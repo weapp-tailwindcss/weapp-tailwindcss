@@ -1,5 +1,8 @@
 import type { BuildOutputCase } from './types'
+import { taroMiniOutputByPlatform } from './case-factories/taro-mini'
 import { rawTailwindDirectiveRE } from './helpers'
+
+export { taroMiniCase } from './case-factories/taro-mini'
 
 const miniStyleFileByPlatform: Record<string, string> = {
   'mp-alipay': 'app.acss',
@@ -213,7 +216,7 @@ export function uniAppSubpackageMiniCase(options: {
     projectDir: `demo/${options.project}`,
     platform: options.platform,
     command: ['pnpm', 'run', `build:${options.platform}`],
-    env: singleEntry ? { E2E_TW_CSS_ENTRY_MODE: 'single' } : undefined,
+    env: { E2E_TW_CSS_ENTRY_MODE: options.mode },
     outputDir,
     requiredFiles: [
       `${outputDir}/app.js`,
@@ -266,7 +269,6 @@ export function uniAppSubpackageH5Case(options: {
     independent: string
   }
 }): BuildOutputCase {
-  const singleEntry = options.mode === 'single'
   const platform = options.ssr ? 'h5:ssr' : 'h5'
   return {
     name: `${options.project} ${platform} ${options.mode}`,
@@ -274,7 +276,7 @@ export function uniAppSubpackageH5Case(options: {
     projectDir: `demo/${options.project}`,
     platform,
     command: ['pnpm', 'run', options.ssr ? 'build:h5:ssr' : 'build:h5'],
-    env: singleEntry ? { E2E_TW_CSS_ENTRY_MODE: 'single' } : undefined,
+    env: { E2E_TW_CSS_ENTRY_MODE: options.mode },
     outputDir: 'dist/build/h5',
     requiredFiles: options.ssr
       ? [
@@ -447,59 +449,6 @@ export function mpxCase(options: {
   }
 }
 
-const taroMiniOutputByPlatform = {
-  alipay: {
-    appJson: 'dist/app.json',
-    appStyle: 'dist/app.acss',
-    pageScript: 'dist/pages/index/index.js',
-    pageTemplate: 'dist/pages/index/index.axml',
-  },
-  tt: {
-    appJson: 'dist/app.json',
-    appStyle: 'dist/app.ttss',
-    pageScript: 'dist/pages/index/index.js',
-    pageTemplate: 'dist/pages/index/index.ttml',
-  },
-} as const
-
-export function taroMiniCase(options: {
-  project: string
-  packageName: string
-  platform: keyof typeof taroMiniOutputByPlatform
-  styleContains: Array<string | RegExp>
-  textContains: Array<string | RegExp>
-  fileAssertions?: BuildOutputCase['fileAssertions']
-  status?: BuildOutputCase['status']
-  reason?: string
-}): BuildOutputCase {
-  const output = taroMiniOutputByPlatform[options.platform]
-  return {
-    name: `${options.project} ${options.platform}`,
-    framework: 'taro',
-    projectDir: `demo/${options.project}`,
-    platform: options.platform,
-    command: ['pnpm', '--filter', options.packageName, 'run', `build:${options.platform}`],
-    commandCwd: 'repo',
-    outputDir: 'dist',
-    requiredFiles: [
-      'dist/app.js',
-      output.appJson,
-      output.appStyle,
-      output.pageTemplate,
-    ],
-    styleFiles: ['dist'],
-    styleFileExtensions: [options.platform === 'alipay' ? '.acss' : '.ttss'],
-    textFiles: [output.pageScript],
-    styleContains: options.styleContains,
-    forbidEmptyBlockAtRules: true,
-    textContains: options.textContains,
-    fileAssertions: options.fileAssertions,
-    notContains: [rawTailwindDirectiveRE],
-    status: options.status ?? 'local',
-    reason: options.reason ?? 'Taro 非微信小程序目标通过多平台构建专项断言；本地 runner 可能因系统依赖挂起，不放入默认 vitest/execa 构建集合。',
-  }
-}
-
 export function taroSubpackageMiniCase(options: {
   project: string
   packageName: string
@@ -512,7 +461,7 @@ export function taroSubpackageMiniCase(options: {
   }
 }): BuildOutputCase {
   const output = taroMiniOutputByPlatform[options.platform]
-  const extension = options.platform === 'alipay' ? '.acss' : '.ttss'
+  const extension = output.styleExtension
   const singleEntry = options.mode === 'single'
   return {
     name: `${options.project} ${options.platform} ${options.mode}`,
@@ -521,7 +470,7 @@ export function taroSubpackageMiniCase(options: {
     platform: options.platform,
     command: ['pnpm', '--filter', options.packageName, 'run', `build:${options.platform}`],
     commandCwd: 'repo',
-    env: singleEntry ? { E2E_TW_CSS_ENTRY_MODE: 'single' } : undefined,
+    env: { E2E_TW_CSS_ENTRY_MODE: options.mode },
     outputDir: 'dist',
     requiredFiles: [
       'dist/app.js',
@@ -536,7 +485,7 @@ export function taroSubpackageMiniCase(options: {
         : []),
     ],
     styleFiles: ['dist'],
-    styleFileExtensions: [options.platform === 'alipay' ? '.acss' : '.ttss', extension],
+    styleFileExtensions: [extension],
     textFiles: ['dist'],
     styleContains: [cssMarker(options.markers.main), cssMarker(options.markers.normal), cssMarker(options.markers.independent)],
     forbidEmptyBlockAtRules: true,
@@ -567,7 +516,6 @@ export function taroSubpackageH5Case(options: {
     independent: string
   }
 }): BuildOutputCase {
-  const singleEntry = options.mode === 'single'
   return {
     name: `${options.project} h5 ${options.mode}`,
     framework: 'taro',
@@ -575,7 +523,7 @@ export function taroSubpackageH5Case(options: {
     platform: 'h5',
     command: ['pnpm', '--filter', options.packageName, 'run', 'build:h5'],
     commandCwd: 'repo',
-    env: singleEntry ? { E2E_TW_CSS_ENTRY_MODE: 'single' } : undefined,
+    env: { E2E_TW_CSS_ENTRY_MODE: options.mode },
     outputDir: 'dist',
     requiredFiles: [
       'dist/js/app.js',

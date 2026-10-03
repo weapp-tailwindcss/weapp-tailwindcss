@@ -11,13 +11,13 @@ import type {
   WatchCase,
   WatchSession,
 } from '../types'
+import type { ClassOutputEvidence } from './class/evidence'
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { replaceWxml } from '../../core/replace-wxml'
 import { formatPath } from '../cli'
 import {
-  assertContainsOneOf,
   assertNotContains,
   getMtime,
   readFileIfExists,
@@ -26,6 +26,7 @@ import {
 } from '../text'
 import { runAddedClassMutation } from './class/added-class'
 import { runCommentCarrierMutation } from './class/comment-carrier'
+import { assertClassTokensInOutput, assertPreviousClassEvidenceRemoved } from './class/evidence'
 import { runSameClassLiteralMutation } from './class/same-literal'
 import {
   assertNoUnsupportedMiniProgramCssImport,
@@ -103,26 +104,6 @@ function sanitizePathSegment(value: string) {
 
 function asErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error)
-}
-
-function htmlEscapeClassToken(value: string) {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-}
-
-function createClassTokenExpectedValues(classToken: string | undefined, escaped: string | undefined) {
-  const values = new Set<string>()
-  if (escaped) {
-    values.add(escaped)
-  }
-  if (classToken) {
-    values.add(classToken)
-    values.add(htmlEscapeClassToken(classToken))
-  }
-  return [...values]
 }
 
 function createRollbackProbeSource(
@@ -375,7 +356,7 @@ function assertIssue33ScriptTokenHealth(
   }
 }
 
-function assertRoundOutputs(
+export function assertRoundOutputs(
   watchCase: WatchCase,
   mutationKind: 'template' | 'script',
   sourcePath: string,
@@ -391,38 +372,11 @@ function assertRoundOutputs(
   assertNoUnsupportedMiniProgramCssImport(watchCase, outputs.globalStyle, `mutation=${mutationKind} phase=${phase}`)
 
   if (mutation.verifyAllEscapedClasses !== false) {
-    for (const escaped of escapedClasses) {
-      const classToken = classTokens[escapedClasses.indexOf(escaped)]
-      const expectedValues = createClassTokenExpectedValues(classToken, escaped)
-      if (mutation.verifyEscapedIn.includes('wxml')) {
-        assertContainsOneOf(outputs.wxml, expectedValues, `[${watchCase.label}] mutation=${mutationKind} phase=${phase} updated wxml`)
-      }
-      if (mutation.verifyEscapedIn.includes('js')) {
-        assertContainsOneOf(outputs.js, expectedValues, `[${watchCase.label}] mutation=${mutationKind} phase=${phase} updated js`)
-      }
-    }
+    assertClassTokensInOutput(outputs, classTokens, escapedClasses, mutation.verifyEscapedIn, `[${watchCase.label}] mutation=${mutationKind} phase=${phase}`, true, minRequiredGlobalStyleEscapedClasses > 0, mutation.expectedRemovedCssUtilities)
   }
 
   if (mutation.verifyAllClassLiterals !== false) {
-    for (const [index, classToken] of classTokens.entries()) {
-      const escapedToken = escapedClasses[index]
-      const expectedValues = createClassTokenExpectedValues(classToken, escapedToken)
-
-      if (verifyClassLiteralIn.includes('wxml')) {
-        assertContainsOneOf(
-          outputs.wxml,
-          expectedValues,
-          `[${watchCase.label}] mutation=${mutationKind} phase=${phase} updated wxml token literal`,
-        )
-      }
-      if (verifyClassLiteralIn.includes('js')) {
-        assertContainsOneOf(
-          outputs.js,
-          expectedValues,
-          `[${watchCase.label}] mutation=${mutationKind} phase=${phase} updated js token literal`,
-        )
-      }
-    }
+    assertClassTokensInOutput(outputs, classTokens, escapedClasses, verifyClassLiteralIn, `[${watchCase.label}] mutation=${mutationKind} phase=${phase} literal`, true, minRequiredGlobalStyleEscapedClasses > 0, mutation.expectedRemovedCssUtilities)
   }
 
   if (forbidBgHexTruncationIn.length > 0) {
@@ -551,6 +505,11 @@ export async function runClassMutation(
     let effectiveHotUpdatePluginProcessMs = 0
     let effectiveHotUpdatePluginProcessSamples: PluginProcessSample[] = []
     let phaseOutputs: RoundOutputs | undefined
+    const roundEvidence: ClassOutputEvidence[] = []
+    const evidenceTargets = [...new Set([
+      ...(mutation.verifyAllEscapedClasses !== false ? mutation.verifyEscapedIn : []),
+      ...(mutation.verifyAllClassLiterals !== false ? verifyClassLiteralIn : []),
+    ])]
 
     try {
       const hotUpdateStartedAt = Date.now()
@@ -634,6 +593,7 @@ export async function runClassMutation(
       )
       const outputs = addResult.outputs
       phaseOutputs = outputs
+      roundEvidence.push(...assertClassTokensInOutput(outputs, classTokens, escapedClasses, evidenceTargets, `[${watchCase.label}] mutation=${mutationKind} phase=add`, true, minRequiredGlobalStyleEscapedClasses > 0, mutation.expectedRemovedCssUtilities))
       const matchedEscapedClasses = addResult.matchedEscapedClasses
 
       for (const escaped of matchedEscapedClasses.slice(0, 3)) {
@@ -799,6 +759,12 @@ export async function runClassMutation(
         )
         const outputs = modifyResult.outputs
         phaseOutputs = outputs
+        assertPreviousClassEvidenceRemoved(outputs, roundEvidence, modifyClassTokens, `[${watchCase.label}] phase=modify`, {
+          wxml: baselineWxml,
+          js: baselineJs,
+          globalStyle: baselineGlobalStyle,
+        })
+        roundEvidence.push(...assertClassTokensInOutput(outputs, modifyClassTokens, modifyEscapedClasses, evidenceTargets, `[${watchCase.label}] mutation=${mutationKind} phase=modify`, true, minRequiredGlobalStyleEscapedClasses > 0, mutation.expectedRemovedCssUtilities))
         const matchedEscapedClasses = modifyResult.matchedEscapedClasses
 
         for (const escaped of matchedEscapedClasses.slice(0, 3)) {
@@ -898,6 +864,11 @@ export async function runClassMutation(
           if (!outputs.wxml || !outputs.js) {
             return false
           }
+          assertPreviousClassEvidenceRemoved(outputs, roundEvidence, [], `[${watchCase.label}] phase=rollback`, {
+            wxml: baselineWxml,
+            js: baselineJs,
+            globalStyle: baselineGlobalStyle,
+          })
           if (isContentMutation) {
             return effectiveEscapedClasses.every(escaped => !outputs.js.includes(escaped))
           }

@@ -2626,7 +2626,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 428676,
+      "bytes": 428724,
       "selectors": [
         ".-translate-y-1",
         "._b--watch-hmr-offset_c000089px_B",
@@ -6682,7 +6682,7 @@
     ],
     "status": "passed",
     "generator": {
-      "bytes": 338900,
+      "bytes": 339051,
       "selectors": [
         ".before_ccontent-_b_aindependent_subpackage_taro-vite-vue3-tailwindcss-v4_a_B:before",
         ".before_ccontent-_b_anormal_subpackage_taro-vite-vue3-tailwindcss-v4_a_B:before",

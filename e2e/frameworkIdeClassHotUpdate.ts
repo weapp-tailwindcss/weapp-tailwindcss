@@ -1,5 +1,6 @@
 import type { createWatchSession } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/session'
 import type { CliOptions, WatchCase } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/types'
+import type { IdeWatchCase } from './frameworkIdeHotUpdateArtifacts'
 import process from 'node:process'
 import { buildHexScriptRoundConfigs } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cases/round-configs'
 import {
@@ -87,7 +88,7 @@ async function refreshDevToolsCompile(miniProgram: any) {
 
 export async function runIdeClassHotUpdate(
   options: CliOptions,
-  watchCase: WatchCase,
+  watchCase: IdeWatchCase,
   session: ReturnType<typeof createWatchSession>,
   mutationKind: 'template' | 'script',
   sourceOriginal: string,

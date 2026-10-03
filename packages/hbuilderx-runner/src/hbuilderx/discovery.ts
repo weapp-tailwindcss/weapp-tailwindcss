@@ -1,3 +1,4 @@
+import type { SpawnSyncReturns } from 'node:child_process'
 import type {
   HBuilderXChannel,
   HBuilderXCliResolution,
@@ -43,7 +44,7 @@ export function inferHBuilderXChannel(file: string): HBuilderXResolvedChannel {
 
 export function getDefaultHBuilderXCliCandidates(
   env: NodeJS.ProcessEnv = process.env,
-  channel: HBuilderXChannel = resolveHBuilderXChannel(env.HBUILDERX_CHANNEL),
+  channel: HBuilderXChannel = resolveHBuilderXChannel(env['HBUILDERX_CHANNEL']),
   platform: NodeJS.Platform = process.platform,
 ) {
   const defaults = platform === 'darwin'
@@ -54,7 +55,7 @@ export function getDefaultHBuilderXCliCandidates(
         : [macOSStableCli, macOSAlphaCli]
     : []
   return unique([
-    env.HBUILDERX_CLI_PATH,
+    env['HBUILDERX_CLI_PATH'],
     ...defaults,
   ].filter((item): item is string => Boolean(item)))
 }
@@ -62,7 +63,7 @@ export function getDefaultHBuilderXCliCandidates(
 export function extractHBuilderXMacOSExecutables(output: string) {
   return unique(Array.from(
     output.matchAll(/(\/[^\r\n]*?HBuilderX(?:-Alpha|\s+Alpha)?\.app\/Contents\/MacOS\/HBuilderX)(?=\s|$)/gi),
-    match => match[1],
+    match => match[1]!,
   ))
 }
 
@@ -114,7 +115,7 @@ export async function findRunningHBuilderXCliCandidates(platform: NodeJS.Platfor
     : ['-ax', '-o', 'command=']
   const timeout = 15_000
   const maxAttempts = platform === 'win32' ? 3 : 1
-  let result: ReturnType<typeof spawnSync> | undefined
+  let result: SpawnSyncReturns<string> | undefined
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     result = spawnSync(command, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true, timeout, maxBuffer: 1024 * 1024 })
     if (!result.error && result.status === 0) {
@@ -196,7 +197,7 @@ async function firstExisting(items: string[]) {
 
 export async function resolveHBuilderXCliInfoFromOptions(options: HBuilderXCliResolveOptions = {}): Promise<HBuilderXCliResolution> {
   const env = options.env ?? process.env
-  const channel = resolveHBuilderXChannel(options.channel ?? env.HBUILDERX_CHANNEL)
+  const channel = resolveHBuilderXChannel(options.channel ?? env['HBUILDERX_CHANNEL'])
   const running = await findRunningHBuilderXCliCandidates()
 
   const configured = await resolveConfiguredCli(options)

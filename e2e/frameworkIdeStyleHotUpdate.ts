@@ -1,6 +1,6 @@
 import type { createWatchSession } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/session'
 import type { CliOptions, WatchCase } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/types'
-import type { ArtifactSnapshot } from './frameworkIdeHotUpdateArtifacts'
+import type { ArtifactSnapshot, IdeWatchCase } from './frameworkIdeHotUpdateArtifacts'
 import process from 'node:process'
 import {
   createStyleMutationPayload,
@@ -85,7 +85,7 @@ function resolveUpdatedStyleFiles(watchCase: WatchCase, baselineMtimes: Map<stri
 
 export async function runIdeStyleHotUpdate(
   options: CliOptions,
-  watchCase: WatchCase,
+  watchCase: IdeWatchCase,
   session: ReturnType<typeof createWatchSession>,
   sourceOriginal: string,
 ) {

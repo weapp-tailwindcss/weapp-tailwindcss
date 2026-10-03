@@ -226,7 +226,7 @@ function subpackageTaroWebpackPlatforms(name: string): DemoPlatformCoverage[] {
   return subpackageTaroWebpackV4Platforms.map((platform) => {
     const buildScript = platform === 'weapp' ? 'build:weapp' : `build:${platform}`
     const devScript = platform === 'weapp' ? 'dev:weapp' : `dev:${platform}`
-    if (platform === 'alipay' || platform === 'tt' || platform === 'h5') {
+    if (platform === 'weapp' || platform === 'alipay' || platform === 'tt' || platform === 'h5') {
       return local(platform, {
         buildScript,
         devScript,
@@ -244,7 +244,7 @@ function subpackageTaroWebpackPlatforms(name: string): DemoPlatformCoverage[] {
       command: demoCommand(name, buildScript),
       reason: platform === 'android' || platform === 'ios' || platform === 'rn'
         ? 'Taro RN/Android/iOS 依赖本地 RN SDK、模拟器或原生环境，默认 CI 不执行。'
-        : '该 subpackage 专项 demo 默认验证 alipay/tt/h5 构建产物，其他目标登记为本地候选。',
+        : '该 subpackage 专项 demo 默认验证 weapp/alipay/tt/h5 构建产物，其他目标登记为本地候选。',
       hmrCoverage: 'exempt',
     })
   })

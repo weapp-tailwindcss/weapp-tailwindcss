@@ -28,7 +28,7 @@ export function createWatchProcessEnv(base: NodeJS.ProcessEnv, extra: Record<str
   const env = createSpawnEnv(base, extra)
   // 子构建应自行选择开发/生产模式，不能继承测试运行器的专用环境。
   for (const key of Object.keys(env)) {
-    if (key === 'VITEST' || key.startsWith('VITEST_')) {
+    if (key === 'TEST' || key === 'VITEST' || key.startsWith('VITEST_')) {
       delete env[key]
     }
   }

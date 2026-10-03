@@ -25,7 +25,7 @@ export async function resolveHBuilderXCli(options?: HBuilderXCliResolveOptions):
 export async function resolveHBuilderXCli(candidates?: string[]): Promise<string>
 export async function resolveHBuilderXCli(candidatesOrOptions?: string[] | HBuilderXCliResolveOptions) {
   const options = Array.isArray(candidatesOrOptions) ? { candidates: candidatesOrOptions } : candidatesOrOptions ?? {}
-  resolveHBuilderXChannel(options.channel ?? (options.env ?? process.env).HBUILDERX_CHANNEL)
+  resolveHBuilderXChannel(options.channel ?? (options.env ?? process.env)['HBUILDERX_CHANNEL'])
   const configured = await resolveConfiguredCli(options)
   return configured?.path ?? (await resolveHBuilderXCliInfoFromOptions(options)).path
 }
@@ -33,8 +33,8 @@ export async function resolveHBuilderXCli(candidatesOrOptions?: string[] | HBuil
 export function createHBuilderXEnv(options: { hbuilderxCliPath?: string, env?: Record<string, string | undefined> } = {}) {
   return {
     ...options.env,
-    HBUILDERX_CLI_PATH: options.hbuilderxCliPath ?? options.env?.HBUILDERX_CLI_PATH ?? process.env.HBUILDERX_CLI_PATH ?? getDefaultHBuilderXCliCandidates()[0],
-    NODE_OPTIONS: options.env?.NODE_OPTIONS ?? process.env.NODE_OPTIONS ?? '--max-old-space-size=8192',
+    HBUILDERX_CLI_PATH: options.hbuilderxCliPath ?? options.env?.['HBUILDERX_CLI_PATH'] ?? process.env['HBUILDERX_CLI_PATH'] ?? getDefaultHBuilderXCliCandidates()[0],
+    NODE_OPTIONS: options.env?.['NODE_OPTIONS'] ?? process.env['NODE_OPTIONS'] ?? '--max-old-space-size=8192',
   }
 }
 
@@ -47,8 +47,8 @@ export async function runPnpmCommand(options: HBuilderXProjectOptions & { args: 
     command: 'pnpm',
     args: options.args,
     cwd: options.cwd,
-    timeoutMs: options.timeoutMs,
-    allowFailure: options.allowFailure,
+    ...(options.timeoutMs !== undefined ? { timeoutMs: options.timeoutMs } : {}),
+    ...(options.allowFailure !== undefined ? { allowFailure: options.allowFailure } : {}),
     env: createHBuilderXEnv(options),
   })
 }

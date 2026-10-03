@@ -43,6 +43,7 @@
     "dev": "tsdown --watch --sourcemap",
     "build": "tsdown",
     "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --pretty false",
     "test:dev": "vitest",
     "release": "pnpm publish",
     "lint": "eslint .",

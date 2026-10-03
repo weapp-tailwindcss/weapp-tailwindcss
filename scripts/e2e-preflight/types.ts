@@ -1,5 +1,10 @@
 export const checkIds = ['base', 'wechat', 'hbuilderx', 'ios', 'android', 'harmony', 'web', 'computer-use'] as const
-export type CheckId = typeof checkIds[number]
+export const runtimeCheckIds = ['runtime-android', 'runtime-ios'] as const
+export type CheckId = typeof checkIds[number] | typeof runtimeCheckIds[number]
+
+export function requiredCheckIds(extended = false): CheckId[] {
+  return extended ? [...checkIds, ...runtimeCheckIds] : [...checkIds]
+}
 export type ProbeId = Exclude<CheckId, 'computer-use'>
 export const maxAgeMs = 15 * 60_000
 
@@ -24,6 +29,7 @@ export interface Check {
 
 export interface PreflightReport {
   schema: 'full-test-preflight/v1'
+  extended?: boolean
   runId: string
   identity: Identity
   createdAt: string
@@ -53,8 +59,10 @@ export interface ProbeOutput {
 }
 
 export const remedies: Record<CheckId, string> = {
+  'runtime-android': '配置 RN_JAVA_HOME、LYNX_JAVA_HOME、LYNX_GRADLE 和唯一 Android SDK；工具链需满足各原生工程要求。',
+  'runtime-ios': '准备 PATH 中的 CocoaPods、xcodegen，以及 LYNX_POD 指定的 CocoaPods；不自动安装。',
   'base': '按根 manifest 准备 Node、pnpm 和依赖，检查 checkout、临时目录及端口。',
-  'wechat': '检查微信 IDE 登录和服务端口权限；指定 E2E_PREFLIGHT_WECHAT_CLI，保留用户项目会话。',
+  'wechat': '手动打开微信 IDE 并确认登录和服务端口；指定 E2E_PREFLIGHT_WECHAT_CLI 仅识别安装，必要时指定 E2E_PREFLIGHT_WECHAT_HTTP_PORT，不自动启动或重置登录。',
   'hbuilderx': '检查 HBUILDERX_CLI_PATH、HBUILDERX_CHANNEL、HBUILDERX_HOST，解决实例冲突。',
   'ios': '安装完整 Xcode 并完成首次启动；指定 E2E_HBUILDERX_IOS_DEVICE_ID。',
   'android': '通过已安装的 Android Studio 启动明确的 AVD，完成授权，指定 E2E_HBUILDERX_ANDROID_DEVICE_ID。',

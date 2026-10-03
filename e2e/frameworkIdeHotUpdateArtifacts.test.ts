@@ -14,12 +14,13 @@ afterEach(async () => {
 async function fixture() {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'ide-style-graph-'))
   roots.push(root)
-  const shell = path.join(root, 'entry.acss')
-  const generated = path.join(root, 'chunks', 'generated.acss')
-  await fs.mkdir(path.dirname(generated))
+  const miniprogramRoot = path.join(root, 'output', 'mini')
+  const shell = path.join(miniprogramRoot, 'entry.acss')
+  const generated = path.join(miniprogramRoot, 'chunks', 'generated.acss')
+  await fs.mkdir(path.dirname(generated), { recursive: true })
   await fs.writeFile(shell, '@import "./chunks/generated.acss";')
   await fs.writeFile(generated, '@import "../entry.acss";\n.before { color: red; }')
-  await fs.writeFile(path.join(root, 'unused.acss'), '.unreachable {}')
+  await fs.writeFile(path.join(miniprogramRoot, 'unused.acss'), '.unreachable {}')
   const base = buildCases(root, { includeLocalOnly: true }).find(item => item.name === 'gulp-tailwindcss-v4')!
   return {
     generated,
@@ -27,6 +28,7 @@ async function fixture() {
     watchCase: {
       ...base,
       cwd: root,
+      miniprogramRoot,
       outputWxml: path.join(root, 'page.axml'),
       outputJs: path.join(root, 'page.js'),
       outputStyleCandidates: [shell],
@@ -54,5 +56,21 @@ describe('IDE HMR style artifact graph', () => {
     const { watchCase, generated } = await fixture()
     await fs.rm(generated)
     await expect(readArtifacts(watchCase)).rejects.toThrow(/ENOENT/)
+  })
+
+  it('resolves root imports in the mini-program output rather than the project or host root', async () => {
+    const { watchCase, generated, shell } = await fixture()
+    await fs.writeFile(generated, '@import "/entry.acss";.local{}')
+    await fs.writeFile(path.join(watchCase.cwd, 'entry.acss'), '.wrong-root{}')
+    const artifacts = await readArtifacts(watchCase)
+    expect(artifacts.map(item => item.file)).toEqual([shell, generated])
+    expect(artifacts.some(item => item.content.includes('.wrong-root'))).toBe(false)
+  })
+
+  it('rejects a page-relative import copied into a root asset even if a project file can satisfy it', async () => {
+    const { watchCase, shell } = await fixture()
+    await fs.writeFile(path.join(watchCase.cwd, 'framework.acss'), '.wrong-root{}')
+    await fs.writeFile(shell, '@import "../../framework.acss";')
+    await expect(readArtifacts(watchCase)).rejects.toThrow(/Invalid stylesheet import.*\.\.\/\.\.\/framework.acss.*entry.acss/)
   })
 })

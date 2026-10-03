@@ -14,6 +14,7 @@ import { createWatchSession, runPnpmCommand, sleep } from '../tools/weapp-tailwi
 import { getMtime, readFileIfExists, waitFor, writeFilePreserveEol } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/text'
 import { runIdeClassHotUpdate } from './frameworkIdeClassHotUpdate'
 import { runIdeStyleHotUpdate } from './frameworkIdeStyleHotUpdate'
+import { resolveFrameworkSupportPaths } from './frameworkSupportPaths'
 
 const TARO_VITE_INITIAL_BUILD_RE = /built in [\d.]+s?|compiled successfully|构建完成/i
 const IDE_STYLE_HOT_UPDATE_EXEMPT_CASES = new Set([
@@ -97,7 +98,7 @@ function resolveFrameworkWatchCase(entry: FrameworkSupportCase) {
   if (!watchCase) {
     throw new Error(`Missing IDE hot-update watch case ${watchCaseName} for ${entry.name}`)
   }
-  return watchCase
+  return { ...watchCase, miniprogramRoot: resolveFrameworkSupportPaths(entry).miniprogramRoot }
 }
 
 function shouldWaitForTaroViteInitialBuild(watchCase: WatchCase) {

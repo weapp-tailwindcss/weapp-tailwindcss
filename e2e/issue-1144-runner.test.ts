@@ -82,7 +82,7 @@ it('一次保存同时替换真实 pt 与 marker，失败时不写入半成品',
   }
 })
 
-it.each(['none', 'browser', 'server', 'source'])('清理阶段先断开浏览器，且 %s 失败后仍恢复项目', async (failure) => {
+it.each(['none', 'browser', 'server', 'source', 'project'])('清理阶段先断开浏览器，且 %s 失败后仍恢复项目', async (failure) => {
   let serverRunning = true
   let browserOpen = true
   let sourceRestored = false
@@ -113,6 +113,9 @@ it.each(['none', 'browser', 'server', 'source'])('清理阶段先断开浏览器
     closeProject: async () => {
       expect(sourceRestored).toBe(true)
       projectClosed = true
+      if (failure === 'project') {
+        throw new Error(failure)
+      }
     },
   })
   if (failure === 'none') {
@@ -122,4 +125,28 @@ it.each(['none', 'browser', 'server', 'source'])('清理阶段先断开浏览器
     await expect(result).rejects.toThrow(failure)
   }
   expect(projectClosed).toBe(true)
+})
+
+it('Web 多个收尾阶段失败时保留所有异常并继续恢复源码', async () => {
+  const browserError = new Error('browser close failed')
+  const serverError = new Error('server stop failed')
+  const closeError = new Error('project close failed')
+  const stages: string[] = []
+  const error = await cleanupWebHmrSession({
+    closeBrowser: async () => {
+      stages.push('browser')
+      throw browserError
+    },
+    stopServer: async () => {
+      stages.push('server')
+      throw serverError
+    },
+    restoreSource: async () => { stages.push('source') },
+    closeProject: async () => {
+      stages.push('project')
+      throw closeError
+    },
+  }).catch(error => error)
+  expect(stages).toEqual(['browser', 'server', 'source', 'project'])
+  expect(error).toMatchObject({ errors: [browserError, serverError, closeError], cause: browserError })
 })

@@ -10,6 +10,7 @@ import { collectCoverageIdentity } from '../e2e/coverageIdentity'
 import { createCoverageReport, readCommittedCompatibilityEvidence } from '../e2e/coverageReport'
 import { DEMO_COVERAGE_MATRIX } from '../e2e/demoCoverageMatrix'
 import { createDemoE2eMemoryReport, sampleProcessTree, summarizeMemorySamples } from './demo-e2e-memory'
+import { formatWorkflowError, runWithCleanup } from './e2e-preflight/cleanup'
 import { enterFullTestGate } from './e2e-preflight/gate'
 
 type StepStatus = 'passed' | 'failed' | 'skipped'
@@ -849,13 +850,13 @@ async function writeReport(report: LocalFullRunReport, outputDir: string) {
   await writeFile(path.join(outputDir, 'coverage-report.json'), `${JSON.stringify(coverageReport, null, 2)}\n`, 'utf8')
 }
 
-async function main() {
+export async function runLocalFullPlatformReport() {
   const profile = getArgValue('--profile') ?? process.env['LOCAL_FULL_REPORT_PROFILE'] ?? 'full'
   if (!['full', 'smoke', 'hmr-smoke'].includes(profile)) {
     throw new Error(`未知报告 profile：${profile}`)
   }
   const gate = profile === 'full' ? await enterFullTestGate(getArgValue('--preflight-report')) : undefined
-  try {
+  await runWithCleanup(async () => {
     const timestamp = getArgValue('--timestamp') ?? formatTimestamp()
     const outputRoot = getArgValue('--out-root') ?? DEFAULT_OUT_ROOT
     const outputDir = path.resolve(outputRoot, timestamp)
@@ -894,18 +895,17 @@ async function main() {
     const readme = path.join(outputDir, 'README.md')
     process.stdout.write(`[local-full-report] report written: ${path.relative(process.cwd(), readme)}\n`)
 
-    if (reports.some(step => step.status === 'failed')) {
-      process.exitCode = 1
+    const failedSteps = reports.filter(step => step.status === 'failed')
+    if (failedSteps.length) {
+      const reason = failedSteps.map(step => `${step.name} failed with exit=${step.exitCode}${step.reason ? `: ${step.reason}` : ''}`).join('; ')
+      throw Object.assign(new Error(`[local-full-report] ${reason}；报告：${readme}`), { stepReports: failedSteps })
     }
-  }
-  finally {
-    await gate?.close()
-  }
+  }, () => gate?.close())
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main().catch((error) => {
-    process.stderr.write(`${error instanceof Error ? error.stack ?? error.message : String(error)}\n`)
+  runLocalFullPlatformReport().catch((error) => {
+    process.stderr.write(`${formatWorkflowError(error)}\n`)
     process.exitCode = 1
   })
 }

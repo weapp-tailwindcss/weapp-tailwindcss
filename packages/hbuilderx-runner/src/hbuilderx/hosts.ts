@@ -94,7 +94,7 @@ export async function connectHBuilderXHost(options: HostOptions) {
     if (result.issue.kind === 'cli-instance-mismatch' || result.issue.kind === 'cli-host-ambiguous') {
       throw createRunnerError(cliPath, cwd, result.args, result.issue.kind, result.issue.message, result.issue.hint ?? '请检查目标 HBuilderX host。', logs)
     }
-    if (result.exit.code !== 0) {
+    if (result.issue.kind === 'timeout' || result.exit.code !== 0) {
       throw new HBuilderXCommandError(`HBuilderX host 命令失败：${cliPath} ${result.args.join(' ')}\ncwd=${cwd}\nexit=${result.exit.signal ?? result.exit.code}\nissue=${result.issue.kind}\n${formatRecentLogs(logs)}`, result)
     }
   }

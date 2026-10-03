@@ -13,9 +13,11 @@ import { execa } from 'execa'
 import { PNG } from 'pngjs'
 import { assessNativeScreenshot } from './native-screenshot'
 import type { ReactNativePlatform, ReactNativeReport } from './catalog'
+import { androidExpoDevice } from './android-device'
 import { androidScreenProbes, findAndroidAnrWaitTap } from './android-window'
 import { getHttpText } from './native-http'
 import { createExpoNativeEnvironment } from './native-environment'
+import { reactNativeAndroidToolchain } from './native-toolchain'
 import { evaluateNativeWait } from './native-wait'
 import { stopOwnedProcess } from './process'
 import { createRuntimeArtifacts } from './runtime-artifacts'
@@ -257,18 +259,6 @@ async function assertAndroidMarker(device: string, marker: string) {
   throw new Error(`Android accessibility tree is missing ${marker} or tw-rn-root`)
 }
 
-async function androidExpoDevice(device: string) {
-  const configured = process.env['RN_ANDROID_EXPO_DEVICE']
-  if (configured) { return configured }
-  const result = await execa('adb', ['-s', device, 'emu', 'avd', 'name'], { reject: false })
-  const avdName = result.stdout
-    .split(/\r?\n/)
-    .map(line => line.trim())
-    .find(line => line && line !== 'OK')
-  if (result.exitCode === 0 && avdName) { return avdName }
-  throw new Error(`Unable to resolve the Expo AVD name for ${device}; set RN_ANDROID_EXPO_DEVICE explicitly`)
-}
-
 function startAndroidDialogGuard(device: string) {
   let dismissing = false
   const timer = setInterval(() => {
@@ -313,19 +303,21 @@ function withNativeEnvironment(report: ReactNativeReport, environment: Partial<R
 }
 
 async function main() {
+  const toolchain = platform === 'android' ? await reactNativeAndroidToolchain() : undefined
   await fs.rm(artifacts, { recursive: true, force: true })
   await fs.mkdir(artifacts, { recursive: true })
   if (updateBaseline) { await fs.mkdir(reportsDir, { recursive: true }) }
   const originalMarker = await fs.readFile(markerFile, 'utf8')
   const originalCss = await fs.readFile(cssFile, 'utf8')
   const runtimeHost = platform === 'ios' ? iosHostAddress() : '127.0.0.1'
-  const reporter = startReporter(platform === 'ios' ? '0.0.0.0' : runtimeHost)
-  const port = await reporter.ready
   const device = platform === 'android'
     ? process.env['RN_ANDROID_DEVICE_ID'] ?? 'emulator-5554'
     : process.env['RN_IOS_DEVICE_ID'] ?? (await execa('xcrun', ['simctl', 'list', 'devices', 'booted', '-j'])).stdout.match(/"udid"\s*:\s*"([^"]+)"/)?.[1] ?? ''
   if (!device) { throw new TypeError(`No booted ${platform} simulator was found`) }
+  const expoDevice = platform === 'android' ? await androidExpoDevice(device) : device
   const nativeEnvironment = await collectNativeEnvironment(device)
+  const reporter = startReporter(platform === 'ios' ? '0.0.0.0' : runtimeHost)
+  const port = await reporter.ready
   const reportUrl = `http://${runtimeHost}:${port}`
   let stopAndroidDialogGuard: (() => void) | undefined
   if (platform === 'android') {
@@ -340,19 +332,8 @@ async function main() {
   }
   const logFile = await fs.open(path.resolve(artifacts, 'expo-run.log'), 'w')
   const metroLogFile = await fs.open(metroLogPath, 'w')
-  const androidStudioJavaHome = '/Applications/Android Studio.app/Contents/jbr/Contents/Home'
-  const hasAndroidStudioJava = process.platform === 'darwin'
-    ? await fs.access(androidStudioJavaHome).then(() => true, () => false)
-    : false
-  const javaHome = platform === 'android'
-    ? process.env['RN_JAVA_HOME']
-    ?? (hasAndroidStudioJava ? androidStudioJavaHome : process.env['JAVA_HOME'])
-    : undefined
-  const androidHome = process.env['ANDROID_HOME']
-    ?? process.env['ANDROID_SDK_ROOT']
-    ?? (process.platform === 'darwin'
-      ? path.join(os.homedir(), 'Library', 'Android', 'sdk')
-      : path.join(os.homedir(), 'Android', 'Sdk'))
+  const javaHome = toolchain?.javaHome
+  const androidHome = toolchain?.sdk
   const env = {
     ...createExpoNativeEnvironment(runtimeHost, reportUrl),
     ...(javaHome ? { JAVA_HOME: javaHome } : {}),
@@ -374,7 +355,6 @@ async function main() {
   try {
     await waitForMetro(metro)
     const runArgs = ['--filter', '@weapp-tailwindcss/example-react-native-expo', 'exec', 'expo', 'run', platform === 'android' ? 'android' : 'ios', '--no-bundler']
-    const expoDevice = platform === 'android' ? await androidExpoDevice(device) : device
     runArgs.push('--device', expoDevice)
     if (platform === 'android' && process.env['RN_ANDROID_BINARY']) {
       runArgs.push('--binary', path.resolve(repoRoot, process.env['RN_ANDROID_BINARY']))

@@ -1,7 +1,9 @@
-import type { NormalizedOutputOptions, ObjectHook, PluginContext } from 'rollup'
+import type { ObjectHook } from 'rollup'
 import type { Plugin, ResolvedConfig } from 'vite'
 
 const wrappedPlugins = new WeakSet<Plugin>()
+type GenerateBundle = Extract<Plugin['generateBundle'], (...args: never[]) => unknown>
+type OutputIdentity = Pick<Parameters<GenerateBundle>[0], 'dir' | 'file' | 'format'>
 
 function unwrap<T>(hook: ObjectHook<T> | undefined): T | undefined {
   return hook && typeof hook === 'object' && 'handler' in hook ? hook.handler : hook as T | undefined
@@ -11,7 +13,7 @@ function replace<T>(hook: ObjectHook<T> | undefined, handler: T): ObjectHook<T> 
   return hook && typeof hook === 'object' && 'handler' in hook ? { ...hook, handler } : handler
 }
 
-function outputKey(options: NormalizedOutputOptions) {
+function outputKey(options: OutputIdentity) {
   // 仅序列化 Rollup 提供的输出身份；不由路径推导源文件或平台后缀。
   return JSON.stringify([options.dir, options.file, options.format])
 }
@@ -44,7 +46,7 @@ export function wrapViteCssPostOutput(config: ResolvedConfig) {
               emitted.add(file.fileName)
             }
             return reference
-          }) as PluginContext['emitFile']
+          }) as typeof target.emitFile
         }
         return Reflect.get(target, property, receiver)
       },

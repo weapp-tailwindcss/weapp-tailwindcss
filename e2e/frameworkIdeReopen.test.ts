@@ -4,7 +4,7 @@ import { readFreshDevToolsPageContent } from './frameworkIdeReopen'
 
 const { launch } = vi.hoisted(() => ({ launch: vi.fn() }))
 
-vi.mock('@weapp-vite/miniprogram-automator', () => ({
+vi.mock('../scripts/wechat/automator', () => ({
   Launcher: class {
     launch = launch
   },

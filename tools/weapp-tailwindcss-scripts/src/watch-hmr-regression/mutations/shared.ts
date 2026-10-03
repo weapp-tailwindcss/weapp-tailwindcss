@@ -14,6 +14,7 @@ import type {
 import { readdir } from 'node:fs/promises'
 import path from 'node:path'
 import { replaceWxml } from '../../core/replace-wxml'
+import { collectImportedStyleFiles } from '../artifacts/imports'
 import { getBaseWatchCaseName } from '../cases'
 import { formatPath } from '../cli'
 import { getMtime, readFileIfExists, waitFor } from '../text'
@@ -462,15 +463,19 @@ export async function waitForOutputFilesUpdatedWithDiagnostics(
     label?: string
   } = {},
 ): Promise<OutputWaitDiagnostics> {
+  let semanticFailure: { error: unknown } | undefined
   const acceptsSemanticOutput = async () => {
     if (!acceptWhen) {
       return false
     }
 
     try {
-      return await acceptWhen()
+      const accepted = await acceptWhen()
+      semanticFailure = undefined
+      return accepted
     }
-    catch {
+    catch (error) {
+      semanticFailure = { error }
       return false
     }
   }
@@ -487,6 +492,7 @@ export async function waitForOutputFilesUpdatedWithDiagnostics(
     updatedFiles: [],
   }
 
+  const timeoutMessage = `[${watchCase.label}] ${diagnostics.label ? `${diagnostics.label} ` : ''}output files were not updated after source change: ${files.map(formatPath).join(', ')}`
   const elapsedMs = await waitFor(
     async () => {
       const missingExactFiles: string[] = []
@@ -597,11 +603,18 @@ export async function waitForOutputFilesUpdatedWithDiagnostics(
     {
       timeoutMs: options.timeoutMs,
       pollMs: options.pollMs,
-      message: `[${watchCase.label}] ${diagnostics.label ? `${diagnostics.label} ` : ''}output files were not updated after source change: ${files.map(formatPath).join(', ')}`,
+      message: timeoutMessage,
       onTick: session.ensureRunning,
     },
     startedAt,
-  )
+  ).catch((error: unknown) => {
+    // 允许构建替换产物时短暂缺失；超时后保留最后一次读图/语义失败，不能只留下 mtime 提示。
+    if (error instanceof Error && error.message === timeoutMessage && semanticFailure) {
+      const cause = semanticFailure.error
+      throw new Error(`${timeoutMessage}\nLast output validation error: ${cause instanceof Error ? cause.message : String(cause)}`, { cause })
+    }
+    throw error
+  })
 
   return {
     ...lastDiagnostics,
@@ -794,7 +807,7 @@ export async function resolveOutputFiles(
 }
 
 export async function readJoinedOutputFiles(files: string[]) {
-  const resolvedFiles = await expandOutputFileEntries(files)
+  const resolvedFiles = await collectImportedStyleFiles(await expandOutputFileEntries(files))
   const parts = await Promise.all(resolvedFiles.map(file => readFileIfExists(file)))
   return parts.filter((item): item is string => item != null).join('\n')
 }

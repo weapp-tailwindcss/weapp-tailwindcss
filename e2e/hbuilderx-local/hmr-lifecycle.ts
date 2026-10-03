@@ -28,13 +28,20 @@ export function observeHmrStep(
 ) {
   const outputs = { stdout: '', stderr: '' }
   let overflow = false
+  let runtimeVerified = false
+  let verifiedTransfer: string | undefined
+  let orderedOutput = ''
   const subscribe = (name: 'stdout' | 'stderr') => {
     const decoder = new StringDecoder('utf8')
     const receive = (chunk: Buffer | string) => {
       if (overflow) {
         return
       }
-      outputs[name] += typeof chunk === 'string' ? chunk : decoder.write(chunk)
+      const text = typeof chunk === 'string' ? chunk : decoder.write(chunk)
+      outputs[name] += text
+      if (platform === 'app-ios') {
+        orderedOutput += text
+      }
       overflow = Buffer.byteLength(outputs.stdout) + Buffer.byteLength(outputs.stderr) > 32 * 1024 * 1024
     }
     child[name]?.on('data', receive)
@@ -43,44 +50,77 @@ export function observeHmrStep(
   const subscriptions = [subscribe('stdout'), subscribe('stderr')]
   const output = () => `${outputs.stdout}\n${outputs.stderr}`
   const modeLabel = mode === 'native-reload' ? '原生热重载' : '纯 HMR'
+  const readIosTransfer = () => {
+    const text = stripVTControlCharacters(orderedOutput)
+    const started = Math.max(text.lastIndexOf('开始差量编译'), text.lastIndexOf('开始编译'))
+    const compiled = text.lastIndexOf('编译成功')
+    const synced = text.lastIndexOf('同步手机端程序文件成功')
+    return started >= 0 && compiled > started && synced > compiled ? `${started}:${compiled}:${synced}` : undefined
+  }
+  const hasCurrentRuntimeEvidence = () => runtimeVerified && verifiedTransfer === readIosTransfer()
+  const state = () => {
+    const observed = classifyHmrStep(output())
+    return platform === 'app-ios' && (observed === 'pending' || observed === 'updated')
+      ? hasCurrentRuntimeEvidence() ? 'updated' : 'pending'
+      : observed
+  }
   const snapshot = () => ({
     mode,
-    state: classifyHmrStep(output()),
+    state: state(),
     appLaunchCount: stripVTControlCharacters(output()).match(/App Launch/g)?.length ?? 0,
+    ...(platform === 'app-ios' ? { runtimeVerified: hasCurrentRuntimeEvidence() } : {}),
   })
   const assertNoFallback = () => {
     if (overflow) {
       throw new Error(`${modeLabel} 单轮日志超过 32 MiB，不能确认运行结果`)
     }
     const state = classifyHmrStep(output())
-    if (mode === 'native-reload' && state === 'restarted') {
-      return
-    }
-    if (state !== 'pending' && state !== 'updated') {
+    if (state !== 'pending' && state !== 'updated' && !(mode === 'native-reload' && state === 'restarted')) {
       const reason = mode === 'native-reload' ? '更新失败或重装不能计作原生热重载' : '增量重启或重装不能计作保持运行状态的更新'
       throw new Error(`${modeLabel} 验收失败：${state}；${reason}\n${output()}`)
+    }
+    if (platform === 'app-ios' && runtimeVerified && !hasCurrentRuntimeEvidence()) {
+      throw new Error(`iOS HMR 取证完成后出现新编译或同步，旧运行时证据已失效\n${output()}`)
     }
   }
   return {
     assertNoFallback,
     snapshot,
-    async waitForCompletion(timeoutMs: number, ensureRunning: () => void) {
-      // Android/iOS 由产物与运行时探针确认更新，生命周期策略由用例显式声明。
-      if (platform !== 'app-harmony') {
+    async waitForCompletion<T>(timeoutMs: number, ensureRunning: () => void, verifyRuntime?: (remainingMs: number) => Promise<T>): Promise<T | undefined> {
+      // Android 由调用方的运行时探针确认；iOS 必须把设备取证纳入完成契约。
+      if (platform === 'app-android') {
         ensureRunning()
         assertNoFallback()
         return
+      }
+      if (platform === 'app-ios' && !verifyRuntime) {
+        throw new Error('iOS HMR 缺少运行时验证：中间产物与同步日志不能证明设备已更新')
       }
       const startedAt = Date.now()
       while (Date.now() - startedAt < timeoutMs) {
         ensureRunning()
         assertNoFallback()
-        if (classifyHmrStep(output()) === 'updated') {
+        if (platform === 'app-ios') {
+          const transfer = readIosTransfer()
+          if (transfer) {
+            assertNoFallback()
+            const evidence = await verifyRuntime!(Math.max(1, timeoutMs - (Date.now() - startedAt)))
+            ensureRunning()
+            assertNoFallback()
+            if (readIosTransfer() !== transfer) {
+              continue
+            }
+            verifiedTransfer = transfer
+            runtimeVerified = true
+            return evidence
+          }
+        }
+        else if (classifyHmrStep(output()) === 'updated') {
           return
         }
         await setTimeout(100)
       }
-      throw new Error(`产物更新后未收到 HBuilderX 热更新完成日志\n${output()}`)
+      throw new Error(`${platform === 'app-ios' ? 'iOS 产物更新后未收到当轮编译与同步完成日志' : '产物更新后未收到 HBuilderX 热更新完成日志'}\n${output()}`)
     },
     dispose() {
       subscriptions.forEach(dispose => dispose())

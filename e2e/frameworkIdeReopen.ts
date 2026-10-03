@@ -1,6 +1,6 @@
 import type { CliOptions } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/types'
 import process from 'node:process'
-import { Launcher } from '@weapp-vite/miniprogram-automator'
+import { Launcher } from '../scripts/wechat/automator'
 import { waitFor } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/text'
 import { getDevToolsRelaunchTimeoutMs, getDevToolsVisibleTimeoutMs, readPageLiveContent } from './frameworkIdeLivePage'
 
@@ -38,15 +38,11 @@ export async function readFreshDevToolsPageContent(
     async () => {
       try {
         if (!freshMiniProgram) {
-          freshMiniProgram = await withDevToolsRelaunchTimeout(
-            options,
-            pageUrl,
-            launcher.launch({
-              ...(cliPath ? { cliPath } : {}),
-              projectPath,
-              timeout: getDevToolsRelaunchTimeoutMs(options),
-            }),
-          )
+          freshMiniProgram = await launcher.launch({
+            ...(cliPath ? { cliPath } : {}),
+            projectPath,
+            timeout: getDevToolsRelaunchTimeoutMs(options),
+          })
         }
         const page = await withDevToolsRelaunchTimeout(options, pageUrl, freshMiniProgram.reLaunch(pageUrl))
         if (!page) {

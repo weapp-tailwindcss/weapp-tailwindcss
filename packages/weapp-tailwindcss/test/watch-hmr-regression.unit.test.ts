@@ -1087,7 +1087,7 @@ describe('watch-hmr regression text helpers', () => {
           verifyClassLiteralIn: ['js'],
           roundConfigs: [roundConfig],
           mutate(source, mutationPayload) {
-            return `${source}\n${mutationPayload.marker}\n${mutationPayload.classLiteral}`
+            return `${source}\nconst marker = ${JSON.stringify(mutationPayload.marker)};\nconst className = ${JSON.stringify(mutationPayload.classLiteral)};`
           },
         },
         sourceOriginal,

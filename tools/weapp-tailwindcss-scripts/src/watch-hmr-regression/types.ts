@@ -195,6 +195,11 @@ export interface MutationScenario extends ClassMutationPayload {
   mutatedSource: string
 }
 
+export interface CssRuleRemovalExpectation {
+  utility: string
+  condition: 'supports' | 'hover'
+}
+
 export interface ClassMutationConfig {
   sourceFile: string
   verifyEscapedIn: Array<'wxml' | 'js'>
@@ -202,6 +207,8 @@ export interface ClassMutationConfig {
   verifyAllEscapedClasses?: boolean
   verifyAllClassLiterals?: boolean
   forbidBgHexTruncationIn?: Array<'wxml' | 'js'>
+  /** 平台契约明确移除的规则；仍验证 token 传播、CSS 缺失和回滚，不因实际缺失自动豁免。 */
+  expectedRemovedCssUtilities?: readonly CssRuleRemovalExpectation[]
   roundConfigs?: MutationRoundConfig[]
   skipExtendedHmr?: boolean
   /**

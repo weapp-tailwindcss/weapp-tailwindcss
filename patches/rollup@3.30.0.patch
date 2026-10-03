@@ -1,5 +1,5 @@
 diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
-index dc419c2d423cdfa2479b2cd9c6343b05d936c741..da51a7f33c29d0802f654aea42aee80123e05a7b 100644
+index dc419c2d423cdfa2479b2cd9c6343b05d936c741..830bb78529d7db8dbdd0ccaed7ddbe45df0db2f5 100644
 --- a/dist/es/shared/watch.js
 +++ b/dist/es/shared/watch.js
 @@ -2775,7 +2775,15 @@ _handleFile(file, stats, initialAdd) {
@@ -139,6 +139,44 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..da51a7f33c29d0802f654aea42aee801
          };
          const watcher = chokidar
              .watch([], this.chokidarOptions)
+@@ -4740,6 +4765,7 @@ class Task {
+         this.watchFiles = [];
+         this.closed = false;
+         this.invalidated = true;
++        this.invalidatedTransformDependencies = new Set();
+         this.watched = new Set();
+         this.watcher = watcher;
+         this.options = options;
+@@ -4765,6 +4791,7 @@ class Task {
+     invalidate(id, details) {
+         this.invalidated = true;
+         if (details.isTransformDependency) {
++            this.invalidatedTransformDependencies.add(id);
+             for (const module of this.cache.modules) {
+                 if (!module.transformDependencies.includes(id))
+                     continue;
+@@ -4778,6 +4805,8 @@ class Task {
+         if (!this.invalidated)
+             return;
+         this.invalidated = false;
++        // 新一轮消费现有缓存；本轮构建期间到达的失效必须保留给下一轮。
++        this.invalidatedTransformDependencies.clear();
+         const options = {
+             ...this.options,
+             cache: this.cache
+@@ -4827,6 +4856,12 @@ class Task {
+         this.watched = new Set();
+         this.watchFiles = result.watchFiles;
+         this.cache = result.cache;
++        // 新缓存不能覆盖构建期间对旧缓存标记的失效。
++        for (const module of this.cache.modules) {
++            if (module.transformDependencies.some(id => this.invalidatedTransformDependencies.has(id))) {
++                module.originalCode = null;
++            }
++        }
+         for (const id of this.watchFiles) {
+             this.watchFile(id);
+         }
 diff --git a/dist/shared/index.js b/dist/shared/index.js
 index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..0cddb0a2e2e91b97753ed44db50a0a512dfb7c1b 100644
 --- a/dist/shared/index.js
@@ -195,7 +233,7 @@ index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..0cddb0a2e2e91b97753ed44db50a0a51
 
    if (opts.alwaysStat && val1 === undefined &&
 diff --git a/dist/shared/watch.js b/dist/shared/watch.js
-index b7ac9010156c0fc2a71fcd23cbaa5dc5230508f5..fbef62f4f58dc1a629995eeb94583fd5e8b27a4f 100644
+index b7ac9010156c0fc2a71fcd23cbaa5dc5230508f5..81772ad7e2cb3e3f19881d76a0672df0fea91c3b 100644
 --- a/dist/shared/watch.js
 +++ b/dist/shared/watch.js
 @@ -30,49 +30,57 @@ require('events');
@@ -284,3 +322,41 @@ index b7ac9010156c0fc2a71fcd23cbaa5dc5230508f5..fbef62f4f58dc1a629995eeb94583fd5
          };
          const watcher = index.chokidar
              .watch([], this.chokidarOptions)
+@@ -197,6 +205,7 @@ class Task {
+         this.watchFiles = [];
+         this.closed = false;
+         this.invalidated = true;
++        this.invalidatedTransformDependencies = new Set();
+         this.watched = new Set();
+         this.watcher = watcher;
+         this.options = options;
+@@ -222,6 +231,7 @@ class Task {
+     invalidate(id, details) {
+         this.invalidated = true;
+         if (details.isTransformDependency) {
++            this.invalidatedTransformDependencies.add(id);
+             for (const module of this.cache.modules) {
+                 if (!module.transformDependencies.includes(id))
+                     continue;
+@@ -235,6 +245,8 @@ class Task {
+         if (!this.invalidated)
+             return;
+         this.invalidated = false;
++        // 新一轮消费现有缓存；本轮构建期间到达的失效必须保留给下一轮。
++        this.invalidatedTransformDependencies.clear();
+         const options = {
+             ...this.options,
+             cache: this.cache
+@@ -284,6 +296,12 @@ class Task {
+         this.watched = new Set();
+         this.watchFiles = result.watchFiles;
+         this.cache = result.cache;
++        // 新缓存不能覆盖构建期间对旧缓存标记的失效。
++        for (const module of this.cache.modules) {
++            if (module.transformDependencies.some(id => this.invalidatedTransformDependencies.has(id))) {
++                module.originalCode = null;
++            }
++        }
+         for (const id of this.watchFiles) {
+             this.watchFile(id);
+         }

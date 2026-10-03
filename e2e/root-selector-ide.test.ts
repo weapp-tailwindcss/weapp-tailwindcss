@@ -1,11 +1,11 @@
 import type { PNG } from 'pngjs'
 import fs from 'node:fs/promises'
 import process from 'node:process'
-import { Launcher } from '@weapp-vite/miniprogram-automator'
 import path from 'pathe'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { captureMiniProgramViewport } from '../scripts/demo-visual-e2e-report/mini-program-screenshot'
 import { closeWechatProject } from '../scripts/wechat-project-cleanup'
+import { Launcher } from '../scripts/wechat/automator'
 import { collectFrameworkIdeDiagnostics } from './frameworkIdeDiagnostics'
 
 const describeIde = process.env['E2E_IDE'] === '1' ? describe : describe.skip
@@ -32,23 +32,12 @@ const probeMatchers = {
   twRoot: (red, green, blue, alpha) => alpha > 200 && red < 100 && green < 110 && blue > 150,
 } satisfies Record<string, ColorMatcher>
 
-function withTimeout<T>(promise: Promise<T>, timeout: number, label: string) {
-  return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`${label} timed out in ${timeout}ms`)), timeout)
-    promise.then(resolve, reject).finally(() => clearTimeout(timer))
-  })
-}
-
 async function launchMiniProgram() {
   let lastError: unknown
   for (let attempt = 1; attempt <= 2; attempt++) {
     const automator = new Launcher()
     try {
-      return await withTimeout(
-        automator.launch({ cliPath: process.env.E2E_PREFLIGHT_WECHAT_CLI, projectPath, timeout: timeoutMs }),
-        launchAttemptTimeoutMs,
-        `root selector DevTools launch attempt ${attempt}`,
-      )
+      return await automator.launch({ cliPath: process.env.E2E_PREFLIGHT_WECHAT_CLI, projectPath, timeout: Math.min(timeoutMs, launchAttemptTimeoutMs) })
     }
     catch (error) {
       lastError = error

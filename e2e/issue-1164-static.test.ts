@@ -7,8 +7,11 @@ import fg from 'fast-glob'
 import { JSDOM } from 'jsdom'
 import postcss from 'postcss'
 import { expect, it } from 'vitest'
+import { runWithCleanup } from '../scripts/e2e-preflight/cleanup'
+import { createHBuilderXAppProject } from '../scripts/hbuilderx-app-project'
 import { createHBuilderXProjectAlias } from '../scripts/hbuilderx-project-alias.mjs'
-import { runPnpm } from './hbuilderx-local/process'
+import { withHBuilderXProjectCleanup } from '../scripts/hbuilderx-project-lifecycle'
+import { createLocalHBuilderXRunner, runPnpm } from './hbuilderx-local/process'
 
 const project = 'uni-app-x-vdom-tailwindcss-v4'
 const projectRoot = path.resolve(__dirname, '../demo', project)
@@ -91,11 +94,11 @@ it.skipIf(!included)('issue #1164 connects all SCSS comment variants to producti
 }, 150_000)
 
 it.skipIf(!included || process.env['E2E_ISSUE_1164_HARMONY'] !== '1')('issue #1164 preserves scoped utilities in real HBuilderX Harmony style objects', async () => {
-  const alias = await createHBuilderXProjectAlias(projectRoot)
-  const repository = path.resolve(__dirname, '..')
-  try {
-    await runPnpm(repository, ['exec', 'hbuilderx', 'project', 'open', '--path', alias.projectPath], 30_000)
-    await runPnpm(repository, ['exec', 'hbuilderx', 'launch', 'app-harmony', '--project', alias.projectPath, '--compile', 'true'], 180_000)
+  const runner = await createLocalHBuilderXRunner(projectRoot)
+  const session = await createHBuilderXAppProject({ projectRoot, platform: 'app-harmony', runner, timeoutMs: 30_000 })
+  await runWithCleanup(async () => {
+    await session.open()
+    await runner.run({ args: ['launch', 'app-harmony', '--project', session.launchProject, '--compile', 'true'], cwd: session.projectRoot, timeoutMs: 180_000 })
     const files = await fg('**/www/assets/components/issue-1164/*.js', {
       cwd: path.join(projectRoot, 'unpackage/dist/dev/app-harmony'),
       absolute: true,
@@ -134,17 +137,13 @@ it.skipIf(!included || process.env['E2E_ISSUE_1164_HARMONY'] !== '1')('issue #11
     }
     const sorted = Object.fromEntries(Object.entries(evidence).sort(([a], [b]) => a.localeCompare(b)))
     await expect(`${JSON.stringify(sorted, null, 2)}\n`).toMatchFileSnapshot('__snapshots__/issue-1164/harmony.json')
-  }
-  finally {
-    await runPnpm(repository, ['exec', 'hbuilderx', 'project', 'close', '--path', alias.projectPath], 30_000)
-    await alias.cleanup()
-  }
+  }, () => session.cleanup())
 }, 240_000)
 
 it.skipIf(!included || process.env['E2E_ISSUE_1164_MINI'] !== '1')('issue #1164 keeps local utilities reachable in HBuilderX mini output', async () => {
   const alias = await createHBuilderXProjectAlias(projectRoot)
   const repository = path.resolve(__dirname, '..')
-  try {
+  await withHBuilderXProjectCleanup(alias, async () => {
     await runPnpm(repository, ['exec', 'hbuilderx', 'project', 'open', '--path', alias.projectPath], 30_000)
     await runPnpm(repository, ['exec', 'hbuilderx', 'launch', 'mp-weixin', '--project', alias.projectName, '--compile', 'true'], 120_000)
     const output = path.join(projectRoot, 'unpackage/dist/dev/mp-weixin')
@@ -219,9 +218,5 @@ it.skipIf(!included || process.env['E2E_ISSUE_1164_MINI'] !== '1')('issue #1164 
       expect(evidence[`issue-1164-${probe}-circle`]['border-radius']).toBeDefined()
     }
     await expect(`${JSON.stringify(evidence, null, 2)}\n`).toMatchFileSnapshot('__snapshots__/issue-1164/mini.json')
-  }
-  finally {
-    await runPnpm(repository, ['exec', 'hbuilderx', 'project', 'close', '--path', alias.projectPath], 30_000)
-    await alias.cleanup()
-  }
+  }, () => runPnpm(repository, ['exec', 'hbuilderx', 'project', 'close', '--path', alias.projectPath], 30_000))
 }, 180_000)

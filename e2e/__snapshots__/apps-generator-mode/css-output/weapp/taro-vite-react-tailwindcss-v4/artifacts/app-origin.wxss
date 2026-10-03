@@ -7317,7 +7317,7 @@ wx-root-portal-content {
   width: 100%;
   height: 100%;
   z-index: 1;
-  background: linear-gradient(90deg, #0000, #00000005, #0000);
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.01961), rgba(0, 0, 0, 0));
   animation-name: nut-skeleton;
   animation-delay: 0s;
   animation-duration: 0.6s;
@@ -13913,7 +13913,7 @@ wx-root-portal-content {
   top: 0;
   opacity: 0.73;
   content: '';
-  background-image: linear-gradient(106deg, #e8e0ff00 24%, #e8e0ff 91%);
+  background-image: linear-gradient(106deg, rgba(232, 224, 255, 0) 24%, #e8e0ff 91%);
   animation: flicker 1.5s linear infinite;
   transform: skew(-20deg);
   filter: blur(3rpx);

@@ -4,7 +4,6 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import {
-  HBuilderXCommandError,
   classifyHBuilderXOutput,
   createHBuilderXRunner,
   createLaunchArgs,
@@ -17,11 +16,11 @@ import {
   parseHBuilderXVersion,
   parseHdcTargets,
   parseIosSimulatorDevices,
-  resolveIosSimulatorDeviceId,
-  selectPreferredIosSimulatorDevice,
   resolveHBuilderXCli,
+  resolveIosSimulatorDeviceId,
   runCommand,
   selectHBuilderXCliCandidatesForChannel,
+  selectPreferredIosSimulatorDevice,
 } from '../src'
 
 describe('hbuilderx-runner', () => {
@@ -323,7 +322,7 @@ describe('hbuilderx-runner', () => {
           kind: 'timeout',
         },
       },
-    } satisfies Partial<HBuilderXCommandError>)
+    })
   })
 
   it('includes classified output when commands fail', async () => {

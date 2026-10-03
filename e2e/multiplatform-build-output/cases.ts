@@ -19,6 +19,7 @@ import {
   uniAppSubpackageH5Case,
   uniAppSubpackageMiniCase,
 } from './case-factories'
+import { issue951MiniCase } from './case-factories/issue-951'
 import { createLocalTargetCase, uniqueTargetKey } from './helpers'
 import { MULTIPLATFORM_TARGETS } from './targets'
 
@@ -184,41 +185,7 @@ export const EXECUTABLE_MULTIPLATFORM_BUILD_OUTPUT_CASES: BuildOutputCase[] = [
     textContains: ['bg-_b_h123456_B', 'text-_b_hfff_B'],
     status: 'ci',
   }),
-  taroMiniCase({
-    project: 'issue-951-taro-vite-react-tailwindcss-v4',
-    packageName: '@weapp-tailwindcss-demo/issue-951-taro-vite-react-tailwindcss-v4',
-    platform: 'alipay',
-    styleContains: ['.bg-issue-951-main', '.bg-issue-951-normal', '.bg-issue-951-independent'],
-    textContains: ['bg-issue-951-main'],
-    fileAssertions: [
-      {
-        file: 'dist/app-origin.acss',
-        contains: ['.bg-issue-951-main'],
-        notContains: ['.bg-issue-951-normal', '.bg-issue-951-independent', '.issue-951-page-local'],
-      },
-      {
-        file: 'dist/app.acss',
-        contains: [/@import\s+["']\.\/app-origin\.acss["']/],
-        notContains: ['.bg-issue-951-normal', '.bg-issue-951-independent', '.issue-951-page-local'],
-      },
-      {
-        file: 'dist/pages/index/index.acss',
-        contains: ['.issue-951-page-local'],
-        notContains: ['.bg-issue-951-main', '.bg-issue-951-normal', '.bg-issue-951-independent'],
-      },
-      {
-        file: 'dist/sub-normal/pages/index.acss',
-        contains: ['.bg-issue-951-normal'],
-        notContains: ['.issue-951-page-local', '.bg-issue-951-main', '.bg-issue-951-independent'],
-      },
-      {
-        file: 'dist/sub-independent/pages/index.acss',
-        contains: ['.bg-issue-951-independent'],
-        notContains: ['.issue-951-page-local', '.bg-issue-951-main', '.bg-issue-951-normal'],
-      },
-    ],
-    status: 'ci',
-  }),
+  ...(['weapp', 'alipay', 'tt'] as const).map(issue951MiniCase),
   {
     name: 'issue-951-taro-vite-react-tailwindcss-v4 h5',
     framework: 'taro',
@@ -236,7 +203,7 @@ export const EXECUTABLE_MULTIPLATFORM_BUILD_OUTPUT_CASES: BuildOutputCase[] = [
     notContains: [/@import\s+["']tailwindcss["']/],
     status: 'ci',
   },
-  ...(['alipay', 'tt'] as const).flatMap(platform =>
+  ...(['weapp', 'alipay', 'tt'] as const).flatMap(platform =>
     (['isolated', 'single'] as const).map(mode =>
       taroSubpackageMiniCase({
         project: 'subpackage-taro-webpack-react-tailwindcss-v4',
@@ -255,41 +222,6 @@ export const EXECUTABLE_MULTIPLATFORM_BUILD_OUTPUT_CASES: BuildOutputCase[] = [
       markers: taroSubpackageMarkers,
     }),
   ),
-  taroMiniCase({
-    project: 'issue-951-taro-vite-react-tailwindcss-v4',
-    packageName: '@weapp-tailwindcss-demo/issue-951-taro-vite-react-tailwindcss-v4',
-    platform: 'tt',
-    styleContains: ['.bg-issue-951-main', '.bg-issue-951-normal', '.bg-issue-951-independent'],
-    textContains: ['bg-issue-951-main'],
-    fileAssertions: [
-      {
-        file: 'dist/app-origin.ttss',
-        contains: ['.bg-issue-951-main'],
-        notContains: ['.bg-issue-951-normal', '.bg-issue-951-independent', '.issue-951-page-local'],
-      },
-      {
-        file: 'dist/app.ttss',
-        contains: [/@import\s+["']\.\/app-origin\.ttss["']/],
-        notContains: ['.bg-issue-951-normal', '.bg-issue-951-independent', '.issue-951-page-local'],
-      },
-      {
-        file: 'dist/pages/index/index.ttss',
-        contains: ['.issue-951-page-local'],
-        notContains: ['.bg-issue-951-main', '.bg-issue-951-normal', '.bg-issue-951-independent'],
-      },
-      {
-        file: 'dist/sub-normal/pages/index.ttss',
-        contains: ['.bg-issue-951-normal'],
-        notContains: ['.issue-951-page-local', '.bg-issue-951-main', '.bg-issue-951-independent'],
-      },
-      {
-        file: 'dist/sub-independent/pages/index.ttss',
-        contains: ['.bg-issue-951-independent'],
-        notContains: ['.issue-951-page-local', '.bg-issue-951-main', '.bg-issue-951-normal'],
-      },
-    ],
-    status: 'ci',
-  }),
   taroMiniCase({
     project: 'taro-vite-vue3-tailwindcss-v4',
     packageName: '@weapp-tailwindcss-demo/taro-vite-vue3-tailwindcss-v4',

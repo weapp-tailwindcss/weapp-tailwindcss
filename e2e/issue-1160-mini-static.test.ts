@@ -7,6 +7,7 @@ import { JSDOM } from 'jsdom'
 import postcss from 'postcss'
 import { expect, it } from 'vitest'
 import { createHBuilderXProjectAlias } from '../scripts/hbuilderx-project-alias.mjs'
+import { withHBuilderXProjectCleanup } from '../scripts/hbuilderx-project-lifecycle'
 import { createLocalHBuilderXRunner } from './hbuilderx-local/process'
 
 const project = 'uni-app-x-vdom-tailwindcss-v4'
@@ -16,18 +17,14 @@ const selectorParser = createRequire(path.resolve(__dirname, '../packages/postcs
 
 it.skipIf(!enabled)('issue #1160 preserves component border defaults in HBuilderX mini output', async () => {
   const projectRoot = path.resolve(__dirname, '../demo', project)
-  const alias = await createHBuilderXProjectAlias(projectRoot)
   const runner = await createLocalHBuilderXRunner(projectRoot)
-  try {
+  const alias = await createHBuilderXProjectAlias(projectRoot)
+  await withHBuilderXProjectCleanup(alias, async () => {
     await runner.run({ args: ['project', 'open', '--path', alias.projectPath] })
     await rm(path.join(projectRoot, 'unpackage', 'dist', 'dev', 'mp-weixin'), { recursive: true, force: true })
     await runner.run({ args: ['launch', 'mp-weixin', '--project', alias.projectName, '--compile', 'true'], timeoutMs: 120_000 })
     await verifyOutput(projectRoot)
-  }
-  finally {
-    await runner.run({ args: ['project', 'close', '--path', alias.projectPath], allowFailure: true }).catch(() => undefined)
-    await alias.cleanup()
-  }
+  }, () => runner.run({ args: ['project', 'close', '--path', alias.projectPath], allowFailure: false, timeoutMs: 30_000 }))
 }, 150_000)
 
 async function verifyOutput(projectRoot: string) {

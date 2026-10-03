@@ -365,12 +365,14 @@ html[data-theme='dark'] .homepage .home-cta:hover {
 .home-support__anchor-values strong {
   color: var(--home-accent-strong, #0369a1);
   font:
-    650 0.94rem / 1.4 ui-monospace,
+    0.94rem / 1.4 ui-monospace,
     SFMono-Regular,
     Menlo,
     Monaco,
     Consolas,
     monospace;
+  // clean-css 的 font 简写解析不接受非整百字重，独立声明保留原始设计与字体重置。
+  font-weight: 650;
 }
 
 [data-theme='dark'] .home-support__anchor-values strong {

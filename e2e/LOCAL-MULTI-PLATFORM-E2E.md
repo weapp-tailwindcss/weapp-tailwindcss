@@ -18,7 +18,13 @@ pnpm e2e:preflight prepare
 
 目标必须唯一：优先使用已有设备变量；多个目标时指定 `E2E_HBUILDERX_ANDROID_DEVICE_ID`、`E2E_HBUILDERX_IOS_DEVICE_ID`、`E2E_HBUILDERX_HARMONY_DEVICE_ID`。微信探针默认使用仓库微信项目的授权 AppID；使用其他有权限的项目时通过 `E2E_PREFLIGHT_WECHAT_APPID` 覆盖。微信非默认安装位置通过 `E2E_PREFLIGHT_WECHAT_CLI` 配置；Windows 指向官方 `cli.bat`。HBuilderX 使用 `HBUILDERX_CLI_PATH`、`HBUILDERX_CHANNEL` 和 `HBUILDERX_HOST`。
 
-预检可安全启动目标明确的 HBuilderX、微信 IDE 和指定 iOS 模拟器。Android/Harmony 无在线目标时，由 AI 用当前 computer use 在已安装的 Android Studio/DevEco 中启动明确的模拟器，再重新 prepare；不能安装新设备或猜测多个候选中的一个。登录、授权、组件安装或用户会话冲突交给用户处理。微信使用本轮独立的临时原生探针项目，显式采用 DevTools provider；不会使用 headless runtime 替代 IDE，也不全局关闭 IDE。
+预检可安全启动目标明确的 HBuilderX 和指定 iOS 模拟器。微信 IDE 必须由用户预先打开、确认登录并开启服务端口；E2E 不自动启动或重启 IDE。Android/Harmony 无在线目标时，由 AI 用当前 computer use 在已安装的 Android Studio/DevEco 中启动明确的模拟器，再重新 prepare；不能安装新设备或猜测多个候选中的一个。登录、授权、组件安装或用户会话冲突交给用户处理。微信使用本轮独立的临时原生探针项目，显式采用 DevTools provider。
+
+微信入口统一使用 `scripts/wechat/`：只读官方安装元数据和 `.ide` / `.ide-status` 服务标记，通过已有 HTTP 服务的 `/v2/isLogin`、`/v2/auto`、`/v2/close` 操作本轮项目。`E2E_PREFLIGHT_WECHAT_CLI` 仅用于识别安装，绝不执行；Linux、旧版或非标准安装可显式设置 `E2E_PREFLIGHT_WECHAT_HTTP_PORT`。IDE 配置 CLI token 时通过 `WECHAT_DEVTOOLS_CLI_TOKEN` 传入，不写入报告。服务不可用时直接阻断，无 CLI 回退。
+
+所有 E2E 禁止退出登录、切换账号、读取/替换/刷新登录票据、清 session/all 缓存、删除用户配置或终止共享 IDE。允许编译缓存操作但不降级为全量清理。打开项目时记录原 HTTP 端口，清理只断开自己的连接并关闭原服务上的本轮项目；认证或服务失败后不再发项目请求，保留未清理现场并报告。服务端自然过期或撤销票据仍可能令 IDE 自行退出，测试不得伪造/恢复这些凭据；用户恢复后重新 prepare。根因与证据见[微信登录态保护复盘](../docs/engineering/lessons/wechat-login-preservation.md)。
+
+第三方工具中转同样受限：HBuilderX `launch mp-weixin --compile false` 会自动调用微信 CLI，启动前还会清理本地存储，禁止使用。独立脚本默认直接运行所选 HBuilderX 安装的同套 Node 与 uni 编译器持续 watch，再由 `scripts/wechat` 连接已有 IDE；安装身份缺失或歧义直接失败。只有显式 `HBUILDERX_COMPILE_ONLY=1` 才进入静态编译，一次性编译不能替代 watch/HMR 验收。环境合同与验收边界见[HBuilderX 微信 watch 复盘](../docs/engineering/lessons/hbuilderx-wechat-watch-session.md)。
 
 ### 当前会话的 computer use 证据
 
@@ -80,6 +86,18 @@ pnpm e2e:local:full-report --preflight-report <本轮-report.json>
 需要同时执行全仓质量检查与 demo 多端验收时，使用 `pnpm e2e:demo:workflow:local --quality --preflight-report <本轮-report.json>`。`--quality` 只允许与 `--local` 一起使用；根构建、全量单测、lint、类型、架构、文档、规则和 release 检查与后续多端阶段共享同一次门禁领取，任一步失败即停止。不要嵌套两个全面入口重复领取同一报告。 本地 demo 工作流在本轮微信视觉阶段重置报告，后续 Android/iOS/H5/Harmony 合并本轮证据；最后补齐 H5、Harmony 截图，执行 `--fail-on-incomplete` 与 `0.05` 跨端差异门槛。没有对应 H5 case 的平台或模式仍需标明缺少跨端对照，不能仅凭工作流退出码宣称所有组合通过。
 
 demo 工作流在矩阵检查后先执行 static 快照和多平台构建产物断言，再进入微信 IDE、watch HMR 和 H5。多平台构建范围固定为矩阵中 `status: ci` 的可执行 case；普通 uni-app Vite 的 H5 构建与浏览器 HMR 通过 `e2e:uni:h5` 单独执行。矩阵中登记为 local 的额外平台仍按本次任务涉及范围选择专用入口。
+
+需要补齐独立类型、打包、脚本、模板、React Native/Lynx 原生与性能回归时，在同一个入口增加 `--extended --baseline-ref <任务起始提交的完整SHA>`，且同时保留 `--quality`。本轮预检必须从 `pnpm e2e:preflight prepare --extended` 开始；普通报告不能领取扩展流程。完成本轮 computer use 与 verify 后执行：
+
+```bash
+pnpm e2e:demo:workflow:local --quality --extended --baseline-ref <任务起始提交的完整SHA> --preflight-report <本轮-report.json>
+```
+
+扩展模式要求固定的完整提交 SHA，禁止以移动分支充当性能基线；性能命令及基线会写入阶段报告。新增阶段共享本轮门禁，任一失败均停止。独立质量检查在 static 前完成，模板构建/HMR/微信 IDE 与启动矩阵在标准 IDE 阶段前完成；标准多端截图之后串行执行 RN Web/Android/iOS、Lynx Android/iOS 和 synthetic/framework 性能门禁。canonical template 与 RN/Lynx 静态测试由 static 统一覆盖，不重复执行。
+
+扩展模式固定 `CI=1`，清除局部用例过滤、旧二进制和原生工作目录复用配置，禁用跳过安装/构建及自动更新基线；工具路径、设备和超时配置仍需与预检一致。RN/Lynx 原生验收使用本轮绑定的 Android/iOS 模拟器；`prepare --extended`、verify、领取前会检查额外工具链，RN/Lynx 对应原生阶段前再次复查命令、版本与组件。检查遵循运行时实际选择：RN 使用 `RN_JAVA_HOME`/Android Studio JBR，Lynx 使用 `LYNX_JAVA_HOME`/`JAVA_HOME` 与 `LYNX_GRADLE`；Java 需 17 以上，当前 Lynx AGP 8.7.3 需 Gradle 8.9 以上的 8.x。Android SDK 两个环境变量同时设置时必须指向同一目录；检查所选 platform 的 `android.jar`、Lynx Build Tools 35.0.0 以及 RN 安装版本声明的 Build Tools/NDK。iOS 分别检查 RN 的 PATH `pod`、Lynx 的 `LYNX_POD` 和 `xcodegen`。工具缺失立即阻断，不自动安装；工具链预检不代表原生编译通过。历史 Issue 的特殊版本对照与人工诊断按关联改动另行执行，不属于扩展模式的默认覆盖。
+
+视觉测试的 `DEMO_VISUAL_STYLE_ISOLATION_VARIANT` 和 IDE 的 `E2E_IDE_REQUIRE_LIVE_PAGE_VISIBILITY` 也会清除：uni-app x 恢复两种样式隔离模式，IDE HMR 恢复默认页面可见性要求。既有用例级可见性例外仍按原逻辑处理，不能将它们的产物证据描述为实时页面验收。
 
 也可以把本轮报告交给 `pnpm e2e:demo:workflow:local --preflight-report <本轮-report.json>`。两者只能选择一个消费同一报告；再次运行必须新建预检。prepare 前台服务要保持运行，测试结束后自动释放会话和锁。
 
@@ -208,6 +226,8 @@ pnpm e2e:ios:hmr
 ```
 
 切换 Android/iOS/Harmony 前先停止上一个 HBuilderX 运行任务，再重新 launch。确认日志出现真实运行时信号（例如 `App Launch`），并确认页面不是 HBuilderX 启动页。App 产物路径必须从 runner 输出和实际文件确认，不能把 Android 的 `app-plus` 路径套给 Harmony。
+
+Harmony 的项目身份由 `scripts/hbuilderx-app-project.ts` 按本轮绑定 host 的版本选择。Alpha 5.31 起使用 `fs.realpath` 后的真实根作为 `--project` 与 cwd，不注册或关闭这个真实项目；其他版本和 Android/iOS 保留独占别名兼容入口。核对 `[hbuilderx-app-project]` 中的 `kind`、`projectRoot`、`launchProject` 与实际编译输出路径一致，不能将同名项目、符号链接目录或旧预检版本当作身份依据。该模式消除仓库引入的 Harmony 根路径别名，但不证明 IDE 内部 native 任务已停止；停止或 fallback 状态未知时仍按[取消边界记录](../docs/engineering/lessons/harmony-cancel-alias-boundary.md)保留现场并阻断后续调度。真实对照的证据要求见[路径身份复盘](../docs/engineering/lessons/harmony-canonical-project-root.md)。
 
 ### 3.4 视觉报告
 

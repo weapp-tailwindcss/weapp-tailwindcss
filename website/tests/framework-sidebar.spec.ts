@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'https://tw.weapp.dev/'
@@ -15,7 +16,7 @@ const frameworkLogos = [
   'nodejs',
 ] as const
 
-async function expandCategory(page: Parameters<typeof test>[0]['page'], name: string) {
+async function expandCategory(page: Page, name: string) {
   const category = page.getByRole('button', { name, exact: true })
   if (await category.getAttribute('aria-expanded') === 'false') {
     await category.click()

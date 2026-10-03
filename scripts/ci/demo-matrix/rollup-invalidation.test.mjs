@@ -2,11 +2,11 @@ import { mkdir, mkdtemp, readFile, realpath, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { rollupTestRequire } from './rollup-test-runtime.mjs'
 import { replaceSourceFile } from './source-file.mjs'
 
-describe.each(['uni-app-vite-tailwindcss-v4', 'issue-uview-plus-cssentries'])('%s Rollup', (demo) => {
+describe.each(['uni-app-vite-tailwindcss-v4', 'issue-uview-plus-cssentries', 'taro-vite-react-tailwindcss-v4'])('%s Rollup', (demo) => {
   const viteRequire = rollupTestRequire(demo)
   const rollupDist = path.dirname(viteRequire.resolve('rollup'))
 
@@ -34,7 +34,7 @@ describe.each(['uni-app-vite-tailwindcss-v4', 'issue-uview-plus-cssentries'])('%
     finally { await watcher.close() }
   })
 
-  it.each(['cjs', 'esm'])('preserves transform invalidation received during an unfinished build (%s)', async (format) => {
+  it.each(['cjs', 'esm'].flatMap(format => ['file', 'directory'].map(dependency => ({ format, dependency }))))('preserves transform invalidation received during an unfinished build ($format, $dependency)', async ({ format, dependency }) => {
     const rollup = format === 'cjs'
       ? viteRequire('rollup')
       : await import(pathToFileURL(path.join(rollupDist, 'es/rollup.js')).href)
@@ -46,6 +46,17 @@ describe.each(['uni-app-vite-tailwindcss-v4', 'issue-uview-plus-cssentries'])('%
     let reached = false
     const release = Promise.withResolvers()
     const invalidated = []
+    // Rollup 3 没有 onInvalidate；在真实任务收到事件时观察，不替代事件或构建。
+    const legacyTask = demo.startsWith('taro-')
+      ? (format === 'cjs'
+          ? viteRequire(path.join(rollupDist, 'shared/watch.js'))
+          : await import(pathToFileURL(path.join(rollupDist, 'es/shared/watch.js')).href)).Task
+      : undefined
+    const invalidate = legacyTask?.prototype.invalidate
+    const observer = legacyTask && vi.spyOn(legacyTask.prototype, 'invalidate').mockImplementation(function (id, details) {
+      invalidated.push(id)
+      return invalidate.call(this, id, details)
+    })
     let watcher
     let inspection = 0
     try {
@@ -59,7 +70,7 @@ describe.each(['uni-app-vite-tailwindcss-v4', 'issue-uview-plus-cssentries'])('%
         // 该用例验证构建期间的缓存失效；polling 保证两轮状态都能跨过原生事件去重窗口。
         // 原子替换后的原生监听连续性由 rollup-watch.test.mjs 独立覆盖。
           chokidar: { usePolling: true, interval: 10 },
-          onInvalidate(id) { invalidated.push(id) },
+          ...(legacyTask ? {} : { onInvalidate(id) { invalidated.push(id) } }),
         },
         plugins: [{
           name: 'inflight-transform-dependency',
@@ -69,7 +80,7 @@ describe.each(['uni-app-vite-tailwindcss-v4', 'issue-uview-plus-cssentries'])('%
             if (id !== 'virtual:derived') {
               return
             }
-            this.addWatchFile(data)
+            this.addWatchFile(dependency === 'directory' ? dataDir : data)
             const { value } = JSON.parse(await readFile(data, 'utf8'))
             if (value === 1) {
               reached = true
@@ -89,7 +100,7 @@ describe.each(['uni-app-vite-tailwindcss-v4', 'issue-uview-plus-cssentries'])('%
       await expect.poll(() => reached, { timeout: 5000, interval: 1 }).toBe(true)
       const previous = invalidated.length
       await replaceSourceFile(data, '{"value":2}')
-      await expect.poll(() => invalidated.slice(previous), { timeout: 5000, interval: 1 }).toContain(data)
+      await expect.poll(() => invalidated.slice(previous), { timeout: 5000, interval: 1 }).toContain(dependency === 'directory' ? dataDir : data)
       release.resolve()
       await inspect(4)
       await replaceSourceFile(data, '{"value":3}')
@@ -98,6 +109,7 @@ describe.each(['uni-app-vite-tailwindcss-v4', 'issue-uview-plus-cssentries'])('%
     finally {
       release.resolve()
       await watcher?.close()
+      observer?.mockRestore()
       await rm(dir, { recursive: true, force: true })
     }
   }, 15_000)

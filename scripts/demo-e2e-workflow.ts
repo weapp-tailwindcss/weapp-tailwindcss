@@ -11,7 +11,11 @@ import {
   summarizeMemorySamples,
   writeDemoE2eMemoryReport,
 } from './demo-e2e-memory'
+import { verifyBaseline } from './demo-e2e-workflow/baseline'
+import { extendedEnvironment } from './demo-e2e-workflow/extended-environment'
+import { extendedBaseline, extendedFrameworkSteps, extendedQualitySteps, extendedRuntimeSteps } from './demo-e2e-workflow/extended-steps'
 import { createQualityWorkflowSteps } from './demo-e2e-workflow/quality-steps'
+import { formatWorkflowError, runWithCleanup } from './e2e-preflight/cleanup'
 import { enterFullTestGate } from './e2e-preflight/gate'
 
 function formatStep(step: WorkflowStep, index: number, total: number) {
@@ -19,14 +23,14 @@ function formatStep(step: WorkflowStep, index: number, total: number) {
   return `[demo-e2e] ${index}/${total}${local} ${step.name}: ${step.command} ${step.args.join(' ')}\n`
 }
 
-async function runStep(step: WorkflowStep, index: number, total: number, preflightEnv: Record<string, string> = {}) {
+async function runStep(step: WorkflowStep, index: number, total: number, preflightEnv: Record<string, string> = {}, workflowEnv = process.env) {
   process.stdout.write(formatStep(step, index, total))
   const startedAt = Date.now()
   const samples: DemoE2eMemorySample[] = []
   const child = spawn(step.command, step.args, {
     cwd: process.cwd(),
     env: {
-      ...process.env,
+      ...workflowEnv,
       ...step.env,
       ...preflightEnv,
     },
@@ -89,9 +93,10 @@ async function runStep(step: WorkflowStep, index: number, total: number, preflig
   return report
 }
 
-function createWorkflowSteps(includeLocal: boolean, includeQuality: boolean): WorkflowStep[] {
+function createWorkflowSteps(includeLocal: boolean, includeQuality: boolean, baseline?: string): WorkflowStep[] {
   const steps: WorkflowStep[] = [
     ...(includeQuality ? createQualityWorkflowSteps() : []),
+    ...(baseline ? extendedQualitySteps() : []),
     {
       name: 'matrix assertions',
       command: 'pnpm',
@@ -112,6 +117,7 @@ function createWorkflowSteps(includeLocal: boolean, includeQuality: boolean): Wo
         E2E_MULTIPLATFORM_BUILD_SKIP_BUILD: '0',
       },
     },
+    ...(baseline ? extendedFrameworkSteps() : []),
     {
       name: 'WeChat DevTools IDE + visible hot update',
       command: 'pnpm',
@@ -185,19 +191,22 @@ function createWorkflowSteps(includeLocal: boolean, includeQuality: boolean): Wo
     process.stdout.write('[demo-e2e] skip local HBuilderX mp/H5/Android/iOS/Harmony stages; pass --local to include them.\n')
   }
 
-  return steps
+  return baseline ? [...steps, ...extendedRuntimeSteps(baseline)] : steps
 }
 
 export async function runDemoE2eWorkflow(argv = process.argv.slice(2)) {
+  const baseline = extendedBaseline(argv)
   const includeLocal = argv.includes('--local')
   const includeQuality = argv.includes('--quality')
   if (includeQuality && !includeLocal) {
     throw new Error('--quality 必须配合 --local 和本轮 --preflight-report，在全面测试门禁内执行。')
   }
   const reportIndex = argv.indexOf('--preflight-report')
-  const gate = includeLocal ? await enterFullTestGate(reportIndex < 0 ? undefined : argv[reportIndex + 1]) : undefined
-  try {
-    const steps = createWorkflowSteps(includeLocal, includeQuality)
+  const gate = includeLocal ? await enterFullTestGate(reportIndex < 0 ? undefined : argv[reportIndex + 1], process.cwd(), Boolean(baseline)) : undefined
+  await runWithCleanup(async () => {
+    const verifiedBaseline = baseline ? await verifyBaseline(baseline) : undefined
+    const steps = createWorkflowSteps(includeLocal, includeQuality, verifiedBaseline)
+    const workflowEnv = baseline ? extendedEnvironment(process.env) : process.env
     const stepReports: DemoE2eMemoryStepReport[] = []
     let exitCode = 0
     const writeReport = async () => {
@@ -213,29 +222,31 @@ export async function runDemoE2eWorkflow(argv = process.argv.slice(2)) {
     for (const [index, step] of steps.entries()) {
       try {
         await gate?.check(step.name)
-        stepReports.push(await runStep(step, index + 1, steps.length, gate?.env))
+        stepReports.push(await runStep(step, index + 1, steps.length, gate?.env, workflowEnv))
         await writeReport()
       }
       catch (error) {
-        const stepReport = (error as { stepReport?: DemoE2eMemoryStepReport }).stepReport
+        const stepReport = error && typeof error === 'object' ? (error as { stepReport?: DemoE2eMemoryStepReport }).stepReport : undefined
         if (stepReport) {
           stepReports.push(stepReport)
         }
         exitCode = 1
-        await writeReport()
+        try {
+          await writeReport()
+        }
+        catch (reportError) {
+          throw new AggregateError([error, reportError], '阶段失败且无法写入内存报告。', { cause: error })
+        }
         throw error
       }
     }
-    process.stdout.write('[demo-e2e] workflow passed\n')
-  }
-  finally {
-    await gate?.close()
-  }
+  }, () => gate?.close())
+  process.stdout.write('[demo-e2e] workflow passed\n')
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   runDemoE2eWorkflow().catch((error) => {
-    process.stderr.write(`${error instanceof Error ? error.stack ?? error.message : String(error)}\n`)
+    process.stderr.write(`${formatWorkflowError(error)}\n`)
     process.exitCode = 1
   })
 }

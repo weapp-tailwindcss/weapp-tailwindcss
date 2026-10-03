@@ -1,12 +1,12 @@
 import type { IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
 import type { TailwindV4Engine, TailwindV4GenerateOptions, TailwindV4ResolvedSource } from '../types'
+import type { PreparedTailwindV4Source } from './prepared-source'
 import { createTailwindV4Engine as createEngineTailwindV4Engine } from '@weapp-tailwindcss/engine'
 import { createCssRuntimeAffectingSignature } from '@weapp-tailwindcss/postcss/transform'
-import { resolveCssMacroTailwindV4Source } from '../css-macro-source'
 import { transformTailwindV4CssByTarget } from '../miniprogram'
-import { createCompatibleSource } from './css-compat'
 import { createIncrementalGenerateCacheKey, createIncrementalStyleOptions, hasRemovedCandidates, incrementalGenerateCache, normalizeTargetRpxLengthCandidates, resolveStyleOptions, resolveTargetCandidates, runIncrementalGenerateTask, seedIncrementalGenerateCache, shouldRebuildIncrementalEntry } from './incremental-cache'
 import { TailwindV4NativeSessionPool } from './native-session'
+import { prepareTailwindV4Source } from './prepared-source'
 import { generateRawArtifact, transformGeneratedArtifact } from './raw-generation'
 import { restoreRpxLengthCssSelectors } from './rpx-candidates'
 import { hasChangedCssCalcContext, resolveGenerationStyleContext, resolveIncrementalStyleContext } from './style-context'
@@ -16,19 +16,19 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
   const incrementalCacheKeys = new Set<string>()
   const validationEngine = createEngineTailwindV4Engine(source)
 
-  async function generateOnce(generateSource: TailwindV4ResolvedSource, options: TailwindV4GenerateOptions = {}) {
-    return transformGeneratedArtifact(await generateRawArtifact(generationSessions, generateSource, options))
+  async function generateOnce(generateSource: TailwindV4ResolvedSource, options: TailwindV4GenerateOptions = {}, preparedSource?: PreparedTailwindV4Source) {
+    return transformGeneratedArtifact(await generateRawArtifact(generationSessions, generateSource, options, preparedSource))
   }
 
   async function generateWithIncrementalCache(options: TailwindV4GenerateOptions = {}) {
     const target = options.target ?? 'weapp'
-    const cssMacroSource = resolveCssMacroTailwindV4Source(source)
-    const compatibleSource = createCompatibleSource(cssMacroSource, target)
+    const preparedSource = prepareTailwindV4Source(source, target)
+    const { cssMacroSource, compatibleSource } = preparedSource
     const requestedCandidates = resolveTargetCandidates(options.candidates, target)
     const styleOptions = resolveStyleOptions(source, options.styleOptions)
 
     if ((options.sources?.length ?? 0) > 0 || options.bareArbitraryValues !== undefined || Array.isArray(options.scanSources)) {
-      return generateOnce(cssMacroSource, options)
+      return generateOnce(cssMacroSource, options, preparedSource)
     }
 
     const cacheKey = createIncrementalGenerateCacheKey(
@@ -40,7 +40,7 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
 
     if (options.scanSources === true) {
       return runIncrementalGenerateTask(cacheKey, requestedCandidates, options.scanSources, async () => {
-        const generated = await generateOnce(cssMacroSource, options)
+        const generated = await generateOnce(cssMacroSource, options, preparedSource)
         const admitted = seedIncrementalGenerateCache({
           compatibleSource,
           generated,
@@ -59,7 +59,7 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
     if (cached) {
       if (hasRemovedCandidates(cached.seenCandidates, requestedCandidates)) {
         return runIncrementalGenerateTask(cacheKey, requestedCandidates, options.scanSources, async () => {
-          const generated = await generateOnce(cssMacroSource, options)
+          const generated = await generateOnce(cssMacroSource, options, preparedSource)
           const admitted = seedIncrementalGenerateCache({
             compatibleSource,
             generated,
@@ -94,7 +94,7 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
 
       if (shouldRebuildIncrementalEntry(cached, requestedCandidates, missingCandidates)) {
         return runIncrementalGenerateTask(cacheKey, requestedCandidates, options.scanSources, async () => {
-          const generated = await generateOnce(cssMacroSource, options)
+          const generated = await generateOnce(cssMacroSource, options, preparedSource)
           const admitted = seedIncrementalGenerateCache({
             compatibleSource,
             generated,
@@ -127,7 +127,7 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
         const rawCss = rawCssParts.join('\n')
         const fullRawCss = [cached.rawCss, rawCss].filter(Boolean).join('\n')
         // 完整产物同时确认主题、keyframes、@property 依赖及规则顺序，追加不能改变层叠结果。
-        const artifact = await generateRawArtifact(generationSessions, cssMacroSource, options)
+        const artifact = await generateRawArtifact(generationSessions, cssMacroSource, options, preparedSource)
         if (createCssRuntimeAffectingSignature(fullRawCss) !== createCssRuntimeAffectingSignature(artifact.rawCss)
           || hasChangedCssCalcContext(cached.rawCss, artifact.rawCss, styleOptions)) {
           const generated = await transformGeneratedArtifact(artifact)
@@ -172,7 +172,7 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
     }
 
     return runIncrementalGenerateTask(cacheKey, requestedCandidates, options.scanSources, async () => {
-      const generated = await generateOnce(cssMacroSource, options)
+      const generated = await generateOnce(cssMacroSource, options, preparedSource)
       seedIncrementalGenerateCache({
         compatibleSource,
         generated,

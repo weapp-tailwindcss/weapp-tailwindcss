@@ -14,8 +14,10 @@ import {
   readJoinedOutputFiles,
   waitForCompileSettled,
   waitForMarkerState,
+  waitForOutputFilesUpdated,
   waitForOutputsUpdated,
 } from '../shared'
+import { assertClassTokensInOutput, assertPreviousClassEvidenceRemoved } from './evidence'
 
 interface RunSameClassLiteralMutationOptions {
   watchCase: WatchCase
@@ -53,6 +55,11 @@ export async function runSameClassLiteralMutation(
     preferredRound,
     baselineMtime,
   } = options
+  const baselineOutputs = {
+    wxml: await readFileIfExists(watchCase.outputWxml) ?? '',
+    js: await readFileIfExists(watchCase.outputJs) ?? '',
+    globalStyle: await readJoinedOutputFiles(globalStyleOutputs),
+  }
 
   const seed = `${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`
   const markerBefore = `tw-watch-${watchCase.name}-script-same-before-${seed}`
@@ -143,6 +150,14 @@ export async function runSameClassLiteralMutation(
     hotUpdateAfterStartedAt,
   )
   const updatedGlobalStyleAfterSameClassMutation = await readJoinedOutputFiles(globalStyleOutputs)
+  const classEvidence = assertClassTokensInOutput({
+    wxml: await readFileIfExists(watchCase.outputWxml) ?? '',
+    js: await readFileIfExists(watchCase.outputJs) ?? '',
+    globalStyle: updatedGlobalStyleAfterSameClassMutation,
+  }, preferredRound.classLiteral.split(/\s+/), preferredRound.escapedClasses, [...new Set([
+    ...(mutation.verifyAllEscapedClasses !== false ? mutation.verifyEscapedIn : []),
+    ...(mutation.verifyAllClassLiterals !== false ? mutation.verifyClassLiteralIn ?? [] : []),
+  ])], `[${watchCase.label}] same-class-literal`, true, minRequiredGlobalStyleEscapedClasses > 0, mutation.expectedRemovedCssUtilities)
   const changedGlobalStyleOutputs: string[] = []
   const stableGlobalStyleOutputs: string[] = []
   for (const file of globalStyleOutputs) {
@@ -194,9 +209,10 @@ export async function runSameClassLiteralMutation(
     `[watch-hmr] ${watchCase.label} mutation=script same-class-literal phase=delete dirty=${formatPath(sourcePath)}\n`,
   )
   await writeFilePreserveEol(sourcePath, sourceOriginal, sourceOriginal)
-  const rollbackOutputMs = await waitForOutputsUpdated(
+  const rollbackOutputMs = await waitForOutputFilesUpdated(
     watchCase,
-    mtimeAfterAfter,
+    [watchCase.outputWxml, watchCase.outputJs],
+    new Map([[watchCase.outputWxml, mtimeAfterAfter.wxml], [watchCase.outputJs, mtimeAfterAfter.js]]),
     cliOptions,
     session,
     rollbackStartedAt,
@@ -205,6 +221,7 @@ export async function runSameClassLiteralMutation(
         readFileIfExists(watchCase.outputWxml),
         readFileIfExists(watchCase.outputJs),
       ])
+      assertPreviousClassEvidenceRemoved({ wxml: wxml ?? '', js: js ?? '', globalStyle: '' }, classEvidence, [], `[${watchCase.label}] same-class-literal rollback`, baselineOutputs)
       return !wxml?.includes(markerAfter) && !js?.includes(markerAfter)
     },
   )

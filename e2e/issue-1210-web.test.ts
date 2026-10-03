@@ -5,7 +5,9 @@ import path from 'node:path'
 import { chromium } from 'playwright'
 import { normalizePath } from 'vite'
 import { describe, expect, it } from 'vitest'
+import { cleanupHBuilderXResources } from '../scripts/hbuilderx-project-resources'
 import { collectProcessOutput, findFreePort, killProcessTree, resolveBaseUrls } from './hbuilderx-local/process'
+import { cleanupWebHmrSession } from './hbuilderx-local/web/cleanup'
 import { createDevServer, createHBuilderXDevServer } from './hbuilderx-local/web/dev-server'
 
 const enabled = process.env.E2E_ISSUE_1210 === '1'
@@ -61,6 +63,8 @@ describe.runIf(enabled)('issue #1210 uni-app x Web', () => {
     let ownedSource = original
     let child: ChildProcess | undefined
     let cleanup: (() => Promise<void>) | undefined
+    let stopServer: (() => Promise<void>) | undefined
+    let failure: { error: unknown } | undefined
     let logs: string[] = []
     const errors: string[] = []
     const requests: string[] = []
@@ -79,6 +83,7 @@ describe.runIf(enabled)('issue #1210 uni-app x Web', () => {
           const server = await createHBuilderXDevServer(projectRoot)
           child = server.child
           cleanup = server.cleanup
+          stopServer = () => server.stop()
         }
         else {
           const port = await findFreePort()
@@ -156,21 +161,42 @@ describe.runIf(enabled)('issue #1210 uni-app x Web', () => {
       expect(errors).toEqual([])
     }
     catch (error) {
+      failure = { error }
       await writeFile(path.join(artifactDir, 'failure.html'), await page.content().catch(() => '')).catch(() => {})
       await page.screenshot({ path: path.join(artifactDir, 'failure.png'), fullPage: true }).catch(() => {})
-      throw error
     }
     finally {
-      await writeFile(path.join(artifactDir, 'server-browser.log'), logs.join('\n'))
-      await writeFile(path.join(artifactDir, 'errors.json'), JSON.stringify({ errors, requests }, null, 2))
-      await browser.close()
-      if (child?.pid) {
-        await killProcessTree(child.pid)
+      try {
+        await cleanupHBuilderXResources([
+          () => writeFile(path.join(artifactDir, 'server-browser.log'), logs.join('\n')),
+          () => writeFile(path.join(artifactDir, 'errors.json'), JSON.stringify({ errors, requests }, null, 2)),
+          () => cleanupWebHmrSession({
+            closeBrowser: () => browser.close(),
+            stopServer: async () => {
+              if (stopServer) {
+                await stopServer()
+              }
+              else if (child) {
+                killProcessTree(child)
+              }
+            },
+            restoreSource: async () => {
+              if (ownedSource !== original && await readFile(sourceFile, 'utf8') === ownedSource) {
+                await writeFile(sourceFile, original)
+              }
+            },
+            closeProject: async () => { await cleanup?.() },
+          }),
+        ])
       }
-      await cleanup?.()
-      if (ownedSource !== original && await readFile(sourceFile, 'utf8') === ownedSource) {
-        await writeFile(sourceFile, original)
+      catch (error) {
+        failure = { error: failure
+          ? new AggregateError([failure.error, error], 'issue #1210 Web 验证与收尾均失败。', { cause: failure.error })
+          : error }
       }
+    }
+    if (failure) {
+      throw failure.error
     }
   }, 360_000)
 })

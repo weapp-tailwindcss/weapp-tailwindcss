@@ -149,8 +149,8 @@ function createTaroTargets(project: string, platforms: string[]): MultiplatformT
     const isTaroViteMiniCi = (
       project.startsWith('taro-vite-')
       || project === 'issue-951-taro-vite-react-tailwindcss-v4'
-    ) && (platform === 'alipay' || platform === 'tt' || (project === 'issue-951-taro-vite-react-tailwindcss-v4' && platform === 'h5'))
-    const isSubpackageWebpackCi = project === 'subpackage-taro-webpack-react-tailwindcss-v4' && (platform === 'alipay' || platform === 'tt' || platform === 'h5')
+    ) && (platform === 'alipay' || platform === 'tt' || (project === 'issue-951-taro-vite-react-tailwindcss-v4' && (platform === 'weapp' || platform === 'h5')))
+    const isSubpackageWebpackCi = project === 'subpackage-taro-webpack-react-tailwindcss-v4' && (platform === 'weapp' || platform === 'alipay' || platform === 'tt' || platform === 'h5')
     const isCiScript = project === 'taro-webpack-react-tailwindcss-v4' && platform === 'alipay'
     return target({
       framework: 'taro',
@@ -158,9 +158,9 @@ function createTaroTargets(project: string, platforms: string[]): MultiplatformT
       platform,
       coverage: isTaroViteMiniCi || isSubpackageWebpackCi ? 'default-ci' : isCiScript ? 'ci-script' : 'local',
       reason: isTaroViteMiniCi
-        ? 'Taro Vite alipay/tt/H5 作为核心产物回归，覆盖 .acss/.ttss、H5 CSS chunk 与 Vite bundle asset 关系。'
+        ? 'Taro Vite 小程序与 H5 作为核心产物回归，覆盖平台样式后缀、H5 CSS chunk 与 Vite bundle asset 关系；issue951 同时覆盖微信。'
         : isSubpackageWebpackCi
-          ? 'Taro Webpack subpackage Tailwind v4 回归默认覆盖 alipay/tt 小程序产物和 H5 产物。'
+          ? 'Taro Webpack subpackage Tailwind v4 回归默认覆盖 weapp/alipay/tt 小程序产物和 H5 产物。'
           : isCiScript
             ? '通过 pnpm e2e:multiplatform-build:taro-alipay 做专项构建与只读断言；本地 Taro runner 可能因系统依赖挂起。'
             : '当前 Taro 目标在本仓 demo 中存在 runner 兼容、平台 SDK 或产物残留问题，登记为全平台 local 候选。',
@@ -203,7 +203,7 @@ export const MULTIPLATFORM_TARGETS: MultiplatformTarget[] = [
   ...createUniAppTargets('subpackage-uni-app-vite-tailwindcss-v4', subpackageUniAppV4Platforms),
   ...createUniAppHBuilderXTargets('uni-app-vite-vue3-hbuilderx-tailwindcss-v4'),
   ...createTaroTargets('taro-vite-react-tailwindcss-v4', taroVitePlatforms),
-  ...createTaroTargets('issue-951-taro-vite-react-tailwindcss-v4', ['alipay', 'tt', 'h5']),
+  ...createTaroTargets('issue-951-taro-vite-react-tailwindcss-v4', ['weapp', 'alipay', 'tt', 'h5']),
   ...createTaroTargets('taro-vite-vue3-tailwindcss-v4', taroVitePlatforms),
   ...createTaroTargets('taro-webpack-react-tailwindcss-v4', taroWebpackV4Platforms),
   ...createTaroTargets('subpackage-taro-webpack-react-tailwindcss-v4', subpackageTaroWebpackV4Platforms),

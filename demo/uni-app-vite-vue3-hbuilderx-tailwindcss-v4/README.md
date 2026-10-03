@@ -18,4 +18,6 @@ pnpm dev:mp-weixin
 pnpm build:mp-weixin
 ```
 
+`dev:mp-weixin` 直接使用选中 HBuilderX 安装的编译器持续监听源码，不自动打开微信开发者工具；可通过 `HBUILDERX_CLI_PATH` 或 `HBUILDERX_CHANNEL` 选择安装。uni 插件工厂与编译器使用同一工具链，普通 npm 构建仍使用项目依赖。微信 IDE 由用户预先打开，E2E 统一经仓库会话入口连接。
+
 也可以直接用 HBuilderX 导入当前目录运行。

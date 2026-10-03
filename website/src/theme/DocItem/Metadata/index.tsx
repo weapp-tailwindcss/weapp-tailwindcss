@@ -12,26 +12,16 @@ import {
 import { toAbsoluteLocaleUrl } from '@site/src/i18n/locale'
 import { useCurrentSiteLocale } from '@site/src/i18n/runtime'
 import { getSiteConfigCopy } from '@site/src/i18n/siteConfig'
+import { toIsoDate } from '@site/src/utils/content-date'
 import { resolveSeoDescription, resolveSeoKeywords, toAbsoluteUrl } from '@site/src/utils/seo'
 import OriginalMetadata from '@theme-original/DocItem/Metadata'
 import React from 'react'
-
-function toIsoString(value?: number | string | null) {
-  if (!value) {
-    return undefined
-  }
-  if (typeof value === 'number') {
-    return new Date(value * 1000).toISOString()
-  }
-  const parsed = new Date(value)
-  return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString()
-}
 
 type DocItemMetadataProps = React.ComponentProps<typeof OriginalMetadata>
 
 export default function DocItemMetadata(props: DocItemMetadataProps) {
   const locale = useCurrentSiteLocale()
-  const { metadata } = useDoc()
+  const { metadata, assets } = useDoc()
   const copy = getSiteConfigCopy(locale)
   const siteLanguage = getSiteLanguage(locale)
   const alternateZhUrl = toAbsoluteLocaleUrl(siteUrl, metadata.permalink, 'zh-cn')
@@ -39,10 +29,12 @@ export default function DocItemMetadata(props: DocItemMetadataProps) {
 
   const canonicalUrl = toAbsoluteLocaleUrl(siteUrl, metadata.permalink, locale)
   const defaultImageUrl = getSocialImageUrl(locale)
-  const imageUrl = toAbsoluteUrl(siteUrl, metadata.frontMatter?.image) || defaultImageUrl
+  const imageUrl = toAbsoluteUrl(siteUrl, assets?.image ?? metadata.frontMatter.image) || defaultImageUrl
   const imageAlt = getSocialImageAlt(locale)
-  const publishedTime = toIsoString(metadata.frontMatter?.date)
-  const modifiedTime = toIsoString(metadata.lastUpdatedAt ?? metadata.frontMatter?.last_updated_at)
+  const publishedTime = toIsoDate(metadata.frontMatter.date, 'seconds')
+  // 官方更新时间是毫秒，自定义 front matter 数字日期保留原有的秒约定。
+  const modifiedTime = toIsoDate(metadata.lastUpdatedAt, 'milliseconds')
+    ?? toIsoDate(metadata.frontMatter.last_updated_at, 'seconds')
   const description = resolveSeoDescription({
     description: metadata.description ?? metadata.frontMatter?.description,
     title: metadata.title,
@@ -51,7 +43,6 @@ export default function DocItemMetadata(props: DocItemMetadataProps) {
   const keywords = resolveSeoKeywords({
     title: metadata.title,
     permalink: metadata.permalink,
-    metadataKeywords: metadata.keywords,
     frontMatterKeywords: metadata.frontMatter?.keywords,
     locale,
   })

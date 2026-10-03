@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test'
 import { URL } from 'node:url'
 import { devices, expect, test } from '@playwright/test'
 import routes from '../routes.json'
@@ -40,7 +41,6 @@ function mobileUse(device: typeof devices['iPhone 12']): Parameters<typeof test.
     deviceScaleFactor,
     isMobile,
     hasTouch,
-    colorScheme,
   } = device
 
   return {
@@ -49,7 +49,6 @@ function mobileUse(device: typeof devices['iPhone 12']): Parameters<typeof test.
     deviceScaleFactor,
     isMobile,
     hasTouch,
-    colorScheme,
   }
 }
 
@@ -70,7 +69,7 @@ const viewports: ViewportCase[] = [
   },
 ] as const
 
-async function setStoredLocale(page: Parameters<typeof test>[0]['page'], locale: 'zh-cn' | 'en') {
+async function setStoredLocale(page: Page, locale: 'zh-cn' | 'en') {
   await page.addInitScript(({ key, value }) => {
     if (!window.localStorage.getItem(key)) {
       window.localStorage.setItem(key, value)
@@ -78,7 +77,7 @@ async function setStoredLocale(page: Parameters<typeof test>[0]['page'], locale:
   }, { key: localeStorageKey, value: locale })
 }
 
-async function setNavigatorLanguages(page: Parameters<typeof test>[0]['page'], languages: string[]) {
+async function setNavigatorLanguages(page: Page, languages: string[]) {
   await page.addInitScript((values) => {
     Object.defineProperty(window.navigator, 'language', {
       configurable: true,
@@ -92,7 +91,7 @@ async function setNavigatorLanguages(page: Parameters<typeof test>[0]['page'], l
 }
 
 async function instrumentThemeTransitions(
-  page: Parameters<typeof test>[0]['page'],
+  page: Page,
   initialTheme: 'dark' | 'light' = 'dark',
 ) {
   await page.addInitScript((theme) => {
@@ -889,7 +888,7 @@ test.describe('color mode transition strategy', () => {
       animations: window.__themeTransitionAnimations ?? [],
       calls: window.__themeTransitionCalls ?? 0,
       clicks: window.__themeTransitionClicks ?? [],
-      liveAnimations: document.getAnimations({ subtree: true }).filter((animation) => {
+      liveAnimations: document.getAnimations().filter((animation) => {
         const pseudoElement = animation.effect instanceof KeyframeEffect
           ? animation.effect.pseudoElement
           : null
@@ -949,7 +948,7 @@ test.describe('color mode transition strategy', () => {
       await expect(html).toHaveAttribute('data-theme', expectedTheme)
       await expect.poll(() => page.evaluate(() => window.localStorage.getItem('theme'))).toBe(expectedTheme)
       await expect.poll(() => page.evaluate(() => document.documentElement.getAttribute('data-theme-transition'))).toBeNull()
-      await expect.poll(() => page.evaluate(() => document.getAnimations({ subtree: true }).filter((animation) => {
+      await expect.poll(() => page.evaluate(() => document.getAnimations().filter((animation) => {
         const pseudoElement = animation.effect instanceof KeyframeEffect
           ? animation.effect.pseudoElement
           : null

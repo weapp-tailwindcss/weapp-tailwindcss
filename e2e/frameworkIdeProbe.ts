@@ -1,9 +1,9 @@
 import type { FrameworkIdeHotUpdateProbe } from './frameworkIdeHotUpdate'
 import fs from 'node:fs/promises'
 import process from 'node:process'
-import { Launcher } from '@weapp-vite/miniprogram-automator'
 import path from 'pathe'
 import { closeWechatProject } from '../scripts/wechat-project-cleanup'
+import { Launcher } from '../scripts/wechat/automator'
 import { collectFrameworkIdeDiagnostics } from './frameworkIdeDiagnostics'
 import { withFrameworkIdeHotUpdateProbe } from './frameworkIdeHotUpdate'
 import { installFrameworkIdeRuntimeErrorCollector } from './frameworkIdeRuntimeErrors'
@@ -118,7 +118,7 @@ async function runProbe(hotUpdate?: FrameworkIdeHotUpdateProbe) {
   await snapshotProjectConfig()
 
   try {
-    miniProgram = await withStageTimeout('launch', automator.launch({ cliPath: process.env.E2E_PREFLIGHT_WECHAT_CLI, projectPath: launchProjectPath, timeout: timeoutMs }))
+    miniProgram = await automator.launch({ cliPath: process.env.E2E_PREFLIGHT_WECHAT_CLI, projectPath: launchProjectPath, timeout: timeoutMs })
     const runtimeErrors = await installFrameworkIdeRuntimeErrorCollector(supportCaseName, miniProgram)
     await runtimeErrors.assertNoErrors('launch')
 

@@ -364,12 +364,6 @@ export async function processViteCssBundleEntry(options: any) {
     temporaryCssAssetSourceResolver.markUsed(cssCompositionPlan.usedConfiguredSourceFile)
   }
   const { cssHandlerOptions: cssHandlerOptions2, generatorCssHandlerOptions, generatorRawSource, generatorSourceFile, generatorUserLayerRawSource, hasCurrentTailwindGenerationDirective, hasRememberedApplySource, hasSameOutputRememberedTailwindGenerationSource, hasStaleViteProcessedCssSource, usesConfiguredTailwindV4FallbackSource, vitePipelineCssAsset, webviewRootCssInjectionTarget } = cssCompositionPlan
-  const scopedSourceCandidateGetter = createScopedSourceCandidateGetter(outputFile, generatorCssHandlerOptions, generatorSourceFile)
-  const scopedSourceCandidateSourceGetter = createScopedSourceCandidateSourceGetter(outputFile, generatorCssHandlerOptions, generatorSourceFile)
-  const { scopedGeneratorRuntime, signatureSources, sourceTraceSources } = await createScopedGeneratorSourceData({ createScopedGeneratorRuntime, createScopedGeneratorSourceTraceMap: (source, file, options) => createScopedGeneratorSourceTraceMap(source, file, scopedSourceCandidateSourceGetter, options), generatorCssHandlerOptions, generatorRawSource, generatorRuntime, generatorSourceFile, rememberedCssSources, scopedSourceCandidateSourceGetter, outputFile })
-  const sourceTraceTokenSources = sourceTraceSources ? createCssTokenSourceMap(sourceTraceSources, opts) : void 0
-  const sourceTraceSignature = createCssSourceTraceCacheSignature(sourceTraceTokenSources, opts)
-  const annotateCss = (css: string) => annotateCssSourceTrace(css, { opts, tokenSources: sourceTraceTokenSources })
   const removeRootCoveredCssFromScopedAsset = (css: string) => {
     const normalizedOutputFile = normalizeOutputPathKey(outputFile.replace(/[?#].*$/, ''))
     const isRootOrSubpackageCss = !normalizedOutputFile.includes('/')
@@ -382,10 +376,6 @@ export async function processViteCssBundleEntry(options: any) {
       : removeCssCoveredByRootStyleBundleSources(bundle, outputFile, css)
   }
   const shouldRegenerateMainPackageCssWithScopedCandidates = vitePipelineCssAsset && shouldExcludeSubpackageSourceCandidates(outputFile, generatorCssHandlerOptions)
-  const generatorCssUserHandlerOptions = getCssUserHandlerOptions(generatorSourceFile)
-  const cssRuntimeAffectingSignature = vitePipelineCssAsset ? createRuntimeAffectingSourceSignature(generatorRawSource, 'css') : snapshot.runtimeAffectingSignatureByFile.get(file) ?? createRuntimeAffectingSourceSignature(generatorRawSource, 'css')
-  const cssRuntimeAffectingHash = vitePipelineCssAsset ? cache.computeHash(cssRuntimeAffectingSignature) : snapshot.runtimeAffectingHashByFile.get(file) ?? cache.computeHash(cssRuntimeAffectingSignature)
-  const cssShareScope = createCssTransformShareScopeKey(opts, outputFile, generatorRawSource)
   const vitePipelineCssInjectionOutputFile = webviewRootCssInjectionTarget ?? outputFile
   const shouldRecordVitePipelineCssByOutput = normalizeOutputPathKey(vitePipelineCssInjectionOutputFile) === normalizeOutputPathKey(outputFile)
   const shouldInjectVitePipelineCssIntoMain = vitePipelineCssAsset && !resolvedFromConfiguredOriginalCssEntry && outputCssHandlerOptions.isMainChunk !== true && (webviewRootCssInjectionTarget != null || shouldInjectCssIntoMainFromOutput(outputFile, generatorSourceFile, outputCssHandlerOptions))
@@ -411,6 +401,17 @@ export async function processViteCssBundleEntry(options: any) {
     debug('css skip vite-processed asset: %s', outputFile)
     return
   }
+  // 复用产物只需保留归属与输出记录；生成候选、来源追踪和缓存签名由后续转换消费。
+  const scopedSourceCandidateGetter = createScopedSourceCandidateGetter(outputFile, generatorCssHandlerOptions, generatorSourceFile)
+  const scopedSourceCandidateSourceGetter = createScopedSourceCandidateSourceGetter(outputFile, generatorCssHandlerOptions, generatorSourceFile)
+  const { scopedGeneratorRuntime, signatureSources, sourceTraceSources } = await createScopedGeneratorSourceData({ createScopedGeneratorRuntime, createScopedGeneratorSourceTraceMap: (source, file, options) => createScopedGeneratorSourceTraceMap(source, file, scopedSourceCandidateSourceGetter, options), generatorCssHandlerOptions, generatorRawSource, generatorRuntime, generatorSourceFile, rememberedCssSources, scopedSourceCandidateSourceGetter, outputFile })
+  const sourceTraceTokenSources = sourceTraceSources ? createCssTokenSourceMap(sourceTraceSources, opts) : void 0
+  const sourceTraceSignature = createCssSourceTraceCacheSignature(sourceTraceTokenSources, opts)
+  const annotateCss = (css: string) => annotateCssSourceTrace(css, { opts, tokenSources: sourceTraceTokenSources })
+  const generatorCssUserHandlerOptions = getCssUserHandlerOptions(generatorSourceFile)
+  const cssRuntimeAffectingSignature = vitePipelineCssAsset ? createRuntimeAffectingSourceSignature(generatorRawSource, 'css') : snapshot.runtimeAffectingSignatureByFile.get(file) ?? createRuntimeAffectingSourceSignature(generatorRawSource, 'css')
+  const cssRuntimeAffectingHash = vitePipelineCssAsset ? cache.computeHash(cssRuntimeAffectingSignature) : snapshot.runtimeAffectingHashByFile.get(file) ?? cache.computeHash(cssRuntimeAffectingSignature)
+  const cssShareScope = createCssTransformShareScopeKey(opts, outputFile, generatorRawSource)
   const trackedGeneratorCandidateSignature = shouldTrackGeneratorRuntime ? createCandidateSignature(scopedGeneratorRuntime) : 'generator:stable'
   const scopedGeneratorCandidateSignature = shouldTrackGeneratorRuntime
     ? signatureSources.length > 1

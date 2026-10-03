@@ -7435,7 +7435,7 @@ module.exports = {
     expect(appCss).not.toContain('font-size: 222px')
   }, TEST_TIMEOUT_MS)
 
-  it('injects replayed main package vite css into app wxss without leaking subpackage css', async () => {
+  it('keeps replayed main package and subpackage vite css in their own outputs', async () => {
     const generateCssByGeneratorMock = vi.fn(async (options: {
       rawSource: string
     }) => {
@@ -7570,13 +7570,13 @@ module.exports = {
     const appCss = (bundle['app.wxss'] as OutputAsset).source.toString()
     const mainPageCss = emitted.find(file => file.fileName === 'pages/index/index.wxss')?.source
     const subPageCss = emitted.find(file => file.fileName === 'sub-normal/pages/index.wxss')?.source
-    expect(appCss).toMatch(/\.tw-main-watch\s*\{[^}]*display:\s*block/)
+    expect(appCss).not.toContain('.tw-main-watch')
     expect(appCss).not.toContain('.tw-sub-watch')
     expect(bundle['pages/index/index.wxss' as keyof typeof bundle]).toBeUndefined()
     expect(mainPageCss).toMatch(/\.tw-main-watch\s*\{[^}]*display:\s*block/)
     expect(mainPageCss).not.toContain('.tw-sub-watch')
     expect(subPageCss).toMatch(/\.tw-sub-watch\s*\{[^}]*display:\s*block/)
-    expect(viteProcessedCssAssetResults.get(mainSourceFile)?.injectIntoMain).toBe(true)
+    expect(viteProcessedCssAssetResults.get(mainSourceFile)?.injectIntoMain).toBe(false)
     expect(viteProcessedCssAssetResults.get(subSourceFile)?.injectIntoMain).toBe(false)
   }, TEST_TIMEOUT_MS)
 

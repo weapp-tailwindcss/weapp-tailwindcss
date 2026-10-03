@@ -9,12 +9,13 @@ import { satisfies } from 'semver'
 import { parseHBuilderXVersion } from '../../../packages/hbuilderx-runner/src/hbuilderx/hosts'
 import { createHBuilderXRunner } from '../../../packages/hbuilderx-runner/src/hbuilderx/runner'
 import { resolveWechatAppId } from '../../wechat-app-id'
+import { closeWechatProject } from '../../wechat-project-cleanup'
+import { assertWechatLogin, existingWechatService, wechatRequest } from '../../wechat/service'
 import { assertImage, command } from '../io'
 import { hbuilderxTools } from './hbuilderx-tools'
 import { availablePort } from './port'
 import { waitForProbe } from './wait'
 import { connectWechat } from './wechat-connect'
-import { wechatVersion } from './wechat-version'
 
 export async function base(ctx: ProbeContext): Promise<ProbeOutput> {
   const manifest = JSON.parse(await readFile(path.join(ctx.root, 'package.json'), 'utf8'))
@@ -61,27 +62,14 @@ export async function hbuilderx(ctx: ProbeContext): Promise<ProbeOutput> {
   return { detail: 'HBuilderX CLI/host/channel、项目查询及平台组件入口通过。', binding: { command: cli, host, version, channel, ...await hbuilderxTools(cli) } }
 }
 
-export function loggedIn(output: string) {
-  return /(?:islogin|login)["']?\s*:\s*true\b|已登录|logged in/i.test(output)
-}
-
 export async function wechat(ctx: ProbeContext): Promise<ProbeOutput> {
-  const cli = ctx.binding?.command ?? process.env.E2E_PREFLIGHT_WECHAT_CLI
-    ?? (process.platform === 'darwin'
-      ? path.join(path.parse(os.homedir()).root, 'Applications', 'wechatwebdevtools.app', 'Contents', 'MacOS', 'cli')
-      : undefined)
-  if (!cli) {
-    throw new Error('请设置 E2E_PREFLIGHT_WECHAT_CLI 指向官方 CLI（Windows 为 cli.bat）。')
+  const binding = await existingWechatService(ctx.binding?.command)
+  if (ctx.binding?.httpPort && ctx.binding.httpPort !== binding.httpPort) {
+    throw new Error('微信 IDE HTTP 服务端口已改变；必须重新 prepare。')
   }
-  await access(cli)
-  const { version, metadata } = await wechatVersion(cli)
-  const login = await command(cli, ['islogin'])
-  if (!loggedIn(login)) {
-    throw new Error(`微信 IDE 登录未确认：${login}`)
-  }
-  const binding = { command: cli, version, metadata }
+  await assertWechatLogin(binding.httpPort)
   if (ctx.phase === 'live') {
-    return { detail: '微信 IDE CLI 与登录状态可用。', binding }
+    return { detail: '微信 IDE 已有 HTTP 服务与登录状态可用；未启动 CLI。', binding }
   }
   const project = path.join(ctx.dir, 'wechat-project')
   await mkdir(path.join(project, 'pages', 'probe'), { recursive: true })
@@ -101,15 +89,26 @@ export async function wechat(ctx: ProbeContext): Promise<ProbeOutput> {
   let failed = false
   const screenshot = path.join(ctx.dir, 'wechat.png')
   try {
-    // 显式要求官方 CLI 打开本轮项目和空闲端口，避免 launcher 回退连接到旧项目。
+    // 仅请求已开启的 IDE 服务，避免 CLI 隐式启动触发登录票据刷新。
     process.stdout.write(`[preflight] 打开本轮微信探针 ${project}，自动化端口 ${port}\n`)
-    process.stdout.write(`${await command(cli, ['auto', '--project', project, '--auto-port', String(port)], 30_000)}\n`)
+    const opened = await wechatRequest(binding.httpPort, { kind: 'auto', project, port }, 30_000)
+    if (opened.autoPort !== port) {
+      throw new Error('微信 IDE 自动化端口与本轮请求不一致。')
+    }
+    await assertWechatLogin(binding.httpPort)
     const connection = await connectWechat(port)
     mini = connection
-    let page = await connection.currentPage()
+    let page: Awaited<ReturnType<MiniProgram['currentPage']>>
     await waitForProbe(async () => {
-      page = await connection.currentPage()
-      const actual = page ? await (await page.$('#marker'))?.text() : undefined
+      let actual: string | undefined
+      try {
+        // HTTP auto 返回时页面可能仍在创建，页面元数据与本轮标识一起等待，不提前读取一次。
+        page = await connection.currentPage()
+        actual = page ? await (await page.$('#marker'))?.text() : undefined
+      }
+      catch (error) {
+        return { expected: ctx.runId, actual, error: String(error) }
+      }
       if (actual && actual !== ctx.runId) {
         throw new Error(`微信运行页面并非本轮探针：expected=${ctx.runId} actual=${actual}`)
       }
@@ -132,8 +131,7 @@ export async function wechat(ctx: ProbeContext): Promise<ProbeOutput> {
   }
   finally {
     // 仅释放本次连接，不关闭 IDE 或其他项目，也不使用全局进程清理。
-    mini?.disconnect()
-    await command(cli, ['close', '--project', project]).catch((error) => {
+    await closeWechatProject(project, mini, 10_000, binding.httpPort).catch((error) => {
       if (!failed) {
         throw error
       }

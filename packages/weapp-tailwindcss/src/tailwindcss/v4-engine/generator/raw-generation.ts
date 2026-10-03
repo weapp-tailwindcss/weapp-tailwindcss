@@ -1,11 +1,12 @@
 import type { TailwindV4GenerateOptions, TailwindV4ResolvedSource } from '../types'
 import type { TailwindV4NativeSessionPool } from './native-session'
+import type { PreparedTailwindV4Source } from './prepared-source'
 import { createTailwindV4Engine as createEngineTailwindV4Engine, extractRawCandidates } from '@weapp-tailwindcss/engine'
-import { resolveCssMacroTailwindV4Source } from '../css-macro-source'
 import { transformTailwindV4CssByTarget } from '../miniprogram'
-import { createCompatibleSource } from './css-compat'
 import { collectCandidates, createTailwindV4SourceCacheKey, normalizeTargetRpxLengthCandidates, resolveStyleOptions, resolveTargetCandidates } from './incremental-cache'
+import { createLocalUtilitySourcePreparation } from './local-utility-order'
 import { createEngineSourceEntries, serializeTailwindGenerationArtifact } from './native-session'
+import { prepareTailwindV4Source } from './prepared-source'
 import { restoreRpxLengthCandidates, restoreRpxLengthCssSelectors } from './rpx-candidates'
 import { resolveCompiledSourceRoot, resolveScanSources } from './scan-sources'
 import { resolveGenerationStyleContext } from './style-context'
@@ -19,6 +20,7 @@ export async function generateRawArtifact(
   generationSessions: TailwindV4NativeSessionPool,
   generateSource: TailwindV4ResolvedSource,
   options: TailwindV4GenerateOptions = {},
+  preparedSource?: PreparedTailwindV4Source,
 ) {
   const {
     scanSources = true,
@@ -27,8 +29,13 @@ export async function generateRawArtifact(
     ...patchOptions
   } = options
   const resolvedStyleOptions = resolveStyleOptions(generateSource, styleOptions)
-  const cssMacroSource = resolveCssMacroTailwindV4Source(generateSource)
-  const compatibleSource = createCompatibleSource(cssMacroSource, target)
+  const { compatibleSource } = preparedSource ?? prepareTailwindV4Source(generateSource, target)
+  const preparation = createLocalUtilitySourcePreparation(
+    compatibleSource,
+    target,
+    resolvedStyleOptions,
+    options.bareArbitraryValues,
+  )
   const compiledScan = options.scanMode === 'compiled'
   const resolvedScanSources = compiledScan ? undefined : await resolveScanSources(generateSource, scanSources)
   const filesystemCandidates = Array.isArray(resolvedScanSources)
@@ -69,6 +76,7 @@ export async function generateRawArtifact(
       createTailwindV4SourceCacheKey(compatibleSource),
       compatibleSource,
       generationRequest,
+      preparation,
     )
     generatedCss = serializeTailwindGenerationArtifact(artifact)
     classSet = artifact.classSet
@@ -79,7 +87,7 @@ export async function generateRawArtifact(
     if (compiledScan || !isCssSyntaxError(error)) {
       throw error
     }
-    const legacyEngine = createEngineTailwindV4Engine(compatibleSource)
+    const legacyEngine = createEngineTailwindV4Engine(compatibleSource, preparation)
     try {
       const legacyResult = await legacyEngine.generate({
         ...(patchOptions.bareArbitraryValues === undefined ? {} : { bareArbitraryValues: patchOptions.bareArbitraryValues }),
