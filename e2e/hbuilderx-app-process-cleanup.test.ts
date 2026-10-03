@@ -3,12 +3,13 @@ import type { CommandExit, HBuilderXNativeCommandOptions } from '../packages/hbu
 import type { AppCase } from './hbuilderx-local/cases'
 import { EventEmitter } from 'node:events'
 import { mkdirSync, writeFileSync } from 'node:fs'
-import { lstat, mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from 'node:fs/promises'
+import { lstat, mkdir, mkdtemp, readdir, readFile, realpath, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { PassThrough } from 'node:stream'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { findNativeCleanupBlock } from '../scripts/hbuilderx-native-session'
 import { verifyAppHmrWithHBuilderX } from './hbuilderx-local/runner'
 
 const state = vi.hoisted(() => ({
@@ -17,6 +18,8 @@ const state = vi.hoisted(() => ({
   alias: undefined as { projectPath: string, cleanup: () => Promise<void> } | undefined,
   captureError: undefined as Error | undefined,
   closeError: undefined as Error | undefined,
+  logCloseError: undefined as Error | undefined,
+  updateOutput: '',
   kill: vi.fn(),
   run: vi.fn(),
   spawn: vi.fn(),
@@ -52,6 +55,10 @@ vi.mock('./hbuilderx-local/app-target', () => ({
 vi.mock('./hbuilderx-local/ios-runtime', () => ({
   waitForIosRuntimeEvidence: async ({ screenshot }: { screenshot: string }) => ({ screenshot }),
 }))
+vi.mock('./hbuilderx-local/harmony-runtime', () => ({
+  waitForHarmonyRuntimeEvidence: async () => ({ pid: '100', afterPid: '100' }),
+  captureHarmonyRuntimeEvidence: async () => ({}),
+}))
 vi.mock('./hbuilderx-local/hmr-lifecycle', async (importOriginal) => {
   const original = await importOriginal<typeof import('./hbuilderx-local/hmr-lifecycle')>()
   return {
@@ -59,6 +66,7 @@ vi.mock('./hbuilderx-local/hmr-lifecycle', async (importOriginal) => {
     observeHmrStep: (...args: Parameters<typeof original.observeHmrStep>) => {
       const observer = original.observeHmrStep(...args)
       args[0].stdout!.emit('data', '开始差量编译\n项目 fixture 编译成功。\n同步手机端程序文件成功\n')
+      args[0].stdout!.emit('data', `热更新完成\n${state.updateOutput}`)
       return observer
     },
   }
@@ -71,7 +79,13 @@ vi.mock('./hbuilderx-local/native-log', async (importOriginal) => {
       if (state.captureError) {
         throw state.captureError
       }
-      return original.captureNativeLog(...args)
+      const log = original.captureNativeLog(...args)
+      return { async close() {
+        await log.close()
+        if (state.logCloseError) {
+          throw state.logCloseError
+        }
+      } }
     },
   }
 })
@@ -95,6 +109,8 @@ beforeEach(async () => {
   state.alias = undefined
   state.captureError = undefined
   state.closeError = undefined
+  state.logCloseError = undefined
+  state.updateOutput = ''
   state.kill.mockReset()
   state.run.mockReset().mockImplementation(async (options: HBuilderXNativeCommandOptions) => {
     if (options.args[1] === 'close' && state.closeError) {
@@ -166,31 +182,79 @@ it.each([null, 0])('根进程 exitCode=%s 时仍等受管进程树停止后恢�
   await expect(lstat(state.alias!.projectPath)).rejects.toMatchObject({ code: 'ENOENT' })
 })
 
-it('进程树停止失败不能报告成功，仍恢复源码并关闭项目', async () => {
+it('进程树停止失败必须冻结当前源码和别名，不能关闭项目', async () => {
   const stopError = new Error('owned descendant did not close')
   state.stop.mockRejectedValue(stopError)
-  await expect(verifyAppHmrWithHBuilderX(item)).rejects.toBe(stopError)
+  await expect(verifyAppHmrWithHBuilderX(item)).rejects.toThrow()
   expect(state.stop).toHaveBeenCalledExactlyOnceWith('SIGINT')
-  expect(await readFile(source, 'utf8')).toBe(originalSource)
-  expect(projectCloseCalls()).toHaveLength(1)
-  await expect(lstat(state.alias!.projectPath)).rejects.toMatchObject({ code: 'ENOENT' })
+  expect(await readFile(source, 'utf8')).toContain('changed')
+  expect(projectCloseCalls()).toHaveLength(0)
+  expect(await realpath(state.alias!.projectPath)).toBe(await realpath(item.projectDir))
+  expect(child.stdout!.listenerCount('data')).toBe(0)
 })
 
-it('验证、进程树停止和项目关闭同时失败时保留三处原因及别名', async () => {
-  state.captureError = new Error('native log capture failed')
-  state.closeError = new Error('project close timed out')
+it('验证、进程树停止和日志关闭同时失败时保留三处原因及别名', async () => {
+  state.updateOutput = 'App Launch'
+  state.logCloseError = new Error('native log close failed')
   const stopError = new Error('process tree stop failed')
   state.stop.mockRejectedValue(stopError)
   const error = await verifyAppHmrWithHBuilderX(item).catch(error => error)
   expect(error).toBeInstanceOf(AggregateError)
-  expect(error.cause).toBe(state.captureError)
-  expect(error.errors[0]).toBe(state.captureError)
-  expect(error.errors[1].errors[0]).toBe(stopError)
-  expect(error.errors[1].errors[1]).toMatchObject({ cause: state.closeError })
+  expect(error.cause.message).toContain('restarted')
+  const block = findNativeCleanupBlock(error)!
+  expect(block.errors).toEqual(expect.arrayContaining([stopError, state.logCloseError]))
   expect(state.stop).toHaveBeenCalledExactlyOnceWith('SIGINT')
-  expect(await readFile(source, 'utf8')).toBe(originalSource)
+  expect(await readFile(source, 'utf8')).toContain('changed')
   expect(await realpath(state.alias!.projectPath)).toBe(await realpath(item.projectDir))
   expect(state.alias!.cleanup).not.toHaveBeenCalled()
+  expect(projectCloseCalls()).toHaveLength(0)
+  expect(JSON.parse(await readFile(path.join(block.recoveryDirectory, 'blocked.json'), 'utf8')).primaryError).toContain('restarted')
+})
+
+it.each(['mutation', 'stop'])('Harmony %s 时观测到 fallback 后，即使 CLI stop 成功仍冻结源码', async (phase) => {
+  if (phase === 'mutation') {
+    state.updateOutput = '热更新失败\n开始构建鸿蒙工程'
+  }
+  else {
+    state.stop.mockImplementation(async () => {
+      child.stdout!.emit('data', '热更新失败\n开始构建鸿蒙工程')
+      closeRoot()
+    })
+  }
+  const error = await verifyAppHmrWithHBuilderX({ ...item, platform: 'app-harmony' }).catch(error => error)
+  const block = findNativeCleanupBlock(error)!
+  expect(block).toBeDefined()
+  expect(await readFile(source, 'utf8')).toContain('changed')
+  expect(projectCloseCalls()).toHaveLength(0)
+  expect(state.alias!.cleanup).not.toHaveBeenCalled()
+  expect(child.stdout!.listenerCount('data')).toBe(0)
+  const recovery = JSON.parse(await readFile(path.join(block.recoveryDirectory, 'recovery.json'), 'utf8'))
+  expect(await readFile(path.join(block.recoveryDirectory, recovery.files[0].backup), 'utf8')).toBe(originalSource)
+})
+
+it('已有 Harmony 主错误时，stop 期间迟到的重装仍阻断并保留新错误', async () => {
+  state.updateOutput = 'App Launch'
+  state.stop.mockImplementation(async () => {
+    child.stdout!.emit('data', '安装 .hap 到鸿蒙设备')
+    closeRoot()
+  })
+  const error = await verifyAppHmrWithHBuilderX({ ...item, platform: 'app-harmony' }).catch(error => error)
+  expect(error.cause.message).toContain('restarted')
+  const block = findNativeCleanupBlock(error)!
+  expect(block.errors.some((item: Error) => item.message.includes('reinstalled'))).toBe(true)
+  expect(await readFile(source, 'utf8')).toContain('changed')
+  expect(projectCloseCalls()).toHaveLength(0)
+})
+
+it('恢复资料写入失败时不创建 alias、不改源码也不 launch', async () => {
+  const evidenceRoot = path.join(root, 'not-a-directory')
+  await writeFile(evidenceRoot, 'occupied')
+  vi.stubEnv('E2E_HBUILDERX_RUNTIME_EVIDENCE_ROOT', evidenceRoot)
+  await expect(verifyAppHmrWithHBuilderX(item)).rejects.toThrow()
+  expect(state.spawn).not.toHaveBeenCalled()
+  expect(state.alias).toBeUndefined()
+  expect(await readFile(source, 'utf8')).toBe(originalSource)
+  expect(await readdir(item.projectDir)).toEqual(['App.uvue'])
 })
 
 it('停止期间最后到达的 HMR 失败仍使验收失败并释放日志监听', async () => {

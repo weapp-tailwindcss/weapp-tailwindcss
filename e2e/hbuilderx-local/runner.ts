@@ -10,9 +10,9 @@ import process from 'node:process'
 import path from 'pathe'
 import { expect } from 'vitest'
 import { createHBuilderXAppProject } from '../../scripts/hbuilderx-app-project'
+import { createNativeSessionRecovery } from '../../scripts/hbuilderx-native-session'
 import { createHBuilderXProjectAlias as createSharedHBuilderXProjectAlias } from '../../scripts/hbuilderx-project-alias.mjs'
 import { withHBuilderXProjectCleanup } from '../../scripts/hbuilderx-project-lifecycle'
-import { cleanupHBuilderXResources } from '../../scripts/hbuilderx-project-resources'
 import {
   collectAndroidRuntimeMetadata,
   waitForAndroidRuntimeEvidence,
@@ -41,7 +41,7 @@ import {
   wait,
 } from './process'
 import { findMissingRuntimeLogs, resolveAppRuntimeLogContract } from './render-mode'
-import { appendHmrSourceMutation, createHmrOutputSnapshot, createHmrSourceRestore, haveHmrOutputsChanged } from './source-mutations'
+import { appendHmrSourceMutation, createHmrOutputSnapshot, haveHmrOutputsChanged } from './source-mutations'
 import { collectMiniProgramStyleFiles, readReachableMiniProgramStyles, resolveMiniProgramRuntimeStyleEntry } from './styles'
 import { runWebHmr } from './web'
 
@@ -543,7 +543,13 @@ export async function verifyAppHmrWithHBuilderX(item: AppCase) {
   let nativeLog: ReturnType<typeof captureNativeLog> | undefined
   const domOptions = domProbe ? { readDomProbe: () => domObserver?.read() } : {}
   let projectSession: Awaited<ReturnType<typeof createHBuilderXAppProject>> | undefined
-  let restore: (() => Promise<void>) | undefined
+  const recovery = await createNativeSessionRecovery({
+    directory: runtimeEvidenceRoot,
+    projectRoot,
+    platform: item.platform,
+    host: hbuilderx.resolution,
+    files: [sourceFile, ...resolveAppHmrSteps(item).flatMap(step => step.sourceMutation ? [path.resolve(projectRoot, step.sourceMutation.file)] : [])].map(file => ({ file })),
+  })
   let harmonyFailureEvidence: Parameters<typeof captureHarmonyRuntimeEvidence>[0] | undefined
   let hmrLifecycle: ReturnType<typeof observeHmrStep> | undefined
   let launch: SpawnedHBuilderXCommand | undefined
@@ -552,10 +558,8 @@ export async function verifyAppHmrWithHBuilderX(item: AppCase) {
     projectSession = await createHBuilderXAppProject({ projectRoot, platform: item.platform, runner: hbuilderx, timeoutMs: hbuilderxAppTimeoutMs, env: androidEnv })
     projectRoot = projectSession.projectRoot
     sourceFile = path.resolve(projectRoot, item.sourceFile)
-    restore = await createHmrSourceRestore([
-      sourceFile,
-      ...resolveAppHmrSteps(item).flatMap(step => step.sourceMutation ? [path.resolve(projectRoot, step.sourceMutation.file)] : []),
-    ])
+    await recovery.bindProject(projectSession)
+    recovery.beginMutation()
     await writeAppMarker(sourceFile, resolveAppMarkerAnchors(item), {
       className: item.markerClass,
       textClassName: item.markerTextClass,
@@ -777,28 +781,23 @@ export async function verifyAppHmrWithHBuilderX(item: AppCase) {
     expectNoContent(logs.join(''), resolveAppRuntimeLogContract(item).notContains, `${item.name} HBuilderX 渲染模式日志`)
   }
   catch (error) {
+    failure = { error }
     if (harmonyFailureEvidence) {
       await captureHarmonyRuntimeEvidence(harmonyFailureEvidence).catch((captureError) => {
-        process.stderr.write(`Harmony 失败现场取证也失败：${captureError}\n`)
+        failure = { error: new AggregateError([error, captureError], 'Harmony 验证与失败现场取证均失败。', { cause: error }) }
       })
     }
-    failure = { error }
   }
   finally {
     try {
-      await cleanupHBuilderXResources([
-        async () => { await launch?.stop('SIGINT') },
-        async () => {
-          if (!failure) {
-            hmrLifecycle?.assertNoFallback()
-          }
-        },
-        () => hmrLifecycle?.dispose(),
-        async () => { await restore?.() },
-        async () => { await projectSession?.cleanup() },
-        () => domObserver?.dispose(),
-        async () => { await nativeLog?.close() },
-      ])
+      await recovery.cleanup({
+        failure,
+        stop: async () => { await launch?.stop('SIGINT') },
+        nativeStopReason: () => hmrLifecycle?.nativeStopReason(),
+        afterStop: () => hmrLifecycle?.assertNoFallback(),
+        safe: [() => hmrLifecycle?.dispose(), () => domObserver?.dispose(), async () => { await nativeLog?.close() }],
+        release: [async () => { await projectSession?.cleanup() }],
+      })
     }
     catch (error) {
       failure = { error: failure

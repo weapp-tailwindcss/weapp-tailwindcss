@@ -2,6 +2,7 @@ import type { ChildProcess } from 'node:child_process'
 import type { CaseResult } from '../scripts/demo-visual-e2e-report/types'
 import type { AppCase } from './hbuilderx-local/cases'
 import { ChildProcess as TestChild } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { lstat, mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -10,6 +11,8 @@ import { PassThrough } from 'node:stream'
 import { PNG } from 'pngjs'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { runAppCase } from '../scripts/demo-visual-e2e-report/app'
+import { runNativeVisualCases } from '../scripts/demo-visual-e2e-report/app-batch'
+import { findNativeCleanupBlock } from '../scripts/hbuilderx-native-session'
 
 const state = vi.hoisted(() => ({
   child: undefined as ChildProcess | undefined,
@@ -25,6 +28,8 @@ const state = vi.hoisted(() => ({
   stop: vi.fn(),
   screenshot: vi.fn(),
   restart: 'mutation' as 'mutation' | 'screenshot' | 'stop' | 'none',
+  variants: 1,
+  writeReport: vi.fn(),
 }))
 vi.mock('node:child_process', async importOriginal => ({
   ...await importOriginal<typeof import('node:child_process')>(),
@@ -94,13 +99,14 @@ vi.mock('./hbuilderx-local/native-log', () => ({ captureNativeLog: () => ({ clos
   }
 } }) }))
 vi.mock('../scripts/demo-visual-e2e-report/harmony-output', () => ({ finalizeHarmonyAppOutput: async () => {} }))
+vi.mock('../scripts/demo-visual-e2e-report/report', () => ({ writeReport: state.writeReport }))
 vi.mock('./hbuilderx-local/render-mode', () => ({
   resolveAppRuntimeLogContract: () => ({ contains: [], notContains: [] }),
   findForbiddenRuntimeLogs: () => [],
 }))
 vi.mock('./hbuilderx-local/app-output', () => ({ readExistingAppTransformedOutput: async () => 'compiled' }))
 vi.mock('./hbuilderx-local/app-marker', () => ({
-  removeLegacyAppMarkers: (source: string) => source,
+  removeLegacyAppMarkers: (source: string) => source.replace('legacy-marker', ''),
   rewriteAppMarker: (_source: string, _anchors: string[], marker: { text: string }) => {
     if (marker.text === 'changed') {
       state.child!.stdout!.emit('data', '开始差量编译\n项目 fixture 编译成功。\n同步手机端程序文件成功\n')
@@ -123,7 +129,7 @@ vi.mock('../scripts/hbuilderx-project-alias.mjs', () => ({
 }))
 vi.mock('../scripts/demo-visual-e2e-report/style-isolation', () => ({
   readManifest: async () => undefined,
-  resolveStyleIsolationVariants: () => [{}],
+  resolveStyleIsolationVariants: () => Array.from({ length: state.variants }, () => ({})),
 }))
 
 describe('App 视觉入口的原生 HMR 生命周期', () => {
@@ -132,6 +138,7 @@ describe('App 视觉入口的原生 HMR 生命周期', () => {
     await Promise.all(directories.splice(0).map(directory => rm(directory, { recursive: true, force: true })))
     state.version = '5.14.2026070101-alpha'
     state.launchError = undefined
+    state.variants = 1
     vi.clearAllMocks()
     vi.unstubAllEnvs()
   })
@@ -162,7 +169,8 @@ describe('App 视觉入口的原生 HMR 生命周期', () => {
     const directory = await mkdtemp(join(tmpdir(), 'app-visual-lifecycle-'))
     directories.push(directory)
     const sourceFile = join(directory, 'App.uvue')
-    await writeFile(sourceFile, 'original source')
+    const original = 'original source\r\nlegacy-marker\r\n'
+    await writeFile(sourceFile, original)
     state.child = Object.assign(new TestChild(), { stdout: new PassThrough(), stderr: new PassThrough(), exitCode: restart === 'stop' ? null : 0 })
     const image = new PNG({ width: 20, height: 20 })
     image.data.fill(100)
@@ -196,7 +204,8 @@ describe('App 视觉入口的原生 HMR 生命周期', () => {
       hmrTransformedContains: ['compiled'],
     }
     const results: CaseResult[] = []
-    await runAppCase(item, { repoRoot: directory, artifactRoot: join(directory, 'artifacts'), timeoutMs: 1000, viewport: { width: 20, height: 20 } }, results)
+    state.variants = cleanup === 'stop' ? 2 : 1
+    const error = await runNativeVisualCases(cleanup === 'stop' ? [item, { ...item, name: 'must-not-start' }] : [item], { repoRoot: directory, artifactRoot: join(directory, 'artifacts'), timeoutMs: 1000, viewport: { width: 20, height: 20 } }, results).catch(error => error)
     expect(state.capture).toHaveBeenCalled()
     expect(state.stop).toHaveBeenCalledWith('SIGINT')
     expect(results).toHaveLength(1)
@@ -206,6 +215,23 @@ describe('App 视觉入口的原生 HMR 生命周期', () => {
     }
     if (cleanup === 'stop') {
       expect(results[0].error).toContain('模拟受管进程停止失败')
+      const blocked = findNativeCleanupBlock(error)!
+      expect(blocked).toBeDefined()
+      const recovery = JSON.parse(await readFile(join(blocked.recoveryDirectory, 'recovery.json'), 'utf8'))
+      const sourcePath = await realpath(sourceFile)
+      const source = recovery.files.find((file: { file: string }) => file.file === sourcePath)
+      expect(source.sha256).toBe(createHash('sha256').update(original).digest('hex'))
+      expect(await readFile(join(blocked.recoveryDirectory, source.backup), 'utf8')).toBe(original)
+      expect(state.launch).toHaveBeenCalledTimes(1)
+      expect(state.writeReport).toHaveBeenCalledOnce()
+      expect(state.closeProject).not.toHaveBeenCalled()
+      expect(state.cleanupAlias).not.toHaveBeenCalled()
+      expect(await readFile(sourceFile, 'utf8')).toBe('changed')
+    }
+    else {
+      expect(error).toBeUndefined()
+      expect(state.closeProject).toHaveBeenCalledWith(expect.objectContaining({ allowFailure: false }))
+      expect(await readFile(sourceFile, 'utf8')).toBe(original)
     }
     if (cleanup === 'close' || cleanup === 'log-close') {
       expect(results[0].error).toContain('模拟项目关闭失败')
@@ -214,8 +240,6 @@ describe('App 视觉入口的原生 HMR 生命周期', () => {
     if (cleanup === 'log-close') {
       expect(results[0].error).toContain('模拟日志关闭失败')
     }
-    expect(state.closeProject).toHaveBeenCalledWith(expect.objectContaining({ allowFailure: false }))
-    expect(await readFile(sourceFile, 'utf8')).toBe('original source')
     expect(state.child.stdout!.listenerCount('data')).toBe(0)
     if (platform === 'app-ios') {
       expect(state.launch).toHaveBeenCalledWith(expect.objectContaining({

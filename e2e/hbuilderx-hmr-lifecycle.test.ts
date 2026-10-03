@@ -7,6 +7,24 @@ import { assertHarmonyProcessUnchanged, hasHarmonyMarker } from './hbuilderx-loc
 import { classifyHmrStep, observeHmrStep } from './hbuilderx-local/hmr-lifecycle'
 
 describe('原生 HMR 生命周期验收', () => {
+  it('Harmony 单独重启不推断 fallback，明确重装和丢失日志才报告停止缺证', () => {
+    const child = Object.assign(new ChildProcess(), { stdout: new PassThrough(), stderr: new PassThrough() })
+    const observer = observeHmrStep(child, 'app-harmony')
+    try {
+      child.stdout.emit('data', '热更新完成\nApp Launch\n')
+      expect(observer.nativeStopReason()).toBeUndefined()
+      expect(observer.assertNoFallback).toThrow('restarted')
+      child.stdout.emit('data', '开始构建鸿蒙工程')
+      expect(observer.nativeStopReason()).toContain('fallback')
+      child.stdout.emit('data', 'x'.repeat(32 * 1024 * 1024))
+      expect(observer.nativeStopReason()).toContain('丢失')
+    }
+    finally {
+      observer.dispose()
+      child.stdout.destroy()
+      child.stderr.destroy()
+    }
+  })
   it('只有普通 uni-app 用例显式启用原生热重载', () => {
     expect(uniAppAppCases.length).toBeGreaterThan(0)
     expect(uniAppAppCases.every(item => item.updateMode === 'native-reload')).toBe(true)

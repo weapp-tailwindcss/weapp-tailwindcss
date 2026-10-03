@@ -13,6 +13,7 @@ import {
 } from './demo-visual-e2e-report/hmr.ts'
 import { writeReport } from './demo-visual-e2e-report/report.ts'
 import { resolveScreenshotsRoot } from './demo-visual-e2e-report/screenshots.ts'
+import { formatWorkflowError } from './e2e-preflight/cleanup'
 
 const repoRoot = path.resolve(import.meta.dirname, '..')
 const defaultArtifactRoot = 'e2e/.artifacts/demo-visual/full'
@@ -285,29 +286,30 @@ async function main() {
     }
   }
   if (!h5Only && !weappOnly) {
-    const [{ uniAppAppCases, uniAppXAppCases }, { runAppCase }] = await Promise.all([
+    const [{ uniAppAppCases, uniAppXAppCases }, { runNativeVisualCases }] = await Promise.all([
       import('../e2e/hbuilderx-local/cases.ts'),
-      import('./demo-visual-e2e-report/app.ts'),
+      import('./demo-visual-e2e-report/app-batch.ts'),
     ])
-    for (const item of [...uniAppAppCases, ...uniAppXAppCases]) {
+    const items = [...uniAppAppCases, ...uniAppXAppCases].filter((item) => {
       const name = item.name.replace(/\s+(?:android|ios)$/, '')
       if (!matchesFilter(name) && !matchesFilter(item.name)) {
-        continue
+        return false
       }
       if (hasArg('--android-only') && item.platform !== 'app-android') {
-        continue
+        return false
       }
       if (hasArg('--ios-only') && item.platform !== 'app-ios') {
-        continue
+        return false
       }
       if (hasArg('--harmony-only') && item.platform !== 'app-harmony') {
-        continue
+        return false
       }
       if (hasArg('--app-only') && !targetPlatforms.includes(item.platform)) {
-        continue
+        return false
       }
-      await runAppCase(item, context, results)
-    }
+      return true
+    })
+    await runNativeVisualCases(items, context, results)
   }
   await writeReport(results, context)
   if (shouldFailOnIncomplete()) {
@@ -327,6 +329,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  process.stderr.write(`${error instanceof Error ? error.stack ?? error.message : String(error)}\n`)
+  process.stderr.write(`${formatWorkflowError(error)}\n`)
   process.exitCode = 1
 })

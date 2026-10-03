@@ -40,9 +40,10 @@ import {
   wait,
 } from '../../e2e/hbuilderx-local/process.ts'
 import { findForbiddenRuntimeLogs, findMissingRuntimeLogs, resolveAppRuntimeLogContract } from '../../e2e/hbuilderx-local/render-mode.ts'
-import { appendHmrSourceMutation, createHmrSourceRestore } from '../../e2e/hbuilderx-local/source-mutations.ts'
+import { appendHmrSourceMutation } from '../../e2e/hbuilderx-local/source-mutations.ts'
+import { runWithCleanup } from '../e2e-preflight/cleanup'
 import { createHBuilderXAppProject } from '../hbuilderx-app-project'
-import { cleanupHBuilderXResources } from '../hbuilderx-project-resources'
+import { createNativeSessionRecovery, findNativeCleanupBlock } from '../hbuilderx-native-session'
 import { countMarkerPixelChanges, locateMarkerColor } from './app-marker-visual.ts'
 import { analyzeHarmonyDomTextPairs, captureAndAnalyzeHarmonyLayout } from './harmony-layout.ts'
 import { finalizeHarmonyAppOutput } from './harmony-output.ts'
@@ -604,11 +605,12 @@ async function runAppCaseVariant(
   context: RuntimeContext,
   results: CaseResult[],
   variant: StyleIsolationVariant,
-  shared?: {
+  shared: {
+    recovery: Awaited<ReturnType<typeof createNativeSessionRecovery>>
     hbuilderx?: HBuilderXRunner
-    originalManifest?: string
+    originalManifest?: string | undefined
     originalSource?: string
-    toolEnv?: Record<string, string | undefined>
+    toolEnv?: Record<string, string | undefined> | undefined
   },
 ) {
   const name = resolveAppDemoName(item)
@@ -622,7 +624,6 @@ async function runAppCaseVariant(
   let domObserver: ReturnType<NonNullable<typeof domProbe>['observe']> | undefined
   let nativeLog: ReturnType<typeof captureNativeLog> | undefined
   const domOptions = domProbe ? { readDomProbe: () => domObserver?.read() } : {}
-  let restoreMutations: (() => Promise<void>) | undefined
   let activeSourceFile = sourceFile
   let launch: ReturnType<typeof startAppLaunch> | undefined
   let harmonyFailureEvidence: Parameters<typeof captureHarmonyRuntimeEvidence>[0] | undefined
@@ -631,6 +632,7 @@ async function runAppCaseVariant(
   let hbuilderx = shared?.hbuilderx
   let caseResult: CaseResult | undefined
   let failure: { error: unknown } | undefined
+  let recoveryReady = false
   let beforeScreenshotEvidence: Record<string, unknown> | undefined
   let afterScreenshotEvidence: Record<string, unknown> | undefined
   let harmonyLayoutEvidence: Awaited<ReturnType<typeof captureAndAnalyzeHarmonyLayout>> | undefined
@@ -654,6 +656,8 @@ async function runAppCaseVariant(
     projectSession = await createHBuilderXAppProject({ projectRoot, platform, runner: hbuilderx, timeoutMs: hbuilderxAppTimeoutMs, env: toolEnv })
     projectRoot = projectSession.projectRoot
     activeSourceFile = path.resolve(projectSession.projectPath, item.sourceFile)
+    await shared.recovery.bindProject(projectSession)
+    recoveryReady = true
     const originalSource = shared?.originalSource ?? removeLegacyAppMarkers(await readUtf8(sourceFile))
     const originalManifest = shared?.originalManifest ?? await readManifest(projectRoot).catch(() => undefined)
     const restoreVariantManifest = async () => {
@@ -665,9 +669,9 @@ async function runAppCaseVariant(
         await writeStyleIsolationVariantManifest(projectRoot, variant)
       }
     }
+    shared.recovery.beginMutation()
     await fs.writeFile(activeSourceFile, originalSource, 'utf8')
     await restoreVariantManifest()
-    restoreMutations = await createHmrSourceRestore(resolveAppHmrSteps(item).flatMap(step => step.sourceMutation ? [path.resolve(projectRoot, step.sourceMutation.file)] : []))
 
     process.stdout.write(`[app-${platform}] ${name}${variant.key ? ` ${variant.key}` : ''}: write initial marker\n`)
     await writeAppMarker(activeSourceFile, resolveAppMarkerAnchors(item), {
@@ -870,56 +874,36 @@ async function runAppCaseVariant(
         renderMode: item.renderMode,
       },
     }
-
-    await stopAppLaunch(launch)
-    hmrLifecycle?.assertNoFallback()
-    launch = undefined
   }
   catch (error) {
+    failure = { error }
     if (harmonyFailureEvidence) {
       await captureHarmonyRuntimeEvidence(harmonyFailureEvidence).catch((captureError) => {
-        process.stderr.write(`Harmony 失败现场取证也失败：${captureError}\n`)
+        failure = { error: new AggregateError([error, captureError], 'Harmony 验证与失败现场取证均失败。', { cause: error }) }
       })
     }
-    failure = { error }
   }
   finally {
     try {
-      await cleanupHBuilderXResources([
-        async () => { await stopAppLaunch(launch) },
-        () => {
-          if (!failure) {
-            hmrLifecycle?.assertNoFallback()
-          }
-        },
-        () => hmrLifecycle?.dispose(),
-        () => domObserver?.dispose(),
-        async () => { await nativeLog?.close() },
-        async () => { await restoreMutations?.() },
-        () => {
+      await shared.recovery.cleanup({
+        failure,
+        stop: () => stopAppLaunch(launch),
+        nativeStopReason: () => hmrLifecycle?.nativeStopReason(),
+        afterStop: () => hmrLifecycle?.assertNoFallback(),
+        safe: [() => hmrLifecycle?.dispose(), () => domObserver?.dispose(), async () => { await nativeLog?.close() }],
+        release: [() => {
           if (item.platform === 'app-android') {
             cleanupAndroidAppRuntime(shared?.toolEnv ?? {}, resolveAndroidScreenshotDeviceId(item))
           }
-        },
-        async () => {
-          if (shared?.originalSource !== undefined) {
-            await fs.writeFile(sourceFile, shared.originalSource, 'utf8')
-          }
-        },
-        async () => {
-          if (shared?.originalManifest !== undefined) {
-            await writeManifest(projectRoot, shared.originalManifest)
-          }
-        },
-        async () => { await projectSession?.cleanup() },
-      ])
+        }, async () => { await projectSession?.cleanup() }],
+      })
     }
     catch (error) {
       failure = { error: failure
         ? new AggregateError([failure.error, error], 'HBuilderX App 验证与收尾均失败。', { cause: failure.error })
         : error }
     }
-    const restoredOutput = await findReadyAppOutputRoot(item, projectRoot, item.transformedContains, item.styleContains).catch(() => undefined)
+    const restoredOutput = shared.recovery.blocked ? undefined : await findReadyAppOutputRoot(item, projectRoot, item.transformedContains, item.styleContains).catch(() => undefined)
     if (restoredOutput) {
       process.stdout.write(`[app-${platform}] ${name}${variant.key ? ` ${variant.key}` : ''}: restored output ${restoredOutput}\n`)
     }
@@ -943,6 +927,9 @@ async function runAppCaseVariant(
         updateLifecycle: hmrLifecycle?.snapshot(),
       },
     })
+    if (!recoveryReady || findNativeCleanupBlock(failure.error)) {
+      throw failure.error
+    }
   }
   else if (caseResult) {
     results.push(caseResult)
@@ -954,23 +941,30 @@ export async function runAppCase(item: AppCase, context: RuntimeContext, results
   item = bindAppTarget(item)
   const projectRoot = path.resolve(context.repoRoot, item.projectDir)
   const sourceFile = path.resolve(projectRoot, item.sourceFile)
+  const toolEnv = item.platform === 'app-android' ? assertAndroidToolchain() : {}
+  const hbuilderx = await createLocalHBuilderXRunner(projectRoot, toolEnv)
+  const recovery = await createNativeSessionRecovery({
+    directory: path.resolve(context.artifactRoot, 'native-recovery'),
+    projectRoot,
+    platform: item.platform,
+    host: hbuilderx.resolution,
+    files: [
+      { file: sourceFile },
+      { file: path.resolve(projectRoot, 'manifest.json'), optional: true },
+      ...resolveAppHmrSteps(item).flatMap(step => step.sourceMutation ? [{ file: path.resolve(projectRoot, step.sourceMutation.file) }] : []),
+    ],
+  })
   const originalSource = removeLegacyAppMarkers(await readUtf8(sourceFile))
   const originalManifest = await readManifest(projectRoot).catch(() => undefined)
   const shared = {
     originalManifest,
     originalSource,
-    toolEnv: item.platform === 'app-android' ? assertAndroidToolchain() : {},
+    toolEnv,
+    recovery,
   }
-  const hbuilderx = await createLocalHBuilderXRunner(projectRoot, shared.toolEnv)
-  try {
+  await runWithCleanup(async () => {
     for (const variant of resolveStyleIsolationVariants(item.projectDir)) {
       await runAppCaseVariant(item, context, results, variant, { ...shared, hbuilderx })
     }
-  }
-  finally {
-    await fs.writeFile(sourceFile, originalSource, 'utf8').catch(() => undefined)
-    if (originalManifest !== undefined) {
-      await writeManifest(projectRoot, originalManifest).catch(() => undefined)
-    }
-  }
+  }, () => recovery.restore())
 }

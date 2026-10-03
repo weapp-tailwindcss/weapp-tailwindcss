@@ -86,6 +86,19 @@ export function observeHmrStep(
   return {
     assertNoFallback,
     snapshot,
+    nativeStopReason() {
+      if (platform !== 'app-harmony') {
+        return undefined
+      }
+      if (overflow) {
+        return 'Harmony 本轮更新日志超过 32 MiB，已丢失停止期间的完整证据'
+      }
+      const text = stripVTControlCharacters(output())
+      const observed = classifyHmrStep(text)
+      return observed === 'failed' || observed === 'reinstalled' || text.includes('开始构建鸿蒙工程')
+        ? `Harmony 本轮更新已进入 ${observed} / native fallback，缺少按 session 的停止完成证明`
+        : undefined
+    },
     async waitForCompletion<T>(timeoutMs: number, ensureRunning: () => void, verifyRuntime?: (remainingMs: number) => Promise<T>): Promise<T | undefined> {
       // Android 由调用方的运行时探针确认；iOS 必须把设备取证纳入完成契约。
       if (platform === 'app-android') {

@@ -682,7 +682,7 @@ describe('e2e matrix', () => {
     expect(h5VisualNames).toEqual(expectedH5Names)
     expect(visualScript).toContain('runH5Case(browser')
     expect(visualScript).toContain('runMiniProgramCase({')
-    expect(visualScript).toContain('runAppCase(item, context, results)')
+    expect(visualScript).toContain('runNativeVisualCases(items, context, results)')
     expect(visualHmr).toContain('expectedBackgroundColor')
     expect(visualHmr).toContain('waitForVisualHmrStep')
   })
