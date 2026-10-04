@@ -6,10 +6,13 @@ license = "MIT"
 publish = false
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = [
+  "cdylib",
+  "rlib",
+]
 
 [dependencies]
-napi = { version = "=3.14.0", default-features = false, features = ["napi4"] }
+napi = { version = "=3.14.0", default-features = false, features = [ "napi4" ] }
 napi-derive = "=3.6.10"
 
 [build-dependencies]

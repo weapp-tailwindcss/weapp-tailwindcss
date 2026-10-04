@@ -7,10 +7,16 @@ license = "MIT"
 publish = false
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = [
+  "cdylib",
+  "rlib",
+]
 
 [dependencies]
-napi = { version = "=3.14.0", default-features = false, features = ["napi4", "dyn-symbols"] }
+napi = { version = "=3.14.0", default-features = false, features = [
+  "napi4",
+  "dyn-symbols",
+] }
 napi-derive = "=3.6.10"
 oxc_allocator = "=0.152.0"
 oxc_ast = "=0.152.0"
