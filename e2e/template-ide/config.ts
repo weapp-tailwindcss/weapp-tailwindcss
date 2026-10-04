@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises'
+import path from 'node:path'
 
 interface PageConfig {
   usingComponents?: Record<string, string>
@@ -12,19 +13,40 @@ function parseConfig(source: string): PageConfig {
   return config
 }
 
-export async function readTemplatePageConfig(outputFile: string, nativeSourceFile?: string): Promise<PageConfig> {
-  try {
-    return parseConfig(await readFile(outputFile, 'utf8'))
+/** 页面注册依赖真实 JSON 产物，源码空对象不能替代编译器漏掉的文件。 */
+export async function readTemplatePageConfig(outputFile: string): Promise<PageConfig> {
+  return parseConfig(await readFile(outputFile, 'utf8'))
+}
+
+/** 路由采用小程序逻辑路径；文件位置始终由当前平台的路径 API 解析。 */
+export function resolveTemplatePageConfigFile(root: string, route: string, paths: typeof path = path) {
+  if (!route || route.includes('\\') || route.includes(':') || route.split('/').some(part => !part || part === '.' || part === '..')) {
+    throw new Error(`页面路由无效：${route}`)
   }
-  catch (error) {
-    // weapp-vite 不输出空原生页面配置；只有源码明确为空对象时才接受缺省产物。
-    if ((error as NodeJS.ErrnoException).code !== 'ENOENT' || !nativeSourceFile) {
-      throw error
-    }
-    const source = parseConfig(await readFile(nativeSourceFile, 'utf8'))
-    if (Object.keys(source).length > 0) {
-      throw new Error(`非空页面配置缺少构建产物：${outputFile}`, { cause: error })
-    }
-    return source
+  return paths.resolve(root, `${route}.json`)
+}
+
+/** 仅检查 app.json 注册的页面，避免将组件或 class 报告当作页面配置。 */
+export async function readTemplatePageConfigs(root: string) {
+  const app = JSON.parse(await readFile(path.resolve(root, 'app.json'), 'utf8')) as {
+    pages?: string[]
+    subPackages?: Array<{ root: string, pages: string[] }>
+    subpackages?: Array<{ root: string, pages: string[] }>
   }
+  const routes = [...app.pages ?? []]
+  for (const group of [...app.subPackages ?? [], ...app.subpackages ?? []]) {
+    const groupRoot = group.root.replace(/\/$/, '')
+    resolveTemplatePageConfigFile(root, groupRoot)
+    for (const page of group.pages) {
+      resolveTemplatePageConfigFile(root, page)
+      routes.push(`${groupRoot}/${page}`)
+    }
+  }
+  if (!routes.length) {
+    throw new Error('app.json 必须注册至少一个页面。')
+  }
+  return Promise.all([...new Set(routes)].map(async (route) => {
+    const file = resolveTemplatePageConfigFile(root, route)
+    return { route, file, config: await readTemplatePageConfig(file) }
+  }))
 }

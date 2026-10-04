@@ -7,7 +7,7 @@ import { captureMiniProgramViewport } from '../scripts/demo-visual-e2e-report/mi
 import { resolveWechatAppId } from '../scripts/wechat-app-id'
 import { installFrameworkIdeRuntimeErrorCollector } from './frameworkIdeRuntimeErrors'
 import { clearProjectBuildState } from './projectTest'
-import { readTemplatePageConfig } from './template-ide/config'
+import { readTemplatePageConfig, readTemplatePageConfigs } from './template-ide/config'
 import { withTemplateAppId } from './template-ide/project-config'
 import { assertTemplatePageRendered } from './template-ide/runtime'
 import { withTemplateIdeSession } from './template-ide/session'
@@ -20,7 +20,6 @@ interface TemplateIdeCase {
   miniprogramRoot: string
   appJson: string
   requiredFiles: string[]
-  nativePageConfig?: boolean
 }
 
 interface TemplateIdeLocalOnlyCase {
@@ -77,7 +76,6 @@ const templateIdeCases: TemplateIdeCase[] = [
   {
     name: 'weapp-vite-tailwindcss-v4 weixin',
     template: 'weapp-vite-tailwindcss-v4',
-    nativePageConfig: true,
     command: ['pnpm', 'run', 'build'],
     projectPath: '.',
     miniprogramRoot: 'dist',
@@ -152,8 +150,8 @@ function resolveComponentPath(miniprogramRoot: string, pageJsonFile: string, com
   return path.resolve(path.dirname(pageJsonFile), componentPath)
 }
 
-async function expectUsingComponentsExist(name: string, miniprogramRoot: string, pageJsonFile: string, nativeSourceFile?: string) {
-  const pageConfig = await readTemplatePageConfig(pageJsonFile, nativeSourceFile)
+async function expectUsingComponentsExist(name: string, miniprogramRoot: string, pageJsonFile: string) {
+  const pageConfig = await readTemplatePageConfig(pageJsonFile)
   for (const [componentName, componentPath] of Object.entries(pageConfig.usingComponents ?? {})) {
     const resolved = resolveComponentPath(miniprogramRoot, pageJsonFile, componentPath)
     if (!resolved) {
@@ -206,7 +204,8 @@ describe('templates ide smoke', () => {
     expect(await pathExists(path.resolve(miniprogramRoot, `${pagePath}.js`)), `${item.name} should emit page js`).toBe(true)
     const pageJsonFile = path.resolve(miniprogramRoot, `${pagePath}.json`)
     expect(await pathExists(path.resolve(miniprogramRoot, `${pagePath}.wxml`)), `${item.name} should emit page wxml`).toBe(true)
-    await expectUsingComponentsExist(item.name, miniprogramRoot, pageJsonFile, item.nativePageConfig ? path.resolve(root, `${pagePath}.json`) : undefined)
+    await readTemplatePageConfigs(miniprogramRoot)
+    await expectUsingComponentsExist(item.name, miniprogramRoot, pageJsonFile)
 
     const artifactDir = path.resolve(__dirname, '.artifacts/templates-ide', item.template)
     await fs.mkdir(artifactDir, { recursive: true })

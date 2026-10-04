@@ -8,40 +8,30 @@ import { assertTemplatePageRendered } from './template-ide/runtime'
 
 describe('template page config contract', () => {
   let dir: string
-  let source: string
   let output: string
 
   beforeEach(async () => {
     dir = await mkdtemp(path.join(os.tmpdir(), 'template-config-'))
-    source = path.join(dir, 'source.json')
     output = path.join(dir, 'output.json')
   })
   afterEach(async () => rm(dir, { recursive: true, force: true }))
 
-  it('accepts an omitted native config only when its source is an empty object', async () => {
-    await writeFile(source, '{}')
-    await expect(readTemplatePageConfig(output, source)).resolves.toEqual({})
+  it('源码为空对象也不能替代缺失的页面 JSON 产物', async () => {
+    await writeFile(path.join(dir, 'source.json'), '{}')
     await expect(readTemplatePageConfig(output)).rejects.toMatchObject({ code: 'ENOENT' })
   })
 
-  it.each(['{"usingComponents":{"card":"./card"}}', '{"navigationBarTitleText":"Title"}'])('rejects missing non-empty config: %s', async (config) => {
-    await writeFile(source, config)
-    await expect(readTemplatePageConfig(output, source)).rejects.toThrow('非空页面配置')
+  it('真实输出的空页面配置可以注册', async () => {
+    await writeFile(output, '{}')
+    await expect(readTemplatePageConfig(output)).resolves.toEqual({})
   })
 
-  it.each(['null', '[]', 'invalid'])('rejects invalid source config: %s', async (config) => {
-    await writeFile(source, config)
-    await expect(readTemplatePageConfig(output, source)).rejects.toThrow()
+  it.each(['null', '[]', 'invalid'])('拒绝非法页面配置产物：%s', async (config) => {
+    await writeFile(output, config)
+    await expect(readTemplatePageConfig(output)).rejects.toThrow()
   })
 
-  it('rejects missing source and malformed output even with an empty source', async () => {
-    await expect(readTemplatePageConfig(output, source)).rejects.toMatchObject({ code: 'ENOENT' })
-    await writeFile(source, '{}')
-    await writeFile(output, 'invalid')
-    await expect(readTemplatePageConfig(output, source)).rejects.toThrow()
-  })
-
-  it('retains emitted component references for artifact checks', async () => {
+  it('保留输出中的组件引用供产物检查', async () => {
     await writeFile(output, '{"usingComponents":{"card":"./card"}}')
     await expect(readTemplatePageConfig(output)).resolves.toEqual({ usingComponents: { card: './card' } })
   })
