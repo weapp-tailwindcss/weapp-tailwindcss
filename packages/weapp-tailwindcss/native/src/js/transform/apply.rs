@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use super::super::JsSourceAnalysis;
 use super::{
@@ -66,45 +66,68 @@ fn replace_first(input: &str, candidate: &str, replacement: &str) -> String {
     output
 }
 
-fn transform_literal(
+struct Membership<F> {
+    contains: F,
+    values: HashMap<String, bool>,
+}
+
+impl<F> Membership<F> {
+    fn contains<E>(&mut self, candidate: &str) -> Result<bool, E>
+    where
+        F: FnMut(&str) -> Result<bool, E>,
+    {
+        if let Some(value) = self.values.get(candidate) {
+            return Ok(*value);
+        }
+        let value = (self.contains)(candidate)?;
+        self.values.insert(candidate.to_owned(), value);
+        Ok(value)
+    }
+}
+
+fn transform_literal<E>(
     value: &str,
-    class_names: &HashSet<String>,
+    membership: &mut Membership<impl FnMut(&str) -> Result<bool, E>>,
     escape: &EscapeTable,
     options: &JsTransformOptions,
     class_context: bool,
     plans: &mut HashMap<(String, bool), Option<String>>,
-) -> Option<Option<String>> {
+) -> Result<Option<Option<String>>, E> {
     let source = if options.unescape_unicode == Some(true) && value.contains("\\u") {
-        decode::decode(value)?
+        let Some(decoded) = decode::decode(value) else {
+            return Ok(None);
+        };
+        decoded
     } else {
         value.to_owned()
     };
     let mut transformed = source.clone();
     let mut mutated = false;
     for candidate in candidates::split(&source) {
-        let plan = plans
-            .entry((candidate.clone(), class_context))
-            .or_insert_with(|| {
-                // 默认回调的保留决策优先于 alwaysEscape 与集合命中。
-                if options.preserve_star == Some(true) && candidate == "*" {
-                    return None;
-                }
-                if options.always_escape != Some(true)
+        let plan = match plans.entry((candidate.clone(), class_context)) {
+            std::collections::hash_map::Entry::Occupied(entry) => entry.into_mut(),
+            std::collections::hash_map::Entry::Vacant(entry) => {
+                // 保留策略和业务路径先于集合查询，不触发无意义的跨 ABI 调用。
+                let preserved = options.preserve_star == Some(true) && candidate == "*";
+                let business_path = options.always_escape != Some(true)
                     && !class_context
-                    && candidates::is_plain_slash_path(&candidate)
-                {
-                    return None;
-                }
-                let escaped = escape.escape(&candidate);
-                if options.always_escape == Some(true)
-                    || class_names.contains(&candidate)
-                    || (escaped != candidate && class_names.contains(&escaped))
-                {
-                    Some(escaped)
-                } else {
+                    && candidates::is_plain_slash_path(&candidate);
+                let replacement = if preserved || business_path {
                     None
-                }
-            });
+                } else {
+                    let escaped = escape.escape(&candidate);
+                    if options.always_escape == Some(true)
+                        || membership.contains(&candidate)?
+                        || (escaped != candidate && membership.contains(&escaped)?)
+                    {
+                        Some(escaped)
+                    } else {
+                        None
+                    }
+                };
+                entry.insert(replacement)
+            }
+        };
         if let Some(replacement) = plan {
             let replaced = replace_first(&transformed, &candidate, replacement);
             if replaced != transformed {
@@ -113,7 +136,7 @@ fn transform_literal(
             }
         }
     }
-    Some(mutated.then_some(transformed))
+    Ok(Some(mutated.then_some(transformed)))
 }
 
 struct Edit {
@@ -122,16 +145,17 @@ struct Edit {
     value: String,
 }
 
-pub(super) fn transform(
+pub(super) fn transform<E>(
     source: &str,
     analysis: &JsSourceAnalysis,
-    class_names: &HashSet<String>,
     escape: &EscapeTable,
     options: &JsTransformOptions,
-) -> Option<String> {
-    if class_names.is_empty() && options.always_escape != Some(true) {
-        return Some(source.to_owned());
-    }
+    contains: impl FnMut(&str) -> Result<bool, E>,
+) -> Result<Option<String>, E> {
+    let mut membership = Membership {
+        contains,
+        values: HashMap::new(),
+    };
     let units: Vec<u16> = source.encode_utf16().collect();
     let mut edits = Vec::new();
     let mut plans = HashMap::new();
@@ -142,14 +166,17 @@ pub(super) fn transform(
         }
         let key = (literal.value.as_str(), literal.class_context);
         if let std::collections::hash_map::Entry::Vacant(entry) = literals.entry(key) {
-            let transformed = transform_literal(
+            let Some(transformed) = transform_literal(
                 &literal.value,
-                class_names,
+                &mut membership,
                 escape,
                 options,
                 literal.class_context,
                 &mut plans,
-            )?;
+            )?
+            else {
+                return Ok(None);
+            };
             entry.insert(transformed);
         }
         let Some(transformed) = &literals[&key] else {
@@ -161,12 +188,17 @@ pub(super) fn transform(
         let (mut start, mut end) = (literal.start as usize, literal.end as usize);
         let replacement = if literal.kind == "string" {
             start += 1;
-            end = end.checked_sub(1)?;
-            if start >= end
-                || transformed
-                    .encode_utf16()
-                    .eq(units.get(start..end)?.iter().copied())
-            {
+            let Some(inner_end) = end.checked_sub(1) else {
+                return Ok(None);
+            };
+            end = inner_end;
+            if start >= end {
+                continue;
+            }
+            let Some(original) = units.get(start..end) else {
+                return Ok(None);
+            };
+            if transformed.encode_utf16().eq(original.iter().copied()) {
                 continue;
             }
             js_string_escape(transformed)
@@ -185,6 +217,10 @@ pub(super) fn transform(
             value: replacement,
         });
     }
+    Ok(render(source, &units, edits))
+}
+
+fn render(source: &str, units: &[u16], mut edits: Vec<Edit>) -> Option<String> {
     if edits.is_empty() {
         return Some(source.to_owned());
     }

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 
 export interface NativeTransformer {
   transform: (source: string, lang: ParseConfig['lang'], sourceType: ParseConfig['sourceType'], preserveParens: boolean, options: { alwaysEscape?: boolean, unescapeUnicode?: boolean, moduleGraph?: boolean, ignoreTaggedTemplates?: boolean, preserveStar?: boolean }) => string | null
+  transformWithCandidates: (source: string, lang: ParseConfig['lang'], sourceType: ParseConfig['sourceType'], preserveParens: boolean, options: Parameters<NativeTransformer['transform']>[4], contains: (candidate: string) => boolean) => string | null
   replaceClassNames: (classes: string[]) => boolean
 }
 

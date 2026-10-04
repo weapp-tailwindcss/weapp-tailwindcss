@@ -14,6 +14,7 @@ const native = vi.hoisted(() => ({
   },
   transformer: {
     transform: vi.fn<NativeJsTransformer['transform']>(),
+    transformWithCandidates: vi.fn<NativeJsTransformer['transformWithCandidates']>(),
     replaceClassNames: vi.fn<NativeJsTransformer['replaceClassNames']>(),
   },
 }))
@@ -29,7 +30,7 @@ beforeEach(() => {
   native.load.mockReturnValue(native.compiler)
   native.compiler.createJsTransformer.mockReturnValue(native.transformer)
   native.compiler.analyzeJs.mockReturnValue(null)
-  native.transformer.transform.mockReturnValue(output)
+  native.transformer.transformWithCandidates.mockReturnValue(output)
   native.transformer.replaceClassNames.mockReturnValue(true)
 })
 afterEach(() => vi.restoreAllMocks())
@@ -39,38 +40,44 @@ describe('Rust 完整 JS 转换适配器', () => {
     const { createJsHandler } = await import('@/js')
     expect(createJsHandler(options)(source).code).toBe(output)
     expect(native.compiler.analyzeJs).not.toHaveBeenCalled()
-    expect(native.transformer.transform).toHaveBeenCalledExactlyOnceWith(source, 'js', 'script', false, {
+    expect(native.transformer.transformWithCandidates).toHaveBeenCalledExactlyOnceWith(source, 'js', 'script', false, {
       alwaysEscape: true,
       preserveStar: false,
       unescapeUnicode: false,
       moduleGraph: false,
       ignoreTaggedTemplates: false,
-    })
+    }, expect.any(Function))
   })
 
   it('默认保留策略作为固定开关传给内核，用户自定义回调仍回退', async () => {
     const { nativeJsHandler } = await import('@/js/fast-path/native')
     const { defaultJsPreserveClass } = await import('@/js/default-preserve')
     nativeJsHandler(source, { ...options, jsPreserveClass: defaultJsPreserveClass })
-    expect(native.transformer.transform).toHaveBeenLastCalledWith(source, 'js', 'script', false, expect.objectContaining({ preserveStar: true }))
+    expect(native.transformer.transformWithCandidates).toHaveBeenLastCalledWith(source, 'js', 'script', false, expect.objectContaining({ preserveStar: true }), expect.any(Function))
     nativeJsHandler(source, options)
-    expect(native.transformer.transform).toHaveBeenLastCalledWith(source, 'js', 'script', false, expect.objectContaining({ preserveStar: false }))
+    expect(native.transformer.transformWithCandidates).toHaveBeenLastCalledWith(source, 'js', 'script', false, expect.objectContaining({ preserveStar: false }), expect.any(Function))
     expect(nativeJsHandler(source, { ...options, jsPreserveClass: () => false })).toBeUndefined()
-    expect(native.transformer.transform).toHaveBeenCalledTimes(2)
+    expect(native.transformer.transformWithCandidates).toHaveBeenCalledTimes(2)
   })
 
-  it('同一个 Set 等长替换成员时原子更新，集合不变时复用实例', async () => {
+  it.each([0, 6, 100_000])('集合规模 %i 不触发全量快照，每次候选查询读取最新集合', async (size) => {
     const { nativeJsHandler } = await import('@/js/fast-path/native')
-    const classes = new Set(['w-[100px]'])
+    const classes = new Set(Array.from({ length: size }, (_, index) => `unrelated-${index}`))
     const current = { ...options, classNameSet: classes }
-    nativeJsHandler(source, current)
-    nativeJsHandler(source, current)
-    expect(native.compiler.createJsTransformer).toHaveBeenCalledOnce()
-    expect(native.transformer.replaceClassNames).not.toHaveBeenCalled()
+    native.transformer.transformWithCandidates.mockImplementation((_source, _lang, _type, _parens, _options, contains) => contains('w-[100px]') ? output : source)
+    expect(nativeJsHandler(source, current)?.code).toBe(source)
+    classes.add('w-[100px]')
+    expect(nativeJsHandler(source, current)?.code).toBe(output)
     classes.delete('w-[100px]')
     classes.add('h-[100px]')
-    nativeJsHandler(source, current)
-    expect(native.transformer.replaceClassNames).toHaveBeenCalledExactlyOnceWith(['h-[100px]'])
+    expect(nativeJsHandler(source, current)?.code).toBe(source)
+    classes.clear()
+    expect(nativeJsHandler(source, current)?.code).toBe(source)
+    classes.add('w-[100px]')
+    expect(nativeJsHandler(source, current)?.code).toBe(output)
+    expect(native.compiler.createJsTransformer).toHaveBeenCalledExactlyOnceWith([], expect.any(Array))
+    expect(native.transformer.replaceClassNames).not.toHaveBeenCalled()
+    expect(native.transformer.transform).not.toHaveBeenCalled()
   })
 
   it('自定义映射同对象变更与删除使原生实例失效，并补齐默认映射', async () => {
@@ -89,17 +96,21 @@ describe('Rust 完整 JS 转换适配器', () => {
     expect(native.compiler.createJsTransformer.mock.calls[2]?.[1]).toContainEqual({ character: '[', replacement: '_b' })
   })
 
-  it('集合更新失败不执行旧集合，下一次仍尝试更新', async () => {
+  it('未被源码查询的孤立代理字符不导致集合快照回退', async () => {
+    const { nativeJsHandler } = await import('@/js/fast-path/native')
+    const classes = new Set(['w-[100px]', '\uD800'])
+    expect(nativeJsHandler(source, { ...options, classNameSet: classes })?.code).toBe(output)
+    expect(native.compiler.createJsTransformer).toHaveBeenCalledExactlyOnceWith([], expect.any(Array))
+    expect(native.transformer.replaceClassNames).not.toHaveBeenCalled()
+  })
+
+  it('直接适配器同样拒绝自定义集合', async () => {
     const { nativeJsHandler } = await import('@/js/fast-path/native')
     const classes = new Set(['w-[100px]'])
-    const current = { ...options, classNameSet: classes }
-    nativeJsHandler(source, current)
-    classes.add('\uD800')
-    native.transformer.replaceClassNames.mockReturnValue(false)
-    expect(nativeJsHandler(source, current)).toBeNull()
-    expect(nativeJsHandler(source, current)).toBeNull()
-    expect(native.transformer.replaceClassNames).toHaveBeenCalledTimes(2)
-    expect(native.transformer.transform).toHaveBeenCalledOnce()
+    classes.has = vi.fn(() => true)
+    expect(nativeJsHandler(source, { ...options, classNameSet: classes })).toBeUndefined()
+    expect(native.load).not.toHaveBeenCalled()
+    expect(classes.has).not.toHaveBeenCalled()
   })
 
   it.each([
@@ -126,19 +137,19 @@ describe('Rust 完整 JS 转换适配器', () => {
       ignoreTaggedTemplateExpressionIdentifiers: ['keep'],
       babelParserOptions: { sourceType: 'script' as const, createParenthesizedExpressions: true, plugins: ['typescript', 'jsx'] as ('typescript' | 'jsx')[] },
     }
-    native.transformer.transform.mockReturnValue(null)
+    native.transformer.transformWithCandidates.mockReturnValue(null)
     expect(nativeJsHandler(source, current)).toBeNull()
-    expect(native.transformer.transform).toHaveBeenCalledWith(source, 'tsx', 'script', true, expect.objectContaining({ moduleGraph: true, ignoreTaggedTemplates: true }))
+    expect(native.transformer.transformWithCandidates).toHaveBeenCalledWith(source, 'tsx', 'script', true, expect.objectContaining({ moduleGraph: true, ignoreTaggedTemplates: true }), expect.any(Function))
   })
 
   it('只有 null 回退，保留空输出且执行异常不吞掉', async () => {
     const { nativeJsHandler } = await import('@/js/fast-path/native')
-    native.transformer.transform.mockReturnValue(null)
+    native.transformer.transformWithCandidates.mockReturnValue(null)
     expect(nativeJsHandler(source, options)).toBeNull()
-    native.transformer.transform.mockReturnValue('')
+    native.transformer.transformWithCandidates.mockReturnValue('')
     expect(nativeJsHandler(source, options)).toEqual({ code: '' })
     const error = new Error('native transform failed')
-    native.transformer.transform.mockImplementation(() => {
+    native.transformer.transformWithCandidates.mockImplementation(() => {
       throw error
     })
     expect(() => nativeJsHandler(source, options)).toThrow(error)
@@ -156,7 +167,7 @@ describe('Rust 完整 JS 转换适配器', () => {
     expect(() => handler(source)).toThrow(error)
     native.load.mockReturnValue(native.compiler)
     expect(handler(source).code).toBe(output)
-    expect(native.transformer.transform).toHaveBeenCalledOnce()
+    expect(native.transformer.transformWithCandidates).toHaveBeenCalledOnce()
   })
 
   it('自定义集合与映射 getter 不由原生快照接管', async () => {
@@ -173,14 +184,14 @@ describe('Rust 完整 JS 转换适配器', () => {
     expect(createJsHandler({ ...options, escapeMap })(source).code).toContain('w-_custom_100px_B')
     expect(getter).toHaveBeenCalledOnce()
     expect(native.load).not.toHaveBeenCalled()
-    expect(native.transformer.transform).not.toHaveBeenCalled()
+    expect(native.transformer.transformWithCandidates).not.toHaveBeenCalled()
   })
 
   it('原生拒绝的语义必须交给 Babel，不能再次进入 Oxc', async () => {
     const { createJsHandler } = await import('@/js')
     const { jsHandler } = await import('@/js/babel')
     const invalid = 'let value = "w-[100px]"; let value = 1'
-    native.transformer.transform.mockReturnValue(null)
+    native.transformer.transformWithCandidates.mockReturnValue(null)
     const result = createJsHandler(options)(invalid)
     const expected = jsHandler(invalid, options)
     expect(expected.error).toBeDefined()

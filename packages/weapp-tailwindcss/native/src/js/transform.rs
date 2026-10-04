@@ -1,11 +1,12 @@
-use std::collections::{HashSet, VecDeque};
+use std::{cell::RefCell, collections::HashSet};
 
-use napi::bindgen_prelude::Utf16String;
+use napi::bindgen_prelude::{Function, Utf16String};
 use napi_derive::napi;
 
-use super::{JsSourceAnalysis, analyze_for_transform};
-
 mod apply;
+mod cache;
+#[cfg(test)]
+mod candidate_tests;
 mod candidates;
 mod decode;
 #[cfg(test)]
@@ -29,25 +30,12 @@ pub struct JsTransformOptions {
     pub preserve_star: Option<bool>,
 }
 
-struct CachedAnalysis {
-    source: String,
-    lang: String,
-    source_type: String,
-    preserve_parens: bool,
-    analysis: JsSourceAnalysis,
-    size: usize,
-}
-
-const MAX_CACHE_BYTES: usize = 2 * 1024 * 1024;
-const MAX_CACHE_ENTRIES: usize = 128;
-
 /// 实例由 JS GC 持有；类集合显式更新，解析缓存不保存原生 AST 或用户回调。
 #[napi]
 pub struct JsTransformer {
-    class_names: HashSet<String>,
+    class_names: RefCell<HashSet<String>>,
     escape: EscapeTable,
-    cache: VecDeque<CachedAnalysis>,
-    cache_size: usize,
+    cache: RefCell<cache::AnalysisCache>,
 }
 
 fn read_class_names(class_names: Vec<Utf16String>) -> Option<HashSet<String>> {
@@ -74,92 +62,116 @@ pub fn create_js_transformer(
         }
     }
     Some(JsTransformer {
-        class_names,
+        class_names: RefCell::new(class_names),
         escape,
-        cache: VecDeque::new(),
-        cache_size: 0,
+        cache: RefCell::default(),
     })
+}
+
+impl JsTransformer {
+    fn source_analysis(
+        &self,
+        input: Utf16String,
+        lang: String,
+        source_type: String,
+        preserve_parens: bool,
+        options: &JsTransformOptions,
+    ) -> Option<std::rc::Rc<cache::CachedAnalysis>> {
+        let source = String::from_utf16(&input).ok()?;
+        if source.contains("eval(") || (source.contains("weapp-tw") && source.contains("ignore")) {
+            return None;
+        }
+        // 解析结果由 Rc 持有；进入 JS 回调前必须释放缓存的所有 RefCell 借用。
+        let entry = {
+            let mut cache = self.cache.borrow_mut();
+            cache.resolve(source, lang, source_type, preserve_parens)
+        }?;
+        if (options.module_graph == Some(true) && entry.analysis.has_module_declarations)
+            || (options.ignore_tagged_templates == Some(true) && entry.analysis.has_tagged_template)
+        {
+            return None;
+        }
+        Some(entry)
+    }
+
+    fn transform_with<E>(
+        &self,
+        input: Utf16String,
+        lang: String,
+        source_type: String,
+        preserve_parens: bool,
+        options: &JsTransformOptions,
+        contains: impl FnMut(&str) -> Result<bool, E>,
+    ) -> Result<Option<String>, E> {
+        let Some(entry) = self.source_analysis(input, lang, source_type, preserve_parens, options)
+        else {
+            return Ok(None);
+        };
+        apply::transform(
+            &entry.source,
+            &entry.analysis,
+            &self.escape,
+            options,
+            contains,
+        )
+    }
 }
 
 #[napi]
 impl JsTransformer {
-    /// 原子替换集合；无损转换失败时不提交部分结果，调用方必须回退当前请求。
+    /// 原子替换旧接口的集合；候选查询接口不读取或保存此集合。
     #[napi]
-    pub fn replace_class_names(&mut self, class_names: Vec<Utf16String>) -> bool {
+    pub fn replace_class_names(&self, class_names: Vec<Utf16String>) -> bool {
         let Some(class_names) = read_class_names(class_names) else {
             return false;
         };
-        self.class_names = class_names;
+        *self.class_names.borrow_mut() = class_names;
         true
     }
 
-    /// 完整执行解析、精确匹配和文本替换；null 表示交还原有兼容管线。
+    /// 保留完整快照接口，供直接 ABI 消费者使用。
     #[napi]
     pub fn transform(
-        &mut self,
+        &self,
         input: Utf16String,
         lang: String,
         source_type: String,
         preserve_parens: bool,
         options: JsTransformOptions,
     ) -> Option<String> {
-        let source = String::from_utf16(&input).ok()?;
-        if source.contains("eval(") || (source.contains("weapp-tw") && source.contains("ignore")) {
-            return None;
+        let entry = self.source_analysis(input, lang, source_type, preserve_parens, &options)?;
+        let classes = self.class_names.borrow();
+        if classes.is_empty() && options.always_escape != Some(true) {
+            return Some(entry.source.clone());
         }
-        let index = self.cache.iter().position(|entry| {
-            entry.source == source
-                && entry.lang == lang
-                && entry.source_type == source_type
-                && entry.preserve_parens == preserve_parens
-        });
-        let entry = if let Some(index) = index {
-            let entry = self.cache.remove(index)?;
-            self.cache_size -= entry.size;
-            entry
-        } else {
-            let (analysis, _) =
-                analyze_for_transform(&source, &lang, &source_type, preserve_parens, false, true)?;
-            let size = source.len()
-                + analysis
-                    .literals
-                    .iter()
-                    .map(|item| item.value.len() + 104)
-                    .sum::<usize>();
-            CachedAnalysis {
-                source,
-                lang,
-                source_type,
-                preserve_parens,
-                analysis,
-                size,
-            }
-        };
-        let result = if (options.module_graph == Some(true)
-            && entry.analysis.has_module_declarations)
-            || (options.ignore_tagged_templates == Some(true) && entry.analysis.has_tagged_template)
-        {
-            None
-        } else {
-            apply::transform(
-                &entry.source,
-                &entry.analysis,
-                &self.class_names,
-                &self.escape,
-                &options,
-            )
-        };
-        if entry.size <= MAX_CACHE_BYTES {
-            while self.cache.len() >= MAX_CACHE_ENTRIES
-                || self.cache_size + entry.size > MAX_CACHE_BYTES
-            {
-                if let Some(oldest) = self.cache.pop_back() {
-                    self.cache_size -= oldest.size;
-                }
-            }
-            self.cache_size += entry.size;
-            self.cache.push_front(entry);
-        }
-        result
+        apply::transform(
+            &entry.source,
+            &entry.analysis,
+            &self.escape,
+            &options,
+            |candidate| Ok::<_, std::convert::Infallible>(classes.contains(candidate)),
+        )
+        .unwrap()
+    }
+
+    /// 只跨 ABI 查询当前源码候选，回调不跨调用保留；null 表示语义回退。
+    #[napi]
+    pub fn transform_with_candidates(
+        &self,
+        input: Utf16String,
+        lang: String,
+        source_type: String,
+        preserve_parens: bool,
+        options: JsTransformOptions,
+        contains: Function<'_, Utf16String, bool>,
+    ) -> napi::Result<Option<String>> {
+        self.transform_with(
+            input,
+            lang,
+            source_type,
+            preserve_parens,
+            &options,
+            |candidate| contains.call(candidate.encode_utf16().collect::<Vec<_>>().into()),
+        )
     }
 }

@@ -1,11 +1,11 @@
 use super::{JsEscapeEntry, JsTransformOptions, JsTransformer, create_js_transformer};
 use napi::bindgen_prelude::Utf16String;
 
-fn utf16(input: &str) -> Utf16String {
+pub(super) fn utf16(input: &str) -> Utf16String {
     input.encode_utf16().collect::<Vec<_>>().into()
 }
 
-fn transformer(classes: &[&str]) -> JsTransformer {
+pub(super) fn transformer(classes: &[&str]) -> JsTransformer {
     create_js_transformer(
         classes.iter().map(|input| utf16(input)).collect(),
         [
@@ -44,7 +44,7 @@ fn transforms_complete_source_and_preserves_comparison_values() {
         "'w-[1px]'; const x = c === 'w-[1px]' ? 'h-_b2px_B' : `w-_b1px_B ${v} h-_b2px_B`;";
     assert_eq!(run(&mut instance, source).unwrap(), expected);
     assert_eq!(run(&mut instance, source).unwrap(), expected);
-    assert_eq!(instance.cache.len(), 1);
+    assert_eq!(instance.cache.borrow().entries.len(), 1);
 }
 
 #[test]
@@ -101,7 +101,7 @@ fn preserves_unicode_and_explicit_merged_escape_mapping() {
 
 #[test]
 fn decodes_unicode_without_losing_json_fallback_semantics() {
-    let mut instance = transformer(&["w-[1px]"]);
+    let instance = transformer(&["w-[1px]"]);
     let options = JsTransformOptions {
         unescape_unicode: Some(true),
         ..Default::default()
@@ -223,7 +223,7 @@ fn default_star_preservation_precedes_matching_and_changes_per_call() {
             );
         }
     }
-    assert_eq!(instance.cache.len(), 1);
+    assert_eq!(instance.cache.borrow().entries.len(), 1);
 }
 
 #[test]
@@ -232,6 +232,9 @@ fn bounds_instance_analysis_cache() {
     for index in 0..140 {
         assert!(run(&mut instance, &format!("const x = 'w-[1px]'; // {index}")).is_some());
     }
-    assert_eq!(instance.cache.len(), super::MAX_CACHE_ENTRIES);
-    assert!(instance.cache_size <= super::MAX_CACHE_BYTES);
+    assert_eq!(
+        instance.cache.borrow().entries.len(),
+        super::cache::MAX_CACHE_ENTRIES
+    );
+    assert!(instance.cache.borrow().size <= super::cache::MAX_CACHE_BYTES);
 }

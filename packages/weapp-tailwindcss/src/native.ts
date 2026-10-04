@@ -50,6 +50,10 @@ export function loadNativeCompiler(): NativeCompiler | undefined {
         throw new TypeError(`Native compiler does not provide ${method}`)
       }
     }
+    const jsTransformer = loaded.createJsTransformer([], [])
+    if (!jsTransformer || typeof jsTransformer.transformWithCandidates !== 'function') {
+      throw new TypeError('Native compiler does not provide transformWithCandidates')
+    }
     compiler = loaded
     return compiler
   }

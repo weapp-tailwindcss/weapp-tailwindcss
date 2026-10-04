@@ -8,6 +8,7 @@ import { native } from './binding'
 import { classes, sources } from './fixtures'
 
 const names = [...classes, 'pages/home', 'text/plain', 'http://example.com']
+const classesForCallback = new Set(names)
 const transformer = native.createJsTransformer(names, Object.entries(MappingChars2String).map(([character, replacement]) => ({ character, replacement })))!
 const contexts = [
   'const x = VALUE',
@@ -60,6 +61,7 @@ for (const lang of ['js', 'jsx', 'ts', 'tsx'] as const) {
         for (const source of cases) {
           const babel = jsHandler(source, { classNameSet: new Set(names), unescapeUnicode, babelParserOptions: { plugins, sourceType, createParenthesizedExpressions: preserveParens } })
           const actual = transformer.transform(source, lang, sourceType, preserveParens, { unescapeUnicode })
+          assert.equal(transformer.transformWithCandidates(source, lang, sourceType, preserveParens, { unescapeUnicode }, candidate => classesForCallback.has(candidate)), actual)
           if (evalSources.includes(source)) {
             assert.equal(actual, null, 'eval 参数必须交还 Babel 递归转译')
           }
