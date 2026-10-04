@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url'
 import { satisfies } from 'semver'
 import { parseHBuilderXVersion } from '../../../packages/hbuilderx-runner/src/hbuilderx/hosts'
 import { createHBuilderXRunner } from '../../../packages/hbuilderx-runner/src/hbuilderx/runner'
+import { assertNativeSessionsAvailable } from '../../hbuilderx-native-registry'
 import { assertWechatAppIdBinding, resolveWechatAppId } from '../../wechat-app-id'
 import { closeWechatProject } from '../../wechat-project-cleanup'
 import { assertWechatLogin, existingWechatService, wechatRequest } from '../../wechat/service'
@@ -50,15 +51,17 @@ export async function hbuilderx(ctx: ProbeContext): Promise<ProbeOutput> {
     if (parseHBuilderXVersion(actual) !== version) {
       throw new Error(`HBuilderX 实例版本改变：${actual}`)
     }
+    await assertNativeSessionsAvailable(ctx.root, { path: cli!, host: host! })
     await command(cli!, ['project', 'list', '--host', host!])
     return { detail: 'HBuilderX 原 host 的版本、项目查询和平台组件入口通过。', binding: { ...ctx.binding, ...await hbuilderxTools(cli!) } }
   }
   const runner = await createHBuilderXRunner({ cwd: ctx.root, timeoutMs: 30_000 })
-  await runner.run({ args: ['project', 'list'], timeoutMs: 10_000 })
   const { path: cli, host, version, channel } = runner.resolution
   if (!host || !version) {
     throw new Error('未能确定 HBuilderX host 与实际版本。')
   }
+  await assertNativeSessionsAvailable(ctx.root, { path: cli, host })
+  await runner.run({ args: ['project', 'list'], timeoutMs: 10_000 })
   return { detail: 'HBuilderX CLI/host/channel、项目查询及平台组件入口通过。', binding: { command: cli, host, version, channel, ...await hbuilderxTools(cli) } }
 }
 

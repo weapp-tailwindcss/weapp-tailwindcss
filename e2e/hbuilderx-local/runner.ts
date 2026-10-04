@@ -9,6 +9,7 @@ import process from 'node:process'
 
 import path from 'pathe'
 import { expect } from 'vitest'
+import { runWithCleanup } from '../../scripts/e2e-preflight/cleanup'
 import { createHBuilderXAppProject } from '../../scripts/hbuilderx-app-project'
 import { createNativeSessionRecovery } from '../../scripts/hbuilderx-native-session'
 import { createHBuilderXProjectAlias as createSharedHBuilderXProjectAlias } from '../../scripts/hbuilderx-project-alias.mjs'
@@ -559,7 +560,7 @@ export async function verifyAppHmrWithHBuilderX(item: AppCase) {
     projectRoot = projectSession.projectRoot
     sourceFile = path.resolve(projectRoot, item.sourceFile)
     await recovery.bindProject(projectSession)
-    recovery.beginMutation()
+    await recovery.beginMutation()
     await writeAppMarker(sourceFile, resolveAppMarkerAnchors(item), {
       className: item.markerClass,
       textClassName: item.markerTextClass,
@@ -790,13 +791,17 @@ export async function verifyAppHmrWithHBuilderX(item: AppCase) {
   }
   finally {
     try {
-      await recovery.cleanup({
+      await runWithCleanup(() => recovery.cleanup({
         failure,
         stop: async () => { await launch?.stop('SIGINT') },
         nativeStopReason: () => hmrLifecycle?.nativeStopReason(),
         afterStop: () => hmrLifecycle?.assertNoFallback(),
         safe: [() => hmrLifecycle?.dispose(), () => domObserver?.dispose(), async () => { await nativeLog?.close() }],
         release: [async () => { await projectSession?.cleanup() }],
+      }), async () => {
+        if (recovery.cleanupComplete) {
+          await recovery.finish()
+        }
       })
     }
     catch (error) {

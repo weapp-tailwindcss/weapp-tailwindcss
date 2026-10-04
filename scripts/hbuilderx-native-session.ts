@@ -1,10 +1,13 @@
 import type { Buffer } from 'node:buffer'
+import type { NativeHost } from './hbuilderx-native-registry/identity'
 import { createHash, randomUUID } from 'node:crypto'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { inspect } from 'node:util'
+import { runWithCleanup } from './e2e-preflight/cleanup'
+import { claimNativeSession } from './hbuilderx-native-registry'
 import { cleanupHBuilderXResources } from './hbuilderx-project-resources'
 
 /** 停止边界未确认时冻结当前源码与项目，禁止调用方继续原生调度。 */
@@ -40,7 +43,7 @@ interface RecoveryOptions {
   directory: string
   projectRoot: string
   platform: string
-  host: unknown
+  host: NativeHost
   files: Array<{ file: string, optional?: boolean }>
 }
 
@@ -57,47 +60,60 @@ interface CleanupOptions {
 export async function createNativeSessionRecovery(options: RecoveryOptions) {
   const sessionId = randomUUID()
   const directory = path.resolve(options.directory, `native-session-${sessionId}`)
+  const registration = await claimNativeSession({ ...options, directory, sessionId })
   const originals = new Map<string, Buffer | undefined>()
-  for (const entry of options.files) {
-    let file = path.resolve(entry.file)
-    try {
-      file = await fs.realpath(file)
-      if (!originals.has(file)) {
-        originals.set(file, await fs.readFile(file))
+  try {
+    for (const entry of options.files) {
+      let file = path.resolve(entry.file)
+      try {
+        file = await fs.realpath(file)
+        if (!originals.has(file)) {
+          originals.set(file, await fs.readFile(file))
+        }
+      }
+      catch (error) {
+        if (!entry.optional || (error as NodeJS.ErrnoException).code !== 'ENOENT') {
+          throw error
+        }
+        originals.set(file, undefined)
       }
     }
-    catch (error) {
-      if (!entry.optional || (error as NodeJS.ErrnoException).code !== 'ENOENT') {
-        throw error
+    await fs.mkdir(directory, { recursive: true })
+    const files = []
+    for (const [file, bytes] of originals) {
+      const backup: string = `${files.length}.bin`
+      if (bytes) {
+        await fs.writeFile(path.join(directory, backup), bytes, { flag: 'wx' })
       }
-      originals.set(file, undefined)
+      files.push({ file, existed: bytes !== undefined, ...(bytes ? { backup, sha256: createHash('sha256').update(bytes).digest('hex'), size: bytes.length } : {}) })
     }
-  }
-  await fs.mkdir(directory, { recursive: true })
-  const files = []
-  for (const [file, bytes] of originals) {
-    const backup: string = `${files.length}.bin`
-    if (bytes) {
-      await fs.writeFile(path.join(directory, backup), bytes, { flag: 'wx' })
+    const manifest = {
+      sessionId,
+      createdAt: new Date().toISOString(),
+      owner: { pid: process.pid, hostname: os.hostname() },
+      projectRoot: options.projectRoot,
+      platform: options.platform,
+      host: options.host,
+      files,
     }
-    files.push({ file, existed: bytes !== undefined, ...(bytes ? { backup, sha256: createHash('sha256').update(bytes).digest('hex'), size: bytes.length } : {}) })
+    await fs.writeFile(path.join(directory, 'recovery.json'), JSON.stringify(manifest, null, 2), { flag: 'wx' })
   }
-  const manifest = {
-    sessionId,
-    createdAt: new Date().toISOString(),
-    owner: { pid: process.pid, hostname: os.hostname() },
-    projectRoot: options.projectRoot,
-    platform: options.platform,
-    host: options.host,
-    files,
+  catch (error) {
+    // 尚未返回恢复对象，源码与原生任务均未开始；只释放自己的领取。
+    return await runWithCleanup(async () => {
+      throw error
+    }, () => registration.release())
   }
-  await fs.writeFile(path.join(directory, 'recovery.json'), JSON.stringify(manifest, null, 2), { flag: 'wx' })
   let blocked = false
   let mutationStarted = false
+  let cleanupComplete = true
+  let cleanupFailed = false
+  let finished = false
   const restore = async () => {
     if (blocked || !mutationStarted) {
       return
     }
+    await registration.assertOwner()
     await cleanupHBuilderXResources([...originals].map(([file, bytes]) => async () => {
       if (bytes === undefined) {
         await fs.rm(file, { force: true })
@@ -114,9 +130,32 @@ export async function createNativeSessionRecovery(options: RecoveryOptions) {
     directory,
     sessionId,
     get blocked() { return blocked },
-    beginMutation() { mutationStarted = true },
+    get cleanupComplete() { return cleanupComplete },
+    async beginMutation() {
+      await registration.assertOwner()
+      if (blocked) {
+        throw new NativeCleanupBlockedError([new Error('当前原生会话已冻结。')], directory, sessionId)
+      }
+      if (cleanupFailed) {
+        throw new Error('原生会话未解除：前一轮资源收尾失败。')
+      }
+      cleanupComplete = false
+      mutationStarted = true
+    },
     restore,
+    async finish() {
+      if (finished || blocked) {
+        return
+      }
+      if (!cleanupComplete || cleanupFailed) {
+        throw new Error(`HBuilderX 原生会话未解除：收尾未完成，保留持久登记 ${registration.directory}`)
+      }
+      await registration.release()
+      finished = true
+    },
     async bindProject(project: { kind: string, projectRoot: string, projectPath: string, launchProject: string }) {
+      await registration.assertOwner()
+      cleanupComplete = false
       await fs.writeFile(path.join(directory, 'project.json'), JSON.stringify({ sessionId, ...project }, null, 2))
     },
     async cleanup(cleanup: CleanupOptions) {
@@ -130,7 +169,7 @@ export async function createNativeSessionRecovery(options: RecoveryOptions) {
         }
       }
       await attempt(cleanup.stop)
-      blocked = errors.length > 0
+      blocked ||= errors.length > 0
       let reason: string | undefined
       await attempt(() => {
         reason = cleanup.nativeStopReason()
@@ -140,11 +179,15 @@ export async function createNativeSessionRecovery(options: RecoveryOptions) {
         blocked = true
         errors.push(new Error(reason))
       }
+      const beforeAssertion = errors.length
       await attempt(cleanup.afterStop)
+      // restarted 等验收断言仍保留为失败，但不等价于停止或资源收尾未知。
+      const assertionErrors = errors.length - beforeAssertion
       for (const action of cleanup.safe) {
         await attempt(action)
       }
       if (blocked) {
+        await attempt(() => registration.block(reason ?? '原生任务停止未确认'))
         await attempt(() => fs.writeFile(path.join(directory, 'blocked.json'), JSON.stringify({
           sessionId,
           status: 'blocked',
@@ -158,6 +201,8 @@ export async function createNativeSessionRecovery(options: RecoveryOptions) {
       for (const action of cleanup.release) {
         await attempt(action)
       }
+      cleanupFailed ||= errors.length > assertionErrors
+      cleanupComplete = !cleanupFailed
       if (errors.length === 1) {
         throw errors[0]
       }

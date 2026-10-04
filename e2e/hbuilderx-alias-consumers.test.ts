@@ -8,9 +8,11 @@ import { launchHBuilderXMiniProgram } from '../scripts/hbuilderx-launch-mp-weixi
 import { withIssue1144Setup } from './hbuilderx-local/issue-1144-source'
 import { compileMiniProgramWithHBuilderX, verifyAppHmrWithHBuilderX } from './hbuilderx-local/runner'
 import { createHBuilderXDevServer } from './hbuilderx-local/web/dev-server'
+import { prepareNativeFixture } from './hbuilderx-native-fixture'
 
 const state = vi.hoisted(() => ({
   aliasRoot: '',
+  cli: '',
   alias: undefined as { projectPath: string, projectName: string, cleanup: () => Promise<void> } | undefined,
   closeError: undefined as Error | undefined,
   launchError: undefined as Error | undefined,
@@ -35,7 +37,7 @@ vi.mock('./hbuilderx-local/process', async importOriginal => ({
   ...await importOriginal<typeof import('./hbuilderx-local/process')>(),
   assertIosSimulatorToolchain: () => {},
   createLocalHBuilderXRunner: async () => ({
-    resolution: { channel: 'alpha', version: '5.14.2026070101-alpha' },
+    resolution: { path: state.cli, host: 'test-host', channel: 'alpha', version: '5.14.2026070101-alpha' },
     run: state.run,
     spawn: state.spawn,
     openProject: (options: { cwd: string }) => state.run({ ...options, args: ['project', 'open', '--path', options.cwd] }),
@@ -60,6 +62,7 @@ let projectRoot: string
 beforeEach(async () => {
   vi.stubEnv('HBUILDERX_COMPILE_ONLY', '1')
   root = await mkdtemp(path.join(tmpdir(), 'hbuilderx-alias-consumer-'))
+  state.cli = (await prepareNativeFixture(root)).path
   projectRoot = path.join(root, 'project')
   await mkdir(projectRoot)
   state.aliasRoot = path.join(root, 'aliases')

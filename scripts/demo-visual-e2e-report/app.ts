@@ -669,7 +669,7 @@ async function runAppCaseVariant(
         await writeStyleIsolationVariantManifest(projectRoot, variant)
       }
     }
-    shared.recovery.beginMutation()
+    await shared.recovery.beginMutation()
     await fs.writeFile(activeSourceFile, originalSource, 'utf8')
     await restoreVariantManifest()
 
@@ -927,7 +927,7 @@ async function runAppCaseVariant(
         updateLifecycle: hmrLifecycle?.snapshot(),
       },
     })
-    if (!recoveryReady || findNativeCleanupBlock(failure.error)) {
+    if (!recoveryReady || !shared.recovery.cleanupComplete || findNativeCleanupBlock(failure.error)) {
       throw failure.error
     }
   }
@@ -954,17 +954,12 @@ export async function runAppCase(item: AppCase, context: RuntimeContext, results
       ...resolveAppHmrSteps(item).flatMap(step => step.sourceMutation ? [{ file: path.resolve(projectRoot, step.sourceMutation.file) }] : []),
     ],
   })
-  const originalSource = removeLegacyAppMarkers(await readUtf8(sourceFile))
-  const originalManifest = await readManifest(projectRoot).catch(() => undefined)
-  const shared = {
-    originalManifest,
-    originalSource,
-    toolEnv,
-    recovery,
-  }
   await runWithCleanup(async () => {
+    const originalSource = removeLegacyAppMarkers(await readUtf8(sourceFile))
+    const originalManifest = await readManifest(projectRoot).catch(() => undefined)
+    const shared = { originalManifest, originalSource, toolEnv, recovery }
     for (const variant of resolveStyleIsolationVariants(item.projectDir)) {
       await runAppCaseVariant(item, context, results, variant, { ...shared, hbuilderx })
     }
-  }, () => recovery.restore())
+  }, () => recovery.finish())
 }

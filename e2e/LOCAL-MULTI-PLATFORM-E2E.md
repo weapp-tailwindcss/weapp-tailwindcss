@@ -227,6 +227,8 @@ pnpm e2e:ios:hmr
 
 切换 Android/iOS/Harmony 前先停止上一个 HBuilderX 运行任务，再重新 launch。确认日志出现真实运行时信号（例如 `App Launch`），并确认页面不是 HBuilderX 启动页。App 产物路径必须从 runner 输出和实际文件确认，不能把 Android 的 `app-plus` 路径套给 Harmony。
 
+原生入口在共享 Git common dir 中按安装、机器和 host 原子登记，整个测试作用域清理成功后才释放。未解除、损坏或 owner 已退出的登记会同时阻断预检和新的原生入口，不能换项目、平台、版本或报告目录重跑绕过。停止未知时保留现场；不存在强制跳过或自动过期解除。该保护仅覆盖共享此 Git common dir 的仓库脚本，不控制其他仓库或人工 IDE 任务，详见[持久门禁复盘](../docs/engineering/lessons/native-session-persistent-guard.md)。
+
 Harmony 的项目身份由 `scripts/hbuilderx-app-project.ts` 按本轮绑定 host 的版本选择。Alpha 5.31 起使用 `fs.realpath` 后的真实根作为 `--project` 与 cwd，不注册或关闭这个真实项目；其他版本和 Android/iOS 保留独占别名兼容入口。核对 `[hbuilderx-app-project]` 中的 `kind`、`projectRoot`、`launchProject` 与实际编译输出路径一致，不能将同名项目、符号链接目录或旧预检版本当作身份依据。该模式消除仓库引入的 Harmony 根路径别名，但不证明 IDE 内部 native 任务已停止；停止或 fallback 状态未知时仍按[取消边界记录](../docs/engineering/lessons/harmony-cancel-alias-boundary.md)保留现场并阻断后续调度。真实对照的证据要求见[路径身份复盘](../docs/engineering/lessons/harmony-canonical-project-root.md)。
 
 ### 3.4 视觉报告

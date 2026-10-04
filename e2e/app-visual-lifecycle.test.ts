@@ -13,8 +13,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { runAppCase } from '../scripts/demo-visual-e2e-report/app'
 import { runNativeVisualCases } from '../scripts/demo-visual-e2e-report/app-batch'
 import { findNativeCleanupBlock } from '../scripts/hbuilderx-native-session'
+import { prepareNativeFixture } from './hbuilderx-native-fixture'
 
 const state = vi.hoisted(() => ({
+  cli: '',
   child: undefined as ChildProcess | undefined,
   version: '5.14.2026070101-alpha',
   launchError: undefined as Error | undefined,
@@ -67,7 +69,7 @@ vi.mock('./hbuilderx-local/process', () => ({
   resolveHdcCommand: () => 'test-hdc',
   collectProcessOutput: () => [],
   createLocalHBuilderXRunner: async () => ({
-    resolution: { channel: 'alpha', version: state.version },
+    resolution: { path: state.cli, host: 'test-host', channel: 'alpha', version: state.version },
     run: async (options: { args: string[], allowFailure?: boolean }) => {
       if (options.args[1] === 'open') {
         state.openProject(options)
@@ -168,6 +170,7 @@ describe('App 视觉入口的原生 HMR 生命周期', () => {
     vi.stubEnv('E2E_HBUILDERX_IOS_SCREENSHOT_TARGET', 'second-simulator')
     const directory = await mkdtemp(join(tmpdir(), 'app-visual-lifecycle-'))
     directories.push(directory)
+    state.cli = (await prepareNativeFixture(directory)).path
     const sourceFile = join(directory, 'App.uvue')
     const original = 'original source\r\nlegacy-marker\r\n'
     await writeFile(sourceFile, original)
@@ -229,7 +232,10 @@ describe('App 视觉入口的原生 HMR 生命周期', () => {
       expect(await readFile(sourceFile, 'utf8')).toBe('changed')
     }
     else {
-      expect(error).toBeUndefined()
+      if (cleanup === 'none') {
+        expect(error).toBeUndefined()
+      }
+      else { expect(error).toBeDefined() }
       expect(state.closeProject).toHaveBeenCalledWith(expect.objectContaining({ allowFailure: false }))
       expect(await readFile(sourceFile, 'utf8')).toBe(original)
     }
@@ -262,6 +268,7 @@ describe('App 视觉入口的原生 HMR 生命周期', () => {
     }
     const directory = await mkdtemp(join(tmpdir(), 'app-visual-harmony-'))
     directories.push(directory)
+    state.cli = (await prepareNativeFixture(directory)).path
     const linked = join(directory, 'worktree-link')
     const project = join(directory, 'project')
     await mkdir(project)

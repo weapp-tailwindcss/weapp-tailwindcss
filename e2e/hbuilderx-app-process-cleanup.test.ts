@@ -11,9 +11,11 @@ import { PassThrough } from 'node:stream'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { findNativeCleanupBlock } from '../scripts/hbuilderx-native-session'
 import { verifyAppHmrWithHBuilderX } from './hbuilderx-local/runner'
+import { prepareNativeFixture } from './hbuilderx-native-fixture'
 
 const state = vi.hoisted(() => ({
   aliasRoot: '',
+  cli: '',
   version: '5.14.2026070101-alpha',
   alias: undefined as { projectPath: string, cleanup: () => Promise<void> } | undefined,
   captureError: undefined as Error | undefined,
@@ -43,7 +45,7 @@ vi.mock('./hbuilderx-local/process', async importOriginal => ({
   killProcessTree: state.kill,
   wait: async () => {},
   createLocalHBuilderXRunner: async () => ({
-    resolution: { channel: 'alpha', version: state.version },
+    resolution: { path: state.cli, host: 'test-host', channel: 'alpha', version: state.version },
     run: state.run,
     spawn: state.spawn,
   }),
@@ -99,6 +101,7 @@ const originalSource = '<template><view>original</view></template>'
 
 beforeEach(async () => {
   root = await mkdtemp(path.join(tmpdir(), 'hbuilderx-app-process-'))
+  state.cli = (await prepareNativeFixture(root)).path
   const projectRoot = path.join(root, 'project')
   await mkdir(projectRoot)
   source = path.join(projectRoot, 'App.uvue')
