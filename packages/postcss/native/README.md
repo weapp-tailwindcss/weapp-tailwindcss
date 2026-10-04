@@ -4,7 +4,7 @@
 
 `transformSelector` 接收 UTF-16 原始选择器，支持类名、简单 ASCII ID、嵌套符、组合器与列表。遇到未接管的语法返回 `null`，由原有 AST 路径处理；自定义映射也继续走 AST。`transformSelectors` 是同一语义的批量接口。不会在 NAPI 传递 PostCSS AST 或调用用户插件。显式 escape map 按内容生成快照，同一对象原地修改后会刷新映射与选择器缓存。
 
-生产规则转换改用 `SelectorRuleTransformer`，构造时只传一次 root/universal/child 替换和平台开关，之后 `transform(selector)` 返回 `{ selector, remove, spacing }`。Rust 内部先使用简单选择器路径，否则一次解析 arena AST，完成 where/is 嵌套展开、RTL、不支持伪类与伪元素移除、空分支清理和 spacing 选择器替换。PostCSS 根据动作更新原规则和声明。注释、命名空间、部分特殊 escape、小数 keyframes、自定义映射和超过 128 层的嵌套仍回退；展开达到 100,000 个 arena 节点时也回退。未将这些边界标记为迁移完成。
+生产规则转换改用 `SelectorRuleTransformer`，公共入口按有效内容生成配置快照，root/universal/child 数组、平台开关或 escapeMap 变化时统一重建 JS/原生实例与结果缓存；每个原生实例构造时只传一次替换和平台开关，之后 `transform(selector)` 返回 `{ selector, remove, spacing }`。Rust 内部先使用简单选择器路径，否则一次解析 arena AST，完成 where/is 嵌套展开、RTL、不支持伪类与伪元素移除、空分支清理和 spacing 选择器替换。PostCSS 根据动作更新原规则和声明。注释、命名空间、部分特殊 escape、小数 keyframes、自定义映射和超过 128 层的嵌套仍回退；展开达到 100,000 个 arena 节点时也回退。未将这些边界标记为迁移完成。
 
 `normalizeV4VariableFallbacks` 一次解析完成空 `--tw-` fallback、gradient via-stops 拆分和位置变量 fallback 三个阶段。`normalizeUvueTransformValue` 只改写 translate 的直接逗号分隔符，保留嵌套 var、字符串、URL 和注释。生产 uvue 管线使用 `normalizeUvueTransformValues` 批量接口，按声明顺序回写；未闭合值和达到 256 层的嵌套返回 `null`，逐项使用原有 value-parser。Rust AST 借用输入 UTF-16 切片，避免每个 token 复制文本，AST 不跨 NAPI。
 

@@ -7,6 +7,8 @@ regressions:
   - packages/postcss/test/native-selectors-loader.test.ts
   - packages/postcss/test/selectorParser.test.ts
   - packages/postcss/test/native/native-selectors.test.ts
+  - packages/postcss/test/selector-options-mutation.test.ts
+  - packages/postcss/test/native/selector-options-mutation.test.ts
 ---
 
 # Rust 复杂选择器 AST 迁移
@@ -46,6 +48,14 @@ Node 24.18.0、macOS arm64、PostCSS 8.5.28、postcss-selector-parser 7.1.6。�
 验证时仅将本工作树拥有的二进制暂存到 `os.tmpdir()` 创建的独立目录，用 try/finally 还原，哈希未改变。无二进制、默认 auto 下，普通入口 124 文件、1,252 项通过、3 项既有跳过。专用原生入口在 setup 抛出两个 `Cannot find module` 子错误，0 项执行、1 个 suite 失败，证实没有静默回退或 skip；最初的验证脚本误判 Vitest 会输出 AggregateError 外层中文，但 Vitest 实际展开了子错误，修正的是日志断言，不是产品失败边界。还原后专用入口五文件通过；外部设置 `WEAPP_TW_NATIVE=off` 也由配置强制为 required。
 
 当前真实 ABI 命令为 `CI=1 pnpm --filter @weapp-tailwindcss/postcss exec vitest run --config vitest.native.config.ts --update=none --coverage.enabled=false`。普通入口和真实原生门禁都必须运行；设置环境变量不会自动把真实 ABI 文件加入普通测试配置。
+
+### 后续配置生命周期审计
+
+复用同一个 options 并修改字段时，旧 JS 并非统一读取配置：root/universal 在创建 transformer 时固定，hover/active/focus Set 首次创建后缓存，child 替换在首次实际使用时缓存，uniAppX 每次读取；结果缓存又未包含这些选项。新原生实例在首次调用时统一固化，因此引入额外差异。最小复现为先处理 `.warm:hover`，再改 child 为 text：off 输出 text+text，原生仍输出 view+view；改 uniAppX 后处理新的 `[hidden]` selector 也会漂移。先走简单 `.warm` 快路再打开 hover 开关时，off 保留 hover，原生却删除规则。
+
+修复将相关配置快照统一放在 `ruleTransformSync` 入口。root/universal/child 按数组内容比较并复制，三个伪类开关和 uniAppX 按有效布尔值比较，escapeMap 复用内容快照。配置内容变化时重建整个 transformer：新的选项身份同时刷新 JS 子缓存、原生实例和 selector 结果缓存。未改变的配置继续复用；不再保留旧 JS 混合冻结时机产生的缺陷，验收以等价新 options 对象的输出为准。此行为修复有中文 patch intent。
+
+先增加回归再修复：普通 off 的九组场景在修复前七组失败，真实 ABI 对拍八组失败；覆盖等长数组原地修改、配置删除、空 child、三个开关和 uniAppX 往返、escapeMap 增删改，以及首次使用时机。修复后普通选项/selector/loader 三文件 63 项通过；真实 ABI 六文件 99 项通过；ESM/CJS、类型和源码 ESLint 通过。本次没有修改 Rust ABI、重编二进制或进行性能采样。
 
 ## 适用边界
 

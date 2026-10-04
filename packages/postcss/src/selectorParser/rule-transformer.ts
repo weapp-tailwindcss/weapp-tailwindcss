@@ -5,9 +5,9 @@ import type { IStyleHandlerOptions } from '../types'
 import type { CachedSelectorTransformResult, TransformContext } from './rule-transformer/types'
 import psp from 'postcss-selector-parser'
 import { composeIsPseudo } from '../shared'
-import { resolveCssEscapeMap } from '../utils/escape-map'
 import { createNativeSelectorRuleTransformer } from './native-rule'
 import { handleClassNode, handleCombinatorNode, handleSelectorNode, handleTagOrAttribute, handleUniversalNode } from './rule-transformer/nodes'
+import { resolveSelectorTransformOptions } from './rule-transformer/options'
 import { handlePseudoNode, shouldRemoveEmptyFunctionalPseudo } from './rule-transformer/pseudos'
 import { getUnsupportedPseudoClassSet } from './rule-transformer/unsupported-pseudos'
 import {
@@ -20,7 +20,7 @@ import {
 
 export type RuleTransformer = (rule: Rule) => void
 
-const ruleTransformCache = new WeakMap<IStyleHandlerOptions, RuleTransformer>()
+const ruleTransformCache = new WeakMap<IStyleHandlerOptions, { options: IStyleHandlerOptions, transform: RuleTransformer }>()
 
 const SELECTOR_TRANSFORM_OPTIONS = normalizeTransformOptions()
 const SIMPLE_SELECTOR_FAST_PATH = /^[#.][\w-]+(?:\s+[#.][\w-]+)*$/
@@ -101,8 +101,7 @@ function createRuleTransformer(options: IStyleHandlerOptions): RuleTransformer {
   const universalReplacement = options.cssSelectorReplacement?.universal
     ? composeIsPseudo(options.cssSelectorReplacement.universal)
     : undefined
-  let escapeMapSnapshot = resolveCssEscapeMap(options.escapeMap)
-  let selectorReplacerOptions = options.escapeMap
+  const selectorReplacerOptions = options.escapeMap
     ? { escapeMap: options.escapeMap }
     : undefined
   const unsupportedPseudoClasses = getUnsupportedPseudoClassSet(options)
@@ -128,13 +127,6 @@ function createRuleTransformer(options: IStyleHandlerOptions): RuleTransformer {
     const sourceSelector = rule.selector
     if (!sourceSelector) {
       return
-    }
-
-    const nextEscapeMap = resolveCssEscapeMap(options.escapeMap)
-    if (nextEscapeMap !== escapeMapSnapshot) {
-      selectorResultCache.clear()
-      escapeMapSnapshot = nextEscapeMap
-      selectorReplacerOptions = options.escapeMap ? { escapeMap: options.escapeMap } : undefined
     }
 
     const cached = selectorResultCache.get(sourceSelector)
@@ -216,10 +208,11 @@ function createRuleTransformer(options: IStyleHandlerOptions): RuleTransformer {
 
 // ruleTransformSync 提供同步的规则转换入口，并基于配置缓存转换器
 export function ruleTransformSync(rule: Rule, options: IStyleHandlerOptions) {
-  let transformer = ruleTransformCache.get(options)
-  if (!transformer) {
-    transformer = createRuleTransformer(options)
-    ruleTransformCache.set(options, transformer)
+  let cached = ruleTransformCache.get(options)
+  const snapshot = resolveSelectorTransformOptions(options, cached?.options)
+  if (!cached || snapshot !== cached.options) {
+    cached = { options: snapshot, transform: createRuleTransformer(snapshot) }
+    ruleTransformCache.set(options, cached)
   }
-  transformer(rule)
+  cached.transform(rule)
 }
