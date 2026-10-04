@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { Buffer } from 'node:buffer'
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
@@ -14,10 +15,18 @@ assert.ok(compiler, 'Native compiler must be built before verification; fallback
 const tokenizer = new Tokenizer()
 const reference = new JavaScriptTokenizer()
 const cases = [
-  '', ' \t\n\v\f\r\u00A0\uFEFF', 'a\u2003b', 'w-[10px] h-[20px]',
+  '',
+  ' \t\n\v\f\r\u00A0\uFEFF',
+  'a\u2003b',
+  'w-[10px] h-[20px]',
   '2xl:text-xs rd-tag-{{type}}-{{theme}} {{prefix}}-btn',
   `{{n.attrs.href?'_a ':''}}{{n.attrs.class}}`,
-  'a { b', '{a}}x', '{{a{{b}}}}', '{{a}b}}', '\\{{a}}', '{{"}}"}} tail',
+  'a { b',
+  '{a}}x',
+  '{{a{{b}}}}',
+  '{{a}b}}',
+  '\\{{a}}',
+  '{{"}}"}} tail',
   '😀 中文\uD800{{\uDC00}}\0',
 ]
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
@@ -31,8 +40,8 @@ for (const segments of [
   cases.push(readFileSync(resolve(root, '../..', ...segments), 'utf8'))
 }
 
-let seed = 0x5eeda11
-const alphabet = ['x', '{', '}', ' ', '\t', '\n', '\\', '"', "'", '中', '😀', '\uD800', '\uDC00', '\u00A0', '\uFEFF', '\u2003', '\0']
+let seed = 0x5EEDA11
+const alphabet = ['x', '{', '}', ' ', '\t', '\n', '\\', '"', '\'', '中', '😀', '\uD800', '\uDC00', '\u00A0', '\uFEFF', '\u2003', '\0']
 function random() {
   seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0
   return seed

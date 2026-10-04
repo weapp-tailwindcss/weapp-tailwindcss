@@ -66,6 +66,8 @@ p50 使用 nearest-rank 统计；三轮分析缓存未命中的比率分别为 3
 
 采样时 HEAD 为 `d974423089b62aac0f0005c0cbe569b9a0500c7b`，包含本次尚未提交的修复；因此用实际源码哈希锁定被测实现：`src/js/fast-path/analysis.ts` 为 `df43581a21ffcf112864b0e2591915fe5851dbca4f01929ae266ae82f625314c`，`src/js/oxc-parser.ts` 为 `cdf8da2bed22dee03f9c23cbaeac55a246304c2f04066b82d00eabba2065b568`。完整逐样本数据保存在忽略的 `.tmp/oxc-raw-transfer/benchmark.json`，可用上述持久脚本重新生成。
 
+2026-10-05 在后续原生集成基线 `30d9fc2196b7921f5c24a05ab08a7fc5ea80bee2` 上重新以 `WEAPP_TW_NATIVE=off` 测量 normal/raw；同一输入、Node 24.18.0、三轮交替采样的 240 对分析和输出全部一致。冷分析 p50 为 11.608/4.308 ms，2.694 倍；三轮分别为 2.703、2.725、2.668 倍。冷 handler 为 12.740/5.355 ms，2.379 倍；热 handler 为 1.101/1.109 ms，没有收益。报告 `.tmp/rust-native/raw-report.json` 记录四个被测模块的实际源码哈希。两次测量分别属于不同源码基线，不合并样本，也不以较好的早期数字代替当前结果。
+
 ### 真实 Vite demo
 
 使用 `demo/web/vue-vite-tailwindcss-v4` 的真实 Vite 8.3.0 配置与本 worktree 构建产物。每个模式为独立 Node 进程，生产构建 `write:false`，在同一开发服务与 headless Chromium 页面依次执行文本、新增类、删除和恢复；每次同时校验 DOM、计算样式与页面 session。normal/raw 的完整构建产物哈希及各 HMR 阶段结果均一致。App.vue 逐字恢复，所有临时服务、浏览器与缓存完成清理，未修改 demo/static 基线。
@@ -98,9 +100,9 @@ Web 目标三对采样通过，但实际 core Oxc 调用数为 0，不能用它�
 ## 适用边界
 
 - 本轮验证 Oxc 与现有 Babel 行为一致。Babel 对模板字符串或 TS 包装内的某些比较值也会转义，例如 ``value === `w-[1px]` `` 或 `value === ("w-[1px]" as string)`。本次没有修改这项既有 Babel 行为，因此不能表述为“所有条件比较都安全”。
-- 未实施全项目 Rust 化、lazy visitor 或完整 Lightning CSS 替换；CSS 继续走既有 PostCSS 管线，未合入独立 Rust tokenizer/escape 实验。
+- 本记录的初始阶段未实施全项目 Rust 化、lazy visitor 或完整 Lightning CSS 替换。后续 JS/WXML 与独立 CSS 内核接线见 [JS 原生边界](rust-js-native-boundary.md) 和 [CSS 迁移覆盖清单](../../../packages/postcss/native/MIGRATION.md)；PostCSS 管线继续保留，不能将初始 raw transfer 数据当作后续 Rust 实现的性能数据。
 - 本地覆盖 macOS arm64，尚未取得 Windows/Linux 实机性能结果。能力探测与失败回退有定向测试，不能替代其他平台的性能证据。
-- 本次执行定向回归，不宣称全仓或多端验收；未执行全端环境预检及全面测试。
+- 本记录执行定向回归，不宣称全仓或多端验收；后续全面环境预检仍因 iOS 目标歧义与当前会话 computer use 缺证而阻塞，详情见 JS 原生边界记录。
 
 ## 规则评估
 

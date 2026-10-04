@@ -16,7 +16,9 @@ beforeEach(() => {
   native.create.mockReturnValue({ transformStatic: native.transform })
   native.transform.mockReturnValue('native result')
   native.tokenize.mockImplementation((source: string) => Uint32Array.from(new JavaScriptTokenizer().run(source).flatMap(token => [
-    token.start, token.end, token.expressions.length,
+    token.start,
+    token.end,
+    token.expressions.length,
     ...token.expressions.flatMap(expression => [expression.start, expression.end]),
   ])))
 })
@@ -66,7 +68,9 @@ describe('native static WXML adapter', () => {
     native.transform.mockReturnValue(null)
     expect(templateReplacer('w-[1px]')).toBe('w-_b1px_B')
     const error = new Error('native execution failure')
-    native.transform.mockImplementation(() => { throw error })
+    native.transform.mockImplementation(() => {
+      throw error
+    })
     expect(() => templateReplacer('w-[1px]')).toThrow(error)
   })
 

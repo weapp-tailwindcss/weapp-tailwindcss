@@ -46,4 +46,6 @@ CI 在 Node 24 和 core 最低受支持的 Node 22.18.0 上运行消费者验证
 
 `pnpm native:artifacts:verify` 要求两套内核、八个平台全部存在，并检查目标、源码摘要、二进制 SHA-256、消费者版本、平台包版本、os/cpu/libc、导出、第三方许可和无安装脚本。源码摘要统一 LF/CRLF，避免 Windows checkout 差异产生误判。缺失平台、混入旧产物或内容不匹配时立即失败，不使用本机 binding 填补其他目标。
 
+预发布会在构建后修改版本。repoctl 的 `beforeVersion` 先保存已通过全部目标校验的证据，`afterVersion` 再确认源码、二进制和元数据未变，仅更新消费者版本；`beforePublish` 重新执行完整验证。缺少版本修改前的证据时禁止重标旧产物。此过程不重新编译，也不绕过八平台验证。
+
 `native/test/package.mjs` 只读取当前平台产物；`test/native-distribution.test.ts` 验证缺失、篡改、版本漂移、错误 libc 和跨内核错配的失败边界。未执行的远端矩阵不得记为已验证。

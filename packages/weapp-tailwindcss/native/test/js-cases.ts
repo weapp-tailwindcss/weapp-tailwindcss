@@ -25,7 +25,7 @@ export const javascriptCases = [
   'export default "w-[10px]"',
   'const mod = import("./w-[10px]")',
   'const cls = "\\ud800 w-[10px] \\udc00"',
-  'const cls = "\ud800 w-[10px] \udc00"',
+  'const cls = "\uD800 w-[10px] \uDC00"',
   'const cls = `line\r\nw-[10px]`',
   'const broken = "w-[10px]',
 ]

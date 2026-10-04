@@ -1,6 +1,7 @@
-import type { NativeWxmlCompiler } from '../../src/wxml/native/types'
 import type { ITemplateHandlerOptions } from '../../src/types'
+import type { NativeWxmlCompiler } from '../../src/wxml/native/types'
 import assert from 'node:assert/strict'
+import { Buffer } from 'node:buffer'
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
@@ -27,10 +28,19 @@ function reference(source: string, options: ITemplateHandlerOptions = {}) {
 }
 
 const cases = [
-  '', ' \t\n\r\v\f\u00A0\uFEFF', 'w-[1px] h-[2px]', '\r\n w-[1px]\r \u00A0w-[2px]\n',
-  '- -- -1 2xl:w-[1px]', '😀 中\uD800\uDC00 \uDC00 \uD800', 'a\u2003b w-[1px]\u2003w-[2px]',
-  'a { w-[1px]\n w-[2px]', '{0\r\n1', '{\uD800\n\uDC00', 'before:content-[\'a b\']',
-  'w-[1px]\0', ' \u1680\u2028\u2029\u202F\u205F\u3000\u200B',
+  '',
+  ' \t\n\r\v\f\u00A0\uFEFF',
+  'w-[1px] h-[2px]',
+  '\r\n w-[1px]\r \u00A0w-[2px]\n',
+  '- -- -1 2xl:w-[1px]',
+  '😀 中\uD800\uDC00 \uDC00 \uD800',
+  'a\u2003b w-[1px]\u2003w-[2px]',
+  'a { w-[1px]\n w-[2px]',
+  '{0\r\n1',
+  '{\uD800\n\uDC00',
+  'before:content-[\'a b\']',
+  'w-[1px]\0',
+  ' \u1680\u2028\u2029\u202F\u205F\u3000\u200B',
 ]
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..')
 for (const parts of [
@@ -48,7 +58,7 @@ for (const parts of [
   }, { xmlMode: true })
   parser.end(readFileSync(resolve(root, ...parts), 'utf8'))
 }
-let seed = 0x77a11
+let seed = 0x77A11
 const alphabet = ['x', '0', '2', '-', '[', ']', ':', '/', '\0', '{', ' ', '\r', '\n', '\t', '\v', '\f', '\\', '中', '😀', '\uD800', '\uDC00', '\u00A0', '\uFEFF', '\u2003', '\u2028', '\u2029', '\u200B']
 function random() {
   seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0
@@ -87,12 +97,16 @@ for (const map of [{ '[': '<', ']': '', '-': '-', '2': '2' }, { '[': '\uD800', '
 }
 
 for (const source of ['x {{foo}} y', 'w-[1px] {a}} w-[2px]', '{{class}}', '{{a}b}}']) {
-  assert.equal(transformer.transformStatic(source, () => { throw new Error('Dynamic fallback must not call membership') }), null)
+  assert.equal(transformer.transformStatic(source, () => {
+    throw new Error('Dynamic fallback must not call membership')
+  }), null)
   assert.equal(nativeStaticTemplateReplacer(source, {}), undefined)
   assert.equal(templateReplacer(source), reference(source))
 }
 const predicateError = new Error('membership identity')
-assert.throws(() => transformer.transformStatic('w-[1px]', () => { throw predicateError }), error => error === predicateError)
+assert.throws(() => transformer.transformStatic('w-[1px]', () => {
+  throw predicateError
+}), error => error === predicateError)
 const exactSet = new Set(['w-[1px]'])
 const source = 'w-[1px] w-[2px]'
 assert.equal(nativeStaticTemplateReplacer(source, { classSetMode: 'exact', runtimeSet: exactSet }), 'w-_b1px_B w-[2px]')

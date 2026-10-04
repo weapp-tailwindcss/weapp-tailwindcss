@@ -1,12 +1,14 @@
 # Rust CSS 转换内核
 
-此内核负责选择器 tokenize、CSS escape 解码、类名转义、复杂伪类展开与序列化，以及 Tailwind v4 变量 fallback 和 uvue translate 的值解析与转换。PostCSS AST、其余平台兼容处理、单位和颜色处理、用户插件仍由现有管线执行，不能将其称为完整 CSS 管线迁移。逐模块状态见[迁移覆盖清单](MIGRATION.md)。
+此内核负责选择器 tokenize、CSS escape 解码、类名转义、复杂伪类展开与序列化，以及 Tailwind v4 变量 fallback、圆角 clamp、渐变方向、infinity/calc 和 uvue translate 的值解析与转换。PostCSS AST、其余平台兼容处理、单位和颜色处理、用户插件仍由现有管线执行，不能将其称为完整 CSS 管线迁移。逐模块状态见[迁移覆盖清单](MIGRATION.md)。
 
 `transformSelector` 接收 UTF-16 原始选择器，支持类名、简单 ASCII ID、嵌套符、组合器与列表。遇到未接管的语法返回 `null`，由原有 AST 路径处理；自定义映射也继续走 AST。`transformSelectors` 是同一语义的批量接口。不会在 NAPI 传递 PostCSS AST 或调用用户插件。显式 escape map 按内容生成快照，同一对象原地修改后会刷新映射与选择器缓存。
 
 生产规则转换改用 `SelectorRuleTransformer`，公共入口按有效内容生成配置快照，root/universal/child 数组、平台开关或 escapeMap 变化时统一重建 JS/原生实例与结果缓存；每个原生实例构造时只传一次替换和平台开关，之后 `transform(selector)` 返回 `{ selector, remove, spacing }`。Rust 内部先使用简单选择器路径，否则一次解析 arena AST，完成 where/is 嵌套展开、RTL、不支持伪类与伪元素移除、空分支清理和 spacing 选择器替换。PostCSS 根据动作更新原规则和声明。注释、命名空间、部分特殊 escape、小数 keyframes、自定义映射和超过 128 层的嵌套仍回退；展开达到 100,000 个 arena 节点时也回退。未将这些边界标记为迁移完成。
 
 `normalizeV4VariableFallbacks` 一次解析完成空 `--tw-` fallback、gradient via-stops 拆分和位置变量 fallback 三个阶段。`normalizeUvueTransformValue` 只改写 translate 的直接逗号分隔符，保留嵌套 var、字符串、URL 和注释。生产 uvue 管线使用 `normalizeUvueTransformValues` 批量接口，按声明顺序回写；未闭合值和达到 256 层的嵌套返回 `null`，逐项使用原有 value-parser。Rust AST 借用输入 UTF-16 切片，避免每个 token 复制文本，AST 不跨 NAPI。
+
+生产声明使用 `normalizeV4Declaration(value, options)` 合并变量 fallback、渐变方向、infinity/calc 与圆角数值处理，减少逐阶段调用。上层显式传入父规则决定的渐变回退方向，仍负责声明删除、访问顺序与 AST 写回。公开渐变工具分别消费 `normalizeV4GradientPosition` 和 `normalizeV4InfinityCalc`；数值舍入、JS 空白与正则边界通过真实 ABI 差分验证，不使用 Rust 默认 Unicode 分类替代原有语义。
 
 `escapeClasses` 保留为原始边界实验与 ABI 对拍入口，接收一批 UTF-16 已解码类名与可选 ASCII 映射。它在小输入上的 NAPI 成本超过转换收益，已从生产转换路径移除。
 

@@ -117,7 +117,7 @@ function sourceFiles() {
 }
 
 function dependency(name: string) {
-  const entry = realpathSync(require.resolve(name))
+  const entry = realpathSync(fileURLToPath(import.meta.resolve(name)))
   let root = dirname(entry)
   while (!existsSync(join(root, 'package.json'))) {
     const parent = dirname(root)
@@ -209,6 +209,11 @@ async function run() {
           }
         }
       }
+    }
+    assert.deepEqual(sourceFiles(), metadata.sourceFiles, 'Measured adapter source changed during sampling')
+    assert.equal(sha256(readFileSync(join(repoRoot, 'pnpm-lock.yaml'))), metadata.lockfileSha256)
+    for (const binding of counter.bindings) {
+      assert.equal(sha256(readFileSync(binding.path)), binding.sha256)
     }
     process.stdout.write(`${JSON.stringify({
       performanceMeasured: measured,

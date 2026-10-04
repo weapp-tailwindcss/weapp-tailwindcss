@@ -35,7 +35,9 @@ describe('native platform resolution', () => {
 
   it.each(['ERR_DLOPEN_FAILED', 'MODULE_NOT_FOUND'])('preserves an installed package load error: %s', (code) => {
     const error = Object.assign(new Error('broken binary'), { code })
-    const require = Object.assign(vi.fn(() => { throw error }), { resolve: vi.fn(() => '/native.node') })
+    const require = Object.assign(vi.fn(() => {
+      throw error
+    }), { resolve: vi.fn(() => '/native.node') })
     expect(() => requireNativeBinding(require, 'linux-x64-gnu')).toThrow(error)
     expect(require.resolve).toHaveBeenCalledTimes(1)
   })

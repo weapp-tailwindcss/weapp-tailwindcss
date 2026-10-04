@@ -41,4 +41,28 @@ pnpm --filter weapp-tailwindcss exec vitest run test/wxml --update=none --covera
 
 本轮 Node 24.18.0 / macOS arm64 的真实 ABI 验证包含 10,056 个静态输入、1,500 个自定义映射输入、4 个动态回退输入，涵盖真实 demo class 属性、确定性随机 UTF-16、异常身份、同实例重入和集合变更。exact 路径总共执行 116,301 次成员查询，逐项核对只有实际候选跨越 ABI。输入 SHA-256（JSON 的 UTF-16LE）为 `a94ce5868548d22e428911119a0d90ac4cc88bbdf49be5b4dc8744e85977cfd1`。
 
-Rust 4 项静态内核单测、clippy 通过；WXML 在 required/off 两种模式均为 18 文件、155 项通过。原有 2 个 `it.skip` 不代表本次已覆盖。本次 6 个 TypeScript 文件的定向诊断为零；宽范围包检查仍会触发其他目录的 rootDir 与既有类型错误，不能记为整包类型检查通过。脚本仅验证功能，没有进行正式性能采样；其他 OS/CPU/libc 的实际 Node-API 验证仍由 CI 矩阵负责。
+Rust 4 项静态内核单测、clippy 通过；WXML 在 required/off 两种模式均为 18 文件、155 项通过。原有 2 个 `it.skip` 不代表本次已覆盖。后续集成的主包严格类型检查使用 `--noCheck false` 已通过；其他 OS/CPU/libc 的实际 Node-API 验证仍由 CI 矩阵负责。
+
+## 公开适配器性能
+
+2026-10-05 使用 Node 24.18.0 / macOS arm64，在同一进程对公开 `templateReplacer` 进行三轮、每轮 20 对交替采样，每个样本连续调用 200 次，预热每种模式与场景各 100 次。计时包含 TypeScript 适配器、同步成员查询和原生调用计数开销；输出比较与哈希不在计时内。exact 集合包含 5,000 项无关类名。动态场景未传自定义 `jsHandler`，按公开默认行为保留表达式。
+
+```sh
+pnpm --filter weapp-tailwindcss exec node --import tsx native/test/wxml-benchmark.ts --self-check
+pnpm --filter weapp-tailwindcss exec node --import tsx native/test/wxml-benchmark.ts --measure
+```
+
+| 属性值场景 | 字节数 | JS p50 / 次 | 原生 p50 / 次 | 比率 |
+| --- | ---: | ---: | ---: | ---: |
+| 短静态 / all | 45 | 0.006831 ms | 0.000909 ms | 7.51 倍 |
+| 短静态 / exact | 45 | 0.006739 ms | 0.001329 ms | 5.07 倍 |
+| 短动态 / all | 92 | 0.017030 ms | 0.015530 ms | 1.10 倍 |
+| 短动态 / exact | 92 | 0.018470 ms | 0.015101 ms | 1.22 倍 |
+| 长静态 / all | 2,968 | 0.801518 ms | 0.016485 ms | 48.62 倍 |
+| 长静态 / exact | 2,968 | 0.885944 ms | 0.055913 ms | 15.85 倍 |
+| 长动态 / all | 3,015 | 0.888405 ms | 0.813232 ms | 1.09 倍 |
+| 长动态 / exact | 3,015 | 0.969649 ms | 0.964878 ms | 1.00 倍 |
+
+p50 为 60 个批次均摊耗时的中位数。480 对全部输出一致，每个场景记录 12,000 次实际内核调用：静态调用 `transformStatic`，动态调用 `tokenizeWxml`。静态路径的替换和组装留在 Rust 中，动态路径仍需 JavaScript 片段处理，因此不能将静态收益推广到动态模板或完整构建。
+
+正式报告为忽略目录中的 `.tmp/rust-native/wxml-benchmark-esm.json`，记录输入 UTF-16 哈希、实际 ESM 依赖入口、锁文件、源码及二进制身份，并在结束时确认未变。采样基线为 `d5d1c330d` 加报告脚本身份校验修订；原生源码摘要为 `9eabb743fb1b10fbaff3061c417667dd6be1ef4c7f47c84e76c329959e5fe2ff`。更早的 `wxml-benchmark.json` 在运行中修改了脚本且记录 CJS 解析入口，作为无效实验保留，不计入结果。
