@@ -31,4 +31,6 @@ pnpm --filter weapp-tailwindcss exec tsx native/test/transform/adapter-benchmark
 
 `benchmark.ts` 仍测旧快照 ABI 与同步成本，只用于历史内核比较。`adapter-benchmark.ts` 才覆盖生产 `createJsHandler` 的配置检查、实例缓存、候选回调、转译和真实原生执行次数，并记录 6/1,000/10,000/100,000 项集合的冷/热路径。执行前必须确认 instrumentation 统计 `transformWithCandidates`，factory 的 ABI probe 不能当作成功转译证据。
 
+2026-10-05 的公开 adapter 报告为 `.tmp/rust-native/adapter-candidates-benchmark.json`：500 次转换全部使用新接口，6/1,000/10,000/100,000 项集合的冷原生 p50 分别为 3.169、2.849、5.496、3.369 ms，热原生 p50 分别为 1.033、1.028、1.258、0.881 ms；关闭原生的对应冷/热中位数为 13.731/2.503、8.273/1.921、40.690/3.723、12.174/1.829 ms。数据仅覆盖公开 handler。
+
 完整 adapter 数据也不代表整个项目构建速度；实际框架收益还需单独运行 Vite 冷构建、文本/新增类 HMR 和峰值内存采样。
