@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { replaceWxml } from '../../../tools/weapp-tailwindcss-scripts/src/core/replace-wxml'
+import { buildDemoBaseCases } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cases/demo/base'
 import { buildUniAppHBuilderXCases } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cases/demo/hbuilderx'
 import { MINI_PROGRAM_REMOVED_CSS_UTILITIES } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cases/round-configs'
 import { assertRoundOutputs } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/class'
@@ -80,4 +81,34 @@ describe('watch evidence for platform-removed rules', () => {
       expect(() => assertRoundOutputs(watchCase, kind, mutation.sourceFile, 'modify', mutation, [], [], 1, classTokens, [escaped, 'flex'], { ...outputs, globalStyle: '' })).toThrow('missing class/CSS evidence for flex')
     }
   })
+})
+
+const weappViteCase = buildDemoBaseCases(process.cwd()).find(item => item.name === 'weapp-vite-tailwindcss-v4')!
+const weappViteMutations = [
+  { name: 'main-template', kind: 'template' as const, mutation: weappViteCase.templateMutation },
+  ...weappViteCase.subPackageMutations!.map(entry => ({ name: entry.root, kind: 'template' as const, mutation: entry.templateMutation })),
+]
+
+it.each(weappViteMutations)('weapp-vite $name 保留完整条件 token、负向 CSS 合同和回滚检查', ({ kind, mutation }) => {
+  const corpus = mutation.roundConfigs!.find(round => round.name === 'complex-corpus')!.buildClassTokens('000042')
+  for (const removed of MINI_PROGRAM_REMOVED_CSS_UTILITIES) {
+    expect(corpus).toContain(removed.utility)
+    expect(mutation.expectedRemovedCssUtilities).toContain(removed)
+  }
+  const classTokens = [...MINI_PROGRAM_REMOVED_CSS_UTILITIES.map(item => item.utility), 'flex']
+  const escapedClasses = classTokens.map(item => replaceWxml(item))
+  const outputs = {
+    wxml: `<view class="${escapedClasses.join(' ')}"/>`,
+    js: `const classes = '${escapedClasses.join(' ')}'`,
+    globalStyle: '.flex{display:flex}',
+  }
+  const assertOutputs = (value: typeof outputs) => assertRoundOutputs(weappViteCase, kind, mutation.sourceFile, 'add', mutation, [], [], 1, classTokens, escapedClasses, value)
+  expect(() => assertOutputs(outputs)).not.toThrow()
+  expect(() => assertOutputs({ ...outputs, globalStyle: '' })).toThrow('missing class/CSS evidence for flex')
+  expect(() => assertOutputs({ ...outputs, globalStyle: `${outputs.globalStyle}@supports(display:grid){.${escaped}{display:grid}}` })).toThrow('remove @supports')
+  const target = mutation.verifyEscapedIn[0]!
+  expect(() => assertOutputs({ ...outputs, [target]: outputs[target].replace(escaped, '') })).toThrow('missing original class token')
+  const evidence = assertClassTokensInOutput(outputs, classTokens, escapedClasses, [target], 'weapp-vite', true, true, mutation.expectedRemovedCssUtilities)
+  expect(() => assertPreviousClassEvidenceRemoved(outputs, evidence, [], 'rollback')).toThrow('stale class')
+  expect(() => assertPreviousClassEvidenceRemoved({ wxml: '', js: '', globalStyle: '' }, evidence, [], 'rollback')).not.toThrow()
 })

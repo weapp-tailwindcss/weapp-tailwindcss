@@ -1,14 +1,11 @@
 import { spawn } from 'node:child_process'
-import { readdir, stat } from 'node:fs/promises'
+import { readFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import path from 'node:path'
 import process from 'node:process'
 import { pathToFileURL } from 'node:url'
-import { createPnpmCommand } from './pnpm-command.mjs'
 
 const READY_RE = /开发服务已就绪|dev(?:elopment)? server ready|ready in \d+/i
-const sourceDirs = ['miniprogram', 'pages', 'packageA', 'packageB', 'sub-normal', 'sub-independent']
-const ignoredDirs = new Set(['dist', 'node_modules', '.git'])
-const rootSourceFileRe = /^(?:app|tailwind\.config(?:\.[\w-]+)?)\.[cm]?[jt]s$|^app\.(?:wxss|css|s[ac]ss|less|json)$/i
 const supportedWatchPlatforms = new Set(['weapp', 'web', 'all'])
 
 export function isWatchReadyOutput(text) {
@@ -23,290 +20,101 @@ export function resolveWatchPlatform(env = process.env) {
   return platform
 }
 
-export function shouldBuildBeforeDev(runFallbackBuild) {
-  return runFallbackBuild
-}
-
-export function resolveOutputSettleOptions(env = process.env) {
-  const settleMs = Number(env.WEAPP_VITE_E2E_WATCH_OUTPUT_SETTLE_MS ?? 3_000)
-  const timeoutMs = Number(env.WEAPP_VITE_E2E_WATCH_OUTPUT_SETTLE_TIMEOUT_MS ?? 30_000)
-  const pollMs = Number(env.WEAPP_VITE_E2E_WATCH_OUTPUT_SETTLE_POLL_MS ?? 100)
-  return {
-    settleMs: Number.isFinite(settleMs) && settleMs > 0 ? settleMs : 3_000,
-    timeoutMs: Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : 30_000,
-    pollMs: Number.isFinite(pollMs) && pollMs > 0 ? pollMs : 100,
+/** 解析当前项目安装的 CLI，直接交给同一个 Node，避免额外启动器切断退出回执。 */
+async function resolveProjectCli(cwd) {
+  const require = createRequire(path.resolve(cwd, 'package.json'))
+  const manifestPath = require.resolve('weapp-vite/package.json')
+  const manifest = JSON.parse(await readFile(manifestPath, 'utf8'))
+  const bin = typeof manifest.bin === 'string' ? manifest.bin : manifest.bin?.['weapp-vite']
+  if (typeof bin !== 'string' || !bin) {
+    throw new Error('Installed weapp-vite does not declare its CLI bin')
   }
+  return path.resolve(path.dirname(manifestPath), bin)
 }
 
-function spawnPnpm(args, options = {}) {
-  const { command, args: commandArgs, shell } = createPnpmCommand(args)
-  return spawn(command, commandArgs, {
-    cwd: process.cwd(),
-    env: process.env,
-    shell,
-    stdio: options.stdio ?? ['ignore', 'pipe', 'pipe'],
-  })
-}
-
-function pipeWithReady(child, resolveReady) {
-  let resolved = false
-  const resolveOnce = () => {
-    if (resolved) {
-      return
-    }
-    resolved = true
-    resolveReady()
+/** 一个会话只有原生 dev 写入产物；关闭信号只转发一次，并等待实际 close 完成。 */
+export async function runWeappViteWatch({
+  cwd = process.cwd(),
+  env = process.env,
+  signals = process,
+  stdout = process.stdout,
+  stderr = process.stderr,
+} = {}) {
+  if (env.WEAPP_VITE_E2E_WATCH_BUILD_FALLBACK === '1') {
+    throw new Error('WEAPP_VITE_E2E_WATCH_BUILD_FALLBACK=1 would create competing output writers; remove it and use native weapp-vite dev')
   }
-  const onData = (chunk) => {
-    const text = chunk.toString()
-    process.stdout.write(text)
-    if (isWatchReadyOutput(text)) {
-      resolveOnce()
-    }
-  }
+  const platform = resolveWatchPlatform(env)
+  const cli = await resolveProjectCli(cwd)
 
-  child.stdout?.on('data', onData)
-  child.stderr?.on('data', (chunk) => {
-    process.stderr.write(chunk)
-  })
-}
-
-async function runBuild() {
   await new Promise((resolve, reject) => {
-    const build = spawnPnpm(['exec', 'weapp-vite', 'build'], { stdio: 'inherit' })
-    build.on('error', reject)
-    build.on('close', (code, signal) => {
-      if (code === 0) {
-        resolve()
+    const dev = spawn(process.execPath, [cli, 'dev', '--platform', platform, '--no-mcp'], {
+      cwd,
+      env,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    })
+    let ready = false
+    let stopping = false
+    let failure
+    let exitReceipt
+
+    const forward = (destination) => {
+      let outputTail = ''
+      return (text) => {
+        destination.write(text)
+        // 每条流独立保留 UTF-8 短缓冲，识别分片消息且不拼接 stdout 与 stderr。
+        outputTail = `${outputTail}${text}`.slice(-1024)
+        ready ||= isWatchReadyOutput(outputTail)
+      }
+    }
+    const onStdout = forward(stdout)
+    const onStderr = forward(stderr)
+    dev.stdout.setEncoding('utf8').on('data', onStdout)
+    dev.stderr.setEncoding('utf8').on('data', onStderr)
+
+    const stop = (signal) => {
+      if (stopping) {
         return
       }
-      reject(new Error(`weapp-vite build failed: ${signal ?? code}`))
+      stopping = true
+      try {
+        dev.kill(signal)
+      }
+      catch (error) {
+        failure ??= error
+      }
+    }
+    const onInterrupt = () => stop('SIGINT')
+    const onTerminate = () => stop('SIGTERM')
+    signals.on('SIGINT', onInterrupt)
+    signals.on('SIGTERM', onTerminate)
+
+    dev.once('error', (error) => {
+      failure = error
+    })
+    // exit 与 close 之间后代仍可能持有管道；迟到的取消不能改写已发生的意外退出。
+    dev.once('exit', (code, signal) => {
+      exitReceipt = { code, signal, stopping }
+    })
+    dev.once('close', (code, signal) => {
+      signals.off('SIGINT', onInterrupt)
+      signals.off('SIGTERM', onTerminate)
+      dev.stdout.off('data', onStdout)
+      dev.stderr.off('data', onStderr)
+      if (failure) {
+        reject(failure)
+      }
+      else if (!exitReceipt?.stopping || code !== 0 || signal !== null) {
+        reject(new Error(`weapp-vite dev exited ${ready ? 'after' : 'before'} ready: ${signal ?? code}`))
+      }
+      else {
+        resolve()
+      }
     })
   })
 }
 
-async function collectFiles(dir, output) {
-  let entries
-  try {
-    entries = await readdir(dir, { withFileTypes: true })
-  }
-  catch {
-    return
-  }
-
-  for (const entry of entries) {
-    if (ignoredDirs.has(entry.name)) {
-      continue
-    }
-
-    const file = path.join(dir, entry.name)
-    if (entry.isDirectory()) {
-      await collectFiles(file, output)
-      continue
-    }
-
-    if (entry.isFile()) {
-      output.push(file)
-    }
-  }
-}
-
-async function collectSnapshot() {
-  const files = []
-  for (const dir of sourceDirs) {
-    await collectFiles(path.resolve(process.cwd(), dir), files)
-  }
-
-  let rootEntries = []
-  try {
-    rootEntries = await readdir(process.cwd(), { withFileTypes: true })
-  }
-  catch {
-  }
-
-  for (const entry of rootEntries) {
-    if (entry.isFile() && rootSourceFileRe.test(entry.name)) {
-      files.push(path.resolve(process.cwd(), entry.name))
-    }
-  }
-
-  const snapshot = new Map()
-  await Promise.all(files.map(async (file) => {
-    try {
-      const item = await stat(file)
-      snapshot.set(file, `${item.mtimeMs}:${item.size}`)
-    }
-    catch {
-      snapshot.set(file, 'missing')
-    }
-  }))
-  return snapshot
-}
-
-function hasSnapshotChanged(previous, next) {
-  if (previous.size !== next.size) {
-    return true
-  }
-
-  for (const [file, signature] of next) {
-    if (previous.get(file) !== signature) {
-      return true
-    }
-  }
-  return false
-}
-
-async function collectOutputSnapshot(dir) {
-  const files = []
-  await collectFiles(dir, files)
-  const snapshot = new Map()
-  await Promise.all(files.map(async (file) => {
-    try {
-      const item = await stat(file)
-      snapshot.set(file, `${item.mtimeMs}:${item.size}`)
-    }
-    catch {
-      snapshot.set(file, 'missing')
-    }
-  }))
-  return snapshot
-}
-
-async function waitForOutputSettle(dir, options) {
-  const startedAt = Date.now()
-  let previous = await collectOutputSnapshot(dir)
-  let stableSince = previous.size > 0 ? startedAt : undefined
-
-  while (Date.now() - startedAt < options.timeoutMs) {
-    await new Promise(resolve => setTimeout(resolve, options.pollMs))
-    const next = await collectOutputSnapshot(dir)
-    if (next.size === 0) {
-      stableSince = undefined
-      previous = next
-      continue
-    }
-    if (previous.size === 0 || hasSnapshotChanged(previous, next)) {
-      stableSince = Date.now()
-      previous = next
-      continue
-    }
-    if (stableSince != null && Date.now() - stableSince >= options.settleMs) {
-      return
-    }
-  }
-
-  throw new Error(`weapp-vite output did not settle within ${options.timeoutMs}ms: ${dir}`)
-}
-
-async function main() {
-  const runFallbackBuild = process.env.WEAPP_VITE_E2E_WATCH_BUILD_FALLBACK === '1'
-  const watchPlatform = resolveWatchPlatform()
-  // fallback 构建必须先完成，再启动 dev watcher。
-  // 如果两个进程同时写入 dist，微信 DevTools 可能在 common.js 尚未完整写入时
-  // 加载 appservice-hotreload，随后把旧模块缓存与新页面代码混合，产生误报的运行时异常。
-  if (shouldBuildBeforeDev(runFallbackBuild)) {
-    await runBuild()
-  }
-
-  let resolveReady
-  const ready = new Promise((resolve) => {
-    resolveReady = resolve
-  })
-  const dev = spawnPnpm(['exec', 'weapp-vite', 'dev', '--platform', watchPlatform])
-  let stopping = false
-  let building = false
-  let queued = false
-  let pollTimer
-  let lastSnapshot = await collectSnapshot()
-
-  pipeWithReady(dev, resolveReady)
-
-  const stop = (signal = 'SIGTERM') => {
-    if (stopping) {
-      return
-    }
-    stopping = true
-    if (pollTimer) {
-      clearInterval(pollTimer)
-    }
-    dev.kill(signal)
-  }
-
-  process.on('SIGINT', () => stop('SIGINT'))
-  process.on('SIGTERM', () => stop('SIGTERM'))
-
-  dev.on('error', (error) => {
-    process.stderr.write(`${error.stack ?? error.message}\n`)
-    process.exitCode = 1
-  })
-
-  dev.on('close', (code, signal) => {
-    if (!stopping && code !== 0) {
-      process.exitCode = code ?? 1
-    }
-    if (signal && !stopping) {
-      process.stderr.write(`weapp-vite dev exited with signal ${signal}\n`)
-    }
-  })
-
-  await ready
-  if (!stopping && runFallbackBuild) {
-    const outputDir = path.resolve(process.cwd(), process.env.WEAPP_VITE_E2E_WATCH_OUTPUT_DIR || 'dist')
-    await waitForOutputSettle(outputDir, resolveOutputSettleOptions())
-  }
-  if (!stopping && runFallbackBuild) {
-    const rebuild = async () => {
-      if (stopping) {
-        return
-      }
-      if (building) {
-        queued = true
-        return
-      }
-      building = true
-      try {
-        do {
-          if (stopping) {
-            break
-          }
-          queued = false
-          const beforeBuildSnapshot = lastSnapshot
-          await runBuild()
-          const afterBuildSnapshot = await collectSnapshot()
-          if (hasSnapshotChanged(beforeBuildSnapshot, afterBuildSnapshot)) {
-            queued = true
-          }
-          lastSnapshot = afterBuildSnapshot
-        } while (queued)
-      }
-      finally {
-        building = false
-      }
-    }
-    const triggerRebuild = () => {
-      void rebuild().catch((error) => {
-        process.stderr.write(`${error.stack ?? error.message}\n`)
-        process.exitCode = 1
-        stop()
-      })
-    }
-    pollTimer = setInterval(() => {
-      void collectSnapshot().then((nextSnapshot) => {
-        if (hasSnapshotChanged(lastSnapshot, nextSnapshot)) {
-          lastSnapshot = nextSnapshot
-          triggerRebuild()
-        }
-      }).catch((error) => {
-        process.stderr.write(`${error.stack ?? error.message}\n`)
-        process.exitCode = 1
-        stop()
-      })
-    }, 250)
-  }
-}
-
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  main().catch((error) => {
+  runWeappViteWatch().catch((error) => {
     process.stderr.write(`${error.stack ?? error.message}\n`)
     process.exitCode = 1
   })
