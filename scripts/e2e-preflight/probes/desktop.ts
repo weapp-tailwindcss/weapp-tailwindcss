@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 import { satisfies } from 'semver'
 import { parseHBuilderXVersion } from '../../../packages/hbuilderx-runner/src/hbuilderx/hosts'
 import { createHBuilderXRunner } from '../../../packages/hbuilderx-runner/src/hbuilderx/runner'
-import { resolveWechatAppId } from '../../wechat-app-id'
+import { assertWechatAppIdBinding, resolveWechatAppId } from '../../wechat-app-id'
 import { closeWechatProject } from '../../wechat-project-cleanup'
 import { assertWechatLogin, existingWechatService, wechatRequest } from '../../wechat/service'
 import { assertImage, command } from '../io'
@@ -63,7 +63,8 @@ export async function hbuilderx(ctx: ProbeContext): Promise<ProbeOutput> {
 }
 
 export async function wechat(ctx: ProbeContext): Promise<ProbeOutput> {
-  const binding = await existingWechatService(ctx.binding?.command)
+  const appid = ctx.phase === 'prepare' ? resolveWechatAppId() : assertWechatAppIdBinding(ctx.binding?.['appid'])
+  const binding = { ...await existingWechatService(ctx.binding?.command), appid }
   if (ctx.binding?.httpPort && ctx.binding.httpPort !== binding.httpPort) {
     throw new Error('微信 IDE HTTP 服务端口已改变；必须重新 prepare。')
   }
@@ -74,7 +75,7 @@ export async function wechat(ctx: ProbeContext): Promise<ProbeOutput> {
   const project = path.join(ctx.dir, 'wechat-project')
   await mkdir(path.join(project, 'pages', 'probe'), { recursive: true })
   const files: Record<string, string> = {
-    'project.config.json': JSON.stringify({ appid: resolveWechatAppId(), projectname: `preflight-${ctx.runId}`, compileType: 'miniprogram', miniprogramRoot: './', setting: { es6: true } }),
+    'project.config.json': JSON.stringify({ appid, projectname: `preflight-${ctx.runId}`, compileType: 'miniprogram', miniprogramRoot: './', setting: { es6: true } }),
     'app.json': JSON.stringify({ pages: ['pages/probe/index'], window: { navigationBarTitleText: '环境预检' } }),
     'app.js': 'App({})',
     [path.join('pages', 'probe', 'index.js')]: `Page({data:{marker:${JSON.stringify(ctx.runId)},clicked:false},tap(){this.setData({clicked:true})}})`,

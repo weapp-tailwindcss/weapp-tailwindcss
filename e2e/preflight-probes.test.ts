@@ -36,6 +36,8 @@ beforeEach(() => {
     'RN_ANDROID_DEVICE_ID',
     'LYNX_ANDROID_DEVICE_ID',
     'ANDROID_SERIAL',
+    'E2E_PREFLIGHT_WECHAT_APPID',
+    'E2E_TEMPLATE_IDE_APP_ID',
   ]) {
     vi.stubEnv(key, undefined)
   }
@@ -95,7 +97,7 @@ describe('真实探针的阻断条件', () => {
     await mkdir(path.join(dir, 'package.nw'))
     await writeFile(path.join(dir, 'package.nw', 'package.json'), JSON.stringify({ name: '微信开发者工具', version: '2.02.2608070' }))
     run.mockResolvedValue('{"login":false}')
-    await expect(wechat({ ...context, binding: { command: cli } })).rejects.toThrow('登录未确认')
+    await expect(wechat({ ...context, binding: { command: cli, appid: 'wx6ffee4673b257014' } })).rejects.toThrow('登录未确认')
     expect(run).not.toHaveBeenCalled()
     expect((await wechatVersion(cli)).version).toBe('2.02.2608070')
     expect(run.mock.calls.every(([, args]) => !args.includes('--version'))).toBe(true)
@@ -126,6 +128,23 @@ describe('真实探针的阻断条件', () => {
     })
     await expect(wechat({ ...context, dir, phase: 'prepare', binding: { command: cli } })).rejects.toThrow('停止本轮探针')
     expect(run).not.toHaveBeenCalled()
+  })
+
+  it.each([undefined, 'wx1111111111111111'])('微信实时复查拒绝缺失或失配的已验证 AppID：%s', async (appid) => {
+    await expect(wechat({ ...context, binding: { command: 'fake-cli', ...(appid ? { appid } : {}) } })).rejects.toThrow('AppID')
+    expect(existingWechatService).not.toHaveBeenCalled()
+    expect(wechatRequest).not.toHaveBeenCalled()
+  })
+
+  it('微信预检 AppID 别名冲突时不接触 IDE 服务', async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), 'wt-preflight-wechat-'))
+    dirs.push(dir)
+    vi.stubEnv('E2E_PREFLIGHT_WECHAT_APPID', 'wx0123456789abcdef')
+    vi.stubEnv('E2E_TEMPLATE_IDE_APP_ID', 'wx1111111111111111')
+    vi.mocked(wechatRequest).mockRejectedValue(new Error('合成失败：冲突配置不应访问 IDE 服务'))
+    await expect(wechat({ ...context, dir, phase: 'prepare' })).rejects.toThrow('AppID 配置冲突')
+    expect(existingWechatService).not.toHaveBeenCalled()
+    expect(wechatRequest).not.toHaveBeenCalled()
   })
 
   it('微信页面元数据未就绪时等待，返回旧页面时不得点击或重启旧页面', async () => {

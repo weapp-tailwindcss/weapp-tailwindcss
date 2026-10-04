@@ -14,7 +14,11 @@ import { checkIds, maxAgeMs } from '../scripts/e2e-preflight/types'
 import { computerEvidence, fixtureSession, passingCheck } from './preflight-fixture'
 
 const cleanups: Array<() => Promise<unknown>> = []
-beforeEach(() => vi.stubEnv('LYNX_IOS_DESTINATION', undefined))
+beforeEach(() => {
+  vi.stubEnv('LYNX_IOS_DESTINATION', undefined)
+  vi.stubEnv('E2E_PREFLIGHT_WECHAT_APPID', undefined)
+  vi.stubEnv('E2E_TEMPLATE_IDE_APP_ID', undefined)
+})
 afterEach(async () => {
   for (const cleanup of cleanups.splice(0).reverse()) {
     await cleanup()
@@ -116,7 +120,18 @@ describe('全面测试预检门禁', () => {
       .toBe('platform=iOS Simulator,id=ios,arch=arm64')
   })
 
-  it.each(['E2E_PREFLIGHT_WECHAT_HTTP_PORT', 'LYNX_ANDROID_DEVICE_ID', 'ANDROID_SERIAL', 'LYNX_IOS_DEVICE_ID', 'LYNX_IOS_DESTINATION', 'RN_ANDROID_EXPO_DEVICE', 'JAVA_HOME', 'RN_JAVA_HOME', 'LYNX_JAVA_HOME', 'LYNX_GRADLE', 'LYNX_POD'])('%s 改变后旧门禁身份失效', async (key) => {
+  it.each([{}, { E2E_PREFLIGHT_WECHAT_APPID: 'wx0123456789abcdef' }, { E2E_TEMPLATE_IDE_APP_ID: 'wx0123456789abcdef' }])('门禁固定实际验证 AppID 并同时传给两个入口：%j', (env) => {
+    const appid = Object.keys(env).length ? 'wx0123456789abcdef' : 'wx6ffee4673b257014'
+    const bindings = Object.fromEntries(['android', 'ios', 'harmony', 'hbuilderx', 'wechat', 'web'].map(id => [id, passingCheck(id as 'android').binding!]))
+    bindings['wechat'] = { ...bindings['wechat'], appid }
+    expect(bindingEnvironment(bindings, env)).toMatchObject({ E2E_PREFLIGHT_WECHAT_APPID: appid, E2E_TEMPLATE_IDE_APP_ID: appid })
+    expect(() => bindingEnvironment({ ...bindings, wechat: { ...bindings['wechat'], appid: 'wx1111111111111111' } }, env)).toThrow('AppID')
+    const missing = { ...bindings['wechat'] }
+    delete missing['appid']
+    expect(() => bindingEnvironment({ ...bindings, wechat: missing }, env)).toThrow('AppID')
+  })
+
+  it.each(['E2E_PREFLIGHT_WECHAT_HTTP_PORT', 'E2E_PREFLIGHT_WECHAT_APPID', 'E2E_TEMPLATE_IDE_APP_ID', 'LYNX_ANDROID_DEVICE_ID', 'ANDROID_SERIAL', 'LYNX_IOS_DEVICE_ID', 'LYNX_IOS_DESTINATION', 'RN_ANDROID_EXPO_DEVICE', 'JAVA_HOME', 'RN_JAVA_HOME', 'LYNX_JAVA_HOME', 'LYNX_GRADLE', 'LYNX_POD'])('%s 改变后旧门禁身份失效', async (key) => {
     vi.stubEnv(key, 'initial')
     const initial = await collectIdentity(process.cwd())
     vi.stubEnv(key, 'changed')

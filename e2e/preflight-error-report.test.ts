@@ -19,8 +19,22 @@ vi.mock('node:fs/promises', async importOriginal => ({
 beforeEach(() => {
   vi.clearAllMocks()
   vi.stubEnv('LYNX_IOS_DESTINATION', undefined)
+  vi.stubEnv('E2E_PREFLIGHT_WECHAT_APPID', undefined)
+  vi.stubEnv('E2E_TEMPLATE_IDE_APP_ID', undefined)
 })
 afterEach(() => vi.unstubAllEnvs())
+
+it('领取后绑定校验与租约归还同时失败时保留两条错误', async () => {
+  const bindings = Object.fromEntries(['android', 'ios', 'harmony', 'hbuilderx', 'wechat', 'web'].map(id => [id, passingCheck(id as 'android').binding!]))
+  delete bindings['wechat']!['appid']
+  const cleanupError = new Error('finish fetch failed')
+  mocks.request.mockResolvedValueOnce({ lease: 'lease', bindings }).mockRejectedValueOnce(cleanupError)
+  const error = await enterFullTestGate('current.json').catch(error => error)
+  expect(error.cause).toBeInstanceOf(AggregateError)
+  expect(error.cause.errors[0].message).toContain('缺少已验证的微信 AppID')
+  expect(error.cause.errors[1]).toBe(cleanupError)
+  expect(mocks.request).toHaveBeenLastCalledWith({}, 'finish', { lease: 'lease' })
+})
 
 it.each([mkdir, writeFile])('领取失败且报告无法写入时保留原始缺证错误', async (write) => {
   const diskError = new Error('EACCES: blocked report')

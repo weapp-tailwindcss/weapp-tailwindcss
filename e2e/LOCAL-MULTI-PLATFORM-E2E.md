@@ -16,7 +16,7 @@ pnpm e2e:preflight prepare
 
 命令生成 `e2e/.artifacts/preflight/<run-id>/report.json`、`report.md`、探针日志和截图。每条工具命令都有超时，每个平台 worker 有总超时；出现故障时保留一次有界诊断，然后非零退出，全面测试不启动。检查失败、超时、未知、缺证、平台不支持均阻断，不能按 skip/optional 通过。
 
-目标必须唯一：优先使用已有设备变量；多个目标时指定 `E2E_HBUILDERX_ANDROID_DEVICE_ID`、`E2E_HBUILDERX_IOS_DEVICE_ID`、`E2E_HBUILDERX_HARMONY_DEVICE_ID`。微信探针默认使用仓库微信项目的授权 AppID；使用其他有权限的项目时通过 `E2E_PREFLIGHT_WECHAT_APPID` 覆盖。微信非默认安装位置通过 `E2E_PREFLIGHT_WECHAT_CLI` 配置；Windows 指向官方 `cli.bat`。HBuilderX 使用 `HBUILDERX_CLI_PATH`、`HBUILDERX_CHANNEL` 和 `HBUILDERX_HOST`。
+目标必须唯一：优先使用已有设备变量；多个目标时指定 `E2E_HBUILDERX_ANDROID_DEVICE_ID`、`E2E_HBUILDERX_IOS_DEVICE_ID`、`E2E_HBUILDERX_HARMONY_DEVICE_ID`。微信探针默认使用仓库微信项目的授权 AppID；使用其他有权限的项目时通过 `E2E_PREFLIGHT_WECHAT_APPID` 或 `E2E_TEMPLATE_IDE_APP_ID` 覆盖，两个别名同时设置时必须相同。预检保存实际验证的 AppID，门禁将同一绑定传给模板 IDE 阶段；缺少绑定、绑定不符或配置改变时必须重新 prepare，不以默认值补齐旧报告。微信非默认安装位置通过 `E2E_PREFLIGHT_WECHAT_CLI` 配置；Windows 指向官方 `cli.bat`。HBuilderX 使用 `HBUILDERX_CLI_PATH`、`HBUILDERX_CHANNEL` 和 `HBUILDERX_HOST`。
 
 预检可安全启动目标明确的 HBuilderX 和指定 iOS 模拟器。微信 IDE 必须由用户预先打开、确认登录并开启服务端口；E2E 不自动启动或重启 IDE。Android/Harmony 无在线目标时，由 AI 用当前 computer use 在已安装的 Android Studio/DevEco 中启动明确的模拟器，再重新 prepare；不能安装新设备或猜测多个候选中的一个。登录、授权、组件安装或用户会话冲突交给用户处理。微信使用本轮独立的临时原生探针项目，显式采用 DevTools provider。
 

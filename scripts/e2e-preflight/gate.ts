@@ -2,6 +2,7 @@ import type { ProbeId } from './types'
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
+import { assertWechatAppIdBinding } from '../wechat-app-id'
 import { formatWorkflowError } from './cleanup'
 import { readReport, request } from './client'
 import { collectIdentity } from './io'
@@ -45,9 +46,12 @@ export function bindingEnvironment(bindings: Record<string, Record<string, strin
   if (!android || !ios || !harmony || !hx?.command || !hx.host || !hx.channel || !bindings.wechat?.httpPort) {
     throw new Error('预检缺少目标绑定。')
   }
+  const appid = assertWechatAppIdBinding(bindings['wechat']?.['appid'], env)
   return {
     E2E_PREFLIGHT_WECHAT_CLI: bindings.wechat!.command!,
     E2E_PREFLIGHT_WECHAT_HTTP_PORT: bindings.wechat!.httpPort!,
+    E2E_PREFLIGHT_WECHAT_APPID: appid,
+    E2E_TEMPLATE_IDE_APP_ID: appid,
     E2E_HBUILDERX_CHROME_PATH: bindings.web!.hbuilderxBrowser ?? bindings.web!.command!,
     WEAPP_VITE_E2E_RUNTIME_PROVIDER: 'devtools',
     E2E_SKIP_OPEN_AUTOMATOR: '0',
@@ -99,7 +103,20 @@ export async function enterFullTestGate(file?: string, root = process.cwd(), ext
     const report = await readReport(file)
     const identity = await collectIdentity(root)
     const claimed = await request<{ lease: string, bindings: Record<string, Record<string, string>> }>(report, 'claim', { identity, consumer: `${process.pid}:${root}`, extended })
-    const env = bindingEnvironment(claimed.bindings)
+    let env: ReturnType<typeof bindingEnvironment>
+    try {
+      env = bindingEnvironment(claimed.bindings)
+    }
+    catch (error) {
+      // 已领取后若绑定校验失败，仍须归还本轮租约，避免留下无法执行的活动门禁。
+      try {
+        await request(report, 'finish', { lease: claimed.lease })
+      }
+      catch (cleanupError) {
+        throw new AggregateError([error, cleanupError], '预检绑定校验与租约归还同时失败。', { cause: error })
+      }
+      throw error
+    }
     return {
       env,
       async check(stage: string) {
