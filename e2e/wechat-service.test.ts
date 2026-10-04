@@ -1,13 +1,21 @@
 import type { RequestListener } from 'node:http'
+import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
+import os from 'node:os'
 import path from 'node:path'
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { assertWechatLogin, ownedWechatPort, serviceDirectory, servicePort, wechatRequest } from '../scripts/wechat/service'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { assertWechatLogin, ownedWechatPort, serviceDirectory, servicePort, wechatRequest, wechatServiceLockPath } from '../scripts/wechat/service'
 
 const cleanup: Array<() => Promise<void>> = []
+let lockDirectory: string
+beforeEach(async () => {
+  lockDirectory = await mkdtemp(path.join(os.tmpdir(), 'weapp-wechat-service-test-'))
+  vi.stubEnv('E2E_WECHAT_LOCK_DIRECTORY', lockDirectory)
+})
 afterEach(async () => {
   vi.unstubAllEnvs()
   await Promise.all(cleanup.splice(0).map(close => close()))
+  await rm(lockDirectory, { recursive: true, force: true })
 })
 
 async function server(handler: RequestListener) {
@@ -87,10 +95,22 @@ describe('微信已有服务边界', () => {
     })
     const project = `/same-project-${port}`
     const first = wechatRequest(port, { kind: 'auto', project, port: 45682 })
-    await expect(wechatRequest(port, { kind: 'auto', project, port: 45683 })).rejects.toThrow('已有请求正在执行')
+    await expect(wechatRequest(port, { kind: 'auto', project, port: 45683 })).rejects.toThrow('已有活跃会话')
     await first
     expect(ownedWechatPort(project)).toBe(String(port))
     await wechatRequest(port, { kind: 'close', project })
+  })
+
+  it('拒绝其他进程留下的微信服务锁且不触达 IDE', async () => {
+    let calls = 0
+    const port = await server((_req, res) => {
+      calls++
+      res.end('{"autoPort":45678}')
+    })
+    const project = `/external-lock-${port}`
+    await writeFile(wechatServiceLockPath(port), JSON.stringify({ pid: 999_999, project: '/other', runId: 'other-run' }))
+    await expect(wechatRequest(port, { kind: 'auto', project, port: 45678 })).rejects.toThrow('另一个 E2E 会话占用')
+    expect(calls).toBe(0)
   })
 
   it.each([false, undefined, 'true'])('非明确登录态 %s 阻断之后所有项目请求', async (login) => {

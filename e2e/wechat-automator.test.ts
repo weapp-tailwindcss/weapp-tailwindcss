@@ -90,6 +90,8 @@ describe('微信会话保护', () => {
     vi.mocked(wechatRequest).mockResolvedValue({ autoPort: 56789 })
     await expect(new Launcher().launch({ projectPath: '/owned', port: 45678 })).rejects.toThrow('不一致')
     expect(connect).not.toHaveBeenCalled()
+    expect(wechatRequest).toHaveBeenCalledTimes(2)
+    expect(wechatRequest).toHaveBeenLastCalledWith('12345', { kind: 'close', project: '/owned' }, expect.any(Number))
   })
 
   it('页面就绪失败只断开自己的连接', async () => {
@@ -98,7 +100,8 @@ describe('微信会话保护', () => {
     connect.mockResolvedValue(mini)
     await expect(new Launcher().launch({ projectPath: '/owned', port: 45678 })).rejects.toThrow('page failed')
     expect(connection.dispose).toHaveBeenCalledOnce()
-    expect(wechatRequest).toHaveBeenCalledOnce()
+    expect(wechatRequest).toHaveBeenCalledTimes(2)
+    expect(wechatRequest).toHaveBeenLastCalledWith('12345', { kind: 'close', project: '/owned' }, expect.any(Number))
   })
 
   it('页面就绪和断开连接同时失败时保留首次失败，不重新连接', async () => {
@@ -116,7 +119,7 @@ describe('微信会话保护', () => {
     expect(error.errors).toEqual([primary, cleanup])
     expect(connection.dispose).toHaveBeenCalledOnce()
     expect(connect).toHaveBeenCalledOnce()
-    expect(wechatRequest).toHaveBeenCalledOnce()
+    expect(wechatRequest).toHaveBeenCalledTimes(2)
   })
 
   it('超过截止时间才返回的连接会断开，不返回迟到成功或旁路重连', async () => {
@@ -128,6 +131,6 @@ describe('微信会话保护', () => {
     await expect(new Launcher().launch({ projectPath: '/owned', port: 45678, timeout: 10 })).rejects.toThrow('超时')
     expect(connection.dispose).toHaveBeenCalledOnce()
     expect(connect).toHaveBeenCalledOnce()
-    expect(wechatRequest).toHaveBeenCalledOnce()
+    expect(wechatRequest).toHaveBeenCalledTimes(2)
   })
 })

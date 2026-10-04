@@ -1,5 +1,6 @@
+import type { FileHandle } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
-import { readFile } from 'node:fs/promises'
+import { mkdir, open, readFile, unlink } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
@@ -58,13 +59,73 @@ type Operation = { kind: 'isLogin' } | { kind: 'auto', project: string, port: nu
 interface ProjectBinding {
   servicePort: number
   autoPort: number
+  runId: string
+  release: () => Promise<void>
 }
 const blocked = new Set<number>()
 const projects = new Map<string, ProjectBinding>()
 // 稳定版 IDE 的 simulator 资源是实例级共享的。只允许同一 HTTP 服务持有一个本轮项目租约，
 // 防止两个项目虽然拿到不同 autoPort，却在 appLaunch 阶段竞争同一个运行时。
-const serviceLeases = new Map<number, string>()
-const activeProjects = new Set<string>()
+const serviceLeases = new Map<number, ProjectBinding>()
+const pendingProjects = new Set<string>()
+const pendingServices = new Set<number>()
+const serviceQueues = new Map<number, Promise<void>>()
+let nextRunId = 0
+
+function lockDirectory() {
+  return process.env['E2E_WECHAT_LOCK_DIRECTORY'] || os.tmpdir()
+}
+
+/** 返回当前用户对应的微信服务锁路径；锁文件不包含账号或票据。 */
+export function wechatServiceLockPath(port: string | number) {
+  const user = createHash('sha256').update(os.userInfo().username).digest('hex').slice(0, 16)
+  return path.join(lockDirectory(), `weapp-wechat-service-${servicePort(port)}-${user}.lock`)
+}
+
+async function acquireServiceLease(port: number, project: string, runId: string) {
+  const file = wechatServiceLockPath(port)
+  await mkdir(path.dirname(file), { recursive: true })
+  let handle: FileHandle
+  try {
+    handle = await open(file, 'wx')
+  }
+  catch (error) {
+    if (!error || typeof error !== 'object' || (error as NodeJS.ErrnoException).code !== 'EEXIST') {
+      throw error
+    }
+    const owner = await readFile(file, 'utf8').catch(() => '未知（锁文件不可读）')
+    throw new Error(`微信 IDE 服务 ${port} 已被另一个 E2E 会话占用；拒绝并发打开项目 ${project}，保留登录态。锁=${file}，所有者=${owner}`)
+  }
+  try {
+    await handle.writeFile(JSON.stringify({ pid: process.pid, project, runId, createdAt: new Date().toISOString() }))
+  }
+  finally {
+    await handle.close()
+  }
+  return async () => {
+    const owner = JSON.parse(await readFile(file, 'utf8')) as { pid?: number, runId?: string }
+    if (owner.pid !== process.pid || owner.runId !== runId) {
+      throw new Error('微信 IDE 服务锁所有者改变，拒绝清理其他会话。')
+    }
+    await unlink(file)
+  }
+}
+
+function enqueue<T>(port: number, task: () => Promise<T>) {
+  const previous = serviceQueues.get(port) ?? Promise.resolve()
+  let release!: () => void
+  const current = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  serviceQueues.set(port, current)
+  const result = previous.then(task)
+  return result.finally(() => {
+    release()
+    if (serviceQueues.get(port) === current) {
+      serviceQueues.delete(port)
+    }
+  })
+}
 
 export function ownedWechatPort(project: string) {
   const binding = projects.get(path.resolve(project))
@@ -92,7 +153,7 @@ export async function wechatRequest(port: string | number, operation: Operation,
   let endpoint = new URL(`/v2/${operation.kind}`, origin)
   const project = operation.kind === 'isLogin' ? undefined : path.resolve(operation.project)
   const autoPort = operation.kind === 'auto' ? servicePort(operation.port) : undefined
-  let leaseAcquired = false
+  let lease: ProjectBinding | undefined
   if (operation.kind !== 'isLogin') {
     if (!operation.project.trim()) {
       throw new Error('微信 IDE 操作必须指定本次测试的项目路径。')
@@ -100,13 +161,6 @@ export async function wechatRequest(port: string | number, operation: Operation,
     // 官方服务在解析 query 后还会解码一次，必须保留路径中的字面量 % 等字符。
     endpoint.searchParams.set('project', encodeURIComponent(project!))
     if (operation.kind === 'auto') {
-      if (activeProjects.has(project!)) {
-        throw new Error('微信项目已有请求正在执行；拒绝并发打开或关闭同一项目。')
-      }
-      const leaseOwner = serviceLeases.get(actualPort)
-      if (leaseOwner && leaseOwner !== project) {
-        throw new Error('稳定版微信 IDE 的运行时资源按 HTTP 服务共享；同一服务已有本轮项目，必须先清理后再打开其他项目。')
-      }
       const previous = projects.get(project!)
       if (previous && previous.servicePort !== actualPort) {
         throw new Error('微信项目的 HTTP 服务绑定已改变；必须清理原会话后重新预检。')
@@ -115,19 +169,36 @@ export async function wechatRequest(port: string | number, operation: Operation,
       if (previousAutoPort && previousAutoPort !== autoPort) {
         throw new Error('微信项目的自动化端口已改变；必须清理原会话后重新预检。')
       }
-      activeProjects.add(project!)
-      serviceLeases.set(actualPort, project!)
+      if (previous || pendingProjects.has(project!)) {
+        throw new Error('微信项目已有活跃会话；必须先清理原会话后重新打开。')
+      }
+      const occupied = serviceLeases.get(actualPort)
+      if (occupied || pendingServices.has(actualPort)) {
+        throw new Error('稳定版微信 IDE 的运行时资源按 HTTP 服务共享；同一服务已有本轮项目，必须先清理后再打开其他项目。')
+      }
+      const runId = `${process.pid}-${++nextRunId}`
+      pendingProjects.add(project!)
+      pendingServices.add(actualPort)
+      let release: () => Promise<void>
+      try {
+        release = await acquireServiceLease(actualPort, project!, runId)
+      }
+      catch (error) {
+        pendingProjects.delete(project!)
+        pendingServices.delete(actualPort)
+        throw error
+      }
+      pendingProjects.delete(project!)
+      pendingServices.delete(actualPort)
+      lease = { servicePort: actualPort, autoPort: autoPort!, runId, release }
+      serviceLeases.set(actualPort, lease)
       // 在请求发出前登记归属，使超时或协议错误仍能沿原服务边界诊断和清理。
-      projects.set(project!, { servicePort: actualPort, autoPort: autoPort! })
-      leaseAcquired = true
+      projects.set(project!, lease)
       // 稳定版同时要求 port 与 autoPort；只传 autoPort 会返回 HTTP 200/窗口 ID，却不监听 WebSocket。
       endpoint.searchParams.set('port', String(autoPort!))
       endpoint.searchParams.set('autoPort', String(autoPort!))
     }
     else {
-      if (activeProjects.has(project!)) {
-        throw new Error('微信项目已有请求正在执行；拒绝并发打开或关闭同一项目。')
-      }
       const binding = projects.get(project!)
       if (!binding) {
         throw new Error('未登记本轮微信项目与 HTTP 服务的归属，保留 IDE，不关闭其他项目。')
@@ -136,14 +207,16 @@ export async function wechatRequest(port: string | number, operation: Operation,
         throw new Error('微信项目的 HTTP 服务绑定已改变；必须清理原会话后重新预检。')
       }
       const leaseOwner = serviceLeases.get(actualPort)
-      if (leaseOwner !== project) {
+      if (!leaseOwner || leaseOwner.runId !== binding.runId) {
         throw new Error('微信项目租约不属于本轮请求，保留 IDE，不关闭其他项目。')
       }
-      activeProjects.add(project!)
-      leaseAcquired = true
+      lease = binding
     }
   }
-  try {
+  return enqueue(actualPort, async () => {
+    if (blocked.has(actualPort)) {
+      blockWechatService(actualPort)
+    }
     const signal = AbortSignal.timeout(timeoutMs)
     const token = process.env.WECHAT_DEVTOOLS_CLI_TOKEN
     for (let redirects = 0; redirects < 32; redirects++) {
@@ -201,8 +274,12 @@ export async function wechatRequest(port: string | number, operation: Operation,
           : { autoPort: autoPort!, windowId: stableWindowId }
       }
       if (operation.kind === 'close') {
-        projects.delete(project!)
-        if (serviceLeases.get(actualPort) === project) {
+        const currentLease = projects.get(project!)
+        if (currentLease?.runId === lease?.runId) {
+          await currentLease.release()
+          projects.delete(project!)
+        }
+        if (serviceLeases.get(actualPort)?.runId === currentLease?.runId) {
           serviceLeases.delete(actualPort)
         }
         return result as Record<string, unknown>
@@ -211,12 +288,7 @@ export async function wechatRequest(port: string | number, operation: Operation,
     }
     blocked.add(actualPort)
     throw new Error('微信 IDE 异步任务重定向过多，停止本轮操作。')
-  }
-  finally {
-    if (leaseAcquired && project) {
-      activeProjects.delete(project)
-    }
-  }
+  })
 }
 
 export async function assertWechatLogin(port: string | number, timeoutMs?: number) {
