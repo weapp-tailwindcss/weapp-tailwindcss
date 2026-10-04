@@ -24,9 +24,11 @@ Rust 单测覆盖字符、映射和 token 边界；Vitest 必须比较原生实�
 
 - `cargo test --manifest-path packages/postcss/native/Cargo.toml`
 - `pnpm --filter @weapp-tailwindcss/postcss build:native`
-- `pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/native-selectors.test.ts --update=none --coverage.enabled=false`
-- `pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/native-value-transform.test.ts test/native-escape-mutation.test.ts --update=none --coverage.enabled=false`
+- `pnpm --filter @weapp-tailwindcss/postcss exec vitest run --config vitest.native.config.ts --update=none --coverage.enabled=false`
+- `pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/native-selectors-loader.test.ts test/native-selector-platform.test.ts --update=none --coverage.enabled=false`
 
 ## 提交前检查
 
 不提交编译产物；报告原生分支和回退分支的验证命令，不把局部计算迁移表述为整个 CSS 管线迁移。发布内核必须同时保留第三方许可。
+
+真实 ABI 用例只放在 `test/native/`，普通配置排除此目录；原生门禁必须使用专用配置，其 required setup 在缺少二进制时失败，禁止自动 skip。完整入口规则见上层 PostCSS 规则。

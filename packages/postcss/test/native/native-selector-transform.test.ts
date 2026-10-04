@@ -85,7 +85,7 @@ describe('Rust 直接选择器转换', () => {
   })
 
   it('真实 CSS fixtures 的选择器批次保持原有转换结果', () => {
-    const fixtureRoot = fileURLToPath(new URL('./fixtures/css', import.meta.url))
+    const fixtureRoot = fileURLToPath(new URL('../fixtures/css', import.meta.url))
     const selectors: string[] = []
     for (const file of readdirSync(fixtureRoot, { recursive: true })) {
       if (typeof file !== 'string' || !file.endsWith('.css')) continue

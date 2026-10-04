@@ -3,8 +3,8 @@ status: partial
 issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss
 baseline: fb2421b1bb20c36e9bb4019b039b012ae9003e17
 regressions:
-  - packages/postcss/test/native-selector-transform.test.ts
-  - packages/postcss/test/native-selectors.test.ts
+  - packages/postcss/test/native/native-selector-transform.test.ts
+  - packages/postcss/test/native/native-selectors.test.ts
   - packages/postcss/test/native-selectors-loader.test.ts
   - packages/postcss/test/native-selector-platform.test.ts
 ---

@@ -18,15 +18,15 @@
 - `off`：完全使用 TypeScript。
 - `required`：缺失二进制或 ABI 不兼容时抛出原始加载错误；均缺失时包含两次解析错误。
 
-原生转换异常不会被加载器吞掉；不完整批次会报错。原生差分测试强制实际加载原生内核，执行前必须构建二进制。值解析兼容实现的第三方许可保留在 [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt)。
+原生转换异常不会被加载器吞掉；不完整批次会报错。原生差分测试位于 `test/native/`，独立配置强制 required 并在 setup 实际加载内核，执行前必须构建二进制；缺失或损坏时失败，不能探测后跳过。普通测试配置始终排除此目录，mock loader/平台路由仍运行，不要求消费者编译二进制。值和选择器兼容实现的第三方许可保留在 [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt)。
 
 验证入口：
 
 ```sh
 pnpm --filter @weapp-tailwindcss/postcss build:native
-pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/native-selector-transform.test.ts test/native-selectors.test.ts test/native-selectors-loader.test.ts test/native-selector-platform.test.ts --update=none --coverage.enabled=false
-pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/native-selector-rule.test.ts --update=none --coverage.enabled=false
-pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/native-value-transform.test.ts test/native-escape-mutation.test.ts test/uni-app-x.test.ts --update=none --coverage.enabled=false
+pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/native-selectors-loader.test.ts test/native-selector-platform.test.ts --update=none --coverage.enabled=false
+pnpm --filter @weapp-tailwindcss/postcss exec vitest run --config vitest.native.config.ts --update=none --coverage.enabled=false
+pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/uni-app-x.test.ts --update=none --coverage.enabled=false
 pnpm --filter @weapp-tailwindcss/postcss exec tsx native/benchmark.mts
 pnpm --filter @weapp-tailwindcss/postcss exec tsx native/benchmark.mts --check
 pnpm --filter @weapp-tailwindcss/postcss exec tsx native/value-benchmark.mts

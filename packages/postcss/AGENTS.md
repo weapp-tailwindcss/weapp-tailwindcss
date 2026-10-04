@@ -41,3 +41,9 @@
 
 - 新增 bug fix 时，优先添加最小输入/输出断言，不仅依赖 snapshot。
 - 涉及性能路径（如 calc、selector parser）时，至少补一个边界 case，防止复杂选择器退化。
+
+## 原生测试边界
+
+- 普通 `vitest.config.ts` 始终排除 `test/native/**`，不要求本机编译或安装原生二进制；mock loader 与平台路由测试仍在普通入口执行。
+- 真正加载 ABI 的测试集中在 `test/native/`，使用 `pnpm --filter @weapp-tailwindcss/postcss exec vitest run --config vitest.native.config.ts --update=none --coverage.enabled=false`。该入口强制 `WEAPP_TW_NATIVE=required`，先加载真实 binding；缺失、损坏或 ABI 不兼容必须失败，禁止探测后 skip。
+- 原生门禁先构建或安装当前提交的二进制，再运行上述专用配置。其他包新增原生行为时，同时验证普通无二进制入口与真实原生入口；修改 selector/value fixture 路径需同步 `test/native/` 的相对引用。

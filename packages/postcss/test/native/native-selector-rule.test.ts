@@ -135,7 +135,7 @@ describe('Rust 规则选择器 AST', () => {
   })
 
   it('所有真实 CSS fixture 的规则和配置矩阵', () => {
-    const directory = fileURLToPath(new URL('./fixtures/css', import.meta.url))
+    const directory = fileURLToPath(new URL('../fixtures/css', import.meta.url))
     let handled = 0
     let total = 0
     for (const file of readdirSync(directory, { recursive: true })) {

@@ -73,7 +73,7 @@ describe('Rust CSS 值兼容转换', () => {
   })
 
   it('全部现有 CSS fixture 声明逐值对拍', () => {
-    const directory = fileURLToPath(new URL('./fixtures/css', import.meta.url))
+    const directory = fileURLToPath(new URL('../fixtures/css', import.meta.url))
     let count = 0
     let changed = 0
     for (const file of readdirSync(directory, { recursive: true })) {

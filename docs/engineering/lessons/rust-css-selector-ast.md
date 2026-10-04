@@ -3,10 +3,10 @@ status: partial
 issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss
 baseline: c717348f308d6572953fe623c4bdae3437d8fb5d
 regressions:
-  - packages/postcss/test/native-selector-rule.test.ts
+  - packages/postcss/test/native/native-selector-rule.test.ts
   - packages/postcss/test/native-selectors-loader.test.ts
   - packages/postcss/test/selectorParser.test.ts
-  - packages/postcss/test/native-selectors.test.ts
+  - packages/postcss/test/native/native-selectors.test.ts
 ---
 
 # Rust 复杂选择器 AST 迁移
@@ -38,6 +38,14 @@ Node 24.18.0、macOS arm64、PostCSS 8.5.28、postcss-selector-parser 7.1.6。�
 - `CI=1 WEAPP_TW_NATIVE=off pnpm --filter @weapp-tailwindcss/postcss exec vitest run --update=none --coverage.enabled=false`：129 文件、1,341 项通过、3 项既有跳过。原生差分测试内部仍会强制 required。
 
 命令在复用依赖的工作树添加 `--config.verify-deps-before-run=false`，避免 pnpm 自动安装写入共享链接。本阶段按集成任务调度暂缓正式性能采样，仅运行 `native/benchmark.mts --check` 输出一致性检查；脚本现已覆盖复杂 selector root 并用实际生产 class 统计接管数量。之前简单 selector 的性能数字不能用于新 AST 实现。
+
+### 后续测试入口边界修正
+
+以上 129 文件的历史验证把真实 ABI 用例和普通用例放在同一入口，导致普通 CI 若未构建二进制，会被测试内部的 required 强制加载阻断。后续把五个真实 ABI 文件移入 `test/native/`，修正 fixture 相对路径；普通配置始终排除该目录，mock loader/platform 测试保留在普通入口。`vitest.native.config.ts` 单独包含该目录、强制 required，并在 setup 验证模式与真实加载，缺失二进制必须失败，不允许自动 skip。
+
+验证时仅将本工作树拥有的二进制暂存到 `os.tmpdir()` 创建的独立目录，用 try/finally 还原，哈希未改变。无二进制、默认 auto 下，普通入口 124 文件、1,252 项通过、3 项既有跳过。专用原生入口在 setup 抛出两个 `Cannot find module` 子错误，0 项执行、1 个 suite 失败，证实没有静默回退或 skip；最初的验证脚本误判 Vitest 会输出 AggregateError 外层中文，但 Vitest 实际展开了子错误，修正的是日志断言，不是产品失败边界。还原后专用入口五文件通过；外部设置 `WEAPP_TW_NATIVE=off` 也由配置强制为 required。
+
+当前真实 ABI 命令为 `CI=1 pnpm --filter @weapp-tailwindcss/postcss exec vitest run --config vitest.native.config.ts --update=none --coverage.enabled=false`。普通入口和真实原生门禁都必须运行；设置环境变量不会自动把真实 ABI 文件加入普通测试配置。
 
 ## 适用边界
 
