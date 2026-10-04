@@ -7,7 +7,7 @@ import { transformLiteralText } from '../../../src/js/literal-transform'
 
 export interface ParseConfig {
   lang: 'js' | 'jsx' | 'ts' | 'tsx'
-  sourceType: 'script' | 'module'
+  sourceType: 'script' | 'module' | 'unambiguous'
   preserveParens: boolean
 }
 
@@ -37,6 +37,9 @@ export function analyzeReference(source: string, config: ParseConfig): Analysis 
   walk(result.program, {
     enter(node: any) {
       const parent = ancestors.at(-1)
+      if (node.type === 'CallExpression' && node.callee.type === 'Identifier' && node.callee.name === 'eval') {
+        unsupported = true
+      }
       if (['ImportDeclaration', 'ExportAllDeclaration', 'ExportNamedDeclaration', 'ExportDefaultDeclaration'].includes(node.type) && config.sourceType === 'script') {
         unsupported = true
       }

@@ -1,7 +1,7 @@
 use napi::bindgen_prelude::Utf16String;
 use napi_derive::napi;
 use oxc_allocator::Allocator;
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_ast_visit::Visit;
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::{GetSpan, SourceType, Span};
@@ -102,6 +102,13 @@ impl<'a> Visit<'a> for AnalysisVisitor<'a, '_> {
             self.unsupported = true;
         }
         match kind {
+            // eval 的参数由 Babel 递归转译，空白或注释不能绕过其条件与 ignore 语义。
+            AstKind::CallExpression(node)
+                if self.signature.is_none()
+                    && matches!(&node.callee, Expression::Identifier(callee) if callee.name == "eval") =>
+            {
+                self.unsupported = true;
+            }
             AstKind::ImportDeclaration(_)
             | AstKind::ExportAllDeclaration(_)
             | AstKind::ExportFromDeclaration(_) => self.analysis.has_module_declarations = true,

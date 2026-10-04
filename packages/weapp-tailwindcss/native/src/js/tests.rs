@@ -155,6 +155,31 @@ fn defers_static_esm_declarations_in_script_mode() {
 }
 
 #[test]
+fn defers_direct_eval_by_ast_without_disabling_runtime_signatures() {
+    for source in [
+        "eval ('const x = \\\"w-[1px]\\\"')",
+        "eval /*comment*/ ('const x = \\\"w-[1px]\\\"')",
+        "eval\n('const x = \\\"w-[1px]\\\"')",
+        "eval?.('const x = \\\"w-[1px]\\\"')",
+    ] {
+        assert!(analyze(source, "js", "module", false, false).is_none());
+        assert!(analyze(source, "js", "unambiguous", true, true).is_some());
+    }
+    assert!(analyze("object.eval('w-[1px]')", "js", "module", false, false).is_some());
+}
+
+#[test]
+fn unambiguous_accepts_script_and_module_syntax() {
+    for source in [
+        "with (scope) { const cls = 'w-[1px]' }",
+        "const legacy = '\\141'; const cls = 'w-[1px]'",
+        "export default 'w-[1px]'",
+    ] {
+        assert!(analyze(source, "js", "unambiguous", false, false).is_some());
+    }
+}
+
+#[test]
 fn exposes_babel_class_context_without_marking_business_values() {
     for source in [
         "const x = { className: 'pages/home' }",

@@ -167,6 +167,35 @@ fn rejects_semantic_errors_before_rewriting() {
 }
 
 #[test]
+fn eval_requires_babel_and_unambiguous_retains_script_semantics() {
+    let mut instance = transformer(&["w-[1px]"]);
+    for source in [
+        "eval ('const x = \\\"w-[1px]\\\"')",
+        "eval /*comment*/ ('const x = \\\"w-[1px]\\\"')",
+        "eval\n('const x = \\\"w-[1px]\\\"')",
+        "eval?.('const x = \\\"w-[1px]\\\"')",
+    ] {
+        assert!(run(&mut instance, source).is_none());
+    }
+    for source in [
+        "with (scope) { const cls = 'w-[1px]' }",
+        "const legacy = '\\141'; const cls = 'w-[1px]'",
+        "export default 'w-[1px]'",
+    ] {
+        assert_eq!(
+            instance.transform(
+                utf16(source),
+                "js".into(),
+                "unambiguous".into(),
+                false,
+                JsTransformOptions::default(),
+            ),
+            Some(source.replace("w-[1px]", "w-_b1px_B"))
+        );
+    }
+}
+
+#[test]
 fn bounds_instance_analysis_cache() {
     let mut instance = transformer(&["w-[1px]"]);
     for index in 0..140 {

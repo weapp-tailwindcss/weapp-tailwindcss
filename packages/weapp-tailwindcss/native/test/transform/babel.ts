@@ -39,11 +39,13 @@ const contexts = [
 ]
 const contextSources = contexts.flatMap(context => ['"pages/home"', '`pages/home`', '"text/plain"', '"http://example.com"'].map(value => context.replace('VALUE', value)))
 const cases = [...sources, ...contextSources, 'const x = `} w-[10px]`', 'const x = `w-[10px] {`', 'const x = `} w-[10px] {`', 'import "w-[10px]"', 'export { "w-[10px]" as alias } from "h-[20px]"', 'export * as "w-[10px]" from "h-[20px]"', 'let x; let x; const cls = "w-[10px]"', 'export { missing }; const cls = "w-[10px]"', 'break; const cls = "w-[10px]"', 'return "w-[10px]"']
+const evalSources = ['eval ', 'eval /*comment*/ ', 'eval\n', 'eval?.'].map(prefix => `${prefix}(${JSON.stringify('const cls = value === "w-[10px]" ? "h-[20px]" : ""')})`)
+cases.push(...evalSources, 'with (scope) { const cls = "w-[10px]" }', 'const legacy = "\\141"; const cls = "w-[10px]"', 'export default "w-[10px]"', 'const cls = "w-[10px]"; await foo()')
 let compared = 0
 let fallback = 0
 const failures: object[] = []
 for (const lang of ['js', 'jsx', 'ts', 'tsx'] as const) {
-  for (const sourceType of ['script', 'module'] as const) {
+  for (const sourceType of ['script', 'module', 'unambiguous'] as const) {
     for (const preserveParens of [false, true]) {
       for (const unescapeUnicode of [false, true]) {
         const plugins: ('typescript' | 'jsx')[] = []
@@ -56,6 +58,9 @@ for (const lang of ['js', 'jsx', 'ts', 'tsx'] as const) {
         for (const source of cases) {
           const babel = jsHandler(source, { classNameSet: new Set(names), unescapeUnicode, babelParserOptions: { plugins, sourceType, createParenthesizedExpressions: preserveParens } })
           const actual = transformer.transform(source, lang, sourceType, preserveParens, { unescapeUnicode })
+          if (evalSources.includes(source)) {
+            assert.equal(actual, null, 'eval 参数必须交还 Babel 递归转译')
+          }
           if (actual === null) {
             fallback++
             continue

@@ -17,7 +17,7 @@ for (const map of maps) {
   for (const classNames of [classes, classes.map(value => escape(value, { map }))]) {
     const instance = create(classNames, map)
     for (const lang of ['js', 'jsx', 'ts', 'tsx'] as const) {
-      for (const sourceType of ['module', 'script'] as const) {
+      for (const sourceType of ['module', 'script', 'unambiguous'] as const) {
         for (const preserveParens of [false, true]) {
           const config = { lang, sourceType, preserveParens }
           for (const source of sources) {
