@@ -14,6 +14,7 @@ import { hbuilderxTools } from './hbuilderx-tools'
 import { availablePort } from './port'
 import { waitForProbe } from './wait'
 import { connectWechat } from './wechat-connect'
+import { waitForWechatPage } from './wechat-page'
 import { wechatVersion } from './wechat-version'
 
 export async function base(ctx: ProbeContext): Promise<ProbeOutput> {
@@ -106,15 +107,7 @@ export async function wechat(ctx: ProbeContext): Promise<ProbeOutput> {
     process.stdout.write(`${await command(cli, ['auto', '--project', project, '--auto-port', String(port)], 30_000)}\n`)
     const connection = await connectWechat(port)
     mini = connection
-    let page = await connection.currentPage()
-    await waitForProbe(async () => {
-      page = await connection.currentPage()
-      const actual = page ? await (await page.$('#marker'))?.text() : undefined
-      if (actual && actual !== ctx.runId) {
-        throw new Error(`微信运行页面并非本轮探针：expected=${ctx.runId} actual=${actual}`)
-      }
-      return { expected: ctx.runId, actual }
-    }, value => value.actual === ctx.runId)
+    const page = await waitForWechatPage(connection, ctx.runId)
     const button = await page!.$('#probe')
     if (!button) {
       throw new Error('微信本轮探针缺少交互按钮。')
