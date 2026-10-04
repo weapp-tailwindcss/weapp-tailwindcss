@@ -1,6 +1,8 @@
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { subset } from 'semver'
 import { afterEach, describe, expect, it } from 'vitest'
 import { sourceDigest, stageBinding, verifyBinding, verifyDistribution, writeBindingMetadata } from '../native/distribution.mjs'
 import { bindingFileName, nativeTargets } from '../native/targets.mjs'
@@ -49,6 +51,17 @@ afterEach(() => {
 })
 
 describe('native distribution release gates', () => {
+  it('keeps every consumer Node range within the shared platform package support range', () => {
+    const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..')
+    const consumers = ['weapp-tailwindcss', 'postcss'].map(name => JSON.parse(readFileSync(join(repoRoot, 'packages', name, 'package.json'), 'utf8')))
+    for (const { suffix } of Object.values(nativeTargets)) {
+      const platform = JSON.parse(readFileSync(join(repoRoot, 'packages-native', suffix, 'package.json'), 'utf8'))
+      for (const consumer of consumers) {
+        expect(subset(consumer.engines.node, platform.engines.node), `${consumer.name} Node range in ${platform.name}`).toBe(true)
+      }
+    }
+  })
+
   it('accepts a complete eight-platform/two-kernel set even when consumer versions differ', () => {
     const { repoRoot, roots } = fixture()
     expect(() => verifyDistribution(roots, repoRoot)).not.toThrow()

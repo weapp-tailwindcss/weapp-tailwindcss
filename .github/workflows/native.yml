@@ -116,6 +116,28 @@ jobs:
           -e CI=1 -e HUSKY=0 -e NATIVE_VERIFY_ONLY=1 -e NATIVE_NODE_VERSION -e NATIVE_TARGET -e NATIVE_ARCH -e NATIVE_LIBC
           "$NATIVE_IMAGE" sh packages/weapp-tailwindcss/native/ci-linux.sh
 
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        if: matrix.image == ''
+        with:
+          node-version: 20.19.0
+
+      - name: Verify independent PostCSS minimum Node ABI
+        if: matrix.image == ''
+        run: node --import tsx packages/weapp-tailwindcss/native/test/package.mjs --css-only
+
+      - name: Verify independent PostCSS minimum Node ABI in Linux
+        if: matrix.image != ''
+        env:
+          NATIVE_NODE_VERSION: v20.19.0
+          NATIVE_TARGET: ${{ matrix.target }}
+          NATIVE_ARCH: ${{ matrix.arch }}
+          NATIVE_LIBC: ${{ matrix.libc }}
+          NATIVE_IMAGE: ${{ matrix.libc == 'musl' && 'node:20.19.0-alpine' || matrix.image }}
+        run: >-
+          docker run --rm -v "$PWD:/work" -w /work
+          -e CI=1 -e HUSKY=0 -e NATIVE_CSS_ONLY=1 -e NATIVE_NODE_VERSION -e NATIVE_TARGET -e NATIVE_ARCH -e NATIVE_LIBC
+          "$NATIVE_IMAGE" sh packages/weapp-tailwindcss/native/ci-linux.sh
+
       - name: Upload verified native artifacts
         uses: actions/upload-artifact@v7
         with:

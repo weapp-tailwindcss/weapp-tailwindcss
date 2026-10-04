@@ -23,7 +23,9 @@ corepack enable
 corepack prepare "$(node -p 'require("./package.json").packageManager')" --activate
 pnpm install --frozen-lockfile
 
-if [ "${NATIVE_VERIFY_ONLY:-0}" = 1 ]; then
+if [ "${NATIVE_CSS_ONLY:-0}" = 1 ]; then
+  node --import tsx packages/weapp-tailwindcss/native/test/package.mjs --css-only
+elif [ "${NATIVE_VERIFY_ONLY:-0}" = 1 ]; then
   node packages/weapp-tailwindcss/native/ci.mjs "--target=$NATIVE_TARGET" --verify-only
 else
   task_rust_installer="$(mktemp)"

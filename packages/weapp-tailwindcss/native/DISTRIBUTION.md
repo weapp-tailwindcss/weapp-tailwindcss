@@ -34,7 +34,7 @@
 3. JS/WXML 真实 ABI 差分、CSS 原生回归和公开 tokenizer/JS 条件语义回归。
 4. 平台包 tarball 的隔离解析与离线安装，在安装后执行 JS/WXML/CSS Node-API。
 
-CI 在 Node 24 和最低受支持的 Node 22.18.0 上运行消费者验证。Linux GNU 使用 manylinux glibc 2.28 镜像构建；musl 使用 Alpine；CPU 由原生 arm64/x64 runner 提供，不将交叉编译成功当成目标平台运行通过。
+CI 在 Node 24 和 core 最低受支持的 Node 22.18.0 上运行消费者验证，另外在独立 PostCSS 最低受支持的 Node 20.19.0 上验证 CSS 平台包离线安装与真实 ABI。共享平台包的 engines 覆盖两个消费者范围；core 自身要求不变。Linux GNU 使用 manylinux glibc 2.28 镜像构建；musl 使用 Alpine；CPU 由原生 arm64/x64 runner 提供，不将交叉编译成功当成目标平台运行通过。
 
 本机只验证当前 OS/CPU/libc，不能替代其余七个平台的 CI。Linux 容器入口 `ci-linux.sh` 仅用于 Linux CI，不用于 Windows 或 macOS 开发者环境。
 

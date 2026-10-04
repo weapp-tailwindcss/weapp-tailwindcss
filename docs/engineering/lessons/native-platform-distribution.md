@@ -35,6 +35,8 @@ tarball 验证使用主集成工作树构建的 JS/WXML binding，以及 CSS 实
 
 本次核验的 JS/WXML binary SHA-256 为 `c810ac38b4ada2b302e6216edf0a06cefc1b79adea46f6df9dc13683be5b652c`，CSS binary SHA-256 为 `e0b02643567d0413167793eaed25ce81b219aa2e75a69772f1e92a0c146218f1`。这两个 hash 只记录本次本地测试输入，不作为发布 artifact 白名单。
 
+后续发布边界审计发现：PostCSS 支持 Node 20.19.0，而共享平台包最初复制了 core 更高的 engines 下限。平台包现覆盖两个消费者的范围，新增范围包含关系回归；CI 的八个平台再增加独立 CSS Node 20.19.0 tarball/离线安装/ABI 验证。本地用 SHA-256 验证后的官方 Node 20.19.0 darwin arm64 二进制运行 `native/test/package.mjs --css-only`，真实 CSS ABI 与离线安装通过；core 的 Node 要求没有降低。新增回归后 distribution 定向测试 11 项通过。
+
 ## 适用边界
 
 尚未执行远端八平台矩阵、最低 Node 22.18.0 或实际 npm 发布。新增平台包的首次 trusted publisher 配置需由 npm 包所有者完成。本机 tarball 验证不证明完整消费者构建提速，也不替代全仓或多端验收。
