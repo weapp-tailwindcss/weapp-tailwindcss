@@ -20,7 +20,7 @@ vi.mock('../scripts/demo-e2e-workflow/process-tree', async (importOriginal) => {
 vi.mock('../scripts/e2e-preflight/gate', () => ({ enterFullTestGate: mocks.enter }))
 vi.mock('../scripts/demo-e2e-memory', async importOriginal => ({
   ...await importOriginal<typeof import('../scripts/demo-e2e-memory')>(),
-  sampleProcessTree: () => undefined,
+  sampleProcessTreeAsync: async () => undefined,
   writeDemoE2eMemoryReport: mocks.writeReport,
 }))
 

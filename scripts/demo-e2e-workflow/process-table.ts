@@ -1,5 +1,5 @@
-import { spawnSync } from 'node:child_process'
 import process from 'node:process'
+import { runProcessCommand } from './process-command'
 
 export interface ProcessIdentity {
   pid: number
@@ -25,25 +25,21 @@ export function parsePosixProcesses(output: string): ProcessIdentity[] {
   })
 }
 
-export function readProcessTable(timeoutMs = 5000): ProcessIdentity[] {
+export async function readProcessTable(timeoutMs = 5000, signal?: AbortSignal): Promise<ProcessIdentity[]> {
   const windows = process.platform === 'win32'
-  const result = spawnSync(windows ? 'powershell' : 'ps', windows
-    ? ['-NoProfile', '-Command', '$rows = @(Get-CimInstance Win32_Process | Where-Object { $null -ne $_.CreationDate } | ForEach-Object { @{ pid = [int]$_.ProcessId; parent = [int]$_.ParentProcessId; group = 0; started = $_.CreationDate.ToUniversalTime().ToString("o") } }); ConvertTo-Json -InputObject $rows -Compress']
-    : ['-A', '-o', 'pid=,ppid=,pgid=,lstart=,stat='], {
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
-    windowsHide: true,
-    timeout: Math.max(1, timeoutMs),
-    env: { ...process.env, LC_ALL: 'C' },
-    maxBuffer: 8 * 1024 * 1024,
-  })
-  if (result.error || result.status !== 0) {
-    throw new Error(`无法确认本轮子进程归属：${result.error?.message ?? result.stderr ?? result.status}`, { cause: result.error })
+  let output: string
+  try {
+    output = await runProcessCommand(windows ? 'powershell' : 'ps', windows
+      ? ['-NoProfile', '-Command', '$rows = @(Get-CimInstance Win32_Process | Where-Object { $null -ne $_.CreationDate } | ForEach-Object { @{ pid = [int]$_.ProcessId; parent = [int]$_.ParentProcessId; group = 0; started = $_.CreationDate.ToUniversalTime().ToString("o") } }); ConvertTo-Json -InputObject $rows -Compress']
+      : ['-A', '-o', 'pid=,ppid=,pgid=,lstart=,stat='], timeoutMs, signal)
+  }
+  catch (error) {
+    throw new Error(`无法确认本轮子进程归属：${error instanceof Error ? error.message : String(error)}`, { cause: error })
   }
   if (!windows) {
-    return parsePosixProcesses(result.stdout)
+    return parsePosixProcesses(output)
   }
-  const rows: unknown = JSON.parse(result.stdout.trim())
+  const rows: unknown = JSON.parse(output.trim())
   if (!Array.isArray(rows) || rows.some(row => !Number.isInteger(row.pid) || !Number.isInteger(row.parent) || typeof row.started !== 'string' || !Number.isFinite(Date.parse(row.started)))) {
     throw new Error('Windows 进程身份表无效，不能确认子树已结束。')
   }

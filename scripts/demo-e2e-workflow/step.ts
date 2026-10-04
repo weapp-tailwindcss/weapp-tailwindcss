@@ -2,7 +2,7 @@ import type { DemoE2eMemorySample, DemoE2eMemoryStepReport } from '../demo-e2e-m
 import type { WorkflowStep } from './quality-steps'
 import { spawn } from 'node:child_process'
 import process from 'node:process'
-import { sampleProcessTree, summarizeMemorySamples } from '../demo-e2e-memory'
+import { sampleProcessTreeAsync, summarizeMemorySamples } from '../demo-e2e-memory'
 import { formatWorkflowError } from '../e2e-preflight/cleanup'
 import { WorkflowCancellationError } from './cancellation'
 import { createWorkflowProcessTree } from './process-tree'
@@ -29,7 +29,12 @@ export async function runStep(step: WorkflowStep, index: number, total: number, 
   })
   const tree = createWorkflowProcessTree(child, closed)
   let cleanup: Promise<{ error?: unknown }> | undefined
+  let recording = true
+  let timer: NodeJS.Timeout | undefined
+  let pendingSample: Promise<void> | undefined
   const stop = (cooperative = false) => {
+    recording = false
+    clearInterval(timer)
     cleanup ??= tree.stop(cooperative).then(() => ({}), error => ({ error }))
   }
   const onExit = () => stop()
@@ -43,29 +48,38 @@ export async function runStep(step: WorkflowStep, index: number, total: number, 
     resolveCancelled()
   }
   cancellation?.addEventListener('abort', onAbort, { once: true })
-  let timer: NodeJS.Timeout | undefined
   let failure: unknown
   let exitCode = 1
   const record = () => {
-    tree.capture()
-    const sample = sampleProcessTree(child.pid)
-    if (sample) {
-      samples.push(sample)
-    }
+    pendingSample ??= (async () => {
+      await tree.capture()
+      if (!recording) {
+        return
+      }
+      const sample = await sampleProcessTreeAsync(child.pid)
+      if (sample) {
+        samples.push(sample)
+      }
+    })().finally(() => {
+      pendingSample = undefined
+    })
+    return pendingSample
   }
   try {
-    record()
-    timer = setInterval(() => {
-      try {
-        record()
-      }
-      catch (error) {
-        failure = error
-        stop()
-        resolveCancelled()
-      }
-    }, 1000)
-    timer.unref?.()
+    await record()
+    if (recording) {
+      timer = setInterval(() => {
+        if (pendingSample) {
+          return
+        }
+        void record().catch((error) => {
+          failure = error
+          stop()
+          resolveCancelled()
+        })
+      }, 1000)
+      timer.unref?.()
+    }
     if (cancellation?.aborted) {
       onAbort()
     }
@@ -82,6 +96,10 @@ export async function runStep(step: WorkflowStep, index: number, total: number, 
     cancellation?.removeEventListener('abort', onAbort)
   }
   const cleanupResult = await cleanup!
+  // 收尾等待最后一轮采样落定，不能让晚到的错误或样本越过阶段边界。
+  await pendingSample?.catch((error) => {
+    failure ??= error
+  })
   const reason = cancellation?.aborted ? cancellation.reason : undefined
   const errors = [...new Set([reason, failure, spawnError, cleanupResult.error].filter(error => error !== undefined))]
   const cancelledError = reason instanceof WorkflowCancellationError ? reason : undefined

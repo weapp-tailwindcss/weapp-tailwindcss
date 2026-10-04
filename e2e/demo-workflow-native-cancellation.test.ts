@@ -106,7 +106,7 @@ describe('隔离进程内的真实信号与合作恢复', () => {
     const tree = createWorkflowProcessTree(child, done, { cooperativeMs: 2000 })
     try {
       await vi.waitFor(async () => expect(await readFile(source, 'utf8')).toBe('mutated'))
-      tree.capture()
+      await tree.capture()
       await writeFile(exit, 'exit')
       await done
       const stopping = tree.stop(true)

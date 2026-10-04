@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process'
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
+import { runProcessCommand } from './demo-e2e-workflow/process-command'
 
 export interface DemoE2eMemorySample {
   at: number
@@ -118,9 +119,12 @@ function listDescendantRowsOnPosix(rootPid: number): ProcessRow[] {
   if (result.status !== 0 || typeof result.stdout !== 'string') {
     return []
   }
+  return parseDescendantRows(result.stdout, rootPid)
+}
 
+function parseDescendantRows(output: string, rootPid: number): ProcessRow[] {
   const rows: ProcessRow[] = []
-  for (const line of result.stdout.split(/\r?\n/)) {
+  for (const line of output.split(/\r?\n/)) {
     const normalized = line.trim()
     if (!normalized) {
       continue
@@ -158,7 +162,10 @@ function listDescendantRowsOnPosix(rootPid: number): ProcessRow[] {
 }
 
 function samplePosix(rootPid: number): DemoE2eMemorySample | undefined {
-  const rows = listDescendantRowsOnPosix(rootPid)
+  return sampleRows(listDescendantRowsOnPosix(rootPid))
+}
+
+function sampleRows(rows: ProcessRow[]): DemoE2eMemorySample | undefined {
   if (rows.length === 0) {
     return undefined
   }
@@ -236,6 +243,23 @@ export function sampleProcessTree(pid?: number): DemoE2eMemorySample | undefined
     return undefined
   }
   return process.platform === 'win32' ? sampleWindows(pid) : samplePosix(pid)
+}
+
+/** 全面工作流使用异步有界采样，不阻塞子进程 close 与取消处理。 */
+export async function sampleProcessTreeAsync(pid?: number): Promise<DemoE2eMemorySample | undefined> {
+  if (!pid) {
+    return undefined
+  }
+  if (process.platform !== 'win32') {
+    const output = await runProcessCommand('ps', ['-Ao', 'pid=,ppid=,rss=,command='], 5000)
+    return sampleRows(parseDescendantRows(output, pid))
+  }
+  const output = await runProcessCommand('powershell', ['-NoProfile', '-Command', createWindowsProcessTreeMemoryScript(pid)], 5000)
+  const parsed = JSON.parse(output.trim()) as Partial<DemoE2eMemorySample>
+  if (typeof parsed.rssMb !== 'number') {
+    throw new TypeError('Windows 内存探针响应无效。')
+  }
+  return { at: Date.now(), ...parsed } as DemoE2eMemorySample
 }
 
 export function summarizeMemorySamples(samples: DemoE2eMemorySample[]): DemoE2eMemorySummary {
