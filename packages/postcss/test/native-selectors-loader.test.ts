@@ -30,6 +30,13 @@ afterEach(() => {
 })
 
 describe('Rust CSS 内核加载契约', () => {
+  it('未设置模式时默认保留 PostCSS 实现', async () => {
+    const { loadNativeCssBinding } = await import('@/native/binding')
+    expect(loadNativeCssBinding()).toBeUndefined()
+    expect(nativeMock.resolve).not.toHaveBeenCalled()
+    expect(nativeMock.load).not.toHaveBeenCalled()
+  })
+
   it('off 不尝试解析或加载二进制', async () => {
     vi.stubEnv('WEAPP_TW_NATIVE', 'off')
     const { loadNativeCssBinding } = await import('@/native/binding')

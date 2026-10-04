@@ -76,7 +76,9 @@ function resolveBinding() {
 
 /** 原生加载失败可以回退；原生转换本身的异常必须继续向上抛出。 */
 export function loadNativeCssBinding(): NativeCssBinding | undefined {
-  const mode = process.env['WEAPP_TW_NATIVE'] ?? 'auto'
+  // CSS 原生内核仍属于已 profile 的边界实验，默认保留现有 PostCSS 实现。
+  // 显式设置 WEAPP_TW_NATIVE=auto/required 时才启用，避免无意中改变完整构建的性能基线。
+  const mode = process.env['WEAPP_TW_NATIVE'] ?? 'off'
   if (mode === 'off') {
     return undefined
   }
