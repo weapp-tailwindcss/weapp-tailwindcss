@@ -23,4 +23,9 @@ describe('CSS Rust 预编译平台路由', () => {
     expect(getNativeSelectorBindingSuffix('linux', 'ia32')).toBeUndefined()
     expect(getNativeSelectorBindingSuffix('win32', 'ia32')).toBeUndefined()
   })
+
+  it('无法获取 Linux report 时不猜测 libc', () => {
+    vi.spyOn(process.report, 'getReport').mockReturnValue(undefined as unknown as ReturnType<typeof process.report.getReport>)
+    expect(getNativeSelectorBindingSuffix('linux', 'x64')).toBeUndefined()
+  })
 })

@@ -10,7 +10,7 @@ export function getNativeSelectorBindingSuffix(platform = process.platform, arch
   }
   if (platform === 'linux' && (arch === 'arm64' || arch === 'x64')) {
     const report = process.report?.getReport() as { header?: { glibcVersionRuntime?: string } } | undefined
-    return `${platform}-${arch}-${report?.header?.glibcVersionRuntime ? 'gnu' : 'musl'}`
+    return report?.header ? `${platform}-${arch}-${report.header.glibcVersionRuntime ? 'gnu' : 'musl'}` : undefined
   }
   return undefined
 }

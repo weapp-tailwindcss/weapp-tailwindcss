@@ -54,7 +54,8 @@ describe('Rust 直接选择器转换', () => {
       expect(transform(selector, 'required', options)).toBe(transform(selector, 'off', options))
     }
     vi.stubEnv('WEAPP_TW_NATIVE', 'required')
-    expect(transformNativeSelector(selector, { escapeMap: {} })).toBeUndefined()
+    expect(transformNativeSelector(selector, { escapeMap: { '[': 'OPEN' } })).toBeUndefined()
+    expect(transformNativeSelector(selector, { escapeMap: {} })).toBe(transform(selector, 'off'))
   })
 
   it('随机 UTF-16 类名、CSS escape 与组合器逐字节对拍', () => {

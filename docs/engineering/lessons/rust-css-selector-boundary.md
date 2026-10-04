@@ -64,7 +64,7 @@ UTF-16 代理项、非 BMP 字符、无效 Unicode escape、开头数字和双�
 
 表格只测 PostCSS parse、选择器转换与 stringify，没有完整 PostCSS 插件管线、真实 Vite 冷构建/HMR、峰值 RSS 的证据。v4 两个 fixture 基本持平，不能推导整体构建加速。跨平台后缀路由有回归，八平台二进制构建和分发由原生发布矩阵验证；本机不能证明全部平台实际加载成功。
 
-此交付迁移的是 CSS 选择器内核的一部分。通用 CSS parser/value parser、复杂伪类展开、平台声明兼容、颜色/单位和用户 PostCSS 插件仍未迁移，不能宣称完整 CSS Rust 化。没有用 Lightning CSS 整体替换现有管线。
+此阶段迁移的是 CSS 选择器内核的一部分。通用 CSS parser/value parser、复杂伪类展开、平台声明兼容、颜色/单位和用户 PostCSS 插件在该阶段仍未迁移，不能宣称完整 CSS Rust 化。后续部分 value parser/兼容阶段及可变映射缓存的修正见[值迁移记录](rust-css-value-boundary.md)，当前状态见[迁移覆盖清单](../../../packages/postcss/native/MIGRATION.md)。没有用 Lightning CSS 整体替换现有管线。
 
 ## 规则评估
 

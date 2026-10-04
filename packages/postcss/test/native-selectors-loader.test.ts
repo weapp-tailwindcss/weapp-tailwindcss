@@ -1,88 +1,129 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const nativeMock = vi.hoisted(() => ({
-  load: vi.fn(),
-}))
-
+const nativeMock = vi.hoisted(() => ({ load: vi.fn(), resolve: vi.fn() }))
 vi.mock('node:module', () => ({
-  createRequire: () => Object.assign(nativeMock.load, { resolve: () => '/fixture/postcss/package.json' }),
+  createRequire: () => Object.assign(nativeMock.load, { resolve: nativeMock.resolve }),
 }))
 
+function binding() {
+  return {
+    escapeClasses: (values: string[]) => values,
+    transformSelector: () => null,
+    transformSelectors: () => [],
+    normalizeV4VariableFallbacks: (value: string) => value,
+    normalizeUvueTransformValue: (value: string) => value,
+    normalizeUvueTransformValues: (values: string[]) => values,
+  }
+}
+
+beforeEach(() => {
+  nativeMock.resolve.mockImplementation((id: string) => id === '@weapp-tailwindcss/postcss/package.json' ? '/fixture/postcss/package.json' : id)
+})
 afterEach(() => {
   vi.resetModules()
   vi.resetAllMocks()
   vi.unstubAllEnvs()
 })
 
-describe('Rust 选择器内核加载契约', () => {
-  it('off 不尝试加载二进制', async () => {
+describe('Rust CSS 内核加载契约', () => {
+  it('off 不尝试解析或加载二进制', async () => {
     vi.stubEnv('WEAPP_TW_NATIVE', 'off')
-    const { loadNativeSelectorBinding } = await import('@/selectorParser/native')
-    expect(loadNativeSelectorBinding()).toBeUndefined()
+    const { loadNativeCssBinding } = await import('@/native/binding')
+    expect(loadNativeCssBinding()).toBeUndefined()
+    expect(nativeMock.resolve).not.toHaveBeenCalled()
     expect(nativeMock.load).not.toHaveBeenCalled()
   })
 
-  it('拒绝错误的模式名称，避免意外启用原生转换', async () => {
+  it('拒绝错误的模式名称', async () => {
     vi.stubEnv('WEAPP_TW_NATIVE', 'enabled')
-    const { loadNativeSelectorBinding } = await import('@/selectorParser/native')
-    expect(() => loadNativeSelectorBinding()).toThrow('无效的 WEAPP_TW_NATIVE 模式')
+    const { loadNativeCssBinding } = await import('@/native/binding')
+    expect(() => loadNativeCssBinding()).toThrow('无效的 WEAPP_TW_NATIVE 模式')
+  })
+
+  it('优先加载已安装平台包，不尝试本地二进制', async () => {
+    vi.stubEnv('WEAPP_TW_NATIVE', 'required')
+    const native = binding()
+    nativeMock.load.mockReturnValue(native)
+    const { loadNativeCssBinding } = await import('@/native/binding')
+    expect(loadNativeCssBinding()).toBe(native)
+    expect(nativeMock.load).toHaveBeenCalledExactlyOnceWith(expect.stringMatching(/^@weapp-tailwindcss\/native-.+\/postcss$/))
+    expect(nativeMock.resolve).not.toHaveBeenCalledWith(expect.stringMatching(/\.node$/))
+  })
+
+  it('只有平台包解析 MODULE_NOT_FOUND 时才加载本地二进制', async () => {
+    vi.stubEnv('WEAPP_TW_NATIVE', 'required')
+    nativeMock.resolve.mockImplementation((id: string) => {
+      if (id.startsWith('@weapp-tailwindcss/native-')) throw Object.assign(new Error('missing package'), { code: 'MODULE_NOT_FOUND' })
+      return id === '@weapp-tailwindcss/postcss/package.json' ? '/fixture/postcss/package.json' : id
+    })
+    nativeMock.load.mockReturnValue(binding())
+    const { loadNativeCssBinding } = await import('@/native/binding')
+    expect(loadNativeCssBinding()).toBeDefined()
+    expect(nativeMock.load).toHaveBeenCalledExactlyOnceWith(expect.stringMatching(/weapp-tailwindcss-postcss\.node$/))
+  })
+
+  it.each(['auto', 'required'])('已安装包加载失败不尝试本地，%s 保留失败策略', async (mode) => {
+    vi.stubEnv('WEAPP_TW_NATIVE', mode)
+    const error = Object.assign(new Error('installed binary is damaged'), { code: 'ERR_DLOPEN_FAILED' })
+    nativeMock.load.mockImplementation(() => { throw error })
+    const { loadNativeCssBinding } = await import('@/native/binding')
+    if (mode === 'required') expect(() => loadNativeCssBinding()).toThrow(error)
+    else expect(loadNativeCssBinding()).toBeUndefined()
+    expect(nativeMock.load).toHaveBeenCalledTimes(1)
+    expect(nativeMock.resolve).not.toHaveBeenCalledWith(expect.stringMatching(/\.node$/))
+    vi.stubEnv('WEAPP_TW_NATIVE', 'required')
+    expect(() => loadNativeCssBinding()).toThrow(error)
+    expect(nativeMock.load).toHaveBeenCalledTimes(1)
+  })
+
+  it('解析时非缺包错误直接保留，禁止其它 binding 掩盖', async () => {
+    vi.stubEnv('WEAPP_TW_NATIVE', 'required')
+    const error = Object.assign(new Error('package subpath not exported'), { code: 'ERR_PACKAGE_PATH_NOT_EXPORTED' })
+    nativeMock.resolve.mockImplementation((id: string) => {
+      if (id.startsWith('@weapp-tailwindcss/native-')) throw error
+      return '/fixture/postcss/package.json'
+    })
+    const { loadNativeCssBinding } = await import('@/native/binding')
+    expect(() => loadNativeCssBinding()).toThrow(error)
     expect(nativeMock.load).not.toHaveBeenCalled()
   })
 
-  it('本地二进制缺失时加载平台包的 CSS 子路径', async () => {
+  it.each(['escapeClasses', 'transformSelector', 'transformSelectors', 'normalizeV4VariableFallbacks', 'normalizeUvueTransformValue', 'normalizeUvueTransformValues'])('旧二进制缺少 %s 时拒绝，不尝试本地', async (method) => {
     vi.stubEnv('WEAPP_TW_NATIVE', 'required')
-    const binding = { escapeClasses: () => [], transformSelector: () => null, transformSelectors: () => [] }
-    nativeMock.load.mockImplementation((candidate: string) => {
-      if (candidate.startsWith('@weapp-tailwindcss/native-') && candidate.endsWith('/postcss')) return binding
-      throw new Error('local binary not found')
-    })
-    const { loadNativeSelectorBinding } = await import('@/selectorParser/native')
-    expect(loadNativeSelectorBinding()).toBe(binding)
-    expect(nativeMock.load).toHaveBeenCalledTimes(2)
+    const native = binding() as Record<string, unknown>
+    delete native[method]
+    nativeMock.load.mockReturnValue(native)
+    const { loadNativeCssBinding } = await import('@/native/binding')
+    expect(() => loadNativeCssBinding()).toThrow(/原生模块缺少/)
+    expect(nativeMock.load).toHaveBeenCalledTimes(1)
+    expect(nativeMock.resolve).not.toHaveBeenCalledWith(expect.stringMatching(/\.node$/))
   })
 
-  it('auto 在加载失败时回退并缓存失败', async () => {
-    vi.stubEnv('WEAPP_TW_NATIVE', 'auto')
-    nativeMock.load.mockImplementation(() => { throw new Error('binary not found') })
-    const { loadNativeSelectorBinding } = await import('@/selectorParser/native')
-    expect(loadNativeSelectorBinding()).toBeUndefined()
-    const attempts = nativeMock.load.mock.calls.length
-    expect(attempts).toBeGreaterThan(0)
-    expect(loadNativeSelectorBinding()).toBeUndefined()
-    expect(nativeMock.load).toHaveBeenCalledTimes(attempts)
-  })
-
-  it.each([new Error('binary not found'), new Error('wrong ABI'), {}])('required 明确暴露加载或 ABI 错误：%s', async (failure) => {
-    vi.stubEnv('WEAPP_TW_NATIVE', 'required')
-    nativeMock.load.mockImplementation(() => {
-      if (failure instanceof Error) throw failure
-      return failure
-    })
-    const { loadNativeSelectorBinding } = await import('@/selectorParser/native')
-    expect(() => loadNativeSelectorBinding()).toThrow(/无法加载 PostCSS Rust 选择器内核/)
-    expect(() => loadNativeSelectorBinding()).toThrow(failure instanceof Error ? failure.message : 'escapeClasses')
-  })
-
-  it('auto 不吞掉原生转换抛出的异常', async () => {
-    vi.stubEnv('WEAPP_TW_NATIVE', 'auto')
-    nativeMock.load.mockReturnValue({ escapeClasses: () => { throw new Error('native transform failed') }, transformSelector: () => null, transformSelectors: () => [] })
-    const { escapeNativeSelectorClasses } = await import('@/selectorParser/native')
-    expect(() => escapeNativeSelectorClasses(['w-[10px]'])).toThrow('native transform failed')
-  })
-
-  it('required 拒绝缺少完整选择器接口的旧二进制', async () => {
-    vi.stubEnv('WEAPP_TW_NATIVE', 'required')
-    nativeMock.load.mockReturnValue({ escapeClasses: () => [] })
-    const { loadNativeSelectorBinding } = await import('@/selectorParser/native')
-    expect(() => loadNativeSelectorBinding()).toThrow('transformSelector/transformSelectors')
-  })
-
-  it('auto 不吞掉原生选择器转换异常，仅 null 结果回退', async () => {
+  it('只允许 null 转换结果回退，不吞掉原生执行异常', async () => {
     vi.stubEnv('WEAPP_TW_NATIVE', 'auto')
     const transformSelector = vi.fn().mockReturnValueOnce(null).mockImplementation(() => { throw new Error('selector failed') })
-    nativeMock.load.mockReturnValue({ escapeClasses: () => [], transformSelector, transformSelectors: () => [] })
+    nativeMock.load.mockReturnValue({ ...binding(), transformSelector })
     const { transformNativeSelector } = await import('@/selectorParser/native')
     expect(transformNativeSelector('.a:hover')).toBeUndefined()
     expect(() => transformNativeSelector('.a')).toThrow('selector failed')
+  })
+
+  it('原生值转换失败保留原始异常，不重新执行兼容实现', async () => {
+    vi.stubEnv('WEAPP_TW_NATIVE', 'auto')
+    const error = new Error('value transform failed')
+    const fail = () => { throw error }
+    nativeMock.load.mockReturnValue({ ...binding(), normalizeV4VariableFallbacks: fail, normalizeUvueTransformValue: fail, normalizeUvueTransformValues: fail })
+    const { normalizeV4VariableFallbacks } = await import('@/compat/tailwindcss-v4/declarations/variable-fallbacks')
+    const { normalizeUniAppXTransformValue, normalizeUniAppXTransformValues } = await import('@/compat/uni-app-x-uvue/transform-value')
+    expect(() => normalizeV4VariableFallbacks('var(--tw-x,)')).toThrow(error)
+    expect(() => normalizeUniAppXTransformValue('translate(1px,2px)')).toThrow(error)
+    expect(() => normalizeUniAppXTransformValues(['translate(1px,2px)'])).toThrow(error)
+  })
+
+  it('拒绝长度不完整的原生值批次，防止声明错配', async () => {
+    vi.stubEnv('WEAPP_TW_NATIVE', 'required')
+    nativeMock.load.mockReturnValue({ ...binding(), normalizeUvueTransformValues: () => [] })
+    const { normalizeUniAppXTransformValues } = await import('@/compat/uni-app-x-uvue/transform-value')
+    expect(() => normalizeUniAppXTransformValues(['rotate(45deg)', 'translate(1px,2px)'])).toThrow('不完整的 transform 声明批次')
   })
 })

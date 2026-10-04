@@ -5,6 +5,7 @@ import type { IStyleHandlerOptions } from '../types'
 import type { CachedSelectorTransformResult, TransformContext } from './rule-transformer/types'
 import psp from 'postcss-selector-parser'
 import { composeIsPseudo } from '../shared'
+import { resolveCssEscapeMap } from '../utils/escape-map'
 import { transformNativeSelector } from './native'
 import { handleClassNode, handleCombinatorNode, handleSelectorNode, handleTagOrAttribute, handleUniversalNode } from './rule-transformer/nodes'
 import { handlePseudoNode, shouldRemoveEmptyFunctionalPseudo } from './rule-transformer/pseudos'
@@ -100,7 +101,8 @@ function createRuleTransformer(options: IStyleHandlerOptions): RuleTransformer {
   const universalReplacement = options.cssSelectorReplacement?.universal
     ? composeIsPseudo(options.cssSelectorReplacement.universal)
     : undefined
-  const selectorReplacerOptions = options.escapeMap
+  let escapeMapSnapshot = resolveCssEscapeMap(options.escapeMap)
+  let selectorReplacerOptions = options.escapeMap
     ? { escapeMap: options.escapeMap }
     : undefined
   const unsupportedPseudoClasses = getUnsupportedPseudoClassSet(options)
@@ -125,6 +127,13 @@ function createRuleTransformer(options: IStyleHandlerOptions): RuleTransformer {
     const sourceSelector = rule.selector
     if (!sourceSelector) {
       return
+    }
+
+    const nextEscapeMap = resolveCssEscapeMap(options.escapeMap)
+    if (nextEscapeMap !== escapeMapSnapshot) {
+      selectorResultCache.clear()
+      escapeMapSnapshot = nextEscapeMap
+      selectorReplacerOptions = options.escapeMap ? { escapeMap: options.escapeMap } : undefined
     }
 
     const cached = selectorResultCache.get(sourceSelector)

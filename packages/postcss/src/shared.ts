@@ -1,6 +1,7 @@
 // 通用工具：处理选择器转义与 :is 伪类组合
 import type { InternalCssSelectorReplacerOptions } from './types'
-import { escape, MappingChars2String } from '@weapp-tailwindcss/escape'
+import { escape } from '@weapp-tailwindcss/escape'
+import { resolveCssEscapeMap } from './utils/escape-map'
 // css 中，要多加一个 '\' 来转义
 // 用于原始 CSS 选择器的实现
 // export function cssSelectorReplacer(selector: string, escapeEntries = MappingChars2StringEntries) {
@@ -23,8 +24,8 @@ export function internalCssSelectorReplacer(
   selectors: string,
   options?: InternalCssSelectorReplacerOptions,
 ) {
-  const escapeMap = options?.escapeMap
-  if (escapeMap === undefined || escapeMap === MappingChars2String) {
+  const escapeMap = resolveCssEscapeMap(options?.escapeMap)
+  if (escapeMap === undefined) {
     return escape(selectors)
   }
 

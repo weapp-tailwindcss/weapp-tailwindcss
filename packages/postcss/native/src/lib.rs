@@ -1,5 +1,6 @@
 mod escape;
 mod selector;
+mod value;
 
 use napi::bindgen_prelude::Utf16String;
 use napi_derive::napi;
@@ -18,6 +19,27 @@ pub fn transform_selector(value: Utf16String) -> Option<Utf16String> {
 #[napi]
 pub fn transform_selectors(values: Vec<Utf16String>) -> Vec<Option<Utf16String>> {
     values.into_iter().map(transform_selector).collect()
+}
+
+/// 合并 Tailwind v4 三个 var/gradient fallback 兼容阶段，不跨边界传递值 AST。
+#[napi]
+pub fn normalize_v4_variable_fallbacks(value: Utf16String) -> Option<Utf16String> {
+    value::normalize_v4(&value).map(Into::into)
+}
+
+/// uvue 的 translate 只改直属参数分隔符，保留嵌套 var 的 fallback 逗号。
+#[napi]
+pub fn normalize_uvue_transform_value(value: Utf16String) -> Option<Utf16String> {
+    value::normalize_translate(&value).map(Into::into)
+}
+
+/// 同一 PostCSS 阶段的 transform 声明批量跨越 NAPI。
+#[napi]
+pub fn normalize_uvue_transform_values(values: Vec<Utf16String>) -> Vec<Option<Utf16String>> {
+    values
+        .into_iter()
+        .map(normalize_uvue_transform_value)
+        .collect()
 }
 
 #[napi(object)]
