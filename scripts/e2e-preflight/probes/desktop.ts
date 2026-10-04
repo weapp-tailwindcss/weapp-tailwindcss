@@ -102,6 +102,10 @@ export async function wechat(ctx: ProbeContext): Promise<ProbeOutput> {
     await assertWechatLogin(binding.httpPort)
     const connection = await connectWechat(port)
     mini = connection
+    // 稳定版 IDE 会在自动化端口可连接后继续编译并注册 pageframe 元数据；
+    // currentPage 在这段窗口内会收到 getPageMetaByWebviewId(null)。先等待 App 域
+    // 就绪，再读取本轮 marker，避免把正常的异步编译误判为运行页冲突。
+    await connection.waitForAppReady?.(30_000)
     let page: Awaited<ReturnType<MiniProgram['currentPage']>>
     await waitForProbe(async () => {
       let actual: string | undefined
@@ -117,7 +121,7 @@ export async function wechat(ctx: ProbeContext): Promise<ProbeOutput> {
         throw new Error(`微信运行页面并非本轮探针：expected=${ctx.runId} actual=${actual}`)
       }
       return { expected: ctx.runId, actual }
-    }, value => value.actual === ctx.runId)
+    }, value => value.actual === ctx.runId, 15_000)
     const button = await page!.$('#probe')
     if (!button) {
       throw new Error('微信本轮探针缺少交互按钮。')

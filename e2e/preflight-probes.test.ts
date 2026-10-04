@@ -157,8 +157,10 @@ describe('真实探针的阻断条件', () => {
     run.mockResolvedValue('{"login":true}')
     const tap = vi.fn()
     const reLaunch = vi.fn()
+    const waitForAppReady = vi.fn().mockResolvedValue(undefined)
     const mini = Object.assign({}, {
       currentPage: vi.fn().mockRejectedValueOnce(new Error('page metadata is not ready')).mockResolvedValue({ $: async () => ({ text: async () => 'old-run', tap }) }),
+      waitForAppReady,
       reLaunch,
       screenshot: vi.fn().mockRejectedValue(new Error('no image')),
       disconnect: vi.fn(),
@@ -166,6 +168,8 @@ describe('真实探针的阻断条件', () => {
     vi.spyOn(Launcher.prototype, 'connect').mockResolvedValue(mini as unknown as MiniProgram)
     await expect(wechat({ ...context, dir, phase: 'prepare', binding: { command: cli } })).rejects.toThrow('actual=old-run')
     expect(tap).not.toHaveBeenCalled()
+    expect(waitForAppReady).toHaveBeenCalledOnce()
+    expect(waitForAppReady).toHaveBeenCalledWith(30_000)
     expect(mini.currentPage).toHaveBeenCalledTimes(2)
     expect(reLaunch).not.toHaveBeenCalled()
     expect(wechatRequest).toHaveBeenLastCalledWith('12345', { kind: 'close', project: path.join(dir, 'wechat-project') }, 10_000)
