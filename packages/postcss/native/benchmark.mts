@@ -14,6 +14,7 @@ import { ruleTransformSync } from '../src/selectorParser/rule-transformer'
 
 const warmups = 8
 const runs = 35
+const checkOnly = process.argv.includes('--check')
 const rows: object[] = []
 const require = createRequire(import.meta.url)
 
@@ -41,6 +42,10 @@ function dependencyVersion(name: string) {
 
 function measurePair(name: string, input: string, legacy: () => unknown, native: () => unknown) {
   assert.deepEqual(native(), legacy())
+  if (checkOnly) {
+    rows.push({ name, inputHash: createHash('sha256').update(input).digest('hex'), bytes: Buffer.byteLength(input), parity: true })
+    return
+  }
   const samples = { legacy: [] as number[], native: [] as number[] }
   const jobs = { legacy, native }
   for (let index = 0; index < runs + warmups; index++) {
@@ -66,7 +71,8 @@ for (const fixture of ['v4.css', 'v4-postcss.css', 'nutui/style.css']) {
   const inputSelectors: string[] = []
   postcss.parse(css).walkRules(rule => inputSelectors.push(rule.selector))
   process.env.WEAPP_TW_NATIVE = 'required'
-  const results = loadNativeSelectorBinding()!.transformSelectors(inputSelectors)
+  const transformer = new (loadNativeSelectorBinding()!.SelectorRuleTransformer)({ child: ['view'], removeHover: false, removeActive: false, removeFocus: false, uniAppX: false })
+  const results = inputSelectors.map(selector => transformer.transform(selector))
   const coverage = {
     rules: results.length,
     nativeSupportedRules: results.filter(result => result !== null && result !== undefined).length,
@@ -81,6 +87,23 @@ for (const fixture of ['v4.css', 'v4-postcss.css', 'nutui/style.css']) {
   }
   measurePair(`fixture-root-${fixture}`, css, () => transform('off'), () => transform('required'))
   Object.assign(rows.at(-1)!, { coverage })
+}
+
+for (const selector of [
+  String.raw`.dark\:bg-black:where([data-mode="dark"],[data-mode="dark"] *)`,
+  String.raw`.scope:where(:is(.w-\[2px\],.h-\[3px\])>.child):hover`,
+  '.space-x-2>:not(:last-child),.disabled:checked,.keep',
+  '.a:not(:-webkit-any(:lang(ar),:lang(he))),.b:before',
+]) {
+  const css = Array.from({ length: 128 }, (_, index) => `${selector}.rule-${index}{margin-top:1px;margin-bottom:var(--v)}`).join('')
+  function transform(mode: string) {
+    process.env.WEAPP_TW_NATIVE = mode
+    const root = postcss.parse(css)
+    const options = {}
+    root.walkRules(rule => ruleTransformSync(rule, options))
+    return root.toString()
+  }
+  measurePair(`complex-selector-root-${selector}`, css, () => transform('off'), () => transform('required'))
 }
 
 for (const count of [1, 8, 64]) {
@@ -124,6 +147,6 @@ process.stdout.write(`${JSON.stringify({
     dependencies: Object.fromEntries(['postcss', 'postcss-selector-parser', '@weapp-tailwindcss/escape'].map(name => [name, dependencyVersion(name)])),
     nativeBinaryHash: createHash('sha256').update(readFileSync(new URL('./weapp-tailwindcss-postcss.node', import.meta.url))).digest('hex'),
   },
-  method: { warmups, runs, alternating: true, scope: '已加载进程的类名批处理及无缓存选择器 root；不代表完整构建' },
+  method: { warmups: checkOnly ? 0 : warmups, runs: checkOnly ? 0 : runs, checkOnly, alternating: true, scope: '已加载进程的类名批处理及无缓存选择器 root；不代表完整构建' },
   rows,
 }, null, 2)}\n`)

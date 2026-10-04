@@ -1,5 +1,6 @@
 mod escape;
 mod selector;
+mod selector_ast;
 mod value;
 
 use napi::bindgen_prelude::Utf16String;
@@ -19,6 +20,71 @@ pub fn transform_selector(value: Utf16String) -> Option<Utf16String> {
 #[napi]
 pub fn transform_selectors(values: Vec<Utf16String>) -> Vec<Option<Utf16String>> {
     values.into_iter().map(transform_selector).collect()
+}
+
+#[napi(object)]
+pub struct SelectorRuleOptions {
+    pub root: Option<Utf16String>,
+    pub universal: Option<Utf16String>,
+    pub child: Vec<Utf16String>,
+    pub remove_hover: bool,
+    pub remove_active: bool,
+    pub remove_focus: bool,
+    pub uni_app_x: bool,
+}
+
+#[napi(object)]
+pub struct SelectorRuleResult {
+    pub selector: Utf16String,
+    pub remove: bool,
+    pub spacing: bool,
+}
+
+/// 配置只跨 NAPI 一次，规则调用只传入 UTF-16 选择器。
+#[napi]
+pub struct SelectorRuleTransformer {
+    options: selector_ast::Options,
+}
+
+#[napi]
+impl SelectorRuleTransformer {
+    #[napi(constructor)]
+    pub fn new(options: SelectorRuleOptions) -> Self {
+        Self {
+            options: selector_ast::Options {
+                root: options.root.map(|value| value.to_vec()),
+                universal: options.universal.map(|value| value.to_vec()),
+                child: options
+                    .child
+                    .into_iter()
+                    .map(|value| value.to_vec())
+                    .collect(),
+                unsupported: selector_ast::unsupported_pseudos(
+                    options.remove_hover,
+                    options.remove_active,
+                    options.remove_focus,
+                ),
+                uni_app_x: options.uni_app_x,
+            },
+        }
+    }
+
+    #[napi]
+    pub fn transform(&self, value: Utf16String) -> Option<SelectorRuleResult> {
+        let mapping = DEFAULT_MAPPING.get_or_init(escape::default_mapping);
+        if let Some(selector) = selector::transform(&value, mapping) {
+            return Some(SelectorRuleResult {
+                selector: selector.into(),
+                remove: false,
+                spacing: false,
+            });
+        }
+        selector_ast::transform(&value, &self.options, mapping).map(|result| SelectorRuleResult {
+            selector: result.selector.into(),
+            remove: result.remove,
+            spacing: result.spacing,
+        })
+    }
 }
 
 /// 合并 Tailwind v4 三个 var/gradient fallback 兼容阶段，不跨边界传递值 AST。

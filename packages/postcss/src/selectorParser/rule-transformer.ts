@@ -6,7 +6,7 @@ import type { CachedSelectorTransformResult, TransformContext } from './rule-tra
 import psp from 'postcss-selector-parser'
 import { composeIsPseudo } from '../shared'
 import { resolveCssEscapeMap } from '../utils/escape-map'
-import { transformNativeSelector } from './native'
+import { createNativeSelectorRuleTransformer } from './native-rule'
 import { handleClassNode, handleCombinatorNode, handleSelectorNode, handleTagOrAttribute, handleUniversalNode } from './rule-transformer/nodes'
 import { handlePseudoNode, shouldRemoveEmptyFunctionalPseudo } from './rule-transformer/pseudos'
 import { getUnsupportedPseudoClassSet } from './rule-transformer/unsupported-pseudos'
@@ -106,6 +106,7 @@ function createRuleTransformer(options: IStyleHandlerOptions): RuleTransformer {
     ? { escapeMap: options.escapeMap }
     : undefined
   const unsupportedPseudoClasses = getUnsupportedPseudoClassSet(options)
+  const nativeTransform = createNativeSelectorRuleTransformer(options, rootReplacement, universalReplacement)
 
   function writeSelectorResultCache(selector: string, result: CachedSelectorTransformResult) {
     if (selectorResultCache.size >= selectorResultCacheLimit) {
@@ -152,10 +153,19 @@ function createRuleTransformer(options: IStyleHandlerOptions): RuleTransformer {
       return
     }
 
-    const nativeSelector = transformNativeSelector(sourceSelector, selectorReplacerOptions)
-    if (nativeSelector !== undefined) {
-      rule.selector = nativeSelector
-      writeSelectorResultCache(sourceSelector, { action: 'update', selector: nativeSelector })
+    const native = nativeTransform(sourceSelector)
+    if (native !== undefined) {
+      rule.selector = native.selector
+      if (native.spacing) {
+        normalizeSpacingDeclarations(rule)
+      }
+      if (native.remove) {
+        rule.remove()
+        writeSelectorResultCache(sourceSelector, { action: 'remove' })
+      }
+      else if (!native.spacing) {
+        writeSelectorResultCache(sourceSelector, { action: 'update', selector: native.selector })
+      }
       return
     }
 

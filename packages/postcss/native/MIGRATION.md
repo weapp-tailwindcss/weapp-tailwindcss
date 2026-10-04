@@ -4,11 +4,11 @@
 
 | 模块 / 语义 | 当前状态 | 原生消费路径 / 剩余工作 |
 | --- | --- | --- |
-| `selectorParser/rule-transformer.ts` 类名、简单 ID、组合器、列表、嵌套符 | 部分迁移 | `transformSelector` 完成 tokenize/解码/转义/序列化；原有简单 ASCII 跳过路径保留 |
-| `selectorParser/rule-transformer/nodes.ts` class escape | 部分迁移 | 原生接管的完整 selector 在 Rust 处理；custom map 和复杂 selector 仍由 AST 处理 |
-| `selectorParser/rule-transformer/pseudos.ts` 复杂伪类、`:where` 展开、RTL、伪元素 | 待迁移 | 仍为 PostCSS selector AST；必须维持分支顺序与删规则语义 |
-| `selectorParser/rule-transformer/unsupported-pseudos.ts` 平台伪类移除 | 待迁移 | 仍由 TypeScript 处理 |
-| `selectorParser/spacing.ts` space/divide 选择器与声明归一化 | 待迁移 | 声明镜像、去重、变量顺序需一起迁移 |
+| `selectorParser/rule-transformer.ts` 类名、ID、组合器、列表、嵌套符与规则动作 | 部分迁移 | `SelectorRuleTransformer` 配置一次、每条规则一次调用；Rust AST 返回更新/删除/spacing 动作，原有简单 ASCII 跳过路径保留；parser 特殊语法回退 |
+| `selectorParser/rule-transformer/nodes.ts` class escape、root/universal、属性与子代转换 | 部分迁移 | Rust 接管支持的完整 selector；custom map、注释、namespace、特殊 escape 与小数 keyframes 仍走兼容 AST |
+| `selectorParser/rule-transformer/pseudos.ts` 复杂伪类、`:where` 展开、RTL、伪元素 | 自有转换已接线，解析边界仍回退 | Rust arena 保持 pre-order、删除与插入顺序、嵌套 is/where 展开、uniAppX 分支和空节点清理；未接管 parser/custom map 使用原实现 |
+| `selectorParser/rule-transformer/unsupported-pseudos.ts` 平台伪类移除 | 自有转换已接线，解析边界仍回退 | Rust 持有不支持列表和 hover/active/focus 开关，并删除所属顶层分支；原实现留作 fallback |
+| `selectorParser/spacing.ts` space/divide 选择器与声明归一化 | 部分迁移 | selector 资格与替换在 Rust；返回 spacing 动作，由 TS 完成声明镜像、去重、变量顺序；声明阶段尚未迁移 |
 | `compat/tailwindcss-v4/declarations/variable-fallbacks.ts` 三个 var/gradient fallback 阶段 | 部分迁移 | Rust UTF-16 value AST 一次解析处理；不完整值与超过 256 层嵌套回退原解析器，其他完整语法由差分验收 |
 | `compat/tailwindcss-v4/declarations.ts` radius clamp、声明删除 | 待迁移 | 仍由 TypeScript 处理 |
 | `compat/tailwindcss-v4/gradients.ts` 方向、infinity/calc | 待迁移 | 仍由 TypeScript 处理；依赖父规则的上下文需明确传入 |

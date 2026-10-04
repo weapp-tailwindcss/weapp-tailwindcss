@@ -8,7 +8,28 @@ export interface EscapeMappingEntry {
   value?: string
 }
 
+export interface NativeSelectorRuleOptions {
+  root?: string
+  universal?: string
+  child: string[]
+  removeHover: boolean
+  removeActive: boolean
+  removeFocus: boolean
+  uniAppX: boolean
+}
+
+export interface NativeSelectorRuleResult {
+  selector: string
+  remove: boolean
+  spacing: boolean
+}
+
+export interface NativeSelectorRuleTransformer {
+  transform: (value: string) => NativeSelectorRuleResult | null
+}
+
 export interface NativeCssBinding {
+  SelectorRuleTransformer: new (options: NativeSelectorRuleOptions) => NativeSelectorRuleTransformer
   normalizeV4VariableFallbacks: (value: string) => string | null
   normalizeUvueTransformValue: (value: string) => string | null
   normalizeUvueTransformValues: (values: string[]) => Array<string | null>
@@ -70,6 +91,9 @@ export function loadNativeCssBinding(): NativeCssBinding | undefined {
       }
       if (typeof loaded.transformSelector !== 'function' || typeof loaded.transformSelectors !== 'function') {
         throw new TypeError('原生模块缺少 transformSelector/transformSelectors 接口，可能存在 ABI 或版本不匹配。')
+      }
+      if (typeof loaded.SelectorRuleTransformer !== 'function' || typeof loaded.SelectorRuleTransformer.prototype?.transform !== 'function') {
+        throw new TypeError('原生模块缺少 SelectorRuleTransformer 接口，可能存在 ABI 或版本不匹配。')
       }
       if (typeof loaded.normalizeV4VariableFallbacks !== 'function' || typeof loaded.normalizeUvueTransformValue !== 'function' || typeof loaded.normalizeUvueTransformValues !== 'function') {
         throw new TypeError('原生模块缺少值转换接口，可能存在 ABI 或版本不匹配。')

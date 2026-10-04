@@ -7,6 +7,7 @@ vi.mock('node:module', () => ({
 
 function binding() {
   return {
+    SelectorRuleTransformer: class { transform() { return null } },
     escapeClasses: (values: string[]) => values,
     transformSelector: () => null,
     transformSelectors: () => [],
@@ -88,7 +89,7 @@ describe('Rust CSS 内核加载契约', () => {
     expect(nativeMock.load).not.toHaveBeenCalled()
   })
 
-  it.each(['escapeClasses', 'transformSelector', 'transformSelectors', 'normalizeV4VariableFallbacks', 'normalizeUvueTransformValue', 'normalizeUvueTransformValues'])('旧二进制缺少 %s 时拒绝，不尝试本地', async (method) => {
+  it.each(['SelectorRuleTransformer', 'escapeClasses', 'transformSelector', 'transformSelectors', 'normalizeV4VariableFallbacks', 'normalizeUvueTransformValue', 'normalizeUvueTransformValues'])('旧二进制缺少 %s 时拒绝，不尝试本地', async (method) => {
     vi.stubEnv('WEAPP_TW_NATIVE', 'required')
     const native = binding() as Record<string, unknown>
     delete native[method]
@@ -125,5 +126,32 @@ describe('Rust CSS 内核加载契约', () => {
     nativeMock.load.mockReturnValue({ ...binding(), normalizeUvueTransformValues: () => [] })
     const { normalizeUniAppXTransformValues } = await import('@/compat/uni-app-x-uvue/transform-value')
     expect(() => normalizeUniAppXTransformValues(['rotate(45deg)', 'translate(1px,2px)'])).toThrow('不完整的 transform 声明批次')
+  })
+
+  it('规则转换器只初始化一次，off 不调用且原生执行异常向上传递', async () => {
+    vi.stubEnv('WEAPP_TW_NATIVE', 'required')
+    const transform = vi.fn().mockReturnValueOnce(null).mockImplementation(() => { throw new Error('rule failed') })
+    let constructions = 0
+    nativeMock.load.mockReturnValue({ ...binding(), SelectorRuleTransformer: class {
+      constructor() { constructions++ }
+      transform(value: string) { return transform(value) }
+    } })
+    const { createNativeSelectorRuleTransformer } = await import('@/selectorParser/native-rule')
+    const run = createNativeSelectorRuleTransformer({})
+    expect(run('.a:where(.b,.c)')).toBeUndefined()
+    vi.stubEnv('WEAPP_TW_NATIVE', 'off')
+    expect(run('.a:where(.b,.c)')).toBeUndefined()
+    vi.stubEnv('WEAPP_TW_NATIVE', 'required')
+    expect(() => run('.a:where(.b,.c)')).toThrow('rule failed')
+    expect(constructions).toBe(1)
+    expect(transform).toHaveBeenCalledTimes(2)
+  })
+
+  it('规则转换器缺少 prototype transform 时按 ABI 不匹配处理', async () => {
+    vi.stubEnv('WEAPP_TW_NATIVE', 'required')
+    nativeMock.load.mockReturnValue({ ...binding(), SelectorRuleTransformer: class {} })
+    const { loadNativeCssBinding } = await import('@/native/binding')
+    expect(() => loadNativeCssBinding()).toThrow('原生模块缺少 SelectorRuleTransformer')
+    expect(nativeMock.load).toHaveBeenCalledTimes(1)
   })
 })

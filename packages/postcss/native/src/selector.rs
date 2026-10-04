@@ -1,10 +1,10 @@
 use crate::escape::{escape_class, EscapeMapping};
 
-fn whitespace(unit: u16) -> bool {
+pub(super) fn whitespace(unit: u16) -> bool {
     matches!(unit, 9 | 10 | 12 | 13 | 32)
 }
 
-fn name(unit: u16) -> bool {
+pub(super) fn name(unit: u16) -> bool {
     matches!(unit, 45 | 48..=57 | 65..=90 | 95 | 97..=122 | 128..=65535)
 }
 
@@ -17,7 +17,7 @@ fn hex(unit: u16) -> Option<u32> {
     }
 }
 
-fn escaped(input: &[u16], index: &mut usize, output: &mut Vec<u16>) -> Option<()> {
+pub(super) fn escaped(input: &[u16], index: &mut usize, output: &mut Vec<u16>) -> Option<()> {
     *index += 1;
     let Some(&first) = input.get(*index) else {
         output.push(92);
