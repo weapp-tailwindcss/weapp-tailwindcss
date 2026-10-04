@@ -11,7 +11,7 @@ function replace<T>(hook: ObjectHook<T> | undefined, handler: T): ObjectHook<T> 
   return hook && typeof hook === 'object' && 'handler' in hook ? { ...hook, handler } : handler
 }
 
-function outputKey(options: NormalizedOutputOptions) {
+function outputKey(options: Pick<NormalizedOutputOptions, 'dir' | 'file' | 'format'>) {
   // 仅序列化 Rollup 提供的输出身份；不由路径推导源文件或平台后缀。
   return JSON.stringify([options.dir, options.file, options.format])
 }

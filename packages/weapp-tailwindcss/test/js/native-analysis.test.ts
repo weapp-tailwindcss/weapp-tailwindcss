@@ -7,13 +7,14 @@ const native = vi.hoisted(() => ({
     tokenizeWxml: vi.fn<NativeCompiler['tokenizeWxml']>(),
     analyzeJs: vi.fn<NativeCompiler['analyzeJs']>(),
     jsRuntimeSignature: vi.fn<NativeCompiler['jsRuntimeSignature']>(),
+    createJsTransformer: vi.fn<NativeCompiler['createJsTransformer']>(),
   },
 }))
 vi.mock('@/native', () => ({ loadNativeCompiler: native.load }))
 
 const source = 'const cls = "w-[100px]"'
 const facts = {
-  literals: [{ kind: 'string' as const, start: 12, end: source.length, value: 'w-[100px]', isConditionTest: false }],
+  literals: [{ kind: 'string' as const, start: 12, end: source.length, value: 'w-[100px]', isConditionTest: false, classContext: false }],
   hasModuleDeclarations: false,
   hasTaggedTemplate: false,
 }
@@ -33,7 +34,7 @@ describe('Rust JS 分析与缓存边界', () => {
     const parser = await import('@/js/oxc-parser')
     const parse = vi.spyOn(parser, 'parseOxcSync')
     native.compiler.analyzeJs.mockReturnValue(facts)
-    const options = { filename: 'entry.tsx', babelParserOptions: { sourceType: 'script' as const, createParenthesizedExpressions: true } }
+    const options = { filename: 'entry.tsx', babelParserOptions: { sourceType: 'script' as const, createParenthesizedExpressions: true, plugins: ['typescript', 'jsx'] as ('typescript' | 'jsx')[] } }
 
     expect(getOxcSourceAnalysis(source, options)).toBe(facts)
     expect(getOxcSourceAnalysis(source, options)).toBe(facts)
@@ -61,7 +62,9 @@ describe('Rust JS 分析与缓存边界', () => {
     native.compiler.analyzeJs.mockReturnValue(facts)
     expect(getOxcSourceAnalysis(source, {})).toBe(facts)
     const error = new Error('required native binding unavailable')
-    native.load.mockImplementation(() => { throw error })
+    native.load.mockImplementation(() => {
+      throw error
+    })
     expect(() => getOxcSourceAnalysis(source, {})).toThrow(error)
   })
 
@@ -75,7 +78,9 @@ describe('Rust JS 分析与缓存边界', () => {
 
     parse.mockClear()
     const error = new Error('native execution failed')
-    native.compiler.analyzeJs.mockImplementation(() => { throw error })
+    native.compiler.analyzeJs.mockImplementation(() => {
+      throw error
+    })
     expect(() => getOxcSourceAnalysis(`${source};`, {})).toThrow(error)
     expect(parse).not.toHaveBeenCalled()
   })
@@ -111,7 +116,9 @@ describe('Rust 运行时签名', () => {
     expect(parse).toHaveBeenCalledOnce()
     parse.mockClear()
     const error = new Error('native signature failed')
-    native.compiler.jsRuntimeSignature.mockImplementation(() => { throw error })
+    native.compiler.jsRuntimeSignature.mockImplementation(() => {
+      throw error
+    })
     expect(() => tryCreateJsRuntimeAffectingSignature(source)).toThrow(error)
     expect(parse).not.toHaveBeenCalled()
   })

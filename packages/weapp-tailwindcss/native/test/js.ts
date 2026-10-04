@@ -10,6 +10,7 @@ import { getOxcSourceAnalysis } from '../../src/js/fast-path/analysis'
 import { oxcJsHandler } from '../../src/js/fast-path/oxc'
 import { loadNativeCompiler } from '../../src/native'
 import { classNames, javascriptCases, jsxCases, sourceCases, typescriptCases } from './js-cases'
+import { verifyJsLifecycle } from './js-lifecycle'
 
 assert.equal(process.env.WEAPP_TW_NATIVE, 'required', 'ABI verification must explicitly require native execution')
 const compiler = loadNativeCompiler()
@@ -54,7 +55,11 @@ try {
     const options: IJsHandlerOptions = {
       ...base,
       filename: `entry.${lang}`,
-      babelParserOptions: { sourceType, createParenthesizedExpressions: preserveParens, plugins: ['jsx', 'typescript'] },
+      babelParserOptions: {
+        sourceType,
+        createParenthesizedExpressions: preserveParens,
+        plugins: [...(lang === 'jsx' || lang === 'tsx' ? ['jsx' as const] : []), ...(lang === 'ts' || lang === 'tsx' ? ['typescript' as const] : [])],
+      },
     }
     const label = `${lang}/${sourceType}/parens=${preserveParens}: ${source}`
     const expected = withMode('off', () => getOxcSourceAnalysis(source, options))
@@ -81,7 +86,7 @@ try {
 
   const corpus = createInput()
   const largeSource = corpus.sourceFor(0)
-  const largeOptions = { ...base, filename: 'large.js' }
+  const largeOptions = { ...base, filename: 'large.js', babelParserOptions: { sourceType: 'module' as const } }
   const expectedFacts = withMode('off', () => getOxcSourceAnalysis(largeSource, largeOptions))
   assert.ok(expectedFacts)
   assert.deepEqual(compiler.analyzeJs(largeSource, 'js', 'module', false), expectedFacts)
@@ -115,7 +120,8 @@ try {
   }
   assert.ok(nativeAnalyses > cases, 'Integrated paths must invoke the real native binding')
   assert.ok(nativeSignatures > 0)
-  process.stdout.write(`${JSON.stringify({ node: process.version, cases, compatibleFallbacks, nativeAnalyses, nativeSignatures, input: { bytes: corpus.utf8Bytes, sha256: corpus.sha256 } })}\n`)
+  const nativeTransforms = verifyJsLifecycle()
+  process.stdout.write(`${JSON.stringify({ node: process.version, cases, compatibleFallbacks, nativeAnalyses, nativeSignatures, nativeTransforms, input: { bytes: corpus.utf8Bytes, sha256: corpus.sha256 } })}\n`)
 }
 finally {
   compiler.analyzeJs = analyze

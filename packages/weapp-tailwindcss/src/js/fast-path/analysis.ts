@@ -4,6 +4,8 @@ import { LRUCache } from 'lru-cache'
 import { walk } from 'oxc-walker'
 import { loadNativeCompiler } from '../../native'
 import { parseOxcSync } from '../oxc-parser'
+import { isClassContextLiteral } from './class-context'
+import { getParserLang, getParserSourceType } from './parser-options'
 
 export type { LiteralSpan } from './types'
 
@@ -42,23 +44,10 @@ function isConditionTestLiteral(node: object, ancestors: readonly object[]) {
   return false
 }
 
-function getParserLang(filename?: string) {
-  if (filename?.endsWith('.ts') || filename?.endsWith('.mts') || filename?.endsWith('.cts')) {
-    return 'ts'
-  }
-  if (filename?.endsWith('.tsx')) {
-    return 'tsx'
-  }
-  if (filename?.endsWith('.jsx')) {
-    return 'jsx'
-  }
-  return 'js'
-}
-
 /** 只缓存与 classSet 无关的字面量事实；完整 AST 在本次解析后释放。 */
 export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptions): SourceAnalysis | undefined {
-  const lang = getParserLang(options.filename)
-  const sourceType = options.babelParserOptions?.sourceType === 'script' ? 'script' : 'module'
+  const lang = getParserLang(options)
+  const sourceType = getParserSourceType(options)
   const preserveParens = options.babelParserOptions?.createParenthesizedExpressions === true
   // 加载检查必须先于缓存，required 模式不能命中先前的 JS 回退结果。
   const compiler = loadNativeCompiler()
@@ -105,6 +94,9 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
         if (node.type === 'TaggedTemplateExpression') {
           analysis.hasTaggedTemplate = true
         }
+        if (node.type === 'CallExpression' && node.callee.type === 'Identifier' && node.callee.name === 'eval') {
+          requiresBabel = true
+        }
         const value = node.type === 'Literal' && typeof node.value === 'string' && typeof node.raw === 'string'
           ? node.value
           : node.type === 'TemplateElement' ? node.value.raw : undefined
@@ -116,13 +108,19 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
           requiresBabel = true
         }
         if (!isDirective && value !== undefined && typeof node.start === 'number' && typeof node.end === 'number' && node.start < node.end) {
-          analysis.literals.push({
-            kind: node.type === 'TemplateElement' ? 'template' : 'string',
-            start: node.start,
-            end: node.end,
-            value,
-            isConditionTest: isConditionTestLiteral(node, ancestors),
-          })
+          // TS ESTree 的 quasi 包含边界标点，统一正文区间后再排除空片段。
+          const start = node.start + (node.type === 'TemplateElement' && (lang === 'ts' || lang === 'tsx') ? 1 : 0)
+          const end = node.end - (node.type === 'TemplateElement' && (lang === 'ts' || lang === 'tsx') ? node.tail ? 1 : 2 : 0)
+          if (start < end) {
+            analysis.literals.push({
+              kind: node.type === 'TemplateElement' ? 'template' : 'string',
+              start,
+              end,
+              value,
+              isConditionTest: isConditionTestLiteral(node, ancestors),
+              classContext: isClassContextLiteral(node, ancestors),
+            })
+          }
         }
         ancestors.push(node)
       },

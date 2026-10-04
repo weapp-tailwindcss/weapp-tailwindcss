@@ -43,10 +43,10 @@ describe('compact Oxc analysis cache', () => {
 
   it('isolates parser language, source type and modified source', () => {
     const source = 'const cls: string = "w-[100px]"'
-    expect(getOxcSourceAnalysis(source, { ...options, filename: 'entry.ts' })).toBeDefined()
+    expect(getOxcSourceAnalysis(source, { ...options, filename: 'entry.ts', babelParserOptions: { plugins: ['typescript'] } })).toBeDefined()
     expect(getOxcSourceAnalysis(source, options)).toBeUndefined()
     const moduleSource = 'export const cls = "w-[100px]"'
-    const moduleAnalysis = getOxcSourceAnalysis(moduleSource, options)
+    const moduleAnalysis = getOxcSourceAnalysis(moduleSource, { ...options, babelParserOptions: { sourceType: 'module' } })
     expect(moduleAnalysis).toBeDefined()
     expect(getOxcSourceAnalysis(moduleSource, { ...options, babelParserOptions: { sourceType: 'script' } })).not.toBe(moduleAnalysis)
     expect(oxcJsHandler('const cls = "h-[20px]"', options)?.code).toBe('const cls = "h-[20px]"')

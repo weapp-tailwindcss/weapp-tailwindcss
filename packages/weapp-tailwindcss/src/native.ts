@@ -1,11 +1,16 @@
 import type { SourceAnalysis } from './js/fast-path/types'
+import type { NativeJsEscapeEntry, NativeJsTransformer } from './native/types'
 import { createRequire } from 'node:module'
 import process from 'node:process'
+import { getNativeBindingSuffix, requireNativeBinding } from './native/resolve'
+
+export { getNativeBindingSuffix } from './native/resolve'
 
 export interface NativeCompiler {
   tokenizeWxml: (source: string) => Uint32Array
-  analyzeJs: (source: string, lang: 'js' | 'jsx' | 'ts' | 'tsx', sourceType: 'module' | 'script', preserveParens: boolean) => SourceAnalysis | null
+  analyzeJs: (source: string, lang: 'js' | 'jsx' | 'ts' | 'tsx', sourceType: 'module' | 'script' | 'unambiguous', preserveParens: boolean) => SourceAnalysis | null
   jsRuntimeSignature: (source: string) => string | null
+  createJsTransformer: (classes: string[], effectiveEscapeEntries: NativeJsEscapeEntry[]) => NativeJsTransformer | null
 }
 
 const require = createRequire(import.meta.url)
@@ -19,22 +24,8 @@ function unavailable(mode: string) {
   return undefined
 }
 
-export function getNativeBindingSuffix(platform = process.platform, arch = process.arch) {
-  if (platform === 'darwin' && (arch === 'arm64' || arch === 'x64')) {
-    return `${platform}-${arch}`
-  }
-  if (platform === 'win32' && (arch === 'arm64' || arch === 'x64')) {
-    return `${platform}-${arch}-msvc`
-  }
-  if (platform === 'linux' && (arch === 'arm64' || arch === 'x64')) {
-    const report = process.report?.getReport() as { header?: { glibcVersionRuntime?: string } } | undefined
-    return `${platform}-${arch}-${report?.header?.glibcVersionRuntime ? 'gnu' : 'musl'}`
-  }
-  return undefined
-}
-
 export function loadNativeCompiler(): NativeCompiler | undefined {
-  const mode = process.env.WEAPP_TW_NATIVE ?? 'auto'
+  const mode = process.env['WEAPP_TW_NATIVE'] ?? 'auto'
   if (mode === 'off') {
     return undefined
   }
@@ -52,8 +43,8 @@ export function loadNativeCompiler(): NativeCompiler | undefined {
     if (!suffix) {
       throw new Error(`Unsupported native platform: ${process.platform}-${process.arch}`)
     }
-    const loaded = require(`weapp-tailwindcss/native/bindings/weapp-tailwindcss-native.${suffix}.node`) as NativeCompiler
-    for (const method of ['tokenizeWxml', 'analyzeJs', 'jsRuntimeSignature'] as const) {
+    const loaded = requireNativeBinding(require, suffix) as NativeCompiler
+    for (const method of ['tokenizeWxml', 'analyzeJs', 'jsRuntimeSignature', 'createJsTransformer'] as const) {
       if (typeof loaded[method] !== 'function') {
         throw new TypeError(`Native compiler does not provide ${method}`)
       }

@@ -3,6 +3,7 @@ import { LRUCache } from 'lru-cache'
 import { md5Hash } from '../cache/md5'
 import { defuOverrideArray } from '../utils'
 import { jsHandler } from './babel'
+import { nativeJsHandler } from './fast-path/native'
 import { oxcJsHandler } from './fast-path/oxc'
 import { hasDependencyHint } from './precheck'
 
@@ -236,13 +237,23 @@ export function createJsHandler(options: CreateJsHandlerOptions): JsHandler {
 
   function handler(rawSource: string, classNameSet?: Set<string>, options?: CreateJsHandlerOptions) {
     const resolvedOptions = resolveOptions(classNameSet, options)
+    const fastPathOptions = resolveFastPathOptions(rawSource, resolvedOptions)
+    // 原生实例自行缓存解析事实，先校验可变集合与映射，并执行 required 加载检查。
+    const nativeResult = nativeJsHandler(rawSource, fastPathOptions)
+    if (nativeResult) {
+      return nativeResult
+    }
+    if (nativeResult === null) {
+      // 原生语义检查拒绝的输入交还 Babel，不能被较宽松的 Oxc 分析重新接管。
+      return jsHandler(rawSource, resolvedOptions)
+    }
 
     const cached = getCachedJsResult(rawSource, resolvedOptions)
     if (cached) {
       return cached
     }
 
-    const fastPathResult = oxcJsHandler(rawSource, resolveFastPathOptions(rawSource, resolvedOptions))
+    const fastPathResult = oxcJsHandler(rawSource, fastPathOptions)
     return setCachedJsResult(rawSource, resolvedOptions, fastPathResult ?? jsHandler(rawSource, resolvedOptions))
   }
 

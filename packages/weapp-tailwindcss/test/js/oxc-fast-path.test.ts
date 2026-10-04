@@ -180,7 +180,7 @@ describe('OXC JS fast path', () => {
       babelParserOptions: {
         sourceType: 'commonjs' as any,
       },
-    })?.code).toContain('w-_b100px_B')
+    })).toBeUndefined()
   })
 
   it('falls back to Babel for ignore-call semantics', () => {

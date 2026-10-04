@@ -1,7 +1,7 @@
+import type { NativeReport } from '../benchmark/oxc-vite/types'
 import { describe, expect, it } from 'vitest'
 import { createNativeCounter, measuredNativeCalls } from '../benchmark/oxc-vite/native'
 import { comparisonModes, nativeMode, pairOrder, parseOptions } from '../benchmark/oxc-vite/options'
-import type { NativeReport } from '../benchmark/oxc-vite/types'
 
 describe('Vite comparison modes', () => {
   it('keeps transfer as the default and explicitly disables native for both old modes', () => {
@@ -48,7 +48,7 @@ describe('native benchmark counters', () => {
       expect(transformer.replaceClassNames(['w-[1px]'])).toBe(true)
       expect(transformer.transform('text')).toBe('result:text')
       expect(report.counts.build?.createJsTransformer?.calls).toBe(2)
-      expect(report.counts.build?.transform).toEqual({ calls: 1, failures: 0, sourceCodeUnits: 2 })
+      expect(report.counts.build?.transform).toEqual({ calls: 1, failures: 0, nullReturns: 0, sourceCodeUnits: 2 })
       expect(report.counts.add?.transform?.calls).toBe(1)
       expect(report.counts.add?.replaceClassNames?.calls).toBe(1)
       expect(measuredNativeCalls(report)).toBe(5)
@@ -74,8 +74,9 @@ describe('native benchmark counters', () => {
     try {
       expect(() => binding.tokenizeWxml('text')).toThrow(failure)
       expect(binding.transformSelector(':is(*)')).toBeNull()
-      expect(report.counts.text?.tokenizeWxml).toEqual({ calls: 1, failures: 1, sourceCodeUnits: 4 })
+      expect(report.counts.text?.tokenizeWxml).toEqual({ calls: 1, failures: 1, nullReturns: 0, sourceCodeUnits: 4 })
       expect(report.counts.text?.transformSelector?.failures).toBe(0)
+      expect(report.counts.text?.transformSelector?.nullReturns).toBe(1)
     }
     finally {
       counter.restore()

@@ -29,4 +29,6 @@ pnpm exec tsx packages/weapp-tailwindcss/benchmark/oxc-vite/runner.ts --root . -
 
 原生对比还记录每个候选 binary 的实际路径、SHA-256 和是否加载，以及分阶段的 `tokenizeWxml`、`analyzeJs`、`jsRuntimeSignature`、`createJsTransformer`、实例 `transform/replaceClassNames`、CSS 选择器/值处理调用和异常数。正式采样通过 `.node` 加载 hook 包装真实导出，计时前只解析路径并读取哈希，不预先加载或调用 native。工厂实例保留方法的 `this` 和返回值，finally 恢复 hook 与原方法。原生自检会真实调用核心五种方法，但其次数明确排除在正式测量统计外。
 
+计数单独记录 `nullReturns`，不能把一次拒绝后回退的调用当作完成原生转换。JS 完整转换收益应核对实例 `transform` 的调用、异常和 null 数；其他内核调用非零不能证明这一接口被真实构建消费。
+
 `off` 样本若出现真实 native 调用会立即失败；两个模式或不同 pair 的 binary 路径/内容发生变化也会失败。`required` 的零调用阶段如实记录，不能用二进制存在、自检成功或工厂创建次数代替真实转换收益。新增原生路径后应先运行自检，再由同一目标构建产物执行串行测量。

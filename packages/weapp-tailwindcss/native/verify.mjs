@@ -4,7 +4,7 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-for (const file of ['native/test/wxml.ts', 'native/test/js.ts']) {
+for (const file of ['native/test/wxml.ts', 'native/test/js.ts', 'native/test/transform.ts', 'native/test/transform/babel.ts']) {
   const result = spawnSync(process.execPath, ['--import', 'tsx', file], {
     cwd: packageRoot,
     stdio: 'inherit',

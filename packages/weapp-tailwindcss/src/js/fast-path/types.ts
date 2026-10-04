@@ -4,6 +4,7 @@ export interface LiteralSpan {
   end: number
   value: string
   isConditionTest: boolean
+  classContext: boolean
 }
 
 export interface SourceAnalysis {

@@ -26,13 +26,16 @@ export function createNativeCounter(report: NativeReport) {
     const descriptor = Object.getOwnPropertyDescriptor(object, method)
     const wrapper = function (this: unknown, ...args: unknown[]) {
       const counts = report.counts[phase] ??= {}
-      const count = counts[method] ??= { calls: 0, failures: 0, sourceCodeUnits: 0 }
+      const count = counts[method] ??= { calls: 0, failures: 0, nullReturns: 0, sourceCodeUnits: 0 }
       count.calls++
       const first = args[0]
       // 只取源码字符串的常量时间 length，计数不能再次遍历完整 classSet。
       count.sourceCodeUnits += typeof first === 'string' ? first.length : 0
       try {
         const result = (original as Callable).apply(this, args)
+        if (result === null) {
+          count.nullReturns++
+        }
         if (method === 'createJsTransformer' && result && typeof result === 'object' && !wrappedObjects.has(result)) {
           wrappedObjects.add(result)
           wrap(result as Binding, 'transform')

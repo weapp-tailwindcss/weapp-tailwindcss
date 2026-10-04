@@ -1,13 +1,14 @@
 import process from 'node:process'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const native = vi.hoisted(() => ({ require: vi.fn() }))
+const native = vi.hoisted(() => ({ require: Object.assign(vi.fn(), { resolve: vi.fn((id: string) => id) }) }))
 vi.mock('node:module', () => ({ createRequire: () => native.require }))
 
 beforeEach(() => {
   vi.resetModules()
   vi.stubEnv('WEAPP_TW_NATIVE', 'auto')
   native.require.mockReset()
+  native.require.resolve.mockReset().mockImplementation((id: string) => id)
 })
 
 afterEach(() => {
@@ -17,7 +18,7 @@ afterEach(() => {
 
 describe('native compiler loader', () => {
   it('loads a binding once and reuses it', async () => {
-    const binding = { tokenizeWxml: vi.fn(), analyzeJs: vi.fn(), jsRuntimeSignature: vi.fn() }
+    const binding = { tokenizeWxml: vi.fn(), analyzeJs: vi.fn(), jsRuntimeSignature: vi.fn(), createJsTransformer: vi.fn() }
     native.require.mockReturnValue(binding)
     const { loadNativeCompiler } = await import('@/native')
     expect(loadNativeCompiler()).toBe(binding)
@@ -26,7 +27,9 @@ describe('native compiler loader', () => {
   })
 
   it('retains automatic fallback after a missing optional binding', async () => {
-    native.require.mockImplementation(() => { throw new Error('binding missing') })
+    native.require.mockImplementation(() => {
+      throw new Error('binding missing')
+    })
     const { loadNativeCompiler } = await import('@/native')
     expect(loadNativeCompiler()).toBeUndefined()
     expect(loadNativeCompiler()).toBeUndefined()
@@ -35,7 +38,9 @@ describe('native compiler loader', () => {
 
   it('fails required mode with the original load error, including after a cached auto failure', async () => {
     const cause = new Error('wrong architecture')
-    native.require.mockImplementation(() => { throw cause })
+    native.require.mockImplementation(() => {
+      throw cause
+    })
     const { loadNativeCompiler } = await import('@/native')
     expect(loadNativeCompiler()).toBeUndefined()
     vi.stubEnv('WEAPP_TW_NATIVE', 'required')
@@ -56,8 +61,8 @@ describe('native compiler loader', () => {
     expect(loadNativeCompiler).toThrow('native compiler could not be loaded')
   })
 
-  it.each(['analyzeJs', 'jsRuntimeSignature'])('rejects a stale binding missing %s', async (method) => {
-    const binding: Record<string, unknown> = { tokenizeWxml: vi.fn(), analyzeJs: vi.fn(), jsRuntimeSignature: vi.fn() }
+  it.each(['analyzeJs', 'jsRuntimeSignature', 'createJsTransformer'])('rejects a stale binding missing %s', async (method) => {
+    const binding: Record<string, unknown> = { tokenizeWxml: vi.fn(), analyzeJs: vi.fn(), jsRuntimeSignature: vi.fn(), createJsTransformer: vi.fn() }
     delete binding[method]
     native.require.mockReturnValue(binding)
     vi.stubEnv('WEAPP_TW_NATIVE', 'required')

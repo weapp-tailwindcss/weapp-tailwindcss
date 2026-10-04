@@ -26,6 +26,7 @@ export type NativeMethod = 'tokenizeWxml' | 'analyzeJs' | 'jsRuntimeSignature' |
 export interface NativeCount {
   calls: number
   failures: number
+  nullReturns: number
   sourceCodeUnits: number
 }
 
