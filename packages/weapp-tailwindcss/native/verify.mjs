@@ -4,14 +4,16 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const result = spawnSync(process.execPath, ['--import', 'tsx', 'native/test/wxml.ts'], {
-  cwd: packageRoot,
-  stdio: 'inherit',
-  env: { ...process.env, WEAPP_TW_NATIVE: 'required' },
-})
-if (result.error) {
-  throw result.error
-}
-if (result.status !== 0) {
-  throw new Error(`Native ABI verification failed (${result.signal ?? result.status})`)
+for (const file of ['native/test/wxml.ts', 'native/test/js.ts']) {
+  const result = spawnSync(process.execPath, ['--import', 'tsx', file], {
+    cwd: packageRoot,
+    stdio: 'inherit',
+    env: { ...process.env, WEAPP_TW_NATIVE: 'required' },
+  })
+  if (result.error) {
+    throw result.error
+  }
+  if (result.status !== 0) {
+    throw new Error(`Native ABI verification failed for ${file} (${result.signal ?? result.status})`)
+  }
 }

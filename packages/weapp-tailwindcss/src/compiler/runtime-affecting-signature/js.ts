@@ -1,8 +1,16 @@
 import { walk } from 'oxc-walker'
 import { parseOxcSync } from '@/js/oxc-parser'
+import { loadNativeCompiler } from '@/native'
 
 /** 签名只保留候选文本，不把完整 Babel AST 常驻到转译缓存。 */
 export function tryCreateJsRuntimeAffectingSignature(source: string): string | undefined {
+  const compiler = loadNativeCompiler()
+  if (compiler) {
+    const signature = compiler.jsRuntimeSignature(source)
+    if (signature !== null) {
+      return signature
+    }
+  }
   try {
     const result = parseOxcSync('runtime.tsx', source, {
       lang: 'tsx',

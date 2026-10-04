@@ -1,8 +1,11 @@
+import type { SourceAnalysis } from './js/fast-path/types'
 import { createRequire } from 'node:module'
 import process from 'node:process'
 
 export interface NativeCompiler {
   tokenizeWxml: (source: string) => Uint32Array
+  analyzeJs: (source: string, lang: 'js' | 'jsx' | 'ts' | 'tsx', sourceType: 'module' | 'script', preserveParens: boolean) => SourceAnalysis | null
+  jsRuntimeSignature: (source: string) => string | null
 }
 
 const require = createRequire(import.meta.url)
@@ -50,8 +53,10 @@ export function loadNativeCompiler(): NativeCompiler | undefined {
       throw new Error(`Unsupported native platform: ${process.platform}-${process.arch}`)
     }
     const loaded = require(`weapp-tailwindcss/native/bindings/weapp-tailwindcss-native.${suffix}.node`) as NativeCompiler
-    if (typeof loaded.tokenizeWxml !== 'function') {
-      throw new TypeError('Native compiler does not provide tokenizeWxml')
+    for (const method of ['tokenizeWxml', 'analyzeJs', 'jsRuntimeSignature'] as const) {
+      if (typeof loaded[method] !== 'function') {
+        throw new TypeError(`Native compiler does not provide ${method}`)
+      }
     }
     compiler = loaded
     return compiler

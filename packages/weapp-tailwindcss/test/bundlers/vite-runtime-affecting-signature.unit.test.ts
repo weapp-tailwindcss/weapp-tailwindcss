@@ -4,7 +4,10 @@ import { babelParse, parseCache } from '@/js/babel/parse'
 import * as oxcParser from '@/js/oxc-parser'
 
 describe('bundlers/vite runtime-affecting signature', () => {
-  afterEach(() => vi.restoreAllMocks())
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.unstubAllEnvs()
+  })
   it('keeps html comment content in runtime-affecting signature', () => {
     const first = createRuntimeAffectingSourceSignature(
       '<view class="card"></view><!-- text-[#123456] -->',
@@ -47,6 +50,7 @@ describe('bundlers/vite runtime-affecting signature', () => {
   })
 
   it('falls back to the cached Babel parser when the native parser is unavailable', () => {
+    vi.stubEnv('WEAPP_TW_NATIVE', 'off')
     const parse = vi.spyOn(oxcParser, 'parseOxcSync').mockReturnValue(undefined)
     parseCache.clear()
     const source = 'const cls = "card"'
@@ -86,6 +90,7 @@ describe('bundlers/vite runtime-affecting signature', () => {
   })
 
   it('falls back to Babel if the native parser throws', () => {
+    vi.stubEnv('WEAPP_TW_NATIVE', 'off')
     const parse = vi.spyOn(oxcParser, 'parseOxcSync').mockImplementation(() => {
       throw new Error('native parser unavailable')
     })

@@ -4,6 +4,7 @@ import { fork } from 'node:child_process'
 import { once } from 'node:events'
 import { createRequire } from 'node:module'
 import { join, resolve } from 'node:path'
+import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 
 export async function createWorker(root: string, mode: Mode) {
@@ -11,6 +12,8 @@ export async function createWorker(root: string, mode: Mode) {
   const child = fork(fileURLToPath(new URL('./worker.ts', import.meta.url)), [root, mode], {
     cwd: resolve(root, 'packages', 'weapp-tailwindcss'),
     execArgv: ['--import', require.resolve('tsx')],
+    // 此基准只比较 Oxc AST 传输，不允许原生事实接口绕开被测解析器。
+    env: { ...process.env, WEAPP_TW_NATIVE: 'off' },
     stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
   })
   let pending: { resolve: (reply: WorkerReply) => void, reject: (error: Error) => void } | undefined

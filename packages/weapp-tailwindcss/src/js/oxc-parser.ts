@@ -11,6 +11,10 @@ export function parseOxcSync(
   sourceText: string,
   options: OxcParseOptions,
 ) {
+  // N-API 的 UTF-8 转换会把输入中的孤立代理替换为 U+FFFD，必须交还 Babel。
+  if (/[\uD800-\uDFFF]/u.test(sourceText)) {
+    return undefined
+  }
   const parser = loadOxcParser()
   if (!parser) {
     return undefined

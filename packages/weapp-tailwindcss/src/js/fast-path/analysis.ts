@@ -1,24 +1,22 @@
 import type { IJsHandlerOptions } from '../../types'
+import type { SourceAnalysis } from './types'
 import { LRUCache } from 'lru-cache'
 import { walk } from 'oxc-walker'
+import { loadNativeCompiler } from '../../native'
 import { parseOxcSync } from '../oxc-parser'
 
-export interface LiteralSpan {
-  kind: 'string' | 'template'
-  start: number
-  end: number
-  value: string
-  isConditionTest: boolean
-}
-
-interface SourceAnalysis {
-  literals: LiteralSpan[]
-  hasModuleDeclarations: boolean
-  hasTaggedTemplate: boolean
-}
+export type { LiteralSpan } from './types'
 
 const MAX_ANALYSIS_BYTES = 2 * 1024 * 1024
 const analysisCache = new LRUCache<string, SourceAnalysis>({ max: 128, maxSize: MAX_ANALYSIS_BYTES })
+
+function cacheAnalysis(key: string, analysis: SourceAnalysis) {
+  const size = analysis.literals.reduce((total, literal) => total + 104 + literal.value.length * 2, key.length * 2)
+  if (size <= MAX_ANALYSIS_BYTES) {
+    analysisCache.set(key, analysis, { size })
+  }
+  return analysis
+}
 
 function isConditionTestLiteral(node: object, ancestors: readonly object[]) {
   let current = node
@@ -62,10 +60,19 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
   const lang = getParserLang(options.filename)
   const sourceType = options.babelParserOptions?.sourceType === 'script' ? 'script' : 'module'
   const preserveParens = options.babelParserOptions?.createParenthesizedExpressions === true
-  const key = `${lang}:${sourceType}:${preserveParens}:${rawSource}`
+  // 加载检查必须先于缓存，required 模式不能命中先前的 JS 回退结果。
+  const compiler = loadNativeCompiler()
+  const key = `${compiler ? 'native' : 'oxc'}:${lang}:${sourceType}:${preserveParens}:${rawSource}`
   const cached = analysisCache.get(key)
   if (cached) {
     return cached
+  }
+  if (compiler) {
+    // null 表示语义不支持；原生执行异常直接上抛，不能伪装为兼容回退。
+    const analysis = compiler.analyzeJs(rawSource, lang, sourceType, preserveParens)
+    if (analysis !== null) {
+      return cacheAnalysis(key, analysis)
+    }
   }
   try {
     const result = parseOxcSync(options.filename ?? 'weapp-tailwindcss.js', rawSource, {
@@ -83,11 +90,14 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
       hasModuleDeclarations: false,
       hasTaggedTemplate: false,
     }
-    let size = key.length * 2
     let requiresBabel = false
     const ancestors: object[] = []
     walk(result.program, {
       enter(node) {
+        // Oxc 在 script 模式下仍可能接受 ESM；交给 Babel 执行调用方的语法约束。
+        if (sourceType === 'script' && (node.type === 'ImportDeclaration' || node.type.startsWith('Export'))) {
+          requiresBabel = true
+        }
         if (node.type === 'ImportDeclaration' || node.type === 'ExportAllDeclaration'
           || (node.type === 'ExportNamedDeclaration' && node.source !== null)) {
           analysis.hasModuleDeclarations = true
@@ -113,7 +123,6 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
             value,
             isConditionTest: isConditionTestLiteral(node, ancestors),
           })
-          size += 104 + value.length * 2
         }
         ancestors.push(node)
       },
@@ -124,10 +133,7 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
     if (requiresBabel) {
       return undefined
     }
-    if (size <= MAX_ANALYSIS_BYTES) {
-      analysisCache.set(key, analysis, { size })
-    }
-    return analysis
+    return cacheAnalysis(key, analysis)
   }
   catch {
     return undefined

@@ -17,7 +17,7 @@ afterEach(() => {
 
 describe('native compiler loader', () => {
   it('loads a binding once and reuses it', async () => {
-    const binding = { tokenizeWxml: vi.fn() }
+    const binding = { tokenizeWxml: vi.fn(), analyzeJs: vi.fn(), jsRuntimeSignature: vi.fn() }
     native.require.mockReturnValue(binding)
     const { loadNativeCompiler } = await import('@/native')
     expect(loadNativeCompiler()).toBe(binding)
@@ -54,6 +54,17 @@ describe('native compiler loader', () => {
     vi.stubEnv('WEAPP_TW_NATIVE', 'required')
     const { loadNativeCompiler } = await import('@/native')
     expect(loadNativeCompiler).toThrow('native compiler could not be loaded')
+  })
+
+  it.each(['analyzeJs', 'jsRuntimeSignature'])('rejects a stale binding missing %s', async (method) => {
+    const binding: Record<string, unknown> = { tokenizeWxml: vi.fn(), analyzeJs: vi.fn(), jsRuntimeSignature: vi.fn() }
+    delete binding[method]
+    native.require.mockReturnValue(binding)
+    vi.stubEnv('WEAPP_TW_NATIVE', 'required')
+    const { loadNativeCompiler } = await import('@/native')
+    expect(loadNativeCompiler).toThrowError(expect.objectContaining({
+      cause: expect.objectContaining({ message: `Native compiler does not provide ${method}` }),
+    }))
   })
 
   it('rejects invalid modes instead of silently disabling verification', async () => {

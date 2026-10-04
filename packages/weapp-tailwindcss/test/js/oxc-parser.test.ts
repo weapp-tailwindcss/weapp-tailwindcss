@@ -68,6 +68,12 @@ describe('Oxc 解析传输与回退', () => {
     expect(load).toHaveBeenCalledOnce()
   })
 
+  it.each(['\uD800', '\uDC00'])('输入的孤立代理字符 %s 交还 Babel，避免 UTF-8 有损转换', (character) => {
+    const load = vi.spyOn(loader, 'loadOxcParser')
+    expect(parseOxcSync('entry.js', `const cls = "${character} w-[10px]"`, options)).toBeUndefined()
+    expect(load).not.toHaveBeenCalled()
+  })
+
   it('语法错误保留诊断且不重复解析', () => {
     const invalidSource = 'const broken ='
     const invalidResult = parseSync('entry.js', invalidSource)
