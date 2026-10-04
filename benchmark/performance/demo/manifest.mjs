@@ -1,13 +1,19 @@
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
-import { boundaries, defaults, metrics, rowKey, schema, selectCases, weeklyMatrix } from './model.mjs'
+import { boundaries, defaults, metrics, rowKey, schema, weeklyMatrix } from './model.mjs'
 import { run } from './process.mjs'
 import { resolvePublished } from './published.mjs'
 
 export function planJobs(only = '', phases = ['install', 'build', 'hmr']) {
   const owners = new Set()
-  return weeklyMatrix(only).include.map((job, index) => {
-    const items = selectCases(job.cases.join(','))
+  const planned = weeklyMatrix(only)
+  const itemsById = new Map(planned.items.map(item => [item.id, item]))
+  return planned.include.map((job, index) => {
+    const items = job.cases.map(id => {
+      const item = itemsById.get(id)
+      assert.ok(item, `未知目标 ${id}`)
+      return item
+    })
     const rows = []
     const installCases = []
     for (const item of items) {

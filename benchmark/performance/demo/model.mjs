@@ -18,8 +18,9 @@ export function selectCases(only = '') {
 }
 
 export function weeklyMatrix(only = '') {
-  const selected = new Set(selectCases(only).map(item => item.id))
-  return { include: matrix().include.flatMap(job => {
+  const selectedItems = selectCases(only)
+  const selected = new Set(selectedItems.map(item => item.id))
+  return { items: selectedItems, include: matrix().include.flatMap(job => {
     const selectedCases = job.cases.filter(id => selected.has(id))
     return selectedCases.length ? [{ ...job, cases: selectedCases }] : []
   }) }
