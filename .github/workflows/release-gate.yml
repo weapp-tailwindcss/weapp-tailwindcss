@@ -9,6 +9,12 @@ on:
       - repoctl.config.ts
       - packages/*/package.json
       - packages-runtime/*/package.json
+      - packages-native/**
+      - packages/weapp-tailwindcss/**
+      - packages/postcss/**
+      - pnpm-workspace.yaml
+      - .github/workflows/native.yml
+      - .github/workflows/release.yml
       - scripts/verify-packed-packages.mjs
       - scripts/release-certificate.ts
       - .github/workflows/release-gate.yml
@@ -22,9 +28,13 @@ permissions:
   contents: read
 
 jobs:
+  native-artifacts:
+    uses: ./.github/workflows/native.yml
+
   release-gate:
     name: Release Gate (ubuntu-latest, 24)
     runs-on: ubuntu-latest
+    needs: native-artifacts
     timeout-minutes: 30
     env:
       HUSKY: 0
@@ -43,6 +53,16 @@ jobs:
 
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Download native artifacts from this run
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          pattern: native-*
+          merge-multiple: true
+          path: packages
+
+      - name: Stage and verify all native platform packages
+        run: pnpm native:artifacts:stage
 
       - name: Build release artifacts
         run: pnpm build

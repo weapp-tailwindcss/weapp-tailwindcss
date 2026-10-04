@@ -46,9 +46,13 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  native-artifacts:
+    uses: ./.github/workflows/native.yml
+
   release:
     name: Release
     runs-on: ubuntu-latest
+    needs: native-artifacts
     timeout-minutes: 30
     steps:
       - name: Checkout Repo
@@ -67,6 +71,16 @@ jobs:
 
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Download native artifacts from this run
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          pattern: native-*
+          merge-multiple: true
+          path: packages
+
+      - name: Stage and verify all native platform packages
+        run: pnpm native:artifacts:stage
 
       - name: Install Playwright Chromium
         run: |

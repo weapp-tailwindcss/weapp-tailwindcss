@@ -199,7 +199,10 @@
     "lint:fix": "eslint ./src --fix",
     "bench:vite-dev-hmr": "pnpm --filter @weapp-tailwindcss/scripts bench:vite-dev-hmr",
     "watch-hmr:speed-report": "pnpm --filter @weapp-tailwindcss/scripts watch-hmr:speed-report",
-    "test:watch-hmr": "pnpm --filter @weapp-tailwindcss/scripts test:watch-hmr"
+    "test:watch-hmr": "pnpm --filter @weapp-tailwindcss/scripts test:watch-hmr",
+    "build:native": "node native/build.mjs",
+    "test:native": "node native/verify.mjs",
+    "test:native:package": "node --import tsx native/test/package.mjs"
   },
   "tsd": {
     "compilerOptions": {
@@ -258,6 +261,16 @@
     "tailwindcss-config": "workspace:*",
     "weapp-style-injector": "workspace:*",
     "yaml": "catalog:buildUtilities"
+  },
+  "optionalDependencies": {
+    "@weapp-tailwindcss/native-darwin-arm64": "workspace:*",
+    "@weapp-tailwindcss/native-darwin-x64": "workspace:*",
+    "@weapp-tailwindcss/native-linux-arm64-gnu": "workspace:*",
+    "@weapp-tailwindcss/native-linux-arm64-musl": "workspace:*",
+    "@weapp-tailwindcss/native-linux-x64-gnu": "workspace:*",
+    "@weapp-tailwindcss/native-linux-x64-musl": "workspace:*",
+    "@weapp-tailwindcss/native-win32-arm64-msvc": "workspace:*",
+    "@weapp-tailwindcss/native-win32-x64-msvc": "workspace:*"
   },
   "devDependencies": {
     "@mpxjs/webpack-plugin": "^2.11.1",

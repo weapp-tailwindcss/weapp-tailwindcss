@@ -1,5 +1,7 @@
 # Rust 编译内核
 
+跨平台包布局、版本联动与发布门禁见 [Rust 内核分发与发布](./DISTRIBUTION.md)。
+
 当前内核通过 Node-API 提供 WXML 属性值 tokenizer。公开 `Tokenizer` API 不变，原生 binding 不可用时沿用 TypeScript 状态机。`WEAPP_TW_NATIVE=auto` 自动加载，`off` 强制回退，`required` 在缺失 binding 时失败，供原生验收使用。
 
 ## 构建与验证

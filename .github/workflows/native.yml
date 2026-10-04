@@ -1,0 +1,127 @@
+name: Native Compiler Artifacts
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    name: Native (${{ matrix.suffix }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-latest
+            target: aarch64-apple-darwin
+            suffix: darwin-arm64
+          - runner: macos-15-intel
+            target: x86_64-apple-darwin
+            suffix: darwin-x64
+          - runner: windows-latest
+            target: x86_64-pc-windows-msvc
+            suffix: win32-x64-msvc
+          - runner: windows-11-arm
+            target: aarch64-pc-windows-msvc
+            suffix: win32-arm64-msvc
+          - runner: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            suffix: linux-x64-gnu
+            image: quay.io/pypa/manylinux_2_28_x86_64
+            arch: x64
+            libc: gnu
+          - runner: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            suffix: linux-arm64-gnu
+            image: quay.io/pypa/manylinux_2_28_aarch64
+            arch: arm64
+            libc: gnu
+          - runner: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            suffix: linux-x64-musl
+            image: node:24-alpine
+            arch: x64
+            libc: musl
+          - runner: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-musl
+            suffix: linux-arm64-musl
+            image: node:24-alpine
+            arch: arm64
+            libc: musl
+    env:
+      HUSKY: 0
+      CI: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+        if: matrix.image == ''
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        id: node
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        if: matrix.image == ''
+        run: pnpm install --frozen-lockfile
+
+      - name: Install pinned Rust toolchain
+        if: matrix.image == ''
+        run: |
+          rustup toolchain install 1.96.0 --profile minimal --component clippy
+          rustup default 1.96.0
+          rustup target add ${{ matrix.target }}
+
+      - name: Build, lint and verify native consumers
+        if: matrix.image == ''
+        run: node packages/weapp-tailwindcss/native/ci.mjs --target=${{ matrix.target }}
+
+      - name: Build and verify in the target Linux libc
+        if: matrix.image != ''
+        env:
+          NATIVE_NODE_VERSION: ${{ steps.node.outputs.node-version }}
+          NATIVE_TARGET: ${{ matrix.target }}
+          NATIVE_ARCH: ${{ matrix.arch }}
+          NATIVE_LIBC: ${{ matrix.libc }}
+          NATIVE_IMAGE: ${{ matrix.image }}
+        run: >-
+          docker run --rm -v "$PWD:/work" -w /work
+          -e CI=1 -e HUSKY=0 -e NATIVE_NODE_VERSION -e NATIVE_TARGET -e NATIVE_ARCH -e NATIVE_LIBC
+          "$NATIVE_IMAGE" sh packages/weapp-tailwindcss/native/ci-linux.sh
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        if: matrix.image == ''
+        with:
+          node-version: 22.18.0
+
+      - name: Verify minimum supported Node ABI
+        if: matrix.image == ''
+        run: node packages/weapp-tailwindcss/native/ci.mjs --target=${{ matrix.target }} --verify-only
+
+      - name: Verify minimum Node ABI in the target Linux libc
+        if: matrix.image != ''
+        env:
+          NATIVE_NODE_VERSION: v22.18.0
+          NATIVE_TARGET: ${{ matrix.target }}
+          NATIVE_ARCH: ${{ matrix.arch }}
+          NATIVE_LIBC: ${{ matrix.libc }}
+          NATIVE_IMAGE: ${{ matrix.libc == 'musl' && 'node:22.18.0-alpine' || matrix.image }}
+        run: >-
+          docker run --rm -v "$PWD:/work" -w /work
+          -e CI=1 -e HUSKY=0 -e NATIVE_VERIFY_ONLY=1 -e NATIVE_NODE_VERSION -e NATIVE_TARGET -e NATIVE_ARCH -e NATIVE_LIBC
+          "$NATIVE_IMAGE" sh packages/weapp-tailwindcss/native/ci-linux.sh
+
+      - name: Upload verified native artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-${{ matrix.suffix }}
+          path: |
+            packages/weapp-tailwindcss/native/bindings/*
+            packages/postcss/native/bindings/*
+          if-no-files-found: error
+          retention-days: 7

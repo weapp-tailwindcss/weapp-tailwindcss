@@ -1,0 +1,36 @@
+{
+  "name": "@weapp-tailwindcss/native-win32-arm64-msvc",
+  "version": "5.5.11",
+  "description": "Prebuilt Rust compiler binding for weapp-tailwindcss (win32-arm64-msvc)",
+  "license": "MIT",
+  "homepage": "https://tw.weapp.dev/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
+    "directory": "packages-native/win32-arm64-msvc"
+  },
+  "exports": {
+    ".": "./weapp-tailwindcss-native.win32-arm64-msvc.node",
+    "./package.json": "./package.json",
+    "./postcss": "./weapp-tailwindcss-postcss.win32-arm64-msvc.node"
+  },
+  "main": "weapp-tailwindcss-native.win32-arm64-msvc.node",
+  "files": [
+    "*.node",
+    "native-metadata.json",
+    "postcss-native-metadata.json"
+  ],
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "engines": {
+    "node": "^22.18.0 || >=24.11.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  }
+}

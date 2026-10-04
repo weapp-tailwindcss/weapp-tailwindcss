@@ -57,6 +57,7 @@
 ## 目录规则路由
 
 - `packages/**`：[packages 规则](packages/AGENTS.md)
+- `packages-native/**`：[packages-native 规则](packages-native/AGENTS.md)
 - `packages-runtime/**`：[packages-runtime 规则](packages-runtime/AGENTS.md)
 - `apps/**`：[apps 规则](apps/AGENTS.md)
 - `demo/**`：[demo 规则](demo/AGENTS.md)
