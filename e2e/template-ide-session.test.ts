@@ -46,6 +46,7 @@ describe('模板 IDE 会话的错误与资源归属', () => {
     expect(run).toHaveBeenCalledExactlyOnceWith(mini)
     expect(close).toHaveBeenCalledExactlyOnceWith(options.projectPath, mini, 1000)
     expect(screenshot).not.toHaveBeenCalled()
+    expect(await fs.readdir(artifactDir)).toEqual([])
   })
 
   it('启动失败未取得连接时不截图，保留原错误及完整原因栈', async () => {
@@ -105,6 +106,64 @@ describe('模板 IDE 会话的错误与资源归属', () => {
     const failure = new Error('project close failed')
     close.mockRejectedValue(failure)
     await expect(withTemplateIdeSession(options, async () => 'rendered')).rejects.toBe(failure)
+    expect(close).toHaveBeenCalledOnce()
+    expect(await fs.readFile(path.join(artifactDir, 'error.txt'), 'utf8')).toBe(formatWorkflowError(failure))
+  })
+
+  it('最终诊断记录渲染、截图与关闭的全部叶子错误，保留原聚合层级', async () => {
+    const { screenshot } = connection()
+    const primary = new Error('render failed', { cause: new Error('protocol did not respond') })
+    const capture = new Error('screenshot timed out')
+    const closure = new Error('project close failed')
+    screenshot.mockRejectedValue(capture)
+    close.mockRejectedValue(closure)
+    const error = await withTemplateIdeSession(options, async () => {
+      throw primary
+    }).catch(error => error)
+    expect(error).toBeInstanceOf(AggregateError)
+    expect(error.cause).toBe(error.errors[0])
+    expect(error.errors[0]).toBeInstanceOf(AggregateError)
+    expect(error.errors[0].cause).toBe(primary)
+    expect(error.errors[0].errors).toEqual([primary, capture])
+    expect(error.errors[1]).toBe(closure)
+    const diagnostic = await fs.readFile(path.join(artifactDir, 'error.txt'), 'utf8')
+    expect(diagnostic).toBe(formatWorkflowError(error))
+    for (const failure of [primary, primary.cause as Error, capture, closure]) {
+      expect(diagnostic).toContain(failure.message)
+      expect(diagnostic).toContain(failure.stack!.split('\n')[1]!.trim())
+    }
+    expect(screenshot).toHaveBeenCalledOnce()
+    expect(close).toHaveBeenCalledOnce()
+  })
+
+  it('最终诊断写入失败也保留已有错误层级、对象与因果，且不重复关闭', async () => {
+    const { screenshot } = connection()
+    const primary = new Error('render failed')
+    const capture = new Error('screenshot timed out')
+    const closure = new Error('project close failed')
+    screenshot.mockRejectedValue(capture)
+    const diagnostic = path.join(artifactDir, 'error.txt')
+    close.mockImplementation(async () => {
+      // 首因已写入后模拟最终报告路径不可写，验证最后一次持久化的独立失败边界。
+      expect(await fs.readFile(diagnostic, 'utf8')).toContain(primary.message)
+      await fs.rm(diagnostic)
+      await fs.mkdir(diagnostic)
+      throw closure
+    })
+    const error = await withTemplateIdeSession(options, async () => {
+      throw primary
+    }).catch(error => error)
+    expect(error).toBeInstanceOf(AggregateError)
+    expect(error.cause).toBe(error.errors[0])
+    const sessionError = error.errors[0]
+    expect(sessionError).toBeInstanceOf(AggregateError)
+    expect(sessionError.cause).toBe(sessionError.errors[0])
+    expect(sessionError.errors[0].cause).toBe(primary)
+    expect(sessionError.errors[0].errors).toEqual([primary, capture])
+    expect(sessionError.errors[1]).toBe(closure)
+    expect(error.errors[1]).toMatchObject({ code: expect.stringMatching(/EISDIR|EPERM|EACCES/) })
+    expect(formatWorkflowError(error)).toContain(diagnostic)
+    expect(screenshot).toHaveBeenCalledOnce()
     expect(close).toHaveBeenCalledOnce()
   })
 

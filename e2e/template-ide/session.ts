@@ -30,17 +30,26 @@ async function recordFailure(error: unknown, miniProgram: MiniProgram | undefine
 /** 启动失败、探针失败与诊断/收尾失败共同保留；只关闭本轮绑定的项目。 */
 export async function withTemplateIdeSession<T>(options: TemplateIdeSessionOptions, run: (miniProgram: MiniProgram) => Promise<T>): Promise<T> {
   let miniProgram: MiniProgram | undefined
-  return runWithCleanup(async () => {
-    try {
-      miniProgram = await new Launcher().launch({
-        ...(options.cliPath === undefined ? {} : { cliPath: options.cliPath }),
-        projectPath: options.projectPath,
-        timeout: options.launchTimeoutMs,
-      })
-      return await run(miniProgram)
-    }
-    catch (error) {
-      return runWithCleanup(() => Promise.reject(error), () => recordFailure(error, miniProgram, options))
-    }
-  }, () => closeWechatProject(options.projectPath, miniProgram, options.closeTimeoutMs))
+  try {
+    return await runWithCleanup(async () => {
+      try {
+        miniProgram = await new Launcher().launch({
+          ...(options.cliPath === undefined ? {} : { cliPath: options.cliPath }),
+          projectPath: options.projectPath,
+          timeout: options.launchTimeoutMs,
+        })
+        return await run(miniProgram)
+      }
+      catch (error) {
+        return runWithCleanup(() => Promise.reject(error), () => recordFailure(error, miniProgram, options))
+      }
+    }, () => closeWechatProject(options.projectPath, miniProgram, options.closeTimeoutMs))
+  }
+  catch (error) {
+    // 默认测试报告只展开一层 AggregateError；收尾后落盘完整链，避免诊断次因不可见。
+    return runWithCleanup(
+      () => Promise.reject(error),
+      () => writeFile(path.join(options.artifactDir, 'error.txt'), formatWorkflowError(error)),
+    )
+  }
 }
