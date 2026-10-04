@@ -31,10 +31,22 @@ afterEach(() => {
 
 describe('Rust CSS 内核加载契约', () => {
   it('未设置模式时默认保留 PostCSS 实现', async () => {
-    const { loadNativeCssBinding } = await import('@/native/binding')
-    expect(loadNativeCssBinding()).toBeUndefined()
-    expect(nativeMock.resolve).not.toHaveBeenCalled()
-    expect(nativeMock.load).not.toHaveBeenCalled()
+    const previous = process.env.WEAPP_TW_NATIVE
+    delete process.env.WEAPP_TW_NATIVE
+    try {
+      const { loadNativeCssBinding } = await import('@/native/binding')
+      expect(loadNativeCssBinding()).toBeUndefined()
+      expect(nativeMock.resolve).not.toHaveBeenCalled()
+      expect(nativeMock.load).not.toHaveBeenCalled()
+    }
+    finally {
+      if (previous === undefined) {
+        delete process.env.WEAPP_TW_NATIVE
+      }
+      else {
+        process.env.WEAPP_TW_NATIVE = previous
+      }
+    }
   })
 
   it('off 不尝试解析或加载二进制', async () => {
