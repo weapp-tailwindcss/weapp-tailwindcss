@@ -84,7 +84,14 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
       return
     }
     const errors: unknown[] = []
-    const signals = new Set<NodeJS.Signals>()
+    const sent: Array<{ pid: number, started?: string, method: string }> = []
+    const fail = (message: string): never => {
+      const targets = sent.map(item => `pid=${item.pid} started=${item.started ?? '未采集（本次 spawn 身份）'} method=${item.method}`).join('；')
+      const termination = sent.length
+        ? [new Error(`已向本轮进程发送终止请求：${targets}；正常清理与源码恢复未确认。`)]
+        : []
+      throw new AggregateError([...errors, ...termination], message)
+    }
     let current = owned
     let verified = false
     const read = async (deadline: number) => {
@@ -117,11 +124,8 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
       if (!didClose || !verified || current.size !== 0) {
         return false
       }
-      if (signals.size) {
-        errors.push(new Error(`本轮已确认身份的进程通过 ${[...signals].join('/')} 终止；正常清理与源码恢复未确认。`))
-      }
-      if (errors.length) {
-        throw new AggregateError(errors, '阶段子进程清理未正常完成。')
+      if (sent.length || errors.length) {
+        fail('阶段子进程清理未正常完成。')
       }
       return true
     }
@@ -157,7 +161,7 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
           if (!child.kill(value)) {
             throw new Error(`本轮子进程 pid=${child.pid} 未接受 ${value}`)
           }
-          signals.add(value)
+          sent.push({ pid: child.pid, method: value })
         }
         catch (error) {
           errors.push(error)
@@ -173,13 +177,14 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
             if (!latest || Date.now() >= deadline) {
               continue
             }
-            signals.add(value)
             if (process.platform === 'win32') {
               // 每个 PID 均已核对出生时间；禁止 /t 按复用的历史 PPID 扩大范围。
               await runProcessCommand('taskkill', ['/pid', String(row.pid), '/f'], deadline - Date.now())
+              sent.push({ pid: row.pid, started: row.started, method: 'taskkill /pid /f' })
             }
             else {
               process.kill(row.pid, value)
+              sent.push({ pid: row.pid, started: row.started, method: value })
             }
           }
           catch (error) {
@@ -203,7 +208,7 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
         }
       }
     }
-    throw new AggregateError(errors, `阶段子进程有界清理未成功；close=${didClose}，仍记录 PID=${[...current.keys()].join(',')}；清理范围与源码恢复未确认。`)
+    fail(`阶段子进程有界清理未成功；close=${didClose}，仍记录 PID=${[...current.keys()].join(',')}；清理范围与源码恢复未确认。`)
   }
   return {
     capture() {

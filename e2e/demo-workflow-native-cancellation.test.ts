@@ -80,7 +80,7 @@ describe('隔离进程内的真实信号与合作恢复', () => {
       expect(await readFile(source)).toEqual(sourceBytes)
       expect(await Promise.race([done.then(() => 'closed'), delay(3000, 'hung')])).toBe('closed')
       const report = JSON.parse(await readFile(resultFile, 'utf8'))
-      expect(report.error).not.toContain('通过 SIG')
+      expect(report.error).not.toContain('已向本轮进程发送终止请求')
       expect(report.sourceRestoration).toBe('unverified')
     }
     finally {
