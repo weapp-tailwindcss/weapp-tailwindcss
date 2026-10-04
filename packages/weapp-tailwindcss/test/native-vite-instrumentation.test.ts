@@ -44,7 +44,10 @@ describe('native Vite instrumentation lifecycle', () => {
               createWxmlTransformer: () => ({ transformStatic: (source: string) => source.replace('w-[1px]', 'w-_b1px_B') }),
               analyzeJs: () => ({ literals: [] }),
               jsRuntimeSignature: () => 's:w-[1px]',
-              createJsTransformer: () => ({ transform: (source: string) => source.replace('w-[1px]', 'w-_b1px_B') }),
+              createJsTransformer: () => ({
+                transform: (source: string) => source.replace('w-[1px]', 'w-_b1px_B'),
+                transformWithCandidates: (source: string, _lang: string, _sourceType: string, _parens: boolean, _options: object, contains: (candidate: string) => boolean) => contains('w-[2px]') ? source.replace('w-[2px]', 'w-_b2px_B') : source,
+              }),
             }
           : {
               SelectorRuleTransformer: class {
@@ -70,11 +73,15 @@ describe('native Vite instrumentation lifecycle', () => {
       instrumentation.phase('build')
       const binding = require(coreFile)
       binding.tokenizeWxml('w-[1px]')
-      expect(measuredNativeCalls(instrumentation.report)).toBe(1)
+      const transformer = binding.createJsTransformer()
+      expect(transformer.transformWithCandidates('const x="w-[2px]"', 'js', 'module', false, {}, () => true)).toBe('const x="w-_b2px_B"')
+      expect(instrumentation.report.counts.build?.transformWithCandidates).toMatchObject({ calls: 1, failures: 0, nullReturns: 0 })
+      expect(measuredNativeCalls(instrumentation.report)).toBe(3)
       instrumentation.restore()
       expect(module._extensions['.node']).toBe(fixtureLoader)
       binding.tokenizeWxml('w-[1px]')
-      expect(measuredNativeCalls(instrumentation.report)).toBe(1)
+      transformer.transformWithCandidates('w-[2px]', 'js', 'module', false, {}, () => true)
+      expect(measuredNativeCalls(instrumentation.report)).toBe(3)
       instrumentation = undefined
     }
     finally {

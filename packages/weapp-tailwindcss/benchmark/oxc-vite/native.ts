@@ -39,6 +39,7 @@ export function createNativeCounter(report: NativeReport) {
         if (method === 'createJsTransformer' && result && typeof result === 'object' && !wrappedObjects.has(result)) {
           wrappedObjects.add(result)
           wrap(result as Binding, 'transform')
+          wrap(result as Binding, 'transformWithCandidates')
           wrap(result as Binding, 'replaceClassNames')
         }
         if (method === 'createWxmlTransformer' && result && typeof result === 'object' && !wrappedObjects.has(result)) {
@@ -132,6 +133,7 @@ export function instrumentNative(root: string) {
       assert.equal(typeof core.jsRuntimeSignature!('const x="w-[1px]"'), 'string')
       const transformer = core.createJsTransformer!(['w-[1px]'], [{ character: '[', replacement: '_b' }, { character: ']', replacement: '_B' }]) as Record<string, Callable>
       assert.equal(transformer.transform!('const x="w-[1px]"', 'js', 'module', false, {}), 'const x="w-_b1px_B"')
+      assert.equal(transformer.transformWithCandidates!('const x="w-[2px]"', 'js', 'module', false, {}, (candidate: string) => candidate === 'w-[2px]'), 'const x="w-_b2px_B"')
       const css = cssRequire(report.bindings.find(binding => binding.kernel === 'postcss')!.resolved) as Record<string, Callable>
       assert.equal(typeof css.transformSelector!('.p-4'), 'string')
       const selector = Reflect.construct(css.SelectorRuleTransformer!, [{ child: ['view'], removeHover: false, removeActive: false, removeFocus: false, uniAppX: false }])
@@ -142,7 +144,7 @@ export function instrumentNative(root: string) {
       assert.equal(css.normalizeV4InfinityCalc!('calc(infinity * 1px)', true), '9999px')
       assert.equal(css.normalizeUvueTransformValue!('translate(var(--x,0), var(--y,0))'), 'translate(var(--x,0) var(--y,0))')
       assert.deepEqual(css.normalizeUvueTransformValues!(['translate(1px,2px)', 'translate(1px,2px']), ['translate(1px 2px)', null])
-      for (const method of ['tokenizeWxml', 'createWxmlTransformer', 'transformStatic', 'analyzeJs', 'jsRuntimeSignature', 'createJsTransformer', 'transform', 'transformSelectorRule', 'normalizeV4Declaration', 'normalizeV4GradientPosition', 'normalizeV4InfinityCalc'] as const) {
+      for (const method of ['tokenizeWxml', 'createWxmlTransformer', 'transformStatic', 'analyzeJs', 'jsRuntimeSignature', 'createJsTransformer', 'transform', 'transformWithCandidates', 'transformSelectorRule', 'normalizeV4Declaration', 'normalizeV4GradientPosition', 'normalizeV4InfinityCalc'] as const) {
         assert.equal(report.counts['self-check']?.[method]?.calls, 1, `原生自检未触发 ${method} 包装。`)
       }
     },

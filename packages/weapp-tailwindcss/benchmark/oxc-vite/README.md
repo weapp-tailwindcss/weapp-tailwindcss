@@ -27,8 +27,8 @@ pnpm exec tsx packages/weapp-tailwindcss/benchmark/oxc-vite/runner.ts --root . -
 
 报告保存 Node、平台、CPU、commit、源码/依赖输入哈希、各阶段真实 core Oxc 调用计数、所有原始耗时与产物哈希。零 Oxc 调用的阶段不能用于归因 raw transfer 加速。峰值 `process.resourceUsage().maxRSS` 单位 KiB，只覆盖 worker Node，**不包含 Chromium 或其它子进程**。这里是 Web demo 的有限采样，不代表完整项目、其它平台或所有内存开销。
 
-原生对比还记录每个候选 binary 的实际路径、SHA-256 和是否加载，以及分阶段的 `tokenizeWxml`、`analyzeJs`、`jsRuntimeSignature`、`createJsTransformer`、实例 `transform/replaceClassNames`、CSS 选择器/值处理调用和异常数。正式采样通过 `.node` 加载 hook 包装真实导出，计时前只解析路径并读取哈希，不预先加载或调用 native。工厂实例保留方法的 `this` 和返回值，finally 恢复 hook 与原方法。原生自检会真实调用核心五种方法，但其次数明确排除在正式测量统计外。
+原生对比还记录每个候选 binary 的实际路径、SHA-256 和是否加载，以及分阶段的 `tokenizeWxml`、`analyzeJs`、`jsRuntimeSignature`、`createJsTransformer`、实例 `transform/transformWithCandidates/replaceClassNames`、CSS 选择器/值处理调用和异常数。正式采样通过 `.node` 加载 hook 包装真实导出，计时前只解析路径并读取哈希，不预先加载或调用 native。工厂实例保留方法的 `this` 和返回值，finally 恢复 hook 与原方法。原生自检会真实调用这些接口，但其次数明确排除在正式测量统计外。
 
-计数单独记录 `nullReturns`，不能把一次拒绝后回退的调用当作完成原生转换。JS 完整转换收益应核对实例 `transform` 的调用、异常和 null 数；WXML 静态属性对应 `createWxmlTransformer/transformStatic`，CSS 完整选择器对应构造器 prototype 包装的 `transformSelectorRule`。其他内核调用非零不能证明某个接口被真实构建消费。
+计数单独记录 `nullReturns`，不能把一次拒绝后回退的调用当作完成原生转换。JS 公开 adapter 的完整转换收益应核对实例 `transformWithCandidates` 的调用、异常和 null 数；旧 `transform` 与工厂探针不能代替新方法的执行证据。WXML 静态属性对应 `createWxmlTransformer/transformStatic`，CSS 完整选择器对应构造器 prototype 包装的 `transformSelectorRule`。其他内核调用非零不能证明某个接口被真实构建消费。
 
 `off` 样本若出现真实 native 调用会立即失败；两个模式或不同 pair 的 binary 路径/内容发生变化也会失败。`required` 的零调用阶段如实记录，不能用二进制存在、自检成功或工厂创建次数代替真实转换收益。新增原生路径后应先运行自检，再由同一目标构建产物执行串行测量。

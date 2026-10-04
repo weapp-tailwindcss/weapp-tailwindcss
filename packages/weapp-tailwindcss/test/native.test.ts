@@ -4,6 +4,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const native = vi.hoisted(() => ({ require: Object.assign(vi.fn(), { resolve: vi.fn((id: string) => id) }) }))
 vi.mock('node:module', () => ({ createRequire: () => native.require }))
 
+function createBinding() {
+  return {
+    tokenizeWxml: vi.fn(),
+    createWxmlTransformer: vi.fn(),
+    analyzeJs: vi.fn(),
+    jsRuntimeSignature: vi.fn(),
+    createJsTransformer: vi.fn(() => ({ transform: vi.fn(), replaceClassNames: vi.fn(), transformWithCandidates: vi.fn() })),
+  }
+}
+
 beforeEach(() => {
   vi.resetModules()
   vi.stubEnv('WEAPP_TW_NATIVE', 'auto')
@@ -18,12 +28,13 @@ afterEach(() => {
 
 describe('native compiler loader', () => {
   it('loads a binding once and reuses it', async () => {
-    const binding = { tokenizeWxml: vi.fn(), createWxmlTransformer: vi.fn(), analyzeJs: vi.fn(), jsRuntimeSignature: vi.fn(), createJsTransformer: vi.fn() }
+    const binding = createBinding()
     native.require.mockReturnValue(binding)
     const { loadNativeCompiler } = await import('@/native')
     expect(loadNativeCompiler()).toBe(binding)
     expect(loadNativeCompiler()).toBe(binding)
     expect(native.require).toHaveBeenCalledOnce()
+    expect(binding.createJsTransformer).toHaveBeenCalledExactlyOnceWith([], [])
   })
 
   it('retains automatic fallback after a missing optional binding', async () => {
@@ -62,7 +73,7 @@ describe('native compiler loader', () => {
   })
 
   it.each(['createWxmlTransformer', 'analyzeJs', 'jsRuntimeSignature', 'createJsTransformer'])('rejects a stale binding missing %s', async (method) => {
-    const binding: Record<string, unknown> = { tokenizeWxml: vi.fn(), createWxmlTransformer: vi.fn(), analyzeJs: vi.fn(), jsRuntimeSignature: vi.fn(), createJsTransformer: vi.fn() }
+    const binding: Record<string, unknown> = createBinding()
     delete binding[method]
     native.require.mockReturnValue(binding)
     vi.stubEnv('WEAPP_TW_NATIVE', 'required')
@@ -70,6 +81,19 @@ describe('native compiler loader', () => {
     expect(loadNativeCompiler).toThrowError(expect.objectContaining({
       cause: expect.objectContaining({ message: `Native compiler does not provide ${method}` }),
     }))
+  })
+
+  it('rejects a stale factory instance lacking candidate lookup in auto and required modes', async () => {
+    const binding = createBinding()
+    binding.createJsTransformer.mockReturnValue({ transform: vi.fn(), replaceClassNames: vi.fn() } as ReturnType<typeof binding.createJsTransformer>)
+    native.require.mockReturnValue(binding)
+    const { loadNativeCompiler } = await import('@/native')
+    expect(loadNativeCompiler()).toBeUndefined()
+    vi.stubEnv('WEAPP_TW_NATIVE', 'required')
+    expect(loadNativeCompiler).toThrowError(expect.objectContaining({
+      cause: expect.objectContaining({ message: expect.stringContaining('transformWithCandidates') }),
+    }))
+    expect(binding.createJsTransformer).toHaveBeenCalledOnce()
   })
 
   it('rejects invalid modes instead of silently disabling verification', async () => {

@@ -30,10 +30,12 @@ describe('native benchmark counters', () => {
     class Transformer {
       prefix = 'result:'
       transform(source: string) { return `${this.prefix}${source}` }
+      transformWithCandidates(source: string, contains: (candidate: string) => boolean) { return contains(source) ? `${this.prefix}${source}` : null }
       replaceClassNames(_classes: string[]) { return true }
     }
     const transformer = new Transformer()
     const original = transformer.transform
+    const candidates = transformer.transformWithCandidates
     const binding = { createJsTransformer: () => transformer, analyzeJs: (_source: string) => null }
     const factory = binding.createJsTransformer
     counter.binding(binding)
@@ -44,21 +46,31 @@ describe('native benchmark counters', () => {
       expect(binding.createJsTransformer()).toBe(transformer)
       expect(binding.createJsTransformer()).toBe(transformer)
       expect(transformer.transform('😀')).toBe('result:😀')
+      expect(transformer.transformWithCandidates('😀', candidate => candidate === '😀')).toBe('result:😀')
       counter.phase('add')
       expect(transformer.replaceClassNames(['w-[1px]'])).toBe(true)
       expect(transformer.transform('text')).toBe('result:text')
+      expect(transformer.transformWithCandidates('text', () => false)).toBeNull()
+      const failure = new Error('candidate callback failure')
+      expect(() => transformer.transformWithCandidates('fail', () => {
+        throw failure
+      })).toThrow(failure)
       expect(report.counts.build?.createJsTransformer?.calls).toBe(2)
       expect(report.counts.build?.transform).toEqual({ calls: 1, failures: 0, nullReturns: 0, sourceCodeUnits: 2 })
       expect(report.counts.add?.transform?.calls).toBe(1)
       expect(report.counts.add?.replaceClassNames?.calls).toBe(1)
-      expect(measuredNativeCalls(report)).toBe(5)
+      expect(report.counts.build?.transformWithCandidates).toEqual({ calls: 1, failures: 0, nullReturns: 0, sourceCodeUnits: 2 })
+      expect(report.counts.add?.transformWithCandidates).toEqual({ calls: 2, failures: 1, nullReturns: 1, sourceCodeUnits: 8 })
+      expect(measuredNativeCalls(report)).toBe(8)
     }
     finally {
       counter.restore()
     }
     expect(binding.createJsTransformer).toBe(factory)
     expect(transformer.transform).toBe(original)
+    expect(transformer.transformWithCandidates).toBe(candidates)
     expect(Object.hasOwn(transformer, 'transform')).toBe(false)
+    expect(Object.hasOwn(transformer, 'transformWithCandidates')).toBe(false)
   })
 
   it('records native exceptions while preserving their identity and unsupported null results', () => {

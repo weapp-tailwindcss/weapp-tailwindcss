@@ -13,8 +13,8 @@ export function verifyJsLifecycle() {
   compiler.createJsTransformer = (...args) => {
     const instance = create(...args)
     if (instance) {
-      const transform = instance.transform.bind(instance)
-      instance.transform = (...input) => {
+      const transform = instance.transformWithCandidates.bind(instance)
+      instance.transformWithCandidates = (...input) => {
         transforms++
         return transform(...input)
       }
