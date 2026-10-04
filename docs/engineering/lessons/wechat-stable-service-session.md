@@ -1,11 +1,14 @@
 ---
 status: verified
 issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1269
-baseline: e162c17b68c13bf2328a3a4103c631f89e283af7
+baseline: 9d847b01c8193ae68734dd8aacefaf8de8f0d94a
 regressions:
   - e2e/wechat-service.test.ts
   - e2e/wechat-automator.test.ts
   - e2e/ide-project-cleanup.test.ts
+  - e2e/preflight-probes.test.ts
+  - e2e/preflight-wechat-probe.test.ts
+  - e2e/wechat-session-boundary.test.ts
 ---
 
 # 稳定版微信 DevTools 自动化会话与并发复盘
@@ -18,7 +21,7 @@ regressions:
 
 稳定版的 `/v2/auto` 必须同时收到同一个自动化端口的 `port` 与 `autoPort`；成功回执是类似 `"s60"` 的窗口 ID，而不是旧实现假定的对象。服务层现在发送两个参数，接受并规范化稳定版窗口 ID，并在回执声明端口时校验它必须与本轮请求一致。项目在请求发出前绑定到原 HTTP 服务，超时或协议错误不会重新发现其他 IDE；清理仍只能通过本轮绑定服务执行。
 
-同一稳定版 IDE 的 simulator 资源按实例共享。两个项目分别请求 38001、38002 时虽都得到 HTTP 200，但日志出现 `simulator launch failed`、`LoadApp: waiting for previous app to dispose`、`command ... already registered, override it` 和 `routeTo appLaunch timeout`。因此同一 HTTP 服务只保留一个项目租约；第二个项目、同一项目重复请求和跨服务迁移都会在触达 IDE 前拒绝。不同 HTTP 服务的并发只有在用户已手动准备独立 IDE 实例、用户数据目录和端口后才有资格单独验收，脚本不会自动启动、切换或重启实例。
+同一稳定版 IDE 的 simulator 资源按实例共享。两个项目分别请求 38001、38002 时虽都得到 HTTP 200，但日志出现 `simulator launch failed`、`LoadApp: waiting for previous app to dispose`、`command ... already registered, override it` 和 `routeTo appLaunch timeout`。因此同一 HTTP 服务只保留一个项目租约；第二个项目、同一项目重复请求和跨服务迁移都会在触达 IDE 前拒绝。租约使用按用户和 HTTP 端口命名的原子锁覆盖不同 Node 进程，并在 close 成功后释放；连接失败、端口回执不符或页面未就绪时，`Launcher` 会清理本项目。不同 HTTP 服务的并发只有在用户已手动准备独立 IDE 实例、用户数据目录和端口后才有资格单独验收，脚本不会自动启动、切换或重启实例。
 
 ## 验证
 
@@ -31,7 +34,7 @@ CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts \
 node --import tsx scripts/check-e2e-ide-shared-launch.ts
 ```
 
-三份回归共 57 项通过，ESLint 与 `git diff --check` 通过。真实单项目链路使用当前 `Launcher.launch` 打开临时项目、连接自动化 WebSocket、读取页面 marker、断开并调用 `closeWechatProject`；稳定版 2.02.2608080 / HTTP 19355 / 自动化端口 54656 通过，随后 `/v2/isLogin` 返回 `{"login":true}`。没有执行登录、注销、清缓存、CLI 启动或 IDE 重启。
+六份微信与预检回归共 92 项通过，ESLint 与 `git diff --check` 通过。真实单项目链路使用当前 `Launcher.launch` 打开临时项目、连接自动化 WebSocket、读取页面 marker、断开并调用 `closeWechatProject`；稳定版 2.02.2608080 / HTTP 19355 / 自动化端口 62399 通过，随后 `/v2/isLogin` 返回 `{"login":true}`，本轮锁文件已释放。没有执行登录、注销、清缓存、CLI 启动或 IDE 重启。
 
 ## 适用边界
 
