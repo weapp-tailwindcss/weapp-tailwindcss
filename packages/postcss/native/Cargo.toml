@@ -1,0 +1,21 @@
+[package]
+name = "weapp_tailwindcss_postcss_native"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+napi = { version = "=3.14.0", default-features = false, features = ["napi4"] }
+napi-derive = "=3.6.10"
+
+[build-dependencies]
+napi-build = "=2.6.0"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = "symbols"

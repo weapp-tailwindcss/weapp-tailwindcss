@@ -8,6 +8,7 @@ export interface TransformContext {
   rootReplacement?: string
   universalReplacement?: string
   selectorReplacerOptions?: InternalCssSelectorReplacerOptions
+  classReplacements?: ReadonlyMap<string, string>
   unsupportedPseudoClasses?: ReadonlySet<string>
 }
 

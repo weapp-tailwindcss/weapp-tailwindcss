@@ -5,6 +5,7 @@ import type { IStyleHandlerOptions } from '../types'
 import type { CachedSelectorTransformResult, TransformContext } from './rule-transformer/types'
 import psp from 'postcss-selector-parser'
 import { composeIsPseudo } from '../shared'
+import { createNativeClassReplacements } from './native'
 import { handleClassNode, handleCombinatorNode, handleSelectorNode, handleTagOrAttribute, handleUniversalNode } from './rule-transformer/nodes'
 import { handlePseudoNode, shouldRemoveEmptyFunctionalPseudo } from './rule-transformer/pseudos'
 import { getUnsupportedPseudoClassSet } from './rule-transformer/unsupported-pseudos'
@@ -36,6 +37,7 @@ function canSkipRuleTransform(rule: Rule) {
 
 // transformSelectors 会遍历选择器 AST 并触发各类节点处理逻辑
 function transformSelectors(selectors: Root, context: TransformContext) {
+  context.classReplacements = createNativeClassReplacements(selectors, context.selectorReplacerOptions)
   selectors.walk((node, index) => {
     const parent = node.parent?.type === 'selector'
       ? node.parent as Selector
