@@ -1,5 +1,5 @@
 ---
-status: partial
+status: verified
 issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1269
 baseline: e192ed3d3b2a6e3aa402f1c72b9355f7efe7f94c
 regressions:
@@ -42,9 +42,13 @@ CLI 生命周期回归启动真实 Node 子进程，在带空格的临时项目�
 
 原始证据保存在任务忽略目录 `.tmp/weapp-vite-single-writer/`：`classic-native-before-error.txt`、`candidate-diagnostic/` 和 `classic-native-after.log` / `classic-native-after-error.txt`。测试结束后确认源码已恢复；首次失败样本保留，不调整性能阈值或反复重跑寻找通过。
 
+后续在主任务提交 `779129b54500e5eaacc93da7516914772973cb32` 完成新预检 `005877e1-513c-45fe-9061-56df3ccc5526`，原微信 IDE 用例三项通过：模板和脚本热更新均以 `devtoolsVisible=live` 确认，运行时检查无异常；样式热更新通过。没有使用页面重载或重新打开项目兜底。外层领取与准备进程退出码均为 0，记录的 15 个采样进程均已退出，源码干净，临时浏览器标签页为 0，微信登录态仍有效。证据目录为 `e2e/.artifacts/weapp-vite-demo-ide-verification/005877e1-513c-45fe-9061-56df3ccc5526/`。
+
+后续 content 失败根因及 native 完整功能复验见[混合模板 class 消费证据](watch-mixed-class-consumers.md)。保留前述首次失败，后续通过不能覆盖原始观察。
+
 ## 适用边界
 
-本轮修复测试包装器的输出归属与退出回执，未修改公开包行为、demo 源码、生成器或 static 基线。CLI 功能回归不替代真实 IDE 验收，也不代表性能门禁通过；IDE 原用例需由主任务在新提交完成预检后执行。条件样式合同仅限已证明执行小程序 finalize 的 weapp-vite 模板链路。
+本轮修复测试包装器的输出归属与退出回执，未修改公开包行为、demo 源码、生成器或 static 基线。CLI 功能回归不替代真实 IDE 验收，也不代表性能门禁通过；IDE 原用例已按上述主任务提交完成预检和复验；最终扩展全流程仍由主任务统一验收。条件样式合同仅限已证明执行小程序 finalize 的 weapp-vite 模板链路。
 
 ## 规则评估
 

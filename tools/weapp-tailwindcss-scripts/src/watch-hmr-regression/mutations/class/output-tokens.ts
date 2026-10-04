@@ -1,17 +1,12 @@
+import type { ClassAlternative, OutputTokenGroup } from './class-value'
 import ts from 'typescript'
+import { createOutputTokenGroups, guaranteedScopes, parseTemplateClassValue, splitClassTokens } from './class-value'
 import { collectScriptConsumerScopes } from './script-consumers'
 
+export { isSafeClass, isScopeClass, splitClassTokens } from './class-value'
+
 export interface TemplateClassConsumer {
-  tokens: Set<string>
-  references: Set<string>
-}
-
-export function splitClassTokens(value: string) {
-  return new Set(value.split(/\s+/).filter(Boolean))
-}
-
-export function isScopeClass(token: string) {
-  return /^data-v-[\da-z]+$/i.test(token)
+  alternatives: ClassAlternative[]
 }
 
 function readAttributes(tag: string) {
@@ -25,32 +20,7 @@ function readAttributes(tag: string) {
   return attributes
 }
 
-function parseClassExpression(value: string): TemplateClassConsumer | undefined {
-  const source = ts.createSourceFile('class-expression.js', `(${value})`, ts.ScriptTarget.Latest, false, ts.ScriptKind.JS)
-  const diagnostics = (source as ts.SourceFile & { parseDiagnostics: readonly ts.Diagnostic[] }).parseDiagnostics
-  const statement = source.statements[0]
-  if (diagnostics.length > 0 || source.statements.length !== 1 || !statement || !ts.isExpressionStatement(statement)) {
-    return undefined
-  }
-  const consumer: TemplateClassConsumer = { tokens: new Set(), references: new Set() }
-  const visit = (node: ts.Expression): boolean => {
-    if (ts.isParenthesizedExpression(node)) {
-      return visit(node.expression)
-    }
-    if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
-      splitClassTokens(node.text).forEach(token => consumer.tokens.add(token))
-      return true
-    }
-    if (ts.isIdentifier(node)) {
-      consumer.references.add(node.text)
-      return true
-    }
-    return ts.isArrayLiteralExpression(node) && node.elements.every(visit)
-  }
-  return visit(statement.expression) ? consumer : undefined
-}
-
-/** 只读取 class 的完整词法 token；表达式仅证明无条件字符串、数组及直接绑定。 */
+/** 读取 class 的完整消费分支，并保留模板局部绑定与模块边界。 */
 export function collectTemplateClassConsumers(output: string) {
   const consumers: TemplateClassConsumer[] = []
   const markup = output.replace(/<!--[\s\S]*?-->/g, '')
@@ -97,15 +67,14 @@ export function collectTemplateClassConsumers(output: string) {
         .replaceAll('&gt;', '>')
         .replaceAll('&amp;', '&')
         .trim()
-      const expression = /^\{\{([\s\S]*)\}\}$/.exec(value)
-      const consumer = expression
-        ? parseClassExpression(expression[1]!)
-        : value.includes('{{') || value.includes('}}') ? undefined : { tokens: splitClassTokens(value), references: new Set<string>() }
-      if (consumer) {
+      const alternatives = parseTemplateClassValue(value)
+      if (alternatives) {
         // 循环变量及命名模板拥有局部数据，不能当作顶层 render 字段。
         const scopes = [...stack, frame]
-        consumer.references = new Set([...consumer.references].filter(reference => !scopes.some(scope => scope.opaque || scope.bindings.has(reference))))
-        consumers.push(consumer)
+        consumers.push({ alternatives: alternatives.map(item => ({
+          ...item,
+          references: new Set([...item.references].filter(reference => !scopes.some(scope => scope.opaque || scope.bindings.has(reference)))),
+        })) })
       }
     }
     if (!tag[0].endsWith('/>')) {
@@ -113,26 +82,29 @@ export function collectTemplateClassConsumers(output: string) {
     }
   }
   return stack.length === 0
-    ? consumers.map(consumer => ({ ...consumer, references: new Set([...consumer.references].filter(reference => !modules.has(reference))) }))
+    ? consumers.map(consumer => ({ alternatives: consumer.alternatives.map(item => ({ ...item, references: new Set([...item.references].filter(reference => !modules.has(reference))) })) }))
     : []
 }
 
 export function collectOutputTokenGroups(output: string, target: 'wxml' | 'js', wxml = '') {
   if (target === 'wxml') {
-    return collectTemplateClassConsumers(output).map(consumer => consumer.tokens)
+    return collectTemplateClassConsumers(output).flatMap(consumer => createOutputTokenGroups(consumer.alternatives))
   }
   const source = ts.createSourceFile('output.js', output, ts.ScriptTarget.Latest, false, ts.ScriptKind.JS)
-  const consumerScopes = collectScriptConsumerScopes(source, collectTemplateClassConsumers(wxml).map(consumer => ({
-    scopes: new Set([...consumer.tokens].filter(isScopeClass)),
-    references: consumer.references,
-  })))
-  const groups: Set<string>[] = []
+  const consumerScopes = collectScriptConsumerScopes(source, collectTemplateClassConsumers(wxml).flatMap((consumer) => {
+    const references = new Set(consumer.alternatives.flatMap(item => [...item.references]))
+    return [...references].map(reference => ({
+      scopes: guaranteedScopes(consumer.alternatives, reference, 'references'),
+      references: new Set([reference]),
+    }))
+  }))
+  const groups: OutputTokenGroup[] = []
   const visit = (node: ts.Node) => {
     if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
       const tokens = splitClassTokens(node.text)
-      groups.push(tokens)
+      groups.push(...createOutputTokenGroups([{ tokens, references: new Set() }]))
       for (const scopes of consumerScopes.get(node) ?? []) {
-        groups.push(new Set([...tokens, ...scopes]))
+        groups.push(...createOutputTokenGroups([{ tokens: new Set([...tokens, ...scopes]), references: new Set() }]))
       }
     }
     ts.forEachChild(node, visit)

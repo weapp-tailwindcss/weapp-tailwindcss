@@ -1,7 +1,8 @@
 import type { CssRuleRemovalExpectation } from '../../types'
+import type { OutputTokenGroup } from './class-value'
 import { createCssClassSignatureReader } from '../../../../../../packages/postcss/src/selectorParser/class-signatures'
 import { assertCssConditionsRemoved } from '../../../../../../packages/postcss/src/selectorParser/rule-removal-evidence'
-import { collectOutputTokenGroups, isScopeClass } from './output-tokens'
+import { collectOutputTokenGroups, isSafeClass } from './output-tokens'
 
 type OutputTarget = 'wxml' | 'js'
 
@@ -23,7 +24,7 @@ export interface ClassOutputEvidence {
 }
 
 function collectOutputTokens(output: string, target: OutputTarget) {
-  return new Set(collectOutputTokenGroups(output, target).flatMap(group => [...group]))
+  return new Set(collectOutputTokenGroups(output, target).flatMap(group => [...group.tokens]))
 }
 
 /** 检查模板 class 或 JS 字符串候选的完整 token，以及 safe class 与 utility 的完整规则。 */
@@ -37,7 +38,24 @@ export function assertClassTokensInOutput(
   requireCss = true,
   expectedRemovedCssUtilities: readonly CssRuleRemovalExpectation[] = [],
 ): ClassOutputEvidence[] {
-  if (targets.length === 0) {
+  return assertClassTokensInConsumers(outputs, classTokens, escapedClasses, targets.map(target => ({
+    target,
+    groups: collectOutputTokenGroups(outputs[target], target, outputs.wxml),
+  })), label, requireAll, requireCss, expectedRemovedCssUtilities)
+}
+
+/** 消费者已解析时复用原始分支与有向 scope，禁止投影成字符串后重新猜测上下文。 */
+export function assertClassTokensInConsumers(
+  outputs: ClassOutputSnapshot,
+  classTokens: string[],
+  escapedClasses: string[],
+  consumers: Array<{ target: OutputTarget, groups: OutputTokenGroup[] }>,
+  label: string,
+  requireAll = true,
+  requireCss = true,
+  expectedRemovedCssUtilities: readonly CssRuleRemovalExpectation[] = [],
+): ClassOutputEvidence[] {
+  if (consumers.length === 0) {
     return []
   }
   assertCssConditionsRemoved(outputs.globalStyle, expectedRemovedCssUtilities
@@ -45,10 +63,9 @@ export function assertClassTokensInOutput(
     .map(item => item.condition))
   const readSignatures = createCssClassSignatureReader(outputs.globalStyle)
   const evidence: ClassOutputEvidence[] = []
-  for (const target of targets) {
-    const groups = collectOutputTokenGroups(outputs[target], target, outputs.wxml)
-    const tokens = new Set(groups.flatMap(group => [...group]))
-    const safeClasses = [...tokens].filter(token => /^wtu-[\da-z]+-[\da-z]+$/i.test(token))
+  for (const { target, groups } of consumers) {
+    const tokens = new Set(groups.flatMap(group => [...group.tokens]))
+    const safeClasses = [...tokens].filter(isSafeClass)
     let matched = 0
     for (const [index, utility] of classTokens.entries()) {
       const escapedClass = escapedClasses[index] ?? utility
@@ -63,14 +80,14 @@ export function assertClassTokensInOutput(
           throw new Error(`${label} ${target}: expected platform to remove CSS rules for ${utility}`)
         }
         matched += 1
-        const consumerAliases = [...new Set(groups.filter(group => group.has(original))
-          .flatMap(group => [...group].filter(token => safeClasses.includes(token))))]
+        const consumerAliases = [...new Set(groups.filter(group => group.tokens.has(original))
+          .flatMap(group => [...group.tokens].filter(token => safeClasses.includes(token))))]
         evidence.push({ utility, escapedClass, actualClass: original, target, ruleSignatures: [], cssExpectation: 'removed', consumerAliases })
         continue
       }
       const actualClasses = safeClasses.filter((safeClass) => {
-        return groups.filter(group => group.has(safeClass)).some((group) => {
-          const scopes = new Set([...group].filter(isScopeClass))
+        return groups.filter(group => group.tokens.has(safeClass)).some((group) => {
+          const scopes = group.scopesByToken.get(safeClass) ?? new Set<string>()
           const actual = readSignatures(safeClass, scopes)
           return reference.length > 0 && JSON.stringify(actual) === JSON.stringify(reference)
         })

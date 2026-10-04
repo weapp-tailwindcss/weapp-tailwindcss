@@ -37,6 +37,12 @@ describe('watch compiled dynamic class scopes', () => {
     expect(verify(outputs(`<view class="{{['${alias}', 'data-v-00a60067']}}"/>`), 'wxml')[0]?.actualClass).toBe(alias)
   })
 
+  it('只将 reference 实际出现分支中共同的 scope 绑定到脚本消费', () => {
+    expect(verify(outputs(`<view class="before {{enabled ? ['data-v-00a60067', c] : 'other'}} after"/>`))[0]?.actualClass).toBe(alias)
+    expect(() => verify(outputs(`<view class="before {{enabled ? ['data-v-00a60067', c] : c}} after"/>`))).toThrow(utility)
+    expect(() => verify(outputs(`<view class="{{enabled ? ['${alias}', 'data-v-00a60067', c] : '${alias}'}}"/>`), 'wxml')).toThrow(utility)
+  })
+
   it('tracks the render data parameter by position rather than its spelling', () => {
     expect(verify(outputs(undefined, compiled().replaceAll('$data', 'state')))[0]?.actualClass).toBe(alias)
   })
@@ -107,19 +113,19 @@ describe('watch compiled dynamic class scopes', () => {
     ['another render data parameter', '$data.__twWatchClass', '$setup.__twWatchClass'],
     ['another data property', '$data.__twWatchClass', '$data.__twWatchClassExtra'],
     ['another helper namespace', 'c: common_vendor.n', 'c: other_vendor.n'],
-    ['a changed class value', 'common_vendor.n($data.__twWatchClass)', "common_vendor.n($data.__twWatchClass + '-extra')"],
-    ['an unattached render', "['render', _sfc_render]", "['render', another_render]"],
-    ['a duplicate data property', "unrelated: 'wtu-other-0'", "__twWatchClass: 'wtu-other-0'"],
+    ['a changed class value', 'common_vendor.n($data.__twWatchClass)', 'common_vendor.n($data.__twWatchClass + \'-extra\')'],
+    ['an unattached render', '[\'render\', _sfc_render]', '[\'render\', another_render]'],
+    ['a duplicate data property', 'unrelated: \'wtu-other-0\'', '__twWatchClass: \'wtu-other-0\''],
     ['a duplicate render key', 'd: common_vendor.n', 'c: common_vendor.n'],
-    ['a spread data source', "unrelated: 'wtu-other-0'", '...unknown'],
+    ['a spread data source', 'unrelated: \'wtu-other-0\'', '...unknown'],
     ['an asynchronous data method', 'data()', 'async data()'],
     ['a generator data method', 'data()', '*data()'],
     ['an optional normalizer', 'c: common_vendor.n(', 'c: common_vendor.n?.('],
     ['malformed script syntax', 'wx.createPage(MiniProgramPage);', 'wx.createPage(MiniProgramPage;'],
     ['a shadowed data parameter', '$data, $options', '$data, $data'],
     ['an unregistered component', 'wx.createPage(MiniProgramPage)', 'wx.createPage(otherPage)'],
-    ['an ambiguous render attachment', "['__scopeId', 'data-v-00a60067']", '...otherAttachments'],
-    ['an overwritten data option', "['__scopeId', 'data-v-00a60067']", "['data', otherData]"],
+    ['an ambiguous render attachment', '[\'__scopeId\', \'data-v-00a60067\']', '...otherAttachments'],
+    ['an overwritten data option', '[\'__scopeId\', \'data-v-00a60067\']', '[\'data\', otherData]'],
   ])('rejects %s', (_, before, after) => {
     expect(() => verify(outputs(undefined, compiled().replace(before, after)))).toThrow(utility)
   })

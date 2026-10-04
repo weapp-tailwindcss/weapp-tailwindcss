@@ -1,6 +1,7 @@
 import type { ClassOutputSnapshot } from '../class/evidence'
 import ts from 'typescript'
-import { assertClassTokensInOutput } from '../class/evidence'
+import { createOutputTokenGroups } from '../class/class-value'
+import { assertClassTokensInConsumers } from '../class/evidence'
 import { collectOutputTokenGroups, splitClassTokens } from '../class/output-tokens'
 
 function collectScriptClassGroups(output: string) {
@@ -42,19 +43,13 @@ export function assertIconifyConsumer(
   }
   for (const target of targets) {
     const consumers = (target === 'js'
-      ? collectScriptClassGroups(outputs.js)
+      ? collectScriptClassGroups(outputs.js).flatMap(tokens => createOutputTokenGroups([{ tokens, references: new Set() }]))
       : collectOutputTokenGroups(outputs.wxml, target))
-      .filter(group => group.has(marker))
+      .filter(group => group.tokens.has(marker))
     let cause: unknown
     const matched = consumers.some((group) => {
-      // 分组已来自真实输出解析；仅将该组投影给共享的完整 token / safe class 证明。
-      const classValue = [...group].join(' ').replaceAll('&', '&amp;').replaceAll('"', '&quot;')
       try {
-        assertClassTokensInOutput({
-          wxml: `<view class="${classValue}"/>`,
-          js: '',
-          globalStyle: outputs.globalStyle,
-        }, classTokens, escapedClasses, ['wxml'], label)
+        assertClassTokensInConsumers(outputs, classTokens, escapedClasses, [{ target, groups: [group] }], label)
         return true
       }
       catch (error) {
