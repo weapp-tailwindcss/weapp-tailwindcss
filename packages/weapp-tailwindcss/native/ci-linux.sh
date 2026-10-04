@@ -19,8 +19,14 @@ else
   export PATH="$task_node_dir/bin:$PATH"
 fi
 
-corepack enable
-corepack prepare "$(node -p 'require("./package.json").packageManager')" --activate
+task_pnpm_version="$(node -p 'require("./package.json").packageManager.replace(/^pnpm@/, "")')"
+task_pnpm_dir="$(mktemp -d)"
+task_pnpm_archive="$task_pnpm_dir/pnpm.tgz"
+curl --fail --location --retry 3 \
+  "https://registry.npmjs.org/pnpm/-/pnpm-$task_pnpm_version.tgz" \
+  -o "$task_pnpm_archive"
+tar -xzf "$task_pnpm_archive" -C "$task_pnpm_dir"
+export PATH="$task_pnpm_dir/package:$PATH"
 pnpm install --frozen-lockfile
 
 if [ "${NATIVE_CSS_ONLY:-0}" = 1 ]; then

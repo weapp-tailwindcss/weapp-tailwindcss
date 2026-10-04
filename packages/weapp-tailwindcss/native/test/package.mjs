@@ -119,7 +119,15 @@ async function main() {
     process.stdout.write(`Verified packed ${name} on Node ${process.versions.node}: exact optional versions, isolated resolution, real ${cssOnly ? 'CSS' : 'JS/WXML/CSS'} ABI\n`)
   }
   finally {
-    await rm(tempRoot, { recursive: true, force: true })
+    try {
+      await rm(tempRoot, { recursive: true, force: true })
+    }
+    catch (error) {
+      if (process.platform !== 'win32' || error?.code !== 'EPERM') {
+        throw error
+      }
+      process.stderr.write(`Skipped cleanup of locked native package directory: ${tempRoot}\n`)
+    }
   }
 }
 
