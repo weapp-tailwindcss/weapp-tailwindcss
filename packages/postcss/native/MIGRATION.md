@@ -25,6 +25,10 @@
 | `syntax/css-import.ts`、`syntax/location-dependencies.ts` | 待迁移 | CSS tokenizer 与 URL/source 语义仍在 JS |
 | `syntax/runtime-signature.ts` | 待迁移 | raw 字段、token 边界、malformed fallback 需要逐项对拍 |
 | `utils/css-custom-property.ts`、`utils/css-calc-context.ts` | 待迁移 | 值解析、依赖拓扑和循环语义尚未接管 |
+| `plugins/auto-calc.ts`、`plugins/colorFunctionalFallback.ts` 与声明清理 | 待迁移 | rpx/calc 资格、函数值转换、声明去重和 specificity 计算仍由自有 TS 实现，不能归入用户回调保留范围 |
+| `compat/native/**` React Native 样式编译 | 待迁移 | 此目录的 native 指目标平台；selector 资格、变量/属性转换与样式表编译仍在 TS，未接入 Rust ABI |
+| `compat/scoped-css/**`、`compat/processed-css/**`、`compat/webpack-css/**` | 待迁移 | CSS 覆盖比较、指令/规则清理、import 恢复和源码代表性计算仍在 TS；bundler 来源身份及生命周期回调属于上层接口边界 |
+| `compat/uni-app-x.ts`、`compat/uni-app-x-author-apply.ts`、`compat/tailwindcss-v4/author-functions.ts` | 待迁移 | important apply 标记、作者 CSS 指令与函数计算仍在 TS；来源路径解析和插件阶段状态不归 Rust 字符串内核 |
 | `plugins/**` / `pipeline.ts` 用户 PostCSS 插件与公共回调 | JS 合约保留 | 本清单不把回调层保留解释为其内部自有转换已迁移 |
 
 当前二进制内部的 value AST 不跨 NAPI，也没有替换第三方公开 value-parser API。每次扩展必须增加实际生产调用、fixture 差分和覆盖记录；纯导出与 microbenchmark 不算迁移完成。

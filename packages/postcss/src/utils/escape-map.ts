@@ -10,14 +10,14 @@ function sameEntries(left: Record<string, string>, right: Record<string, string>
 }
 
 /** 按映射内容而非对象身份复用快照，隔离底层 escape 包的身份缓存。 */
-export function resolveCssEscapeMap(map?: Record<string, string>) {
+export function resolveCssEscapeMap(map?: Record<string, string>): Record<string, string> | undefined {
   if (!map) {
     return undefined
   }
   if (map === MappingChars2String && Object.keys(map).length === defaultEntries.length && defaultEntries.every(([key, value]) => map[key] === value)) {
     return undefined
   }
-  const merged = { ...MappingChars2String, ...map }
+  const merged: Record<string, string> = { ...MappingChars2String, ...map }
   if (Object.keys(merged).length === defaultEntries.length && defaultEntries.every(([key, value]) => merged[key] === value)) {
     return undefined
   }

@@ -1,7 +1,7 @@
 import type { IStyleHandlerOptions } from '../../types'
 import { resolveCssEscapeMap } from '../../utils/escape-map'
 
-function sameReplacement(current: string | string[] | undefined, previous: string | string[] | undefined) {
+function sameReplacement(current: string | false | string[] | undefined, previous: string | false | string[] | undefined) {
   if (Array.isArray(current)) {
     return Array.isArray(previous)
       && current.length === previous.length
@@ -10,7 +10,7 @@ function sameReplacement(current: string | string[] | undefined, previous: strin
   return current === previous
 }
 
-function copyReplacement(value: string | string[] | undefined) {
+function copyReplacement<T extends string | false | undefined>(value: T | string[]) {
   return Array.isArray(value) ? [...value] : value
 }
 

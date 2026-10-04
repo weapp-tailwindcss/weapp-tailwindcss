@@ -5,12 +5,12 @@ import { getNativeSelectorBindingSuffix } from '../selectorParser/native-platfor
 
 export interface EscapeMappingEntry {
   key: number
-  value?: string
+  value?: string | undefined
 }
 
 export interface NativeSelectorRuleOptions {
-  root?: string
-  universal?: string
+  root?: string | undefined
+  universal?: string | undefined
   child: string[]
   removeHover: boolean
   removeActive: boolean
@@ -30,7 +30,7 @@ export interface NativeSelectorRuleTransformer {
 
 export interface NativeCssBinding {
   SelectorRuleTransformer: new (options: NativeSelectorRuleOptions) => NativeSelectorRuleTransformer
-  normalizeV4Declaration: (value: string, options: { gradientPosition?: boolean, gradientFallback?: string, radius?: boolean }) => string | null
+  normalizeV4Declaration: (value: string, options: { gradientPosition?: boolean, gradientFallback?: string | undefined, radius?: boolean }) => string | null
   normalizeV4GradientPosition: (value: string) => string
   normalizeV4InfinityCalc: (value: string, wholeValue: boolean) => string
   normalizeV4VariableFallbacks: (value: string) => string | null
@@ -76,7 +76,7 @@ function resolveBinding() {
 
 /** 原生加载失败可以回退；原生转换本身的异常必须继续向上抛出。 */
 export function loadNativeCssBinding(): NativeCssBinding | undefined {
-  const mode = process.env.WEAPP_TW_NATIVE ?? 'auto'
+  const mode = process.env['WEAPP_TW_NATIVE'] ?? 'auto'
   if (mode === 'off') {
     return undefined
   }

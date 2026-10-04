@@ -74,7 +74,7 @@ CSS 私有映射边界按有效内容创建稳定快照，隔离 escape 包原�
 - `pnpm --filter @weapp-tailwindcss/postcss build:native`：release 二进制构建通过。
 - `CI=1 WEAPP_TW_NATIVE=required pnpm --filter @weapp-tailwindcss/postcss exec vitest run --update=none --coverage.enabled=false`：128 文件、1,304 项通过、3 项既有跳过。
 - `CI=1 WEAPP_TW_NATIVE=off pnpm --filter @weapp-tailwindcss/postcss exec vitest run --update=none --coverage.enabled=false`：128 文件、1,304 项通过、3 项既有跳过。原生差分测试会在单个用例中强制原生；其他管线测试使用此关闭模式。
-- `pnpm --filter @weapp-tailwindcss/postcss build`：ESM/CJS/类型通过；保留既有 CJS 与 mixed exports 提示。
+- `pnpm --filter @weapp-tailwindcss/postcss build`：ESM/CJS 和声明文件生成通过；该配置使用 `noCheck: true`，不能作为严格类型检查通过的证据。保留既有 CJS 与 mixed exports 提示。
 - 对修改的 TS 源码和 benchmark 执行 ESLint：通过；test 目录被仓库 lint 配置忽略，测试质量由 Vitest 验证。
 
 值回归包含 3,000 组有种子的嵌套语法/任意 UTF-16 差分，以及全部现有 CSS fixture 的 8,970 条声明值（15 条实际触发所选 v4 变换）。初次测试的 fixture 数量下限猜测为大于 10,000 条/20 条变换，实际数量较小，因此修正数量断言为大于 8,000 条/至少一条变换；没有放宽任何输出差分断言。

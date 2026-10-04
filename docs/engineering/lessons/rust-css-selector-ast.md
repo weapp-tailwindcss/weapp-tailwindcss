@@ -35,7 +35,7 @@ Node 24.18.0、macOS arm64、PostCSS 8.5.28、postcss-selector-parser 7.1.6。�
 - 全部 CSS fixture 共 2,877 条规则 × 五组配置 = 14,385 组，其中原生支持 14,345 组。排除 TS 原有简单 ASCII 跳过路径后为 6,260/6,300；剩余 40 组为四类小数百分比 keyframes。此统计只代表现有 fixture，不代表完整 CSS 语法覆盖。
 - `cargo test --manifest-path packages/postcss/native/Cargo.toml --locked`：12 项通过。
 - `cargo clippy --manifest-path packages/postcss/native/Cargo.toml --locked --all-targets -- -D warnings`：通过。
-- `pnpm --filter @weapp-tailwindcss/postcss build:native` 和 `pnpm --filter @weapp-tailwindcss/postcss build`：release、ESM/CJS 和类型通过。
+- `pnpm --filter @weapp-tailwindcss/postcss build:native` 和 `pnpm --filter @weapp-tailwindcss/postcss build`：release、ESM/CJS 和声明文件生成通过；构建使用 `noCheck: true`，没有证明严格类型检查通过。
 - `CI=1 WEAPP_TW_NATIVE=required pnpm --filter @weapp-tailwindcss/postcss exec vitest run --update=none --coverage.enabled=false`：129 文件、1,341 项通过、3 项既有跳过。
 - `CI=1 WEAPP_TW_NATIVE=off pnpm --filter @weapp-tailwindcss/postcss exec vitest run --update=none --coverage.enabled=false`：129 文件、1,341 项通过、3 项既有跳过。原生差分测试内部仍会强制 required。
 
@@ -55,7 +55,17 @@ Node 24.18.0、macOS arm64、PostCSS 8.5.28、postcss-selector-parser 7.1.6。�
 
 修复将相关配置快照统一放在 `ruleTransformSync` 入口。root/universal/child 按数组内容比较并复制，三个伪类开关和 uniAppX 按有效布尔值比较，escapeMap 复用内容快照。配置内容变化时重建整个 transformer：新的选项身份同时刷新 JS 子缓存、原生实例和 selector 结果缓存。未改变的配置继续复用；不再保留旧 JS 混合冻结时机产生的缺陷，验收以等价新 options 对象的输出为准。此行为修复有中文 patch intent。
 
-先增加回归再修复：普通 off 的九组场景在修复前七组失败，真实 ABI 对拍八组失败；覆盖等长数组原地修改、配置删除、空 child、三个开关和 uniAppX 往返、escapeMap 增删改，以及首次使用时机。修复后普通选项/selector/loader 三文件 63 项通过；真实 ABI 六文件 99 项通过；ESM/CJS、类型和源码 ESLint 通过。本次没有修改 Rust ABI、重编二进制或进行性能采样。
+先增加回归再修复：普通 off 的九组场景在修复前七组失败，真实 ABI 对拍八组失败；覆盖等长数组原地修改、配置删除、空 child、三个开关和 uniAppX 往返、escapeMap 增删改，以及首次使用时机。修复后普通选项/selector/loader 三文件 63 项通过；真实 ABI 六文件 99 项通过；ESM/CJS、声明文件生成和源码 ESLint 通过。本次没有修改 Rust ABI、重编二进制或进行性能采样。
+
+### 后续严格类型检查纠正
+
+此前把声明文件生成写成“类型通过”不准确：包的 `tsconfig.build.json` 继承并启用 `noCheck: true`。必须显式执行 `pnpm --filter @weapp-tailwindcss/postcss exec tsc -p tsconfig.build.json --noEmit --noCheck false --pretty false` 才检查类型。
+
+Node 24.18.0、pnpm 12.6.0 下，在同一独立工作树保留完全相同的依赖和生成产物，依次检查 `origin/main` 的 `7abfff12a4960d7bb799b81b2d6a37fbdb47c591` 与整合提交 `ea13e36d8`：前者 86 条诊断，后者 95 条。比较忽略行号变化并识别 `declarations.ts` 到 `declarations/variable-fallbacks.ts` 的三条旧诊断搬迁后，本次新增九条，来自原生 options 的显式 undefined、映射索引推断、环境变量索引访问，以及合法 false 替换配置在快照助手中的类型遗漏。
+
+修复在三处边界声明完成：NAPI 的 optional 类型接受 undefined、escape 映射快照返回完整字典类型、配置复制助手保留 false 和输入类型。修复后严格检查仍失败，但仅剩与主分支对应的 86 条既有诊断，没有新增诊断；计数包括两边相同的 `tailwindcss-config` 声明解析失败，不把它包装成包级类型通过。该修复未改变运行时逻辑，也未扩大处理既有类型债务。
+
+普通定向命令 `CI=1 WEAPP_TW_NATIVE=off pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/selector-options-mutation.test.ts test/selectorParser.test.ts test/native-selectors-loader.test.ts test/native-selector-platform.test.ts --update=none --coverage.enabled=false`：4 文件、72 项通过；三处修改源码 ESLint 通过。此轮没有重编或重跑真实 ABI；先前的原生回归记录仍仅代表其对应提交。
 
 ## 适用边界
 
