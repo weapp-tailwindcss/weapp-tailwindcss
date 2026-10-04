@@ -17,23 +17,48 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
   let initialized = false
   let stopping: Promise<void> | undefined
   let didClose = false
-  let pending: { promise: Promise<Map<number, ProcessIdentity>>, controller: AbortController } | undefined
+  let pending: { promise: Promise<Map<number, ProcessIdentity>>, controller: AbortController, budget: { deadline: number } } | undefined
   void closed.then(() => {
     didClose = true
   })
-  const capture = (timeoutMs = 5000) => {
+  const capture = (deadline = Date.now() + 5000) => {
     if (pending) {
+      pending.budget.deadline = Math.min(pending.budget.deadline, deadline)
       return pending.promise
     }
     const controller = new AbortController()
+    const budget = { deadline }
+    const assertCurrent = () => {
+      controller.signal.throwIfAborted()
+      if (Date.now() > budget.deadline) {
+        throw new Error('进程归属扫描结果超过截止时间，不能更新身份。')
+      }
+    }
+    const scan = async () => {
+      controller.signal.throwIfAborted()
+      const remaining = budget.deadline - Date.now()
+      if (remaining <= 0) {
+        throw new Error('进程归属扫描预算已耗尽，禁止继续调度。')
+      }
+      const rows = await readProcessTable(remaining, controller.signal)
+      assertCurrent()
+      return rows
+    }
     const promise = (async () => {
       if (!child.pid) {
         return new Map<number, ProcessIdentity>()
       }
-      const rows = await readProcessTable(timeoutMs, controller.signal)
+      const running = () => child.exitCode === null && child.signalCode === null
+      const wasRunning = running()
+      let rows = await scan()
+      if (!initialized && wasRunning && !running() && group && rows.some(row => row.group === group && !row.zombie)) {
+        // 首次扫描跨越本体退出时，旧快照不能证明根身份；同一预算内重采，仅空组可自然收尾。
+        rows = await scan()
+      }
+      assertCurrent()
       if (!initialized) {
         const root = rows.find(row => row.pid === child.pid)
-        if (root && child.exitCode === null && child.signalCode === null) {
+        if (root && running()) {
           owned.set(root.pid, root)
         }
         initialized = true
@@ -51,7 +76,7 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
     })().finally(() => {
       pending = undefined
     })
-    pending = { promise, controller }
+    pending = { promise, controller, budget }
     return promise
   }
   const stop = async (cooperative: boolean) => {
@@ -68,7 +93,7 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
         return false
       }
       // 已开始的周期扫描也共享截止时间，不能在 stop 后迟到回写旧身份。
-      const task = capture(remaining)
+      const task = capture(deadline)
       const controller = pending?.controller
       const timer = setTimeout(() => controller?.abort(new Error('进程归属扫描超过清理截止时间。')), remaining)
       try {
