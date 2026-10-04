@@ -1,9 +1,9 @@
-import type { Root } from 'postcss-selector-parser'
 import type { InternalCssSelectorReplacerOptions } from '../types'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import process from 'node:process'
 import { MappingChars2String } from '@weapp-tailwindcss/escape'
+import { getNativeSelectorBindingSuffix } from './native-platform'
 
 interface EscapeMappingEntry {
   key: number
@@ -12,6 +12,8 @@ interface EscapeMappingEntry {
 
 export interface NativeSelectorBinding {
   escapeClasses: (values: string[], customMap?: EscapeMappingEntry[]) => string[]
+  transformSelector: (value: string) => string | null
+  transformSelectors: (values: string[]) => Array<string | null>
 }
 
 const require = createRequire(import.meta.url)
@@ -21,8 +23,12 @@ let loadError: Error | undefined
 
 function getLoadCandidates() {
   const packageRoot = path.dirname(require.resolve('@weapp-tailwindcss/postcss/package.json'))
-  const nativePackage = `@weapp-tailwindcss/postcss-native-${process.platform}-${process.arch}`
-  return [path.join(packageRoot, 'native', 'weapp-tailwindcss-postcss.node'), nativePackage]
+  const suffix = getNativeSelectorBindingSuffix()
+  const candidates = [path.join(packageRoot, 'native', 'weapp-tailwindcss-postcss.node')]
+  if (suffix) {
+    candidates.push(`@weapp-tailwindcss/native-${suffix}/postcss`)
+  }
+  return candidates
 }
 
 /** 原生加载失败可以回退；原生转换本身的异常必须继续向上抛出。 */
@@ -30,6 +36,9 @@ export function loadNativeSelectorBinding(): NativeSelectorBinding | undefined {
   const mode = process.env.WEAPP_TW_NATIVE ?? 'auto'
   if (mode === 'off') {
     return undefined
+  }
+  if (mode !== 'auto' && mode !== 'required') {
+    throw new Error(`无效的 WEAPP_TW_NATIVE 模式：${mode}`)
   }
   if (binding) {
     return binding
@@ -41,6 +50,9 @@ export function loadNativeSelectorBinding(): NativeSelectorBinding | undefined {
         const loaded = require(candidate) as Partial<NativeSelectorBinding>
         if (typeof loaded.escapeClasses !== 'function') {
           throw new TypeError('原生模块缺少 escapeClasses 接口，可能存在 ABI 或版本不匹配。')
+        }
+        if (typeof loaded.transformSelector !== 'function' || typeof loaded.transformSelectors !== 'function') {
+          throw new TypeError('原生模块缺少 transformSelector/transformSelectors 接口，可能存在 ABI 或版本不匹配。')
         }
         binding = loaded as NativeSelectorBinding
         return binding
@@ -71,25 +83,12 @@ function resolveMapping(escapeMap: Record<string, string> | undefined) {
   return entries
 }
 
-/** 同一选择器 AST 的类名一次跨越 NAPI，展开伪类时复用原始值映射。 */
-export function createNativeClassReplacements(root: Root, options?: InternalCssSelectorReplacerOptions) {
-  const native = loadNativeSelectorBinding()
-  if (!native) {
+/** 原生内核只接管可完整处理的选择器；复杂语法与自定义映射继续经过 AST。 */
+export function transformNativeSelector(value: string, options?: InternalCssSelectorReplacerOptions) {
+  if (options?.escapeMap && options.escapeMap !== MappingChars2String) {
     return undefined
   }
-  const values = new Set<string>()
-  root.walkClasses((node) => {
-    values.add(node.value)
-  })
-  if (values.size === 0) {
-    return undefined
-  }
-  const originals = [...values]
-  const replaced = native.escapeClasses(originals, resolveMapping(options?.escapeMap))
-  if (replaced.length !== originals.length) {
-    throw new Error('PostCSS Rust 选择器内核返回了不完整的类名批次。')
-  }
-  return new Map(originals.map((original, index) => [original, replaced[index]!]))
+  return loadNativeSelectorBinding()?.transformSelector(value) ?? undefined
 }
 
 export function escapeNativeSelectorClasses(values: string[], options?: InternalCssSelectorReplacerOptions) {

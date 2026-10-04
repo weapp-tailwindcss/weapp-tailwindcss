@@ -208,8 +208,7 @@ function expandNestedFunctionalPseudoBranches(selector: Selector) {
 function transformExpandedSelectorNodes(selector: Selector, context: TransformContext) {
   selector.walk((node) => {
     if (node.type === 'class') {
-      node.value = context.classReplacements?.get(node.value)
-        ?? internalCssSelectorReplacer(node.value, context.selectorReplacerOptions)
+      node.value = internalCssSelectorReplacer(node.value, context.selectorReplacerOptions)
     }
     else if (node.type === 'universal' && context.universalReplacement) {
       node.value = context.universalReplacement

@@ -64,7 +64,7 @@ pub fn escape_class(value: &[u16], mapping: &EscapeMapping) -> Vec<u16> {
             let negative_digit = first == b'-' as u16
                 && value
                     .get(index + 1)
-                    .map_or(true, |next| (b'0' as u16..=b'9' as u16).contains(next));
+                    .is_none_or(|next| (b'0' as u16..=b'9' as u16).contains(next));
             if index == 0 && (digit || negative_digit) {
                 result.push(b'_' as u16);
             }

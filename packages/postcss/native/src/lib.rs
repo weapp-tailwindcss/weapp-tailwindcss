@@ -1,10 +1,24 @@
 mod escape;
+mod selector;
 
 use napi::bindgen_prelude::Utf16String;
 use napi_derive::napi;
 use std::sync::OnceLock;
 
 static DEFAULT_MAPPING: OnceLock<escape::EscapeMapping> = OnceLock::new();
+
+/// 一次调用完成选择器 tokenize、类名解码和转换，避免在 NAPI 传递 AST 节点。
+#[napi]
+pub fn transform_selector(value: Utf16String) -> Option<Utf16String> {
+    selector::transform(&value, DEFAULT_MAPPING.get_or_init(escape::default_mapping))
+        .map(Into::into)
+}
+
+/// 批量入口用于持有完整规则列表的消费方与差分验证。
+#[napi]
+pub fn transform_selectors(values: Vec<Utf16String>) -> Vec<Option<Utf16String>> {
+    values.into_iter().map(transform_selector).collect()
+}
 
 #[napi(object)]
 pub struct EscapeMappingEntry {

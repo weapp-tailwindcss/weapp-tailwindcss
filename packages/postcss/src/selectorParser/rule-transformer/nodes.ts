@@ -11,8 +11,7 @@ export function handleClassNode(node: Node, context: TransformContext) {
   if (node.type !== 'class') {
     return
   }
-  node.value = context.classReplacements?.get(node.value)
-    ?? internalCssSelectorReplacer(node.value, context.selectorReplacerOptions)
+  node.value = internalCssSelectorReplacer(node.value, context.selectorReplacerOptions)
 }
 
 export function handleUniversalNode(node: Node, context: TransformContext) {

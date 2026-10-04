@@ -1,10 +1,12 @@
-# Rust 选择器类名计算实验
+# Rust 选择器转换内核
 
-此内核只迁移已解码类名的转义计算。选择器解析、PostCSS AST、复杂伪类展开、平台兼容处理、单位和颜色处理、用户插件仍由现有管线执行，不能将其称为完整 CSS 管线迁移。
+此内核负责常见类名选择器的 tokenize、CSS escape 解码、类名转义和紧凑序列化。PostCSS AST、复杂伪类展开、平台兼容处理、单位和颜色处理、用户插件仍由现有管线执行，不能将其称为完整 CSS 管线迁移。
 
-`escapeClasses` 接收一批 UTF-16 类名与可选 ASCII 映射，保留默认映射、开头数字、非 BMP 字符和孤立代理项语义。选择器处理器在遍历 AST 前批量计算映射，类名节点和伪类展开副本复用该映射。
+`transformSelector` 接收 UTF-16 原始选择器，支持类名、简单 ASCII ID、嵌套符、组合器与列表。遇到未接管的语法返回 `null`，由原有 AST 路径处理；自定义映射也继续走 AST。`transformSelectors` 是同一语义的批量接口。不会在 NAPI 传递 PostCSS AST，也不会修改声明或调用用户插件。
 
-运行 `pnpm --filter @weapp-tailwindcss/postcss build:native` 构建当前平台的本地二进制。加载器先查找本包 `native/weapp-tailwindcss-postcss.node`，再加载对应平台包。平台分发仍需要发布流水线提供。
+`escapeClasses` 保留为原始边界实验与 ABI 对拍入口，接收一批 UTF-16 已解码类名与可选 ASCII 映射。它在小输入上的 NAPI 成本超过转换收益，已从生产转换路径移除。
+
+运行 `pnpm --filter @weapp-tailwindcss/postcss build:native` 构建当前平台的本地二进制。加载器先查找本包 `native/weapp-tailwindcss-postcss.node`，再加载 `@weapp-tailwindcss/native-<suffix>/postcss`。支持的 suffix 为 macOS arm64/x64、Linux GNU/musl arm64/x64、Windows MSVC arm64/x64；预编译平台包与主编译器共用发布单元，CSS 仍由本包独立加载和消费。消费者安装时不编译或下载二进制。
 
 `WEAPP_TW_NATIVE` 支持：
 
@@ -18,10 +20,10 @@
 
 ```sh
 pnpm --filter @weapp-tailwindcss/postcss build:native
-pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/native-selectors.test.ts test/native-selectors-loader.test.ts --update=none --coverage.enabled=false
+pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/native-selector-transform.test.ts test/native-selectors.test.ts test/native-selectors-loader.test.ts test/native-selector-platform.test.ts --update=none --coverage.enabled=false
 pnpm --filter @weapp-tailwindcss/postcss exec tsx native/benchmark.mts
 ```
 
-benchmark 在同一进程内交替测量 1、8、64 个类名的批处理与无缓存选择器 root，先断言输出一致，再记录输入 SHA-256、环境、35 次样本及 median/p95。此结果不代表完整 CSS 处理、冷构建或 HMR 收益；新增的 AST 遍历、映射及 NAPI 开销必须一并评估。
+benchmark 在同一进程内交替测量 1、8、64 个类名的批处理、无缓存选择器 root 以及 v4/NutUI 真实 CSS fixtures，先断言输出一致，再记录输入与二进制 SHA-256、依赖、环境、35 次样本及 median/p95。它包括 PostCSS parse、规则转换和 stringify，但不包含完整插件管线、框架构建或 HMR。
 
-2026-10-04 的本机实验（Node 24.18.0、macOS arm64、Apple M4 Max）表明这个边界太小：1、8、64 个类名的原生批处理分别比 TypeScript 慢约 2.06、1.51、1.40 倍；包含解析和映射的选择器 root 分别慢约 13%、11%、15%。因此本分支只保留可复现实验，当前结果不支持在正式版本默认启用此实现。后续若继续迁移，须验证更大粒度的选择器计算是否能抵消边界开销。
+2026-10-04 首轮已解码类名实验比 TypeScript 慢，包含解析和映射的选择器 root 慢约 11–15%。扩大到直接选择器转换后，1/8/64 类名的 root 样本分别快约 1.87/4.02/5.25 倍；261 KB NutUI fixture 的规则处理两轮约快 11–20%，v4 fixture 的差异较小。这是内核边界收益，不代表整个项目构建收益。完整范围与限制见[验证记录](../../../docs/engineering/lessons/rust-css-selector-boundary.md)。

@@ -5,7 +5,7 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 
 const root = path.dirname(fileURLToPath(import.meta.url))
-const command = spawnSync('cargo', ['build', '--manifest-path', path.join(root, 'Cargo.toml'), '--release'], { stdio: 'inherit' })
+const command = spawnSync('cargo', ['build', '--manifest-path', path.join(root, 'Cargo.toml'), '--release', '--locked'], { stdio: 'inherit' })
 if (command.error) {
   throw command.error
 }

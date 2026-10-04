@@ -33,6 +33,7 @@
 - [packages/minify-preserve/AGENTS.md](../../packages/minify-preserve/AGENTS.md)
 - [packages/postcss-calc/AGENTS.md](../../packages/postcss-calc/AGENTS.md)
 - [packages/postcss/AGENTS.md](../../packages/postcss/AGENTS.md)
+- [packages/postcss/native/AGENTS.md](../../packages/postcss/native/AGENTS.md)
 - [packages/react-native/AGENTS.md](../../packages/react-native/AGENTS.md)
 - [packages/reset/AGENTS.md](../../packages/reset/AGENTS.md)
 - [packages/source-scan/AGENTS.md](../../packages/source-scan/AGENTS.md)
