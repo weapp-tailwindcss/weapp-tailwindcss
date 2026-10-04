@@ -34,10 +34,17 @@ describe('Rust 直接选择器转换', () => {
   })
 
   it.each([
-    '.a:hover', '.a[hidden]', 'view.a', '.a/*comment*/.b', '.a,',
-    String.raw`.a\20 b`, String.raw`.\000032 xl`,
-    '.space-x-2 > :not(:last-child)', '.a:where(.b,.c)',
-    '#é.a', String.raw`#a\:b.a`,
+    '.a:hover',
+    '.a[hidden]',
+    'view.a',
+    '.a/*comment*/.b',
+    '.a,',
+    String.raw`.a\20 b`,
+    String.raw`.\000032 xl`,
+    '.space-x-2 > :not(:last-child)',
+    '.a:where(.b,.c)',
+    '#é.a',
+    String.raw`#a\:b.a`,
   ])('未接管的语法完整回退：%s', (selector) => {
     vi.stubEnv('WEAPP_TW_NATIVE', 'required')
     expect(transformNativeSelector(selector)).toBeUndefined()
@@ -48,7 +55,7 @@ describe('Rust 直接选择器转换', () => {
     const selector = String.raw`.w-\[2px\],.--x`
     for (const options of [
       { escapeMap: { '[': ' ', ']': '\uD800' } },
-      { escapeMap: { w: '2', '-': '--' } },
+      { escapeMap: { 'w': '2', '-': '--' } },
       { uniAppX: true, uniAppXCssTarget: 'uvue' },
     ] satisfies Partial<IStyleHandlerOptions>[]) {
       expect(transform(selector, 'required', options)).toBe(transform(selector, 'off', options))
@@ -88,7 +95,9 @@ describe('Rust 直接选择器转换', () => {
     const fixtureRoot = fileURLToPath(new URL('../fixtures/css', import.meta.url))
     const selectors: string[] = []
     for (const file of readdirSync(fixtureRoot, { recursive: true })) {
-      if (typeof file !== 'string' || !file.endsWith('.css')) continue
+      if (typeof file !== 'string' || !file.endsWith('.css')) {
+        continue
+      }
       const root = postcss.parse(readFileSync(path.join(fixtureRoot, file), 'utf8'))
       root.walkRules(rule => selectors.push(rule.selector))
     }
@@ -97,7 +106,9 @@ describe('Rust 直接选择器转换', () => {
     expect(result).toHaveLength(selectors.length)
     let handled = 0
     result.forEach((native, index) => {
-      if (native === null || native === undefined) return
+      if (native === null || native === undefined) {
+        return
+      }
       handled++
       expect(native, selectors[index]).toBe(transform(selectors[index]!, 'off'))
     })

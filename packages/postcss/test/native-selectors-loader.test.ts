@@ -57,7 +57,9 @@ describe('Rust CSS 内核加载契约', () => {
   it('只有平台包解析 MODULE_NOT_FOUND 时才加载本地二进制', async () => {
     vi.stubEnv('WEAPP_TW_NATIVE', 'required')
     nativeMock.resolve.mockImplementation((id: string) => {
-      if (id.startsWith('@weapp-tailwindcss/native-')) throw Object.assign(new Error('missing package'), { code: 'MODULE_NOT_FOUND' })
+      if (id.startsWith('@weapp-tailwindcss/native-')) {
+        throw Object.assign(new Error('missing package'), { code: 'MODULE_NOT_FOUND' })
+      }
       return id === '@weapp-tailwindcss/postcss/package.json' ? '/fixture/postcss/package.json' : id
     })
     nativeMock.load.mockReturnValue(binding())
@@ -69,10 +71,16 @@ describe('Rust CSS 内核加载契约', () => {
   it.each(['auto', 'required'])('已安装包加载失败不尝试本地，%s 保留失败策略', async (mode) => {
     vi.stubEnv('WEAPP_TW_NATIVE', mode)
     const error = Object.assign(new Error('installed binary is damaged'), { code: 'ERR_DLOPEN_FAILED' })
-    nativeMock.load.mockImplementation(() => { throw error })
+    nativeMock.load.mockImplementation(() => {
+      throw error
+    })
     const { loadNativeCssBinding } = await import('@/native/binding')
-    if (mode === 'required') expect(() => loadNativeCssBinding()).toThrow(error)
-    else expect(loadNativeCssBinding()).toBeUndefined()
+    if (mode === 'required') {
+      expect(() => loadNativeCssBinding()).toThrow(error)
+    }
+    else {
+      expect(loadNativeCssBinding()).toBeUndefined()
+    }
     expect(nativeMock.load).toHaveBeenCalledTimes(1)
     expect(nativeMock.resolve).not.toHaveBeenCalledWith(expect.stringMatching(/\.node$/))
     vi.stubEnv('WEAPP_TW_NATIVE', 'required')
@@ -84,7 +92,9 @@ describe('Rust CSS 内核加载契约', () => {
     vi.stubEnv('WEAPP_TW_NATIVE', 'required')
     const error = Object.assign(new Error('package subpath not exported'), { code: 'ERR_PACKAGE_PATH_NOT_EXPORTED' })
     nativeMock.resolve.mockImplementation((id: string) => {
-      if (id.startsWith('@weapp-tailwindcss/native-')) throw error
+      if (id.startsWith('@weapp-tailwindcss/native-')) {
+        throw error
+      }
       return '/fixture/postcss/package.json'
     })
     const { loadNativeCssBinding } = await import('@/native/binding')
@@ -105,7 +115,9 @@ describe('Rust CSS 内核加载契约', () => {
 
   it('只允许 null 转换结果回退，不吞掉原生执行异常', async () => {
     vi.stubEnv('WEAPP_TW_NATIVE', 'auto')
-    const transformSelector = vi.fn().mockReturnValueOnce(null).mockImplementation(() => { throw new Error('selector failed') })
+    const transformSelector = vi.fn().mockReturnValueOnce(null).mockImplementation(() => {
+      throw new Error('selector failed')
+    })
     nativeMock.load.mockReturnValue({ ...binding(), transformSelector })
     const { transformNativeSelector } = await import('@/selectorParser/native')
     expect(transformNativeSelector('.a:hover')).toBeUndefined()
@@ -115,7 +127,9 @@ describe('Rust CSS 内核加载契约', () => {
   it('原生值转换失败保留原始异常，不重新执行兼容实现', async () => {
     vi.stubEnv('WEAPP_TW_NATIVE', 'auto')
     const error = new Error('value transform failed')
-    const fail = () => { throw error }
+    const fail = () => {
+      throw error
+    }
     nativeMock.load.mockReturnValue({ ...binding(), normalizeV4VariableFallbacks: fail, normalizeUvueTransformValue: fail, normalizeUvueTransformValues: fail })
     const { normalizeV4VariableFallbacks } = await import('@/compat/tailwindcss-v4/declarations/variable-fallbacks')
     const { normalizeUniAppXTransformValue, normalizeUniAppXTransformValues } = await import('@/compat/uni-app-x-uvue/transform-value')
@@ -133,7 +147,9 @@ describe('Rust CSS 内核加载契约', () => {
 
   it('规则转换器只初始化一次，off 不调用且原生执行异常向上传递', async () => {
     vi.stubEnv('WEAPP_TW_NATIVE', 'required')
-    const transform = vi.fn().mockReturnValueOnce(null).mockImplementation(() => { throw new Error('rule failed') })
+    const transform = vi.fn().mockReturnValueOnce(null).mockImplementation(() => {
+      throw new Error('rule failed')
+    })
     let constructions = 0
     nativeMock.load.mockReturnValue({ ...binding(), SelectorRuleTransformer: class {
       constructor() { constructions++ }

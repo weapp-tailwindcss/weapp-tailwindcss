@@ -77,7 +77,9 @@ describe('Rust CSS 值兼容转换', () => {
     let count = 0
     let changed = 0
     for (const file of readdirSync(directory, { recursive: true })) {
-      if (typeof file !== 'string' || !file.endsWith('.css')) continue
+      if (typeof file !== 'string' || !file.endsWith('.css')) {
+        continue
+      }
       const root = postcss.parse(readFileSync(path.join(directory, file), 'utf8'))
       root.walkDecls((decl) => {
         const expected = normalizeV4VariableFallbacksLegacy(decl.value)

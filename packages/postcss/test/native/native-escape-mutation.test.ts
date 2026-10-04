@@ -21,7 +21,13 @@ describe('CSS escape 映射内容失效', () => {
     const nativeOptions = { escapeMap: map }
     const jsOptions = { escapeMap: map }
     const values = ['a:b', 'w-[2px]']
-    for (const mutate of [() => {}, () => { map[':'] = 'TWO' }, () => { map['['] = 'OPEN' }, () => { delete map[':'] }, () => { map[']'] = undefined as unknown as string }]) {
+    for (const mutate of [
+      () => {},
+      () => { map[':'] = 'TWO' },
+      () => { map['['] = 'OPEN' },
+      () => { delete map[':'] },
+      () => { map[']'] = undefined as unknown as string },
+    ]) {
       mutate()
       const expected = values.map(value => escape(value, { map: { ...map } }))
       vi.stubEnv('WEAPP_TW_NATIVE', 'required')

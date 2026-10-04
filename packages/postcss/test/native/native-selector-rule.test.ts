@@ -38,14 +38,20 @@ function compare(selector: string, options: IStyleHandlerOptions = {}, required 
   vi.stubEnv('WEAPP_TW_NATIVE', 'required')
   const transform = new (loadNativeCssBinding()!.SelectorRuleTransformer)(nativeOptions(options))
   const result = transform.transform(selector)
-  if (!required && result === null) return false
+  if (!required && result === null) {
+    return false
+  }
   expect(result, selector).not.toBeNull()
   const root = postcss.root({ nodes: [postcss.rule({ selector, nodes: [postcss.decl({ prop: 'margin-top', value: '1px' })] })] })
   const rule = root.first as postcss.Rule
-  if (result!.remove) rule.remove()
+  if (result!.remove) {
+    rule.remove()
+  }
   else {
     rule.selector = result!.selector
-    if (result!.spacing) normalizeSpacingDeclarations(rule)
+    if (result!.spacing) {
+      normalizeSpacingDeclarations(rule)
+    }
   }
   expect(root.toString(), `${selector} / ${JSON.stringify(options)}`).toBe(legacy(selector, options))
   vi.stubEnv('WEAPP_TW_NATIVE', 'required')
@@ -76,24 +82,38 @@ describe('Rust 规则选择器 AST', () => {
   })
 
   it.each([
-    '.a:where(.b,.c):where(.d,.e)', '.a:where(:is(.b,.c))', '.a:where(.b)',
-    '.a:where(.b:checked,.c)', '.a:where(:not(.b:checked),.c)', '.a:where(.b:before,.c)',
-    '.a:not(:where(.b,.c))', '.a:not(:-webkit-any(:lang(ar),:lang(he))),.b:lang(en)',
+    '.a:where(.b,.c):where(.d,.e)',
+    '.a:where(:is(.b,.c))',
+    '.a:where(.b)',
+    '.a:where(.b:checked,.c)',
+    '.a:where(:not(.b:checked),.c)',
+    '.a:where(.b:before,.c)',
+    '.a:not(:where(.b,.c))',
+    '.a:not(:-webkit-any(:lang(ar),:lang(he))),.b:lang(en)',
     ':root *,.a:before,.b:after,::backdrop,.c::file-selector-button',
     '.a:not(),:where(),.b:where(,,),.c:has(:where())',
-    '.a,', '.a,,', '.a,  ', ':where(.a,),.b:is(.c,)',
-    '.a>.b:not(:last-child)', '.a>:not(:last-child)', ':where(.a>:not(:last-child))',
-    '.a>:not(template)~:not([hidden])', '.a>:not([hidden])+ :not(template)',
+    '.a,',
+    '.a,,',
+    '.a,  ',
+    ':where(.a,),.b:is(.c,)',
+    '.a>.b:not(:last-child)',
+    '.a>:not(:last-child)',
+    ':where(.a>:not(:last-child))',
+    '.a>:not(template)~:not([hidden])',
+    '.a>:not([hidden])+ :not(template)',
     'button,input:where([type="button"],[type="reset"]):hover',
     '.a[ data-x = "a b" i ],.b[a = b i],.c[data-x = \'a b\' S]',
-    ':where(select:is([multiple],[size])) optgroup', '.a:is(.b,.c):nth-child(2n + 1)',
+    ':where(select:is([multiple],[size])) optgroup',
+    '.a:is(.b,.c):nth-child(2n + 1)',
     String.raw`.dark\:bg-black:where([data-mode="dark"],[data-mode="dark"] *)`,
     String.raw`:where(.child\:ring-white)>:where(:not(.not-child))`,
     '.中文\uD800:where(.😀,.b):focus-visible,.keep',
     String.raw`.a:where\78(.b,.c),.c:ch\65 cked,.b\61 r:where(.c)`,
     '[a=b I],[a=b S]',
   ])('语义矩阵：%s', (selector) => {
-    for (const options of optionCases) compare(selector, options)
+    for (const options of optionCases) {
+      compare(selector, options)
+    }
   })
 
   it('嵌套 pseudo 与多分支的有种子差分', () => {
@@ -139,7 +159,9 @@ describe('Rust 规则选择器 AST', () => {
     let handled = 0
     let total = 0
     for (const file of readdirSync(directory, { recursive: true })) {
-      if (typeof file !== 'string' || !file.endsWith('.css')) continue
+      if (typeof file !== 'string' || !file.endsWith('.css')) {
+        continue
+      }
       const root = postcss.parse(readFileSync(path.join(directory, file), 'utf8'))
       root.walkRules((rule) => {
         for (const options of optionCases) {
