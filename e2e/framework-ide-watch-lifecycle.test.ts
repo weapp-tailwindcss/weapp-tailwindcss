@@ -1,7 +1,9 @@
+import path from 'node:path'
 import { beforeEach, expect, it, vi } from 'vitest'
 import { withFrameworkIdeHotUpdateProbe } from './frameworkIdeHotUpdate'
+import { FRAMEWORK_SUPPORT_CASES } from './frameworkSupportMatrix'
 
-const state = vi.hoisted(() => ({ events: [] as string[], failWarmup: false }))
+const state = vi.hoisted(() => ({ events: [] as string[], watchRoots: [] as Array<string | undefined>, failWarmup: false }))
 vi.mock('node:fs/promises', () => ({ default: { readFile: vi.fn(async () => 'original') } }))
 vi.mock('../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cases', () => ({
   buildCases: () => [{
@@ -45,14 +47,18 @@ vi.mock('../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/text', () =
   writeFilePreserveEol: async () => { state.events.push('restore') },
 }))
 vi.mock('./frameworkIdeClassHotUpdate', () => ({
-  runIdeClassHotUpdate: async (_options: unknown, _case: unknown, _session: unknown, kind: string) => { state.events.push(kind) },
+  runIdeClassHotUpdate: async (_options: unknown, watchCase: { miniprogramRoot?: string }, _session: unknown, kind: string) => {
+    state.events.push(kind)
+    state.watchRoots.push(watchCase.miniprogramRoot)
+  },
 }))
 vi.mock('./frameworkIdeStyleHotUpdate', () => ({ runIdeStyleHotUpdate: vi.fn() }))
 
-const entry = { name: 'weapp-vite-tailwindcss-v4' } as Parameters<typeof withFrameworkIdeHotUpdateProbe>[0]
+const entry = FRAMEWORK_SUPPORT_CASES.find(item => item.name === 'weapp-vite-tailwindcss-v4')!
 
 beforeEach(() => {
   state.events = []
+  state.watchRoots = []
   state.failWarmup = false
 })
 
@@ -63,6 +69,8 @@ it('首轮构建和 watch 就绪后才打开 IDE，所有增量操作共用该 w
     state.events.push('ide:close')
   })
   expect(state.events).toEqual(['build', 'watch:start', 'watch:ready', 'ide:open', 'template', 'script', 'ide:close', 'restore', 'restore', 'watch:stop'])
+  const miniprogramRoot = path.resolve(import.meta.dirname, '..', 'demo', 'weapp-vite-tailwindcss-v4', 'dist')
+  expect(state.watchRoots.map(root => root && path.normalize(root))).toEqual([miniprogramRoot, miniprogramRoot])
 })
 
 it('首轮编译失败时不打开 IDE，仍回收 watcher', async () => {

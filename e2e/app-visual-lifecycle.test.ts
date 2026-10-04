@@ -249,10 +249,17 @@ describe('App 视觉入口的原生 HMR 生命周期', () => {
     }
   })
 
-  it('Alpha 5.31 Harmony 视觉入口启动失败也不打开或关闭真实项目', async () => {
+  it.each([undefined, 'preflight-harmony'])('Alpha 5.31 Harmony 视觉入口隔离预选目标 %s，启动失败也不打开或关闭真实项目', async (inheritedDevice) => {
     state.version = '5.31.2026093020-alpha'
     state.launchError = new Error('模拟 Harmony 启动失败')
-    vi.stubEnv('E2E_HBUILDERX_HARMONY_DEVICE_ID', 'test-harmony')
+    vi.stubEnv('E2E_HBUILDERX_HARMONY_DEVICE_ID', inheritedDevice)
+    vi.stubEnv('DEMO_VISUAL_HARMONY_DEVICE_ID', inheritedDevice)
+    vi.stubEnv('DEMO_VISUAL_HARMONY_SCREENSHOT_DEVICE_ID', inheritedDevice)
+    const deviceKeys = ['E2E_HBUILDERX_HARMONY_DEVICE_ID', 'DEMO_VISUAL_HARMONY_DEVICE_ID', 'DEMO_VISUAL_HARMONY_SCREENSHOT_DEVICE_ID']
+    // 完整预检会同时绑定执行和截图别名；夹具必须覆盖整个设备身份。
+    for (const key of deviceKeys) {
+      vi.stubEnv(key, 'test-harmony')
+    }
     const directory = await mkdtemp(join(tmpdir(), 'app-visual-harmony-'))
     directories.push(directory)
     const linked = join(directory, 'worktree-link')
