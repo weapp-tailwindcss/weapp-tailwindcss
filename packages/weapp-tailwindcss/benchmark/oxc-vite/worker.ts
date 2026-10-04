@@ -10,11 +10,11 @@ import { performance } from 'node:perf_hooks'
 import process from 'node:process'
 import { pathToFileURL } from 'node:url'
 import { fingerprintBuild } from './artifacts'
-import { canonicalState, openBrowser, waitForState } from './browser'
+import { canonicalState, capture, openBrowser, waitForState } from './browser'
 import { instrumentNative } from './native'
 import { nativeMode } from './options'
 import { instrumentParser } from './parser'
-import { makeVariants, restoreOwnedSource } from './source'
+import { makeVariants, restoreOwnedSource, writeOwnedSource } from './source'
 
 const options = JSON.parse(process.argv[2]!) as WorkerOptions
 const project = path.join(options.root, 'demo', 'web', 'vue-vite-tailwindcss-v4')
@@ -27,6 +27,7 @@ const report: WorkerReport = {
   cleanupErrors: [],
   serverErrors: [],
   browserErrors: [],
+  diagnostics: { phase: 'build', events: [] },
   parser: { resolved: '', rawTransferSupported: false, counts: {} },
   hmr: [],
   peakNodeRssKiB: 0,
@@ -146,9 +147,27 @@ async function main() {
   assert(address && typeof address === 'object', 'Vite 未提供本任务的监听地址。')
   ;({ browser, page } = await openBrowser(repositoryRequire, report.browserErrors))
   assert(!interrupted, 'worker 收到中断。')
+  const diagnostics = report.diagnostics!
+  diagnostics.phase = 'dev-startup'
+  function record(type: string, detail: string) {
+    // 只记录有限事件，失败时区分 CSS 延迟、丢失更新和整页刷新；不增加页面或重试。
+    if (diagnostics.events.length < 100) {
+      diagnostics.events.push({ phase: diagnostics.phase, milliseconds: performance.now(), type, detail: detail.slice(0, 4000) })
+    }
+  }
+  page.on('framenavigated', (frame) => {
+    if (frame === page?.mainFrame()) {
+      record('navigation', frame.url())
+    }
+  })
+  page.on('requestfailed', request => record('requestfailed', `${request.url()}: ${request.failure()?.errorText}`))
+  page.on('console', message => record(`console:${message.type()}`, message.text()))
   let connected = false
   page.on('websocket', (socket) => {
+    socket.on('close', () => record('websocket-close', socket.url()))
+    socket.on('socketerror', error => record('websocket-error', error))
     socket.on('framereceived', ({ payload }) => {
+      record('hmr', String(payload))
       try {
         connected ||= JSON.parse(String(payload)).type === 'connected'
       }
@@ -159,6 +178,7 @@ async function main() {
   })
   await page.goto(`http://127.0.0.1:${address.port}/`, { waitUntil: 'networkidle', timeout: options.timeoutMs })
   const initial = await waitForState(page, 'dev-startup', options.timeoutMs)
+  diagnostics.expectedSession = initial.session
   report.startupMs = performance.now() - startupStarted
   assert(connected, '未观察到 Vite HMR WebSocket 握手。')
   let previous = original
@@ -169,9 +189,10 @@ async function main() {
     await page.waitForTimeout(150)
     parser.phase(phase)
     native?.phase(phase)
+    diagnostics.phase = phase
     assert(!interrupted, 'worker 收到中断，停止保存。')
     const started = performance.now()
-    await writeFile(sourceFile, variants[phase])
+    await writeOwnedSource(sourceFile, variants[phase])
     previous = variants[phase]
     const state = await waitForState(page, phase, options.timeoutMs, initial.session)
     if (phase === 'text') {
@@ -199,6 +220,7 @@ async function run() {
     // 失败只做一次有限诊断，不启动新页面或重试服务。
     if (page && !page.isClosed()) {
       try {
+        report.diagnostics!.failureState = await capture(page)
         await writeFile(`${options.output}.html`, await page.content())
         await page.screenshot({ path: `${options.output}.png`, fullPage: false, timeout: 5000 })
       }

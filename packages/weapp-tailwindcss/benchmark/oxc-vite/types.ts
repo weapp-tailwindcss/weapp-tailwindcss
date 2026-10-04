@@ -56,6 +56,12 @@ export interface WorkerReport {
   cleanupErrors: string[]
   serverErrors: string[]
   browserErrors: string[]
+  diagnostics?: {
+    expectedSession?: string
+    failureState?: PageState
+    phase: Phase
+    events: Array<{ phase: Phase, milliseconds: number, type: string, detail: string }>
+  }
   parser: { resolved: string, rawTransferSupported: boolean, counts: Partial<Record<Phase, ParseCount>> }
   native?: NativeReport
   build?: { milliseconds: number, sha256: string, artifacts: Array<{ name: string, bytes: number, sha256: string }> }

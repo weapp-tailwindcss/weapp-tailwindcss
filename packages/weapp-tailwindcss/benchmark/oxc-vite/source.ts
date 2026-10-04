@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict'
-import { readFile, writeFile } from 'node:fs/promises'
+import { randomUUID } from 'node:crypto'
+import { readFile, rename, rm, writeFile } from 'node:fs/promises'
+import path from 'node:path'
+import process from 'node:process'
 
 export const ORIGINAL_TEXT = 'Web target is the default. Use build:weapp to compare mini-program CSS output.'
 export const TEXT_MARKER = 'Oxc text HMR verified.'
@@ -16,6 +19,28 @@ export function makeVariants(original: string) {
   const text = original.replace(ORIGINAL_TEXT, `${ORIGINAL_TEXT} ${TEXT_MARKER}`)
   const probe = `<div data-oxc-vite-probe="ready" class="w-[137px] h-[29px] bg-[#13579b]">${PROBE_MARKER}</div>`
   return { text, add: text.replace('</section>', `${probe}\n    </section>`), remove: text, restore: original }
+}
+
+/** 以完整文件替换触发 watcher，避免 Vite 读取到截断的 SFC。 */
+export async function writeOwnedSource(file: string, content: string) {
+  const temporary = path.join(path.dirname(file), `.${path.basename(file)}.${process.pid}.${randomUUID()}.tmp`)
+  try {
+    await writeFile(temporary, content)
+    try {
+      await rename(temporary, file)
+    }
+    catch (error) {
+      // Windows 不能总是覆盖已存在文件；删除后重命名仍保证 watcher 不会看到半写入内容。
+      if ((error as NodeJS.ErrnoException).code !== 'EEXIST' && (error as NodeJS.ErrnoException).code !== 'EPERM') {
+        throw error
+      }
+      await rm(file, { force: true })
+      await rename(temporary, file)
+    }
+  }
+  finally {
+    await rm(temporary, { force: true })
+  }
 }
 
 /** 只恢复已知的本任务内容；遇到外部编辑立即报错，不能覆盖。 */
