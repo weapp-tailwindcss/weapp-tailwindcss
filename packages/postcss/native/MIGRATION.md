@@ -9,9 +9,9 @@
 | `selectorParser/rule-transformer/pseudos.ts` 复杂伪类、`:where` 展开、RTL、伪元素 | 自有转换已接线，解析边界仍回退 | Rust arena 保持 pre-order、删除与插入顺序、嵌套 is/where 展开、uniAppX 分支和空节点清理；未接管 parser/custom map 使用原实现 |
 | `selectorParser/rule-transformer/unsupported-pseudos.ts` 平台伪类移除 | 自有转换已接线，解析边界仍回退 | Rust 持有不支持列表和 hover/active/focus 开关，并删除所属顶层分支；原实现留作 fallback |
 | `selectorParser/spacing.ts` space/divide 选择器与声明归一化 | 部分迁移 | selector 资格与替换在 Rust；返回 spacing 动作，由 TS 完成声明镜像、去重、变量顺序；声明阶段尚未迁移 |
-| `compat/tailwindcss-v4/declarations/variable-fallbacks.ts` 三个 var/gradient fallback 阶段 | 部分迁移 | Rust UTF-16 value AST 一次解析处理；不完整值与超过 256 层嵌套回退原解析器，其他完整语法由差分验收 |
-| `compat/tailwindcss-v4/declarations.ts` radius clamp、声明删除 | 待迁移 | 仍由 TypeScript 处理 |
-| `compat/tailwindcss-v4/gradients.ts` 方向、infinity/calc | 待迁移 | 仍由 TypeScript 处理；依赖父规则的上下文需明确传入 |
+| `compat/tailwindcss-v4/declarations/variable-fallbacks.ts` 三个 var/gradient fallback 阶段 | 部分迁移 | Rust UTF-16 value AST 一次解析处理，生产声明并入 `normalizeV4Declaration` 单次调用；不完整值与超过 256 层嵌套回退原解析器 |
+| `compat/tailwindcss-v4/declarations.ts` radius clamp、声明删除 | 部分迁移 | radius 数值和正则边界计算由 `normalizeV4Declaration` 接管，保留 IEEE-754 舍入、科学计数法与阶段提前返回；声明删除、AST 所有权和访问顺序仍在 TypeScript |
+| `compat/tailwindcss-v4/gradients.ts` 方向、infinity/calc | 部分迁移 | 生产声明组合接口和公开函数均消费 Rust 值计算；父规则首个背景声明的回退方向由 TS 显式传入。跨规则合并、theme 颜色收集与渐变组合生成仍在 TS |
 | `compat/uni-app-x-uvue/transform-value.ts` translate 参数分隔符 | 部分迁移 | 生产声明批次由 Rust AST 处理，保留嵌套 var fallback 与字符串/URL/注释；不完整值逐项回退 |
 | `compat/uni-app-x-uvue.ts` calc 检测、选择器资格、警告/规则删除 | 待迁移 | 插件 warning/error 回调保留 TS，资格计算与变换仍待迁移 |
 | `compat/uni-app-x-uvue/theme.ts` 变量展开 | 待迁移 | 变量生命周期与来源优先级需保持 |

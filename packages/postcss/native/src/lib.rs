@@ -93,6 +93,31 @@ pub fn normalize_v4_variable_fallbacks(value: Utf16String) -> Option<Utf16String
     value::normalize_v4(&value).map(Into::into)
 }
 
+#[napi(object)]
+pub struct V4DeclarationOptions {
+    pub gradient_position: Option<bool>,
+    pub gradient_fallback: Option<Utf16String>,
+    pub radius: Option<bool>,
+}
+
+/// 单次跨界依次完成变量 fallback、渐变方向、无限值与圆角钳制；父规则上下文由 PostCSS 提供。
+#[napi]
+pub fn normalize_v4_declaration(value: Utf16String, options: V4DeclarationOptions) -> Option<Utf16String> {
+    value::compat::declaration(&value, options.gradient_position == Some(true), options.gradient_fallback.as_deref(), options.radius == Some(true)).map(Into::into)
+}
+
+/// 保持原有 JS 正则的 UTF-16 匹配与替换语义，包括非 AST 的字符串片段。
+#[napi]
+pub fn normalize_v4_gradient_position(value: Utf16String) -> Utf16String {
+    value::compat::gradient_position(&value).into()
+}
+
+/// whole_value 区分声明完整值与预处理前 CSS 字符串的全局替换。
+#[napi]
+pub fn normalize_v4_infinity_calc(value: Utf16String, whole_value: bool) -> Utf16String {
+    value::compat::infinity(&value, whole_value).into()
+}
+
 /// uvue 的 translate 只改直属参数分隔符，保留嵌套 var 的 fallback 逗号。
 #[napi]
 pub fn normalize_uvue_transform_value(value: Utf16String) -> Option<Utf16String> {

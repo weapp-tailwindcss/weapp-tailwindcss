@@ -1,6 +1,7 @@
 import type { Declaration as PostcssDeclaration, Root, Rule } from 'postcss'
 import { rule as createRule, Declaration } from 'postcss'
 import valueParser from 'postcss-value-parser'
+import { loadNativeCssBinding } from '../../native/binding'
 import { CLAMP_PX, COLOR_VAR_RE, GRADIENT_BACKGROUND_RE, GRADIENT_DIRECTION_CLASS_RE, GRADIENT_STOPS_VAR_RE, INFINITY_CALC_VALUE_REGEXP, SIMPLE_CLASS_SELECTOR_RE, testIfRootHostForV4 } from './variables'
 
 function collectTailwindcssV4ThemeVariables(root: Root) {
@@ -37,6 +38,10 @@ function normalizeDeclarationValue(value: string) {
 }
 
 export function normalizeTailwindcssV4GradientPosition(value: string) {
+  return loadNativeCssBinding()?.normalizeV4GradientPosition(value) ?? normalizeTailwindcssV4GradientPositionLegacy(value)
+}
+
+export function normalizeTailwindcssV4GradientPositionLegacy(value: string) {
   return value
     .replace(/calc\(\s*([+-]?(?:\d+(?:\.\d+)?|\.\d+)(?:deg|grad|rad|turn))\s*\*\s*-1\s*\)/gi, '-$1')
     .replace(/^in\s+(?:oklab|oklch|hsl|srgb)(?:\s+(?:longer|shorter|increasing|decreasing)\s+hue)?$/i, '')
@@ -46,6 +51,10 @@ export function normalizeTailwindcssV4GradientPosition(value: string) {
 }
 
 export function normalizeTailwindcssV4InfinityCalcValue(value: string) {
+  return loadNativeCssBinding()?.normalizeV4InfinityCalc(value, true) ?? normalizeTailwindcssV4InfinityCalcValueLegacy(value)
+}
+
+export function normalizeTailwindcssV4InfinityCalcValueLegacy(value: string) {
   return INFINITY_CALC_VALUE_REGEXP.test(value.trim()) ? `${CLAMP_PX}px` : value
 }
 
@@ -53,6 +62,10 @@ const INFINITY_CALC_CSS_RE = /calc\(\s*infinity\s*\*\s*(?:\d+(?:\.\d*)?|\.\d+)r?
 
 /** 在预处理器解析前收敛 Tailwind v4 生成的无限圆角，避免 Sass 将 infinity 当作非法表达式。 */
 export function normalizeTailwindcssV4InfinityCalcCss(css: string) {
+  return loadNativeCssBinding()?.normalizeV4InfinityCalc(css, false) ?? normalizeTailwindcssV4InfinityCalcCssLegacy(css)
+}
+
+export function normalizeTailwindcssV4InfinityCalcCssLegacy(css: string) {
   return css.replace(INFINITY_CALC_CSS_RE, `${CLAMP_PX}px`)
 }
 
@@ -61,11 +74,16 @@ export function normalizeTailwindcssV4GradientDirectionDeclaration(rule: Rule, d
   if (normalized) {
     return normalized
   }
+  return getTailwindcssV4GradientFallback(rule) ?? normalized
+}
+
+/** 只读取当前父规则的首个 background-image，保持声明顺序与上下文归属。 */
+export function getTailwindcssV4GradientFallback(rule: Rule) {
   const backgroundImageDecl = rule.nodes.find((node): node is PostcssDeclaration => {
     return node.type === 'decl' && node.prop === 'background-image'
   })
   if (!backgroundImageDecl) {
-    return normalized
+    return undefined
   }
   if (/^radial-gradient\(/i.test(backgroundImageDecl.value)) {
     return 'at center'
@@ -73,7 +91,7 @@ export function normalizeTailwindcssV4GradientDirectionDeclaration(rule: Rule, d
   if (/^conic-gradient\(/i.test(backgroundImageDecl.value)) {
     return 'from 0deg'
   }
-  return normalized
+  return undefined
 }
 
 function appendStopPosition(color: string, position?: string) {

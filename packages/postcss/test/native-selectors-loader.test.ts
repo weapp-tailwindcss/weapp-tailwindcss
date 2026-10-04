@@ -12,6 +12,9 @@ function binding() {
     transformSelector: () => null,
     transformSelectors: () => [],
     normalizeV4VariableFallbacks: (value: string) => value,
+    normalizeV4Declaration: (value: string) => value,
+    normalizeV4GradientPosition: (value: string) => value,
+    normalizeV4InfinityCalc: (value: string) => value,
     normalizeUvueTransformValue: (value: string) => value,
     normalizeUvueTransformValues: (values: string[]) => values,
   }
@@ -89,7 +92,7 @@ describe('Rust CSS 内核加载契约', () => {
     expect(nativeMock.load).not.toHaveBeenCalled()
   })
 
-  it.each(['SelectorRuleTransformer', 'escapeClasses', 'transformSelector', 'transformSelectors', 'normalizeV4VariableFallbacks', 'normalizeUvueTransformValue', 'normalizeUvueTransformValues'])('旧二进制缺少 %s 时拒绝，不尝试本地', async (method) => {
+  it.each(['SelectorRuleTransformer', 'escapeClasses', 'transformSelector', 'transformSelectors', 'normalizeV4VariableFallbacks', 'normalizeV4Declaration', 'normalizeV4GradientPosition', 'normalizeV4InfinityCalc', 'normalizeUvueTransformValue', 'normalizeUvueTransformValues'])('旧二进制缺少 %s 时拒绝，不尝试本地', async (method) => {
     vi.stubEnv('WEAPP_TW_NATIVE', 'required')
     const native = binding() as Record<string, unknown>
     delete native[method]

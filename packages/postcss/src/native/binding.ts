@@ -30,6 +30,9 @@ export interface NativeSelectorRuleTransformer {
 
 export interface NativeCssBinding {
   SelectorRuleTransformer: new (options: NativeSelectorRuleOptions) => NativeSelectorRuleTransformer
+  normalizeV4Declaration: (value: string, options: { gradientPosition?: boolean, gradientFallback?: string, radius?: boolean }) => string | null
+  normalizeV4GradientPosition: (value: string) => string
+  normalizeV4InfinityCalc: (value: string, wholeValue: boolean) => string
   normalizeV4VariableFallbacks: (value: string) => string | null
   normalizeUvueTransformValue: (value: string) => string | null
   normalizeUvueTransformValues: (values: string[]) => Array<string | null>
@@ -97,6 +100,9 @@ export function loadNativeCssBinding(): NativeCssBinding | undefined {
       }
       if (typeof loaded.normalizeV4VariableFallbacks !== 'function' || typeof loaded.normalizeUvueTransformValue !== 'function' || typeof loaded.normalizeUvueTransformValues !== 'function') {
         throw new TypeError('原生模块缺少值转换接口，可能存在 ABI 或版本不匹配。')
+      }
+      if (typeof loaded.normalizeV4Declaration !== 'function' || typeof loaded.normalizeV4GradientPosition !== 'function' || typeof loaded.normalizeV4InfinityCalc !== 'function') {
+        throw new TypeError('原生模块缺少 v4 声明转换接口，可能存在 ABI 或版本不匹配。')
       }
       binding = loaded as NativeCssBinding
       return binding

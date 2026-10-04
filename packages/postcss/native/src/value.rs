@@ -1,5 +1,6 @@
 mod parser;
 mod transform;
+pub mod compat;
 
 use std::borrow::Cow;
 
