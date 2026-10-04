@@ -125,4 +125,52 @@ describe('微信已有服务边界', () => {
     await expect(wechatRequest(port, { kind: 'close', project: `/owned-${port}` })).rejects.toThrow('停止后续')
     expect(calls).toBe(1)
   })
+
+  it('同一 HTTP 服务的项目生命周期请求严格串行', async () => {
+    let active = 0
+    let maximum = 0
+    const port = await server((req, res) => {
+      active++
+      maximum = Math.max(maximum, active)
+      const project = new URL(req.url!, 'http://127.0.0.1').searchParams.get('project')
+      setTimeout(() => {
+        active--
+        res.end(JSON.stringify({ autoPort: project?.includes('first') ? 45678 : 45679 }))
+      }, 20)
+    })
+    const first = wechatRequest(port, { kind: 'auto', project: `/serial-first-${port}`, port: 45678 })
+    const second = wechatRequest(port, { kind: 'auto', project: `/serial-second-${port}`, port: 45679 })
+    await Promise.all([first, second])
+    expect(maximum).toBe(1)
+    await wechatRequest(port, { kind: 'close', project: `/serial-first-${port}` })
+    await wechatRequest(port, { kind: 'close', project: `/serial-second-${port}` })
+  })
+
+  it('重复打开同一项目会被拒绝且不触达 IDE', async () => {
+    let calls = 0
+    const port = await server((_req, res) => {
+      calls++
+      res.end('{"autoPort":45678}')
+    })
+    const project = `/duplicate-${port}`
+    await wechatRequest(port, { kind: 'auto', project, port: 45678 })
+    await expect(wechatRequest(port, { kind: 'auto', project, port: 45678 })).rejects.toThrow('已有活跃会话')
+    expect(calls).toBe(1)
+    await wechatRequest(port, { kind: 'close', project })
+  })
+
+  it('跨 HTTP 服务重复打开同一项目不会覆盖原服务归属', async () => {
+    let secondCalls = 0
+    const first = await server((_req, res) => res.end('{"autoPort":45678}'))
+    const second = await server((_req, res) => {
+      secondCalls++
+      res.end('{"autoPort":45678}')
+    })
+    const project = `/cross-service-${first}`
+    await wechatRequest(first, { kind: 'auto', project, port: 45678 })
+    await expect(wechatRequest(second, { kind: 'auto', project, port: 45678 })).rejects.toThrow('绑定已改变')
+    expect(secondCalls).toBe(0)
+    expect(ownedWechatPort(project)).toBe(String(first))
+    await wechatRequest(first, { kind: 'close', project })
+  })
 })
