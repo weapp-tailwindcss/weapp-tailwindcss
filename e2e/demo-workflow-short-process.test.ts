@@ -65,6 +65,7 @@ it.skipIf(process.platform === 'win32').each([[descendant], [reused]])('退出�
 
 it.skipIf(process.platform === 'win32')('已登记根进程的 PID 真正复用时不重新领取身份', async () => {
   const probe = vi.spyOn(table, 'readProcessTable').mockResolvedValue([root])
+  const subsetProbe = vi.spyOn(table, 'readProcessSubset').mockResolvedValue([root])
   const kill = vi.spyOn(process, 'kill').mockReturnValue(true)
   const child = Object.assign(new EventEmitter(), { pid: 100, exitCode: null, signalCode: null }) as ChildProcess
   let close!: () => void
@@ -75,8 +76,10 @@ it.skipIf(process.platform === 'win32')('已登记根进程的 PID 真正复用�
   Object.assign(child, { exitCode: 0 })
   close()
   probe.mockResolvedValue([reused])
+  subsetProbe.mockResolvedValue([reused])
   await expect(tree.capture()).rejects.toThrow('缺少仍匹配的身份锚')
-  expect(probe).toHaveBeenCalledTimes(2)
+  expect(probe).toHaveBeenCalledOnce()
+  expect(subsetProbe).toHaveBeenCalledOnce()
   await expect(tree.stop()).rejects.toThrow('清理未成功')
   expect(kill).not.toHaveBeenCalled()
 })

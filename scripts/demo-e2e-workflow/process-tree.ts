@@ -3,7 +3,7 @@ import type { ProcessIdentity } from './process-table'
 import process from 'node:process'
 import { setTimeout as delay } from 'node:timers/promises'
 import { runProcessCommand } from './process-command'
-import { collectOwnedProcesses, readProcessTable } from './process-table'
+import { collectOwnedProcesses, readProcessSubset, readProcessTable } from './process-table'
 
 interface CleanupOptions {
   cooperativeMs?: number
@@ -40,7 +40,10 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
       if (remaining <= 0) {
         throw new Error('进程归属扫描预算已耗尽，禁止继续调度。')
       }
-      const rows = await readProcessTable(remaining, controller.signal)
+      const exited = child.exitCode !== null || child.signalCode !== null
+      const rows = initialized && (didClose || exited)
+        ? await readProcessSubset(group, [...owned.keys()], remaining, controller.signal)
+        : await readProcessTable(remaining, controller.signal)
       assertCurrent()
       return rows
     }
@@ -168,12 +171,20 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
         }
       }
       else if (available) {
+        let latestRows: ProcessIdentity[] = []
+        try {
+          latestRows = await readProcessSubset(group, [...current.keys()], deadline - Date.now())
+        }
+        catch (error) {
+          errors.push(error)
+        }
+        const latestByPid = new Map(latestRows.map(row => [row.pid, row]))
         for (const row of [...current.values()].reverse()) {
           if (Date.now() >= deadline) {
             break
           }
           try {
-            const latest = (await readProcessTable(deadline - Date.now())).find(item => item.pid === row.pid && item.started === row.started && !item.zombie)
+            const latest = latestByPid.get(row.pid)
             if (!latest || Date.now() >= deadline) {
               continue
             }

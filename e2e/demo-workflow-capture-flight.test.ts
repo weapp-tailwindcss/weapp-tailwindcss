@@ -47,6 +47,7 @@ it.skipIf(process.platform === 'win32')('短命 root 首次扫描前退出，仍
 it.skipIf(process.platform === 'win32')('close 不能掩盖已登记后代存活，强制终止仍报告恢复未确认', async () => {
   let rows = [root, descendant]
   vi.spyOn(table, 'readProcessTable').mockImplementation(async () => rows)
+  vi.spyOn(table, 'readProcessSubset').mockImplementation(async () => rows)
   const kill = vi.spyOn(process, 'kill').mockImplementation((pid) => {
     rows = rows.filter(row => row.pid !== pid)
     return true

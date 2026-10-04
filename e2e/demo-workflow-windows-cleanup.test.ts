@@ -19,6 +19,7 @@ it('Windows 只终止再次核对身份的 PID，既不 /t 扩散也不触碰复
   const childRow = { pid: 200, parent: 100, group: 0, started: '2026-10-04T12:00:11Z' }
   let rows = [root, childRow]
   vi.spyOn(table, 'readProcessTable').mockImplementation(async () => rows)
+  vi.spyOn(table, 'readProcessSubset').mockImplementation(async () => rows)
   const child = Object.assign(new EventEmitter(), { pid: 100, exitCode: null, signalCode: null }) as ChildProcess
   let finish!: () => void
   const closed = new Promise<void>((resolve) => {

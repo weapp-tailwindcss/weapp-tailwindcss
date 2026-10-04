@@ -57,4 +57,24 @@ describe('取消只能清理仍有身份证据的本轮进程', () => {
     await expect(tree.stop()).rejects.toThrow('清理未成功')
     expect(kill).toHaveBeenCalledWith('SIGTERM')
   })
+
+  it('正常退出后按进程组和已登记身份锚读取，避免重复扫描整张进程表', async () => {
+    const childRow = row(200, 123, 123, 11)
+    const fullScan = vi.spyOn(table, 'readProcessTable').mockResolvedValue([row(123, 1, 123, 10), childRow])
+    const subsetScan = vi.spyOn(table, 'readProcessSubset').mockResolvedValue([])
+    const child = new EventEmitter() as ChildProcess
+    let close!: () => void
+    const closed = new Promise<void>((resolve) => {
+      close = resolve
+    })
+    Object.assign(child, { pid: 123, exitCode: null, signalCode: null })
+    const tree = createWorkflowProcessTree(child, closed)
+    await tree.capture()
+    Object.assign(child, { exitCode: 0 })
+    close()
+    await tree.stop()
+    expect(fullScan).toHaveBeenCalledOnce()
+    expect(subsetScan).toHaveBeenCalledOnce()
+    expect(subsetScan).toHaveBeenCalledWith(123, [123, 200], expect.any(Number), expect.any(AbortSignal))
+  })
 })

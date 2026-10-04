@@ -46,6 +46,55 @@ export async function readProcessTable(timeoutMs = 5000, signal?: AbortSignal): 
   return rows
 }
 
+/**
+ * 子进程已经退出后只读取本轮已确认的进程组和身份锚，避免高负载下再次扫描整张系统进程表。
+ * 独立进程组中的已登记后代通过 pids 保留身份校验；未登记的独立后代仍不在清理范围内。
+ */
+export async function readProcessSubset(group: number | undefined, pids: readonly number[], timeoutMs = 5000, signal?: AbortSignal): Promise<ProcessIdentity[]> {
+  if (process.platform === 'win32') {
+    const values = [...new Set(pids)].filter(Number.isInteger)
+    if (!values.length) {
+      return []
+    }
+    let output: string
+    try {
+      output = await runProcessCommand('powershell', [
+        '-NoProfile',
+        '-Command',
+        `$ids = @(${values.join(',')}); $filter = [string]::Join(' OR ', ($ids | ForEach-Object { "ProcessId = $_" })); $rows = @(Get-CimInstance Win32_Process -Filter $filter | Where-Object { $null -ne $_.CreationDate } | ForEach-Object { @{ pid = [int]$_.ProcessId; parent = [int]$_.ParentProcessId; group = 0; started = $_.CreationDate.ToUniversalTime().ToString("o") } }); ConvertTo-Json -InputObject @($rows) -Compress`,
+      ], timeoutMs, signal)
+    }
+    catch (error) {
+      throw new Error(`无法确认本轮子进程身份：${error instanceof Error ? error.message : String(error)}`, { cause: error })
+    }
+    const parsed: unknown = JSON.parse(output.trim() || '[]')
+    const rows = Array.isArray(parsed) ? parsed : [parsed]
+    if (rows.some(row => !Number.isInteger(row.pid) || !Number.isInteger(row.parent) || typeof row.started !== 'string' || !Number.isFinite(Date.parse(row.started)))) {
+      throw new Error('Windows 进程身份子集无效，不能确认子树已结束。')
+    }
+    return rows
+  }
+  const filters: string[] = []
+  if (group !== undefined) {
+    filters.push('-g', String(group))
+  }
+  const values = [...new Set(pids)].filter(Number.isInteger)
+  if (values.length) {
+    filters.push('-p', values.join(','))
+  }
+  if (!filters.length) {
+    return []
+  }
+  let output: string
+  try {
+    output = await runProcessCommand('ps', [...filters, '-o', 'pid=,ppid=,pgid=,lstart=,stat='], timeoutMs, signal)
+  }
+  catch (error) {
+    throw new Error(`无法确认本轮子进程身份：${error instanceof Error ? error.message : String(error)}`, { cause: error })
+  }
+  return parsePosixProcesses(output)
+}
+
 /** 仅从本轮仍匹配的身份和独立组扩展后代，不按命令名或工作目录猜测。 */
 export function collectOwnedProcesses(rows: ProcessIdentity[], owned: Map<number, ProcessIdentity>, group?: number) {
   const live = new Map(rows.filter(row => !row.zombie).map(row => [row.pid, row]))
