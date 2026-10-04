@@ -12,6 +12,8 @@ regressions:
   - packages/weapp-tailwindcss/test/native.test.ts
   - e2e/preflight-wechat-page.test.ts
   - packages/weapp-tailwindcss/test/js/handler-cache-lifecycle.test.ts
+  - packages/weapp-tailwindcss/test/native-mode.test.ts
+  - packages/weapp-tailwindcss/test/native-vite-benchmark.test.ts
 ---
 
 # Rust JS 转换的语义与生命周期
@@ -50,6 +52,32 @@ pnpm --filter weapp-tailwindcss exec tsx native/test/transform/adapter-benchmark
 `c5304ba44` 内核及本轮解析适配修订的真实 ABI 验证通过：WXML 10,018 组、JS 分析 544 组（88 组明确回退）、完整转换 14,096 组、生命周期 7 项、Babel 输出 6,224 组与明确回退 1,024 组，零差异。首次集成复验暴露了 `sourceFilename` 错误阻挡和 TS 空 quasi 区间不一致；修正后对应 32 项回归通过。严格 TypeScript 检查显式使用 `--noCheck false`，不能将声明构建的 `noCheck: true` 当作类型验收。
 
 125,082 字节基准固定输入 SHA-256 为 `21ad19ea581c664217f72ee2acebc73921de585c680e420c3de594deea09bcf3`。适配器基准比较实际公开 handler 的 `off`/`required` 路径，以 6/1,000/10,000/100,000 类集合观察验证集合内容的成本。每组 3 轮、每轮 20 对，交替顺序，比较每次输出并记录锁文件、二进制、被测源码和输入哈希。cold 指预热进程中的解析缓存未命中，warm 指命中；均不是进程冷启动。self-check 只证明脚本路径，不作为性能结论。
+
+### 默认启用策略与当前产物复验
+
+2026-10-05，提交 `f4df65bec27025167c83f3f7c948fa9711f28cfd` 将 JS/WXML 与 CSS 的默认模式统一为 `off`。独立内核和公开 adapter 的局部收益尚未转化为稳定的框架构建收益，因此原生能力作为显式实验保留。用户须在启动进程前设置 `WEAPP_TW_NATIVE=auto/required`；默认关闭直接跳过四处高频加载检查，启用进程仍在缓存前校验 required。无效模式会进入加载器报错，不静默视为关闭。运行时签名继续使用 Oxc 普通 AST。
+
+默认关闭回归覆盖真实 JS/WXML 入口、条件比较值保护、loader 零调用、无效配置报错，以及启用进程从 off 切回 required 后缓存不能隐藏加载失败。两个同进程 benchmark 在动态 import 前设置 required；`candidates.ts` 的独立命令改为 `pnpm --filter weapp-tailwindcss exec cross-env WEAPP_TW_NATIVE=required tsx native/test/transform/candidates.ts`，并检查启动模式，避免原生 adapter 验收偷偷走回退。
+
+首次恢复会话时误用了旧 dist，Vite 报告仍含源码已经移除的 `jsRuntimeSignature` 调用；`.tmp/oxc-vite/native-pair-current.json`、`native-pairs3-current.json` 和 `native-report-repro.json` 仅作旧产物/基础设施记录，不归入最终提交的性能结果。WXML 基准还拒绝了旧二进制的 `sourceDigest`。重新执行主包 native 构建与 CSS `cargo build --locked --release --target aarch64-apple-darwin`，按分发模块写入并核验元数据、暂存到当前平台包后再验证；没有手工修改摘要来绕过门禁。
+
+当前核心 binary SHA-256 为 `772c2e67e2b27d01a6c57316f11959292b4942f0f39133349e405004797cdd26`，源码摘要为 `25c4e00f0e3b73e74737a87fb737233878a51fc02bd45936e3d9c0cd0b645c14`。重建后 `native/verify.mjs` 通过 WXML tokenizer 10,018 组、静态属性 10,056 组、自定义映射 1,500 组、JS 分析 544 组、完整转换 14,096 组、Babel 对拍 6,224 组与明确回退 1,024 组，零差异；PostCSS 真 ABI 7 文件、117 项通过。WXML benchmark 8 组 self-check 均观察到真实原生调用，adapter self-check 的 7 次转换均进入候选查询接口；自检数字不作性能结论。
+
+最终真实 Vite `off/required` 三对交替采样使用相同提交、输入与二进制，两组都保留生产 Oxc 传递选项：
+
+| 指标（时间为中位数） | off | required |
+| --- | ---: | ---: |
+| 冷构建 | 1.174 秒 | 1.194 秒 |
+| 开发启动 | 1.216 秒 | 1.144 秒 |
+| 文本 HMR | 151.1 ms | 154.8 ms |
+| 新增类 HMR | 170.4 ms | 170.0 ms |
+| 删除 HMR | 169.0 ms | 169.6 ms |
+| 恢复 HMR | 148.6 ms | 150.1 ms |
+| Node 峰值 RSS 范围 | 584.0–605.7 MiB | 598.8–613.0 MiB |
+
+required 每个进程记录 8 次 `transformWithCandidates`、212 次选择器和 812 次声明转换；没有执行原生 runtime signature，off 的原生调用为 0。构建产物哈希、HMR DOM/计算样式一致，源码全部恢复，清理无错误。该对比同时启用 JS 与 CSS，未命中 WXML，不能单独归因某个内核。冷构建约慢 1.8%，其余阶段有升有降；小样本不支持稳定整体加速，也不能把这个差值单独确认为普遍退化。
+
+复现命令与完整统计脚本见 [真实 Vite benchmark](../../../packages/weapp-tailwindcss/benchmark/oxc-vite/README.md)，本轮依次执行 `--compare native --target weapp` 的 self-check、1 pair 基础设施验证和 3 pairs 正式采样，输出保留在 `.tmp/oxc-vite/final-native-{self-check,verify,report}.json`。原生输入指纹为 `440c8f4a4c50c83bf1b33acca32a387858e729c05e6ce0ea42c167822b79e0a0`，与 normal/raw 报告分别保存，不能混合两种采样。最终 raw transfer 数据见 [Oxc 复验](oxc-raw-transfer-parity.md)。
 
 ## 适用边界
 

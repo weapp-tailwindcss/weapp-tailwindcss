@@ -9,6 +9,8 @@ regressions:
   - packages/weapp-tailwindcss/test/js/oxc-fast-path.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-js-processing.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-runtime-affecting-signature.unit.test.ts
+  - packages/weapp-tailwindcss/test/native-mode.test.ts
+  - packages/weapp-tailwindcss/test/native-vite-benchmark.test.ts
 ---
 
 # Oxc 条件语义与 raw transfer 验证
@@ -96,6 +98,38 @@ Web 目标三对采样通过，但实际 core Oxc 调用数为 0，不能用它�
 这些数据没有证明稳定的整体构建加速。首次 raw 冷构建中位数高于普通路径，复测方向反转；复测还保留了普通模式 7.072 秒的首次样本，原因没有定位，不归因为已证实的环境噪声。新增类与删除 HMR 在两组采样中的 raw 中位数均偏高，因此不能把微基准 3.216 倍写成项目构建/HMR 的收益。所有首轮、复测与基础设施验证数据保留在 `.tmp/oxc-vite/`。
 
 首次基础设施验证失败记录为 `.tmp/oxc-vite/verify.json`：`vite.build()` 保留 `NODE_ENV=production`，同进程随后创建的 dev server 因此关闭 Vue HMR，文本保存变成整页刷新。按实际 CLI 阶段分别设置 production/development 并断言开发配置后，`.tmp/oxc-vite/verify-development.json` 与后续正式测量通过。该失败属于测量脚本生命周期，不作为产品回归，也没有通过允许 reload 或增加超时绕过。
+
+### 默认关闭 Rust 后的最终复验
+
+2026-10-05 在干净提交 `f4df65bec27025167c83f3f7c948fa9711f28cfd` 上完成复验，环境仍为 Apple M4 Max / macOS arm64 / Node 24.18.0 / pnpm 12.6.0 / Oxc 0.152.0。先重建 Engine、PostCSS 与主包 dist，再串行测量，采样期间没有并行构建或测试任务。
+
+125,082 字节输入与前述 SHA-256 相同，三轮共 240 对完整分析和输出全部一致。冷分析 normal/raw p50 为 **10.706/4.063 ms（2.635 倍）**，三轮分别为 2.644、2.735、2.606 倍；冷 handler 为 11.793/5.008 ms（2.355 倍），热 handler 为 1.065/1.050 ms。报告 `.tmp/oxc-raw-transfer/final-benchmark.json` 保存全部样本、依赖和被测模块哈希。
+
+本轮修正了真实 Vite 基准的传递方式覆盖：normal 仅禁用产品主动请求的 raw，raw 保持产品选项；runtime snapshot 明确选择普通 AST，两组均不改动该选择。旧脚本会把 snapshot 也强制切为 raw，不能用其数字代表最终生产配置。新增 `rawTransferCalls` 与回归断言，正式三对共 48 次 Oxc 解析，其中 raw 组真实 raw 调用 21 次、normal 组为 0，解析失败为 0。
+
+真实 demo 的 `--target weapp` 三对交替样本结果如下，时间为中位数，RSS 为各 worker 峰值范围：
+
+| 指标 | 普通 AST | raw transfer |
+| --- | ---: | ---: |
+| 冷构建 | 1.463 秒 | 1.236 秒 |
+| 开发启动 | 1.240 秒 | 1.391 秒 |
+| 文本 HMR | 88.4 ms | 170.6 ms |
+| 新增类 HMR | 168.8 ms | 168.9 ms |
+| 删除 HMR | 170.4 ms | 149.1 ms |
+| 恢复 HMR | 149.0 ms | 151.2 ms |
+| Node 峰值 RSS | 625.8–645.9 MiB | 574.1–587.4 MiB |
+
+完整构建产物 SHA-256 仍为 `560fddf7402079a67bcde204d9d2c468a23fc01c1393241923390ad8b28d346d`；输入指纹为 `afc49d8a33576ec10fa181322a10bfba5fee0b3405b6137e9691aa7830787dc6`。DOM、计算样式与同一页面 session 的文本/新增/删除/恢复验证均通过，所有 worker 的 `restored=true`、`cleanupErrors=[]`，demo 无最终改动，因此没有新增 static 基线。RSS 仍只含 Node，不含 Chromium。样本仅三对，文本 HMR 本轮明显更慢，不能把局部冷分析收益解读为整体稳定提速，也不把未定位的差异归因为已证实的环境噪声。
+
+```sh
+pnpm exec tsx packages/weapp-tailwindcss/benchmark/oxc-raw-transfer.ts --root . --output .tmp/oxc-raw-transfer/final-verification.json --verify-only
+pnpm exec tsx packages/weapp-tailwindcss/benchmark/oxc-raw-transfer.ts --root . --output .tmp/oxc-raw-transfer/final-benchmark.json --pairs 20 --rounds 3
+pnpm exec tsx packages/weapp-tailwindcss/benchmark/oxc-vite/runner.ts --root . --target weapp --output .tmp/oxc-vite/final-transfer-self-check.json --self-check
+pnpm exec tsx packages/weapp-tailwindcss/benchmark/oxc-vite/runner.ts --root . --target weapp --output .tmp/oxc-vite/final-transfer-verify.json --pairs 1 --timeout-ms 60000
+pnpm exec tsx packages/weapp-tailwindcss/benchmark/oxc-vite/runner.ts --root . --target weapp --output .tmp/oxc-vite/final-transfer-report.json --pairs 3 --timeout-ms 60000
+```
+
+JS/WXML/Vite 定向测试 58 文件、649 项通过、4 项既有跳过；新增 HMR 状态与基准回归批次 5 文件、20 项通过（与前一批部分重叠，不累加总数）。Engine 19 文件、189 项通过，严格主包和 benchmark TypeScript、ESLint、架构契约与 `agents:check` 通过。显式原生验证和默认开关的决定见 [JS 原生边界](rust-js-native-boundary.md)。
 
 ## 适用边界
 
