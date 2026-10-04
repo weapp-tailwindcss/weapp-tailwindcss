@@ -139,6 +139,7 @@ export async function waitForOutputsReady(
       pollMs: options.pollMs,
       message: `[${outputLabel}] initial outputs were not generated in time`,
       onTick: session.ensureRunning,
+      signal: session.signal,
     },
   )
 }
@@ -186,6 +187,7 @@ export async function waitForInitialWarmup(
       pollMs: options.pollMs,
       message: `[${watchCase.label}] initial watch warmup did not finish in time`,
       onTick: session.ensureRunning,
+      signal: session.signal,
     },
   )
 }
@@ -307,6 +309,7 @@ export async function waitForCompileSettled(
       pollMs: options.pollMs,
       message: `[${watchCase.label}] watch compile did not settle in time`,
       onTick: session.ensureRunning,
+      signal: session.signal,
     },
   )
 }
@@ -365,6 +368,7 @@ export async function waitForOutputsUpdated(
       pollMs: options.pollMs,
       message: `[${watchCase.label}] outputs were not updated after source change`,
       onTick: session.ensureRunning,
+      signal: session.signal,
     },
     startedAt,
   )
@@ -416,6 +420,7 @@ export async function waitForClassOutputBaseline(
       pollMs: options.pollMs,
       message: `[${watchCase.label}] baseline outputs are missing for ${mutationKind}: ${lastReason}`,
       onTick: session.ensureRunning,
+      signal: session.signal,
     },
     waitStartedAt,
   )
@@ -605,6 +610,7 @@ export async function waitForOutputFilesUpdatedWithDiagnostics(
       pollMs: options.pollMs,
       message: timeoutMessage,
       onTick: session.ensureRunning,
+      signal: session.signal,
     },
     startedAt,
   ).catch((error: unknown) => {
@@ -658,6 +664,7 @@ export async function waitForMarkerState(
         ? `[${outputLabel}] marker was not propagated to outputs`
         : `[${outputLabel}] marker was not removed from outputs`,
       onTick: session.ensureRunning,
+      signal: session.signal,
     },
     startedAt,
   )
@@ -796,6 +803,7 @@ export async function resolveOutputFiles(
       pollMs: options.pollMs,
       message: `[${watchCase.label}] could not resolve ${label} output from candidates: ${candidates.map(formatPath).join(', ')}`,
       onTick: session.ensureRunning,
+      signal: session.signal,
     },
   )
 

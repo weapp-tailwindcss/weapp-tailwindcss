@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
+import { setTimeout as delay } from 'node:timers/promises'
 import { sleep } from './session'
 
 const CRLF_RE = /\r\n/g
@@ -167,17 +168,28 @@ export async function waitFor(
     pollMs: number
     message: string
     onTick?: () => void
+    signal?: AbortSignal | undefined
   },
   startedAt = Date.now(),
 ) {
   while (Date.now() - startedAt <= options.timeoutMs) {
+    options.signal?.throwIfAborted()
     options.onTick?.()
-    if (await predicate()) {
+    const matched = await predicate()
+    options.signal?.throwIfAborted()
+    if (matched) {
       return Date.now() - startedAt
     }
     options.onTick?.()
-    await sleep(options.pollMs)
+    try {
+      await delay(options.pollMs, undefined, { signal: options.signal })
+    }
+    catch (error) {
+      options.signal?.throwIfAborted()
+      throw error
+    }
   }
+  options.signal?.throwIfAborted()
   throw new Error(options.message)
 }
 

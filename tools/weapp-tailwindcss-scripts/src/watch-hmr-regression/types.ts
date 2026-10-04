@@ -371,6 +371,8 @@ export interface WebHmrSourceDomReplacement {
 }
 
 export interface WatchSession {
+  /** 可选探针取消信号，由发起该轮探针的生命周期持有。 */
+  signal?: AbortSignal | undefined
   child: ChildProcessWithoutNullStreams
   ensureRunning: () => void
   lastCompileSuccessAt: () => number

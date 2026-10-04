@@ -1,5 +1,10 @@
-import { describe, expect, it, vi } from 'vitest'
-import { readCurrentPageLiveContent, readPageLiveContentRaw } from './frameworkIdeLivePage'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { readCurrentPageLiveContent, readPageLiveContent, readPageLiveContentRaw } from './frameworkIdeLivePage'
+
+afterEach(() => {
+  vi.useRealTimers()
+  vi.unstubAllEnvs()
+})
 
 describe('framework IDE live page reader', () => {
   it('combines page content with child elements', async () => {
@@ -58,5 +63,37 @@ describe('framework IDE live page reader', () => {
 
     expect(result.page).toBe(currentPage)
     expect(result.content).toContain('HMR-MARKER')
+  })
+
+  it('取消挂起的叶子读取后，不因迟到结果继续查询页面', async () => {
+    const controller = new AbortController()
+    let release!: (value: string) => void
+    const element = {
+      text: vi.fn(() => new Promise<string>((resolve) => { release = resolve })),
+      attribute: vi.fn(),
+      outerWxml: vi.fn(),
+    }
+    const page = { $: vi.fn().mockResolvedValue(element), $$: vi.fn(), data: vi.fn() }
+    const result = readPageLiveContent(page, '/page', controller.signal).catch(error => error)
+    await vi.waitFor(() => expect(element.text).toHaveBeenCalledOnce())
+    controller.abort(new Error('cancelled'))
+    await expect(result).resolves.toMatchObject({ message: 'cancelled' })
+    release('late text')
+    await Promise.resolve()
+    expect(element.attribute).not.toHaveBeenCalled()
+    expect(element.outerWxml).not.toHaveBeenCalled()
+    expect(page.$$).not.toHaveBeenCalled()
+    expect(page.data).not.toHaveBeenCalled()
+  })
+
+  it('读取自身超时也会取消原读取链', async () => {
+    vi.useFakeTimers()
+    vi.stubEnv('E2E_IDE_DEVTOOLS_READ_TIMEOUT_MS', '10')
+    const page = { $: vi.fn(() => new Promise(() => {})), $$: vi.fn(), data: vi.fn() }
+    const result = readPageLiveContent(page, '/page').catch(error => error)
+    await vi.advanceTimersByTimeAsync(10)
+    await expect(result).resolves.toMatchObject({ message: expect.stringContaining('timed out after 10ms') })
+    expect(page.$$).not.toHaveBeenCalled()
+    expect(page.data).not.toHaveBeenCalled()
   })
 })

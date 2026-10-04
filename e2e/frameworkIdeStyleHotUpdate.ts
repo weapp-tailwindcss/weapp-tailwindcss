@@ -12,8 +12,9 @@ import {
   findCssRuleBody,
   normalizeCssDeclaration,
   waitFor,
-  writeFilePreserveEol,
 } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/text'
+import { bindWatchSessionSignal } from './framework-ide/abort'
+import { writeProbeSource } from './framework-ide/source-lifecycle'
 import {
   assertNoUnsupportedMiniProgramCssImport,
   collectArtifactMtimes,
@@ -88,7 +89,10 @@ export async function runIdeStyleHotUpdate(
   watchCase: IdeWatchCase,
   session: ReturnType<typeof createWatchSession>,
   sourceOriginal: string,
+  signal?: AbortSignal,
 ) {
+  signal?.throwIfAborted()
+  session = bindWatchSessionSignal(session, signal)
   const sourceFile = watchCase.styleMutation.sourceFile
   process.stdout.write(`[e2e:ide] ${watchCase.label} style HMR mutate ${sourceFile}\n`)
   const payload = createStyleMutationPayload(watchCase)
@@ -96,7 +100,7 @@ export async function runIdeStyleHotUpdate(
   const { artifacts: baselineArtifacts, mtimes: baselineMtimes } = await collectArtifactMtimes(watchCase)
   const mutationStartedAt = Date.now()
 
-  await writeFilePreserveEol(sourceFile, mutatedSource, sourceOriginal)
+  await writeProbeSource(sourceFile, mutatedSource, sourceOriginal, signal)
   await waitForOutputFilesUpdated(
     watchCase,
     resolveUpdatedStyleFiles(watchCase, baselineMtimes, baselineArtifacts),
@@ -127,6 +131,7 @@ export async function runIdeStyleHotUpdate(
       pollMs: options.pollMs,
       message: `[${watchCase.label}] IDE style HMR output did not contain expanded @apply and theme() declarations`,
       onTick: session.ensureRunning,
+      signal,
     },
     mutationStartedAt,
   )
@@ -136,7 +141,7 @@ export async function runIdeStyleHotUpdate(
   )
 
   const rollbackStartedAt = Date.now()
-  await writeFilePreserveEol(sourceFile, sourceOriginal, sourceOriginal)
+  await writeProbeSource(sourceFile, sourceOriginal, sourceOriginal, signal)
   await waitForCompileSettled(watchCase, options, session, rollbackStartedAt)
   await waitFor(
     async () => !hasAnyNeedle(await readArtifacts(watchCase), [payload.styleNeedle]),
@@ -145,6 +150,7 @@ export async function runIdeStyleHotUpdate(
       pollMs: options.pollMs,
       message: `[${watchCase.label}] IDE style HMR marker was not removed after rollback: ${payload.styleNeedle}`,
       onTick: session.ensureRunning,
+      signal,
     },
     rollbackStartedAt,
   )

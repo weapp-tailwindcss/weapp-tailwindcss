@@ -26,6 +26,56 @@ function createPage(content: string) {
 const options = { timeoutMs: 100, pollMs: 1 } as CliOptions
 
 describe('framework IDE reopened page content', () => {
+  it('页面读取成功但连接释放失败时，仍判定失败', async () => {
+    const miniProgram = {
+      reLaunch: vi.fn().mockResolvedValue(createPage('marker')),
+      disconnect: vi.fn().mockRejectedValue(new Error('disconnect denied')),
+    }
+    launch.mockResolvedValue(miniProgram)
+    await expect(readFreshDevToolsPageContent('project', options, '/page', 'marker'))
+      .rejects
+      .toThrow('[e2e:ide:cleanup] Failed to disconnect temporary IDE client for project: Error: disconnect denied')
+  })
+
+  it('取消与释放失败同时发生时保留两个错误', async () => {
+    const controller = new AbortController()
+    const miniProgram = {
+      reLaunch: vi.fn(() => new Promise(() => {})),
+      disconnect: vi.fn(() => { throw new Error('disconnect denied') }),
+    }
+    launch.mockResolvedValue(miniProgram)
+    const result = readFreshDevToolsPageContent('project', options, '/page', 'marker', controller.signal).catch(error => error)
+    await vi.waitFor(() => expect(miniProgram.reLaunch).toHaveBeenCalledOnce())
+    controller.abort(new Error('cancelled'))
+    const error = await result
+    expect(error).toBeInstanceOf(AggregateError)
+    expect(error.message).toContain('cancelled')
+    expect(error.message).toContain('disconnect denied')
+    expect(error.errors).toHaveLength(2)
+  })
+
+  it('连接获取期间取消时，等待迟到连接并释放，不再重新加载页面', async () => {
+    const controller = new AbortController()
+    const miniProgram = { reLaunch: vi.fn(), disconnect: vi.fn(), close: vi.fn() }
+    let release!: (client: typeof miniProgram) => void
+    launch.mockImplementation(() => new Promise((resolve) => {
+      release = resolve
+    }))
+    let settled = false
+    const result = readFreshDevToolsPageContent('project', options, '/page', 'marker', controller.signal)
+      .catch(error => error)
+      .finally(() => { settled = true })
+    controller.abort(new Error('cancelled'))
+    await Promise.resolve()
+    expect(settled).toBe(false)
+    release(miniProgram)
+    await expect(result).resolves.toMatchObject({ message: 'cancelled' })
+    expect(miniProgram.reLaunch).not.toHaveBeenCalled()
+    expect(miniProgram.disconnect).toHaveBeenCalledOnce()
+    expect(miniProgram.close).not.toHaveBeenCalled()
+    expect(launch).toHaveBeenCalledTimes(1)
+  })
+
   it('returns the live page text rather than the polling elapsed time', async () => {
     let projectOpen = true
     const miniProgram = {
@@ -117,9 +167,10 @@ describe('framework IDE reopened page content', () => {
     }
     launch.mockResolvedValue(miniProgram)
 
-    await expect(readFreshDevToolsPageContent('project', options, '/pages/index/index', 'new HMR marker'))
-      .rejects
-      .toThrow('DevTools page did not show HMR marker')
+    const error = await readFreshDevToolsPageContent('project', options, '/pages/index/index', 'new HMR marker').catch(error => error)
+    expect(error.message).toContain('DevTools page did not show HMR marker')
+    expect(error.message).toContain('cleanup transport unavailable')
+    expect(error).toBeInstanceOf(AggregateError)
     expect(miniProgram.disconnect).toHaveBeenCalledOnce()
     expect(miniProgram.close).not.toHaveBeenCalled()
   })
