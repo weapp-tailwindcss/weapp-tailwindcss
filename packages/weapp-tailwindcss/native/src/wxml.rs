@@ -1,6 +1,8 @@
 use napi::bindgen_prelude::{Uint32Array, Utf16String};
 use napi_derive::napi;
 
+mod transform;
+
 #[derive(Clone, Copy)]
 enum State {
     Start,
