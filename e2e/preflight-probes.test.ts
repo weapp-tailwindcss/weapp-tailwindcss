@@ -1,15 +1,16 @@
 import type { MiniProgram } from '@weapp-vite/miniprogram-automator'
 import type { ProbeContext } from '../scripts/e2e-preflight/types'
+import { Buffer } from 'node:buffer'
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { chromium } from 'playwright'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { command } from '../scripts/e2e-preflight/io'
+import { assertImage, command } from '../scripts/e2e-preflight/io'
 import { base, hbuilderx, wechat } from '../scripts/e2e-preflight/probes/desktop'
 import { hbuilderxTools } from '../scripts/e2e-preflight/probes/hbuilderx-tools'
-import { android, parseAdbDevices, requestedTarget, selectTarget } from '../scripts/e2e-preflight/probes/native'
+import { android, harmony, parseAdbDevices, requestedTarget, selectTarget } from '../scripts/e2e-preflight/probes/native'
 import { waitForProbe } from '../scripts/e2e-preflight/probes/wait'
 import { web } from '../scripts/e2e-preflight/probes/web'
 import { connectWechat } from '../scripts/e2e-preflight/probes/wechat-connect'
@@ -75,6 +76,49 @@ describe('真实探针的阻断条件', () => {
       return '0'
     })
     await expect(android(context)).rejects.toThrow('未完成启动')
+  })
+
+  it('Harmony screenCap 无法取得 pixelMap 时回退 snapshot_display 并保留 JPEG 证据', async () => {
+    vi.stubEnv('HDC_PATH', 'hdc')
+    const jpeg = Buffer.from([0xFF, 0xD8, 0xFF, 0xC0, 0x00, 0x0B, 0x08, 0x00, 0x0A, 0x00, 0x0A, 0x01, 0x01, 0x11, 0x00])
+    run.mockImplementation(async (_file, args) => {
+      if (args[0] === 'version') {
+        return 'hdc 1'
+      }
+      if (args[0] === 'list') {
+        return '127.0.0.1:5557'
+      }
+      if (args.includes('param')) {
+        return 'OpenHarmony 6.0'
+      }
+      if (args.includes('dumpLayout')) {
+        return ''
+      }
+      if (args.includes('screenCap')) {
+        throw new Error('Failed to get display pixelMap')
+      }
+      if (args.includes('snapshot_display')) {
+        return ''
+      }
+      if (args.includes('file') && args.includes('recv')) {
+        const target = args.at(-1)!
+        if (target.endsWith('.json')) {
+          await writeFile(target, '{"root":{"type":"root"}}')
+        }
+        else if (target.endsWith('.jpeg')) {
+          await writeFile(target, jpeg)
+        }
+        return ''
+      }
+      return ''
+    })
+    const dir = await mkdtemp(path.join(os.tmpdir(), 'wt-preflight-harmony-'))
+    dirs.push(dir)
+    const result = await harmony({ ...context, dir, phase: 'prepare' })
+    expect(result.evidence).toEqual([path.join(dir, 'harmony-ui.json'), path.join(dir, 'harmony.jpeg')])
+    expect(run.mock.calls.some(([, args]) => args.includes('snapshot_display'))).toBe(true)
+    expect(run.mock.calls.some(([, args]) => args.includes('screenCap'))).toBe(true)
+    await expect(assertImage(path.join(dir, 'harmony.jpeg'))).resolves.toBeUndefined()
   })
 
   it('多个目标不得默认选择第一个', () => {

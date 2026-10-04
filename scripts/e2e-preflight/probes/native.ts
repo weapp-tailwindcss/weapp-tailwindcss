@@ -126,6 +126,7 @@ export async function harmony(ctx: ProbeContext): Promise<ProbeOutput> {
   const remote = `/data/local/tmp/wt-preflight-${ctx.runId}`
   const layout = path.join(ctx.dir, 'harmony-ui.json')
   const screenshot = path.join(ctx.dir, 'harmony.png')
+  let screenshotEvidence = screenshot
   try {
     await shell('uitest', 'dumpLayout', '-p', `${remote}.json`)
     await command(tool.file, [...args, 'file', 'recv', `${remote}.json`, layout])
@@ -133,13 +134,30 @@ export async function harmony(ctx: ProbeContext): Promise<ProbeOutput> {
     if (!tree || typeof tree !== 'object' || Object.keys(tree).length === 0) {
       throw new Error('Harmony UI 结构为空。')
     }
-    await shell('uitest', 'screenCap', '-p', `${remote}.png`)
-    await command(tool.file, [...args, 'file', 'recv', `${remote}.png`, screenshot])
-    await access(screenshot)
-    await assertImage(screenshot)
+    try {
+      await shell('uitest', 'screenCap', '-p', `${remote}.png`)
+      await command(tool.file, [...args, 'file', 'recv', `${remote}.png`, screenshot])
+      await access(screenshot)
+      await assertImage(screenshot)
+    }
+    catch (screenCapError) {
+      // 部分 DevEco 模拟器的 uitest screenCap 无法取得 pixelMap，使用系统截图接口保留同等设备证据。
+      const fallbackRemote = `${remote}.jpeg`
+      const fallbackScreenshot = path.join(ctx.dir, 'harmony.jpeg')
+      try {
+        await shell('snapshot_display', '-f', fallbackRemote)
+        await command(tool.file, [...args, 'file', 'recv', fallbackRemote, fallbackScreenshot])
+        await access(fallbackScreenshot)
+        await assertImage(fallbackScreenshot)
+        screenshotEvidence = fallbackScreenshot
+      }
+      catch (fallbackError) {
+        throw new Error(`Harmony 截图失败：screenCap=${String(screenCapError)}；snapshot_display=${String(fallbackError)}`)
+      }
+    }
   }
   finally {
-    await shell('rm', '-f', `${remote}.json`, `${remote}.png`)
+    await shell('rm', '-f', `${remote}.json`, `${remote}.png`, `${remote}.jpeg`)
   }
-  return { detail: 'Harmony 系统查询、布局读取和截图通过。', binding, evidence: [layout, screenshot] }
+  return { detail: 'Harmony 系统查询、布局读取和截图通过。', binding, evidence: [layout, screenshotEvidence] }
 }
