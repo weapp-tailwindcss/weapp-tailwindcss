@@ -2,10 +2,17 @@ import assert from 'node:assert/strict'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { ESLint } from 'eslint'
-import { it } from 'vitest'
+import { beforeAll, it } from 'vitest'
 
 const root = fileURLToPath(new URL('../../', import.meta.url))
 const eslint = new ESLint({ cwd: root, overrideConfigFile: path.join(root, 'eslint.config.js') })
+
+beforeAll(async () => {
+  // 首次查询会加载真实配置及插件图；初始化应由 setup 管理，不计入首个路径合同的超时。
+  const config = await eslint.calculateConfigForFile(path.join(root, 'scripts', 'agents', 'check.mjs'))
+  assert.ok(config, '仓库维护的脚本必须加载真实 ESLint 配置')
+  assert.ok(Object.keys(config.rules ?? {}).length > 0, '真实 ESLint 配置必须包含检查规则')
+})
 
 it.each([
   ['e2e', 'reports', 'local-full-run', 'run-example', 'runner.mjs'],
