@@ -19,14 +19,18 @@ else
   export PATH="$task_node_dir/bin:$PATH"
 fi
 
-task_pnpm_version="$(node -p 'require("./package.json").packageManager.replace(/^pnpm@/, "")')"
-task_pnpm_dir="$(mktemp -d)"
-task_pnpm_archive="$task_pnpm_dir/pnpm.tgz"
-curl --fail --location --retry 3 \
-  "https://registry.npmjs.org/pnpm/-/pnpm-$task_pnpm_version.tgz" \
-  -o "$task_pnpm_archive"
-tar -xzf "$task_pnpm_archive" -C "$task_pnpm_dir"
-export PATH="$task_pnpm_dir/package:$PATH"
+task_package_manager="$(node -p 'require("./package.json").packageManager')"
+task_pnpm_version="${task_package_manager#*@}"
+task_corepack_home="$(mktemp -d)"
+export COREPACK_HOME="$task_corepack_home"
+corepack enable
+corepack prepare "$task_package_manager" --activate
+task_pnpm_entry="$COREPACK_HOME/v1/pnpm/$task_pnpm_version/bin/pnpm.mjs"
+test -f "$task_pnpm_entry"
+task_pnpm_bin="$(mktemp -d)"
+printf '#!/bin/sh\nexec node "%s" "$@"\n' "$task_pnpm_entry" > "$task_pnpm_bin/pnpm"
+chmod +x "$task_pnpm_bin/pnpm"
+export PATH="$task_pnpm_bin:$PATH"
 pnpm install --frozen-lockfile
 
 if [ "${NATIVE_CSS_ONLY:-0}" = 1 ]; then
