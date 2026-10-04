@@ -159,6 +159,23 @@ describe('Rust 完整 JS 转换适配器', () => {
     expect(native.transformer.transform).toHaveBeenCalledOnce()
   })
 
+  it('自定义集合与映射 getter 不由原生快照接管', async () => {
+    const { createJsHandler } = await import('@/js')
+    const classes = new Set(['w-[100px]'])
+    classes.has = vi.fn(() => false)
+    const handler = createJsHandler({ experimentalJsFastPath: 'oxc' })
+    expect(handler(source, classes).code).toBe(source)
+    expect(classes.has).toHaveBeenCalledWith('w-[100px]')
+
+    const escapeMap: Record<string, string> = {}
+    const getter = vi.fn(() => '_custom_')
+    Object.defineProperty(escapeMap, '[', { enumerable: true, get: getter })
+    expect(createJsHandler({ ...options, escapeMap })(source).code).toContain('w-_custom_100px_B')
+    expect(getter).toHaveBeenCalledOnce()
+    expect(native.load).not.toHaveBeenCalled()
+    expect(native.transformer.transform).not.toHaveBeenCalled()
+  })
+
   it('原生拒绝的语义必须交给 Babel，不能再次进入 Oxc', async () => {
     const { createJsHandler } = await import('@/js')
     const { jsHandler } = await import('@/js/babel')

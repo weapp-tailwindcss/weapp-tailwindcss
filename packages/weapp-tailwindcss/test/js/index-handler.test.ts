@@ -2,6 +2,7 @@ import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createJsHandler } from '@/js'
 import * as babel from '@/js/babel'
+import { defaultJsPreserveClass } from '@/js/default-preserve'
 
 const STYLED_TAG_REGEXP = /^styled$/
 const OVERRIDE_CALL_REGEXP = /^override$/
@@ -76,7 +77,9 @@ describe('createJsHandler', () => {
     const [, resolvedAgain] = spy.mock.calls[1]
     expect(resolved).toBe(resolvedAgain)
     expect(resolved.classNameSet).toBeUndefined()
-    expect(resolved.escapeMap).toBe(base.escapeMap)
+    expect(resolved.escapeMap).toEqual(base.escapeMap)
+    expect(resolved.escapeMap).not.toBe(base.escapeMap)
+    expect(Object.isFrozen(resolved.escapeMap)).toBe(true)
     expect(resolved.ignoreCallExpressionIdentifiers).toBe(base.ignoreCallExpressionIdentifiers)
     expect(resolved.needEscaped).toBe(true)
     expect(resolved.alwaysEscape).toBe(true)
@@ -117,7 +120,7 @@ describe('createJsHandler', () => {
   it('caches repeated short-source transform results for the same resolved options', () => {
     const spy = vi.spyOn(babel, 'jsHandler').mockReturnValue({ code: 'cached-result' })
     const base = createBaseOptions()
-    const handler = createJsHandler(base)
+    const handler = createJsHandler({ ...base, jsPreserveClass: defaultJsPreserveClass })
     const classNameSet = new Set(['foo'])
     const override = {
       wrapExpression: true as const,
