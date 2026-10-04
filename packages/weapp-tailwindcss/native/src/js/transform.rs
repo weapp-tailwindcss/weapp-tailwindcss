@@ -26,6 +26,7 @@ pub struct JsTransformOptions {
     pub unescape_unicode: Option<bool>,
     pub module_graph: Option<bool>,
     pub ignore_tagged_templates: Option<bool>,
+    pub preserve_star: Option<bool>,
 }
 
 struct CachedAnalysis {

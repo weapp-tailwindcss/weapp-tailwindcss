@@ -85,6 +85,10 @@ fn transform_literal(
         let plan = plans
             .entry((candidate.clone(), class_context))
             .or_insert_with(|| {
+                // 默认回调的保留决策优先于 alwaysEscape 与集合命中。
+                if options.preserve_star == Some(true) && candidate == "*" {
+                    return None;
+                }
                 if options.always_escape != Some(true)
                     && !class_context
                     && candidates::is_plain_slash_path(&candidate)

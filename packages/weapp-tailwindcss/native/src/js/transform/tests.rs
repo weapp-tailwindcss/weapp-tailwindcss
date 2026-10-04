@@ -196,6 +196,37 @@ fn eval_requires_babel_and_unambiguous_retains_script_semantics() {
 }
 
 #[test]
+fn default_star_preservation_precedes_matching_and_changes_per_call() {
+    let mut instance = transformer(&["*", "**", "w-[1px]"]);
+    instance.escape.set(b'*', "_s".to_owned());
+    let source = "const cls = '* ** w-[1px]'";
+    for always_escape in [false, true] {
+        for preserve_star in [true, false, true, false] {
+            let result = instance.transform(
+                utf16(source),
+                "js".into(),
+                "module".into(),
+                false,
+                JsTransformOptions {
+                    always_escape: Some(always_escape),
+                    preserve_star: Some(preserve_star),
+                    ..Default::default()
+                },
+            );
+            assert_eq!(
+                result.as_deref(),
+                Some(if preserve_star {
+                    "const cls = '* _s_s w-_b1px_B'"
+                } else {
+                    "const cls = '_s _s_s w-_b1px_B'"
+                })
+            );
+        }
+    }
+    assert_eq!(instance.cache.len(), 1);
+}
+
+#[test]
 fn bounds_instance_analysis_cache() {
     let mut instance = transformer(&["w-[1px]"]);
     for index in 0..140 {

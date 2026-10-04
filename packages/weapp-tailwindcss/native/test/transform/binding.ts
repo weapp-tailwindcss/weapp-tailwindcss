@@ -5,7 +5,7 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 
 export interface NativeTransformer {
-  transform: (source: string, lang: ParseConfig['lang'], sourceType: ParseConfig['sourceType'], preserveParens: boolean, options: { alwaysEscape?: boolean, unescapeUnicode?: boolean, moduleGraph?: boolean, ignoreTaggedTemplates?: boolean }) => string | null
+  transform: (source: string, lang: ParseConfig['lang'], sourceType: ParseConfig['sourceType'], preserveParens: boolean, options: { alwaysEscape?: boolean, unescapeUnicode?: boolean, moduleGraph?: boolean, ignoreTaggedTemplates?: boolean, preserveStar?: boolean }) => string | null
   replaceClassNames: (classes: string[]) => boolean
 }
 

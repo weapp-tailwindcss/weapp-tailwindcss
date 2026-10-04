@@ -1,6 +1,7 @@
 import type { CssPreflightOptions, UserDefinedOptions } from './types'
 import { isAllowedClassName, MappingChars2String } from '@weapp-tailwindcss/escape'
 import { DEFAULT_PARSE_CACHE_MAX_ENTRIES, DEFAULT_PARSE_CACHE_MAX_SOURCE_LENGTH } from './js/babel/cache-options'
+import { defaultJsPreserveClass } from './js/default-preserve'
 import { noop } from './utils'
 
 const CSS_FILE_PATTERN = /.+\.(?:wx|ac|jx|tt|q|c|ty|dd)ss$/
@@ -94,15 +95,7 @@ export function getDefaultOptions(): UserDefinedOptions {
     cssChildCombinatorReplaceValue: ['view', 'text'],
     inlineWxs: false,
     injectAdditionalCssVarScope: false,
-    jsPreserveClass: (keyword) => {
-      /**
-       * 默认保留 keyword
-       */
-      if (keyword === '*') {
-        return true
-      }
-      return false
-    },
+    jsPreserveClass: defaultJsPreserveClass,
     disabledDefaultTemplateHandler: false,
     cssSelectorReplacement: {
       root: ['page', '.tw-root', 'wx-root-portal-content'],

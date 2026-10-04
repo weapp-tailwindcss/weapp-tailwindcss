@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict'
 import process from 'node:process'
 import { MappingChars2String } from '@weapp-tailwindcss/escape'
+import { getDefaultOptions } from '../../../src/defaults'
 import { jsHandler } from '../../../src/js/babel'
+import { defaultJsPreserveClass } from '../../../src/js/default-preserve'
 import { native } from './binding'
 import { classes, sources } from './fixtures'
 
@@ -74,6 +76,24 @@ for (const lang of ['js', 'jsx', 'ts', 'tsx'] as const) {
     }
   }
 }
-process.stdout.write(`${JSON.stringify({ compared, fallback, failures: failures.slice(0, 30), failureCount: failures.length }, null, 2)}\n`)
+assert.equal(getDefaultOptions().jsPreserveClass, defaultJsPreserveClass)
+assert.equal(getDefaultOptions().jsPreserveClass, getDefaultOptions().jsPreserveClass)
+const preserveSources = ['const cls = "* w-[10px]"', 'const cls = `* w-[10px]`', 'const cls = {className: "* w-[10px]"}', 'const cls = "** *:w-[10px] * w-[10px]"']
+const preservedNames = ['*', '**', '*:w-[10px]', 'w-[10px]']
+const preserveTransformer = native.createJsTransformer(preservedNames, Object.entries(MappingChars2String).map(([character, replacement]) => ({ character, replacement })))!
+let preserveComparisons = 0
+for (const alwaysEscape of [false, true]) {
+  for (const source of preserveSources) {
+    // 同一实例与同一解析结果交替切换，保留决策不能藏进解析缓存。
+    for (const preserveStar of [true, false, true, false]) {
+      const expected = jsHandler(source, { classNameSet: new Set(preservedNames), alwaysEscape, jsPreserveClass: preserveStar ? defaultJsPreserveClass : undefined, babelParserOptions: { sourceType: 'module' } })
+      assert.equal(expected.error, undefined)
+      const actual = preserveTransformer.transform(source, 'js', 'module', false, { alwaysEscape, preserveStar })
+      assert.equal(actual, expected.code, JSON.stringify({ source, alwaysEscape, preserveStar }))
+      preserveComparisons++
+    }
+  }
+}
+process.stdout.write(`${JSON.stringify({ compared, fallback, preserveComparisons, failures: failures.slice(0, 30), failureCount: failures.length }, null, 2)}\n`)
 assert.equal(failures.length, 0)
 assert.ok(compared > 3000, '确认有效输入真实进入 Rust 完整转译')
