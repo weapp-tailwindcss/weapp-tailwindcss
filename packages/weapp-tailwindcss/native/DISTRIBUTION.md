@@ -15,6 +15,8 @@
 
 包名为 `@weapp-tailwindcss/native-<后缀>`。根入口加载 JS/WXML binding，`/postcss` 加载 CSS binding。平台包不包含安装脚本；用户不需要 Rust，也不会在安装过程中额外下载二进制。可选依赖被禁用、平台不支持或 binary 加载失败时，原有 JavaScript 回退仍由各消费者控制。`WEAPP_TW_NATIVE=required` 用于明确要求原生实现的验收。
 
+每个平台包同时发布 `THIRD_PARTY_LICENSES.txt`，由暂存步骤从 `packages/postcss/native/THIRD_PARTY_LICENSES.txt` 复制。许可证与 Rust 源码一同进入源摘要；发布前检查文本一致性和包的 `files` 声明，打包测试检查 tarball 的实际内容。不得因平台包不包含 Rust 源码而遗漏第三方许可。
+
 ## 版本与变更意图
 
 八个平台包与 `weapp-tailwindcss`、CLI 属于同一 repoctl/pnpm 固定版本组。PostCSS 保留自己的版本序列，不加入该固定组。两个消费者均以 `workspace:*` 依赖平台包，打包后得到当前平台包的精确版本。
@@ -32,7 +34,7 @@
 1. 两个 crate 的 `cargo test --locked` 与 `cargo clippy --locked --all-targets -- -D warnings`。
 2. 两个 release binding 构建、平台包暂存，以及 TypeScript 消费包构建。
 3. JS/WXML 真实 ABI 差分、CSS 原生回归和公开 tokenizer/JS 条件语义回归。
-4. 平台包 tarball 的隔离解析与离线安装，在安装后执行 JS/WXML/CSS Node-API。
+4. 平台包 tarball 的隔离解析与离线安装，在两种路径均执行 JS/WXML/CSS Node-API，包括 JS transformer 的创建、复用、类名集合替换以及 CSS 值转换的单项/批量接口。
 
 CI 在 Node 24 和 core 最低受支持的 Node 22.18.0 上运行消费者验证，另外在独立 PostCSS 最低受支持的 Node 20.19.0 上验证 CSS 平台包离线安装与真实 ABI。共享平台包的 engines 覆盖两个消费者范围；core 自身要求不变。Linux GNU 使用 manylinux glibc 2.28 镜像构建；musl 使用 Alpine；CPU 由原生 arm64/x64 runner 提供，不将交叉编译成功当成目标平台运行通过。
 
@@ -42,6 +44,6 @@ CI 在 Node 24 和 core 最低受支持的 Node 22.18.0 上运行消费者验证
 
 [Native Compiler Artifacts](../../../.github/workflows/native.yml) 由 Release 与 Release Gate 复用。八个任务全部通过后，上游同一 workflow run 下载产物，执行 `pnpm native:artifacts:stage`，最后通过既有 repoctl 发布流程。
 
-`pnpm native:artifacts:verify` 要求两套内核、八个平台全部存在，并检查目标、源码摘要、二进制 SHA-256、消费者版本、平台包版本、os/cpu/libc、导出和无安装脚本。源码摘要统一 LF/CRLF，避免 Windows checkout 差异产生误判。缺失平台、混入旧产物或内容不匹配时立即失败，不使用本机 binding 填补其他目标。
+`pnpm native:artifacts:verify` 要求两套内核、八个平台全部存在，并检查目标、源码摘要、二进制 SHA-256、消费者版本、平台包版本、os/cpu/libc、导出、第三方许可和无安装脚本。源码摘要统一 LF/CRLF，避免 Windows checkout 差异产生误判。缺失平台、混入旧产物或内容不匹配时立即失败，不使用本机 binding 填补其他目标。
 
 `native/test/package.mjs` 只读取当前平台产物；`test/native-distribution.test.ts` 验证缺失、篡改、版本漂移、错误 libc 和跨内核错配的失败边界。未执行的远端矩阵不得记为已验证。

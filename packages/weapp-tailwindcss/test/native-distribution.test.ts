@@ -4,7 +4,7 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { subset } from 'semver'
 import { afterEach, describe, expect, it } from 'vitest'
-import { sourceDigest, stageBinding, verifyBinding, verifyDistribution, writeBindingMetadata } from '../native/distribution.mjs'
+import { sourceDigest, stageBinding, thirdPartyLicenseFile, verifyBinding, verifyDistribution, writeBindingMetadata } from '../native/distribution.mjs'
 import { bindingFileName, nativeTargets } from '../native/targets.mjs'
 
 const directories: string[] = []
@@ -22,6 +22,9 @@ function fixture() {
       writeFileSync(join(root, name), `${kernel}\n`)
     }
     writeFileSync(join(root, 'src', 'lib.rs'), 'pub fn value() {}\n')
+    if (kernel === 'postcss') {
+      writeFileSync(join(root, thirdPartyLicenseFile), 'MIT license fixture\n')
+    }
   }
   for (const [target, { suffix }] of Object.entries(nativeTargets)) {
     const platformRoot = join(repoRoot, 'packages-native', suffix)
@@ -34,6 +37,7 @@ function fixture() {
       cpu: [cpu],
       ...(os === 'linux' ? { libc: [libc === 'gnu' ? 'glibc' : 'musl'] } : {}),
       exports: { '.': `./${bindingFileName(suffix)}`, './postcss': `./${bindingFileName(suffix, 'postcss')}` },
+      files: ['*.node', thirdPartyLicenseFile],
     }))
     for (const [kernel, root] of Object.entries(roots)) {
       writeFileSync(join(root, 'bindings', bindingFileName(suffix, kernel)), `${target}:${kernel}`)
@@ -73,6 +77,28 @@ describe('native distribution release gates', () => {
     expect(() => verifyDistribution(roots, repoRoot)).toThrow()
   })
 
+  it('rejects a missing third-party license', () => {
+    const { repoRoot, roots } = fixture()
+    rmSync(join(repoRoot, 'packages-native', 'darwin-x64', thirdPartyLicenseFile))
+    expect(() => verifyDistribution(roots, repoRoot)).toThrow(thirdPartyLicenseFile)
+  })
+
+  it('rejects a changed third-party license', () => {
+    const { repoRoot, roots } = fixture()
+    writeFileSync(join(repoRoot, 'packages-native', 'linux-arm64-gnu', thirdPartyLicenseFile), 'different license')
+    expect(() => verifyDistribution(roots, repoRoot)).toThrow(`mismatched ${thirdPartyLicenseFile}`)
+  })
+
+  it('includes the license in the normalized source digest', () => {
+    const { roots } = fixture()
+    const file = join(roots.postcss, thirdPartyLicenseFile)
+    const before = sourceDigest(roots.postcss)
+    writeFileSync(file, readFileSync(file, 'utf8').replaceAll('\n', '\r\n'))
+    expect(sourceDigest(roots.postcss)).toBe(before)
+    writeFileSync(file, 'updated license\n')
+    expect(sourceDigest(roots.postcss)).not.toBe(before)
+  })
+
   it('rejects changed bytes even when the metadata still names the expected target', () => {
     const { repoRoot, roots } = fixture()
     writeFileSync(join(repoRoot, 'packages-native', 'win32-arm64-msvc', bindingFileName('win32-arm64-msvc')), 'different binary')
@@ -93,7 +119,7 @@ describe('native distribution release gates', () => {
     expect(() => verifyBinding('aarch64-apple-darwin', file, metadata, roots.core, 'postcss')).toThrow('kernel')
   })
 
-  it.each(['version', 'libc', 'scripts', 'exports'])('rejects an unsafe platform package manifest: %s', (key) => {
+  it.each(['version', 'libc', 'scripts', 'exports', 'files'])('rejects an unsafe platform package manifest: %s', (key) => {
     const { repoRoot, roots } = fixture()
     const manifestPath = join(repoRoot, 'packages-native', 'linux-x64-gnu', 'package.json')
     const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))

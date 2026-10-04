@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { copyFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import process from 'node:process'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -8,6 +8,7 @@ import { bindingFileName, nativePackagePrefix, nativeTargets } from './targets.m
 export const nativeRoot = dirname(fileURLToPath(import.meta.url))
 export const repositoryRoot = resolve(nativeRoot, '..', '..', '..')
 export const kernelRoots = { core: nativeRoot, postcss: resolve(nativeRoot, '..', '..', 'postcss', 'native') }
+export const thirdPartyLicenseFile = 'THIRD_PARTY_LICENSES.txt'
 
 function metadataFile(kernel) {
   return kernel === 'core' ? 'native-metadata.json' : 'postcss-native-metadata.json'
@@ -38,6 +39,9 @@ export function sourceDigest(root = nativeRoot) {
   }
   for (const name of ['Cargo.toml', 'Cargo.lock', 'build.rs']) {
     hash.update(name).update('\0').update(content(join(root, name))).update('\0')
+  }
+  if (existsSync(join(root, thirdPartyLicenseFile))) {
+    hash.update(thirdPartyLicenseFile).update('\0').update(content(join(root, thirdPartyLicenseFile))).update('\0')
   }
   visit(join(root, 'src'), ['src'])
   return hash.digest('hex')
@@ -95,6 +99,9 @@ export function stageBinding(target, root = nativeRoot, repoRoot = repositoryRoo
   }
   mkdirSync(destination, { recursive: true })
   copyFileSync(input, join(destination, filename))
+  if (kernel === 'postcss') {
+    copyFileSync(join(root, thirdPartyLicenseFile), join(destination, thirdPartyLicenseFile))
+  }
   writeFileSync(join(destination, metadataFile(kernel)), `${JSON.stringify(metadata, null, 2)}\n`)
 }
 
@@ -108,6 +115,12 @@ export function verifyDistribution(roots = kernelRoots, repoRoot = repositoryRoo
     }
     if (manifest.scripts) {
       throw new Error(`Native package ${suffix} must not execute lifecycle scripts`)
+    }
+    if (!manifest.files?.includes(thirdPartyLicenseFile)) {
+      throw new Error(`Native package ${suffix} must publish ${thirdPartyLicenseFile}`)
+    }
+    if (!readFileSync(join(directory, thirdPartyLicenseFile)).equals(readFileSync(join(roots.postcss, thirdPartyLicenseFile)))) {
+      throw new Error(`Native package ${suffix} has mismatched ${thirdPartyLicenseFile}`)
     }
     const [os, cpu, libc] = suffix.split('-')
     if (JSON.stringify(manifest.os) !== JSON.stringify([os]) || JSON.stringify(manifest.cpu) !== JSON.stringify([cpu])) {

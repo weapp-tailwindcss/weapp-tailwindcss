@@ -17,6 +17,7 @@
   "main": "weapp-tailwindcss-native.darwin-arm64.node",
   "files": [
     "*.node",
+    "THIRD_PARTY_LICENSES.txt",
     "native-metadata.json",
     "postcss-native-metadata.json"
   ],
