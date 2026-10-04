@@ -82,7 +82,7 @@ process.once('SIGINT', stop)
 process.once('SIGTERM', stop)
 
 async function main() {
-  process.env.WEAPP_TW_TARGET = 'web'
+  process.env.WEAPP_TW_TARGET = options.target
   original = await readFile(sourceFile, 'utf8')
   variants = makeVariants(original)
   parser = instrumentParser(options.root, options.mode)
@@ -96,6 +96,7 @@ async function main() {
   temporary = await mkdtemp(path.join(os.tmpdir(), 'weapp-oxc-vite-'))
   const demoRequire = createRequire(path.join(project, 'package.json'))
   const repositoryRequire = createRequire(path.join(options.root, 'package.json'))
+  process.env.NODE_ENV = 'production'
   parser.phase('build')
   const buildStarted = performance.now()
   const vite = await import(pathToFileURL(demoRequire.resolve('vite')).href) as typeof import('vite')
@@ -113,9 +114,12 @@ async function main() {
   report.build = { milliseconds: buildMs, ...fingerprintBuild(built) }
   assert(!interrupted, 'worker 收到中断。')
   assert.equal(report.serverErrors.length, 0, '生产构建记录了 server error。')
+  // Vite build 会保留 NODE_ENV；显式切换到真实 dev 命令的环境，避免禁用 Vue HMR。
+  process.env.NODE_ENV = 'development'
   parser.phase('dev-startup')
   const startupStarted = performance.now()
   server = await vite.createServer({ root: project, configFile, customLogger, clearScreen: false, cacheDir: path.join(temporary, 'dev-cache'), server: { host: '127.0.0.1', port: 0, strictPort: true } })
+  assert.equal(server.config.isProduction, false, 'HMR 验证必须使用开发配置。')
   assert(!interrupted, 'worker 收到中断。')
   await server.listen()
   assert(!interrupted, 'worker 收到中断。')

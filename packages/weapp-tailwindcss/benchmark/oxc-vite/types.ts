@@ -2,6 +2,7 @@ export type TransferMode = 'normal' | 'raw'
 export type Phase = 'self-check' | 'build' | 'dev-startup' | 'text' | 'add' | 'remove' | 'restore'
 
 export interface WorkerOptions {
+  target: 'web' | 'weapp'
   root: string
   output: string
   mode: TransferMode

@@ -55,16 +55,45 @@ Windows PowerShell 可先设置 `$env:CI='1'`，再运行对应 pnpm 测试命�
 
 每轮创建两个独立 Node worker，按 normal/raw 交替先后顺序串行采样；每阶段预热 5 对，正式 20 对，重复 3 轮。每对比较全部分析事实和最终代码，240 对全部一致。首次分析计时区严格发生 1 次解析，缓存命中计时区严格为 0 次。每对保存输入、事实和输出哈希，前后核对被测源码与 HEAD 未变化。
 
-| 阶段 | 普通 AST p50 | raw transfer p50 | 比率 |
-| --- | ---: | ---: | ---: |
-| 分析缓存未命中 | 11.090 ms | 3.449 ms | 3.216 倍 |
-| 分析缓存命中 | 0.0455 ms | 0.0428 ms | 1.064 倍 |
-| JS handler 缓存未命中 | 11.803 ms | 4.488 ms | 2.630 倍 |
-| JS handler 缓存命中 | 1.295 ms | 1.266 ms | 1.022 倍 |
+| 阶段                  | 普通 AST p50 | raw transfer p50 |     比率 |
+| --------------------- | -----------: | ---------------: | -------: |
+| 分析缓存未命中        |    11.090 ms |         3.449 ms | 3.216 倍 |
+| 分析缓存命中          |    0.0455 ms |        0.0428 ms | 1.064 倍 |
+| JS handler 缓存未命中 |    11.803 ms |         4.488 ms | 2.630 倍 |
+| JS handler 缓存命中   |     1.295 ms |         1.266 ms | 1.022 倍 |
 
 p50 使用 nearest-rank 统计；三轮分析缓存未命中的比率分别为 3.293、3.090、3.226，均优于普通 AST。缓存命中差异很小，不据此宣称稳定优化。这里的 cold 指预热进程里的分析缓存未命中，不是进程冷启动。
 
 采样时 HEAD 为 `d974423089b62aac0f0005c0cbe569b9a0500c7b`，包含本次尚未提交的修复；因此用实际源码哈希锁定被测实现：`src/js/fast-path/analysis.ts` 为 `df43581a21ffcf112864b0e2591915fe5851dbca4f01929ae266ae82f625314c`，`src/js/oxc-parser.ts` 为 `cdf8da2bed22dee03f9c23cbaeac55a246304c2f04066b82d00eabba2065b568`。完整逐样本数据保存在忽略的 `.tmp/oxc-raw-transfer/benchmark.json`，可用上述持久脚本重新生成。
+
+### 真实 Vite demo
+
+使用 `demo/web/vue-vite-tailwindcss-v4` 的真实 Vite 8.3.0 配置与本 worktree 构建产物。每个模式为独立 Node 进程，生产构建 `write:false`，在同一开发服务与 headless Chromium 页面依次执行文本、新增类、删除和恢复；每次同时校验 DOM、计算样式与页面 session。normal/raw 的完整构建产物哈希及各 HMR 阶段结果均一致。App.vue 逐字恢复，所有临时服务、浏览器与缓存完成清理，未修改 demo/static 基线。
+
+```sh
+pnpm exec tsx packages/weapp-tailwindcss/benchmark/oxc-vite/runner.ts --root . --output .tmp/oxc-vite/self-check.json --self-check
+pnpm exec tsx packages/weapp-tailwindcss/benchmark/oxc-vite/runner.ts --root . --output .tmp/oxc-vite/report.json --pairs 3
+pnpm exec tsx packages/weapp-tailwindcss/benchmark/oxc-vite/runner.ts --root . --output .tmp/oxc-vite/report-weapp.json --target weapp --pairs 3
+pnpm exec tsx packages/weapp-tailwindcss/benchmark/oxc-vite/runner.ts --root . --output .tmp/oxc-vite/repeat-weapp.json --target weapp --pairs 3
+```
+
+Web 目标三对采样通过，但实际 core Oxc 调用数为 0，不能用它归因 raw transfer 收益。其构建中位数 normal/raw 为 1.060/1.007 秒，文本 HMR 为 69.8/65.0 ms，新增类 HMR 为 66.3/66.3 ms；这些只作为该路径的回归记录。
+
+`weapp` 目标确实调用 Oxc：每个进程在 production build 中 2 次、开发启动中 3 次、文本/新增类/恢复各 1 次，删除阶段复用缓存。每组三对共 48 次调用，失败数为 0。首次正式三对及一次预先限定的三对复测全部通过；没有继续反复采样以追求更好的数字。
+
+| 小程序输出目标     |                  首轮普通/raw |              有限复测普通/raw |
+| ------------------ | ----------------------------: | ----------------------------: |
+| 冷构建中位数       |              1.339 / 1.464 秒 |              2.001 / 1.969 秒 |
+| 文本 HMR 中位数    |               128.0 / 86.3 ms |              231.5 / 173.6 ms |
+| 新增类 HMR 中位数  |              146.6 / 168.3 ms |              174.3 / 189.7 ms |
+| 删除 HMR 中位数    |              145.9 / 168.4 ms |              135.6 / 148.5 ms |
+| Node 峰值 RSS 范围 | 626.6–628.2 / 575.3–622.4 MiB | 621.5–635.6 / 617.9–629.8 MiB |
+
+冷构建包含 Vite 加载与 API 构建，不包含进程启动，也未清理操作系统文件缓存。HMR 的 20ms 观察轮询会影响小差异。内存是单个 worker 的 `process.resourceUsage().maxRSS`，不含 Chromium/其他子进程。源码/依赖输入哈希为 `50727f4cfdf2fc8cacb2db23841d25260eefad0847fef1b28ef5ff65907081a5`，小程序目标完整产物哈希为 `560fddf7402079a67bcde204d9d2c468a23fc01c1393241923390ad8b28d346d`。
+
+这些数据没有证明稳定的整体构建加速。首次 raw 冷构建中位数高于普通路径，复测方向反转；复测还保留了普通模式 7.072 秒的首次样本，原因没有定位，不归因为已证实的环境噪声。新增类与删除 HMR 在两组采样中的 raw 中位数均偏高，因此不能把微基准 3.216 倍写成项目构建/HMR 的收益。所有首轮、复测与基础设施验证数据保留在 `.tmp/oxc-vite/`。
+
+首次基础设施验证失败记录为 `.tmp/oxc-vite/verify.json`：`vite.build()` 保留 `NODE_ENV=production`，同进程随后创建的 dev server 因此关闭 Vue HMR，文本保存变成整页刷新。按实际 CLI 阶段分别设置 production/development 并断言开发配置后，`.tmp/oxc-vite/verify-development.json` 与后续正式测量通过。该失败属于测量脚本生命周期，不作为产品回归，也没有通过允许 reload 或增加超时绕过。
 
 ## 适用边界
 

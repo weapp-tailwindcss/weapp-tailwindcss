@@ -8,13 +8,14 @@ export function parseOptions(args: string[]) {
   let pairs = 3
   let timeoutMs = 30_000
   let selfCheck = false
+  let target: 'web' | 'weapp' = 'web'
   for (let index = 0; index < args.length; index++) {
     const flag = args[index]!
     if (flag === '--self-check') {
       selfCheck = true
       continue
     }
-    assert(['--root', '--output', '--pairs', '--timeout-ms'].includes(flag), `未知参数：${flag}`)
+    assert(['--root', '--output', '--pairs', '--timeout-ms', '--target'].includes(flag), `未知参数：${flag}`)
     const value = args[++index]
     assert(value && !value.startsWith('--'), `参数缺少值：${flag}`)
     if (flag === '--root') {
@@ -29,10 +30,14 @@ export function parseOptions(args: string[]) {
     if (flag === '--timeout-ms') {
       timeoutMs = Number(value)
     }
+    if (flag === '--target') {
+      assert(value === 'web' || value === 'weapp', '--target 必须是 web 或 weapp。')
+      target = value
+    }
   }
   assert(Number.isInteger(pairs) && pairs >= 1 && pairs <= 20, '--pairs 必须是 1–20。')
   assert(Number.isInteger(timeoutMs) && timeoutMs >= 1000 && timeoutMs <= 120_000, '--timeout-ms 必须是 1000–120000。')
-  return { root: path.resolve(root), output: output ?? path.resolve(root, '.tmp', 'oxc-vite', 'report.json'), pairs, timeoutMs, selfCheck }
+  return { root: path.resolve(root), output: output ?? path.resolve(root, '.tmp', 'oxc-vite', 'report.json'), pairs, timeoutMs, selfCheck, target }
 }
 
 export function pairOrder(pair: number) {
