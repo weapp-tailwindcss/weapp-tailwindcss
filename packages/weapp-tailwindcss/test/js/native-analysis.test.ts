@@ -99,28 +99,12 @@ describe('Rust JS 分析与缓存边界', () => {
 })
 
 describe('Rust 运行时签名', () => {
-  it('保留原生空签名并跳过 JS AST 解析', async () => {
-    const { tryCreateJsRuntimeAffectingSignature } = await import('@/compiler/runtime-affecting-signature/js')
-    const parser = await import('@/js/oxc-parser')
-    const parse = vi.spyOn(parser, 'parseOxcSync')
-    native.compiler.jsRuntimeSignature.mockReturnValue('')
-    expect(tryCreateJsRuntimeAffectingSignature('let n = 1')).toBe('')
-    expect(native.compiler.jsRuntimeSignature).toHaveBeenCalledExactlyOnceWith('let n = 1')
-    expect(parse).not.toHaveBeenCalled()
-  })
-
-  it('不支持时复用 Oxc，原生执行失败不静默回退', async () => {
+  it('高频 runtime snapshot 沿用 Oxc 签名，避免逐文件 Node-API 调用', async () => {
     const { tryCreateJsRuntimeAffectingSignature } = await import('@/compiler/runtime-affecting-signature/js')
     const parser = await import('@/js/oxc-parser')
     const parse = vi.spyOn(parser, 'parseOxcSync')
     expect(tryCreateJsRuntimeAffectingSignature(source)).toBe('s:w-[100px]')
     expect(parse).toHaveBeenCalledOnce()
-    parse.mockClear()
-    const error = new Error('native signature failed')
-    native.compiler.jsRuntimeSignature.mockImplementation(() => {
-      throw error
-    })
-    expect(() => tryCreateJsRuntimeAffectingSignature(source)).toThrow(error)
-    expect(parse).not.toHaveBeenCalled()
+    expect(native.compiler.jsRuntimeSignature).not.toHaveBeenCalled()
   })
 })
