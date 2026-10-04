@@ -1,12 +1,14 @@
 import valueParser from 'postcss-value-parser'
-import { loadNativeCssBinding } from '../../native/binding'
+import { loadNativeCssBinding, nativeCssConfigured } from '../../native/binding'
 
 export function normalizeUniAppXTransformValue(value: string) {
   if (!value.toLowerCase().includes('translate(') || !value.includes(',')) {
     return value
   }
 
-  const native = loadNativeCssBinding()?.normalizeUvueTransformValue(value)
+  const native = nativeCssConfigured
+    ? loadNativeCssBinding()?.normalizeUvueTransformValue(value)
+    : undefined
   if (native !== undefined && native !== null) {
     return native
   }
@@ -51,7 +53,9 @@ export function normalizeUniAppXTransformValues(values: string[]) {
   if (candidates.length === 0) {
     return values
   }
-  const native = loadNativeCssBinding()?.normalizeUvueTransformValues(candidates)
+  const native = nativeCssConfigured
+    ? loadNativeCssBinding()?.normalizeUvueTransformValues(candidates)
+    : undefined
   if (native && native.length !== candidates.length) {
     throw new Error('PostCSS Rust 内核返回了不完整的 transform 声明批次')
   }

@@ -1,7 +1,7 @@
 import type { Declaration as PostcssDeclaration, Root, Rule } from 'postcss'
 import { rule as createRule, Declaration } from 'postcss'
 import valueParser from 'postcss-value-parser'
-import { loadNativeCssBinding } from '../../native/binding'
+import { loadNativeCssBinding, nativeCssConfigured } from '../../native/binding'
 import { CLAMP_PX, COLOR_VAR_RE, GRADIENT_BACKGROUND_RE, GRADIENT_DIRECTION_CLASS_RE, GRADIENT_STOPS_VAR_RE, INFINITY_CALC_VALUE_REGEXP, SIMPLE_CLASS_SELECTOR_RE, testIfRootHostForV4 } from './variables'
 
 function collectTailwindcssV4ThemeVariables(root: Root) {
@@ -38,7 +38,8 @@ function normalizeDeclarationValue(value: string) {
 }
 
 export function normalizeTailwindcssV4GradientPosition(value: string) {
-  return loadNativeCssBinding()?.normalizeV4GradientPosition(value) ?? normalizeTailwindcssV4GradientPositionLegacy(value)
+  return (nativeCssConfigured ? loadNativeCssBinding()?.normalizeV4GradientPosition(value) : undefined)
+    ?? normalizeTailwindcssV4GradientPositionLegacy(value)
 }
 
 export function normalizeTailwindcssV4GradientPositionLegacy(value: string) {
@@ -51,7 +52,8 @@ export function normalizeTailwindcssV4GradientPositionLegacy(value: string) {
 }
 
 export function normalizeTailwindcssV4InfinityCalcValue(value: string) {
-  return loadNativeCssBinding()?.normalizeV4InfinityCalc(value, true) ?? normalizeTailwindcssV4InfinityCalcValueLegacy(value)
+  return (nativeCssConfigured ? loadNativeCssBinding()?.normalizeV4InfinityCalc(value, true) : undefined)
+    ?? normalizeTailwindcssV4InfinityCalcValueLegacy(value)
 }
 
 export function normalizeTailwindcssV4InfinityCalcValueLegacy(value: string) {
@@ -62,7 +64,8 @@ const INFINITY_CALC_CSS_RE = /calc\(\s*infinity\s*\*\s*(?:\d+(?:\.\d*)?|\.\d+)r?
 
 /** 在预处理器解析前收敛 Tailwind v4 生成的无限圆角，避免 Sass 将 infinity 当作非法表达式。 */
 export function normalizeTailwindcssV4InfinityCalcCss(css: string) {
-  return loadNativeCssBinding()?.normalizeV4InfinityCalc(css, false) ?? normalizeTailwindcssV4InfinityCalcCssLegacy(css)
+  return (nativeCssConfigured ? loadNativeCssBinding()?.normalizeV4InfinityCalc(css, false) : undefined)
+    ?? normalizeTailwindcssV4InfinityCalcCssLegacy(css)
 }
 
 export function normalizeTailwindcssV4InfinityCalcCssLegacy(css: string) {

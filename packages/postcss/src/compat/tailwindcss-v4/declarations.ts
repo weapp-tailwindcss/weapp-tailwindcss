@@ -1,5 +1,5 @@
 import type { Declaration } from 'postcss'
-import { loadNativeCssBinding } from '../../native/binding'
+import { loadNativeCssBinding, nativeCssConfigured } from '../../native/binding'
 import { normalizeV4VariableFallbacksLegacy } from './declarations/variable-fallbacks'
 import { getTailwindcssV4GradientFallback, normalizeTailwindcssV4GradientPositionLegacy, normalizeTailwindcssV4InfinityCalcValueLegacy } from './gradients'
 import { CLAMP_PX, RADIUS_THRESHOLD, RADIUS_VALUE_RE, SCIENTIFIC_NOTATION_RE } from './variables'
@@ -12,7 +12,9 @@ export function normalizeTailwindcssV4Declaration(decl: Declaration): boolean {
   }
   const gradientPosition = decl.prop === '--tw-gradient-position'
   const gradientFallback = gradientPosition && decl.parent?.type === 'rule' ? getTailwindcssV4GradientFallback(decl.parent) : undefined
-  const native = loadNativeCssBinding()?.normalizeV4Declaration(decl.value, { gradientPosition, gradientFallback, radius: decl.prop.includes('radius') })
+  const native = nativeCssConfigured
+    ? loadNativeCssBinding()?.normalizeV4Declaration(decl.value, { gradientPosition, gradientFallback, radius: decl.prop.includes('radius') })
+    : undefined
   if (native !== undefined && native !== null) {
     if (native === decl.value) {
       return false

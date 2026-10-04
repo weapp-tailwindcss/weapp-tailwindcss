@@ -46,6 +46,10 @@ let binding: NativeCssBinding | undefined
 let loadError: unknown
 let failed = false
 
+/** 原生 CSS 模式在进程启动时确定；默认关闭时避免在每个声明上读取环境变量。 */
+export const nativeCssConfigured = process.env['WEAPP_TW_NATIVE'] === 'auto'
+  || process.env['WEAPP_TW_NATIVE'] === 'required'
+
 function resolveBinding() {
   const packageRoot = path.dirname(require.resolve('@weapp-tailwindcss/postcss/package.json'))
   const suffix = getNativeSelectorBindingSuffix()

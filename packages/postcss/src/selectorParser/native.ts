@@ -1,6 +1,6 @@
 import type { EscapeMappingEntry } from '../native/binding'
 import type { InternalCssSelectorReplacerOptions } from '../types'
-import { loadNativeCssBinding } from '../native/binding'
+import { loadNativeCssBinding, nativeCssConfigured } from '../native/binding'
 import { defaultCssEscapeKeys, resolveCssEscapeMap } from '../utils/escape-map'
 
 export { loadNativeCssBinding as loadNativeSelectorBinding } from '../native/binding'
@@ -28,9 +28,9 @@ export function transformNativeSelector(value: string, options?: InternalCssSele
   if (resolveCssEscapeMap(options?.escapeMap) !== undefined) {
     return undefined
   }
-  return loadNativeCssBinding()?.transformSelector(value) ?? undefined
+  return (nativeCssConfigured ? loadNativeCssBinding()?.transformSelector(value) : undefined) ?? undefined
 }
 
 export function escapeNativeSelectorClasses(values: string[], options?: InternalCssSelectorReplacerOptions) {
-  return loadNativeCssBinding()?.escapeClasses(values, resolveMapping(options?.escapeMap))
+  return nativeCssConfigured ? loadNativeCssBinding()?.escapeClasses(values, resolveMapping(options?.escapeMap)) : undefined
 }

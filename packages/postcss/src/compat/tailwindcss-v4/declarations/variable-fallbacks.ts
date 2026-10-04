@@ -1,5 +1,5 @@
 import valueParser from 'postcss-value-parser'
-import { loadNativeCssBinding } from '../../../native/binding'
+import { loadNativeCssBinding, nativeCssConfigured } from '../../../native/binding'
 import { TW_GRADIENT_POSITION_PROPS } from '../variables'
 
 function normalizeTailwindcssV4EmptyVarFallback(value: string) {
@@ -154,5 +154,6 @@ export function normalizeV4VariableFallbacks(value: string) {
   if (!value.includes('var(') || !value.includes('--tw-')) {
     return value
   }
-  return loadNativeCssBinding()?.normalizeV4VariableFallbacks(value) ?? normalizeV4VariableFallbacksLegacy(value)
+  return (nativeCssConfigured ? loadNativeCssBinding()?.normalizeV4VariableFallbacks(value) : undefined)
+    ?? normalizeV4VariableFallbacksLegacy(value)
 }
