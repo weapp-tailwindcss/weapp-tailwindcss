@@ -105,6 +105,9 @@ function applyReplacements(
 ) {
   let changed = false
   for (const node of literals) {
+    if (node.isConditionTest) {
+      continue
+    }
     changed = (node.kind === 'string'
       ? addStringLiteralReplacement(rawSource, node, stringLiteralOptions, context)
       : addTemplateElementReplacement(rawSource, node, templateLiteralOptions, context)) || changed
