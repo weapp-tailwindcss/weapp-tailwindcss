@@ -720,9 +720,14 @@ describe('ci workflows', () => {
     const packageJson = readPackageJson<{ scripts: Record<string, string> }>('package.json')
 
     expect(config).toContain("verify: ['release:verify']")
+    expect(config).toContain('beforeVersion: [\'native:artifacts:before-version\']')
+    expect(config).toContain('afterVersion: [\'native:artifacts:after-version\']')
+    expect(config).toContain('beforePublish: [\'native:artifacts:verify\']')
     expect(config).toContain("script: 'release:sync-npmmirror'")
     expect(config).toContain('continueOnError: true')
-    expect(packageJson.scripts['release:verify']).toBe('node scripts/verify-packed-packages.mjs && pnpm test:release')
+    expect(packageJson.scripts['release:verify']).toBe('pnpm native:artifacts:verify && node scripts/verify-packed-packages.mjs && pnpm test:release')
+    expect(packageJson.scripts['native:artifacts:before-version']).toBe('node packages/weapp-tailwindcss/native/release.mjs before-version')
+    expect(packageJson.scripts['native:artifacts:after-version']).toBe('node packages/weapp-tailwindcss/native/release.mjs after-version')
     expect(packageJson.scripts['release:sync-npmmirror']).toBe('node scripts/sync-npmmirror.mjs')
   })
 

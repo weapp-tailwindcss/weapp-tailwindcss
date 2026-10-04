@@ -5,6 +5,8 @@ baseline: 7bd913cb2b2294b4ec0c270f7d7cc72ffc3fe855
 regressions:
   - packages/weapp-tailwindcss/test/native-resolve.test.ts
   - packages/weapp-tailwindcss/test/native-distribution.test.ts
+  - packages/weapp-tailwindcss/test/native-release.test.ts
+  - packages/weapp-tailwindcss/test/ci/workflows.test.ts
 ---
 
 # 原生平台包必须进入同一发布图
@@ -36,6 +38,19 @@ tarball 验证使用主集成工作树构建的 JS/WXML binding，以及 CSS 实
 本次核验的 JS/WXML binary SHA-256 为 `c810ac38b4ada2b302e6216edf0a06cefc1b79adea46f6df9dc13683be5b652c`，CSS binary SHA-256 为 `e0b02643567d0413167793eaed25ce81b219aa2e75a69772f1e92a0c146218f1`。这两个 hash 只记录本次本地测试输入，不作为发布 artifact 白名单。
 
 后续发布边界审计发现：PostCSS 支持 Node 20.19.0，而共享平台包最初复制了 core 更高的 engines 下限。平台包现覆盖两个消费者的范围，新增范围包含关系回归；CI 的八个平台再增加独立 CSS Node 20.19.0 tarball/离线安装/ABI 验证。本地用 SHA-256 验证后的官方 Node 20.19.0 darwin arm64 二进制运行 `native/test/package.mjs --css-only`，真实 CSS ABI 与离线安装通过；core 的 Node 要求没有降低。新增回归后 distribution 定向测试 11 项通过。
+
+进一步核对 repoctl 5.5.7 的实际编排发现，预发布顺序为 `beforeVersion → verify → pnpm version -r → afterVersion → commit → beforePublish → publish`。工作流原先在版本修改前构建并验证 native artifact，随后预发布修改 manifest，却没有更新 artifact metadata，导致新版本 tarball 携带旧版本元数据。稳定版准备流程会在 Release PR 再次构建，因此不能据此推断预发布也安全。
+
+修复将版本迁移放进 repoctl hooks：`beforeVersion` 核验两个内核、八个平台及下载/暂存副本，保存忽略目录内的完整已验证元数据；`afterVersion` 重新核验源码摘要、target、suffix、binary hash、旧元数据和新平台 manifest 的一致性，全部通过后只更新版本字段。它拒绝缺少前置证据、源码变化、binary 或元数据篡改；成功后消费前置证据。`beforePublish` 再执行默认的完整版本校验，避免将允许旧版本的迁移校验用于普通发布。
+
+本次基于 `403fd3ccb585ac2bb6b1b3020b713f4abdae6a5f` 验证：
+
+- `CI=1 pnpm --filter weapp-tailwindcss exec vitest run test/native-release.test.ts test/native-distribution.test.ts test/ci/workflows.test.ts --update=none --coverage.enabled=false`：3 文件、74 项通过。用真实 repoctl 函数与模拟进程边界验证预发布调用顺序，不调用真实发布、Git 写入或 registry。
+- 回归覆盖仅修改版本、缺失或已消费证据、两套 binary、副本和源摘要篡改，以及最后一个目标失败时尚未重写前面目标的元数据。
+- 修正 `release:verify` 的工作流测试断言，保留新增的 native artifact 验证入口。
+- 新增/修改的脚本、配置与分发测试通过 ESLint（测试显式 `--no-ignore`）；被仓库默认忽略的既有 `workflows.test.ts` 强制检查仍有 62 项历史格式诊断，基线与修改后数量一致，本次新增 hook 断言没有新增诊断。
+
+官方 runner 清单确认 `macos-latest` 为 ARM64，`macos-15-intel` 为 x64，`windows-11-arm` 与 `ubuntu-24.04-arm` 均存在。该静态核验不等同于已执行八平台矩阵。
 
 ## 适用边界
 

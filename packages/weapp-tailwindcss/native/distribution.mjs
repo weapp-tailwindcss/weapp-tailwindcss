@@ -10,7 +10,7 @@ export const repositoryRoot = resolve(nativeRoot, '..', '..', '..')
 export const kernelRoots = { core: nativeRoot, postcss: resolve(nativeRoot, '..', '..', 'postcss', 'native') }
 export const thirdPartyLicenseFile = 'THIRD_PARTY_LICENSES.txt'
 
-function metadataFile(kernel) {
+export function metadataFile(kernel) {
   return kernel === 'core' ? 'native-metadata.json' : 'postcss-native-metadata.json'
 }
 
@@ -67,14 +67,14 @@ export function writeBindingMetadata(target, root = nativeRoot, kernel = 'core')
   return metadata
 }
 
-export function verifyBinding(target, binding, metadata, root = nativeRoot, kernel = 'core') {
+export function verifyBinding(target, binding, metadata, root = nativeRoot, kernel = 'core', version) {
   const { suffix } = nativeTargets[target]
   const manifest = json(join(root, '..', 'package.json'))
   const expected = {
     kernel,
     target,
     suffix,
-    version: manifest.version,
+    version: version ?? manifest.version,
     sourceDigest: sourceDigest(root),
     sha256: digest(binding),
   }
@@ -105,7 +105,7 @@ export function stageBinding(target, root = nativeRoot, repoRoot = repositoryRoo
   writeFileSync(join(destination, metadataFile(kernel)), `${JSON.stringify(metadata, null, 2)}\n`)
 }
 
-export function verifyDistribution(roots = kernelRoots, repoRoot = repositoryRoot) {
+export function verifyDistribution(roots = kernelRoots, repoRoot = repositoryRoot, versions = {}) {
   for (const [target, { suffix }] of Object.entries(nativeTargets)) {
     const directory = join(repoRoot, 'packages-native', suffix)
     const manifest = json(join(directory, 'package.json'))
@@ -138,7 +138,7 @@ export function verifyDistribution(roots = kernelRoots, repoRoot = repositoryRoo
       if (manifest.exports?.[exportName] !== `./${bindingFileName(suffix, kernel)}`) {
         throw new Error(`Native package ${suffix} does not export its ${kernel} binding`)
       }
-      verifyBinding(target, join(directory, bindingFileName(suffix, kernel)), json(join(directory, metadataFile(kernel))), root, kernel)
+      verifyBinding(target, join(directory, bindingFileName(suffix, kernel)), json(join(directory, metadataFile(kernel))), root, kernel, versions[kernel])
     }
   }
 }

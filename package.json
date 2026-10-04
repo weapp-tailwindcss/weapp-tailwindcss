@@ -303,7 +303,9 @@
     "up:uniapp": "pnpx @dcloudio/uvm@latest",
     "architecture:check": "tsx scripts/architecture/check.ts",
     "native:artifacts:stage": "node packages/weapp-tailwindcss/native/distribution.mjs stage",
-    "native:artifacts:verify": "node packages/weapp-tailwindcss/native/distribution.mjs verify"
+    "native:artifacts:verify": "node packages/weapp-tailwindcss/native/distribution.mjs verify",
+    "native:artifacts:before-version": "node packages/weapp-tailwindcss/native/release.mjs before-version",
+    "native:artifacts:after-version": "node packages/weapp-tailwindcss/native/release.mjs after-version"
   },
   "publishConfig": {
     "access": "public",
