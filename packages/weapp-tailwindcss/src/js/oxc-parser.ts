@@ -1,43 +1,43 @@
-import { createRequire } from 'node:module'
-import process from 'node:process'
+import type { OxcParser } from './oxc-parser/loader'
+import { loadOxcParser } from './oxc-parser/loader'
 
-type OxcParser = Pick<typeof import('oxc-parser'), 'parseSync'>
+export { isOxcParserRuntimeSupported, loadOxcParser } from './oxc-parser/loader'
 
-const require = createRequire(import.meta.url)
-let oxcParser: OxcParser | false | undefined
+type OxcParseOptions = NonNullable<Parameters<OxcParser['parseSync']>[2]>
 
-export function isOxcParserRuntimeSupported(version = process.versions.node) {
-  const match = /^(\d+)\.(\d+)(?:\.|$)/.exec(version)
-  if (!match) {
-    return false
-  }
-  const major = Number(match[1])
-  const minor = Number(match[2])
-  if (major === 20) {
-    return minor >= 19
-  }
-  if (major === 21) {
-    return false
-  }
-  if (major === 22) {
-    return minor >= 12
-  }
-  return major > 22
-}
-
-export function loadOxcParser(): OxcParser | undefined {
-  if (!isOxcParserRuntimeSupported() || oxcParser === false) {
+/** 优先使用 raw transfer，运行时不支持或失败时回退到普通 AST。 */
+export function parseOxcSync(
+  filename: string,
+  sourceText: string,
+  options: OxcParseOptions,
+) {
+  const parser = loadOxcParser()
+  if (!parser) {
     return undefined
   }
-  if (oxcParser) {
-    return oxcParser
-  }
+
+  let rawTransferAvailable = false
   try {
-    oxcParser = require('oxc-parser') as OxcParser
+    rawTransferAvailable = parser.rawTransferSupported?.() === true
   }
   catch {
-    oxcParser = false
+    rawTransferAvailable = false
+  }
+
+  if (rawTransferAvailable) {
+    try {
+      const rawOptions = { ...options, experimentalRawTransfer: true }
+      return parser.parseSync(filename, sourceText, rawOptions)
+    }
+    catch {
+      // raw transfer 失败时继续使用兼容性更高的普通 AST。
+    }
+  }
+
+  try {
+    return parser.parseSync(filename, sourceText, options)
+  }
+  catch {
     return undefined
   }
-  return oxcParser
 }

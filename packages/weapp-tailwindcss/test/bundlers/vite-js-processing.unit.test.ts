@@ -1,8 +1,11 @@
+import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { describe, expect, it, vi } from 'vitest'
 import { createJsHandlerOptionsFactory, resolveGenerateBundleJsFastPath } from '@/bundlers/vite/generate-bundle/js-handler-options'
 import { processJsBundleEntry, replayCleanJsBundleEntry } from '@/bundlers/vite/generate-bundle/js-processing'
 import { createTransformFilter, createTransformFilterSignature, shouldSkipViteJsChunkTransform } from '@/bundlers/vite/generate-bundle/transform-filter'
 import { createCache } from '@/cache'
+import { createJsHandler } from '@/js'
+import * as babel from '@/js/babel'
 import { createRollupChunk } from './vite-plugin.testkit'
 
 function createMetrics() {
@@ -79,6 +82,46 @@ describe('bundlers/vite js processing', () => {
       experimentalJsFastPath: false,
       moduleGraphEnabled: false,
     })
+  })
+
+  it('keeps production conditional comparison values unchanged under Oxc', () => {
+    const productionFastPath = resolveGenerateBundleJsFastPath({ useIncrementalMode: false })
+    const createHandlerOptions = createJsHandlerOptionsFactory({
+      getExperimentalJsFastPath: () => productionFastPath.experimentalJsFastPath,
+      getMajorVersion: () => 4,
+      moduleGraph: productionFastPath.moduleGraphEnabled
+        ? { resolve: () => undefined, load: () => undefined }
+        : undefined,
+    })
+    const sharedOptions = {
+      escapeMap: MappingChars2String,
+      alwaysEscape: true,
+    }
+    const fastOptions = createHandlerOptions('/repo/dist/index.js', sharedOptions)
+    const babelOptions = {
+      ...fastOptions,
+      experimentalJsFastPath: false,
+    } as const
+    expect(fastOptions.experimentalJsFastPath).toBe('oxc')
+    expect(babelOptions.experimentalJsFastPath).toBe(false)
+    const fastHandler = createJsHandler(fastOptions)
+    const babelHandler = createJsHandler(babelOptions)
+    const source = 'const cls = value === "w-[10px]" ? "h-[10px]" : "plain"'
+
+    const babelSpy = vi.spyOn(babel, 'jsHandler')
+    try {
+      const fast = fastHandler(source, new Set())
+      expect(babelSpy).not.toHaveBeenCalled()
+      const expected = babelHandler(source, new Set())
+      expect(babelSpy).toHaveBeenCalledOnce()
+
+      expect(fast.code).toBe(expected.code)
+      expect(fast.code).toContain('value === "w-[10px]"')
+      expect(fast.code).toContain('"h-_b10px_B"')
+    }
+    finally {
+      babelSpy.mockRestore()
+    }
   })
 
   it('directly replays cached clean incremental chunks without scheduling js work', () => {
