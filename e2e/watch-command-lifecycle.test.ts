@@ -2,13 +2,17 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { assertWatchCommandActive } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cancellation'
 import { createWatchCommandSession } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/session'
 import { runWatchCommand } from './watch/hot-update/command'
 
 describe('watch command cancellation lifecycle', () => {
   const roots: string[] = []
+  beforeEach(() => {
+    // 预期超时只取消本用例；不能把模拟信号写进调用方的全面流程标记。
+    vi.stubEnv('E2E_WATCH_CANCEL_FILE', undefined)
+  })
   afterEach(async () => {
     vi.unstubAllEnvs()
     await Promise.all(roots.splice(0).map(root => fs.rm(root, { recursive: true, force: true })))
