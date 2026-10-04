@@ -5,13 +5,35 @@ export async function assertTemplatePageRendered(miniProgram: Pick<MiniProgram, 
   if (!page) {
     throw new Error(`模板未进入页面：${pageUrl}`)
   }
+  // SDK 将 query 与页面路由分开；只允许单个前导斜线的等价写法。
+  const requestedRoute = pageUrl.replace(/^\//, '').replace(/\?.*$/, '')
+  if (!requestedRoute || typeof page.path !== 'string' || page.path.replace(/^\//, '') !== requestedRoute) {
+    throw new Error(`模板页面路由不匹配：预期 ${pageUrl}，实际 ${page.path}`)
+  }
   const selector = '.min-h-screen'
   const componentSelectors = ['comp']
-  // 所有模板入口均声明该根 class；类选择器也适用于 IDE 的 App-Service 查询协议。
-  await page.waitForRendered({ selector, componentSelectors, timeout: 15_000 })
-  const nodes = await page.renderedNodes(selector, { componentSelectors, timeout: 5000 })
-  if (!Array.isArray(nodes) || !nodes.some(node => Number.isFinite(node.width) && Number.isFinite(node.height) && node.width! > 0 && node.height! > 0)) {
-    throw new Error(`模板页面未产生渲染内容：${pageUrl}`)
+  const deadline = Date.now() + 15_000
+  // 公开的渲染查询直接使用 App-Service 协议，避免旧 Page 查询消耗渲染预算。
+  while (true) {
+    const remaining = deadline - Date.now()
+    if (remaining <= 0) {
+      break
+    }
+    const nodes = await page.renderedNodes(selector, { componentSelectors, timeout: Math.min(5000, remaining) })
+    if (Date.now() >= deadline) {
+      break
+    }
+    if (Array.isArray(nodes) && nodes.some(node =>
+      typeof node?.width === 'number' && Number.isFinite(node.width) && node.width > 0
+      && typeof node?.height === 'number' && Number.isFinite(node.height) && node.height > 0,
+    )) {
+      return nodes
+    }
+    const delay = Math.min(220, deadline - Date.now())
+    if (delay <= 0) {
+      break
+    }
+    await new Promise(resolve => setTimeout(resolve, delay))
   }
-  return nodes
+  throw new Error(`模板页面未产生渲染内容：${pageUrl}（15秒渲染预算耗尽）`)
 }
