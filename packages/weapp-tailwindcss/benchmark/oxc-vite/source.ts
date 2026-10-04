@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
-import { readFile, rename, rm, writeFile } from 'node:fs/promises'
+import { readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 
@@ -24,18 +24,23 @@ export function makeVariants(original: string) {
 /** 以完整文件替换触发 watcher，避免 Vite 读取到截断的 SFC。 */
 export async function writeOwnedSource(file: string, content: string) {
   const temporary = path.join(path.dirname(file), `.${path.basename(file)}.${process.pid}.${randomUUID()}.tmp`)
+  let mode: number | undefined
   try {
-    await writeFile(temporary, content)
+    mode = (await stat(file)).mode & 0o7777
+  }
+  catch {
+  }
+  try {
+    await writeFile(temporary, content, mode === undefined ? undefined : { mode })
     try {
       await rename(temporary, file)
     }
     catch (error) {
-      // Windows 不能总是覆盖已存在文件；删除后重命名仍保证 watcher 不会看到半写入内容。
+      // Windows 某些文件系统不能替换已存在文件；原位回退保持文件身份，但可能产生普通 watcher 事件。
       if ((error as NodeJS.ErrnoException).code !== 'EEXIST' && (error as NodeJS.ErrnoException).code !== 'EPERM') {
         throw error
       }
-      await rm(file, { force: true })
-      await rename(temporary, file)
+      await writeFile(file, content)
     }
   }
   finally {
@@ -50,5 +55,5 @@ export async function restoreOwnedSource(file: string, original: string, owned: 
     return
   }
   assert(new Set(owned).has(current), `App.vue 已被外部修改，保留现场：${file}`)
-  await writeFile(file, original)
+  await writeOwnedSource(file, original)
 }
