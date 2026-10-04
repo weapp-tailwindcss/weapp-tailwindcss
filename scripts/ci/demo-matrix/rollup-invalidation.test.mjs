@@ -59,6 +59,7 @@ describe.each(['uni-app-vite-tailwindcss-v4', 'issue-uview-plus-cssentries', 'ta
     })
     let watcher
     let inspection = 0
+    const firstBuild = Promise.withResolvers()
     try {
       await mkdir(dataDir)
       await replaceSourceFile(entry, 'export { default } from "virtual:derived"')
@@ -90,11 +91,21 @@ describe.each(['uni-app-vite-tailwindcss-v4', 'issue-uview-plus-cssentries', 'ta
           },
         }],
       })
-      watcher.on('event', event => event.result?.close())
+      watcher.on('event', (event) => {
+        event.result?.close()
+        if (event.code === 'END') {
+          firstBuild.resolve()
+        }
+        else if (event.code === 'ERROR') {
+          firstBuild.reject(event.error)
+        }
+      })
       const inspect = value => expect.poll(async () => {
         const module = await import(`${pathToFileURL(output).href}?inspection=${++inspection}`)
         return module.default
       }, { timeout: 5000, interval: 1 }).toBe(value)
+      // 等待首轮构建结束，确保监听器已注册后再写入依赖文件，避免负载较高时丢失首个变更。
+      await firstBuild.promise
       await inspect(0)
       await replaceSourceFile(data, '{"value":1}')
       await expect.poll(() => reached, { timeout: 5000, interval: 1 }).toBe(true)
