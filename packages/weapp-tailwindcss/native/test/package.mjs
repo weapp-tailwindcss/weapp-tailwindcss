@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
@@ -30,7 +30,7 @@ async function main() {
     await mkdir(destination, { recursive: true })
     await extract({ cwd: destination, file: join(tarballRoot, tarballs[0]), strip: 1 })
     const manifest = JSON.parse(await readFile(join(destination, 'package.json'), 'utf8'))
-    tarballsByPackage.set(manifest.name, join(tarballRoot, tarballs[0]))
+    tarballsByPackage.set(manifest.name, pathToFileURL(await realpath(join(tarballRoot, tarballs[0]))).href)
     return manifest
   }
 
@@ -108,7 +108,7 @@ async function main() {
     await mkdir(installation)
     await writeFile(join(installation, 'package.json'), JSON.stringify({
       private: true,
-      optionalDependencies: { [name]: pathToFileURL(tarballsByPackage.get(name)).href },
+      optionalDependencies: { [name]: tarballsByPackage.get(name) },
     }))
     await execa('pnpm', ['install', '--offline', '--ignore-scripts'], { cwd: installation })
     const installedRequire = createRequire(join(installation, 'package.json'))
