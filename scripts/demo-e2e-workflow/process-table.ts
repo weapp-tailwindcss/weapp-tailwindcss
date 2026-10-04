@@ -87,7 +87,12 @@ export async function readProcessSubset(group: number | undefined, pids: readonl
   }
   let output: string
   try {
-    output = await runProcessCommand('ps', [...filters, '-o', 'pid=,ppid=,pgid=,lstart=,stat='], timeoutMs, signal)
+    output = await runProcessCommand('ps', [...filters, '-o', 'pid=,ppid=,pgid=,lstart=,stat='], timeoutMs, signal, {
+      acceptFailure: (error, stdout, stderr) => {
+        const code = error && typeof error === 'object' && 'code' in error ? error.code : undefined
+        return code === 1 && stdout.length === 0 && stderr.length === 0
+      },
+    })
   }
   catch (error) {
     throw new Error(`无法确认本轮子进程身份：${error instanceof Error ? error.message : String(error)}`, { cause: error })

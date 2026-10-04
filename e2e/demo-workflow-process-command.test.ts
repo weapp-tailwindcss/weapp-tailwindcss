@@ -4,7 +4,7 @@ import process from 'node:process'
 import { afterEach, expect, it, vi } from 'vitest'
 import { runProcessCommand } from '../scripts/demo-e2e-workflow/process-command'
 
-const state = vi.hoisted(() => ({ synthetic: false, child: undefined as ChildProcess | undefined, callback: undefined as ((error: Error | null, stdout: string) => void) | undefined }))
+const state = vi.hoisted(() => ({ synthetic: false, child: undefined as ChildProcess | undefined, callback: undefined as ((error: Error | null, stdout: string, stderr: string) => void) | undefined }))
 vi.mock('node:child_process', async (importOriginal) => {
   const actual = await importOriginal<typeof import('node:child_process')>()
   return { ...actual, execFile: (...args: Parameters<typeof actual.execFile>) => {
@@ -47,6 +47,30 @@ it('真实探针超时后已等待本轮进程退出，不留下后台进程', a
 it('预算耗尽不启动探针', async () => {
   await expect(runProcessCommand('ps', [], 0)).rejects.toThrow('禁止继续调度')
   expect(state.child).toBeUndefined()
+})
+
+it('调用方确认合法失败时接受空输出', async () => {
+  state.synthetic = true
+  state.child = Object.assign(new EventEmitter(), { kill: vi.fn() }) as unknown as ChildProcess
+  const noMatch = Object.assign(new Error('ps exited'), { code: 1 })
+  const task = runProcessCommand('ps', [], 500, undefined, {
+    acceptFailure: (error, stdout, stderr) => error === noMatch && stdout === '' && stderr === '',
+  })
+  state.callback!(noMatch, '', '')
+  state.child.emit('close', null, null)
+  await expect(task).resolves.toBe('')
+})
+
+it('合法失败判定必须拒绝带错误输出的退出码', async () => {
+  state.synthetic = true
+  state.child = Object.assign(new EventEmitter(), { kill: vi.fn() }) as unknown as ChildProcess
+  const invalidQuery = Object.assign(new Error('ps exited'), { code: 1 })
+  const task = runProcessCommand('ps', [], 500, undefined, {
+    acceptFailure: (error, stdout, stderr) => error === invalidQuery && stdout === '' && stderr === '',
+  })
+  state.callback!(invalidQuery, '', 'ps: invalid option')
+  state.child.emit('close', null, null)
+  await expect(task).rejects.toBe(invalidQuery)
 })
 
 it('超时后缺少 callback 与 close 仍有独立截止并记录未确认 PID', async () => {

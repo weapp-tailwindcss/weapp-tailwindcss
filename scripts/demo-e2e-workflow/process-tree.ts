@@ -18,6 +18,7 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
   let stopping: Promise<void> | undefined
   let didClose = false
   let pending: { promise: Promise<Map<number, ProcessIdentity>>, controller: AbortController, budget: { deadline: number } } | undefined
+  let identityError: unknown
   void closed.then(() => {
     didClose = true
   })
@@ -69,7 +70,8 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
       const current = collectOwnedProcesses(rows, owned, group)
       const groupRows = group ? rows.filter(row => row.group === group && !row.zombie) : []
       if (groupRows.length && ![...current.values()].some(row => row.group === group)) {
-        throw new Error(`本轮进程组缺少仍匹配的身份锚，不能重新领取 PGID=${group}；清理范围未确认。`)
+        identityError = new Error(`本轮进程组缺少仍匹配的身份锚，不能重新领取 PGID=${group}；清理范围未确认。`)
+        throw identityError
       }
       if (!groupRows.length) {
         group = undefined
@@ -127,8 +129,11 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
       if (!didClose || !verified || current.size !== 0) {
         return false
       }
+      if (identityError && !errors.includes(identityError)) {
+        errors.push(identityError)
+      }
       if (sent.length || errors.length) {
-        fail('阶段子进程清理未正常完成。')
+        fail('阶段子进程清理未正常完成；清理未成功。')
       }
       return true
     }

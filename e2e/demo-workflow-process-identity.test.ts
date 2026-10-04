@@ -1,7 +1,7 @@
 import type { ChildProcess } from 'node:child_process'
 import { EventEmitter } from 'node:events'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { collectOwnedProcesses, parsePosixProcesses } from '../scripts/demo-e2e-workflow/process-table'
+import { collectOwnedProcesses, parsePosixProcesses, readProcessSubset } from '../scripts/demo-e2e-workflow/process-table'
 import * as table from '../scripts/demo-e2e-workflow/process-table'
 import { createWorkflowProcessTree } from '../scripts/demo-e2e-workflow/process-tree'
 
@@ -56,6 +56,13 @@ describe('取消只能清理仍有身份证据的本轮进程', () => {
     const tree = createWorkflowProcessTree(child, closed, { cleanupMs: 50 })
     await expect(tree.stop()).rejects.toThrow('清理未成功')
     expect(kill).toHaveBeenCalledWith('SIGTERM')
+  })
+
+  it('已登记 PID 消失后 POSIX 空快照视为已清理', async () => {
+    const command = vi.spyOn(await import('../scripts/demo-e2e-workflow/process-command'), 'runProcessCommand')
+    command.mockResolvedValueOnce('')
+    await expect(readProcessSubset(undefined, [123], 500)).resolves.toEqual([])
+    expect(command).toHaveBeenCalledWith('ps', ['-p', '123', '-o', 'pid=,ppid=,pgid=,lstart=,stat='], 500, undefined, expect.objectContaining({ acceptFailure: expect.any(Function) }))
   })
 
   it('正常退出后按进程组和已登记身份锚读取，避免重复扫描整张进程表', async () => {
