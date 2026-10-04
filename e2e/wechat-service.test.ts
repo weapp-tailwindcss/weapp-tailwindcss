@@ -87,6 +87,41 @@ describe('微信已有服务边界', () => {
     await wechatRequest(port, { kind: 'close', project: second })
   })
 
+  it('独立 HTTP 服务的微信 IDE 实例可以并发打开各自项目', async () => {
+    const entered: number[] = []
+    let release!: () => void
+    const bothEntered = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const handlers = [0, 1].map(index => async (req: Parameters<RequestListener>[0], res: Parameters<RequestListener>[1]) => {
+      const request = new URL(req.url!, 'http://127.0.0.1')
+      if (request.pathname === '/v2/auto') {
+        entered.push(index)
+        if (entered.length === 2) {
+          release()
+        }
+        await Promise.race([bothEntered, new Promise(resolve => setTimeout(resolve, 500))])
+        res.end(JSON.stringify({ autoPort: Number(request.searchParams.get('autoPort')) }))
+        return
+      }
+      res.end(JSON.stringify({ success: true }))
+    })
+    const [firstPort, secondPort] = await Promise.all(handlers.map(handler => server(handler)))
+    const first = `/isolated-first-${firstPort}`
+    const second = `/isolated-second-${secondPort}`
+    const [firstResult, secondResult] = await Promise.all([
+      wechatRequest(firstPort, { kind: 'auto', project: first, port: 45684 }),
+      wechatRequest(secondPort, { kind: 'auto', project: second, port: 45685 }),
+    ])
+    expect(firstResult.autoPort).toBe(45684)
+    expect(secondResult.autoPort).toBe(45685)
+    expect(entered).toEqual(expect.arrayContaining([0, 1]))
+    await Promise.all([
+      wechatRequest(firstPort, { kind: 'close', project: first }),
+      wechatRequest(secondPort, { kind: 'close', project: second }),
+    ])
+  })
+
   it('同一项目的并发 auto 在登记前即拒绝，不覆盖原服务归属', async () => {
     const port = await server(async (req, res) => {
       await new Promise(resolve => setTimeout(resolve, 20))
