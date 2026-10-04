@@ -4,6 +4,8 @@
 
 当前内核通过 Node-API 提供 WXML 属性值 tokenizer、JavaScript 字面量分析/完整转换与运行时签名。公开 TypeScript API 不变，原生 binding 不可用时沿用 JavaScript/Babel 兼容路径。`WEAPP_TW_NATIVE=auto` 自动加载，`off` 强制回退，`required` 在缺失 binding 时失败，供原生验收使用。
 
+静态 WXML 属性值由 `createWxmlTransformer` 创建的实例完成扫描、精确匹配、转义与输出组装；动态表达式保留原流程。ABI、回调与自定义表边界见 [WXML 静态转换](WXML.md)。
+
 ## 构建与验证
 
 ```sh

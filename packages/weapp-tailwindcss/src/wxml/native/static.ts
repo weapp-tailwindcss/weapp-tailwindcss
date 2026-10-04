@@ -1,6 +1,6 @@
 import type { NativeCompiler } from '../../native'
 import type { ITemplateHandlerOptions } from '../../types'
-import type { NativeWxmlCompiler, NativeWxmlEscapeEntry, NativeWxmlTransformer } from './types'
+import type { NativeWxmlEscapeEntry, NativeWxmlTransformer } from './types'
 import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { loadNativeCompiler } from '../../native'
 import { isAllWhitespace } from '../whitespace'
@@ -27,7 +27,7 @@ export function nativeStaticTemplateReplacer(source: string, options: ITemplateH
   if (exact && options.escapeMap && options.escapeMap !== MappingChars2String) {
     return undefined
   }
-  const compiler = loadNativeCompiler() as (NativeCompiler & NativeWxmlCompiler) | undefined
+  const compiler = loadNativeCompiler()
   if (!compiler) {
     return undefined
   }

@@ -67,7 +67,7 @@ catch {
   bindingPath = require.resolve(`weapp-tailwindcss/native/bindings/weapp-tailwindcss-native.${getNativeBindingSuffix()}.node`)
 }
 const packageRoot = resolve(root, 'packages', 'weapp-tailwindcss')
-const sources = [join(packageRoot, 'src', 'native.ts'), require.resolve('@weapp-tailwindcss/escape')]
+const sources = [join(packageRoot, 'src', 'native.ts'), fileURLToPath(import.meta.resolve('@weapp-tailwindcss/escape'))]
 function collectSources(directory: string) {
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
     const file = join(directory, entry.name)

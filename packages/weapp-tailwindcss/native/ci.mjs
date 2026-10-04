@@ -45,4 +45,5 @@ if (!process.argv.includes('--verify-only')) {
 run(process.execPath, ['native/verify.mjs'], packageRoot, nativeEnvironment)
 run('pnpm', ['--filter', 'weapp-tailwindcss', 'test:native:package'], root, nativeEnvironment)
 run('pnpm', ['--filter', 'weapp-tailwindcss', 'exec', 'vitest', 'run', 'test/wxml/Tokenizer.test.ts', 'test/js/oxc-semantic-parity.test.ts', 'test/js/oxc-parser-contract.test.ts', 'test/native-resolve.test.ts', '--update=none', '--coverage.enabled=false'], root, nativeEnvironment)
-run('pnpm', ['--filter', '@weapp-tailwindcss/postcss', 'exec', 'vitest', 'run', 'test/native-selector-transform.test.ts', 'test/native-selectors.test.ts', 'test/native-selectors-loader.test.ts', 'test/native-selector-platform.test.ts', 'test/native-value-transform.test.ts', 'test/native-escape-mutation.test.ts', '--update=none', '--coverage.enabled=false'], root, nativeEnvironment)
+run('pnpm', ['--filter', '@weapp-tailwindcss/postcss', 'exec', 'vitest', 'run', '--config', 'vitest.native.config.ts', '--update=none', '--coverage.enabled=false'], root, nativeEnvironment)
+run('pnpm', ['--filter', '@weapp-tailwindcss/postcss', 'exec', 'vitest', 'run', 'test/native-selectors-loader.test.ts', 'test/native-selector-platform.test.ts', '--update=none', '--coverage.enabled=false'], root, nativeEnvironment)

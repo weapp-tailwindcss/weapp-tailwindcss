@@ -18,7 +18,7 @@ afterEach(() => {
 
 describe('native compiler loader', () => {
   it('loads a binding once and reuses it', async () => {
-    const binding = { tokenizeWxml: vi.fn(), analyzeJs: vi.fn(), jsRuntimeSignature: vi.fn(), createJsTransformer: vi.fn() }
+    const binding = { tokenizeWxml: vi.fn(), createWxmlTransformer: vi.fn(), analyzeJs: vi.fn(), jsRuntimeSignature: vi.fn(), createJsTransformer: vi.fn() }
     native.require.mockReturnValue(binding)
     const { loadNativeCompiler } = await import('@/native')
     expect(loadNativeCompiler()).toBe(binding)
@@ -61,8 +61,8 @@ describe('native compiler loader', () => {
     expect(loadNativeCompiler).toThrow('native compiler could not be loaded')
   })
 
-  it.each(['analyzeJs', 'jsRuntimeSignature', 'createJsTransformer'])('rejects a stale binding missing %s', async (method) => {
-    const binding: Record<string, unknown> = { tokenizeWxml: vi.fn(), analyzeJs: vi.fn(), jsRuntimeSignature: vi.fn(), createJsTransformer: vi.fn() }
+  it.each(['createWxmlTransformer', 'analyzeJs', 'jsRuntimeSignature', 'createJsTransformer'])('rejects a stale binding missing %s', async (method) => {
+    const binding: Record<string, unknown> = { tokenizeWxml: vi.fn(), createWxmlTransformer: vi.fn(), analyzeJs: vi.fn(), jsRuntimeSignature: vi.fn(), createJsTransformer: vi.fn() }
     delete binding[method]
     native.require.mockReturnValue(binding)
     vi.stubEnv('WEAPP_TW_NATIVE', 'required')

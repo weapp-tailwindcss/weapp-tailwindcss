@@ -41,13 +41,20 @@ describe('native Vite instrumentation lifecycle', () => {
         loaded.exports = filename === coreFile
           ? {
               tokenizeWxml: () => Uint32Array.from([0, 7, 0]),
+              createWxmlTransformer: () => ({ transformStatic: (source: string) => source.replace('w-[1px]', 'w-_b1px_B') }),
               analyzeJs: () => ({ literals: [] }),
               jsRuntimeSignature: () => 's:w-[1px]',
               createJsTransformer: () => ({ transform: (source: string) => source.replace('w-[1px]', 'w-_b1px_B') }),
             }
           : {
+              SelectorRuleTransformer: class {
+                transform(selector: string) { return { selector, remove: false, spacing: false } }
+              },
               transformSelector: (selector: string) => selector,
               normalizeV4VariableFallbacks: () => 'var(--tw-x, )',
+              normalizeV4Declaration: () => '9999px',
+              normalizeV4GradientPosition: () => 'to right',
+              normalizeV4InfinityCalc: () => '9999px',
               normalizeUvueTransformValue: () => 'translate(var(--x,0) var(--y,0))',
               normalizeUvueTransformValues: () => ['translate(1px 2px)', null],
             }

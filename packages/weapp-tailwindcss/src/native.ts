@@ -1,12 +1,13 @@
 import type { SourceAnalysis } from './js/fast-path/types'
 import type { NativeJsEscapeEntry, NativeJsTransformer } from './native/types'
+import type { NativeWxmlCompiler } from './wxml/native/types'
 import { createRequire } from 'node:module'
 import process from 'node:process'
 import { getNativeBindingSuffix, requireNativeBinding } from './native/resolve'
 
 export { getNativeBindingSuffix } from './native/resolve'
 
-export interface NativeCompiler {
+export interface NativeCompiler extends NativeWxmlCompiler {
   tokenizeWxml: (source: string) => Uint32Array
   analyzeJs: (source: string, lang: 'js' | 'jsx' | 'ts' | 'tsx', sourceType: 'module' | 'script' | 'unambiguous', preserveParens: boolean) => SourceAnalysis | null
   jsRuntimeSignature: (source: string) => string | null
@@ -44,7 +45,7 @@ export function loadNativeCompiler(): NativeCompiler | undefined {
       throw new Error(`Unsupported native platform: ${process.platform}-${process.arch}`)
     }
     const loaded = requireNativeBinding(require, suffix) as NativeCompiler
-    for (const method of ['tokenizeWxml', 'analyzeJs', 'jsRuntimeSignature', 'createJsTransformer'] as const) {
+    for (const method of ['tokenizeWxml', 'createWxmlTransformer', 'analyzeJs', 'jsRuntimeSignature', 'createJsTransformer'] as const) {
       if (typeof loaded[method] !== 'function') {
         throw new TypeError(`Native compiler does not provide ${method}`)
       }

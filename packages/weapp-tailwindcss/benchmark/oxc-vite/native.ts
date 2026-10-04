@@ -11,14 +11,14 @@ type Binding = Record<string, unknown>
 interface LoadedModule { exports: Binding }
 type Extension = (module: LoadedModule, filename: string) => void
 
-const bindingMethods: NativeMethod[] = ['tokenizeWxml', 'analyzeJs', 'jsRuntimeSignature', 'createJsTransformer', 'escapeClasses', 'transformSelector', 'transformSelectors', 'normalizeV4VariableFallbacks', 'normalizeUvueTransformValue', 'normalizeUvueTransformValues']
+const bindingMethods: NativeMethod[] = ['tokenizeWxml', 'createWxmlTransformer', 'analyzeJs', 'jsRuntimeSignature', 'createJsTransformer', 'escapeClasses', 'transformSelector', 'transformSelectors', 'normalizeV4Declaration', 'normalizeV4GradientPosition', 'normalizeV4InfinityCalc', 'normalizeV4VariableFallbacks', 'normalizeUvueTransformValue', 'normalizeUvueTransformValues']
 
 export function createNativeCounter(report: NativeReport) {
   let phase: Phase = 'self-check'
   const restores: Array<() => void> = []
   const wrappedObjects = new WeakSet<object>()
 
-  function wrap(object: Binding, method: NativeMethod) {
+  function wrap(object: Binding, method: NativeMethod, label = method) {
     const original = object[method]
     if (typeof original !== 'function') {
       return
@@ -26,7 +26,7 @@ export function createNativeCounter(report: NativeReport) {
     const descriptor = Object.getOwnPropertyDescriptor(object, method)
     const wrapper = function (this: unknown, ...args: unknown[]) {
       const counts = report.counts[phase] ??= {}
-      const count = counts[method] ??= { calls: 0, failures: 0, nullReturns: 0, sourceCodeUnits: 0 }
+      const count = counts[label] ??= { calls: 0, failures: 0, nullReturns: 0, sourceCodeUnits: 0 }
       count.calls++
       const first = args[0]
       // 只取源码字符串的常量时间 length，计数不能再次遍历完整 classSet。
@@ -40,6 +40,10 @@ export function createNativeCounter(report: NativeReport) {
           wrappedObjects.add(result)
           wrap(result as Binding, 'transform')
           wrap(result as Binding, 'replaceClassNames')
+        }
+        if (method === 'createWxmlTransformer' && result && typeof result === 'object' && !wrappedObjects.has(result)) {
+          wrappedObjects.add(result)
+          wrap(result as Binding, 'transformStatic')
         }
         return result
       }
@@ -57,6 +61,10 @@ export function createNativeCounter(report: NativeReport) {
     binding(object: Binding) {
       for (const method of bindingMethods) {
         wrap(object, method)
+      }
+      const selector = object['SelectorRuleTransformer']
+      if (typeof selector === 'function' && selector.prototype) {
+        wrap(selector.prototype, 'transform', 'transformSelectorRule')
       }
     },
     restore() {
@@ -118,16 +126,23 @@ export function instrumentNative(root: string) {
     selfCheck() {
       const core = coreRequire(report.bindings.find(binding => binding.kernel === 'core')!.resolved) as Record<string, Callable>
       assert(core.tokenizeWxml!('w-[1px]') instanceof Uint32Array)
+      const wxml = core.createWxmlTransformer!([{ character: '[', replacement: '_b' }, { character: ']', replacement: '_B' }]) as Record<string, Callable>
+      assert.equal(wxml.transformStatic!('w-[1px]'), 'w-_b1px_B')
       assert(core.analyzeJs!('const x="w-[1px]"', 'js', 'module', false))
       assert.equal(typeof core.jsRuntimeSignature!('const x="w-[1px]"'), 'string')
       const transformer = core.createJsTransformer!(['w-[1px]'], [{ character: '[', replacement: '_b' }, { character: ']', replacement: '_B' }]) as Record<string, Callable>
       assert.equal(transformer.transform!('const x="w-[1px]"', 'js', 'module', false, {}), 'const x="w-_b1px_B"')
       const css = cssRequire(report.bindings.find(binding => binding.kernel === 'postcss')!.resolved) as Record<string, Callable>
       assert.equal(typeof css.transformSelector!('.p-4'), 'string')
+      const selector = Reflect.construct(css.SelectorRuleTransformer!, [{ child: ['view'], removeHover: false, removeActive: false, removeFocus: false, uniAppX: false }])
+      assert.deepEqual(selector.transform('.p-4'), { selector: '.p-4', remove: false, spacing: false })
       assert.equal(css.normalizeV4VariableFallbacks!('var(--tw-x,)'), 'var(--tw-x, )')
+      assert.equal(css.normalizeV4Declaration!('1e9px', { radius: true }), '9999px')
+      assert.equal(css.normalizeV4GradientPosition!('to right in oklab'), 'to right')
+      assert.equal(css.normalizeV4InfinityCalc!('calc(infinity * 1px)', true), '9999px')
       assert.equal(css.normalizeUvueTransformValue!('translate(var(--x,0), var(--y,0))'), 'translate(var(--x,0) var(--y,0))')
       assert.deepEqual(css.normalizeUvueTransformValues!(['translate(1px,2px)', 'translate(1px,2px']), ['translate(1px 2px)', null])
-      for (const method of ['tokenizeWxml', 'analyzeJs', 'jsRuntimeSignature', 'createJsTransformer', 'transform'] as const) {
+      for (const method of ['tokenizeWxml', 'createWxmlTransformer', 'transformStatic', 'analyzeJs', 'jsRuntimeSignature', 'createJsTransformer', 'transform', 'transformSelectorRule', 'normalizeV4Declaration', 'normalizeV4GradientPosition', 'normalizeV4InfinityCalc'] as const) {
         assert.equal(report.counts['self-check']?.[method]?.calls, 1, `原生自检未触发 ${method} 包装。`)
       }
     },

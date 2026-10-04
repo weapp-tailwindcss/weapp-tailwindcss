@@ -5,6 +5,7 @@ const native = vi.hoisted(() => ({
   load: vi.fn<() => NativeCompiler | undefined>(),
   compiler: {
     tokenizeWxml: vi.fn<NativeCompiler['tokenizeWxml']>(),
+    createWxmlTransformer: vi.fn<NativeCompiler['createWxmlTransformer']>(),
     analyzeJs: vi.fn<NativeCompiler['analyzeJs']>(),
     jsRuntimeSignature: vi.fn<NativeCompiler['jsRuntimeSignature']>(),
     createJsTransformer: vi.fn<NativeCompiler['createJsTransformer']>(),
