@@ -43,7 +43,54 @@ describe('微信已有服务边界', () => {
     })
     await wechatRequest(port, { kind: 'auto', project, port: 45678 })
     expect(decodeURIComponent(requests[0]!.searchParams.get('project')!)).toBe(path.resolve(project))
-    expect([...requests[0]!.searchParams.keys()]).toEqual(['project', 'autoPort'])
+    expect([...requests[0]!.searchParams.keys()]).toEqual(['project', 'port', 'autoPort'])
+    await wechatRequest(port, { kind: 'close', project })
+  })
+
+  it('兼容稳定版以窗口 ID 返回的 auto，并把本轮端口规范化回执给连接层', async () => {
+    const requests: URL[] = []
+    const port = await server((req, res) => {
+      const request = new URL(req.url!, 'http://127.0.0.1')
+      requests.push(request)
+      res.end(request.pathname === '/v2/auto' ? JSON.stringify('s123') : JSON.stringify({ success: true, winId: 's123' }))
+    })
+    const project = `/stable-window-${port}`
+    await expect(wechatRequest(port, { kind: 'auto', project, port: 45679 })).resolves.toEqual({ autoPort: 45679, windowId: 's123' })
+    expect(requests[0]!.searchParams.get('port')).toBe('45679')
+    expect(requests[0]!.searchParams.get('autoPort')).toBe('45679')
+    await wechatRequest(port, { kind: 'close', project })
+  })
+
+  it('同一 HTTP 服务拒绝第二个项目并发打开，关闭后才释放租约', async () => {
+    const requests: URL[] = []
+    const port = await server((req, res) => {
+      const request = new URL(req.url!, 'http://127.0.0.1')
+      requests.push(request)
+      res.end(request.pathname === '/v2/auto' ? JSON.stringify('s456') : JSON.stringify({ success: true, winId: 's456' }))
+    })
+    const first = `/lease-first-${port}`
+    const second = `/lease-second-${port}`
+    await wechatRequest(port, { kind: 'auto', project: first, port: 45680 })
+    await expect(wechatRequest(port, { kind: 'auto', project: second, port: 45681 })).rejects.toThrow('运行时资源按 HTTP 服务共享')
+    expect(requests).toHaveLength(1)
+    await wechatRequest(port, { kind: 'close', project: first })
+    await wechatRequest(port, { kind: 'auto', project: second, port: 45681 })
+    expect(requests).toHaveLength(3)
+    await wechatRequest(port, { kind: 'close', project: second })
+  })
+
+  it('同一项目的并发 auto 在登记前即拒绝，不覆盖原服务归属', async () => {
+    const port = await server(async (req, res) => {
+      await new Promise(resolve => setTimeout(resolve, 20))
+      const request = new URL(req.url!, 'http://127.0.0.1')
+      res.end(request.pathname === '/v2/auto' ? JSON.stringify('s789') : JSON.stringify({ success: true, winId: 's789' }))
+    })
+    const project = `/same-project-${port}`
+    const first = wechatRequest(port, { kind: 'auto', project, port: 45682 })
+    await expect(wechatRequest(port, { kind: 'auto', project, port: 45683 })).rejects.toThrow('已有请求正在执行')
+    await first
+    expect(ownedWechatPort(project)).toBe(String(port))
+    await wechatRequest(port, { kind: 'close', project })
   })
 
   it.each([false, undefined, 'true'])('非明确登录态 %s 阻断之后所有项目请求', async (login) => {
