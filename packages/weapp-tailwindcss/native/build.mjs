@@ -32,16 +32,16 @@ if (rustc.error || rustc.status !== 0) {
   throw rustc.error ?? new Error(rustc.stderr)
 }
 const host = /^host: (.+)$/m.exec(rustc.stdout)?.[1]
-const resolvedTarget = target ?? host
+const resolvedTarget = target ?? process.env.CARGO_BUILD_TARGET ?? host
 if (!resolvedTarget || !targets[resolvedTarget]) {
   throw new Error(`Unsupported native target: ${resolvedTarget}`)
 }
 const [suffix, artifact] = targets[resolvedTarget]
-run('cargo', ['build', '--locked', '--release', ...(target ? ['--target', target] : [])])
+run('cargo', ['build', '--locked', '--release', '--target', resolvedTarget])
 const targetRoot = resolve(nativeRoot, process.env.CARGO_TARGET_DIR ?? 'target')
-const output = target ? join(targetRoot, target, 'release', artifact) : join(targetRoot, 'release', artifact)
+const output = join(targetRoot, resolvedTarget, 'release', artifact)
 const bindingRoot = join(nativeRoot, 'bindings')
 mkdirSync(bindingRoot, { recursive: true })
 const destination = join(bindingRoot, `weapp-tailwindcss-native.${suffix}.node`)
 copyFileSync(output, destination)
-console.log(destination)
+process.stdout.write(`${destination}\n`)
