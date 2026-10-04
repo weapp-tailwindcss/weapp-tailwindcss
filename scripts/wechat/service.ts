@@ -1,5 +1,6 @@
+import type { FileHandle } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
-import { readFile } from 'node:fs/promises'
+import { mkdir, open, readFile, unlink } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
@@ -59,10 +60,48 @@ const blocked = new Set<number>()
 interface ProjectLease {
   port: number
   runId: string
+  release: () => Promise<void>
 }
 const projects = new Map<string, ProjectLease>()
+const serviceLeases = new Map<number, ProjectLease>()
 const serviceQueues = new Map<number, Promise<void>>()
 let nextRunId = 0
+
+function lockDirectory() {
+  return process.env['E2E_WECHAT_LOCK_DIRECTORY'] || os.tmpdir()
+}
+
+/** 返回当前用户对应的微信服务锁路径；锁文件不包含账号或票据。 */
+export function wechatServiceLockPath(port: string | number) {
+  const user = createHash('sha256').update(os.userInfo().username).digest('hex').slice(0, 16)
+  return path.join(lockDirectory(), `weapp-wechat-service-${servicePort(port)}-${user}.lock`)
+}
+
+async function acquireServiceLease(port: number, project: string, runId: string) {
+  const file = wechatServiceLockPath(port)
+  await mkdir(path.dirname(file), { recursive: true })
+  let handle: FileHandle
+  try {
+    handle = await open(file, 'wx')
+  }
+  catch {
+    const owner = await readFile(file, 'utf8').catch(() => '未知（锁文件不可读）')
+    throw new Error(`微信 IDE 服务 ${port} 已被另一个 E2E 会话占用；拒绝并发打开项目 ${project}，保留登录态。锁=${file}，所有者=${owner}`)
+  }
+  try {
+    await handle.writeFile(JSON.stringify({ pid: process.pid, project, runId, createdAt: new Date().toISOString() }))
+  }
+  finally {
+    await handle.close()
+  }
+  return async () => {
+    const owner = JSON.parse(await readFile(file, 'utf8')) as { pid?: number, runId?: string }
+    if (owner.pid !== process.pid || owner.runId !== runId) {
+      throw new Error('微信 IDE 服务锁所有者改变，拒绝清理其他会话。')
+    }
+    await unlink(file)
+  }
+}
 
 function enqueue<T>(port: number, task: () => Promise<T>) {
   const previous = serviceQueues.get(port) ?? Promise.resolve()
@@ -103,7 +142,7 @@ export async function wechatRequest(port: string | number, operation: Operation,
     throw new Error('E2E 不允许此微信 IDE 服务操作。')
   }
   const projectPath = operation.kind === 'isLogin' ? undefined : path.resolve(operation.project)
-  if (projectPath !== undefined && !operation.project.trim()) {
+  if (operation.kind !== 'isLogin' && !operation.project.trim()) {
     throw new Error('微信 IDE 操作必须指定本次测试的项目路径。')
   }
 
@@ -118,7 +157,14 @@ export async function wechatRequest(port: string | number, operation: Operation,
     if (previous) {
       throw new Error('微信项目已有活跃会话；必须先清理原会话后重新打开。')
     }
-    lease = { port: actualPort, runId: `${process.pid}-${++nextRunId}` }
+    const occupied = serviceLeases.get(actualPort)
+    if (occupied) {
+      throw new Error(`微信 IDE 服务 ${actualPort} 已有活跃项目会话；稳定版 IDE 不支持并发运行，必须等待原项目清理后重试。`)
+    }
+    const runId = `${process.pid}-${++nextRunId}`
+    const release = await acquireServiceLease(actualPort, projectPath!, runId)
+    lease = { port: actualPort, runId, release }
+    serviceLeases.set(actualPort, lease)
     projects.set(projectPath!, lease)
   }
   else if (operation.kind === 'close') {
@@ -178,8 +224,13 @@ export async function wechatRequest(port: string | number, operation: Operation,
         // 不回显可能包含凭据的服务端正文，保留状态码供定位。
         throw new Error(`微信 IDE ${operation.kind} 失败（HTTP ${response.status}）；请检查 IDE 认证/项目授权，E2E 不会登录、刷新票据或重试账号操作。`)
       }
-      if (operation.kind === 'close' && projects.get(projectPath!)?.runId === lease?.runId) {
+      const currentLease = lease
+      if (operation.kind === 'close' && currentLease && projects.get(projectPath!)?.runId === currentLease.runId) {
+        await currentLease.release()
         projects.delete(projectPath!)
+        if (serviceLeases.get(actualPort)?.runId === currentLease.runId) {
+          serviceLeases.delete(actualPort)
+        }
       }
       return result
     }

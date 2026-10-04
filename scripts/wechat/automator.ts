@@ -3,6 +3,7 @@ import { setTimeout as delay } from 'node:timers/promises'
 import { MiniProgram, Launcher as RawLauncher } from '@weapp-vite/miniprogram-automator'
 import { runWithCleanup } from '../e2e-preflight/cleanup'
 import { availablePort } from '../e2e-preflight/probes/port'
+import { closeWechatProject } from '../wechat-project-cleanup'
 import { assertWechatLogin, existingWechatService, wechatRequest } from './service'
 
 const guarded = new WeakSet<MiniProgram>()
@@ -50,7 +51,8 @@ export class Launcher {
     if (Object.keys(options).some(key => !allowed.has(key)) || (options.runtimeProvider && options.runtimeProvider !== 'devtools')) {
       throw new Error('微信 E2E 不接受账号、票据、自定义 CLI 参数或非 devtools provider。')
     }
-    if (!options.projectPath?.trim()) {
+    const projectPath = options.projectPath
+    if (!projectPath?.trim()) {
       throw new Error('微信 IDE 操作必须指定本次测试的项目路径。')
     }
     const deadline = Date.now() + (options.timeout ?? 30_000)
@@ -64,31 +66,31 @@ export class Launcher {
     const service = await existingWechatService(options.cliPath)
     await assertWechatLogin(service.httpPort, remaining())
     const port = options.port ?? await availablePort()
-    const result = await wechatRequest(service.httpPort, { kind: 'auto', project: options.projectPath, port }, remaining())
-    if (result.autoPort !== port) {
-      throw new Error('微信 IDE 自动化端口与本轮请求不一致，拒绝连接旧会话。')
-    }
-    await assertWechatLogin(service.httpPort, remaining())
+    const result = await wechatRequest(service.httpPort, { kind: 'auto', project: projectPath, port }, remaining())
     let mini: MiniProgram | undefined
-    while (!mini) {
-      const timeout = Math.min(3000, remaining())
-      try {
-        mini = await this.connect({ wsEndpoint: `ws://127.0.0.1:${port}`, timeout })
-      }
-      catch (error) {
-        if (Date.now() >= deadline) {
-          throw error
-        }
-        await delay(Math.min(100, remaining()))
-      }
-    }
     try {
+      if (result.autoPort !== port) {
+        throw new Error('微信 IDE 自动化端口与本轮请求不一致，拒绝连接旧会话。')
+      }
+      await assertWechatLogin(service.httpPort, remaining())
+      while (!mini) {
+        const timeout = Math.min(3000, remaining())
+        try {
+          mini = await this.connect({ wsEndpoint: `ws://127.0.0.1:${port}`, timeout })
+        }
+        catch (error) {
+          if (Date.now() >= deadline) {
+            throw error
+          }
+          await delay(Math.min(100, remaining()))
+        }
+      }
       await mini.waitForAppReady(remaining())
       remaining()
       return mini
     }
     catch (error) {
-      return runWithCleanup(() => Promise.reject(error), () => mini.disconnect())
+      return runWithCleanup(() => Promise.reject(error), () => closeWechatProject(projectPath, mini, 10_000, service.httpPort))
     }
   }
 }

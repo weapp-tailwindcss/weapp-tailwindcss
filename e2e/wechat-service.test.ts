@@ -1,13 +1,21 @@
 import type { RequestListener } from 'node:http'
+import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
+import os from 'node:os'
 import path from 'node:path'
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { assertWechatLogin, ownedWechatPort, serviceDirectory, servicePort, wechatRequest } from '../scripts/wechat/service'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { assertWechatLogin, ownedWechatPort, serviceDirectory, servicePort, wechatRequest, wechatServiceLockPath } from '../scripts/wechat/service'
 
 const cleanup: Array<() => Promise<void>> = []
+let lockDirectory: string
+beforeEach(async () => {
+  lockDirectory = await mkdtemp(path.join(os.tmpdir(), 'weapp-wechat-service-test-'))
+  vi.stubEnv('E2E_WECHAT_LOCK_DIRECTORY', lockDirectory)
+})
 afterEach(async () => {
   vi.unstubAllEnvs()
   await Promise.all(cleanup.splice(0).map(close => close()))
+  await rm(lockDirectory, { recursive: true, force: true })
 })
 
 async function server(handler: RequestListener) {
@@ -126,24 +134,32 @@ describe('微信已有服务边界', () => {
     expect(calls).toBe(1)
   })
 
-  it('同一 HTTP 服务的项目生命周期请求严格串行', async () => {
-    let active = 0
-    let maximum = 0
+  it('同一 HTTP 服务拒绝并发项目，等待原项目显式清理', async () => {
     const port = await server((req, res) => {
-      active++
-      maximum = Math.max(maximum, active)
       const project = new URL(req.url!, 'http://127.0.0.1').searchParams.get('project')
       setTimeout(() => {
-        active--
         res.end(JSON.stringify({ autoPort: project?.includes('first') ? 45678 : 45679 }))
       }, 20)
     })
-    const first = wechatRequest(port, { kind: 'auto', project: `/serial-first-${port}`, port: 45678 })
-    const second = wechatRequest(port, { kind: 'auto', project: `/serial-second-${port}`, port: 45679 })
-    await Promise.all([first, second])
-    expect(maximum).toBe(1)
-    await wechatRequest(port, { kind: 'close', project: `/serial-first-${port}` })
-    await wechatRequest(port, { kind: 'close', project: `/serial-second-${port}` })
+    const firstProject = `/serial-first-${port}`
+    const secondProject = `/serial-second-${port}`
+    await wechatRequest(port, { kind: 'auto', project: firstProject, port: 45678 })
+    await expect(wechatRequest(port, { kind: 'auto', project: secondProject, port: 45679 })).rejects.toThrow('不支持并发运行')
+    await wechatRequest(port, { kind: 'close', project: firstProject })
+    await wechatRequest(port, { kind: 'auto', project: secondProject, port: 45679 })
+    await wechatRequest(port, { kind: 'close', project: secondProject })
+  })
+
+  it('拒绝其他进程留下的微信服务锁且不触达 IDE', async () => {
+    let calls = 0
+    const port = await server((_req, res) => {
+      calls++
+      res.end('{"autoPort":45678}')
+    })
+    const project = `/external-lock-${port}`
+    await writeFile(wechatServiceLockPath(port), JSON.stringify({ pid: 999_999, project: '/other', runId: 'other-run' }))
+    await expect(wechatRequest(port, { kind: 'auto', project, port: 45678 })).rejects.toThrow('另一个 E2E 会话占用')
+    expect(calls).toBe(0)
   })
 
   it('重复打开同一项目会被拒绝且不触达 IDE', async () => {
