@@ -8,7 +8,7 @@ import { probeClasses } from './probe.mjs'
 import { until } from './process.mjs'
 
 export async function openBrowser(url, session, artifactDir) {
-  const browser = await chromium.launch()
+  const browser = await chromium.launch({ headless: true })
   const page = await browser.newPage({ viewport: { width: 1200, height: 900 } })
   const events = []
   const pendingModules = new Set()

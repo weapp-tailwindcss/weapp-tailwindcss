@@ -1,0 +1,60 @@
+diff --git a/dist/createContext-UOEgeYnA.mjs b/dist/createContext-UOEgeYnA.mjs
+--- a/dist/createContext-UOEgeYnA.mjs
++++ b/dist/createContext-UOEgeYnA.mjs
+@@ -1,3 +1,4 @@
++import { createStatefulHmrCommonjsPlugin } from "./statefulHmrCommonjs.mjs";
+ import { a as resolveWeappViteHostMeta, n as applyWeappViteHostMeta } from "./pluginHost--CaeyWpA.mjs";
+ import { t as MINI_PROGRAM_PLATFORM_ADAPTERS } from "./adapters-BwnMMIZR.mjs";
+ import { C as shouldNormalizeVueTemplateForPlatform, D as shouldUseProjectRootNpmDir, E as shouldRewriteBundleNpmImports, S as shouldNormalizeUsingComponents, T as shouldRebuildCachedMiniprogramPackage, _ as shouldEmitGenericPlaceholderAsset, a as getPlatformNpmDistDirName, b as shouldNormalizeMiniprogramPackage, c as getPreservedNpmDirNames, d as getWxmlDirectivePrefix, f as getWxmlPlatformTransformOptions, g as shouldCopyEsModuleDirectory, h as resolveMiniPlatformWithDefault, i as getPlatformAppTypesPackage, l as getProjectPlatformOptions, m as resolveMiniPlatform, o as getPlatformOutputExtensions, p as normalizePlatformNpmImportPath, r as getJsonPlatformOptions, s as getPlatformScriptModuleTag, t as DEFAULT_MP_PLATFORM, u as getSupportedMiniProgramPlatforms$1, v as shouldFillComponentGenericsDefault, x as shouldNormalizePlatformNpmImportPath, y as shouldHoistNestedMiniprogramDependencies } from "./platform-DTWs5QRi.mjs";
+@@ -15149,7 +15150,7 @@
+ 			"Module"
+ 		],
+ 		[
+-			helpers,
++			`${helpers}\n${runtime.source}`,
+ 			/(?:var|let|const)\s+__exportAll\s*=|function\s+__exportAll\b/,
+ 			"common runtime helpers"
+ 		]
+@@ -20346,7 +20347,9 @@
+ 			Object.assign(output, desiredOutput);
+ 			const userBanner = output.banner;
+ 			const userFooter = output.footer;
+-			output.format = "cjs";
++			// 原生 DevEngine 只支持 ESM；宿主 CJS 转换留在产物图的 renderChunk 阶段。
++			output.format = "esm";
++			options.plugins = [...options.plugins ?? [], createStatefulHmrCommonjsPlugin()];
+ 			output.minify = false;
+ 			output.sourcemap = Boolean(this.config.build.sourcemap);
+ 			output.banner = async (chunk) => {
+diff --git a/dist/statefulHmrCommonjs.mjs b/dist/statefulHmrCommonjs.mjs
+new file mode 100644
+--- /dev/null
++++ b/dist/statefulHmrCommonjs.mjs
+@@ -0,0 +1,27 @@
++import babelPresetEnv from '@babel/preset-env'
++import { transformSync } from '@weapp-vite/ast/babelCore'
++
++/** 将原生 DevEngine 的 ESM chunk 转成宿主 CJS，保留原生生成的模块图协议。 */
++export function createStatefulHmrCommonjsPlugin() {
++  return {
++    name: 'weapp-vite:stateful-hmr-commonjs',
++    renderChunk: {
++      order: 'post',
++      handler(code, chunk, options = {}) {
++        const result = transformSync(code, {
++          babelrc: false,
++          configFile: false,
++          filename: chunk.fileName,
++          sourceType: 'module',
++          presets: [[babelPresetEnv, { targets: { node: '22' }, modules: 'commonjs' }]],
++          sourceFileName: chunk.fileName,
++          sourceMaps: Boolean(options.sourcemap),
++        })
++        if (!result?.code) {
++          throw new Error('stateful HMR 宿主 CJS 转换未返回产物。')
++        }
++        return { code: result.code, map: result.map ?? null }
++      },
++    },
++  }
++}

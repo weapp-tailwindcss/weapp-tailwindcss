@@ -11,10 +11,40 @@ const viteRequire = createRequire(frameworkRequire.resolve('vite/package.json'))
 const { createStatefulHmrCommonjsPlugin } = await import(pathToFileURL(frameworkRequire.resolve('weapp-vite/dist/statefulHmrCommonjs.mjs')).href)
 const { rolldown } = await import(pathToFileURL(viteRequire.resolve('rolldown')).href)
 const { dev } = await import(pathToFileURL(viteRequire.resolve('rolldown/experimental')).href)
+const mappingRequire = createRequire(createRequire(import.meta.url).resolve('@ampproject/remapping'))
+const { originalPositionFor, TraceMap } = mappingRequire('@jridgewell/trace-mapping')
 
 it('uses the same fixed native engine for Vite and its framework', () => {
+  expect(frameworkRequire('weapp-vite/package.json').version).toBe('7.4.0')
   expect(viteRequire('rolldown/package.json').version).toBe('1.2.12')
   expect(frameworkRequire.resolve('rolldown/experimental')).toBe(viteRequire.resolve('rolldown/experimental'))
+})
+
+it('composes host conversion sourcemaps back to the original module', async () => {
+  const source = '\n\nexport const marker = "SOURCE_MAP_MARKER";\n'
+  const build = await rolldown({
+    input: 'virtual:entry',
+    plugins: [{
+      name: 'mapped-fixture',
+      resolveId: id => id === 'virtual:entry' ? id : null,
+      load: () => source,
+    }, createStatefulHmrCommonjsPlugin()],
+  })
+  try {
+    const { output } = await build.generate({ format: 'esm', sourcemap: true })
+    const chunk = output.find(item => item.type === 'chunk')
+    const lines = chunk.code.split('\n')
+    const index = lines.findIndex(line => line.includes('SOURCE_MAP_MARKER'))
+    expect(index).toBeGreaterThanOrEqual(0)
+    const position = originalPositionFor(new TraceMap(chunk.map), {
+      line: index + 1,
+      column: lines[index].indexOf('"SOURCE_MAP_MARKER"'),
+    })
+    expect(position.source).toContain('virtual:entry')
+    expect(position.line).toBe(3)
+    expect(createStatefulHmrCommonjsPlugin().renderChunk.handler(source, { fileName: 'entry.js' }, { sourcemap: false }).map).toBeNull()
+  }
+  finally { await build.close() }
 })
 
 it('keeps the upstream rejection of unsupported CJS dev mode', async () => {

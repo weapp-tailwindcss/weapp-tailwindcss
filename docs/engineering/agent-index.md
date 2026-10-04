@@ -4,6 +4,7 @@
 
 - [AGENTS.md](../../AGENTS.md)
 - [apps/AGENTS.md](../../apps/AGENTS.md)
+- [apps/weapp-tailwindcss-promo-video/AGENTS.md](../../apps/weapp-tailwindcss-promo-video/AGENTS.md)
 - [benchmark/runtime-cn-vs-merge/AGENTS.md](../../benchmark/runtime-cn-vs-merge/AGENTS.md)
 - [benchmark/performance/AGENTS.md](../../benchmark/performance/AGENTS.md)
 - [demo/AGENTS.md](../../demo/AGENTS.md)

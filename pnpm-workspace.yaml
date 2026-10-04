@@ -108,6 +108,7 @@ overrides:
   rolldown@1.2.10: 1.2.12
   tsdown@0.23.0>rolldown: 1.2.11
   jiti: 2.7.0
+  weapp-vite>rolldown: 1.2.12
   weapp-vite>weapp-tailwindcss: workspace:*
 
 catalogs:
@@ -398,4 +399,4 @@ patchedDependencies:
   rollup@4.63.0: patches/rollup@4.63.0.patch
   rollup@4.63.1: patches/rollup@4.63.1.patch
   rollup@4.63.5: patches/rollup@4.63.5.patch
-  weapp-vite@7.3.0: patches/weapp-vite@7.3.0.patch
+  weapp-vite@7.4.0: patches/weapp-vite@7.4.0.patch

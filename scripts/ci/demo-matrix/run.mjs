@@ -7,6 +7,7 @@ import { repositoryPackageManager } from '../version-contract.mjs'
 import { authoredCss } from './authored.mjs'
 import { openBrowser } from './browser.mjs'
 import { cases, checkCatalog, commands, coverage, isWeb, matrix, repo } from './catalog.mjs'
+import { developmentUrl } from './endpoint.mjs'
 import { inspectNative } from './native.mjs'
 import { inspectFiles } from './output.mjs'
 import { insertProbe } from './probe.mjs'
@@ -70,8 +71,7 @@ async function runCase(item) {
   const slug = item.id.replaceAll('/', '-').replaceAll(':', '-')
   const artifactDir = path.join(artifactRoot, slug)
   const baselineFile = path.join(baselineRoot, `${slug}.json`)
-  const port = await freePort()
-  const command = commands(item, port)
+  const command = commands(item)
   const outputDir = path.join(dir, command.output)
   const result = { id: item.id, coverage: coverage(item), commands: command, status: 'running', rounds: {} }
   let session
@@ -115,10 +115,13 @@ async function runCase(item) {
       return result
     }
     await rm(outputDir, { recursive: true, force: true })
+    const port = await freePort(item.family === 'taro' ? '0.0.0.0' : '127.0.0.1')
+    command.dev = commands(item, port).dev
     session = start(command.dev, dir, developmentEnvironment({ ...command.env, DEMO_MATRIX_NATIVE_WATCH_FILE: process.env.DEMO_MATRIX_PROCESS_DIAGNOSTICS === '1' ? sourceFile : '' }), path.join(artifactDir, 'dev-live.log'))
     activeSession = session
     if (isWeb(item) || item.name.startsWith('web/')) {
-      browser = await openBrowser(`http://127.0.0.1:${port}${item.route ?? '/'}`, session, artifactDir)
+      result.endpoint = { requestedPort: port, url: await developmentUrl(item, port, session) }
+      browser = await openBrowser(result.endpoint.url, session, artifactDir)
     }
     for (const round of ['initial', 'replace', 'add', 'restore']) {
       assert.ok(!interrupted, 'Matrix interrupted')

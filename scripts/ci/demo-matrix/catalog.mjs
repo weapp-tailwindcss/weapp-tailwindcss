@@ -15,10 +15,10 @@ function demo(name, family, targets, source, extra = {}) {
 
 export const demos = [
   ...['vite', 'webpack'].flatMap(bundler => ['react', 'vue3'].map(framework =>
-    demo(`taro-${bundler}-${framework}-tailwindcss-v4`, 'taro', taroTargets, `src/pages/index/index.${framework === 'react' ? 'tsx' : 'vue'}`, { node22: true }),
+    demo(`taro-${bundler}-${framework}-tailwindcss-v4`, 'taro', taroTargets, `src/pages/index/index.${framework === 'react' ? 'tsx' : 'vue'}`, { node22: true, bundler }),
   )),
-  demo('issue-951-taro-vite-react-tailwindcss-v4', 'taro', taroTargets, 'src/pages/index/index.tsx'),
-  demo('subpackage-taro-webpack-react-tailwindcss-v4', 'taro', ['weapp', 'alipay', 'tt', 'h5', 'rn'], 'src/pages/index/index.tsx'),
+  demo('issue-951-taro-vite-react-tailwindcss-v4', 'taro', taroTargets, 'src/pages/index/index.tsx', { bundler: 'vite' }),
+  demo('subpackage-taro-webpack-react-tailwindcss-v4', 'taro', ['weapp', 'alipay', 'tt', 'h5', 'rn'], 'src/pages/index/index.tsx', { bundler: 'webpack' }),
   demo('uni-app-vite-tailwindcss-v4', 'uni', uniTargets, 'src/pages/index/index.vue', { node22: true }),
   demo('subpackage-uni-app-vite-tailwindcss-v4', 'uni', mini, 'src/pages/index/index.vue'),
   demo('issue-uview-plus-cssentries', 'uni', ['mp-weixin', 'mp-alipay'], 'src/pages/demonstration/index.vue'),
@@ -31,7 +31,7 @@ export const demos = [
   demo('weapp-vite-tailwindcss-v4', 'weapp-vite', ['weapp'], 'pages/index/index.wxml', { node22: true }),
   demo('style-injector-uni-app', 'uni', ['mp-weixin', 'h5'], 'src/sub-normal/pages/index.vue', { route: '/#/sub-normal/pages/index' }),
   demo('style-injector-mpx', 'mpx', ['wx'], 'src/sub-normal/pages/index.mpx'),
-  ...['vite', 'webpack'].map(bundler => demo(`style-injector-taro-${bundler}-react`, 'taro', ['weapp', 'h5'], 'src/sub-normal/pages/index/index.tsx', { route: '/#/sub-normal/pages/index/index' })),
+  ...['vite', 'webpack'].map(bundler => demo(`style-injector-taro-${bundler}-react`, 'taro', ['weapp', 'h5'], 'src/sub-normal/pages/index/index.tsx', { route: '/#/sub-normal/pages/index/index', bundler })),
   ...['vite', 'webpack', 'rsbuild'].flatMap(bundler => ['react', 'vue'].map(framework =>
     demo(`web/${framework}-${bundler}-tailwindcss-v4`, bundler, ['web', 'weapp'], `src/App.${framework === 'react' ? 'tsx' : 'vue'}`, { node22: bundler === 'rsbuild' && framework === 'react' }),
   )),
@@ -105,6 +105,9 @@ export function checkCatalog() {
   assert.deepEqual(demos.map(item => item.name).sort(), actual, 'Every demo must declare host coverage')
   assert.equal(new Set(cases.map(item => item.id)).size, cases.length)
   for (const item of demos) {
+    if (item.family === 'taro') {
+      assert.ok(['vite', 'webpack'].includes(item.bundler), `Undeclared Taro bundler: ${item.name}`)
+    }
     const manifest = JSON.parse(readFileSync(path.join(repo, 'demo', item.name, 'package.json'), 'utf8'))
     assert.ok(item.targets.length || item.limitation, item.name)
     if (item.source) {
