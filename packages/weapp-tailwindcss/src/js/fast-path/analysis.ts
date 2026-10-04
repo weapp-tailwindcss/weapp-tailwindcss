@@ -2,7 +2,7 @@ import type { IJsHandlerOptions } from '../../types'
 import type { SourceAnalysis } from './types'
 import { LRUCache } from 'lru-cache'
 import { walk } from 'oxc-walker'
-import { loadNativeCompiler } from '../../native'
+import { loadNativeCompiler, nativeCompilerConfigured } from '../../native'
 import { parseOxcSync } from '../oxc-parser'
 import { isClassContextLiteral } from './class-context'
 import { getParserLang, getParserSourceType } from './parser-options'
@@ -50,7 +50,7 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
   const sourceType = getParserSourceType(options)
   const preserveParens = options.babelParserOptions?.createParenthesizedExpressions === true
   // 加载检查必须先于缓存，required 模式不能命中先前的 JS 回退结果。
-  const compiler = loadNativeCompiler()
+  const compiler = nativeCompilerConfigured ? loadNativeCompiler() : undefined
   const key = `${compiler ? 'native' : 'oxc'}:${lang}:${sourceType}:${preserveParens}:${rawSource}`
   const cached = analysisCache.get(key)
   if (cached) {

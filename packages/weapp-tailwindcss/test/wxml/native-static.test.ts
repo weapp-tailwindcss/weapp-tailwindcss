@@ -8,7 +8,7 @@ import { JavaScriptTokenizer } from '@/wxml/tokenizer/javascript'
 import { templateReplacer } from '@/wxml/utils/template-fragments'
 
 const native = vi.hoisted(() => ({ load: vi.fn(), create: vi.fn(), transform: vi.fn(), tokenize: vi.fn() }))
-vi.mock('@/native', () => ({ loadNativeCompiler: native.load }))
+vi.mock('@/native', () => ({ loadNativeCompiler: native.load, nativeCompilerConfigured: true }))
 
 beforeEach(() => {
   vi.clearAllMocks()

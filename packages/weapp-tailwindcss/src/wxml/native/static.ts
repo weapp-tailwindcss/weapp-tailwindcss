@@ -2,7 +2,7 @@ import type { NativeCompiler } from '../../native'
 import type { ITemplateHandlerOptions } from '../../types'
 import type { NativeWxmlEscapeEntry, NativeWxmlTransformer } from './types'
 import { MappingChars2String } from '@weapp-tailwindcss/escape'
-import { loadNativeCompiler } from '../../native'
+import { loadNativeCompiler, nativeCompilerConfigured } from '../../native'
 import { isAllWhitespace } from '../whitespace'
 import { getNativeWxmlEscapeEntries } from './escape'
 
@@ -10,6 +10,9 @@ const caches = new WeakMap<NativeCompiler, WeakMap<NativeWxmlEscapeEntry[], Nati
 const setHas = Set.prototype.has
 
 export function nativeStaticTemplateReplacer(source: string, options: ITemplateHandlerOptions): string | undefined {
+  if (!nativeCompilerConfigured) {
+    return undefined
+  }
   // tokenizer 从单个左花括号起等待 }}；拒绝必须发生在读取/缓存转义表之前。
   const opening = source.indexOf('{')
   if (opening >= 0 && source.includes('}}', opening + 1)) {

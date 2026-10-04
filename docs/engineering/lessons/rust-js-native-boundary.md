@@ -26,7 +26,7 @@ regressions:
 - UTF-16 位置与输入必须保真；孤立代理项不能经 UTF-8 无损解析时，显式交还 Babel。Oxc JavaScript 接口也加入同样的原始字符串防护。
 - 原生 `null` 是语义回退，直接交给 Babel；不可再由较宽松的 Oxc 分析重新接管。加载不可用与语义不支持分开处理，执行异常不被兼容 catch 吞掉。
 - 工厂参数包含最终有效映射，Rust 不维护一份容易漂移的默认字典。第一版每次验证类集合完整内容，在 10 万项集合下抵消了内核收益；后续改为 `transformWithCandidates`，只查询当前源码实际候选，每次调用重新查询并在调用内部去重，等长 delete/add 立即生效。映射内容变化重建实例。实例由 WeakMap/GC 拥有，不保留用户回调；异常身份、重入和缓存淘汰边界见 [候选成员查询复盘](js-native-candidate-membership.md)。
-- 原生检查先于短 JS 结果缓存，否则先 `off` 后 `required` 会返回旧缓存，隐藏缺失二进制。原生成功结果不进入这层缓存，解析事实由原生实例缓存。
+- 原生检查先于短 JS 结果缓存，否则先 `off` 后 `required` 会返回旧缓存，隐藏缺失二进制。原生成功结果不进入这层缓存，解析事实由原生实例缓存。2026-10-05 调整为默认关闭后，此运行期对照要求首次 import 前已设置 `auto/required`；默认关闭进程不进入原生检查，显式启用进程仍保留每次加载校验。
 - Oxc 的 TS ESTree template element 区间包含标点，JS ESTree 只包含正文。分析统一为正文区间，替换不能根据正文首尾字符猜测边界。显式 class 上下文使用 Babel 的对象属性、JSX 属性和 helper 父链语义，普通业务斜杠路径仍受保护。
 - 默认 `sourceType` 按 Babel 的 `script` 语义处理，TS/JSX 由真实 parser plugins 决定，不能根据扩展名放宽语法。特殊解析选项交还 Babel；`sourceFilename` 与缓存配置只提供元数据，不阻止快速路径。direct eval 按 AST 识别，覆盖空格、换行、注释与 optional 调用。
 

@@ -20,7 +20,7 @@
 - `off`：默认使用现有 PostCSS/TypeScript 实现。
 - `required`：缺失二进制或 ABI 不兼容时抛出原始加载错误；均缺失时包含两次解析错误。
 
-CSS 内核默认关闭。需要验证或显式采用原生 CSS 边界时设置 `WEAPP_TW_NATIVE=auto` 或 `required`；该开关与 JS/WXML 原生内核共用，但未设置时 CSS 仍保持 `off`。
+CSS 内核默认关闭。需要验证或显式采用原生 CSS 边界时，在进程启动前设置 `WEAPP_TW_NATIVE=auto` 或 `required`；该开关与 JS/WXML 原生内核共用，三者未设置时均保持 `off`。
 
 原生转换异常不会被加载器吞掉；不完整批次会报错。原生差分测试位于 `test/native/`，独立配置强制 required 并在 setup 实际加载内核，执行前必须构建二进制；缺失或损坏时失败，不能探测后跳过。普通测试配置始终排除此目录，mock loader/平台路由仍运行，不要求消费者编译二进制。值和选择器兼容实现的第三方许可保留在 [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt)。
 

@@ -2,8 +2,21 @@ import type { NativeReport } from '../benchmark/oxc-vite/types'
 import { describe, expect, it } from 'vitest'
 import { createNativeCounter, measuredNativeCalls } from '../benchmark/oxc-vite/native'
 import { comparisonModes, nativeMode, pairOrder, parseOptions } from '../benchmark/oxc-vite/options'
+import { transferOptions } from '../benchmark/oxc-vite/parser'
 
 describe('Vite comparison modes', () => {
+  it('only compares transfer for opted-in parsing and preserves ordinary runtime snapshot parsing', () => {
+    const raw = { sourceType: 'module', experimentalRawTransfer: true }
+    expect(transferOptions('normal', raw)).toEqual({ ...raw, experimentalRawTransfer: false })
+    expect(transferOptions('raw', raw)).toBe(raw)
+    expect(transferOptions('default', raw)).toBe(raw)
+    for (const mode of ['normal', 'raw', 'default'] as const) {
+      for (const ast of [undefined, { lang: 'tsx' }, { experimentalRawTransfer: false }]) {
+        expect(transferOptions(mode, ast)).toBe(ast)
+      }
+    }
+  })
+
   it('keeps transfer as the default and explicitly disables native for both old modes', () => {
     expect(parseOptions([]).compare).toBe('transfer')
     expect(comparisonModes('transfer')).toEqual(['normal', 'raw'])

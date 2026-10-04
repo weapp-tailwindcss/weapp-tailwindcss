@@ -142,7 +142,7 @@ assert(!(measured && process.argv.includes('--self-check')), 'Choose --measure o
 const iterations = measured ? Number(process.argv.find(value => value.startsWith('--iterations='))?.slice('--iterations='.length) ?? 200) : 1
 assert(Number.isSafeInteger(iterations) && iterations > 0 && iterations <= 1_000_000)
 const originalMode = process.env.WEAPP_TW_NATIVE
-process.env.WEAPP_TW_NATIVE = 'off'
+process.env.WEAPP_TW_NATIVE = 'required'
 const counter = instrument()
 
 async function run() {

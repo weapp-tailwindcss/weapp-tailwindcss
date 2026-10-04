@@ -11,7 +11,7 @@ const native = vi.hoisted(() => ({
     createJsTransformer: vi.fn<NativeCompiler['createJsTransformer']>(),
   },
 }))
-vi.mock('@/native', () => ({ loadNativeCompiler: native.load }))
+vi.mock('@/native', () => ({ loadNativeCompiler: native.load, nativeCompilerConfigured: true }))
 
 const source = 'const cls = "w-[100px]"'
 const facts = {

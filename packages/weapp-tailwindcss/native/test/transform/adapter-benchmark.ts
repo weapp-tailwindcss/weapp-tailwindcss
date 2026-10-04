@@ -8,13 +8,16 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { createInput } from '../../../benchmark/oxc-raw-transfer/input'
-import { createJsHandler } from '../../../src/js'
-import { getNativeBindingSuffix, loadNativeCompiler } from '../../../src/native'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..', '..')
 const require = createRequire(import.meta.url)
 const previous = process.env.WEAPP_TW_NATIVE
 process.env.WEAPP_TW_NATIVE = 'required'
+// eslint-disable-next-line antfu/no-top-level-await -- 独立基准需先设置原生模式，再加载消费者。
+const [{ createJsHandler }, { getNativeBindingSuffix, loadNativeCompiler }] = await Promise.all([
+  import('../../../src/js'),
+  import('../../../src/native'),
+])
 const compiler = loadNativeCompiler()!
 const factory = compiler.createJsTransformer
 const analyze = compiler.analyzeJs

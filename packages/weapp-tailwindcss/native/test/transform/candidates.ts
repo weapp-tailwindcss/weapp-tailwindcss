@@ -5,6 +5,8 @@ import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { createJsHandler } from '../../../src/js'
 import { native } from './binding'
 
+assert.equal(process.env.WEAPP_TW_NATIVE, 'required', '公开 adapter 验收必须在进程启动时设置 WEAPP_TW_NATIVE=required')
+
 const transformer = native.createJsTransformer(['h-[2px]'], Object.entries(MappingChars2String).map(([character, replacement]) => ({ character, replacement })))!
 assert.equal(typeof transformer.transformWithCandidates, 'function')
 function transform(source: string, contains: (candidate: string) => boolean, options: Parameters<NativeTransformer['transform']>[4] = {}) {

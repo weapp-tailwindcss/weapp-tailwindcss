@@ -4,6 +4,8 @@
 
 默认 `--compare transfer` 保留 normal/raw 对比，并显式设置 `WEAPP_TW_NATIVE=off`。`--compare native` 切换为 off/required 对比，两组均保留生产默认 Oxc 传递选项；要求目标 checkout 的 JS/WXML 与 CSS native binary 已构建。两种对比使用相同的交替采样、产物哈希、HMR 语义和资源释放流程。
 
+normal 只关闭产品主动请求的 raw transfer；raw 保持产品传递选项。runtime snapshot 显式选用普通 AST，两组均保持普通 AST，不能为构造 raw 样本而强制开启。报告同时记录 `calls` 与 `rawTransferCalls`，普通签名解析的调用数不能作为 raw 已执行的证据。
+
 前置条件：目标仓库依赖、core 和其依赖包的 dist 已构建，仓库的 Playwright Chromium 可启动。demo 必须真实解析到 `--root` 的 core 包；不能用指向其它 checkout 的依赖链接。浏览器固定 headless，整个 runner 串行执行，每个 worker 只有一个 dev server 和一个页面。
 
 从仓库根目录执行（`--root` 和 `--output` 支持绝对路径）：

@@ -16,6 +16,7 @@ export interface WorkerOptions {
 
 export interface ParseCount {
   calls: number
+  rawTransferCalls: number
   failures: number
   sourceCodeUnits: number
   filenames: string[]

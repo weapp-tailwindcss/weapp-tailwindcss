@@ -14,7 +14,7 @@
 pnpm --filter weapp-tailwindcss exec node native/build.mjs
 pnpm --filter weapp-tailwindcss exec tsx native/test/transform.ts
 pnpm --filter weapp-tailwindcss exec tsx native/test/transform/babel.ts
-pnpm --filter weapp-tailwindcss exec tsx native/test/transform/candidates.ts
+pnpm --filter weapp-tailwindcss exec cross-env WEAPP_TW_NATIVE=required tsx native/test/transform/candidates.ts
 pnpm --filter weapp-tailwindcss exec tsx native/test/transform/benchmark.ts
 pnpm --filter weapp-tailwindcss exec tsx native/test/transform/adapter-benchmark.ts
 ```

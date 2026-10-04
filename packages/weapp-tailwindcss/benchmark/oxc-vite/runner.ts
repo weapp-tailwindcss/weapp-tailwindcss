@@ -87,15 +87,17 @@ async function run() {
     assert.deepEqual(await inputFingerprint(options.root, options.compare), input, '运行前后源码、构建输入或依赖身份发生变化。')
     const measuredCalls = rows.reduce((sum, row) => sum + Object.entries(row.parser.counts).reduce((total, [phase, count]) => total + (phase === 'self-check' ? 0 : count.calls), 0), 0)
     report['coreOxcMeasuredCalls'] = measuredCalls
+    const rawCalls = rows.reduce((sum, row) => sum + Object.entries(row.parser.counts).reduce((total, [phase, count]) => total + (phase === 'self-check' ? 0 : count.rawTransferCalls), 0), 0)
+    report['coreOxcRawTransferMeasuredCalls'] = rawCalls
     const nativeCalls = rows.reduce((sum, row) => sum + (row.native ? measuredNativeCalls(row.native) : 0), 0)
     report['nativeMeasuredCalls'] = nativeCalls
     report['attribution'] = options.compare === 'native'
       ? nativeCalls === 0
         ? '真实构建/HMR 未调用被测原生内核；这些耗时不能用于归因 Rust 的收益。'
         : '存在真实原生调用；结合各阶段/方法的调用数、产物一致性和原始样本评估，不能把局部内核加速宣称为整个项目加速。'
-      : measuredCalls === 0
-        ? '真实构建/HMR 未调用被测 core Oxc parseSync；这些耗时不能用于归因 Oxc raw transfer 的收益。'
-        : '存在真实 core Oxc 调用；仍须结合各阶段调用数评估，不能把 handler 加速直接宣称为项目构建加速。'
+      : rawCalls === 0
+        ? '真实构建/HMR 未执行 core Oxc raw transfer；这些耗时不能用于归因 raw transfer 的收益。'
+        : '存在真实 core Oxc raw transfer 调用；仍须结合各阶段调用数评估，不能把 handler 加速直接宣称为项目构建加速。'
     if (!options.selfCheck) {
       report['summary'] = Object.fromEntries(comparisonModes(options.compare).map((mode) => {
         const group = rows.filter(row => row.mode === mode)

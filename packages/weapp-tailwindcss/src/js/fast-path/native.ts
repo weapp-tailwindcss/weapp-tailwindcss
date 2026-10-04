@@ -2,7 +2,7 @@ import type { NativeCompiler } from '../../native'
 import type { NativeJsTransformer } from '../../native/types'
 import type { IJsHandlerOptions, JsHandlerResult } from '../../types'
 import { MappingChars2String } from '@weapp-tailwindcss/escape'
-import { loadNativeCompiler } from '../../native'
+import { loadNativeCompiler, nativeCompilerConfigured } from '../../native'
 import { defaultJsPreserveClass } from '../default-preserve'
 import { isPlainClassNameSet } from '../options-signature'
 import { canAttemptOxcJsFastPath } from './oxc'
@@ -42,7 +42,8 @@ function getTransformer(compiler: NativeCompiler, options: IJsHandlerOptions) {
 
 /** 快速路径在原生实例内完成解析与替换，只把最终代码送回 JavaScript。 */
 export function nativeJsHandler(source: string, options: IJsHandlerOptions): JsHandlerResult | null | undefined {
-  if (!isPlainClassNameSet(options.classNameSet ?? emptyClasses)
+  if (!nativeCompilerConfigured
+    || !isPlainClassNameSet(options.classNameSet ?? emptyClasses)
     || !canAttemptOxcJsFastPath(options)
     || (options.jsPreserveClass && options.jsPreserveClass !== defaultJsPreserveClass)) {
     return undefined

@@ -1,7 +1,10 @@
 import type { Token } from './types'
-import { loadNativeCompiler } from '../../native'
+import { loadNativeCompiler, nativeCompilerConfigured } from '../../native'
 
 export function tokenizeWithNative(input: string): Token[] | undefined {
+  if (!nativeCompilerConfigured) {
+    return undefined
+  }
   const compiler = loadNativeCompiler()
   if (!compiler) {
     return undefined

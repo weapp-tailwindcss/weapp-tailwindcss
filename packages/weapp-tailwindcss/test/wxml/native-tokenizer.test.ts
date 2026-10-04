@@ -4,6 +4,7 @@ import { JavaScriptTokenizer } from '@/wxml/tokenizer/javascript'
 
 const native = vi.hoisted(() => ({ tokenizeWxml: vi.fn(), available: true }))
 vi.mock('@/native', () => ({
+  nativeCompilerConfigured: true,
   loadNativeCompiler: () => native.available ? { tokenizeWxml: native.tokenizeWxml } : undefined,
 }))
 

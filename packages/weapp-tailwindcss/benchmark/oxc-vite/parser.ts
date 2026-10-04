@@ -9,6 +9,13 @@ interface OxcModule {
   rawTransferSupported?: () => boolean
 }
 
+export function transferOptions(mode: TransferMode | 'default', options?: Record<string, unknown>) {
+  // 只对产品请求 raw 的解析切换传递方式，显式普通 AST 的 runtime snapshot 保持原路径。
+  return mode === 'normal' && options?.experimentalRawTransfer === true
+    ? { ...options, experimentalRawTransfer: false }
+    : options
+}
+
 export function instrumentParser(root: string, mode: TransferMode | 'default') {
   const coreManifest = path.join(root, 'packages', 'weapp-tailwindcss', 'package.json')
   const coreRequire = createRequire(coreManifest)
@@ -25,14 +32,18 @@ export function instrumentParser(root: string, mode: TransferMode | 'default') {
   const wrapped = {
     ...original,
     parseSync(filename: string, source: string, options?: Record<string, unknown>) {
-      const count = counts[phase] ??= { calls: 0, failures: 0, sourceCodeUnits: 0, filenames: [] }
+      const count = counts[phase] ??= { calls: 0, rawTransferCalls: 0, failures: 0, sourceCodeUnits: 0, filenames: [] }
       count.calls++
+      const measuredOptions = transferOptions(mode, options)
+      if (measuredOptions?.experimentalRawTransfer === true) {
+        count.rawTransferCalls++
+      }
       count.sourceCodeUnits += source.length
       if (count.filenames.length < 12 && !count.filenames.includes(filename)) {
         count.filenames.push(filename)
       }
       try {
-        return original.parseSync(filename, source, mode === 'default' ? options : { ...options, experimentalLazy: false, experimentalRawTransfer: mode === 'raw' })
+        return original.parseSync(filename, source, measuredOptions)
       }
       catch (error) {
         count.failures++
@@ -46,7 +57,7 @@ export function instrumentParser(root: string, mode: TransferMode | 'default') {
     report: { resolved, rawTransferSupported: supported, counts },
     phase(value: Phase) { phase = value },
     selfCheck() {
-      const parsed = coreRequire('oxc-parser').parseSync('oxc-benchmark-self-check.js', 'const value = "中文😀 w-[10px]"', { sourceType: 'module' })
+      const parsed = coreRequire('oxc-parser').parseSync('oxc-benchmark-self-check.js', 'const value = "中文😀 w-[10px]"', { sourceType: 'module', experimentalRawTransfer: true })
       assert.equal(parsed.errors.length, 0)
       assert(parsed.program && counts['self-check']?.calls === 1, 'Oxc 自检未触发真实包装调用。')
     },

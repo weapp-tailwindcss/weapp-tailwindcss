@@ -3,7 +3,7 @@
 "@weapp-tailwindcss/postcss": minor
 ---
 
-将 WXML tokenize、JavaScript 完整字面量转换与运行时签名计算接入 Rust Node-API 内核，保留 JavaScript/Babel 兼容路径与公开 TypeScript API。原生与回退路径共享 UTF-16 位置、精确类名命中和条件测试保护语义，并支持显式关闭或要求原生内核的验证模式。
+提供 WXML tokenize、JavaScript 完整字面量转换的 Rust Node-API 实验内核，保留 JavaScript/Oxc/Babel 兼容路径与公开 TypeScript API。原生与回退路径共享 UTF-16 位置、精确类名命中和条件测试保护语义。JS/WXML 与 CSS 内核均默认关闭，须在进程启动前设置 `WEAPP_TW_NATIVE=auto` 或 `required` 显式启用；默认路径跳过高频原生加载检查。运行时签名仍沿用 Oxc，原生签名接口仅供 ABI 对照。
 
 WXML 静态属性值在原生实例内完成扫描、转义和组装；精确模式仅查询实际候选，避免复制完整类集合。动态表达式与自定义回调保留原执行顺序。
 

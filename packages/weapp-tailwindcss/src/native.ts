@@ -18,6 +18,11 @@ const require = createRequire(import.meta.url)
 let compiler: NativeCompiler | false | undefined
 let loadError: unknown
 
+/** 原生模式在进程启动时确定；默认关闭时避免在每个片段上读取环境变量。 */
+const configuredMode = process.env['WEAPP_TW_NATIVE']
+// 非空的错误配置也进入加载器校验，不能静默当作关闭。
+export const nativeCompilerConfigured = configuredMode !== undefined && configuredMode !== 'off'
+
 function unavailable(mode: string) {
   if (mode === 'required') {
     throw new Error('WEAPP_TW_NATIVE=required, but the native compiler could not be loaded', { cause: loadError })
@@ -26,7 +31,8 @@ function unavailable(mode: string) {
 }
 
 export function loadNativeCompiler(): NativeCompiler | undefined {
-  const mode = process.env['WEAPP_TW_NATIVE'] ?? 'auto'
+  // 整体构建收益尚不稳定，只有显式启用时才改变现有 JS/Oxc 路径。
+  const mode = process.env['WEAPP_TW_NATIVE'] ?? 'off'
   if (mode === 'off') {
     return undefined
   }

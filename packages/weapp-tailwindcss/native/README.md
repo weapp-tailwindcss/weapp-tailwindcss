@@ -2,7 +2,7 @@
 
 跨平台包布局、版本联动与发布门禁见 [Rust 内核分发与发布](./DISTRIBUTION.md)。
 
-当前内核通过 Node-API 提供 WXML 属性值 tokenizer、JavaScript 字面量分析/完整转换与运行时签名。公开 TypeScript API 不变，原生 binding 不可用时沿用 JavaScript/Babel 兼容路径。`WEAPP_TW_NATIVE=auto` 自动加载，`off` 强制回退，`required` 在缺失 binding 时失败，供原生验收使用。
+当前内核通过 Node-API 提供 WXML 属性值 tokenizer、JavaScript 字面量分析/完整转换与运行时签名。公开 TypeScript API 不变，默认沿用 JavaScript/Oxc/Babel 兼容路径。完整构建收益尚不稳定，因此 JS/WXML 与 CSS 内核均默认关闭；在启动进程前设置 `WEAPP_TW_NATIVE=auto` 显式尝试加载，`off` 强制回退，`required` 在缺失 binding 时失败，供原生验收使用。局部内核的收益不能用作默认启用或完整项目加速的证据。
 
 静态 WXML 属性值由 `createWxmlTransformer` 创建的实例完成扫描、精确匹配、转义与输出组装；动态表达式保留原流程。ABI、回调与自定义表边界见 [WXML 静态转换](WXML.md)。
 
@@ -25,7 +25,7 @@ TypeScript 从原输入切片恢复 token 与表达式的 value，因此不经�
 
 ## JS ABI
 
-`analyzeJs` 返回带 UTF-16 位置、条件测试与 class 上下文的字面量事实。模板元素区间只包含正文，不包含反引号或插值边界。`jsRuntimeSignature` 返回紧凑的运行时依赖签名，空签名有效。
+`analyzeJs` 返回带 UTF-16 位置、条件测试与 class 上下文的字面量事实。模板元素区间只包含正文，不包含反引号或插值边界。`jsRuntimeSignature` 返回紧凑的运行时依赖签名，空签名有效；它保留供 ABI 对照，生产 runtime snapshot 继续使用 Oxc。
 
 `createJsTransformer` 返回由 JS GC 拥有的原生实例。生产适配器传入空集合与最终有效转义映射，再通过 `transformWithCandidates` 在 Rust 中完成解析和替换；成员回调只查询当前源码实际候选，同一次调用去重，不遍历或复制整个 classSet。集合原地修改在下一次调用立即生效，映射内容变化重建实例。旧 `transform/replaceClassNames` 快照接口保留供 ABI 对照，生产路径不再使用。加载器拒绝缺少候选查询方法的旧二进制。
 
