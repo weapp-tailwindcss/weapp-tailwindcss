@@ -2663,7 +2663,7 @@ wx-root-portal-content {
   animation-name: nut-skeleton;
   animation-play-state: running;
   animation-timing-function: linear;
-  background: linear-gradient(90deg, #0000, #00000005, #0000);
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.01961), rgba(0, 0, 0, 0));
   height: 100%;
   left: 0;
   position: absolute;
@@ -9189,7 +9189,7 @@ wx-root-portal-content {
 }
 .nut-animate .nut-animate-flicker::after {
   animation: flicker 1.5s linear infinite;
-  background-image: linear-gradient(106deg, #e8e0ff00 24%, #e8e0ff 91%);
+  background-image: linear-gradient(106deg, rgba(232, 224, 255, 0) 24%, #e8e0ff 91%);
   content: '';
   filter: blur(3rpx);
   height: 60rpx;
