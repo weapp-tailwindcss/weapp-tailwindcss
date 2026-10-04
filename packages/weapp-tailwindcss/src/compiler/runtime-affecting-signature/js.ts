@@ -7,7 +7,7 @@ export function tryCreateJsRuntimeAffectingSignature(source: string): string | u
     const result = parseOxcSync('runtime.tsx', source, {
       lang: 'tsx',
       sourceType: 'unambiguous',
-    })
+    }, 'ast')
     if (!result || result.errors.length > 0) {
       return undefined
     }

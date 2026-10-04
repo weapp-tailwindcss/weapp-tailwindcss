@@ -27,6 +27,18 @@ describe('Oxc 解析传输与回退', () => {
     expect(options).not.toHaveProperty('experimentalRawTransfer')
   })
 
+  it('缓存 raw transfer 能力探测，并允许签名路径固定使用普通 AST', () => {
+    const parse = vi.fn<OxcParser['parseSync']>().mockReturnValue(result)
+    const rawTransferSupported = vi.fn(() => true)
+    useParser({ parseSync: parse, rawTransferSupported })
+
+    parseOxcSync('entry.js', source, options)
+    parseOxcSync('runtime.tsx', source, { lang: 'tsx', sourceType: 'unambiguous' }, 'ast')
+
+    expect(rawTransferSupported).toHaveBeenCalledOnce()
+    expect(parse).toHaveBeenNthCalledWith(2, 'runtime.tsx', source, { lang: 'tsx', sourceType: 'unambiguous' })
+  })
+
   it.each([
     ['能力检查缺失', undefined],
     ['平台不支持', () => false],
