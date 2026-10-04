@@ -1,6 +1,7 @@
 import type { IConnectOptions, ILaunchOptions } from '@weapp-vite/miniprogram-automator'
 import { setTimeout as delay } from 'node:timers/promises'
 import { MiniProgram, Launcher as RawLauncher } from '@weapp-vite/miniprogram-automator'
+import { runWithCleanup } from '../e2e-preflight/cleanup'
 import { availablePort } from '../e2e-preflight/probes/port'
 import { assertWechatLogin, existingWechatService, wechatRequest } from './service'
 
@@ -87,8 +88,7 @@ export class Launcher {
       return mini
     }
     catch (error) {
-      mini.disconnect()
-      throw error
+      return runWithCleanup(() => Promise.reject(error), () => mini.disconnect())
     }
   }
 }

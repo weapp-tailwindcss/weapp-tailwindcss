@@ -1,4 +1,5 @@
 import { readFile, writeFile } from 'node:fs/promises'
+import { runWithCleanup } from '../../scripts/e2e-preflight/cleanup'
 
 export async function withTemplateAppId<T>(file: string, appId: string | undefined, run: () => Promise<T>): Promise<T> {
   if (appId === undefined) {
@@ -17,10 +18,5 @@ export async function withTemplateAppId<T>(file: string, appId: string | undefin
     }
     await writeFile(file, original)
   }
-  try {
-    return await run()
-  }
-  finally {
-    await restore()
-  }
+  return runWithCleanup(run, restore)
 }

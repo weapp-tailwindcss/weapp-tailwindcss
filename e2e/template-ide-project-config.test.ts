@@ -56,4 +56,18 @@ describe('template IDE AppID override', () => {
     })).rejects.toThrow('配置已被修改')
     expect(await readFile(file, 'utf8')).toBe(external)
   })
+
+  it('执行失败与恢复冲突同时保留，且不覆盖其他写入', async () => {
+    const primary = new Error('auto HTTP 500')
+    const external = '{"appid":"wx1111111111111111"}'
+    const error = await withTemplateAppId(file, appId, async () => {
+      await writeFile(file, external)
+      throw primary
+    }).catch(error => error)
+    expect(error).toBeInstanceOf(AggregateError)
+    expect(error.cause).toBe(primary)
+    expect(error.errors[0]).toBe(primary)
+    expect(error.errors[1].message).toContain('配置已被修改')
+    expect(await readFile(file, 'utf8')).toBe(external)
+  })
 })

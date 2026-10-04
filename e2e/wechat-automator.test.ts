@@ -101,6 +101,24 @@ describe('微信会话保护', () => {
     expect(wechatRequest).toHaveBeenCalledOnce()
   })
 
+  it('页面就绪和断开连接同时失败时保留首次失败，不重新连接', async () => {
+    const { mini, connection } = miniProgram()
+    const primary = new Error('page readiness failed')
+    const cleanup = new Error('disconnect failed')
+    vi.mocked(mini.waitForAppReady).mockRejectedValue(primary)
+    connection.dispose.mockImplementation(() => {
+      throw cleanup
+    })
+    connect.mockResolvedValue(mini)
+    const error = await new Launcher().launch({ projectPath: '/owned', port: 45678 }).catch(error => error)
+    expect(error).toBeInstanceOf(AggregateError)
+    expect(error.cause).toBe(primary)
+    expect(error.errors).toEqual([primary, cleanup])
+    expect(connection.dispose).toHaveBeenCalledOnce()
+    expect(connect).toHaveBeenCalledOnce()
+    expect(wechatRequest).toHaveBeenCalledOnce()
+  })
+
   it('超过截止时间才返回的连接会断开，不返回迟到成功或旁路重连', async () => {
     const { mini, connection } = miniProgram()
     connect.mockImplementation(async () => {

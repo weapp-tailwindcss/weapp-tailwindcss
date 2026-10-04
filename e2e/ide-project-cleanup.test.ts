@@ -47,6 +47,37 @@ describe('IDE project ownership', () => {
     expect(wechatRequest).not.toHaveBeenCalled()
   })
 
+  it.each(['login', 'close'])('断开连接与 %s 清理同时失败时保留两个错误', async (stage) => {
+    const primary = new Error('disconnect failed')
+    const cleanup = new Error(`${stage} failed`)
+    if (stage === 'login') {
+      vi.mocked(assertWechatLogin).mockRejectedValue(cleanup)
+    }
+    else {
+      vi.mocked(wechatRequest).mockRejectedValue(cleanup)
+    }
+    const disconnect = vi.fn(() => {
+      throw primary
+    })
+    const error = await closeWechatProject('/owned/project', { disconnect }).catch(error => error)
+    expect(error).toBeInstanceOf(AggregateError)
+    expect(error.cause).toBe(primary)
+    expect(error.errors).toEqual([primary, cleanup])
+    expect(disconnect).toHaveBeenCalledOnce()
+    expect(wechatRequest).toHaveBeenCalledTimes(stage === 'login' ? 0 : 1)
+  })
+
+  it('等待异步断开失败后仍执行清理，避免未处理的拒绝', async () => {
+    const primary = new Error('async disconnect failed')
+    const cleanup = new Error('close failed')
+    vi.mocked(wechatRequest).mockRejectedValue(cleanup)
+    const disconnect = vi.fn().mockRejectedValue(primary)
+    const error = await closeWechatProject('/owned/project', { disconnect }).catch(error => error)
+    expect(error.errors).toEqual([primary, cleanup])
+    expect(disconnect).toHaveBeenCalledOnce()
+    expect(wechatRequest).toHaveBeenCalledOnce()
+  })
+
   it('does not retry a failed project close', async () => {
     vi.mocked(wechatRequest).mockRejectedValue(new Error('close failed'))
     await expect(closeWechatProject('/owned/project')).rejects.toThrow('close failed')
