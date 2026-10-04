@@ -85,6 +85,7 @@ const report = {
   node: process.version,
   oxc: require('oxc-parser/package.json').version,
   nativeSha256: createHash('sha256').update(readFileSync(bindingPath)).digest('hex'),
+  nativeBytes: readFileSync(bindingPath).byteLength,
   input: { bytes: input.bytes, units: input.units, sha256: input.sha256 },
   rounds,
   pairs,

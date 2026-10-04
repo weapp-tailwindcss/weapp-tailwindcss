@@ -71,7 +71,8 @@ fn transform_literal(
     class_names: &HashSet<String>,
     escape: &EscapeTable,
     options: &JsTransformOptions,
-    plans: &mut HashMap<String, Option<String>>,
+    class_context: bool,
+    plans: &mut HashMap<(String, bool), Option<String>>,
 ) -> Option<Option<String>> {
     let source = if options.unescape_unicode == Some(true) && value.contains("\\u") {
         decode::decode(value)?
@@ -81,20 +82,25 @@ fn transform_literal(
     let mut transformed = source.clone();
     let mut mutated = false;
     for candidate in candidates::split(&source) {
-        let plan = plans.entry(candidate.clone()).or_insert_with(|| {
-            if options.always_escape != Some(true) && candidates::is_plain_slash_path(&candidate) {
-                return None;
-            }
-            let escaped = escape.escape(&candidate);
-            if options.always_escape == Some(true)
-                || class_names.contains(&candidate)
-                || (escaped != candidate && class_names.contains(&escaped))
-            {
-                Some(escaped)
-            } else {
-                None
-            }
-        });
+        let plan = plans
+            .entry((candidate.clone(), class_context))
+            .or_insert_with(|| {
+                if options.always_escape != Some(true)
+                    && !class_context
+                    && candidates::is_plain_slash_path(&candidate)
+                {
+                    return None;
+                }
+                let escaped = escape.escape(&candidate);
+                if options.always_escape == Some(true)
+                    || class_names.contains(&candidate)
+                    || (escaped != candidate && class_names.contains(&escaped))
+                {
+                    Some(escaped)
+                } else {
+                    None
+                }
+            });
         if let Some(replacement) = plan {
             let replaced = replace_first(&transformed, &candidate, replacement);
             if replaced != transformed {
@@ -125,17 +131,24 @@ pub(super) fn transform(
     let units: Vec<u16> = source.encode_utf16().collect();
     let mut edits = Vec::new();
     let mut plans = HashMap::new();
-    let mut literals: HashMap<&str, Option<String>> = HashMap::new();
+    let mut literals: HashMap<(&str, bool), Option<String>> = HashMap::new();
     for literal in &analysis.literals {
         if literal.is_condition_test {
             continue;
         }
-        if !literals.contains_key(literal.value.as_str()) {
-            let transformed =
-                transform_literal(&literal.value, class_names, escape, options, &mut plans)?;
-            literals.insert(&literal.value, transformed);
+        let key = (literal.value.as_str(), literal.class_context);
+        if let std::collections::hash_map::Entry::Vacant(entry) = literals.entry(key) {
+            let transformed = transform_literal(
+                &literal.value,
+                class_names,
+                escape,
+                options,
+                literal.class_context,
+                &mut plans,
+            )?;
+            entry.insert(transformed);
         }
-        let Some(transformed) = &literals[literal.value.as_str()] else {
+        let Some(transformed) = &literals[&key] else {
             continue;
         };
         if transformed.is_empty() {
@@ -157,14 +170,6 @@ pub(super) fn transform(
             if transformed == &literal.value {
                 continue;
             }
-            if matches!(units.get(start), Some(96 | 125)) {
-                start += 1;
-            }
-            end = end.checked_sub(match units.get(end.checked_sub(1)?) {
-                Some(96) => 1,
-                Some(123) => 2,
-                _ => 0,
-            })?;
             if start >= end {
                 continue;
             }

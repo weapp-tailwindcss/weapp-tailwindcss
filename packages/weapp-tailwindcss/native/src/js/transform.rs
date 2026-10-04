@@ -3,7 +3,7 @@ use std::collections::{HashSet, VecDeque};
 use napi::bindgen_prelude::Utf16String;
 use napi_derive::napi;
 
-use super::{JsSourceAnalysis, analyze};
+use super::{JsSourceAnalysis, analyze_for_transform};
 
 mod apply;
 mod candidates;
@@ -117,7 +117,8 @@ impl JsTransformer {
             self.cache_size -= entry.size;
             entry
         } else {
-            let (analysis, _) = analyze(&source, &lang, &source_type, preserve_parens, false)?;
+            let (analysis, _) =
+                analyze_for_transform(&source, &lang, &source_type, preserve_parens, false, true)?;
             let size = source.len()
                 + analysis
                     .literals

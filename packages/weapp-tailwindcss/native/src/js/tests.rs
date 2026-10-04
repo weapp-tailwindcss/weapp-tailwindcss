@@ -30,14 +30,7 @@ fn preserves_utf16_positions_and_template_boundaries() {
             .iter()
             .map(|item| String::from_utf16(&units[item.start as usize..item.end as usize]).unwrap())
             .collect();
-        assert_eq!(
-            slices,
-            if lang == "ts" {
-                vec!["'中文😀'", "`w-[1px] ${", "} h-[2px]`"]
-            } else {
-                vec!["'中文😀'", "w-[1px] ", " h-[2px]"]
-            }
-        );
+        assert_eq!(slices, vec!["'中文😀'", "w-[1px] ", " h-[2px]"]);
     }
 }
 
@@ -159,4 +152,36 @@ fn defers_static_esm_declarations_in_script_mode() {
         );
     }
     assert!(analyze("const x = import('w-[1px]')", "js", "script", false, false).is_some());
+}
+
+#[test]
+fn exposes_babel_class_context_without_marking_business_values() {
+    for source in [
+        "const x = { className: 'pages/home' }",
+        "const x = cn('pages/home')",
+        "const x = <view hover-class='pages/home'/>",
+    ] {
+        assert!(
+            analyze(source, "tsx", "module", false, false)
+                .unwrap()
+                .0
+                .literals[0]
+                .class_context,
+            "{source}"
+        );
+    }
+    for source in [
+        "const x = { route: 'pages/home' }",
+        "const x = cn?.('pages/home')",
+        "const x = <view route='pages/home'/>",
+    ] {
+        assert!(
+            !analyze(source, "tsx", "module", false, false)
+                .unwrap()
+                .0
+                .literals[0]
+                .class_context,
+            "{source}"
+        );
+    }
 }

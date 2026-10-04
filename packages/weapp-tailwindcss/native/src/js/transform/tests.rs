@@ -136,3 +136,42 @@ fn splitter_preserves_quoted_arbitrary_values_and_escaped_whitespace() {
         ]
     );
 }
+
+#[test]
+fn preserves_template_body_braces_and_class_context() {
+    let mut instance = transformer(&["w-[1px]", "pages/home"]);
+    assert_eq!(
+        run(&mut instance, "const x = `} w-[1px] {`").unwrap(),
+        "const x = `} w-_b1px_B {`"
+    );
+    assert_eq!(
+        run(
+            &mut instance,
+            "const x = {className: ['pages/home']}; const p = 'pages/home'"
+        )
+        .unwrap(),
+        "const x = {className: ['pages_fhome']}; const p = 'pages/home'"
+    );
+}
+
+#[test]
+fn rejects_semantic_errors_before_rewriting() {
+    let mut instance = transformer(&["w-[1px]"]);
+    for source in [
+        "let x; let x; const c = 'w-[1px]'",
+        "break; const c = 'w-[1px]'",
+        "export { missing }; const c = 'w-[1px]'",
+    ] {
+        assert!(run(&mut instance, source).is_none(), "{source}");
+    }
+}
+
+#[test]
+fn bounds_instance_analysis_cache() {
+    let mut instance = transformer(&["w-[1px]"]);
+    for index in 0..140 {
+        assert!(run(&mut instance, &format!("const x = 'w-[1px]'; // {index}")).is_some());
+    }
+    assert_eq!(instance.cache.len(), super::MAX_CACHE_ENTRIES);
+    assert!(instance.cache_size <= super::MAX_CACHE_BYTES);
+}

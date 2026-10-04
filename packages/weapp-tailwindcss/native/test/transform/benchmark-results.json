@@ -1,7 +1,8 @@
 {
   "node": "v24.18.0",
   "oxc": "0.152.0",
-  "nativeSha256": "550fcc00d6a382880201d8d0c336bad403035dc5530c1a09a5460f8c38d0200d",
+  "nativeSha256": "5d36e7521989a31723d8696161752003194f79206bdbb391a4b56ed46c2a0f88",
+  "nativeBytes": 1411824,
   "input": {
     "bytes": 125082,
     "units": 120720,
@@ -13,763 +14,763 @@
   "summary": [
     {
       "mode": "cold",
-      "referenceMs": 4.891062499999975,
-      "nativeMs": 1.6690619999999967,
-      "speedup": 2.9304258919081407
+      "referenceMs": 10.950229000000036,
+      "nativeMs": 3.8048330000001442,
+      "speedup": 2.877978875813898
     },
     {
       "mode": "warm",
-      "referenceMs": 1.4151454999999942,
-      "nativeMs": 0.734104499999944,
-      "speedup": 1.9277166942854895
+      "referenceMs": 1.7037500000001273,
+      "nativeMs": 0.8098125000005894,
+      "speedup": 2.1038820714657867
     }
   ],
   "setupCosts": [
     {
       "size": 6,
-      "constructMs": 0.010541999999986729,
-      "updateMs": 0.0016250000001036824,
-      "snapshotCheckMs": 0.0005419999999958236
+      "constructMs": 0.010916999999608379,
+      "updateMs": 0.0017079999997804407,
+      "snapshotCheckMs": 0.0006670000002486631
     },
     {
       "size": 1000,
-      "constructMs": 0.1487090000000535,
-      "updateMs": 0.25245799999993324,
-      "snapshotCheckMs": 0.04349999999999454
+      "constructMs": 0.15525000000161526,
+      "updateMs": 0.14025000000037835,
+      "snapshotCheckMs": 0.03445800000008603
     },
     {
       "size": 10000,
-      "constructMs": 1.1944170000001577,
-      "updateMs": 1.2554999999999836,
-      "snapshotCheckMs": 0.23550000000000182
+      "constructMs": 1.2749170000006416,
+      "updateMs": 1.337375000000975,
+      "snapshotCheckMs": 0.23870799999895098
     },
     {
       "size": 100000,
-      "constructMs": 16.121832999999924,
-      "updateMs": 17.376125000000002,
-      "snapshotCheckMs": 5.6814999999999145
+      "constructMs": 15.863790999999765,
+      "updateMs": 20.748915999998644,
+      "snapshotCheckMs": 6.844999999999345
     }
   ],
   "samples": [
     {
       "round": 0,
       "mode": "cold",
-      "referenceMs": 6.021208999999999,
-      "nativeMs": 1.6808750000000146
+      "referenceMs": 11.476540999999997,
+      "nativeMs": 4.391125000000102
     },
     {
       "round": 0,
       "mode": "warm",
-      "referenceMs": 1.8962910000000193,
-      "nativeMs": 0.866375000000005
+      "referenceMs": 5.6415420000003,
+      "nativeMs": 2.0394169999999576
     },
     {
       "round": 0,
       "mode": "cold",
-      "referenceMs": 5.902458000000024,
-      "nativeMs": 2.0163329999999746
+      "referenceMs": 11.804334000000381,
+      "nativeMs": 2.557333000000199
     },
     {
       "round": 0,
       "mode": "warm",
-      "referenceMs": 1.393665999999996,
-      "nativeMs": 0.7544589999999971
+      "referenceMs": 99.56341699999984,
+      "nativeMs": 129.88208299999997
     },
     {
       "round": 0,
       "mode": "cold",
-      "referenceMs": 4.822375000000022,
-      "nativeMs": 1.932333999999969
+      "referenceMs": 21.9822079999999,
+      "nativeMs": 106.54787499999975
     },
     {
       "round": 0,
       "mode": "warm",
-      "referenceMs": 1.3911669999999958,
-      "nativeMs": 0.7486670000000117
+      "referenceMs": 1.561540999999579,
+      "nativeMs": 1.0186249999997017
     },
     {
       "round": 0,
       "mode": "cold",
-      "referenceMs": 5.87216699999999,
-      "nativeMs": 1.6723330000000374
+      "referenceMs": 234.8948330000003,
+      "nativeMs": 116.02929199999971
     },
     {
       "round": 0,
       "mode": "warm",
-      "referenceMs": 1.497458999999992,
-      "nativeMs": 0.7113329999999678
+      "referenceMs": 5.309250000000247,
+      "nativeMs": 24.70545899999979
     },
     {
       "round": 0,
       "mode": "cold",
-      "referenceMs": 5.307291000000021,
-      "nativeMs": 1.7269169999999576
+      "referenceMs": 24.8779999999997,
+      "nativeMs": 7.567791999999827
     },
     {
       "round": 0,
       "mode": "warm",
-      "referenceMs": 1.49004199999996,
-      "nativeMs": 0.7454170000000317
+      "referenceMs": 29.029708000000028,
+      "nativeMs": 5.689167000000452
     },
     {
       "round": 0,
       "mode": "cold",
-      "referenceMs": 7.307042000000024,
-      "nativeMs": 1.654291999999998
+      "referenceMs": 18.6029580000004,
+      "nativeMs": 4.892499999999927
     },
     {
       "round": 0,
       "mode": "warm",
-      "referenceMs": 1.3851250000000164,
-      "nativeMs": 0.7173750000000041
+      "referenceMs": 184.65166600000066,
+      "nativeMs": 0.7538329999997586
     },
     {
       "round": 0,
       "mode": "cold",
-      "referenceMs": 4.901124999999979,
-      "nativeMs": 1.6211669999999572
+      "referenceMs": 6.896875000000364,
+      "nativeMs": 137.29579100000046
     },
     {
       "round": 0,
       "mode": "warm",
-      "referenceMs": 1.5850829999999974,
-      "nativeMs": 0.7132919999999672
+      "referenceMs": 1.7041660000004413,
+      "nativeMs": 0.7598330000000715
     },
     {
       "round": 0,
       "mode": "cold",
-      "referenceMs": 5.274000000000001,
-      "nativeMs": 1.6737909999999943
+      "referenceMs": 185.90000000000055,
+      "nativeMs": 5.08758299999954
     },
     {
       "round": 0,
       "mode": "warm",
-      "referenceMs": 5.266542000000015,
-      "nativeMs": 0.7314159999999674
+      "referenceMs": 1.3609999999998763,
+      "nativeMs": 0.7922920000000886
     },
     {
       "round": 0,
       "mode": "cold",
-      "referenceMs": 4.83949999999993,
-      "nativeMs": 1.6502919999999222
+      "referenceMs": 55.56354199999987,
+      "nativeMs": 186.73225000000002
     },
     {
       "round": 0,
       "mode": "warm",
-      "referenceMs": 1.2825419999999212,
-      "nativeMs": 0.7155410000000302
+      "referenceMs": 2.297375000000102,
+      "nativeMs": 0.7555420000007871
     },
     {
       "round": 0,
       "mode": "cold",
-      "referenceMs": 4.728250000000003,
-      "nativeMs": 1.6110830000000078
+      "referenceMs": 5.05633299999954,
+      "nativeMs": 2.4087079999999332
     },
     {
       "round": 0,
       "mode": "warm",
-      "referenceMs": 1.2565000000000737,
-      "nativeMs": 0.7180829999999787
+      "referenceMs": 42.34991699999955,
+      "nativeMs": 0.7557500000002619
     },
     {
       "round": 0,
       "mode": "cold",
-      "referenceMs": 4.620415999999977,
-      "nativeMs": 1.6215839999999844
+      "referenceMs": 108.19933299999957,
+      "nativeMs": 2.2378749999998035
     },
     {
       "round": 0,
       "mode": "warm",
-      "referenceMs": 1.3341249999999718,
-      "nativeMs": 0.7260420000000067
+      "referenceMs": 1.5142500000001746,
+      "nativeMs": 0.7644579999996495
     },
     {
       "round": 0,
       "mode": "cold",
-      "referenceMs": 5.015541999999982,
-      "nativeMs": 1.6327079999999796
+      "referenceMs": 257.0141249999997,
+      "nativeMs": 3.6552080000001297
     },
     {
       "round": 0,
       "mode": "warm",
-      "referenceMs": 1.647375000000011,
-      "nativeMs": 0.7222500000000309
+      "referenceMs": 1.4864580000003116,
+      "nativeMs": 0.7593750000005457
     },
     {
       "round": 0,
       "mode": "cold",
-      "referenceMs": 4.880999999999972,
-      "nativeMs": 1.6232499999999845
+      "referenceMs": 11.289208000000144,
+      "nativeMs": 5.893874999999753
     },
     {
       "round": 0,
       "mode": "warm",
-      "referenceMs": 1.4781670000000986,
-      "nativeMs": 0.7214999999999918
+      "referenceMs": 8.952499999999418,
+      "nativeMs": 10.509584000000359
     },
     {
       "round": 0,
       "mode": "cold",
-      "referenceMs": 5.1417920000000095,
-      "nativeMs": 1.623207999999977
+      "referenceMs": 130.74133400000028,
+      "nativeMs": 3.0214590000005046
     },
     {
       "round": 0,
       "mode": "warm",
-      "referenceMs": 1.4867499999999154,
-      "nativeMs": 0.7110830000000306
+      "referenceMs": 100.33279199999924,
+      "nativeMs": 0.8082500000000437
     },
     {
       "round": 0,
       "mode": "cold",
-      "referenceMs": 5.170791000000008,
-      "nativeMs": 1.9424589999999853
+      "referenceMs": 8.949499999999716,
+      "nativeMs": 2.478208999999879
     },
     {
       "round": 0,
       "mode": "warm",
-      "referenceMs": 3.2012919999999667,
-      "nativeMs": 0.7237910000000056
+      "referenceMs": 1.921249999999418,
+      "nativeMs": 9.481999999999971
     },
     {
       "round": 0,
       "mode": "cold",
-      "referenceMs": 5.9435419999999795,
-      "nativeMs": 1.6497080000000324
+      "referenceMs": 5.714917000000241,
+      "nativeMs": 2.464791000000332
     },
     {
       "round": 0,
       "mode": "warm",
-      "referenceMs": 1.5351249999999936,
-      "nativeMs": 0.7147499999999809
+      "referenceMs": 2.201875000000655,
+      "nativeMs": 0.7633340000002136
     },
     {
       "round": 0,
       "mode": "cold",
-      "referenceMs": 5.68420900000001,
-      "nativeMs": 1.8242919999999003
+      "referenceMs": 32.11108400000012,
+      "nativeMs": 19.021332999999686
     },
     {
       "round": 0,
       "mode": "warm",
-      "referenceMs": 1.2848339999999325,
-      "nativeMs": 0.7188330000000178
+      "referenceMs": 1.937540999999328,
+      "nativeMs": 2.803334000000177
     },
     {
       "round": 0,
       "mode": "cold",
-      "referenceMs": 4.6391250000000355,
-      "nativeMs": 1.6039590000000317
+      "referenceMs": 107.4393340000006,
+      "nativeMs": 40.32866699999977
     },
     {
       "round": 0,
       "mode": "warm",
-      "referenceMs": 1.235290999999961,
-      "nativeMs": 0.7133340000000317
+      "referenceMs": 2.5673329999999623,
+      "nativeMs": 0.7604999999994106
     },
     {
       "round": 0,
       "mode": "cold",
-      "referenceMs": 4.517166999999972,
-      "nativeMs": 1.626041999999984
+      "referenceMs": 118.61704100000043,
+      "nativeMs": 3.5956670000005033
     },
     {
       "round": 0,
       "mode": "warm",
-      "referenceMs": 1.588416000000052,
-      "nativeMs": 0.7158329999999751
+      "referenceMs": 1.4630420000003141,
+      "nativeMs": 5.537792000000081
     },
     {
       "round": 0,
       "mode": "cold",
-      "referenceMs": 4.831458999999995,
-      "nativeMs": 1.674541999999974
+      "referenceMs": 10.211499999999432,
+      "nativeMs": 4.79412499999944
     },
     {
       "round": 0,
       "mode": "warm",
-      "referenceMs": 1.537916999999993,
-      "nativeMs": 0.8124589999999898
+      "referenceMs": 52.13487499999974,
+      "nativeMs": 0.7633340000002136
     },
     {
       "round": 1,
       "mode": "cold",
-      "referenceMs": 4.642583000000059,
-      "nativeMs": 1.6198750000000928
+      "referenceMs": 161.3140000000003,
+      "nativeMs": 2.792000000000371
     },
     {
       "round": 1,
       "mode": "warm",
-      "referenceMs": 1.6183340000000044,
-      "nativeMs": 1.084875000000011
+      "referenceMs": 17.708792000000358,
+      "nativeMs": 2.7837500000005093
     },
     {
       "round": 1,
       "mode": "cold",
-      "referenceMs": 6.589541999999938,
-      "nativeMs": 1.7010420000000295
+      "referenceMs": 7.02599999999984,
+      "nativeMs": 4.826042000000598
     },
     {
       "round": 1,
       "mode": "warm",
-      "referenceMs": 1.3990420000000086,
-      "nativeMs": 0.7247499999999718
+      "referenceMs": 3.4139589999995223,
+      "nativeMs": 1.159125000000131
     },
     {
       "round": 1,
       "mode": "cold",
-      "referenceMs": 4.66108399999996,
-      "nativeMs": 1.6401670000000195
+      "referenceMs": 6.8437089999997625,
+      "nativeMs": 2.2454160000006596
     },
     {
       "round": 1,
       "mode": "warm",
-      "referenceMs": 1.2374589999999444,
-      "nativeMs": 0.8587079999999787
+      "referenceMs": 1.7033339999998134,
+      "nativeMs": 0.7949159999998301
     },
     {
       "round": 1,
       "mode": "cold",
-      "referenceMs": 4.309875000000034,
-      "nativeMs": 1.628500000000031
+      "referenceMs": 170.8768339999997,
+      "nativeMs": 4.806375000000116
     },
     {
       "round": 1,
       "mode": "warm",
-      "referenceMs": 1.2530830000000606,
-      "nativeMs": 0.715082999999936
+      "referenceMs": 1.355333000000428,
+      "nativeMs": 375.80212499999925
     },
     {
       "round": 1,
       "mode": "cold",
-      "referenceMs": 4.466125000000034,
-      "nativeMs": 1.6339999999999009
+      "referenceMs": 119.93820899999992,
+      "nativeMs": 2.713292000000365
     },
     {
       "round": 1,
       "mode": "warm",
-      "referenceMs": 1.3016249999999445,
-      "nativeMs": 0.7336669999999685
+      "referenceMs": 1.439791000000696,
+      "nativeMs": 0.7495830000007118
     },
     {
       "round": 1,
       "mode": "cold",
-      "referenceMs": 4.509208000000058,
-      "nativeMs": 1.668207999999936
+      "referenceMs": 111.20279200000004,
+      "nativeMs": 25.275832999999693
     },
     {
       "round": 1,
       "mode": "warm",
-      "referenceMs": 1.3339580000000524,
-      "nativeMs": 0.8993749999999636
+      "referenceMs": 1.4946660000005068,
+      "nativeMs": 0.7539590000014869
     },
     {
       "round": 1,
       "mode": "cold",
-      "referenceMs": 4.562583000000018,
-      "nativeMs": 1.716291999999953
+      "referenceMs": 26.019083000001046,
+      "nativeMs": 3.967540999999983
     },
     {
       "round": 1,
       "mode": "warm",
-      "referenceMs": 1.3209170000000086,
-      "nativeMs": 0.7087910000000193
+      "referenceMs": 5.101957999999286,
+      "nativeMs": 1.8870420000002923
     },
     {
       "round": 1,
       "mode": "cold",
-      "referenceMs": 4.394542000000001,
-      "nativeMs": 1.6187090000000808
+      "referenceMs": 43.09562499999993,
+      "nativeMs": 15.401874999999563
     },
     {
       "round": 1,
       "mode": "warm",
-      "referenceMs": 1.34537499999999,
-      "nativeMs": 0.8194999999999482
+      "referenceMs": 9.336459000000104,
+      "nativeMs": 1.4091669999997976
     },
     {
       "round": 1,
       "mode": "cold",
-      "referenceMs": 9.980583000000024,
-      "nativeMs": 1.660082999999986
+      "referenceMs": 6.567457999999533,
+      "nativeMs": 4.168166999999812
     },
     {
       "round": 1,
       "mode": "warm",
-      "referenceMs": 1.2719170000000304,
-      "nativeMs": 0.7205000000000155
+      "referenceMs": 1.4632499999988795,
+      "nativeMs": 0.7615829999995185
     },
     {
       "round": 1,
       "mode": "cold",
-      "referenceMs": 4.875084000000015,
-      "nativeMs": 1.606375000000071
+      "referenceMs": 35.41645900000003,
+      "nativeMs": 2.2085409999999683
     },
     {
       "round": 1,
       "mode": "warm",
-      "referenceMs": 1.2122080000000324,
-      "nativeMs": 0.7419160000000602
+      "referenceMs": 1.2907080000004498,
+      "nativeMs": 0.7403339999982563
     },
     {
       "round": 1,
       "mode": "cold",
-      "referenceMs": 4.928042000000005,
-      "nativeMs": 1.6382500000000846
+      "referenceMs": 5.775499999999738,
+      "nativeMs": 2.695540999999139
     },
     {
       "round": 1,
       "mode": "warm",
-      "referenceMs": 1.2556660000000193,
-      "nativeMs": 0.965082999999936
+      "referenceMs": 3.4180409999989934,
+      "nativeMs": 0.8332499999996799
     },
     {
       "round": 1,
       "mode": "cold",
-      "referenceMs": 4.793916999999965,
-      "nativeMs": 1.7801670000000058
+      "referenceMs": 4.750416000000769,
+      "nativeMs": 2.3211670000000595
     },
     {
       "round": 1,
       "mode": "warm",
-      "referenceMs": 1.4003340000000435,
-      "nativeMs": 0.7206669999999349
+      "referenceMs": 1.43841699999939,
+      "nativeMs": 0.7433750000000146
     },
     {
       "round": 1,
       "mode": "cold",
-      "referenceMs": 4.491334000000052,
-      "nativeMs": 1.679666999999995
+      "referenceMs": 4.797042000000147,
+      "nativeMs": 9.259874999999738
     },
     {
       "round": 1,
       "mode": "warm",
-      "referenceMs": 1.411375000000021,
-      "nativeMs": 0.7292079999999714
+      "referenceMs": 1.3460830000003625,
+      "nativeMs": 0.7523750000000291
     },
     {
       "round": 1,
       "mode": "cold",
-      "referenceMs": 5.239916999999991,
-      "nativeMs": 1.613207999999986
+      "referenceMs": 8.25274999999965,
+      "nativeMs": 2.205375000001368
     },
     {
       "round": 1,
       "mode": "warm",
-      "referenceMs": 1.3052079999999933,
-      "nativeMs": 0.7097499999999854
+      "referenceMs": 6.332833000000392,
+      "nativeMs": 2.5947910000013508
     },
     {
       "round": 1,
       "mode": "cold",
-      "referenceMs": 5.233042000000069,
-      "nativeMs": 1.6278330000000096
+      "referenceMs": 5.0164590000003955,
+      "nativeMs": 3.195791999998619
     },
     {
       "round": 1,
       "mode": "warm",
-      "referenceMs": 1.3478749999999309,
-      "nativeMs": 0.7110830000000306
+      "referenceMs": 1.4266660000012052,
+      "nativeMs": 0.7377080000005662
     },
     {
       "round": 1,
       "mode": "cold",
-      "referenceMs": 8.901250000000005,
-      "nativeMs": 1.7295830000000478
+      "referenceMs": 4.722165999999561,
+      "nativeMs": 2.189790999998877
     },
     {
       "round": 1,
       "mode": "warm",
-      "referenceMs": 1.2314590000000862,
-      "nativeMs": 0.74087499999996
+      "referenceMs": 9.947958999999173,
+      "nativeMs": 0.7362090000005992
     },
     {
       "round": 1,
       "mode": "cold",
-      "referenceMs": 4.414625000000001,
-      "nativeMs": 1.6740409999999883
+      "referenceMs": 4.788292000001093,
+      "nativeMs": 2.2453330000007554
     },
     {
       "round": 1,
       "mode": "warm",
-      "referenceMs": 1.2537079999999605,
-      "nativeMs": 0.7510829999999942
+      "referenceMs": 1.2659999999996217,
+      "nativeMs": 0.8194159999984549
     },
     {
       "round": 1,
       "mode": "cold",
-      "referenceMs": 4.71612499999992,
-      "nativeMs": 1.6295000000000073
+      "referenceMs": 64.18104200000016,
+      "nativeMs": 2.2120409999988624
     },
     {
       "round": 1,
       "mode": "warm",
-      "referenceMs": 1.255916999999954,
-      "nativeMs": 0.7281670000000986
+      "referenceMs": 1.367500000000291,
+      "nativeMs": 0.7462500000001455
     },
     {
       "round": 1,
       "mode": "cold",
-      "referenceMs": 4.697709000000032,
-      "nativeMs": 1.676584000000048
+      "referenceMs": 6.4505000000008295,
+      "nativeMs": 48.64983300000131
     },
     {
       "round": 1,
       "mode": "warm",
-      "referenceMs": 1.270291000000043,
-      "nativeMs": 1.0919169999999667
+      "referenceMs": 1.6265840000014578,
+      "nativeMs": 1.4777500000000146
     },
     {
       "round": 1,
       "mode": "cold",
-      "referenceMs": 4.533167000000049,
-      "nativeMs": 1.7117080000000442
+      "referenceMs": 5.880959000000075,
+      "nativeMs": 15.827875000000859
     },
     {
       "round": 1,
       "mode": "warm",
-      "referenceMs": 1.3262909999999692,
-      "nativeMs": 0.7295410000000402
+      "referenceMs": 1.5265000000017608,
+      "nativeMs": 1.0665419999986625
     },
     {
       "round": 2,
       "mode": "cold",
-      "referenceMs": 4.709541999999942,
-      "nativeMs": 1.7356669999999212
+      "referenceMs": 7.4146249999994325,
+      "nativeMs": 7.405457999999271
     },
     {
       "round": 2,
       "mode": "warm",
-      "referenceMs": 3.472541999999976,
-      "nativeMs": 0.7384999999999309
+      "referenceMs": 1.5060000000012224,
+      "nativeMs": 0.8080419999987498
     },
     {
       "round": 2,
       "mode": "cold",
-      "referenceMs": 5.952541999999994,
-      "nativeMs": 1.664625000000001
+      "referenceMs": 5.262958000001163,
+      "nativeMs": 3.954458000000159
     },
     {
       "round": 2,
       "mode": "warm",
-      "referenceMs": 2.047916999999984,
-      "nativeMs": 0.8065829999999323
+      "referenceMs": 7.333416999999827,
+      "nativeMs": 1.5662910000010015
     },
     {
       "round": 2,
       "mode": "cold",
-      "referenceMs": 5.015667000000008,
-      "nativeMs": 1.6483329999999796
+      "referenceMs": 19.76104200000009,
+      "nativeMs": 7.567500000001019
     },
     {
       "round": 2,
       "mode": "warm",
-      "referenceMs": 1.7755829999999833,
-      "nativeMs": 0.7233330000000251
+      "referenceMs": 5.1362910000007105,
+      "nativeMs": 1.197667000000365
     },
     {
       "round": 2,
       "mode": "cold",
-      "referenceMs": 4.537832999999978,
-      "nativeMs": 1.6524590000000217
+      "referenceMs": 5.050416000000041,
+      "nativeMs": 2.788749999999709
     },
     {
       "round": 2,
       "mode": "warm",
-      "referenceMs": 1.4189159999999674,
-      "nativeMs": 0.7852500000000191
+      "referenceMs": 1.593458000001192,
+      "nativeMs": 0.795125000000553
     },
     {
       "round": 2,
       "mode": "cold",
-      "referenceMs": 4.771292000000017,
-      "nativeMs": 1.6699160000000575
+      "referenceMs": 6.078541999999288,
+      "nativeMs": 4.377291000000696
     },
     {
       "round": 2,
       "mode": "warm",
-      "referenceMs": 1.5060419999999795,
-      "nativeMs": 0.7579170000000204
+      "referenceMs": 1.6627499999995052,
+      "nativeMs": 1.1909580000010465
     },
     {
       "round": 2,
       "mode": "cold",
-      "referenceMs": 4.942999999999984,
-      "nativeMs": 2.530332999999928
+      "referenceMs": 47.323875000000044,
+      "nativeMs": 30.84441599999991
     },
     {
       "round": 2,
       "mode": "warm",
-      "referenceMs": 1.4760839999999007,
-      "nativeMs": 1.3544170000000122
+      "referenceMs": 1.545083999999406,
+      "nativeMs": 1.789415999999619
     },
     {
       "round": 2,
       "mode": "cold",
-      "referenceMs": 8.159417000000076,
-      "nativeMs": 1.662708000000066
+      "referenceMs": 4.9427080000004935,
+      "nativeMs": 11.166291999999885
     },
     {
       "round": 2,
       "mode": "warm",
-      "referenceMs": 1.4795410000001539,
-      "nativeMs": 0.7731249999999363
+      "referenceMs": 1.739040999998906,
+      "nativeMs": 0.8172500000000582
     },
     {
       "round": 2,
       "mode": "cold",
-      "referenceMs": 5.623916999999892,
-      "nativeMs": 2.3407079999999496
+      "referenceMs": 16.681915999999546,
+      "nativeMs": 2.3715830000001006
     },
     {
       "round": 2,
       "mode": "warm",
-      "referenceMs": 1.5428750000000946,
-      "nativeMs": 0.7345419999999194
+      "referenceMs": 2.3195840000007593,
+      "nativeMs": 0.811375000001135
     },
     {
       "round": 2,
       "mode": "cold",
-      "referenceMs": 4.444291000000021,
-      "nativeMs": 1.6372499999999945
+      "referenceMs": 10.611249999999927,
+      "nativeMs": 2.362082999999984
     },
     {
       "round": 2,
       "mode": "warm",
-      "referenceMs": 1.7603340000000571,
-      "nativeMs": 0.8682499999999891
+      "referenceMs": 1.521667000000889,
+      "nativeMs": 2.141791000000012
     },
     {
       "round": 2,
       "mode": "cold",
-      "referenceMs": 4.520541999999978,
-      "nativeMs": 1.9428330000000642
+      "referenceMs": 15.428334000000177,
+      "nativeMs": 2.414167000000816
     },
     {
       "round": 2,
       "mode": "warm",
-      "referenceMs": 1.3500830000000406,
-      "nativeMs": 0.7297499999999673
+      "referenceMs": 1.2295839999987948,
+      "nativeMs": 0.7869589999991149
     },
     {
       "round": 2,
       "mode": "cold",
-      "referenceMs": 18.228875000000016,
-      "nativeMs": 1.7602079999999205
+      "referenceMs": 23.38379200000054,
+      "nativeMs": 9.131124999999884
     },
     {
       "round": 2,
       "mode": "warm",
-      "referenceMs": 1.48762499999998,
-      "nativeMs": 1.603749999999991
+      "referenceMs": 1.592916999999943,
+      "nativeMs": 0.7519999999985885
     },
     {
       "round": 2,
       "mode": "cold",
-      "referenceMs": 11.707083000000011,
-      "nativeMs": 3.656291999999894
+      "referenceMs": 28.746499999999287,
+      "nativeMs": 15.26837499999965
     },
     {
       "round": 2,
       "mode": "warm",
-      "referenceMs": 2.4147080000000187,
-      "nativeMs": 1.4516250000001492
+      "referenceMs": 1.2153749999997672,
+      "nativeMs": 1.5895840000011958
     },
     {
       "round": 2,
       "mode": "cold",
-      "referenceMs": 5.615665999999919,
-      "nativeMs": 1.663915999999972
+      "referenceMs": 5.277625000000626,
+      "nativeMs": 2.237374999998792
     },
     {
       "round": 2,
       "mode": "warm",
-      "referenceMs": 9.653042000000141,
-      "nativeMs": 0.7369590000000699
+      "referenceMs": 1.774541999999201,
+      "nativeMs": 2.5479160000013508
     },
     {
       "round": 2,
       "mode": "cold",
-      "referenceMs": 16.189208000000008,
-      "nativeMs": 5.8610409999998865
+      "referenceMs": 6.826250000000073,
+      "nativeMs": 2.2411670000001322
     },
     {
       "round": 2,
       "mode": "warm",
-      "referenceMs": 1.3605840000000171,
-      "nativeMs": 0.7384999999999309
+      "referenceMs": 1.2654999999995198,
+      "nativeMs": 0.739333000001352
     },
     {
       "round": 2,
       "mode": "cold",
-      "referenceMs": 4.479792000000089,
-      "nativeMs": 2.314416999999821
+      "referenceMs": 5.496957999999722,
+      "nativeMs": 2.7617909999989934
     },
     {
       "round": 2,
       "mode": "warm",
-      "referenceMs": 2.5971250000000055,
-      "nativeMs": 0.7445410000000265
+      "referenceMs": 2.460416999998415,
+      "nativeMs": 0.7966660000001866
     },
     {
       "round": 2,
       "mode": "cold",
-      "referenceMs": 4.462957999999844,
-      "nativeMs": 2.60020899999995
+      "referenceMs": 7.061666999999943,
+      "nativeMs": 3.4532079999989946
     },
     {
       "round": 2,
       "mode": "warm",
-      "referenceMs": 1.4736249999998563,
-      "nativeMs": 0.7283330000000205
+      "referenceMs": 1.5627079999994749,
+      "nativeMs": 0.7432499999995343
     },
     {
       "round": 2,
       "mode": "cold",
-      "referenceMs": 4.875875000000178,
-      "nativeMs": 1.6644169999999576
+      "referenceMs": 5.0977919999986625,
+      "nativeMs": 4.253208000000086
     },
     {
       "round": 2,
       "mode": "warm",
-      "referenceMs": 1.8604170000000977,
-      "nativeMs": 1.1663750000000164
+      "referenceMs": 3.2337919999990845,
+      "nativeMs": 0.7444589999995515
     },
     {
       "round": 2,
       "mode": "cold",
-      "referenceMs": 4.962999999999965,
-      "nativeMs": 1.9471670000000358
+      "referenceMs": 5.742582999999286,
+      "nativeMs": 2.2224999999998545
     },
     {
       "round": 2,
       "mode": "warm",
-      "referenceMs": 2.2713329999999132,
-      "nativeMs": 0.7283330000000205
+      "referenceMs": 1.3666670000002341,
+      "nativeMs": 0.7861250000005384
     },
     {
       "round": 2,
       "mode": "cold",
-      "referenceMs": 5.418916999999965,
-      "nativeMs": 1.7355840000000171
+      "referenceMs": 13.452250000000276,
+      "nativeMs": 2.2265000000006694
     },
     {
       "round": 2,
       "mode": "warm",
-      "referenceMs": 1.2658329999999296,
-      "nativeMs": 0.8909579999999551
+      "referenceMs": 1.959791999999652,
+      "nativeMs": 0.8240420000001905
     },
     {
       "round": 2,
       "mode": "cold",
-      "referenceMs": 5.402457999999797,
-      "nativeMs": 2.1165829999999914
+      "referenceMs": 4.769792000000962,
+      "nativeMs": 3.488916000000245
     },
     {
       "round": 2,
       "mode": "warm",
-      "referenceMs": 2.0157910000000356,
-      "nativeMs": 0.9936250000000655
+      "referenceMs": 1.2987080000002607,
+      "nativeMs": 0.8162080000001879
     }
   ]
 }

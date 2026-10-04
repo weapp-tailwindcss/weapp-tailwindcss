@@ -6,8 +6,10 @@ use oxc_ast_visit::Visit;
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::{GetSpan, SourceType, Span};
 
+mod context;
 mod offsets;
 mod transform;
+mod validate;
 pub use transform::{JsTransformer, create_js_transformer};
 #[cfg(test)]
 mod tests;
@@ -22,6 +24,7 @@ pub struct JsLiteralSpan {
     pub end: u32,
     pub value: String,
     pub is_condition_test: bool,
+    pub class_context: bool,
 }
 
 #[napi(object)]
@@ -37,7 +40,6 @@ struct AnalysisVisitor<'a, 's> {
     analysis: JsSourceAnalysis,
     offsets: Utf16Offsets,
     source: &'s str,
-    typescript: bool,
     script: bool,
     unsupported: bool,
     signature: Option<Vec<String>>,
@@ -77,6 +79,7 @@ impl AnalysisVisitor<'_, '_> {
                 end: self.offsets.convert(span.end),
                 value: value.to_owned(),
                 is_condition_test: self.is_condition_test(span),
+                class_context: context::is_class_context(&self.ancestors, span),
             });
         }
     }
@@ -118,13 +121,7 @@ impl<'a> Visit<'a> for AnalysisVisitor<'a, '_> {
                 }
             }
             AstKind::TemplateElement(node) => {
-                let mut span = node.span;
-                // 与 Oxc 的 TS-ESTree span 契约一致，JS span 则仅包含正文。
-                if self.typescript {
-                    span.start -= 1;
-                    span.end += if node.tail { 1 } else { 2 };
-                }
-                self.literal("template", span, &node.value.raw);
+                self.literal("template", node.span, &node.value.raw);
             }
             AstKind::JSXText(node) => {
                 if let Some(parts) = &mut self.signature {
@@ -160,6 +157,17 @@ fn analyze(
     preserve_parens: bool,
     signature: bool,
 ) -> Option<(JsSourceAnalysis, Option<String>)> {
+    analyze_for_transform(source, lang, source_type, preserve_parens, signature, false)
+}
+
+fn analyze_for_transform(
+    source: &str,
+    lang: &str,
+    source_type: &str,
+    preserve_parens: bool,
+    signature: bool,
+    check_semantics: bool,
+) -> Option<(JsSourceAnalysis, Option<String>)> {
     let source_kind = match lang {
         "js" => SourceType::mjs(),
         "jsx" => SourceType::jsx(),
@@ -183,6 +191,10 @@ fn analyze(
     if result.fatal_error || !result.diagnostics.is_empty() {
         return None;
     }
+    // 完整转译需要与 Babel 一样拒绝作用域和 early error，不能仅通过 parser 成功放行。
+    if check_semantics && !validate::is_valid(&result.program) {
+        return None;
+    }
     let mut visitor = AnalysisVisitor {
         ancestors: Vec::new(),
         analysis: JsSourceAnalysis {
@@ -192,7 +204,6 @@ fn analyze(
         },
         offsets: Utf16Offsets::new(source),
         source,
-        typescript: matches!(lang, "ts" | "tsx"),
         script: source_type == "script",
         unsupported: false,
         signature: signature.then(Vec::new),
