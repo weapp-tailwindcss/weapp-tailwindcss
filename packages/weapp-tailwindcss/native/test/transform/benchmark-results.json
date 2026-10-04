@@ -1,0 +1,775 @@
+{
+  "node": "v24.18.0",
+  "oxc": "0.152.0",
+  "nativeSha256": "550fcc00d6a382880201d8d0c336bad403035dc5530c1a09a5460f8c38d0200d",
+  "input": {
+    "bytes": 125082,
+    "units": 120720,
+    "sha256": "21ad19ea581c664217f72ee2acebc73921de585c680e420c3de594deea09bcf3"
+  },
+  "rounds": 3,
+  "pairs": 20,
+  "parityChecks": 125,
+  "summary": [
+    {
+      "mode": "cold",
+      "referenceMs": 4.891062499999975,
+      "nativeMs": 1.6690619999999967,
+      "speedup": 2.9304258919081407
+    },
+    {
+      "mode": "warm",
+      "referenceMs": 1.4151454999999942,
+      "nativeMs": 0.734104499999944,
+      "speedup": 1.9277166942854895
+    }
+  ],
+  "setupCosts": [
+    {
+      "size": 6,
+      "constructMs": 0.010541999999986729,
+      "updateMs": 0.0016250000001036824,
+      "snapshotCheckMs": 0.0005419999999958236
+    },
+    {
+      "size": 1000,
+      "constructMs": 0.1487090000000535,
+      "updateMs": 0.25245799999993324,
+      "snapshotCheckMs": 0.04349999999999454
+    },
+    {
+      "size": 10000,
+      "constructMs": 1.1944170000001577,
+      "updateMs": 1.2554999999999836,
+      "snapshotCheckMs": 0.23550000000000182
+    },
+    {
+      "size": 100000,
+      "constructMs": 16.121832999999924,
+      "updateMs": 17.376125000000002,
+      "snapshotCheckMs": 5.6814999999999145
+    }
+  ],
+  "samples": [
+    {
+      "round": 0,
+      "mode": "cold",
+      "referenceMs": 6.021208999999999,
+      "nativeMs": 1.6808750000000146
+    },
+    {
+      "round": 0,
+      "mode": "warm",
+      "referenceMs": 1.8962910000000193,
+      "nativeMs": 0.866375000000005
+    },
+    {
+      "round": 0,
+      "mode": "cold",
+      "referenceMs": 5.902458000000024,
+      "nativeMs": 2.0163329999999746
+    },
+    {
+      "round": 0,
+      "mode": "warm",
+      "referenceMs": 1.393665999999996,
+      "nativeMs": 0.7544589999999971
+    },
+    {
+      "round": 0,
+      "mode": "cold",
+      "referenceMs": 4.822375000000022,
+      "nativeMs": 1.932333999999969
+    },
+    {
+      "round": 0,
+      "mode": "warm",
+      "referenceMs": 1.3911669999999958,
+      "nativeMs": 0.7486670000000117
+    },
+    {
+      "round": 0,
+      "mode": "cold",
+      "referenceMs": 5.87216699999999,
+      "nativeMs": 1.6723330000000374
+    },
+    {
+      "round": 0,
+      "mode": "warm",
+      "referenceMs": 1.497458999999992,
+      "nativeMs": 0.7113329999999678
+    },
+    {
+      "round": 0,
+      "mode": "cold",
+      "referenceMs": 5.307291000000021,
+      "nativeMs": 1.7269169999999576
+    },
+    {
+      "round": 0,
+      "mode": "warm",
+      "referenceMs": 1.49004199999996,
+      "nativeMs": 0.7454170000000317
+    },
+    {
+      "round": 0,
+      "mode": "cold",
+      "referenceMs": 7.307042000000024,
+      "nativeMs": 1.654291999999998
+    },
+    {
+      "round": 0,
+      "mode": "warm",
+      "referenceMs": 1.3851250000000164,
+      "nativeMs": 0.7173750000000041
+    },
+    {
+      "round": 0,
+      "mode": "cold",
+      "referenceMs": 4.901124999999979,
+      "nativeMs": 1.6211669999999572
+    },
+    {
+      "round": 0,
+      "mode": "warm",
+      "referenceMs": 1.5850829999999974,
+      "nativeMs": 0.7132919999999672
+    },
+    {
+      "round": 0,
+      "mode": "cold",
+      "referenceMs": 5.274000000000001,
+      "nativeMs": 1.6737909999999943
+    },
+    {
+      "round": 0,
+      "mode": "warm",
+      "referenceMs": 5.266542000000015,
+      "nativeMs": 0.7314159999999674
+    },
+    {
+      "round": 0,
+      "mode": "cold",
+      "referenceMs": 4.83949999999993,
+      "nativeMs": 1.6502919999999222
+    },
+    {
+      "round": 0,
+      "mode": "warm",
+      "referenceMs": 1.2825419999999212,
+      "nativeMs": 0.7155410000000302
+    },
+    {
+      "round": 0,
+      "mode": "cold",
+      "referenceMs": 4.728250000000003,
+      "nativeMs": 1.6110830000000078
+    },
+    {
+      "round": 0,
+      "mode": "warm",
+      "referenceMs": 1.2565000000000737,
+      "nativeMs": 0.7180829999999787
+    },
+    {
+      "round": 0,
+      "mode": "cold",
+      "referenceMs": 4.620415999999977,
+      "nativeMs": 1.6215839999999844
+    },
+    {
+      "round": 0,
+      "mode": "warm",
+      "referenceMs": 1.3341249999999718,
+      "nativeMs": 0.7260420000000067
+    },
+    {
+      "round": 0,
+      "mode": "cold",
+      "referenceMs": 5.015541999999982,
+      "nativeMs": 1.6327079999999796
+    },
+    {
+      "round": 0,
+      "mode": "warm",
+      "referenceMs": 1.647375000000011,
+      "nativeMs": 0.7222500000000309
+    },
+    {
+      "round": 0,
+      "mode": "cold",
+      "referenceMs": 4.880999999999972,
+      "nativeMs": 1.6232499999999845
+    },
+    {
+      "round": 0,
+      "mode": "warm",
+      "referenceMs": 1.4781670000000986,
+      "nativeMs": 0.7214999999999918
+    },
+    {
+      "round": 0,
+      "mode": "cold",
+      "referenceMs": 5.1417920000000095,
+      "nativeMs": 1.623207999999977
+    },
+    {
+      "round": 0,
+      "mode": "warm",
+      "referenceMs": 1.4867499999999154,
+      "nativeMs": 0.7110830000000306
+    },
+    {
+      "round": 0,
+      "mode": "cold",
+      "referenceMs": 5.170791000000008,
+      "nativeMs": 1.9424589999999853
+    },
+    {
+      "round": 0,
+      "mode": "warm",
+      "referenceMs": 3.2012919999999667,
+      "nativeMs": 0.7237910000000056
+    },
+    {
+      "round": 0,
+      "mode": "cold",
+      "referenceMs": 5.9435419999999795,
+      "nativeMs": 1.6497080000000324
+    },
+    {
+      "round": 0,
+      "mode": "warm",
+      "referenceMs": 1.5351249999999936,
+      "nativeMs": 0.7147499999999809
+    },
+    {
+      "round": 0,
+      "mode": "cold",
+      "referenceMs": 5.68420900000001,
+      "nativeMs": 1.8242919999999003
+    },
+    {
+      "round": 0,
+      "mode": "warm",
+      "referenceMs": 1.2848339999999325,
+      "nativeMs": 0.7188330000000178
+    },
+    {
+      "round": 0,
+      "mode": "cold",
+      "referenceMs": 4.6391250000000355,
+      "nativeMs": 1.6039590000000317
+    },
+    {
+      "round": 0,
+      "mode": "warm",
+      "referenceMs": 1.235290999999961,
+      "nativeMs": 0.7133340000000317
+    },
+    {
+      "round": 0,
+      "mode": "cold",
+      "referenceMs": 4.517166999999972,
+      "nativeMs": 1.626041999999984
+    },
+    {
+      "round": 0,
+      "mode": "warm",
+      "referenceMs": 1.588416000000052,
+      "nativeMs": 0.7158329999999751
+    },
+    {
+      "round": 0,
+      "mode": "cold",
+      "referenceMs": 4.831458999999995,
+      "nativeMs": 1.674541999999974
+    },
+    {
+      "round": 0,
+      "mode": "warm",
+      "referenceMs": 1.537916999999993,
+      "nativeMs": 0.8124589999999898
+    },
+    {
+      "round": 1,
+      "mode": "cold",
+      "referenceMs": 4.642583000000059,
+      "nativeMs": 1.6198750000000928
+    },
+    {
+      "round": 1,
+      "mode": "warm",
+      "referenceMs": 1.6183340000000044,
+      "nativeMs": 1.084875000000011
+    },
+    {
+      "round": 1,
+      "mode": "cold",
+      "referenceMs": 6.589541999999938,
+      "nativeMs": 1.7010420000000295
+    },
+    {
+      "round": 1,
+      "mode": "warm",
+      "referenceMs": 1.3990420000000086,
+      "nativeMs": 0.7247499999999718
+    },
+    {
+      "round": 1,
+      "mode": "cold",
+      "referenceMs": 4.66108399999996,
+      "nativeMs": 1.6401670000000195
+    },
+    {
+      "round": 1,
+      "mode": "warm",
+      "referenceMs": 1.2374589999999444,
+      "nativeMs": 0.8587079999999787
+    },
+    {
+      "round": 1,
+      "mode": "cold",
+      "referenceMs": 4.309875000000034,
+      "nativeMs": 1.628500000000031
+    },
+    {
+      "round": 1,
+      "mode": "warm",
+      "referenceMs": 1.2530830000000606,
+      "nativeMs": 0.715082999999936
+    },
+    {
+      "round": 1,
+      "mode": "cold",
+      "referenceMs": 4.466125000000034,
+      "nativeMs": 1.6339999999999009
+    },
+    {
+      "round": 1,
+      "mode": "warm",
+      "referenceMs": 1.3016249999999445,
+      "nativeMs": 0.7336669999999685
+    },
+    {
+      "round": 1,
+      "mode": "cold",
+      "referenceMs": 4.509208000000058,
+      "nativeMs": 1.668207999999936
+    },
+    {
+      "round": 1,
+      "mode": "warm",
+      "referenceMs": 1.3339580000000524,
+      "nativeMs": 0.8993749999999636
+    },
+    {
+      "round": 1,
+      "mode": "cold",
+      "referenceMs": 4.562583000000018,
+      "nativeMs": 1.716291999999953
+    },
+    {
+      "round": 1,
+      "mode": "warm",
+      "referenceMs": 1.3209170000000086,
+      "nativeMs": 0.7087910000000193
+    },
+    {
+      "round": 1,
+      "mode": "cold",
+      "referenceMs": 4.394542000000001,
+      "nativeMs": 1.6187090000000808
+    },
+    {
+      "round": 1,
+      "mode": "warm",
+      "referenceMs": 1.34537499999999,
+      "nativeMs": 0.8194999999999482
+    },
+    {
+      "round": 1,
+      "mode": "cold",
+      "referenceMs": 9.980583000000024,
+      "nativeMs": 1.660082999999986
+    },
+    {
+      "round": 1,
+      "mode": "warm",
+      "referenceMs": 1.2719170000000304,
+      "nativeMs": 0.7205000000000155
+    },
+    {
+      "round": 1,
+      "mode": "cold",
+      "referenceMs": 4.875084000000015,
+      "nativeMs": 1.606375000000071
+    },
+    {
+      "round": 1,
+      "mode": "warm",
+      "referenceMs": 1.2122080000000324,
+      "nativeMs": 0.7419160000000602
+    },
+    {
+      "round": 1,
+      "mode": "cold",
+      "referenceMs": 4.928042000000005,
+      "nativeMs": 1.6382500000000846
+    },
+    {
+      "round": 1,
+      "mode": "warm",
+      "referenceMs": 1.2556660000000193,
+      "nativeMs": 0.965082999999936
+    },
+    {
+      "round": 1,
+      "mode": "cold",
+      "referenceMs": 4.793916999999965,
+      "nativeMs": 1.7801670000000058
+    },
+    {
+      "round": 1,
+      "mode": "warm",
+      "referenceMs": 1.4003340000000435,
+      "nativeMs": 0.7206669999999349
+    },
+    {
+      "round": 1,
+      "mode": "cold",
+      "referenceMs": 4.491334000000052,
+      "nativeMs": 1.679666999999995
+    },
+    {
+      "round": 1,
+      "mode": "warm",
+      "referenceMs": 1.411375000000021,
+      "nativeMs": 0.7292079999999714
+    },
+    {
+      "round": 1,
+      "mode": "cold",
+      "referenceMs": 5.239916999999991,
+      "nativeMs": 1.613207999999986
+    },
+    {
+      "round": 1,
+      "mode": "warm",
+      "referenceMs": 1.3052079999999933,
+      "nativeMs": 0.7097499999999854
+    },
+    {
+      "round": 1,
+      "mode": "cold",
+      "referenceMs": 5.233042000000069,
+      "nativeMs": 1.6278330000000096
+    },
+    {
+      "round": 1,
+      "mode": "warm",
+      "referenceMs": 1.3478749999999309,
+      "nativeMs": 0.7110830000000306
+    },
+    {
+      "round": 1,
+      "mode": "cold",
+      "referenceMs": 8.901250000000005,
+      "nativeMs": 1.7295830000000478
+    },
+    {
+      "round": 1,
+      "mode": "warm",
+      "referenceMs": 1.2314590000000862,
+      "nativeMs": 0.74087499999996
+    },
+    {
+      "round": 1,
+      "mode": "cold",
+      "referenceMs": 4.414625000000001,
+      "nativeMs": 1.6740409999999883
+    },
+    {
+      "round": 1,
+      "mode": "warm",
+      "referenceMs": 1.2537079999999605,
+      "nativeMs": 0.7510829999999942
+    },
+    {
+      "round": 1,
+      "mode": "cold",
+      "referenceMs": 4.71612499999992,
+      "nativeMs": 1.6295000000000073
+    },
+    {
+      "round": 1,
+      "mode": "warm",
+      "referenceMs": 1.255916999999954,
+      "nativeMs": 0.7281670000000986
+    },
+    {
+      "round": 1,
+      "mode": "cold",
+      "referenceMs": 4.697709000000032,
+      "nativeMs": 1.676584000000048
+    },
+    {
+      "round": 1,
+      "mode": "warm",
+      "referenceMs": 1.270291000000043,
+      "nativeMs": 1.0919169999999667
+    },
+    {
+      "round": 1,
+      "mode": "cold",
+      "referenceMs": 4.533167000000049,
+      "nativeMs": 1.7117080000000442
+    },
+    {
+      "round": 1,
+      "mode": "warm",
+      "referenceMs": 1.3262909999999692,
+      "nativeMs": 0.7295410000000402
+    },
+    {
+      "round": 2,
+      "mode": "cold",
+      "referenceMs": 4.709541999999942,
+      "nativeMs": 1.7356669999999212
+    },
+    {
+      "round": 2,
+      "mode": "warm",
+      "referenceMs": 3.472541999999976,
+      "nativeMs": 0.7384999999999309
+    },
+    {
+      "round": 2,
+      "mode": "cold",
+      "referenceMs": 5.952541999999994,
+      "nativeMs": 1.664625000000001
+    },
+    {
+      "round": 2,
+      "mode": "warm",
+      "referenceMs": 2.047916999999984,
+      "nativeMs": 0.8065829999999323
+    },
+    {
+      "round": 2,
+      "mode": "cold",
+      "referenceMs": 5.015667000000008,
+      "nativeMs": 1.6483329999999796
+    },
+    {
+      "round": 2,
+      "mode": "warm",
+      "referenceMs": 1.7755829999999833,
+      "nativeMs": 0.7233330000000251
+    },
+    {
+      "round": 2,
+      "mode": "cold",
+      "referenceMs": 4.537832999999978,
+      "nativeMs": 1.6524590000000217
+    },
+    {
+      "round": 2,
+      "mode": "warm",
+      "referenceMs": 1.4189159999999674,
+      "nativeMs": 0.7852500000000191
+    },
+    {
+      "round": 2,
+      "mode": "cold",
+      "referenceMs": 4.771292000000017,
+      "nativeMs": 1.6699160000000575
+    },
+    {
+      "round": 2,
+      "mode": "warm",
+      "referenceMs": 1.5060419999999795,
+      "nativeMs": 0.7579170000000204
+    },
+    {
+      "round": 2,
+      "mode": "cold",
+      "referenceMs": 4.942999999999984,
+      "nativeMs": 2.530332999999928
+    },
+    {
+      "round": 2,
+      "mode": "warm",
+      "referenceMs": 1.4760839999999007,
+      "nativeMs": 1.3544170000000122
+    },
+    {
+      "round": 2,
+      "mode": "cold",
+      "referenceMs": 8.159417000000076,
+      "nativeMs": 1.662708000000066
+    },
+    {
+      "round": 2,
+      "mode": "warm",
+      "referenceMs": 1.4795410000001539,
+      "nativeMs": 0.7731249999999363
+    },
+    {
+      "round": 2,
+      "mode": "cold",
+      "referenceMs": 5.623916999999892,
+      "nativeMs": 2.3407079999999496
+    },
+    {
+      "round": 2,
+      "mode": "warm",
+      "referenceMs": 1.5428750000000946,
+      "nativeMs": 0.7345419999999194
+    },
+    {
+      "round": 2,
+      "mode": "cold",
+      "referenceMs": 4.444291000000021,
+      "nativeMs": 1.6372499999999945
+    },
+    {
+      "round": 2,
+      "mode": "warm",
+      "referenceMs": 1.7603340000000571,
+      "nativeMs": 0.8682499999999891
+    },
+    {
+      "round": 2,
+      "mode": "cold",
+      "referenceMs": 4.520541999999978,
+      "nativeMs": 1.9428330000000642
+    },
+    {
+      "round": 2,
+      "mode": "warm",
+      "referenceMs": 1.3500830000000406,
+      "nativeMs": 0.7297499999999673
+    },
+    {
+      "round": 2,
+      "mode": "cold",
+      "referenceMs": 18.228875000000016,
+      "nativeMs": 1.7602079999999205
+    },
+    {
+      "round": 2,
+      "mode": "warm",
+      "referenceMs": 1.48762499999998,
+      "nativeMs": 1.603749999999991
+    },
+    {
+      "round": 2,
+      "mode": "cold",
+      "referenceMs": 11.707083000000011,
+      "nativeMs": 3.656291999999894
+    },
+    {
+      "round": 2,
+      "mode": "warm",
+      "referenceMs": 2.4147080000000187,
+      "nativeMs": 1.4516250000001492
+    },
+    {
+      "round": 2,
+      "mode": "cold",
+      "referenceMs": 5.615665999999919,
+      "nativeMs": 1.663915999999972
+    },
+    {
+      "round": 2,
+      "mode": "warm",
+      "referenceMs": 9.653042000000141,
+      "nativeMs": 0.7369590000000699
+    },
+    {
+      "round": 2,
+      "mode": "cold",
+      "referenceMs": 16.189208000000008,
+      "nativeMs": 5.8610409999998865
+    },
+    {
+      "round": 2,
+      "mode": "warm",
+      "referenceMs": 1.3605840000000171,
+      "nativeMs": 0.7384999999999309
+    },
+    {
+      "round": 2,
+      "mode": "cold",
+      "referenceMs": 4.479792000000089,
+      "nativeMs": 2.314416999999821
+    },
+    {
+      "round": 2,
+      "mode": "warm",
+      "referenceMs": 2.5971250000000055,
+      "nativeMs": 0.7445410000000265
+    },
+    {
+      "round": 2,
+      "mode": "cold",
+      "referenceMs": 4.462957999999844,
+      "nativeMs": 2.60020899999995
+    },
+    {
+      "round": 2,
+      "mode": "warm",
+      "referenceMs": 1.4736249999998563,
+      "nativeMs": 0.7283330000000205
+    },
+    {
+      "round": 2,
+      "mode": "cold",
+      "referenceMs": 4.875875000000178,
+      "nativeMs": 1.6644169999999576
+    },
+    {
+      "round": 2,
+      "mode": "warm",
+      "referenceMs": 1.8604170000000977,
+      "nativeMs": 1.1663750000000164
+    },
+    {
+      "round": 2,
+      "mode": "cold",
+      "referenceMs": 4.962999999999965,
+      "nativeMs": 1.9471670000000358
+    },
+    {
+      "round": 2,
+      "mode": "warm",
+      "referenceMs": 2.2713329999999132,
+      "nativeMs": 0.7283330000000205
+    },
+    {
+      "round": 2,
+      "mode": "cold",
+      "referenceMs": 5.418916999999965,
+      "nativeMs": 1.7355840000000171
+    },
+    {
+      "round": 2,
+      "mode": "warm",
+      "referenceMs": 1.2658329999999296,
+      "nativeMs": 0.8909579999999551
+    },
+    {
+      "round": 2,
+      "mode": "cold",
+      "referenceMs": 5.402457999999797,
+      "nativeMs": 2.1165829999999914
+    },
+    {
+      "round": 2,
+      "mode": "warm",
+      "referenceMs": 2.0157910000000356,
+      "nativeMs": 0.9936250000000655
+    }
+  ]
+}

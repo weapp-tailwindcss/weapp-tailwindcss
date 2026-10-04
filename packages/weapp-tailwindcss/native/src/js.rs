@@ -7,12 +7,15 @@ use oxc_parser::{ParseOptions, Parser};
 use oxc_span::{GetSpan, SourceType, Span};
 
 mod offsets;
+mod transform;
+pub use transform::{JsTransformer, create_js_transformer};
 #[cfg(test)]
 mod tests;
 
 use offsets::Utf16Offsets;
 
 #[napi(object)]
+#[derive(Clone)]
 pub struct JsLiteralSpan {
     pub kind: String,
     pub start: u32,
@@ -22,6 +25,7 @@ pub struct JsLiteralSpan {
 }
 
 #[napi(object)]
+#[derive(Clone)]
 pub struct JsSourceAnalysis {
     pub literals: Vec<JsLiteralSpan>,
     pub has_module_declarations: bool,
