@@ -6,6 +6,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { finished } from 'node:stream/promises'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { nativeMode } from './options'
 
 export async function runWorker(options: WorkerOptions) {
   const require = createRequire(path.join(options.root, 'package.json'))
@@ -13,7 +14,7 @@ export async function runWorker(options: WorkerOptions) {
   const log = createWriteStream(`${options.output}.log`)
   const child = spawn(process.execPath, ['--import', pathToFileURL(require.resolve('tsx')).href, worker, JSON.stringify(options)], {
     cwd: path.join(options.root, 'demo', 'web', 'vue-vite-tailwindcss-v4'),
-    env: { ...process.env, WEAPP_TW_TARGET: options.target, WEAPP_TW_NATIVE: 'off', NO_COLOR: '1' },
+    env: { ...process.env, WEAPP_TW_TARGET: options.target, WEAPP_TW_NATIVE: nativeMode(options), NO_COLOR: '1' },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   child.stdout.on('data', chunk => log.write(chunk))

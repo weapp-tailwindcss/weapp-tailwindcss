@@ -1,3 +1,4 @@
+import type { BenchmarkMode, Comparison, WorkerOptions } from './types'
 import assert from 'node:assert/strict'
 import path from 'node:path'
 import process from 'node:process'
@@ -9,13 +10,14 @@ export function parseOptions(args: string[]) {
   let timeoutMs = 30_000
   let selfCheck = false
   let target: 'web' | 'weapp' = 'web'
+  let compare: Comparison = 'transfer'
   for (let index = 0; index < args.length; index++) {
     const flag = args[index]!
     if (flag === '--self-check') {
       selfCheck = true
       continue
     }
-    assert(['--root', '--output', '--pairs', '--timeout-ms', '--target'].includes(flag), `未知参数：${flag}`)
+    assert(['--root', '--output', '--pairs', '--timeout-ms', '--target', '--compare'].includes(flag), `未知参数：${flag}`)
     const value = args[++index]
     assert(value && !value.startsWith('--'), `参数缺少值：${flag}`)
     if (flag === '--root') {
@@ -34,14 +36,32 @@ export function parseOptions(args: string[]) {
       assert(value === 'web' || value === 'weapp', '--target 必须是 web 或 weapp。')
       target = value
     }
+    if (flag === '--compare') {
+      assert(value === 'transfer' || value === 'native', '--compare 必须是 transfer 或 native。')
+      compare = value
+    }
   }
   assert(Number.isInteger(pairs) && pairs >= 1 && pairs <= 20, '--pairs 必须是 1–20。')
   assert(Number.isInteger(timeoutMs) && timeoutMs >= 1000 && timeoutMs <= 120_000, '--timeout-ms 必须是 1000–120000。')
-  return { root: path.resolve(root), output: output ?? path.resolve(root, '.tmp', 'oxc-vite', 'report.json'), pairs, timeoutMs, selfCheck, target }
+  return { root: path.resolve(root), output: output ?? path.resolve(root, '.tmp', 'oxc-vite', 'report.json'), pairs, timeoutMs, selfCheck, target, compare }
 }
 
-export function pairOrder(pair: number) {
-  return pair % 2 === 0 ? ['normal', 'raw'] as const : ['raw', 'normal'] as const
+export function comparisonModes(compare: Comparison): readonly BenchmarkMode[] {
+  return compare === 'native' ? ['off', 'required'] : ['normal', 'raw']
+}
+
+export function pairOrder(pair: number, compare: Comparison = 'transfer') {
+  const modes = comparisonModes(compare)
+  return pair % 2 === 0 ? modes : [...modes].reverse()
+}
+
+export function nativeMode(options: Pick<WorkerOptions, 'compare' | 'mode'>) {
+  if (options.compare === 'native') {
+    assert(options.mode === 'off' || options.mode === 'required', 'native 对比的 mode 必须为 off/required。')
+    return options.mode
+  }
+  assert(options.mode === 'normal' || options.mode === 'raw', 'transfer 对比的 mode 必须为 normal/raw。')
+  return 'off'
 }
 
 export function statistics(values: number[]) {

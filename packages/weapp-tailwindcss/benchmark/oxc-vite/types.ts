@@ -1,11 +1,14 @@
 export type TransferMode = 'normal' | 'raw'
+export type Comparison = 'transfer' | 'native'
+export type BenchmarkMode = TransferMode | 'off' | 'required'
 export type Phase = 'self-check' | 'build' | 'dev-startup' | 'text' | 'add' | 'remove' | 'restore'
 
 export interface WorkerOptions {
   target: 'web' | 'weapp'
   root: string
   output: string
-  mode: TransferMode
+  compare: Comparison
+  mode: BenchmarkMode
   pair: number
   selfCheck: boolean
   timeoutMs: number
@@ -16,6 +19,19 @@ export interface ParseCount {
   failures: number
   sourceCodeUnits: number
   filenames: string[]
+}
+
+export type NativeMethod = 'tokenizeWxml' | 'analyzeJs' | 'jsRuntimeSignature' | 'createJsTransformer' | 'replaceClassNames' | 'transform' | 'escapeClasses' | 'transformSelector' | 'transformSelectors' | 'normalizeV4VariableFallbacks' | 'normalizeUvueTransformValue' | 'normalizeUvueTransformValues'
+
+export interface NativeCount {
+  calls: number
+  failures: number
+  sourceCodeUnits: number
+}
+
+export interface NativeReport {
+  bindings: Array<{ kernel: 'core' | 'postcss', resolved: string, sha256: string, loaded: boolean }>
+  counts: Partial<Record<Phase, Partial<Record<NativeMethod, NativeCount>>>>
 }
 
 export interface PageState {
@@ -32,13 +48,15 @@ export interface PageState {
 
 export interface WorkerReport {
   status: 'running' | 'passed' | 'failed' | 'self-check'
-  mode: TransferMode
+  compare: Comparison
+  mode: BenchmarkMode
   pair: number
   error?: string
   cleanupErrors: string[]
   serverErrors: string[]
   browserErrors: string[]
   parser: { resolved: string, rawTransferSupported: boolean, counts: Partial<Record<Phase, ParseCount>> }
+  native?: NativeReport
   build?: { milliseconds: number, sha256: string, artifacts: Array<{ name: string, bytes: number, sha256: string }> }
   startupMs?: number
   hmr: Array<{ phase: string, milliseconds: number, state: Omit<PageState, 'session'> }>

@@ -11,6 +11,8 @@ import process from 'node:process'
 import { pathToFileURL } from 'node:url'
 import { fingerprintBuild } from './artifacts'
 import { canonicalState, openBrowser, waitForState } from './browser'
+import { instrumentNative } from './native'
+import { nativeMode } from './options'
 import { instrumentParser } from './parser'
 import { makeVariants, restoreOwnedSource } from './source'
 
@@ -19,6 +21,7 @@ const project = path.join(options.root, 'demo', 'web', 'vue-vite-tailwindcss-v4'
 const sourceFile = path.join(project, 'src', 'App.vue')
 const report: WorkerReport = {
   status: 'running',
+  compare: options.compare,
   mode: options.mode,
   pair: options.pair,
   cleanupErrors: [],
@@ -34,6 +37,7 @@ let browser: Browser | undefined
 let page: Page | undefined
 let server: ViteDevServer | undefined
 let parser: ReturnType<typeof instrumentParser> | undefined
+let native: ReturnType<typeof instrumentNative> | undefined
 let original: string | undefined
 let variants: ReturnType<typeof makeVariants> | undefined
 let temporary: string | undefined
@@ -61,7 +65,14 @@ async function cleanup() {
   catch (error) {
     report.cleanupErrors.push(`restore: ${String(error)}`)
   }
-  parser?.restore()
+  for (const [name, restore] of [['parser', () => parser?.restore()], ['native', () => native?.restore()]] as const) {
+    try {
+      restore()
+    }
+    catch (error) {
+      report.cleanupErrors.push(`${name}: ${String(error)}`)
+    }
+  }
   if (temporary) {
     try {
       await rm(temporary, { recursive: true, force: true })
@@ -83,13 +94,19 @@ process.once('SIGTERM', stop)
 
 async function main() {
   process.env.WEAPP_TW_TARGET = options.target
+  process.env.WEAPP_TW_NATIVE = nativeMode(options)
   original = await readFile(sourceFile, 'utf8')
   variants = makeVariants(original)
-  parser = instrumentParser(options.root, options.mode)
+  parser = instrumentParser(options.root, options.mode === 'normal' || options.mode === 'raw' ? options.mode : 'default')
+  if (options.compare === 'native') {
+    native = instrumentNative(options.root)
+    report.native = native.report
+  }
   assert(!interrupted, 'worker 收到中断。')
   report.parser = parser.report
   if (options.selfCheck) {
     parser.selfCheck()
+    native?.selfCheck()
     report.status = 'self-check'
     return
   }
@@ -98,6 +115,7 @@ async function main() {
   const repositoryRequire = createRequire(path.join(options.root, 'package.json'))
   process.env.NODE_ENV = 'production'
   parser.phase('build')
+  native?.phase('build')
   const buildStarted = performance.now()
   const vite = await import(pathToFileURL(demoRequire.resolve('vite')).href) as typeof import('vite')
   const logger = vite.createLogger('info', { allowClearScreen: false })
@@ -117,6 +135,7 @@ async function main() {
   // Vite build 会保留 NODE_ENV；显式切换到真实 dev 命令的环境，避免禁用 Vue HMR。
   process.env.NODE_ENV = 'development'
   parser.phase('dev-startup')
+  native?.phase('dev-startup')
   const startupStarted = performance.now()
   server = await vite.createServer({ root: project, configFile, customLogger, clearScreen: false, cacheDir: path.join(temporary, 'dev-cache'), server: { host: '127.0.0.1', port: 0, strictPort: true } })
   assert.equal(server.config.isProduction, false, 'HMR 验证必须使用开发配置。')
@@ -149,6 +168,7 @@ async function main() {
     assert.equal(await readFile(sourceFile, 'utf8'), previous, 'App.vue 已被外部修改，停止保存。')
     await page.waitForTimeout(150)
     parser.phase(phase)
+    native?.phase(phase)
     assert(!interrupted, 'worker 收到中断，停止保存。')
     const started = performance.now()
     await writeFile(sourceFile, variants[phase])

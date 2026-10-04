@@ -1,3 +1,4 @@
+import type { Comparison } from './types'
 import { Buffer } from 'node:buffer'
 import { createHash } from 'node:crypto'
 import { readdir, readFile } from 'node:fs/promises'
@@ -20,13 +21,13 @@ export function fingerprintBuild(result: unknown) {
   return { artifacts, sha256: hash(JSON.stringify(artifacts)) }
 }
 
-export async function inputFingerprint(root: string) {
+export async function inputFingerprint(root: string, compare: Comparison = 'transfer') {
   const files: string[] = []
   async function collect(directory: string) {
     for (const entry of await readdir(directory, { withFileTypes: true })) {
       const filename = path.join(directory, entry.name)
       if (entry.isDirectory()) {
-        if (!['node_modules', 'dist', 'dist-weapp', '.git'].includes(entry.name)) {
+        if (!['node_modules', 'dist', 'dist-weapp', '.git', 'target'].includes(entry.name)) {
           await collect(filename)
         }
       }
@@ -37,6 +38,16 @@ export async function inputFingerprint(root: string) {
   }
   await collect(path.join(root, 'demo', 'web', 'vue-vite-tailwindcss-v4'))
   await collect(path.join(root, 'packages', 'weapp-tailwindcss', 'dist'))
+  if (compare === 'native') {
+    await collect(path.join(root, 'packages', 'postcss', 'dist'))
+    for (const name of ['weapp-tailwindcss', 'postcss']) {
+      await collect(path.join(root, 'packages', name, 'native', 'src'))
+      for (const file of ['Cargo.toml', 'Cargo.lock', 'build.rs']) {
+        files.push(path.join(root, 'packages', name, 'native', file))
+      }
+    }
+    files.push(path.join(root, 'packages', 'postcss', 'package.json'))
+  }
   for (const segments of [['pnpm-lock.yaml'], ['demo', 'web', 'shared', 'vite-target.ts'], ['packages', 'weapp-tailwindcss', 'package.json']]) {
     files.push(path.resolve(root, ...segments))
   }

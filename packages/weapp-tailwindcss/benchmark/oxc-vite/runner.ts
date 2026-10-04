@@ -6,7 +6,8 @@ import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { inputFingerprint } from './artifacts'
-import { pairOrder, parseOptions, statistics } from './options'
+import { measuredNativeCalls } from './native'
+import { comparisonModes, pairOrder, parseOptions, statistics } from './options'
 import { runWorker } from './process'
 import { makeVariants, restoreOwnedSource } from './source'
 
@@ -21,7 +22,7 @@ async function run() {
   await mkdir(path.dirname(lockPath), { recursive: true })
   const rows: WorkerReport[] = []
   const errors: string[] = []
-  const input = await inputFingerprint(options.root)
+  const input = await inputFingerprint(options.root, options.compare)
   const report: Record<string, unknown> = {
     status: 'running',
     date: new Date().toISOString(),
@@ -33,6 +34,11 @@ async function run() {
       alternating: true,
       independentNodeProcesses: true,
       target: options.target,
+      comparison: options.compare,
+      modes: comparisonModes(options.compare),
+      native: options.compare === 'native'
+        ? 'off/required 对比；两组保持生产默认 Oxc 传递选项；正式 worker 只预先 resolve/hash binding，通过 .node 加载 hook 计数，不在计时前 require 原生模块。'
+        : 'normal/raw 对比固定 WEAPP_TW_NATIVE=off，避免原生路径绕开 Oxc 传递实验。',
       headless: true,
       production: '独立 Node 进程；Vite import+真实配置 build(write:false)，未清理系统文件缓存；正式 worker 不运行 parser 预热。',
       hmr: 'build 后显式切换 NODE_ENV=development；同一个 dev server 和页面，text/add/remove/restore 顺序保存到已验证 DOM/CSS；轮间静置 150ms 不计时。',
@@ -52,7 +58,7 @@ async function run() {
   try {
     await lock.writeFile(`${process.pid}\n`)
     for (let pair = 0; pair < (options.selfCheck ? 1 : options.pairs); pair++) {
-      for (const mode of pairOrder(pair)) {
+      for (const mode of pairOrder(pair, options.compare)) {
         assert.equal(await readFile(sourceFile, 'utf8'), original, '上轮 App.vue 未恢复或有外部编辑。')
         const output = path.join(directory, `${pair}-${mode}.json`)
         process.stdout.write(`[oxc-vite] pair=${pair + 1} mode=${mode}${options.selfCheck ? ' self-check' : ''}\n`)
@@ -63,22 +69,35 @@ async function run() {
         assert(!result.timedOut && !result.signalled && result.code === 0, `worker 异常退出：${JSON.stringify(result)}`)
         assert.equal(row.status, options.selfCheck ? 'self-check' : 'passed', row.error ?? 'worker 未通过验证。')
         assert(row.restored && row.cleanupErrors.length === 0, 'worker 未成功恢复源码/释放资源。')
+        if (row.mode === 'off' && row.native) {
+          assert.equal(measuredNativeCalls(row.native), 0, 'native=off 样本出现真实原生调用。')
+        }
       }
       if (!options.selfCheck) {
         const pairRows = rows.filter(row => row.pair === pair)
-        assert.equal(pairRows[0]!.build!.sha256, pairRows[1]!.build!.sha256, 'normal/raw 冷构建产物 SHA-256 不一致。')
-        assert.deepEqual(pairRows[0]!.hmr.map(row => row.state), pairRows[1]!.hmr.map(row => row.state), 'normal/raw HMR 语义证据不一致。')
+        assert.equal(pairRows[0]!.build!.sha256, pairRows[1]!.build!.sha256, '对比两组冷构建产物 SHA-256 不一致。')
+        assert.deepEqual(pairRows[0]!.hmr.map(row => row.state), pairRows[1]!.hmr.map(row => row.state), '对比两组 HMR 语义证据不一致。')
         assert(rows.every(row => row.build!.sha256 === rows[0]!.build!.sha256), '不同 pair 的构建产物漂移。')
       }
+      if (options.compare === 'native') {
+        const identities = (row: WorkerReport) => row.native!.bindings.map(({ loaded: _loaded, ...identity }) => identity)
+        assert(rows.every(row => JSON.stringify(identities(row)) === JSON.stringify(identities(rows[0]!))), '原生 binary 路径或 SHA-256 在模式/pair 之间变化。')
+      }
     }
-    assert.deepEqual(await inputFingerprint(options.root), input, '运行前后源码、构建输入或依赖身份发生变化。')
+    assert.deepEqual(await inputFingerprint(options.root, options.compare), input, '运行前后源码、构建输入或依赖身份发生变化。')
     const measuredCalls = rows.reduce((sum, row) => sum + Object.entries(row.parser.counts).reduce((total, [phase, count]) => total + (phase === 'self-check' ? 0 : count.calls), 0), 0)
     report['coreOxcMeasuredCalls'] = measuredCalls
-    report['attribution'] = measuredCalls === 0
-      ? '真实构建/HMR 未调用被测 core Oxc parseSync；这些耗时不能用于归因 Oxc raw transfer 的收益。'
-      : '存在真实 core Oxc 调用；仍须结合各阶段调用数评估，不能把 handler 加速直接宣称为项目构建加速。'
+    const nativeCalls = rows.reduce((sum, row) => sum + (row.native ? measuredNativeCalls(row.native) : 0), 0)
+    report['nativeMeasuredCalls'] = nativeCalls
+    report['attribution'] = options.compare === 'native'
+      ? nativeCalls === 0
+        ? '真实构建/HMR 未调用被测原生内核；这些耗时不能用于归因 Rust 的收益。'
+        : '存在真实原生调用；结合各阶段/方法的调用数、产物一致性和原始样本评估，不能把局部内核加速宣称为整个项目加速。'
+      : measuredCalls === 0
+        ? '真实构建/HMR 未调用被测 core Oxc parseSync；这些耗时不能用于归因 Oxc raw transfer 的收益。'
+        : '存在真实 core Oxc 调用；仍须结合各阶段调用数评估，不能把 handler 加速直接宣称为项目构建加速。'
     if (!options.selfCheck) {
-      report['summary'] = Object.fromEntries(['normal', 'raw'].map((mode) => {
+      report['summary'] = Object.fromEntries(comparisonModes(options.compare).map((mode) => {
         const group = rows.filter(row => row.mode === mode)
         return [mode, {
           build: statistics(group.map(row => row.build!.milliseconds)),

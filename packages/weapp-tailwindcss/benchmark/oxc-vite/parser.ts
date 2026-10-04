@@ -9,7 +9,7 @@ interface OxcModule {
   rawTransferSupported?: () => boolean
 }
 
-export function instrumentParser(root: string, mode: TransferMode) {
+export function instrumentParser(root: string, mode: TransferMode | 'default') {
   const coreManifest = path.join(root, 'packages', 'weapp-tailwindcss', 'package.json')
   const coreRequire = createRequire(coreManifest)
   const demoRequire = createRequire(path.join(root, 'demo', 'web', 'vue-vite-tailwindcss-v4', 'package.json'))
@@ -32,7 +32,7 @@ export function instrumentParser(root: string, mode: TransferMode) {
         count.filenames.push(filename)
       }
       try {
-        return original.parseSync(filename, source, { ...options, experimentalLazy: false, experimentalRawTransfer: mode === 'raw' })
+        return original.parseSync(filename, source, mode === 'default' ? options : { ...options, experimentalLazy: false, experimentalRawTransfer: mode === 'raw' })
       }
       catch (error) {
         count.failures++
