@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest'
 import staticEvidenceJson from '../examples/react-lynx/src/compatibility/static-evidence.json'
 import { buildCompatibilityBundle } from './lynx/build'
 import { compatibilityDir, exampleDir, getCatalogHash, lynxIntermediateDir, repoRoot } from './lynx/catalog'
+import { verifyFlexFixture } from './lynx/flex-fixture-browser'
 import { verifyGridFixtures } from './lynx/grid-fixture-browser'
 import { verifySkewFixture } from './lynx/skew-fixture-browser'
 import { analyzeStaticEvidence } from './lynx/static-evidence'
@@ -147,6 +148,10 @@ describe('ReactLynx Rspeedy compatibility evidence', () => {
     for (const selector of ['.grid-slot-grid-placement', '.grid-probe-grid-auto', '.grid-probe-grid-justify-self']) {
       expect(decodedCss).toContain(selector)
     }
+  }, 30_000)
+
+  it.each(['flex-grow', 'flex-wrap-order', 'flex-shorthand-shrink'])('%s 的真实组件产生竞争布局且逐项依赖 utility', async (id) => {
+    await verifyFlexFixture(await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8'), id)
   }, 30_000)
 
   it('真实组件和 CSS 的 skew 图形在不同像素密度下必须同时依赖双轴 utility', async () => {

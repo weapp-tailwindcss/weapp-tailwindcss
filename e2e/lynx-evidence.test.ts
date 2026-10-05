@@ -25,17 +25,20 @@ async function fixture() {
   const report = structuredClone(androidReport) as NativePlatformReport
   // 此 fixture 验证取证协议：几何节点使用同布局、不同屏幕原点，结论应为不支持。
   const rect = (left: number, top: number, width: number, height: number) => ({ left, top, width, height, right: left + width, bottom: top + height })
-  const gridControls: Record<string, number[]> = {
+  const layoutControls: Record<string, number[]> = {
     'grid-placement': [50, 34, 40, 24, 0, 0, 8, 8],
     'grid-auto': [6, 6, 140, 68, 0, 36, 40, 24],
     'grid-justify-self': [6, 6, 100, 44, 0, 0, 20, 12],
+    'flex-grow': [6, 6, 24, 24, 0, 0, 8, 8],
+    'flex-wrap-order': [6, 6, 64, 24, 44, 0, 40, 24],
+    'flex-shorthand-shrink': [6, 6, 24, 24, 0, 0, 12, 24],
   }
   for (const result of report.results) {
     if (!requiresPixelEffect(result.id) && result.checkpoints.some(checkpoint => checkpoint.name.startsWith('geometry:'))) {
       const item = compatibilityCases.find(item => item.id === result.id)!
-      const grid = gridControls[item.id]
-      if (grid) {
-        const [x, y, width, height, childX, childY, childWidth, childHeight] = grid as [number, number, number, number, number, number, number, number]
+      const layout = layoutControls[item.id]
+      if (layout) {
+        const [x, y, width, height, childX, childY, childWidth, childHeight] = layout as [number, number, number, number, number, number, number, number]
         Object.assign(result, evaluateGeometry(item, {
           probe: rect(x, y, width, height),
           control: rect(200 + x, 300 + y, width, height),
