@@ -38,6 +38,10 @@ FileWatcher 只在首个路径别名加入时建立订阅，每次仍刷新 tran
 
 测试自身的超时也是独立缺陷。Vitest 超时后不会等待测试函数中的 finally，下一例可能把上一例尚未恢复的 `fs.watch` spy 当作原始函数，导致递归。fixture 现在在模块级保存原始函数，使用 `TestContext.signal` 同步关闭 watcher、恢复本例 spy 并释放屏障；异步等待可响应 abort，返回后再次检查取消。`onTestFinished` 等待 body 和幂等清理结束后才允许下一例开始。新增 CJS/ESM × release/pending 四项回归，覆盖释放后禁止重新监听、永不完成的 Promise 可取消、原生句柄清零和重复清理不影响下一例 spy。
 
+新完整轮次 `ef579d67` 在第 15 阶段又出现 CJS `create` 超时，首次失败和 562 个已退出进程的审计已归档。单文件有界复测通过，随后连续重建用例也间歇失败，不能归为单一测试 mock 或机器负载。此前测试为固定 stat→bind 窗口禁用了整个 `_addToNodeFs`，会吞掉真实目录事件；现改为只在目标的原生绑定前同步删除真实文件，让真实 ENOENT 触发恢复，再验证再次创建和后续更新。fixture 在超时时保留最近 100 条本例原生事件、绑定状态、恢复记录与节流状态，诊断只读观察被测状态。
+
+明确遗漏是第三种跨代节流：`add` 虽然设置零延时，其清理定时器仍可能晚于下一次文件 I/O 执行。新文件绑定成功并消费恢复记录后，旧 `add` 记录令 `_throttle` 返回 false，创建事件被丢弃。新增 CJS/ESM 回归先接收真实第一轮 add，仅暂停该旧记录的过期，再执行真实删除和重建；修复前两项都在 second create 的 5 秒期限失败。成功绑定时现在同时清理旧 `add`，保留绑定失败时的恢复记录及同一代去重。两项修复后均通过，不增加等待、重试或轮询兜底。
+
 ## 验证
 
 - 修复前持久用例证明提前重建、stat 到绑定之间再次删除、重复目录登记三类失败。
@@ -46,6 +50,8 @@ FileWatcher 只在首个路径别名加入时建立订阅，每次仍刷新 tran
 - 修改的 fixture、fixture 回归与 lifecycle 回归均通过定向 ESLint。
 - 本地 Linux arm64 容器（Node 24.21.0、Debian bookworm）使用与候选补丁 SHA256 一致的 Rollup 3 文件，三份测试 36 项通过。测试临时目录在容器原生文件系统中；诊断 harness 直接解析复制的 Rollup，并非整套框架矩阵。失败及修复日志保存在 `.tmp/linux-rollup-recovery/`，包括 `before.log`、`delete-trace.log`、`second-deviation.log` 和 `after-generational-throttles.log`。
 - `CI=1 pnpm install --frozen-lockfile --offline` 通过。pnpm `patch-commit` 生成补丁时会重新解析全图；未保留无关依赖更新。锁文件仅替换 223 处 Rollup 3 补丁哈希，反向替换后与起始锁文件逐字一致。
+
+- `ef579d67` 之后的新修复：`CI=1 pnpm test:demo:matrix` 29 文件、189 项通过，定向 ESLint、冻结离线安装与差异检查通过。锁文件只替换 223 处补丁哈希，未保留 `patch-commit` 的无关依赖解析更新；补丁 SHA256 为 `dfb3e7b05589fc5f55ebe6a0d28bddd5477935c88f31627004ab7cc283f3fcba`。Linux arm64 / Node 24.21.0 bookworm 容器的 3 文件 38 项也通过，CJS/ESM 文件 SHA256 与候选补丁一致；临时目录使用容器原生文件系统，容器退出后删除。首次容器因依赖目录只读在运行测试前失败，调整为容器内可写副本后才执行测试，两个日志均保留。
 
 ## 适用边界
 

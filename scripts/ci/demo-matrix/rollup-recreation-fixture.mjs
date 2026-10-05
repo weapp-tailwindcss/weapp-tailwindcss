@@ -47,8 +47,17 @@ export async function recoveryFixture(format, context, run) {
   const watcher = task.fileWatcher.watcher
   const listeners = new Map()
   const bindings = new Set()
+  const trace = []
+  const record = (operation, detail) => {
+    trace.push({ operation, detail, at: performance.now(), tracked: watcher._watched.get(dataDir)?.has(path.basename(data)), addThrottle: watcher._throttled.get('add')?.get(data)?.count, pending: typeof watcher._pendingRecreations.get(data)?.closer, closers: [...watcher._closers.keys()] })
+    if (trace.length > 100) {
+      trace.shift()
+    }
+  }
+  watcher.on('all', (event, file) => record('event', { event, file }))
   const restores = []
   const releases = []
+  let beforeNativeWatch
   let stopped = false
   let closing
   let cleanupPromise
@@ -89,12 +98,28 @@ export async function recoveryFixture(format, context, run) {
     return bind.call(this, file, listener)
   })
   trackSpy(vi.spyOn(fs, 'watch')).mockImplementation((file, ...args) => {
-    const native = nativeWatch(file, ...args)
     const relative = path.relative(dir, path.resolve(String(file)))
-    if (relative && relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative)) {
-      bindings.add(native)
-      native.once('close', () => bindings.delete(native))
+    const owned = relative && relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative)
+    if (!owned) {
+      return nativeWatch(file, ...args)
     }
+    beforeNativeWatch?.(String(file))
+    const listener = args.at(-1)
+    args[args.length - 1] = (...event) => {
+      record('native-event', { file, event })
+      return listener(...event)
+    }
+    let native
+    try {
+      native = nativeWatch(file, ...args)
+      record('native-binding', { file })
+    }
+    catch (error) {
+      record('native-binding-error', { file, code: error.code })
+      throw error
+    }
+    bindings.add(native)
+    native.once('close', () => bindings.delete(native))
     return native
   })
   signal.addEventListener('abort', stop, { once: true })
@@ -116,7 +141,15 @@ export async function recoveryFixture(format, context, run) {
       bindings,
       listeners,
       trackSpy,
-      waitFor: (predicate, message) => waitFor(predicate, message, signal),
+      waitFor: async (predicate, message) => {
+        try {
+          await waitFor(predicate, message, signal)
+        }
+        catch (error) {
+          record('wait-failed', { message, events })
+          throw new Error(`${error.message}\n${JSON.stringify(trace, null, 2)}`, { cause: error })
+        }
+      },
       settle: async (pending) => {
         signal.throwIfAborted()
         let abort
@@ -134,6 +167,7 @@ export async function recoveryFixture(format, context, run) {
         }
       },
       onStop: release => releases.push(release),
+      beforeNativeWatch: (callback) => { beforeNativeWatch = callback },
     })
   })()
   context.onTestFinished(async () => {

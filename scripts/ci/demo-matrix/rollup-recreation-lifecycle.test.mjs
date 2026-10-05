@@ -1,5 +1,5 @@
 import fs from 'node:fs'
-import { rm, stat } from 'node:fs/promises'
+import { rm } from 'node:fs/promises'
 import path from 'node:path'
 import { expect, it, vi } from 'vitest'
 import { recoveryFixture as fixture } from './rollup-recreation-fixture.mjs'
@@ -134,24 +134,52 @@ it.for(['cjs', 'esm'].flatMap(format => ['add', 'change'].map(event => ({ format
 }, 20_000)
 
 it.for(['cjs', 'esm'])('keeps recovery live when the file disappears between stat and native binding (%s)', async (format, context) => {
-  await fixture(format, context, async ({ waitFor, trackSpy, watcher, data, dataDir, events }) => {
+  await fixture(format, context, async ({ waitFor, beforeNativeWatch, watcher, data, dataDir, events }) => {
     await rm(data)
     await waitFor(() => typeof watcher._pendingRecreations.get(data)?.closer === 'function', 'recovery handle')
-    // 真正删除 stat 对应的文件；禁用异步对账只用于固定这一个注册窗口。
-    const handler = watcher._nodeFsHandler
-    const add = trackSpy(vi.spyOn(handler, '_addToNodeFs')).mockResolvedValue(false)
-    try {
-      await replaceSourceFile(data, '1')
-      const stale = await stat(data)
-      await rm(data)
-      events.length = 0
-      handler._handleFile(data, stale, true)
-      expect(events).toEqual([])
-      expect(watcher._getWatchedDir(dataDir).has(path.basename(data))).toBe(false)
-      expect(watcher._pendingRecreations.get(data)?.closer).toBeTypeOf('function')
-    }
-    finally { add.mockRestore() }
+    let removedBeforeBinding = false
+    // 只固定 stat 成功后的原生绑定窗口，真实目录事件和异步对账继续执行。
+    beforeNativeWatch((file) => {
+      if (file === data && !removedBeforeBinding) {
+        fs.unlinkSync(data)
+        removedBeforeBinding = true
+      }
+    })
+    events.length = 0
+    await replaceSourceFile(data, '1')
+    await waitFor(() => removedBeforeBinding, 'file removed before native binding')
+    expect(events.some(x => x.id === data && x.event === 'create')).toBe(false)
+    expect(watcher._getWatchedDir(dataDir).has(path.basename(data))).toBe(false)
+    expect(watcher._pendingRecreations.get(data)?.closer).toBeTypeOf('function')
     await replaceSourceFile(data, '2')
     await waitFor(() => events.some(x => x.id === data && x.event === 'create'), 'create')
+    events.length = 0
+    await replaceSourceFile(data, '33')
+    await waitFor(() => events.some(x => x.id === data && x.event === 'update'), 'update after recovery')
+  })
+}, 20_000)
+
+it.for(['cjs', 'esm'])('new file generation is not suppressed by a delayed add throttle (%s)', async (format, context) => {
+  await fixture(format, context, async ({ waitFor, onStop, watcher, data, events }) => {
+    let previousAdd
+    watcher.on('add', (file) => {
+      if (file === data && !previousAdd) {
+        previousAdd = watcher._throttled.get('add').get(data)
+        // 暂停旧代去重记录的过期，模拟原生 I/O 先于零延时定时器被调度。
+        clearTimeout(previousAdd.timeoutObject)
+      }
+    })
+    onStop(() => previousAdd?.clear())
+    await rm(data)
+    await waitFor(() => events.some(x => x.id === data && x.event === 'delete'), 'first delete')
+    await replaceSourceFile(data, '1')
+    await waitFor(() => events.some(x => x.id === data && x.event === 'create'), 'first create')
+    expect(previousAdd).toBeDefined()
+    events.length = 0
+    await rm(data)
+    await waitFor(() => events.some(x => x.id === data && x.event === 'delete'), 'second delete')
+    await replaceSourceFile(data, '22')
+    await waitFor(() => events.some(x => x.id === data && x.event === 'create'), 'second create')
+    expect(watcher._throttled.get('add').get(data)).not.toBe(previousAdd)
   })
 }, 20_000)
