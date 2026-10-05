@@ -1,3 +1,4 @@
+import type { CommandDiagnostics } from './native-command-observer'
 import type { NativePlatform } from './native-options'
 import process from 'node:process'
 import { iosSimulatorDestination, parseAdbDevices, requestedIosTarget, requestedTarget, selectTarget } from '../../scripts/e2e-preflight/targets'
@@ -53,9 +54,9 @@ export function selectIosDevice(output: string, env: NodeJS.ProcessEnv = process
 }
 
 /** 构建前锁定唯一在线设备，后续运行和证据采集只消费该身份。 */
-export async function resolveNativeDevice(platform: NativePlatform, cwd: string, env: NodeJS.ProcessEnv = process.env): Promise<NativeDevice> {
+export async function resolveNativeDevice(platform: NativePlatform, cwd: string, env: NodeJS.ProcessEnv = process.env, diagnostics?: CommandDiagnostics): Promise<NativeDevice> {
   if (platform === 'android') {
-    return selectAndroidDevice(await command('adb', ['devices', '-l'], cwd, 30_000), env)
+    return selectAndroidDevice(await command('adb', ['devices', '-l'], cwd, 30_000, diagnostics), env)
   }
-  return selectIosDevice(await command('xcrun', ['simctl', 'list', 'devices', 'available', '--json'], cwd, 30_000), env)
+  return selectIosDevice(await command('xcrun', ['simctl', 'list', 'devices', 'available', '--json'], cwd, 30_000, diagnostics), env)
 }

@@ -74,10 +74,11 @@ describe('Lynx 原生设备身份', () => {
     const cwd = path.resolve('native host')
     run.mockResolvedValueOnce('selected device').mockResolvedValueOnce(iosDevices)
     await expect(resolveNativeDevice('android', cwd, {})).resolves.toEqual({ platform: 'android', id: 'selected' })
-    await expect(resolveNativeDevice('ios', cwd, { LYNX_IOS_DEVICE_ID: 'selected' })).resolves.toMatchObject({ id: 'selected' })
+    const diagnostics = { file: path.join(cwd, 'discovery.json') }
+    await expect(resolveNativeDevice('ios', cwd, { LYNX_IOS_DEVICE_ID: 'selected' }, diagnostics)).resolves.toMatchObject({ id: 'selected' })
     expect(run.mock.calls).toEqual([
-      ['adb', ['devices', '-l'], cwd, 30_000],
-      ['xcrun', ['simctl', 'list', 'devices', 'available', '--json'], cwd, 30_000],
+      ['adb', ['devices', '-l'], cwd, 30_000, undefined],
+      ['xcrun', ['simctl', 'list', 'devices', 'available', '--json'], cwd, 30_000, diagnostics],
     ])
   })
 
