@@ -928,6 +928,9 @@ importers:
       '@types/npm-registry-fetch':
         specifier: ^8.0.9
         version: 8.0.9
+      '@types/pngjs':
+        specifier: ^6.0.5
+        version: 6.0.5
       '@types/postcss-js':
         specifier: ^4.1.0
         version: 4.1.0
@@ -17749,6 +17752,9 @@ packages:
 
   '@types/picomatch@4.0.3':
     resolution: {integrity: sha512-iG0T6+nYJ9FAPmx9SsUlnwcq1ZVRuCXcVEvWnntoPlrOpwtSTKNDC9uVAxTsC3PUvJ+99n4RpAcNgBbHX3JSnQ==}
+
+  '@types/pngjs@6.0.5':
+    resolution: {integrity: sha512-0k5eKfrA83JOZPppLtS2C7OUtyNAl2wKNxfyYl9Q5g9lPkgBl/9hNyAu6HuEH2J4XmIv2znEpkDd0SaZVxW6iQ==}
 
   '@types/postcss-js@4.1.0':
     resolution: {integrity: sha512-E19kBYOk2uEhzxfbam6jALzE6J1GNdny2jdftwDHo72+oWWt7bkWSGzZYVfaRK1r/UToMhAcfbKCAauBXrxi7g==}
@@ -54993,6 +54999,10 @@ snapshots:
       parse-path: 7.1.0
 
   '@types/picomatch@4.0.3': {}
+
+  '@types/pngjs@6.0.5':
+    dependencies:
+      '@types/node': 26.6.4
 
   '@types/postcss-js@4.1.0':
     dependencies:

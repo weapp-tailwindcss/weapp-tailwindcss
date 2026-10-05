@@ -16,9 +16,10 @@ import type { ReactNativePlatform, ReactNativeReport } from './catalog'
 import { androidExpoDevice } from './android-device'
 import { androidScreenProbes, findAndroidAnrWaitTap } from './android-window'
 import { getHttpText } from './native-http'
+import { createIosLaunchReconciler } from './ios-launch'
 import { createExpoNativeEnvironment } from './native-environment'
 import { reactNativeAndroidToolchain } from './native-toolchain'
-import { evaluateNativeWait } from './native-wait'
+import { awaitNativeExitCompletion, canAcceptNativeReport, evaluateNativeWait } from './native-wait'
 import { stopOwnedProcess } from './process'
 import { createRuntimeArtifacts } from './runtime-artifacts'
 import { validateReactNativeReport } from './reports'
@@ -30,6 +31,8 @@ interface ReportWaitOptions {
   recover?: () => Promise<void>
   reportTimeout?: number
   startupTimeout?: number
+  reconcileLaunch?: () => Promise<void>
+  requireLaunchCompletion?: boolean
 }
 
 const platform = process.argv[2] as ReactNativePlatform
@@ -90,6 +93,8 @@ async function waitForReportOrExit(marker: string, run: ReturnType<typeof execa>
     recover,
     reportTimeout = 240_000,
     startupTimeout = reportTimeout,
+    reconcileLaunch,
+    requireLaunchCompletion = false,
   } = options
   const started = Date.now()
   let runCompletedAt: number | undefined
@@ -98,10 +103,17 @@ async function waitForReportOrExit(marker: string, run: ReturnType<typeof execa>
   while (true) {
     const now = Date.now()
     const envelope = reports.find(item => item.hmrMarker === marker && (!cssHmrColor || item.cssHmrColor === cssHmrColor))
-    if (envelope) { return envelope }
-    if (typeof run.exitCode === 'number' && run.exitCode !== 0) { throw new TypeError(`expo run:${platform} exited with code ${run.exitCode}; see ${path.resolve(artifacts, 'expo-run.log')}`) }
-    if (run.exitCode === 0 && !runCompletedAt) { runCompletedAt = now }
-    if (recover && runCompletedAt && !recovered) {
+    let launchReconciled = false
+    if (typeof run.exitCode === 'number' && run.exitCode !== 0) {
+      if (!reconcileLaunch) { throw new TypeError(`expo run:${platform} exited with code ${run.exitCode}; see ${path.resolve(artifacts, 'expo-run.log')}`) }
+      // 等待 Expo 输出流结束后核对首个错误；HMR 使用同一已核对的启动结果。
+      await awaitNativeExitCompletion(run, startupTimeout - (Date.now() - started))
+      await reconcileLaunch()
+      launchReconciled = true
+    }
+    if (envelope && canAcceptNativeReport(run.exitCode, launchReconciled, requireLaunchCompletion)) { return envelope }
+    if ((run.exitCode === 0 || launchReconciled) && !runCompletedAt) { runCompletedAt = now }
+    if (recover && runCompletedAt && !recovered && !launchReconciled) {
       if (!bundleCompletedAt) {
         const metroLog = await fs.readFile(metroLogPath, 'utf8').catch(() => '')
         if (metroLog.includes(`${platform === 'ios' ? 'iOS' : 'Android'} Bundled`)) { bundleCompletedAt = now }
@@ -334,12 +346,12 @@ async function main() {
   const metroLogFile = await fs.open(metroLogPath, 'w')
   const javaHome = toolchain?.javaHome
   const androidHome = toolchain?.sdk
-  const env = {
+  const env: NodeJS.ProcessEnv = {
     ...createExpoNativeEnvironment(runtimeHost, reportUrl),
     ...(javaHome ? { JAVA_HOME: javaHome } : {}),
     ...(platform === 'android' ? { ANDROID_HOME: androidHome } : {}),
   }
-  if (javaHome) { env.PATH = `${path.join(javaHome, 'bin')}${path.delimiter}${process.env['PATH'] ?? ''}` }
+  if (javaHome) { env['PATH'] = `${path.join(javaHome, 'bin')}${path.delimiter}${process.env['PATH'] ?? ''}` }
   // iOS Simulator 与宿主机共享网络栈时使用 localhost，避免 CI 的虚拟网卡地址无法被 simctl openurl 访问。
   const metroHost = platform === 'ios' && runtimeHost !== '127.0.0.1' ? '--lan' : '--localhost'
   const metro = execa('pnpm', ['--filter', '@weapp-tailwindcss/example-react-native-expo', 'exec', 'expo', 'start', metroHost, '--port', '8081', '--clear'], {
@@ -359,6 +371,14 @@ async function main() {
     if (platform === 'android' && process.env['RN_ANDROID_BINARY']) {
       runArgs.push('--binary', path.resolve(repoRoot, process.env['RN_ANDROID_BINARY']))
     }
+    const reconcileLaunch = platform === 'ios'
+      ? createIosLaunchReconciler({
+          device,
+          url: `com.weapptailwindcss.rncompat://expo-development-client/?url=${encodeURIComponent(`http://${runtimeHost}:8081`)}`,
+          artifacts,
+          deadline: Date.now() + 1_800_000,
+        })
+      : undefined
     run = execa('pnpm', runArgs, {
       cwd: repoRoot,
       detached: process.platform !== 'win32',
@@ -373,6 +393,8 @@ async function main() {
       recover: () => relaunchRuntime(device, runtimeHost),
       reportTimeout: 300_000,
       startupTimeout: 1_800_000,
+      reconcileLaunch,
+      requireLaunchCompletion: true,
     })
     const baselineReport = withNativeEnvironment(baseline.report, nativeEnvironment)
     validateReactNativeReport(baselineReport, platform)
@@ -381,7 +403,7 @@ async function main() {
 
     const updated = originalMarker.replace('rn-hmr-baseline', 'rn-hmr-updated').replace('bg-emerald-500', 'bg-rose-500')
     await fs.writeFile(markerFile, updated, 'utf8')
-    const hmr = await waitForReportOrExit('rn-hmr-updated', run, metro, { cssHmrColor: '#10b981', reportTimeout: 120_000 })
+    const hmr = await waitForReportOrExit('rn-hmr-updated', run, metro, { cssHmrColor: '#10b981', reportTimeout: 120_000, reconcileLaunch })
     const hmrReport = withNativeEnvironment(hmr.report, nativeEnvironment)
     validateReactNativeReport(hmrReport, platform)
     if (platform === 'android') { await assertAndroidMarker(device, 'rn-hmr-updated') }
@@ -389,7 +411,7 @@ async function main() {
     const updatedCss = originalCss.replace('#10b981', '#f59e0b')
     if (updatedCss === originalCss) { throw new Error('CSS HMR probe color was not found') }
     await fs.writeFile(cssFile, updatedCss, 'utf8')
-    const cssHmr = await waitForReportOrExit('rn-hmr-updated', run, metro, { cssHmrColor: '#f59e0b', reportTimeout: 120_000 })
+    const cssHmr = await waitForReportOrExit('rn-hmr-updated', run, metro, { cssHmrColor: '#f59e0b', reportTimeout: 120_000, reconcileLaunch })
     const cssHmrReport = withNativeEnvironment(cssHmr.report, nativeEnvironment)
     validateReactNativeReport(cssHmrReport, platform)
     if (platform === 'android') { await assertAndroidMarker(device, 'rn-hmr-updated') }
