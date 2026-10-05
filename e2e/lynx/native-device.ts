@@ -58,5 +58,7 @@ export async function resolveNativeDevice(platform: NativePlatform, cwd: string,
   if (platform === 'android') {
     return selectAndroidDevice(await command('adb', ['devices', '-l'], cwd, 30_000, diagnostics), env)
   }
-  return selectIosDevice(await command('xcrun', ['simctl', 'list', 'devices', 'available', '--json'], cwd, 30_000, diagnostics), env)
+  const requested = requestedIosTarget(['LYNX_IOS_DEVICE_ID'], env)
+  // 显式目标只查询自身；simctl 的搜索为 contains，返回后仍按精确 ID 和可运行状态校验。
+  return selectIosDevice(await command('xcrun', ['simctl', 'list', 'devices', requested ?? 'available', '--json'], cwd, 30_000, diagnostics), env)
 }

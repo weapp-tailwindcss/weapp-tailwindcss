@@ -78,8 +78,32 @@ describe('Lynx 原生设备身份', () => {
     await expect(resolveNativeDevice('ios', cwd, { LYNX_IOS_DEVICE_ID: 'selected' }, diagnostics)).resolves.toMatchObject({ id: 'selected' })
     expect(run.mock.calls).toEqual([
       ['adb', ['devices', '-l'], cwd, 30_000, undefined],
-      ['xcrun', ['simctl', 'list', 'devices', 'available', '--json'], cwd, 30_000, diagnostics],
+      ['xcrun', ['simctl', 'list', 'devices', 'selected', '--json'], cwd, 30_000, diagnostics],
     ])
+  })
+
+  it('destination 指定 ID 时同样只查询该目标，未指定时才枚举全部可用设备', async () => {
+    const cwd = path.resolve('native host')
+    run.mockResolvedValue(iosDevices)
+    await expect(resolveNativeDevice('ios', cwd, { LYNX_IOS_DESTINATION: 'platform=iOS Simulator,id=selected' })).resolves.toMatchObject({ id: 'selected' })
+    expect(run).toHaveBeenLastCalledWith('xcrun', ['simctl', 'list', 'devices', 'selected', '--json'], cwd, 30_000, undefined)
+    await expect(resolveNativeDevice('ios', cwd, {})).rejects.toThrow('唯一明确')
+    expect(run).toHaveBeenLastCalledWith('xcrun', ['simctl', 'list', 'devices', 'available', '--json'], cwd, 30_000, undefined)
+  })
+
+  it('冲突配置在设备查询前失败；指定目标超时、缺失或未启动均不回退全量查询', async () => {
+    const cwd = path.resolve('native host')
+    await expect(resolveNativeDevice('ios', cwd, { LYNX_IOS_DEVICE_ID: 'selected', LYNX_IOS_DESTINATION: 'platform=iOS Simulator,id=first' })).rejects.toThrow()
+    expect(run).not.toHaveBeenCalled()
+    const failure = new Error('discovery timeout')
+    run.mockRejectedValueOnce(failure)
+    await expect(resolveNativeDevice('ios', cwd, { LYNX_IOS_DEVICE_ID: 'selected' })).rejects.toBe(failure)
+    expect(run).toHaveBeenCalledTimes(1)
+    run.mockResolvedValue(iosDevices)
+    for (const id of ['missing', 'stopped', 'unavailable']) {
+      await expect(resolveNativeDevice('ios', cwd, { LYNX_IOS_DEVICE_ID: id })).rejects.toThrow('指定设备不可用')
+    }
+    expect(run).toHaveBeenCalledTimes(4)
   })
 
   it.each(['/artifacts/raw.mp4', 'C:\\artifacts\\raw.mp4', 'relative.mp4'])('Android 导出文件 %s 仍绑定同一目标', (output) => {

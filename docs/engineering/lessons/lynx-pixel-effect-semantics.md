@@ -21,7 +21,9 @@ regressions:
 
 采集端直接使用 PNG 编码指纹差异决定支持；宿主只进一步检查可见像素不同。无效 utility 覆盖默认样式后，同样满足这个弱条件。
 
-实际 CSS/TASM 保留了渐变和阴影变量，但最终值中还有嵌套 `var(...)`。Lynx 4.0.1 的 `GetCSSVariableByRule` 只替换当前占位符，`GetCSSVariableValue` 直接返回变量字符串，随后交给属性解析器，并不递归展开。因此 bundled 不能证明对应效果可在该 runtime 绘制；跨选择器提前替换动态变量也不是安全的兼容修复。
+实际 CSS/TASM 保留了渐变和阴影变量，但最终值中还有嵌套 `var(...)`。本轮 `targetSdkVersion=3.9` 产物使用旧的 `css_var/{{…}}` 路径：Lynx 4.0.1 的 `GetCSSVariableByRule` 只替换当前占位符，`GetCSSVariableValue` 直接返回变量字符串，随后交给属性解析器，并不递归展开。源码另有 `NeedsVariableResolution` 分支，不能泛化为所有 Lynx 4.0.1 变量路径都不支持嵌套。因此 bundled 不能证明本轮效果可绘制；跨选择器提前替换动态变量也不是安全的兼容修复。
+
+版本依据为 CocoaPods 的 4.0.1 podspec 所引用的[官方发布源码 ZIP](https://github.com/lynx-family/lynx/releases/download/4.0.1/Lynx-4.0.1.zip)：`core/renderer/css/css_variable_handler.cc` 第 49–65、109–186 行，以及 `core/renderer/dom/attribute_holder.cc` 第 191–207 行。前者 SHA-256 为 `69fbdf4a282639ae569f7fbd1c3ece1ff7c5285ef558e4bea2d92a75ee33a727`，本任务的调度器回移未修改此文件。
 
 这两个用例现在只由设备提交原始图片与待判定状态。宿主先校验本轮身份和全部 PNG 字节，再解码像素并生成独立最终报告；原始报告和图均保留。读取最终报告及刷新基线时，必须按固定 `pixel:expected-effect-v1` 契约重算并核对状态、原因、统计和 checkpoint。
 
