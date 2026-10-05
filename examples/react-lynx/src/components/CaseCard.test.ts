@@ -31,6 +31,25 @@ function probeNodes(id: string) {
 }
 
 describe('Lynx compatibility text fixtures', () => {
+  it.each(['grid-placement', 'grid-auto', 'grid-justify-self'])('%s 使用专属 grid 角色且没有额外文字子项', (id) => {
+    const { item, probe, control } = probeNodes(id)
+    const nodes = elements(CaseCard({ item }))
+    for (const prefix of ['probe', 'control']) {
+      const container = nodes.find(node => node.props.id === `${prefix}-container-${id}`)!
+      expect(container.props.className).toContain(`grid-slot-${id}`)
+    }
+    expect(String(probe.props.className)).toContain(item.className)
+    expect(String(control.props.className)).not.toContain(item.className)
+    expect(elements(probe).filter(node => node.type === 'text')).toEqual([])
+    expect(elements(control).filter(node => node.type === 'text')).toEqual([])
+    if (id === 'grid-auto') {
+      expect(elements(probe).filter(node => String(node.props.id).startsWith('probe-child')).map(node => node.props.id)).toEqual([`probe-child-${id}-b`, `probe-child-${id}-a`])
+    }
+    if (id === 'grid-placement') {
+      expect(nodes.filter(node => node.props.className === 'grid-placement-blocker')).toHaveLength(2)
+    }
+  })
+
   it.each([
     ['layout-box-sizing', 'probe-box-sizing'],
     ['sizing-min-max', 'probe-constrained-size'],

@@ -1,4 +1,5 @@
 @layer theme, base, components, utilities;
+@import './styles/grid-fixtures.css' layer(components);
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities) source(none);
 @source './**/*.{ts,tsx}';

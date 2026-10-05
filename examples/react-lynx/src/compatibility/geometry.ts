@@ -1,4 +1,5 @@
 import type { CompatibilityCase, NativeCaseResult, NativeGeometryEvidence, NativeRect } from './types'
+import { checkGridGeometry } from './grid-geometry'
 
 function validRect(value: NativeRect | undefined): value is NativeRect {
   return Boolean(value && ['width', 'height', 'left', 'right', 'top', 'bottom'].every(key => Number.isFinite(value[key as keyof NativeRect]))
@@ -85,7 +86,11 @@ export function evaluateGeometry(item: CompatibilityCase, evidence?: Partial<Nat
     return { id: item.id, status: 'not-tested', reason: 'probe/control 参考容器尺寸不同，不能形成同条件几何对照', checkpoints: [{ name: 'geometry:reference-frames', passed: false, actual: rectText(probeContainer), expected: rectText(controlContainer) }] }
   }
   const geometry = { probe, control, probeContainer, controlContainer, probeChild, controlChild }
-  const passed = geometryPassed(item, geometry)
+  const grid = checkGridGeometry(item.id, geometry)
+  if (grid && !grid.control) {
+    return { id: item.id, status: 'not-tested', reason: '固定 grid 对照布局不满足夹具条件，不能判定 utility 支持程度', geometry, checkpoints: [{ name: 'geometry:fixture-control', passed: false, actual: `${rectText(relativeRect(control, controlContainer))}; child=${rectText(relativeRect(controlChild, control))}` }] }
+  }
+  const passed = grid?.probe ?? geometryPassed(item, geometry)
   return {
     id: item.id,
     status: passed ? 'supported' : 'unsupported',

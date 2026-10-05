@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest'
 import staticEvidenceJson from '../examples/react-lynx/src/compatibility/static-evidence.json'
 import { buildCompatibilityBundle } from './lynx/build'
 import { compatibilityDir, exampleDir, getCatalogHash, lynxIntermediateDir, repoRoot } from './lynx/catalog'
+import { verifyGridFixtures } from './lynx/grid-fixture-browser'
 import { analyzeStaticEvidence } from './lynx/static-evidence'
 
 const bundlePath = path.join(exampleDir, 'dist', 'main.lynx.bundle')
@@ -139,6 +140,13 @@ describe('ReactLynx Rspeedy compatibility evidence', () => {
   it('keeps generated evidence under the compatibility directory', () => {
     expect(path.dirname(path.join(compatibilityDir, 'static-evidence.json'))).toBe(compatibilityDir)
   })
+
+  it('真实组件及生成 CSS 的 grid 几何逐项依赖被测 utility', async () => {
+    await verifyGridFixtures(await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8'))
+    for (const selector of ['.grid-slot-grid-placement', '.grid-probe-grid-auto', '.grid-probe-grid-justify-self']) {
+      expect(decodedCss).toContain(selector)
+    }
+  }, 30_000)
 
   it.each([
     ['background-linear-gradient', 'probe-linear-gradient', '.bg-linear-to-r', 'background-image'],
