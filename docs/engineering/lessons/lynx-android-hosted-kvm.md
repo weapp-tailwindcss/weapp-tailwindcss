@@ -28,6 +28,8 @@ regressions:
 - `CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-ci.test.ts e2e/react-native-ci.test.ts --update=none`
 - `CI=1 pnpm exec eslint e2e/lynx-ci.test.ts .github/workflows/lynx-native.yml`
 
+后续 e82143388 的 [job 111914804229](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/37354926422/job/111914804229) 确认 `KVM (version 12) is installed and usable`，启动耗时 26279ms，APK 安装、原生运行、截图及几何证据全部完成。报告有 118 项结果，26 支持、92 不支持，0 未测试；本地严格 readNativeReport 再次验证原始六矩形、runId、bundle SHA-256、PNG 及逐项结论。当前 job 因 28 项与历史支持基线不同而失败，说明环境修复已到达真实验收层，失败传播也符合预期。
+
 ## 适用边界
 
 日志明确证明 KVM 权限和失败隐藏问题；它没有证明 package service 消失的全部因果链。提交后的真实 hosted 模拟器仍需完成安装、运行、截图和几何证据验收。如 package service 故障持续，需要继续追查 emulator/system_server 日志，不能改成允许失败。

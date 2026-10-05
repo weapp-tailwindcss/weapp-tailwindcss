@@ -1,8 +1,6 @@
 @layer theme, base, components, utilities;
-
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities) source(none);
-
 @source './**/*.{ts,tsx}';
 @source inline('underline {hover:,focus:,}bg-red-{500,600}');
 @source not './compatibility/excluded.ts';
@@ -34,38 +32,38 @@ page {
 
 .nav-item {
   padding: 8px 11px;
+  background-color: #f8fafb;
   border: 1px solid #d3dde0;
   border-radius: 6px;
-  background-color: #f8fafb;
 }
 
 .nav-item-active {
-  border-color: #16734b;
   background-color: #16734b;
+  border-color: #16734b;
 }
 
 .filter-item {
   padding: 6px 9px;
+  background-color: #fff;
   border: 1px solid #d8e0e3;
   border-radius: 5px;
-  background-color: #fff;
 }
 
 .filter-item-active {
-  border-color: #e1a21a;
   background-color: #fff4ce;
+  border-color: #e1a21a;
 }
 
 .summary-panel {
   padding: 16px;
+  background-color: #fff;
   border: 1px solid #d8e0e3;
   border-radius: 7px;
-  background-color: #fff;
 }
 
 .verification-banner {
-  margin-top: 14px;
   padding: 9px 11px;
+  margin-top: 14px;
   border-radius: 5px;
 }
 
@@ -85,35 +83,35 @@ page {
 
 .case-card {
   padding: 14px;
+  background-color: #fff;
   border: 1px solid #d8e0e3;
   border-radius: 7px;
-  background-color: #fff;
 }
 
 .class-code {
-  margin-top: 10px;
   padding: 8px;
-  border-radius: 4px;
-  background-color: #edf2f4;
-  color: #26353b;
+  margin-top: 10px;
   font-family: monospace;
   font-size: 11px;
+  color: #26353b;
   word-break: break-all;
+  background-color: #edf2f4;
+  border-radius: 4px;
 }
 
 .evidence-code {
   margin-top: 7px;
-  color: #526168;
   font-family: monospace;
   font-size: 10px;
+  color: #526168;
   word-break: break-all;
 }
 
 .filter-label {
   margin-bottom: 7px;
-  color: #607178;
   font-size: 11px;
   font-weight: 700;
+  color: #607178;
 }
 
 .filter-scroll {
@@ -126,8 +124,8 @@ page {
   min-height: 46px;
   margin-top: 10px;
   overflow: hidden;
-  border-radius: 5px;
   background-color: #e8edef;
+  border-radius: 5px;
 }
 
 @layer components {
@@ -142,8 +140,8 @@ page {
     position: relative;
     width: 48%;
     min-height: 86px;
-    overflow: hidden;
     padding: 6px;
+    overflow: hidden;
     background-color: #f7fafb;
   }
 
@@ -154,10 +152,10 @@ page {
 
   .probe-capture {
     box-sizing: border-box;
+    flex-shrink: 0;
     width: 160px;
     height: 160px;
     min-height: 160px;
-    flex-shrink: 0;
     padding: 12px;
   }
 
@@ -168,11 +166,24 @@ page {
     background-color: #0ea5e9;
   }
 
+  .probe-fixture-layout-aspect .compat-probe,
+  .probe-fixture-sizing-size .compat-probe,
+  .probe-fixture-accessibility-sr .compat-probe {
+    box-sizing: border-box;
+    min-width: 0;
+    min-height: 0;
+  }
+
   .probe-fixture-layout-aspect .compat-probe {
     width: 64px;
-    min-height: 0;
     height: auto;
-    box-sizing: border-box;
+  }
+
+  .probe-fixture-type-size .compat-probe,
+  .probe-fixture-type-tracking .compat-probe {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
   }
 
   .probe-fixture-layout-aspect .probe-target,
@@ -181,8 +192,8 @@ page {
   }
 
   .probe-target {
-    color: #fff;
     font-size: 12px;
+    color: #fff;
   }
 
   .probe-child {
@@ -220,8 +231,8 @@ page {
 
   .probe-fixture-effect-shadow .probe-child-a {
     position: absolute;
-    left: 28px;
     top: 20px;
+    left: 28px;
     width: 26px;
     height: 26px;
     background-color: #facc15;
@@ -229,16 +240,16 @@ page {
 
   .probe-fixture-layout-z-index .compat-probe {
     position: absolute;
-    left: 6px;
     top: 6px;
+    left: 6px;
     width: 76px;
     height: 52px;
   }
 
   .probe-z-overlay {
     position: absolute;
-    left: 32px;
     top: 22px;
+    left: 32px;
     z-index: 1;
     width: 66px;
     height: 42px;
@@ -264,6 +275,6 @@ page {
 }
 
 .status-text {
-  color: #26353b;
   font-size: 10px;
+  color: #26353b;
 }

@@ -26,8 +26,8 @@ function declarationsText(declarations: ExpectedDeclaration[]) {
   )).join('; ')
 }
 
-// 这些像素用例验证文字自身的样式，不依赖 view 到 text 的可选 CSS 继承。
-const textUtilityCases = new Set(['type-weight-style', 'type-decoration', 'syntax-opacity-modifier', 'syntax-type-hint'])
+// 文字的几何和像素用例均由 text 消费，不依赖 view 到 text 的可选 CSS 继承。
+const textUtilityCases = new Set(['type-size', 'type-tracking', 'type-weight-style', 'type-decoration', 'syntax-opacity-modifier', 'syntax-type-hint'])
 
 function ProbeBody({ id, textClassName = '' }: { id: string, textClassName?: string }) {
   return (

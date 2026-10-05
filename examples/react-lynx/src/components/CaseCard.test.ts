@@ -31,7 +31,7 @@ function probeNodes(id: string) {
 }
 
 describe('Lynx compatibility text fixtures', () => {
-  it.each(['type-weight-style', 'type-decoration', 'syntax-opacity-modifier', 'syntax-type-hint'])('%s 将文字样式交给真实 text 消费，control 保持无被测类', (id) => {
+  it.each(['type-size', 'type-tracking', 'type-weight-style', 'type-decoration', 'syntax-opacity-modifier', 'syntax-type-hint'])('%s 将文字样式交给真实 text 消费，control 保持无被测类', (id) => {
     const { item, probe, control, text } = probeNodes(id)
     for (const candidate of item.className.split(/\s+/)) {
       expect(String(text(probe).props.className).split(/\s+/)).toContain(candidate)
