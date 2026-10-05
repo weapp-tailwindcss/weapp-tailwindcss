@@ -3,7 +3,6 @@ package com.weapptailwindcss.lynxcompat;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Rect;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Base64;
@@ -112,15 +111,21 @@ public final class CompatibilityReporterModule extends LynxModule {
         callback.invoke((Object) null);
         return;
       }
-      Rect rect = ui.getRectToWindow();
-      float density = mContext.getResources().getDisplayMetrics().density;
+      LynxBaseUI.TransOffset corners = ui.getTransformValue(0, 0, 0, 0);
+      double[] rect = GeometryBounds.fromCorners(new float[][] {
+        corners.left_top, corners.right_top, corners.right_bottom, corners.left_bottom,
+      }, ui.getLynxContext().getScreenMetrics().density);
+      if (rect == null) {
+        callback.invoke((Object) null);
+        return;
+      }
       JavaOnlyMap result = new JavaOnlyMap();
-      result.putDouble("left", rect.left / density);
-      result.putDouble("right", rect.right / density);
-      result.putDouble("top", rect.top / density);
-      result.putDouble("bottom", rect.bottom / density);
-      result.putDouble("width", rect.width() / density);
-      result.putDouble("height", rect.height() / density);
+      result.putDouble("left", rect[0]);
+      result.putDouble("top", rect[1]);
+      result.putDouble("right", rect[2]);
+      result.putDouble("bottom", rect[3]);
+      result.putDouble("width", rect[4]);
+      result.putDouble("height", rect[5]);
       callback.invoke(result);
     });
   }

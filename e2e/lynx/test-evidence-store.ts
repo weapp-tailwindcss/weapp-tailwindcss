@@ -14,9 +14,11 @@ async function main() {
   const hosts = path.resolve(import.meta.dirname, '..', 'fixtures', 'lynx-native')
   try {
     if (platform === 'android') {
-      const source = path.join(hosts, 'android', 'app', 'src', 'main', 'java', 'com', 'weapptailwindcss', 'lynxcompat', 'EvidenceStore.java')
-      await execa('javac', ['-d', directory, source, path.join(fixtures, 'EvidenceStoreTest.java')], { stdio: 'inherit' })
-      await execa('java', ['-cp', directory, 'com.weapptailwindcss.lynxcompat.EvidenceStoreTest', directory], { stdio: 'inherit' })
+      const source = path.join(hosts, 'android', 'app', 'src', 'main', 'java', 'com', 'weapptailwindcss', 'lynxcompat')
+      for (const name of ['EvidenceStore', 'GeometryBounds']) {
+        await execa('javac', ['-d', directory, path.join(source, `${name}.java`), path.join(fixtures, `${name}Test.java`)], { stdio: 'inherit' })
+        await execa('java', ['-cp', directory, `com.weapptailwindcss.lynxcompat.${name}Test`, directory], { stdio: 'inherit' })
+      }
     }
     else {
       const source = path.join(hosts, 'ios', 'App')
