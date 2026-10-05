@@ -20,6 +20,7 @@ async function fixture(target = 'linux') {
   const root = { pid: 100, parent: 1, group: target === 'win32' ? 0 : 100, started: '2026-10-04T08:09:00Z' }
   let rows = [root]
   const scan = vi.spyOn(table, 'readProcessTable').mockImplementation(async () => rows)
+  const subsetScan = vi.spyOn(table, 'readProcessSubset').mockImplementation(async () => rows)
   const child = Object.assign(new EventEmitter(), { pid: root.pid, exitCode: null, signalCode: null }) as ChildProcess
   let close!: () => void
   const closed = new Promise<void>((resolve) => {
@@ -34,18 +35,19 @@ async function fixture(target = 'linux') {
   }
   const tree = createWorkflowProcessTree(child, closed, { cleanupMs: 30 })
   await tree.capture()
-  return { root, finish, tree, scan }
+  return { root, finish, tree, scan, subsetScan }
 }
 
 it('已核对目标在发信号前自然退出，ESRCH 后确认空树则不伪报强制终止', async () => {
-  const { tree, finish, scan } = await fixture()
+  const { tree, finish, scan, subsetScan } = await fixture()
   const kill = vi.spyOn(process, 'kill').mockImplementation(() => {
     finish()
     throw Object.assign(new Error('kill ESRCH'), { code: 'ESRCH' })
   })
   await expect(tree.stop()).resolves.toBeUndefined()
   expect(kill).toHaveBeenCalledExactlyOnceWith(100, 'SIGTERM')
-  expect(scan).toHaveBeenCalledTimes(4)
+  expect(scan).toHaveBeenCalledTimes(2)
+  expect(subsetScan).toHaveBeenCalledTimes(2)
 })
 
 it.each(['nonempty', 'open-pipes'])('ESRCH 后 %s 未完成时继续阻断', async (state) => {
@@ -63,11 +65,11 @@ it.each(['nonempty', 'open-pipes'])('ESRCH 后 %s 未完成时继续阻断', asy
 })
 
 it('ESRCH 不代表归属已清空，后续无法复查仍保留失败', async () => {
-  const { tree, finish, scan } = await fixture()
+  const { tree, finish, subsetScan } = await fixture()
   const failure = new Error('final ownership scan failed')
   vi.spyOn(process, 'kill').mockImplementation(() => {
     finish()
-    scan.mockRejectedValue(failure)
+    subsetScan.mockRejectedValue(failure)
     throw Object.assign(new Error('kill ESRCH'), { code: 'ESRCH' })
   })
   const error = await tree.stop().catch(error => error)
@@ -130,9 +132,9 @@ it('成功发送后等待 close 超时，最终失败同样保留发送目标', 
 })
 
 it('目标 PID 复用时不发送，也不生成成功发送记录', async () => {
-  const { tree, finish, root, scan } = await fixture()
+  const { tree, finish, root, subsetScan } = await fixture()
   finish()
-  scan.mockResolvedValue([{ ...root, started: '2026-10-04T08:09:01Z' }])
+  subsetScan.mockResolvedValue([{ ...root, started: '2026-10-04T08:09:01Z' }])
   const kill = vi.spyOn(process, 'kill').mockReturnValue(true)
   const error = await tree.stop().catch(error => error)
   expect(error).toBeInstanceOf(AggregateError)
