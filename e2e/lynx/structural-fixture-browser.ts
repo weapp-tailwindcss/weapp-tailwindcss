@@ -34,6 +34,12 @@ export async function verifyStructuralFixture(css: string) {
       await text.evaluateAll(elements => elements.forEach(element => element.setAttribute('style', 'font-weight:700;opacity:0.5')))
       images[0] = PNG.sync.read(await page.locator(`#probe-container-${item.id}`).screenshot())
       expect(evaluateStructural(images).status).toBe('unsupported')
+      await text.evaluateAll(elements => elements.forEach(element => element.removeAttribute('style')))
+      await text.first().evaluate(element => element.setAttribute('style', 'font-size:34px;font-weight:400;opacity:0.5'))
+      await page.locator('#reference-variant-structural .probe-structural-text').first().evaluate(element => element.setAttribute('style', 'font-size:34px;font-weight:400;opacity:0.5'))
+      images[0] = PNG.sync.read(await page.locator(`#probe-container-${item.id}`).screenshot())
+      images[2] = PNG.sync.read(await page.locator(`#reference-container-${item.id}`).screenshot())
+      expect(() => evaluateStructural(images)).toThrow('对照')
       await page.close()
     }
   }

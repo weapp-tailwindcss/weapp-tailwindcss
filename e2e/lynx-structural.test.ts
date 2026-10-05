@@ -29,3 +29,17 @@ it('probe 与显式首项同步错位也不能自证为有效粗体', () => {
   reference.data.set(shifted.data.subarray(20 * 160 * 4, 60 * 160 * 4), 20 * 160 * 4)
   expect(() => evaluateStructural([reference, structuralImage(1, 'plain'), reference])).toThrow('对照')
 })
+
+it('probe 与显式首项同步放大字号不能冒充字重变化', () => {
+  const reference = structuralImage()
+  const plain = structuralImage(1, 'plain')
+  for (let y = 20; y < 60; y++) {
+    for (let x = 0; x < 160; x++) {
+      const sourceX = Math.floor(80 + (x + 0.5 - 80) * 16 / 17)
+      const sourceY = Math.floor(40 + (y + 0.5 - 40) * 16 / 17)
+      const color = [247, 250, 251].map((channel, i) => Math.round((channel + plain.data[(sourceY * 160 + sourceX) * 4 + i]!) / 2))
+      reference.data.set([...color, 255], (y * 160 + x) * 4)
+    }
+  }
+  expect(() => evaluateStructural([reference, plain, reference])).toThrow('对照')
+})

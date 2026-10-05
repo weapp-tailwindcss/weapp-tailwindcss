@@ -74,7 +74,15 @@ function sameBoldGlyph(normal: Map<number, number>, bold: Map<number, number>, w
     || Math.abs((thick.bottom - thick.top + 1) / (plain.bottom - plain.top + 1) - 1) > 0.2) {
     return false
   }
-  // 粗细字体的轮廓允许有限笔画扩张，但不能以错位或不同字形作为正向对照。
+  const normalArea = (plain.right - plain.left + 1) * (plain.bottom - plain.top + 1)
+  const boldArea = (thick.right - thick.left + 1) * (thick.bottom - thick.top + 1)
+  const normalMass = [...normal.values()].reduce((sum, alpha) => sum + alpha, 0)
+  const boldMass = [...bold.values()].reduce((sum, alpha) => sum + alpha, 0)
+  // 校正半透明后比较单位字形面积的笔画密度；字号缩放只能扩大面积，不能替代真实增粗。
+  if (boldMass * 2 / boldArea / (normalMass / normalArea) < 1.15) {
+    return false
+  }
+  // 粗细字体的实际字高可能不同；同时约束轮廓邻域，不将浏览器字体差异误当作缩放。
   const radius = Math.ceil(2 * scale)
   return masks.every((source, index) => {
     const target = masks[1 - index]!
