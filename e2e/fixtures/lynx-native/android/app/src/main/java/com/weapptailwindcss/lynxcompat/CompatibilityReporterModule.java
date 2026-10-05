@@ -78,41 +78,18 @@ public final class CompatibilityReporterModule extends LynxModule {
   @LynxMethod
   public void capture(String identifier, Callback callback) {
     mainHandler.post(() -> {
-      LynxView lynxView = lynxViewReference.get();
       LynxBaseUI ui = findUI(identifier);
-      if (lynxView == null || ui == null) {
+      if (!(ui instanceof LynxUI<?>)) {
         callback.invoke((Object) null);
         return;
       }
-      String rendered = captureUI(ui);
-      if (rendered != null) {
-        callback.invoke(rendered);
-        return;
-      }
-      if (lynxView.getWidth() <= 0 || lynxView.getHeight() <= 0) {
+      View view = ((LynxUI<?>) ui).getView();
+      if (view == null || view.getWidth() <= 0 || view.getHeight() <= 0) {
         callback.invoke((Object) null);
         return;
       }
-      int[] viewLocation = new int[2];
-      lynxView.getLocationInWindow(viewLocation);
-      Rect uiRect = ui.getRectToWindow();
-      Rect crop = new Rect(
-        Math.max(0, uiRect.left - viewLocation[0]),
-        Math.max(0, uiRect.top - viewLocation[1]),
-        Math.min(lynxView.getWidth(), uiRect.right - viewLocation[0]),
-        Math.min(lynxView.getHeight(), uiRect.bottom - viewLocation[1])
-      );
-      if (crop.width() <= 0 || crop.height() <= 0) {
-        callback.invoke((Object) null);
-        return;
-      }
-      Bitmap full = Bitmap.createBitmap(lynxView.getWidth(), lynxView.getHeight(), Bitmap.Config.ARGB_8888);
-      lynxView.draw(new Canvas(full));
-      Bitmap cropped = Bitmap.createBitmap(full, crop.left, crop.top, crop.width(), crop.height());
-      String data = encodeBitmap(cropped);
-      cropped.recycle();
-      full.recycle();
-      callback.invoke(data);
+      // JS 传入固定大小且非 flatten 的父容器，由 Android 合成子节点的可见性、透明度与变换。
+      callback.invoke(captureView(view));
     });
   }
 
@@ -152,37 +129,6 @@ public final class CompatibilityReporterModule extends LynxModule {
     String data = encodeBitmap(bitmap);
     bitmap.recycle();
     return data;
-  }
-
-  private static String captureUI(LynxBaseUI target) {
-    EventTarget current = target;
-    Rect targetRect = target.getRectToWindow();
-    while (current != null) {
-      if (current instanceof LynxUI<?>) {
-        View view = ((LynxUI<?>) current).getView();
-        if (view != null && view.getWidth() > 0 && view.getHeight() > 0) {
-          int[] location = new int[2];
-          view.getLocationInWindow(location);
-          Rect crop = new Rect(
-            Math.max(0, targetRect.left - location[0]),
-            Math.max(0, targetRect.top - location[1]),
-            Math.min(view.getWidth(), targetRect.right - location[0]),
-            Math.min(view.getHeight(), targetRect.bottom - location[1])
-          );
-          if (crop.width() > 0 && crop.height() > 0) {
-            Bitmap full = Bitmap.createBitmap(view.getWidth(), view.getHeight(), Bitmap.Config.ARGB_8888);
-            view.draw(new Canvas(full));
-            Bitmap cropped = Bitmap.createBitmap(full, crop.left, crop.top, crop.width(), crop.height());
-            String data = encodeBitmap(cropped);
-            cropped.recycle();
-            full.recycle();
-            return data;
-          }
-        }
-      }
-      current = current.parent();
-    }
-    return null;
   }
 
   private static String encodeBitmap(Bitmap bitmap) {

@@ -55,8 +55,9 @@ static __weak LynxView *compatibilityLynxView;
       return;
     }
     UIGraphicsBeginImageContextWithOptions(view.bounds.size, NO, UIScreen.mainScreen.scale);
-    [view drawViewHierarchyInRect:view.bounds afterScreenUpdates:NO];
-    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    // identifier 指向稳定父容器，保留子节点合成效果，并拒绝失败绘制产生的空白图。
+    BOOL rendered = [view drawViewHierarchyInRect:view.bounds afterScreenUpdates:NO];
+    UIImage *image = rendered ? UIGraphicsGetImageFromCurrentImageContext() : nil;
     UIGraphicsEndImageContext();
     NSData *data = image == nil ? nil : UIImagePNGRepresentation(image);
     callback(data == nil ? [NSNull null] : [data base64EncodedStringWithOptions:0]);

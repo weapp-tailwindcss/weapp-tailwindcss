@@ -229,8 +229,8 @@ async function collectGeometry(item: CompatibilityCase, reporter: ReporterModule
 }
 
 async function collectPixel(item: CompatibilityCase, reporter: ReporterModule): Promise<NativeCaseResult> {
-  const probeId = item.id === 'layout-z-index' ? `probe-container-${item.id}` : `probe-${item.id}`
-  const controlId = item.id === 'layout-z-index' ? `control-container-${item.id}` : `control-${item.id}`
+  const probeId = `probe-container-${item.id}`
+  const controlId = `control-container-${item.id}`
   const [styled, control] = await Promise.all([
     capture(probeId, reporter),
     capture(controlId, reporter),
@@ -274,12 +274,12 @@ async function collectInteraction(item: CompatibilityCase, reporter: ReporterMod
     }
   }
   if (item.id === 'variant-state') {
-    const before = await capture(`probe-${item.id}`, reporter)
+    const before = await capture(`probe-container-${item.id}`, reporter)
     const activated = reporter.setPseudoActive
       ? await callReporter<boolean | number>(callback => reporter.setPseudoActive!(`probe-${item.id}`, true, callback))
       : undefined
     await wait(120)
-    const active = await capture(`probe-${item.id}`, reporter)
+    const active = await capture(`probe-container-${item.id}`, reporter)
     if (reporter.setPseudoActive) {
       await callReporter<boolean | number>(callback => reporter.setPseudoActive!(`probe-${item.id}`, false, callback))
     }
@@ -298,9 +298,9 @@ async function collectInteraction(item: CompatibilityCase, reporter: ReporterMod
     }
   }
   if (item.id === 'animation-spin') {
-    const before = await capture(`probe-${item.id}`, reporter)
+    const before = await capture(`probe-container-${item.id}`, reporter)
     await wait(220)
-    const after = await capture(`probe-${item.id}`, reporter)
+    const after = await capture(`probe-container-${item.id}`, reporter)
     saveArtifact(reporter, `${item.id}-before.png`, before)
     saveArtifact(reporter, `${item.id}-after.png`, after)
     const captured = Boolean(before?.data && after?.data)
@@ -314,12 +314,12 @@ async function collectInteraction(item: CompatibilityCase, reporter: ReporterMod
     }
   }
   if (item.id === 'transition-basic') {
-    const before = await capture(`probe-${item.id}`, reporter)
+    const before = await capture(`probe-container-${item.id}`, reporter)
     setNativeStyle(`probe-${item.id}`, 'opacity: 0.15;')
     await wait(40)
-    const during = await capture(`probe-${item.id}`, reporter)
+    const during = await capture(`probe-container-${item.id}`, reporter)
     await wait(360)
-    const after = await capture(`probe-${item.id}`, reporter)
+    const after = await capture(`probe-container-${item.id}`, reporter)
     saveArtifact(reporter, `${item.id}-before.png`, before)
     saveArtifact(reporter, `${item.id}-during.png`, during)
     saveArtifact(reporter, `${item.id}-after.png`, after)

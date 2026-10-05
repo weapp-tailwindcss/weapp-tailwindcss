@@ -10,4 +10,6 @@
 
 这项校验是支持结论的必要证据，不能证明截图包含父节点合成的透明度、裁剪、滤镜等效果，也不能代替逐 case 的语义审查。失败保留原报告与截图，不自动改写状态或刷新基线。历史报告中的一像素尺寸差异假阳性见[复盘](../../../docs/engineering/lessons/lynx-pixel-evidence.md)。
 
+像素及动画用例的 `probe-container-*` / `control-container-*` 是相同大小的固定父画布，Android 使用 `flatten=false` 保留原生 view。采样父画布以包含子节点的可见性、透明度、边框和变换，状态注入仍作用于 `probe-*`。Android 不向上猜测可截图祖先或按窗口边界裁剪；iOS 绘制失败不返回空白 PNG。原生尺寸与内容仍由上述 PNG 门禁核对，不能仅凭画布配置视为通过。
+
 禁止根据 `@lynx-js/css-defines` 或静态 encoder 结果手工填写这里的报告。

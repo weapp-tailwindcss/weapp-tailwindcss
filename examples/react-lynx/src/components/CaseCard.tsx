@@ -40,6 +40,8 @@ export function CaseCard({ item, result, staticEvidence }: { item: Compatibility
   const generated = result?.generated ?? staticEvidence?.generated
   const bundled = result?.bundled ?? staticEvidence?.bundled
   const failureStage = result?.failureStage ?? staticEvidence?.failureStage
+  const usesCaptureFrame = item.evidence === 'runtime' && item.probe !== 'geometry'
+  const pairClass = usesCaptureFrame ? 'probe-pair probe-capture-pair' : 'probe-pair'
   return (
     <view className="case-card">
       <view className="flex flex-row items-start justify-between gap-3">
@@ -105,14 +107,14 @@ export function CaseCard({ item, result, staticEvidence }: { item: Compatibility
       </view>
 
       <view className={`probe-shell probe-fixture-${item.id}`}>
-        <view className={item.id === 'variant-dark' ? 'probe-pair dark' : 'probe-pair'}>
-          <view id={`probe-container-${item.id}`} className="probe-slot">
+        <view className={item.id === 'variant-dark' ? `${pairClass} dark` : pairClass}>
+          <view id={`probe-container-${item.id}`} flatten={false} className={usesCaptureFrame ? 'probe-slot probe-capture' : 'probe-slot'}>
             <view id={`probe-${item.id}`} className={`compat-probe ${item.className}`}>
               <ProbeBody id={item.id} />
             </view>
             {item.id === 'layout-z-index' && <view className="probe-z-overlay" />}
           </view>
-          <view id={`control-container-${item.id}`} className="probe-slot probe-control-slot">
+          <view id={`control-container-${item.id}`} flatten={false} className={usesCaptureFrame ? 'probe-slot probe-control-slot probe-capture' : 'probe-slot probe-control-slot'}>
             <view id={`control-${item.id}`} className="compat-probe">
               <ProbeBody id={`control-${item.id}`} />
             </view>
