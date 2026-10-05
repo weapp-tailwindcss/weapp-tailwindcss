@@ -231,12 +231,12 @@ export async function runIdeClassHotUpdate(
         : undefined
       if (freshContent == null || !freshContent.includes(scenario.marker)) {
         signal?.throwIfAborted()
-        process.stdout.write(`[e2e:ide] ${watchCase.label} ${mutationKind} HMR reopen DevTools project for visibility fallback\n`)
+        process.stdout.write(`[e2e:ide] ${watchCase.label} ${mutationKind} HMR reconnect to owned DevTools project for visibility fallback\n`)
         const reopenedContent = await readFreshDevToolsPageContent(launchProjectPath, options, pageUrl, scenario.marker, signal)
         signal?.throwIfAborted()
         if (reopenedContent == null || !reopenedContent.includes(scenario.marker)) {
           throw new Error([
-            `[${watchCase.label}] DevTools page did not show ${mutationKind} HMR marker after reLaunch/reopen: ${scenario.marker}`,
+            `[${watchCase.label}] DevTools page did not show ${mutationKind} HMR marker after reLaunch/reconnect: ${scenario.marker}`,
             `compileErrors=${JSON.stringify(compileErrors)}`,
             `liveBefore=${summarizeDiagnostic(liveBefore)}`,
             `liveAfter=${summarizeDiagnostic(liveAfter)}`,
@@ -248,7 +248,7 @@ export async function runIdeClassHotUpdate(
           throw new Error(`[${watchCase.label}] DevTools reopened page content did not change after ${mutationKind} HMR`)
         }
         else {
-          devtoolsVisible = 'reopened'
+          devtoolsVisible = 'reconnected'
         }
       }
       else if (liveBefore != null && liveBefore === freshContent) {

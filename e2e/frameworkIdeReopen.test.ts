@@ -2,12 +2,16 @@ import type { CliOptions } from '../tools/weapp-tailwindcss-scripts/src/watch-hm
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { readFreshDevToolsPageContent } from './frameworkIdeReopen'
 
-const { launch } = vi.hoisted(() => ({ launch: vi.fn() }))
+const { connect } = vi.hoisted(() => ({ connect: vi.fn() }))
 
 vi.mock('../scripts/wechat/automator', () => ({
   Launcher: class {
-    launch = launch
+    connect = connect
   },
+}))
+
+vi.mock('../scripts/wechat/service', () => ({
+  ownedWechatEndpoint: vi.fn(() => 'ws://127.0.0.1:45678'),
 }))
 
 afterEach(() => {
@@ -26,12 +30,18 @@ function createPage(content: string) {
 const options = { timeoutMs: 100, pollMs: 1 } as CliOptions
 
 describe('framework IDE reopened page content', () => {
+  it.each([new Error('connection denied'), new AggregateError([new Error('handshake'), new Error('disconnect')], 'cleanup failed')])('连接获取失败原样传播且不重试：%s', async (error) => {
+    connect.mockRejectedValue(error)
+    await expect(readFreshDevToolsPageContent('project', options, '/page', 'marker')).rejects.toBe(error)
+    expect(connect).toHaveBeenCalledOnce()
+  })
+
   it('页面读取成功但连接释放失败时，仍判定失败', async () => {
     const miniProgram = {
       reLaunch: vi.fn().mockResolvedValue(createPage('marker')),
       disconnect: vi.fn().mockRejectedValue(new Error('disconnect denied')),
     }
-    launch.mockResolvedValue(miniProgram)
+    connect.mockResolvedValue(miniProgram)
     await expect(readFreshDevToolsPageContent('project', options, '/page', 'marker'))
       .rejects
       .toThrow('[e2e:ide:cleanup] Failed to disconnect temporary IDE client for project: Error: disconnect denied')
@@ -43,7 +53,7 @@ describe('framework IDE reopened page content', () => {
       reLaunch: vi.fn(() => new Promise(() => {})),
       disconnect: vi.fn(() => { throw new Error('disconnect denied') }),
     }
-    launch.mockResolvedValue(miniProgram)
+    connect.mockResolvedValue(miniProgram)
     const result = readFreshDevToolsPageContent('project', options, '/page', 'marker', controller.signal).catch(error => error)
     await vi.waitFor(() => expect(miniProgram.reLaunch).toHaveBeenCalledOnce())
     controller.abort(new Error('cancelled'))
@@ -58,7 +68,7 @@ describe('framework IDE reopened page content', () => {
     const controller = new AbortController()
     const miniProgram = { reLaunch: vi.fn(), disconnect: vi.fn(), close: vi.fn() }
     let release!: (client: typeof miniProgram) => void
-    launch.mockImplementation(() => new Promise((resolve) => {
+    connect.mockImplementation(() => new Promise((resolve) => {
       release = resolve
     }))
     let settled = false
@@ -73,7 +83,7 @@ describe('framework IDE reopened page content', () => {
     expect(miniProgram.reLaunch).not.toHaveBeenCalled()
     expect(miniProgram.disconnect).toHaveBeenCalledOnce()
     expect(miniProgram.close).not.toHaveBeenCalled()
-    expect(launch).toHaveBeenCalledTimes(1)
+    expect(connect).toHaveBeenCalledTimes(1)
   })
 
   it('returns the live page text rather than the polling elapsed time', async () => {
@@ -89,7 +99,7 @@ describe('framework IDE reopened page content', () => {
       }
       return 'next HMR stage'
     })
-    launch.mockResolvedValue(miniProgram)
+    connect.mockResolvedValue(miniProgram)
 
     const content = await readFreshDevToolsPageContent('project', options, '/pages/index/index', 'new HMR marker')
 
@@ -107,23 +117,21 @@ describe('framework IDE reopened page content', () => {
       close: vi.fn().mockResolvedValue(undefined),
       disconnect: vi.fn(),
     }
-    launch.mockResolvedValue(miniProgram)
-    vi.stubEnv('E2E_PREFLIGHT_WECHAT_CLI', 'selected-wechat-cli')
+    connect.mockResolvedValue(miniProgram)
 
     const content = await readFreshDevToolsPageContent('project', options, '/pages/index/index', 'new HMR marker')
 
     expect(content).toBe('[page:0:text] new HMR marker\n[page:data] {}')
     expect(miniProgram.reLaunch).toHaveBeenCalledTimes(2)
-    expect(launch).toHaveBeenCalledExactlyOnceWith({
-      cliPath: 'selected-wechat-cli',
-      projectPath: 'project',
+    expect(connect).toHaveBeenCalledExactlyOnceWith({
+      wsEndpoint: 'ws://127.0.0.1:45678',
       timeout: options.timeoutMs,
     })
     expect(miniProgram.disconnect).toHaveBeenCalledOnce()
     expect(miniProgram.close).not.toHaveBeenCalled()
   })
 
-  it('recovers from a transient launch error and an unavailable page without losing content', async () => {
+  it('waits for an unavailable page after connecting without opening the project again', async () => {
     const miniProgram = {
       reLaunch: vi.fn()
         .mockRejectedValueOnce(new Error('page is reloading'))
@@ -132,14 +140,12 @@ describe('framework IDE reopened page content', () => {
       close: vi.fn().mockResolvedValue(undefined),
       disconnect: vi.fn(),
     }
-    launch
-      .mockRejectedValueOnce(new Error('DevTools connection is starting'))
-      .mockResolvedValue(miniProgram)
+    connect.mockResolvedValue(miniProgram)
 
     await expect(readFreshDevToolsPageContent('project', options, '/pages/index/index', 'new HMR marker'))
       .resolves
       .toBe('[page:0:text] new HMR marker\n[page:data] {}')
-    expect(launch).toHaveBeenCalledTimes(2)
+    expect(connect).toHaveBeenCalledOnce()
     expect(miniProgram.disconnect).toHaveBeenCalledOnce()
     expect(miniProgram.close).not.toHaveBeenCalled()
   })
@@ -150,11 +156,11 @@ describe('framework IDE reopened page content', () => {
       close: vi.fn().mockResolvedValue(undefined),
       disconnect: vi.fn(),
     }
-    launch.mockResolvedValue(miniProgram)
+    connect.mockResolvedValue(miniProgram)
 
     await expect(readFreshDevToolsPageContent('project', options, '/pages/index/index', 'new HMR marker'))
       .rejects
-      .toThrow('DevTools page did not show HMR marker after reopening project: new HMR marker')
+      .toThrow('DevTools page did not show HMR marker after reconnecting to project: new HMR marker')
     expect(miniProgram.disconnect).toHaveBeenCalledOnce()
     expect(miniProgram.close).not.toHaveBeenCalled()
   })
@@ -165,7 +171,7 @@ describe('framework IDE reopened page content', () => {
       close: vi.fn(),
       disconnect: vi.fn(() => { throw new Error('cleanup transport unavailable') }),
     }
-    launch.mockResolvedValue(miniProgram)
+    connect.mockResolvedValue(miniProgram)
 
     const error = await readFreshDevToolsPageContent('project', options, '/pages/index/index', 'new HMR marker').catch(error => error)
     expect(error.message).toContain('DevTools page did not show HMR marker')

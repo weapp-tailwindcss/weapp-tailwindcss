@@ -235,6 +235,13 @@ describe('真实探针的阻断条件', () => {
     await expect(connectWechat(12345, 10)).rejects.toThrow('ECONNREFUSED')
   })
 
+  it('微信连接的聚合清理失败立即阻断，保留原始错误链', async () => {
+    const error = new AggregateError([new Error('version failed'), new Error('disconnect failed')], 'connect cleanup failed')
+    const connect = vi.spyOn(Launcher.prototype, 'connect').mockRejectedValueOnce(error).mockResolvedValue({} as MiniProgram)
+    await expect(connectWechat(12345, 500)).rejects.toBe(error)
+    expect(connect).toHaveBeenCalledOnce()
+  })
+
   it('运行设备与截图设备配置冲突时阻断', () => {
     vi.stubEnv('E2E_HBUILDERX_ANDROID_DEVICE_ID', 'a')
     vi.stubEnv('E2E_HBUILDERX_ANDROID_SCREENSHOT_DEVICE_ID', 'b')

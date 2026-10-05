@@ -79,7 +79,8 @@ export class Launcher {
           mini = await this.connect({ wsEndpoint: `ws://127.0.0.1:${port}`, timeout })
         }
         catch (error) {
-          if (Date.now() >= deadline) {
+          // 上游握手与断连同时失败会聚合异常，资源未确认释放时禁止再连。
+          if (error instanceof AggregateError || Date.now() >= deadline) {
             throw error
           }
           await delay(Math.min(100, remaining()))

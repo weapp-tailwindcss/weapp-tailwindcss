@@ -4,7 +4,9 @@ import { createServer } from 'node:http'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { assertWechatLogin, ownedWechatPort, serviceDirectory, servicePort, wechatRequest, wechatServiceLockPath } from '../scripts/wechat/service'
+import { Launcher } from '../scripts/wechat/automator'
+import { assertWechatLogin, ownedWechatEndpoint, ownedWechatPort, serviceDirectory, servicePort, wechatRequest, wechatServiceLockPath } from '../scripts/wechat/service'
+import { readFreshDevToolsPageContent } from './frameworkIdeReopen'
 
 const cleanup: Array<() => Promise<void>> = []
 let lockDirectory: string
@@ -13,6 +15,7 @@ beforeEach(async () => {
   vi.stubEnv('E2E_WECHAT_LOCK_DIRECTORY', lockDirectory)
 })
 afterEach(async () => {
+  vi.restoreAllMocks()
   vi.unstubAllEnvs()
   await Promise.all(cleanup.splice(0).map(close => close()))
   await rm(lockDirectory, { recursive: true, force: true })
@@ -30,6 +33,35 @@ async function server(handler: RequestListener) {
 }
 
 describe('微信已有服务边界', () => {
+  it('临时 HMR 读取借用已绑定端口，不再次打开项目或释放外层租约', async () => {
+    const requests: string[] = []
+    const port = await server((req, res) => {
+      const url = new URL(req.url!, 'http://127.0.0.1')
+      requests.push(url.pathname)
+      res.end(url.pathname === '/v2/auto' ? JSON.stringify('s123') : JSON.stringify({ login: true }))
+    })
+    const project = path.join(lockDirectory, 'owned-project')
+    vi.spyOn(Launcher.prototype, 'launch').mockRejectedValue(new Error('must not open an owned project'))
+    const mini = {
+      reLaunch: vi.fn().mockResolvedValue({ $: vi.fn().mockResolvedValue({ text: vi.fn().mockResolvedValue('current-marker') }), $$: vi.fn().mockResolvedValue([]), data: vi.fn().mockResolvedValue({}) }),
+      disconnect: vi.fn(),
+    }
+    const connect = vi.spyOn(Launcher.prototype, 'connect').mockResolvedValue(mini as never)
+    await wechatRequest(port, { kind: 'auto', project, port: 45678 })
+    try {
+      const content = await readFreshDevToolsPageContent(project, { timeoutMs: 100, pollMs: 1 } as never, '/page', 'current-marker')
+      expect(content).toContain('current-marker')
+      expect(connect).toHaveBeenCalledExactlyOnceWith({ wsEndpoint: 'ws://127.0.0.1:45678', timeout: 100 })
+      expect(mini.disconnect).toHaveBeenCalledOnce()
+      expect(ownedWechatPort(project)).toBe(String(port))
+      expect(requests).toEqual(['/v2/auto'])
+    }
+    finally {
+      await wechatRequest(port, { kind: 'close', project })
+    }
+    expect(requests).toEqual(['/v2/auto', '/v2/close'])
+  })
+
   it.each(['0', '65536', '1.5', 'abc', '-1', ' 123'])('拒绝无效端口 %s', (port) => {
     expect(() => servicePort(port)).toThrow('端口')
   })
@@ -49,10 +81,13 @@ describe('微信已有服务边界', () => {
       requests.push(new URL(req.url!, 'http://127.0.0.1'))
       res.end(JSON.stringify({ autoPort: 45678 }))
     })
+    expect(() => ownedWechatEndpoint(project)).toThrow('拒绝借用')
     await wechatRequest(port, { kind: 'auto', project, port: 45678 })
+    expect(ownedWechatEndpoint(project)).toBe('ws://127.0.0.1:45678')
     expect(decodeURIComponent(requests[0]!.searchParams.get('project')!)).toBe(path.resolve(project))
     expect([...requests[0]!.searchParams.keys()]).toEqual(['project', 'port', 'autoPort'])
     await wechatRequest(port, { kind: 'close', project })
+    expect(() => ownedWechatEndpoint(project)).toThrow('拒绝借用')
   })
 
   it('兼容稳定版以窗口 ID 返回的 auto，并把本轮端口规范化回执给连接层', async () => {
@@ -130,10 +165,45 @@ describe('微信已有服务边界', () => {
     })
     const project = `/same-project-${port}`
     const first = wechatRequest(port, { kind: 'auto', project, port: 45682 })
+    expect(() => ownedWechatEndpoint(project)).toThrow('拒绝借用')
     await expect(wechatRequest(port, { kind: 'auto', project, port: 45683 })).rejects.toThrow('已有活跃会话')
     await first
     expect(ownedWechatPort(project)).toBe(String(port))
     await wechatRequest(port, { kind: 'close', project })
+  })
+
+  it('auto 尚未完成或原服务阻断时不能借用预登记的端口', async () => {
+    let release!: () => void
+    const pending = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    let entered!: () => void
+    const requested = new Promise<void>((resolve) => {
+      entered = resolve
+    })
+    const port = await server(async (req, res) => {
+      if (req.url?.startsWith('/v2/auto')) {
+        entered()
+        await pending
+        res.end(JSON.stringify('s456'))
+      }
+      else {
+        res.end(JSON.stringify({ login: false }))
+      }
+    })
+    const project = path.join(lockDirectory, 'pending-project')
+    const opening = wechatRequest(port, { kind: 'auto', project, port: 45678 })
+    await requested
+    try {
+      expect(() => ownedWechatEndpoint(project)).toThrow('拒绝借用')
+    }
+    finally {
+      release()
+      await opening
+    }
+    expect(ownedWechatEndpoint(project)).toBe('ws://127.0.0.1:45678')
+    await expect(assertWechatLogin(port)).rejects.toThrow('登录未确认')
+    expect(() => ownedWechatEndpoint(project)).toThrow('停止后续')
   })
 
   it('拒绝其他进程留下的微信服务锁且不触达 IDE', async () => {

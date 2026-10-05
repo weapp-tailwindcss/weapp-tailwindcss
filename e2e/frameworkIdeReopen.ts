@@ -1,6 +1,6 @@
 import type { CliOptions } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/types'
-import process from 'node:process'
 import { Launcher } from '../scripts/wechat/automator'
+import { ownedWechatEndpoint } from '../scripts/wechat/service'
 import { waitFor } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/text'
 import { awaitWithAbort, withAbortDeadline } from './framework-ide/abort'
 import { withCleanup } from './framework-ide/cleanup'
@@ -19,46 +19,48 @@ export async function readFreshDevToolsPageContent(
   signal?: AbortSignal,
 ): Promise<string> {
   const launcher = new Launcher()
-  const cliPath = process.env['E2E_PREFLIGHT_WECHAT_CLI']
-  let freshMiniProgram: Awaited<ReturnType<Launcher['launch']>> | undefined
+  let freshMiniProgram: Awaited<ReturnType<Launcher['connect']>> | undefined
   let content = ''
-  await withCleanup(() => waitFor(
-    async () => {
-      try {
-        signal?.throwIfAborted()
-        if (!freshMiniProgram) {
-          // 获取连接不能提前 race 返回：等待有界 launch 后由 finally 回收迟到连接。
-          freshMiniProgram = await launcher.launch({
-            ...(cliPath ? { cliPath } : {}),
-            projectPath,
-            timeout: getDevToolsRelaunchTimeoutMs(options),
-          })
+  await withCleanup(async () => {
+    signal?.throwIfAborted()
+    // 等待有界连接完成后再响应取消，确保迟到连接也进入 finally；不重新打开外层项目。
+    freshMiniProgram = await launcher.connect({
+      wsEndpoint: ownedWechatEndpoint(projectPath),
+      timeout: getDevToolsRelaunchTimeoutMs(options),
+    })
+    signal?.throwIfAborted()
+    await waitFor(
+      async () => {
+        try {
+          signal?.throwIfAborted()
+          const page = await withDevToolsRelaunchTimeout(options, pageUrl, freshMiniProgram!.reLaunch(pageUrl), signal)
+          if (!page) {
+            return false
+          }
+          const liveContent = await readPageLiveContent(page, pageUrl, signal)
+          if (!liveContent.includes(marker)) {
+            return false
+          }
+          content = liveContent
+          return true
         }
-        signal?.throwIfAborted()
-        const page = await withDevToolsRelaunchTimeout(options, pageUrl, freshMiniProgram.reLaunch(pageUrl), signal)
-        if (!page) {
+        catch (error) {
+          signal?.throwIfAborted()
+          if (error instanceof AggregateError) {
+            throw error
+          }
           return false
         }
-        const liveContent = await readPageLiveContent(page, pageUrl, signal)
-        if (!liveContent.includes(marker)) {
-          return false
-        }
-        content = liveContent
-        return true
-      }
-      catch {
-        signal?.throwIfAborted()
-        return false
-      }
-    },
-    {
-      timeoutMs: getDevToolsVisibleTimeoutMs(options),
-      pollMs: options.pollMs,
-      message: `DevTools page did not show HMR marker after reopening project: ${marker} (${pageUrl})`,
-      onTick: () => signal?.throwIfAborted(),
-      signal,
-    },
-  ), [{
+      },
+      {
+        timeoutMs: getDevToolsVisibleTimeoutMs(options),
+        pollMs: options.pollMs,
+        message: `DevTools page did not show HMR marker after reconnecting to project: ${marker} (${pageUrl})`,
+        onTick: () => signal?.throwIfAborted(),
+        signal,
+      },
+    )
+  }, [{
     // 项目由外层 probe 统一关闭；临时读取只释放自己的连接。
     label: `Failed to disconnect temporary IDE client for ${projectPath}`,
     run: async () => freshMiniProgram?.disconnect(),

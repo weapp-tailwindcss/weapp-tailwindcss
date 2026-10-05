@@ -12,6 +12,9 @@ export async function connectWechat(port: number, timeoutMs = 30_000) {
       return { ready: true, error: '' }
     }
     catch (error) {
+      if (error instanceof AggregateError) {
+        throw error
+      }
       return { ready: false, error: String(error) }
     }
   }, value => value.ready, timeoutMs)

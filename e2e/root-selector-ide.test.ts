@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { captureMiniProgramViewport } from '../scripts/demo-visual-e2e-report/mini-program-screenshot'
 import { closeWechatProject } from '../scripts/wechat-project-cleanup'
 import { Launcher } from '../scripts/wechat/automator'
-import { collectFrameworkIdeDiagnostics } from './frameworkIdeDiagnostics'
+import { launchWithDiagnostics } from './framework-ide/launch-diagnostics'
 
 const describeIde = process.env['E2E_IDE'] === '1' ? describe : describe.skip
 const timeoutMs = Number(process.env['E2E_IDE_ROOT_SELECTOR_TIMEOUT_MS'] ?? process.env['E2E_AUTOMATOR_TIMEOUT_MS'] ?? 90_000)
@@ -33,21 +33,7 @@ const probeMatchers = {
 } satisfies Record<string, ColorMatcher>
 
 async function launchMiniProgram() {
-  let lastError: unknown
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    const automator = new Launcher()
-    try {
-      return await automator.launch({ cliPath: process.env.E2E_PREFLIGHT_WECHAT_CLI, projectPath, timeout: Math.min(timeoutMs, launchAttemptTimeoutMs) })
-    }
-    catch (error) {
-      lastError = error
-      // Launcher 已按原服务收尾；此处没有取得项目所有权。
-    }
-  }
-  if (lastError instanceof Error) {
-    lastError.message = `${lastError.message}\n${await collectFrameworkIdeDiagnostics(projectName)}`
-  }
-  throw lastError
+  return launchWithDiagnostics(projectName, () => new Launcher().launch({ cliPath: process.env.E2E_PREFLIGHT_WECHAT_CLI, projectPath, timeout: Math.min(timeoutMs, launchAttemptTimeoutMs) }))
 }
 
 async function captureMiniProgramScreenshot(miniProgram: any, screenshotPath: string) {
@@ -81,7 +67,7 @@ describeIde('root selector IDE runtime', () => {
 
   beforeAll(async () => {
     miniProgram = await launchMiniProgram()
-  }, launchAttemptTimeoutMs * 2 + 30_000)
+  }, launchAttemptTimeoutMs + 30_000)
 
   afterAll(async () => {
     if (miniProgram) {

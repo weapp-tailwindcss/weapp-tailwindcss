@@ -60,6 +60,7 @@ interface ProjectBinding {
   servicePort: number
   autoPort: number
   runId: string
+  opened: boolean
   release: () => Promise<void>
 }
 const blocked = new Set<number>()
@@ -135,6 +136,18 @@ export function ownedWechatPort(project: string) {
   return String(binding.servicePort)
 }
 
+/** 临时客户端只借用本进程已打开项目的端口，不重新发现服务或申请项目租约。 */
+export function ownedWechatEndpoint(project: string) {
+  const binding = projects.get(path.resolve(project))
+  if (!binding?.opened || serviceLeases.get(binding.servicePort) !== binding) {
+    throw new Error('微信项目没有本轮已打开的自动化连接，拒绝借用未知会话。')
+  }
+  if (blocked.has(binding.servicePort)) {
+    blockWechatService(binding.servicePort)
+  }
+  return `ws://127.0.0.1:${binding.autoPort}`
+}
+
 export function blockWechatService(port: string | number): never {
   blocked.add(servicePort(port))
   throw new Error('微信 IDE 登录或服务异常；本进程停止后续项目请求，保留现场与登录态，请恢复后重新预检。')
@@ -190,7 +203,7 @@ export async function wechatRequest(port: string | number, operation: Operation,
       }
       pendingProjects.delete(project!)
       pendingServices.delete(actualPort)
-      lease = { servicePort: actualPort, autoPort: autoPort!, runId, release }
+      lease = { servicePort: actualPort, autoPort: autoPort!, runId, opened: false, release }
       serviceLeases.set(actualPort, lease)
       // 在请求发出前登记归属，使超时或协议错误仍能沿原服务边界诊断和清理。
       projects.set(project!, lease)
@@ -269,6 +282,7 @@ export async function wechatRequest(port: string | number, operation: Operation,
             throw new Error('微信 IDE 自动化端口回执与本轮请求不一致；拒绝连接旧会话。')
           }
         }
+        lease!.opened = true
         return validObject
           ? { ...objectResult, autoPort: autoPort! }
           : { autoPort: autoPort!, windowId: stableWindowId }

@@ -37,6 +37,14 @@ afterEach(() => {
 })
 
 describe('微信会话保护', () => {
+  it('连接握手与断开同时失败时立即保留聚合错误，不重试新连接', async () => {
+    const error = new AggregateError([new Error('version failed'), new Error('disconnect failed')], 'connect cleanup failed')
+    connect.mockRejectedValueOnce(error).mockResolvedValue(miniProgram().mini)
+    await expect(new Launcher().launch({ projectPath: '/owned', port: 45678, timeout: 1000 })).rejects.toBe(error)
+    expect(connect).toHaveBeenCalledOnce()
+    expect(wechatRequest).toHaveBeenLastCalledWith('12345', { kind: 'close', project: '/owned' }, expect.any(Number))
+  })
+
   it.each(['template', 'framework', 'visual'])('启动失败已收尾时，%s 调用方不再关闭已释放的项目', async (owner) => {
     const dir = await mkdtemp(path.join(tmpdir(), 'wechat-launch-ownership-'))
     const { mini, connection } = miniProgram()
