@@ -32,6 +32,8 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm turbo run build --filter=@weapp-tailwindcss/react-native...
+      - run: pnpm --filter @weapp-tailwindcss/react-native typecheck
+      - run: pnpm --filter @weapp-tailwindcss/react-native test --update=none
       - name: Install Playwright Chromium
         run: |
           for attempt in 1 2 3 4; do

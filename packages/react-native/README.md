@@ -41,9 +41,13 @@ On Android and iOS, the Metro integration resolves `react` and `react-native` fr
 - `dark:`, `ios:`, `android:`, and `native:` are conditional native variants. State, responsive, structural, and other browser selector variants are reported as unsupported instead of being applied unconditionally.
 - Static StyleSheet IDs are stable across unrelated class additions and CSS value changes, so Metro CSS HMR cannot redirect an existing Babel lookup to another rule.
 
+`tw()` and `getStaticStyle()` return React Native `StyleProp` values, which can be passed directly to View, Text, and Image styles. They may contain registered StyleSheet IDs or arrays; use `StyleSheet.flatten()` when you need to inspect individual properties. `composeStyle()` preserves the inline style type, including `false`, `null`, and nested arrays.
+
 ## Public entry points
 
 The package exposes `compiler`, `tailwind`, `babel`, `metro`, `runtime`, and the platform-neutral `env` type entry. Custom Metro setups can compose these entry points directly.
+
+Node-only tooling without the optional React Native peer should import `compiler`, `tailwind`, or `metro` directly. The root and `runtime` entries expose native `StyleProp` types and require React Native types in TypeScript projects.
 
 ## Scope
 

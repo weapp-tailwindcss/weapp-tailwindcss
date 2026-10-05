@@ -7,7 +7,7 @@ import { createRequire } from 'node:module'
 import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, URL } from 'node:url'
 import { compileNativeStylesheet } from './compiler'
 import { writeManifestFile } from './metro/manifest-store'
 import { compileStableInput, waitForCurrentRefresh } from './metro/refresh'
@@ -67,7 +67,7 @@ let nextId = 0
 
 function packageNameFromModuleId(moduleName: string) {
   const segments = moduleName.split('/')
-  return moduleName.startsWith('@') ? segments.slice(0, 2).join('/') : segments[0]
+  return moduleName.startsWith('@') ? segments.slice(0, 2).join('/') : (segments[0] ?? '')
 }
 
 function shouldResolveFromAppRoot(moduleName: string, platform?: string) {
@@ -196,7 +196,7 @@ function register(options: WeappReactNativeMetroOptions) {
 
   const sourceRoots = (options.sourceGlobs ?? [])
     .map(pattern => pattern.split(/[*{[]/, 1)[0]?.replace(/[/\\]$/, ''))
-    .filter(Boolean)
+    .filter((root): root is string => Boolean(root))
   const watched = [...(options.watchFiles ?? []), ...(options.input ? [options.input] : []), ...sourceRoots]
   const watchers = watched.map((file) => {
     const target = path.resolve(projectRoot, file)
@@ -259,7 +259,10 @@ export async function getVirtualModuleCodeAsync(filename: string) {
   return getVirtualModuleCode(filename)
 }
 
-export function withWeappTailwindcss<T extends MetroConfigLike>(config: T | Promise<T> | (() => T | Promise<T>), options: WeappReactNativeMetroOptions = {}): T | Promise<T> {
+export function withWeappTailwindcss<T extends MetroConfigLike>(config: T, options?: WeappReactNativeMetroOptions): T & MetroConfigLike
+export function withWeappTailwindcss<T extends MetroConfigLike>(config: Promise<T> | (() => T | Promise<T>), options?: WeappReactNativeMetroOptions): Promise<T & MetroConfigLike>
+export function withWeappTailwindcss<T extends MetroConfigLike>(config: T | Promise<T> | (() => T | Promise<T>), options?: WeappReactNativeMetroOptions): (T & MetroConfigLike) | Promise<T & MetroConfigLike>
+export function withWeappTailwindcss<T extends MetroConfigLike>(config: T | Promise<T> | (() => T | Promise<T>), options: WeappReactNativeMetroOptions = {}): (T & MetroConfigLike) | Promise<T & MetroConfigLike> {
   if (typeof config === 'function' || (config && typeof (config as Promise<T>).then === 'function')) {
     return Promise.resolve(typeof config === 'function' ? config() : config).then(resolved => withWeappTailwindcss(resolved, options))
   }
