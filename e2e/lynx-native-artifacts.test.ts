@@ -94,3 +94,18 @@ it('正常返回不生成失败记录', async () => {
   await expect(withNativeArtifacts('ios', directory, async () => 'complete')).resolves.toBe('complete')
   expect(await fs.readdir(directory)).toEqual([])
 })
+
+it('已有成功报告的目录不能在设备发现或构建前被新运行复用', async () => {
+  const directory = await artifactDirectory()
+  await fs.mkdir(directory)
+  const previous = '{"runId":"previous-success"}'
+  await fs.writeFile(path.join(directory, 'report.json'), previous)
+  await fs.writeFile(path.join(directory, 'run-context.json'), previous)
+  const run = vi.fn(async () => {
+    throw new Error('new bundle preparation failed')
+  })
+  await expect(withNativeArtifacts('android', directory, run)).rejects.toMatchObject({ code: 'EEXIST' })
+  expect(run).not.toHaveBeenCalled()
+  expect(await fs.readFile(path.join(directory, 'report.json'), 'utf8')).toBe(previous)
+  expect(await fs.readdir(directory)).toEqual(['report.json', 'run-context.json'])
+})

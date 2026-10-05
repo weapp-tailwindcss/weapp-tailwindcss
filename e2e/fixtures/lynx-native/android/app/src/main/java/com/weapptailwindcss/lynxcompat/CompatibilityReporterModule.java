@@ -7,6 +7,9 @@ import android.graphics.Rect;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Base64;
+import android.util.Log;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import android.view.View;
 import com.lynx.react.bridge.Callback;
 import com.lynx.react.bridge.JavaOnlyMap;
@@ -17,14 +20,15 @@ import com.lynx.tasm.behavior.event.EventTarget;
 import com.lynx.tasm.behavior.ui.LynxBaseUI;
 import com.lynx.tasm.behavior.ui.LynxUI;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.nio.charset.StandardCharsets;
 
 public final class CompatibilityReporterModule extends LynxModule {
   private static final int ACTIVE_PSEUDO_STATE = 8;
+  private static EvidenceStore evidenceStore;
+
+  static void setEvidenceStore(EvidenceStore store) {
+    evidenceStore = store;
+  }
   private static WeakReference<LynxView> lynxViewReference = new WeakReference<>(null);
   private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
@@ -37,21 +41,67 @@ public final class CompatibilityReporterModule extends LynxModule {
   }
 
   @LynxMethod
-  public void submit(String report) {
-    writeReport(mContext, report);
+  public void getEvidenceContext(Callback callback) {
+    if (evidenceStore == null) {
+      callback.invoke((Object) null);
+      return;
+    }
+    JavaOnlyMap context = new JavaOnlyMap();
+    context.putInt("version", 1);
+    context.putString("runId", evidenceStore.runId);
+    context.putString("bundleSha256", evidenceStore.bundleSha256);
+    callback.invoke(context);
   }
 
   @LynxMethod
-  public void submitArtifact(String name, String data) {
-    if (!name.matches("[a-z0-9-]+\\.png")) {
-      throw new IllegalArgumentException("Invalid artifact name");
+  public void submit(String runId, String report, Callback callback) {
+    try {
+      JSONObject value = new JSONObject(report);
+      JSONObject evidence = new JSONObject();
+      evidence.put("version", 1);
+      evidence.put("runId", evidenceStore.runId);
+      evidence.put("bundleSha256", evidenceStore.bundleSha256);
+      JSONArray artifacts = new JSONArray();
+      for (EvidenceStore.Receipt receipt : evidenceStore.receipts()) {
+        JSONObject artifact = new JSONObject();
+        artifact.put("runId", receipt.runId);
+        artifact.put("name", receipt.name);
+        artifact.put("sha256", receipt.sha256);
+        artifact.put("byteLength", receipt.byteLength);
+        artifacts.put(artifact);
+      }
+      evidence.put("artifacts", artifacts);
+      value.put("evidence", evidence);
+      evidenceStore.publish(runId, value.toString());
+      callback.invoke(true);
+    } catch (Exception error) {
+      failEvidence(error);
+      callback.invoke(false);
     }
-    String payload = data.contains(",") ? data.substring(data.indexOf(',') + 1) : data;
-    File directory = new File(mContext.getFilesDir(), "lynx-compat/artifacts");
-    if (!directory.exists() && !directory.mkdirs()) {
-      throw new IllegalStateException("Cannot create artifact directory");
+  }
+
+  @LynxMethod
+  public void submitArtifact(String runId, String name, String data, Callback callback) {
+    try {
+      String payload = data.startsWith("data:image/png;base64,") ? data.substring(22) : data;
+      EvidenceStore.Receipt receipt = evidenceStore.save(runId, name, Base64.decode(payload, Base64.DEFAULT));
+      JavaOnlyMap result = new JavaOnlyMap();
+      result.putString("runId", receipt.runId);
+      result.putString("name", receipt.name);
+      result.putString("sha256", receipt.sha256);
+      result.putInt("byteLength", receipt.byteLength);
+      callback.invoke(result);
+    } catch (Exception error) {
+      failEvidence(error);
+      callback.invoke((Object) null);
     }
-    writeBytes(new File(directory, name), Base64.decode(payload, Base64.DEFAULT));
+  }
+
+  static void failEvidence(Throwable error) {
+    if (evidenceStore != null) {
+      evidenceStore.fail();
+    }
+    Log.e("LynxEvidence", "Evidence run failed", error);
   }
 
   @LynxMethod
@@ -137,36 +187,4 @@ public final class CompatibilityReporterModule extends LynxModule {
     return Base64.encodeToString(output.toByteArray(), Base64.NO_WRAP);
   }
 
-  static void writeFatal(Context context, Throwable error) {
-    String message = error.getMessage() == null ? error.getClass().getName() : error.getMessage();
-    writeReport(context, "{\"fatalError\":\"" + message.replace("\"", "'") + "\"}");
-  }
-
-  private static void writeReport(Context context, String report) {
-    File directory = new File(context.getFilesDir(), "lynx-compat");
-    if (!directory.exists() && !directory.mkdirs()) {
-      throw new IllegalStateException("Cannot create report directory");
-    }
-    File output = new File(directory, "report.json");
-    writeBytes(output, report.getBytes(StandardCharsets.UTF_8));
-  }
-
-  private static void writeBytes(File output, byte[] data) {
-    File temporary = new File(output.getParentFile(), output.getName() + ".tmp");
-    try (FileOutputStream stream = new FileOutputStream(temporary)) {
-      stream.write(data);
-    } catch (IOException error) {
-      throw new IllegalStateException(error);
-    }
-    publish(temporary, output);
-  }
-
-  private static void publish(File temporary, File output) {
-    if (output.exists() && !output.delete()) {
-      throw new IllegalStateException("Cannot replace output");
-    }
-    if (!temporary.renameTo(output)) {
-      throw new IllegalStateException("Cannot publish output");
-    }
-  }
 }

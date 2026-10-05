@@ -1,4 +1,4 @@
-import type { NativePlatformReport } from './types'
+import type { NativeArtifactReceipt, NativePlatformReport } from './types'
 import { afterEach, expect, it, vi } from 'vitest'
 import { submitNativeCompatibilityReport } from './native-reporter'
 
@@ -22,8 +22,9 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-async function collect(options: { missingFrame?: boolean } = {}) {
+async function collect(options: { missingFrame?: boolean, receipt?: 'late' | 'wrong-run' | 'missing' | 'failed' } = {}) {
   vi.useFakeTimers()
+  const runId = '00000000-0000-4000-8000-000000000001'
   const captures: string[] = []
   const mutations: string[] = []
   const states = new Map<string, number>()
@@ -39,6 +40,7 @@ async function collect(options: { missingFrame?: boolean } = {}) {
   })
   vi.stubGlobal('NativeModules', {
     CompatibilityReporter: {
+      getEvidenceContext: (callback: (value: object) => void) => callback({ version: 1, runId, bundleSha256: 'a'.repeat(64) }),
       measure: (_id: string, callback: (rect: object) => void) => callback({ width: 64, height: 48 }),
       capture: (id: string, callback: (image: string | null) => void) => {
         captures.push(id)
@@ -54,14 +56,38 @@ async function collect(options: { missingFrame?: boolean } = {}) {
         mutations.push(`${id}:${active}`)
         callback(true)
       },
-      submit: (value: string) => { submitted = JSON.parse(value) },
-      submitArtifact: vi.fn(),
+      submit: (_run: string, value: string, callback: (value: boolean) => void) => {
+        submitted = JSON.parse(value)
+        callback(true)
+      },
+      submitArtifact: (_run: string, name: string, _data: string, callback: (value: NativeArtifactReceipt | null) => void) => {
+        const receipt = { runId, name, sha256: 'b'.repeat(64), byteLength: 128 }
+        if (options.receipt === 'missing') {
+          return
+        }
+        if (options.receipt === 'failed') {
+          callback(null)
+          return
+        }
+        if (options.receipt === 'wrong-run') {
+          receipt.runId = '00000000-0000-4000-8000-000000000002'
+        }
+        if (options.receipt === 'late') {
+          setTimeout(() => {
+            expect(submitted).toBeUndefined()
+            callback(receipt)
+          }, 1500)
+        }
+        else {
+          callback(receipt)
+        }
+      },
     },
   })
-  const pending = submitNativeCompatibilityReport()
+  const pending = submitNativeCompatibilityReport().catch(error => error as Error)
   await vi.runAllTimersAsync()
-  await pending
-  return { report: submitted!, captures, mutations }
+  const error = await pending
+  return { report: submitted!, captures, mutations, error }
 }
 
 it('透明度、可见性与边框对照都采集父级合成画布', async () => {
@@ -83,8 +109,21 @@ it('动画及 transition 全部采集稳定画布，状态变化仍作用于被�
   expect(report.results.every(result => result.status === 'supported')).toBe(true)
 })
 
-it('合成画布缺失时保持未验收，不退回元素自身截图', async () => {
-  const { report, captures } = await collect({ missingFrame: true })
+it('合成画布缺失时拒绝发布报告，不退回元素自身截图', async () => {
+  const { report, captures, error } = await collect({ missingFrame: true })
   expect(captures.every(id => id.includes('-container-'))).toBe(true)
-  expect(report.results.every(result => result.status === 'not-tested')).toBe(true)
+  expect(report).toBeUndefined()
+  expect(error instanceof Error ? error.message : undefined).toMatch(/截图缺失/)
+})
+
+it('等待最后一帧的真实写入回执后才发布报告', async () => {
+  const { report, error } = await collect({ receipt: 'late' })
+  expect(error).toBeUndefined()
+  expect(report.evidence?.artifacts).toHaveLength(13)
+})
+
+it.each(['wrong-run', 'missing', 'failed'] as const)('%s 回执禁止发布报告', async (receipt) => {
+  const { report, error } = await collect({ receipt })
+  expect(report).toBeUndefined()
+  expect(error).toBeInstanceOf(Error)
 })

@@ -3,15 +3,11 @@ import type { PngPixels } from './png'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { compatibilityCases } from '../../examples/react-lynx/src/compatibility/catalog'
+import { evidenceSequence } from '../../examples/react-lynx/src/compatibility/evidence'
 import staticEvidenceJson from '../../examples/react-lynx/src/compatibility/static-evidence.json'
 import { PNG } from './png'
 
 const staticById = new Map((staticEvidenceJson as StaticEvidenceReport).results.map(item => [item.id, item]))
-const interactionSequences: Record<string, { checkpoint: string, frames: string[] }> = {
-  'variant-state': { checkpoint: 'interaction:pseudo-active', frames: ['before', 'active'] },
-  'animation-spin': { checkpoint: 'interaction:animation-progress', frames: ['before', 'after'] },
-  'transition-basic': { checkpoint: 'interaction:transition-progress', frames: ['before', 'during', 'after'] },
-}
 
 function hasVisibleDifference(first: PngPixels, second: PngPixels) {
   for (let offset = 0; offset < first.data.length; offset += 4) {
@@ -46,12 +42,7 @@ export async function validateNativePixelEvidence(report: NativePlatformReport, 
   const errors: Error[] = []
   for (const item of compatibilityCases) {
     const staticResult = staticById.get(item.id)
-    if (!staticResult?.generated || !staticResult.bundled || item.evidence === 'build' || item.probe === 'geometry') {
-      continue
-    }
-    const sequence = item.probe === 'interaction'
-      ? interactionSequences[item.id]
-      : { checkpoint: 'pixel:probe-vs-control', frames: ['probe', 'control'] }
+    const sequence = evidenceSequence(item, staticResult)
     if (!sequence) {
       continue
     }

@@ -1,4 +1,5 @@
 #import "CompatibilityReporter.h"
+#import "EvidenceStore.h"
 #import <Lynx/LynxEvent.h>
 #import <Lynx/LynxEventEmitter.h>
 #import <Lynx/LynxUI.h>
@@ -6,8 +7,12 @@
 #import <Lynx/LynxView.h>
 
 static __weak LynxView *compatibilityLynxView;
+static EvidenceStore *evidenceStore;
 
 @implementation CompatibilityReporter
++ (void)setEvidenceStore:(EvidenceStore *)store {
+  evidenceStore = store;
+}
 + (void)setLynxView:(LynxView *)lynxView {
   compatibilityLynxView = lynxView;
 }
@@ -18,8 +23,9 @@ static __weak LynxView *compatibilityLynxView;
 
 + (NSDictionary<NSString *, NSString *> *)methodLookup {
   return @{
-    @"submit" : NSStringFromSelector(@selector(submit:)),
-    @"submitArtifact" : NSStringFromSelector(@selector(submitArtifact:data:)),
+    @"getEvidenceContext" : NSStringFromSelector(@selector(getEvidenceContext:)),
+    @"submit" : NSStringFromSelector(@selector(submit:report:callback:)),
+    @"submitArtifact" : NSStringFromSelector(@selector(submitArtifact:name:data:callback:)),
     @"measure" : NSStringFromSelector(@selector(measure:callback:)),
     @"capture" : NSStringFromSelector(@selector(capture:callback:)),
     @"pointerEventsNone" : NSStringFromSelector(@selector(pointerEventsNone:callback:)),
@@ -88,31 +94,25 @@ static __weak LynxView *compatibilityLynxView;
   });
 }
 
-- (void)submit:(NSString *)report {
-  NSURL *directory = [[[NSFileManager defaultManager] URLsForDirectory:NSApplicationSupportDirectory inDomains:NSUserDomainMask] firstObject];
-  directory = [directory URLByAppendingPathComponent:@"lynx-compat" isDirectory:YES];
-  [[NSFileManager defaultManager] createDirectoryAtURL:directory withIntermediateDirectories:YES attributes:nil error:nil];
-  NSURL *temporary = [directory URLByAppendingPathComponent:@"report.json.tmp"];
-  NSURL *output = [directory URLByAppendingPathComponent:@"report.json"];
-  [report writeToURL:temporary atomically:YES encoding:NSUTF8StringEncoding error:nil];
-  [[NSFileManager defaultManager] removeItemAtURL:output error:nil];
-  [[NSFileManager defaultManager] moveItemAtURL:temporary toURL:output error:nil];
+- (void)getEvidenceContext:(LynxCallbackBlock)callback {
+  callback(evidenceStore.context ?: [NSNull null]);
 }
 
-- (void)submitArtifact:(NSString *)name data:(NSString *)source {
-  NSCharacterSet *invalid = [[NSCharacterSet characterSetWithCharactersInString:@"abcdefghijklmnopqrstuvwxyz0123456789-."] invertedSet];
-  if ([name rangeOfCharacterFromSet:invalid].location != NSNotFound || ![name hasSuffix:@".png"]) {
-    return;
-  }
-  NSRange separator = [source rangeOfString:@","];
-  NSString *payload = separator.location == NSNotFound ? source : [source substringFromIndex:separator.location + 1];
-  NSData *data = [[NSData alloc] initWithBase64EncodedString:payload options:NSDataBase64DecodingIgnoreUnknownCharacters];
-  if (data == nil) {
-    return;
-  }
-  NSURL *directory = [[[NSFileManager defaultManager] URLsForDirectory:NSApplicationSupportDirectory inDomains:NSUserDomainMask] firstObject];
-  directory = [directory URLByAppendingPathComponent:@"lynx-compat/artifacts" isDirectory:YES];
-  [[NSFileManager defaultManager] createDirectoryAtURL:directory withIntermediateDirectories:YES attributes:nil error:nil];
-  [data writeToURL:[directory URLByAppendingPathComponent:name] options:NSDataWritingAtomic error:nil];
+- (void)submit:(NSString *)runId report:(NSString *)source callback:(LynxCallbackBlock)callback {
+  NSError *error = nil;
+  NSDictionary *report = [NSJSONSerialization JSONObjectWithData:[source dataUsingEncoding:NSUTF8StringEncoding] options:0 error:&error];
+  BOOL accepted = [evidenceStore publishReport:report runId:runId error:&error];
+  if (!accepted) NSLog(@"Lynx evidence report failed: %@", error);
+  callback(@(accepted));
+}
+
+- (void)submitArtifact:(NSString *)runId name:(NSString *)name data:(NSString *)source callback:(LynxCallbackBlock)callback {
+  NSString *prefix = @"data:image/png;base64,";
+  NSString *payload = [source hasPrefix:prefix] ? [source substringFromIndex:prefix.length] : source;
+  NSData *data = [[NSData alloc] initWithBase64EncodedString:payload options:0];
+  NSError *error = nil;
+  NSDictionary *receipt = [evidenceStore saveArtifact:name runId:runId data:data error:&error];
+  if (receipt == nil) NSLog(@"Lynx evidence artifact failed: %@", error);
+  callback(receipt ?: [NSNull null]);
 }
 @end

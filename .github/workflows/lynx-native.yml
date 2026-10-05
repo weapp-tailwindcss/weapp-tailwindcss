@@ -35,6 +35,8 @@ jobs:
         with:
           gradle-version: 8.10.2
       - run: pnpm install --frozen-lockfile
+      - name: Verify Android evidence storage
+        run: pnpm exec tsx e2e/lynx/test-evidence-store.ts android
       - uses: reactivecircus/android-emulator-runner@v2
         id: android-native
         continue-on-error: true
@@ -82,6 +84,8 @@ jobs:
         run: |
           ruby e2e/lynx/podfile.test.rb
           ruby e2e/lynx/source-patch.test.rb
+      - name: Verify iOS evidence storage
+        run: pnpm exec tsx e2e/lynx/test-evidence-store.ts ios
       - name: Boot iOS 18.5 simulator
         run: |
           udid="$(xcrun simctl create LynxCompatibility 'iPhone 16 Pro' 'com.apple.CoreSimulator.SimRuntime.iOS-18-5')"

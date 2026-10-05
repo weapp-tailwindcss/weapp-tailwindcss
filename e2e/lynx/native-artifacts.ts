@@ -37,7 +37,9 @@ export function formatNativeFailure(error: unknown): string {
 
 /** 设备发现和准备也属于本轮执行；在任何外部命令之前创建证据目录。 */
 export async function withNativeArtifacts<T>(platform: NativePlatform, artifactDir: string, run: (setStage: (stage: NativeRunStage) => void) => Promise<T>): Promise<T> {
-  await fs.mkdir(artifactDir, { recursive: true })
+  await fs.mkdir(path.dirname(artifactDir), { recursive: true })
+  // 整个输出目录仅属于一次执行，准备阶段失败也不能留下可被误认成本轮的旧报告。
+  await fs.mkdir(artifactDir)
   const startedAt = new Date().toISOString()
   let stage: NativeRunStage = 'device-discovery'
   try {

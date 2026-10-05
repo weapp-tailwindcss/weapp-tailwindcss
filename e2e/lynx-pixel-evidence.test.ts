@@ -3,8 +3,9 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, expect, it } from 'vitest'
+import { validateNativePixelEvidence } from './lynx/pixel-evidence'
 import { PNG } from './lynx/png'
-import { readNativeReport } from './lynx/reports'
+import { validateNativeReport } from './lynx/reports'
 import androidReport from './lynx/reports/android.json'
 
 const directories: string[] = []
@@ -20,6 +21,13 @@ function screenshot(width = 8, height = 4, color = [14, 165, 233, 255], deflateL
     png.data.set(color, offset)
   }
   return PNG.sync.write(png, { deflateLevel })
+}
+
+// 像素算法独立回归；完整实时门禁及更新器入口由 lynx-evidence.test.ts 覆盖。
+async function readPixelReport(reportPath: string, platform: 'android') {
+  const report = validateNativeReport(JSON.parse(await fs.readFile(reportPath, 'utf8')), platform)
+  await validateNativePixelEvidence(report, path.join(path.dirname(reportPath), 'crops'))
+  return report
 }
 
 async function fixture() {
@@ -47,14 +55,14 @@ async function fixture() {
 
 it('接收带完整且可见像素变化的原生报告', async () => {
   const { reportPath, report } = await fixture()
-  await expect(readNativeReport(reportPath, 'android')).resolves.toEqual(report)
+  await expect(readPixelReport(reportPath, 'android')).resolves.toEqual(report)
 })
 
 it('拒绝原始基线中仅多一列背景像素导致的支持结论', async () => {
   const { crops, reportPath } = await fixture()
   await fs.writeFile(path.join(crops, `${target}-probe.png`), screenshot(446, 171))
   await fs.writeFile(path.join(crops, `${target}-control.png`), screenshot(445, 171))
-  await expect(readNativeReport(reportPath, 'android')).rejects.toThrow(/type-weight-style.*446x171.*445x171.*可见像素/)
+  await expect(readPixelReport(reportPath, 'android')).rejects.toThrow(/type-weight-style.*446x171.*445x171.*可见像素/)
 })
 
 it('不把 PNG 压缩编码差异当作可见像素差异', async () => {
@@ -64,14 +72,14 @@ it('不把 PNG 压缩编码差异当作可见像素差异', async () => {
   expect(first.equals(second)).toBe(false)
   await fs.writeFile(path.join(crops, `${target}-probe.png`), first)
   await fs.writeFile(path.join(crops, `${target}-control.png`), second)
-  await expect(readNativeReport(reportPath, 'android')).rejects.toThrow(/type-weight-style.*可见像素/)
+  await expect(readPixelReport(reportPath, 'android')).rejects.toThrow(/type-weight-style.*可见像素/)
 })
 
 it('忽略完全透明像素中不可见的 RGB 数据', async () => {
   const { crops, reportPath } = await fixture()
   await fs.writeFile(path.join(crops, `${target}-probe.png`), screenshot(8, 4, [255, 0, 0, 0]))
   await fs.writeFile(path.join(crops, `${target}-control.png`), screenshot(8, 4, [0, 255, 0, 0]))
-  await expect(readNativeReport(reportPath, 'android')).rejects.toThrow(/type-weight-style.*可见像素/)
+  await expect(readPixelReport(reportPath, 'android')).rejects.toThrow(/type-weight-style.*可见像素/)
 })
 
 it.each(['missing', 'corrupt'])('%s 截图使报告无效，即使 checkpoint 写了通过', async (kind) => {
@@ -83,21 +91,21 @@ it.each(['missing', 'corrupt'])('%s 截图使报告无效，即使 checkpoint �
   else {
     await fs.writeFile(file, 'not a PNG')
   }
-  await expect(readNativeReport(reportPath, 'android')).rejects.toThrow(/type-weight-style-probe.png/)
+  await expect(readPixelReport(reportPath, 'android')).rejects.toThrow(/type-weight-style-probe.png/)
 })
 
 it.each([[9, 4], [8, 5]])('尺寸 %ix%i 的截图即使颜色不同也不能与 8x4 对照', async (width, height) => {
   const { crops, reportPath } = await fixture()
   await fs.writeFile(path.join(crops, `${target}-probe.png`), screenshot(width, height, [128, 0, 0, 255]))
   await fs.writeFile(path.join(crops, `${target}-control.png`), screenshot(8, 4, [0, 0, 0, 255]))
-  await expect(readNativeReport(reportPath, 'android')).rejects.toThrow(/截图尺寸不一致/)
+  await expect(readPixelReport(reportPath, 'android')).rejects.toThrow(/截图尺寸不一致/)
 })
 
 it('相同 RGB 的透明度变化仍属于可见变化', async () => {
   const { crops, reportPath } = await fixture()
   await fs.writeFile(path.join(crops, `${target}-probe.png`), screenshot(8, 4, [0, 0, 0, 128]))
   await fs.writeFile(path.join(crops, `${target}-control.png`), screenshot(8, 4, [0, 0, 0, 255]))
-  await expect(readNativeReport(reportPath, 'android')).resolves.toBeDefined()
+  await expect(readPixelReport(reportPath, 'android')).resolves.toBeDefined()
 })
 
 it('相同尺寸的多行图中单个可见像素变化仍被接受', async () => {
@@ -108,10 +116,10 @@ it('相同尺寸的多行图中单个可见像素变化仍被接受', async () =
   second.data[(2 * second.width + 3) * 4] = 100
   await fs.writeFile(path.join(crops, `${target}-probe.png`), PNG.sync.write(first))
   await fs.writeFile(path.join(crops, `${target}-control.png`), PNG.sync.write(second))
-  await expect(readNativeReport(reportPath, 'android')).rejects.toThrow(/可见像素/)
+  await expect(readPixelReport(reportPath, 'android')).rejects.toThrow(/可见像素/)
   first.data[(2 * first.width + 3) * 4] = 101
   await fs.writeFile(path.join(crops, `${target}-probe.png`), PNG.sync.write(first))
-  await expect(readNativeReport(reportPath, 'android')).resolves.toBeDefined()
+  await expect(readPixelReport(reportPath, 'android')).resolves.toBeDefined()
 })
 
 it('额外列中的颜色不能代替等尺寸的样式证据', async () => {
@@ -122,14 +130,14 @@ it('额外列中的颜色不能代替等尺寸的样式证据', async () => {
   }
   await fs.writeFile(path.join(crops, `${target}-probe.png`), PNG.sync.write(first))
   await fs.writeFile(path.join(crops, `${target}-control.png`), screenshot(8, 4))
-  await expect(readNativeReport(reportPath, 'android')).rejects.toThrow(/可见像素/)
+  await expect(readPixelReport(reportPath, 'android')).rejects.toThrow(/可见像素/)
 })
 
 it('拒绝只声明 pixel 前缀而缺少具体采样契约的 checkpoint', async () => {
   const { report, reportPath } = await fixture()
   report.results.find(result => result.id === target)!.checkpoints = [{ name: 'pixel:exists', passed: true }]
   await fs.writeFile(reportPath, JSON.stringify(report))
-  await expect(readNativeReport(reportPath, 'android')).rejects.toThrow(/缺少 pixel:probe-vs-control checkpoint/)
+  await expect(readPixelReport(reportPath, 'android')).rejects.toThrow(/缺少 pixel:probe-vs-control checkpoint/)
 })
 
 it('拒绝动画时间序列仅有编码变化的通过结论', async () => {
@@ -140,7 +148,7 @@ it('拒绝动画时间序列仅有编码变化的通过结论', async () => {
   await fs.writeFile(reportPath, JSON.stringify(report))
   await fs.writeFile(path.join(crops, 'animation-spin-before.png'), screenshot(8, 4, undefined, 0))
   await fs.writeFile(path.join(crops, 'animation-spin-after.png'), screenshot(8, 4, undefined, 9))
-  await expect(readNativeReport(reportPath, 'android')).rejects.toThrow(/animation-spin.*可见像素/)
+  await expect(readPixelReport(reportPath, 'android')).rejects.toThrow(/animation-spin.*可见像素/)
 })
 
 it('transition 必须在相邻两个区间都有可见变化', async () => {
@@ -150,7 +158,7 @@ it('transition 必须在相邻两个区间都有可见变化', async () => {
   result.checkpoints = [{ name: 'interaction:transition-progress', passed: true }]
   await fs.writeFile(reportPath, JSON.stringify(report))
   await fs.copyFile(path.join(crops, 'transition-basic-during.png'), path.join(crops, 'transition-basic-after.png'))
-  await expect(readNativeReport(reportPath, 'android')).rejects.toThrow(/transition-basic.*during.*after.*可见像素/)
+  await expect(readPixelReport(reportPath, 'android')).rejects.toThrow(/transition-basic.*during.*after.*可见像素/)
 })
 
 it('不支持的结论也必须保留可解码的截图', async () => {
@@ -161,7 +169,7 @@ it('不支持的结论也必须保留可解码的截图', async () => {
   result.checkpoints[0]!.passed = false
   await fs.writeFile(reportPath, JSON.stringify(report))
   await fs.copyFile(path.join(crops, `${target}-probe.png`), path.join(crops, `${target}-control.png`))
-  await expect(readNativeReport(reportPath, 'android')).resolves.toBeDefined()
+  await expect(readPixelReport(reportPath, 'android')).resolves.toBeDefined()
   await fs.rm(path.join(crops, `${target}-control.png`))
-  await expect(readNativeReport(reportPath, 'android')).rejects.toThrow(/type-weight-style-control.png/)
+  await expect(readPixelReport(reportPath, 'android')).rejects.toThrow(/type-weight-style-control.png/)
 })

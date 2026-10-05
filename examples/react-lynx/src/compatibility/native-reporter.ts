@@ -1,5 +1,7 @@
+import type { EvidenceModule, NativeEvidenceWriter } from './native-evidence'
 import type { CompatibilityCase, NativeCaseResult, NativePlatformReport, NativeRuntimeEnvironment, Platform, StaticEvidenceReport } from './types'
 import { compatibilityCases } from './catalog'
+import { createNativeEvidence } from './native-evidence'
 import { waitForProbeLayout } from './runtime-ready'
 import staticEvidenceJson from './static-evidence.json'
 
@@ -16,9 +18,7 @@ interface ScreenshotResult {
   data: string
 }
 
-interface ReporterModule {
-  submit?: (report: string) => void
-  submitArtifact?: (name: string, data: string) => void
+interface ReporterModule extends EvidenceModule {
   measure?: (id: string, callback: (value: RectResult | null) => void) => void
   capture?: (id: string, callback: (value: string | null) => void) => void
   pointerEventsNone?: (id: string, callback: (value: boolean | number | null) => void) => void
@@ -143,12 +143,6 @@ function fingerprint(value: string) {
   return `${value.length}:${(hash >>> 0).toString(16)}`
 }
 
-function saveArtifact(reporter: ReporterModule, name: string, screenshot: ScreenshotResult | undefined) {
-  if (screenshot?.data && reporter.submitArtifact) {
-    reporter.submitArtifact(name, screenshot.data)
-  }
-}
-
 function relativeRect(rect: RectResult | undefined, parent: RectResult | undefined) {
   if (!rect || !parent) {
     return undefined
@@ -228,15 +222,15 @@ async function collectGeometry(item: CompatibilityCase, reporter: ReporterModule
   }
 }
 
-async function collectPixel(item: CompatibilityCase, reporter: ReporterModule): Promise<NativeCaseResult> {
+async function collectPixel(item: CompatibilityCase, reporter: ReporterModule, evidence: NativeEvidenceWriter): Promise<NativeCaseResult> {
   const probeId = `probe-container-${item.id}`
   const controlId = `control-container-${item.id}`
   const [styled, control] = await Promise.all([
     capture(probeId, reporter),
     capture(controlId, reporter),
   ])
-  saveArtifact(reporter, `${item.id}-probe.png`, styled)
-  saveArtifact(reporter, `${item.id}-control.png`, control)
+  await evidence.save(`${item.id}-probe.png`, styled?.data)
+  await evidence.save(`${item.id}-control.png`, control?.data)
   const captured = Boolean(styled?.data && control?.data)
   const passed = captured && fingerprint(styled!.data) !== fingerprint(control!.data)
   return {
@@ -253,7 +247,7 @@ async function collectPixel(item: CompatibilityCase, reporter: ReporterModule): 
   }
 }
 
-async function collectInteraction(item: CompatibilityCase, reporter: ReporterModule): Promise<NativeCaseResult> {
+async function collectInteraction(item: CompatibilityCase, reporter: ReporterModule, evidence: NativeEvidenceWriter): Promise<NativeCaseResult> {
   if (item.id === 'interaction-pointer') {
     const [styled, control] = reporter.pointerEventsNone
       ? await Promise.all([
@@ -283,8 +277,8 @@ async function collectInteraction(item: CompatibilityCase, reporter: ReporterMod
     if (reporter.setPseudoActive) {
       await callReporter<boolean | number>(callback => reporter.setPseudoActive!(`probe-${item.id}`, false, callback))
     }
-    saveArtifact(reporter, `${item.id}-before.png`, before)
-    saveArtifact(reporter, `${item.id}-active.png`, active)
+    await evidence.save(`${item.id}-before.png`, before?.data)
+    await evidence.save(`${item.id}-active.png`, active?.data)
     const captured = Boolean(before?.data && active?.data)
     const activatedValue = nativeBoolean(activated)
     const measured = activatedValue !== undefined && captured
@@ -301,8 +295,8 @@ async function collectInteraction(item: CompatibilityCase, reporter: ReporterMod
     const before = await capture(`probe-container-${item.id}`, reporter)
     await wait(220)
     const after = await capture(`probe-container-${item.id}`, reporter)
-    saveArtifact(reporter, `${item.id}-before.png`, before)
-    saveArtifact(reporter, `${item.id}-after.png`, after)
+    await evidence.save(`${item.id}-before.png`, before?.data)
+    await evidence.save(`${item.id}-after.png`, after?.data)
     const captured = Boolean(before?.data && after?.data)
     const passed = captured && fingerprint(before!.data) !== fingerprint(after!.data)
     return {
@@ -320,9 +314,9 @@ async function collectInteraction(item: CompatibilityCase, reporter: ReporterMod
     const during = await capture(`probe-container-${item.id}`, reporter)
     await wait(360)
     const after = await capture(`probe-container-${item.id}`, reporter)
-    saveArtifact(reporter, `${item.id}-before.png`, before)
-    saveArtifact(reporter, `${item.id}-during.png`, during)
-    saveArtifact(reporter, `${item.id}-after.png`, after)
+    await evidence.save(`${item.id}-before.png`, before?.data)
+    await evidence.save(`${item.id}-during.png`, during?.data)
+    await evidence.save(`${item.id}-after.png`, after?.data)
     const captured = Boolean(before?.data && during?.data && after?.data)
     const passed = Boolean(
       before?.data && during?.data && after?.data
@@ -345,7 +339,7 @@ async function collectInteraction(item: CompatibilityCase, reporter: ReporterMod
   }
 }
 
-async function collectCase(item: CompatibilityCase, reporter: ReporterModule): Promise<NativeCaseResult> {
+async function collectCase(item: CompatibilityCase, reporter: ReporterModule, evidence: NativeEvidenceWriter): Promise<NativeCaseResult> {
   const staticResult = staticById.get(item.id)
   if (!staticResult?.generated || !staticResult.bundled) {
     return {
@@ -372,9 +366,9 @@ async function collectCase(item: CompatibilityCase, reporter: ReporterModule): P
     return collectGeometry(item, reporter)
   }
   if (item.probe === 'interaction') {
-    return collectInteraction(item, reporter)
+    return collectInteraction(item, reporter, evidence)
   }
-  return collectPixel(item, reporter)
+  return collectPixel(item, reporter, evidence)
 }
 
 export async function submitNativeCompatibilityReport() {
@@ -383,10 +377,11 @@ export async function submitNativeCompatibilityReport() {
   if (!reporter?.submit || !platform || staticEvidence.catalogHash === 'pending-static-e2e') {
     return
   }
+  const evidence = await createNativeEvidence(reporter)
   await waitForProbeLayout(id => measure(id, reporter))
   const results: NativeCaseResult[] = []
   for (const item of compatibilityCases) {
-    results.push(await collectCase(item, reporter))
+    results.push(await collectCase(item, reporter, evidence))
   }
   const report: NativePlatformReport = {
     schemaVersion: 1,
@@ -397,5 +392,5 @@ export async function submitNativeCompatibilityReport() {
     environment: runtimeEnvironment(platform),
     results,
   }
-  reporter.submit(JSON.stringify(report))
+  await evidence.submit(report)
 }

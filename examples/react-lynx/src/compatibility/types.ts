@@ -114,6 +114,21 @@ export interface NativePlatformReport {
   versions: CompatibilityBaseline['versions']
   environment: NativeRuntimeEnvironment
   results: NativeCaseResult[]
+  // 历史结论仍可展示；实时验收及基线更新必须携带完整的新证据协议。
+  evidence?: NativeEvidenceContext & { artifacts: NativeArtifactReceipt[] }
+}
+
+export interface NativeEvidenceContext {
+  version: 1
+  runId: string
+  bundleSha256: string
+}
+
+export interface NativeArtifactReceipt {
+  runId: string
+  name: string
+  sha256: string
+  byteLength: number
 }
 
 export interface CompatibilityBaseline {

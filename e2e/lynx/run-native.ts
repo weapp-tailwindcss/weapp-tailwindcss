@@ -1,4 +1,4 @@
-import type { NativePlatformReport, Platform } from '../../examples/react-lynx/src/compatibility/types'
+import type { NativeEvidenceContext, NativePlatformReport, Platform } from '../../examples/react-lynx/src/compatibility/types'
 import type { AndroidDevice, IosDevice } from './native-device'
 import fs from 'node:fs/promises'
 import os from 'node:os'
@@ -8,6 +8,7 @@ import { execa } from 'execa'
 import { androidSdkRoot } from '../react-native/native-toolchain'
 import { buildCompatibilityBundle } from './build'
 import { exampleDir, lynxIntermediateDir, repoRoot } from './catalog'
+import { collectNativeEvidence, createEvidenceContext, validateNativeEvidence } from './evidence'
 import { resolveIosAppContainer } from './ios-container'
 import { formatNativeFailure, withNativeArtifacts } from './native-artifacts'
 import { command } from './native-command'
@@ -39,20 +40,14 @@ async function waitForReport(read: () => Promise<string | undefined>) {
   throw new Error('Timed out waiting for the native compatibility report.')
 }
 
-async function collectAndroidArtifacts(artifactDir: string, device: AndroidDevice) {
-  const directory = 'files/lynx-compat/artifacts'
-  const listing = await execa('adb', adbArgs(device, ['shell', 'run-as', applicationId, 'ls', directory]), { reject: false })
-  if (listing.exitCode !== 0) {
-    return
-  }
-  const outputDir = path.join(artifactDir, 'crops')
-  await fs.mkdir(outputDir, { recursive: true })
-  for (const name of listing.stdout.split(/\r?\n/).filter(name => /^[a-z0-9-]+\.png$/.test(name))) {
-    const result = await execa('adb', adbArgs(device, ['exec-out', 'run-as', applicationId, 'cat', `${directory}/${name}`]), { encoding: 'buffer', reject: false })
-    if (result.exitCode === 0 && result.stdout) {
-      await fs.writeFile(path.join(outputDir, name), result.stdout)
-    }
-  }
+async function collectAndroidArtifacts(source: string, artifactDir: string, device: AndroidDevice, context: NativeEvidenceContext) {
+  await fs.writeFile(path.join(artifactDir, 'raw-report.json'), source)
+  const report = JSON.parse(source) as NativePlatformReport
+  await collectNativeEvidence(report, artifactDir, context, async (name) => {
+    const devicePath = `files/lynx-compat/${context.runId}/artifacts/${name}`
+    const result = await execa('adb', adbArgs(device, ['exec-out', 'run-as', applicationId, 'cat', devicePath]), { encoding: 'buffer' })
+    return result.stdout
+  })
 }
 
 async function collectAndroidLogcat(artifactDir: string, device: AndroidDevice) {
@@ -60,9 +55,11 @@ async function collectAndroidLogcat(artifactDir: string, device: AndroidDevice) 
   await fs.writeFile(path.join(artifactDir, 'logcat.txt'), result.all ?? result.stdout ?? result.stderr ?? '')
 }
 
-async function collectIosArtifacts(container: string, artifactDir: string) {
-  const source = path.join(container, 'Library', 'Application Support', 'lynx-compat', 'artifacts')
-  await fs.cp(source, path.join(artifactDir, 'crops'), { recursive: true }).catch(() => undefined)
+async function collectIosArtifacts(source: string, container: string, artifactDir: string, context: NativeEvidenceContext) {
+  await fs.writeFile(path.join(artifactDir, 'raw-report.json'), source)
+  const report = JSON.parse(source) as NativePlatformReport
+  const directory = path.join(container, 'Library', 'Application Support', 'lynx-compat', context.runId, 'artifacts')
+  await collectNativeEvidence(report, artifactDir, context, name => fs.readFile(path.join(directory, name)))
 }
 
 async function installedAndroidCompileSdk() {
@@ -92,7 +89,7 @@ async function recordAndroidVideo(hostDir: string, artifactDir: string, device: 
   await execa('adb', adbArgs(device, ['shell', 'rm', '-f', devicePath]), { reject: false })
 }
 
-async function runAndroid(hostDir: string, artifactDir: string, device: AndroidDevice) {
+async function runAndroid(hostDir: string, artifactDir: string, device: AndroidDevice, context: NativeEvidenceContext) {
   await command('adb', adbArgs(device, ['get-state']), hostDir, 30_000)
   const compileSdk = await installedAndroidCompileSdk()
   const gradleArguments = ['--project-dir', hostDir, ':app:assembleDebug', '--stacktrace']
@@ -103,7 +100,6 @@ async function runAndroid(hostDir: string, artifactDir: string, device: AndroidD
   const apkPath = path.join(hostDir, 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk')
   await command('adb', adbArgs(device, ['install', '-r', apkPath]), hostDir, 120_000)
   await command('adb', adbArgs(device, ['shell', 'am', 'force-stop', applicationId]), hostDir, 30_000)
-  await execa('adb', adbArgs(device, ['shell', 'run-as', applicationId, 'rm', '-f', 'files/lynx-compat/report.json']), { reject: false })
   const hiddenErrorDialogs = (await command('adb', adbArgs(device, ['shell', 'settings', 'get', 'global', 'hide_error_dialogs']), hostDir, 30_000)).trim()
   await command('adb', adbArgs(device, ['shell', 'settings', 'put', 'global', 'hide_error_dialogs', '1']), hostDir, 30_000)
   try {
@@ -123,7 +119,7 @@ async function runAndroid(hostDir: string, artifactDir: string, device: AndroidD
       return undefined
     }
     const report = await waitForReport(async () => {
-      const result = await execa('adb', adbArgs(device, ['shell', 'run-as', applicationId, 'cat', 'files/lynx-compat/report.json']), { reject: false })
+      const result = await execa('adb', adbArgs(device, ['shell', 'run-as', applicationId, 'cat', `files/lynx-compat/${context.runId}/report.json`]), { reject: false })
       return result.exitCode === 0 && result.stdout.trim().startsWith('{') ? result.stdout : undefined
     })
     const screenshotPath = path.join(artifactDir, 'screen.png')
@@ -131,7 +127,7 @@ async function runAndroid(hostDir: string, artifactDir: string, device: AndroidD
     if (screenshot.exitCode === 0 && screenshot.stdout) {
       await fs.writeFile(screenshotPath, screenshot.stdout)
     }
-    await collectAndroidArtifacts(artifactDir, device)
+    await collectAndroidArtifacts(report, artifactDir, device, context)
     return report
   }
   finally {
@@ -151,7 +147,7 @@ async function recordIosVideo(deviceId: string, artifactDir: string) {
   await recording
 }
 
-async function runIos(hostDir: string, artifactDir: string, device: IosDevice) {
+async function runIos(hostDir: string, artifactDir: string, device: IosDevice, context: NativeEvidenceContext) {
   if (process.env['LYNX_IOS_SKIP_PROJECT_GENERATION'] !== '1') {
     await command('xcodegen', ['generate'], hostDir, 60_000)
   }
@@ -196,8 +192,7 @@ async function runIos(hostDir: string, artifactDir: string, device: IosDevice) {
     await fs.writeFile(path.join(artifactDir, 'container-query-timeout.txt'), `${detail}\n`)
     process.stderr.write('iOS 应用容器查询超时；已保留原始错误，等待指定模拟器就绪后仅再查询一次。\n')
   })
-  const reportPath = path.join(container, 'Library', 'Application Support', 'lynx-compat', 'report.json')
-  await fs.rm(reportPath, { force: true })
+  const reportPath = path.join(container, 'Library', 'Application Support', 'lynx-compat', context.runId, 'report.json')
   await command('xcrun', ['simctl', 'launch', '--terminate-running-process', deviceId, applicationId], hostDir, 60_000)
   if (options.captureOnly) {
     await wait(2200)
@@ -207,7 +202,7 @@ async function runIos(hostDir: string, artifactDir: string, device: IosDevice) {
   }
   const report = await waitForReport(async () => fs.readFile(reportPath, 'utf8').catch(() => undefined))
   await command('xcrun', ['simctl', 'io', deviceId, 'screenshot', path.join(artifactDir, 'screen.png')], hostDir, 60_000)
-  await collectIosArtifacts(container, artifactDir)
+  await collectIosArtifacts(report, container, artifactDir, context)
   return report
 }
 
@@ -241,9 +236,14 @@ async function main() {
       ? path.join(hostDir, 'app', 'src', 'main', 'assets', 'main.lynx.bundle')
       : path.join(hostDir, 'App', 'main.lynx.bundle')
     await fs.mkdir(path.dirname(stagedBundle), { recursive: true })
+    const bundle = await fs.readFile(bundlePath)
+    const context = createEvidenceContext(bundle)
+    const contextSource = `${JSON.stringify(context, null, 2)}\n`
     const stagedArtifacts = [
-      fs.copyFile(bundlePath, stagedBundle),
-      fs.copyFile(bundlePath, path.join(artifactDir, 'main.lynx.bundle')),
+      fs.writeFile(stagedBundle, bundle),
+      fs.writeFile(path.join(artifactDir, 'main.lynx.bundle'), bundle),
+      fs.writeFile(path.join(artifactDir, 'run-context.json'), contextSource),
+      fs.writeFile(path.join(path.dirname(stagedBundle), 'run-context.json'), contextSource),
     ]
     if (!options.captureOnly && build) {
       stagedArtifacts.push(
@@ -255,8 +255,8 @@ async function main() {
 
     setStage('native-run')
     const reportSource = device.platform === 'android'
-      ? await runAndroid(hostDir, artifactDir, device)
-      : await runIos(hostDir, artifactDir, device)
+      ? await runAndroid(hostDir, artifactDir, device, context)
+      : await runIos(hostDir, artifactDir, device, context)
     if (options.captureOnly) {
       process.stdout.write(`${JSON.stringify({ platform, artifactDir, captureDurationSeconds: options.captureDurationSeconds }, null, 2)}\n`)
       return
@@ -268,7 +268,8 @@ async function main() {
     await fs.writeFile(path.join(artifactDir, 'raw-report.json'), `${reportSource.trim()}\n`)
     const report = validateNativeReport(await enrichEnvironment(JSON.parse(reportSource) as NativePlatformReport, hostDir, device), platform)
     await fs.writeFile(path.join(artifactDir, 'report.json'), `${JSON.stringify(report, null, 2)}\n`)
-    await validateNativePixelEvidence(report, path.join(artifactDir, 'crops'))
+    const crops = await validateNativeEvidence(report, artifactDir, context)
+    await validateNativePixelEvidence(report, crops)
     await compareCommittedReport(report)
     process.stdout.write(`${JSON.stringify({ platform, artifactDir, cases: report.results.length }, null, 2)}\n`)
   })
