@@ -57,6 +57,40 @@ describe('Lynx native report gate', () => {
     expect(validateNativeReport(report(), 'ios').results).toHaveLength(compatibilityCases.length)
   })
 
+  it('原生 JSON 重排版本字段后仍能校验并序列化为相同结论', () => {
+    const first = report()
+    const reordered = report({
+      versions: {
+        engineVersion: compatibilityVersions.engineVersion,
+        tailwindcss: compatibilityVersions.tailwindcss,
+        cssDefines: compatibilityVersions.cssDefines,
+        lynxEngine: compatibilityVersions.lynxEngine,
+      },
+    })
+    expect(validateNativeReport(reordered, 'ios')).toBe(reordered)
+    expect(JSON.stringify(nativeReportConclusion(reordered))).toBe(JSON.stringify(nativeReportConclusion(first)))
+  })
+
+  it('版本字段顺序不影响独立的结论比较入口', () => {
+    const first = report()
+    const reversed = report({ versions: Object.fromEntries(Object.entries(first.versions).reverse()) as NativePlatformReport['versions'] })
+    expect(JSON.stringify(nativeReportConclusion(reversed))).toBe(JSON.stringify(nativeReportConclusion(first)))
+  })
+
+  it.each(Object.keys(compatibilityVersions))('仍拒绝错误或缺失的版本字段 %s', (key) => {
+    const wrong = { ...compatibilityVersions, [key]: 'wrong' }
+    const missing = Object.fromEntries(Object.entries(compatibilityVersions).filter(([name]) => name !== key))
+    for (const versions of [wrong, missing]) {
+      const invalid = report({ versions: versions as NativePlatformReport['versions'] })
+      expect(() => validateNativeReport(invalid, 'ios')).toThrow(/versions do not match/)
+      expect(JSON.stringify(nativeReportConclusion(invalid))).not.toBe(JSON.stringify(nativeReportConclusion(report())))
+    }
+  })
+
+  it.each([null, [], '4.0.1', { ...compatibilityVersions, extra: '1.0.0' }].map(versions => [versions]))('拒绝非版本对象或多余字段 %j', (versions) => {
+    expect(() => validateNativeReport(report({ versions: versions as NativePlatformReport['versions'] }), 'ios')).toThrow(/versions do not match/)
+  })
+
   it('rejects stale catalogs, missing cases and incomplete checkpoints', () => {
     expect(() => validateNativeReport(report({ catalogHash: 'stale' }), 'ios')).toThrow(/stale/)
     expect(() => validateNativeReport(report({ results: [] }), 'ios')).toThrow(/every catalog case/)

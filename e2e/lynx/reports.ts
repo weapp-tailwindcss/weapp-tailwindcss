@@ -18,7 +18,13 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
   assert(report.schemaVersion === 1, `${platform} report schemaVersion must be 1`)
   assert(report.platform === platform, `expected ${platform} report, received ${report.platform}`)
   assert(report.catalogHash === getCatalogHash(), `${platform} report catalog hash is stale`)
-  assert(JSON.stringify(report.versions) === JSON.stringify(compatibilityVersions), `${platform} report versions do not match the pinned matrix`)
+  const versions = report.versions
+  assert(
+    versions && typeof versions === 'object' && !Array.isArray(versions)
+    && Object.keys(versions).length === Object.keys(compatibilityVersions).length
+    && Object.entries(compatibilityVersions).every(([key, value]) => Object.hasOwn(versions, key) && versions[key as keyof typeof versions] === value),
+    `${platform} report versions do not match the pinned matrix`,
+  )
   assert(!Number.isNaN(Date.parse(report.verifiedAt)), `${platform} report verifiedAt is invalid`)
   const environment = report.environment
   assert(Boolean(environment), `${platform} report environment is missing`)
@@ -103,7 +109,8 @@ export function nativeReportConclusion(report: NativePlatformReport) {
     schemaVersion: report.schemaVersion,
     platform: report.platform,
     catalogHash: report.catalogHash,
-    versions: report.versions,
+    // 原生 JSON 序列化不承诺属性顺序，结论比较固定键顺序并保留所有版本值。
+    versions: Object.fromEntries(Object.entries(report.versions).sort(([a], [b]) => a.localeCompare(b))),
     results: report.results.map(result => ({
       id: result.id,
       status: result.status,
