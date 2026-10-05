@@ -1,5 +1,16 @@
 {
   "$schema": "https://turborepo.com/schema.json",
+  "globalPassThroughEnv": [
+    "HTTP_PROXY",
+    "HTTPS_PROXY",
+    "ALL_PROXY",
+    "NO_PROXY",
+    "http_proxy",
+    "https_proxy",
+    "all_proxy",
+    "no_proxy",
+    "NODE_USE_ENV_PROXY"
+  ],
   "globalEnv": [
     "WEAPP_TW_SKIP_AUTO_BUILD",
     "WEAPP_TW_SKIP_INTERACTIVE_TARO_BUILD",
