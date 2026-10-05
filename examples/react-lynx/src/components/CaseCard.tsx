@@ -28,10 +28,13 @@ function declarationsText(declarations: ExpectedDeclaration[]) {
 
 // 文字的几何和像素用例均由 text 消费，不依赖 view 到 text 的可选 CSS 继承。
 const textUtilityCases = new Set(['type-size', 'type-tracking', 'type-weight-style', 'type-decoration', 'syntax-opacity-modifier', 'syntax-type-hint'])
-const sizeFixtureClasses: Record<string, string> = {
+const fixtureClasses: Record<string, string> = {
   'layout-box-sizing': 'probe-box-sizing',
   'sizing-min-max': 'probe-constrained-size',
   'syntax-css-variable': 'probe-constrained-size',
+  'background-size': 'probe-background-size',
+  'background-linear-gradient': 'probe-linear-gradient',
+  'effect-shadow': 'probe-shadow',
 }
 
 function ProbeBody({ id, textClassName = '' }: { id: string, textClassName?: string }) {
@@ -52,7 +55,7 @@ export function CaseCard({ item, result, staticEvidence }: { item: Compatibility
   const pairClass = usesCaptureFrame ? 'probe-pair probe-capture-pair' : 'probe-pair'
   const textClassName = textUtilityCases.has(item.id) ? item.className : ''
   const viewClassName = textUtilityCases.has(item.id) ? '' : item.className
-  const probeClassName = ['compat-probe', sizeFixtureClasses[item.id]].filter(Boolean).join(' ')
+  const probeClassName = ['compat-probe', fixtureClasses[item.id]].filter(Boolean).join(' ')
   return (
     <view className="case-card">
       <view className="flex flex-row items-start justify-between gap-3">

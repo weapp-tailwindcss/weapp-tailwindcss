@@ -43,6 +43,18 @@ describe('Lynx compatibility text fixtures', () => {
     expect(String(control.props.className)).not.toContain(item.className)
   })
 
+  it.each([
+    ['background-size', 'probe-background-size'],
+    ['background-linear-gradient', 'probe-linear-gradient'],
+    ['effect-shadow', 'probe-shadow'],
+  ])('%s 使用相同的单类默认样式，让 utility 参与渲染', (id, fixture) => {
+    const { item, probe, control } = probeNodes(id)
+    expect(String(probe.props.className).split(/\s+/)).toContain(fixture)
+    expect(String(control.props.className).split(/\s+/)).toContain(fixture)
+    expect(String(probe.props.className)).toContain(item.className)
+    expect(String(control.props.className)).not.toContain(item.className)
+  })
+
   it.each(['type-size', 'type-tracking', 'type-weight-style', 'type-decoration', 'syntax-opacity-modifier', 'syntax-type-hint'])('%s 将文字样式交给真实 text 消费，control 保持无被测类', (id) => {
     const { item, probe, control, text } = probeNodes(id)
     for (const candidate of item.className.split(/\s+/)) {

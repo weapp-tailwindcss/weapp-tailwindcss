@@ -115,4 +115,30 @@ describe('ReactLynx Rspeedy compatibility evidence', () => {
   it('keeps generated evidence under the compatibility directory', () => {
     expect(path.dirname(path.join(compatibilityDir, 'static-evidence.json'))).toBe(compatibilityDir)
   })
+
+  it.each([
+    ['background-linear-gradient', 'probe-linear-gradient', '.bg-linear-to-r', 'background-image'],
+    ['effect-shadow', 'probe-shadow', '.shadow-lg', 'box-shadow'],
+    ['background-size', 'probe-background-size', '.bg-cover', 'background-size'],
+  ])('%s 的默认像素夹具不能以更高权重覆盖 utility', async (id, fixture, utility, property) => {
+    const css = await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8')
+    let defaultIndex = -1
+    let utilityIndex = -1
+    let index = 0
+    postcss.parse(css).walkRules((rule) => {
+      index++
+      rule.walkDecls(property, () => {
+        expect(rule.selectors).not.toContain(`.probe-fixture-${id} .compat-probe`)
+        if (rule.selectors.includes(`.${fixture}`)) {
+          defaultIndex = index
+        }
+        if (rule.selectors.includes(utility)) {
+          utilityIndex = index
+        }
+      })
+    })
+    expect(defaultIndex).toBeGreaterThan(0)
+    expect(utilityIndex).toBeGreaterThan(defaultIndex)
+    expect(decodedCss).toContain(`.${fixture}`)
+  })
 })
