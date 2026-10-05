@@ -8,8 +8,6 @@ import { replaceSourceFile } from './source-file.mjs'
 
 it.for(['cjs', 'esm'])('旧恢复 stat 不能借立即重新 watch 复活订阅 (%s)', async (format, context) => {
   await recoveryFixture(format, context, async ({ task, watcher, data, events, waitFor, settle, onStop }) => {
-    await rm(data)
-    await waitFor(() => typeof watcher._pendingRecreations.get(data)?.closer === 'function', 'pending recovery')
     const handler = watcher._nodeFsHandler
     const add = handler._addToNodeFs
     const release = Promise.withResolvers()
@@ -28,6 +26,9 @@ it.for(['cjs', 'esm'])('旧恢复 stat 不能借立即重新 watch 复活订阅 
         return add.call(this, file, initialAdd, ...args)
       }
       oldStatStarted = true
+      // 删除前安装拦截；由首次恢复调用重建文件，不能让在途 stat 抢先完成恢复。
+      events.length = 0
+      fs.writeFileSync(data, '1')
       // 先启动实际异步 stat，再于同一调用栈中取消并重新订阅。
       const pending = add.call(this, file, initialAdd, ...args)
       task.fileWatcher.unwatch(data)
@@ -37,8 +38,8 @@ it.for(['cjs', 'esm'])('旧恢复 stat 不能借立即重新 watch 复活订阅 
       return pending
     }
     try {
-      events.length = 0
-      fs.writeFileSync(data, '1')
+      await rm(data)
+      await waitFor(() => oldStatStarted, 'target recovery stat started')
       await settle(finished.promise)
       expect(oldStatStarted).toBe(true)
       expect(events).toEqual([])
