@@ -1,6 +1,7 @@
 import type { NativeCaseResult, NativePlatformReport, StaticEvidenceReport } from '../examples/react-lynx/src/compatibility/types'
 import { describe, expect, it } from 'vitest'
 import { compatibilityCases } from '../examples/react-lynx/src/compatibility/catalog'
+import { lynxEvidenceStrategy } from '../examples/react-lynx/src/compatibility/evidence'
 import staticEvidenceJson from '../examples/react-lynx/src/compatibility/static-evidence.json'
 import { compatibilityVersions, getCatalogHash } from './lynx/catalog'
 import { nativeReportConclusion, validateNativeReport } from './lynx/reports'
@@ -20,11 +21,12 @@ function validResult(item: typeof compatibilityCases[number]): NativeCaseResult 
       ],
     }
   }
-  const checkpoint = item.evidence === 'build'
+  const strategy = lynxEvidenceStrategy(item)
+  const checkpoint = strategy === 'build'
     ? 'build:bundled'
-    : item.probe === 'geometry'
+    : strategy === 'native-geometry' || strategy === 'pixel-geometry'
       ? 'geometry:probe-vs-control'
-      : item.probe === 'interaction'
+      : strategy === 'interaction'
         ? 'interaction:progress'
         : 'pixel:probe-vs-control'
   return { id: item.id, status: 'supported', checkpoints: [{ name: checkpoint, passed: true }] }
@@ -132,6 +134,12 @@ describe('Lynx native report gate', () => {
       checkpoints: [{ name: 'rendered', passed: true }],
     }
     expect(() => validateNativeReport(invalid, 'ios')).toThrow(/missing a geometry: checkpoint/)
+  })
+
+  it('supports 的历史像素差异不能替代当前几何取证', () => {
+    const invalid = report()
+    invalid.results.find(item => item.id === 'variant-supports')!.checkpoints = [{ name: 'pixel:probe-vs-control', passed: true }]
+    expect(() => validateNativeReport(invalid, 'ios')).toThrow(/variant-supports.*geometry:/)
   })
 
   it('compares conclusions without volatile diagnostics or simulator metadata', () => {

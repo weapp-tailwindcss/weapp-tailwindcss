@@ -39,6 +39,13 @@ async function fixture() {
   await fs.mkdir(crops)
   const report = structuredClone(androidReport) as NativePlatformReport
   for (const result of report.results) {
+    // 此文件只验证像素协议；已改为几何取证的 supports 不再提供伪像素 checkpoint。
+    if (result.id === 'variant-supports') {
+      result.status = 'unsupported'
+      result.reason = '几何回归由 lynx-evidence.test.ts 独立覆盖'
+      result.checkpoints = [{ name: 'geometry:probe-vs-control', passed: false }]
+      continue
+    }
     const slots = (requiresPixelEffect(result.id) || result.checkpoints.some(checkpoint => checkpoint.name === 'pixel:probe-vs-control'))
       ? ['probe', 'control']
       : result.id === 'variant-state'

@@ -150,6 +150,30 @@ describe('ReactLynx Rspeedy compatibility evidence', () => {
     }
   }, 30_000)
 
+  it('supports 的真/假条件均保留在送入 encoder 的规则树中', async () => {
+    const tasm = JSON.parse(await fs.readFile(path.join(lynxIntermediateDir, 'tasm.json'), 'utf8'))
+    const conditions: Array<{ prelude: { value: string }, rules: unknown[] }> = []
+    const walk = (value: unknown) => {
+      if (Array.isArray(value)) {
+        value.forEach(walk)
+      }
+      else if (value && typeof value === 'object') {
+        if ('type' in value && value.type === 'SupportsRule') {
+          conditions.push(value as typeof conditions[number])
+        }
+        Object.values(value).forEach(walk)
+      }
+    }
+    walk(tasm.css.cssMap)
+    for (const value of ['grid', 'weapp-invalid']) {
+      expect(conditions.find(rule => rule.prelude.value === `(display:${value})`)?.rules).toContainEqual(expect.objectContaining({
+        type: 'StyleRule',
+        selectorText: expect.objectContaining({ value: `.supports-\\[display\\:${value}\\]\\:grid` }),
+        style: expect.arrayContaining([expect.objectContaining({ name: 'display', value: 'grid' })]),
+      }))
+    }
+  })
+
   it.each(['flex-grow', 'flex-wrap-order', 'flex-shorthand-shrink'])('%s 的真实组件产生竞争布局且逐项依赖 utility', async (id) => {
     await verifyFlexFixture(await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8'), id)
   }, 30_000)

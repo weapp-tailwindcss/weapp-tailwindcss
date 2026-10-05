@@ -6,6 +6,7 @@ const contracts: Record<string, { probe: Box, control: Box, child: Box, controlC
   'grid-placement': { probe: [6, 6, 84, 52], control: [50, 34, 40, 24], child: [0, 0, 8, 8], controlChild: [0, 0, 8, 8] },
   'grid-auto': { probe: [6, 6, 140, 24], control: [6, 6, 140, 68], child: [72, 0, 40, 24], controlChild: [0, 36, 40, 24] },
   'grid-justify-self': { probe: [46, 6, 100, 44], control: [6, 6, 100, 44], child: [40, 0, 20, 12], controlChild: [0, 0, 20, 12] },
+  'variant-supports': { probe: [6, 6, 100, 44], control: [6, 6, 100, 44], child: [44, 0, 20, 12], controlChild: [0, 16, 20, 12] },
 }
 
 function matches(rect: NativeRect, parent: NativeRect, expected: Box) {

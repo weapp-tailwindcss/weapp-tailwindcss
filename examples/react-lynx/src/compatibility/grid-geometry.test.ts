@@ -15,10 +15,13 @@ function geometry(id: string): NativeGeometryEvidence {
   if (id === 'grid-auto') {
     return { ...container, probe: rect(16, 26, 140, 24), control: rect(206, 306, 140, 68), probeChild: rect(88, 26, 40, 24), controlChild: rect(206, 342, 40, 24) }
   }
+  if (id === 'variant-supports') {
+    return { ...container, probe: rect(16, 26, 100, 44), control: rect(206, 306, 100, 44), probeChild: rect(60, 26, 20, 12), controlChild: rect(206, 322, 20, 12) }
+  }
   return { ...container, probe: rect(56, 26, 100, 44), control: rect(206, 306, 100, 44), probeChild: rect(96, 26, 20, 12), controlChild: rect(206, 306, 20, 12) }
 }
 
-it.each(['grid-placement', 'grid-auto', 'grid-justify-self'])('%s 只接受完整期望几何', (id) => {
+it.each(['grid-placement', 'grid-auto', 'grid-justify-self', 'variant-supports'])('%s 只接受完整期望几何', (id) => {
   const item = compatibilityCases.find(item => item.id === id)!
   expect(evaluateGeometry(item, geometry(id)).status).toBe('supported')
 })
@@ -33,6 +36,8 @@ it.each([
   ['grid-auto', 'probe', 'height', 32],
   ['grid-justify-self', 'probe', 'left', 16],
   ['grid-justify-self', 'probeChild', 'left', 56],
+  ['variant-supports', 'probeChild', 'left', 16],
+  ['variant-supports', 'probeChild', 'top', 42],
 ] as const)('%s 缺少单项布局效果 %s.%s 时不能由其他差异代替', (id, node, property, value) => {
   const item = compatibilityCases.find(item => item.id === id)!
   const evidence = geometry(id)
@@ -40,9 +45,16 @@ it.each([
   expect(evaluateGeometry(item, evidence).status).toBe('unsupported')
 })
 
-it.each(['grid-placement', 'grid-auto', 'grid-justify-self'])('%s 对照布局失效时阻断而非判定 utility 不支持', (id) => {
+it.each(['grid-placement', 'grid-auto', 'grid-justify-self', 'variant-supports'])('%s 对照布局失效时阻断而非判定 utility 不支持', (id) => {
   const item = compatibilityCases.find(item => item.id === id)!
   const evidence = geometry(id)
   evidence.control.width += 10
   expect(evaluateGeometry(item, evidence)).toMatchObject({ status: 'not-tested', checkpoints: [{ name: 'geometry:fixture-control', passed: false }] })
+})
+
+it('supports 的无效条件意外成为 grid 时拒绝验收', () => {
+  const item = compatibilityCases.find(item => item.id === 'variant-supports')!
+  const evidence = geometry(item.id)
+  evidence.controlChild = rect(250, 306, 20, 12)
+  expect(evaluateGeometry(item, evidence).status).toBe('not-tested')
 })

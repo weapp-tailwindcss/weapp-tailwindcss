@@ -13,7 +13,7 @@ export function lynxEvidenceStrategy(item: CompatibilityCase) {
   if (item.id === 'transform-skew') {
     return 'pixel-geometry'
   }
-  if (item.probe === 'geometry') {
+  if (item.probe === 'geometry' || item.id === 'variant-supports') {
     return 'native-geometry'
   }
   if (item.probe === 'interaction') {

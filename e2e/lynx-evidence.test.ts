@@ -29,12 +29,13 @@ async function fixture() {
     'grid-placement': [50, 34, 40, 24, 0, 0, 8, 8],
     'grid-auto': [6, 6, 140, 68, 0, 36, 40, 24],
     'grid-justify-self': [6, 6, 100, 44, 0, 0, 20, 12],
+    'variant-supports': [6, 6, 100, 44, 0, 16, 20, 12],
     'flex-grow': [6, 6, 24, 24, 0, 0, 8, 8],
     'flex-wrap-order': [6, 6, 64, 24, 44, 0, 40, 24],
     'flex-shorthand-shrink': [6, 6, 24, 24, 0, 0, 12, 24],
   }
   for (const result of report.results) {
-    if (!requiresPixelEffect(result.id) && result.checkpoints.some(checkpoint => checkpoint.name.startsWith('geometry:'))) {
+    if (!requiresPixelEffect(result.id) && (result.id === 'variant-supports' || result.checkpoints.some(checkpoint => checkpoint.name.startsWith('geometry:')))) {
       const item = compatibilityCases.find(item => item.id === result.id)!
       const layout = layoutControls[item.id]
       if (layout) {
@@ -240,4 +241,13 @@ it('原生 JSON 重排 checkpoint 字段不会改变几何证据', async () => {
   result.checkpoints = [{ expected: checkpoint.expected, actual: checkpoint.actual, passed: checkpoint.passed, name: checkpoint.name }]
   await fs.writeFile(reportPath, JSON.stringify(report))
   await expect(readNativeReport(reportPath, 'android').then(() => 'accepted')).resolves.toBe('accepted')
+})
+
+it('supports 的无效条件也变成两列时，原始几何阻止旧结论放行', async () => {
+  const { reportPath, report } = await fixture()
+  const result = report.results.find(item => item.id === 'variant-supports')!
+  const { control, controlChild } = result.geometry!
+  Object.assign(controlChild, { left: control.left + 44, right: control.left + 64, top: control.top, bottom: control.top + 12 })
+  await fs.writeFile(reportPath, JSON.stringify(report))
+  await expect(readNativeReport(reportPath, 'android')).rejects.toThrow(/variant-supports.*geometry.*无效/)
 })

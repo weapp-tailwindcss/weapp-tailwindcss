@@ -108,3 +108,24 @@
   width: 20px;
   height: 12px;
 }
+
+.grid-probe-variant-supports {
+  display: flex;
+  flex-direction: column;
+  grid-template-rows: 12px 12px;
+  grid-template-columns: 40px 40px;
+  gap: 4px;
+  align-content: start;
+  align-items: flex-start;
+  justify-items: start;
+  width: 100px;
+  height: 44px;
+}
+
+.grid-supports-first,
+.grid-child-variant-supports {
+  flex-shrink: 0;
+  width: 20px;
+  height: 12px;
+  background-color: #facc15;
+}

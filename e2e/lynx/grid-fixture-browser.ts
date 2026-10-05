@@ -4,23 +4,9 @@ import { chromium } from 'playwright'
 import { expect } from 'vitest'
 import { compatibilityCases } from '../../examples/react-lynx/src/compatibility/catalog'
 import { evaluateGeometry } from '../../examples/react-lynx/src/compatibility/geometry'
-import { GridProbePair } from '../../examples/react-lynx/src/components/GridProbePair'
+import { CaseCard } from '../../examples/react-lynx/src/components/CaseCard'
 import { repoRoot } from './catalog'
-
-function html(tree: unknown): string {
-  if (Array.isArray(tree)) {
-    return tree.map(html).join('')
-  }
-  if (!tree || typeof tree !== 'object' || !('type' in tree) || !('props' in tree)) {
-    return ''
-  }
-  const node = tree as { type: string, props: { id?: string, className?: string, children?: unknown } }
-  if (node.type !== 'view') {
-    throw new Error(`grid 夹具出现未支持的节点：${node.type}`)
-  }
-  const escape = (value: string) => value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;')
-  return `<div id="${escape(node.props.id ?? '')}" class="${escape(node.props.className ?? '')}">${html(node.props.children)}</div>`
-}
+import { fixtureHtml } from './fixture-html'
 
 /** 用实际组件结构及送入 encoder 的 CSS 核对标准几何；不替代 Lynx 原生验收。 */
 export async function verifyGridFixtures(css: string) {
@@ -30,9 +16,9 @@ export async function verifyGridFixtures(css: string) {
   try {
     const page = await browser.newPage({ viewport: { width: 600, height: 500 } })
     try {
-      for (const id of ['grid-placement', 'grid-auto', 'grid-justify-self']) {
+      for (const id of ['grid-placement', 'grid-auto', 'grid-justify-self', 'variant-supports']) {
         const item = compatibilityCases.find(item => item.id === id)!
-        await page.setContent(`<style>${css}</style>${html(GridProbePair({ item }))}`)
+        await page.setContent(`<style>${css}</style>${fixtureHtml(CaseCard({ item }))}`)
         const read = () => page.evaluate((id) => {
           const rect = (name: string) => document.getElementById(name)!.getBoundingClientRect().toJSON()
           return {
@@ -46,6 +32,11 @@ export async function verifyGridFixtures(css: string) {
         }, id)
         const evidence = await read()
         samples.push({ id, evidence })
+        if (id === 'variant-supports') {
+          expect(evidence.probeChild.left - evidence.probe.left).toBeCloseTo(44, 1)
+          expect(evidence.controlChild.left - evidence.control.left).toBeCloseTo(0, 1)
+          expect(evidence.controlChild.top - evidence.control.top).toBeCloseTo(16, 1)
+        }
         expect(evaluateGeometry(item, evidence), id).toMatchObject({ status: 'supported' })
         const probe = page.locator(`#probe-${id}`)
         const classes = await probe.getAttribute('class')
@@ -55,6 +46,14 @@ export async function verifyGridFixtures(css: string) {
           samples.push({ id, missing: candidate, evidence: missing })
           expect(evaluateGeometry(item, missing), `${id} 缺少 ${candidate}`).toMatchObject({ status: 'unsupported' })
           await probe.evaluate((element, classes) => element.setAttribute('class', classes!), classes)
+        }
+        if (id === 'variant-supports') {
+          await page.locator(`#control-${id}`).evaluate((element) => {
+            element.style.display = 'grid'
+          })
+          const flattened = await read()
+          samples.push({ id, mutation: '无效条件被展平', evidence: flattened })
+          expect(evaluateGeometry(item, flattened)).toMatchObject({ status: 'not-tested' })
         }
       }
     }
