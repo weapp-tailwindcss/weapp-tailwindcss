@@ -173,10 +173,16 @@ it('waits for local scripts while allowing a persistent background request', asy
   }
 }, 30_000)
 
-it('waits for the current document after a development full reload', async () => {
+it.each(['', '#/current'])('waits for the current document when reload interrupts DOMContentLoaded (%s)', async (hash) => {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), 'demo-matrix-reload-')))
   let navigations = 0
   let obsolete
+  let reloadBarrier
+  const releaseReload = () => {
+    if (obsolete && reloadBarrier) {
+      reloadBarrier.end('ready')
+    }
+  }
   const server = await createServer({
     root,
     configFile: false,
@@ -188,6 +194,11 @@ it('waits for the current document after a development full reload', async () =>
         server.middlewares.use((req, res, next) => {
           if (req.url === '/obsolete.js') {
             obsolete = res
+            releaseReload()
+          }
+          else if (req.url === '/reload-barrier') {
+            reloadBarrier = res
+            releaseReload()
           }
           else if (req.url === '/current.js') {
             res.setHeader('Content-Type', 'text/javascript')
@@ -199,7 +210,7 @@ it('waits for the current document after a development full reload', async () =>
             }
             res.setHeader('Content-Type', 'text/html')
             res.end(navigations === 1
-              ? '<script type="module" src="/@vite/client"></script><script async src="/obsolete.js"></script><script>setTimeout(() => location.reload(), 500)</script><div id="tw-matrix-height">previous</div>'
+              ? '<script type="module" src="/@vite/client"></script><script type="module" src="/obsolete.js"></script><script>fetch("/reload-barrier").then(() => location.reload())</script><div id="tw-matrix-height">previous</div>'
               : '<script type="module" src="/@vite/client"></script><script async src="/current.js"></script><div id="tw-matrix-height">current</div>')
           }
           else { next() }
@@ -210,12 +221,14 @@ it('waits for the current document after a development full reload', async () =>
   let browser
   try {
     await server.listen()
-    browser = await openBrowser(server.resolvedUrls.local[0], undefined, root)
-    expect(navigations).toBe(2)
+    browser = await openBrowser(`${server.resolvedUrls.local[0]}${hash}`, undefined, root)
+    expect(navigations, JSON.stringify(browser.events)).toBe(2)
     expect(browser.events).toContain('log: current-document-ready')
+    expect(browser.events.some(event => event.startsWith('startup-reload:'))).toBe(false)
   }
   finally {
     obsolete?.end()
+    reloadBarrier?.end()
     await browser?.close()
     await server.close()
     await rm(root, { recursive: true, force: true })
