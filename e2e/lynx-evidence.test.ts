@@ -5,8 +5,11 @@ import os from 'node:os'
 import path from 'node:path'
 import { afterEach, expect, it } from 'vitest'
 import { compatibilityCases } from '../examples/react-lynx/src/compatibility/catalog'
+import { requiresPixelEffect } from '../examples/react-lynx/src/compatibility/evidence'
 import { evaluateGeometry } from '../examples/react-lynx/src/compatibility/geometry'
 import { collectNativeEvidence, createEvidenceContext, cropsDirectory, sha256, validateNativeEvidence } from './lynx/evidence'
+import { effectFixtureImage } from './lynx/fixtures/effect-images'
+import { finalizeNativePixelEffects } from './lynx/pixel-evidence'
 import { PNG } from './lynx/png'
 import { readNativeReport } from './lynx/reports'
 import androidReport from './lynx/reports/android.json'
@@ -53,9 +56,12 @@ async function fixture() {
       for (let offset = 0; offset < png.data.length; offset += 4) {
         png.data.set([index * 80, 165, 233, 255], offset)
       }
-      const data = PNG.sync.write(png)
+      const data = await effectFixtureImage(result.id, frame) ?? PNG.sync.write(png)
       images.set(name, data)
       report.evidence.artifacts.push({ runId: context.runId, name, sha256: sha256(data), byteLength: data.byteLength })
+    }
+    if (requiresPixelEffect(result.id)) {
+      result.status = 'not-tested'
     }
   }
   const reportPath = path.join(directory, 'report.json')
@@ -63,7 +69,9 @@ async function fixture() {
   await fs.writeFile(path.join(directory, 'run-context.json'), JSON.stringify(context))
   await fs.writeFile(path.join(directory, 'main.lynx.bundle'), bundle)
   await collectNativeEvidence(report, directory, context, async name => images.get(name)!)
-  return { directory, reportPath, report, context, crops: cropsDirectory(directory, context), images }
+  const final = await finalizeNativePixelEffects(report, cropsDirectory(directory, context))
+  await fs.writeFile(reportPath, JSON.stringify(final))
+  return { directory, reportPath, report: final, context, crops: cropsDirectory(directory, context), images }
 }
 
 it('完整入口接受本轮落盘回执、实际 bundle 和可见像素证据', async () => {

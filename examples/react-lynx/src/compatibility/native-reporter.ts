@@ -1,6 +1,7 @@
 import type { EvidenceModule, NativeEvidenceWriter } from './native-evidence'
 import type { CompatibilityCase, NativeCaseResult, NativePlatformReport, NativeRect, NativeRuntimeEnvironment, Platform, StaticEvidenceReport } from './types'
 import { compatibilityCases } from './catalog'
+import { requiresPixelEffect } from './evidence'
 import { collectGeometry } from './geometry'
 import { createNativeEvidence } from './native-evidence'
 import { waitForProbeLayout } from './runtime-ready'
@@ -146,10 +147,11 @@ async function collectPixel(item: CompatibilityCase, reporter: ReporterModule, e
   await evidence.save(`${item.id}-control.png`, control?.data)
   const captured = Boolean(styled?.data && control?.data)
   const passed = captured && fingerprint(styled!.data) !== fingerprint(control!.data)
+  const pendingEffect = captured && requiresPixelEffect(item.id)
   return {
     id: item.id,
-    status: passed ? 'supported' : captured ? 'unsupported' : 'not-tested',
-    reason: passed ? undefined : captured ? 'probe/control 元素截图没有可观察的像素差异' : '原生 host 未返回完整的 probe/control 局部截图',
+    status: pendingEffect ? 'not-tested' : passed ? 'supported' : captured ? 'unsupported' : 'not-tested',
+    reason: pendingEffect ? '已采集原始截图，等待宿主验证预期效果' : passed ? undefined : captured ? 'probe/control 元素截图没有可观察的像素差异' : '原生 host 未返回完整的 probe/control 局部截图',
     failureStage: passed || !captured ? undefined : 'runtime',
     checkpoints: [{
       name: 'pixel:probe-vs-control',

@@ -3,8 +3,9 @@ import type { PngPixels } from './png'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { compatibilityCases } from '../../examples/react-lynx/src/compatibility/catalog'
-import { evidenceSequence } from '../../examples/react-lynx/src/compatibility/evidence'
+import { evidenceSequence, requiresPixelEffect } from '../../examples/react-lynx/src/compatibility/evidence'
 import staticEvidenceJson from '../../examples/react-lynx/src/compatibility/static-evidence.json'
+import { evaluatePixelEffect } from './pixel-effects'
 import { PNG } from './png'
 
 const staticById = new Map((staticEvidenceJson as StaticEvidenceReport).results.map(item => [item.id, item]))
@@ -34,6 +35,30 @@ async function readPixels(file: string): Promise<PngPixels> {
   catch (cause) {
     throw new Error(`缺失或无法解码的 Lynx 截图：${file}`, { cause })
   }
+}
+
+/** 仅处理原生采集端明确留待判定的效果，原始报告由 runner 单独保留。 */
+export async function finalizeNativePixelEffects(raw: NativePlatformReport, cropsDirectory: string) {
+  const report = structuredClone(raw)
+  for (const result of report.results) {
+    const built = staticById.get(result.id)
+    if (!requiresPixelEffect(result.id) || !built?.generated || !built.bundled) {
+      continue
+    }
+    if (result.status !== 'not-tested') {
+      throw new Error(`${result.id} 原始采集报告不能预先声明预期效果结论`)
+    }
+    const [probe, control] = await Promise.all(['probe', 'control'].map(frame => readPixels(path.join(cropsDirectory, `${result.id}-${frame}.png`))))
+    const measured = evaluatePixelEffect(result.id, probe!, control!)!
+    const difference = { name: 'pixel:probe-vs-control', passed: hasVisibleDifference(probe!, control!) }
+    Object.assign(result, measured)
+    if (measured.status === 'supported') {
+      delete result.reason
+      delete result.failureStage
+    }
+    result.checkpoints = [difference, ...measured.checkpoints]
+  }
+  return report
 }
 
 /** 校验原始 PNG 对结论的必要支撑，不改写报告或自动更新基线。 */
@@ -66,6 +91,16 @@ export async function validateNativePixelEvidence(report: NativePlatformReport, 
           throw new Error(
             `${pair} 没有可见像素变化，PNG 编码差异不能支撑通过结论`,
           )
+        }
+      }
+      const measured = evaluatePixelEffect(item.id, images[0]!, images[1]!)
+      if (measured) {
+        const expected = measured.checkpoints[0]!
+        const recorded = result?.checkpoints.filter(value => value.name === expected.name)
+        if (result?.status !== measured.status || result.reason !== measured.reason || result.failureStage !== measured.failureStage
+          || recorded?.length !== 1 || Object.entries(expected).some(([key, value]) => recorded[0]![key as keyof typeof expected] !== value)
+          || checkpoint.passed !== hasVisibleDifference(images[0]!, images[1]!)) {
+          throw new Error(`${report.platform}:${item.id} 预期效果结论与原始像素不符`)
         }
       }
     }

@@ -120,7 +120,7 @@
     "e2e:react-native:native": "pnpm e2e:react-native:android && pnpm e2e:react-native:ios",
     "e2e:react-native:all": "pnpm e2e:react-native-compatibility && pnpm e2e:react-native:web && pnpm e2e:react-native:native",
     "e2e:react-native:update": "pnpm e2e:react-native:static:update && pnpm e2e:react-native:web:update && pnpm e2e:react-native:android:update && pnpm e2e:react-native:ios:update",
-    "e2e:lynx": "pnpm --filter @weapp-tailwindcss/example-react-lynx test --update=none && vitest run --bail=1 -c ./e2e/vitest.e2e.config.ts e2e/lynx-rspeedy.test.ts e2e/lynx-reports.test.ts e2e/lynx-pixel-evidence.test.ts e2e/lynx-evidence.test.ts e2e/lynx-static-evidence.test.ts e2e/lynx-css-defaults.test.ts",
+    "e2e:lynx": "pnpm --filter @weapp-tailwindcss/example-react-lynx test --update=none && vitest run --bail=1 -c ./e2e/vitest.e2e.config.ts e2e/lynx-rspeedy.test.ts e2e/lynx-reports.test.ts e2e/lynx-pixel-evidence.test.ts e2e/lynx-pixel-effects.test.ts e2e/lynx-evidence.test.ts e2e/lynx-static-evidence.test.ts e2e/lynx-css-defaults.test.ts",
     "e2e:lynx:static:update": "tsx e2e/lynx/update-static-evidence.ts",
     "e2e:lynx:android": "tsx e2e/lynx/run-native.ts android",
     "e2e:lynx:ios": "tsx e2e/lynx/run-native.ts ios",

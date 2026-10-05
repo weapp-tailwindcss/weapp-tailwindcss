@@ -3,7 +3,9 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, expect, it } from 'vitest'
-import { validateNativePixelEvidence } from './lynx/pixel-evidence'
+import { requiresPixelEffect } from '../examples/react-lynx/src/compatibility/evidence'
+import { effectFixtureImage } from './lynx/fixtures/effect-images'
+import { finalizeNativePixelEffects, validateNativePixelEvidence } from './lynx/pixel-evidence'
 import { PNG } from './lynx/png'
 import { validateNativeReport } from './lynx/reports'
 import androidReport from './lynx/reports/android.json'
@@ -45,12 +47,16 @@ async function fixture() {
           ? ['before', 'after']
           : result.id === 'transition-basic' ? ['before', 'during', 'after'] : []
     for (const [index, slot] of slots.entries()) {
-      await fs.writeFile(path.join(crops, `${result.id}-${slot}.png`), screenshot(8, 4, [index * 80, 165, 233, 255]))
+      await fs.writeFile(path.join(crops, `${result.id}-${slot}.png`), await effectFixtureImage(result.id, slot) ?? screenshot(8, 4, [index * 80, 165, 233, 255]))
+    }
+    if (requiresPixelEffect(result.id)) {
+      result.status = 'not-tested'
     }
   }
+  const final = await finalizeNativePixelEffects(report, crops)
   const reportPath = path.join(directory, 'report.json')
-  await fs.writeFile(reportPath, JSON.stringify(report))
-  return { crops, report, reportPath }
+  await fs.writeFile(reportPath, JSON.stringify(final))
+  return { crops, report: final, reportPath }
 }
 
 it('接收带完整且可见像素变化的原生报告', async () => {
@@ -172,4 +178,49 @@ it('不支持的结论也必须保留可解码的截图', async () => {
   await expect(readPixelReport(reportPath, 'android')).resolves.toBeDefined()
   await fs.rm(path.join(crops, `${target}-control.png`))
   await expect(readPixelReport(reportPath, 'android')).rejects.toThrow(/type-weight-style-control.png/)
+})
+
+it.each(['background-linear-gradient', 'effect-shadow'])('%s 不能把移除默认效果后的纯色图判为支持', async (id) => {
+  const { crops, report, reportPath } = await fixture()
+  const result = report.results.find(item => item.id === id)!
+  result.status = 'supported'
+  delete result.reason
+  result.checkpoints = [{ name: 'pixel:probe-vs-control', passed: true }]
+  await fs.writeFile(reportPath, JSON.stringify(report))
+  expect(await fs.readFile(path.join(crops, `${id}-probe.png`))).toEqual(await effectFixtureImage(id, 'probe'))
+  await expect(readPixelReport(reportPath, 'android').then(() => 'accepted')).rejects.toThrow(/预期效果/)
+})
+
+it('宿主只判定待验收效果，保留原始采集报告且无效图不能降级为不支持', async () => {
+  const { crops, report } = await fixture()
+  await expect(finalizeNativePixelEffects(report, crops)).rejects.toThrow('原始采集报告不能预先声明')
+  for (const result of report.results) {
+    if (requiresPixelEffect(result.id)) {
+      result.status = 'not-tested'
+      result.reason = '等待宿主'
+    }
+  }
+  const original = JSON.stringify(report)
+  const final = await finalizeNativePixelEffects(report, crops)
+  expect(JSON.stringify(report)).toBe(original)
+  expect(final.results.filter(result => requiresPixelEffect(result.id)).map(result => result.status)).toEqual(['unsupported', 'unsupported'])
+  await fs.writeFile(path.join(crops, 'effect-shadow-control.png'), 'broken PNG')
+  await expect(finalizeNativePixelEffects(report, crops)).rejects.toThrow('无法解码')
+})
+
+it.each(['missing', 'forged', 'duplicate'])('%s 效果契约不允许进入最终验收', async (mode) => {
+  const { report, reportPath } = await fixture()
+  const result = report.results.find(item => item.id === 'effect-shadow')!
+  const checkpoint = result.checkpoints.find(item => item.name === 'pixel:expected-effect-v1')!
+  if (mode === 'missing') {
+    result.checkpoints = result.checkpoints.filter(item => item !== checkpoint)
+  }
+  else if (mode === 'forged') {
+    checkpoint.actual = 'trust this report'
+  }
+  else {
+    result.checkpoints.push(checkpoint)
+  }
+  await fs.writeFile(reportPath, JSON.stringify(report))
+  await expect(readPixelReport(reportPath, 'android').then(() => 'accepted')).rejects.toThrow('预期效果结论')
 })

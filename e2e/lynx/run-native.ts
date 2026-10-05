@@ -15,7 +15,7 @@ import { command } from './native-command'
 import { adbArgs, resolveNativeDevice } from './native-device'
 import { enrichEnvironment } from './native-environment'
 import { iosPodInstallArguments, parseNativeRunArgs } from './native-options'
-import { validateNativePixelEvidence } from './pixel-evidence'
+import { finalizeNativePixelEffects, validateNativePixelEvidence } from './pixel-evidence'
 import { defaultReportPath, nativeReportConclusion, validateNativeReport } from './reports'
 
 const options = parseNativeRunArgs(process.argv.slice(2), process.cwd())
@@ -266,9 +266,10 @@ async function main() {
     }
     setStage('report-validation')
     await fs.writeFile(path.join(artifactDir, 'raw-report.json'), `${reportSource.trim()}\n`)
-    const report = validateNativeReport(await enrichEnvironment(JSON.parse(reportSource) as NativePlatformReport, hostDir, device), platform, { requireGeometryEvidence: true })
+    const raw = await enrichEnvironment(JSON.parse(reportSource) as NativePlatformReport, hostDir, device)
+    const crops = await validateNativeEvidence(raw, artifactDir, context)
+    const report = validateNativeReport(await finalizeNativePixelEffects(raw, crops), platform, { requireGeometryEvidence: true })
     await fs.writeFile(path.join(artifactDir, 'report.json'), `${JSON.stringify(report, null, 2)}\n`)
-    const crops = await validateNativeEvidence(report, artifactDir, context)
     await validateNativePixelEvidence(report, crops)
     await compareCommittedReport(report)
     process.stdout.write(`${JSON.stringify({ platform, artifactDir, cases: report.results.length }, null, 2)}\n`)

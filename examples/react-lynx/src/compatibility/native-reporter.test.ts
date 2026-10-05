@@ -13,6 +13,8 @@ vi.mock('./catalog', async (importOriginal) => {
       'variant-state',
       'animation-spin',
       'transition-basic',
+      'background-linear-gradient',
+      'effect-shadow',
     ].includes(item.id)),
   }
 })
@@ -106,7 +108,7 @@ it('动画及 transition 全部采集稳定画布，状态变化仍作用于被�
   expect(captures.filter(id => id === 'probe-container-transition-basic')).toHaveLength(3)
   expect(captures.filter(id => id === 'probe-container-variant-state')).toHaveLength(2)
   expect(mutations).toEqual(['#probe-transition-basic', 'probe-variant-state:true', 'probe-variant-state:false'])
-  expect(report.results.every(result => result.status === 'supported')).toBe(true)
+  expect(report.results.filter(result => !['background-linear-gradient', 'effect-shadow'].includes(result.id)).every(result => result.status === 'supported')).toBe(true)
 })
 
 it('合成画布缺失时拒绝发布报告，不退回元素自身截图', async () => {
@@ -119,11 +121,19 @@ it('合成画布缺失时拒绝发布报告，不退回元素自身截图', asyn
 it('等待最后一帧的真实写入回执后才发布报告', async () => {
   const { report, error } = await collect({ receipt: 'late' })
   expect(error).toBeUndefined()
-  expect(report.evidence?.artifacts).toHaveLength(13)
+  expect(report.evidence?.artifacts).toHaveLength(17)
 })
 
 it.each(['wrong-run', 'missing', 'failed'] as const)('%s 回执禁止发布报告', async (receipt) => {
   const { report, error } = await collect({ receipt })
   expect(report).toBeUndefined()
   expect(error).toBeInstanceOf(Error)
+})
+
+it('渐变和阴影指纹不同也仅提交待宿主判定的原始截图', async () => {
+  const { report } = await collect()
+  for (const id of ['background-linear-gradient', 'effect-shadow']) {
+    expect(report.results.find(result => result.id === id)).toMatchObject({ status: 'not-tested', reason: expect.stringContaining('预期效果') })
+    expect(report.evidence?.artifacts.filter(item => item.name.startsWith(id))).toHaveLength(2)
+  }
 })
