@@ -166,6 +166,28 @@ page {
     background-color: #0ea5e9;
   }
 
+  .probe-box-sizing {
+    box-sizing: content-box;
+    width: 96px;
+    height: 64px;
+    padding: 8px;
+    border: 2px solid #132026;
+  }
+
+  .probe-constrained-size {
+    box-sizing: border-box;
+    width: 40px;
+    min-width: 0;
+    height: 300px;
+    min-height: 0;
+    padding: 0;
+  }
+
+  .probe-fixture-sizing-min-max .probe-slot,
+  .probe-fixture-syntax-css-variable .probe-slot {
+    height: 320px;
+  }
+
   .probe-fixture-layout-aspect .compat-probe,
   .probe-fixture-sizing-size .compat-probe,
   .probe-fixture-accessibility-sr .compat-probe {

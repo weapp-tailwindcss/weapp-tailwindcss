@@ -76,6 +76,42 @@ describe('ReactLynx Rspeedy compatibility evidence', () => {
     expect(actual.results.some(result => result.bundled)).toBe(true)
   })
 
+  it('尺寸夹具在真实编码产物中提供可触发的对照并允许 utility 覆盖', async () => {
+    const rules: Array<{ selector: string, declarations: Record<string, string> }> = []
+    postcss.parse(decodedCss).walkRules((rule) => {
+      const declarations: Record<string, string> = {}
+      rule.walkDecls((declaration) => {
+        declarations[declaration.prop] = declaration.value
+      })
+      for (const selector of rule.selectors) {
+        rules.push({ selector, declarations })
+      }
+    })
+    const box = rules.findIndex(rule => rule.selector === '.probe-box-sizing')
+    const utility = rules.findIndex(rule => rule.selector === '.box-border')
+    expect(box).toBeGreaterThanOrEqual(0)
+    // decoder 的诊断文本按选择器重排；级联顺序必须读取真正送入 encoder 的 CSS。
+    const encoderCss = await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8')
+    expect(encoderCss.indexOf('.box-border {')).toBeGreaterThan(encoderCss.indexOf('.probe-box-sizing {'))
+    expect(rules[box]?.declarations).toMatchObject({
+      'width': '96px',
+      'height': '64px',
+      'box-sizing': 'content-box',
+      'padding-top': '8px',
+      'border-top-width': '2px',
+    })
+    const constrained = rules.find(rule => rule.selector === '.probe-constrained-size')
+    expect(constrained?.declarations).toMatchObject({
+      'width': '40px',
+      'height': '300px',
+      'box-sizing': 'border-box',
+      'min-width': '0',
+      'min-height': '0',
+      'padding-top': '0',
+    })
+    expect(rules[utility]?.declarations['box-sizing']).toBe('border-box')
+  })
+
   it('keeps generated evidence under the compatibility directory', () => {
     expect(path.dirname(path.join(compatibilityDir, 'static-evidence.json'))).toBe(compatibilityDir)
   })

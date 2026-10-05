@@ -28,6 +28,11 @@ function declarationsText(declarations: ExpectedDeclaration[]) {
 
 // 文字的几何和像素用例均由 text 消费，不依赖 view 到 text 的可选 CSS 继承。
 const textUtilityCases = new Set(['type-size', 'type-tracking', 'type-weight-style', 'type-decoration', 'syntax-opacity-modifier', 'syntax-type-hint'])
+const sizeFixtureClasses: Record<string, string> = {
+  'layout-box-sizing': 'probe-box-sizing',
+  'sizing-min-max': 'probe-constrained-size',
+  'syntax-css-variable': 'probe-constrained-size',
+}
 
 function ProbeBody({ id, textClassName = '' }: { id: string, textClassName?: string }) {
   return (
@@ -47,6 +52,7 @@ export function CaseCard({ item, result, staticEvidence }: { item: Compatibility
   const pairClass = usesCaptureFrame ? 'probe-pair probe-capture-pair' : 'probe-pair'
   const textClassName = textUtilityCases.has(item.id) ? item.className : ''
   const viewClassName = textUtilityCases.has(item.id) ? '' : item.className
+  const probeClassName = ['compat-probe', sizeFixtureClasses[item.id]].filter(Boolean).join(' ')
   return (
     <view className="case-card">
       <view className="flex flex-row items-start justify-between gap-3">
@@ -114,13 +120,13 @@ export function CaseCard({ item, result, staticEvidence }: { item: Compatibility
       <view className={`probe-shell probe-fixture-${item.id}`}>
         <view className={item.id === 'variant-dark' ? `${pairClass} dark` : pairClass}>
           <view id={`probe-container-${item.id}`} flatten={false} className={usesCaptureFrame ? 'probe-slot probe-capture' : 'probe-slot'}>
-            <view id={`probe-${item.id}`} className={`compat-probe ${viewClassName}`}>
+            <view id={`probe-${item.id}`} className={`${probeClassName} ${viewClassName}`}>
               <ProbeBody id={item.id} textClassName={textClassName} />
             </view>
             {item.id === 'layout-z-index' && <view className="probe-z-overlay" />}
           </view>
           <view id={`control-container-${item.id}`} flatten={false} className={usesCaptureFrame ? 'probe-slot probe-control-slot probe-capture' : 'probe-slot probe-control-slot'}>
-            <view id={`control-${item.id}`} className="compat-probe">
+            <view id={`control-${item.id}`} className={probeClassName}>
               <ProbeBody id={`control-${item.id}`} />
             </view>
             {item.id === 'layout-z-index' && <view className="probe-z-overlay" />}

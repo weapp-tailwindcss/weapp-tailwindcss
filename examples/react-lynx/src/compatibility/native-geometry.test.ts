@@ -120,6 +120,15 @@ it.each([
   ['sizing-size', 44, 44, 80, 40, 'supported'],
   ['sizing-size', 72, 44, 80, 40, 'unsupported'],
   ['accessibility-sr', 1, 1, 80, 40, 'supported'],
+  ['layout-box-sizing', 96, 64, 116, 84, 'supported'],
+  ['layout-box-sizing', 95, 62, 116, 84, 'unsupported'],
+  ['layout-box-sizing', 96, 64, 96, 84, 'unsupported'],
+  ['sizing-min-max', 120, 240, 40, 300, 'supported'],
+  ['sizing-min-max', 40, 240, 40, 300, 'unsupported'],
+  ['sizing-min-max', 120, 300, 40, 300, 'unsupported'],
+  ['syntax-css-variable', 40, 240, 40, 300, 'supported'],
+  ['syntax-css-variable', 40, 200, 40, 300, 'unsupported'],
+  ['syntax-css-variable', 40, 240, 40, 280, 'unsupported'],
   ['variant-responsive', 200, 40, 80, 40, 'supported'],
 ] as const)('%s 的精确几何期望 %s×%s 不能由任意变化替代', async (id, width, height, controlWidth, controlHeight, status) => {
   const boxes = measurements()

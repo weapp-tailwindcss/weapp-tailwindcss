@@ -47,6 +47,15 @@ function geometryPassed(item: CompatibilityCase, geometry: NativeGeometryEvidenc
   if (item.id === 'accessibility-sr') {
     return closeTo(probe.width, 1) && closeTo(probe.height, 1)
   }
+  if (item.id === 'layout-box-sizing') {
+    return closeTo(probe.width, 96) && closeTo(probe.height, 64)
+      && closeTo(control.width, 116) && closeTo(control.height, 84)
+  }
+  if (item.id === 'sizing-min-max' || item.id === 'syntax-css-variable') {
+    // 原生 rem 随屏幕适配；同时验证 min-width 确实扩大宽度及 max-height 的精确限制。
+    const widthPassed = item.id === 'sizing-min-max' ? probe.width > control.width + 1 : closeTo(probe.width, 40)
+    return widthPassed && closeTo(control.width, 40) && closeTo(probe.height, 240) && closeTo(control.height, 300)
+  }
   if (item.id === 'variant-responsive') {
     return closeTo(probe.width, 200) && Math.abs(probe.width - control.width) > 1
   }
