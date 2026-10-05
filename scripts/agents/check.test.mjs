@@ -82,6 +82,12 @@ it('复盘要求状态、基线、持久回归和非空验证章节', () => {
       ...['症状', '根因与纠正', '验证', '适用边界', '规则评估'].map(title => `## ${title}\n证据\n`),
     ].join('\n')
     assert.deepEqual(validateLesson(valid, root), [])
+    writeFileSync(path.join(root, 'podfile.test.rb'), '')
+    writeFileSync(path.join(root, 'helper.rb'), '')
+    assert.deepEqual(validateLesson(valid.replace('regression.test.ts', 'podfile.test.rb'), root), [])
+    for (const invalid of ['missing.test.rb', 'helper.rb', path.join(root, 'podfile.test.rb'), '../podfile.test.rb', 'C:/repo/podfile.test.rb', 'C:\\repo\\podfile.test.rb']) {
+      assert.ok(validateLesson(valid.replace('regression.test.ts', JSON.stringify(invalid)), root).length, invalid)
+    }
     assert.deepEqual(validateLesson(valid.replace(/\n/g, '\r\n'), root), [])
     assert.ok(validateLesson(valid.replace('regression.test.ts', 'missing.test.ts'), root).length)
     assert.ok(validateLesson(valid.replace('partial', 'superseded'), root).length)
