@@ -12,7 +12,7 @@ regressions:
 
 审查 Lynx 原生支持基线时，三个 flex 用例的“不支持”缺少有效布局对照。将实际 `CaseCard` 和 encoder 输入 CSS 放进标准浏览器，三项 probe/control 的尺寸及子节点局部位置仍完全相同。
 
-## 根因与修复
+## 根因与纠正
 
 通用 slot 没有明确的 flex 父容器和竞争项，无法触发 grow、basis、order 或 shrink。通用判定又接受任意几何变化，使组合用例只生效一部分也能返回支持。先补回归，三个浏览器场景失败；固定新布局后，旧判定器仍错误接受删除 grow、wrap、shrink 的结果，13 项几何回归中 9 项失败。
 
@@ -27,6 +27,10 @@ regressions:
 - 浏览器从实际 `CaseCard` 递归生成 HTML，读取实际 encoder CSS。三个完整效果通过；分别删除六个 utility token 都必须失败，且每次重建相同控制场景。所有 headless 浏览器均在 `finally` 释放。
 - `CI=1 pnpm e2e:lynx:static:update`：限定 React Lynx 重生成 118 项，catalog hash 与样式结果不变，仅时间更新；随后不更新基线的完整 Lynx 定向回归通过。
 - 类型、ESLint、Stylelint、规则和 diff 检查通过。最终提交的双端原生采样尚未完成，不更新原生支持基线，复盘保持 `partial`。
+
+## 适用边界
+
+固定数值只适用于这三个有显式竞争项的 Lynx 夹具，不是通用 flex 布局判定器。RN 与 Lynx 共享 catalog 的 className 和 hash 保持不变；浏览器校准证明场景可触发，不能替代新提交的原生设备报告。
 
 ## 规则评估
 
