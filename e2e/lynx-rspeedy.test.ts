@@ -12,6 +12,7 @@ import { analyzeStaticEvidence } from './lynx/static-evidence'
 const bundlePath = path.join(exampleDir, 'dist', 'main.lynx.bundle')
 let encoderLog = ''
 let decodedCss = ''
+let decodedBundle: { 'engine-version': string, 'page-config': string } | undefined
 
 describe('ReactLynx Rspeedy compatibility evidence', () => {
   it('builds the public Lynx package and a development bundle with inspectable CSS', async () => {
@@ -34,9 +35,32 @@ describe('ReactLynx Rspeedy compatibility evidence', () => {
     const source = new Uint8Array(await fs.readFile(bundlePath))
     const decoded = tasm.supportNapi() ? tasm.decode_napi(source) : await tasm.decode_wasm(source)
     expect(decoded).toBeTruthy()
+    decodedBundle = decoded as typeof decodedBundle
     // decoder 以双花括号打印变量；仅恢复诊断文本语法，不改写被测字面量或实际 bundle。
     decodedCss = (decoded as { css: { text: string } }).css.text.replace(/\{\{(--[a-z0-9-]+)\}\}/gi, 'var($1)')
   }, 120_000)
+
+  it('固定 SDK 的编码配置启用运行时递归变量解析', async () => {
+    const tasm = JSON.parse(await fs.readFile(path.join(lynxIntermediateDir, 'tasm.json'), 'utf8'))
+    expect(tasm.compilerOptions.targetSdkVersion).toBe('3.9')
+    expect(tasm.sourceContent.config.enableCSSInlineVariables).toBe(true)
+    expect(decodedBundle?.['engine-version']).toBe('3.9')
+    expect(JSON.parse(decodedBundle!['page-config']).enableCSSInlineVariables).toBe(true)
+    // 保留动态变量依赖，不能跨选择器预先替换成固定值。
+    expect(decodedCss).toContain('var(--tw-gradient-stops)')
+    expect(decodedCss).toContain('var(--tw-shadow)')
+  })
+
+  it('公共 CJS 入口无需同步 require 仅提供 ESM 的模板插件', () => {
+    const require = createRequire(import.meta.url)
+    const { pluginLynxTailwindcss } = require('../packages/lynx/dist/index.cjs')
+    const handlers: unknown[] = []
+    pluginLynxTailwindcss().setup({
+      modifyBundlerChain: (handler: unknown) => handlers.push(handler),
+      modifyRspackConfig: (handler: unknown) => handlers.push(handler),
+    })
+    expect(handlers).toHaveLength(2)
+  })
 
   it.each(['layout-aspect', 'sizing-size', 'accessibility-sr'])('%s 的真实编码产物不允许通用最小尺寸覆盖被测尺寸', (id) => {
     const overrides: Record<string, string> = {}

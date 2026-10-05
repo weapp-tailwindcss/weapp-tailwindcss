@@ -47,6 +47,10 @@ export default defineConfig({
 
 插件固定使用 `platform: 'lynx'`、`generator.target: 'web'` 与 Lynx Web CSS 兼容输出。ReactLynx 保留原始 `className`，不会生成小程序 safe class，也不会创建 React Native style manifest。
 
+递归变量路径要求 Lynx runtime 3.6 以上，以及 ReactLynx 插件 0.12.4 以上公开的模板 API；更旧的构建器需要升级。源码支持边界不等于设备验收，当前原生测试仍使用固定 4.0.1 矩阵。
+
+模板编码前，插件复用 ReactLynx 构建器公开的 `LynxTemplatePlugin` hook，将未配置的 `enableCSSInlineVariables` 默认设为 `true`，让嵌套的 Tailwind utility 变量进入原生递归解析路径。显式页面配置和动态变量依赖保持不变；缺少模板 API 时构建失败，不静默回退。该设置不改变 `engineVersion`，也不代替渐变、阴影等效果的设备验收。当前真实编码回归固定 `engineVersion: '3.9'`，原生矩阵固定 Lynx `4.0.1`。
+
 ## 配置索引
 
 | 配置项 | 类型 | 默认值 | 说明 |

@@ -2,7 +2,9 @@ import type { RsbuildPlugin } from '@lynx-js/rspeedy'
 import type { WeappTailwindcssGeneratorOptions } from 'weapp-tailwindcss/generator'
 import type { PatchRspackConfigOptions, RspackConfigLike } from 'weapp-tailwindcss/rspack'
 import type { UserDefinedOptions } from 'weapp-tailwindcss/types'
+import type { LynxTemplatePluginApi } from './css-variables'
 import { patchRspackConfig, WeappTailwindcss } from 'weapp-tailwindcss/rspack'
+import { LynxCssVariablesPlugin } from './css-variables'
 
 const PLUGIN_NAME = 'weapp-tailwindcss:lynx'
 
@@ -17,7 +19,7 @@ export interface LynxTailwindcssOptions extends Omit<UserDefinedOptions, 'platfo
 }
 
 interface RspackPluginChain {
-  use: (plugin: new (options: UserDefinedOptions) => unknown, options: [UserDefinedOptions]) => unknown
+  use: <T>(plugin: new (options: T) => unknown, options: [T]) => unknown
 }
 
 interface BundlerChain {
@@ -25,6 +27,7 @@ interface BundlerChain {
 }
 
 interface RsbuildPluginApi {
+  useExposed: (key: symbol) => { LynxTemplatePlugin?: LynxTemplatePluginApi } | undefined
   modifyBundlerChain: (handler: (chain: BundlerChain) => BundlerChain) => void
   modifyRspackConfig: (handler: (config: RspackConfigLike) => RspackConfigLike) => void
 }
@@ -88,7 +91,13 @@ export function pluginLynxTailwindcss(options: LynxTailwindcssOptions = {}): Rsb
     setup(api) {
       const rsbuildApi = api as unknown as RsbuildPluginApi
       rsbuildApi.modifyBundlerChain((chain) => {
+        // 所有插件 setup 完成后复用实际构建器暴露的模板入口，避免独立副本与 ESM/CJS 边界。
+        const templatePlugin = rsbuildApi.useExposed?.(Symbol.for('LynxTemplatePlugin'))?.LynxTemplatePlugin
+        if (!templatePlugin?.getLynxTemplatePluginHooks) {
+          throw new Error('Lynx 模板编码 hook 不可用；请注册或升级 ReactLynx 构建插件（至少 0.12.4），确认其提供 LynxTemplatePlugin API。')
+        }
         chain.plugin(PLUGIN_NAME).use(WeappTailwindcss, [normalizedOptions])
+        chain.plugin(`${PLUGIN_NAME}:css-variables`).use(LynxCssVariablesPlugin, [templatePlugin])
         return chain
       })
       rsbuildApi.modifyRspackConfig(config => patchRspackConfig(config, normalizeRspackOptions(options.rspack)))

@@ -16,7 +16,7 @@ regressions:
 
 设备发现存在一个可确认的边界问题：已有明确的 `LYNX_IOS_DEVICE_ID` 或 destination ID，仍然枚举全部可用设备，且冲突配置直到查询完成才检查。
 
-现在先解析和校验请求身份，显式目标通过 `simctl list devices <ID> --json` 查询自身；未指定时保留全量发现及多设备歧义拒绝。simctl 的过滤为不区分大小写的 contains，返回后仍执行精确 ID、Booted、available、runtime 与 destination 校验；失败、超时、未启动或缺失均不回退其他目标。30 秒预算保持不变。
+现在先解析和校验请求身份，显式目标通过 `simctl list devices <ID> --json` 查询自身；未指定时保留全量发现及多设备歧义拒绝。simctl 的过滤为不区分大小写的 contains，返回后保留 runtime 信息，继续执行精确 ID、Booted、available 与 destination 校验；失败、超时、未启动或缺失均不回退其他目标。30 秒预算保持不变。
 
 ## 验证
 
