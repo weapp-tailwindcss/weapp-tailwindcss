@@ -13,6 +13,9 @@ export function lynxEvidenceStrategy(item: CompatibilityCase) {
   if (item.id === 'transform-skew') {
     return 'pixel-geometry'
   }
+  if (item.id === 'variant-dark') {
+    return 'color-scheme'
+  }
   if (item.probe === 'geometry' || item.id === 'variant-supports') {
     return 'native-geometry'
   }
@@ -27,6 +30,9 @@ export function evidenceSequence(item: CompatibilityCase, built: Pick<StaticCase
   const strategy = lynxEvidenceStrategy(item)
   if (!built?.generated || !built.bundled || strategy === 'build' || strategy === 'native-geometry') {
     return undefined
+  }
+  if (strategy === 'color-scheme') {
+    return { checkpoint: 'pixel:color-scheme-v1', frames: ['light-probe', 'light-control', 'dark-probe', 'dark-control'] }
   }
   if (strategy !== 'interaction') {
     return { checkpoint: 'pixel:probe-vs-control', frames: ['probe', 'control'] }

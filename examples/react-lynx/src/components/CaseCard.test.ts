@@ -31,6 +31,18 @@ function probeNodes(id: string) {
 }
 
 describe('Lynx compatibility text fixtures', () => {
+  it('dark 媒体 utility 由同步绘制的 text 直接消费，控制组不预设白字', () => {
+    const { item, probe, control, text } = probeNodes('variant-dark')
+    expect(String(text(probe).props.className)).toContain(item.className)
+    expect(String(text(control).props.className)).not.toContain(item.className)
+    expect(String(text(probe).props.className).split(/\s+/)).not.toContain('probe-target')
+    expect(String(text(control).props.className).split(/\s+/)).not.toContain('probe-target')
+    expect(text(probe).props['async-display']).toBe(false)
+    expect(text(control).props['async-display']).toBe(false)
+    expect(text(probe).props.children).toBe(text(control).props.children)
+    expect(elements(CaseCard({ item })).some(node => String(node.props.className).split(/\s+/).includes('dark'))).toBe(false)
+  })
+
   it.each(['grid-placement', 'grid-auto', 'grid-justify-self'])('%s 使用专属 grid 角色且没有额外文字子项', (id) => {
     const { item, probe, control } = probeNodes(id)
     const nodes = elements(CaseCard({ item }))

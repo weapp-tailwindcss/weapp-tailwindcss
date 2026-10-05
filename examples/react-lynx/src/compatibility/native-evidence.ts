@@ -36,6 +36,7 @@ export async function createNativeEvidence(reporter: EvidenceModule) {
   let pending = 0
   let submitted = false
   return {
+    runId: context.runId,
     async save(name: string, data: string | undefined) {
       pending++
       try {

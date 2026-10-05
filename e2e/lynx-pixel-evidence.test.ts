@@ -3,7 +3,10 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, expect, it } from 'vitest'
-import { requiresPixelEffect } from '../examples/react-lynx/src/compatibility/evidence'
+import { compatibilityCases } from '../examples/react-lynx/src/compatibility/catalog'
+import { evidenceSequence, requiresPixelEffect } from '../examples/react-lynx/src/compatibility/evidence'
+import staticEvidence from '../examples/react-lynx/src/compatibility/static-evidence.json'
+import { darkReceipts } from './lynx/fixtures/dark-images'
 import { effectFixtureImage } from './lynx/fixtures/effect-images'
 import { finalizeNativePixelEffects, validateNativePixelEvidence } from './lynx/pixel-evidence'
 import { PNG } from './lynx/png'
@@ -38,6 +41,7 @@ async function fixture() {
   const crops = path.join(directory, 'crops')
   await fs.mkdir(crops)
   const report = structuredClone(androidReport) as NativePlatformReport
+  report.evidence = { version: 1, runId: '00000000-0000-4000-8000-000000000001', bundleSha256: 'a'.repeat(64), artifacts: [] }
   for (const result of report.results) {
     // 此文件只验证像素协议；已改为几何取证的 supports 不再提供伪像素 checkpoint。
     if (result.id === 'variant-supports') {
@@ -46,18 +50,15 @@ async function fixture() {
       result.checkpoints = [{ name: 'geometry:probe-vs-control', passed: false }]
       continue
     }
-    const slots = (requiresPixelEffect(result.id) || result.checkpoints.some(checkpoint => checkpoint.name === 'pixel:probe-vs-control'))
-      ? ['probe', 'control']
-      : result.id === 'variant-state'
-        ? ['before', 'active']
-        : result.id === 'animation-spin'
-          ? ['before', 'after']
-          : result.id === 'transition-basic' ? ['before', 'during', 'after'] : []
+    const slots = evidenceSequence(compatibilityCases.find(item => item.id === result.id)!, staticEvidence.results.find(item => item.id === result.id))?.frames ?? []
     for (const [index, slot] of slots.entries()) {
       await fs.writeFile(path.join(crops, `${result.id}-${slot}.png`), await effectFixtureImage(result.id, slot) ?? screenshot(8, 4, [index * 80, 165, 233, 255]))
     }
-    if (requiresPixelEffect(result.id)) {
+    if (requiresPixelEffect(result.id) || result.id === 'variant-dark') {
       result.status = 'not-tested'
+    }
+    if (result.id === 'variant-dark') {
+      result.colorScheme = darkReceipts(report.evidence.runId)
     }
   }
   const final = await finalizeNativePixelEffects(report, crops)
@@ -69,6 +70,25 @@ async function fixture() {
 it('接收带完整且可见像素变化的原生报告', async () => {
   const { reportPath, report } = await fixture()
   await expect(readPixelReport(reportPath, 'android')).resolves.toEqual(report)
+})
+
+it.each(['missing-frame', 'foreign-receipt', 'wrong-restore', 'false-supported'])('dark 的 %s 不能进入最终验收', async (mode) => {
+  const { crops, report, reportPath } = await fixture()
+  const result = report.results.find(item => item.id === 'variant-dark')!
+  if (mode === 'missing-frame') {
+    await fs.rm(path.join(crops, 'variant-dark-dark-control.png'))
+  }
+  else if (mode === 'foreign-receipt') {
+    result.colorScheme!.dark.runId = 'another-run'
+  }
+  else if (mode === 'wrong-restore') {
+    result.colorScheme!.restored.scheme = 'dark'
+  }
+  else {
+    await fs.copyFile(path.join(crops, 'variant-dark-light-probe.png'), path.join(crops, 'variant-dark-dark-probe.png'))
+  }
+  await fs.writeFile(reportPath, JSON.stringify(report))
+  await expect(readPixelReport(reportPath, 'android')).rejects.toThrow(/variant-dark|颜色模式/)
 })
 
 it('拒绝原始基线中仅多一列背景像素导致的支持结论', async () => {
@@ -202,7 +222,7 @@ it('宿主只判定待验收效果，保留原始采集报告且无效图不能�
   const { crops, report } = await fixture()
   await expect(finalizeNativePixelEffects(report, crops)).rejects.toThrow('原始采集报告不能预先声明')
   for (const result of report.results) {
-    if (requiresPixelEffect(result.id)) {
+    if (requiresPixelEffect(result.id) || result.id === 'variant-dark') {
       result.status = 'not-tested'
       result.reason = '等待宿主'
     }

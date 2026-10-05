@@ -107,6 +107,13 @@ export interface NativeCaseResult extends PlatformResult {
   failureStage?: Extract<FailureStage, 'runtime' | 'version-limit'>
   checkpoints: RuntimeCheckpoint[]
   geometry?: NativeGeometryEvidence
+  colorScheme?: Record<'light' | 'dark' | 'restored', NativeColorSchemeReceipt>
+}
+
+export interface NativeColorSchemeReceipt {
+  runId: string
+  requestId: string
+  scheme: 'light' | 'dark'
 }
 
 export interface NativeRuntimeEnvironment {

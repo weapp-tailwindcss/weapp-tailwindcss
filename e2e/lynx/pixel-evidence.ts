@@ -5,6 +5,7 @@ import path from 'node:path'
 import { compatibilityCases } from '../../examples/react-lynx/src/compatibility/catalog'
 import { evidenceSequence, requiresPixelEffect } from '../../examples/react-lynx/src/compatibility/evidence'
 import staticEvidenceJson from '../../examples/react-lynx/src/compatibility/static-evidence.json'
+import { evaluateColorScheme, validateColorSchemeReceipts } from './color-scheme'
 import { evaluatePixelEffect } from './pixel-effects'
 import { PNG } from './png'
 
@@ -42,11 +43,23 @@ export async function finalizeNativePixelEffects(raw: NativePlatformReport, crop
   const report = structuredClone(raw)
   for (const result of report.results) {
     const built = staticById.get(result.id)
-    if (!requiresPixelEffect(result.id) || !built?.generated || !built.bundled) {
+    if ((!requiresPixelEffect(result.id) && result.id !== 'variant-dark') || !built?.generated || !built.bundled) {
       continue
     }
     if (result.status !== 'not-tested') {
       throw new Error(`${result.id} 原始采集报告不能预先声明预期效果结论`)
+    }
+    if (result.id === 'variant-dark') {
+      validateColorSchemeReceipts(result, report.evidence?.runId)
+      const item = compatibilityCases.find(item => item.id === result.id)!
+      const frames = evidenceSequence(item, built)!.frames
+      const measured = evaluateColorScheme(await Promise.all(frames.map(frame => readPixels(path.join(cropsDirectory, `${result.id}-${frame}.png`)))))
+      Object.assign(result, measured)
+      if (measured.status === 'supported') {
+        delete result.reason
+        delete result.failureStage
+      }
+      continue
     }
     const [probe, control] = await Promise.all(['probe', 'control'].map(frame => readPixels(path.join(cropsDirectory, `${result.id}-${frame}.png`))))
     const measured = evaluatePixelEffect(result.id, probe!, control!)!
@@ -78,6 +91,16 @@ export async function validateNativePixelEvidence(report: NativePlatformReport, 
         throw new Error(`${report.platform}:${item.id} 缺少 ${sequence.checkpoint} checkpoint`)
       }
       const images = await Promise.all(sequence.frames.map(frame => readPixels(path.join(cropsDirectory, `${item.id}-${frame}.png`))))
+      if (item.id === 'variant-dark') {
+        validateColorSchemeReceipts(result!, report.evidence?.runId)
+        const measured = evaluateColorScheme(images)
+        const expected = measured.checkpoints[0]!
+        if (result?.status !== measured.status || result.reason !== measured.reason || result.failureStage !== measured.failureStage
+          || result.checkpoints.length !== 1 || Object.entries(expected).some(([key, value]) => checkpoint[key as keyof typeof expected] !== value)) {
+          throw new Error(`${report.platform}:${item.id} 颜色模式结论与四帧像素不符`)
+        }
+        continue
+      }
       for (let index = 1; index < images.length; index++) {
         const before = images[index - 1]!
         const after = images[index]!

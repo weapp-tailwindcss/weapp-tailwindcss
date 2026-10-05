@@ -15,7 +15,7 @@ async function main() {
   try {
     if (platform === 'android') {
       const source = path.join(hosts, 'android', 'app', 'src', 'main', 'java', 'com', 'weapptailwindcss', 'lynxcompat')
-      for (const name of ['EvidenceStore', 'GeometryBounds']) {
+      for (const name of ['EvidenceStore', 'GeometryBounds', 'ColorSchemeSession']) {
         await execa('javac', ['-d', directory, path.join(source, `${name}.java`), path.join(fixtures, `${name}Test.java`)], { stdio: 'inherit' })
         await execa('java', ['-cp', directory, `com.weapptailwindcss.lynxcompat.${name}Test`, directory], { stdio: 'inherit' })
       }
@@ -23,9 +23,11 @@ async function main() {
     else {
       const source = path.join(hosts, 'ios', 'App')
       const { stdout: sdk } = await execa('xcrun', ['--sdk', 'macosx', '--show-sdk-path'])
-      const executable = path.join(directory, 'evidence-store-test')
-      await execa('xcrun', ['--sdk', 'macosx', 'clang', '-fobjc-arc', '-Wall', '-Wextra', '-Werror', '-isysroot', sdk.trim(), '-framework', 'Foundation', '-I', source, path.join(source, 'EvidenceStore.m'), path.join(fixtures, 'evidence-store.test.m'), '-o', executable], { stdio: 'inherit' })
-      await execa(executable, [directory], { stdio: 'inherit' })
+      for (const [name, test] of [['EvidenceStore', 'evidence-store'], ['ColorSchemeSession', 'color-scheme']]) {
+        const executable = path.join(directory, `${test}-test`)
+        await execa('xcrun', ['--sdk', 'macosx', 'clang', '-fobjc-arc', '-Wall', '-Wextra', '-Werror', '-isysroot', sdk.trim(), '-framework', 'Foundation', '-I', source, path.join(source, `${name}.m`), path.join(fixtures, `${test}.test.m`), '-o', executable], { stdio: 'inherit' })
+        await execa(executable, [directory], { stdio: 'inherit' })
+      }
     }
   }
   finally {

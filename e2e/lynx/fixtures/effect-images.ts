@@ -1,9 +1,13 @@
 import fs from 'node:fs/promises'
 import { PNG } from '../png'
+import { darkImage } from './dark-images'
 import { skewImage } from './skew-images'
 
 /** ce65d0626 的原始 Android 局部图：utility 移除了默认效果，却没有绘制预期效果。 */
 export async function effectFixtureImage(id: string, frame: string) {
+  if (id === 'variant-dark') {
+    return PNG.sync.write(darkImage(1, frame === 'dark-probe' ? 'white' : 'ink'))
+  }
   // skew 使用明确的合成图验证协议，不能冒充设备截图。
   if (id === 'transform-skew') {
     return PNG.sync.write(skewImage(1, frame === 'control' ? 'identity' : 'skew'))

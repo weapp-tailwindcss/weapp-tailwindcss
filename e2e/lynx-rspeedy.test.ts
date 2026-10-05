@@ -3,10 +3,11 @@ import fs from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import postcss from 'postcss'
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import staticEvidenceJson from '../examples/react-lynx/src/compatibility/static-evidence.json'
 import { buildCompatibilityBundle } from './lynx/build'
 import { compatibilityDir, exampleDir, getCatalogHash, lynxIntermediateDir, repoRoot } from './lynx/catalog'
+import { verifyDarkFixture } from './lynx/dark-fixture-browser'
 import { verifyFlexFixture } from './lynx/flex-fixture-browser'
 import { verifyGridFixtures } from './lynx/grid-fixture-browser'
 import { verifySkewFixture } from './lynx/skew-fixture-browser'
@@ -18,9 +19,20 @@ let decodedCss = ''
 let decodedBundle: { 'engine-version': string, 'page-config': string } | undefined
 
 describe('ReactLynx Rspeedy compatibility evidence', () => {
-  it('builds the public Lynx package and a development bundle with inspectable CSS', async () => {
+  // 构建和解码属于共享夹具，定向运行不能跳过日志或沿用磁盘旧产物。
+  beforeAll(async () => {
     const build = await buildCompatibilityBundle()
     encoderLog = build.encoderLog
+    const require = createRequire(path.join(repoRoot, 'e2e', 'package.json'))
+    const tasm = require('@lynx-js/tasm') as { decode_napi: (source: Uint8Array) => unknown, decode_wasm: (source: Uint8Array) => Promise<unknown>, supportNapi: () => boolean }
+    const source = new Uint8Array(await fs.readFile(bundlePath))
+    const decoded = tasm.supportNapi() ? tasm.decode_napi(source) : await tasm.decode_wasm(source)
+    decodedBundle = decoded as typeof decodedBundle
+    // decoder 以双花括号打印变量；仅恢复诊断文本语法，不改写被测字面量或实际 bundle。
+    decodedCss = (decoded as { css: { text: string } }).css.text.replace(/\{\{(--[a-z0-9-]+)\}\}/gi, 'var($1)')
+  }, 420_000)
+
+  it('builds the public Lynx package and a development bundle with inspectable CSS', async () => {
     const [bundle, css, tasm] = await Promise.all([
       fs.readFile(bundlePath),
       fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8'),
@@ -32,16 +44,10 @@ describe('ReactLynx Rspeedy compatibility evidence', () => {
     expect((JSON.parse(tasm) as { css: { cssMap: object } }).css.cssMap).toBeTruthy()
   }, 300_000)
 
-  it('decodes the real bundle with the pinned TASM decoder', async () => {
-    const require = createRequire(path.join(repoRoot, 'e2e', 'package.json'))
-    const tasm = require('@lynx-js/tasm') as { decode_napi: (source: Uint8Array) => unknown, decode_wasm: (source: Uint8Array) => Promise<unknown>, supportNapi: () => boolean }
-    const source = new Uint8Array(await fs.readFile(bundlePath))
-    const decoded = tasm.supportNapi() ? tasm.decode_napi(source) : await tasm.decode_wasm(source)
-    expect(decoded).toBeTruthy()
-    decodedBundle = decoded as typeof decodedBundle
-    // decoder 以双花括号打印变量；仅恢复诊断文本语法，不改写被测字面量或实际 bundle。
-    decodedCss = (decoded as { css: { text: string } }).css.text.replace(/\{\{(--[a-z0-9-]+)\}\}/gi, 'var($1)')
-  }, 120_000)
+  it('decodes the real bundle with the pinned TASM decoder', () => {
+    expect(decodedBundle).toBeTruthy()
+    expect(decodedCss).not.toBe('')
+  })
 
   it('固定 SDK 的编码配置启用运行时递归变量解析', async () => {
     const tasm = JSON.parse(await fs.readFile(path.join(lynxIntermediateDir, 'tasm.json'), 'utf8'))
@@ -176,6 +182,10 @@ describe('ReactLynx Rspeedy compatibility evidence', () => {
 
   it.each(['flex-grow', 'flex-wrap-order', 'flex-shorthand-shrink'])('%s 的真实组件产生竞争布局且逐项依赖 utility', async (id) => {
     await verifyFlexFixture(await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8'), id)
+  }, 30_000)
+
+  it('dark 的真实文字夹具只响应媒体颜色模式', async () => {
+    await verifyDarkFixture(await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8'))
   }, 30_000)
 
   it('真实组件和 CSS 的 skew 图形在不同像素密度下必须同时依赖双轴 utility', async () => {

@@ -5,9 +5,11 @@ import os from 'node:os'
 import path from 'node:path'
 import { afterEach, expect, it } from 'vitest'
 import { compatibilityCases } from '../examples/react-lynx/src/compatibility/catalog'
-import { requiresPixelEffect } from '../examples/react-lynx/src/compatibility/evidence'
+import { evidenceSequence, requiresPixelEffect } from '../examples/react-lynx/src/compatibility/evidence'
 import { evaluateGeometry } from '../examples/react-lynx/src/compatibility/geometry'
+import staticEvidence from '../examples/react-lynx/src/compatibility/static-evidence.json'
 import { collectNativeEvidence, createEvidenceContext, cropsDirectory, sha256, validateNativeEvidence } from './lynx/evidence'
+import { darkReceipts } from './lynx/fixtures/dark-images'
 import { effectFixtureImage } from './lynx/fixtures/effect-images'
 import { finalizeNativePixelEffects } from './lynx/pixel-evidence'
 import { PNG } from './lynx/png'
@@ -65,13 +67,7 @@ async function fixture() {
   report.evidence = { ...context, artifacts: [] }
   const images = new Map<string, Buffer>()
   for (const result of report.results) {
-    const frames = (requiresPixelEffect(result.id) || result.checkpoints.some(checkpoint => checkpoint.name === 'pixel:probe-vs-control'))
-      ? ['probe', 'control']
-      : result.id === 'variant-state'
-        ? ['before', 'active']
-        : result.id === 'animation-spin'
-          ? ['before', 'after']
-          : result.id === 'transition-basic' ? ['before', 'during', 'after'] : []
+    const frames = evidenceSequence(compatibilityCases.find(item => item.id === result.id)!, staticEvidence.results.find(item => item.id === result.id))?.frames ?? []
     for (const [index, frame] of frames.entries()) {
       const name = `${result.id}-${frame}.png`
       const png = new PNG({ width: 8, height: 4 })
@@ -82,8 +78,11 @@ async function fixture() {
       images.set(name, data)
       report.evidence.artifacts.push({ runId: context.runId, name, sha256: sha256(data), byteLength: data.byteLength })
     }
-    if (requiresPixelEffect(result.id)) {
+    if (requiresPixelEffect(result.id) || result.id === 'variant-dark') {
       result.status = 'not-tested'
+    }
+    if (result.id === 'variant-dark') {
+      result.colorScheme = darkReceipts(context.runId)
     }
   }
   const reportPath = path.join(directory, 'report.json')

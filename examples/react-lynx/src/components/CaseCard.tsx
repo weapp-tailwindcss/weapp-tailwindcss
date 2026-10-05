@@ -1,5 +1,6 @@
 import type { CaseBaseline, CompatibilityCase, ExpectedDeclaration, RuntimeStatus, StaticCaseEvidence } from '../compatibility/types'
 import { lynxEvidenceStrategy } from '../compatibility/evidence'
+import { DarkProbePair } from './DarkProbePair'
 import { FlexProbePair, isFlexFixture } from './FlexProbePair'
 import { GridProbePair, isGridFixture } from './GridProbePair'
 
@@ -130,22 +131,24 @@ export function CaseCard({ item, result, staticEvidence }: { item: Compatibility
           ? <GridProbePair item={item} />
           : isFlexFixture(item.id)
             ? <FlexProbePair item={item} />
-            : (
-                <view className={item.id === 'variant-dark' ? `${pairClass} dark` : pairClass}>
-                  <view id={`probe-container-${item.id}`} flatten={false} className={usesCaptureFrame ? 'probe-slot probe-capture' : 'probe-slot'}>
-                    <view id={`probe-${item.id}`} className={`${probeClassName} ${viewClassName}`}>
-                      {item.id !== 'transform-skew' && <ProbeBody id={item.id} textClassName={textClassName} />}
+            : item.id === 'variant-dark'
+              ? <DarkProbePair item={item} />
+              : (
+                  <view className={pairClass}>
+                    <view id={`probe-container-${item.id}`} flatten={false} className={usesCaptureFrame ? 'probe-slot probe-capture' : 'probe-slot'}>
+                      <view id={`probe-${item.id}`} className={`${probeClassName} ${viewClassName}`}>
+                        {item.id !== 'transform-skew' && <ProbeBody id={item.id} textClassName={textClassName} />}
+                      </view>
+                      {item.id === 'layout-z-index' && <view className="probe-z-overlay" />}
                     </view>
-                    {item.id === 'layout-z-index' && <view className="probe-z-overlay" />}
-                  </view>
-                  <view id={`control-container-${item.id}`} flatten={false} className={usesCaptureFrame ? 'probe-slot probe-control-slot probe-capture' : 'probe-slot probe-control-slot'}>
-                    <view id={`control-${item.id}`} className={probeClassName}>
-                      {item.id !== 'transform-skew' && <ProbeBody id={`control-${item.id}`} />}
+                    <view id={`control-container-${item.id}`} flatten={false} className={usesCaptureFrame ? 'probe-slot probe-control-slot probe-capture' : 'probe-slot probe-control-slot'}>
+                      <view id={`control-${item.id}`} className={probeClassName}>
+                        {item.id !== 'transform-skew' && <ProbeBody id={`control-${item.id}`} />}
+                      </view>
+                      {item.id === 'layout-z-index' && <view className="probe-z-overlay" />}
                     </view>
-                    {item.id === 'layout-z-index' && <view className="probe-z-overlay" />}
                   </view>
-                </view>
-              )}
+                )}
       </view>
 
       {result?.ios.reason && (

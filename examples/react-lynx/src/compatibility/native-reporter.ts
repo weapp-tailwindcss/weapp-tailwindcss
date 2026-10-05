@@ -1,8 +1,10 @@
+import type { ColorSchemeModule } from './native-color-scheme'
 import type { EvidenceModule, NativeEvidenceWriter } from './native-evidence'
 import type { CompatibilityCase, NativeCaseResult, NativePlatformReport, NativeRect, NativeRuntimeEnvironment, Platform, StaticEvidenceReport } from './types'
 import { compatibilityCases } from './catalog'
 import { lynxEvidenceStrategy, requiresPixelEffect } from './evidence'
 import { collectGeometry } from './geometry'
+import { collectColorScheme } from './native-color-scheme'
 import { createNativeEvidence } from './native-evidence'
 import { waitForProbeLayout } from './runtime-ready'
 import staticEvidenceJson from './static-evidence.json'
@@ -11,7 +13,7 @@ interface ScreenshotResult {
   data: string
 }
 
-interface ReporterModule extends EvidenceModule {
+interface ReporterModule extends EvidenceModule, ColorSchemeModule {
   measure?: (id: string, callback: (value: NativeRect | null) => void) => void
   capture?: (id: string, callback: (value: string | null) => void) => void
   pointerEventsNone?: (id: string, callback: (value: boolean | number | null) => void) => void
@@ -280,6 +282,9 @@ async function collectCase(item: CompatibilityCase, reporter: ReporterModule, ev
   }
   if (strategy === 'native-geometry') {
     return collectGeometry(item, id => measure(id, reporter))
+  }
+  if (strategy === 'color-scheme') {
+    return collectColorScheme(reporter, evidence)
   }
   if (strategy === 'interaction') {
     return collectInteraction(item, reporter, evidence)
