@@ -89,7 +89,7 @@ export async function assertIssue928GradientRuntime(miniProgram: any, options: I
   })))
   const compareRect = expandRect(unionRect(...cssRects), 2)
   const viewportWidth = (await gradientPage.size()).width
-  const comparePng = cropCssPixelRegion(gradientScreenshot, viewportWidth, compareRect)
+  const comparePng = cropCssPixelRegion(gradientScreenshot, viewportWidth, compareRect, { requireIntegerScale: true })
   const comparePath = path.resolve(artifactDir, `${options.artifactPrefix}-issue-928-compare.png`)
   await fs.writeFile(comparePath, PNG.sync.write(comparePng))
   let compareBaselineInitialized = false

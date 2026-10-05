@@ -26,7 +26,7 @@ export function cropMiniProgramViewport(image: PNG, metrics: WindowMetrics): PNG
   }
   const scale = image.width / screenWidth
   if (Math.abs(image.height - screenHeight * scale) > 2) {
-    throw new Error('小程序截图尺寸与运行时屏幕比例不一致。')
+    throw new Error(`小程序截图尺寸与运行时屏幕比例不一致：图像 ${image.width}×${image.height}，屏幕 ${screenWidth}×${screenHeight}，按宽度推算高度 ${screenHeight * scale}。请在当前项目的微信模拟器菜单选择「显示比例 → 100%」并保留足够窗口空间后重新验证；E2E 不会修改登录态或放宽裁剪校验。`)
   }
   const top = Math.round(screenTop * scale)
   const width = Math.round(windowWidth * scale)

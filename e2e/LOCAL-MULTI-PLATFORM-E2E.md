@@ -212,6 +212,12 @@ pnpm e2e:hbuilderx:mp
 
 普通 Vite demo 使用项目自身的 `dev:*`/`build:*` 脚本。H5 需要浏览器页面和最终 CSS 都通过结构探针；小程序需要真实 DevTools/headless runtime、WXML 和可达样式文件都通过。小程序 IDE 链路不要反复启动 automator，同一 suite 复用连接并用 `miniProgram.reLaunch(...)` 切页。
 
+#### 微信像素截图的显示比例
+
+稳定版 DevTools 的截图会受模拟器「自适应」缩放与宿主窗口空间影响，接口没有返回完整截图几何。需要像素对照时，在确认属于本轮测试的项目窗口中，用模拟器机型菜单选择「显示比例 → 100%」，并保持窗口足以完整容纳模拟器。375×667 CSS 像素的模拟器在本次稳定版实现中至少需要 391×683 的内容窗口；最终仍以原图尺寸和运行时几何检查为准，不把菜单值当作通过证据。
+
+设置按完整项目路径保存，换 worktree 或临时目录后不自动继承。E2E 不直接修改 IDE 内部存储、不增加 Tool 协议白名单、不为恢复截图重启或重置登录。截图比例失败会打印原图和运行时尺寸；#928 的像素基线还拒绝非整数采样比例。模板 smoke 可独立保存原图证据，但像素测试不能切到原图绕过裁剪。详见[截图缩放与渐变基线复盘](../docs/engineering/lessons/wechat-screenshot-pixel-alignment.md)。
+
 ### 3.3 Android、iOS、Harmony
 
 先做 HBuilderX 本地结构/HMR，再做截图：
