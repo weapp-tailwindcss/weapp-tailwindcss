@@ -5,6 +5,7 @@ baseline: 63f883bd7f559ace6eed2b4c7074a1f8b4fb2a42
 regressions:
   - scripts/ci/demo-matrix/rollup-recreation.test.mjs
   - scripts/ci/demo-matrix/rollup-recreation-lifecycle.test.mjs
+  - scripts/ci/demo-matrix/rollup-recreation-fixture.test.mjs
   - scripts/ci/demo-matrix/rollup-watch.test.mjs
 ---
 
@@ -31,17 +32,24 @@ FileWatcher 只在首个路径别名加入时建立订阅，每次仍刷新 tran
 
 上游 [Chokidar #1437](https://github.com/paulmillr/chokidar/issues/1437) 也报告共享 watcher 的事件丢失，[PR #1442](https://github.com/paulmillr/chokidar/pull/1442) 修复的是不同 target 共用目录扫描节流键。Chokidar 5.0.0 已包含该修复，但其 [`_remove`](https://github.com/paulmillr/chokidar/blob/5.0.0/src/index.ts#L879) 仍保留单目录限制，[目标目录注册](https://github.com/paulmillr/chokidar/blob/5.0.0/src/handler.ts#L654)仍跳过初始扫描，不能据此认定本次问题已由上游发布版解决。原版 Rollup 为 transform 依赖建立独立 watcher；这里的已证事实针对本仓共享 watcher 补丁，不声称已复现未打补丁的原版。
 
+`c19d19c9e` 的 macOS 183 项通过没有覆盖更快的连续重建。随后 [Ubuntu CI](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/37256821213/job/111595577130) 在连续恢复用例超时，并出现 `fs.watch` spy 自递归。本地 Linux arm64 / Node 24.21.0 容器复现了相同问题；将外层测试预算与单次事件期限分开后，首次偏离明确为第二轮 delete 丢失。原生事件轨迹显示首轮 add 后 53ms 的真实删除仍命中上一轮 100ms remove 去重记录。更快的 1ms 状态检查也让 macOS CJS/ESM 在修复前稳定报告 `cycle 2: delete`。
+
+只清除 remove 记录仍不完整：Linux 更快重建后，第三轮收到多个 native 事件却没有进入 `_remove`。5ms watch 去重记录中的 retry 捕获旧 listener；新监听沿用该记录而不安排自己的对账，旧 retry 又被有效状态检查拒绝。修复将这两种记录限定在文件订阅代次内：只有新 native binding 成功后才取消旧 retry 并调用两种记录的 `clear()`，同时取消其定时器。绑定失败仍保留原恢复流程，同一代内继续去重，不放宽阈值。
+
+测试自身的超时也是独立缺陷。Vitest 超时后不会等待测试函数中的 finally，下一例可能把上一例尚未恢复的 `fs.watch` spy 当作原始函数，导致递归。fixture 现在在模块级保存原始函数，使用 `TestContext.signal` 同步关闭 watcher、恢复本例 spy 并释放屏障；异步等待可响应 abort，返回后再次检查取消。`onTestFinished` 等待 body 和幂等清理结束后才允许下一例开始。新增 CJS/ESM × release/pending 四项回归，覆盖释放后禁止重新监听、永不完成的 Promise 可取消、原生句柄清零和重复清理不影响下一例 spy。
+
 ## 验证
 
 - 修复前持久用例证明提前重建、stat 到绑定之间再次删除、重复目录登记三类失败。
-- `CI=1 pnpm test:demo:matrix`：28 文件、183 项通过，脚本固定 `--update=none`。覆盖三个框架实际解析的 Rollup、CJS/ESM、文件/目录 transform 依赖、原子保存、删除恢复及现有矩阵检查。
-- 新增 32 项回归包含注册屏障、`atomic=false`、连续重建、暂停恢复时取消、取消后重新加入、事件回调中同步取消、stat 尚未返回时取消，以及实际 `fs.watch` 句柄关闭断言。
-- `CI=1 pnpm exec eslint scripts/ci/demo-matrix/rollup-recreation.test.mjs scripts/ci/demo-matrix/rollup-recreation-lifecycle.test.mjs` 通过。
+- 初次 macOS 验证 28 文件、183 项通过，但后续 CI 证明连续快速重建覆盖不足；不得把这一结果当作跨平台完成。补齐修复后 `CI=1 pnpm test:demo:matrix`：29 文件、187 项通过，脚本固定 `--update=none`。覆盖三个框架实际解析的 Rollup、CJS/ESM、文件/目录 transform 依赖、原子保存、删除恢复及现有矩阵检查。
+- 文件恢复与 fixture 的 36 项回归包含注册屏障、`atomic=false`、连续重建、暂停恢复时取消、取消后重新加入、事件回调中同步取消、stat 尚未返回时取消，以及实际 `fs.watch` 句柄关闭断言。
+- 修改的 fixture、fixture 回归与 lifecycle 回归均通过定向 ESLint。
+- 本地 Linux arm64 容器（Node 24.21.0、Debian bookworm）使用与候选补丁 SHA256 一致的 Rollup 3 文件，三份测试 36 项通过。测试临时目录在容器原生文件系统中；诊断 harness 直接解析复制的 Rollup，并非整套框架矩阵。失败及修复日志保存在 `.tmp/linux-rollup-recovery/`，包括 `before.log`、`delete-trace.log`、`second-deviation.log` 和 `after-generational-throttles.log`。
 - `CI=1 pnpm install --frozen-lockfile --offline` 通过。pnpm `patch-commit` 生成补丁时会重新解析全图；未保留无关依赖更新。锁文件仅替换 223 处 Rollup 3 补丁哈希，反向替换后与起始锁文件逐字一致。
 
 ## 适用边界
 
-本轮真实文件系统验证来自 macOS；使用原生 `fs.watch`，未以 polling 或增加 5 秒预算代替修复。测试随 demo matrix 在其他平台执行，但这里不声称已经取得本提交的 Linux/Windows 实机结果。
+真实文件系统验证来自 macOS 和本地 Linux arm64 容器；使用原生 `fs.watch`，单次事件期限仍为 5 秒。外层用例期限为 20 秒，用于串行步骤及清理，失败仍在首次事件等待的 5 秒处明确报告。没有用文件系统 polling 代替原生事件，也未获得本修复的 Windows 实机验收。
 
 本修复覆盖父目录存在时的文件删除重建及依赖订阅生命周期，没有宣称支持任意祖先目录树删除后恢复。补丁只影响本仓冻结安装，不随公开包发布，因此不增加公开包 change intent。没有 demo 或样式输出修改，无需变更 static 基线。
 

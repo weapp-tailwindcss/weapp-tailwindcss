@@ -1,5 +1,5 @@
 diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
-index dc419c2d423cdfa2479b2cd9c6343b05d936c741..e60c3c770d38ed41c470f5154fa3bdec25e760be 100644
+index dc419c2d423cdfa2479b2cd9c6343b05d936c741..f6166ed2ccb7e5d844132d69a8df6015a986afa5 100644
 --- a/dist/es/shared/watch.js
 +++ b/dist/es/shared/watch.js
 @@ -2731,7 +2731,6 @@ _watchWithNodeFs(path, listener) {
@@ -18,7 +18,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..e60c3c770d38ed41c470f5154fa3bdec
    return closer;
  }
 
-@@ -2774,26 +2774,58 @@ _handleFile(file, stats, initialAdd) {
+@@ -2774,26 +2774,66 @@ _handleFile(file, stats, initialAdd) {
    // if the file is already being watched, do nothing
    if (parent.has(basename)) return;
 
@@ -27,6 +27,14 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..e60c3c770d38ed41c470f5154fa3bdec
 +  const bindListener = () => {
 +    const closer = this._watchWithNodeFs(file, listener);
 +    if (!closer) return;
++    // 新文件已成功绑定；上一代删除的去重窗口不能吞掉新一轮删除。
++    this.fsw._throttled.get('remove')?.get(sysPath$2.join(dirname, basename))?.clear();
++    // 延迟对账捕获旧 listener；新订阅必须拥有独立的事件节流窗口。
++    const pendingWatch = this.fsw._throttled.get(THROTTLE_MODE_WATCH)?.get(file);
++    if (pendingWatch) {
++      clearTimeout(pendingWatch.retry);
++      pendingWatch.clear();
++    }
 +    active = true;
 +    const installedRevision = ++revision;
 +    let disposed = false;
@@ -85,7 +93,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..e60c3c770d38ed41c470f5154fa3bdec
          // Fix issues where mtime is null but file is still present
          this.fsw._remove(dirname, basename);
        }
-@@ -2809,7 +2841,20 @@ _handleFile(file, stats, initialAdd) {
+@@ -2809,7 +2849,20 @@ _handleFile(file, stats, initialAdd) {
      }
    };
    // kick off the watcher
@@ -107,7 +115,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..e60c3c770d38ed41c470f5154fa3bdec
 
    // emit an add event if we're supposed to
    if (!(initialAdd && this.fsw.options.ignoreInitial) && this.fsw._isntIgnored(file)) {
-@@ -2817,7 +2862,7 @@ _handleFile(file, stats, initialAdd) {
+@@ -2817,7 +2870,7 @@ _handleFile(file, stats, initialAdd) {
      this.fsw._emit(EV_ADD$2, file, stats);
    }
 
@@ -116,7 +124,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..e60c3c770d38ed41c470f5154fa3bdec
  }
 
  /**
-@@ -2976,10 +3021,24 @@ async _handleDir(dir, stats, initialAdd, depth, target, wh, realpath) {
+@@ -2976,10 +3029,24 @@ async _handleDir(dir, stats, initialAdd, depth, target, wh, realpath) {
 
    const oDepth = this.fsw.options.depth;
    if ((oDepth == null || depth <= oDepth) && !this.fsw._symlinkPaths.has(realpath)) {
@@ -144,7 +152,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..e60c3c770d38ed41c470f5154fa3bdec
 
      closer = this._watchWithNodeFs(dir, (dirPath, stats) => {
        // if current directory is removed, do nothing
-@@ -3896,6 +3955,8 @@ constructor(_opts) {
+@@ -3896,6 +3963,8 @@ constructor(_opts) {
    this._watched = new Map();
    /** @type {Map<String, Array>} */
    this._closers = new Map();
@@ -153,7 +161,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..e60c3c770d38ed41c470f5154fa3bdec
    /** @type {Set<String>} */
    this._ignoredPaths = new Set();
 
-@@ -4080,6 +4141,7 @@ unwatch(paths_) {
+@@ -4080,6 +4149,7 @@ unwatch(paths_) {
      }
 
      this._closePath(path);
@@ -161,7 +169,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..e60c3c770d38ed41c470f5154fa3bdec
 
      this._ignoredPaths.add(path);
      if (this._watched.has(path)) {
-@@ -4109,6 +4171,7 @@ close() {
+@@ -4109,6 +4179,7 @@ close() {
      const promise = closer();
      if (promise instanceof Promise) closers.push(promise);
    }));
@@ -169,7 +177,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..e60c3c770d38ed41c470f5154fa3bdec
    this._streams.forEach(stream => stream.destroy());
    this._userIgnored = undefined;
    this._readyCount = 0;
-@@ -4212,8 +4275,15 @@ async _emit(event, path, val1, val2, val3) {
+@@ -4212,8 +4283,15 @@ async _emit(event, path, val1, val2, val3) {
    }
 
    if (event === EV_CHANGE) {
@@ -187,7 +195,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..e60c3c770d38ed41c470f5154fa3bdec
    }
 
    if (opts.alwaysStat && val1 === undefined &&
-@@ -4451,11 +4521,6 @@ _remove(directory, item, isDirectory) {
+@@ -4451,11 +4529,6 @@ _remove(directory, item, isDirectory) {
    // via multiple paths (such as _handleFile and _handleDir)
    if (!this._throttle('remove', path, 100)) return;
 
@@ -199,7 +207,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..e60c3c770d38ed41c470f5154fa3bdec
    // This will create a new entry in the watched object in either case
    // so we got to do the directory check beforehand
    const wp = this._getWatchedDir(path);
-@@ -4491,12 +4556,23 @@ _remove(directory, item, isDirectory) {
+@@ -4491,12 +4564,23 @@ _remove(directory, item, isDirectory) {
    this._watched.delete(path);
    this._watched.delete(fullPath);
    const eventName = isDirectory ? EV_UNLINK_DIR : EV_UNLINK;
@@ -226,7 +234,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..e60c3c770d38ed41c470f5154fa3bdec
  }
 
  /**
-@@ -4573,49 +4649,52 @@ chokidar.watch = watch;
+@@ -4573,49 +4657,52 @@ chokidar.watch = watch;
 
  class FileWatcher {
      constructor(task, chokidarOptions) {
@@ -308,7 +316,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..e60c3c770d38ed41c470f5154fa3bdec
          };
          const watcher = chokidar
              .watch([], this.chokidarOptions)
-@@ -4740,6 +4819,7 @@ class Task {
+@@ -4740,6 +4827,7 @@ class Task {
          this.watchFiles = [];
          this.closed = false;
          this.invalidated = true;
@@ -316,7 +324,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..e60c3c770d38ed41c470f5154fa3bdec
          this.watched = new Set();
          this.watcher = watcher;
          this.options = options;
-@@ -4765,6 +4845,7 @@ class Task {
+@@ -4765,6 +4853,7 @@ class Task {
      invalidate(id, details) {
          this.invalidated = true;
          if (details.isTransformDependency) {
@@ -324,7 +332,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..e60c3c770d38ed41c470f5154fa3bdec
              for (const module of this.cache.modules) {
                  if (!module.transformDependencies.includes(id))
                      continue;
-@@ -4778,6 +4859,8 @@ class Task {
+@@ -4778,6 +4867,8 @@ class Task {
          if (!this.invalidated)
              return;
          this.invalidated = false;
@@ -333,7 +341,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..e60c3c770d38ed41c470f5154fa3bdec
          const options = {
              ...this.options,
              cache: this.cache
-@@ -4827,6 +4910,12 @@ class Task {
+@@ -4827,6 +4918,12 @@ class Task {
          this.watched = new Set();
          this.watchFiles = result.watchFiles;
          this.cache = result.cache;
@@ -347,7 +355,7 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..e60c3c770d38ed41c470f5154fa3bdec
              this.watchFile(id);
          }
 diff --git a/dist/shared/index.js b/dist/shared/index.js
-index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..e0c0933154521e389c4529590eb61f80e40c363b 100644
+index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..e7e4bd64534ba70cc82b7859667476923245ef0d 100644
 --- a/dist/shared/index.js
 +++ b/dist/shared/index.js
 @@ -2727,7 +2727,6 @@ _watchWithNodeFs(path, listener) {
@@ -366,7 +374,7 @@ index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..e0c0933154521e389c4529590eb61f80
    return closer;
  }
 
-@@ -2770,26 +2770,58 @@ _handleFile(file, stats, initialAdd) {
+@@ -2770,26 +2770,66 @@ _handleFile(file, stats, initialAdd) {
    // if the file is already being watched, do nothing
    if (parent.has(basename)) return;
 
@@ -375,6 +383,14 @@ index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..e0c0933154521e389c4529590eb61f80
 +  const bindListener = () => {
 +    const closer = this._watchWithNodeFs(file, listener);
 +    if (!closer) return;
++    // 新文件已成功绑定；上一代删除的去重窗口不能吞掉新一轮删除。
++    this.fsw._throttled.get('remove')?.get(sysPath$2.join(dirname, basename))?.clear();
++    // 延迟对账捕获旧 listener；新订阅必须拥有独立的事件节流窗口。
++    const pendingWatch = this.fsw._throttled.get(THROTTLE_MODE_WATCH)?.get(file);
++    if (pendingWatch) {
++      clearTimeout(pendingWatch.retry);
++      pendingWatch.clear();
++    }
 +    active = true;
 +    const installedRevision = ++revision;
 +    let disposed = false;
@@ -433,7 +449,7 @@ index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..e0c0933154521e389c4529590eb61f80
          // Fix issues where mtime is null but file is still present
          this.fsw._remove(dirname, basename);
        }
-@@ -2805,7 +2837,20 @@ _handleFile(file, stats, initialAdd) {
+@@ -2805,7 +2845,20 @@ _handleFile(file, stats, initialAdd) {
      }
    };
    // kick off the watcher
@@ -455,7 +471,7 @@ index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..e0c0933154521e389c4529590eb61f80
 
    // emit an add event if we're supposed to
    if (!(initialAdd && this.fsw.options.ignoreInitial) && this.fsw._isntIgnored(file)) {
-@@ -2813,7 +2858,7 @@ _handleFile(file, stats, initialAdd) {
+@@ -2813,7 +2866,7 @@ _handleFile(file, stats, initialAdd) {
      this.fsw._emit(EV_ADD$2, file, stats);
    }
 
@@ -464,7 +480,7 @@ index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..e0c0933154521e389c4529590eb61f80
  }
 
  /**
-@@ -2972,10 +3017,24 @@ async _handleDir(dir, stats, initialAdd, depth, target, wh, realpath) {
+@@ -2972,10 +3025,24 @@ async _handleDir(dir, stats, initialAdd, depth, target, wh, realpath) {
 
    const oDepth = this.fsw.options.depth;
    if ((oDepth == null || depth <= oDepth) && !this.fsw._symlinkPaths.has(realpath)) {
@@ -492,7 +508,7 @@ index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..e0c0933154521e389c4529590eb61f80
 
      closer = this._watchWithNodeFs(dir, (dirPath, stats) => {
        // if current directory is removed, do nothing
-@@ -3892,6 +3951,8 @@ constructor(_opts) {
+@@ -3892,6 +3959,8 @@ constructor(_opts) {
    this._watched = new Map();
    /** @type {Map<String, Array>} */
    this._closers = new Map();
@@ -501,7 +517,7 @@ index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..e0c0933154521e389c4529590eb61f80
    /** @type {Set<String>} */
    this._ignoredPaths = new Set();
 
-@@ -4076,6 +4137,7 @@ unwatch(paths_) {
+@@ -4076,6 +4145,7 @@ unwatch(paths_) {
      }
 
      this._closePath(path);
@@ -509,7 +525,7 @@ index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..e0c0933154521e389c4529590eb61f80
 
      this._ignoredPaths.add(path);
      if (this._watched.has(path)) {
-@@ -4105,6 +4167,7 @@ close() {
+@@ -4105,6 +4175,7 @@ close() {
      const promise = closer();
      if (promise instanceof Promise) closers.push(promise);
    }));
@@ -517,7 +533,7 @@ index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..e0c0933154521e389c4529590eb61f80
    this._streams.forEach(stream => stream.destroy());
    this._userIgnored = undefined;
    this._readyCount = 0;
-@@ -4208,8 +4271,15 @@ async _emit(event, path, val1, val2, val3) {
+@@ -4208,8 +4279,15 @@ async _emit(event, path, val1, val2, val3) {
    }
 
    if (event === EV_CHANGE) {
@@ -535,7 +551,7 @@ index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..e0c0933154521e389c4529590eb61f80
    }
 
    if (opts.alwaysStat && val1 === undefined &&
-@@ -4447,11 +4517,6 @@ _remove(directory, item, isDirectory) {
+@@ -4447,11 +4525,6 @@ _remove(directory, item, isDirectory) {
    // via multiple paths (such as _handleFile and _handleDir)
    if (!this._throttle('remove', path, 100)) return;
 
@@ -547,7 +563,7 @@ index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..e0c0933154521e389c4529590eb61f80
    // This will create a new entry in the watched object in either case
    // so we got to do the directory check beforehand
    const wp = this._getWatchedDir(path);
-@@ -4487,12 +4552,23 @@ _remove(directory, item, isDirectory) {
+@@ -4487,12 +4560,23 @@ _remove(directory, item, isDirectory) {
    this._watched.delete(path);
    this._watched.delete(fullPath);
    const eventName = isDirectory ? EV_UNLINK_DIR : EV_UNLINK;
