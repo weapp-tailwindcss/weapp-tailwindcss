@@ -78,6 +78,10 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Verify iOS preparation recovery
         run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-ios-container.test.ts e2e/lynx-native-options.test.ts e2e/lynx-native-artifacts.test.ts e2e/lynx-native-command.test.ts e2e/lynx-command-observer.test.ts --update=none
+      - name: Verify pinned Lynx source patch
+        run: |
+          ruby e2e/lynx/podfile.test.rb
+          ruby e2e/lynx/source-patch.test.rb
       - name: Boot iOS 18.5 simulator
         run: |
           udid="$(xcrun simctl create LynxCompatibility 'iPhone 16 Pro' 'com.apple.CoreSimulator.SimRuntime.iOS-18-5')"

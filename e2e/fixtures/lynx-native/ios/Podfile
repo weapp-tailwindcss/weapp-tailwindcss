@@ -1,4 +1,5 @@
 source 'https://cdn.cocoapods.org/'
+require_relative 'lynx-source-patch'
 
 platform :ios, '15.0'
 
@@ -12,6 +13,9 @@ target 'LynxCompatibilityHost' do
 end
 
 post_install do |installer|
+  lynx = installer.pod_targets.find { |target| target.pod_name == 'Lynx' }
+  raise '缺少受管 Lynx Pod' unless lynx
+  LynxSourcePatch.apply!(installer.sandbox.pod_dir('Lynx'), lynx.root_spec.version)
   installer.pods_project.targets.each do |target|
     target.build_configurations.each do |config|
       config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
