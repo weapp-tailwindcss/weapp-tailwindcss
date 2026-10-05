@@ -26,6 +26,22 @@ pnpm e2e:preflight prepare
 
 第三方工具中转同样受限：HBuilderX `launch mp-weixin --compile false` 会自动调用微信 CLI，启动前还会清理本地存储，禁止使用。独立脚本默认直接运行所选 HBuilderX 安装的同套 Node 与 uni 编译器持续 watch，再由 `scripts/wechat` 连接已有 IDE；安装身份缺失或歧义直接失败。只有显式 `HBUILDERX_COMPILE_ONLY=1` 才进入静态编译，一次性编译不能替代 watch/HMR 验收。环境合同与验收边界见[HBuilderX 微信 watch 复盘](../docs/engineering/lessons/hbuilderx-wechat-watch-session.md)。
 
+### 包源网络与代理
+
+`release status`、安装或其他包源请求超时时，先区分 DNS、TCP、TLS 与 HTTP 响应。系统显示“网络可达”、浏览器能访问或系统代理已开启，都不能证明当前命令行进程使用了同一条网络路径。macOS 可只读检查 `scutil --proxy`，再确认已配置代理的监听状态；分别用直连和该代理访问同一个官方 registry 地址，保留首次失败与有界对照。不凭超时次数认定 registry 服务故障，也不关闭证书校验、替换官方源或硬编码域名 IP 来放行。
+
+确认为命令行没有继承已启用的系统代理时，将下列配置放入机器本地的任务启动环境，并让 prepare、verify、全面入口及其子进程复用。不要把本机代理端口、账号或工具路径提交到仓库。
+
+| 环境变量 | 配置要求 |
+| --- | --- |
+| `HTTP_PROXY`、`HTTPS_PROXY` | 使用已经验证的代理 URL；设置小写别名时与大写值保持一致 |
+| `NO_PROXY` | 保留已有直连规则，补齐 `localhost,127.0.0.1,::1`，确保微信 IDE、预检服务及本地设备通信不经过外部代理 |
+| `NODE_USE_ENV_PROXY` | 本仓库 Node 24 命令需要原生 `fetch` 使用代理时设为 `1` |
+
+配置后实际验证 Node 的 HTTPS 请求与 `pnpm release status`；代理返回 CONNECT 成功不等于目标 HTTPS 成功，必须保持证书校验并取得目标响应。扩展工作流保留上述环境变量，当前预检身份不绑定代理配置，报告不能被描述为锁定了网络路径；本轮三个入口需使用同一会话环境。网络恢复后重新 prepare，之前失败的报告仍不能放行。
+
+实际案例中，直连官方 npm 的 DNS/TCP/TLS 请求失败，已有系统代理路径正常；任务环境未继承代理导致重复超时。补齐任务环境后，官方 npm、GitHub 和 Node 原生请求取得 HTTP 200，`pnpm release status` 成功退出。此证据只证明包源网络恢复；微信自动化、截图及完整验收必须分别通过，不能由网络恢复推定。
+
 ### 当前会话的 computer use 证据
 
 脚本探针通过后，prepare 保持前台服务，打印本轮 loopback 探针 URL。AI 必须使用当前会话实际可用的 computer use 工具：发现目标，读取页面，截图，在输入框输入页面上的 run ID，点击“验证”，再读取界面确认“完成：<run-id>”。不得用 Playwright、HTTP 请求或页面脚本代做此项；Web 脚本探针的交互不会写入 computer use 回执。
