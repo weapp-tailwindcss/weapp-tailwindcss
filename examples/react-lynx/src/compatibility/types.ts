@@ -84,10 +84,29 @@ export interface RuntimeCheckpoint {
   expected?: string | number | boolean
 }
 
+export interface NativeRect {
+  width: number
+  height: number
+  left: number
+  right: number
+  top: number
+  bottom: number
+}
+
+export interface NativeGeometryEvidence {
+  probe: NativeRect
+  control: NativeRect
+  probeContainer: NativeRect
+  controlContainer: NativeRect
+  probeChild: NativeRect
+  controlChild: NativeRect
+}
+
 export interface NativeCaseResult extends PlatformResult {
   id: string
   failureStage?: Extract<FailureStage, 'runtime' | 'version-limit'>
   checkpoints: RuntimeCheckpoint[]
+  geometry?: NativeGeometryEvidence
 }
 
 export interface NativeRuntimeEnvironment {

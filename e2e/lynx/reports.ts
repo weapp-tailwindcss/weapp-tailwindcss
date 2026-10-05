@@ -2,6 +2,7 @@ import type { NativePlatformReport, Platform, StaticEvidenceReport } from '../..
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { compatibilityCases } from '../../examples/react-lynx/src/compatibility/catalog'
+import { evaluateGeometry } from '../../examples/react-lynx/src/compatibility/geometry'
 import staticEvidenceJson from '../../examples/react-lynx/src/compatibility/static-evidence.json'
 import { compatibilityVersions, getCatalogHash } from './catalog'
 import { readEvidenceContext, validateNativeEvidence } from './evidence'
@@ -13,7 +14,7 @@ function assert(condition: unknown, message: string): asserts condition {
   }
 }
 
-export function validateNativeReport(report: NativePlatformReport, platform: Platform) {
+export function validateNativeReport(report: NativePlatformReport, platform: Platform, options: { requireGeometryEvidence?: boolean } = {}) {
   assert(report.schemaVersion === 1, `${platform} report schemaVersion must be 1`)
   assert(report.platform === platform, `expected ${platform} report, received ${report.platform}`)
   assert(report.catalogHash === getCatalogHash(), `${platform} report catalog hash is stale`)
@@ -68,6 +69,15 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
         `${platform}:${result.id} is missing a ${checkpointPrefix} checkpoint`,
       )
     }
+    if (options.requireGeometryEvidence && staticResult.generated && staticResult.bundled && item.evidence === 'runtime' && item.probe === 'geometry') {
+      const measured = evaluateGeometry(item, result.geometry)
+      assert(measured.status !== 'not-tested', `${platform}:${result.id} geometry 原始测量证据缺失或无效`)
+      assert(measured.status === result.status, `${platform}:${result.id} geometry 结论与原始测量不符`)
+      const matches = result.checkpoints.length === measured.checkpoints.length && measured.checkpoints.every(expected => result.checkpoints.some(actual => (
+        actual.name === expected.name && actual.passed === expected.passed && actual.actual === expected.actual && actual.expected === expected.expected
+      )))
+      assert(matches, `${platform}:${result.id} geometry checkpoint 与原始测量不符`)
+    }
     if (result.status === 'supported') {
       assert(result.checkpoints.every(checkpoint => checkpoint.passed), `${platform}:${result.id} is supported but contains a failed checkpoint`)
     }
@@ -80,7 +90,7 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
 
 export async function readNativeReport(reportPath: string, platform: Platform) {
   const report = JSON.parse(await fs.readFile(reportPath, 'utf8')) as NativePlatformReport
-  validateNativeReport(report, platform)
+  validateNativeReport(report, platform, { requireGeometryEvidence: true })
   const artifactDir = path.dirname(reportPath)
   const context = await readEvidenceContext(artifactDir)
   const crops = await validateNativeEvidence(report, artifactDir, context)

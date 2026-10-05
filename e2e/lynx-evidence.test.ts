@@ -4,6 +4,8 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, expect, it } from 'vitest'
+import { compatibilityCases } from '../examples/react-lynx/src/compatibility/catalog'
+import { evaluateGeometry } from '../examples/react-lynx/src/compatibility/geometry'
 import { collectNativeEvidence, createEvidenceContext, cropsDirectory, sha256, validateNativeEvidence } from './lynx/evidence'
 import { PNG } from './lynx/png'
 import { readNativeReport } from './lynx/reports'
@@ -18,6 +20,21 @@ async function fixture() {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'lynx bound evidence '))
   directories.push(directory)
   const report = structuredClone(androidReport) as NativePlatformReport
+  // 此 fixture 验证取证协议：几何节点使用同布局、不同屏幕原点，结论应为不支持。
+  const rect = (left: number, top: number, width: number, height: number) => ({ left, top, width, height, right: left + width, bottom: top + height })
+  for (const result of report.results) {
+    if (result.checkpoints.some(checkpoint => checkpoint.name.startsWith('geometry:'))) {
+      const item = compatibilityCases.find(item => item.id === result.id)!
+      Object.assign(result, evaluateGeometry(item, {
+        probe: rect(6, 6, 80, 40),
+        control: rect(206, 306, 80, 40),
+        probeContainer: rect(0, 0, 160, 160),
+        controlContainer: rect(200, 300, 160, 160),
+        probeChild: rect(14, 30, 12, 12),
+        controlChild: rect(214, 330, 12, 12),
+      }))
+    }
+  }
   const bundle = Buffer.from('the actual staged bundle')
   const context = createEvidenceContext(bundle)
   report.evidence = { ...context, artifacts: [] }
@@ -160,4 +177,38 @@ it('拒绝新报告配合上轮残留的有效截图，历史报告不能刷新�
   const reportPath = path.join(directory, 'report.json')
   await fs.writeFile(reportPath, JSON.stringify(report))
   await expect(readNativeReport(reportPath, 'android')).rejects.toThrow(/本轮|证据|evidence/)
+})
+
+it('基线更新拒绝只有支持结论而缺少原始几何证据的报告', async () => {
+  const { reportPath, report } = await fixture()
+  delete report.results.find(item => item.id === 'flex-direction')!.geometry
+  await fs.writeFile(reportPath, JSON.stringify(report))
+  await expect(readNativeReport(reportPath, 'android').then(() => 'unexpected acceptance')).rejects.toThrow(/geometry.*证据/)
+})
+
+it('基线更新从原始容器重算几何结论，拒绝固定列偏移假阳性', async () => {
+  const { reportPath, report } = await fixture()
+  const rect = (left: number, top: number, width: number, height: number) => ({ left, top, width, height, right: left + width, bottom: top + height })
+  const result = report.results.find(item => item.id === 'flex-direction')!
+  result.geometry = {
+    probe: rect(6, 6, 80, 40),
+    control: rect(206, 306, 80, 40),
+    probeContainer: rect(0, 0, 160, 160),
+    controlContainer: rect(200, 300, 160, 160),
+    probeChild: rect(14, 30, 12, 12),
+    controlChild: rect(214, 330, 12, 12),
+  }
+  result.status = 'supported'
+  result.checkpoints = [{ name: 'geometry:probe-vs-control', passed: true, actual: '0,0,80,40', expected: 'different' }]
+  await fs.writeFile(reportPath, JSON.stringify(report))
+  await expect(readNativeReport(reportPath, 'android').then(() => 'unexpected acceptance')).rejects.toThrow(/geometry.*结论/)
+})
+
+it('原生 JSON 重排 checkpoint 字段不会改变几何证据', async () => {
+  const { reportPath, report } = await fixture()
+  const result = report.results.find(item => item.id === 'flex-direction')!
+  const checkpoint = result.checkpoints[0]!
+  result.checkpoints = [{ expected: checkpoint.expected, actual: checkpoint.actual, passed: checkpoint.passed, name: checkpoint.name }]
+  await fs.writeFile(reportPath, JSON.stringify(report))
+  await expect(readNativeReport(reportPath, 'android').then(() => 'accepted')).resolves.toBe('accepted')
 })

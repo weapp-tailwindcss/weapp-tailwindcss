@@ -4,7 +4,7 @@
 
 每轮使用独占的新输出目录，`--output` 指向已存在目录时在任何设备命令前拒绝。原生命令先把报告写入 `e2e/.artifacts/lynx-native/`，并把 probe/control 的 PNG 裁剪写入 `crops/<runId>/`。审查截图、裁剪、运行时错误和逐 case checkpoint 后，将两份报告作为 `LYNX_IOS_REPORT`、`LYNX_ANDROID_REPORT` 传给 `pnpm e2e:lynx:update`。更新器会拒绝单端报告、过期 catalog、版本不一致、重复 ID、缺失 case、`not-tested` 或无 checkpoint 的结果。
 
-几何 case 必须同时有 probe 与 control 的尺寸测量；像素 case 必须有两个局部截图；动画/transition 必须有时间序列 checkpoint。需要真实输入注入的 `active`、`hover`、`pointer-events` case 在 host 尚未注入时保持 `not-tested`，不能手工改成不支持或支持。
+几何 case 必须在 `geometry` 中同时保留 probe/control、各自参考容器及子节点的六份原始矩形；只比较容器内的局部位置、尺寸和子节点偏移，左右两列的屏幕原点差异不能算样式效果。缺失、非有限、空区域或参考容器尺寸不同均为未测，不能刷新基线。实时验收和更新器会从原始矩形重算结论与 checkpoint；历史报告缺少几何证据时只可展示，不能重新验收。像素 case 必须有两个局部截图；动画/transition 必须有时间序列 checkpoint。需要真实输入注入的 `active`、`hover`、`pointer-events` case 在 host 尚未注入时保持 `not-tested`，不能手工改成不支持或支持。
 
 运行验收与基线更新都读取报告旁 `crops/<runId>/` 的原始 PNG，拒绝缺失、损坏或不能支撑通过结论的截图。两图必须尺寸一致，再比较解码后的可见 RGBA；PNG 压缩、隐藏的透明 RGB、边缘宽高取整差异不能证明样式生效。一像素宽度变化也会改变渐变插值，因此不自动裁剪或缩放来凑齐尺寸。动画及 transition 的相邻 checkpoint 也遵循此要求。更新基线不能只提供 JSON 或回读本目录的已提交报告。
 

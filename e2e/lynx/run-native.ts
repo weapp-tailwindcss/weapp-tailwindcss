@@ -266,7 +266,7 @@ async function main() {
     }
     setStage('report-validation')
     await fs.writeFile(path.join(artifactDir, 'raw-report.json'), `${reportSource.trim()}\n`)
-    const report = validateNativeReport(await enrichEnvironment(JSON.parse(reportSource) as NativePlatformReport, hostDir, device), platform)
+    const report = validateNativeReport(await enrichEnvironment(JSON.parse(reportSource) as NativePlatformReport, hostDir, device), platform, { requireGeometryEvidence: true })
     await fs.writeFile(path.join(artifactDir, 'report.json'), `${JSON.stringify(report, null, 2)}\n`)
     const crops = await validateNativeEvidence(report, artifactDir, context)
     await validateNativePixelEvidence(report, crops)

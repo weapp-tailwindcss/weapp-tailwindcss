@@ -1,25 +1,17 @@
 import type { EvidenceModule, NativeEvidenceWriter } from './native-evidence'
-import type { CompatibilityCase, NativeCaseResult, NativePlatformReport, NativeRuntimeEnvironment, Platform, StaticEvidenceReport } from './types'
+import type { CompatibilityCase, NativeCaseResult, NativePlatformReport, NativeRect, NativeRuntimeEnvironment, Platform, StaticEvidenceReport } from './types'
 import { compatibilityCases } from './catalog'
+import { collectGeometry } from './geometry'
 import { createNativeEvidence } from './native-evidence'
 import { waitForProbeLayout } from './runtime-ready'
 import staticEvidenceJson from './static-evidence.json'
-
-interface RectResult {
-  width: number
-  height: number
-  left: number
-  right: number
-  top: number
-  bottom: number
-}
 
 interface ScreenshotResult {
   data: string
 }
 
 interface ReporterModule extends EvidenceModule {
-  measure?: (id: string, callback: (value: RectResult | null) => void) => void
+  measure?: (id: string, callback: (value: NativeRect | null) => void) => void
   capture?: (id: string, callback: (value: string | null) => void) => void
   pointerEventsNone?: (id: string, callback: (value: boolean | number | null) => void) => void
   setPseudoActive?: (id: string, active: boolean, callback: (value: boolean | number) => void) => void
@@ -98,9 +90,9 @@ function callReporter<T>(invokeReporter: (callback: (value: T) => void) => void,
 
 function measure(id: string, reporter: ReporterModule) {
   if (reporter.measure) {
-    return callReporter<RectResult | null>(callback => reporter.measure!(id, callback)).then(value => value ?? undefined)
+    return callReporter<NativeRect | null>(callback => reporter.measure!(id, callback)).then(value => value ?? undefined)
   }
-  return invoke<RectResult>(id, 'boundingClientRect', {
+  return invoke<NativeRect>(id, 'boundingClientRect', {
     relativeTo: 'screen',
     androidEnableTransformProps: true,
   })
@@ -141,85 +133,6 @@ function fingerprint(value: string) {
     hash = Math.imul(hash, 16777619)
   }
   return `${value.length}:${(hash >>> 0).toString(16)}`
-}
-
-function relativeRect(rect: RectResult | undefined, parent: RectResult | undefined) {
-  if (!rect || !parent) {
-    return undefined
-  }
-  return {
-    width: rect.width,
-    height: rect.height,
-    left: rect.left - parent.left,
-    top: rect.top - parent.top,
-  }
-}
-
-function rectText(rect: ReturnType<typeof relativeRect>) {
-  return rect ? `${rect.left},${rect.top},${rect.width},${rect.height}` : 'missing'
-}
-
-function closeTo(actual: number, expected: number, tolerance = 1.5) {
-  return Math.abs(actual - expected) <= tolerance
-}
-
-function geometryPassed(item: CompatibilityCase, styled: RectResult, control: RectResult, styledChild?: RectResult, controlChild?: RectResult) {
-  if (item.id === 'layout-aspect') {
-    return closeTo(styled.width, control.width) && Math.abs(styled.height - control.height) > 1
-  }
-  if (item.id === 'sizing-fixed') {
-    return closeTo(styled.width, 123)
-  }
-  if (item.id === 'sizing-size') {
-    return closeTo(styled.width, 44) && closeTo(styled.height, 44)
-  }
-  if (item.id === 'accessibility-sr') {
-    return closeTo(styled.width, 1) && closeTo(styled.height, 1)
-  }
-  if (item.id === 'variant-responsive') {
-    return closeTo(styled.width, 200)
-  }
-  const styledRelativeChild = relativeRect(styledChild, styled)
-  const controlRelativeChild = relativeRect(controlChild, control)
-  const values = [
-    Math.abs(styled.width - control.width),
-    Math.abs(styled.height - control.height),
-    Math.abs(styled.left - control.left),
-    Math.abs(styled.top - control.top),
-    styledRelativeChild && controlRelativeChild ? Math.abs(styledRelativeChild.left - controlRelativeChild.left) : 0,
-    styledRelativeChild && controlRelativeChild ? Math.abs(styledRelativeChild.top - controlRelativeChild.top) : 0,
-  ]
-  return values.some(value => value !== undefined && value > 1)
-}
-
-async function collectGeometry(item: CompatibilityCase, reporter: ReporterModule): Promise<NativeCaseResult> {
-  const [styled, control, styledChild, controlChild] = await Promise.all([
-    measure(`probe-${item.id}`, reporter),
-    measure(`control-${item.id}`, reporter),
-    measure(`probe-child-${item.id}-a`, reporter),
-    measure(`probe-child-control-${item.id}-a`, reporter),
-  ])
-  if (!styled || !control || styled.width <= 0 || styled.height <= 0 || control.width <= 0 || control.height <= 0) {
-    return {
-      id: item.id,
-      status: 'not-tested',
-      reason: 'boundingClientRect 未返回完整的 probe/control 区域',
-      checkpoints: [{ name: 'geometry:rendered', passed: false }],
-    }
-  }
-  const passed = geometryPassed(item, styled, control, styledChild, controlChild)
-  return {
-    id: item.id,
-    status: passed ? 'supported' : 'unsupported',
-    reason: passed ? undefined : 'Tailwind probe 与 control 的几何结果没有满足 case 断言',
-    failureStage: passed ? undefined : 'runtime',
-    checkpoints: [{
-      name: 'geometry:probe-vs-control',
-      passed,
-      actual: `${rectText(relativeRect(styled, styled))}; child=${rectText(relativeRect(styledChild, styled))}`,
-      expected: `control=${rectText(relativeRect(control, control))}; child=${rectText(relativeRect(controlChild, control))}`,
-    }],
-  }
 }
 
 async function collectPixel(item: CompatibilityCase, reporter: ReporterModule, evidence: NativeEvidenceWriter): Promise<NativeCaseResult> {
@@ -363,7 +276,7 @@ async function collectCase(item: CompatibilityCase, reporter: ReporterModule, ev
     }
   }
   if (item.probe === 'geometry') {
-    return collectGeometry(item, reporter)
+    return collectGeometry(item, id => measure(id, reporter))
   }
   if (item.probe === 'interaction') {
     return collectInteraction(item, reporter, evidence)
