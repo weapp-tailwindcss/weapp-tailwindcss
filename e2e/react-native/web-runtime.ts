@@ -34,33 +34,12 @@ function serve(directory: string) {
   })
 }
 
-function bundleContainsTailwindStyles(directory: string) {
-  const pending = [path.resolve(directory)]
-  while (pending.length) {
-    const current = pending.pop()!
-    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
-      const target = path.join(current, entry.name)
-      if (entry.isDirectory()) {
-        pending.push(target)
-        continue
-      }
-      if (!/\.(?:js|bundle)$/.test(entry.name)) {
-        continue
-      }
-      const source = fs.readFileSync(target, 'utf8')
-      if (source.includes('"bg-blue-500"') && source.includes('"#2b7fff"') && source.includes('"text-white"')) {
-        return true
-      }
-    }
-  }
-  return false
-}
-
 export async function runWebRuntime(outputDirectory: string, screenshotFile: string) {
   const server = await serve(outputDirectory)
-  const browser = await chromium.launch({ headless: true })
+  let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined
   try {
-    const page = await browser.newPage({ viewport: { width: 402, height: 874 }, deviceScaleFactor: 1 })
+    browser = await chromium.launch({ headless: true })
+    const page = await browser.newPage({ viewport: { width: 402, height: 874 }, deviceScaleFactor: 1, colorScheme: 'light' })
     const browserDiagnostics: string[] = []
     page.on('console', message => browserDiagnostics.push(`console:${message.type()}:${message.text()}`))
     page.on('pageerror', error => browserDiagnostics.push(`pageerror:${error.message}`))
@@ -78,7 +57,7 @@ export async function runWebRuntime(outputDirectory: string, screenshotFile: str
         }
         const cardBackground = getComputedStyle(card).backgroundColor
         const themeColor = getComputedStyle(theme).color
-        return cardBackground !== 'rgba(0, 0, 0, 0)' && themeColor !== 'rgba(0, 0, 0, 0)'
+        return cardBackground === 'rgb(43, 127, 255)' && themeColor === 'rgb(255, 255, 255)'
       }, undefined, { polling: 100, timeout: 30_000 })
     }
     catch (error) {
@@ -111,22 +90,11 @@ export async function runWebRuntime(outputDirectory: string, screenshotFile: str
         }
       })
       const details = JSON.stringify({ state, browserDiagnostics })
-      // 某些 hosted Chromium 环境会保留 React Native Web 的 CSSOM 规则，
-      // 但不把同一份 StyleSheet registry 生成的 hash class 绑定到节点。
-      // 此时仍要求 bundle 含有 Tailwind manifest 和可测量布局，避免掩盖编译回归。
-      if (
-        state.card
-        && Number.parseFloat(state.card.width) > 0
-        && Number.parseFloat(state.card.height) > 0
-        && bundleContainsTailwindStyles(outputDirectory)
-      ) {
-        const box = await card.boundingBox()
+      try {
         await root.screenshot({ path: screenshotFile })
-        return {
-          box: box ?? { x: 0, y: 0, width: Number.parseFloat(state.card.width), height: Number.parseFloat(state.card.height) },
-          background: 'rgb(43, 127, 255)',
-          textColor: 'rgb(255, 255, 255)',
-        }
+      }
+      catch (captureError) {
+        throw new AggregateError([error, captureError], `React Native Web styles did not become measurable and screenshot failed: ${details}`)
       }
       throw new Error(`React Native Web styles did not become measurable: ${details}`, { cause: error })
     }
@@ -136,17 +104,21 @@ export async function runWebRuntime(outputDirectory: string, screenshotFile: str
     if (!box || box.width <= 0 || box.height <= 0) {
       throw new Error('React Native Web root/card did not render a measurable layout')
     }
-    if (!background || background === 'rgba(0, 0, 0, 0)') {
-      throw new Error('React Native Web Tailwind background style is missing')
+    if (background !== 'rgb(43, 127, 255)') {
+      throw new Error(`React Native Web Tailwind background style mismatch: ${background}`)
     }
-    if (!textColor || textColor === 'rgba(0, 0, 0, 0)') {
-      throw new Error('React Native Web Tailwind text style is missing')
+    if (textColor !== 'rgb(255, 255, 255)') {
+      throw new Error(`React Native Web Tailwind text style mismatch: ${textColor}`)
     }
     await root.screenshot({ path: screenshotFile })
     return { box, background, textColor }
   }
   finally {
-    await browser.close()
-    await server.close()
+    try {
+      await browser?.close()
+    }
+    finally {
+      await server.close()
+    }
   }
 }
