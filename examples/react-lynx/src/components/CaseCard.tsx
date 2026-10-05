@@ -26,10 +26,13 @@ function declarationsText(declarations: ExpectedDeclaration[]) {
   )).join('; ')
 }
 
-function ProbeBody({ id }: { id: string }) {
+// 这些像素用例验证文字自身的样式，不依赖 view 到 text 的可选 CSS 继承。
+const textUtilityCases = new Set(['type-weight-style', 'type-decoration', 'syntax-opacity-modifier', 'syntax-type-hint'])
+
+function ProbeBody({ id, textClassName = '' }: { id: string, textClassName?: string }) {
   return (
     <>
-      <text className="probe-target">Tw4</text>
+      <text className={`probe-target target ${textClassName}`}>Tw4</text>
       <view id={`probe-child-${id}-a`} className="probe-child probe-child-a" />
       <view id={`probe-child-${id}-b`} className="probe-child probe-child-b" />
     </>
@@ -42,6 +45,8 @@ export function CaseCard({ item, result, staticEvidence }: { item: Compatibility
   const failureStage = result?.failureStage ?? staticEvidence?.failureStage
   const usesCaptureFrame = item.evidence === 'runtime' && item.probe !== 'geometry'
   const pairClass = usesCaptureFrame ? 'probe-pair probe-capture-pair' : 'probe-pair'
+  const textClassName = textUtilityCases.has(item.id) ? item.className : ''
+  const viewClassName = textUtilityCases.has(item.id) ? '' : item.className
   return (
     <view className="case-card">
       <view className="flex flex-row items-start justify-between gap-3">
@@ -109,8 +114,8 @@ export function CaseCard({ item, result, staticEvidence }: { item: Compatibility
       <view className={`probe-shell probe-fixture-${item.id}`}>
         <view className={item.id === 'variant-dark' ? `${pairClass} dark` : pairClass}>
           <view id={`probe-container-${item.id}`} flatten={false} className={usesCaptureFrame ? 'probe-slot probe-capture' : 'probe-slot'}>
-            <view id={`probe-${item.id}`} className={`compat-probe ${item.className}`}>
-              <ProbeBody id={item.id} />
+            <view id={`probe-${item.id}`} className={`compat-probe ${viewClassName}`}>
+              <ProbeBody id={item.id} textClassName={textClassName} />
             </view>
             {item.id === 'layout-z-index' && <view className="probe-z-overlay" />}
           </view>
