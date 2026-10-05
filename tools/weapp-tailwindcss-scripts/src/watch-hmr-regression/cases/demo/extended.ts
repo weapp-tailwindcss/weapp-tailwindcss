@@ -1,4 +1,4 @@
-import type { SubPackageMutationConfig, TaroMiniProgramWatchPlatform, UniAppMiniProgramWatchPlatform, WatchCase } from '../../types'
+import type { ClassMutationConfig, SubPackageMutationConfig, TaroMiniProgramWatchPlatform, UniAppMiniProgramWatchPlatform, WatchCase } from '../../types'
 import path from 'node:path'
 import {
   appendTrailingSnippet,
@@ -11,7 +11,7 @@ import {
   mutateVueRefStringLiteral,
   replaceExactSnippet,
 } from '../../text'
-import { buildBaselineHexScriptRoundConfigs, buildHexScriptRoundConfigs, buildIssue33HighRiskRoundConfigs, buildTailwindV4JsContentRoundConfigs } from '../round-configs'
+import { buildBaselineHexScriptRoundConfigs, buildHexScriptRoundConfigs, buildIssue33HighRiskRoundConfigs, buildTailwindV4JsContentRoundConfigs, MINI_PROGRAM_REMOVED_CSS_UTILITIES } from '../round-configs'
 
 const taroWatchEnv = {
   TARO_BUILD_STRICT: '1',
@@ -242,6 +242,7 @@ function createSubPackageMutations(
     templateVerifyEscapedIn?: Array<'wxml' | 'js'>
     templateVerifyClassLiteralIn?: Array<'wxml' | 'js'>
     templateVerifyAllClassLiterals?: boolean
+    expectedRemovedCssUtilities?: ClassMutationConfig['expectedRemovedCssUtilities']
   },
 ): SubPackageMutationConfig[] {
   const styleExtension = options.styleExtension ?? normalizeExtension(options.version)
@@ -276,6 +277,7 @@ function createSubPackageMutations(
           ? {}
           : { verifyAllClassLiterals: options.templateVerifyAllClassLiterals }),
         roundConfigs,
+        ...(options.expectedRemovedCssUtilities ? { expectedRemovedCssUtilities: options.expectedRemovedCssUtilities } : {}),
         mutate(source, payload) {
           if (options.pageKind === 'tsx') {
             const snippet = `  <View className="${payload.classLiteral}">${payload.marker}-${label}-subpackage</View>`
@@ -357,6 +359,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       sourceFile: path.resolve(baseCwd, 'demo/uni-app-vite-tailwindcss-v4/src/pages/index/index.vue'),
       verifyEscapedIn: ['wxml'],
       verifyClassLiteralIn: [],
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: [
         ...buildHexScriptRoundConfigs(),
         {
@@ -376,6 +379,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       sourceFile: path.resolve(baseCwd, 'demo/uni-app-vite-tailwindcss-v4/src/pages/index/index.vue'),
       verifyEscapedIn: ['js'],
       verifyClassLiteralIn: ['js'],
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: buildHexScriptRoundConfigs(),
       mutate(source, payload) {
         return mutateVueRefStringLiteral(
@@ -401,6 +405,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       version: 'v4',
       pageKind: 'vue',
       skipStyleMutation: true,
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       globalStyleCandidates(subPackage) {
         return [
           path.resolve(baseCwd, `demo/uni-app-vite-tailwindcss-v4/dist/dev/mp-weixin/${subPackage}/pages/index.wxss`),
