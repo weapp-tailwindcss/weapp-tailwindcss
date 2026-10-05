@@ -2,6 +2,7 @@ import type { NativePlatformReport, Platform, StaticEvidenceReport } from '../..
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { compatibilityCases } from '../../examples/react-lynx/src/compatibility/catalog'
+import { lynxEvidenceStrategy } from '../../examples/react-lynx/src/compatibility/evidence'
 import { evaluateGeometry } from '../../examples/react-lynx/src/compatibility/geometry'
 import staticEvidenceJson from '../../examples/react-lynx/src/compatibility/static-evidence.json'
 import { compatibilityVersions, getCatalogHash } from './catalog'
@@ -54,6 +55,7 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
     const item = caseById.get(result.id)
     const staticResult = staticById.get(result.id)
     assert(item && staticResult, `${platform}:${result.id} is missing catalog or static evidence`)
+    const strategy = lynxEvidenceStrategy(item)
     assert(result.status === 'supported' || result.status === 'unsupported', `${platform}:${result.id} has no final runtime status`)
     assert(result.checkpoints.length > 0, `${platform}:${result.id} has no runtime checkpoint`)
     assert(result.checkpoints.every(checkpoint => typeof checkpoint.passed === 'boolean'), `${platform}:${result.id} has an invalid checkpoint`)
@@ -63,11 +65,11 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
       assert(result.checkpoints.some(checkpoint => checkpoint.name === 'bundled'), `${platform}:${result.id} is missing its bundled checkpoint`)
     }
     else {
-      const checkpointPrefix = item.evidence === 'build'
+      const checkpointPrefix = strategy === 'build'
         ? 'build:'
-        : item.probe === 'geometry'
+        : strategy === 'native-geometry' || strategy === 'pixel-geometry'
           ? 'geometry:'
-          : item.probe === 'interaction'
+          : strategy === 'interaction'
             ? 'interaction:'
             : 'pixel:'
       assert(
@@ -75,7 +77,7 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
         `${platform}:${result.id} is missing a ${checkpointPrefix} checkpoint`,
       )
     }
-    if (options.requireGeometryEvidence && staticResult.generated && staticResult.bundled && item.evidence === 'runtime' && item.probe === 'geometry') {
+    if (options.requireGeometryEvidence && staticResult.generated && staticResult.bundled && strategy === 'native-geometry') {
       const measured = evaluateGeometry(item, result.geometry)
       assert(measured.status !== 'not-tested', `${platform}:${result.id} geometry 原始测量证据缺失或无效`)
       assert(measured.status === result.status, `${platform}:${result.id} geometry 结论与原始测量不符`)

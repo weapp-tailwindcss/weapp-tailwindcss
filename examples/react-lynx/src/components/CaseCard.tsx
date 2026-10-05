@@ -1,4 +1,5 @@
 import type { CaseBaseline, CompatibilityCase, ExpectedDeclaration, RuntimeStatus, StaticCaseEvidence } from '../compatibility/types'
+import { lynxEvidenceStrategy } from '../compatibility/evidence'
 import { GridProbePair, isGridFixture } from './GridProbePair'
 
 function statusLabel(status: RuntimeStatus | undefined) {
@@ -36,6 +37,7 @@ const fixtureClasses: Record<string, string> = {
   'background-size': 'probe-background-size',
   'background-linear-gradient': 'probe-linear-gradient',
   'effect-shadow': 'probe-shadow',
+  'transform-skew': 'probe-skew',
 }
 
 function ProbeBody({ id, textClassName = '' }: { id: string, textClassName?: string }) {
@@ -52,7 +54,8 @@ export function CaseCard({ item, result, staticEvidence }: { item: Compatibility
   const generated = result?.generated ?? staticEvidence?.generated
   const bundled = result?.bundled ?? staticEvidence?.bundled
   const failureStage = result?.failureStage ?? staticEvidence?.failureStage
-  const usesCaptureFrame = item.evidence === 'runtime' && item.probe !== 'geometry'
+  const strategy = lynxEvidenceStrategy(item)
+  const usesCaptureFrame = strategy !== 'build' && strategy !== 'native-geometry'
   const pairClass = usesCaptureFrame ? 'probe-pair probe-capture-pair' : 'probe-pair'
   const textClassName = textUtilityCases.has(item.id) ? item.className : ''
   const viewClassName = textUtilityCases.has(item.id) ? '' : item.className
@@ -128,13 +131,13 @@ export function CaseCard({ item, result, staticEvidence }: { item: Compatibility
               <view className={item.id === 'variant-dark' ? `${pairClass} dark` : pairClass}>
                 <view id={`probe-container-${item.id}`} flatten={false} className={usesCaptureFrame ? 'probe-slot probe-capture' : 'probe-slot'}>
                   <view id={`probe-${item.id}`} className={`${probeClassName} ${viewClassName}`}>
-                    <ProbeBody id={item.id} textClassName={textClassName} />
+                    {item.id !== 'transform-skew' && <ProbeBody id={item.id} textClassName={textClassName} />}
                   </view>
                   {item.id === 'layout-z-index' && <view className="probe-z-overlay" />}
                 </view>
                 <view id={`control-container-${item.id}`} flatten={false} className={usesCaptureFrame ? 'probe-slot probe-control-slot probe-capture' : 'probe-slot probe-control-slot'}>
                   <view id={`control-${item.id}`} className={probeClassName}>
-                    <ProbeBody id={`control-${item.id}`} />
+                    {item.id !== 'transform-skew' && <ProbeBody id={`control-${item.id}`} />}
                   </view>
                   {item.id === 'layout-z-index' && <view className="probe-z-overlay" />}
                 </view>

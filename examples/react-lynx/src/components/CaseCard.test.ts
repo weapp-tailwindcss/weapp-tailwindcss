@@ -66,6 +66,7 @@ describe('Lynx compatibility text fixtures', () => {
     ['background-size', 'probe-background-size'],
     ['background-linear-gradient', 'probe-linear-gradient'],
     ['effect-shadow', 'probe-shadow'],
+    ['transform-skew', 'probe-skew'],
   ])('%s 使用相同的单类默认样式，让 utility 参与渲染', (id, fixture) => {
     const { item, probe, control } = probeNodes(id)
     expect(String(probe.props.className).split(/\s+/)).toContain(fixture)
@@ -89,6 +90,16 @@ describe('Lynx compatibility text fixtures', () => {
     expect(String(probe.props.className)).toContain(item.className)
     expect(String(text(probe).props.className).split(/\s+/)).toContain('target')
     expect(text(probe).props).toEqual(text(control).props)
+  })
+
+  it('skew 固定画布只含实心主体，避免文字和装饰物干扰轮廓', () => {
+    const { item, probe, control } = probeNodes('transform-skew')
+    expect(elements(probe)).toHaveLength(1)
+    expect(elements(control)).toHaveLength(1)
+    for (const node of elements(CaseCard({ item })).filter(node => String(node.props.id).includes('-container-'))) {
+      expect(node.props.flatten).toBe(false)
+      expect(node.props.className).toContain('probe-capture')
+    }
   })
 
   it('透明度、边框与交互样式仍由原 view 消费并保留固定捕获画布', () => {

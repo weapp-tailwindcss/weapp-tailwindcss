@@ -3,7 +3,7 @@ package com.weapptailwindcss.lynxcompat;
 final class GeometryBounds {
   private GeometryBounds() {}
 
-  // 四角已经包含节点与祖先变换、滚动及屏幕偏移；保留浮点精度后统一转换密度。
+  // 四角包含节点与祖先 View 矩阵、滚动及屏幕偏移；Canvas 绘制变换另用像素证据验证。
   static double[] fromCorners(float[][] corners, float density) {
     if (!Float.isFinite(density) || density <= 0 || corners == null || corners.length != 4) {
       return null;

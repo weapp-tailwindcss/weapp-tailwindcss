@@ -1,6 +1,7 @@
 import type { NativeCaseResult } from '../../examples/react-lynx/src/compatibility/types'
 import type { PngPixels } from './png'
 import { requiresPixelEffect } from '../../examples/react-lynx/src/compatibility/evidence'
+import { evaluateSkewGeometry } from './pixel-geometry'
 
 type Color = readonly [number, number, number]
 const canvas: Color = [247, 250, 251]
@@ -128,11 +129,11 @@ export function evaluatePixelEffect(id: string, probe: PngPixels, control: PngPi
   if (probe.width !== probe.height || probe.width < 160 || probe.width !== control.width || probe.height !== control.height) {
     throw new Error('预期效果缺少等尺寸的完整固定画布')
   }
-  const effect = id === 'effect-shadow' ? shadow(probe, control) : gradient(probe, control)
+  const effect = id === 'transform-skew' ? evaluateSkewGeometry(probe, control) : id === 'effect-shadow' ? shadow(probe, control) : gradient(probe, control)
   return {
     id,
     status: effect.passed ? 'supported' : 'unsupported',
     ...(effect.passed ? {} : { reason: `原生截图未呈现预期效果：${effect.expected}`, failureStage: 'runtime' as const }),
-    checkpoints: [{ name: 'pixel:expected-effect-v1', ...effect }],
+    checkpoints: [{ name: id === 'transform-skew' ? 'geometry:expected-effect-v1' : 'pixel:expected-effect-v1', ...effect }],
   }
 }

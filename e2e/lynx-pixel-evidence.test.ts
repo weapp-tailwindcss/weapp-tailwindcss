@@ -39,7 +39,7 @@ async function fixture() {
   await fs.mkdir(crops)
   const report = structuredClone(androidReport) as NativePlatformReport
   for (const result of report.results) {
-    const slots = result.checkpoints.some(checkpoint => checkpoint.name === 'pixel:probe-vs-control')
+    const slots = (requiresPixelEffect(result.id) || result.checkpoints.some(checkpoint => checkpoint.name === 'pixel:probe-vs-control'))
       ? ['probe', 'control']
       : result.id === 'variant-state'
         ? ['before', 'active']
@@ -203,7 +203,7 @@ it('宿主只判定待验收效果，保留原始采集报告且无效图不能�
   const original = JSON.stringify(report)
   const final = await finalizeNativePixelEffects(report, crops)
   expect(JSON.stringify(report)).toBe(original)
-  expect(final.results.filter(result => requiresPixelEffect(result.id)).map(result => result.status)).toEqual(['unsupported', 'unsupported'])
+  expect(final.results.filter(result => requiresPixelEffect(result.id)).map(result => result.status)).toEqual(['unsupported', 'unsupported', 'supported'])
   await fs.writeFile(path.join(crops, 'effect-shadow-control.png'), 'broken PNG')
   await expect(finalizeNativePixelEffects(report, crops)).rejects.toThrow('无法解码')
 })
@@ -223,4 +223,23 @@ it.each(['missing', 'forged', 'duplicate'])('%s 效果契约不允许进入最�
   }
   await fs.writeFile(reportPath, JSON.stringify(report))
   await expect(readPixelReport(reportPath, 'android').then(() => 'accepted')).rejects.toThrow('预期效果结论')
+})
+
+it.each(['missing', 'corrupt', 'forged', 'old-geometry'] as const)('skew 的 %s 证据不得沿用旧矩形结论', async (mode) => {
+  const { crops, report, reportPath } = await fixture()
+  const result = report.results.find(item => item.id === 'transform-skew')!
+  if (mode === 'missing') {
+    await fs.rm(path.join(crops, 'transform-skew-control.png'))
+  }
+  else if (mode === 'corrupt') {
+    await fs.writeFile(path.join(crops, 'transform-skew-probe.png'), 'broken PNG')
+  }
+  else if (mode === 'forged') {
+    result.checkpoints.find(item => item.name === 'geometry:expected-effect-v1')!.actual = 'old View matrix'
+  }
+  else {
+    result.checkpoints = [{ name: 'geometry:probe-vs-control', passed: true }]
+  }
+  await fs.writeFile(reportPath, JSON.stringify(report))
+  await expect(readPixelReport(reportPath, 'android')).rejects.toThrow(/transform-skew/)
 })

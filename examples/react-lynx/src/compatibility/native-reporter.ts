@@ -1,7 +1,7 @@
 import type { EvidenceModule, NativeEvidenceWriter } from './native-evidence'
 import type { CompatibilityCase, NativeCaseResult, NativePlatformReport, NativeRect, NativeRuntimeEnvironment, Platform, StaticEvidenceReport } from './types'
 import { compatibilityCases } from './catalog'
-import { requiresPixelEffect } from './evidence'
+import { lynxEvidenceStrategy, requiresPixelEffect } from './evidence'
 import { collectGeometry } from './geometry'
 import { createNativeEvidence } from './native-evidence'
 import { waitForProbeLayout } from './runtime-ready'
@@ -267,7 +267,8 @@ async function collectCase(item: CompatibilityCase, reporter: ReporterModule, ev
       ],
     }
   }
-  if (item.evidence === 'build') {
+  const strategy = lynxEvidenceStrategy(item)
+  if (strategy === 'build') {
     return {
       id: item.id,
       status: 'supported',
@@ -277,10 +278,10 @@ async function collectCase(item: CompatibilityCase, reporter: ReporterModule, ev
       ],
     }
   }
-  if (item.probe === 'geometry') {
+  if (strategy === 'native-geometry') {
     return collectGeometry(item, id => measure(id, reporter))
   }
-  if (item.probe === 'interaction') {
+  if (strategy === 'interaction') {
     return collectInteraction(item, reporter, evidence)
   }
   return collectPixel(item, reporter, evidence)

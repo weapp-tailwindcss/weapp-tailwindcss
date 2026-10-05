@@ -31,7 +31,7 @@ async function fixture() {
     'grid-justify-self': [6, 6, 100, 44, 0, 0, 20, 12],
   }
   for (const result of report.results) {
-    if (result.checkpoints.some(checkpoint => checkpoint.name.startsWith('geometry:'))) {
+    if (!requiresPixelEffect(result.id) && result.checkpoints.some(checkpoint => checkpoint.name.startsWith('geometry:'))) {
       const item = compatibilityCases.find(item => item.id === result.id)!
       const grid = gridControls[item.id]
       if (grid) {
@@ -61,7 +61,7 @@ async function fixture() {
   report.evidence = { ...context, artifacts: [] }
   const images = new Map<string, Buffer>()
   for (const result of report.results) {
-    const frames = result.checkpoints.some(checkpoint => checkpoint.name === 'pixel:probe-vs-control')
+    const frames = (requiresPixelEffect(result.id) || result.checkpoints.some(checkpoint => checkpoint.name === 'pixel:probe-vs-control'))
       ? ['probe', 'control']
       : result.id === 'variant-state'
         ? ['before', 'active']
@@ -185,7 +185,7 @@ it('拒绝新报告配合上轮残留的有效截图，历史报告不能刷新�
   await fs.mkdir(crops)
   const report = structuredClone(androidReport) as NativePlatformReport
   for (const result of report.results) {
-    const frames = result.checkpoints.some(checkpoint => checkpoint.name === 'pixel:probe-vs-control')
+    const frames = (requiresPixelEffect(result.id) || result.checkpoints.some(checkpoint => checkpoint.name === 'pixel:probe-vs-control'))
       ? ['probe', 'control']
       : result.id === 'variant-state'
         ? ['before', 'active']

@@ -254,6 +254,16 @@ page {
     width: 54px;
   }
 
+  .probe-skew {
+    box-sizing: border-box;
+    width: 96px;
+    height: 80px;
+    padding: 0;
+    margin-top: 28px;
+    margin-left: 20px;
+    transform-origin: center;
+  }
+
   .probe-shadow {
     box-shadow: 0 0 0 5px #ef4444;
   }

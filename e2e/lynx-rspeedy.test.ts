@@ -8,6 +8,7 @@ import staticEvidenceJson from '../examples/react-lynx/src/compatibility/static-
 import { buildCompatibilityBundle } from './lynx/build'
 import { compatibilityDir, exampleDir, getCatalogHash, lynxIntermediateDir, repoRoot } from './lynx/catalog'
 import { verifyGridFixtures } from './lynx/grid-fixture-browser'
+import { verifySkewFixture } from './lynx/skew-fixture-browser'
 import { analyzeStaticEvidence } from './lynx/static-evidence'
 
 const bundlePath = path.join(exampleDir, 'dist', 'main.lynx.bundle')
@@ -146,6 +147,11 @@ describe('ReactLynx Rspeedy compatibility evidence', () => {
     for (const selector of ['.grid-slot-grid-placement', '.grid-probe-grid-auto', '.grid-probe-grid-justify-self']) {
       expect(decodedCss).toContain(selector)
     }
+  }, 30_000)
+
+  it('真实组件和 CSS 的 skew 图形在不同像素密度下必须同时依赖双轴 utility', async () => {
+    await verifySkewFixture(await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8'))
+    expect(decodedCss).toContain('.probe-skew')
   }, 30_000)
 
   it.each([
