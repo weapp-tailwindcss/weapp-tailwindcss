@@ -1,7 +1,13 @@
+import { mkdtemp, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
 import { MiniProgram } from '@weapp-vite/miniprogram-automator'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { closeMiniProgramAndCleanup, launchMiniProgramInCleanDevTools } from '../scripts/demo-visual-e2e-report/ide'
 import { Launcher } from '../scripts/wechat/automator'
 import { assertWechatLogin, existingWechatService, ownedWechatPort, wechatRequest } from '../scripts/wechat/service'
+import { withFrameworkIdeProject } from './framework-ide/project-lifecycle'
+import { withTemplateIdeSession } from './template-ide/session'
 
 const { connect, coldLaunch } = vi.hoisted(() => ({ connect: vi.fn(), coldLaunch: vi.fn() }))
 vi.mock('@weapp-vite/miniprogram-automator', async original => ({
@@ -31,6 +37,46 @@ afterEach(() => {
 })
 
 describe('微信会话保护', () => {
+  it.each(['template', 'framework', 'visual'])('启动失败已收尾时，%s 调用方不再关闭已释放的项目', async (owner) => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'wechat-launch-ownership-'))
+    const { mini, connection } = miniProgram()
+    const primary = new Error('App domain readiness failed')
+    vi.mocked(mini.waitForAppReady).mockRejectedValue(primary)
+    connect.mockResolvedValue(mini)
+    vi.mocked(wechatRequest).mockImplementation(async (_port, operation) => operation.kind === 'auto' ? { autoPort: operation.port } : {})
+    // Launcher 使用打开时的显式服务；外层重新查找已释放的归属必须失败。
+    vi.mocked(ownedWechatPort).mockImplementation(() => {
+      throw new Error('already released')
+    })
+    try {
+      const launch = () => new Launcher().launch({ projectPath: dir, port: 45678, timeout: 1000 })
+      const run = vi.fn()
+      const execute = async () => {
+        if (owner === 'template') {
+          return withTemplateIdeSession({ projectPath: dir, artifactDir: dir, launchTimeoutMs: 1000, closeTimeoutMs: 1000 }, run)
+        }
+        if (owner === 'framework') {
+          return withFrameworkIdeProject({ projectPath: dir, closeTimeoutMs: 1000, launch, run })
+        }
+        let session
+        try {
+          session = await launchMiniProgramInCleanDevTools('test', dir, 45678, 1000)
+        }
+        finally {
+          await closeMiniProgramAndCleanup(session?.miniProgram, dir)
+        }
+      }
+      await expect(execute()).rejects.toBe(primary)
+      expect(run).not.toHaveBeenCalled()
+      expect(connection.dispose).toHaveBeenCalledOnce()
+      expect(wechatRequest).toHaveBeenCalledTimes(2)
+      expect(ownedWechatPort).not.toHaveBeenCalled()
+    }
+    finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
   it('仅在已有服务打开绑定项目与端口，保留登录态', async () => {
     const { mini } = miniProgram()
     connect.mockResolvedValue(mini)

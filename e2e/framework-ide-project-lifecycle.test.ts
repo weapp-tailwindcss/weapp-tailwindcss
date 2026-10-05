@@ -62,7 +62,7 @@ it('配置快照读取失败不能启动 IDE 操作或覆盖未保存的配置',
   expect(writeFile).not.toHaveBeenCalled()
 })
 
-it('连接获取失败仍关闭当前绑定项目并恢复已保存配置', async () => {
+it('连接获取失败由 Launcher 收尾，外层仅恢复已保存配置', async () => {
   const first = new Error('launch failed')
   await expect(withFrameworkIdeProject({
     projectPath: 'fixture',
@@ -70,7 +70,7 @@ it('连接获取失败仍关闭当前绑定项目并恢复已保存配置', asyn
     launch: async () => { throw first },
     run: vi.fn(),
   })).rejects.toBe(first)
-  expect(closeProject).toHaveBeenCalledExactlyOnceWith('fixture', undefined, 100)
+  expect(closeProject).not.toHaveBeenCalled()
   expect(writeFile).toHaveBeenCalledOnce()
 })
 

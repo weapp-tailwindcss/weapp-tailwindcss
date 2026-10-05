@@ -10,7 +10,7 @@ import { clearProjectBuildState } from './projectTest'
 import { readTemplatePageConfig, readTemplatePageConfigs } from './template-ide/config'
 import { withTemplateAppId } from './template-ide/project-config'
 import { assertTemplatePageRendered } from './template-ide/runtime'
-import { withTemplateIdeSession } from './template-ide/session'
+import { createTemplateIdeArtifacts, withTemplateIdeSession } from './template-ide/session'
 
 interface TemplateIdeCase {
   name: string
@@ -207,8 +207,8 @@ describe('templates ide smoke', () => {
     await readTemplatePageConfigs(miniprogramRoot)
     await expectUsingComponentsExist(item.name, miniprogramRoot, pageJsonFile)
 
-    const artifactDir = path.resolve(__dirname, '.artifacts/templates-ide', item.template)
-    await fs.mkdir(artifactDir, { recursive: true })
+    const artifactDir = await createTemplateIdeArtifacts(path.resolve(__dirname, '.artifacts/templates-ide', item.template))
+    process.stdout.write(`[e2e:ide] ${item.name} evidence: ${artifactDir}\n`)
     await withTemplateAppId(path.join(projectPath, 'project.config.json'), resolveWechatAppId(), () =>
       withTemplateIdeSession({
         projectPath,

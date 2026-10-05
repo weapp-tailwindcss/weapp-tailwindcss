@@ -90,7 +90,7 @@ describe('IDE project ownership', () => {
     expect(wechatRequest).not.toHaveBeenCalled()
   })
 
-  it('视觉用例的页面启动失败由外层清理一次，不掩盖原始失败', async () => {
+  it('视觉用例的页面启动失败不重复清理 Launcher 已收尾的项目', async () => {
     const failure = new Error('page readiness failed')
     launch.mockRejectedValue(failure)
     const run = async () => {
@@ -103,6 +103,6 @@ describe('IDE project ownership', () => {
     }
     await expect(run()).rejects.toBe(failure)
     expect(launch).toHaveBeenCalledOnce()
-    expect(wechatRequest).toHaveBeenCalledExactlyOnceWith('12345', { kind: 'close', project: '/owned/project' }, 10_000)
+    expect(wechatRequest).not.toHaveBeenCalled()
   })
 })

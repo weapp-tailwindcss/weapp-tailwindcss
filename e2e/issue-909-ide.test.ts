@@ -76,7 +76,9 @@ describeIde('issues 909/916/928 IDE runtime', () => {
   }, 180_000)
 
   afterAll(async () => {
-    await closeWechatProject(v4ProjectPath, miniProgram)
+    if (miniProgram) {
+      await closeWechatProject(v4ProjectPath, miniProgram)
+    }
   })
 
   it('keeps Tailwind v4 transform, native selector and gradient utilities valid in WeChat DevTools', async () => {

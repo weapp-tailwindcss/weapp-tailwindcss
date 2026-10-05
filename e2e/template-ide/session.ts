@@ -1,5 +1,5 @@
 import type { MiniProgram } from '@weapp-vite/miniprogram-automator'
-import { writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { formatWorkflowError, runWithCleanup } from '../../scripts/e2e-preflight/cleanup'
 import { closeWechatProject } from '../../scripts/wechat-project-cleanup'
@@ -12,6 +12,12 @@ interface TemplateIdeSessionOptions {
   launchTimeoutMs: number
   closeTimeoutMs: number
   failureScreenshotTimeoutMs?: number
+}
+
+/** 每次运行使用独立目录，启动失败时不能混入上一轮成功图片。 */
+export async function createTemplateIdeArtifacts(root: string) {
+  await mkdir(root, { recursive: true })
+  return mkdtemp(path.join(root, 'run-'))
 }
 
 /** 诊断失败也必须留在异常链中，且不能阻止另一个诊断或项目收尾。 */
@@ -43,7 +49,12 @@ export async function withTemplateIdeSession<T>(options: TemplateIdeSessionOptio
       catch (error) {
         return runWithCleanup(() => Promise.reject(error), () => recordFailure(error, miniProgram, options))
       }
-    }, () => closeWechatProject(options.projectPath, miniProgram, options.closeTimeoutMs))
+    }, async () => {
+      // launch 成功返回才移交清理责任；失败由 Launcher 原服务路径收尾。
+      if (miniProgram) {
+        await closeWechatProject(options.projectPath, miniProgram, options.closeTimeoutMs)
+      }
+    })
   }
   catch (error) {
     // 默认测试报告只展开一层 AggregateError；收尾后落盘完整链，避免诊断次因不可见。

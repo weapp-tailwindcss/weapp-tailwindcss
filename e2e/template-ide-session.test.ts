@@ -9,7 +9,7 @@ import { formatWorkflowError } from '../scripts/e2e-preflight/cleanup'
 import * as projectCleanup from '../scripts/wechat-project-cleanup'
 import { wechatRequest } from '../scripts/wechat/service'
 import { withTemplateAppId } from './template-ide/project-config'
-import { withTemplateIdeSession } from './template-ide/session'
+import { createTemplateIdeArtifacts, withTemplateIdeSession } from './template-ide/session'
 
 const { launch } = vi.hoisted(() => ({ launch: vi.fn() }))
 vi.mock('../scripts/wechat/automator', () => ({ Launcher: class { launch = launch } }))
@@ -29,12 +29,14 @@ describe('模板 IDE 会话的错误与资源归属', () => {
 
   beforeEach(async () => {
     artifactDir = await fs.mkdtemp(path.join(os.tmpdir(), 'template-ide-session-'))
+    vi.stubEnv('E2E_WECHAT_LOCK_DIRECTORY', artifactDir)
     options = { artifactDir, projectPath: path.join(artifactDir, 'project'), launchTimeoutMs: 1000, closeTimeoutMs: 1000 }
     close = vi.spyOn(projectCleanup, 'closeWechatProject').mockResolvedValue(undefined)
   })
   afterEach(async () => {
     vi.restoreAllMocks()
     vi.clearAllMocks()
+    vi.unstubAllEnvs()
     await Promise.all(cleanup.splice(0).map(dispose => dispose()))
     await fs.rm(artifactDir, { recursive: true, force: true })
   })
@@ -55,7 +57,7 @@ describe('模板 IDE 会话的错误与资源归属', () => {
     const run = vi.fn()
     await expect(withTemplateIdeSession(options, run)).rejects.toBe(primary)
     expect(run).not.toHaveBeenCalled()
-    expect(close).toHaveBeenCalledExactlyOnceWith(options.projectPath, undefined, 1000)
+    expect(close).not.toHaveBeenCalled()
     const diagnostic = await fs.readFile(path.join(artifactDir, 'error.txt'), 'utf8')
     expect(diagnostic).toContain(primary.stack!.split('\n')[1]!.trim())
     expect(diagnostic).toContain('original failure')
@@ -167,7 +169,7 @@ describe('模板 IDE 会话的错误与资源归属', () => {
     expect(close).toHaveBeenCalledOnce()
   })
 
-  it('真实本地 HTTP 500 后的 blocked 收尾保留首因，且不再发送服务请求', async () => {
+  it('真实本地 HTTP 500 后保留首因，外层不再发送服务请求', async () => {
     const requests: string[] = []
     const server = createServer((request, response) => {
       requests.push(new URL(request.url!, 'http://127.0.0.1').pathname)
@@ -184,16 +186,31 @@ describe('模板 IDE 会话的错误与资源归属', () => {
     launch.mockImplementation(async () => wechatRequest(address.port, { kind: 'auto', project: options.projectPath, port: 45678 }))
     const run = vi.fn()
     const error = await withTemplateIdeSession(options, run).catch(error => error)
-    expect(error).toBeInstanceOf(AggregateError)
-    if (!(error instanceof AggregateError)) {
-      throw error
-    }
-    expect(error.cause).toBe(error.errors[0])
-    expect(error.errors[0].message).toContain('auto 失败（HTTP 500）')
-    expect(error.errors[1].message).toContain('停止后续项目请求')
+    expect(error.message).toContain('auto 失败（HTTP 500）')
     expect(requests).toEqual(['/v2/auto'])
-    expect(observedClose).toHaveBeenCalledOnce()
+    expect(observedClose).not.toHaveBeenCalled()
     expect(run).not.toHaveBeenCalled()
     expect(await fs.readFile(path.join(artifactDir, 'error.txt'), 'utf8')).toContain('auto 失败（HTTP 500）')
+  })
+
+  it('启动层已聚合认证与收尾失败时保留完整错误，不再发送清理请求', async () => {
+    const primary = new Error('auto HTTP 500')
+    const blocked = new Error('服务已阻断，保留现场')
+    const error = new AggregateError([primary, blocked], '启动与清理失败', { cause: primary })
+    launch.mockRejectedValue(error)
+    await expect(withTemplateIdeSession(options, vi.fn())).rejects.toBe(error)
+    expect(close).not.toHaveBeenCalled()
+    expect(await fs.readFile(path.join(artifactDir, 'error.txt'), 'utf8')).toBe(formatWorkflowError(error))
+  })
+
+  it('同一模板的失败运行使用新目录，不混入旧的成功证据', async () => {
+    const previous = await createTemplateIdeArtifacts(artifactDir)
+    await fs.writeFile(path.join(previous, 'rendered.png'), 'previous screenshot')
+    const current = await createTemplateIdeArtifacts(artifactDir)
+    expect(current).not.toBe(previous)
+    launch.mockRejectedValue(new Error('appLaunch timeout'))
+    await expect(withTemplateIdeSession({ ...options, artifactDir: current }, vi.fn())).rejects.toThrow('appLaunch timeout')
+    expect(await fs.readdir(current)).toEqual(['error.txt'])
+    expect(await fs.readFile(path.join(previous, 'rendered.png'), 'utf8')).toBe('previous screenshot')
   })
 })

@@ -26,7 +26,11 @@ export async function withFrameworkIdeProject<T, Client extends NonNullable<Para
   }, [
     {
       label: `Failed to close IDE project ${options.projectPath}`,
-      run: () => closeWechatProject(options.projectPath, client, options.closeTimeoutMs),
+      run: async () => {
+        if (client) {
+          await closeWechatProject(options.projectPath, client, options.closeTimeoutMs)
+        }
+      },
     },
     {
       label: `Failed to restore IDE project config ${configPath}`,

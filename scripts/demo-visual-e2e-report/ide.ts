@@ -58,11 +58,13 @@ export async function launchMiniProgramInCleanDevTools(
   const port = preferredPort ?? await findFreePort()
   const launcher = new Launcher()
   process.stdout.write(`[weapp-hmr] ${name}: connect existing IDE for ${projectPath} port=${port}\n`)
-  // 会话边界统一管理截止时间；项目清理由拥有整个用例的 finally 统一执行。
+  // Launcher 负责失败启动的收尾；成功返回后才由用例的 finally 接管项目清理。
   const miniProgram = await launcher.launch({ cliPath: process.env.E2E_PREFLIGHT_WECHAT_CLI, projectPath, port, timeout: timeoutMs })
   return { miniProgram, port }
 }
 
 export async function closeMiniProgramAndCleanup(miniProgram: any, projectPath: string) {
-  await closeWechatProject(projectPath, miniProgram, readNumberEnv('DEMO_VISUAL_IDE_CLOSE_TIMEOUT_MS', 10_000))
+  if (miniProgram) {
+    await closeWechatProject(projectPath, miniProgram, readNumberEnv('DEMO_VISUAL_IDE_CLOSE_TIMEOUT_MS', 10_000))
+  }
 }

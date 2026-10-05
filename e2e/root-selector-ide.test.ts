@@ -41,7 +41,7 @@ async function launchMiniProgram() {
     }
     catch (error) {
       lastError = error
-      await closeWechatProject(projectPath, undefined, closeTimeoutMs)
+      // Launcher 已按原服务收尾；此处没有取得项目所有权。
     }
   }
   if (lastError instanceof Error) {
@@ -84,7 +84,9 @@ describeIde('root selector IDE runtime', () => {
   }, launchAttemptTimeoutMs * 2 + 30_000)
 
   afterAll(async () => {
-    await closeWechatProject(projectPath, miniProgram, closeTimeoutMs)
+    if (miniProgram) {
+      await closeWechatProject(projectPath, miniProgram, closeTimeoutMs)
+    }
   }, closeTimeoutMs + 10_000)
 
   it('verifies root selectors through inherited CSS variables in WeChat DevTools', async () => {

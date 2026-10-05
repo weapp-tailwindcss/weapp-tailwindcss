@@ -107,7 +107,9 @@ async function runProbe(projectName: string, screenshotName: string, selectors: 
     throw error
   }
   finally {
-    await closeWechatProject(projectPath, miniProgram, closeTimeoutMs)
+    if (miniProgram) {
+      await closeWechatProject(projectPath, miniProgram, closeTimeoutMs)
+    }
   }
 }
 
