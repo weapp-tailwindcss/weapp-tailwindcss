@@ -16,6 +16,7 @@ import type { ReactNativePlatform, ReactNativeReport } from './catalog'
 import { androidExpoDevice } from './android-device'
 import { androidScreenProbes, findAndroidAnrWaitTap } from './android-window'
 import { getHttpText } from './native-http'
+import { captureMetroEvidence } from './metro-evidence'
 import { createIosLaunchReconciler } from './ios-launch'
 import { createExpoNativeEnvironment } from './native-environment'
 import { reactNativeAndroidToolchain } from './native-toolchain'
@@ -200,6 +201,8 @@ async function captureVerified(name: string, device: string, envelope: ReportEnv
 }
 
 async function captureFailureDiagnostics(device: string) {
+  await captureMetroEvidence(exampleRoot, path.join(artifacts, 'metro-failure'), { 'global.css': cssFile, 'hmr-marker.ts': markerFile })
+    .catch(error => process.stderr.write(`Failed to preserve Metro compilation evidence: ${String(error)}\n`))
   if (platform === 'android') {
     const logcat = await execa('adb', ['-s', device, 'logcat', '-d', '-v', 'threadtime'], { reject: false })
     await fs.writeFile(path.resolve(artifacts, 'logcat.txt'), logcat.stdout, 'utf8')
