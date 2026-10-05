@@ -4,6 +4,7 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { expect, it, vi } from 'vitest'
 import { rollupTestRequire } from './rollup-test-runtime.mjs'
+import { getWatchPathEntry } from './rollup-watch-paths.mjs'
 import { replaceSourceFile } from './source-file.mjs'
 
 const require = rollupTestRequire('taro-vite-react-tailwindcss-v4')
@@ -75,13 +76,13 @@ it.each(scenarios)('reconciles a dependency recreated during native subscription
     }, { timeout: 5000, interval: 1 }).toEqual({ value, derived: value * 2 })
     await inspect(0)
     const fsWatcher = task.fileWatcher.watcher
-    await expect.poll(() => fsWatcher._closers.has(data), { timeout: 5000 }).toBe(true)
+    await expect.poll(() => getWatchPathEntry(fsWatcher._closers, data), { timeout: 5000 }).toBeDefined()
     expect(fsWatcher._watched.size).toBeGreaterThan(1)
     const handler = fsWatcher._nodeFsHandler
     const add = handler._addToNodeFs
     // 只延后真实订阅，不注入文件事件；控制重建发生在 stat 或父目录绑定之前。
     registration = vi.spyOn(handler, '_addToNodeFs').mockImplementation(async function (file, ...args) {
-      if (barrier === 'file' ? file === data : file === dataDir && args[3] === path.basename(data)) {
+      if (barrier === 'file' ? path.resolve(file) === data : path.resolve(file) === dataDir && args[3] === path.basename(data)) {
         blocked = true
         await release.promise
       }

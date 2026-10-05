@@ -3,6 +3,7 @@ import { rm } from 'node:fs/promises'
 import path from 'node:path'
 import { expect, it, vi } from 'vitest'
 import { recoveryFixture as fixture } from './rollup-recreation-fixture.mjs'
+import { getWatchPathEntry } from './rollup-watch-paths.mjs'
 import { replaceSourceFile } from './source-file.mjs'
 
 it.for(['cjs', 'esm'])('releases recovery subscriptions over repeated delete/recreate cycles (%s)', async (format, context) => {
@@ -14,7 +15,7 @@ it.for(['cjs', 'esm'])('releases recovery subscriptions over repeated delete/rec
       await replaceSourceFile(data, String(value))
       await waitFor(() => events.some(x => x.id === data && x.event === 'create'), 'create')
       expect(watcher._pendingRecreations.size).toBe(0)
-      expect(watcher._closers.get(data)).toHaveLength(1)
+      expect(getWatchPathEntry(watcher._closers, data)).toHaveLength(1)
       await waitFor(() => bindings.size === 2, `cycle ${value}: release recovery handle`)
     }
   })
@@ -30,7 +31,7 @@ it.for(['cjs', 'esm'])('does not rebind from a file stat completed after unwatch
     task.fileWatcher.unwatch(data)
     await pending
     expect(events).toEqual([])
-    expect(watcher._closers.has(data)).toBe(false)
+    expect(getWatchPathEntry(watcher._closers, data)).toBeUndefined()
     expect(watcher._pendingRecreations.size).toBe(0)
   })
 }, 20_000)
@@ -50,7 +51,7 @@ it.for(['cjs', 'esm'])('keeps one directory subscription when subsequent builds 
         task.fileWatcher.watch(dataDir, true)
         await settle(Promise.all(registrations))
       }
-      expect(watcher._closers.get(dataDir)).toHaveLength(1)
+      expect(getWatchPathEntry(watcher._closers, dataDir)).toHaveLength(1)
     }
     finally { spy.mockRestore() }
   })
@@ -65,7 +66,7 @@ it.for(['cjs', 'esm'].flatMap(format => ['unwatch', 'close'].map(action => ({ fo
     const add = handler._addToNodeFs
     let blocked = false
     const spy = trackSpy(vi.spyOn(handler, '_addToNodeFs')).mockImplementation(async function (file, ...args) {
-      const pause = file === dataDir && args[3] === path.basename(data)
+      const pause = path.resolve(file) === dataDir && args[3] === path.basename(data)
       if (pause) {
         blocked = true
         await release.promise
@@ -92,10 +93,10 @@ it.for(['cjs', 'esm'].flatMap(format => ['unwatch', 'close'].map(action => ({ fo
       await settle(finished.promise)
       expect(events).toEqual([])
       expect(watcher._pendingRecreations.size).toBe(0)
-      expect(watcher._closers.has(data)).toBe(false)
+      expect(getWatchPathEntry(watcher._closers, data)).toBeUndefined()
       if (action === 'unwatch') {
         task.fileWatcher.watch(data, true)
-        await waitFor(() => watcher._closers.has(data), 'file subscription')
+        await waitFor(() => getWatchPathEntry(watcher._closers, data), 'file subscription')
         await replaceSourceFile(data, '22')
         await waitFor(() => events.some(x => x.id === data && x.event === 'update'), 'update')
       }
@@ -111,7 +112,7 @@ it.for(['cjs', 'esm'].flatMap(format => ['add', 'change'].map(event => ({ format
   await fixture(format, context, async ({ waitFor, task, watcher, data, bindings }) => {
     let cancelled = false
     watcher.on(event, (file) => {
-      if (file === data) {
+      if (path.resolve(file) === data) {
         if (event === 'add') {
           task.fileWatcher.unwatch(data)
         }
@@ -128,7 +129,7 @@ it.for(['cjs', 'esm'].flatMap(format => ['add', 'change'].map(event => ({ format
     await replaceSourceFile(data, '1')
     await waitFor(() => cancelled, 'synchronous cancellation')
     await waitFor(() => bindings.size === (event === 'add' ? 1 : 0), 'cancelled handles')
-    expect(watcher._closers.has(data)).toBe(false)
+    expect(getWatchPathEntry(watcher._closers, data)).toBeUndefined()
     expect(watcher._pendingRecreations.size).toBe(0)
   })
 }, 20_000)
@@ -140,7 +141,7 @@ it.for(['cjs', 'esm'])('keeps recovery live when the file disappears between sta
     let removedBeforeBinding = false
     // 只固定 stat 成功后的原生绑定窗口，真实目录事件和异步对账继续执行。
     beforeNativeWatch((file) => {
-      if (file === data && !removedBeforeBinding) {
+      if (path.resolve(file) === data && !removedBeforeBinding) {
         fs.unlinkSync(data)
         removedBeforeBinding = true
       }
@@ -160,11 +161,11 @@ it.for(['cjs', 'esm'])('keeps recovery live when the file disappears between sta
 }, 20_000)
 
 it.for(['cjs', 'esm'])('new file generation is not suppressed by a delayed add throttle (%s)', async (format, context) => {
-  await fixture(format, context, async ({ waitFor, onStop, watcher, data, events }) => {
+  await fixture(format, context, async ({ waitFor, onStop, watcher, data, events, record }) => {
     let previousAdd
     watcher.on('add', (file) => {
-      if (file === data && !previousAdd) {
-        previousAdd = watcher._throttled.get('add').get(data)
+      if (path.resolve(file) === data && !previousAdd) {
+        previousAdd = getWatchPathEntry(watcher._throttled.get('add'), data)
         // 暂停旧代去重记录的过期，模拟原生 I/O 先于零延时定时器被调度。
         clearTimeout(previousAdd.timeoutObject)
       }
@@ -173,13 +174,15 @@ it.for(['cjs', 'esm'])('new file generation is not suppressed by a delayed add t
     await rm(data)
     await waitFor(() => events.some(x => x.id === data && x.event === 'delete'), 'first delete')
     await replaceSourceFile(data, '1')
+    record('source-published', { value: 1 })
     await waitFor(() => events.some(x => x.id === data && x.event === 'create'), 'first create')
     expect(previousAdd).toBeDefined()
     events.length = 0
     await rm(data)
     await waitFor(() => events.some(x => x.id === data && x.event === 'delete'), 'second delete')
     await replaceSourceFile(data, '22')
+    record('source-published', { value: 22 })
     await waitFor(() => events.some(x => x.id === data && x.event === 'create'), 'second create')
-    expect(watcher._throttled.get('add').get(data)).not.toBe(previousAdd)
+    expect(getWatchPathEntry(watcher._throttled.get('add'), data)).not.toBe(previousAdd)
   })
 }, 20_000)

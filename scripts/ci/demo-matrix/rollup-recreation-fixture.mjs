@@ -6,12 +6,24 @@ import { setTimeout } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
 import { expect, vi } from 'vitest'
 import { rollupTestRequire } from './rollup-test-runtime.mjs'
+import { getWatchPathEntry } from './rollup-watch-paths.mjs'
 import { replaceSourceFile } from './source-file.mjs'
 
 const require = rollupTestRequire('taro-vite-react-tailwindcss-v4')
 const dist = path.dirname(require.resolve('rollup'))
 // 每个 fixture 都调用原生函数，不能捕获上一用例尚未恢复的 spy。
 const nativeWatch = fs.watch
+
+// 同时等待就绪与主体终结，初始化失败不能留下永不完成的就绪等待。
+export function fixtureReadiness(pending, ready) {
+  const finished = pending.then(() => ({ ok: true }), error => ({ ok: false, error }))
+  return {
+    finished,
+    ready: Promise.race([ready, finished.then((result) => {
+      throw result.ok ? new Error('fixture finished before ready') : result.error
+    })]),
+  }
+}
 
 async function waitFor(predicate, message, signal) {
   const deadline = performance.now() + 5000
@@ -27,7 +39,7 @@ async function waitFor(predicate, message, signal) {
   }
 }
 
-export async function recoveryFixture(format, context, run) {
+export async function recoveryFixture(format, context, run, watchOptions = {}) {
   const { signal } = context
   signal.throwIfAborted()
   const { Task } = format === 'cjs'
@@ -42,7 +54,7 @@ export async function recoveryFixture(format, context, run) {
     invalidate(event) { events.push(event) },
   }, {
     output: [],
-    watch: { chokidar: { atomic: false, useFsEvents: false, usePolling: false } },
+    watch: { chokidar: { atomic: false, useFsEvents: false, usePolling: false, ...watchOptions } },
   })
   const watcher = task.fileWatcher.watcher
   const listeners = new Map()
@@ -93,9 +105,27 @@ export async function recoveryFixture(format, context, run) {
     }
   })()
   const bind = watcher._nodeFsHandler._watchWithNodeFs
-  trackSpy(vi.spyOn(watcher._nodeFsHandler, '_watchWithNodeFs')).mockImplementation(function (file, listener) {
-    listeners.set(file, listener)
-    return bind.call(this, file, listener)
+  trackSpy(vi.spyOn(watcher._nodeFsHandler, '_watchWithNodeFs')).mockImplementation(function (file, listener, ...args) {
+    listeners.set(path.resolve(file), listener)
+    return bind.call(this, file, listener, ...args)
+  })
+  const handler = watcher._nodeFsHandler
+  const add = handler._addToNodeFs
+  // 用普通包装器保留原函数；用例再 spyOn 同一方法时不能重新指向自己。
+  handler._addToNodeFs = async function (file, ...args) {
+    record('subscription-start', { file, initial: args[0], target: args[3] })
+    try {
+      const result = await add.call(this, file, ...args)
+      record('subscription-end', { file, result })
+      return result
+    }
+    catch (error) {
+      record('subscription-error', { file, code: error.code, message: error.message })
+      throw error
+    }
+  }
+  restores.push(() => {
+    handler._addToNodeFs = add
   })
   trackSpy(vi.spyOn(fs, 'watch')).mockImplementation((file, ...args) => {
     const relative = path.relative(dir, path.resolve(String(file)))
@@ -119,7 +149,11 @@ export async function recoveryFixture(format, context, run) {
       throw error
     }
     bindings.add(native)
-    native.once('close', () => bindings.delete(native))
+    native.once('close', () => {
+      bindings.delete(native)
+      record('native-close', { file })
+    })
+    native.on('error', error => record('native-error', { file, code: error.code, message: error.message }))
     return native
   })
   signal.addEventListener('abort', stop, { once: true })
@@ -131,7 +165,7 @@ export async function recoveryFixture(format, context, run) {
     signal.throwIfAborted()
     task.fileWatcher.watch(entry, false)
     task.fileWatcher.watch(data, true)
-    await waitFor(() => watcher._closers.has(data), 'initial subscription', signal)
+    await waitFor(() => getWatchPathEntry(watcher._closers, data), 'initial subscription', signal)
     await run({
       task,
       watcher,
@@ -140,13 +174,14 @@ export async function recoveryFixture(format, context, run) {
       events,
       bindings,
       listeners,
+      record,
       trackSpy,
       waitFor: async (predicate, message) => {
         try {
           await waitFor(predicate, message, signal)
         }
         catch (error) {
-          record('wait-failed', { message, events })
+          record('wait-failed', { message, events, dataExists: fs.existsSync(data), bindings: bindings.size })
           throw new Error(`${error.message}\n${JSON.stringify(trace, null, 2)}`, { cause: error })
         }
       },

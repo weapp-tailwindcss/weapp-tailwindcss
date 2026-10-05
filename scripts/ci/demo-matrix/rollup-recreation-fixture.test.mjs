@@ -1,6 +1,6 @@
 import fs from 'node:fs'
 import { expect, it, vi } from 'vitest'
-import { recoveryFixture } from './rollup-recreation-fixture.mjs'
+import { fixtureReadiness, recoveryFixture } from './rollup-recreation-fixture.mjs'
 import { replaceSourceFile } from './source-file.mjs'
 
 it.for(['cjs', 'esm'].flatMap(format => ['release', 'pending'].map(gate => ({ format, gate }))))('settles an aborted fixture before the next native watcher starts ($format, $gate)', async ({ format, gate }, context) => {
@@ -25,12 +25,18 @@ it.for(['cjs', 'esm'].flatMap(format => ['release', 'pending'].map(gate => ({ fo
     fixture.task.fileWatcher.watch(fixture.data, true)
     continued = true
   })
-  // 在 abort 前安装 rejection 消费方，模拟 runner 已经接管失败结果。
-  const rejection = expect(aborted).rejects.toBe(timeout)
-  await ready.promise
-  controller.abort(timeout)
-  await finish()
-  await rejection
+  const outcome = fixtureReadiness(aborted, ready.promise)
+  try {
+    await outcome.ready
+    controller.abort(timeout)
+    await finish()
+    expect(await outcome.finished).toEqual({ ok: false, error: timeout })
+  }
+  finally {
+    controller.abort(timeout)
+    await finish?.()
+    await outcome.finished
+  }
   expect(continued).toBe(false)
   expect(resources.watcher.closed).toBe(true)
   expect(resources.bindings.size).toBe(0)
@@ -47,3 +53,18 @@ it.for(['cjs', 'esm'].flatMap(format => ['release', 'pending'].map(gate => ({ fo
   })
   expect(fs.watch).toBe(originalWatch)
 }, 20_000)
+
+it('fixture 初始化失败立即传播原错误，不遗留就绪等待或未处理拒绝', async () => {
+  const controller = new AbortController()
+  const failure = new Error('fixture initialization failed')
+  controller.abort(failure)
+  const run = vi.fn()
+  const finish = vi.fn()
+  const ready = Promise.withResolvers()
+  const fixture = recoveryFixture('cjs', { signal: controller.signal, onTestFinished: finish }, run)
+  const outcome = fixtureReadiness(fixture, ready.promise)
+  await expect(outcome.ready).rejects.toBe(failure)
+  expect(await outcome.finished).toEqual({ ok: false, error: failure })
+  expect(run).not.toHaveBeenCalled()
+  expect(finish).not.toHaveBeenCalled()
+})
