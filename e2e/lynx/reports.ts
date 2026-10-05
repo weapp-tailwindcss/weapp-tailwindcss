@@ -4,6 +4,7 @@ import path from 'node:path'
 import { compatibilityCases } from '../../examples/react-lynx/src/compatibility/catalog'
 import staticEvidenceJson from '../../examples/react-lynx/src/compatibility/static-evidence.json'
 import { compatibilityVersions, getCatalogHash } from './catalog'
+import { validateNativePixelEvidence } from './pixel-evidence'
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {
@@ -78,7 +79,9 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
 
 export async function readNativeReport(reportPath: string, platform: Platform) {
   const report = JSON.parse(await fs.readFile(reportPath, 'utf8')) as NativePlatformReport
-  return validateNativeReport(report, platform)
+  validateNativeReport(report, platform)
+  await validateNativePixelEvidence(report, path.join(path.dirname(reportPath), 'crops'))
+  return report
 }
 
 export function nativeReportConclusion(report: NativePlatformReport) {

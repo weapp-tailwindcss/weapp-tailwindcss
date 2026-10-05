@@ -6,4 +6,8 @@
 
 几何 case 必须同时有 probe 与 control 的尺寸测量；像素 case 必须有两个局部截图；动画/transition 必须有时间序列 checkpoint。需要真实输入注入的 `active`、`hover`、`pointer-events` case 在 host 尚未注入时保持 `not-tested`，不能手工改成不支持或支持。
 
+运行验收与基线更新都读取报告旁 `crops/` 的原始 PNG，拒绝缺失、损坏或不能支撑通过结论的截图。两图必须尺寸一致，再比较解码后的可见 RGBA；PNG 压缩、隐藏的透明 RGB、边缘宽高取整差异不能证明样式生效。一像素宽度变化也会改变渐变插值，因此不自动裁剪或缩放来凑齐尺寸。动画及 transition 的相邻 checkpoint 也遵循此要求。更新基线不能只提供 JSON 或回读本目录的已提交报告。
+
+这项校验是支持结论的必要证据，不能证明截图包含父节点合成的透明度、裁剪、滤镜等效果，也不能代替逐 case 的语义审查。失败保留原报告与截图，不自动改写状态或刷新基线。历史报告中的一像素尺寸差异假阳性见[复盘](../../../docs/engineering/lessons/lynx-pixel-evidence.md)。
+
 禁止根据 `@lynx-js/css-defines` 或静态 encoder 结果手工填写这里的报告。
