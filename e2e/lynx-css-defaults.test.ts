@@ -63,6 +63,15 @@ async function generateCss(candidates: string) {
 }
 
 describe('Lynx native CSS defaults', () => {
+  it('将 Tailwind v4 百分比透明度编码为 Lynx 原生数值', async () => {
+    const css = await generateCss('opacity-50')
+    expect(css).toContain('opacity: 0.5')
+    expect(css).not.toContain('opacity: 50%')
+    const encoded = await encodeCss(css)
+    expect(encoded.diagnostics).toEqual([])
+    expect(encoded.css).toContain('opacity: 0.5')
+  })
+
   it.each([
     ['border', ['--tw-border-style: solid', 'border-top-width: 1px']],
     ['border border-dashed', ['--tw-border-style: solid', '--tw-border-style: dashed', 'border-style: {{--tw-border-style}}']],

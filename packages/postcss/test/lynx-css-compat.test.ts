@@ -1,6 +1,37 @@
 import { transformLynxCssCompat, transformWebCssCompat } from '@/index'
 
 describe('Lynx CSS compatibility transform', () => {
+  it.each([
+    ['50%', '0.5'],
+    ['0%', '0'],
+    ['100%', '1'],
+    ['12.5%', '0.125'],
+    ['.5%', '0.005'],
+    ['+5e1%', '0.5'],
+    ['-20%', '-0.2'],
+    ['150%', '1.5'],
+  ])('将 opacity 的百分比 %s 转为原生数字 %s', (value, expected) => {
+    expect(transformLynxCssCompat(`.probe { opacity: ${value} !important; }`)).toBe(`.probe { opacity: ${expected} !important; }`)
+  })
+
+  it('保留非 opacity 百分比、动态值及无效 token', () => {
+    const css = '.probe { --opacity: 50%; width: 50%; opacity: var(--opacity, 50%); opacity: calc(var(--factor) * 50%); opacity: .5; opacity: inherit; opacity: 50% 20%; opacity: 1e999%; }'
+    expect(transformLynxCssCompat(css)).toBe(css)
+  })
+
+  it('转换不丢失注释，重复处理幂等，普通 Web 不使用原生数值转换', () => {
+    const css = '.probe { opacity: 50% /* authored */ !important; }'
+    const result = transformLynxCssCompat(css)
+    expect(result).toContain('opacity: 0.5 /* authored */ !important')
+    expect(transformLynxCssCompat(result)).toBe(result)
+    expect(transformWebCssCompat('.probe { opacity: 50%; }', true)).toContain('opacity: 50%')
+  })
+
+  it('关键帧与嵌套规则使用同一 opacity 兼容转换', () => {
+    const css = '@keyframes fade { from { opacity: 0%; } to { opacity: 100%; } } @media (width > 1px) { .probe { OPACITY: 25%; } }'
+    expect(transformLynxCssCompat(css)).toBe('@keyframes fade { from { opacity: 0; } to { opacity: 1; } } @media (width > 1px) { .probe { OPACITY: 0.25; } }')
+  })
+
   it('inlines Tailwind theme values and reduces static calculations', () => {
     const css = [
       ':root, :host {',

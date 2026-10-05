@@ -139,21 +139,39 @@ function normalizeTailwindDefaultSelectors(root: postcss.Root) {
   })
 }
 
-/** 保留 Lynx 的 Tailwind 默认变量，并静态化可证明稳定的 theme 值。 */
+function normalizeOpacityPercentages(root: postcss.Root) {
+  root.walkDecls(/^opacity$/i, (decl) => {
+    // PostCSS 将值内注释保存在 raws；仅在原值未被前序转换修改时读取。
+    const raw = decl.raws.value
+    const parsed = valueParser(raw?.value === decl.value ? raw.raw : decl.value)
+    const tokens = parsed.nodes.filter(node => node.type !== 'space' && node.type !== 'comment')
+    const token = tokens[0]
+    // Lynx 4.0.1 的 opacity 使用 NumberHandler；仅转换明确的单个百分比，不推断动态变量。
+    if (tokens.length !== 1 || token?.type !== 'word' || !/^[+-]?(?:\d+|\d*\.\d+)(?:e[+-]?\d+)?%$/i.test(token.value)) {
+      return
+    }
+    const number = Number(token.value.slice(0, -1)) / 100
+    if (Number.isFinite(number)) {
+      token.value = String(number)
+      decl.value = parsed.toString()
+    }
+  })
+}
+
+/** 保留 Lynx 的 Tailwind 默认变量，静态化稳定 theme 值并适配原生 opacity 数值。 */
 export function transformLynxCssCompat(css: string) {
   try {
     const root = postcss.parse(css)
     normalizeTailwindDefaultSelectors(root)
     const properties = collectTailwindThemeProperties(root)
-    if (properties.size === 0) {
-      return root.toString()
+    if (properties.size > 0) {
+      root.walkDecls((decl) => {
+        decl.value = resolveThemeValue(decl.value, properties)
+      })
+      removeConsumedThemeProperties(root, properties)
+      postcss([postcssCalc()]).process(root, { from: undefined }).sync()
     }
-
-    root.walkDecls((decl) => {
-      decl.value = resolveThemeValue(decl.value, properties)
-    })
-    removeConsumedThemeProperties(root, properties)
-    postcss([postcssCalc()]).process(root, { from: undefined }).sync()
+    normalizeOpacityPercentages(root)
     return root.toString()
   }
   catch {
