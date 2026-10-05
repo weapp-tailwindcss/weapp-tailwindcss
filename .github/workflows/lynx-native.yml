@@ -77,7 +77,7 @@ jobs:
       - run: brew install cocoapods xcodegen
       - run: pnpm install --frozen-lockfile
       - name: Verify iOS preparation recovery
-        run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-ios-container.test.ts e2e/lynx-native-options.test.ts --update=none
+        run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-ios-container.test.ts e2e/lynx-native-options.test.ts e2e/lynx-native-artifacts.test.ts --update=none
       - name: Boot iOS 18.5 simulator
         run: |
           udid="$(xcrun simctl create LynxCompatibility 'iPhone 16 Pro' 'com.apple.CoreSimulator.SimRuntime.iOS-18-5')"

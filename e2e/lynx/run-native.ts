@@ -9,6 +9,7 @@ import { androidSdkRoot } from '../react-native/native-toolchain'
 import { buildCompatibilityBundle } from './build'
 import { exampleDir, lynxIntermediateDir, repoRoot } from './catalog'
 import { resolveIosAppContainer } from './ios-container'
+import { formatNativeFailure, withNativeArtifacts } from './native-artifacts'
 import { command } from './native-command'
 import { adbArgs, resolveNativeDevice } from './native-device'
 import { enrichEnvironment } from './native-environment'
@@ -221,36 +222,37 @@ async function compareCommittedReport(actual: NativePlatformReport) {
 }
 
 async function main() {
-  const device = await resolveNativeDevice(platform, fixtureDir)
-  const temporaryRoot = process.env['LYNX_NATIVE_WORK_DIR']
-    ? path.resolve(process.env['LYNX_NATIVE_WORK_DIR'])
-    : await fs.mkdtemp(path.join(os.tmpdir(), `weapp-tailwindcss-lynx-${platform}-`))
-  const hostDir = path.join(temporaryRoot, 'host')
   const artifactDir = options.outputDir ?? path.join(repoRoot, 'e2e', '.artifacts', 'lynx-native', `${platform}-${Date.now()}`)
-  await Promise.all([
-    fs.cp(fixtureDir, hostDir, { recursive: true }),
-    fs.mkdir(artifactDir, { recursive: true }),
-  ])
-  await fs.writeFile(path.join(artifactDir, 'device.json'), `${JSON.stringify(device, null, 2)}\n`)
-  const build = options.captureOnly ? undefined : await buildCompatibilityBundle()
-  const bundlePath = options.bundlePath ?? path.join(exampleDir, 'dist', 'main.lynx.bundle')
-  const stagedBundle = platform === 'android'
-    ? path.join(hostDir, 'app', 'src', 'main', 'assets', 'main.lynx.bundle')
-    : path.join(hostDir, 'App', 'main.lynx.bundle')
-  await fs.mkdir(path.dirname(stagedBundle), { recursive: true })
-  const stagedArtifacts = [
-    fs.copyFile(bundlePath, stagedBundle),
-    fs.copyFile(bundlePath, path.join(artifactDir, 'main.lynx.bundle')),
-  ]
-  if (!options.captureOnly && build) {
-    stagedArtifacts.push(
-      fs.copyFile(path.join(lynxIntermediateDir, 'main.css'), path.join(artifactDir, 'main.css')),
-      fs.writeFile(path.join(artifactDir, 'encoder.log'), build.encoderLog),
-    )
-  }
-  await Promise.all(stagedArtifacts)
+  return withNativeArtifacts(platform, artifactDir, async (setStage) => {
+    const device = await resolveNativeDevice(platform, fixtureDir)
+    setStage('host-preparation')
+    const temporaryRoot = process.env['LYNX_NATIVE_WORK_DIR']
+      ? path.resolve(process.env['LYNX_NATIVE_WORK_DIR'])
+      : await fs.mkdtemp(path.join(os.tmpdir(), `weapp-tailwindcss-lynx-${platform}-`))
+    const hostDir = path.join(temporaryRoot, 'host')
+    await fs.cp(fixtureDir, hostDir, { recursive: true })
+    await fs.writeFile(path.join(artifactDir, 'device.json'), `${JSON.stringify(device, null, 2)}\n`)
+    setStage('bundle-build')
+    const build = options.captureOnly ? undefined : await buildCompatibilityBundle()
+    setStage('bundle-staging')
+    const bundlePath = options.bundlePath ?? path.join(exampleDir, 'dist', 'main.lynx.bundle')
+    const stagedBundle = platform === 'android'
+      ? path.join(hostDir, 'app', 'src', 'main', 'assets', 'main.lynx.bundle')
+      : path.join(hostDir, 'App', 'main.lynx.bundle')
+    await fs.mkdir(path.dirname(stagedBundle), { recursive: true })
+    const stagedArtifacts = [
+      fs.copyFile(bundlePath, stagedBundle),
+      fs.copyFile(bundlePath, path.join(artifactDir, 'main.lynx.bundle')),
+    ]
+    if (!options.captureOnly && build) {
+      stagedArtifacts.push(
+        fs.copyFile(path.join(lynxIntermediateDir, 'main.css'), path.join(artifactDir, 'main.css')),
+        fs.writeFile(path.join(artifactDir, 'encoder.log'), build.encoderLog),
+      )
+    }
+    await Promise.all(stagedArtifacts)
 
-  try {
+    setStage('native-run')
     const reportSource = device.platform === 'android'
       ? await runAndroid(hostDir, artifactDir, device)
       : await runIos(hostDir, artifactDir, device)
@@ -261,19 +263,16 @@ async function main() {
     if (!reportSource) {
       throw new Error('Native compatibility run did not produce a report.')
     }
+    setStage('report-validation')
     await fs.writeFile(path.join(artifactDir, 'raw-report.json'), `${reportSource.trim()}\n`)
     const report = validateNativeReport(await enrichEnvironment(JSON.parse(reportSource) as NativePlatformReport, hostDir, device), platform)
     await fs.writeFile(path.join(artifactDir, 'report.json'), `${JSON.stringify(report, null, 2)}\n`)
     await compareCommittedReport(report)
     process.stdout.write(`${JSON.stringify({ platform, artifactDir, cases: report.results.length }, null, 2)}\n`)
-  }
-  catch (error) {
-    await fs.writeFile(path.join(artifactDir, 'failure.txt'), `${error instanceof Error ? error.stack : String(error)}\n`)
-    throw error
-  }
+  })
 }
 
 main().catch((error) => {
-  process.stderr.write(`${error instanceof Error ? error.stack : String(error)}\n`)
+  process.stderr.write(`${formatNativeFailure(error)}\n`)
   process.exitCode = 1
 })
