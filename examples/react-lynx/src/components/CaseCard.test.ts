@@ -31,6 +31,21 @@ function probeNodes(id: string) {
 }
 
 describe('Lynx compatibility text fixtures', () => {
+  it('结构选择器由三个真实兄弟 text 消费，包含命中和非命中位置', () => {
+    const { item, probe, control } = probeNodes('variant-structural')
+    for (const [node, prefix] of [[probe, 'probe'], [control, 'control']] as const) {
+      const children = elements(node).filter(child => child.type === 'text')
+      expect(children).toHaveLength(3)
+      expect(children.map(child => child.props.children)).toEqual(['Tw4', 'Tw4', 'Tw4'])
+      for (const child of children) {
+        expect(child.props['async-display']).toBe(false)
+        for (const utility of item.className.split(/\s+/)) {
+          expect(String(child.props.className).split(/\s+/).includes(utility)).toBe(prefix === 'probe')
+        }
+      }
+    }
+  })
+
   it('dark 媒体 utility 由同步绘制的 text 直接消费，控制组不预设白字', () => {
     const { item, probe, control, text } = probeNodes('variant-dark')
     expect(String(text(probe).props.className)).toContain(item.className)

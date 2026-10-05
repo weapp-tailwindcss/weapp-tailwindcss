@@ -8,6 +8,7 @@ import { evidenceSequence, requiresPixelEffect } from '../examples/react-lynx/sr
 import staticEvidence from '../examples/react-lynx/src/compatibility/static-evidence.json'
 import { darkReceipts } from './lynx/fixtures/dark-images'
 import { effectFixtureImage } from './lynx/fixtures/effect-images'
+import { structuralImage } from './lynx/fixtures/structural-images'
 import { finalizeNativePixelEffects, validateNativePixelEvidence } from './lynx/pixel-evidence'
 import { PNG } from './lynx/png'
 import { validateNativeReport } from './lynx/reports'
@@ -230,7 +231,12 @@ it('宿主只判定待验收效果，保留原始采集报告且无效图不能�
   const original = JSON.stringify(report)
   const final = await finalizeNativePixelEffects(report, crops)
   expect(JSON.stringify(report)).toBe(original)
-  expect(final.results.filter(result => requiresPixelEffect(result.id)).map(result => result.status)).toEqual(['unsupported', 'unsupported', 'supported'])
+  expect(Object.fromEntries(final.results.filter(result => requiresPixelEffect(result.id)).map(result => [result.id, result.status]))).toEqual({
+    'background-linear-gradient': 'unsupported',
+    'effect-shadow': 'unsupported',
+    'transform-skew': 'supported',
+    'variant-structural': 'supported',
+  })
   await fs.writeFile(path.join(crops, 'effect-shadow-control.png'), 'broken PNG')
   await expect(finalizeNativePixelEffects(report, crops)).rejects.toThrow('无法解码')
 })
@@ -269,4 +275,24 @@ it.each(['missing', 'corrupt', 'forged', 'old-geometry'] as const)('skew 的 %s 
   }
   await fs.writeFile(reportPath, JSON.stringify(report))
   await expect(readPixelReport(reportPath, 'android')).rejects.toThrow(/transform-skew/)
+})
+
+it.each(['missing-reference', 'bad-control', 'bad-reference', 'false-supported', 'old-checkpoint'] as const)('结构选择器的 %s 不能进入完整报告验收', async (mode) => {
+  const { crops, report, reportPath } = await fixture()
+  const result = report.results.find(item => item.id === 'variant-structural')!
+  if (mode === 'missing-reference') {
+    await fs.rm(path.join(crops, 'variant-structural-reference.png'))
+  }
+  else if (mode === 'bad-control' || mode === 'bad-reference') {
+    const frame = mode === 'bad-control' ? 'control' : 'reference'
+    await fs.writeFile(path.join(crops, `variant-structural-${frame}.png`), PNG.sync.write(structuralImage(1, 'empty')))
+  }
+  else if (mode === 'false-supported') {
+    await fs.copyFile(path.join(crops, 'variant-structural-control.png'), path.join(crops, 'variant-structural-probe.png'))
+  }
+  else {
+    result.checkpoints = [{ name: 'pixel:probe-vs-control', passed: true }]
+  }
+  await fs.writeFile(reportPath, JSON.stringify(report))
+  await expect(readPixelReport(reportPath, 'android')).rejects.toThrow(/variant-structural|结构选择器/)
 })

@@ -17,6 +17,7 @@ vi.mock('./catalog', async (importOriginal) => {
       'effect-shadow',
       'transform-skew',
       'variant-dark',
+      'variant-structural',
     ].includes(item.id)),
   }
 })
@@ -122,7 +123,7 @@ it('动画及 transition 全部采集稳定画布，状态变化仍作用于被�
   expect(captures.filter(id => id === 'probe-container-transition-basic')).toHaveLength(3)
   expect(captures.filter(id => id === 'probe-container-variant-state')).toHaveLength(2)
   expect(mutations).toEqual(['#probe-transition-basic', 'probe-variant-state:true', 'probe-variant-state:false'])
-  expect(report.results.filter(result => !['background-linear-gradient', 'effect-shadow', 'transform-skew', 'variant-dark'].includes(result.id)).every(result => result.status === 'supported')).toBe(true)
+  expect(report.results.filter(result => !['background-linear-gradient', 'effect-shadow', 'transform-skew', 'variant-dark', 'variant-structural'].includes(result.id)).every(result => result.status === 'supported')).toBe(true)
 })
 
 it('合成画布缺失时拒绝发布报告，不退回元素自身截图', async () => {
@@ -135,7 +136,7 @@ it('合成画布缺失时拒绝发布报告，不退回元素自身截图', asyn
 it('等待最后一帧的真实写入回执后才发布报告', async () => {
   const { report, error } = await collect({ receipt: 'late' })
   expect(error).toBeUndefined()
-  expect(report.evidence?.artifacts).toHaveLength(23)
+  expect(report.evidence?.artifacts).toHaveLength(26)
 })
 
 it.each(['wrong-run', 'missing', 'failed'] as const)('%s 回执禁止发布报告', async (receipt) => {
@@ -171,4 +172,15 @@ it('dark 报告包含四帧与恢复回执，恢复失败不得提交任何报�
   const failed = await collect({ restoreFailed: true })
   expect(failed.error).toBeInstanceOf(AggregateError)
   expect(failed.report).toBeUndefined()
+})
+
+it('结构选择器包含普通文字与显式效果两种对照，指纹不同仍等待像素判定', async () => {
+  const { report, captures } = await collect()
+  expect(captures.filter(id => id.includes('variant-structural'))).toEqual([
+    'probe-container-variant-structural',
+    'control-container-variant-structural',
+    'reference-container-variant-structural',
+  ])
+  expect(report.results.find(item => item.id === 'variant-structural')).toMatchObject({ status: 'not-tested' })
+  expect(report.evidence!.artifacts.filter(item => item.name.startsWith('variant-structural'))).toHaveLength(3)
 })

@@ -8,6 +8,7 @@ import staticEvidenceJson from '../../examples/react-lynx/src/compatibility/stat
 import { evaluateColorScheme, validateColorSchemeReceipts } from './color-scheme'
 import { evaluatePixelEffect } from './pixel-effects'
 import { PNG } from './png'
+import { evaluateStructural } from './structural'
 
 const staticById = new Map((staticEvidenceJson as StaticEvidenceReport).results.map(item => [item.id, item]))
 
@@ -49,11 +50,14 @@ export async function finalizeNativePixelEffects(raw: NativePlatformReport, crop
     if (result.status !== 'not-tested') {
       throw new Error(`${result.id} 原始采集报告不能预先声明预期效果结论`)
     }
-    if (result.id === 'variant-dark') {
-      validateColorSchemeReceipts(result, report.evidence?.runId)
+    if (result.id === 'variant-dark' || result.id === 'variant-structural') {
+      if (result.id === 'variant-dark') {
+        validateColorSchemeReceipts(result, report.evidence?.runId)
+      }
       const item = compatibilityCases.find(item => item.id === result.id)!
       const frames = evidenceSequence(item, built)!.frames
-      const measured = evaluateColorScheme(await Promise.all(frames.map(frame => readPixels(path.join(cropsDirectory, `${result.id}-${frame}.png`)))))
+      const evaluate = result.id === 'variant-dark' ? evaluateColorScheme : evaluateStructural
+      const measured = evaluate(await Promise.all(frames.map(frame => readPixels(path.join(cropsDirectory, `${result.id}-${frame}.png`)))))
       Object.assign(result, measured)
       if (measured.status === 'supported') {
         delete result.reason
@@ -91,13 +95,15 @@ export async function validateNativePixelEvidence(report: NativePlatformReport, 
         throw new Error(`${report.platform}:${item.id} 缺少 ${sequence.checkpoint} checkpoint`)
       }
       const images = await Promise.all(sequence.frames.map(frame => readPixels(path.join(cropsDirectory, `${item.id}-${frame}.png`))))
-      if (item.id === 'variant-dark') {
-        validateColorSchemeReceipts(result!, report.evidence?.runId)
-        const measured = evaluateColorScheme(images)
+      if (item.id === 'variant-dark' || item.id === 'variant-structural') {
+        if (item.id === 'variant-dark') {
+          validateColorSchemeReceipts(result!, report.evidence?.runId)
+        }
+        const measured = item.id === 'variant-dark' ? evaluateColorScheme(images) : evaluateStructural(images)
         const expected = measured.checkpoints[0]!
         if (result?.status !== measured.status || result.reason !== measured.reason || result.failureStage !== measured.failureStage
           || result.checkpoints.length !== 1 || Object.entries(expected).some(([key, value]) => checkpoint[key as keyof typeof expected] !== value)) {
-          throw new Error(`${report.platform}:${item.id} 颜色模式结论与四帧像素不符`)
+          throw new Error(`${report.platform}:${item.id} 结论与完整序列的原始像素不符`)
         }
         continue
       }

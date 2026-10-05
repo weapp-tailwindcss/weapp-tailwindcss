@@ -2,7 +2,7 @@ import type { ColorSchemeModule } from './native-color-scheme'
 import type { EvidenceModule, NativeEvidenceWriter } from './native-evidence'
 import type { CompatibilityCase, NativeCaseResult, NativePlatformReport, NativeRect, NativeRuntimeEnvironment, Platform, StaticEvidenceReport } from './types'
 import { compatibilityCases } from './catalog'
-import { lynxEvidenceStrategy, requiresPixelEffect } from './evidence'
+import { evidenceSequence, lynxEvidenceStrategy, requiresPixelEffect } from './evidence'
 import { collectGeometry } from './geometry'
 import { collectColorScheme } from './native-color-scheme'
 import { createNativeEvidence } from './native-evidence'
@@ -139,15 +139,13 @@ function fingerprint(value: string) {
 }
 
 async function collectPixel(item: CompatibilityCase, reporter: ReporterModule, evidence: NativeEvidenceWriter): Promise<NativeCaseResult> {
-  const probeId = `probe-container-${item.id}`
-  const controlId = `control-container-${item.id}`
-  const [styled, control] = await Promise.all([
-    capture(probeId, reporter),
-    capture(controlId, reporter),
-  ])
-  await evidence.save(`${item.id}-probe.png`, styled?.data)
-  await evidence.save(`${item.id}-control.png`, control?.data)
-  const captured = Boolean(styled?.data && control?.data)
+  const sequence = evidenceSequence(item, staticById.get(item.id))!
+  const images = await Promise.all(sequence.frames.map(frame => capture(`${frame}-container-${item.id}`, reporter)))
+  for (const [index, frame] of sequence.frames.entries()) {
+    await evidence.save(`${item.id}-${frame}.png`, images[index]?.data)
+  }
+  const [styled, control] = images
+  const captured = images.every(image => Boolean(image?.data))
   const passed = captured && fingerprint(styled!.data) !== fingerprint(control!.data)
   const pendingEffect = captured && requiresPixelEffect(item.id)
   return {
@@ -156,7 +154,7 @@ async function collectPixel(item: CompatibilityCase, reporter: ReporterModule, e
     reason: pendingEffect ? '已采集原始截图，等待宿主验证预期效果' : passed ? undefined : captured ? 'probe/control 元素截图没有可观察的像素差异' : '原生 host 未返回完整的 probe/control 局部截图',
     failureStage: passed || !captured ? undefined : 'runtime',
     checkpoints: [{
-      name: 'pixel:probe-vs-control',
+      name: sequence.checkpoint,
       passed,
       actual: styled?.data ? fingerprint(styled.data) : 'missing',
       expected: control?.data ? `different from ${fingerprint(control.data)}` : 'control screenshot',

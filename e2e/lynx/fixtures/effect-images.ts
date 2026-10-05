@@ -2,9 +2,13 @@ import fs from 'node:fs/promises'
 import { PNG } from '../png'
 import { darkImage } from './dark-images'
 import { skewImage } from './skew-images'
+import { structuralImage } from './structural-images'
 
 /** ce65d0626 的原始 Android 局部图：utility 移除了默认效果，却没有绘制预期效果。 */
 export async function effectFixtureImage(id: string, frame: string) {
+  if (id === 'variant-structural') {
+    return PNG.sync.write(structuralImage(1, frame === 'control' ? 'plain' : 'expected'))
+  }
   if (id === 'variant-dark') {
     return PNG.sync.write(darkImage(1, frame === 'dark-probe' ? 'white' : 'ink'))
   }

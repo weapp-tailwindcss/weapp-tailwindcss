@@ -12,6 +12,7 @@ import { verifyFlexFixture } from './lynx/flex-fixture-browser'
 import { verifyGridFixtures } from './lynx/grid-fixture-browser'
 import { verifySkewFixture } from './lynx/skew-fixture-browser'
 import { analyzeStaticEvidence } from './lynx/static-evidence'
+import { verifyStructuralFixture } from './lynx/structural-fixture-browser'
 
 const bundlePath = path.join(exampleDir, 'dist', 'main.lynx.bundle')
 let encoderLog = ''
@@ -182,6 +183,10 @@ describe('ReactLynx Rspeedy compatibility evidence', () => {
 
   it.each(['flex-grow', 'flex-wrap-order', 'flex-shorthand-shrink'])('%s 的真实组件产生竞争布局且逐项依赖 utility', async (id) => {
     await verifyFlexFixture(await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8'), id)
+  }, 30_000)
+
+  it('结构选择器在真实兄弟位置生效且每条 utility 都不可删除', async () => {
+    await verifyStructuralFixture(await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8'))
   }, 30_000)
 
   it('dark 的真实文字夹具只响应媒体颜色模式', async () => {

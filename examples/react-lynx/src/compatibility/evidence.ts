@@ -2,7 +2,7 @@ import type { CompatibilityCase, StaticCaseEvidence } from './types'
 
 /** 这些效果必须由宿主解码 PNG 后核对，截图指纹不同不能证明支持。 */
 export function requiresPixelEffect(id: string) {
-  return id === 'background-linear-gradient' || id === 'effect-shadow' || id === 'transform-skew'
+  return id === 'background-linear-gradient' || id === 'effect-shadow' || id === 'transform-skew' || id === 'variant-structural'
 }
 
 /** Lynx 的 Canvas 变换不一定进入 View 矩阵；保持共享 catalog，集中选择实际取证路径。 */
@@ -33,6 +33,9 @@ export function evidenceSequence(item: CompatibilityCase, built: Pick<StaticCase
   }
   if (strategy === 'color-scheme') {
     return { checkpoint: 'pixel:color-scheme-v1', frames: ['light-probe', 'light-control', 'dark-probe', 'dark-control'] }
+  }
+  if (item.id === 'variant-structural') {
+    return { checkpoint: 'pixel:structural-v1', frames: ['probe', 'control', 'reference'] }
   }
   if (strategy !== 'interaction') {
     return { checkpoint: 'pixel:probe-vs-control', frames: ['probe', 'control'] }
