@@ -61,6 +61,7 @@ interface ProjectBinding {
   autoPort: number
   runId: string
   opened: boolean
+  closing?: boolean
   release: () => Promise<void>
 }
 const blocked = new Set<number>()
@@ -139,7 +140,7 @@ export function ownedWechatPort(project: string) {
 /** 临时客户端只借用本进程已打开项目的端口，不重新发现服务或申请项目租约。 */
 export function ownedWechatEndpoint(project: string) {
   const binding = projects.get(path.resolve(project))
-  if (!binding?.opened || serviceLeases.get(binding.servicePort) !== binding) {
+  if (!binding?.opened || binding.closing || serviceLeases.get(binding.servicePort) !== binding) {
     throw new Error('微信项目没有本轮已打开的自动化连接，拒绝借用未知会话。')
   }
   if (blocked.has(binding.servicePort)) {
@@ -223,12 +224,20 @@ export async function wechatRequest(port: string | number, operation: Operation,
       if (!leaseOwner || leaseOwner.runId !== binding.runId) {
         throw new Error('微信项目租约不属于本轮请求，保留 IDE，不关闭其他项目。')
       }
+      if (binding.closing) {
+        throw new Error('微信项目正在关闭；拒绝对同一租约重复清理。')
+      }
+      // 入队前锁定关闭责任，避免旧 close 回执与同路径的新 auto 交错。
+      binding.closing = true
       lease = binding
     }
   }
   return enqueue(actualPort, async () => {
     if (blocked.has(actualPort)) {
       blockWechatService(actualPort)
+    }
+    if (lease && (projects.get(project!) !== lease || serviceLeases.get(actualPort) !== lease)) {
+      throw new Error('微信项目租约已改变；拒绝执行过期请求，保留当前会话。')
     }
     const signal = AbortSignal.timeout(timeoutMs)
     const token = process.env.WECHAT_DEVTOOLS_CLI_TOKEN
@@ -288,12 +297,9 @@ export async function wechatRequest(port: string | number, operation: Operation,
           : { autoPort: autoPort!, windowId: stableWindowId }
       }
       if (operation.kind === 'close') {
-        const currentLease = projects.get(project!)
-        if (currentLease?.runId === lease?.runId) {
-          await currentLease.release()
+        if (projects.get(project!) === lease && serviceLeases.get(actualPort) === lease) {
+          await lease!.release()
           projects.delete(project!)
-        }
-        if (serviceLeases.get(actualPort)?.runId === currentLease?.runId) {
           serviceLeases.delete(actualPort)
         }
         return result as Record<string, unknown>
