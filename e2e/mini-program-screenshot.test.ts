@@ -23,6 +23,17 @@ describe('mini-program screenshot viewport', () => {
     expect(cropMiniProgramViewport(full, { ...metrics, screenTop: 0, windowHeight: 200 }).height).toBe(200)
   })
 
+  it('rejects viewport inference when screenshot scaling cannot be verified', () => {
+    const full = new PNG({ width: 804, height: 1428 })
+    expect(() => cropMiniProgramViewport(full, {
+      screenWidth: 375,
+      screenHeight: 667,
+      screenTop: 64,
+      windowWidth: 375,
+      windowHeight: 603,
+    })).toThrow('小程序截图尺寸与运行时屏幕比例不一致')
+  })
+
   it('uses the actual top chrome when screenTop also includes a bottom tab bar', () => {
     const full = new PNG({ width: 100, height: 200 })
     full.data.set([12, 34, 56, 255], 30 * full.width * 4)

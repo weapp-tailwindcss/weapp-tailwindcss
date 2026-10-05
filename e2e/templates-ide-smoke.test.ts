@@ -3,7 +3,7 @@ import process from 'node:process'
 import { execa } from 'execa'
 import path from 'pathe'
 import { describe, expect, it } from 'vitest'
-import { captureMiniProgramViewport } from '../scripts/demo-visual-e2e-report/mini-program-screenshot'
+import { captureMiniProgramScreenshot } from '../scripts/demo-visual-e2e-report/mini-program-screenshot'
 import { resolveWechatAppId } from '../scripts/wechat-app-id'
 import { installFrameworkIdeRuntimeErrorCollector } from './frameworkIdeRuntimeErrors'
 import { clearProjectBuildState } from './projectTest'
@@ -220,7 +220,7 @@ describe('templates ide smoke', () => {
         const errors = installFrameworkIdeRuntimeErrorCollector(item.name, miniProgram)
         const nodes = await assertTemplatePageRendered(miniProgram, pageUrl)
         await fs.writeFile(path.join(artifactDir, 'rendered.json'), JSON.stringify({ pageUrl, nodes }, null, 2))
-        await captureMiniProgramViewport(miniProgram, path.join(artifactDir, 'rendered.png'), 15_000)
+        await captureMiniProgramScreenshot(miniProgram, path.join(artifactDir, 'rendered.png'), 15_000)
         await errors.assertNoErrors('template rendered')
       }))
   }, 240_000)

@@ -115,6 +115,32 @@ export async function readMiniProgramViewportMetrics(miniProgram: any, timeout: 
   throw new Error('小程序页面视口未在限定时间内就绪。', { cause: lastError })
 }
 
+/** 保存未经裁剪的真实截图，运行时尺寸仅作证据，不推断宿主截图比例。 */
+export async function captureMiniProgramScreenshot(miniProgram: any, screenshotPath: string, timeout: number) {
+  const metrics = await readMiniProgramWindowMetrics(miniProgram, timeout)
+  if (metrics.screenTop < 0 || metrics.screenTop + metrics.windowHeight > metrics.screenHeight + 1
+    || metrics.windowWidth > metrics.screenWidth) {
+    throw new Error('小程序截图缺少有效的窗口几何信息。')
+  }
+  const result = await miniProgram.send('App.captureScreenshot', {}, { timeout })
+  if (typeof result?.data !== 'string') {
+    throw new TypeError('小程序截图接口未返回图像。')
+  }
+  const fullImage = Buffer.from(result.data, 'base64')
+  const image = PNG.sync.read(fullImage)
+  if (image.width <= 0 || image.height <= 0) {
+    throw new Error('小程序截图尺寸无效。')
+  }
+  await fs.mkdir(path.dirname(screenshotPath), { recursive: true })
+  await fs.writeFile(screenshotPath, fullImage)
+  await fs.writeFile(`${screenshotPath}.capture.json`, `${JSON.stringify({
+    kind: 'full-screen',
+    image: { width: image.width, height: image.height },
+    runtime: metrics,
+  }, null, 2)}\n`)
+  return image
+}
+
 export async function captureMiniProgramViewport(miniProgram: any, screenshotPath: string, timeout: number) {
   await fs.mkdir(path.dirname(screenshotPath), { recursive: true })
   const metrics = await readMiniProgramViewportMetrics(miniProgram, timeout)
