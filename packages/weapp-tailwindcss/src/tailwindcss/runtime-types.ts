@@ -1,4 +1,4 @@
-import type { PackageResolvingOptions } from 'local-pkg'
+import type { PackageResolvingOptions } from './package-options'
 import type { TailwindSourceEntry } from './source-scan'
 import type { TailwindV4SourceOptions } from './v4-engine'
 
