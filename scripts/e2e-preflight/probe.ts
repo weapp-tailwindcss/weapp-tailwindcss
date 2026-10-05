@@ -3,6 +3,7 @@ import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { formatWorkflowError } from './cleanup'
 import { runOwnedWorker } from './process'
 import { remedies } from './types'
 
@@ -30,7 +31,7 @@ export async function runProbe(id: ProbeId, context: ProbeContext, signal?: Abor
     return { id, status: 'passed', checkedAt: new Date().toISOString(), detail: output.detail, remedy: remedies[id], evidence: [logFile, resultFile, ...(output.evidence ?? [])], binding: output.binding }
   }
   catch (error) {
-    const detail = String(error)
+    const detail = formatWorkflowError(error)
     await writeFile(logFile, detail)
     return { id, status: 'blocked', checkedAt: new Date().toISOString(), detail, remedy: remedies[id], evidence: [logFile] }
   }

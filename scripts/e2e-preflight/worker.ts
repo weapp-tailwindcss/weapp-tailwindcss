@@ -1,6 +1,7 @@
 import type { ProbeContext, ProbeId } from './types'
 import { readFile, writeFile } from 'node:fs/promises'
 import process from 'node:process'
+import { formatWorkflowError } from './cleanup'
 import { base, hbuilderx, wechat } from './probes/desktop'
 import { android, harmony, ios } from './probes/native'
 import { runtimeAndroid, runtimeIos } from './probes/runtime'
@@ -16,6 +17,6 @@ try {
   await writeFile(resultFile, JSON.stringify(await probes[id as ProbeId](context)))
 }
 catch (error) {
-  process.stderr.write(`${error instanceof Error ? error.stack : String(error)}\n`)
+  process.stderr.write(`${formatWorkflowError(error)}\n`)
   process.exitCode = 1
 }

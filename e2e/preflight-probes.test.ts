@@ -7,6 +7,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { chromium } from 'playwright'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { formatWorkflowError } from '../scripts/e2e-preflight/cleanup'
 import { assertImage, command } from '../scripts/e2e-preflight/io'
 import { base, hbuilderx, wechat } from '../scripts/e2e-preflight/probes/desktop'
 import { hbuilderxTools } from '../scripts/e2e-preflight/probes/hbuilderx-tools'
@@ -210,7 +211,9 @@ describe('真实探针的阻断条件', () => {
       disconnect: vi.fn(),
     })
     vi.spyOn(Launcher.prototype, 'connect').mockResolvedValue(mini as unknown as MiniProgram)
-    await expect(wechat({ ...context, dir, phase: 'prepare', binding: { command: cli } })).rejects.toThrow('actual=old-run')
+    const error = await wechat({ ...context, dir, phase: 'prepare', binding: { command: cli } }).catch(error => error)
+    expect(formatWorkflowError(error)).toContain('actual=old-run')
+    expect(formatWorkflowError(error)).toContain('no image')
     expect(tap).not.toHaveBeenCalled()
     expect(waitForAppReady).toHaveBeenCalledOnce()
     expect(waitForAppReady).toHaveBeenCalledWith(30_000)
