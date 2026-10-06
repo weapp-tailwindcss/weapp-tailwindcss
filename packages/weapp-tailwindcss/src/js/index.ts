@@ -1,4 +1,5 @@
 import type { CreateJsHandlerOptions, IJsHandlerOptions, JsHandler } from '../types'
+import { nativeCompilerConfigured } from '../native'
 import { defuOverrideArray } from '../utils'
 import { jsHandler } from './babel'
 import { nativeJsHandler } from './fast-path/native'
@@ -41,6 +42,9 @@ function resolveFastPathOptions(rawSource: string, options: IJsHandlerOptions): 
 }
 
 export function createJsHandler(options: CreateJsHandlerOptions): JsHandler {
+  // 插件上下文传入冻结的配置快照；其生命周期会在配置变化时重建 handler。
+  // 直接调用 createJsHandler 的可变配置仍保持逐次指纹检查。
+  const stableOptions = Object.isFrozen(options)
   // 顶层默认值在创建时固定；嵌套配置在每次调用入口检查内容版本。
   const defaults: IJsHandlerOptions = {
     escapeMap: options.escapeMap,
@@ -73,9 +77,14 @@ export function createJsHandler(options: CreateJsHandlerOptions): JsHandler {
   const resultCache = createJsResultCache()
   let defaultsSignature: string | undefined
   let defaultsSnapshot = defaults
+  let defaultsInitialized = false
 
   function refreshDefaults() {
+    if (stableOptions && defaultsInitialized) {
+      return defaultsSignature !== undefined
+    }
     const signature = getJsOptionsSignature(defaults)
+    defaultsInitialized = true
     if (signature === undefined) {
       return false
     }
@@ -174,7 +183,9 @@ export function createJsHandler(options: CreateJsHandlerOptions): JsHandler {
     }
     const fastPathOptions = resolveFastPathOptions(rawSource, resolvedOptions)
     // 原生实例自行缓存解析事实，先校验可变集合与映射，并执行 required 加载检查。
-    const nativeResult = nativeJsHandler(rawSource, fastPathOptions)
+    const nativeResult = nativeCompilerConfigured
+      ? nativeJsHandler(rawSource, fastPathOptions)
+      : undefined
     if (nativeResult) {
       return nativeResult
     }

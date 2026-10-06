@@ -45,7 +45,7 @@ export function createHandlersFromContext(
     majorVersion: normalizeStyleHandlerMajorVersion(tailwindcssMajorVersion),
   })
 
-  const jsHandler = createJsHandler({
+  const jsHandlerOptions = Object.freeze({
     escapeMap,
     arbitraryValues,
     jsPreserveClass,
@@ -57,6 +57,7 @@ export function createHandlersFromContext(
     uniAppX: uniAppXEnabled,
     moduleSpecifierReplacements,
   })
+  const jsHandler = createJsHandler(jsHandlerOptions)
 
   const templateHandler = createTemplateHandler({
     customAttributesEntities,
