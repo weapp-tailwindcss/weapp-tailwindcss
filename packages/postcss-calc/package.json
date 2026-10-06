@@ -55,7 +55,7 @@
     "eslint": "catalog:eslint10",
     "eslint-config-prettier": "^10.1.8",
     "jison-gho": "0.6.1-216",
-    "postcss": "^8.5.28",
+    "postcss": "^8.5.29",
     "prettier": "catalog:prettier371",
     "typescript": "catalog:typescript59",
     "vitest": "catalog:vitest"

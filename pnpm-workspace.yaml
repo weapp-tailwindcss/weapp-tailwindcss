@@ -123,7 +123,7 @@ catalogs:
     local-pkg: ^1.2.1
     lightningcss: ^1.33.0
     lru-cache: 11.5.3
-    magic-string: ^1.4.2
+    magic-string: ^1.4.3
     micromatch: ^4.0.8
     pathe: ^2.0.3
     picocolors: ^1.1.1
@@ -133,7 +133,7 @@ catalogs:
     yaml: ^2.9.1
   compilerUtilities:
     comment-json: ^5.0.0
-    oxc-parser: ^0.152.0
+    oxc-parser: ^0.153.0
     oxc-walker: ^1.1.1
     semver: ~7.8.5
   postcssCompat:
@@ -187,13 +187,13 @@ catalogs:
     gulp-rename: ^2.1.0
     gulp-typescript: ^6.0.0-alpha.1
   csstools:
-    '@csstools/css-color-parser': ^4.2.5
+    '@csstools/css-color-parser': ^4.2.6
     '@csstools/css-parser-algorithms': ^4.0.2
     '@csstools/css-tokenizer': ^4.0.1
   egoistTailwindcssIcons:
     '@egoist/tailwindcss-icons': ^1.9.2
   eslint10:
-    eslint: ^10.11.0
+    eslint: ^10.12.0
   eslintPluginReact:
     eslint-plugin-react: ^7.37.5
   eslintPluginReactHooks:
@@ -202,12 +202,12 @@ catalogs:
     '@iconify-json/bi': ^1.2.7
     '@iconify-json/line-md': ^1.2.16
     '@iconify-json/logos': ^1.2.14
-    '@iconify-json/lucide': ^1.2.138
+    '@iconify-json/lucide': ^1.2.140
     '@iconify-json/mdi': ^1.2.3
     '@iconify-json/mdi-light': ^1.2.2
     '@iconify-json/svg-spinners': ^1.2.4
   inquirerPrompts:
-    '@inquirer/prompts': ^8.7.2
+    '@inquirer/prompts': ^8.7.3
   lucideReact0555:
     lucide-react: ^1.14.0
   lucideVueNext0555:
@@ -215,9 +215,9 @@ catalogs:
   miniApiTypings:
     miniprogram-api-typings: ^5.2.3
   postcss85:
-    postcss: ^8.5.28
+    postcss: ^8.5.29
   postcss85tilde:
-    postcss: ^8.5.28
+    postcss: ^8.5.29
   postcssComment2:
     postcss-comment: ^2.0.0
   postcssRem:
@@ -226,7 +226,7 @@ catalogs:
     postcss-rpx-transform: ^1.0.1
   postcssUtilities:
     es-toolkit: ^1.52.0
-    postcss-preset-env: ^11.5.5
+    postcss-preset-env: ^11.6.1
   prettier371:
     prettier: ^3.9.9
   react18:

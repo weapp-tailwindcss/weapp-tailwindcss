@@ -139,10 +139,10 @@
     "tailwindcss-config": "workspace:*"
   },
   "devDependencies": {
-    "@csstools/postcss-is-pseudo-class": "^6.0.1",
+    "@csstools/postcss-is-pseudo-class": "^6.0.3",
     "fast-check": "^4.10.2",
     "lightningcss": "^1.33.0",
-    "postcss-custom-properties": "^15.0.3",
+    "postcss-custom-properties": "^15.0.4",
     "tsx": "catalog:tsx"
   }
 }
