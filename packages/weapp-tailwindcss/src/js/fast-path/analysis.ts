@@ -4,7 +4,7 @@ import { LRUCache } from 'lru-cache'
 import { walk } from 'oxc-walker'
 import { loadNativeCompiler, nativeCompilerConfigured } from '../../native'
 import { parseOxcSync } from '../oxc-parser'
-import { isClassContextLiteral } from './class-context'
+import { isClassContextChild } from './class-context'
 import { getParserLang, getParserSourceType } from './parser-options'
 
 export type { LiteralSpan } from './types'
@@ -84,6 +84,7 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
     }
     let requiresBabel = false
     const ancestors: object[] = []
+    const classContextStack: boolean[] = []
     walk(result.program, {
       enter(node) {
         // Oxc 在 script 模式下仍可能接受 ESM；交给 Babel 执行调用方的语法约束。
@@ -104,6 +105,7 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
           ? node.value
           : node.type === 'TemplateElement' ? node.value.raw : undefined
         const parent = ancestors.at(-1) as { type?: string, directive?: unknown, expression?: unknown } | undefined
+        const classContext = (classContextStack.at(-1) === true) || isClassContextChild(node, parent)
         const isDirective = parent?.type === 'ExpressionStatement'
           && typeof parent.directive === 'string' && parent.expression === node
         // JSX 实体由 Babel 解码，避免在快速路径重复维护 HTML 实体解析规则。
@@ -121,14 +123,16 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
               end,
               value,
               isConditionTest: isConditionTestLiteral(node, ancestors),
-              classContext: isClassContextLiteral(node, ancestors),
+              classContext,
             })
           }
         }
         ancestors.push(node)
+        classContextStack.push(classContext)
       },
       leave() {
         ancestors.pop()
+        classContextStack.pop()
       },
     })
     if (requiresBabel) {
