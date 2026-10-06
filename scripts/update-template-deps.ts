@@ -500,8 +500,8 @@ function getLockfileName(): string {
   return 'pnpm-lock.yaml'
 }
 
-function shouldUpdateLockfile(templateDir: string, depsChanged: boolean): boolean {
-  if (depsChanged) {
+function shouldUpdateLockfile(templateDir: string, manifestChanged: boolean): boolean {
+  if (manifestChanged) {
     return true
   }
   const lockPath = path.join(templateDir, getLockfileName())
@@ -638,7 +638,7 @@ async function processTemplate(
   let lockUpdated = false
   const legacyLockRemoved = removeLegacyLockfiles(templateDir)
 
-  if (shouldUpdateLockfile(templateDir, depsChanged)) {
+  if (shouldUpdateLockfile(templateDir, depsChanged || packageManagerChanged)) {
     console.log(`更新 ${templateName} 的锁文件（pnpm）...`)
     lockUpdated = await regenerateLockfile(templateDir)
   }

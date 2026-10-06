@@ -44,6 +44,7 @@
     "node": "^22.18.0 || >=24.11.0"
   },
   "scripts": {
+    "preinstall": "node scripts/verify-template-pnpm.mjs",
     "e2e:windows-utilities": "node scripts/ci/windows-utilities.mjs",
     "e2e:demo:matrix": "node scripts/ci/demo-matrix/run.mjs",
     "test:demo:matrix": "vitest run -c scripts/ci/demo-matrix/vitest.config.mts --update=none",
@@ -254,6 +255,7 @@
     "sync:all": "turbo run sync",
     "templates:sync": "tsx scripts/sync-templates.ts && pnpm templates:update-deps",
     "templates:push": "pnpm templates:update-deps && tsx scripts/push-templates.ts",
+    "templates:check-pnpm": "node scripts/verify-template-pnpm.mjs",
     "templates:update-deps": "tsx scripts/update-template-deps.ts",
     "templates:upgrade": "pnpm templates:update-deps && pnpm e2e:templates && pnpm e2e:canonical-templates",
     "generate:readme": "pnpm docs:packages:check",

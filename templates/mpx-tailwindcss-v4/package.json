@@ -2,7 +2,7 @@
   "name": "mpx-tailwindcss-v4",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@12.6.0",
+  "packageManager": "pnpm@12.9.1",
   "scripts": {
     "serve": "mpx-cli-service serve",
     "build": "mpx-cli-service build",

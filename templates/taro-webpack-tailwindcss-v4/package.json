@@ -93,5 +93,5 @@
     "weapp-tailwindcss": "^5.5.5",
     "webpack": "5.91.0"
   },
-  "packageManager": "pnpm@12.6.0"
+  "packageManager": "pnpm@12.9.1"
 }
