@@ -6,6 +6,11 @@
   dir: packages/cli
   intents:
     - dx-vite-doctor-init
+"@weapp-tailwindcss/cli@5.5.12":
+  dir: packages/cli
+  intents:
+    - organization-repository-metadata
+    - young-walls-know
 "@weapp-tailwindcss/cli@5.5.7":
   dir: packages/cli
   intents:
@@ -24,6 +29,14 @@
   dir: packages-runtime/cn
   intents:
     - dependency-update-accabe87-32e0-4511-9458-fd25b5086f1d
+"@weapp-tailwindcss/cn@0.1.5":
+  dir: packages-runtime/cn
+  intents:
+    - organization-repository-metadata
+"@weapp-tailwindcss/cva@0.1.12":
+  dir: packages-runtime/cva
+  intents:
+    - organization-repository-metadata
 "@weapp-tailwindcss/cva@0.1.9":
   dir: packages-runtime/cva
   intents:
@@ -40,6 +53,11 @@
   dir: packages/debug-uni-app-x
   intents:
     - dependency-update-90e4d73f-7515-4892-ac86-714172a43761
+"@weapp-tailwindcss/debug-uni-app-x@1.0.8":
+  dir: packages/debug-uni-app-x
+  intents:
+    - dependency-update-608f3999-75d0-44c2-b9f4-7f6cfc138a09
+    - organization-repository-metadata
 "@weapp-tailwindcss/e2e@0.0.0":
   dir: e2e
   intents:
@@ -58,6 +76,20 @@
   dir: packages/engine
   intents:
     - bounded-build-caches
+"@weapp-tailwindcss/engine@0.1.4":
+  dir: packages/engine
+  intents:
+    - dependency-update-3f0f42c6-8aba-4052-b905-acea66028956
+    - organization-repository-metadata
+    - scoped-generation-invalidation
+    - uni-app-x-local-utility-cascade
+    - uni-app-x-session-source-preparation
+"@weapp-tailwindcss/escape@0.0.2":
+  dir: packages/escape
+  intents:
+    - escape-canonical-homepage
+    - migrate-weapp-core-escape
+    - organization-repository-metadata
 "@weapp-tailwindcss/example-react-lynx-promo@0.0.0":
   dir: examples/react-lynx-promo
   intents:
@@ -74,6 +106,10 @@
   dir: packages/experimental
   intents:
     - loud-flies-travel
+"@weapp-tailwindcss/experimental@0.0.48":
+  dir: packages/experimental
+  intents:
+    - organization-repository-metadata
 "@weapp-tailwindcss/hbuilderx-runner@0.1.3":
   dir: packages/hbuilderx-runner
   intents:
@@ -90,6 +126,11 @@
   dir: packages/hbuilderx-runner
   intents:
     - fix-hbuilderx-stopped-host
+"@weapp-tailwindcss/hbuilderx-runner@0.1.7":
+  dir: packages/hbuilderx-runner
+  intents:
+    - hbuilderx-process-closure
+    - organization-repository-metadata
 "@weapp-tailwindcss/init@1.0.16":
   dir: packages/init
   intents:
@@ -102,10 +143,19 @@
   dir: packages/init
   intents:
     - dependency-update-90e4d73f-7515-4892-ac86-714172a43761
+"@weapp-tailwindcss/init@2.0.2":
+  dir: packages/init
+  intents:
+    - organization-repository-metadata
+    - warm-rings-design
 "@weapp-tailwindcss/logger@2.0.3":
   dir: packages/logger
   intents:
     - bright-package-homepages
+"@weapp-tailwindcss/logger@2.0.4":
+  dir: packages/logger
+  intents:
+    - organization-repository-metadata
 "@weapp-tailwindcss/lynx-promo-video@0.0.0":
   dir: apps/lynx-promo-video
   intents:
@@ -126,6 +176,14 @@
   dir: packages/lynx
   intents:
     - bright-package-homepages
+"@weapp-tailwindcss/lynx@0.4.0":
+  dir: packages/lynx
+  intents:
+    - dependency-update-608f3999-75d0-44c2-b9f4-7f6cfc138a09
+    - lynx-native-css-defaults
+    - lynx-opacity-percentage
+    - lynx-recursive-variable-config
+    - organization-repository-metadata
 "@weapp-tailwindcss/merge@2.2.3":
   dir: packages-runtime/merge
   intents:
@@ -138,6 +196,17 @@
   dir: packages-runtime/merge
   intents:
     - khaki-donkeys-retire
+"@weapp-tailwindcss/merge@2.2.7":
+  dir: packages-runtime/merge
+  intents:
+    - migrate-weapp-core-escape
+    - organization-repository-metadata
+"@weapp-tailwindcss/postcss-calc@1.0.10":
+  dir: packages/postcss-calc
+  intents:
+    - dependency-update-3f0f42c6-8aba-4052-b905-acea66028956
+    - dependency-update-608f3999-75d0-44c2-b9f4-7f6cfc138a09
+    - organization-repository-metadata
 "@weapp-tailwindcss/postcss-calc@1.0.5":
   dir: packages/postcss-calc
   intents:
@@ -181,6 +250,24 @@
     - cache-input-identity
     - fluffy-poets-float
     - orange-pumas-shake
+"@weapp-tailwindcss/postcss@3.3.11":
+  dir: packages/postcss
+  intents:
+    - css-macro-variant-idempotency
+    - dependency-update-3f0f42c6-8aba-4052-b905-acea66028956
+    - dependency-update-608f3999-75d0-44c2-b9f4-7f6cfc138a09
+    - fast-css-content-hash
+    - lynx-native-css-defaults
+    - lynx-opacity-percentage
+    - migrate-weapp-core-escape
+    - organization-repository-metadata
+    - postcss-remove-unused-toolkit
+    - preserve-gradient-color-fallbacks
+    - reuse-css-comparison-ast
+    - reuse-root-css-coverage
+    - uni-app-x-local-spacing-selectors
+    - uni-app-x-local-utility-cascade
+    - uni-app-x-runtime-variable-preservation
 "@weapp-tailwindcss/postcss@3.3.2":
   dir: packages/postcss
   intents:
@@ -252,14 +339,30 @@
   dir: packages/react-native
   intents:
     - bright-package-homepages
+"@weapp-tailwindcss/react-native@0.3.0":
+  dir: packages/react-native
+  intents:
+    - dependency-update-608f3999-75d0-44c2-b9f4-7f6cfc138a09
+    - organization-repository-metadata
+    - react-native-metro-refresh-consistency
+    - react-native-style-type-contract
 "@weapp-tailwindcss/reset@0.1.4":
   dir: packages/reset
   intents:
     - bright-package-homepages
+"@weapp-tailwindcss/reset@0.1.5":
+  dir: packages/reset
+  intents:
+    - organization-repository-metadata
 "@weapp-tailwindcss/runtime@0.1.10":
   dir: packages-runtime/runtime
   intents:
     - runtime-transformer-cache
+"@weapp-tailwindcss/runtime@0.1.11":
+  dir: packages-runtime/runtime
+  intents:
+    - migrate-weapp-core-escape
+    - organization-repository-metadata
 "@weapp-tailwindcss/runtime@0.1.8":
   dir: packages-runtime/runtime
   intents:
@@ -273,10 +376,18 @@
   dir: packages/shared
   intents:
     - bright-package-homepages
+"@weapp-tailwindcss/shared@2.0.4":
+  dir: packages/shared
+  intents:
+    - organization-repository-metadata
 "@weapp-tailwindcss/source-scan@0.1.1":
   dir: packages/source-scan
   intents:
     - great-emus-refuse
+"@weapp-tailwindcss/source-scan@0.1.2":
+  dir: packages/source-scan
+  intents:
+    - organization-repository-metadata
 "@weapp-tailwindcss/typography@1.0.4":
   dir: packages-runtime/typography
   intents:
@@ -289,6 +400,11 @@
   dir: packages-runtime/typography
   intents:
     - dependency-update-90e4d73f-7515-4892-ac86-714172a43761
+"@weapp-tailwindcss/typography@1.0.7":
+  dir: packages-runtime/typography
+  intents:
+    - dependency-update-3f0f42c6-8aba-4052-b905-acea66028956
+    - organization-repository-metadata
 "@weapp-tailwindcss/ui@0.0.12":
   dir: packages-runtime/ui
   intents:
@@ -305,6 +421,15 @@
   dir: packages-runtime/ui
   intents:
     - dependency-update-90e4d73f-7515-4892-ac86-714172a43761
+"@weapp-tailwindcss/ui@0.0.18":
+  dir: packages-runtime/ui
+  intents:
+    - dependency-update-608f3999-75d0-44c2-b9f4-7f6cfc138a09
+    - organization-repository-metadata
+"@weapp-tailwindcss/variants@0.2.10":
+  dir: packages-runtime/variants
+  intents:
+    - organization-repository-metadata
 "@weapp-tailwindcss/variants@0.2.5":
   dir: packages-runtime/variants
   intents:
@@ -326,10 +451,18 @@ tailwindcss-config@2.0.5:
   dir: packages/tailwindcss-config
   intents:
     - great-emus-refuse
+tailwindcss-config@2.0.6:
+  dir: packages/tailwindcss-config
+  intents:
+    - organization-repository-metadata
 tailwindcss-core-plugins-extractor@0.2.2:
   dir: packages/tailwindcss-core-plugins-extractor
   intents:
     - bright-package-homepages
+tailwindcss-core-plugins-extractor@0.2.3:
+  dir: packages/tailwindcss-core-plugins-extractor
+  intents:
+    - organization-repository-metadata
 tailwindcss-injector@1.0.17:
   dir: packages/tailwindcss-injector
   intents:
@@ -342,6 +475,11 @@ tailwindcss-injector@1.0.20:
   dir: packages/tailwindcss-injector
   intents:
     - dependency-update-90e4d73f-7515-4892-ac86-714172a43761
+tailwindcss-injector@1.0.23:
+  dir: packages/tailwindcss-injector
+  intents:
+    - dependency-update-3f0f42c6-8aba-4052-b905-acea66028956
+    - organization-repository-metadata
 theme-transition@2.1.0:
   dir: packages-runtime/theme-transition
   intents:
@@ -351,6 +489,10 @@ theme-transition@2.1.1:
   dir: packages-runtime/theme-transition
   intents:
     - bright-package-homepages
+theme-transition@2.1.2:
+  dir: packages-runtime/theme-transition
+  intents:
+    - organization-repository-metadata
 weapp-style-injector@1.0.4:
   dir: packages/weapp-style-injector
   intents:
@@ -363,6 +505,10 @@ weapp-style-injector@1.0.6:
   dir: packages/weapp-style-injector
   intents:
     - great-emus-refuse
+weapp-style-injector@1.0.7:
+  dir: packages/weapp-style-injector
+  intents:
+    - organization-repository-metadata
 weapp-tailwindcss-monorepo@0.0.0:
   dir: ""
   intents:
@@ -448,6 +594,32 @@ weapp-tailwindcss@5.5.11:
     - orange-pumas-shake
     - vite-state-ownership
     - webpack-css-content-identity
+weapp-tailwindcss@5.5.12:
+  dir: packages/weapp-tailwindcss
+  intents:
+    - dependency-update-3f0f42c6-8aba-4052-b905-acea66028956
+    - dependency-update-608f3999-75d0-44c2-b9f4-7f6cfc138a09
+    - dependency-update-cd34d724-ba07-4f13-b9fa-17c84f729a27
+    - generator-source-preparation-once
+    - gentle-tigers-hug
+    - lynx-native-css-defaults
+    - lynx-opacity-percentage
+    - migrate-weapp-core-escape
+    - organization-repository-metadata
+    - oxc-parser-0152
+    - preserve-gradient-color-fallbacks
+    - public-package-resolution-types
+    - quiet-borders-reset
+    - reuse-css-comparison-ast
+    - reuse-root-css-coverage
+    - scoped-generation-invalidation
+    - uni-app-x-local-spacing-selectors
+    - uni-app-x-local-utility-cascade
+    - uni-app-x-runtime-variable-preservation
+    - uni-app-x-session-source-preparation
+    - vite-bundle-markup-query-reuse
+    - vite-reused-css-planning
+    - wild-squids-hope
 weapp-tailwindcss@5.5.2:
   dir: packages/weapp-tailwindcss
   intents:
@@ -507,7 +679,17 @@ weapp-tw@0.0.3:
   dir: packages/weapp-tw
   intents:
     - bright-package-homepages
+weapp-tw@0.0.4:
+  dir: packages/weapp-tw
+  intents:
+    - organization-repository-metadata
 wetw@0.1.6:
   dir: packages/wetw
   intents:
     - bright-package-homepages
+wetw@0.1.7:
+  dir: packages/wetw
+  intents:
+    - dependency-update-3f0f42c6-8aba-4052-b905-acea66028956
+    - dependency-update-608f3999-75d0-44c2-b9f4-7f6cfc138a09
+    - organization-repository-metadata

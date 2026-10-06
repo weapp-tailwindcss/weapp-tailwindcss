@@ -1,7 +1,7 @@
 {
   "name": "@weapp-tailwindcss/ui",
   "type": "module",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "description": "Cross-platform utility-first UI components for Tailwind CSS. 面向跨端 Tailwind CSS 的 utility-first UI 组件库。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "ISC",

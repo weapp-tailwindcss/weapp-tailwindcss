@@ -1,5 +1,12 @@
 # weapp-vite-tailwindcss-v4
 
+## 1.0.23
+
+### Patch Changes
+
+- Updated dependencies:
+  - @weapp-tailwindcss/merge@2.2.7
+
 ## 1.0.22
 
 ### Patch Changes

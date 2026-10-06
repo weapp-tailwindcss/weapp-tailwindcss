@@ -1,5 +1,11 @@
 # @weapp-tailwindcss/reset
 
+## 0.1.5
+
+### Patch Changes
+
+- 将发布包的仓库与问题反馈地址更新为 weapp-tailwindcss 组织下的主仓库，使 npm 包元数据与迁移后的 OIDC 发布来源一致。保留现有包名、导出接口、npm 所有权和文档域名。
+
 ## 0.1.4
 
 ### Patch Changes

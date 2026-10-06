@@ -1,7 +1,7 @@
 {
   "name": "tailwindcss-core-plugins-extractor",
   "type": "module",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Tailwind CSS core plugin extractor for cross-platform integrations. 面向跨端集成的 Tailwind CSS 核心插件提取器。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",

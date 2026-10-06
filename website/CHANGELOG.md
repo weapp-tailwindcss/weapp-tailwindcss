@@ -1,5 +1,15 @@
 # website
 
+## 1.0.66
+
+### Patch Changes
+
+- Updated dependencies:
+  - @weapp-tailwindcss/cva@0.1.12
+  - @weapp-tailwindcss/merge@2.2.7
+  - @weapp-tailwindcss/variants@0.2.10
+  - weapp-tailwindcss@5.5.12
+
 ## 1.0.65
 
 ### Patch Changes

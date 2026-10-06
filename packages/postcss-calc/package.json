@@ -1,6 +1,6 @@
 {
   "name": "@weapp-tailwindcss/postcss-calc",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "type": "module",
   "description": "PostCSS calc reduction utility for cross-platform Tailwind CSS builds. 跨端 Tailwind CSS 构建使用的 PostCSS calc 归约工具。",
   "keywords": [

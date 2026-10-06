@@ -1,5 +1,14 @@
 # benchmark-tailwindcss4
 
+## 0.0.10
+
+### Patch Changes
+
+- Updated dependencies:
+  - @weapp-tailwindcss/cva@0.1.12
+  - @weapp-tailwindcss/merge@2.2.7
+  - @weapp-tailwindcss/variants@0.2.10
+
 ## 0.0.9
 
 ### Patch Changes

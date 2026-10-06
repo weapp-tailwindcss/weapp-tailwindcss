@@ -2,7 +2,7 @@
   "name": "benchmark-performance",
   "private": true,
   "type": "module",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "weapp-tailwindcss 全链路性能报告与门禁",
   "scripts": {
     "report": "node ./scripts/cli.mjs",

@@ -1,7 +1,7 @@
 {
   "name": "@weapp-tailwindcss/runtime",
   "type": "module",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "Shared runtime adapters for cross-platform Tailwind CSS class utilities. 跨端 Tailwind CSS 类名工具的共享运行时适配层。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",
