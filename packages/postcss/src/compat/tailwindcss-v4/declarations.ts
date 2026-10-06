@@ -4,6 +4,24 @@ import { normalizeV4VariableFallbacksLegacy } from './declarations/variable-fall
 import { getTailwindcssV4GradientFallback, normalizeTailwindcssV4GradientPositionLegacy, normalizeTailwindcssV4InfinityCalcValueLegacy } from './gradients'
 import { CLAMP_PX, RADIUS_THRESHOLD, RADIUS_VALUE_RE, SCIENTIFIC_NOTATION_RE } from './variables'
 
+/**
+ * 只把可能命中原生兼容规则的声明送过 NAPI。
+ *
+ * Rust 声明入口合并了变量 fallback、渐变方向、infinity 和圆角四个阶段；
+ * 其它属性和值只能返回原文，却仍会承担一次 UTF-16 跨边界和解析成本。
+ * 条件保持保守：命中任一可能的规则才进入原生，无法证明安全时继续走原有路径。
+ */
+function shouldAttemptNativeDeclaration(
+  prop: string,
+  value: string,
+  gradientPosition: boolean,
+) {
+  return gradientPosition
+    || prop.includes('radius')
+    || value.toLowerCase().includes('infinity')
+    || (value.includes('var(') && value.includes('--tw-'))
+}
+
 // 对 Tailwind v4 生成的声明做兼容处理，返回是否发生变更
 export function normalizeTailwindcssV4Declaration(decl: Declaration): boolean {
   if (decl.prop === '--tw-gradient-via-stops' && decl.value.trim() === 'initial') {
@@ -12,7 +30,7 @@ export function normalizeTailwindcssV4Declaration(decl: Declaration): boolean {
   }
   const gradientPosition = decl.prop === '--tw-gradient-position'
   const gradientFallback = gradientPosition && decl.parent?.type === 'rule' ? getTailwindcssV4GradientFallback(decl.parent) : undefined
-  const native = nativeCssConfigured
+  const native = nativeCssConfigured && shouldAttemptNativeDeclaration(decl.prop, decl.value, gradientPosition)
     ? loadNativeCssBinding()?.normalizeV4Declaration(decl.value, { gradientPosition, gradientFallback, radius: decl.prop.includes('radius') })
     : undefined
   if (native !== undefined && native !== null) {

@@ -53,6 +53,17 @@ describe('Rust v4 声明值生产消费', () => {
     expect(variable).not.toHaveBeenCalled()
   })
 
+  it('无兼容候选的声明跳过原生跨边界调用并保持原值', () => {
+    vi.stubEnv('WEAPP_TW_NATIVE', 'required')
+    const binding = loadNativeCssBinding()!
+    const combined = vi.spyOn(binding, 'normalizeV4Declaration')
+    const decl = postcss.decl({ prop: 'color', value: 'rgb(1 2 3)' })
+
+    expect(normalizeTailwindcssV4Declaration(decl)).toBe(false)
+    expect(decl.value).toBe('rgb(1 2 3)')
+    expect(combined).not.toHaveBeenCalled()
+  })
+
   it('渐变方向保持父规则首个背景声明、顺序、删除与提前返回', () => {
     const css = '.a{--tw-gradient-position:in oklab;background-image:radial-gradient(red,blue);background-image:conic-gradient(red,blue)}.b{background-image:conic-gradient(red,blue);--tw-gradient-position:in oklab}.c{--tw-gradient-position:calc(-45deg * -1) in oklch longer hue;--tw-gradient-via-stops:initial;--tw-gradient-position:calc(infinity * 1px) in srgb}@supports(a:b){--tw-gradient-position:in oklab} '
     const run = (mode: string) => {
@@ -135,8 +146,9 @@ describe('Rust v4 声明值生产消费', () => {
       }
     }
     expect(count).toBeGreaterThan(8000)
-    expect(calls).toBeGreaterThan(count)
-    expect(completed).toBeGreaterThan(8000)
+    expect(calls).toBeGreaterThan(0)
+    expect(calls).toBeLessThan(count)
+    expect(completed).toBeGreaterThan(0)
   }, 120_000)
 
   it('原生 null 才回退，执行错误保留原异常', () => {
