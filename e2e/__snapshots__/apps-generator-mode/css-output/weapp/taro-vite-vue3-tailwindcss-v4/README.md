@@ -7,7 +7,7 @@ Entry: taro-vite-vue3-tailwindcss-v4/dist/app.wxss
 
 | Bytes | Selectors | @supports | :hover | Tailwind banner | System dark media | Manual dark selector | Raw arbitrary selector | Weapp escaped arbitrary selector |
 | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |
-| 338900 | 1693 | false | false | false | true | true | false | true |
+| 339051 | 1693 | false | false | false | true | true | false | true |
 
 ## Generator CSS Files
 
@@ -24,7 +24,7 @@ Entry: taro-vite-vue3-tailwindcss-v4/dist/app.wxss
 | File | Artifact | Bytes | Selectors | @supports | :hover | Tailwind banner | System dark media | Manual dark selector | Raw arbitrary selector | Weapp escaped arbitrary selector |
 | --- | --- | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |
 | `app.wxss` | [artifacts/app.wxss](artifacts/app.wxss) | 29 | 0 | false | false | false | false | false | false | false |
-| `app-origin.wxss` | [artifacts/app-origin.wxss](artifacts/app-origin.wxss) | 319261 | 1541 | false | false | false | true | true | false | true |
+| `app-origin.wxss` | [artifacts/app-origin.wxss](artifacts/app-origin.wxss) | 319412 | 1541 | false | false | false | true | true | false | true |
 | `sub-independent/pages/index.wxss` | [artifacts/sub-independent__pages__index.wxss](artifacts/sub-independent__pages__index.wxss) | 1916 | 8 | false | false | false | false | false | false | true |
 | `sub-normal/pages/index.wxss` | [artifacts/sub-normal__pages__index.wxss](artifacts/sub-normal__pages__index.wxss) | 1881 | 8 | false | false | false | false | false | false | true |
 | `vendors.wxss` | [artifacts/vendors.wxss](artifacts/vendors.wxss) | 15813 | 161 | false | false | false | false | false | false | false |

@@ -5,34 +5,9 @@ import path from 'node:path'
 import process from 'node:process'
 import { parseHdcTargets, parseIosSimulatorDevices } from '../../../packages/hbuilderx-runner/src/toolchains'
 import { assertImage, command, imageCommand } from '../io'
+import { parseAdbDevices, requestedIosTarget, requestedTarget, selectTarget } from '../targets'
 
-export function selectTarget(ids: string[], requested?: string) {
-  if (requested) {
-    if (!ids.includes(requested)) {
-      throw new Error(`指定设备不可用：${requested}；实际目标：${ids.join(', ') || '无'}`)
-    }
-    return requested
-  }
-  if (ids.length !== 1) {
-    throw new Error(`需要唯一明确的目标设备，当前：${ids.join(', ') || '无'}；请启动并显式指定设备 ID。`)
-  }
-  return ids[0]!
-}
-
-export function requestedTarget(keys: string[], generic: string[] = []) {
-  const values = [...new Set(keys.map(key => process.env[key]).filter((value): value is string => Boolean(value) && !generic.includes(value!)))]
-  if (values.length > 1) {
-    throw new Error(`设备配置存在歧义：${keys.join(', ')}；目标=${values.join(', ')}`)
-  }
-  return values[0]
-}
-
-export function parseAdbDevices(output: string) {
-  return output.split(/\r?\n/).flatMap((line) => {
-    const match = line.match(/^(\S+)\s+(device|offline|unauthorized)(?:\s|$)/)
-    return match ? [{ id: match[1]!, state: match[2]! }] : []
-  })
-}
+export { parseAdbDevices, requestedTarget, selectTarget } from '../targets'
 
 async function executable(candidates: Array<string | undefined>, args: string[]) {
   const errors: string[] = []
@@ -56,7 +31,7 @@ export async function android(ctx: ProbeContext): Promise<ProbeOutput> {
         ...(sdk ? [path.join(sdk, 'platform-tools', process.platform === 'win32' ? 'adb.exe' : 'adb')] : ['adb']),
       ], ['version'])
   const devices = parseAdbDevices(await command(tool.file, ['devices', '-l']))
-  const requested = ctx.binding?.device ?? requestedTarget(['E2E_HBUILDERX_ANDROID_DEVICE_ID', 'E2E_HBUILDERX_ANDROID_SCREENSHOT_DEVICE_ID', 'RN_ANDROID_DEVICE_ID'])
+  const requested = ctx.binding?.device ?? requestedTarget(['E2E_HBUILDERX_ANDROID_DEVICE_ID', 'E2E_HBUILDERX_ANDROID_SCREENSHOT_DEVICE_ID', 'RN_ANDROID_DEVICE_ID', 'LYNX_ANDROID_DEVICE_ID', 'ANDROID_SERIAL'])
   const unavailable = devices.find(item => item.id === requested && item.state !== 'device')
   if (unavailable) {
     throw new Error(`Android ${unavailable.id}：${unavailable.state}`)
@@ -99,7 +74,7 @@ export async function ios(ctx: ProbeContext): Promise<ProbeOutput> {
   const version = await command('xcodebuild', ['-version'])
   await command('xcodebuild', ['-checkFirstLaunchStatus'])
   const devices = parseIosSimulatorDevices(await command('xcrun', ['simctl', 'list', 'devices', 'available', '--json']))
-  const requested = ctx.binding?.device ?? requestedTarget(['E2E_HBUILDERX_IOS_DEVICE_ID', 'E2E_HBUILDERX_IOS_SCREENSHOT_TARGET', 'E2E_HBUILDERX_IOS_TARGET', 'RN_IOS_DEVICE_ID'], ['simulator', 'booted'])
+  const requested = ctx.binding?.device ?? requestedIosTarget(['E2E_HBUILDERX_IOS_DEVICE_ID', 'E2E_HBUILDERX_IOS_SCREENSHOT_TARGET', 'E2E_HBUILDERX_IOS_TARGET', 'RN_IOS_DEVICE_ID', 'LYNX_IOS_DEVICE_ID'])
   const booted = devices.filter(item => item.state === 'Booted')
   const device = selectTarget((requested || !booted.length ? devices : booted).map(item => item.udid), requested)
   if (devices.find(item => item.udid === device)?.state !== 'Booted') {
@@ -151,6 +126,7 @@ export async function harmony(ctx: ProbeContext): Promise<ProbeOutput> {
   const remote = `/data/local/tmp/wt-preflight-${ctx.runId}`
   const layout = path.join(ctx.dir, 'harmony-ui.json')
   const screenshot = path.join(ctx.dir, 'harmony.png')
+  let screenshotEvidence = screenshot
   try {
     await shell('uitest', 'dumpLayout', '-p', `${remote}.json`)
     await command(tool.file, [...args, 'file', 'recv', `${remote}.json`, layout])
@@ -158,13 +134,30 @@ export async function harmony(ctx: ProbeContext): Promise<ProbeOutput> {
     if (!tree || typeof tree !== 'object' || Object.keys(tree).length === 0) {
       throw new Error('Harmony UI 结构为空。')
     }
-    await shell('uitest', 'screenCap', '-p', `${remote}.png`)
-    await command(tool.file, [...args, 'file', 'recv', `${remote}.png`, screenshot])
-    await access(screenshot)
-    await assertImage(screenshot)
+    try {
+      await shell('uitest', 'screenCap', '-p', `${remote}.png`)
+      await command(tool.file, [...args, 'file', 'recv', `${remote}.png`, screenshot])
+      await access(screenshot)
+      await assertImage(screenshot)
+    }
+    catch (screenCapError) {
+      // 部分 DevEco 模拟器的 uitest screenCap 无法取得 pixelMap，使用系统截图接口保留同等设备证据。
+      const fallbackRemote = `${remote}.jpeg`
+      const fallbackScreenshot = path.join(ctx.dir, 'harmony.jpeg')
+      try {
+        await shell('snapshot_display', '-f', fallbackRemote)
+        await command(tool.file, [...args, 'file', 'recv', fallbackRemote, fallbackScreenshot])
+        await access(fallbackScreenshot)
+        await assertImage(fallbackScreenshot)
+        screenshotEvidence = fallbackScreenshot
+      }
+      catch (fallbackError) {
+        throw new Error(`Harmony 截图失败：screenCap=${String(screenCapError)}；snapshot_display=${String(fallbackError)}`)
+      }
+    }
   }
   finally {
-    await shell('rm', '-f', `${remote}.json`, `${remote}.png`)
+    await shell('rm', '-f', `${remote}.json`, `${remote}.png`, `${remote}.jpeg`)
   }
-  return { detail: 'Harmony 系统查询、布局读取和截图通过。', binding, evidence: [layout, screenshot] }
+  return { detail: 'Harmony 系统查询、布局读取和截图通过。', binding, evidence: [layout, screenshotEvidence] }
 }

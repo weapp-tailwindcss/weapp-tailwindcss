@@ -1,6 +1,7 @@
 import type { ChildProcess } from 'node:child_process'
 import process from 'node:process'
 import { createHBuilderXProjectAlias } from '../../../scripts/hbuilderx-project-alias.mjs'
+import { closeHBuilderXProjectAlias, withHBuilderXProjectCleanup } from '../../../scripts/hbuilderx-project-lifecycle'
 import { createLocalHBuilderXRunner, pollIntervalMs, serverTimeoutMs, spawnPnpm, wait } from '../process'
 
 let devProcess: ChildProcess | undefined
@@ -64,14 +65,8 @@ export async function createHBuilderXDevServer(projectRoot: string) {
   const hbuilderx = await createLocalHBuilderXRunner(projectRoot, env)
   const identity = await createHBuilderXProjectAlias(projectRoot, process.env['E2E_HBUILDERX_ALIAS_ROOT'])
   const projectOptions = { cwd: identity.projectPath, env, timeoutMs: serverTimeoutMs }
-  const cleanup = async () => {
-    try {
-      await hbuilderx.closeProject({ ...projectOptions, allowFailure: true })
-    }
-    finally {
-      await identity.cleanup()
-    }
-  }
+  const closeProject = () => hbuilderx.closeProject({ ...projectOptions, allowFailure: false })
+  const cleanup = () => closeHBuilderXProjectAlias(identity, closeProject)
   try {
     await hbuilderx.openProject(projectOptions)
     const startedAt = Date.now()
@@ -96,7 +91,8 @@ export async function createHBuilderXDevServer(projectRoot: string) {
     return { ...launch, cleanup }
   }
   catch (error) {
-    await cleanup()
-    throw error
+    return await withHBuilderXProjectCleanup(identity, async () => {
+      throw error
+    }, closeProject)
   }
 }

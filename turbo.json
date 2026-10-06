@@ -1,9 +1,22 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "globalPassThroughEnv": [
+    "HTTP_PROXY",
+    "HTTPS_PROXY",
+    "ALL_PROXY",
+    "NO_PROXY",
+    "http_proxy",
+    "https_proxy",
+    "all_proxy",
+    "no_proxy",
+    "NODE_USE_ENV_PROXY"
+  ],
+  "globalEnv": [
     "WEAPP_TW_SKIP_AUTO_BUILD",
     "WEAPP_TW_SKIP_INTERACTIVE_TARO_BUILD",
-    "WEAPP_TW_SKIP_INTERACTIVE_UNI_BUILD"
+    "WEAPP_TW_SKIP_INTERACTIVE_UNI_BUILD",
+    "TARO_BUILD_STRICT",
+    "UNI_BUILD_STRICT"
   ],
   "tasks": {
     "build": {
@@ -43,6 +56,86 @@
     },
     "release": {},
     "sync": {
+      "cache": false
+    },
+    "@weapp-tailwindcss-demo/web-nuxt-vite-tailwindcss-v4#build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        ".output/**"
+      ]
+    },
+    "@weapp-tailwindcss-demo/issue-951-taro-vite-react-tailwindcss-v4#build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": false
+    },
+    "@weapp-tailwindcss-demo/issue-uview-plus-cssentries#build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": false
+    },
+    "@weapp-tailwindcss-demo/style-injector-taro-vite-react#build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": false
+    },
+    "@weapp-tailwindcss-demo/style-injector-taro-webpack-react#build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": false
+    },
+    "@weapp-tailwindcss-demo/subpackage-taro-webpack-react-tailwindcss-v4#build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": false
+    },
+    "@weapp-tailwindcss-demo/subpackage-uni-app-vite-tailwindcss-v4#build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": false
+    },
+    "@weapp-tailwindcss-demo/taro-vite-react-tailwindcss-v4#build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": false
+    },
+    "@weapp-tailwindcss-demo/taro-vite-vue3-tailwindcss-v4#build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": false
+    },
+    "@weapp-tailwindcss-demo/taro-webpack-react-tailwindcss-v4#build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": false
+    },
+    "@weapp-tailwindcss-demo/taro-webpack-vue3-tailwindcss-v4#build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": false
+    },
+    "@weapp-tailwindcss-demo/uni-app-vite-tailwindcss-v4#build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": false
+    },
+    "@weapp-tailwindcss-demo/uni-app-vite-vue3-hbuilderx-tailwindcss-v4#build": {
+      "dependsOn": [
+        "^build"
+      ],
       "cache": false
     },
     "demo/*#build": {

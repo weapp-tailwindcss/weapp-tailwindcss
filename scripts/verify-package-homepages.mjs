@@ -13,6 +13,7 @@ const expectedHomepages = {
   '@weapp-tailwindcss/cn': '/docs/community/merge',
   '@weapp-tailwindcss/debug-uni-app-x': '/docs/config/uni-app-x',
   '@weapp-tailwindcss/engine': '/',
+  '@weapp-tailwindcss/escape': '/',
   '@weapp-tailwindcss/experimental': '/',
   '@weapp-tailwindcss/hbuilderx-runner': '/docs/quick-start/frameworks/hbuilderx',
   '@weapp-tailwindcss/init': '/docs/quick-start/install',

@@ -36,6 +36,7 @@ export interface HBuilderXCommandOptions {
   command: string
   args: string[]
   cwd: string
+  /** 业务截止时间；超时后另有有界进程清理预算。 */
   timeoutMs?: number
   env?: Record<string, string | undefined>
   allowFailure?: boolean
@@ -59,6 +60,7 @@ export interface SpawnedHBuilderXCommand {
   command: string
   args: string[]
   cwd: string
+  /** 在 close 前启动有界清理并确认本轮进程树结束；失败抛出诊断，多次调用复用同一结果。 */
   stop: (signal?: NodeJS.Signals) => Promise<void>
   closed: Promise<CommandExit>
   ensureRunning: () => void

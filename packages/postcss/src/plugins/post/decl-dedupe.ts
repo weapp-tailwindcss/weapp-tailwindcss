@@ -217,12 +217,22 @@ export function dedupeDeclarations(rule: Rule) {
     })
   }
 
-  const seen = new Map<string, DedupeEntry>()
+  const customProperties = new Map<string, DedupeEntry>()
+  const ordinaryProperties = new Map<string, DedupeEntry>()
+  let previousOrdinaryProp: string | undefined
 
   for (const entry of entries) {
-    const key = `${entry.canonicalProp}${entry.importantKey}@@${entry.normalizedValue}`
+    const isCustomProperty = entry.canonicalProp.startsWith('--')
+    if (!isCustomProperty && previousOrdinaryProp !== entry.canonicalProp) {
+      // 不推测 shorthand 与 longhand 的重叠关系，跨普通属性时保留作者顺序。
+      ordinaryProperties.clear()
+      previousOrdinaryProp = entry.canonicalProp
+    }
+    const seen = isCustomProperty ? customProperties : ordinaryProperties
+    const key = `${entry.canonicalProp}${entry.importantKey}`
     const existing = seen.get(key)
-    if (!existing) {
+    // 自定义属性独立参与层叠；同属性的不同值会重新建立去重边界。
+    if (!existing || existing.normalizedValue !== entry.normalizedValue) {
       seen.set(key, entry)
       continue
     }
@@ -283,12 +293,19 @@ export function dedupeDeclarations(rule: Rule) {
       continue
     }
 
-    const existing = literalSeen.get(canonical)
+    const key = `${canonical}${node.important ? '!important' : ''}`
+    const existing = literalSeen.get(key)
     if (existing) {
-      node.remove()
+      if (existing.prop !== canonical && node.prop === canonical) {
+        existing.remove()
+        literalSeen.set(key, node)
+      }
+      else {
+        node.remove()
+      }
     }
     else {
-      literalSeen.set(canonical, node)
+      literalSeen.set(key, node)
     }
   }
 

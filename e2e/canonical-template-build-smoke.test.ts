@@ -4,6 +4,7 @@ import fg from 'fast-glob'
 import path from 'pathe'
 import { describe, expect, it } from 'vitest'
 import { CANONICAL_TEMPLATE_CASES } from './canonicalTemplateMatrix'
+import { readTemplatePageConfigs } from './template-ide/config'
 import { isTemplateVersionCompatible, TEMPLATE_PACKAGE_MANAGER } from './templateContract'
 
 const repoRoot = path.resolve(__dirname, '..')
@@ -112,6 +113,15 @@ describe('canonical template build smoke', () => {
 
     for (const file of item.requiredFiles) {
       expect(await pathExists(path.resolve(root, file)), `${item.name} should emit ${file}`).toBe(true)
+    }
+
+    if (item.kind === 'mini-program') {
+      await readTemplatePageConfigs(path.resolve(root, item.outputDir))
+    }
+    if ('snapshotFiles' in item) {
+      for (const file of item.snapshotFiles) {
+        await expect(await fs.readFile(path.resolve(root, item.outputDir, file), 'utf8')).toMatchFileSnapshot(path.resolve(__dirname, '__snapshots__', 'canonical-templates', item.template, file))
+      }
     }
 
     const styles = await readTargets(root, item.styleTargets, styleFileRE)

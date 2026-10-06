@@ -47,6 +47,10 @@ export default defineConfig({
 
 The plugin fixes `platform: 'lynx'`, `generator.target: 'web'`, and Lynx-compatible Web CSS output. ReactLynx keeps the original `className`; it does not create mini-program safe classes or a React Native style manifest.
 
+Recursive variables require Lynx runtime 3.6 or later and the exposed template API from ReactLynx plugin 0.12.4 or later. Older builders must be upgraded; native behavior is currently tested on the pinned 4.0.1 matrix.
+
+Before encoding, the plugin uses the ReactLynx builder’s exposed `LynxTemplatePlugin` hooks to default `enableCSSInlineVariables` to `true`. This selects native recursive resolution for nested Tailwind utility variables, preserving explicit page configuration and dynamic dependencies. A missing template API fails the build. The setting does not change `engineVersion` or replace device verification of gradients, shadows, and other effects. The encoding regression uses `engineVersion: '3.9'`; the native matrix uses Lynx `4.0.1`.
+
 ## Option index
 
 | Option                                                                | Type                            | Default                | Description                                  |

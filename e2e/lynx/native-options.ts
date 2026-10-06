@@ -5,9 +5,9 @@ export type NativePlatform = 'android' | 'ios'
 
 export interface NativeRunOptions {
   platform: NativePlatform
-  bundlePath?: string
+  bundlePath: string | undefined
   captureOnly: boolean
-  outputDir?: string
+  outputDir: string | undefined
   captureDurationSeconds: number
 }
 

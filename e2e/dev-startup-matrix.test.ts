@@ -2,6 +2,7 @@ import path from 'pathe'
 import { describe, expect, it } from 'vitest'
 import { buildCases, demoWatchShardCases } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cases'
 import { createWatchSession, sleep } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/session'
+import { hasInitialCompileEvidence } from './dev-startup/readiness'
 
 const repoRoot = path.resolve(__dirname, '..')
 const startupTimeoutMs = Number(process.env['E2E_DEV_STARTUP_TIMEOUT_MS'] ?? 180_000)
@@ -18,14 +19,7 @@ async function waitForInitialCompile(session: ReturnType<typeof createWatchSessi
   const startedAt = Date.now()
   while (Date.now() - startedAt < startupTimeoutMs) {
     session.ensureRunning()
-    if (session.lastCompileSuccessAt() > 0) {
-      await sleep(settleMs)
-      session.ensureRunning()
-      return
-    }
-    // 部分 demo 的 dev 脚本是等待内部 builder 就绪的 wrapper，不会转发 builder 的成功行。
-    // wrapper 已输出 Tailwind 初始化日志且进程持续运行时，使用稳定窗口作为首次编译证据。
-    if (Date.now() - startedAt >= 8_000 && /Tailwind CSS|Weapp-tailwindcss/u.test(session.logs())) {
+    if (hasInitialCompileEvidence(name, session.logs(), session.lastCompileSuccessAt(), Date.now() - startedAt)) {
       await sleep(settleMs)
       session.ensureRunning()
       return

@@ -16,6 +16,7 @@
 - 与 watch/HMR 相关的测试要注意环境波动，避免引入强时序依赖导致 flaky。
 - 预期值先核对项目 theme、单位和组件消费链；首次加载、服务根目录身份和本轮保存标识必须可验证。HMR 失败同时记录服务日志、请求、页面与截图，不能只保留超时。
 - 正常回归禁止自动写快照；基线更新单独限定项目执行，审查后再运行不更新的验证。
+- 微信 IDE 会话必须使用 `scripts/wechat/automator.ts`，清理使用 `closeWechatProject`；不得直接值导入上游 automator 或执行微信 CLI。登录保护与恢复步骤见多端手册；新增入口须通过 `wechat-session-boundary.test.ts`。
 - 全面测试必须先通过本轮 `pnpm e2e:preflight prepare` 与 verify，包括当前 AI 会话的 computer use。任一环境未通过则停止调度并通知用户；预检回归可以独立运行。
 - 本地多端执行顺序、设备变量、HBuilderX/DevEco 边界、截图门槛、结构探针和阻塞记录统一见 [`LOCAL-MULTI-PLATFORM-E2E.md`](LOCAL-MULTI-PLATFORM-E2E.md)。测试代码只维护可复用逻辑，机器差异通过环境变量表达。
 

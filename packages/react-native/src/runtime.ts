@@ -1,24 +1,17 @@
 /* eslint-disable style/max-statements-per-line */
 
-import type {
-  NativeClassValue,
-  NativePlatform,
-  NativeStyleEnvironment,
-  NativeStyleManifest,
-  NativeStyleRule,
-  NativeStyleRuntime,
-  NativeStyleValue,
-} from './types'
+import type { NativeClassValue, NativeStyleEnvironment, NativeStyleRuntime, NativeStyleValue } from './runtime/types'
+import type { NativePlatform, NativeStyleManifest, NativeStyleRule } from './types'
 
 interface StyleValue { [key: string]: unknown }
 interface StyleMeta { important: NativeStyleValue }
-type StyleSheetFactory = (value: Record<string, StyleValue>) => Record<string, unknown>
+type StyleSheetFactory = (value: Record<string, StyleValue>) => Record<string, NativeStyleValue>
 
 let activeManifest: NativeStyleManifest | undefined
 let activeEnvironment: NativeStyleEnvironment = {}
 const styleMetadata = new Map<unknown, StyleMeta>()
 let styleSheetFactory: StyleSheetFactory | undefined
-let nativeStyleSheet: Record<string, unknown> = {}
+let nativeStyleSheet: Record<string, NativeStyleValue> = {}
 
 function createStyleSheet(manifest: NativeStyleManifest) {
   const source = manifest.styleSheet ?? Object.fromEntries(
@@ -69,7 +62,7 @@ function resolveRules(ids: readonly string[], manifest: NativeStyleManifest | un
     const fallbackIds = manifest?.staticLookup?.[id] ?? []
     if (fallbackIds.length) {
       for (const fallbackId of fallbackIds) {
-        const fallbackRule = manifest.styleEntries?.[fallbackId]
+        const fallbackRule = manifest?.styleEntries?.[fallbackId]
         if (!fallbackRule || !matches(fallbackRule, environment)) { continue }
         ;(fallbackRule.important ? important : normal).push({ rule: fallbackRule, id: fallbackId })
       }
@@ -93,8 +86,8 @@ function resolveRules(ids: readonly string[], manifest: NativeStyleManifest | un
   const asStyleValue = (ids: string[], fallback: StyleValue): NativeStyleValue => {
     if (!styleSheetFactory) { return fallback }
     const values = ids.map(id => nativeStyleSheet[id]).filter(value => value !== undefined)
-    if (values.length === 1) { return values[0] as NativeStyleValue }
-    if (values.length > 1) { return values as NativeStyleValue[] }
+    if (values.length === 1) { return values[0] }
+    if (values.length > 1) { return values }
     return fallback
   }
   return {
@@ -121,7 +114,7 @@ function rememberStyle(style: NativeStyleValue, importantStyle: NativeStyleValue
 export function createNativeStyleRuntime(initialManifest?: NativeStyleManifest): NativeStyleRuntime {
   let manifest = initialManifest
   let environment = activeEnvironment
-  const cache = new Map<string, StyleValue>()
+  const cache = new Map<string, NativeStyleValue>()
   const runtime: NativeStyleRuntime = {
     tw(value, requestedEnvironment = {}) {
       const effectiveEnvironment = { ...environment, ...requestedEnvironment }
@@ -188,15 +181,15 @@ export function getManifest() {
   return activeManifest ?? defaultRuntime.getManifest()
 }
 
-export function tw(value: NativeClassValue, environment?: NativeStyleEnvironment): Record<string, unknown> {
-  return defaultRuntime.tw(value, environment) as Record<string, unknown>
+export function tw(value: NativeClassValue, environment?: NativeStyleEnvironment): NativeStyleValue {
+  return defaultRuntime.tw(value, environment)
 }
 
 export function getStaticStyle(ids: readonly string[], environment?: NativeStyleEnvironment) {
   return defaultRuntime.getStaticStyle(ids, environment)
 }
 
-export function composeStyle(tailwindStyle: NativeStyleValue, inlineStyle: unknown) {
+export function composeStyle<const InlineStyle>(tailwindStyle: NativeStyleValue, inlineStyle: InlineStyle) {
   return defaultRuntime.composeStyle(tailwindStyle, inlineStyle)
 }
 

@@ -2,6 +2,7 @@ import type { BundleSnapshot } from '../bundle-state'
 import type { SourceCandidateFilterOptions } from '../source-candidates'
 import type { TailwindSourceEntry } from '@/tailwindcss/source-scan'
 import path from 'node:path'
+import { isRootStyleOutputFile } from '../processed-css-assets/style-files'
 import { collectMiniProgramSubpackageSourceEntries, isSubpackageOutputFile } from './subpackages'
 
 interface CreateSubpackageSourceCandidateScopeOptions {
@@ -241,14 +242,15 @@ export function createSubpackageSourceCandidateScope(options: CreateSubpackageSo
     sourceFile: string,
     outputCssHandlerOptions: { isMainChunk?: boolean | undefined },
   ) =>
-    (
+    // 主包页面仍拥有自己的样式及相对导入，增量模式不能把整份局部产物提升到根样式。
+    isRootStyleOutputFile(outputFile)
+    && (
       outputCssHandlerOptions.isMainChunk === true
-      && !outputFile.replace(/[?#].*$/, '').includes('/')
-    )
-    || (
-      options.useIncrementalMode
-      && isMainPackageStyleOutputFile(outputFile)
-      && isMainPackageStyleOutputFile(sourceFile)
+      || (
+        options.useIncrementalMode
+        && isMainPackageStyleOutputFile(outputFile)
+        && isMainPackageStyleOutputFile(sourceFile)
+      )
     )
 
   return {

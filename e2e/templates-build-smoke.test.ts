@@ -5,6 +5,7 @@ import fg from 'fast-glob'
 import path from 'pathe'
 import { describe, expect, it } from 'vitest'
 import { CANONICAL_TEMPLATE_CASES } from './canonicalTemplateMatrix'
+import { readTemplatePageConfig, readTemplatePageConfigs } from './template-ide/config'
 import { isTemplateVersionCompatible, TEMPLATE_PACKAGE_MANAGER } from './templateContract'
 
 interface TemplateCase {
@@ -368,11 +369,11 @@ async function expectUsingComponentsExist(name: string, root: string, outputDir:
   const miniprogramRoot = path.resolve(root, outputDir)
   const relativePageFile = path.relative(outputDir, pageFile)
   const pageJsonFile = path.resolve(root, outputDir, relativePageFile.replace(new RegExp(`\\.${markupExtension}$`), '.json'))
-  if (!await pathExists(pageJsonFile)) {
+  if (markupExtension !== 'wxml' && !await pathExists(pageJsonFile)) {
     return
   }
 
-  const pageConfig = await readJson<{ usingComponents?: Record<string, string> }>(pageJsonFile)
+  const pageConfig = await readTemplatePageConfig(pageJsonFile)
   for (const [componentName, componentPath] of Object.entries(pageConfig.usingComponents ?? {})) {
     const resolved = resolveComponentPath(miniprogramRoot, pageJsonFile, componentPath)
     if (!resolved) {
@@ -541,6 +542,10 @@ describe('templates build smoke', () => {
     await runPnpm(item.command.slice(1), root)
 
     expect(await pathExists(path.resolve(root, item.outputDir)), `${item.name} should emit ${item.outputDir}`).toBe(true)
+    if (item.requiredFiles.some(file => file.endsWith('.wxml'))) {
+      await readTemplatePageConfigs(path.resolve(root, item.outputDir))
+    }
+
     for (const file of item.requiredFiles) {
       expect(await pathExists(path.resolve(root, file)), `${item.name} should emit ${file}`).toBe(true)
     }

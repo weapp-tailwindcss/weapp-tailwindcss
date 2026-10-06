@@ -54,3 +54,11 @@ If one CLI matches multiple hosts, the runner reports an ambiguity instead of gu
 Some HBuilderX releases reject concurrent stable and Alpha processes. The runner never closes an existing instance automatically; it reports `cli-instance-mismatch` when the target edition cannot start, so close the conflicting instance before retrying.
 
 `runPnpmCommand`, `spawnPnpmCommand`, `hbuilderxPnpmArgs`, and the synchronous `startLaunch` remain for compatibility. Use a bound runner when the stable/Alpha choice must be deterministic; the `@dcloudio/hbuilderx-cli` pnpm wrapper performs its own process discovery and cannot provide that guarantee.
+
+## Timeouts and cleanup
+
+After `timeoutMs`, `runCommand` cleans up its own process before waiting for the real `close` event and final logs. Cleanup has a separate budget: POSIX waits up to one second after the requested signal, then up to one second after `SIGKILL`; Windows runs `taskkill /T /F` with a five-second timeout, then waits up to one second for closure. Cleanup already in progress also waits for descendants in the default detached process group, including descendants that close their pipes before the root exits.
+
+A graceful exit code of zero after the business deadline still has the `timeout` classification. `allowFailure` permits business failures, but never cleanup failures. `HBuilderXCommandError.cleanupError` and `cause` retain cleanup diagnostics alongside the command, cwd, observed exit and recent logs. A Windows partial tree-termination failure remains an error even if the root closes.
+
+Call and await `stop()` before a long-running root process closes. Repeated calls share the same cleanup result. Natural closure revokes the numeric PID/group handle to avoid targeting a later process that reuses it; services that deliberately leave the group are outside this scope. With `detached: false`, only the owned root's closure is confirmed. The synchronous `killProcessTree` remains a best-effort compatibility request, not cleanup confirmation. Unreaped POSIX orphan processes or persistent permission errors that prevent confirmation cause conservative cleanup failure.

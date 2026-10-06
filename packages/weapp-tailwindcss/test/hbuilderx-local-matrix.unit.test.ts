@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 
 import { miniProgramCases, rawTailwindDirectiveRE, uniAppAppCases, uniAppXAppCases, uniAppXHBuilderXUnsupportedMiniProgramPlatforms, webCases } from '../../../e2e/hbuilderx-local/cases'
 import { filterHBuilderXCases, matchesHBuilderXCaseFilter, parseCaseNameFilters } from '../../../e2e/hbuilderx-local/filters'
-import { findHBuilderXAppTerminatedLog, findHBuilderXDeviceUnavailableLog, resolveHBuilderXLaunchProject } from '../../../e2e/hbuilderx-local/runner'
+import { findHBuilderXAppTerminatedLog, findHBuilderXDeviceUnavailableLog } from '../../../e2e/hbuilderx-local/runner'
 import { resolveExpectedMarkerTextColor } from '../../../scripts/demo-visual-e2e-report/app'
 
 const hbuilderxDemoNames = [
@@ -49,17 +49,6 @@ describe('HBuilderX local demo matrix', () => {
     expect(findHBuilderXAppTerminatedLog('运行包制作失败')).toBe('运行包制作失败')
     expect(findHBuilderXAppTerminatedLog('已停止运行...')).toBe('已停止运行')
     expect(findHBuilderXAppTerminatedLog('App Launch')).toBeUndefined()
-  })
-
-  it('uses the absolute project alias for Harmony without changing other App launch identities', () => {
-    const identity = {
-      projectAlias: 'C:/Temp/uni-app-x-worktree-alias',
-      projectName: 'uni-app-x-worktree-alias',
-    }
-
-    expect(resolveHBuilderXLaunchProject('app-harmony', identity)).toBe(identity.projectAlias)
-    expect(resolveHBuilderXLaunchProject('app-android', identity)).toBe(identity.projectName)
-    expect(resolveHBuilderXLaunchProject('app-ios', identity)).toBe(identity.projectName)
   })
 
   it('keeps every HBuilderX demo covered by local mini-program and Web HMR cases', () => {

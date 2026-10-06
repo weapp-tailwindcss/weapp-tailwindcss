@@ -1,4 +1,3 @@
-import type { NormalizedInputOptions, PluginContext } from 'rollup'
 import type { Plugin, ResolvedConfig } from 'vite'
 import type { WebpackObjectPluginInstance, WebpackWeappStyleInjectorOptions } from 'weapp-style-injector/webpack'
 import type { WeappTailwindcssStyleInjectorUserOptions } from './options'
@@ -14,6 +13,7 @@ import { omitUndefined } from '@/utils/object'
 import { normalizeStyleInjectorOptions, resolveStyleInjectorSubPackages } from './options'
 
 type VitePluginResult = Plugin | Plugin[] | undefined
+type ViteBuildStart = Extract<Plugin['buildStart'], (...args: never[]) => unknown>
 export type ViteStyleInjectorDelegateFactory = (options: NonNullable<ReturnType<typeof normalizeStyleInjectorOptions>>) => Plugin[]
 export type WebpackStyleInjectorDelegateFactory = (
   options: NonNullable<ReturnType<typeof normalizeWebpackStyleInjectorOptions>>,
@@ -104,7 +104,7 @@ export function createBuiltinViteStyleInjectorPlugins(
     }
   }
 
-  const startDelegates = async (context: PluginContext, buildOptions: NormalizedInputOptions) => {
+  const startDelegates = async (context: ThisParameterType<ViteBuildStart>, buildOptions: Parameters<ViteBuildStart>[0]) => {
     if (delegatesBuildStarted) {
       return
     }

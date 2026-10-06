@@ -1,7 +1,7 @@
 import process from 'node:process'
-import { Launcher } from '@weapp-vite/miniprogram-automator'
 import { execa } from 'execa'
 import { closeWechatProject } from '../wechat-project-cleanup.ts'
+import { Launcher } from '../wechat/automator'
 import { findFreePort } from './process.ts'
 
 export function wait(ms: number) {
@@ -49,78 +49,22 @@ export async function captureWechatDevToolsWindow(screenshot: string) {
   await execa('screencapture', ['-x', '-R', bounds, screenshot], { timeout: 10_000 })
 }
 
-async function withTimeout<T>(label: string, timeoutMs: number, task: Promise<T>) {
-  let timer: ReturnType<typeof setTimeout> | undefined
-  try {
-    return await Promise.race([
-      task,
-      new Promise<never>((_, reject) => {
-        timer = setTimeout(() => reject(new Error(`${label} 超时 ${timeoutMs}ms`)), timeoutMs)
-      }),
-    ])
-  }
-  finally {
-    if (timer) {
-      clearTimeout(timer)
-    }
-  }
-}
-
-function isRetryableLaunchError(error: unknown) {
-  const message = error instanceof Error ? error.message : String(error)
-  return /launch 超时|Wait timed out|Failed connecting|Failed to launch wechat web devTools|DevTools did not respond/i.test(message)
-}
-
 export async function launchMiniProgramInCleanDevTools(
   name: string,
   projectPath: string,
   preferredPort: number | undefined,
   timeoutMs: number,
 ) {
-  const retries = readNumberEnv('DEMO_VISUAL_IDE_LAUNCH_RETRIES', 1)
-  const settleMs = readNumberEnv('DEMO_VISUAL_IDE_SETTLE_MS', 800)
-  let lastError: unknown
-
-  for (let attempt = 1; attempt <= retries + 1; attempt++) {
-    await wait(settleMs)
-    const port = attempt === 1 ? preferredPort : await findFreePort()
-    const launcher = new Launcher()
-    try {
-      process.stdout.write(`[weapp-hmr] ${name}: launch ${projectPath} port=${port} attempt=${attempt}/${retries + 1}\n`)
-      const miniProgram = await withTimeout(`${name} launch`, timeoutMs, launcher.launch({ cliPath: process.env.E2E_PREFLIGHT_WECHAT_CLI, projectPath, port, timeout: timeoutMs }))
-      return {
-        miniProgram,
-        port,
-      }
-    }
-    catch (error) {
-      lastError = error
-      if (isRetryableLaunchError(error)) {
-        try {
-          const connectTimeoutMs = Math.min(timeoutMs, readNumberEnv('DEMO_VISUAL_IDE_CONNECT_TIMEOUT_MS', 10_000))
-          process.stderr.write(`[weapp-hmr] ${name}: connect existing DevTools session after launch timeout port=${port}\n`)
-          const miniProgram = await withTimeout<any>(
-            `${name} connect existing session`,
-            connectTimeoutMs,
-            launcher.connect({ timeout: connectTimeoutMs, wsEndpoint: `ws://127.0.0.1:${port}` }),
-          )
-          return { miniProgram, port }
-        }
-        catch (connectError) {
-          lastError = connectError
-        }
-      }
-      await closeWechatProject(projectPath)
-      if (attempt > retries || !isRetryableLaunchError(lastError)) {
-        throw lastError
-      }
-      process.stderr.write(`[weapp-hmr] ${name}: retry launch after DevTools error (${attempt}/${retries})\n`)
-    }
-  }
-
-  throw lastError instanceof Error ? lastError : new Error(String(lastError))
+  const port = preferredPort ?? await findFreePort()
+  const launcher = new Launcher()
+  process.stdout.write(`[weapp-hmr] ${name}: connect existing IDE for ${projectPath} port=${port}\n`)
+  // Launcher 负责失败启动的收尾；成功返回后才由用例的 finally 接管项目清理。
+  const miniProgram = await launcher.launch({ cliPath: process.env.E2E_PREFLIGHT_WECHAT_CLI, projectPath, port, timeout: timeoutMs })
+  return { miniProgram, port }
 }
 
 export async function closeMiniProgramAndCleanup(miniProgram: any, projectPath: string) {
-  await closeWechatProject(projectPath, miniProgram, readNumberEnv('DEMO_VISUAL_IDE_CLOSE_TIMEOUT_MS', 10_000))
+  if (miniProgram) {
+    await closeWechatProject(projectPath, miniProgram, readNumberEnv('DEMO_VISUAL_IDE_CLOSE_TIMEOUT_MS', 10_000))
+  }
 }

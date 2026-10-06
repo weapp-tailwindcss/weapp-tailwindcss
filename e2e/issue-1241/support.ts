@@ -13,7 +13,8 @@ export function dependencies() {
   return state ??= (async () => {
     const packageRoot = await realpath(path.join(repositoryRoot, 'packages', 'weapp-tailwindcss'))
     const temporary = await realpath(await mkdtemp(path.join(tmpdir(), 'weapp-issue-1241-')))
-    const root = await realpath(await prepareDependencies(temporary))
+    const preparation = path.join(artifacts, 'preparation', path.basename(temporary))
+    const root = await realpath(await prepareDependencies(temporary, preparation))
     const require = createRequire(path.join(root, 'package.json'))
     const versions = Object.fromEntries(await Promise.all(['@dcloudio/vite-plugin-uni', 'tailwindcss', 'vite', 'vue'].map(async (name) => {
       const file = await realpath(require.resolve(`${name}/package.json`))
@@ -21,7 +22,7 @@ export function dependencies() {
       return [name, { version: manifest.version, file }]
     })))
     await save('framework-pnpm-lock.yaml', await readFile(path.join(root, 'pnpm-lock.yaml'), 'utf8'))
-    await save('identity.json', { root, packageRoot, temporary, versions, node: process.version })
+    await save('identity.json', { root, packageRoot, temporary, preparation, versions, node: process.version })
     return { root, packageRoot, temporary, require }
   })()
 }

@@ -1,9 +1,10 @@
 import type { ProjectEntry } from './shared'
 import fs from 'node:fs/promises'
 import process from 'node:process'
-import { Launcher } from '@weapp-vite/miniprogram-automator'
 import path from 'pathe'
 import { describe, expect, it } from 'vitest'
+import { closeWechatProject } from '../scripts/wechat-project-cleanup'
+import { Launcher } from '../scripts/wechat/automator'
 import { collectEmptyCssBlocks } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/css-integrity'
 import { ensureProjectBuilt } from './projectBuild'
 import { isE2EProjectSupportedOnPlatform } from './projectEntries'
@@ -462,7 +463,7 @@ async function runProjectTest(entry: ProjectEntry, options: ProjectTestOptions) 
     }
   }
   finally {
-    await miniProgram?.close()
+    await closeWechatProject(projectPath, miniProgram)
   }
 
   await wait()

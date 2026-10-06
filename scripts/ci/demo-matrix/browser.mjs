@@ -79,7 +79,20 @@ export async function openBrowser(url, session, artifactDir) {
       assert.ok(response.ok, url)
     }, session)
     await until(async () => {
-      const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15_000 })
+      // 已收到成功主文档后只等待当前页面，开发重载不能触发第二次主动导航。
+      if (documentVersion > 0) {
+        return
+      }
+      let response
+      try {
+        response = await page.goto(url, { waitUntil: 'commit', timeout: 15_000 })
+      }
+      catch (error) {
+        if (documentVersion > 0) {
+          return
+        }
+        throw error
+      }
       // 开发重载可能中断首次 goto；随后同一 hash 导航没有新的 HTTP 响应。
       const targetDocument = new URL(url)
       targetDocument.hash = ''
@@ -93,17 +106,18 @@ export async function openBrowser(url, session, artifactDir) {
         assert.equal(startupReloads, 0, `Module transport failed again after startup recovery: ${transientModuleFailure}`)
         events.push(`startup-reload: ${transientModuleFailure}`)
         startupReloads++
-        await page.reload({ waitUntil: 'domcontentloaded', timeout: 15_000 })
+        await page.reload({ waitUntil: 'commit', timeout: 15_000 })
       }
       const version = documentVersion
       await page.locator('#tw-matrix-height').waitFor({ timeout: 5000 })
       // requestfinished 只证明响应已下载，async 脚本可能尚未执行；load 不等待后台 fetch。
       await page.waitForLoadState('load', { timeout: 5000 })
+      await assertUpdateIdle()
+      // 最后一次异步检查也可能跨越导航，返回前同步复核当前文档和连接。
       assert.equal(documentVersion, version, 'Document changed while waiting for local scripts')
       assert.equal(pendingModules.size, 0, `Local modules still loading: ${[...pendingModules].map(request => request.url()).join(', ')}`)
       assert.ok(documentResponse?.ok(), 'Current document navigation is not complete')
       assert.ok(transportReady, 'Development update transport is not ready')
-      await assertUpdateIdle()
     }, session)
     return {
       events,

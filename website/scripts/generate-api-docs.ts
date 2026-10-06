@@ -404,7 +404,7 @@ function isProjectSourceFile(node: Node): boolean {
 
 function readTagText(tag: JSDocTag): string {
   const structuredText = tag.getStructure().text
-  if (structuredText) {
+  if (typeof structuredText === 'string' && structuredText) {
     return structuredText.trim()
   }
   const comment = tag.getComment()

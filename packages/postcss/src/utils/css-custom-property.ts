@@ -47,6 +47,32 @@ export function getCssCalcVariableReferences(value: string) {
   if (!value.includes('(')) {
     return references
   }
+  if (value.includes('\\')) {
+    // value-parser 会把转义终止空白拆开；tokenizer 保留函数与参数的真实身份。
+    const tokens = tokenize({ css: value })
+    for (let index = 0; index < tokens.length; index++) {
+      const token = tokens[index]
+      if (token?.[0] !== TokenType.Function || token[4].value.toLowerCase() !== 'var') {
+        continue
+      }
+      let end = index + 1
+      while (tokens[end]?.[0] === TokenType.Whitespace || tokens[end]?.[0] === TokenType.Comment) {
+        end++
+      }
+      const name = tokens[end]
+      if (name?.[0] !== TokenType.Ident || !name[4].value.startsWith('--')) {
+        continue
+      }
+      end++
+      while (tokens[end]?.[0] === TokenType.Whitespace || tokens[end]?.[0] === TokenType.Comment) {
+        end++
+      }
+      const separator = tokens[end]
+      if (separator?.[0] === TokenType.Comma || separator?.[0] === TokenType.CloseParen) {
+        references.set(value.slice(token[3] + 1, separator[2]).trim(), name[4].value)
+      }
+    }
+  }
   valueParser(value).walk((node) => {
     if (node.type !== 'function' || !isCssVarFunction(node.value)) {
       return

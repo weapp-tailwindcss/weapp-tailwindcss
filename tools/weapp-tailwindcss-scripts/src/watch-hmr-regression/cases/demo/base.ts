@@ -1,4 +1,4 @@
-import type { SubPackageMutationConfig, WatchCase } from '../../types'
+import type { ClassMutationConfig, SubPackageMutationConfig, WatchCase } from '../../types'
 import path from 'node:path'
 import {
   appendTrailingSnippet,
@@ -8,7 +8,7 @@ import {
   mutateScriptByDataAnchorWithCommentCarrier,
   replaceExactSnippet,
 } from '../../text'
-import { buildHexScriptRoundConfigs, buildIssue33HighRiskRoundConfigs, buildTailwindV4JsContentRoundConfigs } from '../round-configs'
+import { buildHexScriptRoundConfigs, buildIssue33HighRiskRoundConfigs, buildTailwindV4JsContentRoundConfigs, MINI_PROGRAM_REMOVED_CSS_UTILITIES } from '../round-configs'
 
 const gulpWatchEnv = {
   CHOKIDAR_USEPOLLING: '1',
@@ -30,6 +30,7 @@ function createSubPackageMutations(
     skipStyleMutation?: boolean
     templateVerifyEscapedIn?: Array<'wxml' | 'js'>
     templateVerifyClassLiteralIn?: Array<'wxml' | 'js'>
+    expectedRemovedCssUtilities?: ClassMutationConfig['expectedRemovedCssUtilities']
   },
 ): SubPackageMutationConfig[] {
   const styleExtension = options.styleExtension ?? 'css'
@@ -62,6 +63,7 @@ function createSubPackageMutations(
           ?? (options.pageKind === 'wxml' || options.pageKind === 'mpx' || options.pageKind === 'vue' ? ['wxml'] : ['js']),
         verifyClassLiteralIn: options.templateVerifyClassLiteralIn
           ?? (options.pageKind === 'tsx' ? ['js'] : []),
+        ...(options.expectedRemovedCssUtilities ? { expectedRemovedCssUtilities: options.expectedRemovedCssUtilities } : {}),
         roundConfigs,
         mutate(source, payload) {
           if (options.pageKind === 'wxml') {
@@ -167,7 +169,6 @@ export function buildDemoBaseCases(baseCwd: string): WatchCase[] {
     cwd: path.resolve(baseCwd, 'demo/weapp-vite-tailwindcss-v4'),
     devScript: 'dev:e2e-watch',
     env: {
-      WEAPP_VITE_E2E_WATCH_BUILD_FALLBACK: '1',
       WEAPP_VITE_E2E_WATCH_HMR_RUNTIME: 'classic',
     },
     outputWxml: path.resolve(baseCwd, 'demo/weapp-vite-tailwindcss-v4/dist/pages/index/index.wxml'),
@@ -208,6 +209,7 @@ export function buildDemoBaseCases(baseCwd: string): WatchCase[] {
     templateMutation: {
       sourceFile: path.resolve(baseCwd, 'demo/weapp-vite-tailwindcss-v4/pages/index/index.wxml'),
       verifyEscapedIn: ['wxml'],
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: buildHexScriptRoundConfigs(),
       mutate(source, payload) {
         const snippet = `  <view class="${payload.classLiteral}">${payload.marker}-template</view>`
@@ -241,6 +243,7 @@ export function buildDemoBaseCases(baseCwd: string): WatchCase[] {
       version: 'v4',
       pageKind: 'wxml',
       skipStyleMutation: true,
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       globalStyleCandidates(subPackage) {
         return [
           path.resolve(baseCwd, 'demo/weapp-vite-tailwindcss-v4/dist/tailwind.wxss'),

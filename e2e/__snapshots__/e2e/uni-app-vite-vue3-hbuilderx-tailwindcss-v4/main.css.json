@@ -1,0 +1,18 @@
+{
+  "file": "main.css",
+  "count": 12,
+  "tokens": [
+    "bg-gradient-to-r",
+    "font-semibold",
+    "from-[#9e58e9]",
+    "gap-2",
+    "inline-flex",
+    "items-center",
+    "px-[18rpx]",
+    "py-[10rpx]",
+    "rounded-[20rpx]",
+    "text-[26rpx]",
+    "text-white",
+    "to-blue-500"
+  ]
+}

@@ -1,43 +1,39 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
+import process from 'node:process'
+import { execa } from 'execa'
+import { afterEach, expect, it, vi } from 'vitest'
 import { collectFrameworkIdeDiagnostics } from './frameworkIdeDiagnostics'
 
+vi.mock('node:fs/promises', async (original) => {
+  const fs = await original<typeof import('node:fs/promises')>()
+  return { ...fs, readdir: vi.fn(fs.readdir), readFile: vi.fn(fs.readFile) }
+})
+vi.mock('execa', () => ({ execa: vi.fn().mockResolvedValue({ stdout: 'wechatwebdevtools --token=private-process' }) }))
 const tempDirs: string[] = []
 
 afterEach(async () => {
-  delete process.env['E2E_IDE_DEVTOOLS_SUPPORT_DIR']
-  delete process.env['E2E_IDE_DIAGNOSTIC_LOG_FILES']
-  delete process.env['E2E_IDE_DIAGNOSTIC_LOG_LINES']
-  delete process.env['E2E_IDE_DIAGNOSTIC_PROCESSES']
-  delete process.env['E2E_IDE_DIAGNOSTIC_PROCESS_CHARS']
+  vi.unstubAllEnvs()
+  vi.clearAllMocks()
   await Promise.all(tempDirs.splice(0).map(dir => rm(dir, { recursive: true, force: true })))
 })
 
-describe('framework IDE diagnostics', () => {
-  it('collects recent WeChat DevTools log tails for failed IDE probes', async () => {
-    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'weapp-tw-ide-diagnostics-'))
-    tempDirs.push(tempDir)
-    const logDir = path.join(tempDir, 'profile-id', 'WeappLog', 'logs')
-    await mkdir(logDir, { recursive: true })
-    await writeFile(path.join(tempDir, 'profile-id', 'WeappLog', 'stderr.log'), 'stderr-a\nstderr-b\nstderr-c\n')
-    await writeFile(path.join(logDir, 'devtools.log'), 'log-a\nlog-b\nlog-c\n')
-
-    process.env['E2E_IDE_DEVTOOLS_SUPPORT_DIR'] = tempDir
-    process.env['E2E_IDE_DIAGNOSTIC_LOG_FILES'] = '2'
-    process.env['E2E_IDE_DIAGNOSTIC_LOG_LINES'] = '2'
-    process.env['E2E_IDE_DIAGNOSTIC_PROCESSES'] = '0'
-
-    const diagnostics = await collectFrameworkIdeDiagnostics('fixture-case')
-
-    expect(diagnostics).toContain('[e2e:ide] diagnostics for fixture-case')
-    expect(diagnostics).toContain('[devtools log:')
-    expect(diagnostics).toContain('stderr-b')
-    expect(diagnostics).toContain('stderr-c')
-    expect(diagnostics).toContain('log-b')
-    expect(diagnostics).toContain('log-c')
-    expect(diagnostics).not.toContain('stderr-a')
-    expect(diagnostics).not.toContain('log-a')
-  })
+it('失败诊断只记录当前测试身份，不扫描共享账号日志或全局进程参数', async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'weapp-tw-ide-diagnostics-'))
+  tempDirs.push(dir)
+  const logs = path.join(dir, 'another-project', 'WeappLog')
+  await mkdir(logs, { recursive: true })
+  await writeFile(path.join(logs, 'stderr.log'), 'private-account-log')
+  vi.stubEnv('E2E_IDE_DEVTOOLS_SUPPORT_DIR', dir)
+  vi.stubEnv('E2E_IDE_DIAGNOSTIC_PROCESSES', '1')
+  const diagnostics = await collectFrameworkIdeDiagnostics('fixture-case')
+  expect(diagnostics).toContain('[e2e:ide] diagnostics for fixture-case')
+  expect(diagnostics).toContain(String(process.pid))
+  expect(diagnostics).toContain(process.cwd())
+  expect(diagnostics).not.toContain('private-account-log')
+  expect(diagnostics).not.toContain('private-process')
+  expect(readdir).not.toHaveBeenCalled()
+  expect(readFile).not.toHaveBeenCalled()
+  expect(execa).not.toHaveBeenCalled()
 })

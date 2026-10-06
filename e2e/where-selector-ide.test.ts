@@ -1,11 +1,11 @@
 import fs from 'node:fs/promises'
 import process from 'node:process'
-import { Launcher } from '@weapp-vite/miniprogram-automator'
 import path from 'pathe'
 import { PNG } from 'pngjs'
 import { describe, expect, it } from 'vitest'
 import { captureMiniProgramViewport } from '../scripts/demo-visual-e2e-report/mini-program-screenshot'
 import { closeWechatProject } from '../scripts/wechat-project-cleanup'
+import { Launcher } from '../scripts/wechat/automator'
 import { collectFrameworkIdeDiagnostics } from './frameworkIdeDiagnostics'
 import { sampleSelectorPixels } from './where-selector/pixels'
 
@@ -107,7 +107,9 @@ async function runProbe(projectName: string, screenshotName: string, selectors: 
     throw error
   }
   finally {
-    await closeWechatProject(projectPath, miniProgram, closeTimeoutMs)
+    if (miniProgram) {
+      await closeWechatProject(projectPath, miniProgram, closeTimeoutMs)
+    }
   }
 }
 

@@ -77,6 +77,16 @@ export interface TailwindGenerationArtifact {
   sourceEntries: SourceEntry[]
 }
 
+export interface TailwindGenerationSessionOptions {
+  /**
+   * 使用当前实际编译来源的 design system 准备 CSS，结果与候选校验共享该实例。
+   * 仅允许调整生成规则的顺序或非语义标记，不能改变主题、utility、variant、
+   * 配置、插件、导入或来源指令；其他来源元数据由会话保留。
+   * 回调及其闭包配置在会话存活期间必须保持不变。
+   */
+  prepareSource?: ((source: Readonly<TailwindV4ResolvedSource>, designSystem: TailwindV4DesignSystem) => string | Promise<string>) | undefined
+}
+
 export interface TailwindGenerationSession {
   readonly source: TailwindV4ResolvedSource
   generate: (request?: GenerationRequest) => Promise<TailwindGenerationArtifact>
@@ -149,6 +159,8 @@ export interface TailwindV4StyleGenerateResult extends TailwindV4GenerateResult 
 export interface TailwindV4DesignSystem {
   parseCandidate: (candidate: string) => unknown[]
   candidatesToCss: (candidates: string[]) => Array<string | null | undefined>
+  /** 当前候选集合的生成顺序；可选以兼容只提供校验能力的实现。 */
+  getClassOrder?: ((candidates: string[]) => Array<[string, bigint | null]>) | undefined
 }
 
 export interface TailwindV4Engine {

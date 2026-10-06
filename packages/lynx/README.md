@@ -13,11 +13,12 @@ pnpm add @weapp-tailwindcss/lynx tailwindcss
 ## Configure
 
 ```ts
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin'
 import { defineConfig } from '@lynx-js/rspeedy'
 import { pluginLynxTailwindcss } from '@weapp-tailwindcss/lynx'
 
 export default defineConfig({
-  plugins: [pluginLynxTailwindcss()],
+  plugins: [pluginReactLynx(), pluginLynxTailwindcss()],
 })
 ```
 
@@ -33,6 +34,10 @@ Import Tailwind CSS 4 from the application CSS entry and point `@source` at the 
 ```
 
 `pluginLynxTailwindcss` fixes `platform` to `'lynx'`, sets `generator.target` to `'web'`, and enables Lynx-compatible output. Tailwind CSS 4 theme variables are resolved at build time, while application-defined dynamic variables remain unchanged.
+
+Recursive variables require Lynx runtime 3.6 or later and the exposed template API from ReactLynx plugin 0.12.4 or later. Older builders must be upgraded; native behavior is currently tested on the pinned 4.0.1 matrix.
+
+Before template encoding, the plugin defaults `enableCSSInlineVariables` to `true` through the ReactLynx builder’s exposed template hooks. This selects native recursive variable resolution for nested Tailwind utility variables while preserving explicit page configuration and dynamic CSS dependencies. Register `pluginReactLynx()` alongside this plugin; a missing template API is a build error. This does not change the target SDK or guarantee native support for each CSS property.
 
 See the [ReactLynx / Rspeedy configuration reference](https://tw.weapp.dev/docs/config/react-lynx) for the `generator`, `rspack`, CSS loader, and encoder options.
 

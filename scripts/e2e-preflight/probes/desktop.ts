@@ -8,13 +8,16 @@ import { fileURLToPath } from 'node:url'
 import { satisfies } from 'semver'
 import { parseHBuilderXVersion } from '../../../packages/hbuilderx-runner/src/hbuilderx/hosts'
 import { createHBuilderXRunner } from '../../../packages/hbuilderx-runner/src/hbuilderx/runner'
-import { resolveWechatAppId } from '../../wechat-app-id'
+import { assertNativeSessionsAvailable } from '../../hbuilderx-native-registry'
+import { assertWechatAppIdBinding, resolveWechatAppId } from '../../wechat-app-id'
+import { closeWechatProject } from '../../wechat-project-cleanup'
+import { assertWechatLogin, existingWechatService, wechatRequest } from '../../wechat/service'
+import { runWithCleanup } from '../cleanup'
 import { assertImage, command } from '../io'
 import { hbuilderxTools } from './hbuilderx-tools'
 import { availablePort } from './port'
 import { waitForProbe } from './wait'
 import { connectWechat } from './wechat-connect'
-import { wechatVersion } from './wechat-version'
 
 export async function base(ctx: ProbeContext): Promise<ProbeOutput> {
   const manifest = JSON.parse(await readFile(path.join(ctx.root, 'package.json'), 'utf8'))
@@ -49,44 +52,34 @@ export async function hbuilderx(ctx: ProbeContext): Promise<ProbeOutput> {
     if (parseHBuilderXVersion(actual) !== version) {
       throw new Error(`HBuilderX 实例版本改变：${actual}`)
     }
+    await assertNativeSessionsAvailable(ctx.root, { path: cli!, host: host! })
     await command(cli!, ['project', 'list', '--host', host!])
     return { detail: 'HBuilderX 原 host 的版本、项目查询和平台组件入口通过。', binding: { ...ctx.binding, ...await hbuilderxTools(cli!) } }
   }
   const runner = await createHBuilderXRunner({ cwd: ctx.root, timeoutMs: 30_000 })
-  await runner.run({ args: ['project', 'list'], timeoutMs: 10_000 })
   const { path: cli, host, version, channel } = runner.resolution
   if (!host || !version) {
     throw new Error('未能确定 HBuilderX host 与实际版本。')
   }
+  await assertNativeSessionsAvailable(ctx.root, { path: cli, host })
+  await runner.run({ args: ['project', 'list'], timeoutMs: 10_000 })
   return { detail: 'HBuilderX CLI/host/channel、项目查询及平台组件入口通过。', binding: { command: cli, host, version, channel, ...await hbuilderxTools(cli) } }
 }
 
-export function loggedIn(output: string) {
-  return /(?:islogin|login)["']?\s*:\s*true\b|已登录|logged in/i.test(output)
-}
-
 export async function wechat(ctx: ProbeContext): Promise<ProbeOutput> {
-  const cli = ctx.binding?.command ?? process.env.E2E_PREFLIGHT_WECHAT_CLI
-    ?? (process.platform === 'darwin'
-      ? path.join(path.parse(os.homedir()).root, 'Applications', 'wechatwebdevtools.app', 'Contents', 'MacOS', 'cli')
-      : undefined)
-  if (!cli) {
-    throw new Error('请设置 E2E_PREFLIGHT_WECHAT_CLI 指向官方 CLI（Windows 为 cli.bat）。')
+  const appid = ctx.phase === 'prepare' ? resolveWechatAppId() : assertWechatAppIdBinding(ctx.binding?.['appid'])
+  const binding = { ...await existingWechatService(ctx.binding?.command), appid }
+  if (ctx.binding?.httpPort && ctx.binding.httpPort !== binding.httpPort) {
+    throw new Error('微信 IDE HTTP 服务端口已改变；必须重新 prepare。')
   }
-  await access(cli)
-  const { version, metadata } = await wechatVersion(cli)
-  const login = await command(cli, ['islogin'])
-  if (!loggedIn(login)) {
-    throw new Error(`微信 IDE 登录未确认：${login}`)
-  }
-  const binding = { command: cli, version, metadata }
+  await assertWechatLogin(binding.httpPort)
   if (ctx.phase === 'live') {
-    return { detail: '微信 IDE CLI 与登录状态可用。', binding }
+    return { detail: '微信 IDE 已有 HTTP 服务与登录状态可用；未启动 CLI。', binding }
   }
   const project = path.join(ctx.dir, 'wechat-project')
   await mkdir(path.join(project, 'pages', 'probe'), { recursive: true })
   const files: Record<string, string> = {
-    'project.config.json': JSON.stringify({ appid: resolveWechatAppId(), projectname: `preflight-${ctx.runId}`, compileType: 'miniprogram', miniprogramRoot: './', setting: { es6: true } }),
+    'project.config.json': JSON.stringify({ appid, projectname: `preflight-${ctx.runId}`, compileType: 'miniprogram', miniprogramRoot: './', setting: { es6: true } }),
     'app.json': JSON.stringify({ pages: ['pages/probe/index'], window: { navigationBarTitleText: '环境预检' } }),
     'app.js': 'App({})',
     [path.join('pages', 'probe', 'index.js')]: `Page({data:{marker:${JSON.stringify(ctx.runId)},clicked:false},tap(){this.setData({clicked:true})}})`,
@@ -98,46 +91,63 @@ export async function wechat(ctx: ProbeContext): Promise<ProbeOutput> {
   }
   const port = await availablePort()
   let mini: MiniProgram | undefined
-  let failed = false
+  let openedByProbe = false
   const screenshot = path.join(ctx.dir, 'wechat.png')
-  try {
-    // 显式要求官方 CLI 打开本轮项目和空闲端口，避免 launcher 回退连接到旧项目。
-    process.stdout.write(`[preflight] 打开本轮微信探针 ${project}，自动化端口 ${port}\n`)
-    process.stdout.write(`${await command(cli, ['auto', '--project', project, '--auto-port', String(port)], 30_000)}\n`)
-    const connection = await connectWechat(port)
-    mini = connection
-    let page = await connection.currentPage()
-    await waitForProbe(async () => {
-      page = await connection.currentPage()
-      const actual = page ? await (await page.$('#marker'))?.text() : undefined
-      if (actual && actual !== ctx.runId) {
-        throw new Error(`微信运行页面并非本轮探针：expected=${ctx.runId} actual=${actual}`)
+  return runWithCleanup(async () => {
+    try {
+      // 仅请求已开启的 IDE 服务，避免 CLI 隐式启动触发登录票据刷新。
+      process.stdout.write(`[preflight] 打开本轮微信探针 ${project}，自动化端口 ${port}\n`)
+      const opened = await wechatRequest(binding.httpPort, { kind: 'auto', project, port }, 30_000)
+      openedByProbe = true
+      if (opened.autoPort !== port) {
+        throw new Error('微信 IDE 自动化端口与本轮请求不一致。')
       }
-      return { expected: ctx.runId, actual }
-    }, value => value.actual === ctx.runId)
-    const button = await page!.$('#probe')
-    if (!button) {
-      throw new Error('微信本轮探针缺少交互按钮。')
+      await assertWechatLogin(binding.httpPort)
+      const connection = await connectWechat(port)
+      mini = connection
+      // 稳定版 IDE 会在自动化端口可连接后继续编译并注册 pageframe 元数据；
+      // currentPage 在这段窗口内会收到 getPageMetaByWebviewId(null)。先等待 App 域
+      // 就绪，再读取本轮 marker，避免把正常的异步编译误判为运行页冲突。
+      await connection.waitForAppReady?.(30_000)
+      let page: Awaited<ReturnType<MiniProgram['currentPage']>>
+      await waitForProbe(async () => {
+        let actual: string | undefined
+        try {
+          // HTTP auto 返回时页面可能仍在创建，页面元数据与本轮标识一起等待，不提前读取一次。
+          page = await connection.currentPage()
+          actual = page ? await (await page.$('#marker'))?.text() : undefined
+        }
+        catch (error) {
+          return { expected: ctx.runId, actual, error: String(error) }
+        }
+        if (actual && actual !== ctx.runId) {
+          throw new Error(`微信运行页面并非本轮探针：expected=${ctx.runId} actual=${actual}`)
+        }
+        return { expected: ctx.runId, actual }
+      }, value => value.actual === ctx.runId, 15_000)
+      const button = await page!.$('#probe')
+      if (!button) {
+        throw new Error('微信本轮探针缺少交互按钮。')
+      }
+      await button.tap()
+      await waitForProbe(async () => ({ data: await page!.data(), text: await (await page!.$('#result'))?.text() }), value => value.data?.clicked === true && value.text === 'true')
+      await mini.screenshot({ path: screenshot })
+      await assertImage(screenshot)
+      return { detail: '微信登录、真实 DevTools 自动化连接、页面交互和截图通过。', binding, evidence: [screenshot] }
     }
-    await button.tap()
-    await waitForProbe(async () => ({ data: await page!.data(), text: await (await page!.$('#result'))?.text() }), value => value.data?.clicked === true && value.text === 'true')
-    await mini.screenshot({ path: screenshot })
-    await assertImage(screenshot)
-    return { detail: '微信登录、真实 DevTools 自动化连接、页面交互和截图通过。', binding, evidence: [screenshot] }
-  }
-  catch (error) {
-    failed = true
-    const captured = mini && await mini.screenshot({ path: screenshot }).then(() => true, () => false)
-    throw new Error(`${String(error)}；微信现场截图：${captured ? screenshot : '连接不可用，未取得'}`)
-  }
-  finally {
-    // 仅释放本次连接，不关闭 IDE 或其他项目，也不使用全局进程清理。
-    mini?.disconnect()
-    await command(cli, ['close', '--project', project]).catch((error) => {
-      if (!failed) {
-        throw error
-      }
-      process.stderr.write(`[preflight] 本轮微信探针清理失败：${String(error)}\n`)
-    })
-  }
+    catch (error) {
+      return runWithCleanup(async () => {
+        throw new Error(`${error instanceof Error ? error.message : String(error)}；微信现场截图目标：${mini ? screenshot : '连接不可用，未取得'}`, { cause: error })
+      }, async () => {
+        if (mini) {
+          await mini.screenshot({ path: screenshot })
+        }
+      })
+    }
+  }, async () => {
+    // 直接 auto 成功返回后才持有项目；拒绝或冲突不能关闭已有会话。
+    if (openedByProbe) {
+      await closeWechatProject(project, mini, 10_000, binding.httpPort)
+    }
+  })
 }

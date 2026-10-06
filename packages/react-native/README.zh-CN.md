@@ -41,9 +41,13 @@ Metro 会扫描源码、生成精确候选集合和 manifest，并把 Babel JSX 
 - `dark:`、`ios:`、`android:`、`native:` 是原生条件变体；状态、响应式、结构等浏览器 selector 变体会明确报告为不支持，不会被错误地无条件应用。
 - 静态 StyleSheet ID 在无关 class 增删和 CSS 值变化时保持稳定，Metro CSS HMR 不会让已有 Babel lookup 串到其他规则。
 
+`tw()` 与 `getStaticStyle()` 返回 React Native 的 `StyleProp`，可以直接传给 View、Text、Image 的 style。返回值可能含已注册的 StyleSheet ID 或数组；需要读取具体属性时使用 `StyleSheet.flatten()`。`composeStyle()` 保留内联样式类型，包括 `false`、`null` 和嵌套数组。
+
 ## 公开入口
 
 包提供 `compiler`、`tailwind`、`babel`、`metro`、`runtime` 与中性类型入口 `env`。非 Expo 或定制 Metro 场景可以显式组合这些入口。
+
+没有安装可选 React Native peer 的纯 Node 工具应直接导入 `compiler`、`tailwind` 或 `metro`。根入口和 `runtime` 暴露原生 `StyleProp`，TypeScript 项目需要 React Native 类型。
 
 ## 边界
 

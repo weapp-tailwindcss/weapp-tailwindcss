@@ -1,5 +1,7 @@
+import type { RollupWatcher } from 'rollup'
 import type { Plugin } from 'vite'
-import { access, mkdir, mkdtemp, readFile, rm, unlink, writeFile } from 'node:fs/promises'
+import { EventEmitter } from 'node:events'
+import { access, mkdir, mkdtemp, readFile, realpath, rm, unlink, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import os from 'node:os'
 import path from 'node:path'
@@ -8,33 +10,52 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { WeappTailwindcss } from '@/bundlers/vite'
 import { replaceWxml } from '@/wxml'
 
-interface ViteBuildWatcher {
-  close: () => Promise<void> | void
-  off?: (event: 'event', listener: (event: { code: string, error?: unknown }) => void) => void
-  on: (event: 'event', listener: (event: { code: string, error?: unknown }) => void) => void
-}
-
 const require = createRequire(import.meta.url)
 const tailwindcssBasedir = path.dirname(require.resolve('tailwindcss/package.json'))
 const createdDirs: string[] = []
+const closeWatchers: Array<() => Promise<void>> = []
 const rawCandidate = 'pt-[12rpx]'
 const transformedCandidate = replaceWxml(rawCandidate)
 
-function waitForWatchEnd(watcher: ViteBuildWatcher) {
+function waitForWatch(watcher: RollupWatcher, signal: AbortSignal, options: { deletedFile?: string, written?: Promise<void> } = {}) {
   return new Promise<void>((resolve, reject) => {
+    signal.throwIfAborted()
+    let observedChange = options.deletedFile === undefined
+    const onChange = (id: string, change: { event: string }) => {
+      if (id === options.deletedFile && change.event === 'delete') {
+        observedChange = true
+      }
+    }
     const onEvent = (event: { code: string, error?: unknown }) => {
       if (event.code === 'ERROR') {
         cleanup()
         reject(event.error instanceof Error ? event.error : new Error(String(event.error)))
         return
       }
-      if (event.code === 'END') {
+      if (event.code === 'END' && observedChange && !options.written) {
         cleanup()
         resolve()
       }
     }
-    const cleanup = () => watcher.off?.('event', onEvent)
+    const onAbort = () => {
+      cleanup()
+      reject(signal.reason)
+    }
+    const cleanup = () => {
+      watcher.off('event', onEvent)
+      watcher.off('change', onChange)
+      signal.removeEventListener('abort', onAbort)
+    }
+    signal.addEventListener('abort', onAbort, { once: true })
+    watcher.on('change', onChange)
     watcher.on('event', onEvent)
+    options.written?.then(() => {
+      cleanup()
+      resolve()
+    }, (error) => {
+      cleanup()
+      reject(error)
+    })
   })
 }
 
@@ -61,7 +82,8 @@ function emitWatchedTemplate(templateFile: string, templateOutput: string): Plug
 }
 
 async function createFixtureRoot(explicitSource: boolean, extension: string) {
-  const root = await mkdtemp(path.join(os.tmpdir(), 'weapp-tailwindcss-vite-template-delete-'))
+  // 与 Rollup 的模块身份一致，避免 macOS 临时目录符号链接产生双路径通知。
+  const root = await realpath(await mkdtemp(path.join(os.tmpdir(), 'weapp-tailwindcss-vite-template-delete-')))
   createdDirs.push(root)
   const viewsDir = path.join(root, 'views')
   await mkdir(viewsDir, { recursive: true })
@@ -87,13 +109,41 @@ async function createFixtureRoot(explicitSource: boolean, extension: string) {
 
 describe('bundlers/vite template delete watch', () => {
   afterEach(async () => {
+    // 测试超时同样先完成 watcher 收尾，再删除它监听的目录。
+    await Promise.all(closeWatchers.splice(0).map(close => close()))
     await Promise.all(createdDirs.splice(0).map(dir => rm(dir, { recursive: true, force: true })))
   })
 
-  it.each([true, false].flatMap(explicit => ['axml', 'qxml'].map(extension => ({ explicit, extension }))))('removes anonymous $extension candidates with explicit source=$explicit', async ({ explicit, extension }) => {
+  it.each([false, true])('等待写盘=$written 时响应错误和取消，并释放监听', async (written) => {
+    for (const failure of ['error', 'abort'] as const) {
+      const events = new EventEmitter()
+      const controller = new AbortController()
+      const barrier = Promise.withResolvers<void>()
+      const pending = waitForWatch(events as unknown as RollupWatcher, controller.signal, {
+        written: written ? barrier.promise : undefined,
+      })
+      const error = new Error(failure)
+      if (failure === 'error') {
+        events.emit('event', { code: 'ERROR', error })
+      }
+      else {
+        controller.abort(error)
+      }
+      await expect(pending).rejects.toBe(error)
+      expect(events.listenerCount('event')).toBe(0)
+      expect(events.listenerCount('change')).toBe(0)
+      barrier.resolve()
+    }
+  })
+
+  const cases = [true, false].flatMap(explicit => ['axml', 'qxml'].flatMap(extension => [false, true].map(inFlight => ({ explicit, extension, inFlight }))))
+  it.for(cases)('removes anonymous $extension candidates with explicit source=$explicit and previous build in flight=$inFlight', async ({ explicit, extension, inFlight }, { signal }) => {
     const { cssFile, root, templateFile, templateOutput } = await createFixtureRoot(explicit, extension)
     const distCssFile = path.join(root, 'dist/app.css')
     let emittedStyles = new Map<string, string>()
+    let holdNextWrite = false
+    const previousBuildWritten = Promise.withResolvers<void>()
+    const releasePreviousBuild = Promise.withResolvers<void>()
     const watcher = await build({
       root,
       logLevel: 'silent',
@@ -117,12 +167,17 @@ describe('bundlers/vite template delete watch', () => {
         }) ?? [],
         {
           name: 'inspect-emitted-style-identity',
-          generateBundle: {
+          writeBundle: {
             order: 'post',
-            handler(_options, bundle) {
+            async handler(_options, bundle) {
               emittedStyles = new Map(Object.entries(bundle).flatMap(([file, output]) =>
                 output.type === 'asset' && /\.(?:css|wxss|acss)$/.test(file) ? [[file, String(output.source)]] : [],
               ))
+              if (holdNextWrite) {
+                holdNextWrite = false
+                previousBuildWritten.resolve()
+                await releasePreviousBuild.promise
+              }
             },
           },
         },
@@ -139,17 +194,31 @@ describe('bundlers/vite template delete watch', () => {
           },
         },
       },
-    }) as ViteBuildWatcher
+    }) as RollupWatcher
+    let closing: Promise<void> | undefined
+    const close = () => closing ??= (async () => {
+      releasePreviousBuild.resolve()
+      await watcher.close()
+    })()
+    closeWatchers.push(close)
 
     try {
-      await waitForWatchEnd(watcher)
+      await waitForWatch(watcher, signal)
       expect(await readFile(distCssFile, 'utf8')).toContain(`.${transformedCandidate}`)
       const emittedTemplate = path.join(root, 'dist', templateOutput)
       await access(emittedTemplate)
       expect(await readFile(emittedTemplate, 'utf8')).toContain(transformedCandidate)
 
-      const rebuild = waitForWatchEnd(watcher)
+      if (inFlight) {
+        // 让上一轮产物已经写入但 END 尚未发出，确定性覆盖删除与在途构建交错。
+        holdNextWrite = true
+        const previousWrite = waitForWatch(watcher, signal, { written: previousBuildWritten.promise })
+        await writeFile(path.join(root, 'app.ts'), 'import "./app.css"\nexport const trigger = 1\n')
+        await previousWrite
+      }
+      const rebuild = waitForWatch(watcher, signal, { deletedFile: templateFile })
       await unlink(templateFile)
+      releasePreviousBuild.resolve()
       await rebuild
 
       expect([...emittedStyles.keys()]).toEqual(['app.css'])
@@ -159,7 +228,7 @@ describe('bundlers/vite template delete watch', () => {
       expect(await readFile(distCssFile, 'utf8')).not.toContain(`.${transformedCandidate}`)
     }
     finally {
-      await watcher.close()
+      await close()
     }
   }, 60_000)
 })

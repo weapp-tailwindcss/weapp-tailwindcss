@@ -84,10 +84,36 @@ export interface RuntimeCheckpoint {
   expected?: string | number | boolean
 }
 
+export interface NativeRect {
+  width: number
+  height: number
+  left: number
+  right: number
+  top: number
+  bottom: number
+}
+
+export interface NativeGeometryEvidence {
+  probe: NativeRect
+  control: NativeRect
+  probeContainer: NativeRect
+  controlContainer: NativeRect
+  probeChild: NativeRect
+  controlChild: NativeRect
+}
+
 export interface NativeCaseResult extends PlatformResult {
   id: string
   failureStage?: Extract<FailureStage, 'runtime' | 'version-limit'>
   checkpoints: RuntimeCheckpoint[]
+  geometry?: NativeGeometryEvidence
+  colorScheme?: Record<'light' | 'dark' | 'restored', NativeColorSchemeReceipt>
+}
+
+export interface NativeColorSchemeReceipt {
+  runId: string
+  requestId: string
+  scheme: 'light' | 'dark'
 }
 
 export interface NativeRuntimeEnvironment {
@@ -114,6 +140,21 @@ export interface NativePlatformReport {
   versions: CompatibilityBaseline['versions']
   environment: NativeRuntimeEnvironment
   results: NativeCaseResult[]
+  // 历史结论仍可展示；实时验收及基线更新必须携带完整的新证据协议。
+  evidence?: NativeEvidenceContext & { artifacts: NativeArtifactReceipt[] }
+}
+
+export interface NativeEvidenceContext {
+  version: 1
+  runId: string
+  bundleSha256: string
+}
+
+export interface NativeArtifactReceipt {
+  runId: string
+  name: string
+  sha256: string
+  byteLength: number
 }
 
 export interface CompatibilityBaseline {

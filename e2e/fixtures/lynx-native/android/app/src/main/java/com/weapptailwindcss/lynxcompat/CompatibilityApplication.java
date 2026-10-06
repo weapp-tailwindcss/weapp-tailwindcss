@@ -8,6 +8,5 @@ public final class CompatibilityApplication extends Application {
   public void onCreate() {
     super.onCreate();
     LynxEnv.inst().init(this, null, null, null);
-    LynxEnv.inst().registerModule("CompatibilityReporter", CompatibilityReporterModule.class);
   }
 }

@@ -1,10 +1,11 @@
 import fs from 'node:fs'
-import { posix, win32 } from 'node:path'
+import path, { posix, win32 } from 'node:path'
 import { runInNewContext } from 'node:vm'
-import path from 'pathe'
 import ts from 'typescript'
 import { describe, expect, it } from 'vitest'
 import { DEMO_COVERAGE_MATRIX } from './demoCoverageMatrix'
+import { EXECUTABLE_MULTIPLATFORM_BUILD_OUTPUT_CASES } from './multiplatform-build-output/cases'
+import { MULTIPLATFORM_TARGETS } from './multiplatform-build-output/targets'
 import { E2E_PROJECTS } from './projectEntries'
 import { taroWebHmrCases } from './taro-web-demo-hmr-cases'
 
@@ -68,6 +69,70 @@ function taroHmrCaseName(name: string) {
 }
 
 describe('Taro CI coverage matrix', () => {
+  it('聚合构建跳过的每个 Taro demo 都有同一微信目标的真实构建入口', () => {
+    const guardedProjects = fs.readdirSync(path.join(repoRoot, 'demo'), { withFileTypes: true })
+      .filter(entry => entry.isDirectory() && fs.existsSync(path.join(repoRoot, 'demo', entry.name, 'package.json')))
+      .map(entry => entry.name)
+      .filter(name => Object.values(demoPackageJson(name).scripts ?? {}).some(script => script.includes('taro-build-guard.mjs')))
+    expect(guardedProjects.length).toBeGreaterThan(0)
+
+    for (const name of guardedProjects) {
+      if (E2E_PROJECTS.some(item => item.name === name)) {
+        expect(fs.existsSync(path.join(repoRoot, 'e2e', `${name}.test.ts`)), `${name} 应保留 static 构建入口`).toBe(true)
+        continue
+      }
+      const projectDir = `demo/${name}`
+      const cases = EXECUTABLE_MULTIPLATFORM_BUILD_OUTPUT_CASES.filter(item => item.projectDir === projectDir && item.platform === 'weapp' && item.status === 'ci')
+      expect(cases.length, `${name} 不能用其他平台或 local 占位项代替微信构建`).toBeGreaterThan(0)
+      expect(MULTIPLATFORM_TARGETS.find(item => item.projectDir === projectDir && item.platform === 'weapp')?.coverage).toBe('default-ci')
+      for (const item of cases) {
+        expect(item.command, item.name).toContain('build:weapp')
+        expect(item.styleFileExtensions, item.name).toContain('.wxss')
+        expect(item.requiredFiles.some(file => file.endsWith('.wxss')), item.name).toBe(true)
+      }
+    }
+  })
+
+  it('微信分包构建保留独立入口与单入口两个隔离语义', () => {
+    const cases = EXECUTABLE_MULTIPLATFORM_BUILD_OUTPUT_CASES.filter(item => item.projectDir === 'demo/subpackage-taro-webpack-react-tailwindcss-v4' && item.platform === 'weapp' && item.status === 'ci')
+    expect(cases.map(item => item.name)).toEqual([
+      'subpackage-taro-webpack-react-tailwindcss-v4 weapp isolated',
+      'subpackage-taro-webpack-react-tailwindcss-v4 weapp single',
+    ])
+    expect(cases[0]?.fileAssertions?.some(item => item.file === 'dist/sub-independent/pages/index.wxss')).toBe(true)
+    expect(cases[1]?.env?.E2E_TW_CSS_ENTRY_MODE).toBe('single')
+    expect(cases.every(item => item.requiredFiles.includes('dist/pages/index/index.wxml'))).toBe(true)
+    const coverage = DEMO_COVERAGE_MATRIX.find(item => item.name === 'subpackage-taro-webpack-react-tailwindcss-v4')?.platforms.find(item => item.platform === 'weapp')
+    expect(coverage?.staticCoverage).toBe('automated')
+    expect(coverage?.command).toContain('pnpm e2e:multiplatform-build')
+  })
+
+  it('分包构建显式固定入口模式，不继承终端的 single 设置', () => {
+    const cases = EXECUTABLE_MULTIPLATFORM_BUILD_OUTPUT_CASES.filter(item => item.projectDir.includes('subpackage-'))
+    expect(cases.length).toBeGreaterThan(0)
+    for (const item of cases) {
+      const mode = item.name.endsWith(' single') ? 'single' : 'isolated'
+      expect(item.env?.E2E_TW_CSS_ENTRY_MODE, item.name).toBe(mode)
+    }
+  })
+
+  it.each([
+    { platform: 'weapp', style: '.wxss', template: '.wxml' },
+    { platform: 'alipay', style: '.acss', template: '.axml' },
+    { platform: 'tt', style: '.ttss', template: '.ttml' },
+  ])('issue951 $platform 保留对应平台产物与主包样式导入关系', ({ platform, style, template }) => {
+    const item = EXECUTABLE_MULTIPLATFORM_BUILD_OUTPUT_CASES.find(item => item.projectDir === 'demo/issue-951-taro-vite-react-tailwindcss-v4' && item.platform === platform)
+    expect(item?.status).toBe('ci')
+    expect(item?.requiredFiles).toContain(`dist/pages/index/index${template}`)
+    expect(item?.styleFileExtensions).toEqual([style])
+    const assertion = item?.fileAssertions?.find(item => item.file === `dist/app${style}`)
+    const importPattern = assertion?.contains?.find(item => item instanceof RegExp) as RegExp
+    expect(`@import "./app-origin${style}";`).toMatch(importPattern)
+    expect(`@import './app-origin${style}';`).toMatch(importPattern)
+    expect(`@import "./app-originX${style.slice(1)}";`).not.toMatch(importPattern)
+    expect(assertion?.notContains).toEqual(expect.arrayContaining(['.bg-issue-951-normal', '.bg-issue-951-independent']))
+  })
+
   it('guards style-injector Taro mini-program builds in aggregate CI', () => {
     for (const name of styleInjectorTaroDemos) {
       const scripts = demoPackageJson(name).scripts ?? {}

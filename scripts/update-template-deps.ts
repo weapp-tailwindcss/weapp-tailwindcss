@@ -4,6 +4,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { execa } from 'execa'
 import { minVersion } from 'semver'
+import { resolveWeappViteTemplateVersion } from './template-framework-versions'
 import { ROOT } from './template-utils'
 import { updateTemplateWorkspaceConfig } from './template-workspace-config'
 
@@ -158,7 +159,7 @@ async function resolveBaseTargets(): Promise<TargetPackage[]> {
     typescriptVersion,
   ] = await Promise.all([
     fetchVersionForMajor('weapp-ide-cli', 5),
-    fetchVersionForMajor('weapp-vite', 6),
+    resolveWeappViteTemplateVersion(fetchVersionForMajor),
     fetchLatestVersion('sass'),
     fetchLatestVersion('sass-embedded'),
     fetchVersionForMajor('typescript', 6),

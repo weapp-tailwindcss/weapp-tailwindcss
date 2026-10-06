@@ -26,7 +26,7 @@ export function cropMiniProgramViewport(image: PNG, metrics: WindowMetrics): PNG
   }
   const scale = image.width / screenWidth
   if (Math.abs(image.height - screenHeight * scale) > 2) {
-    throw new Error('小程序截图尺寸与运行时屏幕比例不一致。')
+    throw new Error(`小程序截图尺寸与运行时屏幕比例不一致：图像 ${image.width}×${image.height}，屏幕 ${screenWidth}×${screenHeight}，按宽度推算高度 ${screenHeight * scale}。请在当前项目的微信模拟器菜单选择「显示比例 → 100%」并保留足够窗口空间后重新验证；E2E 不会修改登录态或放宽裁剪校验。`)
   }
   const top = Math.round(screenTop * scale)
   const width = Math.round(windowWidth * scale)
@@ -113,6 +113,32 @@ export async function readMiniProgramViewportMetrics(miniProgram: any, timeout: 
     await new Promise(resolve => setTimeout(resolve, Math.min(100, Math.max(0, deadline - Date.now()))))
   } while (Date.now() < deadline)
   throw new Error('小程序页面视口未在限定时间内就绪。', { cause: lastError })
+}
+
+/** 保存未经裁剪的真实截图，运行时尺寸仅作证据，不推断宿主截图比例。 */
+export async function captureMiniProgramScreenshot(miniProgram: any, screenshotPath: string, timeout: number) {
+  const metrics = await readMiniProgramWindowMetrics(miniProgram, timeout)
+  if (metrics.screenTop < 0 || metrics.screenTop + metrics.windowHeight > metrics.screenHeight + 1
+    || metrics.windowWidth > metrics.screenWidth) {
+    throw new Error('小程序截图缺少有效的窗口几何信息。')
+  }
+  const result = await miniProgram.send('App.captureScreenshot', {}, { timeout })
+  if (typeof result?.data !== 'string') {
+    throw new TypeError('小程序截图接口未返回图像。')
+  }
+  const fullImage = Buffer.from(result.data, 'base64')
+  const image = PNG.sync.read(fullImage)
+  if (image.width <= 0 || image.height <= 0) {
+    throw new Error('小程序截图尺寸无效。')
+  }
+  await fs.mkdir(path.dirname(screenshotPath), { recursive: true })
+  await fs.writeFile(screenshotPath, fullImage)
+  await fs.writeFile(`${screenshotPath}.capture.json`, `${JSON.stringify({
+    kind: 'full-screen',
+    image: { width: image.width, height: image.height },
+    runtime: metrics,
+  }, null, 2)}\n`)
+  return image
 }
 
 export async function captureMiniProgramViewport(miniProgram: any, screenshotPath: string, timeout: number) {

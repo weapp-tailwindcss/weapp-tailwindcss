@@ -1,45 +1,479 @@
 {
   "schemaVersion": 1,
-  "platform": "ios",
-  "catalogHash": "a8c3b45f993d9aa28782f308fc959a09e160d67a9097d11b1bc6a8a38b93c886",
-  "verifiedAt": "2026-08-17T06:36:27.838Z",
-  "versions": {
-    "tailwindcss": "4.3.3",
-    "lynxEngine": "4.0.1",
-    "engineVersion": "3.9",
-    "cssDefines": "0.0.16"
+  "evidence": {
+    "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+    "artifacts": [
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "layout-overflow-probe.png",
+        "byteLength": 8391,
+        "sha256": "65c930ffa9dfee221b39107c2fdbc8a00177876ae2b93a8ffb00e0e783a2cc39"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "layout-overflow-control.png",
+        "byteLength": 8391,
+        "sha256": "65c930ffa9dfee221b39107c2fdbc8a00177876ae2b93a8ffb00e0e783a2cc39"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "layout-visibility-probe.png",
+        "byteLength": 6045,
+        "sha256": "7dcf1111fe5939e9a0542bb754a146a237a94a39c3ad87ab4c9fe4c84d14b721"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "layout-visibility-control.png",
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "layout-z-index-probe.png",
+        "byteLength": 6045,
+        "sha256": "7dcf1111fe5939e9a0542bb754a146a237a94a39c3ad87ab4c9fe4c84d14b721"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "layout-z-index-control.png",
+        "byteLength": 8215,
+        "sha256": "9dee1d118de723888f6e7700b5376b495e9b837e8f4c6d69f442a646c599ff51"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "type-weight-style-probe.png",
+        "byteLength": 8392,
+        "sha256": "8f8d60df4a363bceed4faa86b1efbd678b316c45cf864f2f57a08d2a51c67327"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "type-weight-style-control.png",
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "type-align-overflow-probe.png",
+        "byteLength": 8391,
+        "sha256": "65c930ffa9dfee221b39107c2fdbc8a00177876ae2b93a8ffb00e0e783a2cc39"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "type-align-overflow-control.png",
+        "byteLength": 8391,
+        "sha256": "65c930ffa9dfee221b39107c2fdbc8a00177876ae2b93a8ffb00e0e783a2cc39"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "background-color-probe.png",
+        "byteLength": 8125,
+        "sha256": "5d884efe40b335e0275f2b1230213be41d63116daf263e441f88cfce067ee389"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "background-color-control.png",
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "background-gradient-probe.png",
+        "byteLength": 139843,
+        "sha256": "f6848b632f7d038d4193c0429120885e9fa05ffb05b7f1d00716259d509f4ace"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "background-gradient-control.png",
+        "byteLength": 6393,
+        "sha256": "7a127c5ddf71efefa4928aeaa8369f713b31ab80ede344bbac5ad7c6633a3f6d"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "background-size-probe.png",
+        "byteLength": 137740,
+        "sha256": "67e926f8fce3f5649216dffab3b7a2824e754a5dd4b17a460aac6795b19fdf64"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "background-size-control.png",
+        "byteLength": 95937,
+        "sha256": "c83f6234b0494a80200fbc083cea644bb64d3e5e81dec5f82e067498124b8c0a"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "border-width-color-probe.png",
+        "byteLength": 8101,
+        "sha256": "4065f6ef0e8508ce99f3c056ac6e140f21bc10b74743c70229cf44430121873f"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "border-width-color-control.png",
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "border-radius-probe.png",
+        "byteLength": 10695,
+        "sha256": "e4879eee48d30cbd0b959fd664ec5cee159c7d296afe0e67900e3e980acfe377"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "border-radius-control.png",
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "effect-opacity-probe.png",
+        "byteLength": 7924,
+        "sha256": "812afc887d808b82aaf0f1f7493260e65b1a89c9e44e16750aba8b284a065275"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "effect-opacity-control.png",
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "effect-shadow-probe.png",
+        "byteLength": 33738,
+        "sha256": "f9abf1ba2893543f4739ce666f9738b4bd4b6fe52e61ab88d83d32c77deac050"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "effect-shadow-control.png",
+        "byteLength": 15393,
+        "sha256": "80b6d147ff8df5372a310d597a5bb0793576054e9bfe4a7915ba68137859db21"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "filter-blur-probe.png",
+        "byteLength": 31498,
+        "sha256": "ab335592f3834fc263ffafd845dbcca518a9388459d2b9df3adb7ff6beae7918"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "filter-blur-control.png",
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "transition-basic-before.png",
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "transition-basic-during.png",
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "transition-basic-after.png",
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "animation-spin-before.png",
+        "byteLength": 13205,
+        "sha256": "eca39aba663aa131ffb3b7d99be0c7e8a87a37227d39c688cc330da9c0739da7"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "animation-spin-after.png",
+        "byteLength": 12716,
+        "sha256": "f6aa474ddacc3b1552185f6654d727dab98e41e931b55016dacce29ac2632f0a"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "variant-dark-light-probe.png",
+        "byteLength": 11114,
+        "sha256": "dcd71acd80ca185a94e48c44540e93fadc541d60e56dd65af880a004c372673f"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "variant-dark-light-control.png",
+        "byteLength": 11114,
+        "sha256": "dcd71acd80ca185a94e48c44540e93fadc541d60e56dd65af880a004c372673f"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "variant-dark-dark-probe.png",
+        "byteLength": 11114,
+        "sha256": "dcd71acd80ca185a94e48c44540e93fadc541d60e56dd65af880a004c372673f"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "variant-dark-dark-control.png",
+        "byteLength": 11114,
+        "sha256": "dcd71acd80ca185a94e48c44540e93fadc541d60e56dd65af880a004c372673f"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "variant-state-before.png",
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "variant-state-active.png",
+        "byteLength": 8070,
+        "sha256": "66fc1f159d311ad74fb1e9fafd5cddeb18b0405ea51eaae84136930a7ab24270"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "variant-structural-probe.png",
+        "byteLength": 17850,
+        "sha256": "cc1c2ace4b4467023beca71a649b044b56ae93bfdfdeea80a45b7ab11d1bf6f1"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "variant-structural-control.png",
+        "byteLength": 17850,
+        "sha256": "cc1c2ace4b4467023beca71a649b044b56ae93bfdfdeea80a45b7ab11d1bf6f1"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "variant-structural-reference.png",
+        "byteLength": 17512,
+        "sha256": "7840aba8602ae433a7e9d8a5274fc9ef528acc16a7a15b7ed7bcb9d9cbc9042d"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "variant-arbitrary-probe.png",
+        "byteLength": 7982,
+        "sha256": "5b69b352c53e9c5b397d9f7c9f8687146fb0fd2a4046a0f8b53dc0ee0d8a28f4"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "variant-arbitrary-control.png",
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "syntax-type-hint-probe.png",
+        "byteLength": 8111,
+        "sha256": "6569497bb0b98af3275fe51f537e219a0e69c3e95f2427b3d49758fd3a892935"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "syntax-type-hint-control.png",
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "type-flow-probe.png",
+        "byteLength": 11223,
+        "sha256": "09183d781180c8d60373da3e780d69b5b46f3d3b735ff504a6e3c0f3f2c8b29d"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "type-flow-control.png",
+        "byteLength": 11300,
+        "sha256": "a6c6d812ccf47b7316d08eced4e9e9982d02c8ae25589bf4ac2d26cee6f25893"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "type-flow-reference.png",
+        "byteLength": 14244,
+        "sha256": "2dc89780d81936c9b4c14ec6847a6742046a57c25cb8ef0804c304fb612370f4"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "type-content-probe.png",
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "type-content-control.png",
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "background-linear-gradient-probe.png",
+        "byteLength": 134108,
+        "sha256": "6f43591ee5166d9c978d2baf7151c87df9461f67119b9b7a6f22dd90982ee559"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "background-linear-gradient-control.png",
+        "byteLength": 137740,
+        "sha256": "67e926f8fce3f5649216dffab3b7a2824e754a5dd4b17a460aac6795b19fdf64"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "effect-ring-probe.png",
+        "byteLength": 12323,
+        "sha256": "d5eb9fe72bc5b95d7303018641f7f87cfb5c85049c51452ad3b70475206dfb42"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "effect-ring-control.png",
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "effect-inset-text-shadow-probe.png",
+        "byteLength": 17783,
+        "sha256": "1528102084b4e1fb9cf30149f50099ed2d3263374b1a354002d387fc51d7da6e"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "effect-inset-text-shadow-control.png",
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "filter-color-adjustments-probe.png",
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "filter-color-adjustments-control.png",
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "filter-color-rotation-probe.png",
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "filter-color-rotation-control.png",
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "filter-drop-shadow-probe.png",
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "filter-drop-shadow-control.png",
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "transform-skew-probe.png",
+        "byteLength": 7774,
+        "sha256": "0835a235e9b1c2ce94faa89241c8118e97af335ba3640ceacc2cb92659c6566b"
+      },
+      {
+        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "name": "transform-skew-control.png",
+        "byteLength": 6540,
+        "sha256": "03eebb8e8b6bc1ec78070e43723f7a2458fe256e1b270e59007e5833aa00c402"
+      }
+    ],
+    "bundleSha256": "1bc4f2294871be821c5673ace6c40d22b8312981f0fa9627b579134ebd303072",
+    "version": 1
   },
+  "platform": "ios",
+  "versions": {
+    "engineVersion": "3.9",
+    "tailwindcss": "4.3.3",
+    "cssDefines": "0.0.16",
+    "lynxEngine": "4.0.1"
+  },
+  "catalogHash": "a8c3b45f993d9aa28782f308fc959a09e160d67a9097d11b1bc6a8a38b93c886",
   "environment": {
-    "deviceName": "iPhone 17 Pro iOS 26.5",
-    "deviceModel": "iPhone18,1",
     "osName": "iOS",
-    "osVersion": "26.5",
     "osBuild": "23F77",
-    "runtimeIdentifier": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
+    "deviceName": "iPhone 17 Pro iOS 26.5",
+    "osVersion": "26.5",
     "abi": "arm64",
+    "runtimeIdentifier": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
     "viewport": {
       "width": 402,
       "height": 874,
       "pixelRatio": 3
-    }
+    },
+    "deviceModel": "iPhone18,1"
   },
+  "verifiedAt": "2026-10-06T01:37:07.516Z",
   "results": [
     {
+      "status": "supported",
       "id": "layout-aspect",
-      "status": "supported",
       "checkpoints": [
         {
-          "name": "geometry:probe-vs-control",
+          "actual": "6,6,64,48; child=0,4,12,12",
           "passed": true,
-          "actual": "0,0,72,48; child=0,4,12,12",
-          "expected": "control=0,0,72,16; child=0,4,12,12"
+          "expected": "control=6,6,64,16; child=0,4,12,12",
+          "name": "geometry:probe-vs-control"
         }
-      ]
+      ],
+      "geometry": {
+        "probe": {
+          "left": 21,
+          "right": 85,
+          "top": 743.3333333333334,
+          "height": 48,
+          "width": 64,
+          "bottom": 791.3333333333334
+        },
+        "control": {
+          "left": 207.66666666666663,
+          "right": 271.66666666666663,
+          "top": 743.3333333333334,
+          "height": 16,
+          "width": 64,
+          "bottom": 759.3333333333334
+        },
+        "controlChild": {
+          "left": 207.66666666666663,
+          "right": 219.66666666666663,
+          "top": 747.3333333333334,
+          "height": 12,
+          "width": 12,
+          "bottom": 759.3333333333334
+        },
+        "probeChild": {
+          "left": 21,
+          "right": 33,
+          "top": 747.3333333333334,
+          "height": 12,
+          "width": 12,
+          "bottom": 759.3333333333334
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 193.66666666666666,
+          "top": 737.3333333333334,
+          "height": 92,
+          "width": 178.66666666666666,
+          "bottom": 829.3333333333334
+        },
+        "controlContainer": {
+          "left": 201.66666666666663,
+          "right": 380,
+          "top": 737.3333333333334,
+          "height": 92,
+          "width": 178.33333333333337,
+          "bottom": 829.3333333333334
+        }
+      }
     },
     {
+      "status": "unsupported",
       "id": "layout-columns",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：columns",
       "checkpoints": [
         {
           "name": "generated",
@@ -49,36 +483,136 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：columns"
     },
     {
+      "status": "supported",
       "id": "layout-box-sizing",
-      "status": "supported",
       "checkpoints": [
         {
-          "name": "geometry:probe-vs-control",
+          "actual": "6,6,96,64; child=10,28.333333333333485,12,12",
           "passed": true,
-          "actual": "0,0,166.66666666666666,62.33333333333326; child=8,26.333333333333258,12,12",
-          "expected": "control=0,0,166.33333333333337,62.33333333333326; child=8,26.333333333333258,12,12"
+          "expected": "control=6,6,116,84; child=10,28.333333333333485,12,12",
+          "name": "geometry:probe-vs-control"
         }
-      ]
+      ],
+      "geometry": {
+        "probe": {
+          "left": 21,
+          "right": 117,
+          "top": 1403,
+          "height": 64,
+          "width": 96,
+          "bottom": 1467
+        },
+        "control": {
+          "left": 207.66666666666663,
+          "right": 323.66666666666663,
+          "top": 1403,
+          "height": 84,
+          "width": 116,
+          "bottom": 1487
+        },
+        "controlChild": {
+          "left": 217.66666666666663,
+          "right": 229.66666666666663,
+          "top": 1431.3333333333335,
+          "height": 12,
+          "width": 12,
+          "bottom": 1443.3333333333335
+        },
+        "probeChild": {
+          "left": 31,
+          "right": 43,
+          "top": 1431.3333333333335,
+          "height": 12,
+          "width": 12,
+          "bottom": 1443.3333333333335
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 193.66666666666666,
+          "top": 1397,
+          "height": 96,
+          "width": 178.66666666666666,
+          "bottom": 1493
+        },
+        "controlContainer": {
+          "left": 201.66666666666663,
+          "right": 380,
+          "top": 1397,
+          "height": 96,
+          "width": 178.33333333333337,
+          "bottom": 1493
+        }
+      }
     },
     {
+      "status": "supported",
       "id": "layout-display",
-      "status": "supported",
       "checkpoints": [
         {
-          "name": "geometry:probe-vs-control",
+          "actual": "6,6,166.66666666666666,40; child=31.66666666666667,12,12,12",
           "passed": true,
-          "actual": "0,0,166.66666666666666,40; child=31.66666666666667,12,12,12",
-          "expected": "control=0,0,166.33333333333337,62.33333333333326; child=8,26.333333333333485,12,12"
+          "expected": "control=6,6,166.33333333333337,62.33333333333326; child=8,26.333333333333485,12,12",
+          "name": "geometry:probe-vs-control"
         }
-      ]
+      ],
+      "geometry": {
+        "probe": {
+          "left": 21,
+          "right": 187.66666666666666,
+          "top": 1706.3333333333333,
+          "height": 40,
+          "width": 166.66666666666666,
+          "bottom": 1746.3333333333333
+        },
+        "control": {
+          "left": 207.66666666666663,
+          "right": 374,
+          "top": 1706.3333333333333,
+          "height": 62.33333333333326,
+          "width": 166.33333333333337,
+          "bottom": 1768.6666666666665
+        },
+        "controlChild": {
+          "left": 215.66666666666663,
+          "right": 227.66666666666663,
+          "top": 1732.6666666666667,
+          "height": 12,
+          "width": 12,
+          "bottom": 1744.6666666666667
+        },
+        "probeChild": {
+          "left": 52.66666666666667,
+          "right": 64.66666666666667,
+          "top": 1718.3333333333333,
+          "height": 12,
+          "width": 12,
+          "bottom": 1730.3333333333333
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 193.66666666666666,
+          "top": 1700.3333333333333,
+          "height": 92,
+          "width": 178.66666666666666,
+          "bottom": 1792.3333333333333
+        },
+        "controlContainer": {
+          "left": 201.66666666666663,
+          "right": 380,
+          "top": 1700.3333333333333,
+          "height": 92,
+          "width": 178.33333333333337,
+          "bottom": 1792.3333333333333
+        }
+      }
     },
     {
+      "status": "unsupported",
       "id": "layout-float",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：float",
       "checkpoints": [
         {
           "name": "generated",
@@ -88,12 +622,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：float"
     },
     {
+      "status": "unsupported",
       "id": "layout-isolation",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：isolation",
       "checkpoints": [
         {
           "name": "generated",
@@ -103,12 +637,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：isolation"
     },
     {
+      "status": "unsupported",
       "id": "layout-object-fit",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：object-fit",
       "checkpoints": [
         {
           "name": "generated",
@@ -118,43 +652,94 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：object-fit"
     },
     {
-      "id": "layout-overflow",
       "status": "unsupported",
-      "reason": "probe/control 元素截图没有可观察的像素差异",
+      "id": "layout-overflow",
       "failureStage": "runtime",
+      "reason": "probe/control 元素截图没有可观察的像素差异",
       "checkpoints": [
         {
-          "name": "pixel:probe-vs-control",
+          "actual": "11188:ffc2f305",
           "passed": false,
-          "actual": "4068:e0a03b2a",
-          "expected": "different from 4068:e0a03b2a"
+          "expected": "different from 11188:ffc2f305",
+          "name": "pixel:probe-vs-control"
         }
       ]
     },
     {
-      "id": "layout-position",
       "status": "supported",
+      "id": "layout-position",
       "checkpoints": [
         {
-          "name": "geometry:probe-vs-control",
+          "actual": "7,9,72,62.33333333333303; child=8,26.33333333333303,12,12",
           "passed": true,
-          "actual": "0,0,72,62.333333333333485; child=8,26.33333333333303,12,12",
-          "expected": "control=0,0,166.33333333333337,62.333333333333485; child=8,26.33333333333303,12,12"
+          "expected": "control=6,6,166.33333333333337,62.33333333333303; child=8,26.33333333333303,12,12",
+          "name": "geometry:probe-vs-control"
         }
-      ]
+      ],
+      "geometry": {
+        "probe": {
+          "left": 22,
+          "right": 94,
+          "top": 4137.666666666667,
+          "height": 62.33333333333303,
+          "width": 72,
+          "bottom": 4200
+        },
+        "control": {
+          "left": 207.66666666666663,
+          "right": 374,
+          "top": 4134.666666666667,
+          "height": 62.33333333333303,
+          "width": 166.33333333333337,
+          "bottom": 4197
+        },
+        "controlChild": {
+          "left": 215.66666666666663,
+          "right": 227.66666666666663,
+          "top": 4161,
+          "height": 12,
+          "width": 12,
+          "bottom": 4173
+        },
+        "probeChild": {
+          "left": 30,
+          "right": 42,
+          "top": 4164,
+          "height": 12,
+          "width": 12,
+          "bottom": 4176
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 193.66666666666666,
+          "top": 4128.666666666667,
+          "height": 92,
+          "width": 178.66666666666666,
+          "bottom": 4220.666666666667
+        },
+        "controlContainer": {
+          "left": 201.66666666666663,
+          "right": 380,
+          "top": 4128.666666666667,
+          "height": 92,
+          "width": 178.33333333333337,
+          "bottom": 4220.666666666667
+        }
+      }
     },
     {
       "id": "layout-visibility",
       "status": "supported",
       "checkpoints": [
         {
-          "name": "pixel:probe-vs-control",
+          "actual": "8060:306eaf41",
           "passed": true,
-          "actual": "2604:d78cf793",
-          "expected": "different from 5684:f7430fa1"
+          "expected": "different from 10756:33306848",
+          "name": "pixel:probe-vs-control"
         }
       ]
     },
@@ -163,89 +748,388 @@
       "status": "supported",
       "checkpoints": [
         {
-          "name": "pixel:probe-vs-control",
+          "actual": "8060:306eaf41",
           "passed": true,
-          "actual": "5288:75326d64",
-          "expected": "different from 8176:e716825"
+          "expected": "different from 10956:abfa2639",
+          "name": "pixel:probe-vs-control"
         }
       ]
     },
     {
+      "status": "supported",
       "id": "flex-direction",
-      "status": "supported",
       "checkpoints": [
         {
-          "name": "geometry:probe-vs-control",
+          "actual": "6,6,166.66666666666666,40; child=31.66666666666667,12,12,12",
           "passed": true,
-          "actual": "0,0,166.66666666666666,40; child=31.66666666666667,12,12,12",
-          "expected": "control=0,0,166.33333333333337,62.33333333333303; child=8,26.33333333333303,12,12"
+          "expected": "control=6,6,166.33333333333337,62.33333333333303; child=8,26.33333333333394,12,12",
+          "name": "geometry:probe-vs-control"
         }
-      ]
+      ],
+      "geometry": {
+        "probe": {
+          "left": 21,
+          "right": 187.66666666666666,
+          "top": 5504.666666666666,
+          "height": 40,
+          "width": 166.66666666666666,
+          "bottom": 5544.666666666666
+        },
+        "control": {
+          "left": 207.66666666666663,
+          "right": 374,
+          "top": 5504.666666666666,
+          "height": 62.33333333333303,
+          "width": 166.33333333333337,
+          "bottom": 5566.999999999999
+        },
+        "controlChild": {
+          "left": 215.66666666666663,
+          "right": 227.66666666666663,
+          "top": 5531,
+          "height": 12,
+          "width": 12,
+          "bottom": 5543
+        },
+        "probeChild": {
+          "left": 52.66666666666667,
+          "right": 64.66666666666667,
+          "top": 5516.666666666666,
+          "height": 12,
+          "width": 12,
+          "bottom": 5528.666666666666
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 193.66666666666666,
+          "top": 5498.666666666666,
+          "height": 92,
+          "width": 178.66666666666666,
+          "bottom": 5590.666666666666
+        },
+        "controlContainer": {
+          "left": 201.66666666666663,
+          "right": 380,
+          "top": 5498.666666666666,
+          "height": 92,
+          "width": 178.33333333333337,
+          "bottom": 5590.666666666666
+        }
+      }
     },
     {
+      "status": "supported",
       "id": "flex-alignment",
-      "status": "supported",
       "checkpoints": [
         {
-          "name": "geometry:probe-vs-control",
+          "actual": "6,6,166.66666666666666,62.33333333333303; child=77.33333333333333,26.33333333333394,12,12",
           "passed": true,
-          "actual": "0,0,166.66666666666666,62.33333333333303; child=77.33333333333333,26.33333333333394,12,12",
-          "expected": "control=0,0,166.33333333333337,62.33333333333303; child=8,26.33333333333394,12,12"
+          "expected": "control=6,6,166.33333333333337,62.33333333333303; child=8,26.33333333333394,12,12",
+          "name": "geometry:probe-vs-control"
         }
-      ]
+      ],
+      "geometry": {
+        "probe": {
+          "left": 21,
+          "right": 187.66666666666666,
+          "top": 5804,
+          "height": 62.33333333333303,
+          "width": 166.66666666666666,
+          "bottom": 5866.333333333333
+        },
+        "control": {
+          "left": 207.66666666666663,
+          "right": 374,
+          "top": 5804,
+          "height": 62.33333333333303,
+          "width": 166.33333333333337,
+          "bottom": 5866.333333333333
+        },
+        "controlChild": {
+          "left": 215.66666666666663,
+          "right": 227.66666666666663,
+          "top": 5830.333333333334,
+          "height": 12,
+          "width": 12,
+          "bottom": 5842.333333333334
+        },
+        "probeChild": {
+          "left": 98.33333333333333,
+          "right": 110.33333333333333,
+          "top": 5830.333333333334,
+          "height": 12,
+          "width": 12,
+          "bottom": 5842.333333333334
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 193.66666666666666,
+          "top": 5798,
+          "height": 92,
+          "width": 178.66666666666666,
+          "bottom": 5890
+        },
+        "controlContainer": {
+          "left": 201.66666666666663,
+          "right": 380,
+          "top": 5798,
+          "height": 92,
+          "width": 178.33333333333337,
+          "bottom": 5890
+        }
+      }
     },
     {
+      "status": "supported",
       "id": "flex-grow",
-      "status": "supported",
       "checkpoints": [
         {
-          "name": "geometry:probe-vs-control",
+          "actual": "6,6,91,24; child=0,0,8,8",
           "passed": true,
-          "actual": "0,0,166.66666666666666,62.66666666666697; child=8,26.66666666666697,12,12",
-          "expected": "control=0,0,166.33333333333337,62.66666666666697; child=8,26.66666666666697,12,12"
+          "expected": "control=6,6,24,24; child=0,0,8,8",
+          "name": "geometry:probe-vs-control"
         }
-      ]
+      ],
+      "geometry": {
+        "probe": {
+          "left": 21,
+          "right": 112,
+          "top": 6103.333333333333,
+          "height": 24,
+          "width": 91,
+          "bottom": 6127.333333333333
+        },
+        "control": {
+          "left": 21,
+          "right": 45,
+          "top": 6251.333333333333,
+          "height": 24,
+          "width": 24,
+          "bottom": 6275.333333333333
+        },
+        "controlChild": {
+          "left": 21,
+          "right": 29,
+          "top": 6251.333333333333,
+          "height": 8,
+          "width": 8,
+          "bottom": 6259.333333333333
+        },
+        "probeChild": {
+          "left": 21,
+          "right": 29,
+          "top": 6103.333333333333,
+          "height": 8,
+          "width": 8,
+          "bottom": 6111.333333333333
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 175,
+          "top": 6097.333333333333,
+          "height": 140,
+          "width": 160,
+          "bottom": 6237.333333333333
+        },
+        "controlContainer": {
+          "left": 15,
+          "right": 175,
+          "top": 6245.333333333333,
+          "height": 140,
+          "width": 160,
+          "bottom": 6385.333333333333
+        }
+      }
     },
     {
+      "status": "supported",
       "id": "grid-template",
-      "status": "supported",
       "checkpoints": [
         {
-          "name": "geometry:probe-vs-control",
+          "actual": "6,6,166.66666666666666,55; child=95,12,12,12",
           "passed": true,
-          "actual": "0,0,166.66666666666666,55; child=95,12,12,12",
-          "expected": "control=0,0,166.33333333333337,62.33333333333303; child=8,26.33333333333303,12,12"
+          "expected": "control=6,6,166.33333333333337,62.33333333333303; child=8,26.33333333333394,12,12",
+          "name": "geometry:probe-vs-control"
         }
-      ]
+      ],
+      "geometry": {
+        "probe": {
+          "left": 21,
+          "right": 187.66666666666666,
+          "top": 6598.666666666666,
+          "height": 55,
+          "width": 166.66666666666666,
+          "bottom": 6653.666666666666
+        },
+        "control": {
+          "left": 207.66666666666663,
+          "right": 374,
+          "top": 6598.666666666666,
+          "height": 62.33333333333303,
+          "width": 166.33333333333337,
+          "bottom": 6660.999999999999
+        },
+        "controlChild": {
+          "left": 215.66666666666663,
+          "right": 227.66666666666663,
+          "top": 6625,
+          "height": 12,
+          "width": 12,
+          "bottom": 6637
+        },
+        "probeChild": {
+          "left": 116,
+          "right": 128,
+          "top": 6610.666666666666,
+          "height": 12,
+          "width": 12,
+          "bottom": 6622.666666666666
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 193.66666666666666,
+          "top": 6592.666666666666,
+          "height": 92,
+          "width": 178.66666666666666,
+          "bottom": 6684.666666666666
+        },
+        "controlContainer": {
+          "left": 201.66666666666663,
+          "right": 380,
+          "top": 6592.666666666666,
+          "height": 92,
+          "width": 178.33333333333337,
+          "bottom": 6684.666666666666
+        }
+      }
     },
     {
+      "status": "supported",
       "id": "spacing-margin",
-      "status": "supported",
       "checkpoints": [
         {
-          "name": "geometry:probe-vs-control",
+          "actual": "17,-1,155.66666666666666,62.33333333333303; child=8,26.33333333333394,12,12",
           "passed": true,
-          "actual": "0,0,155.66666666666666,62.33333333333303; child=8,26.33333333333394,12,12",
-          "expected": "control=0,0,166.33333333333337,62.33333333333303; child=8,26.33333333333394,12,12"
+          "expected": "control=6,6,166.33333333333337,62.33333333333303; child=8,26.33333333333394,12,12",
+          "name": "geometry:probe-vs-control"
         }
-      ]
+      ],
+      "geometry": {
+        "probe": {
+          "left": 32,
+          "right": 187.66666666666666,
+          "top": 6891,
+          "height": 62.33333333333303,
+          "width": 155.66666666666666,
+          "bottom": 6953.333333333333
+        },
+        "control": {
+          "left": 207.66666666666663,
+          "right": 374,
+          "top": 6898,
+          "height": 62.33333333333303,
+          "width": 166.33333333333337,
+          "bottom": 6960.333333333333
+        },
+        "controlChild": {
+          "left": 215.66666666666663,
+          "right": 227.66666666666663,
+          "top": 6924.333333333334,
+          "height": 12,
+          "width": 12,
+          "bottom": 6936.333333333334
+        },
+        "probeChild": {
+          "left": 40,
+          "right": 52,
+          "top": 6917.333333333334,
+          "height": 12,
+          "width": 12,
+          "bottom": 6929.333333333334
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 193.66666666666666,
+          "top": 6892,
+          "height": 92,
+          "width": 178.66666666666666,
+          "bottom": 6984
+        },
+        "controlContainer": {
+          "left": 201.66666666666663,
+          "right": 380,
+          "top": 6892,
+          "height": 92,
+          "width": 178.33333333333337,
+          "bottom": 6984
+        }
+      }
     },
     {
+      "status": "supported",
       "id": "spacing-padding",
-      "status": "supported",
       "checkpoints": [
         {
-          "name": "geometry:probe-vs-control",
+          "actual": "6,6,166.66666666666666,72.33333333333303; child=7,31.33333333333394,12,12",
           "passed": true,
-          "actual": "0,0,166.66666666666666,72.33333333333303; child=7,31.33333333333394,12,12",
-          "expected": "control=0,0,166.33333333333337,62.33333333333303; child=8,26.33333333333394,12,12"
+          "expected": "control=6,6,166.33333333333337,62.33333333333303; child=8,26.33333333333394,12,12",
+          "name": "geometry:probe-vs-control"
         }
-      ]
+      ],
+      "geometry": {
+        "probe": {
+          "left": 21,
+          "right": 187.66666666666666,
+          "top": 7197.333333333333,
+          "height": 72.33333333333303,
+          "width": 166.66666666666666,
+          "bottom": 7269.666666666666
+        },
+        "control": {
+          "left": 207.66666666666663,
+          "right": 374,
+          "top": 7197.333333333333,
+          "height": 62.33333333333303,
+          "width": 166.33333333333337,
+          "bottom": 7259.666666666666
+        },
+        "controlChild": {
+          "left": 215.66666666666663,
+          "right": 227.66666666666663,
+          "top": 7223.666666666667,
+          "height": 12,
+          "width": 12,
+          "bottom": 7235.666666666667
+        },
+        "probeChild": {
+          "left": 28,
+          "right": 40,
+          "top": 7228.666666666667,
+          "height": 12,
+          "width": 12,
+          "bottom": 7240.666666666667
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 193.66666666666666,
+          "top": 7191.333333333333,
+          "height": 92,
+          "width": 178.66666666666666,
+          "bottom": 7283.333333333333
+        },
+        "controlContainer": {
+          "left": 201.66666666666663,
+          "right": 380,
+          "top": 7191.333333333333,
+          "height": 92,
+          "width": 178.33333333333337,
+          "bottom": 7283.333333333333
+        }
+      }
     },
     {
+      "status": "unsupported",
       "id": "spacing-logical",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：padding-inline",
       "checkpoints": [
         {
           "name": "generated",
@@ -255,36 +1139,138 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：padding-inline"
     },
     {
+      "status": "supported",
       "id": "sizing-fixed",
-      "status": "supported",
       "checkpoints": [
         {
-          "name": "geometry:probe-vs-control",
+          "actual": "6,6,123,40; child=8,26.33333333333394,12,12",
           "passed": true,
-          "actual": "0,0,123,40; child=8,26.33333333333394,12,12",
-          "expected": "control=0,0,166.33333333333337,62.33333333333303; child=8,26.33333333333394,12,12"
+          "expected": "control=6,6,166.33333333333337,62.33333333333303; child=8,26.33333333333394,12,12",
+          "name": "geometry:probe-vs-control"
         }
-      ]
+      ],
+      "geometry": {
+        "probe": {
+          "left": 21,
+          "right": 144,
+          "top": 7877.333333333333,
+          "height": 40,
+          "width": 123,
+          "bottom": 7917.333333333333
+        },
+        "control": {
+          "left": 207.66666666666663,
+          "right": 374,
+          "top": 7877.333333333333,
+          "height": 62.33333333333303,
+          "width": 166.33333333333337,
+          "bottom": 7939.666666666666
+        },
+        "controlChild": {
+          "left": 215.66666666666663,
+          "right": 227.66666666666663,
+          "top": 7903.666666666667,
+          "height": 12,
+          "width": 12,
+          "bottom": 7915.666666666667
+        },
+        "probeChild": {
+          "left": 29,
+          "right": 41,
+          "top": 7903.666666666667,
+          "height": 12,
+          "width": 12,
+          "bottom": 7915.666666666667
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 193.66666666666666,
+          "top": 7871.333333333333,
+          "height": 92,
+          "width": 178.66666666666666,
+          "bottom": 7963.333333333333
+        },
+        "controlContainer": {
+          "left": 201.66666666666663,
+          "right": 380,
+          "top": 7871.333333333333,
+          "height": 92,
+          "width": 178.33333333333337,
+          "bottom": 7963.333333333333
+        }
+      }
     },
     {
-      "id": "sizing-min-max",
-      "status": "supported",
-      "checkpoints": [
-        {
-          "name": "geometry:probe-vs-control",
-          "passed": true,
-          "actual": "0,0,166.66666666666666,62.33333333333303; child=8,26.33333333333394,12,12",
-          "expected": "control=0,0,166.33333333333337,62.33333333333303; child=8,26.33333333333394,12,12"
-        }
-      ]
-    },
-    {
-      "id": "table-layout",
       "status": "unsupported",
-      "reason": "encoder 删除属性：table-layout, border-collapse",
+      "id": "sizing-min-max",
+      "failureStage": "runtime",
+      "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言",
+      "geometry": {
+        "probe": {
+          "left": 21,
+          "right": 61,
+          "top": 8176.666666666666,
+          "height": 240,
+          "width": 40,
+          "bottom": 8416.666666666666
+        },
+        "control": {
+          "left": 207.66666666666663,
+          "right": 247.66666666666663,
+          "top": 8176.666666666666,
+          "height": 300,
+          "width": 40,
+          "bottom": 8476.666666666666
+        },
+        "controlChild": {
+          "left": 207.66666666666663,
+          "right": 219.66666666666663,
+          "top": 8195,
+          "height": 12,
+          "width": 12,
+          "bottom": 8207
+        },
+        "probeChild": {
+          "left": 21,
+          "right": 33,
+          "top": 8195,
+          "height": 12,
+          "width": 12,
+          "bottom": 8207
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 193.66666666666666,
+          "top": 8170.666666666666,
+          "height": 320,
+          "width": 178.66666666666666,
+          "bottom": 8490.666666666666
+        },
+        "controlContainer": {
+          "left": 201.66666666666663,
+          "right": 380,
+          "top": 8170.666666666666,
+          "height": 320,
+          "width": 178.33333333333337,
+          "bottom": 8490.666666666666
+        }
+      },
+      "checkpoints": [
+        {
+          "actual": "6,6,40,240; child=0,18.33333333333394,12,12",
+          "passed": false,
+          "expected": "control=6,6,40,300; child=0,18.33333333333394,12,12",
+          "name": "geometry:probe-vs-control"
+        }
+      ]
+    },
+    {
+      "status": "unsupported",
+      "id": "table-layout",
       "checkpoints": [
         {
           "name": "generated",
@@ -294,62 +1280,162 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：table-layout, border-collapse"
     },
     {
-      "id": "type-size",
       "status": "supported",
+      "id": "type-size",
       "checkpoints": [
         {
-          "name": "geometry:probe-vs-control",
+          "actual": "6,6,166.66666666666666,45; child=50.66666666666666,12,12,12",
           "passed": true,
-          "actual": "0,0,166.66666666666666,62.33333333333303; child=8,26.33333333333394,12,12",
-          "expected": "control=0,0,166.33333333333337,62.33333333333303; child=8,26.33333333333394,12,12"
+          "expected": "control=6,6,166.33333333333337,40; child=31.666666666666686,12,12,12",
+          "name": "geometry:probe-vs-control"
         }
-      ]
+      ],
+      "geometry": {
+        "probe": {
+          "left": 21,
+          "right": 187.66666666666666,
+          "top": 9300.333333333334,
+          "height": 45,
+          "width": 166.66666666666666,
+          "bottom": 9345.333333333334
+        },
+        "control": {
+          "left": 207.66666666666663,
+          "right": 374,
+          "top": 9300.333333333334,
+          "height": 40,
+          "width": 166.33333333333337,
+          "bottom": 9340.333333333334
+        },
+        "controlChild": {
+          "left": 239.33333333333331,
+          "right": 251.33333333333331,
+          "top": 9312.333333333334,
+          "height": 12,
+          "width": 12,
+          "bottom": 9324.333333333334
+        },
+        "probeChild": {
+          "left": 71.66666666666666,
+          "right": 83.66666666666666,
+          "top": 9312.333333333334,
+          "height": 12,
+          "width": 12,
+          "bottom": 9324.333333333334
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 193.66666666666666,
+          "top": 9294.333333333334,
+          "height": 92,
+          "width": 178.66666666666666,
+          "bottom": 9386.333333333334
+        },
+        "controlContainer": {
+          "left": 201.66666666666663,
+          "right": 380,
+          "top": 9294.333333333334,
+          "height": 92,
+          "width": 178.33333333333337,
+          "bottom": 9386.333333333334
+        }
+      }
     },
     {
       "id": "type-weight-style",
       "status": "supported",
       "checkpoints": [
         {
-          "name": "pixel:probe-vs-control",
+          "actual": "11192:aad0ad4f",
           "passed": true,
-          "actual": "5744:d83adefe",
-          "expected": "different from 5684:f7430fa1"
+          "expected": "different from 10756:33306848",
+          "name": "pixel:probe-vs-control"
         }
       ]
     },
     {
-      "id": "type-tracking",
       "status": "supported",
+      "id": "type-tracking",
       "checkpoints": [
         {
-          "name": "geometry:probe-vs-control",
+          "actual": "6,6,166.66666666666666,40; child=35.666666666666664,12,11.999999999999993,12",
           "passed": true,
-          "actual": "0,0,166.66666666666666,62.33333333333303; child=8,26.33333333333394,12,12",
-          "expected": "control=0,0,166.33333333333337,62.33333333333303; child=8,26.33333333333394,12,12"
+          "expected": "control=6,6,166.33333333333337,40; child=31.666666666666686,12,12,12",
+          "name": "geometry:probe-vs-control"
         }
-      ]
+      ],
+      "geometry": {
+        "probe": {
+          "left": 21,
+          "right": 187.66666666666666,
+          "top": 10135,
+          "height": 40,
+          "width": 166.66666666666666,
+          "bottom": 10175
+        },
+        "control": {
+          "left": 207.66666666666663,
+          "right": 374,
+          "top": 10135,
+          "height": 40,
+          "width": 166.33333333333337,
+          "bottom": 10175
+        },
+        "controlChild": {
+          "left": 239.33333333333331,
+          "right": 251.33333333333331,
+          "top": 10147,
+          "height": 12,
+          "width": 12,
+          "bottom": 10159
+        },
+        "probeChild": {
+          "left": 56.666666666666664,
+          "right": 68.66666666666666,
+          "top": 10147,
+          "height": 12,
+          "width": 11.999999999999993,
+          "bottom": 10159
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 193.66666666666666,
+          "top": 10129,
+          "height": 92,
+          "width": 178.66666666666666,
+          "bottom": 10221
+        },
+        "controlContainer": {
+          "left": 201.66666666666663,
+          "right": 380,
+          "top": 10129,
+          "height": 92,
+          "width": 178.33333333333337,
+          "bottom": 10221
+        }
+      }
     },
     {
-      "id": "type-align-overflow",
       "status": "unsupported",
-      "reason": "probe/control 元素截图没有可观察的像素差异",
+      "id": "type-align-overflow",
       "failureStage": "runtime",
+      "reason": "probe/control 元素截图没有可观察的像素差异",
       "checkpoints": [
         {
-          "name": "pixel:probe-vs-control",
+          "actual": "11188:ffc2f305",
           "passed": false,
-          "actual": "4068:e0a03b2a",
-          "expected": "different from 4068:e0a03b2a"
+          "expected": "different from 11188:ffc2f305",
+          "name": "pixel:probe-vs-control"
         }
       ]
     },
     {
-      "id": "type-decoration",
       "status": "unsupported",
-      "reason": "encoder 删除属性：text-decoration-line",
+      "id": "type-decoration",
       "checkpoints": [
         {
           "name": "generated",
@@ -359,17 +1445,18 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：text-decoration-line"
     },
     {
       "id": "background-color",
       "status": "supported",
       "checkpoints": [
         {
-          "name": "pixel:probe-vs-control",
+          "actual": "10836:e7917076",
           "passed": true,
-          "actual": "5832:94566b9e",
-          "expected": "different from 5684:f7430fa1"
+          "expected": "different from 10756:33306848",
+          "name": "pixel:probe-vs-control"
         }
       ]
     },
@@ -378,10 +1465,10 @@
       "status": "supported",
       "checkpoints": [
         {
-          "name": "pixel:probe-vs-control",
+          "actual": "186460:bcdbbeee",
           "passed": true,
-          "actual": "4756:287330f6",
-          "expected": "different from 3404:a6b8a865"
+          "expected": "different from 8524:e9c7a93",
+          "name": "pixel:probe-vs-control"
         }
       ]
     },
@@ -390,10 +1477,10 @@
       "status": "supported",
       "checkpoints": [
         {
-          "name": "pixel:probe-vs-control",
+          "actual": "183656:ffe798d6",
           "passed": true,
-          "actual": "4608:b25628e0",
-          "expected": "different from 4604:e1b87cea"
+          "expected": "different from 127916:8103cdcf",
+          "name": "pixel:probe-vs-control"
         }
       ]
     },
@@ -402,10 +1489,10 @@
       "status": "supported",
       "checkpoints": [
         {
-          "name": "pixel:probe-vs-control",
+          "actual": "10804:caeae8dd",
           "passed": true,
-          "actual": "4744:be7eda5d",
-          "expected": "different from 5684:f7430fa1"
+          "expected": "different from 10756:33306848",
+          "name": "pixel:probe-vs-control"
         }
       ]
     },
@@ -414,10 +1501,10 @@
       "status": "supported",
       "checkpoints": [
         {
-          "name": "pixel:probe-vs-control",
+          "actual": "14260:7663fef3",
           "passed": true,
-          "actual": "9296:7eb28aa",
-          "expected": "different from 5684:f7430fa1"
+          "expected": "different from 10756:33306848",
+          "name": "pixel:probe-vs-control"
         }
       ]
     },
@@ -426,29 +1513,32 @@
       "status": "supported",
       "checkpoints": [
         {
-          "name": "pixel:probe-vs-control",
+          "actual": "10568:1eecb4bd",
           "passed": true,
-          "actual": "5744:d83adefe",
-          "expected": "different from 5684:f7430fa1"
+          "expected": "different from 10756:33306848",
+          "name": "pixel:probe-vs-control"
         }
       ]
     },
     {
-      "id": "effect-shadow",
       "status": "supported",
+      "id": "effect-shadow",
       "checkpoints": [
         {
           "name": "pixel:probe-vs-control",
+          "passed": true
+        },
+        {
+          "name": "pixel:expected-effect-v1",
           "passed": true,
-          "actual": "4256:16a1de0",
-          "expected": "different from 4260:c5d906f5"
+          "actual": "[11,6.2,1.8,0,11.1,6.2,1.8,0]",
+          "expected": "主体下方两列均有中性黑色半透明阴影，向远处衰减至背景"
         }
       ]
     },
     {
-      "id": "effect-blend",
       "status": "unsupported",
-      "reason": "encoder 删除属性：mix-blend-mode",
+      "id": "effect-blend",
       "checkpoints": [
         {
           "name": "generated",
@@ -458,24 +1548,24 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：mix-blend-mode"
     },
     {
       "id": "filter-blur",
       "status": "supported",
       "checkpoints": [
         {
-          "name": "pixel:probe-vs-control",
+          "actual": "42000:5848ec61",
           "passed": true,
-          "actual": "5744:d83adefe",
-          "expected": "different from 5684:f7430fa1"
+          "expected": "different from 10756:33306848",
+          "name": "pixel:probe-vs-control"
         }
       ]
     },
     {
+      "status": "unsupported",
       "id": "filter-backdrop",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：backdrop-filter",
       "checkpoints": [
         {
           "name": "generated",
@@ -485,12 +1575,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：backdrop-filter"
     },
     {
+      "status": "unsupported",
       "id": "svg-fill-stroke",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：fill, stroke-width, stroke",
       "checkpoints": [
         {
           "name": "generated",
@@ -500,102 +1590,199 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：fill, stroke-width, stroke"
     },
     {
-      "id": "accessibility-sr",
-      "status": "unsupported",
-      "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言",
-      "failureStage": "runtime",
-      "checkpoints": [
-        {
-          "name": "geometry:probe-vs-control",
-          "passed": false,
-          "actual": "0,0,72,40; child=0,18.33333333333212,12,12",
-          "expected": "control=0,0,166.33333333333337,62.33333333333394; child=8,26.33333333333212,12,12"
-        }
-      ]
-    },
-    {
-      "id": "transform-translate",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：translate",
-      "checkpoints": [
-        {
-          "name": "generated",
-          "passed": true
-        },
-        {
-          "name": "bundled",
-          "passed": false
-        }
-      ]
-    },
-    {
-      "id": "transform-rotate",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：rotate",
-      "checkpoints": [
-        {
-          "name": "generated",
-          "passed": true
-        },
-        {
-          "name": "bundled",
-          "passed": false
-        }
-      ]
-    },
-    {
-      "id": "transform-scale",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：scale",
-      "checkpoints": [
-        {
-          "name": "generated",
-          "passed": true
-        },
-        {
-          "name": "bundled",
-          "passed": false
-        }
-      ]
-    },
-    {
-      "id": "transform-origin",
       "status": "supported",
+      "id": "accessibility-sr",
       "checkpoints": [
         {
-          "name": "geometry:probe-vs-control",
+          "actual": "-1,-1,1,1; child=0,47,12,12",
           "passed": true,
-          "actual": "0,0,177.12069152623516,103.34588402243935; child=13.939063692773047,27.50659911976618,14.696938456699066,14.696938456700082",
-          "expected": "control=0,0,176.79871625080548,103.2596110074046; child=13.939063692773061,27.50659911976618,14.696938456699058,14.696938456700082"
+          "expected": "control=6,6,166.33333333333337,62.33333333333212; child=8,26.33333333333212,12,12",
+          "name": "geometry:probe-vs-control"
         }
-      ]
+      ],
+      "geometry": {
+        "probe": {
+          "left": 14,
+          "right": 15,
+          "top": 17911.333333333336,
+          "height": 1,
+          "width": 1,
+          "bottom": 17912.333333333336
+        },
+        "control": {
+          "left": 207.66666666666663,
+          "right": 374,
+          "top": 17918.333333333336,
+          "height": 62.33333333333212,
+          "width": 166.33333333333337,
+          "bottom": 17980.666666666668
+        },
+        "controlChild": {
+          "left": 215.66666666666663,
+          "right": 227.66666666666663,
+          "top": 17944.666666666668,
+          "height": 12,
+          "width": 12,
+          "bottom": 17956.666666666668
+        },
+        "probeChild": {
+          "left": 14,
+          "right": 26,
+          "top": 17958.333333333336,
+          "height": 12,
+          "width": 12,
+          "bottom": 17970.333333333336
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 193.66666666666666,
+          "top": 17912.333333333336,
+          "height": 92,
+          "width": 178.66666666666666,
+          "bottom": 18004.333333333336
+        },
+        "controlContainer": {
+          "left": 201.66666666666663,
+          "right": 380,
+          "top": 17912.333333333336,
+          "height": 92,
+          "width": 178.33333333333337,
+          "bottom": 18004.333333333336
+        }
+      }
     },
     {
-      "id": "transition-basic",
       "status": "unsupported",
-      "reason": "transition 的开始、中间和结束 checkpoint 未形成连续变化",
+      "id": "transform-translate",
+      "checkpoints": [
+        {
+          "name": "generated",
+          "passed": true
+        },
+        {
+          "name": "bundled",
+          "passed": false
+        }
+      ],
+      "reason": "encoder 删除属性：translate"
+    },
+    {
+      "status": "unsupported",
+      "id": "transform-rotate",
+      "checkpoints": [
+        {
+          "name": "generated",
+          "passed": true
+        },
+        {
+          "name": "bundled",
+          "passed": false
+        }
+      ],
+      "reason": "encoder 删除属性：rotate"
+    },
+    {
+      "status": "unsupported",
+      "id": "transform-scale",
+      "checkpoints": [
+        {
+          "name": "generated",
+          "passed": true
+        },
+        {
+          "name": "bundled",
+          "passed": false
+        }
+      ],
+      "reason": "encoder 删除属性：scale"
+    },
+    {
+      "status": "supported",
+      "id": "transform-origin",
+      "checkpoints": [
+        {
+          "actual": "-10.133053811390461,6,177.12069152623516,103.34588402243753; child=13.939063692773047,27.50659911976618,14.696938456699066,14.696938456698263",
+          "passed": true,
+          "expected": "control=0.7673085412639296,-14.463138837032602,176.79871625080548,103.2596110074046; child=13.939063692773061,27.50659911976254,14.696938456699058,14.696938456698263",
+          "name": "geometry:probe-vs-control"
+        }
+      ],
+      "geometry": {
+        "probe": {
+          "left": 4.86694618860954,
+          "right": 181.9876377148447,
+          "top": 19411.333333333332,
+          "height": 103.34588402243753,
+          "width": 177.12069152623516,
+          "bottom": 19514.67921735577
+        },
+        "control": {
+          "left": 202.43397520793056,
+          "right": 379.23269145873604,
+          "top": 19390.8701944963,
+          "height": 103.2596110074046,
+          "width": 176.79871625080548,
+          "bottom": 19494.129805503704
+        },
+        "controlChild": {
+          "left": 216.37303890070362,
+          "right": 231.06997735740268,
+          "top": 19418.376793616062,
+          "height": 14.696938456698263,
+          "width": 14.696938456699058,
+          "bottom": 19433.07373207276
+        },
+        "probeChild": {
+          "left": 18.806009881382586,
+          "right": 33.50294833808165,
+          "top": 19438.8399324531,
+          "height": 14.696938456698263,
+          "width": 14.696938456699066,
+          "bottom": 19453.536870909797
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 193.66666666666666,
+          "top": 19405.333333333332,
+          "height": 92,
+          "width": 178.66666666666666,
+          "bottom": 19497.333333333332
+        },
+        "controlContainer": {
+          "left": 201.66666666666663,
+          "right": 380,
+          "top": 19405.333333333332,
+          "height": 92,
+          "width": 178.33333333333337,
+          "bottom": 19497.333333333332
+        }
+      }
+    },
+    {
+      "status": "unsupported",
+      "id": "transition-basic",
       "failureStage": "runtime",
+      "reason": "transition 的开始、中间和结束 checkpoint 未形成连续变化",
       "checkpoints": [
         {
           "name": "interaction:transition-progress",
           "passed": false,
-          "actual": "5744:d83adefe -> 5744:d83adefe -> 5744:d83adefe"
+          "actual": "10756:33306848 -> 10756:33306848 -> 10756:33306848"
         }
       ]
     },
     {
       "id": "animation-spin",
-      "status": "unsupported",
-      "reason": "两个动画 checkpoint 之间没有像素变化",
-      "failureStage": "runtime",
+      "status": "supported",
       "checkpoints": [
         {
           "name": "interaction:animation-progress",
-          "passed": false,
-          "actual": "5744:d83adefe -> 5744:d83adefe"
+          "passed": true,
+          "actual": "17608:c59bdfad -> 16956:1ffd8b5d"
         }
       ]
     },
@@ -604,68 +1791,137 @@
       "status": "supported",
       "checkpoints": [
         {
-          "name": "interaction:pointer-events-native",
-          "passed": true,
           "actual": "probe=1; control=0",
-          "expected": "probe=true; control=false"
-        }
-      ]
-    },
-    {
-      "id": "interaction-select",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：user-select",
-      "checkpoints": [
-        {
-          "name": "generated",
-          "passed": true
-        },
-        {
-          "name": "bundled",
-          "passed": false
-        }
-      ]
-    },
-    {
-      "id": "interaction-scroll",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：scroll-behavior, scroll-snap-type",
-      "checkpoints": [
-        {
-          "name": "generated",
-          "passed": true
-        },
-        {
-          "name": "bundled",
-          "passed": false
-        }
-      ]
-    },
-    {
-      "id": "variant-responsive",
-      "status": "unsupported",
-      "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言",
-      "failureStage": "runtime",
-      "checkpoints": [
-        {
-          "name": "geometry:probe-vs-control",
-          "passed": false,
-          "actual": "0,0,166.66666666666666,62.33333333333394; child=8,26.33333333333212,12,12",
-          "expected": "control=0,0,166.33333333333337,62.33333333333394; child=8,26.33333333333212,12,12"
-        }
-      ]
-    },
-    {
-      "id": "variant-dark",
-      "status": "supported",
-      "checkpoints": [
-        {
-          "name": "pixel:probe-vs-control",
           "passed": true,
-          "actual": "5744:d83adefe",
-          "expected": "different from 5684:f7430fa1"
+          "expected": "probe=true; control=false",
+          "name": "interaction:pointer-events-native"
         }
       ]
+    },
+    {
+      "status": "unsupported",
+      "id": "interaction-select",
+      "checkpoints": [
+        {
+          "name": "generated",
+          "passed": true
+        },
+        {
+          "name": "bundled",
+          "passed": false
+        }
+      ],
+      "reason": "encoder 删除属性：user-select"
+    },
+    {
+      "status": "unsupported",
+      "id": "interaction-scroll",
+      "checkpoints": [
+        {
+          "name": "generated",
+          "passed": true
+        },
+        {
+          "name": "bundled",
+          "passed": false
+        }
+      ],
+      "reason": "encoder 删除属性：scroll-behavior, scroll-snap-type"
+    },
+    {
+      "status": "unsupported",
+      "id": "variant-responsive",
+      "failureStage": "runtime",
+      "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言",
+      "geometry": {
+        "probe": {
+          "left": 21,
+          "right": 187.66666666666666,
+          "top": 22606.333333333332,
+          "height": 62.33333333333212,
+          "width": 166.66666666666666,
+          "bottom": 22668.666666666664
+        },
+        "control": {
+          "left": 207.66666666666663,
+          "right": 374,
+          "top": 22606.333333333332,
+          "height": 62.33333333333212,
+          "width": 166.33333333333337,
+          "bottom": 22668.666666666664
+        },
+        "controlChild": {
+          "left": 215.66666666666663,
+          "right": 227.66666666666663,
+          "top": 22632.666666666668,
+          "height": 12,
+          "width": 12,
+          "bottom": 22644.666666666668
+        },
+        "probeChild": {
+          "left": 29,
+          "right": 41,
+          "top": 22632.666666666668,
+          "height": 12,
+          "width": 12,
+          "bottom": 22644.666666666668
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 193.66666666666666,
+          "top": 22600.333333333332,
+          "height": 92,
+          "width": 178.66666666666666,
+          "bottom": 22692.333333333332
+        },
+        "controlContainer": {
+          "left": 201.66666666666663,
+          "right": 380,
+          "top": 22600.333333333332,
+          "height": 92,
+          "width": 178.33333333333337,
+          "bottom": 22692.333333333332
+        }
+      },
+      "checkpoints": [
+        {
+          "actual": "6,6,166.66666666666666,62.33333333333212; child=8,26.33333333333576,12,12",
+          "passed": false,
+          "expected": "control=6,6,166.33333333333337,62.33333333333212; child=8,26.33333333333576,12,12",
+          "name": "geometry:probe-vs-control"
+        }
+      ]
+    },
+    {
+      "status": "unsupported",
+      "id": "variant-dark",
+      "checkpoints": [
+        {
+          "name": "pixel:color-scheme-v1",
+          "passed": false,
+          "actual": "{\"glyphPixels\":3740,\"corePixels\":3023,\"whiteMatch\":0,\"invalidGlyphColors\":3740,\"backgroundMismatch\":0}",
+          "expected": "light 深色字形 → dark 同字形白色；control 与背景不变"
+        }
+      ],
+      "reason": "深色模式未仅将相同字形变为白色并保持背景及 control 不变",
+      "colorScheme": {
+        "light": {
+          "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+          "requestId": "color-scheme-1",
+          "scheme": "light"
+        },
+        "dark": {
+          "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+          "requestId": "color-scheme-2",
+          "scheme": "dark"
+        },
+        "restored": {
+          "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+          "requestId": "color-scheme-3",
+          "scheme": "light"
+        }
+      },
+      "failureStage": "runtime"
     },
     {
       "id": "variant-state",
@@ -674,26 +1930,27 @@
         {
           "name": "interaction:pseudo-active",
           "passed": true,
-          "actual": "5744:d83adefe -> 5748:c562b11f"
+          "actual": "10756:33306848 -> 10760:972d9a63"
         }
       ]
     },
     {
+      "status": "unsupported",
       "id": "variant-structural",
-      "status": "supported",
+      "failureStage": "runtime",
+      "reason": "结构选择器未在首项、偶数项和第三项同时呈现预期粗体与透明度",
       "checkpoints": [
         {
-          "name": "pixel:probe-vs-control",
-          "passed": true,
-          "actual": "5744:d83adefe",
-          "expected": "different from 5684:f7430fa1"
+          "name": "pixel:structural-v1",
+          "passed": false,
+          "actual": "{\"outside\":true,\"rows\":[{\"massRatio\":1.273459310277935,\"forward\":0.028851107676455434,\"reverse\":0.06867989646246764,\"valid\":true},{\"massRatio\":1,\"forward\":1,\"reverse\":1,\"valid\":true},{\"massRatio\":1.9967356750631737,\"forward\":0.05100463678516229,\"reverse\":0.06607929515418502,\"valid\":true}]}",
+          "expected": "三个兄弟依次为粗体/0.5、普通/1、普通/0.5，与显式效果及普通文字对照一致"
         }
       ]
     },
     {
+      "status": "unsupported",
       "id": "variant-group-peer",
-      "status": "unsupported",
-      "reason": "encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*), .peer-checked\\:opacity-100:is(:where(.peer):checked~*)",
       "checkpoints": [
         {
           "name": "generated",
@@ -703,12 +1960,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*), .peer-checked\\:opacity-100:is(:where(.peer):checked~*)"
     },
     {
+      "status": "unsupported",
       "id": "variant-data-aria",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：text-decoration-line",
       "checkpoints": [
         {
           "name": "generated",
@@ -718,24 +1975,76 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：text-decoration-line"
     },
     {
+      "status": "unsupported",
       "id": "variant-supports",
-      "status": "supported",
+      "failureStage": "runtime",
+      "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言",
+      "geometry": {
+        "probe": {
+          "left": 21,
+          "right": 121,
+          "top": 25989.333333333332,
+          "height": 44,
+          "width": 100,
+          "bottom": 26033.333333333332
+        },
+        "control": {
+          "left": 21,
+          "right": 121,
+          "top": 26137.333333333332,
+          "height": 44,
+          "width": 100,
+          "bottom": 26181.333333333332
+        },
+        "controlChild": {
+          "left": 21,
+          "right": 41,
+          "top": 26153.333333333332,
+          "height": 12,
+          "width": 20,
+          "bottom": 26165.333333333332
+        },
+        "probeChild": {
+          "left": 21,
+          "right": 41,
+          "top": 26005.333333333332,
+          "height": 12,
+          "width": 20,
+          "bottom": 26017.333333333332
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 175,
+          "top": 25983.333333333332,
+          "height": 140,
+          "width": 160,
+          "bottom": 26123.333333333332
+        },
+        "controlContainer": {
+          "left": 15,
+          "right": 175,
+          "top": 26131.333333333332,
+          "height": 140,
+          "width": 160,
+          "bottom": 26271.333333333332
+        }
+      },
       "checkpoints": [
         {
-          "name": "pixel:probe-vs-control",
-          "passed": true,
-          "actual": "5768:16c6edd2",
-          "expected": "different from 5724:c2df474e"
+          "actual": "6,6,100,44; child=0,16,20,12",
+          "passed": false,
+          "expected": "control=6,6,100,44; child=0,16,20,12",
+          "name": "geometry:probe-vs-control"
         }
       ]
     },
     {
-      "id": "variant-pseudo-element",
       "status": "unsupported",
-      "reason": "TASM 未保留完整 selector 或声明",
+      "id": "variant-pseudo-element",
       "checkpoints": [
         {
           "name": "generated",
@@ -745,24 +2054,24 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "TASM 未保留完整 selector 或声明"
     },
     {
       "id": "variant-arbitrary",
       "status": "supported",
       "checkpoints": [
         {
-          "name": "pixel:probe-vs-control",
+          "actual": "10644:c2868462",
           "passed": true,
-          "actual": "5744:d83adefe",
-          "expected": "different from 5684:f7430fa1"
+          "expected": "different from 10756:33306848",
+          "name": "pixel:probe-vs-control"
         }
       ]
     },
     {
+      "status": "unsupported",
       "id": "syntax-negative",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：translate",
       "checkpoints": [
         {
           "name": "generated",
@@ -772,12 +2081,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：translate"
     },
     {
+      "status": "unsupported",
       "id": "syntax-important",
-      "status": "unsupported",
-      "reason": "TASM 未保留完整 selector 或声明",
       "checkpoints": [
         {
           "name": "generated",
@@ -787,12 +2096,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "TASM 未保留完整 selector 或声明"
     },
     {
+      "status": "unsupported",
       "id": "syntax-opacity-modifier",
-      "status": "unsupported",
-      "reason": "TASM 未保留完整 selector 或声明",
       "checkpoints": [
         {
           "name": "generated",
@@ -802,12 +2111,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "TASM 未保留完整 selector 或声明"
     },
     {
+      "status": "unsupported",
       "id": "syntax-arbitrary-property",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：mask-type",
       "checkpoints": [
         {
           "name": "generated",
@@ -817,29 +2126,80 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：mask-type"
     },
     {
-      "id": "syntax-css-variable",
       "status": "supported",
+      "id": "syntax-css-variable",
       "checkpoints": [
         {
-          "name": "geometry:probe-vs-control",
+          "actual": "6,6,40,240; child=0,18.33333333333576,12,12",
           "passed": true,
-          "actual": "0,0,166.66666666666666,62.33333333333212; child=8,26.33333333333576,12,12",
-          "expected": "control=0,0,166.33333333333337,62.33333333333212; child=8,26.33333333333576,12,12"
+          "expected": "control=6,6,40,300; child=0,18.33333333333576,12,12",
+          "name": "geometry:probe-vs-control"
         }
-      ]
+      ],
+      "geometry": {
+        "probe": {
+          "left": 21,
+          "right": 61,
+          "top": 29842.333333333332,
+          "height": 240,
+          "width": 40,
+          "bottom": 30082.333333333332
+        },
+        "control": {
+          "left": 207.66666666666663,
+          "right": 247.66666666666663,
+          "top": 29842.333333333332,
+          "height": 300,
+          "width": 40,
+          "bottom": 30142.333333333332
+        },
+        "controlChild": {
+          "left": 207.66666666666663,
+          "right": 219.66666666666663,
+          "top": 29860.666666666668,
+          "height": 12,
+          "width": 12,
+          "bottom": 29872.666666666668
+        },
+        "probeChild": {
+          "left": 21,
+          "right": 33,
+          "top": 29860.666666666668,
+          "height": 12,
+          "width": 12,
+          "bottom": 29872.666666666668
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 193.66666666666666,
+          "top": 29836.333333333332,
+          "height": 320,
+          "width": 178.66666666666666,
+          "bottom": 30156.333333333332
+        },
+        "controlContainer": {
+          "left": 201.66666666666663,
+          "right": 380,
+          "top": 29836.333333333332,
+          "height": 320,
+          "width": 178.33333333333337,
+          "bottom": 30156.333333333332
+        }
+      }
     },
     {
       "id": "syntax-type-hint",
       "status": "supported",
       "checkpoints": [
         {
-          "name": "pixel:probe-vs-control",
+          "actual": "10816:8517fa30",
           "passed": true,
-          "actual": "5768:16c6edd2",
-          "expected": "different from 5724:c2df474e"
+          "expected": "different from 10756:33306848",
+          "name": "pixel:probe-vs-control"
         }
       ]
     },
@@ -872,9 +2232,8 @@
       ]
     },
     {
+      "status": "unsupported",
       "id": "directive-source",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：text-decoration-line",
       "checkpoints": [
         {
           "name": "generated",
@@ -884,12 +2243,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：text-decoration-line"
     },
     {
+      "status": "unsupported",
       "id": "directive-utility",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：content-visibility",
       "checkpoints": [
         {
           "name": "generated",
@@ -899,12 +2258,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：content-visibility"
     },
     {
-      "id": "directive-variant",
       "status": "unsupported",
-      "reason": "encoder 删除 selector：.theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *)",
+      "id": "directive-variant",
       "checkpoints": [
         {
           "name": "generated",
@@ -914,7 +2273,8 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除 selector：.theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *)"
     },
     {
       "id": "directive-apply",
@@ -945,9 +2305,8 @@
       ]
     },
     {
+      "status": "unsupported",
       "id": "directive-config-plugin",
-      "status": "unsupported",
-      "reason": "TASM 未保留完整 selector 或声明",
       "checkpoints": [
         {
           "name": "generated",
@@ -957,12 +2316,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "TASM 未保留完整 selector 或声明"
     },
     {
+      "status": "unsupported",
       "id": "directive-prefix-important",
-      "status": "unsupported",
-      "reason": "TASM 未保留完整 selector 或声明",
       "checkpoints": [
         {
           "name": "generated",
@@ -972,12 +2331,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "TASM 未保留完整 selector 或声明"
     },
     {
+      "status": "unsupported",
       "id": "layout-break",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：break-before, break-after, break-inside",
       "checkpoints": [
         {
           "name": "generated",
@@ -987,12 +2346,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：break-before, break-after, break-inside"
     },
     {
+      "status": "unsupported",
       "id": "layout-decoration-clear",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：box-decoration-break, clear",
       "checkpoints": [
         {
           "name": "generated",
@@ -1002,12 +2361,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：box-decoration-break, clear"
     },
     {
+      "status": "unsupported",
       "id": "layout-object-position",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：object-position",
       "checkpoints": [
         {
           "name": "generated",
@@ -1017,12 +2376,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：object-position"
     },
     {
+      "status": "unsupported",
       "id": "layout-overscroll",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：overscroll-behavior",
       "checkpoints": [
         {
           "name": "generated",
@@ -1032,128 +2391,480 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：overscroll-behavior"
     },
     {
+      "status": "supported",
       "id": "flex-wrap-order",
-      "status": "supported",
       "checkpoints": [
         {
-          "name": "geometry:probe-vs-control",
+          "actual": "30,6,64,52; child=0,28,40,24",
           "passed": true,
-          "actual": "0,0,166.66666666666666,62.33333333333212; child=8,26.33333333333576,12,12",
-          "expected": "control=0,0,166.33333333333337,62.33333333333212; child=8,26.33333333333576,12,12"
+          "expected": "control=6,6,64,24; child=44,0,40,24",
+          "name": "geometry:probe-vs-control"
         }
-      ]
+      ],
+      "geometry": {
+        "probe": {
+          "left": 45,
+          "right": 109,
+          "top": 35967.333333333336,
+          "height": 52,
+          "width": 64,
+          "bottom": 36019.333333333336
+        },
+        "control": {
+          "left": 21,
+          "right": 85,
+          "top": 36115.333333333336,
+          "height": 24,
+          "width": 64,
+          "bottom": 36139.333333333336
+        },
+        "controlChild": {
+          "left": 65,
+          "right": 105,
+          "top": 36115.333333333336,
+          "height": 24,
+          "width": 40,
+          "bottom": 36139.333333333336
+        },
+        "probeChild": {
+          "left": 45,
+          "right": 85,
+          "top": 35995.333333333336,
+          "height": 24,
+          "width": 40,
+          "bottom": 36019.333333333336
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 175,
+          "top": 35961.333333333336,
+          "height": 140,
+          "width": 160,
+          "bottom": 36101.333333333336
+        },
+        "controlContainer": {
+          "left": 15,
+          "right": 175,
+          "top": 36109.333333333336,
+          "height": 140,
+          "width": 160,
+          "bottom": 36249.333333333336
+        }
+      }
     },
     {
+      "status": "supported",
       "id": "flex-shorthand-shrink",
-      "status": "supported",
       "checkpoints": [
         {
-          "name": "geometry:probe-vs-control",
+          "actual": "6,6,108,24; child=0,0,80,24",
           "passed": true,
-          "actual": "0,0,166.66666666666666,62.33333333333212; child=8,26.33333333333576,12,12",
-          "expected": "control=0,0,166.33333333333337,62.33333333333212; child=8,26.33333333333576,12,12"
+          "expected": "control=6,6,24,24; child=0,0,12,24",
+          "name": "geometry:probe-vs-control"
         }
-      ]
+      ],
+      "geometry": {
+        "probe": {
+          "left": 21,
+          "right": 129,
+          "top": 36462.66666666667,
+          "height": 24,
+          "width": 108,
+          "bottom": 36486.66666666667
+        },
+        "control": {
+          "left": 21,
+          "right": 45,
+          "top": 36610.66666666667,
+          "height": 24,
+          "width": 24,
+          "bottom": 36634.66666666667
+        },
+        "controlChild": {
+          "left": 21,
+          "right": 33,
+          "top": 36610.66666666667,
+          "height": 24,
+          "width": 12,
+          "bottom": 36634.66666666667
+        },
+        "probeChild": {
+          "left": 21,
+          "right": 101,
+          "top": 36462.66666666667,
+          "height": 24,
+          "width": 80,
+          "bottom": 36486.66666666667
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 175,
+          "top": 36456.66666666667,
+          "height": 140,
+          "width": 160,
+          "bottom": 36596.66666666667
+        },
+        "controlContainer": {
+          "left": 15,
+          "right": 175,
+          "top": 36604.66666666667,
+          "height": 140,
+          "width": 160,
+          "bottom": 36744.66666666667
+        }
+      }
     },
     {
+      "status": "supported",
       "id": "grid-placement",
-      "status": "supported",
       "checkpoints": [
         {
-          "name": "geometry:probe-vs-control",
+          "actual": "6,6,84,52; child=0,0,8,8",
           "passed": true,
-          "actual": "0,0,166.66666666666666,62.33333333333212; child=8,26.33333333333576,12,12",
-          "expected": "control=0,0,166.33333333333337,62.33333333333212; child=8,26.33333333333576,12,12"
+          "expected": "control=50,34,40,24; child=0,0,8,8",
+          "name": "geometry:probe-vs-control"
         }
-      ]
+      ],
+      "geometry": {
+        "probe": {
+          "left": 21,
+          "right": 105,
+          "top": 36958,
+          "height": 52,
+          "width": 84,
+          "bottom": 37010
+        },
+        "control": {
+          "left": 65,
+          "right": 105,
+          "top": 37134,
+          "height": 24,
+          "width": 40,
+          "bottom": 37158
+        },
+        "controlChild": {
+          "left": 65,
+          "right": 73,
+          "top": 37134,
+          "height": 8,
+          "width": 8,
+          "bottom": 37142
+        },
+        "probeChild": {
+          "left": 21,
+          "right": 29,
+          "top": 36958,
+          "height": 8,
+          "width": 8,
+          "bottom": 36966
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 175,
+          "top": 36952,
+          "height": 140,
+          "width": 160,
+          "bottom": 37092
+        },
+        "controlContainer": {
+          "left": 15,
+          "right": 175,
+          "top": 37100,
+          "height": 140,
+          "width": 160,
+          "bottom": 37240
+        }
+      }
     },
     {
+      "status": "unsupported",
       "id": "grid-auto",
-      "status": "supported",
-      "checkpoints": [
-        {
-          "name": "geometry:probe-vs-control",
-          "passed": true,
-          "actual": "0,0,166.66666666666666,62.33333333333212; child=8,26.33333333333576,12,12",
-          "expected": "control=0,0,166.33333333333337,62.33333333333212; child=8,26.33333333333576,12,12"
-        }
-      ]
-    },
-    {
-      "id": "grid-place",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：place-content, place-items, place-self",
-      "checkpoints": [
-        {
-          "name": "generated",
-          "passed": true
-        },
-        {
-          "name": "bundled",
-          "passed": false
-        }
-      ]
-    },
-    {
-      "id": "grid-justify-self",
-      "status": "supported",
-      "checkpoints": [
-        {
-          "name": "geometry:probe-vs-control",
-          "passed": true,
-          "actual": "0,0,166.66666666666666,62.33333333333212; child=8,26.33333333333576,12,12",
-          "expected": "control=0,0,166.33333333333337,62.33333333333212; child=8,26.33333333333576,12,12"
-        }
-      ]
-    },
-    {
-      "id": "grid-align-content-self",
-      "status": "supported",
-      "checkpoints": [
-        {
-          "name": "geometry:probe-vs-control",
-          "passed": true,
-          "actual": "0,0,72,62.33333333333212; child=8,26.33333333333576,12,12",
-          "expected": "control=0,0,166.33333333333337,62.33333333333212; child=8,26.33333333333576,12,12"
-        }
-      ]
-    },
-    {
-      "id": "spacing-space-between",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：margin-block-start",
-      "checkpoints": [
-        {
-          "name": "generated",
-          "passed": true
-        },
-        {
-          "name": "bundled",
-          "passed": false
-        }
-      ]
-    },
-    {
-      "id": "sizing-size",
-      "status": "unsupported",
-      "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言",
       "failureStage": "runtime",
+      "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言",
+      "geometry": {
+        "probe": {
+          "left": 21,
+          "right": 161,
+          "top": 37477.333333333336,
+          "height": 32,
+          "width": 140,
+          "bottom": 37509.333333333336
+        },
+        "control": {
+          "left": 21,
+          "right": 161,
+          "top": 37625.333333333336,
+          "height": 68,
+          "width": 140,
+          "bottom": 37693.333333333336
+        },
+        "controlChild": {
+          "left": 21,
+          "right": 61,
+          "top": 37661.333333333336,
+          "height": 24,
+          "width": 40,
+          "bottom": 37685.333333333336
+        },
+        "probeChild": {
+          "left": 93,
+          "right": 133,
+          "top": 37477.333333333336,
+          "height": 24,
+          "width": 40,
+          "bottom": 37501.333333333336
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 175,
+          "top": 37471.333333333336,
+          "height": 140,
+          "width": 160,
+          "bottom": 37611.333333333336
+        },
+        "controlContainer": {
+          "left": 15,
+          "right": 175,
+          "top": 37619.333333333336,
+          "height": 140,
+          "width": 160,
+          "bottom": 37759.333333333336
+        }
+      },
       "checkpoints": [
         {
-          "name": "geometry:probe-vs-control",
+          "actual": "6,6,140,32; child=72,0,40,24",
           "passed": false,
-          "actual": "0,0,72,44; child=8,26.33333333333576,12,12",
-          "expected": "control=0,0,166.33333333333337,62.33333333333212; child=8,26.33333333333576,12,12"
+          "expected": "control=6,6,140,68; child=0,36,40,24",
+          "name": "geometry:probe-vs-control"
         }
       ]
     },
     {
+      "status": "unsupported",
+      "id": "grid-place",
+      "checkpoints": [
+        {
+          "name": "generated",
+          "passed": true
+        },
+        {
+          "name": "bundled",
+          "passed": false
+        }
+      ],
+      "reason": "encoder 删除属性：place-content, place-items, place-self"
+    },
+    {
+      "status": "unsupported",
+      "id": "grid-justify-self",
+      "failureStage": "runtime",
+      "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言",
+      "geometry": {
+        "probe": {
+          "left": 21,
+          "right": 121,
+          "top": 38345,
+          "height": 44,
+          "width": 100,
+          "bottom": 38389
+        },
+        "control": {
+          "left": 21,
+          "right": 121,
+          "top": 38493,
+          "height": 44,
+          "width": 100,
+          "bottom": 38537
+        },
+        "controlChild": {
+          "left": 21,
+          "right": 41,
+          "top": 38493,
+          "height": 12,
+          "width": 20,
+          "bottom": 38505
+        },
+        "probeChild": {
+          "left": 61,
+          "right": 81,
+          "top": 38345,
+          "height": 12,
+          "width": 20,
+          "bottom": 38357
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 175,
+          "top": 38339,
+          "height": 140,
+          "width": 160,
+          "bottom": 38479
+        },
+        "controlContainer": {
+          "left": 15,
+          "right": 175,
+          "top": 38487,
+          "height": 140,
+          "width": 160,
+          "bottom": 38627
+        }
+      },
+      "checkpoints": [
+        {
+          "actual": "6,6,100,44; child=40,0,20,12",
+          "passed": false,
+          "expected": "control=6,6,100,44; child=0,0,20,12",
+          "name": "geometry:probe-vs-control"
+        }
+      ]
+    },
+    {
+      "status": "supported",
+      "id": "grid-align-content-self",
+      "checkpoints": [
+        {
+          "actual": "100.66666666666669,6,72,62.33333333333576; child=8,26.333333333328483,12,12",
+          "passed": true,
+          "expected": "control=6,6,166.33333333333337,62.33333333333576; child=8,26.333333333328483,12,12",
+          "name": "geometry:probe-vs-control"
+        }
+      ],
+      "geometry": {
+        "probe": {
+          "left": 115.66666666666669,
+          "right": 187.66666666666669,
+          "top": 38840.333333333336,
+          "height": 62.33333333333576,
+          "width": 72,
+          "bottom": 38902.66666666667
+        },
+        "control": {
+          "left": 207.66666666666663,
+          "right": 374,
+          "top": 38840.333333333336,
+          "height": 62.33333333333576,
+          "width": 166.33333333333337,
+          "bottom": 38902.66666666667
+        },
+        "controlChild": {
+          "left": 215.66666666666663,
+          "right": 227.66666666666663,
+          "top": 38866.666666666664,
+          "height": 12,
+          "width": 12,
+          "bottom": 38878.666666666664
+        },
+        "probeChild": {
+          "left": 123.66666666666669,
+          "right": 135.66666666666669,
+          "top": 38866.666666666664,
+          "height": 12,
+          "width": 12,
+          "bottom": 38878.666666666664
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 193.66666666666666,
+          "top": 38834.333333333336,
+          "height": 92,
+          "width": 178.66666666666666,
+          "bottom": 38926.333333333336
+        },
+        "controlContainer": {
+          "left": 201.66666666666663,
+          "right": 380,
+          "top": 38834.333333333336,
+          "height": 92,
+          "width": 178.33333333333337,
+          "bottom": 38926.333333333336
+        }
+      }
+    },
+    {
+      "status": "unsupported",
+      "id": "spacing-space-between",
+      "checkpoints": [
+        {
+          "name": "generated",
+          "passed": true
+        },
+        {
+          "name": "bundled",
+          "passed": false
+        }
+      ],
+      "reason": "encoder 删除属性：margin-block-start"
+    },
+    {
+      "status": "supported",
+      "id": "sizing-size",
+      "checkpoints": [
+        {
+          "actual": "6,6,44,44; child=8,26.333333333328483,12,12",
+          "passed": true,
+          "expected": "control=6,6,166.33333333333337,62.33333333333576; child=8,26.333333333328483,12,12",
+          "name": "geometry:probe-vs-control"
+        }
+      ],
+      "geometry": {
+        "probe": {
+          "left": 21,
+          "right": 65,
+          "top": 39544.333333333336,
+          "height": 44,
+          "width": 44,
+          "bottom": 39588.333333333336
+        },
+        "control": {
+          "left": 207.66666666666663,
+          "right": 374,
+          "top": 39544.333333333336,
+          "height": 62.33333333333576,
+          "width": 166.33333333333337,
+          "bottom": 39606.66666666667
+        },
+        "controlChild": {
+          "left": 215.66666666666663,
+          "right": 227.66666666666663,
+          "top": 39570.666666666664,
+          "height": 12,
+          "width": 12,
+          "bottom": 39582.666666666664
+        },
+        "probeChild": {
+          "left": 29,
+          "right": 41,
+          "top": 39570.666666666664,
+          "height": 12,
+          "width": 12,
+          "bottom": 39582.666666666664
+        },
+        "probeContainer": {
+          "left": 15,
+          "right": 193.66666666666666,
+          "top": 39538.333333333336,
+          "height": 92,
+          "width": 178.66666666666666,
+          "bottom": 39630.333333333336
+        },
+        "controlContainer": {
+          "left": 201.66666666666663,
+          "right": 380,
+          "top": 39538.333333333336,
+          "height": 92,
+          "width": 178.33333333333337,
+          "bottom": 39630.333333333336
+        }
+      }
+    },
+    {
+      "status": "unsupported",
       "id": "type-family-smoothing-stretch",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：-webkit-font-smoothing, font-stretch",
       "checkpoints": [
         {
           "name": "generated",
@@ -1163,12 +2874,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：-webkit-font-smoothing, font-stretch"
     },
     {
+      "status": "unsupported",
       "id": "type-numeric",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：font-variant-numeric",
       "checkpoints": [
         {
           "name": "generated",
@@ -1178,12 +2889,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：font-variant-numeric"
     },
     {
+      "status": "unsupported",
       "id": "type-line-clamp",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：-webkit-line-clamp",
       "checkpoints": [
         {
           "name": "generated",
@@ -1193,12 +2904,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：-webkit-line-clamp"
     },
     {
+      "status": "unsupported",
       "id": "type-list",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：list-style-position, list-style-type, list-style-image",
       "checkpoints": [
         {
           "name": "generated",
@@ -1208,12 +2919,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：list-style-position, list-style-type, list-style-image"
     },
     {
+      "status": "unsupported",
       "id": "type-decoration-full",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：text-decoration-style, text-underline-offset",
       "checkpoints": [
         {
           "name": "generated",
@@ -1223,12 +2934,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：text-decoration-style, text-underline-offset"
     },
     {
+      "status": "unsupported",
       "id": "type-transform-wrap-indent",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：text-transform, text-wrap",
       "checkpoints": [
         {
           "name": "generated",
@@ -1238,24 +2949,26 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：text-transform, text-wrap"
     },
     {
+      "status": "unsupported",
       "id": "type-flow",
-      "status": "supported",
       "checkpoints": [
         {
-          "name": "geometry:probe-vs-control",
-          "passed": true,
-          "actual": "0,0,166.66666666666666,62.33333333333212; child=8,26.33333333333576,12,12",
-          "expected": "control=0,0,166.33333333333337,62.33333333333212; child=8,26.33333333333576,12,12"
+          "name": "pixel:text-flow-v1",
+          "passed": false,
+          "actual": "{\"aligned\":true,\"whitespace\":false,\"movement\":23,\"lines\":[{\"top\":77,\"bottom\":91.33333333333333,\"glyphs\":[{\"left\":12.666666666666666,\"right\":24.666666666666668},{\"left\":35,\"right\":47}]}]}",
+          "expected": "行内标记由 top 移至 middle；文字与独立 2/4/2 字分行及双空格对照一致"
         }
-      ]
+      ],
+      "reason": "行内中部对齐、双空格保留、显式换行与软换行未同时满足",
+      "failureStage": "runtime"
     },
     {
+      "status": "unsupported",
       "id": "type-breaking",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：overflow-wrap",
       "checkpoints": [
         {
           "name": "generated",
@@ -1265,24 +2978,26 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：overflow-wrap"
     },
     {
+      "status": "unsupported",
       "id": "type-content",
-      "status": "supported",
+      "failureStage": "runtime",
+      "reason": "probe/control 元素截图没有可观察的像素差异",
       "checkpoints": [
         {
-          "name": "pixel:probe-vs-control",
-          "passed": true,
-          "actual": "5744:d83adefe",
-          "expected": "different from 5684:f7430fa1"
+          "actual": "10756:33306848",
+          "passed": false,
+          "expected": "different from 10756:33306848",
+          "name": "pixel:probe-vs-control"
         }
       ]
     },
     {
+      "status": "unsupported",
       "id": "background-attachment-clip-origin",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：background-attachment",
       "checkpoints": [
         {
           "name": "generated",
@@ -1292,24 +3007,28 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：background-attachment"
     },
     {
-      "id": "background-linear-gradient",
       "status": "supported",
+      "id": "background-linear-gradient",
       "checkpoints": [
         {
           "name": "pixel:probe-vs-control",
+          "passed": true
+        },
+        {
+          "name": "pixel:expected-effect-v1",
           "passed": true,
-          "actual": "4608:b25628e0",
-          "expected": "different from 4604:e1b87cea"
+          "actual": "[[5,139,188],[15,158,157],[24,177,126],[35,197,94],[99,199,72],[164,201,50],[228,203,28],[5,138,188],[15,158,157],[24,177,126],[35,197,94],[99,199,72],[164,201,50],[228,203,28]]",
+          "expected": "两条空白横线均呈现蓝→绿→黄的连续 sRGB 插值"
         }
       ]
     },
     {
+      "status": "unsupported",
       "id": "border-divide",
-      "status": "unsupported",
-      "reason": "encoder 删除 selector：:where(.divide-y-2>:not(:last-child)), :where(.divide-y-2>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child))",
       "checkpoints": [
         {
           "name": "generated",
@@ -1319,12 +3038,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除 selector：:where(.divide-y-2>:not(:last-child)), :where(.divide-y-2>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child))"
     },
     {
-      "id": "border-outline",
       "status": "unsupported",
-      "reason": "encoder 删除属性：outline-offset",
+      "id": "border-outline",
       "checkpoints": [
         {
           "name": "generated",
@@ -1334,17 +3053,18 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：outline-offset"
     },
     {
       "id": "effect-ring",
       "status": "supported",
       "checkpoints": [
         {
-          "name": "pixel:probe-vs-control",
+          "actual": "16432:2f1bd250",
           "passed": true,
-          "actual": "5744:d83adefe",
-          "expected": "different from 5684:f7430fa1"
+          "expected": "different from 10756:33306848",
+          "name": "pixel:probe-vs-control"
         }
       ]
     },
@@ -1353,17 +3073,16 @@
       "status": "supported",
       "checkpoints": [
         {
-          "name": "pixel:probe-vs-control",
+          "actual": "23712:f3651f62",
           "passed": true,
-          "actual": "5744:d83adefe",
-          "expected": "different from 5684:f7430fa1"
+          "expected": "different from 10756:33306848",
+          "name": "pixel:probe-vs-control"
         }
       ]
     },
     {
+      "status": "unsupported",
       "id": "effect-background-blend",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：background-blend-mode",
       "checkpoints": [
         {
           "name": "generated",
@@ -1373,12 +3092,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：background-blend-mode"
     },
     {
+      "status": "unsupported",
       "id": "effect-mask-box",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：mask-mode",
       "checkpoints": [
         {
           "name": "generated",
@@ -1388,12 +3107,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：mask-mode"
     },
     {
+      "status": "unsupported",
       "id": "effect-mask-image-composite",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：mask-type",
       "checkpoints": [
         {
           "name": "generated",
@@ -1403,90 +3122,100 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：mask-type"
     },
     {
+      "status": "unsupported",
       "id": "filter-color-adjustments",
-      "status": "supported",
+      "failureStage": "runtime",
+      "reason": "probe/control 元素截图没有可观察的像素差异",
       "checkpoints": [
         {
-          "name": "pixel:probe-vs-control",
-          "passed": true,
-          "actual": "5744:d83adefe",
-          "expected": "different from 5684:f7430fa1"
+          "actual": "10756:33306848",
+          "passed": false,
+          "expected": "different from 10756:33306848",
+          "name": "pixel:probe-vs-control"
         }
       ]
     },
     {
+      "status": "unsupported",
       "id": "filter-color-rotation",
-      "status": "supported",
+      "failureStage": "runtime",
+      "reason": "probe/control 元素截图没有可观察的像素差异",
       "checkpoints": [
         {
-          "name": "pixel:probe-vs-control",
-          "passed": true,
-          "actual": "5744:d83adefe",
-          "expected": "different from 5684:f7430fa1"
+          "actual": "10756:33306848",
+          "passed": false,
+          "expected": "different from 10756:33306848",
+          "name": "pixel:probe-vs-control"
         }
       ]
     },
     {
+      "status": "unsupported",
       "id": "filter-drop-shadow",
+      "failureStage": "runtime",
+      "reason": "probe/control 元素截图没有可观察的像素差异",
+      "checkpoints": [
+        {
+          "actual": "10756:33306848",
+          "passed": false,
+          "expected": "different from 10756:33306848",
+          "name": "pixel:probe-vs-control"
+        }
+      ]
+    },
+    {
+      "status": "unsupported",
+      "id": "filter-backdrop-adjustments",
+      "checkpoints": [
+        {
+          "name": "generated",
+          "passed": true
+        },
+        {
+          "name": "bundled",
+          "passed": false
+        }
+      ],
+      "reason": "encoder 删除属性：backdrop-filter"
+    },
+    {
+      "status": "unsupported",
+      "id": "table-spacing-caption",
+      "checkpoints": [
+        {
+          "name": "generated",
+          "passed": true
+        },
+        {
+          "name": "bundled",
+          "passed": false
+        }
+      ],
+      "reason": "encoder 删除属性：border-spacing, caption-side"
+    },
+    {
       "status": "supported",
+      "id": "transform-skew",
       "checkpoints": [
         {
           "name": "pixel:probe-vs-control",
-          "passed": true,
-          "actual": "5744:d83adefe",
-          "expected": "different from 5684:f7430fa1"
-        }
-      ]
-    },
-    {
-      "id": "filter-backdrop-adjustments",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：backdrop-filter",
-      "checkpoints": [
-        {
-          "name": "generated",
           "passed": true
         },
         {
-          "name": "bundled",
-          "passed": false
-        }
-      ]
-    },
-    {
-      "id": "table-spacing-caption",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：border-spacing, caption-side",
-      "checkpoints": [
-        {
-          "name": "generated",
-          "passed": true
-        },
-        {
-          "name": "bundled",
-          "passed": false
-        }
-      ]
-    },
-    {
-      "id": "transform-skew",
-      "status": "supported",
-      "checkpoints": [
-        {
-          "name": "geometry:probe-vs-control",
+          "name": "geometry:expected-effect-v1",
           "passed": true,
-          "actual": "0,0,166.66666666666666,62.33333333333576; child=8,26.333333333328483,12,12",
-          "expected": "control=0,0,166.33333333333337,62.33333333333576; child=8,26.333333333328483,12,12"
+          "actual": "{\"slopes\":[0.104987,0.104987,0.051833,0.051833],\"residual\":0.097272,\"center\":[80,80],\"area\":7679.777778,\"width\":96,\"height\":79.559829}",
+          "expected": "居中的 96×80 实心主体，左右边斜率 tan(6deg)、上下边斜率 tan(3deg)，斜率误差≤0.015、面积变化≤4%"
         }
       ]
     },
     {
+      "status": "unsupported",
       "id": "transform-perspective",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：perspective-origin",
       "checkpoints": [
         {
           "name": "generated",
@@ -1496,12 +3225,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：perspective-origin"
     },
     {
+      "status": "unsupported",
       "id": "transform-style-backface",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：transform-style, backface-visibility",
       "checkpoints": [
         {
           "name": "generated",
@@ -1511,12 +3240,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：transform-style, backface-visibility"
     },
     {
+      "status": "unsupported",
       "id": "transition-complete",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：transition-behavior",
       "checkpoints": [
         {
           "name": "generated",
@@ -1526,12 +3255,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：transition-behavior"
     },
     {
+      "status": "unsupported",
       "id": "interaction-form-colors",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：accent-color",
       "checkpoints": [
         {
           "name": "generated",
@@ -1541,12 +3270,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：accent-color"
     },
     {
+      "status": "unsupported",
       "id": "interaction-form-control",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：appearance, field-sizing, resize",
       "checkpoints": [
         {
           "name": "generated",
@@ -1556,12 +3285,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：appearance, field-sizing, resize"
     },
     {
+      "status": "unsupported",
       "id": "interaction-cursor-scheme",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：color-scheme",
       "checkpoints": [
         {
           "name": "generated",
@@ -1571,12 +3300,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：color-scheme"
     },
     {
+      "status": "unsupported",
       "id": "interaction-scroll-spacing",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：scroll-margin, scroll-padding",
       "checkpoints": [
         {
           "name": "generated",
@@ -1586,12 +3315,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：scroll-margin, scroll-padding"
     },
     {
+      "status": "unsupported",
       "id": "interaction-snap-touch",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：scroll-snap-align, scroll-snap-stop, touch-action",
       "checkpoints": [
         {
           "name": "generated",
@@ -1601,12 +3330,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：scroll-snap-align, scroll-snap-stop, touch-action"
     },
     {
+      "status": "unsupported",
       "id": "interaction-will-change",
-      "status": "unsupported",
-      "reason": "encoder 删除属性：will-change",
       "checkpoints": [
         {
           "name": "generated",
@@ -1616,12 +3345,12 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：will-change"
     },
     {
-      "id": "accessibility-forced-colors",
       "status": "unsupported",
-      "reason": "encoder 删除属性：forced-color-adjust",
+      "id": "accessibility-forced-colors",
       "checkpoints": [
         {
           "name": "generated",
@@ -1631,7 +3360,8 @@
           "name": "bundled",
           "passed": false
         }
-      ]
+      ],
+      "reason": "encoder 删除属性：forced-color-adjust"
     }
   ]
 }

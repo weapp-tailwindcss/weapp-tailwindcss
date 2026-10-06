@@ -19,64 +19,64 @@
     "border-color:red"
   ],
   "issue-1160-right": [
+    "border-right-style:var(--tw-border-style)",
+    "border-right-width:1px",
     "--tw-border-style:solid",
     "border-style:solid",
-    "border-color:red",
-    "border-right-style:var(--tw-border-style)",
-    "border-right-width:1px"
+    "border-color:red"
   ],
   "issue-1160-bottom": [
+    "border-bottom-style:var(--tw-border-style)",
+    "border-bottom-width:1px",
     "--tw-border-style:solid",
     "border-style:solid",
-    "border-color:red",
-    "border-bottom-style:var(--tw-border-style)",
-    "border-bottom-width:1px"
+    "border-color:red"
   ],
   "issue-1160-left": [
+    "border-left-style:var(--tw-border-style)",
+    "border-left-width:1px",
     "--tw-border-style:solid",
     "border-style:solid",
-    "border-color:red",
-    "border-left-style:var(--tw-border-style)",
-    "border-left-width:1px"
+    "border-color:red"
   ],
   "issue-1160-pair": [
     "border-top-style:var(--tw-border-style)",
     "border-top-width:1px",
+    "border-left-style:var(--tw-border-style)",
+    "border-left-width:2px",
     "--tw-border-style:solid",
     "border-style:solid",
-    "border-color:red",
-    "border-left-style:var(--tw-border-style)",
-    "border-left-width:2px"
+    "border-color:red"
   ],
   "issue-1160-all": [
+    "border-style:var(--tw-border-style)",
+    "border-width:2px",
     "--tw-border-style:solid",
     "border-style:solid",
-    "border-color:red",
-    "border-style:var(--tw-border-style)",
-    "border-width:2px"
+    "border-color:red"
   ],
   "issue-1160-override": [
-    "--tw-border-style:solid",
-    "border-style:solid",
-    "border-color:red",
     "border-style:var(--tw-border-style)",
     "border-width:2px",
     "border-top-style:var(--tw-border-style)",
-    "border-top-width:0px"
+    "border-top-width:0px",
+    "--tw-border-style:solid",
+    "border-style:solid",
+    "border-color:red"
   ],
   "issue-1160-dashed": [
     "border-top-style:var(--tw-border-style)",
     "border-top-width:1px",
-    "border-color:red",
     "--tw-border-style:dashed",
-    "border-style:dashed"
+    "border-style:dashed",
+    "border-color:red"
   ],
   "issue-1160-none": [
     "border-top-style:var(--tw-border-style)",
     "border-top-width:1px",
-    "border-color:red",
     "--tw-border-style:none",
-    "border-style:none"
+    "border-style:none",
+    "border-color:red"
   ],
   "issue-1160-apply": [
     "border-top-style:var(--tw-border-style)",

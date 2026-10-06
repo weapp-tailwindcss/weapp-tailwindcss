@@ -2,8 +2,12 @@ import type { NativePlatformReport, Platform, StaticEvidenceReport } from '../..
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { compatibilityCases } from '../../examples/react-lynx/src/compatibility/catalog'
+import { lynxEvidenceStrategy } from '../../examples/react-lynx/src/compatibility/evidence'
+import { evaluateGeometry } from '../../examples/react-lynx/src/compatibility/geometry'
 import staticEvidenceJson from '../../examples/react-lynx/src/compatibility/static-evidence.json'
 import { compatibilityVersions, getCatalogHash } from './catalog'
+import { readEvidenceContext, validateNativeEvidence } from './evidence'
+import { validateNativePixelEvidence } from './pixel-evidence'
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {
@@ -11,11 +15,17 @@ function assert(condition: unknown, message: string): asserts condition {
   }
 }
 
-export function validateNativeReport(report: NativePlatformReport, platform: Platform) {
+export function validateNativeReport(report: NativePlatformReport, platform: Platform, options: { requireGeometryEvidence?: boolean } = {}) {
   assert(report.schemaVersion === 1, `${platform} report schemaVersion must be 1`)
   assert(report.platform === platform, `expected ${platform} report, received ${report.platform}`)
   assert(report.catalogHash === getCatalogHash(), `${platform} report catalog hash is stale`)
-  assert(JSON.stringify(report.versions) === JSON.stringify(compatibilityVersions), `${platform} report versions do not match the pinned matrix`)
+  const versions = report.versions
+  assert(
+    versions && typeof versions === 'object' && !Array.isArray(versions)
+    && Object.keys(versions).length === Object.keys(compatibilityVersions).length
+    && Object.entries(compatibilityVersions).every(([key, value]) => Object.hasOwn(versions, key) && versions[key as keyof typeof versions] === value),
+    `${platform} report versions do not match the pinned matrix`,
+  )
   assert(!Number.isNaN(Date.parse(report.verifiedAt)), `${platform} report verifiedAt is invalid`)
   const environment = report.environment
   assert(Boolean(environment), `${platform} report environment is missing`)
@@ -45,6 +55,7 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
     const item = caseById.get(result.id)
     const staticResult = staticById.get(result.id)
     assert(item && staticResult, `${platform}:${result.id} is missing catalog or static evidence`)
+    const strategy = lynxEvidenceStrategy(item)
     assert(result.status === 'supported' || result.status === 'unsupported', `${platform}:${result.id} has no final runtime status`)
     assert(result.checkpoints.length > 0, `${platform}:${result.id} has no runtime checkpoint`)
     assert(result.checkpoints.every(checkpoint => typeof checkpoint.passed === 'boolean'), `${platform}:${result.id} has an invalid checkpoint`)
@@ -54,17 +65,26 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
       assert(result.checkpoints.some(checkpoint => checkpoint.name === 'bundled'), `${platform}:${result.id} is missing its bundled checkpoint`)
     }
     else {
-      const checkpointPrefix = item.evidence === 'build'
+      const checkpointPrefix = strategy === 'build'
         ? 'build:'
-        : item.probe === 'geometry'
+        : strategy === 'native-geometry' || strategy === 'pixel-geometry'
           ? 'geometry:'
-          : item.probe === 'interaction'
+          : strategy === 'interaction'
             ? 'interaction:'
             : 'pixel:'
       assert(
         result.checkpoints.some(checkpoint => checkpoint.name.startsWith(checkpointPrefix)),
         `${platform}:${result.id} is missing a ${checkpointPrefix} checkpoint`,
       )
+    }
+    if (options.requireGeometryEvidence && staticResult.generated && staticResult.bundled && strategy === 'native-geometry') {
+      const measured = evaluateGeometry(item, result.geometry)
+      assert(measured.status !== 'not-tested', `${platform}:${result.id} geometry 原始测量证据缺失或无效`)
+      assert(measured.status === result.status, `${platform}:${result.id} geometry 结论与原始测量不符`)
+      const matches = result.checkpoints.length === measured.checkpoints.length && measured.checkpoints.every(expected => result.checkpoints.some(actual => (
+        actual.name === expected.name && actual.passed === expected.passed && actual.actual === expected.actual && actual.expected === expected.expected
+      )))
+      assert(matches, `${platform}:${result.id} geometry checkpoint 与原始测量不符`)
     }
     if (result.status === 'supported') {
       assert(result.checkpoints.every(checkpoint => checkpoint.passed), `${platform}:${result.id} is supported but contains a failed checkpoint`)
@@ -78,7 +98,12 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
 
 export async function readNativeReport(reportPath: string, platform: Platform) {
   const report = JSON.parse(await fs.readFile(reportPath, 'utf8')) as NativePlatformReport
-  return validateNativeReport(report, platform)
+  validateNativeReport(report, platform, { requireGeometryEvidence: true })
+  const artifactDir = path.dirname(reportPath)
+  const context = await readEvidenceContext(artifactDir)
+  const crops = await validateNativeEvidence(report, artifactDir, context)
+  await validateNativePixelEvidence(report, crops)
+  return report
 }
 
 export function nativeReportConclusion(report: NativePlatformReport) {
@@ -86,7 +111,8 @@ export function nativeReportConclusion(report: NativePlatformReport) {
     schemaVersion: report.schemaVersion,
     platform: report.platform,
     catalogHash: report.catalogHash,
-    versions: report.versions,
+    // 原生 JSON 序列化不承诺属性顺序，结论比较固定键顺序并保留所有版本值。
+    versions: Object.fromEntries(Object.entries(report.versions).sort(([a], [b]) => a.localeCompare(b))),
     results: report.results.map(result => ({
       id: result.id,
       status: result.status,

@@ -2,6 +2,7 @@
 import process from 'node:process'
 import postcss from 'postcss'
 import { ifdefAtRule, ifndefAtRule } from './constants'
+import { hasWrappingVariantCondition } from './variant-condition'
 
 type ConditionalValue = boolean | undefined
 
@@ -175,9 +176,11 @@ function rewriteOuterCustomVariantConditionalComments(root: postcss.Root) {
       const customVariants = conditionalNodes.filter((current): current is postcss.AtRule => current.type === 'atrule' && current.name === 'custom-variant')
       if (customVariants.length === 0 || customVariants.some(variant => !variant.nodes?.length)) { continue }
       for (const variant of customVariants) {
+        if (hasWrappingVariantCondition(variant, start.directive === 'ifndef' ? ifndefAtRule : ifdefAtRule, quoteAtRuleParam(start.expression))) { continue }
         const variantNodes = [...variant.nodes ?? []]
         variant.removeAll()
         variant.append(createConditionalAtRule(start, variantNodes))
+        changed = true
       }
       const hasOnlyCustomVariants = conditionalNodes.every(current => current.type === 'comment' || (current.type === 'atrule' && current.name === 'custom-variant'))
       if (hasOnlyCustomVariants) {
@@ -185,8 +188,8 @@ function rewriteOuterCustomVariantConditionalComments(root: postcss.Root) {
         for (const removedNode of nodes.slice(index + 1, endIndex + 1)) {
           if (removedNode.type === 'comment') { removedNode.remove() }
         }
+        changed = true
       }
-      changed = true
     }
     for (const node of [...container.nodes ?? []]) {
       if ('nodes' in node && node.nodes) { transformContainer(node) }

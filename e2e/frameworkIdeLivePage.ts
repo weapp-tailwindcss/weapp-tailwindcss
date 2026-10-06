@@ -1,5 +1,6 @@
 import type { CliOptions } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/types'
 import process from 'node:process'
+import { awaitWithAbort, withAbortDeadline } from './framework-ide/abort'
 
 function readNumberEnv(name: string, fallback: number) {
   const raw = process.env[name]
@@ -29,25 +30,6 @@ export function getDevToolsRelaunchTimeoutMs(options: CliOptions) {
   return Math.min(options.timeoutMs, readNumberEnv('E2E_IDE_RELAUNCH_TIMEOUT_MS', 20_000))
 }
 
-export async function withDevToolsReadTimeout<T>(pageUrl: string, task: Promise<T>) {
-  let timer: ReturnType<typeof setTimeout> | undefined
-  try {
-    return await Promise.race([
-      task,
-      new Promise<T>((_, reject) => {
-        timer = setTimeout(() => {
-          reject(new Error(`DevTools live page read timed out after ${getDevToolsReadTimeoutMs()}ms: ${pageUrl}`))
-        }, getDevToolsReadTimeoutMs())
-      }),
-    ])
-  }
-  finally {
-    if (timer) {
-      clearTimeout(timer)
-    }
-  }
-}
-
 function stringifyLiveValue(value: unknown) {
   if (typeof value === 'string') {
     return value
@@ -60,11 +42,11 @@ function stringifyLiveValue(value: unknown) {
   }
 }
 
-async function readElementContent(element: any, label: string) {
+async function readElementContent(element: any, label: string, signal?: AbortSignal) {
   if (!element) {
     return ''
   }
-  const text = await element.text().catch(() => undefined)
+  const text = await awaitWithAbort(signal, () => element.text()).catch(() => undefined)
   if (text != null && text !== '') {
     return `[${label}:text] ${stringifyLiveValue(text)}`
   }
@@ -75,7 +57,7 @@ async function readElementContent(element: any, label: string) {
   ]
 
   for (const [kind, read] of reads) {
-    const value = await read().catch(() => undefined)
+    const value = await awaitWithAbort(signal, read).catch(() => undefined)
     if (value != null && value !== '') {
       parts.push(`[${label}:${kind}] ${stringifyLiveValue(value)}`)
     }
@@ -83,14 +65,14 @@ async function readElementContent(element: any, label: string) {
   return parts.join('\n')
 }
 
-async function readSelectorContent(page: any, selector: string, limit: number) {
+async function readSelectorContent(page: any, selector: string, limit: number, signal?: AbortSignal) {
   const rawElements = selector === 'page'
-    ? [await page.$('page').catch(() => undefined)]
-    : await page.$$(selector).catch(() => [])
+    ? [await awaitWithAbort(signal, () => page.$('page')).catch(() => undefined)]
+    : await awaitWithAbort(signal, () => page.$$(selector)).catch(() => [])
   const elements = Array.isArray(rawElements) ? rawElements.filter(Boolean) : []
   const parts: string[] = []
   for (const [index, element] of elements.slice(0, limit).entries()) {
-    const content = await readElementContent(element, `${selector}:${index}`)
+    const content = await readElementContent(element, `${selector}:${index}`, signal)
     if (content) {
       parts.push(content)
     }
@@ -98,24 +80,25 @@ async function readSelectorContent(page: any, selector: string, limit: number) {
   return parts.join('\n')
 }
 
-export async function readPageLiveContentRaw(page: any) {
+export async function readPageLiveContentRaw(page: any, signal?: AbortSignal) {
   const selectorLimit = readNumberEnv('E2E_IDE_LIVE_SELECTOR_LIMIT', 80)
   const selectors = ['view', 'text', 'button']
   const parts: string[] = []
 
-  const pageContent = await readSelectorContent(page, 'page', 1)
+  const pageContent = await readSelectorContent(page, 'page', 1, signal)
   if (pageContent) {
     parts.push(pageContent)
   }
 
   for (const selector of selectors) {
-    const content = await readSelectorContent(page, selector, selectorLimit)
+    const content = await readSelectorContent(page, selector, selectorLimit, signal)
     if (content) {
       parts.push(content)
     }
   }
 
-  const pageData = await page.data().catch(() => undefined)
+  const pageData = await awaitWithAbort(signal, () => page.data()).catch(() => undefined)
+  signal?.throwIfAborted()
   if (pageData != null) {
     parts.push(`[page:data] ${stringifyLiveValue(pageData)}`)
   }
@@ -126,15 +109,16 @@ export async function readPageLiveContentRaw(page: any) {
   return parts.join('\n')
 }
 
-export async function readPageLiveContent(page: any, pageUrl: string) {
-  return await withDevToolsReadTimeout(pageUrl, readPageLiveContentRaw(page))
+export async function readPageLiveContent(page: any, pageUrl: string, signal?: AbortSignal) {
+  const timeoutMs = getDevToolsReadTimeoutMs()
+  return withAbortDeadline(timeoutMs, `DevTools live page read timed out after ${timeoutMs}ms: ${pageUrl}`, current => readPageLiveContentRaw(page, current), signal)
 }
 
-export async function readCurrentPageLiveContent(miniProgram: any, fallbackPage: any, pageUrl: string) {
-  const page = await miniProgram.currentPage({ timeout: getDevToolsReadTimeoutMs() })
+export async function readCurrentPageLiveContent(miniProgram: any, fallbackPage: any, pageUrl: string, signal?: AbortSignal) {
+  const page = await awaitWithAbort(signal, () => miniProgram.currentPage({ timeout: getDevToolsReadTimeoutMs() }))
     .catch(() => fallbackPage) ?? fallbackPage
   return {
-    content: await readPageLiveContent(page, pageUrl),
+    content: await readPageLiveContent(page, pageUrl, signal),
     page,
   }
 }

@@ -1,11 +1,10 @@
 import type { CliOptions, HmrMemoryDebugSample, MemoryProcessSample, MemoryUsageSample, PluginProcessSample, WatchSession } from './types'
 import { Buffer } from 'node:buffer'
 import { spawn, spawnSync } from 'node:child_process'
-import { existsSync } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
+import { createPnpmCommand } from '../../../../scripts/pnpm-command.mjs'
 import { assertWatchCommandActive } from './cancellation'
-import { resolvePnpmCommand } from './cli'
 import { createSpawnEnv, createWatchProcessEnv } from './environment'
 
 export { createSpawnEnv } from './environment'
@@ -204,28 +203,6 @@ function resolveCompileFatalError(line: string) {
   }
 }
 
-function resolvePnpmBinary() {
-  const candidate = resolvePnpmCommand()
-  if (path.isAbsolute(candidate) && existsSync(candidate)) {
-    return candidate
-  }
-
-  const resolver = process.platform === 'win32' ? 'where' : 'which'
-  const result = spawnSync(resolver, ['pnpm'], {
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'ignore'],
-  })
-
-  if (result.status === 0 && typeof result.stdout === 'string') {
-    const resolved = result.stdout.split(NEWLINE_SPLIT_RE)[0]?.trim()
-    if (resolved && existsSync(resolved)) {
-      return resolved
-    }
-  }
-
-  return candidate
-}
-
 export function spawnPnpm(
   args: string[],
   options: {
@@ -235,15 +212,13 @@ export function spawnPnpm(
     stdio: 'pipe'
   },
 ) {
-  if (process.platform === 'win32') {
-    return spawn(resolvePnpmBinary(), args, {
-      ...options,
-      shell: true,
-      windowsHide: true,
-    })
-  }
-
-  return spawn(resolvePnpmBinary(), args, options)
+  // 保留调用方已选择的 CLI，避免切到 demo 后被 Corepack 的就近版本声明重新路由。
+  const command = createPnpmCommand(args, { npmExecPath: options.env['npm_execpath'] })
+  return spawn(command.command, command.args, {
+    ...options,
+    shell: command.shell,
+    ...(process.platform === 'win32' ? { windowsHide: true } : {}),
+  })
 }
 
 export function killProcessTreeOnWindows(pid: number) {

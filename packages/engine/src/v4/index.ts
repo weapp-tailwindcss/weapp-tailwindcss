@@ -61,6 +61,7 @@ export type {
   SourceEntry,
   TailwindGenerationArtifact,
   TailwindGenerationSession,
+  TailwindGenerationSessionOptions,
   TailwindV4CandidateSource,
   TailwindV4CompiledSourceRoot,
   TailwindV4CssSource,

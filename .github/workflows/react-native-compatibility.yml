@@ -32,6 +32,8 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm turbo run build --filter=@weapp-tailwindcss/react-native...
+      - run: pnpm --filter @weapp-tailwindcss/react-native typecheck
+      - run: pnpm --filter @weapp-tailwindcss/react-native test --update=none
       - name: Install Playwright Chromium
         run: |
           for attempt in 1 2 3 4; do
@@ -118,6 +120,8 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
       - run: brew install cocoapods
       - run: pnpm install --frozen-lockfile
+      - name: Verify iOS launch reconciliation
+        run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-ios-launch.test.ts e2e/react-native-native-wait.test.ts --update=none
       - run: pnpm turbo run build --filter=@weapp-tailwindcss/react-native...
       - name: Boot iOS simulator
         run: |

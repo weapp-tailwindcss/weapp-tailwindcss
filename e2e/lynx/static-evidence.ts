@@ -44,16 +44,24 @@ function classCandidates(className: string) {
   return className.trim().split(/\s+/).filter(Boolean)
 }
 
-function normalizeDeclarationValue(value: string) {
-  return value
+function normalizeDeclarationValue(value: string, property: string) {
+  const normalized = value
     .trim()
     .replace(/\{\{(--[a-z0-9-]+)\}\}/gi, 'var($1)')
     .replace(/\s+/g, ' ')
+  // opacity 的 50% 和 0.5 是等价期望；50 与 50% 不等价，不能只比较去单位文本。
+  if (property === 'opacity' && /^[+-]?(?:\d+|\d*\.\d+)(?:e[+-]?\d+)?%?$/i.test(normalized)) {
+    const number = normalized.endsWith('%') ? Number(normalized.slice(0, -1)) / 100 : Number(normalized)
+    if (Number.isFinite(number)) {
+      return String(number)
+    }
+  }
+  return normalized
 }
 
 export function declarationMatches(actual: ExpectedDeclaration, expected: ExpectedDeclaration, checkImportant: boolean) {
   return actual.property === expected.property
-    && (expected.value === undefined || (actual.value !== undefined && normalizeDeclarationValue(actual.value) === normalizeDeclarationValue(expected.value)))
+    && (expected.value === undefined || (actual.value !== undefined && normalizeDeclarationValue(actual.value, actual.property) === normalizeDeclarationValue(expected.value, expected.property)))
     && (!checkImportant || expected.important !== true || actual.important === true)
 }
 

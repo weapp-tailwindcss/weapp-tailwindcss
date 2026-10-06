@@ -67,4 +67,13 @@ describe('framework IDE probe retries', () => {
     expect(execa).toHaveBeenCalledOnce()
     expect(write).not.toHaveBeenCalled()
   })
+
+  it('瞬时探针错误同时伴随清理失败时，禁止启动下一轮', async () => {
+    const error = Object.assign(new Error('Framework IDE probe reLaunch timed out'), {
+      stderr: '[e2e:ide:cleanup] Failed to restore IDE project config: disk denied',
+    })
+    execa.mockRejectedValue(error)
+    await expect(runFrameworkIdeProbeWithRetry('fixture', timing)).rejects.toBe(error)
+    expect(execa).toHaveBeenCalledOnce()
+  })
 })

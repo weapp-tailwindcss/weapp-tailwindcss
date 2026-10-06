@@ -4,7 +4,7 @@ import process from 'node:process'
 import { validateComputerUse } from './computer-use'
 import { assertIdentity, writeReport } from './io'
 import { runProbe } from './probe'
-import { checkIds, maxAgeMs, remedies } from './types'
+import { maxAgeMs, remedies, requiredCheckIds } from './types'
 
 type Probe = (id: ProbeId, context: ProbeContext, signal?: AbortSignal) => Promise<Check>
 
@@ -70,7 +70,7 @@ export class PreflightSession {
   assertReady(now = Date.now()) {
     const time = Date.parse(this.report.verifiedAt ?? '')
     if (this.report.status !== 'ready' || !Number.isFinite(time) || time > now || now - time > maxAgeMs
-      || checkIds.some(id => !this.report.checks.some(check => check.id === id && check.status === 'passed'
+      || requiredCheckIds(this.report.extended).some(id => !this.report.checks.some(check => check.id === id && check.status === 'passed'
         && Number.isFinite(Date.parse(check.checkedAt)) && Date.parse(check.checkedAt) <= now
         && now - Date.parse(check.checkedAt) <= maxAgeMs))) {
       throw new Error('预检未全部通过或超过 15 分钟；全面测试禁止启动。')
@@ -92,7 +92,7 @@ export class PreflightSession {
         const result = await validateComputerUse(this.report, this.dir, this.interactionAt)
         Object.assign(check, { status: 'passed', checkedAt: result.evidence.observedAt, detail: '当前会话工具证据与本轮输入/点击回执一致。', evidence: result.files, binding: { provider: result.evidence.provider, session: result.evidence.sessionId } })
         computerVerified = true
-        await this.probes(checkIds.filter((id): id is ProbeId => id !== 'computer-use'), 'verify')
+        await this.probes(requiredCheckIds(this.report.extended).filter((id): id is ProbeId => id !== 'computer-use'), 'verify')
         this.controller.signal.throwIfAborted()
         this.report.verifiedAt = new Date().toISOString()
         this.report.status = 'ready'
@@ -111,16 +111,19 @@ export class PreflightSession {
     })
   }
 
-  async claim(identity: Identity, consumer: string) {
+  async claim(identity: Identity, consumer: string, extended = false) {
     return this.exclusive(async () => {
       if (this.lease) {
         throw new Error('预检报告已领取，不能重复使用。')
       }
       try {
+        if (extended && this.report.extended !== true) {
+          throw new Error('扩展流程必须先执行 pnpm e2e:preflight prepare --extended。')
+        }
         assertIdentity(this.report.identity, identity)
         this.assertReady()
         // 领取前复查所有目标，避免通过验证后关闭设备仍启动构建。
-        await this.probes(checkIds.filter((id): id is ProbeId => id !== 'computer-use'), 'live')
+        await this.probes(requiredCheckIds(this.report.extended).filter((id): id is ProbeId => id !== 'computer-use'), 'live')
         this.controller.signal.throwIfAborted()
         await validateComputerUse(this.report, this.dir, this.interactionAt)
         this.assertReady()
@@ -146,6 +149,9 @@ export class PreflightSession {
       if (!this.lease || lease !== this.lease || this.report.status !== 'running') {
         throw new Error('测试会话已失效或阻断，禁止继续调度。')
       }
+      if (ids.some(id => !requiredCheckIds(this.report.extended).includes(id))) {
+        throw new Error('存活检查目标不属于本轮预检范围。')
+      }
       await this.probes(ids, 'live')
     })
   }
@@ -161,6 +167,6 @@ export class PreflightSession {
   }
 }
 
-export function initialChecks(): Check[] {
-  return checkIds.map(id => ({ id, status: 'not-run', checkedAt: '', detail: '尚未验证。', remedy: remedies[id], evidence: [] }))
+export function initialChecks(extended = false): Check[] {
+  return requiredCheckIds(extended).map(id => ({ id, status: 'not-run', checkedAt: '', detail: '尚未验证。', remedy: remedies[id], evidence: [] }))
 }

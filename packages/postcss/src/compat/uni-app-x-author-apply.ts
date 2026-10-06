@@ -62,8 +62,9 @@ export function retainUniAppXAuthorApplyCss(
     if (options.preserveRuntimeProperties) {
       const retained = postcss.root()
       root.walkRules((rule) => {
-        if (rule.selectors.every(selector => matchesAuthorSelector(normalizeSelector(selector)))) {
-          retained.append(rule.clone())
+        const selectors = rule.selectors.filter(selector => matchesAuthorSelector(normalizeSelector(selector)))
+        if (selectors.length > 0) {
+          retained.append(rule.clone({ selectors }))
         }
       })
       for (const prop of collectUsedTailwindcssV4Variables(retained)) {
@@ -73,7 +74,12 @@ export function retainUniAppXAuthorApplyCss(
     let changed = false
     root.walkRules((rule) => {
       const selectors = rule.selectors ?? [rule.selector]
-      if (selectors.every(selector => matchesAuthorSelector(normalizeSelector(selector)))) {
+      const retainedSelectors = selectors.filter(selector => matchesAuthorSelector(normalizeSelector(selector)))
+      if (retainedSelectors.length > 0) {
+        if (retainedSelectors.length !== selectors.length) {
+          rule.selectors = retainedSelectors
+          changed = true
+        }
         return
       }
       // Web 局部样式仍需要元素级运行时默认值，不能把它们当作 preflight 丢弃。

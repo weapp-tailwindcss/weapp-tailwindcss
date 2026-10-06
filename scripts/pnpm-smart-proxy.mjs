@@ -58,8 +58,66 @@ export function canConnect({ host, port }) {
   })
 }
 
+/** 帮助参数只影响 pnpm 本身，双横线后的参数不参与此判断。 */
+export function isHelpRequest(args) {
+  const separator = args.indexOf('--')
+  const options = separator === -1 ? args : args.slice(0, separator)
+  return commandFromArgs(options) === 'help' || options.some(arg => arg === '--help' || arg === '-h')
+}
+
+/** 跳过带值的全局选项，定位 help 命令而非过滤器中的同名包。 */
+function commandFromArgs(args) {
+  const valuedOptions = new Set(['--dir', '-C', '--filter', '--filter-prod', '-F', '--registry', '--store-dir', '--global-dir', '--config-dir', '--reporter', '--loglevel', '--workspace-concurrency'])
+  for (let index = 0; index < args.length; index++) {
+    const arg = args[index]
+    if (arg === '--') {
+      return undefined
+    }
+    if (valuedOptions.has(arg)) {
+      index++
+      continue
+    }
+    if (!arg.startsWith('-')) {
+      return arg
+    }
+  }
+}
+
 export function shouldRefreshMetadataCache(args) {
-  return args.some(arg => UPDATE_COMMANDS.has(arg))
+  return !isHelpRequest(args) && args.some(arg => UPDATE_COMMANDS.has(arg))
+}
+
+/** Windows 没有 POSIX 信号转发，按本层持有的子进程 PID 定向终止整棵树。 */
+export function terminateChild(child, signal, platform = process.platform, spawnSyncImpl = spawnSync) {
+  if (platform !== 'win32') {
+    return child.kill(signal)
+  }
+  if (!child.pid || child.exitCode !== null || child.signalCode !== null) {
+    return false
+  }
+  const result = spawnSyncImpl('taskkill', ['/pid', String(child.pid), '/t', '/f'], { timeout: 5000, windowsHide: true, stdio: 'ignore' })
+  if (result.error) {
+    throw result.error
+  }
+  if (result.status !== 0) {
+    throw new Error(`子进程树 ${child.pid} 终止失败，退出码：${result.status}`)
+  }
+  return true
+}
+
+/** 逐层转发中断，子进程关闭或启动失败后释放本层监听。 */
+export function forwardChildSignals(child, parent = process) {
+  const interrupt = () => terminateChild(child, 'SIGINT')
+  const terminate = () => terminateChild(child, 'SIGTERM')
+  const cleanup = () => {
+    parent.off('SIGINT', interrupt)
+    parent.off('SIGTERM', terminate)
+  }
+  parent.on('SIGINT', interrupt)
+  parent.on('SIGTERM', terminate)
+  child.once('error', cleanup)
+  child.once('close', cleanup)
+  return cleanup
 }
 
 /**
@@ -207,13 +265,14 @@ export async function main({
     shell: false,
     stdio: 'inherit',
   })
+  forwardChildSignals(child)
 
   child.once('error', (error) => {
     console.error(error)
     process.exit(1)
   })
 
-  child.once('exit', (code, signal) => {
+  child.once('close', (code, signal) => {
     if (signal) {
       process.kill(process.pid, signal)
       return

@@ -7,10 +7,10 @@ import type {
   WatchCase,
   WatchSession,
 } from '../../types'
+import type { ClassOutputEvidence } from './evidence'
 import process from 'node:process'
 import { replaceWxml } from '../../../core/replace-wxml'
 import {
-  assertContainsOneOf,
   getMtime,
   readFileIfExists,
   waitFor,
@@ -23,9 +23,11 @@ import {
   waitForClassOutputBaseline,
   waitForCompileSettled,
   waitForMarkerState,
+  waitForOutputFilesUpdated,
   waitForOutputsUpdated,
 } from '../shared'
 import { buildAddedTailwindClassTokens } from '../tokens'
+import { assertClassTokensInOutput, assertPreviousClassEvidenceRemoved } from './evidence'
 
 interface RunAddedClassMutationOptions {
   watchCase: WatchCase
@@ -45,54 +47,6 @@ interface RunAddedClassMutationOptions {
 
 interface OutputSnapshot { wxml: string, js: string, globalStyle: string }
 
-function htmlEscapeClassToken(value: string) {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-}
-
-function createClassTokenExpectedValues(classToken: string, escapedToken: string | undefined) {
-  const values = new Set<string>()
-  values.add(classToken)
-  values.add(htmlEscapeClassToken(classToken))
-  if (escapedToken) {
-    values.add(escapedToken)
-  }
-  return [...values]
-}
-
-function assertExpectedClassOutput(
-  output: string,
-  watchCase: WatchCase,
-  mutationKind: 'template' | 'script',
-  target: 'wxml' | 'js',
-  label: string,
-  requireAll: boolean,
-  classTokens: string[],
-  escapedClasses: string[],
-) {
-  const expectedValueGroups = classTokens.map((classToken, index) => {
-    return createClassTokenExpectedValues(classToken, escapedClasses[index])
-  })
-
-  if (requireAll) {
-    for (const expectedValues of expectedValueGroups) {
-      assertContainsOneOf(output, expectedValues, `[${watchCase.label}] added-class ${mutationKind} ${target} ${label}`)
-    }
-    return
-  }
-
-  const matched = expectedValueGroups.some((expectedValues) => {
-    return expectedValues.some(value => output.includes(value))
-  })
-
-  if (!matched) {
-    throw new Error(`[${watchCase.label}] added-class ${mutationKind} ${target} ${label}: expected at least one added class token`)
-  }
-}
-
 async function readOutputs(watchCase: WatchCase, globalStyleOutputs: string[]): Promise<OutputSnapshot> {
   const [wxml, js, globalStyle] = await Promise.all([
     readFileIfExists(watchCase.outputWxml),
@@ -106,7 +60,7 @@ async function readOutputs(watchCase: WatchCase, globalStyleOutputs: string[]): 
   }
 }
 
-function assertClassOutputs(
+export function assertClassOutputs(
   outputs: OutputSnapshot,
   watchCase: WatchCase,
   mutationKind: 'template' | 'script',
@@ -121,55 +75,9 @@ function assertClassOutputs(
     throw new Error(`[${watchCase.label}] added-class ${mutationKind} marker missing: ${marker}`)
   }
 
-  if (mutation.verifyEscapedIn.includes('wxml')) {
-    assertExpectedClassOutput(
-      outputs.wxml,
-      watchCase,
-      mutationKind,
-      'wxml',
-      'transformed token',
-      mutation.verifyAllEscapedClasses !== false,
-      classTokens,
-      escapedClasses,
-    )
-  }
-  if (mutation.verifyEscapedIn.includes('js')) {
-    assertExpectedClassOutput(
-      outputs.js,
-      watchCase,
-      mutationKind,
-      'js',
-      'transformed token',
-      mutation.verifyAllEscapedClasses !== false,
-      classTokens,
-      escapedClasses,
-    )
-  }
-
-  if (verifyClassLiteralIn.includes('wxml')) {
-    assertExpectedClassOutput(
-      outputs.wxml,
-      watchCase,
-      mutationKind,
-      'wxml',
-      'literal',
-      mutation.verifyAllClassLiterals !== false,
-      classTokens,
-      escapedClasses,
-    )
-  }
-  if (verifyClassLiteralIn.includes('js')) {
-    assertExpectedClassOutput(
-      outputs.js,
-      watchCase,
-      mutationKind,
-      'js',
-      'literal',
-      mutation.verifyAllClassLiterals !== false,
-      classTokens,
-      escapedClasses,
-    )
-  }
+  const label = `[${watchCase.label}] added-class ${mutationKind}`
+  const evidence = assertClassTokensInOutput(outputs, classTokens, escapedClasses, mutation.verifyEscapedIn, label, mutation.verifyAllEscapedClasses !== false, minRequiredEscapedClasses > 0, mutation.expectedRemovedCssUtilities)
+  evidence.push(...assertClassTokensInOutput(outputs, classTokens, escapedClasses, verifyClassLiteralIn, `${label} literal`, mutation.verifyAllClassLiterals !== false, minRequiredEscapedClasses > 0, mutation.expectedRemovedCssUtilities))
 
   const verifiedEscapedClasses = escapedClasses.filter(escaped => outputs.globalStyle.includes(escaped))
   if (verifiedEscapedClasses.length < minRequiredEscapedClasses) {
@@ -178,7 +86,7 @@ function assertClassOutputs(
     )
   }
 
-  return verifiedEscapedClasses
+  return { verifiedEscapedClasses, evidence }
 }
 
 function buildFreshAddedClassTokens(
@@ -307,6 +215,7 @@ export async function runAddedClassMutation(
     ? 0
     : Math.max(1, Math.min(minRequiredGlobalStyleEscapedClasses, addedClasses.addedEscapedClasses.length))
   let verifiedAddedEscapedClasses: string[] = []
+  let addedEvidence: ClassOutputEvidence[] = []
 
   const hotUpdateStartedAt = Date.now()
   process.stdout.write(
@@ -348,7 +257,7 @@ export async function runAddedClassMutation(
       async () => {
         const outputs = await readOutputs(watchCase, globalStyleOutputs)
         try {
-          verifiedAddedEscapedClasses = assertClassOutputs(
+          const assertion = assertClassOutputs(
             outputs,
             watchCase,
             mutationKind,
@@ -359,6 +268,8 @@ export async function runAddedClassMutation(
             addedClasses.addedEscapedClasses,
             minRequiredEscapedClasses,
           )
+          verifiedAddedEscapedClasses = assertion.verifiedEscapedClasses
+          addedEvidence = assertion.evidence
           return true
         }
         catch (error) {
@@ -399,14 +310,16 @@ export async function runAddedClassMutation(
     `[watch-hmr] ${watchCase.label} mutation=${mutationKind} added-class phase=delete dirty=${sourcePath}\n`,
   )
   await writeFilePreserveEol(sourcePath, sourceAfterRollback, sourceOriginal)
-  const rollbackOutputMs = await waitForOutputsUpdated(
+  const rollbackOutputMs = await waitForOutputFilesUpdated(
     watchCase,
-    mtimeAfterAdd,
+    [watchCase.outputWxml, watchCase.outputJs],
+    new Map([[watchCase.outputWxml, mtimeAfterAdd.wxml], [watchCase.outputJs, mtimeAfterAdd.js]]),
     cliOptions,
     session,
     rollbackStartedAt,
     async () => {
       const outputs = await readOutputs(watchCase, globalStyleOutputs)
+      assertPreviousClassEvidenceRemoved(outputs, addedEvidence, baseScenario.classTokens, `[${watchCase.label}] added-class rollback`, { wxml: baselineWxml, js: baselineJs, globalStyle: baselineGlobalStyle })
       const rollbackMarkerPresent = sourceAfterRollback === sourceOriginal
         || outputs.wxml.includes(rollbackMarker)
         || outputs.js.includes(rollbackMarker)

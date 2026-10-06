@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { forwardChildSignals, isHelpRequest } from './pnpm-smart-proxy.mjs'
 import { writeIntent } from './update-packages/intent'
 import { compareSnapshots, readSnapshot } from './update-packages/snapshot'
 
@@ -17,14 +18,7 @@ interface UpdateResult {
 export function runProxy(args: string[], cwd: string, script = proxyScript): Promise<UpdateResult> {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [script, ...args], { cwd, stdio: 'inherit', shell: false })
-    const interrupt = () => child.kill('SIGINT')
-    const terminate = () => child.kill('SIGTERM')
-    process.on('SIGINT', interrupt)
-    process.on('SIGTERM', terminate)
-    const cleanup = () => {
-      process.off('SIGINT', interrupt)
-      process.off('SIGTERM', terminate)
-    }
+    const cleanup = forwardChildSignals(child)
     child.once('error', (error) => {
       cleanup()
       reject(error)
@@ -47,6 +41,9 @@ export async function updatePackages(args: string[], {
 } = {}): Promise<UpdateResult> {
   let updated = false
   try {
+    if (isHelpRequest(args)) {
+      return await run(args, cwd)
+    }
     const before = await readSnapshot(cwd)
     const result = await run(args, cwd)
     if (result.code !== 0 || result.signal) {

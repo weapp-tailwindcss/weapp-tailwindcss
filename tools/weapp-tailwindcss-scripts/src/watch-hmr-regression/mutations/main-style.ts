@@ -7,15 +7,16 @@ import type {
   WatchCase,
   WatchSession,
 } from '../types'
+import type { ClassOutputEvidence } from './class/evidence'
 import process from 'node:process'
 import { replaceWxml } from '../../core/replace-wxml'
 import { formatPath } from '../cli'
 import {
-  assertContainsOneOf,
   getMtime,
   readFileIfExists,
   writeFilePreserveEol,
 } from '../text'
+import { assertClassTokensInOutput, assertPreviousClassEvidenceRemoved } from './class/evidence'
 import {
   collectPluginProcessMetrics,
   expandOutputFileEntries,
@@ -57,11 +58,7 @@ async function loadOutputs(watchCase: WatchCase, globalStyleOutputs: string[]): 
   }
 }
 
-function createExpectedValues(classToken: string, escaped: string) {
-  return [escaped, classToken]
-}
-
-function assertMainStyleOutputs(
+export function assertMainStyleOutputs(
   watchCase: WatchCase,
   mutation: ClassMutationConfig,
   phase: 'setup' | 'hot-update' | 'rollback',
@@ -69,14 +66,7 @@ function assertMainStyleOutputs(
   escapedClass: string,
   outputs: MainStyleOutputs,
 ) {
-  const expectedValues = createExpectedValues(classToken, escapedClass)
-
-  if (mutation.verifyEscapedIn.includes('wxml')) {
-    assertContainsOneOf(outputs.wxml, expectedValues, `[${watchCase.label}] main-style ${phase} wxml`)
-  }
-  if (mutation.verifyEscapedIn.includes('js')) {
-    assertContainsOneOf(outputs.js, expectedValues, `[${watchCase.label}] main-style ${phase} js`)
-  }
+  const evidence = assertClassTokensInOutput(outputs, [classToken], [escapedClass], mutation.verifyEscapedIn, `[${watchCase.label}] main-style ${phase}`)
 
   if (!outputs.globalStyle.includes(escapedClass)) {
     throw new Error(
@@ -84,7 +74,7 @@ function assertMainStyleOutputs(
     )
   }
 
-  return [escapedClass]
+  return { escapedClasses: [escapedClass], evidence }
 }
 
 function asErrorMessage(error: unknown) {
@@ -100,7 +90,8 @@ export async function runMainStyleHotUpdate(
   sourceOriginal: string,
   globalStyleOutputs: string[],
 ): Promise<MainStyleHotUpdateMetrics> {
-  await waitForClassOutputBaseline(watchCase, options, session, 'template', globalStyleOutputs)
+  const baselineOutputs = await waitForClassOutputBaseline(watchCase, options, session, 'template', globalStyleOutputs)
+  const previousEvidence: ClassOutputEvidence[] = []
 
   const marker = `tw-watch-main-style-${watchCase.name}`
   const fromEscapedClass = replaceWxml(FROM_CLASS_TOKEN)
@@ -137,7 +128,8 @@ export async function runMainStyleHotUpdate(
       setupStartedAt,
       async () => {
         const outputs = await loadOutputs(watchCase, globalStyleOutputs)
-        assertMainStyleOutputs(watchCase, mutation, 'setup', FROM_CLASS_TOKEN, fromEscapedClass, outputs)
+        const assertion = assertMainStyleOutputs(watchCase, mutation, 'setup', FROM_CLASS_TOKEN, fromEscapedClass, outputs)
+        previousEvidence.push(...assertion.evidence)
         return true
       },
       {
@@ -165,7 +157,10 @@ export async function runMainStyleHotUpdate(
         hotUpdateStartedAt,
         async () => {
           const outputs = await loadOutputs(watchCase, globalStyleOutputs)
-          verifiedGlobalStyleEscapedClasses = assertMainStyleOutputs(watchCase, mutation, 'hot-update', TO_CLASS_TOKEN, toEscapedClass, outputs)
+          const assertion = assertMainStyleOutputs(watchCase, mutation, 'hot-update', TO_CLASS_TOKEN, toEscapedClass, outputs)
+          assertPreviousClassEvidenceRemoved(outputs, previousEvidence, [TO_CLASS_TOKEN], `[${watchCase.label}] main-style hot-update`, baselineOutputs)
+          verifiedGlobalStyleEscapedClasses = assertion.escapedClasses
+          previousEvidence.push(...assertion.evidence)
           return true
         },
         {
@@ -204,6 +199,7 @@ export async function runMainStyleHotUpdate(
         rollbackStartedAt,
         async () => {
           const outputs = await loadOutputs(watchCase, globalStyleOutputs)
+          assertPreviousClassEvidenceRemoved(outputs, previousEvidence, [], `[${watchCase.label}] main-style rollback`, baselineOutputs)
           const sourceOriginalHasFromClass = sourceOriginal.includes(FROM_CLASS_TOKEN)
           const removedEscapedClasses = sourceOriginalHasFromClass
             ? [toEscapedClass]

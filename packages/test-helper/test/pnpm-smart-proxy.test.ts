@@ -1,13 +1,18 @@
-import { describe, expect, it } from 'vitest'
+import { EventEmitter } from 'node:events'
+import process from 'node:process'
+import { describe, expect, it, vi } from 'vitest'
 
 import {
   appendUpdateIgnoreSelectors,
   createPnpmEnv,
+  forwardChildSignals,
+  isHelpRequest,
+  isWeappPackageScopedUpdate,
   readUpdateIgnoreDeps,
   refreshUpdateMetadataCache,
   shouldRefreshMetadataCache,
+  terminateChild,
   UPDATE_METADATA_CACHE_PATTERNS,
-  isWeappPackageScopedUpdate,
 } from '../../../scripts/pnpm-smart-proxy.mjs'
 
 describe('pnpm-smart-proxy', () => {
@@ -16,6 +21,54 @@ describe('pnpm-smart-proxy', () => {
     expect(shouldRefreshMetadataCache(['update', '-r'])).toBe(true)
     expect(shouldRefreshMetadataCache(['install'])).toBe(false)
     expect(shouldRefreshMetadataCache(['run', 'build'])).toBe(false)
+  })
+
+  it.each([['--help'], ['-h'], ['up', '--help'], ['update', '-h'], ['help', 'up']])('帮助请求 %j 不清缓存或追加升级参数', (...args) => {
+    expect(shouldRefreshMetadataCache(args)).toBe(false)
+    expect(appendUpdateIgnoreSelectors(args, ['vite'])).toEqual(args)
+  })
+
+  it('不把位置参数或转发参数当作帮助请求', () => {
+    expect(isHelpRequest(['up', 'help'])).toBe(false)
+    expect(isHelpRequest(['up', '--filter', 'help'])).toBe(false)
+    expect(isHelpRequest(['up', '--', '--help'])).toBe(false)
+    expect(isHelpRequest(['up', '--', '-h'])).toBe(false)
+    expect(shouldRefreshMetadataCache(['--dir', 'up', 'help'])).toBe(false)
+  })
+
+  it.each([['--dir', '工作 目录', 'help', 'update'], ['-C', 'work', 'help', 'up'], ['-r', 'help', 'up'], ['--reporter', 'append-only', 'help', 'up'], ['--loglevel', 'error', 'help', 'update']])('前置全局参数 %j 不把帮助目标当作升级命令', (...args) => {
+    expect(isHelpRequest(args)).toBe(true)
+    expect(shouldRefreshMetadataCache(args)).toBe(false)
+  })
+
+  it.each([['--reporter', 'append-only', 'up'], ['--loglevel', 'error', 'update']])('保留带值全局参数 %j 的真实升级行为', (...args) => {
+    expect(shouldRefreshMetadataCache(args)).toBe(true)
+    expect(appendUpdateIgnoreSelectors(args, ['vite'])).toEqual([...args, '!vite'])
+  })
+
+  it.each(['close', 'error'])('向直接子进程转发两种信号并在 %s 后释放监听', (event) => {
+    const parent = new EventEmitter()
+    const child = Object.assign(new EventEmitter(), { kill: vi.fn(), pid: undefined })
+    const cleanup = forwardChildSignals(child, parent as any)
+    parent.emit('SIGINT')
+    parent.emit('SIGTERM')
+    if (process.platform !== 'win32') {
+      expect(child.kill.mock.calls).toEqual([['SIGINT'], ['SIGTERM']])
+    }
+    child.emit(event)
+    cleanup()
+    expect(parent.listenerCount('SIGINT')).toBe(0)
+    expect(parent.listenerCount('SIGTERM')).toBe(0)
+  })
+
+  it('Windows 只终止自己持有的子进程树并报告终止失败', () => {
+    const child = { pid: 12345, exitCode: null, signalCode: null, kill: vi.fn() }
+    const spawn = vi.fn(() => ({ status: 0 }))
+    expect(terminateChild(child, 'SIGTERM', 'win32', spawn as any)).toBe(true)
+    expect(spawn).toHaveBeenCalledWith('taskkill', ['/pid', '12345', '/t', '/f'], expect.objectContaining({ timeout: 5000, windowsHide: true }))
+    expect(child.kill).not.toHaveBeenCalled()
+    expect(() => terminateChild(child, 'SIGTERM', 'win32', (() => ({ status: 1 })) as any)).toThrow('终止失败')
+    expect(terminateChild({ ...child, exitCode: 0 }, 'SIGTERM', 'win32', spawn as any)).toBe(false)
   })
 
   it('loads update ignores and appends pnpm negative selectors', () => {
@@ -38,9 +91,16 @@ update:
     ])
     expect(appendUpdateIgnoreSelectors(['install'], ignoreDeps)).toEqual(['install'])
     expect(appendUpdateIgnoreSelectors([
-      'up', '-rLi', '--filter', './packages/*',
+      'up',
+      '-rLi',
+      '--filter',
+      './packages/*',
     ], ['@babel/*', 'babel-*', '@tarojs/*'])).toEqual([
-      'up', '-rLi', '--filter', './packages/*', '!@tarojs/*',
+      'up',
+      '-rLi',
+      '--filter',
+      './packages/*',
+      '!@tarojs/*',
     ])
     expect(isWeappPackageScopedUpdate(['up', '--filter=@weapp-tailwindcss/babel'])).toBe(true)
     expect(isWeappPackageScopedUpdate(['up', '--filter', '@tarojs/*'])).toBe(false)

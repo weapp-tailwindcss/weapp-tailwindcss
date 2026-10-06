@@ -1,4 +1,4 @@
-import type { PackageResolvingOptions } from 'local-pkg'
+import type { PackageResolvingOptions } from '../tailwindcss/package-options'
 import type { TailwindSourceEntry as SourceEntry } from '../tailwindcss/source-scan'
 import type { TailwindV4SourceOptions } from '../tailwindcss/v4-engine'
 import type { LengthUnitsRuntimeOptions } from '@/tailwindcss/runtime-types'

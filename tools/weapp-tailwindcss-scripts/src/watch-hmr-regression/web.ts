@@ -18,19 +18,14 @@ import {
 } from './session'
 import { waitFor, writeWatchedFilePreserveEol } from './text'
 import { resolveReloadAcceptAttemptTimeout, resolveWebCompileSettleTimeoutMs, waitForWebCompileSettled } from './web-compile-settle'
+import { runWebIconifyHmr } from './web/iconify'
+import { collectStyleText } from './web/style-text'
 
 const LOCAL_URL_RE = /https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\])\S*/i
 const RGB_RE = /^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/
 const DOM_REPLACEMENT_SELECTOR = '[data-tw-watch-web-dom]'
 const WEB_HMR_MARKER_ATTACH_MIN_TIMEOUT_MS = 1_000
 const WEB_HMR_RELOAD_MIN_INTERVAL_MS = 500
-const DEFAULT_ICON_CLASS_TOKENS = [
-  'i-[mdi--github-circle]',
-  'i-[mdi--star]',
-  'i-[svg-spinners--180-ring-with-bg]',
-]
-const DEFAULT_BEFORE_CONTENT_CLASS = 'before:content-[\'现在，让我们开始神奇的_tailwindcss_开发之旅吧！\']'
-const DEFAULT_AFTER_CONTENT_CLASS = 'before:content-[\'现在，让我们继续神奇的_tailwindcss_HMR_回归之旅吧！\']'
 
 export function isWebCompileReadyLogLine(line: string) {
   return /ready in \d+|compiled successfully|compiled with (?:(?:some|\d+) )?warnings?|webpack\s+[\d.]+\s+compiled|webpack compiled|dev server running|(?:^|\s)Local:\s+https?:\/\/|开发服务已就绪|构建完成|编译成功/u.test(line)
@@ -319,22 +314,6 @@ function assertDomReplacement(
   }
 }
 
-async function collectStyleText(page: Page) {
-  return await page.evaluate(() => {
-    const doc = (globalThis as any).document
-    return Array.from(doc.querySelectorAll('style') as ArrayLike<{ textContent: string | null }>)
-      .map(style => style.textContent ?? '')
-      .join('\n')
-  })
-}
-
-async function createCssClassSelectorIncludes(page: Page, classTokens: string[]) {
-  return await page.evaluate((tokens) => {
-    const css = (globalThis as any).CSS
-    return tokens.map(token => `.${css.escape(token)}`)
-  }, classTokens)
-}
-
 export async function waitForWebPageReady(
   page: Pick<Page, 'goto' | 'locator'>,
   url: string,
@@ -616,134 +595,6 @@ async function runSourceDomReplacementSequence(
   }
 
   return results
-}
-
-function insertDefaultWebIconifyProbe(source: string, sourceFile: string, payload: {
-  marker: string
-  classLiteral: string
-}) {
-  const extension = sourceFile.split('?')[0]?.split('#')[0]?.match(/\.[^.\\/]+$/)?.[0]
-  if (extension === '.tsx' || extension === '.jsx' || extension === '.ts' || extension === '.js') {
-    return `${source}\n// ${payload.marker} ${payload.classLiteral}\n`
-  }
-  if (source.includes('</template>')) {
-    return source.replace(
-      '</template>',
-      `  <view class="${payload.classLiteral}">${payload.marker}-web-iconify</view>\n</template>`,
-    )
-  }
-  return `${source}\n<!-- ${payload.marker} ${payload.classLiteral} -->\n`
-}
-
-async function runWebIconifyHmr(
-  watchCase: WatchCase,
-  options: CliOptions,
-  page: Page,
-  config: WebHmrConfig,
-  sourceOriginal: string,
-  waitForCompileSettled: WaitForCompileSettled,
-) {
-  const iconifyConfig = config.iconifyHmr
-  if (!iconifyConfig) {
-    return undefined
-  }
-
-  const iconClassTokens = iconifyConfig.iconClassTokens ?? DEFAULT_ICON_CLASS_TOKENS
-  const beforeContentClass = iconifyConfig.beforeContentClass ?? DEFAULT_BEFORE_CONTENT_CLASS
-  const afterContentClass = iconifyConfig.afterContentClass ?? DEFAULT_AFTER_CONTENT_CLASS
-  const marker = `tw-watch-web-iconify-${watchCase.name}-${Date.now().toString().slice(-6)}`
-  const classLiteral = [...iconClassTokens, beforeContentClass].join(' ')
-  const payload = {
-    marker,
-    classLiteral,
-    iconClassTokens,
-    beforeContentClass,
-    afterContentClass,
-  }
-  const sourceWithProbe = iconifyConfig.mutate
-    ? iconifyConfig.mutate(sourceOriginal, payload)
-    : insertDefaultWebIconifyProbe(sourceOriginal, config.sourceFile, payload)
-  if (sourceWithProbe === sourceOriginal) {
-    throw new Error(`[${watchCase.label}] web iconify HMR probe mutation produced no source change`)
-  }
-  const sourceWithUpdatedContent = sourceWithProbe.replace(beforeContentClass, afterContentClass)
-  if (sourceWithUpdatedContent === sourceWithProbe) {
-    throw new Error(`[${watchCase.label}] web iconify HMR content replacement produced no source change`)
-  }
-
-  const iconCssIncludes = await createCssClassSelectorIncludes(page, iconClassTokens)
-  const beforeContentCssIncludes = await createCssClassSelectorIncludes(page, [beforeContentClass])
-  const afterContentCssIncludes = await createCssClassSelectorIncludes(page, [afterContentClass])
-  const assertStyleIncludes = async (phase: string, contentIncludes: string[]) => {
-    const styleText = await collectStyleText(page)
-    const missingIcons = iconCssIncludes.filter(needle => !styleText.includes(needle))
-    if (missingIcons.length > 0) {
-      throw new Error(`[${watchCase.label}] web iconify HMR ${phase} missing icon CSS selectors: ${missingIcons.join(', ')}`)
-    }
-    const missingContent = contentIncludes.filter(needle => !styleText.includes(needle))
-    if (missingContent.length > 0) {
-      throw new Error(`[${watchCase.label}] web iconify HMR ${phase} missing content CSS selector: ${missingContent.join(', ')}`)
-    }
-  }
-
-  const injectStartedAt = Date.now()
-  process.stdout.write(
-    `[watch-hmr] ${watchCase.label} web iconify-hmr phase=inject icons=${iconClassTokens.join(' | ')}\n`,
-  )
-  await writeWatchedFilePreserveEol(config.sourceFile, sourceWithProbe, sourceOriginal)
-  await waitFor(
-    async () => {
-      try {
-        await assertStyleIncludes('inject', beforeContentCssIncludes)
-        return true
-      }
-      catch {
-        return false
-      }
-    },
-    {
-      timeoutMs: options.timeoutMs,
-      pollMs: options.pollMs,
-      message: `[${watchCase.label}] web iconify HMR probe did not generate expected CSS`,
-    },
-    injectStartedAt,
-  )
-  await waitForCompileSettled(injectStartedAt, 'iconify inject')
-
-  const hotUpdateStartedAt = Date.now()
-  process.stdout.write(
-    `[watch-hmr] ${watchCase.label} web iconify-hmr phase=content content=${afterContentClass}\n`,
-  )
-  await writeWatchedFilePreserveEol(config.sourceFile, sourceWithUpdatedContent, sourceOriginal)
-  const hotUpdateEffectiveMs = await waitFor(
-    async () => {
-      try {
-        await assertStyleIncludes('content', afterContentCssIncludes)
-        return true
-      }
-      catch {
-        return false
-      }
-    },
-    {
-      timeoutMs: options.timeoutMs,
-      pollMs: options.pollMs,
-      message: `[${watchCase.label}] web iconify HMR content update did not preserve icon CSS`,
-    },
-    hotUpdateStartedAt,
-  )
-  await waitForCompileSettled(hotUpdateStartedAt, 'iconify content')
-
-  return {
-    marker,
-    beforeContentClass,
-    afterContentClass,
-    iconClassTokens,
-    contentClassTokens: [beforeContentClass, afterContentClass],
-    preservedIconCssIncludes: iconCssIncludes,
-    verifiedContentCssIncludes: afterContentCssIncludes,
-    hotUpdateEffectiveMs,
-  }
 }
 
 export function resolveChromiumLaunchOptions() {

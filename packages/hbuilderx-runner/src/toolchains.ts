@@ -27,9 +27,9 @@ export function resolveAdbCommand(env: NodeJS.ProcessEnv = process.env): Android
   }
 
   const candidates = [
-    env.ANDROID_HOME,
-    env.ANDROID_SDK_ROOT,
-    env.HOME ? path.join(env.HOME, 'Library/Android/sdk') : undefined,
+    env['ANDROID_HOME'],
+    env['ANDROID_SDK_ROOT'],
+    env['HOME'] ? path.join(env['HOME'], 'Library/Android/sdk') : undefined,
     '/opt/android-sdk',
     '/usr/local/share/android-sdk',
   ].filter((item): item is string => Boolean(item))
@@ -42,9 +42,9 @@ export function resolveAdbCommand(env: NodeJS.ProcessEnv = process.env): Android
         command: adbPath,
         output: candidate.output,
         env: {
-          ANDROID_HOME: env.ANDROID_HOME ?? sdkRoot,
-          ANDROID_SDK_ROOT: env.ANDROID_SDK_ROOT ?? sdkRoot,
-          PATH: `${path.dirname(adbPath)}${path.delimiter}${env.PATH ?? ''}`,
+          ANDROID_HOME: env['ANDROID_HOME'] ?? sdkRoot,
+          ANDROID_SDK_ROOT: env['ANDROID_SDK_ROOT'] ?? sdkRoot,
+          PATH: `${path.dirname(adbPath)}${path.delimiter}${env['PATH'] ?? ''}`,
         },
       }
     }
@@ -84,7 +84,7 @@ export function assertIosSimulatorToolchain(env: NodeJS.ProcessEnv = process.env
     throw new Error([
       '当前机器缺少 iOS 模拟器所需的完整 Xcode 工具链，无法运行 HBuilderX app-ios E2E。',
       `xcode-select: ${xcodeSelect.output || 'unknown'}`,
-      `DEVELOPER_DIR: ${env.DEVELOPER_DIR || '未设置'}`,
+      `DEVELOPER_DIR: ${env['DEVELOPER_DIR'] || '未设置'}`,
       `simctl: ${simctl.output || 'not found'}`,
       `xcodebuild: ${xcodebuild.output || 'not found'}`,
       `firstLaunchStatus: ${firstLaunchStatus?.output || (firstLaunchStatus?.ok === false ? 'not ready' : 'unknown')}`,
@@ -166,7 +166,7 @@ export function selectPreferredIosSimulatorDevice(devices: IosSimulatorDevice[])
 }
 
 export function resolveIosSimulatorDeviceId(env: NodeJS.ProcessEnv = process.env) {
-  const explicitDeviceId = env.E2E_HBUILDERX_IOS_DEVICE_ID
+  const explicitDeviceId = env['E2E_HBUILDERX_IOS_DEVICE_ID']
   if (explicitDeviceId) {
     return explicitDeviceId
   }
@@ -195,9 +195,9 @@ export function resolveIosSimulatorDeviceId(env: NodeJS.ProcessEnv = process.env
 
 export function resolveHdcCommand(env: NodeJS.ProcessEnv = process.env) {
   const candidates = [
-    env.DEMO_VISUAL_HARMONY_HDC_PATH,
-    env.E2E_HBUILDERX_HARMONY_HDC_PATH,
-    env.HDC_PATH,
+    env['DEMO_VISUAL_HARMONY_HDC_PATH'],
+    env['E2E_HBUILDERX_HARMONY_HDC_PATH'],
+    env['HDC_PATH'],
     'hdc',
     process.platform === 'darwin'
       ? '/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/toolchains/hdc'

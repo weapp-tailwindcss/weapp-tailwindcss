@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.build.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noCheck": false,
+    "noEmit": true
+  },
+  "include": [
+    "src/**/*",
+    "types/**/*",
+    "type-tests/vite-hooks.test.ts"
+  ]
+}

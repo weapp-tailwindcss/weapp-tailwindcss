@@ -2618,7 +2618,7 @@ wx-root-portal-content {
   color: var(--nut-dark-color, var(--nut-white, #fff));
 }
 .nut-theme-dark .nut-picker-roller-mask {
-  background-image: linear-gradient(180deg, #1b1b1be6, #1b1b1b66), linear-gradient(0deg, #1b1b1be6, #1b1b1b66);
+  background-image: linear-gradient(180deg, rgba(27, 27, 27, 0.90196), rgba(27, 27, 27, 0.4)), linear-gradient(0deg, rgba(27, 27, 27, 0.90196), rgba(27, 27, 27, 0.4));
   background-position: top, bottom;
   background-repeat: no-repeat;
   z-index: 1;
@@ -2744,7 +2744,7 @@ wx-root-portal-content {
   width: 100%;
 }
 .nut-picker-roller-mask {
-  background-image: linear-gradient(180deg, #ffffffe6, #fff6), linear-gradient(0deg, #ffffffe6, #fff6);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.90196), rgba(255, 255, 255, 0.4)), linear-gradient(0deg, rgba(255, 255, 255, 0.90196), rgba(255, 255, 255, 0.4));
   background-position: top, bottom;
   background-repeat: no-repeat;
   display: block;
@@ -4427,7 +4427,7 @@ wx-root-portal-content {
 .nut-video-play-btn {
   align-items: center;
   background-color: rgba(0, 0, 0, 0.45098);
-  background-color: #00000080;
+  background-color: rgba(0, 0, 0, 0.50196);
   border: 0;
   border-radius: 20%;
   color: #fff;
@@ -5294,7 +5294,7 @@ wx-root-portal-content {
 }
 .nut-animate .nut-animate-flicker::after {
   animation: flicker 1.5s linear infinite;
-  background-image: linear-gradient(106deg, #e8e0ff00 24%, #e8e0ff 91%);
+  background-image: linear-gradient(106deg, rgba(232, 224, 255, 0) 24%, #e8e0ff 91%);
   content: '';
   filter: blur(3rpx);
   height: 60rpx;
@@ -5916,7 +5916,7 @@ wx-root-portal-content {
   --move-distance: '300%';
 }
 .nut-barrage__item {
-  background: linear-gradient(90deg, #00000026, #0000);
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.14902), rgba(0, 0, 0, 0));
   border-radius: 50rpx;
   display: block;
   font-size: 12rpx;

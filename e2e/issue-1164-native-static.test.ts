@@ -5,6 +5,8 @@ import process from 'node:process'
 import { parseSync, traverse } from '@babel/core'
 import fg from 'fast-glob'
 import { expect, it } from 'vitest'
+import { runWithCleanup } from '../scripts/e2e-preflight/cleanup'
+import { createHBuilderXAppProject } from '../scripts/hbuilderx-app-project'
 import { createLocalHBuilderXRunner } from './hbuilderx-local/process'
 
 it.skipIf(process.env['E2E_ISSUE_1164_NATIVE'] !== '1')('原生 CSS 最小对照生成四组 Harmony 样式，未加载 Tailwind 插件', async () => {
@@ -14,9 +16,10 @@ it.skipIf(process.env['E2E_ISSUE_1164_NATIVE'] !== '1')('原生 CSS 最小对照
   await cp(fixture, projectRoot, { recursive: true })
   await symlink(path.resolve(__dirname, '../demo/uni-app-x-vdom-tailwindcss-v4/node_modules'), path.join(projectRoot, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir')
   const runner = await createLocalHBuilderXRunner(projectRoot)
-  try {
-    await runner.run({ args: ['project', 'open', '--path', projectRoot] })
-    await runner.run({ args: ['launch', 'app-harmony', '--project', projectRoot, '--compile', 'true'], timeoutMs: 180_000 })
+  const session = await createHBuilderXAppProject({ projectRoot, platform: 'app-harmony', runner, timeoutMs: 30_000 })
+  await runWithCleanup(async () => {
+    await session.open()
+    await runner.run({ args: ['launch', 'app-harmony', '--project', session.launchProject, '--compile', 'true'], cwd: session.projectRoot, timeoutMs: 180_000 })
     const files = await fg('**/src/main/resources/resfile/**/www/assets/components/*.js', {
       cwd: path.join(projectRoot, 'unpackage/dist/dev/app-harmony'),
       absolute: true,
@@ -54,9 +57,8 @@ it.skipIf(process.env['E2E_ISSUE_1164_NATIVE'] !== '1')('原生 CSS 最小对照
       evidence[path.parse(file).name] = { inline, scoped }
     }
     await expect(`${JSON.stringify(evidence, null, 2)}\n`).toMatchFileSnapshot('__snapshots__/issue-1164/native-control.json')
-  }
-  finally {
-    await runner.run({ args: ['project', 'close', '--path', projectRoot], allowFailure: true }).catch(() => undefined)
+  }, async () => {
+    await session.cleanup()
     await rm(temporary, { recursive: true, force: true, maxRetries: 10, retryDelay: 500 })
-  }
+  })
 }, 240_000)
