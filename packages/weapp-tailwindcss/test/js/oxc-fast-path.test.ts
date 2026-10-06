@@ -113,6 +113,29 @@ describe('OXC JS fast path', () => {
     }
   })
 
+  it('matches Babel condition-test literal semantics', () => {
+    const options = createOptions()
+    const source = [
+      'const direct = candidate === "bg-red-500/50" ? "w-[100px]" : "text-red-500"',
+      'const nested = candidate === resolve("bg-red-500/50") ? "h-[20px]" : "text-blue-500"',
+      'const logical = candidate === "bg-red-500/50" && ready ? "p-[8px]" : "m-[4px]"',
+      'const member = candidate === values["bg-red-500/50"] ? "gap-[6px]" : "space-x-2"',
+      'const unary = !"bg-red-500/50" ? "rounded-[4px]" : "border-[1px]"',
+      'const branch = ready ? "bg-red-500/50" : "text-red-500"',
+      'const argument = useClass("w-[100px]")',
+    ].join('\n')
+
+    const fast = oxcJsHandler(source, options)
+    const babel = jsHandler(source, options)
+
+    expect(fast?.code).toBe(babel.code)
+    expect(fast?.code).toContain('candidate === "bg-red-500/50"')
+    expect(fast?.code).toContain('resolve("bg-red-500/50")')
+    expect(fast?.code).toContain('values["bg-red-500/50"]')
+    expect(fast?.code).toContain('useClass("w-_b100px_B")')
+    expect(fast?.code).toContain('ready ? "bg-red-500_f50"')
+  })
+
   it('falls back to Babel when source maps are requested', () => {
     const options = {
       ...createOptions(),

@@ -16,6 +16,38 @@ interface SourceAnalysis {
   hasTaggedTemplate: boolean
 }
 
+interface OxcAstNode {
+  type: string
+  test?: unknown
+}
+
+const CONDITION_TEST_CHAIN_TYPES = new Set([
+  'BinaryExpression',
+  'CallExpression',
+  'LogicalExpression',
+  'MemberExpression',
+  'UnaryExpression',
+])
+
+/** 与 Babel handler 保持一致，跳过条件表达式 test 中的字面量。 */
+function isConditionTestLiteral(node: OxcAstNode, ancestors: OxcAstNode[]) {
+  let current = node
+
+  for (let index = ancestors.length - 1; index >= 0; index -= 1) {
+    const parent = ancestors[index]
+    if (parent.type === 'ConditionalExpression') {
+      return parent.test === current
+    }
+    if (CONDITION_TEST_CHAIN_TYPES.has(parent.type)) {
+      current = parent
+      continue
+    }
+    return false
+  }
+
+  return false
+}
+
 const MAX_ANALYSIS_BYTES = 2 * 1024 * 1024
 const analysisCache = new LRUCache<string, SourceAnalysis>({ max: 128, maxSize: MAX_ANALYSIS_BYTES })
 
@@ -57,8 +89,10 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
       hasTaggedTemplate: false,
     }
     let size = key.length * 2
+    const ancestors: OxcAstNode[] = []
     walk(result.program, {
       enter(node) {
+        ancestors.push(node)
         if (node.type === 'ImportDeclaration' || node.type === 'ExportAllDeclaration'
           || (node.type === 'ExportNamedDeclaration' && node.source !== null)) {
           analysis.hasModuleDeclarations = true
@@ -72,6 +106,9 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
         if (value === undefined || typeof node.start !== 'number' || typeof node.end !== 'number' || node.start >= node.end) {
           return
         }
+        if (isConditionTestLiteral(node, ancestors.slice(0, -1))) {
+          return
+        }
         analysis.literals.push({
           kind: node.type === 'TemplateElement' ? 'template' : 'string',
           start: node.start,
@@ -79,6 +116,9 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
           value,
         })
         size += 96 + value.length * 2
+      },
+      leave() {
+        ancestors.pop()
       },
     })
     if (size <= MAX_ANALYSIS_BYTES) {
