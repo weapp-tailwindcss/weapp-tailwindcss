@@ -17,23 +17,12 @@ const CONDITION_TEST_CHAIN_TYPES = new Set([
   'UnaryExpression',
 ])
 
-/** 与 Babel handler 保持一致，跳过条件表达式 test 中的字面量。 */
-function isConditionTestLiteral(node: object, ancestors: readonly object[]) {
-  let current = node
+// 只有命中这些词时，字面量才可能进入 Babel 的 class 上下文。
+// 没有提示时跳过逐节点的上下文判断，避免为普通生成代码付出遍历成本。
+const CLASS_CONTEXT_HINT_RE = /class|\b(?:cn|clsx|classnames|twmerge|cva|tv|cx)\b|\br\s*\(/iu
 
-  for (let index = ancestors.length - 1; index >= 0; index -= 1) {
-    const parent = ancestors[index] as { type?: string, test?: unknown }
-    if (parent.type === 'ConditionalExpression') {
-      return parent.test === current
-    }
-    if (parent.type && CONDITION_TEST_CHAIN_TYPES.has(parent.type)) {
-      current = parent
-      continue
-    }
-    return false
-  }
-
-  return false
+function hasClassContextHint(source: string) {
+  return CLASS_CONTEXT_HINT_RE.test(source)
 }
 
 const MAX_ANALYSIS_BYTES = 2 * 1024 * 1024
@@ -84,6 +73,9 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
     }
     let requiresBabel = false
     const ancestors: object[] = []
+    const conditionTestStates: boolean[] = []
+    let conditionTestContext = false
+    const classContextHint = hasClassContextHint(rawSource)
     // 只记录当前上下文边界节点；普通 AST 节点不再各自分配一个布尔栈项。
     let classContextNode: object | undefined
     walk(result.program, {
@@ -106,7 +98,22 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
           ? node.value
           : node.type === 'TemplateElement' ? node.value.raw : undefined
         const parent = ancestors.at(-1) as { type?: string, directive?: unknown, expression?: unknown } | undefined
-        const classContext = classContextNode !== undefined || isClassContextChild(node, parent)
+        const previousConditionTestContext = conditionTestContext
+        if (parent?.type === 'ConditionalExpression') {
+          conditionTestContext = parent.test === node
+        }
+        else if (conditionTestContext && parent?.type && CONDITION_TEST_CHAIN_TYPES.has(parent.type)) {
+          conditionTestContext = true
+        }
+        else {
+          conditionTestContext = false
+        }
+        conditionTestStates.push(previousConditionTestContext)
+        const classContextParent = parent?.type === 'Property'
+          || parent?.type === 'JSXAttribute'
+          || parent?.type === 'CallExpression'
+        const classContext = classContextNode !== undefined
+          || (classContextHint && classContextParent && isClassContextChild(node, parent))
         if (classContextNode === undefined && classContext) {
           classContextNode = node
         }
@@ -126,7 +133,7 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
               start,
               end,
               value,
-              isConditionTest: isConditionTestLiteral(node, ancestors),
+              isConditionTest: conditionTestContext,
               classContext,
             })
           }
@@ -135,6 +142,7 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
       },
       leave(node) {
         ancestors.pop()
+        conditionTestContext = conditionTestStates.pop() ?? false
         if (classContextNode === node) {
           classContextNode = undefined
         }
