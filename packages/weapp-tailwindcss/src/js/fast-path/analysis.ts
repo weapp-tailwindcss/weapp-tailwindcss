@@ -121,8 +121,7 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
               end,
               value,
               isConditionTest: isConditionTestLiteral(node, ancestors),
-              // classContext 只影响带斜杠的路径候选；普通字面量无需扫描祖先链。
-              classContext: value.includes('/') && isClassContextLiteral(node, ancestors),
+              classContext: isClassContextLiteral(node, ancestors),
             })
           }
         }
