@@ -7,7 +7,7 @@ import * as loader from '@/js/oxc-parser/loader'
 describe('Oxc 解析传输与回退', () => {
   afterEach(() => vi.restoreAllMocks())
 
-  const source = 'const cls = "w-[10px]"'
+  const source = `${'const cls = "w-[10px]"; '.repeat(64)}const cls = "w-[10px]"`
   const result = parseSync('entry.js', source)
   const options = Object.freeze({ lang: 'js' as const, sourceType: 'module' as const, preserveParens: false })
 
@@ -37,6 +37,17 @@ describe('Oxc 解析传输与回退', () => {
 
     expect(rawTransferSupported).toHaveBeenCalledOnce()
     expect(parse).toHaveBeenNthCalledWith(2, 'runtime.tsx', source, { lang: 'tsx', sourceType: 'unambiguous' })
+  })
+
+  it('小源码跳过 raw transfer，避免跨边界成本超过普通 AST', () => {
+    const smallSource = 'const cls = "w-[10px]"'
+    const parse = vi.fn<OxcParser['parseSync']>().mockReturnValue(result)
+    const rawTransferSupported = vi.fn(() => true)
+    useParser({ parseSync: parse, rawTransferSupported })
+
+    expect(parseOxcSync('entry.js', smallSource, options)).toBe(result)
+    expect(rawTransferSupported).not.toHaveBeenCalled()
+    expect(parse).toHaveBeenCalledExactlyOnceWith('entry.js', smallSource, options)
   })
 
   it.each([

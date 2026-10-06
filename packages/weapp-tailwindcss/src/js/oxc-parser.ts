@@ -6,6 +6,9 @@ export { isOxcParserRuntimeSupported, loadOxcParser } from './oxc-parser/loader'
 type OxcParseOptions = NonNullable<Parameters<OxcParser['parseSync']>[2]>
 type OxcParseTransport = 'auto' | 'ast'
 
+// raw transfer 的固定跨边界成本在小片段上高于普通 AST；只对较大源码启用。
+const RAW_TRANSFER_MIN_SOURCE_LENGTH = 1024
+
 const rawTransferSupportCache = new WeakMap<object, boolean>()
 
 function supportsRawTransfer(parser: OxcParser) {
@@ -40,7 +43,7 @@ export function parseOxcSync(
     return undefined
   }
 
-  if (transport === 'auto' && supportsRawTransfer(parser)) {
+  if (transport === 'auto' && sourceText.length >= RAW_TRANSFER_MIN_SOURCE_LENGTH && supportsRawTransfer(parser)) {
     try {
       const rawOptions = { ...options, experimentalRawTransfer: true }
       return parser.parseSync(filename, sourceText, rawOptions)
