@@ -24,6 +24,9 @@ runs:
         key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
         restore-keys: |
           playwright-${{ runner.os }}-
-    - name: Install dependencies
+    - name: Install dependencies with timeout and retry
       shell: bash
-      run: pnpm install --frozen-lockfile
+      env:
+        PNPM_INSTALL_ATTEMPTS: '2'
+        PNPM_INSTALL_TIMEOUT_MS: '600000'
+      run: node scripts/ci/install-workspace.mjs
