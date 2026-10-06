@@ -9,6 +9,7 @@ import staticEvidence from '../examples/react-lynx/src/compatibility/static-evid
 import { darkReceipts } from './lynx/fixtures/dark-images'
 import { effectFixtureImage } from './lynx/fixtures/effect-images'
 import { structuralImage } from './lynx/fixtures/structural-images'
+import { textFlowImage } from './lynx/fixtures/text-flow-images'
 import { finalizeNativePixelEffects, validateNativePixelEvidence } from './lynx/pixel-evidence'
 import { PNG } from './lynx/png'
 import { validateNativeReport } from './lynx/reports'
@@ -236,6 +237,7 @@ it('宿主只判定待验收效果，保留原始采集报告且无效图不能�
     'effect-shadow': 'unsupported',
     'transform-skew': 'supported',
     'variant-structural': 'supported',
+    'type-flow': 'supported',
   })
   await fs.writeFile(path.join(crops, 'effect-shadow-control.png'), 'broken PNG')
   await expect(finalizeNativePixelEffects(report, crops)).rejects.toThrow('无法解码')
@@ -295,4 +297,24 @@ it.each(['missing-reference', 'bad-control', 'bad-reference', 'false-supported',
   }
   await fs.writeFile(reportPath, JSON.stringify(report))
   await expect(readPixelReport(reportPath, 'android')).rejects.toThrow(/variant-structural|结构选择器/)
+})
+
+it.each(['missing-reference', 'bad-control', 'bad-reference', 'false-supported', 'old-geometry'] as const)('文字流的 %s 不能进入完整报告验收', async (mode) => {
+  const { crops, report, reportPath } = await fixture()
+  const result = report.results.find(item => item.id === 'type-flow')!
+  if (mode === 'missing-reference') {
+    await fs.rm(path.join(crops, 'type-flow-reference.png'))
+  }
+  else if (mode === 'bad-control' || mode === 'bad-reference') {
+    const frame = mode === 'bad-control' ? 'control' : 'reference'
+    await fs.writeFile(path.join(crops, `type-flow-${frame}.png`), PNG.sync.write(textFlowImage(1, 'empty')))
+  }
+  else if (mode === 'false-supported') {
+    await fs.copyFile(path.join(crops, 'type-flow-control.png'), path.join(crops, 'type-flow-probe.png'))
+  }
+  else {
+    result.checkpoints = [{ name: 'geometry:probe-vs-control', passed: true }]
+  }
+  await fs.writeFile(reportPath, JSON.stringify(report))
+  await expect(readPixelReport(reportPath, 'android')).rejects.toThrow(/type-flow|文字流/)
 })

@@ -18,6 +18,7 @@ vi.mock('./catalog', async (importOriginal) => {
       'transform-skew',
       'variant-dark',
       'variant-structural',
+      'type-flow',
     ].includes(item.id)),
   }
 })
@@ -123,7 +124,7 @@ it('动画及 transition 全部采集稳定画布，状态变化仍作用于被�
   expect(captures.filter(id => id === 'probe-container-transition-basic')).toHaveLength(3)
   expect(captures.filter(id => id === 'probe-container-variant-state')).toHaveLength(2)
   expect(mutations).toEqual(['#probe-transition-basic', 'probe-variant-state:true', 'probe-variant-state:false'])
-  expect(report.results.filter(result => !['background-linear-gradient', 'effect-shadow', 'transform-skew', 'variant-dark', 'variant-structural'].includes(result.id)).every(result => result.status === 'supported')).toBe(true)
+  expect(report.results.filter(result => !['background-linear-gradient', 'effect-shadow', 'transform-skew', 'variant-dark', 'variant-structural', 'type-flow'].includes(result.id)).every(result => result.status === 'supported')).toBe(true)
 })
 
 it('合成画布缺失时拒绝发布报告，不退回元素自身截图', async () => {
@@ -136,7 +137,7 @@ it('合成画布缺失时拒绝发布报告，不退回元素自身截图', asyn
 it('等待最后一帧的真实写入回执后才发布报告', async () => {
   const { report, error } = await collect({ receipt: 'late' })
   expect(error).toBeUndefined()
-  expect(report.evidence?.artifacts).toHaveLength(26)
+  expect(report.evidence?.artifacts).toHaveLength(29)
 })
 
 it.each(['wrong-run', 'missing', 'failed'] as const)('%s 回执禁止发布报告', async (receipt) => {
@@ -183,4 +184,16 @@ it('结构选择器包含普通文字与显式效果两种对照，指纹不同�
   ])
   expect(report.results.find(item => item.id === 'variant-structural')).toMatchObject({ status: 'not-tested' })
   expect(report.evidence!.artifacts.filter(item => item.name.startsWith('variant-structural'))).toHaveLength(3)
+})
+
+it('文字流采集三张独立画布，不再用容器几何变化推断行内及空白语义', async () => {
+  const { report, captures, measurements } = await collect()
+  expect(captures.filter(id => id.includes('type-flow'))).toEqual([
+    'probe-container-type-flow',
+    'control-container-type-flow',
+    'reference-container-type-flow',
+  ])
+  expect(measurements.some(id => id.includes('type-flow'))).toBe(false)
+  expect(report.results.find(item => item.id === 'type-flow')).toMatchObject({ status: 'not-tested' })
+  expect(report.evidence!.artifacts.filter(item => item.name.startsWith('type-flow'))).toHaveLength(3)
 })

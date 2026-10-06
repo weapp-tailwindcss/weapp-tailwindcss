@@ -31,6 +31,21 @@ function probeNodes(id: string) {
 }
 
 describe('Lynx compatibility text fixtures', () => {
+  it('文字流由真实行内标记和包含空白、硬换行及软换行的 text 分别消费', () => {
+    const { probe, control } = probeNodes('type-flow')
+    for (const [node, tested] of [[probe, true], [control, false]] as const) {
+      const nodes = elements(node)
+      const line = nodes.find(child => child.type === 'text' && child.props.className === 'probe-flow-line')!
+      const marker = elements(line).find(child => child.type === 'view')!
+      expect(marker).toBeDefined()
+      expect(String(marker.props.className).split(/\s+/).includes('align-middle')).toBe(tested)
+      const flow = nodes.find(child => String(child.props.className).split(/\s+/).includes('probe-flow-text'))!
+      expect(flow.type).toBe('text')
+      expect(String(flow.props.className).split(/\s+/).includes('whitespace-pre-wrap')).toBe(tested)
+      expect(flow.props.children).toBe('X  X\nX X X X X X')
+    }
+  })
+
   it('结构选择器由三个真实兄弟 text 消费，包含命中和非命中位置', () => {
     const { item, probe, control } = probeNodes('variant-structural')
     for (const [node, prefix] of [[probe, 'probe'], [control, 'control']] as const) {

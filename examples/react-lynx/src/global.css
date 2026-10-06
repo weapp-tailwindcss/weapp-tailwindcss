@@ -3,6 +3,7 @@
 @import './styles/flex-fixtures.css' layer(components);
 @import './styles/dark-fixtures.css' layer(components);
 @import './styles/structural-fixtures.css' layer(components);
+@import './styles/flow-fixtures.css' layer(components);
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities) source(none);
 @source './**/*.{ts,tsx}';

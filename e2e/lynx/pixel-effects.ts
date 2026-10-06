@@ -123,7 +123,7 @@ function shadow(probe: PngPixels, control: PngPixels) {
 
 /** 以真实效果决定支持状态；不从截图指纹、差异面积或已提交基线推断。 */
 export function evaluatePixelEffect(id: string, probe: PngPixels, control: PngPixels): NativeCaseResult | undefined {
-  if (!requiresPixelEffect(id) || id === 'variant-structural') {
+  if (!requiresPixelEffect(id) || id === 'variant-structural' || id === 'type-flow') {
     return undefined
   }
   if (probe.width !== probe.height || probe.width < 160 || probe.width !== control.width || probe.height !== control.height) {

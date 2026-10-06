@@ -3,9 +3,13 @@ import { PNG } from '../png'
 import { darkImage } from './dark-images'
 import { skewImage } from './skew-images'
 import { structuralImage } from './structural-images'
+import { textFlowImage } from './text-flow-images'
 
 /** ce65d0626 的原始 Android 局部图：utility 移除了默认效果，却没有绘制预期效果。 */
 export async function effectFixtureImage(id: string, frame: string) {
+  if (id === 'type-flow') {
+    return PNG.sync.write(textFlowImage(1, frame === 'control' ? 'control' : 'expected'))
+  }
   if (id === 'variant-structural') {
     return PNG.sync.write(structuralImage(1, frame === 'control' ? 'plain' : 'expected'))
   }

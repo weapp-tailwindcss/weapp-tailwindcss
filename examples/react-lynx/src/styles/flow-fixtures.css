@@ -1,0 +1,52 @@
+.probe-flow-panel {
+  position: relative;
+  width: 128px;
+  height: 136px;
+}
+
+.probe-flow-line {
+  display: block;
+  width: 120px;
+  height: 48px;
+  font-size: 40px;
+  line-height: 48px;
+  color: #132026;
+  white-space: nowrap;
+}
+
+.probe-flow-marker {
+  /* 原生 text 将子 view 当作行内附件；此声明供浏览器映射相同角色。 */
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  vertical-align: top;
+  background-color: #0ea5e9;
+}
+
+.probe-flow-middle {
+  vertical-align: middle;
+}
+
+.probe-flow-text,
+.probe-flow-reference {
+  position: absolute;
+  top: 60px;
+  left: 0;
+  width: 78px;
+  height: 72px;
+}
+
+.probe-flow-text,
+.probe-flow-row {
+  display: block;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 24px;
+  color: #132026;
+  white-space: nowrap;
+}
+
+.probe-flow-row {
+  width: 78px;
+  height: 24px;
+}

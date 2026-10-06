@@ -13,6 +13,7 @@ import { verifyGridFixtures } from './lynx/grid-fixture-browser'
 import { verifySkewFixture } from './lynx/skew-fixture-browser'
 import { analyzeStaticEvidence } from './lynx/static-evidence'
 import { verifyStructuralFixture } from './lynx/structural-fixture-browser'
+import { verifyTextFlowFixture } from './lynx/text-flow-fixture-browser'
 
 const bundlePath = path.join(exampleDir, 'dist', 'main.lynx.bundle')
 let encoderLog = ''
@@ -187,6 +188,10 @@ describe('ReactLynx Rspeedy compatibility evidence', () => {
 
   it('结构选择器在真实兄弟位置生效且每条 utility 都不可删除', async () => {
     await verifyStructuralFixture(await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8'))
+  }, 30_000)
+
+  it('文字流由真实行内上下文和独立手工分行对照验证', async () => {
+    await verifyTextFlowFixture(await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8'))
   }, 30_000)
 
   it('dark 的真实文字夹具只响应媒体颜色模式', async () => {

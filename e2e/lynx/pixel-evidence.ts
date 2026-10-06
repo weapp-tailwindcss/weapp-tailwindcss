@@ -9,6 +9,13 @@ import { evaluateColorScheme, validateColorSchemeReceipts } from './color-scheme
 import { evaluatePixelEffect } from './pixel-effects'
 import { PNG } from './png'
 import { evaluateStructural } from './structural'
+import { evaluateTextFlow } from './text-flow'
+
+const sequenceEvaluators: Record<string, (images: PngPixels[]) => ReturnType<typeof evaluateStructural>> = {
+  'variant-dark': evaluateColorScheme,
+  'variant-structural': evaluateStructural,
+  'type-flow': evaluateTextFlow,
+}
 
 const staticById = new Map((staticEvidenceJson as StaticEvidenceReport).results.map(item => [item.id, item]))
 
@@ -50,13 +57,13 @@ export async function finalizeNativePixelEffects(raw: NativePlatformReport, crop
     if (result.status !== 'not-tested') {
       throw new Error(`${result.id} 原始采集报告不能预先声明预期效果结论`)
     }
-    if (result.id === 'variant-dark' || result.id === 'variant-structural') {
+    const evaluate = sequenceEvaluators[result.id]
+    if (evaluate) {
       if (result.id === 'variant-dark') {
         validateColorSchemeReceipts(result, report.evidence?.runId)
       }
       const item = compatibilityCases.find(item => item.id === result.id)!
       const frames = evidenceSequence(item, built)!.frames
-      const evaluate = result.id === 'variant-dark' ? evaluateColorScheme : evaluateStructural
       const measured = evaluate(await Promise.all(frames.map(frame => readPixels(path.join(cropsDirectory, `${result.id}-${frame}.png`)))))
       Object.assign(result, measured)
       if (measured.status === 'supported') {
@@ -95,11 +102,12 @@ export async function validateNativePixelEvidence(report: NativePlatformReport, 
         throw new Error(`${report.platform}:${item.id} 缺少 ${sequence.checkpoint} checkpoint`)
       }
       const images = await Promise.all(sequence.frames.map(frame => readPixels(path.join(cropsDirectory, `${item.id}-${frame}.png`))))
-      if (item.id === 'variant-dark' || item.id === 'variant-structural') {
+      const evaluate = sequenceEvaluators[item.id]
+      if (evaluate) {
         if (item.id === 'variant-dark') {
           validateColorSchemeReceipts(result!, report.evidence?.runId)
         }
-        const measured = item.id === 'variant-dark' ? evaluateColorScheme(images) : evaluateStructural(images)
+        const measured = evaluate(images)
         const expected = measured.checkpoints[0]!
         if (result?.status !== measured.status || result.reason !== measured.reason || result.failureStage !== measured.failureStage
           || result.checkpoints.length !== 1 || Object.entries(expected).some(([key, value]) => checkpoint[key as keyof typeof expected] !== value)) {
