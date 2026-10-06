@@ -91,7 +91,7 @@ function transformSelectors(selectors: Root, context: TransformContext) {
 }
 
 // createRuleTransformer 结合上下文执行器与 parser，生成可复用的规则转换函数
-function createRuleTransformer(options: IStyleHandlerOptions): RuleTransformer {
+export function createRuleTransformer(options: IStyleHandlerOptions): RuleTransformer {
   let context: TransformContext | undefined
   const selectorResultCache = new Map<string, CachedSelectorTransformResult>()
   const selectorResultCacheLimit = 50000
@@ -204,6 +204,17 @@ function createRuleTransformer(options: IStyleHandlerOptions): RuleTransformer {
       })
     }
   }
+}
+
+/**
+ * 为一次完整 PostCSS 管线建立不可变的选择器转换器。
+ *
+ * 管线创建阶段已经拿到本轮选项，先复制会影响选择器的数组和映射，
+ * 后续每条规则无需重复做可变配置探测；直接调用 ruleTransformSync 的
+ * 场景仍保留逐次探测，兼容外部原地修改配置的行为。
+ */
+export function createStableRuleTransformer(options: IStyleHandlerOptions): RuleTransformer {
+  return createRuleTransformer(resolveSelectorTransformOptions(options))
 }
 
 // ruleTransformSync 提供同步的规则转换入口，并基于配置缓存转换器

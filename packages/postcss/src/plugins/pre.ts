@@ -15,6 +15,8 @@ import {
 import { postcssPlugin } from '../constants'
 import { commonChunkPreflight } from '../mp'
 import { ruleTransformSync } from '../selectorParser'
+import { createStableRuleTransformer } from '../selectorParser/rule-transformer'
+import { isSelectorTransformOptionsStable } from '../selectorParser/rule-transformer/options'
 
 export type PostcssWeappTailwindcssRenamePlugin = PluginCreator<IStyleHandlerOptions>
 
@@ -107,12 +109,15 @@ const postcssWeappTailwindcssPrePlugin: PostcssWeappTailwindcssRenamePlugin = (
   options,
 ) => {
   const opts = defu(options, { isMainChunk: true })
+  const transformRule = isSelectorTransformOptionsStable(options)
+    ? createStableRuleTransformer(opts)
+    : (rule: Rule) => ruleTransformSync(rule, opts)
 
   const p: Plugin = {
     postcssPlugin,
     Rule(rule) {
       // 统一通过 selectorParser 做兼容性替换
-      ruleTransformSync(rule, opts)
+      transformRule(rule)
     },
     AtRule(atRule) {
       if (isAtMediaHover(atRule)) {

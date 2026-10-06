@@ -18,6 +18,7 @@ import { postcssWeappTailwindcssPostPlugin } from './plugins/post'
 import { postcssWeappTailwindcssPrePlugin } from './plugins/pre'
 import { createPresetEnvPlugin } from './plugins/preset-env'
 import { createUserPluginStage } from './plugins/user-plugin-stage'
+import { markSelectorTransformOptionsStable } from './selectorParser/rule-transformer/options'
 
 export type PipelineStage = 'pre' | 'normal' | 'post'
 
@@ -244,6 +245,7 @@ function createPreparedNodes(options: IStyleHandlerOptions, signal?: FeatureSign
 export function createStylePipeline(options: IStyleHandlerOptions, signal?: FeatureSignal): StyleProcessingPipeline {
   // 管线创建前先初始化上下文，以便各插件共享状态
   options.ctx = createContext()
+  markSelectorTransformOptionsStable(options)
 
   const preparedNodes = createPreparedNodes(options, signal)
   const frameworkProfile = resolvePostcssFrameworkProfile(options)

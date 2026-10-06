@@ -1,6 +1,17 @@
 import type { IStyleHandlerOptions } from '../../types'
 import { resolveCssEscapeMap } from '../../utils/escape-map'
 
+const stableSelectorOptions = new WeakSet<object>()
+
+/** 标记由 PostCSS 管线持有的本轮不可变选项，避免每条规则重复探测配置。 */
+export function markSelectorTransformOptionsStable(options: IStyleHandlerOptions) {
+  stableSelectorOptions.add(options)
+}
+
+export function isSelectorTransformOptionsStable(options?: IStyleHandlerOptions) {
+  return options !== undefined && stableSelectorOptions.has(options)
+}
+
 function sameReplacement(current: string | false | string[] | undefined, previous: string | false | string[] | undefined) {
   if (Array.isArray(current)) {
     return Array.isArray(previous)
