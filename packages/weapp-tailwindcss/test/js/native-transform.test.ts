@@ -80,6 +80,15 @@ describe('Rust 完整 JS 转换适配器', () => {
     expect(native.transformer.transform).not.toHaveBeenCalled()
   })
 
+  it('不同 class set 共享同一有效映射的原生实例', async () => {
+    const { nativeJsHandler } = await import('@/js/fast-path/native')
+    const first = new Set(['w-[100px]'])
+    const second = new Set(['h-[100px]'])
+    nativeJsHandler(source, { ...options, classNameSet: first })
+    nativeJsHandler(source, { ...options, classNameSet: second })
+    expect(native.compiler.createJsTransformer).toHaveBeenCalledExactlyOnceWith([], expect.any(Array))
+  })
+
   it('自定义映射同对象变更与删除使原生实例失效，并补齐默认映射', async () => {
     const { nativeJsHandler } = await import('@/js/fast-path/native')
     const map: Record<string, string> = { '[': '_left' }

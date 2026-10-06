@@ -8,35 +8,63 @@ import { isPlainClassNameSet } from '../options-signature'
 import { canAttemptOxcJsFastPath } from './oxc'
 import { getParserLang, getParserSourceType } from './parser-options'
 
-interface TransformerEntry {
-  mapping: string
-  transformer: NativeJsTransformer
+const caches = new WeakMap<NativeCompiler, Map<string, NativeJsTransformer>>()
+const frozenMappingEntries = new WeakMap<object, { mapping: string, entries: { character: string, replacement: string }[] }>()
+const emptyClasses = new Set<string>()
+const MAX_TRANSFORMER_CACHE_ENTRIES = 32
+
+function createMappingEntries(escapeMap: IJsHandlerOptions['escapeMap']) {
+  const entries = Object.entries({ ...MappingChars2String, ...escapeMap })
+    .filter(([key]) => key.length === 1 && key.charCodeAt(0) < 128)
+    .map(([character, replacement]) => ({ character, replacement }))
+  return { mapping: JSON.stringify(entries), entries }
 }
 
-const caches = new WeakMap<NativeCompiler, WeakMap<Set<string>, TransformerEntry>>()
-const emptyClasses = new Set<string>()
+function isFrozenDataRecord(value: object) {
+  if (!Object.isFrozen(value)) {
+    return false
+  }
+  return Object.values(Object.getOwnPropertyDescriptors(value)).every(descriptor => 'value' in descriptor)
+}
+
+function getMappingEntries(escapeMap: IJsHandlerOptions['escapeMap']) {
+  // 配置快照由 createJsHandler 冻结；冻结对象不会再发生原地变更，可以跨 class set 复用映射。
+  if (escapeMap && isFrozenDataRecord(escapeMap)) {
+    const cached = frozenMappingEntries.get(escapeMap)
+    if (cached) {
+      return cached
+    }
+    const created = createMappingEntries(escapeMap)
+    frozenMappingEntries.set(escapeMap, created)
+    return created
+  }
+  // 可变映射必须每次重算，保持直接调用 nativeJsHandler 的原地修改语义。
+  return createMappingEntries(escapeMap)
+}
 
 function getTransformer(compiler: NativeCompiler, options: IJsHandlerOptions) {
   let cache = caches.get(compiler)
   if (!cache) {
-    cache = new WeakMap()
+    cache = new Map()
     caches.set(compiler, cache)
   }
-  const classes = options.classNameSet ?? emptyClasses
-  // 传入最终有效映射，不让 Rust 重复维护默认字典；按内容识别原地修改。
-  const entries = Object.entries({ ...MappingChars2String, ...options.escapeMap })
-    .filter(([key]) => key.length === 1 && key.charCodeAt(0) < 128)
-    .map(([character, replacement]) => ({ character, replacement }))
-  const mapping = JSON.stringify(entries)
-  const cached = cache.get(classes)
-  if (cached && cached.mapping === mapping) {
-    return cached.transformer
+  // 原生实例不保存 class set，集合成员由每次调用的候选回调查询；按有效映射内容共享实例。
+  const { mapping, entries } = getMappingEntries(options.escapeMap)
+  const cached = cache.get(mapping)
+  if (cached) {
+    return cached
   }
   const transformer = compiler.createJsTransformer([], entries)
   if (transformer === null) {
     return undefined
   }
-  cache.set(classes, { mapping, transformer })
+  if (cache.size >= MAX_TRANSFORMER_CACHE_ENTRIES) {
+    const oldest = cache.keys().next().value
+    if (oldest !== undefined) {
+      cache.delete(oldest)
+    }
+  }
+  cache.set(mapping, transformer)
   return transformer
 }
 
