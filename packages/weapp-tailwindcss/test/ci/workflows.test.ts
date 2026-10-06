@@ -704,8 +704,8 @@ describe('ci workflows', () => {
     const downloadStep = releaseSteps.find(step => step.name === 'Download same-commit coverage certificate')
     const validateStep = releaseSteps.find(step => step.name === 'Validate release certificate')
 
-    expect(downloadStep.if).toBe("inputs.mode == 'publish' || inputs.mode == 'publish-unpublished'")
-    expect(validateStep.if).toBe("inputs.mode == 'publish' || inputs.mode == 'publish-unpublished'")
+    expect(downloadStep.if).toBe("inputs.oidc_audit != true && (inputs.mode == 'publish' || inputs.mode == 'publish-unpublished')")
+    expect(validateStep.if).toBe("inputs.oidc_audit != true && (inputs.mode == 'publish' || inputs.mode == 'publish-unpublished')")
     expect(source).toContain('RELEASE_CERTIFICATE_RUN_ID: ${{ vars.RELEASE_CERTIFICATE_RUN_ID }}')
     expect(source).toContain('Release certificate is not configured')
     expect(source).toContain('gh run view "$run_id" --json headSha,status,conclusion')
@@ -714,6 +714,19 @@ describe('ci workflows', () => {
     expect(source).toContain('certificate_name="coverage-certificate-$GITHUB_SHA"')
     expect(source).toContain('did not upload the required $certificate_name artifact')
     expect(source).not.toContain('gh run list --workflow e2e-coverage-nightly.yml')
+  })
+
+  it('核验 OIDC 时独立检查全部包并阻断发布、证书和覆盖率步骤', () => {
+    const { workflow } = readWorkflow('release.yml')
+    const steps: Array<Record<string, any>> = workflow.jobs.release.steps
+    expect(workflow.on.workflow_dispatch.inputs.oidc_audit).toMatchObject({ type: 'boolean', default: false })
+    const audit = steps.find(step => step.name === 'Audit npm OIDC')
+    expect(audit.if).toBe('inputs.oidc_audit')
+    expect(audit.run).toBe('pnpm exec tsx scripts/release-oidc-preflight.ts')
+    for (const name of ['Install Playwright Chromium', 'Run repo release CI', 'Upload coverage reports to Codecov']) {
+      expect(steps.find(step => step.name === name).if).toBe('${{ !inputs.oidc_audit }}')
+    }
+    expect(steps.indexOf(audit)).toBeLessThan(steps.findIndex(step => step.name === 'Run repo release CI'))
   })
 
   it('runs release verification and npmmirror sync through repoctl hooks', () => {

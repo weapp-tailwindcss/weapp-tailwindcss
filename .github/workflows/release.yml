@@ -29,6 +29,11 @@ on:
         description: Version used for unpublished-version recovery
         required: false
         type: string
+      oidc_audit:
+        description: 仅核验全部公开包的 npm OIDC 凭据交换
+        required: false
+        default: false
+        type: boolean
 
 env:
   HUSKY: 0
@@ -68,7 +73,12 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Audit npm OIDC
+        if: inputs.oidc_audit
+        run: pnpm exec tsx scripts/release-oidc-preflight.ts
+
       - name: Install Playwright Chromium
+        if: ${{ !inputs.oidc_audit }}
         run: |
           for attempt in 1 2 3 4; do
             if pnpm exec playwright install chromium chromium-headless-shell; then
@@ -80,7 +90,7 @@ jobs:
           pnpm exec playwright install chromium chromium-headless-shell
 
       - name: Download same-commit coverage certificate
-        if: inputs.mode == 'publish' || inputs.mode == 'publish-unpublished'
+        if: inputs.oidc_audit != true && (inputs.mode == 'publish' || inputs.mode == 'publish-unpublished')
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_CERTIFICATE_RUN_ID: ${{ vars.RELEASE_CERTIFICATE_RUN_ID }}
@@ -113,7 +123,7 @@ jobs:
           gh run download "$run_id" --name "$certificate_name" --dir e2e/.artifacts/release-certificate
 
       - name: Validate release certificate
-        if: inputs.mode == 'publish' || inputs.mode == 'publish-unpublished'
+        if: inputs.oidc_audit != true && (inputs.mode == 'publish' || inputs.mode == 'publish-unpublished')
         shell: bash
         run: |
           report="$(find e2e/.artifacts/release-certificate -type f \( -name 'nightly-report.json' -o -name 'pr-report.json' -o -name 'coverage-report.json' \) -print -quit)"
@@ -121,6 +131,7 @@ jobs:
           pnpm e2e:coverage:release-gate --report "$report"
 
       - name: Run repo release CI
+        if: ${{ !inputs.oidc_audit }}
         env:
           GITHUB_TOKEN: ${{ secrets.REPOCTL_RELEASE_TOKEN || secrets.CHANGESETS_RELEASE_TOKEN || github.token }}
           REPO_RELEASE_MODE: ${{ inputs.mode || 'auto' }}
@@ -129,6 +140,7 @@ jobs:
         run: pnpm exec repo release ci
 
       - name: Upload coverage reports to Codecov
+        if: ${{ !inputs.oidc_audit }}
         uses: codecov/codecov-action@v5
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
