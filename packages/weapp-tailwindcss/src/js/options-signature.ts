@@ -2,6 +2,8 @@ import type { IJsHandlerOptions } from '../types'
 import { types } from 'node:util'
 
 const objectIds = new WeakMap<object, number>()
+const frozenOptionSignatures = new WeakMap<object, string | undefined>()
+const trustedOptionSnapshots = new WeakSet<object>()
 const UNSUPPORTED = Symbol('自定义配置行为')
 let nextObjectId = 0
 
@@ -58,9 +60,24 @@ function encodeData(value: unknown, parents: Set<object>): unknown {
 }
 
 /** 只读取数据描述符；getter、Proxy、状态正则等自定义行为不得在指纹阶段执行。 */
+export function markTrustedJsOptions<T extends object>(options: T) {
+  trustedOptionSnapshots.add(options)
+  return options
+}
+
 export function getJsOptionsSignature(options: IJsHandlerOptions) {
   if (types.isProxy(options)) {
     return undefined
+  }
+  // 内部 Vite 工厂只生成固定字段并冻结嵌套配置，跳过重复深度枚举。
+  if (trustedOptionSnapshots.has(options)) {
+    return 'trusted'
+  }
+  // Vite 生成的 handler 选项是内部冻结快照；其嵌套数据不会再变化，
+  // 可以复用深度编码结果，避免每个 chunk 重复枚举同一份配置。
+  const frozen = Object.isFrozen(options)
+  if (frozen && frozenOptionSignatures.has(options)) {
+    return frozenOptionSignatures.get(options)
   }
   const entries: unknown[] = []
   const descriptors = Object.getOwnPropertyDescriptors(options)
@@ -69,6 +86,9 @@ export function getJsOptionsSignature(options: IJsHandlerOptions) {
       continue
     }
     if (typeof key !== 'string' || !('value' in descriptors[key]!)) {
+      if (frozen) {
+        frozenOptionSignatures.set(options, undefined)
+      }
       return undefined
     }
     const value: unknown = descriptors[key]!.value
@@ -76,11 +96,18 @@ export function getJsOptionsSignature(options: IJsHandlerOptions) {
       ? ['moduleGraph', getObjectId(value)]
       : encodeData(value, new Set())
     if (encoded === UNSUPPORTED) {
+      if (frozen) {
+        frozenOptionSignatures.set(options, undefined)
+      }
       return undefined
     }
     entries.push([key, encoded])
   }
-  return JSON.stringify(entries)
+  const signature = JSON.stringify(entries)
+  if (frozen) {
+    frozenOptionSignatures.set(options, signature)
+  }
+  return signature
 }
 
 /** 自定义 has/iterator/size、子类和 Proxy 交给 Babel，避免原生集合快照吞掉用户行为。 */

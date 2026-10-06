@@ -66,6 +66,40 @@ describe('bundlers/vite js processing', () => {
     })
   })
 
+  it('复用同一文件的冻结 handler options，并在动态 fast path 变化时重建', () => {
+    let experimentalJsFastPath: false | 'oxc' = 'oxc'
+    const createHandlerOptions = createJsHandlerOptionsFactory({
+      getExperimentalJsFastPath: () => experimentalJsFastPath,
+      getMajorVersion: () => 4,
+      moduleGraph: undefined,
+    })
+
+    const first = createHandlerOptions('/repo/dist/index.js')
+    const second = createHandlerOptions('/repo/dist/index.js')
+    expect(second).toBe(first)
+    expect(Object.isFrozen(first)).toBe(true)
+    expect(Object.isFrozen(first.babelParserOptions)).toBe(true)
+
+    experimentalJsFastPath = false
+    const changed = createHandlerOptions('/repo/dist/index.js')
+    expect(changed).not.toBe(first)
+    expect(changed.experimentalJsFastPath).toBe(false)
+  })
+
+  it('moduleGraph 路径不保留跨轮次 options 缓存', () => {
+    const moduleGraph = { resolve: () => undefined, load: () => undefined }
+    const createHandlerOptions = createJsHandlerOptionsFactory({
+      getExperimentalJsFastPath: () => 'oxc',
+      getMajorVersion: () => 4,
+      moduleGraph,
+    })
+
+    const first = createHandlerOptions('/repo/dist/index.js')
+    const second = createHandlerOptions('/repo/dist/index.js')
+    expect(second).not.toBe(first)
+    expect(Object.isFrozen(first)).toBe(true)
+  })
+
   it('uses oxc in production generateBundle and keeps moduleGraph only for incremental rebuilds', () => {
     expect(resolveGenerateBundleJsFastPath({ useIncrementalMode: false })).toEqual({
       experimentalJsFastPath: 'oxc',
