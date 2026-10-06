@@ -64,13 +64,60 @@ export const UNI_APP_X_WEB_PREFLIGHT_RESET_CSS = [
 ].join('\n')
 
 const TAILWIND_PREFLIGHT_BORDER_RE = /\bborder\s*:\s*0(?:px)?\s+solid\b/
+const UNI_APP_X_WEB_FRAMEWORK_BORDER_RE = new RegExp(
+  `\\buni-app\\s+(?:${UNI_APP_X_WEB_COMPONENT_TAGS.join('|')})[^{}]*\\{[^{}]*\\bborder-width\\s*:\\s*medium\\b[^{}]*\\}`,
+  'g',
+)
+
+function findUniAppXWebFrameworkBorderEnd(css: string) {
+  const matcher = new RegExp(UNI_APP_X_WEB_FRAMEWORK_BORDER_RE.source, 'g')
+  let lastEnd = -1
+  for (;;) {
+    const match = matcher.exec(css)
+    if (match === null) {
+      break
+    }
+    lastEnd = matcher.lastIndex
+  }
+  return lastEnd
+}
+
+function removeInjectedUniAppXWebPreflightReset(css: string) {
+  const injectedReset = css.includes(UNI_APP_X_WEB_PREFLIGHT_RESET_CSS)
+    ? UNI_APP_X_WEB_PREFLIGHT_RESET_CSS
+    : `/* ${UNI_APP_X_WEB_PREFLIGHT_RESET_MARKER} */`
+  const resetIndex = css.indexOf(injectedReset)
+  if (resetIndex < 0) {
+    return css
+  }
+  const before = css.slice(0, resetIndex).trimEnd()
+  const after = css.slice(resetIndex + injectedReset.length).trimStart()
+  if (!before) {
+    return after
+  }
+  if (!after) {
+    return before
+  }
+  return `${before}\n${after}`
+}
 
 export function withUniAppXWebPreflightReset(css: string, enabled: boolean) {
-  if (
-    !enabled
-    || css.includes(UNI_APP_X_WEB_PREFLIGHT_RESET_MARKER)
-    || !TAILWIND_PREFLIGHT_BORDER_RE.test(css)
-  ) {
+  if (!enabled) {
+    return css
+  }
+
+  const frameworkBorderEnd = findUniAppXWebFrameworkBorderEnd(css)
+  const hasTailwindPreflightBorder = TAILWIND_PREFLIGHT_BORDER_RE.test(css)
+  const hasInjectedReset = css.includes(UNI_APP_X_WEB_PREFLIGHT_RESET_MARKER)
+  if (frameworkBorderEnd >= 0) {
+    const source = hasInjectedReset ? removeInjectedUniAppXWebPreflightReset(css) : css
+    const resetAfterFrameworkBorder = findUniAppXWebFrameworkBorderEnd(source)
+    if (resetAfterFrameworkBorder < 0) {
+      return source
+    }
+    return `${source.slice(0, resetAfterFrameworkBorder)}\n${UNI_APP_X_WEB_PREFLIGHT_RESET_CSS}${source.slice(resetAfterFrameworkBorder)}`
+  }
+  if (hasInjectedReset || !hasTailwindPreflightBorder) {
     return css
   }
   return css.length > 0
