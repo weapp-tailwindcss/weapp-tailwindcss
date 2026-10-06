@@ -1,6 +1,6 @@
 {
   "name": "@weapp-tailwindcss/native-linux-arm64-gnu",
-  "version": "5.5.11",
+  "version": "5.5.12",
   "description": "Prebuilt Rust compiler binding for weapp-tailwindcss (linux-arm64-gnu)",
   "license": "MIT",
   "homepage": "https://tw.weapp.dev/",

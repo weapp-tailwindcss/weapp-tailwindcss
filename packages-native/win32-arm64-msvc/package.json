@@ -1,6 +1,6 @@
 {
   "name": "@weapp-tailwindcss/native-win32-arm64-msvc",
-  "version": "5.5.11",
+  "version": "5.5.12",
   "description": "Prebuilt Rust compiler binding for weapp-tailwindcss (win32-arm64-msvc)",
   "license": "MIT",
   "homepage": "https://tw.weapp.dev/",
