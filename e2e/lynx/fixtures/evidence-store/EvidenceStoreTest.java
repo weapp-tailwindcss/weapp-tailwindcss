@@ -38,6 +38,11 @@ public final class EvidenceStoreTest {
     successful.publish(run(1), "{}");
     check(new File(new File(root, run(1)), "report.json").isFile(), "Published report");
     fails(() -> successful.publish(run(1), "{}"));
+    EvidenceStore failure = store(root, 8);
+    failure.publishFailure(run(8), "quote \"line\"\nnext");
+    String failureSource = Files.readString(new File(new File(root, run(8)), "failure.json").toPath());
+    check(failureSource.equals("{\"runId\":\"" + run(8) + "\",\"message\":\"quote \\\"line\\\"\\nnext\"}"), "Persist escaped failure");
+    fails(() -> failure.publish(run(8), "{}"));
     fails(() -> store(root, 1));
     fails(() -> new EvidenceStore(root, run(2), BUNDLE, EvidenceStore.sha256(IMAGE)));
     fails(() -> new EvidenceStore(root, "../outside", BUNDLE, EvidenceStore.sha256(BUNDLE)));

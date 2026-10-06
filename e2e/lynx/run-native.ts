@@ -28,9 +28,26 @@ async function wait(milliseconds: number) {
   await new Promise(resolve => setTimeout(resolve, milliseconds))
 }
 
-async function waitForReport(read: () => Promise<string | undefined>) {
+function nativeFailureMessage(source: string) {
+  try {
+    const value = JSON.parse(source) as { message?: unknown }
+    if (typeof value.message === 'string' && value.message.trim()) {
+      return value.message
+    }
+  }
+  catch {
+    // 保留非 JSON host 的原始错误，便于定位旧宿主协议问题。
+  }
+  return source.trim() || 'unknown native evidence failure'
+}
+
+async function waitForReportOrFailure(read: () => Promise<string | undefined>, readFailure: () => Promise<string | undefined>) {
   const deadline = Date.now() + 300_000
   while (Date.now() < deadline) {
+    const failure = await readFailure()
+    if (failure?.trim()) {
+      throw new Error(`原生兼容性报告执行失败：${nativeFailureMessage(failure)}`)
+    }
     const source = await read()
     if (source) {
       return source
@@ -118,9 +135,12 @@ async function runAndroid(hostDir: string, artifactDir: string, device: AndroidD
       await recordAndroidVideo(hostDir, artifactDir, device)
       return undefined
     }
-    const report = await waitForReport(async () => {
+    const report = await waitForReportOrFailure(async () => {
       const result = await execa('adb', adbArgs(device, ['shell', 'run-as', applicationId, 'cat', `files/lynx-compat/${context.runId}/report.json`]), { reject: false })
       return result.exitCode === 0 && result.stdout.trim().startsWith('{') ? result.stdout : undefined
+    }, async () => {
+      const result = await execa('adb', adbArgs(device, ['shell', 'run-as', applicationId, 'cat', `files/lynx-compat/${context.runId}/failure.json`]), { reject: false })
+      return result.exitCode === 0 ? result.stdout : undefined
     })
     const screenshotPath = path.join(artifactDir, 'screen.png')
     const screenshot = await execa('adb', adbArgs(device, ['exec-out', 'screencap', '-p']), { encoding: 'buffer', reject: false })
@@ -200,7 +220,10 @@ async function runIos(hostDir: string, artifactDir: string, device: IosDevice, c
     await recordIosVideo(deviceId, artifactDir)
     return undefined
   }
-  const report = await waitForReport(async () => fs.readFile(reportPath, 'utf8').catch(() => undefined))
+  const report = await waitForReportOrFailure(
+    async () => fs.readFile(reportPath, 'utf8').catch(() => undefined),
+    async () => fs.readFile(path.join(container, 'Library', 'Application Support', 'lynx-compat', context.runId, 'failure.json'), 'utf8').catch(() => undefined),
+  )
   await command('xcrun', ['simctl', 'io', deviceId, 'screenshot', path.join(artifactDir, 'screen.png')], hostDir, 60_000)
   await collectIosArtifacts(report, container, artifactDir, context)
   return report

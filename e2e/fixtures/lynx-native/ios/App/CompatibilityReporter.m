@@ -28,6 +28,7 @@
   return @{
     @"getEvidenceContext" : NSStringFromSelector(@selector(getEvidenceContext:)),
     @"submit" : NSStringFromSelector(@selector(submit:report:callback:)),
+    @"fail" : NSStringFromSelector(@selector(fail:message:callback:)),
     @"submitArtifact" : NSStringFromSelector(@selector(submitArtifact:name:data:callback:)),
     @"measure" : NSStringFromSelector(@selector(measure:callback:)),
     @"capture" : NSStringFromSelector(@selector(capture:callback:)),
@@ -36,6 +37,15 @@
     @"pointerEventsNone" : NSStringFromSelector(@selector(pointerEventsNone:callback:)),
     @"setPseudoActive" : NSStringFromSelector(@selector(setPseudoActive:active:callback:))
   };
+}
+
+- (void)fail:(NSString *)runId message:(NSString *)message callback:(LynxCallbackBlock)callback {
+  dispatch_async(dispatch_get_main_queue(), ^{
+    NSError *error = nil;
+    BOOL accepted = [_binding.store publishFailure:message runId:runId error:&error];
+    if (!accepted) NSLog(@"Lynx evidence failure could not be persisted: %@", error);
+    callback(@(accepted));
+  });
 }
 
 - (void)measure:(NSString *)identifier callback:(LynxCallbackBlock)callback {

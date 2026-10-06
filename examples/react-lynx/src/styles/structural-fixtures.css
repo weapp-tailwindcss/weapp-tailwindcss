@@ -10,16 +10,19 @@
   margin-left: 4px;
 }
 
+.probe-structural-line {
+  width: 128px;
+  height: 40px;
+}
+
 .probe-structural-text {
   display: block;
   width: 128px;
   height: 40px;
   font-size: 32px;
-  font-weight: 400;
   line-height: 40px;
   color: #132026;
   text-align: center;
-  opacity: 1;
 }
 
 .probe-structural-bold {

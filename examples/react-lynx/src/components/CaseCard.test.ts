@@ -46,16 +46,16 @@ describe('Lynx compatibility text fixtures', () => {
     }
   })
 
-  it('结构选择器由三个真实兄弟 text 消费，包含命中和非命中位置', () => {
+  it('结构选择器由三个真实兄弟行消费，包含命中和非命中位置', () => {
     const { item, probe, control } = probeNodes('variant-structural')
     for (const [node, prefix] of [[probe, 'probe'], [control, 'control']] as const) {
-      const children = elements(node).filter(child => child.type === 'text')
-      expect(children).toHaveLength(3)
-      expect(children.map(child => child.props.children)).toEqual(['Tw4', 'Tw4', 'Tw4'])
-      for (const child of children) {
-        expect(child.props['async-display']).toBe(false)
+      const lines = elements(node).filter(child => String(child.props.className).split(/\s+/).includes('probe-structural-line'))
+      expect(lines).toHaveLength(3)
+      expect(lines.flatMap(line => elements(line).filter(child => child.type === 'text')).map(child => child.props.children)).toEqual(['Tw4', 'Tw4', 'Tw4'])
+      for (const line of lines) {
+        expect(line.props['async-display']).toBe(false)
         for (const utility of item.className.split(/\s+/)) {
-          expect(String(child.props.className).split(/\s+/).includes(utility)).toBe(prefix === 'probe')
+          expect(String(line.props.className).split(/\s+/).includes(utility)).toBe(prefix === 'probe')
         }
       }
     }

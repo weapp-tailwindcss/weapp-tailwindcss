@@ -140,7 +140,11 @@ function fingerprint(value: string) {
 
 async function collectPixel(item: CompatibilityCase, reporter: ReporterModule, evidence: NativeEvidenceWriter): Promise<NativeCaseResult> {
   const sequence = evidenceSequence(item, staticById.get(item.id))!
-  const images = await Promise.all(sequence.frames.map(frame => capture(`${frame}-container-${item.id}`, reporter)))
+  // 原生截图都在 UI 线程合成；逐帧等待回调，避免多个 drawViewHierarchy/View.draw 同时进入宿主。
+  const images = []
+  for (const frame of sequence.frames) {
+    images.push(await capture(`${frame}-container-${item.id}`, reporter))
+  }
   for (const [index, frame] of sequence.frames.entries()) {
     await evidence.save(`${item.id}-${frame}.png`, images[index]?.data)
   }
@@ -296,20 +300,33 @@ export async function submitNativeCompatibilityReport() {
   if (!reporter?.submit || !platform || staticEvidence.catalogHash === 'pending-static-e2e') {
     return
   }
-  const evidence = await createNativeEvidence(reporter)
-  await waitForProbeLayout(id => measure(id, reporter))
-  const results: NativeCaseResult[] = []
-  for (const item of compatibilityCases) {
-    results.push(await collectCase(item, reporter, evidence))
+  let runId: string | undefined
+  try {
+    const evidence = await createNativeEvidence(reporter)
+    runId = evidence.runId
+    if (!await waitForProbeLayout(id => measure(id, reporter))) {
+      throw new Error('原生 probe 布局在等待期限内未就绪')
+    }
+    const results: NativeCaseResult[] = []
+    for (const item of compatibilityCases) {
+      results.push(await collectCase(item, reporter, evidence))
+    }
+    const report: NativePlatformReport = {
+      schemaVersion: 1,
+      platform,
+      catalogHash: staticEvidence.catalogHash,
+      verifiedAt: new Date().toISOString(),
+      versions: staticEvidence.versions,
+      environment: runtimeEnvironment(platform),
+      results,
+    }
+    await evidence.submit(report)
   }
-  const report: NativePlatformReport = {
-    schemaVersion: 1,
-    platform,
-    catalogHash: staticEvidence.catalogHash,
-    verifiedAt: new Date().toISOString(),
-    versions: staticEvidence.versions,
-    environment: runtimeEnvironment(platform),
-    results,
+  catch (error) {
+    const message = error instanceof Error ? error.stack ?? error.message : String(error)
+    if (runId && reporter.fail) {
+      await callReporter<boolean>(callback => reporter.fail!(runId!, message, callback), 3000).catch(() => undefined)
+    }
+    throw error
   }
-  await evidence.submit(report)
 }

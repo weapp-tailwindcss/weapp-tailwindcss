@@ -110,6 +110,19 @@ public final class CompatibilityReporterModule extends LynxModule {
   }
 
   @LynxMethod
+  public void fail(String runId, String message, Callback callback) {
+    mainHandler.post(() -> {
+      try {
+        binding.store.publishFailure(runId, message);
+        callback.invoke(true);
+      } catch (Exception error) {
+        Log.e("LynxEvidence", "Evidence failure could not be persisted", error);
+        callback.invoke(false);
+      }
+    });
+  }
+
+  @LynxMethod
   public void submitArtifact(String runId, String name, String data, Callback callback) {
     mainHandler.post(() -> {
       try {

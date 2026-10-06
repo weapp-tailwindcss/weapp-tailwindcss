@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "catalogHash": "a8c3b45f993d9aa28782f308fc959a09e160d67a9097d11b1bc6a8a38b93c886",
-  "verifiedAt": "2026-08-17T06:36:27.838Z",
+  "verifiedAt": "2026-10-06T01:38:07.800Z",
   "versions": {
     "tailwindcss": "4.3.3",
     "lynxEngine": "4.0.1",
@@ -10,18 +10,18 @@
   },
   "environments": {
     "ios": {
-      "deviceName": "iPhone 17 Pro iOS 26.5",
-      "deviceModel": "iPhone18,1",
       "osName": "iOS",
-      "osVersion": "26.5",
       "osBuild": "23F77",
-      "runtimeIdentifier": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
+      "deviceName": "iPhone 17 Pro iOS 26.5",
+      "osVersion": "26.5",
       "abi": "arm64",
+      "runtimeIdentifier": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
       "viewport": {
         "width": 402,
         "height": 874,
         "pixelRatio": 3
-      }
+      },
+      "deviceModel": "iPhone18,1"
     },
     "android": {
       "deviceName": "sdk_gphone_arm64",
@@ -271,8 +271,10 @@
       "id": "sizing-min-max",
       "generated": true,
       "bundled": true,
+      "failureStage": "runtime",
       "ios": {
-        "status": "supported"
+        "status": "unsupported",
+        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
       },
       "android": {
         "status": "supported"
@@ -487,14 +489,11 @@
       "id": "accessibility-sr",
       "generated": true,
       "bundled": true,
-      "failureStage": "runtime",
       "ios": {
-        "status": "unsupported",
-        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
+        "status": "supported"
       },
       "android": {
-        "status": "unsupported",
-        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
+        "status": "supported"
       }
     },
     {
@@ -568,10 +567,8 @@
       "id": "animation-spin",
       "generated": true,
       "bundled": true,
-      "failureStage": "runtime",
       "ios": {
-        "status": "unsupported",
-        "reason": "两个动画 checkpoint 之间没有像素变化"
+        "status": "supported"
       },
       "android": {
         "status": "supported"
@@ -634,11 +631,14 @@
       "id": "variant-dark",
       "generated": true,
       "bundled": true,
+      "failureStage": "runtime",
       "ios": {
-        "status": "supported"
+        "status": "unsupported",
+        "reason": "深色模式未仅将相同字形变为白色并保持背景及 control 不变"
       },
       "android": {
-        "status": "supported"
+        "status": "unsupported",
+        "reason": "深色模式未仅将相同字形变为白色并保持背景及 control 不变"
       }
     },
     {
@@ -656,11 +656,14 @@
       "id": "variant-structural",
       "generated": true,
       "bundled": true,
+      "failureStage": "runtime",
       "ios": {
-        "status": "supported"
+        "status": "unsupported",
+        "reason": "结构选择器未在首项、偶数项和第三项同时呈现预期粗体与透明度"
       },
       "android": {
-        "status": "supported"
+        "status": "unsupported",
+        "reason": "结构选择器未在首项、偶数项和第三项同时呈现预期粗体与透明度"
       }
     },
     {
@@ -670,11 +673,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*)"
+        "reason": "encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*), .peer-checked\\:opacity-100:is(:where(.peer):checked~*)"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*)"
+        "reason": "encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*), .peer-checked\\:opacity-100:is(:where(.peer):checked~*)"
       }
     },
     {
@@ -695,11 +698,14 @@
       "id": "variant-supports",
       "generated": true,
       "bundled": true,
+      "failureStage": "runtime",
       "ios": {
-        "status": "supported"
+        "status": "unsupported",
+        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
       },
       "android": {
-        "status": "supported"
+        "status": "unsupported",
+        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
       }
     },
     {
@@ -862,11 +868,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除 selector：.theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *)"
+        "reason": "encoder 删除 selector：.theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *)"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除 selector：.theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *)"
+        "reason": "encoder 删除 selector：.theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *)"
       }
     },
     {
@@ -1012,11 +1018,14 @@
       "id": "grid-auto",
       "generated": true,
       "bundled": true,
+      "failureStage": "runtime",
       "ios": {
-        "status": "supported"
+        "status": "unsupported",
+        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
       },
       "android": {
-        "status": "supported"
+        "status": "unsupported",
+        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
       }
     },
     {
@@ -1037,11 +1046,14 @@
       "id": "grid-justify-self",
       "generated": true,
       "bundled": true,
+      "failureStage": "runtime",
       "ios": {
-        "status": "supported"
+        "status": "unsupported",
+        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
       },
       "android": {
-        "status": "supported"
+        "status": "unsupported",
+        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
       }
     },
     {
@@ -1073,14 +1085,11 @@
       "id": "sizing-size",
       "generated": true,
       "bundled": true,
-      "failureStage": "runtime",
       "ios": {
-        "status": "unsupported",
-        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
+        "status": "supported"
       },
       "android": {
-        "status": "unsupported",
-        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
+        "status": "supported"
       }
     },
     {
@@ -1171,11 +1180,14 @@
       "id": "type-flow",
       "generated": true,
       "bundled": true,
+      "failureStage": "runtime",
       "ios": {
-        "status": "supported"
+        "status": "unsupported",
+        "reason": "行内中部对齐、双空格保留、显式换行与软换行未同时满足"
       },
       "android": {
-        "status": "supported"
+        "status": "unsupported",
+        "reason": "行内中部对齐、双空格保留、显式换行与软换行未同时满足"
       }
     },
     {
@@ -1196,11 +1208,14 @@
       "id": "type-content",
       "generated": true,
       "bundled": true,
+      "failureStage": "runtime",
       "ios": {
-        "status": "supported"
+        "status": "unsupported",
+        "reason": "probe/control 元素截图没有可观察的像素差异"
       },
       "android": {
-        "status": "supported"
+        "status": "unsupported",
+        "reason": "probe/control 元素截图没有可观察的像素差异"
       }
     },
     {
@@ -1235,11 +1250,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除 selector：:where(.divide-y-2>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child))"
+        "reason": "encoder 删除 selector：:where(.divide-y-2>:not(:last-child)), :where(.divide-y-2>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child))"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除 selector：:where(.divide-y-2>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child))"
+        "reason": "encoder 删除 selector：:where(.divide-y-2>:not(:last-child)), :where(.divide-y-2>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child))"
       }
     },
     {
@@ -1324,33 +1339,42 @@
       "id": "filter-color-adjustments",
       "generated": true,
       "bundled": true,
+      "failureStage": "runtime",
       "ios": {
-        "status": "supported"
+        "status": "unsupported",
+        "reason": "probe/control 元素截图没有可观察的像素差异"
       },
       "android": {
-        "status": "supported"
+        "status": "unsupported",
+        "reason": "probe/control 元素截图没有可观察的像素差异"
       }
     },
     {
       "id": "filter-color-rotation",
       "generated": true,
       "bundled": true,
+      "failureStage": "runtime",
       "ios": {
-        "status": "supported"
+        "status": "unsupported",
+        "reason": "probe/control 元素截图没有可观察的像素差异"
       },
       "android": {
-        "status": "supported"
+        "status": "unsupported",
+        "reason": "probe/control 元素截图没有可观察的像素差异"
       }
     },
     {
       "id": "filter-drop-shadow",
       "generated": true,
       "bundled": true,
+      "failureStage": "runtime",
       "ios": {
-        "status": "supported"
+        "status": "unsupported",
+        "reason": "probe/control 元素截图没有可观察的像素差异"
       },
       "android": {
-        "status": "supported"
+        "status": "unsupported",
+        "reason": "probe/control 元素截图没有可观察的像素差异"
       }
     },
     {

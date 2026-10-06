@@ -84,7 +84,7 @@ function sameBoldGlyph(normal: Map<number, number>, bold: Map<number, number>, w
   }
   // 粗细字体的实际字高可能不同；同时约束轮廓邻域，不将浏览器字体差异误当作缩放。
   const radius = Math.ceil(2 * scale)
-  return masks.every((source, index) => {
+  const matches = masks.map((source, index) => {
     const target = masks[1 - index]!
     let matched = 0
     for (const pixel of source) {
@@ -97,8 +97,11 @@ function sameBoldGlyph(normal: Map<number, number>, bold: Map<number, number>, w
       }
       matched += Number(found)
     }
-    return matched / source.size >= 0.97
+    return matched / source.size
   })
+  // CoreText 粗体会在普通字形外侧增加真实笔画，新增像素无法反向匹配到普通字形；
+  // 保持普通字形全部落在粗体轮廓内，同时给粗体反向匹配保留原生字体的增厚余量。
+  return matches[0]! >= 0.97 && matches[1]! >= 0.9
 }
 
 /** 三帧分别提供被测选择器、普通文字和显式效果；所有兄弟位置必须与显式效果一致。 */

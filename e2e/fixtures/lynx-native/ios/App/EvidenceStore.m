@@ -101,4 +101,15 @@
     return YES;
   }
 }
+
+- (BOOL)publishFailure:(NSString *)message runId:(NSString *)runId error:(NSError **)error {
+  @synchronized(self) {
+    if (![self.context[@"runId"] isEqualToString:runId]) return [self reject:@"Evidence failure run ID mismatch" error:error];
+    NSDictionary *value = @{@"runId": runId, @"message": message ?: @"unknown native evidence failure"};
+    NSData *data = [NSJSONSerialization dataWithJSONObject:value options:0 error:error];
+    if (![self writeData:data to:[self.directory URLByAppendingPathComponent:@"failure.json"] error:error]) return NO;
+    self.failed = YES;
+    return YES;
+  }
+}
 @end

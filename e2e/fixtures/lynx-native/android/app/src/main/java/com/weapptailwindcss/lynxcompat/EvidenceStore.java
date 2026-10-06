@@ -89,6 +89,49 @@ public final class EvidenceStore {
     failed = true;
   }
 
+  public synchronized void publishFailure(String requestedRunId, String message) throws IOException {
+    if (published || !runId.equals(requestedRunId)) {
+      throw new IOException("Evidence failure run ID mismatch");
+    }
+    try {
+      String value = "{\"runId\":" + quoteJson(runId) + ",\"message\":"
+          + quoteJson(message == null ? "unknown native evidence failure" : message) + "}";
+      write(new File(directory, "failure.json"), value.getBytes(StandardCharsets.UTF_8));
+    } catch (IOException error) {
+      failed = true;
+      throw new IOException("Cannot publish evidence failure", error);
+    }
+    failed = true;
+  }
+
+  private static String quoteJson(String value) {
+    StringBuilder result = new StringBuilder(value.length() + 2);
+    result.append('"');
+    for (int index = 0; index < value.length(); index++) {
+      char character = value.charAt(index);
+      switch (character) {
+        case '"': result.append("\\\""); break;
+        case '\\': result.append("\\\\"); break;
+        case '\b': result.append("\\b"); break;
+        case '\f': result.append("\\f"); break;
+        case '\n': result.append("\\n"); break;
+        case '\r': result.append("\\r"); break;
+        case '\t': result.append("\\t"); break;
+        default:
+          if (character < 0x20) {
+            result.append("\\u00");
+            result.append(HEX.charAt((character >>> 4) & 0x0f));
+            result.append(HEX.charAt(character & 0x0f));
+          } else {
+            result.append(character);
+          }
+      }
+    }
+    return result.append('"').toString();
+  }
+
+  private static final String HEX = "0123456789abcdef";
+
   private void checkRun(String requestedRunId) throws IOException {
     if (failed || published || !runId.equals(requestedRunId)) {
       throw new IOException("Evidence run is failed, published, or mismatched");

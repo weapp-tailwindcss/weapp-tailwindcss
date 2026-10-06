@@ -28,12 +28,13 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-async function collect(options: { missingFrame?: boolean, restoreFailed?: boolean, receipt?: 'late' | 'wrong-run' | 'missing' | 'failed' } = {}) {
+async function collect(options: { missingFrame?: boolean, missingLayout?: boolean, restoreFailed?: boolean, receipt?: 'late' | 'wrong-run' | 'missing' | 'failed' } = {}) {
   vi.useFakeTimers()
   const runId = '00000000-0000-4000-8000-000000000001'
   const captures: string[] = []
   const mutations: string[] = []
   const measurements: string[] = []
+  const failures: string[] = []
   const states = new Map<string, number>()
   let schemeRequests = 0
   let submitted: NativePlatformReport | undefined
@@ -56,9 +57,9 @@ async function collect(options: { missingFrame?: boolean, restoreFailed?: boolea
         captures.push(id)
         callback(options.missingFrame ? null : `native-color-scheme:${id}`)
       },
-      measure: (id: string, callback: (rect: object) => void) => {
+      measure: (id: string, callback: (rect: object | undefined) => void) => {
         measurements.push(id)
-        callback({ width: 64, height: 48 })
+        callback(options.missingLayout ? undefined : { width: 64, height: 48 })
       },
       capture: (id: string, callback: (image: string | null) => void) => {
         captures.push(id)
@@ -76,6 +77,10 @@ async function collect(options: { missingFrame?: boolean, restoreFailed?: boolea
       },
       submit: (_run: string, value: string, callback: (value: boolean) => void) => {
         submitted = JSON.parse(value)
+        callback(true)
+      },
+      fail: (_run: string, message: string, callback: (value: boolean) => void) => {
+        failures.push(message)
         callback(true)
       },
       submitArtifact: (_run: string, name: string, _data: string, callback: (value: NativeArtifactReceipt | null) => void) => {
@@ -105,7 +110,7 @@ async function collect(options: { missingFrame?: boolean, restoreFailed?: boolea
   const pending = submitNativeCompatibilityReport().catch(error => error as Error)
   await vi.runAllTimersAsync()
   const error = await pending
-  return { report: submitted!, captures, measurements, mutations, error }
+  return { report: submitted!, captures, measurements, mutations, failures, error }
 }
 
 it('透明度、可见性与边框对照都采集父级合成画布', async () => {
@@ -132,6 +137,15 @@ it('合成画布缺失时拒绝发布报告，不退回元素自身截图', asyn
   expect(captures.every(id => id.includes('-container-'))).toBe(true)
   expect(report).toBeUndefined()
   expect(error instanceof Error ? error.message : undefined).toMatch(/截图缺失/)
+})
+
+it('probe 布局未就绪时持久化失败原因并拒绝发布报告', async () => {
+  const { report, failures, error } = await collect({ missingLayout: true })
+  expect(report).toBeUndefined()
+  expect(error).toBeInstanceOf(Error)
+  expect(error instanceof Error ? error.message : undefined).toMatch(/probe 布局/)
+  expect(failures).toHaveLength(1)
+  expect(failures[0]).toMatch(/probe 布局/)
 })
 
 it('等待最后一帧的真实写入回执后才发布报告', async () => {

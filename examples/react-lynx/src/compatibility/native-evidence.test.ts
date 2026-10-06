@@ -32,6 +32,17 @@ it('超时后的迟到回执不能恢复失败会话或发布报告', async () =
   expect(reporter.submit).not.toHaveBeenCalled()
 })
 
+it('首屏宿主回执超过短写入期限但在上下文期限内仍可继续', async () => {
+  vi.useFakeTimers()
+  const reporter = native()
+  reporter.getEvidenceContext.mockImplementation((callback) => {
+    setTimeout(callback, 3000, context)
+  })
+  const pending = createNativeEvidence(reporter)
+  await vi.advanceTimersByTimeAsync(3000)
+  await expect(pending).resolves.toMatchObject({ runId: context.runId })
+})
+
 it('待写图期间不能发布，全部确认后只发布一次', async () => {
   const reporter = native()
   let complete: ((value: NativeArtifactReceipt) => void) | undefined
