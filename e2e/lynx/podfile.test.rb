@@ -12,7 +12,9 @@ runner.instance_eval(File.read(file), file)
 raise 'Podfile 缺少 post_install' unless hook
 
 configuration = Struct.new(:build_settings)
-target = Struct.new(:build_configurations)
+source_file_type = Struct.new(:settings)
+source_phase_type = Struct.new(:files)
+target = Struct.new(:name, :build_configurations, :source_build_phase)
 project = Struct.new(:targets)
 installer = Struct.new(:pods_project, :pod_targets, :sandbox)
 specification = Struct.new(:version)
@@ -31,11 +33,15 @@ Dir.mktmpdir('lynx-podfile-') do |root|
     configuration.new(version ? { 'IPHONEOS_DEPLOYMENT_TARGET' => version } : {})
   end
   original = configs.map { |config| config.build_settings.dup }
-  context = installer.new(project.new([target.new(configs)]), [dependency.new('Lynx', specification.new('4.0.1'))], sandbox)
+  context = installer.new(project.new([target.new('Lynx', configs, source_phase_type.new([source_file_type.new(nil)]))]), [dependency.new('Lynx', specification.new('4.0.1'))], sandbox)
   2.times { hook.call(context) }
   raise 'Podfile 未应用上游修复' unless Digest::SHA256.file(source_file).hexdigest == LynxSourcePatch::PATCHED_SHA
   configs.each_with_index do |config, index|
-    raise '签名或部署版本被意外改变' unless config.build_settings == original[index].merge('CODE_SIGNING_ALLOWED' => 'NO')
+    expected = original[index].merge(
+      'CODE_SIGNING_ALLOWED' => 'NO',
+      'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
+    )
+    raise '签名或受管部署版本被意外改变' unless config.build_settings == expected
   end
   begin
     hook.call(installer.new(nil, [], nil))
