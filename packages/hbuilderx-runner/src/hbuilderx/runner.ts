@@ -1,4 +1,5 @@
 import type {
+  HBuilderXCliResolveOptions,
   HBuilderXLaunchOptions,
   HBuilderXNativeCommandOptions,
   HBuilderXRunner,
@@ -45,11 +46,12 @@ export async function createHBuilderXRunner(options: HBuilderXRunnerOptions = {}
   }
   const cwd = options.cwd ?? process.cwd()
   const timeoutMs = options.timeoutMs ?? defaultStartupTimeoutMs
-  const resolveOptions = {
-    candidates: options.hbuilderxCliPath ? [options.hbuilderxCliPath] : options.candidates,
-    channel: options.channel,
+  const candidates = options.hbuilderxCliPath ? [options.hbuilderxCliPath] : options.candidates
+  const resolveOptions: HBuilderXCliResolveOptions = {
+    ...(candidates !== undefined ? { candidates } : {}),
+    ...(options.channel !== undefined ? { channel: options.channel } : {}),
     env,
-    host: options.host,
+    ...(options.host !== undefined ? { host: options.host } : {}),
   }
   const configured = await resolveConfiguredCli(resolveOptions)
   const resolution = configured
@@ -60,17 +62,17 @@ export async function createHBuilderXRunner(options: HBuilderXRunnerOptions = {}
     HBUILDERX_CLI_PATH: resolution.path,
   }
 
-  const requestedChannel = resolveHBuilderXChannel(options.channel ?? env.HBUILDERX_CHANNEL)
+  const requestedChannel = resolveHBuilderXChannel(options.channel ?? env['HBUILDERX_CHANNEL'])
   const expectedChannel = resolution.channel !== 'unknown'
     ? resolution.channel
     : requestedChannel === 'auto' ? inferHBuilderXChannel(resolution.path) : requestedChannel
-  const explicitHost = options.host ?? env.HBUILDERX_HOST
+  const explicitHost = options.host ?? env['HBUILDERX_HOST']
   const selected = await connectHBuilderXHost({
     cliPath: resolution.path,
     cwd,
     env: cliEnv,
     expectedChannel,
-    explicitHost,
+    ...(explicitHost !== undefined ? { explicitHost } : {}),
     timeoutMs,
   })
 

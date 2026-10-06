@@ -208,7 +208,8 @@ describe('ci workflows', () => {
     expect(websiteSource).toContain('Validate Worker bundle')
     const sharedSetup = readText('.github/actions/setup-pnpm/action.yml')
     expect(sharedSetup).toContain('key: playwright-${{ runner.os }}-${{ hashFiles(\'pnpm-lock.yaml\') }}')
-    expect(sharedSetup).toContain('pnpm install --frozen-lockfile')
+    expect(sharedSetup).toContain('PNPM_INSTALL_TIMEOUT_MS: \'600000\'')
+    expect(sharedSetup).toContain('node scripts/ci/install-workspace.mjs')
   })
 
   it('keeps pnpm updates within the verified compatibility boundaries', () => {

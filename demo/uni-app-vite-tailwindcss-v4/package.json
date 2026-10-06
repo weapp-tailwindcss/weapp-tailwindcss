@@ -1,7 +1,7 @@
 {
   "name": "@weapp-tailwindcss-demo/uni-app-vite-tailwindcss-v4",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
   },

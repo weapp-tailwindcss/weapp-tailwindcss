@@ -2,7 +2,7 @@ import type { PreflightSession } from './session'
 import type { Identity, ProbeId } from './types'
 import { createServer } from 'node:http'
 import { challengePage, recordComputerUseBlock } from './computer-use'
-import { checkIds } from './types'
+import { requiredCheckIds } from './types'
 
 export async function serve(session: PreflightSession) {
   const report = session.report
@@ -46,10 +46,10 @@ export async function serve(session: PreflightSession) {
         result = await session.verify(payload.identity as Identity)
       }
       else if (url.pathname === '/claim') {
-        result = await session.claim(payload.identity as Identity, String(payload.consumer))
+        result = await session.claim(payload.identity as Identity, String(payload.consumer), payload.extended === true)
       }
       else if (url.pathname === '/check') {
-        if (!Array.isArray(payload.ids) || payload.ids.some((id: string) => id === 'computer-use' || !checkIds.includes(id as ProbeId))) {
+        if (!Array.isArray(payload.ids) || payload.ids.some((id: string) => id === 'computer-use' || !requiredCheckIds(report.extended).includes(id as ProbeId))) {
           throw new Error('存活检查目标无效。')
         }
         await session.check(payload.identity as Identity, payload.lease, payload.ids)

@@ -1,3 +1,5 @@
+import { cleanupHBuilderXResources } from '../../../scripts/hbuilderx-project-resources'
+
 interface WebHmrCleanup {
   closeBrowser: () => Promise<unknown>
   stopServer: () => unknown | Promise<unknown>
@@ -7,20 +9,10 @@ interface WebHmrCleanup {
 
 export async function cleanupWebHmrSession(actions: WebHmrCleanup) {
   // 先断开观察者，再停止被观察服务，避免浏览器重连把清理误判为运行失败。
-  try {
-    await actions.closeBrowser()
-  }
-  finally {
-    try {
-      await actions.stopServer()
-    }
-    finally {
-      try {
-        await actions.restoreSource()
-      }
-      finally {
-        await actions.closeProject()
-      }
-    }
-  }
+  await cleanupHBuilderXResources([
+    actions.closeBrowser,
+    actions.stopServer,
+    actions.restoreSource,
+    actions.closeProject,
+  ])
 }

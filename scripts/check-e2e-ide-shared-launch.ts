@@ -100,18 +100,21 @@ async function main() {
   const probe = await readSource('e2e/frameworkIdeProbe.ts')
   const probeMain = findFunction(probe.source, 'main')
   assert(probeMain?.body, 'frameworkIdeProbe.ts must declare main().')
+  const runProbe = findFunction(probe.source, 'runProbe')
+  assert(runProbe?.body, 'frameworkIdeProbe.ts must declare the owned runProbe transaction.')
   assert(
-    countCalls(probeMain.body, expression => isPropertyCall(expression, 'automator', 'launch')) === 1,
+    countCalls(probe.source, expression => isPropertyCall(expression, 'automator', 'launch')) === 1,
     'frameworkIdeProbe.ts must launch exactly one automator session per framework case.',
   )
   assert(
-    callReceivesIdentifier(probeMain.body, 'runFrameworkIdeHotUpdateProbe', 'miniProgram'),
+    callReceivesIdentifier(probeMain.body, 'withFrameworkIdeHotUpdateProbe', 'runProbe')
+    && callReceivesIdentifier(runProbe.body, 'hotUpdate', 'miniProgram'),
     'frameworkIdeProbe.ts must pass the launched miniProgram into the complete HMR probe.',
   )
 
   const hotUpdate = await readSource('e2e/frameworkIdeHotUpdate.ts')
-  const hotUpdateProbe = findFunction(hotUpdate.source, 'runFrameworkIdeHotUpdateProbe')
-  assert(hotUpdateProbe?.body, 'frameworkIdeHotUpdate.ts must declare runFrameworkIdeHotUpdateProbe().')
+  const hotUpdateProbe = findFunction(hotUpdate.source, 'withFrameworkIdeHotUpdateProbe')
+  assert(hotUpdateProbe?.body, 'frameworkIdeHotUpdate.ts must declare withFrameworkIdeHotUpdateProbe().')
   assert(
     countCalls(hotUpdateProbe.body, expression => isIdentifierCall(expression, 'runIdeClassHotUpdate')) === 2,
     'The IDE HMR probe must keep template and script mutations in one transaction.',

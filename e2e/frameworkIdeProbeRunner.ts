@@ -1,5 +1,6 @@
 import process from 'node:process'
 import { execa } from 'execa'
+import { IDE_CLEANUP_FAILURE_MARKER } from './framework-ide/cleanup'
 import { collectFrameworkIdeDiagnostics } from './frameworkIdeDiagnostics'
 
 const wait = (timeout: number) => new Promise(resolve => setTimeout(resolve, timeout))
@@ -25,7 +26,7 @@ function isTransientIdeError(error: unknown) {
     candidate.shortMessage,
     candidate.stderr,
   ].filter(Boolean).join('\n')
-  return transientIdeErrorPatterns.some(pattern => pattern.test(text))
+  return !text.includes(IDE_CLEANUP_FAILURE_MARKER) && transientIdeErrorPatterns.some(pattern => pattern.test(text))
 }
 
 async function runFrameworkIdeProbe(entryName: string, timeoutMs: number, relaunchTimeoutMs: number, testTimeoutMs: number) {

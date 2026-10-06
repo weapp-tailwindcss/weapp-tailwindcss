@@ -3,6 +3,7 @@ import type {
   SourceEntry,
   TailwindGenerationArtifact,
   TailwindGenerationSession,
+  TailwindGenerationSessionOptions,
   TailwindV4CandidateSource,
   TailwindV4ResolvedSource,
 } from '@weapp-tailwindcss/engine'
@@ -11,11 +12,17 @@ import { createTailwindGenerationSession } from '@weapp-tailwindcss/engine'
 
 type CreateTailwindGenerationSession = (
   source: TailwindV4ResolvedSource,
+  options?: TailwindGenerationSessionOptions,
 ) => TailwindGenerationSession
+
+export interface NativeSessionSourcePreparation extends TailwindGenerationSessionOptions {
+  key: string
+}
 
 interface NativeSessionEntry {
   pending: Promise<void>
   sourceKey: string
+  preparationKey: string | undefined
   session: TailwindGenerationSession
 }
 
@@ -32,8 +39,9 @@ export class TailwindV4NativeSessionPool {
     sourceKey: string,
     source: TailwindV4ResolvedSource,
     request: GenerationRequest,
+    preparation?: NativeSessionSourcePreparation,
   ): Promise<TailwindGenerationArtifact> {
-    const entry = this.getSession(target, sourceKey, source)
+    const entry = this.getSession(target, sourceKey, source, preparation)
     const generated = entry.pending.then(() => entry.session.generate(request))
     entry.pending = generated.then(() => undefined, () => undefined)
     return generated
@@ -55,19 +63,20 @@ export class TailwindV4NativeSessionPool {
     target: TailwindV4GenerateTarget,
     sourceKey: string,
     source: TailwindV4ResolvedSource,
+    preparation?: NativeSessionSourcePreparation,
   ) {
     if (this.disposed) {
       throw new Error('TailwindV4NativeSessionPool 已释放。')
     }
     const cached = this.sessions.get(target)
-    if (cached?.sourceKey === sourceKey) {
+    if (cached?.sourceKey === sourceKey && cached.preparationKey === preparation?.key) {
       return cached
     }
     if (cached) {
       this.disposeEntry(cached)
     }
-    const session = this.createSession(source)
-    const entry = { pending: Promise.resolve(), session, sourceKey }
+    const session = this.createSession(source, preparation)
+    const entry = { pending: Promise.resolve(), session, sourceKey, preparationKey: preparation?.key }
     this.sessions.set(target, entry)
     return entry
   }

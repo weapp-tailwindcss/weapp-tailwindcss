@@ -1,15 +1,19 @@
 import type { HBuilderXCommandOptions } from '../src/types'
 import { spawnSync } from 'node:child_process'
+import process from 'node:process'
 import { beforeEach, expect, it, vi } from 'vitest'
 import { fileExists } from '../src/fs'
-import process from 'node:process'
 import { resolveHBuilderXCli, resolveHBuilderXCliInfo } from '../src/hbuilderx'
 import { createHBuilderXRunner } from '../src/hbuilderx/runner'
 import { runCommand } from '../src/process'
 
-vi.mock('node:child_process', () => ({ spawnSync: vi.fn(() => { throw new Error('进程枚举不可用') }) }))
+vi.mock('node:child_process', () => ({
+  spawnSync: vi.fn(() => {
+    throw new Error('进程枚举不可用')
+  }),
+}))
 vi.mock('../src/fs', () => ({ fileExists: vi.fn(async () => true), wait: vi.fn(async () => {}) }))
-vi.mock('../src/process', async (importOriginal) => ({ ...await importOriginal<typeof import('../src/process')>(), runCommand: vi.fn() }))
+vi.mock('../src/process', async importOriginal => ({ ...await importOriginal<typeof import('../src/process')>(), runCommand: vi.fn() }))
 
 const cli = 'configured-cli'
 let hosts: string[]
@@ -47,18 +51,22 @@ it('显式设置的进程环境仍能绑定 CLI、channel 和 host', async () =>
 
   const runner = await createHBuilderXRunner()
   expect(runner.resolution).toMatchObject({
-    path: 'environment-cli', channel: 'alpha', host: 'host-b', source: 'env',
+    path: 'environment-cli',
+    channel: 'alpha',
+    host: 'host-b',
+    source: 'env',
   })
   expect(vi.mocked(runCommand).mock.calls.map(([options]) => options.args)).toEqual([
-    ['listhost'], ['version', '--host', 'host-b'],
+    ['listhost'],
+    ['version', '--host', 'host-b'],
   ])
   expect(spawnSync).not.toHaveBeenCalled()
 })
 
 it('显式实例选项优先于进程环境，环境不跨测试保留', async () => {
-  expect(process.env.HBUILDERX_HOST).toBeUndefined()
-  expect(process.env.HBUILDERX_CHANNEL).toBeUndefined()
-  expect(process.env.HBUILDERX_CLI_PATH).toBeUndefined()
+  expect(process.env['HBUILDERX_HOST']).toBeUndefined()
+  expect(process.env['HBUILDERX_CHANNEL']).toBeUndefined()
+  expect(process.env['HBUILDERX_CLI_PATH']).toBeUndefined()
   vi.stubEnv('HBUILDERX_CLI_PATH', 'other-cli')
   vi.stubEnv('HBUILDERX_CHANNEL', 'alpha')
   vi.stubEnv('HBUILDERX_HOST', 'other-host')
@@ -198,7 +206,7 @@ const stoppedDiagnostics = [
   '没有可用的命令，尝试使用 cli open',
   '没有可用的命令，尝试使用 cli open\n未检测到已打开的HBuilderX，请先执行cli open启动HBuilderX后再重试',
   '未检测到已打开的HBuilderX，请先执行cli open启动HBuilderX后再重试',
-]
+] as const
 
 it.each(stoppedDiagnostics)('识别中文未启动响应并启动目标 IDE：%s', async (output) => {
   let opened = false
@@ -210,7 +218,10 @@ it.each(stoppedDiagnostics)('识别中文未启动响应并启动目标 IDE：%s
   }
   await expect(createHBuilderXRunner({ hbuilderxCliPath: cli })).resolves.toMatchObject({ resolution: { host: 'host-a' } })
   expect(vi.mocked(runCommand).mock.calls.map(([options]) => options.args)).toEqual([
-    ['listhost'], ['open'], ['listhost'], ['version', '--host', 'host-a'],
+    ['listhost'],
+    ['open'],
+    ['listhost'],
+    ['version', '--host', 'host-a'],
   ])
 })
 
@@ -218,4 +229,10 @@ it('中文未启动提示不能覆盖命令超时', async () => {
   onCommand = () => ({ code: null, kind: 'timeout', output: stoppedDiagnostics[0] })
   await expect(createHBuilderXRunner({ hbuilderxCliPath: cli })).rejects.toMatchObject({ result: { issue: { kind: 'timeout' } } })
   expect(vi.mocked(runCommand).mock.calls.some(([options]) => options.args[0] === 'open')).toBe(false)
+})
+
+it('超时 CLI 即使在清理时以零退出码结束，也不能被接纳为有效 host 响应', async () => {
+  onCommand = () => ({ code: 0, kind: 'timeout', output: 'host-a' })
+  await expect(createHBuilderXRunner({ hbuilderxCliPath: cli })).rejects.toMatchObject({ result: { issue: { kind: 'timeout' } } })
+  expect(vi.mocked(runCommand).mock.calls.map(([options]) => options.args)).toEqual([['listhost']])
 })

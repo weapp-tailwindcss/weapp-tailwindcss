@@ -1,7 +1,7 @@
 {
   "name": "tailwindcss-injector",
   "type": "module",
-  "version": "1.0.22",
+  "version": "1.0.23",
   "description": "Tailwind CSS generation and source injection helpers for cross-platform builds. 跨端构建的 Tailwind CSS 生成与源码注入工具。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",

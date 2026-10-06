@@ -1,7 +1,7 @@
 {
   "name": "benchmark-runtime-cn-vs-merge",
   "type": "module",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "description": "Compare @weapp-tailwindcss/cn and @weapp-tailwindcss/merge semantics, bundle size, and runtime performance.",
   "author": "ice breaker <1324318532@qq.com>",

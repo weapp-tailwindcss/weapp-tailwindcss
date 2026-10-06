@@ -228,6 +228,9 @@ wx-root-portal-content {
 .w-full {
   width: 100%;
 }
+.transform {
+  transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,);
+}
 .flex-col {
   flex-direction: column;
 }
@@ -672,6 +675,8 @@ wx-root-portal-content {
 .drop-shadow-md {
   --tw-drop-shadow-size: drop-shadow(0 3px 3px var(--tw-drop-shadow-color, rgba(0, 0, 0, 0.12)));
   --tw-drop-shadow: drop-shadow(var(--drop-shadow-md));
+  filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,)
+    var(--tw-drop-shadow,);
 }
 .before_ccontent-_b_au_x73b0_u_x5728_u_xff0c_u_x8ba9_u_x6211_u_x4eec_u_x5f00_u_x59cb_u_x795e_u_x5947_u_x7684__tailwindcss_u_x5f00_u_x53d1_u_x4e4b_u_x65c5_u_x5427_u_xff01__a_B::before {
   --tw-content: '现在，让我们开始神奇的 tailwindcss 开发之旅吧！';

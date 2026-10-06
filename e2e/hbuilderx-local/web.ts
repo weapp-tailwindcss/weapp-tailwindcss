@@ -8,6 +8,7 @@ import fs from 'node:fs/promises'
 
 import path from 'node:path'
 import { chromium } from 'playwright'
+import { cleanupHBuilderXResources } from '../../scripts/hbuilderx-project-resources'
 
 import {
   fetchText,
@@ -113,6 +114,16 @@ export async function runWebHmr(
   const diagnostics: WebPageDiagnostics = { errors: [], requests: [], warnings: [] }
   let restore: (() => Promise<void>) | undefined
 
+  let failure: { error: unknown } | undefined
+  let result!: {
+    hmrCss: string[]
+    initialCss: string
+    pageErrors: WebPageDiagnostics['errors']
+    pageHtml: string
+    pageOverlayText: string | null | undefined
+    pageWarnings: WebPageDiagnostics['warnings']
+    serverLogs: string
+  }
   try {
     session = await createWebSession(projectRoot, launchWithHBuilderX, logFile, attached, serverIdentityPath)
     const { logs, baseUrl } = session
@@ -199,7 +210,7 @@ export async function runWebHmr(
       : undefined
     await session.ensureRunning()
 
-    return {
+    result = {
       hmrCss,
       initialCss,
       pageErrors: diagnostics.errors,
@@ -210,30 +221,52 @@ export async function runWebHmr(
     }
   }
   catch (error) {
-    if (attached) {
-      await fs.copyFile(attached.logFile, logFile).catch(() => {})
+    failure = { error }
+    try {
+      await cleanupHBuilderXResources([
+        async () => {
+          if (attached) {
+            await fs.copyFile(attached.logFile, logFile)
+          }
+        },
+        async () => {
+          if (launchWithHBuilderX && !attached) {
+            await captureHBuilderXFailure(artifactRoot)
+          }
+        },
+        () => fs.writeFile(path.join(artifactRoot, 'failure.txt'), error instanceof Error ? error.stack ?? error.message : String(error)),
+      ])
     }
-    if (launchWithHBuilderX && !attached) {
-      await captureHBuilderXFailure(artifactRoot)
+    catch (reportError) {
+      failure = { error: new AggregateError([error, reportError], 'HBuilderX Web 验证与失败取证均失败。', { cause: error }) }
     }
-    await fs.writeFile(path.join(artifactRoot, 'failure.txt'), error instanceof Error ? error.stack ?? error.message : String(error))
-    throw error
   }
   finally {
     try {
-      await fs.writeFile(path.join(artifactRoot, 'diagnostics.json'), JSON.stringify(diagnostics, null, 2))
-      if (page) {
-        await fs.writeFile(path.join(artifactRoot, 'page.html'), await page.content().catch(() => ''))
-        await page.screenshot({ path: path.join(artifactRoot, 'final.png') }).catch(() => {})
-      }
+      await cleanupHBuilderXResources([
+        async () => {
+          await fs.writeFile(path.join(artifactRoot, 'diagnostics.json'), JSON.stringify(diagnostics, null, 2))
+          if (page) {
+            await fs.writeFile(path.join(artifactRoot, 'page.html'), await page.content().catch(() => ''))
+            await page.screenshot({ path: path.join(artifactRoot, 'final.png') }).catch(() => {})
+          }
+        },
+        () => cleanupWebHmrSession({
+          closeBrowser: async () => browser?.close(),
+          stopServer: async () => session?.stop(),
+          restoreSource: async () => restore?.(),
+          closeProject: async () => session?.closeProject(),
+        }),
+      ])
     }
-    finally {
-      await cleanupWebHmrSession({
-        closeBrowser: async () => browser?.close(),
-        stopServer: async () => session?.stop(),
-        restoreSource: async () => restore?.(),
-        closeProject: async () => session?.closeProject(),
-      })
+    catch (error) {
+      failure = { error: failure
+        ? new AggregateError([failure.error, error], 'HBuilderX Web 验证与收尾均失败。', { cause: failure.error })
+        : error }
     }
   }
+  if (failure) {
+    throw failure.error
+  }
+  return result
 }

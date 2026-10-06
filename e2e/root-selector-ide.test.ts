@@ -1,12 +1,12 @@
 import type { PNG } from 'pngjs'
 import fs from 'node:fs/promises'
 import process from 'node:process'
-import { Launcher } from '@weapp-vite/miniprogram-automator'
 import path from 'pathe'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { captureMiniProgramViewport } from '../scripts/demo-visual-e2e-report/mini-program-screenshot'
 import { closeWechatProject } from '../scripts/wechat-project-cleanup'
-import { collectFrameworkIdeDiagnostics } from './frameworkIdeDiagnostics'
+import { Launcher } from '../scripts/wechat/automator'
+import { launchWithDiagnostics } from './framework-ide/launch-diagnostics'
 
 const describeIde = process.env['E2E_IDE'] === '1' ? describe : describe.skip
 const timeoutMs = Number(process.env['E2E_IDE_ROOT_SELECTOR_TIMEOUT_MS'] ?? process.env['E2E_AUTOMATOR_TIMEOUT_MS'] ?? 90_000)
@@ -32,33 +32,8 @@ const probeMatchers = {
   twRoot: (red, green, blue, alpha) => alpha > 200 && red < 100 && green < 110 && blue > 150,
 } satisfies Record<string, ColorMatcher>
 
-function withTimeout<T>(promise: Promise<T>, timeout: number, label: string) {
-  return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`${label} timed out in ${timeout}ms`)), timeout)
-    promise.then(resolve, reject).finally(() => clearTimeout(timer))
-  })
-}
-
 async function launchMiniProgram() {
-  let lastError: unknown
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    const automator = new Launcher()
-    try {
-      return await withTimeout(
-        automator.launch({ cliPath: process.env.E2E_PREFLIGHT_WECHAT_CLI, projectPath, timeout: timeoutMs }),
-        launchAttemptTimeoutMs,
-        `root selector DevTools launch attempt ${attempt}`,
-      )
-    }
-    catch (error) {
-      lastError = error
-      await closeWechatProject(projectPath, undefined, closeTimeoutMs)
-    }
-  }
-  if (lastError instanceof Error) {
-    lastError.message = `${lastError.message}\n${await collectFrameworkIdeDiagnostics(projectName)}`
-  }
-  throw lastError
+  return launchWithDiagnostics(projectName, () => new Launcher().launch({ cliPath: process.env.E2E_PREFLIGHT_WECHAT_CLI, projectPath, timeout: Math.min(timeoutMs, launchAttemptTimeoutMs) }))
 }
 
 async function captureMiniProgramScreenshot(miniProgram: any, screenshotPath: string) {
@@ -92,10 +67,12 @@ describeIde('root selector IDE runtime', () => {
 
   beforeAll(async () => {
     miniProgram = await launchMiniProgram()
-  }, launchAttemptTimeoutMs * 2 + 30_000)
+  }, launchAttemptTimeoutMs + 30_000)
 
   afterAll(async () => {
-    await closeWechatProject(projectPath, miniProgram, closeTimeoutMs)
+    if (miniProgram) {
+      await closeWechatProject(projectPath, miniProgram, closeTimeoutMs)
+    }
   }, closeTimeoutMs + 10_000)
 
   it('verifies root selectors through inherited CSS variables in WeChat DevTools', async () => {

@@ -1,12 +1,12 @@
 import { defineConfig } from 'vite'
-import uniModule from '@dcloudio/vite-plugin-uni'
+import { loadUniPlugin } from '../uni-app-x-plugin'
 import parity from '../official-postcss-parity-plugin.cjs'
 import { hbuilderx } from 'weapp-tailwindcss/presets'
 import { WeappTailwindcss } from 'weapp-tailwindcss/vite'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const uni = (uniModule as typeof uniModule & { default?: typeof uniModule }).default ?? uniModule
+const uni = loadUniPlugin(import.meta.url)
 const projectRoot = dirname(fileURLToPath(import.meta.url))
 const officialPostcssParity = process.env.WEAPP_TW_OFFICIAL_POSTCSS_PARITY === '1'
 const weappTailwindcssPlugins = WeappTailwindcss(

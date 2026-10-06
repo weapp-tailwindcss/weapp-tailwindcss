@@ -14,11 +14,12 @@ pnpm add @weapp-tailwindcss/lynx tailwindcss
 
 ```ts
 // lynx.config.ts
+import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin'
 import { defineConfig } from '@lynx-js/rspeedy'
 import { pluginLynxTailwindcss } from '@weapp-tailwindcss/lynx'
 
 export default defineConfig({
-  plugins: [pluginLynxTailwindcss()],
+  plugins: [pluginReactLynx(), pluginLynxTailwindcss()],
 })
 ```
 
@@ -34,6 +35,10 @@ export default defineConfig({
 ```
 
 `pluginLynxTailwindcss` 固定使用 `platform: 'lynx'`、`generator.target: 'web'` 与 Lynx 原生兼容输出。Tailwind v4 theme 变量会在构建期静态化，确保 `bg-sky-500`、`p-6`、`text-lg` 等标准 utility 能进入 Lynx 原生样式表；应用自行定义的动态 CSS 变量保持不变。
+
+递归变量路径要求 Lynx runtime 3.6 以上，以及 ReactLynx 插件 0.12.4 以上公开的模板 API；更旧的构建器需要升级。源码支持边界不等于设备验收，当前原生测试仍使用固定 4.0.1 矩阵。
+
+插件在模板编码前，通过 ReactLynx 构建器公开的 hook 将未配置的 `enableCSSInlineVariables` 默认设为 `true`，使嵌套 utility 变量进入原生递归解析路径；保留显式页面配置与动态 CSS 依赖。需要同时注册 `pluginReactLynx()`，缺少模板 API 时明确构建失败。此设置不改变目标 SDK，也不代表所有 CSS 属性已通过原生验收。
 
 完整的 `generator`、`rspack`、CSS loader 和 encoder 配置项见 [ReactLynx / Rspeedy 配置参考](https://tw.weapp.dev/zh-cn/docs/config/react-lynx)。
 

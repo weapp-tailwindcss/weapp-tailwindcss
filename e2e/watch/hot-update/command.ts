@@ -17,8 +17,9 @@ interface WatchCommandOptions {
 
 /** 先请求 runner 恢复源码并关闭自身会话，再对无响应的进程树执行强制清理。 */
 export async function runWatchCommand(options: WatchCommandOptions) {
-  const controlRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'watch-hmr-command-'))
-  const cancelFile = path.join(controlRoot, 'cancel')
+  const borrowedCancelFile = options.env['E2E_WATCH_CANCEL_FILE'] || undefined
+  const controlRoot = borrowedCancelFile ? undefined : await fs.mkdtemp(path.join(os.tmpdir(), 'watch-hmr-command-'))
+  const cancelFile = borrowedCancelFile ?? path.join(controlRoot!, 'cancel')
   const child = execa(options.command ?? 'pnpm', options.args, {
     cwd: options.cwd,
     env: { ...options.env, E2E_WATCH_CANCEL_FILE: cancelFile },
@@ -56,7 +57,9 @@ export async function runWatchCommand(options: WatchCommandOptions) {
     clearTimeout(timer)
     clearTimeout(forceTimer)
     await cancellationWrite
-    await fs.rm(controlRoot, { recursive: true, force: true })
+    if (controlRoot) {
+      await fs.rm(controlRoot, { recursive: true, force: true })
+    }
   }
   if (timedOut) {
     throw Object.assign(new Error(`Watch command timed out after ${options.timeoutMs} milliseconds`, { cause: error }), { timedOut: true })

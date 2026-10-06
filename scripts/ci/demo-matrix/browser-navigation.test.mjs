@@ -6,7 +6,7 @@ import { createServer } from 'vite'
 import { expect, it, vi } from 'vitest'
 import { openBrowser } from './browser.mjs'
 
-it.each([200, 404])('重载中断后按当前文档 HTTP %i 判断同地址 hash 导航', async (status) => {
+it.each([200, 404].flatMap(status => ['', '#/sub-normal/pages/index/index'].map(hash => ({ status, hash }))))('导航响应后中断时按当前 HTTP $status 判断就绪且不重发成功文档 ($hash)', async ({ status, hash }) => {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), 'demo-matrix-hash-recovery-')))
   let navigations = 0
   const server = await createServer({
@@ -58,7 +58,7 @@ it.each([200, 404])('重载中断后按当前文档 HTTP %i 判断同地址 hash
   const deadline = Date.now() + 20_000
   try {
     await server.listen()
-    const opened = openBrowser(`${server.resolvedUrls.local[0]}#/sub-normal/pages/index/index`, {
+    const opened = openBrowser(`${server.resolvedUrls.local[0]}${hash}`, {
       ensureRunning() {
         expect(Date.now()).toBeLessThan(deadline)
         if (navigationResponses.length >= 3) {
@@ -68,11 +68,11 @@ it.each([200, 404])('重载中断后按当前文档 HTTP %i 判断同地址 hash
     }, root)
     if (status !== 200) {
       await expect(opened).rejects.toThrow('当前文档未通过 HTTP 状态校验')
-      expect(navigationResponses).toEqual([404, null, null])
+      expect(navigationResponses).toEqual(hash ? [404, null, null] : [404, 404, 404])
       return
     }
     browser = await opened
-    expect(navigationResponses).toEqual([200, null])
+    expect(navigationResponses).toEqual([200])
     expect(navigations).toBe(1)
     expect(browser.events).toContain('debug: [vite] connected.')
   }

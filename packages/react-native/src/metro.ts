@@ -1,14 +1,18 @@
 /* eslint-disable no-console, style/max-statements-per-line */
 
 import type { NativeStyleManifest } from './types'
-import { createHash } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import fs from 'node:fs'
 import { createRequire } from 'node:module'
 import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, URL } from 'node:url'
 import { compileNativeStylesheet } from './compiler'
+import { writeManifestFile } from './metro/manifest-store'
+import { compileStableInput, waitForCurrentRefresh } from './metro/refresh'
+import { virtualModuleCode } from './metro/virtual-module'
+import { watchInput } from './metro/watch'
 
 export const VIRTUAL_MANIFEST_MODULE = '@weapp-tailwindcss/react-native/virtual'
 
@@ -63,7 +67,7 @@ let nextId = 0
 
 function packageNameFromModuleId(moduleName: string) {
   const segments = moduleName.split('/')
-  return moduleName.startsWith('@') ? segments.slice(0, 2).join('/') : segments[0]
+  return moduleName.startsWith('@') ? segments.slice(0, 2).join('/') : (segments[0] ?? '')
 }
 
 function shouldResolveFromAppRoot(moduleName: string, platform?: string) {
@@ -105,15 +109,11 @@ function emptyManifest(): NativeStyleManifest {
   return { version: 1, classSet: [], rules: {}, variables: {}, warnings: [] }
 }
 
-function virtualModuleCode(manifest: NativeStyleManifest) {
-  return `import { setEnvironment, setManifest, setStyleSheetFactory } from ${JSON.stringify('@weapp-tailwindcss/react-native/runtime')};\nimport { Appearance, Platform, StyleSheet } from 'react-native';\nsetStyleSheetFactory(StyleSheet.create);\nconst syncEnvironment = () => setEnvironment({ platform: Platform.OS, colorScheme: Appearance.getColorScheme() ?? 'light' });\nsetManifest(${JSON.stringify(manifest)});\nsyncEnvironment();\nAppearance.addChangeListener?.(({ colorScheme }) => setEnvironment({ platform: Platform.OS, colorScheme: colorScheme ?? 'light' }));\nexport default undefined;`
-}
-
 function writeVirtualModule(entry: RegisteredManifest) {
   fs.mkdirSync(path.dirname(entry.virtualPath), { recursive: true })
   fs.mkdirSync(path.dirname(entry.manifestPath), { recursive: true })
-  fs.writeFileSync(entry.virtualPath, virtualModuleCode(entry.manifest), 'utf8')
-  fs.writeFileSync(entry.manifestPath, JSON.stringify(entry.manifest), 'utf8')
+  writeManifestFile(entry.virtualPath, virtualModuleCode(entry.manifest))
+  writeManifestFile(entry.manifestPath, JSON.stringify(entry.manifest))
 }
 
 /**
@@ -129,7 +129,7 @@ function markManifestPending(entry: RegisteredManifest) {
 }
 
 function markManifestReady(entry: RegisteredManifest) {
-  fs.writeFileSync(entry.manifestReadyPath, `${entry.version}\n`, 'utf8')
+  writeManifestFile(entry.manifestReadyPath, JSON.stringify({ revision: randomUUID(), version: entry.version, virtualPath: entry.virtualPath }))
 }
 
 async function compileOptions(options: WeappReactNativeMetroOptions, projectRoot: string) {
@@ -165,37 +165,43 @@ function register(options: WeappReactNativeMetroOptions) {
   markManifestPending(entry)
   writeVirtualModule(entry)
 
+  const inputFiles = [...new Set([...(options.watchFiles ?? []), ...(options.input ? [options.input] : [])]
+    .map(file => path.resolve(projectRoot, file)))]
   let generation = 0
-  entry.refresh = async () => {
+  entry.refresh = () => {
     const currentGeneration = ++generation
     markManifestPending(entry)
-    const manifest = await compileOptions(options, projectRoot)
-    if (currentGeneration === generation) {
-      entry.manifest = manifest
-      entry.version++
-      writeVirtualModule(entry)
-      markManifestReady(entry)
-    }
+    entry.ready = (async () => {
+      try {
+        const manifest = await compileStableInput(inputFiles, () => compileOptions(options, projectRoot), () => currentGeneration === generation)
+        if (manifest && currentGeneration === generation) {
+          entry.manifest = manifest
+          entry.version++
+          writeVirtualModule(entry)
+          markManifestReady(entry)
+        }
+      }
+      catch (error) {
+        if (currentGeneration !== generation) { return }
+        const message = `生成 React Native manifest 失败：${error instanceof Error ? error.message : String(error)}`
+        writeManifestFile(entry.manifestReadyPath, JSON.stringify({ error: message }))
+        throw new Error(message, { cause: error })
+      }
+    })()
+    // watcher 没有调用方接收 Promise；保留 ready 的拒绝供读取者处理，并记录原始失败。
+    void entry.ready.catch(error => console.error(error.message))
+    return entry.ready
   }
-  entry.ready = entry.refresh().catch((error) => {
-    const message = `生成 React Native manifest 失败：${error instanceof Error ? error.message : String(error)}`
-    entry.manifest.warnings.push({ message })
-    if (process.env.WEAPP_TW_RN_DEBUG === '1') {
-      console.error(`[react-native-debug] ${message}`)
-    }
-    writeVirtualModule(entry)
-    markManifestReady(entry)
-  })
+  void entry.refresh()
 
   const sourceRoots = (options.sourceGlobs ?? [])
     .map(pattern => pattern.split(/[*{[]/, 1)[0]?.replace(/[/\\]$/, ''))
-    .filter(Boolean)
+    .filter((root): root is string => Boolean(root))
   const watched = [...(options.watchFiles ?? []), ...(options.input ? [options.input] : []), ...sourceRoots]
   const watchers = watched.map((file) => {
     const target = path.resolve(projectRoot, file)
     try {
-      const recursive = fs.statSync(target).isDirectory()
-      return fs.watch(target, { persistent: false, recursive }, () => { void entry.refresh() })
+      return watchInput(target, () => { void entry.refresh() })
     }
     catch {
       return undefined
@@ -215,7 +221,7 @@ export function getRegisteredVirtualModule(filename: string) {
 export async function getRegisteredManifest(id: string) {
   const registered = registry.get(id)
   if (!registered) { return undefined }
-  await registered.ready
+  await waitForCurrentRefresh(registered)
   return registered.manifest
 }
 
@@ -223,7 +229,7 @@ export async function getRegisteredManifest(id: string) {
 export async function getRegisteredManifestByPath(filename: string) {
   for (const entry of registry.values()) {
     if (entry.manifestPath === filename) {
-      await entry.ready
+      await waitForCurrentRefresh(entry)
       return entry.manifest
     }
   }
@@ -236,7 +242,7 @@ export async function getRegisteredManifestByProjectRoot(projectRoot: string) {
   const entries = [...registry.values()].filter(entry => entry.projectRoot === resolvedRoot)
   const entry = entries.at(-1)
   if (!entry) { return undefined }
-  await entry.ready
+  await waitForCurrentRefresh(entry)
   return entry.manifest
 }
 
@@ -249,11 +255,14 @@ export function getVirtualModuleCode(filename: string) {
 export async function getVirtualModuleCodeAsync(filename: string) {
   const registered = getRegisteredVirtualModule(filename)
   if (!registered) { return undefined }
-  await registered.ready
+  await waitForCurrentRefresh(registered)
   return getVirtualModuleCode(filename)
 }
 
-export function withWeappTailwindcss<T extends MetroConfigLike>(config: T | Promise<T> | (() => T | Promise<T>), options: WeappReactNativeMetroOptions = {}): T | Promise<T> {
+export function withWeappTailwindcss<T extends MetroConfigLike>(config: T, options?: WeappReactNativeMetroOptions): T & MetroConfigLike
+export function withWeappTailwindcss<T extends MetroConfigLike>(config: Promise<T> | (() => T | Promise<T>), options?: WeappReactNativeMetroOptions): Promise<T & MetroConfigLike>
+export function withWeappTailwindcss<T extends MetroConfigLike>(config: T | Promise<T> | (() => T | Promise<T>), options?: WeappReactNativeMetroOptions): (T & MetroConfigLike) | Promise<T & MetroConfigLike>
+export function withWeappTailwindcss<T extends MetroConfigLike>(config: T | Promise<T> | (() => T | Promise<T>), options: WeappReactNativeMetroOptions = {}): (T & MetroConfigLike) | Promise<T & MetroConfigLike> {
   if (typeof config === 'function' || (config && typeof (config as Promise<T>).then === 'function')) {
     return Promise.resolve(typeof config === 'function' ? config() : config).then(resolved => withWeappTailwindcss(resolved, options))
   }

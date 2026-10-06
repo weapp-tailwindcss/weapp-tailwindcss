@@ -80,6 +80,13 @@ it.skipIf(Boolean(filter && !new RegExp(filter).test(project)))('issue #1160 kee
   expect(evidence['issue-1160-original']).toContain('border-top-width:1px')
   expect(evidence['issue-1160-pair']).toContain('border-left-width:2px')
   expect(evidence['issue-1160-override']).toContain('border-top-width:0px')
+  const override = evidence['issue-1160-override']
+  expect(override).toContain('border-width:2px')
+  expect(override.indexOf('border-top-width:0px')).toBeGreaterThan(override.indexOf('border-width:2px'))
+  for (const style of ['dashed', 'none']) {
+    expect(evidence[`issue-1160-${style}`]).toContain(`--tw-border-style:${style}`)
+    expect(evidence[`issue-1160-${style}`]).toContain(`border-style:${style}`)
+  }
   expect(evidence['issue-1160-apply']).toContain('border-top-width:1px')
   await expect(`${JSON.stringify(evidence, null, 2)}\n`).toMatchFileSnapshot('__snapshots__/issue-1160/borders.json')
 }, 150_000)

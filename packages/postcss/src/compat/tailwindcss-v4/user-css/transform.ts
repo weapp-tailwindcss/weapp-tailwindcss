@@ -3,6 +3,7 @@ import type { GeneratedThemeDeclarationResolver } from './generated-cleanup'
 import { applyConfiguredCssCalc } from '../../../plugins/applyConfiguredCssCalc'
 import { filterExistingCssRules } from '../../../vite-css-rules'
 import { removeUnsupportedMiniProgramAtRules } from '../../mini-program-css'
+import { removeLocalUtilityMarkers } from '../../uni-app-x/local-utility-order'
 import { removeTailwindApplyAtRules } from './at-rules'
 import { removeTailwindSourceDirectives } from './directives'
 import { removeTailwindV4GeneratedUserCssArtifacts } from './generated-cleanup'
@@ -38,20 +39,24 @@ export async function transformGeneratorUserCss(
           options.generatedSource,
         )
       : compiledSource
-    return stripUnmatchedTailwindSourceMediaCloseFragments(
-      stripTailwindSourceMediaFragments(
-        removeTailwindV4GeneratorAtRules(cleanedSource),
+    return removeLocalUtilityMarkers(
+      stripUnmatchedTailwindSourceMediaCloseFragments(
+        stripTailwindSourceMediaFragments(
+          removeTailwindV4GeneratorAtRules(cleanedSource),
+        ),
       ),
     )
   }
   const repairedSource = stripUnmatchedTailwindSourceMediaCloseFragments(
     stripTailwindSourceMediaFragments(source),
   )
-  const cleanedSource = removeTailwindSourceDirectives(
-    removeTailwindV4GeneratorAtRules(repairedSource),
-    {
-      importFallback: options.importFallback,
-    },
+  const cleanedSource = removeLocalUtilityMarkers(
+    removeTailwindSourceDirectives(
+      removeTailwindV4GeneratorAtRules(repairedSource),
+      {
+        importFallback: options.importFallback,
+      },
+    ),
   )
   if (cleanedSource.trim().length === 0) {
     return ''

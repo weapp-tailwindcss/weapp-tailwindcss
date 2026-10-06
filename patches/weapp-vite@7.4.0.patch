@@ -1,3 +1,66 @@
+diff --git a/dist/cli.mjs b/dist/cli.mjs
+--- a/dist/cli.mjs
++++ b/dist/cli.mjs
+@@ -5908,16 +5908,20 @@
+ 		}
+ 	};
+ }
+-function waitForServeShutdownSignal() {
+-	return new Promise((resolve) => {
+-		const onSignal = () => {
++function createServeShutdownSignalScope() {
++	let onSignal;
++	const signal = new Promise((resolve) => {
++		onSignal = () => resolve();
++		process.on("SIGINT", onSignal);
++		process.on("SIGTERM", onSignal);
++	});
++	return {
++		signal,
++		dispose() {
+ 			process.off("SIGINT", onSignal);
+ 			process.off("SIGTERM", onSignal);
+-			resolve();
+-		};
+-		process.on("SIGINT", onSignal);
+-		process.on("SIGTERM", onSignal);
+-	});
++		}
++	};
+ }
+ //#endregion
+ //#region src/cli/commands/serve/index.ts
+@@ -6039,6 +6043,8 @@
+ 			silentStartupHint: true,
+ 			weappViteConfig: configService.weappViteConfig
+ 		}) : void 0;
++		// 启动前领取信号，清理结束后释放；重复信号不能打断异步恢复。
++		const shutdown = createServeShutdownSignalScope();
+ 		try {
+ 			const analyzeController = createAnalyzeController({
+ 				configFile,
+@@ -6128,12 +6134,16 @@
+ 					devHotkeysSession?.restore();
+ 				}
+ 			}
+-			if (analyzeHandle) await analyzeController.waitForExit();
+-			else if (targets.has("dev")) await waitForServeShutdownSignal();
++			if (analyzeHandle) await Promise.race([analyzeController.waitForExit(), shutdown.signal]);
++			else if (targets.has("dev")) await shutdown.signal;
+ 		} finally {
+-			devHotkeysSession?.close();
+-			await closeActiveForwardConsole();
+-			for (const backend of [...targets.select("dev")].reverse()) await backend.driver.close(ctx);
++			try {
++				devHotkeysSession?.close();
++				await closeActiveForwardConsole();
++				for (const backend of [...targets.select("dev")].reverse()) await backend.driver.close(ctx);
++			} finally {
++				shutdown.dispose();
++			}
+ 		}
+ 	});
+ }
 diff --git a/dist/createContext-UOEgeYnA.mjs b/dist/createContext-UOEgeYnA.mjs
 --- a/dist/createContext-UOEgeYnA.mjs
 +++ b/dist/createContext-UOEgeYnA.mjs
@@ -26,6 +89,65 @@ diff --git a/dist/createContext-UOEgeYnA.mjs b/dist/createContext-UOEgeYnA.mjs
  			output.minify = false;
  			output.sourcemap = Boolean(this.config.build.sourcemap);
  			output.banner = async (chunk) => {
+@@ -23792,15 +23795,17 @@
+ 	const statefulRestartTasks = /* @__PURE__ */ new Set();
+ 	let stopStatefulWatcher;
+ 	let restoreAssetWatch;
++	let releaseAssetWatchPromise;
+ 	let projectConfigReady = Promise.resolve();
+ 	function idePrivateConfigPath() {
+ 		if (!configService.projectPrivateConfigPath) return;
+ 		return configService.multiPlatform.enabled ? path.join(path.dirname(configService.outDir), "project.private.config.json") : configService.projectPrivateConfigPath;
+ 	}
+-	async function releaseAssetWatch() {
++	function releaseAssetWatch() {
++		if (releaseAssetWatchPromise) return releaseAssetWatchPromise;
+ 		const restore = restoreAssetWatch;
+ 		restoreAssetWatch = void 0;
+-		await restore?.();
++		return releaseAssetWatchPromise = Promise.resolve().then(() => restore?.());
+ 	}
+ 	async function trackStatefulRestart(restart) {
+ 		const task = restart();
+@@ -23921,12 +23926,14 @@
+ 				const privateConfigPath = idePrivateConfigPath();
+ 				if (privateConfigPath) {
+ 					await projectConfigReady;
++					await releaseAssetWatchPromise;
+ 					restoreAssetWatch ??= await installIdeAssetWatch({
+ 						configPath: privateConfigPath,
+ 						outDir: configService.outDir,
+ 						inheritedWatchOptions: configService.projectConfig?.watchOptions,
+ 						output: initialSnapshot
+ 					});
++					releaseAssetWatchPromise = void 0;
+ 				}
+ 				await configService.load(configService.loadOptions);
+ 				ctx.moduleGraphService.resetSession();
+@@ -23940,7 +23947,22 @@
+ 				};
+ 				buildOptions.plugins = [...buildOptions.plugins ?? [], {
+ 					name: "weapp-vite:ide-asset-watch-ownership",
+-					closeBundle: releaseAssetWatch
++					closeServer({ reason }) {
++						// bundledDev 不执行 closeBundle；启动期也要进入服务器的关闭边界。
++						if (reason !== "restart") return releaseAssetWatch();
++					},
++					configureServer(server) {
++						const close = server.close.bind(server);
++						let closePromise;
++						// 内部重启复用关闭 Promise 时，退出仍须等待外层租约恢复。
++						server.close = () => closePromise ??= (async () => {
++							try {
++								await close();
++							} finally {
++								await releaseAssetWatch();
++							}
++						})();
++					}
+ 				}];
+ 				if (statefulWatcherClosed) return nativeBuildEvents.watcher;
+ 				const workerPromise = hasWorkersDir && workersDir ? devWorkers(configService, watcherService, workersDir) : Promise.resolve();
 diff --git a/dist/statefulHmrCommonjs.mjs b/dist/statefulHmrCommonjs.mjs
 new file mode 100644
 --- /dev/null

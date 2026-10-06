@@ -9,6 +9,33 @@ import { getParserLang, getParserSourceType } from './parser-options'
 
 export type { LiteralSpan } from './types'
 
+const CONDITION_TEST_CHAIN_TYPES = new Set([
+  'BinaryExpression',
+  'CallExpression',
+  'LogicalExpression',
+  'MemberExpression',
+  'UnaryExpression',
+])
+
+/** 与 Babel handler 保持一致，跳过条件表达式 test 中的字面量。 */
+function isConditionTestLiteral(node: object, ancestors: readonly object[]) {
+  let current = node
+
+  for (let index = ancestors.length - 1; index >= 0; index -= 1) {
+    const parent = ancestors[index] as { type?: string, test?: unknown }
+    if (parent.type === 'ConditionalExpression') {
+      return parent.test === current
+    }
+    if (parent.type && CONDITION_TEST_CHAIN_TYPES.has(parent.type)) {
+      current = parent
+      continue
+    }
+    return false
+  }
+
+  return false
+}
+
 const MAX_ANALYSIS_BYTES = 2 * 1024 * 1024
 const analysisCache = new LRUCache<string, SourceAnalysis>({ max: 128, maxSize: MAX_ANALYSIS_BYTES })
 
@@ -18,30 +45,6 @@ function cacheAnalysis(key: string, analysis: SourceAnalysis) {
     analysisCache.set(key, analysis, { size })
   }
   return analysis
-}
-
-function isConditionTestLiteral(node: object, ancestors: readonly object[]) {
-  let current = node
-
-  for (let index = ancestors.length - 1; index >= 0; index--) {
-    const parent = ancestors[index] as { type?: string, test?: unknown }
-    if (parent.type === 'ConditionalExpression') {
-      return parent.test === current
-    }
-    if (
-      parent.type === 'BinaryExpression'
-      || parent.type === 'CallExpression'
-      || parent.type === 'LogicalExpression'
-      || parent.type === 'MemberExpression'
-      || parent.type === 'UnaryExpression'
-    ) {
-      current = parent
-      continue
-    }
-    return false
-  }
-
-  return false
 }
 
 /** 只缓存与 classSet 无关的字面量事实；完整 AST 在本次解析后释放。 */

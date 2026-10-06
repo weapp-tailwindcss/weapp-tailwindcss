@@ -1,7 +1,7 @@
 {
   "name": "@weapp-tailwindcss/shared",
   "type": "module",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "Shared utilities for the cross-platform weapp-tailwindcss toolchain. weapp-tailwindcss 跨端工具链的共享工具。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",

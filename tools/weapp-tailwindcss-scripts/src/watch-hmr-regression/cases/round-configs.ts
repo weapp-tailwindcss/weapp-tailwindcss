@@ -8,12 +8,14 @@ import {
 } from '../mutations/tokens'
 
 const NON_DIGIT_RE = /\D/g
-const TAILWIND_V4_JS_CONTENT_UNSUPPORTED_TOKENS = new Set([
-  '[@supports(display:grid)]:grid',
-  'supports-[backdrop-filter:blur(2px)]:backdrop-blur-[2px]',
-  '[@media(any-hover:hover){&:hover}]:opacity-100',
-  'supports-[display:grid]:grid',
-])
+/** 默认小程序兼容管线移除 @supports 与 hover 规则；保留输入并显式验证负向结果。 */
+export const MINI_PROGRAM_REMOVED_CSS_UTILITIES = [
+  { utility: '[@supports(display:grid)]:grid', condition: 'supports' },
+  { utility: 'supports-[backdrop-filter:blur(2px)]:backdrop-blur-[2px]', condition: 'supports' },
+  { utility: '[@media(any-hover:hover){&:hover}]:opacity-100', condition: 'hover' },
+  { utility: 'supports-[display:grid]:grid', condition: 'supports' },
+] as const
+const TAILWIND_V4_JS_CONTENT_UNSUPPORTED_TOKENS = new Set<string>(MINI_PROGRAM_REMOVED_CSS_UTILITIES.map(item => item.utility))
 
 export function buildHexScriptRoundConfigs() {
   const rounds = [

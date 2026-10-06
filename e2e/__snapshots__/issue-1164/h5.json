@@ -1,51 +1,51 @@
 {
   "issue-1164-author": {
     "padding-left": "12px",
-    "background-color": "#ff7a00",
     "height": "100px",
-    "width": "100%"
+    "width": "100%",
+    "background-color": "#ff7a00"
   },
   "issue-1164-author-circle": {
-    "background-color": "#f21903",
     "height": "48px",
     "width": "48px",
-    "border-radius": "9999px"
+    "border-radius": "9999px",
+    "background-color": "#f21903"
   },
   "issue-1164-block": {
-    "background-color": "#ff7a00",
     "height": "100px",
-    "width": "100%"
+    "width": "100%",
+    "background-color": "#ff7a00"
   },
   "issue-1164-block-circle": {
-    "background-color": "#f21903",
     "height": "48px",
     "width": "48px",
-    "border-radius": "9999px"
+    "border-radius": "9999px",
+    "background-color": "#f21903"
   },
   "issue-1164-empty": {
-    "background-color": "#ff7a00",
     "height": "100px",
-    "width": "100%"
+    "width": "100%",
+    "background-color": "#ff7a00"
   },
   "issue-1164-empty-circle": {
-    "background-color": "#f21903",
     "height": "48px",
     "width": "48px",
-    "border-radius": "9999px"
+    "border-radius": "9999px",
+    "background-color": "#f21903"
   },
   "issue-1164-line": {
-    "background-color": "#ff7a00",
     "height": "100px",
-    "width": "100%"
+    "width": "100%",
+    "background-color": "#ff7a00"
   },
   "issue-1164-line-circle": {
-    "background-color": "#f21903",
     "height": "48px",
     "width": "48px",
-    "border-radius": "9999px"
+    "border-radius": "9999px",
+    "background-color": "#f21903"
   },
   "issue-1164-width-auto": {
-    "background-color": "#ff7a00",
-    "height": "100px"
+    "height": "100px",
+    "background-color": "#ff7a00"
   }
 }

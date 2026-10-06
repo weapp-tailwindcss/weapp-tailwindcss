@@ -2,8 +2,44 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
-import { expect, it } from 'vitest'
-import { runCommand } from '../src/process'
+import { expect, it, vi } from 'vitest'
+import { runCommand, spawnCommand } from '../src/process'
+
+it.skipIf(process.platform === 'win32')('超时后等待宽限退出和日志关闭，保留真实零退出码及 timeout 分类', async () => {
+  const result = await runCommand({
+    command: process.execPath,
+    args: ['-e', 'process.on("SIGTERM", () => setTimeout(() => { console.log("CLEANED"); process.exit(0) }, 100)); console.log("READY"); setTimeout(() => process.exit(2), 3000)'],
+    cwd: process.cwd(),
+    timeoutMs: 700,
+    allowFailure: true,
+  })
+  expect(result.issue.kind).toBe('timeout')
+  expect(result.output).toContain('CLEANED')
+  expect(result.exit).toEqual({ code: 0, signal: null })
+})
+
+it('stop 强制终止拒绝 SIGTERM 的子进程，只有收到 close 才返回', async () => {
+  const spawned = spawnCommand({
+    command: process.execPath,
+    args: ['-e', 'process.on("SIGTERM", () => {}); console.log("READY"); setTimeout(() => process.exit(2), 12000)'],
+    cwd: process.cwd(),
+  })
+  let closed = false
+  void spawned.closed.then(() => {
+    closed = true
+  })
+  try {
+    await vi.waitFor(() => expect(spawned.logs.join('')).toContain('READY'), { timeout: 5000 })
+    await spawned.stop()
+    expect(closed).toBe(true)
+  }
+  finally {
+    if (!closed) {
+      spawned.child.kill('SIGKILL')
+      await vi.waitFor(() => expect(closed).toBe(true), { timeout: 3000 })
+    }
+  }
+})
 
 it('原生可执行文件不存在时返回带命令和 cwd 的分类错误', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'hbuilderx-missing-'))
@@ -56,5 +92,44 @@ it.skipIf(process.platform !== 'win32')('通过 PATH 运行带空格目录中的
   }
   finally {
     await rm(root, { recursive: true, force: true })
+  }
+})
+
+it.skipIf(process.platform === 'win32')('根进程退出后仍清理忽略 TERM 且关闭管道的真实后代', async () => {
+  const leaf = 'process.on("SIGTERM", () => {}); console.log(process.pid); process.stdout.end(); setTimeout(() => process.exit(2), 12000)'
+  const script = `
+    const { spawn } = require('node:child_process')
+    const child = spawn(process.execPath, ['-e', ${JSON.stringify(leaf)}], { stdio: ['ignore', 'pipe', 'ignore'] })
+    process.on('SIGTERM', () => process.exit(0))
+    child.stdout.on('data', chunk => console.log('LEAF=' + chunk.toString().trim()))
+    setTimeout(() => process.exit(2), 12000)
+  `
+  const owned = spawnCommand({ command: process.execPath, args: ['-e', script], cwd: process.cwd() })
+  const group = owned.child.pid!
+  const groupGone = () => {
+    try {
+      process.kill(-group, 0)
+      return false
+    }
+    catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ESRCH') {
+        return true
+      }
+      throw error
+    }
+  }
+  try {
+    await vi.waitFor(() => expect(owned.logs.join('')).toMatch(/LEAF=\d+/), { timeout: 5000 })
+    const stopped = owned.stop()
+    expect(await owned.closed).toEqual({ code: 0, signal: null })
+    expect(groupGone()).toBe(false)
+    await stopped
+    expect(groupGone()).toBe(true)
+  }
+  finally {
+    if (!groupGone()) {
+      process.kill(-group, 'SIGKILL')
+      await vi.waitFor(() => expect(groupGone()).toBe(true), { timeout: 3000 })
+    }
   }
 })

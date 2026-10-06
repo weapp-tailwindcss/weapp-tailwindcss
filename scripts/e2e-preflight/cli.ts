@@ -11,20 +11,21 @@ import { consumerAlive } from './lifecycle'
 import { acquireLock } from './lock'
 import { serve } from './server'
 import { initialChecks, PreflightSession } from './session'
-import { checkIds, maxAgeMs } from './types'
+import { maxAgeMs, requiredCheckIds } from './types'
 
-async function prepare(root: string) {
+async function prepare(root: string, extended = false) {
   const runId = randomUUID()
   const dir = path.join(root, 'e2e', '.artifacts', 'preflight', runId)
   await mkdir(dir, { recursive: true })
   const file = path.join(dir, 'report.json')
   const report: PreflightReport = {
     schema: 'full-test-preflight/v1',
+    extended,
     runId,
     identity: await collectIdentity(root),
     createdAt: new Date().toISOString(),
     status: 'blocked',
-    checks: initialChecks(),
+    checks: initialChecks(extended),
     endpoint: '',
     token: randomUUID(),
     challenge: randomUUID(),
@@ -75,7 +76,7 @@ async function prepare(root: string) {
     })
     await session.save()
     process.stdout.write(`[preflight] 报告：${file}\n`)
-    await session.probes(checkIds.filter((id): id is ProbeId => id !== 'computer-use'), 'prepare')
+    await session.probes(requiredCheckIds(extended).filter((id): id is ProbeId => id !== 'computer-use'), 'prepare')
     if (report.checks.some(check => check.id !== 'computer-use' && check.status !== 'passed')) {
       process.stderr.write(`[preflight] 环境已阻断；全面测试未启动。请查看 ${path.join(dir, 'report.md')}\n`)
       process.exitCode = 1
@@ -109,12 +110,12 @@ async function prepare(root: string) {
 }
 
 async function main() {
-  const { values, positionals } = parseArgs({ allowPositionals: true, options: { report: { type: 'string' }, reason: { type: 'string' } } })
+  const { values, positionals } = parseArgs({ allowPositionals: true, options: { extended: { type: 'boolean' }, report: { type: 'string' }, reason: { type: 'string' } } })
   if (positionals.length !== 1 || !['prepare', 'verify', 'block'].includes(positionals[0]!)) {
-    throw new Error('用法：pnpm e2e:preflight prepare | verify --report <本轮 report.json> | block --report <本轮 report.json> --reason <工具错误>')
+    throw new Error('用法：pnpm e2e:preflight prepare [--extended] | verify --report <本轮 report.json> | block --report <本轮 report.json> --reason <工具错误>')
   }
   if (positionals[0] === 'prepare') {
-    await prepare(process.cwd())
+    await prepare(process.cwd(), values.extended)
     return
   }
   if (!values.report) {

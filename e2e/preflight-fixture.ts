@@ -13,7 +13,7 @@ export function fixtureIdentity(root: string): Identity {
 }
 
 export function passingCheck(id: ProbeId): Check {
-  return { id, status: 'passed', checkedAt: new Date().toISOString(), detail: '测试注入探针', remedy: '', evidence: [], binding: { command: 'test-command', version: '1', device: id, host: 'test-host', channel: 'stable' } }
+  return { id, status: 'passed', checkedAt: new Date().toISOString(), detail: '测试注入探针', remedy: '', evidence: [], binding: { command: 'test-command', version: '1', device: id, host: 'test-host', channel: 'stable', httpPort: '12345', ...(id === 'wechat' ? { appid: 'wx6ffee4673b257014' } : {}) } }
 }
 
 export async function fixtureSession(identity?: Identity) {

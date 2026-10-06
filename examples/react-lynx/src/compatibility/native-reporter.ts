@@ -1,25 +1,20 @@
-import type { CompatibilityCase, NativeCaseResult, NativePlatformReport, NativeRuntimeEnvironment, Platform, StaticEvidenceReport } from './types'
+import type { ColorSchemeModule } from './native-color-scheme'
+import type { EvidenceModule, NativeEvidenceWriter } from './native-evidence'
+import type { CompatibilityCase, NativeCaseResult, NativePlatformReport, NativeRect, NativeRuntimeEnvironment, Platform, StaticEvidenceReport } from './types'
 import { compatibilityCases } from './catalog'
+import { evidenceSequence, lynxEvidenceStrategy, requiresPixelEffect } from './evidence'
+import { collectGeometry } from './geometry'
+import { collectColorScheme } from './native-color-scheme'
+import { createNativeEvidence } from './native-evidence'
 import { waitForProbeLayout } from './runtime-ready'
 import staticEvidenceJson from './static-evidence.json'
-
-interface RectResult {
-  width: number
-  height: number
-  left: number
-  right: number
-  top: number
-  bottom: number
-}
 
 interface ScreenshotResult {
   data: string
 }
 
-interface ReporterModule {
-  submit?: (report: string) => void
-  submitArtifact?: (name: string, data: string) => void
-  measure?: (id: string, callback: (value: RectResult | null) => void) => void
+interface ReporterModule extends EvidenceModule, ColorSchemeModule {
+  measure?: (id: string, callback: (value: NativeRect | null) => void) => void
   capture?: (id: string, callback: (value: string | null) => void) => void
   pointerEventsNone?: (id: string, callback: (value: boolean | number | null) => void) => void
   setPseudoActive?: (id: string, active: boolean, callback: (value: boolean | number) => void) => void
@@ -98,9 +93,9 @@ function callReporter<T>(invokeReporter: (callback: (value: T) => void) => void,
 
 function measure(id: string, reporter: ReporterModule) {
   if (reporter.measure) {
-    return callReporter<RectResult | null>(callback => reporter.measure!(id, callback)).then(value => value ?? undefined)
+    return callReporter<NativeRect | null>(callback => reporter.measure!(id, callback)).then(value => value ?? undefined)
   }
-  return invoke<RectResult>(id, 'boundingClientRect', {
+  return invoke<NativeRect>(id, 'boundingClientRect', {
     relativeTo: 'screen',
     androidEnableTransformProps: true,
   })
@@ -143,109 +138,27 @@ function fingerprint(value: string) {
   return `${value.length}:${(hash >>> 0).toString(16)}`
 }
 
-function saveArtifact(reporter: ReporterModule, name: string, screenshot: ScreenshotResult | undefined) {
-  if (screenshot?.data && reporter.submitArtifact) {
-    reporter.submitArtifact(name, screenshot.data)
+async function collectPixel(item: CompatibilityCase, reporter: ReporterModule, evidence: NativeEvidenceWriter): Promise<NativeCaseResult> {
+  const sequence = evidenceSequence(item, staticById.get(item.id))!
+  // 原生截图都在 UI 线程合成；逐帧等待回调，避免多个 drawViewHierarchy/View.draw 同时进入宿主。
+  const images = []
+  for (const frame of sequence.frames) {
+    images.push(await capture(`${frame}-container-${item.id}`, reporter))
   }
-}
-
-function relativeRect(rect: RectResult | undefined, parent: RectResult | undefined) {
-  if (!rect || !parent) {
-    return undefined
+  for (const [index, frame] of sequence.frames.entries()) {
+    await evidence.save(`${item.id}-${frame}.png`, images[index]?.data)
   }
-  return {
-    width: rect.width,
-    height: rect.height,
-    left: rect.left - parent.left,
-    top: rect.top - parent.top,
-  }
-}
-
-function rectText(rect: ReturnType<typeof relativeRect>) {
-  return rect ? `${rect.left},${rect.top},${rect.width},${rect.height}` : 'missing'
-}
-
-function closeTo(actual: number, expected: number, tolerance = 1.5) {
-  return Math.abs(actual - expected) <= tolerance
-}
-
-function geometryPassed(item: CompatibilityCase, styled: RectResult, control: RectResult, styledChild?: RectResult, controlChild?: RectResult) {
-  if (item.id === 'layout-aspect') {
-    return closeTo(styled.width, control.width) && Math.abs(styled.height - control.height) > 1
-  }
-  if (item.id === 'sizing-fixed') {
-    return closeTo(styled.width, 123)
-  }
-  if (item.id === 'sizing-size') {
-    return closeTo(styled.width, 44) && closeTo(styled.height, 44)
-  }
-  if (item.id === 'accessibility-sr') {
-    return closeTo(styled.width, 1) && closeTo(styled.height, 1)
-  }
-  if (item.id === 'variant-responsive') {
-    return closeTo(styled.width, 200)
-  }
-  const styledRelativeChild = relativeRect(styledChild, styled)
-  const controlRelativeChild = relativeRect(controlChild, control)
-  const values = [
-    Math.abs(styled.width - control.width),
-    Math.abs(styled.height - control.height),
-    Math.abs(styled.left - control.left),
-    Math.abs(styled.top - control.top),
-    styledRelativeChild && controlRelativeChild ? Math.abs(styledRelativeChild.left - controlRelativeChild.left) : 0,
-    styledRelativeChild && controlRelativeChild ? Math.abs(styledRelativeChild.top - controlRelativeChild.top) : 0,
-  ]
-  return values.some(value => value !== undefined && value > 1)
-}
-
-async function collectGeometry(item: CompatibilityCase, reporter: ReporterModule): Promise<NativeCaseResult> {
-  const [styled, control, styledChild, controlChild] = await Promise.all([
-    measure(`probe-${item.id}`, reporter),
-    measure(`control-${item.id}`, reporter),
-    measure(`probe-child-${item.id}-a`, reporter),
-    measure(`probe-child-control-${item.id}-a`, reporter),
-  ])
-  if (!styled || !control || styled.width <= 0 || styled.height <= 0 || control.width <= 0 || control.height <= 0) {
-    return {
-      id: item.id,
-      status: 'not-tested',
-      reason: 'boundingClientRect 未返回完整的 probe/control 区域',
-      checkpoints: [{ name: 'geometry:rendered', passed: false }],
-    }
-  }
-  const passed = geometryPassed(item, styled, control, styledChild, controlChild)
-  return {
-    id: item.id,
-    status: passed ? 'supported' : 'unsupported',
-    reason: passed ? undefined : 'Tailwind probe 与 control 的几何结果没有满足 case 断言',
-    failureStage: passed ? undefined : 'runtime',
-    checkpoints: [{
-      name: 'geometry:probe-vs-control',
-      passed,
-      actual: `${rectText(relativeRect(styled, styled))}; child=${rectText(relativeRect(styledChild, styled))}`,
-      expected: `control=${rectText(relativeRect(control, control))}; child=${rectText(relativeRect(controlChild, control))}`,
-    }],
-  }
-}
-
-async function collectPixel(item: CompatibilityCase, reporter: ReporterModule): Promise<NativeCaseResult> {
-  const probeId = item.id === 'layout-z-index' ? `probe-container-${item.id}` : `probe-${item.id}`
-  const controlId = item.id === 'layout-z-index' ? `control-container-${item.id}` : `control-${item.id}`
-  const [styled, control] = await Promise.all([
-    capture(probeId, reporter),
-    capture(controlId, reporter),
-  ])
-  saveArtifact(reporter, `${item.id}-probe.png`, styled)
-  saveArtifact(reporter, `${item.id}-control.png`, control)
-  const captured = Boolean(styled?.data && control?.data)
+  const [styled, control] = images
+  const captured = images.every(image => Boolean(image?.data))
   const passed = captured && fingerprint(styled!.data) !== fingerprint(control!.data)
+  const pendingEffect = captured && requiresPixelEffect(item.id)
   return {
     id: item.id,
-    status: passed ? 'supported' : captured ? 'unsupported' : 'not-tested',
-    reason: passed ? undefined : captured ? 'probe/control 元素截图没有可观察的像素差异' : '原生 host 未返回完整的 probe/control 局部截图',
+    status: pendingEffect ? 'not-tested' : passed ? 'supported' : captured ? 'unsupported' : 'not-tested',
+    reason: pendingEffect ? '已采集原始截图，等待宿主验证预期效果' : passed ? undefined : captured ? 'probe/control 元素截图没有可观察的像素差异' : '原生 host 未返回完整的 probe/control 局部截图',
     failureStage: passed || !captured ? undefined : 'runtime',
     checkpoints: [{
-      name: 'pixel:probe-vs-control',
+      name: sequence.checkpoint,
       passed,
       actual: styled?.data ? fingerprint(styled.data) : 'missing',
       expected: control?.data ? `different from ${fingerprint(control.data)}` : 'control screenshot',
@@ -253,7 +166,7 @@ async function collectPixel(item: CompatibilityCase, reporter: ReporterModule): 
   }
 }
 
-async function collectInteraction(item: CompatibilityCase, reporter: ReporterModule): Promise<NativeCaseResult> {
+async function collectInteraction(item: CompatibilityCase, reporter: ReporterModule, evidence: NativeEvidenceWriter): Promise<NativeCaseResult> {
   if (item.id === 'interaction-pointer') {
     const [styled, control] = reporter.pointerEventsNone
       ? await Promise.all([
@@ -274,17 +187,17 @@ async function collectInteraction(item: CompatibilityCase, reporter: ReporterMod
     }
   }
   if (item.id === 'variant-state') {
-    const before = await capture(`probe-${item.id}`, reporter)
+    const before = await capture(`probe-container-${item.id}`, reporter)
     const activated = reporter.setPseudoActive
       ? await callReporter<boolean | number>(callback => reporter.setPseudoActive!(`probe-${item.id}`, true, callback))
       : undefined
     await wait(120)
-    const active = await capture(`probe-${item.id}`, reporter)
+    const active = await capture(`probe-container-${item.id}`, reporter)
     if (reporter.setPseudoActive) {
       await callReporter<boolean | number>(callback => reporter.setPseudoActive!(`probe-${item.id}`, false, callback))
     }
-    saveArtifact(reporter, `${item.id}-before.png`, before)
-    saveArtifact(reporter, `${item.id}-active.png`, active)
+    await evidence.save(`${item.id}-before.png`, before?.data)
+    await evidence.save(`${item.id}-active.png`, active?.data)
     const captured = Boolean(before?.data && active?.data)
     const activatedValue = nativeBoolean(activated)
     const measured = activatedValue !== undefined && captured
@@ -298,11 +211,11 @@ async function collectInteraction(item: CompatibilityCase, reporter: ReporterMod
     }
   }
   if (item.id === 'animation-spin') {
-    const before = await capture(`probe-${item.id}`, reporter)
+    const before = await capture(`probe-container-${item.id}`, reporter)
     await wait(220)
-    const after = await capture(`probe-${item.id}`, reporter)
-    saveArtifact(reporter, `${item.id}-before.png`, before)
-    saveArtifact(reporter, `${item.id}-after.png`, after)
+    const after = await capture(`probe-container-${item.id}`, reporter)
+    await evidence.save(`${item.id}-before.png`, before?.data)
+    await evidence.save(`${item.id}-after.png`, after?.data)
     const captured = Boolean(before?.data && after?.data)
     const passed = captured && fingerprint(before!.data) !== fingerprint(after!.data)
     return {
@@ -314,15 +227,15 @@ async function collectInteraction(item: CompatibilityCase, reporter: ReporterMod
     }
   }
   if (item.id === 'transition-basic') {
-    const before = await capture(`probe-${item.id}`, reporter)
+    const before = await capture(`probe-container-${item.id}`, reporter)
     setNativeStyle(`probe-${item.id}`, 'opacity: 0.15;')
     await wait(40)
-    const during = await capture(`probe-${item.id}`, reporter)
+    const during = await capture(`probe-container-${item.id}`, reporter)
     await wait(360)
-    const after = await capture(`probe-${item.id}`, reporter)
-    saveArtifact(reporter, `${item.id}-before.png`, before)
-    saveArtifact(reporter, `${item.id}-during.png`, during)
-    saveArtifact(reporter, `${item.id}-after.png`, after)
+    const after = await capture(`probe-container-${item.id}`, reporter)
+    await evidence.save(`${item.id}-before.png`, before?.data)
+    await evidence.save(`${item.id}-during.png`, during?.data)
+    await evidence.save(`${item.id}-after.png`, after?.data)
     const captured = Boolean(before?.data && during?.data && after?.data)
     const passed = Boolean(
       before?.data && during?.data && after?.data
@@ -345,7 +258,7 @@ async function collectInteraction(item: CompatibilityCase, reporter: ReporterMod
   }
 }
 
-async function collectCase(item: CompatibilityCase, reporter: ReporterModule): Promise<NativeCaseResult> {
+async function collectCase(item: CompatibilityCase, reporter: ReporterModule, evidence: NativeEvidenceWriter): Promise<NativeCaseResult> {
   const staticResult = staticById.get(item.id)
   if (!staticResult?.generated || !staticResult.bundled) {
     return {
@@ -358,7 +271,8 @@ async function collectCase(item: CompatibilityCase, reporter: ReporterModule): P
       ],
     }
   }
-  if (item.evidence === 'build') {
+  const strategy = lynxEvidenceStrategy(item)
+  if (strategy === 'build') {
     return {
       id: item.id,
       status: 'supported',
@@ -368,13 +282,16 @@ async function collectCase(item: CompatibilityCase, reporter: ReporterModule): P
       ],
     }
   }
-  if (item.probe === 'geometry') {
-    return collectGeometry(item, reporter)
+  if (strategy === 'native-geometry') {
+    return collectGeometry(item, id => measure(id, reporter))
   }
-  if (item.probe === 'interaction') {
-    return collectInteraction(item, reporter)
+  if (strategy === 'color-scheme') {
+    return collectColorScheme(reporter, evidence)
   }
-  return collectPixel(item, reporter)
+  if (strategy === 'interaction') {
+    return collectInteraction(item, reporter, evidence)
+  }
+  return collectPixel(item, reporter, evidence)
 }
 
 export async function submitNativeCompatibilityReport() {
@@ -383,19 +300,33 @@ export async function submitNativeCompatibilityReport() {
   if (!reporter?.submit || !platform || staticEvidence.catalogHash === 'pending-static-e2e') {
     return
   }
-  await waitForProbeLayout(id => measure(id, reporter))
-  const results: NativeCaseResult[] = []
-  for (const item of compatibilityCases) {
-    results.push(await collectCase(item, reporter))
+  let runId: string | undefined
+  try {
+    const evidence = await createNativeEvidence(reporter)
+    runId = evidence.runId
+    if (!await waitForProbeLayout(id => measure(id, reporter))) {
+      throw new Error('原生 probe 布局在等待期限内未就绪')
+    }
+    const results: NativeCaseResult[] = []
+    for (const item of compatibilityCases) {
+      results.push(await collectCase(item, reporter, evidence))
+    }
+    const report: NativePlatformReport = {
+      schemaVersion: 1,
+      platform,
+      catalogHash: staticEvidence.catalogHash,
+      verifiedAt: new Date().toISOString(),
+      versions: staticEvidence.versions,
+      environment: runtimeEnvironment(platform),
+      results,
+    }
+    await evidence.submit(report)
   }
-  const report: NativePlatformReport = {
-    schemaVersion: 1,
-    platform,
-    catalogHash: staticEvidence.catalogHash,
-    verifiedAt: new Date().toISOString(),
-    versions: staticEvidence.versions,
-    environment: runtimeEnvironment(platform),
-    results,
+  catch (error) {
+    const message = error instanceof Error ? error.stack ?? error.message : String(error)
+    if (runId && reporter.fail) {
+      await callReporter<boolean>(callback => reporter.fail!(runId!, message, callback), 3000).catch(() => undefined)
+    }
+    throw error
   }
-  reporter.submit(JSON.stringify(report))
 }

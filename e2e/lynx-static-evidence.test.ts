@@ -2,6 +2,21 @@ import { describe, expect, it } from 'vitest'
 import { declarationMatches } from './lynx/static-evidence'
 
 describe('Lynx static declaration evidence', () => {
+  it.each([
+    ['0.5', '50%', true],
+    ['1', '100%', true],
+    ['50', '50%', false],
+    ['0.25', '50%', false],
+    ['var(--opacity)', '50%', false],
+    ['50% 0', '50%', false],
+  ])('opacity %s 与 %s 的语义比较为 %s', (actual, expected, matches) => {
+    expect(declarationMatches({ property: 'opacity', value: actual }, { property: 'opacity', value: expected }, true)).toBe(matches)
+  })
+
+  it('不把其它属性的数字与百分比当作等价值', () => {
+    expect(declarationMatches({ property: 'width', value: '0.5' }, { property: 'width', value: '50%' }, true)).toBe(false)
+  })
+
   it('requires an expected value to match instead of accepting the property name alone', () => {
     expect(declarationMatches(
       { property: 'width', value: '100px' },

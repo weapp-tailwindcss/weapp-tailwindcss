@@ -1,7 +1,7 @@
 {
   "name": "tailwindcss-config",
   "type": "module",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "description": "Tailwind CSS configuration loader for cross-platform toolchains. 跨端工具链的 Tailwind CSS 配置加载器。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",

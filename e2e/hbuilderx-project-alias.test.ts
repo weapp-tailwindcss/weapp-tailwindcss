@@ -38,4 +38,27 @@ describe('HBuilderX project alias', () => {
       await fs.rm(projectRoot, { recursive: true, force: true })
     }
   })
+  it('同一进程再次领取同一项目也不覆盖待恢复的别名', async () => {
+    const projectRoot = await fs.mkdtemp(path.join(tmpdir(), 'hbuilderx-alias-recovery-'))
+    const aliasRoot = path.join(projectRoot, 'aliases')
+    const first = await createHBuilderXProjectAlias(projectRoot, aliasRoot)
+    try {
+      const second = await createHBuilderXProjectAlias(projectRoot, aliasRoot)
+      try {
+        expect(second.projectPath).not.toBe(first.projectPath)
+        expect(second.projectName).not.toBe(first.projectName)
+        await first.cleanup()
+        expect((await fs.lstat(second.projectPath)).isSymbolicLink()).toBe(true)
+        await fs.writeFile(path.join(second.projectPath, 'probe.txt'), 'current')
+        expect(await fs.readFile(path.join(projectRoot, 'probe.txt'), 'utf8')).toBe('current')
+      }
+      finally {
+        await second.cleanup()
+      }
+    }
+    finally {
+      await first.cleanup()
+      await fs.rm(projectRoot, { recursive: true, force: true })
+    }
+  })
 })

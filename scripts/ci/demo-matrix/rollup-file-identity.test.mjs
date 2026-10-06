@@ -94,7 +94,7 @@ it.each(['relative', 'windows'])('Taro 重绑使用注册身份，避免目录�
     const eventPath = style === 'relative' ? path.relative(process.cwd(), file) : path.win32.normalize(file)
     await listener(eventPath)
     expect(closers[0]).toHaveBeenCalledTimes(1)
-    expect([...watcher._closers.keys()]).toEqual([file])
+    expect([...watcher._closers.keys()].map(key => path.resolve(key))).toEqual([file])
     await watcher.close()
     expect(closers).toHaveLength(2)
     for (const closer of closers) {

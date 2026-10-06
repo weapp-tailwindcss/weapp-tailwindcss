@@ -6,6 +6,7 @@ import { readFileIfExists } from '../tools/weapp-tailwindcss-scripts/src/watch-h
 import { readReachableMiniProgramStyleFiles } from './hbuilderx-local/styles'
 
 export type ArtifactKind = 'wxml' | 'js' | 'style'
+export type IdeWatchCase = WatchCase & { miniprogramRoot: string }
 
 export interface ArtifactSnapshot {
   kind: ArtifactKind
@@ -13,7 +14,7 @@ export interface ArtifactSnapshot {
   content: string
 }
 
-export async function readArtifacts(watchCase: WatchCase): Promise<ArtifactSnapshot[]> {
+export async function readArtifacts(watchCase: IdeWatchCase): Promise<ArtifactSnapshot[]> {
   const styleFiles = await expandOutputFileEntries([
     ...watchCase.outputStyleCandidates,
     ...watchCase.globalStyleCandidates,
@@ -34,7 +35,7 @@ export async function readArtifacts(watchCase: WatchCase): Promise<ArtifactSnaps
     const content = await readFileIfExists(item.file)
     if (content != null) {
       const reachable = item.kind === 'style'
-        ? await readReachableMiniProgramStyleFiles(watchCase.cwd, item.file, styleExtensions)
+        ? await readReachableMiniProgramStyleFiles(watchCase.miniprogramRoot, item.file, styleExtensions)
         : [{ file: item.file, content }]
       for (const source of reachable) {
         if (!visited.has(source.file)) {
@@ -47,7 +48,7 @@ export async function readArtifacts(watchCase: WatchCase): Promise<ArtifactSnaps
   return snapshots
 }
 
-export async function collectArtifactMtimes(watchCase: WatchCase) {
+export async function collectArtifactMtimes(watchCase: IdeWatchCase) {
   const artifacts = await readArtifacts(watchCase)
   const mtimes = new Map<string, number>()
 

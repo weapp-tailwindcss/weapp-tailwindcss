@@ -1,7 +1,7 @@
 {
   "name": "@weapp-tailwindcss/reset",
   "type": "module",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Cross-platform reset styles for weapp-tailwindcss projects. weapp-tailwindcss 项目的跨端 reset 样式资源。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",

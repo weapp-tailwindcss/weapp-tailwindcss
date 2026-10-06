@@ -1,7 +1,7 @@
 {
   "name": "@weapp-tailwindcss/source-scan",
   "type": "module",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "共享的源码扫描描述、路径身份与匹配工具。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",

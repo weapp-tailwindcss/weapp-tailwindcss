@@ -9,6 +9,7 @@
 - `App.uvue` 的全局 `<style>` 使用 `@import './main.css'`，把生成入口加入 HBuilderX 构建图
 - 显式配置 `cssEntries`，使用项目根目录解析主入口和非 App Iconify 入口的绝对路径
 - 不注册 `@tailwindcss/postcss`，也不注册 `@tailwindcss/vite`
+- uni 插件由共享选择器加载：HBuilderX 使用当前 IDE 提供的编译器路径，npm CLI 使用项目依赖；IDE 插件缺失时立即失败，不混用两个版本。IDE 日志中的 `[uni-toolchain]` 记录实际入口。
 
 ## 运行
 

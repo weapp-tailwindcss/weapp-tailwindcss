@@ -4281,7 +4281,7 @@ wx-button {
   padding: 0;
   cursor: pointer;
   opacity: 1;
-  background-color: #00000080;
+  background-color: rgba(0, 0, 0, 0.50196);
   font-size: 30rpx;
   border-radius: 20%;
 }
@@ -8927,7 +8927,7 @@ wx-button {
   align-items: center;
 }
 .nut-theme-dark .nut-picker-roller-mask {
-  background-image: linear-gradient(180deg, #1b1b1be6, #1b1b1b66), linear-gradient(0deg, #1b1b1be6, #1b1b1b66);
+  background-image: linear-gradient(180deg, rgba(27, 27, 27, 0.90196), rgba(27, 27, 27, 0.4)), linear-gradient(0deg, rgba(27, 27, 27, 0.90196), rgba(27, 27, 27, 0.4));
   background-repeat: no-repeat;
   background-position: top, bottom;
   z-index: 1;
@@ -9009,7 +9009,7 @@ wx-button {
   width: 100%;
   display: block;
   height: 100%;
-  background-image: linear-gradient(180deg, #ffffffe6, #fff6), linear-gradient(0deg, #ffffffe6, #fff6);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.90196), rgba(255, 255, 255, 0.4)), linear-gradient(0deg, rgba(255, 255, 255, 0.90196), rgba(255, 255, 255, 0.4));
   background-repeat: no-repeat;
   background-position: top, bottom;
   transform: translateZ(0);
@@ -9862,7 +9862,7 @@ wx-button {
   padding: 0;
   cursor: pointer;
   opacity: 1;
-  background-color: #00000080;
+  background-color: rgba(0, 0, 0, 0.50196);
   font-size: 30rpx;
   border-radius: 20%;
 }
@@ -10159,7 +10159,7 @@ wx-button {
   top: 0;
   opacity: 0.73;
   content: '';
-  background-image: linear-gradient(106deg, #e8e0ff00 24%, #e8e0ff 91%);
+  background-image: linear-gradient(106deg, rgba(232, 224, 255, 0) 24%, #e8e0ff 91%);
   animation: flicker 1.5s linear infinite;
   transform: skew(-20deg);
   filter: blur(3rpx);
@@ -10348,7 +10348,7 @@ wx-button {
   text-align: center;
   white-space: pre;
   transform: translate(100%);
-  background: linear-gradient(to right, #00000026, #0000);
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.14902), rgba(0, 0, 0, 0));
 }
 .nut-signature .nut-signature-inner {
   height: 256rpx;
@@ -11150,7 +11150,5 @@ page,
 .tw-root,
 wx-root-portal-content {
   --font-sans: 'inter', 'inter Fallback', system-ui;
-  --text-base: 1rem;
-  --radius-lg: 0.5rem;
   --default-font-family: var(--font-inter), system-ui;
 }

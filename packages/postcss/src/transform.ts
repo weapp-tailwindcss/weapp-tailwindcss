@@ -7,6 +7,7 @@ export {
   resolvePostcssStyleBranchProfile,
 } from './branches'
 export * from './compat'
+export { createLocalUtilityOrderPlan, UNI_APP_X_LOCAL_UTILITY_MARKER } from './compat/uni-app-x/local-utility-order'
 export {
   compileCssMacroConditionalComments,
   CSS_MACRO_STYLE_OPTIONS_MARKER,

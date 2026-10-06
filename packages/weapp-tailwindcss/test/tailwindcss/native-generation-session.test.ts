@@ -91,4 +91,31 @@ describe('TailwindV4NativeSessionPool', () => {
     await Promise.all([first, second])
     expect(session.generate).toHaveBeenCalledTimes(2)
   })
+
+  it('replaces a session when preparation configuration changes and keeps targets isolated', async () => {
+    const sessions = [createSession(), createSession(), createSession(), createSession()]
+    const create = vi.fn()
+    for (const session of sessions) {
+      create.mockReturnValueOnce(session)
+    }
+    const pool = new TailwindV4NativeSessionPool(create)
+    const prepareSource = vi.fn(actual => actual.css)
+    try {
+      await pool.generate('web', 'source', source, {}, { key: 'option-1', prepareSource })
+      await pool.generate('web', 'source', source, {}, { key: 'option-1', prepareSource })
+      await pool.generate('weapp', 'source', source, {}, { key: 'option-1', prepareSource })
+      expect(create).toHaveBeenCalledTimes(2)
+      expect(sessions[0]!.dispose).not.toHaveBeenCalled()
+      await pool.generate('web', 'source', source, {}, { key: 'option-2', prepareSource })
+      expect(sessions[0]!.dispose).toHaveBeenCalledTimes(1)
+      expect(sessions[1]!.dispose).not.toHaveBeenCalled()
+      expect(create).toHaveBeenNthCalledWith(3, source, { key: 'option-2', prepareSource })
+      await pool.generate('web', 'source', source, {})
+      expect(sessions[2]!.dispose).toHaveBeenCalledTimes(1)
+      expect(create).toHaveBeenCalledTimes(4)
+    }
+    finally {
+      pool.dispose()
+    }
+  })
 })

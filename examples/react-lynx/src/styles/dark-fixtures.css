@@ -1,0 +1,24 @@
+.probe-dark-pair {
+  padding: 6px;
+  background-color: #f7fafb;
+}
+
+.probe-dark-panel {
+  box-sizing: border-box;
+  width: 96px;
+  height: 80px;
+  padding: 0;
+  margin-top: 28px;
+  margin-left: 20px;
+  background-color: #0ea5e9;
+}
+
+.probe-dark-text {
+  display: block;
+  width: 96px;
+  height: 80px;
+  font-size: 32px;
+  line-height: 80px;
+  color: #132026;
+  text-align: center;
+}

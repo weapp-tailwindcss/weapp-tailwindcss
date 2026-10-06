@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { mkdir, rm, symlink } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { basename, join, resolve } from 'node:path'
@@ -12,11 +12,10 @@ export function createHBuilderXProjectAliasName(projectRoot, processId = process
 }
 
 export async function createHBuilderXProjectAlias(projectRoot, aliasRoot = join(tmpdir(), 'weapp-tailwindcss-hbuilderx-projects')) {
-  const projectName = createHBuilderXProjectAliasName(projectRoot)
+  const projectName = `${createHBuilderXProjectAliasName(projectRoot)}-${randomUUID()}`
   const aliasDirectory = resolve(aliasRoot)
   const projectPath = join(aliasDirectory, projectName)
   await mkdir(aliasDirectory, { recursive: true })
-  await rm(projectPath, { recursive: true, force: true })
   await symlink(resolve(projectRoot), projectPath, process.platform === 'win32' ? 'junction' : 'dir')
   return {
     projectName,

@@ -1,16 +1,26 @@
-import { readFileSync } from 'node:fs'
+import { Buffer } from 'node:buffer'
+import { closeSync, openSync, readSync } from 'node:fs'
+import path from 'node:path'
 import process from 'node:process'
 
 function isNodeScript(file) {
-  if (!file) {
-    return false
+  if (/\.(?:c|m)?js$/i.test(file)) {
+    return true
   }
+  let descriptor
   try {
-    const header = readFileSync(file, { encoding: 'utf8', flag: 'r' }).slice(0, 256)
-    return header.startsWith('#!') || /\.(?:c|m)?js$/i.test(file)
+    descriptor = openSync(file, 'r')
+    const buffer = Buffer.alloc(256)
+    const length = readSync(descriptor, buffer, 0, buffer.length, 0)
+    return /^#![^\r\n]*\bnode(?:\s|$)/.test(buffer.toString('utf8', 0, length))
   }
   catch {
-    return /\.(?:c|m)?js$/i.test(file)
+    return false
+  }
+  finally {
+    if (descriptor !== undefined) {
+      closeSync(descriptor)
+    }
   }
 }
 
@@ -24,10 +34,22 @@ export function createPnpmCommand(
     ? options.npmExecPath
     : process.env.npm_execpath
 
-  if (npmExecPath && isNodeScript(npmExecPath)) {
+  const paths = platform === 'win32' ? path.win32 : path.posix
+  const activeName = npmExecPath ? paths.basename(npmExecPath) : undefined
+  if (activeName && /^pnpm(?:-native)?\.(?:cmd|bat|ps1)$/i.test(activeName)) {
+    // 包装脚本需要 shell 重解释参数，不能静默换用 PATH 或猜测相邻 CLI。
+    throw Object.assign(new Error(`无法保留 pnpm 包装入口身份：${npmExecPath}。请将 npm_execpath 指向 pnpm.mjs、pnpm.cjs 等 JavaScript 入口或 pnpm 原生可执行文件。`), {
+      code: 'ERR_UNSUPPORTED_PNPM_ENTRY',
+    })
+  }
+  const activeCli = activeName && /^(?:pnpm(?:-native)?(?:\.exe)?|pnpm\.(?:c|m)?js)$/i.test(activeName)
+    ? paths.resolve(npmExecPath)
+    : undefined
+  if (activeCli) {
+    const script = isNodeScript(activeCli)
     return {
-      command: execPath,
-      args: [npmExecPath, ...args],
+      command: script ? execPath : activeCli,
+      args: script ? [activeCli, ...args] : args,
       shell: false,
     }
   }

@@ -1,11 +1,11 @@
 import fs from 'node:fs/promises'
 import process from 'node:process'
-import { Launcher } from '@weapp-vite/miniprogram-automator'
 import path from 'pathe'
 import { PNG } from 'pngjs'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { captureMiniProgramViewport } from '../scripts/demo-visual-e2e-report/mini-program-screenshot'
 import { closeWechatProject } from '../scripts/wechat-project-cleanup'
+import { Launcher } from '../scripts/wechat/automator'
 import { collectFrameworkIdeDiagnostics } from './frameworkIdeDiagnostics'
 import { artifactDir, issue928BaselineDir, timeoutMs } from './issue-928/config'
 import { assertIssue928GradientRuntime } from './issue-928/gradient'
@@ -76,7 +76,9 @@ describeIde('issues 909/916/928 IDE runtime', () => {
   }, 180_000)
 
   afterAll(async () => {
-    await closeWechatProject(v4ProjectPath, miniProgram)
+    if (miniProgram) {
+      await closeWechatProject(v4ProjectPath, miniProgram)
+    }
   })
 
   it('keeps Tailwind v4 transform, native selector and gradient utilities valid in WeChat DevTools', async () => {

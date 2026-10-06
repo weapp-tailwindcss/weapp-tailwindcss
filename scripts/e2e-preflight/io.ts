@@ -1,5 +1,5 @@
-import type { Buffer } from 'node:buffer'
 import type { Identity, PreflightReport } from './types'
+import { Buffer } from 'node:buffer'
 import { createHash } from 'node:crypto'
 import { readFile, realpath, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
@@ -23,10 +23,57 @@ export async function imageCommand(file: string, args: string[], target: string)
 
 export async function assertImage(file: string) {
   const buffer = await readFile(file)
-  const metadata = PNG.sync.read(buffer)
-  if (metadata.width < 10 || metadata.height < 10) {
-    throw new Error(`截图尺寸无效：${file}`)
+  let width: number | undefined
+  let height: number | undefined
+  if (buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]))) {
+    const metadata = PNG.sync.read(buffer)
+    width = metadata.width
+    height = metadata.height
   }
+  else if (buffer.subarray(0, 2).equals(Buffer.from([0xFF, 0xD8]))) {
+    const metadata = readJpegSize(buffer)
+    width = metadata?.width
+    height = metadata?.height
+  }
+  if (!width || !height || width < 10 || height < 10) {
+    throw new Error(`截图格式或尺寸无效：${file}`)
+  }
+}
+
+function readJpegSize(buffer: Buffer) {
+  let offset = 2
+  while (offset + 3 < buffer.length) {
+    if (buffer[offset] !== 0xFF) {
+      offset += 1
+      continue
+    }
+    while (offset < buffer.length && buffer[offset] === 0xFF) {
+      offset += 1
+    }
+    const marker = buffer[offset++]
+    if (marker === undefined) {
+      break
+    }
+    if (marker === 0xD8 || marker === 0xD9 || marker === 0x01 || (marker >= 0xD0 && marker <= 0xD7)) {
+      continue
+    }
+    if (offset + 2 > buffer.length) {
+      break
+    }
+    const length = buffer.readUInt16BE(offset)
+    if (length < 2 || offset + length > buffer.length) {
+      break
+    }
+    const isStartOfFrame = marker >= 0xC0 && marker <= 0xCF && ![0xC4, 0xC8, 0xCC].includes(marker)
+    if (isStartOfFrame && offset + 7 < buffer.length) {
+      return {
+        height: buffer.readUInt16BE(offset + 3),
+        width: buffer.readUInt16BE(offset + 5),
+      }
+    }
+    offset += length
+  }
+  return undefined
 }
 
 const configKeys = [
@@ -34,11 +81,21 @@ const configKeys = [
   'HBUILDERX_CHANNEL',
   'HBUILDERX_HOST',
   'DEVELOPER_DIR',
+  'PATH',
+  'Path',
+  'PATHEXT',
+  'JAVA_HOME',
+  'RN_JAVA_HOME',
+  'LYNX_JAVA_HOME',
+  'LYNX_GRADLE',
+  'LYNX_POD',
   'ANDROID_HOME',
   'ANDROID_SDK_ROOT',
   'HDC_PATH',
   'E2E_PREFLIGHT_WECHAT_CLI',
+  'E2E_PREFLIGHT_WECHAT_HTTP_PORT',
   'E2E_PREFLIGHT_WECHAT_APPID',
+  'E2E_TEMPLATE_IDE_APP_ID',
   'E2E_HBUILDERX_CHROME_PATH',
   'E2E_HBUILDERX_ANDROID_DEVICE_ID',
   'E2E_HBUILDERX_ANDROID_SCREENSHOT_DEVICE_ID',
@@ -53,7 +110,12 @@ const configKeys = [
   'DEMO_VISUAL_ANDROID_DEVICE_ID',
   'DEMO_VISUAL_IOS_DEVICE_ID',
   'RN_ANDROID_DEVICE_ID',
+  'RN_ANDROID_EXPO_DEVICE',
   'RN_IOS_DEVICE_ID',
+  'LYNX_ANDROID_DEVICE_ID',
+  'ANDROID_SERIAL',
+  'LYNX_IOS_DEVICE_ID',
+  'LYNX_IOS_DESTINATION',
 ]
 
 export async function collectIdentity(root: string): Promise<Identity> {

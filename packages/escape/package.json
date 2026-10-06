@@ -1,11 +1,11 @@
 {
   "name": "@weapp-tailwindcss/escape",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "escape class name in weapp",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",
-  "homepage": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/tree/main/packages/escape#readme",
+  "homepage": "https://tw.weapp.dev",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",

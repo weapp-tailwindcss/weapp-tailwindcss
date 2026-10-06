@@ -3,10 +3,10 @@ import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { execa } from 'execa'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { request } from '../scripts/e2e-preflight/client'
-import { enterFullTestGate, stageChecks } from '../scripts/e2e-preflight/gate'
-import { collectIdentity } from '../scripts/e2e-preflight/io'
+import { bindingEnvironment, enterFullTestGate, stageChecks } from '../scripts/e2e-preflight/gate'
+import { assertIdentity, collectIdentity } from '../scripts/e2e-preflight/io'
 import { acquireLock } from '../scripts/e2e-preflight/lock'
 import { serve } from '../scripts/e2e-preflight/server'
 import { PreflightSession } from '../scripts/e2e-preflight/session'
@@ -14,10 +14,16 @@ import { checkIds, maxAgeMs } from '../scripts/e2e-preflight/types'
 import { computerEvidence, fixtureSession, passingCheck } from './preflight-fixture'
 
 const cleanups: Array<() => Promise<unknown>> = []
+beforeEach(() => {
+  vi.stubEnv('LYNX_IOS_DESTINATION', undefined)
+  vi.stubEnv('E2E_PREFLIGHT_WECHAT_APPID', undefined)
+  vi.stubEnv('E2E_TEMPLATE_IDE_APP_ID', undefined)
+})
 afterEach(async () => {
   for (const cleanup of cleanups.splice(0).reverse()) {
     await cleanup()
   }
+  vi.unstubAllEnvs()
 })
 
 async function setup() {
@@ -85,7 +91,12 @@ describe('全面测试预检门禁', () => {
     await computerEvidence(session)
     await session.verify(report.identity)
     const gate = await enterFullTestGate(session.file)
+    expect(gate.env.E2E_PREFLIGHT_WECHAT_HTTP_PORT).toBe('12345')
     expect(gate.env.E2E_HBUILDERX_ANDROID_DEVICE_ID).toBe('android')
+    expect(gate.env.LYNX_ANDROID_DEVICE_ID).toBe('android')
+    expect(gate.env.ANDROID_SERIAL).toBe('android')
+    expect(gate.env.LYNX_IOS_DEVICE_ID).toBe('ios')
+    expect(gate.env.LYNX_IOS_DESTINATION).toBe('platform=iOS Simulator,id=ios')
     await gate.check('hbuilderx-android')
     await gate.close()
     await expect(request(report, 'claim', { identity: report.identity, consumer: 'retry' })).rejects.toThrow()
@@ -95,6 +106,37 @@ describe('全面测试预检门禁', () => {
     expect(stageChecks('hbuilderx-ios')).toEqual(['ios', 'hbuilderx'])
     expect(stageChecks('H5 browser build and HMR')).toEqual(['web'])
     expect(stageChecks('visual-weapp-h5-app')).toContain('harmony')
+    expect(stageChecks('Lynx Android runtime')).toEqual(['android'])
+    expect(stageChecks('Lynx iOS runtime')).toEqual(['ios'])
+    expect(stageChecks('React Native web HMR')).toEqual(['web'])
+    expect(stageChecks('React Native Android HMR')).toEqual(['android'])
+    expect(stageChecks('React Native iOS HMR')).toEqual(['ios'])
+  })
+
+  it('门禁绑定不覆盖冲突的 iOS destination', () => {
+    const bindings = Object.fromEntries(['android', 'ios', 'harmony', 'hbuilderx', 'wechat', 'web'].map(id => [id, passingCheck(id as 'android').binding!]))
+    expect(() => bindingEnvironment(bindings, { LYNX_IOS_DESTINATION: 'platform=iOS Simulator,id=other' })).toThrow('存在歧义')
+    expect(bindingEnvironment(bindings, { LYNX_IOS_DESTINATION: 'platform=iOS Simulator,id=ios,arch=arm64' }).LYNX_IOS_DESTINATION)
+      .toBe('platform=iOS Simulator,id=ios,arch=arm64')
+  })
+
+  it.each([{}, { E2E_PREFLIGHT_WECHAT_APPID: 'wx0123456789abcdef' }, { E2E_TEMPLATE_IDE_APP_ID: 'wx0123456789abcdef' }])('门禁固定实际验证 AppID 并同时传给两个入口：%j', (env) => {
+    const appid = Object.keys(env).length ? 'wx0123456789abcdef' : 'wx6ffee4673b257014'
+    const bindings = Object.fromEntries(['android', 'ios', 'harmony', 'hbuilderx', 'wechat', 'web'].map(id => [id, passingCheck(id as 'android').binding!]))
+    bindings['wechat'] = { ...bindings['wechat'], appid }
+    expect(bindingEnvironment(bindings, env)).toMatchObject({ E2E_PREFLIGHT_WECHAT_APPID: appid, E2E_TEMPLATE_IDE_APP_ID: appid })
+    expect(() => bindingEnvironment({ ...bindings, wechat: { ...bindings['wechat'], appid: 'wx1111111111111111' } }, env)).toThrow('AppID')
+    const missing = { ...bindings['wechat'] }
+    delete missing['appid']
+    expect(() => bindingEnvironment({ ...bindings, wechat: missing }, env)).toThrow('AppID')
+  })
+
+  it.each(['E2E_PREFLIGHT_WECHAT_HTTP_PORT', 'E2E_PREFLIGHT_WECHAT_APPID', 'E2E_TEMPLATE_IDE_APP_ID', 'LYNX_ANDROID_DEVICE_ID', 'ANDROID_SERIAL', 'LYNX_IOS_DEVICE_ID', 'LYNX_IOS_DESTINATION', 'RN_ANDROID_EXPO_DEVICE', 'JAVA_HOME', 'RN_JAVA_HOME', 'LYNX_JAVA_HOME', 'LYNX_GRADLE', 'LYNX_POD'])('%s 改变后旧门禁身份失效', async (key) => {
+    vi.stubEnv(key, 'initial')
+    const initial = await collectIdentity(process.cwd())
+    vi.stubEnv(key, 'changed')
+    const current = await collectIdentity(process.cwd())
+    expect(() => assertIdentity(initial, current)).toThrow('变化字段：config')
   })
 
   it('锁竞争不能接管，释放时不能删除其他会话的锁', async () => {

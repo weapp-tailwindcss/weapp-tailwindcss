@@ -1,27 +1,14 @@
 import type { CliOptions } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/types'
-import process from 'node:process'
-import { Launcher } from '@weapp-vite/miniprogram-automator'
+import { Launcher } from '../scripts/wechat/automator'
+import { ownedWechatEndpoint } from '../scripts/wechat/service'
 import { waitFor } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/text'
+import { awaitWithAbort, withAbortDeadline } from './framework-ide/abort'
+import { withCleanup } from './framework-ide/cleanup'
 import { getDevToolsRelaunchTimeoutMs, getDevToolsVisibleTimeoutMs, readPageLiveContent } from './frameworkIdeLivePage'
 
-export async function withDevToolsRelaunchTimeout<T>(options: CliOptions, pageUrl: string, task: Promise<T>) {
+export async function withDevToolsRelaunchTimeout<T>(options: CliOptions, pageUrl: string, task: Promise<T>, signal?: AbortSignal) {
   const timeoutMs = getDevToolsRelaunchTimeoutMs(options)
-  let timer: ReturnType<typeof setTimeout> | undefined
-  try {
-    return await Promise.race([
-      task,
-      new Promise<T>((_, reject) => {
-        timer = setTimeout(() => {
-          reject(new Error(`DevTools reLaunch timed out after ${timeoutMs}ms: ${pageUrl}`))
-        }, timeoutMs)
-      }),
-    ])
-  }
-  finally {
-    if (timer) {
-      clearTimeout(timer)
-    }
-  }
+  return withAbortDeadline(timeoutMs, `DevTools reLaunch timed out after ${timeoutMs}ms: ${pageUrl}`, current => awaitWithAbort(current, () => task), signal)
 }
 
 export async function readFreshDevToolsPageContent(
@@ -29,52 +16,54 @@ export async function readFreshDevToolsPageContent(
   options: CliOptions,
   pageUrl: string,
   marker: string,
+  signal?: AbortSignal,
 ): Promise<string> {
   const launcher = new Launcher()
-  const cliPath = process.env['E2E_PREFLIGHT_WECHAT_CLI']
-  let freshMiniProgram: Awaited<ReturnType<Launcher['launch']>> | undefined
+  let freshMiniProgram: Awaited<ReturnType<Launcher['connect']>> | undefined
   let content = ''
-  await waitFor(
-    async () => {
-      try {
-        if (!freshMiniProgram) {
-          freshMiniProgram = await withDevToolsRelaunchTimeout(
-            options,
-            pageUrl,
-            launcher.launch({
-              ...(cliPath ? { cliPath } : {}),
-              projectPath,
-              timeout: getDevToolsRelaunchTimeoutMs(options),
-            }),
-          )
+  await withCleanup(async () => {
+    signal?.throwIfAborted()
+    // 等待有界连接完成后再响应取消，确保迟到连接也进入 finally；不重新打开外层项目。
+    freshMiniProgram = await launcher.connect({
+      wsEndpoint: ownedWechatEndpoint(projectPath),
+      timeout: getDevToolsRelaunchTimeoutMs(options),
+    })
+    signal?.throwIfAborted()
+    await waitFor(
+      async () => {
+        try {
+          signal?.throwIfAborted()
+          const page = await withDevToolsRelaunchTimeout(options, pageUrl, freshMiniProgram!.reLaunch(pageUrl), signal)
+          if (!page) {
+            return false
+          }
+          const liveContent = await readPageLiveContent(page, pageUrl, signal)
+          if (!liveContent.includes(marker)) {
+            return false
+          }
+          content = liveContent
+          return true
         }
-        const page = await withDevToolsRelaunchTimeout(options, pageUrl, freshMiniProgram.reLaunch(pageUrl))
-        if (!page) {
+        catch (error) {
+          signal?.throwIfAborted()
+          if (error instanceof AggregateError) {
+            throw error
+          }
           return false
         }
-        const liveContent = await readPageLiveContent(page, pageUrl)
-        if (!liveContent.includes(marker)) {
-          return false
-        }
-        content = liveContent
-        return true
-      }
-      catch {
-        return false
-      }
-    },
-    {
-      timeoutMs: getDevToolsVisibleTimeoutMs(options),
-      pollMs: options.pollMs,
-      message: `DevTools page did not show HMR marker after reopening project: ${marker} (${pageUrl})`,
-    },
-  ).finally(() => {
+      },
+      {
+        timeoutMs: getDevToolsVisibleTimeoutMs(options),
+        pollMs: options.pollMs,
+        message: `DevTools page did not show HMR marker after reconnecting to project: ${marker} (${pageUrl})`,
+        onTick: () => signal?.throwIfAborted(),
+        signal,
+      },
+    )
+  }, [{
     // 项目由外层 probe 统一关闭；临时读取只释放自己的连接。
-    try {
-      freshMiniProgram?.disconnect()
-    }
-    catch {
-    }
-  })
+    label: `Failed to disconnect temporary IDE client for ${projectPath}`,
+    run: async () => freshMiniProgram?.disconnect(),
+  }])
   return content
 }

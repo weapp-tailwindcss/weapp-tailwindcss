@@ -1,7 +1,7 @@
 {
   "name": "@weapp-tailwindcss/postcss",
   "type": "module",
-  "version": "3.3.10",
+  "version": "3.3.11",
   "description": "PostCSS transforms that bring Tailwind CSS compatibility to every platform. 将 Tailwind CSS 兼容能力带到全端的 PostCSS 转换工具。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",
@@ -150,10 +150,10 @@
     "@weapp-tailwindcss/native-win32-x64-msvc": "workspace:*"
   },
   "devDependencies": {
-    "@csstools/postcss-is-pseudo-class": "^6.0.1",
+    "@csstools/postcss-is-pseudo-class": "^6.0.3",
     "fast-check": "^4.10.2",
     "lightningcss": "^1.33.0",
-    "postcss-custom-properties": "^15.0.3",
+    "postcss-custom-properties": "^15.0.4",
     "tsx": "catalog:tsx"
   }
 }

@@ -1,7 +1,7 @@
 {
   "name": "@weapp-tailwindcss/debug-uni-app-x",
   "type": "module",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Vite diagnostics for cross-platform uni-app x Tailwind CSS builds. 用于跨端 uni-app x Tailwind CSS 构建的 Vite 调试工具。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",

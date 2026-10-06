@@ -13,6 +13,7 @@ import { omitUndefined } from '@/utils/object'
 import { normalizeStyleInjectorOptions, resolveStyleInjectorSubPackages } from './options'
 
 type VitePluginResult = Plugin | Plugin[] | undefined
+type ViteBuildStart = Extract<Plugin['buildStart'], (...args: never[]) => unknown>
 export type ViteStyleInjectorDelegateFactory = (options: NonNullable<ReturnType<typeof normalizeStyleInjectorOptions>>) => Plugin[]
 export type WebpackStyleInjectorDelegateFactory = (
   options: NonNullable<ReturnType<typeof normalizeWebpackStyleInjectorOptions>>,
@@ -103,8 +104,7 @@ export function createBuiltinViteStyleInjectorPlugins(
     }
   }
 
-  type BuildStart = Extract<Plugin['buildStart'], (...args: never[]) => unknown>
-  const startDelegates = async (context: ThisParameterType<BuildStart>, buildOptions: Parameters<BuildStart>[0]) => {
+  const startDelegates = async (context: ThisParameterType<ViteBuildStart>, buildOptions: Parameters<ViteBuildStart>[0]) => {
     if (delegatesBuildStarted) {
       return
     }

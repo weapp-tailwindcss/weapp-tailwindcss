@@ -1,7 +1,7 @@
 import type { NodePath } from '@babel/traverse'
 import type { StringLiteral, TemplateElement } from '@babel/types'
 import { splitCandidateTokens } from '@weapp-tailwindcss/engine'
-import { UNI_APP_X_IMPORTANT_APPLY_MARKER } from '@weapp-tailwindcss/postcss/transform'
+import { UNI_APP_X_IMPORTANT_APPLY_MARKER, UNI_APP_X_LOCAL_UTILITY_MARKER } from '@weapp-tailwindcss/postcss/transform'
 import MagicString from 'magic-string'
 import { analyzeSource, babelParse } from '@/js/babel'
 import { isClassContextLiteralPath } from '@/js/class-context'
@@ -318,6 +318,7 @@ export class UniAppXComponentLocalStyleCollector {
       const selector = this.deepUtilities.has(utility)
         ? `${localSelector}, :deep(.${alias})`
         : localSelector
+      lines.push(`/*${UNI_APP_X_LOCAL_UTILITY_MARKER} */`)
       lines.push(`${selector} {`)
       lines.push(`  @apply ${serializeApplyUtility(utility, options)};`)
       lines.push('}')

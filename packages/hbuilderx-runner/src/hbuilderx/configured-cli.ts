@@ -6,7 +6,7 @@ export const macOSStableCli = '/Applications/HBuilderX.app/Contents/MacOS/cli'
 export const macOSAlphaCli = '/Applications/HBuilderX-Alpha.app/Contents/MacOS/cli'
 
 function resolveCandidateSource(candidate: string, env: NodeJS.ProcessEnv): HBuilderXCliResolutionSource {
-  if (candidate === env.HBUILDERX_CLI_PATH) {
+  if (candidate === env['HBUILDERX_CLI_PATH']) {
     return 'env'
   }
   if (candidate === macOSStableCli || candidate === macOSAlphaCli) {
@@ -33,8 +33,8 @@ export async function resolveConfiguredCli(options: HBuilderXCliResolveOptions) 
     }
     return { path: candidate, source: resolveCandidateSource(candidate, env) }
   }
-  if (env.HBUILDERX_CLI_PATH && await fileExists(env.HBUILDERX_CLI_PATH)) {
-    return { path: env.HBUILDERX_CLI_PATH, source: 'env' as const }
+  if (env['HBUILDERX_CLI_PATH'] && await fileExists(env['HBUILDERX_CLI_PATH'])) {
+    return { path: env['HBUILDERX_CLI_PATH'], source: 'env' as const }
   }
   return undefined
 }

@@ -1,7 +1,31 @@
 import fs from 'node:fs/promises'
-import path from 'pathe'
+import path from 'node:path'
+import { collectCssImportRequestsRoot, isLocalCssImportRequest, postcss } from '../../packages/postcss/src/index'
 
-const CSS_IMPORT_RE = /@import\s+(?:url\(\s*)?["']([^"']+)["']\s*\)?/gi
+function assertWithinRoot(root: string, file: string, paths: typeof path.posix = path) {
+  const relative = paths.relative(root, file)
+  if (relative === '..' || relative.startsWith(`..${paths.sep}`) || paths.isAbsolute(relative)) {
+    throw new Error(`Stylesheet escapes mini-program output root: ${file}; root=${root}`)
+  }
+}
+
+/** 小程序绝对导入以产物根为基准，不得读取宿主文件系统根目录或产物根以外的文件。 */
+export function resolveMiniProgramStyleImport(root: string, importer: string, request: string, paths: typeof path.posix = path) {
+  if (!isLocalCssImportRequest(request) || /^[a-z][a-z\d+.-]*:/i.test(request)) {
+    return undefined
+  }
+  const pathname = request.replace(/[?#].*$/, '')
+  const target = pathname.startsWith('/')
+    ? paths.resolve(root, pathname.slice(1))
+    : paths.resolve(paths.dirname(importer), pathname)
+  try {
+    assertWithinRoot(paths.resolve(root), target, paths)
+  }
+  catch (cause) {
+    throw new Error(`Invalid stylesheet import ${JSON.stringify(request)} from ${importer}: ${target}; ${String(cause)}`, { cause })
+  }
+  return target
+}
 
 export async function collectMiniProgramStyleFiles(root: string, extensions: string[]) {
   const styleFiles: string[] = []
@@ -46,22 +70,22 @@ export async function readReachableMiniProgramStyleFiles(root: string, entryFile
 
   async function visit(file: string) {
     const normalizedFile = path.resolve(file)
-    const relative = path.relative(normalizedRoot, normalizedFile)
-    if (relative.startsWith('..') || path.isAbsolute(relative) || visited.has(normalizedFile)) {
+    assertWithinRoot(normalizedRoot, normalizedFile)
+    if (visited.has(normalizedFile)) {
       return
     }
     visited.add(normalizedFile)
     const source = await fs.readFile(normalizedFile, 'utf8')
     sources.push({ file: normalizedFile, content: source })
-    const importPattern = new RegExp(CSS_IMPORT_RE.source, CSS_IMPORT_RE.flags)
-    for (const match of source.matchAll(importPattern)) {
-      const request = match[1]?.split(/[?#]/, 1)[0]
-      if (!request || /^(?:https?:)?\/\//i.test(request) || request.startsWith('data:')) {
-        continue
-      }
-      const importedFile = path.resolve(path.dirname(normalizedFile), request)
-      if (normalizedExtensions.has(path.extname(importedFile).toLowerCase())) {
-        await visit(importedFile)
+    for (const request of collectCssImportRequestsRoot(postcss.parse(source, { from: normalizedFile }))) {
+      const importedFile = resolveMiniProgramStyleImport(normalizedRoot, normalizedFile, request)
+      if (importedFile && normalizedExtensions.has(path.extname(importedFile).toLowerCase())) {
+        try {
+          await visit(importedFile)
+        }
+        catch (cause) {
+          throw new Error(`Cannot read stylesheet import ${JSON.stringify(request)} from ${normalizedFile}: ${importedFile}; ${String(cause)}`, { cause })
+        }
       }
     }
   }

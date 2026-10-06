@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, realpath, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -234,10 +234,11 @@ describe('tailwindcss helpers', () => {
   it('filters Tailwind v4 raw source tokens before exposing runtime class set', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'wtw-tailwind-v4-runtime-'))
     const { createTailwindcssRuntime } = await import('@/tailwindcss')
-    const repoRoot = path.resolve(__dirname, '../../../..')
 
     try {
-      await writeFile(path.join(tempDir, 'app.css'), '@import "tailwindcss";')
+      const cssEntry = path.join(tempDir, 'app.css')
+      await writeFile(cssEntry, '@import "tailwindcss" source(none); @source "./index.tsx";')
+      await writeFile(path.join(tempDir, 'excluded.tsx'), '<View className="z-[7654321]" />')
       await writeFile(path.join(tempDir, 'index.tsx'), [
         'export const view = (',
         '  <View',
@@ -256,12 +257,14 @@ describe('tailwindcss helpers', () => {
             paths: [path.resolve(__dirname, '../../../../node_modules')],
           },
           v4: {
-            css: `@import "tailwindcss" source("${tempDir.replaceAll('\\', '\\\\')}");`,
-            base: repoRoot,
+            cssEntries: [cssEntry],
           },
         },
       })
 
+      const report = await runtime.collectContentTokens!()
+      expect(report.filesScanned).toBe(1)
+      expect(new Set(report.entries.map(entry => entry.file))).toEqual(new Set([await realpath(path.join(tempDir, 'index.tsx'))]))
       const classSet = await runtime.getClassSet()
       const { collectRuntimeClassSet } = await import('@/tailwindcss/runtime')
       const collectedClassSet = await collectRuntimeClassSet(runtime, {
@@ -269,16 +272,9 @@ describe('tailwindcss helpers', () => {
         skipRefresh: true,
       })
 
-      expect(classSet.has('text-[55rpx]')).toBe(true)
-      expect(classSet.has('text-[#fff]')).toBe(true)
-      expect(classSet.has('bg-purple-300')).toBe(true)
-      expect(classSet.has('world!')).toBe(false)
-      expect(classSet.has('https://example.com/a[b]?q=Hello')).toBe(false)
-      expect(collectedClassSet.has('text-[55rpx]')).toBe(true)
-      expect(collectedClassSet.has('text-[#fff]')).toBe(true)
-      expect(collectedClassSet.has('bg-purple-300')).toBe(true)
-      expect(collectedClassSet.has('world!')).toBe(false)
-      expect(collectedClassSet.has('https://example.com/a[b]?q=Hello')).toBe(false)
+      const expected = new Set(['text-[55rpx]', 'text-[#fff]', 'bg-purple-300'])
+      expect(classSet).toEqual(expected)
+      expect(collectedClassSet).toEqual(expected)
     }
     finally {
       await rm(tempDir, { recursive: true, force: true })

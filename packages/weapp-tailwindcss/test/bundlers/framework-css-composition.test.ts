@@ -20,7 +20,7 @@ describe('framework CSS composition', () => {
       const file = path.join(directory, 'entry.css')
       const vendor = '@charset "UTF-8";.vendor{width:16px;--framework-pass:0}.vendor-alt{height:24px;-webkit-transform:translateY(-50%);transform:translateY(-50%)}'
       const padding = Array.from({ length: paddingRules }, (_, index) => `.padding-${index}{color:rgb(1,2,3);height:1px}`).join('\n')
-      const source = `@import "./vendor.css";\n@import "tailwindcss";\n${padding}`
+      const source = `@import "./vendor.css";\n@import "tailwindcss";\npage{--text-base:1rem;--radius-lg:.5rem}\n${padding}`
       await writeFile(path.join(directory, 'vendor.css'), vendor)
       await writeFile(file, source)
       const opts = getCompilerContext({
@@ -50,7 +50,7 @@ describe('framework CSS composition', () => {
         runtime: new Set(['flex', 'gap-1']),
         rawSource: source,
         userRawSource: '.raw-user{height:10px}',
-        frameworkProcessedUserCss: `.before{width:1rpx}\n@media source(none){/*! weapp-tailwindcss generator-placeholder */}\n:root{--spacing:0.25rem;--test-color:#006241;--brand-color:#123456;--color-custom:purple;--radius-custom:.5rem}${processedVendor}\n.vendor{width:32rpx}.vendor{width:16rpx;--framework-pass:1}.bundle-only{height:8rpx;--framework-pass:1}`,
+        frameworkProcessedUserCss: `.before{width:1rpx}\n@media source(none){/*! weapp-tailwindcss generator-placeholder */}\n:root{--spacing:0.25rem;--test-color:#006241;--brand-color:#123456;--color-custom:purple;--radius-custom:.5rem}page{--text-base:1rem;--radius-lg:.5rem}${processedVendor}\n.vendor{width:32rpx}.vendor{width:16rpx;--framework-pass:1}.bundle-only{height:8rpx;--framework-pass:1}`,
         file,
         cssStage: 'framework-processed',
         cssHandlerOptions: { majorVersion: 4, isMainChunk: false, sourceOptions: { cssEntries: [file], sourceFile: file } },
@@ -104,7 +104,7 @@ describe('framework CSS composition', () => {
       })
       expect(customRadius).toEqual(['16rpx'])
       expect(result!.css).not.toContain('--radius-custom:.5rem')
-      for (const [property, value] of [['--test-color', '#006241'], ['--brand-color', '#123456'], ['--color-custom', 'purple']]) {
+      for (const [property, value] of [['--test-color', '#006241'], ['--brand-color', '#123456'], ['--color-custom', 'purple'], ['--text-base', '32rpx'], ['--radius-lg', '16rpx']]) {
         const values: string[] = []
         root.walkDecls(property, (decl) => {
           values.push(decl.value)

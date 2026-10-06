@@ -6,7 +6,7 @@ import process from 'node:process'
 import { createWeappTailwindcssGenerator, resolveTailwindV4Source } from 'weapp-tailwindcss/generator'
 import { addNativeVariantRules, baseClassName, compileNativeStylesheet, finalizeNativeManifest } from './compiler'
 
-export interface GenerateNativeStylesheetOptions extends TailwindV4SourceOptions {
+export interface GenerateNativeStylesheetOptions extends Omit<TailwindV4SourceOptions, 'projectRoot' | 'cssEntries'> {
   /** Tailwind source 扫描根目录；用于 workspace 示例和 Metro 项目。 */
   projectRoot?: string | undefined
   /** Tailwind CSS 入口文件；相对路径会按 projectRoot 解析。 */
@@ -19,7 +19,8 @@ export interface GenerateNativeStylesheetOptions extends TailwindV4SourceOptions
  * 使用 weapp-tailwindcss 的 Tailwind v4 generator 生成原始 CSS，再编译为 RN manifest。
  */
 export async function generateNativeStylesheet(options: GenerateNativeStylesheetOptions = {}): Promise<NativeStyleManifest> {
-  const source = await resolveTailwindV4Source({ ...options, projectRoot: options.projectRoot ?? process.cwd() })
+  const { projectRoot = process.cwd(), cssEntries, ...sourceOptions } = options
+  const source = await resolveTailwindV4Source({ ...sourceOptions, projectRoot, ...(cssEntries ? { cssEntries } : {}) })
   const generator = createWeappTailwindcssGenerator(source)
   const sourcePatterns = options.sourceGlobs?.map(pattern => ({ base: source.projectRoot, pattern, negated: false }))
   const generatorCandidates = new Set(options.candidates ?? [])

@@ -13,12 +13,12 @@
     "up:pkg": "pnpm up -rLi"
   },
   "dependencies": {
-    "weapp-vite": "^6.25.1",
-    "@weapp-tailwindcss/merge": "^2.2.3"
+    "@weapp-tailwindcss/merge": "^2.2.3",
+    "weapp-vite": "7.1.0"
   },
   "devDependencies": {
     "tailwindcss": "^4.3.3",
     "weapp-tailwindcss": "^5.5.5"
   },
-  "packageManager": "pnpm@12.6.0"
+  "packageManager": "pnpm@12.9.1"
 }

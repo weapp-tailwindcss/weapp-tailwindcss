@@ -691,7 +691,7 @@ const active = true
       },
     )
 
-    expect(result?.code).toMatch(/<style scoped>\n:global\(\.wtu-[\w-]+\)/)
+    expect(result?.code).toMatch(/<style scoped>\n\/\*! weapp-tailwindcss local-utility \*\/\n:global\(\.wtu-[\w-]+\)/)
   })
 
   it.each(['<style scoped>.author{color:red}</style>', ''])('includes mini-program variants in the same local cascade as base utilities', (style) => {

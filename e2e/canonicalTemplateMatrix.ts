@@ -11,6 +11,7 @@ export interface CanonicalTemplateCase {
   buildCommand: string[]
   outputDir: string
   requiredFiles: string[]
+  snapshotFiles?: string[]
   styleTargets: string[]
   textTargets: string[]
   source: 'templates' | 'starter'
@@ -32,6 +33,7 @@ export const CANONICAL_TEMPLATE_CASES = [
       'dist/build/mp-weixin/app.json',
       'dist/build/mp-weixin/app.wxss',
       'dist/build/mp-weixin/pages/index/index.wxml',
+      'dist/build/mp-weixin/pages/index/index.json',
     ],
     styleTargets: ['dist/build/mp-weixin/app.wxss', 'dist/build/mp-weixin/common'],
     textTargets: ['dist/build/mp-weixin/pages/index/index.wxml'],
@@ -52,6 +54,7 @@ export const CANONICAL_TEMPLATE_CASES = [
       'dist/app.json',
       'dist/app.wxss',
       'dist/pages/index/index.wxml',
+      'dist/pages/index/index.json',
     ],
     styleTargets: ['dist/app.wxss', 'dist/app-origin.wxss'],
     textTargets: ['dist/pages/index/index.wxml', 'dist/pages/index/index.js'],
@@ -72,7 +75,9 @@ export const CANONICAL_TEMPLATE_CASES = [
       'dist/app.json',
       'dist/app.wxss',
       'dist/pages/index/index.wxml',
+      'dist/pages/index/index.json',
     ],
+    snapshotFiles: ['app.json', 'app.wxss', 'pages/index/index.json', 'pages/index/index.wxml'],
     styleTargets: ['dist/app.wxss'],
     textTargets: ['dist/pages/index/index.wxml'],
     source: 'templates',

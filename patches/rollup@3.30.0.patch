@@ -1,13 +1,73 @@
 diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
-index dc419c2d423cdfa2479b2cd9c6343b05d936c741..da51a7f33c29d0802f654aea42aee80123e05a7b 100644
+index dc419c2d423cdfa2479b2cd9c6343b05d936c741..b4686e7a3844846facbee60ddeb60a925a465662 100644
 --- a/dist/es/shared/watch.js
 +++ b/dist/es/shared/watch.js
-@@ -2775,7 +2775,15 @@ _handleFile(file, stats, initialAdd) {
+@@ -2726,12 +2726,11 @@ constructor(fsW) {
+  * @param {Function} listener on fs change
+  * @returns {Function} closer for the watcher instance
+  */
+-_watchWithNodeFs(path, listener) {
++_watchWithNodeFs(path, listener, onBindingError) {
+   const opts = this.fsw.options;
+   const directory = sysPath$2.dirname(path);
+   const basename = sysPath$2.basename(path);
+   const parent = this.fsw._getWatchedDir(directory);
+-  parent.add(basename);
+   const absolutePath = sysPath$2.resolve(path);
+   const options = {persistent: opts.persistent};
+   if (!listener) listener = EMPTY_FN$2;
+@@ -2747,10 +2746,14 @@ _watchWithNodeFs(path, listener) {
+   } else {
+     closer = setFsWatchListener(path, absolutePath, options, {
+       listener,
+-      errHandler: this._boundHandleError,
++      errHandler: onBindingError ? error => {
++        onBindingError(error);
++        this._boundHandleError(error);
++      } : this._boundHandleError,
+       rawEmitter: this.fsw._emitRaw
+     });
+   }
++  if (closer) parent.add(basename);
+   return closer;
+ }
+
+@@ -2774,26 +2777,72 @@ _handleFile(file, stats, initialAdd) {
+   // if the file is already being watched, do nothing
    if (parent.has(basename)) return;
 
++  let active = false;
++  let revision = 0;
++  let missingBinding = false;
++  const bindListener = () => {
++    missingBinding = false;
++    const closer = this._watchWithNodeFs(file, listener, error => {
++      missingBinding = error.code === 'ENOENT' || error.code === 'ENOTDIR';
++    });
++    if (!closer) return;
++    // 新文件已成功绑定；上一代删除的去重窗口不能吞掉新一轮删除。
++    this.fsw._throttled.get('remove')?.get(sysPath$2.join(dirname, basename))?.clear();
++    // 零延时 add 去重也可能晚于下一代原生事件过期，不能吞掉新建通知。
++    this.fsw._throttled.get(EV_ADD$2)?.get(file)?.clear();
++    // 延迟对账捕获旧 listener；新订阅必须拥有独立的事件节流窗口。
++    const pendingWatch = this.fsw._throttled.get(THROTTLE_MODE_WATCH)?.get(file);
++    if (pendingWatch) {
++      clearTimeout(pendingWatch.retry);
++      pendingWatch.clear();
++    }
++    active = true;
++    const installedRevision = ++revision;
++    let disposed = false;
++    return () => {
++      if (disposed) return;
++      disposed = true;
++      if (revision === installedRevision) active = false;
++      closer();
++    };
++  };
    const listener = async (path, newStats) => {
 -    if (!this.fsw._throttle(THROTTLE_MODE_WATCH, file, 5)) return;
-+    if (this.fsw.closed) return;
++    if (!active || this.fsw.closed || this.fsw._isIgnored(file)) return;
 +    if (!this.fsw._throttle(THROTTLE_MODE_WATCH, file, 5)) {
 +      // 节流期间可能已替换文件；窗口结束后必须读取最后状态。
 +      const pending = this.fsw._throttled.get(THROTTLE_MODE_WATCH).get(file);
@@ -16,26 +76,243 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..da51a7f33c29d0802f654aea42aee801
 +      }
 +      return;
 +    }
++    const observedRevision = revision;
      if (!newStats || newStats.mtimeMs === 0) {
        try {
          const newStats = await stat$2(file);
-@@ -2786,10 +2794,12 @@ _handleFile(file, stats, initialAdd) {
-         if (!at || at <= mt || mt !== prevStats.mtimeMs) {
-           this.fsw._emit(EV_CHANGE$2, file, newStats);
-         }
+-        if (this.fsw.closed) return;
++        // 异步 stat 不能复活已取消或已换代的原生订阅。
++        if (!active || revision !== observedRevision || this.fsw.closed || this.fsw._isIgnored(file)) return;
+         // Check that change event was not fired because of changed only accessTime.
+         const at = newStats.atimeMs;
+         const mt = newStats.mtimeMs;
+-        if (!at || at <= mt || mt !== prevStats.mtimeMs) {
+-          this.fsw._emit(EV_CHANGE$2, file, newStats);
+-        }
 -        if (isLinux && prevStats.ino !== newStats.ino) {
 -          this.fsw._closeFile(path);
++        const changed = !at || at <= mt || mt !== prevStats.mtimeMs;
 +        // 原子保存会替换文件身份；各平台都必须重新绑定原生监听句柄。
 +        if (prevStats.ino !== newStats.ino) {
 +          // 注册身份与目录广播的原生路径可能不同，关闭和重绑必须使用同一键。
 +          this.fsw._closeFile(file);
            prevStats = newStats;
 -          this.fsw._addPathCloser(path, this._watchWithNodeFs(file, listener));
-+          this.fsw._addPathCloser(file, this._watchWithNodeFs(file, listener));
++          const closer = bindListener();
++          if (!closer) {
++            this.fsw._remove(dirname, basename);
++            return;
++          }
++          this.fsw._addPathCloser(file, closer);
          } else {
            prevStats = newStats;
          }
-@@ -4212,8 +4222,15 @@ async _emit(event, path, val1, val2, val3) {
++        if (changed) this.fsw._emit(EV_CHANGE$2, file, newStats);
+       } catch (error) {
++        if (!active || revision !== observedRevision || this.fsw.closed || this.fsw._isIgnored(file)) return;
+         // Fix issues where mtime is null but file is still present
+         this.fsw._remove(dirname, basename);
+       }
+@@ -2809,7 +2858,20 @@ _handleFile(file, stats, initialAdd) {
+     }
+   };
+   // kick off the watcher
+-  const closer = this._watchWithNodeFs(file, listener);
++  const closer = bindListener();
++  if (!closer) {
++    // stat 与原生订阅之间也可能删除文件；保留恢复订阅，不发布虚假的 add。
++    if (!this.fsw.closed && !this.fsw._isIgnored(file) && !this.fsw._pendingRecreations.has(sysPath$2.resolve(file))) {
++      this.fsw.add(dirname, basename, true);
++    }
++    return missingBinding ? false : undefined;
++  }
++  if (this.fsw._pendingRecreations.has(sysPath$2.resolve(file))) {
++    initialAdd = false;
++    this.fsw._closeRecreation(file);
++  }
++  // 先登记归属再发事件，事件回调中的 unwatch/close 也能释放新句柄。
++  this.fsw._addPathCloser(file, closer);
+
+   // emit an add event if we're supposed to
+   if (!(initialAdd && this.fsw.options.ignoreInitial) && this.fsw._isntIgnored(file)) {
+@@ -2817,7 +2879,7 @@ _handleFile(file, stats, initialAdd) {
+     this.fsw._emit(EV_ADD$2, file, stats);
+   }
+
+-  return closer;
++  return undefined;
+ }
+
+ /**
+@@ -2976,10 +3038,60 @@ async _handleDir(dir, stats, initialAdd, depth, target, wh, realpath) {
+
+   const oDepth = this.fsw.options.depth;
+   if ((oDepth == null || depth <= oDepth) && !this.fsw._symlinkPaths.has(realpath)) {
+-    if (!target) {
+-      await this._handleRead(dir, initialAdd, wh, target, dir, depth, throttler);
+-      if (this.fsw.closed) return;
++    if (target) {
++      const file = sysPath$2.join(dir, target);
++      const key = sysPath$2.resolve(file);
++      if (this.fsw._isIgnored(file) || this.fsw._getWatchedDir(dir).has(target)) return;
++      let pending = this.fsw._pendingRecreations.get(key);
++      if (pending?.closer) return;
++      if (!pending) this.fsw._pendingRecreations.set(key, pending = {});
++      let disposed = false;
++      let running = false;
++      let timer;
++      let nativeCloser;
++      const isCurrent = () => !disposed && !this.fsw.closed && this.fsw._pendingRecreations.get(key) === pending && !this.fsw._isIgnored(file);
++      const dispose = () => {
++        if (disposed) return;
++        disposed = true;
++        clearTimeout(timer);
++        timer = undefined;
++        nativeCloser?.();
++      };
++      const reconcile = async () => {
++        clearTimeout(timer);
++        timer = undefined;
++        if (!isCurrent() || running) return;
++        running = true;
++        let missing = false;
++        try {
++          missing = file === await this._addToNodeFs(file, false, wh, depth + 1, undefined, isCurrent);
++        } finally {
++          running = false;
++          // fs.watch 返回不代表底层事件流已就绪；仅重试明确缺失的文件。
++          if (missing && isCurrent()) {
++            timer = setTimeout(notify, this.fsw.options.interval);
++            if (!this.fsw.options.persistent) timer.unref?.();
++          }
++        }
++      };
++      const notify = () => {
++        void reconcile().catch(error => this.fsw._handleError(error));
++      };
++      // 登记过程中也可能同步取消，必须先安装幂等 disposer。
++      pending.closer = dispose;
++      try {
++        nativeCloser = this._watchWithNodeFs(dir, notify);
++        if (disposed) nativeCloser?.();
++        await reconcile();
++      } catch (error) {
++        dispose();
++        if (this.fsw._pendingRecreations.get(key) === pending) this.fsw._pendingRecreations.delete(key);
++        throw error;
++      }
++      return;
+     }
++    await this._handleRead(dir, initialAdd, wh, target, dir, depth, throttler);
++    if (this.fsw.closed) return;
+
+     closer = this._watchWithNodeFs(dir, (dirPath, stats) => {
+       // if current directory is removed, do nothing
+@@ -3001,9 +3113,9 @@ async _handleDir(dir, stats, initialAdd, depth, target, wh, realpath) {
+  * @param {String=} target Child path actually targeted for watch
+  * @returns {Promise}
+  */
+-async _addToNodeFs(path, initialAdd, priorWh, depth, target) {
++async _addToNodeFs(path, initialAdd, priorWh, depth, target, isActive = () => true) {
+   const ready = this.fsw._emitReady;
+-  if (this.fsw._isIgnored(path) || this.fsw.closed) {
++  if (this.fsw._isIgnored(path) || this.fsw.closed || !isActive()) {
+     ready();
+     return false;
+   }
+@@ -3017,9 +3129,10 @@ async _addToNodeFs(path, initialAdd, priorWh, depth, target) {
+   }
+
+   // evaluate what is at the path we're being asked to watch
++  let handlingFile = false;
+   try {
+     const stats = await statMethods$1[wh.statMethod](wh.watchPath);
+-    if (this.fsw.closed) return;
++    if (this.fsw.closed || !isActive()) return;
+     if (this.fsw._isIgnored(wh.watchPath, stats)) {
+       ready();
+       return false;
+@@ -3030,28 +3143,38 @@ async _addToNodeFs(path, initialAdd, priorWh, depth, target) {
+     if (stats.isDirectory()) {
+       const absPath = sysPath$2.resolve(path);
+       const targetPath = follow ? await fsrealpath(path) : path;
+-      if (this.fsw.closed) return;
++      if (this.fsw.closed || !isActive()) return;
+       closer = await this._handleDir(wh.watchPath, stats, initialAdd, depth, target, wh, targetPath);
+-      if (this.fsw.closed) return;
++      if (this.fsw.closed || !isActive()) {
++        closer?.();
++        return;
++      }
+       // preserve this symlink's target path
+       if (absPath !== targetPath && targetPath !== undefined) {
+         this.fsw._symlinkPaths.set(absPath, targetPath);
+       }
+     } else if (stats.isSymbolicLink()) {
+       const targetPath = follow ? await fsrealpath(path) : path;
+-      if (this.fsw.closed) return;
++      if (this.fsw.closed || !isActive()) return;
+       const parent = sysPath$2.dirname(wh.watchPath);
+       this.fsw._getWatchedDir(parent).add(wh.watchPath);
+       this.fsw._emit(EV_ADD$2, wh.watchPath, stats);
++      if (this.fsw.closed || !isActive()) return;
+       closer = await this._handleDir(parent, stats, initialAdd, depth, path, wh, targetPath);
+-      if (this.fsw.closed) return;
++      if (this.fsw.closed || !isActive()) {
++        closer?.();
++        return;
++      }
+
+       // preserve this symlink's target path
+       if (targetPath !== undefined) {
+         this.fsw._symlinkPaths.set(sysPath$2.resolve(path), targetPath);
+       }
+     } else {
++      handlingFile = true;
+       closer = this._handleFile(wh.watchPath, stats, initialAdd);
++      // stat 成功后绑定失败也属于仍缺失，不能停掉恢复对账。
++      if (closer === false && this.fsw._pendingRecreations.has(sysPath$2.resolve(path))) return path;
+     }
+     ready();
+
+@@ -3059,8 +3182,11 @@ async _addToNodeFs(path, initialAdd, priorWh, depth, target) {
+     return false;
+
+   } catch (error) {
++    if (!handlingFile && (this.fsw.closed || !isActive())) return;
+     if (this.fsw._handleError(error)) {
+       ready();
++      // 恢复对账不得把权限或资源错误当成缺失后无限重试。
++      if (arguments.length > 5 && error.code !== 'ENOENT' && error.code !== 'ENOTDIR') return false;
+       return path;
+     }
+   }
+@@ -3896,6 +4022,8 @@ constructor(_opts) {
+   this._watched = new Map();
+   /** @type {Map<String, Array>} */
+   this._closers = new Map();
++  // 已删除文件与临时父目录订阅共用同一恢复生命周期。
++  this._pendingRecreations = new Map();
+   /** @type {Set<String>} */
+   this._ignoredPaths = new Set();
+
+@@ -4080,6 +4208,7 @@ unwatch(paths_) {
+     }
+
+     this._closePath(path);
++    this._closeRecreation(path);
+
+     this._ignoredPaths.add(path);
+     if (this._watched.has(path)) {
+@@ -4109,6 +4238,7 @@ close() {
+     const promise = closer();
+     if (promise instanceof Promise) closers.push(promise);
+   }));
++  for (const path of this._pendingRecreations.keys()) this._closeRecreation(path);
+   this._streams.forEach(stream => stream.destroy());
+   this._userIgnored = undefined;
+   this._readyCount = 0;
+@@ -4212,8 +4342,15 @@ async _emit(event, path, val1, val2, val3) {
    }
 
    if (event === EV_CHANGE) {
@@ -53,7 +330,62 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..da51a7f33c29d0802f654aea42aee801
    }
 
    if (opts.alwaysStat && val1 === undefined &&
-@@ -4573,49 +4590,57 @@ chokidar.watch = watch;
+@@ -4451,11 +4588,6 @@ _remove(directory, item, isDirectory) {
+   // via multiple paths (such as _handleFile and _handleDir)
+   if (!this._throttle('remove', path, 100)) return;
+
+-  // if the only watched file is removed, watch for its return
+-  if (!isDirectory && !this.options.useFsEvents && this._watched.size === 1) {
+-    this.add(directory, item, true);
+-  }
+-
+   // This will create a new entry in the watched object in either case
+   // so we got to do the directory check beforehand
+   const wp = this._getWatchedDir(path);
+@@ -4491,12 +4623,23 @@ _remove(directory, item, isDirectory) {
+   this._watched.delete(path);
+   this._watched.delete(fullPath);
+   const eventName = isDirectory ? EV_UNLINK_DIR : EV_UNLINK;
+-  if (wasTracked && !this._isIgnored(path)) this._emit(eventName, path);
+-
+-  // Avoid conflicts if we later create another file with the same name
++  // 旧句柄先退出，再建立恢复订阅；共享多个目录时也不能丢掉重建事件。
+   if (!this.options.useFsEvents) {
+     this._closePath(path);
++    if (!isDirectory && wasTracked && !this._isIgnored(path)) {
++      this._closeRecreation(path);
++      this._pendingRecreations.set(fullPath, {});
++      this.add(directory, item, true);
++    }
+   }
++  if (wasTracked && !this._isIgnored(path)) this._emit(eventName, path);
++}
++
++_closeRecreation(path) {
++  const key = sysPath.resolve(path);
++  const pending = this._pendingRecreations.get(key);
++  this._pendingRecreations.delete(key);
++  if (pending?.closer) pending.closer();
+ }
+
+ /**
+@@ -4514,6 +4657,7 @@ _closePath(path) {
+  * @param {Path} path
+  */
+ _closeFile(path) {
++  path = normalizePathToUnix(path);
+   const closers = this._closers.get(path);
+   if (!closers) return;
+   closers.forEach(closer => closer());
+@@ -4527,6 +4671,7 @@ _closeFile(path) {
+  */
+ _addPathCloser(path, closer) {
+   if (!closer) return;
++  path = normalizePathToUnix(path);
+   let list = this._closers.get(path);
+   if (!list) {
+     list = [];
+@@ -4573,49 +4718,52 @@ chokidar.watch = watch;
 
  class FileWatcher {
      constructor(task, chokidarOptions) {
@@ -99,18 +431,19 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..da51a7f33c29d0802f654aea42aee801
 -        }
 +        const key = path.resolve(id);
 +        let aliases = this.fileAliases.get(key);
++        const firstRegistration = !aliases;
 +        if (!aliases) this.fileAliases.set(key, aliases = new Set());
 +        aliases.add(id);
 +        if (isTransformDependency) this.transformDependencies.add(id);
 +        else this.transformDependencies.delete(id);
-+        this.watcher.add(key);
++        // 底层负责文件重建；保留依赖时不能重复安装目录回调。
++        if (firstRegistration) this.watcher.add(key);
      }
 -    createWatcher(transformWatcherId) {
 +    createWatcher() {
          const task = this.task;
-         const isLinux = platform() === 'linux';
+-        const isLinux = platform() === 'linux';
 -        const isTransformDependency = transformWatcherId !== null;
-+        const isFreeBSD = platform() === 'freebsd';
          const handleChange = (id, event) => {
 -            const changedId = transformWatcherId || id;
 -            if (isLinux) {
@@ -120,11 +453,6 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..da51a7f33c29d0802f654aea42aee801
 -                watcher.unwatch(changedId);
 -                watcher.add(changedId);
 +            const key = path.resolve(id);
-+            if (isLinux || isFreeBSD) {
-+                // 删除并立即恢复文件后，重新注册监听以继续接收后续事件。
-+                watcher.unwatch(key);
-+                watcher.add(key);
-+            }
 +            // 文件系统身份用于管理句柄，原始依赖 ID 用于使对应模块缓存失效。
 +            for (const alias of this.fileAliases.get(key) || [id]) {
 +                task.invalidate(alias, { event, isTransformDependency: this.transformDependencies.has(alias) });
@@ -139,16 +467,114 @@ index dc419c2d423cdfa2479b2cd9c6343b05d936c741..da51a7f33c29d0802f654aea42aee801
          };
          const watcher = chokidar
              .watch([], this.chokidarOptions)
+@@ -4740,6 +4888,7 @@ class Task {
+         this.watchFiles = [];
+         this.closed = false;
+         this.invalidated = true;
++        this.invalidatedTransformDependencies = new Set();
+         this.watched = new Set();
+         this.watcher = watcher;
+         this.options = options;
+@@ -4765,6 +4914,7 @@ class Task {
+     invalidate(id, details) {
+         this.invalidated = true;
+         if (details.isTransformDependency) {
++            this.invalidatedTransformDependencies.add(id);
+             for (const module of this.cache.modules) {
+                 if (!module.transformDependencies.includes(id))
+                     continue;
+@@ -4778,6 +4928,8 @@ class Task {
+         if (!this.invalidated)
+             return;
+         this.invalidated = false;
++        // 新一轮消费现有缓存；本轮构建期间到达的失效必须保留给下一轮。
++        this.invalidatedTransformDependencies.clear();
+         const options = {
+             ...this.options,
+             cache: this.cache
+@@ -4827,6 +4979,12 @@ class Task {
+         this.watched = new Set();
+         this.watchFiles = result.watchFiles;
+         this.cache = result.cache;
++        // 新缓存不能覆盖构建期间对旧缓存标记的失效。
++        for (const module of this.cache.modules) {
++            if (module.transformDependencies.some(id => this.invalidatedTransformDependencies.has(id))) {
++                module.originalCode = null;
++            }
++        }
+         for (const id of this.watchFiles) {
+             this.watchFile(id);
+         }
 diff --git a/dist/shared/index.js b/dist/shared/index.js
-index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..0cddb0a2e2e91b97753ed44db50a0a512dfb7c1b 100644
+index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..7cb3ed0cc01696e55195f6b349368b5933cda73c 100644
 --- a/dist/shared/index.js
 +++ b/dist/shared/index.js
-@@ -2771,7 +2771,15 @@ _handleFile(file, stats, initialAdd) {
+@@ -2722,12 +2722,11 @@ constructor(fsW) {
+  * @param {Function} listener on fs change
+  * @returns {Function} closer for the watcher instance
+  */
+-_watchWithNodeFs(path, listener) {
++_watchWithNodeFs(path, listener, onBindingError) {
+   const opts = this.fsw.options;
+   const directory = sysPath$2.dirname(path);
+   const basename = sysPath$2.basename(path);
+   const parent = this.fsw._getWatchedDir(directory);
+-  parent.add(basename);
+   const absolutePath = sysPath$2.resolve(path);
+   const options = {persistent: opts.persistent};
+   if (!listener) listener = EMPTY_FN$2;
+@@ -2743,10 +2742,14 @@ _watchWithNodeFs(path, listener) {
+   } else {
+     closer = setFsWatchListener(path, absolutePath, options, {
+       listener,
+-      errHandler: this._boundHandleError,
++      errHandler: onBindingError ? error => {
++        onBindingError(error);
++        this._boundHandleError(error);
++      } : this._boundHandleError,
+       rawEmitter: this.fsw._emitRaw
+     });
+   }
++  if (closer) parent.add(basename);
+   return closer;
+ }
+
+@@ -2770,26 +2773,72 @@ _handleFile(file, stats, initialAdd) {
+   // if the file is already being watched, do nothing
    if (parent.has(basename)) return;
 
++  let active = false;
++  let revision = 0;
++  let missingBinding = false;
++  const bindListener = () => {
++    missingBinding = false;
++    const closer = this._watchWithNodeFs(file, listener, error => {
++      missingBinding = error.code === 'ENOENT' || error.code === 'ENOTDIR';
++    });
++    if (!closer) return;
++    // 新文件已成功绑定；上一代删除的去重窗口不能吞掉新一轮删除。
++    this.fsw._throttled.get('remove')?.get(sysPath$2.join(dirname, basename))?.clear();
++    // 零延时 add 去重也可能晚于下一代原生事件过期，不能吞掉新建通知。
++    this.fsw._throttled.get(EV_ADD$2)?.get(file)?.clear();
++    // 延迟对账捕获旧 listener；新订阅必须拥有独立的事件节流窗口。
++    const pendingWatch = this.fsw._throttled.get(THROTTLE_MODE_WATCH)?.get(file);
++    if (pendingWatch) {
++      clearTimeout(pendingWatch.retry);
++      pendingWatch.clear();
++    }
++    active = true;
++    const installedRevision = ++revision;
++    let disposed = false;
++    return () => {
++      if (disposed) return;
++      disposed = true;
++      if (revision === installedRevision) active = false;
++      closer();
++    };
++  };
    const listener = async (path, newStats) => {
 -    if (!this.fsw._throttle(THROTTLE_MODE_WATCH, file, 5)) return;
-+    if (this.fsw.closed) return;
++    if (!active || this.fsw.closed || this.fsw._isIgnored(file)) return;
 +    if (!this.fsw._throttle(THROTTLE_MODE_WATCH, file, 5)) {
 +      // 节流期间可能已替换文件；窗口结束后必须读取最后状态。
 +      const pending = this.fsw._throttled.get(THROTTLE_MODE_WATCH).get(file);
@@ -157,26 +583,243 @@ index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..0cddb0a2e2e91b97753ed44db50a0a51
 +      }
 +      return;
 +    }
++    const observedRevision = revision;
      if (!newStats || newStats.mtimeMs === 0) {
        try {
          const newStats = await stat$2(file);
-@@ -2782,10 +2790,12 @@ _handleFile(file, stats, initialAdd) {
-         if (!at || at <= mt || mt !== prevStats.mtimeMs) {
-           this.fsw._emit(EV_CHANGE$2, file, newStats);
-         }
+-        if (this.fsw.closed) return;
++        // 异步 stat 不能复活已取消或已换代的原生订阅。
++        if (!active || revision !== observedRevision || this.fsw.closed || this.fsw._isIgnored(file)) return;
+         // Check that change event was not fired because of changed only accessTime.
+         const at = newStats.atimeMs;
+         const mt = newStats.mtimeMs;
+-        if (!at || at <= mt || mt !== prevStats.mtimeMs) {
+-          this.fsw._emit(EV_CHANGE$2, file, newStats);
+-        }
 -        if (isLinux && prevStats.ino !== newStats.ino) {
 -          this.fsw._closeFile(path);
++        const changed = !at || at <= mt || mt !== prevStats.mtimeMs;
 +        // 原子保存会替换文件身份；各平台都必须重新绑定原生监听句柄。
 +        if (prevStats.ino !== newStats.ino) {
 +          // 注册身份与目录广播的原生路径可能不同，关闭和重绑必须使用同一键。
 +          this.fsw._closeFile(file);
            prevStats = newStats;
 -          this.fsw._addPathCloser(path, this._watchWithNodeFs(file, listener));
-+          this.fsw._addPathCloser(file, this._watchWithNodeFs(file, listener));
++          const closer = bindListener();
++          if (!closer) {
++            this.fsw._remove(dirname, basename);
++            return;
++          }
++          this.fsw._addPathCloser(file, closer);
          } else {
            prevStats = newStats;
          }
-@@ -4208,8 +4218,15 @@ async _emit(event, path, val1, val2, val3) {
++        if (changed) this.fsw._emit(EV_CHANGE$2, file, newStats);
+       } catch (error) {
++        if (!active || revision !== observedRevision || this.fsw.closed || this.fsw._isIgnored(file)) return;
+         // Fix issues where mtime is null but file is still present
+         this.fsw._remove(dirname, basename);
+       }
+@@ -2805,7 +2854,20 @@ _handleFile(file, stats, initialAdd) {
+     }
+   };
+   // kick off the watcher
+-  const closer = this._watchWithNodeFs(file, listener);
++  const closer = bindListener();
++  if (!closer) {
++    // stat 与原生订阅之间也可能删除文件；保留恢复订阅，不发布虚假的 add。
++    if (!this.fsw.closed && !this.fsw._isIgnored(file) && !this.fsw._pendingRecreations.has(sysPath$2.resolve(file))) {
++      this.fsw.add(dirname, basename, true);
++    }
++    return missingBinding ? false : undefined;
++  }
++  if (this.fsw._pendingRecreations.has(sysPath$2.resolve(file))) {
++    initialAdd = false;
++    this.fsw._closeRecreation(file);
++  }
++  // 先登记归属再发事件，事件回调中的 unwatch/close 也能释放新句柄。
++  this.fsw._addPathCloser(file, closer);
+
+   // emit an add event if we're supposed to
+   if (!(initialAdd && this.fsw.options.ignoreInitial) && this.fsw._isntIgnored(file)) {
+@@ -2813,7 +2875,7 @@ _handleFile(file, stats, initialAdd) {
+     this.fsw._emit(EV_ADD$2, file, stats);
+   }
+
+-  return closer;
++  return undefined;
+ }
+
+ /**
+@@ -2972,10 +3034,60 @@ async _handleDir(dir, stats, initialAdd, depth, target, wh, realpath) {
+
+   const oDepth = this.fsw.options.depth;
+   if ((oDepth == null || depth <= oDepth) && !this.fsw._symlinkPaths.has(realpath)) {
+-    if (!target) {
+-      await this._handleRead(dir, initialAdd, wh, target, dir, depth, throttler);
+-      if (this.fsw.closed) return;
++    if (target) {
++      const file = sysPath$2.join(dir, target);
++      const key = sysPath$2.resolve(file);
++      if (this.fsw._isIgnored(file) || this.fsw._getWatchedDir(dir).has(target)) return;
++      let pending = this.fsw._pendingRecreations.get(key);
++      if (pending?.closer) return;
++      if (!pending) this.fsw._pendingRecreations.set(key, pending = {});
++      let disposed = false;
++      let running = false;
++      let timer;
++      let nativeCloser;
++      const isCurrent = () => !disposed && !this.fsw.closed && this.fsw._pendingRecreations.get(key) === pending && !this.fsw._isIgnored(file);
++      const dispose = () => {
++        if (disposed) return;
++        disposed = true;
++        clearTimeout(timer);
++        timer = undefined;
++        nativeCloser?.();
++      };
++      const reconcile = async () => {
++        clearTimeout(timer);
++        timer = undefined;
++        if (!isCurrent() || running) return;
++        running = true;
++        let missing = false;
++        try {
++          missing = file === await this._addToNodeFs(file, false, wh, depth + 1, undefined, isCurrent);
++        } finally {
++          running = false;
++          // fs.watch 返回不代表底层事件流已就绪；仅重试明确缺失的文件。
++          if (missing && isCurrent()) {
++            timer = setTimeout(notify, this.fsw.options.interval);
++            if (!this.fsw.options.persistent) timer.unref?.();
++          }
++        }
++      };
++      const notify = () => {
++        void reconcile().catch(error => this.fsw._handleError(error));
++      };
++      // 登记过程中也可能同步取消，必须先安装幂等 disposer。
++      pending.closer = dispose;
++      try {
++        nativeCloser = this._watchWithNodeFs(dir, notify);
++        if (disposed) nativeCloser?.();
++        await reconcile();
++      } catch (error) {
++        dispose();
++        if (this.fsw._pendingRecreations.get(key) === pending) this.fsw._pendingRecreations.delete(key);
++        throw error;
++      }
++      return;
+     }
++    await this._handleRead(dir, initialAdd, wh, target, dir, depth, throttler);
++    if (this.fsw.closed) return;
+
+     closer = this._watchWithNodeFs(dir, (dirPath, stats) => {
+       // if current directory is removed, do nothing
+@@ -2997,9 +3109,9 @@ async _handleDir(dir, stats, initialAdd, depth, target, wh, realpath) {
+  * @param {String=} target Child path actually targeted for watch
+  * @returns {Promise}
+  */
+-async _addToNodeFs(path, initialAdd, priorWh, depth, target) {
++async _addToNodeFs(path, initialAdd, priorWh, depth, target, isActive = () => true) {
+   const ready = this.fsw._emitReady;
+-  if (this.fsw._isIgnored(path) || this.fsw.closed) {
++  if (this.fsw._isIgnored(path) || this.fsw.closed || !isActive()) {
+     ready();
+     return false;
+   }
+@@ -3013,9 +3125,10 @@ async _addToNodeFs(path, initialAdd, priorWh, depth, target) {
+   }
+
+   // evaluate what is at the path we're being asked to watch
++  let handlingFile = false;
+   try {
+     const stats = await statMethods$1[wh.statMethod](wh.watchPath);
+-    if (this.fsw.closed) return;
++    if (this.fsw.closed || !isActive()) return;
+     if (this.fsw._isIgnored(wh.watchPath, stats)) {
+       ready();
+       return false;
+@@ -3026,28 +3139,38 @@ async _addToNodeFs(path, initialAdd, priorWh, depth, target) {
+     if (stats.isDirectory()) {
+       const absPath = sysPath$2.resolve(path);
+       const targetPath = follow ? await fsrealpath(path) : path;
+-      if (this.fsw.closed) return;
++      if (this.fsw.closed || !isActive()) return;
+       closer = await this._handleDir(wh.watchPath, stats, initialAdd, depth, target, wh, targetPath);
+-      if (this.fsw.closed) return;
++      if (this.fsw.closed || !isActive()) {
++        closer?.();
++        return;
++      }
+       // preserve this symlink's target path
+       if (absPath !== targetPath && targetPath !== undefined) {
+         this.fsw._symlinkPaths.set(absPath, targetPath);
+       }
+     } else if (stats.isSymbolicLink()) {
+       const targetPath = follow ? await fsrealpath(path) : path;
+-      if (this.fsw.closed) return;
++      if (this.fsw.closed || !isActive()) return;
+       const parent = sysPath$2.dirname(wh.watchPath);
+       this.fsw._getWatchedDir(parent).add(wh.watchPath);
+       this.fsw._emit(EV_ADD$2, wh.watchPath, stats);
++      if (this.fsw.closed || !isActive()) return;
+       closer = await this._handleDir(parent, stats, initialAdd, depth, path, wh, targetPath);
+-      if (this.fsw.closed) return;
++      if (this.fsw.closed || !isActive()) {
++        closer?.();
++        return;
++      }
+
+       // preserve this symlink's target path
+       if (targetPath !== undefined) {
+         this.fsw._symlinkPaths.set(sysPath$2.resolve(path), targetPath);
+       }
+     } else {
++      handlingFile = true;
+       closer = this._handleFile(wh.watchPath, stats, initialAdd);
++      // stat 成功后绑定失败也属于仍缺失，不能停掉恢复对账。
++      if (closer === false && this.fsw._pendingRecreations.has(sysPath$2.resolve(path))) return path;
+     }
+     ready();
+
+@@ -3055,8 +3178,11 @@ async _addToNodeFs(path, initialAdd, priorWh, depth, target) {
+     return false;
+
+   } catch (error) {
++    if (!handlingFile && (this.fsw.closed || !isActive())) return;
+     if (this.fsw._handleError(error)) {
+       ready();
++      // 恢复对账不得把权限或资源错误当成缺失后无限重试。
++      if (arguments.length > 5 && error.code !== 'ENOENT' && error.code !== 'ENOTDIR') return false;
+       return path;
+     }
+   }
+@@ -3892,6 +4018,8 @@ constructor(_opts) {
+   this._watched = new Map();
+   /** @type {Map<String, Array>} */
+   this._closers = new Map();
++  // 已删除文件与临时父目录订阅共用同一恢复生命周期。
++  this._pendingRecreations = new Map();
+   /** @type {Set<String>} */
+   this._ignoredPaths = new Set();
+
+@@ -4076,6 +4204,7 @@ unwatch(paths_) {
+     }
+
+     this._closePath(path);
++    this._closeRecreation(path);
+
+     this._ignoredPaths.add(path);
+     if (this._watched.has(path)) {
+@@ -4105,6 +4234,7 @@ close() {
+     const promise = closer();
+     if (promise instanceof Promise) closers.push(promise);
+   }));
++  for (const path of this._pendingRecreations.keys()) this._closeRecreation(path);
+   this._streams.forEach(stream => stream.destroy());
+   this._userIgnored = undefined;
+   this._readyCount = 0;
+@@ -4208,8 +4338,15 @@ async _emit(event, path, val1, val2, val3) {
    }
 
    if (event === EV_CHANGE) {
@@ -194,11 +837,66 @@ index b38d5dcdc1bf50b5aff481dee32bbb3297075f78..0cddb0a2e2e91b97753ed44db50a0a51
    }
 
    if (opts.alwaysStat && val1 === undefined &&
+@@ -4447,11 +4584,6 @@ _remove(directory, item, isDirectory) {
+   // via multiple paths (such as _handleFile and _handleDir)
+   if (!this._throttle('remove', path, 100)) return;
+
+-  // if the only watched file is removed, watch for its return
+-  if (!isDirectory && !this.options.useFsEvents && this._watched.size === 1) {
+-    this.add(directory, item, true);
+-  }
+-
+   // This will create a new entry in the watched object in either case
+   // so we got to do the directory check beforehand
+   const wp = this._getWatchedDir(path);
+@@ -4487,12 +4619,23 @@ _remove(directory, item, isDirectory) {
+   this._watched.delete(path);
+   this._watched.delete(fullPath);
+   const eventName = isDirectory ? EV_UNLINK_DIR : EV_UNLINK;
+-  if (wasTracked && !this._isIgnored(path)) this._emit(eventName, path);
+-
+-  // Avoid conflicts if we later create another file with the same name
++  // 旧句柄先退出，再建立恢复订阅；共享多个目录时也不能丢掉重建事件。
+   if (!this.options.useFsEvents) {
+     this._closePath(path);
++    if (!isDirectory && wasTracked && !this._isIgnored(path)) {
++      this._closeRecreation(path);
++      this._pendingRecreations.set(fullPath, {});
++      this.add(directory, item, true);
++    }
+   }
++  if (wasTracked && !this._isIgnored(path)) this._emit(eventName, path);
++}
++
++_closeRecreation(path) {
++  const key = sysPath.resolve(path);
++  const pending = this._pendingRecreations.get(key);
++  this._pendingRecreations.delete(key);
++  if (pending?.closer) pending.closer();
+ }
+
+ /**
+@@ -4510,6 +4653,7 @@ _closePath(path) {
+  * @param {Path} path
+  */
+ _closeFile(path) {
++  path = normalizePathToUnix(path);
+   const closers = this._closers.get(path);
+   if (!closers) return;
+   closers.forEach(closer => closer());
+@@ -4523,6 +4667,7 @@ _closeFile(path) {
+  */
+ _addPathCloser(path, closer) {
+   if (!closer) return;
++  path = normalizePathToUnix(path);
+   let list = this._closers.get(path);
+   if (!list) {
+     list = [];
 diff --git a/dist/shared/watch.js b/dist/shared/watch.js
-index b7ac9010156c0fc2a71fcd23cbaa5dc5230508f5..fbef62f4f58dc1a629995eeb94583fd5e8b27a4f 100644
+index b7ac9010156c0fc2a71fcd23cbaa5dc5230508f5..1a6b28feae2eca164c58394ec43a208b06b54443 100644
 --- a/dist/shared/watch.js
 +++ b/dist/shared/watch.js
-@@ -30,49 +30,57 @@ require('events');
+@@ -30,49 +30,52 @@ require('events');
 
  class FileWatcher {
      constructor(task, chokidarOptions) {
@@ -244,18 +942,19 @@ index b7ac9010156c0fc2a71fcd23cbaa5dc5230508f5..fbef62f4f58dc1a629995eeb94583fd5
 -        }
 +        const key = node_path.resolve(id);
 +        let aliases = this.fileAliases.get(key);
++        const firstRegistration = !aliases;
 +        if (!aliases) this.fileAliases.set(key, aliases = new Set());
 +        aliases.add(id);
 +        if (isTransformDependency) this.transformDependencies.add(id);
 +        else this.transformDependencies.delete(id);
-+        this.watcher.add(key);
++        // 底层负责文件重建；保留依赖时不能重复安装目录回调。
++        if (firstRegistration) this.watcher.add(key);
      }
 -    createWatcher(transformWatcherId) {
 +    createWatcher() {
          const task = this.task;
-         const isLinux = node_os.platform() === 'linux';
+-        const isLinux = node_os.platform() === 'linux';
 -        const isTransformDependency = transformWatcherId !== null;
-+        const isFreeBSD = node_os.platform() === 'freebsd';
          const handleChange = (id, event) => {
 -            const changedId = transformWatcherId || id;
 -            if (isLinux) {
@@ -265,11 +964,6 @@ index b7ac9010156c0fc2a71fcd23cbaa5dc5230508f5..fbef62f4f58dc1a629995eeb94583fd5
 -                watcher.unwatch(changedId);
 -                watcher.add(changedId);
 +            const key = node_path.resolve(id);
-+            if (isLinux || isFreeBSD) {
-+                // 删除并立即恢复文件后，重新注册监听以继续接收后续事件。
-+                watcher.unwatch(key);
-+                watcher.add(key);
-+            }
 +            // 文件系统身份用于管理句柄，原始依赖 ID 用于使对应模块缓存失效。
 +            for (const alias of this.fileAliases.get(key) || [id]) {
 +                task.invalidate(alias, { event, isTransformDependency: this.transformDependencies.has(alias) });
@@ -284,3 +978,41 @@ index b7ac9010156c0fc2a71fcd23cbaa5dc5230508f5..fbef62f4f58dc1a629995eeb94583fd5
          };
          const watcher = index.chokidar
              .watch([], this.chokidarOptions)
+@@ -197,6 +200,7 @@ class Task {
+         this.watchFiles = [];
+         this.closed = false;
+         this.invalidated = true;
++        this.invalidatedTransformDependencies = new Set();
+         this.watched = new Set();
+         this.watcher = watcher;
+         this.options = options;
+@@ -222,6 +226,7 @@ class Task {
+     invalidate(id, details) {
+         this.invalidated = true;
+         if (details.isTransformDependency) {
++            this.invalidatedTransformDependencies.add(id);
+             for (const module of this.cache.modules) {
+                 if (!module.transformDependencies.includes(id))
+                     continue;
+@@ -235,6 +240,8 @@ class Task {
+         if (!this.invalidated)
+             return;
+         this.invalidated = false;
++        // 新一轮消费现有缓存；本轮构建期间到达的失效必须保留给下一轮。
++        this.invalidatedTransformDependencies.clear();
+         const options = {
+             ...this.options,
+             cache: this.cache
+@@ -284,6 +291,12 @@ class Task {
+         this.watched = new Set();
+         this.watchFiles = result.watchFiles;
+         this.cache = result.cache;
++        // 新缓存不能覆盖构建期间对旧缓存标记的失效。
++        for (const module of this.cache.modules) {
++            if (module.transformDependencies.some(id => this.invalidatedTransformDependencies.has(id))) {
++                module.originalCode = null;
++            }
++        }
+         for (const id of this.watchFiles) {
+             this.watchFile(id);
+         }

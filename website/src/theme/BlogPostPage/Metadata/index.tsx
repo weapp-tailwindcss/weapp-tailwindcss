@@ -9,6 +9,7 @@ import {
 import { toAbsoluteLocaleUrl } from '@site/src/i18n/locale'
 import { useCurrentSiteLocale } from '@site/src/i18n/runtime'
 import { getSiteConfigCopy } from '@site/src/i18n/siteConfig'
+import { toIsoDate } from '@site/src/utils/content-date'
 import { resolveSeoDescription, resolveSeoKeywords, toAbsoluteUrl } from '@site/src/utils/seo'
 import OriginalMetadata from '@theme-original/BlogPostPage/Metadata'
 import React from 'react'
@@ -17,23 +18,26 @@ type BlogPostPageMetadataProps = React.ComponentProps<typeof OriginalMetadata>
 
 export default function BlogPostPageMetadata(props: BlogPostPageMetadataProps) {
   const locale = useCurrentSiteLocale()
-  const { metadata, frontMatter } = useBlogPost()
+  const { metadata, frontMatter, assets } = useBlogPost()
   const copy = getSiteConfigCopy(locale)
 
   const canonicalUrl = toAbsoluteLocaleUrl(siteUrl, metadata.permalink, locale)
   const defaultImageUrl = getSocialImageUrl(locale)
-  const imageUrl = toAbsoluteUrl(siteUrl, metadata.image ?? frontMatter?.image) || defaultImageUrl
+  const imageUrl = toAbsoluteUrl(siteUrl, assets.image ?? frontMatter.image) || defaultImageUrl
   const imageAlt = getSocialImageAlt(locale)
   const publishedTime = metadata.date
-  const modifiedTime = metadata.modifiedDate ?? metadata.date
-  const articleSection = frontMatter?.category ?? metadata.tags?.[0]?.label ?? 'Blog'
-  const language = frontMatter?.lang ?? getSiteLanguage(locale)
+  const modifiedTime = toIsoDate(metadata.lastUpdatedAt, 'milliseconds') ?? metadata.date
+  const articleSection = 'category' in frontMatter && typeof frontMatter.category === 'string'
+    ? frontMatter.category
+    : metadata.tags[0]?.label ?? 'Blog'
+  const language = 'lang' in frontMatter && typeof frontMatter.lang === 'string'
+    ? frontMatter.lang
+    : getSiteLanguage(locale)
   const alternateZhUrl = toAbsoluteLocaleUrl(siteUrl, metadata.permalink, 'zh-cn')
   const alternateEnUrl = toAbsoluteLocaleUrl(siteUrl, metadata.permalink, 'en')
   const description = resolveSeoDescription({
-    description: metadata.description ?? metadata.excerpt,
+    description: metadata.description,
     title: metadata.title,
-    fallbackText: metadata.excerpt,
     locale,
   })
   const keywords = resolveSeoKeywords({

@@ -6,38 +6,20 @@ import os from 'node:os'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { summarize } from './stats.mjs'
+import { closeWatchResources, createWatchControl, runWatchOperation } from './watch-lifecycle/control.mjs'
 
 /** 复用真实编译契约的双 CSS 入口，整个样本序列保留同一 watcher。 */
-export async function measureWatchLifecycle({ sourceRoot, kind, size, warmups, runs }) {
+export async function measureWatchLifecycle({ sourceRoot, kind, size, warmups, runs, signal }) {
   const require = createRequire(path.join(sourceRoot, 'package.json'))
   const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'weapp-watch-perf-')))
   const output = path.join(root, 'dist')
   let close = async () => {}
-  let completed = 0
-  let latestCss = ''
-  let phase = 'startup'
-  let failure
-  let waiting
-  const notify = (error) => {
-    completed++
-    failure = error
-    waiting?.()
+  const control = createWatchControl(kind, signal, root)
+  const write = (file, content) => {
+    control.assertActive()
+    return fs.writeFile(path.join(root, file), content)
   }
-  const nextBuild = (previous) => new Promise((resolve, reject) => {
-    const timer = setTimeout(() => { waiting = undefined; reject(new Error(`${kind} watch timed out at ${phase} after build ${completed}; colors=${[...new Set(latestCss.match(/#[0-9a-f]{6}/gi) ?? [])].join(',')}`)) }, 15000)
-    const check = () => {
-      if (failure || completed > previous) {
-        clearTimeout(timer)
-        waiting = undefined
-        if (failure) { reject(failure) }
-        else { resolve() }
-      }
-    }
-    waiting = check
-    check()
-  })
-  const write = (file, content) => fs.writeFile(path.join(root, file), content)
-  try {
+  return runWatchOperation(control, async () => {
     await fs.symlink(path.join(sourceRoot, 'node_modules'), path.join(root, 'node_modules'), 'junction')
     const baseCss = '@import "tailwindcss" source(none); @source "./view.html"; @config "./theme.cjs";'
     const mainCss = `${baseCss}\n.author-main{width:17px}`
@@ -48,16 +30,18 @@ export async function measureWatchLifecycle({ sourceRoot, kind, size, warmups, r
       write('main.css', mainCss), write('secondary.css', `${baseCss}\n.author-secondary{height:19px}`),
       write('view.html', template), write('theme.cjs', config('#123456')),
     ])
+    control.assertActive()
     const options = { tailwindcssBasedir: root, cssEntries: [path.join(root, 'main.css'), path.join(root, 'secondary.css')], generator: { target: 'web', hmr: { preserveDeletedCss: false } } }
     const started = performance.now()
     if (kind === 'vite') {
       const { build } = await import(pathToFileURL(require.resolve('vite')).href)
       const { WeappTailwindcss } = require('weapp-tailwindcss/vite')
+      control.assertActive()
       const watcher = await build({
         configFile: false, root, logLevel: 'silent', plugins: [WeappTailwindcss(options), {
           name: 'benchmark-current-css-assets',
           writeBundle: { order: 'post', handler(_options, bundle) {
-            latestCss = Object.values(bundle).filter(asset => asset.type === 'asset' && asset.fileName.endsWith('.css')).sort((a, b) => a.fileName.localeCompare(b.fileName)).map(asset => String(asset.source)).join('\n')
+            control.css = Object.values(bundle).filter(asset => asset.type === 'asset' && asset.fileName.endsWith('.css')).sort((a, b) => a.fileName.localeCompare(b.fileName)).map(asset => String(asset.source)).join('\n')
           } },
         }],
         build: {
@@ -65,11 +49,11 @@ export async function measureWatchLifecycle({ sourceRoot, kind, size, warmups, r
           rollupOptions: { input: { main: path.join(root, 'main.js'), secondary: path.join(root, 'secondary.js') }, output: { assetFileNames: '[name][extname]' } },
         },
       })
-      watcher.on('event', (event) => {
-        if (event.code === 'END') { notify() }
-        if (event.code === 'ERROR') { notify(event.error) }
-      })
       close = () => watcher.close()
+      watcher.on('event', (event) => {
+        if (event.code === 'END') { control.notify() }
+        if (event.code === 'ERROR') { control.notify(event.error) }
+      })
     }
     else {
       const webpack = require('webpack')
@@ -83,39 +67,41 @@ export async function measureWatchLifecycle({ sourceRoot, kind, size, warmups, r
           apply(compiler) {
             compiler.hooks.thisCompilation.tap('BenchmarkCurrentCssAssets', (compilation) => {
               compilation.hooks.afterProcessAssets.tap('BenchmarkCurrentCssAssets', () => {
-                latestCss = compilation.getAssets().filter(asset => asset.name.endsWith('.css')).sort((a, b) => a.name.localeCompare(b.name)).map(asset => String(asset.source.source())).join('\n')
+                control.css = compilation.getAssets().filter(asset => asset.name.endsWith('.css')).sort((a, b) => a.name.localeCompare(b.name)).map(asset => String(asset.source.source())).join('\n')
               })
             })
           },
         }],
       })
+      const closeCompiler = () => new Promise((resolve, reject) => compiler.close(error => error ? reject(error) : resolve()))
+      close = closeCompiler
       // watch 回调早于下一轮监听注册；afterDone 后让 nextTick 完成，才能写下一份输入。
       compiler.hooks.afterDone.tap('BenchmarkWatchReady', (stats) => {
-        setImmediate(() => notify(stats.hasErrors() ? new Error(stats.toString({ all: false, errors: true })) : undefined))
+        setImmediate(() => control.notify(stats.hasErrors() ? new Error(stats.toString({ all: false, errors: true })) : undefined))
       })
       const watcher = compiler.watch({ aggregateTimeout: 5 }, (error) => {
-        if (error) { notify(error) }
+        if (error) { control.notify(error) }
       })
-      close = async () => {
-        await new Promise((resolve, reject) => watcher.close(error => error ? reject(error) : resolve()))
-        await new Promise((resolve, reject) => compiler.close(error => error ? reject(error) : resolve()))
-      }
+      close = () => closeWatchResources([
+        () => new Promise((resolve, reject) => watcher.close(error => error ? reject(error) : resolve())),
+        closeCompiler,
+      ])
     }
-    await nextBuild(0)
+    await control.nextBuild(0)
     const startupMs = performance.now() - started
-    const initial = latestCss
+    const initial = control.css
     assert(initial.includes('author-main') && initial.includes('author-secondary'), '两个样式入口均须输出')
     const samples = []
     const outputs = []
     const change = async (updates, predicate) => {
-      phase = updates.map(([file, content]) => `${file}:${content.includes('#654321') ? 'blue' : content.includes('#123456') ? 'red' : ''}`).join(',')
-      const before = completed
+      control.setPhase(updates.map(([file, content]) => `${file}:${content.includes('#654321') ? 'blue' : content.includes('#123456') ? 'red' : ''}`).join(','))
+      const before = control.completed
       await Promise.all(updates.map(([file, content]) => write(file, content)))
       let observed = before
       for (;;) {
-        await nextBuild(observed)
-        observed = completed
-        const css = latestCss
+        await control.nextBuild(observed)
+        observed = control.completed
+        const css = control.css
         if (predicate(css)) { return css }
 
       }
@@ -140,9 +126,8 @@ export async function measureWatchLifecycle({ sourceRoot, kind, size, warmups, r
       throw new Error(`恢复后 CSS 产物不一致，证据：${artifacts}`)
     }
     return { kind, size, startupMs, warmups, runs, time: summarize(measured.map(sample => sample.milliseconds)), peakRssMb: process.resourceUsage().maxRSS / 1024, peakHeapMb: Math.max(...measured.map(sample => sample.heapMb)), outputCss: outputs.at(-1), samples }
-  }
-  finally {
+  }, async () => {
     await close()
     await fs.rm(root, { recursive: true, force: true })
-  }
+  })
 }

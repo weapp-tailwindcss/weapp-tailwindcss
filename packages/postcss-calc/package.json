@@ -1,6 +1,6 @@
 {
   "name": "@weapp-tailwindcss/postcss-calc",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "type": "module",
   "description": "PostCSS calc reduction utility for cross-platform Tailwind CSS builds. 跨端 Tailwind CSS 构建使用的 PostCSS calc 归约工具。",
   "keywords": [
@@ -55,7 +55,7 @@
     "eslint": "catalog:eslint10",
     "eslint-config-prettier": "^10.1.8",
     "jison-gho": "0.6.1-216",
-    "postcss": "^8.5.28",
+    "postcss": "^8.5.29",
     "prettier": "catalog:prettier371",
     "typescript": "catalog:typescript59",
     "vitest": "catalog:vitest"

@@ -89,6 +89,7 @@ export interface WatchHmrCommandOptions {
   webOnly: boolean
   styleOnly: boolean
   mainStyleOnly: boolean
+  skipBuild: boolean
   mainStyleSubPackageLimit?: string
   maxHotUpdateMs?: number
   maxMemoryRssMb?: number
@@ -105,6 +106,7 @@ export function resolveWatchCommandOptions(reportFile: string): WatchHmrCommandO
     webOnly: toBoolEnv('E2E_WATCH_WEB_ONLY', false),
     styleOnly: toBoolEnv('E2E_WATCH_STYLE_ONLY', false),
     mainStyleOnly: toBoolEnv('E2E_WATCH_MAIN_STYLE_ONLY', false),
+    skipBuild: toBoolEnv('E2E_WATCH_SKIP_BUILD', true),
     mainStyleSubPackageLimit: process.env.E2E_WATCH_MAIN_STYLE_SUBPACKAGE_LIMIT,
     maxHotUpdateMs: resolveOptionalNumberEnv('E2E_WATCH_MAX_HOT_UPDATE_MS'),
     maxMemoryRssMb: resolveOptionalNumberEnv('E2E_WATCH_MAX_MEMORY_RSS_MB'),
@@ -129,7 +131,7 @@ export function buildWatchHmrArgs(caseName: string, options: WatchHmrCommandOpti
     String(options.maxPluginProcessMs),
     '--report',
     options.reportFile,
-    '--skip-build',
+    ...(options.skipBuild ? ['--skip-build'] : []),
     '--quiet-sass',
     ...(options.webOnly ? ['--web-only'] : []),
     ...(options.styleOnly ? ['--style-only'] : []),

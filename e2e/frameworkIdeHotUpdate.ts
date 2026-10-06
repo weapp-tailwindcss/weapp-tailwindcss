@@ -5,15 +5,19 @@ import type {
 import type { FrameworkSupportCase } from './frameworkSupportMatrix'
 import fs from 'node:fs/promises'
 import process from 'node:process'
+import { formatWorkflowError } from '../scripts/e2e-preflight/cleanup'
 import { buildCases } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cases'
 import {
   waitForInitialWarmup,
   waitForOutputsReady,
 } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations'
 import { createWatchSession, runPnpmCommand, sleep } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/session'
-import { getMtime, readFileIfExists, waitFor, writeFilePreserveEol } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/text'
+import { getMtime, readFileIfExists, waitFor } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/text'
+import { awaitWithAbort, withAbortDeadline } from './framework-ide/abort'
+import { restoreProbeSources } from './framework-ide/source-lifecycle'
 import { runIdeClassHotUpdate } from './frameworkIdeClassHotUpdate'
 import { runIdeStyleHotUpdate } from './frameworkIdeStyleHotUpdate'
+import { resolveFrameworkSupportPaths } from './frameworkSupportPaths'
 
 const TARO_VITE_INITIAL_BUILD_RE = /built in [\d.]+s?|compiled successfully|构建完成/i
 const IDE_STYLE_HOT_UPDATE_EXEMPT_CASES = new Set([
@@ -48,6 +52,10 @@ function createWatchOptions(): CliOptions {
     maxHotUpdateMs: readNumberEnv('E2E_IDE_MAX_HOT_UPDATE_MS', 60_000),
     pollMs: readNumberEnv('E2E_IDE_HOT_UPDATE_POLL_MS', readNumberEnv('E2E_WATCH_POLL_MS', 40)),
     quietSass: true,
+    webOnly: false,
+    miniProgramOnly: false,
+    styleOnly: false,
+    mainStyleOnly: false,
     skipBuild: true,
     timeoutMs: readNumberEnv('E2E_IDE_HOT_UPDATE_TIMEOUT_MS', readNumberEnv('E2E_WATCH_TIMEOUT_MS', 120_000)),
   }
@@ -63,25 +71,10 @@ function readHotUpdateTotalTimeoutMs(watchCase: WatchCase, options: CliOptions) 
 async function withHotUpdateTotalTimeout<T>(
   watchCase: WatchCase,
   options: CliOptions,
-  task: Promise<T>,
+  task: (signal: AbortSignal) => Promise<T>,
 ) {
   const timeoutMs = readHotUpdateTotalTimeoutMs(watchCase, options)
-  let timer: ReturnType<typeof setTimeout> | undefined
-  try {
-    return await Promise.race([
-      task,
-      new Promise<T>((_, reject) => {
-        timer = setTimeout(() => {
-          reject(new Error(`[${watchCase.label}] IDE hot-update probe timed out after ${timeoutMs}ms`))
-        }, timeoutMs)
-      }),
-    ])
-  }
-  finally {
-    if (timer) {
-      clearTimeout(timer)
-    }
-  }
+  return withAbortDeadline(timeoutMs, `[${watchCase.label}] IDE hot-update probe timed out after ${timeoutMs}ms`, task)
 }
 
 function resolveFrameworkWatchCase(entry: FrameworkSupportCase) {
@@ -97,7 +90,7 @@ function resolveFrameworkWatchCase(entry: FrameworkSupportCase) {
   if (!watchCase) {
     throw new Error(`Missing IDE hot-update watch case ${watchCaseName} for ${entry.name}`)
   }
-  return watchCase
+  return { ...watchCase, miniprogramRoot: resolveFrameworkSupportPaths(entry).miniprogramRoot }
 }
 
 function shouldWaitForTaroViteInitialBuild(watchCase: WatchCase) {
@@ -195,6 +188,8 @@ export async function withFrameworkIdeHotUpdateProbe<T>(
   const session = createWatchSession(watchCase.cwd, watchCase.devScript, {
     quietSass: options.quietSass,
   }, watchCase.env)
+  const errors: Error[] = []
+  let result: T | undefined
 
   try {
     process.stdout.write(`[e2e:ide] ${watchCase.label} wait for watch ready before IDE launch\n`)
@@ -204,12 +199,14 @@ export async function withFrameworkIdeHotUpdateProbe<T>(
       session.ensureRunning()
     }
 
-    return await run(async (miniProgram, page, pageUrl, launchProjectPath, runtimeErrors) => withHotUpdateTotalTimeout(
+    result = await run(async (miniProgram, page, pageUrl, launchProjectPath, runtimeErrors) => withHotUpdateTotalTimeout(
       watchCase,
       options,
-      (async () => {
+      async (signal) => {
+        const assertRuntime = (stage: string) => awaitWithAbort(signal, async () => runtimeErrors?.assertNoErrors(stage))
+        signal.throwIfAborted()
         session.ensureRunning()
-        await runtimeErrors?.assertNoErrors('watch ready')
+        await assertRuntime('watch ready')
 
         await runIdeClassHotUpdate(
           options,
@@ -221,8 +218,9 @@ export async function withFrameworkIdeHotUpdateProbe<T>(
           page,
           pageUrl,
           launchProjectPath,
+          signal,
         )
-        await runtimeErrors?.assertNoErrors('template class HMR')
+        await assertRuntime('template class HMR')
         await runIdeClassHotUpdate(
           options,
           watchCase,
@@ -233,35 +231,37 @@ export async function withFrameworkIdeHotUpdateProbe<T>(
           page,
           pageUrl,
           launchProjectPath,
+          signal,
         )
-        await runtimeErrors?.assertNoErrors('script class HMR')
+        await assertRuntime('script class HMR')
         if (shouldRunIdeStyleHotUpdate(watchCase)) {
           await runIdeStyleHotUpdate(
             options,
             watchCase,
             session,
             sourceOriginals.get(watchCase.styleMutation.sourceFile)!,
+            signal,
           )
-          await runtimeErrors?.assertNoErrors('style HMR')
+          await assertRuntime('style HMR')
         }
         else if (!watchCase.skipStyleMutation) {
           process.stdout.write(`[e2e:ide] ${watchCase.label} style HMR skipped for IDE stability; watch-HMR keeps style coverage\n`)
         }
-      })(),
+      },
     ))
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    throw new Error(`[${watchCase.label}] recent watch logs:\n${session.logs()}\n[${watchCase.label}] IDE HMR failure:\n${message}`)
+    const message = formatWorkflowError(error)
+    errors.push(new Error(`[${watchCase.label}] recent watch logs:\n${session.logs()}\n[${watchCase.label}] IDE HMR failure:\n${message}`, { cause: error }))
   }
   finally {
-    for (const [sourceFile, sourceOriginal] of sourceOriginals) {
-      try {
-        await writeFilePreserveEol(sourceFile, sourceOriginal, sourceOriginal)
-      }
-      catch {
-      }
-    }
-    await session.stop()
+    errors.push(...await restoreProbeSources(sourceOriginals, () => session.stop()))
   }
+  if (errors.length === 1) {
+    throw errors[0]
+  }
+  if (errors.length > 1) {
+    throw new AggregateError(errors, errors.map(error => error.message).join('\n'))
+  }
+  return result as T
 }

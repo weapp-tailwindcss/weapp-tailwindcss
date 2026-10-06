@@ -1,6 +1,7 @@
 import type { NativeCaseResult, NativePlatformReport, StaticEvidenceReport } from '../examples/react-lynx/src/compatibility/types'
 import { describe, expect, it } from 'vitest'
 import { compatibilityCases } from '../examples/react-lynx/src/compatibility/catalog'
+import { lynxEvidenceStrategy } from '../examples/react-lynx/src/compatibility/evidence'
 import staticEvidenceJson from '../examples/react-lynx/src/compatibility/static-evidence.json'
 import { compatibilityVersions, getCatalogHash } from './lynx/catalog'
 import { nativeReportConclusion, validateNativeReport } from './lynx/reports'
@@ -20,11 +21,12 @@ function validResult(item: typeof compatibilityCases[number]): NativeCaseResult 
       ],
     }
   }
-  const checkpoint = item.evidence === 'build'
+  const strategy = lynxEvidenceStrategy(item)
+  const checkpoint = strategy === 'build'
     ? 'build:bundled'
-    : item.probe === 'geometry'
+    : strategy === 'native-geometry' || strategy === 'pixel-geometry'
       ? 'geometry:probe-vs-control'
-      : item.probe === 'interaction'
+      : strategy === 'interaction'
         ? 'interaction:progress'
         : 'pixel:probe-vs-control'
   return { id: item.id, status: 'supported', checkpoints: [{ name: checkpoint, passed: true }] }
@@ -55,6 +57,40 @@ function report(overrides: Partial<NativePlatformReport> = {}): NativePlatformRe
 describe('Lynx native report gate', () => {
   it('accepts one complete pinned report', () => {
     expect(validateNativeReport(report(), 'ios').results).toHaveLength(compatibilityCases.length)
+  })
+
+  it('原生 JSON 重排版本字段后仍能校验并序列化为相同结论', () => {
+    const first = report()
+    const reordered = report({
+      versions: {
+        engineVersion: compatibilityVersions.engineVersion,
+        tailwindcss: compatibilityVersions.tailwindcss,
+        cssDefines: compatibilityVersions.cssDefines,
+        lynxEngine: compatibilityVersions.lynxEngine,
+      },
+    })
+    expect(validateNativeReport(reordered, 'ios')).toBe(reordered)
+    expect(JSON.stringify(nativeReportConclusion(reordered))).toBe(JSON.stringify(nativeReportConclusion(first)))
+  })
+
+  it('版本字段顺序不影响独立的结论比较入口', () => {
+    const first = report()
+    const reversed = report({ versions: Object.fromEntries(Object.entries(first.versions).reverse()) as NativePlatformReport['versions'] })
+    expect(JSON.stringify(nativeReportConclusion(reversed))).toBe(JSON.stringify(nativeReportConclusion(first)))
+  })
+
+  it.each(Object.keys(compatibilityVersions))('仍拒绝错误或缺失的版本字段 %s', (key) => {
+    const wrong = { ...compatibilityVersions, [key]: 'wrong' }
+    const missing = Object.fromEntries(Object.entries(compatibilityVersions).filter(([name]) => name !== key))
+    for (const versions of [wrong, missing]) {
+      const invalid = report({ versions: versions as NativePlatformReport['versions'] })
+      expect(() => validateNativeReport(invalid, 'ios')).toThrow(/versions do not match/)
+      expect(JSON.stringify(nativeReportConclusion(invalid))).not.toBe(JSON.stringify(nativeReportConclusion(report())))
+    }
+  })
+
+  it.each([null, [], '4.0.1', { ...compatibilityVersions, extra: '1.0.0' }].map(versions => [versions]))('拒绝非版本对象或多余字段 %j', (versions) => {
+    expect(() => validateNativeReport(report({ versions: versions as NativePlatformReport['versions'] }), 'ios')).toThrow(/versions do not match/)
   })
 
   it('rejects stale catalogs, missing cases and incomplete checkpoints', () => {
@@ -98,6 +134,12 @@ describe('Lynx native report gate', () => {
       checkpoints: [{ name: 'rendered', passed: true }],
     }
     expect(() => validateNativeReport(invalid, 'ios')).toThrow(/missing a geometry: checkpoint/)
+  })
+
+  it('supports 的历史像素差异不能替代当前几何取证', () => {
+    const invalid = report()
+    invalid.results.find(item => item.id === 'variant-supports')!.checkpoints = [{ name: 'pixel:probe-vs-control', passed: true }]
+    expect(() => validateNativeReport(invalid, 'ios')).toThrow(/variant-supports.*geometry:/)
   })
 
   it('compares conclusions without volatile diagnostics or simulator metadata', () => {

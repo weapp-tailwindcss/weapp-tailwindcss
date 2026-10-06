@@ -1,7 +1,7 @@
 {
   "name": "weapp-style-injector",
   "type": "module",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Style entry injection for cross-platform mini-program and Web builds. 面向小程序与 Web 跨端构建的样式入口注入工具。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",

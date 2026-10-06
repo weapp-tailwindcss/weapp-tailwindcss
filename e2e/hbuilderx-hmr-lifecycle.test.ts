@@ -7,6 +7,24 @@ import { assertHarmonyProcessUnchanged, hasHarmonyMarker } from './hbuilderx-loc
 import { classifyHmrStep, observeHmrStep } from './hbuilderx-local/hmr-lifecycle'
 
 describe('原生 HMR 生命周期验收', () => {
+  it('Harmony 单独重启不推断 fallback，明确重装和丢失日志才报告停止缺证', () => {
+    const child = Object.assign(new ChildProcess(), { stdout: new PassThrough(), stderr: new PassThrough() })
+    const observer = observeHmrStep(child, 'app-harmony')
+    try {
+      child.stdout.emit('data', '热更新完成\nApp Launch\n')
+      expect(observer.nativeStopReason()).toBeUndefined()
+      expect(observer.assertNoFallback).toThrow('restarted')
+      child.stdout.emit('data', '开始构建鸿蒙工程')
+      expect(observer.nativeStopReason()).toContain('fallback')
+      child.stdout.emit('data', 'x'.repeat(32 * 1024 * 1024))
+      expect(observer.nativeStopReason()).toContain('丢失')
+    }
+    finally {
+      observer.dispose()
+      child.stdout.destroy()
+      child.stderr.destroy()
+    }
+  })
   it('只有普通 uni-app 用例显式启用原生热重载', () => {
     expect(uniAppAppCases.length).toBeGreaterThan(0)
     expect(uniAppAppCases.every(item => item.updateMode === 'native-reload')).toBe(true)
@@ -20,10 +38,10 @@ describe('原生 HMR 生命周期验收', () => {
     stdout.emit('data', 'App Launch\n')
     const observer = observeHmrStep(child, platform, 'native-reload')
     try {
-      stdout.emit('data', '差量编译\nApp Lau')
+      stdout.emit('data', '开始差量编译\n项目 demo 编译成功。\n同步手机端程序文件成功\nApp Lau')
       stdout.emit('data', 'nch\n')
-      await observer.waitForCompletion(100, () => {})
-      expect(observer.snapshot()).toEqual({ mode: 'native-reload', state: 'restarted', appLaunchCount: 1 })
+      await observer.waitForCompletion(100, () => {}, async () => {})
+      expect(observer.snapshot()).toMatchObject({ mode: 'native-reload', state: 'restarted', appLaunchCount: 1 })
       stderr.emit('data', platform === 'app-ios' ? '正在安装HBuilder调试基座...\n' : 'HBuilder调试基座安装成功\n')
       expect(observer.assertNoFallback).toThrow('原生热重载 验收失败：reinstalled')
       stderr.emit('data', '热更新失败\n')
@@ -44,12 +62,12 @@ describe('原生 HMR 生命周期验收', () => {
     stdout.emit('data', 'App Launch\n')
     const observer = observeHmrStep(child, platform)
     try {
-      stdout.emit('data', '编译完成\n热更新传输完成\n')
-      await observer.waitForCompletion(100, () => {})
+      stdout.emit('data', '开始差量编译\n项目 demo 编译成功。\n同步手机端程序文件成功\n')
+      await observer.waitForCompletion(100, () => {}, async () => {})
       expect(observer.assertNoFallback).not.toThrow()
       stderr.emit('data', '\u001B[0mApp Launch\u001B[0m at App.uvue:6\n')
       expect(observer.assertNoFallback).toThrow('restarted')
-      await expect(observer.waitForCompletion(100, () => {})).rejects.toThrow('restarted')
+      await expect(observer.waitForCompletion(100, () => {}, async () => {})).rejects.toThrow('restarted')
     }
     finally {
       observer.dispose()

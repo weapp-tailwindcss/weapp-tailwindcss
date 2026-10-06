@@ -1,7 +1,7 @@
 {
   "name": "@weapp-tailwindcss/cli",
   "type": "module",
-  "version": "5.5.11",
+  "version": "5.5.12",
   "description": "Cross-platform Tailwind CSS CLI for Web and mini-program builds. 面向 Web 与小程序构建的跨端 Tailwind CSS CLI。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",

@@ -1,10 +1,10 @@
-import { spawnSync } from 'node:child_process'
 import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it, vi } from 'vitest'
 import YAML from 'yaml'
+import { runOwnedWorker } from '../../../../scripts/e2e-preflight/process'
 import { runProxy, updatePackages } from '../../../../scripts/update-packages'
 import { writeIntent } from '../../../../scripts/update-packages/intent'
 import { fixture, releaseStatus } from './fixture'
@@ -127,13 +127,24 @@ describe('更新命令自动累积 changeset', () => {
     expect(JSON.parse(await f.read('args.json'))).toEqual(['up', '-ri', '--filter', './packages/*'])
     // help 不升级依赖，用真实代理验证 CLI 的模块入口和退出流程。
     const script = fileURLToPath(new URL('../../../../scripts/update-packages.ts', import.meta.url))
-    const result = spawnSync(process.execPath, ['--import', 'tsx', script, '--help'], {
-      cwd: path.resolve(path.dirname(script), '..'),
-      encoding: 'utf8',
-      shell: false,
+    const output = await runOwnedWorker({
+      command: process.execPath,
+      args: ['--import', import.meta.resolve('tsx'), script, '--help'],
+      cwd: f.root,
+      timeoutMs: 15_000,
     })
-    expect(result.status, result.stderr).toBe(0)
-    expect(result.stdout).toMatch(/Usage|用法/)
+    expect(output).toMatch(/Usage|用法/)
+  })
+
+  it.each([['--help'], ['-h'], ['up', '--help'], ['update', '-h'], ['help', 'up']])('帮助请求 %j 不读取依赖快照或生成发布记录', async (...args) => {
+    const f = await setup()
+    await f.write('pnpm-lock.yaml', 'importers: [')
+    const run = vi.fn(async () => ok)
+    const info = vi.fn()
+    expect(await updatePackages(args, { cwd: f.root, run, logger: { info, error: vi.fn() } })).toEqual(ok)
+    expect(run).toHaveBeenCalledWith(args, f.root)
+    expect(info).not.toHaveBeenCalled()
+    await expect(readdir(path.join(f.root, '.changeset'))).rejects.toMatchObject({ code: 'ENOENT' })
   })
 
   it('两个 package scripts 均接入编排入口，保留升级模式及 demo 排除项', async () => {

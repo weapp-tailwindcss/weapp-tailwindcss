@@ -1,11 +1,6 @@
-import type { NativeCompilerWarning, NativePlatform, NativeStyleRule } from '@weapp-tailwindcss/postcss/native'
+import type { NativeCompilerWarning, NativeStyleRule } from '@weapp-tailwindcss/postcss/native'
 
 export type { CompileNativeStylesheetOptions, NativeCompilerWarning, NativePlatform, NativeStyleRule } from '@weapp-tailwindcss/postcss/native'
-
-export interface NativeStyleEnvironment {
-  colorScheme?: 'light' | 'dark' | undefined
-  platform?: NativePlatform | undefined
-}
 
 export interface NativeStyleManifest {
   version: 1
@@ -19,16 +14,4 @@ export interface NativeStyleManifest {
   staticLookup?: Record<string, string[]>
   variables: Record<string, string>
   warnings: NativeCompilerWarning[]
-}
-
-export type NativeClassValue = string | false | null | undefined | NativeClassValue[] | Record<string, boolean>
-export type NativeStyleValue = Record<string, unknown> | number | readonly NativeStyleValue[]
-
-export interface NativeStyleRuntime {
-  tw: (value: NativeClassValue, environment?: NativeStyleEnvironment) => NativeStyleValue
-  getStaticStyle: (ids: readonly string[], environment?: NativeStyleEnvironment) => NativeStyleValue
-  composeStyle: (tailwindStyle: NativeStyleValue, inlineStyle: unknown) => NativeStyleValue[]
-  setManifest: (manifest: NativeStyleManifest) => void
-  setEnvironment: (environment: NativeStyleEnvironment) => void
-  getManifest: () => NativeStyleManifest | undefined
 }

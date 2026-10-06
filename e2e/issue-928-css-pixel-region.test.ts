@@ -31,6 +31,19 @@ it('真实 CSS 尺寸变化不会被归一化为旧尺寸', () => {
   expect([actual.width, actual.height]).toEqual([6, 4])
 })
 
+it.each([[640, 390], [804, 375]])('像素基线拒绝非整数截图采样比例 %s/%s', (width, viewportWidth) => {
+  const source = new PNG({ width, height: 1428 })
+  expect(() => cropCssPixelRegion(source, viewportWidth, { left: 22, top: 70, width: 240, height: 128 }, { requireIntegerScale: true }))
+    .toThrow('100%')
+})
+
+it.each([1, 2, 3])('像素基线保留整数密度 %s 的真实采样', (scale) => {
+  const source = screenshot(scale)
+  const rect = { left: 2, top: 1, width: 5, height: 4 }
+  expect(cropCssPixelRegion(source, 12, rect, { requireIntegerScale: true }).data)
+    .toEqual(cropCssPixelRegion(source, 12, rect).data)
+})
+
 it.each([
   { left: 10, top: 1, width: 5, height: 4 },
   { left: 2, top: 6, width: 5, height: 4 },

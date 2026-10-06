@@ -1,5 +1,17 @@
 # benchmark-performance
 
+## 0.0.1
+
+### Patch Changes
+
+- Updated dependencies:
+  - @weapp-tailwindcss/cn@0.1.5
+  - @weapp-tailwindcss/engine@0.1.4
+  - @weapp-tailwindcss/merge@2.2.7
+  - @weapp-tailwindcss/postcss@3.3.11
+  - @weapp-tailwindcss/runtime@0.1.11
+  - weapp-tailwindcss@5.5.12
+
 ## 0.0.0
 
 ### Patch Changes
