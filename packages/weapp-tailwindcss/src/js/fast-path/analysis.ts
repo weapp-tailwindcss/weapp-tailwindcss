@@ -84,7 +84,8 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
     }
     let requiresBabel = false
     const ancestors: object[] = []
-    const classContextStack: boolean[] = []
+    // 只记录当前上下文边界节点；普通 AST 节点不再各自分配一个布尔栈项。
+    let classContextNode: object | undefined
     walk(result.program, {
       enter(node) {
         // Oxc 在 script 模式下仍可能接受 ESM；交给 Babel 执行调用方的语法约束。
@@ -105,7 +106,10 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
           ? node.value
           : node.type === 'TemplateElement' ? node.value.raw : undefined
         const parent = ancestors.at(-1) as { type?: string, directive?: unknown, expression?: unknown } | undefined
-        const classContext = (classContextStack.at(-1) === true) || isClassContextChild(node, parent)
+        const classContext = classContextNode !== undefined || isClassContextChild(node, parent)
+        if (classContextNode === undefined && classContext) {
+          classContextNode = node
+        }
         const isDirective = parent?.type === 'ExpressionStatement'
           && typeof parent.directive === 'string' && parent.expression === node
         // JSX 实体由 Babel 解码，避免在快速路径重复维护 HTML 实体解析规则。
@@ -128,11 +132,12 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
           }
         }
         ancestors.push(node)
-        classContextStack.push(classContext)
       },
-      leave() {
+      leave(node) {
         ancestors.pop()
-        classContextStack.pop()
+        if (classContextNode === node) {
+          classContextNode = undefined
+        }
       },
     })
     if (requiresBabel) {
