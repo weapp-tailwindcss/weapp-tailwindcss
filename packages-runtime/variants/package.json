@@ -1,7 +1,7 @@
 {
   "name": "@weapp-tailwindcss/variants",
   "type": "module",
-  "version": "0.2.9",
+  "version": "0.2.10",
   "description": "Cross-platform tailwind-variants runtime with Tailwind CSS class compatibility. 兼容 Tailwind CSS 类名的跨端 tailwind-variants 运行时封装。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",

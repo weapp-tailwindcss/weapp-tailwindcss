@@ -1,7 +1,7 @@
 {
   "name": "@weapp-tailwindcss/init",
   "type": "module",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Project initializer for cross-platform Tailwind CSS with weapp-tailwindcss. 用于初始化跨端 Tailwind CSS 项目的 weapp-tailwindcss 工具。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",

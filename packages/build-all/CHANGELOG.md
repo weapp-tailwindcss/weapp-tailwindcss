@@ -1,5 +1,25 @@
 # @weapp-tailwindcss/build-all
 
+## 0.0.73
+
+### Patch Changes
+
+- Updated dependencies:
+  - @weapp-tailwindcss/debug-uni-app-x@1.0.8
+  - @weapp-tailwindcss/escape@0.0.2
+  - @weapp-tailwindcss/experimental@0.0.48
+  - @weapp-tailwindcss/init@2.0.2
+  - @weapp-tailwindcss/logger@2.0.4
+  - @weapp-tailwindcss/postcss@3.3.11
+  - @weapp-tailwindcss/shared@2.0.4
+  - tailwindcss-config@2.0.6
+  - tailwindcss-core-plugins-extractor@0.2.3
+  - tailwindcss-injector@1.0.23
+  - weapp-style-injector@1.0.7
+  - weapp-tailwindcss@5.5.12
+  - weapp-tw@0.0.4
+  - wetw@0.1.7
+
 ## 0.0.72
 
 ### Patch Changes

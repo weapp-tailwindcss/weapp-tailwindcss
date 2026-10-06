@@ -1,5 +1,15 @@
 # @weapp-tailwindcss/variants
 
+## 0.2.10
+
+### Patch Changes
+
+- 将发布包的仓库与问题反馈地址更新为 weapp-tailwindcss 组织下的主仓库，使 npm 包元数据与迁移后的 OIDC 发布来源一致。保留现有包名、导出接口、npm 所有权和文档域名。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/merge@2.2.7
+  - @weapp-tailwindcss/runtime@0.1.11
+
 ## 0.2.9
 
 ### Patch Changes

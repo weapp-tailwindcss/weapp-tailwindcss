@@ -1,5 +1,17 @@
 # @weapp-tailwindcss/init
 
+## 2.0.2
+
+### Patch Changes
+
+- 将发布包的仓库与问题反馈地址更新为 weapp-tailwindcss 组织下的主仓库，使 npm 包元数据与迁移后的 OIDC 发布来源一致。保留现有包名、导出接口、npm 所有权和文档域名。
+
+- 初始化依赖按 semver 选择目标范围内最高稳定版，无匹配时在写入前报错，避免预发布版及跨主版本回退。Refs #1265。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/logger@2.0.4
+  - @weapp-tailwindcss/shared@2.0.4
+
 ## 2.0.1
 
 ### Patch Changes

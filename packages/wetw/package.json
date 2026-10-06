@@ -1,7 +1,7 @@
 {
   "name": "wetw",
   "type": "module",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Cross-platform Tailwind CSS component registry and project CLI. 跨端 Tailwind CSS 组件注册与项目 CLI。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",

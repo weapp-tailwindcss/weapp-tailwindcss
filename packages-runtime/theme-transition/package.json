@@ -1,7 +1,7 @@
 {
   "name": "theme-transition",
   "type": "module",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Cross-platform CSS, SCSS, and Tailwind CSS theme transition utilities. 跨端 CSS、SCSS 与 Tailwind CSS 主题过渡工具。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",

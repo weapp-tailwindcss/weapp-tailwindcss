@@ -1,7 +1,7 @@
 {
   "name": "@weapp-tailwindcss/merge",
   "type": "module",
-  "version": "2.2.6",
+  "version": "2.2.7",
   "description": "Cross-platform Tailwind CSS class merging runtime with mini-program compatibility. 兼容小程序的跨端 Tailwind CSS 类名合并运行时。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",

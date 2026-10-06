@@ -1,7 +1,7 @@
 {
   "name": "@weapp-tailwindcss/logger",
   "type": "module",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "Shared logging utilities for the weapp-tailwindcss cross-platform toolchain. weapp-tailwindcss 跨端工具链的共享日志工具。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",

@@ -1,5 +1,12 @@
 # @weapp-tailwindcss/example-react-native-expo
 
+## 0.1.4
+
+### Patch Changes
+
+- Updated dependencies:
+  - @weapp-tailwindcss/react-native@0.3.0
+
 ## 0.1.3
 
 ### Patch Changes

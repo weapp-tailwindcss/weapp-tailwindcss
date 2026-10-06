@@ -1,7 +1,7 @@
 {
   "name": "@weapp-tailwindcss/lynx",
   "type": "module",
-  "version": "0.3.20",
+  "version": "0.4.0",
   "description": "Tailwind CSS integration for ReactLynx and Rspeedy cross-platform builds. 面向 ReactLynx 与 Rspeedy 跨端构建的 Tailwind CSS 集成。",
   "license": "MIT",
   "homepage": "https://tw.weapp.dev/docs/quick-start/frameworks/lynx",
