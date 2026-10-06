@@ -51,6 +51,8 @@ const base: IJsHandlerOptions = {
 let cases = 0
 let compatibleFallbacks = 0
 try {
+  // 先安装生命周期计数器，避免后续用例预热的全局 transformer 绕过计数。
+  const nativeTransforms = verifyJsLifecycle()
   for (const { source, lang, sourceType, preserveParens } of sourceCases()) {
     const options: IJsHandlerOptions = {
       ...base,
@@ -120,7 +122,6 @@ try {
   }
   assert.ok(nativeAnalyses > cases, 'Integrated paths must invoke the real native binding')
   assert.ok(nativeSignatures > 0)
-  const nativeTransforms = verifyJsLifecycle()
   process.stdout.write(`${JSON.stringify({ node: process.version, cases, compatibleFallbacks, nativeAnalyses, nativeSignatures, nativeTransforms, input: { bytes: corpus.utf8Bytes, sha256: corpus.sha256 } })}\n`)
 }
 finally {
