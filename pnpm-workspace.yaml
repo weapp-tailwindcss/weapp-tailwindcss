@@ -108,6 +108,9 @@ overrides:
   tsdown@0.23.0>rolldown: 1.2.11
   weapp-vite>rolldown: 1.2.12
   jiti: 2.7.0
+  '@docusaurus/bundler>postcss': 8.5.29
+  '@docusaurus/cssnano-preset>postcss': 8.5.29
+  '@docusaurus/theme-classic>postcss': 8.5.29
   weapp-vite>weapp-tailwindcss: workspace:*
 
 catalogs:
