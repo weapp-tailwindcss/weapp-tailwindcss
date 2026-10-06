@@ -138,17 +138,17 @@ async function runMutationLifecycle(
 const repositoryRoot = path.resolve(__dirname, '../../../..')
 const uniAppViteV4DemoRoot = path.resolve(repositoryRoot, 'demo/uni-app-vite-tailwindcss-v4')
 
-async function createUniAppViteV4DemoCopy() {
-  const projectRoot = await fs.mkdtemp(path.join(repositoryRoot, 'demo/.tmp-weapp-tw-uni-vite-v4-'))
-  await fs.cp(uniAppViteV4DemoRoot, projectRoot, {
+async function createIsolatedDemoCopy(sourceRoot: string) {
+  const projectRoot = await fs.mkdtemp(path.join(repositoryRoot, 'demo/.tmp-weapp-tw-hmr-'))
+  await fs.cp(sourceRoot, projectRoot, {
     recursive: true,
     filter(source) {
-      const relative = path.relative(uniAppViteV4DemoRoot, source)
+      const relative = path.relative(sourceRoot, source)
       const parts = relative.split(path.sep)
       return !parts.some(part => part === 'node_modules' || part === 'dist' || part === '.turbo' || part === '.hbuilderx')
     },
   })
-  await fs.symlink(path.join(uniAppViteV4DemoRoot, 'node_modules'), path.join(projectRoot, 'node_modules'), 'dir')
+  await fs.symlink(path.join(sourceRoot, 'node_modules'), path.join(projectRoot, 'node_modules'), 'dir')
   return projectRoot
 }
 
@@ -157,6 +157,7 @@ const cases: SourceMutationCase[] = [
     title: 'demo/gulp-tailwindcss-v4',
     projectRoot: path.resolve(repositoryRoot, 'demo/gulp-tailwindcss-v4'),
     appType: 'native',
+    createIsolatedProjectRoot: () => createIsolatedDemoCopy(path.resolve(repositoryRoot, 'demo/gulp-tailwindcss-v4')),
     resolveOptions: root => ({
       cssEntries: [path.resolve(root, 'src/app.css')],
     }),
@@ -181,7 +182,7 @@ const cases: SourceMutationCase[] = [
     title: 'demo/uni-app-vite-tailwindcss-v4',
     projectRoot: uniAppViteV4DemoRoot,
     appType: 'uni-app-vite',
-    createIsolatedProjectRoot: createUniAppViteV4DemoCopy,
+    createIsolatedProjectRoot: () => createIsolatedDemoCopy(uniAppViteV4DemoRoot),
     resolveOptions: root => ({
       cssEntries: [
         path.resolve(root, 'src/main.css'),
@@ -224,6 +225,7 @@ const cases: SourceMutationCase[] = [
     title: 'demo/taro-vite-react-tailwindcss-v4',
     projectRoot: path.resolve(repositoryRoot, 'demo/taro-vite-react-tailwindcss-v4'),
     appType: 'taro',
+    createIsolatedProjectRoot: () => createIsolatedDemoCopy(path.resolve(repositoryRoot, 'demo/taro-vite-react-tailwindcss-v4')),
     resolveOptions: root => ({
       cssEntries: [path.resolve(root, 'src/app.css')],
     }),
@@ -248,6 +250,7 @@ const cases: SourceMutationCase[] = [
     title: 'demo/taro-webpack-react-tailwindcss-v4',
     projectRoot: path.resolve(repositoryRoot, 'demo/taro-webpack-react-tailwindcss-v4'),
     appType: 'taro',
+    createIsolatedProjectRoot: () => createIsolatedDemoCopy(path.resolve(repositoryRoot, 'demo/taro-webpack-react-tailwindcss-v4')),
     resolveOptions: root => ({
       cssEntries: [path.resolve(root, 'src/app.css')],
     }),
@@ -272,6 +275,7 @@ const cases: SourceMutationCase[] = [
     title: 'demo/mpx-tailwindcss-v4',
     projectRoot: path.resolve(repositoryRoot, 'demo/mpx-tailwindcss-v4'),
     appType: 'mpx',
+    createIsolatedProjectRoot: () => createIsolatedDemoCopy(path.resolve(repositoryRoot, 'demo/mpx-tailwindcss-v4')),
     resolveOptions: root => ({
       cssEntries: [path.resolve(root, 'src/app.css')],
     }),
@@ -296,6 +300,7 @@ const cases: SourceMutationCase[] = [
     title: 'demo/weapp-vite-tailwindcss-v4',
     projectRoot: path.resolve(repositoryRoot, 'demo/weapp-vite-tailwindcss-v4'),
     appType: 'native',
+    createIsolatedProjectRoot: () => createIsolatedDemoCopy(path.resolve(repositoryRoot, 'demo/weapp-vite-tailwindcss-v4')),
     resolveOptions: (root) => {
       const file = path.resolve(root, 'tailwind.css')
       return {
@@ -366,7 +371,7 @@ describe('tailwindcss v4 source hmr regression', () => {
   }
 
   it('demo/uni-app-vite-tailwindcss-v4 template add named arbitrary colors', async () => {
-    const projectRoot = await createUniAppViteV4DemoCopy()
+    const projectRoot = await createIsolatedDemoCopy(uniAppViteV4DemoRoot)
     const entryPath = path.resolve(projectRoot, 'src/pages/index/index.vue')
     const original = await fs.readFile(entryPath, 'utf8')
     const classLiteral = 'text-[yellow] bg-[blue]'
