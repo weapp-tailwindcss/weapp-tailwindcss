@@ -73,7 +73,8 @@ describe('发布 OIDC 核验', () => {
   it('身份来自其他仓库时拒绝交换', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValueOnce(json({ value: idToken }))
     await expect(auditNpmOidc(['first'], { ...env, GITHUB_REPOSITORY: 'another/repository' }, fetcher))
-      .rejects.toThrow('身份与当前 workflow 不一致')
+      .rejects
+      .toThrow('身份与当前 workflow 不一致')
     expect(fetcher).toHaveBeenCalledTimes(1)
   })
 })

@@ -2,6 +2,10 @@
 
 ## 当前状态
 
+2026-10-07 发布恢复补充：Release 已恢复为 `active`。此前迁移后的 npm 信任配置因未在创建后 48 小时内完成首次发布而过期，已按维护者授权删除并重建全部 30 个包；[真实 OIDC 核验](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/37524191219) 已 30/30 通过。[main 上实际发布](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/37524611131) 已上传全部 30 个目标版本，但任务因主包 registry 可见性确认超时而失败；随后已通过 repoctl 补齐元数据，30 个精确版本、latest、新组织来源的 provenance、Git tag 和 GitHub Release 均验收通过，主包与 CLI 均为 `5.5.12`。详细原因与证据见 [npm 信任配置过期与发布恢复](lessons/npm-trust-expiry-release-recovery.md)。下方保留 2026-10-02 的历史验收、暂停状态与待办，不将当时的配置回读当作当前发布授权证据。
+
+## 2026-10-02 的迁移验收状态
+
 2026-10-02 已将主仓库从 `sonofmagic/weapp-tailwindcss` 转移到 [weapp-tailwindcss/weapp-tailwindcss](https://github.com/weapp-tailwindcss/weapp-tailwindcss)。仓库名称与公开属性、npm 包名及所有权、文档域名和独立模板仓库保持不变。
 
 代码准备基线为 `0bfb23912f59cfaf0b58b00353d7f08122d1f8f1`。维护者本轮要求开始迁移，已采用“先转移 GitHub、保持 npm 发布暂停”的分阶段交付。**GitHub Transfer 与 30 个 npm 包的 Trusted Publisher 迁移均已完成；发布恢复尚未完成。** npm 信任配置已逐包回读核验。发布 Token 对组织仓库的访问权、Cloudflare Actions 真实部署与 Codecov 的组织授权仍待核实。
