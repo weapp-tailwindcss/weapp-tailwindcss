@@ -6,8 +6,9 @@ export { isOxcParserRuntimeSupported, loadOxcParser } from './oxc-parser/loader'
 type OxcParseOptions = NonNullable<Parameters<OxcParser['parseSync']>[2]>
 type OxcParseTransport = 'auto' | 'ast'
 
-// raw transfer 的固定跨边界成本在小片段上高于普通 AST；只对较大源码启用。
-const RAW_TRANSFER_MIN_SOURCE_LENGTH = 1024
+// raw transfer 的固定跨边界成本在中小 chunk 上高于普通 AST；只对大型 bundle 启用。
+// 125 KB 基准样本在 raw transfer 下稳定受益，而常见的 1–30 KB chunk 直接走 AST。
+const RAW_TRANSFER_MIN_SOURCE_LENGTH = 96 * 1024
 
 const rawTransferSupportCache = new WeakMap<object, boolean>()
 

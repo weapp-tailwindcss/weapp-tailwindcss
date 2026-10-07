@@ -7,7 +7,7 @@ import * as loader from '@/js/oxc-parser/loader'
 describe('Oxc 解析传输与回退', () => {
   afterEach(() => vi.restoreAllMocks())
 
-  const source = `${'const cls = "w-[10px]"; '.repeat(64)}const cls = "w-[10px]"`
+  const source = `${'const cls = "w-[10px]"; '.repeat(4096)}const cls = "w-[10px]"`
   const result = parseSync('entry.js', source)
   const options = Object.freeze({ lang: 'js' as const, sourceType: 'module' as const, preserveParens: false })
 

@@ -261,10 +261,7 @@ export function createContext(options: UserDefinedOptions = {}) {
       })
     }
     const resolvedOptions = resolveTransformJsOptions(options)
-    if (shouldSkipJsTransform(rawJs, {
-      ...resolvedOptions,
-      classNameSet: runtimeSet,
-    })) {
+    if (shouldSkipJsTransform(rawJs, resolvedOptions)) {
       return { code: rawJs }
     }
     const startedAt = performance.now()

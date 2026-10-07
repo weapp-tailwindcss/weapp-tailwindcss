@@ -105,6 +105,13 @@ describe('shouldSkipJsTransform', () => {
         moduleGraph: {} as never,
       })).toBe(false)
     })
+
+    it('Babel 路径不使用 classNameSet 预筛跳过 handler', () => {
+      expect(shouldSkipJsTransform('const className = "business-value"', {
+        ...options,
+        experimentalJsFastPath: false,
+      })).toBe(false)
+    })
   })
 
   describe('含 import/export/require 语句的代码返回 false', () => {

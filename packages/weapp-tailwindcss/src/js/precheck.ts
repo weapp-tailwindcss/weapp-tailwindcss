@@ -10,6 +10,7 @@ import { getReplacement } from './replacement-cache'
 const FAST_JS_TRANSFORM_HINT_RE = /className\b|class\s*=|classList\.|\b(?:twMerge|clsx|classnames|cn|cva)\b|\[["'`]class["'`]\]|text-\[|bg-\[|\b(?:[whpm]|px|py|mx|my|rounded|flex|grid|gap)-/
 
 const DEFAULT_ESCAPE_CHARACTERS = new Set(Object.keys(MappingChars2String))
+const DEFAULT_ESCAPE_CHARACTER_RE = new RegExp(`[${Object.keys(MappingChars2String).map(character => character.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&')).join('')}]`, 'u')
 const CANDIDATE_SPLIT_HINT_RE = /\s|\\[nrt]/
 const WHITESPACE_RE = /\s/
 const customEscapeCharactersCache = new WeakMap<object, string[] | undefined>()
@@ -42,20 +43,24 @@ function getEscapeCharacters(escapeMap: IJsHandlerOptions['escapeMap']) {
 }
 
 function hasPotentialEscapeCharacter(literal: string, customEscapeCharacters?: string[]) {
-  for (let index = 0; index < literal.length; index++) {
-    const character = literal[index]!
-    const code = literal.charCodeAt(index)
-    if (code > 0x7F || DEFAULT_ESCAPE_CHARACTERS.has(character) || customEscapeCharacters?.includes(character)) {
-      return true
-    }
-    const startsCandidate = index === 0 || WHITESPACE_RE.test(literal[index - 1]!)
-    if (startsCandidate && ((code >= 0x30 && code <= 0x39)
-      || (character === '-' && index + 1 < literal.length
-        && literal.charCodeAt(index + 1) >= 0x30 && literal.charCodeAt(index + 1) <= 0x39))) {
-      return true
-    }
+  if (literal.length === 0) {
+    return false
   }
-  return false
+
+  // 绝大多数业务字符串不含需要转义的字符。先用原生字符串/正则检查，
+  // 只有数字开头、Unicode、空格或映射字符才进入逐候选路径。
+  if (DEFAULT_ESCAPE_CHARACTER_RE.test(literal)
+    || customEscapeCharacters?.some(character => literal.includes(character))
+    || WHITESPACE_RE.test(literal)) {
+    return true
+  }
+
+  const firstCodePoint = literal.codePointAt(0)
+  return firstCodePoint !== undefined
+    && (firstCodePoint > 0x7F
+      || (firstCodePoint >= 0x30 && firstCodePoint <= 0x39)
+      || (literal[0] === '-' && literal.length > 1
+        && literal.charCodeAt(1) >= 0x30 && literal.charCodeAt(1) <= 0x39))
 }
 
 /** 用于检测源码中是否包含 import/export/require 语句的正则表达式 */
@@ -129,12 +134,13 @@ function hasClassNameSetMatch(rawSource: string, options: IJsHandlerOptions) {
     const literal = options.unescapeUnicode && rawLiteral.includes('\\u')
       ? decodeUnicode2(rawLiteral)
       : rawLiteral
+    // 完整字面量命中是最常见的类名形式；提前返回也避免对普通类名做二次扫描。
+    if (classNameSet.has(literal)) {
+      return true
+    }
     // 没有任何可能触发转义的字符时，除非整个字符串正好是集合成员，否则转换结果必然不变。
     // 这一步避免为普通业务字符串建立候选 token 数组。
     if (!hasPotentialEscapeCharacter(literal, customEscapeCharacters)) {
-      if (classNameSet.has(literal)) {
-        return true
-      }
       if (quote !== '`') {
         index = end
       }
@@ -202,14 +208,14 @@ export function shouldSkipJsTransform(rawSource: string, options?: IJsHandlerOpt
     // 生产 bundle 没有 moduleGraph；没有集合成员命中时，静态依赖本身
     // 不会改变任何类名，可以直接跳过 AST。增量 moduleGraph 路径仍须
     // 保留依赖分析，避免漏掉被链接模块的更新。
-    if (!classNameSetMatch && !options?.moduleGraph) {
+    if (!classNameSetMatch && !options?.moduleGraph && options?.experimentalJsFastPath !== false) {
       return true
     }
   }
   if (hasDependencyHint(rawSource)) {
     return false
   }
-  if (classNameSetMatch !== undefined) {
+  if (classNameSetMatch !== undefined && !options?.moduleGraph && options?.experimentalJsFastPath !== false) {
     return !classNameSetMatch
   }
   return !FAST_JS_TRANSFORM_HINT_RE.test(rawSource)
