@@ -1,4 +1,4 @@
-import { postcss } from '@weapp-tailwindcss/postcss'
+import { parseCssSource } from '@weapp-tailwindcss/postcss/syntax'
 
 const UNI_APP_X_WEB_COMPONENT_TAGS = [
   'uni-ad-draw',
@@ -97,7 +97,7 @@ function findInjectedResetRanges(css: string): InjectedResetRange[] {
     return []
   }
   // 只读取已注入规则的身份与位置，CSS 解析交给共享 PostCSS 包。
-  const root = postcss.parse(css)
+  const root = parseCssSource(css)
   const ranges: InjectedResetRange[] = []
   root.each((node) => {
     if (node.type === 'comment' && node.text.trim() === UNI_APP_X_WEB_PREFLIGHT_RESET_MARKER) {
