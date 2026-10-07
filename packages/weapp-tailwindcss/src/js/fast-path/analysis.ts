@@ -72,14 +72,14 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
       hasTaggedTemplate: false,
     }
     let requiresBabel = false
-    const ancestors: object[] = []
-    const conditionTestStates: boolean[] = []
+    const conditionTestStates = rawSource.includes('?') ? [] as boolean[] : undefined
     let conditionTestContext = false
-    const classContextHint = hasClassContextHint(rawSource)
+    // classContext 只会影响带斜杠的 utility；普通生成 JS 无需维护这条上下文链。
+    const classContextHint = rawSource.includes('/') && hasClassContextHint(rawSource)
     // 只记录当前上下文边界节点；普通 AST 节点不再各自分配一个布尔栈项。
     let classContextNode: object | undefined
     walk(result.program, {
-      enter(node) {
+      enter(node, parent) {
         // Oxc 在 script 模式下仍可能接受 ESM；交给 Babel 执行调用方的语法约束。
         if (sourceType === 'script' && (node.type === 'ImportDeclaration' || node.type.startsWith('Export'))) {
           requiresBabel = true
@@ -97,30 +97,35 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
         const value = node.type === 'Literal' && typeof node.value === 'string' && typeof node.raw === 'string'
           ? node.value
           : node.type === 'TemplateElement' ? node.value.raw : undefined
-        const parent = ancestors.at(-1) as { type?: string, directive?: unknown, expression?: unknown } | undefined
-        const previousConditionTestContext = conditionTestContext
-        if (parent?.type === 'ConditionalExpression') {
-          conditionTestContext = parent.test === node
-        }
-        else if (conditionTestContext && parent?.type && CONDITION_TEST_CHAIN_TYPES.has(parent.type)) {
-          conditionTestContext = true
+        const parentNode = parent as { type?: string, directive?: unknown, expression?: unknown } | null
+        if (conditionTestStates) {
+          const previousConditionTestContext = conditionTestContext
+          if (parentNode?.type === 'ConditionalExpression') {
+            conditionTestContext = parentNode.test === node
+          }
+          else if (conditionTestContext && parentNode?.type && CONDITION_TEST_CHAIN_TYPES.has(parentNode.type)) {
+            conditionTestContext = true
+          }
+          else {
+            conditionTestContext = false
+          }
+          conditionTestStates.push(previousConditionTestContext)
         }
         else {
           conditionTestContext = false
         }
-        conditionTestStates.push(previousConditionTestContext)
-        const classContextParent = parent?.type === 'Property'
-          || parent?.type === 'JSXAttribute'
-          || parent?.type === 'CallExpression'
+        const classContextParent = parentNode?.type === 'Property'
+          || parentNode?.type === 'JSXAttribute'
+          || parentNode?.type === 'CallExpression'
         const classContext = classContextNode !== undefined
-          || (classContextHint && classContextParent && isClassContextChild(node, parent))
+          || (classContextHint && classContextParent && isClassContextChild(node, parentNode))
         if (classContextNode === undefined && classContext) {
           classContextNode = node
         }
-        const isDirective = parent?.type === 'ExpressionStatement'
-          && typeof parent.directive === 'string' && parent.expression === node
+        const isDirective = parentNode?.type === 'ExpressionStatement'
+          && typeof parentNode.directive === 'string' && parentNode.expression === node
         // JSX 实体由 Babel 解码，避免在快速路径重复维护 HTML 实体解析规则。
-        if (parent?.type === 'JSXAttribute' && value?.includes('&')) {
+        if (parentNode?.type === 'JSXAttribute' && value?.includes('&')) {
           requiresBabel = true
         }
         if (!isDirective && value !== undefined && typeof node.start === 'number' && typeof node.end === 'number' && node.start < node.end) {
@@ -138,11 +143,11 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
             })
           }
         }
-        ancestors.push(node)
       },
       leave(node) {
-        ancestors.pop()
-        conditionTestContext = conditionTestStates.pop() ?? false
+        if (conditionTestStates) {
+          conditionTestContext = conditionTestStates.pop() ?? false
+        }
         if (classContextNode === node) {
           classContextNode = undefined
         }

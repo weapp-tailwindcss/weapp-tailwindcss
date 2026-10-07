@@ -183,15 +183,19 @@ fn unambiguous_accepts_script_and_module_syntax() {
 fn exposes_babel_class_context_without_marking_business_values() {
     for source in [
         "const x = { className: 'pages/home' }",
+        "const x = { className: 'w-[1px]' }",
         "const x = cn('pages/home')",
+        "const x = helpers[\"TW-Merge\"]('pages/home')",
+        "const x = r\n('pages/home')",
         "const x = <view hover-class='pages/home'/>",
     ] {
+        assert!(super::has_class_context_hint(source), "hint: {source}");
+        let analysis = analyze(source, "tsx", "module", false, false).unwrap().0;
         assert!(
-            analyze(source, "tsx", "module", false, false)
-                .unwrap()
-                .0
-                .literals[0]
-                .class_context,
+            analysis
+                .literals
+                .last()
+                .is_some_and(|literal| literal.class_context),
             "{source}"
         );
     }
