@@ -72,7 +72,9 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
       hasTaggedTemplate: false,
     }
     let requiresBabel = false
-    const conditionTestStates = rawSource.includes('?') ? [] as boolean[] : undefined
+    // 只在进入条件测试链时保存上下文。为每个 AST 节点压入一个布尔值会让生成代码的
+    // 普通遍历产生大量无用数组操作；条件链之外的节点始终保持 false。
+    const conditionContextStack: { node: object, previous: boolean }[] | undefined = rawSource.includes('?') ? [] : undefined
     let conditionTestContext = false
     // classContext 只会影响带斜杠的 utility；普通生成 JS 无需维护这条上下文链。
     const classContextHint = rawSource.includes('/') && hasClassContextHint(rawSource)
@@ -98,18 +100,14 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
           ? node.value
           : node.type === 'TemplateElement' ? node.value.raw : undefined
         const parentNode = parent as { type?: string, directive?: unknown, expression?: unknown } | null
-        if (conditionTestStates) {
-          const previousConditionTestContext = conditionTestContext
-          if (parentNode?.type === 'ConditionalExpression') {
-            conditionTestContext = parentNode.test === node
+        if (conditionContextStack) {
+          const nextConditionTestContext = parentNode?.type === 'ConditionalExpression'
+            ? parentNode.test === node
+            : conditionTestContext && parentNode?.type !== undefined && CONDITION_TEST_CHAIN_TYPES.has(parentNode.type)
+          if (nextConditionTestContext !== conditionTestContext || nextConditionTestContext) {
+            conditionContextStack.push({ node, previous: conditionTestContext })
           }
-          else if (conditionTestContext && parentNode?.type && CONDITION_TEST_CHAIN_TYPES.has(parentNode.type)) {
-            conditionTestContext = true
-          }
-          else {
-            conditionTestContext = false
-          }
-          conditionTestStates.push(previousConditionTestContext)
+          conditionTestContext = nextConditionTestContext
         }
         else {
           conditionTestContext = false
@@ -145,8 +143,12 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
         }
       },
       leave(node) {
-        if (conditionTestStates) {
-          conditionTestContext = conditionTestStates.pop() ?? false
+        if (conditionContextStack) {
+          const last = conditionContextStack[conditionContextStack.length - 1]
+          if (last?.node === node) {
+            conditionContextStack.pop()
+            conditionTestContext = last.previous
+          }
         }
         if (classContextNode === node) {
           classContextNode = undefined
