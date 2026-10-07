@@ -24,6 +24,7 @@ import { resolveWebpackFrameworkProfile } from '../../../framework-selector'
 import { isWatchFileInRuntimeDependencies } from '../../BaseUnifiedPlugin/shared'
 import { setupWebpackV5ProcessAssetsHook } from '../../BaseUnifiedPlugin/v5-assets'
 import { setupWebpackV5Loaders } from '../../BaseUnifiedPlugin/v5-loaders'
+import { createWebpackLoaderRuntimePreparation } from './runtime-preparation'
 import { debug, setupWebpackWatchOutputIgnore, shouldKeepPreviousWebpackCssSource, weappTailwindcssPackageDir } from './watch-output'
 
 function isInternalUserDefinedOptions(options: UserDefinedOptions | InternalUserDefinedOptions): options is InternalUserDefinedOptions {
@@ -105,7 +106,6 @@ export class WebpackFrameworkPlugin implements IBaseWebpackPlugin {
     })
     void runtimeState.events.emit({ schemaVersion: COMPILATION_EVENT_SCHEMA_VERSION, type: 'diagnostic', timestamp: new Date().toISOString(), adapter: 'webpack', phase: 'hmr', revision: runtimeState.revision, operationId: `webpack-init-${Date.now()}`, evidence: ['compiler.apply'] })
 
-    let runtimeSetPrepared = false
     let runtimeSetSignature: string | undefined
     let runtimeRefreshRequiredForCompilation = false
     let watchRunObserved = false
@@ -226,7 +226,7 @@ export class WebpackFrameworkPlugin implements IBaseWebpackPlugin {
     }
 
     const resetRuntimePreparation = () => {
-      runtimeSetPrepared = false
+      loaderRuntimePreparation.invalidate()
       syncRuntimeRefreshRequirement()
       const changes = createCompilationDependencyChanges(collectWatchChangedFiles())
       // loader 会消费生成会话，必须在它执行前失效；processAssets 只复用本轮记录。
@@ -243,7 +243,7 @@ export class WebpackFrameworkPlugin implements IBaseWebpackPlugin {
       if (!changed) {
         return
       }
-      runtimeSetPrepared = false
+      loaderRuntimePreparation.invalidate()
       runtimeMetadataPrepared = false
       runtimeRefreshRequiredForCompilation = true
       await refreshTailwindRuntimeState(runtimeState, {
@@ -373,6 +373,24 @@ export class WebpackFrameworkPlugin implements IBaseWebpackPlugin {
       return false
     }
 
+    const loaderRuntimePreparation = createWebpackLoaderRuntimePreparation(async (isCurrent) => {
+      const signature = getRuntimeClassSetSignature(runtimeState.tailwindRuntime)
+      const forceRefresh = runtimeRefreshRequiredForCompilation || signature !== runtimeSetSignature
+      debug('runtime loader ensure class set forceRefresh=%s watchDirty=%s signatureChanged=%s', forceRefresh, runtimeRefreshRequiredForCompilation, signature !== runtimeSetSignature)
+      const runtimeSet = await ensureRuntimeClassSet(runtimeState, {
+        forceRefresh,
+        forceCollect: forceRefresh || !watchRunObserved,
+        clearCache: forceRefresh,
+        allowEmpty: true,
+      })
+      await ensureRuntimeMetadata(forceRefresh)
+      if (isCurrent()) {
+        runtimeSetSignature = signature
+        runtimeRefreshRequiredForCompilation = false
+      }
+      return runtimeSet
+    })
+
     compiler.hooks.invalid?.tap?.(pluginName, (fileName: string | null) => {
       if (!fileName) {
         return
@@ -389,30 +407,10 @@ export class WebpackFrameworkPlugin implements IBaseWebpackPlugin {
     }
 
     async function getClassSetInLoader() {
-      if (runtimeSetPrepared) {
-        return
-      }
-      const signature = getRuntimeClassSetSignature(runtimeState.tailwindRuntime)
-      const forceRefresh = runtimeRefreshRequiredForCompilation || signature !== runtimeSetSignature
-      debug('runtime loader ensure class set forceRefresh=%s watchDirty=%s signatureChanged=%s', forceRefresh, runtimeRefreshRequiredForCompilation, signature !== runtimeSetSignature)
-      runtimeSetPrepared = true
-      await ensureRuntimeClassSet(runtimeState, {
-        forceRefresh,
-        forceCollect: forceRefresh || !watchRunObserved,
-        clearCache: forceRefresh,
-        allowEmpty: true,
-      })
-      await ensureRuntimeMetadata(forceRefresh)
-      runtimeSetSignature = signature
-      runtimeRefreshRequiredForCompilation = false
+      await loaderRuntimePreparation.getRuntimeSet()
     }
 
-    async function getRuntimeSetInLoader() {
-      await getClassSetInLoader()
-      return ensureRuntimeClassSet(runtimeState, {
-        allowEmpty: true,
-      })
-    }
+    const getRuntimeSetInLoader = loaderRuntimePreparation.getRuntimeSet
 
     onLoad()
     setupWebpackV5Loaders({
