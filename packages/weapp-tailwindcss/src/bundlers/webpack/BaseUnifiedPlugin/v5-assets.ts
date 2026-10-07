@@ -93,6 +93,13 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
           return
         }
         const groupedEntries = getGroupedEntries(entries, compilerOptions)
+        // 无匹配产物的子编译不应扫描源码或消费父编译共享的刷新标记与缓存。
+        if (compilation.compiler?.isChild?.()
+          && groupedEntries.css.length === 0
+          && groupedEntries.html.length === 0
+          && groupedEntries.js.length === 0) {
+          return
+        }
         if (isWebGeneratorTarget && groupedEntries.css.length === 0) {
           return
         }
