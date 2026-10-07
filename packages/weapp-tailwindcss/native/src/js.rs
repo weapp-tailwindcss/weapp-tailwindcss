@@ -42,7 +42,6 @@ struct AnalysisVisitor<'a, 's> {
     source: &'s str,
     script: bool,
     condition_test_hint: bool,
-    class_context_hint: bool,
     unsupported: bool,
     signature: Option<Vec<String>>,
 }
@@ -84,8 +83,7 @@ impl AnalysisVisitor<'_, '_> {
                 end: self.offsets.convert(span.end),
                 value: value.to_owned(),
                 is_condition_test: self.is_condition_test(span),
-                class_context: self.class_context_hint
-                    && context::is_class_context(&self.ancestors, span),
+                class_context: context::is_class_context(&self.ancestors, span),
             });
         }
     }
@@ -163,46 +161,6 @@ fn is_js_whitespace(character: char) -> bool {
         | '\u{2028}' | '\u{2029}' | '\u{202f}' | '\u{205f}' | '\u{3000}' | '\u{feff}')
 }
 
-fn has_class_context_hint(source: &str) -> bool {
-    let lower = source.to_ascii_lowercase();
-    lower.contains("class")
-        || ["cn", "clsx", "classnames", "twmerge", "cva", "tv", "cx"]
-            .iter()
-            .any(|name| lower.contains(name))
-        || lower.contains("tw-merge")
-        || lower.contains("tw_merge")
-        || has_r_helper_call_hint(source)
-}
-
-fn has_r_helper_call_hint(source: &str) -> bool {
-    let bytes = source.as_bytes();
-    for (index, character) in bytes.iter().copied().enumerate() {
-        if !matches!(character, b'r' | b'R')
-            || (index > 0 && is_ascii_identifier(bytes[index - 1]))
-            || bytes
-                .get(index + 1)
-                .is_some_and(|next| is_ascii_identifier(*next))
-        {
-            continue;
-        }
-        let mut cursor = index + 1;
-        while bytes
-            .get(cursor)
-            .is_some_and(|next| next.is_ascii_whitespace())
-        {
-            cursor += 1;
-        }
-        if bytes.get(cursor) == Some(&b'(') {
-            return true;
-        }
-    }
-    false
-}
-
-fn is_ascii_identifier(character: u8) -> bool {
-    character.is_ascii_alphanumeric() || matches!(character, b'_' | b'$')
-}
-
 fn analyze(
     source: &str,
     lang: &str,
@@ -259,8 +217,6 @@ fn analyze_for_transform(
         source,
         script: source_type == "script",
         condition_test_hint: source.contains('?'),
-        // 没有 class 属性或 class helper 提示时，字面量不可能进入 classContext。
-        class_context_hint: has_class_context_hint(source),
         unsupported: false,
         signature: signature.then(Vec::new),
     };

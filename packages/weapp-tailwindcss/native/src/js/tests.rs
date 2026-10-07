@@ -187,9 +187,15 @@ fn exposes_babel_class_context_without_marking_business_values() {
         "const x = cn('pages/home')",
         "const x = helpers[\"TW-Merge\"]('pages/home')",
         "const x = r\n('pages/home')",
+        "const x = r/*comment*/('pages/home')",
+        "const x = c\\u006e('pages/home')",
+        "const x = { className: 'pages\\u002fhome' }",
+        "const x = { '\\x63lass': 'pages/home' }",
+        "const x = { 'c-l-a-s-s': 'pages/home' }",
+        "const x = { [`cl\\u0061ss`]: 'pages/home' }",
+        "const x = helpers[\"t_w:m-e_r_g_e\"]('pages/home')",
         "const x = <view hover-class='pages/home'/>",
     ] {
-        assert!(super::has_class_context_hint(source), "hint: {source}");
         let analysis = analyze(source, "tsx", "module", false, false).unwrap().0;
         assert!(
             analysis

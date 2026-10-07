@@ -17,14 +17,6 @@ const CONDITION_TEST_CHAIN_TYPES = new Set([
   'UnaryExpression',
 ])
 
-// 只有命中这些词时，字面量才可能进入 Babel 的 class 上下文。
-// 没有提示时跳过逐节点的上下文判断，避免为普通生成代码付出遍历成本。
-const CLASS_CONTEXT_HINT_RE = /class|\b(?:cn|clsx|classnames|twmerge|cva|tv|cx)\b|\br\s*\(/iu
-
-function hasClassContextHint(source: string) {
-  return CLASS_CONTEXT_HINT_RE.test(source)
-}
-
 const MAX_ANALYSIS_BYTES = 2 * 1024 * 1024
 const analysisCache = new LRUCache<string, SourceAnalysis>({ max: 128, maxSize: MAX_ANALYSIS_BYTES })
 
@@ -76,8 +68,7 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
     // 普通遍历产生大量无用数组操作；条件链之外的节点始终保持 false。
     const conditionContextStack: { node: object, previous: boolean }[] | undefined = rawSource.includes('?') ? [] : undefined
     let conditionTestContext = false
-    // classContext 只会影响带斜杠的 utility；普通生成 JS 无需维护这条上下文链。
-    const classContextHint = rawSource.includes('/') && hasClassContextHint(rawSource)
+    // 从解析后的属性与调用边界维护上下文，保留转义名称和名称规范化语义。
     // 只记录当前上下文边界节点；普通 AST 节点不再各自分配一个布尔栈项。
     let classContextNode: object | undefined
     walk(result.program, {
@@ -119,7 +110,7 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
           || parentNode?.type === 'JSXAttribute'
           || parentNode?.type === 'CallExpression'
         const classContext = classContextNode !== undefined
-          || (classContextHint && classContextParent && isClassContextChild(node, parentNode))
+          || (classContextParent && isClassContextChild(node, parentNode))
         if (classContextNode === undefined && classContext) {
           classContextNode = node
         }

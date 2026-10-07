@@ -4,6 +4,7 @@ import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { getDefaultOptions } from '../../../src/defaults'
 import { jsHandler } from '../../../src/js/babel'
 import { defaultJsPreserveClass } from '../../../src/js/default-preserve'
+import { classContextEdgeCases } from '../../../test/helpers/class-context-edge-cases'
 import { native } from './binding'
 import { classes, sources } from './fixtures'
 
@@ -41,7 +42,7 @@ const contexts = [
   'const x = <view other={VALUE}/>',
 ]
 const contextSources = contexts.flatMap(context => ['"pages/home"', '`pages/home`', '"text/plain"', '"http://example.com"'].map(value => context.replace('VALUE', value)))
-const cases = [...sources, ...contextSources, 'const x = `} w-[10px]`', 'const x = `w-[10px] {`', 'const x = `} w-[10px] {`', 'import "w-[10px]"', 'export { "w-[10px]" as alias } from "h-[20px]"', 'export * as "w-[10px]" from "h-[20px]"', 'let x; let x; const cls = "w-[10px]"', 'export { missing }; const cls = "w-[10px]"', 'break; const cls = "w-[10px]"', 'return "w-[10px]"']
+const cases = [...sources, ...contextSources, ...classContextEdgeCases, 'const x = `} w-[10px]`', 'const x = `w-[10px] {`', 'const x = `} w-[10px] {`', 'import "w-[10px]"', 'export { "w-[10px]" as alias } from "h-[20px]"', 'export * as "w-[10px]" from "h-[20px]"', 'let x; let x; const cls = "w-[10px]"', 'export { missing }; const cls = "w-[10px]"', 'break; const cls = "w-[10px]"', 'return "w-[10px]"']
 const evalSources = ['eval ', 'eval /*comment*/ ', 'eval\n', 'eval?.'].map(prefix => `${prefix}(${JSON.stringify('const cls = value === "w-[10px]" ? "h-[20px]" : ""')})`)
 cases.push(...evalSources, 'with (scope) { const cls = "w-[10px]" }', 'const legacy = "\\141"; const cls = "w-[10px]"', 'export default "w-[10px]"', 'const cls = "w-[10px]"; await foo()')
 let compared = 0
