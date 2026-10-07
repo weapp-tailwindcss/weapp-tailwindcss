@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use super::super::JsSourceAnalysis;
 use super::{
@@ -218,6 +218,67 @@ pub(super) fn transform<E>(
         });
     }
     Ok(render(source, &units, edits))
+}
+
+/// 收集一次转换中需要查询的候选，并保持与逐个查询相同的过滤顺序。
+///
+/// 批量 ABI 只改变跨 Node-API 的次数，不改变 Rust 内部的候选与替换规则。
+fn collect_membership_candidates(
+    analysis: &JsSourceAnalysis,
+    escape: &EscapeTable,
+    options: &JsTransformOptions,
+) -> Option<Vec<String>> {
+    let mut seen = HashSet::new();
+    let mut queries = Vec::new();
+    for literal in &analysis.literals {
+        if literal.is_condition_test {
+            continue;
+        }
+        let source = if options.unescape_unicode == Some(true) && literal.value.contains("\\u") {
+            decode::decode(&literal.value)?
+        } else {
+            literal.value.clone()
+        };
+        for candidate in candidates::split(&source) {
+            let preserved = options.preserve_star == Some(true) && candidate == "*";
+            let business_path = options.always_escape != Some(true)
+                && !literal.class_context
+                && candidates::is_plain_slash_path(&candidate);
+            if preserved || business_path || options.always_escape == Some(true) {
+                continue;
+            }
+            if seen.insert(candidate.clone()) {
+                queries.push(candidate.clone());
+            }
+            let escaped = escape.escape(&candidate);
+            if escaped != candidate && seen.insert(escaped.clone()) {
+                queries.push(escaped);
+            }
+        }
+    }
+    Some(queries)
+}
+
+/// 使用一次批量成员查询完成转换，供生产 Node-API adapter 降低回调次数。
+pub(super) fn transform_with_batch<E>(
+    source: &str,
+    analysis: &JsSourceAnalysis,
+    escape: &EscapeTable,
+    options: &JsTransformOptions,
+    contains_many: impl FnOnce(Vec<String>) -> Result<Vec<bool>, E>,
+) -> Result<Option<String>, E> {
+    let queries = match collect_membership_candidates(analysis, escape, options) {
+        Some(queries) => queries,
+        None => return Ok(None),
+    };
+    let values = contains_many(queries.clone())?;
+    if values.len() != queries.len() {
+        return Ok(None);
+    }
+    let membership: HashMap<String, bool> = queries.into_iter().zip(values).collect();
+    transform(source, analysis, escape, options, |candidate| {
+        Ok::<_, E>(membership.get(candidate).copied().unwrap_or(false))
+    })
 }
 
 fn render(source: &str, units: &[u16], mut edits: Vec<Edit>) -> Option<String> {

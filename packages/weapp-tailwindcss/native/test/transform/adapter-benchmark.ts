@@ -24,6 +24,7 @@ const analyze = compiler.analyzeJs
 let nativeTransforms = 0
 let nativeStoredTransforms = 0
 let nativeCandidateTransforms = 0
+let nativeCandidateBatchTransforms = 0
 let nativeAnalyses = 0
 let nativeFallbacks = 0
 const restoreInstances: Array<() => void> = []
@@ -36,10 +37,13 @@ compiler.createJsTransformer = (...args) => {
   assert.ok(transformer)
   const originalTransform = transformer.transform
   const originalCandidates = transformer.transformWithCandidates
+  const originalCandidatesBatch = transformer.transformWithCandidatesBatch
   const transformDescriptor = Object.getOwnPropertyDescriptor(transformer, 'transform')
   const candidatesDescriptor = Object.getOwnPropertyDescriptor(transformer, 'transformWithCandidates')
+  const candidatesBatchDescriptor = Object.getOwnPropertyDescriptor(transformer, 'transformWithCandidatesBatch')
   const transform = originalTransform.bind(transformer)
   const transformWithCandidates = originalCandidates.bind(transformer)
+  const transformWithCandidatesBatch = originalCandidatesBatch?.bind(transformer)
   transformer.transform = (...input) => {
     nativeTransforms++
     nativeStoredTransforms++
@@ -58,6 +62,17 @@ compiler.createJsTransformer = (...args) => {
     }
     return output
   }
+  if (transformWithCandidatesBatch) {
+    transformer.transformWithCandidatesBatch = (...input) => {
+      nativeTransforms++
+      nativeCandidateBatchTransforms++
+      const output = transformWithCandidatesBatch(...input)
+      if (output === null) {
+        nativeFallbacks++
+      }
+      return output
+    }
+  }
   restoreInstances.push(() => {
     if (transformDescriptor) {
       Object.defineProperty(transformer, 'transform', transformDescriptor)
@@ -70,6 +85,12 @@ compiler.createJsTransformer = (...args) => {
     }
     else {
       Reflect.deleteProperty(transformer, 'transformWithCandidates')
+    }
+    if (candidatesBatchDescriptor) {
+      Object.defineProperty(transformer, 'transformWithCandidatesBatch', candidatesBatchDescriptor)
+    }
+    else {
+      Reflect.deleteProperty(transformer, 'transformWithCandidatesBatch')
     }
   })
   return transformer
@@ -84,7 +105,7 @@ interface Sample {
   nativeMs: number
   inputSha256: string
   outputSha256: string
-  nativeCalls: { transform: number, transformWithCandidates: number }
+  nativeCalls: { transform: number, transformWithCandidates: number, transformWithCandidatesBatch: number }
 }
 const samples: Sample[] = []
 const input = createInput()
@@ -135,16 +156,17 @@ try {
       const before = nativeTransforms
       const storedBefore = nativeStoredTransforms
       const candidatesBefore = nativeCandidateTransforms
+      const candidatesBatchBefore = nativeCandidateBatchTransforms
       const fallbacksBefore = nativeFallbacks
       const start = selfCheck ? 0 : performance.now()
       const result = handler(source, classes)
       const ms = selfCheck ? 0 : performance.now() - start
       assert.equal(result.error, undefined)
       assert.equal(nativeTransforms - before, mode === 'required' ? 1 : 0)
-      assert.equal(nativeCandidateTransforms - candidatesBefore, mode === 'required' ? 1 : 0, '公开 adapter 必须实际调用候选查询 ABI')
+      assert.equal(nativeCandidateTransforms - candidatesBefore + nativeCandidateBatchTransforms - candidatesBatchBefore, mode === 'required' ? 1 : 0, '公开 adapter 必须实际调用候选查询 ABI')
       assert.equal(nativeStoredTransforms, storedBefore, '公开 adapter 不应重新复制完整类集合到旧接口')
       assert.equal(nativeFallbacks, fallbacksBefore, '固定基准输入必须由 Rust 返回最终代码，不能回退后计入原生收益')
-      return { ms, code: result.code, nativeCalls: { transform: nativeStoredTransforms - storedBefore, transformWithCandidates: nativeCandidateTransforms - candidatesBefore } }
+      return { ms, code: result.code, nativeCalls: { transform: nativeStoredTransforms - storedBefore, transformWithCandidates: nativeCandidateTransforms - candidatesBefore, transformWithCandidatesBatch: nativeCandidateBatchTransforms - candidatesBatchBefore } }
     }
     for (let warmup = 0; warmup < 5; warmup++) {
       const source = input.sourceFor(size * 100 + 90 + warmup)
@@ -192,6 +214,7 @@ try {
     nativeTransforms,
     nativeStoredTransforms,
     nativeCandidateTransforms,
+    nativeCandidateBatchTransforms,
     nativeAnalyses,
     nativeFallbacks,
     summary: selfCheck ? [] : summary,

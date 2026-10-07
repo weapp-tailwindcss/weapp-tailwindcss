@@ -85,19 +85,33 @@ export function nativeJsHandler(source: string, options: IJsHandlerOptions): JsH
     return null
   }
   // null 是唯一的语义回退信号；执行异常不能进入兼容路径或结果缓存。
-  const code = transformer.transformWithCandidates(
-    source,
-    getParserLang(options),
-    getParserSourceType(options),
-    options.babelParserOptions?.createParenthesizedExpressions === true,
-    {
-      alwaysEscape: options.alwaysEscape === true,
-      preserveStar: options.jsPreserveClass === defaultJsPreserveClass,
-      unescapeUnicode: options.unescapeUnicode === true,
-      moduleGraph: Boolean(options.moduleGraph),
-      ignoreTaggedTemplates: Boolean(options.ignoreTaggedTemplateExpressionIdentifiers?.length),
-    },
-    candidate => (options.classNameSet ?? emptyClasses).has(candidate),
-  )
+  const parserLang = getParserLang(options)
+  const sourceType = getParserSourceType(options)
+  const preserveParens = options.babelParserOptions?.createParenthesizedExpressions === true
+  const transformOptions = {
+    alwaysEscape: options.alwaysEscape === true,
+    preserveStar: options.jsPreserveClass === defaultJsPreserveClass,
+    unescapeUnicode: options.unescapeUnicode === true,
+    moduleGraph: Boolean(options.moduleGraph),
+    ignoreTaggedTemplates: Boolean(options.ignoreTaggedTemplateExpressionIdentifiers?.length),
+  }
+  const classNameSet = options.classNameSet ?? emptyClasses
+  const code = transformer.transformWithCandidatesBatch
+    ? transformer.transformWithCandidatesBatch(
+        source,
+        parserLang,
+        sourceType,
+        preserveParens,
+        transformOptions,
+        candidates => candidates.map(candidate => classNameSet.has(candidate)),
+      )
+    : transformer.transformWithCandidates(
+        source,
+        parserLang,
+        sourceType,
+        preserveParens,
+        transformOptions,
+        candidate => classNameSet.has(candidate),
+      )
   return code === null ? null : { code }
 }

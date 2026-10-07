@@ -14,9 +14,16 @@ export function verifyJsLifecycle() {
     const instance = create(...args)
     if (instance) {
       const transform = instance.transformWithCandidates.bind(instance)
+      const transformBatch = instance.transformWithCandidatesBatch?.bind(instance)
       instance.transformWithCandidates = (...input) => {
         transforms++
         return transform(...input)
+      }
+      if (transformBatch) {
+        instance.transformWithCandidatesBatch = (...input) => {
+          transforms++
+          return transformBatch(...input)
+        }
       }
     }
     return instance

@@ -15,6 +15,7 @@ const native = vi.hoisted(() => ({
   transformer: {
     transform: vi.fn<NativeJsTransformer['transform']>(),
     transformWithCandidates: vi.fn<NativeJsTransformer['transformWithCandidates']>(),
+    transformWithCandidatesBatch: undefined as NativeJsTransformer['transformWithCandidatesBatch'],
     replaceClassNames: vi.fn<NativeJsTransformer['replaceClassNames']>(),
   },
 }))
@@ -31,11 +32,25 @@ beforeEach(() => {
   native.compiler.createJsTransformer.mockReturnValue(native.transformer)
   native.compiler.analyzeJs.mockReturnValue(null)
   native.transformer.transformWithCandidates.mockReturnValue(output)
+  native.transformer.transformWithCandidatesBatch = undefined
   native.transformer.replaceClassNames.mockReturnValue(true)
 })
 afterEach(() => vi.restoreAllMocks())
 
 describe('Rust 完整 JS 转换适配器', () => {
+  it('新版批量候选 ABI 只回调一次并保留旧 ABI 回退', async () => {
+    const { nativeJsHandler } = await import('@/js/fast-path/native')
+    const batch = vi.fn<NonNullable<NativeJsTransformer['transformWithCandidatesBatch']>>()
+    batch.mockImplementation((_source, _lang, _type, _parens, _options, containsMany) => containsMany(['w-[100px]']).some(Boolean) ? output : source)
+    native.transformer.transformWithCandidatesBatch = batch
+    const classes = new Set(['w-[100px]'])
+    expect(nativeJsHandler(source, { ...options, alwaysEscape: false, classNameSet: classes })?.code).toBe(output)
+    expect(batch).toHaveBeenCalledExactlyOnceWith(source, 'js', 'script', false, expect.objectContaining({ alwaysEscape: false }), expect.any(Function))
+    expect(native.transformer.transformWithCandidates).not.toHaveBeenCalled()
+    const containsMany = batch.mock.calls[0]?.[5]
+    expect(containsMany?.(['w-[100px]', 'h-[100px]'])).toEqual([true, false])
+  })
+
   it('完整转换只传回代码，不把 AST 或字面量传到 JS', async () => {
     const { createJsHandler } = await import('@/js')
     expect(createJsHandler(options)(source).code).toBe(output)

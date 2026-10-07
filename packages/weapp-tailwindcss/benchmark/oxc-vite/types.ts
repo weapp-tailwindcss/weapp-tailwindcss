@@ -22,7 +22,7 @@ export interface ParseCount {
   filenames: string[]
 }
 
-export type NativeMethod = 'tokenizeWxml' | 'createWxmlTransformer' | 'transformStatic' | 'analyzeJs' | 'jsRuntimeSignature' | 'createJsTransformer' | 'replaceClassNames' | 'transform' | 'transformWithCandidates' | 'escapeClasses' | 'transformSelector' | 'transformSelectors' | 'transformSelectorRule' | 'normalizeV4Declaration' | 'normalizeV4GradientPosition' | 'normalizeV4InfinityCalc' | 'normalizeV4VariableFallbacks' | 'normalizeUvueTransformValue' | 'normalizeUvueTransformValues'
+export type NativeMethod = 'tokenizeWxml' | 'createWxmlTransformer' | 'transformStatic' | 'analyzeJs' | 'jsRuntimeSignature' | 'createJsTransformer' | 'replaceClassNames' | 'transform' | 'transformWithCandidates' | 'transformWithCandidatesBatch' | 'escapeClasses' | 'transformSelector' | 'transformSelectors' | 'transformSelectorRule' | 'normalizeV4Declaration' | 'normalizeV4GradientPosition' | 'normalizeV4InfinityCalc' | 'normalizeV4VariableFallbacks' | 'normalizeUvueTransformValue' | 'normalizeUvueTransformValues'
 
 export interface NativeCount {
   calls: number

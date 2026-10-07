@@ -115,6 +115,28 @@ impl JsTransformer {
             contains,
         )
     }
+
+    fn transform_with_batch<E>(
+        &self,
+        input: Utf16String,
+        lang: String,
+        source_type: String,
+        preserve_parens: bool,
+        options: &JsTransformOptions,
+        contains_many: impl FnOnce(Vec<String>) -> Result<Vec<bool>, E>,
+    ) -> Result<Option<String>, E> {
+        let Some(entry) = self.source_analysis(input, lang, source_type, preserve_parens, options)
+        else {
+            return Ok(None);
+        };
+        apply::transform_with_batch(
+            &entry.source,
+            &entry.analysis,
+            &self.escape,
+            options,
+            contains_many,
+        )
+    }
 }
 
 #[napi]
@@ -172,6 +194,33 @@ impl JsTransformer {
             preserve_parens,
             &options,
             |candidate| contains.call(candidate.encode_utf16().collect::<Vec<_>>().into()),
+        )
+    }
+
+    /// 一次查询当前源码中的全部候选，减少生产 adapter 的 Node-API 回调次数。
+    #[napi]
+    pub fn transform_with_candidates_batch(
+        &self,
+        input: Utf16String,
+        lang: String,
+        source_type: String,
+        preserve_parens: bool,
+        options: JsTransformOptions,
+        contains_many: Function<'_, Vec<Utf16String>, Vec<bool>>,
+    ) -> napi::Result<Option<String>> {
+        self.transform_with_batch(
+            input,
+            lang,
+            source_type,
+            preserve_parens,
+            &options,
+            |candidates| {
+                let values = candidates
+                    .into_iter()
+                    .map(|candidate| candidate.encode_utf16().collect::<Vec<_>>().into())
+                    .collect::<Vec<Utf16String>>();
+                contains_many.call(values)
+            },
         )
     }
 }

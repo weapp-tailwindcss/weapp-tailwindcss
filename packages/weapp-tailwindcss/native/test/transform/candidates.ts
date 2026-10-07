@@ -9,8 +9,12 @@ assert.equal(process.env.WEAPP_TW_NATIVE, 'required', '公开 adapter 验收必�
 
 const transformer = native.createJsTransformer(['h-[2px]'], Object.entries(MappingChars2String).map(([character, replacement]) => ({ character, replacement })))!
 assert.equal(typeof transformer.transformWithCandidates, 'function')
+assert.equal(typeof transformer.transformWithCandidatesBatch, 'function')
 function transform(source: string, contains: (candidate: string) => boolean, options: Parameters<NativeTransformer['transform']>[4] = {}) {
   return transformer.transformWithCandidates(source, 'js', 'module', false, options, contains)
+}
+function transformBatch(source: string, containsMany: (candidates: string[]) => boolean[], options: Parameters<NativeTransformer['transform']>[4] = {}) {
+  return transformer.transformWithCandidatesBatch(source, 'js', 'module', false, options, containsMany)
 }
 
 const source = 'const x = "w-[1px] h-[2px] w-[1px]"; const y = {className: "w-[1px]"}'
@@ -87,5 +91,7 @@ assert.equal(transform(source, (candidate) => {
   return candidate === 'w-[1px]'
 }), matched)
 assert.equal(transform(source, () => false), unmatched)
+assert.equal(transformBatch(source, candidates => candidates.map(candidate => candidate === 'w-[1px]')), matched)
+assert.equal(transformBatch(source, candidates => candidates.map(candidate => candidate === 'h-[2px]')), source.replaceAll('h-[2px]', 'h-_b2px_B'))
 
 process.stdout.write(`${JSON.stringify({ classSetSizes: [0, 6, 1_000, 10_000, 100_000], sameQueriesAtEverySize: 3, recordedQueries: calls, mutableSetLifecycle: true, exceptionIdentity: true, reentrantTransformer: true, storedClassesIgnored: true, performanceMeasured: false }, null, 2)}\n`)

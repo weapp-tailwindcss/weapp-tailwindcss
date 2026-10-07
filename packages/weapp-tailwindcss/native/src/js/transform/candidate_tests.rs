@@ -43,6 +43,53 @@ fn queries_unique_candidates_per_call_and_does_not_use_stored_classes() {
 }
 
 #[test]
+fn batch_queries_candidates_once_and_matches_membership_results() {
+    let instance = transformer(&[]);
+    let source = "const x = 'w-[1px] h-[2px] w-[1px]'";
+    let mut batches = 0;
+    let result = instance
+        .transform_with_batch(
+            utf16(source),
+            "js".into(),
+            "module".into(),
+            false,
+            &JsTransformOptions::default(),
+            |candidates| {
+                batches += 1;
+                assert_eq!(
+                    candidates,
+                    vec!["w-[1px]", "w-_b1px_B", "h-[2px]", "h-_b2px_B",]
+                );
+                Ok::<_, ()>(
+                    candidates
+                        .into_iter()
+                        .map(|candidate| candidate == "w-[1px]")
+                        .collect(),
+                )
+            },
+        )
+        .unwrap();
+    assert_eq!(batches, 1);
+    assert_eq!(result, Some(source.replace("w-[1px]", "w-_b1px_B")));
+}
+
+#[test]
+fn batch_rejects_a_mismatched_membership_response() {
+    let instance = transformer(&[]);
+    let result = instance
+        .transform_with_batch(
+            utf16("const x = 'w-[1px]'"),
+            "js".into(),
+            "module".into(),
+            false,
+            &JsTransformOptions::default(),
+            |_| Ok::<_, ()>(Vec::new()),
+        )
+        .unwrap();
+    assert_eq!(result, None);
+}
+
+#[test]
 fn rejects_unsupported_semantics_before_querying() {
     let instance = transformer(&[]);
     for source in [

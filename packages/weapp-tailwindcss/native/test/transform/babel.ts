@@ -62,6 +62,7 @@ for (const lang of ['js', 'jsx', 'ts', 'tsx'] as const) {
           const babel = jsHandler(source, { classNameSet: new Set(names), unescapeUnicode, babelParserOptions: { plugins, sourceType, createParenthesizedExpressions: preserveParens } })
           const actual = transformer.transform(source, lang, sourceType, preserveParens, { unescapeUnicode })
           assert.equal(transformer.transformWithCandidates(source, lang, sourceType, preserveParens, { unescapeUnicode }, candidate => classesForCallback.has(candidate)), actual)
+          assert.equal(transformer.transformWithCandidatesBatch(source, lang, sourceType, preserveParens, { unescapeUnicode }, candidates => candidates.map(candidate => classesForCallback.has(candidate))), actual)
           if (evalSources.includes(source)) {
             assert.equal(actual, null, 'eval 参数必须交还 Babel 递归转译')
           }
@@ -92,6 +93,7 @@ for (const alwaysEscape of [false, true]) {
       assert.equal(expected.error, undefined)
       const actual = preserveTransformer.transform(source, 'js', 'module', false, { alwaysEscape, preserveStar })
       assert.equal(actual, expected.code, JSON.stringify({ source, alwaysEscape, preserveStar }))
+      assert.equal(preserveTransformer.transformWithCandidatesBatch(source, 'js', 'module', false, { alwaysEscape, preserveStar }, candidates => candidates.map(candidate => preservedNames.includes(candidate))), actual)
       preserveComparisons++
     }
   }

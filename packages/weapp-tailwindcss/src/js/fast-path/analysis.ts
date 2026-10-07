@@ -99,7 +99,7 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
         const value = node.type === 'Literal' && typeof node.value === 'string' && typeof node.raw === 'string'
           ? node.value
           : node.type === 'TemplateElement' ? node.value.raw : undefined
-        const parentNode = parent as { type?: string, directive?: unknown, expression?: unknown } | null
+        const parentNode = parent as { type?: string, directive?: unknown, expression?: unknown, test?: unknown } | null
         if (conditionContextStack) {
           const nextConditionTestContext = parentNode?.type === 'ConditionalExpression'
             ? parentNode.test === node

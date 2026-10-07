@@ -27,7 +27,7 @@ TypeScript 从原输入切片恢复 token 与表达式的 value，因此不经�
 
 `analyzeJs` 返回带 UTF-16 位置、条件测试与 class 上下文的字面量事实。模板元素区间只包含正文，不包含反引号或插值边界。`jsRuntimeSignature` 返回紧凑的运行时依赖签名，空签名有效；它保留供 ABI 对照，生产 runtime snapshot 继续使用 Oxc。
 
-`createJsTransformer` 返回由 JS GC 拥有的原生实例。生产适配器传入空集合与最终有效转义映射，再通过 `transformWithCandidates` 在 Rust 中完成解析和替换；成员回调只查询当前源码实际候选，同一次调用去重，不遍历或复制整个 classSet。集合原地修改在下一次调用立即生效，映射内容变化重建实例。旧 `transform/replaceClassNames` 快照接口保留供 ABI 对照，生产路径不再使用。加载器拒绝缺少候选查询方法的旧二进制。
+`createJsTransformer` 返回由 JS GC 拥有的原生实例。生产适配器传入空集合与最终有效转义映射，再通过 `transformWithCandidatesBatch` 在 Rust 中完成解析和替换；批量成员回调只查询当前源码实际候选，一次回调返回并行布尔结果，不遍历或复制整个 classSet。缺少批量方法的旧 binary 自动回退到 `transformWithCandidates` 逐候选 ABI；两条路径共享同一 Rust 替换逻辑。集合原地修改在下一次调用立即生效，映射内容变化重建实例。旧 `transform/replaceClassNames` 快照接口保留供 ABI 对照，生产路径不再使用。加载器仍要求逐候选方法，以兼容已有 binding。
 
 `null` 表示该输入应走 Babel，异常直接上抛，不按兼容失败处理。缓存只持有解析事实，进入同步成员回调前释放内部可变借用，支持回调异常与同实例重入。
 

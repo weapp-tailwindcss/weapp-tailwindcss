@@ -48,7 +48,7 @@ async function main() {
     assert.ok(binding.jsRuntimeSignature('const cls = "p-4"'))
     const transformer = binding.createJsTransformer(['w-[1px]'], [{ character: '[', replacement: '_b' }, { character: ']', replacement: '_B' }])
     assert.ok(transformer)
-    for (const method of ['transform', 'replaceClassNames', 'transformWithCandidates']) {
+    for (const method of ['transform', 'replaceClassNames', 'transformWithCandidates', 'transformWithCandidatesBatch']) {
       assert.equal(typeof transformer[method], 'function', `Missing JS transformer ABI: ${method}`)
     }
     assert.equal(transformer.transform('const x="w-[1px]"', 'js', 'module', false, {}), 'const x="w-_b1px_B"')
@@ -61,6 +61,7 @@ async function main() {
     }), 'const x="w-_b1px_B w-[2px]"')
     assert.ok(candidates.includes('w-[1px]'))
     assert.ok(candidates.includes('w-[2px]'))
+    assert.equal(transformer.transformWithCandidatesBatch('const x="w-[1px] w-[2px]"', 'js', 'module', false, {}, (values) => values.map(value => value === 'w-[1px]')), 'const x="w-_b1px_B w-[2px]"')
   }
 
   function verifyCss(css) {

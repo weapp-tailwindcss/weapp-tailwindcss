@@ -181,10 +181,7 @@ export function processJsBundleEntry(options: ProcessJsBundleEntryOptions) {
               }
             }
             const handlerOptions = createHandlerOptions(absoluteFile)
-            if (!disableJsPrecheck && shouldSkipViteJsTransform(rawSource, {
-              ...handlerOptions,
-              classNameSet: transformRuntime,
-            })) {
+            if (!disableJsPrecheck && shouldSkipViteJsTransform(rawSource, handlerOptions)) {
               metrics.js.elapsed += measureElapsed(start)
               metrics.js.transformed++
               return {
