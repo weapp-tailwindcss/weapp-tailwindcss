@@ -1,3 +1,5 @@
+import { postcss } from '@weapp-tailwindcss/postcss'
+
 const UNI_APP_X_WEB_COMPONENT_TAGS = [
   'uni-ad-draw',
   'uni-ad-fullscreen-video',
@@ -82,23 +84,57 @@ function findUniAppXWebFrameworkBorderEnd(css: string) {
   return lastEnd
 }
 
-function removeInjectedUniAppXWebPreflightReset(css: string) {
-  const injectedReset = css.includes(UNI_APP_X_WEB_PREFLIGHT_RESET_CSS)
-    ? UNI_APP_X_WEB_PREFLIGHT_RESET_CSS
-    : `/* ${UNI_APP_X_WEB_PREFLIGHT_RESET_MARKER} */`
-  const resetIndex = css.indexOf(injectedReset)
-  if (resetIndex < 0) {
-    return css
+const RESET_SELECTORS = new Set(UNI_APP_X_WEB_COMPONENT_TAGS.map(tag => `uni-app ${tag}`))
+
+interface InjectedResetRange {
+  start: number
+  end: number
+  complete: boolean
+}
+
+function findInjectedResetRanges(css: string): InjectedResetRange[] {
+  if (!css.includes(UNI_APP_X_WEB_PREFLIGHT_RESET_MARKER) && !css.includes('uni-app uni-ad-draw')) {
+    return []
   }
-  const before = css.slice(0, resetIndex).trimEnd()
-  const after = css.slice(resetIndex + injectedReset.length).trimStart()
-  if (!before) {
-    return after
+  // 只读取已注入规则的身份与位置，CSS 解析交给共享 PostCSS 包。
+  const root = postcss.parse(css)
+  const ranges: InjectedResetRange[] = []
+  root.each((node) => {
+    if (node.type === 'comment' && node.text.trim() === UNI_APP_X_WEB_PREFLIGHT_RESET_MARKER) {
+      ranges.push({ start: node.source!.start!.offset, end: node.source!.end!.offset, complete: false })
+      return
+    }
+    if (node.type !== 'rule' || node.nodes.length !== 1) {
+      return
+    }
+    const declaration = node.nodes[0]!
+    if (declaration.type !== 'decl' || declaration.prop !== 'border-width'
+      || !/^0(?:px)?$/.test(declaration.value) || declaration.important) {
+      return
+    }
+    const selectors = new Set(node.selectors.map(selector => selector.trim().replace(/\s+/g, ' ')))
+    if (selectors.size !== RESET_SELECTORS.size || [...selectors].some(selector => !RESET_SELECTORS.has(selector))) {
+      return
+    }
+    const previous = node.prev()
+    const marker = previous?.type === 'comment' && previous.text.trim() === UNI_APP_X_WEB_PREFLIGHT_RESET_MARKER
+      ? ranges.pop()
+      : undefined
+    ranges.push({
+      start: marker?.start ?? node.source!.start!.offset,
+      end: node.source!.end!.offset,
+      complete: true,
+    })
+  })
+  return ranges
+}
+
+function removeInjectedResets(css: string, ranges: InjectedResetRange[]) {
+  let source = css
+  for (const range of [...ranges].reverse()) {
+    source = source.slice(0, range.start) + source.slice(range.end)
   }
-  if (!after) {
-    return before
-  }
-  return `${before}\n${after}`
+  return source
 }
 
 export function withUniAppXWebPreflightReset(css: string, enabled: boolean) {
@@ -108,16 +144,22 @@ export function withUniAppXWebPreflightReset(css: string, enabled: boolean) {
 
   const frameworkBorderEnd = findUniAppXWebFrameworkBorderEnd(css)
   const hasTailwindPreflightBorder = TAILWIND_PREFLIGHT_BORDER_RE.test(css)
-  const hasInjectedReset = css.includes(UNI_APP_X_WEB_PREFLIGHT_RESET_MARKER)
+  const injectedResets = findInjectedResetRanges(css)
   if (frameworkBorderEnd >= 0) {
-    const source = hasInjectedReset ? removeInjectedUniAppXWebPreflightReset(css) : css
+    if (injectedResets.length === 1 && injectedResets[0]!.complete && injectedResets[0]!.start >= frameworkBorderEnd) {
+      return css
+    }
+    const source = removeInjectedResets(css, injectedResets)
     const resetAfterFrameworkBorder = findUniAppXWebFrameworkBorderEnd(source)
     if (resetAfterFrameworkBorder < 0) {
       return source
     }
     return `${source.slice(0, resetAfterFrameworkBorder)}\n${UNI_APP_X_WEB_PREFLIGHT_RESET_CSS}${source.slice(resetAfterFrameworkBorder)}`
   }
-  if (hasInjectedReset || !hasTailwindPreflightBorder) {
+  if (injectedResets.length > 1) {
+    return `${UNI_APP_X_WEB_PREFLIGHT_RESET_CSS}\n${removeInjectedResets(css, injectedResets)}`
+  }
+  if (injectedResets.length > 0 || !hasTailwindPreflightBorder) {
     return css
   }
   return css.length > 0

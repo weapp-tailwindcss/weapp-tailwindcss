@@ -8,6 +8,7 @@ import { captureFrameworkPostcssOptions } from '../../../generation/framework-po
 import { disableAndRemoveTailwindVitePlugins, removeTailwindVitePlugins } from '../official-tailwind-plugins'
 import { resolveImplicitAppTypeFromViteRoot } from '../resolve-app-type'
 import { resolveImplicitTailwindcssBasedirFromViteRoot } from '../tailwind-basedir'
+import { installFrameworkCssEmission } from './framework-css-emission'
 
 export function createFrameworkPostPlugin(options: any): Plugin {
   const plugin: Plugin & { api?: unknown } = {
@@ -120,7 +121,16 @@ export function createFrameworkPostPlugin(options: any): Plugin {
             ? config.css.postcss
             : undefined,
         )
+        if (options.transformEmittedWebCss) {
+          installFrameworkCssEmission(config, options.transformEmittedWebCss, options.shouldRehashEmittedWebCssAsset)
+        }
       }, { emit: false })
+    },
+    buildStart() {
+      const config = options.getResolvedConfig?.()
+      if (config && options.transformEmittedWebCss) {
+        installFrameworkCssEmission(config, options.transformEmittedWebCss, options.shouldRehashEmittedWebCssAsset)
+      }
     },
   }
   if (typeof options.generateBundleHook === 'function') {

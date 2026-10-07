@@ -82,6 +82,8 @@ export interface ViteFrameworkCssPipelineStrategy {
     outDir: string
   }) => boolean
   shouldTransformServeJs?: (context: ViteFrameworkCssPipelineContext) => boolean
+  transformEmittedWebCss?: (css: string, context: ViteFrameworkCssPipelineContext) => string
+  shouldRehashEmittedWebCssAsset?: (file: { fileName?: string, name?: string }) => boolean
   transformGeneratedCss?: (css: string, context: ViteFrameworkCssPipelineContext & {
     defaultWebCssCompat: (css: string) => string
     removeScopedPreflight: (css: string, options?: { preserveRuntimeProperties?: boolean }) => string
