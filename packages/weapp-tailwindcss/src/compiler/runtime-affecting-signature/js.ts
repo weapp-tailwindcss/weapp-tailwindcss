@@ -1,18 +1,14 @@
 import { walk } from 'oxc-walker'
-import { loadOxcParser } from '@/js/oxc-parser'
+import { parseOxcSync } from '@/js/oxc-parser'
 
 /** 签名只保留候选文本，不把完整 Babel AST 常驻到转译缓存。 */
 export function tryCreateJsRuntimeAffectingSignature(source: string): string | undefined {
-  const parser = loadOxcParser()
-  if (!parser) {
-    return undefined
-  }
   try {
-    const result = parser.parseSync('runtime.tsx', source, {
+    const result = parseOxcSync('runtime.tsx', source, {
       lang: 'tsx',
       sourceType: 'unambiguous',
-    })
-    if (result.errors.length > 0) {
+    }, 'ast')
+    if (!result || result.errors.length > 0) {
       return undefined
     }
     const parts: string[] = []

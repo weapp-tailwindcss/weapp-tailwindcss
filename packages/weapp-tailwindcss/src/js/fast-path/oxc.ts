@@ -4,6 +4,7 @@ import MagicString from 'magic-string'
 import { jsStringEscape } from '../js-string-escape'
 import { transformLiteralText } from '../literal-transform'
 import { getOxcSourceAnalysis } from './analysis'
+import { supportsOxcParserOptions } from './parser-options'
 
 export { isOxcParserRuntimeSupported } from '../oxc-parser'
 
@@ -25,7 +26,7 @@ function hasSupportedClassMatchSource(options: IJsHandlerOptions) {
     || Boolean(options.classNameSet && options.classNameSet.size > 0)
 }
 
-function canAttemptOxcJsFastPath(options: IJsHandlerOptions) {
+export function canAttemptOxcJsFastPath(options: IJsHandlerOptions) {
   if (options.experimentalJsFastPath !== true && options.experimentalJsFastPath !== 'oxc') {
     return false
   }
@@ -34,6 +35,7 @@ function canAttemptOxcJsFastPath(options: IJsHandlerOptions) {
     && !options.wrapExpression
     && !options.moduleSpecifierReplacements
     && hasSupportedClassMatchSource(options)
+    && supportsOxcParserOptions(options)
     && !hasValues(options.ignoreCallExpressionIdentifiers)
 }
 
@@ -56,7 +58,7 @@ function addStringLiteralReplacement(
   transformOptions: IJsHandlerOptions,
   context: ReplacementContext,
 ) {
-  const transformed = transformLiteralText(node.value, transformOptions, false)
+  const transformed = transformLiteralText(node.value, transformOptions, node.classContext)
   if (!transformed) {
     return false
   }
@@ -79,15 +81,12 @@ function addTemplateElementReplacement(
 ) {
   const raw = node.value
 
-  const transformed = transformLiteralText(raw, transformOptions, false)
+  const transformed = transformLiteralText(raw, transformOptions, node.classContext)
   if (!transformed || transformed === raw) {
     return false
   }
 
-  const first = rawSource[node.start!]
-  const last = rawSource[node.end! - 1]
-  const start = node.start! + (first === '`' || first === '}' ? 1 : 0)
-  const end = node.end! - (last === '`' ? 1 : last === '{' ? 2 : 0)
+  const { start, end } = node
   if (start >= end) {
     return false
   }
@@ -105,6 +104,9 @@ function applyReplacements(
 ) {
   let changed = false
   for (const node of literals) {
+    if (node.isConditionTest) {
+      continue
+    }
     changed = (node.kind === 'string'
       ? addStringLiteralReplacement(rawSource, node, stringLiteralOptions, context)
       : addTemplateElementReplacement(rawSource, node, templateLiteralOptions, context)) || changed

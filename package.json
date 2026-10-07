@@ -271,7 +271,7 @@
     "-------": "-----------",
     "release": "pnpm change",
     "release:pre": "repo release pre publish",
-    "release:verify": "node scripts/verify-packed-packages.mjs && pnpm test:release",
+    "release:verify": "pnpm native:artifacts:verify && node scripts/verify-packed-packages.mjs && pnpm test:release",
     "release:sync-npmmirror": "node scripts/sync-npmmirror.mjs",
     "pr": "pnpm pr:alpha",
     "pr:alpha": "repo release pre enter alpha",
@@ -303,7 +303,11 @@
     "up:pkg:latest": "tsx scripts/update-packages.ts up -rLi --filter \"./packages/*\" --filter \"./packages-runtime/*\" --filter \"./demo/*\" --filter \"./demo/web/*\" --filter \"!./demo/*uni-app*\" --filter \"!./demo/issue-uview-plus-cssentries\"",
     "up:pkg": "tsx scripts/update-packages.ts up -ri --filter \"./packages/*\" --filter \"./packages-runtime/*\" --filter \"./demo/*\" --filter \"./demo/web/*\" --filter \"!./demo/*uni-app*\" --filter \"!./demo/issue-uview-plus-cssentries\"",
     "up:uniapp": "pnpx @dcloudio/uvm@latest",
-    "architecture:check": "tsx scripts/architecture/check.ts"
+    "architecture:check": "tsx scripts/architecture/check.ts",
+    "native:artifacts:stage": "node packages/weapp-tailwindcss/native/distribution.mjs stage",
+    "native:artifacts:verify": "node packages/weapp-tailwindcss/native/distribution.mjs verify",
+    "native:artifacts:before-version": "node packages/weapp-tailwindcss/native/release.mjs before-version",
+    "native:artifacts:after-version": "node packages/weapp-tailwindcss/native/release.mjs after-version"
   },
   "publishConfig": {
     "access": "public",

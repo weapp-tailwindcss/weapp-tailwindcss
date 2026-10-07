@@ -1,0 +1,40 @@
+{
+  "name": "@weapp-tailwindcss/native-linux-x64-gnu",
+  "version": "5.5.12",
+  "description": "Prebuilt Rust compiler binding for weapp-tailwindcss (linux-x64-gnu)",
+  "license": "MIT",
+  "homepage": "https://tw.weapp.dev/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
+    "directory": "packages-native/linux-x64-gnu"
+  },
+  "exports": {
+    ".": "./weapp-tailwindcss-native.linux-x64-gnu.node",
+    "./package.json": "./package.json",
+    "./postcss": "./weapp-tailwindcss-postcss.linux-x64-gnu.node"
+  },
+  "main": "weapp-tailwindcss-native.linux-x64-gnu.node",
+  "files": [
+    "*.node",
+    "THIRD_PARTY_LICENSES.txt",
+    "native-metadata.json",
+    "postcss-native-metadata.json"
+  ],
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "libc": [
+    "glibc"
+  ]
+}

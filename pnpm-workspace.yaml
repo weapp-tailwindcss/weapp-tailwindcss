@@ -1,6 +1,7 @@
 packages:
   - packages/*
   - packages-runtime/*
+  - packages-native/*
   - apps/*
   - website
   - benchmark/*
@@ -99,7 +100,7 @@ update:
 
 versioning:
   fixed:
-    - [weapp-tailwindcss, '@weapp-tailwindcss/cli']
+    - [weapp-tailwindcss, '@weapp-tailwindcss/cli', '@weapp-tailwindcss/native-darwin-arm64', '@weapp-tailwindcss/native-darwin-x64', '@weapp-tailwindcss/native-linux-arm64-gnu', '@weapp-tailwindcss/native-linux-x64-gnu', '@weapp-tailwindcss/native-linux-arm64-musl', '@weapp-tailwindcss/native-linux-x64-musl', '@weapp-tailwindcss/native-win32-arm64-msvc', '@weapp-tailwindcss/native-win32-x64-msvc']
   changelog:
     storage: repository
 

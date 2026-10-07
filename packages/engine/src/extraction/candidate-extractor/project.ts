@@ -1,10 +1,10 @@
 import type { SourceEntry } from '@tailwindcss/oxide'
 import type { TailwindTokenByFileMap, TailwindTokenFileKey, TailwindTokenLocation, TailwindTokenReport } from '../../types.ts'
-import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { compileTailwindV4Source } from '../../v4/node-adapter.ts'
 import { createTailwindV4CompiledSourceEntries, normalizeTailwindV4ScannerSources } from '../../v4/source-scan.ts'
+import { readCandidateFile } from '../file-io.ts'
 import { getOxideModule } from '../oxide.ts'
 import { buildLineOffsets, createTokenLocation, toExtension } from '../project-report.ts'
 
@@ -82,7 +82,7 @@ export async function extractProjectCandidatesWithPositions(
   const batchSize = 32
   for (let start = 0; start < files.length; start += batchSize) {
     const batch = files.slice(start, start + batchSize)
-    const contents = await Promise.allSettled(batch.map(file => fs.readFile(file, 'utf8')))
+    const contents = await Promise.allSettled(batch.map(readCandidateFile))
     for (const [index, file] of batch.entries()) {
       const result = contents[index]!
       if (result.status === 'rejected') {

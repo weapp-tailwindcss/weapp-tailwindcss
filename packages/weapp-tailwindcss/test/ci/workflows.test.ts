@@ -683,7 +683,9 @@ describe('ci workflows', () => {
       group: '${{ github.workflow }}-${{ github.ref }}',
       'cancel-in-progress': false,
     })
-    expect(workflow.jobs.release.if).toBeUndefined()
+    expect(workflow.jobs.release.needs).toBe('native-artifacts')
+    // eslint-disable-next-line no-template-curly-in-string -- 按字面量核验 GitHub Actions 表达式。
+    expect(workflow.jobs.release.if).toBe('${{ !cancelled() && (inputs.oidc_audit || needs.native-artifacts.result == \'success\') }}')
     expect(workflow.permissions['id-token']).toBe('write')
     expect(workflow.env.NPM_CONFIG_PROVENANCE).toBe(true)
     expect(workflow.env.npm_config_registry).toBe('https://registry.npmjs.org')
@@ -721,9 +723,11 @@ describe('ci workflows', () => {
     const steps: Array<Record<string, any>> = workflow.jobs.release.steps
     expect(workflow.on.workflow_dispatch.inputs.oidc_audit).toMatchObject({ type: 'boolean', default: false })
     const audit = steps.find(step => step.name === 'Audit npm OIDC')
+    // eslint-disable-next-line no-template-curly-in-string -- 按字面量核验 GitHub Actions 表达式。
+    expect(workflow.jobs['native-artifacts'].if).toBe('${{ !inputs.oidc_audit }}')
     expect(audit.if).toBe('inputs.oidc_audit')
     expect(audit.run).toBe('pnpm exec tsx scripts/release-oidc-preflight.ts')
-    for (const name of ['Install Playwright Chromium', 'Run repo release CI', 'Upload coverage reports to Codecov']) {
+    for (const name of ['Download native artifacts from this run', 'Stage and verify all native platform packages', 'Install Playwright Chromium', 'Run repo release CI', 'Upload coverage reports to Codecov']) {
       expect(steps.find(step => step.name === name).if).toBe('${{ !inputs.oidc_audit }}')
     }
     expect(steps.indexOf(audit)).toBeLessThan(steps.findIndex(step => step.name === 'Run repo release CI'))
@@ -734,9 +738,14 @@ describe('ci workflows', () => {
     const packageJson = readPackageJson<{ scripts: Record<string, string> }>('package.json')
 
     expect(config).toContain("verify: ['release:verify']")
+    expect(config).toContain('beforeVersion: [\'native:artifacts:before-version\']')
+    expect(config).toContain('afterVersion: [\'native:artifacts:after-version\']')
+    expect(config).toContain('beforePublish: [\'native:artifacts:verify\']')
     expect(config).toContain("script: 'release:sync-npmmirror'")
     expect(config).toContain('continueOnError: true')
-    expect(packageJson.scripts['release:verify']).toBe('node scripts/verify-packed-packages.mjs && pnpm test:release')
+    expect(packageJson.scripts['release:verify']).toBe('pnpm native:artifacts:verify && node scripts/verify-packed-packages.mjs && pnpm test:release')
+    expect(packageJson.scripts['native:artifacts:before-version']).toBe('node packages/weapp-tailwindcss/native/release.mjs before-version')
+    expect(packageJson.scripts['native:artifacts:after-version']).toBe('node packages/weapp-tailwindcss/native/release.mjs after-version')
     expect(packageJson.scripts['release:sync-npmmirror']).toBe('node scripts/sync-npmmirror.mjs')
   })
 

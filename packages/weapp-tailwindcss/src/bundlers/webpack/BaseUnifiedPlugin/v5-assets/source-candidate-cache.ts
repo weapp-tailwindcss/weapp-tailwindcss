@@ -2,11 +2,12 @@ import type { SourceCandidateCollectorSnapshot, SourceCandidateStore } from '../
 import type { SourceCandidateScanRoot } from '../../../shared/source-candidate-scan-signature'
 import type { ResolvedSourceScan } from '../../../shared/source-scan'
 import type { TailwindSourceEntry } from '@/tailwindcss/source-scan'
-import { readFile, stat } from 'node:fs/promises'
+import { stat } from 'node:fs/promises'
 import path from 'node:path'
 import { md5Hash } from '@/cache/md5'
 import { resolveSourceScanPath } from '@/tailwindcss/source-scan'
 import { isSourceCandidateRequest } from '../../../../project-sources/candidates'
+import { forEachSourceCandidateFile, readSourceCandidateFile } from '../../../../project-sources/candidates/file-io'
 import { resolveSourceCandidateScanFiles } from '../../../../project-sources/candidates/scan-root'
 import { createSourceCandidateScanSignature } from '../../../shared/source-candidate-scan-signature'
 
@@ -138,7 +139,7 @@ function normalizeChangedFiles(changedFiles: Iterable<string> | undefined) {
 async function resolveScanFileSnapshot(file: string): Promise<ResolvedScanFileSnapshot | undefined> {
   try {
     const stats = await stat(file)
-    const source = await readFile(file, 'utf8')
+    const source = await readSourceCandidateFile(file)
     return {
       meta: {
         contentHash: md5Hash(source),
@@ -184,32 +185,32 @@ async function resolveScanFiles(roots: SourceCandidateScanRoot[], outDir: string
 
 async function syncChangedScanFiles(
   collector: SourceCandidateStore,
-  cachedScan: CachedScan,
+  files: Map<string, CachedScanFileMeta>,
   scanFiles: Set<string>,
   changedFiles: Set<string>,
 ) {
-  for (const file of cachedScan.files.keys()) {
+  for (const file of files.keys()) {
     if (scanFiles.has(file)) {
       continue
     }
     collector.remove(file)
-    cachedScan.files.delete(file)
+    files.delete(file)
   }
 
-  await Promise.all([...scanFiles].map(async (file) => {
+  await forEachSourceCandidateFile(scanFiles, async (file) => {
     const nextSnapshot = await resolveScanFileSnapshot(file)
     if (!nextSnapshot) {
       collector.remove(file)
-      cachedScan.files.delete(file)
+      files.delete(file)
       return
     }
-    const previousMeta = cachedScan.files.get(file)
+    const previousMeta = files.get(file)
     if (previousMeta && isSameFileMeta(previousMeta, nextSnapshot.meta) && !changedFiles.has(file)) {
       return
     }
     await collector.sync(file, nextSnapshot.source)
-    cachedScan.files.set(file, nextSnapshot.meta)
-  }))
+    files.set(file, nextSnapshot.meta)
+  })
 }
 
 export function createWebpackSourceCandidateScanCache() {
@@ -239,13 +240,15 @@ export function createWebpackSourceCandidateScanCache() {
     if (cachedScan) {
       collector.restore(cachedScan.snapshot)
       collector.syncInline(sourceScan?.inlineCandidates)
+      // 失败扫描不能提前发布新元数据，否则重试会把未发布的候选误判为缓存命中。
+      const files = new Map(cachedScan.files)
       await syncChangedScanFiles(
         collector,
-        cachedScan,
+        files,
         scanFiles,
         normalizeChangedFiles(changedFiles),
       )
-      cachedScan.snapshot = compactSnapshot(collector.snapshot())
+      scans.set(nextSignatureHash, { files, snapshot: compactSnapshot(collector.snapshot()) })
       lastHit = true
       lastSignatureHash = nextSignatureHash
       return createWebpackSourceCandidateCacheRecord(collector, sourceScan, nextSignatureHash)
@@ -254,14 +257,14 @@ export function createWebpackSourceCandidateScanCache() {
     collector.clearScan()
     collector.syncInline(sourceScan?.inlineCandidates)
     const files = new Map<string, CachedScanFileMeta>()
-    await Promise.all([...scanFiles].map(async (file) => {
+    await forEachSourceCandidateFile(scanFiles, async (file) => {
       const nextSnapshot = await resolveScanFileSnapshot(file)
       if (!nextSnapshot) {
         return
       }
       await collector.sync(file, nextSnapshot.source)
       files.set(file, nextSnapshot.meta)
-    }))
+    })
     if (watchMode) {
       scans.set(nextSignatureHash, {
         files,

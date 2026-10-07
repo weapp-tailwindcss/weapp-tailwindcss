@@ -10,7 +10,7 @@ describe('发布包 manifest 校验', () => {
   it('发现全部公开 workspace 包', async () => {
     const packages = await getWorkspacePackages(workspaceRoot)
 
-    expect(packages).toHaveLength(30)
+    expect(packages).toHaveLength(38)
     expect(packages.map(pkg => pkg.manifest.name)).toEqual(expect.arrayContaining([
       'weapp-tailwindcss',
       '@weapp-tailwindcss/cli',
@@ -19,6 +19,14 @@ describe('发布包 manifest 校验', () => {
       '@weapp-tailwindcss/source-scan',
       '@weapp-tailwindcss/runtime',
       'theme-transition',
+      '@weapp-tailwindcss/native-darwin-arm64',
+      '@weapp-tailwindcss/native-darwin-x64',
+      '@weapp-tailwindcss/native-linux-arm64-gnu',
+      '@weapp-tailwindcss/native-linux-arm64-musl',
+      '@weapp-tailwindcss/native-linux-x64-gnu',
+      '@weapp-tailwindcss/native-linux-x64-musl',
+      '@weapp-tailwindcss/native-win32-arm64-msvc',
+      '@weapp-tailwindcss/native-win32-x64-msvc',
     ]))
     expect(packages.every(pkg => pkg.manifest.private !== true)).toBe(true)
   })

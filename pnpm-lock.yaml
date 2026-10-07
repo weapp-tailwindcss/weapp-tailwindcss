@@ -4614,6 +4614,22 @@ importers:
         specifier: catalog:vitest
         version: 5.0.3(@types/node@26.6.4)(@vitest/coverage-v8@5.0.0)(@vitest/ui@5.0.0)(jsdom@29.1.1)(vite@7.3.6(@types/node@26.6.4)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
 
+  packages-native/darwin-arm64: {}
+
+  packages-native/darwin-x64: {}
+
+  packages-native/linux-arm64-gnu: {}
+
+  packages-native/linux-arm64-musl: {}
+
+  packages-native/linux-x64-gnu: {}
+
+  packages-native/linux-x64-musl: {}
+
+  packages-native/win32-arm64-msvc: {}
+
+  packages-native/win32-x64-msvc: {}
+
   packages-runtime/cn:
     dependencies:
       '@weapp-tailwindcss/runtime':
@@ -5051,6 +5067,31 @@ importers:
       tsx:
         specifier: catalog:tsx
         version: 4.23.15
+    optionalDependencies:
+      '@weapp-tailwindcss/native-darwin-arm64':
+        specifier: workspace:*
+        version: link:../../packages-native/darwin-arm64
+      '@weapp-tailwindcss/native-darwin-x64':
+        specifier: workspace:*
+        version: link:../../packages-native/darwin-x64
+      '@weapp-tailwindcss/native-linux-arm64-gnu':
+        specifier: workspace:*
+        version: link:../../packages-native/linux-arm64-gnu
+      '@weapp-tailwindcss/native-linux-arm64-musl':
+        specifier: workspace:*
+        version: link:../../packages-native/linux-arm64-musl
+      '@weapp-tailwindcss/native-linux-x64-gnu':
+        specifier: workspace:*
+        version: link:../../packages-native/linux-x64-gnu
+      '@weapp-tailwindcss/native-linux-x64-musl':
+        specifier: workspace:*
+        version: link:../../packages-native/linux-x64-musl
+      '@weapp-tailwindcss/native-win32-arm64-msvc':
+        specifier: workspace:*
+        version: link:../../packages-native/win32-arm64-msvc
+      '@weapp-tailwindcss/native-win32-x64-msvc':
+        specifier: workspace:*
+        version: link:../../packages-native/win32-x64-msvc
 
   packages/postcss-calc:
     dependencies:
@@ -5304,6 +5345,31 @@ importers:
       webpack:
         specifier: 5.105.4
         version: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+    optionalDependencies:
+      '@weapp-tailwindcss/native-darwin-arm64':
+        specifier: workspace:*
+        version: link:../../packages-native/darwin-arm64
+      '@weapp-tailwindcss/native-darwin-x64':
+        specifier: workspace:*
+        version: link:../../packages-native/darwin-x64
+      '@weapp-tailwindcss/native-linux-arm64-gnu':
+        specifier: workspace:*
+        version: link:../../packages-native/linux-arm64-gnu
+      '@weapp-tailwindcss/native-linux-arm64-musl':
+        specifier: workspace:*
+        version: link:../../packages-native/linux-arm64-musl
+      '@weapp-tailwindcss/native-linux-x64-gnu':
+        specifier: workspace:*
+        version: link:../../packages-native/linux-x64-gnu
+      '@weapp-tailwindcss/native-linux-x64-musl':
+        specifier: workspace:*
+        version: link:../../packages-native/linux-x64-musl
+      '@weapp-tailwindcss/native-win32-arm64-msvc':
+        specifier: workspace:*
+        version: link:../../packages-native/win32-arm64-msvc
+      '@weapp-tailwindcss/native-win32-x64-msvc':
+        specifier: workspace:*
+        version: link:../../packages-native/win32-x64-msvc
 
   packages/weapp-tw: {}
 

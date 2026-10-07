@@ -51,9 +51,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  native-artifacts:
+    if: ${{ !inputs.oidc_audit }}
+    uses: ./.github/workflows/native.yml
+
   release:
     name: Release
     runs-on: ubuntu-latest
+    needs: native-artifacts
+    if: ${{ !cancelled() && (inputs.oidc_audit || needs.native-artifacts.result == 'success') }}
     timeout-minutes: 30
     steps:
       - name: Checkout Repo
@@ -76,6 +82,18 @@ jobs:
       - name: Audit npm OIDC
         if: inputs.oidc_audit
         run: pnpm exec tsx scripts/release-oidc-preflight.ts
+
+      - name: Download native artifacts from this run
+        if: ${{ !inputs.oidc_audit }}
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          pattern: native-*
+          merge-multiple: true
+          path: packages
+
+      - name: Stage and verify all native platform packages
+        if: ${{ !inputs.oidc_audit }}
+        run: pnpm native:artifacts:stage
 
       - name: Install Playwright Chromium
         if: ${{ !inputs.oidc_audit }}

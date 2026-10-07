@@ -4,7 +4,10 @@ import { babelParse, parseCache } from '@/js/babel/parse'
 import * as oxcParser from '@/js/oxc-parser'
 
 describe('bundlers/vite runtime-affecting signature', () => {
-  afterEach(() => vi.restoreAllMocks())
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.unstubAllEnvs()
+  })
   it('keeps html comment content in runtime-affecting signature', () => {
     const first = createRuntimeAffectingSourceSignature(
       '<view class="card"></view><!-- text-[#123456] -->',
@@ -47,11 +50,14 @@ describe('bundlers/vite runtime-affecting signature', () => {
   })
 
   it('falls back to the cached Babel parser when the native parser is unavailable', () => {
-    vi.spyOn(oxcParser, 'loadOxcParser').mockReturnValue(undefined)
+    vi.stubEnv('WEAPP_TW_NATIVE', 'off')
+    const parse = vi.spyOn(oxcParser, 'parseOxcSync').mockReturnValue(undefined)
     parseCache.clear()
     const source = 'const cls = "card"'
 
-    createRuntimeAffectingSourceSignature(source, 'js')
+    expect(createRuntimeAffectingSourceSignature(source, 'js')).toBe('s:card')
+    expect(parse).toHaveBeenCalledOnce()
+    expect(parseCache.size).toBe(1)
     const cached = babelParse(source, {
       cache: true,
       cacheKey: 'st:unambiguous',
@@ -70,6 +76,7 @@ describe('bundlers/vite runtime-affecting signature', () => {
     const source = [
       'type Size = "w-[3rpx]"',
       'const value = "w-\\u005b1rpx\\u005d"',
+      // eslint-disable-next-line no-template-curly-in-string -- 被测源码需要保留模板插值。
       'const text = `p-[2px] ${active ? `m-[3px]` : "gap-[4px]"}`',
       'const view = <view className="h-[5px]"> bg-[red] </view>',
       '// text-[6px]',
@@ -83,8 +90,12 @@ describe('bundlers/vite runtime-affecting signature', () => {
   })
 
   it('falls back to Babel if the native parser throws', () => {
-    vi.spyOn(oxcParser, 'loadOxcParser').mockReturnValue({ parseSync: () => { throw new Error('native parser unavailable') } })
+    vi.stubEnv('WEAPP_TW_NATIVE', 'off')
+    const parse = vi.spyOn(oxcParser, 'parseOxcSync').mockImplementation(() => {
+      throw new Error('native parser unavailable')
+    })
     expect(createRuntimeAffectingSourceSignature('const cls = "w-[3rpx]"', 'js')).toBe('s:w-[3rpx]')
+    expect(parse).toHaveBeenCalledOnce()
   })
 
   it('skips js parser work when source has no runtime-affecting text hint', () => {

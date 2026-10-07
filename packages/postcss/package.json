@@ -101,6 +101,7 @@
     "dev": "tsdown --watch --sourcemap",
     "build": "tsdown && tsc -p tsconfig.build.json && tsx ../../tools/weapp-tailwindcss-scripts/src/rewrite-dts-aliases.ts .",
     "build:types": "tsc -p tsconfig.build.json && tsx ../../tools/weapp-tailwindcss-scripts/src/rewrite-dts-aliases.ts .",
+    "build:native": "node native/build.mjs",
     "test": "vitest run",
     "bench": "vitest bench",
     "test:dev": "vitest",
@@ -137,6 +138,16 @@
     "postcss-selector-parser": "catalog:buildUtilities",
     "postcss-value-parser": "catalog:postcssCompat",
     "tailwindcss-config": "workspace:*"
+  },
+  "optionalDependencies": {
+    "@weapp-tailwindcss/native-darwin-arm64": "workspace:*",
+    "@weapp-tailwindcss/native-darwin-x64": "workspace:*",
+    "@weapp-tailwindcss/native-linux-arm64-gnu": "workspace:*",
+    "@weapp-tailwindcss/native-linux-arm64-musl": "workspace:*",
+    "@weapp-tailwindcss/native-linux-x64-gnu": "workspace:*",
+    "@weapp-tailwindcss/native-linux-x64-musl": "workspace:*",
+    "@weapp-tailwindcss/native-win32-arm64-msvc": "workspace:*",
+    "@weapp-tailwindcss/native-win32-x64-msvc": "workspace:*"
   },
   "devDependencies": {
     "@csstools/postcss-is-pseudo-class": "^6.0.3",

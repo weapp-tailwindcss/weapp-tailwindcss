@@ -17,7 +17,10 @@ export default defineMonorepoConfig({
     },
     release: {
       hooks: {
+        beforeVersion: ['native:artifacts:before-version'],
         verify: ['release:verify'],
+        afterVersion: ['native:artifacts:after-version'],
+        beforePublish: ['native:artifacts:verify'],
         afterPublish: [
           {
             script: 'release:sync-npmmirror',

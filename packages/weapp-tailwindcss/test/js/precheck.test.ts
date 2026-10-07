@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { shouldSkipViteJsTransform } from '@/bundlers/vite/js-precheck'
 import { hasDependencyHint, shouldSkipJsTransform } from '@/js/precheck'
 
@@ -44,6 +44,91 @@ describe('shouldSkipJsTransform', () => {
 
     it('bg-[', () => {
       expect(shouldSkipJsTransform('const cls = "bg-[url(img.png)]"')).toBe(false)
+    })
+  })
+
+  describe('classNameSet 精确预筛', () => {
+    const options = {
+      classNameSet: new Set(['w-[100px]', 'text-[#123456]']),
+      unescapeUnicode: true,
+    }
+
+    it('命中单引号、双引号和模板片段时保留转换', () => {
+      expect(shouldSkipJsTransform(`const a = 'w-[100px]'; const b = "text-[#123456]"; const c = \`w-[100px]\``, options)).toBe(false)
+    })
+
+    it('源码只有 className 标识符但没有集合命中时跳过 AST', () => {
+      expect(shouldSkipJsTransform('const className = getClassName(); const value = "business-value"', options)).toBe(true)
+    })
+
+    it('无启发式前缀的普通类名仍然命中集合', () => {
+      expect(shouldSkipJsTransform('const cls = "button"', {
+        ...options,
+        classNameSet: new Set(['button']),
+      })).toBe(false)
+    })
+
+    it('支持 Unicode 转义和已转义集合成员', () => {
+      expect(shouldSkipJsTransform('const cls = "w-\\u005b100px\\u005d"', options)).toBe(false)
+      expect(shouldSkipJsTransform('const cls = "w-[100px]"', {
+        ...options,
+        classNameSet: new Set(['w-_b100px_B']),
+      })).toBe(false)
+    })
+
+    it('支持数字开头、负数字开头和 Unicode 的已转义类名', () => {
+      expect(shouldSkipJsTransform('const a = "123"', {
+        ...options,
+        classNameSet: new Set(['_123']),
+      })).toBe(false)
+      expect(shouldSkipJsTransform('const b = "-2xl"', {
+        ...options,
+        classNameSet: new Set(['_-2xl']),
+      })).toBe(false)
+      expect(shouldSkipJsTransform('const c = "中文"', {
+        ...options,
+        classNameSet: new Set(['u_x4e2d_u_x6587_']),
+      })).toBe(false)
+    })
+
+    it('空集合保持原有启发式行为', () => {
+      expect(shouldSkipJsTransform('const className = value', { classNameSet: new Set() })).toBe(false)
+    })
+
+    it('生产路径中未命中集合的静态依赖可以跳过 AST', () => {
+      expect(shouldSkipJsTransform('import { helper } from "module"; const value = helper()', options)).toBe(true)
+    })
+
+    it('module graph 路径保留未命中集合的依赖分析', () => {
+      expect(shouldSkipJsTransform('import { helper } from "module"; const value = helper()', {
+        ...options,
+        moduleGraph: {} as never,
+      })).toBe(false)
+    })
+
+    it('Babel 路径不使用 classNameSet 预筛跳过 handler', () => {
+      expect(shouldSkipJsTransform('const className = "business-value"', {
+        ...options,
+        experimentalJsFastPath: false,
+      })).toBe(false)
+    })
+
+    it.each([
+      { experimentalJsFastPath: false as const },
+      { moduleGraph: {} as never },
+    ])('不消费精确预筛结果的路径不读取转义映射：%j', (overrides) => {
+      const readEscapeMap = vi.fn(() => ({ '[': '_L', ']': '_R' }))
+      const current = {
+        ...options,
+        ...overrides,
+        get escapeMap() {
+          return readEscapeMap()
+        },
+      }
+      expect(shouldSkipJsTransform('const className = "business-value"', current)).toBe(false)
+      expect(shouldSkipJsTransform('import { value } from "module"', current)).toBe(false)
+      expect(shouldSkipJsTransform('const value = "business-value"', current)).toBe(true)
+      expect(readEscapeMap).not.toHaveBeenCalled()
     })
   })
 

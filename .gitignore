@@ -154,3 +154,6 @@ __pycache__/
 
 # 本地 IDE 验收身份与恢复账本只存在于本机。
 /demo/**/.hbuilderx-acceptance.json
+
+# 跨平台原生 CSS 编译产物与元数据由 CI 暂存。
+/packages/postcss/native/bindings/

@@ -1,5 +1,6 @@
 import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { describe, expect, it } from 'vitest'
+import { jsHandler } from '@/js/babel'
 import { getOxcSourceAnalysis } from '@/js/fast-path/analysis'
 import { oxcJsHandler } from '@/js/fast-path/oxc'
 
@@ -11,7 +12,20 @@ const options = {
 }
 
 describe('compact Oxc analysis cache', () => {
+  it('isolates explicit parenthesized AST mode when the same source is cached', () => {
+    const source = 'const cls = ("w-[100px]") ? "w-[100px]" : "plain"'
+    const defaults = { ...options, generateMap: false }
+    const explicit = { ...defaults, babelParserOptions: { createParenthesizedExpressions: true } }
+    for (const current of [defaults, explicit, defaults, explicit]) {
+      expect(oxcJsHandler(source, current)?.code).toBe(jsHandler(source, current).code)
+    }
+    expect(oxcJsHandler(source, defaults)?.code).toContain('("w-[100px]")')
+    expect(oxcJsHandler(source, explicit)?.code).toContain('("w-_b100px_B")')
+    expect(getOxcSourceAnalysis(source, defaults)).not.toBe(getOxcSourceAnalysis(source, explicit))
+  })
+
   it('reuses literal facts while applying the current class set and escaping options', () => {
+    // eslint-disable-next-line no-template-curly-in-string -- 输入必须保留模板插值。
     const source = 'const cls = "w-[100px] h-[20px]"; const tpl = `w-[100px] ${value}`'
     const analysis = getOxcSourceAnalysis(source, options)
     expect(analysis).toBeDefined()
@@ -29,10 +43,10 @@ describe('compact Oxc analysis cache', () => {
 
   it('isolates parser language, source type and modified source', () => {
     const source = 'const cls: string = "w-[100px]"'
-    expect(getOxcSourceAnalysis(source, { ...options, filename: 'entry.ts' })).toBeDefined()
+    expect(getOxcSourceAnalysis(source, { ...options, filename: 'entry.ts', babelParserOptions: { plugins: ['typescript'] } })).toBeDefined()
     expect(getOxcSourceAnalysis(source, options)).toBeUndefined()
     const moduleSource = 'export const cls = "w-[100px]"'
-    const moduleAnalysis = getOxcSourceAnalysis(moduleSource, options)
+    const moduleAnalysis = getOxcSourceAnalysis(moduleSource, { ...options, babelParserOptions: { sourceType: 'module' } })
     expect(moduleAnalysis).toBeDefined()
     expect(getOxcSourceAnalysis(moduleSource, { ...options, babelParserOptions: { sourceType: 'script' } })).not.toBe(moduleAnalysis)
     expect(oxcJsHandler('const cls = "h-[20px]"', options)?.code).toBe('const cls = "h-[20px]"')
