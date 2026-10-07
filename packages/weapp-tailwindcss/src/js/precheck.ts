@@ -202,21 +202,16 @@ export function shouldSkipJsTransform(rawSource: string, options?: IJsHandlerOpt
     return false
   }
   const classNameSet = options?.classNameSet
-  let classNameSetMatch: boolean | undefined
-  if (classNameSet && classNameSet.size > 0 && isPlainClassNameSet(classNameSet)) {
-    classNameSetMatch = hasClassNameSetMatch(rawSource, options!)
+  if (!options?.moduleGraph && options?.experimentalJsFastPath !== false
+    && classNameSet && classNameSet.size > 0 && isPlainClassNameSet(classNameSet)) {
+    const classNameSetMatch = hasClassNameSetMatch(rawSource, options!)
     // 生产 bundle 没有 moduleGraph；没有集合成员命中时，静态依赖本身
     // 不会改变任何类名，可以直接跳过 AST。增量 moduleGraph 路径仍须
     // 保留依赖分析，避免漏掉被链接模块的更新。
-    if (!classNameSetMatch && !options?.moduleGraph && options?.experimentalJsFastPath !== false) {
-      return true
-    }
+    return !classNameSetMatch
   }
   if (hasDependencyHint(rawSource)) {
     return false
-  }
-  if (classNameSetMatch !== undefined && !options?.moduleGraph && options?.experimentalJsFastPath !== false) {
-    return !classNameSetMatch
   }
   return !FAST_JS_TRANSFORM_HINT_RE.test(rawSource)
 }

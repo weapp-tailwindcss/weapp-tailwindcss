@@ -7,7 +7,8 @@ import * as loader from '@/js/oxc-parser/loader'
 describe('Oxc 解析传输与回退', () => {
   afterEach(() => vi.restoreAllMocks())
 
-  const source = `${'const cls = "w-[10px]"; '.repeat(4096)}const cls = "w-[10px]"`
+  const mediumSource = `${'const cls = "w-[10px]"; '.repeat(4096)}const cls = "w-[10px]"`
+  const source = mediumSource.repeat(6)
   const result = parseSync('entry.js', source)
   const options = Object.freeze({ lang: 'js' as const, sourceType: 'module' as const, preserveParens: false })
 
@@ -48,6 +49,50 @@ describe('Oxc 解析传输与回退', () => {
     expect(parseOxcSync('entry.js', smallSource, options)).toBe(result)
     expect(rawTransferSupported).not.toHaveBeenCalled()
     expect(parse).toHaveBeenCalledExactlyOnceWith('entry.js', smallSource, options)
+  })
+
+  it('首次中等 chunk 使用普通 AST，大型 chunk 初始化后再使用 raw', () => {
+    const parse = vi.fn<OxcParser['parseSync']>().mockReturnValue(result)
+    const rawTransferSupported = vi.fn(() => true)
+    useParser({ parseSync: parse, rawTransferSupported })
+
+    parseOxcSync('entry.js', mediumSource, options)
+    expect(rawTransferSupported).not.toHaveBeenCalled()
+    expect(parse).toHaveBeenLastCalledWith('entry.js', mediumSource, options)
+    parseOxcSync('vendor.js', source, options)
+    parseOxcSync('entry.js', mediumSource, options)
+    expect(parse).toHaveBeenLastCalledWith('entry.js', mediumSource, { ...options, experimentalRawTransfer: true })
+    expect(rawTransferSupported).toHaveBeenCalledOnce()
+  })
+
+  it.each([
+    { lang: 'ts' as const },
+    { astType: 'ts' as const },
+    { range: true },
+    { lang: undefined },
+  ])('反序列化器初始化不跨 AST 形态复用：%j', (overrides) => {
+    const parse = vi.fn<OxcParser['parseSync']>().mockReturnValue(result)
+    useParser({ parseSync: parse, rawTransferSupported: () => true })
+
+    parseOxcSync('vendor.js', source, options)
+    const coldOptions = { ...options, ...overrides }
+    parseOxcSync('entry.js', mediumSource, coldOptions)
+    expect(parse).toHaveBeenLastCalledWith('entry.js', mediumSource, coldOptions)
+  })
+
+  it('普通 AST 和失败的 raw 调用不标记反序列化器已初始化', () => {
+    const parse = vi.fn<OxcParser['parseSync']>().mockReturnValue(result)
+    useParser({ parseSync: parse, rawTransferSupported: () => true })
+
+    parseOxcSync('vendor.js', source, options, 'ast')
+    parseOxcSync('entry.js', mediumSource, options)
+    expect(parse).toHaveBeenLastCalledWith('entry.js', mediumSource, options)
+    parse.mockImplementationOnce(() => {
+      throw new Error('raw transfer failed')
+    })
+    parseOxcSync('vendor.js', source, options)
+    parseOxcSync('entry.js', mediumSource, options)
+    expect(parse).toHaveBeenLastCalledWith('entry.js', mediumSource, options)
   })
 
   it.each([
@@ -120,13 +165,15 @@ describe('Oxc 解析传输与回退', () => {
     ['entry.js', 'const broken = "w-[10px]'],
   ])('真实解析器保持 AST、模块、注释与诊断一致：%s %s', (filename, text) => {
     const parserOptions = { sourceType: 'unambiguous' as const, preserveParens: false }
-    const expected = parseSync(filename, text, parserOptions)
-    const actual = parseOxcSync(filename, text, parserOptions)
+    // 在有效的大型源码上实际触发 raw，不能用小样本的普通 AST 证明 raw 一致。
+    const largeText = `${text}\n/* ${' '.repeat(512 * 1024)} */`
+    const largeExpected = parseSync(filename, largeText, parserOptions)
+    const actual = parseOxcSync(filename, largeText, parserOptions)
 
     expect(actual).toBeDefined()
-    expect(actual?.program).toEqual(expected.program)
-    expect(actual?.module).toEqual(expected.module)
-    expect(actual?.comments).toEqual(expected.comments)
-    expect(actual?.errors).toEqual(expected.errors)
+    expect(actual?.program).toEqual(largeExpected.program)
+    expect(actual?.module).toEqual(largeExpected.module)
+    expect(actual?.comments).toEqual(largeExpected.comments)
+    expect(actual?.errors).toEqual(largeExpected.errors)
   })
 })

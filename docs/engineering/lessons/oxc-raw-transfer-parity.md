@@ -133,6 +133,8 @@ JS/WXML/Vite 定向测试 58 文件、649 项通过、4 项既有跳过；新增
 
 ## 适用边界
 
+2026-10-07 进一步发现首次 raw 反序列化器加载成本，产品改为区分冷阈值与已初始化阈值，并补全新 worker 的首次分析实验。新基线的 Rust 增量收益及真实构建/HMR 复验见 [首次传输成本记录](oxc-cold-transfer-policy.md)；本页此前的预热数据与历史真实构建样本保留，不作为新策略的性能结论。
+
 - 本轮验证 Oxc 与现有 Babel 行为一致。Babel 对模板字符串或 TS 包装内的某些比较值也会转义，例如 ``value === `w-[1px]` `` 或 `value === ("w-[1px]" as string)`。本次没有修改这项既有 Babel 行为，因此不能表述为“所有条件比较都安全”。
 - 本记录的初始阶段未实施全项目 Rust 化、lazy visitor 或完整 Lightning CSS 替换。后续 JS/WXML 与独立 CSS 内核接线见 [JS 原生边界](rust-js-native-boundary.md) 和 [CSS 迁移覆盖清单](../../../packages/postcss/native/MIGRATION.md)；PostCSS 管线继续保留，不能将初始 raw transfer 数据当作后续 Rust 实现的性能数据。
 - 本地覆盖 macOS arm64，尚未取得 Windows/Linux 实机性能结果。能力探测与失败回退有定向测试，不能替代其他平台的性能证据。

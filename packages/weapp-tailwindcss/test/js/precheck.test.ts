@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { shouldSkipViteJsTransform } from '@/bundlers/vite/js-precheck'
 import { hasDependencyHint, shouldSkipJsTransform } from '@/js/precheck'
 
@@ -111,6 +111,24 @@ describe('shouldSkipJsTransform', () => {
         ...options,
         experimentalJsFastPath: false,
       })).toBe(false)
+    })
+
+    it.each([
+      { experimentalJsFastPath: false as const },
+      { moduleGraph: {} as never },
+    ])('不消费精确预筛结果的路径不读取转义映射：%j', (overrides) => {
+      const readEscapeMap = vi.fn(() => ({ '[': '_L', ']': '_R' }))
+      const current = {
+        ...options,
+        ...overrides,
+        get escapeMap() {
+          return readEscapeMap()
+        },
+      }
+      expect(shouldSkipJsTransform('const className = "business-value"', current)).toBe(false)
+      expect(shouldSkipJsTransform('import { value } from "module"', current)).toBe(false)
+      expect(shouldSkipJsTransform('const value = "business-value"', current)).toBe(true)
+      expect(readEscapeMap).not.toHaveBeenCalled()
     })
   })
 

@@ -11,7 +11,6 @@ import { parseArgs } from 'node:util'
 import { createWorker } from './oxc-raw-transfer/client'
 import { createInput, sha256 } from './oxc-raw-transfer/input'
 
-const phases: Phase[] = ['cold-analysis', 'warm-analysis', 'cold-handler', 'warm-handler']
 const parsed = parseArgs({
   options: {
     'root': { type: 'string' },
@@ -20,14 +19,18 @@ const parsed = parseArgs({
     'rounds': { type: 'string', default: '3' },
     'warmups': { type: 'string', default: '5' },
     'verify-only': { type: 'boolean', default: false },
+    'process-cold': { type: 'boolean', default: false },
   },
 })
 const verifyOnly = parsed.values['verify-only']
+const processCold = parsed.values['process-cold']
+const phases: Phase[] = processCold ? ['cold-analysis'] : ['cold-analysis', 'warm-analysis', 'cold-handler', 'warm-handler']
 const root = resolve(parsed.values.root ?? resolve(dirname(fileURLToPath(import.meta.url)), '../../..'))
 const pairs = verifyOnly ? 1 : Number(parsed.values.pairs)
 const rounds = verifyOnly ? 1 : Number(parsed.values.rounds)
-const warmups = verifyOnly ? 0 : Number(parsed.values.warmups)
-assert.ok(Number.isSafeInteger(pairs) && pairs >= (verifyOnly ? 1 : 20), '--pairs must be at least 20')
+const warmups = verifyOnly || processCold ? 0 : Number(parsed.values.warmups)
+const minPairs = verifyOnly ? 1 : processCold ? 3 : 20
+assert.ok(Number.isSafeInteger(pairs) && pairs >= minPairs, `--pairs must be at least ${minPairs}`)
 assert.ok(Number.isSafeInteger(rounds) && rounds >= (verifyOnly ? 1 : 3), '--rounds must be at least 3')
 assert.ok(Number.isSafeInteger(warmups) && warmups >= 0, '--warmups must be non-negative')
 const output = resolve(parsed.values.output ?? join(root, '.tmp', 'oxc-raw-transfer', verifyOnly ? 'verification.json' : 'benchmark.json'))
@@ -64,7 +67,7 @@ function measurementsOnly({ analysis: _analysis, code: _code, ...measurement }: 
   return measurement
 }
 
-async function runRound(round: number) {
+async function runRound(round: number, processPair?: number) {
   const workers = {
     normal: await createWorker(root, 'normal'),
     raw: undefined as Awaited<ReturnType<typeof createWorker>> | undefined,
@@ -74,9 +77,9 @@ async function runRound(round: number) {
     workers.raw = await createWorker(root, 'raw')
     assert.deepEqual(workers.normal.metadata.versions, workers.raw.metadata.versions)
     assert.equal(workers.normal.metadata.node, workers.raw.metadata.node)
-    metadata.push({ round, normal: workers.normal.metadata, raw: workers.raw.metadata })
+    metadata.push({ round, processPair, normal: workers.normal.metadata, raw: workers.raw.metadata })
     for (const phase of phases) {
-      for (let pair = -warmups; pair < pairs; pair++) {
+      for (let pair = processPair ?? -warmups; pair < (processPair === undefined ? pairs : processPair + 1); pair++) {
         const source = input.sourceFor(sourceId++)
         assert.equal(Buffer.byteLength(source), input.utf8Bytes)
         const order: Mode[] = (pair + warmups + round) % 2 === 0 ? ['normal', 'raw'] : ['raw', 'normal']
@@ -107,7 +110,7 @@ async function runRound(round: number) {
         }
       }
     }
-    process.stdout.write(`Round ${round + 1}/${rounds}: full analysis and handler output parity passed\n`)
+    process.stdout.write(`Round ${round + 1}/${rounds}${processPair === undefined ? '' : `, process pair ${processPair + 1}/${pairs}`}: full analysis and handler output parity passed\n`)
   }
   catch (error) {
     failure = error
@@ -136,7 +139,15 @@ async function main() {
     sha256: sha256(readFileSync(join(root, 'packages', 'weapp-tailwindcss', ...segments), 'utf8')),
   }))
   for (let round = 0; round < rounds; round++) {
-    await runRound(round)
+    if (processCold) {
+      // 每对都创建新进程，首次计时前不解析，保留 raw 反序列化器的初始化成本。
+      for (let pair = 0; pair < pairs; pair++) {
+        await runRound(round, pair)
+      }
+    }
+    else {
+      await runRound(round)
+    }
   }
   for (let index = 0; index < sourcePaths.length; index++) {
     const after = sha256(readFileSync(join(root, 'packages', 'weapp-tailwindcss', ...sourcePaths[index]!), 'utf8'))
@@ -147,7 +158,7 @@ async function main() {
   const perRound = verifyOnly ? [] : Array.from({ length: rounds }, (_, round) => phases.map(phase => summarize(phase, round))).flat()
   const report = {
     schemaVersion: 1,
-    purpose: verifyOnly ? 'correctness-only' : 'full-oxc-analysis-and-handler',
+    purpose: verifyOnly ? 'correctness-only' : processCold ? 'first-oxc-analysis-in-fresh-processes' : 'full-oxc-analysis-and-handler',
     startedAt,
     finishedAt: new Date().toISOString(),
     root,
@@ -155,13 +166,15 @@ async function main() {
     sources,
     environment: { node: process.version, platform: process.platform, arch: process.arch, cpu: cpus()[0]?.model, totalMemoryBytes: totalmem(), freeMemoryBytesAfter: freemem() },
     input: { records: input.records, utf8Bytes: input.utf8Bytes, codeUnits: input.codeUnits, baseSha256: input.sha256 },
-    methodology: { rounds, pairsPerPhasePerRound: pairs, warmupsPerPhase: warmups, modesRunConcurrently: false, analysisCacheMissExpectedParserCalls: 1, warmTimedExpectedParserCalls: 0, warmupExcluded: true },
+    methodology: { rounds, pairsPerPhasePerRound: pairs, warmupsPerPhase: warmups, freshProcessesPerPair: processCold, modesRunConcurrently: false, analysisCacheMissExpectedParserCalls: 1, warmTimedExpectedParserCalls: 0, warmupExcluded: true },
     metadata,
     summary,
     perRound,
     coldAnalysisImprovesEveryRound: verifyOnly ? undefined : perRound.filter(row => row.phase === 'cold-analysis').every(row => row.speedup > 1),
     samples: verifyOnly ? samples.map(({ normal: _normal, raw: _raw, ...sample }) => sample) : samples,
-    limitations: 'Measures Oxc analysis and JS handler only. Cold means source-analysis cache miss in warmed workers, not process startup. Does not establish full build or HMR speedup.',
+    limitations: processCold
+      ? 'Measures the first analysis in fresh workers, including raw deserializer initialization, excluding Node startup and parser module import. Forces the two transports independently of the automatic policy. Does not establish full build or HMR speedup.'
+      : 'Measures Oxc analysis and JS handler only. Cold means source-analysis cache miss in warmed workers, not process startup. Does not establish full build or HMR speedup.',
   }
   mkdirSync(dirname(output), { recursive: true })
   writeFileSync(output, `${JSON.stringify(report, null, 2)}\n`)
