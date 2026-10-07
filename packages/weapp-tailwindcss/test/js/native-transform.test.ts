@@ -35,7 +35,10 @@ beforeEach(() => {
   native.transformer.transformWithCandidatesBatch = undefined
   native.transformer.replaceClassNames.mockReturnValue(true)
 })
-afterEach(() => vi.restoreAllMocks())
+afterEach(() => {
+  vi.unstubAllEnvs()
+  vi.restoreAllMocks()
+})
 
 describe('Rust 完整 JS 转换适配器', () => {
   it('新版批量候选 ABI 只回调一次并保留旧 ABI 回退', async () => {
@@ -62,6 +65,15 @@ describe('Rust 完整 JS 转换适配器', () => {
       moduleGraph: false,
       ignoreTaggedTemplates: false,
     }, expect.any(Function))
+  })
+
+  it('auto 模式复用短结果缓存，避免重复原生扫描', async () => {
+    vi.stubEnv('WEAPP_TW_NATIVE', 'auto')
+    const { createJsHandler } = await import('@/js')
+    const handler = createJsHandler(options)
+    expect(handler(source).code).toBe(output)
+    expect(handler(source).code).toBe(output)
+    expect(native.transformer.transformWithCandidates).toHaveBeenCalledOnce()
   })
 
   it('默认保留策略作为固定开关传给内核，用户自定义回调仍回退', async () => {

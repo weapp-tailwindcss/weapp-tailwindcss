@@ -1,4 +1,5 @@
 import type { CreateJsHandlerOptions, IJsHandlerOptions, JsHandler } from '../types'
+import process from 'node:process'
 import { nativeCompilerConfigured } from '../native'
 import { defuOverrideArray } from '../utils'
 import { jsHandler } from './babel'
@@ -182,19 +183,29 @@ export function createJsHandler(options: CreateJsHandlerOptions): JsHandler {
       return jsHandler(rawSource, resolvedOptions)
     }
     const fastPathOptions = resolveFastPathOptions(rawSource, resolvedOptions)
+    const key = resultCache.key(rawSource, resolvedOptions)
+    // auto 模式允许复用已验证的短结果，避免每次重复跨 N-API 扫描。
+    // required 模式仍必须先执行原生加载与转换检查，不能被旧缓存绕过。
+    if (process.env['WEAPP_TW_NATIVE'] === 'auto') {
+      const cached = resultCache.get(key)
+      if (cached) {
+        return cached
+      }
+    }
     // 原生实例自行缓存解析事实，先校验可变集合与映射，并执行 required 加载检查。
     const nativeResult = nativeCompilerConfigured
       ? nativeJsHandler(rawSource, fastPathOptions)
       : undefined
     if (nativeResult) {
-      return nativeResult
+      return process.env['WEAPP_TW_NATIVE'] === 'auto'
+        ? resultCache.set(key, nativeResult)
+        : nativeResult
     }
     if (nativeResult === null) {
       // 原生语义检查拒绝的输入交还 Babel，不能被较宽松的 Oxc 分析重新接管。
       return jsHandler(rawSource, resolvedOptions)
     }
 
-    const key = resultCache.key(rawSource, resolvedOptions)
     const cached = resultCache.get(key)
     if (cached) {
       return cached
