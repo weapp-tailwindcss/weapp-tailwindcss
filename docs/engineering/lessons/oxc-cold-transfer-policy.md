@@ -17,7 +17,7 @@ PR 的默认关闭 Rust 路径在 uni-app 与 mpx 性能门禁中分别回退 5.
 
 ## 根因与纠正
 
-Oxc 0.152.0 首次 raw 调用同步加载 eager 入口和对应 AST 形态的大型反序列化器。真实 uni-app 的 107,509 code-unit vendor 在六次独立进程交替构建中，raw 首次解析需 40.7–49.7 ms，普通 AST 为 13.5–15.1 ms。`tasks.js` 还包含异步任务等待，不能把其累加值完全归因于解析 CPU 时间。
+Oxc 0.153.0 首次 raw 调用同步加载 eager 入口和对应 AST 形态的大型反序列化器。真实 uni-app 的 107,509 code-unit vendor 在六次独立进程交替构建中，raw 首次解析需 40.7–49.7 ms，普通 AST 为 13.5–15.1 ms。`tasks.js` 还包含异步任务等待，不能把其累加值完全归因于解析 CPU 时间。版本来自冷、热采样报告的元数据及实际模块解析路径；初稿误写为 0.152.0，本次按原报告纠正，采样数值不变。
 
 产品现在先使用 512 Ki code units 的冷阈值；同一 JS/TS AST 形态及 range 模式成功使用 raw 后，降至已验证的 96 Ki 阈值。状态按 parser 对象弱引用保存，普通 AST 与失败的 raw 调用不会标记初始化完成，显式普通 AST 的 runtime snapshot 继续按原策略执行。这里只选择两种等价 AST 传输方式，不跳过必要语义分析。
 
@@ -90,11 +90,23 @@ pnpm exec cross-env WEAPP_TW_NATIVE=required pnpm --filter weapp-tailwindcss exe
 
 正常测试另设置 `CI=1`。JS/WXML/Vite 定向 61 文件、679 项通过、4 项既有跳过；Engine 六文件、83 项通过；Babel/Rust 对拍 6224 项一致、1024 项明确回退。主包构建、严格 TypeScript 与源文件/测试显式 ESLint 检查通过。
 
+### 剩余热点与远端门禁
+
+提交 `78227b1b2c853a82588e691a79522918c1de95b0` 的 [性能工作流](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/37581426006) 全部通过：合成门禁、mpx、uni-app、weapp-vite、Taro Vite、Taro webpack 及汇总门禁均为 success；weekly-demo-cost 按工作流条件跳过。这证明此前默认路径的门禁回退已修复，不能替代显式开启 Rust 的配对实验。
+
+同一提交在 Node 24.18.0 下对真实 uni-app CLI 开启 `--cpu-prof --cpu-prof-interval=1000`，Rust auto，构建成功。单次诊断记录的采样总长约 3850 ms，其中 idle 约 1049 ms。按采样叶节点所属模块归类，Rollup 约 333 ms、Tailwind CSS 约 175 ms、PostCSS 库约 144 ms、本项目 PostCSS 约 63 ms、Engine 约 60 ms；selector parser 7.x 约 10 ms、6.x 约 6 ms、value parser 约 8 ms。分类使用 self time，不能将含 idle 的 runtime/other 都算作 CPU 工作，也不能累加调用栈的 inclusive time。
+
+该 profile 仅用于选择下一步实验，不是关闭/开启 Rust 的速度对照。独立 selector/value 解析的占比尚不足以支持大规模替换 PostCSS；优先验证重复 AST 处理、模块初始化和跨边界分配。任何 fast path 仍需完整事实及最终输出对拍、失败回退和真实构建/HMR 配对复验。原始产物位于 `.tmp/css-profile/auto/`。
+
+lazy 接口另做了有界兼容实验，未进入产品代码。Oxc 0.153.0 的 `experimentalLazy` 返回 Rust AST 形态，例如字符串节点的 type 是 `StringLiteral`；普通/raw 接口对应 `Literal`。`experimentalGetLazyVisitor()` 使用另一套节点名，注册 `Literal` 会报 `Unknown node type 'Literal' in visitor object`。直接把 lazy program 传给现有 oxc-walker，最小条件表达式的分析结果漏掉全部三个字面量，完整事实对拍立即失败。验证包含中文和 emoji 的位置仍相同，不能把节点名差异误归因于 Unicode 偏移。原始证据为 `.tmp/lazy-transfer/compatibility.json`。
+
+因此 raw transfer 是当前可复用 ESTree 分析逻辑的接口；lazy visitor 的第二阶段需要显式 AST 适配及独立生命周期，不能只换 parser 选项。此次未给不等价的结果计时，也不宣称 lazy 已证明加速。后续适配必须保留条件链、directive、class 上下文、JSX 实体和 Babel 回退，并在 `finally` 释放 lazy buffer 后才评估速度与内存。
+
 ## 适用边界
 
 本轮没有全项目 Rust 化；Rust 继续显式 opt-in，默认关闭。主要剩余构建开销来自 CSS 及框架构建阶段。后续优先测量并减少重复解析、无效扫描与边界传输，保留 PostCSS 完整语义，不由局部内核倍率推导整体收益。
 
-本地性能仅覆盖 macOS arm64，样本每组仅三对；Windows/Linux 性能与全部 PR CI 尚待验证。这里只执行定向回归与普通 headless Web 验证，不宣称全仓或多端设备验收。
+本地性能仅覆盖 macOS arm64，样本每组仅三对；远端 Ubuntu Node 22 的性能门禁已通过，Windows/macOS 原生与普通兼容矩阵以当前 PR head 的检查结果为准。全部 PR CI 尚未完成，不将排队、运行中或条件跳过计作已执行通过。这里只执行定向回归与普通 headless Web 验证，不宣称全仓或多端设备验收。
 
 ## 规则评估
 
