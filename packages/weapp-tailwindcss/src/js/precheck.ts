@@ -12,6 +12,34 @@ const FAST_JS_TRANSFORM_HINT_RE = /className\b|class\s*=|classList\.|\b(?:twMerg
 const DEFAULT_ESCAPE_CHARACTERS = new Set(Object.keys(MappingChars2String))
 const CANDIDATE_SPLIT_HINT_RE = /\s|\\[nrt]/
 const WHITESPACE_RE = /\s/
+const customEscapeCharactersCache = new WeakMap<object, string[] | undefined>()
+const escapeCharactersCache = new WeakMap<object, Set<string>>()
+
+function getCustomEscapeCharacters(escapeMap: IJsHandlerOptions['escapeMap']) {
+  if (!escapeMap || escapeMap === MappingChars2String) {
+    return undefined
+  }
+  if (customEscapeCharactersCache.has(escapeMap)) {
+    return customEscapeCharactersCache.get(escapeMap)
+  }
+  const customCharacters = Object.keys(escapeMap).filter(character => !DEFAULT_ESCAPE_CHARACTERS.has(character))
+  const result = customCharacters.length > 0 ? customCharacters : undefined
+  customEscapeCharactersCache.set(escapeMap, result)
+  return result
+}
+
+function getEscapeCharacters(escapeMap: IJsHandlerOptions['escapeMap']) {
+  if (!escapeMap || escapeMap === MappingChars2String) {
+    return DEFAULT_ESCAPE_CHARACTERS
+  }
+  const cached = escapeCharactersCache.get(escapeMap)
+  if (cached) {
+    return cached
+  }
+  const characters = new Set([...DEFAULT_ESCAPE_CHARACTERS, ...Object.keys(escapeMap)])
+  escapeCharactersCache.set(escapeMap, characters)
+  return characters
+}
 
 function hasPotentialEscapeCharacter(literal: string, customEscapeCharacters?: string[]) {
   for (let index = 0; index < literal.length; index++) {
@@ -45,12 +73,8 @@ function hasClassNameSetMatch(rawSource: string, options: IJsHandlerOptions) {
   }
 
   const escapeMap = options.escapeMap
-  const customEscapeCharacters = escapeMap && escapeMap !== MappingChars2String
-    ? Object.keys(escapeMap).filter(character => !DEFAULT_ESCAPE_CHARACTERS.has(character))
-    : undefined
-  const escapeCharacters = escapeMap && escapeMap !== MappingChars2String
-    ? new Set([...DEFAULT_ESCAPE_CHARACTERS, ...Object.keys(escapeMap)])
-    : DEFAULT_ESCAPE_CHARACTERS
+  const customEscapeCharacters = getCustomEscapeCharacters(escapeMap)
+  const escapeCharacters = getEscapeCharacters(escapeMap)
 
   const hasEscapedClassNameMatch = (candidate: string) => {
     if (candidate.length === 0) {
@@ -171,12 +195,22 @@ export function shouldSkipJsTransform(rawSource: string, options?: IJsHandlerOpt
   if (options?.wrapExpression) {
     return false
   }
+  const classNameSet = options?.classNameSet
+  let classNameSetMatch: boolean | undefined
+  if (classNameSet && classNameSet.size > 0 && isPlainClassNameSet(classNameSet)) {
+    classNameSetMatch = hasClassNameSetMatch(rawSource, options!)
+    // 生产 bundle 没有 moduleGraph；没有集合成员命中时，静态依赖本身
+    // 不会改变任何类名，可以直接跳过 AST。增量 moduleGraph 路径仍须
+    // 保留依赖分析，避免漏掉被链接模块的更新。
+    if (!classNameSetMatch && !options?.moduleGraph) {
+      return true
+    }
+  }
   if (hasDependencyHint(rawSource)) {
     return false
   }
-  const classNameSet = options?.classNameSet
-  if (classNameSet && classNameSet.size > 0 && isPlainClassNameSet(classNameSet)) {
-    return !hasClassNameSetMatch(rawSource, options!)
+  if (classNameSetMatch !== undefined) {
+    return !classNameSetMatch
   }
   return !FAST_JS_TRANSFORM_HINT_RE.test(rawSource)
 }

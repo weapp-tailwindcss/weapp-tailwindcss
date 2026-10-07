@@ -94,6 +94,17 @@ describe('shouldSkipJsTransform', () => {
     it('空集合保持原有启发式行为', () => {
       expect(shouldSkipJsTransform('const className = value', { classNameSet: new Set() })).toBe(false)
     })
+
+    it('生产路径中未命中集合的静态依赖可以跳过 AST', () => {
+      expect(shouldSkipJsTransform('import { helper } from "module"; const value = helper()', options)).toBe(true)
+    })
+
+    it('module graph 路径保留未命中集合的依赖分析', () => {
+      expect(shouldSkipJsTransform('import { helper } from "module"; const value = helper()', {
+        ...options,
+        moduleGraph: {} as never,
+      })).toBe(false)
+    })
   })
 
   describe('含 import/export/require 语句的代码返回 false', () => {

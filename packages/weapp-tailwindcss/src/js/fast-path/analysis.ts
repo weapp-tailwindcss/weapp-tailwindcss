@@ -104,7 +104,10 @@ export function getOxcSourceAnalysis(rawSource: string, options: IJsHandlerOptio
           const nextConditionTestContext = parentNode?.type === 'ConditionalExpression'
             ? parentNode.test === node
             : conditionTestContext && parentNode?.type !== undefined && CONDITION_TEST_CHAIN_TYPES.has(parentNode.type)
-          if (nextConditionTestContext !== conditionTestContext || nextConditionTestContext) {
+          // 只有上下文状态发生变化时才需要保存恢复点。状态保持为 true 的
+          // 条件链节点可以直接继承父状态；若其子树离开条件链，离开节点
+          // 时通过这个边界恢复父状态，避免为整棵测试表达式分配栈项。
+          if (nextConditionTestContext !== conditionTestContext) {
             conditionContextStack.push({ node, previous: conditionTestContext })
           }
           conditionTestContext = nextConditionTestContext
