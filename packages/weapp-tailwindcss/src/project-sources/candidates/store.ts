@@ -1,7 +1,7 @@
 import type { ScanSourceCandidateRootOptions, SourceCandidateCollectorOptions, SourceCandidateCollectorSnapshot, SourceCandidateFilterOptions, SourceCandidateStore } from './types-and-cache'
 import type { TailwindInlineSourceCandidates, TailwindSourceEntry } from '@/tailwindcss/source-scan'
-import { readFile } from 'node:fs/promises'
 import { resolveSourceScanPath } from '@/tailwindcss/source-scan'
+import { forEachSourceCandidateFile, readSourceCandidateFile } from './file-io'
 import { resolveSourceCandidateScanFiles } from './scan-root'
 import { createCandidateSnapshot, restoreCandidateSnapshot } from './snapshot'
 import { mergeSourcesByPriority } from './source-priority'
@@ -145,7 +145,7 @@ export function createSourceCandidateStore(options: SourceCandidateCollectorOpti
   async function syncFile(id: string) {
     const normalizedId = cleanUrl(id)
     try {
-      await sync(normalizedId, await readFile(normalizedId, 'utf8'))
+      await sync(normalizedId, await readSourceCandidateFile(normalizedId))
     }
     catch (error) {
       const code = typeof error === 'object' && error !== null && 'code' in error
@@ -195,7 +195,7 @@ export function createSourceCandidateStore(options: SourceCandidateCollectorOpti
   async function syncCurrentFile(id: string) {
     const normalizedId = cleanUrl(id)
     try {
-      return await syncCurrentSource(normalizedId, await readFile(normalizedId, 'utf8'))
+      return await syncCurrentSource(normalizedId, await readSourceCandidateFile(normalizedId))
     }
     catch (error) {
       const code = typeof error === 'object' && error !== null && 'code' in error
@@ -222,7 +222,7 @@ export function createSourceCandidateStore(options: SourceCandidateCollectorOpti
   async function scanRoot(options: ScanSourceCandidateRootOptions) {
     const resolvedFiles = await resolveScanFiles(options)
     options.onFilesResolved?.(resolvedFiles)
-    await Promise.all(resolvedFiles.map(syncFile))
+    await forEachSourceCandidateFile(resolvedFiles, syncFile)
   }
 
   function replaceFinal(id: string, nextCandidates: Set<string>) {

@@ -15,6 +15,7 @@ import { generateTailwindV4Css } from '@/generation/service'
 import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
 import { resolveTailwindV4EntriesFromCssCached } from '@/project-sources'
 import { createSourceCandidateStore, isSourceCandidateRequest } from '@/project-sources/candidates'
+import { forEachSourceCandidateFile } from '@/project-sources/candidates/file-io'
 import { resolveSourceCandidateScanFiles } from '@/project-sources/candidates/scan-root'
 import { resolveTailwindcssOptions } from '@/tailwindcss/runtime-options'
 import { resolveSourceScanPath } from '@/tailwindcss/source-scan'
@@ -138,11 +139,11 @@ async function resolveWebpackLoaderSourceCandidates(
     outDir,
     root,
   })
-  await Promise.all(scanFiles.map(async (file) => {
+  await forEachSourceCandidateFile(scanFiles, async (file) => {
     const normalizedFile = resolveSourceScanPath(file)
     await registerWebpackWatchFile(loaderContext, normalizedFile)
     await collector.syncFile(normalizedFile)
-  }))
+  })
   const candidates = collector.valuesForEntries(resolved.entries)
   if (candidates.size === 0) {
     return undefined

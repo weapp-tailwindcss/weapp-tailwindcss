@@ -5,11 +5,11 @@ import type {
   ExtractSourceCandidateWithContext,
   JsStringStaticRange,
 } from '../types.ts'
-import { promises as fs } from 'node:fs'
 import {
   extractBareArbitraryValueSourceCandidatesWithPositions,
 } from '../../v4/bare-arbitrary-values.ts'
 import { extractCssApplyCandidates } from '../css.ts'
+import { mapCandidateFiles, readCandidateFile } from '../file-io.ts'
 import { createJsStringStaticRanges } from '../js-string-ranges.ts'
 import { getOxideModule } from '../oxide.ts'
 import {
@@ -136,24 +136,24 @@ export async function extractRawCandidates(
 
   const scannedCandidates = scanner.scan()
   if (scannedCandidates.length === 0 && files.length > 0) {
-    const changedContents = (await Promise.all(files.map(async (file) => {
+    const changedContents = (await mapCandidateFiles(files, async (file) => {
       try {
         return {
-          content: await fs.readFile(file, 'utf8'),
+          content: await readCandidateFile(file),
           extension: toExtension(file),
         }
       }
       catch {
         return undefined
       }
-    }))).filter((entry): entry is { content: string, extension: string } => entry !== undefined)
+    })).filter((entry): entry is { content: string, extension: string } => entry !== undefined)
     scannedCandidates.push(...scanner.scanFiles(changedContents))
   }
   const candidates = new Set(scannedCandidates)
   if (options?.bareArbitraryValues !== undefined && options.bareArbitraryValues !== false) {
-    await Promise.all(files.map(async (file) => {
+    await mapCandidateFiles(files, async (file) => {
       try {
-        const content = await fs.readFile(file, 'utf8')
+        const content = await readCandidateFile(file)
 
         const extension = toExtension(file)
         const jsStringStaticRanges = JS_LIKE_SOURCE_EXTENSION_RE.test(extension)
@@ -168,7 +168,7 @@ export async function extractRawCandidates(
       catch {
         // 文件可能在扫描和读取之间被移除，保持与 Tailwind 原扫描结果一致。
       }
-    }))
+    })
   }
   const result = [...candidates]
   setRawCandidateCacheEntry(cacheKey, fingerprint, result)

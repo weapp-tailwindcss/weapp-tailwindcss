@@ -38,6 +38,10 @@ export async function inputFingerprint(root: string, compare: Comparison = 'tran
   }
   await collect(path.join(root, 'demo', 'web', 'vue-vite-tailwindcss-v4'))
   await collect(path.join(root, 'packages', 'weapp-tailwindcss', 'dist'))
+  // Engine 为外部依赖，主包的产物哈希不能代替其扫描实现和实际加载产物。
+  await collect(path.join(root, 'packages', 'engine', 'src'))
+  await collect(path.join(root, 'packages', 'engine', 'dist'))
+  files.push(path.join(root, 'packages', 'engine', 'package.json'))
   if (compare === 'native') {
     await collect(path.join(root, 'packages', 'postcss', 'dist'))
     for (const name of ['weapp-tailwindcss', 'postcss']) {
