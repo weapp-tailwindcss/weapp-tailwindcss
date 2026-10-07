@@ -267,6 +267,8 @@ export function createViteFrameworkPlugins(options: ViteFrameworkRuntimeOptions 
       }
     },
   }))
-  plugins.push(createFrameworkCssEmissionFinalizerPlugin(getResolvedConfig))
+  if (transformEmittedWebCss) {
+    plugins.push(createFrameworkCssEmissionFinalizerPlugin(getResolvedConfig))
+  }
   return plugins
 }
