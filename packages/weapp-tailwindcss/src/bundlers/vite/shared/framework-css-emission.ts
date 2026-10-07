@@ -109,7 +109,7 @@ export function installFrameworkCssEmission(config: ResolvedConfig, transformCss
   if (config.command !== 'build') {
     return false
   }
-  const plugins = config.plugins.filter(candidate => candidate.name === 'vite:css-post' || candidate.name === 'uni:h5-css')
+  const plugins = (config.plugins ?? []).filter(candidate => candidate.name === 'vite:css-post' || candidate.name === 'uni:h5-css')
   if (!plugins.length) {
     return false
   }
