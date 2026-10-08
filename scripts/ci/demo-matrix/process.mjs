@@ -5,7 +5,7 @@ import process from 'node:process'
 import { setTimeout as delay } from 'node:timers/promises'
 import { stripVTControlCharacters } from 'node:util'
 import { execa } from 'execa'
-import { captureOwnedProcessGroups } from './process-groups.mjs'
+import { captureOwnedProcessGroups, signalOwnedProcessGroup } from './process-groups.mjs'
 
 export function developmentEnvironment(env) {
   return {
@@ -56,16 +56,6 @@ export function startProcess(command, args, cwd, env, logFile) {
     output?.end()
     return result
   })
-  function signalGroup(pid, signal) {
-    try {
-      process.kill(-pid, signal)
-    }
-    catch (error) {
-      if (error.code !== 'ESRCH') {
-        throw error
-      }
-    }
-  }
   async function stop() {
     if (!settled) {
       if (process.platform === 'win32') {
@@ -75,7 +65,7 @@ export function startProcess(command, args, cwd, env, logFile) {
         // pnpm/corepack 可能创建新的后代进程组，必须在父进程退出前记录归属。
         const groups = await captureOwnedProcessGroups(child.pid)
         for (const pid of groups.toReversed()) {
-          signalGroup(pid, 'SIGTERM')
+          await signalOwnedProcessGroup(pid, 'SIGTERM')
         }
         const controller = new AbortController()
         try {
@@ -85,7 +75,7 @@ export function startProcess(command, args, cwd, env, logFile) {
         // 启动器退出后，后代仍可能持有输出管道；以整个会话完成为准升级信号。
         if (!settled) {
           for (const pid of groups.toReversed()) {
-            signalGroup(pid, 'SIGKILL')
+            await signalOwnedProcessGroup(pid, 'SIGKILL')
           }
         }
       }

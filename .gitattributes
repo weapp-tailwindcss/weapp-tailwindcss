@@ -122,8 +122,8 @@ yarn.lock         text -diff
 *.toml            text
 *.yaml            text
 *.yml             text
-# diff 上下文行的空格前缀可以紧接上游 tab 缩进，属于合法补丁语法。
-patches/*.patch   whitespace=-space-before-tab
+# diff 上下文行的空格前缀可紧接上游 tab 或表示空行，属于合法补丁语法。
+patches/*.patch   whitespace=-space-before-tab,-blank-at-eol
 browserslist      text
 Makefile          text
 makefile          text

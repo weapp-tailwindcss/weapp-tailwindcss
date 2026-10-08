@@ -121,14 +121,20 @@ describe('native artifact repoctl version transition', () => {
     const spawn = ((command: string, args: string[]) => {
       const invocation = [command, ...args].join(' ')
       calls.push(invocation)
+      let stdout = ''
       if (invocation === 'pnpm run native:artifacts:before-version') {
         beforeNativeVersion(roots, repoRoot)
       }
       else if (invocation === 'pnpm run release:verify' || invocation === 'pnpm run native:artifacts:verify') {
         verifyDistribution(roots, repoRoot)
       }
-      else if (invocation === 'pnpm version -r --no-git-checks') {
+      else if (invocation === 'pnpm version -r --no-git-checks --json') {
         changeVersions(context)
+        stdout = JSON.stringify(names.map(name => ({
+          name,
+          currentVersion: name === '@weapp-tailwindcss/postcss' ? '3.0.0' : '5.5.11',
+          newVersion: name === '@weapp-tailwindcss/postcss' ? '3.0.1-alpha.0' : '5.5.12-alpha.0',
+        })))
       }
       else if (invocation === 'pnpm run native:artifacts:after-version') {
         afterNativeVersion(roots, repoRoot)
@@ -142,13 +148,13 @@ describe('native artifact repoctl version transition', () => {
       else {
         expect(command).toBe('git')
       }
-      return { status: command === 'git' && args[0] === 'diff' ? 1 : 0, stdout: '', stderr: '' } as SpawnSyncReturns<string>
+      return { status: command === 'git' && args[0] === 'diff' ? 1 : 0, stdout, stderr: '' } as SpawnSyncReturns<string>
     }) as NonNullable<Parameters<typeof releasePrerelease>[0]['spawn']>
     await releasePrerelease({ cwd: repoRoot, branch: 'alpha', config: { qualityScripts: [], hooks: config.commands!.release!.hooks }, spawn })
     expect(calls.filter(call => call.startsWith('pnpm '))).toEqual([
       'pnpm run native:artifacts:before-version',
       'pnpm run release:verify',
-      'pnpm version -r --no-git-checks',
+      'pnpm version -r --no-git-checks --json',
       'pnpm run native:artifacts:after-version',
       'pnpm run native:artifacts:verify',
       'pnpm publish -r --tag alpha --report-summary --provenance --no-git-checks',

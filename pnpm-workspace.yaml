@@ -403,3 +403,4 @@ patchedDependencies:
   rollup@4.63.1: patches/rollup@4.63.1.patch
   rollup@4.63.5: patches/rollup@4.63.5.patch
   weapp-vite@7.4.0: patches/weapp-vite@7.4.0.patch
+  webpack@5.105.4: patches/webpack@5.105.4.patch

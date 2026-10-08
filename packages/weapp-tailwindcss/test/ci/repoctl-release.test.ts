@@ -18,17 +18,18 @@ afterEach(() => {
 })
 
 describe('repoctl GitHub Release 恢复补丁', () => {
-  it.each([429, 500, 502])('request 层重试瞬时错误 %s 的 POST', async (failure) => {
+  it.each([429, 500, 502])('POST 返回 %s 后按 tag 查询结果，避免重复创建 Release', async (failure) => {
     vi.useFakeTimers()
     const fetch = vi.fn()
       .mockResolvedValueOnce(response(404, {}))
       .mockResolvedValueOnce(response(failure, {}))
-      .mockResolvedValueOnce(response(201, release))
+      .mockResolvedValueOnce(response(200, release))
     const pending = createClient(fetch).ensureRelease(request)
     const result = expect(pending).resolves.toMatchObject(release)
     await vi.runAllTimersAsync()
     await result
-    expect(fetch.mock.calls.map(call => call[1].method)).toEqual(['GET', 'POST', 'POST'])
+    expect(fetch.mock.calls.map(call => call[1].method)).toEqual(['GET', 'POST', 'GET'])
+    expect(fetch.mock.calls.filter(call => call[1].method === 'POST')).toHaveLength(1)
   })
 
   it('网络错误不在 request 层重试 POST，改为按 tag 恢复', async () => {
@@ -49,7 +50,7 @@ describe('repoctl GitHub Release 恢复补丁', () => {
     expect(fetch.mock.calls.filter(call => call[1].method === 'POST')).toHaveLength(1)
   })
 
-  it.each(['seconds', 'date', 'reset'])('遵守限流等待提示 %s，等待前不发送恢复查询', async (hint) => {
+  it.each(['seconds', 'date', 'reset'])('PATCH 遵守限流等待提示 %s，等待前不再次写入', async (hint) => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-09-13T00:00:00Z'))
     const start = Date.now()
@@ -59,9 +60,9 @@ describe('repoctl GitHub Release 恢复补丁', () => {
         ? { 'retry-after': new Date(start + 5000).toUTCString() }
         : { 'x-ratelimit-remaining': '0', 'x-ratelimit-reset': String((start + 5000) / 1000) }
     const fetch = vi.fn()
-      .mockResolvedValueOnce(response(404, {}))
+      .mockResolvedValueOnce(response(200, release))
       .mockResolvedValueOnce(response(429, {}, headers))
-      .mockResolvedValueOnce(response(201, release))
+      .mockResolvedValueOnce(response(200, release))
     const pending = createClient(fetch).ensureRelease(request)
     const result = expect(pending).resolves.toMatchObject(release)
     await vi.advanceTimersByTimeAsync(4999)
@@ -69,7 +70,7 @@ describe('repoctl GitHub Release 恢复补丁', () => {
     await vi.runAllTimersAsync()
     await result
     expect(Date.now() - start).toBe(5000)
-    expect(fetch.mock.calls.map(call => call[1].method)).toEqual(['GET', 'POST', 'POST'])
+    expect(fetch.mock.calls.map(call => call[1].method)).toEqual(['GET', 'PATCH', 'PATCH'])
   })
 
   it.each(['body-read', 'invalid-json'])('POST 的 %s 响应不确定时按 tag 恢复', async (failure) => {
@@ -104,15 +105,15 @@ describe('repoctl GitHub Release 恢复补丁', () => {
     expect(fetch).toHaveBeenCalledTimes(2)
   })
 
-  it('最多尝试四次 POST，并保留失败结果', async () => {
+  it('最多尝试四次 PATCH，并保留失败结果', async () => {
     vi.useFakeTimers()
-    const fetch = vi.fn(async (_url, init) => response(init.method === 'GET' ? 404 : 502, {}))
+    const fetch = vi.fn(async (_url, init) => response(init.method === 'GET' ? 200 : 502, release))
     const pending = createClient(fetch).ensureRelease(request)
-    // POST 502 耗尽 request 重试后，恢复查询 404 会盖住原始 502。
-    const result = expect(pending).rejects.toMatchObject({ status: 404 })
+    const result = expect(pending).rejects.toMatchObject({ status: 502 })
     await vi.runAllTimersAsync()
     await result
-    expect(fetch.mock.calls.filter(call => call[1].method === 'POST')).toHaveLength(4)
+    expect(fetch.mock.calls.filter(call => call[1].method === 'PATCH')).toHaveLength(4)
+    expect(fetch.mock.calls.filter(call => call[1].method === 'POST')).toHaveLength(0)
   })
 
   it.each([401, 403])('不重试永久权限错误 %s', async (status) => {
@@ -141,12 +142,14 @@ describe('repoctl 缺失 Release 对账', () => {
       await writeFile(path.join(cwd, 'package.json'), JSON.stringify({ name: 'recovery-workspace', private: true }))
       await writeFile(path.join(cwd, 'pnpm-workspace.yaml'), 'packages:\n  - packages/*\n')
       await writeFile(path.join(cwd, 'packages', 'fixture', 'package.json'), JSON.stringify({ name: '@fixture/pkg', version: '1.0.0' }))
+      const changelog = '# @fixture/pkg\n\n## 1.0.0\n\n### Patch Changes\n\n- 修复变量丢失。\n'
+      await writeFile(path.join(cwd, 'packages', 'fixture', 'CHANGELOG.md'), changelog)
       const calls: string[][] = []
       const spawn = vi.fn((command, args) => {
         calls.push([command, ...args])
         let stdout = ''
         if ((command === 'pnpm' || command === 'npm') && args[0] === 'view') {
-          stdout = '1.0.0'
+          stdout = JSON.stringify({ version: '1.0.0', gitHead: request.target })
         }
         else if (command === 'git' && args[0] === 'rev-parse') {
           stdout = request.target
@@ -154,11 +157,14 @@ describe('repoctl 缺失 Release 对账', () => {
         else if (command === 'git' && args[0] === 'ls-remote') {
           stdout = `${request.target}\trefs/tags/${tag}`
         }
+        else if (command === 'git' && args[0] === 'ls-tree') {
+          stdout = '100644 blob fixture\tpackages/fixture/CHANGELOG.md'
+        }
         else if (command === 'git' && args[0] === 'show' && args[1].endsWith('package.json')) {
           stdout = JSON.stringify({ name: '@fixture/pkg', version: '1.0.0' })
         }
         else if (command === 'git' && args[0] === 'show') {
-          stdout = '# @fixture/pkg\n\n## 1.0.0\n\n### Patch Changes\n\n- 修复变量丢失。\n'
+          stdout = changelog
         }
         else { throw new Error(`Unexpected command: ${command} ${args.join(' ')}`) }
         return { status: 0, stdout, stderr: '', pid: 1, output: [], signal: null }
@@ -169,7 +175,7 @@ describe('repoctl 缺失 Release 对账', () => {
       expect(result.repaired).toEqual(dryRun ? [] : [tag])
       expect(ensureRelease).toHaveBeenCalledTimes(dryRun ? 0 : 1)
       expect(calls.some(call => call.includes('publish'))).toBe(false)
-      expect(calls).toContainEqual(['npm', 'view', tag, 'version'])
+      expect(calls).toContainEqual(['npm', 'view', tag, '--json'])
       expect(github.updateRelease).not.toHaveBeenCalled()
       if (!dryRun) {
         github.listReleases.mockResolvedValue([{ ...release, body: ensureRelease.mock.calls[0]![0].body }])
@@ -193,7 +199,7 @@ describe('repoctl 缺失 Release 对账', () => {
       const spawn = vi.fn((command, args) => {
         let stdout = ''
         if ((command === 'pnpm' || command === 'npm') && args[0] === 'view') {
-          stdout = mismatch === 'npm' ? '0.9.0' : '1.0.0'
+          stdout = JSON.stringify({ version: mismatch === 'npm' ? '0.9.0' : '1.0.0', gitHead: request.target })
         }
         else if (command === 'git' && args[0] === 'rev-parse') {
           stdout = request.target
@@ -202,21 +208,20 @@ describe('repoctl 缺失 Release 对账', () => {
           stdout = `${mismatch === 'remote-tag' ? 'b'.repeat(40) : request.target}\trefs/tags/${tag}`
         }
         else if (command === 'git' && args[0] === 'show') {
-          stdout = JSON.stringify({ name: '@fixture/pkg', version: '0.9.0' })
+          stdout = JSON.stringify({ name: '@fixture/pkg', version: mismatch === 'tagged-version' ? '0.9.0' : '1.0.0' })
+        }
+        else if (command === 'git' && args[0] === 'ls-tree') {
+          stdout = ''
         }
         else { throw new Error(`Unexpected command: ${command} ${args.join(' ')}`) }
         return { status: 0, stdout, stderr: '', pid: 1, output: [], signal: null }
       })
       const github = { listReleases: vi.fn(async () => []), updateRelease: vi.fn(), ensureRelease: vi.fn() }
-      const result = await repairReleaseNotes({ cwd, tag, createMissing: true, spawn: spawn as never, github })
-      if (mismatch === 'npm') {
-        expect(result.repaired).toEqual([])
-        expect(github.ensureRelease).not.toHaveBeenCalled()
-      }
-      else {
-        expect(result.repaired).toEqual([tag])
-        expect(github.ensureRelease).toHaveBeenCalledTimes(1)
-      }
+      const expectedError = mismatch === 'npm'
+        ? 'npm returned invalid metadata'
+        : mismatch === 'remote-tag' ? 'Tag target conflict' : 'Original commit does not contain'
+      await expect(repairReleaseNotes({ cwd, tag, createMissing: true, spawn: spawn as never, github })).rejects.toThrow(expectedError)
+      expect(github.ensureRelease).not.toHaveBeenCalled()
       expect(github.updateRelease).not.toHaveBeenCalled()
       expect(spawn.mock.calls.some(([command, args]) => (command === 'pnpm' || command === 'npm') && args.includes('publish'))).toBe(false)
     }
