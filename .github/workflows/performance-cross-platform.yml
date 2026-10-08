@@ -37,6 +37,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build performance dependencies
+        run: pnpm --filter 'benchmark-performance^...' run build
+
       - name: Generate cross-platform report
         run: pnpm perf:report -- --runs 3 --warmups 2 --out-dir .tmp/performance-report
 
