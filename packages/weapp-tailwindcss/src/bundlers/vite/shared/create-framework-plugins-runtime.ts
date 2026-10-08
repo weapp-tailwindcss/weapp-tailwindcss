@@ -45,6 +45,7 @@ import { cleanUrl, slash } from '../utils'
 import { shouldAdaptFrameworkWatchCssBeforeCache } from '../watch-css-post'
 import { createConfiguredCssEntryDiagnostics } from './configured-css-entry-observer'
 import { createFrameworkCssAssets } from './framework-css-assets'
+import { createFrameworkCssEmissionFinalizerPlugin } from './framework-css-emission'
 import { createFrameworkCssGenerator } from './framework-css-generator'
 import { createViteHmrCandidateState } from './framework-hmr-candidate-state'
 import { createViteHmrCssModuleVersionFilterPlugin, createViteHmrCssModuleVersionTracker } from './framework-hmr-module-version'
@@ -206,6 +207,7 @@ export function createViteFrameworkPlugins(options: ViteFrameworkRuntimeOptions 
     shouldSkipSourceCandidateState,
   }, createGenericWebProductionSourceCandidatesApply({ frameworkName: frameworkBranch.frameworkName, getIsWebGeneratorTarget: () => resolveCurrentGeneratorBranch().isWeb, requiresSourceCandidateState: isCssSourceTraceEnabled(opts) }))
   /* eslint-enable antfu/consistent-list-newline */
+  const transformEmittedWebCss = frameworkCssPipelineStrategy?.transformEmittedWebCss
   const postPlugin = createFrameworkPostPlugin({
     api: {
       registerProcessedCssAsset(entry: {
@@ -231,10 +233,15 @@ export function createViteFrameworkPlugins(options: ViteFrameworkRuntimeOptions 
     opts,
     resolveViteStylePlatform,
     refreshRuntimeState,
+    getResolvedConfig: () => resolvedConfig,
     setResolvedConfig: (config: ResolvedConfig) => { resolvedConfig = config },
     shouldInferAppType,
     shouldOwnTailwindGeneration,
     syncCssEntriesFromAnchor,
+    transformEmittedWebCss: transformEmittedWebCss
+      ? (css: string) => transformEmittedWebCss(css, createCssPipelineContext())
+      : undefined,
+    shouldRehashEmittedWebCssAsset: frameworkCssPipelineStrategy?.shouldRehashEmittedWebCssAsset,
   })
   const sourceAndRewritePlugins = orderFrameworkSourceCandidatePlugins(extraPlugins, rewritePlugins, sourceCandidatesPlugin, frameworkBranch.sourceCandidatesBeforeExtraPlugin)
   const serveJsPlugin = capability.serveJsTransform ? createViteServeJsTransformPlugin({ createHandlerOptions: file => serveJsHandlerOptions(file, frameworkCssPipelineStrategy?.getServeJsHandlerOptions?.({ ...createCssPipelineContext(), file })), getCommand: () => resolvedConfig?.command, jsHandler, shouldTransform: () => shouldOwnTailwindGeneration && (frameworkCssPipelineStrategy?.shouldTransformServeJs?.(createCssPipelineContext()) ?? !resolveCurrentGeneratorBranch().isWeb), transformRuntime: (id, code) => registerModuleGraphCandidates(id, code, 'js') }) : undefined
@@ -260,5 +267,8 @@ export function createViteFrameworkPlugins(options: ViteFrameworkRuntimeOptions 
       }
     },
   }))
+  if (transformEmittedWebCss) {
+    plugins.push(createFrameworkCssEmissionFinalizerPlugin(getResolvedConfig))
+  }
   return plugins
 }

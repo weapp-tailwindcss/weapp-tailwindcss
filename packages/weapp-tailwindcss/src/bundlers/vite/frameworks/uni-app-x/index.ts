@@ -72,6 +72,15 @@ export const uniAppXCssPipelineStrategy: ViteFrameworkCssPipelineStrategy = {
     )
     return context.currentGeneratorBranch.isWeb ? output : hoistUniAppXBorderPreflight(output)
   },
+  transformEmittedWebCss(css, context) {
+    if (!context.currentGeneratorBranch.isWeb || !/border-width\s*:\s*medium\b/i.test(css)) {
+      return css
+    }
+    return withUniAppXWebPreflightReset(css, context.currentGeneratorBranch.isWeb)
+  },
+  shouldRehashEmittedWebCssAsset(file) {
+    return typeof file.fileName === 'string' && file.fileName.endsWith('.css')
+  },
 }
 
 export function createUniAppXVitePlugins(options: UserDefinedOptions | InternalUserDefinedOptions = {}) {
