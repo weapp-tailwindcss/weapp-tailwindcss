@@ -27,9 +27,11 @@
 
 ## 构建与验证
 
-开发者可运行 `pnpm --filter weapp-tailwindcss build:native` 构建当前主包内核。该显式命令需要已安装的 Rust 工具链和链接器。构建输出留在忽略目录中，并复制到对应平台包，不写入 bundler 构建产物。
+开发者可在仓库根目录运行 `pnpm build:native` 构建当前主包内核，等同于 `pnpm --filter weapp-tailwindcss build:native`。该显式命令需要已安装的 Rust 工具链和链接器。构建输出留在忽略目录中，并复制到对应平台包，不写入 bundler 构建产物。
 
-完整平台任务使用 `node packages/weapp-tailwindcss/native/ci.mjs --target=<Rust target>`，在该目标平台依次执行：
+`pnpm build:native:postcss` 等同于 `pnpm --filter @weapp-tailwindcss/postcss build:native`，仅生成 PostCSS 开发用的本地 `native/weapp-tailwindcss-postcss.node`。要生成当前平台包中的两个 binding、摘要元数据和第三方许可，并执行完整验证，使用 `pnpm native:ci --target=<Rust target>`；例如 Apple Silicon macOS 使用 `pnpm native:ci --target=aarch64-apple-darwin`。
+
+完整平台任务使用 `pnpm native:ci --target=<Rust target>`，等同于 `node packages/weapp-tailwindcss/native/ci.mjs --target=<Rust target>`，在该目标平台依次执行：
 
 1. 两个 crate 的 `cargo test --locked` 与 `cargo clippy --locked --all-targets -- -D warnings`。
 2. 两个 release binding 构建、平台包暂存，以及 TypeScript 消费包构建。
