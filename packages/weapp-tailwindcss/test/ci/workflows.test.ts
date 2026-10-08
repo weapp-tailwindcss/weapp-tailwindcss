@@ -743,10 +743,12 @@ describe('ci workflows', () => {
     expect(config).toContain('beforePublish: [\'native:artifacts:verify\']')
     expect(config).toContain("script: 'release:sync-npmmirror'")
     expect(config).toContain('continueOnError: true')
+    expect(config).toContain('idempotent: true')
     expect(packageJson.scripts['release:verify']).toBe('pnpm native:artifacts:verify && node scripts/verify-packed-packages.mjs && pnpm test:release')
     expect(packageJson.scripts['native:artifacts:before-version']).toBe('node packages/weapp-tailwindcss/native/release.mjs before-version')
     expect(packageJson.scripts['native:artifacts:after-version']).toBe('node packages/weapp-tailwindcss/native/release.mjs after-version')
-    expect(packageJson.scripts['release:sync-npmmirror']).toBe('node scripts/sync-npmmirror.mjs')
+    expect(packageJson.scripts['release:sync-npmmirror']).toBe('repo release sync-npmmirror --published')
+    expect(packageJson.scripts['sync:npmmirror']).toBe('repo release sync-npmmirror --all')
   })
 
   it('keeps PR benchmark coverage on the smoke demo matrix', () => {

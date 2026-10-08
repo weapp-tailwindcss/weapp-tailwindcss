@@ -57,7 +57,7 @@
     "test:dev": "vitest",
     "tsd": "tsd",
     "release": "pnpm publish",
-    "sync": "cnpm sync @weapp-tailwindcss/typography"
+    "sync": "repo release sync-npmmirror --package @weapp-tailwindcss/typography"
   },
   "dependencies": {
     "htmlparser2": "catalog:buildUtilities",

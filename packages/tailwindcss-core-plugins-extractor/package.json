@@ -31,7 +31,7 @@
   "scripts": {
     "extract": "node scripts/main.js",
     "build": "tsdown",
-    "sync": "cnpm sync tailwindcss-core-plugins-extractor"
+    "sync": "repo release sync-npmmirror --package tailwindcss-core-plugins-extractor"
   },
   "publishConfig": {
     "access": "public",
