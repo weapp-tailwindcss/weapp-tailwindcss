@@ -96,6 +96,14 @@ describe('demo/web vite matrix', () => {
     }
   })
 
+  it('keeps the Nuxt 4.6 Windows renderer workaround separator agnostic', async () => {
+    const config = await readDemoFile('web/nuxt-vite-tailwindcss-v4/nuxt.config.ts')
+
+    expect(config).toContain('nitro: {')
+    expect(config).toContain('externals: {')
+    expect(config).toContain('inline: [/[\\\\/]node_modules[\\\\/]nuxt[\\\\/]dist[\\\\/]/]')
+  })
+
   it('keeps v4 CSS entries using Tailwind CSS import layers', async () => {
     const sources = await Promise.all([
       readDemoFile('web/react-vite-tailwindcss-v4/src/style.css'),
