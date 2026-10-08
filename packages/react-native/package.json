@@ -1,7 +1,7 @@
 {
   "name": "@weapp-tailwindcss/react-native",
   "type": "module",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Tailwind CSS compiler and Expo Metro integration for cross-platform React Native apps. 面向跨端 React Native 应用的 Tailwind CSS 编译器与 Expo Metro 集成。",
   "license": "MIT",
   "homepage": "https://tw.weapp.dev/docs/quick-start/react-native-expo",
