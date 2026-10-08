@@ -1,7 +1,7 @@
 {
   "name": "@weapp-tailwindcss/experimental",
   "type": "module",
-  "version": "0.0.48",
+  "version": "0.0.49",
   "description": "Experimental integrations for cross-platform Tailwind CSS. 跨端 Tailwind CSS 实验性集成能力。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "ISC",

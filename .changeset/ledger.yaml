@@ -84,6 +84,10 @@
     - scoped-generation-invalidation
     - uni-app-x-local-utility-cascade
     - uni-app-x-session-source-preparation
+"@weapp-tailwindcss/engine@0.1.5":
+  dir: packages/engine
+  intents:
+    - source-candidate-file-budget
 "@weapp-tailwindcss/escape@0.0.2":
   dir: packages/escape
   intents:
@@ -319,6 +323,11 @@
   intents:
     - dependency-update-147e36d2-f4f6-4879-bedc-64692d0438da
     - neat-suns-destroy
+"@weapp-tailwindcss/postcss@3.4.0":
+  dir: packages/postcss
+  intents:
+    - postcss-selector-options-lifecycle
+    - rust-native-compiler
 "@weapp-tailwindcss/react-native@0.2.19":
   dir: packages/react-native
   intents:
@@ -675,6 +684,16 @@ weapp-tailwindcss@5.5.9:
     - dependency-update-90e4d73f-7515-4892-ac86-714172a43761
     - fix-calc-static-context
     - fix-rpx-theme-calc
+weapp-tailwindcss@5.6.0:
+  dir: packages/weapp-tailwindcss
+  intents:
+    - clever-donkeys-wait
+    - oxc-class-context-incremental
+    - oxc-raw-transfer-condition-parity
+    - rust-native-compiler
+    - source-candidate-file-budget
+    - webpack-runtime-preparation
+    - webpack-unmatched-child-compilation
 weapp-tw@0.0.3:
   dir: packages/weapp-tw
   intents:
