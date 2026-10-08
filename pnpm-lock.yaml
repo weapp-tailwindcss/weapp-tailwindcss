@@ -795,6 +795,7 @@ patchedDependencies:
   rollup@4.63.1: c8c92d871ccf0418d1ba8b1f11a3371b706a1787f102194edb01d655e1ae84e0
   rollup@4.63.5: 618e46f264569db024ce086e1f1476e9bba0e6814413dc29febeaf4c22932fa6
   weapp-vite@7.4.0: dc8d77006a4374ba1e6f3656abe2dafccd2c6d91654da26f46d359aece5e2585
+  webpack@5.105.4: 62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519
 
 importers:
 
@@ -1164,8 +1165,8 @@ importers:
         specifier: ^1.0.1
         version: 1.0.1
       repoctl:
-        specifier: ^5.8.0
-        version: 5.8.0(2a7a644ca620b881e90c1883f147e059)
+        specifier: ^5.8.1
+        version: 5.8.1(bad8afcc04c8c7e82f29b40220b190bb)
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -1273,7 +1274,7 @@ importers:
         version: 0.1.0(tailwindcss@4.3.3)
       webpack:
         specifier: 5.105.4
-        version: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+        version: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
       webpack-build-utils:
         specifier: ^0.0.7
         version: 0.0.7
@@ -2184,7 +2185,7 @@ importers:
         version: link:../../packages/weapp-tailwindcss
       webpack:
         specifier: 5.105.4
-        version: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+        version: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   demo/style-injector-mpx:
     dependencies:
@@ -2293,7 +2294,7 @@ importers:
         version: link:../../packages/weapp-style-injector
       webpack:
         specifier: 5.105.4
-        version: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+        version: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   demo/style-injector-taro-vite-react:
     dependencies:
@@ -2496,7 +2497,7 @@ importers:
         version: link:../../packages/weapp-style-injector
       webpack:
         specifier: 5.105.4
-        version: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+        version: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   demo/style-injector-uni-app:
     dependencies:
@@ -2738,7 +2739,7 @@ importers:
         version: link:../../packages/weapp-tailwindcss
       webpack:
         specifier: 5.105.4
-        version: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+        version: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   demo/subpackage-uni-app-vite-tailwindcss-v4:
     dependencies:
@@ -3501,7 +3502,7 @@ importers:
         version: link:../../packages/weapp-tailwindcss
       webpack:
         specifier: 5.105.4
-        version: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+        version: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   demo/taro-webpack-vue3-tailwindcss-v4:
     dependencies:
@@ -3724,7 +3725,7 @@ importers:
         version: link:../../packages/weapp-tailwindcss
       webpack:
         specifier: 5.105.4
-        version: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+        version: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   demo/uni-app-vite-tailwindcss-v4:
     dependencies:
@@ -4261,7 +4262,7 @@ importers:
         version: link:../../../packages/weapp-tailwindcss
       webpack:
         specifier: 5.105.4
-        version: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+        version: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
       webpack-cli:
         specifier: catalog:webpackTools
         version: 7.2.3(js-yaml@5.4.2)(json5@2.2.3)(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.105.4)
@@ -4439,7 +4440,7 @@ importers:
         version: link:../../../packages/weapp-tailwindcss
       webpack:
         specifier: 5.105.4
-        version: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+        version: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
       webpack-cli:
         specifier: catalog:webpackTools
         version: 7.2.3(js-yaml@5.4.2)(json5@2.2.3)(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.105.4)
@@ -5344,7 +5345,7 @@ importers:
         version: 7.3.6(@types/node@26.6.4)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)
       webpack:
         specifier: 5.105.4
-        version: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+        version: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
     optionalDependencies:
       '@weapp-tailwindcss/native-darwin-arm64':
         specifier: workspace:*
@@ -5673,7 +5674,7 @@ importers:
         version: link:../../packages/weapp-tailwindcss
       webpack:
         specifier: 5.105.4
-        version: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+        version: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   starter/uni-app-vite:
     dependencies:
@@ -5976,7 +5977,7 @@ importers:
         version: 4.13.0(typedoc@0.28.20(typescript@6.0.3))
       webpack:
         specifier: 5.105.4
-        version: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+        version: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
       webpack-node-externals:
         specifier: ^3.0.0
         version: 3.0.0
@@ -36356,28 +36357,7 @@ packages:
       tailwindcss:
         optional: true
 
-  '@icebreakers/monorepo-templates@2.3.0':
-    resolution: {integrity: sha512-P0HdSxznSdXVnxFLDyWcu4xpCJ1BjX6APaAOWtV47Bla5XnVie6oZMf+cPTWxbl4dzVCwZA3A2CESyNNdwzTLQ==}
-    engines: {node: '>=22.13.0'}
 
-  '@icebreakers/monorepo@5.8.0':
-    resolution: {integrity: sha512-FJrlOIQdykaBmgVQ4TSf+gSd0NBvtAhqY9LDZ8ENu9dzstWvONSsL4MmI/65JnJ4IMt9PjYTxgQ4Ii40XKeZqg==}
-    engines: {node: '>=22.13.0'}
-    hasBin: true
-    peerDependencies:
-      '@commitlint/cli': ^21.2.3
-      eslint: ^9.0.0 || ^10.0.0
-      stylelint: ^17.16.0
-      typescript: ^5.0.0 || ^6.0.0
-    peerDependenciesMeta:
-      '@commitlint/cli':
-        optional: true
-      eslint:
-        optional: true
-      stylelint:
-        optional: true
-      typescript:
-        optional: true
 
   '@icebreakers/stylelint-config@5.1.3':
     resolution: {integrity: sha512-3pI6VJxPQmcOmoLmfIi8ICGnuVhgZfhze+8lUhc5GzuHeAyZD83SW47mPhdLv6ZJ3sTvvtQXYtkvViyv3pp5qA==}
@@ -36806,27 +36786,6 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  repoctl@5.8.0:
-    resolution: {integrity: sha512-qGZUIzrNo58pU0L6urx7oNs9n20wwzbGMun4qmCxnpNcflAe6nuq3Yo8zd/kar8Lopng0yktDmQSzFsUXNCuoA==}
-    engines: {node: '>=22.13.0'}
-    hasBin: true
-    peerDependencies:
-      '@commitlint/cli': ^21.2.3
-      eslint: ^9.0.0 || ^10.0.0
-      stylelint: ^17.16.0
-      typescript: ^5.0.0 || ^6.0.0
-      vitest: ^5.0.3
-    peerDependenciesMeta:
-      '@commitlint/cli':
-        optional: true
-      eslint:
-        optional: true
-      stylelint:
-        optional: true
-      typescript:
-        optional: true
-      vitest:
-        optional: true
 
   sade@1.8.1:
     resolution: {integrity: sha512-xal3CZX1Xlo/k4ApwCFrHVACi9fBqJ7V+mwhBsuf/1IOKbBy098Fex+Wa/5QMubw09pSZ/u8EY8PWgevJsXp1A==}
@@ -36873,6 +36832,51 @@ packages:
   walk-up-path@4.0.0:
     resolution: {integrity: sha512-3hu+tD8YzSLGuFYtPRb48vdhKMi0KQV5sn+uWr8+7dMEq/2G/dtLrdDinkLjqq5TIbIBjYJ4Ax/n3YiaW7QM8A==}
     engines: {node: 20 || >=22}
+
+  repoctl@5.8.1:
+    resolution: {integrity: sha512-c5hf7arL9Hz4ONctUW92CPFSheL0SQcdcaBS7TsVenBCkeFZokfTzF1s2b9DFMKZ4Q/QL0yHQznismPCmHl4xw==}
+    engines: {node: '>=22.13.0'}
+    hasBin: true
+    peerDependencies:
+      '@commitlint/cli': ^21.2.3
+      eslint: ^9.0.0 || ^10.0.0
+      stylelint: ^17.16.0
+      typescript: ^5.0.0 || ^6.0.0
+      vitest: ^5.0.3
+    peerDependenciesMeta:
+      '@commitlint/cli':
+        optional: true
+      eslint:
+        optional: true
+      stylelint:
+        optional: true
+      typescript:
+        optional: true
+      vitest:
+        optional: true
+
+  '@icebreakers/monorepo@5.8.1':
+    resolution: {integrity: sha512-ISdjjXkhgR6XcUTygCgWFr0Go1S0XDo/mKyjjS5ZEz5EaVmt/V+gdRA4BLf8VCD1ZxxxqlRa3jemCfrG3TBkUw==}
+    engines: {node: '>=22.13.0'}
+    hasBin: true
+    peerDependencies:
+      '@commitlint/cli': ^21.2.3
+      eslint: ^9.0.0 || ^10.0.0
+      stylelint: ^17.16.0
+      typescript: ^5.0.0 || ^6.0.0
+    peerDependenciesMeta:
+      '@commitlint/cli':
+        optional: true
+      eslint:
+        optional: true
+      stylelint:
+        optional: true
+      typescript:
+        optional: true
+
+  '@icebreakers/monorepo-templates@2.3.1':
+    resolution: {integrity: sha512-HU/IsZtuZFcM8fZ83As8x+D9Uua8RVOFKqSW4P+k5hx0VVh3ZyYTwwRB8qXsJpRg89+11vQuTwG0WlrAXJZP6g==}
+    engines: {node: '>=22.13.0'}
 
 snapshots:
 
@@ -47337,7 +47341,7 @@ snapshots:
       portfinder: 1.0.38(supports-color@10.2.2)
       std-env: 3.10.0
       terser-webpack-plugin: 5.6.0(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack@5.105.4)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
       webpack-bundle-analyzer: 4.10.2
       webpack-chain: 6.5.1
       webpack-dev-server: 4.15.2(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(webpack-cli@7.2.3)(webpack@5.105.4)
@@ -47586,7 +47590,7 @@ snapshots:
       semver: 7.8.5
       source-list-map: 2.0.1
       source-map: 0.7.6
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
       webpack-virtual-modules: 0.6.2
     optionalDependencies:
       vue: 2.7.16
@@ -48778,7 +48782,7 @@ snapshots:
       react-refresh: 0.18.0
       schema-utils: 4.3.3
       source-map: 0.7.6
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
     optionalDependencies:
       '@types/webpack': 5.28.5(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
       type-fest: 5.9.0
@@ -48793,7 +48797,7 @@ snapshots:
       react-refresh: 0.14.2
       schema-utils: 4.3.3
       source-map: 0.7.6
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
     optionalDependencies:
       '@types/webpack': 5.28.5(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
       type-fest: 5.9.0
@@ -48809,7 +48813,7 @@ snapshots:
       react-refresh: 0.18.0
       schema-utils: 4.3.3
       source-map: 0.7.6
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
     optionalDependencies:
       '@types/webpack': 5.28.5(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
       type-fest: 5.9.0
@@ -52041,7 +52045,7 @@ snapshots:
       source-map: 0.7.6
     optionalDependencies:
       '@rspack/core': 2.2.2(@swc/helpers@0.5.23)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   '@rsdoctor/types@1.6.4(@rspack/core@2.2.2(@swc/helpers@0.5.23))(webpack@5.105.4)':
     dependencies:
@@ -52051,7 +52055,7 @@ snapshots:
       source-map: 0.7.6
     optionalDependencies:
       '@rspack/core': 2.2.2(@swc/helpers@0.5.23)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   '@rsdoctor/utils@1.6.3(@rspack/core@2.2.2(@swc/helpers@0.5.23))(webpack@5.105.4)':
     dependencies:
@@ -52608,7 +52612,7 @@ snapshots:
       error-stack-parser: 2.1.4
       string-width: 4.2.3
       strip-ansi: 6.0.1
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   '@soda/friendly-errors-webpack-plugin@1.8.1(webpack@5.109.2)':
     dependencies:
@@ -53644,7 +53648,7 @@ snapshots:
       '@vitejs/plugin-react': 4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.4)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))
       react: 18.3.1
       vite: 4.5.14(@types/node@26.6.4)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   '@tarojs/plugin-framework-react@4.2.1(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.14.2)(type-fest@5.9.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.4)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@4.5.14(@types/node@26.6.4)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)':
     dependencies:
@@ -53660,7 +53664,7 @@ snapshots:
       '@vitejs/plugin-react': 4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.4)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))
       react: 18.3.1
       vite: 4.5.14(@types/node@26.6.4)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   '@tarojs/plugin-framework-react@4.2.1(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.14.2)(type-fest@5.9.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@5.4.21(@types/node@26.6.4)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@5.4.21(@types/node@26.6.4)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)':
     dependencies:
@@ -53676,7 +53680,7 @@ snapshots:
       '@vitejs/plugin-react': 4.7.0(supports-color@10.2.2)(vite@5.4.21(@types/node@26.6.4)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))
       react: 18.3.1
       vite: 5.4.21(@types/node@26.6.4)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   '@tarojs/plugin-framework-react@4.2.1(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.18.0)(type-fest@5.9.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.4)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@4.5.14(@types/node@26.6.4)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)':
     dependencies:
@@ -53692,7 +53696,7 @@ snapshots:
       '@vitejs/plugin-react': 4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.4)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))
       react: 18.3.1
       vite: 4.5.14(@types/node@26.6.4)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   '@tarojs/plugin-framework-vue3@4.2.1(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runner-utils@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-vue-jsx@3.1.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.4)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue@3.5.43(typescript@6.0.3)))(@vitejs/plugin-vue@4.6.2(vite@4.5.14(@types/node@26.6.4)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue@3.5.43(typescript@6.0.3)))(vite@4.5.14(@types/node@26.6.4)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue-loader@17.4.2(@vue/compiler-sfc@3.5.43)(vue@3.5.43(typescript@6.0.3))(webpack@5.105.4))(vue@3.5.43(typescript@6.0.3))(webpack@5.105.4)':
     dependencies:
@@ -53704,7 +53708,7 @@ snapshots:
       tslib: 2.6.2
       vue: 3.5.43(typescript@6.0.3)
       vue-loader: 17.4.2(@vue/compiler-sfc@3.5.43)(vue@3.5.43(typescript@6.0.3))(webpack@5.105.4)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
     optionalDependencies:
       '@vitejs/plugin-vue': 4.6.2(vite@4.5.14(@types/node@26.6.4)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue@3.5.43(typescript@6.0.3))
       '@vitejs/plugin-vue-jsx': 3.1.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.4)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue@3.5.43(typescript@6.0.3))
@@ -54738,7 +54742,7 @@ snapshots:
     dependencies:
       '@tarojs/helper': 4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2)
       '@tarojs/shared': 4.2.1
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
     transitivePeerDependencies:
       - '@swc/helpers'
       - supports-color
@@ -54977,7 +54981,7 @@ snapshots:
       html-webpack-plugin: 5.6.8(@rspack/core@1.7.11(@swc/helpers@0.5.23))(webpack@5.105.4)
       rollup: 3.30.0(patch_hash=b0e7b942f2190fea1ae08c783d9ff2eb913240d4fcbe3ce13e5da042a4f164bd)
       vue: 3.5.42(typescript@6.0.3)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
       webpack-chain: 6.5.1
       webpack-dev-server: 4.15.2(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(webpack-cli@7.2.3)(webpack@5.105.4)
 
@@ -54995,7 +54999,7 @@ snapshots:
       html-webpack-plugin: 5.6.8(@rspack/core@1.7.11(@swc/helpers@0.5.23))(webpack@5.105.4)
       rollup: 3.30.0(patch_hash=b0e7b942f2190fea1ae08c783d9ff2eb913240d4fcbe3ce13e5da042a4f164bd)
       vue: 3.5.43(typescript@6.0.3)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
       webpack-chain: 6.5.1
       webpack-dev-server: 4.15.2(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(webpack-cli@7.2.3)(webpack@5.105.4)
 
@@ -55013,7 +55017,7 @@ snapshots:
       html-webpack-plugin: 5.6.8(@rspack/core@2.2.2(@swc/helpers@0.5.23))(webpack@5.105.4)
       rollup: 3.30.0(patch_hash=b0e7b942f2190fea1ae08c783d9ff2eb913240d4fcbe3ce13e5da042a4f164bd)
       vue: 3.5.42(typescript@6.0.3)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
       webpack-chain: 6.5.1
       webpack-dev-server: 4.15.2(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(webpack-cli@7.2.3)(webpack@5.105.4)
 
@@ -55031,7 +55035,7 @@ snapshots:
       html-webpack-plugin: 5.6.8(@rspack/core@2.2.2(@swc/helpers@0.5.23))(webpack@5.105.4)
       rollup: 3.30.0(patch_hash=b0e7b942f2190fea1ae08c783d9ff2eb913240d4fcbe3ce13e5da042a4f164bd)
       vue: 3.5.43(typescript@6.0.3)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
       webpack-chain: 6.5.1
       webpack-dev-server: 4.15.2(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(webpack-cli@7.2.3)(webpack@5.105.4)
 
@@ -55138,7 +55142,7 @@ snapshots:
       enhanced-resolve: 5.24.2
       es-module-lexer: 0.10.5
       lodash: 4.18.1
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
       webpack-virtual-modules: 0.6.2
     transitivePeerDependencies:
       - '@swc/helpers'
@@ -55190,7 +55194,7 @@ snapshots:
       stylus-loader: 8.1.2(@rspack/core@1.7.11(@swc/helpers@0.5.23))(stylus@0.63.0(supports-color@10.2.2))(webpack@5.105.4)
       terser-webpack-plugin: 5.6.1(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack@5.105.4)
       vm2: 3.10.0
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
       webpack-chain: 6.5.1
       webpack-dev-server: 4.15.2(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(webpack-cli@7.2.3)(webpack@5.105.4)
       webpack-format-messages: 3.0.1
@@ -56419,7 +56423,7 @@ snapshots:
       oxc-parser: 0.153.0
       rolldown: 1.2.12
       vite: 7.3.6(@types/node@26.6.4)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
     transitivePeerDependencies:
       - '@farmfe/core'
       - '@oxc-project/types'
@@ -56437,7 +56441,7 @@ snapshots:
       vue: 3.5.43(typescript@6.0.3)
     optionalDependencies:
       vite: 7.3.6(@types/node@26.6.4)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
     transitivePeerDependencies:
       - '@farmfe/core'
       - '@oxc-project/types'
@@ -58941,7 +58945,7 @@ snapshots:
       find-up: 5.0.0
     optionalDependencies:
       '@rspack/core': 2.2.2(@swc/helpers@0.5.23)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   babel-loader@8.2.1(@babel/core@7.29.7(supports-color@10.2.2))(webpack@5.105.4):
     dependencies:
@@ -58951,7 +58955,7 @@ snapshots:
       make-dir: 2.1.0
       pify: 4.0.1
       schema-utils: 2.7.1
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   babel-loader@8.4.1(@babel/core@7.29.7(supports-color@10.2.2))(webpack@5.105.4):
     dependencies:
@@ -58960,7 +58964,7 @@ snapshots:
       loader-utils: 2.0.4
       make-dir: 3.1.0
       schema-utils: 2.7.1
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   babel-loader@8.4.1(@babel/core@7.29.7(supports-color@10.2.2))(webpack@5.110.2):
     dependencies:
@@ -60736,7 +60740,7 @@ snapshots:
       normalize-path: 3.0.0
       schema-utils: 4.3.3
       serialize-javascript: 6.0.2
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   copy-webpack-plugin@9.1.0(webpack@5.105.4):
     dependencies:
@@ -60746,7 +60750,7 @@ snapshots:
       normalize-path: 3.0.0
       schema-utils: 3.3.0
       serialize-javascript: 6.0.2
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   copy-webpack-plugin@9.1.0(webpack@5.109.2):
     dependencies:
@@ -61058,7 +61062,7 @@ snapshots:
       semver: 7.8.5
     optionalDependencies:
       '@rspack/core': 1.7.11(@swc/helpers@0.5.23)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   css-loader@7.1.5(@rspack/core@1.7.11(@swc/helpers@0.5.23))(webpack@5.110.2):
     dependencies:
@@ -61086,7 +61090,7 @@ snapshots:
       semver: 7.8.5
     optionalDependencies:
       '@rspack/core': 2.2.2(@swc/helpers@0.5.23)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   css-mediaquery@0.1.2: {}
 
@@ -61127,7 +61131,7 @@ snapshots:
       postcss: 8.5.29
       schema-utils: 4.3.3
       serialize-javascript: 6.0.2
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
     optionalDependencies:
       clean-css: 5.3.3
       csso: 5.0.5
@@ -61142,7 +61146,7 @@ snapshots:
       postcss: 8.5.29
       schema-utils: 4.3.3
       serialize-javascript: 7.1.1
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
     optionalDependencies:
       clean-css: 5.3.3
       csso: 5.0.5
@@ -62635,7 +62639,7 @@ snapshots:
       esbuild: 0.27.7
       get-tsconfig: 4.14.0
       loader-utils: 2.0.4
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
       webpack-sources: 1.4.3
 
   esbuild@0.18.20:
@@ -65789,7 +65793,7 @@ snapshots:
     dependencies:
       html-minifier-terser: 7.2.0
       parse5: 7.3.0
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   html-minifier-terser@6.1.0:
     dependencies:
@@ -65846,7 +65850,7 @@ snapshots:
       tapable: 2.3.3
     optionalDependencies:
       '@rspack/core': 1.7.11(@swc/helpers@0.5.23)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   html-webpack-plugin@5.6.8(@rspack/core@1.7.11(@swc/helpers@0.5.23))(webpack@5.109.2):
     dependencies:
@@ -65879,7 +65883,7 @@ snapshots:
       tapable: 2.3.3
     optionalDependencies:
       '@rspack/core': 2.2.2(@swc/helpers@0.5.23)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   htmlparser2@10.0.0:
     dependencies:
@@ -67749,7 +67753,7 @@ snapshots:
       less: 4.6.6
     optionalDependencies:
       '@rspack/core': 1.7.11(@swc/helpers@0.5.23)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   less-loader@12.3.0(@rspack/core@1.7.11(@swc/helpers@0.5.23))(less@4.6.6)(webpack@5.110.2):
     dependencies:
@@ -69746,7 +69750,7 @@ snapshots:
     dependencies:
       schema-utils: 4.3.3
       tapable: 2.3.3
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   mini-css-extract-plugin@2.10.2(webpack@5.110.2):
     dependencies:
@@ -70376,7 +70380,7 @@ snapshots:
   node-loader@2.1.0(webpack@5.105.4):
     dependencies:
       loader-utils: 2.0.4
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   node-mock-http@1.0.5: {}
 
@@ -72330,7 +72334,7 @@ snapshots:
       semver: 7.8.5
     optionalDependencies:
       '@rspack/core': 1.7.11(@swc/helpers@0.5.23)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
     transitivePeerDependencies:
       - typescript
 
@@ -72342,7 +72346,7 @@ snapshots:
       semver: 7.8.5
     optionalDependencies:
       '@rspack/core': 2.2.2(@swc/helpers@0.5.23)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
     transitivePeerDependencies:
       - typescript
 
@@ -75667,7 +75671,7 @@ snapshots:
       '@rspack/core': 1.7.11(@swc/helpers@0.5.23)
       sass: 1.105.1
       sass-embedded: 1.105.1
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   sass-loader@16.0.8(@rspack/core@1.7.11(@swc/helpers@0.5.23))(sass-embedded@1.105.1)(sass@1.105.1)(webpack@5.105.4):
     dependencies:
@@ -75676,14 +75680,14 @@ snapshots:
       '@rspack/core': 1.7.11(@swc/helpers@0.5.23)
       sass: 1.105.1
       sass-embedded: 1.105.1
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   sass-loader@17.0.1(@rspack/core@1.7.11(@swc/helpers@0.5.23))(sass-embedded@1.105.1)(sass@1.105.1)(webpack@5.105.4):
     optionalDependencies:
       '@rspack/core': 1.7.11(@swc/helpers@0.5.23)
       sass: 1.105.1
       sass-embedded: 1.105.1
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   sass-loader@17.0.1(@rspack/core@1.7.11(@swc/helpers@0.5.23))(sass-embedded@1.105.1)(sass@1.105.1)(webpack@5.110.2):
     optionalDependencies:
@@ -76813,7 +76817,7 @@ snapshots:
 
   style-loader@3.3.4(webpack@5.105.4):
     dependencies:
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   style-loader@4.0.0(webpack@5.105.0):
     dependencies:
@@ -76821,7 +76825,7 @@ snapshots:
 
   style-loader@4.0.0(webpack@5.105.4):
     dependencies:
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   style-to-js@1.1.21:
     dependencies:
@@ -77062,7 +77066,7 @@ snapshots:
       stylus: 0.63.0(supports-color@10.2.2)
     optionalDependencies:
       '@rspack/core': 1.7.11(@swc/helpers@0.5.23)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   stylus-loader@8.1.2(@rspack/core@1.7.11(@swc/helpers@0.5.23))(stylus@0.63.0(supports-color@10.2.2))(webpack@5.110.2):
     dependencies:
@@ -77424,7 +77428,7 @@ snapshots:
       jest-worker: 27.5.1
       schema-utils: 4.3.3
       terser: 5.51.2
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
     optionalDependencies:
       '@swc/core': 1.16.13(@swc/helpers@0.5.23)
       clean-css: 5.3.3
@@ -77478,7 +77482,7 @@ snapshots:
       jest-worker: 27.5.1
       schema-utils: 4.3.3
       terser: 5.51.2
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
     optionalDependencies:
       '@swc/core': 1.16.13(@swc/helpers@0.5.23)
       clean-css: 5.3.3
@@ -77532,7 +77536,7 @@ snapshots:
       jest-worker: 27.5.1
       schema-utils: 4.3.3
       terser: 5.51.2
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
     optionalDependencies:
       '@swc/core': 1.16.13(@swc/helpers@0.5.23)
       clean-css: 5.3.3
@@ -77568,7 +77572,7 @@ snapshots:
       jest-worker: 27.5.1
       schema-utils: 4.3.3
       terser: 5.51.2
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
     optionalDependencies:
       '@swc/core': 1.16.13(@swc/helpers@0.5.23)
       clean-css: 5.3.3
@@ -77874,7 +77878,7 @@ snapshots:
       semver: 7.8.5
       source-map: 0.7.6
       typescript: 6.0.3
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   ts-loader@9.5.7(typescript@6.0.3)(webpack@5.110.2):
     dependencies:
@@ -78514,7 +78518,7 @@ snapshots:
       rolldown: 1.2.11
       rollup: 4.63.5(patch_hash=618e46f264569db024ce086e1f1476e9bba0e6814413dc29febeaf4c22932fa6)
       vite: 7.3.6(@types/node@26.6.4)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
     optional: true
 
   unplugin@3.3.0(@rspack/core@2.2.2(@swc/helpers@0.5.23))(esbuild@0.28.2)(rolldown@1.2.12)(rollup@4.63.5(patch_hash=618e46f264569db024ce086e1f1476e9bba0e6814413dc29febeaf4c22932fa6))(vite@7.3.6(@types/node@26.6.4)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))(webpack@5.105.4):
@@ -78528,7 +78532,7 @@ snapshots:
       rolldown: 1.2.12
       rollup: 4.63.5(patch_hash=618e46f264569db024ce086e1f1476e9bba0e6814413dc29febeaf4c22932fa6)
       vite: 7.3.6(@types/node@26.6.4)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
     optional: true
 
   unplugin@3.3.0(@rspack/core@2.2.8(@swc/helpers@0.5.23))(esbuild@0.28.2)(rolldown@1.2.12)(rollup@4.63.1(patch_hash=c8c92d871ccf0418d1ba8b1f11a3371b706a1787f102194edb01d655e1ae84e0))(vite@7.3.6(@types/node@26.6.4)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))(webpack@5.105.4):
@@ -78542,7 +78546,7 @@ snapshots:
       rolldown: 1.2.12
       rollup: 4.63.1(patch_hash=c8c92d871ccf0418d1ba8b1f11a3371b706a1787f102194edb01d655e1ae84e0)
       vite: 7.3.6(@types/node@26.6.4)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   unplugin@3.3.0(@rspack/core@2.2.8(@swc/helpers@0.5.23))(esbuild@0.28.2)(rolldown@1.2.12)(rollup@4.63.1(patch_hash=c8c92d871ccf0418d1ba8b1f11a3371b706a1787f102194edb01d655e1ae84e0))(vite@8.2.2(@types/node@26.6.4)(esbuild@0.28.2)(jiti@2.7.0)(less@4.6.6)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))(webpack@5.105.4):
     dependencies:
@@ -78555,7 +78559,7 @@ snapshots:
       rolldown: 1.2.12
       rollup: 4.63.1(patch_hash=c8c92d871ccf0418d1ba8b1f11a3371b706a1787f102194edb01d655e1ae84e0)
       vite: 8.2.2(@types/node@26.6.4)(esbuild@0.28.2)(jiti@2.7.0)(less@4.6.6)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   unquote@1.1.1: {}
 
@@ -79400,7 +79404,7 @@ snapshots:
       loader-utils: 1.4.2
       vue-hot-reload-api: 2.3.4
       vue-style-loader: 4.1.3
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
     optionalDependencies:
       '@vue/compiler-sfc': 3.5.42
       prettier: 3.9.9
@@ -79543,7 +79547,7 @@ snapshots:
       chalk: 4.1.2
       hash-sum: 2.0.0
       watchpack: 2.5.2
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
     optionalDependencies:
       '@vue/compiler-sfc': 3.5.43
       vue: 3.5.43(typescript@6.0.3)
@@ -80020,7 +80024,7 @@ snapshots:
       import-local: 3.2.0
       interpret: 3.1.1
       rechoir: 0.8.0
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
       webpack-merge: 6.0.1
     optionalDependencies:
       js-yaml: 5.4.2
@@ -80056,7 +80060,7 @@ snapshots:
       import-local: 3.2.0
       interpret: 3.1.1
       rechoir: 0.8.0
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
       webpack-merge: 6.0.1
     optionalDependencies:
       js-yaml: 5.4.2
@@ -80089,7 +80093,7 @@ snapshots:
       mime-types: 2.1.35
       range-parser: 1.3.0
       schema-utils: 4.3.3
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   webpack-dev-middleware@5.3.4(webpack@5.109.2):
     dependencies:
@@ -80130,7 +80134,7 @@ snapshots:
       range-parser: 1.3.0
       schema-utils: 4.3.3
     optionalDependencies:
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   webpack-dev-middleware@7.4.5(webpack@5.110.2):
     dependencies:
@@ -80176,7 +80180,7 @@ snapshots:
       webpack-dev-middleware: 5.3.4(webpack@5.105.4)
       ws: 8.22.0
     optionalDependencies:
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
       webpack-cli: 7.2.3(js-yaml@5.4.2)(json5@2.2.3)(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@4.15.2)(webpack@5.105.4)
     transitivePeerDependencies:
       - bufferutil
@@ -80337,7 +80341,7 @@ snapshots:
       webpack-dev-middleware: 7.4.5(webpack@5.105.4)
       ws: 8.22.0
     optionalDependencies:
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
       webpack-cli: 7.2.3(js-yaml@5.4.2)(json5@2.2.3)(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.105.4)
     transitivePeerDependencies:
       - bufferutil
@@ -80501,7 +80505,7 @@ snapshots:
       - postcss
       - uglify-js
 
-  webpack@5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3):
+  webpack@5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3):
     dependencies:
       '@types/eslint-scope': 3.7.7
       '@types/estree': 1.0.9
@@ -80544,7 +80548,7 @@ snapshots:
       - postcss
       - uglify-js
 
-  webpack@5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3):
+  webpack@5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3):
     dependencies:
       '@types/eslint-scope': 3.7.7
       '@types/estree': 1.0.9
@@ -80587,7 +80591,7 @@ snapshots:
       - postcss
       - uglify-js
 
-  webpack@5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3):
+  webpack@5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3):
     dependencies:
       '@types/eslint-scope': 3.7.7
       '@types/estree': 1.0.9
@@ -80860,7 +80864,7 @@ snapshots:
       consola: 2.15.3
       pretty-time: 1.1.0
       std-env: 3.10.0
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   webpackbar@7.0.0(@rspack/core@1.7.11(@swc/helpers@0.5.23))(webpack@5.105.4):
     dependencies:
@@ -80870,7 +80874,7 @@ snapshots:
       std-env: 3.10.0
     optionalDependencies:
       '@rspack/core': 1.7.11(@swc/helpers@0.5.23)
-      webpack: 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
   webpackbar@7.0.0(@rspack/core@1.7.11(@swc/helpers@0.5.23))(webpack@5.110.2):
     dependencies:
@@ -81720,107 +81724,7 @@ snapshots:
       - typescript
       - vitest
 
-  '@icebreakers/monorepo-templates@2.3.0(@types/node@26.6.4)':
-    dependencies:
-      '@inquirer/checkbox': 5.2.6(@types/node@26.6.4)
-      '@inquirer/input': 5.1.7(@types/node@26.6.4)
-      '@inquirer/password': 5.2.3(@types/node@26.6.4)
-      '@inquirer/select': 5.2.6(@types/node@26.6.4)
-      commander: 15.0.0
-      nanoexec: 1.1.0(@types/node@26.6.4)
-      yaml: 2.9.1
-    transitivePeerDependencies:
-      - '@types/node'
 
-  '@icebreakers/monorepo@5.8.0(9df13e187d159bec2d788dbd73ea0ef5)':
-    dependencies:
-      '@arethetypeswrong/core': 0.18.5
-      '@babel/parser': 7.29.9
-      '@icebreakers/commitlint-config': 4.1.2(conventional-changelog-conventionalcommits@10.4.1)
-      '@icebreakers/eslint-config': 8.0.8(@next/eslint-plugin-next@16.2.4)(@unocss/eslint-plugin@66.6.8(eslint@10.12.0(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3))(eslint-plugin-pnpm@1.9.1(eslint@10.12.0(jiti@2.7.0)(supports-color@10.2.2)))(eslint-plugin-vuejs-accessibility@2.5.0(eslint@10.12.0(jiti@2.7.0)(supports-color@10.2.2))(globals@17.11.0)(supports-color@10.2.2))(eslint@10.12.0(jiti@2.7.0)(supports-color@10.2.2))(postcss@8.5.29)(stylelint-config-html@2.0.0(postcss-html@2.0.0(postcss@8.5.29))(stylelint@17.16.0(supports-color@10.2.2)(typescript@6.0.3)))(stylelint@17.16.0(supports-color@10.2.2)(typescript@6.0.3))(supports-color@10.2.2)(tailwindcss@4.3.3)(ts-declaration-location@1.0.7(typescript@6.0.3))(typescript@6.0.3)(vitest@5.0.3)
-      '@icebreakers/monorepo-templates': 2.3.0(@types/node@26.6.4)
-      '@icebreakers/stylelint-config': 5.1.3(postcss@8.5.29)(stylelint-config-html@2.0.0(postcss-html@2.0.0(postcss@8.5.29))(stylelint@17.16.0(supports-color@10.2.2)(typescript@6.0.3)))(stylelint@17.16.0(supports-color@10.2.2)(typescript@6.0.3))(tailwindcss@4.3.3)
-      '@npmcli/config': 10.14.0
-      '@pnpm/find-workspace-dir': 1000.1.5
-      '@pnpm/logger': 1100.0.0
-      '@pnpm/types': 1102.1.1
-      '@pnpm/worker': 1100.4.8(@pnpm/logger@1100.0.0)(@types/node@26.6.4)
-      '@pnpm/workspace.find-packages': 1000.0.65(@pnpm/logger@1100.0.0)(@pnpm/worker@1100.4.8(@pnpm/logger@1100.0.0)(@types/node@26.6.4))(domexception@2.0.1)(supports-color@10.2.2)(typanion@3.14.0)
-      '@pnpm/workspace.read-manifest': 1000.3.1
-      c12: 3.3.4(magicast@0.5.4)
-      commander: 15.0.0
-      comment-json: 5.0.0
-      consola: 3.4.2
-      cross-spawn: 7.0.6
-      esbuild: 0.28.2
-      git-url-parse: 16.1.0
-      json5: 2.2.3
-      klaw: 4.1.0
-      lint-staged: 17.6.0
-      micromatch: 4.0.8
-      node-diff3: 3.2.1
-      p-queue: 9.3.3
-      pacote: 21.5.1(supports-color@10.2.2)
-      pathe: 2.0.3
-      picocolors: 1.1.1
-      publint: 0.3.25
-      semver: 7.8.5
-      simple-git: 3.36.0(supports-color@10.2.2)
-      tar: 7.5.22
-      tinyglobby: 0.2.17
-      validate-npm-package-name: 7.0.2
-      vitest: 5.0.3(@types/node@26.6.4)(@vitest/coverage-v8@5.0.0)(@vitest/ui@5.0.0)(jsdom@29.1.1)(vite@7.3.6(@types/node@26.6.4)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
-      yaml: 2.9.1
-    optionalDependencies:
-      '@commitlint/cli': 21.2.2(@types/node@26.6.4)(conventional-commits-parser@7.1.2)(typescript@6.0.3)
-      eslint: 10.12.0(jiti@2.7.0)(supports-color@10.2.2)
-      stylelint: 17.16.0(supports-color@10.2.2)(typescript@6.0.3)
-      typescript: 6.0.3
-    transitivePeerDependencies:
-      - '@angular-eslint/eslint-plugin'
-      - '@angular-eslint/eslint-plugin-template'
-      - '@angular-eslint/template-parser'
-      - '@edge-runtime/vm'
-      - '@eslint/css'
-      - '@eslint/json'
-      - '@next/eslint-plugin-next'
-      - '@opentelemetry/api'
-      - '@prettier/plugin-xml'
-      - '@types/node'
-      - '@unocss/eslint-plugin'
-      - '@vitest/browser-playwright'
-      - '@vitest/browser-preview'
-      - '@vitest/browser-webdriverio'
-      - '@vitest/coverage-istanbul'
-      - '@vitest/coverage-v8'
-      - '@vitest/ui'
-      - astro-eslint-parser
-      - conventional-changelog-conventionalcommits
-      - domexception
-      - eslint-plugin-astro
-      - eslint-plugin-erasable-syntax-only
-      - eslint-plugin-jsx-a11y
-      - eslint-plugin-pnpm
-      - eslint-plugin-slop
-      - eslint-plugin-solid
-      - eslint-plugin-sonarjs
-      - eslint-plugin-svelte
-      - eslint-plugin-vuejs-accessibility
-      - happy-dom
-      - jsdom
-      - magicast
-      - msw
-      - oxlint
-      - postcss
-      - prettier-plugin-astro
-      - prettier-plugin-slidev
-      - stylelint-config-html
-      - supports-color
-      - svelte-eslint-parser
-      - tailwindcss
-      - ts-declaration-location
-      - typanion
-      - vite
 
   '@icebreakers/stylelint-config@5.1.3(postcss@8.5.29)(stylelint-config-html@2.0.0(postcss-html@2.0.0(postcss@8.5.29))(stylelint@17.16.0(supports-color@10.2.2)(typescript@6.0.3)))(stylelint@17.16.0(supports-color@10.2.2)(typescript@6.0.3))(tailwindcss@4.3.3)':
     dependencies:
@@ -82755,60 +82659,6 @@ snapshots:
       picocolors: 1.1.1
       sade: 1.8.1
 
-  repoctl@5.8.0(2a7a644ca620b881e90c1883f147e059):
-    dependencies:
-      '@icebreakers/monorepo': 5.8.0(9df13e187d159bec2d788dbd73ea0ef5)
-    optionalDependencies:
-      '@commitlint/cli': 21.2.2(@types/node@26.6.4)(conventional-commits-parser@7.1.2)(typescript@6.0.3)
-      eslint: 10.12.0(jiti@2.7.0)(supports-color@10.2.2)
-      stylelint: 17.16.0(supports-color@10.2.2)(typescript@6.0.3)
-      typescript: 6.0.3
-      vitest: 5.0.3(@types/node@26.6.4)(@vitest/coverage-v8@5.0.0)(@vitest/ui@5.0.0)(jsdom@29.1.1)(vite@7.3.6(@types/node@26.6.4)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
-    transitivePeerDependencies:
-      - '@angular-eslint/eslint-plugin'
-      - '@angular-eslint/eslint-plugin-template'
-      - '@angular-eslint/template-parser'
-      - '@edge-runtime/vm'
-      - '@eslint/css'
-      - '@eslint/json'
-      - '@next/eslint-plugin-next'
-      - '@opentelemetry/api'
-      - '@prettier/plugin-xml'
-      - '@types/node'
-      - '@unocss/eslint-plugin'
-      - '@vitest/browser-playwright'
-      - '@vitest/browser-preview'
-      - '@vitest/browser-webdriverio'
-      - '@vitest/coverage-istanbul'
-      - '@vitest/coverage-v8'
-      - '@vitest/ui'
-      - astro-eslint-parser
-      - conventional-changelog-conventionalcommits
-      - domexception
-      - eslint-plugin-astro
-      - eslint-plugin-erasable-syntax-only
-      - eslint-plugin-jsx-a11y
-      - eslint-plugin-pnpm
-      - eslint-plugin-slop
-      - eslint-plugin-solid
-      - eslint-plugin-sonarjs
-      - eslint-plugin-svelte
-      - eslint-plugin-vuejs-accessibility
-      - happy-dom
-      - jsdom
-      - magicast
-      - msw
-      - oxlint
-      - postcss
-      - prettier-plugin-astro
-      - prettier-plugin-slidev
-      - stylelint-config-html
-      - supports-color
-      - svelte-eslint-parser
-      - tailwindcss
-      - ts-declaration-location
-      - typanion
-      - vite
 
   sade@1.8.1:
     dependencies:
@@ -82864,3 +82714,156 @@ snapshots:
   typescript@5.6.1-rc: {}
 
   walk-up-path@4.0.0: {}
+
+  repoctl@5.8.1(bad8afcc04c8c7e82f29b40220b190bb):
+    dependencies:
+      '@icebreakers/monorepo': 5.8.1(0ad69d60938de13697aed70d93132592)
+    optionalDependencies:
+      '@commitlint/cli': 21.2.2(@types/node@26.6.4)(conventional-commits-parser@7.1.2)(typescript@6.0.3)
+      eslint: 10.12.0(jiti@2.7.0)(supports-color@10.2.2)
+      stylelint: 17.16.0(supports-color@10.2.2)(typescript@6.0.3)
+      typescript: 6.0.3
+      vitest: 5.0.3(@types/node@26.6.4)(@vitest/coverage-v8@5.0.0)(@vitest/ui@5.0.0)(jsdom@29.1.1)(vite@7.3.6(@types/node@26.6.4)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+    transitivePeerDependencies:
+      - '@angular-eslint/eslint-plugin'
+      - '@angular-eslint/eslint-plugin-template'
+      - '@angular-eslint/template-parser'
+      - '@edge-runtime/vm'
+      - '@eslint/css'
+      - '@eslint/json'
+      - '@next/eslint-plugin-next'
+      - '@opentelemetry/api'
+      - '@prettier/plugin-xml'
+      - '@types/node'
+      - '@unocss/eslint-plugin'
+      - '@vitest/browser-playwright'
+      - '@vitest/browser-preview'
+      - '@vitest/browser-webdriverio'
+      - '@vitest/coverage-istanbul'
+      - '@vitest/coverage-v8'
+      - '@vitest/ui'
+      - astro-eslint-parser
+      - conventional-changelog-conventionalcommits
+      - eslint-plugin-astro
+      - eslint-plugin-erasable-syntax-only
+      - eslint-plugin-jsx-a11y
+      - eslint-plugin-pnpm
+      - eslint-plugin-slop
+      - eslint-plugin-solid
+      - eslint-plugin-sonarjs
+      - eslint-plugin-svelte
+      - eslint-plugin-vuejs-accessibility
+      - happy-dom
+      - jsdom
+      - magicast
+      - msw
+      - oxlint
+      - postcss
+      - prettier-plugin-astro
+      - prettier-plugin-slidev
+      - stylelint-config-html
+      - supports-color
+      - svelte-eslint-parser
+      - tailwindcss
+      - ts-declaration-location
+      - vite
+
+  '@icebreakers/monorepo@5.8.1(0ad69d60938de13697aed70d93132592)':
+    dependencies:
+      '@arethetypeswrong/core': 0.18.5
+      '@babel/parser': 7.29.9
+      '@icebreakers/commitlint-config': 4.1.2(conventional-changelog-conventionalcommits@10.4.1)
+      '@icebreakers/eslint-config': 8.0.8(@next/eslint-plugin-next@16.2.4)(@unocss/eslint-plugin@66.6.8(eslint@10.12.0(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3))(eslint-plugin-pnpm@1.9.1(eslint@10.12.0(jiti@2.7.0)(supports-color@10.2.2)))(eslint-plugin-vuejs-accessibility@2.5.0(eslint@10.12.0(jiti@2.7.0)(supports-color@10.2.2))(globals@17.11.0)(supports-color@10.2.2))(eslint@10.12.0(jiti@2.7.0)(supports-color@10.2.2))(postcss@8.5.29)(stylelint-config-html@2.0.0(postcss-html@2.0.0(postcss@8.5.29))(stylelint@17.16.0(supports-color@10.2.2)(typescript@6.0.3)))(stylelint@17.16.0(supports-color@10.2.2)(typescript@6.0.3))(supports-color@10.2.2)(tailwindcss@4.3.3)(ts-declaration-location@1.0.7(typescript@6.0.3))(typescript@6.0.3)(vitest@5.0.3)
+      '@icebreakers/monorepo-templates': 2.3.1(@types/node@26.6.4)
+      '@icebreakers/stylelint-config': 5.1.3(postcss@8.5.29)(stylelint-config-html@2.0.0(postcss-html@2.0.0(postcss@8.5.29))(stylelint@17.16.0(supports-color@10.2.2)(typescript@6.0.3)))(stylelint@17.16.0(supports-color@10.2.2)(typescript@6.0.3))(tailwindcss@4.3.3)
+      '@npmcli/config': 10.14.0
+      '@pnpm/find-workspace-dir': 1000.1.5
+      '@pnpm/fs.find-packages': 1000.0.24(@pnpm/logger@1100.0.0)
+      '@pnpm/logger': 1100.0.0
+      '@pnpm/types': 1102.1.1
+      '@pnpm/worker': 1100.4.8(@pnpm/logger@1100.0.0)(@types/node@26.6.4)
+      '@pnpm/workspace.read-manifest': 1000.3.1
+      c12: 3.3.4(magicast@0.5.4)
+      commander: 15.0.0
+      comment-json: 5.0.0
+      consola: 3.4.2
+      cross-spawn: 7.0.6
+      esbuild: 0.28.2
+      git-url-parse: 16.1.0
+      json5: 2.2.3
+      klaw: 4.1.0
+      lint-staged: 17.6.0
+      micromatch: 4.0.8
+      node-diff3: 3.2.1
+      p-queue: 9.3.3
+      pacote: 21.5.1(supports-color@10.2.2)
+      pathe: 2.0.3
+      picocolors: 1.1.1
+      publint: 0.3.25
+      semver: 7.8.5
+      simple-git: 3.36.0(supports-color@10.2.2)
+      tar: 7.5.22
+      tinyglobby: 0.2.17
+      validate-npm-package-name: 7.0.2
+      vitest: 5.0.3(@types/node@26.6.4)(@vitest/coverage-v8@5.0.0)(@vitest/ui@5.0.0)(jsdom@29.1.1)(vite@7.3.6(@types/node@26.6.4)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+      yaml: 2.9.1
+    optionalDependencies:
+      '@commitlint/cli': 21.2.2(@types/node@26.6.4)(conventional-commits-parser@7.1.2)(typescript@6.0.3)
+      eslint: 10.12.0(jiti@2.7.0)(supports-color@10.2.2)
+      stylelint: 17.16.0(supports-color@10.2.2)(typescript@6.0.3)
+      typescript: 6.0.3
+    transitivePeerDependencies:
+      - '@angular-eslint/eslint-plugin'
+      - '@angular-eslint/eslint-plugin-template'
+      - '@angular-eslint/template-parser'
+      - '@edge-runtime/vm'
+      - '@eslint/css'
+      - '@eslint/json'
+      - '@next/eslint-plugin-next'
+      - '@opentelemetry/api'
+      - '@prettier/plugin-xml'
+      - '@types/node'
+      - '@unocss/eslint-plugin'
+      - '@vitest/browser-playwright'
+      - '@vitest/browser-preview'
+      - '@vitest/browser-webdriverio'
+      - '@vitest/coverage-istanbul'
+      - '@vitest/coverage-v8'
+      - '@vitest/ui'
+      - astro-eslint-parser
+      - conventional-changelog-conventionalcommits
+      - eslint-plugin-astro
+      - eslint-plugin-erasable-syntax-only
+      - eslint-plugin-jsx-a11y
+      - eslint-plugin-pnpm
+      - eslint-plugin-slop
+      - eslint-plugin-solid
+      - eslint-plugin-sonarjs
+      - eslint-plugin-svelte
+      - eslint-plugin-vuejs-accessibility
+      - happy-dom
+      - jsdom
+      - magicast
+      - msw
+      - oxlint
+      - postcss
+      - prettier-plugin-astro
+      - prettier-plugin-slidev
+      - stylelint-config-html
+      - supports-color
+      - svelte-eslint-parser
+      - tailwindcss
+      - ts-declaration-location
+      - vite
+
+  '@icebreakers/monorepo-templates@2.3.1(@types/node@26.6.4)':
+    dependencies:
+      '@inquirer/checkbox': 5.2.6(@types/node@26.6.4)
+      '@inquirer/input': 5.1.7(@types/node@26.6.4)
+      '@inquirer/password': 5.2.3(@types/node@26.6.4)
+      '@inquirer/select': 5.2.6(@types/node@26.6.4)
+      commander: 15.0.0
+      nanoexec: 1.1.0(@types/node@26.6.4)
+      yaml: 2.9.1
+    transitivePeerDependencies:
+      - '@types/node'
