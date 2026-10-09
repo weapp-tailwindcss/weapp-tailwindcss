@@ -398,6 +398,7 @@ catalogs:
 
 patchedDependencies:
   '@mpxjs/vue-cli-plugin-mpx@2.2.30': patches/@mpxjs__vue-cli-plugin-mpx@2.2.30.patch
+  nitropack@2.13.4: patches/nitropack@2.13.4.patch
   rollup@3.30.0: patches/rollup@3.30.0.patch
   rollup@4.63.0: patches/rollup@4.63.0.patch
   rollup@4.63.1: patches/rollup@4.63.1.patch

@@ -43,6 +43,8 @@ weapp-vite 的首轮产物写出早于监听初始化完成；首次修改前必
 
 锁文件中的 Rollup 4.63.0 使用 [watcher 补丁](../../../patches/rollup@4.63.0.patch)：同一构建任务共用文件 watcher，transform dependency 单独记录失效语义。原版在 Linux 对普通模块和 transform dependency 重复监听同一文件，原子替换后会停止响应后续修改。[CJS/ESM 回归](./rollup-watch.test.mjs) 同时检查直接导入、虚拟模块消费方、连续修改与删除后重建。补丁仅随本仓库冻结依赖应用，不随 weapp-tailwindcss npm 包安装；后续升级 Rollup 时必须复验并评估移除，不能只改版本号。
 
+Nitro 2.13.4 的 [externals 补丁](../../../patches/nitropack@2.13.4.patch) 在匹配内联规则前规范化解析后的 module ID。原版只规范化原始 ID，Windows 原生反斜杠路径会漏掉 `nuxt/dist` 内联规则，让 Nuxt 4.6 的 SSR renderer 在 Node 中未经开发环境变换直接加载，导致 manifest 缺失和 HTTP 500。[发行包 resolver 回归](./nitro-externals.test.mjs) 覆盖 POSIX、Windows 盘符、根目录、UNC、pnpm 嵌套路径、相对导入及更具体的 external 规则；真实 Nuxt demo 继续验证 SSR、静态基线与连续 Web 更新。补丁仅随本仓库冻结安装生效，不随产品 npm 包发布；[上游 resolver](https://github.com/nitrojs/nitro/blob/v2.13.4/src/build/plugins/externals.ts) 发布等价修复后，先复验再移除补丁与锁文件登记。
+
 开发验收使用 demo 默认 watcher，不强加 Watchpack 或 Chokidar polling。短间隔磁盘轮询会将 Webpack 虚拟模块反复报告为缺失，使慢编译持续空转；真实虚拟模块回归要求空闲时稳定、实际更新后重建并再次稳定。Windows 专项连续执行三次完整 H5 流程，额外保存失效事件来源与 watcher 身份。
 
 Mpx CLI 2.2.30 的首轮就绪 Promise 不能接收后续致命错误；原版会吞掉错误，在 MultiCompiler 关闭所有 watcher 后以 0 退出。[CLI 补丁](../../../patches/@mpxjs__vue-cli-plugin-mpx@2.2.30.patch) 将增量致命错误独立报告并设置非零退出码，[真实 MultiCompiler 回归](./mpx-fatal-watch.test.mjs) 同时验证首轮失败和普通编译错误后的恢复。旧的 `dev:e2e-watch` 包装器也不再用定时器掩盖子进程退出。补丁仅作用于本仓库冻结安装，不随 npm 包发布；[上游实现](https://github.com/mpx-ecology/mpx-cli/blob/next/packages/vue-cli-plugin-mpx/commands/serve/mp.js) 发布等价修复后，复验上述回归再移除补丁与锁文件登记。
