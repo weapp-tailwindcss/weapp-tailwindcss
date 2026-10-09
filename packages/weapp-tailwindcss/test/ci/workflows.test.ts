@@ -167,6 +167,10 @@ describe('ci workflows', () => {
     expect(runs).toContain('pnpm build:ci')
     expect(runs).toContain('pnpm e2e:demo:matrix')
     expect(runs.join('\n')).not.toMatch(/--(?:update|build-only)/)
+    // 局部重跑复用分片身份，必须替换旧报告，避免汇总读到上一轮失败证据。
+    const upload = workflow.jobs.demos.steps.find((step: Record<string, unknown>) => step.uses === uploadArtifactAction)
+    expect(upload.with.name).toBe('portable-demo-${{ matrix.os }}-node${{ matrix.node }}-${{ matrix.shard }}')
+    expect(upload.with.overwrite).toBe(true)
     expect(workflow.jobs.gate.needs).toEqual(['catalog', 'demos'])
     expect(workflow.jobs.gate.if).toBe('always()')
     const evidence = stepRuns(workflow, 'gate').join('\n')

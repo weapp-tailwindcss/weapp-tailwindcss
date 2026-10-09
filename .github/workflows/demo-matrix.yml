@@ -63,6 +63,7 @@ jobs:
           path: e2e/.artifacts/demo-matrix/**
           if-no-files-found: error
           retention-days: 14
+          overwrite: true
 
   gate:
     name: Portable Demo Gate

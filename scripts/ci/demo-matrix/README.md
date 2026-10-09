@@ -63,6 +63,8 @@ Mpx CLI 2.2.30 的首轮就绪 Promise 不能接收后续致命错误；原版�
 
 [demo-matrix.yml](../../../.github/workflows/demo-matrix.yml) 在各操作系统使用根 `package.json#packageManager` 声明的 pnpm 版本冻结安装锁文件并构建当前包。所有目标必须执行成功；最终 gate 对照清单检查每个 OS/Node/目标和全部阶段、提交 SHA、pnpm 版本，不接受缺失、重复、过期或跳过的报告。PR Gate 对启用的矩阵要求 success。CI 证据只对报告中的具体提交有效，本机通过不能替代 Windows/Linux 验收。
 
+同一 run 的局部重跑复用 OS、Node 和 shard 的 artifact 名称；上传启用 `overwrite: true`，在保存本轮报告前替换该分片的旧产物。否则 GitHub 可保留两份同名 artifact，按名称下载可能取到上一轮失败报告，让已经成功的分片无法通过汇总。需要保留首次失败时，应在重跑前按 artifact ID 归档日志与产物。门禁仍要求所有分片成功及完整证据，不过滤失败报告；根因和回归见[局部重跑产物复盘](../../../docs/engineering/lessons/portable-artifact-rerun.md)。
+
 Webpack JSX 测试探针会暴露当前 module.hot 状态。DOM 与样式已渲染后仍须等待 HMR 回到 idle，再写入下一轮内容，避免启动期间旧更新尚在 prepare/apply 时触发重叠更新；其余浏览器与产物断言保持不变。
 
 Webpack 5.105.4 的 [only-dev-server 客户端](https://github.com/webpack/webpack/blob/v5.105.4/hot/only-dev-server.js) 将 `hot.check()` 和 `hot.apply()` 分开调用；检查结束后加载新的异步 chunk 会让状态从 ready 回到 prepare，导致 apply 拒绝并停在 ready。[依赖补丁](../../../patches/webpack@5.105.4.patch) 使用 `hot.check(applyOptions)`，由 runtime 等待正在加载的 chunk 后应用更新，保留原有 ignore 选项和错误回调。[真实浏览器回归](./webpack-hmr.test.mjs) 在 ready 时启动异步 chunk，检查更新值和 idle 状态；不能通过放宽 idle 门槛或刷新兜底隐藏竞态。补丁只随本仓库冻结依赖安装，不随产品 npm 包发布；上游发布等价修复后，先复验再删除补丁及锁文件登记。
