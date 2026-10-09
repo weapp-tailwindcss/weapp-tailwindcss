@@ -8,6 +8,12 @@ export default defineNuxtConfig({
   css: [
     '~/assets/css/tailwind.css',
   ],
+  nitro: {
+    // Nuxt 4.6.0 在 Windows 上需要把 Nuxt renderer 内联，避免 Nitro 以反斜杠路径匹配失败。
+    externals: {
+      inline: [/[\\/]node_modules[\\/]nuxt[\\/]dist[\\/]/],
+    },
+  },
   vite: {
     plugins: [
       ...(
