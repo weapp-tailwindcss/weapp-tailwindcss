@@ -38,7 +38,7 @@ export function createGenerateBundleHook(context: GenerateBundleContext) {
     options: unknown,
     bundle: Record<string, OutputAsset | OutputChunk>,
   ) {
-    relationOwner?.recordBundle(bundle)
+    relationOwner?.recordBundle(bundle, context.getResolvedConfig()?.root)
     const removedFiles = removalConsumer?.consume(Object.keys(bundle)) ?? []
     const rememberFrameworkStyles = frameworkStyleMemory.prepare(bundle, removedFiles)
     beginCompilerShadowRun(context.runtimeState)

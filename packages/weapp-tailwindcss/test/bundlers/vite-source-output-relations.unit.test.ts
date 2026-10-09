@@ -1,6 +1,8 @@
 import type { OutputAsset, OutputChunk } from 'rollup'
 import { describe, expect, it } from 'vitest'
+import { normalizeOutputPathKey } from '@/bundlers/shared/module-graph'
 import { createViteCssMemory } from '@/bundlers/vite/css-memory'
+import { collectRememberedCssReplayGroups } from '@/bundlers/vite/generate-bundle/remembered-css'
 import { resolveCurrentSourceCandidateFile } from '@/bundlers/vite/generate-bundle/source-candidate-source'
 import {
   createViteSourceOutputRelationOwner,
@@ -45,6 +47,33 @@ function createChunk(fileName: string, facadeModuleId: string | null, moduleIds:
 }
 
 describe('vite source output relations', () => {
+  it.each([
+    ['/workspace', 'index.html', '/workspace/index.html'],
+    ['/', 'entry.html', '/entry.html'],
+    ['C:\\workspace', 'views\\entry.html', 'C:\\workspace\\views\\entry.html'],
+    ['D:\\workspace', 'views/entry.html', 'D:\\workspace\\views\\entry.html'],
+    ['C:\\workspace', 'D:\\other\\entry.html', 'D:\\other\\entry.html'],
+  ])('合并 CSS 的相对来源与生命周期绝对来源共享归属：%s + %s', (root, metadataSource, sourceFile) => {
+    const owner = createViteSourceOutputRelationOwner()
+    owner.recordOwnedOutput(sourceFile, 'assets/entry-old.css')
+    owner.recordBundle({
+      'assets/entry-new.css': createAsset('assets/entry-new.css', [metadataSource]),
+    }, root)
+    expect(owner.getOwnedOutputs(sourceFile)).toContain('assets/entry-new.css')
+    expect(owner.getOutputSources('assets/entry-new.css')).toEqual(new Set([normalizeOutputPathKey(sourceFile)]))
+    const groups = withViteSourceOutputRelationOwner(owner, () => collectRememberedCssReplayGroups(
+      new Map([['previous', { outputFile: 'assets/entry-old.css', sourceFile, rawSource: '.probe{color:red}' }]]),
+      { cssMatcher: file => file.endsWith('.css') },
+      root,
+      true,
+      false,
+      undefined,
+      '.css',
+      ['assets/entry-new.css'],
+    ))
+    expect([...groups.keys()]).toEqual(['assets/entry-new.css'])
+  })
+
   it('consumes an explicitly deleted non-WeChat style output once', () => {
     const owner = createViteSourceOutputRelationOwner()
     const consumer = owner.createRemovalConsumer()
