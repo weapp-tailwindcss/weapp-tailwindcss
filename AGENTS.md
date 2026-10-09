@@ -78,7 +78,7 @@
 - `packages/weapp-tailwindcss` 的 JS 转译必须遵循 `classNameSet` 精确命中原则，禁止启发式兜底转译。
 - `packages/weapp-tailwindcss` 的 bundler 适配不得依赖硬编码目录或后置 `fs.readFile` 兜底来还原源码关系；源码关系必须来自构建图、插件生命周期缓存或明确的扫描层。
 - `packages/weapp-tailwindcss` 的样式注入、preflight、Tailwind 入口选择和分包样式隔离不得依赖硬编码文件名或输出路径片段；必须来自 CSS 内容、用户显式配置、构建图、loader/transform 阶段缓存或 source-candidates 元数据。
-- 通用 CSS 语法解析、tokenize、selector/value parser、AST 变换和平台兼容 PostCSS 管线实现在 `packages/postcss`；`packages/engine` 仅允许实现 Tailwind CSS 4 生成必需的 CSS 解析、`@source` 处理、选择器别名转换和产物 AST，不承担平台兼容转换；`packages/weapp-tailwindcss` 禁止直接依赖 `postcss-scss`、`@csstools/*`、`postcss-selector-parser`、`postcss-value-parser`、`lightningcss` 或 `postcss`，必须通过 `@weapp-tailwindcss/postcss` 消费。
+- 已提取的框架无关 CSS layer 内核实现在 `packages/css-compat`；其余通用 CSS 语法解析、tokenize、selector/value parser、AST 变换和平台兼容 PostCSS 管线实现在 `packages/postcss`；`packages/engine` 仅允许实现 Tailwind CSS 4 生成必需的 CSS 解析、`@source` 处理、选择器别名转换和产物 AST，不承担平台兼容转换；`packages/weapp-tailwindcss` 禁止直接依赖 `postcss-scss`、`@csstools/*`、`postcss-selector-parser`、`postcss-value-parser`、`lightningcss` 或 `postcss`，必须通过 `@weapp-tailwindcss/postcss` 消费。
 - demo、Web/H5、watch 与 e2e 场景都必须遵守 Tailwind CSS 由 `weapp-tailwindcss` 生成的约束，不能为修复样式或 HMR 问题注册官方 Tailwind 生成插件。
 - 运行时封装（`packages-runtime/*`）改动需重点关注 escape/unescape、merge 兼容和缓存边界。
 - Release 工作流发布 npm 必须使用 trusted publishing/OIDC：发布 job 使用 Node 24 以满足 npm CLI 的 OIDC 支持要求，保留 `permissions.id-token: write` 与 provenance，禁止在发布步骤注入 `NPM_TOKEN` 或 `NODE_AUTH_TOKEN`。

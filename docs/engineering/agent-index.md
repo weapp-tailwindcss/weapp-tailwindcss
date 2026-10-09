@@ -24,6 +24,7 @@
 - [packages/AGENTS.md](../../packages/AGENTS.md)
 - [packages/babel/AGENTS.md](../../packages/babel/AGENTS.md)
 - [packages/build-all/AGENTS.md](../../packages/build-all/AGENTS.md)
+- [packages/css-compat/AGENTS.md](../../packages/css-compat/AGENTS.md)
 - [packages/cli/AGENTS.md](../../packages/cli/AGENTS.md)
 - [packages/debug-uni-app-x/AGENTS.md](../../packages/debug-uni-app-x/AGENTS.md)
 - [packages/engine/AGENTS.md](../../packages/engine/AGENTS.md)

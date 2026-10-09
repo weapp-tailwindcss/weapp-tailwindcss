@@ -18,7 +18,7 @@ const clientEntries: Record<string, string[]> = {
 
 /** 客户端只约束值依赖；主题插件、typography 与 UI preset 属于构建入口。 */
 export function auditClientBoundaries(root: string, packages: WorkspacePackage[], values: Graph) {
-  const buildPackages = ['engine', 'source-scan', 'postcss', 'cli', 'tailwindcss-config', 'weapp-style-injector']
+  const buildPackages = ['engine', 'source-scan', 'css-compat', 'postcss', 'cli', 'tailwindcss-config', 'weapp-style-injector']
     .map(name => path.join(root, 'packages', name, 'src'))
   const forbidden = (file: string) => {
     if (buildPackages.some(directory => inside(directory, file))) {
