@@ -179,7 +179,7 @@ it('合并多文件 Root 后 warning 使用对应原始节点与相关来源', a
 })
 
 it('保留 prologue，source map 关联原始来源', async () => {
-  const css = '@charset "UTF-8";@import "plain.css";@namespace svg "http://www.w3.org/2000/svg";\n@layer a{.x{color:red!important}}'
+  const css = '@charset "UTF-8";@namespace svg "http://www.w3.org/2000/svg";\n@layer a{.x{color:red!important}}'
   const result = await postcss([createCascadeLayersPlugin({ mode: 'ordered' })]).process(css, { from: 'input.css', to: 'output.css', map: { inline: false } })
   expect(result.css.indexOf('@charset')).toBeLessThan(result.css.indexOf('.x'))
   expect(result.map?.toJSON().sourcesContent).toEqual([css])

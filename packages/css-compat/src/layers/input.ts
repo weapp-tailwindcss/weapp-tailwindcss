@@ -34,9 +34,8 @@ export function validateInput(root: Root, reporter: Reporter) {
         parent = parent.parent
       }
     }
-    if (name === 'import' && tokenize({ css: node.params }).some(token =>
-      (token[0] === TokenType.Ident || token[0] === TokenType.Function) && token[4].value.toLowerCase() === 'layer')) {
-      reporter.fail(node, 'LAYER_IMPORT', '输入仍包含未展开的 layer import。', '调用 import processor 展开输入；内核不会读取文件。')
+    if (name === 'import') {
+      reporter.fail(node, 'LAYER_IMPORT', '输入仍包含未展开的 import。', '调用 import processor 展开全部输入；内核不会读取文件。')
     }
   })
   root.walkDecls((node) => {

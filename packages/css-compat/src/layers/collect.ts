@@ -3,6 +3,7 @@ import type { Root as SelectorRoot } from 'postcss-selector-parser'
 import type { Layer } from './model'
 import type { Reporter } from './reporter'
 import { selectorSpecificity } from '@csstools/selector-specificity'
+import { createDescriptorRegistry } from './descriptors'
 import { atomicAtRules } from './input'
 import { createLayer } from './model'
 import { atRuleName, parseLayerNames } from './names'
@@ -23,7 +24,7 @@ function wrap(node: ChildNode, wrappers: AtRule[]) {
 export function collectLayers(root: Root, selectors: WeakMap<Rule, SelectorRoot>, reporter: Reporter) {
   const rootLayer = createLayer('<unlayered>')
   const prologue: ChildNode[] = []
-  const descriptors = new Map<string, { node: AtRule, layer: Layer }>()
+  const registerDescriptor = createDescriptorRegistry(reporter)
   let anonymous = 0
 
   const register = (node: AtRule, parent: Layer, conditional: boolean) => {
@@ -115,12 +116,7 @@ export function collectLayers(root: Root, selectors: WeakMap<Rule, SelectorRoot>
           continue
         }
         if (node.type === 'atrule' && atomicAtRules.test(atRuleName(node))) {
-          const key = `${atRuleName(node)}:${node.params}`
-          const previous = descriptors.get(key)
-          if (previous && previous.layer !== layer) {
-            reporter.warn(node, 'LAYER_DESCRIPTOR_ORDER', `跨层重复 @${node.name} ${node.params} 的命名语义需单独验证。`, '消除跨层同名定义，或在支持原生 layer 的目标使用 preserve。', { related: previous.node, layer: layer.label })
-          }
-          descriptors.set(key, { node, layer })
+          registerDescriptor(node, layer)
         }
         layer.normal.push(wrap(node.clone(), wrappers))
       }

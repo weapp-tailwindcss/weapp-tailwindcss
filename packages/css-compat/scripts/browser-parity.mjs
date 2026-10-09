@@ -3,9 +3,9 @@ import { chromium, firefox, webkit } from 'playwright'
 import postcss from 'postcss'
 // eslint-disable-next-line antfu/no-import-dist -- 验证实际公开构建产物。
 import { compileCascadeLayers } from '../dist/index.mjs'
-import { conflicts, safeCases } from '../test/fixtures.mjs'
+import { conflicts, rejectedCases, safeCases } from '../test/fixtures.mjs'
 
-const properties = ['color', 'background-color', 'margin-top', 'margin-left', 'padding-top']
+const properties = ['color', 'background-color', 'margin-top', 'margin-left', 'padding-top', 'row-gap', 'column-gap', 'overflow-wrap', 'break-before', 'break-after', 'break-inside', 'font-variant-caps', 'white-space-collapse']
 async function computed(page, css) {
   await page.setContent(`<style>${css}</style><div id="card"><div id="probe" class="probe">layer probe</div></div>`)
   return page.locator('#probe').evaluate((node, names) => Object.fromEntries(names.map(name => [name, getComputedStyle(node).getPropertyValue(name)])), properties)
@@ -36,7 +36,17 @@ for (const [name, engine] of Object.entries({ chromium, firefox, webkit })) {
       assert.throws(() => compileCascadeLayers(postcss.parse(fixture.css), { mode: 'ordered', onConflict: 'error' }), /LAYER_SPECIFICITY/)
       comparisons++
     }
-    console.log(JSON.stringify({ engine: name, version: browser.version(), headless: true, comparisons, safe: safeCases.length, conflicts: conflicts.length }))
+    for (const fixture of rejectedCases) {
+      const root = postcss.parse(fixture.css)
+      const nodes = [...root.nodes]
+      assert.throws(() => compileCascadeLayers(root, { mode: 'ordered', onConflict: 'error' }), new RegExp(fixture.code))
+      assert.equal(root.toString(), fixture.css)
+      assert.ok(root.nodes.every((node, index) => node === nodes[index]))
+      assert.deepEqual(compileCascadeLayers(root, { mode: 'preserve' }).diagnostics, [])
+      assert.equal((await computed(page, root.toString())).color, fixture.color, `${name}: ${fixture.name} 原生对照`)
+      comparisons++
+    }
+    console.log(JSON.stringify({ engine: name, version: browser.version(), headless: true, comparisons, safe: safeCases.length, conflicts: conflicts.length, rejected: rejectedCases.length }))
   }
   finally {
     try {

@@ -62,6 +62,7 @@
   "types": "./dist/index.d.mts",
   "files": [
     "README.md",
+    "README.zh-CN.md",
     "THIRD_PARTY_LICENSES.txt",
     "dist"
   ],
