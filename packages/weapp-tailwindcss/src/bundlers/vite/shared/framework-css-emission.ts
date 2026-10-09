@@ -1,4 +1,4 @@
-import type { EmittedFile, ObjectHook, OutputAsset, OutputBundle, PluginContext } from 'rollup'
+import type { EmittedAsset, EmittedFile, ObjectHook, OutputAsset, OutputBundle, PluginContext, TransformResult } from 'rollup'
 import type { Plugin, ResolvedConfig } from 'vite'
 import { Buffer } from 'node:buffer'
 import { createHash } from 'node:crypto'
@@ -8,12 +8,13 @@ type CssTransform = (css: string, file: EmittedFile) => string
 type RenderChunk = Extract<Plugin['renderChunk'], (...args: never[]) => unknown>
 type GenerateBundle = Extract<Plugin['generateBundle'], (...args: never[]) => unknown>
 type Transform = Extract<Plugin['transform'], (...args: never[]) => unknown>
+type CssAssetWithSource = EmittedAsset & { source: string | Uint8Array }
 
 interface CssEmissionState {
   transformCss: CssTransform
-  rehashCssAsset?: (file: EmittedFile) => boolean
+  rehashCssAsset?: ((file: EmittedFile) => boolean) | undefined
   trackFrameworkAssets: boolean
-  frameworkAssets: Array<{ fileName?: string, referenceId?: string, source: string }>
+  frameworkAssets: Array<{ fileName?: string | undefined, referenceId?: string | undefined, source: string }>
   getFileName?: (referenceId: string) => string
 }
 
@@ -28,14 +29,14 @@ function replace<T>(hook: ObjectHook<T> | undefined, handler: T): ObjectHook<T> 
   return hook && typeof hook === 'object' && 'handler' in hook ? { ...hook, handler } : handler
 }
 
-function isCssAsset(file: EmittedFile) {
+function isCssAsset(file: EmittedFile): file is CssAssetWithSource {
   return file.type === 'asset'
     && file.source !== undefined
     && [file.name, file.fileName, file.originalFileName].some(name => name?.endsWith('.css'))
 }
 
 /** Vite 的 css-post 在计算内容 hash 前会以匿名 asset 发射合并 CSS。 */
-function isAnonymousCssAsset(file: EmittedFile, state: CssEmissionState) {
+function isAnonymousCssAsset(file: EmittedFile, state: CssEmissionState): file is CssAssetWithSource {
   return state.trackFrameworkAssets
     && file.type === 'asset'
     && file.source !== undefined
@@ -91,7 +92,7 @@ function withCssEmission(context: PluginContext, state: CssEmissionState) {
   })
 }
 
-function transformCssResult(result: unknown, transformCss: CssTransform) {
+function transformCssResult(result: TransformResult, transformCss: CssTransform): TransformResult {
   if (typeof result === 'string') {
     return transformCss(result, { type: 'asset', source: result })
   }
@@ -173,10 +174,11 @@ function resolveFrameworkCssFileName(fileName: string, source: string) {
   const extension = fileName.match(/\.css$/i)?.[0] ?? ''
   const stem = extension ? fileName.slice(0, -extension.length) : fileName
   const lastSegment = stem.match(/(?:^|[-_.])([a-z0-9]{8,})$/i)
-  if (lastSegment) {
+  const lastHash = lastSegment?.[1]
+  if (lastSegment && lastHash) {
     // 保持 bundler 已选择的 hash 长度，避免自定义 assetFileNames 的命名契约被最终化破坏。
-    const hash = fullHash.slice(0, lastSegment[1].length)
-    const start = lastSegment.index! + lastSegment[0].length - lastSegment[1].length
+    const hash = fullHash.slice(0, lastHash.length)
+    const start = lastSegment.index! + lastSegment[0].length - lastHash.length
     return stem.slice(0, start) + hash + extension
   }
   const hash = fullHash.slice(0, 8)
@@ -187,7 +189,8 @@ function replaceBundleReferences(bundle: OutputBundle, previous: string, next: s
   for (const output of Object.values(bundle)) {
     if (output.type === 'chunk') {
       output.code = output.code.split(previous).join(next)
-      const importedCss = output.viteMetadata?.importedCss
+      const metadata = output.viteMetadata as { importedCss?: Set<string> | string[] } | undefined
+      const importedCss = metadata?.importedCss
       if (importedCss) {
         if (importedCss instanceof Set) {
           if (importedCss.delete(previous)) {
@@ -195,7 +198,7 @@ function replaceBundleReferences(bundle: OutputBundle, previous: string, next: s
           }
         }
         else {
-          output.viteMetadata.importedCss = importedCss.map(file => file === previous ? next : file)
+          metadata!.importedCss = importedCss.map(file => file === previous ? next : file)
         }
       }
       continue

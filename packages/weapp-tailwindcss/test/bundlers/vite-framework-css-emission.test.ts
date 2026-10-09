@@ -100,7 +100,9 @@ describe('框架 CSS 资源发射边界', () => {
         this.emitFile({ type: 'asset', name: 'style.css', source: 'before' })
       },
     }
-    installFrameworkCssEmission(config(plugin), () => { throw new Error('CSS transform failed') })
+    installFrameworkCssEmission(config(plugin), () => {
+      throw new Error('CSS transform failed')
+    })
     expect(() => handler(plugin.generateBundle).call(context)).toThrow('CSS transform failed')
     expect(context.emitFile).not.toHaveBeenCalled()
   })
@@ -134,5 +136,27 @@ describe('框架 CSS 资源发射边界', () => {
     expect(renamed).toMatch(/^assets\/index-[0-9a-f]{8}\.css$/)
     expect(bundle['index.html'].source).toContain(renamed)
     expect(bundle['entry.js'].code).toContain(renamed)
+  })
+
+  it.each([new Set(['assets/index-abcdef12.css']), ['assets/index-abcdef12.css']])('同步框架不同版本的 CSS metadata 容器：%j', (importedCss) => {
+    const plugin: Plugin = {
+      name: 'vite:css-post',
+      generateBundle() {
+        this.emitFile({ type: 'asset', name: 'index.css', source: '.probe{color:red}' })
+      },
+    }
+    const resolved = config(plugin)
+    installFrameworkCssEmission(resolved, source => source)
+    handler(plugin.generateBundle).call({ emitFile: () => 'reference', getFileName: () => 'assets/index-abcdef12.css' })
+    const chunk = { type: 'chunk', fileName: 'entry.js', code: '', viteMetadata: { importedCss } }
+    const bundle = {
+      'entry.js': chunk,
+      'assets/index-abcdef12.css': { type: 'asset', fileName: 'assets/index-abcdef12.css', source: '.probe{color:red}' },
+      'index.html': { type: 'asset', fileName: 'index.html', source: '<link href="assets/index-abcdef12.css">' },
+    } as any
+    finalizeFrameworkCssEmission(resolved, bundle)
+    const renamed = Object.keys(bundle).find(file => file.endsWith('.css'))!
+    expect(renamed).not.toBe('assets/index-abcdef12.css')
+    expect([...chunk.viteMetadata.importedCss]).toEqual([renamed])
   })
 })

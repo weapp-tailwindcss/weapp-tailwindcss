@@ -80,7 +80,7 @@ export async function processViteCssBundleEntry(options: any) {
     usedConfiguredTailwindV4CssSourceFiles,
   } = options
   metrics.css.total++
-  const assetSourceFile = resolveAssetSourceFile(originalSource, file)
+  const assetSourceFile = resolveAssetSourceFile(originalSource, file, rootDir)
   const outputSource = isWebGeneratorTarget
     ? originalEntrySource
     : normalizeMiniProgramImportShell(originalEntrySource, {
