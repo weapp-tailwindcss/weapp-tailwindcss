@@ -141,6 +141,12 @@ it.each(['timeout', 'cancel'] as const)('采样替身忽略 SIGTERM 时仍通过
     }
     const result = await running
     expect(result).toMatchObject(mode === 'cancel' ? { status: 'canceled' } : { status: 'failed', timedOut: true })
+    if (process.platform === 'darwin') {
+      expect(result.host).toMatchObject({ observedPid: 42, parentPid: process.pid, processes: { status: expect.any(String) } })
+    }
+    else {
+      expect(result.host).toBeUndefined()
+    }
     expect(performance.now() - started).toBeLessThan(8000)
     const { pid } = JSON.parse(await fs.readFile(file, 'utf8'))
     expect(() => process.kill(pid, 0)).toThrow()
