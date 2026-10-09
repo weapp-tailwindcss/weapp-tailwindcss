@@ -227,7 +227,7 @@ jobs:
 
   pr-gate:
     name: PR Gate
-    if: always()
+    if: always() && !cancelled()
     needs: [scope, quality, core-smoke, platform-watch, platform-dev, windows-utilities, portable-demos]
     runs-on: ubuntu-latest
     steps:

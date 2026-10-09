@@ -67,7 +67,7 @@ jobs:
   gate:
     name: Portable Demo Gate
     needs: [catalog, demos]
-    if: always()
+    if: always() && !cancelled()
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6

@@ -168,7 +168,7 @@ describe('ci workflows', () => {
     expect(runs).toContain('pnpm e2e:demo:matrix')
     expect(runs.join('\n')).not.toMatch(/--(?:update|build-only)/)
     expect(workflow.jobs.gate.needs).toEqual(['catalog', 'demos'])
-    expect(workflow.jobs.gate.if).toBe('always()')
+    expect(workflow.jobs.gate.if).toBe('always() && !cancelled()')
     const evidence = stepRuns(workflow, 'gate').join('\n')
     expect(evidence).toContain('test "$CATALOG_RESULT" = success')
     expect(evidence).toContain('test "$DEMOS_RESULT" = success')
