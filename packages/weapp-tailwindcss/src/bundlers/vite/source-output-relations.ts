@@ -1,5 +1,6 @@
 import type { OutputAsset, OutputChunk } from 'rollup'
 import { AsyncLocalStorage } from 'node:async_hooks'
+import { sourcePathApi } from '@weapp-tailwindcss/source-scan'
 import { normalizeOutputPathKey } from '../shared/module-graph'
 
 export interface ViteSourceOutputRemovalConsumer {
@@ -19,7 +20,7 @@ export interface ViteSourceOutputRelationOwner {
   getOutputSources: (outputFile: string) => Set<string>
   getOwnedOutputs: (sourceFile: string) => Set<string>
   observeSource: (sourceFile: string) => void
-  recordBundle: (bundle: Record<string, OutputAsset | OutputChunk>) => void
+  recordBundle: (bundle: Record<string, OutputAsset | OutputChunk>, projectRoot?: string) => void
   recordOwnedOutput: (sourceFile: string, outputFile: string) => void
   removeSource: (sourceFile: string) => Set<string>
 }
@@ -34,7 +35,7 @@ function normalizeOutputFile(outputFile: string) {
   return normalizeOutputPathKey(outputFile)
 }
 
-function collectOwnedSources(output: OutputAsset | OutputChunk) {
+function collectOwnedSources(output: OutputAsset | OutputChunk, projectRoot?: string) {
   if (output.type === 'chunk') {
     if (output.facadeModuleId) {
       return [output.facadeModuleId]
@@ -42,10 +43,11 @@ function collectOwnedSources(output: OutputAsset | OutputChunk) {
     const moduleIds = Array.isArray(output.moduleIds) ? output.moduleIds : []
     return moduleIds.length === 1 ? moduleIds : []
   }
+  // Rollup 资产来源相对于 Vite root，生命周期与 remembered CSS 使用绝对源码身份。
   return [
     output.originalFileName,
     ...(Array.isArray(output.originalFileNames) ? output.originalFileNames : []),
-  ].filter((sourceFile): sourceFile is string => typeof sourceFile === 'string' && sourceFile.length > 0)
+  ].filter((sourceFile): sourceFile is string => typeof sourceFile === 'string' && sourceFile.length > 0).map(sourceFile => projectRoot ? sourcePathApi(projectRoot, sourceFile).resolve(projectRoot, sourceFile) : sourceFile)
 }
 
 export function createViteSourceOutputRelationOwner(): ViteSourceOutputRelationOwner {
@@ -168,12 +170,12 @@ export function createViteSourceOutputRelationOwner(): ViteSourceOutputRelationO
         }
       }
     },
-    recordBundle(bundle) {
+    recordBundle(bundle, projectRoot) {
       if (disposed) {
         return
       }
       for (const [bundleFile, output] of Object.entries(bundle)) {
-        const ownedSources = collectOwnedSources(output)
+        const ownedSources = collectOwnedSources(output, projectRoot)
         if (ownedSources.length > 0) {
           replaceOutputOwners(output.fileName || bundleFile, ownedSources)
         }

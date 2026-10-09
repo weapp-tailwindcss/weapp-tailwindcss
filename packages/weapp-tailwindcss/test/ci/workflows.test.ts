@@ -172,7 +172,7 @@ describe('ci workflows', () => {
     expect(upload.with.name).toBe('portable-demo-${{ matrix.os }}-node${{ matrix.node }}-${{ matrix.shard }}')
     expect(upload.with.overwrite).toBe(true)
     expect(workflow.jobs.gate.needs).toEqual(['catalog', 'demos'])
-    expect(workflow.jobs.gate.if).toBe('always()')
+    expect(workflow.jobs.gate.if).toBe('always() && !cancelled()')
     const evidence = stepRuns(workflow, 'gate').join('\n')
     expect(evidence).toContain('test "$CATALOG_RESULT" = success')
     expect(evidence).toContain('test "$DEMOS_RESULT" = success')

@@ -81,7 +81,7 @@ jobs:
       - run: brew install cocoapods xcodegen
       - run: pnpm install --frozen-lockfile
       - name: Verify iOS preparation recovery
-        run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-ios-container.test.ts e2e/lynx-native-options.test.ts e2e/lynx-native-artifacts.test.ts e2e/lynx-native-command.test.ts e2e/lynx-command-observer.test.ts --update=none
+        run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-ios-container.test.ts e2e/lynx-native-options.test.ts e2e/lynx-native-artifacts.test.ts e2e/lynx-native-command.test.ts e2e/lynx-command-observer.test.ts e2e/lynx-command-host.test.ts --update=none
       - name: Verify pinned Lynx source patch
         run: |
           ruby e2e/lynx/podfile.test.rb

@@ -11230,7 +11230,7 @@ const trace = "at App.vue:4"
 
     expect(generateCssByGeneratorMock).toHaveBeenCalledTimes(1)
     expect(generatedOptions[0]).toEqual(expect.objectContaining({
-      file: 'index.html',
+      file: path.join(root, 'index.html'),
       outputFile: 'assets/index-A1B2C3.css',
       rawSource: expect.stringContaining('@media source(none)'),
     }))

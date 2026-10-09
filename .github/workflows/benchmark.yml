@@ -135,8 +135,8 @@ jobs:
       BENCH_BUILD_RUNS: ${{ github.event.inputs.build_runs || '3' }}
       BENCH_HMR_RUNS: ${{ github.event_name == 'pull_request' && '3' || github.event.inputs.hmr_runs || '5' }}
       BENCH_ONLY: ${{ matrix.bench_only }}
-      # MPX 的重复 RSS 回归需同时保留 worker 堆与缓存明细；两侧使用同一诊断配置。
-      WEAPP_TW_HMR_MEMORY_DEBUG: ${{ matrix.bench_only == 'demo-mpx-tailwindcss-v4__mp-weixin' && '1' || '0' }}
+      # MPX 与 uni-app 的 RSS 回归需保留堆与缓存明细；两侧使用同一诊断配置。
+      WEAPP_TW_HMR_MEMORY_DEBUG: ${{ (matrix.bench_only == 'demo-mpx-tailwindcss-v4__mp-weixin' || matrix.bench_only == 'demo-uni-app-vite-tailwindcss-v4__mp-weixin') && '1' || '0' }}
 
     steps:
       - name: Check out code

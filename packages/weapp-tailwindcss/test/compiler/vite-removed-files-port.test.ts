@@ -30,7 +30,7 @@ describe('vite removed files port', () => {
     vi.resetModules()
   })
 
-  it('routes CSS metadata and exact template source deletions into production snapshots once', async () => {
+  it.each([undefined, '/workspace'])('routes CSS metadata and exact template source deletions into production snapshots once (root=%s)', async (root) => {
     const snapshots: Array<{ removedFiles: Set<string> }> = []
     const runtimeCloseBundle = vi.fn()
     const sourceCandidates = new Map<string, string>()
@@ -74,6 +74,7 @@ describe('vite removed files port', () => {
         createViteFrameworkPlugins: vi.fn(() => [{
           name: 'mock-vite-port',
           generateBundle: createGenerateBundleHook({
+            getResolvedConfig: () => root ? { root } : undefined,
             getSourceCandidateSource: (file: string) => sourceCandidates.get(file),
             getSourceCandidateSources: () => sourceCandidates,
             runtimeState: {
@@ -100,8 +101,8 @@ describe('vite removed files port', () => {
     sourceCandidates.set(templateSourceFile, '<view class="pt-2" />')
 
     await generateBundle.call({}, {}, {
-      'styles/theme.acss': createAsset('styles/theme.acss', sourceFile),
-      'styles/other.ttss': createAsset('styles/other.ttss', '/workspace/src/other.css'),
+      'styles/theme.acss': createAsset('styles/theme.acss', root ? 'src/theme.css' : sourceFile),
+      'styles/other.ttss': createAsset('styles/other.ttss', root ? 'src/other.css' : '/workspace/src/other.css'),
       'views/card.axml': createAnonymousAsset('views/card.axml'),
     })
     await watchChange(sourceFile, { event: 'delete' })

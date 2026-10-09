@@ -22,7 +22,7 @@ describe('uni-app X H5 watch 的 CSS 资产身份', () => {
   it.each([true, false])('连续生产增量仍在 hash 前重排 reset，拆分=%s', async (cssCodeSplit) => {
     const root = await realpath(await mkdtemp(path.join(tmpdir(), 'uni-app-x-css-watch-')))
     let watcher: RollupWatcher | undefined
-    const snapshots: { css: string, fileName: string, references: string }[] = []
+    const snapshots: { css: string, cssFiles: string[], fileName: string, references: string }[] = []
     let completed = 0
     let failure: unknown
     try {
@@ -58,6 +58,7 @@ describe('uni-app X H5 watch 的 CSS 资产身份', () => {
                 }
                 snapshots.push({
                   css: String(asset.source),
+                  cssFiles: Object.values(bundle).filter(output => output.type === 'asset' && output.fileName.endsWith('.css')).map(output => output.fileName),
                   fileName: asset.fileName,
                   references: Object.values(bundle).map(output => output.type === 'chunk' ? output.code : String(output.source)).join('\n'),
                 })
@@ -103,11 +104,12 @@ describe('uni-app X H5 watch 的 CSS 资产身份', () => {
         }, { timeout: 20_000, interval: 30 })
         const output = snapshots[index]!
         expect(output.fileName).toBe(`assets/style-${cssHash(output.css)}.css`)
-        expect(output.css.match(/uni-app uni-ad-draw/g)).toHaveLength(1)
+        expect(output.css.match(/uni-app uni-ad-draw/g), output.css).toHaveLength(1)
         expect(output.css.indexOf('uni-app uni-ad-draw')).toBeGreaterThan(output.css.indexOf('medium'))
         expect(output.references).toContain(output.fileName)
         if (index > 0) {
           expect(output.fileName).not.toBe(snapshots[index - 1]!.fileName)
+          expect(output.cssFiles).not.toContain(snapshots[index - 1]!.fileName)
         }
       }
       expect(snapshots).toHaveLength(3)

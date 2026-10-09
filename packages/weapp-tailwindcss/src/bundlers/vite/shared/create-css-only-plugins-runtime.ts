@@ -237,7 +237,7 @@ export function createCssOnlyVitePlugins(
     markCssAssetProcessed: (asset) => { processedCssAssets.add(asset) },
     isCssAssetProcessed: asset => processedCssAssets.has(asset),
     isViteProcessedCssAsset: () => true,
-    resolveCssAssetIdentity: createViteCssAssetIdentityResolver({ generatorPlaceholderFile: path.join(resolvePackageDir('weapp-tailwindcss'), 'generator-placeholder.css'), isKnownProcessedSource: processedCssRegistry.matchesIdentity }),
+    resolveCssAssetIdentity: createViteCssAssetIdentityResolver({ generatorPlaceholderFile: path.join(resolvePackageDir('weapp-tailwindcss'), 'generator-placeholder.css'), getProjectRoot: () => resolvedConfig?.root, isKnownProcessedSource: processedCssRegistry.matchesIdentity }),
     recordCssAssetResult: (file, css) => { generatedCssByFile.set(file, css) },
     recordViteProcessedCssAssetResult: processedCssRegistry.record,
     getViteProcessedCssAssetResults: processedCssRegistry.entries,

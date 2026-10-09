@@ -5,6 +5,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { StringDecoder } from 'node:string_decoder'
 import { execa } from 'execa'
+import { captureNativeHost } from './native-command-host'
 
 const outputLimit = 16 * 1024
 
@@ -19,6 +20,7 @@ interface SampleResult {
   exitCode?: number
   timedOut?: boolean
   file?: string
+  host?: Awaited<ReturnType<typeof captureNativeHost>>
 }
 
 interface ObserverOptions {
@@ -28,13 +30,18 @@ interface ObserverOptions {
 
 export async function sampleNativeProcess(pid: number, cancelSignal: AbortSignal, file: string, executable = { file: 'sample', args: [] as string[] }): Promise<SampleResult> {
   // 只采样本轮原命令的 PID，不另发 simctl 查询或干预共享服务。
-  const result = await execa(executable.file, [...executable.args, String(pid), '2', '10', '-file', file], {
+  const sampling = execa(executable.file, [...executable.args, String(pid), '2', '10', '-file', file], {
     cancelSignal,
     timeout: 5000,
     killSignal: 'SIGKILL',
     maxBuffer: 256 * 1024,
     reject: false,
   })
+  // 与 sample 并行且共用取消信号；sample 无输出时仍保留主机和进程状态。
+  const [result, host] = await Promise.all([
+    sampling,
+    process.platform === 'darwin' ? captureNativeHost(pid, cancelSignal) : undefined,
+  ])
   return {
     status: result.isCanceled ? 'canceled' : result.failed ? 'failed' : 'complete',
     stdout: result.stdout,
@@ -42,6 +49,7 @@ export async function sampleNativeProcess(pid: number, cancelSignal: AbortSignal
     exitCode: result.exitCode,
     timedOut: result.timedOut,
     file: path.basename(file),
+    host,
   }
 }
 
