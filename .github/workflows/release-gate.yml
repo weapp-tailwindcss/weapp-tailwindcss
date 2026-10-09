@@ -12,6 +12,7 @@ on:
       - packages-native/**
       - packages/weapp-tailwindcss/**
       - packages/postcss/**
+      - packages/css-compat/**
       - pnpm-workspace.yaml
       - .github/workflows/native.yml
       - .github/workflows/release.yml
