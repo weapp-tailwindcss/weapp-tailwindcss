@@ -43,6 +43,8 @@ weapp-vite 的首轮产物写出早于监听初始化完成；首次修改前必
 
 锁文件中的 Rollup 4.63.0 使用 [watcher 补丁](../../../patches/rollup@4.63.0.patch)：同一构建任务共用文件 watcher，transform dependency 单独记录失效语义。原版在 Linux 对普通模块和 transform dependency 重复监听同一文件，原子替换后会停止响应后续修改。[CJS/ESM 回归](./rollup-watch.test.mjs) 同时检查直接导入、虚拟模块消费方、连续修改与删除后重建。补丁仅随本仓库冻结依赖应用，不随 weapp-tailwindcss npm 包安装；后续升级 Rollup 时必须复验并评估移除，不能只改版本号。
 
+Nitro 2.13.4 的 [externals 补丁](../../../patches/nitropack@2.13.4.patch) 在匹配内联规则前规范化解析后的 module ID。原版只规范化原始 ID，Windows 原生反斜杠路径会漏掉 `nuxt/dist` 内联规则，让 Nuxt 4.6 的 SSR renderer 在 Node 中未经开发环境变换直接加载，导致 manifest 缺失和 HTTP 500。[发行包 resolver 回归](./nitro-externals.test.mjs) 覆盖 POSIX、Windows 盘符、根目录、UNC、pnpm 嵌套路径、相对导入及更具体的 external 规则；真实 Nuxt demo 继续验证 SSR、静态基线与连续 Web 更新。补丁仅随本仓库冻结安装生效，不随产品 npm 包发布；[上游 resolver](https://github.com/nitrojs/nitro/blob/v2.13.4/src/build/plugins/externals.ts) 发布等价修复后，先复验再移除补丁与锁文件登记。
+
 开发验收使用 demo 默认 watcher，不强加 Watchpack 或 Chokidar polling。短间隔磁盘轮询会将 Webpack 虚拟模块反复报告为缺失，使慢编译持续空转；真实虚拟模块回归要求空闲时稳定、实际更新后重建并再次稳定。Windows 专项连续执行三次完整 H5 流程，额外保存失效事件来源与 watcher 身份。
 
 Mpx CLI 2.2.30 的首轮就绪 Promise 不能接收后续致命错误；原版会吞掉错误，在 MultiCompiler 关闭所有 watcher 后以 0 退出。[CLI 补丁](../../../patches/@mpxjs__vue-cli-plugin-mpx@2.2.30.patch) 将增量致命错误独立报告并设置非零退出码，[真实 MultiCompiler 回归](./mpx-fatal-watch.test.mjs) 同时验证首轮失败和普通编译错误后的恢复。旧的 `dev:e2e-watch` 包装器也不再用定时器掩盖子进程退出。补丁仅作用于本仓库冻结安装，不随 npm 包发布；[上游实现](https://github.com/mpx-ecology/mpx-cli/blob/next/packages/vue-cli-plugin-mpx/commands/serve/mp.js) 发布等价修复后，复验上述回归再移除补丁与锁文件登记。
@@ -61,8 +63,10 @@ Mpx CLI 2.2.30 的首轮就绪 Promise 不能接收后续致命错误；原版�
 
 [demo-matrix.yml](../../../.github/workflows/demo-matrix.yml) 在各操作系统使用根 `package.json#packageManager` 声明的 pnpm 版本冻结安装锁文件并构建当前包。所有目标必须执行成功；最终 gate 对照清单检查每个 OS/Node/目标和全部阶段、提交 SHA、pnpm 版本，不接受缺失、重复、过期或跳过的报告。PR Gate 对启用的矩阵要求 success。CI 证据只对报告中的具体提交有效，本机通过不能替代 Windows/Linux 验收。
 
+同一 run 的局部重跑复用 OS、Node 和 shard 的 artifact 名称；上传启用 `overwrite: true`，在保存本轮报告前替换该分片的旧产物。否则 GitHub 可保留两份同名 artifact，按名称下载可能取到上一轮失败报告，让已经成功的分片无法通过汇总。需要保留首次失败时，应在重跑前按 artifact ID 归档日志与产物。门禁仍要求所有分片成功及完整证据，不过滤失败报告；根因和回归见[局部重跑产物复盘](../../../docs/engineering/lessons/portable-artifact-rerun.md)。
+
 Webpack JSX 测试探针会暴露当前 module.hot 状态。DOM 与样式已渲染后仍须等待 HMR 回到 idle，再写入下一轮内容，避免启动期间旧更新尚在 prepare/apply 时触发重叠更新；其余浏览器与产物断言保持不变。
 
 Webpack 5.105.4 的 [only-dev-server 客户端](https://github.com/webpack/webpack/blob/v5.105.4/hot/only-dev-server.js) 将 `hot.check()` 和 `hot.apply()` 分开调用；检查结束后加载新的异步 chunk 会让状态从 ready 回到 prepare，导致 apply 拒绝并停在 ready。[依赖补丁](../../../patches/webpack@5.105.4.patch) 使用 `hot.check(applyOptions)`，由 runtime 等待正在加载的 chunk 后应用更新，保留原有 ignore 选项和错误回调。[真实浏览器回归](./webpack-hmr.test.mjs) 在 ready 时启动异步 chunk，检查更新值和 idle 状态；不能通过放宽 idle 门槛或刷新兜底隐藏竞态。补丁只随本仓库冻结依赖安装，不随产品 npm 包发布；上游发布等价修复后，先复验再删除补丁及锁文件登记。
 
-POSIX 收尾仅向本次进程树拥有的组发送信号。macOS 对仅剩僵尸进程的组可能返回 `EPERM`；此时读取 `ps` 的 PGID 与状态，仅确认组已空或全部为 Z 时视为终止。仍有活进程、状态缺失或读取失败必须报告错误。[进程组信号回归](./process-group-signal.test.mjs) 覆盖这些边界，并在 macOS 构造真实僵尸组；Windows 继续使用原有 taskkill 路径。
+POSIX 收尾仅向本次进程树拥有的组发送信号。macOS 对仅剩僵尸进程的组可能返回 `EPERM`；此时读取 `ps` 的 PGID 与状态，仅确认组已空或全部为 Z 时视为终止。系统进程表中其他组的状态可能不可读，应先按 PGID 筛出目标组再验证状态。目标组仍有活进程、目标组状态缺失、进程组编号无效或读取失败必须报告错误。[进程组信号回归](./process-group-signal.test.mjs) 覆盖这些边界，并在 macOS 构造真实僵尸组；Windows 继续使用原有 taskkill 路径。

@@ -25,6 +25,7 @@ export default defineMonorepoConfig({
           {
             script: 'release:sync-npmmirror',
             continueOnError: true,
+            idempotent: true,
           },
         ],
       },
