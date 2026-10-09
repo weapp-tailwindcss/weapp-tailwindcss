@@ -26,8 +26,11 @@ export async function captureOwnedProcessGroups(rootPid) {
 
 export function hasLiveGroupMembers(table, group) {
   const rows = table.trim() ? table.trim().split('\n').map(line => line.trim().split(/\s+/)) : []
-  assert.ok(rows.every(([pgid, state]) => Number.isInteger(Number(pgid)) && /^[A-Z]/.test(state ?? '')), '无法确认进程组状态：ps 输出无效')
-  return rows.some(([pgid, state]) => Number(pgid) === group && !state.startsWith('Z'))
+  assert.ok(rows.every(([pgid]) => /^\d+$/.test(pgid)), '无法确认进程组状态：ps 输出无效（进程组编号）')
+  const owned = rows.filter(([pgid]) => Number(pgid) === group)
+  // 系统快照中其他组可能已退出或状态不可读；只判断本任务拥有的目标组。
+  assert.ok(owned.every(([, state]) => /^[A-Z]/.test(state ?? '')), `无法确认进程组状态：ps 输出无效（目标组 ${group}：${owned.map(row => row.join(' ')).join(', ')}）`)
+  return owned.some(([, state]) => !state.startsWith('Z'))
 }
 
 export async function signalOwnedProcessGroup(group, signal, kill = process.kill.bind(process), readGroups = async () => {

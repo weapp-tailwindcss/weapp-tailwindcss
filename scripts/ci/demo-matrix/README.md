@@ -67,4 +67,4 @@ Webpack JSX 测试探针会暴露当前 module.hot 状态。DOM 与样式已渲�
 
 Webpack 5.105.4 的 [only-dev-server 客户端](https://github.com/webpack/webpack/blob/v5.105.4/hot/only-dev-server.js) 将 `hot.check()` 和 `hot.apply()` 分开调用；检查结束后加载新的异步 chunk 会让状态从 ready 回到 prepare，导致 apply 拒绝并停在 ready。[依赖补丁](../../../patches/webpack@5.105.4.patch) 使用 `hot.check(applyOptions)`，由 runtime 等待正在加载的 chunk 后应用更新，保留原有 ignore 选项和错误回调。[真实浏览器回归](./webpack-hmr.test.mjs) 在 ready 时启动异步 chunk，检查更新值和 idle 状态；不能通过放宽 idle 门槛或刷新兜底隐藏竞态。补丁只随本仓库冻结依赖安装，不随产品 npm 包发布；上游发布等价修复后，先复验再删除补丁及锁文件登记。
 
-POSIX 收尾仅向本次进程树拥有的组发送信号。macOS 对仅剩僵尸进程的组可能返回 `EPERM`；此时读取 `ps` 的 PGID 与状态，仅确认组已空或全部为 Z 时视为终止。仍有活进程、状态缺失或读取失败必须报告错误。[进程组信号回归](./process-group-signal.test.mjs) 覆盖这些边界，并在 macOS 构造真实僵尸组；Windows 继续使用原有 taskkill 路径。
+POSIX 收尾仅向本次进程树拥有的组发送信号。macOS 对仅剩僵尸进程的组可能返回 `EPERM`；此时读取 `ps` 的 PGID 与状态，仅确认组已空或全部为 Z 时视为终止。系统进程表中其他组的状态可能不可读，应先按 PGID 筛出目标组再验证状态。目标组仍有活进程、目标组状态缺失、进程组编号无效或读取失败必须报告错误。[进程组信号回归](./process-group-signal.test.mjs) 覆盖这些边界，并在 macOS 构造真实僵尸组；Windows 继续使用原有 taskkill 路径。
