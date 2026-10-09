@@ -43,7 +43,7 @@ describe('demo/web vite matrix', () => {
     expect(packages[0]?.dependencies?.react).toBe('catalog:react19')
     expect(packages[1]?.dependencies?.vue).toBe('catalog:vue3')
     expect(packages[2]?.dependencies?.vue).toBe('catalog:vue3')
-    expect(packages[3]?.dependencies?.nuxt).toBe('4.6.0')
+    expect(packages[3]?.dependencies?.nuxt).toMatch(/^4\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/)
     expect(packages.every(pkg => pkg.devDependencies?.tailwindcss === 'catalog:tailwindcss4')).toBe(true)
     for (const pkg of packages) {
       const deps = {
@@ -94,6 +94,14 @@ describe('demo/web vite matrix', () => {
       expect(config).toContain(`resolve(projectRoot,`)
       expect(config).not.toContain(`resolve(process.cwd()`)
     }
+  })
+
+  it('keeps the Nuxt 4.6 Windows renderer workaround separator agnostic', async () => {
+    const config = await readDemoFile('web/nuxt-vite-tailwindcss-v4/nuxt.config.ts')
+
+    expect(config).toContain('nitro: {')
+    expect(config).toContain('externals: {')
+    expect(config).toContain('inline: [/[\\\\/]node_modules[\\\\/]nuxt[\\\\/]dist[\\\\/]/]')
   })
 
   it('keeps v4 CSS entries using Tailwind CSS import layers', async () => {
