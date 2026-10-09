@@ -206,7 +206,7 @@ catalogs:
     '@iconify-json/bi': ^1.2.7
     '@iconify-json/line-md': ^1.2.16
     '@iconify-json/logos': ^1.2.14
-    '@iconify-json/lucide': ^1.2.140
+    '@iconify-json/lucide': ^1.2.141
     '@iconify-json/mdi': ^1.2.3
     '@iconify-json/mdi-light': ^1.2.2
     '@iconify-json/svg-spinners': ^1.2.4
@@ -246,7 +246,7 @@ catalogs:
   reactRefresh018:
     react-refresh: ^0.18.0
   rsbuild2:
-    '@rsbuild/core': ^2.2.11
+    '@rsbuild/core': ^2.2.12
     '@rsbuild/plugin-react': ^2.1.1
     '@rsbuild/plugin-vue': ^2.0.1
   sass195:

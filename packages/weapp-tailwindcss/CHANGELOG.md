@@ -1,5 +1,59 @@
 # weapp-tailwindcss
 
+## 5.6.0
+
+### Minor Changes
+
+- 提供 WXML tokenize、JavaScript 完整字面量转换的 Rust Node-API 实验内核，保留 JavaScript/Oxc/Babel 兼容路径与公开 TypeScript API。原生与回退路径共享 UTF-16 位置、精确类名命中和条件测试保护语义。JS/WXML 与 CSS 内核均默认关闭，须在进程启动前设置 `WEAPP_TW_NATIVE=auto` 或 `required` 显式启用；默认路径跳过高频原生加载检查。运行时签名仍沿用 Oxc，原生签名接口仅供 ABI 对照。
+
+  WXML 静态属性值在原生实例内完成扫描、转义和组装；精确模式仅查询实际候选，避免复制完整类集合。动态表达式与自定义回调保留原执行顺序。
+
+  修复快速路径的模板正文边界与显式 class 上下文语义，避免模板正文中的括号被错误覆盖。JavaScript 原生转换仅同步查询源码实际候选，消除完整集合扫描；集合原地修改立即生效，映射按实际内容重建实例，原生不支持的语义直接交给 Babel。
+
+  修复回退结果缓存对可变类集合、映射、复用覆盖配置与有状态回调的生命周期判断，避免返回过期转换结果；自定义 Set、getter 与 Proxy 保留原有 Babel 执行语义。
+
+  PostCSS 接入 Rust 选择器与声明值计算，合并 Tailwind v4 变量及渐变 fallback 解析，并批量处理 uvue translate 参数。保留 PostCSS AST 与用户插件契约，修复原生包加载顺序和自定义映射原地更新的缓存边界。
+
+  复杂选择器通过 Rust AST 完成伪类展开、平台伪类移除与 spacing 选择器转换，只向 PostCSS 返回规则动作；未接管语法明确回退。专门的原生测试入口强制验证真实二进制，普通单测保持无 Rust 工具链可运行。
+
+  圆角 clamp、渐变方向与 infinity/calc 的独立值计算迁入 Rust，并与变量回退合并为单次声明调用；保留声明顺序、父规则语义和原有数值行为。
+
+### Patch Changes
+
+- 修复 uni-app X H5 生产 CSS 在 reset 重排后沿用旧内容 hash 的问题：在 Vite 资源发射前完成重排，保持文件名和引用一致，并去除压缩后失去注释的重复 reset。Refs #1271
+
+- 优化 Oxc JavaScript 快速路径的 class 上下文判断，在单次 AST 遍历中增量维护对象属性、JSX class 属性和类名 helper 参数的上下文，保持与 Babel 的父表达式语义一致并减少重复祖先链扫描。
+
+  class 上下文统一依据解析后的 AST 判断，修复转义斜杠、转义或规范化属性名，以及带注释的 helper 调用被源码文本预筛遗漏的问题；Oxc 与可选 Rust 内核均保留精确类名集合匹配和普通业务路径保护。
+
+- 修复 Oxc 快速路径对条件测试字符串的误转换，对齐 Babel 的父表达式与括号节点语义，并保留指令字符串；含 JSX 实体的属性回退 Babel 解码。
+
+  Oxc 分析按源码大小与反序列化器初始化状态选择 raw transfer，避免中等 chunk 的首次加载开销；运行时签名使用普通 AST。不支持或失败时回退普通解析，保持模块图、source map 与 ignore 场景的 Babel 回退行为及公开 API 不变。
+
+  关闭快速路径或启用模块图时省去不会被消费的类名预扫描，保留依赖分析与原有跳过规则。
+
+- 限制源码候选扫描与 Engine 原始候选补扫、无方括号任意值补扫、位置报告的并发文件读取，避免多个构建入口同时扫描时耗尽文件描述符；保留全部候选、来源隔离和报告顺序。
+
+  Webpack watch 扫描失败时等待在途操作结束，保留原始错误，并在整轮成功后一起发布候选快照和文件元数据，避免失败后的重试漏掉变更。
+
+- 让 Webpack 同一编译轮次的 loader 共享运行时类集合准备结果，并在源码变化、刷新失败和新编译开始时正确失效。
+
+- 避免 Webpack 无匹配产物的子编译重复收集类名，并保留父编译的刷新状态与缓存。
+
+  Mpx 的 WXS 子编译在 CSS、模板和 JS matcher 均未命中时直接结束本轮转换准备；用户显式匹配 WXS、JS、模板或样式的子编译继续走现有转换链路。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/engine@0.1.5
+  - @weapp-tailwindcss/native-darwin-arm64@5.6.0
+  - @weapp-tailwindcss/native-darwin-x64@5.6.0
+  - @weapp-tailwindcss/native-linux-arm64-gnu@5.6.0
+  - @weapp-tailwindcss/native-linux-arm64-musl@5.6.0
+  - @weapp-tailwindcss/native-linux-x64-gnu@5.6.0
+  - @weapp-tailwindcss/native-linux-x64-musl@5.6.0
+  - @weapp-tailwindcss/native-win32-arm64-msvc@5.6.0
+  - @weapp-tailwindcss/native-win32-x64-msvc@5.6.0
+  - @weapp-tailwindcss/postcss@3.4.0
+
 ## 5.5.12
 
 ### Patch Changes
