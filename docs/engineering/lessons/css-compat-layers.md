@@ -50,7 +50,7 @@ pnpm --filter @weapp-tailwindcss/css-compat bench
 pnpm architecture:check
 pnpm agents:check
 node scripts/check-package-readmes.mjs
-CI=1 pnpm --filter weapp-tailwindcss exec vitest run test/ci/css-compat-workflow.test.ts test/ci/ensure-built-css-compat.test.ts test/ci/workflows.test.ts test/ci/pr-gate-cancellation.test.ts --update=none --coverage.enabled=false
+CI=1 pnpm --filter weapp-tailwindcss exec vitest run test/ci/css-compat-workflow.test.ts test/ci/ensure-built-css-compat.test.ts test/ci/workflows.test.ts test/ci/workflow-gate-cancellation.test.ts --update=none --coverage.enabled=false
 pnpm exec eslint packages/css-compat/src packages/css-compat/scripts scripts/architecture/css-compat.ts scripts/architecture/audit.ts scripts/architecture/client-boundaries.ts
 pnpm release status
 git diff --check
