@@ -3,6 +3,7 @@ status: verified
 issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues/1280
 baseline: 276ac5a3be2dab0ac16ccd366aeda11937251a3e
 regressions:
+  - packages/weapp-tailwindcss/test/ci/verify-packed-packages.test.ts
   - packages/css-compat/test/boundaries.test.ts
   - packages/weapp-tailwindcss/test/ci/css-compat-workflow.test.ts
   - packages/weapp-tailwindcss/test/ci/ensure-built-css-compat.test.ts
@@ -50,7 +51,7 @@ pnpm --filter @weapp-tailwindcss/css-compat bench
 pnpm architecture:check
 pnpm agents:check
 node scripts/check-package-readmes.mjs
-CI=1 pnpm --filter weapp-tailwindcss exec vitest run test/ci/css-compat-workflow.test.ts test/ci/ensure-built-css-compat.test.ts test/ci/workflows.test.ts test/ci/workflow-gate-cancellation.test.ts --update=none --coverage.enabled=false
+CI=1 pnpm --filter weapp-tailwindcss exec vitest run test/ci/css-compat-workflow.test.ts test/ci/ensure-built-css-compat.test.ts test/ci/workflows.test.ts test/ci/workflow-gate-cancellation.test.ts test/ci/verify-packed-packages.test.ts --update=none --coverage.enabled=false
 pnpm exec eslint packages/css-compat/src packages/css-compat/scripts scripts/architecture/css-compat.ts scripts/architecture/audit.ts scripts/architecture/client-boundaries.ts
 pnpm release status
 git diff --check
@@ -63,7 +64,7 @@ git diff --check
 - Chromium 153.0.8010.12、Firefox 155.0、WebKit 26.6：每种引擎对 15 个安全 fixture 在 390/1000 两种宽度对照原生 computed style，并验证 23 个权重反例的差异、诊断与 strict 拒绝，另验证 5 个输入/descriptor 拒绝对照，共 174 次对照通过。全部 `headless: true`，每个引擎仅一个 browser/context/page，均已定向关闭。
 - repoctl 记录中文 PostCSS patch intent，计划为 3.4.0 → 3.4.1；下游传播由 repoctl 决定。release status 还包含基线已有 dependency intent，不能将全部待发布变化归因于本任务。未执行版本落盘或发布。
 - 冻结安装通过。锁文件保留 main 的既有解析结果，仅新增 css-compat importer、PostCSS workspace 依赖及 MDN 2.37.2 记录。英文/中文 README 和语言切换检查通过；中文 README 随公开 tarball 验证。
-- 自动构建在 PostCSS 前构建 css-compat，持久回归覆盖缺失 dist 及只有内核源码变更的失效判断。CI 增加 Linux/macOS/Windows × Node 22/24 包测试、类型和 tarball，Ubuntu Node 24 执行 MDN、真实生成器、三浏览器及无阈值微基准 artifact；PR Gate 汇总强制等待新门禁成功，Release Gate 增加新包过滤。工作流与取消行为的定向回归共 4 文件 63 项通过。
+- 自动构建在 PostCSS 前构建 css-compat，持久回归覆盖缺失 dist 及只有内核源码变更的失效判断。CI 增加 Linux/macOS/Windows × Node 22/24 包测试、类型和 tarball，Ubuntu Node 24 执行 MDN、真实生成器、三浏览器及无阈值微基准 artifact；PR Gate 汇总强制等待新门禁成功，Release Gate 增加新包过滤。工作流与取消行为的定向回归共 5 文件 66 项通过。
 
 微基准使用实际构建产物，输入包括 parse；每组记录首样本，预热 3 次，采样 10 次，取中位数与最近秩 p95，每次采样前显式 GC。混合输入交替重复层，并在同一规则内混合普通和 important；冲突输入的前半部分为 ID、后半部分为 class。结果如下（毫秒）：
 
@@ -76,6 +77,15 @@ git diff --check
 1 万条混合输入为 528,901 字节，ordered 输出 497,780 字节；该规模首样本分别为 ordered 混合 189.50 ms、冲突 110.87 ms、legacy 114.22 ms。采样观察到的最大 heap 增量分别约 118.2、89.0、41.7 MiB；这是采样边界的 heap 差值，不能当作峰值 RSS。采样期间另有定向 lint/架构检查进程，因此只保留观察数据，不与旧实现作性能优劣结论，不新增耗时阈值。结果证明本组诊断规模保持线性，不代表任意 selector、真实框架构建或 HMR 的性能。
 
 此前解析依赖未构建、生成表格式、warning 类型、规则命令 cwd 和脚本 lint 问题已纠正。本轮还纠正了生成表重新写入后的 lint 格式，并从 lint 命令去掉仓库明确忽略的测试目录。最终定向验收无失败、skip 或环境阻塞；临时安装目录、Panda 探针和浏览器资源全部清理。
+
+## 远端跟进
+
+正式 PR 为 [#1281](https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1281)。首个 head `ee972660ae25c64ad85caff919252cb91fead24d` 的 [PR Gate attempt 1](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/37956080432) 发现两项本地 macOS 定向集未覆盖的问题：
+
+- Windows Node 24 job `113907000882`：构建、类型和 125 项内核测试通过，公开 tarball 安装失败。Node 将 runner 的 `RUNNER~1` 路径转为含 `%7E` 的 file URL，pnpm 12.9.1 未还原该路径。特殊物理路径安装回归继续发现 `#` 被 file fetcher 当作 fragment，测试脚本需避免将物理 tarball 路径直接交给此解析边界。
+- unit shard 3 job `113909823043`：新增公开包后，既有发布清单回归仍断言 38 个包。已在本地复现，更新为 39 并显式检查 css-compat 身份；初始版本仍由本轮 tarball 和 repoctl 验证为 0.1.0。
+
+[Lynx iOS attempt 1](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/37956079836) job `113906811413` 在 app 运行前执行 `simctl list devices` 超时 30 秒，保留为 runner 设备发现基础设施故障；不调整产品逻辑或超时门槛。后续只以最终 head 的新 run 判断通过。
 
 ## 适用边界
 
