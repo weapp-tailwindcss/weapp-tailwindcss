@@ -7,6 +7,7 @@ regressions:
   - packages/weapp-tailwindcss/test/bundlers/vite-uni-app-x-css-watch.integration.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-css-asset-source.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-plugin.bundle.unit.test.ts
+  - packages/weapp-tailwindcss/test/compiler/vite-removed-files-port.test.ts
 ---
 
 # PR #1278 的 CSS 来源与产物归属一致性
@@ -42,6 +43,16 @@ CSS asset 处理已将 `originalFileName(s)` 按 Vite root 解析为绝对来源
 - `pnpm release status` 确认已有中文 patch intent 覆盖主包；仅补充本次归属修复，不改版本、不发布。
 
 只增强现有临时编译测试的断言，没有新增或改动持久 demo、复现页或输出 fixture；没有 e2e static 基线语义变化，也没有更新快照。
+
+## 后续单测替身契约
+
+`a6d6eb3f9240768adbb9d7d684a113d5b2875d0a` 的 run `37893486945`、attempt 1 中，上述 watch 回归所在分片 2 已成功；分片 1 job `113705174826` 出现一项新失败：`TypeError: context.getResolvedConfig is not a function`。精确 job JSON 与完整日志保存在 `cicd/a6d6-quality-shard1-job.json`、`cicd/a6d6-quality-shard1.log`。
+
+[删除文件端口测试](../../../packages/weapp-tailwindcss/test/compiler/vite-removed-files-port.test.ts) mock 了内部生成 runtime，提供的最小上下文却漏掉 `GenerateBundleContext` 一直要求的 `getResolvedConfig` 方法。先前 wrapper 未直接消费该方法，导致不完整替身长期未被发现。真实插件提供 getter；本次应修正测试上下文，不能把产品的必需方法改成可选以掩盖替身缺失。
+
+本地同一文件修复前一项失败。补齐 getter 后，将原端口序列参数化为“getter 返回未解析配置、资产元数据为绝对来源”与“getter 返回 Vite root、元数据为项目相对来源”两种情况；两者都必须按绝对源码删除 CSS、精确模板产物，并且只投递一次删除通知。原删除断言全部保留，仍验证 closeBundle 转发。
+
+本轮仅修改测试和本记录。删除端口、shadow 端口、来源归属、真实 watch、SFC 来源五文件共 33 项通过，命令为 `CI=1 pnpm exec vitest run --project=weapp-tailwindcss packages/weapp-tailwindcss/test/compiler/vite-removed-files-port.test.ts packages/weapp-tailwindcss/test/compiler/shadow-report-vite-port.test.ts packages/weapp-tailwindcss/test/bundlers/vite-source-output-relations.unit.test.ts packages/weapp-tailwindcss/test/bundlers/vite-uni-app-x-css-watch.integration.test.ts packages/weapp-tailwindcss/test/bundlers/vite-css-asset-source.test.ts --update=none`。与前述产品验证有重叠，不累加。没有新增发布 intent 或产物基线。
 
 ## 适用边界
 
