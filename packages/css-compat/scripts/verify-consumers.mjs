@@ -5,13 +5,13 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { execa } from 'execa'
-import { install, pack, repositoryRoot, tarballDependency } from './package-utils.mjs'
+import { install, pack, repositoryRoot } from './package-utils.mjs'
 
 const tempRoot = await mkdtemp(path.join(tmpdir(), 'css-compat-consumers-'))
 try {
   const tarball = await pack(tempRoot)
   const consumer = path.join(tempRoot, 'css-consumer')
-  await install(consumer, { '@weapp-tailwindcss/css-compat': tarballDependency(tarball), 'postcss': '8.5.29' })
+  await install(consumer, { postcss: '8.5.29' }, { '@weapp-tailwindcss/css-compat': tarball })
   const consumerScript = path.join(consumer, 'consume.mjs')
   await writeFile(consumerScript, `import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'

@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { execa } from 'execa'
 import { extract } from 'tar'
-import { install, pack, repositoryRoot, tarballDependency } from './package-utils.mjs'
+import { install, pack, repositoryRoot } from './package-utils.mjs'
 
 const tempRoot = await mkdtemp(path.join(tmpdir(), 'css-compat-tarball-'))
 try {
@@ -20,7 +20,7 @@ try {
   }
   assert.equal(JSON.parse(await readFile(path.join(packaged, 'package', 'package.json'), 'utf8')).version, '0.1.0')
   const consumer = path.join(tempRoot, 'consumer')
-  await install(consumer, { '@weapp-tailwindcss/css-compat': tarballDependency(tarball), 'postcss': '8.5.29' })
+  await install(consumer, { postcss: '8.5.29' }, { '@weapp-tailwindcss/css-compat': tarball })
   const require = createRequire(path.join(consumer, 'package.json'))
   const postcss = require('postcss')
   const keys = ['@weapp-tailwindcss/css-compat', '@weapp-tailwindcss/css-compat/layers', '@weapp-tailwindcss/css-compat/diagnostics', '@weapp-tailwindcss/css-compat/legacy']
