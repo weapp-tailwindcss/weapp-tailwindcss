@@ -43,7 +43,7 @@ describe('demo/web vite matrix', () => {
     expect(packages[0]?.dependencies?.react).toBe('catalog:react19')
     expect(packages[1]?.dependencies?.vue).toBe('catalog:vue3')
     expect(packages[2]?.dependencies?.vue).toBe('catalog:vue3')
-    expect(packages[3]?.dependencies?.nuxt).toBe('4.5.2')
+    expect(packages[3]?.dependencies?.nuxt).toBe('4.6.0')
     expect(packages.every(pkg => pkg.devDependencies?.tailwindcss === 'catalog:tailwindcss4')).toBe(true)
     for (const pkg of packages) {
       const deps = {
