@@ -1,13 +1,15 @@
 ---
 status: partial
 issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1279
-baseline: c4478139f989e412913883c7de754c35aef82f0b
+baseline: ecd0676ee35ab9f34c25fa6175aaf6c032664913
 regressions:
   - packages/weapp-tailwindcss/test/ci/version-pr-route.test.ts
   - packages/weapp-tailwindcss/test/ci/version-pr-workflow.test.ts
   - packages/weapp-tailwindcss/test/ci/manual-version-gates.test.ts
   - packages/weapp-tailwindcss/test/ci/release-route.test.ts
   - packages/weapp-tailwindcss/test/ci/release-trigger-workflow.test.ts
+  - packages/weapp-tailwindcss/test/ci/install-workspace.test.ts
+  - packages/weapp-tailwindcss/test/ci/install-memory-workflow.test.ts
 ---
 
 # 自动生成版本 PR、人工验收、合并发布
@@ -38,6 +40,13 @@ GitHub PR API 的 base SHA 可能仍对应历史基线：本轮实际 PR 返回 
 定向执行版本路由、汇总、官方 prepare/prerelease plan、release stages、内容分类与取消生命周期测试，13 files / 306 tests 通过；ESNext/Bundler 严格类型检查、受影响新文件的显式 ESLint、12 个工作流 actionlint、`pnpm agents:check`（59 rules / 261 documents）与 diff 检查通过。旧 `workflows.test.ts` 被仓库 ESLint 配置忽略，强制检查时仍有历史格式错误；本次修改的表达式使用模板字面量并移除生命周期块内遗留未使用变量，不扩大到无关全文件格式重写。
 工作流检查确认手动验收只有读权限、不启动 prepare/publish、不申请 npm OIDC；发布 OIDC 身份仍在原 release.yml 中。
 具体远端 run 与准确 head 在本轮最终验收记录中分别统计成功、跳过、取消和未完成，自动登记不计为正式测试通过。
+
+`ecd0676ee` 推送自动触发 [prepare 38048985622](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38048985622)，8 个 native 目标、verify 与 prepare 全部成功；npm upload、confirm、finalize 跳过。#1279 自动更新为 `fc3619e0f89db0fd7dc0a80a597b8ad029434075`，真实差异证明 metadata_only=true。
+同 main 的 [OIDC-only 38049131542](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38049131542) 对全部 39 个公开 workspace 包交换成功，HTTP 201；其余阶段均跳过。
+
+第一次 [手动验收 38051370442](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38051370442) 绑定新 head 后发现两项安装边界：macOS Node 22 + pnpm 11 在默认约 2GiB V8 堆退出 134；最小 Node 场景残留 22.12.0，低于根 engines 的 22.18.0，也低于 pnpm 11 的 22.13 启动要求，退出 1。两项均在测试开始前失败，不能记为业务断言失败或用重跑掩盖。
+修复统一 CI 的安装保护入口，为安装子进程设置受可用内存约束、最大 4GiB 的堆预算，保留显式 Node 参数且不改变父进程或后续测试的预算；最小 Node 场景对齐现有 engines，并用契约测试防止漂移。
+两项修复整合后 6 files / 101 tests 通过，真实安装子进程探针验证 frozen-lockfile 参数与环境隔离；另在 Node 22.18 实际运行 11 项回归通过。受影响新文件显式 lint、严格类型、actionlint、规则与 diff 检查通过；最终仍需重新生成的 PR head 远端确认。
 
 ## 操作入口
 
