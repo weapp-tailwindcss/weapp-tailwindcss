@@ -95,7 +95,7 @@ describe('main 自动准备与合并发布的触发边界', () => {
 
   it('源码或分类失败时质量汇总仍执行，轻量版本检查成功后才放行', () => {
     const quality = workflow('ci.yml').jobs.quality
-    expect(quality.if).toBe('always() && !cancelled() && github.event_name != \'pull_request\'')
+    expect(quality.if).toBe('always() && !cancelled() && (inputs.full_verification || github.event_name != \'pull_request\')')
     expect(quality.needs).toEqual(['scope', 'quality-static', 'unit-tests'])
     expect(quality.steps[0].env.SCOPE_RESULT).toBe('${{ needs.scope.result }}')
     expect(quality.steps[0].env.CORE_ENABLED).toBe('${{ needs.scope.outputs.core }}')
