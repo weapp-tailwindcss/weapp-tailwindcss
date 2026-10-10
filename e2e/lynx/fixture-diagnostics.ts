@@ -1,4 +1,4 @@
-import type { CDPSession, Page } from 'playwright'
+import type { CDPSession, LaunchOptions, Page } from 'playwright'
 import type { PngPixels } from './png'
 import fs from 'node:fs/promises'
 import os from 'node:os'
@@ -68,7 +68,7 @@ async function collectPlatformFonts(page: Page, selector: string, nodes: NodeDia
 }
 
 /** 在校验阶段保存原始像素与渲染环境，诊断失败不得替换夹具的校验异常。 */
-export function createFixtureDiagnostics(page: Page, options: { directory?: string, name: string, caseId: string }) {
+export function createFixtureDiagnostics(page: Page, options: { directory?: string, name: string, caseId: string, launchOptions?: Pick<LaunchOptions, 'headless' | 'args'> }) {
   const directory = options.directory ?? path.join(repoRoot, 'e2e', '.artifacts', 'lynx-static')
   const report = {
     caseId: options.caseId,
@@ -80,6 +80,7 @@ export function createFixtureDiagnostics(page: Page, options: { directory?: stri
       release: os.release(),
       node: process.version,
       viewport: page.viewportSize(),
+      ...(options.launchOptions ? { launchOptions: options.launchOptions } : {}),
     },
     frames: [] as FrameDiagnostic[],
     error: undefined as DiagnosticError | undefined,

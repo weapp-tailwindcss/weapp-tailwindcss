@@ -8,12 +8,17 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest
 import { createFixtureDiagnostics } from './lynx/fixture-diagnostics'
 import { PNG } from './lynx/png'
 import { evaluateStructural } from './lynx/structural'
+import { textPixelBrowserOptions } from './lynx/text-pixel-browser'
 
 let browser: Browser
+let launchArguments: Parameters<typeof chromium.launch>[0]
 const directories: string[] = []
 
 beforeAll(async () => {
-  browser = await chromium.launch({ headless: true })
+  const launch = vi.spyOn(chromium, 'launch')
+  browser = await chromium.launch(textPixelBrowserOptions())
+  launchArguments = launch.mock.calls[0]?.[0]
+  launch.mockRestore()
 })
 
 afterEach(async () => {
@@ -33,22 +38,39 @@ async function artifactDirectory() {
 }
 
 describe('Lynx 浏览器夹具诊断', () => {
+  it('实际 Chromium 以后台灰度文字参数启动，不使用分通道字缘', () => {
+    expect(launchArguments).toMatchObject({ headless: true, args: ['--disable-lcd-text'] })
+  })
+
   it('原始 PNG 与同阶段的真实字体、DPR、样式和尺寸一起保存', async () => {
     const directory = await artifactDirectory()
     const page = await browser.newPage({ deviceScaleFactor: 2.625 })
     await page.setContent('<div id="canvas" style="width:160px;height:160px;background:#f7fafb"><span style="font:32px serif;color:#132026">Tw4</span></div>')
     await page.evaluate(() => document.fonts.ready)
-    const diagnostics = createFixtureDiagnostics(page, { directory, name: 'structural-2.625', caseId: 'variant-structural' })
+    const diagnostics = createFixtureDiagnostics(page, { directory, name: 'structural-2.625', caseId: 'variant-structural', launchOptions: textPixelBrowserOptions() })
     await diagnostics.verify(async () => {
       const captured = await diagnostics.capture('control', '#canvas')
       const raw = PNG.sync.read(await fs.readFile(path.join(directory, 'structural-2.625-baseline-control.png')))
       expect(captured.width).toBe(420)
       expect(captured.height).toBe(420)
       expect(raw.data).toEqual(captured.data)
+      const canvas = [247, 250, 251]
+      const ink = [19, 32, 38]
+      let maxResidual = 0
+      let glyphPixels = 0
+      for (let index = 0; index < raw.width * raw.height; index++) {
+        const alpha = (canvas[0]! - raw.data[index * 4]!) / (canvas[0]! - ink[0]!)
+        glyphPixels += Number(alpha > 0.2)
+        for (let channel = 0; channel < 3; channel++) {
+          maxResidual = Math.max(maxResidual, Math.abs(raw.data[index * 4 + channel]! - canvas[channel]! - alpha * (ink[channel]! - canvas[channel]!)))
+        }
+      }
+      expect(glyphPixels).toBeGreaterThan(0)
+      expect(maxResidual).toBeLessThanOrEqual(6)
     })
     const report = JSON.parse(await fs.readFile(path.join(directory, 'structural-2.625.json'), 'utf8'))
     expect(report.status).toBe('passed')
-    expect(report.environment).toMatchObject({ browser: browser.version(), platform: process.platform, node: process.version })
+    expect(report.environment).toMatchObject({ browser: browser.version(), platform: process.platform, node: process.version, launchOptions: { headless: true, args: ['--disable-lcd-text'] } })
     expect(report.frames[0]).toMatchObject({
       frame: 'control',
       phase: 'baseline',

@@ -32,3 +32,9 @@ it('probe/reference 同步使用不均匀单空格不能自证软换行边界', 
   const uneven = textFlowImage(1, 'uneven')
   expect(() => evaluateTextFlow([uneven, textFlowImage(1, 'control'), uneven])).toThrow('对照')
 })
+
+it('拒绝分通道字缘颜色污染手工分行对照', () => {
+  const reference = textFlowImage()
+  reference.data.set([168, 93, 51, 255], (76 * reference.width + 12) * 4)
+  expect(() => evaluateTextFlow([textFlowImage(), textFlowImage(1, 'control'), reference])).toThrow('对照无效')
+})

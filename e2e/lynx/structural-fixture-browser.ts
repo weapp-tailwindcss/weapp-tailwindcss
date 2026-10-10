@@ -6,15 +6,17 @@ import { CaseCard } from '../../examples/react-lynx/src/components/CaseCard'
 import { createFixtureDiagnostics } from './fixture-diagnostics'
 import { fixtureHtml } from './fixture-html'
 import { evaluateStructural } from './structural'
+import { textPixelBrowserOptions } from './text-pixel-browser'
 
 /** 同时验证选择器的命中位置、非命中位置和每条 utility 的必要性。 */
 export async function verifyStructuralFixture(css: string) {
   const item = compatibilityCases.find(item => item.id === 'variant-structural')!
-  const browser = await chromium.launch({ headless: true })
+  const launchOptions = textPixelBrowserOptions()
+  const browser = await chromium.launch(launchOptions)
   try {
     for (const scale of [1, 2.625, 3]) {
       const page = await browser.newPage({ viewport: { width: 600, height: 900 }, deviceScaleFactor: scale })
-      const diagnostics = createFixtureDiagnostics(page, { name: `structural-${scale}`, caseId: item.id })
+      const diagnostics = createFixtureDiagnostics(page, { name: `structural-${scale}`, caseId: item.id, launchOptions })
       await diagnostics.verify(async () => {
         await page.setContent(`<style>${css}</style>${fixtureHtml(CaseCard({ item }))}`)
         const lines = page.locator('#probe-variant-structural .probe-structural-line')

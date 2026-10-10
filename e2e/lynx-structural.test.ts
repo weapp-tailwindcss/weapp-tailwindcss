@@ -30,6 +30,13 @@ it('probe 与显式首项同步错位也不能自证为有效粗体', () => {
   expect(() => evaluateStructural([reference, structuralImage(1, 'plain'), reference])).toThrow('对照')
 })
 
+it('拒绝 LCD 分通道抗锯齿污染普通文字对照，不能通过放宽颜色阈值规避采集故障', () => {
+  const control = structuralImage(1, 'plain')
+  // Ubuntu Chromium 153 原始失败截图中的字缘颜色，不符合单 alpha 混色。
+  control.data.set([168, 93, 51, 255], (30 * control.width + 52) * 4)
+  expect(() => evaluateStructural([structuralImage(), control, structuralImage()])).toThrow('普通文字或画布对照无效')
+})
+
 it('probe 与显式首项同步放大字号不能冒充字重变化', () => {
   const reference = structuralImage()
   const plain = structuralImage(1, 'plain')
