@@ -1,7 +1,7 @@
 {
   "name": "weapp-tailwindcss",
   "type": "module",
-  "version": "5.6.0",
+  "version": "5.6.1",
   "description": "Bring Tailwind CSS to every platform! 把 Tailwind CSS 的原子化开发体验带到全端！",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",

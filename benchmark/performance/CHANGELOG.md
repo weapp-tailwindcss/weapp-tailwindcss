@@ -1,5 +1,13 @@
 # benchmark-performance
 
+## 0.0.3
+
+### Patch Changes
+
+- Updated dependencies:
+  - @weapp-tailwindcss/postcss@3.4.1
+  - weapp-tailwindcss@5.6.1
+
 ## 0.0.2
 
 ### Patch Changes

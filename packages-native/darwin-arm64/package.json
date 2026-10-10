@@ -1,6 +1,6 @@
 {
   "name": "@weapp-tailwindcss/native-darwin-arm64",
-  "version": "5.6.0",
+  "version": "5.6.1",
   "description": "Prebuilt Rust compiler binding for weapp-tailwindcss (darwin-arm64)",
   "license": "MIT",
   "homepage": "https://tw.weapp.dev/",

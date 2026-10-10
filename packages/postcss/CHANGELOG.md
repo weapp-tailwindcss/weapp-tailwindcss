@@ -1,5 +1,22 @@
 # @weapp-tailwindcss/postcss
 
+## 3.4.1
+
+### Patch Changes
+
+- 将旧 layer anchor 算法转导出到独立 CSS 兼容内核，保持现有公开接口和默认输出。Refs #1280
+
+- Updated dependencies:
+  - @weapp-tailwindcss/css-compat@0.1.1
+  - @weapp-tailwindcss/native-darwin-arm64@5.6.1
+  - @weapp-tailwindcss/native-darwin-x64@5.6.1
+  - @weapp-tailwindcss/native-linux-arm64-gnu@5.6.1
+  - @weapp-tailwindcss/native-linux-arm64-musl@5.6.1
+  - @weapp-tailwindcss/native-linux-x64-gnu@5.6.1
+  - @weapp-tailwindcss/native-linux-x64-musl@5.6.1
+  - @weapp-tailwindcss/native-win32-arm64-msvc@5.6.1
+  - @weapp-tailwindcss/native-win32-x64-msvc@5.6.1
+
 ## 3.4.0
 
 ### Minor Changes
