@@ -74,6 +74,32 @@ describe('PR / push 内容范围路由', () => {
     }
   })
 
+  it('审批后完整验收覆盖纯版本快路径，同时保留真实分类审计', () => {
+    const { cwd, before, after } = repository()
+    const stderr = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+    const scopes = resolveChangeScopes({ eventName: 'pull_request', base: before, head: after, cwd, fullVerification: true })
+    expectComplete(scopes)
+    expect(stderr).toHaveBeenCalledWith(expect.stringContaining('classified_metadata_only=true'))
+    expect(stderr).toHaveBeenCalledWith(expect.stringContaining('full_verification=true'))
+  })
+
+  it('默认及显式 false 保留自动纯版本范围，不因为 PR 身份强制运行', () => {
+    const { cwd, before, after } = repository()
+    expect(resolveChangeScopes({ eventName: 'pull_request', base: before, head: after, cwd, fullVerification: false }))
+      .toEqual(resolveChangeScopes({ eventName: 'pull_request', base: before, head: after, cwd }))
+  })
+
+  it('审批后即使没有差异也执行完整验收，审计仍记录 has_changes=false', () => {
+    const { cwd, before } = repository()
+    const stderr = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+    const scopes = resolveChangeScopes({ eventName: 'pull_request', base: before, head: before, cwd, fullVerification: true })
+    expect(scopes).toMatchObject({ metadata_only: false, has_changes: false })
+    for (const field of heavyFields) {
+      expect(scopes[field]).toBe(true)
+    }
+    expect(stderr).toHaveBeenCalledWith(expect.stringContaining('has_changes=false'))
+  })
+
   it('PR 使用 merge-base，排除 base 新增但没有进入 PR 的源码', () => {
     const { cwd, before, after } = repository()
     git(cwd, 'switch', '-c', 'base-advanced', before)
@@ -110,7 +136,7 @@ describe('PR / push 内容范围路由', () => {
     const options = {
       cwd,
       eventName: kind === 'unknown-event' ? 'workflow_dispatch' : 'push',
-      before: kind === 'missing-before' ? undefined : kind === 'missing-ref' ? 'not-a-ref' : kind === 'zero-before' ? '0'.repeat(40) : before,
+      ...(kind === 'missing-before' ? {} : { before: kind === 'missing-ref' ? 'not-a-ref' : kind === 'zero-before' ? '0'.repeat(40) : before }),
       head: after,
       eventPath: kind === 'invalid-event' ? eventPath : null,
     }
@@ -153,6 +179,28 @@ describe('PR / push 内容范围路由', () => {
       env: { ...process.env, GITHUB_EVENT_NAME: 'workflow_dispatch', GITHUB_SHA: before },
     })
     expect(JSON.parse(stdout).metadata_only).toBe(true)
+  })
+
+  it('CLI 审批后输出完整 boolean 范围，不让纯版本快路径跳过验收', () => {
+    const { cwd, before, after } = repository()
+    const output = path.join(cwd, 'github-output.txt')
+    const stdout = execFileSync(process.execPath, [script, '--event', 'pull_request', '--base', before, '--head', after, '--full-verification', 'true', '--github-output', output], {
+      cwd,
+      encoding: 'utf8',
+      env: { ...process.env, GITHUB_EVENT_PATH: '' },
+    })
+    expectComplete(JSON.parse(stdout))
+    expect(fs.readFileSync(output, 'utf8')).toContain('metadata_only=false\n')
+    expect(fs.readFileSync(output, 'utf8')).toContain('website=true\n')
+  })
+
+  it.each(['', 'yes', 'TRUE', '1'])('CLI 不接受非 boolean 完整验收参数 %j', (value) => {
+    const { cwd, before, after } = repository()
+    expect(() => execFileSync(process.execPath, [script, '--event', 'pull_request', '--base', before, '--head', after, '--full-verification', value], {
+      cwd,
+      encoding: 'utf8',
+      stdio: 'pipe',
+    })).toThrow()
   })
 
   it('CLI PR 模式使用 merge-base 而不是已前进的 base 提交', () => {

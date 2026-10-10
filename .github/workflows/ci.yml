@@ -10,9 +10,15 @@ on:
       - '.changeset/**'
   workflow_dispatch:
   workflow_call:
+    inputs:
+      full_verification:
+        description: 审批后完整执行版本 PR 验收，默认保留自动范围
+        type: boolean
+        required: false
+        default: false
 
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ inputs.full_verification && format('full-{0}', github.run_id) || github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -20,13 +26,15 @@ permissions:
 
 jobs:
   scope:
-    if: github.event_name != 'pull_request'
+    if: (inputs.full_verification || github.event_name != 'pull_request')
     uses: ./.github/workflows/ci-scope.yml
+    with:
+      full_verification: ${{ inputs.full_verification || false }}
 
   quality-static:
     needs: scope
     name: Quality Static Gate (ubuntu-latest, 22)
-    if: github.event_name != 'pull_request' && needs.scope.outputs.core == 'true'
+    if: (inputs.full_verification || github.event_name != 'pull_request') && needs.scope.outputs.core == 'true'
     timeout-minutes: 20
     runs-on: ubuntu-latest
     # Remote Caching enabled - configure TURBO_TOKEN and TURBO_TEAM in repository settings
@@ -39,6 +47,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v6
         with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 2
 
       - uses: pnpm/action-setup@v4
@@ -96,7 +105,7 @@ jobs:
   unit-tests:
     needs: scope
     name: Unit Test Gate (${{ matrix.shard }}/${{ matrix.shard_total }}, ubuntu-latest, 22)
-    if: github.event_name != 'pull_request' && needs.scope.outputs.core == 'true'
+    if: (inputs.full_verification || github.event_name != 'pull_request') && needs.scope.outputs.core == 'true'
     timeout-minutes: 20
     runs-on: ubuntu-latest
     strategy:
@@ -113,6 +122,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v6
         with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 2
 
       - uses: pnpm/action-setup@v4
@@ -165,7 +175,7 @@ jobs:
 
   quality:
     name: Quality Gate (ubuntu-latest, 22)
-    if: always() && !cancelled() && github.event_name != 'pull_request'
+    if: always() && !cancelled() && (inputs.full_verification || github.event_name != 'pull_request')
     needs: [scope, quality-static, unit-tests]
     timeout-minutes: 5
     runs-on: ubuntu-latest
@@ -187,7 +197,7 @@ jobs:
   e2e-static:
     needs: scope
     name: E2E Static Gate (${{ matrix.shard }}/${{ matrix.shard_total }}, ubuntu-latest, 22)
-    if: github.event_name != 'pull_request' && needs.scope.outputs.core == 'true'
+    if: (inputs.full_verification || github.event_name != 'pull_request') && needs.scope.outputs.core == 'true'
     timeout-minutes: 15
     runs-on: ubuntu-latest
     strategy:
@@ -207,6 +217,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v6
         with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 2
 
       - uses: pnpm/action-setup@v4
@@ -260,7 +271,7 @@ jobs:
   e2e-focused:
     needs: scope
     name: E2E Focused Gate (${{ matrix.case_name }})
-    if: github.event_name != 'pull_request' && needs.scope.outputs.core == 'true'
+    if: (inputs.full_verification || github.event_name != 'pull_request') && needs.scope.outputs.core == 'true'
     timeout-minutes: 20
     runs-on: ubuntu-latest
     strategy:
@@ -307,6 +318,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v6
         with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 2
 
       - uses: pnpm/action-setup@v4
@@ -360,7 +372,7 @@ jobs:
   e2e-multiplatform:
     needs: scope
     name: E2E Multiplatform Gate (${{ matrix.case_name }})
-    if: github.event_name != 'pull_request' && needs.scope.outputs.core == 'true'
+    if: (inputs.full_verification || github.event_name != 'pull_request') && needs.scope.outputs.core == 'true'
     timeout-minutes: ${{ matrix.timeout_minutes }}
     runs-on: ubuntu-latest
     strategy:
@@ -382,6 +394,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v6
         with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 2
 
       - uses: pnpm/action-setup@v4
@@ -425,7 +438,7 @@ jobs:
   e2e-watch:
     needs: scope
     name: E2E Watch Gate (${{ matrix.runner_label }}, ${{ matrix.watch_case }}, ${{ matrix.round_profile }})
-    if: github.event_name != 'pull_request' && needs.scope.outputs.core == 'true'
+    if: (inputs.full_verification || github.event_name != 'pull_request') && needs.scope.outputs.core == 'true'
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ matrix.timeout_minutes }}
     strategy:
@@ -485,6 +498,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v6
         with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 2
 
       - name: Setup pnpm
@@ -590,12 +604,12 @@ jobs:
   compatibility:
     needs: scope
     name: Compatibility Gate (${{ matrix.os }}, ${{ matrix.node-version }}, ${{ matrix.scenario }})
-    if: github.event_name != 'pull_request' && needs.scope.outputs.core == 'true'
+    if: (inputs.full_verification || github.event_name != 'pull_request') && needs.scope.outputs.core == 'true'
     timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '[{"os":"ubuntu-latest","node-version":"22.18.0","pnpm-version":"11.9.0","scenario":"node22-min-core"},{"os":"ubuntu-latest","node-version":24,"pnpm-version":"11.9.0","scenario":"node24-core"},{"os":"windows-latest","node-version":22,"pnpm-version":"11.9.0","scenario":"windows-node22-core"},{"os":"windows-latest","node-version":24,"pnpm-version":"11.9.0","scenario":"windows-node24-core"},{"os":"macos-latest","node-version":22,"pnpm-version":"11.9.0","scenario":"macos-node22-core"}]' || '[{"os":"windows-latest","node-version":22,"pnpm-version":"11.9.0","scenario":"windows-node22-core"}]') }}
+        include: ${{ fromJSON((inputs.full_verification || github.event_name == 'workflow_dispatch') && '[{"os":"ubuntu-latest","node-version":"22.18.0","pnpm-version":"11.9.0","scenario":"node22-min-core"},{"os":"ubuntu-latest","node-version":24,"pnpm-version":"11.9.0","scenario":"node24-core"},{"os":"windows-latest","node-version":22,"pnpm-version":"11.9.0","scenario":"windows-node22-core"},{"os":"windows-latest","node-version":24,"pnpm-version":"11.9.0","scenario":"windows-node24-core"},{"os":"macos-latest","node-version":22,"pnpm-version":"11.9.0","scenario":"macos-node22-core"}]' || '[{"os":"windows-latest","node-version":22,"pnpm-version":"11.9.0","scenario":"windows-node22-core"}]') }}
     runs-on: ${{ matrix.os }}
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
@@ -608,6 +622,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v6
         with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 2
 
       - uses: pnpm/action-setup@v4

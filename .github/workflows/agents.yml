@@ -6,6 +6,12 @@ on:
     branches: [main]
   workflow_dispatch:
   workflow_call:
+    inputs:
+      full_verification:
+        description: 审批后完整执行版本 PR 验收，默认保留自动范围
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -13,6 +19,8 @@ permissions:
 jobs:
   scope:
     uses: ./.github/workflows/ci-scope.yml
+    with:
+      full_verification: ${{ inputs.full_verification || false }}
 
   agents:
     needs: scope
@@ -21,6 +29,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
       - uses: ./.github/actions/setup-pnpm
       - run: pnpm agents:test
       - run: pnpm agents:check

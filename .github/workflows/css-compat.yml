@@ -2,6 +2,12 @@ name: CSS Compatibility
 
 on:
   workflow_call:
+    inputs:
+      full_verification:
+        description: 审批后完整执行版本 PR 验收，默认保留自动范围
+        type: boolean
+        required: false
+        default: false
   workflow_dispatch:
   push:
     branches: [main, next]
@@ -29,6 +35,8 @@ env:
 jobs:
   scope:
     uses: ./.github/workflows/ci-scope.yml
+    with:
+      full_verification: ${{ inputs.full_verification || false }}
 
   portability:
     needs: scope
@@ -43,6 +51,8 @@ jobs:
         node: [22, 24]
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
       - uses: ./.github/actions/setup-pnpm
         with:
           node-version: ${{ matrix.node }}
@@ -63,6 +73,8 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
       - uses: ./.github/actions/setup-pnpm
         with:
           node-version: 24

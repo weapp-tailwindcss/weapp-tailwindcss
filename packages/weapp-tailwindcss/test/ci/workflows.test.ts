@@ -179,10 +179,10 @@ describe('ci workflows', () => {
     expect(evidence).toContain('node scripts/ci/demo-matrix/gate.mjs')
   })
 
-  it('keeps heavyweight legacy CI jobs out of pull requests', () => {
+  it('keeps heavyweight legacy CI jobs out of automatic pull requests while allowing approved full verification', () => {
     const { workflow } = readWorkflow('ci.yml')
     for (const jobName of ['quality-static', 'unit-tests', 'e2e-static', 'e2e-focused', 'e2e-multiplatform', 'e2e-watch', 'compatibility']) {
-      expect(workflow.jobs[jobName].if, `${jobName} should be push/manual only`).toBe("github.event_name != 'pull_request' && needs.scope.outputs.core == 'true'")
+      expect(workflow.jobs[jobName].if, `${jobName} should require approval for the full PR path`).toBe('(inputs.full_verification || github.event_name != \'pull_request\') && needs.scope.outputs.core == \'true\'')
     }
   })
 
@@ -426,7 +426,7 @@ describe('ci workflows', () => {
       }
     }
 
-    expect(benchmarkWorkflow.jobs['benchmark-shard']['timeout-minutes']).toContain("github.event_name == 'pull_request' && 30")
+    expect(benchmarkWorkflow.jobs['benchmark-shard']['timeout-minutes']).toContain('(github.event_name == \'pull_request\' && !inputs.full_verification) && 30')
     expect(releaseGateWorkflow.jobs['release-gate']['timeout-minutes']).toBe(30)
 
     const watchRows: Array<Record<string, unknown>> = watchWorkflow.jobs['pr-quick-gate'].strategy.matrix.include
@@ -765,12 +765,12 @@ describe('ci workflows', () => {
     expect(job.needs).toBe('benchmark-matrix')
     expect(job.strategy['fail-fast']).toBe(false)
     expect(job.strategy['max-parallel']).toBe(2)
-    expect(job['timeout-minutes']).toContain("github.event_name == 'pull_request' && 30")
+    expect(job['timeout-minutes']).toContain('(github.event_name == \'pull_request\' && !inputs.full_verification) && 30')
     expect(job['timeout-minutes']).toContain('|| 45')
     expect(matrixInclude).toContain('needs.benchmark-matrix.outputs.include')
     expect(job.env.BENCH_ONLY).toBe('${{ matrix.bench_only }}')
     expect(job.env.BENCH_BUILD_RUNS).toBe("${{ github.event.inputs.build_runs || '3' }}")
-    expect(job.env.BENCH_HMR_RUNS).toContain("github.event_name == 'pull_request' && '3'")
+    expect(job.env.BENCH_HMR_RUNS).toContain('(github.event_name == \'pull_request\' && !inputs.full_verification) && \'3\'')
     expect(runCommand).toContain('--baseline-ref')
     expect(runCommand).toContain('--only "$BENCH_ONLY"')
     expect(workflow.jobs['current-vs-published'].needs).toEqual(['scope', 'benchmark-shard'])
@@ -868,11 +868,11 @@ describe('ci workflows', () => {
       'next',
     ])
     expect(workflow.on.workflow_dispatch.inputs.baseline.default).toBe('auto')
-    expect(job['timeout-minutes']).toContain("github.event_name == 'pull_request' && 30")
+    expect(job['timeout-minutes']).toContain('(github.event_name == \'pull_request\' && !inputs.full_verification) && 30')
     expect(job['timeout-minutes']).toContain('|| 45')
     expect(job.env.WEAPP_TW_BENCH_BASELINE).toContain('auto')
     expect(job.env.BENCH_BUILD_RUNS).toBe("${{ github.event.inputs.build_runs || '3' }}")
-    expect(job.env.BENCH_HMR_RUNS).toContain("github.event_name == 'pull_request' && '3'")
+    expect(job.env.BENCH_HMR_RUNS).toContain('(github.event_name == \'pull_request\' && !inputs.full_verification) && \'3\'')
     expect(job.env.BENCH_ONLY).toBe('${{ matrix.bench_only }}')
     expect(runs).toContain('pnpm install --frozen-lockfile')
     expect(runs).toContain('pnpm perf:guard --')

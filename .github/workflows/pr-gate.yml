@@ -5,9 +5,15 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
   workflow_call:
+    inputs:
+      full_verification:
+        description: 审批后完整执行版本 PR 验收，默认保留自动范围
+        type: boolean
+        required: false
+        default: false
 
 concurrency:
-  group: pr-gate-${{ github.event.pull_request.number || github.ref }}
+  group: pr-gate-${{ inputs.full_verification && format('full-{0}', github.run_id) || github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -17,6 +23,8 @@ jobs:
   scope:
     name: Resolve PR scope
     uses: ./.github/workflows/ci-scope.yml
+    with:
+      full_verification: ${{ inputs.full_verification || false }}
 
   prepare-build:
     name: Prepare Ubuntu package build
@@ -26,6 +34,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
       - uses: ./.github/actions/setup-pnpm
       - name: Build package dependency closure
         run: pnpm ci:memory --label pr-gate-build --max-rss-mb 5632 --max-rss-delta-mb 4608 -- pnpm build:ci
@@ -60,6 +70,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
       - uses: ./.github/actions/setup-pnpm
       - uses: actions/download-artifact@v4
         with:
@@ -84,6 +96,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
       - uses: ./.github/actions/setup-pnpm
       - uses: actions/download-artifact@v4
         with:
@@ -125,6 +139,8 @@ jobs:
             web_only: '1'
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
       - uses: ./.github/actions/setup-pnpm
       - name: Build watch dependencies for this OS
         run: pnpm build:ci
@@ -160,6 +176,8 @@ jobs:
             runner_label: windows
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
       - uses: ./.github/actions/setup-pnpm
       - name: Build dev dependencies for this OS
         run: pnpm build:ci
@@ -191,6 +209,8 @@ jobs:
             node: 24
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
       - uses: ./.github/actions/setup-pnpm
         with:
           node-version: ${{ matrix.node }}
@@ -220,9 +240,11 @@ jobs:
     needs: scope
     if: needs.scope.outputs.core == 'true'
     uses: ./.github/workflows/css-compat.yml
+    with:
+      full_verification: ${{ inputs.full_verification || false }}
 
   pr-gate:
-    name: ${{ github.event_name == 'pull_request' && needs.scope.outputs.metadata_only == 'true' && 'Await manual version verification' || 'PR Gate' }}
+    name: ${{ inputs.full_verification && 'Version PR checks' || github.event_name == 'pull_request' && needs.scope.outputs.metadata_only == 'true' && 'Await manual version verification' || 'PR Gate' }}
     if: always() && !cancelled()
     needs: [scope, quality, core-smoke, platform-watch, platform-dev, windows-utilities, portable-demos, css-compat]
     runs-on: ubuntu-latest

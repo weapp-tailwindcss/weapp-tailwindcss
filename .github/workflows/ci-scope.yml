@@ -12,6 +12,12 @@ on:
         type: string
         required: false
   workflow_call:
+    inputs:
+      full_verification:
+        description: 审批后完整执行版本 PR 验收，默认保留自动范围
+        type: boolean
+        required: false
+        default: false
     outputs:
       core:
         value: ${{ jobs.scope.outputs.core }}
@@ -57,4 +63,5 @@ jobs:
           CI_SCOPE_HEAD_SHA: ${{ inputs.head || github.event.pull_request.head.sha || github.sha }}
           CI_SCOPE_EVENT_NAME: ${{ github.event_name == 'workflow_dispatch' && inputs.base && 'pull_request' || github.event_name }}
           CI_SCOPE_DEPENDENCY_ROOT: tools/ci-scope
-        run: node scripts/ci/resolve-pr-scope.mjs --base "$CI_SCOPE_BASE_SHA" --head "$CI_SCOPE_HEAD_SHA" --event "$CI_SCOPE_EVENT_NAME" --github-output "$GITHUB_OUTPUT"
+          CI_SCOPE_FULL_VERIFICATION: ${{ inputs.full_verification || false }}
+        run: node scripts/ci/resolve-pr-scope.mjs --base "$CI_SCOPE_BASE_SHA" --head "$CI_SCOPE_HEAD_SHA" --event "$CI_SCOPE_EVENT_NAME" --full-verification "$CI_SCOPE_FULL_VERIFICATION" --github-output "$GITHUB_OUTPUT"

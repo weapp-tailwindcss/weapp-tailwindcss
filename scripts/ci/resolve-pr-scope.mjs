@@ -107,7 +107,7 @@ export function readChangedFiles(options = {}) {
  * @param {import('./release-metadata/git.mjs').ChangeRangeOptions} [options] 变更范围。
  * @returns {Record<string, boolean>} 各门禁是否启用及元数据判定。
  */
-export function resolveChangeScopes(options = {}) {
+function resolveContentScopes(options = {}) {
   const complete = Object.fromEntries(Object.keys(scopeRules).map(scope => [scope, true]))
   try {
     const { from, to, changes } = readChangeRange(options)
@@ -141,6 +141,24 @@ export function resolveChangeScopes(options = {}) {
   }
 }
 
+/**
+ * 审批后的完整验收保留实际内容分类审计，但所有专项均执行。
+ * @param {import('./release-metadata/git.mjs').ChangeRangeOptions & { fullVerification?: boolean }} [options] 内容范围与完整执行请求。
+ * @returns {Record<string, boolean>} 最终执行范围。
+ */
+export function resolveChangeScopes(options = {}) {
+  const scopes = resolveContentScopes(options)
+  if (options.fullVerification !== true) {
+    return scopes
+  }
+  process.stderr.write(`CI scope audit: classified_metadata_only=${scopes.metadata_only}; has_changes=${scopes.has_changes}; full_verification=true。\n`)
+  return {
+    ...Object.fromEntries(Object.keys(scopeRules).map(scope => [scope, true])),
+    metadata_only: false,
+    has_changes: scopes.has_changes,
+  }
+}
+
 export function writeGitHubOutput(file, scopes) {
   const outputFile = path.resolve(file)
   fs.appendFileSync(outputFile, Object.entries(scopes).map(([key, value]) => `${key}=${value}\n`).join(''))
@@ -148,11 +166,16 @@ export function writeGitHubOutput(file, scopes) {
 
 function main() {
   const args = new Map(process.argv.slice(2).map((value, index, values) => [value, values[index + 1]]))
+  const fullVerification = args.get('--full-verification')
+  if (args.has('--full-verification') && fullVerification !== 'true' && fullVerification !== 'false') {
+    throw new Error('--full-verification 只接受 true 或 false')
+  }
   const scopes = resolveChangeScopes({
     base: args.get('--base'),
     head: args.get('--head'),
     before: args.get('--before'),
     eventName: args.get('--event') || process.env.GITHUB_EVENT_NAME,
+    fullVerification: fullVerification === 'true',
   })
   if (args.has('--github-output')) {
     writeGitHubOutput(args.get('--github-output'), scopes)

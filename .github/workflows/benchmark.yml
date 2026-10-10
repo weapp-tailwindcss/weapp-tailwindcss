@@ -41,9 +41,15 @@ on:
         required: false
         default: ''
   workflow_call:
+    inputs:
+      full_verification:
+        description: 审批后完整执行版本 PR 验收，默认保留自动范围
+        type: boolean
+        required: false
+        default: false
 
 concurrency:
-  group: benchmark-${{ github.event.pull_request.number || github.ref }}
+  group: benchmark-${{ inputs.full_verification && format('full-{0}', github.run_id) || github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -52,6 +58,8 @@ permissions:
 jobs:
   scope:
     uses: ./.github/workflows/ci-scope.yml
+    with:
+      full_verification: ${{ inputs.full_verification || false }}
 
   weekly-demo-cost:
     if: github.event_name == 'workflow_dispatch' && inputs.weekly_demo_cost
@@ -69,6 +77,8 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
 
       - uses: pnpm/action-setup@v4
 
@@ -115,20 +125,23 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
 
       - name: Generate benchmark matrix
         id: matrix
         env:
           BENCH_ONLY: ${{ github.event.inputs.only || '' }}
+          BENCH_EVENT_NAME: ${{ inputs.full_verification && 'workflow_dispatch' || github.event_name }}
         run: |
-          include="$(node benchmark/version-compare/scripts/ci-matrix.mjs --event "$GITHUB_EVENT_NAME" --only "$BENCH_ONLY")"
+          include="$(node benchmark/version-compare/scripts/ci-matrix.mjs --event "$BENCH_EVENT_NAME" --only "$BENCH_ONLY")"
           echo "include=$include" >> "$GITHUB_OUTPUT"
 
   benchmark-shard:
     name: Benchmark shard (${{ matrix.case_name }})
     needs: benchmark-matrix
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ github.event_name == 'pull_request' && 30 || 45 }}
+    timeout-minutes: ${{ (github.event_name == 'pull_request' && !inputs.full_verification) && 30 || 45 }}
     strategy:
       fail-fast: false
       max-parallel: 2
@@ -139,7 +152,7 @@ jobs:
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
       WEAPP_TW_BENCH_BASELINE: ${{ github.event.inputs.baseline || 'auto' }}
       BENCH_BUILD_RUNS: ${{ github.event.inputs.build_runs || '3' }}
-      BENCH_HMR_RUNS: ${{ github.event_name == 'pull_request' && '3' || github.event.inputs.hmr_runs || '5' }}
+      BENCH_HMR_RUNS: ${{ (github.event_name == 'pull_request' && !inputs.full_verification) && '3' || github.event.inputs.hmr_runs || '5' }}
       BENCH_ONLY: ${{ matrix.bench_only }}
       # MPX 与 uni-app 的 RSS 回归需保留堆与缓存明细；两侧使用同一诊断配置。
       WEAPP_TW_HMR_MEMORY_DEBUG: ${{ (matrix.bench_only == 'demo-mpx-tailwindcss-v4__mp-weixin' || matrix.bench_only == 'demo-uni-app-vite-tailwindcss-v4__mp-weixin') && '1' || '0' }}
@@ -148,6 +161,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v6
         with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
 
       - uses: pnpm/action-setup@v4
@@ -163,7 +177,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Resolve the checked-out PR baseline
-        if: github.event_name == 'pull_request'
+        if: (github.event_name == 'pull_request' && !inputs.full_verification)
         id: pr-baseline
         env:
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -171,7 +185,7 @@ jobs:
         run: node benchmark/version-compare/scripts/pr-baseline.mjs
 
       - name: Run pull request performance guard
-        if: github.event_name == 'pull_request'
+        if: (github.event_name == 'pull_request' && !inputs.full_verification)
         run: >
           pnpm perf:guard --
           --baseline-ref "${{ steps.pr-baseline.outputs.baseline }}"
@@ -183,7 +197,7 @@ jobs:
           --result-dir .tmp/benchmark-ci/result
 
       - name: Run current vs published benchmark
-        if: github.event_name != 'pull_request'
+        if: (github.event_name != 'pull_request' || inputs.full_verification)
         run: >
           pnpm bench:ci --
           --build-runs "$BENCH_BUILD_RUNS"
@@ -210,6 +224,8 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
 
       - name: Download benchmark reports
         if: always()

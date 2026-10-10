@@ -21,7 +21,7 @@ const reusableChecks = [
   'lynx-native.yml',
 ]
 
-describe('版本 PR 的手动完整校验入口', () => {
+describe('版本 PR 的审批后完整校验入口', () => {
   it.each(reusableChecks)('%s 可复用调用且保留普通 PR 校验', (name) => {
     const check = workflow(name)
     expect(check.on).toHaveProperty('workflow_call')
@@ -40,11 +40,12 @@ describe('版本 PR 的手动完整校验入口', () => {
     const dispatchName = name === 'website-seo-quality.yml'
       ? 'github.event_name == \'workflow_dispatch\' && github.ref_name == \'release/pnpm-version\' && \'Version PR SEO verification\' || '
       : ''
-    expect(gate.name).toBe(`\${{ github.event_name == 'pull_request' && needs.${scope}.outputs.metadata_only == 'true' && 'Await manual version verification' || ${dispatchName}'${stableName}' }}`)
+    const fullName = name === 'website-seo-quality.yml' ? 'Version PR SEO verification' : 'Version PR checks'
+    expect(gate.name).toBe(`\${{ inputs.full_verification && '${fullName}' || github.event_name == 'pull_request' && needs.${scope}.outputs.metadata_only == 'true' && 'Await manual version verification' || ${dispatchName}'${stableName}' }}`)
     expect(gate.if).toBe('always() && !cancelled()')
     expect(gate.needs).toContain(scope)
     expect(check.jobs[scope].uses).toBe('./.github/workflows/ci-scope.yml')
-    expect(check.jobs[scope].with).toBeUndefined()
+    expect(check.jobs[scope].with).toEqual({ full_verification: '${{ inputs.full_verification || false }}' })
     // 分支名、标题和作者不能替代共享的实际内容分类。
     expect(gate.name).not.toMatch(/head\.ref|title|actor/)
   })
@@ -56,7 +57,7 @@ describe('版本 PR 的手动完整校验入口', () => {
     // 分支只决定结果名称，不能据此跳过网站构建和严格校验。
     expect(seo.if).not.toMatch(/ref_name|release\/pnpm-version/)
     expect(seo.steps.every((step: any) => !/ref_name|release\/pnpm-version/.test(step.if ?? ''))).toBe(true)
-    expect(jobs['detect-website-changes'].with).toBeUndefined()
+    expect(jobs['detect-website-changes'].with).toEqual({ full_verification: '${{ inputs.full_verification || false }}' })
     for (const stepName of ['SEO Quality Gate (website)', 'Build website', 'Validate Worker bundle']) {
       expect(seo.steps.find((step: any) => step.name === stepName).if)
         .toBe('needs.detect-website-changes.outputs.website == \'true\'')
@@ -65,15 +66,15 @@ describe('版本 PR 的手动完整校验入口', () => {
 
   it('手动 CI 继承完整静态、多端和 watch 校验，移动端与 benchmark 保持范围门禁及并发', () => {
     const ci = workflow('ci.yml')
-    expect(ci.jobs.scope.if).toBe('github.event_name != \'pull_request\'')
+    expect(ci.jobs.scope.if).toBe('(inputs.full_verification || github.event_name != \'pull_request\')')
     for (const job of ['quality-static', 'unit-tests', 'e2e-static', 'e2e-focused', 'e2e-multiplatform', 'e2e-watch', 'compatibility']) {
-      expect(ci.jobs[job].if).toBe('github.event_name != \'pull_request\' && needs.scope.outputs.core == \'true\'')
+      expect(ci.jobs[job].if).toBe('(inputs.full_verification || github.event_name != \'pull_request\') && needs.scope.outputs.core == \'true\'')
     }
 
     for (const name of ['benchmark.yml', 'react-native-compatibility.yml', 'lynx-native.yml']) {
       const check = workflow(name)
       expect(check.jobs.scope.uses).toBe('./.github/workflows/ci-scope.yml')
-      expect(check.jobs.scope.with).toBeUndefined()
+      expect(check.jobs.scope.with).toEqual({ full_verification: '${{ inputs.full_verification || false }}' })
       expect(check.concurrency['cancel-in-progress']).toBe(true)
     }
     expect(workflow('benchmark.yml').jobs['benchmark-shard'].strategy['max-parallel']).toBe(2)
