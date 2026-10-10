@@ -125,6 +125,7 @@ describe('自动 prepare 计划 CLI', () => {
         ...process.env,
         ...env,
         GITHUB_EVENT_NAME: eventName,
+        GITHUB_SHA: head,
         GITHUB_REPOSITORY: 'fixture/repo',
         GITHUB_RUN_ID: '100',
         GITHUB_RUN_ATTEMPT: '1',

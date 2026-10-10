@@ -82,7 +82,7 @@
 - demo、Web/H5、watch 与 e2e 场景都必须遵守 Tailwind CSS 由 `weapp-tailwindcss` 生成的约束，不能为修复样式或 HMR 问题注册官方 Tailwind 生成插件。
 - 运行时封装（`packages-runtime/*`）改动需重点关注 escape/unescape、merge 兼容和缓存边界。
 - Release 工作流发布 npm 必须使用 trusted publishing/OIDC：发布 job 使用 Node 24 以满足 npm CLI 的 OIDC 支持要求，保留 `permissions.id-token: write` 与 provenance，禁止在发布步骤注入 `NPM_TOKEN` 或 `NODE_AUTH_TOKEN`。
-- 版本 PR 合并事件只调度原 `release.yml@main`，不在 `pull_request_target` 身份下上传 npm；正式发布与已合并版本恢复使用 `workflow_dispatch`，API 复核同仓库受管 PR 并绑定准确 merge SHA。main 前进不得改变该版本的源码；每轮重新执行完整验证，不跨 run 复用 receipt。未关联版本 PR 的显式发布仍需同提交覆盖率证书，操作与故障证据见 [OIDC 发布恢复](docs/engineering/lessons/release-oidc-recovery.md)。
+- 版本 PR 合并事件只调度原 `release.yml@main`，不在 `pull_request_target` 身份下上传 npm；正式发布与已合并版本恢复使用 `workflow_dispatch`，API 复核同仓库受管 PR 并绑定准确 merge SHA。main 前进不得改变该版本的源码；控制 driver 在工作流 SHA 的 checkout 固定后再切换原源码，六阶段不得覆写 GitHub 签名的 SHA/ref，包来源由 HEAD、receipt、checkpoint 与 tag 独立校验；每轮重新执行完整验证，不跨 run 复用 receipt。未关联版本 PR 的显式发布仍需同提交覆盖率证书，操作与故障证据见 [OIDC 发布恢复](docs/engineering/lessons/release-oidc-recovery.md)。
 - 包的 change intent、版本、预发布、npm publish、tag、GitHub Release 与失败恢复统一由 repoctl 编排；使用 `pnpm release`、`pnpm version-packages`、`pnpm publish-packages` 和 `pnpm release:pre`，不要恢复 Changesets CLI/action。
 - `release/pnpm-version` 由 `main` 有合法待发布 intent 时自动 prepare 生成；版本 PR 更新后自动创建 `Version PR CI`，在 PR 检查详情中审批 `version-pr-ci` 环境后才执行完整验收，全部成功后合并 PR 自动发布。审批配置缺失、拒绝或 head 过时不得放行；自动范围判定与等待登记不得满足必需门禁；源码 PR 保持原自动 CI。该分支是受管生成分支，禁止直接向该分支手工提交或推送修复。发布 PR 的代码、CI/CD 和规范修复必须先落到 `main`，再由工作流重新生成发布分支，并以当前 main 与准确 PR head 验证；不得把旧 head 的成功当作修复已持久交付。操作与阶段证据见 [版本 PR 内审批验收](docs/engineering/lessons/version-pr-approval.md)。
 

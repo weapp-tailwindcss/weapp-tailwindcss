@@ -9,13 +9,35 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..')
 const readWorkflow = (name: string) => parse(readFileSync(join(root, '.github', 'workflows', name), 'utf8'))
 
 describe('Release 分阶段执行与 native 缓存', () => {
+  it('从签名的 workflow revision 固定 driver，历史源码切换前完成且验证后不覆盖', () => {
+    const { jobs } = readWorkflow('release.yml')
+    for (const job of [jobs.plan, jobs.release]) {
+      const steps = job.steps
+      const pin = steps.findIndex((step: any) => step.name === 'Pin workflow release driver')
+      const source = steps.findIndex((step: any) => step.name === 'Checkout validated release source')
+      expect(pin).toBeGreaterThan(0)
+      expect(steps[pin - 1].with?.ref ?? steps[0].with.ref).toContain('github.sha')
+      expect(steps[pin].run).toBe('node scripts/ci/release-stage.mjs --pin')
+      expect(pin).toBeLessThan(source)
+      expect(steps.slice(source + 1).filter((step: any) => step.uses?.startsWith('actions/checkout@'))).toEqual([])
+      expect(steps.slice(source + 1).filter((step: any) => step.run?.includes('--pin'))).toEqual([])
+    }
+    expect(jobs.release.steps[0].with['persist-credentials']).toBe(false)
+    const plan = jobs.plan.steps.find((step: any) => step.id === 'plan')
+    expect(plan.run).toContain('test -n "$REPO_RELEASE_VERSION_PR"')
+    expect(plan.run).toContain('node "$RELEASE_STAGE_DRIVER" plan')
+    // 关联历史版本只调用固定 driver，不能从旧源码载入旧 wrapper。
+    expect(jobs.release.steps.filter((step: any) => step.run?.startsWith('node scripts/ci/release-stage.mjs')))
+      .toHaveLength(1)
+  })
+
   it('先由 repoctl 判定是否需要发布工作，再启动完整 native 矩阵', () => {
     const { jobs } = readWorkflow('release.yml')
     const route = jobs.plan
     expect(route).toBeDefined()
     expect(route.permissions).toEqual({ contents: 'read', 'pull-requests': 'read' })
     expect(route.outputs.run).toBe('${{ steps.plan.outputs.run }}')
-    expect(route.steps.find((step: any) => step.id === 'plan').run).toBe('node scripts/ci/auto-prepare-plan.mjs')
+    expect(route.steps.find((step: any) => step.id === 'plan').run).toContain('node scripts/ci/auto-prepare-plan.mjs')
     expect(jobs['native-artifacts'].needs).toBe('plan')
     expect(jobs['native-artifacts'].if).toBe('needs.plan.outputs.run == \'true\'')
     expect(jobs.release.needs).toEqual(['plan', 'native-artifacts'])
@@ -31,21 +53,21 @@ describe('Release 分阶段执行与 native 缓存', () => {
     expect(audit.if).toBe('steps.prepare.outputs.publish == \'true\'')
     expect(audit['continue-on-error']).toBeUndefined()
     const index = steps.indexOf(audit)
-    expect(steps[index - 1].run).toBe('node scripts/ci/release-stage.mjs prepare')
-    expect(steps[index + 1].run).toBe('node scripts/ci/release-stage.mjs upload')
+    expect(steps[index - 1].run).toBe('node "$RELEASE_STAGE_DRIVER" prepare')
+    expect(steps[index + 1].run).toBe('node "$RELEASE_STAGE_DRIVER" upload')
   })
 
   it('在下载本轮 native 产物后重新规划，六个阶段始终在同一 checkout 执行', () => {
     const { jobs } = readWorkflow('release.yml')
     const steps = jobs.release.steps
-    const stages = steps.filter((step: any) => step.run?.startsWith('node scripts/ci/release-stage.mjs'))
+    const stages = steps.filter((step: any) => step.run?.startsWith('node "$RELEASE_STAGE_DRIVER"'))
     expect(stages.map((step: any) => step.run)).toEqual([
-      'node scripts/ci/release-stage.mjs plan',
-      'node scripts/ci/release-stage.mjs verify',
-      'node scripts/ci/release-stage.mjs prepare',
-      'node scripts/ci/release-stage.mjs upload',
-      'node scripts/ci/release-stage.mjs confirm',
-      'node scripts/ci/release-stage.mjs finalize',
+      'node "$RELEASE_STAGE_DRIVER" plan',
+      'node "$RELEASE_STAGE_DRIVER" verify',
+      'node "$RELEASE_STAGE_DRIVER" prepare',
+      'node "$RELEASE_STAGE_DRIVER" upload',
+      'node "$RELEASE_STAGE_DRIVER" confirm',
+      'node "$RELEASE_STAGE_DRIVER" finalize',
     ])
     expect(steps.findIndex((step: any) => step.name === 'Stage and verify all native platform packages'))
       .toBeLessThan(steps.indexOf(stages[0]))
@@ -69,7 +91,7 @@ describe('Release 分阶段执行与 native 缓存', () => {
     expect(jobs.release.permissions['id-token']).toBe('write')
     expect(env.NPM_CONFIG_PROVENANCE).toBe(true)
     expect(jobs.release['timeout-minutes']).toBe(45)
-    expect(jobs.release.steps.find((step: any) => step.uses?.startsWith('actions/checkout@')).with.token)
+    expect(jobs.release.steps.find((step: any) => step.name === 'Checkout validated release source').with.token)
       .toBe(jobs.release.env.GITHUB_TOKEN)
     for (const job of Object.values(jobs) as any[]) {
       for (const step of job.steps ?? []) {

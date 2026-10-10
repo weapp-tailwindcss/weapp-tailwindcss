@@ -22,7 +22,7 @@ describe('main 自动准备与合并发布的触发边界', () => {
     expect(release.jobs.plan.if).toContain('github.event_name == \'push\' && github.ref == \'refs/heads/main\'')
     expect(release.jobs.plan.if).not.toContain('pull_request_target')
     expect(release.jobs.plan.steps[0].with.ref).toBe('${{ github.event.after || github.sha }}')
-    expect(release.jobs.plan.steps.find((step: any) => step.id === 'plan').run).toBe('node scripts/ci/auto-prepare-plan.mjs')
+    expect(release.jobs.plan.steps.find((step: any) => step.id === 'plan').run).toContain('node scripts/ci/auto-prepare-plan.mjs')
   })
 
   it('合并事件只调度 main 的原工作流，不获取 OIDC 或直接发布', () => {
@@ -39,7 +39,7 @@ describe('main 自动准备与合并发布的触发边界', () => {
   it('路由、native 与发布 checkout 消费相同提交，repoctl 分支和模式来自严格路由', () => {
     const { jobs } = workflow('release.yml')
     expect(jobs['native-artifacts'].with.ref).toBe('${{ needs.plan.outputs.ref }}')
-    expect(jobs.release.steps[0].with.ref).toBe('${{ needs.plan.outputs.ref }}')
+    expect(jobs.release.steps.find((step: any) => step.name === 'Checkout validated release source').with.ref).toBe('${{ needs.plan.outputs.ref }}')
     expect(jobs.release.env.CI_RELEASE_SOURCE_SHA).toBe('${{ needs.plan.outputs.ref }}')
     expect(jobs.release.env.CI_RELEASE_BRANCH).toBe('${{ needs.plan.outputs.branch }}')
     expect(jobs.release.env.REPO_RELEASE_MODE).toBe('${{ needs.plan.outputs.mode }}')
@@ -48,9 +48,9 @@ describe('main 自动准备与合并发布的触发边界', () => {
     expect(workflow('native.yml').jobs.native.steps[0].with.ref).toBe('${{ inputs.ref || github.sha }}')
     const steps = jobs.plan.steps
     const routeIndex = steps.findIndex((step: any) => step.id === 'route')
-    expect(steps[routeIndex + 1].with.ref).toBe('${{ steps.route.outputs.ref }}')
-    expect(steps[routeIndex + 1].if).toBe('steps.route.outputs.run == \'true\'')
-    expect(steps[routeIndex + 1].with['persist-credentials']).toBe(false)
+    expect(steps[routeIndex + 2].with.ref).toBe('${{ steps.route.outputs.ref }}')
+    expect(steps[routeIndex + 2].if).toBe('steps.route.outputs.run == \'true\'')
+    expect(steps[routeIndex + 2].with['persist-credentials']).toBe(false)
     expect(jobs.plan.env.REPO_RELEASE_VERSION_PR).toBe('${{ inputs.version_pr }}')
     expect(jobs.plan.env.GH_TOKEN).toBe('${{ github.token }}')
   })
@@ -60,7 +60,7 @@ describe('main 自动准备与合并发布的触发边界', () => {
     expect(release.permissions).toEqual({ contents: 'read' })
     expect(release.jobs.release.permissions['id-token']).toBe('write')
     expect(release.jobs['oidc-audit'].needs).toBeUndefined()
-    expect(release.jobs.release.steps.filter((step: any) => step.run?.startsWith('node scripts/ci/release-stage.mjs')).map((step: any) => step.run)).toHaveLength(6)
+    expect(release.jobs.release.steps.filter((step: any) => step.run?.startsWith('node "$RELEASE_STAGE_DRIVER"')).map((step: any) => step.run)).toHaveLength(6)
   })
 
   it('自动和手动 prepare 共用可取消队列，正式发布和恢复串行且不会被 prepare pending 替换', () => {
@@ -85,8 +85,8 @@ describe('main 自动准备与合并发布的触发边界', () => {
     expect(fresh.if).toBe('github.event_name == \'push\'')
     expect(fresh.run).toBe('node scripts/ci/auto-prepare-plan.mjs --assert-current-main')
     const index = steps.indexOf(fresh)
-    expect(steps[index - 1].run).toBe('node scripts/ci/release-stage.mjs verify')
-    expect(steps[index + 1].run).toBe('node scripts/ci/release-stage.mjs prepare')
+    expect(steps[index - 1].run).toBe('node "$RELEASE_STAGE_DRIVER" verify')
+    expect(steps[index + 1].run).toBe('node "$RELEASE_STAGE_DRIVER" prepare')
   })
 
   it('纯版本变更统一经共享内容分类，不创建重型矩阵', () => {

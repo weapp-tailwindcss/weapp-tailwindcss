@@ -104,6 +104,9 @@ jobs:
       - name: Validate release event
         id: route
         run: node scripts/ci/release-route.mjs --github-output "$GITHUB_OUTPUT"
+      - name: Pin workflow release driver
+        if: steps.route.outputs.run == 'true'
+        run: node scripts/ci/release-stage.mjs --pin
       - name: Checkout validated release source
         if: steps.route.outputs.run == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -126,7 +129,12 @@ jobs:
           CI_RELEASE_BRANCH: ${{ steps.route.outputs.branch }}
           REPO_RELEASE_MODE: ${{ steps.route.outputs.mode }}
         if: steps.route.outputs.run == 'true'
-        run: node scripts/ci/auto-prepare-plan.mjs
+        run: |
+          if test -n "$REPO_RELEASE_VERSION_PR"; then
+            node "$RELEASE_STAGE_DRIVER" plan
+          else
+            node scripts/ci/auto-prepare-plan.mjs
+          fi
 
   native-artifacts:
     needs: plan
@@ -154,7 +162,17 @@ jobs:
       REPO_RELEASE_PACKAGE: ${{ inputs.package }}
       REPO_RELEASE_VERSION: ${{ inputs.version }}
     steps:
-      - name: Checkout Repo
+      - name: Checkout workflow control revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Pin workflow release driver
+        run: node scripts/ci/release-stage.mjs --pin
+
+      - name: Checkout validated release source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.plan.outputs.ref }}
@@ -183,7 +201,7 @@ jobs:
         run: pnpm native:artifacts:stage
 
       - name: Plan release
-        run: node scripts/ci/release-stage.mjs plan
+        run: node "$RELEASE_STAGE_DRIVER" plan
 
       - name: Install Playwright Chromium
         run: |
@@ -238,7 +256,7 @@ jobs:
           pnpm e2e:coverage:release-gate --report "$report"
 
       - name: Verify release
-        run: node scripts/ci/release-stage.mjs verify
+        run: node "$RELEASE_STAGE_DRIVER" verify
 
       - name: Require latest main before automatic prepare
         if: github.event_name == 'push'
@@ -246,7 +264,7 @@ jobs:
 
       - name: Prepare release
         id: prepare
-        run: node scripts/ci/release-stage.mjs prepare
+        run: node "$RELEASE_STAGE_DRIVER" prepare
 
       - name: Audit publishing OIDC identity
         if: steps.prepare.outputs.publish == 'true'
@@ -254,15 +272,15 @@ jobs:
 
       - name: Upload npm packages
         if: steps.prepare.outputs.publish == 'true'
-        run: node scripts/ci/release-stage.mjs upload
+        run: node "$RELEASE_STAGE_DRIVER" upload
 
       - name: Confirm public npm registry
         if: steps.prepare.outputs.publish == 'true'
-        run: node scripts/ci/release-stage.mjs confirm
+        run: node "$RELEASE_STAGE_DRIVER" confirm
 
       - name: Finalize release metadata
         if: steps.prepare.outputs.publish == 'true'
-        run: node scripts/ci/release-stage.mjs finalize
+        run: node "$RELEASE_STAGE_DRIVER" finalize
 
       - name: Upload release progress
         if: always()
