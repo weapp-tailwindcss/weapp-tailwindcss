@@ -27,7 +27,12 @@ env:
   CI: '1'
 
 jobs:
+  scope:
+    uses: ./.github/workflows/ci-scope.yml
+
   portability:
+    needs: scope
+    if: needs.scope.outputs.core == 'true'
     name: CSS compatibility (${{ matrix.os }}, Node ${{ matrix.node }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
@@ -51,6 +56,8 @@ jobs:
         run: pnpm --filter @weapp-tailwindcss/css-compat test:package
 
   semantics:
+    needs: scope
+    if: needs.scope.outputs.core == 'true'
     name: CSS compatibility semantics (ubuntu-latest, Node 24)
     runs-on: ubuntu-latest
     timeout-minutes: 25

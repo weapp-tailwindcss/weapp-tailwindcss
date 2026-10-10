@@ -1,0 +1,60 @@
+name: CI Change Scope
+
+on:
+  workflow_dispatch:
+    inputs:
+      base:
+        description: 仅用于只读验证的差异基线 SHA
+        type: string
+        required: false
+      head:
+        description: 仅用于只读验证的差异目标 SHA
+        type: string
+        required: false
+  workflow_call:
+    outputs:
+      core:
+        value: ${{ jobs.scope.outputs.core }}
+      watch:
+        value: ${{ jobs.scope.outputs.watch }}
+      website:
+        value: ${{ jobs.scope.outputs.website }}
+      metadata_only:
+        value: ${{ jobs.scope.outputs.metadata_only }}
+
+permissions:
+  contents: read
+
+jobs:
+  scope:
+    name: Validate change scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      core: ${{ steps.scope.outputs.core }}
+      watch: ${{ steps.scope.outputs.watch }}
+      website: ${{ steps.scope.outputs.website }}
+      metadata_only: ${{ steps.scope.outputs.metadata_only }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install only scope parser dependencies
+        env:
+          HUSKY: '0'
+        run: pnpm --filter @weapp-tailwindcss/ci-scope install --prod --frozen-lockfile --ignore-scripts
+      - name: Validate versions and classify the actual diff
+        id: scope
+        env:
+          CI_SCOPE_BASE_SHA: ${{ inputs.base || github.event.pull_request.base.sha }}
+          CI_SCOPE_HEAD_SHA: ${{ inputs.head || github.event.pull_request.head.sha || github.sha }}
+          CI_SCOPE_EVENT_NAME: ${{ github.event_name == 'workflow_dispatch' && inputs.base && 'pull_request' || github.event_name }}
+          CI_SCOPE_DEPENDENCY_ROOT: tools/ci-scope
+        run: node scripts/ci/resolve-pr-scope.mjs --base "$CI_SCOPE_BASE_SHA" --head "$CI_SCOPE_HEAD_SHA" --event "$CI_SCOPE_EVENT_NAME" --github-output "$GITHUB_OUTPUT"

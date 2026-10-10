@@ -15,11 +15,20 @@ on:
       - .github/workflows/lynx-native.yml
   workflow_dispatch:
 
+concurrency:
+  group: lynx-native-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
+  scope:
+    uses: ./.github/workflows/ci-scope.yml
+
   android:
+    needs: scope
+    if: needs.scope.outputs.core == 'true'
     name: Lynx Android 4.0.1 (API 30)
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -67,6 +76,8 @@ jobs:
           retention-days: 14
 
   ios:
+    needs: scope
+    if: needs.scope.outputs.core == 'true'
     name: Lynx iOS 4.0.1 (iPhone 16 Pro / 18.5)
     runs-on: macos-15
     timeout-minutes: 45

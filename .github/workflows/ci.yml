@@ -18,9 +18,14 @@ permissions:
   contents: read
 
 jobs:
-  quality-static:
-    name: Quality Static Gate (ubuntu-latest, 22)
+  scope:
     if: github.event_name != 'pull_request'
+    uses: ./.github/workflows/ci-scope.yml
+
+  quality-static:
+    needs: scope
+    name: Quality Static Gate (ubuntu-latest, 22)
+    if: github.event_name != 'pull_request' && needs.scope.outputs.core == 'true'
     timeout-minutes: 20
     runs-on: ubuntu-latest
     # Remote Caching enabled - configure TURBO_TOKEN and TURBO_TEAM in repository settings
@@ -88,8 +93,9 @@ jobs:
           retention-days: 14
 
   unit-tests:
+    needs: scope
     name: Unit Test Gate (${{ matrix.shard }}/${{ matrix.shard_total }}, ubuntu-latest, 22)
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && needs.scope.outputs.core == 'true'
     timeout-minutes: 20
     runs-on: ubuntu-latest
     strategy:
@@ -158,22 +164,29 @@ jobs:
 
   quality:
     name: Quality Gate (ubuntu-latest, 22)
-    if: github.event_name != 'pull_request'
-    needs: [quality-static, unit-tests]
+    if: always() && !cancelled() && github.event_name != 'pull_request'
+    needs: [scope, quality-static, unit-tests]
     timeout-minutes: 5
     runs-on: ubuntu-latest
     steps:
       - name: Require all quality shards
         env:
+          SCOPE_RESULT: ${{ needs.scope.result }}
+          CORE_ENABLED: ${{ needs.scope.outputs.core }}
           STATIC_RESULT: ${{ needs.quality-static.result }}
           UNIT_RESULT: ${{ needs.unit-tests.result }}
         run: |
-          test "$STATIC_RESULT" = success
-          test "$UNIT_RESULT" = success
+          test "$SCOPE_RESULT" = success
+          test "$CORE_ENABLED" = true || test "$CORE_ENABLED" = false
+          if test "$CORE_ENABLED" = true; then
+            test "$STATIC_RESULT" = success
+            test "$UNIT_RESULT" = success
+          fi
 
   e2e-static:
+    needs: scope
     name: E2E Static Gate (${{ matrix.shard }}/${{ matrix.shard_total }}, ubuntu-latest, 22)
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && needs.scope.outputs.core == 'true'
     timeout-minutes: 15
     runs-on: ubuntu-latest
     strategy:
@@ -244,8 +257,9 @@ jobs:
           retention-days: 14
 
   e2e-focused:
+    needs: scope
     name: E2E Focused Gate (${{ matrix.case_name }})
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && needs.scope.outputs.core == 'true'
     timeout-minutes: 20
     runs-on: ubuntu-latest
     strategy:
@@ -343,8 +357,9 @@ jobs:
           retention-days: 14
 
   e2e-multiplatform:
+    needs: scope
     name: E2E Multiplatform Gate (${{ matrix.case_name }})
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && needs.scope.outputs.core == 'true'
     timeout-minutes: ${{ matrix.timeout_minutes }}
     runs-on: ubuntu-latest
     strategy:
@@ -407,8 +422,9 @@ jobs:
           retention-days: 14
 
   e2e-watch:
+    needs: scope
     name: E2E Watch Gate (${{ matrix.runner_label }}, ${{ matrix.watch_case }}, ${{ matrix.round_profile }})
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && needs.scope.outputs.core == 'true'
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ matrix.timeout_minutes }}
     strategy:
@@ -512,13 +528,13 @@ jobs:
           E2E_WATCH_CASE: ${{ matrix.watch_case }}
           E2E_WATCH_TIMEOUT_MS: ${{ matrix.watch_timeout_ms }}
           E2E_WATCH_POLL_MS: ${{ matrix.watch_poll_ms }}
-          E2E_WATCH_MAX_HOT_UPDATE_MS: ${{ matrix.watch_max_hot_update_ms || matrix.watch_timeout_ms }}
+          E2E_WATCH_MAX_HOT_UPDATE_MS: ${{ matrix.watch_timeout_ms }}
           E2E_WATCH_MAX_PLUGIN_PROCESS_MS: ${{ matrix.watch_max_plugin_process_ms || '6000' }}
-          E2E_WATCH_MAX_MEMORY_RSS_MB: ${{ matrix.watch_max_memory_rss_mb || '5632' }}
-          E2E_WATCH_MAX_MEMORY_RSS_DELTA_MB: ${{ matrix.watch_max_memory_rss_delta_mb || '4608' }}
-          E2E_WATCH_MAX_MEMORY_HEAP_USED_MB: ${{ matrix.watch_max_memory_heap_used_mb || '4096' }}
+          E2E_WATCH_MAX_MEMORY_RSS_MB: '5632'
+          E2E_WATCH_MAX_MEMORY_RSS_DELTA_MB: '4608'
+          E2E_WATCH_MAX_MEMORY_HEAP_USED_MB: '4096'
           E2E_WATCH_COMMAND_TIMEOUT_MS: ${{ matrix.watch_command_timeout_ms }}
-          E2E_WATCH_MAX_ATTEMPTS: ${{ matrix.watch_max_attempts || '2' }}
+          E2E_WATCH_MAX_ATTEMPTS: '2'
           E2E_WATCH_ROUND_PROFILE: ${{ matrix.round_profile }}
           E2E_WATCH_WEB_ONLY: ${{ matrix.watch_web_only || '0' }}
           E2E_WATCH_SAVE_SNAPSHOTS: ${{ matrix.watch_save_snapshots }}
@@ -571,8 +587,9 @@ jobs:
           retention-days: 14
 
   compatibility:
+    needs: scope
     name: Compatibility Gate (${{ matrix.os }}, ${{ matrix.node-version }}, ${{ matrix.scenario }})
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && needs.scope.outputs.core == 'true'
     timeout-minutes: 15
     strategy:
       fail-fast: false

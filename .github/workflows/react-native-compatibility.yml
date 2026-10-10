@@ -14,11 +14,20 @@ on:
       - .github/workflows/react-native-compatibility.yml
   workflow_dispatch:
 
+concurrency:
+  group: react-native-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
+  scope:
+    uses: ./.github/workflows/ci-scope.yml
+
   web:
+    needs: scope
+    if: needs.scope.outputs.core == 'true'
     name: Expo Web compatibility
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -57,6 +66,8 @@ jobs:
           retention-days: 14
 
   android:
+    needs: [scope, web]
+    if: always() && !cancelled() && needs.scope.result == 'success' && needs.scope.outputs.core == 'true'
     name: Expo Android 11 / API 30
     runs-on: ubuntu-latest
     timeout-minutes: 50
@@ -107,6 +118,8 @@ jobs:
           retention-days: 14
 
   ios:
+    needs: scope
+    if: needs.scope.outputs.core == 'true'
     name: Expo iOS 18.5
     runs-on: macos-15
     timeout-minutes: 50

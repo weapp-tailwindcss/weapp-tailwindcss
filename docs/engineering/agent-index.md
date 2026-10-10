@@ -58,5 +58,6 @@
 - [scripts/e2e-preflight/AGENTS.md](../../scripts/e2e-preflight/AGENTS.md)
 - [starter/AGENTS.md](../../starter/AGENTS.md)
 - [tools/AGENTS.md](../../tools/AGENTS.md)
+- [tools/ci-scope/AGENTS.md](../../tools/ci-scope/AGENTS.md)
 - [tools/weapp-tailwindcss-scripts/AGENTS.md](../../tools/weapp-tailwindcss-scripts/AGENTS.md)
 - [website/AGENTS.md](../../website/AGENTS.md)

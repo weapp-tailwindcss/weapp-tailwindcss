@@ -2,19 +2,15 @@
 name: Release
 
 on:
-  push:
-    branches:
-      - main
-      - alpha
-      - beta
-      - rc
-      - next
+  pull_request_target:
+    types: [closed]
+    branches: [main]
   workflow_dispatch:
     inputs:
       mode:
         description: Release operation
         required: true
-        default: auto
+        default: prepare
         type: choice
         options:
           - auto
@@ -41,33 +37,43 @@ env:
   npm_config_registry: https://registry.npmjs.org
 
 permissions:
-  actions: read
-  contents: write
-  pull-requests: write
-  id-token: write
+  contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}${{ inputs.oidc_audit && '-oidc-audit' || '' }}
+  group: ${{ github.workflow }}-refs/heads/${{ github.event.pull_request.base.ref || github.ref_name }}${{ inputs.oidc_audit && '-oidc-audit' || '' }}
   cancel-in-progress: false
 
 jobs:
   plan:
     name: Route release work
-    if: ${{ !inputs.oidc_audit }}
+    if: >-
+      ${{ !inputs.oidc_audit && (github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request_target' && github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'release/pnpm-version' &&
+      github.event.pull_request.base.repo.full_name == github.repository &&
+      github.event.pull_request.head.repo.full_name == github.repository)) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: read
     env:
-      REPO_RELEASE_MODE: ${{ inputs.mode || 'auto' }}
+      REPO_RELEASE_MODE: ${{ inputs.mode || 'prepare' }}
       REPO_RELEASE_PACKAGE: ${{ inputs.package }}
       REPO_RELEASE_VERSION: ${{ inputs.version }}
     outputs:
       run: ${{ steps.plan.outputs.run }}
+      ref: ${{ steps.route.outputs.ref }}
+      mode: ${{ steps.route.outputs.mode }}
+      branch: ${{ steps.route.outputs.branch }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
           fetch-depth: 0
+          persist-credentials: false
+      - name: Validate release event
+        id: route
+        run: node scripts/ci/release-route.mjs --github-output "$GITHUB_OUTPUT"
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -79,12 +85,18 @@ jobs:
         id: plan
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: pnpm exec repo release ci --stage plan
+          CI_RELEASE_SOURCE_SHA: ${{ steps.route.outputs.ref }}
+          CI_RELEASE_BRANCH: ${{ steps.route.outputs.branch }}
+          REPO_RELEASE_MODE: ${{ steps.route.outputs.mode }}
+        if: steps.route.outputs.run == 'true'
+        run: node scripts/ci/release-stage.mjs plan
 
   native-artifacts:
     needs: plan
     if: needs.plan.outputs.run == 'true'
     uses: ./.github/workflows/native.yml
+    with:
+      ref: ${{ needs.plan.outputs.ref }}
 
   release:
     name: Release
@@ -92,15 +104,23 @@ jobs:
     needs: [plan, native-artifacts]
     if: ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.run == 'true' && needs.native-artifacts.result == 'success' }}
     timeout-minutes: 45
+    permissions:
+      actions: read
+      contents: write
+      pull-requests: write
+      id-token: write
     env:
       GITHUB_TOKEN: ${{ secrets.REPOCTL_RELEASE_TOKEN || secrets.CHANGESETS_RELEASE_TOKEN || github.token }}
-      REPO_RELEASE_MODE: ${{ inputs.mode || 'auto' }}
+      CI_RELEASE_SOURCE_SHA: ${{ needs.plan.outputs.ref }}
+      CI_RELEASE_BRANCH: ${{ needs.plan.outputs.branch }}
+      REPO_RELEASE_MODE: ${{ needs.plan.outputs.mode }}
       REPO_RELEASE_PACKAGE: ${{ inputs.package }}
       REPO_RELEASE_VERSION: ${{ inputs.version }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ needs.plan.outputs.ref }}
           fetch-depth: 0
           token: ${{ secrets.REPOCTL_RELEASE_TOKEN || secrets.CHANGESETS_RELEASE_TOKEN || github.token }}
 
@@ -126,7 +146,7 @@ jobs:
         run: pnpm native:artifacts:stage
 
       - name: Plan release
-        run: pnpm exec repo release ci --stage plan
+        run: node scripts/ci/release-stage.mjs plan
 
       - name: Install Playwright Chromium
         run: |
@@ -181,23 +201,23 @@ jobs:
           pnpm e2e:coverage:release-gate --report "$report"
 
       - name: Verify release
-        run: pnpm exec repo release ci --stage verify
+        run: node scripts/ci/release-stage.mjs verify
 
       - name: Prepare release
         id: prepare
-        run: pnpm exec repo release ci --stage prepare
+        run: node scripts/ci/release-stage.mjs prepare
 
       - name: Upload npm packages
         if: steps.prepare.outputs.publish == 'true'
-        run: pnpm exec repo release ci --stage upload
+        run: node scripts/ci/release-stage.mjs upload
 
       - name: Confirm public npm registry
         if: steps.prepare.outputs.publish == 'true'
-        run: pnpm exec repo release ci --stage confirm
+        run: node scripts/ci/release-stage.mjs confirm
 
       - name: Finalize release metadata
         if: steps.prepare.outputs.publish == 'true'
-        run: pnpm exec repo release ci --stage finalize
+        run: node scripts/ci/release-stage.mjs finalize
 
       - name: Upload release progress
         if: always()

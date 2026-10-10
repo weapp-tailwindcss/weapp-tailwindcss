@@ -14,7 +14,7 @@ describe('Release 分阶段执行与 native 缓存', () => {
     expect(route).toBeDefined()
     expect(route.permissions).toEqual({ contents: 'read' })
     expect(route.outputs.run).toBe('${{ steps.plan.outputs.run }}')
-    expect(route.steps.find((step: any) => step.id === 'plan').run).toBe('pnpm exec repo release ci --stage plan')
+    expect(route.steps.find((step: any) => step.id === 'plan').run).toBe('node scripts/ci/release-stage.mjs plan')
     expect(jobs['native-artifacts'].needs).toBe('plan')
     expect(jobs['native-artifacts'].if).toBe("needs.plan.outputs.run == 'true'")
     expect(jobs.release.needs).toEqual(['plan', 'native-artifacts'])
@@ -26,14 +26,14 @@ describe('Release 分阶段执行与 native 缓存', () => {
   it('在下载本轮 native 产物后重新规划，六个阶段始终在同一 checkout 执行', () => {
     const { jobs } = readWorkflow('release.yml')
     const steps = jobs.release.steps
-    const stages = steps.filter((step: any) => step.run?.startsWith('pnpm exec repo release ci'))
+    const stages = steps.filter((step: any) => step.run?.startsWith('node scripts/ci/release-stage.mjs'))
     expect(stages.map((step: any) => step.run)).toEqual([
-      'pnpm exec repo release ci --stage plan',
-      'pnpm exec repo release ci --stage verify',
-      'pnpm exec repo release ci --stage prepare',
-      'pnpm exec repo release ci --stage upload',
-      'pnpm exec repo release ci --stage confirm',
-      'pnpm exec repo release ci --stage finalize',
+      'node scripts/ci/release-stage.mjs plan',
+      'node scripts/ci/release-stage.mjs verify',
+      'node scripts/ci/release-stage.mjs prepare',
+      'node scripts/ci/release-stage.mjs upload',
+      'node scripts/ci/release-stage.mjs confirm',
+      'node scripts/ci/release-stage.mjs finalize',
     ])
     expect(steps.findIndex((step: any) => step.name === 'Stage and verify all native platform packages'))
       .toBeLessThan(steps.indexOf(stages[0]))
@@ -53,7 +53,8 @@ describe('Release 分阶段执行与 native 缓存', () => {
     expect(env.REPO_RELEASE_VERSION).toBeUndefined()
     expect(jobs['oidc-audit'].steps.find((step: any) => step.name === 'Audit npm OIDC').run)
       .toBe('pnpm exec repo release ci --mode oidc-audit')
-    expect(permissions['id-token']).toBe('write')
+    expect(permissions).toEqual({ contents: 'read' })
+    expect(jobs.release.permissions['id-token']).toBe('write')
     expect(env.NPM_CONFIG_PROVENANCE).toBe(true)
     expect(jobs.release['timeout-minutes']).toBe(45)
     expect(jobs.release.steps.find((step: any) => step.uses?.startsWith('actions/checkout@')).with.token)

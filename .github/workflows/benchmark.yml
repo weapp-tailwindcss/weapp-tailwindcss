@@ -49,6 +49,9 @@ permissions:
   contents: read
 
 jobs:
+  scope:
+    uses: ./.github/workflows/ci-scope.yml
+
   weekly-demo-cost:
     if: github.event_name == 'workflow_dispatch' && inputs.weekly_demo_cost
     uses: ./.github/workflows/demo-performance-weekly.yml
@@ -57,7 +60,8 @@ jobs:
       version: latest
 
   synthetic-performance:
-    if: github.event_name != 'workflow_dispatch' || !inputs.weekly_demo_cost
+    needs: scope
+    if: needs.scope.outputs.core == 'true' && (github.event_name != 'workflow_dispatch' || !inputs.weekly_demo_cost)
     name: Synthetic Performance Gate (ubuntu-latest, 22)
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -100,7 +104,8 @@ jobs:
           retention-days: 14
 
   benchmark-matrix:
-    if: github.event_name != 'workflow_dispatch' || !inputs.weekly_demo_cost
+    needs: scope
+    if: needs.scope.outputs.core == 'true' && (github.event_name != 'workflow_dispatch' || !inputs.weekly_demo_cost)
     name: Prepare benchmark matrix
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -125,7 +130,7 @@ jobs:
     timeout-minutes: ${{ github.event_name == 'pull_request' && 30 || 45 }}
     strategy:
       fail-fast: false
-      max-parallel: 6
+      max-parallel: 2
       matrix:
         include: ${{ fromJSON(needs.benchmark-matrix.outputs.include) }}
     env:
@@ -197,8 +202,8 @@ jobs:
 
   current-vs-published:
     name: Performance guard and published trend
-    if: always() && (github.event_name != 'workflow_dispatch' || !inputs.weekly_demo_cost)
-    needs: benchmark-shard
+    if: always() && !cancelled() && needs.scope.result == 'success' && needs.scope.outputs.core == 'true' && (github.event_name != 'workflow_dispatch' || !inputs.weekly_demo_cost)
+    needs: [scope, benchmark-shard]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

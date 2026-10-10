@@ -135,7 +135,7 @@ describe('ci workflows', () => {
     ]))
     expect(platformDevJob.steps.some((step: Record<string, unknown>) => String(step.run ?? '').includes('e2e:dev:smoke'))).toBe(true)
     expect(workflow.jobs['pr-gate'].needs).toEqual(['scope', 'quality', 'core-smoke', 'platform-watch', 'platform-dev', 'windows-utilities', 'portable-demos', 'css-compat'])
-    expect(source).toContain('test "$result" = success || test "$result" = skipped')
+    expect(source).toContain('test "$result" = success')
     expect(source).toContain('pr-gate-package-build-${{ github.run_id }}')
   })
 
@@ -158,7 +158,7 @@ describe('ci workflows', () => {
     expect(gate.jobs['portable-demos'].uses).toBe('./.github/workflows/demo-matrix.yml')
     expect(gate.jobs['portable-demos'].if).toBe("needs.scope.outputs.core == 'true'")
     expect(source).toContain('test "$DEMOS_RESULT" = success')
-    expect(source).toContain('test "$UTILITIES_RESULT" = success')
+    expect(source).toContain('"$DEV_RESULT" "$UTILITIES_RESULT"')
     const { workflow } = readWorkflow('demo-matrix.yml')
     expect(workflow.jobs.demos.strategy['fail-fast']).toBe(false)
     expect(workflow.jobs.demos['timeout-minutes']).toBeLessThanOrEqual(30)
@@ -182,7 +182,7 @@ describe('ci workflows', () => {
   it('keeps heavyweight legacy CI jobs out of pull requests', () => {
     const { workflow } = readWorkflow('ci.yml')
     for (const jobName of ['quality-static', 'unit-tests', 'e2e-static', 'e2e-focused', 'e2e-multiplatform', 'e2e-watch', 'compatibility']) {
-      expect(workflow.jobs[jobName].if, `${jobName} should be push/manual only`).toBe("github.event_name != 'pull_request'")
+      expect(workflow.jobs[jobName].if, `${jobName} should be push/manual only`).toBe("github.event_name != 'pull_request' && needs.scope.outputs.core == 'true'")
     }
   })
 
@@ -317,7 +317,7 @@ describe('ci workflows', () => {
     expect(unitRuns.join('\n')).toContain('pnpm exec vitest run --shard=${{ matrix.shard }}/${{ matrix.shard_total }}')
     expect(workflow.jobs['unit-tests'].strategy.matrix.shard).toEqual([1, 2, 3])
     expect(workflow.jobs['unit-tests'].strategy.matrix.shard_total).toEqual([3])
-    expect(workflow.jobs.quality.needs).toEqual(['quality-static', 'unit-tests'])
+    expect(workflow.jobs.quality.needs).toEqual(['scope', 'quality-static', 'unit-tests'])
     expect(stepRuns(workflow, 'quality').join('\n')).toContain('test "$STATIC_RESULT" = success')
     expect(stepRuns(workflow, 'quality').join('\n')).toContain('test "$UNIT_RESULT" = success')
     expect(hasStepRunCommand(unitRuns, 'pnpm test:release')).toBe(false)
@@ -684,18 +684,18 @@ describe('ci workflows', () => {
     expect(setupNodeStep.with['node-version']).toBe(24)
     expect(setupNodeStep.with['registry-url']).toBeUndefined()
     expect(workflow.concurrency).toEqual({
-      group: "${{ github.workflow }}-${{ github.ref }}${{ inputs.oidc_audit && '-oidc-audit' || '' }}",
+      group: "${{ github.workflow }}-refs/heads/${{ github.event.pull_request.base.ref || github.ref_name }}${{ inputs.oidc_audit && '-oidc-audit' || '' }}",
       'cancel-in-progress': false,
     })
     expect(workflow.jobs.release.needs).toEqual(['plan', 'native-artifacts'])
     // eslint-disable-next-line no-template-curly-in-string -- 按字面量核验 GitHub Actions 表达式。
     expect(workflow.jobs.release.if).toBe("${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.run == 'true' && needs.native-artifacts.result == 'success' }}")
-    expect(workflow.permissions['id-token']).toBe('write')
+    expect(workflow.jobs.release.permissions['id-token']).toBe('write')
     expect(workflow.env.NPM_CONFIG_PROVENANCE).toBe(true)
     expect(workflow.env.npm_config_registry).toBe('https://registry.npmjs.org')
     expectPlaywrightInstallRetry(playwrightStep.run, 'pnpm exec playwright install chromium chromium-headless-shell')
     expect(releaseSteps.indexOf(playwrightStep)).toBeLessThan(releaseSteps.indexOf(releaseStep))
-    expect(releaseStep.run).toBe('pnpm exec repo release ci --stage verify')
+    expect(releaseStep.run).toBe('node scripts/ci/release-stage.mjs verify')
     expect(workflow.jobs.release.env.GITHUB_TOKEN).toContain('secrets.REPOCTL_RELEASE_TOKEN || secrets.CHANGESETS_RELEASE_TOKEN || github.token')
     expect(workflow.jobs.release.env.NPM_TOKEN).toBeUndefined()
     expect(workflow.jobs.release.env.NODE_AUTH_TOKEN).toBeUndefined()
@@ -726,7 +726,7 @@ describe('ci workflows', () => {
     const { workflow } = readWorkflow('release.yml')
     const job = workflow.jobs['oidc-audit']
     expect(workflow.on.workflow_dispatch.inputs.oidc_audit).toMatchObject({ type: 'boolean', default: false })
-    expect(workflow.jobs.plan.if).toBe('${{ !inputs.oidc_audit }}')
+    expect(workflow.jobs.plan.if).toContain('!inputs.oidc_audit')
     expect(job.if).toBe('inputs.oidc_audit')
     expect(job.needs).toBeUndefined()
     expect(job.env).toBeUndefined()
@@ -765,7 +765,7 @@ describe('ci workflows', () => {
     expect(matrixJob.outputs.include).toContain('steps.matrix.outputs.include')
     expect(job.needs).toBe('benchmark-matrix')
     expect(job.strategy['fail-fast']).toBe(false)
-    expect(job.strategy['max-parallel']).toBe(6)
+    expect(job.strategy['max-parallel']).toBe(2)
     expect(job['timeout-minutes']).toContain("github.event_name == 'pull_request' && 30")
     expect(job['timeout-minutes']).toContain('|| 45')
     expect(matrixInclude).toContain('needs.benchmark-matrix.outputs.include')
@@ -774,7 +774,7 @@ describe('ci workflows', () => {
     expect(job.env.BENCH_HMR_RUNS).toContain("github.event_name == 'pull_request' && '3'")
     expect(runCommand).toContain('--baseline-ref')
     expect(runCommand).toContain('--only "$BENCH_ONLY"')
-    expect(workflow.jobs['current-vs-published'].needs).toBe('benchmark-shard')
+    expect(workflow.jobs['current-vs-published'].needs).toEqual(['scope', 'benchmark-shard'])
     const publishedRuns = stepRuns(workflow, 'current-vs-published').join('\n')
     expect(publishedRuns).toContain('test "$BENCHMARK_RESULT" = success')
     expect(publishedRuns).toContain('report-shard-failures.mjs')
@@ -822,10 +822,10 @@ describe('ci workflows', () => {
       'publish',
       'publish-unpublished',
     ])
-    expect(workflow.jobs.release.env.REPO_RELEASE_MODE).toContain("inputs.mode || 'auto'")
+    expect(workflow.jobs.release.env.REPO_RELEASE_MODE).toBe('${{ needs.plan.outputs.mode }}')
     expect(workflow.jobs.release.env.REPO_RELEASE_PACKAGE).toContain('inputs.package')
     expect(workflow.jobs.release.env.REPO_RELEASE_VERSION).toContain('inputs.version')
-    expect(source.match(/pnpm exec repo release ci --stage/g)).toHaveLength(7)
+    expect(source.match(/node scripts\/ci\/release-stage\.mjs/g)).toHaveLength(7)
     expect(packageJson.scripts.release).toBe('pnpm change')
     expect(packageJson.scripts['version-packages']).toBe('pnpm version -r')
     expect(packageJson.scripts.cv).toBe('pnpm version -r')

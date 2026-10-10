@@ -10,45 +10,22 @@ on:
       - 'website/**'
   workflow_dispatch:
 
+concurrency:
+  group: website-seo-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
   detect-website-changes:
     name: Detect website changes
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      website_changed: ${{ steps.changes.outputs.website_changed }}
-
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Detect website changes
-        id: changes
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: |
-          if [ "$EVENT_NAME" != "pull_request" ]; then
-            echo "website_changed=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          if git diff --quiet "$BASE_SHA" "$HEAD_SHA" -- website/ packages/ packages-runtime/ scripts/deploy-docs-gate.ts scripts/deploy-docs-cloudflare.mjs .github/workflows/docs.yml .github/workflows/website-seo-quality.yml; then
-            echo "website_changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "website_changed=true" >> "$GITHUB_OUTPUT"
-          fi
+    uses: ./.github/workflows/ci-scope.yml
 
   seo-quality:
     name: SEO Quality Gate
     needs: detect-website-changes
-    if: always()
+    if: always() && !cancelled()
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -59,19 +36,24 @@ jobs:
           echo "::error::website change detection failed."
           exit 1
 
+      - name: Require website scope output
+        env:
+          WEBSITE_ENABLED: ${{ needs.detect-website-changes.outputs.website }}
+        run: test "$WEBSITE_ENABLED" = true || test "$WEBSITE_ENABLED" = false
+
       - name: Skip when website is unchanged
-        if: needs.detect-website-changes.outputs.website_changed != 'true'
+        if: needs.detect-website-changes.outputs.website != 'true'
         run: echo "No website changes detected; SEO checks are not required for this change."
 
       - name: Check out code
-        if: needs.detect-website-changes.outputs.website_changed == 'true'
+        if: needs.detect-website-changes.outputs.website == 'true'
         uses: actions/checkout@v6
 
       - uses: pnpm/action-setup@v4
-        if: needs.detect-website-changes.outputs.website_changed == 'true'
+        if: needs.detect-website-changes.outputs.website == 'true'
 
       - name: Setup Node.js environment
-        if: needs.detect-website-changes.outputs.website_changed == 'true'
+        if: needs.detect-website-changes.outputs.website == 'true'
         uses: actions/setup-node@v6
         with:
           node-version: 22
@@ -79,35 +61,35 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        if: needs.detect-website-changes.outputs.website_changed == 'true'
+        if: needs.detect-website-changes.outputs.website == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Docs audience gate (website)
-        if: needs.detect-website-changes.outputs.website_changed == 'true'
+        if: needs.detect-website-changes.outputs.website == 'true'
         run: pnpm --filter @weapp-tailwindcss/website check:docs-audience
 
       - name: Test deployment guards
-        if: needs.detect-website-changes.outputs.website_changed == 'true'
+        if: needs.detect-website-changes.outputs.website == 'true'
         run: pnpm --filter @weapp-tailwindcss/website exec vitest run scripts/docs-deployment.test.ts scripts/deploy-docs-cloudflare.test.mjs --update=none
 
       - name: few_keywords Gate (website)
-        if: needs.detect-website-changes.outputs.website_changed == 'true'
+        if: needs.detect-website-changes.outputs.website == 'true'
         run: pnpm --filter @weapp-tailwindcss/website seo:few-keywords
 
       - name: SEO Quality Gate (website)
-        if: needs.detect-website-changes.outputs.website_changed == 'true'
+        if: needs.detect-website-changes.outputs.website == 'true'
         run: pnpm --filter @weapp-tailwindcss/website seo:quality:strict
 
       - name: Build website
-        if: needs.detect-website-changes.outputs.website_changed == 'true'
+        if: needs.detect-website-changes.outputs.website == 'true'
         run: pnpm --filter @weapp-tailwindcss/website build
 
       - name: Verify Worker routing locally
-        if: needs.detect-website-changes.outputs.website_changed == 'true'
+        if: needs.detect-website-changes.outputs.website == 'true'
         run: pnpm --filter @weapp-tailwindcss/website test:worker
 
       - name: Validate Worker bundle
-        if: needs.detect-website-changes.outputs.website_changed == 'true'
+        if: needs.detect-website-changes.outputs.website == 'true'
         run: pnpm --filter @weapp-tailwindcss/website deploy:worker:dry-run
 
       - name: SEO Status Note

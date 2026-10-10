@@ -15,20 +15,7 @@ permissions:
 jobs:
   scope:
     name: Resolve PR scope
-    runs-on: ubuntu-latest
-    outputs:
-      core: ${{ steps.scope.outputs.core }}
-      watch: ${{ steps.scope.outputs.watch }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - id: scope
-        env:
-          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          GITHUB_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
-        run: node scripts/ci/resolve-pr-scope.mjs --github-output "$GITHUB_OUTPUT"
+    uses: ./.github/workflows/ci-scope.yml
 
   prepare-build:
     name: Prepare Ubuntu package build
@@ -184,6 +171,8 @@ jobs:
         run: pnpm e2e:dev:smoke
 
   windows-utilities:
+    needs: scope
+    if: needs.scope.outputs.core == 'true'
     name: Default utilities (${{ matrix.os }}, Node ${{ matrix.node }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
@@ -243,6 +232,7 @@ jobs:
           QUALITY_RESULT: ${{ needs.quality.result }}
           SMOKE_RESULT: ${{ needs.core-smoke.result }}
           PLATFORM_RESULT: ${{ needs.platform-watch.result }}
+          WATCH_ENABLED: ${{ needs.scope.outputs.watch }}
           DEV_RESULT: ${{ needs.platform-dev.result }}
           UTILITIES_RESULT: ${{ needs.windows-utilities.result }}
           DEMOS_ENABLED: ${{ needs.scope.outputs.core }}
@@ -250,11 +240,16 @@ jobs:
           CSS_COMPAT_RESULT: ${{ needs.css-compat.result }}
         run: |
           test "$SCOPE_RESULT" = success
-          test "$UTILITIES_RESULT" = success
+          for enabled in "$DEMOS_ENABLED" "$WATCH_ENABLED"; do
+            test "$enabled" = true || test "$enabled" = false
+          done
           if test "$DEMOS_ENABLED" = true; then
             test "$DEMOS_RESULT" = success
             test "$CSS_COMPAT_RESULT" = success
+            for result in "$QUALITY_RESULT" "$SMOKE_RESULT" "$DEV_RESULT" "$UTILITIES_RESULT"; do
+              test "$result" = success
+            done
           fi
-          for result in "$QUALITY_RESULT" "$SMOKE_RESULT" "$PLATFORM_RESULT" "$DEV_RESULT"; do
-            test "$result" = success || test "$result" = skipped
-          done
+          if test "$WATCH_ENABLED" = true; then
+            test "$PLATFORM_RESULT" = success
+          fi
