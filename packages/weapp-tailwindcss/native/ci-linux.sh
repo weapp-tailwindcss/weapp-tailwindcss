@@ -31,7 +31,7 @@ task_pnpm_bin="$(mktemp -d)"
 printf '#!/bin/sh\nexec node "%s" "$@"\n' "$task_pnpm_entry" > "$task_pnpm_bin/pnpm"
 chmod +x "$task_pnpm_bin/pnpm"
 export PATH="$task_pnpm_bin:$PATH"
-pnpm install --frozen-lockfile
+node packages/weapp-tailwindcss/native/ci-dependencies.mjs
 
 if [ "${NATIVE_CSS_ONLY:-0}" = 1 ]; then
   node --import tsx packages/weapp-tailwindcss/native/test/package.mjs --css-only

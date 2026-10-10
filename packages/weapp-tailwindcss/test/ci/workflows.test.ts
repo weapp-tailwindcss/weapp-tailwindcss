@@ -674,7 +674,7 @@ describe('ci workflows', () => {
       return step.name === 'Install Playwright Chromium'
     })
     const releaseStep = releaseSteps.find((step: Record<string, unknown>) => {
-      return step.name === 'Run repo release CI'
+      return step.name === 'Verify release'
     })
 
     expect(source).toContain('# repoctl-managed: release/v2')
@@ -682,23 +682,23 @@ describe('ci workflows', () => {
     expect(pnpmSetupStep.uses).toBe('pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86')
     expect(setupNodeStep.uses).toBe('actions/setup-node@820762786026740c76f36085b0efc47a31fe5020')
     expect(setupNodeStep.with['node-version']).toBe(24)
-    expect(setupNodeStep.with['registry-url']).toBe('https://registry.npmjs.org')
+    expect(setupNodeStep.with['registry-url']).toBeUndefined()
     expect(workflow.concurrency).toEqual({
-      group: '${{ github.workflow }}-${{ github.ref }}',
+      group: "${{ github.workflow }}-${{ github.ref }}${{ inputs.oidc_audit && '-oidc-audit' || '' }}",
       'cancel-in-progress': false,
     })
-    expect(workflow.jobs.release.needs).toBe('native-artifacts')
+    expect(workflow.jobs.release.needs).toEqual(['plan', 'native-artifacts'])
     // eslint-disable-next-line no-template-curly-in-string -- 按字面量核验 GitHub Actions 表达式。
-    expect(workflow.jobs.release.if).toBe('${{ !cancelled() && (inputs.oidc_audit || needs.native-artifacts.result == \'success\') }}')
+    expect(workflow.jobs.release.if).toBe("${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.run == 'true' && needs.native-artifacts.result == 'success' }}")
     expect(workflow.permissions['id-token']).toBe('write')
     expect(workflow.env.NPM_CONFIG_PROVENANCE).toBe(true)
     expect(workflow.env.npm_config_registry).toBe('https://registry.npmjs.org')
     expectPlaywrightInstallRetry(playwrightStep.run, 'pnpm exec playwright install chromium chromium-headless-shell')
     expect(releaseSteps.indexOf(playwrightStep)).toBeLessThan(releaseSteps.indexOf(releaseStep))
-    expect(releaseStep.run).toBe('pnpm exec repo release ci')
-    expect(releaseStep.env.GITHUB_TOKEN).toContain('secrets.REPOCTL_RELEASE_TOKEN || secrets.CHANGESETS_RELEASE_TOKEN || github.token')
-    expect(releaseStep.env.NPM_TOKEN).toBeUndefined()
-    expect(releaseStep.env.NODE_AUTH_TOKEN).toBeUndefined()
+    expect(releaseStep.run).toBe('pnpm exec repo release ci --stage verify')
+    expect(workflow.jobs.release.env.GITHUB_TOKEN).toContain('secrets.REPOCTL_RELEASE_TOKEN || secrets.CHANGESETS_RELEASE_TOKEN || github.token')
+    expect(workflow.jobs.release.env.NPM_TOKEN).toBeUndefined()
+    expect(workflow.jobs.release.env.NODE_AUTH_TOKEN).toBeUndefined()
     expect(source).not.toContain('changesets/action')
     expect(source).not.toContain('NPM_TOKEN:')
     expect(source).not.toContain('NODE_AUTH_TOKEN:')
@@ -710,8 +710,8 @@ describe('ci workflows', () => {
     const downloadStep = releaseSteps.find(step => step.name === 'Download same-commit coverage certificate')
     const validateStep = releaseSteps.find(step => step.name === 'Validate release certificate')
 
-    expect(downloadStep.if).toBe("inputs.oidc_audit != true && (inputs.mode == 'publish' || inputs.mode == 'publish-unpublished')")
-    expect(validateStep.if).toBe("inputs.oidc_audit != true && (inputs.mode == 'publish' || inputs.mode == 'publish-unpublished')")
+    expect(downloadStep.if).toBe("inputs.mode == 'publish' || inputs.mode == 'publish-unpublished'")
+    expect(validateStep.if).toBe("inputs.mode == 'publish' || inputs.mode == 'publish-unpublished'")
     expect(source).toContain('RELEASE_CERTIFICATE_RUN_ID: ${{ vars.RELEASE_CERTIFICATE_RUN_ID }}')
     expect(source).toContain('Release certificate is not configured')
     expect(source).toContain('gh run view "$run_id" --json headSha,status,conclusion')
@@ -724,17 +724,15 @@ describe('ci workflows', () => {
 
   it('核验 OIDC 时独立检查全部包并阻断发布、证书和覆盖率步骤', () => {
     const { workflow } = readWorkflow('release.yml')
-    const steps: Array<Record<string, any>> = workflow.jobs.release.steps
+    const job = workflow.jobs['oidc-audit']
     expect(workflow.on.workflow_dispatch.inputs.oidc_audit).toMatchObject({ type: 'boolean', default: false })
-    const audit = steps.find(step => step.name === 'Audit npm OIDC')
-    // eslint-disable-next-line no-template-curly-in-string -- 按字面量核验 GitHub Actions 表达式。
-    expect(workflow.jobs['native-artifacts'].if).toBe('${{ !inputs.oidc_audit }}')
-    expect(audit.if).toBe('inputs.oidc_audit')
-    expect(audit.run).toBe('pnpm exec tsx scripts/release-oidc-preflight.ts')
-    for (const name of ['Download native artifacts from this run', 'Stage and verify all native platform packages', 'Install Playwright Chromium', 'Run repo release CI', 'Upload coverage reports to Codecov']) {
-      expect(steps.find(step => step.name === name).if).toBe('${{ !inputs.oidc_audit }}')
-    }
-    expect(steps.indexOf(audit)).toBeLessThan(steps.findIndex(step => step.name === 'Run repo release CI'))
+    expect(workflow.jobs.plan.if).toBe('${{ !inputs.oidc_audit }}')
+    expect(job.if).toBe('inputs.oidc_audit')
+    expect(job.needs).toBeUndefined()
+    expect(job.env).toBeUndefined()
+    expect(job.steps.find((step: Record<string, unknown>) => step.name === 'Audit npm OIDC').run)
+      .toBe('pnpm exec repo release ci --mode oidc-audit')
+    expect(job.steps.some((step: Record<string, unknown>) => /native|certificate|Codecov/.test(String(step.name)))).toBe(false)
   })
 
   it('runs release verification and npmmirror sync through repoctl hooks', () => {
@@ -815,7 +813,7 @@ describe('ci workflows', () => {
     const { workflow: releaseGateWorkflow } = readWorkflow('release-gate.yml')
     const packageJson = readPackageJson<{ scripts: Record<string, string>, devDependencies: Record<string, string> }>('package.json')
     const releaseStep = workflow.jobs.release.steps.find((step: Record<string, unknown>) => {
-      return step.name === 'Run repo release CI'
+      return step.name === 'Verify release'
     })
 
     expect(workflow.on.workflow_dispatch.inputs.mode.options).toEqual([
@@ -824,10 +822,10 @@ describe('ci workflows', () => {
       'publish',
       'publish-unpublished',
     ])
-    expect(releaseStep.env.REPO_RELEASE_MODE).toContain("inputs.mode || 'auto'")
-    expect(releaseStep.env.REPO_RELEASE_PACKAGE).toContain('inputs.package')
-    expect(releaseStep.env.REPO_RELEASE_VERSION).toContain('inputs.version')
-    expect(source.match(/pnpm exec repo release ci/g)).toHaveLength(1)
+    expect(workflow.jobs.release.env.REPO_RELEASE_MODE).toContain("inputs.mode || 'auto'")
+    expect(workflow.jobs.release.env.REPO_RELEASE_PACKAGE).toContain('inputs.package')
+    expect(workflow.jobs.release.env.REPO_RELEASE_VERSION).toContain('inputs.version')
+    expect(source.match(/pnpm exec repo release ci --stage/g)).toHaveLength(7)
     expect(packageJson.scripts.release).toBe('pnpm change')
     expect(packageJson.scripts['version-packages']).toBe('pnpm version -r')
     expect(packageJson.scripts.cv).toBe('pnpm version -r')

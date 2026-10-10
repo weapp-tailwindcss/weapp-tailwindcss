@@ -47,25 +47,62 @@ permissions:
   id-token: write
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}${{ inputs.oidc_audit && '-oidc-audit' || '' }}
   cancel-in-progress: false
 
 jobs:
-  native-artifacts:
+  plan:
+    name: Route release work
     if: ${{ !inputs.oidc_audit }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      REPO_RELEASE_MODE: ${{ inputs.mode || 'auto' }}
+      REPO_RELEASE_PACKAGE: ${{ inputs.package }}
+      REPO_RELEASE_VERSION: ${{ inputs.version }}
+    outputs:
+      run: ${{ steps.plan.outputs.run }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # 此处只消费路由结果；正式 job 在自身 checkout 重新规划和验证。
+      - name: Plan release route
+        id: plan
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: pnpm exec repo release ci --stage plan
+
+  native-artifacts:
+    needs: plan
+    if: needs.plan.outputs.run == 'true'
     uses: ./.github/workflows/native.yml
 
   release:
     name: Release
     runs-on: ubuntu-latest
-    needs: native-artifacts
-    if: ${{ !cancelled() && (inputs.oidc_audit || needs.native-artifacts.result == 'success') }}
-    timeout-minutes: 30
+    needs: [plan, native-artifacts]
+    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.run == 'true' && needs.native-artifacts.result == 'success' }}
+    timeout-minutes: 45
+    env:
+      GITHUB_TOKEN: ${{ secrets.REPOCTL_RELEASE_TOKEN || secrets.CHANGESETS_RELEASE_TOKEN || github.token }}
+      REPO_RELEASE_MODE: ${{ inputs.mode || 'auto' }}
+      REPO_RELEASE_PACKAGE: ${{ inputs.package }}
+      REPO_RELEASE_VERSION: ${{ inputs.version }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          token: ${{ secrets.REPOCTL_RELEASE_TOKEN || secrets.CHANGESETS_RELEASE_TOKEN || github.token }}
 
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
@@ -74,17 +111,11 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-          registry-url: https://registry.npmjs.org
 
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Audit npm OIDC
-        if: inputs.oidc_audit
-        run: pnpm exec tsx scripts/release-oidc-preflight.ts
-
       - name: Download native artifacts from this run
-        if: ${{ !inputs.oidc_audit }}
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           pattern: native-*
@@ -92,11 +123,12 @@ jobs:
           path: packages
 
       - name: Stage and verify all native platform packages
-        if: ${{ !inputs.oidc_audit }}
         run: pnpm native:artifacts:stage
 
+      - name: Plan release
+        run: pnpm exec repo release ci --stage plan
+
       - name: Install Playwright Chromium
-        if: ${{ !inputs.oidc_audit }}
         run: |
           for attempt in 1 2 3 4; do
             if pnpm exec playwright install chromium chromium-headless-shell; then
@@ -108,7 +140,7 @@ jobs:
           pnpm exec playwright install chromium chromium-headless-shell
 
       - name: Download same-commit coverage certificate
-        if: inputs.oidc_audit != true && (inputs.mode == 'publish' || inputs.mode == 'publish-unpublished')
+        if: inputs.mode == 'publish' || inputs.mode == 'publish-unpublished'
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_CERTIFICATE_RUN_ID: ${{ vars.RELEASE_CERTIFICATE_RUN_ID }}
@@ -141,24 +173,65 @@ jobs:
           gh run download "$run_id" --name "$certificate_name" --dir e2e/.artifacts/release-certificate
 
       - name: Validate release certificate
-        if: inputs.oidc_audit != true && (inputs.mode == 'publish' || inputs.mode == 'publish-unpublished')
+        if: inputs.mode == 'publish' || inputs.mode == 'publish-unpublished'
         shell: bash
         run: |
           report="$(find e2e/.artifacts/release-certificate -type f \( -name 'nightly-report.json' -o -name 'pr-report.json' -o -name 'coverage-report.json' \) -print -quit)"
           test -n "$report" || { echo "Coverage report is missing from certificate artifact" >&2; exit 1; }
           pnpm e2e:coverage:release-gate --report "$report"
 
-      - name: Run repo release CI
-        if: ${{ !inputs.oidc_audit }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.REPOCTL_RELEASE_TOKEN || secrets.CHANGESETS_RELEASE_TOKEN || github.token }}
-          REPO_RELEASE_MODE: ${{ inputs.mode || 'auto' }}
-          REPO_RELEASE_PACKAGE: ${{ inputs.package }}
-          REPO_RELEASE_VERSION: ${{ inputs.version }}
-        run: pnpm exec repo release ci
+      - name: Verify release
+        run: pnpm exec repo release ci --stage verify
+
+      - name: Prepare release
+        id: prepare
+        run: pnpm exec repo release ci --stage prepare
+
+      - name: Upload npm packages
+        if: steps.prepare.outputs.publish == 'true'
+        run: pnpm exec repo release ci --stage upload
+
+      - name: Confirm public npm registry
+        if: steps.prepare.outputs.publish == 'true'
+        run: pnpm exec repo release ci --stage confirm
+
+      - name: Finalize release metadata
+        if: steps.prepare.outputs.publish == 'true'
+        run: pnpm exec repo release ci --stage finalize
+
+      - name: Upload release progress
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-progress-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            repoctl-ci-progress.json
+            repoctl-publish-progress.json
+            repoctl-release-progress.json
+            pnpm-publish-summary.json
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Upload coverage reports to Codecov
-        if: ${{ !inputs.oidc_audit }}
         uses: codecov/codecov-action@v5
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  oidc-audit:
+    name: Audit npm OIDC
+    if: inputs.oidc_audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Audit npm OIDC
+        run: pnpm exec repo release ci --mode oidc-audit

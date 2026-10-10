@@ -65,6 +65,39 @@ jobs:
         id: node
         with:
           node-version: 24
+          cache: ${{ matrix.image == '' && 'pnpm' || '' }}
+
+      - name: Cache host Cargo downloads
+        if: matrix.image == ''
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: native-cargo-${{ matrix.suffix }}-1.96.0-${{ hashFiles('packages/weapp-tailwindcss/native/Cargo.lock', 'packages/postcss/native/Cargo.lock') }}
+          restore-keys: native-cargo-${{ matrix.suffix }}-1.96.0-
+
+      - name: Cache Linux container pnpm store
+        if: matrix.image != ''
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: ${{ runner.temp }}/native-ci/pnpm
+          key: native-pnpm-${{ matrix.suffix }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: native-pnpm-${{ matrix.suffix }}-
+
+      - name: Cache Linux container Cargo downloads
+        if: matrix.image != ''
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: |
+            ${{ runner.temp }}/native-ci/cargo/registry
+            ${{ runner.temp }}/native-ci/cargo/git
+          key: native-cargo-${{ matrix.suffix }}-1.96.0-${{ hashFiles('packages/weapp-tailwindcss/native/Cargo.lock', 'packages/postcss/native/Cargo.lock') }}
+          restore-keys: native-cargo-${{ matrix.suffix }}-1.96.0-
+
+      - name: Prepare Linux container cache directories
+        if: matrix.image != ''
+        run: mkdir -p "$RUNNER_TEMP/native-ci/pnpm" "$RUNNER_TEMP/native-ci/cargo"
 
       - name: Install dependencies
         if: matrix.image == ''
@@ -91,6 +124,9 @@ jobs:
           NATIVE_IMAGE: ${{ matrix.image }}
         run: >-
           docker run --rm -v "$PWD:/work" -w /work
+          -v "$RUNNER_TEMP/native-ci:/native-ci"
+          -e NATIVE_PNPM_STORE=/native-ci/pnpm -e CARGO_HOME=/native-ci/cargo
+          -e GITHUB_RUN_ID -e GITHUB_RUN_ATTEMPT -e GITHUB_JOB
           -e CI=1 -e HUSKY=0 -e NATIVE_NODE_VERSION -e NATIVE_TARGET -e NATIVE_ARCH -e NATIVE_LIBC
           "$NATIVE_IMAGE" sh packages/weapp-tailwindcss/native/ci-linux.sh
 
@@ -113,6 +149,9 @@ jobs:
           NATIVE_IMAGE: ${{ matrix.libc == 'musl' && 'node:22.18.0-alpine' || matrix.image }}
         run: >-
           docker run --rm -v "$PWD:/work" -w /work
+          -v "$RUNNER_TEMP/native-ci:/native-ci"
+          -e NATIVE_PNPM_STORE=/native-ci/pnpm -e NATIVE_REUSE_DEPENDENCIES=1
+          -e GITHUB_RUN_ID -e GITHUB_RUN_ATTEMPT -e GITHUB_JOB
           -e CI=1 -e HUSKY=0 -e NATIVE_VERIFY_ONLY=1 -e NATIVE_NODE_VERSION -e NATIVE_TARGET -e NATIVE_ARCH -e NATIVE_LIBC
           "$NATIVE_IMAGE" sh packages/weapp-tailwindcss/native/ci-linux.sh
 
@@ -135,6 +174,9 @@ jobs:
           NATIVE_IMAGE: ${{ matrix.libc == 'musl' && 'node:20.19.0-alpine' || matrix.image }}
         run: >-
           docker run --rm -v "$PWD:/work" -w /work
+          -v "$RUNNER_TEMP/native-ci:/native-ci"
+          -e NATIVE_PNPM_STORE=/native-ci/pnpm -e NATIVE_REUSE_DEPENDENCIES=1
+          -e GITHUB_RUN_ID -e GITHUB_RUN_ATTEMPT -e GITHUB_JOB
           -e CI=1 -e HUSKY=0 -e NATIVE_CSS_ONLY=1 -e NATIVE_NODE_VERSION -e NATIVE_TARGET -e NATIVE_ARCH -e NATIVE_LIBC
           "$NATIVE_IMAGE" sh packages/weapp-tailwindcss/native/ci-linux.sh
 
