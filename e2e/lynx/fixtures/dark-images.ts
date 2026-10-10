@@ -16,7 +16,7 @@ export function darkImage(scale = 1, kind: 'ink' | 'white' | 'missing' | 'red' |
   return image
 }
 
-export function darkReceipts(runId: string): NativeCaseResult['colorScheme'] {
+export function darkReceipts(runId: string): NonNullable<NativeCaseResult['colorScheme']> {
   return {
     light: { runId, requestId: 'color-scheme-1', scheme: 'light' },
     dark: { runId, requestId: 'color-scheme-2', scheme: 'dark' },

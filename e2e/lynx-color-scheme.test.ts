@@ -16,6 +16,13 @@ it.each([0, 1, 3])('第 %s 帧白字导致夹具失效，不能据此归为不�
   expect(() => evaluateColorScheme(images)).toThrow('夹具')
 })
 
+it.each([0, 1, 3])('第 %s 帧的 LCD 色边仍被拒绝，不能放宽颜色容差掩盖采集故障', (index) => {
+  const images = [darkImage(), darkImage(), darkImage(1, 'white'), darkImage()]
+  // Ubuntu Chromium 153 实际浅色失败帧：蓝底文字的三个通道使用了不同覆盖率。
+  images[index]!.data.set([15, 69, 50, 255], (70 * images[index]!.width + 52) * 4)
+  expect(() => evaluateColorScheme(images)).toThrow('颜色模式浅色或 control 文字夹具无效')
+})
+
 it('拒绝缺帧、缺字形、透明及非等尺寸截图', () => {
   expect(() => evaluateColorScheme([darkImage(), darkImage()])).toThrow('四张')
   expect(() => evaluateColorScheme([darkImage(), darkImage(2), darkImage(), darkImage()])).toThrow('等尺寸')

@@ -6,15 +6,17 @@ import { CaseCard } from '../../examples/react-lynx/src/components/CaseCard'
 import { evaluateColorScheme } from './color-scheme'
 import { createFixtureDiagnostics } from './fixture-diagnostics'
 import { fixtureHtml } from './fixture-html'
+import { textPixelBrowserOptions } from './text-pixel-browser'
 
 /** 核对真实媒体条件和文字消费节点；浏览器不替代原生颜色模式取证。 */
 export async function verifyDarkFixture(css: string) {
   const item = compatibilityCases.find(item => item.id === 'variant-dark')!
-  const browser = await chromium.launch({ headless: true })
+  const launchOptions = textPixelBrowserOptions()
+  const browser = await chromium.launch(launchOptions)
   try {
     for (const scale of [1, 2.625, 3]) {
       const page = await browser.newPage({ viewport: { width: 600, height: 800 }, colorScheme: 'light', deviceScaleFactor: scale })
-      const diagnostics = createFixtureDiagnostics(page, { name: `dark-${scale}`, caseId: item.id })
+      const diagnostics = createFixtureDiagnostics(page, { name: `dark-${scale}`, caseId: item.id, launchOptions })
       await diagnostics.verify(async () => {
         await page.setContent(`<style>${css}</style>${fixtureHtml(CaseCard({ item }))}`)
         const probe = page.locator('#probe-variant-dark .probe-dark-text')
