@@ -27,6 +27,10 @@ on:
         description: Version used for unpublished-version recovery
         required: false
         type: string
+      version_pr:
+        description: 已合并受管版本 PR 编号（自动调度与该版本恢复，固定其 merge SHA）
+        required: false
+        type: string
       oidc_audit:
         description: 仅核验全部公开包的 npm OIDC 凭据交换
         required: false
@@ -42,27 +46,50 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ !inputs.oidc_audit && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'prepare')) && 'prepare' || 'publish' }}-refs/heads/${{ github.event.pull_request.base.ref || github.ref_name }}${{ inputs.oidc_audit && '-oidc-audit' || '' }}${{ github.event_name == 'pull_request_target' && !(github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'release/pnpm-version' && github.event.pull_request.base.repo.full_name == github.repository && github.event.pull_request.head.repo.full_name == github.repository) && format('-ignored-{0}', github.run_id) || '' }}${{ github.event_name == 'workflow_dispatch' && !inputs.oidc_audit && ((github.ref_name == 'main' && inputs.mode == 'auto') || (github.ref_name != 'main' && inputs.mode == 'prepare')) && format('-ignored-{0}', github.run_id) || '' }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request_target' && format('dispatch-{0}', github.run_id) || (!inputs.oidc_audit && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'prepare')) && 'prepare' || 'publish') }}-refs/heads/${{ github.ref_name }}${{ inputs.oidc_audit && '-oidc-audit' || '' }}${{ github.event_name == 'workflow_dispatch' && !inputs.oidc_audit && ((github.ref_name == 'main' && inputs.mode == 'auto') || (github.ref_name != 'main' && inputs.mode == 'prepare')) && format('-ignored-{0}', github.run_id) || '' }}
   cancel-in-progress: ${{ !inputs.oidc_audit && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'prepare')) }}
 
 jobs:
+  dispatch:
+    name: Dispatch merged version PR release
+    if: >-
+      ${{ github.event_name == 'pull_request_target' && github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'release/pnpm-version' &&
+      github.event.pull_request.base.repo.full_name == github.repository &&
+      github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      # PR 身份只调度；npm OIDC 始终由 main 上原 release.yml 的 dispatch 身份取得。
+      - run: node scripts/ci/release-dispatch.mjs
+
   plan:
     name: Route release work
     if: >-
       ${{ !inputs.oidc_audit && ((github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request_target' && github.event.pull_request.merged == true &&
-      github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'release/pnpm-version' &&
-      github.event.pull_request.base.repo.full_name == github.repository &&
-      github.event.pull_request.head.repo.full_name == github.repository)) }}
+      github.event_name == 'workflow_dispatch') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: read
+      pull-requests: read
     env:
+      GH_TOKEN: ${{ github.token }}
       REPO_RELEASE_MODE: ${{ inputs.mode || 'prepare' }}
       REPO_RELEASE_PACKAGE: ${{ inputs.package }}
       REPO_RELEASE_VERSION: ${{ inputs.version }}
+      REPO_RELEASE_VERSION_PR: ${{ inputs.version_pr }}
     outputs:
       run: ${{ steps.plan.outputs.run }}
       ref: ${{ steps.route.outputs.ref }}
@@ -71,12 +98,19 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.merge_commit_sha || github.event.after || github.sha }}
+          ref: ${{ github.event.after || github.sha }}
           fetch-depth: 0
           persist-credentials: false
       - name: Validate release event
         id: route
         run: node scripts/ci/release-route.mjs --github-output "$GITHUB_OUTPUT"
+      - name: Checkout validated release source
+        if: steps.route.outputs.run == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.route.outputs.ref }}
+          fetch-depth: 0
+          persist-credentials: false
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -105,7 +139,7 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     needs: [plan, native-artifacts]
-    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.run == 'true' && needs.native-artifacts.result == 'success' }}
+    if: ${{ !cancelled() && github.event_name != 'pull_request_target' && needs.plan.result == 'success' && needs.plan.outputs.run == 'true' && needs.native-artifacts.result == 'success' }}
     timeout-minutes: 45
     permissions:
       actions: read
@@ -163,7 +197,7 @@ jobs:
           pnpm exec playwright install chromium chromium-headless-shell
 
       - name: Download same-commit coverage certificate
-        if: inputs.mode == 'publish' || inputs.mode == 'publish-unpublished'
+        if: "!inputs.version_pr && (inputs.mode == 'publish' || inputs.mode == 'publish-unpublished')"
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_CERTIFICATE_RUN_ID: ${{ vars.RELEASE_CERTIFICATE_RUN_ID }}
@@ -196,7 +230,7 @@ jobs:
           gh run download "$run_id" --name "$certificate_name" --dir e2e/.artifacts/release-certificate
 
       - name: Validate release certificate
-        if: inputs.mode == 'publish' || inputs.mode == 'publish-unpublished'
+        if: "!inputs.version_pr && (inputs.mode == 'publish' || inputs.mode == 'publish-unpublished')"
         shell: bash
         run: |
           report="$(find e2e/.artifacts/release-certificate -type f \( -name 'nightly-report.json' -o -name 'pr-report.json' -o -name 'coverage-report.json' \) -print -quit)"
@@ -213,6 +247,10 @@ jobs:
       - name: Prepare release
         id: prepare
         run: node scripts/ci/release-stage.mjs prepare
+
+      - name: Audit publishing OIDC identity
+        if: steps.prepare.outputs.publish == 'true'
+        run: pnpm exec repo release ci --mode oidc-audit
 
       - name: Upload npm packages
         if: steps.prepare.outputs.publish == 'true'

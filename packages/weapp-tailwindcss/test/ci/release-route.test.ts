@@ -30,13 +30,8 @@ function mainPushEvent() {
 }
 
 describe('Release 事件路由', () => {
-  it('仅以本仓库已合并 release PR 的 merge commit 发布稳定版本', () => {
-    expect(resolveReleaseRoute('pull_request_target', mergedReleaseEvent(), context)).toEqual({
-      run: true,
-      ref: mergeSha,
-      mode: 'publish',
-      branch: 'main',
-    })
+  it('PR 合并事件不得直接进入上传路线，必须由独立调度器处理', () => {
+    expect(resolveReleaseRoute('pull_request_target', mergedReleaseEvent(), context)).toEqual(skipped)
   })
 
   it('main push 绑定事件 after，始终 prepare 并忽略 runner SHA 和手动 mode', () => {
@@ -211,11 +206,11 @@ describe('Release 路由 CLI', () => {
     })
   }
 
-  it('输出固定字段并覆盖 PR_target runner 的原始 SHA', async () => {
+  it('PR_target CLI 输出否决结果，不能仅覆盖 SHA 后直接发布', async () => {
     const result = await run('pull_request_target', mergedReleaseEvent())
     expect(result.status, result.stderr).toBe(0)
-    expect(JSON.parse(result.stdout)).toEqual({ run: true, ref: mergeSha, mode: 'publish', branch: 'main' })
-    expect(await readFile(path.join(cwd, 'output'), 'utf8')).toBe(`run=true\nref=${mergeSha}\nmode=publish\nbranch=main\n`)
+    expect(JSON.parse(result.stdout)).toEqual(skipped)
+    expect(await readFile(path.join(cwd, 'output'), 'utf8')).toBe('run=false\nref=\nmode=\nbranch=\n')
   })
 
   it('不完整 push 输出完整否决结果，main push 输出事件 after 的 prepare 路由', async () => {

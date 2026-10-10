@@ -688,7 +688,7 @@ describe('ci workflows', () => {
     expect(workflow.concurrency['cancel-in-progress']).toBe(`\${{ !inputs.oidc_audit && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'prepare')) }}`)
     expect(workflow.jobs.release.needs).toEqual(['plan', 'native-artifacts'])
     // eslint-disable-next-line no-template-curly-in-string -- 按字面量核验 GitHub Actions 表达式。
-    expect(workflow.jobs.release.if).toBe("${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.run == 'true' && needs.native-artifacts.result == 'success' }}")
+    expect(workflow.jobs.release.if).toBe("${{ !cancelled() && github.event_name != 'pull_request_target' && needs.plan.result == 'success' && needs.plan.outputs.run == 'true' && needs.native-artifacts.result == 'success' }}")
     expect(workflow.jobs.release.permissions['id-token']).toBe('write')
     expect(workflow.env.NPM_CONFIG_PROVENANCE).toBe(true)
     expect(workflow.env.npm_config_registry).toBe('https://registry.npmjs.org')
@@ -709,8 +709,8 @@ describe('ci workflows', () => {
     const downloadStep = releaseSteps.find(step => step.name === 'Download same-commit coverage certificate')
     const validateStep = releaseSteps.find(step => step.name === 'Validate release certificate')
 
-    expect(downloadStep.if).toBe("inputs.mode == 'publish' || inputs.mode == 'publish-unpublished'")
-    expect(validateStep.if).toBe("inputs.mode == 'publish' || inputs.mode == 'publish-unpublished'")
+    expect(downloadStep.if).toBe("!inputs.version_pr && (inputs.mode == 'publish' || inputs.mode == 'publish-unpublished')")
+    expect(validateStep.if).toBe("!inputs.version_pr && (inputs.mode == 'publish' || inputs.mode == 'publish-unpublished')")
     expect(source).toContain('RELEASE_CERTIFICATE_RUN_ID: ${{ vars.RELEASE_CERTIFICATE_RUN_ID }}')
     expect(source).toContain('Release certificate is not configured')
     expect(source).toContain('gh run view "$run_id" --json headSha,status,conclusion')

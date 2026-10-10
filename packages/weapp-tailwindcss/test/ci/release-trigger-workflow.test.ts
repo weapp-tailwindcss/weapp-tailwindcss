@@ -16,12 +16,24 @@ describe('main 自动准备与合并发布的触发边界', () => {
     expect(release.on.workflow_dispatch.inputs.mode.options).toEqual(['auto', 'prepare', 'publish', 'publish-unpublished'])
     expect(release.on.workflow_dispatch.inputs.mode.description).toContain('auto 仅用于预发布分支')
     expect(release.on.pull_request_target).toEqual({ types: ['closed'], branches: ['main'] })
-    expect(release.jobs.plan.if).toContain('github.event.pull_request.merged == true')
-    expect(release.jobs.plan.if).toContain('github.event.pull_request.head.ref == \'release/pnpm-version\'')
-    expect(release.jobs.plan.if).toContain('github.event.pull_request.head.repo.full_name == github.repository')
+    expect(release.jobs.dispatch.if).toContain('github.event.pull_request.merged == true')
+    expect(release.jobs.dispatch.if).toContain('github.event.pull_request.head.ref == \'release/pnpm-version\'')
+    expect(release.jobs.dispatch.if).toContain('github.event.pull_request.head.repo.full_name == github.repository')
     expect(release.jobs.plan.if).toContain('github.event_name == \'push\' && github.ref == \'refs/heads/main\'')
-    expect(release.jobs.plan.steps[0].with.ref).toBe('${{ github.event.pull_request.merge_commit_sha || github.event.after || github.sha }}')
+    expect(release.jobs.plan.if).not.toContain('pull_request_target')
+    expect(release.jobs.plan.steps[0].with.ref).toBe('${{ github.event.after || github.sha }}')
     expect(release.jobs.plan.steps.find((step: any) => step.id === 'plan').run).toBe('node scripts/ci/auto-prepare-plan.mjs')
+  })
+
+  it('合并事件只调度 main 的原工作流，不获取 OIDC 或直接发布', () => {
+    const release = workflow('release.yml')
+    const dispatch = release.jobs.dispatch
+    expect(dispatch.permissions).toEqual({ contents: 'read', 'pull-requests': 'read', actions: 'write' })
+    expect(dispatch.steps[0].with).toMatchObject({ ref: 'main', 'fetch-depth': 0, 'persist-credentials': false })
+    expect(dispatch.steps.find((step: any) => step.run).run).toBe('node scripts/ci/release-dispatch.mjs')
+    expect(dispatch.env.GH_TOKEN).toBe('${{ github.token }}')
+    expect(release.jobs.release.if).toContain('github.event_name != \'pull_request_target\'')
+    expect(release.on.workflow_dispatch.inputs.version_pr).toMatchObject({ type: 'string', required: false })
   })
 
   it('路由、native 与发布 checkout 消费相同提交，repoctl 分支和模式来自严格路由', () => {
@@ -34,6 +46,13 @@ describe('main 自动准备与合并发布的触发边界', () => {
     expect(jobs.release.if).toContain('needs.plan.result == \'success\'')
     expect(jobs.release.if).toContain('needs.native-artifacts.result == \'success\'')
     expect(workflow('native.yml').jobs.native.steps[0].with.ref).toBe('${{ inputs.ref || github.sha }}')
+    const steps = jobs.plan.steps
+    const routeIndex = steps.findIndex((step: any) => step.id === 'route')
+    expect(steps[routeIndex + 1].with.ref).toBe('${{ steps.route.outputs.ref }}')
+    expect(steps[routeIndex + 1].if).toBe('steps.route.outputs.run == \'true\'')
+    expect(steps[routeIndex + 1].with['persist-credentials']).toBe(false)
+    expect(jobs.plan.env.REPO_RELEASE_VERSION_PR).toBe('${{ inputs.version_pr }}')
+    expect(jobs.plan.env.GH_TOKEN).toBe('${{ github.token }}')
   })
 
   it('只读分类和诊断不能取得发布权限，OIDC 与阶段提交仍保留', () => {
@@ -47,18 +66,16 @@ describe('main 自动准备与合并发布的触发边界', () => {
   it('自动和手动 prepare 共用可取消队列，正式发布和恢复串行且不会被 prepare pending 替换', () => {
     const { concurrency } = workflow('release.yml')
     const prepares = '!inputs.oidc_audit && (github.event_name == \'push\' || (github.event_name == \'workflow_dispatch\' && inputs.mode == \'prepare\'))'
-    expect(concurrency.group).toContain(`\${{ github.workflow }}-\${{ ${prepares} && 'prepare' || 'publish' }}-refs/heads/\${{ github.event.pull_request.base.ref || github.ref_name }}\${{ inputs.oidc_audit && '-oidc-audit' || '' }}`)
+    expect(concurrency.group).toContain(`${prepares} && 'prepare' || 'publish'`)
+    expect(concurrency.group).toContain('-refs/heads/${{ github.ref_name }}${{ inputs.oidc_audit && \'-oidc-audit\' || \'\' }}')
     expect(concurrency['cancel-in-progress']).toBe(`\${{ ${prepares} }}`)
     expect(concurrency.group).toContain('github.ref_name == \'main\' && inputs.mode == \'auto\'')
     expect(concurrency.group).toContain('github.ref_name != \'main\' && inputs.mode == \'prepare\'')
   })
 
-  it('普通、未合并或外仓 PR 关闭事件不能占用正式 publish 队列', () => {
+  it('所有 PR 调度事件使用独立队列，不能挤占或等待自己的 publish', () => {
     const { concurrency } = workflow('release.yml')
-    expect(concurrency.group).toContain('github.event_name == \'pull_request_target\' && !(github.event.pull_request.merged == true')
-    expect(concurrency.group).toContain('github.event.pull_request.head.ref == \'release/pnpm-version\'')
-    expect(concurrency.group).toContain('github.event.pull_request.head.repo.full_name == github.repository')
-    expect(concurrency.group).toContain('github.event.pull_request.base.repo.full_name == github.repository')
+    expect(concurrency.group).toContain('github.event_name == \'pull_request_target\' && format(\'dispatch-{0}\', github.run_id)')
     expect(concurrency.group).toContain('format(\'-ignored-{0}\', github.run_id)')
   })
 

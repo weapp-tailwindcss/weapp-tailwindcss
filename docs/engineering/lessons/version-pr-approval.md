@@ -27,7 +27,7 @@ GitHub 原生 “Approve workflows to run” 用于 fork PR，不能通过 YAML 
 
 完整验收显式向共享工作流传 `full_verification: true`。共享范围仍审计真实 diff，但为审批后的执行计划启用全部范围；避免 PR 事件按纯版本变更跳过 native、CSS、watch、移动端、demo 和 benchmark。所有完整验收 checkout 绑定作者 head，scope、CSS 嵌套与 native ref 逐层保持一致。完整子工作流与自动轻量检查使用不同并发组，防止互相取消；普通源码 PR、普通手动检查及 main push 的原行为保留。
 
-main 的合法 intent 仍自动 prepare。合并版本 PR 后仍由原 `release.yml` 对准确 merge SHA 自动 publish；版本准备、正式发布、恢复、Node 24、provenance 与 npm trusted publishing/OIDC 不改入口。
+main 的合法 intent 仍自动 prepare。合并版本 PR 后，由原 `release.yml` 的合并事件调度 main 上的同一工作流，再以 `workflow_dispatch` 身份对准确 merge SHA 自动 publish；版本准备、Node 24、provenance 与 npm trusted publishing/OIDC 保留。事件身份修复与已合并版本恢复见 [OIDC 发布恢复](release-oidc-recovery.md)。
 
 ## 操作入口
 

@@ -13,7 +13,7 @@ describe('Release 分阶段执行与 native 缓存', () => {
     const { jobs } = readWorkflow('release.yml')
     const route = jobs.plan
     expect(route).toBeDefined()
-    expect(route.permissions).toEqual({ contents: 'read' })
+    expect(route.permissions).toEqual({ contents: 'read', 'pull-requests': 'read' })
     expect(route.outputs.run).toBe('${{ steps.plan.outputs.run }}')
     expect(route.steps.find((step: any) => step.id === 'plan').run).toBe('node scripts/ci/auto-prepare-plan.mjs')
     expect(jobs['native-artifacts'].needs).toBe('plan')
@@ -22,6 +22,17 @@ describe('Release 分阶段执行与 native 缓存', () => {
     expect(jobs.release.if).toContain('needs.plan.result == \'success\'')
     expect(jobs.release.if).toContain('needs.native-artifacts.result == \'success\'')
     expect(jobs.release.if).toContain('!cancelled()')
+  })
+
+  it('上传前在正式 job 内审计同一 OIDC 身份，失败不得继续上传', () => {
+    const steps = readWorkflow('release.yml').jobs.release.steps
+    const audit = steps.find((step: any) => step.name === 'Audit publishing OIDC identity')
+    expect(audit.run).toBe('pnpm exec repo release ci --mode oidc-audit')
+    expect(audit.if).toBe('steps.prepare.outputs.publish == \'true\'')
+    expect(audit['continue-on-error']).toBeUndefined()
+    const index = steps.indexOf(audit)
+    expect(steps[index - 1].run).toBe('node scripts/ci/release-stage.mjs prepare')
+    expect(steps[index + 1].run).toBe('node scripts/ci/release-stage.mjs upload')
   })
 
   it('在下载本轮 native 产物后重新规划，六个阶段始终在同一 checkout 执行', () => {
