@@ -4,7 +4,7 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 
 const releaseBranches = new Set(['main', 'alpha', 'beta', 'rc', 'next'])
-const releaseModes = new Set(['prepare', 'publish', 'publish-unpublished'])
+const releaseModes = new Set(['auto', 'prepare', 'publish', 'publish-unpublished'])
 const fullShaPattern = /^[a-f\d]{40}$/i
 const repositoryPattern = /^[\w.-]+\/[\w.-]+$/
 
@@ -59,6 +59,8 @@ export function resolveReleaseRoute(eventName, event, options = {}) {
     const mode = options.mode || event?.inputs?.mode || 'prepare'
     if (!releaseBranches.has(refName)
       || !releaseModes.has(mode)
+      || (mode === 'prepare' && refName !== 'main')
+      || (mode === 'auto' && refName === 'main')
       || typeof sha !== 'string'
       || !fullShaPattern.test(sha)) {
       return skippedRoute()

@@ -83,6 +83,21 @@ afterEach(() => {
 })
 
 describe('repoctl 5.10 真实阶段 API', () => {
+  it('手动预发布 auto 由官方计划选择 prerelease，prepare 在预发布线明确拒绝', async () => {
+    const { options } = fixture(true)
+    const prerelease = {
+      ...options,
+      branch: 'beta',
+      env: { ...options.env, GITHUB_REF_NAME: 'beta', GITHUB_EVENT_NAME: 'workflow_dispatch', REPO_RELEASE_MODE: 'auto' },
+    }
+    expect(await releaseCi({ ...prerelease, stage: 'plan' })).toMatchObject({ action: 'prerelease' })
+    const stableOnly = { ...prerelease, env: { ...prerelease.env, REPO_RELEASE_MODE: 'prepare' } }
+    expect(await releaseCi({ ...stableOnly, stage: 'plan' })).toMatchObject({ action: 'prepare' })
+    await expect(releaseCi({ ...stableOnly, stage: 'verify' })).rejects.toThrow('Stable preparation requires a stable release branch')
+    expect(options.github.ensurePullRequest).not.toHaveBeenCalled()
+    expect(options.spawn.mock.calls.some(([command]) => command === 'pnpm')).toBe(false)
+  })
+
   it('官方 OIDC 审计只交换公开包凭据，报告不保存任何 token', async () => {
     const { root, options } = fixture()
     const workflow = 'fixture/repo/.github/workflows/release.yml@refs/heads/main'

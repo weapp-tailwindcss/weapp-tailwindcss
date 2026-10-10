@@ -816,6 +816,7 @@ describe('ci workflows', () => {
     })
 
     expect(workflow.on.workflow_dispatch.inputs.mode.options).toEqual([
+      'auto',
       'prepare',
       'publish',
       'publish-unpublished',

@@ -13,7 +13,8 @@ describe('main 自动准备与合并发布的触发边界', () => {
     const release = workflow('release.yml')
     expect(release.on.push).toEqual({ branches: ['main'] })
     expect(release.on.workflow_dispatch.inputs.mode.default).toBe('prepare')
-    expect(release.on.workflow_dispatch.inputs.mode.options).toEqual(['prepare', 'publish', 'publish-unpublished'])
+    expect(release.on.workflow_dispatch.inputs.mode.options).toEqual(['auto', 'prepare', 'publish', 'publish-unpublished'])
+    expect(release.on.workflow_dispatch.inputs.mode.description).toContain('auto 仅用于预发布分支')
     expect(release.on.pull_request_target).toEqual({ types: ['closed'], branches: ['main'] })
     expect(release.jobs.plan.if).toContain('github.event.pull_request.merged == true')
     expect(release.jobs.plan.if).toContain('github.event.pull_request.head.ref == \'release/pnpm-version\'')
@@ -48,7 +49,8 @@ describe('main 自动准备与合并发布的触发边界', () => {
     const prepares = '!inputs.oidc_audit && (github.event_name == \'push\' || (github.event_name == \'workflow_dispatch\' && inputs.mode == \'prepare\'))'
     expect(concurrency.group).toContain(`\${{ github.workflow }}-\${{ ${prepares} && 'prepare' || 'publish' }}-refs/heads/\${{ github.event.pull_request.base.ref || github.ref_name }}\${{ inputs.oidc_audit && '-oidc-audit' || '' }}`)
     expect(concurrency['cancel-in-progress']).toBe(`\${{ ${prepares} }}`)
-    expect(concurrency.group).not.toContain('inputs.mode == \'auto\'')
+    expect(concurrency.group).toContain('github.ref_name == \'main\' && inputs.mode == \'auto\'')
+    expect(concurrency.group).toContain('github.ref_name != \'main\' && inputs.mode == \'prepare\'')
   })
 
   it('普通、未合并或外仓 PR 关闭事件不能占用正式 publish 队列', () => {
@@ -84,7 +86,9 @@ describe('main 自动准备与合并发布的触发边界', () => {
   it('稳定 SEO 状态检查要求分类成功，纯版本变更不构建网站', () => {
     const seo = workflow('website-seo-quality.yml')
     expect(seo.jobs['detect-website-changes'].uses).toBe('./.github/workflows/ci-scope.yml')
-    expect(seo.jobs['seo-quality'].name).toBe('SEO Quality Gate')
+    expect(seo.jobs['seo-quality'].name).toContain('github.event_name == \'pull_request\' && needs.detect-website-changes.outputs.metadata_only == \'true\'')
+    expect(seo.jobs['seo-quality'].name).toContain('\'Await manual version verification\'')
+    expect(seo.jobs['seo-quality'].name).toMatch(/\|\| 'SEO Quality Gate' \}\}$/)
     expect(seo.jobs['seo-quality'].steps[0].if).toContain('result != \'success\'')
     expect(seo.jobs['seo-quality'].steps.find((step: any) => step.name === 'Build website').if).toContain('outputs.website')
   })

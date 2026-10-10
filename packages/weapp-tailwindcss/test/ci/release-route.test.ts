@@ -128,13 +128,21 @@ describe('Release 事件路由', () => {
     })
   })
 
-  it.each(['main', 'alpha', 'beta', 'rc', 'next'])('允许手动选择 %s 发布线的 prepare 模式', (refName) => {
-    expect(resolveReleaseRoute('workflow_dispatch', {}, { ...context, refName, mode: 'prepare' })).toEqual({
+  it.each(['alpha', 'beta', 'rc', 'next'])('允许手动选择 %s 预发布线的 auto 模式', (refName) => {
+    expect(resolveReleaseRoute('workflow_dispatch', {}, { ...context, refName, mode: 'auto' })).toEqual({
       run: true,
       ref: sha,
-      mode: 'prepare',
+      mode: 'auto',
       branch: refName,
     })
+  })
+
+  it('main auto 不得隐式发布，预发布 prepare 不得误入仅 stable 的官方准备阶段', () => {
+    expect(resolveReleaseRoute('workflow_dispatch', {}, { ...context, mode: 'auto' })).toEqual(skipped)
+    for (const refName of ['alpha', 'beta', 'rc', 'next']) {
+      expect(resolveReleaseRoute('workflow_dispatch', {}, { ...context, refName, mode: 'prepare' })).toEqual(skipped)
+      expect(resolveReleaseRoute('workflow_dispatch', {}, { ...context, refName, mode: 'publish' })).toMatchObject({ run: true, mode: 'publish', branch: refName })
+    }
   })
 
   it.each(['prepare', 'publish', 'publish-unpublished'])('允许手动 %s 模式', (mode) => {
@@ -151,7 +159,7 @@ describe('Release 事件路由', () => {
     expect(resolveReleaseRoute('workflow_dispatch', {}, { ...context, refName })).toEqual(skipped)
   })
 
-  it.each(['auto', 'oidc-audit', 'unknown', 'publish\nrun=true'])('拒绝手动非法模式 %j', (mode) => {
+  it.each(['oidc-audit', 'unknown', 'publish\nrun=true'])('拒绝手动非法模式 %j', (mode) => {
     expect(resolveReleaseRoute('workflow_dispatch', {}, { ...context, mode })).toEqual(skipped)
   })
 
