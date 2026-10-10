@@ -1,5 +1,6 @@
 ---
-status: partial
+status: superseded
+supersededBy: docs/engineering/lessons/version-pr-manual-ci.md
 issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1279
 baseline: 172d57fb7ddb8db240ad9d5639441a57141f78fb
 regressions:
@@ -13,6 +14,9 @@ regressions:
 ---
 
 # 手动准备版本与 Actions 内容分类
+
+触发方式已由 [自动生成版本 PR、人工验收、合并发布](version-pr-manual-ci.md) 替代。
+本文保留先前阶段的分类、取消生命周期与 OIDC 验证证据，不再作为版本 PR 的操作入口。
 
 ## 症状
 

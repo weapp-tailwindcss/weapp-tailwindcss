@@ -1,0 +1,117 @@
+name: Version PR CI
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+
+concurrency:
+  group: version-pr-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Bind current version PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install version metadata parsers
+        env:
+          HUSKY: '0'
+        run: pnpm --filter @weapp-tailwindcss/ci-scope install --prod --frozen-lockfile --ignore-scripts
+      - name: Validate current version PR and exact head
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CI_SCOPE_DEPENDENCY_ROOT: tools/ci-scope
+        run: node scripts/ci/version-pr-route.mjs --github-output "$GITHUB_OUTPUT"
+
+  pr-checks:
+    needs: validate
+    uses: ./.github/workflows/pr-gate.yml
+    secrets: inherit
+
+  release-checks:
+    needs: validate
+    uses: ./.github/workflows/release-gate.yml
+
+  seo-checks:
+    needs: validate
+    uses: ./.github/workflows/website-seo-quality.yml
+    secrets: inherit
+
+  readme-checks:
+    needs: validate
+    uses: ./.github/workflows/package-readme-quality.yml
+
+  architecture-checks:
+    needs: validate
+    uses: ./.github/workflows/architecture.yml
+
+  agent-checks:
+    needs: validate
+    uses: ./.github/workflows/agents.yml
+
+  ci-checks:
+    needs: validate
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  benchmark-checks:
+    needs: validate
+    uses: ./.github/workflows/benchmark.yml
+    secrets: inherit
+
+  rn-checks:
+    needs: validate
+    uses: ./.github/workflows/react-native-compatibility.yml
+
+  lynx-checks:
+    needs: validate
+    uses: ./.github/workflows/lynx-native.yml
+
+  pr-gate:
+    name: PR Gate
+    if: always() && !cancelled()
+    needs: [validate, pr-checks, release-checks, seo-checks, readme-checks, architecture-checks, agent-checks, ci-checks, benchmark-checks, rn-checks, lynx-checks]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every version verification result
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: node -e 'const results=JSON.parse(process.env.NEEDS_JSON); for (const [name, job] of Object.entries(results)) { if (job.result !== "success") { throw new Error(name + " result=" + job.result) } }'
+
+  seo-gate:
+    name: SEO Quality Gate
+    if: always() && !cancelled()
+    needs: [validate, pr-gate]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require full manual verification
+        env:
+          VALIDATE_RESULT: ${{ needs.validate.result }}
+          PR_GATE_RESULT: ${{ needs.pr-gate.result }}
+        run: test "$VALIDATE_RESULT" = success && test "$PR_GATE_RESULT" = success
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Confirm the PR still belongs to this head
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/ci/version-pr-route.mjs --check-current

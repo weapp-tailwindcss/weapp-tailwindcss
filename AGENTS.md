@@ -83,7 +83,7 @@
 - 运行时封装（`packages-runtime/*`）改动需重点关注 escape/unescape、merge 兼容和缓存边界。
 - Release 工作流发布 npm 必须使用 trusted publishing/OIDC：发布 job 使用 Node 24 以满足 npm CLI 的 OIDC 支持要求，保留 `permissions.id-token: write` 与 provenance，禁止在发布步骤注入 `NPM_TOKEN` 或 `NODE_AUTH_TOKEN`。
 - 包的 change intent、版本、预发布、npm publish、tag、GitHub Release 与失败恢复统一由 repoctl 编排；使用 `pnpm release`、`pnpm version-packages`、`pnpm publish-packages` 和 `pnpm release:pre`，不要恢复 Changesets CLI/action。
-- `release/pnpm-version` 仅由人工启动 Release 的 prepare 模式重新生成；普通分支推送不得自动准备版本，正式版本 PR 合并后由发布工作流自动发布。该分支是受管生成分支，禁止直接向该分支手工提交或推送修复。发布 PR 的代码、CI/CD 和规范修复必须先落到 `main`，再由工作流重新生成发布分支，并以重新生成后的 PR head 验证；不得把生成分支上的临时成功当作修复已持久交付。
+- `release/pnpm-version` 由 `main` 有合法待发布 intent 时自动 prepare 生成；版本 PR 的正式 CI 通过 `Version PR CI` 在该分支人工启动，全部验收成功后合并 PR 自动发布。自动范围判定与等待登记不得满足必需门禁；源码 PR 保持原自动 CI。该分支是受管生成分支，禁止直接向该分支手工提交或推送修复。发布 PR 的代码、CI/CD 和规范修复必须先落到 `main`，再由工作流重新生成发布分支，并以当前 main 与准确 PR head 验证；不得把旧 head 的成功当作修复已持久交付。操作与阶段证据见 [版本 PR 手动验收](docs/engineering/lessons/version-pr-manual-ci.md)。
 
 ## 新增 AGENTS 触发条件
 - 目录具备独立发布或独立 `build/test` 流程。

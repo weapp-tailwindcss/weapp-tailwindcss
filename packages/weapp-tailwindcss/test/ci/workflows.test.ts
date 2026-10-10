@@ -683,9 +683,9 @@ describe('ci workflows', () => {
     expect(setupNodeStep.uses).toBe('actions/setup-node@820762786026740c76f36085b0efc47a31fe5020')
     expect(setupNodeStep.with['node-version']).toBe(24)
     expect(setupNodeStep.with['registry-url']).toBeUndefined()
-    expect(workflow.concurrency.group).toContain("&& 'prepare' || 'publish'")
-    expect(workflow.concurrency.group).toContain("inputs.oidc_audit && '-oidc-audit'")
-    expect(workflow.concurrency['cancel-in-progress']).toBe("${{ !inputs.oidc_audit && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'prepare')) }}")
+    expect(workflow.concurrency.group).toContain(`&& 'prepare' || 'publish'`)
+    expect(workflow.concurrency.group).toContain(`inputs.oidc_audit && '-oidc-audit'`)
+    expect(workflow.concurrency['cancel-in-progress']).toBe(`\${{ !inputs.oidc_audit && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'prepare')) }}`)
     expect(workflow.jobs.release.needs).toEqual(['plan', 'native-artifacts'])
     // eslint-disable-next-line no-template-curly-in-string -- 按字面量核验 GitHub Actions 表达式。
     expect(workflow.jobs.release.if).toBe("${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.run == 'true' && needs.native-artifacts.result == 'success' }}")
@@ -811,10 +811,6 @@ describe('ci workflows', () => {
     const { source, workflow } = readWorkflow('release.yml')
     const { workflow: releaseGateWorkflow } = readWorkflow('release-gate.yml')
     const packageJson = readPackageJson<{ scripts: Record<string, string>, devDependencies: Record<string, string> }>('package.json')
-    const releaseStep = workflow.jobs.release.steps.find((step: Record<string, unknown>) => {
-      return step.name === 'Verify release'
-    })
-
     expect(workflow.on.workflow_dispatch.inputs.mode.options).toEqual([
       'auto',
       'prepare',

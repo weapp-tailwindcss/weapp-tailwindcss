@@ -51,7 +51,12 @@ fixture 样式、生成 CSS 和 static 基线没有变化；本地证据来自 m
 `fa5ce1bd4` 的 CSS Compatibility 38046394606 全部 8 个 job 成功，覆盖 Ubuntu/macOS/Windows × Node 22/24 tarball 及三浏览器/真实生成器消费者。
 该提交的 prepare 38046403236 在 native 阶段因新的 dark 失败而主动取消；Release job 尚未创建，npm 上传、确认与最终化未进入。后续在修复后的 main 创建新的 prepare，旧 run 的 receipt 不复用。
 
-全部修复先提交 main，然后人工启动 Release prepare 重新生成 #1279；不向 `release/pnpm-version` 手工推送。
+`c4478139f` 的 [Ubuntu focused job](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38047031728/job/114198647421) 完整执行并通过 Lynx E2E 11 files / 191 tests，包括真实 RSpeedy 24 项：结构 4596ms、文字流 15256ms、dark 3675ms。
+同 SHA 的 static shard 1（114198647304）通过 66 files / 607 tests，主页四项通过；20 项环境分支测试按 CI 原条件跳过，没有记作已执行通过。
+该 [CI run](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38047031728) 最终 31/31 job 成功，无失败、取消或未完成。
+
+当前交付流程遵循 [自动生成版本 PR、人工验收、合并发布](version-pr-manual-ci.md)。用户明确版本 PR 仍须自动生成，人工启动的是 PR 正式 CI；先前本轮手动 prepare 仅为旧触发策略下的中间步骤。
+全部修复先提交 main，由自动 prepare 重新生成 #1279；不向 `release/pnpm-version` 手工推送。
 prepare 保留完整 native、质量和产物验证；不执行 npm 上传。
 
 远端最终验收必须绑定重新生成的 PR head，核对全部触发运行而非只看 required checks；记录成功、跳过、取消与未完成。
