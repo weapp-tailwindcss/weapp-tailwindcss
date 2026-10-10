@@ -87,7 +87,7 @@ confirm 等待 npm 元数据传播，期间 Lynx 的公开查询曾返回 404，
 
 16/16 远端 Git tag 均指向原 merge SHA，16/16 GitHub Release 均正式发布，包含 [weapp-tailwindcss 5.6.1](https://github.com/weapp-tailwindcss/weapp-tailwindcss/releases/tag/weapp-tailwindcss%405.6.1) 和 [css-compat 0.1.1](https://github.com/weapp-tailwindcss/weapp-tailwindcss/releases/tag/%40weapp-tailwindcss/css-compat%400.1.1)。[durable checkpoint](https://github.com/weapp-tailwindcss/weapp-tailwindcss/blob/repoctl-release-state/.repoctl-release/b43ee3d6d16864617ad4ae3829b98f759f7a5db4b48b9a984af5349016c75180.json) 回读为 `accepted=16`、`metadata=16`、`npm=complete`、`uploadComplete=true`、`complete=true`，镜像同步 hook 完成。`repoctl-ci-progress.json` 的六阶段全部 complete、无 pending；上传进度文件保留的 `confirming` 字段不能替代最终 checkpoint 判断。
 
-发布恢复验收已完成。同一修复 SHA 的 [CI 38077140927](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38077140927) 31 个 job 全部成功，Architecture、Agent Workflow Contract 和 Deploy Docs Worker 成功；push Release 无待发布 intent，成功结束并跳过重型发布 job。PR Benchmark Report 对 push 正常跳过。[Benchmark 38077140952](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38077140952) 单独跟进，以最终实际状态判定，不把仍排队或运行的任务计为成功。
+发布恢复验收已完成。同一修复 SHA 的 [CI 38077140927](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38077140927) 31 个 job 全部成功，Architecture、Agent Workflow Contract 和 Deploy Docs Worker 成功；push Release 无待发布 intent，成功结束并跳过重型发布 job。PR Benchmark Report 对 push 正常跳过。[Benchmark 38077140952](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38077140952) 于 2026-10-10 19:55:31 UTC 完成并成功，范围判定、Synthetic Performance Gate、矩阵准备、12 个 demo shard 和 Performance guard 全部通过；weekly-demo-cost 非周计划触发，按条件跳过。该源码修复 SHA 的全部应执行 Actions 已完成且成功，无取消或未完成运行。
 
 此次用户明确要求修复并成功发包；不更改版本、包 API、intent，不自动合并或关闭 issue。
 
