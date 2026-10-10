@@ -1,5 +1,37 @@
 # weapp-tailwindcss
 
+## 5.6.1
+
+### Patch Changes
+
+- 更新依赖。
+
+  ### @weapp-tailwindcss/lynx
+
+  - 更新 devDependencies 中的 `@lynx-js/rspeedy`：`^0.18.0`，`锁定 0.18.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@rspack/core@2.2.2(@swc/helpers@0.5.23))(clean-css@5.3.3)(core-js@3.50.0)(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(supports-color@10.2.2)(tslib@2.8.1)(typescript@6.0.3)(webpack@5.105.4)` → `^0.18.0`，`锁定 0.18.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@rspack/core@2.2.8(@swc/helpers@0.5.23))(clean-css@5.3.3)(core-js@3.50.0)(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(supports-color@10.2.2)(tslib@2.8.1)(typescript@6.0.3)(webpack@5.105.4)`。
+  - 更新 peerDependencies 中的 `@lynx-js/rspeedy`：`>=0.16.0`，`锁定 0.18.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@rspack/core@2.2.2(@swc/helpers@0.5.23))(clean-css@5.3.3)(core-js@3.50.0)(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(supports-color@10.2.2)(tslib@2.8.1)(typescript@6.0.3)(webpack@5.105.4)` → `>=0.16.0`，`锁定 0.18.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@rspack/core@2.2.8(@swc/helpers@0.5.23))(clean-css@5.3.3)(core-js@3.50.0)(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(supports-color@10.2.2)(tslib@2.8.1)(typescript@6.0.3)(webpack@5.105.4)`。
+
+  ### weapp-tailwindcss
+
+  - 更新 devDependencies 中的 `webpack`：`5.105.4`，`锁定 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)` → `5.105.4`，`锁定 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.29))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3)(webpack-cli@7.2.3)`。
+
+- 修复 Vite 生产 watch 中项目相对 CSS 来源被当作输出身份缓存，确保 SFC 作者样式的相对 reference 在连续重建时仍从源码目录解析。
+
+  统一 Rollup 资产元数据与 CSS 生命周期缓存的绝对来源归属，避免生产 watch 在内容 hash 改变后回放旧 CSS 资产并误删当前页面的边框 reset。
+
+  以 Vite root 识别已完成生成的 CSS 资产来源，首次完整构建复用框架已编译结果，避免 remembered apply 源码触发重复生成和局部规则重复合并；增量重建继续按候选与来源变化重新生成。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/native-darwin-arm64@5.6.1
+  - @weapp-tailwindcss/native-darwin-x64@5.6.1
+  - @weapp-tailwindcss/native-linux-arm64-gnu@5.6.1
+  - @weapp-tailwindcss/native-linux-arm64-musl@5.6.1
+  - @weapp-tailwindcss/native-linux-x64-gnu@5.6.1
+  - @weapp-tailwindcss/native-linux-x64-musl@5.6.1
+  - @weapp-tailwindcss/native-win32-arm64-msvc@5.6.1
+  - @weapp-tailwindcss/native-win32-x64-msvc@5.6.1
+  - @weapp-tailwindcss/postcss@3.4.1
+
 ## 5.6.0
 
 ### Minor Changes

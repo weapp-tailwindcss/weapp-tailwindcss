@@ -1,7 +1,7 @@
 {
   "name": "@weapp-tailwindcss/postcss",
   "type": "module",
-  "version": "3.4.0",
+  "version": "3.4.1",
   "description": "PostCSS transforms that bring Tailwind CSS compatibility to every platform. 将 Tailwind CSS 兼容能力带到全端的 PostCSS 转换工具。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",

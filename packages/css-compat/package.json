@@ -1,7 +1,7 @@
 {
   "name": "@weapp-tailwindcss/css-compat",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "框架无关的 CSS layer 顺序编译、诊断与显式旧算法兼容。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",

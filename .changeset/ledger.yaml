@@ -33,6 +33,10 @@
   dir: packages-runtime/cn
   intents:
     - organization-repository-metadata
+"@weapp-tailwindcss/css-compat@0.1.1":
+  dir: packages/css-compat
+  intents:
+    - thick-shirts-study
 "@weapp-tailwindcss/cva@0.1.12":
   dir: packages-runtime/cva
   intents:
@@ -188,6 +192,10 @@
     - lynx-opacity-percentage
     - lynx-recursive-variable-config
     - organization-repository-metadata
+"@weapp-tailwindcss/lynx@0.4.2":
+  dir: packages/lynx
+  intents:
+    - dependency-update-ad964c2e-870c-4709-9297-17214f27a954
 "@weapp-tailwindcss/merge@2.2.3":
   dir: packages-runtime/merge
   intents:
@@ -328,6 +336,10 @@
   intents:
     - postcss-selector-options-lifecycle
     - rust-native-compiler
+"@weapp-tailwindcss/postcss@3.4.1":
+  dir: packages/postcss
+  intents:
+    - calm-jars-live
 "@weapp-tailwindcss/react-native@0.2.19":
   dir: packages/react-native
   intents:
@@ -694,6 +706,11 @@ weapp-tailwindcss@5.6.0:
     - source-candidate-file-budget
     - webpack-runtime-preparation
     - webpack-unmatched-child-compilation
+weapp-tailwindcss@5.6.1:
+  dir: packages/weapp-tailwindcss
+  intents:
+    - dependency-update-ad964c2e-870c-4709-9297-17214f27a954
+    - friendly-geese-tie
 weapp-tw@0.0.3:
   dir: packages/weapp-tw
   intents:
