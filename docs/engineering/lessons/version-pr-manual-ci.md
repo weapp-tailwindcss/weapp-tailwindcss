@@ -1,5 +1,6 @@
 ---
-status: partial
+status: superseded
+supersededBy: docs/engineering/lessons/version-pr-approval.md
 issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1279
 baseline: ecd0676ee35ab9f34c25fa6175aaf6c032664913
 regressions:
@@ -14,6 +15,8 @@ regressions:
 ---
 
 # 自动生成版本 PR、人工验收、合并发布
+
+操作入口已由 [版本 PR 内审批验收](version-pr-approval.md) 替代：用户进一步明确要求在版本 PR 的检查中审批现有 run，不在 Actions 手动 Run workflow。以下保留当时实现、修复与准确 head 验收证据；原 CLI 启动步骤不再适用于新工作流。
 
 ## 症状
 

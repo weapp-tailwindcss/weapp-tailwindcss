@@ -1,21 +1,47 @@
 import { execFileSync } from 'node:child_process'
-import { appendFileSync } from 'node:fs'
+import { appendFileSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { resolveChangeScopes } from './resolve-pr-scope.mjs'
+import { assertVersionPrApprovalEnvironment } from './version-pr-approval.mjs'
 
 const shaPattern = /^[a-f\d]{40}$/i
 const repositoryPattern = /^[\w.-]+\/[\w.-]+$/
 const versionBranch = 'release/pnpm-version'
+const pullRequestActions = ['opened', 'synchronize', 'reopened', 'ready_for_review']
 
 function validateContext(context) {
-  if (context.eventName !== 'workflow_dispatch'
+  if (context.eventName !== 'pull_request'
     || context.refName !== versionBranch
+    || !pullRequestActions.includes(context.action)
+    || !Number.isSafeInteger(context.number) || context.number <= 0
     || typeof context.repository !== 'string' || !repositoryPattern.test(context.repository)
-    || typeof context.sha !== 'string' || !shaPattern.test(context.sha)) {
-    throw new Error('请在 Version PR CI 的 Run workflow 中选择 release/pnpm-version 分支')
+    || typeof context.sha !== 'string' || !shaPattern.test(context.sha) || /^0+$/.test(context.sha)) {
+    throw new Error('正式版本验收只接受同仓库 release/pnpm-version PR；请在该 PR 检查中审批')
   }
+}
+
+/** 从原始 PR 事件固定作者 head，避免使用 GitHub 临时 merge SHA。 */
+export function resolveVersionPrContext(environment, event) {
+  const pullRequest = event?.pull_request
+  const context = {
+    eventName: environment?.eventName,
+    repository: environment?.repository,
+    sha: pullRequest?.head?.sha,
+    refName: pullRequest?.head?.ref,
+    action: event?.action,
+    number: event?.number,
+  }
+  validateContext(context)
+  if (pullRequest.number !== context.number || pullRequest.state !== 'open'
+    || pullRequest.merged === true || pullRequest.merged_at != null
+    || pullRequest.base?.ref !== 'main'
+    || pullRequest.base?.repo?.full_name !== context.repository
+    || pullRequest.head?.repo?.full_name !== context.repository) {
+    throw new Error('原始 PR 事件的身份、来源或目标无效')
+  }
+  return context
 }
 
 /** 验收只绑定当前同仓库版本 PR 的准确 head，不允许从 main 或旧版本分支代验。 */
@@ -30,13 +56,13 @@ export function resolveVersionPrTarget(context, pullRequests) {
   }
   const pr = pullRequests[0]
   if (!pr || pr.state !== 'open' || pr.merged === true || pr.merged_at != null
-    || !Number.isSafeInteger(pr.number) || pr.number <= 0
+    || pr.number !== context.number
     || pr.base?.repo?.full_name !== context.repository || pr.head?.repo?.full_name !== context.repository
     || pr.base?.ref !== 'main' || pr.head?.ref !== versionBranch
     || typeof pr.base?.sha !== 'string' || !shaPattern.test(pr.base.sha)
     || typeof pr.head?.sha !== 'string' || !shaPattern.test(pr.head.sha)
     || pr.head.sha.toLowerCase() !== context.sha.toLowerCase()) {
-    throw new Error('版本 PR 身份或 head 已改变，请重新生成并在当前版本分支启动验收')
+    throw new Error('版本 PR 身份或 head 已改变，请等待重新生成并审批当前 PR 检查')
   }
   return { number: pr.number, base: context.currentMainSha.toLowerCase(), head: pr.head.sha.toLowerCase() }
 }
@@ -66,14 +92,10 @@ function main() {
   if (!checkCurrent && !outputMode) {
     throw new Error('仅支持 --github-output <路径> 或 --check-current')
   }
-  const context = {
+  const context = resolveVersionPrContext({
     eventName: process.env.GITHUB_EVENT_NAME,
-    refName: process.env.GITHUB_REF_NAME,
     repository: process.env.GITHUB_REPOSITORY,
-    sha: process.env.GITHUB_SHA,
-    currentMainSha: undefined,
-  }
-  validateContext(context)
+  }, JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8')))
   const repository = context.repository
   const mainRef = JSON.parse(execFileSync('gh', ['api', `repos/${repository}/git/ref/heads/main`], {
     encoding: 'utf8',
@@ -101,6 +123,11 @@ function main() {
   if (checkout.toLowerCase() !== target.head) {
     throw new Error('当前 checkout 与版本 PR head 不一致')
   }
+  const environment = JSON.parse(execFileSync('gh', ['api', `repos/${repository}/environments/version-pr-ci`], {
+    encoding: 'utf8',
+    maxBuffer: 1024 * 1024,
+  }))
+  assertVersionPrApprovalEnvironment(environment)
   if (outputMode) {
     validateVersionPrDiff(target, process.cwd())
     appendFileSync(path.resolve(args[1]), `number=${target.number}\nhead=${target.head}\nbase=${target.base}\n`)

@@ -1,13 +1,13 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { resolveVersionPrTarget, validateVersionPrDiff } from '../../../../scripts/ci/version-pr-route.mjs'
+import { resolveVersionPrContext, resolveVersionPrTarget, validateVersionPrDiff } from '../../../../scripts/ci/version-pr-route.mjs'
 import { git, gitFixture, writeFiles } from './release-metadata/fixture'
 
 const repository = 'weapp-tailwindcss/weapp-tailwindcss'
 const sha = 'a'.repeat(40)
 const base = 'b'.repeat(40)
-const context = { repository, sha, currentMainSha: base, eventName: 'workflow_dispatch', refName: 'release/pnpm-version' }
+const context = { repository, sha, currentMainSha: base, eventName: 'pull_request', refName: 'release/pnpm-version', action: 'synchronize', number: 1279 }
 const directories: string[] = []
 
 function pullRequest() {
@@ -20,13 +20,42 @@ function pullRequest() {
   }
 }
 
+function event(action = 'synchronize', number = 1279, pr = pullRequest()) {
+  return { action, number, pull_request: pr }
+}
+
 afterEach(() => {
   for (const directory of directories.splice(0)) {
     fs.rmSync(directory, { recursive: true, force: true })
   }
 })
 
-describe('手动版本 PR 的身份绑定', () => {
+describe('版本 PR 审批 run 的身份绑定', () => {
+  it('从原始 PR 事件绑定作者 head，忽略 Actions 临时 merge SHA', () => {
+    expect(resolveVersionPrContext({ eventName: 'pull_request', repository, sha: 'd'.repeat(40), refName: '1279/merge' }, event()))
+      .toEqual({ repository, sha, eventName: 'pull_request', refName: 'release/pnpm-version', action: 'synchronize', number: 1279 })
+  })
+
+  it.each(['opened', 'synchronize', 'reopened', 'ready_for_review'])('接受自动创建待审批 run 的 %s 事件', (action) => {
+    const derived = resolveVersionPrContext({ eventName: 'pull_request', repository }, event(action))
+    expect(resolveVersionPrTarget({ ...derived, currentMainSha: base }, [pullRequest()])).toEqual({ number: 1279, head: sha, base })
+  })
+
+  it.each(['closed', 'edited', 'labeled', ''])('拒绝非验收入口 %s', (action) => {
+    expect(() => resolveVersionPrContext({ eventName: 'pull_request', repository }, event(action))).toThrow()
+  })
+
+  it('事件本身的 PR 编号、外仓、错误目标和残缺结构均拒绝', () => {
+    const foreign = pullRequest()
+    foreign.head.repo.full_name = 'attacker/weapp-tailwindcss'
+    const wrongBase = pullRequest()
+    wrongBase.base.ref = 'next'
+    for (const pull_request of [foreign, wrongBase, null, {}, { ...pullRequest(), number: 0 }]) {
+      expect(() => resolveVersionPrContext({ eventName: 'pull_request', repository }, event('opened', 1279, pull_request))).toThrow()
+    }
+    expect(() => resolveVersionPrContext({ eventName: 'pull_request', repository }, event('synchronize', 1282))).toThrow()
+  })
+
   it('接受唯一的同仓库 main 版本 PR，并绑定实际 head', () => {
     expect(resolveVersionPrTarget(context, [pullRequest()])).toEqual({ number: 1279, head: sha, base })
   })
@@ -45,11 +74,11 @@ describe('手动版本 PR 的身份绑定', () => {
   })
 
   it.each(['main', 'next', 'codex/fix', 'release/pnpm-version\nhead=main'])('不能从 %j 分支代验', (refName) => {
-    expect(() => resolveVersionPrTarget({ ...context, refName }, [pullRequest()])).toThrow('选择')
+    expect(() => resolveVersionPrTarget({ ...context, refName }, [pullRequest()])).toThrow('正式')
   })
 
-  it.each(['push', 'pull_request', 'workflow_run'])('不能自动由 %s 触发正式版本验收', (eventName) => {
-    expect(() => resolveVersionPrTarget({ ...context, eventName }, [pullRequest()])).toThrow('选择')
+  it.each(['push', 'workflow_dispatch', 'pull_request_target', 'workflow_run'])('不能由 %s 绕过 PR 审批入口', (eventName) => {
+    expect(() => resolveVersionPrTarget({ ...context, eventName }, [pullRequest()])).toThrow('正式')
   })
 
   it.each(['', 'main', 'c'.repeat(39), `${sha}\nnumber=1`])('拒绝非法 SHA %j', (invalid) => {
@@ -62,7 +91,7 @@ describe('手动版本 PR 的身份绑定', () => {
     expect(() => resolveVersionPrTarget(context, [pr])).toThrow('身份')
   })
 
-  it('当前 PR 已前进时不能用旧 dispatch 结果放行', () => {
+  it('当前 PR 已前进时不能用旧审批结果放行', () => {
     const pr = pullRequest()
     pr.head.sha = 'c'.repeat(40)
     expect(() => resolveVersionPrTarget(context, [pr])).toThrow('head 已改变')
