@@ -5,10 +5,12 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { execa } from 'execa'
 import { extract } from 'tar'
-import { install, pack, repositoryRoot } from './package-utils.mjs'
+import { install, pack, packageRoot, repositoryRoot } from './package-utils.mjs'
+import { assertPackedPackageVersion, assertPackedWorkspaceDependency } from './package-versions.mjs'
 
 const tempRoot = await mkdtemp(path.join(tmpdir(), 'css-compat-tarball-'))
 try {
+  const sourceManifest = JSON.parse(await readFile(path.join(packageRoot, 'package.json'), 'utf8'))
   const tarball = await pack(tempRoot)
   const packaged = path.join(tempRoot, 'css-compat-extracted')
   await mkdir(packaged)
@@ -18,7 +20,7 @@ try {
     assert.ok(content.startsWith('# @weapp-tailwindcss/css-compat'))
     assert.ok(content.includes(link), `${file} 缺少语言切换`)
   }
-  assert.equal(JSON.parse(await readFile(path.join(packaged, 'package', 'package.json'), 'utf8')).version, '0.1.0')
+  assertPackedPackageVersion(JSON.parse(await readFile(path.join(packaged, 'package', 'package.json'), 'utf8')), sourceManifest)
   const consumer = path.join(tempRoot, 'consumer')
   await install(consumer, { postcss: '8.5.29' }, { '@weapp-tailwindcss/css-compat': tarball })
   const require = createRequire(path.join(consumer, 'package.json'))
@@ -80,12 +82,15 @@ compileCascadeLayers(root, {})
 `)
   }
   await execa('pnpm', ['exec', 'tsc', '--ignoreConfig', '--noEmit', '--strict', '--module', 'NodeNext', '--moduleResolution', 'NodeNext', '--target', 'ES2022', '--skipLibCheck', 'false', path.join(consumer, 'types.mts'), path.join(consumer, 'types.cts')], { cwd: repositoryRoot })
-  const postcssTarball = await pack(tempRoot, path.join(repositoryRoot, 'packages', 'postcss'))
+  const postcssRoot = path.join(repositoryRoot, 'packages', 'postcss')
+  const postcssSourceManifest = JSON.parse(await readFile(path.join(postcssRoot, 'package.json'), 'utf8'))
+  const postcssTarball = await pack(tempRoot, postcssRoot)
   const extracted = path.join(tempRoot, 'postcss-extracted')
   await mkdir(extracted)
   await extract({ cwd: extracted, file: postcssTarball })
   const manifest = JSON.parse(await readFile(path.join(extracted, 'package', 'package.json'), 'utf8'))
-  assert.equal(manifest.dependencies['@weapp-tailwindcss/css-compat'], '0.1.0')
+  assertPackedPackageVersion(manifest, postcssSourceManifest)
+  assertPackedWorkspaceDependency(manifest, postcssSourceManifest, sourceManifest)
   console.log(JSON.stringify({ tarballBytes: (await stat(tarball)).size, entrypoints: keys.length, esm: true, cjs: true, types: ['mts', 'cts'], isolatedTree: '无 generator/scanner/native/MDN', postcssDependency: manifest.dependencies['@weapp-tailwindcss/css-compat'] }))
 }
 finally {

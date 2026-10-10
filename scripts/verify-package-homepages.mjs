@@ -11,6 +11,7 @@ const expectedHomepages = {
   '@weapp-tailwindcss/cli': '/docs/tools/weapp-tw-cli',
   '@weapp-tailwindcss/cva': '/docs/community/merge/cva-and-variants',
   '@weapp-tailwindcss/cn': '/docs/community/merge',
+  '@weapp-tailwindcss/css-compat': '/',
   '@weapp-tailwindcss/debug-uni-app-x': '/docs/config/uni-app-x',
   '@weapp-tailwindcss/engine': '/',
   '@weapp-tailwindcss/escape': '/',

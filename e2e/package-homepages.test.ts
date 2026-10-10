@@ -25,4 +25,12 @@ describe('published package homepages', () => {
     const manifest = JSON.parse(await readFile(path.join(root, 'packages-runtime', name, 'package.json'), 'utf8'))
     expect(new URL(manifest.homepage).pathname).toBe(`/docs${slug}`)
   })
+
+  it('uses the shared package homepage for css-compat and postcss', async () => {
+    const manifests = await Promise.all(['css-compat', 'postcss'].map(async name => JSON.parse(await readFile(path.join(root, 'packages', name, 'package.json'), 'utf8'))))
+    const urls = manifests.map(manifest => new URL(manifest.homepage))
+    expect(urls[0]!.origin).toBe('https://tw.weapp.dev')
+    expect(urls[0]!.pathname).toBe('/')
+    expect(urls[0]!.toString()).toBe(urls[1]!.toString())
+  })
 })
