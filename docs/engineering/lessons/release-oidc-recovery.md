@@ -1,7 +1,7 @@
 ---
-status: partial
+status: verified
 issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1279
-baseline: 7234fe1b3898329365dbf390812841f8ff5daf4d
+baseline: 67e9402ea61f9d2ef47724ee2cbead7a7a2cf823
 regressions:
   - packages/weapp-tailwindcss/test/ci/release-dispatch.test.ts
   - packages/weapp-tailwindcss/test/ci/release-route.test.ts
@@ -31,7 +31,7 @@ plan 与 release job 都先 checkout `github.sha`，校验 HEAD 等于真实工�
 
 driver 校验初始 HEAD 与 `CI_RELEASE_SOURCE_SHA`，校验发布线等于真实 `GITHUB_REF_NAME`，随后原样传递 GitHub SHA、ref、workflow 与 OIDC 环境。repoctl 的 receipt 绑定实际 Git HEAD/内容/配置/run/attempt，checkpoint 和最终 tag 绑定原版本来源；prepare 后合法产生的新提交继续由官方 receipt 校验。不能直接注入 `REPO_RELEASE_SOURCE_SHA` 绕过普通 verify 前置校验，也不能用并不存在的 `release ci --branch` 参数选择发布线。
 
-[SLSA GitHub Actions workflow/v1](https://github.com/slsa-framework/github-actions-buildtypes/blob/main/workflow/v1/README.md) 的首个 resolved dependency 是执行工作流的 revision。恢复时 provenance 的 workflow revision 为新工作流 SHA，实际包 checkout、receipt、checkpoint、tag 来源为原 merge SHA；不能宣称标准 provenance 单独证明了历史包源码。通过真实发布后的 `gitHead`、checkpoint 与 tag 另外核验该来源。正式上传前在同一个 job 执行 repoctl OIDC 审计，失败阻断后续上传。
+[SLSA GitHub Actions workflow/v1](https://github.com/slsa-framework/github-actions-buildtypes/blob/main/workflow/v1/README.md) 的首个 resolved dependency 是执行工作流的 revision。恢复时 provenance 的 workflow revision 为新工作流 SHA，实际包 checkout、receipt、checkpoint、tag 来源为原 merge SHA；不能宣称标准 provenance 单独证明了历史包源码。本次 16 个目标版本的 registry 元数据均没有 `gitHead`，源码来源通过实际 checkout、receipt、checkpoint 与 tag 另外核验。正式上传前在同一个 job 执行 repoctl OIDC 审计，失败阻断后续上传。
 
 正式发布与恢复保持串行、不自动取消，保留 Node 24、provenance、durable checkpoint 及 plan → verify → prepare → upload → confirm → finalize。关联已合并受管版本 PR 的恢复沿用原自动发布证书边界；未关联版本 PR 的手动 publish / publish-unpublished 继续要求同提交 coverage certificate。不得借恢复复制旧 run receipt，或在验证后覆盖源码文件。
 
@@ -55,7 +55,41 @@ gh workflow run release.yml --ref main -f mode=publish -f version_pr=1279
 
 第二轮本地结果：同一 7 个测试文件、219 项通过；ESLint（release-stage）、actionlint（release.yml）、类型检查、`agents:check`（59 规则 / 263 文档 / 793 命令）和 diff 检查均通过。自动 prepare CLI fixture 现在显式提供真实 push SHA，不能再依赖 wrapper 隐式覆盖身份。
 
-远端恢复 run、最终 registry 与 checkpoint 结果将在实际发布完成后补充。此次用户明确要求修复并成功发包；不更改版本、包 API、intent，不自动合并或关闭 issue。
+### 实际发布与公开核验
+
+[恢复 run 38077149802](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38077149802) 已完成并成功。执行工作流 SHA 为 `67e9402ea61f9d2ef47724ee2cbead7a7a2cf823`，实际发布源码固定为 #1279 的原 merge SHA `e75fd41019dd679bcba7b3d8f74e965171bee10d`。8/8 native job 与 plan、verify、prepare、upload、confirm、finalize 全部成功；同 job 的 OIDC 审计完成 39/39 包的凭据交换。未使用长期 npm token，没有重复发布或修改原版本。
+
+发布 job 的实际阶段时间如下，时间均为 2026-10-10 UTC。plan 在 verify 前完成；耗时来自 GitHub step 起止时间，按秒计算，没有推算提速比例。
+
+| 步骤 | 起止时间 | 耗时 |
+| --- | --- | --- |
+| verify | 19:09:02–19:21:04 | 12m02s |
+| prepare | 19:21:04–19:21:05 | 1s |
+| OIDC audit | 19:21:05–19:21:15 | 10s |
+| upload | 19:21:15–19:22:52 | 1m37s |
+| confirm | 19:22:52–19:27:59 | 5m07s |
+| finalize | 19:27:59–19:31:00 | 3m01s |
+
+全部 16 个目标版本上传、公开确认且 `latest` 正确：
+
+| 包 | 版本 |
+| --- | --- |
+| `@weapp-tailwindcss/native-{darwin-arm64,darwin-x64,linux-arm64-gnu,linux-arm64-musl,linux-x64-gnu,linux-x64-musl,win32-arm64-msvc,win32-x64-msvc}`（8 包） | `5.6.1` |
+| `@weapp-tailwindcss/cli`、`weapp-tailwindcss` | `5.6.1` |
+| `@weapp-tailwindcss/css-compat` | `0.1.1` |
+| `@weapp-tailwindcss/experimental` | `0.0.50` |
+| `@weapp-tailwindcss/lynx` | `0.4.2` |
+| `@weapp-tailwindcss/postcss` | `3.4.1` |
+| `@weapp-tailwindcss/react-native` | `0.3.2` |
+| `tailwindcss-injector` | `1.0.25` |
+
+confirm 等待 npm 元数据传播，期间 Lynx 的公开查询曾返回 404，最终变为 200 且 `latest=0.4.2`；这是上传被接受后的可见性等待。公开读取 16 个版本的 npm attestations，确认 invocation 指向本轮 run、workflow digest 等于 `67e9402…`，attested subject 的 sha512 与 registry `dist.integrity` 全部一致。该核验确认公开证明与产物匹配，不将 workflow digest 当作历史包源码 digest。
+
+16/16 远端 Git tag 均指向原 merge SHA，16/16 GitHub Release 均正式发布，包含 [weapp-tailwindcss 5.6.1](https://github.com/weapp-tailwindcss/weapp-tailwindcss/releases/tag/weapp-tailwindcss%405.6.1) 和 [css-compat 0.1.1](https://github.com/weapp-tailwindcss/weapp-tailwindcss/releases/tag/%40weapp-tailwindcss/css-compat%400.1.1)。[durable checkpoint](https://github.com/weapp-tailwindcss/weapp-tailwindcss/blob/repoctl-release-state/.repoctl-release/b43ee3d6d16864617ad4ae3829b98f759f7a5db4b48b9a984af5349016c75180.json) 回读为 `accepted=16`、`metadata=16`、`npm=complete`、`uploadComplete=true`、`complete=true`，镜像同步 hook 完成。`repoctl-ci-progress.json` 的六阶段全部 complete、无 pending；上传进度文件保留的 `confirming` 字段不能替代最终 checkpoint 判断。
+
+发布恢复验收已完成。同一修复 SHA 的 [CI 38077140927](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38077140927) 31 个 job 全部成功，Architecture、Agent Workflow Contract 和 Deploy Docs Worker 成功；push Release 无待发布 intent，成功结束并跳过重型发布 job。PR Benchmark Report 对 push 正常跳过。[Benchmark 38077140952](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38077140952) 单独跟进，以最终实际状态判定，不把仍排队或运行的任务计为成功。
+
+此次用户明确要求修复并成功发包；不更改版本、包 API、intent，不自动合并或关闭 issue。
 
 ## 适用边界
 
