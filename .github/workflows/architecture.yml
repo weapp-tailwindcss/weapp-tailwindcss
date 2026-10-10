@@ -3,6 +3,8 @@ on:
   pull_request:
   push:
     branches: [main, next]
+  workflow_dispatch:
+  workflow_call:
 permissions:
   contents: read
 jobs:

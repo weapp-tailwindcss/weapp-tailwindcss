@@ -9,6 +9,7 @@ on:
       - .github/workflows/website-seo-quality.yml
       - 'website/**'
   workflow_dispatch:
+  workflow_call:
 
 concurrency:
   group: website-seo-${{ github.event.pull_request.number || github.ref }}
@@ -23,7 +24,7 @@ jobs:
     uses: ./.github/workflows/ci-scope.yml
 
   seo-quality:
-    name: SEO Quality Gate
+    name: ${{ github.event_name == 'pull_request' && needs.detect-website-changes.outputs.metadata_only == 'true' && 'Await manual version verification' || 'SEO Quality Gate' }}
     needs: detect-website-changes
     if: always() && !cancelled()
     runs-on: ubuntu-latest

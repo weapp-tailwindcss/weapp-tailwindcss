@@ -4,6 +4,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
+  workflow_call:
 
 concurrency:
   group: pr-gate-${{ github.event.pull_request.number || github.ref }}
@@ -221,7 +222,7 @@ jobs:
     uses: ./.github/workflows/css-compat.yml
 
   pr-gate:
-    name: PR Gate
+    name: ${{ github.event_name == 'pull_request' && needs.scope.outputs.metadata_only == 'true' && 'Await manual version verification' || 'PR Gate' }}
     if: always() && !cancelled()
     needs: [scope, quality, core-smoke, platform-watch, platform-dev, windows-utilities, portable-demos, css-compat]
     runs-on: ubuntu-latest

@@ -23,6 +23,7 @@ on:
       - scripts/ci/**
       - tools/ci-scope/**
   workflow_dispatch:
+  workflow_call:
 
 concurrency:
   group: release-gate-${{ github.event.pull_request.number || github.ref }}
