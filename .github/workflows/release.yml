@@ -2,6 +2,8 @@
 name: Release
 
 on:
+  push:
+    branches: [main]
   pull_request_target:
     types: [closed]
     branches: [main]
@@ -13,7 +15,6 @@ on:
         default: prepare
         type: choice
         options:
-          - auto
           - prepare
           - publish
           - publish-unpublished
@@ -40,14 +41,15 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-refs/heads/${{ github.event.pull_request.base.ref || github.ref_name }}${{ inputs.oidc_audit && '-oidc-audit' || '' }}
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ !inputs.oidc_audit && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'prepare')) && 'prepare' || 'publish' }}-refs/heads/${{ github.event.pull_request.base.ref || github.ref_name }}${{ inputs.oidc_audit && '-oidc-audit' || '' }}${{ github.event_name == 'pull_request_target' && !(github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'release/pnpm-version' && github.event.pull_request.base.repo.full_name == github.repository && github.event.pull_request.head.repo.full_name == github.repository) && format('-ignored-{0}', github.run_id) || '' }}
+  cancel-in-progress: ${{ !inputs.oidc_audit && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'prepare')) }}
 
 jobs:
   plan:
     name: Route release work
     if: >-
-      ${{ !inputs.oidc_audit && (github.event_name == 'workflow_dispatch' ||
+      ${{ !inputs.oidc_audit && ((github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'pull_request_target' && github.event.pull_request.merged == true &&
       github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'release/pnpm-version' &&
       github.event.pull_request.base.repo.full_name == github.repository &&
@@ -68,7 +70,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
+          ref: ${{ github.event.pull_request.merge_commit_sha || github.event.after || github.sha }}
           fetch-depth: 0
           persist-credentials: false
       - name: Validate release event
@@ -89,7 +91,7 @@ jobs:
           CI_RELEASE_BRANCH: ${{ steps.route.outputs.branch }}
           REPO_RELEASE_MODE: ${{ steps.route.outputs.mode }}
         if: steps.route.outputs.run == 'true'
-        run: node scripts/ci/release-stage.mjs plan
+        run: node scripts/ci/auto-prepare-plan.mjs
 
   native-artifacts:
     needs: plan
@@ -202,6 +204,10 @@ jobs:
 
       - name: Verify release
         run: node scripts/ci/release-stage.mjs verify
+
+      - name: Require latest main before automatic prepare
+        if: github.event_name == 'push'
+        run: node scripts/ci/auto-prepare-plan.mjs --assert-current-main
 
       - name: Prepare release
         id: prepare

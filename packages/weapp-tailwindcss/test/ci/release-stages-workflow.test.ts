@@ -1,3 +1,4 @@
+/* eslint-disable no-template-curly-in-string -- 测试按字面量核验工作流表达式。 */
 import { readFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -14,12 +15,12 @@ describe('Release 分阶段执行与 native 缓存', () => {
     expect(route).toBeDefined()
     expect(route.permissions).toEqual({ contents: 'read' })
     expect(route.outputs.run).toBe('${{ steps.plan.outputs.run }}')
-    expect(route.steps.find((step: any) => step.id === 'plan').run).toBe('node scripts/ci/release-stage.mjs plan')
+    expect(route.steps.find((step: any) => step.id === 'plan').run).toBe('node scripts/ci/auto-prepare-plan.mjs')
     expect(jobs['native-artifacts'].needs).toBe('plan')
-    expect(jobs['native-artifacts'].if).toBe("needs.plan.outputs.run == 'true'")
+    expect(jobs['native-artifacts'].if).toBe('needs.plan.outputs.run == \'true\'')
     expect(jobs.release.needs).toEqual(['plan', 'native-artifacts'])
-    expect(jobs.release.if).toContain("needs.plan.result == 'success'")
-    expect(jobs.release.if).toContain("needs.native-artifacts.result == 'success'")
+    expect(jobs.release.if).toContain('needs.plan.result == \'success\'')
+    expect(jobs.release.if).toContain('needs.native-artifacts.result == \'success\'')
     expect(jobs.release.if).toContain('!cancelled()')
   })
 
@@ -38,10 +39,10 @@ describe('Release 分阶段执行与 native 缓存', () => {
     expect(steps.findIndex((step: any) => step.name === 'Stage and verify all native platform packages'))
       .toBeLessThan(steps.indexOf(stages[0]))
     for (const stage of stages.slice(3)) {
-      expect(stage.if).toBe("steps.prepare.outputs.publish == 'true'")
+      expect(stage.if).toBe('steps.prepare.outputs.publish == \'true\'')
     }
     // receipt 属于本 job，不作为 artifact 传给其他 runner 或下一次运行。
-    expect(JSON.stringify(jobs)).not.toMatch(/upload-artifact[^]*repoctl-release-ci/)
+    expect(JSON.stringify(jobs)).not.toMatch(/upload-artifact[\s\S]*repoctl-release-ci/)
   })
 
   it('OIDC 审计独立运行，并避免 setup-node 注入未设置的 token 占位', () => {
@@ -76,7 +77,7 @@ describe('Release 分阶段执行与 native 缓存', () => {
     const steps = jobs.native.steps
     expect(jobs.native.strategy.matrix.include).toHaveLength(8)
     const node = steps.find((step: any) => step.id === 'node')
-    expect(node.with.cache).toBe("${{ matrix.image == '' && 'pnpm' || '' }}")
+    expect(node.with.cache).toBe('${{ matrix.image == \'\' && \'pnpm\' || \'\' }}')
     const caches = steps.filter((step: any) => step.uses?.startsWith('actions/cache@'))
     expect(caches).toHaveLength(3)
     for (const cache of caches) {

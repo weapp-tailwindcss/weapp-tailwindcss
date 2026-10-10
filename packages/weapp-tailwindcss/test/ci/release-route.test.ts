@@ -25,6 +25,10 @@ function mergedReleaseEvent() {
   }
 }
 
+function mainPushEvent() {
+  return { repository: { full_name: repository }, ref: 'refs/heads/main', after: mergeSha, deleted: false }
+}
+
 describe('Release 事件路由', () => {
   it('仅以本仓库已合并 release PR 的 merge commit 发布稳定版本', () => {
     expect(resolveReleaseRoute('pull_request_target', mergedReleaseEvent(), context)).toEqual({
@@ -35,7 +39,30 @@ describe('Release 事件路由', () => {
     })
   })
 
-  it.each(['push', 'pull_request', 'workflow_run', 'schedule', ''])('拒绝 %s 事件', (eventName) => {
+  it('main push 绑定事件 after，始终 prepare 并忽略 runner SHA 和手动 mode', () => {
+    expect(resolveReleaseRoute('push', mainPushEvent(), { ...context, mode: 'publish' })).toEqual({
+      run: true,
+      ref: mergeSha,
+      mode: 'prepare',
+      branch: 'main',
+    })
+  })
+
+  it.each(['alpha', 'beta', 'rc', 'next', 'release/pnpm-version', 'codex/fix'])('拒绝 %s 分支 push 自动准备', (refName) => {
+    expect(resolveReleaseRoute('push', { ...mainPushEvent(), ref: `refs/heads/${refName}` }, { ...context, refName })).toEqual(skipped)
+  })
+
+  it.each(['', 'abc123', 'g'.repeat(40), '0'.repeat(40), `${mergeSha}\nmode=publish`])('拒绝非法 push after %j', (after) => {
+    expect(resolveReleaseRoute('push', { ...mainPushEvent(), after }, context)).toEqual(skipped)
+  })
+
+  it('拒绝 main 删除、runner 发布线不一致和来源仓库缺失的 push', () => {
+    expect(resolveReleaseRoute('push', { ...mainPushEvent(), deleted: true }, context)).toEqual(skipped)
+    expect(resolveReleaseRoute('push', mainPushEvent(), { ...context, refName: 'next' })).toEqual(skipped)
+    expect(resolveReleaseRoute('push', { ref: 'refs/heads/main', after: mergeSha }, context)).toEqual(skipped)
+  })
+
+  it.each(['pull_request', 'workflow_run', 'schedule', ''])('拒绝 %s 事件', (eventName) => {
     expect(resolveReleaseRoute(eventName, mergedReleaseEvent(), context)).toEqual(skipped)
   })
 
@@ -101,11 +128,11 @@ describe('Release 事件路由', () => {
     })
   })
 
-  it.each(['main', 'alpha', 'beta', 'rc', 'next'])('允许手动选择 %s 发布线的 auto 模式', (refName) => {
-    expect(resolveReleaseRoute('workflow_dispatch', {}, { ...context, refName, mode: 'auto' })).toEqual({
+  it.each(['main', 'alpha', 'beta', 'rc', 'next'])('允许手动选择 %s 发布线的 prepare 模式', (refName) => {
+    expect(resolveReleaseRoute('workflow_dispatch', {}, { ...context, refName, mode: 'prepare' })).toEqual({
       run: true,
       ref: sha,
-      mode: 'auto',
+      mode: 'prepare',
       branch: refName,
     })
   })
@@ -124,7 +151,7 @@ describe('Release 事件路由', () => {
     expect(resolveReleaseRoute('workflow_dispatch', {}, { ...context, refName })).toEqual(skipped)
   })
 
-  it.each(['oidc-audit', 'unknown', 'publish\nrun=true'])('拒绝手动非法模式 %j', (mode) => {
+  it.each(['auto', 'oidc-audit', 'unknown', 'publish\nrun=true'])('拒绝手动非法模式 %j', (mode) => {
     expect(resolveReleaseRoute('workflow_dispatch', {}, { ...context, mode })).toEqual(skipped)
   })
 
@@ -183,10 +210,13 @@ describe('Release 路由 CLI', () => {
     expect(await readFile(path.join(cwd, 'output'), 'utf8')).toBe(`run=true\nref=${mergeSha}\nmode=publish\nbranch=main\n`)
   })
 
-  it('拒绝 push 时也输出完整的否决结果', async () => {
+  it('不完整 push 输出完整否决结果，main push 输出事件 after 的 prepare 路由', async () => {
     const result = await run('push', {})
     expect(result.status, result.stderr).toBe(0)
     expect(await readFile(path.join(cwd, 'output'), 'utf8')).toBe('run=false\nref=\nmode=\nbranch=\n')
+    const main = await run('push', mainPushEvent())
+    expect(main.status, main.stderr).toBe(0)
+    expect(JSON.parse(main.stdout)).toEqual({ run: true, ref: mergeSha, mode: 'prepare', branch: 'main' })
   })
 
   it('读取 REPO_RELEASE_MODE 及 REPO_RELEASE_OIDC_AUDIT 并支持显式 output 路径', async () => {

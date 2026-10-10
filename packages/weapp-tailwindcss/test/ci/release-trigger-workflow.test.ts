@@ -8,15 +8,19 @@ import { parse } from 'yaml'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..')
 const workflow = (name: string) => parse(readFileSync(join(root, '.github', 'workflows', name), 'utf8'))
 
-describe('手动准备与合并发布的触发边界', () => {
-  it('所有 push 均不会自动准备版本，手动默认 prepare', () => {
+describe('main 自动准备与合并发布的触发边界', () => {
+  it('仅 main push 自动准备版本，手动默认 prepare', () => {
     const release = workflow('release.yml')
-    expect(release.on.push).toBeUndefined()
+    expect(release.on.push).toEqual({ branches: ['main'] })
     expect(release.on.workflow_dispatch.inputs.mode.default).toBe('prepare')
+    expect(release.on.workflow_dispatch.inputs.mode.options).toEqual(['prepare', 'publish', 'publish-unpublished'])
     expect(release.on.pull_request_target).toEqual({ types: ['closed'], branches: ['main'] })
     expect(release.jobs.plan.if).toContain('github.event.pull_request.merged == true')
     expect(release.jobs.plan.if).toContain('github.event.pull_request.head.ref == \'release/pnpm-version\'')
     expect(release.jobs.plan.if).toContain('github.event.pull_request.head.repo.full_name == github.repository')
+    expect(release.jobs.plan.if).toContain('github.event_name == \'push\' && github.ref == \'refs/heads/main\'')
+    expect(release.jobs.plan.steps[0].with.ref).toBe('${{ github.event.pull_request.merge_commit_sha || github.event.after || github.sha }}')
+    expect(release.jobs.plan.steps.find((step: any) => step.id === 'plan').run).toBe('node scripts/ci/auto-prepare-plan.mjs')
   })
 
   it('路由、native 与发布 checkout 消费相同提交，repoctl 分支和模式来自严格路由', () => {
@@ -35,9 +39,35 @@ describe('手动准备与合并发布的触发边界', () => {
     const release = workflow('release.yml')
     expect(release.permissions).toEqual({ contents: 'read' })
     expect(release.jobs.release.permissions['id-token']).toBe('write')
-    expect(release.concurrency['cancel-in-progress']).toBe(false)
     expect(release.jobs['oidc-audit'].needs).toBeUndefined()
     expect(release.jobs.release.steps.filter((step: any) => step.run?.startsWith('node scripts/ci/release-stage.mjs')).map((step: any) => step.run)).toHaveLength(6)
+  })
+
+  it('自动和手动 prepare 共用可取消队列，正式发布和恢复串行且不会被 prepare pending 替换', () => {
+    const { concurrency } = workflow('release.yml')
+    const prepares = '!inputs.oidc_audit && (github.event_name == \'push\' || (github.event_name == \'workflow_dispatch\' && inputs.mode == \'prepare\'))'
+    expect(concurrency.group).toContain(`\${{ github.workflow }}-\${{ ${prepares} && 'prepare' || 'publish' }}-refs/heads/\${{ github.event.pull_request.base.ref || github.ref_name }}\${{ inputs.oidc_audit && '-oidc-audit' || '' }}`)
+    expect(concurrency['cancel-in-progress']).toBe(`\${{ ${prepares} }}`)
+    expect(concurrency.group).not.toContain('inputs.mode == \'auto\'')
+  })
+
+  it('普通、未合并或外仓 PR 关闭事件不能占用正式 publish 队列', () => {
+    const { concurrency } = workflow('release.yml')
+    expect(concurrency.group).toContain('github.event_name == \'pull_request_target\' && !(github.event.pull_request.merged == true')
+    expect(concurrency.group).toContain('github.event.pull_request.head.ref == \'release/pnpm-version\'')
+    expect(concurrency.group).toContain('github.event.pull_request.head.repo.full_name == github.repository')
+    expect(concurrency.group).toContain('github.event.pull_request.base.repo.full_name == github.repository')
+    expect(concurrency.group).toContain('format(\'-ignored-{0}\', github.run_id)')
+  })
+
+  it('完整验证后再次核对自动 source，过期任务不能进入 prepare 改写生成分支', () => {
+    const steps = workflow('release.yml').jobs.release.steps
+    const fresh = steps.find((step: any) => step.name === 'Require latest main before automatic prepare')
+    expect(fresh.if).toBe('github.event_name == \'push\'')
+    expect(fresh.run).toBe('node scripts/ci/auto-prepare-plan.mjs --assert-current-main')
+    const index = steps.indexOf(fresh)
+    expect(steps[index - 1].run).toBe('node scripts/ci/release-stage.mjs verify')
+    expect(steps[index + 1].run).toBe('node scripts/ci/release-stage.mjs prepare')
   })
 
   it('纯版本变更统一经共享内容分类，不创建重型矩阵', () => {

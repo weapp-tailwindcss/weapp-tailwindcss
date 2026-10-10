@@ -683,10 +683,9 @@ describe('ci workflows', () => {
     expect(setupNodeStep.uses).toBe('actions/setup-node@820762786026740c76f36085b0efc47a31fe5020')
     expect(setupNodeStep.with['node-version']).toBe(24)
     expect(setupNodeStep.with['registry-url']).toBeUndefined()
-    expect(workflow.concurrency).toEqual({
-      group: "${{ github.workflow }}-refs/heads/${{ github.event.pull_request.base.ref || github.ref_name }}${{ inputs.oidc_audit && '-oidc-audit' || '' }}",
-      'cancel-in-progress': false,
-    })
+    expect(workflow.concurrency.group).toContain("&& 'prepare' || 'publish'")
+    expect(workflow.concurrency.group).toContain("inputs.oidc_audit && '-oidc-audit'")
+    expect(workflow.concurrency['cancel-in-progress']).toBe("${{ !inputs.oidc_audit && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'prepare')) }}")
     expect(workflow.jobs.release.needs).toEqual(['plan', 'native-artifacts'])
     // eslint-disable-next-line no-template-curly-in-string -- 按字面量核验 GitHub Actions 表达式。
     expect(workflow.jobs.release.if).toBe("${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.run == 'true' && needs.native-artifacts.result == 'success' }}")
@@ -817,7 +816,6 @@ describe('ci workflows', () => {
     })
 
     expect(workflow.on.workflow_dispatch.inputs.mode.options).toEqual([
-      'auto',
       'prepare',
       'publish',
       'publish-unpublished',
@@ -825,7 +823,7 @@ describe('ci workflows', () => {
     expect(workflow.jobs.release.env.REPO_RELEASE_MODE).toBe('${{ needs.plan.outputs.mode }}')
     expect(workflow.jobs.release.env.REPO_RELEASE_PACKAGE).toContain('inputs.package')
     expect(workflow.jobs.release.env.REPO_RELEASE_VERSION).toContain('inputs.version')
-    expect(source.match(/node scripts\/ci\/release-stage\.mjs/g)).toHaveLength(7)
+    expect(source.match(/node scripts\/ci\/release-stage\.mjs/g)).toHaveLength(6)
     expect(packageJson.scripts.release).toBe('pnpm change')
     expect(packageJson.scripts['version-packages']).toBe('pnpm version -r')
     expect(packageJson.scripts.cv).toBe('pnpm version -r')
