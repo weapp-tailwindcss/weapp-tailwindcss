@@ -2,6 +2,17 @@ import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import process from 'node:process'
 
+/**
+ * 变更范围的显式边界；未提供时使用 GitHub 事件中的对应字段。
+ * @typedef {object} ChangeRangeOptions
+ * @property {string} [base] PR 的目标提交。
+ * @property {string} [head] PR head 或 push 后的提交。
+ * @property {string} [before] push 前的提交。
+ * @property {string} [eventName] 只允许 PR 或 push 事件。
+ * @property {string | null} [eventPath] GitHub 事件文件；null 表示不读取文件。
+ * @property {string} [cwd] Git 仓库的文件系统目录。
+ */
+
 function git(args, cwd) {
   return execFileSync('git', args, { cwd, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 })
 }
@@ -13,6 +24,10 @@ function commit(ref, cwd) {
   return git(['rev-parse', '--verify', '--end-of-options', `${ref}^{commit}`], cwd).trim()
 }
 
+/**
+ * 读取真实的 PR 或 push 差异，不以提交标题推测变更来源。
+ * @param {ChangeRangeOptions} [options] 变更范围的边界和事件。
+ */
 export function readChangeRange({ base, head, before, eventName = process.env.GITHUB_EVENT_NAME, eventPath = process.env.GITHUB_EVENT_PATH, cwd } = {}) {
   let from
   let to

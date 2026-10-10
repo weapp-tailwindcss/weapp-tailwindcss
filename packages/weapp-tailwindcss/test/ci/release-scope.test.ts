@@ -33,6 +33,38 @@ afterEach(() => {
 })
 
 describe('PR / push 内容范围路由', () => {
+  it.each(['README.md', 'packages/a/README.md', 'docs/guide.mdx', 'website/docs/guide.md'])('普通文档保持轻量范围并保留网站 SEO：%s', (file) => {
+    const { cwd, after } = repository()
+    writeFiles(cwd, { [file]: '中文文档修改。\n' })
+    git(cwd, 'add', '.')
+    git(cwd, 'commit', '-m', 'docs: update guide')
+    const head = git(cwd, 'rev-parse', 'HEAD')
+    const scopes = resolveChangeScopes({ eventName: 'pull_request', base: after, head, cwd })
+    expect(scopes).toMatchObject({ core: false, watch: false, metadata_only: false, has_changes: true })
+    for (const field of heavyFields) {
+      expect(scopes[field]).toBe(field === 'website' && file.startsWith('website/'))
+    }
+  })
+
+  it.each(['packages/a/CHANGELOG.md', 'CHANGELOG.mdx', '.changeset/README.md', '.changeset/invalid.md'])('发布文档仍要求完整元数据证明：%s', (file) => {
+    const { cwd, after } = repository()
+    writeFiles(cwd, { [file]: '不能通过文档后缀豁免发布验证。\n' })
+    git(cwd, 'add', '.')
+    git(cwd, 'commit', '-m', 'docs: change release metadata')
+    const head = git(cwd, 'rev-parse', 'HEAD')
+    vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+    expectComplete(resolveChangeScopes({ eventName: 'push', before: after, head, cwd }))
+  })
+
+  it('文档与源码一起变化时保留完整检查', () => {
+    const { cwd, after } = repository()
+    writeFiles(cwd, { 'README.md': '中文文档。\n', 'packages/a/src/index.ts': 'export const changed = true\n' })
+    git(cwd, 'add', '.')
+    git(cwd, 'commit', '-m', 'docs: mixed changes')
+    const head = git(cwd, 'rev-parse', 'HEAD')
+    expectComplete(resolveChangeScopes({ eventName: 'push', before: after, head, cwd }))
+  })
+
   it('仅元数据时关闭所有重型范围，保留 has_changes', () => {
     const { cwd, before, after } = repository()
     const scopes = resolveChangeScopes({ eventName: 'pull_request', base: before, head: after, cwd })
@@ -103,10 +135,10 @@ describe('PR / push 内容范围路由', () => {
   it('CLI --before / --head 写入 GitHub boolean outputs', () => {
     const { cwd, before, after } = repository()
     const output = path.join(cwd, 'github-output.txt')
-    const stdout = execFileSync(process.execPath, [script, '--before', before, '--head', after, '--github-output', output], {
+    const stdout = execFileSync(process.execPath, [script, '--event', 'push', '--before', before, '--head', after, '--github-output', output], {
       cwd,
       encoding: 'utf8',
-      env: { ...process.env, GITHUB_EVENT_NAME: 'push', GITHUB_EVENT_PATH: '' },
+      env: { ...process.env, GITHUB_EVENT_NAME: 'workflow_dispatch', GITHUB_EVENT_PATH: '' },
     })
     expect(JSON.parse(stdout).metadata_only).toBe(true)
     expect(fs.readFileSync(output, 'utf8')).toContain('metadata_only=true\n')
@@ -119,6 +151,21 @@ describe('PR / push 内容范围路由', () => {
       cwd,
       encoding: 'utf8',
       env: { ...process.env, GITHUB_EVENT_NAME: 'workflow_dispatch', GITHUB_SHA: before },
+    })
+    expect(JSON.parse(stdout).metadata_only).toBe(true)
+  })
+
+  it('CLI PR 模式使用 merge-base 而不是已前进的 base 提交', () => {
+    const { cwd, before, after } = repository()
+    git(cwd, 'switch', '-c', 'base-advanced', before)
+    writeFiles(cwd, { 'packages/a/src/base.ts': 'export const base = true\n' })
+    git(cwd, 'add', '.')
+    git(cwd, 'commit', '-m', 'test: base advanced')
+    const base = git(cwd, 'rev-parse', 'HEAD')
+    const stdout = execFileSync(process.execPath, [script, '--event', 'pull_request', '--base', base, '--head', after], {
+      cwd,
+      encoding: 'utf8',
+      env: { ...process.env, GITHUB_EVENT_NAME: 'workflow_dispatch', GITHUB_SHA: base },
     })
     expect(JSON.parse(stdout).metadata_only).toBe(true)
   })

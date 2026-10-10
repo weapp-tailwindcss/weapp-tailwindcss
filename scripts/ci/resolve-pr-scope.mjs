@@ -88,6 +88,11 @@ export function resolveScopes(files) {
   return result
 }
 
+/**
+ * 保留文件列表入口，未知范围仍返回需要完整检查的路径。
+ * @param {import('./release-metadata/git.mjs').ChangeRangeOptions} [options] 变更范围。
+ * @returns {string[]} 已确认的变更文件列表。
+ */
 export function readChangedFiles(options = {}) {
   try {
     return readChangeRange(options).changes.map(change => change.file)
@@ -97,11 +102,27 @@ export function readChangedFiles(options = {}) {
   }
 }
 
+/**
+ * 解析内容范围；无法证明仅元数据时保留全部代码门禁。
+ * @param {import('./release-metadata/git.mjs').ChangeRangeOptions} [options] 变更范围。
+ * @returns {Record<string, boolean>} 各门禁是否启用及元数据判定。
+ */
 export function resolveChangeScopes(options = {}) {
   const complete = Object.fromEntries(Object.keys(scopeRules).map(scope => [scope, true]))
   try {
     const { from, to, changes } = readChangeRange(options)
     const hasChanges = changes.length > 0
+    const files = changes.map(change => normalizeFile(change.file))
+    const docsOnly = hasChanges && files.every(file => (file.endsWith('.md') || file.endsWith('.mdx'))
+      && !file.startsWith('.changeset/') && !/^changelog(?:\.|$)/i.test(path.posix.basename(file)))
+    if (docsOnly) {
+      return {
+        ...Object.fromEntries(Object.keys(scopeRules).map(scope => [scope, false])),
+        website: files.some(file => scopeRules.website.some(rule => rule.test(file))),
+        metadata_only: false,
+        has_changes: true,
+      }
+    }
     const metadataOnly = hasChanges && classifyReleaseMetadata({
       changes,
       base: readSnapshot(from, options.cwd),
