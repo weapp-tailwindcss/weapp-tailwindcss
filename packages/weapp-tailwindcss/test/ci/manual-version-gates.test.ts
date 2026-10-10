@@ -33,13 +33,30 @@ describe('版本 PR 的手动完整校验入口', () => {
   ])('仅已验证的自动纯版本 PR 在 %s 中等待手动校验', (name, job, scope, stableName) => {
     const check = workflow(name)
     const gate = check.jobs[job]
-    expect(gate.name).toBe(`\${{ github.event_name == 'pull_request' && needs.${scope}.outputs.metadata_only == 'true' && 'Await manual version verification' || '${stableName}' }}`)
+    const dispatchName = name === 'website-seo-quality.yml'
+      ? 'github.event_name == \'workflow_dispatch\' && github.ref_name == \'release/pnpm-version\' && \'Version PR SEO verification\' || '
+      : ''
+    expect(gate.name).toBe(`\${{ github.event_name == 'pull_request' && needs.${scope}.outputs.metadata_only == 'true' && 'Await manual version verification' || ${dispatchName}'${stableName}' }}`)
     expect(gate.if).toBe('always() && !cancelled()')
     expect(gate.needs).toContain(scope)
     expect(check.jobs[scope].uses).toBe('./.github/workflows/ci-scope.yml')
     expect(check.jobs[scope].with).toBeUndefined()
     // 分支名、标题和作者不能替代共享的实际内容分类。
     expect(gate.name).not.toMatch(/head\.ref|title|actor/)
+  })
+
+  it('版本分支单独手动 SEO 保留完整校验，但不能代替全量版本 PR 汇总', () => {
+    const { jobs } = workflow('website-seo-quality.yml')
+    const seo = jobs['seo-quality']
+    expect(seo.name).toContain('github.event_name == \'workflow_dispatch\' && github.ref_name == \'release/pnpm-version\' && \'Version PR SEO verification\'')
+    // 分支只决定结果名称，不能据此跳过网站构建和严格校验。
+    expect(seo.if).not.toMatch(/ref_name|release\/pnpm-version/)
+    expect(seo.steps.every((step: any) => !/ref_name|release\/pnpm-version/.test(step.if ?? ''))).toBe(true)
+    expect(jobs['detect-website-changes'].with).toBeUndefined()
+    for (const stepName of ['SEO Quality Gate (website)', 'Build website', 'Validate Worker bundle']) {
+      expect(seo.steps.find((step: any) => step.name === stepName).if)
+        .toBe('needs.detect-website-changes.outputs.website == \'true\'')
+    }
   })
 
   it('手动完整校验继承 dispatch 事件，不将缺失 diff 当作纯版本豁免', () => {

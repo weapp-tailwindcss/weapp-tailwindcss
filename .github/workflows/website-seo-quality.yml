@@ -24,7 +24,7 @@ jobs:
     uses: ./.github/workflows/ci-scope.yml
 
   seo-quality:
-    name: ${{ github.event_name == 'pull_request' && needs.detect-website-changes.outputs.metadata_only == 'true' && 'Await manual version verification' || 'SEO Quality Gate' }}
+    name: ${{ github.event_name == 'pull_request' && needs.detect-website-changes.outputs.metadata_only == 'true' && 'Await manual version verification' || github.event_name == 'workflow_dispatch' && github.ref_name == 'release/pnpm-version' && 'Version PR SEO verification' || 'SEO Quality Gate' }}
     needs: detect-website-changes
     if: always() && !cancelled()
     runs-on: ubuntu-latest
