@@ -72,4 +72,31 @@ describe('版本 PR 的手动完整校验入口', () => {
     expect(seo.find((step: any) => step.name === 'Require website scope output').run)
       .toContain('test "$WEBSITE_ENABLED" = true || test "$WEBSITE_ENABLED" = false')
   })
+
+  it.each([
+    ['package-readme-quality.yml', 'validate', 'readme-gate', 'Package README Quality Gate'],
+    ['architecture.yml', 'architecture', 'architecture-gate', 'Architecture Quality Gate'],
+    ['agents.yml', 'agents', 'agents-gate', 'Agent Workflow Gate'],
+  ])('%s 仅延后已证明纯版本的自动 PR 正式校验，并传播范围失败', (name, verification, gateName, stableName) => {
+    const check = workflow(name)
+    expect(check.jobs.scope.uses).toBe('./.github/workflows/ci-scope.yml')
+    expect(check.jobs[verification].needs).toBe('scope')
+    expect(check.jobs[verification].if)
+      .toBe('github.event_name != \'pull_request\' || needs.scope.outputs.metadata_only != \'true\'')
+
+    const gate = check.jobs[gateName]
+    expect(gate.name).toBe(`\${{ github.event_name == 'pull_request' && needs.scope.outputs.metadata_only == 'true' && 'Await manual version verification' || '${stableName}' }}`)
+    expect(gate.needs).toEqual(['scope', verification])
+    expect(gate.if).toBe('always() && !cancelled()')
+    expect(gate.steps[0].env).toEqual({
+      SCOPE_RESULT: '${{ needs.scope.result }}',
+      METADATA_ONLY: '${{ needs.scope.outputs.metadata_only }}',
+      EVENT_NAME: '${{ github.event_name }}',
+      VERIFICATION_RESULT: `\${{ needs.${verification}.result }}`,
+    })
+    expect(gate.steps[0].run).toContain('test "$SCOPE_RESULT" = success')
+    expect(gate.steps[0].run).toContain('test "$METADATA_ONLY" = true || test "$METADATA_ONLY" = false')
+    expect(gate.steps[0].run).toContain('if test "$EVENT_NAME" != pull_request || test "$METADATA_ONLY" != true; then')
+    expect(gate.steps[0].run).toContain('test "$VERIFICATION_RESULT" = success')
+  })
 })

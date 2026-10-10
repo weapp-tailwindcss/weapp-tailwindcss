@@ -11,7 +11,12 @@ permissions:
   contents: read
 
 jobs:
+  scope:
+    uses: ./.github/workflows/ci-scope.yml
+
   agents:
+    needs: scope
+    if: github.event_name != 'pull_request' || needs.scope.outputs.metadata_only != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -19,3 +24,22 @@ jobs:
       - uses: ./.github/actions/setup-pnpm
       - run: pnpm agents:test
       - run: pnpm agents:check
+
+  agents-gate:
+    name: ${{ github.event_name == 'pull_request' && needs.scope.outputs.metadata_only == 'true' && 'Await manual version verification' || 'Agent Workflow Gate' }}
+    needs: [scope, agents]
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require scope and enabled agent workflow verification
+        env:
+          SCOPE_RESULT: ${{ needs.scope.result }}
+          METADATA_ONLY: ${{ needs.scope.outputs.metadata_only }}
+          EVENT_NAME: ${{ github.event_name }}
+          VERIFICATION_RESULT: ${{ needs.agents.result }}
+        run: |
+          test "$SCOPE_RESULT" = success
+          test "$METADATA_ONLY" = true || test "$METADATA_ONLY" = false
+          if test "$EVENT_NAME" != pull_request || test "$METADATA_ONLY" != true; then
+            test "$VERIFICATION_RESULT" = success
+          fi

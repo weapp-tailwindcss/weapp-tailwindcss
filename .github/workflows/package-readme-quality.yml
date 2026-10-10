@@ -25,8 +25,13 @@ permissions:
   contents: read
 
 jobs:
+  scope:
+    uses: ./.github/workflows/ci-scope.yml
+
   validate:
     name: Validate published package READMEs
+    needs: scope
+    if: github.event_name != 'pull_request' || needs.scope.outputs.metadata_only != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -41,3 +46,22 @@ jobs:
 
       - name: Validate bilingual package READMEs
         run: node scripts/check-package-readmes.mjs
+
+  readme-gate:
+    name: ${{ github.event_name == 'pull_request' && needs.scope.outputs.metadata_only == 'true' && 'Await manual version verification' || 'Package README Quality Gate' }}
+    needs: [scope, validate]
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require scope and enabled README verification
+        env:
+          SCOPE_RESULT: ${{ needs.scope.result }}
+          METADATA_ONLY: ${{ needs.scope.outputs.metadata_only }}
+          EVENT_NAME: ${{ github.event_name }}
+          VERIFICATION_RESULT: ${{ needs.validate.result }}
+        run: |
+          test "$SCOPE_RESULT" = success
+          test "$METADATA_ONLY" = true || test "$METADATA_ONLY" = false
+          if test "$EVENT_NAME" != pull_request || test "$METADATA_ONLY" != true; then
+            test "$VERIFICATION_RESULT" = success
+          fi
