@@ -7,7 +7,12 @@ const stages = new Set(['plan', 'verify', 'prepare', 'upload', 'confirm', 'final
 const releaseBranches = new Set(['main', 'alpha', 'beta', 'rc', 'next'])
 const fullShaPattern = /^[a-f\d]{40}$/i
 
-/** 验证初始提交，将当前 HEAD 身份传给 repoctl，后续状态由官方 receipt 校验。 */
+/**
+ * 验证初始提交，将当前 HEAD 身份传给 repoctl，后续状态由官方 receipt 校验。
+ * @param {string} stage 已校验的发布阶段。
+ * @param {{ env?: NodeJS.ProcessEnv, headSha?: string, platform?: NodeJS.Platform }} [options] 调用环境、当前提交及运行平台。
+ * @returns {{ command: string, args: string[], options: { env: NodeJS.ProcessEnv, stdio: 'inherit', shell: boolean } }} 保留完整环境类型的阶段调用配置。
+ */
 export function buildStageInvocation(stage, { env = {}, headSha, platform = process.platform } = {}) {
   if (!stages.has(stage)) {
     throw new Error(`不支持的发布阶段：${stage}`)
