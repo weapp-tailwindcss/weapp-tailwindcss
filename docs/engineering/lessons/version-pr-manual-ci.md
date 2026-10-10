@@ -10,6 +10,7 @@ regressions:
   - packages/weapp-tailwindcss/test/ci/release-trigger-workflow.test.ts
   - packages/weapp-tailwindcss/test/ci/install-workspace.test.ts
   - packages/weapp-tailwindcss/test/ci/install-memory-workflow.test.ts
+  - packages/weapp-tailwindcss/test/ci/install-memory-darwin.test.ts
 ---
 
 # 自动生成版本 PR、人工验收、合并发布
@@ -47,6 +48,11 @@ GitHub PR API 的 base SHA 可能仍对应历史基线：本轮实际 PR 返回 
 第一次 [手动验收 38051370442](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38051370442) 绑定新 head 后发现两项安装边界：macOS Node 22 + pnpm 11 在默认约 2GiB V8 堆退出 134；最小 Node 场景残留 22.12.0，低于根 engines 的 22.18.0，也低于 pnpm 11 的 22.13 启动要求，退出 1。两项均在测试开始前失败，不能记为业务断言失败或用重跑掩盖。
 修复统一 CI 的安装保护入口，为安装子进程设置受可用内存约束、最大 4GiB 的堆预算，保留显式 Node 参数且不改变父进程或后续测试的预算；最小 Node 场景对齐现有 engines，并用契约测试防止漂移。
 两项修复整合后 6 files / 101 tests 通过，真实安装子进程探针验证 frozen-lockfile 参数与环境隔离；另在 Node 22.18 实际运行 11 项回归通过。受影响新文件显式 lint、严格类型、actionlint、规则与 diff 检查通过；最终仍需重新生成的 PR head 远端确认。
+
+`09644a87` 的 [自动 prepare 38052296999](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38052296999) 完整成功，生成 `d075435092e5cc7bee9c360bafac3086404fba95`；该 head 包含最新 main，内容分类为纯版本元数据。[手动验收 38054683432](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38054683432) 中最低 Node 22.18、Windows Node 22/24、Ubuntu Node 24 均通过，CSS 六格 tarball、真实生成器、三浏览器语义、README、架构及 Release Gate 也通过。
+macOS Node 22 的安装仍失败：两次 GC 日志分别在约 212MiB 和 464MiB 堆耗尽，业务构建与测试尚未执行。Node 22.23.2 所用旧 libuv 的 Darwin `availableMemory()` 只统计 free 页；libuv 1.52 才加入 inactive 和 purgeable 页。以旧 free 值的一半覆盖 V8 默认堆，会把缓存占用误判为容量不足，反而降低安装预算。
+修复为旧 libuv 的 Darwin 限时读取 `vm_stat`，严格解析 free、inactive、purgeable 页与 page size，采用和新 libuv 相同的读数；保持宿主/容器约束、半数预留及 4GiB 上限。系统读取或解析失败直接拒绝，显式 heap 保留且不额外读取资源；日志仅输出内存来源与数值，便于核验实际安装预算。此轮失败 head 的成功子检查保留为阶段证据，不能代替修复后重新生成 head 的正式验收。
+此修复整合后的版本入口与安装回归 6 files / 95 tests 通过；Node 22.23.2 与最低 22.18.0 各运行 30 项安装回归通过。真实 Darwin Node 22.23.2 / libuv 1.51.0 探针确认使用兼容读数，安装子进程的 old-space 上限为 4096MiB、总 heap 上限为 4144MiB；Node 24.18 / libuv 1.52.1 保留原生读数。显式 lint、新内存模块与对应回归的严格类型（含 exactOptionalPropertyTypes / noUncheckedIndexedAccess）、规则和 diff 检查通过。扩展到原安装 wrapper 与 `pnpm-command.mjs` 的严格 checkJs 仍有既有未标注类型，不把此范围记为通过，也不扩大到无关类型重写。
 
 ## 操作入口
 
