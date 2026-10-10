@@ -13,6 +13,7 @@ on:
       - pnpm-lock.yaml
       - .github/workflows/react-native-compatibility.yml
   workflow_dispatch:
+  workflow_call:
 
 concurrency:
   group: react-native-${{ github.event.pull_request.number || github.ref }}

@@ -15,6 +15,10 @@ const reusableChecks = [
   'package-readme-quality.yml',
   'architecture.yml',
   'agents.yml',
+  'ci.yml',
+  'benchmark.yml',
+  'react-native-compatibility.yml',
+  'lynx-native.yml',
 ]
 
 describe('版本 PR 的手动完整校验入口', () => {
@@ -56,6 +60,42 @@ describe('版本 PR 的手动完整校验入口', () => {
     for (const stepName of ['SEO Quality Gate (website)', 'Build website', 'Validate Worker bundle']) {
       expect(seo.steps.find((step: any) => step.name === stepName).if)
         .toBe('needs.detect-website-changes.outputs.website == \'true\'')
+    }
+  })
+
+  it('手动 CI 继承完整静态、多端和 watch 校验，移动端与 benchmark 保持范围门禁及并发', () => {
+    const ci = workflow('ci.yml')
+    expect(ci.jobs.scope.if).toBe('github.event_name != \'pull_request\'')
+    for (const job of ['quality-static', 'unit-tests', 'e2e-static', 'e2e-focused', 'e2e-multiplatform', 'e2e-watch', 'compatibility']) {
+      expect(ci.jobs[job].if).toBe('github.event_name != \'pull_request\' && needs.scope.outputs.core == \'true\'')
+    }
+
+    for (const name of ['benchmark.yml', 'react-native-compatibility.yml', 'lynx-native.yml']) {
+      const check = workflow(name)
+      expect(check.jobs.scope.uses).toBe('./.github/workflows/ci-scope.yml')
+      expect(check.jobs.scope.with).toBeUndefined()
+      expect(check.concurrency['cancel-in-progress']).toBe(true)
+    }
+    expect(workflow('benchmark.yml').jobs['benchmark-shard'].strategy['max-parallel']).toBe(2)
+    expect(workflow('benchmark.yml').jobs['synthetic-performance'].if).toContain('!inputs.weekly_demo_cost')
+    expect(workflow('react-native-compatibility.yml').jobs.android.needs).toEqual(['scope', 'web'])
+  })
+
+  it('同一手动验收 run 的子工作流与嵌套工作流使用独立 artifact 名称前缀', () => {
+    const artifactOwners = new Map<string, string>()
+    for (const name of [...reusableChecks, 'native.yml', 'css-compat.yml', 'demo-matrix.yml']) {
+      const { jobs } = workflow(name)
+      for (const job of Object.values(jobs) as Array<{ steps?: Array<{ uses?: string, with?: { name?: string } }> }>) {
+        for (const step of job.steps ?? []) {
+          if (!step.uses?.startsWith('actions/upload-artifact@')) {
+            continue
+          }
+          const prefix = step.with!.name!.split('${{')[0]!
+          expect(prefix, name).not.toBe('')
+          expect(artifactOwners.get(prefix), `${name} artifact prefix ${prefix}`).toBeUndefined()
+          artifactOwners.set(prefix, name)
+        }
+      }
     }
   })
 

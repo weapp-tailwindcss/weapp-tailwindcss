@@ -40,6 +40,7 @@ on:
         description: 可选：只跑指定项目 key，多个 key 用逗号分隔
         required: false
         default: ''
+  workflow_call:
 
 concurrency:
   group: benchmark-${{ github.event.pull_request.number || github.ref }}

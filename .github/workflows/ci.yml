@@ -9,6 +9,7 @@ on:
       - '**/*.md'
       - '.changeset/**'
   workflow_dispatch:
+  workflow_call:
 
 concurrency:
   group: ci-${{ github.event.pull_request.number || github.ref }}
