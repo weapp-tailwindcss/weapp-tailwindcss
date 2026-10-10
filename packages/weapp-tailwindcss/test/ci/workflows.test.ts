@@ -305,7 +305,7 @@ describe('ci workflows', () => {
     const qualityRuns = stepRuns(workflow, 'quality-static')
     const unitRuns = stepRuns(workflow, 'unit-tests')
     expect(qualityRuns).toEqual(expect.arrayContaining([
-      'pnpm install --frozen-lockfile',
+      'node scripts/ci/install-workspace.mjs',
       'pnpm lint',
     ]))
     expect(hasStepRunCommand(qualityRuns, 'pnpm build:ci')).toBe(true)
@@ -519,7 +519,7 @@ describe('ci workflows', () => {
 
     expect(workflow.jobs.compatibility.strategy['fail-fast']).toBe(false)
     expect(matrixIds(workflowDispatchRows)).toEqual(expect.arrayContaining([
-      'ubuntu-latest:22.12.0:node22-min-core',
+      'ubuntu-latest:22.18.0:node22-min-core',
       'ubuntu-latest:24:node24-core',
       'windows-latest:22:windows-node22-core',
       'windows-latest:24:windows-node24-core',

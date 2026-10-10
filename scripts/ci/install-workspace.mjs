@@ -5,6 +5,7 @@ import process from 'node:process'
 import { setTimeout as delay } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
 import { createPnpmCommand } from '../pnpm-command.mjs'
+import { createInstallEnvironment } from './install-memory.mjs'
 
 export const DEFAULT_INSTALL_ATTEMPTS = 2
 export const DEFAULT_INSTALL_TIMEOUT_MS = 10 * 60 * 1000
@@ -59,7 +60,7 @@ function runInstallAttempt(timeoutMs) {
   const command = createPnpmCommand(['install', '--frozen-lockfile'])
   const child = spawn(command.command, command.args, {
     cwd: process.cwd(),
-    env: process.env,
+    env: createInstallEnvironment(),
     shell: command.shell,
     stdio: 'inherit',
     detached: process.platform !== 'win32',

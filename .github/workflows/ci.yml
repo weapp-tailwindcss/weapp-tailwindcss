@@ -51,7 +51,7 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: node scripts/ci/install-workspace.mjs
 
       - name: Security Audit
         timeout-minutes: 3
@@ -125,7 +125,7 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: node scripts/ci/install-workspace.mjs
 
       - name: Build test dependency closure
         run: pnpm ci:memory --label unit-build-${{ matrix.shard }} --max-rss-mb 5632 --max-rss-delta-mb 4608 -- pnpm build:ci
@@ -219,7 +219,7 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: node scripts/ci/install-workspace.mjs
 
       - name: Build
         run: pnpm ci:memory --label e2e-static-build-${{ matrix.shard }} --max-rss-mb 5632 --max-rss-delta-mb 4608 -- pnpm build:ci
@@ -319,7 +319,7 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: node scripts/ci/install-workspace.mjs
 
       - name: Build
         run: pnpm ci:memory --label e2e-focused-build-${{ matrix.case_name }} --max-rss-mb 5632 --max-rss-delta-mb 4608 -- pnpm build:ci
@@ -394,7 +394,7 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: node scripts/ci/install-workspace.mjs
 
       - name: Build
         run: pnpm ci:memory --label e2e-multiplatform-build-${{ matrix.case_name }} --max-rss-mb 5632 --max-rss-delta-mb 4608 -- pnpm build:ci
@@ -498,7 +498,7 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: node scripts/ci/install-workspace.mjs
 
       - name: Install Playwright Chromium
         shell: bash
@@ -595,7 +595,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '[{"os":"ubuntu-latest","node-version":"22.12.0","pnpm-version":"11.9.0","scenario":"node22-min-core"},{"os":"ubuntu-latest","node-version":24,"pnpm-version":"11.9.0","scenario":"node24-core"},{"os":"windows-latest","node-version":22,"pnpm-version":"11.9.0","scenario":"windows-node22-core"},{"os":"windows-latest","node-version":24,"pnpm-version":"11.9.0","scenario":"windows-node24-core"},{"os":"macos-latest","node-version":22,"pnpm-version":"11.9.0","scenario":"macos-node22-core"}]' || '[{"os":"windows-latest","node-version":22,"pnpm-version":"11.9.0","scenario":"windows-node22-core"}]') }}
+        include: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '[{"os":"ubuntu-latest","node-version":"22.18.0","pnpm-version":"11.9.0","scenario":"node22-min-core"},{"os":"ubuntu-latest","node-version":24,"pnpm-version":"11.9.0","scenario":"node24-core"},{"os":"windows-latest","node-version":22,"pnpm-version":"11.9.0","scenario":"windows-node22-core"},{"os":"windows-latest","node-version":24,"pnpm-version":"11.9.0","scenario":"windows-node24-core"},{"os":"macos-latest","node-version":22,"pnpm-version":"11.9.0","scenario":"macos-node22-core"}]' || '[{"os":"windows-latest","node-version":22,"pnpm-version":"11.9.0","scenario":"windows-node22-core"}]') }}
     runs-on: ${{ matrix.os }}
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
@@ -621,7 +621,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: node scripts/ci/install-workspace.mjs
 
       - name: Build core package dependency closure
         run: pnpm build:ci
