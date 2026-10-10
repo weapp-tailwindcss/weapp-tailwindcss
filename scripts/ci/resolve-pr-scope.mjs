@@ -1,8 +1,9 @@
-import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { readChangeRange, readSnapshot } from './release-metadata/git.mjs'
+import { classifyReleaseMetadata } from './release-metadata/index.mjs'
 
 const scopeRules = {
   'core': [
@@ -87,14 +88,36 @@ export function resolveScopes(files) {
   return result
 }
 
-export function readChangedFiles({ base, head } = {}) {
-  const baseRef = base || process.env.GITHUB_BASE_SHA
-  const headRef = head || process.env.GITHUB_SHA || 'HEAD'
-  if (!baseRef || process.env.GITHUB_EVENT_NAME !== 'pull_request') {
+export function readChangedFiles(options = {}) {
+  try {
+    return readChangeRange(options).changes.map(change => change.file)
+  }
+  catch {
     return ['.github/workflows/pr-gate.yml']
   }
-  const output = execFileSync('git', ['diff', '--name-only', baseRef, headRef], { encoding: 'utf8' })
-  return output.split(/\r?\n/).filter(Boolean)
+}
+
+export function resolveChangeScopes(options = {}) {
+  const complete = Object.fromEntries(Object.keys(scopeRules).map(scope => [scope, true]))
+  try {
+    const { from, to, changes } = readChangeRange(options)
+    const hasChanges = changes.length > 0
+    const metadataOnly = hasChanges && classifyReleaseMetadata({
+      changes,
+      base: readSnapshot(from, options.cwd),
+      head: readSnapshot(to, options.cwd),
+    })
+    return {
+      ...Object.fromEntries(Object.keys(scopeRules).map(scope => [scope, hasChanges && !metadataOnly])),
+      metadata_only: metadataOnly,
+      has_changes: hasChanges,
+    }
+  }
+  catch (error) {
+    // 无法证明仅元数据时保留全部门禁，不依据标题、作者或分支名称放行。
+    process.stderr.write(`CI scope: ${error.message}; 使用完整检查。\n`)
+    return { ...complete, metadata_only: false, has_changes: true }
+  }
 }
 
 export function writeGitHubOutput(file, scopes) {
@@ -104,7 +127,12 @@ export function writeGitHubOutput(file, scopes) {
 
 function main() {
   const args = new Map(process.argv.slice(2).map((value, index, values) => [value, values[index + 1]]))
-  const scopes = resolveScopes(readChangedFiles({ base: args.get('--base'), head: args.get('--head') }))
+  const scopes = resolveChangeScopes({
+    base: args.get('--base'),
+    head: args.get('--head'),
+    before: args.get('--before'),
+    eventName: args.get('--event') || process.env.GITHUB_EVENT_NAME,
+  })
   if (args.has('--github-output')) {
     writeGitHubOutput(args.get('--github-output'), scopes)
   }
