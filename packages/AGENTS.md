@@ -13,7 +13,7 @@
   - 构建产物类型声明；
   - README 中的公开用法（如有）。
 - 默认保持“单一职责”包边界，不把上游业务逻辑混入基础工具包。
-- 除 `packages/engine` 的 Tailwind CSS 4 生成专用处理外，CSS 语法解析、tokenize 与 AST 变换属于 `@weapp-tailwindcss/postcss`；其他包不得再引入 `postcss-scss`、`@csstools/css-tokenizer` 等样式处理依赖，应通过该包的导出消费。
+- 除 `packages/engine` 的 Tailwind CSS 4 生成专用处理外，已提取的框架无关 layer 内核属于 `@weapp-tailwindcss/css-compat`，其余 CSS 语法解析、tokenize 与 AST 变换属于 `@weapp-tailwindcss/postcss`；这两个包以外不得再引入 `postcss-scss`、`@csstools/css-tokenizer` 等样式处理依赖，应通过该包的导出消费。
 
 ## 工程与测试
 

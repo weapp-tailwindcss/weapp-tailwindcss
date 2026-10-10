@@ -1,0 +1,84 @@
+name: CSS Compatibility
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  push:
+    branches: [main, next]
+    paths:
+      - packages/css-compat/**
+      - packages/postcss/**
+      - packages/engine/**
+      - packages/weapp-tailwindcss/test/ci/css-compat-workflow.test.ts
+      - packages/weapp-tailwindcss/test/ci/ensure-built-css-compat.test.ts
+      - scripts/ensure-weapp-tailwindcss-built.mjs
+      - scripts/architecture/**
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - .github/actions/setup-pnpm/**
+      - .github/workflows/css-compat.yml
+      - .github/workflows/pr-gate.yml
+
+permissions:
+  contents: read
+
+env:
+  CI: '1'
+
+jobs:
+  portability:
+    name: CSS compatibility (${{ matrix.os }}, Node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Build CSS compatibility package
+        run: pnpm --filter @weapp-tailwindcss/css-compat build
+      - name: Check CSS compatibility types
+        run: pnpm --filter @weapp-tailwindcss/css-compat typecheck
+      - name: Run CSS compatibility regressions
+        run: pnpm --filter @weapp-tailwindcss/css-compat test --coverage.enabled=false
+      - name: Verify public tarball consumers
+        run: pnpm --filter @weapp-tailwindcss/css-compat test:package
+
+  semantics:
+    name: CSS compatibility semantics (ubuntu-latest, Node 24)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          node-version: 24
+      - name: Build PostCSS and generator dependency closure
+        run: pnpm --filter @weapp-tailwindcss/postcss... run build
+      - name: Check generated property relationships
+        run: pnpm --filter @weapp-tailwindcss/css-compat properties:check
+      - name: Verify real CSS generator consumers
+        run: pnpm --filter @weapp-tailwindcss/css-compat test:consumers
+      - name: Install three browser engines
+        run: pnpm exec playwright install --with-deps chromium chromium-headless-shell firefox webkit
+      - name: Compare native cascade layer semantics
+        run: pnpm --filter @weapp-tailwindcss/css-compat test:browser
+      - name: Record CSS compatibility benchmark
+        shell: bash
+        run: |
+          mkdir -p .tmp/css-compat
+          pnpm --filter @weapp-tailwindcss/css-compat bench | tee .tmp/css-compat/benchmark.log
+      - name: Upload CSS compatibility benchmark
+        if: always() && !cancelled()
+        uses: actions/upload-artifact@v7
+        with:
+          name: css-compat-benchmark-${{ github.sha }}-${{ github.run_attempt }}
+          path: .tmp/css-compat/benchmark.log
+          if-no-files-found: warn
+          retention-days: 14

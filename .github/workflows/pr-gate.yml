@@ -225,10 +225,16 @@ jobs:
     if: needs.scope.outputs.core == 'true'
     uses: ./.github/workflows/demo-matrix.yml
 
+  css-compat:
+    name: CSS compatibility
+    needs: scope
+    if: needs.scope.outputs.core == 'true'
+    uses: ./.github/workflows/css-compat.yml
+
   pr-gate:
     name: PR Gate
     if: always() && !cancelled()
-    needs: [scope, quality, core-smoke, platform-watch, platform-dev, windows-utilities, portable-demos]
+    needs: [scope, quality, core-smoke, platform-watch, platform-dev, windows-utilities, portable-demos, css-compat]
     runs-on: ubuntu-latest
     steps:
       - name: Require enabled PR checks
@@ -241,11 +247,13 @@ jobs:
           UTILITIES_RESULT: ${{ needs.windows-utilities.result }}
           DEMOS_ENABLED: ${{ needs.scope.outputs.core }}
           DEMOS_RESULT: ${{ needs.portable-demos.result }}
+          CSS_COMPAT_RESULT: ${{ needs.css-compat.result }}
         run: |
           test "$SCOPE_RESULT" = success
           test "$UTILITIES_RESULT" = success
           if test "$DEMOS_ENABLED" = true; then
             test "$DEMOS_RESULT" = success
+            test "$CSS_COMPAT_RESULT" = success
           fi
           for result in "$QUALITY_RESULT" "$SMOKE_RESULT" "$PLATFORM_RESULT" "$DEV_RESULT"; do
             test "$result" = success || test "$result" = skipped

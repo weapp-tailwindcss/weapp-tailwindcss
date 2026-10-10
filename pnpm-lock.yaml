@@ -4873,6 +4873,25 @@ importers:
         specifier: workspace:*
         version: link:../weapp-tailwindcss
 
+  packages/css-compat:
+    dependencies:
+      '@csstools/css-tokenizer':
+        specifier: catalog:csstools
+        version: 4.0.2
+      '@csstools/selector-specificity':
+        specifier: 6.0.1
+        version: 6.0.1(postcss-selector-parser@7.1.6)
+      postcss:
+        specifier: ^8.5.29
+        version: 8.5.29
+      postcss-selector-parser:
+        specifier: catalog:buildUtilities
+        version: 7.1.6
+    devDependencies:
+      mdn-data:
+        specifier: 2.37.2
+        version: 2.37.2
+
   packages/debug-uni-app-x:
     dependencies:
       defu:
@@ -5002,6 +5021,9 @@ importers:
       '@csstools/css-tokenizer':
         specifier: catalog:csstools
         version: 4.0.2
+      '@weapp-tailwindcss/css-compat':
+        specifier: workspace:*
+        version: link:../css-compat
       '@weapp-tailwindcss/engine':
         specifier: workspace:*
         version: link:../engine
@@ -26860,6 +26882,9 @@ packages:
 
   mdn-data@2.29.0:
     resolution: {integrity: sha512-pVxQFCcaYUEAH853+v7yoI/qzhxXSq1bTb9obMYGYAN1c3Hen+XDCEvr296XhstrwlSTNgOR7mCSD4JPjbJe5A==}
+
+  mdn-data@2.37.2:
+    resolution: {integrity: sha512-rz9YOBGItdSbe7HcSArUbhiAv4SB/4DKRYg96CSFS2CcIYMbUvBtZlzA1NCbk2AdgbmYwMqwNblLpR441lLeiQ==}
 
   mdurl@2.1.0:
     resolution: {integrity: sha512-1+HBaOx0zi/dQWht8rNv9MYf9qqpqL/kxI0hXImU6Y547zM6Sni8BQibt7ifgMcYtQg41ao3Ivd6cnSM86inpg==}
@@ -65687,6 +65712,8 @@ snapshots:
   mdn-data@2.27.1: {}
 
   mdn-data@2.29.0: {}
+
+  mdn-data@2.37.2: {}
 
   mdurl@2.1.0: {}
 

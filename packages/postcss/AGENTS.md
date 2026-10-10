@@ -3,7 +3,7 @@
 ## 适用范围
 
 - 本文件适用于 `packages/postcss`。
-- 本包拥有通用 CSS 语法解析、tokenize、AST 变换和平台兼容 PostCSS 管线；Tailwind CSS 4 生成专用的 CSS 处理由 `packages/engine` 拥有。
+- 本包拥有尚未提取的通用 CSS 语法解析、tokenize、AST 变换和平台兼容 PostCSS 管线；框架无关 layer 内核由 `packages/css-compat` 拥有；Tailwind CSS 4 生成专用的 CSS 处理由 `packages/engine` 拥有。
 - 本包聚焦 CSS AST 级处理，不承担 JS/模板层的启发式纠错职责，也不承担 bundler 生命周期或 Tailwind class 生成。
 
 ## 包内结构约定
@@ -19,8 +19,9 @@
 
 ## 所有权
 
-- 新增 CSS parser/tokenizer/selector/value/compat 变换时写在本包并导出；禁止在 `packages/weapp-tailwindcss` 再实现一份。
-- `postcss-scss`、`@csstools/*`、`postcss-selector-parser`、`postcss-value-parser` 只作为本包依赖。
+- layer 算法只从 `@weapp-tailwindcss/css-compat` 消费；旧 `consumeCascadeLayers` 使用显式 `/legacy` 入口，不能静默切换 ordered。
+- 其余新增 CSS parser/tokenizer/selector/value/compat 变换时写在本包并导出；禁止在 `packages/weapp-tailwindcss` 再实现一份。
+- `postcss-scss`、`@csstools/*`、`postcss-selector-parser`、`postcss-value-parser` 只作为本包或框架无关 `css-compat` 内核依赖。
 - 主包可以通过本包 re-export 的 `postcss` 做编排级 parse/walk，但不能拥有这些 CSS 工具依赖。
 
 ## 变更原则

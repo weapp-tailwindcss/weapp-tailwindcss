@@ -1,0 +1,99 @@
+{
+  "name": "@weapp-tailwindcss/css-compat",
+  "type": "module",
+  "version": "0.1.0",
+  "description": "框架无关的 CSS layer 顺序编译、诊断与显式旧算法兼容。",
+  "author": "ice breaker <1324318532@qq.com>",
+  "license": "MIT",
+  "homepage": "https://tw.weapp.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
+    "directory": "packages/css-compat"
+  },
+  "bugs": {
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./layers": {
+      "import": {
+        "types": "./dist/layers.d.mts",
+        "default": "./dist/layers.mjs"
+      },
+      "require": {
+        "types": "./dist/layers.d.cts",
+        "default": "./dist/layers.cjs"
+      }
+    },
+    "./diagnostics": {
+      "import": {
+        "types": "./dist/diagnostics.d.mts",
+        "default": "./dist/diagnostics.mjs"
+      },
+      "require": {
+        "types": "./dist/diagnostics.d.cts",
+        "default": "./dist/diagnostics.cjs"
+      }
+    },
+    "./legacy": {
+      "import": {
+        "types": "./dist/legacy.d.mts",
+        "default": "./dist/legacy.mjs"
+      },
+      "require": {
+        "types": "./dist/legacy.d.cts",
+        "default": "./dist/legacy.cjs"
+      }
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "files": [
+    "README.md",
+    "README.zh-CN.md",
+    "THIRD_PARTY_LICENSES.txt",
+    "dist"
+  ],
+  "engines": {
+    "node": "^22.18.0 || >=24.11.0"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "test": "vitest run --update=none",
+    "typecheck": "tsc -p tsconfig.json --noEmit --pretty false",
+    "test:package": "node scripts/verify-package.mjs",
+    "test:consumers": "node scripts/verify-consumers.mjs",
+    "test:browser": "node scripts/browser-parity.mjs",
+    "bench": "node --expose-gc scripts/benchmark.mjs",
+    "properties:generate": "node scripts/generate-properties.mjs",
+    "properties:check": "node scripts/generate-properties.mjs --check",
+    "lint": "eslint src scripts"
+  },
+  "peerDependencies": {
+    "postcss": "^8.5.29"
+  },
+  "dependencies": {
+    "@csstools/css-tokenizer": "catalog:csstools",
+    "@csstools/selector-specificity": "6.0.1",
+    "postcss-selector-parser": "catalog:buildUtilities"
+  },
+  "devDependencies": {
+    "mdn-data": "2.37.2"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  }
+}

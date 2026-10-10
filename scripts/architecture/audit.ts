@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import ts from 'typescript'
 import { auditClientBoundaries } from './client-boundaries'
+import { auditCssCompat } from './css-compat'
 import { findCycles, findPath } from './graph'
 import { readImports } from './imports'
 import { inside, readWorkspace, resolveWorkspaceEntry } from './workspace'
@@ -100,6 +101,6 @@ export function auditArchitecture(root: string) {
       }
     }
   }
-  errors.push(...auditClientBoundaries(root, packages, values))
+  errors.push(...auditClientBoundaries(root, packages, values), ...auditCssCompat(root))
   return { errors, files: files.size, packages: packages.length }
 }

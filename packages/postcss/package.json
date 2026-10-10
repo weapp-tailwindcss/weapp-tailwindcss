@@ -121,6 +121,7 @@
     "@csstools/css-color-parser": "catalog:csstools",
     "@csstools/css-parser-algorithms": "catalog:csstools",
     "@csstools/css-tokenizer": "catalog:csstools",
+    "@weapp-tailwindcss/css-compat": "workspace:*",
     "@weapp-tailwindcss/engine": "workspace:*",
     "@weapp-tailwindcss/escape": "workspace:*",
     "@weapp-tailwindcss/postcss-calc": "workspace:*",

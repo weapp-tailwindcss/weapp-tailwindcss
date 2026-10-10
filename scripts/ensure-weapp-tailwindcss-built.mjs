@@ -71,6 +71,11 @@ export const buildTargets = [
     packageRoot: path.join(repoRoot, 'packages/reset'),
   },
   {
+    filter: '@weapp-tailwindcss/css-compat',
+    label: '@weapp-tailwindcss/css-compat',
+    packageRoot: path.join(repoRoot, 'packages/css-compat'),
+  },
+  {
     filter: '@weapp-tailwindcss/postcss',
     label: '@weapp-tailwindcss/postcss',
     packageRoot: path.join(repoRoot, 'packages/postcss'),
