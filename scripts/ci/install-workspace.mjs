@@ -5,7 +5,7 @@ import process from 'node:process'
 import { setTimeout as delay } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
 import { createPnpmCommand } from '../pnpm-command.mjs'
-import { createInstallEnvironment } from './install-memory.mjs'
+import { prepareInstallEnvironment } from './install-memory.mjs'
 
 export const DEFAULT_INSTALL_ATTEMPTS = 2
 export const DEFAULT_INSTALL_TIMEOUT_MS = 10 * 60 * 1000
@@ -58,9 +58,11 @@ function terminateProcessTree(child) {
 
 function runInstallAttempt(timeoutMs) {
   const command = createPnpmCommand(['install', '--frozen-lockfile'])
+  const { environment, memory } = prepareInstallEnvironment()
+  console.log(`pnpm install 内存预算：${JSON.stringify(memory)}`)
   const child = spawn(command.command, command.args, {
     cwd: process.cwd(),
-    env: createInstallEnvironment(),
+    env: environment,
     shell: command.shell,
     stdio: 'inherit',
     detached: process.platform !== 'win32',

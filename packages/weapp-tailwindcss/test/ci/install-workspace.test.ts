@@ -12,7 +12,10 @@ import {
   readInstallConfig,
 } from '../../../../scripts/ci/install-workspace.mjs'
 
-afterEach(() => vi.unstubAllEnvs())
+afterEach(() => {
+  vi.unstubAllEnvs()
+  vi.restoreAllMocks()
+})
 
 describe('CI workspace install guard', () => {
   it('uses bounded retries and accepts positive overrides', () => {
@@ -69,7 +72,15 @@ describe('CI workspace install guard', () => {
     expect(createInstallEnvironment(environment, 16 * 1024 ** 3)).toEqual(environment)
   })
 
+  it('显式 heap 不依赖自动内存读数，无法读取预算时仍保留调用方参数', () => {
+    const available = vi.spyOn(process, 'availableMemory').mockReturnValue(Number.NaN)
+    const environment = { NODE_OPTIONS: '--max-old-space-size=768' }
+    expect(createInstallEnvironment(environment)).toEqual(environment)
+    expect(available).not.toHaveBeenCalled()
+  })
+
   it('真实 pnpm 入口仅收到安装预算，父进程环境及冻结锁文件参数保持完整', async () => {
+    const logger = vi.spyOn(console, 'log').mockImplementation(() => {})
     const directory = await mkdtemp(path.join(tmpdir(), 'pnpm-install-probe-'))
     const report = path.join(directory, 'report.json')
     const cli = path.join(directory, 'pnpm.mjs')
@@ -81,6 +92,7 @@ writeFileSync(process.env.PNPM_INSTALL_PROBE, JSON.stringify({ args: process.arg
       vi.stubEnv('npm_execpath', cli)
       vi.stubEnv('NODE_OPTIONS', '--no-warnings')
       vi.stubEnv('PNPM_INSTALL_PROBE', report)
+      vi.stubEnv('PNPM_INSTALL_SECRET_PROBE', 'private-probe')
       const result = await installWorkspace({ attempts: 1, timeoutMs: 10000, retryDelayMs: 1 })
       expect(result.code).toBe(0)
       const child = JSON.parse(await readFile(report, 'utf8'))
@@ -88,6 +100,12 @@ writeFileSync(process.env.PNPM_INSTALL_PROBE, JSON.stringify({ args: process.arg
       expect(child.options).toMatch(/^--no-warnings --max-old-space-size=\d+$/)
       const configuredMb = Number(child.options.match(/--max-old-space-size=(\d+)/)[1])
       expect(configuredMb).toBeLessThanOrEqual(4096)
+      const budgetLog = logger.mock.calls.map(([message]) => String(message)).find(message => message.startsWith('pnpm install 内存预算：'))
+      expect(budgetLog).toBeDefined()
+      expect(budgetLog).not.toContain('private-probe')
+      const budget = JSON.parse(budgetLog!.slice('pnpm install 内存预算：'.length))
+      expect(budget.heapMb).toBe(configuredMb)
+      expect(budget.safeAvailableBytes).toBeLessThanOrEqual(budget.totalBytes)
       // V8 总 heap 还包含 young generation；这里同时证明参数已进入真实 Node 子进程。
       expect(child.heapMb).toBeGreaterThanOrEqual(configuredMb)
       expect(child.heapMb).toBeLessThanOrEqual(configuredMb + 512)
