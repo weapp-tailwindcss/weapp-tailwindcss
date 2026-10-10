@@ -8,6 +8,7 @@ regressions:
   - e2e/lynx-structural.test.ts
   - e2e/lynx-text-flow.test.ts
   - e2e/lynx-fixture-diagnostics.test.ts
+  - e2e/lynx-color-scheme.test.ts
   - packages/weapp-tailwindcss/test/ci/release-trigger-workflow.test.ts
 ---
 
@@ -27,7 +28,9 @@ main 的 homepage 契约和 Lynx 浏览器对照也存在真实失败。
 - [旧 Benchmark 汇总](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38040696456/job/114180184017) 的错误来源是 `benchmark-shard result: cancelled`。最新旧-head Benchmark 38040696811 成功；此前 main 已修正汇总取消生命周期。该失败不构造性能代码补丁，不反复重跑旧 head。
 - [当前 main static shard 1](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38045020396/job/114192781063) 再次确认主页登记遗漏，首次失败前已有 601 个测试通过。
 - [当前 main Lynx focused job](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38045020396/job/114192781157) 的原始截图显示 Linux LCD 抗锯齿按 RGB 通道分别混色，结构字形的单 alpha 投影假设不成立。正常字形每行约 397 个边缘像素偏离模型，最大通道残差 72.76，像素 `(52,30)` 为 `[168,93,51]`。需要在依赖该模型的捕获入口固定灰度抗锯齿，同时保留原始严格阈值、真实 utility 消费和负向回归，不能靠纯版本范围判定宣称修复。
-  结构与文字流入口共享 `textPixelBrowserOptions()`，显式后台启动并传入 `--disable-lcd-text`；原始 PNG 诊断同时保存实际启动参数。保留拒绝 LCD 色边污染的回归和真实截图的灰度残差检查；dark、grid、flex、skew 入口未改变。
+  结构与文字流入口共享 `textPixelBrowserOptions()`，显式后台启动并传入 `--disable-lcd-text`；原始 PNG 诊断同时保存实际启动参数。保留拒绝 LCD 色边污染的回归和真实截图的灰度残差检查。
+- [修复后 Ubuntu focused job](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38046394607/job/114196813389) 在 `fa5ce1bd4` 上确认结构和文字流分别通过，随后首次暴露 dark 的同类失败。实际 light/control PNG 的画布与字区均正确、实心笔画 170 个像素，269 个字缘像素的单 alpha 残差超过原阈值 10，最大残差 31.703；样本 `[15,69,50]`、投影 alpha 0.86937，与已加载 Liberation Serif 的正常文字颜色不矛盾。只有捕获方式不满足协议，不能提高阈值掩盖。
+  依据该独立失败帧，dark 入口也消费同一灰度采集参数，并保存参数诊断。新增三个浅色/control 帧受 LCD 颜色污染时拒绝的回归；原有缺字、错位、背景变白、媒体恢复与删除 utility 反例继续执行。grid、flex、skew 入口未改。
 
 ## 验证
 
@@ -35,15 +38,18 @@ main 的 homepage 契约和 Lynx 浏览器对照也存在真实失败。
 css-compat 的 131 个包测试通过，包含 4 组真正调用 pnpm workspace pack 的版本传播回归：升级、预发布、`workspace:^`、`workspace:~`，并拒绝陈旧的 `0.1.0` 产物与消费依赖。
 包 typecheck、build、独立 tarball 的四入口 ESM/CJS、双端声明与隔离安装依赖树验证通过；main 的 CSS Compatibility 38045020418 全部 8 个 job 成功。
 集成后定向重跑 `packages/css-compat/test/package-versions.test.ts` 和 `e2e/package-homepages.test.ts`，各 4 个测试通过；5 个变更文件显式 ESLint 通过。
-Lynx 定向验证命令如下，两个集合分别通过 40 和 24 个测试；后者实际重建 public Lynx 包与 RSpeedy 编码 bundle，覆盖 DPR 1/2.625/3、三字体文字流，以及删除 utility、错误换行、同步伪造粗体等反例。
+Lynx 定向验证命令如下，修复 dark 后两个集合分别通过 56 和 24 个测试；后者实际重建 public Lynx 包与 RSpeedy 编码 bundle，覆盖 DPR 1/2.625/3、三字体文字流、颜色模式恢复，以及删除 utility、错误换行、同步伪造粗体等反例。
 
 ```sh
-CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-structural.test.ts e2e/lynx-text-flow.test.ts e2e/lynx-fixture-diagnostics.test.ts --update=none --coverage.enabled=false
+CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-color-scheme.test.ts e2e/lynx-structural.test.ts e2e/lynx-text-flow.test.ts e2e/lynx-fixture-diagnostics.test.ts --update=none --coverage.enabled=false
 CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-rspeedy.test.ts --update=none --coverage.enabled=false
 ```
 
-7 个 Lynx 变更文件显式 ESLint、受影响入口 strict 类型检查与 diff 检查通过。测试浏览器使用 `try/finally` / `afterAll` 关闭，临时目录清理完成。
-fixture 样式、生成 CSS 和 static 基线没有变化；当前本地证据来自 macOS，灰度修复效果仍须由新 Ubuntu focused CI 确认。
+两批 Lynx 变更文件显式 ESLint、受影响入口 strict 类型检查与 diff 检查通过；测试 fixture 的回执返回注解收窄为实际必有的对象，未改运行时。测试浏览器使用 `try/finally` / `afterAll` 关闭，临时目录清理完成。
+fixture 样式、生成 CSS 和 static 基线没有变化；本地证据来自 macOS。`fa5ce1bd4` 的 Ubuntu 结构帧最大通道残差从 72.76 降至 DPR 1 的 0.694、DPR 2.625/3 的 0.701，超阈像素为零；dark 修复待新 Ubuntu focused 独立验证。
+
+`fa5ce1bd4` 的 CSS Compatibility 38046394606 全部 8 个 job 成功，覆盖 Ubuntu/macOS/Windows × Node 22/24 tarball 及三浏览器/真实生成器消费者。
+该提交的 prepare 38046403236 在 native 阶段因新的 dark 失败而主动取消；Release job 尚未创建，npm 上传、确认与最终化未进入。后续在修复后的 main 创建新的 prepare，旧 run 的 receipt 不复用。
 
 全部修复先提交 main，然后人工启动 Release prepare 重新生成 #1279；不向 `release/pnpm-version` 手工推送。
 prepare 保留完整 native、质量和产物验证；不执行 npm 上传。
