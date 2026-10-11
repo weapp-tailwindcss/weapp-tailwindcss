@@ -534,6 +534,9 @@ describe('ci workflows', () => {
     expect(compatibilityRuns).toContain('pnpm build:ci')
     expect(compatibilityRuns).toContain('test/bundlers/vite-plugin.uni-app-x.unit.test.ts')
     expect(compatibilityRuns).toContain('test/watch-hmr-coverage-matrix.unit.test.ts')
+    const regressionRun = workflow.jobs.compatibility.steps.find(step => step.name === 'Run core compatibility regression tests')?.run
+    expect(regressionRun).toContain('test/watch-hmr-memory-sampler.unit.test.ts')
+    expect(regressionRun).toContain('--update=none')
   })
 
   it('keeps hosted coverage reports diagnostic until complete evidence executors are available', () => {

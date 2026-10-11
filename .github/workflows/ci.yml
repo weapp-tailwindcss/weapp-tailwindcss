@@ -656,6 +656,8 @@ jobs:
           test/tailwindcss/targets.log.test.ts
           test/watch-hmr-coverage-matrix.unit.test.ts
           test/watch-hmr-regression.unit.test.ts
+          test/watch-hmr-memory-sampler.unit.test.ts
+          --update=none
 
       - name: Compatibility Status Note
         if: always()
