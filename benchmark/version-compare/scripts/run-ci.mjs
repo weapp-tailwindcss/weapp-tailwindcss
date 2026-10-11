@@ -8,12 +8,11 @@ import { classifyPerformanceChanges, performanceRelevantPaths, summarizeFiles } 
 import {
   asInformationalPerformanceGuard,
   buildSummary,
-  confirmHmrMemoryViolations,
   evaluatePerformanceGuard,
-  markHmrMemoryConfirmationUnavailable,
   requiresHmrMemoryConfirmation,
   toMarkdown,
 } from './ci-report.mjs'
+import { runHmrMemoryConfirmation } from './memory-confirmation.mjs'
 import { benchmarkProjectDirs } from './projects.mjs'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -474,9 +473,34 @@ async function main() {
     baselineRef,
     resolverDependencies,
   })
+  const gcDiagnosticsEnabled = process.env.WEAPP_TW_BENCH_GC_DIAGNOSTICS === '1'
+  let diagnosticIdentity
+  if (gcDiagnosticsEnabled) {
+    try {
+      diagnosticIdentity = {
+        current: {
+          role: 'current',
+          sourceCommit: (await runCapture(repoRoot, 'git', ['rev-parse', 'HEAD'])).trim(),
+          sourceWorkingTreeStatus: (await runCapture(repoRoot, 'git', ['status', '--porcelain'])).trim(),
+        },
+        baseline: {
+          role: baselineRef ? 'base' : 'published',
+          sourceCommit: baselineRef ? (await runCapture(repoRoot, 'git', ['rev-parse', `${baselineRef}^{commit}`])).trim() : undefined,
+          packageSpec: baselineRef ? undefined : normalizePackageSpec(baseline),
+        },
+      }
+    }
+    catch (error) {
+      const sourceIdentityError = error instanceof Error ? error.message : String(error)
+      diagnosticIdentity = { current: { role: 'current', sourceIdentityError }, baseline: { role: baselineRef ? 'base' : 'published', sourceIdentityError } }
+      process.stderr.write(`[benchmark-gc] 源码身份缺证：${sourceIdentityError}\n`)
+    }
+  }
+  const currentVersion = { version: currentLabel, root: currentRoot, ...(diagnosticIdentity ? { diagnosticIdentity: diagnosticIdentity.current } : {}) }
+  const baselineVersion = { version: baselineLabel, root: baselineRoot, ...(diagnosticIdentity ? { diagnosticIdentity: diagnosticIdentity.baseline } : {}) }
   await fs.writeFile(versionsPath, JSON.stringify([
-    { version: baselineLabel, root: baselineRoot },
-    { version: currentLabel, root: currentRoot },
+    baselineVersion,
+    currentVersion,
   ], null, 2), 'utf8')
 
   const runMatrix = async ({ versionsFile, outputFile, matrixBuildRuns }) => {
@@ -497,6 +521,9 @@ async function main() {
     ]
     if (only) {
       matrixArgs.push('--only', only)
+    }
+    if (gcDiagnosticsEnabled) {
+      matrixArgs.push('--gc-diagnostic-dir', path.join(resultDir, 'gc-diagnostics', path.basename(outputFile, '.json')))
     }
     await run(repoRoot, process.execPath, matrixArgs)
   }
@@ -555,37 +582,14 @@ async function main() {
       && requiresHmrMemoryConfirmation(performanceGuard)
       && !process.argv.includes('--skip-memory-confirmation')
     ) {
-      const confirmationVersionsPath = path.join(resultDir, 'memory-confirmation-versions.json')
-      const confirmationRawPath = path.join(resultDir, 'memory-confirmation-raw.json')
-      const confirmationSummaryPath = path.join(resultDir, 'memory-confirmation-summary.json')
-      await fs.writeFile(confirmationVersionsPath, JSON.stringify([
-        { version: currentLabel, root: currentRoot },
-        { version: baselineLabel, root: baselineRoot },
-      ], null, 2), 'utf8')
-      process.stdout.write('[benchmark] confirming HMR memory regression with reversed current->baseline order\n')
-      await runMatrix({
-        versionsFile: confirmationVersionsPath,
-        outputFile: confirmationRawPath,
-        matrixBuildRuns: 0,
-      })
-      const confirmationRaw = JSON.parse(await fs.readFile(confirmationRawPath, 'utf8'))
-      const confirmationSummary = buildSummary(confirmationRaw, baselineLabel, currentLabel)
-      const confirmationGuard = evaluatePerformanceGuard(confirmationSummary, {
+      performanceGuard = await runHmrMemoryConfirmation({
+        resultDir,
+        currentVersion,
+        baselineVersion,
+        performanceGuard,
         regressionPercent: parseNumber('--regression-percent', 5),
+        runMatrix,
       })
-      await fs.writeFile(confirmationSummaryPath, `${JSON.stringify(confirmationSummary, null, 2)}\n`, 'utf8')
-      const confirmationError = confirmationSummary.errors.length > 0
-        ? `matrix has ${confirmationSummary.errors.length} failed row(s)`
-        : confirmationGuard.violations.some(violation => violation.metric === 'hmrMemorySamples')
-          ? 'matrix has incomplete RSS samples'
-          : undefined
-      if (confirmationError) {
-        performanceGuard = markHmrMemoryConfirmationUnavailable(performanceGuard, confirmationError)
-      }
-      else {
-        performanceGuard = confirmHmrMemoryViolations(performanceGuard, confirmationGuard)
-      }
-      process.stdout.write(`[benchmark] HMR memory confirmation -> ${confirmationSummaryPath}\n`)
     }
     const relevantFiles = summarizeFiles(performanceChanges.relevantFiles)
     const ignoredFiles = summarizeFiles(performanceChanges.ignoredReleaseMetadataFiles)

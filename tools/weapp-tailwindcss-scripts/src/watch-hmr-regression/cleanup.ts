@@ -31,6 +31,7 @@ export function createWatchCaseCleanup(label: string, sources: ReadonlyMap<strin
     },
     async finish(resources: {
       stopMonitor?: () => Promise<void>
+      closeBrowser?: () => Promise<void>
       stopSession?: () => Promise<void>
     } = {}) {
       const cleanupErrors: Error[] = []
@@ -63,6 +64,9 @@ export function createWatchCaseCleanup(label: string, sources: ReadonlyMap<strin
       }
       if (resources.stopMonitor) {
         await attempt('停止输出完整性监控失败', resources.stopMonitor)
+      }
+      if (resources.closeBrowser) {
+        await attempt('关闭 Web 测试浏览器失败', resources.closeBrowser)
       }
       if (resources.stopSession) {
         await attempt('停止 watch session 失败', resources.stopSession)

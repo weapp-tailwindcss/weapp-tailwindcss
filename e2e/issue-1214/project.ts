@@ -7,6 +7,7 @@ import { postcss } from '@weapp-tailwindcss/postcss'
 import { execa } from 'execa'
 import fg from 'fast-glob'
 import { createWatchProcessEnv } from '../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/environment'
+import { resolveProjectBin } from '../package-cli'
 
 const repositoryRoot = path.resolve(import.meta.dirname, '../..')
 const demoRoot = path.join(repositoryRoot, 'demo/uni-app-vite-tailwindcss-v4')
@@ -46,7 +47,7 @@ export async function createProject(options: FixtureOptions = {}) {
     const modules = path.join(root, 'node_modules')
     await mkdir(modules)
     for (const entry of await readdir(path.join(demoRoot, 'node_modules'), { withFileTypes: true })) {
-      if (entry.name !== '@vue' && (entry.isDirectory() || entry.isSymbolicLink())) {
+      if (entry.name !== '@vue' && entry.name !== '.bin' && (entry.isDirectory() || entry.isSymbolicLink())) {
         await symlink(path.join(demoRoot, 'node_modules', entry.name), path.join(modules, entry.name), linkType)
       }
     }
@@ -110,6 +111,7 @@ export function createApp() { return { app: createSSRApp(App) } }
     })))
     return {
       root,
+      uniBin: await resolveProjectBin(root, '@dcloudio/vite-plugin-uni', 'uni'),
       close,
       versions,
       output: path.join(root, 'dist'),
@@ -131,7 +133,7 @@ export function createApp() { return { app: createSSRApp(App) } }
 export type Project = Awaited<ReturnType<typeof createProject>>
 
 export async function buildProject(project: Project) {
-  return execa('pnpm', ['exec', 'uni', 'build', '-p', 'mp-weixin'], {
+  return execa(process.execPath, [project.uniBin, 'build', '-p', 'mp-weixin'], {
     cwd: project.root,
     env: createWatchProcessEnv(process.env, { ...project.env, NODE_ENV: 'production' }),
     timeout: 120_000,

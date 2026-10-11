@@ -17,8 +17,8 @@ export {
   finalizeMiniProgramCssRoot,
   hoistTailwindPreflightBase,
 } from './finalize'
+export { normalizeMiniProgramGeneratedCssForPostcss } from './normalize-generated'
 export {
-  normalizeMiniProgramGeneratedCssForPostcss,
   pruneMiniProgramGeneratedCss,
   type PruneMiniProgramGeneratedCssOptions,
 } from './prune-generated'

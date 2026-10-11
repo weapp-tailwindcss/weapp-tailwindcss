@@ -119,6 +119,7 @@ export function buildDemoBaseCases(baseCwd: string): WatchCase[] {
       sourceFile: path.resolve(baseCwd, 'demo/gulp-tailwindcss-v4/src/pages/index/index.wxml'),
       verifyEscapedIn: ['wxml'],
       verifyClassLiteralIn: [],
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: buildHexScriptRoundConfigs(),
       mutate(source, payload) {
         const snippet = `        <view class="${payload.classLiteral}">${payload.marker}-template</view>`
@@ -146,6 +147,7 @@ export function buildDemoBaseCases(baseCwd: string): WatchCase[] {
       distRoot: 'dist',
       version: 'v4',
       pageKind: 'wxml',
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       styleCandidates(subPackage) {
         return [
           path.resolve(baseCwd, `demo/gulp-tailwindcss-v4/dist/${subPackage}/pages/index.wxss`),

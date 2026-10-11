@@ -10,9 +10,8 @@ import {
   spawnPnpm,
 } from '../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/session'
 import { resolveCaseName, shouldRunTarget } from './hot-update/shared'
-import { TARO_BUILD_ERROR_RE, TARO_COMPILED_RE } from './taro-dev-signals'
+import { createTaroDevSignalCollector } from './taro-dev-signals'
 
-const TARO_WATCH_READY_RE = /→ Watching|watching for file changes/i
 const ROOT = process.cwd()
 const TARGETS = [
   'taro-vite-react-tailwindcss-v4',
@@ -114,23 +113,26 @@ async function expectDemoDevWatchReady(project: string) {
     lastReadyCompiledCount = compiledCount
   }
 
-  const onData = (chunk: Buffer | string) => {
-    const text = chunk.toString()
-    collect(chunk)
-    buildFailed ||= TARO_BUILD_ERROR_RE.test(text)
-    if (TARO_COMPILED_RE.test(text)) {
+  const signalCollector = createTaroDevSignalCollector((signal) => {
+    buildFailed ||= signal.buildFailed
+    if (signal.compiled) {
       compiledCount += 1
       markReadyIfCompiledAndWatching()
     }
-    if (TARO_WATCH_READY_RE.test(text)) {
+    if (signal.watchReady) {
       sawWatchReady = true
       markReadyIfCompiledAndWatching()
     }
+  })
+  const onData = (chunk: Buffer | string, stream: 'stdout' | 'stderr') => {
+    collect(chunk)
+    signalCollector.push(chunk, stream)
   }
 
-  child.stdout.on('data', onData)
-  child.stderr.on('data', onData)
+  child.stdout.on('data', chunk => onData(chunk, 'stdout'))
+  child.stderr.on('data', chunk => onData(chunk, 'stderr'))
   child.on('close', (code, signal) => {
+    signalCollector.flush()
     closeResult = { code, signal }
   })
 

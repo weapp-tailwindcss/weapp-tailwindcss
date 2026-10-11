@@ -11,6 +11,7 @@ import { assertDevHmrArtifactSnapshotGate } from '../../watchArtifactSnapshotGat
 import { runWatchCommand } from './command'
 import { resolveWatchCommandTimeoutMs } from './command-budget'
 import { resolveWatchCommandScopes } from './command-scopes'
+import { assertIssue33SnapshotGate, listIssue33SnapshotEntries, readNewIssue33Snapshots } from './issue33-snapshot-gate'
 import {
   listWatchHmrFailureLogs,
   readNewPerformanceBudgetFailure,
@@ -670,11 +671,7 @@ async function runWatchHmrCommand(cwd: string, args: string[], commandTimeoutMs:
 }
 
 function expectStyleRollbackMetric(metric: StyleMutationMetric, message: string) {
-  if (metric.rollbackNeedleCleared === false) {
-    expect(metric.rollbackOutputMs, `${message} fallback rollback output latency should be recorded`).toBeGreaterThanOrEqual(0)
-    return
-  }
-
+  expect(metric.rollbackNeedleCleared, `${message} rollback marker clearance must be verified`).toBe(true)
   expect(metric.rollbackEffectiveMs, `${message} rollback marker clearance should be positive`).toBeGreaterThan(0)
 }
 
@@ -1082,6 +1079,19 @@ function assertMainStyleOnlyHotUpdateReport(report: HotUpdateReport, target: Wat
 }
 
 export function assertHotUpdateReport(report: HotUpdateReport, target: WatchCaseName, maxHotUpdateMs: number) {
+  // 所有 profile 统一拒绝缺证或 fallback，分包专用分支同样必须证明真实清理。
+  for (const item of report.cases) {
+    for (const metric of item.mutationMetrics ?? []) {
+      if (metric.mutationKind === 'style') {
+        expectStyleRollbackMetric(metric as StyleMutationMetric, `[${item.name}] style`)
+      }
+    }
+    for (const metric of item.subPackageMutationMetrics ?? []) {
+      if (metric.style) {
+        expectStyleRollbackMetric(metric.style, `[${item.name}/${metric.root}] subpackage style`)
+      }
+    }
+  }
   if (isWebOnlyProfile(report)) {
     assertWebOnlyHotUpdateReport(report, target, maxHotUpdateMs)
     return
@@ -1589,6 +1599,10 @@ export async function runHotUpdateTarget(target: WatchCaseName, scopeOverride?: 
     mainStyleSubPackageLimit: mainStyleSubPackageLimit === undefined ? undefined : Number(mainStyleSubPackageLimit),
   }))
   const reportFile = createReportFilePath(cwd, runTarget)
+  const snapshotsDir = path.resolve(cwd, './benchmark/e2e-watch-hmr/snapshots')
+  const previousSnapshotEntries = isIssue33RoundProfile()
+    ? await listIssue33SnapshotEntries(snapshotsDir)
+    : undefined
 
   const args = [
     '--filter',
@@ -1644,15 +1658,8 @@ export async function runHotUpdateTarget(target: WatchCaseName, scopeOverride?: 
   process.stdout.write(`[e2e-watch] hmr report saved: ${reportFile}\n`)
   assertHotUpdateReport(report, runTarget, maxHotUpdateMs)
 
-  if (isIssue33RoundProfile()) {
-    const snapshotsDir = path.resolve(cwd, './benchmark/e2e-watch-hmr/snapshots')
-    const entries = await fs.readdir(snapshotsDir).catch(() => [])
-    const expectedPhases = ['-template-add-success', '-template-modify-success', '-template-delete-success', '-script-add-success', '-script-modify-success', '-script-delete-success']
-    for (const phaseSuffix of expectedPhases) {
-      expect(
-        entries.some(item => item.includes(phaseSuffix)),
-        `[issue33] missing snapshot phase output: ${phaseSuffix}`,
-      ).toBe(true)
-    }
+  if (previousSnapshotEntries) {
+    const snapshots = await readNewIssue33Snapshots(snapshotsDir, previousSnapshotEntries)
+    assertIssue33SnapshotGate(report, snapshots)
   }
 }

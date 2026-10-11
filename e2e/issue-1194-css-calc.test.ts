@@ -7,6 +7,7 @@ import { postcss } from '@weapp-tailwindcss/postcss'
 import { execa } from 'execa'
 import fg from 'fast-glob'
 import { expect, it } from 'vitest'
+import { resolveProjectBin } from './package-cli'
 
 const demoRoot = path.resolve(__dirname, '../demo/uni-app-vite-tailwindcss-v4')
 
@@ -21,7 +22,7 @@ it('在真实 uni-app H5 产物中预计算指定的间距变量，并保留 Web
     await mkdir(modules)
     for (const entry of await readdir(path.join(demoRoot, 'node_modules'), { withFileTypes: true })) {
       const name = entry.name
-      if (name !== '@vue' && (entry.isDirectory() || entry.isSymbolicLink())) {
+      if (name !== '@vue' && name !== '.bin' && (entry.isDirectory() || entry.isSymbolicLink())) {
         await symlink(path.join(demoRoot, 'node_modules', name), path.join(modules, name), process.platform === 'win32' ? 'junction' : 'dir')
       }
     }
@@ -79,7 +80,8 @@ export function createApp() { return { app: createSSRApp(App) } }
       await mkdir(path.dirname(file), { recursive: true })
       await writeFile(file, content)
     }
-    await execa('pnpm', ['exec', 'uni', 'build'], {
+    const uniBin = await resolveProjectBin(root, '@dcloudio/vite-plugin-uni', 'uni')
+    await execa(process.execPath, [uniBin, 'build'], {
       cwd: root,
       env: {
         ...process.env,

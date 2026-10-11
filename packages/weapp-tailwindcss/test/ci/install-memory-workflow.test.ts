@@ -30,6 +30,9 @@ describe('CI 安装资源策略', () => {
     expect(matrix).toContain('"node-version":22')
     expect(job.steps.find((step: any) => step.uses?.startsWith('pnpm/action-setup@')).with)
       .toMatchObject({ version: '${{ matrix.pnpm-version }}', package_json_file: '.github/pnpm-action-package.json' })
+    const regression = job.steps.find((step: any) => step.name === 'Run core compatibility regression tests').run
+    expect(regression).toContain('test/ci/install-frozen-config.test.ts')
+    expect(regression).toContain('test/ci/install-workspace.test.ts')
   })
 
   it('兼容矩阵的准确 Node 基线同时满足仓库与 pnpm 11 引擎范围', () => {

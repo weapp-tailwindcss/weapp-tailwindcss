@@ -45,8 +45,8 @@ describe.skipIf(!enabled)('uni-app scoped CSS post HMR', () => {
     expect(updatedSource).not.toBe(originalSource)
     expect(secondUpdatedSource).not.toBe(updatedSource)
 
-    const sessionStartedAt = Date.now()
-    const session = createWatchSession(testCase.projectRoot, testCase.devScript, { quietSass: true })
+    const session = await createWatchSession(testCase.projectRoot, testCase.devScript, { quietSass: true })
+    const sessionStartedAt = session.startedAt ?? Date.now()
     let outputIntegrityMonitor: ReturnType<typeof createOutputIntegrityMonitor>
 
     try {

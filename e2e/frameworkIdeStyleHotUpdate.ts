@@ -87,7 +87,7 @@ function resolveUpdatedStyleFiles(watchCase: WatchCase, baselineMtimes: Map<stri
 export async function runIdeStyleHotUpdate(
   options: CliOptions,
   watchCase: IdeWatchCase,
-  session: ReturnType<typeof createWatchSession>,
+  session: Awaited<ReturnType<typeof createWatchSession>>,
   sourceOriginal: string,
   signal?: AbortSignal,
 ) {

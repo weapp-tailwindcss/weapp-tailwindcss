@@ -3,18 +3,29 @@ import type { CliOptions, IconifyHotUpdatePayload, WatchCase, WebHmrConfig } fro
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { writeWatchedFilePreserveEol } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/text'
 import { runWebIconifyHmr } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/web/iconify'
+import { writeWebIconifyStyleEvidence } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/web/iconify/style-evidence'
 
 vi.mock('../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/text', async (importOriginal) => {
   const original = await importOriginal<typeof import('../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/text')>()
   return { ...original, writeWatchedFilePreserveEol: vi.fn() }
 })
+vi.mock('../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/web/iconify/style-evidence', () => ({
+  writeWebIconifyStyleEvidence: vi.fn(async () => 'web-iconify-evidence'),
+}))
 
 const legacyBefore = 'before:content-[\'现在，让我们开始神奇的_tailwindcss_开发之旅吧！\']'
 const legacyAfter = 'before:content-[\'现在，让我们继续神奇的_tailwindcss_HMR_回归之旅吧！\']'
 const icons = ['i-[mdi--github-circle]', 'i-[mdi--star]', 'i-[svg-spinners--180-ring-with-bg]']
 const source = 'export const demo = true\n'
 const options = { timeoutMs: 40, pollMs: 1 } as CliOptions
-const watchCase = { label: 'unit/web-iconify', name: 'web-iconify' } as WatchCase
+const watchCase = {
+  label: 'unit/web-iconify',
+  name: 'web-iconify',
+  templateMutation: {
+    sourceFile: 'index.tsx',
+    mutate: (original: string, payload: { classLiteral: string }) => `${original}\nexport const probeClass = ${JSON.stringify(payload.classLiteral)}\n`,
+  },
+} as WatchCase
 
 function selector(token: string) {
   return `.${token.replace(/[^\w-]/gu, character => `\\${character}`)}`
@@ -71,10 +82,16 @@ describe('web Iconify HMR freshness', () => {
 
     await expect(runWebIconifyHmr(watchCase, options, fixture.page, fixture.config, source, settled))
       .rejects
-      .toThrow('content update did not preserve icon CSS')
+      .toThrow('content update did not generate expected CSS')
 
     expect(settled).toHaveBeenCalledTimes(1)
     expect(writeWatchedFilePreserveEol).toHaveBeenCalledTimes(2)
+    expect(writeWebIconifyStyleEvidence).toHaveBeenCalledWith(watchCase, 'index.tsx', expect.any(String), expect.objectContaining({
+      phase: 'content',
+      missingIcons: [],
+      missingContent: [selector(fixture.getPayload().afterContentClass)],
+      styleText: stylesheet([...icons, fixture.getPayload().beforeContentClass, legacyAfter]),
+    }))
   })
 
   it('accepts each saved content class only after it reaches the page stylesheet', async () => {
@@ -196,7 +213,7 @@ describe('web Iconify HMR freshness', () => {
     expect(first?.marker).not.toBe(second?.marker)
   })
 
-  it('preserves the default TSX comment carrier while requiring fresh stylesheet output', async () => {
+  it('uses the framework template consumer for the default TSX probe', async () => {
     const fixture = createFixture()
     delete fixture.config.iconifyHmr!.mutate
     const savedSources: string[] = []
@@ -210,6 +227,33 @@ describe('web Iconify HMR freshness', () => {
 
     expect(result?.verifiedContentCssIncludes).toEqual([selector(result!.afterContentClass)])
     expect(savedSources).toHaveLength(2)
-    expect(savedSources.every(next => next.startsWith(`${source}\n// `))).toBe(true)
+    expect(savedSources.every(next => next.startsWith(`${source}\nexport const probeClass = `))).toBe(true)
+  })
+
+  it('retains the concrete missing icon diagnosis and the same browser CSS read', async () => {
+    const fixture = createFixture()
+    vi.mocked(writeWatchedFilePreserveEol).mockImplementation(async (_file, next) => {
+      const payload = fixture.getPayload()
+      const updated = next.includes(payload.afterContentClass)
+      fixture.setStyle([...(updated ? icons.slice(1) : icons), updated ? payload.afterContentClass : payload.beforeContentClass])
+    })
+
+    await expect(runWebIconifyHmr(watchCase, options, fixture.page, fixture.config, source, async () => {}))
+      .rejects
+      .toThrow(`content missing icon CSS selectors: ${selector(icons[0]!)}`)
+    expect(writeWebIconifyStyleEvidence).toHaveBeenCalledWith(watchCase, 'index.tsx', expect.any(String), expect.objectContaining({
+      missingIcons: [selector(icons[0]!)],
+      missingContent: [],
+      styleText: stylesheet([...icons.slice(1), fixture.getPayload().afterContentClass]),
+    }))
+  })
+
+  it('reports failure to persist style evidence together with the original missing content', async () => {
+    const fixture = createFixture()
+    vi.mocked(writeWebIconifyStyleEvidence).mockRejectedValueOnce(new Error('snapshot write failed'))
+
+    await expect(runWebIconifyHmr(watchCase, options, fixture.page, fixture.config, source, async () => {}))
+      .rejects
+      .toThrow(/inject missing content CSS selector[\s\S]*样式证据保存失败/)
   })
 })

@@ -195,3 +195,16 @@ it.each([
 ])('文件身份规范化 $value', ({ value, cwd, windows, expected }) => {
   expect(normalizeNativePath(value, cwd, windows)).toBe(expected)
 })
+
+it('Windows 风格 ENOENT 不能把文件祖先下的登记目录当作首次运行', async () => {
+  const { root, host, options } = await fixture()
+  const registry = await nativeRegistryRoot(root)
+  await fs.writeFile(path.dirname(registry), 'not-directory')
+  const readdir = fs.readdir.bind(fs)
+  const lstat = fs.lstat.bind(fs)
+  const missing = Object.assign(new Error('not found'), { code: 'ENOENT' })
+  vi.spyOn(fs, 'readdir').mockImplementation(((file, ...args) => file === registry ? Promise.reject(missing) : readdir(file, ...args)) as typeof fs.readdir)
+  vi.spyOn(fs, 'lstat').mockImplementation(((file, ...args) => file === registry ? Promise.reject(missing) : lstat(file, ...args)) as typeof fs.lstat)
+  await expect(assertNativeSessionsAvailable(root, host)).rejects.toThrow('持久目录不可读取')
+  await expect(claimNativeSession(options)).rejects.toThrow('持久目录不可读取')
+})

@@ -11,12 +11,12 @@ import type {
   WatchCaseRoundComparison,
   WatchSession,
 } from '../types'
-import { readdir } from 'node:fs/promises'
-import path from 'node:path'
 import { replaceWxml } from '../../core/replace-wxml'
 import { collectImportedStyleFiles } from '../artifacts/imports'
 import { getBaseWatchCaseName } from '../cases'
 import { formatPath } from '../cli'
+import { expandOutputFileEntries, isOutputFileCandidate, isOutputFilePattern } from '../outputs/file-entries'
+import { getOutputMtimeOnce } from '../outputs/read'
 import { getMtime, readFileIfExists, waitFor } from '../text'
 import {
   DEFAULT_STYLE_APPLY_VALIDATION,
@@ -25,67 +25,7 @@ import {
   STYLE_REFERENCE_REQUIRED_CASES,
 } from '../types'
 
-const GLOB_TOKEN_RE = /\*/
-const VIRTUAL_OUTPUT_ID_RE = /[\0?#]/
-const REGEXP_ESCAPE_RE = /[.*+?^${}()|[\]\\]/g
-
-function escapeRegExp(value: string) {
-  return value.replace(REGEXP_ESCAPE_RE, '\\$&')
-}
-
-function createGlobRegExp(pattern: string) {
-  return new RegExp(`^${pattern.split('*').map(escapeRegExp).join('.*')}$`)
-}
-
-export function isOutputFilePattern(file: string) {
-  return GLOB_TOKEN_RE.test(path.basename(file))
-}
-
-export function isOutputFileCandidate(file: string) {
-  return !VIRTUAL_OUTPUT_ID_RE.test(file)
-}
-
-export async function expandOutputFileEntries(files: string[]) {
-  const resolved = new Set<string>()
-
-  for (const file of files) {
-    if (!isOutputFileCandidate(file)) {
-      continue
-    }
-
-    if (!isOutputFilePattern(file)) {
-      const content = await readFileIfExists(file)
-      if (content != null) {
-        resolved.add(file)
-      }
-      continue
-    }
-
-    const dir = path.dirname(file)
-    const pattern = createGlobRegExp(path.basename(file))
-    let entries: string[] = []
-
-    try {
-      entries = await readdir(dir)
-    }
-    catch {
-      continue
-    }
-
-    for (const entry of entries) {
-      if (!pattern.test(entry)) {
-        continue
-      }
-      const matchedFile = path.join(dir, entry)
-      const content = await readFileIfExists(matchedFile)
-      if (content != null) {
-        resolved.add(matchedFile)
-      }
-    }
-  }
-
-  return [...resolved]
-}
+export { expandOutputFileEntries, isOutputFileCandidate, isOutputFilePattern } from '../outputs/file-entries'
 
 export async function waitForOutputsReady(
   watchCase: WatchCase,
@@ -248,13 +188,40 @@ export function assertNoUnsupportedMiniProgramCssImport(
   throw new Error(`[${watchCase.label}] ${phase} emitted unsupported mini-program CSS import in ${file}: ${unsupportedImport}`)
 }
 
+export function resolveCompileStableWindowMs(options: Pick<CliOptions, 'pollMs'>) {
+  return Math.min(Math.max(options.pollMs * 2, 600), 1500)
+}
+
+export function getLatestCompileSignalAt(session: WatchSession, phaseStartedAt: number) {
+  const samples = session.pluginProcessSamplesSince?.(phaseStartedAt) ?? []
+  return Math.max(
+    session.lastCompileSuccessAt(),
+    0,
+    ...samples.filter(sample => sample.metric === 'total' || sample.phase === 'total').map(sample => sample.at),
+  )
+}
+
 export async function waitForCompileSettled(
   watchCase: WatchCase,
   options: CliOptions,
   session: WatchSession,
   phaseStartedAt: number,
   settleOutputCandidates?: string[],
+  deadlineAt?: number,
 ) {
+  const settleStartedAt = Date.now()
+  const timeoutMs = resolveCompileSettleTimeoutMs(options)
+  const settleDeadlineAt = Math.min(settleStartedAt + timeoutMs, deadlineAt ?? Number.POSITIVE_INFINITY)
+  const ensureWithinDeadline = () => {
+    session.signal?.throwIfAborted()
+    session.ensureRunning()
+    if (Date.now() > settleDeadlineAt) {
+      throw new Error(`[${watchCase.label}] watch compile did not settle in time`)
+    }
+  }
+  ensureWithinDeadline()
+  const probeOptions = { presenceOnly: true, ensureActive: ensureWithinDeadline }
+  const probeOutputMtime = (candidate: string) => getOutputMtimeOnce(candidate, ensureWithinDeadline)
   // 编译成功日志可能早于 bundler 写完 CSS；默认同时观察当前 case 声明的样式产物。
   // 取所有信号中最后一次发生的时间，确保快照不会落在中间产物状态。
   const outputCandidates = (settleOutputCandidates ?? [
@@ -264,42 +231,30 @@ export async function waitForCompileSettled(
     ...(watchCase.globalStyleCandidates ?? []),
   ])
     .filter((candidate): candidate is string => typeof candidate === 'string' && candidate.length > 0)
-  const stableWindowMs = Math.min(Math.max(options.pollMs * 2, 600), 1500)
-  const timeoutMs = resolveCompileSettleTimeoutMs(options)
-  const initialOutputEntries = await expandOutputFileEntries(outputCandidates)
-  const requiredOutputEntries = new Set<string>()
-  for (const candidate of initialOutputEntries) {
-    if (await getMtime(candidate) > 0) {
-      requiredOutputEntries.add(candidate)
+  const stableWindowMs = resolveCompileStableWindowMs(options)
+  const requiredOutputCandidates = new Set<string>()
+  for (const candidate of outputCandidates) {
+    const entries = await expandOutputFileEntries([candidate], probeOptions)
+    if (entries.length > 0) {
+      requiredOutputCandidates.add(candidate)
     }
   }
-  let observedMissingRequiredOutput = false
+  ensureWithinDeadline()
   return waitFor(
     async () => {
-      const lastCompileSuccessAt = session.lastCompileSuccessAt()
-      const pluginProcessSamples = session.pluginProcessSamplesSince?.(phaseStartedAt) ?? []
-      const latestPluginTotalAt = Math.max(
-        0,
-        ...pluginProcessSamples
-          .filter(sample => sample.metric === 'total' || sample.phase === 'total')
-          .map(sample => sample.at),
-      )
-      const resolvedOutputCandidates = await expandOutputFileEntries(outputCandidates)
-      const outputMtimes = await Promise.all(resolvedOutputCandidates.map(candidate => getMtime(candidate)))
-      if (requiredOutputEntries.size > 0) {
-        const currentOutputs = new Set(resolvedOutputCandidates.filter((_, index) => outputMtimes[index] > 0))
-        for (const candidate of requiredOutputEntries) {
-          if (!currentOutputs.has(candidate)) {
-            observedMissingRequiredOutput = true
-            break
-          }
-        }
-        if (observedMissingRequiredOutput && [...requiredOutputEntries].some(candidate => !currentOutputs.has(candidate))) {
+      const outputMtimes: number[] = []
+      for (const candidate of outputCandidates) {
+        const entries = await expandOutputFileEntries([candidate], probeOptions)
+        const mtimes = await Promise.all(entries.map(probeOutputMtime))
+        // 保留当前消费表达式的存在要求，不把已替换的旧 content-hash 路径当作必需产物。
+        if (requiredOutputCandidates.has(candidate) && !mtimes.some(mtime => mtime > 0)) {
           return false
         }
+        outputMtimes.push(...mtimes)
       }
       const latestOutputMtime = Math.max(0, ...outputMtimes)
-      const latestSignalAt = Math.max(lastCompileSuccessAt, latestPluginTotalAt, latestOutputMtime)
+      // 扫描期间可能收到新的完成信号，稳定窗口以 I/O 结束后的最新状态为准。
+      const latestSignalAt = Math.max(getLatestCompileSignalAt(session, phaseStartedAt), latestOutputMtime)
       return latestSignalAt > 0
         && latestSignalAt >= phaseStartedAt
         && Date.now() - latestSignalAt >= stableWindowMs
@@ -310,7 +265,9 @@ export async function waitForCompileSettled(
       message: `[${watchCase.label}] watch compile did not settle in time`,
       onTick: session.ensureRunning,
       signal: session.signal,
+      deadlineAt: settleDeadlineAt,
     },
+    settleStartedAt,
   )
 }
 
@@ -475,11 +432,14 @@ export async function waitForOutputFilesUpdatedWithDiagnostics(
     }
 
     try {
+      ensureActive()
       const accepted = await acceptWhen()
+      ensureActive()
       semanticFailure = undefined
       return accepted
     }
     catch (error) {
+      ensureActive()
       semanticFailure = { error }
       return false
     }
@@ -498,6 +458,14 @@ export async function waitForOutputFilesUpdatedWithDiagnostics(
   }
 
   const timeoutMessage = `[${watchCase.label}] ${diagnostics.label ? `${diagnostics.label} ` : ''}output files were not updated after source change: ${files.map(formatPath).join(', ')}`
+  const deadlineAt = startedAt + options.timeoutMs
+  const ensureActive = () => {
+    session.signal?.throwIfAborted()
+    session.ensureRunning()
+    if (Date.now() > deadlineAt) {
+      throw new Error(timeoutMessage)
+    }
+  }
   const elapsedMs = await waitFor(
     async () => {
       const missingExactFiles: string[] = []
@@ -511,7 +479,7 @@ export async function waitForOutputFilesUpdatedWithDiagnostics(
           continue
         }
 
-        const currentMtime = await getMtime(file)
+        const currentMtime = await getOutputMtimeOnce(file, ensureActive)
         if (currentMtime === 0) {
           missingExactFiles.push(file)
           if (await acceptsSemanticOutput()) {
@@ -553,11 +521,11 @@ export async function waitForOutputFilesUpdatedWithDiagnostics(
         return true
       }
 
-      const resolvedFiles = await expandOutputFileEntries(files)
+      const resolvedFiles = await expandOutputFileEntries(files, { presenceOnly: true, ensureActive })
       let globFileUpdated = false
       for (const file of resolvedFiles) {
         const baselineMtime = baselineMtimes.get(file) ?? 0
-        const currentMtime = await getMtime(file)
+        const currentMtime = await getOutputMtimeOnce(file, ensureActive)
         if (baselineMtime === 0 || currentMtime > baselineMtime) {
           if (acceptWhen) {
             globFileUpdated = true
@@ -609,8 +577,9 @@ export async function waitForOutputFilesUpdatedWithDiagnostics(
       timeoutMs: options.timeoutMs,
       pollMs: options.pollMs,
       message: timeoutMessage,
-      onTick: session.ensureRunning,
+      onTick: ensureActive,
       signal: session.signal,
+      deadlineAt,
     },
     startedAt,
   ).catch((error: unknown) => {

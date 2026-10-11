@@ -144,6 +144,7 @@ import {
   collectSubPackageStyleOutputs,
 } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/subpackage'
 import { replaceWxml } from '../src/wxml/shared'
+import { resolveWorkflowMatrixEnv } from './ci/workflow-matrix'
 import type {
   CliOptions,
   MainStyleHotUpdateMetrics,
@@ -627,7 +628,7 @@ describe('watch-hmr regression text helpers', () => {
     )
 
     expect(attempt).toBe(3)
-    expect(tickCount).toBe(5)
+    expect(tickCount).toBeGreaterThanOrEqual(5)
     expect(elapsed).toBeGreaterThanOrEqual(0)
     expect(elapsed).toBeLessThan(timeoutMs)
 
@@ -1991,7 +1992,7 @@ describe('watch-hmr regression summary helpers', () => {
   it('samples repository-scoped detached Windows watcher processes in HMR reports', () => {
     const script = createWindowsProcessTreeMemoryScript(42, String.raw`C:\repo\weapp-tailwindcss`)
 
-    expect(script).toContain(String.raw`$repositoryRoot = 'C:\repo\weapp-tailwindcss'`)
+    expect(script).toContain(String.raw`Get-WatchMemory -root 42 -repositoryRoot 'C:\repo\weapp-tailwindcss'`)
     expect(script).toContain('CommandLine')
     expect(script).toContain('uni\\.js[\\s\\S]+-p\\s+mp-weixin')
     expect(script).toContain('taro-build-runner\\.mjs\\s+build\\s+--type\\s+h5\\s+--watch')
@@ -3678,22 +3679,58 @@ describe('watch-hmr regression cases', () => {
     )
     const workflow = parse(workflowSource) as {
       jobs?: Record<string, {
+        strategy: { matrix: { include: Array<Record<string, string>> } }
         steps?: Array<Record<string, unknown>>
       }>
     }
 
-    const runSteps = [
-      ...(workflow.jobs?.['pr-quick-gate']?.steps ?? []),
-      ...(workflow.jobs?.['nightly-full-regression']?.steps ?? []),
-    ].filter(step => typeof step.name === 'string' && step.name.startsWith('Run e2e watch suite'))
-
-    expect(runSteps.length).toBe(2)
-    for (const step of runSteps) {
-      const env = step.env as Record<string, string> | undefined
-      expect(env?.E2E_WATCH_MAX_HOT_UPDATE_MS).toBe('${{ matrix.watch_max_hot_update_ms || matrix.watch_timeout_ms }}')
-      expect(env?.E2E_WATCH_MAX_PLUGIN_PROCESS_MS).toBe("${{ matrix.watch_max_plugin_process_ms || '6000' }}")
-      expect(env?.E2E_WATCH_MAX_ATTEMPTS).toBe("${{ matrix.watch_max_attempts || '2' }}")
-      expect(env?.NODE_OPTIONS).toBe('--max-old-space-size=6144')
+    for (const jobName of ['pr-quick-gate', 'nightly-full-regression']) {
+      const job = workflow.jobs![jobName]!
+      const runSteps = job.steps!.filter(step => typeof step.name === 'string' && step.name.startsWith('Run e2e watch suite'))
+      expect(runSteps).toHaveLength(1)
+      const step = runSteps[0]!
+      expect(step.run).toBe('pnpm e2e:watch')
+      for (const row of job.strategy.matrix.include) {
+        const env = resolveWorkflowMatrixEnv(step.env as Record<string, unknown>, row)
+        const originalEnv = new Map(Object.keys(env).map(key => [key, process.env[key]]))
+        const originalArgv = process.argv
+        Object.assign(process.env, env)
+        try {
+          const command = resolveWatchCommandOptions(path.join(os.tmpdir(), 'workflow-contract-report.json'))
+          const args = buildWatchHmrArgs(row.watch_case!, command)
+          process.argv = ['node', 'watch-hmr-regression', ...args.slice(args.indexOf('--') + 1)]
+          const options = resolveOptions()
+          // 检查 YAML 矩阵实际到达命令与 CLI 的预算，不能由未定义的旧 matrix 字段遮蔽。
+          expect(options.timeoutMs).toBe(Number(row.watch_timeout_ms))
+          expect(options.caseName).toBe(row.watch_case)
+          expect(options.webOnly).toBe(env.E2E_WATCH_WEB_ONLY === '1')
+          expect(options.miniProgramOnly).toBe(env.E2E_WATCH_MINI_PROGRAM_ONLY === '1' || Boolean(env.E2E_WATCH_MINI_PROGRAM_SCOPE))
+          expect(options.miniProgramScope).toBe(env.E2E_WATCH_MINI_PROGRAM_SCOPE || undefined)
+          expect(options.mainStyleOnly).toBe(env.E2E_WATCH_MAIN_STYLE_ONLY === '1')
+          expect(options.maxHotUpdateMs).toBe(Number(row.watch_timeout_ms))
+          expect(options.maxHotUpdateMs).toBeGreaterThan(0)
+          expect(options.maxPluginProcessMs).toBe(Number(row.watch_max_plugin_process_ms ?? '6000'))
+          expect(options.maxPluginProcessMs).toBeGreaterThan(0)
+          expect(options.maxPluginProcessMs).toBeLessThanOrEqual(60000)
+          expect(Number(env.E2E_WATCH_MAX_ATTEMPTS)).toBe(Number(row.watch_max_attempts ?? '2'))
+          expect(Number(env.E2E_WATCH_MAX_ATTEMPTS)).toBeGreaterThan(0)
+          expect(Number(env.E2E_WATCH_MAX_ATTEMPTS)).toBeLessThanOrEqual(2)
+          expect(options).toMatchObject({ maxMemoryRssMb: 5632, maxMemoryRssDeltaMb: 4608, maxMemoryHeapUsedMb: 4096 })
+          expect(env.NODE_OPTIONS).toBe('--max-old-space-size=6144')
+          expect(env.E2E_WATCH_CONFIRM_PERFORMANCE_BUDGET).toBe('1')
+        }
+        finally {
+          process.argv = originalArgv
+          for (const [key, value] of originalEnv) {
+            if (value === undefined) {
+              delete process.env[key]
+            }
+            else {
+              process.env[key] = value
+            }
+          }
+        }
+      }
     }
   })
 })

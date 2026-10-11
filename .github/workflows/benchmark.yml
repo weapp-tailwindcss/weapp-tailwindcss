@@ -156,6 +156,8 @@ jobs:
       BENCH_ONLY: ${{ matrix.bench_only }}
       # MPX 与 uni-app 的 RSS 回归需保留堆与缓存明细；两侧使用同一诊断配置。
       WEAPP_TW_HMR_MEMORY_DEBUG: ${{ (matrix.bench_only == 'demo-mpx-tailwindcss-v4__mp-weixin' || matrix.bench_only == 'demo-uni-app-vite-tailwindcss-v4__mp-weixin') && '1' || '0' }}
+      # 私有自然 GC 证据与原 RSS 门禁隔离，两侧及已有确认轮次使用相同 preload。
+      WEAPP_TW_BENCH_GC_DIAGNOSTICS: ${{ matrix.bench_only == 'demo-mpx-tailwindcss-v4__mp-weixin' && '1' || '0' }}
 
     steps:
       - name: Check out code

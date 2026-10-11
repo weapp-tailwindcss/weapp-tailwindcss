@@ -98,10 +98,10 @@ async function runSubPackageMutationInNewSession(
   sourceOriginals: Map<string, string>,
 ): Promise<SubPackageMutationRunResult> {
   const subWatchCase = createSubPackageWatchCase(watchCase, subPackageMutation)
-  const sessionStartedAt = Date.now()
-  const session = createWatchSession(watchCase.cwd, watchCase.devScript, {
+  const session = await createWatchSession(watchCase.cwd, watchCase.devScript, {
     quietSass: options.quietSass,
   }, watchCase.env)
+  const sessionStartedAt = session.startedAt ?? Date.now()
   const cleanup = createWatchCaseCleanup(subWatchCase.label)
 
   try {
@@ -247,11 +247,11 @@ export async function runCase(watchCase: WatchCase, options: CliOptions): Promis
     await runPnpmCommand(watchCase.cwd, ['run', watchCase.initialBuildScript], 'prebuild')
   }
 
-  const sessionStartedAt = Date.now()
   let outputIntegrityMonitor: ReturnType<typeof createOutputIntegrityMonitor>
-  const session = createWatchSession(watchCase.cwd, watchCase.devScript, {
+  const session = await createWatchSession(watchCase.cwd, watchCase.devScript, {
     quietSass: options.quietSass,
   }, watchCase.env)
+  const sessionStartedAt = session.startedAt ?? Date.now()
   let sessionStopped = false
   const cleanup = createWatchCaseCleanup(watchCase.label, sourceOriginals)
 
@@ -642,7 +642,7 @@ function createMainStyleOnlyMetrics(params: {
   watchCase: WatchCase
   caseStartedAt: number
   sessionStartedAt: number
-  session: ReturnType<typeof createWatchSession>
+  session: Awaited<ReturnType<typeof createWatchSession>>
   initialReadyMs: number
   mainStyleHotUpdate: NonNullable<WatchCaseMetrics['mainStyleHotUpdate']>
   subPackageMainStyleHotUpdates: NonNullable<WatchCaseMetrics['subPackageMainStyleHotUpdates']>
@@ -708,10 +708,10 @@ export async function runMainStyleOnlyCase(watchCase: WatchCase, options: CliOpt
   const sourceOriginal = await fs.readFile(sourcePath, 'utf8')
   sourceOriginals.set(sourcePath, sourceOriginal)
 
-  const sessionStartedAt = Date.now()
-  const session = createWatchSession(watchCase.cwd, watchCase.devScript, {
+  const session = await createWatchSession(watchCase.cwd, watchCase.devScript, {
     quietSass: options.quietSass,
   }, watchCase.env)
+  const sessionStartedAt = session.startedAt ?? Date.now()
   let initialReadyMs = 0
   let mainStyleHotUpdate: WatchCaseMetrics['mainStyleHotUpdate'] | undefined
   const subPackageMainStyleHotUpdates: NonNullable<WatchCaseMetrics['subPackageMainStyleHotUpdates']> = []
@@ -851,6 +851,10 @@ export function assertPluginProcessBudget(metrics: WatchCaseMetrics, options: Cl
 
 export function assertMemoryBudget(metrics: WatchCaseMetrics, options: CliOptions) {
   const maxMemoryRssMb = options.maxMemoryRssMb
+  const maxMemoryRssDeltaMb = options.maxMemoryRssDeltaMb
+  if (((maxMemoryRssMb ?? 0) > 0 || (maxMemoryRssDeltaMb ?? 0) > 0) && metrics.memorySummary.count === 0) {
+    throw new Error(`[${metrics.label}] process memory sampling is unavailable; configured RSS budget cannot be verified`)
+  }
   if (maxMemoryRssMb != null && maxMemoryRssMb > 0) {
     const samples: MemoryBudgetSample[] = [{
       label: 'case',
@@ -867,7 +871,6 @@ export function assertMemoryBudget(metrics: WatchCaseMetrics, options: CliOption
     }
   }
 
-  const maxMemoryRssDeltaMb = options.maxMemoryRssDeltaMb
   if (maxMemoryRssDeltaMb != null && maxMemoryRssDeltaMb > 0) {
     const samples: MemoryBudgetSample[] = [{
       label: 'case',

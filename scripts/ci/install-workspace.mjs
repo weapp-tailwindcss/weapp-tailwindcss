@@ -57,7 +57,8 @@ function terminateProcessTree(child) {
 }
 
 function runInstallAttempt(timeoutMs) {
-  const command = createPnpmCommand(['install', '--frozen-lockfile'])
+  // pnpm 11.9.0 会把 workspace 的 update 配置对象当作安装更新开关，必须在本次冻结安装中显式覆盖。
+  const command = createPnpmCommand(['install', '--frozen-lockfile', '--config.update=false'])
   const { environment, memory } = prepareInstallEnvironment()
   console.log(`pnpm install 内存预算：${JSON.stringify(memory)}`)
   const child = spawn(command.command, command.args, {

@@ -1,4 +1,5 @@
 import type { ChildProcess } from 'node:child_process'
+import type { WorkflowProcessObserver } from './process-observer'
 import type { ProcessIdentity } from './process-table'
 import process from 'node:process'
 import { setTimeout as delay } from 'node:timers/promises'
@@ -8,6 +9,17 @@ import { collectOwnedProcesses, readProcessSubset, readProcessTable } from './pr
 interface CleanupOptions {
   cooperativeMs?: number
   cleanupMs?: number
+  observer?: WorkflowProcessObserver
+}
+
+function remainingProbeBudget(deadline: number) {
+  const remaining = deadline - Date.now()
+  // 只剩最后一个毫秒时不能再建立有界探针；所有实际调度入口必须重新核对，
+  // 不能沿用外层检查后已被调度开销消耗的预算。
+  if (!Number.isFinite(remaining) || remaining <= 1) {
+    throw new Error('进程归属扫描预算已耗尽，禁止继续调度。')
+  }
+  return remaining
 }
 
 /** 仅清理独立组和已证明身份的后代；未登记的 double-fork 不属于确认范围。 */
@@ -19,6 +31,12 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
   let didClose = false
   let pending: { promise: Promise<Map<number, ProcessIdentity>>, controller: AbortController, budget: { deadline: number } } | undefined
   let identityError: unknown
+  const readTable = (timeoutMs: number, signal: AbortSignal) => options.observer
+    ? readProcessTable(timeoutMs, signal, options.observer)
+    : readProcessTable(timeoutMs, signal)
+  const readSubset = (group: number | undefined, pids: number[], timeoutMs: number, signal?: AbortSignal) => options.observer
+    ? readProcessSubset(group, pids, timeoutMs, signal, options.observer)
+    : readProcessSubset(group, pids, timeoutMs, signal)
   void closed.then(() => {
     didClose = true
   })
@@ -37,14 +55,11 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
     }
     const scan = async () => {
       controller.signal.throwIfAborted()
-      const remaining = budget.deadline - Date.now()
-      if (remaining <= 0) {
-        throw new Error('进程归属扫描预算已耗尽，禁止继续调度。')
-      }
+      const remaining = remainingProbeBudget(budget.deadline)
       const exited = child.exitCode !== null || child.signalCode !== null
       const rows = initialized && (didClose || exited)
-        ? await readProcessSubset(group, [...owned.keys()], remaining, controller.signal)
-        : await readProcessTable(remaining, controller.signal)
+        ? await readSubset(group, [...owned.keys()], remaining, controller.signal)
+        : await readTable(remaining, controller.signal)
       assertCurrent()
       return rows
     }
@@ -55,13 +70,30 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
       const running = () => child.exitCode === null && child.signalCode === null
       const wasRunning = running()
       let rows = await scan()
+      if (!initialized) {
+        // 系统快照可能先观察到退出，ChildProcess 的 close/exit 尚未进入 JS；同一绝对预算内等待身份或退出。
+        while (running() && !rows.some(row => row.pid === child.pid && !row.zombie)) {
+          const remaining = budget.deadline - Date.now()
+          if (remaining <= 0) {
+            throw new Error(`本轮仍运行的子进程 pid=${child.pid} 缺少启动身份，采集预算已耗尽，不能确认后代归属。`)
+          }
+          await Promise.race([closed, delay(Math.min(25, remaining))])
+          assertCurrent()
+          if (running()) {
+            if (Date.now() >= budget.deadline) {
+              throw new Error(`本轮仍运行的子进程 pid=${child.pid} 缺少启动身份，采集预算已耗尽，不能确认后代归属。`)
+            }
+            rows = await scan()
+          }
+        }
+      }
       if (!initialized && wasRunning && !running() && group && rows.some(row => row.group === group && !row.zombie)) {
         // 首次扫描跨越本体退出时，旧快照不能证明根身份；同一预算内重采，仅空组可自然收尾。
         rows = await scan()
       }
       assertCurrent()
       if (!initialized) {
-        const root = rows.find(row => row.pid === child.pid)
+        const root = rows.find(row => row.pid === child.pid && !row.zombie)
         if (root && running()) {
           owned.set(root.pid, root)
         }
@@ -100,8 +132,11 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
     let current = owned
     let verified = false
     const read = async (deadline: number) => {
-      const remaining = deadline - Date.now()
-      if (remaining <= 0) {
+      let remaining: number
+      try {
+        remaining = remainingProbeBudget(deadline)
+      }
+      catch {
         return false
       }
       // 已开始的周期扫描也共享截止时间，不能在 stop 后迟到回写旧身份。
@@ -138,8 +173,12 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
       return true
     }
     const cooperativeDeadline = Date.now() + (cooperative ? options.cooperativeMs ?? 30_000 : 0)
+    const cleanupMs = options.cleanupMs ?? 2000
+    const deadline = cooperativeDeadline + cleanupMs
+    const graceDeadline = cooperativeDeadline + Math.floor(cleanupMs / 2)
     while (Date.now() < cooperativeDeadline) {
-      if (!await read(cooperativeDeadline)) {
+      // 合作窗口决定何时强制终止，不是身份查询预算；跨边界查询仍消耗预先固定的总截止。
+      if (!await read(Math.min(Date.now() + 5000, deadline))) {
         break
       }
       if (complete()) {
@@ -150,8 +189,6 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
         await delay(Math.min(100, remaining))
       }
     }
-    const deadline = Date.now() + (options.cleanupMs ?? 2000)
-    const graceDeadline = Date.now() + Math.floor((options.cleanupMs ?? 2000) / 2)
     for (const value of ['SIGTERM', 'SIGKILL'] as const) {
       if (Date.now() >= deadline) {
         break
@@ -178,7 +215,7 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
       else if (available) {
         let latestRows: ProcessIdentity[] = []
         try {
-          latestRows = await readProcessSubset(group, [...current.keys()], deadline - Date.now())
+          latestRows = await readSubset(group, [...current.keys()], remainingProbeBudget(deadline))
         }
         catch (error) {
           errors.push(error)
@@ -190,12 +227,12 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
           }
           try {
             const latest = latestByPid.get(row.pid)
-            if (!latest || Date.now() >= deadline) {
+            if (!latest || latest.started !== row.started || latest.zombie || Date.now() >= deadline) {
               continue
             }
             if (process.platform === 'win32') {
               // 每个 PID 均已核对出生时间；禁止 /t 按复用的历史 PPID 扩大范围。
-              await runProcessCommand('taskkill', ['/pid', String(row.pid), '/f'], deadline - Date.now())
+              await runProcessCommand('taskkill', ['/pid', String(row.pid), '/f'], remainingProbeBudget(deadline))
               sent.push({ pid: row.pid, started: row.started, method: 'taskkill /pid /f' })
             }
             else {

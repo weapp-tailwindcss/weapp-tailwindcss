@@ -455,8 +455,8 @@ async function runMiniProgramHmrCase(
       await runPnpmCommand(watchCase.cwd, ['run', watchCase.initialBuildScript], `demo-visual-${item.name}-prebuild`)
     }
     process.stdout.write(`[weapp-hmr] ${item.name}: watch ${watchCase.devScript}\n`)
-    const sessionStartedAt = Date.now()
-    session = createWatchSession(watchCase.cwd, watchCase.devScript, options, watchCase.env)
+    session = await createWatchSession(watchCase.cwd, watchCase.devScript, options, watchCase.env)
+    const sessionStartedAt = session.startedAt ?? Date.now()
     await waitForOutputsReady(watchCase, options, session, sessionStartedAt)
     await waitForInitialWarmup(watchCase, options, session, sessionStartedAt)
 

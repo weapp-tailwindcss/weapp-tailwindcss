@@ -28,6 +28,7 @@ import { runAddedClassMutation } from './class/added-class'
 import { runCommentCarrierMutation } from './class/comment-carrier'
 import { assertClassTokensInOutput, assertPreviousClassEvidenceRemoved } from './class/evidence'
 import { runSameClassLiteralMutation } from './class/same-literal'
+import { createIssue33SnapshotMetadata } from './class/snapshot'
 import {
   assertNoUnsupportedMiniProgramCssImport,
   buildRoundComparison,
@@ -209,7 +210,7 @@ async function writeIssue33Snapshot(
     fs.writeFile(path.join(dir, 'bundle.wxss'), outputs.globalStyle, 'utf8'),
     fs.writeFile(
       path.join(dir, 'meta.json'),
-      `${JSON.stringify({
+      `${JSON.stringify(createIssue33SnapshotMetadata({
         label: watchCase.label,
         project: watchCase.project,
         mutationKind,
@@ -217,8 +218,7 @@ async function writeIssue33Snapshot(
         phase,
         stage,
         marker,
-        sourceFile: formatPath(sourceFile),
-      }, null, 2)}\n`,
+      }, sourceFile), null, 2)}\n`,
       'utf8',
     ),
   ])

@@ -114,7 +114,7 @@ describe('watch command cancellation lifecycle', () => {
     const cancelFile = path.join(root, 'cancel')
     await fs.writeFile(cancelFile, 'cancel')
     vi.stubEnv('E2E_WATCH_CANCEL_FILE', cancelFile)
-    expect(() => createWatchCommandSession(root, ['--version'], { quietSass: true })).toThrow('watch command was cancelled')
+    await expect(createWatchCommandSession(root, ['--version'], { quietSass: true })).rejects.toThrow('watch command was cancelled')
   })
 
   it('only interrupts a session when its own cancellation file exists', async () => {

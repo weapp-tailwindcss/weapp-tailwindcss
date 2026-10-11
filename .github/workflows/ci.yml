@@ -647,6 +647,8 @@ jobs:
       - name: Run core compatibility regression tests
         run: >
           pnpm --filter weapp-tailwindcss exec vitest run
+          test/ci/install-frozen-config.test.ts
+          test/ci/install-workspace.test.ts
           test/bundlers/module-graph.unit.test.ts
           test/bundlers/vite-bundle-entries.unit.test.ts
           test/bundlers/vite-plugin.uni-app-x.unit.test.ts
@@ -656,6 +658,9 @@ jobs:
           test/tailwindcss/targets.log.test.ts
           test/watch-hmr-coverage-matrix.unit.test.ts
           test/watch-hmr-regression.unit.test.ts
+          test/watch-hmr-memory-sampler.unit.test.ts
+          test/watch-hmr-memory-source.unit.test.ts
+          --update=none
 
       - name: Compatibility Status Note
         if: always()

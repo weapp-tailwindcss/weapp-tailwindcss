@@ -1,7 +1,6 @@
 import type { ApplyConfiguredCssCalcOptions } from '../../plugins/applyConfiguredCssCalc'
+import type { IStyleHandlerOptions } from '../../types'
 import postcss from 'postcss'
-import postcssPresetEnv from 'postcss-preset-env'
-import { applyConfiguredCssCalc } from '../../plugins/applyConfiguredCssCalc'
 import { normalizeMiniProgramPrefixedDeclaration, removeUnsupportedMiniProgramPrefixedAtRule } from '../mini-program-prefixes'
 import { removeUnsupportedCascadeLayers } from './at-rules'
 import {
@@ -20,37 +19,11 @@ const DEFAULT_WEAPP_VARIABLE_SCOPE = 'page,.tw-root,wx-root-portal-content,:host
 const MINI_PROGRAM_PSEUDO_CONTENT_SCOPE_SELECTOR = '::before,\n::after'
 const CLASS_SELECTOR_RE = /(?:^|[^\w-])\.[_a-z\u00A0-\uFFFF\\-]/i
 
-export interface PruneMiniProgramGeneratedCssOptions extends Pick<ApplyConfiguredCssCalcOptions, 'cssCalc' | 'cssOptions' | 'customPropertyValues' | 'customPropertyContextCss' | 'contextCss'> {
+export interface PruneMiniProgramGeneratedCssOptions extends Pick<ApplyConfiguredCssCalcOptions, 'cssCalc' | 'cssOptions' | 'customPropertyValues' | 'customPropertyContextCss' | 'contextCss'>, Pick<IStyleHandlerOptions, 'cssSelectorReplacement'> {
   preserveContentInit?: boolean
   preservePreflight?: boolean
   preserveConditionalComments?: boolean
   preserveRawClassRules?: boolean
-}
-
-/**
- * 在主题作用域改写前按配置预计算 calc，再展开 Tailwind 生成的嵌套规则并裁剪 Web-only 结构。
- */
-export async function normalizeMiniProgramGeneratedCssForPostcss(
-  css: string,
-  options: PruneMiniProgramGeneratedCssOptions = {},
-) {
-  const calculatedCss = await applyConfiguredCssCalc(css, {
-    cssCalc: options.cssCalc,
-    cssOptions: options.cssOptions,
-    customPropertyValues: options.customPropertyValues,
-    customPropertyContextCss: options.customPropertyContextCss,
-    contextCss: options.contextCss ?? css,
-  })
-  const result = await postcss([
-    postcssPresetEnv({
-      stage: false,
-      features: {
-        'nesting-rules': true,
-      },
-      autoprefixer: false,
-    }),
-  ]).process(calculatedCss, { from: undefined })
-  return pruneMiniProgramGeneratedCss(result.css, options)
 }
 
 function isConditionalCompilationComment(text: string) {
@@ -209,7 +182,16 @@ export function pruneMiniProgramGeneratedCss(
   css: string,
   options: PruneMiniProgramGeneratedCssOptions = {},
 ) {
-  const root = postcss.parse(css)
+  return pruneMiniProgramGeneratedCssRoot(postcss.parse(css), options).toString()
+}
+
+/**
+ * 原位裁剪当前管线拥有的 AST，避免序列化后重新解析整份生成样式。
+ */
+export function pruneMiniProgramGeneratedCssRoot(
+  root: postcss.Root,
+  options: PruneMiniProgramGeneratedCssOptions = {},
+) {
   const shouldPreserveContentInit = options.preserveContentInit
     ?? (options.preservePreflight || usesTwContentVariable(root))
 
@@ -327,5 +309,5 @@ export function pruneMiniProgramGeneratedCss(
     }
   })
 
-  return root.toString()
+  return root
 }

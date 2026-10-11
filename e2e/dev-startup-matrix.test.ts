@@ -15,7 +15,7 @@ const cases = buildCases(repoRoot)
   .filter(item => item.group === 'demo' && stableNames.has(item.name))
   .filter(item => !requested || requested === 'all' || requested.split(',').includes(item.name))
 
-async function waitForInitialCompile(session: ReturnType<typeof createWatchSession>, name: string) {
+async function waitForInitialCompile(session: Awaited<ReturnType<typeof createWatchSession>>, name: string) {
   const startedAt = Date.now()
   while (Date.now() - startedAt < startupTimeoutMs) {
     session.ensureRunning()
@@ -37,7 +37,7 @@ describe('demo normal dev startup matrix', () => {
   const run = enabled ? it : it.skip
   for (const item of cases) {
     run(`starts ${item.name} and keeps the process alive after the first compile`, async () => {
-      const session = createWatchSession(item.cwd, item.devScript, { quietSass: true }, {
+      const session = await createWatchSession(item.cwd, item.devScript, { quietSass: true }, {
         WEAPP_TW_WATCH_REGRESSION: '1',
       })
       try {

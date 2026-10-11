@@ -1,8 +1,9 @@
-import { realpathSync } from 'node:fs'
 import fs from 'node:fs/promises'
+import nodePath from 'node:path'
 import path from 'pathe'
 import postcss from 'postcss'
 import prettier from 'prettier'
+import { relativeGeneratedCssSource } from './snapshot/source-path'
 
 export interface CssSnapshotEntry {
   fileName: string
@@ -195,47 +196,23 @@ export function normalizeFontDataUrlsForSnapshot(source: string) {
 }
 
 const GENERATED_CSS_SOURCE_MARKER_RE = /(\/\*!\s*weapp-tailwindcss vite-generated-css(?:-end)?:)([^\s*]+)(\s*\*\/)/g
-const HBUILDERX_PROJECT_ALIAS_SEGMENT_RE = /^.+-[a-f\d]{10}-\d+$/
 
 export function normalizeGeneratedCssSourceMarkers(source: string, projectRoot: string) {
-  const normalizedProjectRoot = resolveRealSnapshotPath(projectRoot)
   const withoutTrailingSourceMedia = source.replace(/\n\s*@media\s+source\([^)]*\)\s*\{\s*$/, '')
   return withoutTrailingSourceMedia.replace(GENERATED_CSS_SOURCE_MARKER_RE, (marker, prefix, encodedSource, suffix) => {
     try {
       const sourceFile = decodeURIComponent(encodedSource)
-      const relativeSource = safeRelative(normalizedProjectRoot, resolveRealSnapshotPath(sourceFile))
-        ?? relativeHBuilderXAliasSource(sourceFile)
+      const relativeSource = relativeGeneratedCssSource(projectRoot, sourceFile)
       if (!relativeSource) {
         return marker
       }
-      const stableSource = path.posix.join('<project-root>', relativeSource.replace(/\\/g, '/'))
+      const stableSource = nodePath.posix.join('<project-root>', relativeSource)
       return `${prefix}${encodeURIComponent(stableSource)}${suffix}`
     }
     catch {
       return marker
     }
   })
-}
-
-function relativeHBuilderXAliasSource(file: string) {
-  const segments = file.replace(/\\/g, '/').split('/')
-  const aliasRootIndex = segments.lastIndexOf('weapp-tailwindcss-hbuilderx-projects')
-  const aliasSegment = segments[aliasRootIndex + 1]
-  if (aliasRootIndex < 0 || !aliasSegment || !HBUILDERX_PROJECT_ALIAS_SEGMENT_RE.test(aliasSegment)) {
-    return undefined
-  }
-  const relativeSegments = segments.slice(aliasRootIndex + 2)
-  return relativeSegments.length > 0 ? relativeSegments.join('/') : undefined
-}
-
-function resolveRealSnapshotPath(file: string) {
-  const resolved = path.resolve(file)
-  try {
-    return realpathSync.native(resolved)
-  }
-  catch {
-    return resolved
-  }
 }
 
 export function normalizeFormattedCssSnapshot(source: string) {

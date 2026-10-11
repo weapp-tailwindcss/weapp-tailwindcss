@@ -39,17 +39,44 @@ async function readRegistration(directory: string): Promise<Registration> {
   }
 }
 
+/** Windows 把文件祖先下的路径也报为 ENOENT，必须验证最近的现存祖先确为目录。 */
+async function registryIsAbsent(root: string) {
+  let current = root
+  while (true) {
+    try {
+      const stat = await fs.lstat(current)
+      if (current === root || (!stat.isDirectory() && !stat.isSymbolicLink())) {
+        return false
+      }
+      if (stat.isSymbolicLink()) {
+        return await fs.stat(current).then(value => value.isDirectory(), (error: NodeJS.ErrnoException) => {
+          if (error.code === 'ENOENT') {
+            return false
+          }
+          throw error
+        })
+      }
+      return true
+    }
+    catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        throw error
+      }
+    }
+    const parent = path.dirname(current)
+    if (parent === current) {
+      return false
+    }
+    current = parent
+  }
+}
+
 /** 预检只读共享 Git 目录；损坏、active 与 blocked 均不能自动回收。 */
 export async function assertNativeSessionsAvailable(projectRoot: string, host: NativeHost) {
   const root = await nativeRegistryRoot(projectRoot)
   const identity = await nativeHostIdentity(host)
   const entries = await fs.readdir(root).catch(async (error: NodeJS.ErrnoException) => {
-    if (error.code === 'ENOENT' && !await fs.lstat(root).then(() => true, (failure) => {
-      if ((failure as NodeJS.ErrnoException).code === 'ENOENT') {
-        return false
-      }
-      throw failure
-    })) {
+    if (error.code === 'ENOENT' && await registryIsAbsent(root)) {
       return []
     }
     throw new Error(`原生会话持久目录不可读取：${root}`, { cause: error })
@@ -80,6 +107,11 @@ export async function claimNativeSession(options: { projectRoot: string, host: N
   }
   try {
     await fs.mkdir(root, { recursive: true })
+  }
+  catch (error) {
+    throw new Error(`原生会话持久目录不可创建：${root}`, { cause: error })
+  }
+  try {
     await fs.mkdir(directory)
   }
   catch (error) {
