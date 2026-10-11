@@ -11,6 +11,7 @@ import { assertDevHmrArtifactSnapshotGate } from '../../watchArtifactSnapshotGat
 import { runWatchCommand } from './command'
 import { resolveWatchCommandTimeoutMs } from './command-budget'
 import { resolveWatchCommandScopes } from './command-scopes'
+import { assertIssue33SnapshotGate, listIssue33SnapshotEntries, readNewIssue33Snapshots } from './issue33-snapshot-gate'
 import {
   listWatchHmrFailureLogs,
   readNewPerformanceBudgetFailure,
@@ -1589,6 +1590,10 @@ export async function runHotUpdateTarget(target: WatchCaseName, scopeOverride?: 
     mainStyleSubPackageLimit: mainStyleSubPackageLimit === undefined ? undefined : Number(mainStyleSubPackageLimit),
   }))
   const reportFile = createReportFilePath(cwd, runTarget)
+  const snapshotsDir = path.resolve(cwd, './benchmark/e2e-watch-hmr/snapshots')
+  const previousSnapshotEntries = isIssue33RoundProfile()
+    ? await listIssue33SnapshotEntries(snapshotsDir)
+    : undefined
 
   const args = [
     '--filter',
@@ -1644,15 +1649,8 @@ export async function runHotUpdateTarget(target: WatchCaseName, scopeOverride?: 
   process.stdout.write(`[e2e-watch] hmr report saved: ${reportFile}\n`)
   assertHotUpdateReport(report, runTarget, maxHotUpdateMs)
 
-  if (isIssue33RoundProfile()) {
-    const snapshotsDir = path.resolve(cwd, './benchmark/e2e-watch-hmr/snapshots')
-    const entries = await fs.readdir(snapshotsDir).catch(() => [])
-    const expectedPhases = ['-template-add-success', '-template-modify-success', '-template-delete-success', '-script-add-success', '-script-modify-success', '-script-delete-success']
-    for (const phaseSuffix of expectedPhases) {
-      expect(
-        entries.some(item => item.includes(phaseSuffix)),
-        `[issue33] missing snapshot phase output: ${phaseSuffix}`,
-      ).toBe(true)
-    }
+  if (previousSnapshotEntries) {
+    const snapshots = await readNewIssue33Snapshots(snapshotsDir, previousSnapshotEntries)
+    assertIssue33SnapshotGate(report, snapshots)
   }
 }
