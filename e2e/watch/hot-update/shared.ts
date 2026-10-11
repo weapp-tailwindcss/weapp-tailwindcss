@@ -671,11 +671,7 @@ async function runWatchHmrCommand(cwd: string, args: string[], commandTimeoutMs:
 }
 
 function expectStyleRollbackMetric(metric: StyleMutationMetric, message: string) {
-  if (metric.rollbackNeedleCleared === false) {
-    expect(metric.rollbackOutputMs, `${message} fallback rollback output latency should be recorded`).toBeGreaterThanOrEqual(0)
-    return
-  }
-
+  expect(metric.rollbackNeedleCleared, `${message} rollback marker clearance must be verified`).toBe(true)
   expect(metric.rollbackEffectiveMs, `${message} rollback marker clearance should be positive`).toBeGreaterThan(0)
 }
 
@@ -1083,6 +1079,19 @@ function assertMainStyleOnlyHotUpdateReport(report: HotUpdateReport, target: Wat
 }
 
 export function assertHotUpdateReport(report: HotUpdateReport, target: WatchCaseName, maxHotUpdateMs: number) {
+  // 所有 profile 统一拒绝缺证或 fallback，分包专用分支同样必须证明真实清理。
+  for (const item of report.cases) {
+    for (const metric of item.mutationMetrics ?? []) {
+      if (metric.mutationKind === 'style') {
+        expectStyleRollbackMetric(metric as StyleMutationMetric, `[${item.name}] style`)
+      }
+    }
+    for (const metric of item.subPackageMutationMetrics ?? []) {
+      if (metric.style) {
+        expectStyleRollbackMetric(metric.style, `[${item.name}/${metric.root}] subpackage style`)
+      }
+    }
+  }
   if (isWebOnlyProfile(report)) {
     assertWebOnlyHotUpdateReport(report, target, maxHotUpdateMs)
     return

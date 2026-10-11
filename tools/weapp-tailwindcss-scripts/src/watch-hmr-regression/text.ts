@@ -169,20 +169,26 @@ export async function waitFor(
     message: string
     onTick?: () => void
     signal?: AbortSignal | undefined
+    /** 多阶段等待共享的绝对截止，不为后续阶段重新分配预算。 */
+    deadlineAt?: number
   },
   startedAt = Date.now(),
 ) {
-  while (Date.now() - startedAt <= options.timeoutMs) {
+  const deadlineAt = Math.min(startedAt + options.timeoutMs, options.deadlineAt ?? Number.POSITIVE_INFINITY)
+  while (Date.now() <= deadlineAt) {
     options.signal?.throwIfAborted()
     options.onTick?.()
     const matched = await predicate()
     options.signal?.throwIfAborted()
+    options.onTick?.()
+    if (Date.now() > deadlineAt) {
+      break
+    }
     if (matched) {
       return Date.now() - startedAt
     }
-    options.onTick?.()
     try {
-      await delay(options.pollMs, undefined, { signal: options.signal })
+      await delay(Math.min(options.pollMs, Math.max(0, deadlineAt - Date.now())), undefined, { signal: options.signal })
     }
     catch (error) {
       options.signal?.throwIfAborted()

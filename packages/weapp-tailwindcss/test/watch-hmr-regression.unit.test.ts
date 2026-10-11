@@ -628,7 +628,7 @@ describe('watch-hmr regression text helpers', () => {
     )
 
     expect(attempt).toBe(3)
-    expect(tickCount).toBe(5)
+    expect(tickCount).toBeGreaterThanOrEqual(5)
     expect(elapsed).toBeGreaterThanOrEqual(0)
     expect(elapsed).toBeLessThan(timeoutMs)
 
