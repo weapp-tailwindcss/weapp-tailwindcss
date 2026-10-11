@@ -647,6 +647,8 @@ jobs:
       - name: Run core compatibility regression tests
         run: >
           pnpm --filter weapp-tailwindcss exec vitest run
+          test/ci/install-frozen-config.test.ts
+          test/ci/install-workspace.test.ts
           test/bundlers/module-graph.unit.test.ts
           test/bundlers/vite-bundle-entries.unit.test.ts
           test/bundlers/vite-plugin.uni-app-x.unit.test.ts

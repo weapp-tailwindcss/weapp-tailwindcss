@@ -96,7 +96,7 @@ writeFileSync(process.env.PNPM_INSTALL_PROBE, JSON.stringify({ args: process.arg
       const result = await installWorkspace({ attempts: 1, timeoutMs: 10000, retryDelayMs: 1 })
       expect(result.code).toBe(0)
       const child = JSON.parse(await readFile(report, 'utf8'))
-      expect(child.args).toEqual(['install', '--frozen-lockfile'])
+      expect(child.args).toEqual(['install', '--frozen-lockfile', '--config.update=false'])
       expect(child.options).toMatch(/^--no-warnings --max-old-space-size=\d+$/)
       const configuredMb = Number(child.options.match(/--max-old-space-size=(\d+)/)[1])
       expect(configuredMb).toBeLessThanOrEqual(4096)
