@@ -15,10 +15,22 @@ if (/^mpx-cli-service(?:\.js)?$/.test(path.basename(process.argv[1] || ''))) {
   const events = []
   const histogram = new Map()
   const inputs = new Set()
+  const declarations = new Map()
   let inputBytes = 0
   let sequence = 0
   let calls = 0
   const sha = value => crypto.createHash('sha256').update(value).digest('hex')
+  const readFileSync = fs.readFileSync
+  fs.readFileSync = function (...args) {
+    const value = readFileSync.apply(this, args)
+    const filename = args[0]
+    if (typeof filename === 'string' && filename.endsWith('.d.ts')) {
+      const previous = declarations.get(filename)
+      if (!previous && declarations.size >= 16384) throw new Error('declaration inventory limit exceeded')
+      declarations.set(filename, { reads: (previous?.reads ?? 0) + 1, bytes: Buffer.byteLength(value), sha256: sha(value) })
+    }
+    return value
+  }
   const record = (kind, data = {}) => {
     if (events.length >= 2048) throw new Error('diagnostic event limit exceeded')
     events.push({ kind, atEpochMs: Date.now(), atMonotonicMs: performance.now(), memory: process.memoryUsage(), ...data })
@@ -99,6 +111,30 @@ if (/^mpx-cli-service(?:\.js)?$/.test(path.basename(process.argv[1] || ''))) {
     if (error) throw error
     record('sampling-ready')
   })
+  // 此独立批次会因 heap snapshot 触发诊断性的 GC，不能与原 RSS 门禁样本互换。
+  process.once('beforeExit', () => {
+    record('snapshot-start', { diagnosticGcExpected: true })
+    const fd = fs.openSync(path.join(output, 'retained.heapsnapshot'), 'wx')
+    let bytes = 0
+    const writeChunk = ({ params }) => {
+      const buffer = Buffer.from(params.chunk)
+      if (bytes + buffer.length > 4294967296) throw new Error('snapshot limit exceeded')
+      let written = 0
+      while (written < buffer.length) {
+        const count = fs.writeSync(fd, buffer, written)
+        if (count <= 0) throw new Error('snapshot write made no progress')
+        written += count
+      }
+      bytes += written
+    }
+    session.on('HeapProfiler.addHeapSnapshotChunk', writeChunk)
+    session.post('HeapProfiler.takeHeapSnapshot', { reportProgress: false }, (error) => {
+      session.removeListener('HeapProfiler.addHeapSnapshotChunk', writeChunk)
+      fs.closeSync(fd)
+      if (error) throw error
+      record('snapshot-end', { bytes, diagnosticGcExpected: true })
+    })
+  })
   process.once('exit', (code) => {
     record('exit', { code, calls, histogramEntries: histogram.size, inputBytes, inputFiles: inputs.size })
     let profileWritten = false
@@ -109,7 +145,8 @@ if (/^mpx-cli-service(?:\.js)?$/.test(path.basename(process.argv[1] || ''))) {
     })
     fs.writeFileSync(path.join(output, 'events.json'), JSON.stringify(events, null, 2))
     fs.writeFileSync(path.join(output, 'tokens.json'), JSON.stringify([...histogram], null, 2))
-    fs.writeFileSync(path.join(output, 'receipt.json'), JSON.stringify({ pid: process.pid, code, profileWritten, diagnosticOnly: true, noForcedGc: true, noGuard: true, inputBytes, inputFiles: inputs.size }, null, 2))
+    fs.writeFileSync(path.join(output, 'declarations.json'), JSON.stringify([...declarations], null, 2))
+    fs.writeFileSync(path.join(output, 'receipt.json'), JSON.stringify({ pid: process.pid, code, profileWritten, diagnosticOnly: true, diagnosticGcExpected: true, noGuard: true, inputBytes, inputFiles: inputs.size }, null, 2))
     session.disconnect()
     observer.disconnect()
   })
