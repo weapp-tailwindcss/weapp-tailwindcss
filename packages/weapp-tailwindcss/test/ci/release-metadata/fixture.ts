@@ -29,6 +29,22 @@ export function fixture() {
   return { base, head }
 }
 
+export function initialReleaseFixture(withVersionBump = false) {
+  const data = fixture()
+  if (!withVersionBump) {
+    data.head['packages/a/package.json'] = data.base['packages/a/package.json']
+    data.head['packages/a/CHANGELOG.md'] = data.base['packages/a/CHANGELOG.md']
+    data.head['.changeset/ledger.yaml'] = data.base['.changeset/ledger.yaml']
+    delete data.base['.changeset/example.md']
+  }
+  const manifest = json({ name: 'pkg-new', version: '0.1.0' })
+  data.base['packages/new/package.json'] = data.head['packages/new/package.json'] = manifest
+  data.base['.changeset/initial.md'] = '---\n"pkg-new": minor\n---\n\n新包使用 manifest 版本首发。\n'
+  data.head['packages/new/CHANGELOG.md'] = '# pkg-new\n\n## 0.1.0\n\n### Minor Changes\n\n新包首发。\n'
+  data.head['.changeset/ledger.yaml'] += '"pkg-new@0.1.0":\n  dir: packages/new\n  intents: [initial]\n'
+  return data
+}
+
 export function snapshot(files: Files) {
   return { paths: Object.keys(files), read: (file: string) => files[file] ?? null }
 }
@@ -61,7 +77,7 @@ export function writeFiles(cwd: string, files: Files) {
   }
 }
 
-export function gitFixture() {
+export function gitFixture(files = fixture()) {
   const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'release-scope-test-'))
   git(cwd, 'init', '--initial-branch=main')
   // 仓库级配置覆盖 helper 之外的 Git 消费方，使临时目录回收拥有明确的写入边界。
@@ -69,13 +85,14 @@ export function gitFixture() {
   git(cwd, 'config', '--local', 'gc.auto', '0')
   git(cwd, 'config', 'user.name', 'CI scope test')
   git(cwd, 'config', 'user.email', 'scope@example.test')
-  const files = fixture()
   writeFiles(cwd, files.base)
   git(cwd, 'add', '.')
   git(cwd, 'commit', '-m', 'test: base')
   const before = git(cwd, 'rev-parse', 'HEAD')
   writeFiles(cwd, files.head)
-  fs.rmSync(path.join(cwd, '.changeset', 'example.md'))
+  for (const file of Object.keys(files.base).filter(file => !(file in files.head))) {
+    fs.rmSync(path.resolve(cwd, file))
+  }
   git(cwd, 'add', '.')
   git(cwd, 'commit', '-m', 'test: versions')
   const after = git(cwd, 'rev-parse', 'HEAD')

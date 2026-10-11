@@ -47,8 +47,27 @@ export function readVersionChanges(changes, base, head, semver) {
     }
     updates.set(next.data.name, { ...next, oldVersion, newVersion })
   }
-  if (updates.size === 0) {
-    throw new Error('没有版本提升')
+  return updates
+}
+
+/** 首发保留 main 中的 manifest 版本，必须同时证明尚无 changelog 和发布台账。 */
+export function readInitialReleases(changes, snapshot, base, head, { yaml, semver }) {
+  const ledger = yaml.parse(snapshot.read('.changeset/ledger.yaml') || '{}')
+  if (!record(ledger)) {
+    throw new Error('intent ledger 无效')
+  }
+  const updates = new Map()
+  for (const { file } of changes.filter(change => path.posix.basename(change.file) === 'CHANGELOG.md' && change.status === 'A')) {
+    const manifest = path.posix.join(path.posix.dirname(file), 'package.json')
+    const previous = base.manifests.get(manifest)
+    const next = head.manifests.get(manifest)
+    if (snapshot.read(file) !== null || !previous || !next
+      || !isDeepStrictEqual(previous.data, next.data) || next.data.private === true
+      || semver.valid(next.data.version) !== next.data.version
+      || Object.keys(ledger).some(key => key.startsWith(`${next.data.name}@`))) {
+      continue
+    }
+    updates.set(next.data.name, { ...next, initialRelease: true, oldVersion: null, newVersion: next.data.version })
   }
   return updates
 }

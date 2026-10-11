@@ -1,7 +1,7 @@
 import path from 'node:path'
 import { loadDependencies } from './dependencies.mjs'
 import { readConsumedIntents, validateChangelogs, validateLedger } from './documents.mjs'
-import { readVersionChanges, readWorkspace, validateFixedGroups, validateWorkspaceProtocols } from './workspace.mjs'
+import { readInitialReleases, readVersionChanges, readWorkspace, validateFixedGroups, validateWorkspaceProtocols } from './workspace.mjs'
 
 export function classifyReleaseMetadata({ changes, base, head, dependencies = loadDependencies() }) {
   if (!changes.length || changes.some(({ file, status }) => !['A', 'M', 'D'].includes(status)
@@ -11,7 +11,13 @@ export function classifyReleaseMetadata({ changes, base, head, dependencies = lo
   }
   const oldWorkspace = readWorkspace(base, dependencies.yaml)
   const newWorkspace = readWorkspace(head, dependencies.yaml)
-  const updates = readVersionChanges(changes, oldWorkspace, newWorkspace, dependencies.semver)
+  const updates = new Map([
+    ...readVersionChanges(changes, oldWorkspace, newWorkspace, dependencies.semver),
+    ...readInitialReleases(changes, base, oldWorkspace, newWorkspace, dependencies),
+  ])
+  if (updates.size === 0) {
+    throw new Error('没有版本提升或首发')
+  }
   validateFixedGroups(newWorkspace, updates)
   validateWorkspaceProtocols(newWorkspace, dependencies.semver)
   validateChangelogs(changes, base, head, updates)

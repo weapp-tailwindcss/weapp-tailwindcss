@@ -44,7 +44,9 @@ export function readConsumedIntents(changes, base, head, updates, { yaml, semver
     }
     for (const [name, kind] of Object.entries(data)) {
       const update = updates.get(name)
-      const minimum = update && ['patch', 'minor', 'major'].includes(kind) ? semver.inc(update.oldVersion, kind) : null
+      const minimum = update && ['patch', 'minor', 'major'].includes(kind)
+        ? update.initialRelease ? update.newVersion : semver.inc(update.oldVersion, kind)
+        : null
       if (!update || !minimum || !semver.gte(update.newVersion, minimum)) {
         throw new Error(`change intent 没有对应版本提升：${file}`)
       }
@@ -70,6 +72,9 @@ export function validateLedger(changes, base, head, updates, intents, yaml) {
     if (!isDeepStrictEqual(value, next[key])) {
       throw new Error('intent ledger 修改了已有记录')
     }
+  }
+  if ([...updates.values()].some(update => update.initialRelease && !Object.hasOwn(next, `${update.data.name}@${update.newVersion}`))) {
+    throw new Error('首发必须有对应的 intent ledger 新记录')
   }
   const linked = new Set()
   let additions = 0
