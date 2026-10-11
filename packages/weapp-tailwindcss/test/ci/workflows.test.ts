@@ -536,6 +536,7 @@ describe('ci workflows', () => {
     expect(compatibilityRuns).toContain('test/watch-hmr-coverage-matrix.unit.test.ts')
     const regressionRun = workflow.jobs.compatibility.steps.find(step => step.name === 'Run core compatibility regression tests')?.run
     expect(regressionRun).toContain('test/watch-hmr-memory-sampler.unit.test.ts')
+    expect(regressionRun).toContain('test/watch-hmr-memory-source.unit.test.ts')
     expect(regressionRun).toContain('--update=none')
   })
 

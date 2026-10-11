@@ -659,6 +659,7 @@ jobs:
           test/watch-hmr-coverage-matrix.unit.test.ts
           test/watch-hmr-regression.unit.test.ts
           test/watch-hmr-memory-sampler.unit.test.ts
+          test/watch-hmr-memory-source.unit.test.ts
           --update=none
 
       - name: Compatibility Status Note
