@@ -114,6 +114,7 @@ if (/^mpx-cli-service(?:\.js)?$/.test(path.basename(process.argv[1] || ''))) {
   // 此独立批次会因 heap snapshot 触发诊断性的 GC，不能与原 RSS 门禁样本互换。
   process.once('beforeExit', () => {
     record('snapshot-start', { diagnosticGcExpected: true })
+    const keepAlive = setInterval(() => {}, 1000)
     const fd = fs.openSync(path.join(output, 'retained.heapsnapshot'), 'wx')
     let bytes = 0
     const writeChunk = ({ params }) => {
@@ -129,6 +130,7 @@ if (/^mpx-cli-service(?:\.js)?$/.test(path.basename(process.argv[1] || ''))) {
     }
     session.on('HeapProfiler.addHeapSnapshotChunk', writeChunk)
     session.post('HeapProfiler.takeHeapSnapshot', { reportProgress: false }, (error) => {
+      clearInterval(keepAlive)
       session.removeListener('HeapProfiler.addHeapSnapshotChunk', writeChunk)
       fs.closeSync(fd)
       if (error) throw error
