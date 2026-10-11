@@ -11,7 +11,7 @@ interface PendingRequest {
   reject: (error: unknown) => void
   timer: ReturnType<typeof setTimeout>
   deadline: number
-  signal?: AbortSignal
+  signal?: AbortSignal | undefined
   abort?: () => void
   diagnostic: ObserverRequestDiagnostic
 }
