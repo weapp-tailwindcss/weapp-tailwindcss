@@ -98,6 +98,7 @@ regressions:
 - 合入热采集器后 `CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/demo-workflow e2e/preflight-report-output.test.ts --testTimeout=30000 --update=none`：19 文件、144 项通过；1 文件中的 2 项真实 Windows PowerShell 协议/父子内存采样测试在 macOS 未执行，必须由新 head 的 Windows CI 验收。17 个修改/新增脚本与测试严格 ESLint 通过。
 - Web Iconify 的 18 项实际候选提取和诊断回归，以及重建当前工作树依赖后的真实 Taro React Web watch 通过；热更新 382 毫秒、回滚 330 毫秒，保持原 420 秒阶段截止。结束后源码字节恢复、headless Chromium 与构建进程全部回收，完整命令见 [真实源码消费位置复盘](watch-web-iconify-source-consumer.md)。本次探针没有永久修改 demo，无新增 static 基线。
 - 合入异步内存与 Web 收尾后，`CI=1 pnpm --filter weapp-tailwindcss exec vitest run test/watch-hmr-web-iconify.unit.test.ts test/watch-hmr-web-iconify-candidates.unit.test.ts test/ci/watch-issue33-snapshot-gate.test.ts test/watch-hmr-regression.unit.test.ts test/watch-hmr-memory-sampler.unit.test.ts test/watch-hmr-web-cleanup.unit.test.ts --update=none`：6 文件、177 项通过，1 项 Windows 专属协议在 macOS 未执行。严格 ESLint、`pnpm agents:check` 与 `git diff --check` 通过；真实异步采样与逐项收尾结果见 [内存探针复盘](watch-memory-probe-lifecycle.md)。
+- 最终 head `b069566031f47d4f5deaabe88554d8188de72025` 的 [Coverage shard 2](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38148666256/job/114497339039) 在 562 项通过后，`e2e/demo-workflow-exit-lifecycle.test.ts` 的超时回归观察到探针调用 `[80, 1]`，并非业务逻辑失败。首次扫描已耗尽 80ms 清理截止，边界调度又发起 1ms 查询，使“耗尽预算后不再调度”依赖毫秒级抖动。`process-tree.ts` 现在把剩余不超过 1ms 视为不可建立有界探针，直接结束查询并保留原清理错误；正常退出、SIGINT/SIGTERM 和原生取消 3 文件 10 项回归通过。该修复不延长总截止、不重试已耗尽探针。
 
 ## 适用边界
 

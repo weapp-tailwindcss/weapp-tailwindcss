@@ -126,7 +126,9 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
     let verified = false
     const read = async (deadline: number) => {
       const remaining = deadline - Date.now()
-      if (remaining <= 0) {
+      // 只剩最后一个毫秒时无法为子进程探针建立有界命令；继续调度会把已耗尽的
+      // 清理预算伪装成一次新的 1ms 扫描，并让退出收尾结果依赖调度抖动。
+      if (remaining <= 1) {
         return false
       }
       // 已开始的周期扫描也共享截止时间，不能在 stop 后迟到回写旧身份。
