@@ -4,6 +4,7 @@ import process from 'node:process'
 import { PassThrough } from 'node:stream'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { sampleProcessTreeAsync } from '../scripts/demo-e2e-memory'
+import { containsWorkflowError, WorkflowCancellationError } from '../scripts/demo-e2e-workflow/cancellation'
 import * as observerModule from '../scripts/demo-e2e-workflow/process-observer'
 import { runStep } from '../scripts/demo-e2e-workflow/step'
 
@@ -155,6 +156,51 @@ it('业务已有失败报告时，采集器回收错误仍必须进入同一报�
   expect(error.stepReport).toBe(report)
   expect(report.error).toContain('workload failed')
   expect(report.error).toContain('observer close failed')
+  expect(close).toHaveBeenCalledOnce()
+})
+
+it.each(['SIGINT', 'SIGTERM'] as const)('%s 已记录的查询 fatal 回收后不重复误标，原取消报告与错误对象保持可见', async (signal) => {
+  const queryError = new Error('identity query already failed')
+  const cancelled = new WorkflowCancellationError(signal)
+  const report = { exitCode: cancelled.exitCode, cancelled: signal, error: `${cancelled.message}\n${queryError.message}` }
+  const primary = Object.assign(new AggregateError([cancelled, new AggregateError([queryError], 'capture failed')], `业务阶段取消 (${signal})`), { stepReport: report })
+  queryError.cause = primary
+  expect(containsWorkflowError(primary, new Error(queryError.message))).toBe(false)
+  const close = vi.fn().mockRejectedValue(queryError)
+  vi.spyOn(observerModule, 'prepareWorkflowProcessObserver').mockResolvedValue({ table: vi.fn(), subset: vi.fn(), memory: vi.fn(), close })
+  mocks.spawn.mockImplementation(() => {
+    throw primary
+  })
+  const error = await runStep({ name: 'cancelled', command: 'workload', args: [] }, 1, 1).catch(error => error)
+  expect(error).toBe(primary)
+  expect(String(error)).toContain(signal)
+  expect(error.stepReport).toBe(report)
+  expect(report.exitCode).toBe(cancelled.exitCode)
+  expect(report.error).not.toContain('身份采集器回收失败')
+  expect(close).toHaveBeenCalledOnce()
+})
+
+it.each(['SIGINT', 'SIGTERM'] as const)('%s 与真正退出未确认并存时仍阻断，顶层及报告保留两处原始原因', async (signal) => {
+  const queryError = new Error('identity query already failed')
+  const cancelled = new WorkflowCancellationError(signal)
+  const report = { exitCode: cancelled.exitCode, cancelled: signal, error: cancelled.message }
+  const primary = Object.assign(new AggregateError([cancelled, queryError], `业务阶段取消 (${signal})`), { stepReport: report })
+  const reapError = new Error('observer pid=424242 退出未确认')
+  const closeError = new AggregateError([queryError, reapError], 'observer close failed')
+  const close = vi.fn().mockRejectedValue(closeError)
+  vi.spyOn(observerModule, 'prepareWorkflowProcessObserver').mockResolvedValue({ table: vi.fn(), subset: vi.fn(), memory: vi.fn(), close })
+  mocks.spawn.mockImplementation(() => {
+    throw primary
+  })
+  const error = await runStep({ name: 'cancelled', command: 'workload', args: [] }, 1, 1).catch(error => error)
+  expect(error).toBeInstanceOf(AggregateError)
+  expect(error.errors).toEqual([primary, closeError])
+  expect(String(error)).toContain(signal)
+  expect(String(error)).toContain('observer close failed')
+  expect(error.stepReport).toBe(report)
+  expect(report.error).toContain(signal)
+  expect(report.error).toContain(reapError.message)
+  expect(report.exitCode).toBe(cancelled.exitCode)
   expect(close).toHaveBeenCalledOnce()
 })
 

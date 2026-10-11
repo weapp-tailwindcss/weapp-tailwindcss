@@ -163,8 +163,12 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
       return true
     }
     const cooperativeDeadline = Date.now() + (cooperative ? options.cooperativeMs ?? 30_000 : 0)
+    const cleanupMs = options.cleanupMs ?? 2000
+    const deadline = cooperativeDeadline + cleanupMs
+    const graceDeadline = cooperativeDeadline + Math.floor(cleanupMs / 2)
     while (Date.now() < cooperativeDeadline) {
-      if (!await read(cooperativeDeadline)) {
+      // 合作窗口决定何时强制终止，不是身份查询预算；跨边界查询仍消耗预先固定的总截止。
+      if (!await read(Math.min(Date.now() + 5000, deadline))) {
         break
       }
       if (complete()) {
@@ -175,8 +179,6 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
         await delay(Math.min(100, remaining))
       }
     }
-    const deadline = Date.now() + (options.cleanupMs ?? 2000)
-    const graceDeadline = Date.now() + Math.floor((options.cleanupMs ?? 2000) / 2)
     for (const value of ['SIGTERM', 'SIGKILL'] as const) {
       if (Date.now() >= deadline) {
         break

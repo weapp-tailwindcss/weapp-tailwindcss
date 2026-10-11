@@ -48,28 +48,33 @@ export function createWorkflowCancellation() {
   }
 }
 
-/** 清理失败不能覆盖取消原因，也不重复加入已由 cause/errors 保留的同一个错误。 */
-export function includeWorkflowCancellation(error: unknown, signal: AbortSignal) {
-  if (!signal.aborted) {
-    return error
-  }
+/** 按对象身份检查 cause/errors 图，循环引用不能阻断查询或制造重复错误。 */
+export function containsWorkflowError(error: unknown, candidate: unknown) {
   const pending: unknown[] = [error]
   const seen = new Set<unknown>()
   while (pending.length) {
     const current = pending.pop()
-    if (current === signal.reason) {
-      return error
+    if (current === candidate) {
+      return true
     }
     if (seen.has(current)) {
       continue
     }
     seen.add(current)
-    if (current instanceof Error) {
+    if (current instanceof Error && current.cause !== undefined) {
       pending.push(current.cause)
     }
     if (current instanceof AggregateError) {
       pending.push(...current.errors)
     }
+  }
+  return false
+}
+
+/** 清理失败不能覆盖取消原因，也不重复加入已由 cause/errors 保留的同一个错误。 */
+export function includeWorkflowCancellation(error: unknown, signal: AbortSignal) {
+  if (!signal.aborted || containsWorkflowError(error, signal.reason)) {
+    return error
   }
   return new AggregateError([signal.reason, error], '工作流取消与收尾同时失败。', { cause: signal.reason })
 }

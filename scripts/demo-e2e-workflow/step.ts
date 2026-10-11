@@ -6,7 +6,7 @@ import process from 'node:process'
 import { sampleProcessTreeAsync, summarizeMemorySamples } from '../demo-e2e-memory'
 import { formatWorkflowError } from '../e2e-preflight/cleanup'
 import { createPnpmCommand } from '../pnpm-command.mjs'
-import { WorkflowCancellationError } from './cancellation'
+import { containsWorkflowError, WorkflowCancellationError } from './cancellation'
 import { prepareWorkflowProcessObserver } from './process-observer'
 import { createWorkflowProcessTree } from './process-tree'
 
@@ -26,21 +26,25 @@ export async function runStep(step: WorkflowStep, index: number, total: number, 
     await observer?.close()
   }
   catch (error) {
-    const errors = [...new Set([failure, error].filter(item => item !== undefined))]
-    const combined = new AggregateError(errors, '身份采集器回收失败；业务阶段不能放行。', { cause: errors[0] })
-    if (report) {
-      report.exitCode = 1
-      report.error = formatWorkflowError(error)
-      Object.assign(combined, { stepReport: report })
-    }
-    else if (failure && typeof failure === 'object' && 'stepReport' in failure) {
-      const failedReport = failure.stepReport as DemoE2eMemoryStepReport | undefined
-      if (failedReport) {
-        failedReport.error = [...new Set([failedReport.error, formatWorkflowError(error)].filter(Boolean))].join('\n')
+    // 关闭仍会重抛历史查询 fatal；已由阶段保留的同一错误不代表新增回收失败。
+    if (failure === undefined || !containsWorkflowError(failure, error)) {
+      const errors = [...new Set([failure, error].filter(item => item !== undefined))]
+      const detail = errors.map(item => item instanceof Error ? item.message : String(item)).join('\n')
+      const combined = new AggregateError(errors, `身份采集器回收失败；业务阶段不能放行。\n${detail}`, { cause: errors[0] })
+      if (report) {
+        report.exitCode = 1
+        report.error = formatWorkflowError(error)
+        Object.assign(combined, { stepReport: report })
       }
-      Object.assign(combined, { stepReport: failure.stepReport })
+      else if (failure && typeof failure === 'object' && 'stepReport' in failure) {
+        const failedReport = failure.stepReport as DemoE2eMemoryStepReport | undefined
+        if (failedReport) {
+          failedReport.error = [...new Set([failedReport.error, formatWorkflowError(error)].filter(Boolean))].join('\n')
+        }
+        Object.assign(combined, { stepReport: failure.stepReport })
+      }
+      failure = combined
     }
-    failure = combined
   }
   if (failure !== undefined) {
     throw failure
