@@ -40,3 +40,34 @@ it('Windows 只终止再次核对身份的 PID，既不 /t 扩散也不触碰复
   expect(mocks.command.mock.calls[0]?.[2]).toBeLessThanOrEqual(2000)
   expect(rows).toEqual([{ ...childRow, parent: 1, started: '2026-10-04T12:00:20Z' }])
 })
+
+it.each(['linux', 'win32'])('%s 最后复查期间 PID 被复用时不向新进程发送终止请求', async (target) => {
+  Object.defineProperty(process, 'platform', { value: target })
+  const root = { pid: 100, parent: 1, group: target === 'win32' ? 0 : 100, started: '2026-10-04T12:00:10Z' }
+  const reused = { ...root, started: '2026-10-04T12:00:20Z' }
+  vi.spyOn(table, 'readProcessTable').mockResolvedValue([root])
+  let close!: () => void
+  const child = Object.assign(new EventEmitter(), { pid: 100, exitCode: null, signalCode: null }) as ChildProcess
+  const closed = new Promise<void>((resolve) => {
+    close = resolve
+  })
+  const tree = createWorkflowProcessTree(child, closed, { cleanupMs: 50 })
+  const kill = vi.spyOn(process, 'kill').mockReturnValue(true)
+  mocks.command.mockClear()
+  await tree.capture()
+  vi.spyOn(table, 'readProcessSubset').mockImplementation(async () => {
+    Object.assign(child, { exitCode: 0 })
+    close()
+    return [reused]
+  })
+  const stopping = tree.stop()
+  // 最后复查返回的新身份也不能被旧 current 快照认领。
+  if (target === 'win32') {
+    await expect(stopping).resolves.toBeUndefined()
+  }
+  else {
+    await expect(stopping).rejects.toThrow('清理未成功')
+  }
+  expect(kill).not.toHaveBeenCalled()
+  expect(mocks.command).not.toHaveBeenCalled()
+})

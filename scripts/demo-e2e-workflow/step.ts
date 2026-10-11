@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process'
 import process from 'node:process'
 import { sampleProcessTreeAsync, summarizeMemorySamples } from '../demo-e2e-memory'
 import { formatWorkflowError } from '../e2e-preflight/cleanup'
+import { createPnpmCommand } from '../pnpm-command.mjs'
 import { WorkflowCancellationError } from './cancellation'
 import { createWorkflowProcessTree } from './process-tree'
 
@@ -12,11 +13,15 @@ export async function runStep(step: WorkflowStep, index: number, total: number, 
   process.stdout.write(`[demo-e2e] ${index}/${total}${step.local ? ' local' : ''} ${step.name}: ${step.command} ${step.args.join(' ')}\n`)
   const startedAt = Date.now()
   const samples: DemoE2eMemorySample[] = []
-  const child = spawn(step.command, step.args, {
+  const environment = { ...workflowEnv, ...step.env, ...preflightEnv }
+  const invocation = step.command === 'pnpm'
+    ? createPnpmCommand(step.args, { npmExecPath: environment['npm_execpath'] })
+    : { command: step.command, args: step.args, shell: false }
+  const child = spawn(invocation.command, invocation.args, {
     cwd: process.cwd(),
-    env: { ...workflowEnv, ...step.env, ...preflightEnv },
+    env: environment,
     detached: process.platform !== 'win32',
-    shell: process.platform === 'win32',
+    shell: invocation.shell,
     stdio: 'inherit',
   })
   let spawnError: unknown

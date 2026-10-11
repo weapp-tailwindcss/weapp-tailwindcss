@@ -44,6 +44,8 @@ describe('normalizeCssSnapshot', () => {
     for (const [root, file] of [
       ['/workspace/demo/app', '/workspace/demo/app/src/app.css'],
       ['C:\\workspace\\demo\\app', 'C:\\workspace\\demo\\app\\src\\app.css'],
+      ['C:/workspace/demo/app', 'C:/workspace/demo/app/src/app.css'],
+      ['\\\\server\\share\\app', '\\\\server\\share\\app\\src\\app.css'],
       ['C:\\', 'C:\\src\\app.css'],
       ['/', '/src/app.css'],
       ['demo/app', 'demo/app/src/app.css'],
@@ -54,6 +56,17 @@ describe('normalizeCssSnapshot', () => {
       )
       expect(normalizeGeneratedCssSourceMarkers(source, '/other-project')).toBe(source)
     }
+  })
+
+  it.each([
+    ['C:\\workspace', 'D:\\workspace\\src\\app.css'],
+    ['C:\\', '/src/app.css'],
+    ['/', 'C:\\src\\app.css'],
+    ['/workspace/app', '/workspace/app-other/src/app.css'],
+    ['C:\\workspace\\app', 'C:\\workspace\\app-other\\src\\app.css'],
+  ])('保留项目外来源 %s → %s 的路径身份', (root, file) => {
+    const marker = `/*! weapp-tailwindcss vite-generated-css:${encodeURIComponent(file)} */`
+    expect(normalizeGeneratedCssSourceMarkers(marker, root)).toBe(marker)
   })
 
   it('normalizes generated css source markers through project aliases', async () => {

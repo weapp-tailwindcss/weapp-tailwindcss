@@ -62,6 +62,9 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
       assertCurrent()
       if (!initialized) {
         const root = rows.find(row => row.pid === child.pid)
+        if (!root && running()) {
+          throw new Error(`本轮仍运行的子进程 pid=${child.pid} 缺少启动身份，不能确认后代归属。`)
+        }
         if (root && running()) {
           owned.set(root.pid, root)
         }
@@ -190,7 +193,7 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
           }
           try {
             const latest = latestByPid.get(row.pid)
-            if (!latest || Date.now() >= deadline) {
+            if (!latest || latest.started !== row.started || latest.zombie || Date.now() >= deadline) {
               continue
             }
             if (process.platform === 'win32') {

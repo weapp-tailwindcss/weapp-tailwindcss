@@ -106,7 +106,9 @@ describe('隔离进程内的真实信号与合作恢复', () => {
     const tree = createWorkflowProcessTree(child, done, { cooperativeMs: 2000 })
     try {
       await vi.waitFor(async () => expect(await readFile(source, 'utf8')).toBe('mutated'))
-      await tree.capture()
+      // 进程表是异步快照；先确认后代已登记，再允许父退出，避免把未登记后代当作验收范围。
+      const descendant = Number(await readFile(pidFile, 'utf8'))
+      await vi.waitFor(async () => expect((await tree.capture()).has(descendant)).toBe(true), { timeout: 5000 })
       await writeFile(exit, 'exit')
       await done
       const stopping = tree.stop(true)

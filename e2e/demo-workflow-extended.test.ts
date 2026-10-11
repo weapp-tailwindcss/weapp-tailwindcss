@@ -24,6 +24,8 @@ describe('扩展回归的完整覆盖与门禁', () => {
 
   beforeEach(() => {
     vi.resetAllMocks()
+    // 编排测试固定为独立调用；活动 pnpm 的身份与参数由真实命令回归验证。
+    vi.stubEnv('npm_execpath', undefined)
     vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
     mocks.enter.mockResolvedValue(gate)
     mocks.execFile.mockImplementation((_file, _args, _options, callback) => callback(null, `${baseline}\n`))
@@ -75,7 +77,7 @@ describe('扩展回归的完整覆盖与门禁', () => {
 
   it('独立质量与模板套件进入同一门禁，原生逐平台执行并固定性能基线', async () => {
     await runDemoE2eWorkflow(args)
-    const commands = mocks.spawn.mock.calls.map(([command, argv]) => [command, ...argv].join(' '))
+    const commands = mocks.spawn.mock.calls.map(([command, argv]) => [command === 'pnpm.cmd' ? 'pnpm' : command, ...argv].join(' '))
     for (const name of ['tsd', 'stylelint', 'release:verify', 'agents:test --update=none', 'test:demo:matrix', 'test:perf:demo', 'skills:validate', 'docs:packages:check', 'e2e:preprocessor', 'e2e:demo-user-workflow', 'e2e:templates', 'e2e:templates:hmr', 'e2e:templates:ide', 'e2e:dev:smoke']) {
       expect(commands, name).toContain(`pnpm ${name}`)
     }

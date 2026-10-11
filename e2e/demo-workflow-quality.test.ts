@@ -27,6 +27,8 @@ describe('本地质量验证的全面测试门禁', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    // 编排测试固定为独立调用；活动 pnpm 的身份与参数由真实命令回归验证。
+    vi.stubEnv('npm_execpath', undefined)
     events.length = 0
     vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
     mocks.enter.mockImplementation(async () => {
@@ -42,7 +44,10 @@ describe('本地质量验证的全面测试门禁', () => {
     })
   })
 
-  afterEach(() => vi.restoreAllMocks())
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.unstubAllEnvs()
+  })
 
   it('拒绝不含本地门禁的 quality 请求，且不启动任何命令', async () => {
     await expect(runDemoE2eWorkflow(['--quality'])).rejects.toThrow('--quality 必须配合 --local')
@@ -60,7 +65,7 @@ describe('本地质量验证的全面测试门禁', () => {
 
   it('先验证质量，再执行完整平台步骤，并共用一次门禁和环境绑定', async () => {
     await runDemoE2eWorkflow(['--local', '--quality', '--preflight-report', 'current-report.json'])
-    const commands = mocks.spawn.mock.calls.map(([command, args]) => [command, ...args].join(' '))
+    const commands = mocks.spawn.mock.calls.map(([command, args]) => [command === 'pnpm.cmd' ? 'pnpm' : command, ...args].join(' '))
     expect(commands.slice(0, 9)).toEqual([
       'pnpm build',
       'pnpm test --update=none',

@@ -1,4 +1,5 @@
-import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises'
+import { realpathSync } from 'node:fs'
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -13,7 +14,8 @@ async function packageFixture(root: string, content: string) {
   await mkdir(directory, { recursive: true })
   await writeFile(path.join(directory, 'package.json'), JSON.stringify({ name: '@dcloudio/vite-plugin-uni', main: 'index.cjs' }))
   await writeFile(path.join(directory, 'index.cjs'), content)
-  return realpath(path.join(directory, 'index.cjs'))
+  // 与 Node 模块解析器使用同一种真实路径，兼容 Windows 的长路径与 8.3 别名。
+  return realpathSync(path.join(directory, 'index.cjs'))
 }
 
 async function fixture() {

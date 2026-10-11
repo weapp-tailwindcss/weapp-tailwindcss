@@ -1,5 +1,6 @@
 import type { ChildProcess } from 'node:child_process'
 import { EventEmitter } from 'node:events'
+import process from 'node:process'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { collectOwnedProcesses, parsePosixProcesses, readProcessSubset } from '../scripts/demo-e2e-workflow/process-table'
 import * as table from '../scripts/demo-e2e-workflow/process-table'
@@ -7,7 +8,11 @@ import { createWorkflowProcessTree } from '../scripts/demo-e2e-workflow/process-
 
 const at = (second: number) => `2026-10-04T12:00:${String(second).padStart(2, '0')}Z`
 const row = (pid: number, parent: number, group: number, second: number) => ({ pid, parent, group, started: at(second) })
-afterEach(() => vi.restoreAllMocks())
+const platform = process.platform
+afterEach(() => {
+  Object.defineProperty(process, 'platform', { value: platform })
+  vi.restoreAllMocks()
+})
 
 describe('取消只能清理仍有身份证据的本轮进程', () => {
   it('PID 复用后的历史 PPID 不能认领更早出生的 Windows 进程', () => {
@@ -59,15 +64,27 @@ describe('取消只能清理仍有身份证据的本轮进程', () => {
   })
 
   it('已登记 PID 消失后 POSIX 空快照视为已清理', async () => {
+    Object.defineProperty(process, 'platform', { value: 'linux' })
     const command = vi.spyOn(await import('../scripts/demo-e2e-workflow/process-command'), 'runProcessCommand')
     command.mockResolvedValueOnce('')
     await expect(readProcessSubset(undefined, [123], 500)).resolves.toEqual([])
     expect(command).toHaveBeenCalledWith('ps', ['-p', '123', '-o', 'pid=,ppid=,pgid=,lstart=,stat='], 500, undefined, expect.objectContaining({ acceptFailure: expect.any(Function) }))
   })
 
-  it('正常退出后按进程组和已登记身份锚读取，避免重复扫描整张进程表', async () => {
-    const childRow = row(200, 123, 123, 11)
-    const fullScan = vi.spyOn(table, 'readProcessTable').mockResolvedValue([row(123, 1, 123, 10), childRow])
+  it('Windows 的空 PID 子集不派发 PowerShell，消失 PID 的空快照视为已清理', async () => {
+    Object.defineProperty(process, 'platform', { value: 'win32' })
+    const command = vi.spyOn(await import('../scripts/demo-e2e-workflow/process-command'), 'runProcessCommand').mockResolvedValue('[]')
+    await expect(readProcessSubset(undefined, [], 500)).resolves.toEqual([])
+    expect(command).not.toHaveBeenCalled()
+    await expect(readProcessSubset(undefined, [123], 500)).resolves.toEqual([])
+    expect(command.mock.calls[0]?.[0]).toBe('powershell')
+  })
+
+  it.each(['linux', 'win32'])('%s 正常退出后按平台进程组和已登记身份锚读取，避免重复扫描整张进程表', async (target) => {
+    Object.defineProperty(process, 'platform', { value: target })
+    const group = target === 'win32' ? 0 : 123
+    const childRow = row(200, 123, group, 11)
+    const fullScan = vi.spyOn(table, 'readProcessTable').mockResolvedValue([row(123, 1, group, 10), childRow])
     const subsetScan = vi.spyOn(table, 'readProcessSubset').mockResolvedValue([])
     const child = new EventEmitter() as ChildProcess
     let close!: () => void
@@ -82,6 +99,16 @@ describe('取消只能清理仍有身份证据的本轮进程', () => {
     await tree.stop()
     expect(fullScan).toHaveBeenCalledOnce()
     expect(subsetScan).toHaveBeenCalledOnce()
-    expect(subsetScan).toHaveBeenCalledWith(123, [123, 200], expect.any(Number), expect.any(AbortSignal))
+    expect(subsetScan).toHaveBeenCalledWith(target === 'win32' ? undefined : 123, [123, 200], expect.any(Number), expect.any(AbortSignal))
+  })
+
+  it.each(['linux', 'win32'])('%s 仍运行的根进程缺少身份时阻断，后续完整快照才能建立归属', async (target) => {
+    Object.defineProperty(process, 'platform', { value: target })
+    const root = row(123, 1, target === 'win32' ? 0 : 123, 10)
+    vi.spyOn(table, 'readProcessTable').mockResolvedValueOnce([]).mockResolvedValueOnce([root])
+    const child = Object.assign(new EventEmitter(), { pid: 123, exitCode: null, signalCode: null }) as ChildProcess
+    const tree = createWorkflowProcessTree(child, new Promise(() => {}))
+    await expect(tree.capture()).rejects.toThrow('缺少启动身份')
+    await expect(tree.capture()).resolves.toEqual(new Map([[123, root]]))
   })
 })
