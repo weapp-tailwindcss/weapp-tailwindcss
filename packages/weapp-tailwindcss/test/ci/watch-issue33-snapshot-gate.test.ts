@@ -7,6 +7,7 @@ import {
   listIssue33SnapshotEntries,
   readNewIssue33Snapshots,
 } from '../../../../e2e/watch/hot-update/issue33-snapshot-gate'
+import { createIssue33SnapshotMetadata } from '../../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/class/snapshot'
 
 const project = 'demo/weapp-vite-tailwindcss-v4'
 const phases = ['add', 'modify', 'delete'] as const
@@ -16,7 +17,7 @@ function createMetric(mutationKind: 'template' | 'script', sourceFile: string, m
 }
 
 function createSnapshots(metric: ReturnType<typeof createMetric>, label: string): Issue33SnapshotMetadata[] {
-  return phases.map(phase => ({
+  return phases.map(phase => createIssue33SnapshotMetadata({
     label,
     project,
     mutationKind: metric.mutationKind,
@@ -24,8 +25,7 @@ function createSnapshots(metric: ReturnType<typeof createMetric>, label: string)
     phase,
     stage: 'success',
     marker: phase === 'add' ? `${metric.rounds[0]!.marker}-initial` : metric.rounds[0]!.marker,
-    sourceFile: metric.sourceFile,
-  }))
+  }, metric.sourceFile))
 }
 
 describe('issue33 snapshot gate', () => {
@@ -63,7 +63,7 @@ describe('issue33 snapshot gate', () => {
   it.each(subPackageMetrics.flatMap(metric => phases.map(phase => [metric.sourceFile, phase] as const)))(
     'rejects a missing subpackage %s %s phase even when another carrier has that phase',
     (sourceFile, phase) => {
-      const snapshots = subPackageSnapshots.filter(snapshot => snapshot.sourceFile !== sourceFile || snapshot.phase !== phase)
+      const snapshots = subPackageSnapshots.filter(snapshot => snapshot.sourceIdentity !== sourceFile || snapshot.phase !== phase)
       expect(() => assertIssue33SnapshotGate(subPackageReport, snapshots)).toThrow(`${phase}-success`)
     },
   )
@@ -71,6 +71,21 @@ describe('issue33 snapshot gate', () => {
   it('rejects snapshots from another report marker or failed stage', () => {
     expect(() => assertIssue33SnapshotGate(mainReport, mainSnapshots.map(snapshot => ({ ...snapshot, marker: 'old-marker' })))).toThrow('modify-success')
     expect(() => assertIssue33SnapshotGate(mainReport, mainSnapshots.map(snapshot => ({ ...snapshot, stage: 'failure' })))).toThrow('modify-success')
+  })
+
+  it('requires a producer source identity even when project, kind, round and marker match', () => {
+    const wrongSource = mainSnapshots.map(snapshot => ({ ...snapshot, sourceIdentity: 'another-carrier' }))
+    expect(() => assertIssue33SnapshotGate(mainReport, wrongSource)).toThrow('modify-success')
+    const missingIdentity = mainSnapshots.map(({ sourceIdentity: _sourceIdentity, ...snapshot }) => snapshot)
+    expect(() => assertIssue33SnapshotGate(mainReport, missingIdentity as Issue33SnapshotMetadata[])).toThrow('modify-success')
+  })
+
+  it('rejects reusing another subpackage when both carriers share a modify marker', () => {
+    const metrics = subPackageMetrics.map(metric => ({ ...metric, rounds: [{ roundName: 'issue33-arbitrary', marker: 'same-millisecond-marker' }] }))
+    const report = { cases: [{ project, mutationMetrics: metrics }] }
+    const snapshots = metrics.flatMap((metric, index) => createSnapshots(metric, `${project}/subpackage-${index}`))
+    expect(() => assertIssue33SnapshotGate(report, snapshots)).not.toThrow()
+    expect(() => assertIssue33SnapshotGate(report, snapshots.filter(snapshot => snapshot.sourceIdentity !== metrics[1]!.sourceFile))).toThrow('modify-success')
   })
 
   it.each([
@@ -82,8 +97,9 @@ describe('issue33 snapshot gate', () => {
     const metric = createMetric('template', sourceFile, 'current-path-marker')
     const report = { cases: [{ project, mutationMetrics: [metric] }] }
     const snapshots = createSnapshots(metric, project)
+    expect(snapshots.map(snapshot => snapshot.sourceIdentity)).toEqual([sourceFile, sourceFile, sourceFile])
     expect(() => assertIssue33SnapshotGate(report, snapshots)).not.toThrow()
-    expect(() => assertIssue33SnapshotGate(report, snapshots.map(snapshot => snapshot.phase === 'add' ? { ...snapshot, sourceFile: 'another-source' } : snapshot))).toThrow('add-success')
+    expect(() => assertIssue33SnapshotGate(report, snapshots.map(snapshot => snapshot.phase === 'add' ? { ...snapshot, sourceIdentity: 'another-source' } : snapshot))).toThrow('add-success')
   })
 
   it('excludes prior command snapshots while reading the new scope evidence', async () => {

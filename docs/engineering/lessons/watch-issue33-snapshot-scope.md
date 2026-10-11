@@ -22,17 +22,19 @@ regressions:
 
 外层仍先执行完整报告合同，主包 template/script 和所选分包数量、轮次与性能预算均由该合同强制校验。快照门禁随后从已验收报告的实际 mutation/round 获取 carrier，按本轮 issue33 modify marker 绑定 metadata，再对同一项目、label、source identity、mutation kind 与 round 验证 add、modify、delete 三阶段成功证据。
 
-命令启动前记录快照目录，命令结束后只读取新增目录；旧命令与前一个 scope 的证据不能放行本轮。metadata 的 `sourceFile` 作为生产者身份比较，不在另一台主机重新解释为文件系统路径。读取目录与文件仍使用 `node:path` 和文件系统 API，缺失或损坏的 metadata 立即失败。
+命令启动前记录快照目录，命令结束后只读取新增目录；旧命令与前一个 scope 的证据不能放行本轮。读取目录与文件使用 `node:path` 和文件系统 API，缺失或损坏的 metadata 立即失败。
+
+报告的 `sourceFile` 原样来自 mutation 的原始 source value，metadata 原有的同名字段却由 `formatPath` 转成相对展示路径，两者不能在验收宿主上推导为同一个来源。生产者新增明确的 `sourceIdentity`，原样复用报告的同一 source value，原有展示字段保留用于诊断。门禁的 modify、add、delete 全部比较该不透明身份值，不在另一台主机解释 POSIX 或 Windows 路径。modify marker 包含 `Date.now()`，正常串行执行不能作为形式上的 carrier 唯一性保证；相同 marker 的不同分包也必须分别验收来源身份。
 
 该修复保留主包 script 必需三阶段，同时要求每个实际分包 template 各自三阶段。没有调整性能阈值、轮次、平台矩阵或 skip 策略，也没有改变 demo 与构建产物，不需要重新生成 static 样式基线。
 
 ## 验证
 
-- 新增回归覆盖主包 template/script、每个分包 template 的任一缺失阶段、失败状态、错误 marker、前一命令快照排除、缺失 metadata，以及 POSIX、Windows 盘符、反斜杠与相对 source identity。
-- 从失败 job 下载的真实报告与六份 metadata 本地重放通过；逐一移除任意一份快照均被拒绝，六次负向验证全部生效。该重放用于确认首次失败层级，不替代新 head 的完整 nightly 验收。
+- 新增回归覆盖主包 template/script、每个分包 template 的任一缺失阶段、失败状态、错误 marker、前一命令快照排除、缺失 metadata，以及 POSIX、Windows 盘符、反斜杠与相对 source identity。测试通过实际生产者 metadata 工厂提供三阶段证据，包含相同 project、kind、round、marker 但不同 carrier 的负向回归。
+- 从失败 job 下载真实报告与六份 metadata，核对两个分包的完整 CRUD 与首次失败层级。旧格式 metadata 缺少新增来源身份，不作为新 gate 已通过的证据；新格式来源身份与每个缺失阶段通过生产者工厂和门禁的定向回归验证。
 - 冷工作树先执行 CI 同入口的依赖构建：`pnpm --filter weapp-tailwindcss... --filter "./packages-runtime/*" run build`。
-- `CI=1 pnpm --filter weapp-tailwindcss exec vitest run test/ci/watch-issue33-snapshot-gate.test.ts test/ci/workflows.test.ts test/watch-hmr-regression.unit.test.ts --update=none`：3 文件、182 项通过，新增门禁回归为 21 项。
-- `pnpm exec eslint --no-ignore e2e/watch/hot-update/issue33-snapshot-gate.ts packages/weapp-tailwindcss/test/ci/watch-issue33-snapshot-gate.test.ts`：新增 helper 与回归文件严格 lint 通过。
+- `CI=1 pnpm --filter weapp-tailwindcss exec vitest run test/ci/watch-issue33-snapshot-gate.test.ts test/ci/workflows.test.ts test/watch-hmr-regression.unit.test.ts --update=none`：3 文件、184 项通过，其中门禁回归 23 项。
+- `pnpm exec eslint --no-ignore e2e/watch/hot-update/issue33-snapshot-gate.ts tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/class/snapshot.ts tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/class.ts packages/weapp-tailwindcss/test/ci/watch-issue33-snapshot-gate.test.ts`：4 文件严格 lint 通过。
 
 ## 适用边界
 

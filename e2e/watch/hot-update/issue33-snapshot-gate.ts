@@ -1,5 +1,8 @@
+import type { Issue33SnapshotMetadata } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/class/snapshot'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+
+export type { Issue33SnapshotMetadata }
 
 interface MutationMetric {
   mutationKind: string
@@ -13,17 +16,6 @@ interface SnapshotReport {
     mutationMetrics: MutationMetric[]
     subPackageMutationMetrics?: Array<{ template: MutationMetric }>
   }>
-}
-
-export interface Issue33SnapshotMetadata {
-  label: string
-  project: string
-  mutationKind: string
-  roundName: string
-  phase: string
-  stage: string
-  marker: string
-  sourceFile: string
 }
 
 /** 记录命令启动前的快照目录，避免上次运行或另一个 scope 的证据放行本轮。 */
@@ -70,6 +62,7 @@ export function assertIssue33SnapshotGate(report: SnapshotReport, snapshots: Iss
       const label = `[issue33] ${item.project} (${metric.sourceFile}) ${metric.mutationKind}`
       const modify = snapshots.find(snapshot => snapshot.project === item.project
         && snapshot.mutationKind === metric.mutationKind
+        && snapshot.sourceIdentity === metric.sourceFile
         && snapshot.roundName === round.roundName
         && snapshot.phase === 'modify'
         && snapshot.stage === 'success'
@@ -81,6 +74,7 @@ export function assertIssue33SnapshotGate(report: SnapshotReport, snapshots: Iss
         const found = snapshots.some(snapshot => snapshot.project === modify.project
           && snapshot.label === modify.label
           && snapshot.sourceFile === modify.sourceFile
+          && snapshot.sourceIdentity === metric.sourceFile
           && snapshot.mutationKind === modify.mutationKind
           && snapshot.roundName === modify.roundName
           && snapshot.phase === phase
