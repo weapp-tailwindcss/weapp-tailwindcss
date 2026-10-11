@@ -177,3 +177,20 @@ it('真实空 Node 进程退出通过 runStep，不要求短阶段必须产生�
   expect(report.exitCode).toBe(0)
   expect(report.error).toBeUndefined()
 })
+
+it('短命令正常退出不会把仍在有界采集的身份探针截短为清理预算', async () => {
+  const scan = vi.spyOn(table, 'readProcessTable').mockImplementation((_timeout, signal) => new Promise((resolve, reject) => {
+    // 复现 Windows 冷 PowerShell 超过 2 秒清理预算、仍处于 5 秒采集预算内的响应。
+    const timer = setTimeout(resolve, 2200, [])
+    signal?.addEventListener('abort', () => {
+      clearTimeout(timer)
+      reject(signal.reason)
+    }, { once: true })
+  }))
+  const report = await runStep({ name: 'slow identity probe', command: process.execPath, args: ['-e', ''] }, 1, 1)
+  expect(report.exitCode).toBe(0)
+  expect(report.error).toBeUndefined()
+  expect(scan).toHaveBeenCalledOnce()
+  expect(scan.mock.calls[0]?.[0]).toBe(5000)
+  expect(scan.mock.calls[0]?.[1]?.aborted).toBe(false)
+})

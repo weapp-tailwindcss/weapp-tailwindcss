@@ -37,12 +37,15 @@ export async function runStep(step: WorkflowStep, index: number, total: number, 
   let recording = true
   let timer: NodeJS.Timeout | undefined
   let pendingSample: Promise<void> | undefined
-  const stop = (cooperative = false) => {
+  const pauseRecording = () => {
     recording = false
     clearInterval(timer)
+  }
+  const stop = (cooperative = false) => {
+    pauseRecording()
     cleanup ??= tree.stop(cooperative).then(() => ({}), error => ({ error }))
   }
-  const onExit = () => stop()
+  const onExit = pauseRecording
   child.once('exit', onExit)
   let resolveCancelled!: () => void
   const cancelled = new Promise<void>((resolve) => {
@@ -96,6 +99,12 @@ export async function runStep(step: WorkflowStep, index: number, total: number, 
   }
   finally {
     clearInterval(timer)
+    if (!cancellation?.aborted && failure === undefined && child.exitCode !== null) {
+      // 正常退出先让已启动的有界采集落定；不能用清理预算截断 Windows 冷启动的身份探针。
+      await pendingSample?.catch((error) => {
+        failure ??= error
+      })
+    }
     stop()
     child.removeListener('exit', onExit)
     cancellation?.removeEventListener('abort', onAbort)

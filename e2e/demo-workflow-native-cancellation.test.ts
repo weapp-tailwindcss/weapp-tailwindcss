@@ -100,7 +100,8 @@ describe('隔离进程内的真实信号与合作恢复', () => {
     const cancel = path.join(root, 'cancel')
     const exit = path.join(root, 'exit-parent')
     const leaf = `const fs = require('node:fs'); fs.writeFileSync(${JSON.stringify(source)}, 'mutated'); const timer=setInterval(() => { if(fs.existsSync(${JSON.stringify(cancel)})) { clearInterval(timer); setTimeout(() => { fs.writeFileSync(${JSON.stringify(source)}, 'original'); process.exit(0); }, 200); } }, 10);`
-    const launcher = `const fs=require('node:fs'); const child=require('node:child_process').spawn(process.execPath, ['-e', ${JSON.stringify(leaf)}], { detached: process.platform!=='win32', stdio:'ignore' }); fs.writeFileSync(${JSON.stringify(pidFile)},String(child.pid)); setInterval(()=>{if(fs.existsSync(${JSON.stringify(exit)}))process.exit(0)},10);`
+    // Windows 的非 detached 子进程归父 Job 管理，会在父退出时被终止；此用例必须创建真正独立的后代。
+    const launcher = `const fs=require('node:fs'); const child=require('node:child_process').spawn(process.execPath, ['-e', ${JSON.stringify(leaf)}], { detached: true, windowsHide: true, stdio:'ignore' }); child.unref(); fs.writeFileSync(${JSON.stringify(pidFile)},String(child.pid)); setInterval(()=>{if(fs.existsSync(${JSON.stringify(exit)}))process.exit(0)},10);`
     const child = spawn(process.execPath, ['-e', launcher], { detached: process.platform !== 'win32', stdio: 'ignore' })
     const done = closed(child)
     const tree = createWorkflowProcessTree(child, done, { cooperativeMs: 2000 })
@@ -111,6 +112,8 @@ describe('隔离进程内的真实信号与合作恢复', () => {
       await vi.waitFor(async () => expect((await tree.capture()).has(descendant)).toBe(true), { timeout: 5000 })
       await writeFile(exit, 'exit')
       await done
+      expect((await tree.capture()).has(descendant)).toBe(true)
+      expect(await readFile(source, 'utf8')).toBe('mutated')
       const stopping = tree.stop(true)
       await writeFile(cancel, 'cancel')
       await stopping

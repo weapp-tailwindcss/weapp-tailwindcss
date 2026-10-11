@@ -1,6 +1,5 @@
 import { realpathSync } from 'node:fs'
 import path from 'node:path'
-import process from 'node:process'
 
 const WINDOWS_PATH_RE = /^(?:[a-z]:|\\|\/\/)/i
 const HBUILDERX_PROJECT_ALIAS_SEGMENT_RE = /^.+-[a-f\d]{10}-\d+$/
@@ -14,8 +13,8 @@ function pathApi(file: string) {
 
 function resolveSourcePath(file: string, paths: typeof path) {
   const resolved = paths.resolve(file)
-  // 外平台 fixture 只按其路径语义解析，不能借用宿主盘符或读取同名文件。
-  if (paths !== (process.platform === 'win32' ? path.win32 : path.posix)) {
+  // node:path 默认实现与 native fs 绑定真实宿主，不受 fixture 改写 process.platform 影响。
+  if (paths !== path) {
     return resolved
   }
   try {
