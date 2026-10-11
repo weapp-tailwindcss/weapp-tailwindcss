@@ -8,25 +8,36 @@ import { setTimeout as delay } from 'node:timers/promises'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { runDemoE2eWorkflow } from '../scripts/demo-e2e-workflow'
 
-const mocks = vi.hoisted(() => ({ enter: vi.fn(), spawn: vi.fn(), writeReport: vi.fn() }))
+const mocks = vi.hoisted(() => ({ enter: vi.fn(), pnpm: vi.fn(), spawn: vi.fn(), tree: vi.fn(), writeReport: vi.fn() }))
 vi.mock('node:child_process', async importOriginal => ({
   ...await importOriginal<typeof import('node:child_process')>(),
   spawn: mocks.spawn,
 }))
 vi.mock('../scripts/demo-e2e-workflow/process-tree', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../scripts/demo-e2e-workflow/process-tree')>()
-  return { createWorkflowProcessTree: (child: ChildProcess, closed: Promise<unknown>) => actual.createWorkflowProcessTree(child, closed, { cooperativeMs: 25 }) }
+  return {
+    createWorkflowProcessTree: (child: ChildProcess, closed: Promise<unknown>) => {
+      const tree = actual.createWorkflowProcessTree(child, closed, { cooperativeMs: 25 })
+      mocks.tree(tree)
+      return tree
+    },
+  }
 })
 vi.mock('../scripts/e2e-preflight/gate', () => ({ enterFullTestGate: mocks.enter }))
+vi.mock('../scripts/pnpm-command.mjs', () => ({ createPnpmCommand: mocks.pnpm }))
 vi.mock('../scripts/demo-e2e-memory', async importOriginal => ({
   ...await importOriginal<typeof import('../scripts/demo-e2e-memory')>(),
   sampleProcessTreeAsync: async () => undefined,
   writeDemoE2eMemoryReport: mocks.writeReport,
 }))
 
-async function until(check: () => Promise<void> | void) {
+async function until(check: () => Promise<void> | void, failure?: () => Error | undefined) {
   let error: unknown
   for (let index = 0; index < 100; index++) {
+    const stopped = failure?.()
+    if (stopped) {
+      throw stopped
+    }
     try {
       await check()
       return
@@ -59,11 +70,14 @@ describe('全面工作流的取消与阶段进程所有权', () => {
   const children: ChildProcess[] = []
   const roots: string[] = []
   let spawn: typeof realSpawn
+  let createPnpmCommand: typeof import('../scripts/pnpm-command.mjs').createPnpmCommand
 
   beforeEach(async () => {
     vi.resetAllMocks()
     signals.clear()
     spawn = (await vi.importActual<typeof import('node:child_process')>('node:child_process')).spawn
+    createPnpmCommand = (await vi.importActual<typeof import('../scripts/pnpm-command.mjs')>('../scripts/pnpm-command.mjs')).createPnpmCommand
+    mocks.pnpm.mockImplementation(createPnpmCommand)
     const on = process.on.bind(process)
     vi.spyOn(process, 'on').mockImplementation(((event: string, listener: () => void) => {
       if (event === 'SIGINT' || event === 'SIGTERM') {
@@ -102,19 +116,50 @@ describe('全面工作流的取消与阶段进程所有权', () => {
     const ids = path.join(root, 'ids.json')
     const heartbeat = path.join(root, 'heartbeat')
     const descendant = `const fs = require('node:fs'); process.on('SIGTERM', () => {}); setInterval(() => fs.writeFileSync(${JSON.stringify(heartbeat)}, String(Date.now())), 20)`
-    const launcher = `const fs = require('node:fs'); const { spawn } = require('node:child_process'); const child = spawn(process.execPath, ['-e', ${JSON.stringify(descendant)}], { detached: process.platform !== 'win32', stdio: 'ignore' }); fs.writeFileSync(${JSON.stringify(ids)}, JSON.stringify([process.pid, child.pid])); process.on('SIGTERM', () => process.exit(0)); setInterval(() => {}, 100)`
+    const launcher = `const fs = require('node:fs'); const { spawn } = require('node:child_process'); const child = spawn(process.execPath, ['-e', ${JSON.stringify(descendant)}], { detached: true, windowsHide: true, stdio: 'ignore' }); child.unref(); fs.writeFileSync(${JSON.stringify(ids)}, JSON.stringify([process.pid, child.pid])); process.on('SIGTERM', () => process.exit(0)); setInterval(() => {}, 100)`
+    // 确定性覆盖 Windows pnpm 包装入口，不能依赖执行测试时的 npm_execpath。
+    mocks.pnpm.mockImplementation(args => createPnpmCommand(args, { platform: 'win32', npmExecPath: undefined }))
+    let launcherError: Error | undefined
+    let launcherExit: { code: number | null, signal: NodeJS.Signals | null } | undefined
+    let stderr = ''
     mocks.spawn.mockImplementation((_command, _args, options) => {
-      const child = spawn(process.execPath, ['-e', launcher], { ...options, stdio: 'ignore' })
+      // 替换为原生 Node 后必须重新声明参数语义，不能继承 pnpm.cmd 的 shell 重解释。
+      const child = spawn(process.execPath, ['-e', launcher], { ...options, shell: false, stdio: ['ignore', 'ignore', 'pipe'] })
+      child.once('error', (error) => {
+        launcherError = error
+      })
+      child.once('exit', (code, exitSignal) => {
+        launcherExit = { code, signal: exitSignal }
+      })
+      child.stderr?.on('data', (chunk) => {
+        stderr += chunk
+      })
       children.push(child)
       return child
     })
-    const running = runDemoE2eWorkflow(['--local', '--quality']).catch(error => error)
+    let finished = false
+    let workflowResult: unknown
+    const running = runDemoE2eWorkflow(['--local', '--quality']).catch(error => error).then((outcome) => {
+      finished = true
+      workflowResult = outcome
+      return outcome
+    })
+    const startupFailure = () => launcherError || launcherExit || finished
+      ? new Error(`取消测试子进程在就绪前结束：${JSON.stringify({ error: launcherError && String(launcherError), exit: launcherExit, workflow: finished ? String(workflowResult) : undefined, stderr })}`)
+      : undefined
     let pids: number[] = []
     try {
       await until(async () => {
         pids = JSON.parse(await readFile(ids, 'utf8'))
         expect(await readFile(heartbeat, 'utf8')).not.toBe('')
-      })
+      }, startupFailure)
+      expect(mocks.spawn.mock.calls[0]?.[2]).toMatchObject({ shell: true })
+      const tree = mocks.tree.mock.calls[0]?.[0] as ReturnType<typeof import('../scripts/demo-e2e-workflow/process-tree').createWorkflowProcessTree>
+      // 文件握手仅证明已启动；取消已知进程前必须等真实身份采集登记本体和独立后代。
+      await until(async () => {
+        const owned = await tree.capture()
+        expect(pids.every(pid => owned.has(pid)), '取消验收必须覆盖已登记的本轮进程').toBe(true)
+      }, startupFailure)
       expect(signals.get(signal), '顶层必须安装取消处理').toBeTypeOf('function')
       signals.get(signal)!()
       const result = await Promise.race([running, delay(8000, 'hung')])
@@ -131,10 +176,13 @@ describe('全面工作流的取消与阶段进程所有权', () => {
       expect(signals.size).toBe(0)
     }
     finally {
+      if (!finished) {
+        signals.get('SIGTERM')?.()
+      }
+      await running
       for (const pid of pids.toReversed()) {
         killKnown(pid)
       }
-      await running
     }
   }, 15_000)
 
