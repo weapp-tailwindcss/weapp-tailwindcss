@@ -1992,7 +1992,7 @@ describe('watch-hmr regression summary helpers', () => {
   it('samples repository-scoped detached Windows watcher processes in HMR reports', () => {
     const script = createWindowsProcessTreeMemoryScript(42, String.raw`C:\repo\weapp-tailwindcss`)
 
-    expect(script).toContain(String.raw`$repositoryRoot = 'C:\repo\weapp-tailwindcss'`)
+    expect(script).toContain(String.raw`Get-WatchMemory -root 42 -repositoryRoot 'C:\repo\weapp-tailwindcss'`)
     expect(script).toContain('CommandLine')
     expect(script).toContain('uni\\.js[\\s\\S]+-p\\s+mp-weixin')
     expect(script).toContain('taro-build-runner\\.mjs\\s+build\\s+--type\\s+h5\\s+--watch')
