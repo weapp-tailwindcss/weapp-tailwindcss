@@ -14,6 +14,8 @@ regressions:
   - packages/weapp-tailwindcss/test/bundlers/generator-css-deferred-selectors.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-framework-universal.integration.test.ts
   - packages/weapp-tailwindcss/test/watch-hmr-uni-rule-removal.unit.test.ts
+  - packages/weapp-tailwindcss/test/ci/workflows.test.ts
+  - packages/weapp-tailwindcss/test/watch-hmr-regression.unit.test.ts
 ---
 
 # Watch 与 Coverage Nightly 的执行边界修复
@@ -36,6 +38,7 @@ regressions:
 - Tailwind 的复杂 group 变体包含 universal 选择器。框架的 `postcss-html-transform` 在最终小程序兼容转换前删除该规则，导致 JS 中存在已转译 class，而最终 CSS 缺失。PostCSS 所有者在生成阶段展开嵌套后，仅准备带 class 的规则中的 universal 元素选择器，保留原始 utility 身份；框架过滤完成后仍由最终阶段转译 class。配置经生成编排显式传递，覆盖 legacy/nested、自定义选择器列表、`universal:false`、classless preflight 与增量组装，真实 Vite 的 weapp/alipay 构建验证框架输入及 CSS/JS 产物身份。
 - watch corpus 对小程序按既有语义移除的 `@supports` 与 hover 工具类漏声明预期，但应保留的 group 规则也缺失。为实际使用 complex corpus 的 Gulp、Mpx、Taro mutation 补齐明确移除合同，继续验证这些类在消费方的身份与条件结构确实消失；group 必须保留 CSS，不能加入移除名单。Taro Vite Vue 模板恢复全量类名断言。
 - Nightly 的临时 uni CLI、Lynx WASM 诊断和原生会话祖先路径问题，见[专项复盘](e2e-nightly-wasm-fixtures.md)。
+- 首轮 PR head `b4239a1ea5af9b3f22d9c92ccd992b338289d6b1` 的 [PR Gate 38110762945](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38110762945/job/114386645312) 暴露 4 项已有工作流合同未同步：原 static 命令、未声明的 hot-update override、nightly 的性能确认开关和 PR 固定 Node 22 的 artifact 表达式。新增 E2E 合同通过不能替代原合同检查。同步原测试后，按解析后的 YAML 实际矩阵逐行还原环境、命令与 artifact，验证分片完整、scope 互斥、严格预算和实际 Node 版本身份，不以某一段旧表达式字符串作为行为证明。
 
 ## 验证
 
@@ -52,6 +55,7 @@ regressions:
 - `CI=1 E2E_WATCH_CASE=taro-vite-react-tailwindcss-v4 E2E_WATCH_MINI_PROGRAM_ONLY=1 E2E_WATCH_MINI_PROGRAM_SCOPE=main-package E2E_WATCH_TIMEOUT_MS=60000 E2E_WATCH_COMMAND_TIMEOUT_MS=600000 E2E_WATCH_MAX_PLUGIN_PROCESS_MS=10000 E2E_WATCH_MAX_ATTEMPTS=1 E2E_WATCH_SAVE_SNAPSHOTS=1 TARO_E2E_WATCH_NATIVE=1 pnpm e2e:watch e2e/watch/hot-update/demo/taro-vite-react-tailwindcss-v4.test.ts e2e/watch/taro-demo-dev.test.ts --update=none`：真实 dev 就绪与主包热更新 2 文件、2 项通过，耗时 109 秒。模板/脚本均完成 baseline、complex、hex 轮次，content 完成 issue33 增删改，样式与主样式通过；complex 轮次继续核对 group 的消费与 CSS。报告为 `e2e/benchmark/e2e-watch-hmr/2026-10-11T04-05-34-435Z-taro-vite-react-tailwindcss-v4.json`。
 - `CI=1 E2E_WATCH_CASE=gulp-tailwindcss-v4 E2E_WATCH_MINI_PROGRAM_ONLY=1 E2E_WATCH_MINI_PROGRAM_SCOPE=main-package E2E_WATCH_TIMEOUT_MS=60000 E2E_WATCH_COMMAND_TIMEOUT_MS=600000 E2E_WATCH_MAX_PLUGIN_PROCESS_MS=6000 E2E_WATCH_MAX_ATTEMPTS=1 E2E_WATCH_SAVE_SNAPSHOTS=1 pnpm e2e:watch e2e/watch/hot-update/demo/gulp-tailwindcss-v4.test.ts --update=none`：真实主包 watch 通过，耗时 32 秒。模板 complex corpus 按明确合同移除条件规则，同时保留 group；模板、脚本、样式和回滚均通过。报告为 `e2e/benchmark/e2e-watch-hmr/2026-10-11T04-07-17-708Z-gulp-tailwindcss-v4.json`。
 - 两轮真实 watch 完成后，`git status --short` 只剩本任务的 static 基线与复盘，源码恢复；按专属工作树 cwd 检查，无遗留测试进程。本轮没有浏览器资源。
+- 首轮 PR 失败合同对应 `CI=1 pnpm --filter weapp-tailwindcss exec vitest run test/ci/workflows.test.ts test/watch-hmr-regression.unit.test.ts --update=none`：2 文件、161 项通过，未修改 workflow 的执行门槛、预算或测试集合。
 
 ## 适用边界
 
