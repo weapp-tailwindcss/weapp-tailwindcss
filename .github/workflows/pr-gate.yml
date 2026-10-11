@@ -240,6 +240,8 @@ jobs:
     needs: scope
     if: needs.scope.outputs.core == 'true'
     uses: ./.github/workflows/css-compat.yml
+    with:
+      full_verification: ${{ inputs.full_verification || false }}
 
   env:
     name: Environment package

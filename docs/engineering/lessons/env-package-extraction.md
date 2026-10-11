@@ -14,6 +14,7 @@ regressions:
   - packages/weapp-tailwindcss/test/ci/architecture-graph.test.ts
   - packages/weapp-tailwindcss/test/ci/client-boundaries.test.ts
   - packages/weapp-tailwindcss/test/ci/env-workflow.test.ts
+  - packages/weapp-tailwindcss/test/ci/approved-version-gates.test.ts
 ---
 
 # 环境识别包提炼与显式快照隔离
@@ -80,6 +81,12 @@ git diff --check
 新增 `env.yml`，在 Linux/macOS/Windows × Node 22/24 执行依赖闭包构建、env 类型、单测与公开 tarball 消费；PR Gate 的 `needs` 与成功断言显式包含 env，维持既有取消生命周期。tarball 同时消费旧 framework 入口，冷 checkout 因此先构建 `weapp-tailwindcss...`。Release Gate 补充 `packages/env/**`，`test:release` 补充 env typecheck，不改变发布权限或实际发布流程。
 
 新增 CI 契约修改前 3 项失败；接入后，env-workflow、workflows、css-compat-workflow 与 workflow-gate-cancellation 共 4 文件 60 项通过。最新 main 上的 22 项依赖闭包构建及 env 类型、包外消费、规则检查再次通过。远端结果以 PR 的准确 head 为准，不复用本地或旧 head 的结论。
+
+[PR #1283](https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1283) 首个 head `575fa401201d024bfe59c8bb202b4331e15ee395` 的 [PR Gate](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38132021333) 与 Version PR CI 在 job 启动前失败。GitHub 原始错误为 `Invalid input, full_verification is not defined in the referenced workflow`。整合 main 后插入 env job 时，原 CSS job 的 `with` 被挂到了 env，env 尚未声明该输入；原局部断言只匹配 uses/needs，未验证调用接口，也未运行新版审批链路测试。
+
+补充输入契约回归先确认 2 项失败，再为 env 声明 boolean/default false 的 `full_verification`、向共享 scope 转发并在完整验收时检出准确 PR head，恢复 CSS 的原转发。审批链路纳入 env，并遍历所有本地复用调用，验证未知输入与必填参数；所有声明了完整验收输入的嵌套调用必须继续传递该范围。
+
+修复后显式执行 env-workflow、approved-version-gates、workflows、css-compat-workflow 与 workflow-gate-cancellation，5 文件 127 项通过；规则和 diff 检查通过。该回归验证调用接口，避免工作流在测试 job 启动前就因 YAML 输入合约失败。
 
 ## 规则评估
 
