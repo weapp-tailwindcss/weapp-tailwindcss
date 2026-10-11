@@ -102,11 +102,11 @@ function syncLegacyFieldsToCssOptions(ctx: InternalUserDefinedOptions) {
 
 function applyFrameworkPlatformDefaults(ctx: InternalUserDefinedOptions) {
   if (ctx.cssOptions?.platform || ctx.platform) {
-    ctx.platform = normalizeFrameworkStylePlatform(ctx.cssOptions?.platform ?? ctx.platform, ctx.appType)
+    ctx.platform = normalizeFrameworkStylePlatform(ctx.cssOptions?.platform ?? ctx.platform, ctx.appType) ?? ctx.platform
     return
   }
   if (ctx.appType === 'mpx') {
-    ctx.platform = normalizeFrameworkStylePlatform(resolveMpxPlatform().normalized, ctx.appType)
+    ctx.platform = normalizeFrameworkStylePlatform(resolveMpxPlatform().normalized, ctx.appType) ?? ctx.platform
   }
 }
 
@@ -145,7 +145,7 @@ export async function clearTailwindcssRuntimeCache(
   if (privateCachePath) {
     cachePaths.set(privateCachePath, false)
   }
-  if (normalizedCacheOptions?.path) {
+  if (normalizedCacheOptions && 'path' in normalizedCacheOptions && typeof normalizedCacheOptions.path === 'string') {
     cachePaths.set(normalizedCacheOptions.path, false)
   }
   if (options?.removeDirectory && normalizedCacheOptions?.dir) {
@@ -183,12 +183,14 @@ function createInternalCompilerContext(opts?: UserDefinedOptions): InternalUserD
   applyLoggerLevel(ctx.logLevel)
 
   const tailwindRuntime = createTailwindcssRuntimeFromContext(ctx) as TailwindcssRuntimeLike
-  logTailwindcssTarget(tailwindRuntime, ctx.tailwindcssBasedir)
-  logRuntimeTailwindcssVersion(
-    ctx.tailwindcssBasedir,
-    tailwindRuntime.packageInfo?.rootPath,
-    tailwindRuntime.packageInfo?.version,
-  )
+  if ((opts as any)?.__internalViteDeferRuntimeLogs !== true) {
+    logTailwindcssTarget(tailwindRuntime, ctx.tailwindcssBasedir)
+    logRuntimeTailwindcssVersion(
+      ctx.tailwindcssBasedir,
+      tailwindRuntime.packageInfo?.rootPath,
+      tailwindRuntime.packageInfo?.version,
+    )
+  }
 
   if ((opts as any)?.__internalDeferMissingCssEntriesWarning !== true) {
     warnMissingCssEntries(ctx, tailwindRuntime)

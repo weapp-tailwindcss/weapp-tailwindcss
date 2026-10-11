@@ -1,5 +1,6 @@
-import type { ChildProcess } from 'node:child_process'
+import type { CommandExit, SpawnedHBuilderXCommand } from '../../packages/hbuilderx-runner/src'
 import type { AppCase, MiniProgramCase, WebCase } from './cases'
+import type { AttachedWebServer } from './web/attached'
 
 import { createHash } from 'node:crypto'
 import fs from 'node:fs/promises'
@@ -8,31 +9,40 @@ import process from 'node:process'
 
 import path from 'pathe'
 import { expect } from 'vitest'
+import { runWithCleanup } from '../../scripts/e2e-preflight/cleanup'
+import { createHBuilderXAppProject } from '../../scripts/hbuilderx-app-project'
+import { createNativeSessionRecovery } from '../../scripts/hbuilderx-native-session'
 import { createHBuilderXProjectAlias as createSharedHBuilderXProjectAlias } from '../../scripts/hbuilderx-project-alias.mjs'
+import { withHBuilderXProjectCleanup } from '../../scripts/hbuilderx-project-lifecycle'
 import {
   collectAndroidRuntimeMetadata,
-  resolveAndroidDeviceId,
   waitForAndroidRuntimeEvidence,
 } from './android-runtime'
+import { rewriteAppMarker } from './app-marker'
+import { readExistingAppHmrTransformedOutput, readExistingAppTransformedOutput, resolveAppTransformedFiles } from './app-output'
+import { bindAppTarget, readAppLaunchOption } from './app-target'
 import { rawTailwindDirectiveRE, resolveAppHmrSteps } from './cases'
+import { createHarmonyDomProbe } from './harmony-dom-probe'
+import { captureHarmonyRuntimeEvidence, waitForHarmonyRuntimeEvidence } from './harmony-runtime'
+import { observeHmrStep } from './hmr-lifecycle'
+import { waitForIosRuntimeEvidence } from './ios-runtime'
+import { captureNativeLog } from './native-log'
 import {
   assertAndroidToolchain,
   assertHarmonyToolchain,
   assertIosSimulatorToolchain,
   classifyHBuilderXOutput,
-  collectProcessOutput,
   createLocalHBuilderXRunner,
   fileExists,
   formatRecentLogs,
   hbuilderxAppTimeoutMs,
   hbuilderxTimeoutMs,
-  killProcessTree,
   pollIntervalMs,
   readUtf8,
-  resolveIosSimulatorDeviceId,
   wait,
 } from './process'
-import { appendHmrSourceMutation, createHmrOutputSnapshot, createHmrSourceRestore, haveHmrOutputsChanged } from './source-mutations'
+import { findMissingRuntimeLogs, resolveAppRuntimeLogContract } from './render-mode'
+import { appendHmrSourceMutation, createHmrOutputSnapshot, haveHmrOutputsChanged } from './source-mutations'
 import { collectMiniProgramStyleFiles, readReachableMiniProgramStyles, resolveMiniProgramRuntimeStyleEntry } from './styles'
 import { runWebHmr } from './web'
 
@@ -49,15 +59,6 @@ export function findHBuilderXDeviceUnavailableLog(output: string) {
 
 export function findHBuilderXAppTerminatedLog(output: string) {
   return output.match(HBUILDERX_APP_TERMINATED_RE)?.[0]
-}
-
-export function resolveHBuilderXLaunchProject(
-  platform: AppCase['platform'],
-  projectIdentity: { projectAlias: string, projectName: string },
-) {
-  return platform === 'app-harmony'
-    ? projectIdentity.projectAlias
-    : projectIdentity.projectName
 }
 
 function resolveAppMarkerAnchors(item: AppCase) {
@@ -116,17 +117,6 @@ function formatHBuilderXIssueDetails(output: string) {
   ].filter(Boolean).join('\n')
 }
 
-async function stopAppLaunch(child: ChildProcess, closed: Promise<void>) {
-  if (child.exitCode == null && child.signalCode == null) {
-    killProcessTree(child, 'SIGINT')
-    await Promise.race([closed, wait(5_000)])
-  }
-  if (child.exitCode == null && child.signalCode == null) {
-    killProcessTree(child)
-    await Promise.race([closed, wait(5_000)])
-  }
-}
-
 async function waitForFile(file: string, timeoutMs: number) {
   const startedAt = Date.now()
   while (Date.now() - startedAt < timeoutMs) {
@@ -147,18 +137,19 @@ async function waitForAppRuntimeLogs(
   logs: string[],
   ensureRunning: () => void,
 ) {
-  if (!item.runtimeLogContains?.length) {
+  const contract = resolveAppRuntimeLogContract(item)
+  if (contract.contains.length === 0) {
     return
   }
   const startedAt = Date.now()
   while (Date.now() - startedAt < hbuilderxAppTimeoutMs) {
     ensureRunning()
-    if (hasContent(logs.join(''), item.runtimeLogContains)) {
+    if (findMissingRuntimeLogs(logs.join(''), contract.contains).length === 0) {
       return
     }
     await wait(pollIntervalMs)
   }
-  throw new Error(`${item.name} 未在 ${hbuilderxAppTimeoutMs}ms 内进入真实 App 运行时\nexpected=${item.runtimeLogContains.map(String).join(' | ')}\nrecentHBuilderXLogs=${formatRecentLogs(logs, 8000)}`)
+  throw new Error(`${item.name} 未在 ${hbuilderxAppTimeoutMs}ms 内进入真实 App 运行时或目标渲染模式\nexpected=${contract.contains.map(String).join(' | ')}\nrecentHBuilderXLogs=${formatRecentLogs(logs, 8000)}`)
 }
 
 async function resolveAppOutputRoot(item: AppCase) {
@@ -188,10 +179,6 @@ function resolveAppIntermediateOutputTargets(item: AppCase, projectRoot: string)
   return [...targets]
 }
 
-function resolveAppTransformedFiles(projectRoot: string, outputRoot: string, item: AppCase) {
-  return [...(item.transformedFiles ?? []).map(file => path.resolve(projectRoot, file)), ...(item.transformedOutputFiles ?? []).map(file => path.resolve(outputRoot, file))]
-}
-
 function resolveAppStyleOutputFiles(outputRoot: string, item: AppCase) {
   return (item.styleOutputFiles ?? []).map(file => path.resolve(outputRoot, file))
 }
@@ -218,25 +205,6 @@ async function readAppStyleOutput(outputRoot: string, item: AppCase) {
       }),
     )
   ).join('\n')
-}
-
-async function readExistingAppTransformedOutput(projectRoot: string, outputRoot: string, item: AppCase) {
-  const transformedFiles = resolveAppTransformedFiles(projectRoot, outputRoot, item)
-  if (!(await Promise.all(transformedFiles.map(fileExists))).every(Boolean)) {
-    return undefined
-  }
-  return (await Promise.all(transformedFiles.map(readUtf8))).join('\n')
-}
-
-async function readExistingAppHmrTransformedOutput(projectRoot: string, outputRoot: string, item: AppCase) {
-  if (!item.hmrTransformedOutputFiles?.length) {
-    return readExistingAppTransformedOutput(projectRoot, outputRoot, item)
-  }
-  const transformedFiles = item.hmrTransformedOutputFiles.map(file => path.resolve(outputRoot, file))
-  if (!(await Promise.all(transformedFiles.map(fileExists))).every(Boolean)) {
-    return undefined
-  }
-  return (await Promise.all(transformedFiles.map(readUtf8))).join('\n')
 }
 
 async function readExistingAppStyleOutput(outputRoot: string, item: AppCase) {
@@ -357,7 +325,10 @@ async function assertMiniProgramOutput(
   ).toBeGreaterThan(0)
   const runtimeStyleEntry = await resolveMiniProgramRuntimeStyleEntry(outputRoot, item.cssExtensions)
   expect(runtimeStyleEntry, `${item.name} 无法唯一识别小程序运行时根样式入口`).toBeTruthy()
-  const css = await readReachableMiniProgramStyles(outputRoot, runtimeStyleEntry!, item.cssExtensions)
+  // 根入口需要沿导入链验证；分包样式由页面路由加载，不会出现在根入口的导入图中。
+  const runtimeCss = await readReachableMiniProgramStyles(outputRoot, runtimeStyleEntry!, item.cssExtensions)
+  expect(runtimeCss, `${item.name} 根样式入口不可读`).not.toBe('')
+  const css = (await Promise.all(styleFiles.map(readUtf8))).join('\n')
 
   expectContent(css, item.cssContains, item.name)
   if (item.outputContains) {
@@ -365,6 +336,21 @@ async function assertMiniProgramOutput(
       const target = path.resolve(outputRoot, file)
       expect(await waitForFile(target, hbuilderxTimeoutMs), `${item.name} 缺少产物 ${file}`).toBe(true)
       expectContent(await readUtf8(target), entries, `${item.name} ${file}`)
+    }
+  }
+  if (item.outputNotContains) {
+    for (const [file, entries] of Object.entries(item.outputNotContains)) {
+      const target = path.resolve(outputRoot, file)
+      expect(await waitForFile(target, hbuilderxTimeoutMs), `${item.name} 缺少产物 ${file}`).toBe(true)
+      const content = await readUtf8(target)
+      for (const entry of entries) {
+        if (typeof entry === 'string') {
+          expect(content, `${item.name} ${file} 不应包含 ${entry}`).not.toContain(entry)
+        }
+        else {
+          expect(content, `${item.name} ${file} 不应匹配 ${entry}`).not.toMatch(entry)
+        }
+      }
     }
   }
   if (item.cssNotContains) {
@@ -477,15 +463,6 @@ async function rmWithRetry(target: string) {
   }
 }
 
-async function createHBuilderXProjectAlias(projectRoot: string) {
-  const identity = await createSharedHBuilderXProjectAlias(projectRoot)
-  return {
-    cleanup: identity.cleanup,
-    projectAlias: identity.projectPath,
-    projectName: identity.projectName,
-  }
-}
-
 async function writeAppMarker(
   file: string,
   anchors: string[],
@@ -495,25 +472,7 @@ async function writeAppMarker(
     text: string
   },
 ) {
-  const source = await readUtf8(file)
-  const persistentMarkerRE = /<view(?:\s+id="native-hmr-probe")?\s+class="[^"]*\bhbuilderx-app-native-hmr-probe\b[^"]*">[\s\S]*?<\/view>/
-  const markerClassName = `hbuilderx-app-native-hmr-probe ${marker.className.replace(/\bhbuilderx-app-native-hmr-probe\b/g, '').trim()}`
-  const cleaned = source.replace(/\n[ \t]*<view class="[^"]+">(?:<text class="[^"]+">)?hbuilderx-app-(?:dynamic|hmr)-[^<]+(?:<\/text>)?<\/view>/g, '')
-  const content = marker.textClassName
-    ? `<text class="${marker.textClassName}">${marker.text}</text>`
-    : marker.text
-  const persistentMarker = `<view id="native-hmr-probe" class="${markerClassName}">${content}</view>`
-  if (persistentMarkerRE.test(source)) {
-    await fs.writeFile(file, source.replace(persistentMarkerRE, persistentMarker), 'utf8')
-    return
-  }
-  const anchor = anchors.find(item => cleaned.includes(item))
-  const index = anchor ? cleaned.indexOf(anchor) : -1
-  if (index < 0) {
-    throw new Error(`找不到 App E2E 插入锚点：${file}`)
-  }
-  const next = `${cleaned.slice(0, index)}${persistentMarker}\n\t\t${cleaned.slice(index)}`
-  await fs.writeFile(file, next, 'utf8')
+  await fs.writeFile(file, rewriteAppMarker(await readUtf8(file), anchors, marker), 'utf8')
 }
 
 export async function compileMiniProgramWithHBuilderX(item: MiniProgramCase) {
@@ -528,13 +487,7 @@ export async function compileMiniProgramWithHBuilderX(item: MiniProgramCase) {
 
   const hbuilderx = await createLocalHBuilderXRunner(projectRoot, { WEAPP_TW_HMR_TIMING: '1' })
   const projectAlias = await createSharedHBuilderXProjectAlias(projectRoot)
-  try {
-    await hbuilderx.run({
-      args: ['project', 'close', '--path', projectAlias.projectPath],
-      allowFailure: true,
-      cwd: projectRoot,
-      timeoutMs: hbuilderxTimeoutMs,
-    })
+  await withHBuilderXProjectCleanup(projectAlias, async () => {
     await hbuilderx.run({
       args: ['project', 'open', '--path', projectAlias.projectPath],
       cwd: projectRoot,
@@ -553,81 +506,88 @@ export async function compileMiniProgramWithHBuilderX(item: MiniProgramCase) {
       ].filter(Boolean).join('\n'))
     }
     await assertMiniProgramOutput(item)
-  }
-  finally {
-    await hbuilderx.run({
-      args: ['project', 'close', '--path', projectAlias.projectPath],
-      allowFailure: true,
-      cwd: projectRoot,
-      timeoutMs: hbuilderxTimeoutMs,
-    })
-    await projectAlias.cleanup()
-  }
+  }, () => hbuilderx.run({
+    args: ['project', 'close', '--path', projectAlias.projectPath],
+    allowFailure: false,
+    cwd: projectRoot,
+    timeoutMs: hbuilderxTimeoutMs,
+  }))
 }
 
 export async function verifyAppHmrWithHBuilderX(item: AppCase) {
+  item = bindAppTarget(item)
   let androidEnv: Record<string, string> | undefined
-  let launchArgs = [...(item.launchArgs ?? [])]
+  const launchArgs = [...(item.launchArgs ?? [])]
   if (item.platform === 'app-android') {
     androidEnv = assertAndroidToolchain()
   }
   if (item.platform === 'app-ios') {
     assertIosSimulatorToolchain()
-    if (!launchArgs.includes('--deviceId')) {
-      launchArgs = [...launchArgs, '--deviceId', resolveIosSimulatorDeviceId()]
-    }
   }
   if (item.platform === 'app-harmony') {
     assertHarmonyToolchain()
   }
 
-  const projectRoot = path.resolve(repoRoot, item.projectDir)
+  let projectRoot = path.resolve(repoRoot, item.projectDir)
   const hbuilderx = await createLocalHBuilderXRunner(projectRoot, {
     WEAPP_TW_HMR_TIMING: '1',
     ...androidEnv,
     ...item.launchEnv,
   })
-  const sourceFile = path.resolve(projectRoot, item.sourceFile)
-  let projectAlias: string | undefined
-  let cleanupProjectAlias: (() => Promise<void>) | undefined
-  let restore: (() => Promise<void>) | undefined
-  let child: ChildProcess | undefined
+  let sourceFile = path.resolve(projectRoot, item.sourceFile)
+  const runtimeEvidenceRoot = process.env['E2E_HBUILDERX_RUNTIME_EVIDENCE_ROOT']
+    ? path.resolve(process.env['E2E_HBUILDERX_RUNTIME_EVIDENCE_ROOT'], item.name.replace(/[^\w-]+/g, '-'))
+    : path.resolve(os.tmpdir(), 'weapp-tailwindcss-hbuilderx-runtime', `${process.pid}-${item.name.replace(/[^\w-]+/g, '-')}`)
+  const domProbe = item.platform === 'app-harmony' && item.renderMode === 'vapor' ? createHarmonyDomProbe() : undefined
+  let logs: string[] = []
+  let domObserver: ReturnType<NonNullable<typeof domProbe>['observe']> | undefined
+  let nativeLog: ReturnType<typeof captureNativeLog> | undefined
+  const domOptions = domProbe ? { readDomProbe: () => domObserver?.read() } : {}
+  let projectSession: Awaited<ReturnType<typeof createHBuilderXAppProject>> | undefined
+  const recovery = await createNativeSessionRecovery({
+    directory: runtimeEvidenceRoot,
+    projectRoot,
+    platform: item.platform,
+    host: hbuilderx.resolution,
+    files: [sourceFile, ...resolveAppHmrSteps(item).flatMap(step => step.sourceMutation ? [path.resolve(projectRoot, step.sourceMutation.file)] : [])].map(file => ({ file })),
+  })
+  let harmonyFailureEvidence: Parameters<typeof captureHarmonyRuntimeEvidence>[0] | undefined
+  let hmrLifecycle: ReturnType<typeof observeHmrStep> | undefined
+  let launch: SpawnedHBuilderXCommand | undefined
+  let failure: { error: unknown } | undefined
   try {
-    restore = await createHmrSourceRestore([
-      sourceFile,
-      ...resolveAppHmrSteps(item).flatMap(step => step.sourceMutation ? [path.resolve(projectRoot, step.sourceMutation.file)] : []),
-    ])
+    projectSession = await createHBuilderXAppProject({ projectRoot, platform: item.platform, runner: hbuilderx, timeoutMs: hbuilderxAppTimeoutMs, env: androidEnv })
+    projectRoot = projectSession.projectRoot
+    sourceFile = path.resolve(projectRoot, item.sourceFile)
+    await recovery.bindProject(projectSession)
+    await recovery.beginMutation()
     await writeAppMarker(sourceFile, resolveAppMarkerAnchors(item), {
       className: item.markerClass,
       textClassName: item.markerTextClass,
       text: item.markerText,
     })
+    if (domProbe) {
+      await fs.writeFile(sourceFile, domProbe.inject(await readUtf8(sourceFile)), 'utf8')
+    }
+    await fs.mkdir(runtimeEvidenceRoot, { recursive: true })
     await cleanAppOutput(item)
-    const projectIdentity = await createHBuilderXProjectAlias(projectRoot)
-    projectAlias = projectIdentity.projectAlias
-    cleanupProjectAlias = projectIdentity.cleanup
-    await hbuilderx.run({
-      args: ['project', 'open', '--path', projectAlias],
-      cwd: projectRoot,
-      timeoutMs: hbuilderxAppTimeoutMs,
-      env: androidEnv,
-    })
-    child = hbuilderx.spawn({
-      args: ['launch', item.platform, '--project', resolveHBuilderXLaunchProject(item.platform, projectIdentity), '--cleanCache', 'true', ...launchArgs],
+    await projectSession.open()
+    launch = hbuilderx.spawn({
+      args: ['launch', item.platform, '--project', projectSession.launchProject, '--cleanCache', 'true', ...launchArgs],
       cwd: projectRoot,
       env: {
         WEAPP_TW_HMR_TIMING: '1',
         ...androidEnv,
         ...item.launchEnv,
       },
-    }).child
-    const logs = collectProcessOutput(child)
-    let exit: { code: number | null, signal: NodeJS.Signals | null } | undefined
-    const closed = new Promise<void>((resolve) => {
-      child?.on('close', (code, signal) => {
-        exit = { code, signal }
-        resolve()
-      })
+    })
+    const { child } = launch
+    nativeLog = captureNativeLog(child, path.resolve(runtimeEvidenceRoot, 'hbuilderx.log'))
+    domObserver = domProbe?.observe(child)
+    logs = launch.logs
+    let exit: CommandExit | undefined
+    void launch.closed.then((result) => {
+      exit = result
     })
 
     const startedAt = Date.now()
@@ -668,16 +628,21 @@ export async function verifyAppHmrWithHBuilderX(item: AppCase) {
     }
     await waitForAppRuntimeLogs(item, logs, ensureLaunchRunning)
     const androidDeviceId = item.platform === 'app-android'
-      ? resolveAndroidDeviceId(launchArgs)
+      ? readAppLaunchOption(launchArgs, '--deviceId')
       : undefined
-    const runtimeEvidenceRoot = process.env['E2E_HBUILDERX_RUNTIME_EVIDENCE_ROOT']
-      ? path.resolve(process.env['E2E_HBUILDERX_RUNTIME_EVIDENCE_ROOT'], item.name.replace(/[^\w-]+/g, '-'))
-      : path.resolve(
-          os.tmpdir(),
-          'weapp-tailwindcss-hbuilderx-runtime',
-          `${process.pid}-${item.name.replace(/[^\w-]+/g, '-')}`,
-        )
+    const harmonyDeviceId = readAppLaunchOption(launchArgs, '--deviceId')
+    const initialHarmony = item.platform === 'app-harmony'
+      ? await waitForHarmonyRuntimeEvidence({
+          ...domOptions,
+          deviceId: harmonyDeviceId,
+          directory: path.resolve(runtimeEvidenceRoot, 'initial'),
+          marker: item.markerText,
+          timeoutMs: hbuilderxAppTimeoutMs,
+          ensureRunning: ensureLaunchRunning,
+        })
+      : undefined
     let previousRuntimeScreenshot: string | undefined
+    let previousRuntimeMarkerClass = item.markerClass
     if (item.platform === 'app-android' && item.runtime) {
       const initialScreenshot = path.resolve(runtimeEvidenceRoot, 'initial.png')
       const evidence = await waitForAndroidRuntimeEvidence({
@@ -700,8 +665,23 @@ export async function verifyAppHmrWithHBuilderX(item: AppCase) {
     else if (item.platform === 'app-android') {
       process.stdout.write(`[hbuilderx-app] ${item.name} 未配置 Android 运行时探针，保留产物/HMR 断言\n`)
     }
+    else if (item.platform === 'app-ios') {
+      const evidence = await waitForIosRuntimeEvidence({
+        deviceId: readAppLaunchOption(launchArgs, '--deviceId'),
+        ensureRunning: ensureLaunchRunning,
+        markerClass: item.markerClass,
+        screenshot: path.resolve(runtimeEvidenceRoot, 'initial.png'),
+        timeoutMs: hbuilderxAppTimeoutMs,
+      })
+      previousRuntimeScreenshot = evidence.screenshot
+      process.stdout.write(`${JSON.stringify({ runtimeEvidence: evidence })}\n`)
+    }
     let hmrOutputRoot = initialOutputRoot
     for (const step of resolveAppHmrSteps(item)) {
+      hmrLifecycle?.assertNoFallback()
+      hmrLifecycle?.dispose()
+      hmrLifecycle = observeHmrStep(child, item.platform, item.updateMode)
+      harmonyFailureEvidence = initialHarmony ? { ...domOptions, deviceId: harmonyDeviceId, directory: path.resolve(runtimeEvidenceRoot, step.name), marker: step.markerText } : undefined
       process.stdout.write(`[hbuilderx-app-hmr] ${item.name} step=${step.name} start\n`)
       if (step.sourceMutation) {
         const shouldWaitForOutputRefresh = step.sourceMutation.expectOutputRefresh !== false
@@ -731,6 +711,39 @@ export async function verifyAppHmrWithHBuilderX(item: AppCase) {
           `recentHBuilderXLogs=${formatRecentLogs(logs, 4000)}`,
         ].join('\n')
       }, step.styleContains, [...(item.transformedNotContains ?? []), ...(step.transformedNotContains ?? [])])
+      const iosEvidence = await hmrLifecycle.waitForCompletion(hbuilderxAppTimeoutMs, ensureLaunchRunning, item.platform === 'app-ios'
+        ? remainingMs => waitForIosRuntimeEvidence({
+          deviceId: readAppLaunchOption(launchArgs, '--deviceId'),
+          ensureRunning: () => {
+            ensureLaunchRunning()
+            hmrLifecycle?.assertNoFallback()
+          },
+          markerClass: step.markerClass,
+          previous: { screenshot: previousRuntimeScreenshot!, markerClass: previousRuntimeMarkerClass },
+          screenshot: path.resolve(runtimeEvidenceRoot, `${step.name}.png`),
+          timeoutMs: remainingMs,
+        })
+        : undefined)
+      if (iosEvidence) {
+        previousRuntimeScreenshot = iosEvidence.screenshot
+        previousRuntimeMarkerClass = step.markerClass
+        process.stdout.write(`${JSON.stringify({ step: step.name, runtimeEvidence: iosEvidence })}\n`)
+      }
+      if (initialHarmony) {
+        const evidence = await waitForHarmonyRuntimeEvidence({
+          ...domOptions,
+          deviceId: harmonyDeviceId,
+          directory: path.resolve(runtimeEvidenceRoot, step.name),
+          marker: step.markerText,
+          previousPid: initialHarmony.pid,
+          timeoutMs: hbuilderxAppTimeoutMs,
+          ensureRunning: () => {
+            ensureLaunchRunning()
+            hmrLifecycle?.assertNoFallback()
+          },
+        })
+        process.stdout.write(`${JSON.stringify({ step: step.name, runtimeEvidence: evidence })}\n`)
+      }
       if (item.platform === 'app-android' && step.runtime) {
         const screenshot = path.resolve(runtimeEvidenceRoot, `${step.name}.png`)
         const evidence = await waitForAndroidRuntimeEvidence({
@@ -760,40 +773,52 @@ export async function verifyAppHmrWithHBuilderX(item: AppCase) {
       else if (item.platform === 'app-android') {
         process.stdout.write(`[hbuilderx-app-hmr] ${item.name} step=${step.name} 未配置 Android 运行时探针，保留产物/HMR 断言\n`)
       }
-      process.stdout.write(`[hbuilderx-app-hmr] ${item.name} step=${step.name} passed\n`)
+      hmrLifecycle?.assertNoFallback()
+      process.stdout.write(`${JSON.stringify({ step: step.name, updateLifecycle: hmrLifecycle.snapshot() })}\n`)
+      process.stdout.write(`[hbuilderx-app-hmr] ${item.name} step=${step.name} ${item.platform === 'app-ios' ? '当轮编译、同步与可见样式标记检查通过（未验证节点文字）' : '产物与传输检查通过'}\n`)
     }
     await assertAppOutputHasNoUnsupportedContent(item, hmrOutputRoot)
     expectNoContent(logs.join(''), item.logNotContains, `${item.name} HBuilderX 日志`)
-
-    await stopAppLaunch(child, closed)
-    child = undefined
+    expectNoContent(logs.join(''), resolveAppRuntimeLogContract(item).notContains, `${item.name} HBuilderX 渲染模式日志`)
+  }
+  catch (error) {
+    failure = { error }
+    if (harmonyFailureEvidence) {
+      await captureHarmonyRuntimeEvidence(harmonyFailureEvidence).catch((captureError) => {
+        failure = { error: new AggregateError([error, captureError], 'Harmony 验证与失败现场取证均失败。', { cause: error }) }
+      })
+    }
   }
   finally {
-    if (child) {
-      const closed = new Promise<void>((resolve) => {
-        child?.once('close', () => resolve())
+    try {
+      await runWithCleanup(() => recovery.cleanup({
+        failure,
+        stop: async () => { await launch?.stop('SIGINT') },
+        nativeStopReason: () => hmrLifecycle?.nativeStopReason(),
+        afterStop: () => hmrLifecycle?.assertNoFallback(),
+        safe: [() => hmrLifecycle?.dispose(), () => domObserver?.dispose(), async () => { await nativeLog?.close() }],
+        release: [async () => { await projectSession?.cleanup() }],
+      }), async () => {
+        if (recovery.cleanupComplete) {
+          await recovery.finish()
+        }
       })
-      await stopAppLaunch(child, closed)
     }
-    if (restore) {
-      await restore()
+    catch (error) {
+      failure = { error: failure
+        ? new AggregateError([failure.error, error], 'HBuilderX App 验证与收尾均失败。', { cause: failure.error })
+        : error }
     }
-    if (projectAlias) {
-      await hbuilderx.run({
-        args: ['project', 'close', '--path', projectAlias],
-        cwd: projectRoot,
-        timeoutMs: hbuilderxAppTimeoutMs,
-        allowFailure: true,
-        env: androidEnv,
-      }).catch(() => undefined)
-      await cleanupProjectAlias?.()
-    }
+    process.stdout.write(`[hbuilderx-app] 原始日志：${path.resolve(runtimeEvidenceRoot, 'hbuilderx.log')}\n`)
+  }
+  if (failure) {
+    throw failure.error
   }
 }
 
-export async function verifyWebHmr(item: WebCase) {
+export async function verifyWebHmr(item: WebCase, attached?: AttachedWebServer) {
   const projectRoot = path.resolve(repoRoot, item.projectDir)
-  const result = await runWebHmr(projectRoot, path.resolve(projectRoot, item.sourceFile), resolveWebMarkerAnchors(item), item.initialCssPath, item.hmrCssPath, item.initialCssContains, item.initialRuntimeStyles, item.persistentRuntimeStyles, item.hmrSteps)
+  const result = await runWebHmr(projectRoot, path.resolve(projectRoot, item.sourceFile), resolveWebMarkerAnchors(item), item.initialCssPath, item.hmrCssPath, item.initialCssContains, item.initialRuntimeStyles, item.persistentRuntimeStyles, item.hmrSteps, item.launchWithHBuilderX, item.initialTextContains, item.serverIdentityPath, attached)
 
   expect(result.pageHtml, `${item.name} Web 首页应可访问`).toContain('<!DOCTYPE html>')
   expect(result.pageErrors, `${item.name} Web 页面不应产生控制台错误`).toEqual([])
@@ -804,4 +829,9 @@ export async function verifyWebHmr(item: WebCase) {
   for (const css of result.hmrCss) {
     expect(css, `${item.name} HMR CSS 不应保留 Tailwind 原始指令`).not.toMatch(rawTailwindDirectiveRE)
   }
+  if (item.nativeIdeVersionRequired && !attached) {
+    expect(result.serverLogs, `${item.name} CLI 应提供原生 IDE 版本`).toMatch(/HBuilderX Version:\s*5\./)
+  }
+  expectContent(result.serverLogs, item.serverLogContains ?? [], `${item.name} Web HBuilderX 服务日志`)
+  expectNoContent(result.serverLogs, item.serverLogNotContains, `${item.name} Web Vite 服务日志`)
 }

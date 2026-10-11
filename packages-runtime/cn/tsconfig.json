@@ -1,0 +1,4 @@
+{
+  "extends": "../merge/tsconfig.json",
+  "include": ["src", "test"]
+}

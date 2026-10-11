@@ -1,9 +1,9 @@
 # wetw
 
-> 简体中文 | [English](./README.en.md)
+> English | [简体中文](./README.zh-CN.md)
 
-这个包是组件注册与生成 CLI，用来从 registry 解析组件并写入项目，帮助管理基于 weapp-tailwindcss 的组件资产。
+This package is a component registry and generation CLI. It resolves components from a registry and writes them into projects to help manage weapp-tailwindcss-based component assets.
 
-## 官网
+## Website
 
-更多接入方式、配置说明和框架示例见 [weapp-tailwindcss 官方文档](https://tw.icebreaker.top)。
+For setup guides, configuration references, and framework examples, see the [official weapp-tailwindcss documentation](https://tw.weapp.dev).

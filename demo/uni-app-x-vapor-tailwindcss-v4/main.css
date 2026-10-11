@@ -1,0 +1,43 @@
+@import "tailwindcss" source(none);
+@config "./tailwind.config.js";
+@plugin "@iconify/tailwind4" {
+  prefix: "i";
+}
+@source "./App.uvue";
+@source "./pages/**/*.{uts,uvue}";
+@source not "./unpackage/**/*";
+@custom-variant system-dark {
+  @media (prefers-color-scheme: dark) {
+    @slot;
+  }
+}
+@custom-variant wx {
+  /*  #ifdef  MP-WEIXIN  */
+  @slot;
+  /*  #endif  */
+}
+@custom-variant not-wx {
+  /*  #ifndef  MP-WEIXIN  */
+  @slot;
+  /*  #endif  */
+}
+@custom-variant any-hover {
+  @media (any-hover: hover) {
+    &:hover {
+      @slot;
+    }
+  }
+}
+@layer components {
+  .template-corpus-apply {
+    display: flex;
+    align-items: center;
+    border-radius: 20px;
+    background-color: #9e58e9;
+    padding-inline: 18px;
+    padding-block: 10px;
+    color: #fff;
+    font-size: 26px;
+  }
+}
+@source inline("bg-[#102938] bg-[#0977ee] text-[#f7fbff] text-[31rpx] px-[29rpx] w-[173px] i-[mdi--github-circle] i-[mdi--star] i-[svg-spinners--180-ring-with-bg] before:content-['现在，让我们开始神奇的_tailwindcss_开发之旅吧！'] before:content-['现在，让我们继续神奇的_tailwindcss_HMR_回归之旅吧！'] theme-mode-demo system-dark: theme-dark dark:bg-zinc-950 dark:bg-[#09090b] t-class --test-color --color-test --font-test --font-sans --font-serif --font-mono --color-red-500 --color-blue-500 --color-slate-900 --spacing --text-base --font-weight-bold --radius-lg --default-font-family");

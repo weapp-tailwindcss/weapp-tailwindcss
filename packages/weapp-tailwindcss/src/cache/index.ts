@@ -1,5 +1,5 @@
 import type { Buffer } from 'node:buffer'
-import type { sources } from 'webpack'
+import type { CacheSource } from './source'
 import { LRUCache } from 'lru-cache'
 import { md5Hash } from './md5'
 
@@ -10,7 +10,7 @@ export interface HashMapValue {
 
 export type HashMapKey = string | number
 
-export type CacheValue = sources.Source | string
+export type CacheValue = CacheSource | string
 
 export interface CacheProcessResult<T extends CacheValue> {
   result: T
@@ -34,8 +34,8 @@ export interface ICreateCacheReturnType {
   getHashValue: (key: HashMapKey) => HashMapValue | undefined
   setHashValue: (key: HashMapKey, value: HashMapValue) => Map<HashMapKey, HashMapValue>
   computeHash: (message: string | Buffer) => string
-  get: <V extends CacheValue = sources.Source>(key: string) => V | undefined
-  set: <V extends CacheValue = sources.Source>(key: string, value: V) => LRUCache<string, CacheValue>
+  get: <V extends CacheValue = CacheSource>(key: string) => V | undefined
+  set: <V extends CacheValue = CacheSource>(key: string, value: V) => LRUCache<string, CacheValue>
   has: (key: string) => boolean
   calcHashValueChanged: (key: HashMapKey, hash: string) => ICreateCacheReturnType
   prune?: (options: {

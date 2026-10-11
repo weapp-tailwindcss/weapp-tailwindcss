@@ -23,4 +23,16 @@ describe('Vite framework HMR runtime signature', () => {
       '@theme { --color-brand: blue; }',
     )).toBe(true)
   })
+
+  it.each([
+    ['"A  B"', '"A B"'],
+    ['"/* label */"', '""'],
+    ['"A : B"', '"A:B"'],
+  ])('invalidates a theme string change from %s to %s', (previous, next) => {
+    expect(hasFrameworkHmrRuntimeSourceChange(
+      '/project/theme.css',
+      `@theme { --font-label: ${previous}; }`,
+      `@theme { --font-label: ${next}; }`,
+    )).toBe(true)
+  })
 })

@@ -8,6 +8,8 @@ export interface TailwindCandidateSource {
 }
 
 export interface WeappTailwindcssPostcssGenerateOptions {
+  scanMode?: 'compiled' | undefined
+  excludeFiles?: string[] | undefined
   candidates?: Iterable<string> | undefined
   scanSources?: boolean | undefined
   sources?: TailwindCandidateSource[] | undefined
@@ -24,6 +26,7 @@ export interface WeappTailwindcssPostcssGenerateResult {
 }
 
 export interface WeappTailwindcssPostcssGenerator {
+  dispose?: (() => void) | undefined
   generate: (options?: WeappTailwindcssPostcssGenerateOptions) => Promise<WeappTailwindcssPostcssGenerateResult>
 }
 
@@ -55,6 +58,8 @@ export interface NormalizedWeappTailwindcssPostcssGeneratorOptions {
 }
 
 export interface WeappTailwindcssPostcssPluginAdapters {
+  /** 生成器支持在编译会话内复用来源扫描；省略时保留旧适配协议。 */
+  compiledSourceScan?: boolean | undefined
   createGenerator: (source: TailwindResolvedSource) => WeappTailwindcssPostcssGenerator
   normalizeGeneratorOptions: (
     options: WeappTailwindcssPostcssGeneratorUserOptions | undefined,

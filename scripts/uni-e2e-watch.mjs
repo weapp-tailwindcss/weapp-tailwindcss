@@ -2,37 +2,24 @@ import { spawn } from 'node:child_process'
 import { readdir, stat } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
+import { createPnpmCommand } from './pnpm-command.mjs'
 
 const READY_RE = /Build complete|Watching for changes|ready in \d+/i
-const pnpmExecPath = process.env.npm_execpath
 const sourceDirs = ['src']
 const ignoredDirs = new Set(['dist', 'node_modules', '.git'])
 const ignoredFiles = new Set(['auto-imports.d.ts', 'components.d.ts', 'uni-pages.d.ts'])
 const useNativeWatch = process.env.UNI_E2E_WATCH_NATIVE === '1'
 const uniPlatform = process.env.UNI_E2E_WATCH_PLATFORM || 'mp-weixin'
 
-function createPnpmCommand(args) {
-  if (pnpmExecPath) {
-    return {
-      command: process.execPath,
-      args: [pnpmExecPath, ...args],
-    }
-  }
-
-  return {
-    command: process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm',
-    args,
-  }
-}
-
 function spawnPnpm(args, options = {}) {
-  const { command, args: commandArgs } = createPnpmCommand(args)
+  const { command, args: commandArgs, shell } = createPnpmCommand(args)
   return spawn(command, commandArgs, {
     cwd: process.cwd(),
     env: {
       ...process.env,
       ...options.env,
     },
+    shell,
     stdio: options.stdio ?? ['ignore', 'pipe', 'pipe'],
   })
 }

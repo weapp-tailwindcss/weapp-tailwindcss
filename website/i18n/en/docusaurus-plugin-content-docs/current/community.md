@@ -1,6 +1,6 @@
 ---
 title: Ecology and solutions
-description: Summarizes weapp-tailwindcss ecological plug-ins, templates and multi-terminal practical solutions, including theme, multi-context and external component integration guides.
+description: Summarizes weapp-tailwindcss plugins, templates, multi-platform practices, themes, multi-context setups, and runtime tools.
 keywords:
   - Ecology and solutions
   - community
@@ -20,8 +20,6 @@ keywords:
 
 ## Plug-in
 
-### [@weapp-tailwindcss/typography](./community/typography)
-
 ### [@weapp-tailwindcss/reset](./community/reset)
 
 ### [Out-of-the-box mini program icon solution](./icons)
@@ -35,8 +33,6 @@ keywords:
 ## Solution
 
 ### [Multi-theme solution for mini program](./quick-start/apply-themes)
-
-### [Building and introducing external components](./quick-start/build-or-import-outside-components)
 
 ### [tailwindcss multiple contexts and independent subcontracting](./quick-start/independent-pkg)
 

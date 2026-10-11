@@ -1,0 +1,27 @@
+<script lang="uts">
+import Empty from '../../components/issue-1164/empty.uvue'
+import Line from '../../components/issue-1164/line.uvue'
+import Block from '../../components/issue-1164/block.uvue'
+import Author from '../../components/issue-1164/author.uvue'
+
+export default {
+  components: { Empty, Line, Block, Author },
+}
+</script>
+
+<template>
+  <scroll-view scroll-y style="flex: 1;">
+    <text>Issue 1164</text>
+    <Empty />
+    <Line />
+    <Block />
+    <Author />
+    <view id="issue-1164-width-auto" class="bg-[#ff7a00] h-[100px]">
+      <text class="text-[#ffffff]">auto width</text>
+    </view>
+  </scroll-view>
+</template>
+
+<style lang="scss" scoped>
+//
+</style>

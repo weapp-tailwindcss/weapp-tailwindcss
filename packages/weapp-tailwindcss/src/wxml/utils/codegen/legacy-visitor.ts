@@ -1,4 +1,4 @@
-import type { NodePath, TraverseOptions } from '@babel/traverse'
+import type { NodePath, TraverseOptions, Visitor } from '@babel/traverse'
 import type { StringLiteral } from '@babel/types'
 import type { JsTokenUpdater } from '../../../js/JsTokenUpdater'
 import type { ITemplateHandlerOptions } from '../../../types'
@@ -21,7 +21,7 @@ function shouldSkipLegacyStringLiteral(path: NodePath<StringLiteral>) {
 export function createLegacyTraverseOptions(
   options: ITemplateHandlerOptions,
   jsTokenUpdater: JsTokenUpdater,
-): TraverseOptions & { noScope: true } {
+): TraverseOptions & Visitor & { noScope: true } {
   const legacyReplaceOptions = {
     escapeMap: options.escapeMap,
     classNameSet: options.runtimeSet,
@@ -43,5 +43,5 @@ export function createLegacyTraverseOptions(
       // path.node.value = replaceWxml(path.node.value, options)
     },
     noScope: true,
-  } satisfies TraverseOptions & { noScope: true }
+  } satisfies TraverseOptions & Visitor & { noScope: true }
 }

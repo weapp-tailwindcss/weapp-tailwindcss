@@ -38,7 +38,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Update template dependencies
-        run: pnpm update:templates:deps
+        run: pnpm templates:update-deps
 
       - name: Configure SSH
         uses: webfactory/ssh-agent@v0.9.1
@@ -51,7 +51,7 @@ jobs:
           GIT_AUTHOR_EMAIL: '41898282+github-actions[bot]@users.noreply.github.com'
           GIT_COMMITTER_NAME: 'github-actions[bot]'
           GIT_COMMITTER_EMAIL: '41898282+github-actions[bot]@users.noreply.github.com'
-        run: pnpm push:templates
+        run: pnpm templates:push
 
       - name: Commit monorepo changes
         run: |

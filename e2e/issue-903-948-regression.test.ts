@@ -75,6 +75,9 @@ async function buildViteProject(root: string) {
     plugins: [
       WeappTailwindcss({
         cssEntries: [cssEntry],
+        generator: {
+          target: 'weapp',
+        },
         tailwindcss: {
           packageName: 'tailwindcss',
           version: 4,

@@ -1,4 +1,4 @@
-import { isSourceStyleRequest } from '@/bundlers/shared/style-requests'
+import { isSourceStyleRequest } from '@/generation/style-requests'
 
 export interface RspackRuleLike {
   exclude?: unknown

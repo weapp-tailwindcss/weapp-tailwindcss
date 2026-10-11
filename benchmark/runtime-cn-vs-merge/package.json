@@ -1,0 +1,41 @@
+{
+  "name": "benchmark-runtime-cn-vs-merge",
+  "type": "module",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Compare @weapp-tailwindcss/cn and @weapp-tailwindcss/merge semantics, bundle size, and runtime performance.",
+  "author": "ice breaker <1324318532@qq.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sonofmagic/weapp-tailwindcss.git",
+    "directory": "benchmark/runtime-cn-vs-merge"
+  },
+  "bugs": {
+    "url": "https://github.com/sonofmagic/weapp-tailwindcss/issues"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "scripts": {
+    "parity": "tsx ./scripts/parity.mts",
+    "bundle": "tsx ./scripts/bundle.mts",
+    "bench": "tsx ./scripts/bench.mts",
+    "report": "tsx ./scripts/generate-reports.mts && tsx ./scripts/generate-upstream-report.mts",
+    "all": "tsx ./scripts/run-all.mts"
+  },
+  "dependencies": {
+    "@weapp-tailwindcss/cn": "workspace:*",
+    "@weapp-tailwindcss/merge": "workspace:*",
+    "@weapp-tailwindcss/runtime": "workspace:*",
+    "clsx": "catalog:clsx",
+    "cn": "^0.3.0",
+    "tailwind-merge": "catalog:tailwindMerge"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:typesNode2410",
+    "@weapp-tailwindcss/escape": "workspace:^",
+    "esbuild": "^0.28.2",
+    "tsx": "catalog:tsx",
+    "typescript": "catalog:typescript59"
+  }
+}

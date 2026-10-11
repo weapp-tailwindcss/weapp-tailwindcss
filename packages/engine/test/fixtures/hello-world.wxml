@@ -1,0 +1,1 @@
+<view class="bg-[#7d7ac2] text-[100px] text-[#123456] {{true?'h-[30px]':'h-[45px]'}}">111</view>

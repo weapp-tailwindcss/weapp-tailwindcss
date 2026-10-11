@@ -30,7 +30,7 @@
     "tsx": "catalog:tsx",
     "typescript": "catalog:typescript59",
     "vite": "catalog:vite724",
-    "vitest": "^4.1.10",
+    "vitest": "catalog:vitest",
     "weapp-tailwindcss": "workspace:*"
   }
 }

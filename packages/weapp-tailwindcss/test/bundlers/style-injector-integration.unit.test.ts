@@ -139,7 +139,7 @@ describe('bundlers/vite builtin styleInjector', () => {
     } as any, {} as any, bundle as any, false)
 
     expect(bundle['app.wxss'].source).toBe('@import "shared.wxss";\n.app{}')
-    expect(plugins.at(-1)?.name).toBe('weapp-tailwindcss:style-injector')
+    expect(plugins.filter(plugin => getGenerateBundleHandler(plugin)).at(-1)?.name).toBe('weapp-tailwindcss:style-injector')
   })
 
   it('uses the selected uni-app Vite framework styleInjector preset', async () => {

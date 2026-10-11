@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { test } from 'vitest'
 import { analyzeTailwindCssDirectives, postcss } from '@/index'
 
 function createDirectiveCorpus(size: number) {
@@ -33,14 +33,15 @@ function createDirectiveCorpus(size: number) {
 
 const css = createDirectiveCorpus(400)
 
-describe('tailwind directive analysis benchmark', () => {
-  bench('parse and scan five times', () => {
-    for (let i = 0; i < 5; i++) {
+test('tailwind directive analysis benchmark', async ({ bench }) => {
+  await bench.compare(
+    bench('parse and scan five times', () => {
+      for (let i = 0; i < 5; i++) {
+        analyzeTailwindCssDirectives(postcss.parse(css), { importFallback: true })
+      }
+    }),
+    bench('parse once and scan once', () => {
       analyzeTailwindCssDirectives(postcss.parse(css), { importFallback: true })
-    }
-  })
-
-  bench('parse once and scan once', () => {
-    analyzeTailwindCssDirectives(postcss.parse(css), { importFallback: true })
-  })
+    }),
+  )
 })

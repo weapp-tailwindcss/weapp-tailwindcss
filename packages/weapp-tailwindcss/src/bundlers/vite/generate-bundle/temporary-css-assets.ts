@@ -12,9 +12,9 @@ export interface TemporaryCssSourceEntry {
 export interface CollectTemporaryCssSourceEntriesOptions {
   configuredEntries: TemporaryCssSourceEntry[]
   configuredScopeEntries: TemporaryCssSourceEntry[]
-  currentSubpackageRoots: string[] | undefined
+  currentSubpackageRoots: Set<string> | undefined
   explicitSourceFileKeys: ReadonlySet<string>
-  isSubpackageOutputFile: (file: string, roots: string[]) => boolean
+  isSubpackageOutputFile: (file: string, roots: Set<string>) => boolean
   normalizeConfiguredSourceFile: (file: string) => string
   rememberedEntries: TemporaryCssSourceEntry[]
   resolveRuntimeLinkedSource: (file: string) => TemporaryCssSourceEntry | undefined

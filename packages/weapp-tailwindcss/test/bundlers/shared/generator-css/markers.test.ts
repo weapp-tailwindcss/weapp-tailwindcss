@@ -11,7 +11,7 @@ import {
   stripGeneratorPlaceholderMarkers,
   stripTailwindBanner,
   stripTailwindBanners,
-} from '@/bundlers/shared/generator-css/markers'
+} from '@/generation/markers'
 
 describe('generator css markers', () => {
   it('appends css and strips generated banners and placeholders', () => {

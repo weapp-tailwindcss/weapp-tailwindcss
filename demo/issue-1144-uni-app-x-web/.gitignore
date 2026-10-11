@@ -1,0 +1,35 @@
+*.DS_Store
+node_modules/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+**/*.log
+
+tests/**/coverage/
+tests/e2e/reports
+selenium-debug.log
+package-lock.json
+pnpm-lock.yaml
+pnpm-workspace.yaml
+yarn.lock
+unpackage/*
+
+# Editor directories and files
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.local
+*.swf
+*.air
+*.ipa
+*.apk
+/.hbuilderx/*
+.claude
+
+# 离线打包工具生成的文件
+config.json
+android/
+ios/

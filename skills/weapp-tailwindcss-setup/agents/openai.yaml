@@ -1,4 +1,4 @@
 interface:
   display_name: "weapp-tailwindcss 接入配置"
-  short_description: "配置 Tailwind CSS 4 与主流小程序和多端框架接入"
-  default_prompt: "使用 $weapp-tailwindcss-setup 配置小程序与多端项目。Use $weapp-tailwindcss-setup to configure Tailwind CSS 4 for my project."
+  short_description: "配置 Tailwind CSS 4、独立 CLI 与主流小程序多端框架"
+  default_prompt: "使用 $weapp-tailwindcss-setup 配置框架或 CLI。Use $weapp-tailwindcss-setup to configure Tailwind CSS 4 for my framework or CLI workflow."

@@ -1,6 +1,6 @@
 import type { NodePath } from '@babel/traverse'
 import type { StringLiteral } from '@babel/types'
-import { MappingChars2String } from '@weapp-core/escape'
+import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { describe, expect, it } from 'vitest'
 import { parse, traverse } from '@/babel'
 import { replaceHandleValue } from '@/js/handlers'

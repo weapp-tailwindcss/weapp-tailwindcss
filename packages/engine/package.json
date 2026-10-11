@@ -1,0 +1,84 @@
+{
+  "name": "@weapp-tailwindcss/engine",
+  "type": "module",
+  "version": "0.1.5",
+  "description": "Tailwind CSS 4 候选提取、源码扫描与样式生成引擎。",
+  "author": "ice breaker <1324318532@qq.com>",
+  "license": "MIT",
+  "homepage": "https://tw.weapp.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
+    "directory": "packages/engine"
+  },
+  "bugs": {
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues"
+  },
+  "keywords": [
+    "tailwindcss",
+    "engine",
+    "weapp"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./v4": {
+      "import": {
+        "types": "./dist/v4/index.d.ts",
+        "default": "./dist/v4/index.js"
+      },
+      "require": {
+        "types": "./dist/v4/index.d.cts",
+        "default": "./dist/v4/index.cjs"
+      }
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": "^22.18.0 || >=24.11.0"
+  },
+  "scripts": {
+    "dev": "tsdown --watch --sourcemap",
+    "build": "tsdown",
+    "test": "pnpm run build && vitest run",
+    "test:dev": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "peerDependencies": {
+    "tailwindcss": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "tailwindcss": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "@tailwindcss/node": "catalog:tailwindcss4",
+    "@tailwindcss/oxide": "catalog:tailwindcss4",
+    "@weapp-tailwindcss/source-scan": "workspace:*",
+    "postcss": "catalog:postcss85tilde"
+  },
+  "devDependencies": {
+    "htmlparser2": "catalog:buildUtilities",
+    "tailwindcss": "catalog:tailwindcss4"
+  }
+}

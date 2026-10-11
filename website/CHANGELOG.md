@@ -1,5 +1,203 @@
 # website
 
+## 1.0.68
+
+### Patch Changes
+
+- Updated dependencies:
+  - weapp-tailwindcss@5.6.1
+
+## 1.0.67
+
+### Patch Changes
+
+- Updated dependencies:
+  - weapp-tailwindcss@5.6.0
+
+## 1.0.66
+
+### Patch Changes
+
+- Updated dependencies:
+  - @weapp-tailwindcss/cva@0.1.12
+  - @weapp-tailwindcss/merge@2.2.7
+  - @weapp-tailwindcss/variants@0.2.10
+  - weapp-tailwindcss@5.5.12
+
+## 1.0.65
+
+### Patch Changes
+
+- Updated dependencies:
+  - @weapp-tailwindcss/cva@0.1.11
+  - @weapp-tailwindcss/merge@2.2.6
+  - @weapp-tailwindcss/variants@0.2.9
+  - weapp-tailwindcss@5.5.11
+
+## 1.0.65
+
+### Patch Changes
+
+- Updated dependencies:
+  - weapp-tailwindcss@5.5.10
+
+## 1.0.65
+
+### Patch Changes
+
+- Updated dependencies:
+  - weapp-tailwindcss@5.5.9
+
+## 1.0.65
+
+### Patch Changes
+
+- Updated dependencies:
+  - weapp-tailwindcss@5.5.8
+
+## 1.0.65
+
+### Patch Changes
+
+- Updated dependencies:
+  - @weapp-tailwindcss/merge@2.2.5
+  - @weapp-tailwindcss/variants@0.2.8
+  - weapp-tailwindcss@5.5.7
+
+## 1.0.65
+
+### Patch Changes
+
+- Updated dependencies:
+  - @weapp-tailwindcss/cva@0.1.10
+  - @weapp-tailwindcss/merge@2.2.4
+  - @weapp-tailwindcss/variants@0.2.7
+  - weapp-tailwindcss@5.5.6
+
+## 1.0.65
+
+### Patch Changes
+
+- Updated dependencies:
+  - weapp-tailwindcss@5.5.5
+
+## 1.0.65
+
+### Patch Changes
+
+- Updated dependencies:
+  - weapp-tailwindcss@5.5.4
+
+## 1.0.65
+
+### Patch Changes
+
+- Updated dependencies:
+  - weapp-tailwindcss@5.5.3
+
+## 1.0.65
+
+### Patch Changes
+
+- deps upgrade
+
+- Updated dependencies:
+  - weapp-tailwindcss@5.5.2
+
+## 1.0.65
+
+### Patch Changes
+
+- upgrade deps
+
+- Updated dependencies:
+  - weapp-tailwindcss@5.5.1
+
+## 1.0.65
+
+### Patch Changes
+
+- Updated dependencies:
+  - @weapp-tailwindcss/variants@0.2.6
+  - weapp-tailwindcss@5.5.0
+
+## 1.0.65
+
+### Patch Changes
+
+- Updated dependencies:
+  - weapp-tailwindcss@5.4.2
+
+## 1.0.65
+
+### Patch Changes
+
+- Updated dependencies:
+  - weapp-tailwindcss@5.4.1
+
+## 1.0.65
+
+### Patch Changes
+
+- Updated dependencies:
+  - @weapp-tailwindcss/cva@0.1.9
+  - @weapp-tailwindcss/merge@2.2.3
+  - @weapp-tailwindcss/variants@0.2.5
+  - weapp-tailwindcss@5.4.0
+
+## 1.0.65
+
+### Patch Changes
+
+- Updated dependencies:
+  - weapp-tailwindcss@5.3.6
+
+## 1.0.65
+
+### Patch Changes
+
+- Updated dependencies:
+  - weapp-tailwindcss@5.3.5
+
+## 1.0.65
+
+### Patch Changes
+
+- Updated dependencies:
+  - weapp-tailwindcss@5.3.4
+
+## 1.0.65
+
+### Patch Changes
+
+- Updated dependencies:
+  - weapp-tailwindcss@5.3.3
+
+## 1.0.65
+
+### Patch Changes
+
+- Updated dependencies:
+  - weapp-tailwindcss@5.3.2
+
+## 1.0.65
+
+### Patch Changes
+
+- Updated dependencies:
+  - weapp-tailwindcss@5.3.1
+
+## 1.0.65
+
+### Patch Changes
+
+- 📦 Updated 4 dependencies [`c2ba271`](https://github.com/sonofmagic/weapp-tailwindcss/commit/c2ba271ac62ba851c23549a8de1038a71bb868d6)
+  <details><summary>Details</summary>
+
+  `@weapp-tailwindcss/cva@0.1.8`, `@weapp-tailwindcss/merge@2.2.2`, `@weapp-tailwindcss/variants@0.2.4`, `weapp-tailwindcss@5.3.0`
+
+  </details>
+
 ## 1.0.64
 
 ### Patch Changes

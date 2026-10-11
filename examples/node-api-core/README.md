@@ -1,6 +1,6 @@
-# Node.js API createContext 示例
+# Node.js API compiler 示例
 
-这个示例覆盖 `import { createContext } from 'weapp-tailwindcss/core'` 的直接 Node.js 用法。
+这个示例覆盖 `import { createCompiler } from 'weapp-tailwindcss/core'` 的直接 Node.js 用法。
 
 ## 运行
 
@@ -12,8 +12,8 @@ pnpm --filter @weapp-tailwindcss-example/node-api-core test
 
 ## 覆盖点
 
-- `transformWxml` 转义模板 class。
-- `transformWxss` 转义 WXSS 选择器。
-- `getRuntimeSet` 从 Tailwind 提取结果里自动取得运行时 class 集合。
-- `transformJs` / `transformWxml` 在不传 `runtimeSet` 时复用上下文里的自动集合。
-- 复用同一个 `createContext()` 多轮转换，验证长生命周期 Node API 使用方式不会出现明显 heap 增长。
+- `generate()` 通过现有 source resolver 生成 Web CSS，并返回 revision 与不可变 snapshot。
+- `transformCss()`、`transformTemplate()` 和 `transformJavaScript()` 显式消费同一 snapshot。
+- 模板和 JavaScript 只转换 snapshot 精确命中的 class。
+- 连续增删 candidates 时复用同一 root 的 Tailwind engine 与 Scanner。
+- `remove()`、`dispose()` 后释放 root 状态，并验证长生命周期 heap 增长保持稳定。

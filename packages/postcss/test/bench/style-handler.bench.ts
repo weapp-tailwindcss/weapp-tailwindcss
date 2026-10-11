@@ -1,6 +1,6 @@
 import fs from 'fs-extra'
 import path from 'pathe'
-import { bench, describe } from 'vitest'
+import { test } from 'vitest'
 import { createStyleHandler } from '@/index'
 
 const v4Code = fs.readFileSync(path.resolve(__dirname, '../fixtures/css/v4.1.2.css'), 'utf8')
@@ -15,17 +15,18 @@ const rpxCode = `
 const v4Handler = createStyleHandler({ isMainChunk: true })
 const rpxHandler = createStyleHandler({ isMainChunk: true })
 
-describe('style handler benchmark', () => {
-  bench('tailwind v4 main chunk', async () => {
-    await v4Handler(v4Code, {
-      isMainChunk: true,
-      majorVersion: 4,
-    })
-  })
-
-  bench('rpx arbitrary value normalization', async () => {
-    await rpxHandler(rpxCode, {
-      isMainChunk: true,
-    })
-  })
+test('style handler benchmark', async ({ bench }) => {
+  await bench.compare(
+    bench('tailwind v4 main chunk', async () => {
+      await v4Handler(v4Code, {
+        isMainChunk: true,
+        majorVersion: 4,
+      })
+    }),
+    bench('rpx arbitrary value normalization', async () => {
+      await rpxHandler(rpxCode, {
+        isMainChunk: true,
+      })
+    }),
+  )
 })

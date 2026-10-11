@@ -1,14 +1,14 @@
 import type { WebpackCssAssetTaskContext } from './processed-css-task'
 import path from 'node:path'
-import { filterExistingCssRules } from '@weapp-tailwindcss/postcss'
+import { filterExistingCssRules } from '@weapp-tailwindcss/postcss/transform'
+import { hasTailwindApplyDirective, hasTailwindRootDirectives, removeTailwindSourceDirectives } from '../../../../generation/directives'
+import { hasTailwindGeneratedCss, hasTailwindGeneratedCssMarkers, hasTailwindSourceDirectives, isPureLocalCssImportWrapper } from '../../../../generation/index'
+import { removeGeneratedSelectorCompatCss } from '../../../../generation/legacy-selectors'
+import { generateTailwindV4Css } from '../../../../generation/service'
+import { isCommentOnlyCss } from '../../../../generation/user-css'
 import { processCachedTask } from '../../../shared/cache'
 import { hasBundlerGeneratedCssMarker, stripBundlerGeneratedCssMarkers } from '../../../shared/generated-css-marker'
-import { hasTailwindGeneratedCss, hasTailwindGeneratedCssMarkers, hasTailwindSourceDirectives, isPureLocalCssImportWrapper } from '../../../shared/generator-css'
-import { hasTailwindApplyDirective, hasTailwindRootDirectives, removeTailwindSourceDirectives } from '../../../shared/generator-css/directives'
-import { removeGeneratedSelectorCompatCss } from '../../../shared/generator-css/legacy-selectors'
-import { isCommentOnlyCss } from '../../../shared/generator-css/user-css'
 import { resolveTailwindV4EntriesFromCssCached } from '../../../shared/source-scan'
-import { generateTailwindV4Css } from '../../../shared/v4-generation-core'
 import { createScopedGeneratorRuntime } from '../../../vite/generate-bundle/scoped-generator'
 import { isWebpackCssLoaderRuntimeSource } from '../../shared/css-loader-runtime'
 import { createRuntimeAwareCssHash } from '../shared'
@@ -57,13 +57,16 @@ export async function processWebpackGeneratedCssAsset(element: any, context: Web
   const cssSourceHash = (() => {
     const sourceFile = resolveWebpackCssSourceFile(file, currentRawSource)
     const sourceCss = sourceFile ? cssSources.get(sourceFile)?.css : undefined
+    const loaderCss = sourceFile ? generatedCssSources.get(sourceFile)?.css : undefined
+    const loaderHash = loaderCss === undefined ? 'loader:0' : compilerOptions.cache.computeHash(loaderCss)
     const generatorSourceCss = removeWebpackGeneratorNonTailwindImports(sourceCss)
     if (sourceCss === undefined) {
       return sourceFile === undefined
-        ? 'webpack-css-source:0'
-        : `webpack-css-source:0:${sourceFile}`
+        ? `webpack-css-source:0:${loaderHash}`
+        : `webpack-css-source:0:${sourceFile}:${loaderHash}`
     }
-    return `webpack-css-source:1:${compilerOptions.cache.computeHash(sourceCss)}:${generatorSourceCss === sourceCss || generatorSourceCss === undefined ? 'generator-source:0' : compilerOptions.cache.computeHash(generatorSourceCss)}`
+    // @config 变化不一定改变入口文本或类名，但会改变 loader 已生成的样式值。
+    return `webpack-css-source:1:${compilerOptions.cache.computeHash(sourceCss)}:${generatorSourceCss === sourceCss || generatorSourceCss === undefined ? 'generator-source:0' : compilerOptions.cache.computeHash(generatorSourceCss)}:${loaderHash}`
   })()
   const runtimeAwareHash = createRuntimeAwareCssHash(
     cssChunkHash,
@@ -98,9 +101,9 @@ export async function processWebpackGeneratedCssAsset(element: any, context: Web
         const sourceFile = cssHandlerOptions.sourceOptions?.sourceFile
         const sourceCss = sourceFile ? cssSources.get(path.resolve(sourceFile))?.css : undefined
         const isConfiguredCssSource = sourceFile !== undefined
-          && configuredCssEntryFiles.some(entry => path.resolve(entry) === path.resolve(sourceFile))
+          && configuredCssEntryFiles.some((entry: string) => path.resolve(entry) === path.resolve(sourceFile))
         const isConfiguredMainCssSource = sourceFile !== undefined
-          && configuredMainCssEntryFiles.some(entry => path.resolve(entry) === path.resolve(sourceFile))
+          && configuredMainCssEntryFiles.some((entry: string) => path.resolve(entry) === path.resolve(sourceFile))
         const sourceCssHasTailwindRoot = sourceCss !== undefined
           && hasTailwindRootDirectives(sourceCss, { importFallback: true })
         const shouldPreserveExistingPreflight = cssHandlerOptions.isMainChunk
@@ -417,7 +420,7 @@ export async function processWebpackGeneratedCssAsset(element: any, context: Web
           cssUserHandlerOptions: getCssUserHandlerOptions(file),
           compilationChanges: scopeCompilationChanges,
           frameworkPostcssOwner: compilerOptions,
-          cssStage: 'framework-processed',
+          cssStage: 'framework-processed' as const,
           getSourceCandidatesForEntries: webpackSourceCandidates?.getSourceCandidatesForEntries,
           sourceCandidates: scopedGeneratorRuntimeSet,
           restoreLocalCssImports: false,

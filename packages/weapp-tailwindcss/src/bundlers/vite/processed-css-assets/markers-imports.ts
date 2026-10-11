@@ -1,15 +1,14 @@
 import type { OutputAsset, OutputBundle } from 'rollup'
 import type { ViteFrameworkCssPipelineContext, ViteFrameworkCssPipelineStrategy } from '../shared/framework-strategy'
 import type { InternalUserDefinedOptions } from '@/types'
-import { collectCssImportRequestsRoot, isMiniProgramLocalCssImportRequest, parseTailwindCssDirectiveRequest, postcss, removeTailwindSourceDirectivesRoot, removeUnsupportedMiniProgramCssImportsRoot } from '@weapp-tailwindcss/postcss'
+import { collectImportedCssFiles, isStyleImportRequest, normalizeInjectableCssWithImports } from '@weapp-tailwindcss/postcss/transform'
 import path from 'pathe'
 import { parseBundlerGeneratedCssMarkerBlocks, stripBundlerGeneratedCssMarkers } from '../../shared/generated-css-marker'
-import { removeTailwindSourceDirectives } from '../../shared/generator-css/directives'
-import { stripGeneratorPlaceholderMarkers } from '../../shared/generator-css/markers'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
 import { isCssOutputFile, isMiniProgramStyleOutputFile, isRootStyleOutputFile } from './style-files'
 
 export { isCssOutputFile } from './style-files'
+export { hasNonCommentCss, isStyleImportRequest, removeTailwindEntryDirectivesFromCss } from '@weapp-tailwindcss/postcss/transform'
 
 export interface CssAssetMarkerMatcher {
   (asset: OutputAsset, file?: string): boolean
@@ -98,10 +97,6 @@ function normalizeCssRecordIdentity(css: string) {
   return css.trim()
 }
 
-export function hasNonCommentCss(css: string) {
-  return css.replace(/\/\*[\s\S]*?\*\//g, '').trim().length > 0
-}
-
 export function dedupeViteCssResults<T extends { css: string, outputFile?: string | undefined }>(records: T[]) {
   const seen = new Set<string>()
   return records.filter((record) => {
@@ -114,118 +109,16 @@ export function dedupeViteCssResults<T extends { css: string, outputFile?: strin
   })
 }
 
-function removeTailwindSourceMediaWrappersRoot(root: ReturnType<typeof postcss.parse>) {
-  let changed = false
-  root.walkAtRules('media', (atRule) => {
-    if (!atRule.params.startsWith('source(')) {
-      return
-    }
-    if (atRule.nodes && atRule.nodes.length > 0) {
-      atRule.replaceWith(...atRule.nodes)
-    }
-    else {
-      atRule.remove()
-    }
-    changed = true
-  })
-  if (changed) {
-    root.walkAtRules((atRule) => {
-      if (atRule.nodes && atRule.nodes.length === 0) {
-        atRule.remove()
-      }
-    })
-  }
-  return changed
-}
-
-function removeTailwindSourceMediaWrappersFallback(css: string) {
-  return css
-    .replace(/@media\s+source\([^)]*\)\s*\{\s*\/\*!\s*weapp-tailwindcss generator-placeholder\s*\*\/?\s*\}/gi, '')
-    .replace(/@media\s+source\([^)]*\)\s*\{\s*\}/gi, '')
-}
-
-export function removeTailwindEntryDirectivesFromCss(css: string) {
-  try {
-    const source = stripGeneratorPlaceholderMarkers(css)
-    const root = postcss.parse(source)
-    const removedMediaWrappers = removeTailwindSourceMediaWrappersRoot(root)
-    const removedTailwindDirectives = removeTailwindSourceDirectivesRoot(root)
-    return removedMediaWrappers || removedTailwindDirectives ? root.toString() : source
-  }
-  catch {
-    return removeTailwindSourceDirectives(removeTailwindSourceMediaWrappersFallback(css))
-  }
-}
-
-interface NormalizeInjectableCssResult {
-  css: string
-  importedStyleFiles: Set<string>
-}
-
-function removeUnsupportedMiniProgramCssImportsFallback(css: string, file: string) {
-  if (!isMiniProgramStyleOutputFile(file) || !css.includes('@import')) {
-    return css
-  }
-  return css
-    .split(/\r?\n/)
-    .filter((line) => {
-      const trimmed = line.trim()
-      if (!trimmed.startsWith('@import')) {
-        return true
-      }
-      const params = trimmed
-        .slice('@import'.length)
-        .trim()
-        .replace(/;$/, '')
-        .trim()
-      const request = parseTailwindCssDirectiveRequest(params)
-      return request === undefined || isMiniProgramLocalCssImportRequest(request)
-    })
-    .join('\n')
-}
-
 export function normalizeInjectableCssForTarget(css: string, file: string) {
   return normalizeInjectableCssForTargetWithImports(css, file).css
 }
 
-export function normalizeInjectableCssForTargetWithImports(css: string, file: string): NormalizeInjectableCssResult {
-  if (!css.includes('@import')) {
-    return {
-      css,
-      importedStyleFiles: new Set(),
-    }
-  }
-  try {
-    const root = postcss.parse(css)
-    const changed = isMiniProgramStyleOutputFile(file)
-      ? removeUnsupportedMiniProgramCssImportsRoot(root)
-      : false
-    const importedStyleFiles = collectImportedStyleFilesRoot(root, file)
-    return {
-      css: changed ? root.toString() : css,
-      importedStyleFiles: importedStyleFiles.size > 0
-        ? importedStyleFiles
-        : collectImportedStyleFilesFallback(css, file),
-    }
-  }
-  catch {
-    const fallbackCss = removeUnsupportedMiniProgramCssImportsFallback(css, file)
-    return {
-      css: fallbackCss,
-      importedStyleFiles: collectImportedStyleFiles(fallbackCss, file),
-    }
-  }
+export function normalizeInjectableCssForTargetWithImports(css: string, file: string) {
+  return normalizeInjectableCssWithImports(css, isMiniProgramStyleOutputFile(file), request => resolveImportedStyleFile(file, request))
 }
 
 function stripStyleExtension(file: string) {
   return file.replace(/[?#].*$/, '').replace(/\.(?:css|wxss|acss|ttss|qss|jxss|tyss|scss|sass|less|styl|stylus|pcss|postcss)$/i, '')
-}
-
-export function isStyleImportRequest(request: string | undefined) {
-  return typeof request === 'string'
-    && request.length > 0
-    && !/^(?:https?:)?\/\//i.test(request)
-    && /\.(?:css|wxss|acss|ttss|qss|jxss|tyss)(?:$|[?#])/i.test(request)
 }
 
 function resolveImportedStyleFile(targetFile: string, request: string | undefined) {
@@ -240,39 +133,8 @@ function resolveImportedStyleFile(targetFile: string, request: string | undefine
   return normalizeOutputPathKey(path.posix.join(targetDir === '.' ? '' : targetDir, cleanRequest))
 }
 
-function collectImportedStyleFilesFromRequests(requests: Iterable<string>, targetFile: string) {
-  const imports = new Set<string>()
-  for (const request of requests) {
-    const importedFile = resolveImportedStyleFile(targetFile, request)
-    if (importedFile) {
-      imports.add(importedFile)
-    }
-  }
-  return imports
-}
-
-function collectImportedStyleFilesRoot(root: ReturnType<typeof postcss.parse>, targetFile: string) {
-  return collectImportedStyleFilesFromRequests(collectCssImportRequestsRoot(root), targetFile)
-}
-
-function collectImportedStyleFilesFallback(css: string, targetFile: string) {
-  const requests = [...css.matchAll(/@import\s+(?:url\(\s*)?(?:"([^"]+)"|'([^']+)'|([^\s;)]+))/g)]
-    .map(match => match[1] ?? match[2] ?? match[3])
-    .filter((request): request is string => typeof request === 'string' && request.length > 0)
-  return collectImportedStyleFilesFromRequests(requests, targetFile)
-}
-
 export function collectImportedStyleFiles(css: string, targetFile: string) {
-  if (!css.includes('@import')) {
-    return new Set<string>()
-  }
-  try {
-    const imports = collectImportedStyleFilesRoot(postcss.parse(css), targetFile)
-    return imports.size > 0 ? imports : collectImportedStyleFilesFallback(css, targetFile)
-  }
-  catch {
-  }
-  return collectImportedStyleFilesFallback(css, targetFile)
+  return collectImportedCssFiles(css, request => resolveImportedStyleFile(targetFile, request))
 }
 
 export function normalizeMarkerOutputFile(

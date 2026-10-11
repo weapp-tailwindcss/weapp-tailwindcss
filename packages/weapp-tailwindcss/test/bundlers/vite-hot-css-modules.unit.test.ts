@@ -221,4 +221,21 @@ describe('bundlers/vite hot css modules', () => {
       ],
     })
   })
+
+  it('does not resend css modules handled by the normal Vite HMR transaction', async () => {
+    const root = path.resolve('/project')
+    const ctx = createHmrContext(root)
+    const cssModule = {
+      file: path.join(root, 'main.css'),
+      id: path.join(root, 'main.css'),
+      url: '/main.css',
+    } as any
+
+    sendSupplementalCssHotUpdates(ctx, [cssModule], [
+      `${path.join(root, 'main.css')}?direct`,
+    ], [], [cssModule])
+    await Promise.resolve()
+
+    expect(ctx.server.ws.send).not.toHaveBeenCalled()
+  })
 })

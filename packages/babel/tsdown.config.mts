@@ -24,6 +24,7 @@ export function createBabelTsdownConfigs(options: WatchAwareOptions = {}) {
       clean: shouldClean,
       dts: true,
       deps: {
+        resolveDepSubpath: true,
         neverBundle: babelEsmOnlyDependencies,
         onlyBundle: false,
       },
@@ -36,6 +37,7 @@ export function createBabelTsdownConfigs(options: WatchAwareOptions = {}) {
       clean: false,
       dts: false,
       deps: {
+        resolveDepSubpath: true,
         alwaysBundle: babelEsmOnlyDependencies,
         onlyBundle: false,
       },

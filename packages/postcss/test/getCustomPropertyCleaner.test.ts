@@ -37,13 +37,13 @@ describe('getCustomPropertyCleaner', () => {
     expect(css).toContain('width: calc(var(--spacing) * 2)')
   })
 
-  it('仍移除紧邻 fallback 后引用目标变量的声明', async () => {
+  it('保留紧邻字面量 fallback 后引用目标变量的声明', async () => {
     const { css } = await clean(`.demo {
   width: 16px;
   width: calc(var(--spacing) * 2);
 }`)
 
     expect(css).toContain('width: 16px')
-    expect(css).not.toContain('calc(var(--spacing)')
+    expect(css).toContain('calc(var(--spacing)')
   })
 })

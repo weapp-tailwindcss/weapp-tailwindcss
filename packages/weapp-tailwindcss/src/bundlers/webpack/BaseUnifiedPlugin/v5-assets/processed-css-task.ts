@@ -1,9 +1,10 @@
+import type { sources } from 'webpack'
 import path from 'node:path'
-import { filterExistingCssRules } from '@weapp-tailwindcss/postcss'
+import { filterExistingCssRules } from '@weapp-tailwindcss/postcss/transform'
+import { hasTailwindApplyDirective, hasTailwindRootDirectives } from '../../../../generation/directives'
+import { hasTailwindGeneratedCss, hasTailwindGeneratedCssMarkers, hasTailwindSourceDirectives } from '../../../../generation/index'
 import { processCachedTask } from '../../../shared/cache'
 import { hasBundlerGeneratedCssMarker, stripBundlerGeneratedCssMarkers } from '../../../shared/generated-css-marker'
-import { hasTailwindGeneratedCss, hasTailwindGeneratedCssMarkers, hasTailwindSourceDirectives } from '../../../shared/generator-css'
-import { hasTailwindApplyDirective, hasTailwindRootDirectives } from '../../../shared/generator-css/directives'
 import { isWebpackCssLoaderRuntimeSource } from '../../shared/css-loader-runtime'
 import { createRuntimeAwareCssHash } from '../shared'
 import {
@@ -22,8 +23,8 @@ export interface WebpackCssAssetTaskContext {
   [key: string]: any
 }
 
-export async function processWebpackProcessedCssAsset(element: any, context: WebpackCssAssetTaskContext) {
-  const { ConcatSource, assetHashByChunk, compilerOptions, configuredMainCssEntryFiles, createRuntimeSetHash, cssSourceTraceSignature, cssSources, cssTaskFactories, debug, enqueueTask, finalizeCssAssetSource, finalizeTracedCss, generatedCssSources, getCssHandlerOptions, getGeneratorRuntimeSet, hasConfiguredTailwindV4SourceRoots, isKnownWebpackProcessedCssAsset, isWebGeneratorTarget, isWebpackProcessedCssAsset, processedCssAssetSkipDecisionCache, rememberProcessCacheKey, runtimeAffectingSourceHash, updateAssetIfChanged, watchMode, webpackSourceCandidateSet, webpackSourceCandidateValueSignature, webpackSourceCandidates } = context
+export async function processWebpackProcessedCssAsset(element: [string, Pick<sources.Source, 'source'>], context: WebpackCssAssetTaskContext) {
+  const { ConcatSource, assetHashByChunk, compilerOptions, configuredMainCssEntryFiles, createRuntimeSetHash, cssSourceTraceSignature, cssSources, cssTaskFactories, debug, enqueueTask, finalizeCssAssetSource, finalizeTracedCss, generatedCssSources, getCssHandlerOptions, getGeneratorRuntimeSet, hasConfiguredTailwindV4SourceRoots, isKnownWebpackProcessedCssAsset, isWebGeneratorTarget, isWebpackProcessedCssAsset, processedCssAssetSkipDecisionCache, rememberProcessCacheKey, runtimeAffectingSourceHash, updateAssetIfChanged, webpackSourceCandidateSet, webpackSourceCandidateValueSignature, webpackSourceCandidates } = context
   const [file, originalSource] = element
 
   let rawSource: string | undefined
@@ -47,15 +48,8 @@ export async function processWebpackProcessedCssAsset(element: any, context: Web
   const processedLoaderGeneratedCss = processedSourceFile
     ? generatedCssSources.get(path.resolve(processedSourceFile))
     : undefined
-  const processedAssetSourceHash = watchMode
-    && isWebGeneratorTarget
-    && cssHandlerOptionsForProcessedAsset.isMainChunk
-    ? compilerOptions.cache.computeHash(readRawSource())
-    : chunkHash === undefined
-      ? processedCssAssetKnown
-        ? 'webpack-css-asset:known'
-        : compilerOptions.cache.computeHash(readRawSource())
-      : 'webpack-css-asset:chunk'
+  // 固定文件名的 CSS asset 可在 JS chunk hash 不变时更新，已知资产同样必须核对本轮内容。
+  const processedAssetSourceHash = `${compilerOptions.cache.computeHash(readRawSource())}:${processedLoaderGeneratedCss ? compilerOptions.cache.computeHash(processedLoaderGeneratedCss.css) : 'loader:0'}`
   const processedCssHashKey = createRuntimeAwareCssHash(
     chunkHash,
     processedAssetSourceHash,

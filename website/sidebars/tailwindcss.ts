@@ -75,6 +75,11 @@ const tailwindcssSidebar: SidebarConfig = [
       'tailwindcss/best-practices',
       {
         type: 'doc',
+        id: 'tailwindcss/unocss-compatibility',
+        label: 'UnoCSS 写法兼容',
+      },
+      {
+        type: 'doc',
         id: 'quick-start/independent-pkg',
         label: '分包 Tailwind 入口隔离',
       },

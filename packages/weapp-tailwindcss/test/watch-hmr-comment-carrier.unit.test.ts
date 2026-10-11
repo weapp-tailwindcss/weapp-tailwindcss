@@ -188,6 +188,7 @@ const classArray = [
     const weappViteCase = cases.find(item => item.name === 'weapp-vite-tailwindcss-v4')
 
     expect(weappViteCase?.scriptMutation.mutateCommentCarrier).toBeTypeOf('function')
+    expect(weappViteCase?.scriptMutation.commentCarrierMinRequiredGlobalStyleEscapedClasses).toBe(0)
   })
 
   it('disables comment-carrier mutation for the taro-vite-react-tailwindcss-v4 demo case', () => {

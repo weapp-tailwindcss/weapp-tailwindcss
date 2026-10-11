@@ -10,7 +10,7 @@ const SOURCE = `page,
 `
 
 describe('issue #830', () => {
-  it('reproduces tailwind v4 spacing fallback output that still keeps the calc declaration', async () => {
+  it('replaces fixed tailwind v4 spacing calc with the final rpx value', async () => {
     const ctx = getCompilerContext({
       cssCalc: true,
     })
@@ -20,7 +20,7 @@ describe('issue #830', () => {
     })
 
     expect(css).toContain('margin-top: 96rpx;')
-    expect(css).toContain('margin-top: calc(var(--spacing)*12);')
+    expect(css).not.toContain('margin-top: calc(')
   })
 
   it('can remove the spacing calc declaration via cssCalc includeCustomProperties config', async () => {

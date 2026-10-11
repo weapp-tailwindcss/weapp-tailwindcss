@@ -1,7 +1,7 @@
 ---
 sidebar: aiSidebar
 title: MCP (Model Context Protocol)
-description: MCP 是一种**客户端-服务端协议**，定义了：
+description: MCP (Model Context Protocol)，覆盖 AI 工作流、提示词和工程化实践。
 keywords:
   - AI 编程
   - LLM

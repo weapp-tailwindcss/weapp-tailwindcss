@@ -1,10 +1,10 @@
 import type { OutputAsset, OutputChunk } from 'rollup'
-import type { CssHandlerOptionsCache } from './css-handler-options'
+import type { CssHandlerOptionsCache } from '../css-handler-options'
 import type { GenerateBundleContext } from './types'
 import { AssetEmissionPlan } from '@/compiler'
 import { collectUniAppXHarmonyApplyStyleSources, collectUniAppXHarmonyApplyUtilities, createUniAppXBundleAssetSourceGetter, createUniAppXHarmonyApplyGeneratorSource, injectUniAppXHarmonyBundleStyles, injectUniAppXStylePlaceholder } from '@/uni-app-x/style-asset'
+import { generateTailwindV4Css } from '../../../generation/service'
 import { annotateCssSourceTrace, createCssTokenSourceMap } from '../../shared/css-source-trace'
-import { generateTailwindV4Css } from '../../shared/v4-generation-core'
 import { applyViteAssetEmissionPlan } from './asset-emission-plan'
 
 function appendCss(baseCss: string, css: string) {

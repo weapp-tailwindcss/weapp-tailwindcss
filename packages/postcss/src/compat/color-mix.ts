@@ -1,6 +1,7 @@
 import type { Node } from 'postcss-value-parser'
 import postcss from 'postcss'
 import valueParser from 'postcss-value-parser'
+import { getCssCustomPropertyName } from '../utils/css-custom-property'
 import { COLOR_MIX_NAME, MODERN_COLOR_FUNCTION_NAMES, PLACEHOLDER_PREFIX } from './color-mix/constants'
 import { hasUnsupportedModernColorFunction, isDisplayP3ColorFunction, isModernColorSyntaxFunction } from './color-mix/modern'
 import { normalizeStandaloneColorFunction } from './color-mix/parse'
@@ -28,16 +29,14 @@ function getStandaloneDynamicVarWithFallback(value: string) {
   const parsed = valueParser(value)
   const nodes = parsed.nodes.filter(node => node.type !== 'space' && node.type !== 'comment')
   const variable = nodes.length === 1 ? nodes[0] : undefined
-  const property = variable?.type === 'function'
-    ? variable.nodes.find(node => node.type === 'word' && node.value.startsWith('--'))
-    : undefined
-  if (
-    variable?.type !== 'function'
-    || variable.value.toLowerCase() !== 'var'
-    || property?.type !== 'word'
-    || isTailwindcssV4ThemeVariable(property.value)
-    || !variable.nodes.some(node => node.type === 'div' && node.value === ',')
-  ) {
+  if (variable?.type !== 'function' || variable.value.toLowerCase() !== 'var') {
+    return undefined
+  }
+  const comma = variable.nodes.findIndex(node => node.type === 'div' && node.value === ',')
+  const property = comma < 0
+    ? undefined
+    : getCssCustomPropertyName(valueParser.stringify(variable.nodes.slice(0, comma)))
+  if (!property || isTailwindcssV4ThemeVariable(property)) {
     return undefined
   }
   return variable

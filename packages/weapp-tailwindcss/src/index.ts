@@ -10,4 +10,4 @@ export { weappTailwindcssPackageDir } from './webpack'
 export {
   unitConversionComposeRules,
   unitConversionPresets,
-} from '@weapp-tailwindcss/postcss'
+} from '@weapp-tailwindcss/postcss/transform'

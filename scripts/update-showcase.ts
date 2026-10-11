@@ -182,7 +182,7 @@ const env = process.env as NodeJS.ProcessEnv & {
   GH_TOKEN?: string
 }
 
-const repo = env.SHOWCASE_REPO ?? 'sonofmagic/weapp-tailwindcss'
+const repo = env.SHOWCASE_REPO ?? 'weapp-tailwindcss/weapp-tailwindcss'
 const issueNumber = Number(env.SHOWCASE_ISSUE ?? '270')
 
 if (Number.isNaN(issueNumber)) {

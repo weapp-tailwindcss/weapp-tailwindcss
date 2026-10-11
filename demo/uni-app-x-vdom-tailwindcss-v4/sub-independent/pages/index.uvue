@@ -1,0 +1,15 @@
+<script lang="uts">
+export default {
+	styleIsolation: 'app',
+}
+</script>
+
+<template>
+	<view class="bg-independent-subpackage-marker">独立分包</view>
+</template>
+
+<style>
+@import "tailwindcss" source(none);
+@config "../../tailwind.config.sub-independent.js";
+@source "../**/*.{css,uts,uvue}";
+</style>

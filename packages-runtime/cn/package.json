@@ -1,0 +1,65 @@
+{
+  "name": "@weapp-tailwindcss/cn",
+  "type": "module",
+  "version": "0.1.5",
+  "description": "Cross-platform Tailwind CSS class name utility for mini-programs. 面向小程序的跨端 Tailwind CSS 类名组合工具。",
+  "author": "ice breaker <1324318532@qq.com>",
+  "license": "MIT",
+  "homepage": "https://tw.weapp.dev/docs/community/merge",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
+    "directory": "packages-runtime/cn"
+  },
+  "bugs": {
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues"
+  },
+  "keywords": [
+    "tailwindcss",
+    "cn",
+    "classnames",
+    "mini-program"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "scripts": {
+    "dev": "tsdown -w",
+    "build": "tsdown",
+    "test": "vitest run",
+    "test:dev": "vitest",
+    "tsd": "tsd",
+    "release": "pnpm publish",
+    "lint": "eslint ."
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@weapp-tailwindcss/runtime": "workspace:*",
+    "cn": "^0.4.0"
+  },
+  "devDependencies": {
+    "@weapp-tailwindcss/escape": "workspace:*",
+    "tsd": "^0.33.0"
+  }
+}

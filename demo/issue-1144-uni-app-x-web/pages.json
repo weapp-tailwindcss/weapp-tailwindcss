@@ -1,0 +1,43 @@
+{
+	"pages": [ //pages数组中第一项表示应用启动页，参考：https://doc.dcloud.net.cn/uni-app-x/collocation/pagesjson.html
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationBarTitleText": "uni-app x"
+			}
+		},
+		{
+			"path": "pages/index/test",
+			"style": {
+				"navigationBarTitleText": "test"
+			}
+		}
+	],
+	"subPackages": [
+		{
+			"root": "sub-normal",
+			"pages": [
+				{
+					"path": "pages/index"
+				}
+			]
+		},
+		{
+			"root": "sub-independent",
+			"pages": [
+				{
+					"path": "pages/index"
+				}
+			],
+			"independent": true
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "@navigationBarTextStyle",
+		"navigationBarTitleText": "uni-app x",
+		"navigationBarBackgroundColor": "@navigationBarBackgroundColor",
+		"backgroundColor": "@backgroundColor"
+	},
+	"themeLocation": "theme.json",
+	"uniIdRouter": {}
+}

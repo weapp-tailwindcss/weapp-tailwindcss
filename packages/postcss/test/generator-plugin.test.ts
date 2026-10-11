@@ -40,6 +40,17 @@ function createAdapters(overrides: Partial<WeappTailwindcssPostcssPluginAdapters
 }
 
 describe('generator postcss plugin factory', () => {
+  it.each([false, true])('释放生成会话，包括生成失败：%s', async (fails) => {
+    const dispose = vi.fn()
+    const { adapters, generate } = createAdapters()
+    if (fails) generate.mockRejectedValueOnce(new Error('generation failed'))
+    adapters.createGenerator = () => ({ generate, dispose })
+    const task = postcss([createWeappTailwindcssPostcssPlugin(adapters)({ scanSources: false })]).process('@tailwind utilities;', { from: undefined })
+    if (fails) await expect(task).rejects.toThrow('generation failed')
+    else await task
+    expect(dispose).toHaveBeenCalledTimes(1)
+  })
+
   it('keeps generation ordered between user PostCSS plugins', async () => {
     const { adapters } = createAdapters()
     const plugin = createWeappTailwindcssPostcssPlugin(adapters)

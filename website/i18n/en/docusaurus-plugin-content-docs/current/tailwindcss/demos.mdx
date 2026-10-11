@@ -34,8 +34,7 @@ import TabItem from '@theme/TabItem'
 
 ## Measurement command (optional)
 
-- Run React Demo (Tailwind/Headless version is built-in): `pnpm --filter react-app dev`
-- Run Vue Demo: `pnpm --filter vue-app dev`
+- Run a React or Vue Demo: enter the corresponding demo directory and run the dev script in its `package.json`.
 - If testing in standalone HTML: Open the HTML with `npx serve` or VSCode Live Server, and use browser coverage to view actual CSS hits.
 
 ## Demo snippet
@@ -94,7 +93,7 @@ $muted: #6b7280;
 
 Expected product: Compiled to a single CSS, variables inlined at build time; still globally scoped.
 
-### CSS Modules（React）
+### CSS Modules (React)
 
 ```tsx title="Card.tsx"
 import styles from './Card.module.css'
@@ -180,7 +179,7 @@ export const Demo = () => (
 
 Expected product: Runtime injection style; pay attention to SSR water injection volume and runtime overhead.
 
-### Utility-first（Tailwind）
+### Utility-first (Tailwind)
 
 <Tabs>
   <TabItem value="react" label="React">
@@ -274,6 +273,6 @@ Expected product: atomic class + merge deduplication; aligned with design token,
 
 ## How to verify these solutions in this repository
 
-1. Tailwind / Headless: Run `pnpm --filter react-app dev` or `pnpm --filter vue-app dev` directly, the corresponding code has been built-in.
+1. Tailwind / Headless: enter the corresponding demo directory and run its own dev script; the relevant code is already included.
 2. Raw/Sass/CSS Modules/CSS-in-JS: Copy the above fragment to `tmp/style-demos/` (or existing app), open it with `npx serve tmp/style-demos`, and compare the style and product; the Coverage panel can view the actual hits.
 3. If you need to take a stable screenshot, add a comment placeholder next to the corresponding HTML: `<!-- screenshot: style-demo-css-modules -->`, then use the browser screenshot tool to generate and put it into the document.

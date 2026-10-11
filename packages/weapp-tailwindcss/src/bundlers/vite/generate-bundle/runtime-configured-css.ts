@@ -6,9 +6,9 @@ import type { InternalUserDefinedOptions } from '@/types'
 import path from 'node:path'
 import { resolveTailwindcssOptions } from '@/tailwindcss/runtime-options'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
+import { resolveViteCssPipelineOutputFile } from '../css-output'
 import { collectConfiguredTailwindV4CssSourceEntries } from './configured-css-sources'
 import { normalizeRelativeCssConfigDirectives } from './css-config-directives'
-import { resolveViteCssPipelineOutputFile } from './css-output'
 import { resolveOutputFileFromMatchedCssSource } from './css-output-helpers'
 import { shouldKeepRootMiniProgramStyleAsImportShell } from './root-style-output'
 import { hasTailwindGenerationSource } from './sfc-style-source'
@@ -94,7 +94,7 @@ export function createConfiguredCssSourceRegistry(
       fallbackFile?: string | undefined,
     ) => normalizeRelativeCssConfigDirectives(
       source,
-      sourceFile || fallbackFile,
+      sourceFile || (fallbackFile ?? ''),
       options.outDir,
       options.opts,
     ),
@@ -112,6 +112,7 @@ export function createConfiguredCssSourceRegistry(
 }
 
 export interface CreateConfiguredCssRootResolversOptions {
+  rootImportShellTargets?: ReadonlyMap<string, string> | undefined
   bundle: OutputBundle
   bundleFiles: string[]
   cssPipelineContext: ViteFrameworkCssPipelineContext
@@ -188,6 +189,9 @@ export function createConfiguredCssRootResolvers(
     const matchedOutputEntries = generationEntries.filter(entry => (
       normalizeOutputPathKey(resolveEntryOutputFile(entry.file).replace(/[?#].*$/, ''))
       === normalizeOutputPathKey(outputFile.replace(/[?#].*$/, ''))
+      || ((originalFileNames?.length ?? 0) === 0
+        && normalizeOutputPathKey(options.rootImportShellTargets?.get(resolveEntryOutputFile(entry.file)) ?? '')
+        === normalizeOutputPathKey(outputFile.replace(/[?#].*$/, '')))
     ))
     if (matchedOutputEntries.length === 1) {
       return matchedOutputEntries[0]

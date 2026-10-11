@@ -1,7 +1,7 @@
 import type { SetupWebpackV5ProcessAssetsHookOptions } from './helpers'
 import type { createWebpackSourceCandidateScanCache } from './source-candidate-cache'
 import process from 'node:process'
-import { createSourceCandidateStore } from '../../../shared/source-candidates'
+import { createSourceCandidateStore } from '../../../../project-sources/candidates'
 import { resolveSourceScanEntries } from '../../../shared/source-scan'
 
 export async function refreshWebpackSourceCandidates(options: {

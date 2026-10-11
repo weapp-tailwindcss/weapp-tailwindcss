@@ -1,12 +1,11 @@
 ---
 title: Mini program multi-theme solution
-description: For the web, the need for multiple theme colors is very common. For example, dark mode is an extremely common need.
+description: 'For the web, the need for multiple theme colors is very common. For example, dark mode is an extremely common need.'
 keywords:
   - quick start
   - Install
   - Configuration
   - Mini program multi-theme solution
-  - quick start
   - apply themes
   - weapp-tailwindcss
   - tailwindcss
@@ -15,6 +14,10 @@ keywords:
   - uni-app
   - taro
   - mpx
+  - installation
+  - Mini
+  - program
+  - multi-theme
 ---
 
 # Mini program multi-theme solution
@@ -121,11 +124,3 @@ For this section, you can refer to the `Dynamically adjust system theme color(4)
 2. [Dynamic adjustment of web themes (2) Extraction] (https://icebreaker.top/articles/2022/1/15-custom-theme-2)
 3. [Dynamic adjustment of web themes (3): Theme color generation scheme based on tailwindcss plug-in] (https://icebreaker.top/articles/2022/9/26-custom-theme-3)
 4. [Dynamic adjustment of system theme color (4): Exploration of CssVar and Variant solutions] (https://icebreaker.top/articles/2023/10/5-custom-theme-4)
-
-## Reference example
-
-Search for `tailwind` on WeChat (the personal qualification fee of `30` yuan has not been paid, so the search is no longer possible) and enter the mini program. The mini program code is:
-
-![tailwind](./frameworks/img/tailwind-mp-qrcode.jpg)
-
-For details of the implementation source code, see: [weapp-tailwindcss/tailwindcss-weapp](https://github.com/sonofmagic/weapp-tailwindcss/tree/main/tailwindcss-weapp)

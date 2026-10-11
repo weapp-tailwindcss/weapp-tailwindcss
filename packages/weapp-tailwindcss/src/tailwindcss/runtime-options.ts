@@ -29,3 +29,11 @@ export function normalizeTailwindcssRuntimeOptions(
 ): TailwindCssRuntimeOptions | undefined {
   return options
 }
+
+/** 清除可选字段中的 undefined，再交给引擎候选校验与生成契约。 */
+export function resolveRuntimeBareArbitraryValues(options?: TailwindCssRuntimeOptions) {
+  const value = resolveTailwindcssOptions(options)?.v4?.bareArbitraryValues
+  return value && typeof value === 'object'
+    ? value.units === undefined ? {} : { units: value.units }
+    : value
+}

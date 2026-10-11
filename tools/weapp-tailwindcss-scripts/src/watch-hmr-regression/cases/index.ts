@@ -25,7 +25,7 @@ const demoWatchShardNames = new Set<DemoWatchShardName>(Object.keys(demoWatchSha
 const defaultDemoWatchCaseNames = new Set<ConcreteWatchCaseName>(Object.values(demoWatchShardCases).flat())
 const localOnlyWatchCaseNames = new Set<ConcreteWatchCaseName>([
   'uni-app-vite-vue3-hbuilderx-tailwindcss-v4',
-  'uni-app-x-hbuilderx-tailwindcss-v4',
+  'uni-app-x-vdom-tailwindcss-v4',
 ])
 
 export function getBaseWatchCaseName(caseName: CliOptions['caseName']): ConcreteWatchCaseName | undefined {

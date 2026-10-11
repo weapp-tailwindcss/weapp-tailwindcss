@@ -1,10 +1,10 @@
 import type { OutputAsset, OutputBundle } from 'rollup'
 import type { ViteFrameworkCssPipelineContext } from '../shared/framework-strategy'
 import type { CssFinalizerContext } from './options'
+import { hasTailwindGeneratedCss, hasTailwindGeneratedCssMarkers } from '../../../generation/index'
 import { stripBundlerGeneratedCssMarkers } from '../../shared/generated-css-marker'
-import { hasTailwindGeneratedCss, hasTailwindGeneratedCssMarkers } from '../../shared/generator-css'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
-import { resolveViteCssPipelineOutputFile } from '../generate-bundle'
+import { resolveViteCssPipelineOutputFile } from '../css-output'
 import { collectMatchingGeneratedCssMarkerFiles, resolveViteProcessedCssAssetSource } from '../processed-css-assets/markers-imports'
 import { shouldUseGenericWebFinalizerFastPath } from '../shared/generic-web-production-fast-path'
 import { finalizeWebCss } from './options'
@@ -119,7 +119,7 @@ function resolveProcessedCssAssets(
         useAssetSource = true
       }
     }
-    if (!output && records.length === 1 && htmlOwnedAssets.length === 1) {
+    if (!output && records.length === 1 && htmlOwnedAssets.length === 1 && htmlOwnedAssets[0]) {
       output = htmlOwnedAssets[0]
       useAssetSource = hasTailwindGeneratedCss(output.original)
         || hasTailwindGeneratedCssMarkers(output.original)

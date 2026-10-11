@@ -14,10 +14,8 @@ export function getDefaultOptions(options?: Partial<IStyleHandlerOptions>): Part
         'color-mix': true,
         'color-functional-notation': options?.cssPresetEnv?.features?.['color-functional-notation']
           ?? { preserve: false },
-        // 在 calc 下，这个需要开启
-        'custom-properties': options?.cssPresetEnv?.features?.['custom-properties'] ?? options?.cssCalc
-          ? { preserve: true }
-          : false,
+        // calc 的变量静态化由作用域感知管线负责；仅保留用户显式开启的独立 preset。
+        'custom-properties': options?.cssPresetEnv?.features?.['custom-properties'] ?? false,
       },
       autoprefixer: {
         add: false,

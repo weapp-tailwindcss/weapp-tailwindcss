@@ -74,7 +74,9 @@ const cssMacro: CssMacroPlugin = markCssMacroPlugin(((options?: Options) => {
 const cssMacroOptionsFunction = cssMacro as CssMacroOptionsFunction
 const cssMacroFactoryOptionsFunction = cssMacroFactory as CssMacroOptionsFunction
 
-cssMacroOptionsFunction.__isOptionsFunction = cssMacroFactoryOptionsFunction.__isOptionsFunction
+if (cssMacroFactoryOptionsFunction.__isOptionsFunction !== undefined) {
+  cssMacroOptionsFunction.__isOptionsFunction = cssMacroFactoryOptionsFunction.__isOptionsFunction
+}
 cssMacroOptionsFunction.__pluginFunction = cssMacroFactoryOptionsFunction.__pluginFunction
 cssMacroOptionsFunction.__configFunction = cssMacroFactoryOptionsFunction.__configFunction
 

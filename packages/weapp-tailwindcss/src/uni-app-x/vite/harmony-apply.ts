@@ -1,7 +1,7 @@
 import type { ResolvedConfig } from 'vite'
 import path from 'node:path'
 import process from 'node:process'
-import { postcss } from '@weapp-tailwindcss/postcss'
+import { collectCssReferenceDirectives } from '@weapp-tailwindcss/postcss/transform'
 import { cleanUrl, normalizePath } from '@/bundlers/vite/utils'
 import {
   collectUniAppXHarmonyApplyStyleSourcesFromSource,
@@ -47,14 +47,8 @@ export function createUniAppXHarmonyApplyExpander(options: CreateUniAppXHarmonyA
       : new Set(referenceBySourceId.get(sourceKey))
     for (const source of sources) {
       styleSources.add(source)
-      try {
-        postcss.parse(source).walkAtRules('reference', (rule) => {
-          const reference = rule.toString()
-          references.add(reference.endsWith(';') ? reference : `${reference};`)
-        })
-      }
-      catch {
-
+      for (const reference of collectCssReferenceDirectives(source)) {
+        references.add(reference)
       }
       for (const utility of collectUniAppXHarmonyApplyUtilitiesFromSources([source])) {
         utilities.add(utility)
@@ -97,7 +91,7 @@ export function createUniAppXHarmonyApplyExpander(options: CreateUniAppXHarmonyA
       cssFile,
       generatorSource,
       {
-        addWatchFile: hookContext.addWatchFile?.bind(hookContext),
+        ...(hookContext.addWatchFile ? { addWatchFile: hookContext.addWatchFile.bind(hookContext) } : {}),
         disableSourceScan: true,
         sourceCandidates: [],
         transient: true,

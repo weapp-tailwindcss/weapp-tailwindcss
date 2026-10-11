@@ -1,10 +1,11 @@
 import type { InternalUserDefinedOptions } from '@/types'
 import { existsSync } from 'node:fs'
 import path from 'node:path'
+import { rewriteCssConfigRequests } from '@weapp-tailwindcss/postcss/transform'
 import { resolveTailwindV4CssSourceBase } from '@/tailwindcss/source-scan'
+import { normalizeCssSourceForCompare } from '../css-output'
 import { slash } from '../utils'
 import { collectConfiguredTailwindV4CssSources } from './configured-css-sources'
-import { normalizeCssSourceForCompare } from './css-output'
 import { hasMatchingStyleFileBase, isMatchingCssSourceFile } from './style-matching'
 
 function isPackageJsonImportRequest(request: string) {
@@ -100,18 +101,18 @@ export function normalizeRelativeCssConfigDirectives(
 
   const baseCandidates = collectCssConfigBaseCandidates(source, file, outputRoot, opts)
 
-  return source.replace(/@config\s+(["'])(.+?)\1\s*;?/g, (full, quote: string, request: string) => {
+  return rewriteCssConfigRequests(source, (request) => {
     if (path.isAbsolute(request) || isPackageJsonImportRequest(request)) {
-      return full
+      return undefined
     }
 
     for (const base of baseCandidates) {
       const configFile = path.resolve(base, request)
       if (existsSync(configFile)) {
-        return `@config ${quote}${slash(configFile)}${quote};`
+        return slash(configFile)
       }
     }
 
-    return full
+    return undefined
   })
 }

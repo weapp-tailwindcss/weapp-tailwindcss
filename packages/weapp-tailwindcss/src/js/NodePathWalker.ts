@@ -42,7 +42,7 @@ export class NodePathWalker {
   private isIgnoredCallIdentifier: NameMatcher
   private hasIgnoredCallIdentifiers: boolean
   private importsStore: Set<ImportToken> | undefined
-  private visitedStore: WeakSet<NodePath<Node | null | undefined>> | undefined
+  private visitedStore: WeakSet<NodePath<Node | null>> | undefined
 
   constructor(
     { ignoreCallExpressionIdentifiers, callback }:
@@ -74,7 +74,7 @@ export class NodePathWalker {
     this.getWritableImports().add(token)
   }
 
-  private getVisited(): WeakSet<NodePath<Node | null | undefined>> {
+  private getVisited(): WeakSet<NodePath<Node | null>> {
     if (!this.visitedStore) {
       this.visitedStore = new WeakSet()
     }
@@ -133,7 +133,7 @@ export class NodePathWalker {
     }
   }
 
-  walkNode(arg: NodePath<Node | null | undefined>) {
+  walkNode(arg: NodePath<Node | null>) {
     const visited = this.getVisited()
     if (visited.has(arg)) {
       return

@@ -1,0 +1,380 @@
+{
+  "env": {
+    "timestamp": "2026-09-30T17:12:41.838Z",
+    "commit": "bc42340685067d13e0ddc665197662848faaacfa",
+    "node": "v24.18.0",
+    "platform": "darwin",
+    "release": "27.0.0",
+    "arch": "arm64",
+    "cpu": "Apple M4 Max",
+    "totalMemoryBytes": 137438953472
+  },
+  "summary": {
+    "total": 17,
+    "weappCnVsMergeMismatches": [],
+    "weappSlimVsMergeMismatches": [
+      "slim-excluded-fill"
+    ],
+    "upstreamMismatches": [],
+    "upstreamMergeMismatches": []
+  },
+  "cases": [
+    {
+      "id": "short-no-conflict",
+      "title": "短 class、无冲突",
+      "conflict": false,
+      "outputs": {
+        "weapp-cn": "flex items-center gap-2",
+        "weapp-merge": "flex items-center gap-2",
+        "weapp-merge-slim": "flex items-center gap-2",
+        "weapp-merge-lite": "flex items-center gap-2",
+        "upstream-cn": "flex items-center gap-2",
+        "upstream-cn-twmerge": "flex items-center gap-2",
+        "upstream-twmerge": "flex items-center gap-2",
+        "upstream-twmerge-clsx": "flex items-center gap-2"
+      },
+      "weappEqual": true,
+      "weappCnVsMerge": true,
+      "weappSlimVsMerge": true,
+      "upstreamEqual": true,
+      "upstreamMergeEqual": true,
+      "escapeDelta": false
+    },
+    {
+      "id": "last-wins",
+      "title": "last-wins 冲突",
+      "conflict": true,
+      "outputs": {
+        "weapp-cn": "p-2 text-blue-500",
+        "weapp-merge": "p-2 text-blue-500",
+        "weapp-merge-slim": "p-2 text-blue-500",
+        "weapp-merge-lite": "p-4 p-2 text-red-500 text-blue-500",
+        "upstream-cn": "p-2 text-blue-500",
+        "upstream-cn-twmerge": "p-2 text-blue-500",
+        "upstream-twmerge": "p-2 text-blue-500",
+        "upstream-twmerge-clsx": "p-2 text-blue-500"
+      },
+      "weappEqual": true,
+      "weappCnVsMerge": true,
+      "weappSlimVsMerge": true,
+      "upstreamEqual": true,
+      "upstreamMergeEqual": true,
+      "escapeDelta": false
+    },
+    {
+      "id": "clsx-object-array",
+      "title": "clsx 对象/数组/falsy",
+      "conflict": false,
+      "outputs": {
+        "weapp-cn": "foo bar baz",
+        "weapp-merge": "foo bar baz",
+        "weapp-merge-slim": "foo bar baz",
+        "weapp-merge-lite": "foo bar baz",
+        "upstream-cn": "foo bar baz",
+        "upstream-cn-twmerge": "foo bar",
+        "upstream-twmerge": "foo bar",
+        "upstream-twmerge-clsx": "foo bar baz"
+      },
+      "weappEqual": true,
+      "weappCnVsMerge": true,
+      "weappSlimVsMerge": true,
+      "upstreamEqual": true,
+      "upstreamMergeEqual": true,
+      "escapeDelta": false
+    },
+    {
+      "id": "refinement-padding",
+      "title": "padding refinement（p-3 px-5）",
+      "conflict": true,
+      "outputs": {
+        "weapp-cn": "p-3 px-5",
+        "weapp-merge": "p-3 px-5",
+        "weapp-merge-slim": "p-3 px-5",
+        "weapp-merge-lite": "p-3 px-5",
+        "upstream-cn": "p-3 px-5",
+        "upstream-cn-twmerge": "p-3 px-5",
+        "upstream-twmerge": "p-3 px-5",
+        "upstream-twmerge-clsx": "p-3 px-5"
+      },
+      "weappEqual": true,
+      "weappCnVsMerge": true,
+      "weappSlimVsMerge": true,
+      "upstreamEqual": true,
+      "upstreamMergeEqual": true,
+      "escapeDelta": false
+    },
+    {
+      "id": "rpx-width",
+      "title": "rpx 宽度冲突",
+      "conflict": true,
+      "outputs": {
+        "weapp-cn": "w-_b24rpx_B",
+        "weapp-merge": "w-_b24rpx_B",
+        "weapp-merge-slim": "w-_b24rpx_B",
+        "weapp-merge-lite": "w-_b10rpx_B w-_b24rpx_B",
+        "upstream-cn": "w-[24rpx]",
+        "upstream-cn-twmerge": "w-[24rpx]",
+        "upstream-twmerge": "w-[24rpx]",
+        "upstream-twmerge-clsx": "w-[24rpx]"
+      },
+      "weappEqual": true,
+      "weappCnVsMerge": true,
+      "weappSlimVsMerge": true,
+      "upstreamEqual": true,
+      "upstreamMergeEqual": true,
+      "escapeDelta": true
+    },
+    {
+      "id": "rpx-text-length",
+      "title": "text-[12rpx] 与 text-[24rpx]",
+      "conflict": true,
+      "outputs": {
+        "weapp-cn": "text-_b24rpx_B",
+        "weapp-merge": "text-_b24rpx_B",
+        "weapp-merge-slim": "text-_b24rpx_B",
+        "weapp-merge-lite": "text-_b12rpx_B text-_b24rpx_B",
+        "upstream-cn": "text-[24rpx]",
+        "upstream-cn-twmerge": "text-[24rpx]",
+        "upstream-twmerge": "text-[24rpx]",
+        "upstream-twmerge-clsx": "text-[24rpx]"
+      },
+      "weappEqual": true,
+      "weappCnVsMerge": true,
+      "weappSlimVsMerge": true,
+      "upstreamEqual": true,
+      "upstreamMergeEqual": true,
+      "escapeDelta": true
+    },
+    {
+      "id": "rpx-text-color-keep",
+      "title": "text-red 与 text-[80rpx] 是否同时保留",
+      "conflict": true,
+      "outputs": {
+        "weapp-cn": "text-red text-_b80rpx_B",
+        "weapp-merge": "text-red text-_b80rpx_B",
+        "weapp-merge-slim": "text-red text-_b80rpx_B",
+        "weapp-merge-lite": "text-red text-_b80rpx_B",
+        "upstream-cn": "text-[80rpx]",
+        "upstream-cn-twmerge": "text-[80rpx]",
+        "upstream-twmerge": "text-[80rpx]",
+        "upstream-twmerge-clsx": "text-[80rpx]"
+      },
+      "weappEqual": true,
+      "weappCnVsMerge": true,
+      "weappSlimVsMerge": true,
+      "upstreamEqual": true,
+      "upstreamMergeEqual": true,
+      "escapeDelta": true
+    },
+    {
+      "id": "escaped-modifier",
+      "title": "已转义 hover modifier",
+      "conflict": true,
+      "outputs": {
+        "weapp-cn": "hover_cp-4",
+        "weapp-merge": "hover_cp-4",
+        "weapp-merge-slim": "hover_cp-4",
+        "weapp-merge-lite": "hover_cp-2 hover_cp-4",
+        "upstream-cn": "hover_cp-2 hover_cp-4",
+        "upstream-cn-twmerge": "hover_cp-2 hover_cp-4",
+        "upstream-twmerge": "hover_cp-2 hover_cp-4",
+        "upstream-twmerge-clsx": "hover_cp-2 hover_cp-4"
+      },
+      "weappEqual": true,
+      "weappCnVsMerge": true,
+      "weappSlimVsMerge": true,
+      "upstreamEqual": true,
+      "upstreamMergeEqual": true,
+      "escapeDelta": true
+    },
+    {
+      "id": "stacked-modifiers",
+      "title": "堆叠 modifier",
+      "conflict": true,
+      "outputs": {
+        "weapp-cn": "focus_chover_cp-4",
+        "weapp-merge": "focus_chover_cp-4",
+        "weapp-merge-slim": "focus_chover_cp-4",
+        "weapp-merge-lite": "hover_cfocus_cp-2 focus_chover_cp-4",
+        "upstream-cn": "focus:hover:p-4",
+        "upstream-cn-twmerge": "focus:hover:p-4",
+        "upstream-twmerge": "focus:hover:p-4",
+        "upstream-twmerge-clsx": "focus:hover:p-4"
+      },
+      "weappEqual": true,
+      "weappCnVsMerge": true,
+      "weappSlimVsMerge": true,
+      "upstreamEqual": true,
+      "upstreamMergeEqual": true,
+      "escapeDelta": true
+    },
+    {
+      "id": "important-postfix",
+      "title": "important 与普通 padding 共存",
+      "conflict": true,
+      "outputs": {
+        "weapp-cn": "p-4_e p-5",
+        "weapp-merge": "p-4_e p-5",
+        "weapp-merge-slim": "p-4_e p-5",
+        "weapp-merge-lite": "p-3_e p-4_e p-5",
+        "upstream-cn": "p-4! p-5",
+        "upstream-cn-twmerge": "p-4! p-5",
+        "upstream-twmerge": "p-4! p-5",
+        "upstream-twmerge-clsx": "p-4! p-5"
+      },
+      "weappEqual": true,
+      "weappCnVsMerge": true,
+      "weappSlimVsMerge": true,
+      "upstreamEqual": true,
+      "upstreamMergeEqual": true,
+      "escapeDelta": true
+    },
+    {
+      "id": "custom-plus-tailwind",
+      "title": "自定义类 + utility 冲突",
+      "conflict": true,
+      "outputs": {
+        "weapp-cn": "custom-card p-2",
+        "weapp-merge": "custom-card p-2",
+        "weapp-merge-slim": "custom-card p-2",
+        "weapp-merge-lite": "custom-card p-4 p-2",
+        "upstream-cn": "custom-card p-2",
+        "upstream-cn-twmerge": "custom-card p-2",
+        "upstream-twmerge": "custom-card p-2",
+        "upstream-twmerge-clsx": "custom-card p-2"
+      },
+      "weappEqual": true,
+      "weappCnVsMerge": true,
+      "weappSlimVsMerge": true,
+      "upstreamEqual": true,
+      "upstreamMergeEqual": true,
+      "escapeDelta": false
+    },
+    {
+      "id": "arbitrary-variant",
+      "title": "arbitrary variant",
+      "conflict": true,
+      "outputs": {
+        "weapp-cn": "_b_n_cnth-child_p3_P_B_cpy-4",
+        "weapp-merge": "_b_n_cnth-child_p3_P_B_cpy-4",
+        "weapp-merge-slim": "_b_n_cnth-child_p3_P_B_cpy-4",
+        "weapp-merge-lite": "_b_n_cnth-child_p3_P_B_cpy-0 _b_n_cnth-child_p3_P_B_cpy-4",
+        "upstream-cn": "[&:nth-child(3)]:py-4",
+        "upstream-cn-twmerge": "[&:nth-child(3)]:py-4",
+        "upstream-twmerge": "[&:nth-child(3)]:py-4",
+        "upstream-twmerge-clsx": "[&:nth-child(3)]:py-4"
+      },
+      "weappEqual": true,
+      "weappCnVsMerge": true,
+      "weappSlimVsMerge": true,
+      "upstreamEqual": true,
+      "upstreamMergeEqual": true,
+      "escapeDelta": true
+    },
+    {
+      "id": "numeric-leading-escaped",
+      "title": "已转义 2xl 数字变体",
+      "conflict": true,
+      "outputs": {
+        "weapp-cn": "_2xl_cp-4",
+        "weapp-merge": "_2xl_cp-4",
+        "weapp-merge-slim": "_2xl_cp-4",
+        "weapp-merge-lite": "_2xl_cp-2 _2xl_cp-4",
+        "upstream-cn": "_2xl_cp-2 _2xl_cp-4",
+        "upstream-cn-twmerge": "_2xl_cp-2 _2xl_cp-4",
+        "upstream-twmerge": "_2xl_cp-2 _2xl_cp-4",
+        "upstream-twmerge-clsx": "_2xl_cp-2 _2xl_cp-4"
+      },
+      "weappEqual": true,
+      "weappCnVsMerge": true,
+      "weappSlimVsMerge": true,
+      "upstreamEqual": true,
+      "upstreamMergeEqual": true,
+      "escapeDelta": true
+    },
+    {
+      "id": "slim-excluded-fill",
+      "title": "slim 可能未覆盖的 SVG fill 冲突",
+      "conflict": true,
+      "outputs": {
+        "weapp-cn": "fill-blue-500",
+        "weapp-merge": "fill-blue-500",
+        "weapp-merge-slim": "fill-red-500 fill-blue-500",
+        "weapp-merge-lite": "fill-red-500 fill-blue-500",
+        "upstream-cn": "fill-blue-500",
+        "upstream-cn-twmerge": "fill-blue-500",
+        "upstream-twmerge": "fill-blue-500",
+        "upstream-twmerge-clsx": "fill-blue-500"
+      },
+      "weappEqual": false,
+      "weappCnVsMerge": true,
+      "weappSlimVsMerge": false,
+      "upstreamEqual": true,
+      "upstreamMergeEqual": true,
+      "escapeDelta": false
+    },
+    {
+      "id": "long-list",
+      "title": "长 class 列表含冲突",
+      "conflict": true,
+      "outputs": {
+        "weapp-cn": "flex-col md_cflex-row gap-3 md_cgap-4 font-semibold shadow-md border grid items-center dark_ctext-slate-100 dark_cbg-slate-900 ring-2 ring-offset-2 ring-indigo-500 px-6 py-3 text-base bg-indigo-600 hover_cbg-indigo-700 rounded-lg border-indigo-500_f40 grid-cols-3 md_cgrid-cols-6 text-blue-500 md_ctext-blue-600 hover_cunderline",
+        "weapp-merge": "flex-col md_cflex-row gap-3 md_cgap-4 font-semibold shadow-md border grid items-center dark_ctext-slate-100 dark_cbg-slate-900 ring-2 ring-offset-2 ring-indigo-500 px-6 py-3 text-base bg-indigo-600 hover_cbg-indigo-700 rounded-lg border-indigo-500_f40 grid-cols-3 md_cgrid-cols-6 text-blue-500 md_ctext-blue-600 hover_cunderline",
+        "weapp-merge-slim": "flex-col md_cflex-row gap-3 md_cgap-4 font-semibold shadow-md border grid items-center dark_ctext-slate-100 dark_cbg-slate-900 ring-2 ring-offset-2 ring-indigo-500 px-6 py-3 text-base bg-indigo-600 hover_cbg-indigo-700 rounded-lg border-indigo-500_f40 grid-cols-3 md_cgrid-cols-6 text-blue-500 md_ctext-blue-600 hover_cunderline",
+        "weapp-merge-lite": "flex flex-col md_cflex-row gap-3 md_cgap-4 px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover_cbg-blue-700 rounded-xl shadow-md border border-blue-500_f30 grid grid-cols-2 md_cgrid-cols-4 items-center dark_ctext-slate-100 dark_cbg-slate-900 ring-2 ring-offset-2 ring-indigo-500 px-6 py-3 text-base bg-indigo-600 hover_cbg-indigo-700 rounded-lg border-indigo-500_f40 grid-cols-3 md_cgrid-cols-6 text-blue-500 md_ctext-blue-600 hover_cunderline",
+        "upstream-cn": "flex-col md:flex-row gap-3 md:gap-4 font-semibold shadow-md border grid items-center dark:text-slate-100 dark:bg-slate-900 ring-2 ring-offset-2 ring-indigo-500 px-6 py-3 text-base bg-indigo-600 hover:bg-indigo-700 rounded-lg border-indigo-500/40 grid-cols-3 md:grid-cols-6 text-blue-500 md:text-blue-600 hover:underline",
+        "upstream-cn-twmerge": "flex-col md:flex-row gap-3 md:gap-4 font-semibold shadow-md border grid items-center dark:text-slate-100 dark:bg-slate-900 ring-2 ring-offset-2 ring-indigo-500 px-6 py-3 text-base bg-indigo-600 hover:bg-indigo-700 rounded-lg border-indigo-500/40 grid-cols-3 md:grid-cols-6 text-blue-500 md:text-blue-600 hover:underline",
+        "upstream-twmerge": "flex-col md:flex-row gap-3 md:gap-4 font-semibold shadow-md border grid items-center dark:text-slate-100 dark:bg-slate-900 ring-2 ring-offset-2 ring-indigo-500 px-6 py-3 text-base bg-indigo-600 hover:bg-indigo-700 rounded-lg border-indigo-500/40 grid-cols-3 md:grid-cols-6 text-blue-500 md:text-blue-600 hover:underline",
+        "upstream-twmerge-clsx": "flex-col md:flex-row gap-3 md:gap-4 font-semibold shadow-md border grid items-center dark:text-slate-100 dark:bg-slate-900 ring-2 ring-offset-2 ring-indigo-500 px-6 py-3 text-base bg-indigo-600 hover:bg-indigo-700 rounded-lg border-indigo-500/40 grid-cols-3 md:grid-cols-6 text-blue-500 md:text-blue-600 hover:underline"
+      },
+      "weappEqual": true,
+      "weappCnVsMerge": true,
+      "weappSlimVsMerge": true,
+      "upstreamEqual": true,
+      "upstreamMergeEqual": true,
+      "escapeDelta": true
+    },
+    {
+      "id": "component-call",
+      "title": "组件最常见调用：cn(base, variant, cond && extra)，参数引用稳定",
+      "conflict": true,
+      "outputs": {
+        "weapp-cn": "rounded-md px-4 py-2 text-sm bg-primary text-white",
+        "weapp-merge": "rounded-md px-4 py-2 text-sm bg-primary text-white",
+        "weapp-merge-slim": "rounded-md px-4 py-2 text-sm bg-primary text-white",
+        "weapp-merge-lite": "rounded-md px-4 py-2 text-sm bg-primary text-white",
+        "upstream-cn": "rounded-md px-4 py-2 text-sm bg-primary text-white",
+        "upstream-cn-twmerge": "rounded-md px-4 py-2 text-sm bg-primary text-white",
+        "upstream-twmerge": "rounded-md px-4 py-2 text-sm bg-primary text-white",
+        "upstream-twmerge-clsx": "rounded-md px-4 py-2 text-sm bg-primary text-white"
+      },
+      "weappEqual": true,
+      "weappCnVsMerge": true,
+      "weappSlimVsMerge": true,
+      "upstreamEqual": true,
+      "upstreamMergeEqual": true,
+      "escapeDelta": false
+    },
+    {
+      "id": "arbitrary-heavy",
+      "title": "大量 arbitrary value",
+      "conflict": true,
+      "outputs": {
+        "weapp-cn": "h-_b21px_B p-_b8px_B mt-_b3px_B border-_b2px_B w-_b26px_B text-_b18px_B bg-_b_habcdef_B ring-_b3px_B",
+        "weapp-merge": "h-_b21px_B p-_b8px_B mt-_b3px_B border-_b2px_B w-_b26px_B text-_b18px_B bg-_b_habcdef_B ring-_b3px_B",
+        "weapp-merge-slim": "h-_b21px_B p-_b8px_B mt-_b3px_B border-_b2px_B w-_b26px_B text-_b18px_B bg-_b_habcdef_B ring-_b3px_B",
+        "weapp-merge-lite": "w-_b13px_B h-_b21px_B p-_b8px_B mt-_b3px_B text-_b15px_B bg-_b_h112233_B border-_b2px_B w-_b26px_B text-_b18px_B bg-_b_habcdef_B ring-_b3px_B",
+        "upstream-cn": "h-[21px] p-[8px] mt-[3px] border-[2px] w-[26px] text-[18px] bg-[#abcdef] ring-[3px]",
+        "upstream-cn-twmerge": "h-[21px] p-[8px] mt-[3px] border-[2px] w-[26px] text-[18px] bg-[#abcdef] ring-[3px]",
+        "upstream-twmerge": "h-[21px] p-[8px] mt-[3px] border-[2px] w-[26px] text-[18px] bg-[#abcdef] ring-[3px]",
+        "upstream-twmerge-clsx": "h-[21px] p-[8px] mt-[3px] border-[2px] w-[26px] text-[18px] bg-[#abcdef] ring-[3px]"
+      },
+      "weappEqual": true,
+      "weappCnVsMerge": true,
+      "weappSlimVsMerge": true,
+      "upstreamEqual": true,
+      "upstreamMergeEqual": true,
+      "escapeDelta": true
+    }
+  ]
+}

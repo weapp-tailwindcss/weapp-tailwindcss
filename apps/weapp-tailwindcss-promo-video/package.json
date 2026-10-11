@@ -1,0 +1,44 @@
+{
+  "name": "@weapp-tailwindcss/promo-video",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "assets": "tsx scripts/prepare-assets.ts",
+    "fonts": "tsx scripts/prepare-fonts.ts",
+    "voice": "tsx scripts/generate-narration.ts",
+    "music": "tsx scripts/generate-music.ts",
+    "audio": "tsx scripts/mix-audio.ts",
+    "prepare:media": "tsx scripts/prepare-media.ts",
+    "studio": "remotion studio src/index.ts",
+    "render:frames": "tsx scripts/render.ts frames",
+    "render:covers": "tsx scripts/render.ts covers",
+    "render:landscape": "tsx scripts/render.ts landscape",
+    "render:portrait": "tsx scripts/render.ts portrait",
+    "render": "tsx scripts/render.ts all",
+    "test": "vitest run --update=none",
+    "typecheck": "tsc --noEmit",
+    "verify": "pnpm test && pnpm typecheck && tsx scripts/verify-media.ts"
+  },
+  "dependencies": {
+    "@fontsource-variable/jetbrains-mono": "5.3.0",
+    "@fontsource-variable/noto-sans-sc": "5.3.0",
+    "qrcode": "1.5.4",
+    "react": "catalog:react19",
+    "react-dom": "catalog:react19",
+    "remotion": "4.0.524"
+  },
+  "devDependencies": {
+    "@remotion/bundler": "4.0.524",
+    "@remotion/cli": "4.0.524",
+    "@remotion/renderer": "4.0.524",
+    "@types/node": "catalog:typesNode2410",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "catalog:react19",
+    "@types/react-dom": "catalog:react19",
+    "execa": "^9.6.1",
+    "tsx": "catalog:tsx",
+    "typescript": "^5.9.0",
+    "vitest": "catalog:vitest"
+  }
+}

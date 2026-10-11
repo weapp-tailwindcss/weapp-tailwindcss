@@ -2,7 +2,7 @@
 title: "🗂️ 其他接口"
 sidebar_label: "🗂️ 其他接口"
 sidebar_position: 2
-description: "其他接口索引，列出 12 个 weapp-tailwindcss 运行时接口和补充类型。"
+description: "其他接口索引，列出 24 个 weapp-tailwindcss 运行时接口和补充类型。"
 keywords:
   - "weapp-tailwindcss"
   - "API"
@@ -21,6 +21,18 @@ keywords:
 
 - [ApplyOptions](./interfaces/ApplyOptions.md) - Tailwind 运行时行为配置。
 - [CacheOptions](./interfaces/CacheOptions.md) - Tailwind 类名缓存配置。
+- [Compiler](./interfaces/Compiler.md)
+- [CompilerCacheReuseState](./interfaces/CompilerCacheReuseState.md)
+- [CompilerCssTransformOptions](./interfaces/CompilerCssTransformOptions.md)
+- [CompilerGenerateRequest](./interfaces/CompilerGenerateRequest.md)
+- [CompilerGenerateResult](./interfaces/CompilerGenerateResult.md)
+- [CompilerSnapshot](./interfaces/CompilerSnapshot.md) - 一次生成事务的只读转换凭据。
+- [CompilerSnapshotRoot](./interfaces/CompilerSnapshotRoot.md)
+- [CompilerSourcePattern](./interfaces/CompilerSourcePattern.md)
+- [CompilerTarget](./interfaces/CompilerTarget.md)
+- [CompilerTemplateTransformOptions](./interfaces/CompilerTemplateTransformOptions.md)
+- [CreateCompilerOptions](./interfaces/CreateCompilerOptions.md)
+- [CreateCompilerSnapshotRequest](./interfaces/CreateCompilerSnapshotRequest.md)
 - [ExtractOptions](./interfaces/ExtractOptions.md) - 类名提取结果的输出配置。
 - [TailwindCssOptions](./interfaces/TailwindCssOptions.md) - 按 Tailwind 版本划分的运行时配置。
 - [TailwindCssRuntimeOptions](./interfaces/TailwindCssRuntimeOptions.md) - Tailwind CSS 运行时根配置。

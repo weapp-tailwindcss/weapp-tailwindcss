@@ -1,0 +1,14 @@
+{
+  "file": "components/issue-1164/block.uvue",
+  "count": 8,
+  "tokens": [
+    "bg-[#f21903]",
+    "bg-[#ff7a00]",
+    "h-[100px]",
+    "h-[48px]",
+    "rounded-full",
+    "text-[#ffffff]",
+    "w-[48px]",
+    "w-full"
+  ]
+}

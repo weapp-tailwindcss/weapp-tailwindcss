@@ -13052,6 +13052,16 @@ wx-button {
 .rounded-full\! {
   border-radius: 249.975rem !important;
 }
+ /*tokens: rounded-s-full <= src/pages/index/index.tsx */
+.rounded-s-full {
+  border-end-start-radius: 249.975rem;
+  border-start-start-radius: 249.975rem;
+}
+ /*tokens: rounded-t-full <= src/pages/index/index.tsx */
+.rounded-t-full {
+  border-top-left-radius: 249.975rem;
+  border-top-right-radius: 249.975rem;
+}
 .border {
   border-style: var(--tw-border-style);
   border-width: 0.025rem;
@@ -13061,6 +13071,14 @@ wx-button {
 }
 .bg-\[\#534312\] {
   background-color: #534312;
+}
+ /*tokens: bg-blue-200 <= src/pages/index/index.tsx */
+.bg-blue-200 {
+  background-color: #bedbff;
+}
+ /*tokens: bg-blue-500 <= src/pages/index/index.tsx */
+.bg-blue-500 {
+  background-color: #3280ff;
 }
  /*tokens: bg-purple-800 <= src/pages/index/index.tsx */
 .bg-purple-800 {

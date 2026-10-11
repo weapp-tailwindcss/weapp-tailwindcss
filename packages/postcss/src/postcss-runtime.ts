@@ -1,6 +1,7 @@
 export type {
   AcceptedPlugin,
   AtRule,
+  ChildNode,
   Container,
   Declaration,
   Document,

@@ -9,7 +9,8 @@ describe('node api core example', () => {
     expect(result.wxml).toContain('mt-_b8px_B')
     expect(result.wxml).toContain('space-y-2_d5')
     expect(result.wxml).toContain('text-_b23_d43px_B')
-    expect(result.runtimeSetSize).toBeGreaterThan(0)
+    expect(result.revision).toBe(1)
+    expect(result.snapshotClassSetSize).toBeGreaterThan(0)
     expect(result.wxss).toContain('.mt-_b8px_B')
     expect(result.wxss).toContain('.text-_b23_d43px_B')
     expect(result.wxss).toContain('.bg-_b_h123456_B')
@@ -17,7 +18,7 @@ describe('node api core example', () => {
     expect(result.js).toContain('not-a-tailwind-token')
   }, 60000)
 
-  it('keeps long-lived createContext memory growth bounded', async () => {
+  it('keeps long-lived compiler candidate updates and removal bounded', async () => {
     const result = await runMemoryDemo({
       heapBudgetMb: 96,
       iterations: 80,

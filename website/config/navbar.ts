@@ -14,9 +14,15 @@ const englishItems: NonNullable<ThemeConfig['navbar']>['items'] = [
   },
   {
     type: 'doc',
-    docId: 'quick-start/install',
+    docId: 'showcase/index',
     position: 'left',
-    label: 'Install',
+    label: copy.navbar.showcase,
+  },
+  {
+    type: 'doc',
+    docId: 'api/interfaces/UserDefinedOptions',
+    position: 'left',
+    label: copy.navbar.options,
   },
   {
     to: '/blog',
@@ -104,7 +110,7 @@ const commonItems: NonNullable<ThemeConfig['navbar']>['items'] = [
     position: 'right',
   },
   {
-    href: 'https://github.com/sonofmagic/weapp-tailwindcss',
+    href: 'https://github.com/weapp-tailwindcss/weapp-tailwindcss',
     label: 'GitHub',
     className: 'navbar__github-link',
     position: 'right',

@@ -141,6 +141,21 @@ describe('tailwindcss source scan', () => {
     expect(isFileExcludedByTailwindSourceEntries('/project/src/ignored/a.wxml', entries)).toBe(true)
     expect(isFileMatchedByTailwindSourceEntries('/project/src/index.wxml', undefined)).toBe(true)
     expect(isFileMatchedByTailwindSourceEntries('/project/src/ignored/a.wxml', entries)).toBe(false)
+    const windowsEntries = [
+      {
+        base: 'C:\\workspace\\src',
+        negated: false,
+        pattern: '**/*.tsx',
+      },
+      {
+        base: 'C:\\workspace\\src',
+        negated: true,
+        pattern: 'ignored/**',
+      },
+    ]
+    expect(isFileMatchedByTailwindSourceEntries('C:\\workspace\\src\\pages\\index.tsx', windowsEntries)).toBe(true)
+    expect(isFileMatchedByTailwindSourceEntries('C:\\workspace\\src\\ignored\\index.tsx', windowsEntries)).toBe(false)
+    expect(isFileMatchedByTailwindSourceEntries('D:\\workspace\\src\\pages\\index.tsx', windowsEntries)).toBe(false)
     expect(createTailwindSourceEntryMatcher(undefined)).toBeUndefined()
     expect(createTailwindSourceEntryMatcher(entries)?.('/project/src/index.wxml')).toBe(true)
     expect(resolveTailwindV4CssSourceBase({ base: '/base', file: '/file.css' }, '/fallback')).toBe('/base')
@@ -154,9 +169,9 @@ describe('tailwindcss source scan', () => {
 
     const absolute = await resolveTailwindSourceEntry('/project/src/pages/**/*.wxml', '/fallback', false)
     expect(absolute).toEqual({
-      base: path.parse('/project/src/pages/**/*.wxml').root,
+      base: path.resolve('/project/src/pages'),
       negated: false,
-      pattern: '/project/src/pages/**/*.wxml',
+      pattern: '**/*.wxml',
     })
     const absoluteFile = await resolveTailwindSourceEntry('/project/src/app.wxml', '/fallback', false)
     expect(absoluteFile).toEqual({

@@ -1,0 +1,27 @@
+1
+00:00:00,267 --> 00:00:04,733
+You can write Tailwind CSS directly in Lynx.
+
+2
+00:00:05,267 --> 00:00:12,733
+@weapp-tailwindcss/lynx brings Tailwind CSS 4 to ReactLynx and Rspeedy.
+
+3
+00:00:13,267 --> 00:00:23,733
+Keep native className, with no runtime stylesheet and no JSX rewriting.
+
+4
+00:00:24,267 --> 00:00:34,733
+Styles become ordinary CSS at build time and enter the Lynx native bundle.
+
+5
+00:00:35,267 --> 00:00:46,733
+The same component code runs natively on iOS and Android.
+
+6
+00:00:47,267 --> 00:00:55,733
+From generation and encoding to native runtime, every boundary has evidence.
+
+7
+00:00:56,267 --> 00:00:59,733
+Open the Lynx integration docs and start building.

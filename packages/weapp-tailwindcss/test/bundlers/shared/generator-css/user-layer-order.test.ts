@@ -4,7 +4,7 @@ import {
   mergeMarkedUserLayerComponentsCss,
   reorderMarkedUserLayerComponentsCss,
   wrapUserLayerComponentsCss,
-} from '@/bundlers/shared/generator-css/user-layer-order'
+} from '@/generation/user-layer-order'
 
 describe('user layer order helpers', () => {
   it('wraps, extracts, and reorders marked component layers before utilities', () => {

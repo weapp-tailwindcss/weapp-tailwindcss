@@ -1,0 +1,46 @@
+{
+  "issue-1164-author": {
+    "background-color": "#ff7a00",
+    "height": "100px",
+    "width": "100%"
+  },
+  "issue-1164-author-circle": {
+    "background-color": "#f21903",
+    "height": "48px",
+    "width": "48px",
+    "border-radius": "9999px"
+  },
+  "issue-1164-block": {
+    "background-color": "#ff7a00",
+    "height": "100px",
+    "width": "100%"
+  },
+  "issue-1164-block-circle": {
+    "background-color": "#f21903",
+    "height": "48px",
+    "width": "48px",
+    "border-radius": "9999px"
+  },
+  "issue-1164-empty": {
+    "background-color": "#ff7a00",
+    "height": "100px",
+    "width": "100%"
+  },
+  "issue-1164-empty-circle": {
+    "background-color": "#f21903",
+    "height": "48px",
+    "width": "48px",
+    "border-radius": "9999px"
+  },
+  "issue-1164-line": {
+    "background-color": "#ff7a00",
+    "height": "100px",
+    "width": "100%"
+  },
+  "issue-1164-line-circle": {
+    "background-color": "#f21903",
+    "height": "48px",
+    "width": "48px",
+    "border-radius": "9999px"
+  }
+}

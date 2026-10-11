@@ -1,6 +1,6 @@
-import { icebreaker } from '@icebreakers/stylelint-config'
+import { createMonorepoStylelintConfig } from 'repoctl/tooling'
 
-export default icebreaker({
+export default createMonorepoStylelintConfig({
   ignoreFiles: [
     '**/node_modules/**',
     '**/dist/**',

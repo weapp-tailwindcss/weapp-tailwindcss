@@ -18,10 +18,10 @@ describe('getDefaultOptions', () => {
     expect(defaults.cssRemoveProperty).toBe(true)
   })
 
-  it('enables custom-properties preservation when cssCalc is truthy', () => {
+  it('keeps custom-properties opt-in when cssCalc is truthy', () => {
     const defaults = getDefaultOptions({ cssCalc: true })
 
-    expect(defaults.cssPresetEnv?.features?.['custom-properties']).toEqual({ preserve: true })
+    expect(defaults.cssPresetEnv?.features?.['custom-properties']).toBe(false)
   })
 
   it('respects falsy custom-properties overrides', () => {

@@ -1,8 +1,11 @@
+import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { describe, expect, it, vi } from 'vitest'
-import { createJsHandlerOptionsFactory } from '@/bundlers/vite/generate-bundle/js-handler-options'
-import { processJsBundleEntry } from '@/bundlers/vite/generate-bundle/js-processing'
+import { createJsHandlerOptionsFactory, resolveGenerateBundleJsFastPath } from '@/bundlers/vite/generate-bundle/js-handler-options'
+import { processJsBundleEntry, replayCleanJsBundleEntry } from '@/bundlers/vite/generate-bundle/js-processing'
 import { createTransformFilter, createTransformFilterSignature, shouldSkipViteJsChunkTransform } from '@/bundlers/vite/generate-bundle/transform-filter'
 import { createCache } from '@/cache'
+import { createJsHandler } from '@/js'
+import * as babel from '@/js/babel'
 import { createRollupChunk } from './vite-plugin.testkit'
 
 function createMetrics() {
@@ -61,6 +64,98 @@ describe('bundlers/vite js processing', () => {
     expect(createHandlerOptions('/repo/dist/index.js')).toMatchObject({
       experimentalJsFastPath: 'oxc',
     })
+  })
+
+  it('复用同一文件的冻结 handler options，并在动态 fast path 变化时重建', () => {
+    let experimentalJsFastPath: false | 'oxc' = 'oxc'
+    const createHandlerOptions = createJsHandlerOptionsFactory({
+      getExperimentalJsFastPath: () => experimentalJsFastPath,
+      getMajorVersion: () => 4,
+      moduleGraph: undefined,
+    })
+
+    const first = createHandlerOptions('/repo/dist/index.js')
+    const second = createHandlerOptions('/repo/dist/index.js')
+    expect(second).toBe(first)
+    expect(Object.isFrozen(first)).toBe(true)
+    expect(Object.isFrozen(first.babelParserOptions)).toBe(true)
+
+    experimentalJsFastPath = false
+    const changed = createHandlerOptions('/repo/dist/index.js')
+    expect(changed).not.toBe(first)
+    expect(changed.experimentalJsFastPath).toBe(false)
+  })
+
+  it('moduleGraph 路径不保留跨轮次 options 缓存', () => {
+    const moduleGraph = { resolve: () => undefined, load: () => undefined }
+    const createHandlerOptions = createJsHandlerOptionsFactory({
+      getExperimentalJsFastPath: () => 'oxc',
+      getMajorVersion: () => 4,
+      moduleGraph,
+    })
+
+    const first = createHandlerOptions('/repo/dist/index.js')
+    const second = createHandlerOptions('/repo/dist/index.js')
+    expect(second).not.toBe(first)
+    expect(Object.isFrozen(first)).toBe(true)
+  })
+
+  it('uses oxc in production generateBundle and keeps moduleGraph only for incremental rebuilds', () => {
+    expect(resolveGenerateBundleJsFastPath({ useIncrementalMode: false })).toEqual({
+      experimentalJsFastPath: 'oxc',
+      moduleGraphEnabled: false,
+    })
+    expect(resolveGenerateBundleJsFastPath({ useIncrementalMode: true })).toEqual({
+      experimentalJsFastPath: 'oxc',
+      moduleGraphEnabled: true,
+    })
+    expect(resolveGenerateBundleJsFastPath({
+      experimentalJsFastPath: false,
+      useIncrementalMode: false,
+    })).toEqual({
+      experimentalJsFastPath: false,
+      moduleGraphEnabled: false,
+    })
+  })
+
+  it('keeps production conditional comparison values unchanged under Oxc', () => {
+    const productionFastPath = resolveGenerateBundleJsFastPath({ useIncrementalMode: false })
+    const createHandlerOptions = createJsHandlerOptionsFactory({
+      getExperimentalJsFastPath: () => productionFastPath.experimentalJsFastPath,
+      getMajorVersion: () => 4,
+      moduleGraph: productionFastPath.moduleGraphEnabled
+        ? { resolve: () => undefined, load: () => undefined }
+        : undefined,
+    })
+    const sharedOptions = {
+      escapeMap: MappingChars2String,
+      alwaysEscape: true,
+    }
+    const fastOptions = createHandlerOptions('/repo/dist/index.js', sharedOptions)
+    const babelOptions = {
+      ...fastOptions,
+      experimentalJsFastPath: false,
+    } as const
+    expect(fastOptions.experimentalJsFastPath).toBe('oxc')
+    expect(babelOptions.experimentalJsFastPath).toBe(false)
+    const fastHandler = createJsHandler(fastOptions)
+    const babelHandler = createJsHandler(babelOptions)
+    const source = 'const cls = value === "w-[10px]" ? "h-[10px]" : "plain"'
+
+    const babelSpy = vi.spyOn(babel, 'jsHandler')
+    try {
+      const fast = fastHandler(source, new Set())
+      expect(babelSpy).not.toHaveBeenCalled()
+      const expected = babelHandler(source, new Set())
+      expect(babelSpy).toHaveBeenCalledOnce()
+
+      expect(fast.code).toBe(expected.code)
+      expect(fast.code).toContain('value === "w-[10px]"')
+      expect(fast.code).toContain('"h-_b10px_B"')
+    }
+    finally {
+      babelSpy.mockRestore()
+    }
   })
 
   it('directly replays cached clean incremental chunks without scheduling js work', () => {
@@ -126,6 +221,38 @@ describe('bundlers/vite js processing', () => {
     expect(chunk.code).toBe(cached)
     expect(jsTaskFactories).toHaveLength(0)
     expect(linkedByEntry.get(file)).toEqual(new Set())
+  })
+
+  it('plans a cached clean chunk without creating a js handler task or replacing linked state', () => {
+    const cache = createCache()
+    const file = 'assets/clean.js'
+    const source = 'const cls = "text-red-500"'
+    const sourceHash = cache.computeHash(source)
+    const runtimeSignature = 'runtime:stable'
+    const processHash = `${sourceHash}:${runtimeSignature}:transform-filter:include:none;exclude:none`
+    const cached = 'const cls = "tw-text-red-500"'
+    cache.set(file, cached)
+    cache.setHashValue(`${file}:js`, { changed: false, hash: processHash })
+    const chunk = { ...createRollupChunk(source), fileName: file }
+    const metrics = createMetrics()
+    const rememberProcessCacheKey = vi.fn()
+
+    const replayed = replayCleanJsBundleEntry({
+      cache,
+      debug: vi.fn(),
+      entry: { file, output: chunk, source, type: 'js' },
+      metrics,
+      rememberProcessCacheKey,
+      snapshot: createSnapshot(file, sourceHash) as any,
+      transformFilterSignature: 'include:none;exclude:none',
+      transformRuntimeSignature: runtimeSignature,
+      useIncrementalMode: true,
+    })
+
+    expect(replayed).toBe(true)
+    expect(chunk.code).toBe(cached)
+    expect(metrics.js.cacheHits).toBe(1)
+    expect(rememberProcessCacheKey).toHaveBeenCalledWith(file, `${file}:js`)
   })
 
   it('skips js ast work when all chunk modules match transform.exclude', async () => {

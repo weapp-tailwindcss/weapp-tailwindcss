@@ -10,7 +10,7 @@ import type { ExportAllDeclarationImportToken, ImportToken } from './import-toke
 
 interface ExportWalkContext {
   addImportToken: (token: ImportToken) => void
-  walkNode: (path: NodePath<Node | null | undefined>) => void
+  walkNode: (path: NodePath<Node | null>) => void
 }
 
 export function walkExportDeclaration(ctx: ExportWalkContext, path: NodePath<ExportDeclaration>) {
@@ -51,7 +51,7 @@ export function walkExportDefaultDeclaration(ctx: ExportWalkContext, path: NodeP
     ctx.walkNode(decl)
   }
   else {
-    ctx.walkNode(decl as unknown as NodePath<Node | null | undefined>)
+    ctx.walkNode(decl as unknown as NodePath<Node | null>)
   }
 }
 

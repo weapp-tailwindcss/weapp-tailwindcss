@@ -1,0 +1,8 @@
+{
+    "tailwindCSS.includeLanguages": {
+        "wxml": "html",
+        "mpx": "html",
+        "uvue": "html",
+        "uts": "javascript"
+    }
+}

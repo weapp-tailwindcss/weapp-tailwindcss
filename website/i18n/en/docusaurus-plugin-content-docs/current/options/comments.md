@@ -1,13 +1,14 @@
 ---
 title: Exact conversion and ignoring in js
-description: 'By default, all tailwindcss runtime tool classes appearing in jsx, js, wxml, and wxss are converted. If conversion is not required, you can use the weappTwIgnore identifier to ignore it:'
+description: >-
+  By default, all tailwindcss runtime tool classes appearing in jsx, js, wxml, and wxss are converted. If conversion is
+  not required, you can use the weappTwIgnore identifier to ignore it:
 keywords:
   - Configuration items
   - Plug-in parameters
   - Options
   - js
   - Exact conversion and ignoring in
-  - options
   - comments
   - weapp-tailwindcss
   - tailwindcss
@@ -16,6 +17,9 @@ keywords:
   - uni-app
   - taro
   - mpx
+  - plugin options
+  - configuration
+  - Exact
 ---
 
 # Exact conversion and ignoring in js

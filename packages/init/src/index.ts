@@ -1,5 +1,5 @@
 import type { PackageJson } from 'pkg-types'
-import type { FetchOptions } from './npm'
+import type { FetchOptions, InitMode } from './npm'
 import process from 'node:process'
 import { logger } from '@weapp-tailwindcss/logger'
 import { defu, setValue } from '@weapp-tailwindcss/shared'
@@ -12,15 +12,18 @@ export interface CreateContextOptions {
   pkgJsonBasename?: string
   postcssConfigBasename?: string
   tailwindConfigBasename?: string
+  cssEntryBasename?: string
+  sourceGlob?: string
+  mode?: InitMode
   fetchOptions?: FetchOptions
 }
 
 export async function createContext(options: Required<CreateContextOptions>) {
-  const { cwd, pkgJsonBasename, postcssConfigBasename, tailwindConfigBasename, fetchOptions } = options
+  const { cwd, pkgJsonBasename, postcssConfigBasename, tailwindConfigBasename, cssEntryBasename, sourceGlob, mode, fetchOptions } = options
   const pkgJsonPath = path.resolve(cwd, pkgJsonBasename)
   if (await fs.exists(pkgJsonPath)) {
     const pkgJson: PackageJson = await fs.readJson(pkgJsonPath)
-    const versions = await getDevDepsVersions(fetchOptions)
+    const versions = await getDevDepsVersions(fetchOptions, mode)
     return {
       pkgJson,
       pkgJsonPath,
@@ -28,13 +31,16 @@ export async function createContext(options: Required<CreateContextOptions>) {
       versions,
       postcssConfigBasename,
       tailwindConfigBasename,
+      cssEntryBasename,
+      sourceGlob,
+      mode,
       get type() {
         return pkgJson.type
       },
     }
   }
   else {
-    logger.warn('当前目录下不存在 `package.json` 文件，初始化脚本将被跳过，请执行 `npm init` 或手动创建 `package.json` 后重试 ')
+    logger.warn('当前目录下不存在 `package.json` 文件，初始化脚本将被跳过，请执行 `pnpm init` 或手动创建 `package.json` 后重试 ')
   }
 }
 
@@ -47,6 +53,14 @@ export async function updatePackageJson(ctx: Context) {
   await fs.writeJSON(ctx.pkgJsonPath, ctx.pkgJson, { spaces: 2 })
 }
 
+async function writeIfMissing(file: string, data: string) {
+  if (await fs.exists(file)) {
+    return false
+  }
+  await fs.outputFile(file, data)
+  return true
+}
+
 export async function touchPostcssConfig(ctx: Context) {
   const data = `${ctx.type === 'module' ? 'export default ' : 'module.exports = '}{
   plugins: {
@@ -57,7 +71,7 @@ export async function touchPostcssConfig(ctx: Context) {
 }
 `
 
-  await fs.writeFile(path.resolve(ctx.cwd, ctx.postcssConfigBasename), data)
+  return await writeIfMissing(path.resolve(ctx.cwd, ctx.postcssConfigBasename), data)
 }
 
 export async function touchTailwindConfig(ctx: Context) {
@@ -75,7 +89,14 @@ ${ctx.type === 'module' ? 'export default ' : 'module.exports = '}{
   },
 }
 `
-  await fs.writeFile(path.resolve(ctx.cwd, ctx.tailwindConfigBasename), data)
+  return await writeIfMissing(path.resolve(ctx.cwd, ctx.tailwindConfigBasename), data)
+}
+
+export async function touchCssEntry(ctx: Context) {
+  const data = `@import "tailwindcss";
+@source "${ctx.sourceGlob}";
+`
+  return await writeIfMissing(path.resolve(ctx.cwd, ctx.cssEntryBasename), data)
 }
 
 export function getInitDefaults() {
@@ -83,7 +104,10 @@ export function getInitDefaults() {
     cwd: process.cwd(),
     postcssConfigBasename: 'postcss.config.js',
     tailwindConfigBasename: 'tailwind.config.js',
+    cssEntryBasename: 'src/app.css',
+    sourceGlob: './**/*.{html,js,ts,jsx,tsx,vue,wxml}',
     pkgJsonBasename: 'package.json',
+    mode: 'v4' as InitMode,
   }
 }
 
@@ -96,10 +120,19 @@ export async function init(options?: CreateContextOptions) {
   if (ctx) {
     await updatePackageJson(ctx)
     logger.success('`package.json` 文件修改完成！')
-    await touchPostcssConfig(ctx)
-    logger.success('`postcss.config.js` 文件创建完成！')
-    await touchTailwindConfig(ctx)
-    logger.success('`tailwind.config.js` 文件创建完成！')
-    logger.success('`weapp-tailwindcss` 初始化完成！请根据你自定义的需求，更改对应的配置文件(比如 `tailwind.config.js` 中的 `content` 配置)')
+    if (ctx.mode === 'legacy') {
+      if (await touchPostcssConfig(ctx)) {
+        logger.success('`postcss.config.js` 文件创建完成！')
+      }
+      if (await touchTailwindConfig(ctx)) {
+        logger.success('`tailwind.config.js` 文件创建完成！')
+      }
+      logger.success('`weapp-tailwindcss` 旧版初始化完成！')
+      return
+    }
+    if (await touchCssEntry(ctx)) {
+      logger.success(`\`${ctx.cssEntryBasename}\` 文件创建完成！`)
+    }
+    logger.success('`weapp-tailwindcss` v5 初始化完成！请将 WeappTailwindcss() 注册到项目构建器，并确认入口 CSS 被实际引入。')
   }
 }

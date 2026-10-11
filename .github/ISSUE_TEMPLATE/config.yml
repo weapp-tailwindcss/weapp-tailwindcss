@@ -1,7 +1,7 @@
 blank_issues_enabled: false
 contact_links:
   - name: 功能需求与问题探讨
-    url: https://github.com/sonofmagic/weapp-tailwindcss/discussions
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/discussions
     about: 提出一些功能需求或者进行一些问题的探讨
   # - name: Discord Chat
   #   url: https://chat.vuejs.org

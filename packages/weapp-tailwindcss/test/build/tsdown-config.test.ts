@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import tsconfigBuild from '../../tsconfig.build.json' with { type: 'json' }
 import {
   bundleCjsRuntimeDeps,
-  cliEntries,
   createTsdownConfigs,
   externalizeEsmRuntimeDeps,
   moduleOutExtensions,
@@ -16,8 +15,6 @@ describe('tsdown build layout', () => {
     const configs = createTsdownConfigs()
     const runtimeEsmConfig = configs[0]
     const runtimeCjsConfig = configs[1]
-    const cliEsmConfig = configs[2]
-    const cliCjsConfig = configs[3]
 
     expect(runtimeEsmConfig.entry).toEqual(runtimeEntries)
     expect(runtimeCjsConfig.entry).toEqual(runtimeCjsEntries)
@@ -28,9 +25,6 @@ describe('tsdown build layout', () => {
     expect(runtimeEsmConfig.entry).toHaveProperty('postcss')
     expect(runtimeCjsConfig.entry).toMatchObject(webpackLoaderEntries)
 
-    expect(cliEsmConfig.entry).toEqual(cliEntries)
-    expect(cliCjsConfig.entry).toEqual(cliEntries)
-    expect(Object.keys(cliEsmConfig.entry)).toEqual(['cli'])
   })
 
   it('keeps runtime config as the only cleanable build during non-watch runs', () => {
@@ -52,8 +46,6 @@ describe('tsdown build layout', () => {
 
     expect(configs[0].format).toEqual(['esm'])
     expect(configs[1].format).toEqual(['cjs'])
-    expect(configs[2].format).toEqual(['esm'])
-    expect(configs[3].format).toEqual(['cjs'])
     expect(runtimeCjsConfig.entry).toMatchObject(webpackLoaderEntries)
     expect(runtimeCjsConfig.deps?.alwaysBundle).toBe(bundleCjsRuntimeDeps)
     expect(moduleOutExtensions({ format: 'es' }).js).toBe('.js')
@@ -90,6 +82,8 @@ describe('tsdown build layout', () => {
     expect(cjsNeverBundle?.('postcss')).toBe(true)
     expect(cjsNeverBundle?.('webpack')).toBe(true)
     expect(runtimeCjsConfig.deps?.onlyBundle).toBe(false)
+    expect(runtimeEsmConfig.deps?.resolveDepSubpath).toBe(true)
+    expect(runtimeCjsConfig.deps?.resolveDepSubpath).toBe(true)
   })
 
   it('keeps declaration builds from emitting workspace dependency dts into source folders', () => {

@@ -46,5 +46,5 @@ pnpm open
 
 ## 相关文档
 
-- `weapp-tailwindcss`：<https://tw.icebreaker.top/>
+- `weapp-tailwindcss`：<https://tw.weapp.dev/>
 - `Taro`：<https://taro.zone/>

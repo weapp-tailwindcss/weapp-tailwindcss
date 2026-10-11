@@ -1,9 +1,9 @@
 # tailwindcss-injector
 
-> 简体中文 | [English](./README.en.md)
+> English | [简体中文](./README.zh-CN.md)
 
-这个包用于在 PostCSS 流程中动态注入 Tailwind 指令，并追踪 WXML import/include 依赖，让小程序模板能进入 Tailwind content 扫描范围。
+This package injects Tailwind directives during PostCSS processing and tracks WXML import/include dependencies so mini program templates can participate in Tailwind content scanning.
 
-## 官网
+## Website
 
-更多接入方式、配置说明和框架示例见 [weapp-tailwindcss 官方文档](https://tw.icebreaker.top)。
+For setup guides, configuration references, and framework examples, see the [official weapp-tailwindcss documentation](https://tw.weapp.dev).

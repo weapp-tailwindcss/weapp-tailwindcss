@@ -1,100 +1,17 @@
 import type { OutputAsset, OutputBundle } from 'rollup'
 import type { CollectViteProcessedCssAssetOptions } from './markers-imports'
 import type { InternalUserDefinedOptions } from '@/types'
-import { isMiniProgramLocalCssImportRequest, parseTailwindCssDirectiveRequest, postcss } from '@weapp-tailwindcss/postcss'
+import { isCssImportOnly, restoreProcessedCssImports } from '@weapp-tailwindcss/postcss/transform'
 import path from 'pathe'
-import { hasEmptyAtRuleBlockCandidate } from '../../shared/final-css-cleanup'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
-import { appendCss, collectImportedStyleFiles, createCssAssetPipelineContext, getAssetFile, isStyleImportRequest, readAssetSource } from './markers-imports'
+import { collectImportedStyleFiles, createCssAssetPipelineContext, getAssetFile, readAssetSource } from './markers-imports'
 import { isMiniProgramStyleOutputFile, isRootStyleOutputFile } from './style-files'
 
-function collectCssImportAtRuleCss(css: string) {
-  if (!css.includes('@import')) {
-    return []
-  }
-  const fallbackImports = [...css.matchAll(/@import\s[^;]+;?/g)].map(match => match[0])
-  if (fallbackImports.length > 0) {
-    return fallbackImports
-  }
-  try {
-    const root = postcss.parse(css)
-    const imports: string[] = []
-    root.each((node) => {
-      if (node.type === 'atrule' && node.name === 'import') {
-        imports.push(node.toString())
-      }
-    })
-    return imports
-  }
-  catch {
-    return []
-  }
-}
-
-function parseCssImportRequest(importCss: string) {
-  const trimmed = importCss.trim()
-  if (!trimmed.startsWith('@import')) {
-    return
-  }
-  const params = trimmed
-    .slice('@import'.length)
-    .trim()
-    .replace(/;$/, '')
-    .trim()
-  return parseTailwindCssDirectiveRequest(params)
-}
-
-function shouldRestoreCssImportAtRule(importCss: string, file?: string) {
-  if (file === undefined || !isMiniProgramStyleOutputFile(file)) {
-    return true
-  }
-  const request = parseCssImportRequest(importCss)
-  if (request === undefined) {
-    return false
-  }
-  if (isMiniProgramLocalCssImportRequest(request)) {
-    return true
-  }
-  return isStyleImportRequest(request) && !request.includes('/')
-}
-
 export function restoreCssImportAtRules(source: string, filtered: string, file?: string) {
-  const imports = collectCssImportAtRuleCss(source)
-    .filter(importCss => shouldRestoreCssImportAtRule(importCss, file))
-  if (imports.length === 0) {
-    return filtered
-  }
-  const missingImports = imports.filter(importCss => !filtered.includes(importCss))
-  if (missingImports.length === 0) {
-    return filtered
-  }
-  return appendCss(missingImports.join('\n'), filtered)
+  return restoreProcessedCssImports(source, filtered, file !== undefined && isMiniProgramStyleOutputFile(file))
 }
 
-export function removeCommentOnlyAtRules(css: string) {
-  if (!hasEmptyAtRuleBlockCandidate(css)) {
-    return css
-  }
-  try {
-    const root = postcss.parse(css)
-    let changed = false
-    root.walkAtRules((atRule) => {
-      if (!atRule.nodes || atRule.nodes.length === 0) {
-        return
-      }
-      const hasCss = atRule.nodes.some(node => node.type !== 'comment')
-      if (hasCss) {
-        return
-      }
-      atRule.remove()
-      changed = true
-    })
-    return changed ? root.toString() : css
-  }
-  catch {
-    return css
-  }
-}
+export { removeCommentOnlyAtRules } from '@weapp-tailwindcss/postcss/transform'
 
 export function collectImportedBundleCssSources(bundle: OutputBundle, importedStyleFiles: Set<string>) {
   if (importedStyleFiles.size === 0) {
@@ -233,22 +150,7 @@ export function isCssImportOnlyBundleAsset(
   if (importedStyleFiles.size === 0) {
     return false
   }
-  let hasNonImportNode = false
-  try {
-    const root = postcss.parse(css)
-    root.each((node) => {
-      if (node.type === 'comment') {
-        return
-      }
-      if (node.type !== 'atrule' || node.name !== 'import') {
-        hasNonImportNode = true
-      }
-    })
-  }
-  catch {
-    return false
-  }
-  if (hasNonImportNode) {
+  if (!isCssImportOnly(css)) {
     return false
   }
   return collectImportedBundleCssSources(bundle, importedStyleFiles).length > 0

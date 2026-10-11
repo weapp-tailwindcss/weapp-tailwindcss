@@ -233,7 +233,14 @@ function createUniAppSubPackageStyleGeneratorPlugin(subPackages: ResolvedSubPack
     name: 'weapp-style-injector:uni-app-sub-packages',
     apply: 'build' as const,
     async buildStart() {
+      processedSourceCache.clear()
+      outputCache.clear()
+      targetStyleSourceCache.clear()
       for (const entry of existing) {
+        for (const sourceFile of entry.sourceFiles ?? [entry.sourceAbsolutePath]) {
+          this.addWatchFile(sourceFile)
+        }
+        await processEntry(entry)
         for (const targetSourceFile of entry.targetSourceFiles ?? []) {
           this.addWatchFile(targetSourceFile.sourceAbsolutePath)
           if (!targetStyleSourceCache.has(targetSourceFile.sourceAbsolutePath) && fs.existsSync(targetSourceFile.sourceAbsolutePath)) {

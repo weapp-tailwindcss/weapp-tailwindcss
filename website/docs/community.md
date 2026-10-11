@@ -1,6 +1,6 @@
 ---
 title: 生态以及解决方案
-description: 汇总 weapp-tailwindcss 生态插件、模板与多端实践方案，包含主题、多上下文与外部组件集成指南。
+description: 汇总 weapp-tailwindcss 生态插件、模板与多端实践方案，包含主题、多上下文与运行时工具。
 keywords:
   - 生态以及解决方案
   - community
@@ -19,8 +19,6 @@ keywords:
 
 ## 插件
 
-### [@weapp-tailwindcss/typography](./community/typography)
-
 ### [@weapp-tailwindcss/reset](./community/reset)
 
 ### [开箱即用的小程序icon解决方案](./icons)
@@ -34,8 +32,6 @@ keywords:
 ## 解决方案
 
 ### [小程序多主题方案](./quick-start/apply-themes)
-
-### [构建以及引入外部组件](./quick-start/build-or-import-outside-components)
 
 ### [tailwindcss 多上下文与独立分包](./quick-start/independent-pkg)
 

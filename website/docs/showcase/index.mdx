@@ -23,7 +23,7 @@ import ShowcaseIndex from '@site/src/components/docs/ShowcaseIndex'
 
 <ShowcaseIndex
   issueUrl={"https://github.com/sonofmagic/weapp-tailwindcss/issues/270"}
-  generatedAt={"2026年6月9日 16:39"}
+  generatedAt={"2026年9月5日 13:04"}
   items={[
     {
       title: "区白白",
@@ -140,6 +140,15 @@ import ShowcaseIndex from '@site/src/components/docs/ShowcaseIndex'
       authorLogin: "qq164798268",
       screenshotCount: 8,
       hasLink: false,
+      hasGithub: false,
+    },
+    {
+      title: "心动的AI",
+      href: "#心动的AI",
+      createdAt: "2026年9月4日",
+      authorLogin: "xavierVue",
+      screenshotCount: 2,
+      hasLink: true,
       hasGithub: false,
     },
   ]}
@@ -546,6 +555,46 @@ ChatGPT+通义千问+360智脑驱动的MBTI测试小程序,有了AI加持,我可
 FamiHub 是想帮你把日子过得更有温度。 无论是一顿晚餐、一次露营、一周菜单，还是孩子成长的瞬间，都值得被记录与分享
 
 联系方式：微信（spongebaby101）
+
+</ShowcaseCard>
+<ShowcaseCard
+  title={"心动的AI"}
+  titleHref={"https://wnxd.cc/"}
+  authorLogin={"xavierVue"}
+  authorUrl={"https://github.com/xavierVue"}
+  createdAt={"2026年9月4日"}
+  commentUrl={"https://github.com/sonofmagic/weapp-tailwindcss/issues/270#issuecomment-5535428183"}
+  link={{
+    text: "https://wnxd.cc/",
+    url: "https://wnxd.cc/",
+  }}
+  primaryImage={{
+    src: "/img/showcase/014.心动的ai/01-二维码.jpg",
+    alt: "二维码",
+  }}
+  screenshots={[
+    {
+      src: "/img/showcase/014.心动的ai/02-截图-1.png",
+      alt: "截图-1",
+    },
+    {
+      src: "/img/showcase/014.心动的ai/03-截图-2.png",
+      alt: "截图-2",
+    },
+  ]}
+>
+
+微信里的 AI 恋爱助理与 AI 红娘——一个帮你把话想清楚，一个帮你找到该说话的人。助理拆解表达与判断，落到可执行的下一步；红娘在实名之后每日推荐，并说明为什么是这个人。
+
+- 联系方式：support@crush.cafe
+
+接入前最大的顾虑是小程序根本不认 Tailwind 的类名：`[`、`]`、`:` 这些字符在 wxss 里非法，任意值基本没法用。weapp-tailwindcss 把这层转义处理干净了，`bg-[#F7F7F6]`、`text-[28rpx]` 在 wxml 里直接写就生效，设计系统落地几乎零摩擦。
+
+`rem2rpx` 又省掉一整套换算：设计稿按 750 出，Tailwind 那边照常写 rem 尺度，编译出来就是 rpx，不用再维护一份对照表。加上 v4 的 CSS-first 配置和按 wxml 扫描的 JIT，主包体积一直压得住。
+
+现在页面 scss 只剩 safe-area、微信组件 reset 和少量 keyframes，其余全是 utility。原生小程序能有这种开发体验，基本是靠这个库撑起来的。感谢维护。
+
+图片/二维码
 
 </ShowcaseCard>
 </div>

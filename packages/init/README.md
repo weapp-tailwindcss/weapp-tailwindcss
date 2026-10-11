@@ -1,9 +1,15 @@
 # @weapp-tailwindcss/init
 
-> 简体中文 | [English](./README.en.md)
+> English | [简体中文](./README.zh-CN.md)
 
-这个包负责初始化 weapp-tailwindcss 相关配置，会帮助项目写入 Tailwind、PostCSS 和依赖版本等接入所需文件。
+This package initializes `weapp-tailwindcss` project configuration.
 
-## 官网
+The default mode targets Tailwind CSS 4 and `weapp-tailwindcss` 5: it updates `package.json` and creates the CSS-first `src/app.css` entry without writing `postcss.config.*`, `tailwind.config.*`, `@tailwindcss/postcss`, or `autoprefixer`.
 
-更多接入方式、配置说明和框架示例见 [weapp-tailwindcss 官方文档](https://tw.icebreaker.top)。
+Use `mode: 'legacy'` explicitly when maintaining a Tailwind 3 project that still needs the old PostCSS and Tailwind configuration files.
+
+## Website
+
+For setup guides, configuration references, and framework examples, see the [official weapp-tailwindcss documentation](https://tw.weapp.dev).
+
+Dependency versions are selected as the highest stable versions within the requested major ranges, regardless of registry response order. If no stable version matches, initialization fails before writing project files; it does not fall back to another major version or a prerelease.

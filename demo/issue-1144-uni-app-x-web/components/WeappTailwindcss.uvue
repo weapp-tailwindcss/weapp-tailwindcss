@@ -1,0 +1,21 @@
+<template>
+	<view class="px-4">
+		<image src="https://picsum.photos/300/49" class="w-[300px] h-[48.3px]"></image>
+		<view @click="copy('https://tw.icebreaker.top/')">
+			<text class="text-black text-2xl underline text-center">tw.icebreaker.top</text>
+		</view>
+		<view>
+			<text class="text-xs text-gray-600/75 text-center">
+				你可以在上方的官网上，找到大量的提效解决方案
+			</text>
+		</view>
+	</view>
+</template>
+
+<script setup>
+function copy(data: string) {
+	uni.setClipboardData({
+		data
+	})
+}
+</script>

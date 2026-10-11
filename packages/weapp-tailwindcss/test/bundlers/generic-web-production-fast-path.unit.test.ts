@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { shouldUseGenericWebFinalizerFastPath, shouldUseGenericWebProductionFastPath } from '@/bundlers/vite/shared/generic-web-production-fast-path'
+import { shouldSkipGenericWebProductionSourceCandidates, shouldUseGenericWebFinalizerFastPath, shouldUseGenericWebProductionFastPath } from '@/bundlers/vite/shared/generic-web-production-fast-path'
 
 describe('generic Web production fast path', () => {
   const productionWeb = {
@@ -7,6 +7,7 @@ describe('generic Web production fast path', () => {
     frameworkName: 'generic',
     hasProcessedCss: true,
     isWebGeneratorTarget: true,
+    requiresSourceCandidateState: false,
     watch: undefined,
   }
 
@@ -14,20 +15,35 @@ describe('generic Web production fast path', () => {
     expect(shouldUseGenericWebProductionFastPath(productionWeb)).toBe(true)
   })
 
+  it('skips duplicate source candidate state before css generation starts', () => {
+    expect(shouldSkipGenericWebProductionSourceCandidates(productionWeb)).toBe(true)
+  })
+
   it.each([
     ['Vite dev', { command: 'serve' as const }],
     ['Vite watch build', { watch: {} }],
-    ['missing generated CSS', { hasProcessedCss: false }],
+    ['CSS source tracing', { requiresSourceCandidateState: true }],
     ['mini-program target', { isWebGeneratorTarget: false }],
     ['uni-app', { frameworkName: 'uni-app' }],
     ['uni-app x', { frameworkName: 'uni-app-x' }],
     ['Taro', { frameworkName: 'taro' }],
     ['weapp-vite', { frameworkName: 'weapp-vite' }],
   ])('keeps the full pipeline for %s', (_label, overrides) => {
-    expect(shouldUseGenericWebProductionFastPath({
+    const options = {
       ...productionWeb,
       ...overrides,
-    })).toBe(false)
+    }
+    expect(shouldSkipGenericWebProductionSourceCandidates(options)).toBe(false)
+    expect(shouldUseGenericWebProductionFastPath(options)).toBe(false)
+  })
+
+  it('skips source candidate state before generated css is recorded', () => {
+    const options = {
+      ...productionWeb,
+      hasProcessedCss: false,
+    }
+    expect(shouldSkipGenericWebProductionSourceCandidates(options)).toBe(true)
+    expect(shouldUseGenericWebProductionFastPath(options)).toBe(false)
   })
 
   it('enables the finalizer fast path only without platform-specific css structures', () => {

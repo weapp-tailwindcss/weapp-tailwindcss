@@ -133,8 +133,7 @@ function addMpxWebpackPluginAlias(alias: any, pkgDir: string) {
       .filter(entry => typeof entry.name === 'string')
       .map(entry => entry.name))
     const managedPatterns = new Set(entries
-      .filter(entry => entry.name instanceof RegExp)
-      .map(entry => `${entry.name.source}/${entry.name.flags}`))
+      .flatMap(entry => entry.name instanceof RegExp ? [`${entry.name.source}/${entry.name.flags}`] : []))
     for (let index = alias.length - 1; index >= 0; index--) {
       const name = alias[index]?.name
       if (managedNames.has(name)

@@ -1,9 +1,36 @@
 # @weapp-tailwindcss/merge
 
-> 简体中文 | [English](./README.en.md)
+> English | [简体中文](./README.zh-CN.md)
 
-这个包是 Tailwind Merge v3 的小程序运行时封装，用于合并 Tailwind class，并处理小程序 escape/unescape 与 rpx 任意值场景。
+A cross-platform wrapper around Tailwind Merge v3. It resolves conflicting utilities while keeping arbitrary values, `rpx`, and mini-program-safe class escaping consistent with `weapp-tailwindcss`.
 
-## 官网
+## Installation
 
-更多接入方式、配置说明和框架示例见 [weapp-tailwindcss 官方文档](https://tw.icebreaker.top)。
+```bash
+pnpm add @weapp-tailwindcss/merge
+```
+
+## Usage
+
+```ts
+import { twMerge } from '@weapp-tailwindcss/merge'
+
+const className = twMerge(
+  'rounded px-2 text-[28rpx]',
+  'px-4 text-surface-700',
+)
+```
+
+The default runtime returns escaped classes suitable for mini-program templates. Create an unescaped runtime when another target owns class serialization:
+
+```ts
+import { create } from '@weapp-tailwindcss/merge'
+
+const { twMerge } = create({ escape: false })
+```
+
+Use the `slim` entry for a smaller preconfigured class-group set or `lite` when you only need joining and escaping without conflict resolution.
+
+## Documentation
+
+See the [merge guide](https://tw.weapp.dev/docs/community/merge/overview) for configuration and migration details.

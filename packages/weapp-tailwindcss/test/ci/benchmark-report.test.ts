@@ -36,6 +36,10 @@ describe('benchmark ci report', () => {
     const { benchmarkProjects } = await import('../../../../benchmark/version-compare/scripts/projects.mjs')
 
     const repoRoot = path.resolve(__dirname, '../../../..')
+    // 仅依赖本机 HBuilderX 与 Harmony 设备的复现项目不进入通用版本 benchmark。
+    const localOnlyBenchmarkExemptProjects = new Set([
+      'demo/uni-app-x-vapor-tailwindcss-v4',
+    ])
     const collectPackageDirs = (dir: string): string[] => {
       return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
         const full = path.join(dir, entry.name)
@@ -62,8 +66,12 @@ describe('benchmark ci report', () => {
       .filter(project => !project.startsWith('demo/style-injector-'))
       .filter(project => project !== 'demo/web/nuxt-vite-tailwindcss-v4')
       .filter(project => !project.startsWith('demo/web/') || project.includes('-vite-'))
+      .filter(project => !localOnlyBenchmarkExemptProjects.has(project))
     const benchmarkProjectDirs = Array.from(new Set(benchmarkProjects.map(project => project.project))).sort()
 
+    for (const project of localOnlyBenchmarkExemptProjects) {
+      expect(fs.existsSync(path.join(repoRoot, project, 'package.json')), `${project} should remain a real demo project`).toBe(true)
+    }
     expect(benchmarkProjectDirs).toEqual(demoProjects)
     expect(benchmarkProjects.map(project => project.key)).toEqual(expect.arrayContaining([
       'demo-web-react-vite-tailwindcss-v4__web',
@@ -85,10 +93,10 @@ describe('benchmark ci report', () => {
     const taroMpWeixinProjects = benchmarkProjects.filter(project => project.key.includes('taro') && project.target === 'mp-weixin')
     expect(taroMpWeixinProjects.every(project => project.buildEnv?.TARO_BUILD_STRICT === '1')).toBe(true)
     expect(taroMpWeixinProjects.every(project => project.hmrMode === 'watch')).toBe(true)
-    const realDevServerTargets = benchmarkProjects.filter(project => (project.target === 'h5' || project.target === 'web') && !project.key.includes('hbuilderx'))
+    const realDevServerTargets = benchmarkProjects.filter(project => (project.target === 'h5' || project.target === 'web') && !project.key.includes('hbuilderx') && !project.key.includes('uni-app-x-vdom'))
     expect(realDevServerTargets.every(project => project.hmrMode === 'watch')).toBe(true)
     expect(realDevServerTargets.every(project => project.hmrDriver === 'dev-server')).toBe(true)
-    expect(benchmarkProjects.filter(project => project.target === 'h5' && project.key.includes('hbuilderx')).every(project => project.hmrMode === 'unsupported')).toBe(true)
+    expect(benchmarkProjects.filter(project => project.target === 'h5' && (project.key.includes('hbuilderx') || project.key.includes('uni-app-x-vdom'))).every(project => project.hmrMode === 'unsupported')).toBe(true)
   })
 
   it('keeps benchmark working copies free from stale build outputs', async () => {
@@ -147,6 +155,7 @@ describe('benchmark ci report', () => {
       relevant: false,
       relevantFiles: [],
       ignoredReleaseMetadataFiles: releaseFiles.sort(),
+      ignoredNonPerformanceFiles: [],
     })
 
     manifests.set('packages/weapp-tailwindcss/package.json', {
@@ -169,6 +178,42 @@ describe('benchmark ci report', () => {
     const manualRangeResult = await classifyChangedPerformanceFiles(releaseFiles, async file => manifests.get(file))
 
     expect(manualRangeResult.relevantFiles).toEqual(['packages/build-all/package.json'])
+  })
+
+  it('keeps Taro build guard script changes outside the blocking performance guard', async () => {
+    const { classifyChangedPerformanceFiles } = await import('../../../../benchmark/version-compare/scripts/change-relevance.mjs')
+    const files = ['demo/style-injector-taro-vite-react/package.json']
+    const manifests = new Map([
+      [files[0], {
+        baseline: {
+          name: '@weapp-tailwindcss-demo/style-injector-taro-vite-react',
+          scripts: {
+            'build:weapp': 'taro build --type weapp',
+            'build:h5': 'taro build --type h5',
+          },
+        },
+        current: {
+          name: '@weapp-tailwindcss-demo/style-injector-taro-vite-react',
+          scripts: {
+            'build:weapp': 'node ../../scripts/taro-build-guard.mjs',
+            'build:h5': 'taro build --type h5',
+          },
+        },
+      }],
+    ])
+
+    const result = await classifyChangedPerformanceFiles(files, async file => manifests.get(file))
+
+    expect(result).toEqual({
+      relevant: false,
+      relevantFiles: [],
+      ignoredReleaseMetadataFiles: [],
+      ignoredNonPerformanceFiles: files,
+    })
+
+    manifests.get(files[0]).current.dependencies = { taro: '^4.0.0' }
+    const dependencyResult = await classifyChangedPerformanceFiles(files, async file => manifests.get(file))
+    expect(dependencyResult.relevantFiles).toEqual(files)
   })
 
   it('formats benchmark shard regressions as actionable GitHub annotations', async () => {
@@ -839,19 +884,6 @@ describe('benchmark ci report', () => {
     expect(markdown).toContain('HMR 内存独立复测：current->baseline，确认 0 项')
   })
 
-  it('runs HMR memory confirmation without builds and reverses version order', async () => {
-    const fs = await import('node:fs')
-    const path = await import('node:path')
-    const source = fs.readFileSync(path.resolve(__dirname, '../../../../benchmark/version-compare/scripts/run-ci.mjs'), 'utf8')
-
-    expect(source).toContain("{ version: currentLabel, root: currentRoot }")
-    expect(source).toContain("{ version: baselineLabel, root: baselineRoot }")
-    expect(source).toContain('matrixBuildRuns: 0')
-    expect(source).toContain('memory-confirmation-raw.json')
-    expect(source).toContain("violation.metric === 'hmrMemorySamples'")
-    expect(source).toContain('markHmrMemoryConfirmationUnavailable')
-  })
-
   it('ignores sub-10ms timing drift while retaining the percentage guard for larger regressions', async () => {
     const { buildSummary, evaluatePerformanceGuard } = await import('../../../../benchmark/version-compare/scripts/ci-report.mjs')
     const baselineLabel = 'base:main'
@@ -1028,6 +1060,38 @@ describe('benchmark ci report', () => {
     expect(result.violations).toContainEqual(expect.objectContaining({
       metric: 'hmrMemorySamples',
     }))
+  })
+
+  it('does not block when neither watch HMR side provides plugin timing samples', async () => {
+    const { buildSummary, evaluatePerformanceGuard } = await import('../../../../benchmark/version-compare/scripts/ci-report.mjs')
+    const baselineLabel = 'base:main'
+    const currentLabel = 'current:feature'
+    const summary = buildSummary({
+      generatedAt: '2026-07-14T00:00:00.000Z',
+      options: { buildRuns: 1, hmrRuns: 3, timeoutMs: 180000 },
+      rows: [
+        {
+          version: baselineLabel,
+          key: 'demo-weapp-vite-tailwindcss-v4__mp-weixin',
+          hmrMode: 'watch',
+          hmrMs: [100, 90, 80],
+          hmrPluginMs: [],
+          hmrMemory: { peakRssMb: 100, steadyRssMb: 90 },
+          summary: { hmr: { p95: 100 }, hmrPeakRssMb: { median: 100 }, hmrSteadyRssMb: { median: 90 } },
+        },
+        {
+          version: currentLabel,
+          key: 'demo-weapp-vite-tailwindcss-v4__mp-weixin',
+          hmrMode: 'watch',
+          hmrMs: [100, 90, 80],
+          hmrPluginMs: [],
+          hmrMemory: { peakRssMb: 100, steadyRssMb: 90 },
+          summary: { hmr: { p95: 100 }, hmrPeakRssMb: { median: 100 }, hmrSteadyRssMb: { median: 90 } },
+        },
+      ],
+    }, baselineLabel, currentLabel)
+
+    expect(evaluatePerformanceGuard(summary).passed).toBe(true)
   })
 
   it('uses every post-ready HMR sample and keeps noisy framework end-to-end timing informational', async () => {

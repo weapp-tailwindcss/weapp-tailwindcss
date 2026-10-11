@@ -1,10 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`templateReplacer > %label for toutiao str add not array {} 1`] = `"{{('ifont-bold') + ' ' + 'itext-_h990000_' + ' ' + 'data-v-1badc801' + ' ' + 'text-2xl' + ' ' + b}}"`;
-
 exports[`templateReplacer > %label for toutiao str add not array 1`] = `"{{('_efont-bold') + ' ' + '_etext-_b_h990000_B' + ' ' + 'data-v-1badc801' + ' ' + 'text-2xl' + ' ' + b}}"`;
-
-exports[`templateReplacer > %label utils.bem() {} 1`] = `"custom-class {{ utils.bem('button', [type, size, { block, round, plain, square, loading, disabled, hairline, unclickable: disabled || loading }]) }} {{ hairline ? 'van-hairline--surround' : '' }}"`;
 
 exports[`templateReplacer > %label utils.bem() 1`] = `"custom-class {{ utils.bem('button', [type, size, { block, round, plain, square, loading, disabled, hairline, unclickable: disabled || loading }]) }} {{ hairline ? 'van-hairline--surround' : '' }}"`;
 

@@ -1,7 +1,9 @@
 ---
 sidebar: aiSidebar
 title: LLMs.txt (LLM friendly document)
-description: '├── components/ # component directory'
+description: >-
+  LLMs.txt (LLM friendly document): Current concepts, configuration guidance, and practical examples for
+  weapp-tailwindcss users.
 keywords:
   - AI programming
   - LLM

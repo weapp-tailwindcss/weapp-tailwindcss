@@ -1,17 +1,18 @@
 {
   "name": "@weapp-tailwindcss/hbuilderx-runner",
   "type": "module",
-  "version": "0.1.1",
-  "description": "Stable HBuilderX CLI runner utilities for weapp-tailwindcss local e2e workflows.",
+  "version": "0.1.7",
+  "description": "HBuilderX runner utilities for cross-platform uni-app Tailwind CSS workflows. 跨端 uni-app Tailwind CSS 工作流的 HBuilderX 运行器工具。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",
+  "homepage": "https://tw.weapp.dev/docs/quick-start/frameworks/hbuilderx",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sonofmagic/weapp-tailwindcss.git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
     "directory": "packages/hbuilderx-runner"
   },
   "bugs": {
-    "url": "https://github.com/sonofmagic/weapp-tailwindcss/issues"
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues"
   },
   "keywords": [
     "hbuilderx",
@@ -42,6 +43,7 @@
     "dev": "tsdown --watch --sourcemap",
     "build": "tsdown",
     "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --pretty false",
     "test:dev": "vitest",
     "release": "pnpm publish",
     "lint": "eslint .",
@@ -50,5 +52,10 @@
   "publishConfig": {
     "access": "public"
   },
-  "devDependencies": {}
+  "dependencies": {
+    "cross-spawn": "^7.0.6"
+  },
+  "devDependencies": {
+    "@types/cross-spawn": "^6.0.6"
+  }
 }

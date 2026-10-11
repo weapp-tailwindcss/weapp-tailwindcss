@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { test } from 'vitest'
 import {
   collectApplyOnlyCssSelectors,
   collectApplyOnlyCssSelectorsRoot,
@@ -32,17 +32,17 @@ function createGeneratedCss(size: number) {
 const rawCss = createApplyOnlyCss(400)
 const generatedCss = createGeneratedCss(400)
 
-describe('apply-only generated css benchmark', () => {
-  bench('collect selectors by parsing raw css', () => {
-    collectApplyOnlyCssSelectors(rawCss)
-  })
-
-  bench('collect selectors from existing root', () => {
-    collectApplyOnlyCssSelectorsRoot(postcss.parse(rawCss))
-  })
-
-  bench('filter generated css with collected selectors', () => {
-    const selectors = collectApplyOnlyCssSelectorsRoot(postcss.parse(rawCss))
-    filterApplyOnlyGeneratedCss(generatedCss, selectors)
-  })
+test('apply-only generated css benchmark', async ({ bench }) => {
+  await bench.compare(
+    bench('collect selectors by parsing raw css', () => {
+      collectApplyOnlyCssSelectors(rawCss)
+    }),
+    bench('collect selectors from existing root', () => {
+      collectApplyOnlyCssSelectorsRoot(postcss.parse(rawCss))
+    }),
+    bench('filter generated css with collected selectors', () => {
+      const selectors = collectApplyOnlyCssSelectorsRoot(postcss.parse(rawCss))
+      filterApplyOnlyGeneratedCss(generatedCss, selectors)
+    }),
+  )
 })

@@ -1,0 +1,22 @@
+<template>
+  <view class="issue-1144-pt-root" :class="pt.root">
+    <text>{{ pt.root }}</text>
+  </view>
+</template>
+
+<script lang="uts">
+export default {
+  props: {
+    pt: {
+      type: Object,
+      default: () => ({ root: '' })
+    }
+  }
+}
+</script>
+
+<style scoped>
+.issue-1144-pt-root {
+  padding: 31px;
+}
+</style>

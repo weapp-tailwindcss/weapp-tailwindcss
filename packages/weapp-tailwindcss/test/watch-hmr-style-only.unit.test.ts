@@ -1,10 +1,10 @@
+import type { CliOptions, WatchCase, WatchSession } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/types'
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { CliOptions, WatchCase, WatchSession } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/types'
 
-const createWatchSessionMock = vi.fn<() => WatchSession>()
+const createWatchSessionMock = vi.fn<() => Promise<WatchSession>>()
 const runStyleMutationMock = vi.fn()
 const sleepMock = vi.fn<(ms: number) => Promise<void>>()
 
@@ -84,6 +84,7 @@ describe('watch-hmr style-only helpers', () => {
     await writeFile(sourceFile, '.anchor {\n  color: inherit;\n}\n', 'utf8')
     const watchCase = createWatchCase(sourceFile)
     const session: WatchSession = {
+      startedAt: 104_000,
       child: {} as WatchSession['child'],
       ensureRunning: vi.fn(),
       lastCompileSuccessAt: vi.fn(() => 106_000),
@@ -109,7 +110,7 @@ describe('watch-hmr style-only helpers', () => {
       pluginProcessSamplesSince: vi.fn(() => []),
       stop: vi.fn(async () => {}),
     }
-    createWatchSessionMock.mockReturnValue(session)
+    createWatchSessionMock.mockResolvedValue(session)
     runStyleMutationMock.mockResolvedValue({
       mutationKind: 'style',
       sourceFile,
@@ -168,6 +169,7 @@ describe('watch-hmr style-only helpers', () => {
     await writeFile(sourceFile, '.anchor {\n  color: inherit;\n}\n', 'utf8')
     const watchCase = createWatchCase(sourceFile)
     const session: WatchSession = {
+      startedAt: 104_000,
       child: {} as WatchSession['child'],
       ensureRunning: vi.fn(),
       lastCompileSuccessAt: vi.fn(() => 106_000),
@@ -177,7 +179,7 @@ describe('watch-hmr style-only helpers', () => {
       pluginProcessSamplesSince: vi.fn(() => []),
       stop: vi.fn(async () => {}),
     }
-    createWatchSessionMock.mockReturnValue(session)
+    createWatchSessionMock.mockResolvedValue(session)
     runStyleMutationMock.mockRejectedValue(new Error('style hot update failed'))
 
     const { runStyleOnlyCase } = await import('../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/style-only')

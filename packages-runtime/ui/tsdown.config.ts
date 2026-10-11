@@ -13,6 +13,7 @@ export default defineConfig({
   clean: false,
   dts: true,
   deps: {
+    resolveDepSubpath: true,
     neverBundle: [
       '@weapp-tailwindcss/merge',
       '@weapp-tailwindcss/variants',

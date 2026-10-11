@@ -1,7 +1,7 @@
 ---
 sidebar: aiSidebar
 title: Prompt Engineering
-description: function SubmitForm() {
+description: 'Prompt Engineering: Current concepts, configuration guidance, and practical examples for weapp-tailwindcss users.'
 keywords:
   - AI programming
   - LLM

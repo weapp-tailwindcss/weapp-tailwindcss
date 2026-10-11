@@ -3,9 +3,8 @@ import path from 'node:path'
 import process from 'node:process'
 import { createJiti } from 'jiti'
 import { lilconfig } from 'lilconfig'
+import { clearConfigModuleCache } from './module-cache.js'
 import { defuOverrideArray } from './utils.js'
-
-const jiti = createJiti(import.meta.url)
 
 export interface LoadConfigOptions {
   cwd: string
@@ -20,6 +19,11 @@ export type LoadConfigResult = null | {
 }
 
 export async function loadConfig(options?: Partial<LoadConfigOptions>): Promise<LoadConfigResult> {
+  const jiti = createJiti(import.meta.url, { moduleCache: true, fsCache: true })
+  const load = (filename: string, source: string) => {
+    clearConfigModuleCache(filename)
+    return jiti.evalModule(source, { filename })
+  }
   const { config, cwd, moduleName } = defuOverrideArray<LoadConfigOptions, Partial<LoadConfigOptions>[]>(
     options as LoadConfigOptions,
     {
@@ -38,12 +42,12 @@ export async function loadConfig(options?: Partial<LoadConfigOptions>): Promise<
       `${moduleName}.config.mts`,
     ],
     loaders: {
-      '.js': jiti,
-      '.cjs': jiti,
-      '.mjs': jiti,
-      '.ts': jiti,
-      '.cts': jiti,
-      '.mts': jiti,
+      '.js': load,
+      '.cjs': load,
+      '.mjs': load,
+      '.ts': load,
+      '.cts': load,
+      '.mts': load,
     },
   })
 

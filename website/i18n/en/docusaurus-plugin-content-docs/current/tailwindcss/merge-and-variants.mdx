@@ -21,7 +21,7 @@ keywords:
 ---
 import TailwindTopicHero from '@site/src/components/docs/TailwindTopicHero'
 
-<TailwindTopicHero topicId="tailwindcss/merge-and-variants" title="tailwind-merge、cva、tailwind-variants Essentials" />
+<TailwindTopicHero topicId="tailwindcss/merge-and-variants" title="tailwind-merge, cva, and tailwind-variants Essentials" />
 
 ## Key Points
 
@@ -81,7 +81,7 @@ function Button({ size = 'md', className, ...props }) {
 Tailwind will sort candidates according to internal rules (such as `p-0 → p-1 → p-2 → p-4 ...`), regardless of the order of class strings:
 
 ```html
-<!-- expect p-2 cover p-4，but generated CSS The order is still p-2 in front、p-4 behind -->
+<!-- Expect p-2 to override p-4, but generated CSS still places p-2 before p-4. -->
 <button class="p-4 p-2 bg-blue-500 bg-red-500">Example</button>
 ```
 

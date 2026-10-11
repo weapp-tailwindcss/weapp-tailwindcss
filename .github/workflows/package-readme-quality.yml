@@ -1,0 +1,77 @@
+name: Package README Quality
+
+on:
+  pull_request:
+    paths:
+      - 'packages/*/README*.md'
+      - 'packages/*/package.json'
+      - 'packages-runtime/*/README*.md'
+      - 'packages-runtime/*/package.json'
+      - scripts/check-package-readmes.mjs
+      - .github/workflows/package-readme-quality.yml
+  push:
+    branches: [main, next]
+    paths:
+      - 'packages/*/README*.md'
+      - 'packages/*/package.json'
+      - 'packages-runtime/*/README*.md'
+      - 'packages-runtime/*/package.json'
+      - scripts/check-package-readmes.mjs
+      - .github/workflows/package-readme-quality.yml
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      full_verification:
+        description: 审批后完整执行版本 PR 验收，默认保留自动范围
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  scope:
+    uses: ./.github/workflows/ci-scope.yml
+    with:
+      full_verification: ${{ inputs.full_verification || false }}
+
+  validate:
+    name: Validate published package READMEs
+    needs: scope
+    if: github.event_name != 'pull_request' || needs.scope.outputs.metadata_only != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Validate bilingual package READMEs
+        run: node scripts/check-package-readmes.mjs
+
+  readme-gate:
+    name: ${{ github.event_name == 'pull_request' && needs.scope.outputs.metadata_only == 'true' && 'Await manual version verification' || 'Package README Quality Gate' }}
+    needs: [scope, validate]
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require scope and enabled README verification
+        env:
+          SCOPE_RESULT: ${{ needs.scope.result }}
+          METADATA_ONLY: ${{ needs.scope.outputs.metadata_only }}
+          EVENT_NAME: ${{ github.event_name }}
+          VERIFICATION_RESULT: ${{ needs.validate.result }}
+        run: |
+          test "$SCOPE_RESULT" = success
+          test "$METADATA_ONLY" = true || test "$METADATA_ONLY" = false
+          if test "$EVENT_NAME" != pull_request || test "$METADATA_ONLY" != true; then
+            test "$VERIFICATION_RESULT" = success
+          fi

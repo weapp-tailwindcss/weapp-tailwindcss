@@ -45,8 +45,9 @@ const COLOR_DECLARATION_REGEX = /color:/g
 
 describe('utility coverage helpers', () => {
   it('fingerprintOptions handles anonymous functions', () => {
-    const anonResult = fingerprintOptions(() => {})
-    expect(anonResult).toBe('fn:anonymous')
+    const anonymous = () => {}
+    const anonResult = fingerprintOptions(anonymous)
+    expect(fingerprintOptions(anonymous)).toBe(anonResult)
 
     const proxyFn = new Proxy(() => {}, {
       get(target, prop, receiver) {
@@ -56,7 +57,8 @@ describe('utility coverage helpers', () => {
         return Reflect.get(target, prop, receiver)
       },
     })
-    expect(fingerprintOptions(proxyFn)).toBe('fn:anonymous')
+    expect(fingerprintOptions(proxyFn)).not.toBe(anonResult)
+    expect(fingerprintOptions(proxyFn)).toBe(fingerprintOptions(proxyFn))
   })
 
   it('hasTwVars handles rules without nodes', () => {
@@ -641,7 +643,7 @@ describe('plugin behaviours', () => {
     expect(css).not.toContain('oklab')
   })
 
-  it('custom property cleaner removes duplicates and matched vars', async () => {
+  it('custom property cleaner removes exact duplicates and preserves matched vars', async () => {
     const cleaner = getCustomPropertyCleaner({ cssCalc: { includeCustomProperties: ['--keep'] } } as any)
     expect(cleaner).toBeTruthy()
     const css = `
@@ -653,8 +655,8 @@ describe('plugin behaviours', () => {
       }
     `
     const result = await postcss([cleaner!]).process(css, { from: undefined })
-    expect(result.css).not.toContain('var(--keep)')
-    expect(result.css.match(COLOR_DECLARATION_REGEX)?.length).toBe(2)
+    expect(result.css).toContain('var(--keep)')
+    expect(result.css.match(COLOR_DECLARATION_REGEX)?.length).toBe(3)
 
     expect(getCustomPropertyCleaner({ cssCalc: false } as any)).toBeNull()
   })

@@ -15,7 +15,8 @@ import { ctaButton } from '../features/homepage/variants'
 
 interface FactItem {
   label: string
-  value: string
+  values: string[]
+  icon: string
 }
 
 interface CapabilityItem {
@@ -31,13 +32,6 @@ interface EntryItem {
   icon: string
 }
 
-interface RouteItem {
-  href: string
-  label: string
-  description: string
-  icon: string
-}
-
 interface PlatformIconItem {
   id: keyof typeof platformIconContent
   label: string
@@ -47,31 +41,15 @@ interface PlatformIconItem {
 const homepageCopy = {
   'zh-cn': {
     facts: [
-      { label: 'Tailwind', value: 'CSS 4 / @source' },
-      { label: '框架', value: 'uni-app / Taro / Mpx / Weapp-vite' },
-      { label: '构建器', value: 'Webpack / Vite / Gulp' },
-      { label: '运行时', value: 'merge / cva / variants' },
-    ] satisfies FactItem[],
-    routeLinks: [
+      { label: 'Tailwind CSS', values: ['@source'], icon: 'icon-[mdi--tailwind]' },
       {
-        href: '/docs/quick-start/install',
-        label: '快速开始',
-        description: '从 CSS-first 入口接入当前版本。',
-        icon: 'icon-[mdi--numeric-4-box-outline]',
-      },
-      {
-        href: '/docs/quick-start/frameworks/uni-app-vite',
-        label: '框架接入',
-        description: '按 uni-app、Taro、Mpx、Weapp-vite 或原生选择路线。',
+        label: '框架',
+        values: ['uni-app', 'Taro', 'React Native', 'Lynx'],
         icon: 'icon-[mdi--transit-connection-variant]',
       },
-      {
-        href: '/docs/api/interfaces/UserDefinedOptions',
-        label: '配置参考',
-        description: '直接查看插件选项、默认值和类型入口。',
-        icon: 'icon-[mdi--api]',
-      },
-    ] satisfies RouteItem[],
+      { label: '构建器', values: ['Webpack', 'Vite', 'Metro', 'Rspeedy'], icon: 'icon-[mdi--hammer-wrench]' },
+      { label: '运行时', values: ['merge', 'cva', 'variants'], icon: 'icon-[mdi--function-variant]' },
+    ] satisfies FactItem[],
     capabilities: [
       {
         title: '精确转译',
@@ -79,13 +57,13 @@ const homepageCopy = {
         icon: 'icon-[mdi--target]',
       },
       {
-        title: 'Web / 小程序分端输出',
-        description: '同一份 CSS-first 输入，按环境生成浏览器 CSS 或小程序 CSS。',
+        title: '多端输出目标',
+        description: '按目标端生成 Web CSS、小程序 CSS 或原生样式清单。',
         icon: 'icon-[mdi--source-branch]',
       },
       {
         title: '跨生态落地',
-        description: '覆盖 uni-app、Taro、Mpx、Weapp-vite、原生小程序以及 Webpack、Vite、Gulp 链路。',
+        description: '覆盖 uni-app、Taro、Mpx、Weapp-vite、React Native、Lynx 与原生小程序。',
         icon: 'icon-[mdi--transit-connection-variant]',
       },
       {
@@ -137,19 +115,18 @@ const homepageCopy = {
       { id: 'lynx', label: 'Lynx', href: '/docs/quick-start/frameworks/lynx' },
     ] satisfies PlatformIconItem[],
     hero: {
-      badge: 'Tailwind CSS 4 + 小程序生成链路',
+      badge: 'Tailwind CSS 4 + 全端生成链路',
       copyrightAria: '查看版权与证书页面',
       copyrightTitle: 'G-Star 毕业项目认证',
       copyrightImageAlt: 'AtomGit G-Star 毕业项目认证徽章',
-      lead: '一套 CSS-first 输入，交付 Web 与小程序两端样式。',
-      sublead: '保留 `WeappTailwindcss` 接管生成、转义与运行时边界，不在小程序构建里重复注册官方 Tailwind 插件。',
+      lead: '一套原子化开发体验，交付 Web、小程序与原生跨端应用。',
+      sublead: '按平台复用编译器、构建器集成与运行时适配，同时保留各端真实语义与工程边界。',
       platformAria: '支持平台',
       primaryCta: '开始接入',
       aiEntry: 'AI 学习入口',
       communityEntry: '加入技术交流群',
     },
     factsAria: '支持矩阵',
-    routesAria: '接入路线',
     capabilitiesTitle: '守住工程边界，接管生成与转译',
     capabilitiesSummary: '复用 Tailwind CSS 4 输入，把源码扫描、样式生成、类名转义和运行时工具放在一条工程链路里。',
     buildToolsTitle: '构建器接管 Tailwind 生成',
@@ -161,31 +138,15 @@ const homepageCopy = {
   },
   'en': {
     facts: [
-      { label: 'Tailwind', value: 'CSS 4 / @source' },
-      { label: 'Frameworks', value: 'uni-app / Taro / Mpx / Weapp-vite' },
-      { label: 'Builders', value: 'Webpack / Vite / Gulp' },
-      { label: 'Runtime', value: 'merge / cva / variants' },
+      { label: 'Tailwind CSS', values: ['@source'], icon: 'icon-[mdi--tailwind]' },
+      {
+        label: 'Frameworks',
+        values: ['uni-app', 'Taro', 'React Native', 'Lynx'],
+        icon: 'icon-[mdi--transit-connection-variant]',
+      },
+      { label: 'Builders', values: ['Webpack', 'Vite', 'Metro', 'Rspeedy'], icon: 'icon-[mdi--hammer-wrench]' },
+      { label: 'Runtime', values: ['merge', 'cva', 'variants'], icon: 'icon-[mdi--function-variant]' },
     ] satisfies FactItem[],
-    routeLinks: [
-      {
-        href: '/docs/quick-start/install',
-        label: 'Quick Start',
-        description: 'Start from the CSS-first entry for the current version.',
-        icon: 'icon-[mdi--numeric-4-box-outline]',
-      },
-      {
-        href: '/docs/intro',
-        label: 'Introduction',
-        description: 'Understand the runtime constraints and the transformation pipeline.',
-        icon: 'icon-[mdi--book-open-page-variant-outline]',
-      },
-      {
-        href: '/blog',
-        label: 'Release Notes',
-        description: 'Read English release notes and compatibility updates.',
-        icon: 'icon-[mdi--newspaper-variant-outline]',
-      },
-    ] satisfies RouteItem[],
     capabilities: [
       {
         title: 'Precise transforms',
@@ -193,13 +154,13 @@ const homepageCopy = {
         icon: 'icon-[mdi--target]',
       },
       {
-        title: 'Web / mini app output targets',
-        description: 'One CSS-first input generates browser CSS or mini app CSS depending on the target.',
+        title: 'Multi-platform output targets',
+        description: 'Generate Web CSS, mini-program CSS, or native style manifests for each target.',
         icon: 'icon-[mdi--source-branch]',
       },
       {
         title: 'Cross-ecosystem delivery',
-        description: 'Supports uni-app, Taro, Mpx, Weapp-vite, native mini apps, plus Webpack, Vite, and Gulp.',
+        description: 'Supports uni-app, Taro, Mpx, Weapp-vite, React Native, Lynx, and native mini programs.',
         icon: 'icon-[mdi--transit-connection-variant]',
       },
       {
@@ -234,7 +195,7 @@ const homepageCopy = {
         icon: 'icon-[logos--openai-icon]',
       },
       {
-        href: 'https://github.com/sonofmagic/weapp-tailwindcss/discussions',
+        href: 'https://github.com/weapp-tailwindcss/weapp-tailwindcss/discussions',
         label: 'Community',
         description: 'Join GitHub Discussions and share framework-specific issues.',
         icon: 'icon-[mdi--account-group-outline]',
@@ -251,20 +212,19 @@ const homepageCopy = {
       { id: 'lynx', label: 'Lynx', href: '/docs/quick-start/frameworks/lynx' },
     ] satisfies PlatformIconItem[],
     hero: {
-      badge: 'Tailwind CSS 4 + mini app generation pipeline',
+      badge: 'Tailwind CSS 4 + cross-platform generation pipeline',
       copyrightAria: 'View the copyright and certificate page',
       copyrightTitle: 'G-Star graduation project certification',
       copyrightImageAlt: 'AtomGit G-Star graduation project badge',
-      lead: 'One CSS-first input, delivered as Web and mini app styles.',
-      sublead: 'Keep `WeappTailwindcss` in charge of generation, escaping, and runtime boundaries without registering the official Tailwind plugin twice in mini app builds.',
+      lead: 'One utility-first workflow for Web, mini programs, and native cross-platform apps.',
+      sublead: 'Reuse compilers, builder integrations, and runtime adapters while preserving each platform\'s native semantics and engineering boundaries.',
       platformAria: 'Supported platforms',
       primaryCta: 'Start setup',
       aiEntry: 'AI entry',
       communityEntry: 'Join the tech community',
-      communityHref: 'https://github.com/sonofmagic/weapp-tailwindcss/discussions',
+      communityHref: 'https://github.com/weapp-tailwindcss/weapp-tailwindcss/discussions',
     },
     factsAria: 'Support matrix',
-    routesAria: 'Setup routes',
     capabilitiesTitle: 'Keep firm engineering boundaries and own generation plus transforms',
     capabilitiesSummary: 'Reuse Tailwind CSS 4 input while keeping source scanning, style generation, class escaping, and runtime utilities in one engineering pipeline.',
     buildToolsTitle: 'Builders own Tailwind generation',
@@ -291,6 +251,7 @@ function HomepageHeader() {
   const { homepage } = useUiManagement()
   const locale = useCurrentSiteLocale()
   const copy = homepageCopy[locale]
+  const [tailwindFact, ...supportFacts] = copy.facts
 
   return (
     <main className="home-v5">
@@ -382,34 +343,43 @@ function HomepageHeader() {
       </section>
 
       {homepage.platformTags && (
-        <section className="ui-homepage-platform-tags home-facts" aria-label={copy.factsAria}>
-          {copy.facts.map(fact => (
-            <div className="home-facts__item" key={fact.label}>
-              <span>{fact.label}</span>
-              <strong>{fact.value}</strong>
+        <section className="ui-homepage-platform-tags home-support" aria-label={copy.factsAria}>
+          <div className="home-support__anchor">
+            <div className="home-support__anchor-label">
+              <i aria-hidden="true" className={tailwindFact.icon}></i>
+              <span>{tailwindFact.label}</span>
             </div>
-          ))}
-          <nav className="home-facts__routes" aria-label={copy.routesAria}>
-            {copy.routeLinks.map(route => (
-              <Link className="home-facts__route" to={route.href} key={route.href}>
-                <i aria-hidden="true" className={route.icon}></i>
-                <span>
-                  <strong>{route.label}</strong>
-                  <small>{route.description}</small>
-                </span>
-              </Link>
+            <div className="home-support__anchor-values">
+              {tailwindFact.values.map(value => (
+                <strong key={value}>{value}</strong>
+              ))}
+            </div>
+            {(homepage.githubBadge || homepage.npmVersionBadge) && (
+              <div className="home-support__signals">
+                {homepage.githubBadge && (
+                  <HeroGithubBadge className="ui-homepage-github-badge" />
+                )}
+                {homepage.npmVersionBadge && (
+                  <HeroVersionBadge className="ui-homepage-npm-version-badge" />
+                )}
+              </div>
+            )}
+          </div>
+          <dl className="home-support__tracks">
+            {supportFacts.map(fact => (
+              <div className="home-support__track" key={fact.label}>
+                <dt>
+                  <i aria-hidden="true" className={fact.icon}></i>
+                  <span>{fact.label}</span>
+                </dt>
+                <dd>
+                  {fact.values.map(value => (
+                    <strong key={value}>{value}</strong>
+                  ))}
+                </dd>
+              </div>
             ))}
-          </nav>
-          {(homepage.githubBadge || homepage.npmVersionBadge) && (
-            <div className="home-facts__signals">
-              {homepage.githubBadge && (
-                <HeroGithubBadge className="ui-homepage-github-badge" />
-              )}
-              {homepage.npmVersionBadge && (
-                <HeroVersionBadge className="ui-homepage-npm-version-badge" />
-              )}
-            </div>
-          )}
+          </dl>
         </section>
       )}
 

@@ -26,4 +26,4 @@
 - `pnpm --filter @weapp-tailwindcss/babel test`
 - `pnpm --filter @weapp-tailwindcss/babel build`
 - 定向回归：
-  - `pnpm --filter @weapp-tailwindcss/babel vitest run test/evaluate.test.ts`
+  - `pnpm --filter @weapp-tailwindcss/babel exec vitest run test/evaluate.test.ts`

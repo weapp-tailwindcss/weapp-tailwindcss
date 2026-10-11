@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { describe, expect, it } from 'vitest'
 import {
   resolveSourceSideCssEntrySource,
-} from '@/bundlers/shared/generator-css/source-files'
+} from '@/generation/source-files'
 
 describe('source files resolver', () => {
   it('resolves css entry from local style import chains', async () => {

@@ -29,7 +29,7 @@
 | uni-app-vite-tailwindcss-v4 | passed | 0MB | 2560MB | 1848MB | [uni-app-vite-tailwindcss-v4](./projects/uni-app-vite-tailwindcss-v4.md) |
 | uni-app-vite-vue3-hbuilderx-tailwindcss-v4 | skipped | 0MB | 0MB | 0MB | [uni-app-vite-vue3-hbuilderx-tailwindcss-v4](./projects/uni-app-vite-vue3-hbuilderx-tailwindcss-v4.md) |
 | uni-app-vite-vue3-hbuilderx-tailwindcss-v4 | skipped | 0MB | 0MB | 0MB | [uni-app-vite-vue3-hbuilderx-tailwindcss-v4](./projects/uni-app-vite-vue3-hbuilderx-tailwindcss-v4.md) |
-| uni-app-x-hbuilderx-tailwindcss-v4 | skipped | 0MB | 0MB | 0MB | [uni-app-x-hbuilderx-tailwindcss-v4](./projects/uni-app-x-hbuilderx-tailwindcss-v4.md) |
-| uni-app-x-hbuilderx-tailwindcss-v4 | skipped | 0MB | 0MB | 0MB | [uni-app-x-hbuilderx-tailwindcss-v4](./projects/uni-app-x-hbuilderx-tailwindcss-v4.md) |
+| uni-app-x-vdom-tailwindcss-v4 | skipped | 0MB | 0MB | 0MB | [uni-app-x-vdom-tailwindcss-v4](./projects/uni-app-x-vdom-tailwindcss-v4.md) |
+| uni-app-x-vdom-tailwindcss-v4 | skipped | 0MB | 0MB | 0MB | [uni-app-x-vdom-tailwindcss-v4](./projects/uni-app-x-vdom-tailwindcss-v4.md) |
 | weapp-vite-tailwindcss-v4 | passed | 531MB | 2850MB | 2110MB | [weapp-vite-tailwindcss-v4](./projects/weapp-vite-tailwindcss-v4.md) |
 | weapp-vite-tailwindcss-v4 | passed | 667MB | 2807MB | 2063MB | [weapp-vite-tailwindcss-v4](./projects/weapp-vite-tailwindcss-v4.md) |

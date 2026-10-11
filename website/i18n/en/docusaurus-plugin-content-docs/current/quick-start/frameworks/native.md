@@ -1,13 +1,12 @@
 ---
-title: Native development (packaging solution)
-description: Template project weapp-tailwindcss-gulp-template (gulp packaging)
+title: Native development with weapp-vite
+description: Build native mini programs with weapp-vite and Tailwind CSS 4
 keywords:
   - quick start
   - Install
   - Configuration
   - Native development
   - Packaging plan
-  - quick start
   - frameworks
   - native
   - weapp-tailwindcss
@@ -17,9 +16,11 @@ keywords:
   - uni-app
   - taro
   - mpx
+  - installation
+  - development
 ---
 
-# Native development (packaging solution)
+# Native development with weapp-vite
 
 :::warning
 This is a packaging solution for native development. If you need a purely native solution, please check out [Quick Start (Pure Native)](/docs/quick-start/native/install).
@@ -35,13 +36,15 @@ Before changing the template toolchain process, please make sure you are familia
 In addition, these templates only need to slightly change the product suffix and adjust the `@source` scanning range to adapt to Baidu, Toutiao, JD... various platforms.
 :::
 
-## gulp template
+## weapp-vite
 
-Template project [weapp-tailwindcss-gulp-template(gulp packaging)](https://github.com/sonofmagic/weapp-tailwindcss/tree/main/demo/gulp-app)
+For native mini programs, use the [weapp-vite website](https://vite.icebreaker.top/) and create a project with:
 
-## weapp-vite template
+```bash
+pnpm create weapp-vite
+```
 
-If you want native mini programs to be built using Vite, it is recommended to check out [Pure native weapp-vite access] (/docs/quick-start/native/install). The current documentation is for `tailwindcss@4`. The current documentation only maintains Tailwind CSS 4 access instructions.
+After creating the project, follow the official documentation to add Tailwind CSS 4 and `weapp-tailwindcss/vite`.
 
 Then register `vite.config.ts` in `weapp-tailwindcss/vite`:
 

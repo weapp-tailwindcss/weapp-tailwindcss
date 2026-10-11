@@ -6,11 +6,8 @@ import path from 'node:path'
 import process from 'node:process'
 import {
   resolveTailwindV4Source as resolveEngineTailwindV4Source,
-} from '@tailwindcss-mangle/engine'
-import { postcss } from '@weapp-tailwindcss/postcss'
-import { normalizeConfigDirective } from '@/bundlers/shared/generator-css/config-directive'
-import { normalizeTailwindConfigDirectives, resolveCssEntrySource } from '@/bundlers/shared/generator-css/directives'
-import { normalizeEmptyTailwindCustomVariants } from '@/bundlers/shared/generator-css/user-css'
+} from '@weapp-tailwindcss/engine'
+import { collectRpxThemeVariables, normalizeConfigDirective, normalizeEmptyTailwindCustomVariants, normalizeTailwindConfigDirectives, parseCssImportSpecifier, postcss, resolveCssEntrySource, rewriteCssImportSpecifiers } from '@weapp-tailwindcss/postcss/transform'
 import { resolveTailwindcssOptions } from '@/tailwindcss/runtime-options'
 import { filterTailwindV4CssSourceRoots } from '@/tailwindcss/v4/css-sources'
 import { omitUndefined } from '@/utils/object'
@@ -49,17 +46,11 @@ function resolvePackageCssEntryPoint(specifier: string) {
   }
 
   try {
-    let current = path.dirname(require.resolve('@tailwindcss-mangle/engine'))
-    while (true) {
-      const cssEntry = path.resolve(current, '..', 'tailwindcss', 'index.css')
-      if (isCssEntryPoint(cssEntry)) {
-        return cssEntry
-      }
-      const parent = path.dirname(current)
-      if (parent === current) {
-        break
-      }
-      current = parent
+    const engineRequire = createRequire(require.resolve('@weapp-tailwindcss/engine'))
+    const packageJson = engineRequire.resolve('tailwindcss/package.json')
+    const cssEntry = path.resolve(path.dirname(packageJson), 'index.css')
+    if (isCssEntryPoint(cssEntry)) {
+      return cssEntry
     }
   }
   catch {
@@ -78,6 +69,13 @@ function isPostcssPluginImportTarget(value: string | undefined) {
 
 function uniqueDefined(values: Array<string | undefined>) {
   return [...new Set(values.filter((value): value is string => typeof value === 'string' && value.length > 0))]
+}
+
+function resolveCssImportFile(base: string, specifier: string) {
+  const normalizedSpecifier = path.sep === '\\'
+    ? specifier.replaceAll('/', '\\')
+    : specifier.replaceAll('\\', '/')
+  return path.resolve(base, normalizedSpecifier)
 }
 
 function getProjectRoot(runtime: TailwindcssRuntimeLike) {
@@ -112,41 +110,6 @@ function isPackageJsonImportSpecifier(specifier: string | undefined) {
   return typeof specifier === 'string' && specifier.startsWith('#')
 }
 
-function parseCssImportSpecifier(params: string) {
-  const value = params.trim()
-  const quoted = /^(['"])(.*?)\1/.exec(value)
-  if (quoted) {
-    const specifier = quoted[2]
-    if (specifier === undefined) {
-      return undefined
-    }
-    return {
-      quote: quoted[1],
-      raw: quoted[0],
-      specifier,
-    }
-  }
-
-  const url = /^url\(\s*(?:(['"])(.*?)\1|([^'")\s]+))\s*\)/.exec(value)
-  if (!url) {
-    return undefined
-  }
-
-  const specifier = url[2] ?? url[3]
-  if (specifier === undefined) {
-    return undefined
-  }
-  return {
-    quote: url[1],
-    raw: url[0],
-    specifier,
-  }
-}
-
-function quoteCssImportSpecifier(specifier: string, quote = '"') {
-  return `${quote}${specifier.replaceAll('\\', '\\\\').replaceAll(quote, `\\${quote}`)}${quote}`
-}
-
 function createTailwindV4CssImportSpecifierSet(packageName: string | undefined) {
   const specifiers = new Set(['tailwindcss'])
   if (packageName && isBarePackageSpecifier(packageName)) {
@@ -160,37 +123,10 @@ function normalizeTailwindV4CssPackageImports(css: string, packageName: string |
     return css
   }
 
-  let root: postcss.Root
-  try {
-    root = postcss.parse(css)
-  }
-  catch {
-    return css
-  }
-
   const importSpecifiers = createTailwindV4CssImportSpecifierSet(packageName)
-  let changed = false
-  root.walkAtRules((rule) => {
-    if (rule.name !== 'import' && rule.name !== 'reference') {
-      return
-    }
-    const parsed = parseCssImportSpecifier(rule.params)
-    if (!parsed || !importSpecifiers.has(parsed.specifier)) {
-      return
-    }
-    const cssEntryPoint = resolvePackageCssEntryPoint(`${parsed.specifier}/index.css`)
-    if (!cssEntryPoint) {
-      return
-    }
-
-    rule.params = rule.params.replace(
-      parsed.raw,
-      quoteCssImportSpecifier(cssEntryPoint, parsed.quote),
-    )
-    changed = true
-  })
-
-  return changed ? root.toString() : css
+  return rewriteCssImportSpecifiers(css, (specifier) => {
+    return importSpecifiers.has(specifier) ? resolvePackageCssEntryPoint(`${specifier}/index.css`) : undefined
+  }, { atRuleNames: ['import', 'reference'], tolerateInvalidCss: true })
 }
 
 function normalizeTailwindV4CssSources(
@@ -257,14 +193,52 @@ function normalizeTailwindV4CssEntrySources(
 
   const remainingCssEntries: string[] = []
   const cssSources: NonNullable<TailwindV4SourceOptions['cssSources']> = []
-  for (const cssEntry of cssEntries) {
-    const file = path.resolve(cssEntry)
-    if (!existsSync(file)) {
-      remainingCssEntries.push(cssEntry)
-      continue
+  const graphs = new Map<string, Set<string>>()
+  const themeVariables = new Map<string, string[]>()
+  const collectCssGraph = (file: string, visiting = new Set<string>()): Set<string> => {
+    const normalizedFile = path.resolve(file)
+    const cached = graphs.get(normalizedFile)
+    if (cached) {
+      return cached
     }
-    const base = path.dirname(file)
-    const rawCss = readFileSync(file, 'utf8')
+    const graph = new Set<string>([normalizedFile])
+    graphs.set(normalizedFile, graph)
+    if (visiting.has(normalizedFile) || !existsSync(normalizedFile)) {
+      return graph
+    }
+    const nextVisiting = new Set(visiting).add(normalizedFile)
+    let root: postcss.Root
+    try {
+      root = postcss.parse(readFileSync(normalizedFile, 'utf8'))
+    }
+    catch {
+      return graph
+    }
+    themeVariables.set(normalizedFile, collectRpxThemeVariables(root))
+    const base = path.dirname(normalizedFile)
+    root.walkAtRules('import', (rule) => {
+      const parsed = parseCssImportSpecifier(rule.params)
+      if (!parsed || !parsed.specifier.startsWith('.')) {
+        return
+      }
+      const importedFile = resolveCssImportFile(base, parsed.specifier)
+      const candidates = path.extname(importedFile)
+        ? [importedFile]
+        : [importedFile, `${importedFile}.css`, `${importedFile}.pcss`, `${importedFile}.scss`, `${importedFile}.sass`]
+      const resolved = candidates.find(candidate => existsSync(candidate))
+      if (!resolved) {
+        return
+      }
+      for (const dependency of collectCssGraph(resolved, nextVisiting)) {
+        graph.add(dependency)
+      }
+    })
+    return graph
+  }
+  const createCssSource = (file: string, dependencies: Set<string>) => {
+    const normalizedFile = path.resolve(file)
+    const base = path.dirname(normalizedFile)
+    const rawCss = readFileSync(normalizedFile, 'utf8')
     const entrySource = resolveCssEntrySource(rawCss, base, {
       removeConfig: false,
     })
@@ -277,12 +251,41 @@ function normalizeTailwindV4CssEntrySources(
       normalizeEmptyTailwindCustomVariants(normalizeConfigDirective(rawCss, config)),
       packageName,
     )
-    cssSources.push({
-      file,
+    return {
+      file: normalizedFile,
       base,
       css,
-      dependencies: [file],
-    })
+      dependencies: [...dependencies],
+      rpxThemeVariables: [...new Set([...dependencies].flatMap(dependency => themeVariables.get(dependency) ?? []))],
+    }
+  }
+  const rootEntries: string[] = []
+  for (const cssEntry of cssEntries) {
+    const normalizedCssEntry = cssEntry.replace(/[?#].*$/, '')
+    const file = path.resolve(normalizedCssEntry)
+    if (!existsSync(file)) {
+      remainingCssEntries.push(normalizedCssEntry)
+      continue
+    }
+    rootEntries.push(file)
+  }
+
+  const entryGraphs = rootEntries.map(entry => [entry, collectCssGraph(entry)] as const)
+  const nestedEntries = new Set<string>()
+  for (const [entry] of entryGraphs) {
+    for (const [otherEntry, otherGraph] of entryGraphs) {
+      if (entry !== otherEntry && otherGraph.has(entry)) {
+        nestedEntries.add(entry)
+        break
+      }
+    }
+  }
+  const selectedEntries = entryGraphs.filter(([entry]) => !nestedEntries.has(entry))
+  const roots = selectedEntries.length > 0
+    ? selectedEntries
+    : entryGraphs.slice(0, 1)
+  for (const [rootEntry, dependencies] of roots) {
+    cssSources.push(createCssSource(rootEntry, dependencies))
   }
 
   return {
@@ -403,9 +406,16 @@ export function resolveTailwindV4SourceOptionsFromRuntime(
   }) as TailwindV4SourceOptionsWithSources) as TailwindV4SourceOptionsWithSources
 }
 
-export function resolveTailwindV4Source(options?: TailwindV4SourceOptions): Promise<TailwindV4ResolvedSource> {
+export async function resolveTailwindV4Source(options?: TailwindV4SourceOptions): Promise<TailwindV4ResolvedSource> {
   const normalizedOptions = normalizeTailwindV4SourceOptions(options)
-  return resolveEngineTailwindV4Source(normalizedOptions) as Promise<TailwindV4ResolvedSource>
+  const source = await resolveEngineTailwindV4Source(normalizedOptions) as TailwindV4ResolvedSource
+  const variables = normalizedOptions?.cssSources?.flatMap(cssSource =>
+    (cssSource as { rpxThemeVariables?: string[] }).rpxThemeVariables ?? [],
+  ) ?? []
+  if (variables.length) {
+    source.rpxThemeVariables = [...new Set(variables)]
+  }
+  return source
 }
 
 export function resolveTailwindV4SourceFromRuntimeOptions(options?: {

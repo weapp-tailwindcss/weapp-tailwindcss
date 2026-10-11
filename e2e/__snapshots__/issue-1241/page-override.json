@@ -1,0 +1,26 @@
+{
+  ".-mt-0_d5": [
+    "calc(var(--spacing)*-0.5)"
+  ],
+  ".-mt-4": [
+    "calc(var(--spacing)*-4)"
+  ],
+  ".mt-4": [
+    "calc(var(--spacing)*4)"
+  ],
+  ".h-32": [
+    "calc(var(--spacing)*32)"
+  ],
+  ".w-32": [
+    "calc(var(--spacing)*32)"
+  ],
+  ".gap-4": [
+    "calc(var(--spacing)*4)"
+  ],
+  ".p-0_d5": [
+    "calc(var(--spacing)*0.5)"
+  ],
+  ".p-4": [
+    "calc(var(--spacing)*4)"
+  ]
+}

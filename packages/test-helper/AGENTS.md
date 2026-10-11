@@ -29,4 +29,4 @@
 - `pnpm --filter @weapp-tailwindcss/test-helper test`
 - `pnpm --filter @weapp-tailwindcss/test-helper build`
 - 定向回归：
-  - `pnpm --filter @weapp-tailwindcss/test-helper vitest run test/index.test.ts`
+  - `pnpm --filter @weapp-tailwindcss/test-helper exec vitest run test/index.test.ts`

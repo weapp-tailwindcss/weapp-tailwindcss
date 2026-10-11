@@ -64,6 +64,25 @@ describe('vite framework source scan session', () => {
     await Promise.all(createdDirs.splice(0).map(dir => rm(dir, { recursive: true, force: true })))
   })
 
+  it('监听依赖来自当前 source 扫描，改指向后移除旧文件和排除文件', async () => {
+    const { appRoot } = await createTempWorkspace()
+    const first = path.join(appRoot, 'first.html')
+    const second = path.join(appRoot, 'second.html')
+    await writeFile(first, 'first-candidate')
+    await writeFile(second, 'second-candidate')
+    const sources = [{ base: appRoot, pattern: 'first.html', negated: false }]
+    const { session, sourceCandidateCollector } = createSession({ appRoot, sources, extractor: async source => [source] })
+    await session.sync()
+    expect([...session.getWatchFiles()].map(file => path.basename(file))).toContain('first.html')
+    expect([...session.getWatchFiles()].map(file => path.basename(file))).not.toContain('second.html')
+    sources[0]!.pattern = 'second.html'
+    session.invalidate()
+    await session.sync()
+    expect([...session.getWatchFiles()].map(file => path.basename(file))).toContain('second.html')
+    expect([...session.getWatchFiles()].map(file => path.basename(file))).not.toContain('first.html')
+    expect(sourceCandidateCollector.valuesForEntries(sources)).toEqual(new Set(['second-candidate']))
+  })
+
   it('serializes explicit source snapshots for the same HMR file', async () => {
     let releaseFirstExtraction!: () => void
     const firstExtractionBlocked = new Promise<void>((resolve) => {
@@ -185,5 +204,62 @@ describe('vite framework source scan session', () => {
     expect(extractor).toHaveBeenCalledOnce()
     expect(extractor).toHaveBeenCalledWith('text-blue-500', 'ts')
     expect(sourceCandidateCollector.values()).toEqual(new Set(['text-blue-500']))
+  })
+
+  it('coalesces queued source changes into one flush while preserving the latest source per file', async () => {
+    const { appRoot } = await createTempWorkspace()
+    const firstFile = path.join(appRoot, 'src/First.vue')
+    const secondFile = path.join(appRoot, 'src/Second.vue')
+    await mkdir(path.dirname(firstFile), { recursive: true })
+    await writeFile(firstFile, 'text-old')
+    await writeFile(secondFile, 'text-second')
+    const extractor = vi.fn(async (source: string) => [source])
+    const { session, sourceCandidateCollector } = createSession({ appRoot, extractor })
+    await session.sync()
+    extractor.mockClear()
+
+    session.queueChangedFile({ event: 'update', id: firstFile, source: 'text-intermediate' })
+    session.queueChangedFile({ event: 'update', id: firstFile, source: 'text-latest' })
+    session.queueChangedFile({ event: 'update', id: secondFile, source: 'text-second-next' })
+    const changes = await session.flushChangedFiles()
+
+    expect(extractor).toHaveBeenCalledTimes(2)
+    expect(extractor).toHaveBeenCalledWith('text-latest', 'vue')
+    expect(extractor).toHaveBeenCalledWith('text-second-next', 'vue')
+    expect(changes.size).toBe(2)
+    expect(sourceCandidateCollector.values()).toEqual(new Set(['text-latest', 'text-second-next']))
+  })
+
+  it('waits for a change queued during an active flush before completing the HMR batch', async () => {
+    const { appRoot } = await createTempWorkspace()
+    const file = path.join(appRoot, 'src/Queued.vue')
+    await mkdir(path.dirname(file), { recursive: true })
+    await writeFile(file, 'text-old')
+    let releaseFirst!: () => void
+    const firstBlocked = new Promise<void>(resolve => {
+      releaseFirst = resolve
+    })
+    const extractor = vi.fn(async (source: string) => {
+      if (source === 'queued-first-1127') {
+        await firstBlocked
+      }
+      return [source]
+    })
+    const { session, sourceCandidateCollector } = createSession({ appRoot, extractor })
+    await session.sync()
+    extractor.mockClear()
+
+    session.queueChangedFile({ event: 'update', id: file, source: 'queued-first-1127' })
+    const firstFlush = session.flushChangedFiles()
+    await vi.waitFor(() => expect(extractor).toHaveBeenCalledWith('queued-first-1127', 'vue'))
+    session.queueChangedFile({ event: 'update', id: file, source: 'queued-latest-1127' })
+    const secondFlush = session.flushChangedFiles()
+    releaseFirst()
+    await Promise.all([firstFlush, secondFlush])
+    await session.waitForPendingSyncs()
+
+    expect(extractor).toHaveBeenCalledTimes(2)
+    expect(extractor).toHaveBeenLastCalledWith('queued-latest-1127', 'vue')
+    expect(sourceCandidateCollector.values()).toEqual(new Set(['queued-latest-1127']))
   })
 })

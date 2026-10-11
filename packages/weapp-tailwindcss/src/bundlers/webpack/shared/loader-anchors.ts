@@ -1,5 +1,11 @@
 export interface LoaderEntry { loader?: string }
 
+const CSS_PREPROCESSOR_RE = /(?:^|[/\\])(?:sass|less|stylus)-loader(?:[/\\]|(?:\.[cm]?js)?$)/
+
+export function findCssPreprocessorIndex(entries: LoaderEntry[]) {
+  return entries.findIndex(entry => CSS_PREPROCESSOR_RE.test(entry.loader ?? ''))
+}
+
 export interface LoaderAnchorFinders {
   findRewriteAnchor: (entries: LoaderEntry[]) => number
   findClassSetAnchor: (entries: LoaderEntry[]) => number
@@ -40,7 +46,7 @@ export function createMpxLoaderAnchorFinders(): LoaderAnchorFinders {
 }
 
 export function createDefaultLoaderAnchorFinders(): LoaderAnchorFinders {
-  const fallbackFinder = createFinder(['postcss-loader'])
+  const fallbackFinder = createPrioritizedFinder(['postcss-loader', 'css-loader'])
   return {
     findRewriteAnchor: fallbackFinder,
     findClassSetAnchor: fallbackFinder,

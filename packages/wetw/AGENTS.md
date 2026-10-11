@@ -34,4 +34,4 @@
 - `pnpm --filter wetw test`
 - `pnpm --filter wetw build`
 - 定向回归：
-  - `pnpm --filter wetw vitest run test/index.test.ts`
+  - `pnpm --filter wetw exec vitest run test/index.test.ts`

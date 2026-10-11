@@ -33,5 +33,5 @@
 - `pnpm --filter @weapp-tailwindcss/typography test`
 - `pnpm --filter @weapp-tailwindcss/typography tsd`
 - 定向回归：
-  - `pnpm --filter @weapp-tailwindcss/typography vitest run test/index.test.ts`
-  - `pnpm --filter @weapp-tailwindcss/typography vitest run test/transform.test.ts`
+  - `pnpm --filter @weapp-tailwindcss/typography exec vitest run test/index.test.ts`
+  - `pnpm --filter @weapp-tailwindcss/typography exec vitest run test/transform.test.ts`

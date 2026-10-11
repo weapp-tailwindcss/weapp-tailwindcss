@@ -45,6 +45,6 @@ WeappTailwindcss({
 
 ## 参考文档
 
-https://tw.icebreaker.top/docs/api/options/important#cssoptions
+https://tw.weapp.dev/docs/api/options/important#cssoptions
 
 https://github.com/sonofmagic/weapp-tailwindcss/issues/604

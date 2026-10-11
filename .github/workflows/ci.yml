@@ -9,17 +9,32 @@ on:
       - '**/*.md'
       - '.changeset/**'
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      full_verification:
+        description: 审批后完整执行版本 PR 验收，默认保留自动范围
+        type: boolean
+        required: false
+        default: false
 
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ inputs.full_verification && format('full-{0}', github.run_id) || github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
+  scope:
+    if: (inputs.full_verification || github.event_name != 'pull_request')
+    uses: ./.github/workflows/ci-scope.yml
+    with:
+      full_verification: ${{ inputs.full_verification || false }}
+
   quality-static:
+    needs: scope
     name: Quality Static Gate (ubuntu-latest, 22)
+    if: (inputs.full_verification || github.event_name != 'pull_request') && needs.scope.outputs.core == 'true'
     timeout-minutes: 20
     runs-on: ubuntu-latest
     # Remote Caching enabled - configure TURBO_TOKEN and TURBO_TEAM in repository settings
@@ -32,6 +47,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v6
         with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 2
 
       - uses: pnpm/action-setup@v4
@@ -44,7 +60,7 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: node scripts/ci/install-workspace.mjs
 
       - name: Security Audit
         timeout-minutes: 3
@@ -56,6 +72,12 @@ jobs:
 
       - name: Build
         run: pnpm ci:memory --label quality-build --max-rss-mb 5632 --max-rss-delta-mb 4608 -- pnpm build:ci
+
+      - name: Verify core escape package
+        run: |
+          pnpm --filter @weapp-tailwindcss/escape typecheck
+          pnpm --filter @weapp-tailwindcss/escape tsd
+          pnpm --filter @weapp-tailwindcss/escape test:package
 
       - name: CI Status Note
         if: always()
@@ -73,7 +95,7 @@ jobs:
 
       - name: Upload CI memory reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ci-memory-quality-static-${{ github.run_id }}
           path: e2e/benchmark/ci-memory/**
@@ -81,7 +103,9 @@ jobs:
           retention-days: 14
 
   unit-tests:
+    needs: scope
     name: Unit Test Gate (${{ matrix.shard }}/${{ matrix.shard_total }}, ubuntu-latest, 22)
+    if: (inputs.full_verification || github.event_name != 'pull_request') && needs.scope.outputs.core == 'true'
     timeout-minutes: 20
     runs-on: ubuntu-latest
     strategy:
@@ -98,6 +122,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v6
         with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 2
 
       - uses: pnpm/action-setup@v4
@@ -110,7 +135,7 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: node scripts/ci/install-workspace.mjs
 
       - name: Build test dependency closure
         run: pnpm ci:memory --label unit-build-${{ matrix.shard }} --max-rss-mb 5632 --max-rss-delta-mb 4608 -- pnpm build:ci
@@ -121,13 +146,13 @@ jobs:
       - name: Install Playwright Chromium
         run: |
           for attempt in 1 2 3 4; do
-            if pnpm exec playwright install chromium; then
+            if pnpm exec playwright install chromium chromium-headless-shell; then
               exit 0
             fi
             echo "Playwright Chromium install failed, retrying (${attempt}/4)"
             sleep $((attempt * 10))
           done
-          pnpm exec playwright install chromium
+          pnpm exec playwright install chromium chromium-headless-shell
 
       - name: Test repository shard
         run: pnpm ci:memory --label unit-test-${{ matrix.shard }}-${{ matrix.shard_total }} --max-rss-mb 5632 --max-rss-delta-mb 4608 -- pnpm exec vitest run --shard=${{ matrix.shard }}/${{ matrix.shard_total }}
@@ -141,7 +166,7 @@ jobs:
 
       - name: Upload CI memory reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ci-memory-unit-${{ matrix.shard }}-${{ github.run_id }}
           path: e2e/benchmark/ci-memory/**
@@ -150,25 +175,36 @@ jobs:
 
   quality:
     name: Quality Gate (ubuntu-latest, 22)
-    if: always()
-    needs: [quality-static, unit-tests]
+    if: always() && !cancelled() && (inputs.full_verification || github.event_name != 'pull_request')
+    needs: [scope, quality-static, unit-tests]
     timeout-minutes: 5
     runs-on: ubuntu-latest
     steps:
       - name: Require all quality shards
         env:
+          SCOPE_RESULT: ${{ needs.scope.result }}
+          CORE_ENABLED: ${{ needs.scope.outputs.core }}
           STATIC_RESULT: ${{ needs.quality-static.result }}
           UNIT_RESULT: ${{ needs.unit-tests.result }}
         run: |
-          test "$STATIC_RESULT" = success
-          test "$UNIT_RESULT" = success
+          test "$SCOPE_RESULT" = success
+          test "$CORE_ENABLED" = true || test "$CORE_ENABLED" = false
+          if test "$CORE_ENABLED" = true; then
+            test "$STATIC_RESULT" = success
+            test "$UNIT_RESULT" = success
+          fi
 
   e2e-static:
+    needs: scope
     name: E2E Static Gate (${{ matrix.shard }}/${{ matrix.shard_total }}, ubuntu-latest, 22)
+    if: (inputs.full_verification || github.event_name != 'pull_request') && needs.scope.outputs.core == 'true'
     timeout-minutes: 15
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      # 静态 E2E 会写入共享 demo 产物目录；同一 checkout 内并发 shard
+      # 会互相覆盖 dist 和快照，导致非确定性的产物断言失败。
+      max-parallel: 1
       matrix:
         shard: [1, 2, 3]
         shard_total: [3]
@@ -181,6 +217,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v6
         with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 2
 
       - uses: pnpm/action-setup@v4
@@ -193,7 +230,7 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: node scripts/ci/install-workspace.mjs
 
       - name: Build
         run: pnpm ci:memory --label e2e-static-build-${{ matrix.shard }} --max-rss-mb 5632 --max-rss-delta-mb 4608 -- pnpm build:ci
@@ -201,20 +238,30 @@ jobs:
       - name: Install Playwright browsers
         run: |
           for attempt in 1 2 3 4; do
-            if pnpm exec playwright install chromium; then
+            if pnpm exec playwright install chromium chromium-headless-shell; then
               exit 0
             fi
             echo "Playwright Chromium install failed, retrying (${attempt}/4)"
             sleep $((attempt * 10))
           done
-          pnpm exec playwright install chromium
+          pnpm exec playwright install chromium chromium-headless-shell
 
       - name: E2E Static
-        run: pnpm ci:memory --label e2e-static-${{ matrix.shard }}-${{ matrix.shard_total }} --max-rss-mb 5632 --max-rss-delta-mb 4608 -- pnpm e2e:static --exclude e2e/taro-h5-build-smoke.test.ts --shard=${{ matrix.shard }}/${{ matrix.shard_total }}
+        run: pnpm ci:memory --label e2e-static-${{ matrix.shard }}-${{ matrix.shard_total }} --max-rss-mb 5632 --max-rss-delta-mb 4608 -- pnpm e2e:static --exclude e2e/apps-generator-mode-compare.test.ts --exclude e2e/taro-h5-build-smoke.test.ts --shard=${{ matrix.shard }}/${{ matrix.shard_total }}
+
+      - name: Upload Lynx failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lynx-static-shard-${{ matrix.shard }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: e2e/.artifacts/lynx-static/**
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Upload CI memory reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ci-memory-e2e-static-${{ matrix.shard }}-${{ github.run_id }}
           path: e2e/benchmark/ci-memory/**
@@ -222,13 +269,17 @@ jobs:
           retention-days: 14
 
   e2e-focused:
+    needs: scope
     name: E2E Focused Gate (${{ matrix.case_name }})
+    if: (inputs.full_verification || github.event_name != 'pull_request') && needs.scope.outputs.core == 'true'
     timeout-minutes: 20
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         include:
+          - case_name: apps-generator
+            command: pnpm e2e:apps-generator
           - case_name: generator-web-parity
             command: pnpm e2e:generator-parity
           - case_name: lynx-rspeedy
@@ -249,6 +300,8 @@ jobs:
             command: pnpm e2e:demo-user-workflow
           - case_name: demo-platform-output-matrix
             command: pnpm exec vitest run -c ./e2e/vitest.e2e.config.ts e2e/e2e-matrix.test.ts
+          - case_name: coverage-contract
+            command: pnpm e2e:coverage:contract
           - case_name: issues-977-978
             command: pnpm e2e:issues-977-978
           - case_name: vite-web-hmr-unit
@@ -265,6 +318,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v6
         with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 2
 
       - uses: pnpm/action-setup@v4
@@ -277,7 +331,7 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: node scripts/ci/install-workspace.mjs
 
       - name: Build
         run: pnpm ci:memory --label e2e-focused-build-${{ matrix.case_name }} --max-rss-mb 5632 --max-rss-delta-mb 4608 -- pnpm build:ci
@@ -285,20 +339,30 @@ jobs:
       - name: Install Playwright browsers
         run: |
           for attempt in 1 2 3 4; do
-            if pnpm exec playwright install chromium; then
+            if pnpm exec playwright install chromium chromium-headless-shell; then
               exit 0
             fi
             echo "Playwright Chromium install failed, retrying (${attempt}/4)"
             sleep $((attempt * 10))
           done
-          pnpm exec playwright install chromium
+          pnpm exec playwright install chromium chromium-headless-shell
 
       - name: Run focused e2e
         run: pnpm ci:memory --label e2e-focused-${{ matrix.case_name }} --max-rss-mb 5632 --max-rss-delta-mb 4608 -- ${{ matrix.command }}
 
+      - name: Upload Lynx failure diagnostics
+        if: failure() && matrix.case_name == 'lynx-rspeedy'
+        uses: actions/upload-artifact@v7
+        with:
+          name: lynx-static-focused-${{ github.run_id }}-${{ github.run_attempt }}
+          path: e2e/.artifacts/lynx-static/**
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Upload CI memory reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ci-memory-e2e-focused-${{ matrix.case_name }}-${{ github.run_id }}
           path: e2e/benchmark/ci-memory/**
@@ -306,7 +370,9 @@ jobs:
           retention-days: 14
 
   e2e-multiplatform:
+    needs: scope
     name: E2E Multiplatform Gate (${{ matrix.case_name }})
+    if: (inputs.full_verification || github.event_name != 'pull_request') && needs.scope.outputs.core == 'true'
     timeout-minutes: ${{ matrix.timeout_minutes }}
     runs-on: ubuntu-latest
     strategy:
@@ -328,6 +394,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v6
         with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 2
 
       - uses: pnpm/action-setup@v4
@@ -340,7 +407,7 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: node scripts/ci/install-workspace.mjs
 
       - name: Build
         run: pnpm ci:memory --label e2e-multiplatform-build-${{ matrix.case_name }} --max-rss-mb 5632 --max-rss-delta-mb 4608 -- pnpm build:ci
@@ -348,20 +415,20 @@ jobs:
       - name: Install Playwright browsers
         run: |
           for attempt in 1 2 3 4; do
-            if pnpm exec playwright install chromium; then
+            if pnpm exec playwright install chromium chromium-headless-shell; then
               exit 0
             fi
             echo "Playwright Chromium install failed, retrying (${attempt}/4)"
             sleep $((attempt * 10))
           done
-          pnpm exec playwright install chromium
+          pnpm exec playwright install chromium chromium-headless-shell
 
       - name: Run multiplatform e2e
         run: pnpm ci:memory --label e2e-multiplatform-${{ matrix.case_name }} --max-rss-mb 5632 --max-rss-delta-mb 4608 -- ${{ matrix.command }}
 
       - name: Upload CI memory reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ci-memory-e2e-multiplatform-${{ matrix.case_name }}-${{ github.run_id }}
           path: e2e/benchmark/ci-memory/**
@@ -369,7 +436,9 @@ jobs:
           retention-days: 14
 
   e2e-watch:
+    needs: scope
     name: E2E Watch Gate (${{ matrix.runner_label }}, ${{ matrix.watch_case }}, ${{ matrix.round_profile }})
+    if: (inputs.full_verification || github.event_name != 'pull_request') && needs.scope.outputs.core == 'true'
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ matrix.timeout_minutes }}
     strategy:
@@ -429,6 +498,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v6
         with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 2
 
       - name: Setup pnpm
@@ -442,19 +512,19 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: node scripts/ci/install-workspace.mjs
 
       - name: Install Playwright Chromium
         shell: bash
         run: |
           for attempt in 1 2 3 4; do
-            if pnpm --filter @weapp-tailwindcss/scripts exec playwright install chromium; then
+            if pnpm --filter @weapp-tailwindcss/scripts exec playwright install chromium chromium-headless-shell; then
               exit 0
             fi
             echo "Playwright Chromium install failed, retrying (${attempt}/4)"
             sleep $((attempt * 10))
           done
-          pnpm --filter @weapp-tailwindcss/scripts exec playwright install chromium
+          pnpm --filter @weapp-tailwindcss/scripts exec playwright install chromium chromium-headless-shell
 
       - name: Build watch suite package dependencies
         run: pnpm build:ci
@@ -473,13 +543,13 @@ jobs:
           E2E_WATCH_CASE: ${{ matrix.watch_case }}
           E2E_WATCH_TIMEOUT_MS: ${{ matrix.watch_timeout_ms }}
           E2E_WATCH_POLL_MS: ${{ matrix.watch_poll_ms }}
-          E2E_WATCH_MAX_HOT_UPDATE_MS: ${{ matrix.watch_max_hot_update_ms || matrix.watch_timeout_ms }}
+          E2E_WATCH_MAX_HOT_UPDATE_MS: ${{ matrix.watch_timeout_ms }}
           E2E_WATCH_MAX_PLUGIN_PROCESS_MS: ${{ matrix.watch_max_plugin_process_ms || '6000' }}
-          E2E_WATCH_MAX_MEMORY_RSS_MB: ${{ matrix.watch_max_memory_rss_mb || '5632' }}
-          E2E_WATCH_MAX_MEMORY_RSS_DELTA_MB: ${{ matrix.watch_max_memory_rss_delta_mb || '4608' }}
-          E2E_WATCH_MAX_MEMORY_HEAP_USED_MB: ${{ matrix.watch_max_memory_heap_used_mb || '4096' }}
+          E2E_WATCH_MAX_MEMORY_RSS_MB: '5632'
+          E2E_WATCH_MAX_MEMORY_RSS_DELTA_MB: '4608'
+          E2E_WATCH_MAX_MEMORY_HEAP_USED_MB: '4096'
           E2E_WATCH_COMMAND_TIMEOUT_MS: ${{ matrix.watch_command_timeout_ms }}
-          E2E_WATCH_MAX_ATTEMPTS: ${{ matrix.watch_max_attempts || '2' }}
+          E2E_WATCH_MAX_ATTEMPTS: '2'
           E2E_WATCH_ROUND_PROFILE: ${{ matrix.round_profile }}
           E2E_WATCH_WEB_ONLY: ${{ matrix.watch_web_only || '0' }}
           E2E_WATCH_SAVE_SNAPSHOTS: ${{ matrix.watch_save_snapshots }}
@@ -510,7 +580,7 @@ jobs:
 
       - name: Upload e2e watch reports (always)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-watch-hmr-ci-${{ matrix.runner_label }}-node${{ matrix.node-version }}-${{ matrix.artifact_case || matrix.watch_case }}-${{ matrix.round_profile }}-${{ github.run_id }}
           path: |
@@ -522,7 +592,7 @@ jobs:
 
       - name: Upload e2e watch failure artifacts
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-watch-hmr-ci-failure-${{ matrix.runner_label }}-node${{ matrix.node-version }}-${{ matrix.artifact_case || matrix.watch_case }}-${{ matrix.round_profile }}-${{ github.run_id }}
           path: |
@@ -532,12 +602,14 @@ jobs:
           retention-days: 14
 
   compatibility:
+    needs: scope
     name: Compatibility Gate (${{ matrix.os }}, ${{ matrix.node-version }}, ${{ matrix.scenario }})
+    if: (inputs.full_verification || github.event_name != 'pull_request') && needs.scope.outputs.core == 'true'
     timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '[{"os":"ubuntu-latest","node-version":"22.12.0","pnpm-version":"11.9.0","scenario":"node22-min-core"},{"os":"ubuntu-latest","node-version":24,"pnpm-version":"11.9.0","scenario":"node24-core"},{"os":"windows-latest","node-version":22,"pnpm-version":"11.9.0","scenario":"windows-node22-core"},{"os":"windows-latest","node-version":24,"pnpm-version":"11.9.0","scenario":"windows-node24-core"},{"os":"macos-latest","node-version":22,"pnpm-version":"11.9.0","scenario":"macos-node22-core"}]' || '[{"os":"windows-latest","node-version":22,"pnpm-version":"11.9.0","scenario":"windows-node22-core"}]') }}
+        include: ${{ fromJSON((inputs.full_verification || github.event_name == 'workflow_dispatch') && '[{"os":"ubuntu-latest","node-version":"22.18.0","pnpm-version":"11.9.0","scenario":"node22-min-core"},{"os":"ubuntu-latest","node-version":24,"pnpm-version":"11.9.0","scenario":"node24-core"},{"os":"windows-latest","node-version":22,"pnpm-version":"11.9.0","scenario":"windows-node22-core"},{"os":"windows-latest","node-version":24,"pnpm-version":"11.9.0","scenario":"windows-node24-core"},{"os":"macos-latest","node-version":22,"pnpm-version":"11.9.0","scenario":"macos-node22-core"}]' || '[{"os":"windows-latest","node-version":22,"pnpm-version":"11.9.0","scenario":"windows-node22-core"}]') }}
     runs-on: ${{ matrix.os }}
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
@@ -550,6 +622,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v6
         with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 2
 
       - uses: pnpm/action-setup@v4
@@ -563,14 +636,19 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: node scripts/ci/install-workspace.mjs
 
       - name: Build core package dependency closure
         run: pnpm build:ci
 
+      - name: Verify core escape on this platform
+        run: pnpm --filter @weapp-tailwindcss/escape test:package
+
       - name: Run core compatibility regression tests
         run: >
           pnpm --filter weapp-tailwindcss exec vitest run
+          test/ci/install-frozen-config.test.ts
+          test/ci/install-workspace.test.ts
           test/bundlers/module-graph.unit.test.ts
           test/bundlers/vite-bundle-entries.unit.test.ts
           test/bundlers/vite-plugin.uni-app-x.unit.test.ts
@@ -580,6 +658,9 @@ jobs:
           test/tailwindcss/targets.log.test.ts
           test/watch-hmr-coverage-matrix.unit.test.ts
           test/watch-hmr-regression.unit.test.ts
+          test/watch-hmr-memory-sampler.unit.test.ts
+          test/watch-hmr-memory-source.unit.test.ts
+          --update=none
 
       - name: Compatibility Status Note
         if: always()

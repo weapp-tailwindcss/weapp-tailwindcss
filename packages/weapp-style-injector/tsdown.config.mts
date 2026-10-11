@@ -3,6 +3,7 @@ import { defineConfig } from 'tsdown'
 export default defineConfig({
   entry: [
     'src/index.ts',
+    'src/types.ts',
     'src/vite.ts',
     'src/vite/uni-app.ts',
     'src/vite/taro.ts',
@@ -16,6 +17,7 @@ export default defineConfig({
   clean: true,
   dts: false,
   deps: {
+    resolveDepSubpath: true,
     neverBundle: ['vite'],
   },
   outExtensions({ format }) {

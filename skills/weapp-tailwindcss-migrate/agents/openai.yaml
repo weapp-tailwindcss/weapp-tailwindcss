@@ -1,4 +1,4 @@
 interface:
   display_name: "weapp-tailwindcss 升级迁移"
-  short_description: "迁移旧版配置到当前 v5 生成链路与完整运行环境要求"
-  default_prompt: "使用 $weapp-tailwindcss-migrate 迁移现有项目。Use $weapp-tailwindcss-migrate to move it to the current v5 setup."
+  short_description: "迁移旧版插件、CLI 与配置到当前 v5 生成链路"
+  default_prompt: "使用 $weapp-tailwindcss-migrate 清理旧插件和 CLI。Use $weapp-tailwindcss-migrate to move my legacy setup to v5."

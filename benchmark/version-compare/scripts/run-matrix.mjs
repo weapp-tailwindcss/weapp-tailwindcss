@@ -3,6 +3,8 @@ import fs from 'node:fs/promises'
 import net from 'node:net'
 import path from 'node:path'
 import process from 'node:process'
+import { fileURLToPath } from 'node:url'
+import { createGcDiagnostics } from './gc-diagnostics.mjs'
 import { createProcessMemorySampler } from './process-memory.mjs'
 import { benchmarkProjects as projects } from './projects.mjs'
 import { resolvePluginTimingSample } from './timing.mjs'
@@ -50,6 +52,7 @@ async function parseVersions() {
     return {
       version: item.version,
       root: path.resolve(item.root),
+      ...(item.diagnosticIdentity ? { diagnosticIdentity: item.diagnosticIdentity } : {}),
     }
   })
 }
@@ -81,6 +84,7 @@ function summarize(values) {
   }
   const sorted = [...values].sort((a, b) => a - b)
   const p95Index = Math.min(sorted.length - 1, Math.ceil(sorted.length * 0.95) - 1)
+  const p99Index = Math.min(sorted.length - 1, Math.ceil(sorted.length * 0.99) - 1)
   return {
     count: values.length,
     mean: mean(values),
@@ -88,12 +92,28 @@ function summarize(values) {
     min: sorted[0],
     max: sorted[sorted.length - 1],
     p95: sorted[p95Index],
+    p99: sorted[p99Index],
     stddev: stddev(values),
   }
 }
 
 function summarizeSteady(values) {
   return summarize(values.slice(1)) ?? summarize(values)
+}
+
+function summarizeTimingPhases(timings) {
+  const phases = new Map()
+  for (const timing of timings) {
+    const phase = timing?.phase
+    const durationMs = timing?.durationMs
+    if (typeof phase !== 'string' || typeof durationMs !== 'number' || !Number.isFinite(durationMs)) {
+      continue
+    }
+    const values = phases.get(phase) ?? []
+    values.push(durationMs)
+    phases.set(phase, values)
+  }
+  return Object.fromEntries([...phases].map(([phase, values]) => [phase, summarize(values)]))
 }
 
 function spawnPnpmWithEnv(cwd, args, env = {}, stdio = 'pipe') {
@@ -304,13 +324,15 @@ function stopChild(child) {
   })
 }
 
-async function runBuildOnce(cwd, buildScript, timeoutMs, buildEnv = {}) {
+async function runBuildOnce(cwd, buildScript, timeoutMs, buildEnv = {}, diagnostics) {
   const start = now()
   const child = spawnPnpmWithEnv(cwd, ['run', buildScript], {
     WEAPP_TW_HMR_TIMING: '1',
     WEAPP_TW_HMR_TIMING_LOG: '0',
     ...buildEnv,
+    ...diagnostics?.env,
   }, 'pipe')
+  diagnostics?.spawned(child.pid)
   const memorySampler = createProcessMemorySampler(child.pid)
   let logs = ''
   child.stdout.on('data', (chunk) => {
@@ -360,6 +382,7 @@ async function runBuildOnce(cwd, buildScript, timeoutMs, buildEnv = {}) {
 
   const pluginTiming = resolvePluginTimingSample(logs.split(/\r?\n/))
   return {
+    rootPid: child.pid,
     durationMs: now() - start,
     pluginProcessMs: pluginTiming?.durationMs,
     pluginTiming,
@@ -407,6 +430,7 @@ async function runHmrRounds({
   rounds,
   timeoutMs,
   pollIntervalMs,
+  diagnostics,
 }) {
   const sourcePath = path.join(cwd, sourceFile)
   const outputPath = path.join(cwd, outputTemplate)
@@ -418,7 +442,9 @@ async function runHmrRounds({
     WEAPP_TW_HMR_TIMING: '1',
     WEAPP_TW_HMR_TIMING_LOG: '0',
     ...devEnv,
+    ...diagnostics?.env,
   }, 'pipe')
+  diagnostics?.spawned(child.pid)
   const memorySampler = createProcessMemorySampler(child.pid)
   const logBuffer = createWatchLogBuffer()
   const logs = logBuffer.lines
@@ -444,6 +470,7 @@ async function runHmrRounds({
     if (!ready) {
       throw new Error(`dev warmup timeout ${timeoutMs}ms\n${logs.slice(-120).join('\n')}`)
     }
+    diagnostics?.mark('watch-ready')
 
     const times = []
 
@@ -452,6 +479,7 @@ async function runHmrRounds({
       const next = injectContent(original, marker, injectType)
       const roundLogs = logBuffer.beginRound()
       const start = now()
+      diagnostics?.mark('mutation-write', i + 1)
       await fs.writeFile(sourcePath, next, 'utf8')
 
       const ok = await waitFor(async () => {
@@ -470,6 +498,7 @@ async function runHmrRounds({
       if (!ok) {
         throw new Error(`hmr round ${i + 1} timeout ${timeoutMs}ms marker=${marker}\n${logs.slice(-120).join('\n')}`)
       }
+      diagnostics?.mark('mutation-observed', i + 1)
 
       const pluginTiming = await waitForPluginTimingSample(roundLogs.lines, 0, timeoutMs, pollIntervalMs)
       times.push({
@@ -478,6 +507,7 @@ async function runHmrRounds({
         pluginTiming,
       })
 
+      diagnostics?.mark('rollback-write', i + 1)
       await fs.writeFile(sourcePath, original, 'utf8')
       const rolledBack = await waitFor(async () => {
         for (const probePath of probePaths) {
@@ -491,6 +521,7 @@ async function runHmrRounds({
       if (!rolledBack) {
         throw new Error(`hmr rollback ${i + 1} timeout ${timeoutMs}ms marker=${marker}\n${logs.slice(-120).join('\n')}`)
       }
+      diagnostics?.mark('rollback-observed', i + 1)
     }
 
     await fs.writeFile(sourcePath, original, 'utf8')
@@ -629,13 +660,14 @@ async function runDevServerHmrRounds({
   }
 }
 
-async function runCase(versionMeta, projectMeta, options) {
+export async function runCase(versionMeta, projectMeta, options) {
   const cwd = path.join(versionMeta.root, projectMeta.project)
   const buildMs = []
   const buildPluginMs = []
   const buildPluginTimings = []
   const buildPeakRssMb = []
   const buildSteadyRssMb = []
+  const buildMemorySamples = []
 
   const buildMode = projectMeta.buildMode ?? 'build'
   if (buildMode === 'unsupported') {
@@ -643,7 +675,15 @@ async function runCase(versionMeta, projectMeta, options) {
   }
   else {
     for (let i = 0; i < options.buildRuns; i += 1) {
-      const sample = await runBuildOnce(cwd, projectMeta.buildScript, options.timeoutMs, projectMeta.buildEnv)
+      const diagnostics = await createGcDiagnostics({ cwd, versionMeta, projectMeta, directory: options.gcDiagnosticDir, kind: 'build', run: i + 1, env: projectMeta.buildEnv })
+      let sample
+      try {
+        sample = await runBuildOnce(cwd, projectMeta.buildScript, options.timeoutMs, projectMeta.buildEnv, diagnostics)
+      }
+      finally {
+        await diagnostics?.finish()
+      }
+      buildMemorySamples.push({ run: i + 1, ...sample })
       buildMs.push(sample.durationMs)
       if (typeof sample.pluginProcessMs === 'number') {
         buildPluginMs.push(sample.pluginProcessMs)
@@ -683,19 +723,27 @@ async function runCase(versionMeta, projectMeta, options) {
       hmrPluginTimings.push(...result.samples.flatMap(sample => sample.pluginTiming ? [sample.pluginTiming] : []))
     }
     else {
-      const result = await runHmrRounds({
-        cwd,
-        sourceFile: projectMeta.sourceFile,
-        outputTemplate: projectMeta.outputTemplate,
-        outputProbeTemplates: projectMeta.outputProbeTemplates,
-        devScript: projectMeta.devScript,
-        injectType: projectMeta.injectType,
-        devEnv: projectMeta.devEnv,
-        watchReadyLog: projectMeta.watchReadyLog,
-        rounds: options.hmrRuns,
-        timeoutMs: options.timeoutMs,
-        pollIntervalMs: options.pollIntervalMs,
-      })
+      const diagnostics = await createGcDiagnostics({ cwd, versionMeta, projectMeta, directory: options.gcDiagnosticDir, kind: 'hmr', run: 1, env: projectMeta.devEnv })
+      let result
+      try {
+        result = await runHmrRounds({
+          cwd,
+          sourceFile: projectMeta.sourceFile,
+          outputTemplate: projectMeta.outputTemplate,
+          outputProbeTemplates: projectMeta.outputProbeTemplates,
+          devScript: projectMeta.devScript,
+          injectType: projectMeta.injectType,
+          devEnv: projectMeta.devEnv,
+          watchReadyLog: projectMeta.watchReadyLog,
+          rounds: options.hmrRuns,
+          timeoutMs: options.timeoutMs,
+          pollIntervalMs: options.pollIntervalMs,
+          diagnostics,
+        })
+      }
+      finally {
+        await diagnostics?.finish()
+      }
       hmrMemory = result.memory
       hmrMs.push(...result.samples.map(sample => sample.durationMs))
       hmrPluginMs.push(...result.samples.flatMap(sample => typeof sample.pluginProcessMs === 'number' ? [sample.pluginProcessMs] : []))
@@ -718,6 +766,7 @@ async function runCase(versionMeta, projectMeta, options) {
     buildPluginTimings,
     buildPeakRssMb,
     buildSteadyRssMb,
+    buildMemorySamples,
     hmrMs,
     hmrPluginMs,
     hmrPluginTimings,
@@ -737,6 +786,7 @@ async function runCase(versionMeta, projectMeta, options) {
       hmrPluginSteady: summarizeSteady(hmrPluginMs),
       hmrPeakRssMb: summarize(hmrMemory?.count > 0 ? [hmrMemory.peakRssMb] : []),
       hmrSteadyRssMb: summarize(hmrMemory?.count > 0 ? [hmrMemory.steadyRssMb] : []),
+      phases: summarizeTimingPhases([...buildPluginTimings, ...hmrPluginTimings]),
     },
   }
 }
@@ -748,9 +798,10 @@ async function main() {
   const pollIntervalMs = parseNumber('--poll-interval', 30)
   const output = parseString('--out', 'benchmark/version-compare/data/matrix-raw.json')
   const only = parseString('--only', '')
+  const gcDiagnosticDir = parseString('--gc-diagnostic-dir', '')
   const versions = await parseVersions()
 
-  const options = { buildRuns, hmrRuns, timeoutMs, pollIntervalMs }
+  const options = { buildRuns, hmrRuns, timeoutMs, pollIntervalMs, ...(gcDiagnosticDir ? { gcDiagnosticDir: path.resolve(gcDiagnosticDir) } : {}) }
   const rows = []
   const selectedProjects = only
     ? projects.filter((item) => {
@@ -789,7 +840,9 @@ async function main() {
   process.stdout.write(`matrix raw -> ${path.resolve(output)}\n`)
 }
 
-main().catch((error) => {
-  console.error(error)
-  process.exitCode = 1
-})
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((error) => {
+    console.error(error)
+    process.exitCode = 1
+  })
+}

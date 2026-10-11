@@ -3,10 +3,10 @@ import type { BundleSnapshot } from '../bundle-state'
 import type { RememberedCssSource } from './types'
 import path from 'node:path'
 import { isTailwindV4CssEntry } from '@/tailwindcss/v4/css-entries'
-import { hasTailwindApplyDirective, hasTailwindNonRootGenerationDirectives, hasTailwindRootDirectives, hasTailwindSourceDirectives } from '../../shared/generator-css/directives'
-import { scoreTailwindV4CssSourceFileMatch } from '../../shared/generator-css/source-resolver/matching'
+import { hasTailwindApplyDirective, hasTailwindNonRootGenerationDirectives, hasTailwindRootDirectives, hasTailwindSourceDirectives } from '../../../generation/directives'
+import { scoreTailwindV4CssSourceFileMatch } from '../../../generation/source-resolver/matching'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
-import { CSS_SOURCE_OUTPUT_EXT_RE } from './css-output'
+import { CSS_SOURCE_OUTPUT_EXT_RE } from '../css-output'
 import { scoreMatchingStyleFileBase } from './style-matching'
 
 const SFC_STYLE_SOURCE_EXTENSIONS = ['.vue', '.uvue', '.nvue', '.svelte', '.mpx'] as const
@@ -53,20 +53,25 @@ export function hasSfcStyleSources(source: string) {
   return extractSfcStyleSources(source).length > 0
 }
 
+function resolveSfcStyleBlockLang(attrs: string) {
+  const match = SFC_LANG_STYLE_ATTR_RE.exec(attrs)
+  return match?.[1] ?? match?.[2] ?? match?.[3]
+}
+
 function resolveSfcStyleHandlerSourceFile(sourceFile: string, styleBlocks: SfcStyleBlock[]) {
   const scopedStyleBlock = styleBlocks.find(style => style.scoped)
   return scopedStyleBlock
-    ? `${sourceFile}?vue&type=style&index=${scopedStyleBlock.index}&scoped=true`
+    ? [
+        `${sourceFile}?vue&type=style&index=${scopedStyleBlock.index}&scoped=true`,
+        ...resolveSfcStyleBlockLang(scopedStyleBlock.attrs)
+          ? [`lang=${encodeURIComponent(resolveSfcStyleBlockLang(scopedStyleBlock.attrs)!)}`]
+          : [],
+      ].join('&')
     : sourceFile
 }
 
 function normalizeSfcStyleSourceForCompare(source: string) {
   return source.replace(/\r\n?/g, '\n').trim()
-}
-
-function resolveSfcStyleBlockLang(attrs: string) {
-  const match = SFC_LANG_STYLE_ATTR_RE.exec(attrs)
-  return match?.[1] ?? match?.[2] ?? match?.[3]
 }
 
 function createSfcStyleRequest(sourceFile: string, styleBlock: SfcStyleBlock) {
@@ -326,7 +331,7 @@ export function resolveSourceStyleSourceFromOutputFile(
   sourceRoot: string | undefined,
   getSourceStyleSource: ((file: string) => string | undefined) | undefined,
   getSourceStyleSources: (() => Iterable<[string, string]>) | undefined,
-  configuredSourceEntries: Iterable<[string, string]> | undefined,
+  configuredSourceEntries: Iterable<readonly [string, string]> | undefined,
   debug: (format: string, ...args: unknown[]) => void,
 ): RememberedCssSource | undefined {
   let sourceFile = resolveSourceStyleFileFromSiblingChunk(outputFile, snapshot, outputRoot, sourceRoot, debug)

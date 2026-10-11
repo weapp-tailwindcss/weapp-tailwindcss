@@ -4,9 +4,12 @@ import { isDisplayP3MediaRule } from './color-gamut'
 import { isBrowserElementPreflightRule } from './predicates'
 import { isUnsupportedBrowserPreflightSelector, isUnsupportedBrowserSelector, MINI_PROGRAM_THEME_SCOPE_SELECTORS, ROOT_SPECIFICITY_PLACEHOLDER_SUFFIXES, SPECIFICITY_PLACEHOLDER_SUFFIXES } from './selectors'
 
+const rootSpecificityTargets = [...MINI_PROGRAM_THEME_SCOPE_SELECTORS].flatMap(scope => ROOT_SPECIFICITY_PLACEHOLDER_SUFFIXES.map(suffix => [scope + suffix, scope] as const))
+const PLAIN_CLASS_OR_ID = /^[.#][\w-]+$/
+
 export function removeSpecificityPlaceholders(root: postcss.Root) {
   root.walkRules((rule) => {
-    if (!rule.selectors || rule.selectors.length === 0) {
+    if (!rule.selector || !hasMiniProgramCssSpecificityPlaceholders(rule.selector)) {
       return
     }
 
@@ -48,19 +51,16 @@ export const removeSpecificityPlaceholdersFromSource = stripMiniProgramCssSpecif
 
 export function removeRootSpecificityPlaceholders(root: postcss.Root) {
   root.walkRules((rule) => {
-    if (!rule.selectors || rule.selectors.length === 0) {
+    if (!rule.selector || !rootSpecificityTargets.some(([target]) => rule.selector.includes(target))) {
       return
     }
 
     let changed = false
     const selectors = rule.selectors.map((selector) => {
       let next = selector
-      for (const scopeSelector of MINI_PROGRAM_THEME_SCOPE_SELECTORS) {
-        for (const suffix of ROOT_SPECIFICITY_PLACEHOLDER_SUFFIXES) {
-          const target = `${scopeSelector}${suffix}`
-          if (next.includes(target)) {
-            next = next.split(target).join(scopeSelector)
-          }
+      for (const [target, scopeSelector] of rootSpecificityTargets) {
+        if (next.includes(target)) {
+          next = next.split(target).join(scopeSelector)
         }
       }
       if (next !== selector) {
@@ -77,6 +77,10 @@ export function removeRootSpecificityPlaceholders(root: postcss.Root) {
 
 function isEffectivelyEmptyContainer(container: postcss.Container) {
   return container.nodes !== undefined && container.nodes.every(node => node.type === 'comment')
+}
+
+function isKeyframeStepRule(rule: postcss.Rule) {
+  return rule.parent?.type === 'atrule' && rule.parent.name.toLowerCase().endsWith('keyframes')
 }
 
 export function removeEmptyAtRules(root: postcss.Root) {
@@ -117,9 +121,24 @@ function removeEmptyAtRuleAncestors(parent: postcss.Container | undefined) {
   }
 }
 
+export function removeEmptyRules(root: postcss.Root) {
+  let removed = 0
+  root.walkRules((rule) => {
+    if (isKeyframeStepRule(rule) || !rule.parent || !isEffectivelyEmptyContainer(rule)) {
+      return
+    }
+    const parent = rule.parent
+    rule.remove()
+    removeEmptyAtRuleAncestors(parent)
+    removed++
+  })
+  return removed
+}
+
 export function removeUnsupportedBrowserSelectors(root: postcss.Root) {
   root.walkRules((rule) => {
-    if (!rule.selectors || rule.selectors.length === 0) {
+    // 单个普通 class/id 不可能是浏览器标签或伪元素；复杂语法仍按完整列表判断。
+    if (!rule.selector || PLAIN_CLASS_OR_ID.test(rule.selector)) {
       return
     }
 
@@ -137,8 +156,9 @@ export function removeUnsupportedBrowserSelectors(root: postcss.Root) {
       return
     }
 
-    const selectors = rule.selectors.filter(selector => !isUnsupportedBrowserSelector(selector))
-    if (selectors.length === rule.selectors.length) {
+    const originalSelectors = rule.selectors
+    const selectors = originalSelectors.filter(selector => !isUnsupportedBrowserSelector(selector))
+    if (selectors.length === originalSelectors.length) {
       return
     }
 
@@ -193,7 +213,7 @@ interface RemoveTailwindContainerRulesOptions {
 }
 
 function isContainerMaxWidthOnlyRule(rule: postcss.Rule) {
-  if (!rule.selectors || rule.selectors.length !== 1 || rule.selectors[0] !== '.container') {
+  if (!isContainerSelector(rule)) {
     return false
   }
   const declarations = rule.nodes?.filter(node => node.type === 'decl') ?? []
@@ -218,8 +238,16 @@ export function removeTailwindContainerMaxWidthMediaRules(root: postcss.Root) {
   })
 }
 
+function isContainerSelector(rule: postcss.Rule) {
+  if (!rule.selector?.includes('.container')) {
+    return false
+  }
+  const selectors = rule.selectors
+  return selectors.length === 1 && selectors[0] === '.container'
+}
+
 function isContainerWidthOnlyRule(rule: postcss.Rule) {
-  if (!rule.selectors || rule.selectors.length !== 1 || rule.selectors[0] !== '.container') {
+  if (!isContainerSelector(rule)) {
     return false
   }
   const declarations = rule.nodes?.filter(node => node.type === 'decl') ?? []

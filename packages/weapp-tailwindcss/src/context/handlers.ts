@@ -1,5 +1,5 @@
 import type { ICustomAttributesEntities, InternalUserDefinedOptions } from '@/types'
-import { createStyleHandler } from '@weapp-tailwindcss/postcss'
+import { createStyleHandler } from '@weapp-tailwindcss/postcss/transform'
 import { createJsHandler } from '@/js'
 import { resolveUniAppXOptions } from '@/uni-app-x/options'
 import { createTemplateHandler } from '@/wxml'
@@ -41,11 +41,11 @@ export function createHandlersFromContext(
     injectAdditionalCssVarScope: resolvedInjectAdditionalCssVarScope,
     postcssOptions,
     uniAppXUnsupported: resolvedUniAppXOptions.uvueUnsupported,
-    cssCalc: cssCalcOptions,
+    cssCalc: styleOptions.cssCalc ?? cssCalcOptions,
     majorVersion: normalizeStyleHandlerMajorVersion(tailwindcssMajorVersion),
   })
 
-  const jsHandler = createJsHandler({
+  const jsHandlerOptions = Object.freeze({
     escapeMap,
     arbitraryValues,
     jsPreserveClass,
@@ -57,6 +57,7 @@ export function createHandlersFromContext(
     uniAppX: uniAppXEnabled,
     moduleSpecifierReplacements,
   })
+  const jsHandler = createJsHandler(jsHandlerOptions)
 
   const templateHandler = createTemplateHandler({
     customAttributesEntities,

@@ -1,33 +1,35 @@
 # weapp-style-injector
 
-> 简体中文 | [English](./README.en.md)
+Use `weapp-style-injector/types` for framework options without importing Vite or Webpack adapter implementations.
 
-`weapp-style-injector` 用于在小程序构建产物中生成样式入口，并把入口通过 `@import` 注入匹配的页面或组件样式。它覆盖 Vite、Webpack、uni-app、Taro 和 Mpx 等常见构建场景。
+> English | [简体中文](./README.zh-CN.md)
 
-它不负责决定 Tailwind CSS 要扫描哪些文件：
+`weapp-style-injector` generates style entry assets for mini program builds and injects them into matching page or component styles through `@import`. It supports common Vite, Webpack, uni-app, Taro, and Mpx build setups.
 
-- `cssEntries` 让 `weapp-tailwindcss` 识别 Tailwind CSS 入口。
-- 每个入口的 `@source` 决定该入口提炼哪些候选类。
-- `styleInjector.rules` 决定生成的分包入口应该注入哪些样式产物。
+It does not decide which files Tailwind CSS scans:
 
-## 推荐入口
+- `cssEntries` lets `weapp-tailwindcss` identify Tailwind CSS entry files.
+- Each entry's `@source` directives define the candidates generated for that entry.
+- `styleInjector.rules` maps generated subpackage entries to target style assets.
 
-| 场景 | 入口 |
+## Recommended Entries
+
+| Scenario | Entry |
 | --- | --- |
-| 已使用 `weapp-tailwindcss` | 使用主插件的 `styleInjector` 选项 |
-| 通用 Vite 插件 | `weapp-style-injector/vite` |
-| 通用 Webpack 插件 | `weapp-style-injector/webpack` |
-| uni-app Vite 预设 | `weapp-style-injector/vite/uni-app` |
-| uni-app Webpack 预设 | `weapp-style-injector/webpack/uni-app` |
-| Taro Vite 预设 | `weapp-style-injector/vite/taro` |
-| Taro Webpack 预设 | `weapp-style-injector/webpack/taro` |
-| Mpx Webpack 预设 | `weapp-style-injector/webpack/mpx` |
+| Already using `weapp-tailwindcss` | Use the main plugin's `styleInjector` option |
+| Generic Vite plugin | `weapp-style-injector/vite` |
+| Generic Webpack plugin | `weapp-style-injector/webpack` |
+| uni-app Vite preset | `weapp-style-injector/vite/uni-app` |
+| uni-app Webpack preset | `weapp-style-injector/webpack/uni-app` |
+| Taro Vite preset | `weapp-style-injector/vite/taro` |
+| Taro Webpack preset | `weapp-style-injector/webpack/taro` |
+| Mpx Webpack preset | `weapp-style-injector/webpack/mpx` |
 
-`uni-app`、`taro`、`subpackage` 等解析模块属于包内实现细节，不作为应用项目的公开接入入口。
+The `uni-app`, `taro`, and `subpackage` parser modules are internal implementation details, not public application entry points.
 
-## 通过 weapp-tailwindcss 使用
+## Using the Built-in Integration
 
-`weapp-tailwindcss` 已内置本包。已有项目不需要再安装或注册一个独立插件，只需开启 `styleInjector`：
+`weapp-tailwindcss` already includes this package. Existing projects do not need to install or register another plugin:
 
 ```ts title="vite.config.ts"
 import { dirname, resolve } from 'node:path'
@@ -64,7 +66,7 @@ export default defineConfig({
 })
 ```
 
-uni-app 预设会从 `pages.json` 读取分包根目录。上面的规则会在每个分包内寻找 `index.css`，生成对应平台的分包入口，并在匹配的页面样式前插入相对引用：
+The uni-app preset reads subpackage roots from `pages.json`. The rule finds `index.css` inside each subpackage, emits the platform-specific entry, and prepends a relative import to matching page styles:
 
 ```css title="dist/build/mp-weixin/sub-normal/pages/index.wxss"
 @import "../index.wxss";
@@ -74,7 +76,7 @@ uni-app 预设会从 `pages.json` 读取分包根目录。上面的规则会在�
 }
 ```
 
-主包入口与分包入口仍需分别限定扫描范围。例如：
+Each Tailwind entry must still own its scan scope:
 
 ```css title="src/main.css"
 @import "tailwindcss" source(none);
@@ -90,11 +92,11 @@ uni-app 预设会从 `pages.json` 读取分包根目录。上面的规则会在�
 @source "./pages/**/*.{vue,js,ts}";
 ```
 
-这样主包专属类只进入主入口，普通分包和独立分包专属类只进入各自入口。多个入口共同使用 `text-white` 之类的类时，各入口保留自己的副本是预期行为。
+Main-only utilities now stay in the main entry, while normal and independent subpackage utilities stay in their own entries. Shared utilities such as `text-white` are expected to appear in every entry that uses them.
 
-## 独立使用
+## Standalone Usage
 
-未使用 `weapp-tailwindcss`，或者只需要注入已经生成好的样式入口时，可以独立注册框架预设：
+When `weapp-tailwindcss` is not in use, or when only prebuilt style entries need to be injected, register a framework preset directly:
 
 ```ts
 import uni from '@dcloudio/vite-plugin-uni'
@@ -114,13 +116,13 @@ export default defineConfig({
 })
 ```
 
-不传规则时，uni-app、Taro 和 Mpx 预设会自动探测常见入口，并让分包样式引用主包样式入口：
+Without explicit rules, the uni-app, Taro, and Mpx presets detect common entries and make subpackage styles reference the main app style:
 
 ```ts
 StyleInjector()
 ```
 
-需要显式引用主包样式时，可以使用 `ref`：
+Use `ref` when the main app style reference should be explicit:
 
 ```ts
 StyleInjector({
@@ -133,17 +135,17 @@ StyleInjector({
 })
 ```
 
-## 常用配置
+## Common Options
 
-| 配置 | 用途 |
+| Option | Purpose |
 | --- | --- |
-| `imports` | 向所有匹配产物注入固定入口 |
-| `perFileImports` | 根据产物文件名动态返回入口 |
-| `rules` | 描述“分包样式入口 -> 目标产物” |
-| `include` / `exclude` | 限定插件处理的产物 |
-| `dedupe` | 避免重复插入已有 `@import`，默认开启 |
+| `imports` | Inject fixed entries into every matching asset |
+| `perFileImports` | Resolve entries dynamically from an output file name |
+| `rules` | Map subpackage style entries to target assets |
+| `include` / `exclude` | Restrict assets processed by the plugin |
+| `dedupe` | Avoid inserting an existing `@import`; enabled by default |
 
-## 示例与文档
+## Demo and Documentation
 
-- [内置 Style Injector 分包隔离 demo](https://github.com/sonofmagic/weapp-tailwindcss/tree/main/demo/subpackage-uni-app-vite-tailwindcss-v4)
-- [Tailwind CSS 多入口与分包隔离](https://tw.icebreaker.top/docs/quick-start/independent-pkg)
+- [Built-in Style Injector subpackage isolation demo](https://github.com/weapp-tailwindcss/weapp-tailwindcss/tree/main/demo/subpackage-uni-app-vite-tailwindcss-v4)
+- [Tailwind CSS multi-entry and subpackage isolation guide](https://tw.weapp.dev/docs/quick-start/independent-pkg)

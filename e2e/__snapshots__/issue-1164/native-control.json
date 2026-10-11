@@ -1,0 +1,93 @@
+{
+  "author": {
+    "inline": [
+      {
+        "background-color": "#ff7a00",
+        "height": "100px",
+        "width": "100%"
+      },
+      {
+        "color": "#ffffff"
+      },
+      {
+        "background-color": "#f21903",
+        "height": "48px",
+        "width": "48px",
+        "border-radius": "9999px"
+      }
+    ],
+    "scoped": [
+      {
+        "author": {
+          "": {
+            "paddingTop": 8,
+            "paddingRight": 8,
+            "paddingBottom": 8,
+            "paddingLeft": 8
+          }
+        }
+      }
+    ]
+  },
+  "block": {
+    "inline": [
+      {
+        "background-color": "#ff7a00",
+        "height": "100px",
+        "width": "100%"
+      },
+      {
+        "color": "#ffffff"
+      },
+      {
+        "background-color": "#f21903",
+        "height": "48px",
+        "width": "48px",
+        "border-radius": "9999px"
+      }
+    ],
+    "scoped": [
+      {}
+    ]
+  },
+  "empty": {
+    "inline": [
+      {
+        "background-color": "#ff7a00",
+        "height": "100px",
+        "width": "100%"
+      },
+      {
+        "color": "#ffffff"
+      },
+      {
+        "background-color": "#f21903",
+        "height": "48px",
+        "width": "48px",
+        "border-radius": "9999px"
+      }
+    ],
+    "scoped": []
+  },
+  "line": {
+    "inline": [
+      {
+        "background-color": "#ff7a00",
+        "height": "100px",
+        "width": "100%"
+      },
+      {
+        "color": "#ffffff"
+      },
+      {
+        "background-color": "#f21903",
+        "height": "48px",
+        "width": "48px",
+        "border-radius": "9999px"
+      }
+    ],
+    "scoped": [
+      {}
+    ]
+  }
+}

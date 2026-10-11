@@ -196,7 +196,7 @@ describe('calc', () => {
     const { css } = await styleHandler(code)
     const fallbackCount = css.match(MARGIN_LEFT_32RPX_RE)?.length ?? 0
     expect(fallbackCount).toBe(1)
-    expect(css).toContain('margin-left: calc(var(--spacing)*4);')
+    expect(css).not.toContain('margin-left: calc(var(--spacing)*4);')
   })
 
   it('removes duplicate literal declarations when cssCalc is enabled', async () => {
@@ -236,9 +236,11 @@ describe('calc', () => {
     })
 
     expect(css.match(/margin-bottom:\s*0rpx;/g)).toHaveLength(1)
-    expect(css.match(/margin-bottom:\s*calc\(/g)).toHaveLength(2)
+    expect(css.match(/margin-bottom:\s*calc\(/g)).toHaveLength(1)
     expect(css.match(/margin-top:\s*32rpx;/g)).toHaveLength(1)
-    expect(css.match(/margin-top:\s*calc\(/g)).toHaveLength(2)
+    expect(css.match(/margin-top:\s*calc\(/g)).toHaveLength(1)
+    expect(css).toContain('calc(32rpx*var(--tw-space-y-reverse))')
+    expect(css).toContain('calc(32rpx*(1 - var(--tw-space-y-reverse)))')
     expect(css).not.toContain('calc(var(--spacing)*4*0)')
     expect(css).not.toContain('calc(var(--spacing)*4*var(--tw-space-y-reverse))')
     expect(css).not.toContain('calc(var(--spacing)*4*1)')
@@ -300,6 +302,27 @@ describe('calc', () => {
     })
     const { css } = await styleHandler(code)
     expect(css).toMatchSnapshot()
+  })
+
+  it('Issue #1194: Tailwind v4 spacing 在 :root/:host 中预计算', async () => {
+    const styleHandler = createStyleHandler({
+      isMainChunk: true,
+      cssCalc: ['--spacing'],
+    })
+    const { css } = await styleHandler(`:root, :host {
+  --spacing: .25rem;
+  --other: 2px;
+}
+.gap-2 { gap: calc(var(--spacing) * 2); }
+.p-2 { padding: calc(var(--spacing) * 2); }
+.mt-2 { margin-top: calc(var(--spacing) * 2); }
+.other { width: calc(var(--other) * 2); }`)
+    expect(css).toContain('gap: 0.5rem;')
+    expect(css).toContain('padding: 0.5rem;')
+    expect(css).toContain('margin-top: 0.5rem;')
+    expect(css).toContain('--spacing: .25rem;')
+    expect(css).toContain('--other: 2px;')
+    expect(css).toContain('width: calc(var(--other)*2);')
   })
 
   it('移除逻辑简写(margin-inline/padding-inline)展开后交错的 calc 残留', async () => {

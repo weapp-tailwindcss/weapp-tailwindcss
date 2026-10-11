@@ -4,15 +4,19 @@ import type { IStyleHandlerOptions } from '../types'
 import { defu } from '@weapp-tailwindcss/shared'
 import { consumeCascadeLayers } from '../compat/mini-program-css/cascade-layers'
 import {
+  isTailwindcssV4,
   isTailwindcssV4DisplayP3Declaration,
   isTailwindcssV4DisplayP3Media,
   isTailwindcssV4DisplayP3Supports,
   isTailwindcssV4LinearGradientSupports,
   isTailwindcssV4ModernCheck,
+  usesTailwindcssV4ContentVariable,
 } from '../compat/tailwindcss-v4'
 import { postcssPlugin } from '../constants'
 import { commonChunkPreflight } from '../mp'
 import { ruleTransformSync } from '../selectorParser'
+import { createStableRuleTransformer } from '../selectorParser/rule-transformer'
+import { isSelectorTransformOptionsStable } from '../selectorParser/rule-transformer/options'
 
 export type PostcssWeappTailwindcssRenamePlugin = PluginCreator<IStyleHandlerOptions>
 
@@ -105,12 +109,15 @@ const postcssWeappTailwindcssPrePlugin: PostcssWeappTailwindcssRenamePlugin = (
   options,
 ) => {
   const opts = defu(options, { isMainChunk: true })
+  const transformRule = isSelectorTransformOptionsStable(options)
+    ? createStableRuleTransformer(opts)
+    : (rule: Rule) => ruleTransformSync(rule, opts)
 
   const p: Plugin = {
     postcssPlugin,
     Rule(rule) {
       // 统一通过 selectorParser 做兼容性替换
-      ruleTransformSync(rule, opts)
+      transformRule(rule)
     },
     AtRule(atRule) {
       if (isAtMediaHover(atRule)) {
@@ -164,8 +171,16 @@ const postcssWeappTailwindcssPrePlugin: PostcssWeappTailwindcssRenamePlugin = (
         }
       })
       consumeCascadeLayers(root)
+      let contentVariableUsedInRoot = isTailwindcssV4(opts)
+        ? usesTailwindcssV4ContentVariable(root)
+        : undefined
+      // 状态只属于本轮 Once；注入后按需重算，不跨 Root 或处理请求缓存。
+      const contentUsage = {
+        read: () => contentVariableUsedInRoot ??= usesTailwindcssV4ContentVariable(root),
+        invalidate: () => { contentVariableUsedInRoot = undefined },
+      }
       root.walkRules((rule) => {
-        commonChunkPreflight(rule, opts)
+        commonChunkPreflight(rule, opts, contentUsage)
       })
     }
   }

@@ -1,0 +1,12 @@
+<template>
+  <view id="issue-1164-author" class="bg-[#ff7a00] h-[100px] w-full author">
+    <text class="text-[#ffffff]">author</text>
+    <view id="issue-1164-author-circle" class="bg-[#f21903] h-[48px] w-[48px] rounded-full" />
+  </view>
+</template>
+
+<style lang="scss" scoped>
+// 作者样式前的注释
+.author { padding-left: 12px; }
+</style>
+

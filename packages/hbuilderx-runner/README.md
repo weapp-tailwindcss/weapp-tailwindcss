@@ -1,6 +1,8 @@
 # @weapp-tailwindcss/hbuilderx-runner
 
-HBuilderX CLI 调用辅助包，用于本地 e2e、demo 脚本和后续 CLI 封装。
+> English | [简体中文](./README.zh-CN.md)
+
+Stable HBuilderX CLI runner utilities for local e2e workflows, demo scripts, and future CLI wrappers.
 
 ```ts
 import {
@@ -21,33 +23,42 @@ const launch = hbuilderx.startLaunch({
   args: ['--deviceId', 'emulator-5554'],
 })
 
-// 业务侧等待产物或探针后主动停止。
 await launch.stop()
 ```
 
-该包只负责 HBuilderX 调用层稳定性，不处理 Tailwind 或小程序样式转译。
+The package only stabilizes the HBuilderX invocation layer. It does not handle Tailwind or mini program style transformation.
 
-## 能力边界
+## Scope
 
-- 同时识别 stable 与 Alpha，可通过 `channel: 'auto' | 'stable' | 'alpha'` 或 `HBUILDERX_CHANNEL` 选择版本。
-- 将原生 CLI 路径、`listhost` 返回的 host 和 `version --host` 结果绑定到 runner 会话，避免另一版本的运行进程抢占命令。
-- 封装 `project open/close`、`launch`、长驻运行、超时、最近日志与进程树清理。
-- 将常见失败归类为可诊断的 `HBuilderXCommandError`，例如项目识别错误、配置加载失败、Android/iOS/Harmony 工具链缺失和命令超时。
-- 提供 Android `adb`、iOS Xcode/simulator、Harmony `hdc` 的本地工具链探测函数，供 e2e 或 demo 脚本在运行前快速失败。
+- Resolve stable and Alpha installations through `channel: 'auto' | 'stable' | 'alpha'` or `HBUILDERX_CHANNEL`.
+- Bind the native CLI path, the host returned by `listhost`, and the `version --host` result to one runner session so another running edition cannot capture commands.
+- Wrap `project open/close`, `launch`, long-running processes, timeouts, recent logs, and process-tree cleanup.
+- Classify common failures into `HBuilderXCommandError`, including project recognition failures, config load failures, missing Android/iOS/Harmony toolchains, and timeouts.
+- Provide local Android `adb`, iOS Xcode/simulator, and Harmony `hdc` probes for e2e and demo scripts.
 
-## 版本选择
+## Edition selection
 
-未传配置时使用 `auto`。选择顺序如下：
+The default channel is `auto`. Resolution uses this precedence:
 
-1. 函数参数中的显式 CLI candidate/path；
-2. `HBUILDERX_CLI_PATH`；
-3. `channel` 或 `HBUILDERX_CHANNEL` 匹配的运行实例；
-4. macOS 默认安装路径，`auto` 下 stable 优先于 Alpha。
+1. An explicit CLI candidate/path passed to the API;
+2. `HBUILDERX_CLI_PATH`;
+3. A running instance matching `channel` or `HBUILDERX_CHANNEL`;
+4. Default macOS install paths, preferring stable over Alpha in `auto` mode.
 
-macOS 默认路径为 `/Applications/HBuilderX.app/Contents/MacOS/cli` 和 `/Applications/HBuilderX-Alpha.app/Contents/MacOS/cli`。Windows/Linux 的非标准安装请设置 `HBUILDERX_CLI_PATH`。
+The macOS defaults are `/Applications/HBuilderX.app/Contents/MacOS/cli` and `/Applications/HBuilderX-Alpha.app/Contents/MacOS/cli`. Set `HBUILDERX_CLI_PATH` for non-standard Windows/Linux installations.
 
-当同一 CLI 匹配到多个 host 时，runner 会拒绝猜测。请设置 `HBUILDERX_HOST`，或向 `createHBuilderXRunner` 传入 `host`。
+`resolveHBuilderXCli` returns an explicitly configured existing path without querying running processes. `resolveHBuilderXCliInfo` also reports `isRunning`, so it still queries the operating system. A configured runner connects through the native CLI host handshake.
 
-部分 HBuilderX 版本自身会拒绝 stable 与 Alpha 跨版本并行运行。runner 不会擅自关闭当前实例；目标版本无法启动时会抛出 `cli-instance-mismatch`，请关闭冲突实例后重试。
+If one CLI matches multiple hosts, the runner reports an ambiguity instead of guessing. Set `HBUILDERX_HOST` or pass `host` to `createHBuilderXRunner`.
 
-`runPnpmCommand`、`spawnPnpmCommand`、`hbuilderxPnpmArgs` 和同步 `startLaunch` 为兼容旧调用保留。需要固定 stable/Alpha 时应使用绑定 runner；`@dcloudio/hbuilderx-cli` 的 pnpm 包装器会重新按运行进程探测版本，无法提供同等保证。
+Some HBuilderX releases reject concurrent stable and Alpha processes. The runner never closes an existing instance automatically; it reports `cli-instance-mismatch` when the target edition cannot start, so close the conflicting instance before retrying.
+
+`runPnpmCommand`, `spawnPnpmCommand`, `hbuilderxPnpmArgs`, and the synchronous `startLaunch` remain for compatibility. Use a bound runner when the stable/Alpha choice must be deterministic; the `@dcloudio/hbuilderx-cli` pnpm wrapper performs its own process discovery and cannot provide that guarantee.
+
+## Timeouts and cleanup
+
+After `timeoutMs`, `runCommand` cleans up its own process before waiting for the real `close` event and final logs. Cleanup has a separate budget: POSIX waits up to one second after the requested signal, then up to one second after `SIGKILL`; Windows runs `taskkill /T /F` with a five-second timeout, then waits up to one second for closure. Cleanup already in progress also waits for descendants in the default detached process group, including descendants that close their pipes before the root exits.
+
+A graceful exit code of zero after the business deadline still has the `timeout` classification. `allowFailure` permits business failures, but never cleanup failures. `HBuilderXCommandError.cleanupError` and `cause` retain cleanup diagnostics alongside the command, cwd, observed exit and recent logs. A Windows partial tree-termination failure remains an error even if the root closes.
+
+Call and await `stop()` before a long-running root process closes. Repeated calls share the same cleanup result. Natural closure revokes the numeric PID/group handle to avoid targeting a later process that reuses it; services that deliberately leave the group are outside this scope. With `detached: false`, only the owned root's closure is confirmed. The synchronous `killProcessTree` remains a best-effort compatibility request, not cleanup confirmation. Unreaped POSIX orphan processes or persistent permission errors that prevent confirmation cause conservative cleanup failure.

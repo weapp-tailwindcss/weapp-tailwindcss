@@ -1,12 +1,14 @@
 ---
 title: Consulting and customization services
-description: Most of the open source projects in China like mine are generated for love. Except for sporadic rewards from individual friends, no one sponsors them. Of course, the reward money is also very small. The total reward amount is much less than my daily salary.
+description: >-
+  Most of the open source projects in China like mine are generated for love. Except for sporadic rewards from
+  individual friends, no one sponsors them. Of course, the reward money is also very small. The total reward amount is
+  much less than my daily salary.
 keywords:
   - Community
   - template
   - Case
   - Consulting and customization services
-  - community
   - consult
   - weapp-tailwindcss
   - tailwindcss
@@ -15,6 +17,10 @@ keywords:
   - uni-app
   - taro
   - mpx
+  - templates
+  - case studies
+  - Consulting
+  - and
 ---
 
 # Consulting and customization services

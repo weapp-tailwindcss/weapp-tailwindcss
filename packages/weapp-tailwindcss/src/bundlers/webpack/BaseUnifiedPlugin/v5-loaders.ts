@@ -1,4 +1,4 @@
-import type { TailwindV4CssSource } from '@tailwindcss-mangle/engine'
+import type { TailwindV4CssSource } from '@weapp-tailwindcss/engine'
 import type { Compiler } from 'webpack'
 import type { WebpackCssSourceRegistration, WebpackGeneratedCssRegistration } from '../loaders/runtime-registry'
 import type { LoaderAnchorFinders } from '../shared/loader-anchors'
@@ -12,9 +12,9 @@ import { pluginName } from '@/constants'
 import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
 import { resolveRuntimeBranch } from '@/runtime-branch'
 import { ensureMpxTailwindcssAliases, injectMpxCssRewritePreRules, patchMpxLoaderResolve } from '@/shared/mpx'
-import { captureResolvedFrameworkPostcssOptions, collectFrameworkPostcssOptionsFromLoaderEntries } from '../../shared/framework-postcss'
+import { captureResolvedFrameworkPostcssOptions, collectFrameworkPostcssOptionsFromLoaderEntries } from '../../../generation/framework-postcss'
 import { deleteWebpackLoaderRuntime, setWebpackLoaderRuntime } from '../loaders/runtime-registry'
-import { createDefaultLoaderAnchorFinders } from '../shared/loader-anchors'
+import { createDefaultLoaderAnchorFinders, findCssPreprocessorIndex } from '../shared/loader-anchors'
 import { hasLoaderEntry, isCssLikeModuleResource } from './shared'
 
 interface SetupWebpackV5LoadersOptions {
@@ -207,7 +207,7 @@ export function setupWebpackV5Loaders(options: SetupWebpackV5LoadersOptions) {
         )
       let rewriteAnchorIdx = findRewriteAnchor(loaderEntries)
       const classSetAnchorIdx = findClassSetAnchor(loaderEntries)
-      const isCssModule = isCssLikeModuleResource(module.resource, compilerOptions.cssMatcher, appType)
+      const isCssModule = isCssLikeModuleResource(module.resource, compilerOptions.cssMatcher)
       if (isCssModule) {
         const frameworkPostcssOptions = collectFrameworkPostcssOptionsFromLoaderEntries(loaderEntries, _loaderContext)
         if (frameworkPostcssOptions) {
@@ -226,9 +226,11 @@ export function setupWebpackV5Loaders(options: SetupWebpackV5LoadersOptions) {
       if (rewriteAnchorIdx === -1 && classSetAnchorIdx === -1 && !isCssModule) {
         return
       }
+      const preprocessorIndex = findCssPreprocessorIndex(loaderEntries)
       const anchorlessInsert = (entry: any, position: 'before' | 'after') => {
         if (position === 'after') {
-          loaderEntries.push(entry)
+          // 没有 CSS 消费 loader 时，仍要等预处理器把 SCSS/Less 编译成 CSS。
+          loaderEntries.splice(preprocessorIndex === -1 ? loaderEntries.length : preprocessorIndex, 0, entry)
         }
         else {
           loaderEntries.unshift(entry)
@@ -261,11 +263,17 @@ export function setupWebpackV5Loaders(options: SetupWebpackV5LoadersOptions) {
         && !isLynxMainThreadCss
       ) {
         const existingIndex = loaderEntries.findIndex(entry => entry.loader?.includes?.(runtimeCssImportRewriteLoader))
+        const existingOptions = existingIndex === -1 ? undefined : loaderEntries[existingIndex]?.options
+        const generateInRegisteredLoader = typeof existingOptions === 'object' && existingOptions !== null
+          && 'generateCss' in existingOptions && existingOptions['generateCss'] === true
         const rewriteLoaderEntry = existingIndex !== -1
           ? {
               ...loaderEntries.splice(existingIndex, 1)[0],
               loader: runtimeCssImportRewriteLoader,
-              options: cssImportRewriteLoaderOptions,
+              options: {
+                ...cssImportRewriteLoaderOptions,
+                generateCss: cssImportRewriteLoaderOptions.generateCss || generateInRegisteredLoader,
+              },
             }
           : createCssImportRewriteLoaderEntry()
         if (rewriteLoaderEntry) {

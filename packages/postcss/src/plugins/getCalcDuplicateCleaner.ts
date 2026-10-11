@@ -40,7 +40,7 @@ const calcDuplicateCleanerPlugin: AcceptedPlugin = {
 }
 
 export function getCalcDuplicateCleaner(options: IStyleHandlerOptions): AcceptedPlugin | null {
-  if (!options.cssCalc) {
+  if (!options.cssCalc || options.cssCalc === 'auto') {
     return null
   }
 

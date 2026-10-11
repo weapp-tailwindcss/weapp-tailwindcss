@@ -4,7 +4,7 @@ const weappTwIgnoreImpl = String.raw as typeof String.raw
 
 export { clsxFn as clsx }
 export const weappTwIgnore = weappTwIgnoreImpl
-export { createRuntimeFactory } from './create-runtime'
+export { createRuntimeFactory, wrapRuntimeAggregator } from './create-runtime'
 export { createRpxLengthTransform } from './rpx-length'
 export { identity, resolveTransformers } from './transformers'
 

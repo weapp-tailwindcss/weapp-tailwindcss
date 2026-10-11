@@ -43,6 +43,42 @@ API 路径、路由、资源地址被误改时，检查手工 runtime set 是否
 4. 检查最终 CSS、DOM/raw class 和 safe class 是否同时更新。
 5. 不通过重启进程掩盖 HMR 图丢失。
 
+### Source candidate 边界
+
+- Vite 初始扫描、transform 与 HMR 应复用 Tailwind Scanner 的实际文件范围。
+- `.gitignore` 排除的模块不应在增量阶段重新进入候选集合。
+- monorepo 第三方依赖默认不扫描；确需外部源码时用 Tailwind v4 显式 `source()` / `@source` 纳入。
+- Nuxt 或其他虚拟模块 HMR 要同时检查源模块事件、生成 CSS 和页面更新，不能只确认 bundle 中存在 class。
+
+## CLI 输出异常
+
+1. 确认安装的是独立 `@weapp-tailwindcss/cli` 5.x，而不是旧 3.x/4 alpha 工具链。
+2. 默认 target 是 `web`；只有显式 `--target weapp` 才转换为小程序兼容 CSS。
+3. `--target weapp` 不改写 WXML、JS、TS、JSX、TSX 或已有 WXSS。
+4. source map 只支持 Web target；stdin/stdout 使用 `-`，不要让输入与输出指向同一文件。
+5. watch 默认原生事件；容器、网络盘或事件丢失时用 `--poll` 或 `--poll=<ms>`。
+
+## 伪类与 custom variant
+
+- 小程序目标默认移除无效 `:active` selector，但保留 candidate 与模板 class 转换；确需保留时设置 `cssOptions.cssRemoveActivePseudoClass: false`。
+- Tailwind v4 `@custom-variant` 可以把平台条件注释放在变体内部或包住整个变体；先检查条件注释与当前 target，再判断 selector 转换。
+- H5/Web 与 App WebView 保留浏览器语义，不应套用小程序 `:active` 清理结论。
+
+## uni-app x 局部样式
+
+- Web 页面/组件局部样式要检查插槽、图片、显式组件 class 属性以及 `!important` 优先级。
+- `uniAppX: true` 的布尔快捷配置会关闭局部样式桥接；需要局部 `@apply` 时改用对象配置，并检查 `componentLocalStyles.enabled` 与 `onlyWhenStyleIsolationVersion2`。
+- Android/iOS 局部样式中的后缀重要修饰符不得以无效 SCSS 语法进入 HBuilderX 编译器。
+- 相对 `@reference` 必须按原始 `.uvue` 模块位置解析，不能按临时 style request 或输出目录解析。
+- 根样式和运行时样式入口分离时，检查 Rollup 入口元数据与最终引用关系；不要硬编码 `app.wxss`。
+- 诊断被 UVUE 原生兼容层过滤的 utility 时，可临时设 `uniAppX.uvueUnsupported: 'error'`，确认后再选择兼容写法；不要把过滤误判为 `@reference` 或级联问题。
+
+## Rspack 规则
+
+- 同时覆盖字符串、正则、函数和组合 rule condition。
+- 对 `use` 数组的修改保持幂等，不扩大到无关 CSS rule。
+- 如果用户是在 ReactLynx + Rspeedy 中排障，改用 `$weapp-tailwindcss-lynx` 的 encoder 与运行端验证流程。
+
 ## rpx 与任意值
 
 - 二义性 `text-[22rpx]` 使用 `text-[length:22rpx]`。

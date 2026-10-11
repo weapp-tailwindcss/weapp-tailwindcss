@@ -4,8 +4,7 @@ import { Buffer } from 'node:buffer'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
-import { postcss } from '@weapp-tailwindcss/postcss'
-import { removeUnsupportedCascadeLayers } from '@/tailwindcss/remove-unsupported-css'
+import { normalizeTailwindV4RuntimeCss } from '@weapp-tailwindcss/postcss/transform'
 import { isWebpackCssLoaderRuntimeSource } from '../shared/css-loader-runtime'
 import { getWebpackLoaderRuntime } from './runtime-registry'
 import { registerWebpackWatchContext, registerWebpackWatchFile } from './watch-dependencies'
@@ -21,30 +20,13 @@ function isPromiseLike<T>(value: unknown): value is PromiseLike<T> {
 function normalizeRuntimeCssSource(source: string | Buffer) {
   if (Buffer.isBuffer(source)) {
     const css = source.toString('utf8')
-    return shouldCleanRuntimeCss(css) ? Buffer.from(cleanRuntimeCss(css)) : source
+    return shouldCleanRuntimeCss(css) ? Buffer.from(normalizeTailwindV4RuntimeCss(css)) : source
   }
-  return shouldCleanRuntimeCss(source) ? cleanRuntimeCss(source) : source
+  return shouldCleanRuntimeCss(source) ? normalizeTailwindV4RuntimeCss(source) : source
 }
 
 function shouldCleanRuntimeCss(css: string) {
-  return css.includes('@layer') || css.includes('@theme')
-}
-
-function cleanRuntimeCss(css: string) {
-  const root = postcss.parse(css)
-  removeUnsupportedCascadeLayers(root)
-  removeUnsupportedThemeKeyframes(root)
-  return root.toString()
-}
-
-function removeUnsupportedThemeKeyframes(root: postcss.Root) {
-  root.walkAtRules('theme', (themeRule) => {
-    themeRule.walkAtRules((atRule) => {
-      if (atRule.name.startsWith('-') && atRule.name.endsWith('keyframes')) {
-        atRule.remove()
-      }
-    })
-  })
+  return !isWebpackCssLoaderRuntimeSource(css) && (css.includes('@layer') || css.includes('@theme'))
 }
 
 function resolveOriginalCssSource(file: string, source: string | Buffer) {
@@ -96,10 +78,13 @@ const WeappTwRuntimeClassSetLoader: webpack.LoaderDefinitionFunction<RuntimeClas
   const runtime = getWebpackLoaderRuntime(rawOptions?.weappTailwindcssRuntimeKey)
   const opt = runtime?.classSet ?? rawOptions
   if (this.resourcePath) {
-    opt?.updateGeneratedCss?.({
-      file: this.resourcePath,
-      css: Buffer.isBuffer(source) ? source.toString('utf8') : source,
-    })
+    const sourceText = Buffer.isBuffer(source) ? source.toString('utf8') : source
+    if (!isWebpackCssLoaderRuntimeSource(sourceText)) {
+      opt?.updateGeneratedCss?.({
+        file: this.resourcePath,
+        css: sourceText,
+      })
+    }
     opt?.registerCssSourceFile?.({
       file: this.resourcePath,
       css: resolveRegisteredCssSource(this.resourcePath, source),
@@ -107,21 +92,24 @@ const WeappTwRuntimeClassSetLoader: webpack.LoaderDefinitionFunction<RuntimeClas
   }
   const maybePromise = opt?.getClassSet?.()
   const applyWatchDependencies = (dependencies: RuntimeLoaderWatchDependencies | void) => {
+    const pending: Promise<void>[] = []
     for (const file of dependencies?.files ?? []) {
-      registerWebpackWatchFile(this, file)
+      const registration = registerWebpackWatchFile(this, file)
+      if (registration) {
+        pending.push(registration)
+      }
     }
     for (const context of dependencies?.contexts ?? []) {
       registerWebpackWatchContext(this, context)
     }
+    return pending.length ? Promise.all(pending).then(() => {}) : undefined
   }
   const resolveWatchDependencies = () => {
     const dependencies = opt?.getWatchDependencies?.()
     if (isPromiseLike<RuntimeLoaderWatchDependencies | void>(dependencies)) {
-      return Promise.resolve(dependencies).then((value) => {
-        applyWatchDependencies(value)
-      })
+      return Promise.resolve(dependencies).then(applyWatchDependencies)
     }
-    applyWatchDependencies(dependencies)
+    return applyWatchDependencies(dependencies)
   }
   if (isPromiseLike<void>(maybePromise)) {
     return Promise.resolve(maybePromise).then(async () => {
@@ -129,7 +117,10 @@ const WeappTwRuntimeClassSetLoader: webpack.LoaderDefinitionFunction<RuntimeClas
       return normalizeRuntimeCssSource(source)
     })
   }
-  resolveWatchDependencies()
+  const watchDependencies = resolveWatchDependencies()
+  if (watchDependencies) {
+    return watchDependencies.then(() => normalizeRuntimeCssSource(source))
+  }
   return normalizeRuntimeCssSource(source)
 }
 

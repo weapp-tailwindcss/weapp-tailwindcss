@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createStyleHandler, finalizeMiniProgramCss, normalizeMiniProgramGeneratedCssForPostcss, pruneMiniProgramGeneratedCss } from '../src'
+import { createStyleHandler, finalizeMiniProgramCss, normalizeMiniProgramGeneratedCssForPostcss, pruneMiniProgramGeneratedCss, repairTrailingUnclosedTailwindSourceMedia } from '../src'
 
 describe('mini-program generated css cleanup', () => {
   it('preserves statement at-rules while removing empty block at-rules', () => {
@@ -410,6 +410,27 @@ describe('mini-program generated css cleanup', () => {
     expect(css).not.toMatch(/^\s*\}\s*$/m)
   })
 
+  it('strictly repairs only a trailing unclosed Tailwind source media marker', () => {
+    expect(repairTrailingUnclosedTailwindSourceMedia('.keep{color:red}\n@media source(none) {\r\n')).toBe('.keep{color:red}')
+    expect(repairTrailingUnclosedTailwindSourceMedia('@media source("./src") {\n')).toBe('')
+    expect(repairTrailingUnclosedTailwindSourceMedia('@media screen {\n')).toBe('@media screen {\n')
+    expect(repairTrailingUnclosedTailwindSourceMedia('.keep{color:red}\n@media source(none) { /* comment */')).toBe('.keep{color:red}\n@media source(none) { /* comment */')
+    expect(repairTrailingUnclosedTailwindSourceMedia('.keep{color:red}\n@media source("./src") {\n.next{color:blue}')).toBe('.keep{color:red}\n@media source("./src") {\n.next{color:blue}')
+    expect(repairTrailingUnclosedTailwindSourceMedia('.keep{color:red}\n@media source("./src) {\n')).toBe('.keep{color:red}\n@media source("./src) {\n')
+    expect(repairTrailingUnclosedTailwindSourceMedia('.keep{color:red}\n@media source(url("./src")) {\n')).toBe('.keep{color:red}')
+    expect(repairTrailingUnclosedTailwindSourceMedia('/*\n@media source(none) {\n')).toBe('/*\n@media source(none) {\n')
+  })
+
+  it('repairs trailing source media before PostCSS finalization', () => {
+    const css = finalizeMiniProgramCss([
+      '@media screen {}',
+      '.keep{color:red}',
+      '@media source(none) {\n',
+    ].join('\n'), { isTailwindcssV4: true })
+
+    expect(css).toBe('.keep{color:red}')
+  })
+
   it('synthesizes configured mini-program preflight when generator css misses base reset', () => {
     const css = finalizeMiniProgramCss([
       '.divide-x-4>view+view{border-left-width:4px}',
@@ -547,6 +568,36 @@ describe('mini-program generated css cleanup', () => {
     expect(css).toContain('.theme-dark .dark\\:bg-zinc-900')
     expect(css).toContain('@media (prefers-color-scheme: dark)')
     expect(css).toContain('.system-dark\\:bg-slate-900')
+  })
+
+  it('precomputes configured custom property calc before mini-program theme scoping', async () => {
+    const css = await normalizeMiniProgramGeneratedCssForPostcss([
+      ':root{--spacing:1rpx}',
+      '.w-32{width:calc(var(--spacing)*32)}',
+    ].join(''), {
+      cssCalc: ['--spacing'],
+      preservePreflight: true,
+      preserveRawClassRules: true,
+    })
+
+    expect(css).toContain('width:32rpx')
+    expect(css).not.toContain('calc(var(--spacing)')
+    expect(css).toContain('page,.tw-root,wx-root-portal-content,:host{--spacing:1rpx}')
+  })
+
+  it('uses the full generated css as context for incremental custom property calc', async () => {
+    const css = await normalizeMiniProgramGeneratedCssForPostcss(
+      '.w-32{width:calc(var(--spacing)*32)}',
+      {
+        cssCalc: ['--spacing'],
+        contextCss: ':root{--spacing:1rpx}',
+        preservePreflight: true,
+        preserveRawClassRules: true,
+      },
+    )
+
+    expect(css).toContain('width:32rpx')
+    expect(css).not.toContain('calc(var(--spacing)')
   })
 
   it('removes Tailwind container max-width media rules from pruned generated css', () => {

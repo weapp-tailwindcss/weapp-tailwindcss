@@ -7,7 +7,7 @@ import type {
   WatchCase,
   WatchSession,
 } from '../types'
-import path from 'node:path'
+import { randomUUID } from 'node:crypto'
 import process from 'node:process'
 import { replaceWxml } from '../../core/replace-wxml'
 import { formatPath } from '../cli'
@@ -16,6 +16,8 @@ import {
   readFileIfExists,
   writeFilePreserveEol,
 } from '../text'
+import { assertIconifyConsumer } from './iconify/evidence'
+import { createIconifyProbeSource } from './iconify/probe'
 import {
   collectPluginProcessMetrics,
   expandOutputFileEntries,
@@ -60,24 +62,6 @@ async function loadOutputs(watchCase: WatchCase, globalStyleOutputs: string[]): 
   }
 }
 
-function insertDefaultIconifyProbe(source: string, config: IconifyHotUpdateConfig, payload: IconifyHotUpdatePayload) {
-  const extension = path.extname(config.sourceFile)
-  const classLiteral = payload.classLiteral
-  if (extension === '.tsx' || extension === '.jsx') {
-    return `${source}\n// ${payload.marker} ${classLiteral}\n`
-  }
-  if (extension === '.ts' || extension === '.js') {
-    return `${source}\nconst __twWatchIconifyHmr = '${payload.marker} ${classLiteral}'\n`
-  }
-  if (source.includes('</template>')) {
-    return source.replace(
-      '</template>',
-      `  <view class="${classLiteral}">${payload.marker}-iconify</view>\n</template>`,
-    )
-  }
-  return `${source.trimEnd()}\n<view class="${classLiteral}">${payload.marker}-iconify</view>\n`
-}
-
 function resolveConfig(config: IconifyHotUpdateConfig) {
   const iconClassTokens = config.iconClassTokens ?? DEFAULT_ICON_CLASS_TOKENS
   const beforeContentClass = config.beforeContentClass ?? DEFAULT_BEFORE_CONTENT_CLASS
@@ -94,11 +78,18 @@ function assertIconifyStyleOutput(
   phase: string,
   outputs: IconifyOutputs,
   params: {
+    marker: string
+    previousMarker?: string
+    classTokens: string[]
     iconEscapedClasses: string[]
     contentEscapedClass: string
     globalStyleOutputs: string[]
   },
 ) {
+  if (params.previousMarker && (outputs.wxml.includes(params.previousMarker) || outputs.js.includes(params.previousMarker))) {
+    throw new Error(`[${watchCase.label}] iconify HMR ${phase} retained previous phase ${params.previousMarker}`)
+  }
+  assertIconifyConsumer(outputs, watchCase.templateMutation.verifyEscapedIn, params.marker, params.classTokens, [...params.iconEscapedClasses, params.contentEscapedClass], `[${watchCase.label}] iconify HMR ${phase}`)
   const preservedIconEscapedClasses = params.iconEscapedClasses.filter(escaped => outputs.globalStyle.includes(escaped))
   if (preservedIconEscapedClasses.length !== params.iconEscapedClasses.length) {
     const missing = params.iconEscapedClasses.filter(escaped => !preservedIconEscapedClasses.includes(escaped))
@@ -133,25 +124,28 @@ export async function runIconifyHotUpdate(
   await waitForClassOutputBaseline(watchCase, options, session, 'content', globalStyleOutputs)
 
   const resolved = resolveConfig(config)
-  const marker = `tw-watch-iconify-${watchCase.name}-${Date.now().toString().slice(-6)}`
-  const classLiteral = [...resolved.iconClassTokens, resolved.beforeContentClass].join(' ')
-  const payload: IconifyHotUpdatePayload = {
-    marker,
-    classLiteral,
-    iconClassTokens: resolved.iconClassTokens,
-    beforeContentClass: resolved.beforeContentClass,
-    afterContentClass: resolved.afterContentClass,
+  const marker = `tw-watch-iconify-${watchCase.name}-${randomUUID()}`
+  const consumerMarker = replaceWxml(marker)
+  const injectMarker = `${consumerMarker}-inject`
+  const contentMarker = `${consumerMarker}-content`
+  const mutate = (phaseMarker: string, contentClass: string) => {
+    const payload: IconifyHotUpdatePayload = {
+      marker: phaseMarker,
+      classLiteral: [phaseMarker, ...resolved.iconClassTokens, contentClass].join(' '),
+      iconClassTokens: resolved.iconClassTokens,
+      beforeContentClass: resolved.beforeContentClass,
+      afterContentClass: resolved.afterContentClass,
+    }
+    return createIconifyProbeSource(watchCase, config, sourceOriginal, payload)
   }
-  const sourceWithProbe = config.mutate
-    ? config.mutate(sourceOriginal, payload)
-    : insertDefaultIconifyProbe(sourceOriginal, config, payload)
+  const sourceWithProbe = mutate(injectMarker, resolved.beforeContentClass)
   if (sourceWithProbe === sourceOriginal) {
     throw new Error(`[${watchCase.label}] iconify HMR probe mutation produced no source change`)
   }
   if (!sourceWithProbe.includes(resolved.beforeContentClass)) {
     throw new Error(`[${watchCase.label}] iconify HMR probe source is missing before content class`)
   }
-  const sourceWithUpdatedContent = sourceWithProbe.replace(resolved.beforeContentClass, resolved.afterContentClass)
+  const sourceWithUpdatedContent = mutate(contentMarker, resolved.afterContentClass)
   if (sourceWithUpdatedContent === sourceWithProbe) {
     throw new Error(`[${watchCase.label}] iconify HMR content replacement produced no source change`)
   }
@@ -176,6 +170,8 @@ export async function runIconifyHotUpdate(
     injectStartedAt,
     async () => {
       assertIconifyStyleOutput(watchCase, 'inject', await loadOutputs(watchCase, globalStyleOutputs), {
+        marker: injectMarker,
+        classTokens: [...resolved.iconClassTokens, resolved.beforeContentClass],
         iconEscapedClasses,
         contentEscapedClass: beforeContentEscapedClass,
         globalStyleOutputs,
@@ -187,6 +183,13 @@ export async function runIconifyHotUpdate(
     },
   )
   await waitForCompileSettled(watchCase, options, session, injectStartedAt)
+  assertIconifyStyleOutput(watchCase, 'inject settled', await loadOutputs(watchCase, globalStyleOutputs), {
+    marker: injectMarker,
+    classTokens: [...resolved.iconClassTokens, resolved.beforeContentClass],
+    iconEscapedClasses,
+    contentEscapedClass: beforeContentEscapedClass,
+    globalStyleOutputs,
+  })
 
   const injectedOutputMtimes = await collectOutputMtimes(outputFiles)
   const hotUpdateStartedAt = Date.now()
@@ -205,6 +208,9 @@ export async function runIconifyHotUpdate(
     hotUpdateStartedAt,
     async () => {
       const result = assertIconifyStyleOutput(watchCase, 'content', await loadOutputs(watchCase, globalStyleOutputs), {
+        marker: contentMarker,
+        previousMarker: injectMarker,
+        classTokens: [...resolved.iconClassTokens, resolved.afterContentClass],
         iconEscapedClasses,
         contentEscapedClass: afterContentEscapedClass,
         globalStyleOutputs,
@@ -218,6 +224,15 @@ export async function runIconifyHotUpdate(
     },
   )
   await waitForCompileSettled(watchCase, options, session, hotUpdateStartedAt)
+  assertIconifyStyleOutput(watchCase, 'content settled', await loadOutputs(watchCase, globalStyleOutputs), {
+    marker: contentMarker,
+    previousMarker: injectMarker,
+    classTokens: [...resolved.iconClassTokens, resolved.afterContentClass],
+    iconEscapedClasses,
+    contentEscapedClass: afterContentEscapedClass,
+    globalStyleOutputs,
+  })
+  const hotUpdateEffectiveMs = Date.now() - hotUpdateStartedAt
   const hotUpdatePluginMetrics = collectPluginProcessMetrics(session, hotUpdateStartedAt)
 
   const updatedOutputMtimes = await collectOutputMtimes(outputFiles)
@@ -235,13 +250,18 @@ export async function runIconifyHotUpdate(
     rollbackStartedAt,
     async () => {
       const outputs = await loadOutputs(watchCase, globalStyleOutputs)
-      return !outputs.wxml.includes(marker) && !outputs.js.includes(marker)
+      return !outputs.wxml.includes(consumerMarker) && !outputs.js.includes(consumerMarker)
     },
     {
       label: `iconify-hmr phase=rollback source=${formatPath(config.sourceFile)}`,
     },
   )
   await waitForCompileSettled(watchCase, options, session, rollbackStartedAt)
+  const rollbackOutputs = await loadOutputs(watchCase, globalStyleOutputs)
+  if (rollbackOutputs.wxml.includes(consumerMarker) || rollbackOutputs.js.includes(consumerMarker)) {
+    throw new Error(`[${watchCase.label}] iconify HMR rollback retained current probe ${marker}`)
+  }
+  const rollbackEffectiveMs = Date.now() - rollbackStartedAt
   const rollbackPluginMetrics = collectPluginProcessMetrics(session, rollbackStartedAt)
 
   return {
@@ -255,12 +275,12 @@ export async function runIconifyHotUpdate(
     verifiedContentEscapedClasses,
     globalStyleOutputs,
     hotUpdateOutputMs: hotUpdateOutputDiagnostics.elapsedMs,
-    hotUpdateEffectiveMs: hotUpdateOutputDiagnostics.elapsedMs,
+    hotUpdateEffectiveMs,
     hotUpdateOutputDiagnostics,
     hotUpdatePluginProcessMs: hotUpdatePluginMetrics.totalMs,
     hotUpdatePluginProcessSamples: hotUpdatePluginMetrics.samples as PluginProcessSample[],
     rollbackOutputMs: rollbackOutputDiagnostics.elapsedMs,
-    rollbackEffectiveMs: rollbackOutputDiagnostics.elapsedMs,
+    rollbackEffectiveMs,
     rollbackOutputDiagnostics,
     rollbackPluginProcessMs: rollbackPluginMetrics.totalMs,
     rollbackPluginProcessSamples: rollbackPluginMetrics.samples as PluginProcessSample[],

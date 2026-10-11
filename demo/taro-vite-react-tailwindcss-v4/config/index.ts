@@ -1,4 +1,4 @@
-import { resolve } from 'node:path'
+import { resolve, win32 } from 'node:path'
 import { defineConfig, type UserConfigExport } from '@tarojs/cli'
 
 import devConfig from './dev'
@@ -46,8 +46,8 @@ export default defineConfig<'vite'>(async (merge, { command, mode }) => {
     designWidth: taroPlatform.isWeb
       ? 750
       : (input) => {
-          const file = typeof input?.file === 'string' ? input.file.replace(/\\\\+/g, '/') : ''
-          return file.includes('/pages/issue-998/') ? 375 : 750
+          const file = typeof input?.file === 'string' ? win32.resolve(projectRoot, input.file) : ''
+          return win32.dirname(file) === win32.resolve(projectRoot, 'src/pages/issue-998') ? 375 : 750
         },
     deviceRatio: {
       640: 2.34 / 2,
@@ -136,6 +136,7 @@ export default defineConfig<'vite'>(async (merge, { command, mode }) => {
       },
     },
     rn: {
+      entry: 'app.rn',
       appName: 'taroDemo',
       postcss: {
         cssModules: {

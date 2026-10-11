@@ -11,6 +11,10 @@ export default function Index() {
       <View id='tw-watch-dom' className='bg-purple-800 text-pink-200'>
         11
       </View>
+      <View data-issue-1166='infinity-radius' className='rounded-full bg-blue-500 px-4 py-2'>
+        无限圆角兼容旧版 PostCSS
+        <View className='rounded-t-full rounded-s-full bg-blue-200'>方向与逻辑圆角</View>
+      </View>
       <View className='weapp-tw-nutui-react-demo mt-4' data-issue-850-import-order='nutui-first'>
         <View data-issue-850-cascade='normal'>
           <NutButton className='rounded-full' type='primary'>Tailwind wins by source order (NutUI first)</NutButton>

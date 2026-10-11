@@ -1,4 +1,5 @@
 export { normalizeTailwindcssV4Declaration } from './tailwindcss-v4/declarations'
 export { appendTailwindcssV4MiniProgramGradientRules, mergeTailwindcssV4GradientDirectionRules, normalizeTailwindcssV4GradientPosition, normalizeTailwindcssV4InfinityCalcCss, normalizeTailwindcssV4InfinityCalcValue } from './tailwindcss-v4/gradients'
 export { isTailwindcssV4DisplayP3Declaration, isTailwindcssV4DisplayP3Media, isTailwindcssV4DisplayP3Supports, isTailwindcssV4LinearGradientSupports, isTailwindcssV4ModernCheck } from './tailwindcss-v4/modern-syntax'
+export { removeTailwindV4PreflightImports, removeUnsupportedThemeVendorKeyframes } from './tailwindcss-v4/theme-source'
 export { collectUsedTailwindcssV4Variables, createMissingCssVarsV4Nodes, createUsedCssVarsV4Nodes, cssVarsV4Nodes, isTailwindcssV4, isTailwindcssV4ThemeVariable, testIfRootHostForV4, usesTailwindcssV4ContentVariable } from './tailwindcss-v4/variables'

@@ -38,22 +38,25 @@ import TailwindTopicHero from '@site/src/components/docs/TailwindTopicHero'
 - Shadow DOM / iframe：浏览器级边界；最强隔离，但需在边界内独立注入样式。
 - preflight 控制：关闭/改写 base，避免 reset 污染宿主；常与以上方案组合。
 
-## 命名空间（Tailwind prefix + important）
+## 命名空间（Tailwind prefix）
 
-- **原理**：给所有生成类名加前缀（如 `tw-btn`），并通过 `important: '#app'` 或 `[data-scope=root]` 提升选择器优先级，减少宿主样式覆盖。
+- **原理**：通过 Tailwind CSS 4 的 import 参数给所有生成类名加前缀，减少与宿主类名冲突。
 - **配置示例**：
 
-```ts
-// tailwind.config.ts
-export default {
-  prefix: 'tw-',
-  important: '[data-scope=widget]', // 或 '#app'
-  content: ['./src/**/*.{tsx,vue,html}'],
-}
+```css
+/* app.css */
+@import "tailwindcss" prefix(tw);
+@source "../src/**/*.{tsx,vue,html}";
+```
+
+```html
+<section class="tw:flex tw:rounded-lg tw:bg-white">
+  Namespaced content
+</section>
 ```
 
 - **适用**：微前端、第三方嵌入、只需「不被覆盖」的场景。
-- **注意**：仍是全局样式，宿主的 `!important` 仍可能干扰；preflight 仍会影响宿主（可关闭）。
+- **注意**：仍是全局样式，宿主的 `!important` 仍可能干扰；preflight 仍会影响宿主（可关闭）。需要提高整套 utilities 的优先级时，可使用 `@import "tailwindcss" important;`。
 
 ## 编译期哈希（CSS Modules / vanilla-extract）
 
@@ -135,9 +138,13 @@ export function Card() {
 ## preflight 控制（可选组合）
 
 - **原理**：关闭或局部启用 Tailwind preflight，避免全局 reset 影响宿主。
-- **做法**：
-  - 在 `tailwind.config.ts` 配置 `corePlugins: { preflight: false }`，或仅在特定入口引入 `@tailwind base;`。
-  - 在组件库中不引入 preflight，让宿主自行决定全局 reset。
+- **做法**：只导入 theme 与 utilities，不导入 `preflight.css`，让宿主决定全局 reset。
+
+```css
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+```
 - **适用**：可发布组件库、微前端、与现有 UI 库共存时。
 
 ## 选择建议

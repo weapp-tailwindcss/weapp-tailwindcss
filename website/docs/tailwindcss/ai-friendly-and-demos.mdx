@@ -83,7 +83,7 @@ import TabItem from '@theme/TabItem'
 
 输出：
 - React 代码块（tsx）+ Vue 代码块（vue SFC），包含 class 解释或推荐检查清单。
-- 若需要安装/运行命令，给出 `pnpm --filter react-app dev` / `pnpm --filter vue-app dev`。
+- 若需要安装/运行命令，引用对应 demo 项目 `package.json` 中的 dev 脚本，不要写仓库根目录的 workspace filter 命令。
 ```
 
 ## 示例输出（React/Vue，对应提示）
@@ -188,9 +188,8 @@ export function Banner({ type, active }: { type: string; active: boolean }) {
 ## React/Vue 运行与查看
 
 - 安装依赖（首次）：`pnpm install`
-- 运行 React Demo：`pnpm --filter react-app dev`
-- 运行 Vue Demo：`pnpm --filter vue-app dev`
-- 构建文档（可选）：`pnpm --filter website build` 或 `pnpm build:docs`（若有别名）
+- 运行 React 或 Vue Demo：在对应 demo 目录执行项目自身的 dev 脚本。
+- 构建文档（可选）：由仓库维护者按照贡献指南执行，普通用户无需构建文档站。
 - 截图占位：`<!-- screenshot: tailwindcss-react-demo -->`、`<!-- screenshot: tailwindcss-vue-demo -->`
 
 ## Demo 内容速览
@@ -267,7 +266,7 @@ flowchart TB
   Gen["生成 React/Vue"]
   Merge["cn(twMerge) 去重"]
   Lint["ESLint + Tailwind 提示"]
-  Build["pnpm build / dev"]
+  Build["项目自己的 build / dev"]
   Review["人工 Spot Check"]
   Snapshot["截图 / Story 基线"]
   Deploy["上线 / 分发"]

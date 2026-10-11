@@ -1,16 +1,18 @@
 {
   "name": "@weapp-tailwindcss/debug-uni-app-x",
   "type": "module",
-  "version": "1.0.3",
+  "version": "1.0.8",
+  "description": "Vite diagnostics for cross-platform uni-app x Tailwind CSS builds. 用于跨端 uni-app x Tailwind CSS 构建的 Vite 调试工具。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",
+  "homepage": "https://tw.weapp.dev/docs/config/uni-app-x",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sonofmagic/weapp-tailwindcss.git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
     "directory": "packages/debug-uni-app-x"
   },
   "bugs": {
-    "url": "https://github.com/sonofmagic/weapp-tailwindcss/issues"
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues"
   },
   "keywords": [],
   "_exports": {

@@ -1,4 +1,5 @@
 import type { AtRule, Node, Root } from 'postcss'
+import { parseCssImportSpecifier } from '../syntax/css-import'
 
 const TAILWIND_ROOT_DIRECTIVE_NAMES = new Set([
   'config',
@@ -40,8 +41,7 @@ function createEmptyDirectiveAnalysis(): TailwindCssDirectiveAnalysis {
 }
 
 export function parseTailwindCssDirectiveRequest(params: string) {
-  const match = /^(?:url\(\s*)?(["']?)([^"')\s]+)\1\s*\)?/.exec(params.trim())
-  return match?.[2]
+  return parseCssImportSpecifier(params)?.specifier
 }
 
 export function parseTailwindCssConfigRequest(params: string) {

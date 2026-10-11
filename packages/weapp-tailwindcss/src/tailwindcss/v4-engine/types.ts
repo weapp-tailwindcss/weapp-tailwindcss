@@ -6,7 +6,7 @@ import type {
   TailwindV4SourceOptions as EngineTailwindV4SourceOptions,
   TailwindV4CandidateSource,
   TailwindV4DesignSystem,
-} from '@tailwindcss-mangle/engine'
+} from '@weapp-tailwindcss/engine'
 import type { IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
 
 export type TailwindV4GenerateTarget = 'weapp' | 'web'
@@ -37,6 +37,8 @@ export type TailwindV4CssSource = NonNullable<TailwindV4SourceOptions['cssSource
  * weapp-tailwindcss 在 Tailwind v4 engine source 基础上附加的运行时来源信息。
  */
 export interface TailwindV4ResolvedSource extends EngineTailwindV4ResolvedSource {
+  /** 源码扫描阶段从入口依赖图收集的 rpx 主题变量。 */
+  rpxThemeVariables?: string[] | undefined
   cwd?: string | undefined
   projectRoot: string
   cssSources?: TailwindV4CssSource[] | undefined
@@ -47,6 +49,9 @@ export interface TailwindV4ResolvedSource extends EngineTailwindV4ResolvedSource
  * Tailwind CSS v4 生成配置。
  */
 export interface TailwindV4GenerateOptions extends TailwindV4EngineGenerateOptions {
+  /** 使用生成会话的编译来源；适用于 CLI 等完整项目输入。 */
+  scanMode?: 'compiled' | undefined
+
   /**
    * 是否启用增量生成缓存。
    */
@@ -91,6 +96,10 @@ export interface TailwindV4GenerateResult extends Omit<EngineTailwindV4GenerateR
    * Tailwind 原始输出 CSS。
    */
   rawCss: string
+  /** 构建期解析出的 CSS 自定义属性上下文，供延后小程序样式适配使用。 */
+  customPropertyValues?: ReadonlyMap<string, string> | undefined
+  /** 保留变量声明作用域的原始上下文；推导声明不得当作显式常量覆盖。 */
+  customPropertyContextCss?: string | undefined
   /**
    * 本次增量新增的转换后 CSS。
    */

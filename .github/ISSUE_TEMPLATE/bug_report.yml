@@ -12,8 +12,8 @@ body:
 
         此表格仅用于提交错误报告。如果您有使用问题, 或者你不确定这是否真的是一个错误，请确保：
 
-        - [x] 已经在 [tw.icebreaker.top](https://tw.icebreaker.top/) 文档网站中搜索过相关的解决方案
-        - [x] 已经在 Github 的 [issues](https://github.com/sonofmagic/weapp-tailwindcss/issues) 中搜索过相关的问题
+        - [x] 已经在 [tw.weapp.dev](https://tw.weapp.dev/) 文档网站中搜索过相关的解决方案
+        - [x] 已经在 Github 的 [issues](https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues) 中搜索过相关的问题
 
         如果您发现最新版本中仍然存在旧的、已解决的问题，
         您应该填写下方的表格打开一个新的 `issue`，而不是对旧的 `issue` 发表评论。

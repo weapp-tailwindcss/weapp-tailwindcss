@@ -441,10 +441,13 @@ export function evaluatePerformanceGuard(summary, options = {}) {
       })
     }
     if (compare.baselineHmrMode === 'watch' && compare.currentHmrMode === 'watch') {
+      const baselinePluginSamples = toNumber(compare.baselineHmrPluginSampleCount)
+      const currentPluginSamples = toNumber(compare.currentHmrPluginSampleCount)
+      const hasPluginTimingData = (baselinePluginSamples ?? 0) > 0 || (currentPluginSamples ?? 0) > 0
       for (const side of ['baseline', 'current']) {
         const hmrSamples = toNumber(compare[`${side}HmrSampleCount`])
         const pluginSamples = toNumber(compare[`${side}HmrPluginSampleCount`])
-        if (hmrSamples !== undefined && hmrSamples > 0 && pluginSamples !== hmrSamples) {
+        if (hmrSamples !== undefined && hmrSamples > 0 && pluginSamples !== hmrSamples && hasPluginTimingData) {
           violations.push({
             key: compare.key,
             metric: `${side}HmrPluginSamples`,

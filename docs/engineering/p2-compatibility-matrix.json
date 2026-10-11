@@ -1,0 +1,1 @@
+{ "schemaVersion": 1, "entries": [{ "name": "Tailwind v3 / Vite", "owner": "core", "test入口": "pnpm --filter weapp-tailwindcss test", "status": "verified", "removalCondition": "v3 support policy change" }, { "name": "Tailwind v4 / Vite", "owner": "core", "test入口": "pnpm --filter weapp-tailwindcss test", "status": "verified", "removalCondition": "v4 replacement released" }] }

@@ -1,4 +1,3 @@
-/*! weapp-tailwindcss vite-generated-css:%3Cproject-root%3E%2Fsrc%2Fpages%2Fissue-998%2Findex.css */
 ::-webkit-backdrop {
   --tw-space-y-reverse: 0;
   --tw-border-style: solid;
@@ -61,7 +60,8 @@
   --tw-ring-offset-color: #fff;
   --tw-ring-offset-shadow: 0 0 #0000;
   --tw-content: '';
-} /*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+}
+/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
 @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
   ::-webkit-backdrop {
     --tw-space-y-reverse: 0;
@@ -489,12 +489,12 @@ taro-input-core:where([type='button'], [type='reset'], [type='submit']),
 }
  /*tokens: border-slate-200/80 <= src/pages/index/index.tsx */
 .border-slate-200\/80 {
-  border-color: #e2e8f0cc;
+  border-color: rgba(226, 232, 240, 0.8);
 }
 @supports (color: color-mix(in lch, red, blue)) {
  /*tokens: border-slate-200/80 <= src/pages/index/index.tsx */
   .border-slate-200\/80 {
-    border-color: #e2e8f0cc;
+    border-color: rgba(226, 232, 240, 0.8);
   }
 }
 .\!bg-\[gray\] {
@@ -514,17 +514,17 @@ taro-input-core:where([type='button'], [type='reset'], [type='submit']),
 }
  /*tokens: bg-green-200/70 <= src/pages/index/index.tsx */
 .bg-green-200\/70 {
-  background-color: #b9f8cfb3;
+  background-color: rgba(185, 248, 207, 0.7);
 }
 @supports (color: color-mix(in lch, red, blue)) {
  /*tokens: bg-green-200/70 <= src/pages/index/index.tsx */
   .bg-green-200\/70 {
-    background-color: #b9f8cfb3;
+    background-color: rgba(185, 248, 207, 0.7);
   }
 }
  /*tokens: bg-purple-300 <= src/pages/index/index.tsx */
 .bg-purple-300 {
-  background-color: #d8b4ff;
+  background-color: rgb(216, 180, 255);
 }
  /*tokens: bg-white <= src/pages/index/index.tsx */
 .bg-white {
@@ -532,12 +532,12 @@ taro-input-core:where([type='button'], [type='reset'], [type='submit']),
 }
  /*tokens: bg-white/70 <= src/pages/index/index.tsx */
 .bg-white\/70 {
-  background-color: #ffffffb3;
+  background-color: rgba(255, 255, 255, 0.7);
 }
 @supports (color: color-mix(in lch, red, blue)) {
  /*tokens: bg-white/70 <= src/pages/index/index.tsx */
   .bg-white\/70 {
-    background-color: #ffffffb3;
+    background-color: rgba(255, 255, 255, 0.7);
   }
 }
  /*tokens: bg-linear-to-r <= src/pages/index/index.tsx */
@@ -552,7 +552,7 @@ taro-input-core:where([type='button'], [type='reset'], [type='submit']),
   background-image: -webkit-linear-gradient(var(--tw-gradient-stops));
   background-image: linear-gradient(var(--tw-gradient-stops));
 }
- /*tokens: bg-gradient-to-r <= src/app.css, src/pages/index/index.tsx */
+ /*tokens: bg-gradient-to-r <= src/pages/index/index.tsx */
 .bg-gradient-to-r {
   --tw-gradient-position: to right;
   background-image: -webkit-linear-gradient(var(--tw-gradient-stops));
@@ -588,7 +588,7 @@ taro-input-core:where([type='button'], [type='reset'], [type='submit']),
     --tw-gradient-from: rgba(15, 23, 43, 0.95);
   }
 }
- /*tokens: to-blue-500 <= src/app.css, src/pages/index/index.tsx */
+ /*tokens: to-blue-500 <= src/pages/index/index.tsx */
 .to-blue-500 {
   --tw-gradient-to: rgb(50, 128, 255);
   --tw-gradient-stops: var(
@@ -614,7 +614,7 @@ taro-input-core:where([type='button'], [type='reset'], [type='submit']),
     --tw-gradient-to: rgba(49, 65, 88, 0.95);
   }
 }
- /*tokens: p-4 <= src/pages/index/index.tsx, src/pages/issue-998/index.css, src/pages/issue-998/index.tsx */
+ /*tokens: p-4 <= src/pages/index/index.tsx, src/pages/issue-998/index.tsx */
 .p-4 {
   padding: calc(var(--spacing) * 4);
 }
@@ -670,13 +670,13 @@ taro-input-core:where([type='button'], [type='reset'], [type='submit']),
 }
  /*tokens: text-slate-700 <= src/pages/index/index.tsx */
 .text-slate-700 {
-  color: #314158;
+  color: rgb(49, 65, 88);
 }
  /*tokens: text-slate-900 <= src/pages/index/index.tsx */
 .text-slate-900 {
-  color: #0f172b;
+  color: rgb(15, 23, 43);
 }
- /*tokens: text-white <= src/app.css, src/pages/index/index.tsx */
+ /*tokens: text-white <= src/pages/index/index.tsx */
 .text-white {
   color: #fff;
 }
@@ -700,21 +700,31 @@ taro-input-core:where([type='button'], [type='reset'], [type='submit']),
   content: var(--tw-content) !important;
 }
  /*tokens: dark:bg-zinc-900 <= src/pages/index/index.tsx | theme-dark <= src/pages/index/index.tsx */
-.dark\:bg-zinc-900.theme-dark,
+.dark\:bg-zinc-900.theme-dark {
+  background-color: rgb(24, 24, 27);
+}
+ /*tokens: theme-dark <= src/pages/index/index.tsx | dark:bg-zinc-900 <= src/pages/index/index.tsx */
 .theme-dark .dark\:bg-zinc-900 {
-  background-color: #18181b;
+  background-color: rgb(24, 24, 27);
 }
  /*tokens: dark:bg-zinc-950 <= src/pages/index/index.tsx | theme-dark <= src/pages/index/index.tsx */
-.dark\:bg-zinc-950.theme-dark,
+.dark\:bg-zinc-950.theme-dark {
+  background-color: rgb(9, 9, 11);
+}
+ /*tokens: theme-dark <= src/pages/index/index.tsx | dark:bg-zinc-950 <= src/pages/index/index.tsx */
 .theme-dark .dark\:bg-zinc-950 {
-  background-color: #09090b;
+  background-color: rgb(9, 9, 11);
 }
  /*tokens: dark:text-zinc-50 <= src/pages/index/index.tsx | theme-dark <= src/pages/index/index.tsx */
-.dark\:text-zinc-50.theme-dark,
+.dark\:text-zinc-50.theme-dark {
+  color: rgb(250, 250, 250);
+}
+ /*tokens: theme-dark <= src/pages/index/index.tsx | dark:text-zinc-50 <= src/pages/index/index.tsx */
 .theme-dark .dark\:text-zinc-50 {
-  color: #fafafa;
+  color: rgb(250, 250, 250);
 }
  /*tokens: issue-998-page <= src/pages/issue-998/index.tsx */
 .issue-998-page {
   padding: calc(var(--spacing) * 4);
 }
+/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */

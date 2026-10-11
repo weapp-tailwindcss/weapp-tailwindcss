@@ -1,7 +1,7 @@
 ---
 sidebar: aiSidebar
 title: LLMs.txt（LLM 友好文档）
-description: '├── components/ # 组件目录'
+description: LLMs.txt（LLM 友好文档），覆盖 AI 工作流、提示词和工程化实践。
 keywords:
   - AI 编程
   - LLM

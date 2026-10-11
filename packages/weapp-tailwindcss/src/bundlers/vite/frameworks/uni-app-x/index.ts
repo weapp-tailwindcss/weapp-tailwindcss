@@ -1,7 +1,8 @@
 import type { ViteFrameworkCssPipelineStrategy } from '../../shared/framework-strategy'
 import type { InternalUserDefinedOptions, UserDefinedOptions } from '@/types'
-import { hasTailwindApplyDirective, hasTailwindRootDirectives } from '@/bundlers/shared/generator-css/directives'
+import { hasTailwindApplyDirective, hasTailwindRootDirectives } from '@/generation/directives'
 import { viteStyleInjectorDelegates } from '@/style-injector/internal'
+import { hoistUniAppXBorderPreflight } from '@/uni-app-x/border-preflight'
 import { isUniAppXHarmonyOutDir, isUniAppXNativeAppOutDir } from '@/uni-app-x/harmony'
 import { isUniAppXHarmonyBundle } from '@/uni-app-x/style-asset'
 import { createUniAppXPlugins } from '@/uni-app-x/vite'
@@ -65,10 +66,20 @@ export const uniAppXCssPipelineStrategy: ViteFrameworkCssPipelineStrategy = {
     const webCss = context.shouldApplyWebCssCompat
       ? context.defaultWebCssCompat(css)
       : css
-    return withUniAppXWebPreflightReset(
-      context.removeScopedPreflight(webCss),
+    const output = withUniAppXWebPreflightReset(
+      context.removeScopedPreflight(webCss, { preserveRuntimeProperties: context.currentGeneratorBranch.isWeb }),
       context.currentGeneratorBranch.isWeb,
     )
+    return context.currentGeneratorBranch.isWeb ? output : hoistUniAppXBorderPreflight(output)
+  },
+  transformEmittedWebCss(css, context) {
+    if (!context.currentGeneratorBranch.isWeb || !/border-width\s*:\s*medium\b/i.test(css)) {
+      return css
+    }
+    return withUniAppXWebPreflightReset(css, context.currentGeneratorBranch.isWeb)
+  },
+  shouldRehashEmittedWebCssAsset(file) {
+    return typeof file.fileName === 'string' && file.fileName.endsWith('.css')
   },
 }
 
@@ -85,23 +96,28 @@ export function createUniAppXVitePlugins(options: UserDefinedOptions | InternalU
     sourceCandidatesBeforeExtraPlugin: plugin => plugin.name === 'weapp-tailwindcss:uni-app-x:nvue',
     createExtraPlugins: context => createUniAppXPlugins({
       appType: 'uni-app-x',
+      cssPreflight: context.cssPreflight,
+      cssPreflightRange: context.cssPreflightRange,
       customAttributesEntities: context.customAttributesEntities,
       disabledDefaultTemplateHandler: context.disabledDefaultTemplateHandler,
       ensureRuntimeClassSet: context.ensureRuntimeClassSet,
       generateCss: context.generateCss,
       getResolvedConfig: context.getResolvedConfig,
+      hmrCssModuleVersions: context.hmrCssModuleVersions,
       isEnabled: context.isEnabled,
       isIosPlatform: context.isIosPlatform,
       isNativeAppStyleTarget: context.isNativeAppStyleTarget,
       isWebGeneratorTarget: context.isWebGeneratorTarget,
       jsHandler: context.jsHandler,
       mainCssChunkMatcher: context.mainCssChunkMatcher,
+      registerModuleGraphCandidates: context.registerModuleGraphCandidates,
       runtimeState: context.runtimeState,
       styleHandler: context.styleHandler,
       syncSourceCandidatesForHotUpdate: context.syncSourceCandidatesForHotUpdate,
       tailwindRootCssModuleIds: context.tailwindRootCssModuleIds,
       uniAppX: context.uniAppX,
       viteProcessedCssSourceFiles: context.viteProcessedCssSourceFiles,
+      webCssEntryDiagnostics: context.webCssEntryDiagnostics,
     }),
   })
 }

@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    },
+    "allowImportingTsExtensions": true
+  },
+  "include": [
+    "src",
+    "test"
+  ],
+  "exclude": [
+    "dist",
+    "coverage",
+    "node_modules",
+    "test/fixtures"
+  ]
+}

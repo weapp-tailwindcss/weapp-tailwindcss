@@ -1,10 +1,16 @@
-import type { CliOptions, HmrMemoryDebugSample, MemoryProcessSample, MemoryUsageSample, PluginProcessSample, WatchSession } from './types'
-import { Buffer } from 'node:buffer'
+import type { Buffer } from 'node:buffer'
+import type { CliOptions, HmrMemoryDebugSample, MemoryUsageSample, PluginProcessSample, WatchSession } from './types'
 import { spawn, spawnSync } from 'node:child_process'
-import { existsSync } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
-import { resolvePnpmCommand } from './cli'
+import { createPnpmCommand } from '../../../../scripts/pnpm-command.mjs'
+import { assertWatchCommandActive } from './cancellation'
+import { createSpawnEnv, createWatchProcessEnv } from './environment'
+import { createMemorySampler } from './memory/sampler'
+import { spawnWithWatchMemorySource } from './memory/source'
+
+export { createSpawnEnv } from './environment'
+export { createWindowsProcessTreeMemoryScript, sampleProcessTreeMemory } from './memory/process-tree'
 
 export async function sleep(ms: number) {
   await new Promise(resolve => setTimeout(resolve, ms))
@@ -200,53 +206,6 @@ function resolveCompileFatalError(line: string) {
   }
 }
 
-export function createSpawnEnv(
-  base: NodeJS.ProcessEnv,
-  extra: Record<string, string> = {},
-): NodeJS.ProcessEnv {
-  const merged: NodeJS.ProcessEnv = {
-    ...base,
-    ...extra,
-  }
-  const sanitized: NodeJS.ProcessEnv = {}
-
-  for (const [key, value] of Object.entries(merged)) {
-    if (typeof value !== 'string') {
-      continue
-    }
-    // Windows keeps internal drive-scoped entries like `=C:` in process.env,
-    // which can make child_process.spawn fail with EINVAL.
-    if (process.platform === 'win32' && key.includes('=')) {
-      continue
-    }
-    sanitized[key] = value
-  }
-
-  return sanitized
-}
-
-function resolvePnpmBinary() {
-  const candidate = resolvePnpmCommand()
-  if (path.isAbsolute(candidate) && existsSync(candidate)) {
-    return candidate
-  }
-
-  const resolver = process.platform === 'win32' ? 'where' : 'which'
-  const result = spawnSync(resolver, ['pnpm'], {
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'ignore'],
-  })
-
-  if (result.status === 0 && typeof result.stdout === 'string') {
-    const resolved = result.stdout.split(NEWLINE_SPLIT_RE)[0]?.trim()
-    if (resolved && existsSync(resolved)) {
-      return resolved
-    }
-  }
-
-  return candidate
-}
-
 export function spawnPnpm(
   args: string[],
   options: {
@@ -256,15 +215,13 @@ export function spawnPnpm(
     stdio: 'pipe'
   },
 ) {
-  if (process.platform === 'win32') {
-    return spawn(resolvePnpmBinary(), args, {
-      ...options,
-      shell: true,
-      windowsHide: true,
-    })
-  }
-
-  return spawn(resolvePnpmBinary(), args, options)
+  // 保留调用方已选择的 CLI，避免切到 demo 后被 Corepack 的就近版本声明重新路由。
+  const command = createPnpmCommand(args, { npmExecPath: options.env['npm_execpath'] })
+  return spawn(command.command, command.args, {
+    ...options,
+    shell: command.shell,
+    ...(process.platform === 'win32' ? { windowsHide: true } : {}),
+  })
 }
 
 export function killProcessTreeOnWindows(pid: number) {
@@ -326,267 +283,6 @@ function listDescendantPidsOnPosix(rootPid: number) {
   }
 
   return descendants
-}
-
-interface ProcessTreeRow {
-  pid: number
-  ppid: number
-  rssKb: number
-  command?: string
-}
-
-interface WindowsProcessTreeRow {
-  pid: number
-  ppid: number
-  workingSetBytes: number
-  command?: string
-}
-
-function readPsToken(value: string, start: number) {
-  let index = start
-  while (index < value.length && value.charCodeAt(index) <= 32) {
-    index += 1
-  }
-  const tokenStart = index
-  while (index < value.length && value.charCodeAt(index) > 32) {
-    index += 1
-  }
-  if (tokenStart === index) {
-    return undefined
-  }
-  return {
-    token: value.slice(tokenStart, index),
-    nextIndex: index,
-  }
-}
-
-function parseProcessTreeRowLine(value: string): ProcessTreeRow | undefined {
-  const pidColumn = readPsToken(value, 0)
-  const ppidColumn = pidColumn ? readPsToken(value, pidColumn.nextIndex) : undefined
-  const rssColumn = ppidColumn ? readPsToken(value, ppidColumn.nextIndex) : undefined
-  if (!pidColumn || !ppidColumn || !rssColumn) {
-    return undefined
-  }
-  const pid = Number(pidColumn.token)
-  const ppid = Number(ppidColumn.token)
-  const rssKb = Number(rssColumn.token)
-  if (!Number.isInteger(pid) || !Number.isInteger(ppid) || !Number.isFinite(rssKb)) {
-    return undefined
-  }
-  const command = value.slice(rssColumn.nextIndex).trim()
-  return {
-    pid,
-    ppid,
-    rssKb,
-    ...(command ? { command: command.slice(0, 240) } : {}),
-  }
-}
-
-function sampleProcessTreeMemoryOnPosix(rootPid: number): Omit<MemoryUsageSample, 'at'> | undefined {
-  const result = spawnSync('ps', ['-Ao', 'pid=,ppid=,rss=,command='], {
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'ignore'],
-  })
-
-  if (result.status !== 0 || typeof result.stdout !== 'string') {
-    return undefined
-  }
-
-  const rows: ProcessTreeRow[] = []
-  for (const line of result.stdout.split(NEWLINE_SPLIT_RE)) {
-    const normalized = line.trim()
-    if (!normalized) {
-      continue
-    }
-
-    const row = parseProcessTreeRowLine(normalized)
-    if (row) {
-      rows.push(row)
-    }
-  }
-
-  const childrenByParent = new Map<number, ProcessTreeRow[]>()
-  const byPid = new Map<number, ProcessTreeRow>()
-  for (const row of rows) {
-    byPid.set(row.pid, row)
-    const siblings = childrenByParent.get(row.ppid)
-    if (siblings) {
-      siblings.push(row)
-    }
-    else {
-      childrenByParent.set(row.ppid, [row])
-    }
-  }
-
-  const tracked = new Map<number, ProcessTreeRow>()
-  const root = byPid.get(rootPid)
-  if (root) {
-    tracked.set(root.pid, root)
-  }
-
-  const stack = [...(childrenByParent.get(rootPid) ?? [])]
-  while (stack.length > 0) {
-    const current = stack.pop()
-    if (current == null || tracked.has(current.pid)) {
-      continue
-    }
-    tracked.set(current.pid, current)
-    const children = childrenByParent.get(current.pid)
-    if (children?.length) {
-      stack.push(...children)
-    }
-  }
-
-  if (tracked.size === 0) {
-    return undefined
-  }
-
-  let totalRssKb = 0
-  let maxProcessRssKb = 0
-  for (const row of tracked.values()) {
-    totalRssKb += row.rssKb
-    maxProcessRssKb = Math.max(maxProcessRssKb, row.rssKb)
-  }
-
-  return {
-    rssMb: Math.round(totalRssKb / 1024),
-    maxProcessRssMb: Math.round(maxProcessRssKb / 1024),
-    processCount: tracked.size,
-    topProcesses: [...tracked.values()]
-      .sort((a, b) => b.rssKb - a.rssKb)
-      .slice(0, 8)
-      .map(row => ({
-        pid: row.pid,
-        ppid: row.ppid,
-        rssMb: Math.round(row.rssKb / 1024),
-        ...(row.command ? { command: row.command } : {}),
-      })),
-  }
-}
-
-export function createWindowsProcessTreeMemoryScript(rootPid: number, cwd = process.cwd()) {
-  const escapedRootPid = JSON.stringify(rootPid)
-  return [
-    `$root = [int]${escapedRootPid}`,
-    `$repositoryRoot = '${cwd.replaceAll('\'', '\'\'')}'`,
-    '$watchCommandPatterns = @("weapp-vite(?:\\.js)?\\s+dev", "taro-build-guard\\.mjs\\s+--watch", "taro-build-runner\\.mjs\\s+build\\s+--type\\s+h5\\s+--watch", "taro-build-runner\\.mjs\\s+build\\s+--type\\s+\\S+\\s+--watch", "run-mpx-cli-service\\.js\\s+serve", "webpack(?:\\.js)?\\s+--watch", "gulp[\\s\\S]+gulpfile\\.ts", "\\bpnpm\\b[\\s\\S]+build:weapp[\\s\\S]+--watch", "hbuilderx[\\s\\S]+launch[\\s\\S]+mp-weixin", "uni\\.js[\\s\\S]+-p\\s+mp-weixin")',
-    '$processes = @(Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,WorkingSetSize,CommandLine)',
-    '$children = @{}',
-    'foreach ($process in $processes) {',
-    '  $parent = [int]$process.ParentProcessId',
-    '  if (-not $children.ContainsKey($parent)) { $children[$parent] = @() }',
-    '  $children[$parent] += $process',
-    '}',
-    '$tracked = @{}',
-    '$stack = New-Object System.Collections.ArrayList',
-    '$rootProcess = $processes | Where-Object { [int]$_.ProcessId -eq $root } | Select-Object -First 1',
-    'if ($null -ne $rootProcess) { $tracked[[int]$rootProcess.ProcessId] = $rootProcess }',
-    'if ($children.ContainsKey($root)) { foreach ($child in $children[$root]) { [void]$stack.Add($child) } }',
-    'while ($stack.Count -gt 0) {',
-    '  $current = $stack[$stack.Count - 1]',
-    '  $stack.RemoveAt($stack.Count - 1)',
-    '  $pid = [int]$current.ProcessId',
-    '  if ($tracked.ContainsKey($pid)) { continue }',
-    '  $tracked[$pid] = $current',
-    '  if ($children.ContainsKey($pid)) { foreach ($child in $children[$pid]) { [void]$stack.Add($child) } }',
-    '}',
-    'foreach ($process in $processes) {',
-    '  $command = if ($null -eq $process.CommandLine) { "" } else { [string]$process.CommandLine }',
-    '  if ($command.Length -eq 0 -or -not $command.Contains($repositoryRoot)) { continue }',
-    '  foreach ($pattern in $watchCommandPatterns) {',
-    '    if ($command -match $pattern) { $tracked[[int]$process.ProcessId] = $process; break }',
-    '  }',
-    '}',
-    '$total = 0',
-    '$max = 0',
-    'foreach ($process in $tracked.Values) {',
-    '  $workingSet = if ($null -eq $process.WorkingSetSize) { 0 } else { [double]$process.WorkingSetSize }',
-    '  $total += $workingSet',
-    '  if ($workingSet -gt $max) { $max = $workingSet }',
-    '}',
-    '$top = @($tracked.Values | Sort-Object -Property WorkingSetSize -Descending | Select-Object -First 8 | ForEach-Object { $workingSet = if ($null -eq $_.WorkingSetSize) { 0 } else { [double]$_.WorkingSetSize }; $command = if ($null -eq $_.CommandLine) { "" } else { [string]$_.CommandLine }; @{ pid = [int]$_.ProcessId; ppid = [int]$_.ParentProcessId; rssMb = [int][Math]::Round($workingSet / 1MB); command = $command.Substring(0, [Math]::Min(240, $command.Length)) } })',
-    '[Console]::Out.WriteLine((@{ rssMb = [int][Math]::Round($total / 1MB); maxProcessRssMb = [int][Math]::Round($max / 1MB); processCount = [int]$tracked.Count; topProcesses = $top } | ConvertTo-Json -Compress -Depth 4))',
-  ].join('; ')
-}
-
-function sampleProcessTreeMemoryOnWindows(rootPid: number): Omit<MemoryUsageSample, 'at'> | undefined {
-  const script = createWindowsProcessTreeMemoryScript(rootPid)
-  const encodedCommand = Buffer.from(script, 'utf16le').toString('base64')
-  const result = spawnSync('powershell', ['-NoProfile', '-NonInteractive', '-EncodedCommand', encodedCommand], {
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'ignore'],
-    windowsHide: true,
-  })
-
-  if (result.status !== 0 || typeof result.stdout !== 'string') {
-    return undefined
-  }
-
-  try {
-    const parsed = JSON.parse(result.stdout.trim()) as Partial<Omit<MemoryUsageSample, 'at'>>
-    if (
-      typeof parsed.rssMb !== 'number'
-      || typeof parsed.maxProcessRssMb !== 'number'
-      || typeof parsed.processCount !== 'number'
-    ) {
-      return undefined
-    }
-    const topProcesses = normalizeWindowsTopProcesses(parsed.topProcesses)
-    const sample: Omit<MemoryUsageSample, 'at'> = {
-      rssMb: parsed.rssMb,
-      maxProcessRssMb: parsed.maxProcessRssMb,
-      processCount: parsed.processCount,
-    }
-    if (topProcesses.length > 0) {
-      sample.topProcesses = topProcesses
-    }
-    return sample
-  }
-  catch {
-    return undefined
-  }
-}
-
-function normalizeWindowsTopProcesses(value: unknown): MemoryProcessSample[] {
-  const rows = Array.isArray(value)
-    ? value
-    : value && typeof value === 'object'
-      ? [value]
-      : []
-  return rows
-    .map((row) => {
-      const item = row as Partial<WindowsProcessTreeRow & MemoryProcessSample>
-      if (
-        typeof item.pid !== 'number'
-        || typeof item.ppid !== 'number'
-        || typeof item.rssMb !== 'number'
-      ) {
-        return undefined
-      }
-      return {
-        pid: item.pid,
-        ppid: item.ppid,
-        rssMb: item.rssMb,
-        ...(typeof item.command === 'string' && item.command ? { command: item.command } : {}),
-      }
-    })
-    .filter((item): item is MemoryProcessSample => item != null)
-}
-
-export function sampleProcessTreeMemory(rootPid: number | undefined): MemoryUsageSample | undefined {
-  if (rootPid == null) {
-    return undefined
-  }
-  const sample = process.platform === 'win32'
-    ? sampleProcessTreeMemoryOnWindows(rootPid)
-    : sampleProcessTreeMemoryOnPosix(rootPid)
-  if (!sample) {
-    return undefined
-  }
-  return {
-    at: Date.now(),
-    ...sample,
-  }
 }
 
 export function killProcessTreeOnPosix(pid: number, signal: NodeJS.Signals) {
@@ -700,7 +396,7 @@ function isProcessAlive(pid: number | undefined) {
 }
 
 function createWatchSpawnEnv(extra: Record<string, string>) {
-  const env = createSpawnEnv(process.env, {
+  return createWatchProcessEnv(process.env, {
     WEAPP_TW_WATCH_REGRESSION: '1',
     // 回归模式优先稳定性。
     // 宿主机上 Webpack/Taro 的 fs.watch 很容易触发 EMFILE，
@@ -712,19 +408,6 @@ function createWatchSpawnEnv(extra: Record<string, string>) {
     NODE_OPTIONS: process.env['NODE_OPTIONS'] ?? '--max-old-space-size=8192',
     ...extra,
   })
-
-  for (const key of Object.keys(env)) {
-    if (key === 'VITEST' || key.startsWith('VITEST_')) {
-      delete env[key]
-    }
-  }
-  if (env['NODE_ENV'] === 'test') {
-    delete env['NODE_ENV']
-  }
-  if (env['BABEL_ENV'] === 'test') {
-    delete env['BABEL_ENV']
-  }
-  return env
 }
 
 export async function runPnpmCommand(cwd: string, args: string[], label: string) {
@@ -782,21 +465,22 @@ export async function ensureLocalPackageBuild(baseCwd: string) {
   await runPnpmCommand(packageRoot, ['run', 'build'], 'build')
 }
 
-export function createWatchSession(
+export async function createWatchSession(
   cwd: string,
   devScript: string,
   options: Pick<CliOptions, 'quietSass'>,
   env: Record<string, string> = {},
-): WatchSession {
+): Promise<WatchSession> {
   return createWatchCommandSession(cwd, ['run', devScript], options, env)
 }
 
-export function createWatchCommandSession(
+export async function createWatchCommandSession(
   cwd: string,
   args: string[],
   options: Pick<CliOptions, 'quietSass'>,
   env: Record<string, string> = {},
-): WatchSession {
+): Promise<WatchSession> {
+  assertWatchCommandActive()
   cleanupExistingWatchProcesses(cwd)
   const lines: string[] = []
   const pluginProcessSamples: PluginProcessSample[] = []
@@ -804,25 +488,23 @@ export function createWatchCommandSession(
   const memorySamples: MemoryUsageSample[] = []
   let lastCompileSuccessAt = 0
   let compileFatalError: string | undefined
-  const child = spawnPnpm(args, {
+  const { child, memorySource, startedAt } = await spawnWithWatchMemorySource(cwd, () => spawnPnpm(args, {
     cwd,
     env: createWatchSpawnEnv(env),
     detached: process.platform !== 'win32',
     stdio: 'pipe',
+  }))
+  const memorySampler = createMemorySampler({
+    probe: signal => memorySource.sample(child.pid, signal),
+    close: () => memorySource.close(),
+    onSample(sample) {
+      memorySamples.push(sample)
+      if (memorySamples.length > 1000) {
+        memorySamples.shift()
+      }
+    },
+    onUnavailable: error => process.stderr.write(`[watch-hmr:memory] unavailable: ${error.message}\n`),
   })
-  const recordMemorySample = () => {
-    const sample = sampleProcessTreeMemory(child.pid)
-    if (!sample) {
-      return
-    }
-    memorySamples.push(sample)
-    if (memorySamples.length > 1000) {
-      memorySamples.shift()
-    }
-  }
-  const memoryTimer = setInterval(recordMemorySample, 1000)
-  memoryTimer.unref?.()
-  recordMemorySample()
   let exitSignal: NodeJS.Signals | null = null
   child.once('close', (_code, signal) => {
     exitSignal = signal
@@ -926,8 +608,6 @@ export function createWatchCommandSession(
     }
     stopped = true
     collecting = false
-    clearInterval(memoryTimer)
-    recordMemorySample()
     child.stdout.off('data', collect)
     child.stderr.off('data', collect)
   }
@@ -936,6 +616,7 @@ export function createWatchCommandSession(
   child.stderr.on('data', collect)
 
   const ensureRunning = () => {
+    assertWatchCommandActive()
     if (compileFatalError) {
       throw new Error(`watch process reported fatal error: ${compileFatalError}`)
     }
@@ -950,7 +631,7 @@ export function createWatchCommandSession(
     }
   }
 
-  const stop = async () => {
+  const stopWatch = async () => {
     const waitForExit = async (timeoutMs: number) => {
       const startedAt = Date.now()
       while (Date.now() - startedAt < timeoutMs) {
@@ -987,7 +668,20 @@ export function createWatchCommandSession(
     closePipes()
   }
 
+  const stop = async () => {
+    const stoppingMemory = memorySampler.stop().then(() => undefined, error => error as Error)
+    const watchError = await stopWatch().then(() => undefined, error => error as Error)
+    const memoryError = await stoppingMemory
+    if (watchError && memoryError) {
+      throw new AggregateError([watchError, memoryError], 'watch process and memory probe cleanup failed')
+    }
+    if (watchError || memoryError) {
+      throw watchError ?? memoryError
+    }
+  }
+
   return {
+    startedAt,
     child,
     ensureRunning,
     lastCompileSuccessAt: () => lastCompileSuccessAt,

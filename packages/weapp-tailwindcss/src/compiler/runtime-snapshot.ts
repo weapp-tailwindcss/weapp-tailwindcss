@@ -39,7 +39,7 @@ export interface RuntimeCompilationBuildState {
   runtimeAffectingHashByFile: Map<string, string>
   linkedByEntry: Map<string, Set<string>>
   dependentsByLinkedFile: Map<string, Set<string>>
-  bundleMarkupCandidatesByFile: Map<string, Set<string>>
+  bundleMarkupCandidatesByFile: Map<string, { sourceFile: string, candidates: Set<string> }>
   generatorCandidateSignature?: string | undefined
 }
 
@@ -168,6 +168,10 @@ export function buildRuntimeCompilationSnapshot<
     const runtimeAffectingHash = canReuseRuntimeAffectingHash
       ? previousRuntimeAffectingHash
       : (() => {
+          // 已排除出候选扫描的 JS 仍按源码变化保守失效，无需为比较候选文本再构建 AST。
+          if (type === 'js' && entry.runtimeCandidate === false) {
+            return hash
+          }
           const signature = options.createRuntimeAffectingSignature(source, type)
           snapshot.runtimeAffectingSignatureByFile.set(file, signature)
           return options.computeHash(signature)

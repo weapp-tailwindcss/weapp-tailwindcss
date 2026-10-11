@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { bench, describe } from 'vitest'
+import { test } from 'vitest'
 import { createContext } from '@/core'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -27,7 +27,7 @@ const uniCss = fs.readFileSync(uniCssPath, 'utf8')
 const uniJs = fs.readFileSync(uniJsPath, 'utf8')
 const uniWxml = fs.readFileSync(uniWxmlPath, 'utf8')
 
-const benchOptions = { time: 260, iterations: 3, minSamples: 3 }
+const benchOptions = { time: 260, iterations: 3 }
 
 let taroHotCounter = 0
 let uniHotCounter = 0
@@ -53,34 +53,34 @@ function createHotWxmlSource(source: string, prefix: string, index: number) {
   return `${source}\n<!-- ${prefix}:${index} -->`
 }
 
-describe('demo hot-update benchmarks', () => {
-  bench(
-    'taro-webpack-react-tailwindcss-v4 hot update (js + wxml, comment-only changes)',
-    async () => {
-      const iteration = taroHotCounter++
-      const ctx = await taroContextPromise
-      const jsSource = createHotJsSource(taroJs, 'taro-hot-js', iteration)
-      const wxmlSource = createHotWxmlSource(taroWxml, 'taro-hot-wxml', iteration)
-      await ctx.transformJs(jsSource, {
-        filename: taroJsPath,
-      })
-      await ctx.transformWxml(wxmlSource)
-    },
-    benchOptions,
-  )
-
-  bench(
-    'uni-app hot update (js + wxml, comment-only changes)',
-    async () => {
-      const iteration = uniHotCounter++
-      const ctx = await uniContextPromise
-      const jsSource = createHotJsSource(uniJs, 'uni-hot-js', iteration)
-      const wxmlSource = createHotWxmlSource(uniWxml, 'uni-hot-wxml', iteration)
-      await ctx.transformJs(jsSource, {
-        filename: uniJsPath,
-      })
-      await ctx.transformWxml(wxmlSource)
-    },
+test('demo hot-update benchmarks', async ({ bench }) => {
+  await bench.compare(
+    bench(
+      'taro-webpack-react-tailwindcss-v4 hot update (js + wxml, comment-only changes)',
+      async () => {
+        const iteration = taroHotCounter++
+        const ctx = await taroContextPromise
+        const jsSource = createHotJsSource(taroJs, 'taro-hot-js', iteration)
+        const wxmlSource = createHotWxmlSource(taroWxml, 'taro-hot-wxml', iteration)
+        await ctx.transformJs(jsSource, {
+          filename: taroJsPath,
+        })
+        await ctx.transformWxml(wxmlSource)
+      },
+    ),
+    bench(
+      'uni-app hot update (js + wxml, comment-only changes)',
+      async () => {
+        const iteration = uniHotCounter++
+        const ctx = await uniContextPromise
+        const jsSource = createHotJsSource(uniJs, 'uni-hot-js', iteration)
+        const wxmlSource = createHotWxmlSource(uniWxml, 'uni-hot-wxml', iteration)
+        await ctx.transformJs(jsSource, {
+          filename: uniJsPath,
+        })
+        await ctx.transformWxml(wxmlSource)
+      },
+    ),
     benchOptions,
   )
 })

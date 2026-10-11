@@ -37,18 +37,6 @@ weapp-tailwindcss 生成器的调用配置。
 
 ***
 
-### candidates?
-
-> 可选 | **candidates**: `Iterable<string>`
-
-***
-
-### sources?
-
-> 可选 | **sources**: `TailwindV4CandidateSource[]`
-
-***
-
 ### incrementalCache?
 
 > 可选 | **incrementalCache**: `boolean`
@@ -70,3 +58,15 @@ weapp-tailwindcss 生成器的调用配置。
 > 可选 | **scanSources**: `boolean | TailwindV4SourcePattern[]`
 
 是否扫描文件系统中的源码入口。
+
+***
+
+### candidates?
+
+> 可选 | **candidates**: `Iterable<string>`
+
+***
+
+### sources?
+
+> 可选 | **sources**: `TailwindV4CandidateSource[]`

@@ -1,13 +1,13 @@
 {
   "name": "benchmark-tailwindcss4",
   "type": "module",
-  "version": "0.0.8",
+  "version": "0.0.10",
   "private": true,
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
   },
   "scripts": {
-    "bench": "vitest bench --config ./vitest.config.mts"
+    "bench": "vitest bench --config ./vitest.config.mts --reporter=default --reporter=json --outputFile.json=bench-report.json"
   },
   "dependencies": {
     "@weapp-tailwindcss/cva": "workspace:*",

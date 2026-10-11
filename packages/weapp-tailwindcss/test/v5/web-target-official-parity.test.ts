@@ -13,7 +13,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { WeappTailwindcss as createGulpPlugins } from '@/gulp'
 import { createWeappTailwindcssGenerator, resolveTailwindV4Source } from '@/generator'
 import { WeappTailwindcss as createVitePlugins } from '@/vite'
-import { generateCssByGenerator } from '@/bundlers/shared/generator-css'
+import { generateCssByGenerator } from '@/generation/index'
 import {
   createContext,
   createRollupAsset,
@@ -683,8 +683,9 @@ describe('web target official tailwind parity', () => {
       expect(css, `${name} website web output should match @tailwindcss/postcss byte-for-byte`).toBe(officialPostcss)
       expect(css).toContain('.sr-only')
       expect(css).toContain('.icon-\\[logos--html-5\\]')
-      expect(css).toContain('.icon-\\[logos--android-icon\\]')
+      expect(css).toContain('.icon-\\[bi--android2\\]')
       expect(css).toContain('.icon-\\[logos--react\\]')
+      expect(css).not.toContain('.icon-\\[logos--android-icon\\]')
       expect(css).not.toContain('.icon-\\[mdi--wechat\\]')
       expect(css).not.toContain('.icon-\\[mdi--android\\]')
       expect(css).not.toContain('.icon-\\[mdi--cellphone-link\\]')

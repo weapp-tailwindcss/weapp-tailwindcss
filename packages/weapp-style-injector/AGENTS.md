@@ -29,7 +29,7 @@
 - `pnpm --filter weapp-style-injector test`
 - `pnpm --filter weapp-style-injector build`
 - 定向回归：
-  - `pnpm --filter weapp-style-injector vitest run test/index.test.ts`
+  - `pnpm --filter weapp-style-injector exec vitest run test/index.test.ts`
 
 ## 提交前检查
 

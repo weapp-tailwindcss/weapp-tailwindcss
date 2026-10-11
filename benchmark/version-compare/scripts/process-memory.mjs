@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process'
 import process from 'node:process'
 
-const WHITESPACE_RE = /\s+/
+const PROCESS_ROW_RE = /^\s*(\d+)\s+(\d+)\s+(\d+)(?=\s|$)/
 
 function median(values) {
   if (values.length === 0) {
@@ -14,24 +14,16 @@ function median(values) {
     : sorted[middle]
 }
 
-function listDescendantRowsOnPosix(rootPid) {
-  const result = spawnSync('ps', ['-Ao', 'pid=,ppid=,rss='], {
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'ignore'],
-  })
-  if (result.status !== 0 || typeof result.stdout !== 'string') {
-    return []
-  }
-
-  const rows = result.stdout.split(/\r?\n/).flatMap((line) => {
-    const [pidText, ppidText, rssText] = line.trim().split(WHITESPACE_RE)
-    const pid = Number(pidText)
-    const ppid = Number(ppidText)
-    const rssKb = Number(rssText)
-    return Number.isInteger(pid) && Number.isInteger(ppid) && Number.isFinite(rssKb)
-      ? [{ pid, ppid, rssKb }]
+export function parsePosixProcessRows(output) {
+  return output.split(/\r?\n/).flatMap((line) => {
+    const match = line.match(PROCESS_ROW_RE)
+    return match
+      ? [{ pid: Number(match[1]), ppid: Number(match[2]), rssKb: Number(match[3]), command: line.slice(match[0].length).trim() }]
       : []
   })
+}
+
+export function selectProcessTreeRows(rows, rootPid) {
   const childrenByParent = new Map()
   const byPid = new Map(rows.map(row => [row.pid, row]))
   for (const row of rows) {
@@ -58,7 +50,14 @@ function listDescendantRowsOnPosix(rootPid) {
 }
 
 function samplePosix(rootPid) {
-  const rows = listDescendantRowsOnPosix(rootPid)
+  const result = spawnSync('ps', ['-Ao', 'pid=,ppid=,rss=,comm='], {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'ignore'],
+  })
+  if (result.status !== 0 || typeof result.stdout !== 'string') {
+    return undefined
+  }
+  const rows = selectProcessTreeRows(parsePosixProcessRows(result.stdout), rootPid)
   if (rows.length === 0) {
     return undefined
   }
@@ -66,13 +65,14 @@ function samplePosix(rootPid) {
     at: Date.now(),
     rssMb: rows.reduce((total, row) => total + row.rssKb, 0) / 1024,
     processCount: rows.length,
+    processes: rows.map(({ pid, ppid, rssKb, command }) => ({ pid, ppid, rssMb: rssKb / 1024, command })),
   }
 }
 
 function sampleWindows(rootPid) {
   const script = [
     '$root = [int]$args[0]',
-    '$processes = Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,WorkingSetSize',
+    '$processes = Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,WorkingSetSize,Name',
     '$children = @{}',
     'foreach ($process in $processes) { $parent = [int]$process.ParentProcessId; if (-not $children.ContainsKey($parent)) { $children[$parent] = @() }; $children[$parent] += $process }',
     '$tracked = @{}',
@@ -80,10 +80,10 @@ function sampleWindows(rootPid) {
     '$rootProcess = $processes | Where-Object { [int]$_.ProcessId -eq $root } | Select-Object -First 1',
     'if ($null -ne $rootProcess) { $tracked[[int]$rootProcess.ProcessId] = $rootProcess }',
     'if ($children.ContainsKey($root)) { foreach ($child in $children[$root]) { [void]$stack.Add($child) } }',
-    'while ($stack.Count -gt 0) { $current = $stack[$stack.Count - 1]; $stack.RemoveAt($stack.Count - 1); $pid = [int]$current.ProcessId; if ($tracked.ContainsKey($pid)) { continue }; $tracked[$pid] = $current; if ($children.ContainsKey($pid)) { foreach ($child in $children[$pid]) { [void]$stack.Add($child) } } }',
+    'while ($stack.Count -gt 0) { $current = $stack[$stack.Count - 1]; $stack.RemoveAt($stack.Count - 1); $processId = [int]$current.ProcessId; if ($tracked.ContainsKey($processId)) { continue }; $tracked[$processId] = $current; if ($children.ContainsKey($processId)) { foreach ($child in $children[$processId]) { [void]$stack.Add($child) } } }',
     '$total = 0',
-    'foreach ($process in $tracked.Values) { $workingSet = if ($null -eq $process.WorkingSetSize) { 0 } else { [double]$process.WorkingSetSize }; $total += $workingSet }',
-    '[Console]::Out.WriteLine((@{ rssMb = $total / 1MB; processCount = [int]$tracked.Count } | ConvertTo-Json -Compress))',
+    '$details = @(foreach ($process in $tracked.Values) { $workingSet = if ($null -eq $process.WorkingSetSize) { 0 } else { [double]$process.WorkingSetSize }; $total += $workingSet; @{ pid = [int]$process.ProcessId; ppid = [int]$process.ParentProcessId; rssMb = $workingSet / 1MB; command = [string]$process.Name } })',
+    '[Console]::Out.WriteLine((@{ rssMb = $total / 1MB; processCount = [int]$tracked.Count; processes = $details } | ConvertTo-Json -Depth 4 -Compress))',
   ].join('; ')
   const result = spawnSync('powershell', ['-NoProfile', '-Command', script, String(rootPid)], {
     encoding: 'utf8',
@@ -117,12 +117,14 @@ export function summarizeProcessMemory(samples) {
       peakRssMb: 0,
       steadyRssMb: 0,
       steadyGrowthPct: 0,
+      samples: [],
     }
   }
   const baselineRssMb = active[0].rssMb
   const steadyCount = Math.max(1, Math.ceil(active.length * 0.2))
   const steadyRssMb = median(active.slice(-steadyCount).map(sample => sample.rssMb))
   return {
+    samples: active,
     count: active.length,
     baselineRssMb,
     peakRssMb: Math.max(...active.map(sample => sample.rssMb)),

@@ -1,6 +1,8 @@
 import type { BundleSnapshot } from './bundle-state'
 import type { InternalUserDefinedOptions } from '@/types'
 import process from 'node:process'
+import { COMPILATION_EVENT_SCHEMA_VERSION } from '@/compiler/events'
+import { createCompilerRuntimeState } from '@/compiler/runtime-state'
 import {
   collectRuntimeClassSet,
   createTailwindRuntimeReadyPromise,
@@ -9,6 +11,7 @@ import {
 import { resolveTailwindcssOptions } from '@/tailwindcss/runtime-options'
 import { getRuntimeClassSetSignature } from '@/tailwindcss/runtime/cache'
 import { createBundleRuntimeClassSetManager } from './incremental-runtime-class-set'
+import { createRuntimeClassSetCache } from './runtime-class-set/cache'
 
 interface CreateViteRuntimeClassSetOptions {
   opts: InternalUserDefinedOptions
@@ -31,11 +34,11 @@ export function createViteRuntimeClassSet(options: CreateViteRuntimeClassSetOpti
     debug,
   } = options
   const readyPromise = createTailwindRuntimeReadyPromise(initialTailwindRuntime)
-  const runtimeState = {
+  const runtimeState = createCompilerRuntimeState({
     tailwindRuntime: initialTailwindRuntime,
     readyPromise,
     refreshTailwindcssRuntime,
-  }
+  })
   const bundleRuntimeClassSetManager = createBundleRuntimeClassSetManager({
     bareArbitraryValues: opts.arbitraryValues?.bareArbitraryValues,
     escapeMap: opts.escapeMap,
@@ -44,8 +47,22 @@ export function createViteRuntimeClassSet(options: CreateViteRuntimeClassSetOpti
     bareArbitraryValues: opts.arbitraryValues?.bareArbitraryValues,
     escapeMap: opts.escapeMap,
   })
-  let runtimeSet: Set<string> | undefined
-  let runtimeSetPromise: Promise<Set<string>> | undefined
+  const runtimeCache = createRuntimeClassSetCache({
+    async refresh() {
+      await refreshTailwindRuntimeState(runtimeState, { force: true, clearCache: true })
+      await runtimeState.readyPromise
+    },
+    collect: () => collectRuntimeClassSet(runtimeState.tailwindRuntime, {
+      force: true,
+      skipRefresh: true,
+      clearCache: true,
+    }),
+  })
+  const disposeRuntimeState = runtimeState.dispose
+  runtimeState.dispose = () => {
+    runtimeCache.dispose()
+    disposeRuntimeState()
+  }
   let runtimeRefreshSignature: string | undefined
   let runtimeRefreshOptionsKey: string | undefined
 
@@ -69,50 +86,30 @@ export function createViteRuntimeClassSet(options: CreateViteRuntimeClassSetOpti
     }
   }
 
+  function invalidateRuntimeClassSet() {
+    runtimeCache.invalidate()
+  }
+
   async function refreshRuntimeState(force: boolean) {
     const invalidation = resolveRuntimeRefreshOptions()
-    const shouldRefresh = force || invalidation.changed
-    const refreshed = await refreshTailwindRuntimeState(runtimeState, {
-      force: shouldRefresh,
-      clearCache: force || invalidation.changed,
-    })
-    if (invalidation.changed) {
-      debug('runtime signature changed, refresh triggered. signature: %s', invalidation.signature)
+    if (force || invalidation.changed) {
+      invalidateRuntimeClassSet()
     }
-    if (refreshed) {
-      runtimeSet = undefined
-      runtimeSetPromise = undefined
-    }
+    await runtimeCache.refresh()
   }
 
   async function ensureRuntimeClassSet(force = false): Promise<Set<string>> {
+    const startedAt = performance.now()
+    const operationId = `vite-runtime-${Date.now()}-${runtimeState.revision}`
     const forceRuntimeRefresh = force || process.env['WEAPP_TW_VITE_FORCE_RUNTIME_REFRESH'] === '1'
-    await refreshRuntimeState(force)
-    await runtimeState.readyPromise
-    if (!forceRuntimeRefresh && runtimeSet) {
-      return runtimeSet
+    const invalidation = resolveRuntimeRefreshOptions()
+    if (forceRuntimeRefresh || invalidation.changed) {
+      invalidateRuntimeClassSet()
     }
-
-    if (forceRuntimeRefresh || !runtimeSetPromise) {
-      const invalidation = resolveRuntimeRefreshOptions()
-      const task = collectRuntimeClassSet(runtimeState.tailwindRuntime, {
-        force: forceRuntimeRefresh || invalidation.changed,
-        skipRefresh: forceRuntimeRefresh,
-        clearCache: forceRuntimeRefresh || invalidation.changed,
-      })
-      runtimeSetPromise = task
-    }
-
-    const task = runtimeSetPromise!
-    try {
-      runtimeSet = await task
-      return runtimeSet
-    }
-    finally {
-      if (runtimeSetPromise === task) {
-        runtimeSetPromise = undefined
-      }
-    }
+    const cacheHit = runtimeCache.peek() !== undefined
+    const result = await runtimeCache.get()
+    await runtimeState.events.emit({ schemaVersion: COMPILATION_EVENT_SCHEMA_VERSION, type: 'diagnostic', timestamp: new Date().toISOString(), adapter: 'vite', phase: 'candidate', revision: runtimeState.revision, operationId, durationMs: performance.now() - startedAt, cache: { hit: cacheHit } })
+    return result
   }
 
   async function ensureBundleRuntimeClassSet(
@@ -125,6 +122,8 @@ export function createViteRuntimeClassSet(options: CreateViteRuntimeClassSetOpti
       transformOnly?: boolean | undefined
     } = {},
   ) {
+    const startedAt = performance.now()
+    const operationId = `vite-bundle-${Date.now()}-${runtimeState.revision}`
     const forceRuntimeRefresh = forceRefresh || process.env['WEAPP_TW_VITE_FORCE_RUNTIME_REFRESH'] === '1'
     const invalidation = resolveRuntimeRefreshOptions()
     const shouldRefreshRuntime = forceRuntimeRefresh || invalidation.changed
@@ -135,25 +134,21 @@ export function createViteRuntimeClassSet(options: CreateViteRuntimeClassSetOpti
     await runtimeState.readyPromise
 
     if (shouldRefreshRuntime) {
-      runtimeSet = undefined
-      runtimeSetPromise = undefined
       await bundleRuntimeClassSetManager.reset()
       await transformRuntimeClassSetManager.reset()
     }
 
+    const expectedRevision = runtimeCache.revision()
     if (!forceRuntimeRefresh) {
       try {
         const baseClassSet = options.baseClassSet
-          ?? runtimeSet
-          ?? await collectRuntimeClassSet(runtimeState.tailwindRuntime, {
-            force: invalidation.changed,
-            clearCache: invalidation.changed,
-          })
+          ?? await runtimeCache.get()
         const nextRuntimeSet = await bundleRuntimeClassSetManager.sync(runtimeState.tailwindRuntime, snapshot, {
           baseClassSet,
           skipInitialFullScanWithBase: options.allowBaselineOnlyInitialSync,
         })
-        runtimeSet = nextRuntimeSet
+        runtimeCache.remember(nextRuntimeSet, expectedRevision)
+        await runtimeState.events.emit({ schemaVersion: COMPILATION_EVENT_SCHEMA_VERSION, type: 'diagnostic', timestamp: new Date().toISOString(), adapter: 'vite', phase: 'candidate', revision: runtimeState.revision, operationId, durationMs: performance.now() - startedAt, cache: { hit: !shouldRefreshRuntime }, evidence: ['bundle-runtime-sync'] })
         return nextRuntimeSet
       }
       catch (error) {
@@ -162,31 +157,18 @@ export function createViteRuntimeClassSet(options: CreateViteRuntimeClassSetOpti
       }
     }
 
-    if (!forceRuntimeRefresh && !invalidation.changed && !forceCollectBySource && runtimeSet) {
-      return runtimeSet
+    if (!forceRuntimeRefresh && !invalidation.changed && forceCollectBySource) {
+      invalidateRuntimeClassSet()
     }
-
-    const task = collectRuntimeClassSet(runtimeState.tailwindRuntime, {
-      force: forceRuntimeRefresh || invalidation.changed || forceCollectBySource,
-      skipRefresh: forceRuntimeRefresh,
-      clearCache: forceRuntimeRefresh || invalidation.changed,
-    })
-    runtimeSetPromise = task
-
-    try {
-      runtimeSet = await task
-      return runtimeSet
-    }
-    finally {
-      if (runtimeSetPromise === task) {
-        runtimeSetPromise = undefined
-      }
-    }
+    const result = await runtimeCache.get()
+    await runtimeState.events.emit({ schemaVersion: COMPILATION_EVENT_SCHEMA_VERSION, type: 'diagnostic', timestamp: new Date().toISOString(), adapter: 'vite', phase: 'candidate', revision: runtimeState.revision, operationId, durationMs: performance.now() - startedAt, cache: { hit: false }, evidence: ['runtime-class-scan'] })
+    return result
   }
 
   return {
     runtimeState,
     refreshRuntimeState,
+    invalidateRuntimeClassSet,
     ensureRuntimeClassSet,
     ensureBundleRuntimeClassSet,
   }

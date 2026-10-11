@@ -30,7 +30,7 @@
     "@vue/compiler-sfc": "catalog:vue3",
     "babel-loader": "^10.1.1",
     "cross-env": "catalog:crossEnv",
-    "css-loader": "^7.1.4",
+    "css-loader": "catalog:webpackTools",
     "html-webpack-plugin": "^5.6.8",
     "mini-css-extract-plugin": "^2.10.2",
     "tailwindcss": "catalog:tailwindcss4",
@@ -39,8 +39,8 @@
     "vue-tsc": "catalog:vueTsc318",
     "weapp-tailwindcss": "workspace:*",
     "webpack": "5.105.4",
-    "webpack-cli": "^7.2.2",
-    "webpack-dev-server": "^5.2.6"
+    "webpack-cli": "catalog:webpackTools",
+    "webpack-dev-server": "catalog:webpackTools"
   },
   "repository": {
     "type": "git",

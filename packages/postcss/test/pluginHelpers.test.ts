@@ -277,7 +277,7 @@ describe('getCalcPlugin', () => {
     expect(calcMock).not.toHaveBeenCalled()
   })
 
-  it('omits includeCustomProperties when forwarding options', () => {
+  it('forwards only safe included properties when processing CSS', async () => {
     calcMock.mockImplementation(options => ({ postcssPlugin: 'mock-calc', options }))
 
     const plugin = getCalcPlugin(createOptions({
@@ -287,20 +287,34 @@ describe('getCalcPlugin', () => {
       },
     })) as Plugin | null
 
+    await postcss([plugin!]).process(':root { --keep: 1rpx } .x { width: calc(var(--keep) * 2) }', { from: undefined })
     expect(calcMock).toHaveBeenCalledTimes(1)
-    expect(calcMock).toHaveBeenCalledWith({ precision: 6 })
-    expect(plugin?.postcssPlugin).toBe('mock-calc')
+    expect(calcMock).toHaveBeenCalledWith({ includeCustomProperties: ['--keep'], precision: 6, customPropertyValues: new Map([['--keep', '1rpx']]) })
+    expect(plugin?.postcssPlugin).toBe('postcss-calc')
   })
 
-  it('reuses empty calc options for boolean and array modes', () => {
+  it('uses mapped custom properties for boolean mode', async () => {
+    calcMock.mockImplementation(options => ({ postcssPlugin: 'mock-calc', options }))
+    const values = new Map([['--theme-space', '1rem']])
+    const plugin = getCalcPlugin(createOptions({ cssCalc: true, customPropertyValues: values }))
+    await postcss([plugin!]).process('.x { width: calc(var(--theme-space) * 2) }', { from: undefined })
+    expect(calcMock).toHaveBeenCalledWith({
+      customPropertyValues: values,
+      includeCustomProperties: ['--theme-space'],
+    })
+  })
+
+  it('does not pass unresolved properties that could freeze fallbacks', async () => {
     calcMock.mockImplementation(options => ({ postcssPlugin: 'mock-calc', options }))
 
-    getCalcPlugin(createOptions({ cssCalc: true }))
-    getCalcPlugin(createOptions({ cssCalc: ['--keep'] }))
+    for (const cssCalc of [true, ['--keep']]) {
+      const plugin = getCalcPlugin(createOptions({ cssCalc }))
+      await postcss([plugin!]).process('.x { width: calc(var(--keep, 1rpx) * 2) }', { from: undefined })
+    }
 
     expect(calcMock).toHaveBeenCalledTimes(2)
-    expect(calcMock.mock.calls[0]?.[0]).toBe(calcMock.mock.calls[1]?.[0])
-    expect(calcMock.mock.calls[0]?.[0]).toEqual({})
+    expect(calcMock.mock.calls[0]?.[0]).toEqual({ customPropertyValues: new Map(), includeCustomProperties: [] })
+    expect(calcMock.mock.calls[1]?.[0]).toEqual({ customPropertyValues: new Map(), includeCustomProperties: [] })
   })
 })
 
@@ -310,7 +324,7 @@ describe('getCustomPropertyCleaner', () => {
     expect(plugin).toBeNull()
   })
 
-  it('removes duplicate declarations containing matched custom properties', () => {
+  it('keeps distinct declarations containing matched custom properties', () => {
     const plugin = getCustomPropertyCleaner(createOptions({
       cssCalc: {
         includeCustomProperties: [TW_CUSTOM_PROPERTY_REGEX],
@@ -320,7 +334,7 @@ describe('getCustomPropertyCleaner', () => {
 
     const root = postcss.parse(':root{--foo:var(--other);--foo:var(--tw-color);}')
     plugin!.OnceExit?.(root, {} as any)
-    expect(root.toString()).toBe(':root{--foo:var(--other);}')
+    expect(root.toString()).toBe(':root{--foo:var(--other);--foo:var(--tw-color);}')
   })
 })
 

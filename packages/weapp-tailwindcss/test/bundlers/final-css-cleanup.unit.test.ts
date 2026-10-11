@@ -1,19 +1,30 @@
 import { describe, expect, it } from 'vitest'
-import { finalizeMiniProgramCssStructure, hasEmptyAtRuleBlockCandidate } from '@/bundlers/shared/final-css-cleanup'
+import { finalizeMiniProgramCssStructure, hasEmptyCssBlockCandidate } from '@/bundlers/shared/final-css-cleanup'
 
 describe('final mini-program css cleanup', () => {
-  it('detects empty block at-rules with a linear precheck', () => {
-    expect(hasEmptyAtRuleBlockCandidate('@media screen { /* token */ .keep {} }')).toBe(false)
-    expect(hasEmptyAtRuleBlockCandidate('@media screen { @supports (display: grid) { /* removed */ } }')).toBe(true)
-    expect(hasEmptyAtRuleBlockCandidate('@supports (background: url(data:image/svg+xml;utf8,test)) {}')).toBe(true)
-    expect(hasEmptyAtRuleBlockCandidate('@custom "value;{}"; .keep {}')).toBe(false)
+  it('detects empty selector and at-rule blocks with a linear precheck', () => {
+    expect(hasEmptyCssBlockCandidate(':is(page,.tw-root,wx-root-portal-content){}')).toBe(true)
+    expect(hasEmptyCssBlockCandidate('@media screen { /* token */ .keep { color: red } }')).toBe(false)
+    expect(hasEmptyCssBlockCandidate('@media screen { @supports (display: grid) { /* removed */ } }')).toBe(true)
+    expect(hasEmptyCssBlockCandidate('@supports (background: url(data:image/svg+xml;utf8,test)) {}')).toBe(true)
+    expect(hasEmptyCssBlockCandidate('@keyframes spin { 0% {} to { transform: rotate(1turn); } }')).toBe(false)
+    expect(hasEmptyCssBlockCandidate('/* prefix */ @-webkit-keyframes spin { 0% {} }')).toBe(false)
+    expect(hasEmptyCssBlockCandidate('@custom "value;{}"; .keep { color: red }')).toBe(false)
   })
 
-  it('recursively removes empty and comment-only block at-rules', () => {
+  it('ignores large non-empty css without entering the structural scan', () => {
+    const source = `${'.keep { color: red; }\n'.repeat(10_000)}.tail { margin: 0; }`
+
+    expect(hasEmptyCssBlockCandidate(source)).toBe(false)
+  })
+
+  it('recursively removes empty selector rules and block at-rules', () => {
     const source = [
       '@media (prefers-color-scheme: light) {}',
       '@media screen { @supports (display: grid) { /* removed declarations */ } }',
       '@supports (display: flex) { /* removed declarations */ }',
+      ':is(page,.tw-root,wx-root-portal-content) {}',
+      '@media print { .removed { /* removed declarations */ } }',
       '.keep { color: red; }',
     ].join('\n')
 
@@ -25,9 +36,16 @@ describe('final mini-program css cleanup', () => {
       '@charset "UTF-8";',
       '@import "./theme.wxss";',
       '@media (prefers-color-scheme: dark) { .theme { background-color: #232323; } }',
+      '@keyframes spin { 0% {} to { transform: rotate(1turn); } }',
     ].join('\n')
 
     expect(finalizeMiniProgramCssStructure(source)).toBe(source)
+  })
+
+  it('removes a trailing unclosed Tailwind source media marker', () => {
+    const source = '@media screen {}\n.keep { color: red; }\n@media source(none) {\n'
+
+    expect(finalizeMiniProgramCssStructure(source)).toBe('.keep { color: red; }')
   })
 
   it('returns css without candidates before parsing', () => {

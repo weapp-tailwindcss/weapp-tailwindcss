@@ -1,7 +1,7 @@
-import { icebreaker } from '@icebreakers/eslint-config'
 import { globalIgnores } from 'eslint/config'
+import { createMonorepoEslintConfig } from 'repoctl/tooling'
 
-const config = icebreaker(
+const config = createMonorepoEslintConfig(
   {
     tailwindcss: false,
     markdown: false,
@@ -61,6 +61,13 @@ const config = icebreaker(
     },
   },
   {
+    // 迁入的基础包保留旧运行环境兼容性，不将 hasOwnProperty 改成较新的 Object.hasOwn。
+    files: ['packages/escape/src/mapping.ts'],
+    rules: {
+      'e18e/prefer-object-has-own': 'off',
+    },
+  },
+  {
     files: ['apps/**/*.{ts,js}', 'demo/**/*.{ts,js}'],
     languageOptions: {
       globals: {
@@ -92,6 +99,9 @@ const config = icebreaker(
 export default config
   .prepend(
     globalIgnores([
+      // 本地验收报告和参考源码不属于仓库维护的代码，避免扫描大型生成文件。
+      'e2e/reports/local-full-run/**',
+      'submodules/tailwindcss-mangle/**',
       '**/test-results/**',
       'website/test-results/',
       'website/test-results/**',

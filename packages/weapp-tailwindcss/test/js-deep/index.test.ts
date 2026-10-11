@@ -1,6 +1,6 @@
 import type { ParseResult } from '@babel/parser'
 import type t from '@babel/types'
-import { escape, isAllowedClassName } from '@weapp-core/escape'
+import { escape, isAllowedClassName } from '@weapp-tailwindcss/escape'
 import fs from 'fs-extra'
 import MagicString from 'magic-string'
 import path from 'pathe'

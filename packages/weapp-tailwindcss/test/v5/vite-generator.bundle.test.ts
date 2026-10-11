@@ -1,6 +1,6 @@
 import type { OutputAsset, OutputChunk } from 'rollup'
 import type { Plugin, ResolvedConfig } from 'vite'
-import { MappingChars2String } from '@weapp-core/escape'
+import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
@@ -83,8 +83,8 @@ describe('v5 vite generator bundle', () => {
 
   it('does not generate v4 utilities from vendor merge runtime config', async () => {
     const generateMock = vi.fn(async ({ candidates }: { candidates: Set<string> }) => ({
-      css: [...candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
-      rawCss: [...candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
+      css: [...candidates].sort().map(candidate => `.${candidate}{display:block}`).join('\n'),
+      rawCss: [...candidates].sort().map(candidate => `.${candidate}{display:block}`).join('\n'),
       target: 'weapp',
       classSet: new Set(candidates),
       dependencies: [],
@@ -1143,14 +1143,14 @@ describe('v5 vite generator bundle', () => {
     const secondBundle = createBundle('const className = "bg-[#112233]"; const stamp = 2')
     await generateBundle?.call(postPlugin, {} as any, secondBundle)
     expect((secondBundle['app.css'] as OutputAsset).source).toBe('.bg-_b_h112233_B{background-color:#112233}')
-    expect(generateMock).toHaveBeenCalledTimes(2)
+    expect(generateMock).toHaveBeenCalledTimes(1)
   }, TEST_TIMEOUT_MS)
 
   it('regenerates v4 main css when template candidates change but the css asset source is stable', async () => {
     const runtimeSet = new Set<string>()
     const generateMock = vi.fn(async ({ candidates }: { candidates: Set<string> }) => ({
-      css: [...candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
-      rawCss: [...candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
+      css: [...candidates].sort().map(candidate => `.${candidate}{display:block}`).join('\n'),
+      rawCss: [...candidates].sort().map(candidate => `.${candidate}{display:block}`).join('\n'),
       target: 'weapp',
       classSet: new Set(candidates),
       dependencies: [],
@@ -1227,12 +1227,12 @@ describe('v5 vite generator bundle', () => {
     await transform?.call(sourcePlugin, '<view class="bg-[#112233]"></view>', '/project/src/pages/index/index.vue')
     const firstBundle = createBundle('<view class="bg-[#112233]"></view>')
     await generateBundle?.call(postPlugin, {} as any, firstBundle)
-    expect((firstBundle['app.css'] as OutputAsset).source).toBe('.bg-[#112233]{}')
+    expect((firstBundle['app.css'] as OutputAsset).source).toBe('.bg-[#112233]{display:block}')
 
     await transform?.call(sourcePlugin, '<view class="bg-[#445566]"></view>', '/project/src/pages/index/index.vue')
     const secondBundle = createBundle('<view class="bg-[#445566]"></view>')
     await generateBundle?.call(postPlugin, {} as any, secondBundle)
-    expect((secondBundle['app.css'] as OutputAsset).source).toBe('.bg-[#445566]{}')
+    expect((secondBundle['app.css'] as OutputAsset).source).toBe('.bg-[#445566]{display:block}')
     expect(generateMock).toHaveBeenCalledTimes(2)
   }, TEST_TIMEOUT_MS)
 
@@ -1711,7 +1711,7 @@ describe('v5 vite generator bundle', () => {
       '@source not "./sub-normal/**/*";',
       '@source not "./sub-independent/**/*";',
     ].join('\n'), 'utf8')
-    await writeFile(pageCss, '.page-local{}', 'utf8')
+    await writeFile(pageCss, '.page-local{display:block}', 'utf8')
     await writeFile(subNormalCss, [
       '@import "tailwindcss" source(none);',
       '@source "./**/*.{ts,tsx}";',
@@ -1725,7 +1725,7 @@ describe('v5 vite generator bundle', () => {
     await writeFile(subIndependentPage, 'export default "vite-independent-only"', 'utf8')
 
     const generateMock = vi.fn(async ({ candidates }: { candidates: Set<string> }) => {
-      const css = [...candidates].sort().map(candidate => `.${candidate}{}`).join('\n')
+      const css = [...candidates].sort().map(candidate => `.${candidate}{display:block}`).join('\n')
       return {
         css,
         rawCss: css,
@@ -1896,7 +1896,7 @@ describe('v5 vite generator bundle', () => {
     expect((bundle['app.css'] as OutputAsset).source).toContain('.vite-main-only')
     expect((bundle['app.css'] as OutputAsset).source).not.toContain('.vite-normal-only')
     expect((bundle['app.css'] as OutputAsset).source).not.toContain('.vite-independent-only')
-    expect((bundle['pages/index/index.css'] as OutputAsset).source).toContain('.page-local{}')
+    expect((bundle['pages/index/index.css'] as OutputAsset).source).toContain('.page-local{display:block}')
     expect((bundle['pages/index/index.css'] as OutputAsset).source).not.toContain('.vite-main-only')
     expect((bundle['pages/index/index.css'] as OutputAsset).source).not.toContain('.vite-normal-only')
     expect((bundle['pages/index/index.css'] as OutputAsset).source).not.toContain('.vite-independent-only')
@@ -2052,9 +2052,9 @@ describe('v5 vite generator bundle', () => {
 
     const runtimeSet = new Set<string>()
     const generateMock = vi.fn(async ({ candidates, target }: { candidates: Set<string>, target: string }) => ({
-      css: [...candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
-      incrementalCss: [...candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
-      rawCss: [...candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
+      css: [...candidates].sort().map(candidate => `.${candidate}{--test-probe:1}`).join('\n'),
+      incrementalCss: [...candidates].sort().map(candidate => `.${candidate}{--test-probe:1}`).join('\n'),
+      rawCss: [...candidates].sort().map(candidate => `.${candidate}{--test-probe:1}`).join('\n'),
       target,
       classSet: new Set(candidates),
       dependencies: [],
@@ -2122,7 +2122,7 @@ describe('v5 vite generator bundle', () => {
 
     const serveTransform = getTransformHandler(serveGenerationPlugin)
     const firstResult = await serveTransform?.call(serveGenerationPlugin, '@tailwind utilities;', cssFile)
-    expect(String((firstResult as any)?.code)).toContain('.text-slate-800{}')
+    expect(String((firstResult as any)?.code)).toContain('.text-slate-800')
 
     await writeFile(sourceFile, '<template><view class="bg-red-500"></view></template>', 'utf8')
     const cssModule = { id: cssFile }
@@ -2144,8 +2144,8 @@ describe('v5 vite generator bundle', () => {
     expect(generateMock.mock.calls.at(-1)?.[0]?.scanSources).toBe(false)
     expect([...secondCandidates]).toEqual(['bg-red-500'])
     const secondCss = String((secondResult as any)?.code)
-    expect(secondCss).toContain('.text-slate-800{}')
-    expect(secondCss).toContain('.bg-red-500{}')
+    expect(secondCss).toContain('.text-slate-800')
+    expect(secondCss).toContain('.bg-red-500')
   }, TEST_TIMEOUT_MS)
 
   it('falls back to full weapp target dev hmr generation when user layer css cannot append incrementally', async () => {
@@ -2161,9 +2161,9 @@ describe('v5 vite generator bundle', () => {
 
     const runtimeSet = new Set<string>()
     const generateMock = vi.fn(async ({ candidates, target }: { candidates: Set<string>, target: string }) => ({
-      css: [...candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
-      incrementalCss: [...candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
-      rawCss: [...candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
+      css: [...candidates].sort().map(candidate => `.${candidate}{--test-probe:1}`).join('\n'),
+      incrementalCss: [...candidates].sort().map(candidate => `.${candidate}{--test-probe:1}`).join('\n'),
+      rawCss: [...candidates].sort().map(candidate => `.${candidate}{--test-probe:1}`).join('\n'),
       target,
       classSet: new Set(candidates),
       dependencies: [],
@@ -2257,9 +2257,9 @@ describe('v5 vite generator bundle', () => {
     const secondCandidates = generateMock.mock.calls.at(-1)?.[0]?.candidates as Set<string>
     expect([...secondCandidates].sort()).toEqual(['bg-red-500', 'p-4'])
     const secondCss = String((secondResult as any)?.code)
-    expect(secondCss).not.toContain('.text-slate-800{}')
-    expect(secondCss).toContain('.bg-red-500{}')
-    expect(secondCss).toContain('.p-4{}')
+    expect(secondCss).not.toContain('.text-slate-800')
+    expect(secondCss).toContain('.bg-red-500')
+    expect(secondCss).toContain('.p-4')
   }, TEST_TIMEOUT_MS)
 
   it('fully regenerates weapp target dev hmr css when preserveDeletedCss is disabled', async () => {
@@ -2272,9 +2272,9 @@ describe('v5 vite generator bundle', () => {
 
     const runtimeSet = new Set<string>()
     const generateMock = vi.fn(async ({ candidates, target }: { candidates: Set<string>, target: string }) => ({
-      css: [...candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
-      incrementalCss: [...candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
-      rawCss: [...candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
+      css: [...candidates].sort().map(candidate => `.${candidate}{--test-probe:1}`).join('\n'),
+      incrementalCss: [...candidates].sort().map(candidate => `.${candidate}{--test-probe:1}`).join('\n'),
+      rawCss: [...candidates].sort().map(candidate => `.${candidate}{--test-probe:1}`).join('\n'),
       target,
       classSet: new Set(candidates),
       dependencies: [],
@@ -2372,8 +2372,8 @@ describe('v5 vite generator bundle', () => {
     const secondCandidates = generateMock.mock.calls.at(-1)?.[0]?.candidates as Set<string>
     expect([...secondCandidates]).toEqual(['bg-red-500'])
     const secondCss = String((secondResult as any)?.code)
-    expect(secondCss).not.toContain('.text-slate-800{}')
-    expect(secondCss).toContain('.bg-red-500{}')
+    expect(secondCss).not.toContain('.text-slate-800')
+    expect(secondCss).toContain('.bg-red-500')
   }, TEST_TIMEOUT_MS)
 
   it('honors Tailwind v4 @config content negation when scanning vite source candidates', async () => {

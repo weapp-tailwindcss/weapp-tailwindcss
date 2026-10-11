@@ -6,24 +6,18 @@
   "license": "MIT",
   "keywords": [],
   "devDependencies": {
-    "tailwindcss": "^4.3.1",
-    "weapp-tailwindcss": "^5.1.3"
+    "tailwindcss": "^4.3.3",
+    "weapp-tailwindcss": "^5.5.5"
   },
   "dependencies": {
     "@weapp-core/escape": "^8.0.0",
-    "@weapp-tailwindcss/merge": "^2.2.1",
+    "@weapp-tailwindcss/merge": "^2.2.3",
     "@weapp-tailwindcss/runtime": "^0.1.6",
     "clsx": "^2.1.1",
     "tailwind-merge": "^3.6.0"
   },
-  "packageManager": "pnpm@11.8.0",
+  "packageManager": "pnpm@12.9.1",
   "scripts": {
     "up:pkg": "pnpm up -rLi"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "weapp-tailwindcss",
-      "@weapp-tailwindcss/merge"
-    ]
   }
 }

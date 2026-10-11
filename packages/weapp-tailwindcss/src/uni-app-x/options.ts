@@ -11,8 +11,10 @@ const DISABLED_COMPONENT_LOCAL_STYLES_OPTIONS: ResolvedUniAppXComponentLocalStyl
 }
 
 export interface ResolvedUniAppXComponentLocalStylesOptions {
+  componentMatcher?: ((id: string) => boolean) | undefined
   enabled: boolean
   onlyWhenStyleIsolationVersion2: boolean
+  pageMatcher?: ((id: string) => boolean) | undefined
 }
 
 export interface ResolvedUniAppXOptions {
@@ -44,8 +46,10 @@ function resolveComponentLocalStyles(
   }
 
   return {
+    ...(componentLocalStyles.componentMatcher ? { componentMatcher: componentLocalStyles.componentMatcher } : {}),
     enabled: componentLocalStyles.enabled !== false,
     onlyWhenStyleIsolationVersion2: componentLocalStyles.onlyWhenStyleIsolationVersion2 !== false,
+    ...(componentLocalStyles.pageMatcher ? { pageMatcher: componentLocalStyles.pageMatcher } : {}),
   }
 }
 

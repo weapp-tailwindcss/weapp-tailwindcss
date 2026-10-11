@@ -20,6 +20,8 @@ keywords:
 
 # CSS variable invalidation problem
 
+If variables are present but settings such as `--spacing: 1rpx` or `3rpx` produce incorrect dimensions or spacing, see [WeChat --spacing and rpx calculation limits](./spacing-rpx.md). That case requires checking runtime calculations; adding variable initialization alone does not resolve it.
+
 ## Symptoms of the problem
 
 In small program projects such as `Taro` and `uni-app`, you may encounter the problem of Tailwind CSS variables being lost.

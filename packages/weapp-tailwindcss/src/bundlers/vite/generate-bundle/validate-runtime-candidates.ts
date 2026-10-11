@@ -3,8 +3,8 @@ import type { OutputAsset } from 'rollup'
 import type { GenerateBundleContext } from './types'
 import type { InternalUserDefinedOptions } from '@/types'
 import { Buffer } from 'node:buffer'
-import { validateCandidatesByGenerator } from '../../shared/generator-css'
-import { hasTailwindApplyDirective } from '../../shared/generator-css/directives'
+import { hasTailwindApplyDirective } from '../../../generation/directives'
+import { validateCandidatesByGenerator } from '../../../generation/index'
 
 export interface ValidateRuntimeCandidatesOptions {
   cssEntries: Array<{

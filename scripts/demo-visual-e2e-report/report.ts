@@ -22,10 +22,21 @@ export function createCrossPlatformComparisons(results: CaseResult[], context: R
       }
       const comparisonName = `${key.replace(/[^\w.-]+/g, '-')}-${platform}`
       const compared = compareImages(h5.screenshot, target.screenshot, comparisonName, context)
-      h5.comparison = { target: platform, ...compared }
+      const comparison = {
+        target: platform,
+        ...compared,
+      }
+      h5.comparison = comparison
       h5.diff = compared.diff
-      target.comparison = { target: 'h5', ...compared }
+      target.comparison = { ...comparison, target: 'h5' }
       target.diff = compared.diff
+      if (compared.withinLimit === false) {
+        const message = `${platform} 与 H5 截图差异比例 ${compared.ratio} 超过上限 ${context.maxCrossPlatformDiffRatio}`
+        h5.status = 'failed'
+        h5.error = [h5.error, message].filter(Boolean).join('\n')
+        target.status = 'failed'
+        target.error = [target.error, message].filter(Boolean).join('\n')
+      }
     }
   }
 }
@@ -51,24 +62,26 @@ export async function writeReport(results: CaseResult[], context: RuntimeContext
     const hmrAfter = item.hmrAfterScreenshot ? renderImageLink(context, item.hmrAfterScreenshot, `${altPrefix}-hmr-after`) : ''
     const hmrSteps = renderHmrStepLinks(context, item)
     const diff = renderDiffLinks(context, item)
-    const comparison = item.comparison ? `ratio=${item.comparison.ratio}` : ''
+    const comparison = renderComparison(item)
     const error = item.error ? item.error.split('\n')[0] : ''
-    return `| ${item.name} | ${item.platform} | ${item.styleIsolationVariant ?? ''} | ${item.status} | ${screenshot} | ${themeLight} | ${themeManualDark} | ${hmrBefore} | ${hmrAfter} | ${hmrSteps} | ${diff} | ${comparison} | ${error} |`
+    return `| ${item.name} | ${item.platform} | ${item.styleIsolationVariant ?? ''} | ${item.status} | ${item.updateMode ?? 'hmr'} | ${screenshot} | ${themeLight} | ${themeManualDark} | ${hmrBefore} | ${hmrAfter} | ${hmrSteps} | ${diff} | ${comparison} | ${error} |`
   })
   const rows = results.map((item) => {
     const screenshot = item.screenshot ? `[截图](${path.relative(context.artifactRoot, item.screenshot)})` : ''
     const themeLight = item.themeLightScreenshot ? `[亮色](${path.relative(context.artifactRoot, item.themeLightScreenshot)})` : ''
     const themeManualDark = item.themeManualDarkScreenshot ? `[手动暗色](${path.relative(context.artifactRoot, item.themeManualDarkScreenshot)})` : ''
-    const hmrBefore = item.hmrBeforeScreenshot ? `[HMR 前](${path.relative(context.artifactRoot, item.hmrBeforeScreenshot)})` : ''
-    const hmrAfter = item.hmrAfterScreenshot ? `[HMR 后](${path.relative(context.artifactRoot, item.hmrAfterScreenshot)})` : ''
+    const hmrBefore = item.hmrBeforeScreenshot ? `[更新前](${path.relative(context.artifactRoot, item.hmrBeforeScreenshot)})` : ''
+    const hmrAfter = item.hmrAfterScreenshot ? `[更新后](${path.relative(context.artifactRoot, item.hmrAfterScreenshot)})` : ''
     const hmrSteps = renderHmrStepTextLinks(context, item)
     const diff = renderDiffTextLinks(context, item)
-    const comparison = item.comparison ? `ratio=${item.comparison.ratio}` : ''
+    const comparison = renderComparison(item)
     const error = item.error ? item.error.split('\n')[0] : ''
-    return `| ${item.name} | ${item.platform} | ${item.styleIsolationVariant ?? ''} | ${item.status} | ${screenshot} | ${themeLight} | ${themeManualDark} | ${hmrBefore} | ${hmrAfter} | ${hmrSteps} | ${diff} | ${comparison} | ${error} |`
+    return `| ${item.name} | ${item.platform} | ${item.styleIsolationVariant ?? ''} | ${item.status} | ${item.updateMode ?? 'hmr'} | ${screenshot} | ${themeLight} | ${themeManualDark} | ${hmrBefore} | ${hmrAfter} | ${hmrSteps} | ${diff} | ${comparison} | ${error} |`
   })
-  const hmrPairs = results.filter(item => item.hmrBeforeScreenshot && item.hmrAfterScreenshot)
-  const hmrStepCount = results.reduce((total, item) => total + (item.hmrSteps?.length ?? 0), 0)
+  const hmrResults = results.filter(item => item.updateMode !== 'native-reload')
+  const reloadResults = results.filter(item => item.updateMode === 'native-reload')
+  const hmrPairs = hmrResults.filter(item => item.hmrBeforeScreenshot && item.hmrAfterScreenshot)
+  const hmrStepCount = hmrResults.reduce((total, item) => total + (item.hmrSteps?.length ?? 0), 0)
   await fs.writeFile(reportMd, [
     '# Demo Visual E2E Report',
     '',
@@ -82,18 +95,19 @@ export async function writeReport(results: CaseResult[], context: RuntimeContext
     `- Screenshots: ${results.filter(item => item.screenshot).length}`,
     `- HMR visual pairs: ${hmrPairs.length}`,
     `- HMR visual steps: ${hmrStepCount}`,
+    `- Native reload visual steps: ${reloadResults.reduce((total, item) => total + (item.hmrSteps?.length ?? 0), 0)}`,
     `- Cross-platform comparisons: ${comparisons.length}`,
     '',
     '## Visual Matrix',
     '',
-    '| Demo | Platform | Variant | Status | Screenshot | Theme Light | Theme Manual Dark | HMR Before | HMR After | HMR Steps | Diff | Comparison | Error |',
-    '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+    '| Demo | Platform | Variant | Status | Update Mode | Screenshot | Theme Light | Theme Manual Dark | Update Before | Update After | Update Steps | Diff | Comparison | Error |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
     ...visualRows,
     '',
     '## Link Matrix',
     '',
-    '| Demo | Platform | Variant | Status | Screenshot | Theme Light | Theme Manual Dark | HMR Before | HMR After | HMR Steps | Diff | Comparison | Error |',
-    '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+    '| Demo | Platform | Variant | Status | Update Mode | Screenshot | Theme Light | Theme Manual Dark | Update Before | Update After | Update Steps | Diff | Comparison | Error |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
     ...rows,
     '',
   ].join('\n'))
@@ -224,6 +238,17 @@ function renderDiffTextLinks(context: RuntimeContext, item: CaseResult) {
     item.diff ? `[跨端 diff](${path.relative(context.artifactRoot, item.diff)})` : '',
   ].filter(Boolean)
   return links.join('<br />')
+}
+
+function renderComparison(item: CaseResult) {
+  if (!item.comparison) {
+    return ''
+  }
+  const parts = [`ratio=${item.comparison.ratio}`]
+  if (item.comparison.maxRatio !== undefined) {
+    parts.push(`max=${item.comparison.maxRatio}`, `withinLimit=${item.comparison.withinLimit}`)
+  }
+  return parts.join(' ')
 }
 
 function renderHmrStepTextLinks(context: RuntimeContext, item: CaseResult) {

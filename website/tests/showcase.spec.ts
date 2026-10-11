@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'https://tw.icebreaker.top/'
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'https://tw.weapp.dev/'
 
 test.describe('showcase page', () => {
   test('shows a first-screen mini program index and compact screenshots', async ({ page }) => {

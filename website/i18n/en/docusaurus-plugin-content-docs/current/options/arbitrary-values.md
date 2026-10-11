@@ -1,6 +1,6 @@
 ---
 title: Use arbitrary values
-description: Arbitrary values  are an important update of tailwindcss v3. Fortunately, you use this plug-in.
+description: Arbitrary values are a core Tailwind CSS v4 capability for cross-platform styles.
 keywords:
   - Configuration items
   - Plug-in parameters
@@ -8,7 +8,6 @@ keywords:
   - use
   - arbitrary
   - values
-  - options
   - arbitrary values
   - weapp-tailwindcss
   - tailwindcss
@@ -17,13 +16,13 @@ keywords:
   - uni-app
   - taro
   - mpx
+  - plugin options
+  - configuration
 ---
 
 # Use arbitrary values
 
-`arbitrary values` is an important update of `tailwindcss v3`. Fortunately, you use this plug-in.
-
-Allows you to use the powerful `tailwindcss v3` functions of `arbitrary values`.
+`arbitrary values` are a core Tailwind CSS v4 capability. With a CSS-first entry, you can use typed arbitrary values in templates and `@apply`.
 
 for example:
 

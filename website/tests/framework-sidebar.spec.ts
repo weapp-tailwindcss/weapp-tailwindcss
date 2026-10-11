@@ -1,6 +1,7 @@
+import type { Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'
 
-const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'https://tw.icebreaker.top/'
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'https://tw.weapp.dev/'
 const frameworkLogos = [
   'html5',
   'expo',
@@ -8,7 +9,6 @@ const frameworkLogos = [
   'uni-app',
   'vite',
   'hbuilderx',
-  'webpack',
   'uni-app-x',
   'taro',
   'weapp-vite',
@@ -16,7 +16,7 @@ const frameworkLogos = [
   'nodejs',
 ] as const
 
-async function expandCategory(page: Parameters<typeof test>[0]['page'], name: string) {
+async function expandCategory(page: Page, name: string) {
   const category = page.getByRole('button', { name, exact: true })
   if (await category.getAttribute('aria-expanded') === 'false') {
     await category.click()
@@ -24,7 +24,7 @@ async function expandCategory(page: Parameters<typeof test>[0]['page'], name: st
   await expect(category).toHaveAttribute('aria-expanded', 'true')
 }
 
-for (const route of ['/docs/quick-start/install', '/en/docs/quick-start/install']) {
+for (const route of ['/docs/quick-start/install', '/zh-cn/docs/quick-start/install']) {
   test(`${route} renders package manager logos and keeps tabs interactive`, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto(new URL(route, baseURL).toString(), { waitUntil: 'networkidle' })
@@ -76,7 +76,7 @@ for (const route of ['/docs/quick-start/install', '/en/docs/quick-start/install'
     }
 
     const items = page.locator('.theme-doc-sidebar-menu .framework-sidebar-item')
-    await expect(items).toHaveCount(16)
+    await expect(items).toHaveCount(15)
 
     for (const logo of frameworkLogos) {
       const logoItems = page.locator(`.framework-sidebar-item--${logo}`)

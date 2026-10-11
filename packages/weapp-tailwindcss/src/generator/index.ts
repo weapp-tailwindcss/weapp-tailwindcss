@@ -2,6 +2,7 @@ import type { TailwindResolvedSource, WeappTailwindcssGenerator } from './types'
 import type { TailwindcssRuntimeLike } from '@/types'
 import {
   createTailwindV4Engine,
+  loadTailwindV4DesignSystem,
   resolveTailwindV4Source,
   resolveTailwindV4SourceFromRuntime,
   resolveTailwindV4SourceFromRuntimeOptions,
@@ -31,6 +32,7 @@ export {
 } from './options'
 
 export {
+  loadTailwindV4DesignSystem,
   resolveTailwindV4Source,
   resolveTailwindV4SourceFromRuntime,
   resolveTailwindV4SourceFromRuntimeOptions,

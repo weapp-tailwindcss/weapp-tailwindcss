@@ -2,16 +2,16 @@ import type { CliOptions, StyleMutationConfig, StyleMutationMetrics, WatchCase, 
 import { promises as fs } from 'node:fs'
 import process from 'node:process'
 import { formatPath } from '../cli'
+import { getOutputMtimeOnce, readOutputFileOnce } from '../outputs/read'
 import {
   assertContains,
   findCssRuleBodies,
-  getMtime,
   normalizeCssDeclaration,
-  readFileIfExists,
   waitFor,
-  writeFilePreserveEol,
+  writeWatchedFilePreserveEol,
 } from '../text'
-import { assertNoUnsupportedMiniProgramCssImport, collectPluginProcessMetrics, createStyleMutationPayload, expandOutputFileEntries, waitForCompileSettled } from './shared'
+import { assertNoUnsupportedMiniProgramCssImport, collectPluginProcessMetrics, createStyleMutationPayload, expandOutputFileEntries } from './shared'
+import { captureStyleRollbackCandidates, waitForStyleRollback } from './style/rollback'
 
 async function touchImporterFiles(files: string[]) {
   for (const file of files) {
@@ -48,10 +48,18 @@ export async function runStyleMutation(
   if (outputNeedles.length === 0) {
     throw new Error(`[${watchCase.label}] style mutation requires at least one output needle`)
   }
+  if (rollbackNeedles.length === 0) {
+    throw new Error(`[${watchCase.label}] style mutation requires at least one rollback needle`)
+  }
+  const requiredRollbackCandidates = await captureStyleRollbackCandidates(verifyOutputCandidates, session)
+  const ensureActive = () => {
+    session.signal?.throwIfAborted()
+    session.ensureRunning()
+  }
 
   const collectOutputCandidateMtimes = async () => {
-    const resolvedCandidates = await expandOutputFileEntries(verifyOutputCandidates)
-    const entries = await Promise.all(resolvedCandidates.map(async candidate => [candidate, await getMtime(candidate)] as const))
+    const resolvedCandidates = await expandOutputFileEntries(verifyOutputCandidates, { presenceOnly: true, ensureActive })
+    const entries = await Promise.all(resolvedCandidates.map(async candidate => [candidate, await getOutputMtimeOnce(candidate, ensureActive)] as const))
     return new Map(entries)
   }
 
@@ -59,18 +67,26 @@ export async function runStyleMutation(
     baselineMtimes: Map<string, number>,
     startedAt: number,
     phase: 'hot-update' | 'rollback',
-    acceptWhen?: (candidate: string) => Promise<boolean>,
+    acceptWhen?: (candidate: string, ensurePhaseActive: () => void) => Promise<boolean>,
   ) => {
+    const deadlineAt = startedAt + options.timeoutMs
+    const message = `[${watchCase.label}] style output candidates were not updated during ${phase}: ${verifyOutputCandidates.map(formatPath).join(', ')}`
+    const ensurePhaseActive = () => {
+      ensureActive()
+      if (Date.now() > deadlineAt) {
+        throw new Error(message)
+      }
+    }
     return waitFor(
       async () => {
-        const resolvedCandidates = await expandOutputFileEntries(verifyOutputCandidates)
+        const resolvedCandidates = await expandOutputFileEntries(verifyOutputCandidates, { presenceOnly: true, ensureActive: ensurePhaseActive })
         for (const candidate of resolvedCandidates) {
           const baselineMtime = baselineMtimes.get(candidate) ?? 0
-          const currentMtime = await getMtime(candidate)
+          const currentMtime = await getOutputMtimeOnce(candidate, ensurePhaseActive)
           if (currentMtime > baselineMtime) {
             return true
           }
-          if (acceptWhen && await acceptWhen(candidate)) {
+          if (acceptWhen && await acceptWhen(candidate, ensurePhaseActive)) {
             return true
           }
         }
@@ -79,8 +95,10 @@ export async function runStyleMutation(
       {
         timeoutMs: options.timeoutMs,
         pollMs: options.pollMs,
-        message: `[${watchCase.label}] style output candidates were not updated during ${phase}: ${verifyOutputCandidates.map(formatPath).join(', ')}`,
-        onTick: session.ensureRunning,
+        message,
+        onTick: ensurePhaseActive,
+        signal: session.signal,
+        deadlineAt,
       },
       startedAt,
     )
@@ -88,23 +106,30 @@ export async function runStyleMutation(
 
   const baselineOutputCandidateMtimes = await collectOutputCandidateMtimes()
   const hotUpdateStartedAt = Date.now()
-  await writeFilePreserveEol(sourcePath, mutatedSource, sourceOriginal)
+  await writeWatchedFilePreserveEol(sourcePath, mutatedSource, sourceOriginal)
   await touchImporterFiles(importerFiles)
   const hotUpdateOutputMs = await waitForOutputCandidateMtimeChanged(
     baselineOutputCandidateMtimes,
     hotUpdateStartedAt,
     'hot-update',
-    async (candidate) => {
-      const content = await readFileIfExists(candidate)
+    async (candidate, ensurePhaseActive) => {
+      const content = await readOutputFileOnce(candidate, { signal: session.signal, ensureActive: ensurePhaseActive })
       return content != null && hasExpectedOutput(content)
     },
   )
   let resolvedOutputStyle: string | undefined
+  const hotUpdateMessage = `[${watchCase.label}] style output candidates are missing needles ${outputNeedles.join(', ')}: ${verifyOutputCandidates.map(formatPath).join(', ')}`
+  const ensureHotUpdateActive = () => {
+    ensureActive()
+    if (Date.now() > hotUpdateStartedAt + options.timeoutMs) {
+      throw new Error(hotUpdateMessage)
+    }
+  }
   const hotUpdateEffectiveMs = await waitFor(
     async () => {
-      const resolvedCandidates = await expandOutputFileEntries(verifyOutputCandidates)
+      const resolvedCandidates = await expandOutputFileEntries(verifyOutputCandidates, { presenceOnly: true, ensureActive: ensureHotUpdateActive })
       for (const candidate of resolvedCandidates) {
-        const content = await readFileIfExists(candidate)
+        const content = await readOutputFileOnce(candidate, { signal: session.signal, ensureActive: ensureHotUpdateActive })
         if (content != null && hasExpectedOutput(content)) {
           resolvedOutputStyle = candidate
           return true
@@ -115,8 +140,10 @@ export async function runStyleMutation(
     {
       timeoutMs: options.timeoutMs,
       pollMs: options.pollMs,
-      message: `[${watchCase.label}] style output candidates are missing needles ${outputNeedles.join(', ')}: ${verifyOutputCandidates.map(formatPath).join(', ')}`,
-      onTick: session.ensureRunning,
+      message: hotUpdateMessage,
+      onTick: ensureHotUpdateActive,
+      signal: session.signal,
+      deadlineAt: hotUpdateStartedAt + options.timeoutMs,
     },
     hotUpdateStartedAt,
   )
@@ -126,7 +153,10 @@ export async function runStyleMutation(
   }
   const hotUpdatePluginMetrics = collectPluginProcessMetrics(session, hotUpdateStartedAt)
 
-  const updatedStyle = await fs.readFile(resolvedOutputStyle, 'utf8')
+  const updatedStyle = await readOutputFileOnce(resolvedOutputStyle, { signal: session.signal, ensureActive: ensureHotUpdateActive })
+  if (updatedStyle == null) {
+    throw new Error(`[${watchCase.label}] updated style output is missing or unreadable: ${formatPath(resolvedOutputStyle)}`)
+  }
   assertNoUnsupportedMiniProgramCssImport(watchCase, updatedStyle, 'mutation=style phase=hot-update', formatPath(resolvedOutputStyle))
   for (const needle of outputNeedles) {
     assertContains(updatedStyle, needle, `[${watchCase.label}] updated style output (${formatPath(resolvedOutputStyle)})`)
@@ -179,54 +209,26 @@ export async function runStyleMutation(
 
   const outputCandidateMtimesAfterHotUpdate = await collectOutputCandidateMtimes()
   const rollbackStartedAt = Date.now()
-  await writeFilePreserveEol(sourcePath, sourceOriginal, sourceOriginal)
+  await writeWatchedFilePreserveEol(sourcePath, sourceOriginal, sourceOriginal)
   await touchImporterFiles(importerFiles)
   const rollbackOutputMs = await waitForOutputCandidateMtimeChanged(
     outputCandidateMtimesAfterHotUpdate,
     rollbackStartedAt,
     'rollback',
-    async (candidate) => {
-      const content = await readFileIfExists(candidate)
+    async (candidate, ensurePhaseActive) => {
+      const content = await readOutputFileOnce(candidate, { signal: session.signal, ensureActive: ensurePhaseActive })
       return content != null && rollbackNeedles.every(needle => !content.includes(needle))
     },
   )
-  let rollbackEffectiveMs = rollbackOutputMs
-  let rollbackNeedleCleared = false
-  const rollbackNeedleCheckTimeoutMs = Math.min(options.timeoutMs, 30_000)
-  try {
-    process.stdout.write(
-      `[watch-hmr] ${watchCase.label} mutation=style waiting rollback marker clear (timeout=${rollbackNeedleCheckTimeoutMs}ms)\n`,
-    )
-    rollbackEffectiveMs = await waitFor(
-      async () => {
-        const resolvedCandidates = await expandOutputFileEntries(verifyOutputCandidates)
-        if (resolvedCandidates.length === 0) {
-          return false
-        }
-        for (const candidate of resolvedCandidates) {
-          const content = await readFileIfExists(candidate)
-          if (content != null && rollbackNeedles.some(needle => content.includes(needle))) {
-            return false
-          }
-        }
-        return true
-      },
-      {
-        timeoutMs: rollbackNeedleCheckTimeoutMs,
-        pollMs: options.pollMs,
-        message: `[${watchCase.label}] style output candidates still contain rollback needles ${rollbackNeedles.join(', ')}: ${verifyOutputCandidates.map(formatPath).join(', ')}`,
-        onTick: session.ensureRunning,
-      },
-      rollbackStartedAt,
-    )
-    rollbackNeedleCleared = true
-  }
-  catch {
-    process.stdout.write(
-      `[watch-hmr] ${watchCase.label} mutation=style rollback marker still present in candidate outputs, fallback to output latency metric\n`,
-    )
-  }
-  await waitForCompileSettled(watchCase, options, session, rollbackStartedAt)
+  const rollbackEffectiveMs = await waitForStyleRollback(
+    watchCase,
+    options,
+    session,
+    rollbackStartedAt,
+    verifyOutputCandidates,
+    requiredRollbackCandidates,
+    rollbackNeedles,
+  )
   const rollbackPluginMetrics = collectPluginProcessMetrics(session, rollbackStartedAt)
 
   process.stdout.write(
@@ -257,6 +259,6 @@ export async function runStyleMutation(
     rollbackEffectiveMs,
     rollbackPluginProcessMs: rollbackPluginMetrics.totalMs,
     rollbackPluginProcessSamples: rollbackPluginMetrics.samples,
-    rollbackNeedleCleared,
+    rollbackNeedleCleared: true,
   }
 }

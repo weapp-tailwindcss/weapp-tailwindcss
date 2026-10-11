@@ -1,5 +1,512 @@
 # @weapp-tailwindcss/postcss
 
+## 3.4.1
+
+### Patch Changes
+
+- 将旧 layer anchor 算法转导出到独立 CSS 兼容内核，保持现有公开接口和默认输出。Refs #1280
+
+- Updated dependencies:
+  - @weapp-tailwindcss/css-compat@0.1.1
+  - @weapp-tailwindcss/native-darwin-arm64@5.6.1
+  - @weapp-tailwindcss/native-darwin-x64@5.6.1
+  - @weapp-tailwindcss/native-linux-arm64-gnu@5.6.1
+  - @weapp-tailwindcss/native-linux-arm64-musl@5.6.1
+  - @weapp-tailwindcss/native-linux-x64-gnu@5.6.1
+  - @weapp-tailwindcss/native-linux-x64-musl@5.6.1
+  - @weapp-tailwindcss/native-win32-arm64-msvc@5.6.1
+  - @weapp-tailwindcss/native-win32-x64-msvc@5.6.1
+
+## 3.4.0
+
+### Minor Changes
+
+- 提供 WXML tokenize、JavaScript 完整字面量转换的 Rust Node-API 实验内核，保留 JavaScript/Oxc/Babel 兼容路径与公开 TypeScript API。原生与回退路径共享 UTF-16 位置、精确类名命中和条件测试保护语义。JS/WXML 与 CSS 内核均默认关闭，须在进程启动前设置 `WEAPP_TW_NATIVE=auto` 或 `required` 显式启用；默认路径跳过高频原生加载检查。运行时签名仍沿用 Oxc，原生签名接口仅供 ABI 对照。
+
+  WXML 静态属性值在原生实例内完成扫描、转义和组装；精确模式仅查询实际候选，避免复制完整类集合。动态表达式与自定义回调保留原执行顺序。
+
+  修复快速路径的模板正文边界与显式 class 上下文语义，避免模板正文中的括号被错误覆盖。JavaScript 原生转换仅同步查询源码实际候选，消除完整集合扫描；集合原地修改立即生效，映射按实际内容重建实例，原生不支持的语义直接交给 Babel。
+
+  修复回退结果缓存对可变类集合、映射、复用覆盖配置与有状态回调的生命周期判断，避免返回过期转换结果；自定义 Set、getter 与 Proxy 保留原有 Babel 执行语义。
+
+  PostCSS 接入 Rust 选择器与声明值计算，合并 Tailwind v4 变量及渐变 fallback 解析，并批量处理 uvue translate 参数。保留 PostCSS AST 与用户插件契约，修复原生包加载顺序和自定义映射原地更新的缓存边界。
+
+  复杂选择器通过 Rust AST 完成伪类展开、平台伪类移除与 spacing 选择器转换，只向 PostCSS 返回规则动作；未接管语法明确回退。专门的原生测试入口强制验证真实二进制，普通单测保持无 Rust 工具链可运行。
+
+  圆角 clamp、渐变方向与 infinity/calc 的独立值计算迁入 Rust，并与变量回退合并为单次声明调用；保留声明顺序、父规则语义和原有数值行为。
+
+### Patch Changes
+
+- 修复复用同一配置对象并修改选择器选项后，原生转换与 JavaScript 回退读取时机不同、或结果缓存仍使用旧配置的问题。root、universal、child 替换数组、hover/active/focus 开关、uniAppX 与 escapeMap 按有效内容生成配置快照，内容变化时同步重建转换器及缓存，保持与等价新配置对象一致；支持等长数组原地修改和开关往返。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/engine@0.1.5
+  - @weapp-tailwindcss/native-darwin-arm64@5.6.0
+  - @weapp-tailwindcss/native-darwin-x64@5.6.0
+  - @weapp-tailwindcss/native-linux-arm64-gnu@5.6.0
+  - @weapp-tailwindcss/native-linux-arm64-musl@5.6.0
+  - @weapp-tailwindcss/native-linux-x64-gnu@5.6.0
+  - @weapp-tailwindcss/native-linux-x64-musl@5.6.0
+  - @weapp-tailwindcss/native-win32-arm64-msvc@5.6.0
+  - @weapp-tailwindcss/native-win32-x64-msvc@5.6.0
+
+## 3.3.11
+
+### Patch Changes
+
+- 修复普通样式与自定义 variant 共用外层条件注释时，重复准备 Tailwind CSS 4 来源会不断嵌套同一条件的问题。仅沿覆盖整个 variant 的单节点条件链识别已有条件，保留不同方向、不同表达式、多分支以及普通样式的外层注释。
+
+- 更新依赖。
+
+  ### @weapp-tailwindcss/engine
+
+  - 更新 dependencies 中的 `postcss`：`catalog:postcss85tilde`，`范围 ^8.5.28`，`锁定 8.5.28` → `catalog:postcss85tilde`，`范围 ^8.5.29`，`锁定 8.5.29`。
+
+  ### @weapp-tailwindcss/postcss
+
+  - 更新 dependencies 中的 `@csstools/css-color-parser`：`catalog:csstools`，`范围 ^4.2.5`，`锁定 4.2.5(@csstools/css-parser-algorithms@4.0.2(@csstools/css-tokenizer@4.0.2))(@csstools/css-tokenizer@4.0.2)` → `catalog:csstools`，`范围 ^4.2.6`，`锁定 4.2.6(@csstools/css-parser-algorithms@4.0.2(@csstools/css-tokenizer@4.0.2))(@csstools/css-tokenizer@4.0.2)`。
+  - 更新 dependencies 中的 `autoprefixer`：`catalog:autoprefixer10`，`范围 ^10.6.1`，`锁定 10.6.1(postcss@8.5.28)` → `catalog:autoprefixer10`，`范围 ^10.6.1`，`锁定 10.6.1(postcss@8.5.29)`。
+  - 更新 dependencies 中的 `postcss`：`catalog:postcss85tilde`，`范围 ^8.5.28`，`锁定 8.5.28` → `catalog:postcss85tilde`，`范围 ^8.5.29`，`锁定 8.5.29`。
+  - 更新 dependencies 中的 `postcss-load-config`：`catalog:buildUtilities`，`范围 ^6.0.1`，`锁定 6.0.1(jiti@2.7.0)(postcss@8.5.28)(tsx@4.23.15)(yaml@2.9.1)` → `catalog:buildUtilities`，`范围 ^6.0.1`，`锁定 6.0.1(jiti@2.7.0)(postcss@8.5.29)(tsx@4.23.15)(yaml@2.9.1)`。
+  - 更新 dependencies 中的 `postcss-preset-env`：`catalog:postcssUtilities`，`范围 ^11.5.5`，`锁定 11.5.5(postcss@8.5.28)` → `catalog:postcssUtilities`，`范围 ^11.6.1`，`锁定 11.6.1(postcss@8.5.29)`。
+  - 更新 dependencies 中的 `postcss-pxtrans`：`catalog:postcssCompat`，`范围 ^1.0.6`，`锁定 1.0.6(postcss@8.5.28)` → `catalog:postcssCompat`，`范围 ^1.0.6`，`锁定 1.0.6(postcss@8.5.29)`。
+  - 更新 dependencies 中的 `postcss-rem-to-responsive-pixel`：`catalog:postcssRem`，`范围 ^7.0.7`，`锁定 7.0.7(postcss@8.5.28)` → `catalog:postcssRem`，`范围 ^7.0.7`，`锁定 7.0.7(postcss@8.5.29)`。
+  - 更新 dependencies 中的 `postcss-rule-unit-converter`：`catalog:postcssCompat`，`范围 ^0.2.5`，`锁定 0.2.5(postcss@8.5.28)` → `catalog:postcssCompat`，`范围 ^0.2.5`，`锁定 0.2.5(postcss@8.5.29)`。
+  - 更新 dependencies 中的 `postcss-scss`：`catalog:postcssCompat`，`范围 ^4.0.9`，`锁定 4.0.9(postcss@8.5.28)` → `catalog:postcssCompat`，`范围 ^4.0.9`，`锁定 4.0.9(postcss@8.5.29)`。
+  - 更新 devDependencies 中的 `@csstools/postcss-is-pseudo-class`：`^6.0.1`，`锁定 6.0.1(postcss@8.5.28)` → `^6.0.3`，`锁定 6.0.3(postcss@8.5.29)`。
+  - 更新 devDependencies 中的 `postcss-custom-properties`：`^15.0.3`，`锁定 15.0.3(postcss@8.5.28)` → `^15.0.4`，`锁定 15.0.4(postcss@8.5.29)`。
+
+  ### @weapp-tailwindcss/postcss-calc
+
+  - 更新 devDependencies 中的 `@eslint/js`：`^10.0.1`，`锁定 10.0.1(eslint@10.11.0(jiti@2.7.0)(supports-color@10.2.2))` → `^10.0.1`，`锁定 10.0.1(eslint@10.12.0(jiti@2.7.0)(supports-color@10.2.2))`。
+  - 更新 devDependencies 中的 `eslint`：`catalog:eslint10`，`范围 ^10.11.0`，`锁定 10.11.0(jiti@2.7.0)(supports-color@10.2.2)` → `catalog:eslint10`，`范围 ^10.12.0`，`锁定 10.12.0(jiti@2.7.0)(supports-color@10.2.2)`。
+  - 更新 devDependencies 中的 `eslint-config-prettier`：`^10.1.8`，`锁定 10.1.8(eslint@10.11.0(jiti@2.7.0)(supports-color@10.2.2))` → `^10.1.8`，`锁定 10.1.8(eslint@10.12.0(jiti@2.7.0)(supports-color@10.2.2))`。
+  - 更新 devDependencies 中的 `postcss`：`^8.5.28`，`锁定 8.5.28` → `^8.5.29`，`锁定 8.5.29`。
+  - 更新 peerDependencies 中的 `postcss`：`^8.4.38`，`锁定 8.5.28` → `^8.4.38`，`锁定 8.5.29`。
+
+  ### @weapp-tailwindcss/typography
+
+  - 更新 dependencies 中的 `magic-string`：`catalog:buildUtilities`，`范围 ^1.4.2`，`锁定 1.4.2` → `catalog:buildUtilities`，`范围 ^1.4.3`，`锁定 1.4.3`。
+
+  ### tailwindcss-injector
+
+  - 更新 dependencies 中的 `magic-string`：`catalog:buildUtilities`，`范围 ^1.4.2`，`锁定 1.4.2` → `catalog:buildUtilities`，`范围 ^1.4.3`，`锁定 1.4.3`。
+
+  ### weapp-tailwindcss
+
+  - 更新 dependencies 中的 `magic-string`：`catalog:buildUtilities`，`范围 ^1.4.2`，`锁定 1.4.2` → `catalog:buildUtilities`，`范围 ^1.4.3`，`锁定 1.4.3`。
+
+  ### wetw
+
+  - 更新 dependencies 中的 `@inquirer/prompts`：`catalog:inquirerPrompts`，`范围 ^8.7.2`，`锁定 8.7.2(@types/node@26.6.4)` → `catalog:inquirerPrompts`，`范围 ^8.7.3`，`锁定 8.7.3(@types/node@26.6.4)`。
+
+- 更新依赖。
+
+  ### @weapp-tailwindcss/debug-uni-app-x
+
+  - 更新 devDependencies 中的 `vite`：`7.2.7`，`锁定 7.2.7(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.105.0)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)` → `7.2.7`，`锁定 7.2.7(@types/node@26.6.4)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)`。
+
+  ### @weapp-tailwindcss/lynx
+
+  - 更新 devDependencies 中的 `vitest`：`catalog:vitest`，`范围 ~5.0.1`，`锁定 5.0.2(@types/node@26.6.2)(@vitest/coverage-v8@5.0.0)(@vitest/ui@5.0.0)(jsdom@29.1.1)(vite@7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.105.0)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))` → `catalog:vitest`，`范围 ~5.0.3`，`锁定 5.0.3(@types/node@26.6.4)(@vitest/coverage-v8@5.0.0)(@vitest/ui@5.0.0)(jsdom@29.1.1)(vite@7.3.6(@types/node@26.6.4)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))`。
+
+  ### @weapp-tailwindcss/postcss
+
+  - 更新 dependencies 中的 `@csstools/css-color-parser`：`catalog:csstools`，`范围 ^4.2.3`，`锁定 4.2.4(@csstools/css-parser-algorithms@4.0.1(@csstools/css-tokenizer@4.0.2))(@csstools/css-tokenizer@4.0.2)` → `catalog:csstools`，`范围 ^4.2.5`，`锁定 4.2.5(@csstools/css-parser-algorithms@4.0.2(@csstools/css-tokenizer@4.0.2))(@csstools/css-tokenizer@4.0.2)`。
+  - 更新 dependencies 中的 `@csstools/css-parser-algorithms`：`catalog:csstools`，`范围 ^4.0.0`，`锁定 4.0.1(@csstools/css-tokenizer@4.0.2)` → `catalog:csstools`，`范围 ^4.0.2`，`锁定 4.0.2(@csstools/css-tokenizer@4.0.2)`。
+  - 更新 dependencies 中的 `postcss-preset-env`：`catalog:postcssUtilities`，`范围 ^11.5.3`，`锁定 11.5.4(postcss@8.5.28)` → `catalog:postcssUtilities`，`范围 ^11.5.5`，`锁定 11.5.5(postcss@8.5.28)`。
+  - 更新 devDependencies 中的 `postcss-custom-properties`：`^15.0.2`，`锁定 15.0.2(postcss@8.5.28)` → `^15.0.3`，`锁定 15.0.3(postcss@8.5.28)`。
+
+  ### @weapp-tailwindcss/postcss-calc
+
+  - 更新 devDependencies 中的 `@types/node`：`catalog:typesNode2410`，`范围 ^26.6.2`，`锁定 26.6.2` → `catalog:typesNode2410`，`范围 ^26.6.4`，`锁定 26.6.4`。
+  - 更新 devDependencies 中的 `vitest`：`catalog:vitest`，`范围 ~5.0.1`，`锁定 5.0.2(@types/node@26.6.2)(@vitest/coverage-v8@5.0.0)(@vitest/ui@5.0.0)(jsdom@29.1.1)(vite@7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.105.0)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))` → `catalog:vitest`，`范围 ~5.0.3`，`锁定 5.0.3(@types/node@26.6.4)(@vitest/coverage-v8@5.0.0)(@vitest/ui@5.0.0)(jsdom@29.1.1)(vite@7.3.6(@types/node@26.6.4)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))`。
+
+  ### @weapp-tailwindcss/react-native
+
+  - 更新 devDependencies 中的 `vitest`：`catalog:vitest`，`范围 ~5.0.1`，`锁定 5.0.2(@types/node@26.6.2)(@vitest/coverage-v8@5.0.0)(@vitest/ui@5.0.0)(jsdom@29.1.1)(vite@7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.105.0)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))` → `catalog:vitest`，`范围 ~5.0.3`，`锁定 5.0.3(@types/node@26.6.4)(@vitest/coverage-v8@5.0.0)(@vitest/ui@5.0.0)(jsdom@29.1.1)(vite@7.3.6(@types/node@26.6.4)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))`。
+
+  ### @weapp-tailwindcss/ui
+
+  - 更新 devDependencies 中的 `@storybook/addon-a11y`：`catalog:storybook`，`范围 ^10.6.0`，`锁定 10.6.0(storybook@10.6.0(@types/react@19.2.18)(prettier@3.9.9)(react@18.3.1))` → `catalog:storybook`，`范围 ^10.6.1`，`锁定 10.6.1(storybook@10.6.1(@types/react@19.2.18)(prettier@3.9.9)(react@18.3.1))`。
+  - 更新 devDependencies 中的 `@storybook/react`：`catalog:storybook`，`范围 ^10.6.0`，`锁定 10.6.0(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(storybook@10.6.0(@types/react@19.2.18)(prettier@3.9.9)(react@18.3.1))(supports-color@10.2.2)(typescript@6.0.3)` → `catalog:storybook`，`范围 ^10.6.1`，`锁定 10.6.1(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(storybook@10.6.1(@types/react@19.2.18)(prettier@3.9.9)(react@18.3.1))(supports-color@10.2.2)(typescript@6.0.3)`。
+  - 更新 devDependencies 中的 `@storybook/react-vite`：`catalog:storybook`，`范围 ^10.6.0`，`锁定 10.6.0(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.63.1(patch_hash=c8c92d871ccf0418d1ba8b1f11a3371b706a1787f102194edb01d655e1ae84e0))(storybook@10.6.0(@types/react@19.2.18)(prettier@3.9.9)(react@18.3.1))(supports-color@10.2.2)(typescript@6.0.3)(vite@7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.105.0)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))` → `catalog:storybook`，`范围 ^10.6.1`，`锁定 10.6.1(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.63.5(patch_hash=618e46f264569db024ce086e1f1476e9bba0e6814413dc29febeaf4c22932fa6))(storybook@10.6.1(@types/react@19.2.18)(prettier@3.9.9)(react@18.3.1))(supports-color@10.2.2)(typescript@6.0.3)(vite@7.3.6(@types/node@26.6.4)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))`。
+  - 更新 devDependencies 中的 `storybook`：`catalog:storybook`，`范围 ^10.6.0`，`锁定 10.6.0(@types/react@19.2.18)(prettier@3.9.9)(react@18.3.1)` → `catalog:storybook`，`范围 ^10.6.1`，`锁定 10.6.1(@types/react@19.2.18)(prettier@3.9.9)(react@18.3.1)`。
+  - 更新 devDependencies 中的 `vite`：`catalog:vite724`，`范围 ^7.3.6`，`锁定 7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.105.0)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)` → `catalog:vite724`，`范围 ^7.3.6`，`锁定 7.3.6(@types/node@26.6.4)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)`。
+
+  ### weapp-tailwindcss
+
+  - 更新 dependencies 中的 `oxc-walker`：`catalog:compilerUtilities`，`范围 ^1.1.1`，`锁定 1.1.1(@oxc-project/types@0.149.0)(oxc-parser@0.152.0)(rolldown@1.2.7)` → `catalog:compilerUtilities`，`范围 ^1.1.1`，`锁定 1.1.1(@oxc-project/types@0.149.0)(oxc-parser@0.152.0)(rolldown@1.2.12)`。
+  - 更新 devDependencies 中的 `vite`：`catalog:vite724`，`范围 ^7.3.6`，`锁定 7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.105.0)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)` → `catalog:vite724`，`范围 ^7.3.6`，`锁定 7.3.6(@types/node@26.6.4)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)`。
+  - 更新 devDependencies 中的 `webpack`：`5.105.4`，`锁定 5.105.4(@swc/core@1.16.2(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.28))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.28)(uglify-js@3.19.3)(webpack-cli@7.2.3)` → `5.105.4`，`锁定 5.105.4(@swc/core@1.16.13(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@8.0.10(postcss@8.5.28))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.28)(uglify-js@3.19.3)(webpack-cli@7.2.3)`。
+  - 更新 peerDependencies 中的 `vite`：`^5.2.0 || ^6.0.0 || ^7.0.0 || ^8.0.0`，`锁定 7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.105.0)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)` → `^5.2.0 || ^6.0.0 || ^7.0.0 || ^8.0.0`，`锁定 7.3.6(@types/node@26.6.4)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)`。
+
+  ### wetw
+
+  - 更新 dependencies 中的 `@inquirer/prompts`：`catalog:inquirerPrompts`，`范围 ^8.7.2`，`锁定 8.7.2(@types/node@26.6.2)` → `catalog:inquirerPrompts`，`范围 ^8.7.2`，`锁定 8.7.2(@types/node@26.6.4)`。
+
+- 使用 32 位整数乘法减少样式缓存键的哈希开销，继续校验完整源码和配置，保持哈希碰撞、外部插件及 Root 来源的失效边界。
+
+- 修复 Lynx 编码时因 Tailwind 默认变量规则包含 `::backdrop` 而整组丢失的问题，保留边框、阴影等 utility 依赖的默认值和动态覆写；补齐默认过渡和等宽字体主题值的静态化，并保守保留局部、条件覆写及无法完整解析的主题别名。
+
+- 修复 Tailwind v4 的百分比透明度在 Lynx 原生端不生效的问题：将明确的 `opacity: 50%` 等声明转换为原生数字 `opacity: 0.5`，覆盖关键帧和条件规则，保留动态变量、其它属性的百分比及无效输入。普通 Web 输出保持原语义。
+
+- 将类名转义基础包源码纳入本仓库，以 @weapp-tailwindcss/escape 从新版本序列独立发布，并统一替换编译端、PostCSS 和运行时的依赖及类型引用。保留原转义 API、ESM/CJS 入口和映射行为，增加旧发布版对照与新包名打包验证。
+
+  公开 workspace 消费方统一使用 repoctl 要求的 `workspace:*`，发布 tarball 固定到同批 escape 版本，避免保留旧依赖范围策略导致 Release 协议校验失败。
+
+- 将发布包的仓库与问题反馈地址更新为 weapp-tailwindcss 组织下的主仓库，使 npm 包元数据与迁移后的 OIDC 发布来源一致。保留现有包名、导出接口、npm 所有权和文档域名。
+
+- 移除源码、声明和发布产物均未使用的 es-toolkit 生产依赖，减少独立消费项目的安装依赖和空间，不改变 CSS 转换行为。
+
+- 修复用户 PostCSS 插件先生成厂商前缀或动态变量声明后，透明十六进制颜色因误判已有回退而遗漏 rgba 兼容转换的问题。保留浏览器目标、显式开关与 preserve 配置，并避免声明去重跨过作者覆写或 shorthand 边界，保证最终渐变和颜色层叠一致。
+
+- 对同一份待比较的 CSS 延迟解析一次，并在规则文本索引与声明索引之间共享只读语法树，减少生成样式恢复时的重复解析；索引完成后释放语法树，保留条件规则、声明优先级及解析失败时的保守处理。
+
+- 在同一轮 Vite 产物清理中复用未变化的根样式覆盖索引，减少多个页面和组件重复解析根 CSS 的开销；根样式变更时重新计算，并保留独立分包隔离。
+
+- 修复 uni-app x 局部样式将 `space-x`、`space-y` 替换为局部类名后，对应子元素间距规则被错误过滤的问题。统一作者样式与纯 `@apply` 生成结果的选择器归属判断，保留结构后代、条件规则及完整 `:is`、`:where` 分支，同时继续排除独立 utility 后代和仅在否定条件中出现的作者类名。
+
+- 修复 uni-app x 自动局部 utility 别名按模板出现顺序生成，导致同优先级样式覆盖顺序与 Tailwind 不一致的问题。根据当前实际生成来源、主题和目标兼容候选的 Tailwind 排名，稳定排序同一父级内连续的自动局部规则，保留作者规则、未知排名和层叠边界；作者样式重放同时清理内部排序标记，避免标记进入最终产物。
+
+- 修复 uni-app x 小程序和 WebView 局部样式将 Tailwind 运行时变量误当作固定主题值的问题。保留 `--tw-leading` 等变量及其间接依赖的动态引用，使同节点、空值和条件覆盖继续生效；仅限制 preset 的变量静态化步骤，保持单位转换、其他兼容处理和原生 UVUE 静态降级契约。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/engine@0.1.4
+  - @weapp-tailwindcss/escape@0.0.2
+  - @weapp-tailwindcss/postcss-calc@1.0.10
+  - @weapp-tailwindcss/shared@2.0.4
+  - @weapp-tailwindcss/source-scan@0.1.2
+  - tailwindcss-config@2.0.6
+
+## 3.3.10
+
+### Patch Changes
+
+- 为跨会话 design system、模块解析、CSS 入口以及 PostCSS 配置和管线复用增加容量上限与最近使用淘汰，避免长期 watch 持续保留旧配置和旧入口；失败任务仅清除自身缓存，不影响更新后的请求。
+
+  同次创建 PostCSS 处理器和管线时复用已计算的配置签名，减少重复遍历嵌套配置。
+
+- 修复 CSS 短哈希碰撞、动态变量保护占位和同名插件闭包导致的结果缓存串用。缓存命中核对完整原始输入，按函数身份区分配置；用户插件每次执行，并按调用级插件配置决定内容探测。
+
+  用户插件完整执行后，以其输出 AST 及来源位置缓存确定性平台阶段，返回本次依赖消息与输入归属，减少 watch 的重复转换。包内无外部状态的 CSS macro 保持稳定准备函数并显式登记纯转换；同名或扩展的第三方插件不会被当成纯转换缓存。
+
+  保留用户阶段删除首节点时的顶层空白归属，避免 layer 提升重新引入文件头缩进。后处理仅为实际占位符拆分选择器，并为单个规范 class/id 跳过无语义贡献的兜底解析，减少大样式表分配与尾部耗时。
+
+  通用作者阶段不套用框架重放的生成插件过滤规则；用户插件生成的 AST 仅执行一次输入准备，保留原有布局及格式，框架适配层继续过滤重复生成插件。
+
+  Root 缓存仅在未命中时捕获结构与来源快照，命中时逐节点核对，避免重复生成整棵 AST 的 JSON 和输入映射；保持本轮 Input 绑定与输出隔离，并按累计节点数限制快照容量，减少 watch 的分配和内存压力。
+
+  小程序 CSS 最终清理只在可能匹配时拆分选择器，复用列表读取结果；移除不支持的 at-rule 与后续平台转换共用 AST，减少真实构建和 watch 中的重复解析、打印及临时分配，保留异常输入扫描修复与字符串兜底。
+
+- 修复微信 Tailwind CSS 4 固定 rpx 主题在默认配置下的 calc 尺寸偏差：新增自动模式，按完整产物作用域预计算并保留覆盖与缓存边界；动态主题可通过 cssOptions.cssCalc: false 退出。
+
+  修复 uni-app 小程序 watch 删除或清空整个 SFC 样式块后旧样式产物残留的问题：通过 CSS 输出插件已提交的资产归属补齐空资产写入，保留构建失败、多输出与其他生产者的边界。
+
+  保留调用阶段嵌套 CSS 配置的安全默认值，避免意外展开第三方组件变量；减少样式阶段配置复制，并在上下文和单位选项不变时复用最终资产结果。
+
+  修复已有等价目标值时原单位声明未被替换的问题，保留覆盖顺序和显式保留模式；将修正后的单位换算实现随 PostCSS 的 ESM/CJS 产物一起交付。
+
+  升级到包含上游修复的 postcss-plugin-shared 1.1.7 依赖链（rem 插件 7.0.7、pxtrans 1.0.6、unit-converter 0.2.5），移除临时 pnpm 补丁及锁文件登记，保留单位替换回归。
+
+  延后样式管线创建至首次处理，避免重复初始化；复用同次 preflight 的选择器拆分结果，并在解析变量作用域选择器前先检查声明，减少大样式表的无效工作。
+
+- 修复嵌套 CSS 规则去重后遗留空 at-rule 祖先，避免 Vite watch 重复注入 Tailwind 外壳导致恢复相同源码时产物不一致。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/engine@0.1.3
+
+## 3.3.9
+
+### Patch Changes
+
+- 更新依赖。
+
+  ### @weapp-tailwindcss/lynx
+
+  - 更新 devDependencies 中的 `vitest`：`catalog:vitest`，`范围 ~5.0.1`，`锁定 5.0.1(@types/node@26.6.2)(@vitest/coverage-v8@5.0.0)(@vitest/ui@5.0.0)(jsdom@29.1.1)(vite@7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.105.0)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))` → `catalog:vitest`，`范围 ~5.0.1`，`锁定 5.0.2(@types/node@26.6.2)(@vitest/coverage-v8@5.0.0)(@vitest/ui@5.0.0)(jsdom@29.1.1)(vite@7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.105.0)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))`。
+
+  ### @weapp-tailwindcss/postcss
+
+  - 更新 dependencies 中的 `@csstools/css-color-parser`：`catalog:csstools`，`范围 ^4.2.3`，`锁定 4.2.3(@csstools/css-parser-algorithms@4.0.0(@csstools/css-tokenizer@4.0.1))(@csstools/css-tokenizer@4.0.1)` → `catalog:csstools`，`范围 ^4.2.3`，`锁定 4.2.4(@csstools/css-parser-algorithms@4.0.1(@csstools/css-tokenizer@4.0.2))(@csstools/css-tokenizer@4.0.2)`。
+  - 更新 dependencies 中的 `@csstools/css-parser-algorithms`：`catalog:csstools`，`范围 ^4.0.0`，`锁定 4.0.0(@csstools/css-tokenizer@4.0.1)` → `catalog:csstools`，`范围 ^4.0.0`，`锁定 4.0.1(@csstools/css-tokenizer@4.0.2)`。
+  - 更新 dependencies 中的 `@csstools/css-tokenizer`：`catalog:csstools`，`范围 ^4.0.1`，`锁定 4.0.1` → `catalog:csstools`，`范围 ^4.0.1`，`锁定 4.0.2`。
+  - 更新 dependencies 中的 `postcss-preset-env`：`catalog:postcssUtilities`，`范围 ^11.5.3`，`锁定 11.5.3(postcss@8.5.28)` → `catalog:postcssUtilities`，`范围 ^11.5.3`，`锁定 11.5.4(postcss@8.5.28)`。
+  - 更新 devDependencies 中的 `@csstools/postcss-is-pseudo-class`：`^6.0.0`，`锁定 6.0.0(postcss@8.5.28)` → `^6.0.1`，`锁定 6.0.1(postcss@8.5.28)`。
+  - 更新 devDependencies 中的 `postcss-custom-properties`：`^15.0.1`，`锁定 15.0.1(postcss@8.5.28)` → `^15.0.2`，`锁定 15.0.2(postcss@8.5.28)`。
+
+  ### @weapp-tailwindcss/postcss-calc
+
+  - 更新 devDependencies 中的 `vitest`：`catalog:vitest`，`范围 ~5.0.1`，`锁定 5.0.1(@types/node@26.6.2)(@vitest/coverage-v8@5.0.0)(@vitest/ui@5.0.0)(jsdom@29.1.1)(vite@7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.105.0)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))` → `catalog:vitest`，`范围 ~5.0.1`，`锁定 5.0.2(@types/node@26.6.2)(@vitest/coverage-v8@5.0.0)(@vitest/ui@5.0.0)(jsdom@29.1.1)(vite@7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.105.0)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))`。
+
+  ### @weapp-tailwindcss/react-native
+
+  - 更新 devDependencies 中的 `vitest`：`catalog:vitest`，`范围 ~5.0.1`，`锁定 5.0.1(@types/node@26.6.2)(@vitest/coverage-v8@5.0.0)(@vitest/ui@5.0.0)(jsdom@29.1.1)(vite@7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.105.0)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))` → `catalog:vitest`，`范围 ~5.0.1`，`锁定 5.0.2(@types/node@26.6.2)(@vitest/coverage-v8@5.0.0)(@vitest/ui@5.0.0)(jsdom@29.1.1)(vite@7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.105.0)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))`。
+
+- 修复多个 CSS 入口合并后文件型 @source 的来源丢失与候选归属错误，保留空范围及主题冲突语义，并监听扫描文件变化。Refs #1241
+
+- Updated dependencies:
+  - @weapp-tailwindcss/engine@0.1.2
+  - @weapp-tailwindcss/postcss-calc@1.0.9
+
+## 3.3.8
+
+### Patch Changes
+
+- 更新依赖。
+
+  ### @weapp-tailwindcss/debug-uni-app-x
+
+  - 更新 dependencies 中的 `fs-extra`：`catalog:buildUtilities`，`范围 ^11.4.0`，`锁定 11.4.0` → `catalog:buildUtilities`，`范围 ^11.4.1`，`锁定 11.4.1`。
+  - 更新 devDependencies 中的 `vite`：`7.2.7`，`锁定 7.2.7(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.104.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)` → `7.2.7`，`锁定 7.2.7(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.105.0)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)`。
+
+  ### @weapp-tailwindcss/init
+
+  - 更新 dependencies 中的 `fs-extra`：`catalog:buildUtilities`，`范围 ^11.4.0`，`锁定 11.4.0` → `catalog:buildUtilities`，`范围 ^11.4.1`，`锁定 11.4.1`。
+
+  ### @weapp-tailwindcss/lynx
+
+  - 更新 devDependencies 中的 `@lynx-js/rspeedy`：`^0.17.2`，`锁定 0.17.2(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@rspack/core@2.2.2(@swc/helpers@0.5.23))(clean-css@5.3.3)(core-js@3.50.0)(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(supports-color@10.2.2)(tslib@2.8.1)(typescript@6.0.3)(webpack@5.105.4)` → `^0.18.0`，`锁定 0.18.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@rspack/core@2.2.2(@swc/helpers@0.5.23))(clean-css@5.3.3)(core-js@3.50.0)(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(supports-color@10.2.2)(tslib@2.8.1)(typescript@6.0.3)(webpack@5.105.4)`。
+  - 更新 devDependencies 中的 `vitest`：`catalog:vitest`，`范围 ~5.0.1`，`锁定 5.0.1(@types/node@26.6.2)(@vitest/coverage-v8@5.0.0)(@vitest/ui@5.0.0)(jsdom@29.1.1)(vite@7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.104.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))` → `catalog:vitest`，`范围 ~5.0.1`，`锁定 5.0.1(@types/node@26.6.2)(@vitest/coverage-v8@5.0.0)(@vitest/ui@5.0.0)(jsdom@29.1.1)(vite@7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.105.0)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))`。
+  - 更新 peerDependencies 中的 `@lynx-js/rspeedy`：`>=0.16.0`，`锁定 0.17.2(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@rspack/core@2.2.2(@swc/helpers@0.5.23))(clean-css@5.3.3)(core-js@3.50.0)(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(supports-color@10.2.2)(tslib@2.8.1)(typescript@6.0.3)(webpack@5.105.4)` → `>=0.16.0`，`锁定 0.18.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@rspack/core@2.2.2(@swc/helpers@0.5.23))(clean-css@5.3.3)(core-js@3.50.0)(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(supports-color@10.2.2)(tslib@2.8.1)(typescript@6.0.3)(webpack@5.105.4)`。
+
+  ### @weapp-tailwindcss/postcss
+
+  - 更新 dependencies 中的 `postcss-pxtrans`：`catalog:postcssCompat`，`范围 ^1.0.4`，`锁定 1.0.4(postcss@8.5.28)` → `catalog:postcssCompat`，`范围 ^1.0.5`，`锁定 1.0.5(postcss@8.5.28)`。
+  - 更新 dependencies 中的 `postcss-rem-to-responsive-pixel`：`catalog:postcssRem`，`范围 ^7.0.5`，`锁定 7.0.5(postcss@8.5.28)` → `catalog:postcssRem`，`范围 ^7.0.6`，`锁定 7.0.6(postcss@8.5.28)`。
+  - 更新 dependencies 中的 `postcss-rule-unit-converter`：`catalog:postcssCompat`，`范围 ^0.2.3`，`锁定 0.2.3(postcss@8.5.28)` → `catalog:postcssCompat`，`范围 ^0.2.4`，`锁定 0.2.4(postcss@8.5.28)`。
+
+  ### @weapp-tailwindcss/postcss-calc
+
+  - 更新 devDependencies 中的 `prettier`：`catalog:prettier371`，`范围 ^3.9.8`，`锁定 3.9.8` → `catalog:prettier371`，`范围 ^3.9.9`，`锁定 3.9.9`。
+  - 更新 devDependencies 中的 `vitest`：`catalog:vitest`，`范围 ~5.0.1`，`锁定 5.0.1(@types/node@26.6.2)(@vitest/coverage-v8@5.0.0)(@vitest/ui@5.0.0)(jsdom@29.1.1)(vite@7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.104.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))` → `catalog:vitest`，`范围 ~5.0.1`，`锁定 5.0.1(@types/node@26.6.2)(@vitest/coverage-v8@5.0.0)(@vitest/ui@5.0.0)(jsdom@29.1.1)(vite@7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.105.0)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))`。
+
+  ### @weapp-tailwindcss/react-native
+
+  - 更新 devDependencies 中的 `vitest`：`catalog:vitest`，`范围 ~5.0.1`，`锁定 5.0.1(@types/node@26.6.2)(@vitest/coverage-v8@5.0.0)(@vitest/ui@5.0.0)(jsdom@29.1.1)(vite@7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.104.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))` → `catalog:vitest`，`范围 ~5.0.1`，`锁定 5.0.1(@types/node@26.6.2)(@vitest/coverage-v8@5.0.0)(@vitest/ui@5.0.0)(jsdom@29.1.1)(vite@7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.105.0)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))`。
+
+  ### @weapp-tailwindcss/typography
+
+  - 更新 dependencies 中的 `magic-string`：`catalog:buildUtilities`，`范围 ^1.4.1`，`锁定 1.4.1` → `catalog:buildUtilities`，`范围 ^1.4.2`，`锁定 1.4.2`。
+
+  ### @weapp-tailwindcss/ui
+
+  - 更新 devDependencies 中的 `@storybook/addon-a11y`：`catalog:storybook`，`范围 ^10.6.0`，`锁定 10.6.0(storybook@10.6.0(@types/react@19.2.18)(prettier@3.9.8)(react@18.3.1))` → `catalog:storybook`，`范围 ^10.6.0`，`锁定 10.6.0(storybook@10.6.0(@types/react@19.2.18)(prettier@3.9.9)(react@18.3.1))`。
+  - 更新 devDependencies 中的 `@storybook/react`：`catalog:storybook`，`范围 ^10.6.0`，`锁定 10.6.0(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(storybook@10.6.0(@types/react@19.2.18)(prettier@3.9.8)(react@18.3.1))(supports-color@10.2.2)(typescript@6.0.3)` → `catalog:storybook`，`范围 ^10.6.0`，`锁定 10.6.0(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(storybook@10.6.0(@types/react@19.2.18)(prettier@3.9.9)(react@18.3.1))(supports-color@10.2.2)(typescript@6.0.3)`。
+  - 更新 devDependencies 中的 `@storybook/react-vite`：`catalog:storybook`，`范围 ^10.6.0`，`锁定 10.6.0(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.63.1(patch_hash=c8c92d871ccf0418d1ba8b1f11a3371b706a1787f102194edb01d655e1ae84e0))(storybook@10.6.0(@types/react@19.2.18)(prettier@3.9.8)(react@18.3.1))(supports-color@10.2.2)(typescript@6.0.3)(vite@7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.104.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))` → `catalog:storybook`，`范围 ^10.6.0`，`锁定 10.6.0(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.63.1(patch_hash=c8c92d871ccf0418d1ba8b1f11a3371b706a1787f102194edb01d655e1ae84e0))(storybook@10.6.0(@types/react@19.2.18)(prettier@3.9.9)(react@18.3.1))(supports-color@10.2.2)(typescript@6.0.3)(vite@7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.105.0)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))`。
+  - 更新 devDependencies 中的 `storybook`：`catalog:storybook`，`范围 ^10.6.0`，`锁定 10.6.0(@types/react@19.2.18)(prettier@3.9.8)(react@18.3.1)` → `catalog:storybook`，`范围 ^10.6.0`，`锁定 10.6.0(@types/react@19.2.18)(prettier@3.9.9)(react@18.3.1)`。
+  - 更新 devDependencies 中的 `vite`：`catalog:vite724`，`范围 ^7.3.6`，`锁定 7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.104.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)` → `catalog:vite724`，`范围 ^7.3.6`，`锁定 7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.105.0)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)`。
+
+  ### tailwindcss-injector
+
+  - 更新 dependencies 中的 `fs-extra`：`catalog:buildUtilities`，`范围 ^11.4.0`，`锁定 11.4.0` → `catalog:buildUtilities`，`范围 ^11.4.1`，`锁定 11.4.1`。
+  - 更新 dependencies 中的 `magic-string`：`catalog:buildUtilities`，`范围 ^1.4.1`，`锁定 1.4.1` → `catalog:buildUtilities`，`范围 ^1.4.2`，`锁定 1.4.2`。
+
+  ### weapp-tailwindcss
+
+  - 更新 dependencies 中的 `magic-string`：`catalog:buildUtilities`，`范围 ^1.4.1`，`锁定 1.4.1` → `catalog:buildUtilities`，`范围 ^1.4.2`，`锁定 1.4.2`。
+  - 更新 devDependencies 中的 `vite`：`catalog:vite724`，`范围 ^7.3.6`，`锁定 7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.104.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)` → `catalog:vite724`，`范围 ^7.3.6`，`锁定 7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.105.0)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)`。
+  - 更新 peerDependencies 中的 `vite`：`^5.2.0 || ^6.0.0 || ^7.0.0 || ^8.0.0`，`锁定 7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.104.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)` → `^5.2.0 || ^6.0.0 || ^7.0.0 || ^8.0.0`，`锁定 7.3.6(@types/node@26.6.2)(jiti@2.7.0)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.104.1)(sass@1.105.0)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)`。
+
+- 修复 `cssCalc` 将局部主题和条件覆盖误当作全局常量的问题，保留变量来源、完整声明和输出上下文；冲突、未知变量及其依赖链继续使用运行时表达式。
+
+  统一多来源 eager/deferred 的静态化判断，修复 Map、正则配置和增量候选改变变量上下文后复用旧 CSS 的问题。`cssCalc` 不再隐式开启全局 CSS 变量展开，也不会删除未成功静态化的运行时声明。
+
+  保留 `cssCalc: true` 在顶层和嵌套配置中的相同语义，嵌套配置完整继承安全默认值。增量颜色降级与 UVUE 所需的推导主题值独立传递，不作为 calc 的显式常量；作者插件完成后恢复后续 PostCSS 节点遍历。
+
+  Vite 构建根据最终 CSS 产物图的入口、静态导入和 CSS 导入合并共同样式作用域，完成静态计算后再转换单位；开发服务和原生 App 嵌入样式保留即时处理。风险提示明确区分当前生成阶段与最终 WXSS，避免延后静态化时将中间表达式误称为最终运行时计算。
+
+  保留 CSS 原始别名依赖，显式常量不能抹除动态、循环或无法解析的依赖。统一 CSS 转义变量名的身份和白名单匹配，合法转义引用可以求值，等价名称的局部覆盖仍阻止静态化。compiler 来源缓存改为内容签名与自有快照，原地修改 source/sourceOptions、扫描来源和裸任意值配置后重新生成，历史缓存快照不再引用调用方的可变来源对象。
+
+  增量追加以原生编译器完整产物为准，新增主题、keyframes、属性注册、颜色降级结构或规则顺序变化时重新转换完整结果；空候选重新添加也恢复完整依赖，避免旧规则与不完整的新 CSS 直接拼接。
+
+  补充真实 uni-app 微信构建与同进程 watch 回归。静态计算仍需显式启用，不改变微信自身的 `rpx` 换算算法。Refs #1214。
+
+- 修复 Tailwind CSS v4 小程序延后构建中配置的 CSS 变量未参与 `cssCalc` 静态计算的问题。固定且可解析的 `rpx` 主题尺寸会根据完整变量上下文折叠为最终 `rpx` 值；Vite 构建在最终 CSS 产物阶段确定共同作用域，完成静态计算后再转换单位。
+
+- 修复 Tailwind CSS v4 主样式预处理对每条规则重复扫描整份 CSS AST 的性能问题。处理大规模样式时复用单次 Root 级内容变量判断，保持 `--tw-content` 初始化和 CSS 输出语义不变。
+
+  Related to #1238。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/postcss-calc@1.0.8
+
+## 3.3.7
+
+### Patch Changes
+
+- 将颜色解析器及其 AST 依赖一起打包，避免独立安装出现多份 parser 实例时丢失主题颜色和透明度工具类。
+
+## 3.3.6
+
+### Patch Changes
+
+- 迁入仅支持 Tailwind CSS 4 的 @weapp-tailwindcss/engine，保留候选提取、扫描和生成会话能力，替换主包、PostCSS 与 CLI 的旧 engine 依赖，并明确生成与平台兼容转换的边界。
+
+- 统一来源扫描基础设施与共享语义契约，修复 Windows glob、qxml、绝对来源排除及配置更新缓存；拆分 PostCSS 子路径和核心扫描职责，解除值依赖循环与核心对构建器的反向引用，CLI 与 PostCSS 复用生成会话扫描并释放资源。
+
+  进一步将通用生成编排与候选状态迁入核心，兼容扫描入口统一使用 AST 来源描述与显式扫描策略。Webpack、Rspack、Gulp 共用真实生成与增量扫描契约，修复 Gulp 禁用自动扫描后的候选泄漏、watch 候选失效，以及 Webpack/Rspack 新增来源文件未触发 CSS 重建的问题。
+
+  生成引擎按内容指纹复用本地配置及插件模块，避免重复遍历和执行未变更依赖；配置或间接依赖更新及显式会话失效仍触发刷新。配置加载器保留 Jiti 转换缓存，每次读取前清理配置的本地模块依赖图，兼顾间接依赖更新正确性与 CommonJS 原生加载性能。
+
+  生成模块缓存的异步上下文在最后一个并发调用结束后停用，避免后续构建继续承担异步跟踪开销；成功与异常路径均释放，并保留并发生成之间的上下文隔离。
+
+  Webpack/Rspack 的来源监听根据 glob 静态前缀注册目录，避免配置基准目录导致整棵项目树进入递归快照；尚未创建的目录登记为缺失依赖，保留新增来源触发生成的行为。
+
+  候选报告采用有限并发读取，避免串行文件等待与构建任务相互阻塞；结果顺序、候选位置及单文件失败报告保持稳定。CSS 来源缓存的配置元数据检查与同步 CSS 读取在同一轮完成，配置修改、删除及重建仍会刷新来源。
+
+  候选删除时仅重建累积输出的编译器，复用同一生成会话的 design system，减少 HMR 重复解析主题和插件的内存分配；源码、配置或依赖失效仍同时刷新编译器与 design system。
+
+- 将共享生成流程、Vite 产物清理、Webpack 兼容和 Harmony apply 的样式变换归入 PostCSS 包，保留主包编排接口，减少重复解析、声明签名计算和未命中规则克隆。
+
+  继续统一源码追踪、主题与引用组装、import 改写、候选扫描和入口指纹；删除重复的 inline/config/source 解析，复用单次调用的 CSS 分析结果，同时保持文件解析、平台和构建会话归主包管理。
+
+  将 Vite 预处理前独占行的 `@config` 清理一并迁入 PostCSS，保留 Sass 源码兼容及原有换行语义。
+
+  将 React Native CSS 编译迁入独立 PostCSS native 子入口，保留原编译器 API、精确类名过滤、告警与稳定 ID；运行时不加载 CSS 编译依赖。
+
+  将 injector 的纯指令插入和 LightningCSS 的实验性样式转换归入 PostCSS。模板依赖追踪仍由 injector 管理；LightningCSS 引擎仍只由实验入口加载，稳定入口不导入实验实现。
+
+  修复完整验收中发现的既有 uni-app x Web 类名身份不一致：Web 模板与脚本保留生成器使用的原始变体类名，局部样式仍按精确候选生成别名，小程序转换行为保持不变。
+
+- 将公开 core 编译入口的 Tailwind banner 注释清理迁入 PostCSS 包，直接复用已有 AST，保留目标平台、finalize 开关、其它版权注释和声明字面量的既有行为。
+
+- 将 CSS 资源位置依赖分析迁入 PostCSS，通过 tokenizer 识别转义的 url 和 import，避免相对资源转换跨目录共享缓存，并排除字符串及注释中的伪资源语法。
+
+- 将 CSS 运行时签名归属 PostCSS，保留字符串空格、注释样文本及选择器关系，避免主题变量等有效修改被误判为排版变化而漏掉 HMR 缓存失效。
+
+- 统一 uni-app x 的样式属性名、数值单位与行高类型转换到 PostCSS，删除主包重复实现，减少重复属性名处理并保持 CSS 与 UTS 输出一致。
+
+- 复用现有 Oxc 解析器分析 JS 候选文本签名，保留原生模块不可用时的 Babel 回退；对构建图已排除出候选扫描的 JS 使用源码哈希保守失效，减少独立分包运行时的重复 AST 解析，同时保留类名精确转译与关联模块失效。
+
+  为 JS 快路径增加有容量上限的字面量位置缓存，类集合变化时复用解析事实并重新精确匹配，避免 watch 反复构建完整 AST。保留 ESM 模块图和特殊语法的 Babel 回退，并让无模块图依赖的 CommonJS 产物使用原生解析器。合并小程序 preflight 与 theme 时预筛单一选择器，减少大型工具类样式表的 selector AST 分配。
+
+- 为微信小程序的 Tailwind v4 rpx 主题变量增加每构建会话一次的建议性警告，区分运行时 calc 与静态输出；将相关生成样式转换及变量收集统一到 PostCSS 包，保持 CSS 和类名集合语义不变。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/engine@0.1.1
+  - @weapp-tailwindcss/source-scan@0.1.1
+  - tailwindcss-config@2.0.5
+
+## 3.3.5
+
+### Patch Changes
+
+- 将 CSS 语法解析与 tokenize 收口到 @weapp-tailwindcss/postcss，主包不再直接依赖样式处理库
+
+- 将 legacy selector/unit、空块清理和 Harmony CSS style value 变换迁到 @weapp-tailwindcss/postcss
+
+- 将 uni-app x 边框 preflight 与 v4 theme CSS 变换迁到 @weapp-tailwindcss/postcss
+
+- 修复 uni-app x H5 渐变与阴影：Web 生成样式保持独立转换链，局部 @apply 与 scoped 清理保留所需运行时变量初始化及注册，保留动态 fallback 和工具类组合。Refs #1210。
+
+- 修复 Tailwind CSS v4 在 web/H5 生成路径中 `cssCalc` 无法预计算配置的 CSS 自定义属性的问题。
+
+  - 抽出仅计算 `calc()` / `var()` 的 `applyConfiguredCssCalc`，web 目标不再走会改写选择器的完整小程序 style handler。
+  - 完整生成、增量生成和 web 用户 CSS（含 `@apply`）都会消费生成器收集的变量映射；未匹配变量与循环引用仍保留运行时表达式。
+  - 补齐 Vite Web/H5 最终 CSS 资产中的普通样式计算，避免独立导入的 CSS 绕过 `cssCalc`；跨资产仅使用唯一生成上下文，多个主题入口不按遍历顺序猜测变量值。Refs #1194。
+
+- 修复 graph 生成结果在样式最终化后丢失编译 snapshot、组件样式去重后残留无消费者的 content 初始化（保留根样式与增量生成的默认初始化契约）、Vite 对象钩子及其上下文和构建参数未完整转发的问题。修复 Webpack 样式入口读取错误的运行时配置字段，以及 Tailwind v4 候选校验未使用裸任意值配置的问题。
+
+  统一内部处理器、只读生成结果和跨构建器类型契约，校验框架分包配置及单 Root AST 返回边界，保留同步与异步 HMR 源码读取能力；Uni App X 通过 Rollup 接受的 JSON source map 保留完整来源信息。
+
+  修复作者样式回填时 Tailwind 编译期函数未展开的问题：复用当前生成源的编译上下文处理函数值，保留重复声明、作用域与原有顺序，并拒绝配置上下文歧义，避免正确样式后面残留未编译声明。
+
+  修复 UI 样式测试加载构建配置时清空发布产物的问题：配置求值不再触发嵌套构建，样式由 weapp-tailwindcss 生成，JS 与声明文件由 tsdown 管理，测试使用内存产物并校验磁盘输出未变化；监听模式保留 CSS、JS 与声明的增量构建。
+
+  修复 Uni App X 小程序增量构建中源码样式与框架产物的映射遗漏，保留框架基础样式贡献，并将同目标入口重放与框架输出合并，避免热更新清空全局样式或覆盖页面布局规则。
+
+  小程序组件局部样式同时生成基础工具类与变体，保留原变体类身份；作者样式过滤按选择器结构保留包含 Vue 作用域的主题、媒体与伪类展开规则，避免局部背景覆盖主题状态。原生 App 保持现有变体路径。
+
+  区分小程序产物导入与 Tailwind 源码依赖，保留框架基础样式 import，避免样式隔离 2.0 编译解析失败；将已有类约束上的 class 属性存在选择器等价转成重复类，保留框架提权效果与小程序兼容性。
+
+  修复增量样式回滚时旧规则复活：框架贡献与入口重放不再复用混合产物缓存，最终注入前先更新本轮来源记录，并在原始框架样式转为生成产物时清理旧贡献。源码签名未变时复用干净生成缓存做合并，避免每次热更新都整份重新生成。产物已包含对应 CSS 时跳过 scoped runtime 计算，避免生产全量构建为不会重放的文件做候选签名。
+  修复 Web 聚合样式替换越过 Tailwind 模块边界而丢失独立导入和组件普通样式的问题，缓存包含真实聚合内容；保留 Web layer 顺序并重放框架 PostCSS 的单位、选择器与前缀转换。插件解析支持相对源码上下文的 CJS/ESM 模块路径和 tuple 选项，保留旧式 transformer 与 Processor 组合，非法或缺失插件明确报错，避免静默省略框架处理。
+
+## 3.3.4
+
+### Patch Changes
+
+- 修复 Tailwind CSS v4 跨 CSS 资产构建时 `cssCalc` 无法预计算配置的 CSS 自定义属性的问题，并支持变量 fallback、链式引用与循环引用保护。
+
+  - 统一数组、正则、对象和布尔形式的 `cssCalc` 外部变量映射透传，支持顶层和 `cssOptions` 配置入口。
+  - 未启用 calc 变量解析时，完整 Tailwind v4 生成路径不再额外解析整份 CSS 收集变量，减少构建内存开销。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/postcss-calc@1.0.7
+
+## 3.3.3
+
+### Patch Changes
+
+- 修复 uni-app x important utility 预处理误用 CSS parser 的问题：使用真正的 SCSS 解析和序列化 API，避免样式中的行内注释使转换静默失效，导致 Web 连续热更新出现 Sass 语法错误。补充真实属性透传、连续保存、样式块增删与刷新回归。Refs #1144。
+
+- 在 Webpack 将 Tailwind CSS v4 交给下游 PostCSS 前归一化无限圆角，避免旧版 postcss-calc 词法警告，并保留正常单位转换与 Web 输出。Refs #1166。
+
+- 修复 Windows 下 CSS import 转义路径导致默认源码扫描失效、标准 utility 与 spacing 变量缺失的问题。统一入口路径解析、CSS 请求序列化和主题文件定位。
+
+  Vite 清理已注入的样式产物时，在单次操作内复用主样式的比较索引，避免对每个候选产物重复解析同一份 CSS。索引绑定不可变内容，不跨 HMR 构建保留。
+
+  Vite 将原始用户样式与框架已处理的 bundle CSS 分开传递，生成 CSS 完成框架转换后再合并后者，避免 px/rpx 阶段差异导致依赖样式重复输出。保留用户覆盖顺序，并避免重放已执行的框架插件或恢复旧主题变量。
+
+  修正 Vite watch 删除模板时的源码与产物归属、符号链接路径身份和候选缓存失效；覆盖 quickapp qxml，并保证 Vite 开发服务中的新增任意值使用当前生成器验证集合，使 CSS 与 JS 类名一致。
+
+  修复没有 PostCSS loader 的 Webpack 预处理链路：在 Sass/Less/Stylus 输出 CSS 后再执行生成和 import 解析，兼容 Docusaurus 服务端丢弃样式的规则。
+
+  修复 Webpack 将 Windows 输出目录直接当作 Watchpack glob 导致忽略规则失效的问题。输出目录使用字面路径包含关系，兼容盘符、UNC、空格与 glob 特殊字符，避免生成产物反复触发 watch 构建。
+
+  Webpack 监听依赖通过构建器输入文件系统分类，避免把 Taro 虚拟入口误登记为缺失文件并循环重建；loader 等待异步依赖注册完成后再返回产物。
+
+  扩展所有 demo 的 Windows、macOS、Linux CLI 验收，覆盖生产、开发首编译、连续源码修改及 Web 刷新。修复百度小程序 CSS 产物身份与重放、入口 chunk 的独立样式引用、Webpack 生成前后的 CSS/JS 边界和 Rspack 已注册 loader 的增量生成；修复 uni 样式注入入口缓存跨构建失效。原生目标保持已有接入边界，仅验收 CLI 构建，不声明设备或 utility 样式覆盖。Refs #1159。
+
+  仓库构建依赖为 Rollup 4.63.0 增加 CJS/ESM watcher 补丁，修复 Linux 原子替换源码后重复依赖监听失效；补丁随冻结锁文件应用，不随本库 npm 包安装。浏览器验收区分客户端路由与新文档，避免 hash/history 跳转清空有效的开发连接。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/postcss-calc@1.0.6
+
+## 3.3.2
+
+### Patch Changes
+
+- 清理小程序最终样式中的空选择器规则，避免无效的 `:is(...)` 语法进入 WXSS 产物。Refs #1152
+
+## 3.3.1
+
+### Patch Changes
+
+- 统一跨构建器编译状态与生命周期协议，新增可复用的 compiler host、事件总线和 runtime state，同时收敛 PostCSS、编译器和运行时衍生包的依赖版本 catalog，保持现有导入路径兼容。
+
+- 统一处理 Tailwind source media 尾部残片，避免非法 CSS 进入小程序最终产物。
+
+## 3.3.0
+
+### Minor Changes
+
+- 完善 Core Compiler 与 PostCSS 集成能力：小程序目标默认完成 CSS 最终化，支持 source glob 增量失效、内存 CSS source、root 淘汰回调、模板 filename 上下文，并公开最终化相关 API。
+
+## 3.2.12
+
+### Patch Changes
+
+- 将公开 npm 包的主页和相关文档入口迁移到新的 `https://tw.weapp.dev` 域名，并补齐缺失的包主页元数据。
+
+- 修复 uni-app x 中 important utility 与局部 Sass `@apply` 在 Web、Android Vapor 等目标间编译不一致的问题。
+
+- 升级 PostCSS 处理链使用的 CSS 颜色解析与预设环境依赖。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/postcss-calc@1.0.5
+  - @weapp-tailwindcss/shared@2.0.3
+  - tailwindcss-config@2.0.4
+
+## 3.2.11
+
+### Patch Changes
+
+- 🐛 **统一更新各发布包的 npm 描述与中英文 README，明确 `weapp-tailwindcss` 面向 Web、小程序、React Native、Lynx 与跨端框架的全端 Tailwind CSS 定位。公开包现在默认展示英文 README，并提供统一命名的简体中文入口，同时保留各子包的具体职责边界。** [#1079](https://github.com/sonofmagic/weapp-tailwindcss/pull/1079) by @sonofmagic
+- 📦 **Dependencies** [`c2ba271`](https://github.com/sonofmagic/weapp-tailwindcss/commit/c2ba271ac62ba851c23549a8de1038a71bb868d6)
+  → `@weapp-tailwindcss/postcss-calc@1.0.4`, `@weapp-tailwindcss/shared@2.0.2`, `tailwindcss-config@2.0.3`
+
 ## 3.2.10
 
 ### Patch Changes

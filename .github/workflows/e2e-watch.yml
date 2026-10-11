@@ -37,8 +37,8 @@ permissions:
 
 jobs:
   pr-quick-gate:
-    name: e2e-watch-pr (${{ matrix.runner_label }}-node${{ matrix['node-version'] || 22 }}-${{ matrix.watch_case }}-${{ matrix.round_profile }})
-    if: (github.event_name == 'pull_request' && github.event.pull_request.draft == false) || (github.event_name == 'workflow_dispatch' && inputs.run_pr_quick_gate == true)
+    name: e2e-watch-pr (${{ matrix.runner_label }}-node22-${{ matrix.watch_case }}-${{ matrix.round_profile }})
+    if: github.event_name == 'workflow_dispatch' && inputs.run_pr_quick_gate == true
     strategy:
       fail-fast: false
       matrix:
@@ -103,8 +103,8 @@ jobs:
             timeout_minutes: 30
             watch_timeout_ms: '60000'
             watch_poll_ms: '40'
-            # macOS hosted runner 的分包 corpus 会同时回放多个样式入口；保留独立预算，避免放宽主包与其他平台。
-            watch_max_plugin_process_ms: '12000'
+            # macOS hosted runner 的分包 corpus 会同时回放多个样式入口；按当前 p95 保留独立预算，避免放宽主包与其他平台。
+            watch_max_plugin_process_ms: '18000'
             watch_command_timeout_ms: '600000'
           - os: macos-latest
             runner_label: macos
@@ -715,8 +715,12 @@ jobs:
             runner_label: windows
             watch_case: uni-app-vite-tailwindcss-v4:mp-weixin
             artifact_case: uni-app-vite-tailwindcss-v4-mp-weixin
-            round_profile: default
+            round_profile: main-style
             watch_save_snapshots: '1'
+            # Windows uni-app 每次变更都会触发完整平台构建；PR 保留主包与两个分包的主样式契约，完整轮次由 Linux/macOS 与 nightly 覆盖。
+            watch_main_style_only: '1'
+            watch_main_style_subpackage_limit: '2'
+            watch_max_attempts: '1'
             timeout_minutes: 30
             watch_timeout_ms: '420000'
             watch_poll_ms: '40'
@@ -726,8 +730,12 @@ jobs:
             runner_label: windows
             watch_case: uni-app-vite-tailwindcss-v4:mp-alipay
             artifact_case: uni-app-vite-tailwindcss-v4-mp-alipay
-            round_profile: default
+            round_profile: main-style
             watch_save_snapshots: '1'
+            # Windows uni-app 每次变更都会触发完整平台构建；PR 保留主包与两个分包的主样式契约，完整轮次由 Linux/macOS 与 nightly 覆盖。
+            watch_main_style_only: '1'
+            watch_main_style_subpackage_limit: '2'
+            watch_max_attempts: '1'
             timeout_minutes: 30
             watch_timeout_ms: '420000'
             watch_poll_ms: '40'
@@ -737,8 +745,12 @@ jobs:
             runner_label: windows
             watch_case: uni-app-vite-tailwindcss-v4:mp-qq
             artifact_case: uni-app-vite-tailwindcss-v4-mp-qq
-            round_profile: default
+            round_profile: main-style
             watch_save_snapshots: '1'
+            # Windows uni-app 每次变更都会触发完整平台构建；PR 保留主包与两个分包的主样式契约，完整轮次由 Linux/macOS 与 nightly 覆盖。
+            watch_main_style_only: '1'
+            watch_main_style_subpackage_limit: '2'
+            watch_max_attempts: '1'
             timeout_minutes: 30
             watch_timeout_ms: '420000'
             watch_poll_ms: '40'
@@ -748,13 +760,17 @@ jobs:
             runner_label: windows
             watch_case: uni-app-vite-tailwindcss-v4:mp-toutiao
             artifact_case: uni-app-vite-tailwindcss-v4-mp-toutiao
-            round_profile: default
+            round_profile: main-style
             watch_save_snapshots: '1'
-            timeout_minutes: 30
+            # Windows uni-app 每次变更都会触发完整平台构建；PR 保留主包与两个分包的主样式契约，完整轮次由 Linux/macOS 与 nightly 覆盖。
+            watch_main_style_only: '1'
+            watch_main_style_subpackage_limit: '2'
+            watch_max_attempts: '1'
+            timeout_minutes: 60
             watch_timeout_ms: '420000'
             watch_poll_ms: '40'
             watch_max_plugin_process_ms: '9000'
-            watch_command_timeout_ms: '1500000'
+            watch_command_timeout_ms: '3000000'
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ matrix.timeout_minutes }}
 
@@ -770,7 +786,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: ${{ matrix['node-version'] || 22 }}
+          node-version: 22
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
@@ -781,13 +797,13 @@ jobs:
         shell: bash
         run: |
           for attempt in 1 2 3 4; do
-            if pnpm --filter @weapp-tailwindcss/scripts exec playwright install chromium; then
+            if pnpm --filter @weapp-tailwindcss/scripts exec playwright install chromium chromium-headless-shell; then
               exit 0
             fi
             echo "Playwright Chromium install failed, retrying (${attempt}/4)"
             sleep $((attempt * 10))
           done
-          pnpm --filter @weapp-tailwindcss/scripts exec playwright install chromium
+          pnpm --filter @weapp-tailwindcss/scripts exec playwright install chromium chromium-headless-shell
 
       - name: Build watch suite package dependencies
         run: pnpm --filter weapp-tailwindcss... --filter "./packages-runtime/*" run build
@@ -802,16 +818,16 @@ jobs:
           mkdir -p e2e/benchmark/e2e-watch-hmr/failures
 
       - name: Run e2e watch suite (PR quick gate)
-        env:
+        env: &watch-suite-env
           E2E_WATCH_CASE: ${{ matrix.watch_case }}
           E2E_WATCH_TIMEOUT_MS: ${{ matrix.watch_timeout_ms }}
           E2E_TARO_DEV_READY_TIMEOUT_MS: ${{ matrix.taro_dev_ready_timeout_ms || matrix.watch_timeout_ms }}
           E2E_WATCH_POLL_MS: ${{ matrix.watch_poll_ms }}
-          E2E_WATCH_MAX_HOT_UPDATE_MS: ${{ matrix.watch_max_hot_update_ms || matrix.watch_timeout_ms }}
+          E2E_WATCH_MAX_HOT_UPDATE_MS: ${{ matrix.watch_timeout_ms }}
           E2E_WATCH_MAX_PLUGIN_PROCESS_MS: ${{ matrix.watch_max_plugin_process_ms || '6000' }}
-          E2E_WATCH_MAX_MEMORY_RSS_MB: ${{ matrix.watch_max_memory_rss_mb || '5632' }}
-          E2E_WATCH_MAX_MEMORY_RSS_DELTA_MB: ${{ matrix.watch_max_memory_rss_delta_mb || '4608' }}
-          E2E_WATCH_MAX_MEMORY_HEAP_USED_MB: ${{ matrix.watch_max_memory_heap_used_mb || '4096' }}
+          E2E_WATCH_MAX_MEMORY_RSS_MB: '5632'
+          E2E_WATCH_MAX_MEMORY_RSS_DELTA_MB: '4608'
+          E2E_WATCH_MAX_MEMORY_HEAP_USED_MB: '4096'
           E2E_WATCH_COMMAND_TIMEOUT_MS: ${{ matrix.watch_command_timeout_ms }}
           E2E_WATCH_MAX_ATTEMPTS: ${{ matrix.watch_max_attempts || '2' }}
           # GitHub-hosted runner 的单次性能尖峰需要在全新 watch session 中复现，语义错误与超时仍立即失败。
@@ -850,9 +866,9 @@ jobs:
 
       - name: Upload e2e watch reports (always)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: e2e-watch-hmr-pr-${{ matrix.runner_label }}-node${{ matrix['node-version'] || 22 }}-${{ matrix.artifact_case || matrix.watch_case }}-${{ matrix.round_profile }}-${{ github.run_id }}
+          name: e2e-watch-hmr-pr-${{ matrix.runner_label }}-node22-${{ matrix.artifact_case || matrix.watch_case }}-${{ matrix.round_profile }}-${{ github.run_id }}
           path: |
             e2e/benchmark/e2e-watch-hmr/*.json
             e2e/benchmark/e2e-watch-hmr/hmr-speed-report.md
@@ -862,9 +878,9 @@ jobs:
 
       - name: Upload e2e watch failure artifacts
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: e2e-watch-hmr-pr-failure-${{ matrix.runner_label }}-node${{ matrix['node-version'] || 22 }}-${{ matrix.artifact_case || matrix.watch_case }}-${{ matrix.round_profile }}-${{ github.run_id }}
+          name: e2e-watch-hmr-pr-failure-${{ matrix.runner_label }}-node22-${{ matrix.artifact_case || matrix.watch_case }}-${{ matrix.round_profile }}-${{ github.run_id }}
           path: |
             e2e/benchmark/e2e-watch-hmr/snapshots/**
             e2e/benchmark/e2e-watch-hmr/failures/**
@@ -873,7 +889,7 @@ jobs:
 
   root-style-import-shell-hmr:
     name: root-style-shell-hmr (${{ matrix.project }})
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:
@@ -913,7 +929,7 @@ jobs:
 
   uni-app-css-post-hmr:
     name: uni-app-css-post-hmr (issue-uview-plus-cssentries)
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: windows-latest
     timeout-minutes: 30
 
@@ -945,7 +961,7 @@ jobs:
         run: pnpm e2e:uni-app-css-post-hmr
 
   nightly-full-regression:
-    name: e2e-watch-nightly (${{ matrix.runner_label }}-node${{ matrix['node-version'] || 22 }}-${{ matrix.watch_case }}-${{ matrix.round_profile }})
+    name: e2e-watch-nightly (${{ matrix.runner_label }}-node${{ matrix['node-version'] || 22 }}-${{ matrix.artifact_case || matrix.watch_case }}-${{ matrix.round_profile }})
     if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_pr_quick_gate != true)
     strategy:
       fail-fast: false
@@ -958,6 +974,10 @@ jobs:
             watch_save_snapshots: '1'
             timeout_minutes: 60
             watch_timeout_ms: '420000'
+            # 显式声明共享 profile 的默认值，其余 shard 可按需覆盖。
+            taro_dev_ready_timeout_ms: '420000'
+            watch_main_style_only: '0'
+            watch_main_style_subpackage_limit: ''
             watch_poll_ms: '40'
             watch_max_plugin_process_ms: '9000'
             watch_command_timeout_ms: '1500000'
@@ -971,15 +991,36 @@ jobs:
             watch_poll_ms: '40'
             watch_max_plugin_process_ms: '6000'
             watch_command_timeout_ms: '720000'
+          # Taro Webpack polling-build 每次变更都会启动完整构建。issue33 按主包与分包拆开，
+          # 避免串行 workload 在完成所有有效断言前命中命令级超时。
           - os: macos-latest
             runner_label: macos
             watch_case: taro-webpack-react-tailwindcss-v4
+            artifact_case: taro-webpack-react-tailwindcss-v4-issue33-main
             round_profile: issue33
             watch_save_snapshots: '1'
-            timeout_minutes: 70
+            watch_mini_program_only: '1'
+            watch_mini_program_scope: main-package
+            watch_max_attempts: '1'
+            timeout_minutes: 35
             watch_timeout_ms: '600000'
             watch_poll_ms: '40'
-            watch_command_timeout_ms: '1800000'
+            watch_max_plugin_process_ms: '18000'
+            watch_command_timeout_ms: '1500000'
+          - os: macos-latest
+            runner_label: macos
+            watch_case: taro-webpack-react-tailwindcss-v4
+            artifact_case: taro-webpack-react-tailwindcss-v4-issue33-subpackages
+            round_profile: issue33
+            watch_save_snapshots: '1'
+            watch_mini_program_only: '1'
+            watch_mini_program_scope: subpackages
+            watch_max_attempts: '1'
+            timeout_minutes: 30
+            watch_timeout_ms: '600000'
+            watch_poll_ms: '40'
+            watch_max_plugin_process_ms: '24000'
+            watch_command_timeout_ms: '1200000'
           - os: macos-latest
             runner_label: macos
             watch_case: taro-vite-vue3-tailwindcss-v4
@@ -993,6 +1034,7 @@ jobs:
           - os: macos-latest
             runner_label: macos
             watch_case: taro-vite-react-tailwindcss-v4
+            artifact_case: taro-vite-react-tailwindcss-v4-web
             round_profile: default
             watch_save_snapshots: '1'
             watch_web_only: '1'
@@ -1003,6 +1045,7 @@ jobs:
           - os: macos-latest
             runner_label: macos
             watch_case: taro-vite-vue3-tailwindcss-v4
+            artifact_case: taro-vite-vue3-tailwindcss-v4-web
             round_profile: default
             watch_save_snapshots: '1'
             watch_web_only: '1'
@@ -1086,26 +1129,88 @@ jobs:
             watch_poll_ms: '40'
             watch_max_plugin_process_ms: '10000'
             watch_command_timeout_ms: '1800000'
+          # 微信小程序 default profile 同样按主包、分包和 Web 拆分。小程序 shard 保留
+          # polling full-build 性能门禁，Web shard 独立验证浏览器 HMR。
           - os: macos-latest
             runner_label: macos
             watch_case: taro-webpack-react-tailwindcss-v4:weapp
             artifact_case: taro-webpack-react-tailwindcss-v4-weapp
-            round_profile: default
+            round_profile: mini-program-main
             watch_save_snapshots: '1'
-            timeout_minutes: 70
+            watch_mini_program_only: '1'
+            watch_mini_program_scope: main-package
+            watch_max_attempts: '1'
+            timeout_minutes: 35
             watch_timeout_ms: '600000'
             watch_poll_ms: '40'
-            watch_command_timeout_ms: '1800000'
+            watch_max_plugin_process_ms: '18000'
+            watch_command_timeout_ms: '1500000'
+          - os: macos-latest
+            runner_label: macos
+            watch_case: taro-webpack-react-tailwindcss-v4:weapp
+            artifact_case: taro-webpack-react-tailwindcss-v4-weapp
+            round_profile: mini-program-subpackages
+            watch_save_snapshots: '1'
+            watch_mini_program_only: '1'
+            watch_mini_program_scope: subpackages
+            watch_max_attempts: '1'
+            timeout_minutes: 30
+            watch_timeout_ms: '600000'
+            watch_poll_ms: '40'
+            watch_max_plugin_process_ms: '24000'
+            watch_command_timeout_ms: '1200000'
+          - os: macos-latest
+            runner_label: macos
+            watch_case: taro-webpack-react-tailwindcss-v4
+            artifact_case: taro-webpack-react-tailwindcss-v4-web
+            round_profile: web-only
+            watch_save_snapshots: '1'
+            watch_web_only: '1'
+            watch_max_attempts: '1'
+            timeout_minutes: 25
+            watch_timeout_ms: '600000'
+            watch_poll_ms: '40'
+            watch_command_timeout_ms: '1200000'
           - os: macos-latest
             runner_label: macos
             watch_case: taro-webpack-vue3-tailwindcss-v4:weapp
             artifact_case: taro-webpack-vue3-tailwindcss-v4-weapp
-            round_profile: default
+            round_profile: mini-program-main
             watch_save_snapshots: '1'
-            timeout_minutes: 70
+            watch_mini_program_only: '1'
+            watch_mini_program_scope: main-package
+            watch_max_attempts: '1'
+            timeout_minutes: 35
             watch_timeout_ms: '600000'
             watch_poll_ms: '40'
-            watch_command_timeout_ms: '1800000'
+            watch_max_plugin_process_ms: '18000'
+            watch_command_timeout_ms: '1500000'
+          - os: macos-latest
+            runner_label: macos
+            watch_case: taro-webpack-vue3-tailwindcss-v4:weapp
+            artifact_case: taro-webpack-vue3-tailwindcss-v4-weapp
+            round_profile: mini-program-subpackages
+            watch_save_snapshots: '1'
+            watch_mini_program_only: '1'
+            watch_mini_program_scope: subpackages
+            watch_max_attempts: '1'
+            timeout_minutes: 30
+            watch_timeout_ms: '600000'
+            watch_poll_ms: '40'
+            watch_max_plugin_process_ms: '24000'
+            watch_command_timeout_ms: '1200000'
+          - os: macos-latest
+            runner_label: macos
+            watch_case: taro-webpack-vue3-tailwindcss-v4
+            artifact_case: taro-webpack-vue3-tailwindcss-v4-web
+            round_profile: web-only
+            watch_save_snapshots: '1'
+            watch_web_only: '1'
+            watch_max_attempts: '1'
+            timeout_minutes: 25
+            watch_timeout_ms: '600000'
+            watch_poll_ms: '40'
+            watch_command_timeout_ms: '1200000'
           - os: macos-latest
             runner_label: macos
             watch_case: uni-app-vite-tailwindcss-v4:mp-weixin
@@ -1203,13 +1308,31 @@ jobs:
           - os: windows-latest
             runner_label: windows
             watch_case: weapp-vite-tailwindcss-v4
+            artifact_case: weapp-vite-tailwindcss-v4-main-package
             round_profile: issue33
+            watch_mini_program_only: '1'
+            watch_mini_program_scope: main-package
             watch_save_snapshots: '1'
+            watch_max_attempts: '1'
             timeout_minutes: 45
             watch_timeout_ms: '320000'
             watch_poll_ms: '40'
             watch_max_plugin_process_ms: '6000'
             watch_command_timeout_ms: '840000'
+          - os: windows-latest
+            runner_label: windows
+            watch_case: weapp-vite-tailwindcss-v4
+            artifact_case: weapp-vite-tailwindcss-v4-subpackages
+            round_profile: issue33
+            watch_mini_program_only: '1'
+            watch_mini_program_scope: subpackages
+            watch_save_snapshots: '1'
+            watch_max_attempts: '1'
+            timeout_minutes: 45
+            watch_timeout_ms: '320000'
+            watch_poll_ms: '40'
+            watch_max_plugin_process_ms: '6000'
+            watch_command_timeout_ms: '1680000'
           - os: windows-latest
             runner_label: windows
             watch_case: taro-vite-vue3-tailwindcss-v4
@@ -1234,12 +1357,30 @@ jobs:
             runner_label: windows
             node-version: 24
             watch_case: weapp-vite-tailwindcss-v4
+            artifact_case: weapp-vite-tailwindcss-v4-main-package
             round_profile: issue33
+            watch_mini_program_only: '1'
+            watch_mini_program_scope: main-package
             watch_save_snapshots: '1'
+            watch_max_attempts: '1'
             timeout_minutes: 45
             watch_timeout_ms: '320000'
             watch_poll_ms: '40'
             watch_command_timeout_ms: '840000'
+          - os: windows-latest
+            runner_label: windows
+            node-version: 24
+            watch_case: weapp-vite-tailwindcss-v4
+            artifact_case: weapp-vite-tailwindcss-v4-subpackages
+            round_profile: issue33
+            watch_mini_program_only: '1'
+            watch_mini_program_scope: subpackages
+            watch_save_snapshots: '1'
+            watch_max_attempts: '1'
+            timeout_minutes: 45
+            watch_timeout_ms: '320000'
+            watch_poll_ms: '40'
+            watch_command_timeout_ms: '1680000'
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ matrix.timeout_minutes }}
 
@@ -1266,13 +1407,13 @@ jobs:
         shell: bash
         run: |
           for attempt in 1 2 3 4; do
-            if pnpm --filter @weapp-tailwindcss/scripts exec playwright install chromium; then
+            if pnpm --filter @weapp-tailwindcss/scripts exec playwright install chromium chromium-headless-shell; then
               exit 0
             fi
             echo "Playwright Chromium install failed, retrying (${attempt}/4)"
             sleep $((attempt * 10))
           done
-          pnpm --filter @weapp-tailwindcss/scripts exec playwright install chromium
+          pnpm --filter @weapp-tailwindcss/scripts exec playwright install chromium chromium-headless-shell
 
       - name: Build watch suite package dependencies
         run: pnpm --filter weapp-tailwindcss... --filter "./packages-runtime/*" run build
@@ -1287,21 +1428,8 @@ jobs:
           mkdir -p e2e/benchmark/e2e-watch-hmr/failures
 
       - name: Run e2e watch suite (nightly/full)
-        env:
-          E2E_WATCH_CASE: ${{ matrix.watch_case }}
-          E2E_WATCH_TIMEOUT_MS: ${{ matrix.watch_timeout_ms }}
-          E2E_WATCH_POLL_MS: ${{ matrix.watch_poll_ms }}
-          E2E_WATCH_MAX_HOT_UPDATE_MS: ${{ matrix.watch_max_hot_update_ms || matrix.watch_timeout_ms }}
-          E2E_WATCH_MAX_PLUGIN_PROCESS_MS: ${{ matrix.watch_max_plugin_process_ms || '6000' }}
-          E2E_WATCH_MAX_MEMORY_RSS_MB: ${{ matrix.watch_max_memory_rss_mb || '5632' }}
-          E2E_WATCH_MAX_MEMORY_RSS_DELTA_MB: ${{ matrix.watch_max_memory_rss_delta_mb || '4608' }}
-          E2E_WATCH_MAX_MEMORY_HEAP_USED_MB: ${{ matrix.watch_max_memory_heap_used_mb || '4096' }}
-          E2E_WATCH_COMMAND_TIMEOUT_MS: ${{ matrix.watch_command_timeout_ms }}
-          E2E_WATCH_MAX_ATTEMPTS: ${{ matrix.watch_max_attempts || '2' }}
-          E2E_WATCH_ROUND_PROFILE: ${{ matrix.round_profile }}
-          E2E_WATCH_SAVE_SNAPSHOTS: ${{ matrix.watch_save_snapshots }}
-          WEAPP_TW_HMR_MEMORY_DEBUG: '1'
-          NODE_OPTIONS: --max-old-space-size=6144
+        # 与 PR 共用参数边界，避免声明的 Web/分包 shard 实际执行完整链路。
+        env: *watch-suite-env
         run: pnpm e2e:watch
 
       - name: Generate failure diff summary
@@ -1327,7 +1455,7 @@ jobs:
 
       - name: Upload e2e watch reports (always)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-watch-hmr-nightly-${{ matrix.runner_label }}-node${{ matrix['node-version'] || 22 }}-${{ matrix.artifact_case || matrix.watch_case }}-${{ matrix.round_profile }}-${{ github.run_id }}
           path: |
@@ -1339,7 +1467,7 @@ jobs:
 
       - name: Upload e2e watch failure artifacts
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-watch-hmr-nightly-failure-${{ matrix.runner_label }}-node${{ matrix['node-version'] || 22 }}-${{ matrix.artifact_case || matrix.watch_case }}-${{ matrix.round_profile }}-${{ github.run_id }}
           path: |

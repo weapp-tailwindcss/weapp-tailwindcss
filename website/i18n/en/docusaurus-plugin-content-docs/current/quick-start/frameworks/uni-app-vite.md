@@ -9,7 +9,6 @@ keywords:
   - cli
   - vue3
   - vite
-  - quick start
   - frameworks
   - uni app vite
   - weapp-tailwindcss
@@ -17,6 +16,8 @@ keywords:
   - Mini program
   - WeChat applet
   - taro
+  - installation
+  - Tailwind CSS 4
 ---
 
 # uni-app CLI Vue3 Vite

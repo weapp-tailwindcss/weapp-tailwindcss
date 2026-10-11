@@ -17,6 +17,7 @@ import {
   wait,
 } from './hbuilderx-local/process'
 import { taroWebHmrCases } from './taro-web-demo-hmr-cases'
+import { withWebHmrEvidence } from './web-hmr/evidence'
 
 const repoRoot = path.resolve(__dirname, '..')
 const serverTimeoutMs = Number(process.env['E2E_TARO_WEB_HMR_TIMEOUT_MS'] ?? 240_000)
@@ -394,21 +395,31 @@ describe('demo Taro H5 source HMR', () => {
       headless: true,
     })
     const page = await browser.newPage()
-    page.on('console', msg => rememberLog(`[console:${msg.type()}] ${msg.text()}`))
-    page.on('pageerror', error => rememberLog(`[pageerror] ${error.stack ?? error.message}`))
-    page.on('requestfailed', request => rememberLog(`[requestfailed] ${request.url()} ${request.failure()?.errorText ?? ''}`))
-    await gotoReadyPage(page, baseUrl, child, logs)
-    await expectIssue850Cascade(page, item)
+    await withWebHmrEvidence({
+      artifactRoot: path.resolve(repoRoot, 'e2e/.artifacts/taro-web-hmr'),
+      caseName: item.name,
+      selector: `[data-taro-web-hmr="${item.markerAttr}"]`,
+      page,
+      projectRoot,
+      serverLogs: () => logs,
+    }, async (capture) => {
+      page.on('console', msg => rememberLog(`[console:${msg.type()}] ${msg.text()}`))
+      page.on('pageerror', error => rememberLog(`[pageerror] ${error.stack ?? error.message}`))
+      page.on('requestfailed', request => rememberLog(`[requestfailed] ${request.url()} ${request.failure()?.errorText ?? ''}`))
+      await gotoReadyPage(page, baseUrl, child, logs)
+      await expectIssue850Cascade(page, item)
+      await capture('before')
 
-    await mutateSource(item, sourceFile)
-    if (cssEntryFile) {
-      await mutateCssEntry(item, cssEntryFile)
-    }
-    if (item.assertion === 'css') {
-      await waitForCssHmr(item, baseUrl, child, logs)
-    }
-    else {
-      await waitForDomHmr(page, item, baseUrl, child, logs)
-    }
+      await mutateSource(item, sourceFile)
+      if (cssEntryFile) {
+        await mutateCssEntry(item, cssEntryFile)
+      }
+      if (item.assertion === 'css') {
+        await waitForCssHmr(item, baseUrl, child, logs)
+      }
+      else {
+        await waitForDomHmr(page, item, baseUrl, child, logs)
+      }
+    })
   }, caseTimeoutMs)
 })

@@ -1,6 +1,6 @@
 ---
 title: Adapted `tailwindcss` plugin
-description: Although, quite a few tailwindcss plug-ins can be used directly in weapp-tailwindcss.
+description: 'Although, quite a few tailwindcss plug-ins can be used directly in weapp-tailwindcss.'
 keywords:
   - Community
   - template
@@ -8,7 +8,6 @@ keywords:
   - Adaptable
   - tailwindcss
   - plug-in
-  - community
   - plugins
   - weapp-tailwindcss
   - Mini program
@@ -16,6 +15,9 @@ keywords:
   - uni-app
   - taro
   - mpx
+  - templates
+  - case studies
+  - Adapted
 ---
 
 # Adapted `tailwindcss` plug-in

@@ -327,7 +327,7 @@ describe('tailwindcss v4 compat helpers', () => {
 })
 
 describe('style handler cache and plugin paths', () => {
-  it('skips feature probing for user plugins and reuses cached results', async () => {
+  it('skips feature probing for user plugins and recomputes results', async () => {
     const styleHandler = entry.createStyleHandler({
       postcssOptions: {
         plugins: {
@@ -346,7 +346,8 @@ describe('style handler cache and plugin paths', () => {
 
     const first = await styleHandler('.card{color:red}', { cssPreflight: false })
     const second = await styleHandler('.card{color:red}', { cssPreflight: false })
-    expect(second).toBe(first)
+    expect(second).not.toBe(first)
+    expect(second.css).toBe(first.css)
     expect(first.css).toContain('.plugin-added')
     expect(styleHandler.getPipeline({ cssPreflight: false })).toBeTruthy()
   })

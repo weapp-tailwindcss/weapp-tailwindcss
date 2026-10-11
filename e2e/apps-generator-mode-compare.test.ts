@@ -10,6 +10,7 @@ import path from 'pathe'
 import postcss from 'postcss'
 import { describe, expect, it } from 'vitest'
 import { createChineseMarkdownReport, createMarkdownReport } from './apps-generator-report'
+import { mergeScopedGeneratorReport } from './apps-generator-report-scoped'
 import { DEMO_COVERAGE_MATRIX } from './demoCoverageMatrix'
 import { E2E_PROJECTS } from './projectEntries'
 import { clearProjectBuildState } from './projectTest'
@@ -889,13 +890,16 @@ async function createProjectReport(
 }
 
 async function expectReportSnapshot(report: AppsGeneratorCompareReportItem[]) {
-  await clearSnapshotDirOnUpdate('apps-generator-mode', 'compare')
   const jsonSnapshotPath = await resolveSnapshotFile(__dirname, 'apps-generator-mode', 'compare', 'report.json')
+  const completeReport = projectFilterEnabled
+    ? mergeScopedGeneratorReport(JSON.parse(await fs.readFile(jsonSnapshotPath, 'utf8')), report)
+    : report
+  await clearSnapshotDirOnUpdate('apps-generator-mode', 'compare')
   const markdownSnapshotPath = await resolveSnapshotFile(__dirname, 'apps-generator-mode', 'compare', 'report.md')
   const chineseMarkdownSnapshotPath = await resolveSnapshotFile(__dirname, 'apps-generator-mode', 'compare', 'report.zh-CN.md')
-  await expect(`${JSON.stringify(report, null, 2)}\n`).toMatchFileSnapshot(jsonSnapshotPath)
-  await expectNormalizedReportSnapshot(markdownSnapshotPath, createMarkdownReport(report))
-  await expectNormalizedReportSnapshot(chineseMarkdownSnapshotPath, createChineseMarkdownReport(report))
+  await expect(`${JSON.stringify(completeReport, null, 2)}\n`).toMatchFileSnapshot(jsonSnapshotPath)
+  await expectNormalizedReportSnapshot(markdownSnapshotPath, createMarkdownReport(completeReport))
+  await expectNormalizedReportSnapshot(chineseMarkdownSnapshotPath, createChineseMarkdownReport(completeReport))
 }
 
 async function expectNormalizedReportSnapshot(snapshotPath: string, content: string) {
@@ -915,7 +919,7 @@ function normalizeCssSnapshot(css: string) {
   return normalizeCssTextSnapshot(css)
 }
 
-const GENERATED_CSS_SOURCE_MARKER_RE = /(\/\*!\s*weapp-tailwindcss vite-generated-css:)([^\s*]+)(\s*\*\/)/g
+const GENERATED_CSS_SOURCE_MARKER_RE = /(\/\*!\s*weapp-tailwindcss vite-generated-css(?:-end)?:)([^\s*]+)(\s*\*\/)/g
 
 function normalizeGeneratedCssSourceMarkers(css: string) {
   return css.replace(GENERATED_CSS_SOURCE_MARKER_RE, (match, prefix, encodedSource, suffix) => {
@@ -1134,16 +1138,16 @@ async function expectCssOutputSnapshot(
 }
 
 describe('demo generator mode output', () => {
-  it('normalizes generated css source markers across checkout locations', () => {
+  it.each(['', '-end'])('normalizes generated css source markers %s across checkout locations', (suffix) => {
     const source = 'demo/taro-vite-react-tailwindcss-v4/src/app.css'
-    const expected = `/*! weapp-tailwindcss vite-generated-css:${encodeURIComponent(source)} */`
+    const expected = `/*! weapp-tailwindcss vite-generated-css${suffix}:${encodeURIComponent(source)} */`
 
     for (const absoluteSource of [
       `/Users/example/project/${source}`,
       `/home/runner/work/project/${source}`,
       `C:\\workspace\\project\\${source.replaceAll('/', '\\')}`,
     ]) {
-      const marker = `/*! weapp-tailwindcss vite-generated-css:${encodeURIComponent(absoluteSource)} */`
+      const marker = `/*! weapp-tailwindcss vite-generated-css${suffix}:${encodeURIComponent(absoluteSource)} */`
       expect(normalizeGeneratedCssSourceMarkers(marker)).toBe(expected)
     }
 
@@ -1167,7 +1171,7 @@ describe('demo generator mode output', () => {
     }
     const source = 'demo/taro-vite-react-tailwindcss-v4/src/app.css'
     const createGeneratorResult = (absoluteSource: string): GeneratorBuildResult => {
-      const css = `/*! weapp-tailwindcss vite-generated-css:${encodeURIComponent(absoluteSource)} */\n.example { color: red; }`
+      const css = `/*! weapp-tailwindcss vite-generated-css:${encodeURIComponent(absoluteSource)} */\n.example { color: red; }\n/*! weapp-tailwindcss vite-generated-css-end:${encodeURIComponent(absoluteSource)} */`
       return {
         css,
         cssFiles: ['css/index.css'],
@@ -1425,8 +1429,9 @@ describe('demo generator mode output', () => {
     }
 
     expect(report.filter(item => item.status === 'failed')).toEqual([])
-    if (!projectFilterEnabled) {
-      await expectReportSnapshot(report)
-    }
+    const artifactRoot = path.resolve(__dirname, '.artifacts', 'apps-generator-mode')
+    await fs.mkdir(artifactRoot, { recursive: true })
+    await fs.writeFile(path.join(artifactRoot, 'report.json'), `${JSON.stringify(report, null, 2)}\n`)
+    await expectReportSnapshot(report)
   }, 1_800_000)
 })

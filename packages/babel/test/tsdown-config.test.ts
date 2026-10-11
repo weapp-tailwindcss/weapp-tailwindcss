@@ -28,6 +28,8 @@ describe('Babel tsdown config', () => {
 
     expect(esm.deps?.neverBundle).toBe(babelEsmOnlyDependencies)
     expect(cjs.deps?.alwaysBundle).toBe(babelEsmOnlyDependencies)
+    expect(esm.deps?.resolveDepSubpath).toBe(true)
+    expect(cjs.deps?.resolveDepSubpath).toBe(true)
     expect(matchesDependency(babelEsmOnlyDependencies, '@babel/parser')).toBe(true)
     expect(matchesDependency(babelEsmOnlyDependencies, '@babel/traverse')).toBe(true)
     expect(matchesDependency(babelEsmOnlyDependencies, 'obug')).toBe(true)

@@ -7,7 +7,7 @@
 当前已验证可用的目标工程为：
 
 - `demo/uni-app-x-hbuilderx-tailwindcss3`
-- `demo/uni-app-x-hbuilderx-tailwindcss-v4`
+- `demo/uni-app-x-vdom-tailwindcss-v4`
 
 本文适合以下场景：
 

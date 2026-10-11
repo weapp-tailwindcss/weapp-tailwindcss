@@ -3,7 +3,7 @@ import fs from 'fs-extra'
 import path from 'pathe'
 import prettier from 'prettier'
 import { getCss } from './helpers/getTwCss'
-// import { getClassCacheSet } from '@tailwindcss-mangle/engine'
+// import { getClassCacheSet } from '@weapp-tailwindcss/engine'
 // import fs from 'fs'
 
 async function getClassCacheSet() {

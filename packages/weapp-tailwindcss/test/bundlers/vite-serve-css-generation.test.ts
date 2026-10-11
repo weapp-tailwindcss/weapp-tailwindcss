@@ -83,6 +83,32 @@ describe('vite serve css generation plugins', () => {
     await expect(hmrPlugin.transform?.call({} as any, rootCode, '/src/app.css?direct' as any)).resolves.toBeUndefined()
   })
 
+  it('defers full uni-app x SFC payloads during CSS HMR', async () => {
+    const shouldDeferGeneration = vi.fn((id: string, code: string) => {
+      return id.includes('.uvue?') && code.includes('@apply') && !code.includes('@import "tailwindcss"')
+    })
+    const { options, plugins } = createPlugins({ shouldDeferGeneration })
+    const hmrPlugin = plugins[2]!
+    const fullSfc = [
+      '<template><text>{{ theme.themeClass }}</text></template>',
+      '<style scoped>',
+      '@reference "../../main.css";',
+      '.content { @apply flex; }',
+      '</style>',
+    ].join('\n')
+    const hmrCode = [
+      `const __vite__css = ${JSON.stringify(fullSfc)}`,
+      '__vite__updateStyle(__vite__id, __vite__css)',
+    ].join('\n')
+    const id = '/src/pages/index/index.uvue?vue&type=style&index=0&scoped=true&lang.css&direct'
+
+    await expect(hmrPlugin.transform?.call({} as any, hmrCode, id as any)).resolves.toBeUndefined()
+
+    expect(shouldDeferGeneration).toHaveBeenCalledWith(id, fullSfc)
+    expect(options.onTailwindRootCss).not.toHaveBeenCalled()
+    expect(options.generateCss).not.toHaveBeenCalled()
+  })
+
   it('scopes serve, build and hmr transforms to their command and generation settings', async () => {
     const disabled = createPlugins({ shouldGenerate: vi.fn(() => false) })
     await expect(disabled.plugins[0]!.transform?.call({} as any, '@import "tailwindcss";', '/src/app.css' as any)).resolves.toBeUndefined()

@@ -1,6 +1,6 @@
 import type { ICustomAttributesEntities } from '@/types'
 import type { IArbitraryValues } from '@/types/shared'
-import { extractSourceCandidates } from '@tailwindcss-mangle/engine'
+import { extractSourceCandidates } from '@weapp-tailwindcss/engine'
 import { Parser } from 'htmlparser2'
 import { traverse } from '@/babel'
 import { babelParse } from '@/js/babel'
@@ -25,6 +25,7 @@ const TEMPLATE_SOURCE_CANDIDATE_EXTENSIONS = new Set([
   'ksml',
   'ttml',
   'qml',
+  'qxml',
   'tyml',
   'xhsml',
   'swan',

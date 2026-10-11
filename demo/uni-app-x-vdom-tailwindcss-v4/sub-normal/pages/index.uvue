@@ -1,0 +1,15 @@
+<script lang="uts">
+export default {
+	styleIsolation: 'app',
+}
+</script>
+
+<template>
+	<view class="bg-normal-subpackage-marker">普通分包</view>
+</template>
+
+<style>
+@import "tailwindcss" source(none);
+@config "../../tailwind.config.sub-normal.js";
+@source "../**/*.{css,uts,uvue}";
+</style>

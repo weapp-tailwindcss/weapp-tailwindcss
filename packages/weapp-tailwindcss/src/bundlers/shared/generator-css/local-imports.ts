@@ -1,16 +1,1 @@
-export {
-  cleanLocalCssImportWrapperTailwindDirectives,
-  cleanLocalCssImportWrapperTailwindDirectivesRoot,
-  createCssSourceOrderAppend,
-  isLocalCssImportRequest,
-  isPureLocalCssImportWrapper,
-  isPureLocalCssImportWrapperRoot,
-  normalizeOutputImportRequest,
-  removeMatchingLocalCssImports,
-  removeMatchingLocalCssImportsRoot,
-  restoreLocalCssImports,
-  rewriteLocalCssImportRequestsForOutput,
-  rewriteLocalCssImportRequestsForOutputRoot,
-  splitLocalCssImports,
-  splitLocalCssImportsRoot,
-} from '@weapp-tailwindcss/postcss'
+export * from '../../../generation/local-imports'

@@ -6,6 +6,8 @@ import { isDeepStrictEqual } from 'node:util'
 
 const dependencyFields = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']
 const workspaceManifestPattern = /^(?:packages|packages-runtime)\/[^/]+\/package\.json$/
+const demoManifestPattern = /^demo\/[^/]+\/package\.json$/
+const demoChangelogPattern = /^demo\/(?:web\/)?[^/]+\/CHANGELOG\.md$/
 
 export const performanceRelevantPaths = [
   ':(glob)packages/*/src/**',
@@ -77,9 +79,29 @@ export function hasPerformanceRelevantManifestChanges(baseline, current, workspa
   return !isDeepStrictEqual(...normalized)
 }
 
+function isTaroBuildGuardOnlyChange(baseline, current) {
+  const baselineBuildScript = baseline?.scripts?.['build:weapp']
+  const currentBuildScript = current?.scripts?.['build:weapp']
+  if (
+    typeof baselineBuildScript !== 'string'
+    || typeof currentBuildScript !== 'string'
+    || baselineBuildScript === currentBuildScript
+    || !currentBuildScript.includes('taro-build-guard.mjs')
+  ) {
+    return false
+  }
+
+  const normalizedBaseline = structuredClone(baseline)
+  const normalizedCurrent = structuredClone(current)
+  delete normalizedBaseline.scripts?.['build:weapp']
+  delete normalizedCurrent.scripts?.['build:weapp']
+  return isDeepStrictEqual(normalizedBaseline, normalizedCurrent)
+}
+
 export async function classifyChangedPerformanceFiles(changedFiles, readManifestPair) {
-  const manifestFiles = changedFiles.filter(file => workspaceManifestPattern.test(file))
-  const directRelevantFiles = changedFiles.filter(file => !workspaceManifestPattern.test(file))
+  const manifestFiles = changedFiles.filter(file => workspaceManifestPattern.test(file) || demoManifestPattern.test(file))
+  const ignoredNonPerformanceFiles = changedFiles.filter(file => file.startsWith('packages-runtime/cn/'))
+  const directRelevantFiles = changedFiles.filter(file => !workspaceManifestPattern.test(file) && !demoManifestPattern.test(file) && !demoChangelogPattern.test(file) && !file.startsWith('packages-runtime/cn/'))
   const manifestPairs = new Map()
   const workspaceVersionTransitions = new Map()
 
@@ -96,14 +118,23 @@ export async function classifyChangedPerformanceFiles(changedFiles, readManifest
   }
 
   const relevantManifestFiles = []
-  const ignoredReleaseMetadataFiles = []
+  const ignoredReleaseMetadataFiles = changedFiles.filter(file => demoChangelogPattern.test(file))
   for (const file of manifestFiles) {
     const pair = manifestPairs.get(file)
-    if (hasPerformanceRelevantManifestChanges(pair?.baseline, pair?.current, workspaceVersionTransitions)) {
+    if (file === 'packages-runtime/cn/package.json') {
+      ignoredNonPerformanceFiles.push(file)
+    }
+    else if (demoManifestPattern.test(file) && isTaroBuildGuardOnlyChange(pair?.baseline, pair?.current)) {
+      ignoredNonPerformanceFiles.push(file)
+    }
+    else if (workspaceManifestPattern.test(file) && hasPerformanceRelevantManifestChanges(pair?.baseline, pair?.current, workspaceVersionTransitions)) {
       relevantManifestFiles.push(file)
     }
-    else {
+    else if (workspaceManifestPattern.test(file)) {
       ignoredReleaseMetadataFiles.push(file)
+    }
+    else {
+      relevantManifestFiles.push(file)
     }
   }
 
@@ -112,6 +143,7 @@ export async function classifyChangedPerformanceFiles(changedFiles, readManifest
     relevant: relevantFiles.length > 0,
     relevantFiles,
     ignoredReleaseMetadataFiles: ignoredReleaseMetadataFiles.sort(),
+    ignoredNonPerformanceFiles: ignoredNonPerformanceFiles.sort(),
   }
 }
 

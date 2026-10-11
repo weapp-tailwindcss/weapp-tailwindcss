@@ -22,7 +22,7 @@ Maintaining such a function is actually very energy-consuming and does not produ
 
 Of course, I personally don’t care much about financial gains. Who makes me like doing open source?
 
-<!-- Of course, so much nonsense has been said，I almost forgot that this page is for asking for money.。（Internet beggar...） -->
+<!-- Of course, so much nonsense has been said, I almost forgot that this page is for asking for money. (Internet beggar...) -->
 
 But then I thought about it, I hope that this project will still have vitality after leaving me, and can still find someone to maintain it.
 
@@ -55,7 +55,7 @@ At my age, I have reached the middle stage of my life.
 However, when I looked back at the past late at night, I found that the memories I cherished deep in my heart were not the tasks that took me the most time:
 
 - But that year, I paid `800` yuan to accompany me in the delivery room and was surprised to see my daughter born from the birth canal at `2point54point` in the afternoon.
-- That year, my wife and I rode the `9.9` Yuan Zhou Pass shared bicycles and rode to the entrance of the Yulin Road tavern while listening to `《Chengdu》`. We passed through the crowded crowd and went to buy a roast rabbit across the street. We were delighted to find that it was exceptionally delicious. (Still the best roast rabbit I have ever eaten)
+- That year, my wife and I rode the `9.9` Yuan Zhou Pass shared bicycles and rode to the entrance of the Yulin Road tavern while listening to `"Chengdu"`. We passed through the crowded crowd and went to buy a roast rabbit across the street. We were delighted to find that it was exceptionally delicious. (Still the best roast rabbit I have ever eaten)
 - It was also that year when I stayed up late playing `DNF` during college, moving bricks and selling gold coins in exchange for money, and I gained pure joy. (At that time, the exchange rate of the trading platform seemed to be `20Exchange tens of thousands of gold coins1Yuan`)
 
 So think about it, life is fleeting, how many years can we stay younger?

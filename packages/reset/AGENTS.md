@@ -24,7 +24,7 @@
 ## 推荐验证命令
 
 - `pnpm --filter @weapp-tailwindcss/reset test`
-- `pnpm --filter @weapp-tailwindcss/reset vitest run test/index.test.ts`
+- `pnpm --filter @weapp-tailwindcss/reset exec vitest run test/index.test.ts`
 
 ## 提交前检查
 

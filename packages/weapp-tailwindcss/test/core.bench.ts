@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { bench, describe } from 'vitest'
+import { test } from 'vitest'
 import { getCompilerContext } from '@/context'
 import { createContext } from '@/core'
 import { collectRuntimeClassSet, createTailwindRuntimeReadyPromise } from '@/tailwindcss/runtime'
@@ -19,8 +19,8 @@ const wxmlTdesign = readFixture('wxml', 'mpx-tdesign-button.wxml')
 const jsLarge = readFixture('js', 'taro-lottie-miniprogram-build.js')
 const jsMedium = readFixture('js', 'taro-vue3-test-build-dist.js')
 
-const benchOptions = { time: 300 }
-const coldOptions = { time: 180 }
+const benchOptions = { time: 300, iterations: 10, warmupTime: 0, warmupIterations: 1 }
+const coldOptions = { time: 180, iterations: 10, warmupTime: 0, warmupIterations: 1 }
 
 const runtimeSetPromise = prepareRuntimeSet()
 const warmContextPromise = prepareWarmContext()
@@ -37,55 +37,50 @@ async function prepareWarmContext() {
   return ctx
 }
 
-describe('weapp-tailwindcss runtime benchmarks', () => {
-  bench(
+test('weapp-tailwindcss runtime benchmarks', async ({ bench }) => {
+  await bench(
     'wxss transform (v4 default bundle)',
     async () => {
       const ctx = await warmContextPromise
       await ctx.transformWxss(cssMain, { isMainChunk: true })
     },
-    benchOptions,
-  )
+  ).run(benchOptions)
 
-  bench(
+  await bench(
     'wxss transform (mpx component bundle)',
     async () => {
       const ctx = await warmContextPromise
       await ctx.transformWxss(cssMpx)
     },
-    benchOptions,
-  )
+  ).run(benchOptions)
 
-  bench(
+  await bench(
     'wxml transform (tdesign button)',
     async () => {
       const ctx = await warmContextPromise
       const runtimeSet = await runtimeSetPromise
       await ctx.transformWxml(wxmlTdesign, { runtimeSet })
     },
-    benchOptions,
-  )
+  ).run(benchOptions)
 
-  bench(
+  await bench(
     'js transform (large bundle, auto runtime discovery)',
     async () => {
       const ctx = await warmContextPromise
       await ctx.transformJs(jsLarge)
     },
-    benchOptions,
-  )
+  ).run(benchOptions)
 
-  bench(
+  await bench(
     'js transform (large bundle, reused runtime set)',
     async () => {
       const ctx = await warmContextPromise
       const runtimeSet = await runtimeSetPromise
       await ctx.transformJs(jsLarge, { runtimeSet })
     },
-    benchOptions,
-  )
+  ).run(benchOptions)
 
-  bench(
+  await bench(
     'end-to-end pipeline (cold context bootstrap)',
     async () => {
       const ctx = createContext()
@@ -93,6 +88,5 @@ describe('weapp-tailwindcss runtime benchmarks', () => {
       await ctx.transformWxml(wxmlTdesign)
       await ctx.transformJs(jsMedium)
     },
-    coldOptions,
-  )
+  ).run(coldOptions)
 })

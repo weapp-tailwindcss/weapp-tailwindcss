@@ -1,0 +1,7 @@
+<view class="min-h-screen bg-slate-950 px-6 py-16 text-slate-100 text-[31rpx]">
+  <view class="mx-auto max-w-3xl space-y-6">
+    <view class="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-300">weapp-vite</view>
+    <view class="text-4xl font-bold tracking-tight">Tailwind CSS v4 on WeChat</view>
+    <view class="text-lg text-slate-300">A native mini program canonical template.</view>
+  </view>
+</view>

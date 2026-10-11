@@ -71,6 +71,14 @@ function normalizeKeyword(name: string) {
   return normalized
 }
 
+export function isClassLikeName(name: string) {
+  return CLASS_LIKE_KEYWORDS.has(normalizeKeyword(name))
+}
+
+export function isClassHelperName(name: string) {
+  return CLASS_HELPER_IDENTIFIERS.has(normalizeKeyword(name))
+}
+
 function readObjectKeyName(path: NodePath<Node>): string | undefined {
   if (path.isIdentifier()) {
     return path.node.name
@@ -97,7 +105,7 @@ function isClassLikeObjectProperty(path: NodePath<Node>, valuePath: NodePath<Nod
     return false
   }
 
-  return CLASS_LIKE_KEYWORDS.has(normalizeKeyword(keyName))
+  return isClassLikeName(keyName)
 }
 
 function isClassLikeJsxAttribute(path: NodePath<Node>) {
@@ -108,7 +116,7 @@ function isClassLikeJsxAttribute(path: NodePath<Node>) {
   if (!namePath.isJSXIdentifier()) {
     return false
   }
-  return CLASS_LIKE_KEYWORDS.has(normalizeKeyword(namePath.node.name))
+  return isClassLikeName(namePath.node.name)
 }
 
 function readCallHelperName(calleePath: NodePath<Node>) {
@@ -135,7 +143,7 @@ function isClassLikeCallExpression(path: NodePath<Node>, valuePath: NodePath<Nod
   }
 
   const helperName = readCallHelperName(path.get('callee'))
-  if (!helperName || !CLASS_HELPER_IDENTIFIERS.has(normalizeKeyword(helperName))) {
+  if (!helperName || !isClassHelperName(helperName)) {
     return false
   }
 

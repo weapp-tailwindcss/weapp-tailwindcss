@@ -6,7 +6,7 @@ import {
   captureFrameworkPostcssOptions,
   collectFrameworkPostcssOptionsFromLoaderEntries,
   resolveFrameworkPostcssOptions,
-} from '@/bundlers/shared/framework-postcss'
+} from '@/generation/framework-postcss'
 
 const owner = () => ({ cssPreflight: false }) as InternalUserDefinedOptions
 

@@ -5,7 +5,7 @@ import {
   normalizeCompatSelectors,
   removeDuplicatedViteMarkers,
   removeGeneratedSelectorCompatCss,
-} from '@/bundlers/shared/generator-css/legacy-selectors'
+} from '@/generation/legacy-selectors'
 
 describe('legacy selector compatibility helpers', () => {
   it('normalizes escaped selectors and ignores theme-only custom property rules', () => {

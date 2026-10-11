@@ -3,16 +3,16 @@
   "type": "module",
   "version": "0.0.0",
   "private": true,
-  "description": "tsdown bundler template",
+  "description": "Reserved internal package name for the cross-platform Tailwind CSS toolchain. 跨端 Tailwind CSS 工具链内部预留包名。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sonofmagic/weapp-tailwindcss.git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
     "directory": "packages/weapptw"
   },
   "bugs": {
-    "url": "https://github.com/sonofmagic/weapp-tailwindcss/issues"
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues"
   },
   "keywords": [],
   "sideEffects": false,

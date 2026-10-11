@@ -1,0 +1,70 @@
+{
+  "env": {
+    "timestamp": "2026-09-30T17:12:42.230Z",
+    "commit": "bc42340685067d13e0ddc665197662848faaacfa",
+    "node": "v24.18.0",
+    "platform": "darwin",
+    "release": "27.0.0",
+    "arch": "arm64",
+    "cpu": "Apple M4 Max",
+    "totalMemoryBytes": 137438953472
+  },
+  "results": [
+    {
+      "id": "weapp-cn",
+      "label": "@weapp-tailwindcss/cn",
+      "rawBytes": 33640,
+      "gzipBytes": 14093,
+      "brotliBytes": 12484
+    },
+    {
+      "id": "weapp-merge",
+      "label": "@weapp-tailwindcss/merge",
+      "rawBytes": 35648,
+      "gzipBytes": 11895,
+      "brotliBytes": 10414
+    },
+    {
+      "id": "weapp-merge-slim",
+      "label": "@weapp-tailwindcss/merge/slim",
+      "rawBytes": 25716,
+      "gzipBytes": 9594,
+      "brotliBytes": 8595
+    },
+    {
+      "id": "weapp-merge-lite",
+      "label": "@weapp-tailwindcss/merge/lite",
+      "rawBytes": 11717,
+      "gzipBytes": 5005,
+      "brotliBytes": 4519
+    },
+    {
+      "id": "upstream-cn",
+      "label": "cn()",
+      "rawBytes": 26066,
+      "gzipBytes": 10723,
+      "brotliBytes": 9504
+    },
+    {
+      "id": "upstream-cn-twmerge",
+      "label": "cn.twMerge",
+      "rawBytes": 26066,
+      "gzipBytes": 10723,
+      "brotliBytes": 9504
+    },
+    {
+      "id": "upstream-twmerge",
+      "label": "tailwind-merge twMerge",
+      "rawBytes": 27400,
+      "gzipBytes": 8554,
+      "brotliBytes": 7487
+    },
+    {
+      "id": "upstream-twmerge-clsx",
+      "label": "clsx + tailwind-merge",
+      "rawBytes": 27766,
+      "gzipBytes": 8704,
+      "brotliBytes": 7625
+    }
+  ]
+}

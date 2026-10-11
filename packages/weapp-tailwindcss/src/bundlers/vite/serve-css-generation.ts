@@ -1,8 +1,8 @@
 import type { Plugin } from 'vite'
 import type { CssStage } from '@/compiler'
 import { vitePluginName } from '@/constants'
-import { hasTailwindApplyDirective, hasTailwindRootDirectives, hasTailwindSourceDirectives } from '../shared/generator-css/directives'
-import { isSourceStyleRequest } from '../shared/style-requests'
+import { hasTailwindApplyDirective, hasTailwindRootDirectives, hasTailwindSourceDirectives } from '../../generation/directives'
+import { isSourceStyleRequest } from '../../generation/style-requests'
 
 const SPECIAL_QUERY_RE = /[?&](?:worker|sharedworker|raw|url)\b/
 const COMMON_JS_PROXY_RE = /\?commonjs-proxy/
@@ -176,6 +176,9 @@ export function createViteCssGenerationPlugins(options: ViteCssGenerationOptions
         return
       }
       if (!hasViteCssGenerationDirective(extracted.css)) {
+        return
+      }
+      if (options.shouldDeferGeneration?.(id, extracted.css)) {
         return
       }
       if (hasViteServeCssRootDirective(extracted.css)) {

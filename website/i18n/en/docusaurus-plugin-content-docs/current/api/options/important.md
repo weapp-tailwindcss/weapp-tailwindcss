@@ -41,7 +41,7 @@ This page contains 20 configuration items, sourced from `UserDefinedOptions`.
 | [tailwindcssBasedir](#tailwindcssbasedir)                                               | <code>string</code>                                         | —                                             | Specifies the path to obtain the Tailwind context.                                                    |
 | [cache](#cache)                                                                         | <code>boolean                                               | ICreateCacheReturnType</code>                 | —                                                                                                     | Control cache strategy.                                 |
 | [cssOptions](#cssoptions)                                                               |                                                             |
-| [tailwindcss](#tailwindcss)                                                             | [`TailwindCssOptions`](../interfaces/TailwindCssOptions.md) | —                                             | Configure behavior for different versions of Tailwind.                                                |
+| [tailwindcss](#tailwindcss)                                                             | [`TailwindCssOptions`](../interfaces/TailwindCssOptions.md) | —                                             | Configure Tailwind CSS v4 runtime behavior.                                                           |
 | [cssEntries](#cssentries)                                                               | <code>string[]</code>                                       | —                                             | Specify the entry CSS of tailwindcss@4.                                                               |
 
 ## Detailed description
@@ -58,7 +58,7 @@ https://github.com/sonofmagic/weapp-tailwindcss/issues/110
 
 #### Remark
 
-Starting from TailwindCSS 3.2.0, length unit verification is performed on any value and undeclared `rpx` will be recognized as a color. This option is enabled by default and is automatically taken over by the build runtime.
+Tailwind CSS v4 performs type inference for arbitrary values, so an undeclared `rpx` may be recognized as a color. This option is enabled by default and is automatically handled by the build runtime.
 
 ### appType
 
@@ -86,6 +86,8 @@ Enable some UnoCSS class writing compatibility.
 
 Off by default. Passing in `true` enables Tailwind CSS v4 bare arbitrary value generation. class character escape continues by
 `customReplaceDictionary` control, JS translation still follows the `classNameSet` precise hit principle.
+
+See the [UnoCSS writing compatibility guide](/docs/tailwindcss/unocss-compatibility) for supported syntax, limitations, and examples.
 
 #### default value
 
@@ -340,9 +342,9 @@ Fine-tuned configuration of CSS generation and post-processing compatibility.
 #### Remark
 
 It is subsequently used to control fine-grained behaviors such as CSS compatibility, variable retention, and rule pruning.
-`cssPreflight`、`cssPreflightRange`、`cssChildCombinatorReplaceValue`、`cssPresetEnv`、`autoprefixer`、
-`atRules`、`injectAdditionalCssVarScope`、`cssSelectorReplacement`、`rem2rpx`、`px2rpx`、`unitsToPx`、
-`unitConversion`、`platform`、`cssRemoveActivePseudoClass`、`cssRemoveHoverPseudoClass`、`cssRemoveFocusPseudoClass`、`cssRemoveProperty`、`cssCalc`
+`cssPreflight`, `cssPreflightRange`, `cssChildCombinatorReplaceValue`, `cssPresetEnv`, `autoprefixer`,
+`atRules`, `injectAdditionalCssVarScope`, `cssSelectorReplacement`, `rem2rpx`, `px2rpx`, `unitsToPx`,
+`unitConversion`, `platform`, `cssRemoveActivePseudoClass`, `cssRemoveHoverPseudoClass`, `cssRemoveFocusPseudoClass`, `cssRemoveProperty`, `cssCalc`
 and `tailwindcssV4GradientFallback` are recommended to be placed here.
 
 #### The mini program removes `:active` and `:focus` by default
@@ -394,7 +396,7 @@ This compatibility does not limit variant names. `active`, `any-hover`, `wx` and
 
 > Optional | Type: [`TailwindCssOptions`](../interfaces/TailwindCssOptions.md) | Version: ^4.0.0
 
-Configure behavior for different versions of Tailwind.
+Configure Tailwind CSS v4 runtime behavior.
 
 ### cssEntries
 

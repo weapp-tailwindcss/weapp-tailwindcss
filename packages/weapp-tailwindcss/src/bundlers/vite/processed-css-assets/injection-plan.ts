@@ -1,13 +1,12 @@
 import type { OutputBundle } from 'rollup'
-import type { ComparableCssCoverage } from './coverage'
 import type { InjectViteProcessedCssAssetOptions } from './markers-imports'
 import type { InternalUserDefinedOptions } from '@/types'
-import { containsCssAfterMinify, filterExistingCssRules, postcss } from '@weapp-tailwindcss/postcss'
+import { createCssRuleMatcher, removeCssRulesCoveredBySources } from '@weapp-tailwindcss/postcss/transform'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
 import { shouldPreserveFrameworkRootMiniProgramImportShell } from '../generate-bundle/root-style-output'
 import { isSubpackageOutputFile } from '../generate-bundle/subpackages'
 import { isSourceRootPrefixedOutputFile, restoreCssImportAtRules } from './cleanup'
-import { collectRootScopedComparableCssCoverage, isRuleCoveredByRootCss, normalizeCssSignatureValue, prepareImportedCssCoverage } from './coverage'
+import { prepareImportedCssCoverage } from './coverage'
 import { clearAssetSource, collectImportedStyleFiles, createCssAssetPipelineContext, getAssetFile, hasNonCommentCss, isCssOutputFile, readAssetSource } from './markers-imports'
 import { isMiniProgramStyleOutputFile, isRootStyleOutputFile } from './style-files'
 
@@ -319,6 +318,7 @@ export function removeCoveredInjectedSourceAssets(
   }
   const recordFileKeys = new Set(removableRecords.map(record => normalizeOutputPathKey(record.file)))
   const recordCss = new Set(removableRecords.map(record => record.css.trim()))
+  const targetMatcher = createCssRuleMatcher(targetCss)
   let removed = 0
   for (const [candidateFile, candidateOutput] of Object.entries(bundle)) {
     if (candidateOutput.type !== 'asset') {
@@ -338,11 +338,11 @@ export function removeCoveredInjectedSourceAssets(
         candidateSource.length > 0
         && (
           recordCss.has(candidateSource)
-          || containsCssAfterMinify(targetCss, candidateSource)
+          || targetMatcher.contains(candidateSource)
           || (
             targetIsRootWebStyle
             && candidateIsRootWebStyle
-            && !hasNonCommentCss(filterExistingCssRules(targetCss, candidateSource).trim())
+            && !hasNonCommentCss(targetMatcher.filter(candidateSource).trim())
           )
         )
       )
@@ -375,35 +375,4 @@ export function removeCssCoveredByImportedViteResults(
   )
 }
 
-export function removeCssRulesCoveredBySources(
-  css: string,
-  sources: string[],
-  options: { exactOnly?: boolean | undefined } = {},
-  preparedCoverage?: ComparableCssCoverage | undefined,
-) {
-  if (sources.length === 0 || css.trim().length === 0) {
-    return css
-  }
-  const coverage = preparedCoverage ?? collectRootScopedComparableCssCoverage(sources)
-  if (coverage.rules.size === 0 && coverage.declarationsBySelector.size === 0 && coverage.normalizedRuleCss.size === 0) {
-    return css
-  }
-  try {
-    const root = postcss.parse(css)
-    let changed = false
-    root.walkRules((rule) => {
-      if (
-        !coverage.normalizedRuleCss.has(normalizeCssSignatureValue(rule.toString()))
-        && (options.exactOnly === true || !isRuleCoveredByRootCss(rule, coverage))
-      ) {
-        return
-      }
-      rule.remove()
-      changed = true
-    })
-    return changed ? root.toString() : css
-  }
-  catch {
-    return css
-  }
-}
+export { removeCssRulesCoveredBySources } from '@weapp-tailwindcss/postcss/transform'

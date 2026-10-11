@@ -1,0 +1,45 @@
+{
+  "spacing": "8rpx",
+  "standard": {
+    "h-8": {
+      "height": "calc(var(--spacing)*8)"
+    },
+    "h-20": {
+      "height": "calc(var(--spacing)*20)"
+    },
+    "h-50": {
+      "height": "calc(var(--spacing)*50)"
+    },
+    "mt-2": {
+      "margin-top": "calc(var(--spacing)*2)"
+    },
+    "flex": {
+      "display": "flex"
+    },
+    "text-slate-500": {
+      "color": "var(--color-slate-500)"
+    }
+  },
+  "special": {
+    "h-_b64rpx_B": {
+      "height": "64rpx"
+    },
+    "h-_b400rpx_B": {
+      "height": "400rpx"
+    },
+    "bg-emerald-50_f80": {
+      "background-color": "rgba(236,253,245,0.8)"
+    }
+  },
+  "jsClasses": [
+    "bg-emerald-50_f80",
+    "flex",
+    "h-20",
+    "h-50",
+    "h-8",
+    "h-_b400rpx_B",
+    "h-_b64rpx_B",
+    "mt-2",
+    "text-slate-500"
+  ]
+}

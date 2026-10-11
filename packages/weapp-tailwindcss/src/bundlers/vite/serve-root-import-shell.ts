@@ -1,5 +1,5 @@
 import type { ViteFrameworkCssPipelineContext, ViteFrameworkCssPipelineStrategy } from './shared/framework-strategy'
-import { normalizeMiniProgramImportShell } from '../shared/generator-css/output-import-shell'
+import { normalizeMiniProgramImportShell } from '../../generation/output-import-shell'
 import { shouldPreserveFrameworkRootMiniProgramImportShell } from './generate-bundle/root-style-output'
 
 export function resolveViteServeRootMiniProgramImportShell(options: {

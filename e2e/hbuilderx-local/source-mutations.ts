@@ -14,19 +14,33 @@ interface HmrOutputSignature {
 
 export type HmrOutputSnapshot = Map<string, HmrOutputSignature>
 
-export async function appendHmrSourceMutation(projectRoot: string, mutation: HmrSourceMutation) {
+export async function appendHmrSourceMutation(projectRoot: string, mutation: HmrSourceMutation, writeSource = async (target: string, content: string) => fs.writeFile(target, content, 'utf8')) {
   const file = path.resolve(projectRoot, mutation.file)
   const source = await readUtf8(file)
   const separator = source.endsWith('\n') ? '' : '\n'
-  const nextSource = typeof mutation.append === 'string'
-    ? `${source}${separator}${mutation.append.trimEnd()}\n`
-    : mutation.touch
-      ? `${source}${separator}\n`
-      : undefined
-  if (nextSource === undefined) {
-    throw new Error(`HMR 源码变更缺少 append 或 touch：${mutation.file}`)
+  let nextSource: string | undefined
+  if (mutation.replace) {
+    if (source.includes(mutation.replace.from)) {
+      nextSource = source.replace(mutation.replace.from, mutation.replace.to)
+    }
+    else if (source.includes(mutation.replace.to)) {
+      // HMR 测试可能在上次中断后留下目标状态，重复执行时保持幂等。
+      return file
+    }
+    else {
+      throw new Error(`HMR 源码变更找不到替换目标：${mutation.file}`)
+    }
   }
-  await fs.writeFile(file, nextSource, 'utf8')
+  else if (typeof mutation.append === 'string') {
+    nextSource = `${source}${separator}${mutation.append.trimEnd()}\n`
+  }
+  else if (mutation.touch) {
+    nextSource = `${source}${separator}\n`
+  }
+  if (nextSource === undefined) {
+    throw new Error(`HMR 源码变更缺少 append、replace 或 touch：${mutation.file}`)
+  }
+  await writeSource(file, nextSource)
   return file
 }
 

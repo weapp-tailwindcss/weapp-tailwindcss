@@ -4,17 +4,15 @@ import path from 'node:path'
 import process from 'node:process'
 import { execa } from 'execa'
 import { minVersion } from 'semver'
+import { resolveWeappViteTemplateVersion } from './template-framework-versions'
 import { ROOT } from './template-utils'
-
-type PnpmConfig = Record<string, unknown> & {
-  onlyBuiltDependencies?: unknown
-}
+import { updateTemplateWorkspaceConfig } from './template-workspace-config'
 
 type PackageJson = Record<string, unknown> & {
   dependencies?: Record<string, string>
   devDependencies?: Record<string, string>
   packageManager?: string
-  pnpm?: PnpmConfig
+  pnpm?: Record<string, unknown>
 }
 
 type CommandEnv = Record<string, string | undefined>
@@ -25,7 +23,6 @@ interface TargetPackage {
   range: string
   addIfMissing?: 'dependencies' | 'devDependencies'
   forceInclude?: boolean
-  ensurePnpmOnlyBuilt?: boolean
 }
 
 interface TailwindResolution {
@@ -91,6 +88,25 @@ const MERGE_PACKAGE = {
   version: readWorkspacePackageVersion(path.join('packages-runtime', 'merge')),
 } as const
 
+const WEAPP_TAILWINDCSS_PACKAGE = {
+  name: 'weapp-tailwindcss',
+  version: readWorkspacePackageVersion(path.join('packages', 'weapp-tailwindcss')),
+} as const
+
+const POSTCSS_PACKAGE = {
+  name: '@weapp-tailwindcss/postcss',
+  version: readWorkspacePackageVersion(path.join('packages', 'postcss')),
+} as const
+
+const RELEASE_AGE_EXCLUDE_PACKAGES = [WEAPP_TAILWINDCSS_PACKAGE, POSTCSS_PACKAGE]
+const WEAPP_VITE_RELEASE_AGE_EXCLUDES = [
+  'weapp-vite',
+  'wevu',
+  '@weapp-vite/*',
+  '@weapp-core/*',
+  '@wevu/*',
+]
+
 const MERGE_PACKAGE_NAMES = [MERGE_PACKAGE.name] as const
 
 async function fetchLatestVersion(pkgName: string): Promise<string> {
@@ -113,7 +129,7 @@ async function fetchLatestVersion(pkgName: string): Promise<string> {
   return latest
 }
 
-async function fetchTailwindVersion(pkgName: string, major: number): Promise<string> {
+async function fetchVersionForMajor(pkgName: string, major: number): Promise<string> {
   const cacheKey = `${pkgName}@${major}`
   const cached = tailwindVersionCache.get(cacheKey)
   if (cached) {
@@ -135,7 +151,6 @@ async function fetchTailwindVersion(pkgName: string, major: number): Promise<str
 }
 
 async function resolveBaseTargets(): Promise<TargetPackage[]> {
-  const weappTailwindcssVersion = readWorkspacePackageVersion(path.join('packages', 'weapp-tailwindcss'))
   const [
     weappIdeCliVersion,
     weappViteVersion,
@@ -143,19 +158,18 @@ async function resolveBaseTargets(): Promise<TargetPackage[]> {
     sassEmbeddedVersion,
     typescriptVersion,
   ] = await Promise.all([
-    fetchLatestVersion('weapp-ide-cli'),
-    fetchLatestVersion('weapp-vite'),
+    fetchVersionForMajor('weapp-ide-cli', 5),
+    resolveWeappViteTemplateVersion(fetchVersionForMajor),
     fetchLatestVersion('sass'),
     fetchLatestVersion('sass-embedded'),
-    fetchLatestVersion('typescript'),
+    fetchVersionForMajor('typescript', 6),
   ])
   return [
     {
-      name: 'weapp-tailwindcss',
-      version: weappTailwindcssVersion,
-      range: `^${weappTailwindcssVersion}`,
+      name: WEAPP_TAILWINDCSS_PACKAGE.name,
+      version: WEAPP_TAILWINDCSS_PACKAGE.version,
+      range: `^${WEAPP_TAILWINDCSS_PACKAGE.version}`,
       addIfMissing: 'devDependencies',
-      ensurePnpmOnlyBuilt: true,
     },
     {
       name: 'weapp-ide-cli',
@@ -280,81 +294,17 @@ function ensureSection(pkg: PackageJson, field: 'dependencies' | 'devDependencie
   return created
 }
 
-function arraysShallowEqual(a: string[], b: string[]): boolean {
-  return a.length === b.length && a.every((item, index) => item === b[index])
-}
-
-function ensurePnpmOnlyBuiltDependencies(
-  pkg: PackageJson,
-  targets: TargetPackage[],
-  remove: string[] = [],
-): boolean {
-  const required = [...new Set(
-    targets
-      .filter(target => target.ensurePnpmOnlyBuilt)
-      .map(target => target.name),
-  )]
-
-  const removal = new Set(remove)
-  const hasWork = required.length > 0 || removal.size > 0
-
-  if (!hasWork) {
+function removeLegacyPnpmOnlyBuiltDependencies(pkg: PackageJson): boolean {
+  const config = pkg.pnpm
+  if (!config || typeof config !== 'object' || !('onlyBuiltDependencies' in config)) {
     return false
   }
 
-  let changed = false
-  let pnpmConfig = pkg.pnpm
-  if (!pnpmConfig || typeof pnpmConfig !== 'object') {
-    pnpmConfig = {} as PnpmConfig
-    pkg.pnpm = pnpmConfig
-    changed = true
+  delete config.onlyBuiltDependencies
+  if (Object.keys(config).length === 0) {
+    delete pkg.pnpm
   }
-
-  const config = pnpmConfig as PnpmConfig
-  const rawOnlyBuilt = config.onlyBuiltDependencies
-  const originalOnlyBuilt = Array.isArray(rawOnlyBuilt)
-    ? rawOnlyBuilt.filter((item): item is string => typeof item === 'string')
-    : []
-
-  if (Array.isArray(rawOnlyBuilt) && originalOnlyBuilt.length !== rawOnlyBuilt.length) {
-    changed = true
-  }
-  else if (!Array.isArray(rawOnlyBuilt) && rawOnlyBuilt !== undefined) {
-    changed = true
-  }
-
-  const onlyBuilt = originalOnlyBuilt.filter(name => !removal.has(name))
-  if (onlyBuilt.length !== originalOnlyBuilt.length) {
-    changed = true
-  }
-
-  for (const name of required) {
-    if (!onlyBuilt.includes(name)) {
-      onlyBuilt.push(name)
-      changed = true
-    }
-  }
-
-  if (onlyBuilt.length === 0 && !required.length) {
-    if ('onlyBuiltDependencies' in config) {
-      delete config.onlyBuiltDependencies
-      changed = true
-    }
-    if (Object.keys(config).length === 0) {
-      delete pkg.pnpm
-      changed = true
-    }
-    return changed
-  }
-
-  if (!Array.isArray(rawOnlyBuilt) || !arraysShallowEqual(onlyBuilt, originalOnlyBuilt)) {
-    config.onlyBuiltDependencies = onlyBuilt
-    if (!changed) {
-      changed = true
-    }
-  }
-
-  return changed
+  return true
 }
 
 function updateDependencyRange(
@@ -449,22 +399,17 @@ async function resolveTailwindTargets(pkg: PackageJson): Promise<TailwindResolut
   const major = min.major
 
   if (major === 3) {
-    const version = await fetchTailwindVersion('tailwindcss', 3)
-    const targets: TargetPackage[] = [
-      {
-        name: 'tailwindcss',
-        version,
-        range: `^${version}`,
-      },
-    ]
-    return {
-      targets,
-      removePackages: collectMergePackagesToRemove(pkg),
-    }
+    throw new Error('模板维护链路仅支持 Tailwind CSS v4，请先移除 Tailwind CSS v3 模板。')
   }
 
   if (major === 4) {
-    const version = await fetchTailwindVersion('tailwindcss', 4)
+    const unsupportedPlugins = ['@tailwindcss/postcss', '@tailwindcss/vite']
+      .filter(name => hasPackageReference(pkg, name))
+    if (unsupportedPlugins.length > 0) {
+      throw new Error(`模板样式生成必须由 weapp-tailwindcss 接管，请移除：${unsupportedPlugins.join('、')}`)
+    }
+
+    const version = await fetchVersionForMajor('tailwindcss', 4)
     const targets: TargetPackage[] = [
       {
         name: 'tailwindcss',
@@ -472,31 +417,12 @@ async function resolveTailwindTargets(pkg: PackageJson): Promise<TailwindResolut
         range: `^${version}`,
       },
     ]
-
-    if (hasPackageReference(pkg, '@tailwindcss/postcss')) {
-      const postcssVersion = await fetchTailwindVersion('@tailwindcss/postcss', 4)
-      targets.push({
-        name: '@tailwindcss/postcss',
-        version: postcssVersion,
-        range: `^${postcssVersion}`,
-      })
-    }
-
-    if (hasPackageReference(pkg, '@tailwindcss/vite')) {
-      const viteVersion = await fetchTailwindVersion('@tailwindcss/vite', 4)
-      targets.push({
-        name: '@tailwindcss/vite',
-        version: viteVersion,
-        range: `^${viteVersion}`,
-      })
-    }
 
     targets.push({
       name: MERGE_PACKAGE.name,
       version: MERGE_PACKAGE.version,
       range: `^${MERGE_PACKAGE.version}`,
       addIfMissing: 'dependencies',
-      ensurePnpmOnlyBuilt: true,
     })
 
     return {
@@ -509,6 +435,31 @@ async function resolveTailwindTargets(pkg: PackageJson): Promise<TailwindResolut
     targets: [],
     removePackages: collectMergePackagesToRemove(pkg),
   }
+}
+
+async function resolveBabelTargets(pkg: PackageJson): Promise<TargetPackage[]> {
+  const names = new Set<string>()
+  for (const field of ['dependencies', 'devDependencies'] as const) {
+    for (const name of Object.keys(pkg[field] ?? {})) {
+      if (name.startsWith('@babel/')) {
+        names.add(name)
+      }
+    }
+  }
+
+  return Promise.all([...names].map(async (name) => {
+    const range = getPackageRange(pkg, name)
+    const minimum = range && !isExternalSpecifier(range) ? minVersion(range) : null
+    if (!minimum) {
+      return null
+    }
+    const version = await fetchVersionForMajor(name, minimum.major)
+    return {
+      name,
+      version,
+      range: `^${version}`,
+    }
+  })).then(targets => targets.filter((target): target is TargetPackage => target !== null))
 }
 
 async function runCommand(
@@ -549,8 +500,8 @@ function getLockfileName(): string {
   return 'pnpm-lock.yaml'
 }
 
-function shouldUpdateLockfile(templateDir: string, depsChanged: boolean): boolean {
-  if (depsChanged) {
+function shouldUpdateLockfile(templateDir: string, manifestChanged: boolean): boolean {
+  if (manifestChanged) {
     return true
   }
   const lockPath = path.join(templateDir, getLockfileName())
@@ -592,7 +543,7 @@ async function regenerateLockfile(templateDir: string): Promise<boolean> {
   try {
     const success = await runCommand(
       'pnpm',
-      ['install', '--lockfile-only', '--ignore-scripts', '--ignore-workspace'],
+      ['install', '--lockfile-only', '--ignore-scripts'],
       directory,
       { allowFailure: true, timeoutMs: LOCK_UPDATE_TIMEOUT_MS },
     )
@@ -645,9 +596,11 @@ async function processTemplate(
   const indent = detectIndentation(raw)
   const pkg = JSON.parse(raw) as PackageJson
   const tailwindResolution = await resolveTailwindTargets(pkg)
+  const babelTargets = await resolveBabelTargets(pkg)
   const relevantTargets = dedupeTargets([
     ...filterTargetsForPackage(pkg, baseTargets),
     ...tailwindResolution.targets,
+    ...babelTargets,
   ])
   let packageManagerChanged = false
   if (ROOT_PNPM_PACKAGE_MANAGER && pkg.packageManager !== ROOT_PNPM_PACKAGE_MANAGER) {
@@ -658,20 +611,34 @@ async function processTemplate(
   const removalChanged = removePackageReferences(pkg, tailwindResolution.removePackages)
   const { changed: rangeChanged, touched: changedTargets } = updateDependencyRange(pkg, relevantTargets)
   const depsChanged = removalChanged || rangeChanged
-  const pnpmChanged = ensurePnpmOnlyBuiltDependencies(
-    pkg,
-    relevantTargets,
-    tailwindResolution.removePackages,
-  )
+  const pnpmChanged = removeLegacyPnpmOnlyBuiltDependencies(pkg)
 
   if (depsChanged || pnpmChanged || packageManagerChanged) {
     writeFileSync(pkgPath, `${JSON.stringify(pkg, null, indent)}\n`)
   }
 
+  let workspaceConfigChanged = false
+  const workspaceConfigPath = path.join(templateDir, 'pnpm-workspace.yaml')
+  if (existsSync(workspaceConfigPath)) {
+    const workspaceConfig = readFileSync(workspaceConfigPath, 'utf8')
+    const requiredExcludes = hasPackageReference(pkg, 'weapp-vite')
+      ? WEAPP_VITE_RELEASE_AGE_EXCLUDES
+      : []
+    const result = updateTemplateWorkspaceConfig(
+      workspaceConfig,
+      RELEASE_AGE_EXCLUDE_PACKAGES,
+      requiredExcludes,
+    )
+    if (result.changed) {
+      writeFileSync(workspaceConfigPath, result.content)
+      workspaceConfigChanged = true
+    }
+  }
+
   let lockUpdated = false
   const legacyLockRemoved = removeLegacyLockfiles(templateDir)
 
-  if (shouldUpdateLockfile(templateDir, depsChanged)) {
+  if (shouldUpdateLockfile(templateDir, depsChanged || packageManagerChanged)) {
     console.log(`更新 ${templateName} 的锁文件（pnpm）...`)
     lockUpdated = await regenerateLockfile(templateDir)
   }
@@ -680,7 +647,7 @@ async function processTemplate(
     changedTargets.forEach(target => summary.add(`${target.name}@${target.range}`))
   }
 
-  return depsChanged || pnpmChanged || lockUpdated || legacyLockRemoved || packageManagerChanged
+  return depsChanged || pnpmChanged || lockUpdated || legacyLockRemoved || packageManagerChanged || workspaceConfigChanged
 }
 
 async function main(): Promise<void> {

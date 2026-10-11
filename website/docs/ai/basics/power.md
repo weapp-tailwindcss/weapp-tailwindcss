@@ -1,7 +1,7 @@
 ---
 sidebar: aiSidebar
 title: Power（规范驱动编程）
-description: Cursor 的 **Composer** 特性：
+description: Power（规范驱动编程），覆盖 AI 工作流、提示词和工程化实践。
 keywords:
   - AI 编程
   - LLM

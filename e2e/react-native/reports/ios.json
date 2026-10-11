@@ -1,0 +1,2077 @@
+{
+  "schemaVersion": 1,
+  "platform": "ios",
+  "catalogHash": "0eeb44540e2e1d3a178c436b7cb98fd25e3ccca6366c043f0a5832eab9524efd",
+  "verifiedAt": "2026-08-19T16:14:38.871Z",
+  "versions": {
+    "tailwindcss": "4.3.3",
+    "expo": "54.0.37",
+    "reactNative": "0.81.5",
+    "compiler": "0.2.4"
+  },
+  "environment": {
+    "deviceName": "iPhone 17 Pro iOS 26.5 (iPhone18,1)",
+    "osName": "ios",
+    "osVersion": "26.5",
+    "runtimeIdentifier": "expo-ios",
+    "abi": "x86_64",
+    "viewport": {
+      "width": 402,
+      "height": 874,
+      "pixelRatio": 3
+    }
+  },
+  "results": [
+    {
+      "id": "layout-aspect",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "geometry:probe",
+          "passed": true,
+          "actual": "16,140.6666717529297,370,277.66668701171875",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "layout-columns",
+      "status": "unsupported",
+      "reason": "不支持将 columns: 2 编译为 React Native style",
+      "warnings": [
+        "不支持将 columns: 2 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "layout-box-sizing",
+      "status": "unsupported",
+      "reason": "不支持将 box-sizing: border-box 编译为 React Native style",
+      "warnings": [
+        "不支持将 box-sizing: border-box 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "layout-display",
+      "status": "unsupported",
+      "reason": "不支持将 display: block 编译为 React Native style",
+      "warnings": [
+        "不支持将 display: block 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "layout-float",
+      "status": "unsupported",
+      "reason": "不支持将 float: left 编译为 React Native style",
+      "warnings": [
+        "不支持将 float: left 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "layout-isolation",
+      "status": "unsupported",
+      "reason": "不支持将 isolation: isolate 编译为 React Native style",
+      "warnings": [
+        "不支持将 isolation: isolate 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "layout-object-fit",
+      "status": "unsupported",
+      "reason": "不支持将 object-fit: cover 编译为 React Native style",
+      "warnings": [
+        "不支持将 object-fit: cover 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "layout-overflow",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "pixel:probe",
+          "passed": true,
+          "actual": "16,418.3333435058594,370,17",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "layout-position",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "geometry:probe",
+          "passed": true,
+          "actual": "7,9,96.66666412353516,17",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "layout-visibility",
+      "status": "unsupported",
+      "reason": "不支持将 visibility: hidden 编译为 React Native style",
+      "warnings": [
+        "不支持将 visibility: hidden 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "layout-z-index",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "pixel:probe",
+          "passed": true,
+          "actual": "16,435.3333435058594,370,17",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "flex-direction",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "geometry:probe",
+          "passed": true,
+          "actual": "16,452.3333435058594,370,17",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "flex-alignment",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "geometry:probe",
+          "passed": true,
+          "actual": "16,469.3333435058594,370,17",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "flex-grow",
+      "status": "unsupported",
+      "reason": "不支持将 flex-basis: calc(1 / 2 * 100%) 编译为 React Native style",
+      "warnings": [
+        "不支持将 flex-basis: calc(1 / 2 * 100%) 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "grid-template",
+      "status": "unsupported",
+      "reason": "不支持将 display: grid 编译为 React Native style; 不支持将 grid-template-columns: 80px 1fr 编译为 React Native style",
+      "warnings": [
+        "不支持将 display: grid 编译为 React Native style",
+        "不支持将 grid-template-columns: 80px 1fr 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "spacing-margin",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "geometry:probe",
+          "passed": true,
+          "actual": "27,478.3333435058594,359,17",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "spacing-padding",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "geometry:probe",
+          "passed": true,
+          "actual": "16,495.3333435058594,370,42.999969482421875",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "spacing-logical",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "geometry:probe",
+          "passed": true,
+          "actual": "16,538,370,17",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "sizing-fixed",
+      "status": "unsupported",
+      "reason": "不支持将 height: 45rpx 编译为 React Native style",
+      "warnings": [
+        "不支持将 height: 45rpx 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "sizing-min-max",
+      "status": "unsupported",
+      "reason": "不支持将 min-width: calc(100% - 2rem) 编译为 React Native style",
+      "warnings": [
+        "不支持将 min-width: calc(100% - 2rem) 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "table-layout",
+      "status": "unsupported",
+      "reason": "不支持将 display: table 编译为 React Native style; 不支持将 table-layout: fixed 编译为 React Native style; 不支持将 border-collapse: collapse 编译为 React Native style",
+      "warnings": [
+        "不支持将 display: table 编译为 React Native style",
+        "不支持将 table-layout: fixed 编译为 React Native style",
+        "不支持将 border-collapse: collapse 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "type-size",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "geometry:probe",
+          "passed": true,
+          "actual": "16,555,370,17",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "type-weight-style",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "pixel:probe",
+          "passed": true,
+          "actual": "16,572,370,17",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "type-tracking",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "geometry:probe",
+          "passed": true,
+          "actual": "16,589,370,17",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "type-align-overflow",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "pixel:probe",
+          "passed": true,
+          "actual": "16,606,370,17",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "type-decoration",
+      "status": "unsupported",
+      "reason": "不支持将 text-decoration-thickness: 2px 编译为 React Native style",
+      "warnings": [
+        "不支持将 text-decoration-thickness: 2px 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "background-color",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "pixel:probe",
+          "passed": true,
+          "actual": "16,623,370,17",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "background-gradient",
+      "status": "unsupported",
+      "reason": "不支持将 background-image: radial-gradient(circle at 20% 20%,#fff,#000) 编译为 React Native style",
+      "warnings": [
+        "不支持将 background-image: radial-gradient(circle at 20% 20%,#fff,#000) 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "background-size",
+      "status": "unsupported",
+      "reason": "不支持将 background-size: cover 编译为 React Native style; 不支持将 background-position: center 编译为 React Native style; 不支持将 background-repeat: no-repeat 编译为 React Native style",
+      "warnings": [
+        "不支持将 background-size: cover 编译为 React Native style",
+        "不支持将 background-position: center 编译为 React Native style",
+        "不支持将 background-repeat: no-repeat 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "border-width-color",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "pixel:probe",
+          "passed": true,
+          "actual": "16,640,370,21",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "border-radius",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "pixel:probe",
+          "passed": true,
+          "actual": "16,661,370,17",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "effect-opacity",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "pixel:probe",
+          "passed": true,
+          "actual": "16,678,370,17",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "effect-shadow",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "pixel:probe",
+          "passed": true,
+          "actual": "16,695,370,17",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "effect-blend",
+      "status": "unsupported",
+      "reason": "不支持将 mix-blend-mode: multiply 编译为 React Native style",
+      "warnings": [
+        "不支持将 mix-blend-mode: multiply 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "filter-blur",
+      "status": "unsupported",
+      "reason": "不支持将 filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,) 编译为 React Native style",
+      "warnings": [
+        "不支持将 filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,) 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "filter-backdrop",
+      "status": "unsupported",
+      "reason": "不支持将 -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style; 不支持将 backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style",
+      "warnings": [
+        "不支持将 -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style",
+        "不支持将 backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "svg-fill-stroke",
+      "status": "unsupported",
+      "reason": "不支持将 fill: #0284c7 编译为 React Native style; 不支持将 stroke: #0f172a 编译为 React Native style; 不支持将 stroke-width: 2 编译为 React Native style",
+      "warnings": [
+        "不支持将 fill: #0284c7 编译为 React Native style",
+        "不支持将 stroke: #0f172a 编译为 React Native style",
+        "不支持将 stroke-width: 2 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "accessibility-sr",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "geometry:probe",
+          "passed": true,
+          "actual": "-1,-1,2,2",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "transform-translate",
+      "status": "unsupported",
+      "reason": "不支持将 translate: var(--tw-translate-x) var(--tw-translate-y) 编译为 React Native style; 不支持将 translate: var(--tw-translate-x) var(--tw-translate-y) 编译为 React Native style",
+      "warnings": [
+        "不支持将 translate: var(--tw-translate-x) var(--tw-translate-y) 编译为 React Native style",
+        "不支持将 translate: var(--tw-translate-x) var(--tw-translate-y) 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "transform-rotate",
+      "status": "unsupported",
+      "reason": "不支持将 rotate: 12deg 编译为 React Native style",
+      "warnings": [
+        "不支持将 rotate: 12deg 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "transform-scale",
+      "status": "unsupported",
+      "reason": "不支持将 scale: var(--tw-scale-x) var(--tw-scale-y) 编译为 React Native style",
+      "warnings": [
+        "不支持将 scale: var(--tw-scale-x) var(--tw-scale-y) 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "transform-origin",
+      "status": "unsupported",
+      "reason": "不支持将 transform-origin: 0 0 编译为 React Native style",
+      "warnings": [
+        "不支持将 transform-origin: 0 0 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "transition-basic",
+      "status": "unsupported",
+      "reason": "不支持将 transition-property: opacity 编译为 React Native style; 不支持将 transition-timing-function: var(--tw-ease, var(--default-transition-timing-function)) 编译为 React Native style; 不支持将 transition-duration: var(--tw-duration, var(--default-transition-duration)) 编译为 React Native style; 不支持将 transition-duration: 300ms 编译为 React Native style; 不支持将 transition-timing-function: var(--ease-in-out) 编译为 React Native style",
+      "warnings": [
+        "不支持将 transition-property: opacity 编译为 React Native style",
+        "不支持将 transition-timing-function: var(--tw-ease, var(--default-transition-timing-function)) 编译为 React Native style",
+        "不支持将 transition-duration: var(--tw-duration, var(--default-transition-duration)) 编译为 React Native style",
+        "不支持将 transition-duration: 300ms 编译为 React Native style",
+        "不支持将 transition-timing-function: var(--ease-in-out) 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "animation-spin",
+      "status": "unsupported",
+      "reason": "不支持将 animation: var(--animate-spin) 编译为 React Native style",
+      "warnings": [
+        "不支持将 animation: var(--animate-spin) 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "interaction-pointer",
+      "status": "unsupported",
+      "reason": "不支持将 pointer-events: none 编译为 React Native style",
+      "warnings": [
+        "不支持将 pointer-events: none 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "interaction-select",
+      "status": "unsupported",
+      "reason": "不支持将 -webkit-user-select: none 编译为 React Native style; 不支持将 user-select: none 编译为 React Native style",
+      "warnings": [
+        "不支持将 -webkit-user-select: none 编译为 React Native style",
+        "不支持将 user-select: none 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "interaction-scroll",
+      "status": "unsupported",
+      "reason": "不支持将 scroll-snap-type: y var(--tw-scroll-snap-strictness) 编译为 React Native style; 不支持将 scroll-behavior: smooth 编译为 React Native style",
+      "warnings": [
+        "不支持将 scroll-snap-type: y var(--tw-scroll-snap-strictness) 编译为 React Native style",
+        "不支持将 scroll-behavior: smooth 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "variant-responsive",
+      "status": "unsupported",
+      "reason": "不支持将 max-md: 变体编译为 React Native 条件样式",
+      "warnings": [
+        "不支持将 max-md: 变体编译为 React Native 条件样式"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "variant-dark",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "pixel:probe",
+          "passed": true,
+          "actual": "16,712,370,17",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "variant-state",
+      "status": "unsupported",
+      "reason": "不支持将 hover: 变体编译为 React Native 条件样式; 不支持将 active: 变体编译为 React Native 条件样式",
+      "warnings": [
+        "不支持将 hover: 变体编译为 React Native 条件样式",
+        "不支持将 active: 变体编译为 React Native 条件样式"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "variant-structural",
+      "status": "unsupported",
+      "reason": "不支持将 first: 变体编译为 React Native 条件样式; 不支持将 odd: 变体编译为 React Native 条件样式",
+      "warnings": [
+        "不支持将 first: 变体编译为 React Native 条件样式",
+        "不支持将 odd: 变体编译为 React Native 条件样式"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "variant-group-peer",
+      "status": "unsupported",
+      "reason": "Tailwind generator did not emit every candidate",
+      "warnings": [
+        "Tailwind generator did not emit every candidate"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "variant-data-aria",
+      "status": "unsupported",
+      "reason": "不支持将 aria-[sort=ascending]: 变体编译为 React Native 条件样式; 不支持将 data-[state=open]: 变体编译为 React Native 条件样式",
+      "warnings": [
+        "不支持将 aria-[sort=ascending]: 变体编译为 React Native 条件样式",
+        "不支持将 data-[state=open]: 变体编译为 React Native 条件样式"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "variant-supports",
+      "status": "unsupported",
+      "reason": "不支持将 supports-[display:grid]: 变体编译为 React Native 条件样式",
+      "warnings": [
+        "不支持将 supports-[display:grid]: 变体编译为 React Native 条件样式"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "variant-pseudo-element",
+      "status": "unsupported",
+      "reason": "Tailwind generator did not emit every candidate",
+      "warnings": [
+        "Tailwind generator did not emit every candidate"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "variant-arbitrary",
+      "status": "unsupported",
+      "reason": "不支持将 [&_.target]: 变体编译为 React Native 条件样式",
+      "warnings": [
+        "不支持将 [&_.target]: 变体编译为 React Native 条件样式"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "syntax-negative",
+      "status": "unsupported",
+      "reason": "不支持将 translate: var(--tw-translate-x) var(--tw-translate-y) 编译为 React Native style",
+      "warnings": [
+        "不支持将 translate: var(--tw-translate-x) var(--tw-translate-y) 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "syntax-important",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "pixel:probe",
+          "passed": true,
+          "actual": "16,729,370,17",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "syntax-opacity-modifier",
+      "status": "unsupported",
+      "reason": "不支持将 color: color-mix(in srgb, #000 35%, transparent) 编译为 React Native style; 不支持将 color: color-mix(in oklab, var(--color-black) 35%, transparent) 编译为 React Native style",
+      "warnings": [
+        "不支持将 color: color-mix(in srgb, #000 35%, transparent) 编译为 React Native style",
+        "不支持将 color: color-mix(in oklab, var(--color-black) 35%, transparent) 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "syntax-arbitrary-property",
+      "status": "unsupported",
+      "reason": "不支持将 mask-type: luminance 编译为 React Native style",
+      "warnings": [
+        "不支持将 mask-type: luminance 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "syntax-css-variable",
+      "status": "unsupported",
+      "reason": "Tailwind generator did not emit every candidate",
+      "warnings": [
+        "Tailwind generator did not emit every candidate"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "syntax-type-hint",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "pixel:probe",
+          "passed": true,
+          "actual": "16,746,370,17",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "directive-import",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": true
+        },
+        {
+          "name": "build:bundled",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "directive-theme",
+      "status": "unsupported",
+      "reason": "Tailwind generator did not emit every candidate",
+      "warnings": [
+        "Tailwind generator did not emit every candidate"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "directive-source",
+      "status": "unsupported",
+      "reason": "不支持将 focus: 变体编译为 React Native 条件样式",
+      "warnings": [
+        "不支持将 focus: 变体编译为 React Native 条件样式"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "directive-utility",
+      "status": "unsupported",
+      "reason": "Tailwind generator did not emit every candidate",
+      "warnings": [
+        "Tailwind generator did not emit every candidate"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "directive-variant",
+      "status": "unsupported",
+      "reason": "Tailwind generator did not emit every candidate",
+      "warnings": [
+        "Tailwind generator did not emit every candidate"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "directive-apply",
+      "status": "unsupported",
+      "reason": "Tailwind generator did not emit every candidate",
+      "warnings": [
+        "Tailwind generator did not emit every candidate"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "directive-reference",
+      "status": "unsupported",
+      "reason": "Tailwind generator did not emit every candidate",
+      "warnings": [
+        "Tailwind generator did not emit every candidate"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "directive-config-plugin",
+      "status": "unsupported",
+      "reason": "Tailwind generator did not emit every candidate",
+      "warnings": [
+        "Tailwind generator did not emit every candidate"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "directive-prefix-important",
+      "status": "unsupported",
+      "reason": "Tailwind generator did not emit every candidate",
+      "warnings": [
+        "Tailwind generator did not emit every candidate"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "layout-break",
+      "status": "unsupported",
+      "reason": "不支持将 break-before: page 编译为 React Native style; 不支持将 break-inside: avoid 编译为 React Native style; 不支持将 break-after: page 编译为 React Native style",
+      "warnings": [
+        "不支持将 break-before: page 编译为 React Native style",
+        "不支持将 break-inside: avoid 编译为 React Native style",
+        "不支持将 break-after: page 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "layout-decoration-clear",
+      "status": "unsupported",
+      "reason": "不支持将 clear: both 编译为 React Native style; 不支持将 -webkit-box-decoration-break: clone 编译为 React Native style; 不支持将 box-decoration-break: clone 编译为 React Native style",
+      "warnings": [
+        "不支持将 clear: both 编译为 React Native style",
+        "不支持将 -webkit-box-decoration-break: clone 编译为 React Native style",
+        "不支持将 box-decoration-break: clone 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "layout-object-position",
+      "status": "unsupported",
+      "reason": "不支持将 object-position: 35% 65% 编译为 React Native style",
+      "warnings": [
+        "不支持将 object-position: 35% 65% 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "layout-overscroll",
+      "status": "unsupported",
+      "reason": "不支持将 overscroll-behavior: contain 编译为 React Native style",
+      "warnings": [
+        "不支持将 overscroll-behavior: contain 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "flex-wrap-order",
+      "status": "unsupported",
+      "reason": "不支持将 order: 2 编译为 React Native style",
+      "warnings": [
+        "不支持将 order: 2 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "flex-shorthand-shrink",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "geometry:probe",
+          "passed": true,
+          "actual": "16,763,370,17",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "grid-placement",
+      "status": "unsupported",
+      "reason": "不支持将 grid-column: span 2 / span 2 编译为 React Native style; 不支持将 grid-column-start: 1 编译为 React Native style; 不支持将 grid-row: span 2 / span 2 编译为 React Native style; 不支持将 grid-row-start: 1 编译为 React Native style",
+      "warnings": [
+        "不支持将 grid-column: span 2 / span 2 编译为 React Native style",
+        "不支持将 grid-column-start: 1 编译为 React Native style",
+        "不支持将 grid-row: span 2 / span 2 编译为 React Native style",
+        "不支持将 grid-row-start: 1 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "grid-auto",
+      "status": "unsupported",
+      "reason": "不支持将 grid-auto-columns: minmax(0, 1fr) 编译为 React Native style; 不支持将 grid-auto-flow: column 编译为 React Native style; 不支持将 grid-auto-rows: min-content 编译为 React Native style",
+      "warnings": [
+        "不支持将 grid-auto-columns: minmax(0, 1fr) 编译为 React Native style",
+        "不支持将 grid-auto-flow: column 编译为 React Native style",
+        "不支持将 grid-auto-rows: min-content 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "grid-place",
+      "status": "unsupported",
+      "reason": "不支持将 place-content: center 编译为 React Native style; 不支持将 place-items: center 编译为 React Native style; 不支持将 place-self: center 编译为 React Native style",
+      "warnings": [
+        "不支持将 place-content: center 编译为 React Native style",
+        "不支持将 place-items: center 编译为 React Native style",
+        "不支持将 place-self: center 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "grid-justify-self",
+      "status": "unsupported",
+      "reason": "不支持将 justify-items: center 编译为 React Native style; 不支持将 justify-self: flex-end 编译为 React Native style",
+      "warnings": [
+        "不支持将 justify-items: center 编译为 React Native style",
+        "不支持将 justify-self: flex-end 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "grid-align-content-self",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "geometry:probe",
+          "passed": true,
+          "actual": "238,780,148,17",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "spacing-space-between",
+      "status": "unsupported",
+      "reason": "不支持将 margin-block-start: calc(calc(var(--spacing) * 2) * var(--tw-space-y-reverse)) 编译为 React Native style; 不支持将 margin-block-end: calc(calc(var(--spacing) * 2) * calc(1 - var(--tw-space-y-reverse))) 编译为 React Native style; 不支持将 margin-inline-start: calc(calc(var(--spacing) * 2) * var(--tw-space-x-reverse)) 编译为 React Native style; 不支持将 margin-inline-end: calc(calc(var(--spacing) * 2) * calc(1 - var(--tw-space-x-reverse))) 编译为 React Native style",
+      "warnings": [
+        "不支持将 margin-block-start: calc(calc(var(--spacing) * 2) * var(--tw-space-y-reverse)) 编译为 React Native style",
+        "不支持将 margin-block-end: calc(calc(var(--spacing) * 2) * calc(1 - var(--tw-space-y-reverse))) 编译为 React Native style",
+        "不支持将 margin-inline-start: calc(calc(var(--spacing) * 2) * var(--tw-space-x-reverse)) 编译为 React Native style",
+        "不支持将 margin-inline-end: calc(calc(var(--spacing) * 2) * calc(1 - var(--tw-space-x-reverse))) 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "sizing-size",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "geometry:probe",
+          "passed": true,
+          "actual": "16,797,44,44",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "type-family-smoothing-stretch",
+      "status": "unsupported",
+      "reason": "不支持将 font-stretch: expanded 编译为 React Native style; 不支持将 -webkit-font-smoothing: antialiased 编译为 React Native style; 不支持将 -moz-osx-font-smoothing: grayscale 编译为 React Native style",
+      "warnings": [
+        "不支持将 font-stretch: expanded 编译为 React Native style",
+        "不支持将 -webkit-font-smoothing: antialiased 编译为 React Native style",
+        "不支持将 -moz-osx-font-smoothing: grayscale 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "type-numeric",
+      "status": "unsupported",
+      "reason": "不支持将 font-variant-numeric: var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,) var(--tw-numeric-fraction,) 编译为 React Native style; 不支持将 font-variant-numeric: var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,) var(--tw-numeric-fraction,) 编译为 React Native style",
+      "warnings": [
+        "不支持将 font-variant-numeric: var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,) var(--tw-numeric-fraction,) 编译为 React Native style",
+        "不支持将 font-variant-numeric: var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,) var(--tw-numeric-fraction,) 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "type-line-clamp",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "geometry:probe",
+          "passed": true,
+          "actual": "16,841,370,17",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "type-list",
+      "status": "unsupported",
+      "reason": "不支持将 list-style-position: inside 编译为 React Native style; 不支持将 list-style-type: disc 编译为 React Native style; 不支持将 list-style-image: none 编译为 React Native style",
+      "warnings": [
+        "不支持将 list-style-position: inside 编译为 React Native style",
+        "不支持将 list-style-type: disc 编译为 React Native style",
+        "不支持将 list-style-image: none 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "type-decoration-full",
+      "status": "unsupported",
+      "reason": "不支持将 text-underline-offset: 4px 编译为 React Native style",
+      "warnings": [
+        "不支持将 text-underline-offset: 4px 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "type-transform-wrap-indent",
+      "status": "unsupported",
+      "reason": "不支持将 text-indent: calc(var(--spacing) * 4) 编译为 React Native style; 不支持将 text-wrap: balance 编译为 React Native style",
+      "warnings": [
+        "不支持将 text-indent: calc(var(--spacing) * 4) 编译为 React Native style",
+        "不支持将 text-wrap: balance 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "type-flow",
+      "status": "unsupported",
+      "reason": "不支持将 vertical-align: middle 编译为 React Native style; 不支持将 white-space: pre-wrap 编译为 React Native style",
+      "warnings": [
+        "不支持将 vertical-align: middle 编译为 React Native style",
+        "不支持将 white-space: pre-wrap 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "type-breaking",
+      "status": "unsupported",
+      "reason": "不支持将 overflow-wrap: break-word 编译为 React Native style; 不支持将 word-break: break-all 编译为 React Native style; 不支持将 -webkit-hyphens: auto 编译为 React Native style; 不支持将 hyphens: auto 编译为 React Native style",
+      "warnings": [
+        "不支持将 overflow-wrap: break-word 编译为 React Native style",
+        "不支持将 word-break: break-all 编译为 React Native style",
+        "不支持将 -webkit-hyphens: auto 编译为 React Native style",
+        "不支持将 hyphens: auto 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "type-content",
+      "status": "unsupported",
+      "reason": "不支持将 content: var(--tw-content) 编译为 React Native style",
+      "warnings": [
+        "不支持将 content: var(--tw-content) 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "background-attachment-clip-origin",
+      "status": "unsupported",
+      "reason": "不支持将 background-attachment: fixed 编译为 React Native style; 不支持将 background-clip: padding-box 编译为 React Native style; 不支持将 background-origin: border-box 编译为 React Native style",
+      "warnings": [
+        "不支持将 background-attachment: fixed 编译为 React Native style",
+        "不支持将 background-clip: padding-box 编译为 React Native style",
+        "不支持将 background-origin: border-box 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "background-linear-gradient",
+      "status": "unsupported",
+      "reason": "不支持将 background-image: linear-gradient(var(--tw-gradient-stops)) 编译为 React Native style",
+      "warnings": [
+        "不支持将 background-image: linear-gradient(var(--tw-gradient-stops)) 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "border-divide",
+      "status": "supported",
+      "checkpoints": [
+        {
+          "name": "pixel:probe",
+          "passed": true,
+          "actual": "16,858,370,17",
+          "expected": "measurable React Native layout"
+        }
+      ]
+    },
+    {
+      "id": "border-outline",
+      "status": "unsupported",
+      "reason": "不支持将 outline-style: var(--tw-outline-style) 编译为 React Native style; 不支持将 outline-width: 2px 编译为 React Native style; 不支持将 outline-offset: 2px 编译为 React Native style; 不支持将 outline-color: #2563eb 编译为 React Native style; 不支持将 outline-style: dashed 编译为 React Native style",
+      "warnings": [
+        "不支持将 outline-style: var(--tw-outline-style) 编译为 React Native style",
+        "不支持将 outline-width: 2px 编译为 React Native style",
+        "不支持将 outline-offset: 2px 编译为 React Native style",
+        "不支持将 outline-color: #2563eb 编译为 React Native style",
+        "不支持将 outline-style: dashed 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "effect-ring",
+      "status": "unsupported",
+      "reason": "Tailwind generator did not emit every candidate",
+      "warnings": [
+        "Tailwind generator did not emit every candidate"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "effect-inset-text-shadow",
+      "status": "unsupported",
+      "reason": "不支持将 text-shadow: 0px 1px 0px var(--tw-text-shadow-color, rgb(0 0 0 / 0.075)), 0px 1px 1px var(--tw-text-shadow-color, rgb(0 0 0 / 0.075)), 0px 2px 2px var(--tw-text-shadow-color, rgb(0 0 0 / 0.075)) 编译为 React Native style",
+      "warnings": [
+        "不支持将 text-shadow: 0px 1px 0px var(--tw-text-shadow-color, rgb(0 0 0 / 0.075)), 0px 1px 1px var(--tw-text-shadow-color, rgb(0 0 0 / 0.075)), 0px 2px 2px var(--tw-text-shadow-color, rgb(0 0 0 / 0.075)) 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "effect-background-blend",
+      "status": "unsupported",
+      "reason": "不支持将 background-blend-mode: multiply 编译为 React Native style",
+      "warnings": [
+        "不支持将 background-blend-mode: multiply 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "effect-mask-box",
+      "status": "unsupported",
+      "reason": "不支持将 mask-mode: alpha 编译为 React Native style; 不支持将 mask-size: cover 编译为 React Native style; 不支持将 mask-clip: padding-box 编译为 React Native style; 不支持将 mask-position: center 编译为 React Native style; 不支持将 mask-repeat: no-repeat 编译为 React Native style; 不支持将 mask-origin: border-box 编译为 React Native style",
+      "warnings": [
+        "不支持将 mask-mode: alpha 编译为 React Native style",
+        "不支持将 mask-size: cover 编译为 React Native style",
+        "不支持将 mask-clip: padding-box 编译为 React Native style",
+        "不支持将 mask-position: center 编译为 React Native style",
+        "不支持将 mask-repeat: no-repeat 编译为 React Native style",
+        "不支持将 mask-origin: border-box 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "effect-mask-image-composite",
+      "status": "unsupported",
+      "reason": "不支持将 mask-image: linear-gradient(black,transparent) 编译为 React Native style; 不支持将 mask-composite: add 编译为 React Native style; 不支持将 mask-type: luminance 编译为 React Native style",
+      "warnings": [
+        "不支持将 mask-image: linear-gradient(black,transparent) 编译为 React Native style",
+        "不支持将 mask-composite: add 编译为 React Native style",
+        "不支持将 mask-type: luminance 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "filter-color-adjustments",
+      "status": "unsupported",
+      "reason": "不支持将 filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,) 编译为 React Native style; 不支持将 filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,) 编译为 React Native style; 不支持将 filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,) 编译为 React Native style",
+      "warnings": [
+        "不支持将 filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,) 编译为 React Native style",
+        "不支持将 filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,) 编译为 React Native style",
+        "不支持将 filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,) 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "filter-color-rotation",
+      "status": "unsupported",
+      "reason": "不支持将 filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,) 编译为 React Native style; 不支持将 filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,) 编译为 React Native style; 不支持将 filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,) 编译为 React Native style; 不支持将 filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,) 编译为 React Native style",
+      "warnings": [
+        "不支持将 filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,) 编译为 React Native style",
+        "不支持将 filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,) 编译为 React Native style",
+        "不支持将 filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,) 编译为 React Native style",
+        "不支持将 filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,) 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "filter-drop-shadow",
+      "status": "unsupported",
+      "reason": "不支持将 filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,) 编译为 React Native style",
+      "warnings": [
+        "不支持将 filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,) 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "filter-backdrop-adjustments",
+      "status": "unsupported",
+      "reason": "不支持将 -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style; 不支持将 backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style; 不支持将 -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style; 不支持将 backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style; 不支持将 -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style; 不支持将 backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style; 不支持将 -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style; 不支持将 backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style; 不支持将 -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style; 不支持将 backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style; 不支持将 -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style; 不支持将 backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style; 不支持将 -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style; 不支持将 backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style; 不支持将 -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style; 不支持将 backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style",
+      "warnings": [
+        "不支持将 -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style",
+        "不支持将 backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style",
+        "不支持将 -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style",
+        "不支持将 backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style",
+        "不支持将 -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style",
+        "不支持将 backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style",
+        "不支持将 -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style",
+        "不支持将 backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style",
+        "不支持将 -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style",
+        "不支持将 backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style",
+        "不支持将 -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style",
+        "不支持将 backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style",
+        "不支持将 -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style",
+        "不支持将 backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style",
+        "不支持将 -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style",
+        "不支持将 backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,) 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "table-spacing-caption",
+      "status": "unsupported",
+      "reason": "不支持将 caption-side: bottom 编译为 React Native style; 不支持将 border-collapse: separate 编译为 React Native style; 不支持将 border-spacing: var(--tw-border-spacing-x) var(--tw-border-spacing-y) 编译为 React Native style",
+      "warnings": [
+        "不支持将 caption-side: bottom 编译为 React Native style",
+        "不支持将 border-collapse: separate 编译为 React Native style",
+        "不支持将 border-spacing: var(--tw-border-spacing-x) var(--tw-border-spacing-y) 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "transform-skew",
+      "status": "unsupported",
+      "reason": "不支持将 transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,) 编译为 React Native style; 不支持将 transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,) 编译为 React Native style",
+      "warnings": [
+        "不支持将 transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,) 编译为 React Native style",
+        "不支持将 transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,) 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "transform-perspective",
+      "status": "unsupported",
+      "reason": "不支持将 perspective: var(--perspective-near) 编译为 React Native style; 不支持将 perspective-origin: top 编译为 React Native style",
+      "warnings": [
+        "不支持将 perspective: var(--perspective-near) 编译为 React Native style",
+        "不支持将 perspective-origin: top 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "transform-style-backface",
+      "status": "unsupported",
+      "reason": "不支持将 backface-visibility: hidden 编译为 React Native style; 不支持将 transform-style: preserve-3d 编译为 React Native style",
+      "warnings": [
+        "不支持将 backface-visibility: hidden 编译为 React Native style",
+        "不支持将 transform-style: preserve-3d 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "transition-complete",
+      "status": "unsupported",
+      "reason": "不支持将 transition-property: transform, translate, scale, rotate 编译为 React Native style; 不支持将 transition-timing-function: var(--tw-ease, var(--default-transition-timing-function)) 编译为 React Native style; 不支持将 transition-duration: var(--tw-duration, var(--default-transition-duration)) 编译为 React Native style; 不支持将 transition-behavior: allow-discrete 编译为 React Native style; 不支持将 transition-delay: 150ms 编译为 React Native style",
+      "warnings": [
+        "不支持将 transition-property: transform, translate, scale, rotate 编译为 React Native style",
+        "不支持将 transition-timing-function: var(--tw-ease, var(--default-transition-timing-function)) 编译为 React Native style",
+        "不支持将 transition-duration: var(--tw-duration, var(--default-transition-duration)) 编译为 React Native style",
+        "不支持将 transition-behavior: allow-discrete 编译为 React Native style",
+        "不支持将 transition-delay: 150ms 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "interaction-form-colors",
+      "status": "unsupported",
+      "reason": "不支持将 caret-color: #e11d48 编译为 React Native style; 不支持将 accent-color: #2563eb 编译为 React Native style",
+      "warnings": [
+        "不支持将 caret-color: #e11d48 编译为 React Native style",
+        "不支持将 accent-color: #2563eb 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "interaction-form-control",
+      "status": "unsupported",
+      "reason": "不支持将 field-sizing: content 编译为 React Native style; 不支持将 resize: horizontal 编译为 React Native style; 不支持将 appearance: none 编译为 React Native style",
+      "warnings": [
+        "不支持将 field-sizing: content 编译为 React Native style",
+        "不支持将 resize: horizontal 编译为 React Native style",
+        "不支持将 appearance: none 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "interaction-cursor-scheme",
+      "status": "unsupported",
+      "reason": "不支持将 cursor: pointer 编译为 React Native style; 不支持将 color-scheme: dark 编译为 React Native style",
+      "warnings": [
+        "不支持将 cursor: pointer 编译为 React Native style",
+        "不支持将 color-scheme: dark 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "interaction-scroll-spacing",
+      "status": "unsupported",
+      "reason": "不支持将 scroll-margin: calc(var(--spacing) * 4) 编译为 React Native style; 不支持将 scroll-padding: calc(var(--spacing) * 4) 编译为 React Native style",
+      "warnings": [
+        "不支持将 scroll-margin: calc(var(--spacing) * 4) 编译为 React Native style",
+        "不支持将 scroll-padding: calc(var(--spacing) * 4) 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "interaction-snap-touch",
+      "status": "unsupported",
+      "reason": "不支持将 touch-action: var(--tw-pan-x,) var(--tw-pan-y,) var(--tw-pinch-zoom,) 编译为 React Native style; 不支持将 scroll-snap-align: center 编译为 React Native style; 不支持将 scroll-snap-stop: always 编译为 React Native style",
+      "warnings": [
+        "不支持将 touch-action: var(--tw-pan-x,) var(--tw-pan-y,) var(--tw-pinch-zoom,) 编译为 React Native style",
+        "不支持将 scroll-snap-align: center 编译为 React Native style",
+        "不支持将 scroll-snap-stop: always 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "interaction-will-change",
+      "status": "unsupported",
+      "reason": "不支持将 will-change: transform 编译为 React Native style",
+      "warnings": [
+        "不支持将 will-change: transform 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "accessibility-forced-colors",
+      "status": "unsupported",
+      "reason": "不支持将 forced-color-adjust: none 编译为 React Native style",
+      "warnings": [
+        "不支持将 forced-color-adjust: none 编译为 React Native style"
+      ],
+      "checkpoints": [
+        {
+          "name": "build:generated",
+          "passed": false
+        },
+        {
+          "name": "build:bundled",
+          "passed": false
+        }
+      ]
+    }
+  ]
+}

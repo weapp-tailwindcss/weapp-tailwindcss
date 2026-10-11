@@ -1,16 +1,6 @@
 name: E2E HBuilderX Windows
 
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - .github/workflows/e2e-hbuilderx-windows.yml
-      - demo/uni-app-x-hbuilderx-tailwindcss-v4/**
-      - e2e/**
-      - packages/hbuilderx-runner/**
-      - packages/postcss/**
-      - packages/weapp-tailwindcss/**
-      - pnpm-lock.yaml
   workflow_dispatch:
 
 concurrency:
@@ -22,7 +12,7 @@ permissions:
 
 jobs:
   windows-hbuilderx-hmr:
-    if: vars.E2E_HBUILDERX_WINDOWS_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository)
+    if: vars.E2E_HBUILDERX_WINDOWS_ENABLED == 'true' && github.event_name == 'workflow_dispatch'
     name: Windows HBuilderX ${{ matrix.channel }} H5 and Android HMR
     runs-on: [self-hosted, Windows, hbuilderx, android]
     timeout-minutes: 90
@@ -94,14 +84,14 @@ jobs:
 
       - name: Run H5 HMR
         env:
-          E2E_HBUILDERX_CASE: uni-app-x-hbuilderx-tailwindcss-v4
+          E2E_HBUILDERX_CASE: uni-app-x-vdom-tailwindcss-v4
           E2E_HBUILDERX_CHROME_PATH: ${{ vars.E2E_HBUILDERX_CHROME_PATH }}
           E2E_HBUILDERX_RUNTIME_EVIDENCE_ROOT: .e2e-runtime/${{ matrix.channel }}
         run: pnpm e2e:hbuilderx:h5
 
       - name: Run Android real-device HMR
         env:
-          E2E_HBUILDERX_CASE: uni-app-x-hbuilderx-tailwindcss-v4
+          E2E_HBUILDERX_CASE: uni-app-x-vdom-tailwindcss-v4
           E2E_HBUILDERX_RUNTIME_EVIDENCE_ROOT: .e2e-runtime/${{ matrix.channel }}
         run: pnpm e2e:hbuilderx:android
 
@@ -113,4 +103,4 @@ jobs:
           if-no-files-found: warn
           path: |
             .e2e-runtime/${{ matrix.channel }}/**
-            demo/uni-app-x-hbuilderx-tailwindcss-v4/unpackage/dist/dev/**
+            demo/uni-app-x-vdom-tailwindcss-v4/unpackage/dist/dev/**

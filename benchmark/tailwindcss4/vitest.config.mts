@@ -4,7 +4,6 @@ export default defineConfig({
   test: {
     benchmark: {
       include: ['bench.bench.ts'],
-      outputJson: 'bench-report.json',
     },
   },
 })

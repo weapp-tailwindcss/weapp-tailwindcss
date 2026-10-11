@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { it } from 'vitest'
 import { compileNativeStylesheet } from '../src/compiler'
 import { createNativeStyleRuntime } from '../src/runtime'
 
@@ -15,14 +15,16 @@ const staticIds = [
   ...(manifest.staticLookup?.['px-4'] ?? []),
 ]
 
-describe('React Native style paths', () => {
-  bench('static StyleSheet lookup', () => {
-    runtime.getStaticStyle(staticIds)
-  })
-  bench('dynamic tw cache hit', () => {
-    runtime.tw('flex items-center px-4')
-  })
-  bench('dynamic tw cache miss', () => {
-    runtime.tw(['flex', 'items-center', `px-4 bg-blue-500 ${Math.random()}`])
-  })
+it('React Native style paths', async ({ bench: benchmark }) => {
+  await benchmark.compare(
+    benchmark('static StyleSheet lookup', () => {
+      runtime.getStaticStyle(staticIds)
+    }),
+    benchmark('dynamic tw cache hit', () => {
+      runtime.tw('flex items-center px-4')
+    }),
+    benchmark('dynamic tw cache miss', () => {
+      runtime.tw(['flex', 'items-center', `px-4 bg-blue-500 ${Math.random()}`])
+    }),
+  )
 })

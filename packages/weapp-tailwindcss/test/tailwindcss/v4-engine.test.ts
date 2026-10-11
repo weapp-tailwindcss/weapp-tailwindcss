@@ -1,4 +1,5 @@
 import type { TailwindCssRuntimeOptions } from '@/tailwindcss/runtime-types'
+import type { TailwindV4ResolvedSource } from '@/tailwindcss/v4-engine'
 import { mkdir, mkdtemp, symlink, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
@@ -511,8 +512,8 @@ describe('tailwindcss v4 engine', () => {
   })
 
   it('treats scanned rpx arbitrary values as lengths for uni-app H5 web css', async () => {
-    const previousUniPlatform = process.env.UNI_PLATFORM
-    process.env.UNI_PLATFORM = 'h5'
+    const previousUniPlatform = process.env['UNI_PLATFORM']
+    process.env['UNI_PLATFORM'] = 'h5'
     try {
       const root = await mkdtemp(path.join(tmpdir(), 'weapp-tw-v4-uni-h5-rpx-length-'))
       const pageFile = path.join(root, 'src/pages/index/index.vue')
@@ -550,10 +551,10 @@ describe('tailwindcss v4 engine', () => {
     }
     finally {
       if (previousUniPlatform === undefined) {
-        delete process.env.UNI_PLATFORM
+        delete process.env['UNI_PLATFORM']
       }
       else {
-        process.env.UNI_PLATFORM = previousUniPlatform
+        process.env['UNI_PLATFORM'] = previousUniPlatform
       }
     }
   })
@@ -593,7 +594,7 @@ describe('tailwindcss v4 engine', () => {
     const engine = createTailwindV4Engine(source)
 
     const first = await engine.generate({
-      candidates: ['text-[88rpx]'],
+      candidates: ['text-[18rpx]'],
       incrementalCache: true,
       scanSources: false,
       styleOptions: {
@@ -601,7 +602,7 @@ describe('tailwindcss v4 engine', () => {
       },
     })
     const second = await engine.generate({
-      candidates: ['text-[88rpx]', 'text-[188rpx]', 'text-[32.4rpx]'],
+      candidates: ['text-[18rpx]', 'text-[28rpx]', 'text-[32.4rpx]'],
       incrementalCache: true,
       scanSources: false,
       styleOptions: {
@@ -609,23 +610,23 @@ describe('tailwindcss v4 engine', () => {
       },
     })
 
-    expect(first.classSet).toEqual(new Set(['text-[88rpx]']))
-    expect(second.classSet).toEqual(new Set(['text-[88rpx]', 'text-[188rpx]', 'text-[32.4rpx]']))
-    expect(second.css).toContain('.text-_b88rpx_B')
-    expect(second.css).toContain('font-size: 88rpx')
-    expect(second.css).toContain('.text-_b188rpx_B')
-    expect(second.css).toContain('font-size: 188rpx')
+    expect(first.classSet).toEqual(new Set(['text-[18rpx]']))
+    expect(second.classSet).toEqual(new Set(['text-[18rpx]', 'text-[28rpx]', 'text-[32.4rpx]']))
+    expect(second.css).toContain('.text-_b18rpx_B')
+    expect(second.css).toContain('font-size: 18rpx')
+    expect(second.css).toContain('.text-_b28rpx_B')
+    expect(second.css).toContain('font-size: 28rpx')
     expect(second.css).toContain('.text-_b32_d4rpx_B')
     expect(second.css).toContain('font-size: 32.4rpx')
     expect(second.css).not.toContain('.text-_blength_c32_d4rpx_B')
-    expect(second.incrementalCss).toContain('.text-_b188rpx_B')
-    expect(second.incrementalCss).toContain('font-size: 188rpx')
+    expect(second.incrementalCss).toContain('.text-_b28rpx_B')
+    expect(second.incrementalCss).toContain('font-size: 28rpx')
     expect(second.incrementalCss).toContain('.text-_b32_d4rpx_B')
     expect(second.incrementalCss).toContain('font-size: 32.4rpx')
     expect(second.incrementalCss).not.toContain('.text-_blength_c32_d4rpx_B')
-    expect(second.incrementalCss).not.toContain('.text-_b88rpx_B')
-    expect(second.css.match(/\.text-_b88rpx_B/g) ?? []).toHaveLength(1)
-    expect(second.css.indexOf('.text-_b188rpx_B')).toBeGreaterThan(second.css.indexOf('.text-_b88rpx_B'))
+    expect(second.incrementalCss).not.toContain('.text-_b18rpx_B')
+    expect(second.css.match(/\.text-_b18rpx_B/g) ?? []).toHaveLength(1)
+    expect(second.css.indexOf('.text-_b28rpx_B')).toBeGreaterThan(second.css.indexOf('.text-_b18rpx_B'))
   })
 
   it('regenerates the v4 incremental cache when requested utilities are removed', async () => {
@@ -691,16 +692,13 @@ describe('tailwindcss v4 engine', () => {
 
     expect(first.classSet).toEqual(new Set(['text-[88rpx]', 'border-[10rpx]']))
     expect(second.classSet).toEqual(new Set(['text-[88rpx]', 'border-[10rpx]', 'text-[188rpx]', 'text-[32.4rpx]', 'bg-[10rpx]', 'outline-[5rpx]', 'ring-[8rpx]']))
+    expect(second.incrementalCss).toBeUndefined()
     expect(second.css).toContain('.text-\\[88rpx\\]')
     expect(second.css).toContain('font-size: 2.75rem')
     expect(second.css).toContain('.text-\\[188rpx\\]')
     expect(second.css).toContain('font-size: 5.875rem')
     expect(second.css).toContain('.text-\\[32\\.4rpx\\]')
     expect(second.css).toContain('font-size: 1.0125rem')
-    expect(second.incrementalCss).toContain('.text-\\[188rpx\\]')
-    expect(second.incrementalCss).toContain('font-size: 5.875rem')
-    expect(second.incrementalCss).toContain('.text-\\[32\\.4rpx\\]')
-    expect(second.incrementalCss).toContain('font-size: 1.0125rem')
     expect(second.css).toContain('.border-\\[10rpx\\]')
     expect(second.css).toContain('border-width: 0.3125rem')
     expect(second.css).toContain('.bg-\\[10rpx\\]')
@@ -709,14 +707,7 @@ describe('tailwindcss v4 engine', () => {
     expect(second.css).toContain('outline-width: 0.15625rem')
     expect(second.css).toContain('.ring-\\[8rpx\\]')
     expect(second.css).toContain('calc(0.25rem + var(--tw-ring-offset-width))')
-    expect(second.incrementalCss).toContain('.bg-\\[10rpx\\]')
-    expect(second.incrementalCss).toContain('background-size: 0.3125rem')
-    expect(second.incrementalCss).toContain('.outline-\\[5rpx\\]')
-    expect(second.incrementalCss).toContain('outline-width: 0.15625rem')
-    expect(second.incrementalCss).toContain('.ring-\\[8rpx\\]')
-    expect(second.incrementalCss).toContain('calc(0.25rem + var(--tw-ring-offset-width))')
     expect(second.css).not.toContain('text-\\[length\\:')
-    expect(second.incrementalCss).not.toContain('text-\\[length\\:')
     expect(second.css).not.toContain('border-\\[length\\:')
     expect(second.css).not.toContain('bg-\\[length\\:')
     expect(second.css).not.toContain('outline-\\[length\\:')
@@ -761,9 +752,10 @@ describe('tailwindcss v4 engine', () => {
       candidates: ['text-xs', 'mt-[10rpx]'],
     })
 
+    expect(second.incrementalCss).toBeUndefined()
     expect(first.css).toMatch(/\.text-xs\s*\{[\s\S]*font-size:\s*0\.75rem/)
-    expect(second.incrementalCss).toMatch(/\.mt-\\\[10rpx\\\]\s*\{[\s\S]*margin-top:\s*0\.3125rem/)
-    expect(second.incrementalCss).not.toContain('margin-top: 10rpx')
+    expect(second.css).toMatch(/\.mt-\\\[10rpx\\\]\s*\{[\s\S]*margin-top:\s*0\.3125rem/)
+    expect(second.css).not.toContain('margin-top: 10rpx')
   })
 
   it('remembers requested candidates that do not generate css in the v4 incremental cache', async () => {
@@ -862,10 +854,9 @@ describe('tailwindcss v4 engine', () => {
       },
     })
 
+    expect(second.incrementalCss).toBeUndefined()
     expect(second.css).toContain('.wx_cbg-blue-500')
     expect(second.css).toContain('.wx_cbg-red-500')
-    expect(second.incrementalCss).toContain('.wx_cbg-red-500')
-    expect(second.incrementalCss).not.toContain('.wx_cbg-blue-500')
   })
 
   it('dedupes concurrent v4 incremental generation for identical requests', async () => {
@@ -886,8 +877,8 @@ describe('tailwindcss v4 engine', () => {
         sourceEntries: [],
       }
     })
-    vi.doMock('@tailwindcss-mangle/engine', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('@tailwindcss-mangle/engine')>()
+    vi.doMock('@weapp-tailwindcss/engine', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@weapp-tailwindcss/engine')>()
       return {
         ...actual,
         createTailwindGenerationSession: vi.fn(() => ({
@@ -911,8 +902,7 @@ describe('tailwindcss v4 engine', () => {
       css: MINIMAL_THEME_CSS,
       dependencies: [],
       projectRoot: process.cwd(),
-      version: 4,
-    } as const
+    } satisfies TailwindV4ResolvedSource
 
     const [first, second] = await Promise.all([
       createMockedTailwindV4Engine(source).generate({
@@ -938,7 +928,7 @@ describe('tailwindcss v4 engine', () => {
     expect(second.css).toContain('.text-_b88rpx_B')
   })
 
-  it('uses mini-program-safe Tailwind v4 default color variables for native v4 weapp output', { timeout: 300_000 }, async () => {
+  it('uses mini-program-safe Tailwind v4 default color variables for native v4 weapp output', async () => {
     const source = await resolveTailwindV4Source({
       css: `
         @import "tailwindcss";
@@ -953,6 +943,8 @@ describe('tailwindcss v4 engine', () => {
 
     const result = await engine.generate({
       candidates: ['bg-blue-500', 'text-red-500'],
+      // 该用例只验证默认主题变量，避免无关的 monorepo 源码扫描造成资源竞争。
+      scanSources: false,
     })
 
     expect(result.css).toContain('--color-blue-500: rgb(50, 128, 255)')
@@ -1254,7 +1246,7 @@ describe('tailwindcss v4 engine', () => {
     const result = await engine.generate()
 
     expect(result.classSet).toEqual(new Set(['bg-red-500']))
-    expect(result.sources).toEqual(expect.arrayContaining([
+    expect(result.sources.map(entry => ({ ...entry, base: path.normalize(entry.base) }))).toEqual(expect.arrayContaining([
       {
         base: srcDir,
         pattern: '**/*.html',
@@ -1425,7 +1417,7 @@ describe('tailwindcss v4 engine', () => {
 
     const result = await engine.generate()
 
-    expect(source.base).toBe(cssDir)
+    expect(path.normalize(source.base)).toBe(cssDir)
     expect(result.classSet).toEqual(new Set(['bg-blue-500', 'bg-red-500', 'w-4']))
     expect(result.rawCss).toContain('.bg-red-500')
     expect(result.rawCss).toContain('.w-4')
@@ -1464,8 +1456,8 @@ describe('tailwindcss v4 engine', () => {
     await writeFile(page, '<view class="bg-blue-500"></view>', 'utf8')
     const updated = await generate()
 
-    expect(initial.dependencies).toContain(cssEntry)
-    expect(updated.dependencies).toContain(cssEntry)
+    expect(initial.dependencies.map(file => path.normalize(file))).toContain(cssEntry)
+    expect(updated.dependencies.map(file => path.normalize(file))).toContain(cssEntry)
     expect(initial.classSet).toEqual(new Set(['bg-red-500']))
     expect(updated.classSet).toEqual(new Set(['bg-blue-500']))
     expect(updated.rawCss).toContain('.bg-blue-500')
@@ -1513,8 +1505,8 @@ describe('tailwindcss v4 engine', () => {
     const engine = createTailwindV4Engine(source)
     const result = await engine.generate({ candidates: ['w-4'] })
 
-    expect(source.base).toBe(root)
-    expect(result.dependencies).toContain(cssEntry)
+    expect(path.normalize(source.base)).toBe(root)
+    expect(result.dependencies.map(file => path.normalize(file))).toContain(cssEntry)
     expect(result.classSet).toEqual(new Set(['w-4']))
     expect(result.css).toContain('.w-4')
   })
@@ -1607,36 +1599,39 @@ describe('tailwindcss v4 engine', () => {
   })
 
   it('keeps cssEntries source options aligned with engine defaults', async () => {
+    const projectRoot = path.resolve('/workspace/app')
+    const customBase = path.resolve('/custom/base')
+    const cssEntry = path.join(projectRoot, 'src', 'app.css')
     const implicitPatchOptions = {
-      projectRoot: '/workspace/app',
+      projectRoot,
       tailwindcss: {
-        cwd: '/workspace/app',
+        cwd: projectRoot,
         packageName: 'tailwindcss',
         v4: {
-          cssEntries: ['/workspace/app/src/app.css'],
+          cssEntries: [cssEntry],
         },
       },
     } satisfies TailwindCssRuntimeOptions
     const explicitPatchOptions = {
-      projectRoot: '/workspace/app',
+      projectRoot,
       tailwindcss: {
-        cwd: '/workspace/app',
+        cwd: projectRoot,
         packageName: 'tailwindcss',
         v4: {
-          base: '/custom/base',
-          cssEntries: ['/workspace/app/src/app.css'],
+          base: customBase,
+          cssEntries: [cssEntry],
         },
       },
     } satisfies TailwindCssRuntimeOptions
     const implicitBaseOptions = resolveTailwindV4SourceOptionsFromRuntime({
       options: {
-        projectRoot: '/workspace/app',
+        projectRoot,
         tailwind: {
-          cwd: '/workspace/app',
+          cwd: projectRoot,
           v4: {
-            base: '/workspace/app',
+            base: projectRoot,
             hasUserDefinedSources: false,
-            cssEntries: ['/workspace/app/src/app.css'],
+            cssEntries: [cssEntry],
           },
         },
       },
@@ -1644,14 +1639,14 @@ describe('tailwindcss v4 engine', () => {
     } as any)
     const explicitBaseOptions = resolveTailwindV4SourceOptionsFromRuntime({
       options: {
-        projectRoot: '/workspace/app',
+        projectRoot,
         tailwind: {
-          cwd: '/workspace/app',
+          cwd: projectRoot,
           v4: {
-            base: '/workspace/app',
-            configuredBase: '/custom/base',
+            base: projectRoot,
+            configuredBase: customBase,
             hasUserDefinedSources: false,
-            cssEntries: ['/workspace/app/src/app.css'],
+            cssEntries: [cssEntry],
           },
         },
       },
@@ -1665,19 +1660,19 @@ describe('tailwindcss v4 engine', () => {
     const explicitPatchSource = await resolveTailwindV4SourceFromRuntimeOptions(explicitPatchOptions)
 
     expect(implicitBaseOptions.base).toBeUndefined()
-    expect(explicitBaseOptions.base).toBe('/custom/base')
-    expect(rawExplicitBaseOptions.base).toBe('/custom/base')
-    expect(implicitBaseOptions.cssEntries).toEqual(['/workspace/app/src/app.css'])
-    expect(explicitBaseOptions.cssEntries).toEqual(['/workspace/app/src/app.css'])
+    expect(explicitBaseOptions.base).toBe(customBase)
+    expect(rawExplicitBaseOptions.base).toBe(customBase)
+    expect(implicitBaseOptions.cssEntries).toEqual([cssEntry])
+    expect(explicitBaseOptions.cssEntries).toEqual([cssEntry])
     expect(implicitBaseOptions.baseFallbacks).toEqual([
-      '/workspace/app',
+      projectRoot,
     ])
     expect(explicitBaseOptions.baseFallbacks).toEqual([
-      '/custom/base',
-      '/workspace/app',
+      customBase,
+      projectRoot,
     ])
-    expect(implicitPatchSource.base).toBe('/workspace/app/src')
-    expect(explicitPatchSource.base).toBe('/custom/base')
+    expect(path.normalize(implicitPatchSource.base)).toBe(path.join(projectRoot, 'src'))
+    expect(path.normalize(explicitPatchSource.base)).toBe(customBase)
   })
 
   it('passes configured v4 source entries through for bundler generation', () => {
@@ -1711,12 +1706,13 @@ describe('tailwindcss v4 engine', () => {
   })
 
   it('normalizes runtime cssSources @config relative to their source file', () => {
-    const cssFile = '/workspace/app/src/sub-normal/pages/index.css'
+    const projectRoot = path.resolve('/workspace/app')
+    const cssFile = path.join(projectRoot, 'src', 'sub-normal', 'pages', 'index.css')
     const options = resolveTailwindV4SourceOptionsFromRuntime({
       options: {
-        projectRoot: '/workspace/app',
+        projectRoot,
         tailwind: {
-          cwd: '/workspace/app',
+          cwd: projectRoot,
           v4: {
             cssSources: [{
               file: cssFile,
@@ -1731,7 +1727,7 @@ describe('tailwindcss v4 engine', () => {
     expect(options.cssSources?.[0]).toEqual(expect.objectContaining({
       file: cssFile,
       base: path.dirname(cssFile),
-      css: expect.stringContaining('@config "/workspace/app/tailwind.config.sub-normal.js";'),
+      css: expect.stringContaining(`@config "${path.join(projectRoot, 'tailwind.config.sub-normal.js').replaceAll(path.sep, '/')}";`),
     }))
   })
 
@@ -1769,7 +1765,7 @@ describe('tailwindcss v4 engine', () => {
       cssEntries: ['missing.css'],
     })
 
-    expect(source.dependencies).toEqual([cssEntry])
+    expect(source.dependencies.map(file => path.normalize(file))).toEqual([cssEntry])
     expect(source.css).toBe('@import "missing.css";')
   })
 
@@ -1916,13 +1912,14 @@ describe('tailwindcss v4 engine', () => {
       styleOptions,
     })
 
-    expect(result.incrementalCss).toMatch(/\.text-white\s*\{\s*color:\s*#fff/)
-    expect(result.incrementalCss).toMatch(/\.rounded-full\s*\{\s*border-radius:\s*9999px/)
-    expect(result.incrementalCss).not.toContain('var(--color-white)')
-    expect(result.incrementalCss).not.toMatch(/line-height:\s*calc\(/)
-    expect(result.incrementalCss).not.toContain('calc(infinity')
-    expect(result.incrementalCss).not.toContain('.tw-root')
-    expect(result.incrementalCss).not.toContain('view,text')
+    expect(result.incrementalCss).toBeUndefined()
+    expect(result.css).toMatch(/\.text-white\s*\{\s*color:\s*#fff/)
+    expect(result.css).toMatch(/\.rounded-full\s*\{\s*border-radius:\s*9999px/)
+    expect(result.css).not.toContain('var(--color-white)')
+    expect(result.css).not.toMatch(/line-height:\s*calc\(/)
+    expect(result.css).not.toContain('calc(infinity')
+    expect(result.css).not.toContain('.tw-root')
+    expect(result.css).not.toContain('view,text')
   })
 
   it('downgrades Tailwind v4 color-mix alpha colors for mini-program output', async () => {
@@ -1974,12 +1971,13 @@ describe('tailwindcss v4 engine', () => {
       scanSources: false,
     })
 
+    expect(result.incrementalCss).toBeUndefined()
     expect(result.css).toContain('background-color: var(--color-blue-500)')
     expect(result.css).toContain('color: rgba(255, 255, 255, 0.1)')
-    expect(result.incrementalCss).toContain('.text-white_f10')
-    expect(result.incrementalCss).toContain('view,text,::after,::before')
-    expect(result.incrementalCss).toContain('--tw-content')
-    expect(result.incrementalCss).not.toContain('box-sizing:border-box')
+    expect(result.css).toContain('.text-white_f10')
+    expect(result.css).toContain('view,text,::after,::before')
+    expect(result.css).toContain('--tw-content')
+    expect(result.css).not.toContain('box-sizing:border-box')
     expect(result.css).not.toContain('color-mix')
     expect(result.css).not.toContain('oklab')
     expect(result.css).not.toContain('oklch')
@@ -2158,6 +2156,34 @@ describe('tailwindcss v4 engine', () => {
     expect(result.css).not.toContain('in-')
     expect(result.css).not.toContain('not-in-')
     expect(result.css).not.toContain('group-hover')
+  })
+
+  it('filters unsupported has-in slash variants discovered by source scanning', async () => {
+    const root = await mkdtemp(path.join(tmpdir(), 'weapp-tw-v4-has-in-source-'))
+    await writeFile(
+      path.join(root, 'index.html'),
+      '<view class="has-in-[.group/name]:flex has-not-in-[.group/name]:block bg-red-500"></view>',
+    )
+    const source = await resolveTailwindV4Source({
+      css: MINIMAL_THEME_CSS,
+      base: root,
+    })
+    const engine = createTailwindV4Engine(source)
+
+    const result = await engine.generate({
+      scanSources: [{
+        base: root,
+        pattern: '*.html',
+        negated: false,
+      }],
+    })
+
+    expect(result.classSet).toEqual(new Set(['bg-red-500']))
+    expect(result.rawCss).not.toContain('has-in-')
+    expect(result.rawCss).not.toContain('has-not-in-')
+    expect(result.css).not.toContain('has-in-')
+    expect(result.css).not.toContain('has-not-in-')
+    expect(result.css).toContain('.bg-red-500')
   })
 
   it('can generate web css without mini-program escaping', async () => {

@@ -1,1 +1,1 @@
-export { resolveSourceCandidateScanFiles } from '../../shared/source-candidates/scan-root'
+export { resolveSourceCandidateScanFiles } from '../../../project-sources/candidates/scan-root'

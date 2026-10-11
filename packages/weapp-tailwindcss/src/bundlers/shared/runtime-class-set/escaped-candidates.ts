@@ -1,4 +1,4 @@
-import { unescape as unescapeClassName } from '@weapp-core/escape'
+import { unescape as unescapeClassName } from '@weapp-tailwindcss/escape'
 
 const ESCAPED_CLASS_TOKEN_RE = /[\w-]+_[A-Z][\w-]*/gi
 const TAILWIND_RESTORED_CANDIDATE_SIGNAL_RE = /[[\]:/#!.]/

@@ -1,0 +1,68 @@
+WEBVTT
+
+00:00:00.198 --> 00:00:01.400
+Tailwind beyond the web.
+
+00:00:03.218 --> 00:00:04.420
+Use familiar classes
+
+00:00:04.432 --> 00:00:06.860
+to shape spacing, corners, and color.
+
+00:00:09.218 --> 00:00:11.454
+Generate styles, transform classes,
+
+00:00:11.550 --> 00:00:12.872
+adapt to each target.
+
+00:00:15.248 --> 00:00:17.063
+Build for the web, mini programs,
+
+00:00:17.171 --> 00:00:18.229
+and app WebViews.
+
+00:00:19.056 --> 00:00:21.412
+Reach native ecosystems
+with uni-app x,
+
+00:00:21.568 --> 00:00:23.203
+React Native, and Lynx.
+
+00:00:27.218 --> 00:00:29.033
+Built for Tailwind CSS 4.
+
+00:00:29.860 --> 00:00:30.906
+Connect your framework
+
+00:00:30.918 --> 00:00:31.928
+and your build tools.
+
+00:00:35.248 --> 00:00:36.570
+For a Vite web project,
+
+00:00:36.690 --> 00:00:37.868
+install the packages,
+
+00:00:37.988 --> 00:00:39.539
+import your CSS entry,
+
+00:00:39.743 --> 00:00:40.969
+then register the plugin.
+
+00:00:41.797 --> 00:00:43.359
+Choose the guide for your target.
+
+00:00:46.218 --> 00:00:48.309
+Build CSS and watch for changes.
+
+00:00:49.137 --> 00:00:50.471
+Merge classes and manage
+
+00:00:50.483 --> 00:00:51.625
+component variants.
+
+00:00:55.218 --> 00:00:56.228
+Pick your framework.
+
+00:00:57.055 --> 00:00:57.896
+Start building.

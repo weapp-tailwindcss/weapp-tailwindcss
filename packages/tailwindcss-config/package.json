@@ -1,17 +1,18 @@
 {
   "name": "tailwindcss-config",
   "type": "module",
-  "version": "2.0.2",
-  "description": "load tailwindcss config function",
+  "version": "2.0.6",
+  "description": "Tailwind CSS configuration loader for cross-platform toolchains. 跨端工具链的 Tailwind CSS 配置加载器。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",
+  "homepage": "https://tw.weapp.dev",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sonofmagic/weapp-tailwindcss.git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
     "directory": "packages/tailwindcss-config"
   },
   "bugs": {
-    "url": "https://github.com/sonofmagic/weapp-tailwindcss/issues"
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues"
   },
   "keywords": [
     "tailwindcss",

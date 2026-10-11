@@ -1,0 +1,34 @@
+diff --git a/commands/serve/mp.js b/commands/serve/mp.js
+index 8c19bd1533ec53d98101c4e42dbdfbe814fc065a..914cb2b29b8aa42a9ca322d94fd23d88e163df25 100644
+--- a/commands/serve/mp.js
++++ b/commands/serve/mp.js
+@@ -1,4 +1,5 @@
+ const webpack = require('webpack')
++const { error } = require('@vue/cli-shared-utils')
+ const { getCurrentTarget } = require('@mpxjs/cli-shared-utils')
+ const { symlinkTargetConfig } = require('../../utils/symlink')
+ const { handleWebpackDone } = require('../../utils/webpack')
+@@ -13,15 +14,22 @@ module.exports.serveMp = async function serveMp (api, options, args) {
+   await api.runAfterResolveWebpackCallBack(webpackConfigs)
+   // 运行webpack
+   return new Promise((resolve, reject) => {
++    let ready = false
+     webpack(webpackConfigs).watch({}, (err, stats) => {
+       handleWebpackDone(err, stats, true, options, webpackConfigs[0])
+         .then((...res) => {
+           if (!options.disabledDefaultLinkFile) {
+             symlinkTargetConfig(api, target, webpackConfigs[0])
+           }
++          ready = true
+           resolve(...res)
+         })
+-        .catch(reject)
++        .catch((err) => {
++          if (!ready) return reject(err)
++          // 首轮就绪后 Promise 已兑现；后续致命错误必须独立报告，不能再次 reject 后静默退出。
++          error(err)
++          process.exitCode = 1
++        })
+     })
+   })
+ }

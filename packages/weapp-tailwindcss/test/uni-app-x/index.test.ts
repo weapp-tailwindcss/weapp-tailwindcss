@@ -3,8 +3,13 @@ import { createGetCase, fixturesRootPath } from '#test/util'
 import process from 'node:process'
 import { beforeEach, afterEach } from 'vitest'
 import { vi } from 'vitest'
+import { createStyleHandler } from '@weapp-tailwindcss/postcss'
 import { getCompilerContext } from '@/context'
 import { transformUVue } from '@/uni-app-x'
+import {
+  shouldEnableComponentLocalStyle,
+  shouldEnablePageLocalStyle,
+} from '@/uni-app-x/local-style-matcher'
 import { replaceWxml } from '@/wxml'
 
 const getCase = createGetCase(fixturesRootPath)
@@ -90,6 +95,16 @@ const label = 'hi'
     expect(result?.code).toContain('handled(dynamicCls)')
     expect(result?.code).toContain('handled(\nconst label = \'hi\'\n)')
     expect(jsHandler).toHaveBeenCalled()
+  })
+
+  it('ignores empty external WXS script blocks', () => {
+    const jsHandler: JsHandler = vi.fn(source => ({ code: source }))
+    const code = `<script module="touch" lang="wxs" src="../../libs/use/useTouch/touch.wxs"></script>
+<script module="wxs" lang="wxs" src="./WX.wxs"></script>`
+
+    const result = transformUVue(code, 'external-wxs.uvue', jsHandler, new Set())
+    expect(result?.code).toBe(code)
+    expect(jsHandler).not.toHaveBeenCalled()
   })
 
   it('transforms object literal class bindings with whitespace', () => {
@@ -232,6 +247,141 @@ const condition = true
     expect(styleBlock).not.toContain(`:deep(.${aliasByUtility.get('h-[100rpx]')})`)
   })
 
+  it('serializes leading important utilities for Sass', () => {
+    const { jsHandler } = getCompilerContext({ uniAppX: true })
+    const runtimeSet = new Set(['!w-[100rpx]'])
+    const result = transformUVue(
+      '<template><view class="!w-[100rpx]">leading important</view></template>',
+      '/src/pages/index/index.uvue',
+      jsHandler,
+      runtimeSet,
+      { enablePageLocalStyle: true },
+    )
+    const styleBlock = extractInjectedStyle(result!.code)
+    expect(styleBlock).toContain("@apply w-[100rpx]#{'!'};")
+    expect(styleBlock).not.toContain('@apply !w-[100rpx];')
+    expect(result?.code).not.toContain('class="!w-[100rpx]"')
+  })
+
+  it('uses a Sass-safe marker for native important local styles', () => {
+    const { jsHandler } = getCompilerContext({ uniAppX: true })
+    const result = transformUVue(
+      '<template><view class="!mt-6 mt-6!">native important</view></template>\n<style lang="scss" scoped>.author { @apply !mt-6 mt-6!; }</style>',
+      '/src/pages/index/index.uvue',
+      jsHandler,
+      new Set(['!mt-6', 'mt-6!']),
+      { enablePageLocalStyle: true, native: true },
+    )
+
+    expect(result?.code).not.toContain('class="!mt-6 mt-6!"')
+    expect(result?.code).toContain('@apply mt-6__weapp_tw_important__ mt-6__weapp_tw_important__;')
+  })
+
+  it('normalizes important utilities across a complete uvue fixture', async () => {
+    const { jsHandler } = getCompilerContext({ uniAppX: true })
+    const source = await getCase('uni-app-x/issue-1113.uvue')
+    const result = transformUVue(
+      source,
+      '/src/pages/issue-1113/index.uvue',
+      jsHandler,
+      new Set(['!mt-6', 'mt-6!']),
+      { enablePageLocalStyle: true, native: true },
+    )
+
+    expect(result?.code).not.toContain('class="!mt-6 mt-6!"')
+    expect(result?.code).toContain('@apply mt-6__weapp_tw_important__ mt-6__weapp_tw_important__;')
+  })
+
+  it('serializes important utilities with CSS-safe syntax for Web local styles', async () => {
+    const { jsHandler } = getCompilerContext({ uniAppX: true })
+    const onWebLocalStyleRules = vi.fn()
+    const runtimeSet = new Set(['!mt-6', 'mt-6!'])
+    const result = transformUVue(
+      '<template><view class="!mt-6 mt-6!">Web important</view></template>\n<style scoped>.author { color: red; }</style>',
+      '/src/pages/index/index.uvue',
+      jsHandler,
+      runtimeSet,
+      {
+        enablePageLocalStyle: true,
+        onWebLocalStyleRules,
+      },
+    )
+
+    const styleRules = onWebLocalStyleRules.mock.calls[0]?.[0] as string | undefined
+    expect(result?.code).not.toContain('class="!mt-6 mt-6!"')
+    expect(styleRules).toContain('@apply mt-6!;')
+    expect(styleRules).not.toContain("#{'!'}")
+
+    const styleHandler = createStyleHandler({
+      appType: 'uni-app-x',
+      uniAppX: true,
+      majorVersion: 4,
+    })
+    await expect(styleHandler(styleRules!, {
+      appType: 'uni-app-x',
+      uniAppX: true,
+    })).resolves.toBeDefined()
+  })
+
+  it('uses a Sass-safe marker for Web-generated local style blocks', () => {
+    const { jsHandler } = getCompilerContext({ uniAppX: true })
+    const result = transformUVue(
+      '<template><view class="!mt-6">Web generated style</view></template>',
+      '/src/pages/index/index.uvue',
+      jsHandler,
+      new Set(['!mt-6']),
+      { enablePageLocalStyle: true, onWebLocalStyleRules: vi.fn() },
+    )
+
+    expect(result?.code).toContain('@apply mt-6__weapp_tw_important__;')
+    expect(result?.code).not.toContain('@apply mt-6!;')
+  })
+
+  it('recomputes dynamic custom-attribute important utilities across HMR rounds', () => {
+    const { jsHandler } = getCompilerContext({ uniAppX: true })
+    const rulesByRound: string[] = []
+    const runtimeSet = new Set(['p-0!', 'p-10!', 'p-4!'])
+
+    for (const utility of ['p-0!', 'p-10!', 'p-4!', 'p-0!']) {
+      const onWebLocalStyleRules = vi.fn((rules: string) => rulesByRound.push(rules))
+      const result = transformUVue(
+        `<template><view :pt="{ root: '${utility}' }">dynamic</view></template><style scoped>.author { color: red; }</style>`,
+        '/src/pages/index/index.uvue',
+        jsHandler,
+        runtimeSet,
+        {
+          customAttributesEntities: [['view', ['pt']]],
+          enablePageLocalStyle: true,
+          onWebLocalStyleRules,
+        },
+      )
+
+      expect(result?.code).toContain('wtu-')
+      expect(onWebLocalStyleRules).toHaveBeenCalledTimes(1)
+    }
+
+    expect(rulesByRound).toHaveLength(4)
+    expect(rulesByRound[0]).toContain('@apply p-0!;')
+    expect(rulesByRound[1]).toContain('@apply p-10!;')
+    expect(rulesByRound[1]).not.toContain('@apply p-0!;')
+    expect(rulesByRound[2]).toContain('@apply p-4!;')
+    expect(rulesByRound[3]).toContain('@apply p-0!;')
+
+    const clearRules = vi.fn()
+    transformUVue(
+      `<template><view :pt="{ root: 'p-0!' }">cleared</view></template><style scoped>.author { color: red; }</style>`,
+      '/src/pages/index/index.uvue',
+      jsHandler,
+      new Set(),
+      {
+        customAttributesEntities: [['view', ['pt']]],
+        enablePageLocalStyle: true,
+        onWebLocalStyleRules: clearRules,
+      },
+    )
+    expect(clearRules).toHaveBeenCalledWith('')
+  })
+
   it('honors disabledDefaultTemplateHandler with custom class rules', () => {
     const { jsHandler } = getCompilerContext()
     const runtimeSet = new Set<string>([
@@ -259,6 +409,48 @@ const condition = true
     const result = transformUVue('<template><view/></template>', 'App.vue', jsHandler, new Set())
     expect(result).toBeUndefined()
     expect(jsHandler).not.toHaveBeenCalled()
+  })
+
+  it('normalizes local style matcher ids and preserves default directories', () => {
+    expect(shouldEnableComponentLocalStyle('/project/src/components/card.uvue?vue&type=template')).toBe(true)
+    expect(shouldEnableComponentLocalStyle('C:\\project\\src\\components\\card.nvue#source')).toBe(true)
+    expect(shouldEnablePageLocalStyle('C:\\project\\src\\pages\\index.uvue?vue&type=template')).toBe(true)
+    expect(shouldEnableComponentLocalStyle('/project/src/layouts/default.uvue')).toBe(false)
+
+    const matcher = vi.fn((id: string) => id.endsWith('/layouts/default.uvue'))
+    expect(shouldEnableComponentLocalStyle('C:\\project\\src\\layouts\\default.uvue?vue&type=template', matcher)).toBe(true)
+    expect(matcher).toHaveBeenCalledWith('C:/project/src/layouts/default.uvue')
+  })
+
+  it('enables local styles for custom component directories only when matched', () => {
+    const { jsHandler } = getCompilerContext({ uniAppX: true })
+    const code = '<template><view class="px-4" /></template>'
+    const componentMatcher = (id: string) => id.endsWith('/layouts/default.uvue')
+    const matched = transformUVue(
+      code,
+      '/project/src/layouts/default.uvue?vue&type=template',
+      jsHandler,
+      new Set(['px-4']),
+      {
+        componentMatcher,
+        enableComponentLocalStyle: true,
+      },
+    )
+    const unmatched = transformUVue(
+      code,
+      '/project/src/views/default.uvue',
+      jsHandler,
+      new Set(['px-4']),
+      {
+        componentMatcher,
+        enableComponentLocalStyle: true,
+      },
+    )
+
+    expect(matched?.code).toContain('class="wtu-')
+    expect(matched?.code).toContain('@apply px-4;')
+    expect(unmatched?.code).toContain('class="px-4"')
+    expect(unmatched?.code).not.toContain('@apply px-4;')
   })
 
   it('does not expand static space-y utility in uvue template', () => {
@@ -465,6 +657,56 @@ const active = true
     expect(result?.code.match(/<style\b/g)).toHaveLength(1)
     expect(result?.code).toContain('.author { @apply flex; }')
     expect(result?.code).toMatch(/\.wtu-[\w-]+ \{\n  @apply bg-\[#123456\];\n\}/)
+  })
+
+  it('lowers web local utility specificity so variants can override the base utility', () => {
+    const { jsHandler } = getCompilerContext({ uniAppX: true })
+    const onWebLocalStyleRules = vi.fn()
+    const result = transformUVue(
+      '<template><view class="bg-[#eccc68] dark:bg-[#3498db]" /></template>\n<style scoped>.author { color: red; }</style>',
+      '/src/pages/index/index.uvue',
+      jsHandler,
+      new Set(['bg-[#eccc68]', 'dark:bg-[#3498db]']),
+      {
+        enablePageLocalStyle: true,
+        onWebLocalStyleRules,
+      },
+    )
+
+    expect(result?.code).toContain('class="wtu-')
+    expect(result?.code).toContain('dark:bg-[#3498db]')
+    expect(onWebLocalStyleRules).toHaveBeenCalledWith(expect.stringMatching(/:global\(\.wtu-[\w-]+\)/))
+  })
+
+  it('uses the same web-safe selector when a page has no scoped author style', () => {
+    const { jsHandler } = getCompilerContext({ uniAppX: true })
+    const result = transformUVue(
+      '<template><view class="bg-[#eccc68]" /></template>',
+      '/src/pages/index/index.uvue',
+      jsHandler,
+      new Set(['bg-[#eccc68]']),
+      {
+        enablePageLocalStyle: true,
+        onWebLocalStyleRules: vi.fn(),
+      },
+    )
+
+    expect(result?.code).toMatch(/<style scoped>\n\/\*! weapp-tailwindcss local-utility \*\/\n:global\(\.wtu-[\w-]+\)/)
+  })
+
+  it.each(['<style scoped>.author{color:red}</style>', ''])('includes mini-program variants in the same local cascade as base utilities', (style) => {
+    const jsHandler: JsHandler = (code: string) => ({ code })
+    const result = transformUVue(
+      `<template><view class="bg-[#eccc68] dark:bg-[#3498db]" /></template>
+${style}`,
+      '/project/pages/theme.uvue',
+      jsHandler,
+      new Set(['bg-[#eccc68]', 'dark:bg-[#3498db]']),
+      { enablePageLocalStyle: true, localStyleVariants: true },
+    )
+    expect(result?.code).toContain('@apply bg-[#eccc68]')
+    expect(result?.code).toContain('dark_cbg-_b_h3498db_B')
+    expect(result?.code).toContain('@apply dark:bg-[#3498db]')
   })
 
   it('keeps variant utilities on the global platform pipeline for app-harmony pages', () => {

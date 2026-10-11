@@ -3,13 +3,13 @@ import { normalizeSiteLocale } from './locale'
 
 const siteConfigCopy = {
   'zh-cn': {
-    tagline: '让 Tailwind CSS 稳定跑在小程序里，覆盖多框架与多构建器链路。',
+    tagline: 'Bring Tailwind CSS to every platform! 把 Tailwind CSS 的原子化开发体验带到全端！',
     metadata: {
       siteLanguage: 'zh-CN',
       ogLocale: 'zh_CN',
-      defaultMetaTitle: 'weapp-tailwindcss | Tailwind CSS 小程序事实标准工具链',
-      defaultMetaDescription: 'weapp-tailwindcss 为小程序生态提供 Tailwind CSS v4 的精确转译、构建器集成与运行时工具，覆盖 Taro、uni-app、原生小程序、Webpack、Vite 与 Gulp 场景。',
-      themeKeywords: ['weapp', '小程序', 'tailwindcss', '原子类', 'uni-app', 'taro', 'mpx', 'native', 'remax', '原生', 'webpack', 'plugin', 'vite', 'gulp', 'wxss', 'wxml'],
+      defaultMetaTitle: 'weapp-tailwindcss | 把 Tailwind CSS 带到全端',
+      defaultMetaDescription: 'weapp-tailwindcss 将 Tailwind CSS v4 的精确转译、构建器集成与运行时工具带到 Web、小程序、React Native、Lynx 与跨端框架。',
+      themeKeywords: ['weapp', '跨端', 'tailwindcss', '原子类', 'uni-app', 'taro', 'react-native', 'lynx', '原生', 'webpack', 'plugin', 'vite', 'gulp', 'wxss', 'wxml'],
       socialImageAlt: 'weapp-tailwindcss 项目标识',
     },
     geo: {
@@ -65,13 +65,13 @@ const siteConfigCopy = {
     },
   },
   'en': {
-    tagline: 'Bring Tailwind CSS to mini apps with a stable pipeline across frameworks and builders.',
+    tagline: 'Bring Tailwind CSS to every platform! Atomic utility-first development for the entire stack.',
     metadata: {
       siteLanguage: 'en-US',
       ogLocale: 'en_US',
-      defaultMetaTitle: 'weapp-tailwindcss | The Tailwind CSS toolchain for mini apps',
-      defaultMetaDescription: 'weapp-tailwindcss delivers precise Tailwind CSS v4 transforms, builder integrations, and runtime utilities for Taro, uni-app, native mini apps, Webpack, Vite, and Gulp.',
-      themeKeywords: ['weapp', 'mini app', 'mini program', 'tailwindcss', 'utility classes', 'uni-app', 'taro', 'mpx', 'native', 'webpack', 'plugin', 'vite', 'gulp', 'wxss', 'wxml'],
+      defaultMetaTitle: 'weapp-tailwindcss | Tailwind CSS for every platform',
+      defaultMetaDescription: 'weapp-tailwindcss brings precise Tailwind CSS v4 transforms, builder integrations, and runtime utilities to Web, mini programs, React Native, Lynx, and cross-platform frameworks.',
+      themeKeywords: ['weapp', 'cross-platform', 'tailwindcss', 'utility classes', 'uni-app', 'taro', 'react-native', 'lynx', 'native', 'webpack', 'plugin', 'vite', 'gulp', 'wxss', 'wxml'],
       socialImageAlt: 'weapp-tailwindcss project logo',
     },
     geo: {

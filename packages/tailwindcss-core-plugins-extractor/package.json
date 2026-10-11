@@ -1,18 +1,18 @@
 {
   "name": "tailwindcss-core-plugins-extractor",
   "type": "module",
-  "version": "0.2.0",
-  "description": "tailwindcss-core-plugins-extractor",
+  "version": "0.2.3",
+  "description": "Tailwind CSS core plugin extractor for cross-platform integrations. 面向跨端集成的 Tailwind CSS 核心插件提取器。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",
-  "homepage": "https://tw.icebreaker.top",
+  "homepage": "https://tw.weapp.dev",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sonofmagic/weapp-tailwindcss.git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
     "directory": "packages/tailwindcss-core-plugins-extractor"
   },
   "bugs": {
-    "url": "https://github.com/sonofmagic/weapp-tailwindcss/issues"
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues"
   },
   "keywords": [
     "tailwindcss",
@@ -31,7 +31,7 @@
   "scripts": {
     "extract": "node scripts/main.js",
     "build": "tsdown",
-    "sync": "cnpm sync tailwindcss-core-plugins-extractor"
+    "sync": "repo release sync-npmmirror --package tailwindcss-core-plugins-extractor"
   },
   "publishConfig": {
     "access": "public",

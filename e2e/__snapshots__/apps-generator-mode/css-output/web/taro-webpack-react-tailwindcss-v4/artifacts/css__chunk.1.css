@@ -7,6 +7,8 @@
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
     --color-yellow-300: oklch(90.5% 0.182 98.111);
     --color-emerald-400: oklch(76.5% 0.177 163.223);
+    --color-blue-200: oklch(88.2% 0.059 254.128);
+    --color-blue-500: oklch(62.3% 0.214 259.815);
     --color-purple-500: oklch(62.7% 0.265 303.9);
     --color-purple-800: oklch(43.8% 0.218 303.724);
     --color-pink-200: oklch(89.9% 0.061 343.231);
@@ -296,11 +298,33 @@
   .rounded-full\! {
     border-radius: calc(infinity * 1px) !important;
   }
+ /*tokens: rounded-s-full <= src/pages/index/index.tsx */
+  .rounded-s-full {
+    border-start-start-radius: calc(infinity * 1px);
+    border-end-start-radius: calc(infinity * 1px);
+  }
+ /*tokens: rounded-t-full <= src/pages/index/index.tsx */
+  .rounded-t-full {
+    border-top-left-radius: calc(infinity * 1px);
+    border-top-right-radius: calc(infinity * 1px);
+  }
+  .border {
+    border-style: var(--tw-border-style);
+    border-width: 1px;
+  }
   .bg-\[\#0977ee\] {
     background-color: #0977ee;
   }
   .bg-\[\#534312\] {
     background-color: #534312;
+  }
+ /*tokens: bg-blue-200 <= src/pages/index/index.tsx */
+  .bg-blue-200 {
+    background-color: var(--color-blue-200);
+  }
+ /*tokens: bg-blue-500 <= src/pages/index/index.tsx */
+  .bg-blue-500 {
+    background-color: var(--color-blue-500);
   }
  /*tokens: bg-purple-800 <= src/pages/index/index.tsx */
   .bg-purple-800 {
@@ -669,6 +693,11 @@
   syntax: '*';
   inherits: false;
 }
+@property --tw-border-style {
+  syntax: '*';
+  inherits: false;
+  initial-value: solid;
+}
 @property --tw-gradient-position {
   syntax: '*';
   inherits: false;
@@ -722,6 +751,7 @@
       --tw-rotate-z: initial;
       --tw-skew-x: initial;
       --tw-skew-y: initial;
+      --tw-border-style: solid;
       --tw-gradient-position: initial;
       --tw-gradient-from: #0000;
       --tw-gradient-via: #0000;
@@ -744,6 +774,8 @@
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
     --color-yellow-300: oklch(90.5% 0.182 98.111);
     --color-emerald-400: oklch(76.5% 0.177 163.223);
+    --color-blue-200: oklch(88.2% 0.059 254.128);
+    --color-blue-500: oklch(62.3% 0.214 259.815);
     --color-purple-500: oklch(62.7% 0.265 303.9);
     --color-purple-800: oklch(43.8% 0.218 303.724);
     --color-pink-200: oklch(89.9% 0.061 343.231);
@@ -862,6 +894,11 @@
   syntax: '*';
   inherits: false;
 }
+@property --tw-border-style {
+  syntax: '*';
+  inherits: false;
+  initial-value: solid;
+}
 @property --tw-gradient-position {
   syntax: '*';
   inherits: false;
@@ -912,6 +949,7 @@
       --tw-rotate-z: initial;
       --tw-skew-x: initial;
       --tw-skew-y: initial;
+      --tw-border-style: solid;
       --tw-gradient-position: initial;
       --tw-gradient-from: #0000;
       --tw-gradient-via: #0000;
@@ -928,6 +966,7 @@
       --tw-rotate-z: initial;
       --tw-skew-x: initial;
       --tw-skew-y: initial;
+      --tw-border-style: solid;
       --tw-gradient-position: initial;
       --tw-gradient-from: #0000;
       --tw-gradient-via: #0000;
@@ -947,6 +986,7 @@
       --tw-rotate-z: initial;
       --tw-skew-x: initial;
       --tw-skew-y: initial;
+      --tw-border-style: solid;
       --tw-gradient-position: initial;
       --tw-gradient-from: #0000;
       --tw-gradient-via: #0000;

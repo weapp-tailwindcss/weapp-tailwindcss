@@ -1,199 +1,56 @@
-import type { TailwindV4GenerateOptions, TailwindV4ResolvedSource, TailwindV4SourcePattern } from '../types'
+import type { TailwindV4GenerateOptions, TailwindV4ResolvedSource } from '../types'
+import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { postcss } from '@weapp-tailwindcss/postcss'
-import { resolveCssSourceEntries, resolveTailwindSourceEntry } from '@/tailwindcss/source-scan'
+import { describeCssSources, postcss, resolveCssScanSources } from '@weapp-tailwindcss/postcss/transform'
+import { LEGACY_SOURCE_IGNORED_PATTERNS } from '@weapp-tailwindcss/source-scan'
 
-type TailwindV4ResolvedScanSources = TailwindV4GenerateOptions['scanSources']
-
-const TAILWIND_V4_DEFAULT_IGNORED_SOURCE_PATTERNS = [
-  '**/.git/**',
-  '**/.hg/**',
-  '**/.jj/**',
-  '**/.next/**',
-  '**/.parcel-cache/**',
-  '**/.pnpm-store/**',
-  '**/.svelte-kit/**',
-  '**/.svn/**',
-  '**/.turbo/**',
-  '**/.venv/**',
-  '**/.vercel/**',
-  '**/.yarn/**',
-  '**/__pycache__/**',
-  '**/node_modules/**',
-  '**/venv/**',
-  '**/*.less',
-  '**/*.lock',
-  '**/*.sass',
-  '**/*.scss',
-  '**/*.styl',
-  '**/*.log',
-  '**/tailwind.config.js',
-  '**/tailwind.config.cjs',
-  '**/tailwind.config.mjs',
-  '**/tailwind.config.ts',
-  '**/tailwind.config.cts',
-  '**/tailwind.config.mts',
-  '**/tailwind.config.*.js',
-  '**/tailwind.config.*.cjs',
-  '**/tailwind.config.*.mjs',
-  '**/tailwind.config.*.ts',
-  '**/tailwind.config.*.cts',
-  '**/tailwind.config.*.mts',
-  '**/package-lock.json',
-  '**/pnpm-lock.yaml',
-  '**/bun.lockb',
-  '**/.gitignore',
-  '**/.env',
-  '**/.env.*',
-]
-
-function parseImportSourceParam(params: string) {
-  const match = /\bsource\(\s*(none|(['"])(.*?)\2)\s*\)/.exec(params)
-  if (!match) {
-    return undefined
-  }
-  return {
-    none: match[1] === 'none',
-    sourcePath: match[3],
-  }
-}
-
-function parseCssImportSpecifier(params: string) {
-  const value = params.trim()
-  const quoted = /^(['"])(.*?)\1/.exec(value)
-  if (quoted) {
-    return quoted[2]
-  }
-
-  const url = /^url\(\s*(?:(['"])(.*?)\1|([^'")\s]+))\s*\)/.exec(value)
-  return url?.[2] ?? url?.[3]
-}
-
-function isTailwindCssImport(params: string) {
-  const specifier = parseCssImportSpecifier(params)
-  return specifier === 'tailwindcss'
-    || specifier?.startsWith('tailwindcss/')
-    || specifier?.replaceAll('\\', '/').endsWith('/tailwindcss/index.css')
-}
-
-function resolveSourceBase(base: string, sourcePath: string) {
-  return path.isAbsolute(sourcePath) ? sourcePath : path.resolve(base, sourcePath)
-}
-
-function createDefaultIgnoredScanSources(base: string) {
-  return TAILWIND_V4_DEFAULT_IGNORED_SOURCE_PATTERNS.map(pattern => ({
-    base,
-    pattern,
-    negated: true,
-  }))
-}
-
-function normalizeCssDefinedScanSources(base: string, entries: TailwindV4SourcePattern[]) {
-  return entries.length > 0 && entries.every(entry => entry.negated)
-    ? [
-        {
-          base,
-          pattern: '**/*',
-          negated: false,
-        },
-        ...entries,
-      ]
-    : entries
-}
-
-function resolveDefaultSourceBase(source: Pick<TailwindV4ResolvedSource, 'base'> & Partial<Pick<TailwindV4ResolvedSource, 'projectRoot' | 'cwd'>>) {
-  return source.projectRoot ?? source.cwd ?? source.base
-}
-
-async function resolveCssDefinedScanSources(source: Pick<TailwindV4ResolvedSource, 'base' | 'css' | 'dependencies'> & Partial<Pick<TailwindV4ResolvedSource, 'projectRoot' | 'cwd'>>): Promise<TailwindV4ResolvedScanSources | undefined> {
-  let importSourceBase: string | undefined
-  let hasSourceNone = false
-  let hasTailwindImport = false
-  const from = source.dependencies[0]
-  let root: postcss.Root
-  try {
-    root = postcss.parse(source.css, { from })
-  }
-  catch {
-    return undefined
-  }
-
-  root.walkAtRules((rule) => {
-    if (rule.name === 'import') {
-      if (!isTailwindCssImport(rule.params)) {
-        return
-      }
-      hasTailwindImport = true
-      const sourceParam = parseImportSourceParam(rule.params)
-      if (sourceParam?.none) {
-        hasSourceNone = true
-      }
-      if (sourceParam?.sourcePath) {
-        importSourceBase = resolveSourceBase(source.base, sourceParam.sourcePath)
-      }
-    }
-  })
-
-  const sourcePatterns = await resolveCssSourceEntries(root, source.base, '**/*')
-  if (!importSourceBase) {
-    if (sourcePatterns.length > 0) {
-      return [
-        ...normalizeCssDefinedScanSources(source.base, sourcePatterns),
-        ...createDefaultIgnoredScanSources(source.base),
-      ]
-    }
-    if (hasSourceNone) {
-      return false
-    }
-    if (hasTailwindImport) {
-      const defaultBase = resolveDefaultSourceBase(source)
-      return [
-        await resolveTailwindSourceEntry('.', defaultBase, false, '**/*'),
-        ...createDefaultIgnoredScanSources(defaultBase),
-      ]
-    }
-    return undefined
-  }
-
-  return [
-    await resolveTailwindSourceEntry('.', importSourceBase, false, '**/*'),
-    ...sourcePatterns,
-    ...createDefaultIgnoredScanSources(importSourceBase),
-  ]
-}
-
-export async function resolveScanSources(
-  source: TailwindV4ResolvedSource,
-  scanSources: TailwindV4GenerateOptions['scanSources'],
-) {
+export async function resolveScanSources(source: TailwindV4ResolvedSource, scanSources: TailwindV4GenerateOptions['scanSources']) {
   if (scanSources !== true) {
     return scanSources
   }
-  return await resolveCssDefinedScanSources(source) ?? false
+  const definitions: Array<{ root: postcss.Root, base: string }> = []
+  const append = (css: string, base: string, from?: string) => {
+    try {
+      definitions.push({ root: postcss.parse(css, { from }), base })
+    }
+    catch {
+    }
+  }
+  append(source.css, source.base, source.dependencies[0])
+  for (const file of source.dependencies.slice(1)) {
+    try {
+      append(readFileSync(file, 'utf8'), path.dirname(file), file)
+    }
+    catch {
+    }
+  }
+  const scan = await resolveCssScanSources(definitions, {
+    base: source.base,
+    defaultBase: source.projectRoot ?? source.cwd ?? source.base,
+    automatic: 'fallback',
+    requireImport: true,
+    pattern: '**/*',
+    configResolution: 'module',
+    ignoredPatterns: LEGACY_SOURCE_IGNORED_PATTERNS,
+  })
+  return scan.entries.some(entry => !entry.negated) || scan.explicitEntries.length + scan.configEntries.length > 0
+    ? scan.entries
+    : false
 }
 
 export function resolveCompiledSourceRoot(source: Pick<TailwindV4ResolvedSource, 'base' | 'css'>) {
-  let root: null | 'none' | { base: string, pattern: string } = null
   try {
-    postcss.parse(source.css).walkAtRules('import', (rule) => {
-      if (!isTailwindCssImport(rule.params)) {
-        return
+    const descriptor = describeCssSources(postcss.parse(source.css))
+    for (const item of descriptor.imports) {
+      if (item.none) {
+        return 'none' as const
       }
-      const sourceParam = parseImportSourceParam(rule.params)
-      if (sourceParam?.none) {
-        root = 'none'
-        return false
+      if (item.sourcePath) {
+        return { base: source.base, pattern: item.sourcePath }
       }
-      if (sourceParam?.sourcePath) {
-        root = {
-          base: source.base,
-          pattern: sourceParam.sourcePath,
-        }
-        return false
-      }
-    })
+    }
   }
   catch {
   }
-  return root
+  return null
 }

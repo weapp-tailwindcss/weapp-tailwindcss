@@ -1,0 +1,14 @@
+packages:
+  - .
+allowBuilds:
+  '@swc/core': true
+  esbuild: true
+minimumReleaseAge: 0
+minimumReleaseAgeExclude:
+  - weapp-tailwindcss@5.5.5
+  - "@weapp-tailwindcss/postcss@3.3.3"
+  - weapp-vite
+  - wevu
+  - "@weapp-vite/*"
+  - "@weapp-core/*"
+  - "@wevu/*"

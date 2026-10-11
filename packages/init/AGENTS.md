@@ -32,5 +32,5 @@
 - `pnpm --filter @weapp-tailwindcss/init test`
 - `pnpm --filter @weapp-tailwindcss/init build`
 - 定向回归：
-  - `pnpm --filter @weapp-tailwindcss/init vitest run test/init.test.ts`
-  - `pnpm --filter @weapp-tailwindcss/init vitest run test/npm.test.ts`
+  - `pnpm --filter @weapp-tailwindcss/init exec vitest run test/init.test.ts`
+  - `pnpm --filter @weapp-tailwindcss/init exec vitest run test/npm.test.ts`

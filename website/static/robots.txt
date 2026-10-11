@@ -1,4 +1,5 @@
 User-agent: *
 Disallow:
 Allow: /
-Sitemap: https://tw.icebreaker.top/sitemap.xml
+Sitemap: https://tw.weapp.dev/sitemap.xml
+Sitemap: https://tw.weapp.dev/zh-cn/sitemap.xml

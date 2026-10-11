@@ -1,5 +1,6 @@
 ---
 sidebar: aiSidebar
+audience: maintainer
 title: AI 生成小程序代码
 description: 本页面为使用 AI 快速构建小程序的专题，希望能够帮助大家不断的提升自己的开发效率
 keywords:
@@ -27,7 +28,7 @@ keywords:
 
 ## AI 学习中心：Skill 快速安装
 
-官方 Skill 已按任务拆分为 1 个兼容协调入口和 6 个专用工作流。推荐安装整套，以覆盖接入、迁移、排障、运行时、自定义构建和 Expo React Native：
+官方 Skill 已按任务拆分为 1 个兼容协调入口和 7 个专用工作流。推荐安装整套，以覆盖接入、迁移、排障、运行时、自定义构建、Expo React Native 和 ReactLynx/Rspeedy：
 
 ```bash
 npx skills add sonofmagic/skills \
@@ -38,12 +39,17 @@ npx skills add sonofmagic/skills \
   --skill weapp-tailwindcss-runtime \
   --skill weapp-tailwindcss-custom-build \
   --skill weapp-tailwindcss-react-native \
+  --skill weapp-tailwindcss-lynx \
   -y
 ```
 
 原来的 `weapp-tailwindcss` 名称继续作为轻量协调入口，旧安装命令不会失效。
 
 详细说明见：[Skill（技能系统）](/docs/ai/basics/skill)
+
+:::warning 仅供仓库维护者
+以下命令用于贡献者和网站维护者，不是普通项目的接入步骤。
+:::
 
 ## 如何参与贡献
 
@@ -55,7 +61,7 @@ npx skills add sonofmagic/skills \
 
 ### 开始
 
-点击 [`fork weapp-tailwindcss`](https://github.com/sonofmagic/weapp-tailwindcss/fork), 然后 `git clone` 到本地在打开这个目录:
+点击 [`fork weapp-tailwindcss`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/fork), 然后 `git clone` 到本地在打开这个目录:
 
 1. 执行 `pnpm i` 安装依赖
 2. 执行 `pnpm build:pkg` 构建 `website` 的本地依赖包

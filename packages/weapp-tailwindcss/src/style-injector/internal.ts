@@ -1,4 +1,4 @@
-import type { Plugin } from 'vite'
+import type { Plugin, ResolvedConfig } from 'vite'
 import type { WebpackObjectPluginInstance, WebpackWeappStyleInjectorOptions } from 'weapp-style-injector/webpack'
 import type { WeappTailwindcssStyleInjectorUserOptions } from './options'
 import { weappStyleInjector } from 'weapp-style-injector/vite'
@@ -8,22 +8,24 @@ import { weappStyleInjectorWebpack } from 'weapp-style-injector/webpack'
 import { StyleInjector as MpxWebpackStyleInjector } from 'weapp-style-injector/webpack/mpx'
 import { StyleInjector as TaroWebpackStyleInjector } from 'weapp-style-injector/webpack/taro'
 import { StyleInjector as UniAppWebpackStyleInjector } from 'weapp-style-injector/webpack/uni-app'
-import { normalizeStyleInjectorOptions } from './options'
+import { getViteHookHandler } from '@/bundlers/vite/plugin-hook'
+import { omitUndefined } from '@/utils/object'
+import { normalizeStyleInjectorOptions, resolveStyleInjectorSubPackages } from './options'
 
-type VitePluginResult = Plugin | Plugin[]
-type ViteHookContext = ThisParameterType<NonNullable<Plugin['buildStart']>>
+type VitePluginResult = Plugin | Plugin[] | undefined
+type ViteBuildStart = Extract<Plugin['buildStart'], (...args: never[]) => unknown>
 export type ViteStyleInjectorDelegateFactory = (options: NonNullable<ReturnType<typeof normalizeStyleInjectorOptions>>) => Plugin[]
 export type WebpackStyleInjectorDelegateFactory = (
   options: NonNullable<ReturnType<typeof normalizeWebpackStyleInjectorOptions>>,
 ) => WebpackObjectPluginInstance
 
 function toPluginArray(pluginOrPlugins: VitePluginResult): Plugin[] {
-  return Array.isArray(pluginOrPlugins) ? pluginOrPlugins : [pluginOrPlugins]
+  return pluginOrPlugins ? (Array.isArray(pluginOrPlugins) ? pluginOrPlugins : [pluginOrPlugins]) : []
 }
 
 function normalizeWebpackStyleInjectorOptions(
   options: WeappTailwindcssStyleInjectorUserOptions | undefined,
-): WebpackWeappStyleInjectorOptions | undefined {
+) {
   const normalized = normalizeStyleInjectorOptions(options)
   if (!normalized) {
     return undefined
@@ -33,7 +35,7 @@ function normalizeWebpackStyleInjectorOptions(
     loadSubpackageTargetStyle,
     ...rest
   } = normalized
-  const webpackOptions: WebpackWeappStyleInjectorOptions = {
+  const webpackOptions: typeof rest & Pick<WebpackWeappStyleInjectorOptions, 'generateSubpackageStyle' | 'loadSubpackageTargetStyle'> = {
     ...rest,
   }
   if (generateSubpackageStyle) {
@@ -57,37 +59,17 @@ function normalizeWebpackStyleInjectorOptions(
   return webpackOptions
 }
 
-function getTransformHandler(hook: Plugin['transform'] | undefined) {
-  if (typeof hook === 'function') {
-    return hook
-  }
-  if (hook && typeof hook === 'object' && typeof hook.handler === 'function') {
-    return hook.handler
-  }
-  return undefined
-}
-
-function getGenerateBundleHandler(hook: Plugin['generateBundle'] | undefined) {
-  if (typeof hook === 'function') {
-    return hook
-  }
-  if (hook && typeof hook === 'object' && typeof hook.handler === 'function') {
-    return hook.handler
-  }
-  return undefined
-}
-
 export const viteStyleInjectorDelegates = {
   generic: (options => [weappStyleInjector(options)]) satisfies ViteStyleInjectorDelegateFactory,
-  taro: (options => toPluginArray(TaroViteStyleInjector(options))) satisfies ViteStyleInjectorDelegateFactory,
-  uniApp: (options => toPluginArray(UniAppViteStyleInjector(options))) satisfies ViteStyleInjectorDelegateFactory,
+  taro: (options => toPluginArray(TaroViteStyleInjector(omitUndefined({ ...options, subPackages: resolveStyleInjectorSubPackages(options.subPackages, 'appConfigPath') })))) satisfies ViteStyleInjectorDelegateFactory,
+  uniApp: (options => toPluginArray(UniAppViteStyleInjector(omitUndefined({ ...options, subPackages: resolveStyleInjectorSubPackages(options.subPackages, 'pagesJsonPath') })))) satisfies ViteStyleInjectorDelegateFactory,
 }
 
 export const webpackStyleInjectorDelegates = {
-  generic: (options => weappStyleInjectorWebpack(options)) satisfies WebpackStyleInjectorDelegateFactory,
-  mpx: (options => MpxWebpackStyleInjector(options)) satisfies WebpackStyleInjectorDelegateFactory,
-  taro: (options => TaroWebpackStyleInjector(options)) satisfies WebpackStyleInjectorDelegateFactory,
-  uniApp: (options => UniAppWebpackStyleInjector(options)) satisfies WebpackStyleInjectorDelegateFactory,
+  generic: (options => weappStyleInjectorWebpack(omitUndefined(options))) satisfies WebpackStyleInjectorDelegateFactory,
+  mpx: (options => MpxWebpackStyleInjector(omitUndefined({ ...options, subPackages: resolveStyleInjectorSubPackages(options.subPackages, 'appPath') }))) satisfies WebpackStyleInjectorDelegateFactory,
+  taro: (options => TaroWebpackStyleInjector(omitUndefined({ ...options, subPackages: resolveStyleInjectorSubPackages(options.subPackages, 'appConfigPath') }))) satisfies WebpackStyleInjectorDelegateFactory,
+  uniApp: (options => UniAppWebpackStyleInjector(omitUndefined({ ...options, subPackages: resolveStyleInjectorSubPackages(options.subPackages, 'pagesJsonPath') }))) satisfies WebpackStyleInjectorDelegateFactory,
 }
 
 export function createBuiltinViteStyleInjectorPlugins(
@@ -99,7 +81,7 @@ export function createBuiltinViteStyleInjectorPlugins(
     return []
   }
 
-  let config: Parameters<NonNullable<Plugin['configResolved']>>[0] | undefined
+  let configuration: { config: ResolvedConfig, context: ThisParameterType<Extract<Plugin['configResolved'], (...args: never[]) => unknown>> } | undefined
   let delegates: Plugin[] | undefined
   let delegatesConfigured = false
   let delegatesBuildStarted = false
@@ -113,27 +95,23 @@ export function createBuiltinViteStyleInjectorPlugins(
   }
 
   const configureDelegates = async () => {
-    if (delegatesConfigured || !config) {
+    if (delegatesConfigured || !configuration) {
       return
     }
     delegatesConfigured = true
     for (const plugin of resolveDelegates()) {
-      if (typeof plugin.configResolved === 'function') {
-        await plugin.configResolved(config)
-      }
+      await getViteHookHandler(plugin.configResolved)?.call(configuration.context, configuration.config)
     }
   }
 
-  const startDelegates = async (context: ViteHookContext) => {
+  const startDelegates = async (context: ThisParameterType<ViteBuildStart>, buildOptions: Parameters<ViteBuildStart>[0]) => {
     if (delegatesBuildStarted) {
       return
     }
     await configureDelegates()
     delegatesBuildStarted = true
     for (const plugin of resolveDelegates()) {
-      if (typeof plugin.buildStart === 'function') {
-        await plugin.buildStart.call(context, {})
-      }
+      await getViteHookHandler(plugin.buildStart)?.call(context, buildOptions)
     }
   }
 
@@ -143,18 +121,19 @@ export function createBuiltinViteStyleInjectorPlugins(
       apply: 'build',
       enforce: 'pre',
       configResolved(resolvedConfig) {
-        config = resolvedConfig
+        configuration = { config: resolvedConfig, context: this }
       },
-      async buildStart() {
-        await startDelegates(this)
+      async buildStart(buildOptions) {
+        await startDelegates(this, buildOptions)
       },
       async load(id, options) {
         await configureDelegates()
         for (const plugin of resolveDelegates()) {
-          if (typeof plugin.load !== 'function') {
+          const handler = getViteHookHandler(plugin.load)
+          if (!handler) {
             continue
           }
-          const result = await plugin.load.call(this, id, options)
+          const result = await handler.call(this, id, options)
           if (result != null) {
             return result
           }
@@ -165,7 +144,7 @@ export function createBuiltinViteStyleInjectorPlugins(
         let currentCode = code
         let changed = false
         for (const plugin of resolveDelegates()) {
-          const handler = getTransformHandler(plugin.transform)
+          const handler = getViteHookHandler(plugin.transform)
           if (!handler) {
             continue
           }
@@ -195,12 +174,12 @@ export function createBuiltinViteStyleInjectorPlugins(
       apply: 'build',
       enforce: 'post',
       configResolved(resolvedConfig) {
-        config = resolvedConfig
+        configuration = { config: resolvedConfig, context: this }
       },
       async generateBundle(outputOptions, bundle, isWrite) {
         await configureDelegates()
         for (const plugin of resolveDelegates()) {
-          const handler = getGenerateBundleHandler(plugin.generateBundle)
+          const handler = getViteHookHandler(plugin.generateBundle)
           if (!handler) {
             continue
           }

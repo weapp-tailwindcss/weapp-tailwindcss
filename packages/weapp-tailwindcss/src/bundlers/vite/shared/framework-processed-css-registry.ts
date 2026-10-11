@@ -52,6 +52,10 @@ export function createFrameworkProcessedCssRegistry() {
   }
 
   return {
+    dispose() {
+      results.clear()
+      sourceFiles.clear()
+    },
     entries: () => results.entries(),
     get,
     getStats: () => ({

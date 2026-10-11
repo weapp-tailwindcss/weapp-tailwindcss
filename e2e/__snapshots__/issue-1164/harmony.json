@@ -1,0 +1,91 @@
+{
+  "issue-1164-author": {
+    "borderTopWidth": 0,
+    "borderRightWidth": 0,
+    "borderBottomWidth": 0,
+    "borderLeftWidth": 0,
+    "backgroundColor": "#ff7a00",
+    "height": 100,
+    "width": "100%",
+    "paddingLeft": 12
+  },
+  "issue-1164-author-circle": {
+    "borderTopWidth": 0,
+    "borderRightWidth": 0,
+    "borderBottomWidth": 0,
+    "borderLeftWidth": 0,
+    "backgroundColor": "#f21903",
+    "height": 48,
+    "width": 48,
+    "borderTopLeftRadius": 9999,
+    "borderTopRightRadius": 9999,
+    "borderBottomRightRadius": 9999,
+    "borderBottomLeftRadius": 9999
+  },
+  "issue-1164-block": {
+    "borderTopWidth": 0,
+    "borderRightWidth": 0,
+    "borderBottomWidth": 0,
+    "borderLeftWidth": 0,
+    "backgroundColor": "#ff7a00",
+    "height": 100,
+    "width": "100%"
+  },
+  "issue-1164-block-circle": {
+    "borderTopWidth": 0,
+    "borderRightWidth": 0,
+    "borderBottomWidth": 0,
+    "borderLeftWidth": 0,
+    "backgroundColor": "#f21903",
+    "height": 48,
+    "width": 48,
+    "borderTopLeftRadius": 9999,
+    "borderTopRightRadius": 9999,
+    "borderBottomRightRadius": 9999,
+    "borderBottomLeftRadius": 9999
+  },
+  "issue-1164-empty": {
+    "borderTopWidth": 0,
+    "borderRightWidth": 0,
+    "borderBottomWidth": 0,
+    "borderLeftWidth": 0,
+    "backgroundColor": "#ff7a00",
+    "height": 100,
+    "width": "100%"
+  },
+  "issue-1164-empty-circle": {
+    "borderTopWidth": 0,
+    "borderRightWidth": 0,
+    "borderBottomWidth": 0,
+    "borderLeftWidth": 0,
+    "backgroundColor": "#f21903",
+    "height": 48,
+    "width": 48,
+    "borderTopLeftRadius": 9999,
+    "borderTopRightRadius": 9999,
+    "borderBottomRightRadius": 9999,
+    "borderBottomLeftRadius": 9999
+  },
+  "issue-1164-line": {
+    "borderTopWidth": 0,
+    "borderRightWidth": 0,
+    "borderBottomWidth": 0,
+    "borderLeftWidth": 0,
+    "backgroundColor": "#ff7a00",
+    "height": 100,
+    "width": "100%"
+  },
+  "issue-1164-line-circle": {
+    "borderTopWidth": 0,
+    "borderRightWidth": 0,
+    "borderBottomWidth": 0,
+    "borderLeftWidth": 0,
+    "backgroundColor": "#f21903",
+    "height": 48,
+    "width": 48,
+    "borderTopLeftRadius": 9999,
+    "borderTopRightRadius": 9999,
+    "borderBottomRightRadius": 9999,
+    "borderBottomLeftRadius": 9999
+  }
+}

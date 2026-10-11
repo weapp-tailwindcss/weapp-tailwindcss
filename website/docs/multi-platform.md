@@ -225,46 +225,29 @@ WeappTailwindcss({
 
 ## CSS 变量计算模式
 
-Tailwind CSS 4 下，CSS 变量与 `calc()` 的预计算默认关闭。这样可以避免 `var()` 中的大体积值被展开后，再被 Autoprefixer 复制到兼容声明中。例如图标插件生成的 `--svg` data URI 默认只会保留一份。
+明确的微信平台与 Tailwind CSS 4 下，未指定 `cssOptions.cssCalc` 默认采用 `'auto'`：在 Vite 完整产物作用域内计算固定 rpx 主题，并归约 rpx 字面量 calc。H5、原生 App、其他及未知平台保留原默认行为。本变更晚于 5.5.10。
 
-需要解决部分机型对 `calc` 与 `rpx` 计算不一致的问题时，可以显式开启：
+自动模式不展开普通 var，也不计算无关单位。已知覆盖和不完整作用域会保留变量表达式；需要未来 JS 或内联样式动态修改主题时，请显式设置 `cssOptions: { cssCalc: false }`。兼容边界和诊断见[微信 rpx 计算说明](./issues/spacing-rpx.md)。
 
-```ts
-WeappTailwindcss({
-  cssOptions: {
-    cssCalc: true,
-  },
-})
-```
+默认模式只针对固定 rpx，不会同时把 px 变量固定化。以下对照使用普通 `@theme`，限定微信 + Tailwind CSS 4、完整 Vite 样式上下文、无已知覆盖，且没有额外单位转换或自定义插件改写：
 
-启用后会补充一条预计算声明，并默认保留后面的原始 `var()` / `calc()` 声明。这样可以保持 CSS 级联兼容，但会让单个工具类出现两份等价的属性；如果目标小程序运行时会优先采用后续原始声明，或者你希望减小 CSS 体积，需要显式指定要清理的 CSS 变量。
+| 主题配置 | `cssOptions.cssCalc` | `mt-2` | `gap-2` |
+| --- | --- | --- | --- |
+| `--spacing: 1rpx` | 未配置或 `'auto'` | `margin-top: 2rpx` | `gap: 2rpx` |
+| `--spacing: 1px` | 未配置或 `'auto'` | `margin-top: calc(var(--spacing) * 2)` | `gap: calc(var(--spacing) * 2)` |
+| `--spacing: 1px` | `true` | `margin-top: 2px` | `gap: 2px` |
+| `--spacing: 1rpx` 或 `1px` | `false` | `margin-top: calc(var(--spacing) * 2)` | `gap: calc(var(--spacing) * 2)` |
 
-例如 Tailwind CSS 4 生成：
+`false` 仅关闭本插件的计算，其他插件仍可能改写表达式。动态 px spacing 可以通过 Vue 的 `style` 绑定修改；动态 rpx 尺寸建议由 JS 算出最终长度，再通过普通 `var()` 使用。完整 uni-app 示例见[固定尺寸与运行时主题如何选择](./issues/spacing-rpx.md#固定尺寸与运行时主题如何选择)。
 
-```css
-page,
-:root {
-  --spacing: 8rpx;
-}
-.h-2 {
-  height: calc(var(--spacing) * 2);
-}
-```
-
-显式启用 `cssOptions.cssCalc` 后会补出预计算结果，并保留原声明：
+`cssCalc: true` 只对能够证明固定的变量计算 `calc()`，默认用静态结果替换原表达式。例如 Tailwind 生成的无条件根主题：
 
 ```css
-page,
-:root {
-  --spacing: 8rpx;
-}
-.h-2 {
-  height: 16rpx;
-  height: calc(var(--spacing) * 2);
-}
+:root, :host { --spacing: 8rpx; }
+.h-2 { height: calc(var(--spacing) * 2); }
 ```
 
-如果你希望 `--spacing` 这类变量完全使用预计算结果，避免后续原始 `calc()` 覆盖兜底值，可以传入数组或对象：
+可以得到 `height: 16rpx`。为限制处理范围，推荐显式选择固定变量：
 
 ```ts
 WeappTailwindcss({
@@ -274,13 +257,7 @@ WeappTailwindcss({
 })
 ```
 
-此时匹配 `--spacing` 的原始 `var()` / `calc()` 声明会被删除，输出会变成：
-
-```css
-.h-2 {
-  height: 16rpx;
-}
-```
+数组也支持正则，例如 `cssCalc: [/^--(gap|spacing)$/]`。对象形式可配置计算选项：
 
 ```ts
 WeappTailwindcss({
@@ -293,29 +270,17 @@ WeappTailwindcss({
 })
 ```
 
-也可以使用正则：
+`preserve: true` 会同时保留原表达式；后面的有效 `calc()` 可能覆盖静态值，因此不能用该选项保证规避微信的运行时尺寸偏差。
 
-```ts
-WeappTailwindcss({
-  cssOptions: {
-    cssCalc: [/^--(gap|spacing)$/],
-  },
-})
-```
+共同样式作用域中已知的局部选择器覆盖、条件规则或来源冲突会阻止相关变量及依赖链静态化。Vite 构建通过入口、静态导入和 CSS 导入确定这些作用域：共同加载的样式一起参与判断，互相独立的入口作用域分别计算，不能仅凭输出文件不同认定隔离。Vite 开发服务和原生 App 嵌入样式不经过这一延后处理阶段。增量生成会在主题或配置变化后重新计算。无法解析、未选择的变量以及它们的 `var()` fallback 保留运行时语义。
 
-如果需要明确关闭，也可以传入：
+构建期无法预测 JavaScript 或内联样式未来对变量的修改。只选择确定固定的变量；动态主题不应启用冻结策略。`@theme inline` 已移除变量引用，单独使用它仍不保证消除 `calc()`。
 
-```ts
-WeappTailwindcss({
-  cssOptions: {
-    cssCalc: false,
-  },
-})
-```
+关闭预计算使用 `cssCalc: false`，这也是动态主题退出自动适配的方式。`cssCalc` 不再隐式启用 `cssPresetEnv` 的全局变量展开；显式启用该独立功能时，需要另行验证它的输出。
 
-### 减少 `.mx-*` 的重复间距声明
+### 检查最终间距声明
 
-例如使用 `mx-1` 时，Tailwind CSS 4 可能先生成变量形式：
+`cssCalc` 处理 `calc()` 内的变量，不会全局替换普通 `var()`。例如：
 
 ```css
 .mx-1 {
@@ -324,48 +289,9 @@ WeappTailwindcss({
 }
 ```
 
-开启 `cssCalc` 后，`weapp-tailwindcss` 会额外计算出 `8rpx`。默认保留原始变量声明时，最终会看到四条属性：
+这些直接变量引用保持原样，不会仅因开启 `cssCalc` 而增加静态 fallback。需要确定的直接长度时，可使用 `mx-[8rpx]` 等任意值。
 
-```css
-.mx-1 {
-  margin-left: 8rpx;
-  margin-right: 8rpx;
-  margin-left: var(--spacing);
-  margin-right: var(--spacing);
-}
-```
-
-按需求选择以下配置：
-
-```ts
-// 只保留 Tailwind 原始的 CSS 变量，关闭预计算，产物最少。
-WeappTailwindcss({
-  cssOptions: {
-    cssCalc: false,
-  },
-})
-```
-
-```ts
-// 保留 rpx 预计算结果，同时删除 --spacing 对应的原始声明。
-// 适合需要兼容不完整支持 CSS 变量或 calc() 的小程序运行时。
-WeappTailwindcss({
-  cssOptions: {
-    cssCalc: ['--spacing'],
-  },
-})
-```
-
-第二种配置的结果是：
-
-```css
-.mx-1 {
-  margin-left: 8rpx;
-  margin-right: 8rpx;
-}
-```
-
-`cssCalc: false` 与 `cssCalc: ['--spacing']` 的区别是：前者不生成预计算 fallback，后者保留预计算的 `rpx` 结果但去掉重复的变量声明。修改后请重新执行目标端构建，并检查实际生成的 `app.wxss`、`app.ttss` 或对应平台 CSS 文件；如果关闭预计算后在低版本运行时出现间距失效，改用第二种配置。
+重新构建后检查最终 WXSS/CSS 中的属性值和声明顺序，并在目标设备与直接长度对照。静态化修复属于库侧构建链路，不代表修复了微信运行时的换算算法。
 
 ## 多端单位转换
 

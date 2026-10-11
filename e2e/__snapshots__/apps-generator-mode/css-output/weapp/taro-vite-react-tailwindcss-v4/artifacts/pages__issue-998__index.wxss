@@ -46,34 +46,34 @@ wx-root-portal-content {
   --default-font-family: var(--font-sans);
   --default-mono-font-family: var(--font-mono);
 }
- /* tokens: h-[45px] <= src/pages/index/index.tsx */
+ /*tokens: h-[45px] <= src/pages/index/index.tsx */
 .h-_b45px_B {
   height: 90rpx;
 }
- /* tokens: h-[300px] <= src/pages/index/index.tsx */
+ /*tokens: h-[300px] <= src/pages/index/index.tsx */
 .h-_b300px_B {
   height: 600rpx;
 }
- /* tokens: w-[323px] <= src/pages/index/index.tsx */
+ /*tokens: w-[323px] <= src/pages/index/index.tsx */
 .w-_b323px_B {
   width: 646rpx;
 }
- /* tokens: border <= src/pages/index/index.tsx */
+ /*tokens: border <= src/pages/index/index.tsx */
 .border {
   border-style: var(--tw-border-style);
   border-width: 2rpx;
 }
- /* tokens: px-[48px] <= src/pages/index/index.tsx */
+ /*tokens: px-[48px] <= src/pages/index/index.tsx */
 .px-_b48px_B {
   padding-left: 96rpx;
   padding-right: 96rpx;
 }
- /* tokens: shadow-xl <= src/pages/index/index.tsx */
+ /*tokens: shadow-xl <= src/pages/index/index.tsx */
 .shadow-xl {
   --tw-shadow: 0 40rpx 50rpx -10rpx var(--tw-shadow-color, rgba(0, 0, 0, 0.1)), 0 16rpx 20rpx -12rpx var(--tw-shadow-color, rgba(0, 0, 0, 0.1));
   box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
 }
- /* tokens: issue-998-page <= src/pages/issue-998/index.tsx */
+ /*tokens: issue-998-page <= src/pages/issue-998/index.tsx */
 .issue-998-page {
   padding: calc(var(--spacing) * 4);
 }

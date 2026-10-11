@@ -1,9 +1,9 @@
-import type { TailwindV4CssSource } from '../../../../shared/generator-css/source-resolver/types'
-import type { SourceCandidateStore } from '../../../../shared/source-candidates'
+import type { TailwindV4CssSource } from '../../../../../generation/source-resolver/types'
+import type { SourceCandidateStore } from '../../../../../project-sources/candidates'
 import type { SetupWebpackV5ProcessAssetsHookOptions } from '../helpers'
 import type { resolveStyleOptionsFromContext } from '@/context/style-options'
 import type { TailwindcssRuntimeLike } from '@/types'
-import { postcss } from '@weapp-tailwindcss/postcss'
+import { hasMiniProgramPreflightSelector } from '@weapp-tailwindcss/postcss/transform'
 import { getDefaultCssPreflight } from '@/defaults'
 import { collectGeneratedCssRuntimeCandidates } from './generated-css'
 import { isRuntimeTransformCandidate } from './runtime-candidates'
@@ -41,151 +41,7 @@ export function resolveExistingWebpackCssPreflight(
     : undefined
 }
 
-export function removeMiniProgramPreflightSelectorRule(source: string) {
-  try {
-    const root = postcss.parse(source)
-    let changed = false
-    root.walkRules((rule) => {
-      const selectors = new Set((rule.selectors ?? [rule.selector])
-        .map(selector => selector.trim().replace(/^:before$/, '::before').replace(/^:after$/, '::after')))
-      if (
-        selectors.has('view')
-        && selectors.has('text')
-        && selectors.has('::before')
-        && selectors.has('::after')
-      ) {
-        rule.remove()
-        changed = true
-      }
-    })
-    return changed ? root.toString() : source
-  }
-  catch {
-    return source.replace(/(?:^|[}\s])\s*view\s*,\s*text\s*,\s*::after\s*,\s*::before\s*\{[^}]*\}/g, '')
-  }
-}
-
-export function dedupeMiniProgramPreflightSelectorRules(source: string) {
-  try {
-    const root = postcss.parse(source)
-    let firstRule: postcss.Rule | undefined
-    let changed = false
-    root.walkRules((rule) => {
-      const selectors = new Set((rule.selectors ?? [rule.selector])
-        .map(selector => selector.trim().replace(/^:before$/, '::before').replace(/^:after$/, '::after')))
-      if (
-        !selectors.has('view')
-        || !selectors.has('text')
-        || !selectors.has('::before')
-        || !selectors.has('::after')
-      ) {
-        return
-      }
-      if (!firstRule) {
-        firstRule = rule
-        return
-      }
-      const existingProps = new Set<string>()
-      firstRule.walkDecls((decl) => {
-        existingProps.add(decl.prop)
-      })
-      rule.walkDecls((decl) => {
-        if (!existingProps.has(decl.prop)) {
-          firstRule?.append(decl.clone())
-          existingProps.add(decl.prop)
-        }
-      })
-      rule.remove()
-      changed = true
-    })
-    return changed ? root.toString() : source
-  }
-  catch {
-    return source
-  }
-}
-
-export function hasMiniProgramPreflightSelector(source: string) {
-  try {
-    let found = false
-    postcss.parse(source).walkRules((rule) => {
-      const selectors = new Set((rule.selectors ?? [rule.selector])
-        .map(selector => selector.trim().replace(/^:before$/, '::before').replace(/^:after$/, '::after')))
-      if (
-        selectors.has('view')
-        && selectors.has('text')
-        && selectors.has('::before')
-        && selectors.has('::after')
-      ) {
-        found = true
-        return false
-      }
-    })
-    return found
-  }
-  catch {
-    return /(?:^|[},])\s*view\s*,\s*text\s*,\s*::after\s*,\s*::before\s*\{/.test(source)
-  }
-}
-
-export function ensureWebpackMiniProgramTwContentInit(source: string) {
-  if (!source.includes('var(--tw-content)')) {
-    return source
-  }
-  try {
-    const root = postcss.parse(source)
-    let changed = false
-    root.walkRules((rule) => {
-      const selectors = new Set((rule.selectors ?? [rule.selector])
-        .map(selector => selector.trim().replace(/^:before$/, '::before').replace(/^:after$/, '::after')))
-      if (
-        !selectors.has('view')
-        || !selectors.has('text')
-        || !selectors.has('::before')
-        || !selectors.has('::after')
-      ) {
-        return
-      }
-      let hasContentInit = false
-      rule.walkDecls('--tw-content', () => {
-        hasContentInit = true
-      })
-      if (!hasContentInit) {
-        rule.append(postcss.decl({ prop: '--tw-content', value: '\'\'' }))
-        changed = true
-      }
-      return false
-    })
-    return changed ? root.toString() : source
-  }
-  catch {
-    return source
-  }
-}
-
-export function removeTailwindV4StandaloneHostPreflightRule(source: string) {
-  if (!source.includes('--theme(')) {
-    return source
-  }
-  try {
-    const root = postcss.parse(source)
-    let changed = false
-    root.walkRules((rule) => {
-      if (rule.selector.trim() !== ':host') {
-        return
-      }
-      if (!rule.nodes?.some(node => node.type === 'decl' && node.value?.includes('--theme('))) {
-        return
-      }
-      rule.remove()
-      changed = true
-    })
-    return changed ? root.toString() : source
-  }
-  catch {
-    return source
-  }
-}
+export { dedupeMiniProgramPreflightSelectorRules, ensureWebpackMiniProgramTwContentInit, hasMiniProgramPreflightSelector, removeMiniProgramPreflightSelectorRule, removeTailwindV4StandaloneHostPreflightRule } from '@weapp-tailwindcss/postcss/transform'
 
 export interface WebpackSourceCandidateCache {
   getSourceCandidatesForEntries: SourceCandidateStore['valuesForEntries']
@@ -264,9 +120,7 @@ export function pruneMapToMaxSize<Key, Value>(map: Map<Key, Value>, maxSize: num
   }
 }
 
-export function stripTrailingLineWhitespace(source: string) {
-  return source.replace(/[ \t]+$/gm, '')
-}
+export { stripTrailingLineWhitespace } from '@weapp-tailwindcss/postcss/transform'
 
 export function pruneWebpackCssHandlerOptionCaches(
   cssHandlerOptionsCache: Map<string, WebpackCssHandlerOptions>,

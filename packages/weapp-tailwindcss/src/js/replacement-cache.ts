@@ -26,7 +26,7 @@ export function getReplacement(
 ) {
   let cached = store.get(candidate)
   if (cached === undefined) {
-    cached = replaceWxml(candidate, { escapeMap })
+    cached = replaceWxml(candidate, { escapeMap, keepEOL: true })
     store.set(candidate, cached)
   }
   return cached

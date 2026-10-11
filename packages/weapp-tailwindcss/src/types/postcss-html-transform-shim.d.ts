@@ -1,5 +1,5 @@
 declare module '@weapp-tailwindcss/postcss/html-transform' {
-  import type { PluginCreator } from '@weapp-tailwindcss/postcss'
+  import type { PluginCreator } from '@weapp-tailwindcss/postcss/transform'
 
   export interface IOptions {
     /** 当前编译平台 */

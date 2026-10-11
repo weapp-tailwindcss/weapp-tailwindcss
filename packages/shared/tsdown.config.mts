@@ -11,6 +11,7 @@ export default defineConfig({
   clean: true,
   dts: true,
   deps: {
+    resolveDepSubpath: true,
     onlyBundle: false,
   },
   outExtensions({ format }) {

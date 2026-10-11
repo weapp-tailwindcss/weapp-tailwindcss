@@ -2,15 +2,17 @@ import type { SetupWebpackV5ProcessAssetsHookOptions, WebpackSourceLike } from '
 import type { WebpackCssHandlerOptions } from './v5-assets/pipeline-helpers'
 import path from 'node:path'
 import process from 'node:process'
-import { MappingChars2String } from '@weapp-core/escape'
+import { MappingChars2String } from '@weapp-tailwindcss/escape'
+import { LRUCache } from 'lru-cache'
 import { beginCompilerShadowRun, createCompilationDependencyChanges, createRuntimeCompilationAffectingSignature, createRuntimeCompilationBuildState, finalizeCompilerShadowRun, getCompilationScopeDependencyRevision, recordCompilationDependencyChanges, resetRuntimeCompilationBuildState, updateRuntimeCompilationBuildState } from '@/compiler'
 import { pluginName } from '@/constants'
 import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
 import { ensureRuntimeClassSet } from '@/tailwindcss/runtime'
 import { getRuntimeClassSetSignature } from '@/tailwindcss/runtime/cache'
+import { warnFinalRpxThemeRisk } from '@/tailwindcss/v4/rpx-theme-warning'
 import { getGroupedEntries } from '@/utils'
+import { resolveTaskConcurrency } from '../../../utils/run-tasks'
 import { annotateCssSourceTrace, createCssSourceTraceCacheSignature, isCssSourceTraceEnabled } from '../../shared/css-source-trace'
-import { resolveTaskConcurrency } from '../../shared/run-tasks'
 import { createRuntimeClassSetManager } from '../../shared/runtime-class-set'
 import { collectStrictEscapedRuntimeCandidates, createEscapeFragments } from '../../shared/runtime-class-set/escaped-candidates'
 import { createCandidateSignature } from '../../shared/runtime-signatures'
@@ -54,6 +56,7 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
     consumeRuntimeRefreshRequirement,
     isWatchMode,
     getWatchChangedFiles,
+    getCompilationChangeRecord,
     runtimeClassSetManager,
     getWebpackCssSources,
     getWebpackGeneratedCssSources,
@@ -76,7 +79,7 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
   const bundleBuildState = createRuntimeCompilationBuildState()
   const bundleRuntimeClassSetManager = runtimeClassSetManager ?? createRuntimeClassSetManager()
   const escapeFragments = createEscapeFragments(MappingChars2String)
-  const processedCssAssetSkipDecisionCache = new Map<string, boolean>()
+  const processedCssAssetSkipDecisionCache = new LRUCache<string, boolean>({ max: 256 })
 
   compiler.hooks.compilation.tap(pluginName, (compilation) => {
     compilation.hooks.processAssets.tapPromise(
@@ -90,6 +93,13 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
           return
         }
         const groupedEntries = getGroupedEntries(entries, compilerOptions)
+        // 无匹配产物的子编译不应扫描源码或消费父编译共享的刷新标记与缓存。
+        if (compilation.compiler?.isChild?.()
+          && groupedEntries.css.length === 0
+          && groupedEntries.html.length === 0
+          && groupedEntries.js.length === 0) {
+          return
+        }
         if (isWebGeneratorTarget && groupedEntries.css.length === 0) {
           return
         }
@@ -148,8 +158,9 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
           }),
         )
         const watchChangedFiles = new Set([...getWatchChangedFiles?.() ?? []].map(file => path.resolve(file)))
-        const compilationChanges = createCompilationDependencyChanges(watchChangedFiles)
-        const affectedCompilationScopes = recordCompilationDependencyChanges(runtimeState, compilationChanges)
+        const recordedChanges = getCompilationChangeRecord?.()
+        const compilationChanges = recordedChanges?.changes ?? createCompilationDependencyChanges(watchChangedFiles)
+        const affectedCompilationScopes = recordedChanges?.affectedScopes ?? recordCompilationDependencyChanges(runtimeState, compilationChanges)
         const getCompilationDependencyRevision = (scopeId: string) => getCompilationScopeDependencyRevision(runtimeState, scopeId)
         const taskConcurrency = watchMode ? resolveTaskConcurrency(1) : undefined
         const activeProcessCacheKeys = new Set<string>()
@@ -476,9 +487,10 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
           for (const [file, asset] of groupedEntries.css) {
             const currentAsset = compilation.getAsset(file)
             const rawSource = currentAsset?.source.source() ?? asset.source()
-            const source = stringifyWebpackSourceLike(rawSource)
+            const source = rawSource.toString()
             const finalized = finalizeWebpackCssAssetOutputSource(source, compilerOptions, isWebGeneratorTarget)
             updateAssetIfChanged(file, finalized)
+            warnFinalRpxThemeRisk(runtimeState, [finalized], compilerOptions)
           }
         },
       )

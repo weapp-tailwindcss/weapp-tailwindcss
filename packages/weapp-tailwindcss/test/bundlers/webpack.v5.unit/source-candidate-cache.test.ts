@@ -3,7 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createWebpackSourceCandidateScanCache } from '@/bundlers/webpack/BaseUnifiedPlugin/v5-assets/source-candidate-cache'
-import { createSourceCandidateCollector } from '@/bundlers/shared/source-candidates'
+import { createSourceCandidateCollector } from '@/project-sources/candidates'
 
 describe('bundlers/webpack source candidate scan cache', () => {
   const createdDirs: string[] = []

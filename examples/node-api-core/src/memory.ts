@@ -1,9 +1,10 @@
 import process from 'node:process'
-import { createContext } from 'weapp-tailwindcss/core'
+import { fileURLToPath } from 'node:url'
+import { createCompiler } from 'weapp-tailwindcss/core'
 import { memoryClassMatrix } from './fixtures'
 
-const tailwindConfig = new URL('../tailwind.config.cjs', import.meta.url).pathname
-const cssEntry = new URL('./app.css', import.meta.url).pathname
+const projectRoot = fileURLToPath(new URL('..', import.meta.url))
+const cssEntry = fileURLToPath(new URL('./app.css', import.meta.url))
 
 export interface MemorySample {
   heapUsedMb: number
@@ -41,11 +42,7 @@ function createSources(iteration: number) {
   return {
     js: `const classes = ["mb-[1.5rem]", "${textClass}", "${bgClass}"]`,
     wxml: `<view class="mt-[8px] ${textClass} ${bgClass}"></view>`,
-    wxss: [
-      `.text-\\[${textSize}px\\] { font-size: ${textSize}px; }`,
-      `.bg-\\[\\#${bgColor}\\] { background-color: #${bgColor}; }`,
-      '.mt-\\[8px\\] { margin-top: 8px; }',
-    ].join('\n'),
+    candidates: ['mb-[1.5rem]', 'mt-[8px]', `text-[${textSize}px]`, `bg-[#${bgColor}]`],
   }
 }
 
@@ -55,30 +52,37 @@ export async function runMemoryDemo(options: {
 } = {}): Promise<MemoryResult> {
   const iterations = options.iterations ?? 160
   const heapBudgetMb = options.heapBudgetMb ?? 96
-  const ctx = createContext({
+  const compiler = createCompiler({
     appType: 'native',
-    tailwindcss: {
-      config: tailwindConfig,
-      v4: {
-        cssEntries: [cssEntry],
-      },
-    },
   })
-  await ctx.getRuntimeSet({
-    forceCollect: true,
-  })
+  const sourceOptions = {
+    cssEntries: [cssEntry],
+    projectRoot,
+  }
+  const rootId = 'memory:main-style'
   const samples: MemorySample[] = []
 
   samples.push(sampleMemory(0))
   for (let iteration = 1; iteration <= iterations; iteration += 1) {
     const source = createSources(iteration)
-    await ctx.transformWxml(source.wxml)
-    await ctx.transformJs(source.js)
-    await ctx.transformWxss(source.wxss, { isMainChunk: true })
+    const generated = await compiler.generate({
+      candidates: source.candidates,
+      id: rootId,
+      scanSources: false,
+      sourceOptions,
+      target: 'web',
+    })
+    await compiler.transformTemplate(source.wxml, generated.snapshot)
+    await compiler.transformJavaScript(source.js, generated.snapshot)
+    await compiler.transformCss(generated.css, generated.snapshot, {
+      isMainChunk: true,
+    })
     if (iteration % 20 === 0) {
       samples.push(sampleMemory(iteration))
     }
   }
+  await compiler.remove(rootId)
+  await compiler.dispose()
   samples.push(sampleMemory(iterations))
 
   const first = samples[0]!
@@ -86,7 +90,7 @@ export async function runMemoryDemo(options: {
   const maxHeapUsedMb = Math.max(...samples.map(sample => sample.heapUsedMb))
   const deltaHeapUsedMb = maxHeapUsedMb - first.heapUsedMb
   if (typeof globalThis.gc === 'function' && deltaHeapUsedMb > heapBudgetMb) {
-    throw new Error(`Node API createContext heap 增长超出预算: ${deltaHeapUsedMb}MB > ${heapBudgetMb}MB`)
+    throw new Error(`Node API compiler heap 增长超出预算: ${deltaHeapUsedMb}MB > ${heapBudgetMb}MB`)
   }
 
   return {

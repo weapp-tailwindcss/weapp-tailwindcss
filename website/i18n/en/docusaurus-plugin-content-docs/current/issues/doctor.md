@@ -112,3 +112,5 @@ Also add:
 | Reproduction command | `pnpm dev:mp-weixin`                      |
 
 This allows you to more quickly determine whether the problem is related to dependency installation, Tailwind scan range, PostCSS registration, plug-in disabling conditions, or mini-program limitations.
+
+See the [support matrix](/docs/reference/support-matrix) for verified framework, builder, and target coverage. `not covered` means that no reproducible automated or local evidence is currently recorded; it is not a claim that the capability is impossible.

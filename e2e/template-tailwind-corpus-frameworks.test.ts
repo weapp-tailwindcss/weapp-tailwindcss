@@ -148,7 +148,7 @@ describe('template Tailwind corpus across framework demos', () => {
   })
 
   it('uni-app x HBuilderX demo keeps the same conservative corpus source coverage', async () => {
-    const root = path.resolve(demoRoot, 'uni-app-x-hbuilderx-tailwindcss-v4')
+    const root = path.resolve(demoRoot, 'uni-app-x-vdom-tailwindcss-v4')
     const style = await fs.readFile(path.join(root, 'main.css'), 'utf8')
     const page = await fs.readFile(path.join(root, 'pages/index/index.uvue'), 'utf8')
     const source = `${style}\n${page}`

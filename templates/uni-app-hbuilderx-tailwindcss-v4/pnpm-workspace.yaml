@@ -1,6 +1,13 @@
 packages:
   - .
-minimumReleaseAge: 1440
+minimumReleaseAge: 0
 minimumReleaseAgeExclude:
-  - '@weapp-tailwindcss/postcss@3.0.4'
-  - weapp-tailwindcss@5.0.7
+  - '@weapp-tailwindcss/*'
+  - weapp-vite
+  - wevu
+  - '@weapp-vite/*'
+  - '@weapp-core/*'
+  - '@wevu/*'
+  - repoctl
+  - '@weapp-tailwindcss/postcss@3.3.3'
+  - weapp-tailwindcss@5.5.5

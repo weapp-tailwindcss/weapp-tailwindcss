@@ -3,7 +3,7 @@
 ## 适用范围
 
 - 本文件仅适用于 `packages/weapp-tailwindcss`。
-- 若与仓库根 `AGENTS.md` 冲突，以“更严格且更近一级”的规则为准。
+- 本文件补充根规则；发现冲突时按根规则的冲突处理流程执行，不削弱上级安全边界。
 
 ## 包定位与目录
 
@@ -13,7 +13,17 @@
   - `src/wxml/`：模板类名处理链路。
   - `src/js/`：JS AST 与模块图相关转译。
   - `src/context/`：上下文、缓存与配置汇总。
+  - `src/project-sources/`：与构建器无关的入口发现、配置来源、扫描缓存与候选状态。
+  - `src/generation/`：来源准备、生成会话协调、revision 与 CSS 结果组装；旧构建器内部路径仅保留兼容重导出。
   - `test/`：单测、集成、回归、性能相关用例。
+
+## 样式处理边界
+
+- 已提取的框架无关 layer 内核由 `@weapp-tailwindcss/css-compat` 拥有；除 `packages/engine` 的 Tailwind CSS 4 生成专用处理外，其余 CSS 语法解析、tokenize、selector/value parser、AST 变换和 PostCSS 管线由 `@weapp-tailwindcss/postcss` 拥有。
+- 本包只消费 `@weapp-tailwindcss/postcss` 的导出；禁止直接依赖 `postcss-scss`、`@csstools/css-tokenizer`、`postcss-selector-parser`、`postcss-value-parser`、`lightningcss` 或 `postcss`。
+- 允许通过 `@weapp-tailwindcss/postcss` 的 `postcss` re-export 做编排级 `parse` + walk（读 `@import`、组装 artifact、决定注入位置）。
+- 禁止在本包新增 CSS parser/tokenizer 或 compat 变换实现；新增变换由相应 CSS 所有者实现，经 PostCSS facade 从本包调用。
+- `builtin:lightningcss-loader` 只是 Rspack loader 名称匹配，不构成引入 `lightningcss` 依赖的理由。
 
 ## JS 转译硬性规则
 
@@ -22,6 +32,9 @@
 - 若需降低误伤风险，优先改进类名集合获取与刷新时机，不通过放宽候选匹配规则实现。
 
 ## 开发与变更要求
+
+- 核心不得通过值引用、类型引用或聚合导出反向引用构建器实现；改动依赖关系后执行仓库根的 architecture:check 脚本。
+- 路径身份、glob 与来源匹配复用 `@weapp-tailwindcss/source-scan`；扫描入口复用测试辅助层的共享契约。
 
 - 修改 `src/js/**`、`src/wxml/**`、`src/context/**` 时，必须补对应回归测试。
 - 涉及 bundler 行为差异时，优先在 `test/bundlers/**` 增加最小复现用例。
@@ -38,7 +51,8 @@
 
 - `pnpm --filter weapp-tailwindcss test`
 - `pnpm --filter weapp-tailwindcss test:dev`
-- 针对单文件回归：`pnpm --filter weapp-tailwindcss vitest run test/js/<case>.test.ts`
+- 针对单文件回归：`pnpm --filter weapp-tailwindcss exec vitest run test/js/<case>.test.ts`
+- 架构边界：`pnpm --filter weapp-tailwindcss exec vitest run test/ci/architecture-contract.test.ts`
 
 ## 提交前检查
 

@@ -7,7 +7,7 @@ import {
   appendLegacyContainerCompatCss,
   hasConfiguredContainerCompatSources,
   removeTailwindApplyRules,
-} from '@/bundlers/shared/generator-css/legacy-compat'
+} from '@/generation/legacy-compat'
 
 describe('legacy compat css helpers', () => {
   it('removes @apply rules and empty wrapper at-rules from compat sources', () => {

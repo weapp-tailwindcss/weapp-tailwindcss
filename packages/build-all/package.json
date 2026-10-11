@@ -1,8 +1,9 @@
 {
   "name": "@weapp-tailwindcss/build-all",
   "type": "module",
-  "version": "0.0.71",
+  "version": "0.0.75",
   "private": true,
+  "description": "Internal build aggregation for the weapp-tailwindcss workspace. weapp-tailwindcss 工作区内部聚合构建包。",
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
   },
@@ -12,6 +13,7 @@
   "dependencies": {
     "@weapp-tailwindcss/babel": "workspace:*",
     "@weapp-tailwindcss/debug-uni-app-x": "workspace:*",
+    "@weapp-tailwindcss/escape": "workspace:*",
     "@weapp-tailwindcss/experimental": "workspace:*",
     "@weapp-tailwindcss/init": "workspace:*",
     "@weapp-tailwindcss/logger": "workspace:*",

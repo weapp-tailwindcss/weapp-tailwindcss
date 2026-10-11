@@ -120,11 +120,3 @@ export default defineComponent({
 2. [动态调整web主题(2) 萃取篇](https://icebreaker.top/articles/2022/1/15-custom-theme-2)
 3. [动态调整web主题(3): 基于tailwindcss插件的主题色生成方案](https://icebreaker.top/articles/2022/9/26-custom-theme-3)
 4. [动态调整系统主题色(4): CssVar 与 Variant 方案的探索](https://icebreaker.top/articles/2023/10/5-custom-theme-4)
-
-## 参考示例
-
-微信上搜索 `tailwind`（未交 `30` 元个人资质费用，已无法搜索），进入小程序即可，小程序码：
-
-![tailwind](./frameworks/img/tailwind-mp-qrcode.jpg)
-
-实现源代码详见: [weapp-tailwindcss/tailwindcss-weapp](https://github.com/sonofmagic/weapp-tailwindcss/tree/main/tailwindcss-weapp)

@@ -128,6 +128,7 @@ export default defineConfig<'vite'>(async (merge, { command, mode }) => {
       },
     },
     rn: {
+      entry: 'app.rn',
       appName: 'taroDemo',
       postcss: {
         cssModules: {

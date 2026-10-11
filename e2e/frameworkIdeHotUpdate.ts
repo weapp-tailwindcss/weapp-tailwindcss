@@ -5,15 +5,19 @@ import type {
 import type { FrameworkSupportCase } from './frameworkSupportMatrix'
 import fs from 'node:fs/promises'
 import process from 'node:process'
+import { formatWorkflowError } from '../scripts/e2e-preflight/cleanup'
 import { buildCases } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cases'
 import {
   waitForInitialWarmup,
   waitForOutputsReady,
 } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations'
 import { createWatchSession, runPnpmCommand, sleep } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/session'
-import { getMtime, readFileIfExists, waitFor, writeFilePreserveEol } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/text'
+import { getMtime, readFileIfExists, waitFor } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/text'
+import { awaitWithAbort, withAbortDeadline } from './framework-ide/abort'
+import { restoreProbeSources } from './framework-ide/source-lifecycle'
 import { runIdeClassHotUpdate } from './frameworkIdeClassHotUpdate'
 import { runIdeStyleHotUpdate } from './frameworkIdeStyleHotUpdate'
+import { resolveFrameworkSupportPaths } from './frameworkSupportPaths'
 
 const TARO_VITE_INITIAL_BUILD_RE = /built in [\d.]+s?|compiled successfully|构建完成/i
 const IDE_STYLE_HOT_UPDATE_EXEMPT_CASES = new Set([
@@ -29,7 +33,7 @@ export const frameworkIdeWatchCaseNames: Record<string, WatchCase['name']> = {
   'taro-vite-vue3-tailwindcss-v4': 'taro-vite-vue3-tailwindcss-v4',
   'uni-app-vite-tailwindcss-v4': 'uni-app-vite-tailwindcss-v4',
   'uni-app-vite-vue3-hbuilderx-tailwindcss-v4': 'uni-app-vite-vue3-hbuilderx-tailwindcss-v4',
-  'uni-app-x-hbuilderx-tailwindcss-v4': 'uni-app-x-hbuilderx-tailwindcss-v4',
+  'uni-app-x-vdom-tailwindcss-v4': 'uni-app-x-vdom-tailwindcss-v4',
   'weapp-vite-tailwindcss-v4': 'weapp-vite-tailwindcss-v4',
 }
 
@@ -48,6 +52,10 @@ function createWatchOptions(): CliOptions {
     maxHotUpdateMs: readNumberEnv('E2E_IDE_MAX_HOT_UPDATE_MS', 60_000),
     pollMs: readNumberEnv('E2E_IDE_HOT_UPDATE_POLL_MS', readNumberEnv('E2E_WATCH_POLL_MS', 40)),
     quietSass: true,
+    webOnly: false,
+    miniProgramOnly: false,
+    styleOnly: false,
+    mainStyleOnly: false,
     skipBuild: true,
     timeoutMs: readNumberEnv('E2E_IDE_HOT_UPDATE_TIMEOUT_MS', readNumberEnv('E2E_WATCH_TIMEOUT_MS', 120_000)),
   }
@@ -63,25 +71,10 @@ function readHotUpdateTotalTimeoutMs(watchCase: WatchCase, options: CliOptions) 
 async function withHotUpdateTotalTimeout<T>(
   watchCase: WatchCase,
   options: CliOptions,
-  task: Promise<T>,
+  task: (signal: AbortSignal) => Promise<T>,
 ) {
   const timeoutMs = readHotUpdateTotalTimeoutMs(watchCase, options)
-  let timer: ReturnType<typeof setTimeout> | undefined
-  try {
-    return await Promise.race([
-      task,
-      new Promise<T>((_, reject) => {
-        timer = setTimeout(() => {
-          reject(new Error(`[${watchCase.label}] IDE hot-update probe timed out after ${timeoutMs}ms`))
-        }, timeoutMs)
-      }),
-    ])
-  }
-  finally {
-    if (timer) {
-      clearTimeout(timer)
-    }
-  }
+  return withAbortDeadline(timeoutMs, `[${watchCase.label}] IDE hot-update probe timed out after ${timeoutMs}ms`, task)
 }
 
 function resolveFrameworkWatchCase(entry: FrameworkSupportCase) {
@@ -97,7 +90,7 @@ function resolveFrameworkWatchCase(entry: FrameworkSupportCase) {
   if (!watchCase) {
     throw new Error(`Missing IDE hot-update watch case ${watchCaseName} for ${entry.name}`)
   }
-  return watchCase
+  return { ...watchCase, miniprogramRoot: resolveFrameworkSupportPaths(entry).miniprogramRoot }
 }
 
 function shouldWaitForTaroViteInitialBuild(watchCase: WatchCase) {
@@ -111,7 +104,7 @@ function shouldRunIdeStyleHotUpdate(watchCase: WatchCase) {
 async function waitForTaroViteInitialBuild(
   watchCase: WatchCase,
   options: CliOptions,
-  session: ReturnType<typeof createWatchSession>,
+  session: Awaited<ReturnType<typeof createWatchSession>>,
   sessionStartedAt: number,
 ) {
   const stableWindowMs = Math.min(Math.max(options.pollMs * 4, 1500), 3000)
@@ -142,7 +135,7 @@ async function waitForTaroViteInitialBuild(
 async function waitForIdeWatchReady(
   watchCase: WatchCase,
   options: CliOptions,
-  session: ReturnType<typeof createWatchSession>,
+  session: Awaited<ReturnType<typeof createWatchSession>>,
   sessionStartedAt: number,
 ) {
   const [wxml, js] = await Promise.all([
@@ -161,13 +154,18 @@ async function waitForIdeWatchReady(
   }
 }
 
-export async function runFrameworkIdeHotUpdateProbe(
-  entry: FrameworkSupportCase,
+export type FrameworkIdeHotUpdateProbe = (
   miniProgram: any,
   page: any,
   pageUrl: string,
   launchProjectPath: string,
   runtimeErrors?: { assertNoErrors: (stage: string) => Promise<void> },
+) => Promise<void>
+
+/** 首轮构建与 watcher 就绪后再打开 IDE，避免运行时观察到清理中的产物图。 */
+export async function withFrameworkIdeHotUpdateProbe<T>(
+  entry: FrameworkSupportCase,
+  run: (probe: FrameworkIdeHotUpdateProbe) => Promise<T>,
 ) {
   const watchCase = resolveFrameworkWatchCase(entry)
   const options = createWatchOptions()
@@ -186,25 +184,29 @@ export async function runFrameworkIdeHotUpdateProbe(
     await runPnpmCommand(watchCase.cwd, ['run', watchCase.initialBuildScript], 'ide-prebuild')
   }
 
-  const sessionStartedAt = Date.now()
-  const session = createWatchSession(watchCase.cwd, watchCase.devScript, {
+  const session = await createWatchSession(watchCase.cwd, watchCase.devScript, {
     quietSass: options.quietSass,
   }, watchCase.env)
+  const sessionStartedAt = session.startedAt ?? Date.now()
+  const errors: Error[] = []
+  let result: T | undefined
 
   try {
-    await withHotUpdateTotalTimeout(
+    process.stdout.write(`[e2e:ide] ${watchCase.label} wait for watch ready before IDE launch\n`)
+    await waitForIdeWatchReady(watchCase, options, session, sessionStartedAt)
+    if ((watchCase.initialMutationDelayMs ?? 0) > 0) {
+      await sleep(watchCase.initialMutationDelayMs!)
+      session.ensureRunning()
+    }
+
+    result = await run(async (miniProgram, page, pageUrl, launchProjectPath, runtimeErrors) => withHotUpdateTotalTimeout(
       watchCase,
       options,
-      (async () => {
-        process.stdout.write(`[e2e:ide] ${watchCase.label} wait for watch ready\n`)
-        await waitForIdeWatchReady(watchCase, options, session, sessionStartedAt)
-        await runtimeErrors?.assertNoErrors('watch ready')
-
-        if ((watchCase.initialMutationDelayMs ?? 0) > 0) {
-          await sleep(watchCase.initialMutationDelayMs!)
-          session.ensureRunning()
-          await runtimeErrors?.assertNoErrors('initial mutation delay')
-        }
+      async (signal) => {
+        const assertRuntime = (stage: string) => awaitWithAbort(signal, async () => runtimeErrors?.assertNoErrors(stage))
+        signal.throwIfAborted()
+        session.ensureRunning()
+        await assertRuntime('watch ready')
 
         await runIdeClassHotUpdate(
           options,
@@ -216,8 +218,9 @@ export async function runFrameworkIdeHotUpdateProbe(
           page,
           pageUrl,
           launchProjectPath,
+          signal,
         )
-        await runtimeErrors?.assertNoErrors('template class HMR')
+        await assertRuntime('template class HMR')
         await runIdeClassHotUpdate(
           options,
           watchCase,
@@ -228,35 +231,37 @@ export async function runFrameworkIdeHotUpdateProbe(
           page,
           pageUrl,
           launchProjectPath,
+          signal,
         )
-        await runtimeErrors?.assertNoErrors('script class HMR')
+        await assertRuntime('script class HMR')
         if (shouldRunIdeStyleHotUpdate(watchCase)) {
           await runIdeStyleHotUpdate(
             options,
             watchCase,
             session,
             sourceOriginals.get(watchCase.styleMutation.sourceFile)!,
+            signal,
           )
-          await runtimeErrors?.assertNoErrors('style HMR')
+          await assertRuntime('style HMR')
         }
         else if (!watchCase.skipStyleMutation) {
           process.stdout.write(`[e2e:ide] ${watchCase.label} style HMR skipped for IDE stability; watch-HMR keeps style coverage\n`)
         }
-      })(),
-    )
+      },
+    ))
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    throw new Error(`[${watchCase.label}] recent watch logs:\n${session.logs()}\n[${watchCase.label}] IDE HMR failure:\n${message}`)
+    const message = formatWorkflowError(error)
+    errors.push(new Error(`[${watchCase.label}] recent watch logs:\n${session.logs()}\n[${watchCase.label}] IDE HMR failure:\n${message}`, { cause: error }))
   }
   finally {
-    for (const [sourceFile, sourceOriginal] of sourceOriginals) {
-      try {
-        await writeFilePreserveEol(sourceFile, sourceOriginal, sourceOriginal)
-      }
-      catch {
-      }
-    }
-    await session.stop()
+    errors.push(...await restoreProbeSources(sourceOriginals, () => session.stop()))
   }
+  if (errors.length === 1) {
+    throw errors[0]
+  }
+  if (errors.length > 1) {
+    throw new AggregateError(errors, errors.map(error => error.message).join('\n'))
+  }
+  return result as T
 }

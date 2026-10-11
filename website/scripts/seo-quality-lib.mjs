@@ -3,6 +3,16 @@ import { normalizeKeywords, readMatterFile, walkMarkdownFiles } from './seo-shar
 
 const genericDescriptionPatterns = [
   '相关文档，覆盖安装、配置与常见问题。',
+  'Related documentation covering installation, configuration, and common issues.',
+]
+
+const invalidDescriptionPatterns = [
+  /^\s*(?:[-*+]|\d+[.)])\s/,
+  /^\s*(?:```|`|import\s|export\s|function\s|const\s|let\s|var\s)/,
+  /(?:https?:\/\/|www\.)/i,
+  /(?:\*\*|__|\[[^\]]+\]\(|<\/?[a-z][^>]*>)/i,
+  /(?:├──|└──|│)/,
+  /[{};]\s*$/,
 ]
 
 /** 匹配关键词分隔符（中英文逗号、顿号、竖线、斜杠） */
@@ -21,13 +31,20 @@ function toKeywordArray(keywords) {
   return []
 }
 
-function isKeywordsNormalized(keywords) {
+export function isKeywordsNormalized(keywords) {
   const original = toKeywordArray(keywords)
   const normalized = normalizeKeywords(original)
   if (original.length !== normalized.length) {
     return false
   }
   return original.every((item, index) => item === normalized[index])
+}
+
+export function isDescriptionValid(description) {
+  return typeof description === 'string'
+    && description.trim().length >= 16
+    && !genericDescriptionPatterns.some(pattern => description.includes(pattern))
+    && !invalidDescriptionPatterns.some(pattern => pattern.test(description.trim()))
 }
 
 export function buildFileIssues(parsedData, relativePath) {
@@ -51,6 +68,14 @@ export function buildFileIssues(parsedData, relativePath) {
       type: 'weak_description',
       file: relativePath,
       message: 'description 过短或缺失关键信息',
+    })
+  }
+
+  if (description && invalidDescriptionPatterns.some(pattern => pattern.test(description))) {
+    issues.push({
+      type: 'invalid_description',
+      file: relativePath,
+      message: 'description 包含列表、代码、URL、Markdown 或残句',
     })
   }
 

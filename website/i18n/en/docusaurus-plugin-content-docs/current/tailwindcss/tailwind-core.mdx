@@ -45,18 +45,17 @@ import TailwindTopicHero from '@site/src/components/docs/TailwindTopicHero'
 
 **Demo (overall series connection)**
 
-```ts
-// tailwind.config.ts
-export default {
-  content: ['./src/**/*.{tsx,jsx,html}'],
-  theme: {
-    extend: {
-      colors: { brand: { 50: '#f1f5ff', 500: '#3b82f6' } },
-      spacing: { 3.5: '0.875rem' },
-      borderRadius: { pill: '999px' },
-    },
-  },
-  plugins: [require('@tailwindcss/typography')],
+```css
+/* src/styles/app.css */
+@import "tailwindcss";
+@source "../**/*.{tsx,jsx,html}";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --color-brand-50: #f1f5ff;
+  --color-brand-500: #3b82f6;
+  --spacing-3.5: 0.875rem;
+  --radius-pill: 999px;
 }
 ```
 
@@ -93,30 +92,26 @@ In other words, the "entry" here is more suitable to be understood as a recommen
 
 **Demo: token definition**
 
-```ts
-// tailwind.config.ts fragment
-export default {
-  theme: {
-    extend: {
-      colors: {
-        brand: { 50: 'var(--brand-50)', 500: 'var(--brand-500)' },
-      },
-      spacing: { 3.5: 'var(--space-3_5)' },
-      borderRadius: { pill: 'var(--radius-pill)' },
-    },
-  },
-}
-```
-
 ```css
 /* src/styles/theme.css */
 :root {
   --brand-50: #eef2ff;
   --brand-500: #4f46e5;
   --space-3_5: 0.875rem;
-  --radius-pill: 999px;
+  --app-radius-pill: 999px;
+}
+
+@theme inline {
+  --color-brand-50: var(--brand-50);
+  --color-brand-500: var(--brand-500);
+  --spacing-3_5: var(--space-3_5);
+  --radius-pill: var(--app-radius-pill);
 }
 ```
+
+:::warning rpx spacing in WeChat mini programs
+Setting the global `--spacing` to values such as `1rpx` or `3rpx` can produce size differences through generated runtime multiplication. `@theme inline` does not automatically compute the product. After successful precomputation to a static length, the property no longer responds to runtime overrides of `--spacing`. See [WeChat --spacing and rpx calculation limits](../issues/spacing-rpx.md).
+:::
 
 ## Middle section: Tailwind’s generation logic
 
@@ -124,7 +119,7 @@ This layer can be split into two parts: one is how Tailwind generates classes, a
 
 ### Generation mechanism
 
-- **JIT + content**: Tailwind will only generate the classes it scans, so the more accurate `content` is written, the cleaner the final CSS will be. Many package body problems are not caused by Tailwind itself being slow, but rather by the scanning range being too wide or the dynamic classes being too arbitrary.
+- **Candidate scanning + `@source`**: Tailwind only generates classes it scans, so precise `@source` rules keep the final CSS focused. Large output usually comes from an overly broad scan range or unconstrained dynamic classes.
 - **`@layer`**: It determines the coverage order of `base / components / utilities`. `@apply` can be used, but it is more suitable for stable reuse and not suitable for secretly stuffing business logic.
 - **Plug-in**: Suitable for translating your stable design rules into classes, not suitable for stuffing temporary requirements into new syntax sugar.
 
@@ -142,21 +137,13 @@ If you find that the classes in your project are getting longer and longer and m
 - Do not mix `@apply`, plugins, variants, and component factories into the same layer. The first two are more focused on generation mechanisms, while the latter two are more focused on team encapsulation strategies.
 - Don’t think of Tailwind as “the fewer classes the better” or “never write custom CSS”. What really matters is clarity of boundaries, not purity of form.
 
-**Demo: content precise + partial @layer**
-
-```ts
-// tailwind.config.ts fragment
-export default {
-  content: ['./src/app/**/*.{tsx,jsx}', './src/pages/**/*.{tsx,jsx}'],
-  plugins: [],
-}
-```
+**Demo: precise `@source` + local `@layer`**
 
 ```css
 /* src/styles/components.css */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss" source(none);
+@source "../app/**/*.{tsx,jsx}";
+@source "../pages/**/*.{tsx,jsx}";
 
 @layer components {
   .card {
@@ -225,7 +212,7 @@ export default {
 ```tsx
 //Use custom tool class
 <div className="grid gap-4 grid-auto-fill-48">
-{/* Autofill columns，smallest 12rem */}
+{/* Autofill columns, minimum 12rem */}
 </div>
 ```
 

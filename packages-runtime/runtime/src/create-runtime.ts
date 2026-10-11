@@ -7,6 +7,7 @@ import type {
   Transformers,
 } from './types'
 import { clsx } from 'clsx'
+import { needsTransform } from './transformer-probes'
 import { resolveTransformers } from './transformers'
 
 type TailwindMergeFactoryFn = (...args: any[]) => TailwindMergeLibraryFn
@@ -39,13 +40,30 @@ interface CreateRuntimeFactoryOptions<
 
 const CACHE_LIMIT = 256
 
-const UNESCAPE_RE = /u[0-9a-f]{3,}/i
-
-function shouldUnescape(value: string) {
-  return value.includes('_') || UNESCAPE_RE.test(value)
+function hasWhitespace(value: string) {
+  return value.includes(' ')
+    || value.includes('\t')
+    || value.includes('\n')
+    || value.includes('\r')
+    || value.includes('\f')
+    || value.includes('\v')
 }
 
-function wrapClassAggregator(
+function transformTokens(value: string, transformFn: (token: string) => string): string {
+  if (!value) {
+    return value
+  }
+  if (!hasWhitespace(value)) {
+    return transformFn(value)
+  }
+  return value.split(/\s+/).filter(Boolean).map(transformFn).join(' ')
+}
+
+/**
+ * 为任意 class 聚合函数套上 unescape / 可选 prepare-restore / escape 与有界 LRU。
+ * 命中缓存时直接返回已转义结果，避免重复跑引擎。
+ */
+export function wrapRuntimeAggregator(
   fn: TailwindMergeLibraryFn,
   transformers: Transformers,
   prepareValue?: (value: string) => string | TransformResult,
@@ -69,10 +87,12 @@ function wrapClassAggregator(
 
     const cached = cache.get(rawInput)
     if (cached !== undefined) {
+      cache.delete(rawInput)
+      cache.set(rawInput, cached)
       return cached
     }
 
-    const normalized = shouldUnescape(rawInput) ? transformers.unescape(rawInput) : rawInput
+    const normalized = needsTransform(transformers.unescape, rawInput) ? transformTokens(rawInput, transformers.unescape) : rawInput
     let metadata: unknown
     let preparedValue = normalized
     if (prepareValue) {
@@ -88,7 +108,9 @@ function wrapClassAggregator(
     const merged = fn(preparedValue)
     const restored = restoreValue ? restoreValue(merged, metadata) : merged
 
-    const escaped = transformers.escape(restored)
+    const escaped = needsTransform(transformers.escape, restored)
+      ? transformTokens(restored, transformers.escape)
+      : restored
 
     if (cache.size >= CACHE_LIMIT) {
       const firstEntry = cache.keys().next()
@@ -110,7 +132,7 @@ function wrapFactory<TFactory extends TailwindMergeFactoryFn>(
 ): TailwindMergeFactory<TFactory> {
   return (...args: Parameters<TFactory>) => {
     const runtime = factory(...args)
-    return wrapClassAggregator(runtime, transformers, prepareValue, restoreValue)
+    return wrapRuntimeAggregator(runtime, transformers, prepareValue, restoreValue)
   }
 }
 
@@ -133,8 +155,8 @@ export function createRuntimeFactory<
   return function createRuntime(createOptions?: CreateOptions) {
     const transformers = resolveTransformers(createOptions)
 
-    const twMerge: TailwindMergeRuntime = wrapClassAggregator(twMergeImpl, transformers, prepareValue, restoreValue)
-    const twJoin: TailwindMergeRuntime = wrapClassAggregator(twJoinImpl, transformers, prepareValue, restoreValue)
+    const twMerge: TailwindMergeRuntime = wrapRuntimeAggregator(twMergeImpl, transformers, prepareValue, restoreValue)
+    const twJoin: TailwindMergeRuntime = wrapRuntimeAggregator(twJoinImpl, transformers, prepareValue, restoreValue)
     const extendTailwindMerge = wrapFactory(extendFactory, transformers, prepareValue, restoreValue)
     const createTailwindMerge = wrapFactory(createFactory, transformers, prepareValue, restoreValue)
 

@@ -1,10 +1,16 @@
 import fs from 'node:fs/promises'
 import process from 'node:process'
-import { Launcher } from '@weapp-vite/miniprogram-automator'
 import { execa } from 'execa'
 import path from 'pathe'
 import { describe, expect, it } from 'vitest'
+import { captureMiniProgramScreenshot } from '../scripts/demo-visual-e2e-report/mini-program-screenshot'
+import { resolveWechatAppId } from '../scripts/wechat-app-id'
+import { installFrameworkIdeRuntimeErrorCollector } from './frameworkIdeRuntimeErrors'
 import { clearProjectBuildState } from './projectTest'
+import { readTemplatePageConfig, readTemplatePageConfigs } from './template-ide/config'
+import { withTemplateAppId } from './template-ide/project-config'
+import { assertTemplatePageRendered } from './template-ide/runtime'
+import { createTemplateIdeArtifacts, withTemplateIdeSession } from './template-ide/session'
 
 interface TemplateIdeCase {
   name: string
@@ -67,6 +73,21 @@ const templateIdeCases: TemplateIdeCase[] = [
       'project.config.json',
     ],
   })),
+  {
+    name: 'weapp-vite-tailwindcss-v4 weixin',
+    template: 'weapp-vite-tailwindcss-v4',
+    command: ['pnpm', 'run', 'build'],
+    projectPath: '.',
+    miniprogramRoot: 'dist',
+    appJson: 'dist/app.json',
+    requiredFiles: [
+      'project.config.json',
+      'dist/app.js',
+      'dist/app.json',
+      'dist/app.wxss',
+      'dist/pages/index/index.wxml',
+    ],
+  },
 ]
 
 const localOnlyIdeCases: TemplateIdeLocalOnlyCase[] = [
@@ -119,58 +140,6 @@ async function runPnpm(args: string[], cwd: string) {
   })
 }
 
-async function cleanupDevTools() {
-  if (process.platform !== 'darwin') {
-    return
-  }
-  await execa('osascript', ['-e', 'quit app "wechatwebdevtools"'], {
-    reject: false,
-    timeout: closeTimeoutMs,
-  })
-  await execa('pkill', ['-f', '/Applications/wechatwebdevtools.app'], {
-    reject: false,
-  })
-  await execa('pkill', ['-f', 'wechatwebdevtools Daemon'], {
-    reject: false,
-  })
-}
-
-async function waitForPageWxml(page: any, timeoutMs = 10_000) {
-  const deadline = Date.now() + timeoutMs
-  let latest = ''
-  while (Date.now() < deadline) {
-    const pageEl = await page.$('page')
-    latest = await pageEl?.wxml() ?? ''
-    if (latest.length > 0) {
-      return latest
-    }
-    await page.waitFor(300)
-  }
-  return latest
-}
-
-async function captureRenderedWxml(miniProgram: any, page: any) {
-  const first = await waitForPageWxml(page)
-  if (first.length > 0) {
-    return first
-  }
-
-  const currentPage = await miniProgram.currentPage({ timeout: 12_000 }).catch(() => undefined)
-  if (!currentPage) {
-    return ''
-  }
-  return waitForPageWxml(currentPage, 5000)
-}
-
-async function tryCaptureRenderedWxml(miniProgram: any, page: any) {
-  try {
-    return await captureRenderedWxml(miniProgram, page)
-  }
-  catch {
-    return ''
-  }
-}
-
 function resolveComponentPath(miniprogramRoot: string, pageJsonFile: string, componentPath: string) {
   if (/^(?:plugin|dynamicLib|ext):\/\//.test(componentPath)) {
     return undefined
@@ -182,7 +151,7 @@ function resolveComponentPath(miniprogramRoot: string, pageJsonFile: string, com
 }
 
 async function expectUsingComponentsExist(name: string, miniprogramRoot: string, pageJsonFile: string) {
-  const pageConfig = await readJson<{ usingComponents?: Record<string, string> }>(pageJsonFile)
+  const pageConfig = await readTemplatePageConfig(pageJsonFile)
   for (const [componentName, componentPath] of Object.entries(pageConfig.usingComponents ?? {})) {
     const resolved = resolveComponentPath(miniprogramRoot, pageJsonFile, componentPath)
     if (!resolved) {
@@ -193,12 +162,7 @@ async function expectUsingComponentsExist(name: string, miniprogramRoot: string,
   }
 }
 
-function isDevToolsPageStackTimeout(error: unknown) {
-  const text = error instanceof Error ? error.message : String(error)
-  return /DevTools did not respond to protocol method App\.getPageStack/i.test(text)
-}
-
-describe.sequential('templates ide smoke', () => {
+describe('templates ide smoke', () => {
   it('keeps non-WeChat-DevTools template IDE coverage documented', async () => {
     const covered = new Set([
       ...templateIdeCases.map(item => item.template),
@@ -239,39 +203,25 @@ describe.sequential('templates ide smoke', () => {
     const pageUrl = `/${pagePath}`
     expect(await pathExists(path.resolve(miniprogramRoot, `${pagePath}.js`)), `${item.name} should emit page js`).toBe(true)
     const pageJsonFile = path.resolve(miniprogramRoot, `${pagePath}.json`)
-    expect(await pathExists(pageJsonFile), `${item.name} should emit page json`).toBe(true)
     expect(await pathExists(path.resolve(miniprogramRoot, `${pagePath}.wxml`)), `${item.name} should emit page wxml`).toBe(true)
+    await readTemplatePageConfigs(miniprogramRoot)
     await expectUsingComponentsExist(item.name, miniprogramRoot, pageJsonFile)
 
-    const automator = new Launcher()
-    let miniProgram: any
-    try {
-      await cleanupDevTools()
-      miniProgram = await automator.launch({ projectPath, timeout: launchTimeoutMs })
-      const page = await miniProgram.reLaunch(pageUrl).catch((error: unknown) => {
-        if (isDevToolsPageStackTimeout(error)) {
-          return undefined
-        }
-        throw error
-      })
-      if (!page) {
-        return
-      }
-      expect(page, `${item.name} should relaunch ${pageUrl}`).toBeTruthy()
-      const wxml = await tryCaptureRenderedWxml(miniProgram, page)
-      if (wxml.length === 0) {
-        return
-      }
-      expect(wxml.length, `${item.name} should render page wxml in DevTools`).toBeGreaterThan(0)
-    }
-    finally {
-      if (miniProgram) {
-        await Promise.race([
-          miniProgram.close(),
-          new Promise(resolve => setTimeout(resolve, closeTimeoutMs)),
-        ]).catch(() => undefined)
-      }
-      await cleanupDevTools()
-    }
+    const artifactDir = await createTemplateIdeArtifacts(path.resolve(__dirname, '.artifacts/templates-ide', item.template))
+    process.stdout.write(`[e2e:ide] ${item.name} evidence: ${artifactDir}\n`)
+    await withTemplateAppId(path.join(projectPath, 'project.config.json'), resolveWechatAppId(), () =>
+      withTemplateIdeSession({
+        projectPath,
+        cliPath: process.env.E2E_PREFLIGHT_WECHAT_CLI,
+        artifactDir,
+        launchTimeoutMs,
+        closeTimeoutMs,
+      }, async (miniProgram) => {
+        const errors = installFrameworkIdeRuntimeErrorCollector(item.name, miniProgram)
+        const nodes = await assertTemplatePageRendered(miniProgram, pageUrl)
+        await fs.writeFile(path.join(artifactDir, 'rendered.json'), JSON.stringify({ pageUrl, nodes }, null, 2))
+        await captureMiniProgramScreenshot(miniProgram, path.join(artifactDir, 'rendered.png'), 15_000)
+        await errors.assertNoErrors('template rendered')
+      }))
   }, 240_000)
 })

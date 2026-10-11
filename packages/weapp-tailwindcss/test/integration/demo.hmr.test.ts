@@ -180,7 +180,7 @@ async function runHotUpdateCase(testCase: DemoCase) {
   }
 }
 
-describe.skip.sequential('demo hot update integration', () => {
+describe.skip('demo hot update integration', () => {
   for (const testCase of cases) {
     it(testCase.title, async () => {
       await runHotUpdateCase(testCase)

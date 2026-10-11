@@ -1,18 +1,17 @@
 import type { Buffer } from 'node:buffer'
 import { describe, expect, it } from 'vitest'
 import { demoWatchShardCases, isDemoWatchShardName } from '../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cases'
+import { createWatchProcessEnv } from '../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/environment'
 import {
   createLineCollector,
-  createSpawnEnv,
   killProcessTreeOnPosix,
   killProcessTreeOnWindows,
   sleep,
   spawnPnpm,
 } from '../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/session'
 import { resolveCaseName, shouldRunTarget } from './hot-update/shared'
+import { createTaroDevSignalCollector } from './taro-dev-signals'
 
-const TARO_WATCH_READY_RE = /→ Watching|watching for file changes/i
-const TARO_COMPILED_RE = /Compiled successfully|built in \d+(?:\.\d+)?m?s\.?|\d+ modules transformed/i
 const ROOT = process.cwd()
 const TARGETS = [
   'taro-vite-react-tailwindcss-v4',
@@ -81,7 +80,7 @@ async function expectDemoDevWatchReady(project: string) {
   const cwd = `${ROOT}/demo/${project}`
   const child = spawnPnpm(['dev'], {
     cwd,
-    env: createSpawnEnv(process.env, {
+    env: createWatchProcessEnv(process.env, {
       CHOKIDAR_INTERVAL: process.env.CHOKIDAR_INTERVAL ?? '50',
       CHOKIDAR_USEPOLLING: process.env.CHOKIDAR_USEPOLLING ?? '1',
       WATCHPACK_POLLING: process.env.WATCHPACK_POLLING ?? '50',
@@ -95,6 +94,7 @@ async function expectDemoDevWatchReady(project: string) {
   const collect = createLineCollector('taro-dev', logs, 160, {
     quietSass: true,
   })
+  let buildFailed = false
   let ready = false
   let readyAt = 0
   let sawWatchReady = false
@@ -113,35 +113,42 @@ async function expectDemoDevWatchReady(project: string) {
     lastReadyCompiledCount = compiledCount
   }
 
-  const onData = (chunk: Buffer | string) => {
-    const text = chunk.toString()
-    collect(chunk)
-    if (TARO_COMPILED_RE.test(text)) {
+  const signalCollector = createTaroDevSignalCollector((signal) => {
+    buildFailed ||= signal.buildFailed
+    if (signal.compiled) {
       compiledCount += 1
       markReadyIfCompiledAndWatching()
     }
-    if (TARO_WATCH_READY_RE.test(text)) {
+    if (signal.watchReady) {
       sawWatchReady = true
       markReadyIfCompiledAndWatching()
     }
+  })
+  const onData = (chunk: Buffer | string, stream: 'stdout' | 'stderr') => {
+    collect(chunk)
+    signalCollector.push(chunk, stream)
   }
 
-  child.stdout.on('data', onData)
-  child.stderr.on('data', onData)
+  child.stdout.on('data', chunk => onData(chunk, 'stdout'))
+  child.stderr.on('data', chunk => onData(chunk, 'stderr'))
   child.on('close', (code, signal) => {
+    signalCollector.flush()
     closeResult = { code, signal }
   })
 
   try {
     const startedAt = Date.now()
     while (Date.now() - startedAt < readyTimeoutMs) {
-      if (ready) {
-        break
+      if (buildFailed) {
+        throw new Error(`[${project}] pnpm dev compilation failed\n${logs.join('\n')}`)
       }
       if (closeResult) {
         throw new Error(
           `[${project}] pnpm dev exited before watch ready: ${closeResult.signal ?? closeResult.code}\n${logs.join('\n')}`,
         )
+      }
+      if (ready) {
+        break
       }
       await sleep(250)
     }
@@ -156,6 +163,9 @@ async function expectDemoDevWatchReady(project: string) {
     ).toBeUndefined()
 
     while (Date.now() - readyAt < STABLE_AFTER_READY_MS) {
+      if (buildFailed) {
+        throw new Error(`[${project}] pnpm dev compilation failed\n${logs.join('\n')}`)
+      }
       if (closeResult) {
         throw new Error(
           `[${project}] pnpm dev exited during stable watch window: ${closeResult.signal ?? closeResult.code}\n${logs.join('\n')}`,

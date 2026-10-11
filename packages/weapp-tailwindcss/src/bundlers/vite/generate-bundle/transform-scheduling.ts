@@ -1,3 +1,5 @@
+import { recordViteCssContribution } from './css-transform-result'
+
 export function scheduleViteCssTransform(options: any) {
   const {
     addWatchFile,
@@ -125,9 +127,23 @@ export function scheduleViteCssTransform(options: any) {
   }
 
   cssTaskFactories.push(() => timeTask('css', () => processViteCssCacheTask({
-    applyResult(source) {
+    applyResult(source: string) {
       applyViteCssCacheResult({
         applyCssResult,
+        recordCssResult: vitePipelineCssAsset
+          ? (css: string) => {
+              recordCssAssetResult?.(outputFile, css)
+              recordViteCssContribution({
+                file,
+                outputIsMainChunk: outputCssHandlerOptions.isMainChunk === true,
+                recordViteProcessedCssAssetResult,
+                shouldRecordVitePipelineCssByOutput,
+                shouldInjectVitePipelineCssIntoMain,
+                vitePipelineCssAsset,
+                vitePipelineCssInjectionOutputFile,
+              }, css)
+            }
+          : undefined,
         cssRuntimeAffectingHash,
         generatorRawSource,
         generatorSourceFile,
@@ -153,10 +169,10 @@ export function scheduleViteCssTransform(options: any) {
       metrics.css.cacheHits++
       debug('css shared hit: %s', file)
     },
-    onSharedResult(sharedCss) {
+    onSharedResult(sharedCss: string) {
       onUpdate(file, rawSource, sharedCss)
     },
-    onTransformResult(css) {
+    onTransformResult(css: string) {
       onUpdate(outputFile, rawSource, css)
       debug('css handle: %s', outputFile)
     },

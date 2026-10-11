@@ -69,7 +69,7 @@ export default defineConfig({
 
   搭配 `cssOptions.cssPreflight` 注入的变量或自定义 `@theme`，可以把 tab bar 的主题色、渐变背景等统一交给 Tailwind 管理。若你需要覆盖其他容器名称，仍可以通过配置把 `cssOptions.cssSelectorReplacement.root` 扩展为更多选择器。
 
-- `cssOptions.cssPresetEnv` 会参与最终构建，请在发布前执行一次 `pnpm build:apps` 或对应的 `pnpm build` 命令确认产物
+- `cssOptions.cssPresetEnv` 会参与最终构建，请在发布前使用你自己的项目构建命令确认最终 CSS 产物
 
 ## 2. 多端共存与按需构建
 
@@ -107,7 +107,7 @@ WeappTailwindcss({
 - **可视化定位**：使用 `outline` 类临时标记组件边界，例如在调试时加上 `outline outline-1 outline-dashed outline-brand/60`
 - **断言样式存在**：核心组件可引入快照测试或 DOM 断言，结合 Vitest + @testing-library 验证关键类名
 - **lint 约束**：在 `eslint-plugin-tailwindcss` 或团队约定的 lint 规则中，限制自定义类名必须通过 `@utility`
-- **回归验证**：Tailwind 升级时执行 `pnpm test`, `pnpm e2e` 确认核心链路稳定，同时在主流机型（尤其是低版本安卓）上真机预览
+- **回归验证**：Tailwind 升级时运行你自己的单元测试和端到端测试，并在主流机型（尤其是低版本安卓）上真机预览
 
 ## 5. 升级与维护策略
 

@@ -7,6 +7,7 @@ import { spawnSync } from 'node:child_process'
 import fsSync from 'node:fs'
 import fs from 'node:fs/promises'
 import process from 'node:process'
+import { inspect } from 'node:util'
 import path from 'pathe'
 import { PNG } from 'pngjs'
 import {
@@ -17,22 +18,34 @@ import {
   readAndroidUiHierarchy,
   resolveAdbCommand,
 } from '../../e2e/hbuilderx-local/android-runtime.ts'
+import { removeLegacyAppMarkers, rewriteAppMarker } from '../../e2e/hbuilderx-local/app-marker.ts'
+import { readExistingAppHmrTransformedOutput, readExistingAppTransformedOutput } from '../../e2e/hbuilderx-local/app-output.ts'
+import { bindAppTarget, readAppLaunchOption } from '../../e2e/hbuilderx-local/app-target.ts'
 import { resolveAppHmrSteps } from '../../e2e/hbuilderx-local/cases.ts'
+import { createHarmonyDomProbe } from '../../e2e/hbuilderx-local/harmony-dom-probe.ts'
+import { captureHarmonyRuntimeEvidence, waitForHarmonyRuntimeEvidence } from '../../e2e/hbuilderx-local/harmony-runtime.ts'
+import { observeHmrStep } from '../../e2e/hbuilderx-local/hmr-lifecycle.ts'
+import { captureIosScreenshot, waitForIosRuntimeEvidence } from '../../e2e/hbuilderx-local/ios-runtime.ts'
+import { captureNativeLog } from '../../e2e/hbuilderx-local/native-log.ts'
 import {
   assertAndroidToolchain,
   assertHarmonyToolchain,
   assertIosSimulatorToolchain,
-  collectProcessOutput,
   createLocalHBuilderXRunner,
   fileExists,
   hbuilderxAppTimeoutMs,
-  killProcessTree,
   pollIntervalMs,
   readUtf8,
   resolveHdcCommand,
   wait,
 } from '../../e2e/hbuilderx-local/process.ts'
-import { createHBuilderXProjectAlias } from '../hbuilderx-project-alias.mjs'
+import { findForbiddenRuntimeLogs, findMissingRuntimeLogs, resolveAppRuntimeLogContract } from '../../e2e/hbuilderx-local/render-mode.ts'
+import { appendHmrSourceMutation } from '../../e2e/hbuilderx-local/source-mutations.ts'
+import { runWithCleanup } from '../e2e-preflight/cleanup'
+import { createHBuilderXAppProject } from '../hbuilderx-app-project'
+import { createNativeSessionRecovery, findNativeCleanupBlock } from '../hbuilderx-native-session'
+import { countMarkerPixelChanges, locateMarkerColor } from './app-marker-visual.ts'
+import { analyzeHarmonyDomTextPairs, captureAndAnalyzeHarmonyLayout } from './harmony-layout.ts'
 import { finalizeHarmonyAppOutput } from './harmony-output.ts'
 import { resolveHmrScreenshotPath, resolveHmrStepScreenshotPath, resolveScreenshotPath } from './screenshots.ts'
 import {
@@ -43,7 +56,6 @@ import {
   writeStyleIsolationVariantManifest,
 } from './style-isolation.ts'
 
-const appMarkerRE = /\n[ \t]*<view class="[^"]+">(?:<text class="[^"]+">)?hbuilderx-app-(?:dynamic|hmr)-[^<]+(?:<\/text>)?<\/view>/g
 const appReadyTimeoutMs = Number(process.env['DEMO_VISUAL_APP_READY_TIMEOUT_MS'] ?? 120_000)
 const appOutputTimeoutMs = Number(process.env['DEMO_VISUAL_APP_OUTPUT_TIMEOUT_MS'] ?? Math.min(hbuilderxAppTimeoutMs, 180_000))
 const harmonyScreenshotTimeoutMs = Number(process.env['DEMO_VISUAL_HARMONY_SCREENSHOT_TIMEOUT_MS'] ?? 30_000)
@@ -77,13 +89,6 @@ function resolveAppIntermediateOutputTargets(item: AppCase, projectRoot: string)
   return [...targets]
 }
 
-function resolveAppTransformedFiles(projectRoot: string, outputRoot: string, item: AppCase) {
-  return [
-    ...(item.transformedFiles ?? []).map(file => path.resolve(projectRoot, file)),
-    ...(item.transformedOutputFiles ?? []).map(file => path.resolve(outputRoot, file)),
-  ]
-}
-
 function resolveAppStyleOutputFiles(outputRoot: string, item: AppCase) {
   return (item.styleOutputFiles ?? []).map(file => path.resolve(outputRoot, file))
 }
@@ -96,14 +101,6 @@ async function findMissingAppFiles(item: AppCase, outputRoot: string) {
     }
   }
   return missing
-}
-
-async function readExistingAppTransformedOutput(projectRoot: string, outputRoot: string, item: AppCase) {
-  const transformedFiles = resolveAppTransformedFiles(projectRoot, outputRoot, item)
-  if (!(await Promise.all(transformedFiles.map(fileExists))).every(Boolean)) {
-    return undefined
-  }
-  return (await Promise.all(transformedFiles.map(readUtf8))).join('\n')
 }
 
 async function readExistingAppStyleOutput(outputRoot: string, item: AppCase) {
@@ -133,6 +130,22 @@ function hasNoContent(source: string, entries: Array<string | RegExp> | undefine
     }
     return !entry.test(source)
   })
+}
+
+async function waitForAppRuntimeLogContract(item: AppCase, logs: string[], ensureRunning: () => void) {
+  const contract = resolveAppRuntimeLogContract(item)
+  if (contract.contains.length === 0) {
+    return contract
+  }
+  const startedAt = Date.now()
+  while (Date.now() - startedAt < appReadyTimeoutMs) {
+    ensureRunning()
+    if (findMissingRuntimeLogs(logs.join(''), contract.contains).length === 0) {
+      return contract
+    }
+    await wait(pollIntervalMs)
+  }
+  throw new Error(`${item.name} 未进入目标 App 渲染模式：expected=${contract.contains.map(String).join(' | ')}`)
 }
 
 async function findReadyAppOutputRoot(item: AppCase, projectRoot: string, expected: Array<string | RegExp>, styleExpected?: Array<string | RegExp>) {
@@ -170,12 +183,14 @@ async function waitForAppOutputRoot(
   const startedAt = Date.now()
   let latest = ''
   let latestStyle = ''
+  let missingFiles: string[] = []
   while (Date.now() - startedAt < timeoutMs) {
     ensureRunning()
     for (const outputDir of resolveAppOutputDirCandidates(item)) {
       const outputRoot = path.resolve(projectRoot, outputDir)
       const missing = await findMissingAppFiles(item, outputRoot)
       if (missing.length > 0) {
+        missingFiles = missing
         continue
       }
       if (item.platform === 'app-harmony') {
@@ -189,7 +204,10 @@ async function waitForAppOutputRoot(
       if (!hasContent(transformed, expected)) {
         continue
       }
-      if (!hasNoContent(transformed, forbidden)) {
+      const forbiddenScope = forbidden?.length
+        ? await readExistingAppHmrTransformedOutput(projectRoot, outputRoot, item)
+        : transformed
+      if (forbiddenScope == null || !hasNoContent(forbiddenScope, forbidden)) {
         continue
       }
       if (styleExpected?.length) {
@@ -206,7 +224,7 @@ async function waitForAppOutputRoot(
     }
     await wait(pollIntervalMs)
   }
-  throw new Error(`${item.name} App 产物未包含预期内容\nexpected=${expected.map(String).join(' | ')}\nforbidden=${forbidden?.map(String).join(' | ') ?? ''}\nstyleExpected=${styleExpected?.map(String).join(' | ') ?? ''}\nlatest=${latest.slice(0, 2000)}\nlatestStyle=${latestStyle.slice(0, 2000)}`)
+  throw new Error(`${item.name} App 产物未包含预期内容\nmissingFiles=${missingFiles.join(' | ')}\nmissingTransformed=${expected.filter(value => !hasContent(latest, [value])).map(String).join(' | ')}\nmissingStyles=${styleExpected?.filter(value => !hasContent(latestStyle, [value])).map(String).join(' | ') ?? ''}\nexpected=${expected.map(String).join(' | ')}\nforbidden=${forbidden?.map(String).join(' | ') ?? ''}\nstyleExpected=${styleExpected?.map(String).join(' | ') ?? ''}\nlatest=${latest.slice(0, 2000)}\nlatestStyle=${latestStyle.slice(0, 2000)}`)
 }
 
 async function cleanAppOutput(item: AppCase, projectRoot: string) {
@@ -245,18 +263,7 @@ async function writeAppMarker(
     text: string
   },
 ) {
-  const source = await readUtf8(file)
-  const cleaned = source.replace(appMarkerRE, '')
-  const anchor = anchors.find(item => cleaned.includes(item))
-  const index = anchor ? cleaned.indexOf(anchor) : -1
-  if (index < 0) {
-    throw new Error(`找不到 App visual 插入锚点：${file}`)
-  }
-  const content = marker.textClassName
-    ? `<text class="${marker.textClassName}">${marker.text}</text>`
-    : marker.text
-  const next = `${cleaned.slice(0, index)}<view class="${marker.className}">${content}</view>\n\t\t${cleaned.slice(index)}`
-  await fs.writeFile(file, next, 'utf8')
+  await fs.writeFile(file, rewriteAppMarker(await readUtf8(file), anchors, marker), 'utf8')
 }
 
 function cleanupAndroidAppRuntime(env: Record<string, string | undefined>, deviceId?: string) {
@@ -273,51 +280,18 @@ function createAndroidAdbArgs(deviceId?: string) {
   ]
 }
 
-function resolveIosScreenshotTarget(item: AppCase) {
-  const launchArgs = item.launchArgs ?? []
-  const index = launchArgs.indexOf('--iosTarget')
-  const target = process.env['E2E_HBUILDERX_IOS_SCREENSHOT_TARGET']
-    ?? (index >= 0 ? launchArgs[index + 1] : undefined)
-    ?? process.env['E2E_HBUILDERX_IOS_TARGET']
-    ?? 'booted'
-  return target === 'simulator' ? 'booted' : target
-}
-
 function resolveAndroidScreenshotDeviceId(item: AppCase) {
-  const launchArgs = item.launchArgs ?? []
-  const index = launchArgs.indexOf('--deviceId')
-  return process.env['E2E_HBUILDERX_ANDROID_SCREENSHOT_DEVICE_ID']
-    ?? process.env['E2E_HBUILDERX_ANDROID_DEVICE_ID']
-    ?? (index >= 0 ? launchArgs[index + 1] : undefined)
+  return readAppLaunchOption(item.launchArgs ?? [], '--deviceId')!
 }
 
 function resolveHarmonyScreenshotDeviceId(item: AppCase) {
-  const launchArgs = item.launchArgs ?? []
-  const index = launchArgs.indexOf('--deviceId')
-  return process.env['DEMO_VISUAL_HARMONY_SCREENSHOT_DEVICE_ID']
-    ?? process.env['DEMO_VISUAL_HARMONY_DEVICE_ID']
-    ?? process.env['E2E_HBUILDERX_HARMONY_DEVICE_ID']
-    ?? (index >= 0 ? launchArgs[index + 1] : undefined)
+  return readAppLaunchOption(item.launchArgs ?? [], '--deviceId')!
 }
 
 function createHdcArgs(deviceId?: string) {
   return [
     ...(deviceId ? ['-t', deviceId] : []),
   ]
-}
-
-async function captureIosScreenshot(screenshot: string, item: AppCase) {
-  await fs.mkdir(path.dirname(screenshot), { recursive: true })
-  const target = resolveIosScreenshotTarget(item)
-  const result = spawnSync('xcrun', ['simctl', 'io', target, 'screenshot', screenshot], {
-    encoding: 'utf8',
-    killSignal: 'SIGTERM',
-    timeout: iosScreenshotTimeoutMs,
-  })
-  if (result.status !== 0) {
-    const timeoutMessage = result.error?.message ? ` error=${result.error.message}` : ''
-    throw new Error(`iOS 截图失败：${result.stderr || result.stdout || `exit=${result.status} signal=${result.signal ?? 'none'}${timeoutMessage}`}`)
-  }
 }
 
 async function captureHarmonyScreenshot(screenshot: string, item: AppCase) {
@@ -371,7 +345,7 @@ async function captureAppScreenshot(item: AppCase, screenshot: string, env: Reco
     await captureHarmonyScreenshot(screenshot, item)
     return
   }
-  await captureIosScreenshot(screenshot, item)
+  await captureIosScreenshot(screenshot, readAppLaunchOption(item.launchArgs ?? [], '--deviceId'), iosScreenshotTimeoutMs)
 }
 
 async function analyzeAppScreenshot(screenshot: string) {
@@ -403,6 +377,22 @@ async function analyzeAppScreenshot(screenshot: string) {
   }
 }
 
+export function resolveExpectedMarkerTextColor(markerTextClass?: string) {
+  if (!markerTextClass) {
+    return undefined
+  }
+  const arbitraryColor = [...markerTextClass.matchAll(/\btext-\[#([\da-f]{6})\]/gi)].at(-1)?.[1]
+  const color = arbitraryColor ?? (markerTextClass.split(/\s+/).includes('text-white') ? 'ffffff' : undefined)
+  if (!color) {
+    return undefined
+  }
+  return {
+    blue: Number.parseInt(color.slice(4, 6), 16),
+    green: Number.parseInt(color.slice(2, 4), 16),
+    red: Number.parseInt(color.slice(0, 2), 16),
+  }
+}
+
 async function analyzeIssue1002MarkerPresentation(
   screenshot: string,
   marker: Awaited<ReturnType<typeof analyzeScreenshotColorPresence>>,
@@ -419,15 +409,21 @@ async function analyzeIssue1002MarkerPresentation(
   const height = bounds.maxY - bounds.minY + 1
   const insetX = Math.max(1, Math.floor(width * 0.2))
   const insetY = Math.max(1, Math.floor(height * 0.2))
-  let centerWhitePixels = 0
+  const expectedTextColor = resolveExpectedMarkerTextColor(markerTextClass)
+  let centerTextColorPixels = 0
   for (let y = bounds.minY + insetY; y <= bounds.maxY - insetY; y++) {
     for (let x = bounds.minX + insetX; x <= bounds.maxX - insetX; x++) {
       const index = (y * image.width + x) * 4
       const red = image.data[index] ?? 0
       const green = image.data[index + 1] ?? 0
       const blue = image.data[index + 2] ?? 0
-      if (red >= 245 && green >= 245 && blue >= 245) {
-        centerWhitePixels += 1
+      if (
+        expectedTextColor
+        && Math.abs(red - expectedTextColor.red) <= 4
+        && Math.abs(green - expectedTextColor.green) <= 4
+        && Math.abs(blue - expectedTextColor.blue) <= 4
+      ) {
+        centerTextColorPixels += 1
       }
     }
   }
@@ -447,14 +443,15 @@ async function analyzeIssue1002MarkerPresentation(
       && Math.abs((image.data[index + 2] ?? 0) - background.blue) <= 3
   }).length
   const roundedReady = !markerClass.includes('rounded-full') || coloredCorners <= 1
-  const whiteTextReady = !markerTextClass?.includes('text-white') || centerWhitePixels >= 8
+  const textColorReady = !expectedTextColor || centerTextColorPixels >= 8
 
   return {
-    centerWhitePixels,
+    centerTextColorPixels,
     coloredCorners,
-    ready: roundedReady && whiteTextReady,
+    expectedTextColor,
+    ready: roundedReady && textColorReady,
     roundedReady,
-    whiteTextReady,
+    textColorReady,
   }
 }
 
@@ -463,18 +460,20 @@ async function collectAppScreenshotEvidence(
   screenshot: string,
   env: Record<string, string | undefined>,
   expectedMarkerClass?: string,
+  expectedMarkerTextClass?: string,
+  expectedBackgroundColor?: string,
 ) {
   const visual = await analyzeAppScreenshot(screenshot)
-  const expectedMarkerColor = expectedMarkerClass ? parseHexColorFromClass(expectedMarkerClass) : undefined
+  const expectedMarkerColor = parseHexColorFromClass(expectedBackgroundColor ? `bg-[${expectedBackgroundColor}]` : expectedMarkerClass ?? '')
   const marker = expectedMarkerColor
-    ? await analyzeScreenshotColorPresence(screenshot, expectedMarkerColor)
+    ? locateMarkerColor(PNG.sync.read(await fs.readFile(screenshot)), expectedMarkerColor, expectedMarkerClass ?? '')
     : undefined
   const markerPresentation = marker && expectedMarkerClass
     ? await analyzeIssue1002MarkerPresentation(
         screenshot,
         marker,
         expectedMarkerClass,
-        expectedMarkerClass === item.markerClass ? item.markerTextClass : item.hmrMarkerTextClass,
+        expectedMarkerTextClass,
       )
     : undefined
   const markerReady = marker ? marker.matched && (markerPresentation?.ready ?? true) : true
@@ -514,17 +513,34 @@ async function waitForAppScreenshotReady(
   label: string,
   ensureRunning: () => void,
   expectedMarkerClass?: string,
+  expectedMarkerTextClass?: string,
+  expectedBackgroundColor?: string,
+  previous?: { screenshot: string, markerClass: string },
+  timeoutMs = appReadyTimeoutMs,
 ) {
   const startedAt = Date.now()
   let latest: Record<string, unknown> | undefined
-  while (Date.now() - startedAt < appReadyTimeoutMs) {
+  while (Date.now() - startedAt < timeoutMs) {
     ensureRunning()
-    await captureAppScreenshot(item, screenshot, env)
+    const iosRuntime = item.platform === 'app-ios'
+      ? await waitForIosRuntimeEvidence({
+          deviceId: readAppLaunchOption(item.launchArgs ?? [], '--deviceId'),
+          ensureRunning,
+          markerClass: expectedMarkerClass ?? '',
+          screenshot,
+          screenshotTimeoutMs: iosScreenshotTimeoutMs,
+          timeoutMs: Math.max(1, timeoutMs - (Date.now() - startedAt)),
+          ...(previous ? { previous } : {}),
+        })
+      : undefined
+    if (!iosRuntime) {
+      await captureAppScreenshot(item, screenshot, env)
+    }
     ensureRunning()
-    const evidence = await collectAppScreenshotEvidence(item, screenshot, env, expectedMarkerClass)
+    const evidence = await collectAppScreenshotEvidence(item, screenshot, env, expectedMarkerClass, expectedMarkerTextClass, expectedBackgroundColor)
     latest = evidence
     if (evidence.ready) {
-      return evidence
+      return { ...evidence, ...iosRuntime }
     }
     await wait(2000)
   }
@@ -547,7 +563,6 @@ function createProcessExitTracker(child: ChildProcess) {
         throw new Error(`命令失败：HBuilderX app dev exit=${exit.signal ?? exit.code}\n${logs.join('')}`)
       }
       if (!exit && Date.now() - startedAt > hbuilderxAppTimeoutMs) {
-        killProcessTree(child)
         throw new Error(`命令超时：HBuilderX app dev timeout=${hbuilderxAppTimeoutMs}ms\n${logs.join('')}`)
       }
     },
@@ -565,7 +580,7 @@ function startAppLaunch(
   if (item.platform !== 'app-harmony' && !launchArgs.includes('--pagePath')) {
     launchArgs.push('--pagePath', 'pages/index/index')
   }
-  const child = hbuilderx.spawn({
+  const command = hbuilderx.spawn({
     args: ['launch', item.platform, '--project', projectPath, ...launchArgs],
     cwd: projectRoot,
     env: {
@@ -573,35 +588,16 @@ function startAppLaunch(
       ...toolEnv,
       ...item.launchEnv,
     },
-  }).child
-  const logs = collectProcessOutput(child)
-  const tracker = createProcessExitTracker(child)
-  return { child, logs, tracker }
+  })
+  const tracker = createProcessExitTracker(command.child)
+  return { ...command, tracker }
 }
 
 async function stopAppLaunch(launch: ReturnType<typeof startAppLaunch> | undefined) {
   if (!launch) {
     return
   }
-  const child = launch.child
-  if (child.pid && child.exitCode == null) {
-    try {
-      if (process.platform === 'win32') {
-        child.kill('SIGINT')
-      }
-      else {
-        process.kill(-child.pid, 'SIGINT')
-      }
-    }
-    catch {
-      child.kill('SIGINT')
-    }
-    await Promise.race([launch.tracker.closed, wait(5000)])
-  }
-  if (child.exitCode == null) {
-    killProcessTree(child)
-    await Promise.race([launch.tracker.closed, wait(5000)])
-  }
+  await launch.stop('SIGINT')
 }
 
 async function runAppCaseVariant(
@@ -609,11 +605,12 @@ async function runAppCaseVariant(
   context: RuntimeContext,
   results: CaseResult[],
   variant: StyleIsolationVariant,
-  shared?: {
+  shared: {
+    recovery: Awaited<ReturnType<typeof createNativeSessionRecovery>>
     hbuilderx?: HBuilderXRunner
-    originalManifest?: string
+    originalManifest?: string | undefined
     originalSource?: string
-    toolEnv?: Record<string, string | undefined>
+    toolEnv?: Record<string, string | undefined> | undefined
   },
 ) {
   const name = resolveAppDemoName(item)
@@ -621,13 +618,24 @@ async function runAppCaseVariant(
   const screenshot = resolveScreenshotPath(context, name, platform, variant.key)
   const hmrBeforeScreenshot = resolveHmrScreenshotPath(context, name, platform, 'before', variant.key)
   const hmrAfterScreenshot = resolveHmrScreenshotPath(context, name, platform, 'after', variant.key)
-  const projectRoot = path.resolve(context.repoRoot, item.projectDir)
+  let projectRoot = path.resolve(context.repoRoot, item.projectDir)
   const sourceFile = path.resolve(projectRoot, item.sourceFile)
+  const domProbe = item.platform === 'app-harmony' && item.renderMode === 'vapor' ? createHarmonyDomProbe() : undefined
+  let domObserver: ReturnType<NonNullable<typeof domProbe>['observe']> | undefined
+  let nativeLog: ReturnType<typeof captureNativeLog> | undefined
+  const domOptions = domProbe ? { readDomProbe: () => domObserver?.read() } : {}
   let activeSourceFile = sourceFile
   let launch: ReturnType<typeof startAppLaunch> | undefined
-  let projectAlias: Awaited<ReturnType<typeof createHBuilderXProjectAlias>> | undefined
+  let harmonyFailureEvidence: Parameters<typeof captureHarmonyRuntimeEvidence>[0] | undefined
+  let hmrLifecycle: ReturnType<typeof observeHmrStep> | undefined
+  let projectSession: Awaited<ReturnType<typeof createHBuilderXAppProject>> | undefined
+  let hbuilderx = shared?.hbuilderx
+  let caseResult: CaseResult | undefined
+  let failure: { error: unknown } | undefined
+  let recoveryReady = false
   let beforeScreenshotEvidence: Record<string, unknown> | undefined
   let afterScreenshotEvidence: Record<string, unknown> | undefined
+  let harmonyLayoutEvidence: Awaited<ReturnType<typeof captureAndAnalyzeHarmonyLayout>> | undefined
 
   try {
     process.stdout.write(`[app-${platform}] ${name}${variant.key ? ` ${variant.key}` : ''}: prepare\n`)
@@ -644,10 +652,13 @@ async function runAppCaseVariant(
       assertHarmonyToolchain(process.env, resolveLaunchArg(item, '--deviceId'))
     }
 
-    const hbuilderx = shared?.hbuilderx ?? await createLocalHBuilderXRunner(projectRoot, toolEnv)
-    projectAlias = await createHBuilderXProjectAlias(projectRoot)
-    activeSourceFile = path.resolve(projectAlias.projectPath, item.sourceFile)
-    const originalSource = shared?.originalSource ?? (await readUtf8(sourceFile)).replace(appMarkerRE, '')
+    hbuilderx ??= await createLocalHBuilderXRunner(projectRoot, toolEnv)
+    projectSession = await createHBuilderXAppProject({ projectRoot, platform, runner: hbuilderx, timeoutMs: hbuilderxAppTimeoutMs, env: toolEnv })
+    projectRoot = projectSession.projectRoot
+    activeSourceFile = path.resolve(projectSession.projectPath, item.sourceFile)
+    await shared.recovery.bindProject(projectSession)
+    recoveryReady = true
+    const originalSource = shared?.originalSource ?? removeLegacyAppMarkers(await readUtf8(sourceFile))
     const originalManifest = shared?.originalManifest ?? await readManifest(projectRoot).catch(() => undefined)
     const restoreVariantManifest = async () => {
       if (originalManifest === undefined) {
@@ -658,6 +669,7 @@ async function runAppCaseVariant(
         await writeStyleIsolationVariantManifest(projectRoot, variant)
       }
     }
+    await shared.recovery.beginMutation()
     await fs.writeFile(activeSourceFile, originalSource, 'utf8')
     await restoreVariantManifest()
 
@@ -667,46 +679,77 @@ async function runAppCaseVariant(
       textClassName: item.markerTextClass,
       text: item.markerText,
     })
+    if (domProbe) {
+      await fs.writeFile(activeSourceFile, domProbe.inject(await readUtf8(activeSourceFile)), 'utf8')
+    }
     process.stdout.write(`[app-${platform}] ${name}${variant.key ? ` ${variant.key}` : ''}: clean output\n`)
     await cleanAppOutput(item, projectRoot)
 
-    process.stdout.write(`[app-${platform}] ${name}${variant.key ? ` ${variant.key}` : ''}: open project ${projectRoot}\n`)
-    await hbuilderx.run({
-      args: ['project', 'close', '--path', projectAlias.projectPath],
-      cwd: projectRoot,
-      timeoutMs: hbuilderxAppTimeoutMs,
-      allowFailure: true,
-      env: toolEnv,
-    }).catch(() => undefined)
-    await hbuilderx.run({
-      args: ['project', 'open', '--path', projectAlias.projectPath],
-      cwd: projectRoot,
-      timeoutMs: hbuilderxAppTimeoutMs,
-      env: toolEnv,
-    })
+    await projectSession.open()
 
     process.stdout.write(`[app-${platform}] ${name}${variant.key ? ` ${variant.key}` : ''}: launch ${item.platform}\n`)
-    launch = startAppLaunch(item, projectRoot, projectAlias.projectPath, hbuilderx, toolEnv)
+    launch = startAppLaunch(item, projectRoot, projectSession.launchProject, hbuilderx, toolEnv)
+    await fs.mkdir(path.dirname(hmrBeforeScreenshot), { recursive: true })
+    nativeLog = captureNativeLog(launch.child, path.join(path.dirname(hmrBeforeScreenshot), 'hbuilderx.log'))
+    domObserver = domProbe?.observe(launch.child)
     const ensureInitialRunning = () => launch?.tracker.ensureRunning(launch.logs)
 
     process.stdout.write(`[app-${platform}] ${name}${variant.key ? ` ${variant.key}` : ''}: wait initial output\n`)
     const initialExpected = [...item.transformedContains, ...(item.compiledStyleContains ?? [])]
     const initialOutputRoot = await waitForAppOutputRoot(item, projectRoot, initialExpected, appOutputTimeoutMs, ensureInitialRunning, item.styleContains)
     process.stdout.write(`[app-${platform}] ${name}${variant.key ? ` ${variant.key}` : ''}: initial output ${initialOutputRoot}\n`)
+    const runtimeLogContract = await waitForAppRuntimeLogContract(item, launch.logs, ensureInitialRunning)
     await wait(Number(process.env['DEMO_VISUAL_APP_SCREENSHOT_DELAY_MS'] ?? 3000))
     process.stdout.write(`[app-${platform}] ${name}${variant.key ? ` ${variant.key}` : ''}: screenshot before\n`)
-    beforeScreenshotEvidence = await waitForAppScreenshotReady(item, hmrBeforeScreenshot, toolEnv, `${item.name} HMR 前`, ensureInitialRunning, item.markerClass)
-
-    const ensureHmrRunning = ensureInitialRunning
+    beforeScreenshotEvidence = await waitForAppScreenshotReady(item, hmrBeforeScreenshot, toolEnv, `${item.name} HMR 前`, ensureInitialRunning, item.markerClass, item.markerTextClass, item.runtime?.backgroundColor)
+    const initialHarmony = item.platform === 'app-harmony'
+      ? await waitForHarmonyRuntimeEvidence({
+          ...domOptions,
+          deviceId: resolveHarmonyScreenshotDeviceId(item),
+          directory: path.join(path.dirname(hmrBeforeScreenshot), 'runtime-initial'),
+          marker: item.markerText,
+          timeoutMs: appOutputTimeoutMs,
+          ensureRunning: ensureInitialRunning,
+        })
+      : undefined
+    if (item.platform === 'app-harmony' && item.harmonyRuntimeTextPairs?.length) {
+      const layoutFile = path.join(path.dirname(hmrBeforeScreenshot), 'layout.json')
+      if (initialHarmony?.dom) {
+        const domFile = path.join(path.dirname(hmrBeforeScreenshot), 'dom-layout.json')
+        await fs.writeFile(domFile, `${JSON.stringify(initialHarmony.dom, null, 2)}\n`)
+        harmonyLayoutEvidence = { file: domFile, pairs: analyzeHarmonyDomTextPairs(initialHarmony.dom, item.harmonyRuntimeTextPairs) }
+      }
+      else {
+        harmonyLayoutEvidence = await captureAndAnalyzeHarmonyLayout({
+          deviceId: resolveHarmonyScreenshotDeviceId(item),
+          file: layoutFile,
+          pairs: item.harmonyRuntimeTextPairs,
+          timeoutMs: harmonyScreenshotTimeoutMs,
+        })
+      }
+    }
+    const ensureHmrRunning = () => {
+      ensureInitialRunning()
+      hmrLifecycle?.assertNoFallback()
+    }
     const hmrSteps: VisualHmrStepResult[] = []
     let previousAfterScreenshot = hmrBeforeScreenshot
+    let previousMarkerClass = item.markerClass
+    let previousMarkerColor = parseHexColorFromClass(item.runtime?.backgroundColor ? `bg-[${item.runtime.backgroundColor}]` : item.markerClass)
     let hmrOutputRoot = initialOutputRoot
     for (const step of resolveAppHmrSteps(item)) {
       const stepBeforeScreenshot = resolveHmrStepScreenshotPath(context, name, platform, step.name, 'before', variant.key)
       const stepAfterScreenshot = resolveHmrStepScreenshotPath(context, name, platform, step.name, 'after', variant.key)
       await fs.mkdir(path.dirname(stepBeforeScreenshot), { recursive: true })
       await fs.copyFile(previousAfterScreenshot, stepBeforeScreenshot)
+      hmrLifecycle?.assertNoFallback()
+      hmrLifecycle?.dispose()
+      hmrLifecycle = observeHmrStep(launch.child, item.platform, item.updateMode)
+      harmonyFailureEvidence = initialHarmony ? { ...domOptions, deviceId: resolveHarmonyScreenshotDeviceId(item), directory: path.join(path.dirname(stepAfterScreenshot), `runtime-${step.name}`), marker: step.markerText } : undefined
       process.stdout.write(`[app-${platform}] ${name}${variant.key ? ` ${variant.key}` : ''}: write hmr marker ${step.name}\n`)
+      if (step.sourceMutation) {
+        await appendHmrSourceMutation(projectRoot, step.sourceMutation)
+      }
       await writeAppMarker(activeSourceFile, resolveAppMarkerAnchors(item), {
         className: step.markerClass,
         text: step.markerText,
@@ -727,46 +770,96 @@ async function runAppCaseVariant(
       process.stdout.write(`[app-${platform}] ${name}${variant.key ? ` ${variant.key}` : ''}: hmr output ${step.name} ${hmrOutputRoot}\n`)
       await wait(Number(process.env['DEMO_VISUAL_APP_SCREENSHOT_DELAY_MS'] ?? 3000))
       process.stdout.write(`[app-${platform}] ${name}${variant.key ? ` ${variant.key}` : ''}: screenshot after ${step.name}\n`)
-      const evidence = await waitForAppScreenshotReady(item, stepAfterScreenshot, toolEnv, `${item.name} HMR ${step.name} 后`, ensureHmrRunning, step.markerClass)
-      const expectedMarkerColor = parseHexColorFromClass(step.markerClass)
+      const captureEvidence = (timeoutMs = appReadyTimeoutMs) => waitForAppScreenshotReady(item, stepAfterScreenshot, toolEnv, `${item.name} HMR ${step.name} 后`, ensureHmrRunning, step.markerClass, step.markerTextClass, step.runtime?.backgroundColor, { screenshot: stepBeforeScreenshot, markerClass: previousMarkerClass }, timeoutMs)
+      const evidence = item.platform === 'app-ios'
+        ? await hmrLifecycle.waitForCompletion(appOutputTimeoutMs, ensureHmrRunning, captureEvidence)
+        : await captureEvidence()
+      if (!evidence) {
+        throw new Error(`${item.name} HMR ${step.name} 缺少设备截图证据`)
+      }
+      if (item.platform !== 'app-ios') {
+        await hmrLifecycle.waitForCompletion(appOutputTimeoutMs, ensureHmrRunning)
+      }
+      const harmonyRuntime = initialHarmony
+        ? await waitForHarmonyRuntimeEvidence({
+            ...domOptions,
+            deviceId: resolveHarmonyScreenshotDeviceId(item),
+            directory: path.join(path.dirname(stepAfterScreenshot), `runtime-${step.name}`),
+            marker: step.markerText,
+            previousPid: initialHarmony.pid,
+            timeoutMs: appOutputTimeoutMs,
+            ensureRunning: ensureHmrRunning,
+          })
+        : undefined
+      const expectedMarkerColor = parseHexColorFromClass(step.runtime?.backgroundColor ? `bg-[${step.runtime.backgroundColor}]` : step.markerClass)
       const beforeMarker = expectedMarkerColor
         ? await analyzeScreenshotColorPresence(stepBeforeScreenshot, expectedMarkerColor)
         : undefined
       const markerColorDelta = beforeMarker && evidence.marker
         ? evidence.marker.matchingPixels - beforeMarker.matchingPixels
         : undefined
-      if (markerColorDelta != null && markerColorDelta <= 100) {
+      const sameColor = expectedMarkerColor && previousMarkerColor
+        && expectedMarkerColor.red === previousMarkerColor.red
+        && expectedMarkerColor.green === previousMarkerColor.green
+        && expectedMarkerColor.blue === previousMarkerColor.blue
+      let markerPixelChanges: number | undefined
+      if (sameColor) {
+        const beforeImage = PNG.sync.read(await fs.readFile(stepBeforeScreenshot))
+        const afterImage = PNG.sync.read(await fs.readFile(stepAfterScreenshot))
+        const previousMarker = locateMarkerColor(beforeImage, expectedMarkerColor, previousMarkerClass)
+        if (!previousMarker.bounds || !evidence.marker?.bounds) {
+          throw new Error(`${item.name} HMR ${step.name} 无法定位前后标记`)
+        }
+        markerPixelChanges = countMarkerPixelChanges(beforeImage, afterImage, expectedMarkerColor, previousMarker.bounds, evidence.marker.bounds)
+        if (markerPixelChanges <= 100) {
+          throw new Error(`${item.name} HMR ${step.name} 同色标记位置或形状未改变：pixels=${markerPixelChanges}`)
+        }
+      }
+      else if (markerColorDelta != null && markerColorDelta <= 100) {
         throw new Error(`${item.name} HMR ${step.name} 目标背景色像素未明显增加：before=${beforeMarker?.matchingPixels} after=${evidence.marker?.matchingPixels}`)
       }
+      hmrLifecycle?.assertNoFallback()
       hmrSteps.push({
         afterScreenshot: stepAfterScreenshot,
         beforeScreenshot: stepBeforeScreenshot,
         classLiteral: [step.markerClass, step.markerTextClass].filter(Boolean).join(' '),
         evidence: {
           ...evidence,
+          updateLifecycle: hmrLifecycle.snapshot(),
           markerColorDelta,
+          markerPixelChanges,
+          harmonyRuntime,
         },
-        expectedBackgroundColor: step.markerClass.match(/bg-\[(#[0-9a-f]{6})\]/i)?.[1] ?? '',
+        expectedBackgroundColor: step.runtime?.backgroundColor ?? step.markerClass.match(/bg-\[(#[0-9a-f]{6})\]/i)?.[1] ?? '',
         marker: step.markerText,
         name: step.name,
       })
       afterScreenshotEvidence = evidence
       previousAfterScreenshot = stepAfterScreenshot
+      previousMarkerClass = step.markerClass
+      previousMarkerColor = expectedMarkerColor
     }
+    hmrLifecycle?.assertNoFallback()
     await fs.copyFile(previousAfterScreenshot, hmrAfterScreenshot)
     await fs.copyFile(hmrAfterScreenshot, screenshot)
+    const forbiddenRuntimeLogs = findForbiddenRuntimeLogs(launch.logs.join(''), runtimeLogContract.notContains)
+    if (forbiddenRuntimeLogs.length > 0) {
+      throw new Error(`${item.name} 出现互斥 App 渲染模式日志：${forbiddenRuntimeLogs.map(String).join(' | ')}`)
+    }
 
-    results.push({
+    caseResult = {
       name,
       platform,
       styleIsolationVariant: variant.key,
       status: 'passed',
+      updateMode: item.updateMode ?? 'hmr',
       screenshot,
       hmrBeforeScreenshot,
       hmrAfterScreenshot,
       hmrSteps,
       diagnostics: {
         hmr: {
+          mode: item.updateMode ?? 'hmr',
           markerText: hmrSteps.at(-1)?.marker,
           steps: hmrSteps,
         },
@@ -776,78 +869,97 @@ async function runAppCaseVariant(
           before: beforeScreenshotEvidence,
         },
         hmrOutputRoot,
+        harmonyLayout: harmonyLayoutEvidence,
         launchArgs: item.launchArgs,
+        renderMode: item.renderMode,
       },
-    })
-    process.stdout.write(`[app-${platform}] ${name}${variant.key ? ` ${variant.key}` : ''}: passed\n`)
-
-    await stopAppLaunch(launch)
-    launch = undefined
+    }
   }
   catch (error) {
-    const launchLog = launch?.logs.join('').trim()
-    results.push({
-      name,
-      platform,
-      styleIsolationVariant: variant.key,
-      status: 'failed',
-      error: [error instanceof Error ? error.message : String(error), launchLog ? `HBuilderX launch log:\n${launchLog}` : '']
-        .filter(Boolean)
-        .join('\n'),
-      diagnostics: {
-        launchArgs: item.launchArgs,
-        projectRoot,
-      },
-    })
+    failure = { error }
+    if (harmonyFailureEvidence) {
+      await captureHarmonyRuntimeEvidence(harmonyFailureEvidence).catch((captureError) => {
+        failure = { error: new AggregateError([error, captureError], 'Harmony 验证与失败现场取证均失败。', { cause: error }) }
+      })
+    }
   }
   finally {
-    await stopAppLaunch(launch)
-    if (item.platform === 'app-android') {
-      cleanupAndroidAppRuntime(shared?.toolEnv ?? {}, resolveAndroidScreenshotDeviceId(item))
+    try {
+      await shared.recovery.cleanup({
+        failure,
+        stop: () => stopAppLaunch(launch),
+        nativeStopReason: () => hmrLifecycle?.nativeStopReason(),
+        afterStop: () => hmrLifecycle?.assertNoFallback(),
+        safe: [() => hmrLifecycle?.dispose(), () => domObserver?.dispose(), async () => { await nativeLog?.close() }],
+        release: [() => {
+          if (item.platform === 'app-android') {
+            cleanupAndroidAppRuntime(shared?.toolEnv ?? {}, resolveAndroidScreenshotDeviceId(item))
+          }
+        }, async () => { await projectSession?.cleanup() }],
+      })
     }
-    if (projectAlias) {
-      await shared?.hbuilderx?.run({
-        args: ['project', 'close', '--path', projectAlias.projectPath],
-        cwd: projectRoot,
-        timeoutMs: hbuilderxAppTimeoutMs,
-        allowFailure: true,
-        env: shared?.toolEnv,
-      }).catch(() => undefined)
-      await projectAlias.cleanup().catch(() => undefined)
+    catch (error) {
+      failure = { error: failure
+        ? new AggregateError([failure.error, error], 'HBuilderX App 验证与收尾均失败。', { cause: failure.error })
+        : error }
     }
-    if (shared?.originalSource) {
-      await fs.writeFile(sourceFile, shared.originalSource, 'utf8').catch(() => undefined)
-    }
-    if (shared?.originalManifest) {
-      await writeManifest(projectRoot, shared.originalManifest).catch(() => undefined)
-    }
-    const restoredOutput = await findReadyAppOutputRoot(item, projectRoot, item.transformedContains, item.styleContains).catch(() => undefined)
+    const restoredOutput = shared.recovery.blocked ? undefined : await findReadyAppOutputRoot(item, projectRoot, item.transformedContains, item.styleContains).catch(() => undefined)
     if (restoredOutput) {
       process.stdout.write(`[app-${platform}] ${name}${variant.key ? ` ${variant.key}` : ''}: restored output ${restoredOutput}\n`)
     }
   }
+  if (failure) {
+    const launchLog = launch?.logs.join('').trim()
+    results.push({
+      ...caseResult,
+      name,
+      platform,
+      styleIsolationVariant: variant.key,
+      status: 'failed',
+      updateMode: item.updateMode ?? 'hmr',
+      error: [inspect(failure.error, { depth: null, colors: false }), launchLog ? `HBuilderX launch log:\n${launchLog}` : '']
+        .filter(Boolean)
+        .join('\n'),
+      diagnostics: {
+        ...caseResult?.diagnostics,
+        launchArgs: item.launchArgs,
+        projectRoot,
+        updateLifecycle: hmrLifecycle?.snapshot(),
+      },
+    })
+    if (!recoveryReady || !shared.recovery.cleanupComplete || findNativeCleanupBlock(failure.error)) {
+      throw failure.error
+    }
+  }
+  else if (caseResult) {
+    results.push(caseResult)
+    process.stdout.write(`[app-${platform}] ${name}${variant.key ? ` ${variant.key}` : ''}: passed\n`)
+  }
 }
 
 export async function runAppCase(item: AppCase, context: RuntimeContext, results: CaseResult[]) {
+  item = bindAppTarget(item)
   const projectRoot = path.resolve(context.repoRoot, item.projectDir)
   const sourceFile = path.resolve(projectRoot, item.sourceFile)
-  const originalSource = (await readUtf8(sourceFile)).replace(appMarkerRE, '')
-  const originalManifest = await readManifest(projectRoot).catch(() => undefined)
-  const shared = {
-    originalManifest,
-    originalSource,
-    toolEnv: item.platform === 'app-android' ? assertAndroidToolchain() : {},
-  }
-  const hbuilderx = await createLocalHBuilderXRunner(projectRoot, shared.toolEnv)
-  try {
+  const toolEnv = item.platform === 'app-android' ? assertAndroidToolchain() : {}
+  const hbuilderx = await createLocalHBuilderXRunner(projectRoot, toolEnv)
+  const recovery = await createNativeSessionRecovery({
+    directory: path.resolve(context.artifactRoot, 'native-recovery'),
+    projectRoot,
+    platform: item.platform,
+    host: hbuilderx.resolution,
+    files: [
+      { file: sourceFile },
+      { file: path.resolve(projectRoot, 'manifest.json'), optional: true },
+      ...resolveAppHmrSteps(item).flatMap(step => step.sourceMutation ? [{ file: path.resolve(projectRoot, step.sourceMutation.file) }] : []),
+    ],
+  })
+  await runWithCleanup(async () => {
+    const originalSource = removeLegacyAppMarkers(await readUtf8(sourceFile))
+    const originalManifest = await readManifest(projectRoot).catch(() => undefined)
+    const shared = { originalManifest, originalSource, toolEnv, recovery }
     for (const variant of resolveStyleIsolationVariants(item.projectDir)) {
       await runAppCaseVariant(item, context, results, variant, { ...shared, hbuilderx })
     }
-  }
-  finally {
-    await fs.writeFile(sourceFile, originalSource, 'utf8').catch(() => undefined)
-    if (originalManifest !== undefined) {
-      await writeManifest(projectRoot, originalManifest).catch(() => undefined)
-    }
-  }
+  }, () => recovery.finish())
 }

@@ -34,6 +34,10 @@ const issuesSidebar: SidebarConfig = [
   },
   {
     type: 'doc',
+    id: 'issues/spacing-rpx',
+  },
+  {
+    type: 'doc',
     id: 'issues/rpx-ambiguities',
   },
   {
@@ -84,21 +88,6 @@ const issuesSidebar: SidebarConfig = [
   {
     type: 'doc',
     id: 'issues/toast-svg-bug',
-  },
-  {
-    type: 'doc',
-    id: 'issues/v1',
-    label: 'v1版本常见问题',
-  },
-  {
-    type: 'doc',
-    label: '深入核心原理',
-    id: 'principle/index',
-  },
-  {
-    type: 'doc',
-    label: 'Tailwindcss 原子类维护指南',
-    id: 'tailwindcss-maintenance-book',
   },
 ]
 

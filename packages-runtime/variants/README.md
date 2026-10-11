@@ -1,9 +1,35 @@
 # @weapp-tailwindcss/variants
 
-> 简体中文 | [English](./README.en.md)
+> English | [简体中文](./README.zh-CN.md)
 
-这个包是 tailwind-variants 的小程序运行时封装，在 tv、cn 等 API 之上增加 escape 和 merge 集成。
+A cross-platform `tailwind-variants` runtime. It keeps the upstream `tv`, `cn`, slots, compound variants, and extension model while integrating Tailwind Merge and mini-program-safe escaping.
 
-## 官网
+## Installation
 
-更多接入方式、配置说明和框架示例见 [weapp-tailwindcss 官方文档](https://tw.icebreaker.top)。
+```bash
+pnpm add @weapp-tailwindcss/variants
+```
+
+## Usage
+
+```ts
+import { tv } from '@weapp-tailwindcss/variants'
+
+const button = tv({
+  base: 'rounded px-4 py-2 font-medium',
+  variants: {
+    intent: {
+      primary: 'bg-sky-500 text-white',
+      secondary: 'bg-slate-100 text-slate-900',
+    },
+  },
+})
+
+const className = button({ intent: 'primary' })
+```
+
+Use `create({ escape: false })` for raw class output or pass a runtime Tailwind Merge configuration when your design system extends the default class groups.
+
+## Documentation
+
+See the [runtime utilities documentation](https://tw.weapp.dev/docs/community/merge/overview) for escaping and merge behavior.

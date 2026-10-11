@@ -1,0 +1,16 @@
+# Android 本地构建与 IDE 产物
+android/.gradle/
+android/.idea/
+android/.kotlin/
+android/**/build/
+android/*.iml
+android/local.properties
+android/app/src/main/assets/main.lynx.bundle
+
+# iOS 依赖、构建与生成工程
+ios/DerivedData/
+ios/Pods/
+ios/*.xcodeproj/
+ios/*.xcworkspace/
+ios/Podfile.lock
+ios/App/main.lynx.bundle

@@ -4,6 +4,9 @@ import { execa } from 'execa'
 import fg from 'fast-glob'
 import path from 'pathe'
 import { describe, expect, it } from 'vitest'
+import { CANONICAL_TEMPLATE_CASES } from './canonicalTemplateMatrix'
+import { readTemplatePageConfig, readTemplatePageConfigs } from './template-ide/config'
+import { isTemplateVersionCompatible, TEMPLATE_PACKAGE_MANAGER } from './templateContract'
 
 interface TemplateCase {
   name: string
@@ -39,6 +42,11 @@ const miniProgramMarkupExtensions = new Set(['axml', 'jxml', 'qml', 'swan', 'ttm
 
 const repoRoot = path.resolve(__dirname, '..')
 const templatesRoot = path.resolve(repoRoot, 'templates')
+const canonicalTemplateNames = new Set(
+  CANONICAL_TEMPLATE_CASES
+    .filter(item => item.template === 'weapp-vite-tailwindcss-v4')
+    .map(item => item.template),
+)
 
 const taroMiniOutputByPlatform: Record<string, OutputShape> = {
   alipay: {
@@ -159,7 +167,7 @@ function createUniMiniBuildCase(template: string, platform: keyof typeof uniMini
       `${outputDir}/${output.styleFile}`,
       `${outputDir}/${output.pageFile}`,
     ],
-    styleFiles: [`${outputDir}/${output.styleFile}`, `${outputDir}/common`],
+    styleFiles: [outputDir],
     textFiles: [`${outputDir}/${output.pageFile}`],
   }
 }
@@ -361,11 +369,11 @@ async function expectUsingComponentsExist(name: string, root: string, outputDir:
   const miniprogramRoot = path.resolve(root, outputDir)
   const relativePageFile = path.relative(outputDir, pageFile)
   const pageJsonFile = path.resolve(root, outputDir, relativePageFile.replace(new RegExp(`\\.${markupExtension}$`), '.json'))
-  if (!await pathExists(pageJsonFile)) {
+  if (markupExtension !== 'wxml' && !await pathExists(pageJsonFile)) {
     return
   }
 
-  const pageConfig = await readJson<{ usingComponents?: Record<string, string> }>(pageJsonFile)
+  const pageConfig = await readTemplatePageConfig(pageJsonFile)
   for (const [componentName, componentPath] of Object.entries(pageConfig.usingComponents ?? {})) {
     const resolved = resolveComponentPath(miniprogramRoot, pageJsonFile, componentPath)
     if (!resolved) {
@@ -440,7 +448,10 @@ describe('templates build smoke', () => {
       cwd: templatesRoot,
       onlyFiles: true,
     })
-    const templateNames = dirs.map(file => file.split('/')[0]).sort()
+    const templateNames = dirs
+      .map(file => file.split('/')[0])
+      .filter(name => !canonicalTemplateNames.has(name))
+      .sort()
     expect(templateCases.map(item => item.name).sort()).toEqual(templateNames)
 
     const executableTemplates = new Set(templateBuildCases.map(item => item.template))
@@ -484,15 +495,17 @@ describe('templates build smoke', () => {
       ...pkg.devDependencies,
     }
 
-    expect(pkg.packageManager, `${item.name} should pin pnpm`).toBe('pnpm@11.5.3')
-    expect(pkg).not.toHaveProperty('pnpm')
+    expect(pkg.packageManager, `${item.name} should pin pnpm`).toBe(TEMPLATE_PACKAGE_MANAGER)
     expect(pkg.scripts?.['up:pkg'], `${item.name} should expose interactive package upgrade`).toMatch(/^pnpm up -rLi\b/)
     expect(await pathExists(path.resolve(root, 'pnpm-lock.yaml')), `${item.name} should include its lockfile`).toBe(true)
     const workspace = await fs.readFile(path.resolve(root, 'pnpm-workspace.yaml'), 'utf8')
     expect(workspace).toContain('- .')
     expect(await fs.readFile(path.resolve(root, '.npmrc'), 'utf8')).toContain('registry=https://registry.npmjs.org/')
 
-    expect(deps['weapp-tailwindcss']).toBe('^5.0.7')
+    expect(isTemplateVersionCompatible(deps['weapp-tailwindcss'])).toBe(true)
+    expect(deps['@tailwindcss/postcss'], `${item.name} should not register the official PostCSS generator`).toBeUndefined()
+    expect(deps['@tailwindcss/vite'], `${item.name} should not register the official Vite generator`).toBeUndefined()
+    expect(pkg.scripts?.postinstall ?? '', `${item.name} should not patch Tailwind CSS`).not.toMatch(/weapp-tw\s+patch/u)
 
     if (Object.keys(deps).some(name => name.startsWith('@dcloudio/'))) {
       expect(pkg.scripts?.['up:pkg'], `${item.name} should keep @dcloudio upgrade out of generic package upgrade`).toContain('"!@dcloudio/*"')
@@ -529,6 +542,10 @@ describe('templates build smoke', () => {
     await runPnpm(item.command.slice(1), root)
 
     expect(await pathExists(path.resolve(root, item.outputDir)), `${item.name} should emit ${item.outputDir}`).toBe(true)
+    if (item.requiredFiles.some(file => file.endsWith('.wxml'))) {
+      await readTemplatePageConfigs(path.resolve(root, item.outputDir))
+    }
+
     for (const file of item.requiredFiles) {
       expect(await pathExists(path.resolve(root, file)), `${item.name} should emit ${file}`).toBe(true)
     }

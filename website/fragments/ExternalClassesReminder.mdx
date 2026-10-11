@@ -1,8 +1,32 @@
 import React from 'react';
 import Admonition from '@theme/Admonition';
+import { useCurrentSiteLocale } from '@site/src/i18n/runtime';
+import { toLocalePath } from '@site/src/i18n/locale';
 
 export default function ExternalClassesReminder({ framework }) {
+  const locale = useCurrentSiteLocale();
   const prefix = framework ? `${framework} ` : '';
+  const documentationPath = toLocalePath('/docs/issues/externalClasses', locale);
+
+  if (locale === 'en') {
+    return (
+      <Admonition type="tip" title="externalClasses reminder">
+        <p>
+          If a {prefix}custom component declares <code>externalClasses</code>, list those attributes in the plugin's{' '}
+          <code>customAttributes</code>. Otherwise, WeChat DevTools can split values such as{' '}
+          <code>my-class="bg-[#fafa00] text-[40px]"</code> into invalid fragments and the styles will not apply.
+        </p>
+        <p>
+          See{' '}
+          <strong>
+            <a href={documentationPath}>External style classes (externalClasses)</a>
+          </strong>{' '}
+          for details and additional examples.
+        </p>
+      </Admonition>
+    );
+  }
+
   return (
     <Admonition type="tip" title="externalClasses 提醒">
       <p>
@@ -12,7 +36,7 @@ export default function ExternalClassesReminder({ framework }) {
       <p>
         详细说明与更多示例请查阅{' '}
         <strong>
-          <a href="/docs/issues/externalClasses">👉 《组件外部样式类（externalClasses）的支持》</a>
+          <a href={documentationPath}>👉 《组件外部样式类（externalClasses）的支持》</a>
         </strong>
         。
       </p>

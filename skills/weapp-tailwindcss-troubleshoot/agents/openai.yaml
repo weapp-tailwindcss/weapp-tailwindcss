@@ -1,4 +1,4 @@
 interface:
   display_name: "weapp-tailwindcss 排障"
-  short_description: "定位样式生成、类名转译、HMR 与多端真实运行异常"
-  default_prompt: "使用 $weapp-tailwindcss-troubleshoot 诊断小程序样式问题。Use $weapp-tailwindcss-troubleshoot to find why classes fail."
+  short_description: "定位 CLI、样式生成、类名转译、HMR 与多端运行异常"
+  default_prompt: "使用 $weapp-tailwindcss-troubleshoot 诊断构建或运行异常。Use $weapp-tailwindcss-troubleshoot to find why the output fails."

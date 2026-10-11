@@ -1,12 +1,10 @@
 import type { ViteFrameworkCssPipelineContext } from '../../shared/framework-strategy'
 import type { FinalizeGenerateBundleOptions } from './root-import-shell'
 import { injectUniAppXHarmonyBundleStyles } from '@/uni-app-x/style-asset'
-import { normalizeOutputPathKey } from '../../../shared/module-graph'
-import { runWithConcurrency } from '../../../shared/run-tasks'
+import { runWithConcurrency } from '../../../../utils/run-tasks'
 import { updateBundleBuildState } from '../../bundle-state'
-import { collectViteProcessedCssAssetResults, injectViteProcessedCssIntoMainCssAssets, removeCssCoveredByRootStyleAssets, removeDuplicateUnlinkedRootCssAssetsReferencedByHtml } from '../../processed-css-assets'
+import { removeCssCoveredByRootStyleAssets, removeDuplicateUnlinkedRootCssAssetsReferencedByHtml } from '../../processed-css-assets'
 import { normalizeBundleFileNameKeysForTest } from '../bundle-file-names'
-import { resolveViteCssPipelineOutputFile } from '../css-output'
 import { finalizeMiniProgramCssAssets } from '../final-css-assets'
 import { resolveViteMemoryDebugStats } from '../memory-debug'
 import { formatCacheHitRate, formatMs } from '../metrics'
@@ -14,6 +12,7 @@ import { collectMiniProgramSubpackageRoots } from '../subpackages'
 import { handleUniAppXPostCssTasks } from '../uni-app-x-postprocess'
 import { pruneLastCssResults, resolveViteCssTaskConcurrency } from '../vite-css-cache'
 import { finalizeWebviewCssCompat, normalizeRootMiniProgramImportShellAssets } from './root-import-shell'
+import { syncProcessedCss } from './sync-processed-css'
 
 export async function finalizeGenerateBundle(options: FinalizeGenerateBundleOptions) {
   const {
@@ -27,7 +26,6 @@ export async function finalizeGenerateBundle(options: FinalizeGenerateBundleOpti
     cssPipelineStrategy,
     createCssPipelineContext,
     debug,
-    defaultStyleOutputExtension,
     formatIteration,
     generatorCandidateSignature,
     generatorRuntime,
@@ -47,32 +45,25 @@ export async function finalizeGenerateBundle(options: FinalizeGenerateBundleOpti
     lastCssResultByFile,
     lastCssSourceHashByFile,
     linkedByEntry,
-    markCssAssetProcessed,
     metrics,
     onEnd,
     onUpdate,
     opts,
     outDir,
     pendingLinkedUpdates,
-    pendingRememberedCssReplayUpdates,
     prepareJsTransformRuntime,
     pruneViteCssCaches,
     recordCssAssetResult,
     recordTimingDetail,
-    recordViteProcessedCssAssetResult,
-    rootDir,
     runtime,
     runtimeState,
-    shouldPreserveAppCssExtension,
     snapshot,
     sourceCandidates,
-    sourceRoot,
     state,
     styleHandler,
     tasks,
     timingDetails,
     transformRuntime,
-    transformWebTargetCss,
     useIncrementalMode,
   } = options
   const tasksStart = performance.now()
@@ -113,80 +104,15 @@ export async function finalizeGenerateBundle(options: FinalizeGenerateBundleOpti
     styleHandler,
   })
   recordTimingDetail('finalize.uniAppXPostCss', uniAppXPostCssStartedAt)
-  const syncViteProcessedCssIntoMainCssAssets = () => {
-    const collectStartedAt = performance.now()
-    collectViteProcessedCssAssetResults(bundle, {
-      opts,
-      cssPipelineStrategy,
-      createCssPipelineContext,
-      isViteProcessedCssAsset,
-      markCssAssetProcessed,
-      recordCssAssetResult,
-      recordViteProcessedCssAssetResult,
-      resolveViteProcessedCssOutputFile: file => resolveViteCssPipelineOutputFile(file, opts, rootDir, isWebGeneratorTarget, shouldPreserveAppCssExtension, sourceRoot, defaultStyleOutputExtension, bundleFiles),
-      subpackageRoots: collectMiniProgramSubpackageRoots(bundle),
-      transformCss: transformWebTargetCss,
-      debug,
-    })
-    recordTimingDetail('finalize.processedCss.collect', collectStartedAt)
-    const injectStartedAt = performance.now()
-    let injected = injectViteProcessedCssIntoMainCssAssets(bundle, {
-      opts,
-      cssPipelineStrategy,
-      createCssPipelineContext,
-      getViteProcessedCssAssetResults,
-      markCssAssetProcessed,
-      recordCssAssetResult,
-      transformCss: transformWebTargetCss,
-      shouldRemoveInjectedSourceAsset: (targetFile, record) => {
-        if (record.injectIntoMain === false) {
-          return false
-        }
-        const targetFileKey = normalizeOutputPathKey(targetFile)
-        const recordFileKey = normalizeOutputPathKey(record.file)
-        return recordFileKey !== targetFileKey
-      },
-      debug,
-      onUpdate,
-      recordTimingDetail,
-    })
-    if (pendingRememberedCssReplayUpdates.length > 0) {
-      for (const update of pendingRememberedCssReplayUpdates) {
-        recordViteProcessedCssAssetResult?.(update.file, update.css, update)
-      }
-      injected += injectViteProcessedCssIntoMainCssAssets(bundle, {
-        opts,
-        cssPipelineStrategy,
-        createCssPipelineContext,
-        getViteProcessedCssAssetResults: () => pendingRememberedCssReplayUpdates.map(update => [
-          update.file,
-          {
-            css: update.css,
-            injectIntoMain: update.injectIntoMain,
-            outputFile: update.outputFile,
-          },
-        ] as const),
-        markCssAssetProcessed,
-        recordCssAssetResult,
-        transformCss: transformWebTargetCss,
-        debug,
-        onUpdate,
-        recordTimingDetail,
-      })
-      debug('inject remembered css replay updates after framework css collection: %d', pendingRememberedCssReplayUpdates.length)
-    }
-    recordTimingDetail('finalize.processedCss.inject', injectStartedAt)
-    return injected
-  }
   const processedCssStartedAt = performance.now()
-  syncViteProcessedCssIntoMainCssAssets()
+  syncProcessedCss(options)
   if (isHarmonyAppStyleTarget && applyStyleSources.length > 0) {
     const viteProcessedCssSources = [...(getViteProcessedCssAssetResults?.() ?? [])]
       .map(([, record]) => typeof record === 'string' ? record : record.css)
     if (injectUniAppXHarmonyBundleStyles(bundle, { cssSources: viteProcessedCssSources })) {
       debug('uni-app-x harmony bundle styles inject after css assets')
     }
-    syncViteProcessedCssIntoMainCssAssets()
+    syncProcessedCss(options)
   }
   recordTimingDetail('finalize.processedCss', processedCssStartedAt)
   const createFinalizeCssPipelineContext = (file = ''): ViteFrameworkCssPipelineContext | undefined => createCssPipelineContext?.(file)

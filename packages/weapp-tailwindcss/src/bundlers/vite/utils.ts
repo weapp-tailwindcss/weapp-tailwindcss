@@ -2,7 +2,7 @@ import type { ExistingRawSourceMap } from 'rollup'
 import path from 'node:path'
 import process from 'node:process'
 import { cleanUrl, ensurePosix } from '@weapp-tailwindcss/shared'
-import { isSourceStyleRequest } from '../shared/style-requests'
+import { isSourceStyleRequest } from '../../generation/style-requests'
 
 export function slash(p: string): string {
   return ensurePosix(p)

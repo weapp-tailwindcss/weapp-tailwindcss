@@ -14,7 +14,7 @@ keywords:
 
 # 安装依赖
 
-这一页只处理包安装。框架注册方式放到下一章。
+这一页只处理包安装。框架注册方式放到下一章，CLI 的完整参数见 [weapp-tw CLI 使用指南](/docs/tools/weapp-tw-cli)。
 
 ## 安装当前版本
 
@@ -24,4 +24,14 @@ keywords:
 npm install -D tailwindcss weapp-tailwindcss
 ```
 
-下一步：进入 [各框架注册方式](/docs/quick-start/frameworks/uni-app-vite)。
+## 使用独立 CLI
+
+如果项目需要直接从 CSS 文件生成 Web 或小程序样式，安装独立的 `@weapp-tailwindcss/cli`：
+
+```bash npm2yarn
+npm install -D @weapp-tailwindcss/cli weapp-tailwindcss tailwindcss
+```
+
+CLI 提供 `weapp-tw` 命令；它只处理 CSS，不会扫描或改写 WXML、JS、TS、JSX、TSX。完整小程序项目仍应使用对应的 Vite、Webpack、Rspack 或 Gulp 集成。
+
+下一步：进入 [各框架注册方式](/docs/quick-start/frameworks/uni-app-vite)，或查看 [weapp-tw CLI 使用指南](/docs/tools/weapp-tw-cli)。

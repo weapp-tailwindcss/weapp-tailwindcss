@@ -1,18 +1,18 @@
 {
   "name": "@weapp-tailwindcss/merge",
   "type": "module",
-  "version": "2.2.1",
-  "description": "Tailwind Merge v3 的 weapp 运行时封装，自动处理 escape/unescape。",
+  "version": "2.2.7",
+  "description": "Cross-platform Tailwind CSS class merging runtime with mini-program compatibility. 兼容小程序的跨端 Tailwind CSS 类名合并运行时。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",
-  "homepage": "https://tw.icebreaker.top/docs/community/merge/overview",
+  "homepage": "https://tw.weapp.dev/docs/community/merge",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sonofmagic/weapp-tailwindcss.git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
     "directory": "packages-runtime/merge"
   },
   "bugs": {
-    "url": "https://github.com/sonofmagic/weapp-tailwindcss/issues"
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues"
   },
   "keywords": [
     "tailwindcss",
@@ -117,11 +117,11 @@
     "types": "./dist/index.d.mts"
   },
   "dependencies": {
-    "@weapp-core/escape": "^8.0.0",
+    "@weapp-tailwindcss/escape": "workspace:*",
     "@weapp-tailwindcss/runtime": "workspace:*",
     "tailwind-merge": "catalog:tailwindMerge"
   },
   "devDependencies": {
-    "fast-check": "^4.9.0"
+    "fast-check": "^4.10.2"
   }
 }

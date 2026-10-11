@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const { spawn } = require('node:child_process')
+const process = require('node:process')
 
 const child = spawn(
   process.execPath,
@@ -13,7 +14,7 @@ const child = spawn(
 )
 
 let stopping = false
-const stop = (signal) => {
+function stop(signal) {
   stopping = true
   if (child.exitCode != null || child.killed) {
     process.exit(0)
@@ -25,15 +26,5 @@ process.on('SIGINT', () => stop('SIGINT'))
 process.on('SIGTERM', () => stop('SIGTERM'))
 
 child.on('exit', (code, signal) => {
-  if (
-    process.env.WEAPP_TW_WATCH_REGRESSION === '1'
-    && process.argv.includes('serve')
-    && code === 0
-    && !stopping
-  ) {
-    setInterval(() => {}, 2 ** 30)
-    return
-  }
-
   process.exit(stopping && signal ? 0 : (code ?? 1))
 })

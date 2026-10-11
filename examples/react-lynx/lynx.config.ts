@@ -7,8 +7,7 @@ export default defineConfig({
     assetPrefix: '/',
     distPath: {
       root: 'dist',
-      intermediate: 'dist/.rspeedy',
     },
   },
-  plugins: [pluginReactLynx(), pluginLynxTailwindcss()],
+  plugins: [pluginReactLynx({ engineVersion: '3.9' }), pluginLynxTailwindcss()],
 })

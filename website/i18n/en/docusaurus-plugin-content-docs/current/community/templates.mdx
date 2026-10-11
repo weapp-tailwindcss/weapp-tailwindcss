@@ -1,12 +1,10 @@
 ---
-title: 🔥Templates for each framework
-description: When your configuration is incorrect, you can also refer to the reference. The version marked with 🔥 is the recommended version.
+title: "🔥Templates for each framework"
+description: "Runnable Tailwind CSS 4 templates using the latest weapp-tailwindcss integration for uni-app, Taro, Mpx, and native mini programs."
 keywords:
   - Community
   - template
-  - Case
-  - Templates for each frame
-  - community
+  - case studies
   - templates
   - weapp-tailwindcss
   - tailwindcss
@@ -18,71 +16,41 @@ keywords:
 ---
 import TemplateLink from '@site/src/components/TemplateLink'
 
-# 🔥Template for each framework
+# 🔥Templates for each framework
 
-When you configure it incorrectly, you can also refer to the reference. The version with the 🔥 mark is the recommended version.
+These templates use the Tailwind CSS 4 CSS-first entry and delegate CSS generation to `weapp-tailwindcss@5.5.4`. Templates marked with 🔥 also run through the repository's canonical build gate. See the [support matrix](/docs/reference/support-matrix) for the complete verification scope.
 
-:::tip
-If you encounter network problems and cannot log in to `Github`, you can use `Gitee`.
+Do not register `@tailwindcss/postcss` or `@tailwindcss/vite` in the same build, and do not run `weapp-tw patch`.
 
-After logging into `Gitee`, click the plus sign in the upper right corner to see an import warehouse function. Then which template you want to use, right-click the link of the template below, click to copy the link address, and then paste the copied url into `Gitee` in the `Git Repository URL` import warehouse. After clicking OK to import, the warehouse will be synchronized in a few seconds and you can download it.
-:::
+## Maintaining template dependencies
+
+Maintainers can run `pnpm templates:upgrade` from the repository root to upgrade dependencies (including Babel) for every template listed in `templates.jsonc`, regenerate pnpm lockfiles, and run the template build gates. If dependency resolution fails, retry with `pnpm templates:update-deps`, then run the template tests again.
 
 ## uni-app
-
----
-
-### Building with `uni-app cli` `vscode` Development
 
 <TemplateLink
   hot
   title="uni-app-tailwindcss-v4"
+  description="uni-app + Vue 3 + Vite"
   href="https://github.com/icebreaker-template/uni-app-tailwindcss-v4"
   repoOwner="icebreaker-template"
   repo="uni-app-tailwindcss-v4"
 />
 
 <TemplateLink
-  title="uni-app-webpack-tailwindcss-v4"
-  href="https://github.com/icebreaker-template/uni-app-webpack-tailwindcss-v4"
-  repoOwner="icebreaker-template"
-  repo="uni-app-webpack-tailwindcss-v4"
-/>
-
-<TemplateLink
-  title="monorepo-uniapp-template"
-  href="https://github.com/sukbearai/x-dev-uni"
-  repoOwner="sukbearai"
-  repo="x-dev-uni"
-/>
-
-{/* ### Ruoyi mobile terminal (`hbuilderx` integrated `tailwindcss`)
-
-<TemplateLink
-  hot
-title="Ruoyi Mobile"
-description="Gitee address"
-  href="https://gitee.com/sonofmagic/RuoYi-App"
-/> */}
-
-### Building and developing with `hbuilderx`
-
-<TemplateLink
   title="uni-app-hbuilderx-tailwindcss-v4"
+  description="uni-app + HBuilderX"
   href="https://github.com/icebreaker-template/uni-app-hbuilderx-tailwindcss-v4"
   repoOwner="icebreaker-template"
   repo="uni-app-hbuilderx-tailwindcss-v4"
 />
 
-## tarojs
-
----
-
-### Building with `tarojs` `vscode` development
+## Taro
 
 <TemplateLink
   hot
   title="taro-vite-tailwindcss-v4"
+  description="Taro + React + Vite"
   href="https://github.com/icebreaker-template/taro-vite-tailwindcss-v4"
   repoOwner="icebreaker-template"
   repo="taro-vite-tailwindcss-v4"
@@ -90,50 +58,31 @@ description="Gitee address"
 
 <TemplateLink
   title="taro-webpack-tailwindcss-v4"
+  description="Taro + React + webpack"
   href="https://github.com/icebreaker-template/taro-webpack-tailwindcss-v4"
   repoOwner="icebreaker-template"
   repo="taro-webpack-tailwindcss-v4"
 />
 
-## native
+## Mpx
 
----
+<TemplateLink
+  title="mpx-tailwindcss-v4"
+  description="Mpx + webpack"
+  href="https://github.com/icebreaker-template/mpx-tailwindcss-v4"
+  repoOwner="icebreaker-template"
+  repo="mpx-tailwindcss-v4"
+/>
 
-### Native applet development template
+## Native mini program
 
 <TemplateLink
   hot
-  title="weapp-vite-tailwindcss-template"
-description="weapp-vite package"
-  href="https://vite.icebreaker.top/guide/"
+  title="weapp-vite-tailwindcss-v4"
+  description={<>weapp-vite website and starter command: <code>pnpm create weapp-vite</code></>}
+  href="https://vite.icebreaker.top/"
 />
 
-#### The technical architecture below is too old and is not recommended.
-
-<TemplateLink
-  deprecated
-  title="native-weapp-tailwindcss-template"
-description="cli package"
-  href="https://github.com/sonofmagic/native-weapp-tailwindcss-template"
-  repoOwner="sonofmagic"
-  repo="native-weapp-tailwindcss-template"
-/>
-
-<TemplateLink
-  deprecated
-  title="weapp-tailwindcss-gulp-template"
-description="gulp packaging"
-  href="https://github.com/sonofmagic/weapp-tailwindcss/tree/main/demo/gulp-app"
-/>
-
-## `tailwindcss@4`
-
-All `tailwindcss@4` templates are maintained at the address below, marked with the words `tailwindcss-v4` in the title:
-
-https://github.com/icebreaker-template
-
-## More templates
-
-You can also find the registration method of each framework in the `demo` folder in the root directory of the project.
-
-There are projects for `gulp`, `mpx`, `webpack5`, `taro-react`, `taro-vue2`, `taro-vue3`,
+:::tip
+If GitHub is unavailable, use Gitee's repository import feature with a template URL to create a mirror.
+:::

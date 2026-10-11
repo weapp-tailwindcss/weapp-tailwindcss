@@ -1,24 +1,6 @@
-export type NativePlatform = 'android' | 'ios' | 'native' | 'web'
+import type { NativeCompilerWarning, NativeStyleRule } from '@weapp-tailwindcss/postcss/native'
 
-export interface NativeStyleEnvironment {
-  colorScheme?: 'light' | 'dark' | undefined
-  platform?: NativePlatform | undefined
-}
-
-export interface NativeStyleRule {
-  style: Record<string, unknown>
-  colorScheme?: 'dark' | undefined
-  platform?: NativePlatform | undefined
-  important?: boolean | undefined
-  order?: number | undefined
-  id?: string | undefined
-}
-
-export interface NativeCompilerWarning {
-  className?: string | undefined
-  property?: string | undefined
-  message: string
-}
+export type { CompileNativeStylesheetOptions, NativeCompilerWarning, NativePlatform, NativeStyleRule } from '@weapp-tailwindcss/postcss/native'
 
 export interface NativeStyleManifest {
   version: 1
@@ -32,21 +14,4 @@ export interface NativeStyleManifest {
   staticLookup?: Record<string, string[]>
   variables: Record<string, string>
   warnings: NativeCompilerWarning[]
-}
-
-export interface CompileNativeStylesheetOptions {
-  classSet?: Iterable<string> | undefined
-  ignorePreflight?: boolean | undefined
-}
-
-export type NativeClassValue = string | false | null | undefined | NativeClassValue[] | Record<string, boolean>
-export type NativeStyleValue = Record<string, unknown> | number | readonly NativeStyleValue[]
-
-export interface NativeStyleRuntime {
-  tw: (value: NativeClassValue, environment?: NativeStyleEnvironment) => NativeStyleValue
-  getStaticStyle: (ids: readonly string[], environment?: NativeStyleEnvironment) => NativeStyleValue
-  composeStyle: (tailwindStyle: NativeStyleValue, inlineStyle: unknown) => NativeStyleValue[]
-  setManifest: (manifest: NativeStyleManifest) => void
-  setEnvironment: (environment: NativeStyleEnvironment) => void
-  getManifest: () => NativeStyleManifest | undefined
 }

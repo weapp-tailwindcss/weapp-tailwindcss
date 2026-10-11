@@ -5,14 +5,14 @@ import fsSync from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { MappingChars2String } from '@weapp-core/escape'
+import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import gulp from 'gulp'
-import { bench, describe } from 'vitest'
+import { test } from 'vitest'
 import { compile, createLoader, getMemfsCompiler5 } from 'webpack-build-utils'
-import { WeappTailwindcss } from '@/bundlers/vite'
+import { WeappTailwindcss as createVitePlugins } from '@/bundlers/vite'
 import { vitePluginName } from '@/constants'
 import { createPlugins } from '@/gulp'
-import { WeappTailwindcss } from '@/webpack'
+import { WeappTailwindcss as WebpackWeappTailwindcss } from '@/webpack'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -44,9 +44,9 @@ const viteResolvedConfig = {
   },
 } as unknown as ResolvedConfig
 
-const webpackBenchOptions = { time: 150, iterations: 3, minSamples: 3 }
-const viteBenchOptions = { time: 150, iterations: 3, minSamples: 3 }
-const gulpBenchOptions = { time: 120, iterations: 3, minSamples: 3 }
+const webpackBenchOptions = { time: 150, iterations: 3, warmupTime: 0, warmupIterations: 1 }
+const viteBenchOptions = { time: 150, iterations: 3 }
+const gulpBenchOptions = { time: 120, iterations: 3 }
 
 function createWebpackCompiler(mode: Configuration['mode']): Compiler {
   return getMemfsCompiler5({
@@ -81,7 +81,7 @@ function createWebpackCompiler(mode: Configuration['mode']): Compiler {
       ],
     },
     plugins: [
-      new WeappTailwindcss({
+      new WebpackWeappTailwindcss({
         mainCssChunkMatcher: name => name.endsWith('index.css'),
         customReplaceDictionary: MappingChars2String,
       }),
@@ -114,7 +114,7 @@ async function runWebpackBuild(mode: Configuration['mode']) {
 }
 
 async function runVitePluginPipeline() {
-  const plugins = WeappTailwindcss({
+  const plugins = createVitePlugins({
     tailwindcssBasedir: viteFixtureRoot,
     mainCssChunkMatcher: name => name.endsWith('index.css'),
   }) ?? []
@@ -233,40 +233,36 @@ function getHook(plugin: Plugin | undefined, key: HookName) {
   return undefined
 }
 
-describe('webpack plugin benchmarks', () => {
-  bench(
+test('webpack plugin benchmarks', async ({ bench }) => {
+  await bench(
     'webpack v5 build (wxml fixture, development)',
     async () => {
       await runWebpackBuild('development')
     },
-    webpackBenchOptions,
-  )
+  ).run(webpackBenchOptions)
 
-  bench(
+  await bench(
     'webpack v5 build (wxml fixture, production)',
     async () => {
       await runWebpackBuild('production')
     },
-    webpackBenchOptions,
-  )
+  ).run(webpackBenchOptions)
 })
 
-describe('vite plugin benchmarks', () => {
-  bench(
+test('vite plugin benchmarks', async ({ bench }) => {
+  await bench(
     'vite build (miniapp fixture, plugin enabled)',
     async () => {
       await runVitePluginPipeline()
     },
-    viteBenchOptions,
-  )
+  ).run(viteBenchOptions)
 })
 
-describe('gulp plugin benchmarks', () => {
-  bench(
+test('gulp plugin benchmarks', async ({ bench }) => {
+  await bench(
     'gulp transforms (css/js/wxml pipeline)',
     async () => {
       await runGulpPipeline()
     },
-    gulpBenchOptions,
-  )
+  ).run(gulpBenchOptions)
 })

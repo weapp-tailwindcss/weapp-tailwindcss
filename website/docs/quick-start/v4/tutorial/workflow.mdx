@@ -193,7 +193,7 @@ Tailwind 4 把主题抽象为原生 CSS 变量。你可以在 `app.css` 中集�
 
 ## 5. 调试与性能提示
 
-- Tailwind 4 的编译沿用增量模式，`pnpm run:watch` 时生成的原子类会写入缓存。需要彻底清理时删除 `.tailwind`、`node_modules/.cache/tailwind`。
+- Tailwind 4 的编译沿用增量模式，项目自己的 watch 脚本生成的原子类会写入缓存。需要彻底清理时删除 `.tailwind`、`node_modules/.cache/tailwind`。
 - 小程序开发者工具不支持 `@layer`，若遇到覆盖问题，可以开启 `cssOptions.cssPresetEnv` 的降级行为，详情见 [高阶篇](/docs/quick-start/v4/tutorial/advanced)。
 - 借助 `pnpm dev:h5`（部分框架提供）可快速在浏览器预览，调试完后再回到真机验证。
 

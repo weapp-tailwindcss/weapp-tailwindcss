@@ -86,6 +86,18 @@
       "expectedSkill": "weapp-tailwindcss-react-native"
     },
     {
+      "id": "lynx-rspeedy",
+      "kind": "positive",
+      "prompt": "给 ReactLynx 和 Rspeedy 项目配置 @weapp-tailwindcss/lynx 与 Tailwind CSS 4。",
+      "expectedSkill": "weapp-tailwindcss-lynx"
+    },
+    {
+      "id": "lynx-encoder",
+      "kind": "positive",
+      "prompt": "Why does the Lynx CSS encoder remove padding-inline and complex arbitrary variants from my Rspeedy bundle?",
+      "expectedSkill": "weapp-tailwindcss-lynx"
+    },
+    {
       "id": "boundary-old-project-broken",
       "kind": "boundary",
       "prompt": "旧项目升级依赖后样式完全没了，先判断是迁移配置还是运行时故障。",
@@ -101,6 +113,30 @@
       "id": "boundary-app-not-rn",
       "kind": "boundary",
       "prompt": "这是 uni-app x 的 Android App，不是 Expo 或 React Native，样式在设备上缺失。",
+      "expectedSkill": "weapp-tailwindcss-troubleshoot"
+    },
+    {
+      "id": "boundary-lynx-not-rn",
+      "kind": "boundary",
+      "prompt": "这是 ReactLynx + Rspeedy 原生项目，不是 Expo、Metro 或 React Native manifest。",
+      "expectedSkill": "weapp-tailwindcss-lynx"
+    },
+    {
+      "id": "boundary-cli-css-only",
+      "kind": "boundary",
+      "prompt": "我只想用 weapp-tw 从一个 Tailwind CSS 入口生成 Web CSS，不需要改 WXML 或 JavaScript。",
+      "expectedSkill": "weapp-tailwindcss-setup"
+    },
+    {
+      "id": "boundary-cli-watch-broken",
+      "kind": "boundary",
+      "prompt": "@weapp-tailwindcss/cli 首次输出正常，但原生 watch 收不到后续文件变化，应该怎么排查 poll？",
+      "expectedSkill": "weapp-tailwindcss-troubleshoot"
+    },
+    {
+      "id": "boundary-mini-not-lynx",
+      "kind": "boundary",
+      "prompt": "这是 Taro 微信小程序的 WXML 和 WXSS 转译问题，不是 ReactLynx 或 Rspeedy。",
       "expectedSkill": "weapp-tailwindcss-troubleshoot"
     },
     {

@@ -1,5 +1,51 @@
 # @weapp-tailwindcss/hbuilderx-runner
 
+## 0.1.7
+
+### Patch Changes
+
+- 修复命令超时与长驻进程停止提前返回的问题：等待真实关闭及最终日志，在固定预算内终止本轮独立进程组，清理失败保留主错误和独立诊断。重复停止复用同一结果，Windows 进程树部分终止失败不再被根进程退出掩盖，超时后的零退出码仍按超时处理。
+
+- 将发布包的仓库与问题反馈地址更新为 weapp-tailwindcss 组织下的主仓库，使 npm 包元数据与迁移后的 OIDC 发布来源一致。保留现有包名、导出接口、npm 所有权和文档域名。
+
+## 0.1.6
+
+### Patch Changes
+
+- 识别 HBuilderX 中文 CLI 的未启动响应，避免把提示文本当作 host 名称；仅在确认实例未启动时打开 IDE，继续保留超时和实例冲突门禁。
+
+## 0.1.5
+
+### Patch Changes
+
+- Windows 上 HBuilderX 进程探测在 PowerShell 冷启动超时时重试，单次失败不再把瞬时超时当成探测失败。
+
+## 0.1.4
+
+### Patch Changes
+
+- 修复 Windows 原生进程参数被 shell 拆分的问题，正确处理带空格和中文的路径、cmd shim 以及可执行文件缺失错误。
+
+  使用 Windows 内置 PowerShell 与进程 API 探测已有 HBuilderX 实例，避免 WMIC 缺失时误判为未启动并重复打开 IDE。通过 JSON 保留中文、逗号和共享路径，探测失败时明确报错。
+
+  显式配置 CLI 时直接通过 listhost 与版本握手绑定实例，不再依赖操作系统进程枚举。只有确认没有 host 才启动一次 IDE；版本不匹配、歧义与命令超时保留为错误，连接过程共享启动截止时间。
+
+  只解析已配置 CLI 路径时不再枚举系统进程；需要运行状态的信息查询 API 保留原有语义。
+
+  子进程 stdout/stderr 分别按流解码 UTF-8，避免中文项目名和错误文本被数据块边界截断成乱码。
+
+## 0.1.3
+
+### Patch Changes
+
+- 将公开 npm 包的主页和相关文档入口迁移到新的 `https://tw.weapp.dev` 域名，并补齐缺失的包主页元数据。
+
+## 0.1.2
+
+### Patch Changes
+
+- 🐛 **统一更新各发布包的 npm 描述与中英文 README，明确 `weapp-tailwindcss` 面向 Web、小程序、React Native、Lynx 与跨端框架的全端 Tailwind CSS 定位。公开包现在默认展示英文 README，并提供统一命名的简体中文入口，同时保留各子包的具体职责边界。** [#1079](https://github.com/sonofmagic/weapp-tailwindcss/pull/1079) by @sonofmagic
+
 ## 0.1.1
 
 ### Patch Changes

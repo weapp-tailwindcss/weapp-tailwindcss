@@ -1,12 +1,13 @@
 {
   "name": "@weapp-tailwindcss/lynx",
   "type": "module",
-  "version": "0.2.0",
-  "description": "Tailwind CSS 4 integration for ReactLynx and Rspeedy.",
+  "version": "0.4.2",
+  "description": "Tailwind CSS integration for ReactLynx and Rspeedy cross-platform builds. 面向 ReactLynx 与 Rspeedy 跨端构建的 Tailwind CSS 集成。",
   "license": "MIT",
+  "homepage": "https://tw.weapp.dev/docs/quick-start/frameworks/lynx",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sonofmagic/weapp-tailwindcss.git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
     "directory": "packages/lynx"
   },
   "sideEffects": false,
@@ -29,8 +30,8 @@
   },
   "scripts": {
     "build": "tsdown",
-    "test": "vitest run",
-    "test:dev": "vitest",
+    "test": "node ../../scripts/ensure-weapp-tailwindcss-built.mjs && vitest run",
+    "test:dev": "node ../../scripts/ensure-weapp-tailwindcss-built.mjs && vitest",
     "lint": "eslint .",
     "release": "pnpm publish"
   },
@@ -50,11 +51,11 @@
     }
   },
   "dependencies": {
-    "weapp-tailwindcss": "workspace:^"
+    "weapp-tailwindcss": "workspace:*"
   },
   "devDependencies": {
-    "@lynx-js/rspeedy": "^0.16.3",
+    "@lynx-js/rspeedy": "^0.18.0",
     "tailwindcss": "catalog:tailwindcss4",
-    "vitest": "^4.1.0"
+    "vitest": "catalog:vitest"
   }
 }

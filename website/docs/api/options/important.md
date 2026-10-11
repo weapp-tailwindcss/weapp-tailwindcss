@@ -28,20 +28,20 @@ keywords:
 | [arbitraryValues](#arbitraryvalues) | <code>IArbitraryValues</code> | — | TailwindCSS 任意值的相关配置。 |
 | [unocss](#unocss) | <code>boolean &#124; IUnocssCompatibilityOptions</code> | <code>false</code> | 启用部分 UnoCSS class 写法兼容。 |
 | [jsPreserveClass](#jspreserveclass) | <code>(keyword: string) => boolean &#124; undefined</code> | — | 控制 JS 字面量是否需要保留。 |
-| [disabled](#disabled) | <code>boolean &#124; { plugin?: boolean &#124; undefined; }</code> | — | 是否禁用此插件。 |
 | [replaceRuntimePackages](#replaceruntimepackages) | <code>boolean &#124; Record<string, string></code> | — | 是否替换运行时依赖包名。 |
+| [disabled](#disabled) | <code>boolean &#124; { plugin?: boolean &#124; undefined; }</code> | — | 是否禁用此插件。 |
 | [rewriteCssImports](#rewritecssimports) | <code>boolean</code> | <code>false</code> | 是否把 CSS 中的 Tailwind 包入口改写到 `weapp-tailwindcss` 内部样式入口。 |
+| [generator](#generator) | <code>WeappTailwindcssGeneratorUserOptions</code> | — | 控制 Tailwind CSS 直接生成目标端 CSS 的策略。 |
 | [customAttributes](#customattributes) | <code>ICustomAttributes</code> | — | 自定义 `wxml` 标签属性的转换规则。 |
 | [customReplaceDictionary](#customreplacedictionary) | <code>Record<string, string></code> | <code>MappingChars2String</code> | 自定义 class 名称的替换字典。 |
-| [generator](#generator) | <code>WeappTailwindcssGeneratorUserOptions</code> | — | 控制 Tailwind CSS 直接生成目标端 CSS 的策略。 |
-| [ignoreTaggedTemplateExpressionIdentifiers](#ignoretaggedtemplateexpressionidentifiers) | <code>(string &#124; RegExp)[]</code> | <code>['weappTwIgnore']</code> | 忽略指定标签模板表达式中的标识符。 |
 | [styleInjector](#styleinjector) | <code>WeappTailwindcssStyleInjectorUserOptions</code> | <code>false</code> | 开启构建产物样式入口注入。 |
+| [ignoreTaggedTemplateExpressionIdentifiers](#ignoretaggedtemplateexpressionidentifiers) | <code>(string &#124; RegExp)[]</code> | <code>['weappTwIgnore']</code> | 忽略指定标签模板表达式中的标识符。 |
 | [ignoreCallExpressionIdentifiers](#ignorecallexpressionidentifiers) | <code>(string &#124; RegExp)[]</code> | — | 忽略指定调用表达式中的标识符。 |
 | [disabledDefaultTemplateHandler](#disableddefaulttemplatehandler) | <code>boolean</code> | <code>false</code> | 禁用默认的 `wxml` 模板替换器。 |
 | [tailwindcssBasedir](#tailwindcssbasedir) | <code>string</code> | — | 指定用于获取 Tailwind 上下文的路径。 |
 | [cache](#cache) | <code>boolean &#124; ICreateCacheReturnType</code> | — | 控制缓存策略。 |
 | [cssOptions](#cssoptions) | <code>CssOptions</code> | — | CSS 生成与兼容后处理的微调配置。 |
-| [tailwindcss](#tailwindcss) | [`TailwindCssOptions`](../interfaces/TailwindCssOptions.md) | — | 为不同版本的 Tailwind 配置行为。 |
+| [tailwindcss](#tailwindcss) | [`TailwindCssOptions`](../interfaces/TailwindCssOptions.md) | — | 配置 Tailwind CSS v4 的运行时行为。 |
 | [cssEntries](#cssentries) | <code>string[]</code> | — | 指定 tailwindcss@4 的入口 CSS。 |
 
 ## 详细说明
@@ -58,7 +58,7 @@ https://github.com/sonofmagic/weapp-tailwindcss/issues/110
 
 #### 备注
 
-TailwindCSS 3.2.0 起对任意值执行长度单位校验，会将未声明的 `rpx` 识别为颜色。本选项默认开启，并由构建运行时自动接管。
+Tailwind CSS v4 会对任意值执行类型推断，未声明的 `rpx` 可能被识别为颜色。本选项默认开启，并由构建运行时自动接管。
 
 ### appType
 
@@ -113,6 +113,28 @@ false
 
 `boolean | undefined`
 
+### replaceRuntimePackages
+
+> 可选 | 类型: `boolean | Record<string, string>`
+
+是否替换运行时依赖包名。
+
+#### 备注
+
+适用于运行时包名需要重定向的场景，例如：
+- 小程序侧无法直接安装 `tailwind-merge`/`class-variance-authority`/`tailwind-variants`，需要替换为内置的 weapp 版本。
+- 企业内私有镜像/多包发布导致运行时包名不同，希望在转换后统一到目标包名。
+传入 `true` 使用内置替换表，或传入对象自定义映射。
+
+#### 示例
+
+```ts
+replaceRuntimePackages: {
+  'tailwind-merge': '@weapp-tailwindcss/merge',
+  'class-variance-authority': '@weapp-tailwindcss/cva',
+}
+```
+
 ### disabled
 
 > 可选 | 类型: `boolean | { plugin?: boolean | undefined; }`
@@ -142,28 +164,6 @@ new WeappTailwindcss({
 })
 ```
 
-### replaceRuntimePackages
-
-> 可选 | 类型: `boolean | Record<string, string>`
-
-是否替换运行时依赖包名。
-
-#### 备注
-
-适用于运行时包名需要重定向的场景，例如：
-- 小程序侧无法直接安装 `tailwind-merge`/`class-variance-authority`/`tailwind-variants`，需要替换为内置的 weapp 版本。
-- 企业内私有镜像/多包发布导致运行时包名不同，希望在转换后统一到目标包名。
-传入 `true` 使用内置替换表，或传入对象自定义映射。
-
-#### 示例
-
-```ts
-replaceRuntimePackages: {
-  'tailwind-merge': '@weapp-tailwindcss/merge',
-  'class-variance-authority': '@weapp-tailwindcss/cva',
-}
-```
-
 ### rewriteCssImports
 
 > 可选 | 类型: `boolean` | 默认值: `false`
@@ -180,6 +180,32 @@ replaceRuntimePackages: {
 
 ```ts
 false
+```
+
+### generator
+
+> 可选 | 类型: `WeappTailwindcssGeneratorUserOptions`
+
+控制 Tailwind CSS 直接生成目标端 CSS 的策略。
+
+#### 备注
+
+默认值会按构建环境推断：小程序构建使用 `weapp`，H5/Web 与普通 uni-app App WebView 使用 `web`。
+uni-app x 原生 App 目标继续通过 `uniAppX` 配置处理 uvue/App 约束，不需要配置 `target: 'app'`。
+
+#### Web 兼容模式
+
+`generator.webCompat` 用于 Web/H5 与经典 uni-app App WebView 目标下的 Tailwind CSS v4 兼容降级。自动推断 `generator.target: "web"` 时默认开启，uni-app 的 `app` / `app-plus` 构建也会自动启用；如果显式配置了 `generator.target`，则以用户传入的 `webCompat` 为准。
+
+传入 `true` 等价于 `{ preset: "legacy-web" }`，该预设面向 Web Compact 输出，兼容基线为 `Chrome/91.0.4472.114` 与 `AppleWebKit/537.36`。它会移除或降级 `@theme`、`@layer`、`@property`、嵌套规则、`oklch()`、现代颜色函数与相关 `@supports` 包裹，并补充 `-webkit-background-clip: text`，同时保留 Tailwind CSS v4 的运行时间距变量语义。需要保持 Tailwind CSS 官方 Web 输出时，可传入 `false` 或 `{ preset: "off" }`。
+
+```ts
+WeappTailwindcss({
+  generator: {
+    target: "web",
+    webCompat: true,
+  },
+})
 ```
 
 ### customAttributes
@@ -222,48 +248,6 @@ const customAttributes = {
 MappingChars2String
 ```
 
-### generator
-
-> 可选 | 类型: `WeappTailwindcssGeneratorUserOptions`
-
-控制 Tailwind CSS 直接生成目标端 CSS 的策略。
-
-#### 备注
-
-默认值会按构建环境推断：小程序构建使用 `weapp`，H5/Web 与普通 uni-app App WebView 使用 `web`。
-uni-app x 原生 App 目标继续通过 `uniAppX` 配置处理 uvue/App 约束，不需要配置 `target: 'app'`。
-
-#### Web 兼容模式
-
-`generator.webCompat` 用于 Web/H5 与经典 uni-app App WebView 目标下的 Tailwind CSS v4 兼容降级。自动推断 `generator.target: "web"` 时默认开启，uni-app 的 `app` / `app-plus` 构建也会自动启用；如果显式配置了 `generator.target`，则以用户传入的 `webCompat` 为准。
-
-传入 `true` 等价于 `{ preset: "legacy-web" }`，该预设面向 Web Compact 输出，兼容基线为 `Chrome/91.0.4472.114` 与 `AppleWebKit/537.36`。它会移除或降级 `@theme`、`@layer`、`@property`、嵌套规则、`oklch()`、现代颜色函数与相关 `@supports` 包裹，并补充 `-webkit-background-clip: text`，同时保留 Tailwind CSS v4 的运行时间距变量语义。需要保持 Tailwind CSS 官方 Web 输出时，可传入 `false` 或 `{ preset: "off" }`。
-
-```ts
-WeappTailwindcss({
-  generator: {
-    target: "web",
-    webCompat: true,
-  },
-})
-```
-
-### ignoreTaggedTemplateExpressionIdentifiers
-
-> 可选 | 类型: `(string | RegExp)[]` | 默认值: `['weappTwIgnore']` | 版本: ^4.0.0
-
-忽略指定标签模板表达式中的标识符。
-
-#### 备注
-
-当模板字符串被这些标识符包裹时，将跳过转义处理。
-
-#### 默认值
-
-```ts
-['weappTwIgnore']
-```
-
 ### styleInjector
 
 > 可选 | 类型: `WeappTailwindcssStyleInjectorUserOptions` | 默认值: `false`
@@ -285,6 +269,22 @@ Vite 会按当前 `appType` 自动选择 uni-app、Taro 或通用预设；Webpac
 
 ```ts
 false
+```
+
+### ignoreTaggedTemplateExpressionIdentifiers
+
+> 可选 | 类型: `(string | RegExp)[]` | 默认值: `['weappTwIgnore']` | 版本: ^4.0.0
+
+忽略指定标签模板表达式中的标识符。
+
+#### 备注
+
+当模板字符串被这些标识符包裹时，将跳过转义处理。
+
+#### 默认值
+
+```ts
+['weappTwIgnore']
 ```
 
 ### ignoreCallExpressionIdentifiers
@@ -343,56 +343,11 @@ CSS 生成与兼容后处理的微调配置。
 `unitConversion`、`platform`、`cssRemoveActivePseudoClass`、`cssRemoveHoverPseudoClass`、`cssRemoveFocusPseudoClass`、`cssRemoveProperty`、`cssCalc`
 与 `tailwindcssV4GradientFallback` 都推荐放在这里。
 
-#### 小程序默认移除 `:active` 与 `:focus`
-
-小程序本身不支持 CSS `:active` 与 `:focus` 伪类，因此 `cssOptions.cssRemoveActivePseudoClass` 和 `cssOptions.cssRemoveFocusPseudoClass` 均默认为 `true`。Tailwind CSS v4 仍会识别对应 candidate，模板和 JS 类名也会正常转成安全类，但小程序最终样式不会包含对应 selector。H5 与 App 的 Web 构建不执行这项删除。
-
-不需要使用 `@source not inline("active:*")`：`@source not inline()` 排除的是完整 candidate，`active:*` 不是变体通配表达式。
-
-如果某个自定义小程序运行时确实支持这些伪类，可以显式恢复：
-
-```ts
-WeappTailwindcss({
-  cssOptions: {
-    cssRemoveActivePseudoClass: false,
-    cssRemoveFocusPseudoClass: false,
-  },
-})
-```
-
-同一条小程序兼容边界也会默认删除 `focus-visible`、`focus-within`、`disabled`、`enabled`、`checked`、`required`、`optional`、`valid`、`invalid`、`visited`、`target` 等依赖浏览器状态的选择器。`first`、`last`、`nth-*` 等结构选择器以及 Tailwind 为兼容性生成的 `:is`、`:where`、`:not` 不在此清理范围内。
-
-#### `@custom-variant` 的跨平台条件
-
-Tailwind CSS v4 的任意 `@custom-variant` 都支持 uni-app 条件编译，条件注释放在变体内部或包住整个变体，效果相同：
-
-```css
-@custom-variant active {
-  &:active {
-    /* #ifndef MP */
-    @slot;
-    /* #endif */
-  }
-}
-```
-
-```css
-/* #ifndef MP */
-@custom-variant active {
-  &:active {
-    @slot;
-  }
-}
-/* #endif */
-```
-
-这项兼容不限定变体名称，`active`、`any-hover`、`wx` 以及项目自定义的其他 `@custom-variant` 都会按目标平台处理。条件表达式支持 `#ifdef`、`#ifndef` 及现有 uni-app 平台别名。
-
 ### tailwindcss
 
 > 可选 | 类型: [`TailwindCssOptions`](../interfaces/TailwindCssOptions.md) | 版本: ^4.0.0
 
-为不同版本的 Tailwind 配置行为。
+配置 Tailwind CSS v4 的运行时行为。
 
 ### cssEntries
 

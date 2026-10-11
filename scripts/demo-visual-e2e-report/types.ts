@@ -1,3 +1,4 @@
+import type { AppUpdateMode } from '../../e2e/hbuilderx-local/hmr-lifecycle.ts'
 import type { WatchCase } from '../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/types.ts'
 
 export type VisualPlatform = 'h5' | 'weapp' | 'app-android' | 'app-ios' | 'app-harmony'
@@ -7,6 +8,7 @@ export interface CaseResult {
   platform: VisualPlatform
   styleIsolationVariant?: string
   status: 'passed' | 'failed' | 'skipped'
+  updateMode?: AppUpdateMode
   screenshot?: string
   themeLightScreenshot?: string
   themeManualDarkScreenshot?: string
@@ -28,6 +30,7 @@ export interface RuntimeContext {
     width: number
     height: number
   }
+  maxCrossPlatformDiffRatio?: number
 }
 
 export interface MiniProgramHmrMutation {
@@ -56,4 +59,10 @@ export interface MiniProgramHmrVisualConfig {
   watchCase: WatchCase
   steps: VisualHmrStep[]
   mutate: (step: VisualHmrStep, previous?: MiniProgramHmrMutation) => Promise<MiniProgramHmrMutation>
+}
+
+export interface MiniProgramThemeExpectation {
+  manualClass: string
+  backgroundColor: [number, number, number]
+  scrollContainer?: string
 }

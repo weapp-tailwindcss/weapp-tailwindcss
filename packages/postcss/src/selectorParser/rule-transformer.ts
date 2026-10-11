@@ -5,7 +5,9 @@ import type { IStyleHandlerOptions } from '../types'
 import type { CachedSelectorTransformResult, TransformContext } from './rule-transformer/types'
 import psp from 'postcss-selector-parser'
 import { composeIsPseudo } from '../shared'
+import { createNativeSelectorRuleTransformer } from './native-rule'
 import { handleClassNode, handleCombinatorNode, handleSelectorNode, handleTagOrAttribute, handleUniversalNode } from './rule-transformer/nodes'
+import { resolveSelectorTransformOptions } from './rule-transformer/options'
 import { handlePseudoNode, shouldRemoveEmptyFunctionalPseudo } from './rule-transformer/pseudos'
 import { getUnsupportedPseudoClassSet } from './rule-transformer/unsupported-pseudos'
 import {
@@ -18,7 +20,7 @@ import {
 
 export type RuleTransformer = (rule: Rule) => void
 
-const ruleTransformCache = new WeakMap<IStyleHandlerOptions, RuleTransformer>()
+const ruleTransformCache = new WeakMap<IStyleHandlerOptions, { options: IStyleHandlerOptions, transform: RuleTransformer }>()
 
 const SELECTOR_TRANSFORM_OPTIONS = normalizeTransformOptions()
 const SIMPLE_SELECTOR_FAST_PATH = /^[#.][\w-]+(?:\s+[#.][\w-]+)*$/
@@ -89,7 +91,7 @@ function transformSelectors(selectors: Root, context: TransformContext) {
 }
 
 // createRuleTransformer 结合上下文执行器与 parser，生成可复用的规则转换函数
-function createRuleTransformer(options: IStyleHandlerOptions): RuleTransformer {
+export function createRuleTransformer(options: IStyleHandlerOptions): RuleTransformer {
   let context: TransformContext | undefined
   const selectorResultCache = new Map<string, CachedSelectorTransformResult>()
   const selectorResultCacheLimit = 50000
@@ -103,6 +105,7 @@ function createRuleTransformer(options: IStyleHandlerOptions): RuleTransformer {
     ? { escapeMap: options.escapeMap }
     : undefined
   const unsupportedPseudoClasses = getUnsupportedPseudoClassSet(options)
+  const nativeTransform = createNativeSelectorRuleTransformer(options, rootReplacement, universalReplacement)
 
   function writeSelectorResultCache(selector: string, result: CachedSelectorTransformResult) {
     if (selectorResultCache.size >= selectorResultCacheLimit) {
@@ -139,6 +142,22 @@ function createRuleTransformer(options: IStyleHandlerOptions): RuleTransformer {
 
     if (canSkipRuleTransform(rule)) {
       writeSelectorResultCache(sourceSelector, { action: 'keep' })
+      return
+    }
+
+    const native = nativeTransform(sourceSelector)
+    if (native !== undefined) {
+      rule.selector = native.selector
+      if (native.spacing) {
+        normalizeSpacingDeclarations(rule)
+      }
+      if (native.remove) {
+        rule.remove()
+        writeSelectorResultCache(sourceSelector, { action: 'remove' })
+      }
+      else if (!native.spacing) {
+        writeSelectorResultCache(sourceSelector, { action: 'update', selector: native.selector })
+      }
       return
     }
 
@@ -187,12 +206,24 @@ function createRuleTransformer(options: IStyleHandlerOptions): RuleTransformer {
   }
 }
 
+/**
+ * 为一次完整 PostCSS 管线建立不可变的选择器转换器。
+ *
+ * 管线创建阶段已经拿到本轮选项，先复制会影响选择器的数组和映射，
+ * 后续每条规则无需重复做可变配置探测；直接调用 ruleTransformSync 的
+ * 场景仍保留逐次探测，兼容外部原地修改配置的行为。
+ */
+export function createStableRuleTransformer(options: IStyleHandlerOptions): RuleTransformer {
+  return createRuleTransformer(resolveSelectorTransformOptions(options))
+}
+
 // ruleTransformSync 提供同步的规则转换入口，并基于配置缓存转换器
 export function ruleTransformSync(rule: Rule, options: IStyleHandlerOptions) {
-  let transformer = ruleTransformCache.get(options)
-  if (!transformer) {
-    transformer = createRuleTransformer(options)
-    ruleTransformCache.set(options, transformer)
+  let cached = ruleTransformCache.get(options)
+  const snapshot = resolveSelectorTransformOptions(options, cached?.options)
+  if (!cached || snapshot !== cached.options) {
+    cached = { options: snapshot, transform: createRuleTransformer(snapshot) }
+    ruleTransformCache.set(options, cached)
   }
-  transformer(rule)
+  cached.transform(rule)
 }

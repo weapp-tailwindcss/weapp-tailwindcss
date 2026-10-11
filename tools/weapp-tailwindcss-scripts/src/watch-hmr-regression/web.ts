@@ -5,6 +5,9 @@ import { createHash } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import process from 'node:process'
 import { chromium } from 'playwright'
+import { createWatchCaseCleanup } from './cleanup'
+import { createMemorySampler } from './memory/sampler'
+import { spawnWithWatchMemorySource } from './memory/source'
 import {
   createLineCollector,
   createSpawnEnv,
@@ -12,25 +15,19 @@ import {
   killProcessTreeOnWindows,
   normalizeLogLine,
   parsePluginProcessSample,
-  sampleProcessTreeMemory,
   sleep,
   spawnPnpm,
 } from './session'
-import { waitFor, writeFilePreserveEol } from './text'
+import { waitFor, writeWatchedFilePreserveEol } from './text'
 import { resolveReloadAcceptAttemptTimeout, resolveWebCompileSettleTimeoutMs, waitForWebCompileSettled } from './web-compile-settle'
+import { runWebIconifyHmr } from './web/iconify'
+import { collectStyleText } from './web/style-text'
 
 const LOCAL_URL_RE = /https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\])\S*/i
 const RGB_RE = /^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/
 const DOM_REPLACEMENT_SELECTOR = '[data-tw-watch-web-dom]'
 const WEB_HMR_MARKER_ATTACH_MIN_TIMEOUT_MS = 1_000
 const WEB_HMR_RELOAD_MIN_INTERVAL_MS = 500
-const DEFAULT_ICON_CLASS_TOKENS = [
-  'i-[mdi--github-circle]',
-  'i-[mdi--star]',
-  'i-[svg-spinners--180-ring-with-bg]',
-]
-const DEFAULT_BEFORE_CONTENT_CLASS = 'before:content-[\'现在，让我们开始神奇的_tailwindcss_开发之旅吧！\']'
-const DEFAULT_AFTER_CONTENT_CLASS = 'before:content-[\'现在，让我们继续神奇的_tailwindcss_HMR_回归之旅吧！\']'
 
 export function isWebCompileReadyLogLine(line: string) {
   return /ready in \d+|compiled successfully|compiled with (?:(?:some|\d+) )?warnings?|webpack\s+[\d.]+\s+compiled|webpack compiled|dev server running|(?:^|\s)Local:\s+https?:\/\/|开发服务已就绪|构建完成|编译成功/u.test(line)
@@ -319,22 +316,6 @@ function assertDomReplacement(
   }
 }
 
-async function collectStyleText(page: Page) {
-  return await page.evaluate(() => {
-    const doc = (globalThis as any).document
-    return Array.from(doc.querySelectorAll('style') as ArrayLike<{ textContent: string | null }>)
-      .map(style => style.textContent ?? '')
-      .join('\n')
-  })
-}
-
-async function createCssClassSelectorIncludes(page: Page, classTokens: string[]) {
-  return await page.evaluate((tokens) => {
-    const css = (globalThis as any).CSS
-    return tokens.map(token => `.${css.escape(token)}`)
-  }, classTokens)
-}
-
 export async function waitForWebPageReady(
   page: Pick<Page, 'goto' | 'locator'>,
   url: string,
@@ -460,7 +441,7 @@ async function runSourceClassReplacementSequence(
     process.stdout.write(
       `[watch-hmr] ${watchCase.label} web source-replacement=${item.label} from=${item.from} to=${item.to}\n`,
     )
-    await writeFilePreserveEol(config.sourceFile, nextSource, sourceOriginal)
+    await writeWatchedFilePreserveEol(config.sourceFile, nextSource, sourceOriginal)
 
     let verifiedCssIncludes: string[] = []
     let lastError = ''
@@ -544,10 +525,10 @@ async function runSourceDomReplacementSequence(
       pollMs: options.pollMs,
       message: `[${watchCase.label}] web source DOM replacement base node was not ready: ${item.label}`,
     }, hotUpdateStartedAt)
-    await writeFilePreserveEol(config.sourceFile, mutation.next, sourceOriginal)
+    await writeWatchedFilePreserveEol(config.sourceFile, mutation.next, sourceOriginal)
     if (config.touchCssEntryOnSourceMutation !== false && config.cssEntryFile && cssEntryOriginal != null) {
       // Taro H5 的 TSX HMR 只更新页面模块；触碰 CSS 入口以复用框架真实的 app.css 热更新链路。
-      await writeFilePreserveEol(
+      await writeWatchedFilePreserveEol(
         config.cssEntryFile,
         `${cssEntryOriginal.trimEnd()}\n:root { --weapp-tailwindcss-watch-dom-replacement: ${hotUpdateStartedAt}; }\n`,
         cssEntryOriginal,
@@ -618,134 +599,6 @@ async function runSourceDomReplacementSequence(
   return results
 }
 
-function insertDefaultWebIconifyProbe(source: string, sourceFile: string, payload: {
-  marker: string
-  classLiteral: string
-}) {
-  const extension = sourceFile.split('?')[0]?.split('#')[0]?.match(/\.[^.\\/]+$/)?.[0]
-  if (extension === '.tsx' || extension === '.jsx' || extension === '.ts' || extension === '.js') {
-    return `${source}\n// ${payload.marker} ${payload.classLiteral}\n`
-  }
-  if (source.includes('</template>')) {
-    return source.replace(
-      '</template>',
-      `  <view class="${payload.classLiteral}">${payload.marker}-web-iconify</view>\n</template>`,
-    )
-  }
-  return `${source}\n<!-- ${payload.marker} ${payload.classLiteral} -->\n`
-}
-
-async function runWebIconifyHmr(
-  watchCase: WatchCase,
-  options: CliOptions,
-  page: Page,
-  config: WebHmrConfig,
-  sourceOriginal: string,
-  waitForCompileSettled: WaitForCompileSettled,
-) {
-  const iconifyConfig = config.iconifyHmr
-  if (!iconifyConfig) {
-    return undefined
-  }
-
-  const iconClassTokens = iconifyConfig.iconClassTokens ?? DEFAULT_ICON_CLASS_TOKENS
-  const beforeContentClass = iconifyConfig.beforeContentClass ?? DEFAULT_BEFORE_CONTENT_CLASS
-  const afterContentClass = iconifyConfig.afterContentClass ?? DEFAULT_AFTER_CONTENT_CLASS
-  const marker = `tw-watch-web-iconify-${watchCase.name}-${Date.now().toString().slice(-6)}`
-  const classLiteral = [...iconClassTokens, beforeContentClass].join(' ')
-  const payload = {
-    marker,
-    classLiteral,
-    iconClassTokens,
-    beforeContentClass,
-    afterContentClass,
-  }
-  const sourceWithProbe = iconifyConfig.mutate
-    ? iconifyConfig.mutate(sourceOriginal, payload)
-    : insertDefaultWebIconifyProbe(sourceOriginal, config.sourceFile, payload)
-  if (sourceWithProbe === sourceOriginal) {
-    throw new Error(`[${watchCase.label}] web iconify HMR probe mutation produced no source change`)
-  }
-  const sourceWithUpdatedContent = sourceWithProbe.replace(beforeContentClass, afterContentClass)
-  if (sourceWithUpdatedContent === sourceWithProbe) {
-    throw new Error(`[${watchCase.label}] web iconify HMR content replacement produced no source change`)
-  }
-
-  const iconCssIncludes = await createCssClassSelectorIncludes(page, iconClassTokens)
-  const beforeContentCssIncludes = await createCssClassSelectorIncludes(page, [beforeContentClass])
-  const afterContentCssIncludes = await createCssClassSelectorIncludes(page, [afterContentClass])
-  const assertStyleIncludes = async (phase: string, contentIncludes: string[]) => {
-    const styleText = await collectStyleText(page)
-    const missingIcons = iconCssIncludes.filter(needle => !styleText.includes(needle))
-    if (missingIcons.length > 0) {
-      throw new Error(`[${watchCase.label}] web iconify HMR ${phase} missing icon CSS selectors: ${missingIcons.join(', ')}`)
-    }
-    const missingContent = contentIncludes.filter(needle => !styleText.includes(needle))
-    if (missingContent.length > 0) {
-      throw new Error(`[${watchCase.label}] web iconify HMR ${phase} missing content CSS selector: ${missingContent.join(', ')}`)
-    }
-  }
-
-  const injectStartedAt = Date.now()
-  process.stdout.write(
-    `[watch-hmr] ${watchCase.label} web iconify-hmr phase=inject icons=${iconClassTokens.join(' | ')}\n`,
-  )
-  await writeFilePreserveEol(config.sourceFile, sourceWithProbe, sourceOriginal)
-  await waitFor(
-    async () => {
-      try {
-        await assertStyleIncludes('inject', beforeContentCssIncludes)
-        return true
-      }
-      catch {
-        return false
-      }
-    },
-    {
-      timeoutMs: options.timeoutMs,
-      pollMs: options.pollMs,
-      message: `[${watchCase.label}] web iconify HMR probe did not generate expected CSS`,
-    },
-    injectStartedAt,
-  )
-  await waitForCompileSettled(injectStartedAt, 'iconify inject')
-
-  const hotUpdateStartedAt = Date.now()
-  process.stdout.write(
-    `[watch-hmr] ${watchCase.label} web iconify-hmr phase=content content=${afterContentClass}\n`,
-  )
-  await writeFilePreserveEol(config.sourceFile, sourceWithUpdatedContent, sourceOriginal)
-  const hotUpdateEffectiveMs = await waitFor(
-    async () => {
-      try {
-        await assertStyleIncludes('content', afterContentCssIncludes)
-        return true
-      }
-      catch {
-        return false
-      }
-    },
-    {
-      timeoutMs: options.timeoutMs,
-      pollMs: options.pollMs,
-      message: `[${watchCase.label}] web iconify HMR content update did not preserve icon CSS`,
-    },
-    hotUpdateStartedAt,
-  )
-  await waitForCompileSettled(hotUpdateStartedAt, 'iconify content')
-
-  return {
-    marker,
-    beforeContentClass,
-    afterContentClass,
-    iconClassTokens,
-    contentClassTokens: [beforeContentClass, afterContentClass],
-    preservedIconCssIncludes: iconCssIncludes,
-    verifiedContentCssIncludes: afterContentCssIncludes,
-    hotUpdateEffectiveMs,
-  }
-}
-
 export function resolveChromiumLaunchOptions() {
   const candidates = [
     process.env['PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH'],
@@ -796,7 +649,6 @@ export async function runWebHmr(
     throw new Error(`[${watchCase.label}] missing web HMR CSS entry original`)
   }
 
-  const startedAt = Date.now()
   const port = resolveWebPort(watchCase)
   const marker = `tw-watch-web-${watchCase.name}-${Date.now().toString().slice(-6)}`
   const mutation = createWebSourceMutation(config, marker)
@@ -812,7 +664,7 @@ export async function runWebHmr(
   const pluginProcessSamples: PluginProcessSample[] = []
   const memoryDebugSamples: HmrMemoryDebugSample[] = []
   const memorySamples: MemoryUsageSample[] = []
-  const child = spawnPnpm(['run', config.devScript, ...(config.devArgs ?? [])], {
+  const { child, memorySource, startedAt } = await spawnWithWatchMemorySource(watchCase.cwd, () => spawnPnpm(['run', config.devScript, ...(config.devArgs ?? [])], {
     cwd: watchCase.cwd,
     env: createSpawnEnv(process.env, {
       BROWSER: 'none',
@@ -833,21 +685,19 @@ export async function runWebHmr(
     }),
     detached: process.platform !== 'win32',
     stdio: 'pipe',
-  })
+  }))
 
-  const recordMemorySample = () => {
-    const sample = sampleProcessTreeMemory(child.pid)
-    if (!sample) {
-      return
-    }
-    memorySamples.push(sample)
-    if (memorySamples.length > 1000) {
-      memorySamples.shift()
-    }
-  }
-  const memoryTimer = setInterval(recordMemorySample, 1000)
-  memoryTimer.unref?.()
-  recordMemorySample()
+  const memorySampler = createMemorySampler({
+    probe: signal => memorySource.sample(child.pid, signal),
+    close: () => memorySource.close(),
+    onSample(sample) {
+      memorySamples.push(sample)
+      if (memorySamples.length > 1000) {
+        memorySamples.shift()
+      }
+    },
+    onUnavailable: error => process.stderr.write(`[watch-hmr:memory] unavailable: ${error.message}\n`),
+  })
 
   const collectLine = createLineCollector('web-watch', lines, 240, {
     quietSass: options.quietSass,
@@ -904,8 +754,6 @@ export async function runWebHmr(
       return
     }
     stopped = true
-    clearInterval(memoryTimer)
-    recordMemorySample()
     child.stdout.off('data', collect)
     child.stderr.off('data', collect)
     try {
@@ -958,7 +806,7 @@ export async function runWebHmr(
     await waitForWebCompileSettled(settleOptions)
   }
 
-  const stop = async () => {
+  const stopWatch = async () => {
     if (child.exitCode != null) {
       cleanupProcessResources()
       return
@@ -990,7 +838,24 @@ export async function runWebHmr(
     cleanupProcessResources()
   }
 
+  const stop = async () => {
+    const stoppingMemory = memorySampler.stop().then(() => undefined, error => error as Error)
+    const watchError = await stopWatch().then(() => undefined, error => error as Error)
+    const memoryError = await stoppingMemory
+    if (watchError && memoryError) {
+      throw new AggregateError([watchError, memoryError], 'watch process and memory probe cleanup failed')
+    }
+    if (watchError || memoryError) {
+      throw watchError ?? memoryError
+    }
+  }
+
   let browser: Browser | undefined
+  const ownedSources = new Map([[config.sourceFile, sourceOriginal]])
+  if (config.cssEntryFile && cssEntryOriginal != null) {
+    ownedSources.set(config.cssEntryFile, cssEntryOriginal)
+  }
+  const cleanup = createWatchCaseCleanup(watchCase.label, ownedSources)
   try {
     await waitFor(
       async () => {
@@ -1085,9 +950,9 @@ export async function runWebHmr(
 
     const initialReadyMs = Date.now() - startedAt
     const hotUpdateStartedAt = Date.now()
-    await writeFilePreserveEol(config.sourceFile, mutatedSource, sourceOriginal)
+    await writeWatchedFilePreserveEol(config.sourceFile, mutatedSource, sourceOriginal)
     if (config.touchCssEntryOnSourceMutation !== false && config.cssEntryFile && cssEntryOriginal != null) {
-      await writeFilePreserveEol(
+      await writeWatchedFilePreserveEol(
         config.cssEntryFile,
         createCssEntryContent(cssEntryOriginal, marker, mutation.classLiteral),
         cssEntryOriginal,
@@ -1139,7 +1004,7 @@ export async function runWebHmr(
 
     const rollbackStartedAt = Date.now()
     const rollbackExpectedStyle = resolveRollbackExpectedStyle(config)
-    await writeFilePreserveEol(
+    await writeWatchedFilePreserveEol(
       config.sourceFile,
       config.injectMarkerElement
         ? createWebRollbackSourceMutation(config, sourceOriginal, marker)
@@ -1147,7 +1012,7 @@ export async function runWebHmr(
       sourceOriginal,
     )
     if (config.touchCssEntryOnSourceMutation !== false && config.cssEntryFile && cssEntryOriginal != null) {
-      await writeFilePreserveEol(
+      await writeWatchedFilePreserveEol(
         config.cssEntryFile,
         config.injectMarkerElement
           ? createCssEntryContent(cssEntryOriginal, marker, resolveRollbackClassLiteral(config))
@@ -1228,7 +1093,7 @@ export async function runWebHmr(
       waitForCompileSettled,
     )
 
-    process.stdout.write(
+    cleanup.recordSuccess(
       `[watch-hmr] ${watchCase.label} web hmr passed (hotUpdate=${hotUpdateEffectiveMs}ms, rollback=${rollbackEffectiveMs}ms, url=${url})\n`,
     )
 
@@ -1256,18 +1121,14 @@ export async function runWebHmr(
   }
   catch (error) {
     const message = error instanceof Error ? error.message : String(error)
-    throw new Error(`${message}\n[${watchCase.label}] recent web watch logs:\n${lines.join('\n')}`)
+    throw cleanup.recordFailure(new Error(`${message}\n[${watchCase.label}] recent web watch logs:\n${lines.join('\n')}`, { cause: error }))
   }
   finally {
-    try {
-      await writeFilePreserveEol(config.sourceFile, sourceOriginal, sourceOriginal)
-      if (config.cssEntryFile && cssEntryOriginal != null) {
-        await writeFilePreserveEol(config.cssEntryFile, cssEntryOriginal, cssEntryOriginal)
-      }
-    }
-    catch {
-    }
-    await browser?.close().catch(() => {})
-    await stop()
+    await cleanup.finish({
+      closeBrowser: async () => {
+        await browser?.close()
+      },
+      stopSession: stop,
+    })
   }
 }

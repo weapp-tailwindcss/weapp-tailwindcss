@@ -1,0 +1,30 @@
+{
+  "name": "benchmark-performance",
+  "private": true,
+  "type": "module",
+  "version": "0.0.3",
+  "description": "weapp-tailwindcss 全链路性能报告与门禁",
+  "scripts": {
+    "report": "node ./scripts/cli.mjs",
+    "watch:report": "node --expose-gc ./scripts/watch-lifecycle.mjs",
+    "watch:baseline": "node --expose-gc ./scripts/watch-lifecycle.mjs --sizes 3 --runs 1 --warmups 0 --update-static",
+    "guard": "node ./scripts/cli.mjs --guard",
+    "baseline:update": "node ./scripts/cli.mjs --update-baseline",
+    "profile": "node --cpu-prof --cpu-prof-dir=.tmp/performance-profile ./scripts/cli.mjs --suite postcss --runs 1 --warmups 0",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@weapp-tailwindcss/cn": "workspace:*",
+    "@weapp-tailwindcss/engine": "workspace:*",
+    "@weapp-tailwindcss/merge": "workspace:*",
+    "@weapp-tailwindcss/postcss": "workspace:*",
+    "@weapp-tailwindcss/runtime": "workspace:*",
+    "cn": "^0.4.0",
+    "esbuild": "^0.28.2",
+    "postcss": "catalog:postcss85",
+    "weapp-tailwindcss": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "catalog:vitest"
+  }
+}

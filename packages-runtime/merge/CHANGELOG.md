@@ -1,5 +1,61 @@
 # @weapp-tailwindcss/merge
 
+## 2.2.7
+
+### Patch Changes
+
+- 将类名转义基础包源码纳入本仓库，以 @weapp-tailwindcss/escape 从新版本序列独立发布，并统一替换编译端、PostCSS 和运行时的依赖及类型引用。保留原转义 API、ESM/CJS 入口和映射行为，增加旧发布版对照与新包名打包验证。
+
+  公开 workspace 消费方统一使用 repoctl 要求的 `workspace:*`，发布 tarball 固定到同批 escape 版本，避免保留旧依赖范围策略导致 Release 协议校验失败。
+
+- 将发布包的仓库与问题反馈地址更新为 weapp-tailwindcss 组织下的主仓库，使 npm 包元数据与迁移后的 OIDC 发布来源一致。保留现有包名、导出接口、npm 所有权和文档域名。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/escape@0.0.2
+  - @weapp-tailwindcss/runtime@0.1.11
+
+## 2.2.6
+
+### Patch Changes
+
+- Updated dependencies:
+  - @weapp-tailwindcss/runtime@0.1.10
+
+## 2.2.5
+
+### Patch Changes
+
+- 修正 cn 与 merge 包主页链接，使其指向文档声明的实际路由。
+
+## 2.2.4
+
+### Patch Changes
+
+- 修复 `twMerge` 处理以数字开头的变体类名（如 `2xl:` 等）时的转义与冲突消解问题。
+
+  - 在 `wrapClassAggregator` 中对包含空格的多类名字符串进行分词处理，使每个类名 Token 都能独立应用完整的 escape/unescape 前缀逻辑。
+  - 解决数字开头变体类名在小程序运行时冲突未消解、或因丢失下划线前缀导致样式在真机及模拟器中失效的问题。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/runtime@0.1.9
+
+## 2.2.3
+
+### Patch Changes
+
+- 将公开 npm 包的主页和相关文档入口迁移到新的 `https://tw.weapp.dev` 域名，并补齐缺失的包主页元数据。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/runtime@0.1.8
+
+## 2.2.2
+
+### Patch Changes
+
+- 🐛 **统一更新各发布包的 npm 描述与中英文 README，明确 `weapp-tailwindcss` 面向 Web、小程序、React Native、Lynx 与跨端框架的全端 Tailwind CSS 定位。公开包现在默认展示英文 README，并提供统一命名的简体中文入口，同时保留各子包的具体职责边界。** [#1079](https://github.com/sonofmagic/weapp-tailwindcss/pull/1079) by @sonofmagic
+- 📦 **Dependencies** [`c2ba271`](https://github.com/sonofmagic/weapp-tailwindcss/commit/c2ba271ac62ba851c23549a8de1038a71bb868d6)
+  → `@weapp-tailwindcss/runtime@0.1.7`
+
 ## 2.2.1
 
 ### Patch Changes

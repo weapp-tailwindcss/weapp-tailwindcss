@@ -5,6 +5,7 @@ import type {
 import { createDebug } from '@/debug'
 import { createTailwindV4Engine, loadTailwindV4DesignSystem, resolveTailwindV4SourceFromRuntime, resolveValidTailwindV4Candidates } from '@/tailwindcss/v4-engine'
 import { resolveCssMacroTailwindV4Source } from '@/tailwindcss/v4-engine/css-macro-source'
+import { resolveRuntimeBareArbitraryValues } from './runtime-options'
 import {
   getRuntimeClassSetCacheEntry,
   getRuntimeClassSetSignatureWithSources,
@@ -208,13 +209,15 @@ async function collectTailwindV4GeneratorClassSet(tailwindRuntime: TailwindcssRu
 
   try {
     const source = resolveCssMacroTailwindV4Source(await resolveTailwindV4SourceFromRuntime(tailwindRuntime))
+    const bareArbitraryValues = resolveRuntimeBareArbitraryValues(tailwindRuntime.options)
     const generated = await createTailwindV4Engine(source).generate({
+      ...(bareArbitraryValues === undefined ? {} : { bareArbitraryValues }),
       scanSources: true,
       target: 'web',
     })
     const designSystem = await loadTailwindV4DesignSystem(source)
     const classSet = resolveValidTailwindV4Candidates(designSystem, generated.classSet, {
-      ...(source.bareArbitraryValues === undefined ? {} : { bareArbitraryValues: source.bareArbitraryValues }),
+      ...(bareArbitraryValues === undefined ? {} : { bareArbitraryValues }),
     })
     debug('runtime class set resolved via tailwindcss v4 generator source scan, raw=%d valid=%d', generated.classSet.size, classSet.size)
     return classSet

@@ -40,6 +40,7 @@ const sharedOptions = {
 export function createTypographyTsdownConfigs(options: WatchAwareOptions = {}) {
   const esmOptions = {
     deps: {
+      resolveDepSubpath: true,
       neverBundle: [
         ...htmlparser2EsmOnlyDependencies,
         'magic-string',
@@ -50,6 +51,7 @@ export function createTypographyTsdownConfigs(options: WatchAwareOptions = {}) {
   }
   const cjsOptions = {
     deps: {
+      resolveDepSubpath: true,
       alwaysBundle: typographyCjsBundledDependencies,
       neverBundle: typographyExternalDependencies,
       onlyBundle: false,

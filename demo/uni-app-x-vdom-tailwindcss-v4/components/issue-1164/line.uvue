@@ -1,0 +1,10 @@
+<template>
+  <view id="issue-1164-line" class="bg-[#ff7a00] h-[100px] w-full">
+    <text class="text-[#ffffff]">line</text>
+    <view id="issue-1164-line-circle" class="bg-[#f21903] h-[48px] w-[48px] rounded-full" />
+  </view>
+</template>
+
+<style lang="scss" scoped>
+//
+</style>

@@ -6,4 +6,4 @@ This package provides the Babel primitives used internally by weapp-tailwindcss 
 
 ## Website
 
-For setup guides, configuration references, and framework examples, see the [official weapp-tailwindcss documentation](https://tw.icebreaker.top).
+For setup guides, configuration references, and framework examples, see the [official weapp-tailwindcss documentation](https://tw.weapp.dev).

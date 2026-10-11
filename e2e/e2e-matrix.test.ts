@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'pathe'
 import { describe, expect, it } from 'vitest'
 import { buildCases } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cases'
+import { CANONICAL_TEMPLATE_CASES } from './canonicalTemplateMatrix'
 import {
   DEMO_COVERAGE_MATRIX,
   discoverDemoPackageNames,
@@ -222,7 +223,7 @@ function collectDemoWeappTailwindcssConfigFiles() {
 
 function readDemoSource(entry: { name: string }) {
   const demoRoot = path.resolve(__dirname, '../demo', entry.name)
-  const ignoredDirs = new Set(['node_modules', 'dist', 'unpackage', '.vite', '.turbo'])
+  const ignoredDirs = new Set(['node_modules', 'dist', 'unpackage', '.debug', '.vite', '.turbo'])
   const sourceExts = new Set(['.css', '.js', '.jsx', '.mpx', '.scss', '.ts', '.tsx', '.uvue', '.vue', '.wxml'])
   const parts: string[] = []
 
@@ -259,6 +260,15 @@ function hasBuildOutputEvidence(name: string, platform: string, cases: Map<strin
 }
 
 describe('e2e matrix', () => {
+  it('keeps every canonical template mapped to a runnable CSS entry', () => {
+    for (const item of CANONICAL_TEMPLATE_CASES) {
+      const root = path.resolve(__dirname, '..', 'templates', item.template)
+      expect(fs.existsSync(path.join(root, 'package.json')), `${item.template} should include package.json`).toBe(true)
+      expect(fs.existsSync(path.join(root, item.cssEntry)), `${item.template} should include ${item.cssEntry}`).toBe(true)
+      expect(fs.existsSync(path.join(root, 'pnpm-lock.yaml')), `${item.template} should include pnpm-lock.yaml`).toBe(true)
+    }
+  })
+
   it('covers every CI-compatible uni-app Vite root import shell demo and platform', () => {
     const cases = createRootStyleImportShellHmrCases('/repo')
     const casesByProject = new Map<string, typeof cases>()
@@ -308,7 +318,7 @@ describe('e2e matrix', () => {
       'taro-vite-vue3-tailwindcss-v4',
       'issue-uview-plus-cssentries',
       'uni-app-vite-vue3-hbuilderx-tailwindcss-v4',
-      'uni-app-x-hbuilderx-tailwindcss-v4',
+      'uni-app-x-vdom-tailwindcss-v4',
     ]))
   })
 
@@ -332,6 +342,9 @@ describe('e2e matrix', () => {
 
   it('requires every demo package to install the Iconify HMR regression dependencies', () => {
     for (const packageJson of discoverAllDemoPackageJsonFiles()) {
+      if (packageJson.startsWith('demo/issue-')) {
+        continue
+      }
       const pkg = readDemoPackageJson(packageJson)
       const dependencies = {
         ...(pkg.dependencies ?? {}),
@@ -371,12 +384,31 @@ describe('e2e matrix', () => {
       const pkg = readDemoPackageJson(entry.packageJson)
       expect(entry.platforms.length, `${entry.name} should declare at least one platform`).toBeGreaterThan(0)
       for (const platform of entry.platforms) {
+        expect(platform.buildCommand, `${entry.name} ${platform.platform} should document build command`).toBeTruthy()
+        expect(platform.buildEvidence, `${entry.name} ${platform.platform} should document build evidence`).toBeTruthy()
+        expect(platform.devCommand, `${entry.name} ${platform.platform} should document dev command`).toBeTruthy()
+        expect(platform.devEvidence, `${entry.name} ${platform.platform} should document dev evidence`).toBeTruthy()
+        expect(platform.hmrCommand, `${entry.name} ${platform.platform} should document HMR command`).toBeTruthy()
+        expect(platform.hmrEvidence, `${entry.name} ${platform.platform} should document HMR evidence`).toBeTruthy()
+        if (platform.staticCoverage === 'automated') {
+          expect(platform.buildScript, `${entry.name} ${platform.platform} automated build should expose a build script`).toBeTruthy()
+        }
         expect(platform.command.length, `${entry.name} ${platform.platform} should document a validation command`).toBeGreaterThan(0)
         expect(platform.evidence.length, `${entry.name} ${platform.platform} should document validation evidence`).toBeGreaterThan(0)
         expect(
           platform.devHmrSnapshotCoverage,
           `${entry.name} ${platform.platform} dev/HMR snapshot coverage should match its HMR execution status`,
         ).toBe(platform.hmrCoverage)
+        expect(
+          platform.devCoverage,
+          `${entry.name} ${platform.platform} should declare normal dev coverage`,
+        ).toBeTruthy()
+        if (platform.devCoverage === 'exempt') {
+          expect(platform.reason?.length, `${entry.name} ${platform.platform} dev exemption should explain why`).toBeGreaterThan(0)
+        }
+        if (platform.devCoverage !== 'exempt') {
+          expect(platform.devScript, `${entry.name} ${platform.platform} covered dev target should expose a dev script`).toBeTruthy()
+        }
         if (platform.buildScript) {
           expect(
             pkg.scripts?.[scriptName(platform.buildScript)],
@@ -419,6 +451,9 @@ describe('e2e matrix', () => {
   it('keeps every Tailwind CSS v4 demo wired to issues 977 and 978 source regressions', () => {
     for (const entry of DEMO_COVERAGE_MATRIX) {
       if (entry.name.startsWith('web/')) {
+        continue
+      }
+      if (entry.name.startsWith('issue-')) {
         continue
       }
       const pkg = readDemoPackageJson(entry.packageJson)
@@ -502,6 +537,9 @@ describe('e2e matrix', () => {
       if (dependencies.tailwindcss !== 'catalog:tailwindcss4' || !dependencies['weapp-tailwindcss']) {
         continue
       }
+      if (name.startsWith('issue-')) {
+        continue
+      }
       if (dependencies['@tailwindcss/postcss'] !== 'catalog:tailwindcss4') {
         missing.push(name)
       }
@@ -546,8 +584,10 @@ describe('e2e matrix', () => {
 
     const demoNames = DEMO_COVERAGE_MATRIX
       .filter(item => !item.name.startsWith('web/'))
+      .filter(item => !item.name.startsWith('issue-'))
       .filter(item => !item.name.startsWith('subpackage-'))
       .filter(item => item.framework !== 'style-injector')
+      .filter(item => !item.skipVisualHmr)
       .map(item => item.name)
       .sort()
     const ideCaseNames = getFrameworkIdeCases().map(item => item.name).sort()
@@ -564,7 +604,7 @@ describe('e2e matrix', () => {
 
   it('keeps every automated mini-program demo in the dynamic arbitrary-value CSS regression', () => {
     const regressionCaseNames = E2E_PROJECTS
-      .filter(item => !item.name.includes('hbuilderx'))
+      .filter(item => !DEMO_COVERAGE_MATRIX.find(entry => entry.name === item.name)?.hbuilderxLocal)
       .map(item => item.name)
       .sort()
     const expectedNames = DEMO_COVERAGE_MATRIX
@@ -621,13 +661,16 @@ describe('e2e matrix', () => {
       ...webViteHmrCoverageCaseNames.map(name => name.replace(/^web /, 'web/').replaceAll(' ', '-').replace('Tailwind-v', 'tailwindcss-v')),
       'uni-app-vite-tailwindcss-v4',
       'uni-app-vite-vue3-hbuilderx-tailwindcss-v4',
-      'uni-app-x-hbuilderx-tailwindcss-v4',
+      'issue-1144-uni-app-x-web',
+      'uni-app-x-vdom-tailwindcss-v4',
     ].sort()
 
     const expectedWeappNames = DEMO_COVERAGE_MATRIX
       .filter(item => !item.name.startsWith('web/'))
+      .filter(item => !item.name.startsWith('issue-'))
       .filter(item => !item.name.startsWith('subpackage-'))
       .filter(item => item.framework !== 'style-injector')
+      .filter(item => !item.skipVisualHmr)
       .map(item => item.name)
       .sort()
     const expectedH5Names = DEMO_COVERAGE_MATRIX
@@ -639,7 +682,7 @@ describe('e2e matrix', () => {
     expect(h5VisualNames).toEqual(expectedH5Names)
     expect(visualScript).toContain('runH5Case(browser')
     expect(visualScript).toContain('runMiniProgramCase({')
-    expect(visualScript).toContain('runAppCase(item, context, results)')
+    expect(visualScript).toContain('runNativeVisualCases(items, context, results)')
     expect(visualHmr).toContain('expectedBackgroundColor')
     expect(visualHmr).toContain('waitForVisualHmrStep')
   })
@@ -673,6 +716,7 @@ describe('e2e matrix', () => {
   it('keeps demo workflow routed through composable platform e2e groups', () => {
     const rootPackageJson = readDemoPackageJson('package.json')
     const workflow = fs.readFileSync(path.resolve(__dirname, '../scripts/demo-e2e-workflow.ts'), 'utf8')
+    const workflowStep = fs.readFileSync(path.resolve(__dirname, '../scripts/demo-e2e-workflow/step.ts'), 'utf8')
     const memoryReport = fs.readFileSync(path.resolve(__dirname, '../scripts/demo-e2e-memory.ts'), 'utf8')
     const weappMemoryReport = fs.readFileSync(path.resolve(__dirname, '../scripts/demo-weapp-memory-report.ts'), 'utf8')
     const localFullReport = fs.readFileSync(path.resolve(__dirname, '../scripts/local-full-platform-report.ts'), 'utf8')
@@ -689,7 +733,7 @@ describe('e2e matrix', () => {
     expect(scripts['e2e:app:visual']).toContain('--app-only --fail-on-incomplete')
     expect(scripts['e2e:hbuilderx:local:harmony']).toContain('E2E_HBUILDERX_APP_PLATFORM=app-harmony')
     expect(scripts['e2e:hbuilderx:local:demo']).toContain('E2E_HBUILDERX_LOCAL=1')
-    expect(scripts['e2e:hbuilderx:local:demo']).toContain('E2E_HBUILDERX_CASE=uni-app-vite-vue3-hbuilderx-tailwindcss-v4,uni-app-x-hbuilderx-tailwindcss-v4')
+    expect(scripts['e2e:hbuilderx:local:demo']).toContain('E2E_HBUILDERX_CASE=uni-app-vite-vue3-hbuilderx-tailwindcss-v4,uni-app-x-vdom-tailwindcss-v4')
     expect(scripts['e2e:hbuilderx:local:demo:mp']).toContain('E2E_HBUILDERX_CASE_GROUP=mp')
     expect(scripts['e2e:hbuilderx:local:demo:mp-extra']).toBe('pnpm e2e:hbuilderx:local:demo:mp-alipay && pnpm e2e:hbuilderx:local:demo:mp-baidu && pnpm e2e:hbuilderx:local:demo:mp-toutiao')
     expect(scripts['e2e:hbuilderx:local:demo:mp-alipay']).toContain('E2E_HBUILDERX_MP_PLATFORM=mp-alipay')
@@ -702,8 +746,9 @@ describe('e2e matrix', () => {
     expect(scripts['e2e:ci']).not.toContain('e2e:hbuilderx:local:demo')
     expect(scripts['e2e:ci']).not.toContain('e2e:hbuilderx:local:demo:mp-extra')
     expect(workflow).toContain('writeDemoE2eMemoryReport')
-    expect(workflow).toContain('sampleProcessTree')
-    expect(memoryReport).toContain('e2e/benchmark/demo-e2e-memory')
+    expect(workflow).toContain('runStep')
+    expect(workflowStep).toContain('sampleProcessTree')
+    expect(memoryReport).toContain('\'e2e\', \'.artifacts\', \'demo-e2e-memory\'')
     expect(weappMemoryReport).toContain('buildScriptCommand')
     expect(weappMemoryReport).toContain('--filter')
     expect(weappMemoryReport).toContain('--from-raw')
@@ -734,7 +779,7 @@ describe('e2e matrix', () => {
     expect(localFullReport).toContain('build source/note')
     expect(localFullReport).toContain('runtime/HMR source/note')
 
-    for (const scriptName of ['e2e:mp', 'e2e:h5', 'e2e:hbuilderx:mp', 'e2e:hbuilderx:h5', 'e2e:android', 'e2e:ios', 'e2e:harmony']) {
+    for (const scriptName of ['e2e:static', 'e2e:multiplatform-build', 'e2e:hot-update:demo', 'e2e:h5', 'e2e:uni:h5', 'e2e:hbuilderx:mp', 'e2e:hbuilderx:h5', 'e2e:android', 'e2e:ios', 'e2e:harmony']) {
       expect(workflow).toContain(`args: ['${scriptName}']`)
     }
   })
@@ -784,8 +829,8 @@ describe('e2e matrix', () => {
       ['subpackage-uni-app-vite-tailwindcss-v4', ['mp-weixin', 'h5', 'app-android', 'app-ios']],
       ['uni-app-vite-vue3-hbuilderx-tailwindcss-v4', ['mp-weixin', 'mp-alipay', 'mp-baidu', 'mp-toutiao', 'h5', 'app-android', 'app-ios']],
       ['uni-app-vite-vue3-hbuilderx-tailwindcss-v4', ['mp-weixin', 'mp-alipay', 'mp-baidu', 'mp-toutiao', 'h5', 'app-android', 'app-ios']],
-      ['uni-app-x-hbuilderx-tailwindcss-v4', ['mp-weixin', 'h5', 'app-android', 'app-ios', 'app-harmony']],
-      ['uni-app-x-hbuilderx-tailwindcss-v4', ['mp-weixin', 'h5', 'app-android', 'app-ios', 'app-harmony']],
+      ['uni-app-x-vdom-tailwindcss-v4', ['mp-weixin', 'h5', 'app-android', 'app-ios', 'app-harmony']],
+      ['uni-app-x-vdom-tailwindcss-v4', ['mp-weixin', 'h5', 'app-android', 'app-ios', 'app-harmony']],
     ])
 
     for (const [name, platforms] of expectedPlatformsByName) {
@@ -820,10 +865,10 @@ describe('e2e matrix', () => {
         if (platform.staticCoverage === 'exempt' && platform.hmrCoverage === 'exempt') {
           continue
         }
-        if (entry.name.includes('hbuilderx') && entry.framework === 'uni-app') {
+        if (entry.hbuilderxLocal && entry.framework === 'uni-app') {
           continue
         }
-        if (entry.name.includes('hbuilderx') && entry.framework === 'uni-app-x' && platform.platform === 'h5') {
+        if (entry.hbuilderxLocal && entry.framework === 'uni-app-x' && platform.platform === 'h5') {
           continue
         }
         expect(targets.has(`${entry.name}:${platform.platform}`), `${entry.name} ${platform.platform} should be in MULTIPLATFORM_TARGETS`).toBe(true)
@@ -917,7 +962,7 @@ describe('e2e matrix', () => {
       'taro-vite-vue3-tailwindcss-v4',
       'uni-app-vite-tailwindcss-v4',
       'uni-app-vite-vue3-hbuilderx-tailwindcss-v4',
-      'uni-app-x-hbuilderx-tailwindcss-v4',
+      'uni-app-x-vdom-tailwindcss-v4',
       'weapp-vite-tailwindcss-v4',
     ])
   })

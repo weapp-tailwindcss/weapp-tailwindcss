@@ -51,6 +51,7 @@ function readBundleBoolean(sample: HmrMemoryDebugSample, key: 'hasOmittedKnownFi
 export function summarizeMemorySamples(samples: MemoryUsageSample[]): MemoryUsageSummary {
   if (samples.length === 0) {
     return {
+      availability: 'unavailable',
       count: 0,
       baselineRssMb: 0,
       peakRssMb: 0,
@@ -104,6 +105,7 @@ export function summarizeMemorySamples(samples: MemoryUsageSample[]): MemoryUsag
     ...(peakSample.topProcesses?.length ? { topProcesses: peakSample.topProcesses } : {}),
   }
   return {
+    availability: 'available',
     count: samples.length,
     baselineRssMb: first.rssMb,
     peakRssMb,
@@ -246,6 +248,7 @@ function createProjectMemoryReport(item: WatchCaseMetrics): HmrMemoryProjectRepo
   const peakMaxProcessRssMb = Math.max(item.memorySummary.peakMaxProcessRssMb, item.memoryDebugSummary.peakRssMb)
   return {
     name: item.name,
+    availability: item.memorySummary.availability ?? (item.memorySummary.count > 0 ? 'available' : 'unavailable'),
     label: item.label,
     project: item.project,
     projectGroup: item.projectGroup,

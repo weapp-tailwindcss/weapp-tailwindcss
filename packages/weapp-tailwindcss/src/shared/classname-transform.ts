@@ -37,13 +37,13 @@ function isUrlLikeCandidate(candidate: string) {
 }
 
 function isPlainSlashPathCandidate(candidate: string) {
+  if (isUrlLikeCandidate(candidate)) {
+    return true
+  }
+
   const slashIndex = candidate.indexOf('/')
   if (slashIndex <= 0) {
     return false
-  }
-
-  if (isUrlLikeCandidate(candidate)) {
-    return true
   }
 
   if (candidate.includes('[') || candidate.includes(']') || candidate.includes(':')) {
@@ -80,7 +80,7 @@ function getEscapedCandidateCacheStore(escapeMap?: EscapeMap) {
 function getEscapedCandidate(candidate: string, escapeMap?: EscapeMap, store = getEscapedCandidateCacheStore(escapeMap)) {
   let cached = store.get(candidate)
   if (cached === undefined) {
-    cached = replaceWxml(candidate, { escapeMap })
+    cached = replaceWxml(candidate, { escapeMap, keepEOL: true })
     store.set(candidate, cached)
   }
   return cached

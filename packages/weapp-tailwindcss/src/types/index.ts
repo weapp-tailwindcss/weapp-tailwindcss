@@ -1,5 +1,5 @@
 import type { ParseError, ParserOptions } from '@babel/parser'
-import type { CssPreflightOptions, Document, IStyleHandlerOptions, Result as PostcssResult, Root } from '@weapp-tailwindcss/postcss'
+import type { CssPreflightOptions, IStyleHandlerOptions, StyleHandler } from '@weapp-tailwindcss/postcss/transform'
 import type { SourceMap } from 'magic-string'
 import type { ICreateCacheReturnType } from '../cache'
 import type { ItemOrItemArray } from './base'
@@ -30,7 +30,7 @@ export type { AppType, IArbitraryValues, ICustomAttributes, ICustomAttributesEnt
 
 // UserDefinedPostcssOptions：用户可配置的 PostCSS 选项
 export type { CssPreflightOptions, IStyleHandlerOptions, ItemOrItemArray }
-export type { WeappTailwindcssStyleInjectorOptions } from '@/style-injector/internal'
+export type { WeappTailwindcssStyleInjectorOptions } from '@/style-injector/options'
 
 export type RequiredDefined<T> = {
   [K in keyof T]-?: Exclude<T[K], undefined>
@@ -139,6 +139,10 @@ export interface ICommonReplaceOptions {
 }
 
 export interface ITemplateHandlerOptions extends ICommonReplaceOptions {
+  /**
+   * `exact` 仅转换 runtimeSet 精确命中的静态 class；默认 `all` 保持旧 API 行为。
+   */
+  classSetMode?: 'all' | 'exact' | undefined
   customAttributesEntities?: ICustomAttributesEntities | undefined
   escapeMap?: Record<string, string> | undefined
   inlineWxs?: boolean | undefined
@@ -149,12 +153,15 @@ export interface ITemplateHandlerOptions extends ICommonReplaceOptions {
   // 是否转译首字母，默认转译，传入 true 不转
   ignoreHead?: boolean | undefined
   wrapExpression?: boolean | undefined
+  /** 当前正在转换的模板模块标识。 */
+  filename?: string | undefined
 }
 
 export interface InternalUserDefinedOptions extends InternalUserDefinedOptionsBase {
+  customAttributesEntities: ICustomAttributesEntities
   supportCustomLengthUnits: LengthUnitsRuntimeOptions | boolean
   templateHandler: (rawSource: string, options?: ITemplateHandlerOptions) => Promise<string>
-  styleHandler: (rawSource: string, options?: IStyleHandlerOptions) => Promise<PostcssResult<Root | Document>>
+  styleHandler: StyleHandler
   jsHandler: JsHandler
   escapeMap: Record<string, string>
   customReplaceDictionary: Record<string, string>

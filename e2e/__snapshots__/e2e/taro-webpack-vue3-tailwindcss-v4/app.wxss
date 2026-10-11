@@ -1,17 +1,3 @@
-.nut-grid-item__content--clickable {
-}
-.nut-calendarcard-day.header {
-}
-.nut-uploader__input.disabled {
-}
-.nut-action-sheet .nut-action-sheet__item--loading {
-}
-.nut-range-disabled .nut-range-button-wrapper,
-.nut-range-disabled .nut-range-button-wrapper-left,
-.nut-range-disabled .nut-range-button-wrapper-right {
-}
-.nut-cell--clickable {
-}
 view,
 text,
 ::after,
@@ -41,30 +27,66 @@ text,
 page,
 .tw-root,
 wx-root-portal-content {
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 'Noto Sans', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
   --font-sans: 'inter', 'inter Fallback', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 'Noto Sans', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
+  --font-sans: 'inter', 'inter Fallback', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
   --font-mono: var(--font-plex-mono), monospace;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  --font-mono: var(--font-plex-mono), monospace;
+  --color-red-500: rgb(251, 44, 54);
   --color-red-500: #fb2c36;
+  --color-green-200: rgb(185, 248, 207);
   --color-green-200: #b9f8cf;
+  --color-cyan-500: rgb(0, 182, 212);
   --color-cyan-500: #00b7d7;
+  --color-cyan-500: #00b6d4;
+  --color-cyan-500: #00b7d7;
+  --color-blue-500: rgb(50, 128, 255);
   --color-blue-500: #3080ff;
+  --color-blue-500: #3280ff;
+  --color-blue-500: #3080ff;
+  --color-purple-800: rgb(110, 17, 176);
   --color-purple-800: #6e11b0;
+  --color-pink-200: rgb(252, 206, 232);
   --color-pink-200: #fccee8;
+  --color-slate-100: rgb(241, 245, 249);
   --color-slate-100: #f1f5f9;
+  --color-slate-200: rgb(226, 232, 240);
   --color-slate-200: #e2e8f0;
+  --color-slate-700: rgb(49, 65, 88);
   --color-slate-700: #314158;
+  --color-slate-800: rgb(29, 41, 61);
   --color-slate-800: #1d293d;
+  --color-slate-900: rgb(15, 23, 43);
   --color-slate-900: #0f172b;
+  --color-zinc-50: rgb(250, 250, 250);
   --color-zinc-50: #fafafa;
+  --color-zinc-900: rgb(24, 24, 27);
   --color-zinc-900: #18181b;
+  --color-zinc-950: rgb(9, 9, 11);
   --color-zinc-950: #09090b;
   --color-white: #fff;
   --spacing: 8rpx;
   --font-weight-semibold: 600;
+  --default-font-family: var(--font-sans);
   --default-font-family: var(--font-inter), system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+  --default-font-family: var(--font-sans);
+  --default-font-family: var(--font-inter), system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+  --default-mono-font-family: var(--font-mono);
+  --default-mono-font-family: var(--font-plex-mono), monospace;
+  --default-mono-font-family: var(--font-mono);
   --default-mono-font-family: var(--font-plex-mono), monospace;
   --test-color: #006241;
   --color-test: #006241;
   --font-test: 'Issue 978', sans-serif;
+  --font-test: 'Issue 978', sans-serif;
+  --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
   --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
   --color-red-50: #fef2f2;
   --color-red-950: #460809;
@@ -2625,7 +2647,7 @@ wx-root-portal-content {
   color: var(--nut-dark-color, var(--nut-white, #fff));
 }
 .nut-theme-dark .nut-picker-roller-mask {
-  background-image: linear-gradient(180deg, #1b1b1be6, #1b1b1b66), linear-gradient(0deg, #1b1b1be6, #1b1b1b66);
+  background-image: linear-gradient(180deg, rgba(27, 27, 27, 0.90196), rgba(27, 27, 27, 0.4)), linear-gradient(0deg, rgba(27, 27, 27, 0.90196), rgba(27, 27, 27, 0.4));
   background-position: top, bottom;
   background-repeat: no-repeat;
   z-index: 1;
@@ -2751,7 +2773,7 @@ wx-root-portal-content {
   width: 100%;
 }
 .nut-picker-roller-mask {
-  background-image: linear-gradient(180deg, #ffffffe6, #fff6), linear-gradient(0deg, #ffffffe6, #fff6);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.90196), rgba(255, 255, 255, 0.4)), linear-gradient(0deg, rgba(255, 255, 255, 0.90196), rgba(255, 255, 255, 0.4));
   background-position: top, bottom;
   background-repeat: no-repeat;
   display: block;
@@ -4435,7 +4457,7 @@ wx-root-portal-content {
 .nut-video-play-btn {
   align-items: center;
   background-color: rgba(0, 0, 0, 0.45098);
-  background-color: #00000080;
+  background-color: rgba(0, 0, 0, 0.50196);
   border: 0;
   border-radius: 20%;
   color: #fff;
@@ -5303,7 +5325,7 @@ wx-root-portal-content {
 }
 .nut-animate .nut-animate-flicker::after {
   animation: flicker 1.5s linear infinite;
-  background-image: linear-gradient(106deg, #e8e0ff00 24%, #e8e0ff 91%);
+  background-image: linear-gradient(106deg, rgba(232, 224, 255, 0) 24%, #e8e0ff 91%);
   content: '';
   filter: blur(3rpx);
   height: 60rpx;
@@ -5929,7 +5951,7 @@ wx-root-portal-content {
   --move-distance: '300%';
 }
 .nut-barrage__item {
-  background: linear-gradient(90deg, #00000026, #0000);
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.14902), rgba(0, 0, 0, 0));
   border-radius: 50rpx;
   display: block;
   font-size: 12rpx;

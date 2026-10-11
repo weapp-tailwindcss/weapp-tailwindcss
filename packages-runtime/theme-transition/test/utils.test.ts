@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   bindViewTransition,
   detectReducedMotion,
@@ -71,6 +71,16 @@ describe('geometry utilities', () => {
 
     expect(resolveCoordinates(undefined, { x: 5, y: 6 }, viewport, target)).toEqual({ x: 5, y: 6 })
     expect(resolveCoordinates(undefined, { x: 5, y: Number.POSITIVE_INFINITY }, viewport, target)).toBeNull()
+  })
+
+  it('treats exact zero coordinates as pointerless while preserving viewport edge clicks', () => {
+    const viewport = { viewportWidth: 50, viewportHeight: 40 }
+    const fallback = vi.fn(() => ({ x: 25, y: 20 }))
+
+    expect(resolveCoordinates({ clientX: 0, clientY: 0 }, fallback, viewport, target)).toBeNull()
+    expect(fallback).not.toHaveBeenCalled()
+    expect(resolveCoordinates({ clientX: 0, clientY: 20 }, undefined, viewport, target)).toEqual({ x: 0, y: 20 })
+    expect(resolveCoordinates({ clientX: 25, clientY: 0 }, undefined, viewport, target)).toEqual({ x: 25, y: 0 })
   })
 
   it('creates reversible clip-path keyframes', () => {

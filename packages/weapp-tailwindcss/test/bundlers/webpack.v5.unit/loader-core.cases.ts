@@ -5,6 +5,21 @@ import RuntimeClassSetLoader from '@/bundlers/webpack/loaders/weapp-tw-runtime-c
 import { getCompilerShadowReportSession } from '@/compiler'
 describe('bundlers/webpack WeappTailwindcss / loader core wiring', () => {
   setupWebpackV5UnitTest()
+  it.each(['sass', 'less', 'stylus'])('runs CSS generation after %s preprocessing without PostCSS', (preprocessor) => {
+    testState.currentContext = createContext({
+      generator: { target: 'web' },
+      tailwindRuntime: { ...testState.currentContext.tailwindRuntime, majorVersion: 4 },
+    })
+    const { compiler, getLoaderHandler } = createCompilerWithLoaderTracking()
+    new WeappTailwindcss().apply(compiler as any)
+    const module: LoaderModule = {
+      resource: '/workspace/theme.scss',
+      loaders: [{ loader: `C:\\loaders\\${preprocessor}-loader\\index.js` }],
+    }
+    getLoaderHandler()?.({}, module)
+    expect(module.loaders.map(entry => isCssGenerationLoader(entry) ? 'generation' : isCssImportRewriteLoader(entry) ? 'rewrite' : 'preprocessor')).toEqual(['rewrite', 'generation', 'preprocessor'])
+  })
+
   it('injects a dedicated css generation loader before postcss-loader execution', () => {
     testState.currentContext = createContext({
       generator: { target: 'weapp' },

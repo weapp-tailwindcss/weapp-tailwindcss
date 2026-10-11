@@ -5,7 +5,7 @@ import { createCssVarNodes } from '../../utils/css-vars'
 
 export const RADIUS_THRESHOLD = 100000
 export const CLAMP_PX = 9999
-export const INFINITY_CALC_VALUE_REGEXP = /^calc\(\s*infinity\s*\*\s*(?:\d+(?:\.\d*)?|\.\d+)r?px\s*\)$/i
+export const INFINITY_CALC_VALUE_REGEXP = /^calc\(\s*infinity\s*\*\s*(\d+(?:\.\d*)?|\.\d+)r?px\s*\)$/i
 
 // 用于 isTailwindcssV4ModernCheck 的正则列表
 export const MODERN_CHECK_WEBKIT_HYPHENS_RE = /-webkit-hyphens\s*:\s*none/

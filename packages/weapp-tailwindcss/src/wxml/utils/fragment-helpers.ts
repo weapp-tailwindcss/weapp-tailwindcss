@@ -29,11 +29,19 @@ export function updateWxmlSegment(
   keepEOL: boolean,
   ignoreHead: boolean,
 ) {
-  ms.update(start, end, replaceWxml(ms.slice(start, end), {
+  const value = ms.slice(start, end)
+  const replaceOptions = {
     keepEOL,
     escapeMap: options.escapeMap,
     ignoreHead,
-  }))
+  }
+  if (options.classSetMode === 'exact' && options.runtimeSet) {
+    ms.update(start, end, value.replace(/\S+/g, candidate => (
+      options.runtimeSet!.has(candidate) ? replaceWxml(candidate, replaceOptions) : candidate
+    )))
+    return
+  }
+  ms.update(start, end, replaceWxml(value, replaceOptions))
 }
 
 export function updateExpressionSegment(

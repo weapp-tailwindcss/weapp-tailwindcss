@@ -1,0 +1,53 @@
+name: Performance Cross Platform
+
+on:
+  schedule:
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: performance-cross-platform
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    name: Performance report (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build performance dependencies
+        run: pnpm --filter 'benchmark-performance^...' run build
+
+      - name: Generate cross-platform report
+        run: pnpm perf:report -- --runs 3 --warmups 2 --out-dir .tmp/performance-report
+
+      - name: Upload cross-platform report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: performance-cross-platform-${{ matrix.os }}-${{ github.run_id }}
+          path: .tmp/performance-report/**
+          if-no-files-found: error
+          retention-days: 14

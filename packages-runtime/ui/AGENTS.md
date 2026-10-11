@@ -22,7 +22,7 @@
 - `pnpm --filter @weapp-tailwindcss/ui build`
 - `pnpm --filter @weapp-tailwindcss/ui test`
 - `pnpm --filter @weapp-tailwindcss/ui tsd`
-- 若改动适配层：`pnpm --filter @weapp-tailwindcss/ui vitest run test/adapters/adapter.test.ts`
+- 若改动适配层：`pnpm --filter @weapp-tailwindcss/ui exec vitest run test/adapters/adapter.test.ts`
 
 ## 提交前检查
 - 确认导出入口（`components/hooks/utils/adapters`）未被意外破坏。

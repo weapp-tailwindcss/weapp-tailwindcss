@@ -1,9 +1,11 @@
 {
   "file": "src/pages/index/index.tsx",
-  "count": 28,
+  "count": 32,
   "tokens": [
     "bg-[#0977ee]",
     "bg-[#534312]",
+    "bg-blue-200",
+    "bg-blue-500",
     "bg-gradient-to-r",
     "bg-purple-800",
     "bg-white",
@@ -22,6 +24,8 @@
     "rounded",
     "rounded-full",
     "rounded-full!",
+    "rounded-s-full",
+    "rounded-t-full",
     "system-dark:bg-slate-900",
     "system-dark:text-slate-100",
     "text-[#fff]",

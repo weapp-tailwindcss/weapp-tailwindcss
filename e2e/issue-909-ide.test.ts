@@ -1,28 +1,25 @@
 import fs from 'node:fs/promises'
 import process from 'node:process'
-import { Launcher } from '@weapp-vite/miniprogram-automator'
-import { execa } from 'execa'
 import path from 'pathe'
-import pixelmatch from 'pixelmatch'
 import { PNG } from 'pngjs'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { captureMiniProgramViewport } from '../scripts/demo-visual-e2e-report/mini-program-screenshot'
+import { closeWechatProject } from '../scripts/wechat-project-cleanup'
+import { Launcher } from '../scripts/wechat/automator'
 import { collectFrameworkIdeDiagnostics } from './frameworkIdeDiagnostics'
+import { artifactDir, issue928BaselineDir, timeoutMs } from './issue-928/config'
+import { assertIssue928GradientRuntime } from './issue-928/gradient'
+import { countAmberPixels, countBluePixels, countCyanPixels, countEmeraldPixels, countPurplePixels, countRedPixels, countYellowPixels, expandRect, scaleRect } from './issue-928/visual'
+import { assertMiniProgramPreflight } from './preflight-assertions'
+
 import { ensureProjectBuilt } from './projectBuild'
 
 const describeIde = process.env['E2E_IDE'] === '1' ? describe : describe.skip
 const v4ProjectRoot = path.resolve(__dirname, '../demo/taro-webpack-react-tailwindcss-v4')
 const v4ProjectPath = v4ProjectRoot
 const v4AppWxssPath = path.resolve(v4ProjectRoot, 'dist/app.wxss')
-const v3ProjectRoot = path.resolve(__dirname, '../demo/taro-webpack-react-tailwindcss-v4')
-const v3ProjectPath = v3ProjectRoot
-const v3AppWxssPath = path.resolve(v3ProjectRoot, 'dist/app.wxss')
 const issue909PageUrl = '/pages/issue-909/index'
-const issue928PageUrl = '/pages/issue-928/index'
-const timeoutMs = Number(process.env['E2E_IDE_ISSUE_909_TIMEOUT_MS'] ?? process.env['E2E_AUTOMATOR_TIMEOUT_MS'] ?? 90_000)
-const artifactDir = path.resolve(__dirname, '.artifacts/issue-909')
-const issue928BaselineDir = path.resolve(__dirname, 'fixtures/issue-928-baselines')
 const isTailwindcssV4GradientFallbackEnabled = process.env['WEAPP_TW_V4_GRADIENT_FALLBACK'] === '1'
-const shouldUpdateIssue928CompareBaseline = process.env['E2E_UPDATE_ISSUE_928_BASELINE'] === '1'
 const transformClasses = [
   'rotate-y-90',
   'rotate-y-45',
@@ -47,351 +44,28 @@ const coveredIssues = [
   '#928 Tailwind v4 gradient stop fallbacks',
 ]
 
-interface Issue928ProbeOptions {
-  artifactPrefix: string
-  coveredIssue: string
-  expectedPrimaryClass: string
-  expectedViaClass: string
-  gradientSelector: string
-  viaSelector: string
-  stopSelector: string
-  radialSelector: string
-  conicSelector: string
-  arbitraryImageSelector: string
-  compareBaselinePath?: string
-  extraVisualAssertions?: (context: {
-    screenshot: PNG
-    scaleX: number
-    scaleY: number
-    page: any
-  }) => Promise<Record<string, unknown>>
-}
-
-interface Rect {
-  left: number
-  top: number
-  width: number
-  height: number
-}
-
 async function captureMiniProgramScreenshot(miniProgram: any, screenshotPath: string) {
-  await fs.mkdir(path.dirname(screenshotPath), { recursive: true })
-  const result = await miniProgram.send('App.captureScreenshot', {}, {
-    timeout: timeoutMs,
-  })
-  expect(typeof result?.data).toBe('string')
-  await fs.writeFile(screenshotPath, result.data, 'base64')
+  return captureMiniProgramViewport(miniProgram, screenshotPath, Math.min(timeoutMs, 30_000))
 }
 
 async function readScreenshot(screenshotPath: string) {
   return PNG.sync.read(await fs.readFile(screenshotPath))
 }
 
-function expandRect(rect: Rect, padding: number): Rect {
-  return {
-    left: rect.left - padding,
-    top: rect.top - padding,
-    width: rect.width + padding * 2,
-    height: rect.height + padding * 2,
-  }
-}
-
-function scaleRect(rect: Rect, scaleX: number, scaleY: number): Rect {
-  return {
-    left: rect.left * scaleX,
-    top: rect.top * scaleY,
-    width: rect.width * scaleX,
-    height: rect.height * scaleY,
-  }
-}
-
-function countEmeraldPixels(png: PNG, rect: Rect) {
-  return countPixels(png, rect, ({ alpha, blue, green, red }) => {
-    return alpha > 180 && green > 130 && green > red + 30 && green > blue + 20
-  })
-}
-
-function countAmberPixels(png: PNG, rect: Rect) {
-  return countPixels(png, rect, ({ alpha, blue, green, red }) => {
-    return alpha > 180 && red > 180 && green > 120 && blue < 80
-  })
-}
-
-function countBluePixels(png: PNG, rect: Rect) {
-  return countPixels(png, rect, ({ alpha, blue, red }) => {
-    return alpha > 180 && blue > 120 && blue > red + 30
-  })
-}
-
-function countCyanPixels(png: PNG, rect: Rect) {
-  return countPixels(png, rect, ({ alpha, blue, green, red }) => {
-    return alpha > 180 && green > 130 && blue > 130 && green > red + 35
-  })
-}
-
-function countPurplePixels(png: PNG, rect: Rect) {
-  return countPixels(png, rect, ({ alpha, blue, green, red }) => {
-    return alpha > 180 && red > 120 && blue > 120 && blue > green + 30
-  })
-}
-
-function countRedPixels(png: PNG, rect: Rect) {
-  return countPixels(png, rect, ({ alpha, blue, green, red }) => {
-    return alpha > 180 && red > 150 && red > green + 40 && red > blue + 30
-  })
-}
-
-function countYellowPixels(png: PNG, rect: Rect) {
-  return countPixels(png, rect, ({ alpha, blue, green, red }) => {
-    return alpha > 180 && red > 180 && green > 150 && blue < 130
-  })
-}
-
-function countPixels(
-  png: PNG,
-  rect: Rect,
-  predicate: (color: { alpha: number, blue: number, green: number, red: number }) => boolean,
-) {
-  const left = Math.max(0, Math.floor(rect.left))
-  const top = Math.max(0, Math.floor(rect.top))
-  const right = Math.min(png.width, Math.ceil(rect.left + rect.width))
-  const bottom = Math.min(png.height, Math.ceil(rect.top + rect.height))
-  let pixels = 0
-
-  for (let y = top; y < bottom; y++) {
-    for (let x = left; x < right; x++) {
-      const index = (png.width * y + x) * 4
-      const red = png.data[index]!
-      const green = png.data[index + 1]!
-      const blue = png.data[index + 2]!
-      const alpha = png.data[index + 3]!
-
-      if (predicate({ alpha, blue, green, red })) {
-        pixels++
-      }
-    }
-  }
-
-  return pixels
-}
-
-function cropPng(source: PNG, rect: Rect) {
-  const left = Math.max(0, Math.floor(rect.left))
-  const top = Math.max(0, Math.floor(rect.top))
-  const right = Math.min(source.width, Math.ceil(rect.left + rect.width))
-  const bottom = Math.min(source.height, Math.ceil(rect.top + rect.height))
-  const width = Math.max(0, right - left)
-  const height = Math.max(0, bottom - top)
-  const cropped = new PNG({ width, height })
-
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const sourceIndex = (source.width * (top + y) + (left + x)) * 4
-      const targetIndex = (width * y + x) * 4
-      cropped.data[targetIndex] = source.data[sourceIndex] ?? 0
-      cropped.data[targetIndex + 1] = source.data[sourceIndex + 1] ?? 0
-      cropped.data[targetIndex + 2] = source.data[sourceIndex + 2] ?? 0
-      cropped.data[targetIndex + 3] = source.data[sourceIndex + 3] ?? 0
-    }
-  }
-
-  return cropped
-}
-
-function unionRect(...rects: Rect[]) {
-  const left = Math.min(...rects.map(rect => rect.left))
-  const top = Math.min(...rects.map(rect => rect.top))
-  const right = Math.max(...rects.map(rect => rect.left + rect.width))
-  const bottom = Math.max(...rects.map(rect => rect.top + rect.height))
-  return {
-    left,
-    top,
-    width: right - left,
-    height: bottom - top,
-  }
-}
-
 function toCssSelector(className: string) {
   return new RegExp(`\\.${className.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\s*\\{`)
 }
 
-const wait = (timeout: number) => new Promise(resolve => setTimeout(resolve, timeout))
-
-async function cleanupDevTools() {
-  if (process.platform !== 'darwin') {
-    return
-  }
-  const timeout = Number(process.env['E2E_IDE_CLEANUP_TIMEOUT_MS'] ?? 5000)
-  await execa('osascript', ['-e', 'quit app "wechatwebdevtools"'], {
-    reject: false,
-    timeout,
-  }).catch(() => undefined)
-  await execa('pkill', ['-f', '/Applications/wechatwebdevtools.app'], {
-    reject: false,
-  }).catch(() => undefined)
-  await execa('pkill', ['-f', 'wechatwebdevtools Daemon'], {
-    reject: false,
-  }).catch(() => undefined)
-  await wait(800)
-}
-
-async function collectScaledRect(page: any, screenshot: PNG, node: any, padding = 2) {
-  const pageSize = await page.size()
-  const scaleX = screenshot.width / pageSize.width
-  const scaleY = screenshot.height / pageSize.height
-  return {
-    rect: expandRect(scaleRect({ ...await node.offset(), ...await node.size() }, scaleX, scaleY), padding),
-    scaleX,
-    scaleY,
-  }
-}
-
-async function assertIssue928GradientRuntime(miniProgram: any, options: Issue928ProbeOptions) {
-  const gradientPage = await miniProgram.reLaunch(issue928PageUrl)
-  await gradientPage.waitFor(1000)
-
-  const gradientNode = await gradientPage.$(options.gradientSelector)
-  const viaGradientNode = await gradientPage.$(options.viaSelector)
-  const stopArbitraryGradientNode = await gradientPage.$(options.stopSelector)
-  const radialGradientNode = await gradientPage.$(options.radialSelector)
-  const conicGradientNode = await gradientPage.$(options.conicSelector)
-  const arbitraryImageGradientNode = await gradientPage.$(options.arbitraryImageSelector)
-
-  expect(gradientNode).toBeTruthy()
-  expect(viaGradientNode).toBeTruthy()
-  expect(stopArbitraryGradientNode).toBeTruthy()
-  expect(radialGradientNode).toBeTruthy()
-  expect(conicGradientNode).toBeTruthy()
-  expect(arbitraryImageGradientNode).toBeTruthy()
-  await expect(gradientNode.attribute('class')).resolves.toContain(options.expectedPrimaryClass)
-  await expect(viaGradientNode.attribute('class')).resolves.toContain(options.expectedViaClass)
-  await expect(stopArbitraryGradientNode.attribute('class')).resolves.toContain('from-')
-
-  const gradientScreenshotPath = path.resolve(artifactDir, `${options.artifactPrefix}-issue-928-gradient.png`)
-  await captureMiniProgramScreenshot(miniProgram, gradientScreenshotPath)
-  const gradientScreenshot = await readScreenshot(gradientScreenshotPath)
-  const { rect: gradientRect, scaleX, scaleY } = await collectScaledRect(gradientPage, gradientScreenshot, gradientNode)
-  const { rect: viaGradientRect } = await collectScaledRect(gradientPage, gradientScreenshot, viaGradientNode)
-  const { rect: stopArbitraryGradientRect } = await collectScaledRect(gradientPage, gradientScreenshot, stopArbitraryGradientNode)
-  const { rect: radialGradientRect } = await collectScaledRect(gradientPage, gradientScreenshot, radialGradientNode)
-  const { rect: conicGradientRect } = await collectScaledRect(gradientPage, gradientScreenshot, conicGradientNode)
-  const { rect: arbitraryImageGradientRect } = await collectScaledRect(gradientPage, gradientScreenshot, arbitraryImageGradientNode)
-  const gradientBluePixels = countBluePixels(gradientScreenshot, gradientRect)
-  const gradientCyanPixels = countCyanPixels(gradientScreenshot, gradientRect)
-  const viaGradientPurplePixels = countPurplePixels(gradientScreenshot, viaGradientRect)
-  const stopArbitraryGradientBluePixels = countBluePixels(gradientScreenshot, stopArbitraryGradientRect)
-  const stopArbitraryGradientCyanPixels = countCyanPixels(gradientScreenshot, stopArbitraryGradientRect)
-  const stopArbitraryGradientPurplePixels = countPurplePixels(gradientScreenshot, stopArbitraryGradientRect)
-  const radialGradientPurplePixels = countPurplePixels(gradientScreenshot, radialGradientRect)
-  const conicGradientPurplePixels = countPurplePixels(gradientScreenshot, conicGradientRect)
-  const arbitraryImageGradientBluePixels = countBluePixels(gradientScreenshot, arbitraryImageGradientRect)
-  const compareRect = unionRect(gradientRect, viaGradientRect, stopArbitraryGradientRect)
-  const comparePng = cropPng(gradientScreenshot, compareRect)
-  const comparePath = path.resolve(artifactDir, `${options.artifactPrefix}-issue-928-compare.png`)
-  await fs.writeFile(comparePath, PNG.sync.write(comparePng))
-  let compareBaselineInitialized = false
-  let compareBaselineUpdated = false
-  let compareDiffPath: string | undefined
-  let compareDifferentPixels: number | undefined
-  let compareRatio: number | undefined
-  if (options.compareBaselinePath) {
-    const shouldWriteBaseline = shouldUpdateIssue928CompareBaseline
-      || await fs.access(options.compareBaselinePath).then(() => false, () => true)
-    if (shouldWriteBaseline) {
-      await fs.mkdir(path.dirname(options.compareBaselinePath), { recursive: true })
-      await fs.writeFile(options.compareBaselinePath, PNG.sync.write(comparePng))
-      compareBaselineInitialized = !shouldUpdateIssue928CompareBaseline
-      compareBaselineUpdated = shouldUpdateIssue928CompareBaseline
-    }
-    const baselinePng = PNG.sync.read(await fs.readFile(options.compareBaselinePath))
-    expect(Math.abs(baselinePng.width - comparePng.width)).toBeLessThanOrEqual(1)
-    expect(Math.abs(baselinePng.height - comparePng.height)).toBeLessThanOrEqual(1)
-    const stableCompareWidth = Math.min(comparePng.width, baselinePng.width)
-    const stableCompareHeight = Math.min(comparePng.height, baselinePng.height)
-    const stableComparePng = cropPng(comparePng, {
-      height: stableCompareHeight,
-      left: 0,
-      top: 0,
-      width: stableCompareWidth,
-    })
-    const stableBaselinePng = cropPng(baselinePng, {
-      height: stableCompareHeight,
-      left: 0,
-      top: 0,
-      width: stableCompareWidth,
-    })
-    const diffPng = new PNG({ width: stableCompareWidth, height: stableCompareHeight })
-    compareDifferentPixels = pixelmatch(stableComparePng.data, stableBaselinePng.data, diffPng.data, stableCompareWidth, stableCompareHeight, {
-      threshold: 0.1,
-    })
-    compareDiffPath = path.resolve(artifactDir, `${options.artifactPrefix}-issue-928-compare-diff.png`)
-    await fs.writeFile(compareDiffPath, PNG.sync.write(diffPng))
-    compareRatio = Math.round((compareDifferentPixels / (stableCompareWidth * stableCompareHeight)) * 10000) / 10000
-  }
-  const extraVisual = await options.extraVisualAssertions?.({
-    page: gradientPage,
-    scaleX,
-    scaleY,
-    screenshot: gradientScreenshot,
-  }) ?? {}
-
-  await fs.writeFile(
-    path.resolve(artifactDir, `${options.artifactPrefix}-issue-928-gradient-visual.json`),
-    `${JSON.stringify({
-      arbitraryImageGradientBluePixels,
-      arbitraryImageGradientRect,
-      conicGradientPurplePixels,
-      conicGradientRect,
-      coveredIssues: [options.coveredIssue],
-      gradientBluePixels,
-      gradientCyanPixels,
-      gradientRect,
-      compareDiffPath,
-      compareBaselineInitialized,
-      compareBaselinePath: options.compareBaselinePath,
-      compareBaselineUpdated,
-      compareDifferentPixels,
-      comparePath,
-      compareRatio,
-      radialGradientPurplePixels,
-      radialGradientRect,
-      scaleX,
-      scaleY,
-      screenshot: gradientScreenshotPath,
-      stopArbitraryGradientBluePixels,
-      stopArbitraryGradientCyanPixels,
-      stopArbitraryGradientPurplePixels,
-      stopArbitraryGradientRect,
-      viaGradientPurplePixels,
-      viaGradientRect,
-      ...extraVisual,
-    }, null, 2)}\n`,
-  )
-
-  expect(gradientCyanPixels).toBeGreaterThan(100)
-  expect(gradientBluePixels).toBeGreaterThan(100)
-  expect(viaGradientPurplePixels).toBeGreaterThan(100)
-  expect(stopArbitraryGradientCyanPixels).toBeGreaterThan(100)
-  expect(stopArbitraryGradientBluePixels).toBeGreaterThan(100)
-  if (options.compareBaselinePath) {
-    expect(compareDifferentPixels).toBeLessThan(10)
-  }
-}
-
-describeIde.sequential('issues 909/916/928 IDE runtime', () => {
+describeIde('issues 909/916/928 IDE runtime', () => {
   let miniProgram: any
 
   beforeAll(async () => {
     if (process.env['E2E_SKIP_BUILD'] !== '1') {
       await ensureProjectBuilt(v4ProjectRoot)
     }
-    await cleanupDevTools()
     try {
       const automator = new Launcher()
-      miniProgram = await automator.launch({
-        projectPath: v4ProjectPath,
-        timeout: timeoutMs,
-      })
+      miniProgram = await automator.launch({ cliPath: process.env.E2E_PREFLIGHT_WECHAT_CLI, projectPath: v4ProjectPath, timeout: timeoutMs })
     }
     catch (error) {
       if (error instanceof Error) {
@@ -402,8 +76,9 @@ describeIde.sequential('issues 909/916/928 IDE runtime', () => {
   }, 180_000)
 
   afterAll(async () => {
-    await miniProgram?.close()
-    await cleanupDevTools()
+    if (miniProgram) {
+      await closeWechatProject(v4ProjectPath, miniProgram)
+    }
   })
 
   it('keeps Tailwind v4 transform, native selector and gradient utilities valid in WeChat DevTools', async () => {
@@ -416,9 +91,14 @@ describeIde.sequential('issues 909/916/928 IDE runtime', () => {
     }
     expect(appWxss).toMatch(/transform:\s*var\(--tw-rotate-x, \) var\(--tw-rotate-y, \) var\(--tw-rotate-z, \) var\(--tw-skew-x, \) var\(--tw-skew-y, \)/)
     expect(appWxss).not.toMatch(/transform:\s*var\(--tw-rotate-x,\) var\(--tw-rotate-y,\)/)
-    expect(appWxss).toMatch(/view,text,::after,::before\s*\{\s*border:0 solid;\s*box-sizing:border-box;\s*margin:0;\s*padding:0\s*\}/)
+    assertMiniProgramPreflight(appWxss)
     expect(appWxss).toMatch(/background-image:\s*linear-gradient\(var\(--tw-gradient-stops\)\)/)
-    expect(appWxss).toMatch(/\.bg-linear-to-r\s*\{\s*--tw-gradient-position:\s*to right;\s*background-image:\s*-webkit-linear-gradient\(var\(--tw-gradient-stops\)\);\s*background-image:\s*linear-gradient\(var\(--tw-gradient-stops\)\)/)
+    const bgLinearToRRule = appWxss.match(/\.bg-linear-to-r\s*\{(?<declarations>[^}]*)\}/)?.groups?.declarations
+    expect(bgLinearToRRule, 'issue 928 should emit the variable-driven gradient rule').toBeTruthy()
+    expect(bgLinearToRRule).toMatch(/--tw-gradient-position:\s*to right;/)
+    expect(bgLinearToRRule).toMatch(/background-image:\s*linear-gradient\(var\(--tw-gradient-stops\)\)/)
+    // 小程序主产物按前缀白名单清理冗余的 -webkit-linear-gradient。
+    expect(bgLinearToRRule).not.toContain('-webkit-linear-gradient')
     if (isTailwindcssV4GradientFallbackEnabled) {
       expect(appWxss).toContain('.bg-linear-to-r.from-cyan-500.to-blue-500')
       expect(appWxss).toContain('background-image: linear-gradient(to right, #06b6d4, #3b82f6)')
@@ -445,7 +125,7 @@ describeIde.sequential('issues 909/916/928 IDE runtime', () => {
     }
     expect(appWxss).toContain('background-image:linear-gradient(90deg,#06b6d4,#3b82f6)')
     expect(appWxss, 'issue 928 should keep mini-program parseable gradient via fallback')
-      .toContain('--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position)),')
+      .toMatch(/--tw-gradient-stops:var\(--tw-gradient-via-stops,\s*var\(--tw-gradient-position\)\),/)
     expect(appWxss, 'issue 928 should keep from-position comma-space fallback in gradient stops')
       .toContain('var(--tw-gradient-from) var(--tw-gradient-from-position, )')
     expect(appWxss, 'issue 928 should keep to-position comma-space fallback in gradient stops')
@@ -496,7 +176,7 @@ describeIde.sequential('issues 909/916/928 IDE runtime', () => {
     const rotateSize = await rotateNode.size()
     const nativeSelectorOffset = await nativeSelectorNode.offset()
     const scaleX = screenshot.width / pageSize.width
-    const scaleY = screenshot.height / pageSize.height
+    const scaleY = scaleX
     const controlRect = expandRect(scaleRect({ ...controlOffset, ...controlSize }, scaleX, scaleY), 4)
     const rotateRect = expandRect(scaleRect({ ...rotateOffset, ...rotateSize }, scaleX, scaleY), 4)
     const nativeSelectorRect = expandRect(scaleRect({ ...nativeSelectorOffset, ...nativeSelectorSize }, scaleX, scaleY), 4)
@@ -588,44 +268,15 @@ describeIde.sequential('issues 909/916/928 IDE runtime', () => {
       },
     })
   }, 120_000)
-})
-
-describeIde.sequential('issue 928 Tailwind v4 IDE runtime', () => {
-  let miniProgram: any
-
-  beforeAll(async () => {
-    if (process.env['E2E_SKIP_BUILD'] !== '1') {
-      await ensureProjectBuilt(v3ProjectRoot)
-    }
-    await cleanupDevTools()
-    try {
-      const automator = new Launcher()
-      miniProgram = await automator.launch({
-        projectPath: v3ProjectPath,
-        timeout: timeoutMs,
-      })
-    }
-    catch (error) {
-      if (error instanceof Error) {
-        error.message = `${error.message}\n${await collectFrameworkIdeDiagnostics('issue-928-v3')}`
-      }
-      throw error
-    }
-  }, 180_000)
-
-  afterAll(async () => {
-    await miniProgram?.close()
-    await cleanupDevTools()
-  })
 
   it('keeps Tailwind v4 gradient utilities valid in WeChat DevTools', async () => {
-    const appWxss = await fs.readFile(v3AppWxssPath, 'utf8')
+    const appWxss = await fs.readFile(v4AppWxssPath, 'utf8')
     expect(appWxss).toContain('.bg-gradient-to-r')
     expect(appWxss).toContain('.from-cyan-500')
     expect(appWxss).toContain('.via-purple-500')
     expect(appWxss).toContain('.to-blue-500')
     expect(appWxss).toMatch(/background-image:\s*linear-gradient\(var\(--tw-gradient-stops\)\)/)
-    expect(appWxss).toContain('--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position)),var(--tw-gradient-from) var(--tw-gradient-from-position, ),var(--tw-gradient-to) var(--tw-gradient-to-position, )')
+    expect(appWxss).toMatch(/--tw-gradient-stops:var\(--tw-gradient-via-stops,\s*var\(--tw-gradient-position\)\),var\(--tw-gradient-from\) var\(--tw-gradient-from-position, \),var\(--tw-gradient-to\) var\(--tw-gradient-to-position, \)/)
     expect(appWxss).toContain('--tw-gradient-via-stops:var(--tw-gradient-position),var(--tw-gradient-from) var(--tw-gradient-from-position, ),var(--tw-gradient-via) var(--tw-gradient-via-position, ),var(--tw-gradient-to) var(--tw-gradient-to-position, )')
     expect(appWxss).toContain('background-image:linear-gradient(90deg,#06b6d4,#3b82f6)')
     expect(appWxss).toContain('background-image:radial-gradient(var(--tw-gradient-stops))')

@@ -1,6 +1,6 @@
 import type { ViteCssAssetIdentityKind } from '../css-asset-identity'
+import { hasTailwindApplyDirective } from '../../../generation/directives'
 import { hasBundlerGeneratedCssMarker, stripBundlerGeneratedCssMarkers } from '../../shared/generated-css-marker'
-import { hasTailwindApplyDirective } from '../../shared/generator-css/directives'
 import { createCssRuntimeSignature } from './css-share-scope'
 import { createRememberedCssRuntimeSignature } from './remembered-css'
 import { hasTailwindGenerationSource } from './sfc-style-source'
@@ -8,6 +8,7 @@ import { hasTailwindGenerationSource } from './sfc-style-source'
 export interface ResolveViteCssTransformDecisionPlanOptions {
   alreadyProcessedCssAsset: boolean
   cssAssetIdentityKind: ViteCssAssetIdentityKind
+  cssAssetSourceFile?: string | undefined
   cssIsMainChunk: boolean
   generatorCandidateSignatureInitialized: boolean
   generatorCandidatesChanged: boolean
@@ -87,15 +88,22 @@ export function resolveViteCssTransformDecisionPlan(
     && options.cssAssetIdentityKind !== 'generator-placeholder'
     && !hasTailwindGenerationSource(strippedViteProcessedCss)
     && !hasTailwindApplyDirective(strippedViteProcessedCss)
+  // 首次完整构建的结构化来源已证明框架完成生成；原始 apply 缓存只供后续增量重放。
+  // 不能把已压缩、已合并的当前产物再当作者源码生成，否则会重复贡献局部规则。
+  const shouldReuseCompletedBuildCss = !options.useIncrementalMode
+    && options.cssAssetIdentityKind === 'bundler-generated'
+    && options.cssAssetSourceFile != null
+    && !hasTailwindGenerationSource(strippedViteProcessedCss)
+    && !hasTailwindApplyDirective(strippedViteProcessedCss)
   const shouldReuseProcessedCss = options.alreadyProcessedCssAsset
     && !shouldRefreshViteProcessedCssByCandidates
     && (
-      !options.hasStaleViteProcessedCssSource
-      || shouldPreserveStaleGeneratedCssAsset
+      shouldReuseCompletedBuildCss
+      || ((!options.hasStaleViteProcessedCssSource || shouldPreserveStaleGeneratedCssAsset)
+        && !options.hasRememberedApplySource)
     )
-    && !options.hasRememberedApplySource
     && !options.shouldRegenerateMainPackageCssWithScopedCandidates
-    && (!shouldTrackGeneratorRuntime || shouldPreserveCollectedViteCssAsset)
+    && (shouldReuseCompletedBuildCss || !shouldTrackGeneratorRuntime || shouldPreserveCollectedViteCssAsset)
 
   return {
     shouldPreserveCollectedViteCssAsset,
@@ -110,6 +118,7 @@ export function resolveViteCssTransformDecisionPlan(
 }
 
 export interface ResolveViteCssTransformCachePlanOptions {
+  cssBundleSourceHash?: string | undefined
   cssIsMainChunk: boolean
   cssRuntimeAffectingHash: string
   cssShareScope: string
@@ -156,12 +165,14 @@ export function resolveViteCssTransformCachePlan(
       options.cssRuntimeAffectingHash,
       options.scopedGeneratorCandidateSignature,
       options.sourceTraceSignature,
+      ...(options.cssBundleSourceHash ? [options.cssBundleSourceHash] : []),
     ].join(':'),
     cssTaskHash: [
       options.cssRuntimeAffectingHash,
       options.scopedGeneratorCandidateSignature,
       options.sourceTraceSignature,
       options.linkedImpactSignature,
+      ...(options.cssBundleSourceHash ? [options.cssBundleSourceHash] : []),
     ].join(':'),
     rememberedCssRuntimeSignature,
   }

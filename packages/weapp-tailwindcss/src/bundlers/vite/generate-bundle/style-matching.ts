@@ -1,7 +1,7 @@
 import { existsSync, realpathSync } from 'node:fs'
 import path from 'node:path'
+import { stripStyleFileExtension } from '../css-output'
 import { slash } from '../utils'
-import { stripStyleFileExtension } from './css-output'
 
 function resolveStyleMatchingRealPath(value: string) {
   const resolved = path.resolve(value)

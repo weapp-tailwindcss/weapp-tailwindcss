@@ -1,8 +1,37 @@
+import type { CompilationDiagnosticEvent } from './compiler/events'
 import type { CreateJsHandlerOptions, IStyleHandlerOptions, ITemplateHandlerOptions, UserDefinedOptions } from './types'
+import { performance } from 'node:perf_hooks'
 import { defuOverrideArray } from '@weapp-tailwindcss/shared'
 import { getCompilerContext } from '@/context'
 import { shouldSkipJsTransform } from '@/js/precheck'
 import { createTailwindRuntimeReadyPromise, ensureRuntimeClassSet } from '@/tailwindcss/runtime'
+import { COMPILATION_EVENT_SCHEMA_VERSION } from './compiler/events'
+import { createCompilerRuntimeState } from './compiler/runtime-state'
+
+export { createCompilationEventBus, createCompilerRuntimeState } from './compiler'
+export type { CompilationEvent, CompilerHost, CompilerRuntimeState } from './compiler'
+export type {
+  Compiler,
+  CompilerCacheReuseState,
+  CompilerCssTransformOptions,
+  CompilerGenerateRequest,
+  CompilerGenerateResult,
+  CompilerSnapshot,
+  CompilerSnapshotRoot,
+  CompilerSourcePattern,
+  CompilerTarget,
+  CompilerTemplateTransformOptions,
+  CreateCompilerOptions,
+  CreateCompilerSnapshotRequest,
+} from './core/compiler'
+export { createCompiler } from './core/compiler'
+export {
+  finalizeMiniProgramCss,
+  finalizeMiniProgramCssRoot,
+  postcss,
+  removeTailwindSourceDirectivesRoot,
+} from '@weapp-tailwindcss/postcss/transform'
+export type { FinalizeMiniProgramCssOptions } from '@weapp-tailwindcss/postcss/transform'
 
 type RuntimeJsTransformOptions = { runtimeSet?: Set<string> } & CreateJsHandlerOptions
 
@@ -47,12 +76,32 @@ export function createContext(options: UserDefinedOptions = {}) {
   const readyPromise = createTailwindRuntimeReadyPromise(initialTailwindRuntime)
 
   let runtimeSet = new Set<string>()
-  const runtimeState = {
+  const runtimeState = createCompilerRuntimeState({
     tailwindRuntime: initialTailwindRuntime,
     readyPromise,
     refreshTailwindcssRuntime,
-  }
+  })
   const defaultJsHandlerOptionsCache = new Map<number, CreateJsHandlerOptions>()
+  const diagnosticEvents: CompilationDiagnosticEvent[] = []
+  runtimeState.events.subscribe((event) => {
+    if (event.type === 'diagnostic') {
+      diagnosticEvents.push(event)
+    }
+  })
+
+  async function emitDiagnostic(phase: CompilationDiagnosticEvent['phase'], startedAt: number, operationId: string, error?: unknown) {
+    await runtimeState.events.emit({
+      schemaVersion: COMPILATION_EVENT_SCHEMA_VERSION,
+      type: 'diagnostic',
+      timestamp: new Date().toISOString(),
+      compilerId: 'weapp-tailwindcss',
+      phase,
+      revision: runtimeState.revision,
+      operationId,
+      durationMs: performance.now() - startedAt,
+      ...(error ? { error: { ...(error instanceof Error ? { name: error.name } : {}), message: error instanceof Error ? error.message : String(error) } } : {}),
+    })
+  }
 
   function getDefaultJsHandlerOptions(majorVersion = runtimeState.tailwindRuntime.majorVersion) {
     if (typeof majorVersion !== 'number') {
@@ -181,9 +230,18 @@ export function createContext(options: UserDefinedOptions = {}) {
 
   async function transformWxss(rawCss: string, options?: Partial<IStyleHandlerOptions>) {
     await runtimeState.readyPromise
-    const result = await styleHandler(rawCss, resolveTransformWxssOptions(options))
-    runtimeSet = await ensureRuntimeClassSet(runtimeState)
-    return result
+    const startedAt = performance.now()
+    const operationId = `css-${Date.now()}-${runtimeState.revision}`
+    try {
+      const result = await styleHandler(rawCss, resolveTransformWxssOptions(options))
+      runtimeSet = await ensureRuntimeClassSet(runtimeState)
+      await emitDiagnostic('postcss', startedAt, operationId)
+      return result
+    }
+    catch (error) {
+      await emitDiagnostic('postcss', startedAt, operationId, error)
+      throw error
+    }
   }
 
   async function getRuntimeSet(options?: GetRuntimeSetOptions) {
@@ -206,7 +264,17 @@ export function createContext(options: UserDefinedOptions = {}) {
     if (shouldSkipJsTransform(rawJs, resolvedOptions)) {
       return { code: rawJs }
     }
-    return await jsHandler(rawJs, runtimeSet, resolvedOptions)
+    const startedAt = performance.now()
+    const operationId = `js-${Date.now()}-${runtimeState.revision}`
+    try {
+      const result = await jsHandler(rawJs, runtimeSet, resolvedOptions)
+      await emitDiagnostic('candidate', startedAt, operationId)
+      return result
+    }
+    catch (error) {
+      await emitDiagnostic('candidate', startedAt, operationId, error)
+      throw error
+    }
   }
 
   async function transformWxml(rawWxml: string, options?: ITemplateHandlerOptions) {
@@ -216,7 +284,17 @@ export function createContext(options: UserDefinedOptions = {}) {
         forceCollect: true,
       })
     }
-    return templateHandler(rawWxml, resolveTransformWxmlOptions(options))
+    const startedAt = performance.now()
+    const operationId = `template-${Date.now()}-${runtimeState.revision}`
+    try {
+      const result = templateHandler(rawWxml, resolveTransformWxmlOptions(options))
+      await emitDiagnostic('scan', startedAt, operationId)
+      return result
+    }
+    catch (error) {
+      await emitDiagnostic('scan', startedAt, operationId, error)
+      throw error
+    }
   }
 
   return {
@@ -224,5 +302,7 @@ export function createContext(options: UserDefinedOptions = {}) {
     transformWxss,
     transformWxml,
     transformJs,
+    events: runtimeState.events,
+    getDiagnosticEvents: () => diagnosticEvents.slice(),
   }
 }

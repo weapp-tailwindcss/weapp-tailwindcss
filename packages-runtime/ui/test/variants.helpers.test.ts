@@ -4,8 +4,8 @@ describe('variant helpers', () => {
   afterEach(() => {
     vi.resetModules()
     vi.clearAllMocks()
-    vi.unmock('@weapp-tailwindcss/variants')
-    vi.unmock('@weapp-tailwindcss/merge')
+    vi.doUnmock('@weapp-tailwindcss/variants')
+    vi.doUnmock('@weapp-tailwindcss/merge')
   })
 
   it('does not merge when variant returns undefined', async () => {

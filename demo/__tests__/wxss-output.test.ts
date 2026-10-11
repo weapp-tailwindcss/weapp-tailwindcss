@@ -342,7 +342,7 @@ const RAW_SNIPPETS = [
 
 const FORBIDDEN_SNIPPETS = RAW_SNIPPETS.map(entry => ({
   label: entry.label,
-  pattern: normalizeCss(entry.css),
+  signature: getRuleSignatures(entry.css)[0]!,
 }))
 
 describe('demo wxss artifacts', () => {
@@ -356,9 +356,10 @@ describe('demo wxss artifacts', () => {
     const violations: string[] = []
 
     for (const file of artifacts) {
-      const normalized = normalizeCss(fs.readFileSync(file, 'utf8'))
+      const source = fs.readFileSync(file, 'utf8')
+      const signatures = new Set(getRuleSignatures(source))
       for (const snippet of FORBIDDEN_SNIPPETS) {
-        if (normalized.includes(snippet.pattern)) {
+        if (signatures.has(snippet.signature)) {
           violations.push(`${path.relative(DEMO_ROOT, file)} -> ${snippet.label}`)
         }
       }
@@ -423,6 +424,29 @@ describe('demo wxss artifacts', () => {
     expect(countDuplicateSelectorRules(distinctOverrides, TAILWIND_V4_ROOT_SELECTORS)).toBe(0)
     expect(countDuplicateSelectorRules(duplicateInjection, TAILWIND_V4_ROOT_SELECTORS)).toBe(1)
   })
+
+  it.each(RAW_SNIPPETS)('检测 $label 的完整违规规则', ({ label, css }) => {
+    const signature = FORBIDDEN_SNIPPETS.find(snippet => snippet.label === label)!.signature
+    expect(getRuleSignatures(`.before{color:red}@media screen{${css}}.after{color:blue}`)).toContain(signature)
+  })
+
+  it('多选择器和声明必须完整匹配', () => {
+    const bold = FORBIDDEN_SNIPPETS.find(snippet => snippet.label === 'b/strong bold')!.signature
+    expect(getRuleSignatures('b, strong { font-weight: bolder; }')).toContain(bold)
+    expect(getRuleSignatures('.b, .strong { font-weight: bolder; }')).not.toContain(bold)
+    expect(getRuleSignatures('b, strong { font-weight: normal; }')).not.toContain(bold)
+  })
+
+  it('matches forbidden selectors exactly without treating utility classes as global tags', () => {
+    const globalTag = getRuleSignatures('small { font-size: 80%; }')
+    const utilityClass = getRuleSignatures('.small { font-size: 80%; }')
+    const forbiddenSignature = FORBIDDEN_SNIPPETS.find(snippet => snippet.label === 'small font size')!.signature
+
+    expect(globalTag).toContain(forbiddenSignature)
+    expect(utilityClass).not.toContain(forbiddenSignature)
+    expect(getRuleSignatures('.small:hover { font-size: 80%; }')).not.toContain(forbiddenSignature)
+    expect(getRuleSignatures('small, textarea { font-size: 80%; }')).not.toContain(forbiddenSignature)
+  })
 })
 
 function resolveAppWxssArtifacts(): string[] {
@@ -454,6 +478,21 @@ function resolveAppWxssArtifacts(): string[] {
 
 function normalizeCss(input: string): string {
   return input.replace(/\s+/g, '')
+}
+
+function getRuleSignatures(source: string): string[] {
+  const signatures: string[] = []
+  postcss.parse(source).walkRules((rule) => {
+    const selectors = (rule.selectors ?? [rule.selector]).map(normalizeCss).join(',')
+    const declarations = normalizeCss(
+      rule.nodes
+        ?.filter(node => node.type === 'decl')
+        .map(node => node.toString())
+        .join(';') ?? '',
+    )
+    signatures.push(`${selectors}{${declarations}}`)
+  })
+  return signatures
 }
 
 function resolveRecursiveAppWxssArtifacts(): string[] {

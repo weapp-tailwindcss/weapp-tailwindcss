@@ -47,12 +47,12 @@ export function createFallbackPlaceholderReplacer() {
 
 export function createFallbackPlaceholderCleaner() {
   return (rule: Rule) => {
-    if (!rule.selectors || rule.selectors.length === 0) {
+    if (!FALLBACK_PLACEHOLDER_SUFFIXES.some(suffix => rule.selector?.includes(suffix))) {
       return
     }
-
+    const selectors = rule.selectors
     let changed = false
-    const next = rule.selectors.map((selector) => {
+    const next = selectors.map((selector) => {
       const updated = replaceFallbackPlaceholder(selector)
       if (updated !== selector) {
         changed = true
@@ -94,12 +94,12 @@ export function createRootSpecificityCleaner(options: IStyleHandlerOptions) {
   }
 
   return (rule: Rule) => {
-    if (!rule.selectors || rule.selectors.length === 0) {
+    if (!rule.selector?.includes(':not(')) {
       return
     }
-
+    const selectors = rule.selectors
     let changed = false
-    const next = rule.selectors.map((selector) => {
+    const next = selectors.map((selector) => {
       let updated = selector
       for (const target of targets) {
         if (updated.includes(target.match)) {

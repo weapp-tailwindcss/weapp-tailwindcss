@@ -4,9 +4,9 @@ import os from 'node:os'
 import path from 'node:path'
 import postcss from 'postcss'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { resolveTailwindcssImport, rewriteTailwindcssImportsInCode } from '@/bundlers/shared/css-imports'
+import { normalizeResolvedTailwindcssImports, resolveTailwindcssImport, rewriteTailwindcssImportsInCode } from '@/bundlers/shared/css-imports'
 import { createBundlerGeneratedCssMarker } from '@/bundlers/shared/generated-css-marker'
-import { rewriteLocalCssImportRequestsForOutput } from '@/bundlers/shared/generator-css/local-imports'
+import { rewriteLocalCssImportRequestsForOutput } from '@/generation/local-imports'
 import loader, { transformCssImportRewriteSource } from '@/bundlers/webpack/loaders/weapp-tw-css-import-rewrite-loader'
 
 function joinPosixPath(base: string, subpath: string) {
@@ -14,6 +14,17 @@ function joinPosixPath(base: string, subpath: string) {
 }
 
 describe('bundlers/shared css-imports', () => {
+  it.each([
+    ['/workspace/node_modules/weapp-tailwindcss', '/workspace/node_modules/weapp-tailwindcss'],
+    ['C:\\project space\\node_modules\\weapp-tailwindcss', 'C:/project space/node_modules/weapp-tailwindcss'],
+    ['\\\\server\\share\\weapp-tailwindcss', '//server/share/weapp-tailwindcss'],
+  ])('restores only resolved generator package files at the loader boundary: %s', (directory, cssDirectory) => {
+    const source = `@import url("${cssDirectory}/theme.css") layer(theme);\n@import "${cssDirectory}/utilities.css" layer(utilities) source(none);\n@import "./theme.css";\n@import "${cssDirectory}/../other/theme.css";`
+    expect(normalizeResolvedTailwindcssImports(source, directory)).toBe(`@import "tailwindcss/theme.css" layer(theme);\n@import "tailwindcss/utilities.css" layer(utilities) source(none);\n@import "./theme.css";\n@import "${cssDirectory}/../other/theme.css";`)
+    const escaped = directory.replaceAll('\\', '\\\\')
+    expect(normalizeResolvedTailwindcssImports(`@import "${escaped}/index.css";`, directory)).toBe('@import "tailwindcss";')
+  })
+
   const pkgDir = '/virtual/weapp-tailwindcss'
   const createdDirs: string[] = []
 
@@ -250,7 +261,7 @@ describe('bundlers/shared css-imports', () => {
         outputFile: options.outputFile,
       },
     }))
-    vi.doMock('@/bundlers/shared/v4-generation-core', () => ({
+    vi.doMock('@/generation/service', () => ({
       generateTailwindV4Css,
     }))
     const { default: webpackLoader } = await import('@/bundlers/webpack/loaders/weapp-tw-css-generation-loader')
@@ -282,7 +293,8 @@ describe('bundlers/shared css-imports', () => {
           compilerOptions: {
             appType: 'taro',
             generator: {},
-            mainCssChunkMatcher: () => true,
+            mainCssChunkMatcher: () => false,
+            tailwindcssRuntimeOptions: { tailwindcss: { v4: { cssEntries: ['/repo/website/src/css/custom.css'] } } },
             styleHandler: async (css: string) => ({ css }),
           },
           getRuntimeSet: async () => new Set(['bg-brand', 'rounded-full', 'dark:text-foreground']),
@@ -349,6 +361,135 @@ describe('bundlers/shared css-imports', () => {
     expect(sawGeneratedCss).toBe(true)
   })
 
+  it('generates Lynx split imports only from the explicit source loader stage', async () => {
+    vi.resetModules()
+    const generateTailwindV4Css = vi.fn(async () => ({
+      css: [
+        '@layer utilities {',
+        '  .flex { display: flex; }',
+        '  .bg-red-500 { background-color: var(--color-red-500); }',
+        '}',
+      ].join('\n'),
+      target: 'web',
+      source: 'generator',
+      classSet: new Set(['flex', 'bg-red-500']),
+      dependencies: [],
+      metadata: {
+        file: '/repo/examples/react-lynx/src/global.css',
+        majorVersion: 4,
+        outputFile: '/repo/examples/react-lynx/src/global.css',
+      },
+    }))
+    vi.doMock('@/generation/service', () => ({
+      generateTailwindV4Css,
+    }))
+    const { default: webpackLoader } = await import('@/bundlers/webpack/loaders/weapp-tw-css-import-rewrite-loader')
+    const registerCssSource = vi.fn(async () => undefined)
+    const registerGeneratedCss = vi.fn()
+    const source = [
+      '@layer theme, utilities;',
+      '@import "tailwindcss/theme.css" layer(theme);',
+      '@import "tailwindcss/utilities.css" layer(utilities) source(none);',
+      '@source inline("flex bg-red-500");',
+    ].join('\n')
+    const residualSource = [
+      '@source inline("flex bg-red-500");',
+      '@theme { --color-brand: #123456; }',
+    ].join('\n')
+    const createContext = (generateCss?: boolean) => ({
+      addDependency: vi.fn(),
+      getOptions: () => ({
+        ...(generateCss === undefined ? {} : { generateCss }),
+        tailwindcssImportRewrite: {
+          pkgDir,
+          compilerOptions: {
+            appType: 'weapp-vite',
+            cssOptions: { platform: 'lynx' },
+            generator: { target: 'web', webCompat: true },
+            mainCssChunkMatcher: () => true,
+            platform: 'lynx',
+            styleHandler: async (css: string) => ({ css }),
+          },
+          getRuntimeSet: async () => new Set(['flex', 'bg-red-500']),
+          registerCssSource,
+          registerGeneratedCss,
+          runtimeState: {
+            readyPromise: Promise.resolve(),
+            tailwindRuntime: { majorVersion: 4 },
+          },
+        },
+      }),
+      resourcePath: '/repo/examples/react-lynx/src/global.css',
+      rootContext: '/repo/examples/react-lynx',
+    })
+
+    const [first, second] = await Promise.all([
+      webpackLoader.call(createContext(true) as any, source),
+      webpackLoader.call(createContext() as any, residualSource),
+    ])
+
+    expect(generateTailwindV4Css).toHaveBeenCalledOnce()
+    expect(generateTailwindV4Css).toHaveBeenCalledWith(expect.objectContaining({ incrementalCache: false }))
+    expect(registerCssSource).toHaveBeenCalledOnce()
+    expect(registerGeneratedCss).toHaveBeenCalledOnce()
+    expect(first).toContain('.flex { display: flex; }')
+    expect(first).toContain('.bg-red-500')
+    expect(first).not.toContain('@import "tailwindcss')
+    expect(second).toBe(residualSource)
+  })
+
+  it.each([
+    ['taro', '/repo/demo/taro-webpack-react-tailwindcss-v4/src/app.css'],
+    ['mpx', '/repo/demo/mpx-tailwindcss-v4/src/app.css'],
+  ] as const)('registers and rewrites %s CSS without generating a duplicate stylesheet', async (appType, resourcePath) => {
+    vi.resetModules()
+    const generateTailwindV4Css = vi.fn()
+    vi.doMock('@/generation/service', () => ({
+      generateTailwindV4Css,
+    }))
+    const { default: webpackLoader } = await import('@/bundlers/webpack/loaders/weapp-tw-css-import-rewrite-loader')
+    const registerCssSource = vi.fn(async () => undefined)
+    const source = [
+      '@import "tailwindcss";',
+      '.ordinary-css { color: red; }',
+    ].join('\n')
+
+    const result = await webpackLoader.call({
+      getOptions: () => ({
+        tailwindcssImportRewrite: {
+          pkgDir,
+          appType,
+          compilerOptions: {
+            appType,
+            platform: appType,
+            generator: { target: 'weapp' },
+            mainCssChunkMatcher: () => true,
+            styleHandler: async (css: string) => ({ css }),
+          },
+          registerCssSource,
+          runtimeState: {
+            readyPromise: Promise.resolve(),
+            tailwindRuntime: { majorVersion: 4 },
+          },
+          getRuntimeSet: async () => new Set(['ordinary-css']),
+        },
+      }),
+      resourcePath,
+      rootContext: path.dirname(path.dirname(resourcePath)),
+    } as any, source)
+
+    expect(generateTailwindV4Css).not.toHaveBeenCalled()
+    expect(registerCssSource).toHaveBeenCalledOnce()
+    expect(registerCssSource).toHaveBeenCalledWith({
+      file: resourcePath,
+      css: source,
+    })
+    expect(result).toBe([
+      `@import "${pkgDir}/index.css";`,
+      '.ordinary-css { color: red; }',
+    ].join('\n'))
+  })
+
   it('removes Tailwind source directives from generated webpack H5 css', async () => {
     vi.resetModules()
     const generateTailwindV4Css = vi.fn(async (options: any) => ({
@@ -368,7 +509,7 @@ describe('bundlers/shared css-imports', () => {
         outputFile: options.outputFile,
       },
     }))
-    vi.doMock('@/bundlers/shared/v4-generation-core', () => ({
+    vi.doMock('@/generation/service', () => ({
       generateTailwindV4Css,
     }))
     const { default: webpackLoader } = await import('@/bundlers/webpack/loaders/weapp-tw-css-generation-loader')
@@ -464,7 +605,7 @@ describe('bundlers/shared css-imports', () => {
         outputFile: options.outputFile,
       },
     }))
-    vi.doMock('@/bundlers/shared/v4-generation-core', () => ({
+    vi.doMock('@/generation/service', () => ({
       generateTailwindV4Css,
     }))
     const { default: webpackLoader } = await import('@/bundlers/webpack/loaders/weapp-tw-css-generation-loader')
@@ -544,7 +685,7 @@ describe('bundlers/shared css-imports', () => {
         outputFile: options.outputFile,
       },
     }))
-    vi.doMock('@/bundlers/shared/v4-generation-core', () => ({
+    vi.doMock('@/generation/service', () => ({
       generateTailwindV4Css,
     }))
     const { default: webpackLoader } = await import('@/bundlers/webpack/loaders/weapp-tw-css-generation-loader')

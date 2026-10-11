@@ -2,7 +2,7 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { readReachableMiniProgramStyles, resolveMiniProgramRuntimeStyleEntry } from './hbuilderx-local/styles'
+import { readReachableMiniProgramStyles, resolveMiniProgramRuntimeStyleEntry, resolveMiniProgramStyleImport } from './hbuilderx-local/styles'
 
 const temporaryDirectories: string[] = []
 
@@ -33,17 +33,39 @@ describe('HBuilderX mini-program style reachability', () => {
     expect(css).not.toContain('.unlinked{}')
   })
 
-  it('does not follow imports outside the output root', async () => {
+  it('rejects imports outside the output root without reading them', async () => {
     const root = await createFixture()
     const external = path.join(path.dirname(root), 'external.acss')
     await fs.writeFile(external, '.external{}')
     await fs.appendFile(path.join(root, 'entry.acss'), '\n@import "../external.acss";')
     try {
-      const css = await readReachableMiniProgramStyles(root, path.join(root, 'entry.acss'), ['.acss'])
-      expect(css).not.toContain('.external{}')
+      await expect(readReachableMiniProgramStyles(root, path.join(root, 'entry.acss'), ['.acss'])).rejects.toThrow(/escapes mini-program output root/)
     }
     finally {
       await fs.rm(external, { force: true })
     }
+  })
+
+  it.each([
+    [path.posix, '/project/out', '/project/out/pages/home/style.acss', '../../framework.acss', '/project/out/framework.acss'],
+    [path.posix, '/project/out', '/project/out/pages/style.acss', '/theme.acss?version=1', '/project/out/theme.acss'],
+    [path.win32, 'C:\\project\\out', 'C:\\project\\out\\pages\\home\\style.acss', '..\\..\\framework.acss', 'C:\\project\\out\\framework.acss'],
+    [path.win32, 'C:\\project\\out', 'C:\\project\\out\\pages\\style.acss', '/theme.acss', 'C:\\project\\out\\theme.acss'],
+  ])('resolves logical imports with explicit filesystem semantics', (paths, root, importer, request, expected) => {
+    expect(resolveMiniProgramStyleImport(root, importer, request, paths)).toBe(expected)
+  })
+
+  it.each([path.posix, path.win32])('rejects a relative import that escapes the registered output root', (paths) => {
+    const root = paths.resolve('output')
+    expect(() => resolveMiniProgramStyleImport(root, paths.join(root, 'entry.acss'), '../../framework.acss', paths)).toThrow('escapes mini-program output root')
+    expect(resolveMiniProgramStyleImport(root, paths.join(root, 'entry.acss'), 'https://example.com/style.css', paths)).toBeUndefined()
+    expect(resolveMiniProgramStyleImport(root, paths.join(root, 'entry.acss'), 'D:\\outside.acss', paths)).toBeUndefined()
+  })
+
+  it('reads multiple imports on one line and ignores import-like comments and strings', async () => {
+    const root = await createFixture()
+    await fs.writeFile(path.join(root, 'entry.acss'), `/* @import "./missing.acss"; */ @import "/framework.acss";@import "./generated.acss";.label{content:"@import './missing.acss';"}`)
+    const css = await readReachableMiniProgramStyles(root, path.join(root, 'entry.acss'), ['.acss'])
+    expect(css.match(/\.tailwind\{\}/g)).toHaveLength(1)
   })
 })

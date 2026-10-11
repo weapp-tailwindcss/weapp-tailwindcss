@@ -1,10 +1,11 @@
 import type { IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
 import type { TailwindV4DesignSystem, TailwindV4Engine, TailwindV4GenerateOptions, TailwindV4GenerateTarget, TailwindV4ResolvedSource, TailwindV4SourcePattern } from '../types'
 import fs from 'node:fs'
-import { postcss } from '@weapp-tailwindcss/postcss'
+import { collectCustomPropertyValues, mergeCustomPropertyValues } from '@weapp-tailwindcss/postcss/transform'
 import { LRUCache } from 'lru-cache'
 import { hasCssMacroTailwindV4Source, withCssMacroStyleOptions } from '@/css-macro/auto'
 import { shouldUseUniAppWebRpxCompatibility } from '@/runtime-branch/generator-target-env'
+import { stableSerialize } from '@/utils/stable-serialize'
 import { filterUnsupportedMiniProgramTailwindV4Candidates } from '../candidates'
 import { loadTailwindV4DesignSystem } from '../design-system'
 import { normalizeRpxLengthCandidates } from './rpx-candidates'
@@ -57,22 +58,6 @@ export function hasRemovedCandidates(previousCandidates: Set<string>, nextCandid
   return false
 }
 
-function createStableJson(value: unknown): string {
-  if (value === undefined) {
-    return 'undefined'
-  }
-  if (value === null || typeof value !== 'object') {
-    return JSON.stringify(value)
-  }
-  if (Array.isArray(value)) {
-    return `[${value.map(item => createStableJson(item)).join(',')}]`
-  }
-  return `{${Object.keys(value).sort().map((key) => {
-    const record = value as Record<string, unknown>
-    return `${JSON.stringify(key)}:${createStableJson(record[key])}`
-  }).join(',')}}`
-}
-
 function createDependencyFingerprint(files: string[]) {
   return files.map((file) => {
     try {
@@ -89,7 +74,7 @@ export function createTailwindV4SourceCacheKey(source: TailwindV4ResolvedSource)
   return [
     source.projectRoot,
     source.base,
-    createStableJson(source.baseFallbacks),
+    stableSerialize(source.baseFallbacks),
     source.css,
     createDependencyFingerprint(source.dependencies),
   ].join('\0')
@@ -103,7 +88,7 @@ export function createIncrementalGenerateCacheKey(
   return [
     createTailwindV4SourceCacheKey(source),
     target,
-    createStableJson(styleOptions),
+    stableSerialize(styleOptions),
   ].join('\0')
 }
 
@@ -132,11 +117,13 @@ export function runIncrementalGenerateTask(
   }
   const promise = task()
   incrementalGenerateTaskCache.set(taskKey, promise)
-  promise.finally(() => {
+  const cleanup = () => {
     if (incrementalGenerateTaskCache.get(taskKey) === promise) {
       incrementalGenerateTaskCache.delete(taskKey)
     }
-  })
+  }
+  // 清理链必须消费拒绝，原始任务仍把错误交给调用方处理。
+  void promise.then(cleanup, cleanup)
   return promise
 }
 
@@ -167,7 +154,7 @@ export function resolveTargetCandidates(
 function collectSeenCandidates(
   generated: Pick<Awaited<ReturnType<TailwindV4Engine['generate']>>, 'rawCandidates' | 'classSet'>,
 ) {
-  return new Set(generated.classSet)
+  return new Set([...generated.rawCandidates, ...generated.classSet])
 }
 
 export function createIncrementalStyleOptions(
@@ -183,27 +170,7 @@ export function resolveStyleOptions(source: TailwindV4ResolvedSource, options: P
   return hasCssMacroTailwindV4Source(source.css) ? withCssMacroStyleOptions(options) : options
 }
 
-function collectCustomPropertyValues(css: string) {
-  const values = new Map<string, string>()
-  try {
-    const root = postcss.parse(css)
-    root.walkDecls((decl) => {
-      if (decl.prop.startsWith('--')) {
-        values.set(decl.prop, decl.value.trim())
-      }
-    })
-  }
-  catch {
-    // Ignore malformed cache context; the normal transformer will still process the current chunk.
-  }
-  return values
-}
-
-export function mergeCustomPropertyValues(target: Map<string, string>, css: string) {
-  for (const [prop, value] of collectCustomPropertyValues(css)) {
-    target.set(prop, value)
-  }
-}
+export { collectCustomPropertyValues, mergeCustomPropertyValues }
 
 function createStableTextSignature(input: string) {
   let hash = 2166136261
@@ -254,8 +221,7 @@ export function seedIncrementalGenerateCache(options: TailwindV4IncrementalCache
     options.target,
     options.styleOptions,
   )
-  const customPropertyValues = collectCustomPropertyValues(options.compatibleSource.css)
-  mergeCustomPropertyValues(customPropertyValues, options.generated.css)
+  const customPropertyValues = new Map(options.generated.customPropertyValues ?? [])
   incrementalGenerateCache.set(cacheKey, {
     seenCandidates: collectSeenCandidates(options.generated),
     classSet: new Set(options.generated.classSet),

@@ -20,7 +20,7 @@ keywords:
 # Escape and processing of wxs
 
 :::info
-In the `2.5.2+` version, escaping and processing of `wxs`, `sjs` and other view layers running `js` have been added, and are turned off by default.
+The current release supports opt-in escaping for `wxs`, `sjs`, and other view-layer JavaScript. It is disabled by default.
 
 See configuration items for details:
 

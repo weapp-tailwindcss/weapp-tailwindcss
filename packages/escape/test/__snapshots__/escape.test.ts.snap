@@ -1,0 +1,5 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`escape > should match snapshot for complex mapping 1`] = `"_1234567890-_cz_cw_ce_ct_ch_cs_cv_cy_cn_cx_cp_cP__cuqwertyuiop_cb_cB_crQWERTYUIOP_ck_cK_coasdfghjkl_cj_caASDFGHJKL_cc_cqzxcvbnm_cm_cd_cfZXCVBNM_cl_cg_cQ"`;
+
+exports[`escape > should match snapshot for default mapping 1`] = `"_1234567890-_z_w_e_t_h_s_v_y_n_x_p_P__uqwertyuiop_b_B_rQWERTYUIOP_k_K_oasdfghjkl_j_aASDFGHJKL_c_qzxcvbnm_m_d_fZXCVBNM_l_g_Q"`;

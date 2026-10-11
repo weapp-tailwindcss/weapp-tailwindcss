@@ -86,6 +86,6 @@ exports[`template expressions with complex syntax > 'array with media and suppor
 
 exports[`template expressions with complex syntax > 'nested ternary with arbitrary values' 1`] = `"{{active ? (compact ? "w-_bcalc_p100_v-theme_pspacing_d4_P_P_B" : "translate-x-_bcalc_p100_v-50_v_P_B") : "grid-cols-_brepeat_pauto-fit_mminmax_p12rem_m1fr_P_P_B"}}"`;
 
-exports[`template expressions with complex syntax > 'string concat with arbitrary properti…' 1`] = `"{{"_b--scroll-offset_ccalc_ptheme_pspacing_d10_P-1px_P_B " + "before_ccontent-_b_qhello_world_q_B " + cls}}"`;
+exports[`template expressions with complex syntax > 'string concat with arbitrary properties' 1`] = `"{{"_b--scroll-offset_ccalc_ptheme_pspacing_d10_P-1px_P_B " + "before_ccontent-_b_qhello_world_q_B " + cls}}"`;
 
 exports[`template expressions with complex syntax > 'ternary with data variants' 1`] = `"{{open ? "data-_bstate_zopen_B_copacity-100" : "data-_bstate_zclosed_B_copacity-0"}}"`;

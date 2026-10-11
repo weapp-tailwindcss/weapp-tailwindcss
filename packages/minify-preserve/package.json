@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.0.1",
   "private": true,
-  "description": "Examples for keeping weapp-tailwindcss helper names during minification.",
+  "description": "Examples for preserving cross-platform Tailwind CSS helper names during minification. 跨端 Tailwind CSS 辅助函数压缩保名示例。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",
   "keywords": [
@@ -26,6 +26,6 @@
     "lint:fix": "eslint . --fix"
   },
   "devDependencies": {
-    "@swc/core": "^1.15.47"
+    "@swc/core": "catalog:swc"
   }
 }

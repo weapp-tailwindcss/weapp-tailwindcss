@@ -1,0 +1,38 @@
+{
+  "rules": {
+    "h-8": [
+      "calc(var(--spacing)*8)"
+    ],
+    "h-20": [
+      "calc(var(--spacing)*20)"
+    ],
+    "h-50": [
+      "calc(var(--spacing)*50)"
+    ],
+    "mt-2": [
+      "calc(var(--spacing)*2)"
+    ],
+    "flex": [
+      "-ms-flexbox",
+      "-webkit-flex",
+      "flex"
+    ],
+    "text-slate-500": [
+      "var(--color-slate-500)"
+    ],
+    "h-[4rem]": [
+      "4rem"
+    ],
+    "h-[25rem]": [
+      "25rem"
+    ],
+    "bg-emerald-50/80": [
+      "color-mix(insrgb,oklch(97.9%.021166.113)80%,transparent)",
+      "color-mix(insrgb,oklch(97.9%0.021166.113)80%,transparent)"
+    ]
+  },
+  "spacing": [
+    ".25rem",
+    "0.25rem"
+  ]
+}

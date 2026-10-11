@@ -1,0 +1,23 @@
+{
+  "declarations": {
+    ".-mt-4": [
+      "-4rpx"
+    ],
+    ".mt-4": [
+      "4rpx"
+    ],
+    ".h-32": [
+      "32rpx"
+    ],
+    ".w-32": [
+      "32rpx"
+    ],
+    ".gap-4": [
+      "4rpx"
+    ],
+    ".p-4": [
+      "4rpx"
+    ]
+  },
+  "wxml": "<view><text id=\"release-marker\">dual-source-layout-static</text><view class=\"columns\"><view class=\"column\"><text>utility</text><view id=\"utility-box\" class=\"w-32 h-32\"/><text>padding</text><view id=\"utility-padding\" class=\"p-4\"><view id=\"utility-padding-child\" class=\"child\"/></view><text>negative margin</text><view class=\"stack\"><view id=\"utility-anchor\" class=\"anchor\"/><view id=\"utility-margin\" class=\"child -mt-4\"/></view><text>positive margin</text><view class=\"stack\"><view id=\"utility-positive-anchor\" class=\"anchor\"/><view id=\"utility-positive-margin\" class=\"child mt-4\"/></view><text>gap</text><view class=\"row gap-4\"><view id=\"utility-gap-first\" class=\"child\"/><view id=\"utility-gap-second\" class=\"child\"/></view></view><view class=\"column\"><text>reference</text><view id=\"reference-box\" style=\"width:32rpx;height:32rpx\"/><text>padding</text><view id=\"reference-padding\" style=\"padding:4rpx\"><view id=\"reference-padding-child\" class=\"child\"/></view><text>negative margin</text><view class=\"stack\"><view id=\"reference-anchor\" class=\"anchor\"/><view id=\"reference-margin\" class=\"child\" style=\"margin-top:-4rpx\"/></view><text>positive margin</text><view class=\"stack\"><view id=\"reference-positive-anchor\" class=\"anchor\"/><view id=\"reference-positive-margin\" class=\"child\" style=\"margin-top:4rpx\"/></view><text>gap</text><view class=\"row\" style=\"gap:4rpx\"><view id=\"reference-gap-first\" class=\"child\"/><view id=\"reference-gap-second\" class=\"child\"/></view></view></view></view>"
+}

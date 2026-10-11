@@ -1,0 +1,4 @@
+interface:
+  display_name: "weapp-tailwindcss Lynx"
+  short_description: "配置 ReactLynx、Rspeedy 与 Tailwind CSS 4 原生样式"
+  default_prompt: "使用 $weapp-tailwindcss-lynx 配置 ReactLynx 项目。Use $weapp-tailwindcss-lynx to configure Tailwind CSS 4 for Rspeedy."

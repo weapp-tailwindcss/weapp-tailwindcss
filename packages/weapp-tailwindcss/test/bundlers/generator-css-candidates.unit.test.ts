@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { collectCssApplyCandidates, collectGeneratorCssCandidates } from '@/bundlers/shared/generator-css/candidates'
+import { collectCssApplyCandidates, collectGeneratorCssCandidates } from '@/generation/candidates'
 
 describe('generator CSS candidates', () => {
   it('只收集结构化 Tailwind CSS 宏候选', () => {

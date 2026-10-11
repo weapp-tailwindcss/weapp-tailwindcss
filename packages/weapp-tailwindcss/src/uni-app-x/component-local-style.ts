@@ -1,6 +1,7 @@
 import type { NodePath } from '@babel/traverse'
 import type { StringLiteral, TemplateElement } from '@babel/types'
-import { splitCandidateTokens } from '@tailwindcss-mangle/engine'
+import { splitCandidateTokens } from '@weapp-tailwindcss/engine'
+import { UNI_APP_X_IMPORTANT_APPLY_MARKER, UNI_APP_X_LOCAL_UTILITY_MARKER } from '@weapp-tailwindcss/postcss/transform'
 import MagicString from 'magic-string'
 import { analyzeSource, babelParse } from '@/js/babel'
 import { isClassContextLiteralPath } from '@/js/class-context'
@@ -19,8 +20,6 @@ interface RewriteCodeOptions {
 
 const EXPRESSION_WRAPPER_PREFIX = '(\n'
 const EXPRESSION_WRAPPER_SUFFIX = '\n)'
-const COMPONENT_RE = /(?:^|[/\\])components(?:[/\\].+)?\.(?:uvue|nvue)$/
-const PAGE_RE = /(?:^|[/\\])pages(?:[/\\].+)?\.(?:uvue|nvue)$/
 
 function createStableHash(input: string) {
   let hash = 2166136261
@@ -48,11 +47,19 @@ function createAlias(fileId: string, utility: string, index: number) {
   return `wtu-${createStableHash(`${fileId}:${utility}`)}-${index.toString(36)}`
 }
 
-function serializeApplyUtility(utility: string) {
+function serializeApplyUtility(utility: string, options: { native?: boolean, web?: boolean } = {}) {
+  const importantSuffix = options.native
+    ? UNI_APP_X_IMPORTANT_APPLY_MARKER
+    : options.web
+      ? '!'
+      : '#{\'!\'}'
+  if (utility.startsWith('!') && !utility.startsWith('\\!')) {
+    return `${utility.slice(1)}${importantSuffix}`
+  }
   if (!utility.endsWith('!') || utility.endsWith('\\!')) {
     return utility
   }
-  return `${utility.slice(0, -1)}#{'!'}`
+  return `${utility.slice(0, -1)}${importantSuffix}`
 }
 
 function isRuntimeCandidate(candidate: string, runtimeSet?: Set<string>) {
@@ -109,14 +116,6 @@ export function hasTopLevelVariant(candidate: string) {
   return false
 }
 
-export function shouldEnableComponentLocalStyle(id: string) {
-  return COMPONENT_RE.test(id)
-}
-
-export function shouldEnablePageLocalStyle(id: string) {
-  return PAGE_RE.test(id)
-}
-
 export class UniAppXComponentLocalStyleCollector {
   private aliasByUtility = new Map<string, string>()
   private aliasByLookup = new Map<string, string>()
@@ -126,7 +125,13 @@ export class UniAppXComponentLocalStyleCollector {
   constructor(
     private readonly fileId: string,
     private readonly runtimeSet?: Set<string>,
+    private readonly includeVariants = false,
+    private readonly preserveClassNames = false,
   ) {}
+
+  private runtimeClassName(utility: string) {
+    return this.preserveClassNames ? utility : replaceWxml(utility)
+  }
 
   private ensureAlias(utility: string) {
     const cached = this.aliasByUtility.get(utility)
@@ -135,8 +140,10 @@ export class UniAppXComponentLocalStyleCollector {
     }
     const alias = createAlias(this.fileId, utility, this.aliasByUtility.size)
     this.aliasByUtility.set(utility, alias)
-    this.aliasByLookup.set(utility, alias)
-    this.aliasByLookup.set(replaceWxml(utility), alias)
+    // 局部变体补充页面级层叠，同时保留全局变体类的既有运行时身份。
+    const replacement = hasTopLevelVariant(utility) ? `${this.runtimeClassName(utility)} ${alias}` : alias
+    this.aliasByLookup.set(utility, replacement)
+    this.aliasByLookup.set(replaceWxml(utility), replacement)
     return alias
   }
 
@@ -150,10 +157,13 @@ export class UniAppXComponentLocalStyleCollector {
       if (!isRuntimeCandidate(candidate, this.runtimeSet)) {
         continue
       }
-      rewritten = rewritten.replace(
-        candidate,
-        hasTopLevelVariant(candidate) ? replaceWxml(candidate) : this.ensureAlias(candidate),
-      )
+      if (!this.includeVariants && hasTopLevelVariant(candidate)) {
+        rewritten = rewritten.replace(candidate, this.runtimeClassName(candidate))
+      }
+      else {
+        this.ensureAlias(candidate)
+        rewritten = rewritten.replace(candidate, this.aliasByLookup.get(candidate)!)
+      }
     }
     return rewritten
   }
@@ -197,7 +207,7 @@ export class UniAppXComponentLocalStyleCollector {
           if (!candidate || !classContext || !isRuntimeCandidate(candidate, this.runtimeSet)) {
             continue
           }
-          if (!hasTopLevelVariant(candidate)) {
+          if (this.includeVariants || !hasTopLevelVariant(candidate)) {
             this.ensureAlias(candidate)
             if (options.deep) {
               this.deepUtilities.add(candidate)
@@ -289,24 +299,28 @@ export class UniAppXComponentLocalStyleCollector {
     return this.aliasByUtility.size > 0
   }
 
-  toStyleBlock() {
+  toStyleBlock(options: { native?: boolean, web?: boolean } = {}) {
     if (!this.hasStyles()) {
       return ''
     }
-    return `<style scoped>\n${this.toStyleRules()}</style>\n`
+    return `<style scoped>\n${this.toStyleRules(options)}</style>\n`
   }
 
-  toStyleRules() {
+  toStyleRules(options: { native?: boolean, web?: boolean } = {}) {
     if (!this.hasStyles()) {
       return ''
     }
     const lines: string[] = []
     for (const [utility, alias] of this.aliasByUtility) {
+      // Vue scoped 编译会额外注入作用域类或属性，
+      // 重新抬高特异性；使用 :global 保持局部 alias 的单类选择器特异性。
+      const localSelector = options.web ? `:global(.${alias})` : `.${alias}`
       const selector = this.deepUtilities.has(utility)
-        ? `.${alias}, :deep(.${alias})`
-        : `.${alias}`
+        ? `${localSelector}, :deep(.${alias})`
+        : localSelector
+      lines.push(`/*${UNI_APP_X_LOCAL_UTILITY_MARKER} */`)
       lines.push(`${selector} {`)
-      lines.push(`  @apply ${serializeApplyUtility(utility)};`)
+      lines.push(`  @apply ${serializeApplyUtility(utility, options)};`)
       lines.push('}')
     }
     return `${lines.join('\n')}\n`

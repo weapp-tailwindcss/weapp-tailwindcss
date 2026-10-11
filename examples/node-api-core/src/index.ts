@@ -1,49 +1,52 @@
 import process from 'node:process'
-import { createContext } from 'weapp-tailwindcss/core'
+import { fileURLToPath } from 'node:url'
+import { createCompiler } from 'weapp-tailwindcss/core'
+import { demoClassNames } from './fixtures'
 
-const tailwindConfig = new URL('../tailwind.config.cjs', import.meta.url).pathname
-const cssEntry = new URL('./app.css', import.meta.url).pathname
+const projectRoot = fileURLToPath(new URL('..', import.meta.url))
+const cssEntry = fileURLToPath(new URL('./app.css', import.meta.url))
 
 export interface DemoResult {
   js: string
-  runtimeSetSize: number
+  revision: number
+  snapshotClassSetSize: number
   wxml: string
   wxss: string
 }
 
 export async function runNodeApiCoreDemo(): Promise<DemoResult> {
-  const ctx = createContext({
+  const compiler = createCompiler({
     appType: 'native',
-    tailwindcss: {
-      config: tailwindConfig,
-      v4: {
-        cssEntries: [cssEntry],
-      },
-    },
   })
-  const runtimeSet = await ctx.getRuntimeSet({
-    forceCollect: true,
+  const generated = await compiler.generate({
+    candidates: demoClassNames,
+    id: cssEntry,
+    scanSources: false,
+    sourceOptions: {
+      cssEntries: [cssEntry],
+      projectRoot,
+    },
+    target: 'web',
   })
 
-  const wxml = await ctx.transformWxml(
+  const wxml = await compiler.transformTemplate(
     '<view class="mt-[8px] space-y-2.5"><text class="text-[23.43px] bg-[#123456]">Node API</text></view>',
+    generated.snapshot,
   )
-  const { css: wxss } = await ctx.transformWxss(
-    [
-      '.mt-\\[8px\\] { margin-top: 8px; }',
-      '.space-y-2\\.5 > view + view { margin-top: 0.625rem; }',
-      '.text-\\[23\\.43px\\] { font-size: 23.43px; }',
-      '.bg-\\[\\#123456\\] { background-color: #123456; }',
-      '.hover\\:bg-\\[\\#654321\\]:hover { background-color: #654321; }',
-    ].join('\n'),
+  const { css: wxss } = await compiler.transformCss(
+    generated.css,
+    generated.snapshot,
   )
-  const { code: js } = await ctx.transformJs(
+  const { code: js } = await compiler.transformJavaScript(
     'const classes = ["mb-[1.5rem]", "text-[23.43px]", "not-a-tailwind-token"]',
+    generated.snapshot,
   )
+  await compiler.dispose()
 
   return {
     js,
-    runtimeSetSize: runtimeSet.size,
+    revision: generated.revision,
+    snapshotClassSetSize: generated.snapshot.classSet.size,
     wxml,
     wxss,
   }

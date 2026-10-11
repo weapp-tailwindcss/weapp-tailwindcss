@@ -1,17 +1,18 @@
 {
   "name": "@weapp-tailwindcss/init",
   "type": "module",
-  "version": "1.0.14",
-  "description": "@weapp-tailwindcss/init",
+  "version": "2.0.2",
+  "description": "Project initializer for cross-platform Tailwind CSS with weapp-tailwindcss. 用于初始化跨端 Tailwind CSS 项目的 weapp-tailwindcss 工具。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",
+  "homepage": "https://tw.weapp.dev/docs/quick-start/install",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sonofmagic/weapp-tailwindcss.git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
     "directory": "packages/init"
   },
   "bugs": {
-    "url": "https://github.com/sonofmagic/weapp-tailwindcss/issues"
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues"
   },
   "keywords": [],
   "sideEffects": false,
@@ -46,6 +47,7 @@
     "@weapp-tailwindcss/shared": "workspace:*",
     "fs-extra": "catalog:buildUtilities",
     "npm-registry-fetch": "^20.0.1",
-    "pathe": "catalog:buildUtilities"
+    "pathe": "catalog:buildUtilities",
+    "semver": "catalog:compilerUtilities"
   }
 }

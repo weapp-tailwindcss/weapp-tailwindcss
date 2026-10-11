@@ -1,3 +1,21 @@
 /* Main style shell. Tailwind v4 source directives live in tailwind.css. */
-@import "./tailwind.css";
+@import "tailwindcss" source(none);
+@custom-variant system-dark {
+  @media (prefers-color-scheme: dark) {
+    @slot;
+  }
+}
+@plugin "@iconify/tailwind4";
+@plugin "@iconify/tailwind4" {
+  prefix: "i";
+}
+@plugin "@iconify/tailwind4" {
+  prefix: "iconify";
+  scale: 1.2;
+}
+@config "./tailwind.config.js";
+@source "./pages/**/*.{wxml,html,js,ts,jsx,tsx,vue}";
+@source not "./sub-normal/**/*";
+@source not "./sub-independent/**/*";
+@source inline("i-[mdi--github-circle] i-[mdi--star] i-[svg-spinners--180-ring-with-bg] before:content-['现在，让我们开始神奇的_tailwindcss_开发之旅吧！'] before:content-['现在，让我们继续神奇的_tailwindcss_HMR_回归之旅吧！']");
 @import "./third-party-ui.css";

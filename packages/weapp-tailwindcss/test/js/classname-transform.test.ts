@@ -1,4 +1,4 @@
-import { MappingChars2String } from '@weapp-core/escape'
+import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { describe, expect, it, vi } from 'vitest'
 import * as classNameTransform from '@/shared/classname-transform'
 import * as wxmlShared from '@/wxml/shared'

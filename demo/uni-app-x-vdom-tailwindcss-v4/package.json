@@ -1,0 +1,44 @@
+{
+  "name": "@weapp-tailwindcss-demo/uni-app-x-vdom-tailwindcss-v4",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "uni-app x VDOM demo for Tailwind CSS v4 with weapp-tailwindcss direct registration.",
+  "author": "icebreaker <hi@sonofmagic.top>",
+  "license": "MIT",
+  "scripts": {
+    "start:android:emulator": "node ./scripts/start-android-emulator.mjs",
+    "start:ios:simulator": "open -a Simulator",
+    "dev:android:emulator": "cross-env WEAPP_TW_HMR_TIMING=1 hbuilderx launch app-android --project . --deviceId emulator-5554",
+    "dev:ios:simulator": "cross-env WEAPP_TW_HMR_TIMING=1 hbuilderx launch app-ios --project . --iosTarget simulator",
+    "dev:h5": "cross-env WEAPP_TW_HMR_TIMING=1 UNI_INPUT_DIR=. uni",
+    "dev:mp-weixin": "cross-env WEAPP_TW_HMR_TIMING=1 tsx ../../scripts/hbuilderx-launch-mp-weixin-dev.ts",
+    "predev:android:emulator": "node ../../scripts/ensure-weapp-tailwindcss-built.mjs",
+    "predev:ios:simulator": "node ../../scripts/ensure-weapp-tailwindcss-built.mjs",
+    "predev:h5": "node ../../scripts/ensure-weapp-tailwindcss-built.mjs",
+    "predev:mp-weixin": "node ../../scripts/ensure-weapp-tailwindcss-built.mjs"
+  },
+  "dependencies": {
+    "@dcloudio/uni-app": "3.0.0-alpha-5020220260725001",
+    "@dcloudio/uni-components": "3.0.0-alpha-5020220260725001",
+    "@dcloudio/uni-h5": "3.0.0-alpha-5020220260725001",
+    "vue": "^3.5.41"
+  },
+  "devDependencies": {
+    "@dcloudio/hbuilderx-cli": "^1.2.0",
+    "@dcloudio/uni-uts-v1": "3.0.0-alpha-5020220260725001",
+    "@dcloudio/vite-plugin-uni": "3.0.0-alpha-5020220260725001",
+    "@iconify-json/mdi": "catalog:iconifyJson",
+    "@iconify-json/svg-spinners": "catalog:iconifyJson",
+    "@iconify/tailwind4": "^1.2.3",
+    "@tailwindcss/postcss": "catalog:tailwindcss4",
+    "@weapp-tailwindcss/debug-uni-app-x": "workspace:*",
+    "cross-env": "catalog:crossEnv",
+    "sass-embedded": "catalog:sass195",
+    "tailwindcss": "catalog:tailwindcss4",
+    "typescript": "catalog:typescript59",
+    "vite": "^5.4.21",
+    "weapp-tailwindcss": "workspace:*"
+  },
+  "packageManager": "pnpm@12.4.1"
+}

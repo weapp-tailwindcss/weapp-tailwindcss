@@ -1,7 +1,7 @@
 ---
 sidebar: aiSidebar
 title: AI 编程助手落地实施方案
-description: 1. **合规边界**：哪些仓库/文件允许出境？是否必须审计留痕？（决定能不能用海外、能用到什么程度）
+description: AI 编程助手落地实施方案，覆盖 AI 工作流、提示词和工程化实践。
 keywords:
   - AI 编程
   - LLM
@@ -897,7 +897,7 @@ env | grep -E 'HTTP_PROXY|HTTPS_PROXY|ALL_PROXY|NO_PROXY'
 
 #### 管理员准备（公司/团队层）
 
-1. 统一 Node 版本（建议 Node >= 18）与 npm 代理策略（避免装不上 CLI）。
+1. 统一 Node 版本（本仓库使用 Node `^22.18.0 || >=24.11.0`）与 npm 代理策略（避免装不上 CLI）。
 2. 以团队为单位开通座席（`Pro`/`Teams`），并明确哪些成员有权限在 S1/S2 仓库使用。
 3. 建立 `CLAUDE.md` 模板库：不同技术栈（Node/Java/Go）各一份，复制到仓库即可用。
 

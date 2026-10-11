@@ -1,6 +1,6 @@
 ---
 title: "WeappTailwindcssPostcssPluginOptions"
-description: "`weapp-tailwindcss` PostCSS 插件配置。"
+description: "weapp-tailwindcss PostCSS 插件配置。"
 keywords:
   - "weapp-tailwindcss"
   - "API"

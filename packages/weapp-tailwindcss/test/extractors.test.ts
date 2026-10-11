@@ -1,5 +1,5 @@
 import { splitCode } from '@weapp-tailwindcss/shared/extractors'
-import { splitCandidateTokens } from '@tailwindcss-mangle/engine'
+import { splitCandidateTokens } from '@weapp-tailwindcss/engine'
 
 describe('extractorSplit', () => {
   it('uses the candidate token splitter without allowDoubleQuotes gating', () => {

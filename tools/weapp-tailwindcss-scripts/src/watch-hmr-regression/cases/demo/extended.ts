@@ -1,4 +1,4 @@
-import type { SubPackageMutationConfig, TaroMiniProgramWatchPlatform, UniAppMiniProgramWatchPlatform, WatchCase } from '../../types'
+import type { ClassMutationConfig, SubPackageMutationConfig, TaroMiniProgramWatchPlatform, UniAppMiniProgramWatchPlatform, WatchCase } from '../../types'
 import path from 'node:path'
 import {
   appendTrailingSnippet,
@@ -11,7 +11,7 @@ import {
   mutateVueRefStringLiteral,
   replaceExactSnippet,
 } from '../../text'
-import { buildBaselineHexScriptRoundConfigs, buildHexScriptRoundConfigs, buildIssue33HighRiskRoundConfigs, buildTailwindV4JsContentRoundConfigs } from '../round-configs'
+import { buildBaselineHexScriptRoundConfigs, buildHexScriptRoundConfigs, buildIssue33HighRiskRoundConfigs, buildTailwindV4JsContentRoundConfigs, MINI_PROGRAM_REMOVED_CSS_UTILITIES } from '../round-configs'
 
 const taroWatchEnv = {
   TARO_BUILD_STRICT: '1',
@@ -37,9 +37,9 @@ const taroViteWatchEnv = {
 
 // Taro Vite 使用同一 compiler 的增量构建，预算覆盖 native watch 中的 CSS replay 与转译。
 const taroViteNativeWatchPluginProcessBudgetMs = 10000
-// Taro Webpack polling-build 每次变更都会启动新的完整构建，采样覆盖冷态 CSS 生成与转译，
-// 不等同于同一 compiler 内的增量插件耗时；与 e2e:taro:mp 专项脚本保持一致。
-const taroPollingBuildPluginProcessBudgetMs = 8000
+// Taro Webpack polling-build 每次变更都会启动新的完整构建，采样覆盖冷态多入口 CSS 生成与转译，
+// 不等同于同一 compiler 内的增量插件耗时；预算按 hosted runner 的稳定 p95 保留余量。
+const taroPollingBuildPluginProcessBudgetMs = 18000
 const webDomMarkerAttr = 'data-tw-watch-web-dom="1"'
 const taroMiniProgramPlatforms: TaroMiniProgramWatchPlatform[] = ['weapp', 'alipay', 'tt']
 const uniAppMiniProgramPlatforms: UniAppMiniProgramWatchPlatform[] = ['mp-weixin', 'mp-alipay', 'mp-qq', 'mp-toutiao']
@@ -242,6 +242,7 @@ function createSubPackageMutations(
     templateVerifyEscapedIn?: Array<'wxml' | 'js'>
     templateVerifyClassLiteralIn?: Array<'wxml' | 'js'>
     templateVerifyAllClassLiterals?: boolean
+    expectedRemovedCssUtilities?: ClassMutationConfig['expectedRemovedCssUtilities']
   },
 ): SubPackageMutationConfig[] {
   const styleExtension = options.styleExtension ?? normalizeExtension(options.version)
@@ -276,6 +277,7 @@ function createSubPackageMutations(
           ? {}
           : { verifyAllClassLiterals: options.templateVerifyAllClassLiterals }),
         roundConfigs,
+        ...(options.expectedRemovedCssUtilities ? { expectedRemovedCssUtilities: options.expectedRemovedCssUtilities } : {}),
         mutate(source, payload) {
           if (options.pageKind === 'tsx') {
             const snippet = `  <View className="${payload.classLiteral}">${payload.marker}-${label}-subpackage</View>`
@@ -357,6 +359,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       sourceFile: path.resolve(baseCwd, 'demo/uni-app-vite-tailwindcss-v4/src/pages/index/index.vue'),
       verifyEscapedIn: ['wxml'],
       verifyClassLiteralIn: [],
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: [
         ...buildHexScriptRoundConfigs(),
         {
@@ -376,6 +379,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       sourceFile: path.resolve(baseCwd, 'demo/uni-app-vite-tailwindcss-v4/src/pages/index/index.vue'),
       verifyEscapedIn: ['js'],
       verifyClassLiteralIn: ['js'],
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: buildHexScriptRoundConfigs(),
       mutate(source, payload) {
         return mutateVueRefStringLiteral(
@@ -401,6 +405,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       version: 'v4',
       pageKind: 'vue',
       skipStyleMutation: true,
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       globalStyleCandidates(subPackage) {
         return [
           path.resolve(baseCwd, `demo/uni-app-vite-tailwindcss-v4/dist/dev/mp-weixin/${subPackage}/pages/index.wxss`),
@@ -512,6 +517,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       sourceFile: path.resolve(baseCwd, 'demo/mpx-tailwindcss-v4/src/custom-tab-bar/index.mpx'),
       verifyEscapedIn: ['wxml'],
       verifyClassLiteralIn: [],
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: buildHexScriptRoundConfigs(),
       mutate(source, payload) {
         const snippet = `  <view class="${payload.classLiteral}">${payload.marker}-template</view>`
@@ -546,6 +552,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       distRoot: 'dist/wx',
       version: 'v4',
       pageKind: 'mpx',
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       styleSourceFile(subPackage) {
         return path.resolve(baseCwd, `demo/mpx-tailwindcss-v4/src/${subPackage}/index.css`)
       },
@@ -635,9 +642,10 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       sourceFile: path.resolve(baseCwd, 'demo/taro-vite-react-tailwindcss-v4/src/pages/index/index.tsx'),
       verifyEscapedIn: ['js'],
       verifyClassLiteralIn: ['js'],
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: buildHexScriptRoundConfigs(),
       mutate(source, payload) {
-        const snippet = `      <View className='${payload.classLiteral}'>${payload.marker}-template</View>`
+        const snippet = `      <View className={${JSON.stringify(payload.classLiteral)}}>${payload.marker}-template</View>`
         return insertBeforeClosingTag(source, '    </View>', snippet)
       },
     },
@@ -645,6 +653,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       sourceFile: path.resolve(baseCwd, 'demo/taro-vite-react-tailwindcss-v4/src/pages/index/index.tsx'),
       verifyEscapedIn: ['js'],
       verifyClassLiteralIn: ['js'],
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: buildHexScriptRoundConfigs(),
       mutate(source, payload) {
         return mutateTsxScriptByReturnAnchor(source, payload)
@@ -662,6 +671,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       distRoot: 'dist',
       version: 'v4',
       pageKind: 'tsx',
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       globalStyleCandidates(subPackage) {
         return [
           path.resolve(baseCwd, `demo/taro-vite-react-tailwindcss-v4/dist/${subPackage}/pages/index.wxss`),
@@ -676,6 +686,8 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       sourceFile: path.resolve(baseCwd, 'demo/taro-vite-react-tailwindcss-v4/src/pages/index/index.tsx'),
       cssEntryFile: path.resolve(baseCwd, 'demo/taro-vite-react-tailwindcss-v4/src/app.css'),
       injectMarkerElement: true,
+      // TSX 注释已携带待扫描 class；只写源码，避免 macOS watcher 合并相邻的源码与 CSS 原子替换事件。
+      touchCssEntryOnSourceMutation: false,
       reloadOnHmrStall: true,
       hmrReloadStallMs: 5_000,
       env: {
@@ -759,9 +771,10 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       sourceFile: path.resolve(baseCwd, 'demo/taro-webpack-react-tailwindcss-v4/src/pages/index/index.tsx'),
       verifyEscapedIn: ['js'],
       verifyClassLiteralIn: ['js'],
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: buildHexScriptRoundConfigs(),
       mutate(source, payload) {
-        const snippet = `      <View className='${payload.classLiteral}'>${payload.marker}-template</View>`
+        const snippet = `      <View className={${JSON.stringify(payload.classLiteral)}}>${payload.marker}-template</View>`
         return insertBeforeClosingTag(source, '    </>', snippet)
       },
     },
@@ -770,6 +783,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       verifyEscapedIn: ['js'],
       verifyClassLiteralIn: ['js'],
       forbidBgHexTruncationIn: ['js'],
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: buildHexScriptRoundConfigs(),
       mutate(source, payload) {
         return mutateTsxScriptByReturnAnchor(source, payload)
@@ -787,6 +801,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       distRoot: 'dist',
       version: 'v4',
       pageKind: 'tsx',
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       globalStyleCandidates(subPackage) {
         return [
           path.resolve(baseCwd, `demo/taro-webpack-react-tailwindcss-v4/dist/${subPackage}/pages/index.wxss`),
@@ -895,8 +910,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       sourceFile: path.resolve(baseCwd, 'demo/taro-vite-vue3-tailwindcss-v4/src/pages/index/index.vue'),
       verifyEscapedIn: ['js'],
       verifyClassLiteralIn: ['js'],
-      verifyAllEscapedClasses: false,
-      verifyAllClassLiterals: false,
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: buildHexScriptRoundConfigs(),
       mutate(source, payload) {
         const snippet = `    <view class="${payload.classLiteral}">${payload.marker}-template</view>`
@@ -907,6 +921,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       sourceFile: path.resolve(baseCwd, 'demo/taro-vite-vue3-tailwindcss-v4/src/pages/index/index.vue'),
       verifyEscapedIn: ['js'],
       verifyClassLiteralIn: ['js'],
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: buildHexScriptRoundConfigs(),
       mutate(source, payload) {
         return mutateVueScriptWithTemplateConsumer(source, payload)
@@ -924,6 +939,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       distRoot: 'dist',
       version: 'v4',
       pageKind: 'vue',
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       templateVerifyEscapedIn: ['js'],
       templateVerifyClassLiteralIn: ['js'],
       globalStyleCandidates(subPackage) {
@@ -1008,6 +1024,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       sourceFile: path.resolve(baseCwd, 'demo/taro-webpack-vue3-tailwindcss-v4/src/pages/index/index.vue'),
       verifyEscapedIn: ['js'],
       verifyClassLiteralIn: ['js'],
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: buildHexScriptRoundConfigs(),
       mutate(source, payload) {
         const snippet = `    <view class="${payload.classLiteral}">${payload.marker}-template</view>`
@@ -1018,6 +1035,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       sourceFile: path.resolve(baseCwd, 'demo/taro-webpack-vue3-tailwindcss-v4/src/pages/index/index.vue'),
       verifyEscapedIn: ['js'],
       verifyClassLiteralIn: ['js'],
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: buildHexScriptRoundConfigs(),
       mutate(source, payload) {
         return mutateVueScriptWithTemplateConsumer(source, payload)
@@ -1035,6 +1053,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       distRoot: 'dist',
       version: 'v4',
       pageKind: 'vue',
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       templateVerifyEscapedIn: ['js'],
       templateVerifyClassLiteralIn: ['js'],
       templateVerifyAllClassLiterals: false,

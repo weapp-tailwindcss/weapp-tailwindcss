@@ -70,11 +70,12 @@ describe('bundlers/webpack WeappTailwindcss / watch ignored paths', () => {
     expect(compiler.watch).toBe(watch)
     expect(watchRunHandlers.length).toBeGreaterThan(0)
 
-    expect(compiler.options.watchOptions.ignored).toEqual([
-      '**/node_modules/**',
-      '**/.git/**',
-      outputPath,
-    ])
+    const ignored = compiler.options.watchOptions.ignored as unknown as (file: string) => boolean
+    expect(ignored(outputPath)).toBe(true)
+    expect(ignored(path.join(outputPath, 'app.js'))).toBe(true)
+    expect(ignored(path.resolve('node_modules/pkg/index.js'))).toBe(true)
+    expect(ignored(path.resolve('.git/index'))).toBe(true)
+    expect(ignored(path.resolve('src/index.ts'))).toBe(false)
   })
 
   it('adds webpack output path to active watch ignored paths without patching compiler.watch', () => {
@@ -148,11 +149,12 @@ describe('bundlers/webpack WeappTailwindcss / watch ignored paths', () => {
       handler()
     }
 
-    expect(compiler.watching.watchOptions.ignored).toEqual([
-      '**/node_modules/**',
-      '**/.git/**',
-      outputPath,
-    ])
+    const ignored = compiler.watching.watchOptions.ignored as unknown as (file: string) => boolean
+    expect(ignored(outputPath)).toBe(true)
+    expect(ignored(path.join(outputPath, 'app.js'))).toBe(true)
+    expect(ignored(path.resolve('node_modules/pkg/index.js'))).toBe(true)
+    expect(ignored(path.resolve('.git/index'))).toBe(true)
+    expect(ignored(path.resolve('src/index.ts'))).toBe(false)
   })
 
   it('adds delayed compilation output path to active watch ignored paths', () => {
@@ -227,10 +229,11 @@ describe('bundlers/webpack WeappTailwindcss / watch ignored paths', () => {
     new WeappTailwindcss().apply(compiler as any)
     expect(compiler.watch).toBe(watch)
     expect(thisCompilationHandlers.length).toBeGreaterThan(0)
-    expect(compiler.watching.watchOptions.ignored).toEqual([
-      '**/node_modules/**',
-      outputPath,
-    ])
+    const ignored = compiler.watching.watchOptions.ignored as unknown as (file: string) => boolean
+    expect(ignored(outputPath)).toBe(true)
+    expect(ignored(path.join(outputPath, 'app.js'))).toBe(true)
+    expect(ignored(path.resolve('node_modules/pkg/index.js'))).toBe(true)
+    expect(ignored(path.resolve('src/index.ts'))).toBe(false)
   })
 
   it('wraps mixed webpack watch ignored rules as a predicate', () => {

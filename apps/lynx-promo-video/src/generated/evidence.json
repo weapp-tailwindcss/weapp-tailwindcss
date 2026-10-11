@@ -1,0 +1,11 @@
+{
+  "total": 118,
+  "supported": 53,
+  "unsupported": 64,
+  "platformDifferences": 1,
+  "verifiedAt": "2026-08-17T06:36:27.838Z",
+  "versions": {
+    "tailwindcss": "4.3.3",
+    "lynxEngine": "4.0.1"
+  }
+}

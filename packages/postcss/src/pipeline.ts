@@ -1,8 +1,8 @@
 // 按阶段构建 PostCSS 插件流水线，并提供状态机式上下文信息
 import type { AcceptedPlugin } from 'postcss'
+import type postcssPresetEnv from 'postcss-preset-env'
 import type { FeatureSignal } from './content-probe'
 import type { IStyleHandlerOptions } from './types'
-import postcssPresetEnv from 'postcss-preset-env'
 import { isAutoprefixerPlugin, resolveAutoprefixerPlugin } from './autoprefixer'
 import { resolvePostcssFrameworkProfile } from './frameworks'
 import { createColorFunctionalFallback } from './plugins/colorFunctionalFallback'
@@ -16,6 +16,9 @@ import { getUnitConversionPlugin } from './plugins/getUnitConversionPlugin'
 import { getUnitsToPxPlugin } from './plugins/getUnitsToPxPlugin'
 import { postcssWeappTailwindcssPostPlugin } from './plugins/post'
 import { postcssWeappTailwindcssPrePlugin } from './plugins/pre'
+import { createPresetEnvPlugin } from './plugins/preset-env'
+import { createUserPluginStage } from './plugins/user-plugin-stage'
+import { markSelectorTransformOptionsStable } from './selectorParser/rule-transformer/options'
 
 export type PipelineStage = 'pre' | 'normal' | 'post'
 
@@ -142,11 +145,11 @@ function appendUniAppXNativeAuthorDeclarationNodes(
   }
 
   const declarationPlugins = [
+    ['normal:calc', getCalcPlugin(options)],
     ['normal:units-to-px', getUnitsToPxPlugin(options)],
     ['normal:px-transform', getPxTransformPlugin(options)],
     ['normal:rem-transform', getRemTransformPlugin(options)],
     ['normal:unit-conversion', getUnitConversionPlugin(options)],
-    ['normal:calc', getCalcPlugin(options)],
   ] as const
 
   for (const [id, plugin] of declarationPlugins) {
@@ -171,14 +174,26 @@ function createPreparedNodes(options: IStyleHandlerOptions, signal?: FeatureSign
       'cascade-layers': false,
     },
   } as Parameters<typeof postcssPresetEnv>[0]
-  userPlugins.forEach((plugin, index) => {
+  const calcPlugin = getCalcPlugin(options)
+  const stagedUserPlugins = calcPlugin && userPlugins.length > 0
+    ? [createUserPluginStage(userPlugins)]
+    : userPlugins
+  stagedUserPlugins.forEach((plugin, index) => {
     preparedNodes.push(createPreparedNode(`pre:user-${index}`, 'pre', () => plugin))
   })
+
+  // 作者插件完成后、选择器和单位改写前求值，保留原始作用域及层叠上下文。
+  if (calcPlugin) {
+    preparedNodes.push(createPreparedNode('pre:calc', 'pre', () => calcPlugin))
+  }
 
   preparedNodes.push(createPreparedNode('pre:core', 'pre', () => postcssWeappTailwindcssPrePlugin(options)))
 
   if (!signal || signal.hasPresetEnvFeatures) {
-    preparedNodes.push(createPreparedNode('normal:preset-env', 'normal', () => postcssPresetEnv(presetEnvOptions)))
+    // 小程序和 WebView 保留运行时状态，UVUE 继续使用原生静态降级契约。
+    const preserveRuntimeVariables = options.appType === 'uni-app-x'
+      && !(options.uniAppX === true && options.uniAppXCssTarget === 'uvue')
+    preparedNodes.push(createPreparedNode('normal:preset-env', 'normal', () => createPresetEnvPlugin(presetEnvOptions, preserveRuntimeVariables)))
   }
   if (!signal || signal.hasModernColorFunction) {
     preparedNodes.push(createPreparedNode('normal:color-functional-fallback', 'normal', () => createColorFunctionalFallback()))
@@ -202,11 +217,6 @@ function createPreparedNodes(options: IStyleHandlerOptions, signal?: FeatureSign
   const unitConversionPlugin = getUnitConversionPlugin(options)
   if (unitConversionPlugin) {
     preparedNodes.push(createPreparedNode('normal:unit-conversion', 'normal', () => unitConversionPlugin))
-  }
-
-  const calcPlugin = getCalcPlugin(options)
-  if (calcPlugin) {
-    preparedNodes.push(createPreparedNode('normal:calc', 'normal', () => calcPlugin))
   }
 
   const calcDuplicateCleaner = getCalcDuplicateCleaner(options)
@@ -235,6 +245,7 @@ function createPreparedNodes(options: IStyleHandlerOptions, signal?: FeatureSign
 export function createStylePipeline(options: IStyleHandlerOptions, signal?: FeatureSignal): StyleProcessingPipeline {
   // 管线创建前先初始化上下文，以便各插件共享状态
   options.ctx = createContext()
+  markSelectorTransformOptionsStable(options)
 
   const preparedNodes = createPreparedNodes(options, signal)
   const frameworkProfile = resolvePostcssFrameworkProfile(options)

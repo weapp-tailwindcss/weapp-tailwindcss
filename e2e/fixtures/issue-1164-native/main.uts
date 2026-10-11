@@ -1,0 +1,5 @@
+import App from './App.uvue'
+import { createSSRApp } from 'vue'
+export function createApp() {
+  return { app: createSSRApp(App) }
+}

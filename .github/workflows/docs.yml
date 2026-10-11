@@ -1,98 +1,93 @@
-name: Deploy Docs
+name: Deploy Docs Worker
 
 on:
-  # push:
-  #   paths:
-  #     - 'website/**'
-  #   branches:
-  #     - main
+  push:
+    branches:
+      - main
   workflow_dispatch:
-  # repository_dispatch:
-  #   types: [deploy_docs]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-worker-production
+  cancel-in-progress: false
 
 jobs:
-  build:
-    name: Deploy production docs
-    if: github.ref != 'refs/heads/next'
+  deploy-production:
+    name: Build, validate and deploy production
+    if: github.repository == 'weapp-tailwindcss/weapp-tailwindcss' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [22]
+    timeout-minutes: 30
     env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: pnpm
-      - name: Install dependencies
-        run: pnpm install
-      - name: Build
-        run: pnpm run build:docs
-      - name: Require Cloudflare token
-        if: env.CLOUDFLARE_API_TOKEN == ''
-        run: |
-          {
-            echo "## Deploy blocked"
-            echo "- \`CLOUDFLARE_API_TOKEN\` is not configured for this repository."
-            echo "- Docs build completed successfully, but production deployment cannot continue."
-          } >> "$GITHUB_STEP_SUMMARY"
-          echo "::error::CLOUDFLARE_API_TOKEN is required to deploy production docs."
-          exit 1
-      - name: Deploy
-        if: env.CLOUDFLARE_API_TOKEN != ''
-        run: pnpm exec wrangler deploy --config wrangler.jsonc
-        working-directory: ./website
-      - name: Verify deployed assets
-        if: env.CLOUDFLARE_API_TOKEN != ''
-        run: pnpm run verify:deployment -- https://tw.icebreaker.top
-        working-directory: ./website
-        # uses: cloudflare/wrangler-action@v3
-        # with:
-        #   apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        #   accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        #   workingDirectory: ./website
-        #   command: pages deploy .vitepress/dist --project-name=host-docs
+      SITE_URL: https://tw.weapp.dev
 
-  next:
-    name: Deploy next docs
-    if: github.ref == 'refs/heads/next'
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [22]
-    env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out code
+        uses: actions/checkout@v6
+
       - uses: pnpm/action-setup@v4
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 24
           cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
       - name: Install dependencies
-        run: pnpm install
-      - name: Build workspace dependencies
-        run: pnpm --filter @weapp-tailwindcss/website... --filter '!@weapp-tailwindcss/website' build
-      - name: Build next docs
-        run: pnpm --filter @weapp-tailwindcss/website build:next
-      - name: Require next Cloudflare token
-        if: env.CLOUDFLARE_API_TOKEN == ''
+        run: pnpm install --frozen-lockfile
+
+      - name: Test deployment guards
+        run: pnpm --filter @weapp-tailwindcss/website exec vitest run scripts/docs-deployment.test.ts scripts/deploy-docs-cloudflare.test.mjs --update=none
+
+      - name: Check docs audience
+        run: pnpm --filter @weapp-tailwindcss/website check:docs-audience
+
+      - name: Run few_keywords gate
+        run: pnpm --filter @weapp-tailwindcss/website seo:few-keywords
+
+      - name: Build website
+        run: pnpm --filter @weapp-tailwindcss/website build
+
+      - name: Run SEO/GEO quality gate
+        run: pnpm --filter @weapp-tailwindcss/website seo:quality:strict
+
+      - name: Verify Worker routing locally
+        run: pnpm --filter @weapp-tailwindcss/website test:worker
+
+      - name: Validate Worker bundle
+        run: pnpm --filter @weapp-tailwindcss/website deploy:worker:dry-run
+
+      - name: Require latest main before deployment
+        id: latest
+        run: pnpm exec tsx scripts/deploy-docs-gate.ts
+
+      - name: Deploy production Worker
+        id: deploy
+        if: steps.latest.outputs.deploy == 'true'
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          pnpm exec tsx scripts/deploy-docs-gate.ts --credentials
+          pnpm --filter @weapp-tailwindcss/website exec wrangler deployments list --config wrangler.jsonc --env=""
+          pnpm deploy:docs:worker
+
+      - name: Verify deployed production assets
+        if: steps.deploy.outcome == 'success'
+        run: pnpm --filter @weapp-tailwindcss/website verify:deployment -- https://tw.weapp.dev
+
+      - name: Record deployment result
+        if: always()
+        env:
+          DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
         run: |
           {
-            echo "## Deploy blocked"
-            echo "- \`CLOUDFLARE_API_TOKEN\` is not configured for this repository."
-            echo "- Next docs build completed successfully, but deployment cannot continue."
+            echo '## Production documentation'
+            echo "- Commit: $GITHUB_SHA"
+            echo "- Upload: $DEPLOY_OUTCOME"
+            echo '- Site: https://tw.weapp.dev'
+            echo '- Worker versions before and after upload are recorded in the deployment step log.'
+            echo '- The job succeeds only after deployed assets pass verification.'
           } >> "$GITHUB_STEP_SUMMARY"
-          echo "::error::CLOUDFLARE_API_TOKEN is required to deploy next docs."
-          exit 1
-      - name: Deploy next docs
-        if: env.CLOUDFLARE_API_TOKEN != ''
-        run: pnpm --filter @weapp-tailwindcss/website deploy:next
-      - name: Verify next deployed assets
-        if: env.CLOUDFLARE_API_TOKEN != ''
-        run: pnpm --filter @weapp-tailwindcss/website verify:deployment -- https://next.tw.icebreaker.top

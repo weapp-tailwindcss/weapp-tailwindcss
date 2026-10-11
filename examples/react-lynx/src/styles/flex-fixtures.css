@@ -1,0 +1,113 @@
+/* stylelint-disable declaration-block-no-redundant-longhand-properties -- 夹具分别声明基础 grow/basis/shrink，避免 shorthand 覆盖待测属性。 */
+.flex-probe-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.flex-probe-slot {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: row;
+  align-items: flex-start;
+  width: 160px;
+  height: 140px;
+  padding: 6px;
+  background-color: #f7fafb;
+}
+
+.flex-probe {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  background-color: #0ea5e9;
+}
+
+.flex-probe-flex-grow {
+  flex-grow: 0;
+  flex-shrink: 1;
+  flex-basis: 24px;
+  height: 24px;
+}
+
+.flex-competitor {
+  flex-grow: 0;
+  flex-shrink: 0;
+  flex-basis: 40px;
+  min-width: 0;
+  height: 24px;
+  background-color: #ef4444;
+}
+
+.flex-competitor-flex-grow {
+  flex-grow: 1;
+}
+
+.flex-measured-child {
+  margin: 0;
+  background-color: #facc15;
+}
+
+.flex-child-flex-grow {
+  width: 8px;
+  height: 8px;
+}
+
+.flex-slot-flex-wrap-order {
+  gap: 4px;
+}
+
+.flex-probe-flex-wrap-order {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 4px;
+  order: 0;
+  width: 64px;
+}
+
+.flex-wrap-first,
+.flex-child-flex-wrap-order {
+  flex-shrink: 0;
+  width: 40px;
+  height: 24px;
+}
+
+.flex-wrap-first {
+  background-color: #facc15;
+}
+
+.flex-competitor-flex-wrap-order {
+  flex-basis: 20px;
+  order: 1;
+}
+
+.flex-probe-flex-shorthand-shrink {
+  display: flex;
+  flex-grow: 0;
+  flex-shrink: 1;
+  flex-basis: auto;
+  flex-direction: row;
+  width: 24px;
+  height: 24px;
+}
+
+.flex-child-flex-shorthand-shrink,
+.flex-shrink-competitor {
+  flex-grow: 0;
+  flex-shrink: 1;
+  flex-basis: auto;
+  width: 80px;
+  min-width: 0;
+  height: 24px;
+}
+
+.flex-shrink-competitor {
+  background-color: #ef4444;
+}

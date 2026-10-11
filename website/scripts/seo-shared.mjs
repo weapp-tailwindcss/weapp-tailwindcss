@@ -23,6 +23,19 @@ const sectionKeywordMap = {
   'tailwindcss': ['tailwindcss', '教程', '原子化'],
 }
 
+const englishSectionKeywordMap = {
+  'quick-start': ['quick start', 'installation', 'configuration'],
+  'issues': ['troubleshooting', 'compatibility', 'diagnostics'],
+  'api': ['API', 'reference', 'options'],
+  'options': ['options', 'plugin options', 'configuration'],
+  'ai': ['AI coding', 'LLM', 'workflow'],
+  'community': ['community', 'templates', 'case studies'],
+  'migrations': ['migration', 'upgrade', 'compatibility'],
+  'tailwindcss': ['tailwindcss', 'tutorial', 'utility-first'],
+  'tools': ['CLI', 'developer tools', 'build workflow'],
+  'uni-app-x': ['uni-app x', 'cross-platform', 'configuration'],
+}
+
 const sectionDescriptionMap = {
   'quick-start': '提供安装步骤、配置示例与常见问题排查。',
   'issues': '聚焦兼容性问题、报错现象与修复方案。',
@@ -44,6 +57,39 @@ const commonKeywords = [
   'taro',
   'mpx',
 ]
+
+const englishCommonKeywords = [
+  'weapp-tailwindcss',
+  'Tailwind CSS 4',
+  'cross-platform',
+  'mini app',
+  'uni-app',
+  'Taro',
+  'React Native',
+  'Lynx',
+]
+
+const chineseGeoCommonKeywords = [
+  'weapp-tailwindcss',
+  'Tailwind CSS 4',
+  '跨端',
+  '小程序',
+  'uni-app',
+  'Taro',
+  'React Native',
+  'Lynx',
+]
+
+const localeKeywordOptions = {
+  'en': {
+    commonKeywords: englishCommonKeywords,
+    sectionKeywordMap: englishSectionKeywordMap,
+  },
+  'zh-cn': {
+    commonKeywords: chineseGeoCommonKeywords,
+    sectionKeywordMap,
+  },
+}
 
 const keywordStopwords = new Set([
   'index',
@@ -116,6 +162,13 @@ const BLOG_DATE_PREFIX_RE = /^\d{4}-\d{2}-\d{2}-/
 
 /** 匹配 frontmatter 首行的键值对格式 */
 const FRONTMATTER_KEY_RE = /^[A-Z_][\w-]*\s*:/i
+
+/** 匹配汉字，防止中文关键词进入英文公开资产 */
+const HAN_RE = /\p{Script=Han}/u
+
+export function containsHan(value) {
+  return HAN_RE.test(String(value))
+}
 
 export function walkMarkdownFiles(rootDir) {
   if (!fs.existsSync(rootDir)) {
@@ -252,9 +305,10 @@ function toTitleKeywords(title) {
 }
 
 export function resolveKeywords(params) {
+  const localeOptions = localeKeywordOptions[params.locale]
   const relativePath = params.relativePath.replace(BACKSLASH_RE, '/')
   const firstSection = relativePath.split('/')[0] || ''
-  const sectionKeywords = (params.sectionKeywordMap ?? sectionKeywordMap)[firstSection] || []
+  const sectionKeywords = (params.sectionKeywordMap ?? localeOptions?.sectionKeywordMap ?? sectionKeywordMap)[firstSection] || []
   const pathKeywords = relativePath
     .replace(MD_MDX_EXTENSION_RE, '')
     .split('/')
@@ -266,9 +320,12 @@ export function resolveKeywords(params) {
     ...sectionKeywords,
     ...toTitleKeywords(params.title),
     ...pathKeywords,
-    ...(params.commonKeywords ?? commonKeywords),
+    ...(params.commonKeywords ?? localeOptions?.commonKeywords ?? commonKeywords),
   ]
-  return normalizeKeywords(merged, {
+  const localeSafeKeywords = params.locale === 'en'
+    ? merged.filter(keyword => !containsHan(keyword))
+    : merged
+  return normalizeKeywords(localeSafeKeywords, {
     maxItems: params.maxItems ?? 16,
   })
 }

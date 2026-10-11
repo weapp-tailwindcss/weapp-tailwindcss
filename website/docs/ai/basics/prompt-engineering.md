@@ -1,7 +1,7 @@
 ---
 sidebar: aiSidebar
 title: Prompt Engineering（提示词工程）
-description: 'function SubmitForm() {'
+description: Prompt Engineering（提示词工程），覆盖 AI 工作流、提示词和工程化实践。
 keywords:
   - AI 编程
   - LLM

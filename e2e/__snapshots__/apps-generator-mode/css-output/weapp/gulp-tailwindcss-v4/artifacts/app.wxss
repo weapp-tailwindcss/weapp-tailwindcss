@@ -16,11 +16,16 @@ text,
 page,
 .tw-root,
 wx-root-portal-content {
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 'Noto Sans', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
   --font-sans: 'inter', 'inter Fallback', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
   --font-mono: var(--font-plex-mono), monospace;
+  --color-slate-900: rgb(15, 23, 43);
   --color-slate-900: #0f172b;
   --color-white: #fff;
   --color-zinc-50: rgb(250, 250, 250);
+  --color-zinc-900: rgb(24, 24, 27);
   --color-zinc-900: rgb(24, 24, 27);
   --color-slate-100: rgb(241, 245, 249);
   --color-zinc-950: rgb(9, 9, 11);
@@ -33,7 +38,9 @@ wx-root-portal-content {
   --text-lg--line-height: calc(1.75 / 1.125);
   --font-weight-medium: 500;
   --font-weight-bold: 700;
+  --default-font-family: var(--font-sans);
   --default-font-family: var(--font-inter), system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+  --default-mono-font-family: var(--font-mono);
   --default-mono-font-family: var(--font-plex-mono), monospace;
   --test-color: #006241;
   --color-test: #006241;

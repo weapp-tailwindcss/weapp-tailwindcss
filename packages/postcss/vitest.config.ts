@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { defineProject } from 'vitest/config'
+import { configDefaults, defineProject } from 'vitest/config'
 
 const alias = [
   {
@@ -23,6 +23,7 @@ const alias = [
 export default defineProject({
   test: {
     alias,
+    exclude: [...configDefaults.exclude, 'test/native/**'],
     globals: true,
     testTimeout: 60_000,
     coverage: {

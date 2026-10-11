@@ -30,6 +30,7 @@ const cases: DemoParityCase[] = [
     project: 'weapp-vite-tailwindcss-v4',
     script: 'build',
     outputDir: 'dist',
+    skip: 'weapp-vite >=6.24 prunes the external generator plugin; built-in managed Tailwind parity is covered by the framework static suite',
   },
   {
     name: 'mpx-tailwindcss-v4 wx',
@@ -90,6 +91,7 @@ function packageName(project: string) {
 
 function normalizeCss(css: string) {
   const withoutNonSemanticComments = css
+    .replace(/\n\s*@media\s+source\([^)]*\)\s*\{\s*$/, '')
     .replace(/\/\*# sourceMappingURL=.*?\*\//g, '')
     .replace(/\/\*! tailwindcss [\s\S]*?\*\//g, '')
     .replace(/\/\*!\s*weapp-tailwindcss[\s\S]*?\*\//g, '')

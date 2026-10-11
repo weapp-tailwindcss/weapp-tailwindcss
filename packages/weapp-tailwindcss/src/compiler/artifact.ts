@@ -1,5 +1,5 @@
 import type { CssFragment, CssFragmentKind, CssStage, GenerationArtifact, SourceScope } from './types'
-import { postcss } from '@weapp-tailwindcss/postcss'
+import { postcss } from '@weapp-tailwindcss/postcss/transform'
 
 export interface CreateCssFragmentOptions {
   id: string

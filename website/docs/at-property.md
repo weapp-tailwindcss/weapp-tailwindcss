@@ -1,8 +1,6 @@
 ---
 title: at property
-description: >-
-  在 CSS 里，@property 是一个 **注册自定义属性（CSS Custom Properties）** 的新特性，它解决了原先 --var: value 那种“纯字符串变量”的一些缺陷。它主要提供了
-  **类型约束、初始值、继承控制** 等能力，让浏览器能更高效地处理这…
+description: at property，提供核心概念、配置说明与实践示例。
 keywords:
   - at
   - property

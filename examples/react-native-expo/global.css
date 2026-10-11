@@ -1,2 +1,6 @@
 @import 'tailwindcss';
-@source './src/**/*.{ts,tsx}';
+@source './src/**/*.{ts,tsx,json}';
+
+@utility rn-css-hmr-probe {
+  background-color: #10b981;
+}

@@ -1,0 +1,6 @@
+{
+  "coverage": "native-build",
+  "javascript": true,
+  "applicationRegistration": true,
+  "pageProbe": true
+}

@@ -3,7 +3,7 @@ import process from 'node:process'
 import { execa } from 'execa'
 import path from 'pathe'
 import { describe, expect, it } from 'vitest'
-import { collectEmptyBlockAtRules } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/css-integrity'
+import { collectEmptyCssBlocks } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/css-integrity'
 import { ensureProjectBuilt } from './projectBuild'
 import { hasScopedDarkApplyProbeStyle, initialScopedDarkApplyProbeState } from './scopedDarkApplyProbe'
 
@@ -136,8 +136,8 @@ async function expectUviewCssEvidence(platform: 'mp-weixin' | 'mp-alipay') {
   ).toBe(true)
   for (const asset of assets) {
     expect(
-      collectEmptyBlockAtRules(asset.source),
-      `${platform} ${asset.file} should not emit empty block at-rules`,
+      collectEmptyCssBlocks(asset.source),
+      `${platform} ${asset.file} should not emit empty CSS blocks`,
     ).toEqual([])
   }
   expect(css).toContain('.u-button')

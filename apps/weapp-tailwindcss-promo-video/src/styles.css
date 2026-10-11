@@ -1,0 +1,26 @@
+@font-face {
+  font-family: 'Noto Sans SC Variable';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: block;
+  src: url('./assets/fonts/noto-sans-sc-video-subset.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'JetBrains Mono Variable';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: block;
+  src: url('./assets/fonts/jetbrains-mono-latin.woff2') format('woff2');
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: #040d1a;
+}
+.mono {
+  font-family: 'JetBrains Mono Variable', monospace;
+}

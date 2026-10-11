@@ -1,0 +1,59 @@
+{
+  "name": "@weapp-tailwindcss/source-scan",
+  "type": "module",
+  "version": "0.1.2",
+  "description": "共享的源码扫描描述、路径身份与匹配工具。",
+  "author": "ice breaker <1324318532@qq.com>",
+  "license": "MIT",
+  "homepage": "https://tw.weapp.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
+    "directory": "packages/source-scan"
+  },
+  "bugs": {
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues"
+  },
+  "keywords": [
+    "tailwindcss",
+    "engine",
+    "weapp"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": "^22.18.0 || >=24.11.0"
+  },
+  "scripts": {
+    "dev": "tsdown --watch --sourcemap",
+    "build": "tsdown",
+    "test": "vitest run",
+    "test:dev": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "dependencies": {
+    "micromatch": "catalog:buildUtilities"
+  }
+}

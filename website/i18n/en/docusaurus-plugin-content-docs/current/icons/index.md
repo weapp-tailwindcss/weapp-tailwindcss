@@ -66,8 +66,6 @@ Then you go back to your page, enter `i-` and the smart prompt will appear, and 
 
 `<view class="i-mdi-home text-3xl text-red-600"></view>`
 
-> If it does not work, if `Tailwindcss@3` is used, please check whether your `@tailwind components;` / `@import 'tailwindcss/components';`(scss) is introduced in the entry `css/scss`
-
 ## Tailwindcss v4
 
 In `Tailwindcss@4`, the `tailwind.config.js` file is not automatically read, so you need to use the [@config](https://tailwindcss.com/docs/functions-and-directives#config-directive) directive to manually introduce the `tailwindcss` configuration file.

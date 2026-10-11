@@ -10,6 +10,10 @@ const communitySidebar: SidebarConfig = [
   },
   {
     type: 'doc',
+    id: 'reference/support-matrix',
+  },
+  {
+    type: 'doc',
     id: 'icons/index',
   },
   {
@@ -31,10 +35,6 @@ const communitySidebar: SidebarConfig = [
   {
     type: 'doc',
     id: 'quick-start/uni-app-css-macro',
-  },
-  {
-    type: 'doc',
-    id: 'quick-start/build-or-import-outside-components',
   },
   {
     type: 'doc',
@@ -63,11 +63,6 @@ const communitySidebar: SidebarConfig = [
     type: 'doc',
     id: 'community/plugins',
   },
-  {
-    type: 'doc',
-    id: 'community/typography',
-  },
-
 ]
 
 export default communitySidebar

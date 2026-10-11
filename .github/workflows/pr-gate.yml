@@ -1,0 +1,288 @@
+name: PR Gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      full_verification:
+        description: 审批后完整执行版本 PR 验收，默认保留自动范围
+        type: boolean
+        required: false
+        default: false
+
+concurrency:
+  group: pr-gate-${{ inputs.full_verification && format('full-{0}', github.run_id) || github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  scope:
+    name: Resolve PR scope
+    uses: ./.github/workflows/ci-scope.yml
+    with:
+      full_verification: ${{ inputs.full_verification || false }}
+
+  prepare-build:
+    name: Prepare Ubuntu package build
+    needs: scope
+    if: needs.scope.outputs.core == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
+      - uses: ./.github/actions/setup-pnpm
+      - name: Build package dependency closure
+        run: pnpm ci:memory --label pr-gate-build --max-rss-mb 5632 --max-rss-delta-mb 4608 -- pnpm build:ci
+
+      - name: Verify core escape package
+        run: |
+          pnpm --filter @weapp-tailwindcss/escape typecheck
+          pnpm --filter @weapp-tailwindcss/escape tsd
+          pnpm --filter @weapp-tailwindcss/escape test:package
+
+      - name: Upload package build artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: pr-gate-package-build-${{ github.run_id }}
+          path: |
+            packages/**/dist/**
+            packages/**/build/**
+            packages-runtime/**/dist/**
+            packages-runtime/**/build/**
+          if-no-files-found: error
+          retention-days: 1
+
+  quality:
+    name: PR quality and unit tests
+    needs: [scope, prepare-build]
+    if: needs.scope.outputs.core == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
+      - uses: ./.github/actions/setup-pnpm
+      - uses: actions/download-artifact@v4
+        with:
+          name: pr-gate-package-build-${{ github.run_id }}
+          path: .
+      - name: Lint
+        if: matrix.shard == 1
+        run: pnpm lint
+      - name: Architecture contract
+        if: matrix.shard == 1
+        run: pnpm architecture:check
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install chromium chromium-headless-shell
+      - name: Unit tests
+        run: pnpm ci:memory --label pr-gate-unit-${{ matrix.shard }} --max-rss-mb 5632 --max-rss-delta-mb 4608 -- pnpm exec vitest run --shard=${{ matrix.shard }}/3 --maxWorkers=2 --update=none
+
+  core-smoke:
+    name: Ubuntu core smoke
+    needs: [scope, prepare-build]
+    if: needs.scope.outputs.core == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
+      - uses: ./.github/actions/setup-pnpm
+      - uses: actions/download-artifact@v4
+        with:
+          name: pr-gate-package-build-${{ github.run_id }}
+          path: .
+      - run: pnpm exec playwright install chromium chromium-headless-shell
+      - name: Run core smoke suite
+        run: >
+          pnpm e2e:generator-parity &&
+          pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/issue-1166-webpack-radius.test.ts e2e/issue-1194-css-calc.test.ts --update=none &&
+          pnpm e2e:web-css-preservation &&
+          pnpm e2e:multiplatform-build
+
+  platform-watch:
+    name: Platform watch smoke (${{ matrix.runner_label }}, ${{ matrix.case_name }})
+    needs: [scope]
+    if: needs.scope.outputs.watch == 'true'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            runner_label: linux
+            case_name: uni-app-vite-tailwindcss-v4
+            web_only: '1'
+          - os: macos-latest
+            runner_label: macos
+            case_name: uni-app-vite-tailwindcss-v4
+            web_only: '1'
+          - os: macos-latest
+            runner_label: macos
+            case_name: uni-app-vite-tailwindcss-v4:mp-weixin
+            web_only: '0'
+          - os: windows-latest
+            runner_label: windows
+            case_name: uni-app-vite-tailwindcss-v4
+            web_only: '1'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
+      - uses: ./.github/actions/setup-pnpm
+      - name: Build watch dependencies for this OS
+        run: pnpm build:ci
+      - name: Install Playwright Chromium
+        run: pnpm --filter @weapp-tailwindcss/scripts exec playwright install chromium chromium-headless-shell
+      - name: Run platform watch smoke
+        env:
+          E2E_WATCH_CASE: ${{ matrix.case_name }}
+          E2E_WATCH_WEB_ONLY: ${{ matrix.web_only }}
+          E2E_WATCH_MAX_ATTEMPTS: '1'
+          E2E_WATCH_ROUND_PROFILE: default
+          E2E_WATCH_TIMEOUT_MS: '420000'
+          E2E_WATCH_COMMAND_TIMEOUT_MS: '1200000'
+          E2E_WATCH_SAVE_SNAPSHOTS: '1'
+          NODE_OPTIONS: --max-old-space-size=6144
+        run: pnpm e2e:watch
+
+  platform-dev:
+    name: Platform dev startup smoke (${{ matrix.runner_label }})
+    needs: [scope]
+    if: needs.scope.outputs.core == 'true'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            runner_label: linux
+          - os: macos-latest
+            runner_label: macos
+          - os: windows-latest
+            runner_label: windows
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
+      - uses: ./.github/actions/setup-pnpm
+      - name: Build dev dependencies for this OS
+        run: pnpm build:ci
+      - name: Run normal dev startup smoke
+        env:
+          E2E_DEV_STARTUP_RUN: '1'
+          E2E_DEV_STARTUP_CASE: weapp-vite-tailwindcss-v4
+          E2E_DEV_STARTUP_TIMEOUT_MS: '180000'
+          NODE_OPTIONS: --max-old-space-size=6144
+        run: pnpm e2e:dev:smoke
+
+  windows-utilities:
+    needs: scope
+    if: needs.scope.outputs.core == 'true'
+    name: Default utilities (${{ matrix.os }}, Node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            node: 22
+          - os: windows-latest
+            node: 24
+          - os: ubuntu-latest
+            node: 24
+          - os: macos-latest
+            node: 24
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Build package on this OS
+        run: pnpm --filter weapp-tailwindcss... --filter @weapp-tailwindcss/postcss-calc run build
+      - name: Check CSS import paths and source generation
+        run: pnpm --filter weapp-tailwindcss exec vitest run test/tailwindcss/v4-import-paths.test.ts test/tailwindcss/v4-engine.test.ts
+      - name: Reproduce published version and verify packed fix
+        run: pnpm e2e:windows-utilities
+      - name: Upload utility output evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: default-utilities-${{ matrix.os }}-node${{ matrix.node }}
+          path: e2e/.artifacts/windows-utilities/**
+          if-no-files-found: error
+          retention-days: 14
+
+  portable-demos:
+    name: Portable demos
+    needs: scope
+    if: needs.scope.outputs.core == 'true'
+    uses: ./.github/workflows/demo-matrix.yml
+
+  css-compat:
+    name: CSS compatibility
+    needs: scope
+    if: needs.scope.outputs.core == 'true'
+    uses: ./.github/workflows/css-compat.yml
+    with:
+      full_verification: ${{ inputs.full_verification || false }}
+
+  env:
+    name: Environment package
+    needs: scope
+    if: needs.scope.outputs.core == 'true'
+    uses: ./.github/workflows/env.yml
+    with:
+      full_verification: ${{ inputs.full_verification || false }}
+
+  pr-gate:
+    name: ${{ inputs.full_verification && 'Version PR checks' || github.event_name == 'pull_request' && needs.scope.outputs.metadata_only == 'true' && 'Await manual version verification' || 'PR Gate' }}
+    if: always() && !cancelled()
+    needs: [scope, quality, core-smoke, platform-watch, platform-dev, windows-utilities, portable-demos, css-compat, env]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require enabled PR checks
+        env:
+          SCOPE_RESULT: ${{ needs.scope.result }}
+          QUALITY_RESULT: ${{ needs.quality.result }}
+          SMOKE_RESULT: ${{ needs.core-smoke.result }}
+          PLATFORM_RESULT: ${{ needs.platform-watch.result }}
+          WATCH_ENABLED: ${{ needs.scope.outputs.watch }}
+          DEV_RESULT: ${{ needs.platform-dev.result }}
+          UTILITIES_RESULT: ${{ needs.windows-utilities.result }}
+          DEMOS_ENABLED: ${{ needs.scope.outputs.core }}
+          DEMOS_RESULT: ${{ needs.portable-demos.result }}
+          CSS_COMPAT_RESULT: ${{ needs.css-compat.result }}
+          ENV_RESULT: ${{ needs.env.result }}
+        run: |
+          test "$SCOPE_RESULT" = success
+          for enabled in "$DEMOS_ENABLED" "$WATCH_ENABLED"; do
+            test "$enabled" = true || test "$enabled" = false
+          done
+          if test "$DEMOS_ENABLED" = true; then
+            test "$DEMOS_RESULT" = success
+            test "$CSS_COMPAT_RESULT" = success
+            test "$ENV_RESULT" = success
+            for result in "$QUALITY_RESULT" "$SMOKE_RESULT" "$DEV_RESULT" "$UTILITIES_RESULT"; do
+              test "$result" = success
+            done
+          fi
+          if test "$WATCH_ENABLED" = true; then
+            test "$PLATFORM_RESULT" = success
+          fi

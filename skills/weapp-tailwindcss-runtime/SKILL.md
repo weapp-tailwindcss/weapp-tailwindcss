@@ -1,6 +1,6 @@
 ---
 name: weapp-tailwindcss-runtime
-description: 设计和排查小程序动态 class 组合与运行时封装，覆盖 @weapp-tailwindcss/runtime、merge、cva、variants、clsx、twMerge、weappTwIgnore、escape/unescape、rpx transformer、缓存和组件 class 覆盖。Use for dynamic classes, cn helpers, variant APIs, runtime package selection, or class escaping at runtime；不用于 bundler 初始接入。
+description: 设计和排查 weapp-tailwindcss 动态 class 组合与运行时封装，覆盖 @weapp-tailwindcss/runtime、merge、cva、variants、typography、theme-transition、ui、clsx、twMerge、weappTwIgnore、escape/unescape、rpx transformer、缓存和组件 class 覆盖。Use for dynamic classes, cn helpers, variant APIs, runtime package selection, or class escaping at runtime；不用于 bundler 初始接入、React Native 或 Lynx 编译器配置。
 ---
 
 # weapp-tailwindcss runtime
@@ -11,10 +11,11 @@ description: 设计和排查小程序动态 class 组合与运行时封装，覆
 
 1. 识别 class 来源：静态模板、完整字面量条件、组件外部覆盖、第三方透传或真正的运行时输入。
 2. 读取 [references/runtime-guide.md](references/runtime-guide.md)，按任务选择最小包和 API。
-3. 优先使用完整 class 字面量或枚举；不要拼接 `bg-${color}-500` 这类半截 token。
-4. 普通组件覆盖使用 `@weapp-tailwindcss/merge`；单槽 variants 使用 `@weapp-tailwindcss/cva`；多槽 recipes 使用 `@weapp-tailwindcss/variants`。
-5. 自定义封装名时检查构建期可识别标识符；需要原样透传时使用 `weappTwIgnore`，不要扩大全局忽略。
-6. 自定义 runtime factory、escape/unescape 或 rpx transformer 时保持纯函数边界，并验证缓存淘汰前后的等价输出。
+3. 读取各包当前 manifest 与 exports，避免把 `merge/slim`、`merge/lite`、UI CSS 或插件入口当成主入口。
+4. 优先使用完整 class 字面量或枚举；不要拼接 `bg-${color}-500` 这类半截 token。
+5. 普通组件覆盖使用 `@weapp-tailwindcss/merge`；单槽 variants 使用 `@weapp-tailwindcss/cva`；多槽 recipes 使用 `@weapp-tailwindcss/variants`。
+6. 自定义封装名时检查构建期可识别标识符；需要原样透传时使用 `weappTwIgnore`，不要扩大全局忽略。
+7. 自定义 runtime factory、escape/unescape 或 rpx transformer 时保持纯函数边界，并验证缓存淘汰前后的等价输出。
 
 ## 关键约束
 

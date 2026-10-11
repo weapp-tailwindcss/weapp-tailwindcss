@@ -21,36 +21,6 @@ weapp-tailwindcss 生成器的输出结果。
 
 ## 属性
 
-### classSet
-
-> **classSet**: `Set<string>`
-
-***
-
-### rawCandidates
-
-> **rawCandidates**: `Set<string>`
-
-***
-
-### dependencies
-
-> **dependencies**: `string[]`
-
-***
-
-### sources
-
-> **sources**: `TailwindV4SourcePattern[]`
-
-***
-
-### root
-
-> **root**: `TailwindV4CompiledSourceRoot`
-
-***
-
 ### css
 
 > **css**: `string`
@@ -88,3 +58,33 @@ Tailwind 原始输出 CSS。
 > **target**: `"weapp" | "web"`
 
 实际生成目标。
+
+***
+
+### classSet
+
+> **classSet**: `Set<string>`
+
+***
+
+### rawCandidates
+
+> **rawCandidates**: `Set<string>`
+
+***
+
+### dependencies
+
+> **dependencies**: `string[]`
+
+***
+
+### sources
+
+> **sources**: `TailwindV4SourcePattern[]`
+
+***
+
+### root
+
+> **root**: `TailwindV4CompiledSourceRoot`

@@ -13,13 +13,14 @@ keywords:
   - taro
   - mpx
   - React Native
+  - ReactLynx
 ---
 
 # Skill（技能系统）
 
 `weapp-tailwindcss` 官方 Skill 面向业务项目使用者。它把当前 v5 的接入、迁移、排障和高级能力拆成独立工作流，避免一个大 Skill 同时维护所有框架与 API。
 
-本项目使用 [`vercel-labs/skills`](https://github.com/vercel-labs/skills) 安装 Skill。`sonofmagic/weapp-tailwindcss` 是内容事实源，`sonofmagic/skills` 是面向用户的聚合安装仓库。
+本项目使用 [`vercel-labs/skills`](https://github.com/vercel-labs/skills) 安装 Skill。`weapp-tailwindcss/weapp-tailwindcss` 是内容事实源，`sonofmagic/skills` 是面向用户的聚合安装仓库。
 
 ## 安装完整套件
 
@@ -32,6 +33,7 @@ npx skills add sonofmagic/skills \
   --skill weapp-tailwindcss-runtime \
   --skill weapp-tailwindcss-custom-build \
   --skill weapp-tailwindcss-react-native \
+  --skill weapp-tailwindcss-lynx \
   -y
 ```
 
@@ -54,12 +56,13 @@ npx skills add sonofmagic/skills --list
 | Skill | 使用场景 |
 | --- | --- |
 | `weapp-tailwindcss` | 泛化请求、任务识别、安全基线与兼容入口 |
-| `weapp-tailwindcss-setup` | 新接入、框架选型、Tailwind CSS 4 与多端配置 |
-| `weapp-tailwindcss-migrate` | v4 到 v5、旧 patch/生成插件与环境迁移 |
-| `weapp-tailwindcss-troubleshoot` | 样式生成、class 转译、rpx、HMR 和运行端排障 |
+| `weapp-tailwindcss-setup` | 新接入、框架选型、独立 CLI、Tailwind CSS 4 与多端配置 |
+| `weapp-tailwindcss-migrate` | v4 到 v5、旧 patch/CLI/生成插件与环境迁移 |
+| `weapp-tailwindcss-troubleshoot` | CLI、样式生成、class 转译、rpx、HMR 和运行端排障 |
 | `weapp-tailwindcss-runtime` | 动态 class、merge、cva、variants 与 escape/unescape |
 | `weapp-tailwindcss-custom-build` | Core API、自研 bundler、样式注入和分包隔离 |
 | `weapp-tailwindcss-react-native` | Expo Metro、Native manifest 和 Android/iOS 运行时 |
+| `weapp-tailwindcss-lynx` | ReactLynx、Rspeedy、Lynx 原生 CSS 与 encoder 兼容 |
 
 ## 当前共同基线
 
@@ -69,6 +72,8 @@ npx skills add sonofmagic/skills --list
 - Tailwind 入口使用纯 CSS，必须被项目实际导入；`cssEntries` 使用绝对路径且不能替代构建图导入。
 - H5/Web 通常保留插件，由 generator 自动选择 Web target。
 - JavaScript class 只转换 Tailwind 验证过的 `classNameSet` 精确候选。
+- `@weapp-tailwindcss/cli` 默认输出 Web CSS，`--target weapp` 只转换生成 CSS，不替代完整小程序 bundler。
+- React Native 使用 style manifest；ReactLynx 保留 `className` 并输出 Lynx 原生 CSS，两条链路互不替代。
 
 ## 本地开发安装
 
@@ -83,6 +88,7 @@ npx skills add . \
   --skill weapp-tailwindcss-runtime \
   --skill weapp-tailwindcss-custom-build \
   --skill weapp-tailwindcss-react-native \
+  --skill weapp-tailwindcss-lynx \
   -y
 ```
 
@@ -108,6 +114,10 @@ npx skills add . \
 使用 $weapp-tailwindcss-react-native，为 Expo SDK 54 配置 Metro 并验证 manifest warnings。
 ```
 
+```text
+使用 $weapp-tailwindcss-lynx，为 ReactLynx + Rspeedy 配置 Tailwind CSS 4 并检查 encoder warnings。
+```
+
 ## 维护与验证
 
 源码位于 `skills/<skill-name>/`。每个目录包含 `SKILL.md`、`agents/openai.yaml` 和按需加载的 `references/`。
@@ -118,4 +128,3 @@ npx skills add . --list
 ```
 
 发布链路见：[Skill 发布与同步](/docs/ai/basics/skill-release)。
-

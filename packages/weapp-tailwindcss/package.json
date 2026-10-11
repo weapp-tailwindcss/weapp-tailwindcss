@@ -1,18 +1,18 @@
 {
   "name": "weapp-tailwindcss",
   "type": "module",
-  "version": "5.2.14",
-  "description": "把 tailwindcss 原子化样式思想，带给小程序开发者们! bring tailwindcss to miniprogram developers!",
+  "version": "5.6.1",
+  "description": "Bring Tailwind CSS to every platform! 把 Tailwind CSS 的原子化开发体验带到全端！",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",
-  "homepage": "https://tw.icebreaker.top",
+  "homepage": "https://tw.weapp.dev",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sonofmagic/weapp-tailwindcss.git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
     "directory": "packages/weapp-tailwindcss"
   },
   "bugs": {
-    "url": "https://github.com/sonofmagic/weapp-tailwindcss/issues"
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues"
   },
   "keywords": [
     "tailwindcss",
@@ -55,6 +55,11 @@
       "types": "./dist/vite.d.ts",
       "import": "./dist/vite.js",
       "require": "./dist/vite.cjs"
+    },
+    "./vite/web": {
+      "types": "./dist/vite/web.d.ts",
+      "import": "./dist/vite/web.js",
+      "require": "./dist/vite/web.cjs"
     },
     "./webpack": {
       "types": "./dist/webpack.d.ts",
@@ -154,12 +159,7 @@
       ]
     }
   },
-  "bin": {
-    "weapp-tailwindcss": "bin/weapp-tailwindcss.cjs",
-    "weapp-tw": "bin/weapp-tailwindcss.cjs"
-  },
   "files": [
-    "bin",
     "css",
     "dist",
     "generator-placeholder.css",
@@ -178,13 +178,13 @@
     "build": "tsdown && tsc -p tsconfig.build.json --declaration --emitDeclarationOnly --declarationDir dist --noEmit false && tsx ../../tools/weapp-tailwindcss-scripts/src/rewrite-dts-aliases.ts && tsx ../../tools/weapp-tailwindcss-scripts/src/create-entry-dts.ts && tsx ../../tools/weapp-tailwindcss-scripts/src/ensure-escape-dts.ts",
     "build:types": "tsc -p tsconfig.build.json --declaration --emitDeclarationOnly --declarationDir dist --noEmit false && tsx ../../tools/weapp-tailwindcss-scripts/src/rewrite-dts-aliases.ts && tsx ../../tools/weapp-tailwindcss-scripts/src/create-entry-dts.ts",
     "build:tsc": "cross-env NODE_ENV=development tsc --build tsconfig.json",
-    "build:cli": "cd plugins/cli && pnpm run build",
     "build:css": "pnpm --filter @weapp-tailwindcss/scripts build:css",
     "build:weapp-theme": "pnpm --filter @weapp-tailwindcss/scripts build:weapp-theme",
     "test": "vitest run",
     "test:dev": "vitest",
     "test:ui": "vitest --ui",
-    "bench": "vitest bench --config ./vitest.config.ts",
+    "bench": "vitest bench --config ./vitest.config.ts --reporter=default --reporter=json --outputFile.json=benchmark/bench-report.json",
+    "bench:core-compiler": "node --expose-gc --import tsx benchmark/core-compiler.ts",
     "bench:vite-perf": "pnpm --filter @weapp-tailwindcss/scripts bench:vite-perf",
     "bench:vite-perf:summary": "pnpm --filter @weapp-tailwindcss/scripts bench:vite-perf:summary",
     "bench:js-handlers": "pnpm --filter @weapp-tailwindcss/scripts bench:js-handlers",
@@ -199,7 +199,10 @@
     "lint:fix": "eslint ./src --fix",
     "bench:vite-dev-hmr": "pnpm --filter @weapp-tailwindcss/scripts bench:vite-dev-hmr",
     "watch-hmr:speed-report": "pnpm --filter @weapp-tailwindcss/scripts watch-hmr:speed-report",
-    "test:watch-hmr": "pnpm --filter @weapp-tailwindcss/scripts test:watch-hmr"
+    "test:watch-hmr": "pnpm --filter @weapp-tailwindcss/scripts test:watch-hmr",
+    "build:native": "node native/build.mjs",
+    "test:native": "node native/verify.mjs",
+    "test:native:package": "node --import tsx native/test/package.mjs"
   },
   "tsd": {
     "compilerOptions": {
@@ -217,10 +220,18 @@
     "registry": "https://registry.npmjs.org"
   },
   "peerDependencies": {
-    "@mpxjs/webpack-plugin": ">=2.0.0 <3.0.0"
+    "@mpxjs/webpack-plugin": ">=2.0.0 <3.0.0",
+    "tailwindcss": "^4.0.0",
+    "vite": "^5.2.0 || ^6.0.0 || ^7.0.0 || ^8.0.0"
   },
   "peerDependenciesMeta": {
     "@mpxjs/webpack-plugin": {
+      "optional": true
+    },
+    "tailwindcss": {
+      "optional": true
+    },
+    "vite": {
       "optional": true
     }
   },
@@ -228,14 +239,16 @@
     "@babel/parser": "catalog:babel8",
     "@babel/traverse": "catalog:babel8",
     "@babel/types": "catalog:babel8",
-    "@tailwindcss-mangle/engine": "catalog:tailwindcssMangleEngine",
     "@vue/compiler-dom": "catalog:vue3",
-    "@weapp-core/escape": "~8.0.0",
+    "@weapp-tailwindcss/engine": "workspace:*",
+    "@weapp-tailwindcss/env": "workspace:*",
+    "@weapp-tailwindcss/escape": "workspace:*",
     "@weapp-tailwindcss/logger": "workspace:*",
     "@weapp-tailwindcss/postcss": "workspace:*",
     "@weapp-tailwindcss/reset": "workspace:*",
     "@weapp-tailwindcss/shared": "workspace:*",
-    "comment-json": "^5.0.0",
+    "@weapp-tailwindcss/source-scan": "workspace:*",
+    "comment-json": "catalog:compilerUtilities",
     "debug": "catalog:buildUtilities",
     "fast-glob": "catalog:buildUtilities",
     "htmlparser2": "catalog:buildUtilities",
@@ -243,15 +256,27 @@
     "lru-cache": "catalog:buildUtilities",
     "magic-string": "catalog:buildUtilities",
     "micromatch": "catalog:buildUtilities",
-    "oxc-parser": "^0.143.0",
-    "oxc-walker": "^1.1.1",
-    "semver": "~7.8.5",
+    "oxc-parser": "catalog:compilerUtilities",
+    "oxc-walker": "catalog:compilerUtilities",
+    "semver": "catalog:compilerUtilities",
     "tailwindcss-config": "workspace:*",
     "weapp-style-injector": "workspace:*",
     "yaml": "catalog:buildUtilities"
   },
+  "optionalDependencies": {
+    "@weapp-tailwindcss/native-darwin-arm64": "workspace:*",
+    "@weapp-tailwindcss/native-darwin-x64": "workspace:*",
+    "@weapp-tailwindcss/native-linux-arm64-gnu": "workspace:*",
+    "@weapp-tailwindcss/native-linux-arm64-musl": "workspace:*",
+    "@weapp-tailwindcss/native-linux-x64-gnu": "workspace:*",
+    "@weapp-tailwindcss/native-linux-x64-musl": "workspace:*",
+    "@weapp-tailwindcss/native-win32-arm64-msvc": "workspace:*",
+    "@weapp-tailwindcss/native-win32-x64-msvc": "workspace:*"
+  },
   "devDependencies": {
     "@mpxjs/webpack-plugin": "^2.11.1",
+    "tsx": "catalog:tsx",
+    "vite": "catalog:vite724",
     "webpack": "5.105.4"
   }
 }

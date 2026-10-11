@@ -23487,7 +23487,7 @@
       ]
     },
     {
-      "name": "uni-app-x-hbuilderx-tailwindcss-v4",
+      "name": "uni-app-x-vdom-tailwindcss-v4",
       "framework": "uni-app-x",
       "builder": "hbuilderx",
       "tailwindcss": "v3",
@@ -23538,7 +23538,7 @@
       ]
     },
     {
-      "name": "uni-app-x-hbuilderx-tailwindcss-v4",
+      "name": "uni-app-x-vdom-tailwindcss-v4",
       "framework": "uni-app-x",
       "builder": "hbuilderx",
       "tailwindcss": "v4",

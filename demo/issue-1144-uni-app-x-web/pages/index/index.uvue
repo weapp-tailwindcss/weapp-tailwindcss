@@ -1,0 +1,138 @@
+<template>
+	<view :class="[theme.themeClass, 'bg-page px-20 py-24']">
+		<text class="text-content text-2xl font-bold text-white/70 text-blue-300/35">全端主题</text>
+		<view class="issue-1144-important-probe mt-24!">
+			<text class="text-content text-sm">重要 utility HMR 探针</text>
+		</view>
+		<pt-probe :pt="{ root: 'p-0!' }" />
+		<text class="mt-6 text-content-muted text-sm">
+			{{ theme.themeClass }} · {{ theme.modePreference }} · {{ theme.resolvedMode }}
+		</text>
+
+		<view class="mt-24 rounded-xl border border-line border-solid bg-surface p-16">
+			<text class="text-content text-sm font-bold">皮肤{{ theme.skin }}</text>
+			<view class="mt-12 flex-row">
+				<view
+					v-for="item in skins"
+					:key="item.value"
+					:class="[
+						'mx-5 flex-1 items-center rounded-lg border border-line border-solid px-12 py-10',
+						theme.skin == item.value ? 'bg-primary' : 'bg-surface-muted'
+					]"
+					@click="selectSkin(item.value)"
+				>
+					<text
+						:class="[
+							'text-sm',
+							theme.skin == item.value ? 'text-on-primary' : 'text-content'
+						]"
+					>
+						{{ item.label }}
+					</text>
+				</view>
+			</view>
+		</view>
+
+		<view class="mt-14 rounded-xl border border-line border-solid bg-surface p-16">
+			<text class="text-content text-sm font-bold">明暗模式</text>
+			<view class="mt-12 flex-row">
+				<view
+					v-for="item in modes"
+					:key="item.value"
+					:class="[
+						'mx-4 flex-1 items-center rounded-lg border border-line border-solid px-8 py-10',
+						theme.modePreference == item.value ? 'bg-primary' : 'bg-surface-muted'
+					]"
+					@click="selectMode(item.value)"
+				>
+					<text
+						:class="[
+							'text-xs',
+							theme.modePreference == item.value ? 'text-on-primary' : 'text-content'
+						]"
+					>
+						{{ item.label }}
+					</text>
+				</view>
+			</view>
+		</view>
+
+		<view class="mt-14 rounded-xl border border-line border-solid bg-surface p-16">
+			<text class="text-content text-lg font-bold">语义色预览</text>
+			<text class="mt-6 text-content-muted text-sm">
+				根节点切换主题类，组件通过 CSS 变量自动换肤。
+			</text>
+			<view class="mt-16 flex-row">
+				<view class="box-class1">
+					<text class="text">主操作</text>
+				</view>
+				<view class="box-class2">
+					<text class="text">辅助色</text>
+				</view>
+			</view>
+		</view>
+
+		<text class="bg-primary text-on-primary mt-30 p-26">--theme-primary: {{ pageColor }}</text>
+
+		<navigator url="/pages/index/test" class="p-20 mt-12 border border-solid text-black">
+			进入test页
+		</navigator>
+	</view>
+</template>
+
+<script lang="uts">
+import PtProbe from '../../components/pt-probe/pt-probe.uvue'
+export default {
+	components: { PtProbe },
+	data() {
+		return {
+			theme: {
+				themeClass: 'light',
+				modePreference: 'system',
+				resolvedMode: 'light',
+				skin: 'default'
+			},
+			skins: [
+				{ label: '默认', value: 'default' },
+				{ label: '海洋', value: 'ocean' }
+			],
+			modes: [
+				{ label: '浅色', value: 'light' },
+				{ label: '深色', value: 'dark' },
+				{ label: '跟随系统', value: 'system' }
+			],
+			pageColor: '#3366ff'
+		}
+	},
+	methods: {
+		selectSkin(skin: string) {
+			this.theme.skin = skin
+		},
+		selectMode(mode: string) {
+			this.theme.modePreference = mode
+		}
+	}
+}
+</script>
+<style lang="scss">
+@reference "../../main.css";
+.text {
+	@apply text-on-primary text-sm font-bold;
+}
+
+.box-class1 {
+	/* bg-[linear-gradient(to_right,#6a88fd,#b4b0bb)] bg-linear-[to_right,red_5%,yellow_60%,lime_90%,teal] bg-linear-(--my-gradient) */
+	@apply mx-5 h-44 flex-1 items-center justify-center rounded-lg bg-[linear-gradient(to_right,#6a88fd,#b4b0bb)];
+}
+
+.box-class2 {
+	margin: 0 5px;
+	height: 44px;
+	flex: 1 1 0%;
+	align-items: center;
+	justify-content: center;
+	border-radius: 10px;
+	background-color: var(--theme-secondary);
+	transition: background-color 0.3s ease;
+}
+</style>

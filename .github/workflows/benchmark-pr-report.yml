@@ -1,0 +1,175 @@
+name: PR Benchmark Report
+
+on:
+  workflow_run:
+    workflows: [Benchmark, E2E Watch]
+    types: [completed]
+
+concurrency:
+  group: pr-benchmark-report-${{ github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.id }}
+  cancel-in-progress: true
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: write
+
+jobs:
+  publish:
+    name: Publish PR benchmark report
+    if: github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out trusted reporter code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Resolve PR and benchmark runs
+        id: metadata
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const sourceRun = context.payload.workflow_run
+            const pullRequest = sourceRun.pull_requests?.[0]
+            if (!pullRequest) {
+              core.setOutput('pr_number', '')
+              core.setOutput('stale', 'true')
+              return
+            }
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pullRequest.number,
+            })
+            core.setOutput('pr_number', String(pr.number))
+            core.setOutput('head_sha', pr.head.sha)
+            core.setOutput('repository', `${context.repo.owner}/${context.repo.repo}`)
+            core.setOutput('stale', pr.head.sha === sourceRun.head_sha ? 'false' : 'true')
+
+            async function latestRun(workflowId) {
+              const { data } = await github.rest.actions.listWorkflowRuns({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: workflowId,
+                event: 'pull_request',
+                head_sha: pr.head.sha,
+                per_page: 100,
+              })
+              return data.workflow_runs
+                .filter(run => run.status === 'completed')
+                .sort((a, b) => b.run_number - a.run_number)[0]
+            }
+
+            const benchmark = await latestRun('benchmark.yml')
+            const watch = await latestRun('e2e-watch.yml')
+            for (const [prefix, run] of [['benchmark', benchmark], ['watch', watch]]) {
+              core.setOutput(`${prefix}_run_id`, run ? String(run.id) : '')
+              core.setOutput(`${prefix}_conclusion`, run?.conclusion || '')
+              core.setOutput(`${prefix}_url`, run?.html_url || '')
+            }
+
+      - name: Prepare artifact directories
+        if: steps.metadata.outputs.stale != 'true' && steps.metadata.outputs.pr_number != ''
+        run: mkdir -p .tmp/benchmark-pr-report/benchmark .tmp/benchmark-pr-report/watch
+
+      - name: Download Benchmark artifacts
+        if: steps.metadata.outputs.stale != 'true' && steps.metadata.outputs.pr_number != '' && steps.metadata.outputs.benchmark_run_id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.metadata.outputs.benchmark_run_id }}
+          path: .tmp/benchmark-pr-report/benchmark
+
+      - name: Download E2E Watch artifacts
+        if: steps.metadata.outputs.stale != 'true' && steps.metadata.outputs.pr_number != '' && steps.metadata.outputs.watch_run_id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.metadata.outputs.watch_run_id }}
+          path: .tmp/benchmark-pr-report/watch
+
+      - name: Generate aggregate report
+        id: report
+        if: steps.metadata.outputs.stale != 'true' && steps.metadata.outputs.pr_number != ''
+        env:
+          PR_NUMBER: ${{ steps.metadata.outputs.pr_number }}
+          HEAD_SHA: ${{ steps.metadata.outputs.head_sha }}
+          REPOSITORY: ${{ steps.metadata.outputs.repository }}
+          BENCHMARK_RUN_ID: ${{ steps.metadata.outputs.benchmark_run_id }}
+          WATCH_RUN_ID: ${{ steps.metadata.outputs.watch_run_id }}
+          BENCHMARK_CONCLUSION: ${{ steps.metadata.outputs.benchmark_conclusion }}
+          WATCH_CONCLUSION: ${{ steps.metadata.outputs.watch_conclusion }}
+        run: |
+          node benchmark/version-compare/scripts/pr-report.mjs \
+            --benchmark-dir .tmp/benchmark-pr-report/benchmark \
+            --watch-dir .tmp/benchmark-pr-report/watch \
+            --output-dir .tmp/benchmark-pr-report/output \
+            --pr "$PR_NUMBER" \
+            --head-sha "$HEAD_SHA" \
+            --repository "$REPOSITORY" \
+            --benchmark-run-id "$BENCHMARK_RUN_ID" \
+            --watch-run-id "$WATCH_RUN_ID" \
+            --benchmark-conclusion "$BENCHMARK_CONCLUSION" \
+            --watch-conclusion "$WATCH_CONCLUSION" \
+            --benchmark-url "${{ steps.metadata.outputs.benchmark_url }}" \
+            --watch-url "${{ steps.metadata.outputs.watch_url }}" \
+            --artifact-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: Upload aggregate report artifact
+        id: upload
+        if: always() && steps.metadata.outputs.stale != 'true' && steps.metadata.outputs.pr_number != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: pr-benchmark-report-${{ steps.metadata.outputs.pr_number }}-${{ steps.metadata.outputs.head_sha }}
+          path: .tmp/benchmark-pr-report/output/**
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Update PR comment
+        if: always() && steps.metadata.outputs.stale != 'true' && steps.metadata.outputs.pr_number != '' && steps.report.outcome == 'success'
+        uses: actions/github-script@v7
+        env:
+          COMMENT_FILE: .tmp/benchmark-pr-report/output/comment.md
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('node:fs')
+            const body = fs.readFileSync(process.env.COMMENT_FILE, 'utf8')
+            const issue = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: Number('${{ steps.metadata.outputs.pr_number }}'),
+            }
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              ...issue,
+              per_page: 100,
+            })
+            const existing = comments
+              .filter(comment => comment.user?.type === 'Bot' && comment.body?.includes('<!-- weapp-tailwindcss-pr-benchmark-report -->'))
+              .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))[0]
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: issue.owner,
+                repo: issue.repo,
+                comment_id: existing.id,
+                body,
+              })
+              core.info(`Updated PR benchmark comment ${existing.id}`)
+            }
+            else {
+              const created = await github.rest.issues.createComment({ ...issue, body })
+              core.info(`Created PR benchmark comment ${created.data.id}`)
+            }

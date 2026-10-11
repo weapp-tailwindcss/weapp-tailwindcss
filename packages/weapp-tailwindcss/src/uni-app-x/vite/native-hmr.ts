@@ -5,7 +5,7 @@ interface CreateUniAppXNativeHmrReloaderOptions {
   ensureRuntimeClassSet: (force?: boolean) => Promise<Set<string>>
   isNativeAppBuildTarget: (id?: string) => boolean
   localStyleModuleIds: Iterable<string>
-  syncSourceCandidates?: (ctx: HmrContext) => Promise<void>
+  syncSourceCandidates?: ((ctx: HmrContext) => Promise<void>) | undefined
   tailwindRootCssModuleIds: Iterable<string>
   viteProcessedCssSourceFiles: Iterable<string>
 }
@@ -21,7 +21,7 @@ export function createUniAppXNativeHmrReloader(
   }
 
   async function refreshBaseline() {
-    return remember(await options.ensureRuntimeClassSet(true))
+    return remember(await options.ensureRuntimeClassSet())
   }
 
   async function handleHotUpdate(ctx: HmrContext) {
@@ -29,7 +29,7 @@ export function createUniAppXNativeHmrReloader(
       return
     }
     await options.syncSourceCandidates?.(ctx)
-    const currentRuntimeClassSet = await options.ensureRuntimeClassSet(true)
+    const currentRuntimeClassSet = await options.ensureRuntimeClassSet()
     const hasRuntimeClassChange = previousRuntimeClassSet !== undefined
       && (
         currentRuntimeClassSet.size !== previousRuntimeClassSet.size

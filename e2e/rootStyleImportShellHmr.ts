@@ -48,7 +48,7 @@ export const ROOT_STYLE_IMPORT_SHELL_HMR_EXEMPTIONS = [
     reason: '小程序 dev 编译依赖本机 HBuilderX，不进入托管 CI 的 uni CLI watch 矩阵。',
   },
   {
-    project: 'uni-app-x-hbuilderx-tailwindcss-v4',
+    project: 'uni-app-x-vdom-tailwindcss-v4',
     reason: 'uni-app x 小程序产物依赖本机 HBuilderX，不能由普通 Vite CI runner 生成。',
   },
   {

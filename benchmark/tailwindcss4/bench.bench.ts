@@ -5,7 +5,7 @@ import { tv as tvWeapp } from '@weapp-tailwindcss/variants'
 import { cva as cvaUpstream } from 'class-variance-authority'
 import { twMerge as mergeUpstream } from 'tailwind-merge'
 import { tv as tvUpstream } from 'tailwind-variants'
-import { bench, describe } from 'vitest'
+import { test } from 'vitest'
 
 type MergeFn = (...classLists: string[]) => string
 
@@ -72,41 +72,46 @@ const cardUpstream = tvUpstream(cardOptions)
 const cardWeapp = tvWeapp(cardOptions)
 const benchOptions = { time: 300 }
 
-describe('tailwindcss v4 merge benchmarks', () => {
-  bench('tailwind-merge v3', () => benchTwMerge(mergeUpstream), benchOptions)
-  bench('@weapp-tailwindcss/merge', () => benchTwMerge(mergeWeapp), benchOptions)
-})
-
-describe('tailwindcss v4 cva benchmarks', () => {
-  bench(
-    'class-variance-authority',
-    () => {
-      buttonUpstream({ intent: 'primary', size: 'md' })
-    },
-    benchOptions,
-  )
-  bench(
-    '@weapp-tailwindcss/cva',
-    () => {
-      buttonWeapp({ intent: 'primary', size: 'md' })
-    },
+test('tailwindcss v4 merge benchmarks', async ({ bench }) => {
+  await bench.compare(
+    bench('tailwind-merge v3', () => benchTwMerge(mergeUpstream)),
+    bench('@weapp-tailwindcss/merge', () => benchTwMerge(mergeWeapp)),
     benchOptions,
   )
 })
 
-describe('tailwindcss v4 variants benchmarks', () => {
-  bench(
-    'tailwind-variants',
-    () => {
-      cardUpstream({ tone: 'info' }).base()
-    },
+test('tailwindcss v4 cva benchmarks', async ({ bench }) => {
+  await bench.compare(
+    bench(
+      'class-variance-authority',
+      () => {
+        buttonUpstream({ intent: 'primary', size: 'md' })
+      },
+    ),
+    bench(
+      '@weapp-tailwindcss/cva',
+      () => {
+        buttonWeapp({ intent: 'primary', size: 'md' })
+      },
+    ),
     benchOptions,
   )
-  bench(
-    '@weapp-tailwindcss/variants',
-    () => {
-      cardWeapp({ tone: 'info' }).base()
-    },
+})
+
+test('tailwindcss v4 variants benchmarks', async ({ bench }) => {
+  await bench.compare(
+    bench(
+      'tailwind-variants',
+      () => {
+        cardUpstream({ tone: 'info' }).base()
+      },
+    ),
+    bench(
+      '@weapp-tailwindcss/variants',
+      () => {
+        cardWeapp({ tone: 'info' }).base()
+      },
+    ),
     benchOptions,
   )
 })

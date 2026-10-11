@@ -1,0 +1,28 @@
+<script setup lang="uts">
+const probeText = 'issue-1125 Vapor line-height probe'
+</script>
+
+<template>
+	<view id="native-hmr-probe" class="hbuilderx-app-native-hmr-probe flex h-[41px] w-[173px] items-center justify-center bg-[#0e7490]"><text class="text-[18px] leading-[26px] text-white">issue-1125-vapor-leading-26px</text></view>
+		<view class="issue-1125-vapor-probe flex w-full flex-col bg-[#102938] p-[12px]">
+		<text id="issue-1125-vapor-tailwind" class="w-[220px] leading-[26px] text-[14px] text-[#f7fbff]">issue-1125 Vapor Tailwind line 1
+issue-1125 Vapor Tailwind line 2</text>
+		<text id="issue-1125-vapor-native" class="issue-1125-native mt-[8px] w-[220px] text-[14px] text-[#f7fbff]">issue-1125 Vapor native line 1
+issue-1125 Vapor native line 2</text>
+		<text id="issue-1125-vapor-rpx" class="mt-[8px] w-[220px] leading-[52rpx] text-[14px] text-[#f7fbff]">issue-1125 Vapor leading 52rpx</text>
+		<text id="issue-1125-vapor-unitless" class="mt-[8px] w-[220px] leading-[1.625] text-[14px] text-[#f7fbff]">issue-1125 Vapor leading unitless</text>
+		<text id="issue-1125-vapor-default" class="mt-[8px] w-[220px] text-sm text-[#f7fbff]">issue-1125 Vapor default text leading</text>
+		<text id="issue-1125-vapor-local-merge" class="issue-1125-local-merge mt-[8px] w-[220px] leading-[26px] text-[14px] text-[#f7fbff]">issue-1125 Vapor local and generated merge</text>
+		<text class="mt-[8px] text-[12px] text-[#f7fbff]">{{ probeText }}</text>
+	</view>
+</template>
+
+<style>
+.issue-1125-native {
+	line-height: 26px;
+}
+
+.issue-1125-local-merge {
+	padding-left: 3px;
+}
+</style>

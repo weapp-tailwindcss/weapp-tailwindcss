@@ -11,7 +11,7 @@ function DECLARATION_TEMPLATE(importPath) {
 export declare const weappTwIgnore: typeof String.raw;
 export declare function escape(original: string, options?: ITemplateHandlerOptions): string;
 
-export { isAllowedClassName, unescape } from '@weapp-core/escape';
+export { isAllowedClassName, unescape } from '@weapp-tailwindcss/escape';
 `
 }
 

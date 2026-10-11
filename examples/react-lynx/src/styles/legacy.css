@@ -1,0 +1,5 @@
+@import 'tailwindcss/utilities.css' source(none);
+
+@config '../../tailwind.config.js';
+@plugin '../../tailwind-plugin.js';
+@source inline('p-legacy lynx-plugin-utility');

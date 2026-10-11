@@ -51,3 +51,5 @@ WeappTailwindcss({
 3. 连续构建两次，import 不重复。
 4. watch 中修改分包 class，不污染主包或其他独立分包。
 5. 覆盖 Vite/Webpack 及真实平台后缀。
+
+框架 preset 的入口解析与分包归属应复用 `weapp-style-injector` 的共享 resolution 层。Vite、Webpack、Taro、uni-app 与 Mpx adapter 只负责把各自构建图信息交给该层，不各自复制路径猜测。

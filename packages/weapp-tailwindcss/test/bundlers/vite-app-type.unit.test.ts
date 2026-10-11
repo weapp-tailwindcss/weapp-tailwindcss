@@ -93,4 +93,27 @@ describe('resolveImplicitAppTypeFromViteRoot', () => {
 
     expect(resolveImplicitAppTypeFromViteRoot(rootDir)).toBe('mpx')
   })
+
+  it('can stop framework detection at the nearest Vite package boundary', async () => {
+    const rootDir = await createProjectRoot({})
+    const childDir = path.join(rootDir, 'packages', 'web')
+    await mkdir(childDir, { recursive: true })
+    await writeFile(path.join(rootDir, 'package.json'), JSON.stringify({
+      dependencies: { 'weapp-vite': '^6.0.0' },
+    }), 'utf8')
+    await writeFile(path.join(childDir, 'package.json'), JSON.stringify({ name: 'web' }), 'utf8')
+
+    expect(resolveImplicitAppTypeFromViteRoot(childDir, { searchUp: false })).toBeUndefined()
+    expect(resolveImplicitAppTypeFromViteRoot(childDir)).toBe('weapp-vite')
+  })
+
+  it('finds the nearest package when Vite root points into its src directory', async () => {
+    const rootDir = await createProjectRoot({
+      dependencies: { '@tarojs/runtime': '^4.0.0' },
+    })
+    const srcDir = path.join(rootDir, 'src')
+    await mkdir(srcDir, { recursive: true })
+
+    expect(resolveImplicitAppTypeFromViteRoot(srcDir, { searchUp: false })).toBe('taro')
+  })
 })

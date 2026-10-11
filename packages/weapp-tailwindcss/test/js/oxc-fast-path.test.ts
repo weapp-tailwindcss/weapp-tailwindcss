@@ -1,4 +1,4 @@
-import { MappingChars2String } from '@weapp-core/escape'
+import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { describe, expect, it, vi } from 'vitest'
 import { createJsHandler } from '@/js'
 import { jsHandler } from '@/js/babel'
@@ -35,6 +35,7 @@ describe('OXC JS fast path', () => {
     const options = createOptions()
     const source = [
       'const a = "w-[100px] hover:bg-red-500"',
+      // eslint-disable-next-line no-template-curly-in-string -- 输入必须保留模板插值。
       'const b = `h-[20px] ${value} mt-2`',
       'const c = <view className="px-[12px]" />',
     ].join('\n')
@@ -52,6 +53,7 @@ describe('OXC JS fast path', () => {
     const options = createOptions()
     const source = [
       'type Item = { className: string }',
+      // eslint-disable-next-line no-template-curly-in-string -- 输入必须保留模板插值。
       'const items: Item[] = [{ className: "w-[100px]" }, { className: `h-[20px] ${value} mt-2` }]',
       'const view = <view data-state={{ active: "bg-[red]" }} className={items[0]!.className} />',
     ].join('\n')
@@ -63,6 +65,34 @@ describe('OXC JS fast path', () => {
     expect(fast?.code).toContain('w-_b100px_B')
     expect(fast?.code).toContain('h-_b20px_B')
     expect(fast?.code).toContain('bg-_bred_B')
+  })
+
+  it('keeps conditional test literals unchanged through Babel parent-chain semantics', () => {
+    const options = createOptions()
+    const source = [
+      'const direct = "w-[direct]" ? "h-[direct]" : "plain"',
+      'const parenthesized = ("w-[parenthesized]") ? "h-[parenthesized]" : "plain"',
+      'const nested = ("w-[nested]" ? "h-[inner]" : "plain") ? "h-[outer]" : "plain"',
+      'const binary = value === "w-[binary]" ? "h-[binary]" : "plain"',
+      'const call = matches("w-[call]") ? "h-[call]" : "plain"',
+      'const logical = enabled && "w-[logical]" ? "h-[logical]" : "plain"',
+      'const member = values["w-[member]"] ? "h-[member]" : "plain"',
+      'const unary = !"w-[unary]" ? "h-[unary]" : "plain"',
+    ].join('\n')
+
+    const fast = oxcJsHandler(source, options)
+    const babel = jsHandler(source, options)
+
+    expect(fast?.code).toBe(babel.code)
+    for (const name of ['direct', 'binary', 'call', 'logical', 'member', 'unary']) {
+      expect(fast?.code).toContain(`"w-[${name}]"`)
+      expect(fast?.code).toContain(`"h-_b${name}_B"`)
+    }
+    expect(fast?.code).toContain('"w-[nested]"')
+    expect(fast?.code).toContain('"w-[parenthesized]"')
+    expect(fast?.code).toContain('"h-_bparenthesized_B"')
+    expect(fast?.code).toContain('"h-_binner_B"')
+    expect(fast?.code).toContain('"h-_bouter_B"')
   })
 
   it('keeps non-class strings unchanged under classNameSet precision', () => {
@@ -113,6 +143,29 @@ describe('OXC JS fast path', () => {
     }
   })
 
+  it('matches Babel condition-test literal semantics', () => {
+    const options = createOptions()
+    const source = [
+      'const direct = candidate === "bg-red-500/50" ? "w-[100px]" : "text-red-500"',
+      'const nested = candidate === resolve("bg-red-500/50") ? "h-[20px]" : "text-blue-500"',
+      'const logical = candidate === "bg-red-500/50" && ready ? "p-[8px]" : "m-[4px]"',
+      'const member = candidate === values["bg-red-500/50"] ? "gap-[6px]" : "space-x-2"',
+      'const unary = !"bg-red-500/50" ? "rounded-[4px]" : "border-[1px]"',
+      'const branch = ready ? "bg-red-500/50" : "text-red-500"',
+      'const argument = useClass("w-[100px]")',
+    ].join('\n')
+
+    const fast = oxcJsHandler(source, options)
+    const babel = jsHandler(source, options)
+
+    expect(fast?.code).toBe(babel.code)
+    expect(fast?.code).toContain('candidate === "bg-red-500/50"')
+    expect(fast?.code).toContain('resolve("bg-red-500/50")')
+    expect(fast?.code).toContain('values["bg-red-500/50"]')
+    expect(fast?.code).toContain('useClass("w-_b100px_B")')
+    expect(fast?.code).toContain('ready ? "bg-red-500_f50"')
+  })
+
   it('falls back to Babel when source maps are requested', () => {
     const options = {
       ...createOptions(),
@@ -150,7 +203,7 @@ describe('OXC JS fast path', () => {
       babelParserOptions: {
         sourceType: 'commonjs' as any,
       },
-    })?.code).toContain('w-_b100px_B')
+    })).toBeUndefined()
   })
 
   it('falls back to Babel for ignore-call semantics', () => {
@@ -233,6 +286,7 @@ describe('OXC JS fast path', () => {
   })
 
   it('does not load the native OXC parser on unsupported Node versions', async () => {
+    vi.stubEnv('WEAPP_TW_NATIVE', 'off')
     vi.resetModules()
     vi.doMock('@/js/babel', () => ({
       jsHandler: vi.fn(() => ({ code: 'babel-fallback' })),
@@ -242,22 +296,27 @@ describe('OXC JS fast path', () => {
     })
     vi.spyOn(process.versions, 'node', 'get').mockReturnValue('18.20.8')
 
-    const { createJsHandler: createMockedJsHandler } = await import('@/js')
-    const { jsHandler: mockedBabelHandler } = await import('@/js/babel')
-    const handler = createMockedJsHandler({
-      escapeMap: MappingChars2String,
-      alwaysEscape: true,
-      generateMap: false,
-      experimentalJsFastPath: 'oxc',
-    })
+    try {
+      const { createJsHandler: createMockedJsHandler } = await import('@/js')
+      const { jsHandler: mockedBabelHandler } = await import('@/js/babel')
+      const handler = createMockedJsHandler({
+        escapeMap: MappingChars2String,
+        alwaysEscape: true,
+        generateMap: false,
+        experimentalJsFastPath: 'oxc',
+      })
 
-    const result = handler('const cls = "w-[100px]"', new Set())
+      const result = handler('const cls = "w-[100px]"', new Set())
 
-    expect(result.code).toBe('babel-fallback')
-    expect(mockedBabelHandler).toHaveBeenCalledTimes(1)
-    vi.restoreAllMocks()
-    vi.doUnmock('@/js/babel')
-    vi.doUnmock('oxc-parser')
+      expect(result.code).toBe('babel-fallback')
+      expect(mockedBabelHandler).toHaveBeenCalledTimes(1)
+    }
+    finally {
+      vi.restoreAllMocks()
+      vi.unstubAllEnvs()
+      vi.doUnmock('@/js/babel')
+      vi.doUnmock('oxc-parser')
+    }
   })
 
   it('does not call Babel when the OXC fast path succeeds', async () => {
@@ -282,7 +341,10 @@ describe('OXC JS fast path', () => {
     vi.doUnmock('@/js/babel')
   })
 
-  it('uses OXC for moduleGraph files without dependency edges', async () => {
+  it.each([
+    'const cls = "w-[100px]"',
+    'const vendor = require("./vendor.js"); const cls = "w-[100px]"',
+  ])('uses OXC for moduleGraph files without consumed dependency edges: %s', async (source) => {
     vi.resetModules()
     vi.doMock('@/js/babel', () => ({
       jsHandler: vi.fn(() => ({ code: 'babel-fallback' })),
@@ -297,7 +359,7 @@ describe('OXC JS fast path', () => {
       experimentalJsFastPath: 'oxc',
     })
 
-    const result = handler('const cls = "w-[100px]"', new Set(), {
+    const result = handler(source, new Set(), {
       filename: '/project/dist/index.js',
       moduleGraph: {
         resolve: vi.fn(),

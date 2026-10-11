@@ -1,8 +1,11 @@
 import type { BabelParserOptions, IJsHandlerOptions, JsModuleGraphOptions, LinkedJsModuleResult } from '../types'
-import type { SourceAnalysis } from './babel'
+import type { EvalHandler } from './evalTransforms'
 import type { ModuleGraphEntry, ModuleState, QueueItem } from './module-graph/types'
 import type { ImportToken } from './NodePathWalker'
-import { analyzeSource, babelParse, processUpdatedSource } from './babel'
+import type { SourceAnalysis } from './sourceAnalysis'
+import { analyzeSource } from './babel/analyze'
+import { babelParse } from './babel/parse'
+import { processUpdatedSource } from './babel/process'
 import { IgnoredExportsTracker } from './module-graph/ignored-exports'
 
 export type { ModuleGraphEntry } from './module-graph/types'
@@ -19,7 +22,7 @@ export class JsModuleGraph {
   private readonly rootFilename: string
   private readonly ignoredExports: IgnoredExportsTracker
 
-  constructor(entry: ModuleGraphEntry, graphOptions: JsModuleGraphOptions) {
+  constructor(entry: ModuleGraphEntry, graphOptions: JsModuleGraphOptions, private readonly evalHandler: EvalHandler) {
     this.resolve = graphOptions.resolve
     this.load = graphOptions.load
     this.filter = graphOptions.filter
@@ -139,7 +142,7 @@ export class JsModuleGraph {
           analysis = analyzeSource(ast, {
             ...this.baseOptions,
             filename: resolved,
-          })
+          }, this.evalHandler)
           this.ignoredExports.applyIgnoredExportsToAnalysis(resolved, analysis)
         }
         catch {

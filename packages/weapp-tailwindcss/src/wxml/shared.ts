@@ -1,5 +1,5 @@
 import type { ITemplateHandlerOptions } from '../types'
-import { escape, MappingChars2String } from '@weapp-core/escape'
+import { escape, MappingChars2String } from '@weapp-tailwindcss/escape'
 import { omitUndefined } from '../utils/object'
 
 // 匹配换行符（用于去除无用换行和空格）

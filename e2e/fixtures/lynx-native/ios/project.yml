@@ -1,0 +1,24 @@
+name: LynxCompatibilityHost
+options:
+  bundleIdPrefix: com.weapptailwindcss
+targets:
+  LynxCompatibilityHost:
+    type: application
+    platform: iOS
+    deploymentTarget: "15.0"
+    sources:
+      - App
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.weapptailwindcss.lynxcompat
+        INFOPLIST_FILE: App/Info.plist
+        CODE_SIGNING_ALLOWED: NO
+        CLANG_ENABLE_MODULES: YES
+    dependencies: []
+schemes:
+  LynxCompatibilityHost:
+    build:
+      targets:
+        LynxCompatibilityHost: all
+    run:
+      config: Debug

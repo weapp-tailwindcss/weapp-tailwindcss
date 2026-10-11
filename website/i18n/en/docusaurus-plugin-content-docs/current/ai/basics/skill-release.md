@@ -15,12 +15,12 @@ keywords:
 
 # Skill publishing and synchronization
 
-`sonofmagic/weapp-tailwindcss` by `skills/` is the only source of truth for official Skill content. The `sonofmagic/skills` installed and used by users is an aggregation warehouse, and copies are not manually maintained here.
+`weapp-tailwindcss/weapp-tailwindcss` by `skills/` is the only source of truth for official Skill content. The `sonofmagic/skills` installed and used by users is an aggregation warehouse, and copies are not manually maintained here.
 
 ## Synchronization relationship
 
 ```text
-sonofmagic/weapp-tailwindcss@main:skills/
+weapp-tailwindcss/weapp-tailwindcss@main:skills/
   -> sonofmagic/skills@main:skills/weapp-tailwindcss/
 ```
 
@@ -50,7 +50,7 @@ npx skills add . --list
 1. Submit `skills/**`, verification corpus and document entry in this warehouse.
 2. Merge into `main`.
 3. Wait for the scheduled synchronization of the aggregation warehouse, or manually run the `Sync Skills From Upstreams` workflow of the aggregation warehouse when immediate release is required.
-4. Check whether the sync submission contains 7 Skill directories.
+4. Check whether the sync submission contains 8 Skill directories.
 5. Perform `sonofmagic/skills` and temporary installation verification from `--list`.
 
 Skills no longer use standalone `skill-weapp-tailwindcss-v*` tags or GitHub Release as content distribution mechanisms. The version history is based on the submission of the source warehouse and the synchronous submission of the aggregation warehouse.
@@ -68,6 +68,7 @@ npx skills add sonofmagic/skills \
   --skill weapp-tailwindcss-runtime \
   --skill weapp-tailwindcss-custom-build \
   --skill weapp-tailwindcss-react-native \
+  --skill weapp-tailwindcss-lynx \
   -y
 ```
 

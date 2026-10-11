@@ -237,7 +237,7 @@ pnpm build:mp-toutiao
 
 ## 完整示例
 
-仓库中的 [subpackage-uni-app-vite-tailwindcss-v4](https://github.com/sonofmagic/weapp-tailwindcss/tree/main/demo/subpackage-uni-app-vite-tailwindcss-v4) demo 同时覆盖：
+仓库中的 [subpackage-uni-app-vite-tailwindcss-v4](https://github.com/weapp-tailwindcss/weapp-tailwindcss/tree/main/demo/subpackage-uni-app-vite-tailwindcss-v4) demo 同时覆盖：
 
 - 内置 `styleInjector` 的隔离入口模式。
 - 主包、普通分包、独立分包的候选隔离。

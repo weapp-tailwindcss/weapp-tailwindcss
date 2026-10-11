@@ -1,5 +1,5 @@
 import type { CssFragment, GenerationArtifact } from './types'
-import { postcss } from '@weapp-tailwindcss/postcss'
+import { postcss } from '@weapp-tailwindcss/postcss/transform'
 import { cloneGenerationArtifact } from './artifact'
 
 export function orderCssFragments(fragments: Iterable<CssFragment>): CssFragment[] {

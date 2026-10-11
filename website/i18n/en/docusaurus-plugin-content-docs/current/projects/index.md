@@ -21,25 +21,7 @@ keywords:
 
 ### template template
 
-> At present, most of the templates are still version `1.x`. I will make a series of upgrades to the templates in the future.
-
-#### How to choose?
-
-If you just develop a combination of `Mini program` + `h5`, then using the `vscode` template is enough
-
-If the key platform for building your project is `app`, it is still recommended to use the `hbuilderx` template, because `hbuilderx` comes with a set of tool chains for `app` construction and debugging, which can better support your development.
-
-#### Building with `uni-app cli` `vscode` Development
-
-[uni-app-vite-vue3-tailwind-vscode-template](https://github.com/sonofmagic/uni-app-vite-vue3-tailwind-vscode-template)
-
-[uni-app-vue3-tailwind-vscode-template](https://github.com/sonofmagic/uni-app-vue3-tailwind-vscode-template)
-
-[uni-app-vue2-tailwind-vscode-template](https://github.com/sonofmagic/uni-app-vue2-tailwind-vscode-template)
-
-#### Build and develop with `hbuilderx`
-
-[uni-app-vue3-tailwind-hbuilder-template](https://github.com/sonofmagic/uni-app-vue3-tailwind-hbuilder-template)
+Maintained templates now use Tailwind CSS 4 and the latest `weapp-tailwindcss`. Choose a uni-app, Taro, Mpx, or weapp-vite setup from the [template catalog](/docs/community/templates).
 
 ### tailwindcss plugin
 

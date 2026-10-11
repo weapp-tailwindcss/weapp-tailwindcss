@@ -1,4 +1,4 @@
-import type { ChildNode, Root } from 'postcss'
+import type { ChildNode, Root } from '@weapp-tailwindcss/postcss/transform'
 import type { GenerationArtifact } from './types'
 
 export interface SemanticCssDeclaration {

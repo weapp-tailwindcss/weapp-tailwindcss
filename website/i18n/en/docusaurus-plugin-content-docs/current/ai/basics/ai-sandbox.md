@@ -1,14 +1,15 @@
 ---
 sidebar: aiSidebar
 title: AI Sandbox
-description: Introduces the core concepts, risk isolation mechanisms, and practical solutions of the AI  sandbox to help safely run AI-generated code and commands locally.
+description: >-
+  Introduces the core concepts, risk isolation mechanisms, and practical solutions of the AI  sandbox to help safely run
+  AI-generated code and commands locally.
 keywords:
   - AI programming
   - LLM
   - Workflow
   - AI
   - sandbox
-  - Sandbox
   - basics
   - ai sandbox
   - weapp-tailwindcss
@@ -17,6 +18,9 @@ keywords:
   - WeChat applet
   - uni-app
   - taro
+  - AI coding
+  - Tailwind CSS 4
+  - cross-platform
 ---
 
 # AI Sandbox (AI Sandbox)

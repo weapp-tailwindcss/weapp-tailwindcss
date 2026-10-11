@@ -313,6 +313,8 @@ page {
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
     --color-yellow-300: oklch(90.5% 0.182 98.111);
     --color-emerald-400: oklch(76.5% 0.177 163.223);
+    --color-blue-200: oklch(88.2% 0.059 254.128);
+    --color-blue-500: oklch(62.3% 0.214 259.815);
     --color-purple-500: oklch(62.7% 0.265 303.9);
     --color-purple-800: oklch(43.8% 0.218 303.724);
     --color-pink-200: oklch(89.9% 0.061 343.231);
@@ -347,6 +349,7 @@ page {
   --font-sans: 'inter', 'inter Fallback', system-ui;
   --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
   --font-mono: var(--font-plex-mono), monospace;
+  --color-blue-500: #3080ff;
   --color-slate-900: #0f172b;
   --color-white: #fff;
   --color-zinc-900: rgb(24, 24, 27);
@@ -12659,6 +12662,8 @@ page {
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
     --color-yellow-300: oklch(90.5% 0.182 98.111);
     --color-emerald-400: oklch(76.5% 0.177 163.223);
+    --color-blue-200: oklch(88.2% 0.059 254.128);
+    --color-blue-500: oklch(62.3% 0.214 259.815);
     --color-purple-500: oklch(62.7% 0.265 303.9);
     --color-purple-800: oklch(43.8% 0.218 303.724);
     --color-pink-200: oklch(89.9% 0.061 343.231);
@@ -13086,6 +13091,16 @@ page {
   .rounded-full\! {
     border-radius: calc(infinity * 0.025rem) !important;
   }
+ /*tokens: rounded-s-full <= src/pages/index/index.tsx */
+  .rounded-s-full {
+    border-end-start-radius: calc(infinity * 0.025rem);
+    border-start-start-radius: calc(infinity * 0.025rem);
+  }
+ /*tokens: rounded-t-full <= src/pages/index/index.tsx */
+  .rounded-t-full {
+    border-top-left-radius: calc(infinity * 0.025rem);
+    border-top-right-radius: calc(infinity * 0.025rem);
+  }
   .border {
     border-style: var(--tw-border-style);
     border-width: 0.025rem;
@@ -13095,6 +13110,14 @@ page {
   }
   .bg-\[\#534312\] {
     background-color: #534312;
+  }
+ /*tokens: bg-blue-200 <= src/pages/index/index.tsx */
+  .bg-blue-200 {
+    background-color: var(--color-blue-200);
+  }
+ /*tokens: bg-blue-500 <= src/pages/index/index.tsx */
+  .bg-blue-500 {
+    background-color: var(--color-blue-500);
   }
  /*tokens: bg-purple-800 <= src/pages/index/index.tsx */
   .bg-purple-800 {

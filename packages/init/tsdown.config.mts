@@ -6,6 +6,9 @@ export default defineConfig({
   format: ['cjs', 'esm'],
   clean: true,
   dts: true,
+  deps: {
+    resolveDepSubpath: true,
+  },
   outExtensions({ format }) {
     return {
       js: format === 'es' ? '.js' : '.cjs',

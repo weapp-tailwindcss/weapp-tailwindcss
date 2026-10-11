@@ -1,0 +1,10 @@
+<script setup lang="uts">
+onLaunch(() => console.log('App Launch'))
+onShow(() => console.log('App Show'))
+onHide(() => console.log('App Hide'))
+onExit(() => console.log('App Exit'))
+</script>
+
+<style lang="scss">
+@import './main.css';
+</style>

@@ -3,16 +3,16 @@
   "type": "module",
   "version": "0.0.3",
   "private": true,
-  "description": "weapp-tailwindcss babel package",
+  "description": "Babel utilities for cross-platform Tailwind CSS class transforms. 跨端 Tailwind CSS 类名转换的 Babel 工具。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sonofmagic/weapp-tailwindcss.git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
     "directory": "packages/babel"
   },
   "bugs": {
-    "url": "https://github.com/sonofmagic/weapp-tailwindcss/issues"
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues"
   },
   "keywords": [],
   "sideEffects": false,

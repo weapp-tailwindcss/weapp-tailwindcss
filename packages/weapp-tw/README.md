@@ -1,9 +1,9 @@
 # weapp-tw
 
-> 简体中文 | [English](./README.en.md)
+> English | [简体中文](./README.zh-CN.md)
 
-这个包是 weapp-tailwindcss 生态中的轻量入口和包名预留，当前保持最小能力，避免和核心包职责重叠。
+This package is a lightweight entry and reserved package name in the weapp-tailwindcss ecosystem. It currently keeps a minimal scope and avoids overlapping with the core package.
 
-## 官网
+## Website
 
-更多接入方式、配置说明和框架示例见 [weapp-tailwindcss 官方文档](https://tw.icebreaker.top)。
+For setup guides, configuration references, and framework examples, see the [official weapp-tailwindcss documentation](https://tw.weapp.dev).

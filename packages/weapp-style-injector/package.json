@@ -1,17 +1,18 @@
 {
   "name": "weapp-style-injector",
   "type": "module",
-  "version": "1.0.2",
-  "description": "weapp-style-injector",
+  "version": "1.0.7",
+  "description": "Style entry injection for cross-platform mini-program and Web builds. 面向小程序与 Web 跨端构建的样式入口注入工具。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",
+  "homepage": "https://tw.weapp.dev/docs/quick-start/independent-pkg",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sonofmagic/weapp-tailwindcss.git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
     "directory": "packages/weapp-style-injector"
   },
   "bugs": {
-    "url": "https://github.com/sonofmagic/weapp-tailwindcss/issues"
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues"
   },
   "keywords": [],
   "sideEffects": false,
@@ -55,6 +56,11 @@
       "types": "./dist/webpack/mpx.d.ts",
       "import": "./dist/webpack/mpx.js",
       "require": "./dist/webpack/mpx.cjs"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.js",
+      "require": "./dist/types.cjs"
     }
   },
   "main": "./dist/index.cjs",
@@ -79,6 +85,9 @@
   "dependencies": {
     "@weapp-tailwindcss/shared": "workspace:*",
     "micromatch": "catalog:buildUtilities"
+  },
+  "devDependencies": {
+    "tsx": "catalog:tsx"
   },
   "publishConfig": {}
 }

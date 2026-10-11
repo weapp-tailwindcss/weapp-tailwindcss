@@ -1,4 +1,4 @@
-import { MappingChars2String } from '@weapp-core/escape'
+import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { replaceWxml } from '@/wxml/shared'
 import { templateReplacer } from '@/wxml/utils'
 import { complexSyntaxMap } from './complexSyntaxMap'
@@ -43,7 +43,7 @@ describe('tailwind complex syntax corpus', () => {
 })
 
 describe('template expressions with complex syntax', () => {
-  it.each(expressionCases)('$label', ({ input }) => {
+  it.each(expressionCases)("'$label'", ({ input }) => {
     const output = templateReplacer(input, {
       escapeMap: MappingChars2String,
     })

@@ -1,22 +1,22 @@
 ---
 title: uni-app x
-description: HBuilderX uni-app x 项目接入 Tailwind CSS 4 与 weapp-tailwindcss。
+description: 在 HBuilderX 的 uni-app x 项目中接入 Tailwind CSS 4 与 weapp-tailwindcss，并覆盖 Web、小程序、Android、iOS 与鸿蒙。
 keywords:
   - 快速开始
   - 安装
   - 配置
   - uni-app
-  - quick start
-  - frameworks
   - uni app x
+  - HBuilderX
   - weapp-tailwindcss
   - tailwindcss
   - 小程序
-  - 微信小程序
-  - taro
-  - mpx
+  - Android
+  - iOS
+  - HarmonyOS
 ---
 import EnvironmentRequirements from '../../uni-app-x/_environment-requirements.mdx'
+import run from '../../uni-app-x/assets/run.png'
 
 # uni-app x
 
@@ -24,34 +24,96 @@ import EnvironmentRequirements from '../../uni-app-x/_environment-requirements.m
 
 `uni-app x` 使用 HBuilderX 和 `@dcloudio/vite-plugin-uni`。建议配合内置的 `uniAppX` 预设使用。
 
+配置项、默认值和局部样式匹配规则见 [uni-app x 配置参考](../../config/uni-app-x)。
+
 当前仓库的 HBuilderX 本地 E2E 覆盖了 uni-app x Web、微信小程序、Android、iOS 和鸿蒙。小程序与 App E2E 依赖本机 HBuilderX、开发者工具或模拟器，只在本地执行。
 
-:::warning 能力边界
-`uvue` 原生 App 端不要依赖 `gap`、`gap-x-*`、`gap-y-*`，这些布局能力当前都不支持。
+<div
+  className="
+    not-prose relative mt-2 flex items-center gap-4 rounded-2xl border
+    border-emerald-200/70 bg-gradient-to-br from-white via-emerald-50 to-emerald-100
+    p-5 shadow-[0_14px_40px_rgba(16,185,129,0.18)]
+    dark:border-emerald-900/60 dark:from-emerald-950/50 dark:via-emerald-950/30 dark:to-emerald-900/20
+    dark:shadow-[0_18px_40px_rgba(16,185,129,0.3)]
+  "
+>
+  <img className="h-16 sm:h-20" src="/img/logo.png" alt="Tailwind CSS" />
+  <i className="icon-[mdi--link] text-3xl text-emerald-500 dark:text-emerald-300" />
+  <img className="h-16 sm:h-20" src="/img/uni-app-x-logo.ico" alt="uni-app x" />
+  <div className="ml-auto hidden text-right sm:block">
+    <div className="text-xs font-medium text-emerald-700/80 dark:text-emerald-200/80">跨端原子化样式方案</div>
+    <div className="text-base font-semibold text-emerald-800 dark:text-emerald-200">Tailwind CSS × uni-app x</div>
+  </div>
+</div>
 
-`space-x-*`、`space-y-*` 也不要在 `uni-app x` 中使用。请直接改用子项显式 `mt-*` / `ml-*`，或封装固定结构的间距组件。
+<div className="not-prose mt-4 grid grid-cols-1 gap-3 sm:auto-cols-max sm:grid-flow-col">
+  <a className="docs-cta-primary" href="https://github.com/weapp-tailwindcss/weapp-tailwindcss/tree/next/demo/uni-app-x-vdom-tailwindcss-v4" target="_blank" rel="noopener noreferrer">
+    <i className="icon-[mdi--rocket-launch] text-xl" />
+    查看已验证 demo（推荐）
+  </a>
+  <a className="docs-cta-secondary" href="#手动集成">
+    <i className="icon-[mdi--playlist-check] text-lg opacity-80" />
+    按步骤手动集成
+  </a>
+</div>
+
+## 这篇文档适合谁
+
+- 想在 uni-app x 项目里使用 Tailwind CSS 的开发者
+- 需要同时覆盖 Web、小程序、Android、iOS 和鸿蒙的原子化样式方案
+- 已经使用 HBuilderX 运行或发布 uni-app x 项目
+
+## 当前支持范围
+
+当前文档面向 Tailwind CSS 4。uni-app x 项目建议通过 `WeappTailwindcss(uniAppX(...))` 注册插件，Tailwind 的生成和小程序/App 转译都交给 `weapp-tailwindcss`。
+
+| Tailwind 版本 | 入口方式 | 扫描方式 | 当前验证 |
+| --- | --- | --- | --- |
+| Tailwind CSS 4 | `@import "tailwindcss" source(none);` | CSS 入口里的 `@source` | HBuilderX Web、微信小程序、Android、iOS、鸿蒙 |
+
+:::info 平台验证
+HBuilderX 依赖本机安装环境。请在自己的项目中分别运行 Web、小程序、Android、iOS 和鸿蒙目标，并检查真实产物与运行时结果。
 :::
 
+## 最快开始
+
+想最快跑起来：点击上方「查看已验证 demo」，按 README 步骤打开 HBuilderX 运行即可。不要使用旧的 `icebreaker-template/uni-app-x-hbuilderx` 作为新项目起点，请按本页的 Tailwind CSS 4 CSS-first 配置创建入口。
+
+## 手动集成
+
+下面给出 Tailwind CSS 4 配置，当前文档仅维护 Tailwind CSS 4 接入说明。
+
+### 前置条件
+
+- 已安装 HBuilderX `>=5.11`，并安装 uni-app x 的 Android / iOS 编译插件
+- Node.js 满足当前包要求：`^22.18.0 || >=24.11.0`
+- 本地 App E2E 需要 Android 模拟器或 iOS 模拟器；iOS 还需要完整 Xcode
+
+### 1) 创建项目
+
+在 HBuilderX 中创建新的 `uni-app x` 项目，然后在项目根目录初始化 `package.json`：
+
 ```bash npm2yarn
-npm run e2e:hbuilderx:local
-npm run e2e:hbuilderx:local:web
-npm run e2e:hbuilderx:local:mp
-npm run e2e:hbuilderx:local:android
-npm run e2e:hbuilderx:local:ios
-npm run e2e:hbuilderx:local:harmony
+npm init -y
 ```
 
-## 注册插件
+### 2) 安装依赖
 
-`uniAppX` 从 `weapp-tailwindcss/presets` 导出，应显式传入 `cssEntries`。
+```bash npm2yarn
+npm i -D tailwindcss weapp-tailwindcss
+```
+
+### 3) 注册 weapp-tailwindcss
+
+建议显式声明 CSS 入口，指向纯 `.css` 文件：
 
 ```ts title="vite.config.ts"
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 import uni from '@dcloudio/vite-plugin-uni'
-import { WeappTailwindcss } from 'weapp-tailwindcss/vite'
 import { uniAppX } from 'weapp-tailwindcss/presets'
+import { WeappTailwindcss } from 'weapp-tailwindcss/vite'
 
 const projectRoot = dirname(fileURLToPath(import.meta.url))
 
@@ -71,17 +133,29 @@ export default defineConfig({
 
 Tailwind CSS 生成由 `weapp-tailwindcss` 接管，不要再注册 `tailwindcss`、`@tailwindcss/postcss` 或 `@tailwindcss/vite`。
 
-当前文档仅维护 Tailwind CSS 4 接入说明。
-
 :::info Web 与 App 调试注意
 `cssEntries` 用来告诉 `weapp-tailwindcss` Tailwind CSS 4 的入口文件，入口仍应是 HBuilderX / Vite 能处理到的真实 CSS 文件。Web/H5、Android 和 iOS 都需要保持 `appType: 'uni-app-x'`，不要因为运行到 Web 端手动关闭 `uniAppX`，否则 `.uvue` 模板里的任意值类名不会转换成安全选择器。
 
 `rem2rpx`、`unitsToPx`、`unitConversion` 是 `uniAppX()` 预设的顶层选项，不要放进 `cssOptions`。
 :::
 
-## Tailwind CSS 入口
+项目把可复用组件放在 `layouts` 等自定义目录时，可以显式扩展局部样式匹配范围：
 
-Tailwind CSS 4 使用 CSS-first 入口，`@source` 要覆盖页面、组件和可能产出类名的脚本目录：
+```ts title="vite.config.ts"
+uniAppX({
+  base: projectRoot,
+  cssEntries: [resolve(projectRoot, 'main.css')],
+  componentLocalStyles: {
+    componentMatcher: id => /(?:^|\/)layouts\/.+\.(?:uvue|nvue)$/.test(id),
+  },
+})
+```
+
+`componentMatcher` 会覆盖默认的 `components` 目录规则；需要同时保留默认组件目录时，应在回调中一并匹配 `components` 和自定义目录。页面目录可通过同级的 `pageMatcher` 调整。两个回调收到的路径都已移除 query/hash，并统一为正斜杠。
+
+### 4) 配置 Tailwind CSS 入口
+
+Tailwind CSS 4 使用 CSS-first 入口。入口文件应放在项目根目录或源码目录下，并在 `cssEntries` 中使用绝对路径引用：
 
 ```css title="main.css"
 @import "tailwindcss" source(none);
@@ -95,9 +169,9 @@ Tailwind CSS 4 使用 CSS-first 入口，`@source` 要覆盖页面、组件和�
 
 不要把 `unpackage` 放进扫描范围，否则 HBuilderX 产物会反过来干扰开发构建。
 
-## 在 App.uvue 中引入入口
+### 5) 把入口 CSS 加入 HBuilderX 构建图
 
-`cssEntries` 负责生成入口识别，不负责把 CSS 自动加入 HBuilderX / Vite 模块图。必须在全局样式中实际导入：
+`cssEntries` 只告诉 `weapp-tailwindcss` 从哪里生成 Tailwind CSS，不会替代 HBuilderX / Vite 引入样式。在 `App.uvue` 的全局样式中导入入口：
 
 ```html title="App.uvue"
 <style>
@@ -105,20 +179,69 @@ Tailwind CSS 4 使用 CSS-first 入口，`@source` 要覆盖页面、组件和�
 </style>
 ```
 
-如果缺少这个导入，Tailwind 可以扫描到 `.uvue` 候选，但 Web、小程序和 App 页面都不会加载生成样式。
+缺少这一步时，候选类可以被扫描到，但 Web、小程序和 App 页面都不会加载生成后的 CSS。
 
-## 验证任意值类名
+### 6) 运行与验证
 
-在任意页面写一段最小用例：
+在 HBuilderX 中依次运行到 Web、微信小程序和计划支持的 App 平台。先用一个任意值类名验证生成和转译是否生效：
 
 ```html
 <view class="p-4">
-  <text class="bg-[#102938] text-[#f7fbff] w-[173px]">Tailwind CSS</text>
+  <text class="text-xl text-[#f7fbff] bg-[#102938] w-[173px]">Hello Tailwind on uni-app x</text>
 </view>
 ```
 
-依次运行到 Web、微信小程序和目标 App 平台后，检查元素样式是否生效。App 端文本使用 `<text>`，文本相关样式要直接写在 `<text>` 上。
+<img className="h-60" src={run} alt="运行" />
 
-## 参考模板
+请按目标平台完成以下验收：
 
-- [仓库内 Tailwind CSS 4 demo](https://github.com/sonofmagic/weapp-tailwindcss/tree/next/demo/uni-app-x-hbuilderx-tailwindcss-v4)
+- 检查实际输出目录、CSS 后缀和入口文件，不要假设所有平台都生成同名 CSS。
+- 确认 `cssEntries` 与 `@source` 覆盖真实页面、组件和布局源码。
+- 在 HBuilderX、模拟器或设备中检查单位转换、局部样式、平台变体和不支持语法的运行时表现。
+- 修改源码后确认 HBuilderX 或对应构建工具的增量更新仍能生成新样式。
+
+### 7) 编辑器智能提示
+
+VS Code 默认不认识 `uvue` / `uts`。可以给 Tailwind 扩展加语言映射，并安装 DCloud 的语言服务插件 `dcloud-ide.hbuilderx-language-services`：
+
+```json title=".vscode/settings.json"
+{
+  "tailwindCSS.includeLanguages": {
+    "uvue": "html",
+    "uts": "javascript"
+  }
+}
+```
+
+## 开发建议
+
+- 推荐用 VS Code 写代码，用 HBuilderX 负责运行与构建
+- 首选 Android 端调试：CSS 兼容度一般是 Web > 小程序 > App，先用 Android 模拟器打通路径
+- 原生 App 端文字必须放在 `<text>` 标签，文本样式也要直接作用在该元素上
+- 如果某些样式在 App 端受限，先保证 Android 端体验，再按需做条件编译适配小程序/Web
+
+## 布局能力边界
+
+- `uvue` 原生 App 端不支持 `gap`、`gap-x-*`、`gap-y-*`，包括 grid gap 与 flex gap
+- `space-x-*`、`space-y-*` 在 `uni-app x` 中也不要作为布局方案
+- 跨端间距建议直接对子项写 `mt-*` / `ml-*`，或者封装固定结构的间距组件
+- HBuilderX 控制台出现 CSS 兼容警告时，优先按目标平台限制调整样式
+
+## 常见问题
+
+### VS Code 对 uvue/uts 的高亮与跳转
+
+安装官方语言服务插件：
+
+- ID：`dcloud-ide.hbuilderx-language-services`
+- 支持 uni-app x 项目的提示、悬浮、转到定义、查找引用和校验
+- https://marketplace.visualstudio.com/items?itemName=dcloud-ide.hbuilderx-language-services
+
+### 运行方式
+
+uni-app x 的运行和构建仍以 HBuilderX 为准。需要命令行自动化时，可以使用 HBuilderX CLI；本仓库的本地 E2E 通过 `hbuilderx launch` 运行 Web、小程序和 App 目标。
+
+## 接下来
+
+- 对照当前可运行配置：[仓库内 uni-app x + Tailwind CSS 4 demo](https://github.com/weapp-tailwindcss/weapp-tailwindcss/tree/next/demo/uni-app-x-vdom-tailwindcss-v4)
+- 其他框架接入：返回 [各框架注册方式](/docs/quick-start/frameworks/uni-app-vite)

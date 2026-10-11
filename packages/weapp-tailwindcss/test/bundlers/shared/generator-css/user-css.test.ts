@@ -14,7 +14,7 @@ import {
   stripTailwindSourceMediaFragments,
   stripUnmatchedTailwindSourceMediaCloseFragments,
   transformGeneratorUserCss,
-} from '@/bundlers/shared/generator-css/user-css'
+} from '@/generation/user-css'
 
 describe('generator user css helpers', () => {
   it('removes empty custom variants produced by platform preprocessors', () => {
@@ -211,7 +211,7 @@ describe('generator user css helpers', () => {
       'abbr[title]{text-decoration:underline}',
       'button,input[type="button"],input[type="reset"],input[type="submit"]{appearance:button}',
       '.keep{color:red}',
-    ].join('\n'))).toBe('.keep{color:red}')
+    ].join('\n'), ':root,:host{--color-red-500:red}')).toBe('.keep{color:red}')
     expect(removeTailwindV4GeneratedUserCssArtifacts([
       'page{',
       '--test-color:#006241;',
@@ -220,6 +220,15 @@ describe('generator user css helpers', () => {
       '}',
     ].join(''))).toContain('--color-test:#006241')
     expect(removeTailwindV4GeneratedUserCssArtifacts(':host,page{--color-test:#006241}')).toContain('--color-test:#006241')
+    const mixedTheme = removeTailwindV4GeneratedUserCssArtifacts(
+      ':host,:root{--color-red-500:red;--spacing:.25rem;--test-color:#006241;--brand-color:#123456}',
+    )
+    expect(mixedTheme).toContain('--test-color:#006241')
+    expect(mixedTheme).toContain('--brand-color:#123456')
+    expect(removeTailwindV4GeneratedUserCssArtifacts(
+      ' :host, page, .tw-root, wx-root-portal-content { --color-red-500: red; --spacing: .25rem; } ',
+      ':host,page,.tw-root,wx-root-portal-content{--color-red-500:red;--spacing:.25rem}',
+    ).trim()).toBe('')
     expect(removeTailwindV4GeneratedUserCssArtifacts('.broken{')).toBe('.broken{')
 
     const styleHandler = vi.fn(async (css: string) => ({ css: `${css}.handled{color:green}` }))
@@ -325,5 +334,23 @@ describe('generator user css helpers', () => {
       styleHandler,
       importFallback: true,
     })).resolves.toBe('')
+  })
+
+  it('precomputes configured cssCalc variables for web user css', async () => {
+    const styleHandler = vi.fn(async (css: string) => ({ css: `handled:${css}` }))
+    const css = await transformGeneratorUserCss('.raw-btn{gap:calc(var(--spacing) * 2)}', {
+      generatorTarget: 'web',
+      generatorStyleOptions: {
+        cssCalc: ['--spacing'],
+      },
+      cssUserHandlerOptions: {} as any,
+      styleHandler,
+      importFallback: true,
+      generatedSource: ':root{--spacing:.25rem}',
+    })
+
+    expect(styleHandler).not.toHaveBeenCalled()
+    expect(css).toMatch(/gap:\s*0\.5rem/)
+    expect(css).not.toMatch(/gap:\s*calc\(var\(--spacing\)/)
   })
 })

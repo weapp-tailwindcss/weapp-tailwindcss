@@ -11,6 +11,9 @@ const entryShims = {
   'generator.d.ts': { target: './generator/index.js' },
   'reset.d.ts': { target: './reset/index.js', defaultExport: true },
   'types.d.ts': { target: './types/index.js' },
+  // tsdown 将 vite/web 的运行时入口输出到 dist/vite/web.js，
+  // TypeScript 则按源码路径生成 dist/vite-web.d.ts，需要补齐公开导出的声明路径。
+  'vite/web.d.ts': { target: '../vite-web.js' },
 }
 
 async function main() {

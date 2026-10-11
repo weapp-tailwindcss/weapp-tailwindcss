@@ -1,9 +1,9 @@
 # @weapp-tailwindcss/ui
 
-> 简体中文 | [English](./README.en.md)
+> English | [简体中文](./README.zh-CN.md)
 
-这个包提供面向小程序的原子化 UI 运行时层，包含组件、样式产物、variants、hooks 和跨平台适配能力。
+This package provides an atomic UI runtime layer for mini programs, including components, style assets, variants, hooks, and cross-platform adapters.
 
-## 官网
+## Website
 
-更多接入方式、配置说明和框架示例见 [weapp-tailwindcss 官方文档](https://tw.icebreaker.top)。
+For setup guides, configuration references, and framework examples, see the [official weapp-tailwindcss documentation](https://tw.weapp.dev).

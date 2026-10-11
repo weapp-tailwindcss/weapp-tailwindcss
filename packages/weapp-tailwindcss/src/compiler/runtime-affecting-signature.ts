@@ -1,11 +1,9 @@
 import type { RuntimeEntryType } from './runtime-snapshot'
+import { createCssRuntimeAffectingSignature } from '@weapp-tailwindcss/postcss/transform'
 import { Parser } from 'htmlparser2'
 import { babelParse } from '@/js/babel/parse'
+import { tryCreateJsRuntimeAffectingSignature } from './runtime-affecting-signature/js'
 
-const CSS_BLOCK_COMMENT_RE = /\/\*[\s\S]*?\*\//g
-const CSS_AROUND_PUNCTUATION_RE = /\s*([{}:;,>+~()])\s*/g
-const CSS_TRAILING_DECLARATION_SEMICOLON_RE = /;\}/g
-const CSS_WHITESPACE_RE = /\s+/g
 const JS_RUNTIME_AFFECTING_TEXT_HINT_RE = /["'`/]/
 const JS_INCOMPLETE_TRAILING_OPERATOR_RE = /(?:=>|[=+\-*%&|^!~?:,.({[\]])\s*$/
 const JS_AST_IGNORED_KEYS = new Set([
@@ -70,6 +68,11 @@ function createJsRuntimeAffectingSignature(source: string) {
     return ''
   }
 
+  const fastSignature = tryCreateJsRuntimeAffectingSignature(source)
+  if (fastSignature !== undefined) {
+    return fastSignature
+  }
+
   try {
     const ast = babelParse(source, {
       cache: true,
@@ -82,20 +85,20 @@ function createJsRuntimeAffectingSignature(source: string) {
     const stack: AstNode[] = [ast as unknown as AstNode]
     while (stack.length > 0) {
       const node = stack.pop()!
-      if (node.type === 'StringLiteral' && typeof node.value === 'string') {
-        parts.push(`s:${node.value}`)
+      if (node.type === 'StringLiteral' && typeof node['value'] === 'string') {
+        parts.push(`s:${node['value']}`)
       }
       else if (
         node.type === 'TemplateElement'
-        && node.value
-        && typeof node.value === 'object'
-        && 'raw' in node.value
-        && typeof node.value.raw === 'string'
+        && node['value']
+        && typeof node['value'] === 'object'
+        && 'raw' in node['value']
+        && typeof node['value'].raw === 'string'
       ) {
-        parts.push(`t:${node.value.raw}`)
+        parts.push(`t:${node['value'].raw}`)
       }
-      else if (node.type === 'JSXText' && typeof node.value === 'string') {
-        const value = node.value.trim()
+      else if (node.type === 'JSXText' && typeof node['value'] === 'string') {
+        const value = node['value'].trim()
         if (value.length > 0) {
           parts.push(`x:${value}`)
         }
@@ -137,15 +140,6 @@ function createJsRuntimeAffectingSignature(source: string) {
     // 解析失败时退回原始源码，宁可多刷新也不要漏刷新。
     return source
   }
-}
-
-function createCssRuntimeAffectingSignature(source: string) {
-  return source
-    .replace(CSS_BLOCK_COMMENT_RE, '')
-    .replace(CSS_AROUND_PUNCTUATION_RE, '$1')
-    .replace(CSS_TRAILING_DECLARATION_SEMICOLON_RE, '}')
-    .replace(CSS_WHITESPACE_RE, ' ')
-    .trim()
 }
 
 export function createRuntimeAffectingSourceSignature(source: string, type: RuntimeEntryType) {

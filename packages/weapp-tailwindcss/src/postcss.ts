@@ -3,8 +3,8 @@ import type {
   WeappTailwindcssPostcssGenerator,
   WeappTailwindcssPostcssPluginAdapters,
   WeappTailwindcssPostcssPluginOptions,
-} from '@weapp-tailwindcss/postcss'
-import { createWeappTailwindcssPostcssPlugin } from '@weapp-tailwindcss/postcss'
+} from '@weapp-tailwindcss/postcss/plugin'
+import { createWeappTailwindcssPostcssPlugin } from '@weapp-tailwindcss/postcss/plugin'
 import {
   createWeappTailwindcssGenerator,
   normalizeWeappTailwindcssGeneratorOptions,
@@ -12,6 +12,7 @@ import {
 } from './generator'
 
 const adapters: WeappTailwindcssPostcssPluginAdapters = {
+  compiledSourceScan: true,
   createGenerator: (source) => {
     const generator = createWeappTailwindcssGenerator(source as Parameters<typeof createWeappTailwindcssGenerator>[0])
     return generator as unknown as WeappTailwindcssPostcssGenerator

@@ -23,7 +23,7 @@
 
 ## 推荐验证命令
 
-- `pnpm --filter weapp-tailwindcss vitest run test/compiler`
+- `pnpm --filter weapp-tailwindcss exec vitest run test/compiler`
 
 ## 提交前检查
 

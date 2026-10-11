@@ -1,0 +1,3193 @@
+{
+  "schemaVersion": 1,
+  "catalogHash": "a8c3b45f993d9aa28782f308fc959a09e160d67a9097d11b1bc6a8a38b93c886",
+  "generatedAt": "2026-10-06T00:16:17.793Z",
+  "versions": {
+    "tailwindcss": "4.3.3",
+    "lynxEngine": "4.0.1",
+    "engineVersion": "3.9",
+    "cssDefines": "0.0.16"
+  },
+  "results": [
+    {
+      "id": "layout-aspect",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "aspect-ratio",
+          "value": "4/3"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "aspect-ratio",
+          "value": "4/3"
+        }
+      ],
+      "cssDefinesKnown": [
+        "aspect-ratio"
+      ]
+    },
+    {
+      "id": "layout-columns",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：columns",
+      "generatedDeclarations": [
+        {
+          "property": "columns",
+          "value": "2"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "columns",
+          "value": "2"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "layout-box-sizing",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "box-sizing",
+          "value": "border-box"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "box-sizing",
+          "value": "border-box"
+        }
+      ],
+      "cssDefinesKnown": [
+        "box-sizing"
+      ]
+    },
+    {
+      "id": "layout-display",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "display",
+          "value": "block"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "display",
+          "value": "block"
+        }
+      ],
+      "cssDefinesKnown": [
+        "display"
+      ]
+    },
+    {
+      "id": "layout-float",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：float",
+      "generatedDeclarations": [
+        {
+          "property": "float",
+          "value": "left"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "float",
+          "value": "left"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "layout-isolation",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：isolation",
+      "generatedDeclarations": [
+        {
+          "property": "isolation",
+          "value": "isolate"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "isolation",
+          "value": "isolate"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "layout-object-fit",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：object-fit",
+      "generatedDeclarations": [
+        {
+          "property": "object-fit",
+          "value": "cover"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "object-fit",
+          "value": "cover"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "layout-overflow",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "overflow",
+          "value": "hidden"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "overflow",
+          "value": "hidden"
+        }
+      ],
+      "cssDefinesKnown": [
+        "overflow"
+      ]
+    },
+    {
+      "id": "layout-position",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "position",
+          "value": "absolute"
+        },
+        {
+          "property": "left",
+          "value": "7px"
+        },
+        {
+          "property": "top",
+          "value": "9px"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "position",
+          "value": "absolute"
+        },
+        {
+          "property": "left",
+          "value": "7px"
+        },
+        {
+          "property": "top",
+          "value": "9px"
+        }
+      ],
+      "cssDefinesKnown": [
+        "position",
+        "left",
+        "top"
+      ]
+    },
+    {
+      "id": "layout-visibility",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "visibility",
+          "value": "hidden"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "visibility",
+          "value": "hidden"
+        }
+      ],
+      "cssDefinesKnown": [
+        "visibility"
+      ]
+    },
+    {
+      "id": "layout-z-index",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "z-index",
+          "value": "10"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "z-index",
+          "value": "10"
+        }
+      ],
+      "cssDefinesKnown": [
+        "z-index"
+      ]
+    },
+    {
+      "id": "flex-direction",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "display",
+          "value": "flex"
+        },
+        {
+          "property": "flex-direction",
+          "value": "row"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "display",
+          "value": "flex"
+        },
+        {
+          "property": "flex-direction",
+          "value": "row"
+        }
+      ],
+      "cssDefinesKnown": [
+        "display",
+        "flex-direction"
+      ]
+    },
+    {
+      "id": "flex-alignment",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "align-items",
+          "value": "center"
+        },
+        {
+          "property": "justify-content",
+          "value": "space-between"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "align-items",
+          "value": "center"
+        },
+        {
+          "property": "justify-content",
+          "value": "space-between"
+        }
+      ],
+      "cssDefinesKnown": [
+        "align-items",
+        "justify-content"
+      ]
+    },
+    {
+      "id": "flex-grow",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "flex-grow",
+          "value": "1"
+        },
+        {
+          "property": "flex-basis",
+          "value": "50%"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "flex-grow",
+          "value": "1"
+        },
+        {
+          "property": "flex-basis",
+          "value": "50%"
+        }
+      ],
+      "cssDefinesKnown": [
+        "flex-grow",
+        "flex-basis"
+      ]
+    },
+    {
+      "id": "grid-template",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "display",
+          "value": "grid"
+        },
+        {
+          "property": "grid-template-columns",
+          "value": "80px 1fr"
+        },
+        {
+          "property": "gap",
+          "value": "0.5rem"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "display",
+          "value": "grid"
+        },
+        {
+          "property": "grid-template-columns",
+          "value": "80px 1fr"
+        },
+        {
+          "property": "gap",
+          "value": "0.5rem"
+        }
+      ],
+      "cssDefinesKnown": [
+        "display",
+        "grid-template-columns",
+        "gap"
+      ]
+    },
+    {
+      "id": "spacing-margin",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "margin-top",
+          "value": "-0.5rem"
+        },
+        {
+          "property": "margin-left",
+          "value": "11px"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "margin-top",
+          "value": "-0.5rem"
+        },
+        {
+          "property": "margin-left",
+          "value": "11px"
+        }
+      ],
+      "cssDefinesKnown": [
+        "margin-top",
+        "margin-left"
+      ]
+    },
+    {
+      "id": "spacing-padding",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "padding",
+          "value": "13px"
+        },
+        {
+          "property": "padding-left",
+          "value": "7px"
+        },
+        {
+          "property": "padding-right",
+          "value": "7px"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "padding",
+          "value": "13px"
+        },
+        {
+          "property": "padding-left",
+          "value": "7px"
+        },
+        {
+          "property": "padding-right",
+          "value": "7px"
+        }
+      ],
+      "cssDefinesKnown": [
+        "padding",
+        "padding-left",
+        "padding-right"
+      ]
+    },
+    {
+      "id": "spacing-logical",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：padding-inline",
+      "generatedDeclarations": [
+        {
+          "property": "padding-inline",
+          "value": "7.5px"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "padding-inline",
+          "value": "7.5px"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "sizing-fixed",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "height",
+          "value": "45rpx"
+        },
+        {
+          "property": "width",
+          "value": "123px"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "height",
+          "value": "45rpx"
+        },
+        {
+          "property": "width",
+          "value": "123px"
+        }
+      ],
+      "cssDefinesKnown": [
+        "height",
+        "width"
+      ]
+    },
+    {
+      "id": "sizing-min-max",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "min-width",
+          "value": "calc(100% - 2rem)"
+        },
+        {
+          "property": "max-height",
+          "value": "240px"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "min-width",
+          "value": "calc(100% - 2rem)"
+        },
+        {
+          "property": "max-height",
+          "value": "240px"
+        }
+      ],
+      "cssDefinesKnown": [
+        "min-width",
+        "max-height"
+      ]
+    },
+    {
+      "id": "table-layout",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：table-layout, border-collapse",
+      "generatedDeclarations": [
+        {
+          "property": "display",
+          "value": "table"
+        },
+        {
+          "property": "table-layout",
+          "value": "fixed"
+        },
+        {
+          "property": "border-collapse",
+          "value": "collapse"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "display",
+          "value": "table"
+        },
+        {
+          "property": "table-layout",
+          "value": "fixed"
+        },
+        {
+          "property": "border-collapse",
+          "value": "collapse"
+        }
+      ],
+      "cssDefinesKnown": [
+        "display"
+      ]
+    },
+    {
+      "id": "type-size",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "font-size",
+          "value": "23px"
+        },
+        {
+          "property": "line-height",
+          "value": "1.25"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "font-size",
+          "value": "23px"
+        },
+        {
+          "property": "line-height",
+          "value": "1.25"
+        }
+      ],
+      "cssDefinesKnown": [
+        "font-size",
+        "line-height"
+      ]
+    },
+    {
+      "id": "type-weight-style",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "font-weight",
+          "value": "700"
+        },
+        {
+          "property": "font-style",
+          "value": "italic"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "font-weight",
+          "value": "700"
+        },
+        {
+          "property": "font-style",
+          "value": "italic"
+        }
+      ],
+      "cssDefinesKnown": [
+        "font-weight",
+        "font-style"
+      ]
+    },
+    {
+      "id": "type-tracking",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "letter-spacing",
+          "value": "0.12em"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "letter-spacing",
+          "value": "0.12em"
+        }
+      ],
+      "cssDefinesKnown": [
+        "letter-spacing"
+      ]
+    },
+    {
+      "id": "type-align-overflow",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "text-align",
+          "value": "center"
+        },
+        {
+          "property": "text-overflow",
+          "value": "ellipsis"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "text-align",
+          "value": "center"
+        },
+        {
+          "property": "text-overflow",
+          "value": "ellipsis"
+        }
+      ],
+      "cssDefinesKnown": [
+        "text-align",
+        "text-overflow"
+      ]
+    },
+    {
+      "id": "type-decoration",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：text-decoration-line",
+      "generatedDeclarations": [
+        {
+          "property": "text-decoration-line",
+          "value": "underline"
+        },
+        {
+          "property": "text-decoration-thickness",
+          "value": "2px"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "text-decoration-line",
+          "value": "underline"
+        },
+        {
+          "property": "text-decoration-thickness",
+          "value": "2px"
+        }
+      ],
+      "cssDefinesKnown": [
+        "text-decoration-thickness"
+      ]
+    },
+    {
+      "id": "background-color",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "background-color",
+          "value": "#123456"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "background-color",
+          "value": "#123456"
+        }
+      ],
+      "cssDefinesKnown": [
+        "background-color"
+      ]
+    },
+    {
+      "id": "background-gradient",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "background-image",
+          "value": "radial-gradient(circle at 20% 20%,#fff,#000)"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "background-image",
+          "value": "radial-gradient(circle at 20% 20%,#fff,#000)"
+        }
+      ],
+      "cssDefinesKnown": [
+        "background-image"
+      ]
+    },
+    {
+      "id": "background-size",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "background-size",
+          "value": "cover"
+        },
+        {
+          "property": "background-position",
+          "value": "center"
+        },
+        {
+          "property": "background-repeat",
+          "value": "no-repeat"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "background-size",
+          "value": "cover"
+        },
+        {
+          "property": "background-position",
+          "value": "center"
+        },
+        {
+          "property": "background-repeat",
+          "value": "no-repeat"
+        }
+      ],
+      "cssDefinesKnown": [
+        "background-size",
+        "background-position",
+        "background-repeat"
+      ]
+    },
+    {
+      "id": "border-width-color",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "border-style",
+          "value": "solid"
+        },
+        {
+          "property": "border-color",
+          "value": "#16a34a"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "border-style",
+          "value": "solid"
+        },
+        {
+          "property": "border-color",
+          "value": "#16a34a"
+        }
+      ],
+      "cssDefinesKnown": [
+        "border-style",
+        "border-color"
+      ]
+    },
+    {
+      "id": "border-radius",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "border-radius",
+          "value": "18px"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "border-radius",
+          "value": "18px"
+        }
+      ],
+      "cssDefinesKnown": [
+        "border-radius"
+      ]
+    },
+    {
+      "id": "effect-opacity",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "opacity",
+          "value": "0.5"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "opacity",
+          "value": "0.5"
+        }
+      ],
+      "cssDefinesKnown": [
+        "opacity"
+      ]
+    },
+    {
+      "id": "effect-shadow",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "box-shadow",
+          "value": "var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "box-shadow",
+          "value": "{{--tw-inset-shadow}} , {{--tw-inset-ring-shadow}} , {{--tw-ring-offset-shadow}} , {{--tw-ring-shadow}} , {{--tw-shadow}}"
+        }
+      ],
+      "cssDefinesKnown": [
+        "box-shadow"
+      ]
+    },
+    {
+      "id": "effect-blend",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：mix-blend-mode",
+      "generatedDeclarations": [
+        {
+          "property": "mix-blend-mode",
+          "value": "multiply"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "mix-blend-mode",
+          "value": "multiply"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "filter-blur",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "--tw-blur",
+          "value": "blur(2px)"
+        },
+        {
+          "property": "filter",
+          "value": "var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "--tw-blur",
+          "value": "blur(2px)"
+        },
+        {
+          "property": "filter",
+          "value": "{{--tw-blur}}  {{--tw-brightness}}  {{--tw-contrast}}  {{--tw-grayscale}}  {{--tw-hue-rotate}}  {{--tw-invert}}  {{--tw-saturate}}  {{--tw-sepia}}  {{--tw-drop-shadow}}"
+        }
+      ],
+      "cssDefinesKnown": [
+        "filter"
+      ]
+    },
+    {
+      "id": "filter-backdrop",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：backdrop-filter",
+      "generatedDeclarations": [
+        {
+          "property": "backdrop-filter",
+          "value": "var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,)"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "backdrop-filter",
+          "value": "{{--tw-backdrop-blur}}  {{--tw-backdrop-brightness}}  {{--tw-backdrop-contrast}}  {{--tw-backdrop-grayscale}}  {{--tw-backdrop-hue-rotate}}  {{--tw-backdrop-invert}}  {{--tw-backdrop-opacity}}  {{--tw-backdrop-saturate}}  {{--tw-backdrop-sepia}}"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "svg-fill-stroke",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：fill, stroke-width, stroke",
+      "generatedDeclarations": [
+        {
+          "property": "fill",
+          "value": "#0284c7"
+        },
+        {
+          "property": "stroke-width",
+          "value": "2"
+        },
+        {
+          "property": "stroke",
+          "value": "#0f172a"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "fill",
+          "value": "#0284c7"
+        },
+        {
+          "property": "stroke-width",
+          "value": "2"
+        },
+        {
+          "property": "stroke",
+          "value": "#0f172a"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "accessibility-sr",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "position",
+          "value": "absolute"
+        },
+        {
+          "property": "width",
+          "value": "1px"
+        },
+        {
+          "property": "height",
+          "value": "1px"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "position",
+          "value": "absolute"
+        },
+        {
+          "property": "width",
+          "value": "1px"
+        },
+        {
+          "property": "height",
+          "value": "1px"
+        }
+      ],
+      "cssDefinesKnown": [
+        "position",
+        "width",
+        "height"
+      ]
+    },
+    {
+      "id": "transform-translate",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：translate",
+      "generatedDeclarations": [
+        {
+          "property": "--tw-translate-x",
+          "value": "12px"
+        },
+        {
+          "property": "--tw-translate-y",
+          "value": "4px"
+        },
+        {
+          "property": "translate",
+          "value": "var(--tw-translate-x) var(--tw-translate-y)"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "--tw-translate-x",
+          "value": "12px"
+        },
+        {
+          "property": "--tw-translate-y",
+          "value": "4px"
+        },
+        {
+          "property": "translate",
+          "value": "{{--tw-translate-x}}  {{--tw-translate-y}}"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "transform-rotate",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：rotate",
+      "generatedDeclarations": [
+        {
+          "property": "rotate",
+          "value": "12deg"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "rotate",
+          "value": "12deg"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "transform-scale",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：scale",
+      "generatedDeclarations": [
+        {
+          "property": "--tw-scale-x",
+          "value": "110%"
+        },
+        {
+          "property": "--tw-scale-y",
+          "value": "110%"
+        },
+        {
+          "property": "scale",
+          "value": "var(--tw-scale-x) var(--tw-scale-y)"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "--tw-scale-x",
+          "value": "110%"
+        },
+        {
+          "property": "--tw-scale-y",
+          "value": "110%"
+        },
+        {
+          "property": "scale",
+          "value": "{{--tw-scale-x}}  {{--tw-scale-y}}"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "transform-origin",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "transform-origin",
+          "value": "0 0"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "transform-origin",
+          "value": "0 0"
+        }
+      ],
+      "cssDefinesKnown": [
+        "transform-origin"
+      ]
+    },
+    {
+      "id": "transition-basic",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "transition-property",
+          "value": "opacity"
+        },
+        {
+          "property": "transition-duration",
+          "value": "300ms"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "transition-property",
+          "value": "opacity"
+        },
+        {
+          "property": "transition-duration",
+          "value": "300ms"
+        }
+      ],
+      "cssDefinesKnown": [
+        "transition-property",
+        "transition-duration"
+      ]
+    },
+    {
+      "id": "animation-spin",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "animation",
+          "value": "spin 1s linear infinite"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "animation",
+          "value": "spin 1s linear infinite"
+        }
+      ],
+      "cssDefinesKnown": [
+        "animation"
+      ]
+    },
+    {
+      "id": "interaction-pointer",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "pointer-events",
+          "value": "none"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "pointer-events",
+          "value": "none"
+        }
+      ],
+      "cssDefinesKnown": [
+        "pointer-events"
+      ]
+    },
+    {
+      "id": "interaction-select",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：user-select",
+      "generatedDeclarations": [
+        {
+          "property": "user-select",
+          "value": "none"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "user-select",
+          "value": "none"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "interaction-scroll",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：scroll-behavior, scroll-snap-type",
+      "generatedDeclarations": [
+        {
+          "property": "scroll-behavior",
+          "value": "smooth"
+        },
+        {
+          "property": "scroll-snap-type",
+          "value": "y var(--tw-scroll-snap-strictness)"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "scroll-behavior",
+          "value": "smooth"
+        },
+        {
+          "property": "scroll-snap-type",
+          "value": "y {{--tw-scroll-snap-strictness}}"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "variant-responsive",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "width",
+          "value": "200px"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "width",
+          "value": "200px"
+        }
+      ],
+      "cssDefinesKnown": [
+        "width"
+      ]
+    },
+    {
+      "id": "variant-dark",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "color",
+          "value": "#ffffff"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "color",
+          "value": "#ffffff"
+        }
+      ],
+      "cssDefinesKnown": [
+        "color"
+      ]
+    },
+    {
+      "id": "variant-state",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "background-color",
+          "value": "#ef4444"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "background-color",
+          "value": "#ef4444"
+        }
+      ],
+      "cssDefinesKnown": [
+        "background-color"
+      ]
+    },
+    {
+      "id": "variant-structural",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "font-weight",
+          "value": "700"
+        },
+        {
+          "property": "opacity",
+          "value": "0.5"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "font-weight",
+          "value": "700"
+        },
+        {
+          "property": "opacity",
+          "value": "0.5"
+        }
+      ],
+      "cssDefinesKnown": [
+        "font-weight",
+        "opacity"
+      ]
+    },
+    {
+      "id": "variant-group-peer",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*), .peer-checked\\:opacity-100:is(:where(.peer):checked~*)",
+      "generatedDeclarations": [
+        {
+          "property": "display",
+          "value": "block"
+        },
+        {
+          "property": "opacity",
+          "value": "1"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "display",
+          "value": "block"
+        },
+        {
+          "property": "opacity",
+          "value": "1"
+        }
+      ],
+      "cssDefinesKnown": [
+        "display",
+        "opacity"
+      ]
+    },
+    {
+      "id": "variant-data-aria",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：text-decoration-line",
+      "generatedDeclarations": [
+        {
+          "property": "opacity",
+          "value": "1"
+        },
+        {
+          "property": "text-decoration-line",
+          "value": "underline"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "opacity",
+          "value": "1"
+        },
+        {
+          "property": "text-decoration-line",
+          "value": "underline"
+        }
+      ],
+      "cssDefinesKnown": [
+        "opacity"
+      ]
+    },
+    {
+      "id": "variant-supports",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "display",
+          "value": "grid"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "display",
+          "value": "grid"
+        }
+      ],
+      "cssDefinesKnown": [
+        "display"
+      ]
+    },
+    {
+      "id": "variant-pseudo-element",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "TASM 未保留完整 selector 或声明",
+      "generatedDeclarations": [
+        {
+          "property": "--tw-content",
+          "value": "'lynx'"
+        }
+      ],
+      "bundledDeclarations": [],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "variant-arbitrary",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "font-weight",
+          "value": "700"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "font-weight",
+          "value": "700"
+        }
+      ],
+      "cssDefinesKnown": [
+        "font-weight"
+      ]
+    },
+    {
+      "id": "syntax-negative",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：translate",
+      "generatedDeclarations": [
+        {
+          "property": "--tw-translate-x",
+          "value": "-5px"
+        },
+        {
+          "property": "translate",
+          "value": "var(--tw-translate-x) var(--tw-translate-y)"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "--tw-translate-x",
+          "value": "-5px"
+        },
+        {
+          "property": "translate",
+          "value": "{{--tw-translate-x}}  {{--tw-translate-y}}"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "syntax-important",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "TASM 未保留完整 selector 或声明",
+      "generatedDeclarations": [
+        {
+          "property": "background-color",
+          "value": "#737373",
+          "important": true
+        }
+      ],
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [
+        "background-color"
+      ]
+    },
+    {
+      "id": "syntax-opacity-modifier",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "TASM 未保留完整 selector 或声明",
+      "generatedDeclarations": [
+        {
+          "property": "color",
+          "value": "rgba(0, 0, 0, 0.35)"
+        }
+      ],
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [
+        "color"
+      ]
+    },
+    {
+      "id": "syntax-arbitrary-property",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：mask-type",
+      "generatedDeclarations": [
+        {
+          "property": "mask-type",
+          "value": "luminance"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "mask-type",
+          "value": "luminance"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "syntax-css-variable",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "--panel-height",
+          "value": "240px"
+        },
+        {
+          "property": "max-height",
+          "value": "var(--panel-height)"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "--panel-height",
+          "value": "240px"
+        },
+        {
+          "property": "max-height",
+          "value": "{{--panel-height}}"
+        }
+      ],
+      "cssDefinesKnown": [
+        "max-height"
+      ]
+    },
+    {
+      "id": "syntax-type-hint",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "color",
+          "value": "#c31d6b"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "color",
+          "value": "#c31d6b"
+        }
+      ],
+      "cssDefinesKnown": [
+        "color"
+      ]
+    },
+    {
+      "id": "directive-import",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [],
+      "bundledDeclarations": [],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "directive-theme",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "background-color",
+          "value": "#0ea5e9"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "background-color",
+          "value": "#0ea5e9"
+        }
+      ],
+      "cssDefinesKnown": [
+        "background-color"
+      ]
+    },
+    {
+      "id": "directive-source",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：text-decoration-line",
+      "generatedDeclarations": [
+        {
+          "property": "text-decoration-line",
+          "value": "underline"
+        },
+        {
+          "property": "background-color",
+          "value": "rgb(228, 0, 22)"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "text-decoration-line",
+          "value": "underline"
+        },
+        {
+          "property": "background-color",
+          "value": "rgb(228,0,22)"
+        }
+      ],
+      "cssDefinesKnown": [
+        "background-color"
+      ]
+    },
+    {
+      "id": "directive-utility",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：content-visibility",
+      "generatedDeclarations": [
+        {
+          "property": "content-visibility",
+          "value": "auto"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "content-visibility",
+          "value": "auto"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "directive-variant",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除 selector：.theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *)",
+      "generatedDeclarations": [
+        {
+          "property": "background-color",
+          "value": "#000"
+        },
+        {
+          "property": "color",
+          "value": "#fff"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "background-color",
+          "value": "#000"
+        },
+        {
+          "property": "color",
+          "value": "#fff"
+        }
+      ],
+      "cssDefinesKnown": [
+        "background-color",
+        "color"
+      ]
+    },
+    {
+      "id": "directive-apply",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "display",
+          "value": "flex"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "display",
+          "value": "flex"
+        }
+      ],
+      "cssDefinesKnown": [
+        "display"
+      ]
+    },
+    {
+      "id": "directive-reference",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "padding",
+          "value": "16px"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "padding",
+          "value": "16px"
+        }
+      ],
+      "cssDefinesKnown": [
+        "padding"
+      ]
+    },
+    {
+      "id": "directive-config-plugin",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "TASM 未保留完整 selector 或声明",
+      "generatedDeclarations": [
+        {
+          "property": "padding",
+          "value": "19px",
+          "important": true
+        },
+        {
+          "property": "opacity",
+          "value": "0.73",
+          "important": true
+        }
+      ],
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [
+        "padding",
+        "opacity"
+      ]
+    },
+    {
+      "id": "directive-prefix-important",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "TASM 未保留完整 selector 或声明",
+      "generatedDeclarations": [
+        {
+          "property": "display",
+          "value": "flex"
+        },
+        {
+          "property": "padding",
+          "value": "19px",
+          "important": true
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "display",
+          "value": "flex"
+        }
+      ],
+      "cssDefinesKnown": [
+        "display",
+        "padding"
+      ]
+    },
+    {
+      "id": "layout-break",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：break-before, break-after, break-inside",
+      "generatedDeclarations": [
+        {
+          "property": "break-before",
+          "value": "page"
+        },
+        {
+          "property": "break-after",
+          "value": "page"
+        },
+        {
+          "property": "break-inside",
+          "value": "avoid"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "break-before",
+          "value": "page"
+        },
+        {
+          "property": "break-after",
+          "value": "page"
+        },
+        {
+          "property": "break-inside",
+          "value": "avoid"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "layout-decoration-clear",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：box-decoration-break, clear",
+      "generatedDeclarations": [
+        {
+          "property": "box-decoration-break",
+          "value": "clone"
+        },
+        {
+          "property": "clear",
+          "value": "both"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "box-decoration-break",
+          "value": "clone"
+        },
+        {
+          "property": "clear",
+          "value": "both"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "layout-object-position",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：object-position",
+      "generatedDeclarations": [
+        {
+          "property": "object-position",
+          "value": "35% 65%"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "object-position",
+          "value": "35% 65%"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "layout-overscroll",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：overscroll-behavior",
+      "generatedDeclarations": [
+        {
+          "property": "overscroll-behavior",
+          "value": "contain"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "overscroll-behavior",
+          "value": "contain"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "flex-wrap-order",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "flex-wrap",
+          "value": "wrap"
+        },
+        {
+          "property": "order",
+          "value": "2"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "flex-wrap",
+          "value": "wrap"
+        },
+        {
+          "property": "order",
+          "value": "2"
+        }
+      ],
+      "cssDefinesKnown": [
+        "flex-wrap",
+        "order"
+      ]
+    },
+    {
+      "id": "flex-shorthand-shrink",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "flex",
+          "value": "1"
+        },
+        {
+          "property": "flex-shrink",
+          "value": "0"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "flex",
+          "value": "1"
+        },
+        {
+          "property": "flex-shrink",
+          "value": "0"
+        }
+      ],
+      "cssDefinesKnown": [
+        "flex",
+        "flex-shrink"
+      ]
+    },
+    {
+      "id": "grid-placement",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "grid-column",
+          "value": "span 2 / span 2"
+        },
+        {
+          "property": "grid-row",
+          "value": "span 2 / span 2"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "grid-column",
+          "value": "span 2/span 2"
+        },
+        {
+          "property": "grid-row",
+          "value": "span 2/span 2"
+        }
+      ],
+      "cssDefinesKnown": [
+        "grid-column",
+        "grid-row"
+      ]
+    },
+    {
+      "id": "grid-auto",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "grid-auto-flow",
+          "value": "column"
+        },
+        {
+          "property": "grid-auto-columns",
+          "value": "minmax(0, 1fr)"
+        },
+        {
+          "property": "grid-auto-rows",
+          "value": "min-content"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "grid-auto-flow",
+          "value": "column"
+        },
+        {
+          "property": "grid-auto-columns",
+          "value": "minmax(0,1fr)"
+        },
+        {
+          "property": "grid-auto-rows",
+          "value": "min-content"
+        }
+      ],
+      "cssDefinesKnown": [
+        "grid-auto-flow",
+        "grid-auto-columns",
+        "grid-auto-rows"
+      ]
+    },
+    {
+      "id": "grid-place",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：place-content, place-items, place-self",
+      "generatedDeclarations": [
+        {
+          "property": "place-content",
+          "value": "center"
+        },
+        {
+          "property": "place-items",
+          "value": "center"
+        },
+        {
+          "property": "place-self",
+          "value": "center"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "place-content",
+          "value": "center"
+        },
+        {
+          "property": "place-items",
+          "value": "center"
+        },
+        {
+          "property": "place-self",
+          "value": "center"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "grid-justify-self",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "justify-items",
+          "value": "center"
+        },
+        {
+          "property": "justify-self",
+          "value": "flex-end"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "justify-items",
+          "value": "center"
+        },
+        {
+          "property": "justify-self",
+          "value": "flex-end"
+        }
+      ],
+      "cssDefinesKnown": [
+        "justify-items",
+        "justify-self"
+      ]
+    },
+    {
+      "id": "grid-align-content-self",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "align-content",
+          "value": "center"
+        },
+        {
+          "property": "align-self",
+          "value": "flex-end"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "align-content",
+          "value": "center"
+        },
+        {
+          "property": "align-self",
+          "value": "flex-end"
+        }
+      ],
+      "cssDefinesKnown": [
+        "align-content",
+        "align-self"
+      ]
+    },
+    {
+      "id": "spacing-space-between",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：margin-block-start",
+      "generatedDeclarations": [
+        {
+          "property": "margin-inline-start",
+          "value": "calc(0.5rem*var(--tw-space-x-reverse))"
+        },
+        {
+          "property": "margin-block-start",
+          "value": "calc(0.5rem*var(--tw-space-y-reverse))"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "margin-inline-start",
+          "value": "calc(0.5rem* {{--tw-space-x-reverse}})"
+        },
+        {
+          "property": "margin-block-start",
+          "value": "calc(0.5rem* {{--tw-space-y-reverse}})"
+        }
+      ],
+      "cssDefinesKnown": [
+        "margin-inline-start"
+      ]
+    },
+    {
+      "id": "sizing-size",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "width",
+          "value": "44px"
+        },
+        {
+          "property": "height",
+          "value": "44px"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "width",
+          "value": "44px"
+        },
+        {
+          "property": "height",
+          "value": "44px"
+        }
+      ],
+      "cssDefinesKnown": [
+        "width",
+        "height"
+      ]
+    },
+    {
+      "id": "type-family-smoothing-stretch",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：-webkit-font-smoothing, font-stretch",
+      "generatedDeclarations": [
+        {
+          "property": "font-family",
+          "value": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 'Noto Sans', Arial,\n    sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'"
+        },
+        {
+          "property": "-webkit-font-smoothing",
+          "value": "antialiased"
+        },
+        {
+          "property": "font-stretch",
+          "value": "expanded"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "font-family",
+          "value": "-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",\"Noto Sans\",Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Segoe UI Symbol\",\"Noto Color Emoji\""
+        },
+        {
+          "property": "-webkit-font-smoothing",
+          "value": "antialiased"
+        },
+        {
+          "property": "font-stretch",
+          "value": "expanded"
+        }
+      ],
+      "cssDefinesKnown": [
+        "font-family"
+      ]
+    },
+    {
+      "id": "type-numeric",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：font-variant-numeric",
+      "generatedDeclarations": [
+        {
+          "property": "font-variant-numeric",
+          "value": "var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,) var(--tw-numeric-fraction,)"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "font-variant-numeric",
+          "value": "{{--tw-ordinal}}  {{--tw-slashed-zero}}  {{--tw-numeric-figure}}  {{--tw-numeric-spacing}}  {{--tw-numeric-fraction}}"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "type-line-clamp",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：-webkit-line-clamp",
+      "generatedDeclarations": [
+        {
+          "property": "-webkit-line-clamp",
+          "value": "2"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "-webkit-line-clamp",
+          "value": "2"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "type-list",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：list-style-position, list-style-type, list-style-image",
+      "generatedDeclarations": [
+        {
+          "property": "list-style-position",
+          "value": "inside"
+        },
+        {
+          "property": "list-style-type",
+          "value": "disc"
+        },
+        {
+          "property": "list-style-image",
+          "value": "none"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "list-style-position",
+          "value": "inside"
+        },
+        {
+          "property": "list-style-type",
+          "value": "disc"
+        },
+        {
+          "property": "list-style-image",
+          "value": "none"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "type-decoration-full",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：text-decoration-style, text-underline-offset",
+      "generatedDeclarations": [
+        {
+          "property": "text-decoration-color",
+          "value": "#e11d48"
+        },
+        {
+          "property": "text-decoration-style",
+          "value": "dashed"
+        },
+        {
+          "property": "text-underline-offset",
+          "value": "4px"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "text-decoration-color",
+          "value": "#e11d48"
+        },
+        {
+          "property": "text-decoration-style",
+          "value": "dashed"
+        },
+        {
+          "property": "text-underline-offset",
+          "value": "4px"
+        }
+      ],
+      "cssDefinesKnown": [
+        "text-decoration-color"
+      ]
+    },
+    {
+      "id": "type-transform-wrap-indent",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：text-transform, text-wrap",
+      "generatedDeclarations": [
+        {
+          "property": "text-transform",
+          "value": "uppercase"
+        },
+        {
+          "property": "text-wrap",
+          "value": "balance"
+        },
+        {
+          "property": "text-indent",
+          "value": "1rem"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "text-transform",
+          "value": "uppercase"
+        },
+        {
+          "property": "text-wrap",
+          "value": "balance"
+        },
+        {
+          "property": "text-indent",
+          "value": "1rem"
+        }
+      ],
+      "cssDefinesKnown": [
+        "text-indent"
+      ]
+    },
+    {
+      "id": "type-flow",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "vertical-align",
+          "value": "middle"
+        },
+        {
+          "property": "white-space",
+          "value": "pre-wrap"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "vertical-align",
+          "value": "middle"
+        },
+        {
+          "property": "white-space",
+          "value": "pre-wrap"
+        }
+      ],
+      "cssDefinesKnown": [
+        "vertical-align",
+        "white-space"
+      ]
+    },
+    {
+      "id": "type-breaking",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：overflow-wrap",
+      "generatedDeclarations": [
+        {
+          "property": "word-break",
+          "value": "break-all"
+        },
+        {
+          "property": "overflow-wrap",
+          "value": "break-word"
+        },
+        {
+          "property": "hyphens",
+          "value": "auto"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "word-break",
+          "value": "break-all"
+        },
+        {
+          "property": "overflow-wrap",
+          "value": "break-word"
+        },
+        {
+          "property": "hyphens",
+          "value": "auto"
+        }
+      ],
+      "cssDefinesKnown": [
+        "word-break",
+        "hyphens"
+      ]
+    },
+    {
+      "id": "type-content",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "content",
+          "value": "var(--tw-content)"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "content",
+          "value": "{{--tw-content}}"
+        }
+      ],
+      "cssDefinesKnown": [
+        "content"
+      ]
+    },
+    {
+      "id": "background-attachment-clip-origin",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：background-attachment",
+      "generatedDeclarations": [
+        {
+          "property": "background-attachment",
+          "value": "fixed"
+        },
+        {
+          "property": "background-clip",
+          "value": "padding-box"
+        },
+        {
+          "property": "background-origin",
+          "value": "border-box"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "background-attachment",
+          "value": "fixed"
+        },
+        {
+          "property": "background-clip",
+          "value": "padding-box"
+        },
+        {
+          "property": "background-origin",
+          "value": "border-box"
+        }
+      ],
+      "cssDefinesKnown": [
+        "background-clip",
+        "background-origin"
+      ]
+    },
+    {
+      "id": "background-linear-gradient",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "background-image",
+          "value": "linear-gradient(var(--tw-gradient-stops))"
+        },
+        {
+          "property": "--tw-gradient-from",
+          "value": "#0284c7"
+        },
+        {
+          "property": "--tw-gradient-to",
+          "value": "#facc15"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "background-image",
+          "value": "linear-gradient( {{--tw-gradient-stops}})"
+        },
+        {
+          "property": "--tw-gradient-from",
+          "value": "#0284c7"
+        },
+        {
+          "property": "--tw-gradient-to",
+          "value": "#facc15"
+        }
+      ],
+      "cssDefinesKnown": [
+        "background-image"
+      ]
+    },
+    {
+      "id": "border-divide",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除 selector：:where(.divide-y-2>:not(:last-child)), :where(.divide-y-2>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child))",
+      "generatedDeclarations": [
+        {
+          "property": "border-bottom-width",
+          "value": "calc(2px*(1 - var(--tw-divide-y-reverse)))"
+        },
+        {
+          "property": "border-color",
+          "value": "#64748b"
+        },
+        {
+          "property": "border-style",
+          "value": "dashed"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "border-bottom-width",
+          "value": "calc(2px*(1 -  {{--tw-divide-y-reverse}}))"
+        },
+        {
+          "property": "border-color",
+          "value": "#64748b"
+        },
+        {
+          "property": "border-style",
+          "value": "dashed"
+        }
+      ],
+      "cssDefinesKnown": [
+        "border-bottom-width",
+        "border-color",
+        "border-style"
+      ]
+    },
+    {
+      "id": "border-outline",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：outline-offset",
+      "generatedDeclarations": [
+        {
+          "property": "outline-width",
+          "value": "2px"
+        },
+        {
+          "property": "outline-color",
+          "value": "#2563eb"
+        },
+        {
+          "property": "outline-style",
+          "value": "var(--tw-outline-style)"
+        },
+        {
+          "property": "outline-offset",
+          "value": "2px"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "outline-width",
+          "value": "2px"
+        },
+        {
+          "property": "outline-color",
+          "value": "#2563eb"
+        },
+        {
+          "property": "outline-style",
+          "value": "{{--tw-outline-style}}"
+        },
+        {
+          "property": "outline-offset",
+          "value": "2px"
+        }
+      ],
+      "cssDefinesKnown": [
+        "outline-width",
+        "outline-color",
+        "outline-style"
+      ]
+    },
+    {
+      "id": "effect-ring",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "box-shadow",
+          "value": "var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "box-shadow",
+          "value": "{{--tw-inset-shadow}} , {{--tw-inset-ring-shadow}} , {{--tw-ring-offset-shadow}} , {{--tw-ring-shadow}} , {{--tw-shadow}}"
+        }
+      ],
+      "cssDefinesKnown": [
+        "box-shadow"
+      ]
+    },
+    {
+      "id": "effect-inset-text-shadow",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "box-shadow",
+          "value": "var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)"
+        },
+        {
+          "property": "text-shadow",
+          "value": "0px 1px 0px var(--tw-text-shadow-color, rgba(0, 0, 0, 0.075)), 0px 1px 1px var(--tw-text-shadow-color, rgba(0, 0, 0, 0.075)), 0px 2px 2px var(--tw-text-shadow-color, rgba(0, 0, 0, 0.075))"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "box-shadow",
+          "value": "{{--tw-inset-shadow}} , {{--tw-inset-ring-shadow}} , {{--tw-ring-offset-shadow}} , {{--tw-ring-shadow}} , {{--tw-shadow}}"
+        },
+        {
+          "property": "text-shadow",
+          "value": "0px 1px 0px {{--tw-text-shadow-color}} ,0px 1px 1px {{--tw-text-shadow-color}} ,0px 2px 2px {{--tw-text-shadow-color}}"
+        }
+      ],
+      "cssDefinesKnown": [
+        "box-shadow",
+        "text-shadow"
+      ]
+    },
+    {
+      "id": "effect-background-blend",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：background-blend-mode",
+      "generatedDeclarations": [
+        {
+          "property": "background-blend-mode",
+          "value": "multiply"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "background-blend-mode",
+          "value": "multiply"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "effect-mask-box",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：mask-mode",
+      "generatedDeclarations": [
+        {
+          "property": "mask-clip",
+          "value": "padding-box"
+        },
+        {
+          "property": "mask-origin",
+          "value": "border-box"
+        },
+        {
+          "property": "mask-mode",
+          "value": "alpha"
+        },
+        {
+          "property": "mask-repeat",
+          "value": "no-repeat"
+        },
+        {
+          "property": "mask-size",
+          "value": "cover"
+        },
+        {
+          "property": "mask-position",
+          "value": "center"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "mask-clip",
+          "value": "padding-box"
+        },
+        {
+          "property": "mask-origin",
+          "value": "border-box"
+        },
+        {
+          "property": "mask-mode",
+          "value": "alpha"
+        },
+        {
+          "property": "mask-repeat",
+          "value": "no-repeat"
+        },
+        {
+          "property": "mask-size",
+          "value": "cover"
+        },
+        {
+          "property": "mask-position",
+          "value": "center"
+        }
+      ],
+      "cssDefinesKnown": [
+        "mask-clip",
+        "mask-origin",
+        "mask-repeat",
+        "mask-size",
+        "mask-position"
+      ]
+    },
+    {
+      "id": "effect-mask-image-composite",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：mask-type",
+      "generatedDeclarations": [
+        {
+          "property": "mask-image",
+          "value": "linear-gradient(black,transparent)"
+        },
+        {
+          "property": "mask-composite",
+          "value": "add"
+        },
+        {
+          "property": "mask-type",
+          "value": "luminance"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "mask-image",
+          "value": "linear-gradient(black,transparent)"
+        },
+        {
+          "property": "mask-composite",
+          "value": "add"
+        },
+        {
+          "property": "mask-type",
+          "value": "luminance"
+        }
+      ],
+      "cssDefinesKnown": [
+        "mask-image",
+        "mask-composite"
+      ]
+    },
+    {
+      "id": "filter-color-adjustments",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "filter",
+          "value": "var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "filter",
+          "value": "{{--tw-blur}}  {{--tw-brightness}}  {{--tw-contrast}}  {{--tw-grayscale}}  {{--tw-hue-rotate}}  {{--tw-invert}}  {{--tw-saturate}}  {{--tw-sepia}}  {{--tw-drop-shadow}}"
+        }
+      ],
+      "cssDefinesKnown": [
+        "filter"
+      ]
+    },
+    {
+      "id": "filter-color-rotation",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "filter",
+          "value": "var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "filter",
+          "value": "{{--tw-blur}}  {{--tw-brightness}}  {{--tw-contrast}}  {{--tw-grayscale}}  {{--tw-hue-rotate}}  {{--tw-invert}}  {{--tw-saturate}}  {{--tw-sepia}}  {{--tw-drop-shadow}}"
+        }
+      ],
+      "cssDefinesKnown": [
+        "filter"
+      ]
+    },
+    {
+      "id": "filter-drop-shadow",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "filter",
+          "value": "var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,)"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "filter",
+          "value": "{{--tw-blur}}  {{--tw-brightness}}  {{--tw-contrast}}  {{--tw-grayscale}}  {{--tw-hue-rotate}}  {{--tw-invert}}  {{--tw-saturate}}  {{--tw-sepia}}  {{--tw-drop-shadow}}"
+        }
+      ],
+      "cssDefinesKnown": [
+        "filter"
+      ]
+    },
+    {
+      "id": "filter-backdrop-adjustments",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：backdrop-filter",
+      "generatedDeclarations": [
+        {
+          "property": "backdrop-filter",
+          "value": "var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,)"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "backdrop-filter",
+          "value": "{{--tw-backdrop-blur}}  {{--tw-backdrop-brightness}}  {{--tw-backdrop-contrast}}  {{--tw-backdrop-grayscale}}  {{--tw-backdrop-hue-rotate}}  {{--tw-backdrop-invert}}  {{--tw-backdrop-opacity}}  {{--tw-backdrop-saturate}}  {{--tw-backdrop-sepia}}"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "table-spacing-caption",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：border-spacing, caption-side",
+      "generatedDeclarations": [
+        {
+          "property": "border-spacing",
+          "value": "var(--tw-border-spacing-x) var(--tw-border-spacing-y)"
+        },
+        {
+          "property": "caption-side",
+          "value": "bottom"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "border-spacing",
+          "value": "{{--tw-border-spacing-x}}  {{--tw-border-spacing-y}}"
+        },
+        {
+          "property": "caption-side",
+          "value": "bottom"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "transform-skew",
+      "generated": true,
+      "bundled": true,
+      "generatedDeclarations": [
+        {
+          "property": "transform",
+          "value": "var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,)"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "transform",
+          "value": "{{--tw-rotate-x}}  {{--tw-rotate-y}}  {{--tw-rotate-z}}  {{--tw-skew-x}}  {{--tw-skew-y}}"
+        }
+      ],
+      "cssDefinesKnown": [
+        "transform"
+      ]
+    },
+    {
+      "id": "transform-perspective",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：perspective-origin",
+      "generatedDeclarations": [
+        {
+          "property": "perspective",
+          "value": "300px"
+        },
+        {
+          "property": "perspective-origin",
+          "value": "top"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "perspective",
+          "value": "300px"
+        },
+        {
+          "property": "perspective-origin",
+          "value": "top"
+        }
+      ],
+      "cssDefinesKnown": [
+        "perspective"
+      ]
+    },
+    {
+      "id": "transform-style-backface",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：transform-style, backface-visibility",
+      "generatedDeclarations": [
+        {
+          "property": "transform-style",
+          "value": "preserve-3d"
+        },
+        {
+          "property": "backface-visibility",
+          "value": "hidden"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "transform-style",
+          "value": "preserve-3d"
+        },
+        {
+          "property": "backface-visibility",
+          "value": "hidden"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "transition-complete",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：transition-behavior",
+      "generatedDeclarations": [
+        {
+          "property": "transition-property",
+          "value": "transform, translate, scale, rotate"
+        },
+        {
+          "property": "transition-delay",
+          "value": "150ms"
+        },
+        {
+          "property": "transition-behavior",
+          "value": "allow-discrete"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "transition-property",
+          "value": "transform,translate,scale,rotate"
+        },
+        {
+          "property": "transition-delay",
+          "value": "150ms"
+        },
+        {
+          "property": "transition-behavior",
+          "value": "allow-discrete"
+        }
+      ],
+      "cssDefinesKnown": [
+        "transition-property",
+        "transition-delay"
+      ]
+    },
+    {
+      "id": "interaction-form-colors",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：accent-color",
+      "generatedDeclarations": [
+        {
+          "property": "accent-color",
+          "value": "#2563eb"
+        },
+        {
+          "property": "caret-color",
+          "value": "#e11d48"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "accent-color",
+          "value": "#2563eb"
+        },
+        {
+          "property": "caret-color",
+          "value": "#e11d48"
+        }
+      ],
+      "cssDefinesKnown": [
+        "caret-color"
+      ]
+    },
+    {
+      "id": "interaction-form-control",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：appearance, field-sizing, resize",
+      "generatedDeclarations": [
+        {
+          "property": "appearance",
+          "value": "none"
+        },
+        {
+          "property": "field-sizing",
+          "value": "content"
+        },
+        {
+          "property": "resize",
+          "value": "horizontal"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "appearance",
+          "value": "none"
+        },
+        {
+          "property": "field-sizing",
+          "value": "content"
+        },
+        {
+          "property": "resize",
+          "value": "horizontal"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "interaction-cursor-scheme",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：color-scheme",
+      "generatedDeclarations": [
+        {
+          "property": "cursor",
+          "value": "pointer"
+        },
+        {
+          "property": "color-scheme",
+          "value": "dark"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "cursor",
+          "value": "pointer"
+        },
+        {
+          "property": "color-scheme",
+          "value": "dark"
+        }
+      ],
+      "cssDefinesKnown": [
+        "cursor"
+      ]
+    },
+    {
+      "id": "interaction-scroll-spacing",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：scroll-margin, scroll-padding",
+      "generatedDeclarations": [
+        {
+          "property": "scroll-margin",
+          "value": "1rem"
+        },
+        {
+          "property": "scroll-padding",
+          "value": "1rem"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "scroll-margin",
+          "value": "1rem"
+        },
+        {
+          "property": "scroll-padding",
+          "value": "1rem"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "interaction-snap-touch",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：scroll-snap-align, scroll-snap-stop, touch-action",
+      "generatedDeclarations": [
+        {
+          "property": "scroll-snap-align",
+          "value": "center"
+        },
+        {
+          "property": "scroll-snap-stop",
+          "value": "always"
+        },
+        {
+          "property": "touch-action",
+          "value": "var(--tw-pan-x,) var(--tw-pan-y,) var(--tw-pinch-zoom,)"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "scroll-snap-align",
+          "value": "center"
+        },
+        {
+          "property": "scroll-snap-stop",
+          "value": "always"
+        },
+        {
+          "property": "touch-action",
+          "value": "{{--tw-pan-x}}  {{--tw-pan-y}}  {{--tw-pinch-zoom}}"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "interaction-will-change",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：will-change",
+      "generatedDeclarations": [
+        {
+          "property": "will-change",
+          "value": "transform"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "will-change",
+          "value": "transform"
+        }
+      ],
+      "cssDefinesKnown": []
+    },
+    {
+      "id": "accessibility-forced-colors",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "encoder 删除属性：forced-color-adjust",
+      "generatedDeclarations": [
+        {
+          "property": "forced-color-adjust",
+          "value": "none"
+        }
+      ],
+      "bundledDeclarations": [
+        {
+          "property": "forced-color-adjust",
+          "value": "none"
+        }
+      ],
+      "cssDefinesKnown": []
+    }
+  ]
+}

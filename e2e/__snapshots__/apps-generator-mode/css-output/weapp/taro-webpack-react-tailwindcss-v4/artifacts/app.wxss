@@ -69,6 +69,7 @@ wx-root-portal-content {
   --nutui-red-3: #ffadbe;
   --nutui-red-4: #ff8595;
   --nutui-red-5: #ff5c67;
+  --nutui-red-6: #ff3333;
   --nutui-red-6: #f33;
   --nutui-red-7: #e53029;
   --nutui-red-8: #cc2c21;
@@ -81,6 +82,7 @@ wx-root-portal-content {
   --nutui-blue-1: #e5f5ff;
   --nutui-blue-2: #0073ff;
   --nutui-secondary-1: #14cc33;
+  --nutui-gray-1: #ffffff;
   --nutui-gray-1: #fff;
   --nutui-gray-2: #f5f6fa;
   --nutui-gray-3: #f2f3f7;
@@ -102,19 +104,33 @@ wx-root-portal-content {
   --nutui-black-10: rgba(0, 0, 0, 0.7);
   --nutui-black-11: rgba(0, 0, 0, 0.8);
   --nutui-black-12: rgba(0, 0, 0, 0.9);
+  --nutui-black-13: rgba(0, 0, 0, 1);
   --nutui-black-13: #000;
+  --nutui-white-1: rgba(255, 255, 255, 0);
   --nutui-white-1: hsla(0, 0%, 100%, 0);
+  --nutui-white-2: rgba(255, 255, 255, 0.02);
   --nutui-white-2: hsla(0, 0%, 100%, 0.02);
+  --nutui-white-3: rgba(255, 255, 255, 0.05);
   --nutui-white-3: hsla(0, 0%, 100%, 0.05);
+  --nutui-white-4: rgba(255, 255, 255, 0.1);
   --nutui-white-4: hsla(0, 0%, 100%, 0.1);
+  --nutui-white-5: rgba(255, 255, 255, 0.2);
   --nutui-white-5: hsla(0, 0%, 100%, 0.2);
+  --nutui-white-6: rgba(255, 255, 255, 0.3);
   --nutui-white-6: hsla(0, 0%, 100%, 0.3);
+  --nutui-white-7: rgba(255, 255, 255, 0.4);
   --nutui-white-7: hsla(0, 0%, 100%, 0.4);
+  --nutui-white-8: rgba(255, 255, 255, 0.5);
   --nutui-white-8: hsla(0, 0%, 100%, 0.5);
+  --nutui-white-9: rgba(255, 255, 255, 0.6);
   --nutui-white-9: hsla(0, 0%, 100%, 0.6);
+  --nutui-white-10: rgba(255, 255, 255, 0.7);
   --nutui-white-10: hsla(0, 0%, 100%, 0.7);
+  --nutui-white-11: rgba(255, 255, 255, 0.8);
   --nutui-white-11: hsla(0, 0%, 100%, 0.8);
+  --nutui-white-12: rgba(255, 255, 255, 0.9);
   --nutui-white-12: hsla(0, 0%, 100%, 0.9);
+  --nutui-white-13: rgba(255, 255, 255, 1);
   --nutui-white-13: #fff;
   --nutui-color-primary: var(--nutui-brand-6);
   --nutui-color-primary-stop-1: var(--nutui-brand-stop-1);
@@ -264,21 +280,42 @@ wx-root-portal-content {
   --nutui-radius-xl: var(--nutui-radius-12);
   --nutui-radius-xxl: var(--nutui-radius-14);
   --nutui-radius-xxxl: var(--nutui-radius-16);
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 'Noto Sans', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
   --font-sans: 'inter', 'inter Fallback', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
   --font-mono: var(--font-plex-mono), monospace;
+  --color-blue-500: rgb(50, 128, 255);
+  --color-blue-500: #3280ff;
+  --color-blue-500: #3080ff;
+  --color-slate-900: rgb(15, 23, 43);
   --color-slate-900: #0f172b;
   --color-white: #fff;
+  --color-purple-800: rgb(110, 17, 176);
   --color-purple-800: #6e11b0;
+  --color-pink-200: rgb(252, 206, 232);
   --color-pink-200: #fccee8;
+  --color-blue-200: rgb(190, 219, 255);
+  --color-blue-200: #bedbff;
+  --color-zinc-50: rgb(250, 250, 250);
   --color-zinc-50: rgb(250, 250, 250);
   --color-zinc-900: rgb(24, 24, 27);
+  --color-zinc-900: rgb(24, 24, 27);
+  --color-yellow-300: rgb(255, 224, 46);
   --color-yellow-300: #ffe02e;
+  --color-emerald-400: rgb(0, 210, 148);
   --color-emerald-400: #00d294;
+  --color-purple-500: rgb(171, 78, 255);
+  --color-purple-500: #ab4eff;
   --color-purple-500: #ac4bff;
+  --color-slate-100: rgb(241, 245, 249);
   --color-slate-100: #f1f5f9;
+  --color-zinc-950: rgb(9, 9, 11);
   --color-zinc-950: #09090b;
   --spacing: 0.25rem;
+  --default-font-family: var(--font-sans);
   --default-font-family: var(--font-inter), system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+  --default-mono-font-family: var(--font-mono);
   --default-mono-font-family: var(--font-plex-mono), monospace;
   --test-color: #006241;
   --color-test: #006241;
@@ -302,28 +339,6 @@ wx-root-portal-content {
   --text-base: 1rem;
   --font-weight-bold: 700;
   --radius-lg: 0.5rem;
-}
-.nut-tag-close {
-}
-.nut-searchbar-disabled {
-}
-.nut-range-disabled .nut-range-button-wrapper,
-.nut-range-disabled .nut-range-button-wrapper-left,
-.nut-range-disabled .nut-range-button-wrapper-right {
-}
-.nut-rate.disabled .nut-rate-item-icon {
-}
-.nut-rate.readonly .nut-rate-item-icon {
-}
-.nut-grid-item-content-clickable {
-}
-.nut-cell-clickable {
-}
-.nut-calendarcard-day.header {
-}
-.nut-calendarcard-day.prev,
-.nut-calendarcard-day.next,
-.nut-calendarcard-day.disabled {
 }
 @font-face {
   font-display: swap;
@@ -1218,7 +1233,6 @@ wx-root-portal-content {
   background: var(--nutui-tag-background-color, var(--nutui-color-title, #1a1a1a));
 }
 .nut-tag-primary {
-  background: -webkit-linear-gradient(315deg, #ff475d 0, #ff0f23 100%);
   background: var(--nutui-tag-primary-background-color, linear-gradient(135deg, var(--nutui-color-primary-stop-1, #ff475d) 0, var(--nutui-color-primary-stop-2, #ff0f23) 100%));
 }
 .nut-tag-info {
@@ -1535,8 +1549,6 @@ wx-root-portal-content {
   background-color: var(--nutui-tabs-titles-item-active-background-color, var(--nutui-color-background-overlay, #fff));
 }
 .nut-tabs-vertical .nut-tabs-titles-item-active .nut-tabs-titles-item-line {
-  background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #ff475d), to(#ffd6e1));
-  background: -webkit-linear-gradient(top, #ff475d 0, #ffd6e1 100%);
   background: var(
     --nutui-tabs-vertical-tab-line-color,
     linear-gradient(180deg, var(--nutui-color-primary-stop-1, #ff475d) 0, var(--nutui-color-primary-light-pressed, #ffebf1) 100%)
@@ -1681,7 +1693,6 @@ wx-root-portal-content {
   overflow-x: auto;
   position: relative;
   table-layout: fixed;
-  width: -moz-max-content;
   width: max-content;
 }
 .nut-table-main-striped .nut-table-main-head-tr {
@@ -2202,7 +2213,6 @@ wx-root-portal-content {
 }
 .nut-steps-horizontal-single .nut-step-special .nut-step-title {
   padding-right: 8rpx;
-  width: -moz-fit-content;
   width: fit-content;
 }
 .nut-steps-horizontal-single.nut-steps-horizontal-count-3 .nut-step-special {
@@ -2610,9 +2620,7 @@ wx-root-portal-content {
   animation-name: nut-skeleton;
   animation-play-state: running;
   animation-timing-function: linear;
-  background: -webkit-gradient(linear, left top, right top, from(#0000), color-stop(#00000005), to(#0000));
-  background: -webkit-linear-gradient(left, #0000, #00000005, #0000);
-  background: linear-gradient(90deg, #0000, #00000005, #0000);
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.01961), rgba(0, 0, 0, 0));
   height: 100%;
   left: 0;
   position: absolute;
@@ -2836,8 +2844,6 @@ wx-root-portal-content {
   padding: 8rpx 38rpx;
 }
 .nut-shortpassword-footer-sure {
-  background: -webkit-linear-gradient(315deg, #ff0f23 0, #ff0f23 100%);
-  background: -webkit-linear-gradient(315deg, var(--nutui-color-primary, #ff0f23) 0, var(--nutui-color-primary-stop-2, #ff0f23) 100%);
   background: linear-gradient(135deg, var(--nutui-color-primary, #ff0f23) 0, var(--nutui-color-primary-stop-2, #ff0f23) 100%);
   border-radius: 15rpx;
   color: #fff;
@@ -2857,8 +2863,6 @@ wx-root-portal-content {
 }
 .nut-rtl .nut-shortpassword-footer-sure,
 [dir='rtl'] .nut-shortpassword-footer-sure {
-  background: -webkit-linear-gradient(225deg, #ff0f23 0, #ff0f23 100%);
-  background: -webkit-linear-gradient(225deg, var(--nutui-color-primary, #ff0f23) 0, var(--nutui-color-primary-stop-2, #ff0f23) 100%);
   background: linear-gradient(-135deg, var(--nutui-color-primary, #ff0f23) 0, var(--nutui-color-primary-stop-2, #ff0f23) 100%);
 }
 .nut-segmented {
@@ -3847,7 +3851,6 @@ wx-root-portal-content {
   top: 0;
 }
 .nut-progress-inner {
-  background: -webkit-linear-gradient(315deg, #ff475d 0, #ff0f23 100%);
   background: var(--nutui-progress-color, linear-gradient(135deg, var(--nutui-color-primary-stop-1, #ff475d) 0, var(--nutui-color-primary-stop-2, #ff0f23) 100%));
   border-radius: var(--nutui-progress-border-radius, 12rpx);
   display: flex;
@@ -3956,7 +3959,6 @@ wx-root-portal-content {
   font-size: var(--nutui-price-decimal-small-size, 12rpx);
 }
 .nut-price-line {
-  text-decoration: line-through;
   text-decoration: line-through var(--nutui-price-line-color, var(--nutui-color-text-help));
 }
 .nut-popup {
@@ -4566,12 +4568,6 @@ wx-root-portal-content {
   z-index: 3;
 }
 .nut-pickerview-mask {
-  background-image:
-    -webkit-gradient(linear, left top, left bottom, from(hsla(0, 0%, 100%, 0.9)), to(hsla(0, 0%, 100%, 0.4))),
-    -webkit-gradient(linear, left bottom, left top, from(hsla(0, 0%, 100%, 0.9)), to(hsla(0, 0%, 100%, 0.4)));
-  background-image:
-    -webkit-linear-gradient(top, hsla(0, 0%, 100%, 0.9), hsla(0, 0%, 100%, 0.4)),
-    -webkit-linear-gradient(bottom, hsla(0, 0%, 100%, 0.9), hsla(0, 0%, 100%, 0.4));
   background-image: var(
     --picker-mask-background,
     linear-gradient(180deg, var(--nutui-white-12), var(--nutui-white-7)),
@@ -6385,7 +6381,6 @@ wx-root-portal-content {
   top: -999999rpx;
 }
 .nut-ellipsis-width {
-  width: -moz-fit-content;
   width: fit-content;
 }
 .nut-elevator {
@@ -6492,8 +6487,6 @@ wx-root-portal-content {
   width: 16rpx;
 }
 .nut-elevator-bars-inner-item-active {
-  background: -webkit-gradient(linear, left top, right top, from(#ff475d), to(#ff0f23));
-  background: -webkit-linear-gradient(left, #ff475d, #ff0f23);
   background: linear-gradient(90deg, #ff475d, #ff0f23);
   background: #ff0f23;
   color: var(--nutui-elevator-bars-active-color, #fff);
@@ -6540,10 +6533,8 @@ wx-root-portal-content {
 .nut-drag-inner {
   display: flex;
   display: inline-flex;
-  height: -moz-fit-content;
   height: fit-content;
   touch-action: none;
-  width: -moz-fit-content;
   width: fit-content;
 }
 .nut-empty {
@@ -8152,9 +8143,6 @@ wx-root-portal-content {
   width: 100%;
 }
 .nut-calendar-footer .calendar-confirm-btn {
-  background: -webkit-gradient(linear, left top, right top, color-stop(0, #ff475d), to(#ff0f23));
-  background: -webkit-linear-gradient(left, #ff475d 0, #ff0f23 100%);
-  background: -webkit-linear-gradient(left, var(--nutui-color-primary-stop-1, #ff475d) 0, var(--nutui-color-primary-stop-2, #ff0f23) 100%);
   background: linear-gradient(90deg, var(--nutui-color-primary-stop-1, #ff475d) 0, var(--nutui-color-primary-stop-2, #ff0f23) 100%);
   border-radius: var(--nutui-radius-base, 8rpx);
   color: #fff;
@@ -8368,9 +8356,6 @@ wx-root-portal-content {
   color: var(--nutui-button-primary-color, #fff);
 }
 .nut-button-primary-solid {
-  background: -webkit-gradient(linear, left top, right top, color-stop(0, #ff475d), to(#ff0f23));
-  background: -webkit-linear-gradient(left, #ff475d 0, #ff0f23 100%);
-  background: -webkit-linear-gradient(left, var(--nutui-color-primary-stop-1, #ff475d) 0, var(--nutui-color-primary-stop-2, #ff0f23) 100%);
   background: linear-gradient(90deg, var(--nutui-color-primary-stop-1, #ff475d) 0, var(--nutui-color-primary-stop-2, #ff0f23) 100%);
   border-color: transparent;
   color: var(--nutui-button-primary-color, #fff);
@@ -8582,9 +8567,6 @@ wx-root-portal-content {
   width: 100%;
 }
 .nut-barrage .barrage-item {
-  background: -webkit-gradient(linear, left top, right top, from(rgba(0, 0, 0, 0.08)), to(rgba(0, 0, 0, 0)));
-  background: -webkit-linear-gradient(left, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0));
-  background: -webkit-linear-gradient(left, var(--nutui-black-3), var(--nutui-black-1));
   background: linear-gradient(to right, var(--nutui-black-3), var(--nutui-black-1));
   border-radius: 16rpx;
   box-sizing: border-box;
@@ -8618,9 +8600,6 @@ wx-root-portal-content {
 }
 .nut-rtl .nut-barrage .barrage-item,
 [dir='rtl'] .nut-barrage .barrage-item {
-  background: -webkit-gradient(linear, right top, left top, from(rgba(0, 0, 0, 0.08)), to(rgba(0, 0, 0, 0)));
-  background: -webkit-linear-gradient(right, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0));
-  background: -webkit-linear-gradient(right, var(--nutui-black-3), var(--nutui-black-1));
   background: linear-gradient(to left, var(--nutui-black-3), var(--nutui-black-1));
   transform: translate(-100%);
 }
@@ -9163,8 +9142,7 @@ wx-root-portal-content {
 }
 .nut-animate .nut-animate-flicker::after {
   animation: flicker 1.5s linear infinite;
-  background-image: -webkit-linear-gradient(344deg, #e8e0ff00 24%, #e8e0ff 91%);
-  background-image: linear-gradient(106deg, #e8e0ff00 24%, #e8e0ff 91%);
+  background-image: linear-gradient(106deg, rgba(232, 224, 255, 0) 24%, #e8e0ff 91%);
   content: '';
   filter: blur(3rpx);
   height: 60rpx;
@@ -9316,9 +9294,6 @@ wx-root-portal-content {
   width: 100%;
 }
 .nut-address-footer-btn {
-  background: -webkit-gradient(linear, left top, right top, color-stop(0, #ff475d), to(#ff0f23));
-  background: -webkit-linear-gradient(left, #ff475d 0, #ff0f23 100%);
-  background: -webkit-linear-gradient(left, var(--nutui-color-primary-stop-1, #ff475d) 0, var(--nutui-color-primary-stop-2, #ff0f23) 100%);
   background: linear-gradient(90deg, var(--nutui-color-primary-stop-1, #ff475d) 0, var(--nutui-color-primary-stop-2, #ff0f23) 100%);
   border-radius: 21rpx;
   color: #fff;
@@ -9540,11 +9515,21 @@ wx-root-portal-content {
 }
  /* tokens: rounded-full <= src/pages/index/index.tsx */
 .rounded-full {
-  border-radius: 9999px;
+  border-radius: 9999rpx;
 }
  /* tokens: rounded-full! <= src/pages/index/index.tsx */
 .rounded-full_e {
-  border-radius: 9999px !important;
+  border-radius: 9999rpx !important;
+}
+ /* tokens: rounded-s-full <= src/pages/index/index.tsx */
+.rounded-s-full {
+  border-bottom-left-radius: 9999rpx;
+  border-top-left-radius: 9999rpx;
+}
+ /* tokens: rounded-t-full <= src/pages/index/index.tsx */
+.rounded-t-full {
+  border-top-left-radius: 9999rpx;
+  border-top-right-radius: 9999rpx;
 }
  /* tokens: bg-[#0977ee] <= src/pages/index/index.tsx */
 .bg-_b_h0977ee_B {
@@ -9553,6 +9538,14 @@ wx-root-portal-content {
  /* tokens: bg-[#534312] <= src/pages/index/index.tsx */
 .bg-_b_h534312_B {
   background-color: #534312;
+}
+ /* tokens: bg-blue-200 <= src/pages/index/index.tsx */
+.bg-blue-200 {
+  background-color: var(--color-blue-200);
+}
+ /* tokens: bg-blue-500 <= src/pages/index/index.tsx */
+.bg-blue-500 {
+  background-color: var(--color-blue-500);
 }
  /* tokens: bg-purple-800 <= src/pages/index/index.tsx */
 .bg-purple-800 {
@@ -9565,67 +9558,56 @@ wx-root-portal-content {
  /* tokens: -bg-linear-65 <= src/pages/issue-928/index.tsx */
 .-bg-linear-65 {
   --tw-gradient-position: -65deg;
-  background-image: -webkit-linear-gradient(var(--tw-gradient-stops));
   background-image: linear-gradient(var(--tw-gradient-stops));
 }
  /* tokens: bg-linear-65 <= src/pages/issue-928/index.tsx */
 .bg-linear-65 {
   --tw-gradient-position: 65deg;
-  background-image: -webkit-linear-gradient(var(--tw-gradient-stops));
   background-image: linear-gradient(var(--tw-gradient-stops));
 }
  /* tokens: bg-linear-to-r <= src/pages/issue-928/index.tsx */
 .bg-linear-to-r {
   --tw-gradient-position: to right;
-  background-image: -webkit-linear-gradient(var(--tw-gradient-stops));
   background-image: linear-gradient(var(--tw-gradient-stops));
 }
  /* tokens: bg-linear-to-r/hsl <= src/pages/issue-928/index.tsx */
 .bg-linear-to-r_fhsl {
   --tw-gradient-position: to right;
-  background-image: -webkit-linear-gradient(var(--tw-gradient-stops));
   background-image: linear-gradient(var(--tw-gradient-stops));
 }
  /* tokens: bg-linear-to-r/increasing <= src/pages/issue-928/index.tsx */
 .bg-linear-to-r_fincreasing {
   --tw-gradient-position: to right;
-  background-image: -webkit-linear-gradient(var(--tw-gradient-stops));
   background-image: linear-gradient(var(--tw-gradient-stops));
 }
  /* tokens: bg-linear-to-r/longer <= src/pages/issue-928/index.tsx */
 .bg-linear-to-r_flonger {
   --tw-gradient-position: to right;
-  background-image: -webkit-linear-gradient(var(--tw-gradient-stops));
   background-image: linear-gradient(var(--tw-gradient-stops));
 }
  /* tokens: bg-linear-to-r/oklab <= src/pages/issue-928/index.tsx */
 .bg-linear-to-r_foklab {
   --tw-gradient-position: to right;
-  background-image: -webkit-linear-gradient(var(--tw-gradient-stops));
   background-image: linear-gradient(var(--tw-gradient-stops));
 }
  /* tokens: bg-linear-to-r/oklch <= src/pages/issue-928/index.tsx */
 .bg-linear-to-r_foklch {
   --tw-gradient-position: to right;
-  background-image: -webkit-linear-gradient(var(--tw-gradient-stops));
   background-image: linear-gradient(var(--tw-gradient-stops));
 }
  /* tokens: bg-linear-to-r/shorter <= src/pages/issue-928/index.tsx */
 .bg-linear-to-r_fshorter {
   --tw-gradient-position: to right;
-  background-image: -webkit-linear-gradient(var(--tw-gradient-stops));
   background-image: linear-gradient(var(--tw-gradient-stops));
 }
  /* tokens: bg-linear-to-r/srgb <= src/pages/issue-928/index.tsx */
 .bg-linear-to-r_fsrgb {
   --tw-gradient-position: to right;
-  background-image: -webkit-linear-gradient(var(--tw-gradient-stops));
   background-image: linear-gradient(var(--tw-gradient-stops));
 }
  /* tokens: bg-linear-to-tr <= src/pages/issue-928/index.tsx */
 .bg-linear-to-tr {
   --tw-gradient-position: to top right;
-  background-image: -webkit-linear-gradient(var(--tw-gradient-stops));
   background-image: linear-gradient(var(--tw-gradient-stops));
 }
  /* tokens: -bg-conic-180 <= src/pages/issue-928/index.tsx */
@@ -9661,39 +9643,31 @@ wx-root-portal-content {
  /* tokens: bg-gradient-to-r <= src/pages/index/index.tsx */
 .bg-gradient-to-r {
   --tw-gradient-position: to right;
-  background-image: -webkit-linear-gradient(var(--tw-gradient-stops));
   background-image: linear-gradient(var(--tw-gradient-stops));
 }
  /* tokens: bg-linear-(--issue-928-linear) <= src/pages/issue-928/index.tsx */
 .bg-linear-_p--issue-928-linear_P {
   --tw-gradient-position: var(--issue-928-linear);
-  background-image: -webkit-linear-gradient(var(--tw-gradient-stops, var(--issue-928-linear)));
   background-image: linear-gradient(var(--tw-gradient-stops, var(--issue-928-linear)));
 }
  /* tokens: bg-linear-[25deg,#ef4444_5%,#eab308_60%,#22c55e_90%,#14b8a6] <= src/pages/issue-928/index.tsx */
 .bg-linear-_b25deg_m_hef4444_5_v_m_heab308_60_v_m_h22c55e_90_v_m_h14b8a6_B {
   --tw-gradient-position: 25deg, #ef4444 5%, #eab308 60%, #22c55e 90%, #14b8a6;
-  background-image: -webkit-linear-gradient(65deg, #ef4444 5%, #eab308 60%, #22c55e 90%, #14b8a6);
-  background-image: -webkit-linear-gradient(var(--tw-gradient-stops, 25deg, #ef4444 5%, #eab308 60%, #22c55e 90%, #14b8a6));
   background-image: linear-gradient(var(--tw-gradient-stops, 25deg, #ef4444 5%, #eab308 60%, #22c55e 90%, #14b8a6));
 }
  /* tokens: bg-radial <= src/pages/issue-928/index.tsx */
 .bg-radial {
-  --tw-gradient-position:;
-  background-image: -webkit-radial-gradient(var(--tw-gradient-stops));
+  --tw-gradient-position: at center;
   background-image: radial-gradient(var(--tw-gradient-stops));
 }
  /* tokens: bg-radial-(--issue-928-radial) <= src/pages/issue-928/index.tsx */
 .bg-radial-_p--issue-928-radial_P {
   --tw-gradient-position: var(--issue-928-radial);
-  background-image: -webkit-radial-gradient(var(--tw-gradient-stops, var(--issue-928-radial)));
   background-image: radial-gradient(var(--tw-gradient-stops, var(--issue-928-radial)));
 }
  /* tokens: bg-radial-[at_50%_75%] <= src/pages/issue-928/index.tsx */
 .bg-radial-_bat_50_v_75_v_B {
   --tw-gradient-position: at 50% 75%;
-  background-image: -webkit-radial-gradient(at 50% 75%);
-  background-image: -webkit-radial-gradient(var(--tw-gradient-stops, at 50% 75%));
   background-image: radial-gradient(var(--tw-gradient-stops, at 50% 75%));
 }
  /* tokens: bg-(image:--issue-928-image) <= src/pages/issue-928/index.tsx */
@@ -9702,8 +9676,6 @@ wx-root-portal-content {
 }
  /* tokens: bg-[image:linear-gradient(to_right,#06b6d4,#3b82f6)] <= src/pages/issue-928/index.tsx */
 .bg-_bimage_clinear-gradient_pto_right_m_h06b6d4_m_h3b82f6_P_B {
-  background-image: -webkit-gradient(linear, left top, right top, from(#06b6d4), to(#3b82f6));
-  background-image: -webkit-linear-gradient(left, #06b6d4, #3b82f6);
   background-image: linear-gradient(90deg, #06b6d4, #3b82f6);
 }
  /* tokens: bg-none <= src/pages/issue-928/index.tsx */

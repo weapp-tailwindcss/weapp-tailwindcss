@@ -2,7 +2,7 @@ import type { OutputAsset } from 'rollup'
 import { logger } from '@weapp-tailwindcss/logger'
 
 interface GeneratorDependencyContext {
-  addWatchFile?: (id: string) => void
+  addWatchFile?: ((id: string) => void) | undefined
 }
 
 export function createReplayCssAsset(fileName: string, source: string): OutputAsset {

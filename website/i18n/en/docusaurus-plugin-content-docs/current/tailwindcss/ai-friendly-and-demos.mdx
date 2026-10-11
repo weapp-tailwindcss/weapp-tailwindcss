@@ -82,7 +82,7 @@ Disabled:
 
 Output:
 - React code blocks (tsx) + Vue code blocks (vue SFC), including class explanation or recommended checklist.
-- If an install/run command is required, give `pnpm --filter react-app dev` / `pnpm --filter vue-app dev`.
+- If an install/run command is required, refer to the dev script in the corresponding demo project's `package.json`; do not use a repository-root workspace filter command.
 ```
 
 ## Sample output (React/Vue, corresponding prompt)
@@ -187,9 +187,8 @@ A more stable approach is usually:
 ## React/Vue running and viewing
 
 - Install dependencies (first time): `pnpm install`
-- Run React Demo: `pnpm --filter react-app dev`
-- Run Vue Demo: `pnpm --filter vue-app dev`
-- Build document (optional): `pnpm --filter website build` or `pnpm build:docs` (if aliased)
+- Run the React or Vue Demo: enter the corresponding demo directory and run its own dev script.
+- Build the documentation (optional): repository maintainers should follow the contribution guide; ordinary users do not need to build the documentation site.
 - Screenshot placeholders: `<!-- screenshot: tailwindcss-react-demo -->`, `<!-- screenshot: tailwindcss-vue-demo -->`
 
 ## Demo content overview
@@ -207,7 +206,7 @@ If you just want to check it out quickly, you don’t need to read it all:
 
 ## Key code snippets
 
-```tsx title="React：variants + merge"
+```tsx title="React: variants + merge"
 import { cva } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 

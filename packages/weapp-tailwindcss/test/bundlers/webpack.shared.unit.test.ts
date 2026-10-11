@@ -326,7 +326,7 @@ describe('bundlers/webpack shared helpers', () => {
   })
 
   it('scores generated subpackage css assets against registered source css files', async () => {
-    const { scoreTailwindV4CssSourceFileMatch } = await import('@/bundlers/shared/generator-css/source-resolver/matching')
+    const { scoreTailwindV4CssSourceFileMatch } = await import('@/generation/source-resolver/matching')
 
     const matchedScore = scoreTailwindV4CssSourceFileMatch(
       'sub-normal/pages/index.wxss',

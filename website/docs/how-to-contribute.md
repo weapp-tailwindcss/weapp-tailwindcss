@@ -1,5 +1,6 @@
 ---
 title: 如何贡献
+audience: maintainer
 description: 其实非常简单，你不一定需要贡献代码，你提一个 issue，回答一个问题，写一篇相关的文章，这些都是为项目做贡献，无需拘泥于具体的形式。
 keywords:
   - 如何贡献
@@ -24,15 +25,15 @@ keywords:
 
 ## 贡献指南
 
-首先，你必须 `fork` [`weapp-tailwindcss`](https://github.com/sonofmagic/weapp-tailwindcss) 这个项目到你自己的账号下，然后你再把它 `git clone` 到你的本地。
+首先，你必须 `fork` [`weapp-tailwindcss`](https://github.com/weapp-tailwindcss/weapp-tailwindcss) 这个项目到你自己的账号下，然后你再把它 `git clone` 到你的本地。
 
 ### 文档贡献
 
-目前本网站所有的文档都在 [weapp-tailwindcss/website](https://github.com/sonofmagic/weapp-tailwindcss/tree/main/website) 目录下，
+目前本网站所有的文档都在 [weapp-tailwindcss/website](https://github.com/weapp-tailwindcss/weapp-tailwindcss/tree/main/website) 目录下，
 
 你可以在里面任意添加文章，修改文章，删除文章，然后提交到你 `fork` 的分支，然后在 `pr` 到 `weapp-tailwindcss` 的 `main` 分支。
 
-`website` 这个项目会被部署到 `https://tw.icebreaker.top` 这个域名下，作为 [`weapp-tailwindcss`](https://github.com/sonofmagic/weapp-tailwindcss) 的文档展示。
+`website` 这个项目会被部署到 `https://tw.weapp.dev` 这个域名下，作为 [`weapp-tailwindcss`](https://github.com/weapp-tailwindcss/weapp-tailwindcss) 的文档展示。
 
 就项目而言，这是一个 `docusaurus@2` 的项目，和 `vuepress`/`vitepress` 类似，它也是一个开源的文档生成工具，不过它是 `react` 写的。
 
@@ -122,7 +123,11 @@ Why？
 - `wxml`: 处理 `wxml` 的地方
 - `*`: `src` 其他一些文件，大多是一些导出文件
 
-想要知道各自做了什么事情，详见 [深入核心原理](./principle)
+想了解当前 Tailwind 生成、设计 token 与组件封装边界，参阅 [Tailwind 设计理念](./tailwindcss/tailwind-core)。
+
+:::warning 仅供仓库维护者
+本页的本地调试、构建和测试说明只适用于贡献仓库代码或文档的维护者，不是业务项目接入步骤。
+:::
 
 ## 如何本地调试
 

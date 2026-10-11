@@ -2,6 +2,7 @@
 ::before,
 ::after,
 ::backdrop {
+  --tw-border-style: solid;
   --tw-gradient-from: #0000;
   --tw-gradient-via: #0000;
   --tw-gradient-to: #0000;
@@ -15,6 +16,7 @@
   ::before,
   ::after,
   ::backdrop {
+    --tw-border-style: solid;
     --tw-gradient-from: #0000;
     --tw-gradient-via: #0000;
     --tw-gradient-to: #0000;
@@ -307,11 +309,33 @@ input:where([type='button'], [type='reset'], [type='submit']),
 .rounded-full\! {
   border-radius: 9999px !important;
 }
+ /*tokens: rounded-s-full <= src/pages/index/index.tsx */
+.rounded-s-full {
+  border-start-start-radius: 9999px;
+  border-end-start-radius: 9999px;
+}
+ /*tokens: rounded-t-full <= src/pages/index/index.tsx */
+.rounded-t-full {
+  border-top-left-radius: 9999px;
+  border-top-right-radius: 9999px;
+}
+.border {
+  border-style: var(--tw-border-style);
+  border-width: 1px;
+}
 .bg-\[\#0977ee\] {
   background-color: #0977ee;
 }
 .bg-\[\#534312\] {
   background-color: #534312;
+}
+ /*tokens: bg-blue-200 <= src/pages/index/index.tsx */
+.bg-blue-200 {
+  background-color: rgb(190, 219, 255);
+}
+ /*tokens: bg-blue-500 <= src/pages/index/index.tsx */
+.bg-blue-500 {
+  background-color: rgb(50, 128, 255);
 }
  /*tokens: bg-purple-800 <= src/pages/index/index.tsx */
 .bg-purple-800 {
@@ -627,6 +651,7 @@ input:where([type='button'], [type='reset'], [type='submit']),
   padding: calc(var(--spacing) * 4);
 }
 ::-webkit-backdrop {
+  --tw-border-style: solid;
   --tw-gradient-from: #0000;
   --tw-gradient-via: #0000;
   --tw-gradient-to: #0000;
@@ -635,6 +660,7 @@ input:where([type='button'], [type='reset'], [type='submit']),
   --tw-gradient-to-position: 100%;
 }
 ::-ms-backdrop {
+  --tw-border-style: solid;
   --tw-gradient-from: #0000;
   --tw-gradient-via: #0000;
   --tw-gradient-to: #0000;
@@ -646,6 +672,7 @@ input:where([type='button'], [type='reset'], [type='submit']),
 ::after,
 ::backdrop,
 ::before {
+  --tw-border-style: solid;
   --tw-gradient-from: #0000;
   --tw-gradient-via: #0000;
   --tw-gradient-to: #0000;
@@ -656,6 +683,7 @@ input:where([type='button'], [type='reset'], [type='submit']),
 /*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
 @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
   ::-webkit-backdrop {
+    --tw-border-style: solid;
     --tw-gradient-from: #0000;
     --tw-gradient-via: #0000;
     --tw-gradient-to: #0000;
@@ -664,6 +692,7 @@ input:where([type='button'], [type='reset'], [type='submit']),
     --tw-gradient-to-position: 100%;
   }
   ::-ms-backdrop {
+    --tw-border-style: solid;
     --tw-gradient-from: #0000;
     --tw-gradient-via: #0000;
     --tw-gradient-to: #0000;
@@ -675,6 +704,7 @@ input:where([type='button'], [type='reset'], [type='submit']),
   ::after,
   ::backdrop,
   ::before {
+    --tw-border-style: solid;
     --tw-gradient-from: #0000;
     --tw-gradient-via: #0000;
     --tw-gradient-to: #0000;

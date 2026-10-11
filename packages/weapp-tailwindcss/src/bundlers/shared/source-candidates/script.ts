@@ -1,1 +1,1 @@
-export { extractScriptStringCandidates } from '@/tailwindcss/candidates'
+export * from '../../../project-sources/candidates/script'

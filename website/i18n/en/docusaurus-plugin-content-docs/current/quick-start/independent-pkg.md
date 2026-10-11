@@ -237,7 +237,7 @@ When verifying, don't just check the fixed `app.wxss` file name. You should chec
 
 ## Complete example
 
-The [subpackage-uni-app-vite-tailwindcss-v4](https://github.com/sonofmagic/weapp-tailwindcss/tree/main/demo/subpackage-uni-app-vite-tailwindcss-v4) demo in the warehouse also covers:
+The [subpackage-uni-app-vite-tailwindcss-v4](https://github.com/weapp-tailwindcss/weapp-tailwindcss/tree/main/demo/subpackage-uni-app-vite-tailwindcss-v4) demo in the warehouse also covers:
 
 - Built-in isolated entry mode for `styleInjector`.
 - Candidate isolation for main package, common subcontract, and independent subcontract.

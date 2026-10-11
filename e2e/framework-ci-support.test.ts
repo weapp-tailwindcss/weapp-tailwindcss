@@ -147,7 +147,7 @@ describeFrameworkCi('framework support matrix ci', () => {
       'uni-app-vite-vue3-hbuilderx-tailwindcss-v4 mp-alipay',
       'uni-app-vite-vue3-hbuilderx-tailwindcss-v4 mp-baidu',
       'uni-app-vite-vue3-hbuilderx-tailwindcss-v4 mp-toutiao',
-      'uni-app-x-hbuilderx-tailwindcss-v4',
+      'uni-app-x-vdom-tailwindcss-v4',
     ])
     for (const name of ['uni-app-vite-vue3-hbuilderx-tailwindcss-v4']) {
       const projectCases = miniProgramCases.filter(item => item.projectDir.endsWith(name))
@@ -163,7 +163,7 @@ describeFrameworkCi('framework support matrix ci', () => {
         )
       }
     }
-    for (const name of ['uni-app-x-hbuilderx-tailwindcss-v4']) {
+    for (const name of ['uni-app-x-vdom-tailwindcss-v4']) {
       expect(
         miniProgramCases
           .filter(item => item.projectDir.endsWith(name))
@@ -178,8 +178,9 @@ describeFrameworkCi('framework support matrix ci', () => {
     ])
     expect(Object.values(uniAppXHBuilderXUnsupportedMiniProgramPlatforms).every(reason => reason.includes('HBuilderX stable/alpha'))).toBe(true)
     expect(webCases.map(item => item.name)).toEqual([
+      'issue-1144-uni-app-x-web',
       'uni-app-vite-vue3-hbuilderx-tailwindcss-v4',
-      'uni-app-x-hbuilderx-tailwindcss-v4',
+      'uni-app-x-vdom-tailwindcss-v4',
     ])
     for (const item of webCases) {
       expect(item.hmrSteps.length, `${item.name} should verify multi-step Web HMR`).toBeGreaterThanOrEqual(2)
@@ -197,9 +198,10 @@ describeFrameworkCi('framework support matrix ci', () => {
       'uni-app-vite-tailwindcss-v4 ios',
       'uni-app-vite-vue3-hbuilderx-tailwindcss-v4 android',
       'uni-app-vite-vue3-hbuilderx-tailwindcss-v4 ios',
-      'uni-app-x-hbuilderx-tailwindcss-v4 android',
-      'uni-app-x-hbuilderx-tailwindcss-v4 ios',
-      'uni-app-x-hbuilderx-tailwindcss-v4 harmony',
+      'uni-app-x-vdom-tailwindcss-v4 android',
+      'uni-app-x-vdom-tailwindcss-v4 ios',
+      'uni-app-x-vdom-tailwindcss-v4 harmony',
+      'uni-app-x-vapor-tailwindcss-v4 harmony vapor',
     ])
     for (const item of appCases) {
       expect(item.transformedContains.length, `${item.name} should verify initial App dev output`).toBeGreaterThan(0)
@@ -222,7 +224,7 @@ describeFrameworkCi('framework support matrix ci', () => {
 
     expect(hbuilderxProjects.map(item => item.name)).toEqual([
       'uni-app-vite-vue3-hbuilderx-tailwindcss-v4',
-      'uni-app-x-hbuilderx-tailwindcss-v4',
+      'uni-app-x-vdom-tailwindcss-v4',
     ])
     expect(hbuilderxProjects.every(item => !isE2EProjectSupportedOnPlatform(item, 'linux'))).toBe(true)
     expect(hbuilderxProjects.every(item => isE2EProjectSupportedOnPlatform(item, 'darwin'))).toBe(true)

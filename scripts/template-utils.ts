@@ -7,7 +7,15 @@ export const ROOT = process.cwd()
 export const DEFAULT_TEMPLATES_JSONC = path.join(ROOT, 'templates.jsonc')
 export const TEMPLATE_CACHE_ROOT = path.join(ROOT, '.cache', 'template-repos')
 export const REMOVED_TEMPLATE_NAMES = new Set([
+  'native-weapp-tailwindcss-template',
+  'taro-react-tailwind-vscode-template',
+  'taro-vue3-tailwind-vscode-template',
+  'uni-app-vite-vue3-tailwind-vscode-template',
+  'uni-app-vue2-tailwind-vscode-template',
+  'uni-app-vue3-tailwind-hbuilder-template',
+  'uni-app-x-hbuilderx',
   'vue-mini-tailwindcss-template',
+  'weapp-native-mina-tailwindcss-template',
 ])
 
 const NEWLINE_RE = /\r?\n/u

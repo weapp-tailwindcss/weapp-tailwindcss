@@ -3,7 +3,6 @@ const compilerOwnerActivities = new WeakMap<object, {
   active: number
   idleWaiters: Set<() => void>
 }>()
-
 type CompilerOwnerActivityRelease = () => void
 
 export function ensureCompilerOwnerActive(owner: object) {

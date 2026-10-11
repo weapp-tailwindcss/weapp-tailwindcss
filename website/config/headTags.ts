@@ -4,7 +4,7 @@ import { navbarUiControls, navbarUiStorageKey } from '../src/features/ui-managem
 import { defaultSiteLocale, localePreferenceStorageKey } from '../src/i18n/locale'
 import { getSiteConfigCopy } from '../src/i18n/siteConfig'
 import { getBuildLocale } from './buildLocale'
-import { geoMeta, organizationJsonLd, siteLanguage, siteName, siteUrl, websiteJsonLd } from './siteMetadata'
+import { organizationJsonLd, siteLanguage, siteName, siteUrl, softwareJsonLd, websiteJsonLd } from './siteMetadata'
 
 const copy = getSiteConfigCopy(getBuildLocale())
 const localeNavigationStorageKey = `${localePreferenceStorageKey}:navigation`
@@ -38,10 +38,19 @@ const localeBootstrapScript = `
 (() => {
   try {
     const pathname = window.location.pathname;
-    if (/^\\/en\\/en(?:\\/|$)/.test(pathname)) {
+    if (/^\\/en(?=\\/|$)/.test(pathname)) {
       let canonicalPathname = pathname;
-      while (/^\\/en\\/en(?:\\/|$)/.test(canonicalPathname)) {
+      while (/^\\/en(?=\\/|$)/.test(canonicalPathname)) {
         canonicalPathname = canonicalPathname.replace(/^\\/en(?=\\/|$)/, '');
+      }
+      canonicalPathname = canonicalPathname || '/';
+      window.location.replace(canonicalPathname + window.location.search + window.location.hash);
+      return;
+    }
+    if (/^\\/zh-cn\\/zh-cn(?:\\/|$)/i.test(pathname)) {
+      let canonicalPathname = pathname;
+      while (/^\\/zh-cn\\/zh-cn(?:\\/|$)/i.test(canonicalPathname)) {
+        canonicalPathname = canonicalPathname.replace(/^\\/zh-cn(?=\\/|$)/i, '');
       }
       window.location.replace(canonicalPathname + window.location.search + window.location.hash);
       return;
@@ -50,10 +59,13 @@ const localeBootstrapScript = `
       return;
     }
     const pendingLocale = window.sessionStorage.getItem(${JSON.stringify(localeNavigationStorageKey)});
-    if (pendingLocale === 'zh-cn') {
+    if (pendingLocale === 'en' || pendingLocale === 'zh-cn') {
       window.sessionStorage.removeItem(${JSON.stringify(localeNavigationStorageKey)});
-      window.localStorage.setItem(${JSON.stringify(localePreferenceStorageKey)}, 'zh-cn');
-      return;
+      window.localStorage.setItem(${JSON.stringify(localePreferenceStorageKey)}, pendingLocale);
+      if (pendingLocale === 'zh-cn') {
+        window.location.replace('/zh-cn/' + (window.location.search || '') + (window.location.hash || ''));
+        return;
+      }
     }
     const rawStoredLocale = window.localStorage.getItem(${JSON.stringify(localePreferenceStorageKey)});
     const storedLocale = rawStoredLocale === 'en' || rawStoredLocale === 'zh-cn' ? rawStoredLocale : null;
@@ -63,13 +75,13 @@ const localeBootstrapScript = `
     const hasChineseLocale = navigatorLocales.some(candidate =>
       typeof candidate === 'string' && candidate.toLowerCase().startsWith('zh'));
     const browserLocale = hasChineseLocale
-      ? ${JSON.stringify(defaultSiteLocale)}
-      : 'en';
+      ? 'zh-cn'
+      : ${JSON.stringify(defaultSiteLocale)};
     const targetLocale = storedLocale || browserLocale;
-    if (targetLocale !== 'en') {
+    if (targetLocale !== 'zh-cn') {
       return;
     }
-    window.location.replace('/en/' + (window.location.search || '') + (window.location.hash || ''));
+    window.location.replace('/zh-cn/' + (window.location.search || '') + (window.location.hash || ''));
   } catch {}
 })();
 `.trim()
@@ -96,11 +108,11 @@ const localePreferenceScript = `
       }
       const locale = language.toLowerCase().startsWith('en') ? 'en' : 'zh-cn';
       let pathname = window.location.pathname.replace(/\\/{2,}/g, '/');
-      while (/^\\/en(?=\\/|$)/.test(pathname)) {
-        pathname = pathname.replace(/^\\/en(?=\\/|$)/, '') || '/';
+      while (/^\\/zh-cn(?=\\/|$)/i.test(pathname)) {
+        pathname = pathname.replace(/^\\/zh-cn(?=\\/|$)/i, '') || '/';
       }
-      const targetPathname = locale === 'en'
-        ? (pathname === '/' ? '/en/' : '/en' + pathname)
+      const targetPathname = locale === 'zh-cn'
+        ? (pathname === '/' ? '/zh-cn/' : '/zh-cn' + pathname)
         : pathname;
       window.localStorage.setItem(${JSON.stringify(localePreferenceStorageKey)}, locale);
       window.sessionStorage.setItem(${JSON.stringify(localeNavigationStorageKey)}, locale);
@@ -177,34 +189,6 @@ const headTags: NonNullable<Config['headTags']> = [
     },
   },
   {
-    tagName: 'meta',
-    attributes: {
-      name: 'geo.region',
-      content: geoMeta.region,
-    },
-  },
-  {
-    tagName: 'meta',
-    attributes: {
-      name: 'geo.placename',
-      content: geoMeta.placename,
-    },
-  },
-  {
-    tagName: 'meta',
-    attributes: {
-      name: 'geo.position',
-      content: geoMeta.position,
-    },
-  },
-  {
-    tagName: 'meta',
-    attributes: {
-      name: 'ICBM',
-      content: geoMeta.icbm,
-    },
-  },
-  {
     tagName: 'link',
     attributes: {
       rel: 'preconnect',
@@ -239,6 +223,7 @@ const headTags: NonNullable<Config['headTags']> = [
     tagName: 'script',
     attributes: {
       type: 'application/ld+json',
+      id: 'organization-jsonld',
     },
     innerHTML: JSON.stringify(organizationJsonLd),
   },
@@ -249,6 +234,14 @@ const headTags: NonNullable<Config['headTags']> = [
       id: 'website-jsonld',
     },
     innerHTML: JSON.stringify(websiteJsonLd),
+  },
+  {
+    tagName: 'script',
+    attributes: {
+      type: 'application/ld+json',
+      id: 'software-jsonld',
+    },
+    innerHTML: JSON.stringify(softwareJsonLd),
   },
 ]
 

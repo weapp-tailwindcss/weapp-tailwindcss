@@ -1,18 +1,18 @@
 {
   "name": "@weapp-tailwindcss/cva",
   "type": "module",
-  "version": "0.1.7",
-  "description": "class-variance-authority 的运行时封装，自动完成小程序 escape/unescape。",
+  "version": "0.1.12",
+  "description": "Cross-platform class-variance-authority runtime for Tailwind CSS. 面向跨端 Tailwind CSS 的 class-variance-authority 运行时封装。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",
-  "homepage": "https://tw.icebreaker.top/docs/community/merge/cva-and-variants",
+  "homepage": "https://tw.weapp.dev/docs/community/merge/cva-and-variants",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sonofmagic/weapp-tailwindcss.git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
     "directory": "packages-runtime/cva"
   },
   "bugs": {
-    "url": "https://github.com/sonofmagic/weapp-tailwindcss/issues"
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues"
   },
   "keywords": [
     "tailwindcss",

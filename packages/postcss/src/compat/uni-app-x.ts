@@ -2,7 +2,12 @@
 import type { Result as PostcssResult, Rule } from 'postcss'
 import type { Node, Pseudo } from 'postcss-selector-parser'
 import type { IStyleHandlerOptions } from '../types'
+import { splitCandidateTokens } from '@weapp-tailwindcss/engine'
 import postcss from 'postcss'
+import { parseScssSource, stringifyScssSource } from '../syntax/parse'
+
+/** native Sass 可解析、PostCSS 阶段再还原的 important utility 标记。 */
+export const UNI_APP_X_IMPORTANT_APPLY_MARKER = '__weapp_tw_important__'
 
 const UNI_APP_X_BASE_CARRIER_SELECTORS = new Set([
   '*',
@@ -17,6 +22,73 @@ const UNI_APP_X_BASE_CARRIER_SELECTORS = new Set([
 const REQUIRED_TW_VAR_RE = /var\(\s*(--tw-[\w-]+)\s*\)/g
 const CLASS_SELECTOR_RE = /\.[\w-]+/
 const SELECTOR_WHITESPACE_RE = /\s+/g
+
+function rewriteImportantApplyUtility(utility: string, marker: string) {
+  if (utility.startsWith('!') && !utility.startsWith('\\!')) {
+    return `${utility.slice(1)}${marker}`
+  }
+  if (utility.endsWith('!') && !utility.endsWith('\\!')) {
+    return `${utility.slice(0, -1)}${marker}`
+  }
+  return utility
+}
+
+function rewriteApplyParams(params: string, marker: string) {
+  const candidates = splitCandidateTokens(params)
+  if (candidates.length === 0) {
+    return params
+  }
+  let result = params
+  for (const candidate of candidates) {
+    const rewritten = rewriteImportantApplyUtility(candidate, marker)
+    if (rewritten !== candidate) {
+      result = result.replace(candidate, rewritten)
+    }
+  }
+  return result
+}
+
+/** 将 Sass 不可直接解析的 important utility 改写成跨预处理器中间形式。 */
+export function normalizeUniAppXImportantApplyForSass(css: string) {
+  try {
+    // postcss.parse 不读取 syntax 选项；必须直接使用 SCSS parser 保留行内注释和插值。
+    const root = parseScssSource(css)
+    let changed = false
+    root.walkAtRules('apply', (rule) => {
+      const params = rewriteApplyParams(rule.params, UNI_APP_X_IMPORTANT_APPLY_MARKER)
+      if (params !== rule.params) {
+        rule.params = params
+        changed = true
+      }
+    })
+    return changed ? stringifyScssSource(root) : css
+  }
+  catch {
+    return css
+  }
+}
+
+/** 在 Tailwind/PostCSS 处理前还原 native important utility 标记。 */
+export function restoreUniAppXImportantApplyMarker(css: string) {
+  if (!css.includes(UNI_APP_X_IMPORTANT_APPLY_MARKER)) {
+    return css
+  }
+  try {
+    const root = postcss.parse(css)
+    let changed = false
+    root.walkAtRules('apply', (rule) => {
+      if (!rule.params.includes(UNI_APP_X_IMPORTANT_APPLY_MARKER)) {
+        return
+      }
+      rule.params = rule.params.split(UNI_APP_X_IMPORTANT_APPLY_MARKER).join('!')
+      changed = true
+    })
+    return changed ? root.toString() : css
+  }
+  catch {
+    return css
+  }
+}
 
 interface TwDefaultDeclaration {
   prop: string

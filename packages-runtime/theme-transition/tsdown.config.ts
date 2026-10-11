@@ -7,6 +7,7 @@ export default defineConfig({
   clean: true,
   dts: true,
   deps: {
+    resolveDepSubpath: true,
     neverBundle: [/^tailwindcss(\/|$)/],
     onlyBundle: false,
   },

@@ -350,12 +350,12 @@ describe('bundlers/vite source scan', () => {
     expect(resolved?.entries).toEqual([
       {
         base: path.join(tempDir, 'dist'),
-        pattern: '**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,vue,uvue,nvue,svelte,mpx,html,wxml,axml,jxml,ksml,ttml,qml,tyml,xhsml,swan,css,wxss,acss,jxss,ttss,qss,tyss,scss,sass,less,styl,stylus}',
+        pattern: '**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,vue,uvue,nvue,svelte,mpx,html,wxml,axml,jxml,ksml,ttml,qml,qxml,tyml,xhsml,swan,css,wxss,acss,jxss,ttss,qss,tyss,scss,sass,less,styl,stylus}',
         negated: true,
       },
       {
         base: path.join(srcDir, 'uni_modules'),
-        pattern: '**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,vue,uvue,nvue,svelte,mpx,html,wxml,axml,jxml,ksml,ttml,qml,tyml,xhsml,swan,css,wxss,acss,jxss,ttss,qss,tyss,scss,sass,less,styl,stylus}',
+        pattern: '**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,vue,uvue,nvue,svelte,mpx,html,wxml,axml,jxml,ksml,ttml,qml,qxml,tyml,xhsml,swan,css,wxss,acss,jxss,ttss,qss,tyss,scss,sass,less,styl,stylus}',
         negated: true,
       },
     ])
@@ -663,7 +663,7 @@ describe('bundlers/vite source scan', () => {
     })
     expect(resolved?.entries).not.toContainEqual({
       base: path.join(srcDir, 'sub-normal'),
-      pattern: '**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,vue,uvue,nvue,svelte,mpx,html,wxml,axml,jxml,ksml,ttml,qml,tyml,xhsml,swan,css,wxss,acss,jxss,ttss,qss,tyss,scss,sass,less,styl,stylus}',
+      pattern: '**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,vue,uvue,nvue,svelte,mpx,html,wxml,axml,jxml,ksml,ttml,qml,qxml,tyml,xhsml,swan,css,wxss,acss,jxss,ttss,qss,tyss,scss,sass,less,styl,stylus}',
       negated: true,
     })
   })

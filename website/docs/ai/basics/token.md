@@ -1,7 +1,7 @@
 ---
 sidebar: aiSidebar
 title: Token（词元）
-description: Token 是将文本切分成的**序列片段**：
+description: Token（词元），覆盖 AI 工作流、提示词和工程化实践。
 keywords:
   - AI 编程
   - LLM

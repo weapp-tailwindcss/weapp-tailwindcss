@@ -21,6 +21,7 @@ const SKILL_INSTALL_COMMAND = `npx skills add sonofmagic/skills \\
   --skill weapp-tailwindcss-runtime \\
   --skill weapp-tailwindcss-custom-build \\
   --skill weapp-tailwindcss-react-native \\
+  --skill weapp-tailwindcss-lynx \\
   -y`
 
 const LOCAL_SKILL_INSTALL_COMMAND = SKILL_INSTALL_COMMAND.replace('sonofmagic/skills', '.')
@@ -37,7 +38,7 @@ const llmsPageCopy = {
     markdownTitle: 'Markdown 副本（示例）',
     markdownIntroPrefix: '每篇文档都会生成纯 Markdown（路径同原始 docs，只是后缀改为 .md）。完整列表见',
     skillTitle: 'Skill 套件安装与使用',
-    skillIntro: '官方套件包含兼容协调入口，以及接入、迁移、排障、运行时、自定义构建和 React Native 六个专用工作流：',
+    skillIntro: '官方套件包含兼容协调入口，以及接入、迁移、排障、运行时、自定义构建、React Native 和 ReactLynx 七个专用工作流：',
     installCommandLabel: '安装完整套件',
     installCommand: SKILL_INSTALL_COMMAND,
     skillListLabel: '查看可安装 Skill 列表',
@@ -53,7 +54,7 @@ const llmsPageCopy = {
     loadingTitle: '推荐加载顺序',
     onlineTitle: '在线模式',
     onlineSteps: [
-      '结构化检索：先读取 {baseUrl}/llms-index.json，拿到标题、摘要、关键词和 canonical。',
+      '产品问题先读取 {baseUrl}/llms-index.json；需要博客、AI 基础与历史内容时再读取 {baseUrl}/llms-index-full.json。',
       '入门、模板、AI 工作流：加载 {baseUrl}/llms-quickstart.txt。',
       '配置、API、兼容与迁移：加载 {baseUrl}/llms-api.txt。',
       '需要导航：先读取 {baseUrl}/llms.txt，拿到章节与链接。',
@@ -63,13 +64,14 @@ const llmsPageCopy = {
     offlineSteps: [
       '下载 llms-full.txt 或构建产出的 Markdown 文件整体打包。',
       '向量化时可按章节拆分，使用 llms.txt 里的标题做元信息。',
-      '需要元信息检索可使用 llms-index.json 作为首层索引，再按 url 读取正文。',
+      '使用 llms-index.json 作为产品首层索引，llms-index-full.json 作为完整知识库索引。',
       '生成回答时引用具体链接或标题，便于追溯来源。',
     ],
     exampleTitle: '示例提示词',
     examplePrompt: '你可以从 {baseUrl}/llms-quickstart.txt 和 {baseUrl}/llms-api.txt 读取 weapp-tailwindcss 的入门、配置和常见问题，回答时请引用对应链接。',
     txtFiles: [
       { label: 'llms-index.json', path: '/llms-index.json', desc: 'GEO 索引（标题、摘要、关键词、canonical）' },
+      { label: 'llms-index-full.json', path: '/llms-index-full.json', desc: '包含博客、AI 基础与历史内容的完整 GEO 索引' },
       { label: 'llms.txt', path: '/llms.txt', desc: '全站文档链接索引（llmstxt.org 规范）' },
       { label: 'llms-full.txt', path: '/llms-full.txt', desc: '全量内容（适合离线/一次性载入）' },
       { label: 'llms-quickstart.txt', path: '/llms-quickstart.txt', desc: '入门、模板、AI 工作流合集' },
@@ -94,7 +96,7 @@ const llmsPageCopy = {
     markdownTitle: 'Markdown copies (examples)',
     markdownIntroPrefix: 'Each doc also ships as plain Markdown with the same route path and a .md suffix. For the full list, see',
     skillTitle: 'Install and use the skill suite',
-    skillIntro: 'The suite includes the compatibility router plus focused setup, migration, troubleshooting, runtime, custom-build, and React Native workflows:',
+    skillIntro: 'The suite includes the compatibility router plus seven focused setup, migration, troubleshooting, runtime, custom-build, React Native, and ReactLynx workflows:',
     installCommandLabel: 'Install the complete suite',
     installCommand: SKILL_INSTALL_COMMAND,
     skillListLabel: 'List installable skills',
@@ -110,7 +112,7 @@ const llmsPageCopy = {
     loadingTitle: 'Recommended loading order',
     onlineTitle: 'Online mode',
     onlineSteps: [
-      'Structured retrieval: read {baseUrl}/llms-index.json first to get titles, summaries, keywords, and canonicals.',
+      'Read {baseUrl}/llms-index.json for product questions, then use {baseUrl}/llms-index-full.json only when blog, AI fundamentals, or historical context is needed.',
       'Quick start and setup context: load {baseUrl}/llms-quickstart.txt.',
       'Need navigation context: read {baseUrl}/llms.txt first to get section names and links.',
       'Full knowledge base: read {baseUrl}/llms-full.txt.',
@@ -119,13 +121,14 @@ const llmsPageCopy = {
     offlineSteps: [
       'Download llms-full.txt or package the generated Markdown files together.',
       'When vectorizing, split by section and use titles from llms.txt as metadata.',
-      'For metadata retrieval, use llms-index.json as the first-layer index and fetch article bodies by url afterward.',
+      'Use llms-index.json as the product index and llms-index-full.json as the complete knowledge-base index.',
       'When generating answers, cite the exact link or title so the source stays traceable.',
     ],
     exampleTitle: 'Example prompt',
     examplePrompt: 'You can read the English weapp-tailwindcss introduction and install guide from {baseUrl}/llms-quickstart.txt. Please cite the corresponding links in your answer.',
     txtFiles: [
       { label: 'llms-index.json', path: '/llms-index.json', desc: 'GEO index with titles, summaries, keywords, and canonicals' },
+      { label: 'llms-index-full.json', path: '/llms-index-full.json', desc: 'Complete GEO index including blog, AI fundamentals, and history' },
       { label: 'llms.txt', path: '/llms.txt', desc: 'Site-wide document link index following llmstxt.org' },
       { label: 'llms-full.txt', path: '/llms-full.txt', desc: 'Full content bundle for offline or single-pass loading' },
       { label: 'llms-quickstart.txt', path: '/llms-quickstart.txt', desc: 'English introduction and installation guidance' },
@@ -214,7 +217,7 @@ export default function LLMSPage() {
                   dark:bg-white dark:text-slate-900
                   dark:hover:bg-slate-100
                 `}
-                href={`${baseUrl}/llms-quickstart.txt`}
+                href={`${baseUrl}${localePrefix}/llms-quickstart.txt`}
                 target="_blank"
                 rel="noreferrer"
               >
@@ -230,7 +233,7 @@ export default function LLMSPage() {
                   dark:border-white/15 dark:bg-slate-900 dark:text-white
                   dark:hover:border-white/30
                 `}
-                href={`${baseUrl}/llms-full.txt`}
+                href={`${baseUrl}${localePrefix}/llms-full.txt`}
                 target="_blank"
                 rel="noreferrer"
               >
@@ -266,7 +269,7 @@ export default function LLMSPage() {
                           dark:text-sky-300
                           dark:hover:text-sky-200
                         `}
-                        href={`${baseUrl}${item.path}`}
+                        href={`${baseUrl}${localePrefix}${item.path}`}
                         target="_blank"
                         rel="noreferrer"
                       >
@@ -301,7 +304,7 @@ export default function LLMSPage() {
                     dark:text-sky-300
                     dark:hover:text-sky-200
                   `}
-                  href={`${baseUrl}/llms.txt`}
+                  href={`${baseUrl}${localePrefix}/llms.txt`}
                   target="_blank"
                   rel="noreferrer"
                 >

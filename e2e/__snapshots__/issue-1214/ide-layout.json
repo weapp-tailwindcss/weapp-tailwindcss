@@ -1,0 +1,20 @@
+{
+  "declarations": {
+    ".-mt-4": [
+      "-32rpx"
+    ],
+    ".h-32": [
+      "256rpx"
+    ],
+    ".w-32": [
+      "256rpx"
+    ],
+    ".gap-4": [
+      "32rpx"
+    ],
+    ".p-4": [
+      "32rpx"
+    ]
+  },
+  "wxml": "<view class=\"issue-1214-runtime\"><text id=\"issue-1214-marker\">issue-1214-static-layout</text><view class=\"probe-columns\"><view class=\"probe-column\"><text>Tailwind 工具类</text><text>宽高</text><view id=\"utility-box\" class=\"probe-box w-32 h-32\"/><text>内边距</text><view id=\"utility-padding\" class=\"probe-inset p-4\"><view id=\"utility-padding-child\" class=\"probe-child\"/></view><text>负外边距</text><view class=\"probe-stack\"><view id=\"utility-anchor\" class=\"probe-anchor\"/><view id=\"utility-margin\" class=\"probe-child -mt-4\"/></view><text>子元素间距</text><view id=\"utility-gap\" class=\"probe-row gap-4\"><view id=\"utility-gap-first\" class=\"probe-child\"/><view id=\"utility-gap-second\" class=\"probe-child\"/></view></view><view class=\"probe-column\"><text>直接 rpx 对照</text><text>宽高</text><view id=\"reference-box\" class=\"probe-box\" style=\"width:256rpx;height:256rpx\"/><text>内边距</text><view id=\"reference-padding\" class=\"probe-inset\" style=\"padding:32rpx\"><view id=\"reference-padding-child\" class=\"probe-child\"/></view><text>负外边距</text><view class=\"probe-stack\"><view id=\"reference-anchor\" class=\"probe-anchor\"/><view id=\"reference-margin\" class=\"probe-child\" style=\"margin-top:-32rpx\"/></view><text>子元素间距</text><view id=\"reference-gap\" class=\"probe-row\" style=\"gap:32rpx\"><view id=\"reference-gap-first\" class=\"probe-child\"/><view id=\"reference-gap-second\" class=\"probe-child\"/></view></view></view></view>"
+}

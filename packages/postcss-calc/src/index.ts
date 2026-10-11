@@ -7,6 +7,8 @@ export interface PostCssCalcOptions {
   warnWhenCannotResolve?: boolean;
   mediaQueries?: boolean;
   selectors?: boolean;
+  customPropertyValues?: ReadonlyMap<string, string>;
+  includeCustomProperties?: (string | RegExp)[];
 }
 
 interface NormalizedPostCssCalcOptions {
@@ -15,6 +17,8 @@ interface NormalizedPostCssCalcOptions {
   warnWhenCannotResolve: boolean;
   mediaQueries: boolean;
   selectors: boolean;
+  customPropertyValues?: ReadonlyMap<string, string>;
+  includeCustomProperties?: (string | RegExp)[];
 }
 
 export type PostCssCalcPluginCreator = PluginCreator<PostCssCalcOptions> & {

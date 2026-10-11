@@ -1,4 +1,4 @@
-import type { TailwindV4CssSource } from '@tailwindcss-mangle/engine'
+import type { TailwindV4CssSource } from '@weapp-tailwindcss/engine'
 import type { InternalUserDefinedOptions } from '@/types'
 import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'

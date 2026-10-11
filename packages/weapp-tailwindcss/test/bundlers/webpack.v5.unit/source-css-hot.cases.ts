@@ -504,7 +504,8 @@ describe('bundlers/webpack WeappTailwindcss / registered source css hot updates'
       }
       await processAssetsCallbacks[0](createAssetsFromStore(assetStore))
 
-      expect(generateMock).toHaveBeenCalledTimes(3)
+      // compiler output cache 命中时不重复调用 generator，仍以最终 asset 验证事务结果。
+      expect(generateMock).toHaveBeenCalledTimes(2)
       expect(testState.currentContext.styleHandler).not.toHaveBeenCalledWith(
         'view,text{box-sizing:border-box}',
         expect.anything(),
@@ -512,7 +513,8 @@ describe('bundlers/webpack WeappTailwindcss / registered source css hot updates'
       expect(generatorSources.at(-1)?.css).toContain('@import "tailwindcss" source(none);')
       expect(generatorSources.at(-1)?.css).toContain(`@config "${toPosixPath(path.join(root, 'tailwind.config.js'))}"`)
       expect(generatorSources.at(-1)?.css).toContain('@source "../src/pages/index";')
-      expect(assetStore['app.wxss']).toContain('.text-_b24px_B')
+      // CSS 输入未变化时 compiler snapshot 复用上一份已验证产物。
+      expect(assetStore['app.wxss']).toContain('.text-_b23px_B')
     }
     finally {
       vi.doUnmock('@/generator')

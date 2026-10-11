@@ -1,7 +1,7 @@
 import type { ViteFrameworkCssPipelineStrategy } from '../../shared/framework-strategy'
 import type { InternalUserDefinedOptions, UserDefinedOptions } from '@/types'
 import path from 'node:path'
-import { transformWebCssSafeSelectors } from '@weapp-tailwindcss/postcss'
+import { transformWebCssSafeSelectors } from '@weapp-tailwindcss/postcss/transform'
 import { viteStyleInjectorDelegates } from '@/style-injector/internal'
 import { createViteFrameworkPlugins } from '../../shared/create-framework-plugins'
 

@@ -1,4 +1,4 @@
 export {
   loadTailwindV4DesignSystem,
   resolveValidTailwindV4Candidates,
-} from '@tailwindcss-mangle/engine'
+} from '@weapp-tailwindcss/engine'

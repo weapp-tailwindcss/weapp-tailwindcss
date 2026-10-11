@@ -1,0 +1,10 @@
+{
+  "issue": "https://github.com/sonofmagic/weapp-tailwindcss/issues/1176",
+  "status": "verified",
+  "fixture": ["packages/weapp-tailwindcss/test/compiler/capabilities-cache.test.ts"],
+  "tests": ["packages/weapp-tailwindcss/test/compiler/capabilities-cache.test.ts"],
+  "e2e": ["e2e/framework-demo-ci-coverage-matrix.test.ts"],
+  "benchmark": ["benchmark/version-compare/test/percentiles.test.mjs"],
+  "staticSnapshot": ["e2e/__snapshots__"],
+  "releaseNote": [".changeset/p1-contract-completion.md"]
+}

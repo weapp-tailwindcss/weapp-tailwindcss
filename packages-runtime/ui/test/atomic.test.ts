@@ -1,32 +1,49 @@
-import { readFile } from 'node:fs/promises'
+import { createHash } from 'node:crypto'
+import { readdir, readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { isCI } from 'ci-info'
 import { build as viteBuild } from 'vite'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { button, mergeClassNames, skeleton, tag } from '../src/variants'
 
 const testDir = fileURLToPath(new URL('.', import.meta.url))
 const packageRoot = resolve(testDir, '..')
-const distCss = resolve(packageRoot, 'dist/index.css')
 const viteConfigPath = resolve(packageRoot, 'vite.config.ts')
 
 let cssOutput = ''
 
-beforeAll(async () => {
-  if (isCI) {
-    return
-  }
+async function snapshotPackageOutput() {
+  const directory = resolve(packageRoot, 'dist')
+  const entries = await readdir(directory, { recursive: true, withFileTypes: true }).catch(() => [])
+  return Object.fromEntries(await Promise.all(entries.filter(entry => entry.isFile()).map(async (entry) => {
+    const file = resolve(entry.parentPath, entry.name)
+    return [file, createHash('sha256').update(await readFile(file)).digest('hex')]
+  })))
+}
 
-  await viteBuild({
+beforeAll(async () => {
+  const previousOutput = await snapshotPackageOutput()
+  const result = await viteBuild({
     configFile: viteConfigPath,
     mode: 'test',
     logLevel: 'error',
+    build: { write: false },
   })
-  cssOutput = await readFile(distCss, 'utf8')
+  const bundles = Array.isArray(result) ? result : [result]
+  expect(await snapshotPackageOutput()).toEqual(previousOutput)
+  const assets = bundles.flatMap(bundle => 'output' in bundle ? bundle.output : [])
+  const css = assets.find(asset => asset.type === 'asset' && asset.fileName === 'index.css')
+  const wxss = assets.find(asset => asset.type === 'asset' && asset.fileName === 'index.wxss')
+  expect(css?.type).toBe('asset')
+  expect(wxss?.type).toBe('asset')
+  if (css?.type !== 'asset' || wxss?.type !== 'asset') {
+    throw new Error('UI 样式构建未返回 CSS 和 WXSS 产物。')
+  }
+  cssOutput = css.source.toString()
+  expect(wxss.source.toString()).toBe(cssOutput)
 })
 
-describe.skipIf(isCI)('atomic CSS build', () => {
+describe('atomic CSS build', () => {
   it('contains design tokens', () => {
     expect(cssOutput).toContain('--wt-color-primary')
     expect(cssOutput).toContain('--wt-space-4')

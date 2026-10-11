@@ -1,4 +1,4 @@
-import type { PackageResolvingOptions } from 'local-pkg'
+import type { PackageResolvingOptions } from '@/tailwindcss/package-options'
 import type { UserDefinedOptions } from '@/types'
 import { resolveTailwindcssBasedir } from '@/context/tailwindcss'
 import { resolveTaroPlatform, resolveUniPlatformsFromEnv } from '@/framework'

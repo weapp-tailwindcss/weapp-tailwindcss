@@ -1,4 +1,4 @@
-import { MappingChars2String } from '@weapp-core/escape'
+import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { describe, expect, it } from 'vitest'
 import { collectUnescapedDynamicCandidates } from '@/bundlers/vite/generate-bundle/candidates'
 import { createJsHandler } from '@/js'

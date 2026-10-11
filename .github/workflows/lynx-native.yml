@@ -1,0 +1,129 @@
+name: Lynx Native Compatibility
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'packages/lynx/**'
+      - 'packages/weapp-tailwindcss/src/bundlers/**'
+      - 'examples/react-lynx/**'
+      - 'e2e/lynx/**'
+      - 'e2e/lynx-*.test.ts'
+      - 'e2e/fixtures/lynx-native/**'
+      - package.json
+      - pnpm-lock.yaml
+      - .github/workflows/lynx-native.yml
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      full_verification:
+        description: 审批后完整执行版本 PR 验收，默认保留自动范围
+        type: boolean
+        required: false
+        default: false
+
+concurrency:
+  group: lynx-native-${{ inputs.full_verification && format('full-{0}', github.run_id) || github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  scope:
+    uses: ./.github/workflows/ci-scope.yml
+    with:
+      full_verification: ${{ inputs.full_verification || false }}
+
+  android:
+    needs: scope
+    if: needs.scope.outputs.core == 'true'
+    name: Lynx Android 4.0.1 (API 30)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.10.2
+      - run: pnpm install --frozen-lockfile
+      - name: Verify Android CI contract
+        run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-ci.test.ts --update=none
+      - name: Verify Android evidence storage
+        run: pnpm exec tsx e2e/lynx/test-evidence-store.ts android
+      - name: Enable hardware acceleration for the current runner
+        shell: bash
+        run: |
+          sudo setfacl -m "u:$(id -un):rw" /dev/kvm
+          test -r /dev/kvm && test -w /dev/kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          disable-linux-hw-accel: false
+          pre-emulator-launch-script: '"$ANDROID_HOME/emulator/emulator" -accel-check'
+          api-level: 30
+          arch: x86_64
+          profile: pixel_2
+          cores: 2
+          ram-size: 4096M
+          heap-size: 512M
+          disable-animations: true
+          disable-spellchecker: true
+          script: LYNX_ANDROID_DEVICE_ID=emulator-5554 pnpm e2e:lynx:android
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: lynx-android-${{ github.run_id }}
+          path: e2e/.artifacts/lynx-*/**
+          if-no-files-found: warn
+          include-hidden-files: true
+          retention-days: 14
+
+  ios:
+    needs: scope
+    if: needs.scope.outputs.core == 'true'
+    name: Lynx iOS 4.0.1 (iPhone 16 Pro / 18.5)
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: brew install cocoapods xcodegen
+      - run: pnpm install --frozen-lockfile
+      - name: Verify iOS preparation recovery
+        run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-ios-container.test.ts e2e/lynx-native-options.test.ts e2e/lynx-native-artifacts.test.ts e2e/lynx-native-command.test.ts e2e/lynx-command-observer.test.ts e2e/lynx-command-host.test.ts --update=none
+      - name: Verify pinned Lynx source patch
+        run: |
+          ruby e2e/lynx/podfile.test.rb
+          ruby e2e/lynx/source-patch.test.rb
+      - name: Verify iOS evidence storage
+        run: pnpm exec tsx e2e/lynx/test-evidence-store.ts ios
+      - name: Boot iOS 18.5 simulator
+        run: |
+          udid="$(xcrun simctl create LynxCompatibility 'iPhone 16 Pro' 'com.apple.CoreSimulator.SimRuntime.iOS-18-5')"
+          echo "LYNX_IOS_DEVICE_ID=$udid" >> "$GITHUB_ENV"
+          xcrun simctl boot "$udid"
+          xcrun simctl bootstatus "$udid" -b
+      - run: pnpm e2e:lynx:ios
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: lynx-ios-${{ github.run_id }}
+          path: e2e/.artifacts/lynx-*/**
+          if-no-files-found: warn
+          include-hidden-files: true
+          retention-days: 14

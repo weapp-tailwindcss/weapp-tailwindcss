@@ -32,7 +32,15 @@ export interface BundleSnapshot extends RuntimeCompilationSnapshot<BundleStateEn
   jsEntries: Map<string, OutputEntry>
 }
 
-export type BundleBuildState = RuntimeCompilationBuildState
+interface BundleEntryMetadata {
+  outputType: OutputAsset['type'] | OutputChunk['type']
+  runtimeCandidate: boolean
+  type: EntryType
+}
+
+export interface BundleBuildState extends RuntimeCompilationBuildState {
+  entryMetadataByFile: Map<string, BundleEntryMetadata>
+}
 
 export interface BuildBundleSnapshotOptions {
   hasOmittedKnownFiles?: boolean | undefined
@@ -49,7 +57,10 @@ export function runWithRemovedBundleFiles<T>(
 }
 
 export function createBundleBuildState(): BundleBuildState {
-  return createRuntimeCompilationBuildState()
+  return {
+    ...createRuntimeCompilationBuildState(),
+    entryMetadataByFile: new Map(),
+  }
 }
 
 function readEntrySource(output: OutputAsset | OutputChunk) {
@@ -83,19 +94,30 @@ function collectBundleEntries(
   bundle: Record<string, OutputAsset | OutputChunk>,
   opts: InternalUserDefinedOptions,
   outDir: string,
+  metadataByFile?: Map<string, BundleEntryMetadata>,
 ) {
   const jsEntries = new Map<string, OutputEntry>()
   const entries: BundleStateEntry[] = []
 
   for (const [file, output] of Object.entries(bundle)) {
-    const type = classifyBundleEntry(file, opts)
+    const cachedMetadata = metadataByFile?.get(file)
+    const type = cachedMetadata?.outputType === output.type
+      ? cachedMetadata.type
+      : classifyBundleEntry(file, opts)
     const entry: BundleStateEntry = {
       file,
       output,
       source: readEntrySource(output),
       type,
     }
-    entry.runtimeCandidate = isRuntimeCandidateBundleEntry(entry)
+    entry.runtimeCandidate = cachedMetadata?.outputType === output.type
+      ? cachedMetadata.runtimeCandidate
+      : isRuntimeCandidateBundleEntry(entry)
+    metadataByFile?.set(file, {
+      outputType: output.type,
+      runtimeCandidate: entry.runtimeCandidate === true,
+      type,
+    })
     collectJsEntry(file, output, outDir, jsEntries)
     entries.push(entry)
   }
@@ -114,7 +136,7 @@ export function buildBundleSnapshot(
   forceAll = false,
   options: BuildBundleSnapshotOptions = {},
 ): BundleSnapshot {
-  const { entries, jsEntries } = collectBundleEntries(bundle, opts, outDir)
+  const { entries, jsEntries } = collectBundleEntries(bundle, opts, outDir, state.entryMetadataByFile)
   const snapshot = buildRuntimeCompilationSnapshot(entries, state, {
     computeHash: source => opts.cache.computeHash(source),
     createRuntimeAffectingSignature: createRuntimeAffectingSourceSignature,
@@ -152,4 +174,15 @@ export function updateBundleBuildState(
   options: UpdateRuntimeCompilationBuildStateOptions = {},
 ) {
   updateRuntimeCompilationBuildState(state, snapshot, linkedByEntry, options)
+  for (const file of snapshot.removedFiles) {
+    state.entryMetadataByFile.delete(file)
+  }
+  if (!snapshot.hasOmittedKnownFiles) {
+    const activeFiles = new Set(snapshot.entries.map(entry => entry.file))
+    for (const file of state.entryMetadataByFile.keys()) {
+      if (!activeFiles.has(file)) {
+        state.entryMetadataByFile.delete(file)
+      }
+    }
+  }
 }

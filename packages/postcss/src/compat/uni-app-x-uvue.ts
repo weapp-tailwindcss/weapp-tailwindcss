@@ -1,4 +1,4 @@
-import type { Result as PostcssResult, Rule } from 'postcss'
+import type { Declaration, Result as PostcssResult, Rule } from 'postcss'
 import type { IStyleHandlerOptions, UniAppXUnsupportedMode } from '../types'
 import postcssCalc from '@weapp-tailwindcss/postcss-calc'
 import postcss from 'postcss'
@@ -8,6 +8,7 @@ import { removeEmptyStandardDeclarations } from './mini-program-css/root-cleanup
 import { normalizeTailwindcssV4Declaration } from './tailwindcss-v4'
 import { isUvueSfcStyleRequest, stripScopedTailwindNoise } from './uni-app-x-uvue/scoped-style'
 import { consumeUniAppXSystemRootTheme } from './uni-app-x-uvue/theme'
+import { normalizeUniAppXTransformValues } from './uni-app-x-uvue/transform-value'
 
 const ALLOWED_DISPLAY_VALUES = new Set(['flex', 'none'])
 const FALLBACK_CLASS_RE = /\.((?:\\.|[\w-])+)/g
@@ -37,34 +38,6 @@ function hasCalcFunction(value: string) {
     }
   })
   return found
-}
-
-function normalizeUniAppXTransformValue(value: string) {
-  if (!value.toLowerCase().includes('translate(') || !value.includes(',')) {
-    return value
-  }
-
-  const parsed = valueParser(value)
-  let changed = false
-
-  parsed.walk((node) => {
-    if (node.type !== 'function' || node.value.toLowerCase() !== 'translate') {
-      return
-    }
-
-    for (const child of node.nodes) {
-      if (child.type !== 'div' || child.value !== ',') {
-        continue
-      }
-
-      child.value = ' '
-      child.before = ''
-      child.after = ''
-      changed = true
-    }
-  })
-
-  return changed ? parsed.toString() : value
 }
 
 function getSourceFile(rule: Rule, result: PostcssResult) {
@@ -175,7 +148,7 @@ export function applyUniAppXUvueCompatibility(
   result: PostcssResult,
   options?: Pick<
     IStyleHandlerOptions,
-    'customPropertyValues' | 'isMainChunk' | 'uniAppX' | 'uniAppXCssTarget' | 'uniAppXUnsupported'
+    'customPropertyValues' | 'customPropertyCompatibilityValues' | 'isMainChunk' | 'uniAppX' | 'uniAppXCssTarget' | 'uniAppXUnsupported'
   >,
 ) {
   if (!isUniAppXUvueTarget(options)) {
@@ -189,13 +162,21 @@ export function applyUniAppXUvueCompatibility(
   let root = result.root
   let calcMessages: PostcssResult['messages'] = []
 
-  consumeUniAppXSystemRootTheme(root, options?.customPropertyValues)
+  consumeUniAppXSystemRootTheme(root, new Map([
+    ...options?.customPropertyCompatibilityValues ?? [],
+    ...options?.customPropertyValues ?? [],
+  ]))
   if (root.type === 'root' && Array.isArray(root.nodes) && typeof root.walkDecls === 'function') {
+    const transformDeclarations: Declaration[] = []
     root.walkDecls((decl) => {
       normalizeTailwindcssV4Declaration(decl)
       if (TRANSFORM_PROPERTIES.has(decl.prop.toLowerCase())) {
-        decl.value = normalizeUniAppXTransformValue(decl.value)
+        transformDeclarations.push(decl)
       }
+    })
+    const transformedValues = normalizeUniAppXTransformValues(transformDeclarations.map(decl => decl.value))
+    transformDeclarations.forEach((decl, index) => {
+      decl.value = transformedValues[index]!
     })
     const calcResult = postcss([postcssCalc()]).process(root, result.opts).sync()
     root = calcResult.root

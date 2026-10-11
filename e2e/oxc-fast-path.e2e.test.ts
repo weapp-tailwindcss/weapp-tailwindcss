@@ -78,6 +78,9 @@ describe('OXC fast path e2e', () => {
         plugins: [
           WeappTailwindcss({
             experimentalJsFastPath: 'oxc',
+            generator: {
+              target: 'weapp',
+            },
             tailwindcss: {
               version: 3,
               config: path.join(project.root, 'tailwind.config.js'),

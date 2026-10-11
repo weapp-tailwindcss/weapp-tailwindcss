@@ -2,10 +2,12 @@ import type { Plugin } from 'vite'
 import type { CssStage } from '@/compiler'
 import type { AppType } from '@/types'
 import path from 'node:path'
+import { createDeferredCssSourceMarker, stripTailwindConfigDirectives } from '@weapp-tailwindcss/postcss/transform'
 import { vitePluginName } from '@/constants'
+import { hasTailwindApplyDirective, hasTailwindRootDirectives, normalizeTailwindConfigDirectives } from '../../generation/directives'
+import { isSourceStyleRequest } from '../../generation/style-requests'
 import { resolveTailwindcssImport, rewriteTailwindcssImportsInCode } from '../shared/css-imports'
-import { hasTailwindApplyDirective, hasTailwindRootDirectives, normalizeTailwindConfigDirectives } from '../shared/generator-css/directives'
-import { isSourceStyleRequest } from '../shared/style-requests'
+import { isSfcStyleSourceFile } from './generate-bundle/sfc-style-source'
 import { cleanUrl, isCSSRequest } from './utils'
 
 function joinPosixPath(base: string, subpath: string) {
@@ -41,10 +43,6 @@ interface RewriteCssImportsOptions {
   shouldDeferGeneration?: ((id: string, code: string) => boolean) | undefined
 }
 
-function stripTailwindConfigDirectives(code: string) {
-  return code.replace(/^\s*@config\s+(?:"[^"]+"|'[^']+')[^;\n]*;\s*$/gm, '')
-}
-
 export function createRewriteCssImportsPlugins(options: RewriteCssImportsOptions): Plugin[] {
   if (!options.shouldRewrite && !options.shouldOwnTailwindGeneration) {
     return []
@@ -77,7 +75,7 @@ export function createRewriteCssImportsPlugins(options: RewriteCssImportsOptions
           return null
         }
         const file = cleanUrl(id)
-        const normalizedCode = hasTailwindRootDirectives(code) || code.includes('@config')
+        const normalizedCode = !isSfcStyleSourceFile(file) && (hasTailwindRootDirectives(code) || code.includes('@config'))
           ? normalizeTailwindConfigDirectives(code, path.dirname(file))
           : code
         await options.onCssSourceTransform?.(id, normalizedCode)
@@ -102,9 +100,12 @@ export function createRewriteCssImportsPlugins(options: RewriteCssImportsOptions
         }
 
         if (!options.shouldRewrite) {
-          if (normalizedCode !== code) {
+          const deferredCode = shouldOwnTailwindGeneration && hasTailwindRoot && !shouldGenerateInPreTransform
+            ? `${normalizedCode}\n${createDeferredCssSourceMarker(id)}`
+            : normalizedCode
+          if (deferredCode !== code) {
             return {
-              code: normalizedCode,
+              code: deferredCode,
               map: null,
             }
           }
@@ -115,9 +116,12 @@ export function createRewriteCssImportsPlugins(options: RewriteCssImportsOptions
           appType: resolveAppType(),
           rootImport,
         })
-        const nextCode = shouldOwnTailwindGeneration
+        const transformed = shouldOwnTailwindGeneration
           ? stripTailwindConfigDirectives(rewritten ?? normalizedCode)
           : rewritten
+        const nextCode = shouldOwnTailwindGeneration && hasTailwindRoot && !shouldGenerateInPreTransform
+          ? `${transformed ?? normalizedCode}\n${createDeferredCssSourceMarker(id)}`
+          : transformed
         if (!nextCode || nextCode === code) {
           return null
         }

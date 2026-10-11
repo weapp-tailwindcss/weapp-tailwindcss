@@ -18,6 +18,26 @@ function createOptions() {
 }
 
 describe('bundlers/vite bundle state cache', () => {
+  it('reuses entry metadata while refreshing the current Rollup output object', () => {
+    const opts = createOptions()
+    const state = createBundleBuildState()
+    const first = buildBundleSnapshot({
+      'assets/index.js': {
+        ...createRollupChunk('const cls = "w-1"'),
+        fileName: 'assets/index.js',
+      },
+    }, opts, '/project/dist', state)
+    expect(state.entryMetadataByFile.get('assets/index.js')).toMatchObject({ type: 'js', outputType: 'chunk' })
+
+    const secondOutput = {
+      ...createRollupChunk('const cls = "w-2"'),
+      fileName: 'assets/index.js',
+    }
+    const second = buildBundleSnapshot({ 'assets/index.js': secondOutput }, opts, '/project/dist', state)
+    expect(second.entries[0]?.output).toBe(secondOutput)
+    expect(second.entries[0]?.type).toBe(first.entries[0]?.type)
+  })
+
   it('reuses runtime-affecting hashes when source hash is unchanged without retaining signatures', () => {
     const opts = createOptions()
     const state = createBundleBuildState()

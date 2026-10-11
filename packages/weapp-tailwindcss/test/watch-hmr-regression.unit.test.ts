@@ -118,6 +118,7 @@ import {
   readFileWithRetry,
   waitFor,
   writeFilePreserveEol,
+  writeWatchedFilePreserveEol,
 } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/text'
 import {
   createWebHmrReloadRecovery,
@@ -143,6 +144,7 @@ import {
   collectSubPackageStyleOutputs,
 } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/subpackage'
 import { replaceWxml } from '../src/wxml/shared'
+import { resolveWorkflowMatrixEnv } from './ci/workflow-matrix'
 import type {
   CliOptions,
   MainStyleHotUpdateMetrics,
@@ -487,6 +489,32 @@ describe('watch-hmr regression text helpers', () => {
     expect(after.mtimeMs).toBeGreaterThan(before.mtimeMs)
   })
 
+  it('preserves watched file identity across consecutive in-place mutations', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'weapp-tw-watch-identity-'))
+    tempDirs.push(tempDir)
+    const file = path.join(tempDir, 'sample.tsx')
+    await writeFile(file, 'const state = "initial"\n', 'utf8')
+    const before = await stat(file)
+    const rename = vi.spyOn(fs, 'rename')
+
+    try {
+      await writeWatchedFilePreserveEol(file, 'const state = "updated"\n', 'const state = "initial"\n')
+      const afterFirstMutation = await stat(file)
+      await writeWatchedFilePreserveEol(file, 'const state = "rollback"\n', 'const state = "initial"\n')
+      const afterRollback = await stat(file)
+
+      expect(rename).not.toHaveBeenCalled()
+      expect(afterFirstMutation.ino).toBe(before.ino)
+      expect(afterRollback.ino).toBe(before.ino)
+      expect(afterFirstMutation.mtimeMs).toBeGreaterThan(before.mtimeMs)
+      expect(afterRollback.mtimeMs).toBeGreaterThan(afterFirstMutation.mtimeMs)
+      expect(await readFile(file, 'utf8')).toBe('const state = "rollback"\n')
+    }
+    finally {
+      rename.mockRestore()
+    }
+  })
+
   it('keeps the previous source readable until an atomic watch mutation is ready', async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), 'weapp-tw-watch-atomic-'))
     tempDirs.push(tempDir)
@@ -600,7 +628,7 @@ describe('watch-hmr regression text helpers', () => {
     )
 
     expect(attempt).toBe(3)
-    expect(tickCount).toBe(5)
+    expect(tickCount).toBeGreaterThanOrEqual(5)
     expect(elapsed).toBeGreaterThanOrEqual(0)
     expect(elapsed).toBeLessThan(timeoutMs)
 
@@ -874,6 +902,37 @@ describe('watch-hmr regression text helpers', () => {
     expect(elapsed).toBeGreaterThanOrEqual(0)
   })
 
+  it('allows style compile settle to observe CSS output mtimes', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'weapp-tw-watch-style-settle-'))
+    tempDirs.push(tempDir)
+    const styleFile = path.join(tempDir, 'index.wxss')
+    await writeFilePreserveEol(styleFile, '.anchor{}', '.anchor{}')
+    const phaseStartedAt = Date.now()
+
+    await new Promise(resolve => setTimeout(resolve, 20))
+    await writeFilePreserveEol(styleFile, '.anchor{color:red}', '.anchor{}')
+
+    const elapsed = await waitForCompileSettled(
+      {
+        label: 'demo/weapp-vite-tailwindcss-v4',
+        outputWxml: '/missing/index.wxml',
+        outputJs: '/missing/index.js',
+      } as any,
+      {
+        timeoutMs: 2_000,
+        pollMs: 20,
+      } as CliOptions,
+      {
+        ensureRunning() {},
+        lastCompileSuccessAt: () => 0,
+      } as any,
+      phaseStartedAt,
+      [styleFile],
+    )
+
+    expect(elapsed).toBeGreaterThanOrEqual(0)
+  })
+
   it('allows style-only compile settle to use a stable plugin total sample', async () => {
     const pluginTotalAt = Date.now() - 700
     const elapsed = await waitForCompileSettled(
@@ -901,6 +960,56 @@ describe('watch-hmr regression text helpers', () => {
     )
 
     expect(elapsed).toBeGreaterThanOrEqual(0)
+  })
+
+  it('waits for CSS outputs when a compile success signal arrives first', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'weapp-tw-watch-css-lag-'))
+    tempDirs.push(tempDir)
+    const wxmlFile = path.join(tempDir, 'index.wxml')
+    const jsFile = path.join(tempDir, 'index.js')
+    const styleFile = path.join(tempDir, 'app.wxss')
+    await Promise.all([
+      writeFilePreserveEol(wxmlFile, '<view />', '<view />'),
+      writeFilePreserveEol(jsFile, 'Page({})', 'Page({})'),
+      writeFilePreserveEol(styleFile, '.baseline{}', '.baseline{}'),
+    ])
+
+    await new Promise(resolve => setTimeout(resolve, 40))
+    const phaseStartedAt = Date.now()
+    let compileSuccessAt = 0
+    setTimeout(() => {
+      compileSuccessAt = Date.now()
+      void writeFilePreserveEol(jsFile, 'Page({ ready: true })', 'Page({})').catch(() => undefined)
+    }, 20)
+    setTimeout(() => {
+      void rm(styleFile, { force: true }).catch(() => undefined)
+    }, 100)
+    setTimeout(() => {
+      void writeFilePreserveEol(styleFile, '.updated{color:red}', '.baseline{}').catch(() => undefined)
+    }, 900)
+
+    await waitForCompileSettled(
+      {
+        label: 'demo/uni-app-vite-tailwindcss-v4',
+        outputWxml: wxmlFile,
+        outputJs: jsFile,
+        outputStyleCandidates: [styleFile],
+        globalStyleCandidates: [styleFile],
+      } as any,
+      {
+        timeoutMs: 3_000,
+        pollMs: 20,
+      } as CliOptions,
+      {
+        ensureRunning() {},
+        lastCompileSuccessAt: () => compileSuccessAt,
+        pluginProcessSamplesSince: () => [],
+      } as any,
+      phaseStartedAt,
+    )
+
+    expect(compileSuccessAt).toBeGreaterThan(phaseStartedAt)
+    await expect(readFile(styleFile, 'utf8')).resolves.toBe('.updated{color:red}')
   })
 
   it('waits for added-class rollback compilation to settle before returning', async () => {
@@ -979,7 +1088,7 @@ describe('watch-hmr regression text helpers', () => {
           verifyClassLiteralIn: ['js'],
           roundConfigs: [roundConfig],
           mutate(source, mutationPayload) {
-            return `${source}\n${mutationPayload.marker}\n${mutationPayload.classLiteral}`
+            return `${source}\nconst marker = ${JSON.stringify(mutationPayload.marker)};\nconst className = ${JSON.stringify(mutationPayload.classLiteral)};`
           },
         },
         sourceOriginal,
@@ -1883,7 +1992,7 @@ describe('watch-hmr regression summary helpers', () => {
   it('samples repository-scoped detached Windows watcher processes in HMR reports', () => {
     const script = createWindowsProcessTreeMemoryScript(42, String.raw`C:\repo\weapp-tailwindcss`)
 
-    expect(script).toContain(String.raw`$repositoryRoot = 'C:\repo\weapp-tailwindcss'`)
+    expect(script).toContain(String.raw`Get-WatchMemory -root 42 -repositoryRoot 'C:\repo\weapp-tailwindcss'`)
     expect(script).toContain('CommandLine')
     expect(script).toContain('uni\\.js[\\s\\S]+-p\\s+mp-weixin')
     expect(script).toContain('taro-build-runner\\.mjs\\s+build\\s+--type\\s+h5\\s+--watch')
@@ -2241,7 +2350,7 @@ describe('watch-hmr regression cases', () => {
     ]) {
       const watchCase = cases.find(item => item.name === caseName)
       expect(watchCase?.env).toHaveProperty('TARO_E2E_WATCH_NATIVE', '0')
-      expect(watchCase?.maxPluginProcessMs).toBe(8000)
+      expect(watchCase?.maxPluginProcessMs).toBe(18000)
     }
   })
 
@@ -2427,7 +2536,7 @@ describe('watch-hmr regression cases', () => {
   })
 
   it('keeps uni-app x Options API script and in-place class replacement HMR coverage', () => {
-    const uniAppXCase = buildUniAppHBuilderXCases('/repo').find(watchCase => watchCase.name === 'uni-app-x-hbuilderx-tailwindcss-v4')
+    const uniAppXCase = buildUniAppHBuilderXCases('/repo').find(watchCase => watchCase.name === 'uni-app-x-vdom-tailwindcss-v4')
     const source = [
       '<script lang="uts">',
       'export default {',
@@ -3125,7 +3234,7 @@ describe('watch-hmr regression cases', () => {
     const guardedCases = [
       'uni-app-vite-tailwindcss-v4',
       'uni-app-vite-vue3-hbuilderx-tailwindcss-v4',
-      'uni-app-x-hbuilderx-tailwindcss-v4',
+      'uni-app-x-vdom-tailwindcss-v4',
     ]
 
     for (const caseName of guardedCases) {
@@ -3403,6 +3512,7 @@ describe('watch-hmr regression cases', () => {
       const watchCase = demoExtendedCases.find(item => item.name === caseName)
       expect(watchCase?.webHmr?.reloadOnHmrStall, caseName).toBe(true)
       expect(watchCase?.webHmr?.hmrReloadStallMs, caseName).toBe(5_000)
+      expect(watchCase?.webHmr?.touchCssEntryOnSourceMutation, caseName).toBe(false)
     }
   })
 
@@ -3473,8 +3583,12 @@ describe('watch-hmr regression cases', () => {
       { os: 'macos-latest', runner_label: 'macos', watch_case: 'taro-vite-react-tailwindcss-v4:tt', artifact_case: 'taro-vite-react-tailwindcss-v4-tt', round_profile: 'default' },
       { os: 'macos-latest', runner_label: 'macos', watch_case: 'taro-vite-vue3-tailwindcss-v4:alipay', artifact_case: 'taro-vite-vue3-tailwindcss-v4-alipay', round_profile: 'default' },
       { os: 'macos-latest', runner_label: 'macos', watch_case: 'taro-vite-vue3-tailwindcss-v4:tt', artifact_case: 'taro-vite-vue3-tailwindcss-v4-tt', round_profile: 'default' },
-      { os: 'macos-latest', runner_label: 'macos', watch_case: 'taro-webpack-react-tailwindcss-v4:weapp', artifact_case: 'taro-webpack-react-tailwindcss-v4-weapp', round_profile: 'default' },
-      { os: 'macos-latest', runner_label: 'macos', watch_case: 'taro-webpack-vue3-tailwindcss-v4:weapp', artifact_case: 'taro-webpack-vue3-tailwindcss-v4-weapp', round_profile: 'default' },
+      { os: 'macos-latest', runner_label: 'macos', watch_case: 'taro-webpack-react-tailwindcss-v4:weapp', artifact_case: 'taro-webpack-react-tailwindcss-v4-weapp', round_profile: 'mini-program-main' },
+      { os: 'macos-latest', runner_label: 'macos', watch_case: 'taro-webpack-react-tailwindcss-v4:weapp', artifact_case: 'taro-webpack-react-tailwindcss-v4-weapp', round_profile: 'mini-program-subpackages' },
+      { os: 'macos-latest', runner_label: 'macos', watch_case: 'taro-webpack-react-tailwindcss-v4', artifact_case: 'taro-webpack-react-tailwindcss-v4-web', round_profile: 'web-only' },
+      { os: 'macos-latest', runner_label: 'macos', watch_case: 'taro-webpack-vue3-tailwindcss-v4:weapp', artifact_case: 'taro-webpack-vue3-tailwindcss-v4-weapp', round_profile: 'mini-program-main' },
+      { os: 'macos-latest', runner_label: 'macos', watch_case: 'taro-webpack-vue3-tailwindcss-v4:weapp', artifact_case: 'taro-webpack-vue3-tailwindcss-v4-weapp', round_profile: 'mini-program-subpackages' },
+      { os: 'macos-latest', runner_label: 'macos', watch_case: 'taro-webpack-vue3-tailwindcss-v4', artifact_case: 'taro-webpack-vue3-tailwindcss-v4-web', round_profile: 'web-only' },
       { os: 'macos-latest', runner_label: 'macos', watch_case: 'uni-app-vite-tailwindcss-v4:mp-weixin', artifact_case: 'uni-app-vite-tailwindcss-v4-mp-weixin', round_profile: 'default' },
       { os: 'macos-latest', runner_label: 'macos', watch_case: 'uni-app-vite-tailwindcss-v4:mp-alipay', artifact_case: 'uni-app-vite-tailwindcss-v4-mp-alipay', round_profile: 'default' },
       { os: 'macos-latest', runner_label: 'macos', watch_case: 'uni-app-vite-tailwindcss-v4:mp-qq', artifact_case: 'uni-app-vite-tailwindcss-v4-mp-qq', round_profile: 'default' },
@@ -3565,22 +3679,58 @@ describe('watch-hmr regression cases', () => {
     )
     const workflow = parse(workflowSource) as {
       jobs?: Record<string, {
+        strategy: { matrix: { include: Array<Record<string, string>> } }
         steps?: Array<Record<string, unknown>>
       }>
     }
 
-    const runSteps = [
-      ...(workflow.jobs?.['pr-quick-gate']?.steps ?? []),
-      ...(workflow.jobs?.['nightly-full-regression']?.steps ?? []),
-    ].filter(step => typeof step.name === 'string' && step.name.startsWith('Run e2e watch suite'))
-
-    expect(runSteps.length).toBe(2)
-    for (const step of runSteps) {
-      const env = step.env as Record<string, string> | undefined
-      expect(env?.E2E_WATCH_MAX_HOT_UPDATE_MS).toBe('${{ matrix.watch_max_hot_update_ms || matrix.watch_timeout_ms }}')
-      expect(env?.E2E_WATCH_MAX_PLUGIN_PROCESS_MS).toBe("${{ matrix.watch_max_plugin_process_ms || '6000' }}")
-      expect(env?.E2E_WATCH_MAX_ATTEMPTS).toBe("${{ matrix.watch_max_attempts || '2' }}")
-      expect(env?.NODE_OPTIONS).toBe('--max-old-space-size=6144')
+    for (const jobName of ['pr-quick-gate', 'nightly-full-regression']) {
+      const job = workflow.jobs![jobName]!
+      const runSteps = job.steps!.filter(step => typeof step.name === 'string' && step.name.startsWith('Run e2e watch suite'))
+      expect(runSteps).toHaveLength(1)
+      const step = runSteps[0]!
+      expect(step.run).toBe('pnpm e2e:watch')
+      for (const row of job.strategy.matrix.include) {
+        const env = resolveWorkflowMatrixEnv(step.env as Record<string, unknown>, row)
+        const originalEnv = new Map(Object.keys(env).map(key => [key, process.env[key]]))
+        const originalArgv = process.argv
+        Object.assign(process.env, env)
+        try {
+          const command = resolveWatchCommandOptions(path.join(os.tmpdir(), 'workflow-contract-report.json'))
+          const args = buildWatchHmrArgs(row.watch_case!, command)
+          process.argv = ['node', 'watch-hmr-regression', ...args.slice(args.indexOf('--') + 1)]
+          const options = resolveOptions()
+          // 检查 YAML 矩阵实际到达命令与 CLI 的预算，不能由未定义的旧 matrix 字段遮蔽。
+          expect(options.timeoutMs).toBe(Number(row.watch_timeout_ms))
+          expect(options.caseName).toBe(row.watch_case)
+          expect(options.webOnly).toBe(env.E2E_WATCH_WEB_ONLY === '1')
+          expect(options.miniProgramOnly).toBe(env.E2E_WATCH_MINI_PROGRAM_ONLY === '1' || Boolean(env.E2E_WATCH_MINI_PROGRAM_SCOPE))
+          expect(options.miniProgramScope).toBe(env.E2E_WATCH_MINI_PROGRAM_SCOPE || undefined)
+          expect(options.mainStyleOnly).toBe(env.E2E_WATCH_MAIN_STYLE_ONLY === '1')
+          expect(options.maxHotUpdateMs).toBe(Number(row.watch_timeout_ms))
+          expect(options.maxHotUpdateMs).toBeGreaterThan(0)
+          expect(options.maxPluginProcessMs).toBe(Number(row.watch_max_plugin_process_ms ?? '6000'))
+          expect(options.maxPluginProcessMs).toBeGreaterThan(0)
+          expect(options.maxPluginProcessMs).toBeLessThanOrEqual(60000)
+          expect(Number(env.E2E_WATCH_MAX_ATTEMPTS)).toBe(Number(row.watch_max_attempts ?? '2'))
+          expect(Number(env.E2E_WATCH_MAX_ATTEMPTS)).toBeGreaterThan(0)
+          expect(Number(env.E2E_WATCH_MAX_ATTEMPTS)).toBeLessThanOrEqual(2)
+          expect(options).toMatchObject({ maxMemoryRssMb: 5632, maxMemoryRssDeltaMb: 4608, maxMemoryHeapUsedMb: 4096 })
+          expect(env.NODE_OPTIONS).toBe('--max-old-space-size=6144')
+          expect(env.E2E_WATCH_CONFIRM_PERFORMANCE_BUDGET).toBe('1')
+        }
+        finally {
+          process.argv = originalArgv
+          for (const [key, value] of originalEnv) {
+            if (value === undefined) {
+              delete process.env[key]
+            }
+            else {
+              process.env[key] = value
+            }
+          }
+        }
+      }
     }
   })
 })

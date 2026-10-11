@@ -12,6 +12,10 @@
 | `theme-transition` | 主题过渡运行时与 Tailwind 插件 |
 | `@weapp-tailwindcss/ui` | 项目明确采用该原子化 UI 运行时层时 |
 
+当前运行时包的 Node engine 为 `^20.19.0 || >=22.12.0`。`@weapp-tailwindcss/merge` 还公开 `./slim` 与 `./lite`：只有明确接受对应规则集裁剪时才使用子入口，默认仍使用主入口。
+
+`@weapp-tailwindcss/ui` 的默认入口是 CSS；variants、preset、components、utils、hooks 与 adapters 使用各自公开子路径。`theme-transition` 同时公开运行时、Tailwind 插件、SCSS 和 CSS，按消费端选择入口，不把样式入口当成 JavaScript API。
+
 ## 动态 class 顺序
 
 1. 静态完整字面量。
@@ -104,4 +108,4 @@ const rawClass = weappTwIgnore`w-1/2`
 
 ## 验证
 
-覆盖条件 class、冲突顺序、自定义 token、任意值、斜杠 class、第三方 raw class、生产压缩和缓存淘汰。
+覆盖条件 class、冲突顺序、自定义 token、任意值、斜杠 class、第三方 raw class、生产压缩、缓存淘汰和所选 subpath 的 ESM/CJS 类型解析。

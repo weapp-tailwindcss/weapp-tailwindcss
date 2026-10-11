@@ -1,0 +1,29 @@
+{
+  "file": "components/issue-1160-border/issue-1160-border.uvue",
+  "count": 23,
+  "tokens": [
+    "border-[2px]",
+    "border-[red]",
+    "border-b-[1px]",
+    "border-dashed",
+    "border-l-[1px]",
+    "border-l-[2px]",
+    "border-none",
+    "border-r-[1px]",
+    "border-solid",
+    "border-t-0",
+    "border-t-[1px]",
+    "flex",
+    "flex-row",
+    "items-center",
+    "justify-between",
+    "leading-[14px]",
+    "leading-[16px]",
+    "ml-[3px]",
+    "mr-[16px]",
+    "mt-[12px]",
+    "pt-[10px]",
+    "text-[#94a3b8]",
+    "text-[11px]"
+  ]
+}

@@ -1,11 +1,59 @@
 import fs from 'fs-extra'
 import path from 'pathe'
+import { compileString } from 'sass'
+import { normalizeUniAppXImportantApplyForSass, restoreUniAppXImportantApplyMarker } from '@/compat/uni-app-x'
 import { applyUniAppXUvueCompatibility } from '@/compat/uni-app-x-uvue'
 import { createStyleHandler, postcss } from '@/index'
 
 const INVALID_UNI_APP_X_BASE_SELECTOR_RE = /(^|,)\s*(?:\*|view|text|::before|::after|:before|:after|::backdrop)\s*(?=,|\{)/m
 
 describe('uni-app-x', () => {
+  it('normalizes important utilities in author SCSS before Sass, including inline comments', () => {
+    const source = [
+      '$size: 3px;',
+      '.author {',
+      '  // 用户样式中的行内注释不能使 important 处理失效',
+      '  width: $size;',
+      '  @apply mt-24!;',
+      '  &:hover { @apply !p-10; }',
+      '}',
+    ].join('\n')
+    const normalized = normalizeUniAppXImportantApplyForSass(source)
+    expect(normalized).toContain('@apply mt-24__weapp_tw_important__;')
+    expect(normalized).toContain('@apply p-10__weapp_tw_important__;')
+    expect(normalized).toContain('// 用户样式中的行内注释')
+    expect(normalizeUniAppXImportantApplyForSass(normalized)).toBe(normalized)
+    const css = compileString(normalized).css
+    expect(css).toContain('width: 3px;')
+    expect(restoreUniAppXImportantApplyMarker(css)).toContain('@apply mt-24!;')
+  })
+
+  it('round-trips important apply utilities across Sass and PostCSS', () => {
+    const source = '.probe { @apply !mt-6 mt-6! text-sm; }'
+    const sassSafe = normalizeUniAppXImportantApplyForSass(source)
+
+    expect(sassSafe).toContain('@apply mt-6__weapp_tw_important__ mt-6__weapp_tw_important__ text-sm;')
+    expect(restoreUniAppXImportantApplyMarker(sassSafe)).toContain('@apply mt-6! mt-6! text-sm;')
+  })
+
+  it('accepts Web local important apply syntax', async () => {
+    const styleHandler = createStyleHandler({
+      appType: 'uni-app-x',
+      uniAppX: true,
+      majorVersion: 4,
+    })
+    const options = {
+      appType: 'uni-app-x' as const,
+      uniAppX: true,
+    }
+    const result = await styleHandler('.wtu-important { @apply mt-6!; }', options)
+
+    expect(result.css).toContain('@apply mt-6!;')
+    await expect(
+      styleHandler(".wtu-important { @apply mt-6#{'!'}; }", options),
+    ).rejects.toThrow('Unknown word')
+  })
+
   it('css', async () => {
     const styleHandler = createStyleHandler({
       // uniAppX: true,

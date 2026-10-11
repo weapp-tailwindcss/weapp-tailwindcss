@@ -56,7 +56,7 @@ describe('bundlers/webpack WeappTailwindcss / generated css subpackages', () => 
         || /@import\s+["']tailwindcss["']/.test(source?.css ?? '')
       const css = [
         ...(shouldEmitPreflight ? ['view,text,::after,::before{box-sizing:border-box;margin:0;padding:0;border:0 solid}'] : []),
-        ...[...candidates].sort().map(candidate => `.${candidate}{}`),
+        ...[...candidates].sort().map(candidate => `.${candidate}{display:block}`),
       ].join('\n')
       return {
         css,
@@ -302,11 +302,11 @@ describe('bundlers/webpack WeappTailwindcss / generated css subpackages', () => 
     const generateMock = vi.fn(async ({ candidates }: { candidates: Set<string> }) => ({
       css: [
         'view,text,::after,::before{box-sizing:border-box;margin:0;padding:0;border:0 solid}',
-        ...[...candidates].sort().map(candidate => `.${candidate}{}`),
+        ...[...candidates].sort().map(candidate => `.${candidate}{display:block}`),
       ].join('\n'),
       rawCss: [
         'view,text,::after,::before{box-sizing:border-box;margin:0;padding:0;border:0 solid}',
-        ...[...candidates].sort().map(candidate => `.${candidate}{}`),
+        ...[...candidates].sort().map(candidate => `.${candidate}{display:block}`),
       ].join('\n'),
       target: 'weapp',
       classSet: new Set(candidates),
@@ -488,7 +488,7 @@ describe('bundlers/webpack WeappTailwindcss / generated css subpackages', () => 
       expect(assetStore['sub-normal/pages/index.wxss']).toContain('.sub-only')
       expect(assetStore['sub-normal/pages/index.wxss']).not.toContain('.main-only')
       expect(assetStore['sub-normal/pages/index.wxss']).toContain('view,text,::after,::before')
-      expect(assetStore['sub-normal/pages/index.wxss']).toContain('box-sizing: border-box')
+      expect(assetStore['sub-normal/pages/index.wxss']).toContain('box-sizing:border-box')
     }
     finally {
       vi.doUnmock('@/generator')
@@ -526,8 +526,8 @@ describe('bundlers/webpack WeappTailwindcss / generated css subpackages', () => 
     await writeFile(subBWxml, '<view class="sub-b-only"></view>')
 
     const generateMock = vi.fn(async ({ candidates, source }: { candidates: Set<string>, source: { css?: string } }) => ({
-      css: [...candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
-      rawCss: [...candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
+      css: [...candidates].sort().map(candidate => `.${candidate}{display:block}`).join('\n'),
+      rawCss: [...candidates].sort().map(candidate => `.${candidate}{display:block}`).join('\n'),
       target: 'weapp',
       classSet: new Set(candidates),
       dependencies: [],
@@ -616,7 +616,7 @@ describe('bundlers/webpack WeappTailwindcss / generated css subpackages', () => 
       const processAssetsCallbacks: Array<(assets: Record<string, any>) => Promise<void>> = []
       let assetStore: Record<string, string> = {
         'app.wxss': '@tailwind utilities;',
-        'pages/index/index.wxss': '.page-local{}',
+        'pages/index/index.wxss': '.page-local{display:block}',
       }
       const compilation = {
         compiler: { outputPath: path.join(dir, 'dist') },
@@ -732,10 +732,10 @@ describe('bundlers/webpack WeappTailwindcss / generated css subpackages', () => 
         const rewriteLoaderEntry = module.loaders.find(entry => entry.loader?.includes('weapp-tw-css-import-rewrite-loader'))
         const rewriteRuntime = getWebpackLoaderRuntime(rewriteLoaderEntry?.options?.tailwindcssImportRewriteRuntimeKey)
         const css = cssFile === appCss
-          ? '.main-only{}'
+          ? '.main-only{display:block}'
           : cssFile === subACss
-            ? '.sub-a-only{}'
-            : '.sub-b-only{}'
+            ? '.sub-a-only{display:block}'
+            : '.sub-b-only{display:block}'
         rewriteRuntime?.cssImportRewrite?.registerGeneratedCss?.({
           classSet: new Set(cssFile === appCss
             ? ['main-only']

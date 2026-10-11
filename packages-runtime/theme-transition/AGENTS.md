@@ -34,5 +34,5 @@
 - `pnpm --filter theme-transition test`
 - `pnpm --filter theme-transition tsd`
 - 定向回归：
-  - `pnpm --filter theme-transition vitest run test/index.test.ts`
-  - `pnpm --filter theme-transition vitest run test/tailwindcss.test.ts`
+  - `pnpm --filter theme-transition exec vitest run test/index.test.ts`
+  - `pnpm --filter theme-transition exec vitest run test/tailwindcss.test.ts`

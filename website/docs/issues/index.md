@@ -220,7 +220,7 @@ pnpm 8 这个版本改变了一些默认值，其中 `resolution-mode` 默认值
 
 这通常是 Tailwind 上下文定位不准，或源码没有被扫描到。可以先检查两件事：
 
-- 配置 [tailwindcssBasedir](https://tw.icebreaker.top/docs/api/interfaces/UserDefinedOptions#tailwindcssbasedir)，让插件从正确的项目目录解析 Tailwind
+- 配置 [tailwindcssBasedir](https://tw.weapp.dev/docs/api/interfaces/UserDefinedOptions#tailwindcssbasedir)，让插件从正确的项目目录解析 Tailwind
 
 - 检查 `@source` / `cssEntries`
 

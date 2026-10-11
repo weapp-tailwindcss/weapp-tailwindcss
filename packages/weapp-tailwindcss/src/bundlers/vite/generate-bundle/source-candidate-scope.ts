@@ -2,6 +2,7 @@ import type { BundleSnapshot } from '../bundle-state'
 import type { SourceCandidateFilterOptions } from '../source-candidates'
 import type { TailwindSourceEntry } from '@/tailwindcss/source-scan'
 import path from 'node:path'
+import { isRootStyleOutputFile } from '../processed-css-assets/style-files'
 import { collectMiniProgramSubpackageSourceEntries, isSubpackageOutputFile } from './subpackages'
 
 interface CreateSubpackageSourceCandidateScopeOptions {
@@ -143,14 +144,25 @@ export function createSubpackageSourceCandidateScope(options: CreateSubpackageSo
     && subpackageSourceExcludeEntries.length > 0
     && isMainPackageStyleOutputFile(outputFile)
 
+  const resolveScopedOutputFile = (outputFile: string, sourceFile?: string) => {
+    if (!options.subpackageRoots || isSubpackageOutputFile(outputFile, options.subpackageRoots)) {
+      return outputFile
+    }
+    return sourceFile && isSubpackageOutputFile(sourceFile, options.subpackageRoots)
+      ? sourceFile
+      : outputFile
+  }
+
   const createScopedSourceCandidateGetter = (
     outputFile: string,
     cssHandlerOptions: { isMainChunk?: boolean | undefined },
+    sourceFile?: string,
   ) => {
     if (!options.getSourceCandidatesForEntries) {
       return undefined
     }
-    const subpackageEntries = resolveSubpackageOutputSourceEntries(outputFile)
+    const scopedOutputFile = resolveScopedOutputFile(outputFile, sourceFile)
+    const subpackageEntries = resolveSubpackageOutputSourceEntries(scopedOutputFile)
     if (subpackageEntries) {
       return (entries: TailwindSourceEntry[] | undefined, filterOptions?: SourceCandidateFilterOptions) => {
         if (entries !== undefined) {
@@ -186,11 +198,13 @@ export function createSubpackageSourceCandidateScope(options: CreateSubpackageSo
   const createScopedSourceCandidateSourceGetter = (
     outputFile: string,
     cssHandlerOptions: { isMainChunk?: boolean | undefined },
+    sourceFile?: string,
   ) => {
     if (!options.getSourceCandidateSourcesForEntries) {
       return undefined
     }
-    const subpackageEntries = resolveSubpackageOutputSourceEntries(outputFile)
+    const scopedOutputFile = resolveScopedOutputFile(outputFile, sourceFile)
+    const subpackageEntries = resolveSubpackageOutputSourceEntries(scopedOutputFile)
     if (subpackageEntries) {
       return (entries: TailwindSourceEntry[] | undefined, filterOptions?: SourceCandidateFilterOptions) => {
         if (entries !== undefined) {
@@ -228,14 +242,15 @@ export function createSubpackageSourceCandidateScope(options: CreateSubpackageSo
     sourceFile: string,
     outputCssHandlerOptions: { isMainChunk?: boolean | undefined },
   ) =>
-    (
+    // 主包页面仍拥有自己的样式及相对导入，增量模式不能把整份局部产物提升到根样式。
+    isRootStyleOutputFile(outputFile)
+    && (
       outputCssHandlerOptions.isMainChunk === true
-      && !outputFile.replace(/[?#].*$/, '').includes('/')
-    )
-    || (
-      options.useIncrementalMode
-      && isMainPackageStyleOutputFile(outputFile)
-      && isMainPackageStyleOutputFile(sourceFile)
+      || (
+        options.useIncrementalMode
+        && isMainPackageStyleOutputFile(outputFile)
+        && isMainPackageStyleOutputFile(sourceFile)
+      )
     )
 
   return {

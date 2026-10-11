@@ -33,6 +33,10 @@ export function resolveCoordinates(
   target: Element | null,
 ): ToggleCoordinates | null {
   if (event && isFiniteNumber(event.clientX) && isFiniteNumber(event.clientY)) {
+    if (event.clientX === 0 && event.clientY === 0) {
+      return null
+    }
+
     return {
       x: event.clientX,
       y: event.clientY,

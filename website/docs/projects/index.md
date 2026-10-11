@@ -20,25 +20,7 @@ keywords:
 
 ### 模板 template
 
-> 目前模板大多还是 `1.x` 的版本，后续我会对模板进行一系列的升级
-
-#### 如何选择？
-
-假如你仅仅是开发一个`小程序` + `h5` 的组合，那么使用 `vscode` 模板就足够了
-
-假如你的项目构建的重点平台是 `app` 那么还是推荐使用 `hbuilderx` 模板，因为 `hbuilderx` 自带了一套 `app` 构建和调试的工具链，可以更好的支持你的开发。
-
-#### 使用`uni-app cli`进行构建 `vscode`开发
-
-[uni-app-vite-vue3-tailwind-vscode-template](https://github.com/sonofmagic/uni-app-vite-vue3-tailwind-vscode-template)
-
-[uni-app-vue3-tailwind-vscode-template](https://github.com/sonofmagic/uni-app-vue3-tailwind-vscode-template)
-
-[uni-app-vue2-tailwind-vscode-template](https://github.com/sonofmagic/uni-app-vue2-tailwind-vscode-template)
-
-#### 使用`hbuilderx` 进行构建和开发
-
-[uni-app-vue3-tailwind-hbuilder-template](https://github.com/sonofmagic/uni-app-vue3-tailwind-hbuilder-template)
+当前维护的模板统一使用 Tailwind CSS 4 和最新版 `weapp-tailwindcss`。请从[模板项目](/docs/community/templates)选择 uni-app、Taro、Mpx 或 weapp-vite 方案。
 
 ### tailwindcss plugin
 

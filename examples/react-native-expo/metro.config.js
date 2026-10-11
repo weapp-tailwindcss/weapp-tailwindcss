@@ -5,5 +5,5 @@ const config = getDefaultConfig(__dirname)
 
 module.exports = withWeappTailwindcss(config, {
   input: './global.css',
-  sourceGlobs: ['./src/**/*.{js,jsx,ts,tsx}', './App.tsx'],
+  sourceGlobs: ['./src/**/*.{js,jsx,ts,tsx,json}', './App.tsx'],
 })

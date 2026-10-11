@@ -1,6 +1,6 @@
 ---
-title: "\U0001F525各个框架的模板"
-description: "当你配置不对的时候，也可以参考参考, 其中带有 \U0001F525 标志的为推荐使用版本"
+title: "🔥各个框架的模板"
+description: "Tailwind CSS 4 与最新版 weapp-tailwindcss 的可运行模板，覆盖 uni-app、Taro、Mpx 和原生小程序。"
 keywords:
   - 社区
   - 模板
@@ -20,69 +20,39 @@ import TemplateLink from '@site/src/components/TemplateLink'
 
 # 🔥各个框架的模板
 
-当你配置不对的时候，也可以参考参考, 其中带有 🔥 标志的为推荐使用版本
+以下模板统一使用 Tailwind CSS 4 CSS-first 入口，并由 `weapp-tailwindcss@5.5.4` 接管样式生成。带有 🔥 标志的模板同时纳入仓库 canonical 构建门禁；完整验证范围见[支持矩阵](/docs/reference/support-matrix)。
 
-:::tip
-假如你遇到网络问题，无法登陆 `Github` 的时候，你可以使用 `Gitee`。
+不要同时注册 `@tailwindcss/postcss` 或 `@tailwindcss/vite`，也不需要执行 `weapp-tw patch`。
 
-登陆进 `Gitee` 之后，点击右上角的加号，有一个导入仓库功能。然后你想使用什么模板，你就右键下方模板的link，点击复制链接地址，然后把复制的url，粘贴到`Gitee`导入仓库的 `Git Repository URL` 中去，点击确定导入之后，过几秒仓库就能够同步完成，就可以下载了。
-:::
+## 维护模板依赖
+
+仓库维护者可在根目录执行 `pnpm templates:upgrade`，按兼容矩阵升级 `templates.jsonc` 管理的全部模板依赖（包括 Babel），重新生成 pnpm 锁文件，并运行模板构建门禁。失败后可单独执行 `pnpm templates:update-deps` 重试依赖更新，再运行模板测试。
 
 ## uni-app
-
----
-
-### 使用 `uni-app cli` 进行构建 `vscode` 开发
 
 <TemplateLink
   hot
   title="uni-app-tailwindcss-v4"
+  description="uni-app + Vue 3 + Vite"
   href="https://github.com/icebreaker-template/uni-app-tailwindcss-v4"
   repoOwner="icebreaker-template"
   repo="uni-app-tailwindcss-v4"
 />
 
 <TemplateLink
-  title="uni-app-webpack-tailwindcss-v4"
-  href="https://github.com/icebreaker-template/uni-app-webpack-tailwindcss-v4"
-  repoOwner="icebreaker-template"
-  repo="uni-app-webpack-tailwindcss-v4"
-/>
-
-<TemplateLink
-  title="monorepo-uniapp-template"
-  href="https://github.com/sukbearai/x-dev-uni"
-  repoOwner="sukbearai"
-  repo="x-dev-uni"
-/>
-
-{/* ### 若依移动端 (`hbuilderx` 集成 `tailwindcss`)
-
-<TemplateLink
-  hot
-  title="若依移动端"
-  description="Gitee 地址"
-  href="https://gitee.com/sonofmagic/RuoYi-App"
-/> */}
-
-### 使用 `hbuilderx` 进行构建和开发
-
-<TemplateLink
   title="uni-app-hbuilderx-tailwindcss-v4"
+  description="uni-app + HBuilderX"
   href="https://github.com/icebreaker-template/uni-app-hbuilderx-tailwindcss-v4"
   repoOwner="icebreaker-template"
   repo="uni-app-hbuilderx-tailwindcss-v4"
 />
 
-## tarojs
-
----
-
-### 使用 `tarojs` 进行构建 `vscode` 开发
+## Taro
 
 <TemplateLink
   hot
   title="taro-vite-tailwindcss-v4"
+  description="Taro + React + Vite"
   href="https://github.com/icebreaker-template/taro-vite-tailwindcss-v4"
   repoOwner="icebreaker-template"
   repo="taro-vite-tailwindcss-v4"
@@ -90,50 +60,31 @@ import TemplateLink from '@site/src/components/TemplateLink'
 
 <TemplateLink
   title="taro-webpack-tailwindcss-v4"
+  description="Taro + React + webpack"
   href="https://github.com/icebreaker-template/taro-webpack-tailwindcss-v4"
   repoOwner="icebreaker-template"
   repo="taro-webpack-tailwindcss-v4"
 />
 
-## native
+## Mpx
 
----
+<TemplateLink
+  title="mpx-tailwindcss-v4"
+  description="Mpx + webpack"
+  href="https://github.com/icebreaker-template/mpx-tailwindcss-v4"
+  repoOwner="icebreaker-template"
+  repo="mpx-tailwindcss-v4"
+/>
 
-### 原生小程序开发模板
+## 原生小程序
 
 <TemplateLink
   hot
-  title="weapp-vite-tailwindcss-template"
-  description="weapp-vite 打包"
-  href="https://vite.icebreaker.top/guide/"
+  title="weapp-vite-tailwindcss-v4"
+  description={<>weapp-vite 官网与创建命令：<code>pnpm create weapp-vite</code></>}
+  href="https://vite.icebreaker.top/"
 />
 
-#### 下方的技术架构过于老旧，不推荐
-
-<TemplateLink
-  deprecated
-  title="native-weapp-tailwindcss-template"
-  description="cli 打包"
-  href="https://github.com/sonofmagic/native-weapp-tailwindcss-template"
-  repoOwner="sonofmagic"
-  repo="native-weapp-tailwindcss-template"
-/>
-
-<TemplateLink
-  deprecated
-  title="weapp-tailwindcss-gulp-template"
-  description="gulp 打包"
-  href="https://github.com/sonofmagic/weapp-tailwindcss/tree/main/demo/gulp-app"
-/>
-
-## `tailwindcss@4`
-
-所有的 `tailwindcss@4` 模板都维护在下方的地址，标志为标题带有 `tailwindcss-v4` 字样:
-
-https://github.com/icebreaker-template
-
-## 更多模板
-
-你还可以在项目的根目录的 `demo` 文件夹中，找到各个框架的注册方式。
-
-里面有 `gulp`、`mpx`、`webpack5`、`taro-react`、`taro-vue2`、`taro-vue3`、`uni-app vue2 webpack5`、`uni-app vue3 vite` 的项目
+:::tip
+无法访问 GitHub 时，可以在 Gitee 中使用“导入仓库”，粘贴模板链接创建镜像。
+:::

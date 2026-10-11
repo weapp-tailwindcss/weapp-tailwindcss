@@ -10,7 +10,6 @@ keywords:
   - Demo
   - Mini program
   - Web
-  - community
   - packages runtime
   - multi platform demos
   - weapp-tailwindcss
@@ -18,10 +17,12 @@ keywords:
   - WeChat applet
   - uni-app
   - taro
+  - templates
+  - case studies
 ---
 The examples on this page use **Tailwind v4** as the main line (`@weapp-tailwindcss/merge` + `@weapp-tailwindcss/variants`). The current documentation only maintains Tailwind CSS 4 access instructions.
 
-## Demo 1：uni-app + Web（Vue + TS）
+## Demo 1: uni-app + Web (Vue + TS)
 
 The same `tv` instance can cover the mini program and H5, and determine whether to turn off escape/unescape through environment variables.
 
@@ -84,7 +85,7 @@ import { button } from '@/ui/button.variants'
 - If you rename and package `tv`/`cn`, please update `ignoreCallExpressionIdentifiers` simultaneously.
 - After turning off escape on the H5 side, the class name remains intact and Tailwind can match it normally.
 
-## Demo 2：Taro + Web（React + TSX）
+## Demo 2: Taro + Web (React + TSX)
 
 The same `tv` instance can cover the mini program and H5, and determine whether to turn off escape/unescape through environment variables.
 

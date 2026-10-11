@@ -1,6 +1,6 @@
 ---
 title: 使用 arbitrary values
-description: arbitrary values 是 tailwindcss v3 的重要更新内容，幸运的是你使用了本插件。
+description: arbitrary values 是 Tailwind CSS v4 的核心能力之一，本页介绍其在跨端样式中的使用方式。
 keywords:
   - 配置项
   - 插件参数
@@ -20,9 +20,7 @@ keywords:
 ---
 # 使用 arbitrary values
 
-`arbitrary values` 是 `tailwindcss v3` 的重要更新内容，幸运的是你使用了本插件。
-
-使得你可以使用 `tailwindcss v3` 强大的 `arbitrary values` 功能。
+`arbitrary values` 是 Tailwind CSS v4 的核心能力。使用 CSS-first 入口后，可以直接在模板和 `@apply` 中使用带类型提示的任意值。
 
 比如:
 

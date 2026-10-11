@@ -2,6 +2,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
+import { collectEmptyCssBlocks } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/css-integrity'
 import { createOutputIntegrityMonitor } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/output-integrity'
 
 const createdDirs: string[] = []
@@ -42,5 +43,21 @@ describe('watch output integrity monitor', () => {
 
     await expect(monitor.assertClean('incremental finalization')).rejects.toThrow('@media (prefers-color-scheme: dark)')
     await monitor.stop()
+  })
+
+  it('collects empty selector rules and block at-rules', () => {
+    const source = [
+      ':is(page,.tw-root,wx-root-portal-content){}',
+      '.comment-only{/* declarations removed */}',
+      '@media print{/* declarations removed */}',
+      '@keyframes spin{0%{}to{transform:rotate(1turn)}}',
+      '.keep{color:red}',
+    ].join('\n')
+
+    expect(collectEmptyCssBlocks(source)).toEqual([
+      ':is(page,.tw-root,wx-root-portal-content){}',
+      '.comment-only{/* declarations removed */}',
+      '@media print{/* declarations removed */}',
+    ])
   })
 })

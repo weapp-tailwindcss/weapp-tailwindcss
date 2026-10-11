@@ -1,7 +1,7 @@
 ---
 sidebar: aiSidebar
 title: Token (word element)
-description: 'Token is a **sequence fragment** that cuts the text into:'
+description: 'Token (word element): Current concepts, configuration guidance, and practical examples for weapp-tailwindcss users.'
 keywords:
   - AI programming
   - LLM

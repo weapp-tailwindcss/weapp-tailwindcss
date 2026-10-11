@@ -1,0 +1,35 @@
+{
+  "rules": {
+    "h-8": [
+      "calc(var(--spacing)*8)"
+    ],
+    "h-20": [
+      "calc(var(--spacing)*20)"
+    ],
+    "h-50": [
+      "calc(var(--spacing)*50)"
+    ],
+    "mt-2": [
+      "calc(var(--spacing)*2)"
+    ],
+    "flex": [
+      "-ms-flexbox",
+      "flex"
+    ],
+    "text-slate-500": [
+      "var(--color-slate-500)"
+    ],
+    "h-[64rpx]": [
+      "64rpx"
+    ],
+    "h-[400rpx]": [
+      "400rpx"
+    ],
+    "bg-emerald-50/80": [
+      "rgba(236,253,245,0.8)"
+    ]
+  },
+  "spacing": [
+    "8rpx"
+  ]
+}

@@ -1,3 +1,3 @@
 export {
   removeUnsupportedCascadeLayers,
-} from '@weapp-tailwindcss/postcss'
+} from '@weapp-tailwindcss/postcss/transform'

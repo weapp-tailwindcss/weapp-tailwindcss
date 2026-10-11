@@ -2,10 +2,11 @@ view,
 text,
 ::after,
 ::before {
-  border: 0 solid;
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  border: 0 solid;
+  --tw-content: '';
 }
 :host,
 page,
@@ -18,22 +19,100 @@ wx-root-portal-content {
   --default-font-family: var(--font-sans);
   --default-mono-font-family: var(--font-mono);
 }
-/* tokens: bg-independent-subpackage-marker <= sub-independent/pages/index.wxml */
+:host {
+  line-height: 1.5;
+  tab-size: 4;
+  font-family: var(
+    --default-font-family,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    'Noto Sans',
+    Arial,
+    sans-serif,
+    'Apple Color Emoji',
+    'Segoe UI Emoji',
+    'Segoe UI Symbol',
+    'Noto Color Emoji'
+  );
+  font-feature-settings: var(--default-font-feature-settings, normal);
+  font-variation-settings: var(--default-font-variation-settings, normal);
+}
+.hr {
+  height: 0;
+  color: inherit;
+  border-top-width: 1px;
+}
+abbr[title] {
+  text-decoration: underline;
+  text-decoration: underline dotted;
+}
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+.a {
+  color: inherit;
+  text-decoration: inherit;
+}
+.b,
+.strong {
+  font-weight: bolder;
+}
+.code,
+.pre {
+  font-family: var(--default-mono-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace);
+  font-feature-settings: var(--default-mono-font-feature-settings, normal);
+  font-variation-settings: var(--default-mono-font-variation-settings, normal);
+  font-size: 1em;
+}
+.small {
+  font-size: 80%;
+}
+.table {
+  text-indent: 0;
+  border-color: inherit;
+  border-collapse: collapse;
+}
+:-moz-focusring:not(iframe) {
+  outline: auto;
+}
+.ol,
+.ul {
+  list-style: none;
+}
+.img,
+video,
+canvas,
+audio {
+  display: block;
+  vertical-align: middle;
+}
+.img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+button,
+input[type='button'],
+input[type='reset'],
+input[type='submit'] {
+  appearance: button;
+}
+[hidden]:not([hidden='until-found']) {
+  display: none !important;
+}
 .bg-independent-subpackage-marker {
   background-color: #dc2626;
 }
-/* tokens: before:content-['independent_subpackage_weapp-vite-tailwindcss-v4'] <= sub-independent/pages/index.wxml */
 .before_ccontent-_b_aindependent_subpackage_weapp-vite-tailwindcss-v4_a_B::before {
   --tw-content: 'independent subpackage weapp-vite-tailwindcss-v4';
-  content: var(--tw-content);
-}
-/* tokens: before:content-['现在，让我们开始神奇的_tailwindcss_开发之旅吧！'] <= <tailwind generated> */
-.before_ccontent-_b_au_x73b0_u_x5728_u_xff0c_u_x8ba9_u_x6211_u_x4eec_u_x5f00_u_x59cb_u_x795e_u_x5947_u_x7684__tailwindcss_u_x5f00_u_x53d1_u_x4e4b_u_x65c5_u_x5427_u_xff01__a_B::before {
-  --tw-content: '现在，让我们开始神奇的 tailwindcss 开发之旅吧！';
-  content: var(--tw-content);
-}
-/* tokens: before:content-['现在，让我们继续神奇的_tailwindcss_HMR_回归之旅吧！'] <= <tailwind generated> */
-.before_ccontent-_b_au_x73b0_u_x5728_u_xff0c_u_x8ba9_u_x6211_u_x4eec_u_x7ee7_u_x7eed_u_x795e_u_x5947_u_x7684__tailwindcss_HMR_u_x56de_u_x5f52_u_x4e4b_u_x65c5_u_x5427_u_xff01__a_B::before {
-  --tw-content: '现在，让我们继续神奇的 tailwindcss HMR 回归之旅吧！';
   content: var(--tw-content);
 }

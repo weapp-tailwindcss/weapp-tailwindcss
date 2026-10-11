@@ -1,7 +1,7 @@
 import type { RememberedCssSource } from './generate-bundle'
 import path from 'node:path'
+import { isSourceStyleRequest, stripRequestQuery } from '../../generation/style-requests'
 import { normalizeOutputPathKey } from '../shared/module-graph'
-import { isSourceStyleRequest, stripRequestQuery } from '../shared/style-requests'
 import { pruneMapToMaxSize, touchMapEntry } from './map-cache'
 import { parseVueRequest } from './query'
 import { getActiveViteSourceOutputRelationOwner } from './source-output-relations'
@@ -303,6 +303,12 @@ export function createViteCssMemory(options: {
   }
 
   return {
+    dispose() {
+      rememberedCssSources.clear()
+      rememberedCssSignatureByFile.clear()
+      knownCssSources.clear()
+      knownSfcSources.clear()
+    },
     getKnownSfcSource,
     getKnownCssSource,
     getRememberedCssSignature: (file: string) => rememberedCssSignatureByFile.get(normalizeOutputPathKey(file)),

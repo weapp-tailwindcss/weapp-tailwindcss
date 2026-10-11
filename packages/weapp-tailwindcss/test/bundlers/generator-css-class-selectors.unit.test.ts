@@ -1,6 +1,6 @@
-import { MappingChars2String } from '@weapp-core/escape'
+import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { describe, expect, it } from 'vitest'
-import { collectGeneratedRawSourceCandidatesFromCss } from '@/bundlers/shared/generator-css/class-selectors'
+import { collectGeneratedRawSourceCandidatesFromCss } from '@/generation/class-selectors'
 
 describe('generated CSS class selectors', () => {
   it('unions verified classes across generated and cached CSS without source-scan pollution', () => {

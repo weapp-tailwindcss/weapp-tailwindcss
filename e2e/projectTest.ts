@@ -1,10 +1,11 @@
 import type { ProjectEntry } from './shared'
 import fs from 'node:fs/promises'
 import process from 'node:process'
-import { Launcher } from '@weapp-vite/miniprogram-automator'
 import path from 'pathe'
 import { describe, expect, it } from 'vitest'
-import { collectEmptyBlockAtRules } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/css-integrity'
+import { closeWechatProject } from '../scripts/wechat-project-cleanup'
+import { Launcher } from '../scripts/wechat/automator'
+import { collectEmptyCssBlocks } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/css-integrity'
 import { ensureProjectBuilt } from './projectBuild'
 import { isE2EProjectSupportedOnPlatform } from './projectEntries'
 import { clearTailwindPatchTaskCache, collectCssSnapshots, formatWxml, getProjectCssSnapshotFiles, logE2EError, projectFilter, removeWxmlId, resolveSnapshotFile, twExtract, twPatch, wait } from './shared'
@@ -378,8 +379,8 @@ async function runProjectTest(entry: ProjectEntry, options: ProjectTestOptions) 
     for (const file of await collectMiniProgramStyleOutputs(outputStyleRoot)) {
       const source = await fs.readFile(file, 'utf8')
       expect(
-        collectEmptyBlockAtRules(source),
-        `${entry.name}/${path.relative(projectPath, file)} should not emit empty block at-rules`,
+        collectEmptyCssBlocks(source),
+        `${entry.name}/${path.relative(projectPath, file)} should not emit empty CSS blocks`,
       ).toEqual([])
     }
   }
@@ -416,10 +417,9 @@ async function runProjectTest(entry: ProjectEntry, options: ProjectTestOptions) 
 
   let miniProgram: any
   try {
-    miniProgram = await automator.launch({
+    miniProgram = await automator.launch({ cliPath: process.env.E2E_PREFLIGHT_WECHAT_CLI,
       // cliPath: 'C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\cli.bat',
-      projectPath,
-    })
+      projectPath })
   }
   catch (error: any) {
     if (error?.code === 'EPERM' || EPERM_RE.test(error?.message ?? '')) {
@@ -463,7 +463,7 @@ async function runProjectTest(entry: ProjectEntry, options: ProjectTestOptions) 
     }
   }
   finally {
-    await miniProgram?.close()
+    await closeWechatProject(projectPath, miniProgram)
   }
 
   await wait()

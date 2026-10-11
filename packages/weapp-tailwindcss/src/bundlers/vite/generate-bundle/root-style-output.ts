@@ -1,10 +1,11 @@
 import type { OutputAsset, OutputBundle } from 'rollup'
 import path from 'node:path'
-import { postcss } from '@weapp-tailwindcss/postcss'
+import { postcss } from '@weapp-tailwindcss/postcss/transform'
 import { normalizeOutputPathKey } from '@/bundlers/shared/module-graph'
 import { AssetEmissionPlan } from '@/compiler'
-import { parseImportRequest } from '../../shared/generator-css/directives'
-import { isPureLocalCssImportWrapper } from '../../shared/generator-css/local-imports'
+import { parseImportRequest } from '../../../generation/directives'
+import { isPureLocalCssImportWrapper } from '../../../generation/local-imports'
+import { isRootStyleOutputFile } from '../processed-css-assets/style-files'
 import { applyViteAssetEmissionPlan } from './asset-emission-plan'
 
 export function isRootMiniProgramStyleOutputFile(file: string) {
@@ -38,12 +39,12 @@ export function resolveSingleCssImportOutputFile(targetFile: string, css: string
       if (!request || /^(?:https?:)?\/\//i.test(request) || request.startsWith('data:')) {
         return
       }
-      const cleanRequest = request.replace(/[?#].*$/, '')
+      const cleanRequest = normalizeOutputPathKey(request.replace(/[?#].*$/, ''))
       if (!/\.(?:css|wxss|acss|ttss|qss|jxss|tyss)$/i.test(cleanRequest)) {
         return
       }
       const targetDir = path.posix.dirname(normalizeOutputPathKey(targetFile))
-      importedFile = normalizeOutputPathKey(path.posix.join(targetDir === '.' ? '' : targetDir, cleanRequest))
+      importedFile = path.posix.normalize(cleanRequest.startsWith('/') ? cleanRequest.slice(1) : path.posix.join(targetDir, cleanRequest))
     })
   }
   catch {
@@ -72,7 +73,7 @@ export function shouldPreserveFrameworkRootMiniProgramImportShell(options: {
 }) {
   return !options.isWebGeneratorTarget
     && options.matchesCss
-    && isRootMiniProgramStyleOutputFile(options.file)
+    && isRootStyleOutputFile(options.file)
     && isPureLocalCssImportWrapper(options.css)
     && shouldKeepRootMiniProgramStyleAsImportShell(options.shouldKeep())
 }
@@ -109,14 +110,16 @@ export function resolveFrameworkRootImportShellPlan(
     shouldKeep: options.shouldKeep,
   })
   if (isCurrentImportShell) {
-    const importedFile = resolveSingleCssImportOutputFile(
-      options.rootImportShellOutputFile,
-      options.rawSource,
-    )
+    // 多个合法导入不能被收缩成单一重定向关系。
+    const imports = postcss.parse(options.rawSource).nodes.filter(node => node.type === 'atrule' && node.name === 'import')
+    const importedFile = imports.length === 1
+      ? resolveSingleCssImportOutputFile(options.rootImportShellOutputFile, options.rawSource)
+      : undefined
     return {
       isCurrentImportShell,
-      reusableTarget: options.rememberedTarget,
-      targetToRemember: importedFile && isRootMiniProgramStyleOutputFile(importedFile)
+      reusableTarget: undefined,
+      targetToRemember: importedFile && isRootStyleOutputFile(importedFile)
+        && normalizeOutputPathKey(importedFile) !== normalizeOutputPathKey(options.rootImportShellOutputFile)
         ? importedFile
         : undefined,
     }
@@ -179,8 +182,8 @@ export function restoreFrameworkRootMiniProgramImportShellAssets(
     if (
       !options.matchesCss(sourceFile)
       || !options.matchesCss(targetFile)
-      || !isRootMiniProgramStyleOutputFile(sourceFile)
-      || !isRootMiniProgramStyleOutputFile(targetFile)
+      || !isRootStyleOutputFile(sourceFile)
+      || !isRootStyleOutputFile(targetFile)
       || normalizeOutputPathKey(sourceFile) === normalizeOutputPathKey(targetFile)
     ) {
       continue
@@ -194,6 +197,9 @@ export function restoreFrameworkRootMiniProgramImportShellAssets(
     }
     const rawSource = output.source.toString()
     if (!shouldKeepRootMiniProgramStyleAsImportShell(options.shouldKeep(sourceFile, rawSource))) {
+      continue
+    }
+    if (isPureLocalCssImportWrapper(rawSource)) {
       continue
     }
     const nextSource = createCssImportShell(sourceFile, targetFile)

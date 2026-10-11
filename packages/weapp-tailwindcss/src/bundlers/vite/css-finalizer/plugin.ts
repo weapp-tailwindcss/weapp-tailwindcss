@@ -10,19 +10,21 @@ import { resolveGeneratorRuntimeBranch, shouldUseMiniProgramCssBranch } from '@/
 import { filterUnsupportedMiniProgramTailwindV4Candidates } from '@/tailwindcss/v4-engine/candidates'
 import { collectUniAppXHarmonyApplyStyleSources, collectUniAppXHarmonyApplyUtilities, createUniAppXHarmonyApplyGeneratorSource, injectUniAppXHarmonyBundleStyles } from '@/uni-app-x/style-asset'
 import { resolveUniUtsPlatform } from '@/utils'
+import { isPureLocalCssImportWrapper } from '../../../generation/local-imports'
+import { normalizeMiniProgramGeneratorCssSource } from '../../../generation/output-import-shell'
+import { generateTailwindV4Css } from '../../../generation/service'
 import { annotateCssSourceTrace, createCssTokenSourceMap } from '../../shared/css-source-trace'
 import { stripBundlerGeneratedCssMarkers } from '../../shared/generated-css-marker'
-import { isPureLocalCssImportWrapper } from '../../shared/generator-css/local-imports'
-import { normalizeMiniProgramGeneratorCssSource } from '../../shared/generator-css/output-import-shell'
-import { generateTailwindV4Css } from '../../shared/v4-generation-core'
 import { resolveMiniProgramStyleOutputExtension, resolveViteCssPipelineOutputFile } from '../generate-bundle'
 import { applyViteAssetEmissionPlan } from '../generate-bundle/asset-emission-plan'
-import { finalizeMiniProgramCssAssetStructures } from '../generate-bundle/final-css-assets'
+import { linkEntryChunkStyles } from '../generate-bundle/entry-style-graph'
 import { normalizeRootMiniProgramImportShellAssets } from '../generate-bundle/finalize'
 import { linkFrameworkRootStyleToRuntimeEntry, restoreFrameworkRootMiniProgramImportShellAssets } from '../generate-bundle/root-style-output'
 import { collectViteProcessedCssAssetResults, injectViteProcessedCssIntoMainCssAssets } from '../processed-css-assets'
 import { isHTMLRequest } from '../utils'
 import { resolveSourceRootFromBundleGraph, resolveWeappViteSourceRoot } from '../weapp-vite-config'
+import { finalizeWebCssCalc } from './css-calc'
+import { finalizeCssAssets } from './final-assets'
 import { tryFinalizeGenericWebCss } from './generic-web-fast-path'
 import { collectViteProcessedCssSources, createCssHandlerOptions, finalizeWebCss, inferPlatformFromViteOutDir, registerGeneratorDependencies, shouldGenerateCssByGenerator } from './options'
 
@@ -134,6 +136,7 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
           rootDir,
           sourceRoot,
         })) {
+          await finalizeWebCssCalc(bundle, context)
           finalizeCompilerShadowRun(runtimeState)
           finishTiming()
           return
@@ -142,6 +145,21 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
         const trackFinalCssAssetUpdate = (file: string, original: string, generated: string) => {
           finalCssAssetFiles.add(file)
           opts.onUpdate(file, original, generated)
+        }
+        const linkEntryStyles = () => {
+          if (isWebGeneratorTarget) {
+            return
+          }
+          linkEntryChunkStyles(bundle, {
+            matchesCss: opts.cssMatcher,
+            onUpdate: trackFinalCssAssetUpdate,
+            resolveOutputFile: (id) => {
+              if (!opts.cssMatcher(id) || id.includes('?')) {
+                return undefined
+              }
+              return resolveViteCssPipelineOutputFile(id, opts, rootDir, false, false, sourceRoot, resolveMiniProgramStyleOutputExtension({ files: Object.keys(bundle) }), Object.keys(bundle))
+            },
+          })
         }
         restoreFrameworkRootMiniProgramImportShellAssets(bundle, {
           debug,
@@ -285,10 +303,10 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
         recordTiming('assets.enumerate', enumerateStartedAt)
 
         if (entries.length === 0) {
-          const runtime = getRecordedGeneratorCandidates?.() ?? getSourceCandidates?.() ?? await ensureRuntimeClassSet()
-          await injectHarmonyBundleStyles(runtime)
+          await injectHarmonyBundleStyles()
           collectViteProcessedCssAssets()
           injectViteProcessedCssIntoMainCss()
+          linkEntryStyles()
           normalizeRootMiniProgramImportShellAssets(bundle, {
             cssMatcher: opts.cssMatcher,
             debug,
@@ -296,14 +314,7 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
             onUpdate: trackFinalCssAssetUpdate,
             recordCssAssetResult,
           })
-          finalizeMiniProgramCssAssetStructures(bundle, {
-            cssMatcher: opts.cssMatcher,
-            debug,
-            files: finalCssAssetFiles,
-            isWebGeneratorTarget,
-            onUpdate: opts.onUpdate,
-            recordCssAssetResult,
-          })
+          await finalizeCssAssets(bundle, context, isWebGeneratorTarget, finalCssAssetFiles)
           finalizeCompilerShadowRun(runtimeState)
           finishTiming()
           return
@@ -455,6 +466,7 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
         await injectHarmonyBundleStyles()
         collectViteProcessedCssAssets()
         injectViteProcessedCssIntoMainCss()
+        linkEntryStyles()
         normalizeRootMiniProgramImportShellAssets(bundle, {
           cssMatcher: opts.cssMatcher,
           debug,
@@ -462,14 +474,7 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
           onUpdate: trackFinalCssAssetUpdate,
           recordCssAssetResult,
         })
-        finalizeMiniProgramCssAssetStructures(bundle, {
-          cssMatcher: opts.cssMatcher,
-          debug,
-          files: finalCssAssetFiles,
-          isWebGeneratorTarget,
-          onUpdate: opts.onUpdate,
-          recordCssAssetResult,
-        })
+        await finalizeCssAssets(bundle, context, isWebGeneratorTarget, finalCssAssetFiles)
         finalizeCompilerShadowRun(runtimeState)
         recordTiming('assets.write', writeStartedAt)
         finishTiming()

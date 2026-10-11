@@ -1,0 +1,16 @@
+<template>
+	<view class="issue-1021-cell issue-1021-cell--border">
+		<text>issue 1021 cell apply</text>
+	</view>
+</template>
+
+<style lang="scss">
+	@reference "../../main.css";
+	.issue-1021-cell {
+		@apply flex-row items-center justify-between py-14 pr-12 pl-16;
+
+		&--border {
+			border-bottom: 1px solid #be123c;
+		}
+	}
+</style>

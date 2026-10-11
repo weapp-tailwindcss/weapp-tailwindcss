@@ -63,6 +63,7 @@ describe('style handler caching', () => {
 
   it('reuses processor instance when only from changes', async () => {
     const handler = createStyleHandler()
+    expect(postcssFactory).not.toHaveBeenCalled()
 
     await handler('.foo { color: red; }', {
       postcssOptions: {
@@ -80,7 +81,7 @@ describe('style handler caching', () => {
       },
     })
 
-    expect(postcssFactory).toHaveBeenCalledTimes(2)
+    expect(postcssFactory).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -94,7 +95,7 @@ describe('content-probe integration', () => {
   it('auto-skips color-functional-fallback when CSS has no modern color functions', async () => {
     const handler = createStyleHandler()
 
-    // 初始化时 createStyleHandler 内部会调用 cache.getProcessor(base)（无 signal）
+    // 内容探测前不提前创建无信号管线。
     const initCallCount = postcssFactory.mock.calls.length
 
     // 简单 CSS 不含现代颜色函数，probeFeatures 应返回 hasModernColorFunction: false

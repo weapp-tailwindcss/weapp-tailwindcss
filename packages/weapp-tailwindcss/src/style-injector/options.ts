@@ -9,7 +9,13 @@ import type {
   UniAppStyleScopeInput,
   UniAppSubPackageConfig,
   WeappStyleInjectorOptions,
-} from 'weapp-style-injector'
+} from 'weapp-style-injector/types'
+
+import { omitUndefined } from '@/utils/object'
+
+export type DefinedStyleInjectorOptions = {
+  [K in keyof WeappTailwindcssStyleInjectorOptions]: Exclude<WeappTailwindcssStyleInjectorOptions[K], undefined>
+}
 
 export type WeappTailwindcssStyleInjectorUserOptions = boolean | WeappTailwindcssStyleInjectorOptions
 
@@ -110,12 +116,36 @@ export interface WeappTailwindcssStyleInjectorOptions extends WeappStyleInjector
 
 export function normalizeStyleInjectorOptions(
   options: WeappTailwindcssStyleInjectorUserOptions | undefined,
-): WeappTailwindcssStyleInjectorOptions | undefined {
+): DefinedStyleInjectorOptions | undefined {
   if (options === true) {
     return {}
   }
   if (!options) {
     return undefined
   }
-  return options
+  return omitUndefined<DefinedStyleInjectorOptions>(options)
+}
+
+/** 在框架入口校验分包配置，避免把另一框架的配置静默交给预设。 */
+export function resolveStyleInjectorSubPackages<K extends 'appConfigPath' | 'pagesJsonPath' | 'appPath'>(
+  subPackages: DefinedStyleInjectorOptions['subPackages'],
+  key: K,
+): Extract<UniAppSubPackageConfig | TaroSubPackageConfig | MpxSubPackageConfig, Record<K, string>>[] | undefined {
+  if (subPackages === undefined) {
+    return undefined
+  }
+  const entries = Array.isArray(subPackages) ? subPackages : [subPackages]
+  return entries.map((entry) => {
+    if (hasSubPackagePath(entry, key)) {
+      return entry
+    }
+    throw new TypeError(`[weapp-style-injector] subPackages must provide ${key} for the selected framework.`)
+  })
+}
+
+function hasSubPackagePath<K extends 'appConfigPath' | 'pagesJsonPath' | 'appPath'>(
+  entry: UniAppSubPackageConfig | TaroSubPackageConfig | MpxSubPackageConfig,
+  key: K,
+): entry is Extract<UniAppSubPackageConfig | TaroSubPackageConfig | MpxSubPackageConfig, Record<K, string>> {
+  return key in entry && typeof Reflect.get(entry, key) === 'string'
 }

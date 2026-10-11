@@ -1,10 +1,11 @@
 import type { CssPreflightOptions, UserDefinedOptions } from './types'
-import { isAllowedClassName, MappingChars2String } from '@weapp-core/escape'
+import { isAllowedClassName, MappingChars2String } from '@weapp-tailwindcss/escape'
 import { DEFAULT_PARSE_CACHE_MAX_ENTRIES, DEFAULT_PARSE_CACHE_MAX_SOURCE_LENGTH } from './js/babel/cache-options'
+import { defaultJsPreserveClass } from './js/default-preserve'
 import { noop } from './utils'
 
-const CSS_FILE_PATTERN = /.+\.(?:wx|ac|jx|tt|q|c|ty)ss$/
-const HTML_FILE_PATTERN = /.+\.(?:(?:wx|ax|jx|ks|tt|q|ty|xhs)ml|swan)$/
+const CSS_FILE_PATTERN = /.+\.(?:wx|ac|jx|tt|q|c|ty|dd)ss$/
+const HTML_FILE_PATTERN = /.+\.(?:(?:wx|ax|jx|ks|tt|q|qx|ty|xhs|dd)ml|swan)$/
 const JS_FILE_PATTERN = /.+\.[cm]?js?$/
 
 const alwaysFalse = () => false
@@ -45,6 +46,7 @@ export function getDefaultOptions(): UserDefinedOptions {
      * qss QQ小程序
      * css 最正常的样式文件
      * tyss 涂鸦小程序
+     * ddss 钉钉小程序
      */
     cssMatcher: file => CSS_FILE_PATTERN.test(file),
     /**
@@ -57,6 +59,7 @@ export function getDefaultOptions(): UserDefinedOptions {
      * tyml 涂鸦小程序
      * xhsml 小红书小程序
      * swan 百度小程序
+     * ddml 钉钉小程序
      */
     htmlMatcher: file => HTML_FILE_PATTERN.test(file),
     jsMatcher: (file) => {
@@ -92,15 +95,7 @@ export function getDefaultOptions(): UserDefinedOptions {
     cssChildCombinatorReplaceValue: ['view', 'text'],
     inlineWxs: false,
     injectAdditionalCssVarScope: false,
-    jsPreserveClass: (keyword) => {
-      /**
-       * 默认保留 keyword
-       */
-      if (keyword === '*') {
-        return true
-      }
-      return false
-    },
+    jsPreserveClass: defaultJsPreserveClass,
     disabledDefaultTemplateHandler: false,
     cssSelectorReplacement: {
       root: ['page', '.tw-root', 'wx-root-portal-content'],

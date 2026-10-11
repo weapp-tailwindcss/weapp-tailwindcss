@@ -141,7 +141,7 @@ If you need a more detailed judgment, you can take a look at the segmented versi
 - Applicable to: Design systems that require strong dynamic styles, multiple brands, and multiple themes.
 - Avoidance: Try to choose zero runtime solution or compilation mode, and strictly limit the dynamic style range.
 
-### Utility-first（Tailwind / Uno）
+### Utility-first (Tailwind / Uno)
 
 - Advantages: low-cognition switching, JIT, tree-shaking optimization, alignment with tokens, rich ecosystem.
 - Disadvantages: Readability is highly dependent on team constraints, and the volume of `content` can easily get out of control if it is not punctual.
@@ -174,17 +174,17 @@ If you need a more detailed judgment, you can take a look at the segmented versi
 
 ## A quick overview of representative packages in each stage
 
-- `Raw CSS`：`normalize.css`、`Bootstrap`、`Bulma`
+- `Raw CSS`: `normalize.css`, `Bootstrap`, `Bulma`
 Common usage: global naming + component class.
 - `preprocessor`: `Sass`, `Less`, `PostCSS`, `Stylus`
 Common usage: variables, mix-ins, theme customization.
-- `CSS Modules`：Vite / webpack modules、Next.js、`vanilla-extract`
+- `CSS Modules`: Vite / webpack modules, Next.js, `vanilla-extract`
 Common usage: scope hashing, compile-time isolation.
-- `CSS-in-JS`：`styled-components`、`Emotion`、`JSS`、`vanilla-extract`
+- `CSS-in-JS`: `styled-components`, `Emotion`, `JSS`, `vanilla-extract`
 Common usage: runtime or compile-time dynamic styling.
-- `Utility-first`：`Tailwind`、`Windi`、`UnoCSS`、`twin.macro`
+- `Utility-first`: `Tailwind`, `Windi`, `UnoCSS`, `twin.macro`
 Common usage: JIT atomic class, attributeify, macro mode.
-- `Headless + tokens`：`Radix`、`Headless UI`、`shadcn/ui`、`tailwind-variants`
+- `Headless + tokens`: `Radix`, `Headless UI`, `shadcn/ui`, `tailwind-variants`
 Common usage: As a component abstraction layer, cooperate with Tailwind, CSS Modules, vanilla-extract and other solutions.
 
 ## Stage Demo: Put the "method" into the mechanism
@@ -272,15 +272,15 @@ export const MenuDemo = () => (
 
 ```mermaid
 flowchart TD
-A["Team status?"] --> B{"Need to be highly dynamic/Multiple brands?？"}
+A["Team status?"] --> B{"Need to be highly dynamic/Multiple brands?"}
 B -->|Yes| C["CSS-in-JS or Headless + Tailwind"]
-B -->|No| D{"Already design tokens？"}
+B -->|No| D{"Already design tokens?"}
 D -->|Yes| E["Tailwind / Uno + tokens"]
 D -->|None| F["CSS Modules / Vue scoped isolate first"]
-C --> G{"Focus on runtime/SSR volume？"}
+C --> G{"Focus on runtime/SSR volume?"}
 G -->|Yes| H["Tailwind + cva/tv, reduce runtime"]
 G -->|No| I["styled-components / Emotion compilation mode"]
-E --> J{"Ecological assets are important？"}
+E --> J{"Ecological assets are important?"}
 J -->|Important| K["Tailwind (plugin/merge/community assets)"]
 J -->|Not important| L["UnoCSS (more flexible and customizable)"]
 ```

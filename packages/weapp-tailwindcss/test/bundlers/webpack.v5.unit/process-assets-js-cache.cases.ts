@@ -3,7 +3,7 @@ import type { LoaderModule } from './shared'
 import { setupWebpackV5UnitTest, FakeConcatSource, createAssetsFromStore, createCompilerWithLoaderTracking, createContext, getCompilerContextMock, path, testState, WeappTailwindcss } from './shared'
 describe('bundlers/webpack WeappTailwindcss / process assets js cache', () => {
   setupWebpackV5UnitTest()
-  it('does not attach runtime loader when postcss loader is missing', () => {
+  it('uses the CSS loader boundary when postcss loader is missing', () => {
     const { compiler, getLoaderHandler } = createCompilerWithLoaderTracking()
     const plugin = new WeappTailwindcss()
     plugin.apply(compiler as any)
@@ -14,8 +14,9 @@ describe('bundlers/webpack WeappTailwindcss / process assets js cache', () => {
     }
     handler?.({}, module)
 
-    expect(module.loaders).toHaveLength(1)
-    expect(module.loaders[0].loader).toBe('/path/css-loader.js')
+    expect(module.loaders).toHaveLength(2)
+    expect(module.loaders[0].loader).toBe(testState.currentContext.runtimeLoaderPath)
+    expect(module.loaders[1].loader).toBe('/path/css-loader.js')
   })
 
   it('keeps separate cache entries for js and wxs assets', async () => {

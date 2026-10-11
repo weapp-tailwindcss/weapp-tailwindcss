@@ -1,3 +1,4 @@
+import path from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 describe('tailwind v4 source package css resolution', () => {
@@ -10,6 +11,7 @@ describe('tailwind v4 source package css resolution', () => {
   async function loadWithPackageResolver(options: {
     existsSync: (file: string) => boolean
     resolve: (specifier: string) => string
+    resolveFromEngine?: (specifier: string) => string
   }) {
     vi.doMock('node:fs', async (importOriginal) => {
       const actual = await importOriginal<typeof import('node:fs')>()
@@ -25,7 +27,9 @@ describe('tailwind v4 source package css resolution', () => {
       })
       return {
         ...actual,
-        createRequire: () => projectRequire,
+        createRequire: (filename: string | URL) => /index\.[cm]?js$/.test(String(filename)) && options.resolveFromEngine
+          ? Object.assign(vi.fn(), { resolve: vi.fn(options.resolveFromEngine) })
+          : projectRequire,
       }
     })
     return import('@/tailwindcss/v4-engine/source')
@@ -53,29 +57,31 @@ describe('tailwind v4 source package css resolution', () => {
     expect(options?.css).toContain('/virtual/tailwindcss/index.css')
   })
 
-  it('rewrites tailwind package css imports through engine-adjacent fallback', async () => {
+  it.each([
+    path.resolve('workspace', 'packages', 'engine', 'dist', 'index.js'),
+    path.resolve('project', 'node_modules', '.pnpm', 'engine-peer', 'node_modules', '@weapp-tailwindcss', 'engine', 'dist', 'index.cjs'),
+  ])('resolves CSS using the engine module context: %s', async (engineEntry) => {
+    const cssEntry = path.resolve('resolved-peer', 'tailwindcss', 'index.css')
     const { normalizeTailwindV4SourceOptions } = await loadWithPackageResolver({
-      existsSync: file => file.endsWith('/tailwindcss/index.css'),
+      existsSync: file => file === cssEntry,
       resolve(specifier) {
-        if (specifier === '@tailwindcss-mangle/engine') {
-          return '/workspace/node_modules/@tailwindcss-mangle/engine/dist/index.js'
+        if (specifier === '@weapp-tailwindcss/engine') {
+          return engineEntry
         }
         throw new Error(`missing ${specifier}`)
       },
+      resolveFromEngine(specifier) {
+        if (specifier === 'tailwindcss/package.json') {
+          return path.join(path.dirname(cssEntry), 'package.json')
+        }
+        throw new Error(`missing engine peer ${specifier}`)
+      },
     })
-
     const options = normalizeTailwindV4SourceOptions({
-      cssSources: [
-        {
-          file: '/project/src/app.css',
-          css: '@reference url("tailwindcss");',
-          dependencies: [],
-        },
-      ],
+      cssSources: [{ file: path.resolve('project', 'src', 'app.css'), css: '@reference url("tailwindcss");', dependencies: [] }],
       packageName: 'tailwindcss',
     })
-
-    expect(options?.cssSources?.[0]?.css).toContain('tailwindcss/index.css')
+    expect(options?.cssSources?.[0]?.css).toContain(cssEntry.replaceAll('\\', '/'))
   })
 
   it('keeps unresolved custom package imports and malformed css unchanged', async () => {

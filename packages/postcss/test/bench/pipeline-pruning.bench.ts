@@ -1,7 +1,7 @@
 import fs from 'fs-extra'
 import path from 'pathe'
 import postcss from 'postcss'
-import { bench, describe } from 'vitest'
+import { test } from 'vitest'
 import { probeFeatures } from '@/content-probe'
 import { createStyleHandler } from '@/index'
 import { createStylePipeline } from '@/pipeline'
@@ -60,50 +60,49 @@ const simpleProcessor = postcss(simplePipeline.plugins)
 const rpxPipeline = createStylePipeline({ ...baseOptions } as any, rpxSignal)
 const rpxProcessor = postcss(rpxPipeline.plugins)
 
-describe('pipeline pruning benchmark - 信号探测开销', () => {
-  bench('probeFeatures: v4 CSS (198 行)', () => {
-    probeFeatures(v4Code)
-  })
-
-  bench('probeFeatures: 简单 CSS (20 行)', () => {
-    probeFeatures(simpleCode)
-  })
-
-  bench('probeFeatures: rpx CSS (5 行)', () => {
-    probeFeatures(rpxCode)
-  })
+test('pipeline pruning benchmark - 信号探测开销', async ({ bench }) => {
+  await bench.compare(
+    bench('probeFeatures: v4 CSS (198 行)', () => {
+      probeFeatures(v4Code)
+    }),
+    bench('probeFeatures: 简单 CSS (20 行)', () => {
+      probeFeatures(simpleCode)
+    }),
+    bench('probeFeatures: rpx CSS (5 行)', () => {
+      probeFeatures(rpxCode)
+    }),
+  )
 })
 
-describe('pipeline pruning benchmark - 插件数量对比', () => {
-  bench(`完整流水线 (${fullPipeline.plugins.length} 插件) - 简单 CSS`, async () => {
-    await fullProcessor.process(simpleCode, { from: undefined })
-  })
-
-  bench(`裁剪流水线 (${simplePipeline.plugins.length} 插件) - 简单 CSS`, async () => {
-    await simpleProcessor.process(simpleCode, { from: undefined })
-  })
-
-  bench(`完整流水线 (${fullPipeline.plugins.length} 插件) - rpx CSS`, async () => {
-    await fullProcessor.process(rpxCode, { from: undefined })
-  })
-
-  bench(`裁剪流水线 (${rpxPipeline.plugins.length} 插件) - rpx CSS`, async () => {
-    await rpxProcessor.process(rpxCode, { from: undefined })
-  })
+test('pipeline pruning benchmark - 插件数量对比', async ({ bench }) => {
+  await bench.compare(
+    bench(`完整流水线 (${fullPipeline.plugins.length} 插件) - 简单 CSS`, async () => {
+      await fullProcessor.process(simpleCode, { from: undefined })
+    }),
+    bench(`裁剪流水线 (${simplePipeline.plugins.length} 插件) - 简单 CSS`, async () => {
+      await simpleProcessor.process(simpleCode, { from: undefined })
+    }),
+    bench(`完整流水线 (${fullPipeline.plugins.length} 插件) - rpx CSS`, async () => {
+      await fullProcessor.process(rpxCode, { from: undefined })
+    }),
+    bench(`裁剪流水线 (${rpxPipeline.plugins.length} 插件) - rpx CSS`, async () => {
+      await rpxProcessor.process(rpxCode, { from: undefined })
+    }),
+  )
 })
 
-describe('pipeline pruning benchmark - 端到端 handler 对比', () => {
+test('pipeline pruning benchmark - 端到端 handler 对比', async ({ bench }) => {
   const handler = createStyleHandler({ isMainChunk: true })
 
-  bench('handler: v4 CSS (含现代特征)', async () => {
-    await handler(v4Code, { isMainChunk: true, majorVersion: 4 })
-  })
-
-  bench('handler: 简单 CSS (无现代特征)', async () => {
-    await handler(simpleCode, { isMainChunk: true })
-  })
-
-  bench('handler: rpx CSS (无现代特征)', async () => {
-    await handler(rpxCode, { isMainChunk: true })
-  })
+  await bench.compare(
+    bench('handler: v4 CSS (含现代特征)', async () => {
+      await handler(v4Code, { isMainChunk: true, majorVersion: 4 })
+    }),
+    bench('handler: 简单 CSS (无现代特征)', async () => {
+      await handler(simpleCode, { isMainChunk: true })
+    }),
+    bench('handler: rpx CSS (无现代特征)', async () => {
+      await handler(rpxCode, { isMainChunk: true })
+    }),
+  )
 })

@@ -191,25 +191,20 @@ html.docs-wrapper .theme-edit-this-page svg {
   }
 }
 
-/* Gentle typography rhythm only on uni-app x pages */
-.docs-doc-id-uni-app-x\/index .theme-doc-markdown,
-.docs-doc-id-uni-app-x\/install .theme-doc-markdown {
+/* Gentle typography rhythm for the uni-app x integration page */
+.docs-doc-id-quick-start\/frameworks\/uni-app-x .theme-doc-markdown {
   line-height: 1.75;
 }
-.docs-doc-id-uni-app-x\/index .theme-doc-markdown h2,
-.docs-doc-id-uni-app-x\/install .theme-doc-markdown h2 {
+.docs-doc-id-quick-start\/frameworks\/uni-app-x .theme-doc-markdown h2 {
   margin-top: 1.8rem;
 }
-.docs-doc-id-uni-app-x\/index .theme-doc-markdown h3,
-.docs-doc-id-uni-app-x\/install .theme-doc-markdown h3 {
+.docs-doc-id-quick-start\/frameworks\/uni-app-x .theme-doc-markdown h3 {
   margin-top: 1.2rem;
 }
-.docs-doc-id-uni-app-x\/index .theme-doc-markdown p,
-.docs-doc-id-uni-app-x\/install .theme-doc-markdown p {
+.docs-doc-id-quick-start\/frameworks\/uni-app-x .theme-doc-markdown p {
   margin: 0.65rem 0;
 }
-.docs-doc-id-uni-app-x\/index .theme-doc-markdown ul,
-.docs-doc-id-uni-app-x\/install .theme-doc-markdown ul {
+.docs-doc-id-quick-start\/frameworks\/uni-app-x .theme-doc-markdown ul {
   margin: 0.5rem 0 0.75rem;
   padding-left: 1.1rem;
 }
@@ -1375,9 +1370,13 @@ html.docs-doc-id-showcase\/index .theme-doc-markdown > div.grid > div:has(> deta
   color: rgb(15 23 42);
   background: rgb(255 255 255 / 86%);
   box-shadow: 0 5px 14px rgb(15 23 42 / 9%);
-  content: '小程序码';
+  content: 'Mini app code';
   font-size: 0.72rem;
   font-weight: 700;
+}
+
+html[lang^='zh'].docs-doc-id-showcase\/index .theme-doc-markdown > div.grid > div:has(> details) > div.grid::before {
+  content: '小程序码';
 }
 
 html.docs-doc-id-showcase\/index[data-theme='dark']

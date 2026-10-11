@@ -2,16 +2,22 @@ import type { ModuleNode, Plugin } from 'vite'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
-import { hasTailwindRootDirectives } from '@/bundlers/shared/generator-css/directives'
 import { createCompilationDependencyChanges, recordCompilationDependencyChanges } from '@/compiler'
 import { vitePluginName } from '@/constants'
-import { isSourceStyleRequest } from '../../shared/style-requests'
+import { hasTailwindRootDirectives } from '@/generation/directives'
+import { isSourceStyleRequest } from '../../../generation/style-requests'
 import { shouldCollectTransformedSourceCandidates } from '../css-memory'
 import { hasSelfAcceptingNonStyleHotModule, mergeHotModulesByIdentity, resolveHotSourceModules, resolveHotTailwindCssModules, sendFullReloadForUnresolvedHotUpdate, sendSupplementalCssHotUpdates } from '../hot-css-modules'
 import { isSourceCandidateRequest } from '../source-candidates'
 import { cleanUrl, isCSSRequest } from '../utils'
+import { readViteHmrSource } from './hmr-source'
 
-export function createFrameworkSourceCandidatesPlugin(options: any): Plugin {
+export function createFrameworkSourceCandidatesPlugin(options: any, apply?: Plugin['apply']): Plugin {
+  let sourceRevision = 0
+  let buildRevision = 0
+  let completedRevision = 0
+  let previousBuildConsumedTailwindCss = false
+  const shouldSkipSourceCandidateState = () => options.shouldSkipSourceCandidateState?.() === true
   const hasDifferentHotModules = (left: ModuleNode[], right: ModuleNode[]) => left.length !== right.length
     || left.some((mod, index) => mod !== right[index])
   const hasTemplateHotSourceModule = (modules: Array<{ id?: string | null, url?: string | null }>) => modules.some((mod) => {
@@ -46,10 +52,12 @@ export function createFrameworkSourceCandidatesPlugin(options: any): Plugin {
   }
   return {
     name: `${vitePluginName}:source-candidates`,
+    ...(apply === undefined ? {} : { apply }),
     enforce: 'pre',
     async load(id) {
       if (
         !options.shouldOwnTailwindGeneration
+        || shouldSkipSourceCandidateState()
         || options.isWebOrNativeAppPlatform(options.resolveViteStylePlatform())
         || !isCSSRequest(id)
         || !shouldCollectTransformedSourceCandidates(id)
@@ -72,6 +80,9 @@ export function createFrameworkSourceCandidatesPlugin(options: any): Plugin {
     transform: {
       order: 'pre',
       async handler(code, id) {
+        if (shouldSkipSourceCandidateState()) {
+          return
+        }
         if (options.hasUserCssLayerBlocks(code)) {
           options.rememberOriginalCssLayerSource(id, code)
         }
@@ -86,7 +97,7 @@ export function createFrameworkSourceCandidatesPlugin(options: any): Plugin {
             options.rememberTailwindRootCssModule(id)
           }
         }
-        if (!options.shouldOwnTailwindGeneration || !isSourceCandidateRequest(id) || !shouldCollectTransformedSourceCandidates(id)) {
+        if (!options.shouldOwnTailwindGeneration || shouldSkipSourceCandidateState() || options.collectSourceCandidates === false || !isSourceCandidateRequest(id) || !shouldCollectTransformedSourceCandidates(id)) {
           return shouldReturnTransformedCode ? { code: transformedCode, map: null } : undefined
         }
         return options.hmrTimingRecorder.measure('sourceCandidates.transform', async () => {
@@ -104,9 +115,16 @@ export function createFrameworkSourceCandidatesPlugin(options: any): Plugin {
       },
     },
     async watchChange(id, change) {
+      if (shouldSkipSourceCandidateState()) {
+        return
+      }
+      // Web 样式依赖 transform 产物；小程序由 bundle 阶段统一重建，无需重复转换 CSS 入口。
+      if (options.shouldOwnTailwindGeneration && options.resolveCurrentGeneratorBranch?.().isWeb === true && (isSourceCandidateRequest(id) || options.sourceScanSession.isDependency(id))) {
+        sourceRevision++
+      }
       recordCompilationDependencyChanges(options.runtimeState, createCompilationDependencyChanges([path.resolve(cleanUrl(id))]))
       await options.hmrTimingRecorder.measure('sourceCandidates.watchChange', async () => {
-        if (options.shouldOwnTailwindGeneration && isSourceCandidateRequest(id)) {
+        if (options.shouldOwnTailwindGeneration && options.collectSourceCandidates !== false && isSourceCandidateRequest(id)) {
           options.invalidateRecordedGeneratorCandidates()
         }
         if (options.sourceScanSession.isDependency(id)) {
@@ -114,11 +132,17 @@ export function createFrameworkSourceCandidatesPlugin(options: any): Plugin {
         }
         if (change.event === 'delete') {
           const file = cleanUrl(id)
-          const sourceCandidateChange = options.sourceCandidateCollector.remove(file)
-          options.sourceScanSession.cacheCurrent()
-          options.hmrCandidateState.apply(options.hmrCandidateState.createChange(file, sourceCandidateChange, {
-            runtimeAffecting: options.sourceScanSession.isDependency(file),
-          }))
+          if (typeof options.sourceScanSession.queueChangedFile === 'function') {
+            options.sourceScanSession.queueChangedFile({ event: 'delete', id: file })
+            queueMicrotask(() => void options.sourceScanSession.flushChangedFiles())
+          }
+          else {
+            const sourceCandidateChange = options.sourceCandidateCollector.remove(file)
+            options.sourceScanSession.cacheCurrent()
+            options.hmrCandidateState.apply(options.hmrCandidateState.createChange(file, sourceCandidateChange, {
+              runtimeAffecting: options.sourceScanSession.isDependency(file),
+            }))
+          }
           return
         }
         const changedSource = options.shouldOwnTailwindGeneration && isSourceCandidateRequest(id) && isCSSRequest(id)
@@ -128,15 +152,24 @@ export function createFrameworkSourceCandidatesPlugin(options: any): Plugin {
           options.rememberOriginalCssLayerSource(id, changedSource)
           await options.refreshTailwindRootCssSource(id, changedSource)
         }
-        await options.sourceScanSession.syncChangedFile(id, changedSource)
+        if (typeof options.sourceScanSession.queueChangedFile === 'function') {
+          options.sourceScanSession.queueChangedFile({ event: change.event === 'create' ? 'create' : 'update', id, source: changedSource })
+          queueMicrotask(() => void options.sourceScanSession.flushChangedFiles())
+        }
+        else {
+          await options.sourceScanSession.syncChangedFile(id, changedSource)
+        }
       }, { emit: false })
     },
     handleHotUpdate: {
       order: 'post',
       async handler(ctx) {
+        if (shouldSkipSourceCandidateState()) {
+          return
+        }
         recordCompilationDependencyChanges(options.runtimeState, createCompilationDependencyChanges([path.resolve(cleanUrl(ctx.file))]))
         return options.hmrTimingRecorder.measure('sourceCandidates.handleHotUpdate', async () => {
-          const isSourceCandidateHotUpdate = options.shouldOwnTailwindGeneration && isSourceCandidateRequest(ctx.file)
+          const isSourceCandidateHotUpdate = options.shouldOwnTailwindGeneration && options.collectSourceCandidates !== false && isSourceCandidateRequest(ctx.file)
           if (isSourceCandidateHotUpdate && isSourceStyleRequest(ctx.file)) {
             for (const mod of ctx.modules) {
               for (const id of [mod.id, mod.url, mod.file]) {
@@ -147,13 +180,15 @@ export function createFrameworkSourceCandidatesPlugin(options: any): Plugin {
             }
           }
           const hotSource = isSourceCandidateHotUpdate && typeof ctx.read === 'function'
-            ? await ctx.read().catch(() => undefined)
+            ? await readViteHmrSource(ctx)
             : undefined
           if (typeof hotSource === 'string' && isCSSRequest(ctx.file)) {
             options.rememberOriginalCssLayerSource(ctx.file, hotSource)
             await options.refreshTailwindRootCssSource(ctx.file, hotSource)
           }
-          const sourceCandidateChange = await options.sourceScanSession.syncChangedFile(ctx.file, hotSource)
+          const sourceCandidateChange = typeof options.sourceScanSession.queueChangedFile === 'function'
+            ? (options.sourceScanSession.queueChangedFile({ event: 'update', id: ctx.file, source: hotSource }), await options.sourceScanSession.flushChangedFiles()).get(cleanUrl(ctx.file))
+            : await options.sourceScanSession.syncChangedFile(ctx.file, hotSource)
           options.sourceScanSession.consumeHotUpdateChange(ctx.file)
           const isWebLikeHotUpdate = options.isCurrentWebLikeStylePlatform()
           let canUseHmrCandidateAppend = false
@@ -190,8 +225,14 @@ export function createFrameworkSourceCandidatesPlugin(options: any): Plugin {
           const hotTailwindCssModuleIds = isSourceStyleRequest(ctx.file)
             ? [ctx.file]
             : options.tailwindRootCssModuleIds
-          const cssModules = await resolveHotTailwindCssModules(ctx, hotTailwindCssModuleIds)
           const hotRoot = ctx.server.config?.root ?? process.cwd()
+          const cssModules = await resolveHotTailwindCssModules(
+            ctx,
+            hotTailwindCssModuleIds,
+            options.hmrCssModuleVersions
+              ? modules => options.hmrCssModuleVersions.filterModules(modules, ctx.timestamp, hotRoot)
+              : undefined,
+          )
           const sourceModules = isSourceCandidateHotUpdate && !isSourceStyleRequest(ctx.file)
             ? await resolveHotSourceModules(ctx)
             : ctx.modules
@@ -259,11 +300,16 @@ export function createFrameworkSourceCandidatesPlugin(options: any): Plugin {
             ...options.tailwindRootCssModuleIds,
             ...options.viteProcessedCssSourceFiles,
           ])
+          const currentSupplementalCssFallbackIds = options.hmrCssModuleVersions?.filterIds(
+            supplementalCssFallbackIds,
+            ctx.timestamp,
+            hotRoot,
+          ) ?? supplementalCssFallbackIds
           if (options.hmrCandidateState.hasPendingChange()) {
-            options.hmrCandidateState.armTargets(cssModules, supplementalCssFallbackIds)
+            options.hmrCandidateState.armTargets(cssModules, currentSupplementalCssFallbackIds)
           }
-          if (shouldSendSupplementalCssHotUpdates) {
-            sendSupplementalCssHotUpdates(ctx, cssModules, supplementalCssFallbackIds)
+          if (shouldSendSupplementalCssHotUpdates && cssModules.length === 0) {
+            sendSupplementalCssHotUpdates(ctx, [], currentSupplementalCssFallbackIds)
           }
           if (isWebLikeHotUpdate && isSourceCandidateHotUpdate && !isSourceStyleRequest(ctx.file)) {
             return cssModules.length > 0
@@ -277,9 +323,61 @@ export function createFrameworkSourceCandidatesPlugin(options: any): Plugin {
         }, { emit: false })
       },
     },
-    async buildStart() {
-      await options.hmrTimingRecorder.measure('sourceCandidates.buildStart', options.prepareTailwindGeneration, { emit: false })
+    closeBundle() {
+      options.hmrCssModuleVersions?.clear()
     },
-    generateBundle: options.preGenerateBundleHook,
+    async buildStart() {
+      buildRevision = sourceRevision
+      if (shouldSkipSourceCandidateState()) {
+        return
+      }
+      await options.hmrTimingRecorder.measure('sourceCandidates.buildStart', options.prepareTailwindGeneration, { emit: false })
+      // 已确认的消费图在下一轮开始时补回扫描监听，覆盖框架绕过缓存模块钩子的增量路径。
+      if (previousBuildConsumedTailwindCss) {
+        for (const file of options.sourceScanSession.getWatchFiles?.() ?? []) {
+          this.addWatchFile(file)
+        }
+      }
+    },
+    async moduleParsed(module) {
+      if (shouldSkipSourceCandidateState()) {
+        return
+      }
+      // 仅让实际消费 Tailwind CSS 的构建图监听候选；uni-app 的空 nvue 图不能抢先触发设备同步。
+      const roots = options.tailwindRootCssModuleIds as Set<string> | undefined
+      if (roots?.has(module.id)) {
+        await options.prepareTailwindGeneration()
+        // 在 Rollup 3 允许登记依赖的阶段，刷新 transform 后可能改变的来源范围。
+        for (const file of options.sourceScanSession.getWatchFiles?.() ?? []) {
+          this.addWatchFile(file)
+        }
+      }
+    },
+    async shouldTransformCachedModule(module) {
+      if (!shouldSkipSourceCandidateState() && options.tailwindRootCssModuleIds?.has(module.id)) {
+        await options.prepareTailwindGeneration()
+        for (const file of options.sourceScanSession.getWatchFiles?.() ?? []) {
+          this.addWatchFile(file)
+        }
+        // 来源依赖可能不在 CSS 的 import 图中；revision 改变时让 Rollup 重新执行入口 transform。
+        if (buildRevision !== completedRevision) {
+          return true
+        }
+      }
+      return null
+    },
+    buildEnd(error) {
+      if (!error) {
+        completedRevision = buildRevision
+      }
+    },
+    async generateBundle(...args: any[]) {
+      if (shouldSkipSourceCandidateState()) {
+        return
+      }
+      const roots = options.tailwindRootCssModuleIds as Set<string> | undefined
+      previousBuildConsumedTailwindCss = Boolean(roots && [...roots].some(id => this.getModuleInfo?.(id) != null))
+      return options.preGenerateBundleHook?.apply(this, args)
+    },
   }
 }

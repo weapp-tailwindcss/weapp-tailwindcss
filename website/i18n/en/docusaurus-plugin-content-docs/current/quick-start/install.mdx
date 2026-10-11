@@ -9,11 +9,17 @@ keywords:
   - tailwindcss 4
   - package install
   - weapp-tailwindcss
+  - Tailwind CSS 4
+  - cross-platform
+  - mini app
+  - uni-app
+  - Taro
+  - React Native
 ---
 
 # Install dependencies
 
-This page only covers package installation. Framework-specific registration comes in the next chapter.
+This page only covers package installation. Framework-specific registration comes in the next chapter; see the [weapp-tw CLI guide](/docs/tools/weapp-tw-cli) for the complete CLI reference.
 
 ## Install the current version
 
@@ -23,4 +29,14 @@ These docs target `tailwindcss@4` and the latest `weapp-tailwindcss`. The curren
 npm install -D tailwindcss weapp-tailwindcss
 ```
 
-Next, return to the [introduction](/docs/intro) or browse the maintained [framework examples](https://github.com/sonofmagic/weapp-tailwindcss/tree/main/demo).
+## Use the standalone CLI
+
+If the project needs to generate Web or mini-program CSS directly from a CSS file, install the standalone `@weapp-tailwindcss/cli` package:
+
+```bash npm2yarn
+npm install -D @weapp-tailwindcss/cli weapp-tailwindcss tailwindcss
+```
+
+The CLI provides the `weapp-tw` command. It processes CSS only and does not scan or rewrite WXML, JS, TS, JSX, or TSX. Full mini-program projects should continue to use the corresponding Vite, Webpack, Rspack, or Gulp integration.
+
+Next, choose a [framework integration](/docs/quick-start/frameworks/uni-app-vite) or read the [weapp-tw CLI guide](/docs/tools/weapp-tw-cli).

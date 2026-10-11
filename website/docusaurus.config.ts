@@ -11,7 +11,7 @@ import createBlogOptions from './config/blog'
 import { getBuildLocale } from './config/buildLocale'
 import { footer, footerCustomFields } from './config/footer'
 import headTags from './config/headTags'
-import { englishDocsDirectory } from './config/localizedContent'
+import { getDocsDirectory } from './config/localizedContent'
 import navbar from './config/navbar'
 import { siteUrl } from './config/siteMetadata'
 import themeMetadata from './config/themeMetadata'
@@ -19,8 +19,6 @@ import { getSiteConfigCopy } from './src/i18n/siteConfig'
 import PrismDark from './src/utils/prismDark'
 import PrismLight from './src/utils/prismLight'
 
-const hostingProvider = process.env.PROVIDER
-const isGithub = String.prototype.toLowerCase.call(hostingProvider || '') === 'github'
 const isProd = process.env.NODE_ENV === 'production'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const tailwindCssEntry = path.resolve(__dirname, 'src/css/tailwind.css')
@@ -28,7 +26,6 @@ const workspacePackagePnpmStorePattern = /[\\/]packages(?:-runtime)?[\\/][^\\/]+
 const buildLocale = getBuildLocale()
 const isEnglishBuild = buildLocale === 'en'
 const siteCopy = getSiteConfigCopy(buildLocale)
-console.log(`[hostingProvider]: ${hostingProvider}, [isGithub]: ${isGithub}`)
 
 const config: Config = {
   title: 'weapp-tailwindcss',
@@ -37,24 +34,17 @@ const config: Config = {
 
   // Set the production url of your site here
   url: siteUrl,
-  // Set the /<baseUrl>/ pathname under which your site is served
-  // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: isGithub ? '/weapp-tailwindcss/' : '/',
+  baseUrl: '/',
   staticDirectories: isEnglishBuild ? ['static', 'static/en'] : ['static'],
   trailingSlash: false,
-  // GitHub pages deployment config.
-  // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'sonofmagic', // Usually your GitHub org/user name.
-  projectName: 'weapp-tailwindcss', // Usually your repo name.
-
   onBrokenLinks: 'throw',
 
   // Even if you don't use internalization, you can use this field to set useful
   // metadata like html lang. For example, if your site is Chinese, you may want
   // to replace "en" with "zh-Hans".
   i18n: {
-    defaultLocale: 'zh-cn',
-    locales: ['zh-cn', 'en'],
+    defaultLocale: 'en',
+    locales: ['en', 'zh-cn'],
     localeConfigs: {
       'en': {
         label: 'English',
@@ -79,10 +69,11 @@ const config: Config = {
       'classic',
       {
         docs: {
+          path: getDocsDirectory(buildLocale),
           sidebarPath: 'sidebars.ts',
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
-          editUrl: 'https://github.com/sonofmagic/weapp-tailwindcss/tree/main/website',
+          editUrl: 'https://github.com/weapp-tailwindcss/weapp-tailwindcss/tree/main/website',
           remarkPlugins: [
             [require('@docusaurus/remark-plugin-npm2yarn'), { sync: true }],
           ],
@@ -129,9 +120,7 @@ const config: Config = {
         description: isEnglishBuild
           ? 'Official docs for bringing Tailwind CSS to mini apps across uni-app, Taro, native mini apps, and multiple builders.'
           : 'Tailwind CSS 小程序适配方案，覆盖 uni-app、Taro、原生小程序与多构建器场景的官方文档合集。',
-        docsDir: isEnglishBuild
-          ? [{ path: englishDocsDirectory, routeBasePath: 'docs' }]
-          : 'docs',
+        docsDir: getDocsDirectory(buildLocale),
         includeBlog: !isEnglishBuild,
         generateMarkdownFiles: true,
         excludeImports: true,
@@ -142,7 +131,6 @@ const config: Config = {
           isEnglishBuild ? 'quick-start/**' : 'docs/quick-start/**',
           isEnglishBuild ? 'tailwindcss/v4-reference.md' : 'docs/tailwindcss/v4-reference.md',
           isEnglishBuild ? 'tools/**' : 'docs/tools/**',
-          isEnglishBuild ? 'uni-app-x/**' : 'docs/uni-app-x/**',
           isEnglishBuild ? 'community/templates.md' : 'docs/community/templates.md',
           isEnglishBuild ? 'api/**' : 'docs/api/**',
           isEnglishBuild ? 'options/**' : 'docs/options/**',
@@ -154,11 +142,11 @@ const config: Config = {
         rootContent: isEnglishBuild
           ? `LLM navigation notes:
 - The English bundle mirrors the complete Chinese documentation tree, including guides, API references, troubleshooting, migrations, and AI workflows.
-- The site root is ${siteUrl}, and GitHub Pages uses the /weapp-tailwindcss/ prefix.
+- Use /llms-index.json for the product-focused GEO index and /llms-index-full.json for the complete corpus.
 - MDX imports and duplicate headings are removed for easier model parsing, while key title/description frontmatter is preserved.`
           : `LLM 导航说明：
 - 顺序为「入门 → 配置 → API → 迁移/问题 → AI 工作流」，覆盖 webpack/vite/gulp 与各类小程序框架。
-- 站点根为 ${siteUrl}，GitHub Pages 下为 /weapp-tailwindcss/ 前缀。
+- 产品问题优先读取 /llms-index.json，需要博客、AI 基础和历史内容时读取 /llms-index-full.json。
 - 已剔除 MDX import 与重复标题，便于模型解析；附带保留的标题/描述 frontmatter。`,
         fullRootContent: isEnglishBuild
           ? `Full doc bundle for offline or single-file loading:
@@ -171,14 +159,13 @@ const config: Config = {
           {
             filename: 'llms-quickstart.txt',
             includePatterns: isEnglishBuild
-              ? ['intro.md', 'quick-start/**', 'tailwindcss/v4-reference.md', 'community/templates.md', 'tools/**', 'uni-app-x/**', 'ai/**']
+              ? ['intro.md', 'quick-start/**', 'tailwindcss/v4-reference.md', 'community/templates.md', 'tools/**', 'ai/**']
               : [
                   'docs/intro.md',
                   'docs/quick-start/**',
                   'docs/tailwindcss/v4-reference.md',
                   'docs/community/templates.md',
                   'docs/tools/**',
-                  'docs/uni-app-x/**',
                   'docs/ai/**',
                 ],
             fullContent: true,
@@ -190,6 +177,7 @@ const config: Config = {
           {
             filename: 'llms-api.txt',
             includePatterns: [
+              isEnglishBuild ? 'config/**' : 'docs/config/**',
               isEnglishBuild ? 'options/**' : 'docs/options/**',
               isEnglishBuild ? 'api/**' : 'docs/api/**',
               isEnglishBuild ? 'issues/**' : 'docs/issues/**',
@@ -268,8 +256,7 @@ const config: Config = {
         indexName: 'weapp-tw-icebreaker',
         contextualSearch: true,
       },
-      // Replace with your project's social card
-      image: 'img/logo.png',
+      image: `img/social/weapp-tailwindcss-${buildLocale === 'en' ? 'en' : 'zh-cn'}.png`,
       navbar,
       footer,
       prism: {

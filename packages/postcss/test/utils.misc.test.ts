@@ -12,9 +12,9 @@ describe('fingerprintOptions', () => {
 
     expect(fingerprintOptions(null)).toBe('null')
     expect(fingerprintOptions(undefined)).toBe('undefined')
-    expect(fingerprintOptions(1)).toBe('number:1')
-    expect(fingerprintOptions(fn)).toBe('fn:namedFn')
-    expect(fingerprintOptions(anon)).toBe('fn:anon')
+    expect(fingerprintOptions(1)).not.toBe(fingerprintOptions('1'))
+    expect(fingerprintOptions(fn)).toBe(fingerprintOptions(fn))
+    expect(fingerprintOptions(anon)).not.toBe(fingerprintOptions(fn))
     expect(fingerprintOptions(sym)).toBe(`sym:${String(sym)}`)
   })
 
@@ -30,7 +30,7 @@ describe('fingerprintOptions', () => {
 
     const arrayFingerprint = fingerprintOptions([target, { nested: target }], state)
     expect(arrayFingerprint).toContain('[ref:0')
-    expect(arrayFingerprint).toContain('{nested:ref:0}')
+    expect(arrayFingerprint).toContain('{"nested":ref:0}')
   })
 
   it('fingerprints map contents deterministically', () => {

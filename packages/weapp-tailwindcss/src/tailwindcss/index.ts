@@ -1,5 +1,5 @@
-import type { PackageResolvingOptions } from 'local-pkg'
 import type { PackageJson } from 'pkg-types'
+import type { PackageResolvingOptions } from './package-options'
 import { getPackageInfoSync } from 'local-pkg'
 import { createTailwindcssRuntime } from './runtime-factory'
 

@@ -1,18 +1,18 @@
 {
   "name": "@weapp-tailwindcss/ui",
   "type": "module",
-  "version": "0.0.10",
-  "description": "Atomic utility-first CSS component library for WeChat mini programs.",
+  "version": "0.0.18",
+  "description": "Cross-platform utility-first UI components for Tailwind CSS. 面向跨端 Tailwind CSS 的 utility-first UI 组件库。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "ISC",
-  "homepage": "https://tw.icebreaker.top/docs/community/ui",
+  "homepage": "https://tw.weapp.dev/docs/community/packages-runtime",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sonofmagic/weapp-tailwindcss.git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
     "directory": "packages-runtime/ui"
   },
   "bugs": {
-    "url": "https://github.com/sonofmagic/weapp-tailwindcss/issues"
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues"
   },
   "keywords": [
     "tailwindcss",
@@ -68,7 +68,7 @@
   },
   "scripts": {
     "build": "vite build && tsdown",
-    "build:watch": "vite build --watch",
+    "build:watch": "tsdown --watch --on-success \"vite build --watch --emptyOutDir=false\"",
     "test": "vitest run",
     "test:dev": "vitest",
     "tsd": "tsd --typings dist/variants.d.ts --files test-d/variants.test-d.ts && tsd --typings dist/preset.d.ts --files test-d/preset.test-d.ts && tsd --typings dist/components/index.d.ts --files test-d/components.test-d.ts && tsd --typings dist/hooks/index.d.ts --files test-d/hooks.test-d.ts && tsd --typings dist/utils/index.d.ts --files test-d/utils.test-d.ts && tsd --typings dist/adapters/index.d.ts --files test-d/adapters.test-d.ts",
@@ -129,21 +129,20 @@
   "dependencies": {
     "@weapp-tailwindcss/merge": "workspace:*",
     "@weapp-tailwindcss/variants": "workspace:*",
-    "tailwind-variants": "^3.3.1"
+    "tailwind-variants": "catalog:runtimeVariants"
   },
   "devDependencies": {
-    "@storybook/addon-a11y": "^10.5.7",
-    "@storybook/react": "^10.5.7",
-    "@storybook/react-vite": "^10.5.7",
-    "@tailwindcss/vite": "catalog:tailwindcss4",
+    "@storybook/addon-a11y": "catalog:storybook",
+    "@storybook/react": "catalog:storybook",
+    "@storybook/react-vite": "catalog:storybook",
     "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.4",
+    "@types/react-dom": "^19.2.5",
     "react": "catalog:react18",
     "react-dom": "catalog:react18",
-    "storybook": "^10.5.7",
+    "storybook": "catalog:storybook",
     "tailwindcss": "catalog:tailwindcss4",
     "typescript": "catalog:typescript59",
     "vite": "catalog:vite724",
-    "vite-plugin-dts": "^4.5.4"
+    "weapp-tailwindcss": "workspace:*"
   }
 }

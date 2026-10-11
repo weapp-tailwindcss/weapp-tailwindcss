@@ -47,20 +47,13 @@ describe('website tutorial integration contract', () => {
     }
   })
 
-  it('keeps all uni-app x entry points aligned with the verified demo', () => {
-    const tutorialFiles = [
-      'website/docs/quick-start/frameworks/uni-app-x.mdx',
-      'website/docs/quick-start/v4/uni-app-x.mdx',
-      'website/docs/uni-app-x/_shared.mdx',
-    ]
-    for (const file of tutorialFiles) {
-      const source = read(file)
-      expect(source).toContain('@import \'./main.css\';')
-      expect(source).toContain('rem2rpx: true')
-      expect(source).not.toMatch(/cssOptions:\s*\{\s*rem2rpx:/)
-      expect(source).not.toContain('href="https://github.com/icebreaker-template/uni-app-x-hbuilderx"')
-    }
+  it('keeps the uni-app x tutorial aligned with the verified demo', () => {
+    const source = read('website/docs/quick-start/frameworks/uni-app-x.mdx')
+    expect(source).toContain('@import \'./main.css\';')
+    expect(source).toContain('rem2rpx: true')
+    expect(source).not.toMatch(/cssOptions:\s*\{\s*rem2rpx:/)
+    expect(source).not.toContain('href="https://github.com/icebreaker-template/uni-app-x-hbuilderx"')
 
-    expect(read('demo/uni-app-x-hbuilderx-tailwindcss-v4/App.uvue')).toContain('@import \'./main.css\';')
+    expect(read('demo/uni-app-x-vdom-tailwindcss-v4/App.uvue')).toContain('@import \'./main.css\';')
   })
 })

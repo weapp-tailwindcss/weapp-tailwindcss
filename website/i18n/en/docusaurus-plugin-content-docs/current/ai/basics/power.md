@@ -1,7 +1,9 @@
 ---
 sidebar: aiSidebar
 title: Power (standard-driven programming)
-description: '**Composer** features of Cursor:'
+description: >-
+  Power (standard-driven programming): Current concepts, configuration guidance, and practical examples for
+  weapp-tailwindcss users.
 keywords:
   - AI programming
   - LLM

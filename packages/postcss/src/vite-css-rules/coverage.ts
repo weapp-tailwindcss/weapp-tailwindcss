@@ -172,9 +172,14 @@ export function mergeCoveredCssRuleDeclarations(baseCss: string, css: string) {
 }
 
 export function removeEmptyAtRules(root: postcss.Root) {
+  const atRules: postcss.AtRule[] = []
   root.walkAtRules((atRule) => {
+    atRules.push(atRule)
+  })
+  // walkAtRules 先访问父节点；反向清理才能在子节点移除后判断祖先是否为空。
+  for (const atRule of atRules.reverse()) {
     if (atRule.nodes && atRule.nodes.every(node => node.type === 'comment')) {
       atRule.remove()
     }
-  })
+  }
 }

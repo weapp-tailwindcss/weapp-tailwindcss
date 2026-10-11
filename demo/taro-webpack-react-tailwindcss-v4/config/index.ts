@@ -1,4 +1,5 @@
-import { resolve } from 'node:path'
+import { resolve, win32 } from 'node:path'
+import process from 'node:process'
 import { defineConfig, type UserConfigExport } from '@tarojs/cli'
 import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin'
 import devConfig from './dev'
@@ -58,13 +59,13 @@ export default defineConfig<'webpack5'>(async (merge, { command, mode }) => {
     designWidth: taroPlatform.isWeb
       ? 750
       : (input) => {
-          const file = typeof input?.file === 'string' ? input.file.replace(/\\\\+/g, '/') : ''
-          if (file.includes('/pages/issue-998/')) {
+          const file = typeof input?.file === 'string' ? win32.resolve(projectRoot, input.file) : ''
+          if (win32.dirname(file) === win32.resolve(projectRoot, 'src/pages/issue-998')) {
             return 375
           }
           // 配置 NutUI 375 尺寸
           // @ts-ignore
-          if (input?.file?.replace(/\\+/g, '/').indexOf('@nutui') > -1) {
+          if (file.includes('@nutui')) {
             return 375
           }
           // 全局使用 Taro 默认的 750 尺寸
@@ -151,6 +152,8 @@ export default defineConfig<'webpack5'>(async (merge, { command, mode }) => {
       },
     },
     h5: {
+      // Taro webpack runner 不消费 BROWSER，需显式传入 WDS 的自动打开边界。
+      ...(process.env.BROWSER === 'none' ? { devServer: { open: false } } : {}),
       publicPath: '/',
       staticDirectory: 'static',
       output: {
@@ -204,6 +207,7 @@ export default defineConfig<'webpack5'>(async (merge, { command, mode }) => {
       }
     },
     rn: {
+      entry: 'app.rn',
       appName: 'taroDemo',
       postcss: {
         cssModules: {

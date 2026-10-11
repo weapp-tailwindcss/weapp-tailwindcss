@@ -1,5 +1,5 @@
 import type { IJsHandlerOptions } from '../types'
-import { splitCandidateTokens } from '@tailwindcss-mangle/engine'
+import { splitCandidateTokens } from '@weapp-tailwindcss/engine'
 import { resolveClassNameTransformWithResult } from '../shared/classname-transform'
 import { decodeUnicode2 } from '../utils/decode'
 import { getReplacement, getReplacementCacheStore } from './replacement-cache'

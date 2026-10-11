@@ -10,7 +10,7 @@ import { normalizeMiniProgramThemeScopeSelector } from './selectors'
 
 export function collectThemeVariableRule(root: postcss.Root, options: FinalizeMiniProgramCssOptions = {}) {
   const themeRules: postcss.Rule[] = []
-  const declarations = new Map<string, postcss.Declaration>()
+  const declarations = new Map<string, postcss.Declaration[]>()
   const shouldPreserveContentInit = usesTwContentVariable(root)
 
   for (const node of root.nodes ?? []) {
@@ -29,7 +29,13 @@ export function collectThemeVariableRule(root: postcss.Root, options: FinalizeMi
       if (!shouldPreserveContentInit && isEmptyTwContentDeclaration(decl)) {
         return
       }
-      declarations.set(decl.prop, decl.clone())
+      const values = declarations.get(decl.prop) ?? []
+      const previous = values.at(-1)
+      // 保留不同值的级联历史，后续 cssCalc 必须能识别多入口主题冲突。
+      if (!previous || previous.value !== decl.value || previous.important !== decl.important) {
+        values.push(decl.clone())
+      }
+      declarations.set(decl.prop, values)
     })
   }
 
@@ -45,7 +51,7 @@ export function collectThemeVariableRule(root: postcss.Root, options: FinalizeMi
     selector: normalizeMiniProgramThemeScopeSelector(options.cssSelectorReplacement?.root),
   })
   for (const decl of declarations.values()) {
-    rule.append(decl)
+    rule.append(...decl)
   }
   return rule
 }

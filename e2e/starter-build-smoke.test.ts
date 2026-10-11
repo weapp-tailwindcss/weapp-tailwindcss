@@ -180,7 +180,7 @@ async function readTextTargets(root: string, targets: string[], fileRE: RegExp) 
 }
 
 async function runPnpm(args: string[], cwd: string) {
-  await execa('pnpm', args, {
+  return execa('pnpm', args, {
     cwd,
     env: {
       ...process.env,
@@ -191,7 +191,9 @@ async function runPnpm(args: string[], cwd: string) {
       npm_package_json: path.resolve(cwd, 'package.json'),
       INIT_CWD: cwd,
     },
-    stdio: process.env['E2E_DEBUG_BUILD'] === '1' ? 'inherit' : 'pipe',
+    all: true,
+    stdout: process.env['E2E_DEBUG_BUILD'] === '1' ? ['pipe', 'inherit'] : 'pipe',
+    stderr: process.env['E2E_DEBUG_BUILD'] === '1' ? ['pipe', 'inherit'] : 'pipe',
   })
 }
 
@@ -219,7 +221,11 @@ describe('starter build smoke', () => {
 
     const root = path.resolve(starterRoot, item.starter)
     await clearBuildState(root)
-    await runPnpm(item.command.slice(1), root)
+    const build = await runPnpm(item.command.slice(1), root)
+    if (item.starter === 'gulp') {
+      expect(build.all, `${item.name} should complete its ESM task graph`).toContain('Finished \'default\'')
+      expect(build.all, `${item.name} should load its TypeScript runtime without fallback failures`).not.toMatch(/Failed to (?:preload|load) external module:/)
+    }
 
     expect(await pathExists(path.resolve(root, item.outputDir)), `${item.name} should emit ${item.outputDir}`).toBe(true)
     for (const file of item.requiredFiles) {

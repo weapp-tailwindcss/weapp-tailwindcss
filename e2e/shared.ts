@@ -1,6 +1,8 @@
 import type { TailwindcssPatchOptions } from 'tailwindcss-patch'
 import type { TailwindCssRuntimeOptions } from '../packages/weapp-tailwindcss/src/tailwindcss/runtime-types'
+import type { MiniProgramThemeExpectation } from '../scripts/demo-visual-e2e-report/types'
 import { createRequire } from 'node:module'
+import nodePath from 'node:path'
 import process from 'node:process'
 import { format as formatMessage } from 'node:util'
 import { getConfig } from '@tailwindcss-mangle/config'
@@ -91,6 +93,7 @@ interface E2EPatchOptions extends TailwindcssPatchOptions {
 type NormalizedPatchOptions = E2EPatchOptions
 
 export interface ProjectEntry {
+  theme?: MiniProgramThemeExpectation
   name: string
   projectPath: string
   cssFile: string
@@ -221,9 +224,11 @@ export async function discoverTailwindV4CssEntries(root: string) {
   })
   const entries: string[] = []
   for (const file of files.sort()) {
-    const source = await fs.readFile(file, 'utf8')
+    // glob 使用逻辑分隔符返回结果；进入文件读取及 CSS 入口配置前还原原生路径。
+    const sourcePath = nodePath.normalize(file)
+    const source = await fs.readFile(sourcePath, 'utf8')
     if (TAILWIND_CSS_DIRECTIVE_RE.test(source)) {
-      entries.push(file)
+      entries.push(sourcePath)
     }
   }
   return entries

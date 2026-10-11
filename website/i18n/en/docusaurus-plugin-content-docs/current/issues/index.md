@@ -219,7 +219,7 @@ Check order:
 
 This is usually because the Tailwind context is not positioned correctly, or the source code is not scanned. There are two things you can check first:
 
-- Configure [tailwindcssBasedir](https://tw.icebreaker.top/docs/api/interfaces/UserDefinedOptions#tailwindcssbasedir) to let the plugin parse Tailwind from the correct project directory
+- Configure [tailwindcssBasedir](https://tw.weapp.dev/docs/api/interfaces/UserDefinedOptions#tailwindcssbasedir) to let the plugin parse Tailwind from the correct project directory
 
 - Check `@source` / `cssEntries`
 

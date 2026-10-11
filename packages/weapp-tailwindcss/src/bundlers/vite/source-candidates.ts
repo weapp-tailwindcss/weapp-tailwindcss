@@ -1,1 +1,1 @@
-export * from '../shared/source-candidates'
+export * from '../../project-sources/candidates'

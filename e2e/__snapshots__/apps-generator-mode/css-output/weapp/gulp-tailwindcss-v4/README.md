@@ -7,7 +7,7 @@ Entry: gulp-tailwindcss-v4/dist/app.wxss
 
 | Bytes | Selectors | @supports | :hover | Tailwind banner | System dark media | Manual dark selector | Raw arbitrary selector | Weapp escaped arbitrary selector |
 | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |
-| 17828 | 84 | false | false | false | true | true | false | true |
+| 18200 | 84 | false | false | false | true | true | false | true |
 
 ## Generator CSS Files
 
@@ -23,7 +23,7 @@ Entry: gulp-tailwindcss-v4/dist/app.wxss
 
 | File | Artifact | Bytes | Selectors | @supports | :hover | Tailwind banner | System dark media | Manual dark selector | Raw arbitrary selector | Weapp escaped arbitrary selector |
 | --- | --- | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |
-| `app.wxss` | [artifacts/app.wxss](artifacts/app.wxss) | 13591 | 74 | false | false | false | true | true | false | true |
+| `app.wxss` | [artifacts/app.wxss](artifacts/app.wxss) | 13963 | 74 | false | false | false | true | true | false | true |
 | `third-party-ui.wxss` | [artifacts/third-party-ui.wxss](artifacts/third-party-ui.wxss) | 986 | 4 | false | false | false | false | false | false | false |
 | `pages/more/more.wxss` | [artifacts/pages__more__more.wxss](artifacts/pages__more__more.wxss) | 195 | 2 | false | false | false | false | false | false | false |
 | `sub-independent/pages/index.wxss` | [artifacts/sub-independent__pages__index.wxss](artifacts/sub-independent__pages__index.wxss) | 1543 | 8 | false | false | false | false | false | false | true |

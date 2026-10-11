@@ -21,6 +21,10 @@ const styleFileRE = /\.(?:css|scss|less|mpx|vue|uvue)$/
 const tailwindEntryRE = /@(tailwind\s+(?:base|components|utilities)|import\s+["']tailwindcss(?:\/|["']))/
 const directiveRE = /@(config|source)\s+(not\s+)?["']([^"']+)["']/g
 const subpackageRoots = ['sub-normal', 'sub-independent'] as const
+// Harmony Vapor 最小复现只验证 App 样式注入，不承载小程序分包隔离契约。
+const subpackageCoverageExemptDemoProjects = new Set([
+  'uni-app-x-vapor-tailwindcss-v4',
+])
 
 function stripCssComments(source: string) {
   let output = ''
@@ -291,10 +295,16 @@ describe('demo Tailwind path directives', () => {
   it('keeps every mini-program demo covering normal and independent subpackage styles', async () => {
     const files = await collectFiles(demoRoot)
     const packageJsonFiles = files.filter(file => path.basename(file) === 'package.json')
-    const demoProjects = packageJsonFiles
+    const allDemoProjects = packageJsonFiles
       .map(file => getDemoProjectFromDemoRelativePath(path.relative(demoRoot, file)))
       .filter(project => !isWebDemoProject(project))
       .sort()
+    const demoProjects = allDemoProjects
+      .filter(project => !subpackageCoverageExemptDemoProjects.has(project))
+
+    for (const project of subpackageCoverageExemptDemoProjects) {
+      expect(allDemoProjects, `${project} should remain a real demo project`).toContain(project)
+    }
 
     expect(demoProjects.length).toBeGreaterThan(0)
 

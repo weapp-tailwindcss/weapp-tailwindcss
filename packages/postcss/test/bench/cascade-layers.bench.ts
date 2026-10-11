@@ -1,5 +1,5 @@
 import { consumeCascadeLayers, postcss } from '@/index'
-import { bench, describe } from 'vitest'
+import { test } from 'vitest'
 
 function createLayerCorpus(layerCount: number, fragmentsPerLayer: number) {
   const layerNames = Array.from({ length: layerCount }, (_, index) => `layer-${index}`)
@@ -19,9 +19,9 @@ function createLayerCorpus(layerCount: number, fragmentsPerLayer: number) {
 
 const css = createLayerCorpus(64, 8)
 
-describe('cascade layer consumer benchmark', () => {
-  bench('consume 512 conditional layer fragments', () => {
+test('cascade layer consumer benchmark', async ({ bench }) => {
+  await bench('consume 512 conditional layer fragments', () => {
     const root = postcss.parse(css)
     consumeCascadeLayers(root)
-  })
+  }).run()
 })

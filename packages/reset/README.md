@@ -1,9 +1,9 @@
 # @weapp-tailwindcss/reset
 
-> 简体中文 | [English](./README.en.md)
+> English | [简体中文](./README.zh-CN.md)
 
-这个包提供面向小程序多框架的 reset 样式资源，适合 uni-app、Taro 等项目在入口样式中直接引用。
+This package provides reset stylesheet assets for mini program frameworks such as uni-app and Taro, designed to be imported from project entry styles.
 
-## 官网
+## Website
 
-更多接入方式、配置说明和框架示例见 [weapp-tailwindcss 官方文档](https://tw.icebreaker.top)。
+For setup guides, configuration references, and framework examples, see the [official weapp-tailwindcss documentation](https://tw.weapp.dev).

@@ -1,1 +1,1 @@
-export { pruneMiniProgramGeneratedCss } from '@weapp-tailwindcss/postcss'
+export { pruneMiniProgramGeneratedCss } from '@weapp-tailwindcss/postcss/transform'

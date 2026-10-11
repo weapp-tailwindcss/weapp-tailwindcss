@@ -2,7 +2,7 @@
   "name": "mpx-tailwindcss-v4",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@11.8.0",
+  "packageManager": "pnpm@12.9.1",
   "scripts": {
     "serve": "mpx-cli-service serve",
     "build": "mpx-cli-service build",
@@ -18,7 +18,7 @@
     "@mpxjs/store": "^2.10.13",
     "@mpxjs/utils": "^2.10.13",
     "@weapp-core/escape": "^8.0.0",
-    "@weapp-tailwindcss/merge": "^2.2.1",
+    "@weapp-tailwindcss/merge": "^2.2.3",
     "@weapp-tailwindcss/runtime": "^0.1.6",
     "clsx": "^2.1.1",
     "pinia": "^2.0.14",
@@ -30,10 +30,10 @@
     "vue-router": "^3.1.3"
   },
   "devDependencies": {
-    "@babel/core": "^7.28.3",
-    "@babel/plugin-transform-runtime": "^7.28.3",
-    "@babel/preset-env": "^7.28.3",
-    "@babel/runtime-corejs3": "^7.28.3",
+    "@babel/core": "^7.29.7",
+    "@babel/plugin-transform-runtime": "^7.29.7",
+    "@babel/preset-env": "^7.29.7",
+    "@babel/runtime-corejs3": "^7.29.7",
     "@mpxjs/babel-plugin-inject-page-events": "^2.9.0",
     "@mpxjs/eslint-config-ts": "^1.0.5",
     "@mpxjs/mpx-cli-service": "^2.2.2",
@@ -47,20 +47,14 @@
     "process": "^0.11.10",
     "stylus": "^0.64.0",
     "stylus-loader": "^8.1.2",
-    "tailwindcss": "^4.3.1",
+    "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
-    "weapp-ide-cli": "^5.4.10",
-    "weapp-tailwindcss": "^5.1.3",
+    "weapp-ide-cli": "^5.4.12",
+    "weapp-tailwindcss": "^5.5.5",
     "webpack": "^5.101.3"
   },
   "browserslist": [
     "ios >= 8",
     "chrome >= 47"
-  ],
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "weapp-tailwindcss",
-      "@weapp-tailwindcss/merge"
-    ]
-  }
+  ]
 }

@@ -6,7 +6,7 @@ import {
   insertBeforeAnchor,
   insertBeforeClosingTag,
 } from '../../text'
-import { buildHexScriptRoundConfigs, buildIssue33HighRiskRoundConfigs } from '../round-configs'
+import { buildHexScriptRoundConfigs, buildIssue33HighRiskRoundConfigs, MINI_PROGRAM_REMOVED_CSS_UTILITIES } from '../round-configs'
 
 const webDomMarkerAttr = 'data-tw-watch-web-dom="1"'
 
@@ -155,7 +155,7 @@ function mutateUniAppXOptionsDataWithTemplateConsumer(
 
 function createUniAppXHBuilderXCase(baseCwd: string): WatchCase {
   const version = 'v4'
-  const projectName = `uni-app-x-hbuilderx-tailwindcss-${version}` as const
+  const projectName = `uni-app-x-vdom-tailwindcss-${version}` as const
   const outputRoot = `demo/${projectName}/unpackage/dist/dev/mp-weixin`
   const pageSource = path.resolve(baseCwd, `demo/${projectName}/pages/index/index.uvue`)
 
@@ -199,6 +199,7 @@ function createUniAppXHBuilderXCase(baseCwd: string): WatchCase {
       sourceFile: pageSource,
       verifyEscapedIn: ['wxml'],
       verifyClassLiteralIn: [],
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: buildHexScriptRoundConfigs(),
       mutate(source, payload) {
         return insertBeforeAnchor(source, '<BindClass />', `\t\t<view class="${payload.classLiteral}">${payload.marker}-template</view>\n\t\t`)
@@ -208,6 +209,7 @@ function createUniAppXHBuilderXCase(baseCwd: string): WatchCase {
       sourceFile: pageSource,
       verifyEscapedIn: ['js'],
       verifyClassLiteralIn: [],
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: buildHexScriptRoundConfigs(),
       mutate(source, payload) {
         return mutateUniAppXOptionsDataWithTemplateConsumer(source, payload)

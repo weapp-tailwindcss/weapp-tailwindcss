@@ -1,0 +1,147 @@
+import { reactive } from 'vue'
+
+export type ThemeSkin = 'default' | 'ocean'
+export type ThemeModePreference = 'light' | 'dark' | 'system'
+export type ResolvedThemeMode = 'light' | 'dark'
+export type ThemeClass = 'light' | 'dark' | 'ocean-light' | 'ocean-dark'
+
+export type ThemeState = {
+	skin: ThemeSkin
+	modePreference: ThemeModePreference
+	resolvedMode: ResolvedThemeMode
+	themeClass: ThemeClass
+}
+
+const SKIN_STORAGE_KEY = 'theme.skin'
+const MODE_STORAGE_KEY = 'theme.mode'
+const state = reactive({
+	skin: 'default',
+	modePreference: 'system',
+	resolvedMode: 'light',
+	themeClass: 'light'
+} as ThemeState)
+
+let osThemeChangeId = 0
+let hostThemeChangeId = 0
+let initialized = false
+
+function isSkin(value: string): boolean {
+	return value == 'default' || value == 'ocean'
+}
+
+function isMode(value: string): boolean {
+	return value == 'light' || value == 'dark' || value == 'system'
+}
+
+function resolveSystemMode(): ResolvedThemeMode {
+	const info = uni.getSystemInfoSync()
+	// App 优先使用系统主题；Web 和小程序使用宿主主题。
+	// #ifdef APP
+	if (info.osTheme == 'dark') return 'dark'
+	// #endif
+	// #ifdef WEB || MP
+	if (info.hostTheme == 'dark') return 'dark'
+	// #endif
+	return 'light'
+}
+
+function resolveThemeClass(skin: ThemeSkin, mode: ResolvedThemeMode): ThemeClass {
+	if (skin == 'ocean') return mode == 'dark' ? 'ocean-dark' : 'ocean-light'
+	return mode
+}
+
+function syncNativeAppearance(): void {
+	// const dark = state.resolvedMode == 'dark'
+	// uni.setNavigationBarColor({
+	// 	frontColor: dark ? '#ffffff' : '#000000',
+	// 	backgroundColor: dark ? '#111318' : '#F7F8FA',
+	// 	fail: (error) => console.error('同步导航栏主题失败：', error.errMsg)
+	// })
+}
+
+function applyResolvedMode(mode: ResolvedThemeMode, syncAppearance: boolean = true): void {
+	state.resolvedMode = mode
+	state.themeClass = resolveThemeClass(state.skin, mode)
+	if (syncAppearance) syncNativeAppearance()
+}
+
+function applyTheme(syncAppearance: boolean = true): void {
+	const mode =
+		state.modePreference == 'system'
+			? resolveSystemMode()
+			: (state.modePreference as ResolvedThemeMode)
+	applyResolvedMode(mode, syncAppearance)
+}
+
+function readPreference(key: string): string {
+	return uni.getStorageSync(key) as string
+}
+
+export function initTheme(): void {
+	if (initialized) {
+		refreshSystemTheme()
+		return
+	}
+
+	const savedSkin = readPreference(SKIN_STORAGE_KEY)
+	const savedMode = readPreference(MODE_STORAGE_KEY)
+	const invalidSkin = savedSkin != '' && !isSkin(savedSkin)
+	const invalidMode = savedMode != '' && !isMode(savedMode)
+	if (invalidSkin || invalidMode) {
+		console.warn('主题偏好无效，已恢复 default + system')
+		state.skin = 'default'
+		state.modePreference = 'system'
+		uni.setStorageSync(SKIN_STORAGE_KEY, state.skin)
+		uni.setStorageSync(MODE_STORAGE_KEY, state.modePreference)
+	} else {
+		state.skin = isSkin(savedSkin) ? (savedSkin as ThemeSkin) : 'default'
+		state.modePreference = isMode(savedMode) ? (savedMode as ThemeModePreference) : 'system'
+	}
+	// 此时页面尚未创建，导航栏在 onAppShow 时同步。
+	applyTheme(false)
+
+	// #ifdef APP
+	osThemeChangeId = uni.onOsThemeChange((result: OsThemeChangeResult) => {
+		if (state.modePreference != 'system') return
+		applyResolvedMode(result.osTheme == 'dark' ? 'dark' : 'light')
+	})
+	// #endif
+	// #ifdef WEB || MP
+	hostThemeChangeId = uni.onHostThemeChange((result: OnHostThemeChangeCallbackResult) => {
+		if (state.modePreference != 'system') return
+		applyResolvedMode(result.hostTheme == 'dark' ? 'dark' : 'light')
+	})
+	// #endif
+	initialized = true
+}
+
+export function disposeTheme(): void {
+	if (!initialized) return
+	// #ifdef APP
+	uni.offOsThemeChange(osThemeChangeId)
+	// #endif
+	// #ifdef WEB || MP
+	uni.offHostThemeChange(hostThemeChangeId)
+	// #endif
+	initialized = false
+}
+
+export function refreshSystemTheme(): void {
+	if (state.modePreference == 'system') applyTheme()
+}
+
+export function setThemeSkin(skin: ThemeSkin): void {
+	state.skin = skin
+	uni.setStorageSync(SKIN_STORAGE_KEY, skin)
+	applyTheme()
+}
+
+export function setThemeMode(mode: ThemeModePreference): void {
+	state.modePreference = mode
+	uni.setStorageSync(MODE_STORAGE_KEY, mode)
+	applyTheme()
+}
+
+export function useTheme(): ThemeState {
+	return state
+}

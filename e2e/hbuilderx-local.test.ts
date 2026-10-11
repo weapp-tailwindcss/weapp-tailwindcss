@@ -28,7 +28,7 @@ const miniProgramTestTimeoutMs = hbuilderxTimeoutMs * 2 + 30_000
 const maxAppHmrSteps = Math.max(1, ...filteredAppCases.map(item => resolveAppHmrSteps(item).length))
 const appTestTimeoutMs = hbuilderxAppTimeoutMs * (maxAppHmrSteps + 1) + 30_000
 
-describeLocalHBuilderX.sequential('HBuilderX demo local e2e', () => {
+describeLocalHBuilderX('HBuilderX demo local e2e', () => {
   afterEach(() => {
     const devProcess = getDevProcess()
     if (devProcess) {

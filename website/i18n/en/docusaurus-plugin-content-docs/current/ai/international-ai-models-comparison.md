@@ -726,8 +726,8 @@ Assume a team of 10 people with an average annual salary of $150,000:
 
 **Pure Claude solution**:
 
-- Claude Teams：$40 × 10 = $400
-- Claude API：$857
+- Claude Teams: $40 × 10 = $400
+- Claude API: $857
 - Available tokens: approximately 3.5 million/month
 - **Total: $1257/month**
 

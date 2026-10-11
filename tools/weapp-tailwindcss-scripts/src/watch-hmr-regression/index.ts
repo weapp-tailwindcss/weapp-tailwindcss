@@ -2,6 +2,7 @@ import type { WatchCaseMetrics } from './types'
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
+import { assertWatchCommandActive } from './cancellation'
 import { buildCases, isLocalOnlyWatchCase, pickCases } from './cases'
 import { formatPath, resolveBaseCwd, resolveOptions } from './cli'
 import { assertHotUpdateBudget, assertMemoryBudget, assertPluginProcessBudget, logSummary, runCase, runMainStyleOnlyCase, runSubPackagesOnlyCase, runWebOnlyCase, WatchHmrPartialMetricsError } from './runner'
@@ -60,6 +61,7 @@ export async function main() {
 
   try {
     for (const watchCase of selected) {
+      assertWatchCommandActive()
       process.stdout.write(`[watch-hmr] start ${watchCase.label} (${watchCase.devScript})\n`)
       const result = options.miniProgramScope === 'subpackages'
         ? await runSubPackagesOnlyCase(watchCase, options)
@@ -103,6 +105,7 @@ export async function main() {
     throw new Error('no metrics collected')
   }
 
+  assertWatchCommandActive()
   process.stdout.write('[watch-hmr] all cases passed\n')
 }
 

@@ -1,4 +1,4 @@
-import type { PackageResolvingOptions } from 'local-pkg'
+import type { PackageResolvingOptions } from '@/tailwindcss/package-options'
 import type { UniAppXComponentLocalStylesOptions, UserDefinedOptions } from '@/types'
 import path from 'node:path'
 import process from 'node:process'

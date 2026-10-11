@@ -1,4 +1,4 @@
-import { filterExistingCssRules } from '@weapp-tailwindcss/postcss'
+import { filterExistingCssRules } from '@weapp-tailwindcss/postcss/transform'
 import { collectWebpackBareSelectorUserCss, createWebpackGeneratorUserCssSourceAppend, removeWebpackTailwindGeneratedAssetCss } from './pipeline-helpers'
 
 export async function finalizeWebpackGeneratedCssResult(context: any) {

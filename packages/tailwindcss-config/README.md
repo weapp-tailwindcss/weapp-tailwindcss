@@ -1,9 +1,9 @@
 # tailwindcss-config
 
-> 简体中文 | [English](./README.en.md)
+> English | [简体中文](./README.zh-CN.md)
 
-这个包负责搜索和加载 Tailwind CSS 配置，支持 JavaScript、TypeScript、ESM 和 CommonJS 等多种配置文件格式。
+This package searches for and loads Tailwind CSS configuration files across JavaScript, TypeScript, ESM, and CommonJS formats.
 
-## 官网
+## Website
 
-更多接入方式、配置说明和框架示例见 [weapp-tailwindcss 官方文档](https://tw.icebreaker.top)。
+For setup guides, configuration references, and framework examples, see the [official weapp-tailwindcss documentation](https://tw.weapp.dev).

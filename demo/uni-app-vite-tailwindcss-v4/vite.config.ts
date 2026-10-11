@@ -67,6 +67,10 @@ export default defineConfig(async () => {
         plugins: [],
       },
     },
+    // 小程序独立分包包含独立运行时，使用 CLI 支持的 esbuild 压缩降低重复压缩成本。
+    build: uniPlatform.isMp && process.env.NODE_ENV === 'production'
+      ? { minify: 'esbuild' as const }
+      : {},
     resolve: {
       alias: {
         // Force uni-app runtime to use the v3 build that still exports findComponentPropsData

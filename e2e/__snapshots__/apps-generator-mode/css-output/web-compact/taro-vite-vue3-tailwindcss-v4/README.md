@@ -7,7 +7,7 @@ Entry: taro-vite-vue3-tailwindcss-v4/dist
 
 | Bytes | Selectors | @supports | :hover | Tailwind banner | System dark media | Manual dark selector | Raw arbitrary selector | Weapp escaped arbitrary selector |
 | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |
-| 327702 | 1756 | true | true | true | true | true | true | false |
+| 328594 | 1756 | true | true | true | true | true | true | false |
 
 ## Generator CSS Files
 
@@ -22,7 +22,7 @@ Entry: taro-vite-vue3-tailwindcss-v4/dist
 
 | File | Artifact | Bytes | Selectors | @supports | :hover | Tailwind banner | System dark media | Manual dark selector | Raw arbitrary selector | Weapp escaped arbitrary selector |
 | --- | --- | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |
-| `css/index.1.css` | [artifacts/css__index.1.css](artifacts/css__index.1.css) | 7220 | 26 | true | false | true | false | false | true | false |
-| `css/index.2.css` | [artifacts/css__index.2.css](artifacts/css__index.2.css) | 7190 | 26 | true | false | true | false | false | true | false |
-| `css/index.3.css` | [artifacts/css__index.3.css](artifacts/css__index.3.css) | 292736 | 1582 | true | true | true | true | true | true | false |
+| `css/index.1.css` | [artifacts/css__index.1.css](artifacts/css__index.1.css) | 7179 | 26 | true | false | true | false | false | true | false |
+| `css/index.2.css` | [artifacts/css__index.2.css](artifacts/css__index.2.css) | 7154 | 26 | true | false | true | false | false | true | false |
+| `css/index.3.css` | [artifacts/css__index.3.css](artifacts/css__index.3.css) | 293705 | 1582 | true | true | true | true | true | true | false |
 | `css/vendors.css` | [artifacts/css__vendors.css](artifacts/css__vendors.css) | 20556 | 184 | false | false | false | false | false | false | false |

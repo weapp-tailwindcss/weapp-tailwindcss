@@ -1,0 +1,54 @@
+{
+	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationBarTitleText": "uni-app x"
+			}
+		},
+		// #ifdef H5
+		{
+			"path": "pages/issue-1210/index",
+			"style": { "navigationBarTitleText": "Issue 1210" }
+		},
+		// #endif
+		{
+			"path": "pages/issue-1164/index",
+			"style": {
+				"navigationBarTitleText": "Issue 1164"
+			}
+		},
+		{
+			"path": "pages/issue-1160/index",
+			"style": {
+				"navigationBarTitleText": "Issue 1160"
+			}
+		}
+	],
+	"subPackages": [
+		{
+			"root": "sub-normal",
+			"pages": [
+				{
+					"path": "pages/index"
+				}
+			]
+		},
+		{
+			"root": "sub-independent",
+			"pages": [
+				{
+					"path": "pages/index"
+				}
+			],
+			"independent": true
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "uni-app x",
+		"navigationBarBackgroundColor": "#F8F8F8",
+		"backgroundColor": "#F8F8F8"
+	},
+	"uniIdRouter": {}
+}

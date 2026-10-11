@@ -1,88 +1,66 @@
 // 样式处理入口，负责构建和复用 PostCSS 管线
-import type { Result as PostcssResult, Root } from 'postcss'
+import type { Input, Result as PostcssResult, Root } from 'postcss'
 import type { FeatureSignal } from './content-probe'
+import type { RootCacheSnapshot } from './root-cache'
 import type { IStyleHandlerOptions, StyleHandler } from './types'
+import { performance } from 'node:perf_hooks'
 import { defuOverrideArray } from '@weapp-tailwindcss/shared'
 import { LRUCache } from 'lru-cache'
 import postcss from 'postcss'
+import { isAutoprefixerPlugin } from './autoprefixer'
 import { protectDynamicColorMixAlpha, protectDynamicVarFallbacks } from './compat/color-mix'
 import { normalizeCssLineComments } from './compat/line-comments'
 import { removeEmptyBlockAtRules } from './compat/mini-program-css/root-cleanups'
 import { splitUnresolvedAuthorVariableFallbacks } from './compat/uni-app-x-uvue/theme'
 import { probeFeatures, signalToCacheKey } from './content-probe'
 import { getDefaultOptions } from './defaults'
-import { fingerprintOptions } from './fingerprint'
+import { fingerprintStyleOptions } from './fingerprint'
+import { processUserCss } from './framework-pipeline'
 import { resolvePostcssFrameworkProfile } from './frameworks'
-import { createOptionsResolver } from './options-resolver'
+import { createOptionsResolver, normalizeCssOptions } from './options-resolver'
+import { isKnownPurePostcssPlugin } from './plugin-cache-policy'
 import { createInjectPreflight } from './preflight'
 import { StyleProcessorCache } from './processor-cache'
+import { captureRootCacheSnapshot, cloneRootWithCurrentSources, matchRootCacheSnapshot } from './root-cache'
+import { contentHash } from './utils/content-hash'
 
 /** CSS 结果缓存最大条目数 */
 const CSS_RESULT_CACHE_MAX = 256
 
-/**
- * 简单字符串哈希函数（FNV-1a 变体），用于生成缓存键。
- * 不依赖 crypto 模块，适合高频调用场景。
- */
-function simpleHash(str: string): string {
-  let hash = 0x811C9DC5 | 0
-  for (let i = 0; i < str.length; i++) {
-    hash ^= str.charCodeAt(i)
-    hash = (hash * 0x01000193) | 0
-  }
-  return (hash >>> 0).toString(36)
-}
-
 // createStyleHandler 提供带缓存的高阶处理器，同时暴露 getPipeline 供外部调试/扩展
 export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): StyleHandler {
+  const normalizedOptions = normalizeCssOptions(options ?? {})
   const cachedOptions = defuOverrideArray<
     IStyleHandlerOptions,
     Partial<IStyleHandlerOptions>[]
   >(
-    options as IStyleHandlerOptions,
-    getDefaultOptions(options),
+    normalizedOptions as IStyleHandlerOptions,
+    // 嵌套配置也必须合入同一份默认值，避免后续归一化用 undefined/部分对象覆盖默认值。
+    normalizeCssOptions(getDefaultOptions(normalizedOptions), normalizedOptions.cssOptions !== undefined),
   )
 
   cachedOptions.cssInjectPreflight = createInjectPreflight(cachedOptions.cssPreflight)
   const resolver = createOptionsResolver(cachedOptions)
   const processorCache = new StyleProcessorCache()
-  const base = resolver.resolve()
-  processorCache.getProcessor(base)
-  processorCache.getProcessOptions(base)
-
-  /** 选项指纹缓存，避免重复序列化 */
-  const optionsFingerprintCache = new WeakMap<IStyleHandlerOptions, string>()
-
-  /**
-   * 获取选项指纹（带缓存）
-   */
-  function getOptionsFingerprint(opts: IStyleHandlerOptions): string {
-    const cached = optionsFingerprintCache.get(opts)
-    if (cached) {
-      return cached
-    }
-    const fp = fingerprintOptions(opts)
-    optionsFingerprintCache.set(opts, fp)
-    return fp
-  }
+  // 首次处理拿到内容信号后再创建管线，避免提前构建一条不会使用的完整管线。
 
   /** CSS 处理结果 LRU 缓存 */
-  const resultCache = new LRUCache<string, PostcssResult>({ max: CSS_RESULT_CACHE_MAX })
+  const resultCache = new LRUCache<string, { source: string, options: string, root: RootCacheSnapshot | undefined, result: PostcssResult }>({
+    max: CSS_RESULT_CACHE_MAX,
+    // AST 快照按节点数约束总量，避免少量大样式占满长会话内存。
+    maxSize: 128_000,
+    sizeCalculation: entry => Math.max(1, entry.root?.nodes.length ?? 0),
+  })
 
-  /** 检测是否配置了用户 postcss 插件（如 tailwindcss），有用户插件时不做内容探测 */
-  const hasUserPlugins = Boolean(
-    cachedOptions.postcssOptions?.plugins
-    && (Array.isArray(cachedOptions.postcssOptions.plugins)
-      ? cachedOptions.postcssOptions.plugins.length > 0
-      : typeof cachedOptions.postcssOptions.plugins === 'object'
-        && Object.keys(cachedOptions.postcssOptions.plugins).length > 0),
-  )
-
-  function cloneResult(result: PostcssResult): PostcssResult {
+  function cloneResult(result: PostcssResult, current?: ReadonlyMap<Input, Input>): PostcssResult {
     if (!result.root || typeof result.root.clone !== 'function') {
       return result
     }
-    const cloned = result.root.clone().toResult(result.opts)
+    const clonedRoot = cloneRootWithCurrentSources(result.root as Root, current)
+    // 没有 source map 时 CSS 已确定，复制结果不必再次序列化整棵 AST。
+    const cloned = result.opts.map
+      ? clonedRoot.toResult(result.opts)
+      : Object.assign(new postcss.Result(result.processor, clonedRoot, result.opts), { css: result.css })
     cloned.messages.push(...(result.messages ?? []))
     return cloned
   }
@@ -92,25 +70,83 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
     root: Root | undefined,
     cloneOutput: boolean,
     opt?: Partial<IStyleHandlerOptions>,
+    emitDiagnostics = true,
+    sourcePrepared = false,
   ) {
     const resolvedOptions = resolver.resolve(opt)
-    const normalizedRawSource = normalizeCssLineComments(rawSource)
+    const plugins = resolvedOptions.postcssOptions?.plugins
+    const hasUserPlugins = Boolean(plugins && Object.keys(plugins).length > 0)
+    const configured = Array.isArray(plugins) ? plugins : Object.values(plugins ?? {})
+    const hasExternalPlugins = hasUserPlugins && !configured.every(isKnownPurePostcssPlugin)
+    let cacheable = !hasExternalPlugins
+    const normalizedRawSource = sourcePrepared ? rawSource : normalizeCssLineComments(rawSource)
     // uni-app x 的 WebView/小程序目标也会复用 preserve:false 的 preset，
     // 需要先保护作者变量，否则主题 fallback 会在生成阶段被静态化。
     const isUniAppXFramework = resolvedOptions.appType === 'uni-app-x'
-    const protectedVarFallbacks = resolvedOptions.uniAppX || isUniAppXFramework
+    const protectedVarFallbacks = !sourcePrepared && (resolvedOptions.uniAppX || isUniAppXFramework)
       ? protectDynamicVarFallbacks(normalizedRawSource)
       : {
           css: normalizedRawSource,
           restore: (value: string) => value,
         }
-    const protectedColorMix = resolvedOptions.majorVersion === 4
+    const protectedColorMix = !sourcePrepared && resolvedOptions.majorVersion === 4
       ? protectDynamicColorMixAlpha(protectedVarFallbacks.css)
       : undefined
     const source = protectedColorMix?.css ?? protectedVarFallbacks.css
-    const processInput = source !== normalizedRawSource ? source : root?.clone() ?? source
-    // 当有用户插件时跳过内容探测，因为用户插件（如 tailwindcss）可能在 pre 阶段
-    // 生成新的 CSS 特征（如现代颜色函数、:is() 伪类等），而 probeFeatures 只看原始输入
+    const getProcessInput = () => source !== normalizedRawSource ? source : root?.clone() ?? source
+    const restoreProtectedResult = (result: PostcssResult) => {
+      const restoredCss = protectedVarFallbacks.restore(protectedColorMix?.restore(result.css) ?? result.css)
+      if (restoredCss !== result.css) {
+        const restored = result.root.clone().toResult(result.opts)
+        restored.css = restoredCss
+        restored.root = postcss.parse(restoredCss, result.opts)
+        restored.messages.push(...result.messages)
+        return restored
+      }
+      return result
+    }
+    if (hasExternalPlugins) {
+      const userAutoprefixer = configured.some(plugin => isAutoprefixerPlugin(plugin as never))
+        || (!Array.isArray(plugins) && Boolean(plugins?.autoprefixer))
+      // 用户阶段每次执行；只有它完成后的 AST 才能作为确定性平台阶段的缓存输入。
+      const platformOptions = {
+        ...resolvedOptions,
+        ...(userAutoprefixer ? { autoprefixer: false as const, cssOptions: { ...resolvedOptions.cssOptions, autoprefixer: false as const } } : {}),
+        postcssOptions: { ...resolvedOptions.postcssOptions, plugins: [] },
+      }
+      const stageStartedAt = performance.now()
+      const userInput = getProcessInput()
+      const userRoot = typeof userInput === 'string' ? postcss.parse(userInput, resolvedOptions.postcssOptions?.options) : userInput
+      const firstUserNode = userRoot.first
+      const firstUserBefore = firstUserNode?.raws.before
+      return processUserCss(userRoot, { ...resolvedOptions.postcssOptions, options: { ...resolvedOptions.postcssOptions?.options, map: false } })
+        .then(async (prepared) => {
+          const preparedSource = prepared.root.toString()
+          // 用户阶段串行化时推导的缩进缓存不能带入改变层级的后续平台转换。
+          delete (prepared.root as Root & { rawCache?: unknown }).rawCache
+          const transformed = await processSource(preparedSource, prepared.root as Root, true, platformOptions, false, true)
+          let result = restoreProtectedResult(transformed)
+          // 作者删除首节点的空白归属必须跨 layer 提升保留，不能重新暴露块内缩进。
+          if (firstUserNode && !firstUserNode.parent && result.root.first && result.root.first.raws.before !== firstUserBefore) {
+            result.root.first.raws.before = firstUserBefore
+            const updated = result.root.toResult(result.opts)
+            updated.messages.push(...result.messages)
+            result = updated
+          }
+          result.messages.unshift(...prepared.messages)
+          if (emitDiagnostics) {
+            await resolvedOptions.onDiagnostic?.({ phase: 'postcss', durationMs: performance.now() - stageStartedAt, cache: { hit: false } })
+          }
+          return result
+        })
+        .catch(async (error) => {
+          if (emitDiagnostics) {
+            await resolvedOptions.onDiagnostic?.({ phase: 'postcss', durationMs: performance.now() - stageStartedAt, error: { name: error instanceof Error ? error.name : undefined, message: error instanceof Error ? error.message : String(error) } })
+          }
+          throw error
+        })
+    }
+    // 外部插件已经完成，平台阶段探测本轮实际输入；包内 macro 仍随管线执行时保持保守探测。
     let signal: FeatureSignal | undefined
     if (!hasUserPlugins) {
       try {
@@ -122,23 +158,41 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
     }
 
     // 构建缓存键：选项指纹 + 信号 + 内容哈希
-    const optsFp = getOptionsFingerprint(resolvedOptions)
+    const optsFp = fingerprintStyleOptions(resolvedOptions)
     const signalKey = signal ? signalToCacheKey(signal) : ''
-    const contentHash = simpleHash(source)
-    const cacheKey = `${optsFp}|${signalKey}|${contentHash}`
+    const cacheKey = `${optsFp}|${signalKey}|${contentHash(source)}|${root === undefined ? 'text' : 'root'}`
 
-    const cachedResult = resultCache.get(cacheKey)
-    if (cachedResult) {
-      return Promise.resolve(cloneOutput ? cloneResult(cachedResult) : cachedResult)
+    const cached = cacheable ? resultCache.get(cacheKey) : undefined
+    const sameInput = cached?.source === rawSource && cached.options === optsFp
+    let bindings: ReadonlyMap<Input, Input> | undefined
+    if (sameInput && root && cached.root) {
+      try {
+        bindings = matchRootCacheSnapshot(cached.root, root)
+      }
+      catch { cacheable = false }
+    }
+    if (sameInput && (root ? bindings !== undefined : cached.root === undefined)) {
+      if (emitDiagnostics) {
+        void resolvedOptions.onDiagnostic?.({ phase: 'postcss', durationMs: 0, cache: { hit: true, key: cacheKey } })
+      }
+      return Promise.resolve(cloneOutput ? cloneResult(cached.result, bindings) : cached.result)
     }
 
+    let rootSnapshot: RootCacheSnapshot | undefined
+    if (cacheable && root) {
+      try {
+        rootSnapshot = captureRootCacheSnapshot(root)
+      }
+      catch { cacheable = false }
+    }
     const processor = processorCache.getProcessor(resolvedOptions, signal)
     const processOptions = processorCache.getProcessOptions(resolvedOptions)
 
+    const startedAt = performance.now()
     return processor.process(
-      processInput,
+      getProcessInput(),
       processOptions,
-    ).async().then((result) => {
+    ).async().then(async (result) => {
       const styleBranch = resolvePostcssFrameworkProfile(resolvedOptions)
       let finalResult = styleBranch.postprocess(result, resolvedOptions)
       if (resolvedOptions.isMainChunk !== false && finalResult.root) {
@@ -154,18 +208,7 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
           finalResult = nextResult
         }
       }
-      if (protectedColorMix || protectedVarFallbacks.css !== normalizedRawSource) {
-        const restoredCss = protectedVarFallbacks.restore(
-          protectedColorMix?.restore(finalResult.css) ?? finalResult.css,
-        )
-        if (restoredCss !== finalResult.css) {
-          const nextResult = finalResult.root.clone().toResult(finalResult.opts)
-          nextResult.css = restoredCss
-          nextResult.root = postcss.parse(restoredCss, finalResult.opts)
-          nextResult.messages.push(...finalResult.messages)
-          finalResult = nextResult
-        }
-      }
+      finalResult = restoreProtectedResult(finalResult)
       const shouldSplitAuthorVariableFallbacks = resolvedOptions.uniAppX
         && (resolvedOptions.uniAppXCssTarget === 'uvue' || !isUniAppXFramework)
       if (shouldSplitAuthorVariableFallbacks && finalResult.root) {
@@ -175,8 +218,19 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
         }
       }
       // 缓存最终结果
-      resultCache.set(cacheKey, finalResult)
+      if (cacheable) {
+        // 短哈希仅用于索引，命中还须核对保护占位前的完整输入及配置。
+        resultCache.set(cacheKey, { source: rawSource, options: optsFp, root: rootSnapshot, result: finalResult })
+      }
+      if (emitDiagnostics) {
+        await resolvedOptions.onDiagnostic?.({ phase: 'postcss', durationMs: performance.now() - startedAt, cache: { hit: false, key: cacheKey } })
+      }
       return cloneOutput ? cloneResult(finalResult) : finalResult
+    }).catch(async (error) => {
+      if (emitDiagnostics) {
+        await resolvedOptions.onDiagnostic?.({ phase: 'postcss', durationMs: performance.now() - startedAt, cache: { hit: false, key: cacheKey }, error: { name: error instanceof Error ? error.name : undefined, message: error instanceof Error ? error.message : String(error) } })
+      }
+      throw error
     })
   }
 
@@ -184,8 +238,10 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
     return processSource(rawSource, undefined, false, opt)
   }) as StyleHandler
 
-  handler.transformRoot = (root, opt) => {
-    return processSource(root.toString(), root, true, opt)
+  handler.transformRoot = async (root, opt) => {
+    const result = await processSource(root.toString(), root, true, opt)
+    assertRootResult(result)
+    return result
   }
 
   handler.getPipeline = (opt?: Partial<IStyleHandlerOptions>) => {
@@ -194,4 +250,11 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
   }
 
   return handler
+}
+
+/** 单个 Root 的变换不得返回多文档结果，避免破坏调用方的产物归属。 */
+function assertRootResult(result: PostcssResult): asserts result is PostcssResult<Root> {
+  if (result.root.type !== 'root') {
+    throw new TypeError('StyleHandler.transformRoot must return a single PostCSS Root.')
+  }
 }

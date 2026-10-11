@@ -1,4 +1,4 @@
-import type { TailwindV4CssSource } from '@tailwindcss-mangle/engine'
+import type { TailwindV4CssSource } from '@weapp-tailwindcss/engine'
 import type { Compiler } from 'webpack'
 import type { WebpackFrameworkName } from '../../../framework-selector'
 import type { WebpackCssSourceRegistration, WebpackGeneratedCssRegistration } from '../../loaders/runtime-registry'
@@ -7,6 +7,9 @@ import type { WebpackStyleInjectorDelegateFactory } from '@/style-injector/inter
 import type { AppType, IBaseWebpackPlugin, InternalUserDefinedOptions, UserDefinedOptions } from '@/types'
 import path from 'node:path'
 import process from 'node:process'
+import { createCompilationDependencyChanges, recordCompilationDependencyChanges } from '@/compiler'
+import { COMPILATION_EVENT_SCHEMA_VERSION } from '@/compiler/events'
+import { createCompilerRuntimeState } from '@/compiler/runtime-state'
 import { pluginName } from '@/constants'
 import { getCompilerContext } from '@/context'
 import { createBuiltinWebpackStyleInjectorPlugin } from '@/style-injector/internal'
@@ -15,12 +18,13 @@ import { resolveTailwindcssOptions } from '@/tailwindcss/runtime-options'
 import { getRuntimeClassSetSignature } from '@/tailwindcss/runtime/cache'
 import { hasConfiguredTailwindV4CssRoots, upsertTailwindV4CssSource } from '@/tailwindcss/v4/css-sources'
 import { resolvePluginDisabledState } from '@/utils/disabled'
+import { normalizeTailwindConfigDirectives } from '../../../../generation/directives'
+import { hasTailwindGeneratedCss, hasTailwindGeneratedCssMarkers } from '../../../../generation/index'
 import { resolveWebpackFrameworkProfile } from '../../../framework-selector'
-import { hasTailwindGeneratedCss, hasTailwindGeneratedCssMarkers } from '../../../shared/generator-css'
-import { normalizeTailwindConfigDirectives } from '../../../shared/generator-css/directives'
 import { isWatchFileInRuntimeDependencies } from '../../BaseUnifiedPlugin/shared'
 import { setupWebpackV5ProcessAssetsHook } from '../../BaseUnifiedPlugin/v5-assets'
 import { setupWebpackV5Loaders } from '../../BaseUnifiedPlugin/v5-loaders'
+import { createWebpackLoaderRuntimePreparation } from './runtime-preparation'
 import { debug, setupWebpackWatchOutputIgnore, shouldKeepPreviousWebpackCssSource, weappTailwindcssPackageDir } from './watch-output'
 
 function isInternalUserDefinedOptions(options: UserDefinedOptions | InternalUserDefinedOptions): options is InternalUserDefinedOptions {
@@ -44,7 +48,7 @@ export interface WebpackFrameworkBranchContext {
 
 export class WebpackFrameworkPlugin implements IBaseWebpackPlugin {
   options: InternalUserDefinedOptions
-  appType?: AppType
+  appType: AppType | undefined
   private hasInitialTailwindCssRoots: boolean
   private frameworkBranch: WebpackFrameworkBranchContext
 
@@ -95,13 +99,13 @@ export class WebpackFrameworkPlugin implements IBaseWebpackPlugin {
     }
     setupWebpackWatchOutputIgnore(compiler)
     const readyPromise = createTailwindRuntimeReadyPromise(initialTailwindRuntime)
-    const runtimeState = {
+    const runtimeState = createCompilerRuntimeState({
       tailwindRuntime: initialTailwindRuntime,
       readyPromise,
       refreshTailwindcssRuntime: refreshTailwindRuntime,
-    }
+    })
+    void runtimeState.events.emit({ schemaVersion: COMPILATION_EVENT_SCHEMA_VERSION, type: 'diagnostic', timestamp: new Date().toISOString(), adapter: 'webpack', phase: 'hmr', revision: runtimeState.revision, operationId: `webpack-init-${Date.now()}`, evidence: ['compiler.apply'] })
 
-    let runtimeSetPrepared = false
     let runtimeSetSignature: string | undefined
     let runtimeRefreshRequiredForCompilation = false
     let watchRunObserved = false
@@ -113,10 +117,21 @@ export class WebpackFrameworkPlugin implements IBaseWebpackPlugin {
     const currentWebpackCssSourceFiles = new Set<string>()
     const currentWebpackCssSourceModules = new Set<string>()
     let runtimeMetadataPrepared = false
+    let compilationChangeRecord: {
+      changes: ReturnType<typeof createCompilationDependencyChanges>
+      affectedScopes: Set<string>
+    } | undefined
 
     const updateRuntimeWatchDependencies = async () => {
       runtimeWatchDependencyFiles.clear()
       runtimeWatchDependencyContexts.clear()
+
+      // 配置和插件的间接依赖由生成器发现，来源配置本身未必包含它们。
+      for (const source of webpackGeneratedCssSources.values()) {
+        for (const dependency of source.dependencies) {
+          runtimeWatchDependencyFiles.add(dependency)
+        }
+      }
 
       const tailwindOptions = resolveTailwindcssOptions(runtimeState.tailwindRuntime.options)
       if (tailwindOptions?.config) {
@@ -203,13 +218,19 @@ export class WebpackFrameworkPlugin implements IBaseWebpackPlugin {
         watchRunObserved = true
       }
       const changedFiles = collectWatchChangedFiles()
+      if (markWatchRun && debug.enabled) {
+        debug('webpack watch changed files=%O', [...changedFiles])
+      }
       runtimeRefreshRequiredForCompilation = runtimeRefreshRequiredForCompilation
         || hasRuntimeDependencyChanges(changedFiles)
     }
 
     const resetRuntimePreparation = () => {
-      runtimeSetPrepared = false
+      loaderRuntimePreparation.invalidate()
       syncRuntimeRefreshRequirement()
+      const changes = createCompilationDependencyChanges(collectWatchChangedFiles())
+      // loader 会消费生成会话，必须在它执行前失效；processAssets 只复用本轮记录。
+      compilationChangeRecord = { changes, affectedScopes: recordCompilationDependencyChanges(runtimeState, changes) }
     }
 
     const registerAutoCssSource = async (source: TailwindV4CssSource) => {
@@ -222,7 +243,7 @@ export class WebpackFrameworkPlugin implements IBaseWebpackPlugin {
       if (!changed) {
         return
       }
-      runtimeSetPrepared = false
+      loaderRuntimePreparation.invalidate()
       runtimeMetadataPrepared = false
       runtimeRefreshRequiredForCompilation = true
       await refreshTailwindRuntimeState(runtimeState, {
@@ -255,11 +276,15 @@ export class WebpackFrameworkPlugin implements IBaseWebpackPlugin {
     }
     const registerWebpackGeneratedCss = (source: WebpackGeneratedCssRegistration) => {
       const file = path.resolve(source.file)
+      debug('webpack generated css dependencies: %s count=%d', file, source.dependencies.length)
       webpackGeneratedCssSources.set(file, {
         ...source,
         file,
       })
       currentWebpackCssSourceFiles.add(file)
+      for (const dependency of source.dependencies) {
+        runtimeWatchDependencyFiles.add(dependency)
+      }
     }
     const updateWebpackGeneratedCss = (source: { css: string, file: string }) => {
       const file = path.resolve(source.file)
@@ -348,6 +373,24 @@ export class WebpackFrameworkPlugin implements IBaseWebpackPlugin {
       return false
     }
 
+    const loaderRuntimePreparation = createWebpackLoaderRuntimePreparation(async (isCurrent) => {
+      const signature = getRuntimeClassSetSignature(runtimeState.tailwindRuntime)
+      const forceRefresh = runtimeRefreshRequiredForCompilation || signature !== runtimeSetSignature
+      debug('runtime loader ensure class set forceRefresh=%s watchDirty=%s signatureChanged=%s', forceRefresh, runtimeRefreshRequiredForCompilation, signature !== runtimeSetSignature)
+      const runtimeSet = await ensureRuntimeClassSet(runtimeState, {
+        forceRefresh,
+        forceCollect: forceRefresh || !watchRunObserved,
+        clearCache: forceRefresh,
+        allowEmpty: true,
+      })
+      await ensureRuntimeMetadata(forceRefresh)
+      if (isCurrent()) {
+        runtimeSetSignature = signature
+        runtimeRefreshRequiredForCompilation = false
+      }
+      return runtimeSet
+    })
+
     compiler.hooks.invalid?.tap?.(pluginName, (fileName: string | null) => {
       if (!fileName) {
         return
@@ -364,30 +407,10 @@ export class WebpackFrameworkPlugin implements IBaseWebpackPlugin {
     }
 
     async function getClassSetInLoader() {
-      if (runtimeSetPrepared) {
-        return
-      }
-      const signature = getRuntimeClassSetSignature(runtimeState.tailwindRuntime)
-      const forceRefresh = runtimeRefreshRequiredForCompilation || signature !== runtimeSetSignature
-      debug('runtime loader ensure class set forceRefresh=%s watchDirty=%s signatureChanged=%s', forceRefresh, runtimeRefreshRequiredForCompilation, signature !== runtimeSetSignature)
-      runtimeSetPrepared = true
-      await ensureRuntimeClassSet(runtimeState, {
-        forceRefresh,
-        forceCollect: forceRefresh || !watchRunObserved,
-        clearCache: forceRefresh,
-        allowEmpty: true,
-      })
-      await ensureRuntimeMetadata(forceRefresh)
-      runtimeSetSignature = signature
-      runtimeRefreshRequiredForCompilation = false
+      await loaderRuntimePreparation.getRuntimeSet()
     }
 
-    async function getRuntimeSetInLoader() {
-      await getClassSetInLoader()
-      return ensureRuntimeClassSet(runtimeState, {
-        allowEmpty: true,
-      })
-    }
+    const getRuntimeSetInLoader = loaderRuntimePreparation.getRuntimeSet
 
     onLoad()
     setupWebpackV5Loaders({
@@ -440,6 +463,7 @@ export class WebpackFrameworkPlugin implements IBaseWebpackPlugin {
       },
       isWatchMode: () => watchRunObserved || compiler.options?.watch === true,
       getWatchChangedFiles: collectWatchChangedFiles,
+      getCompilationChangeRecord: () => compilationChangeRecord,
       runtimeClassSetManager: (this.options as any).__internalWebpackRuntimeClassSetManager,
       getWebpackCssSources: () => webpackCssSources,
       getWebpackGeneratedCssSources: () => webpackGeneratedCssSources,

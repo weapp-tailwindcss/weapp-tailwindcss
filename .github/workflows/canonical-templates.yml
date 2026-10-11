@@ -1,0 +1,67 @@
+name: Canonical Templates
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - templates/**
+      - e2e/canonicalTemplateMatrix.ts
+      - e2e/canonical-template-*.test.ts
+      - e2e/templateContract.ts
+      - scripts/generate-support-matrix.ts
+      - website/docs/reference/support-matrix.md
+      - website/i18n/en/docusaurus-plugin-content-docs/current/reference/support-matrix.md
+      - package.json
+      - pnpm-lock.yaml
+  workflow_dispatch:
+
+concurrency:
+  group: canonical-templates-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Canonical template smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install repository dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build local package dependencies
+        run: pnpm build:ci
+
+      - name: Run canonical template builds
+        env:
+          E2E_CANONICAL_TEMPLATE_USE_LOCAL: '1'
+        run: pnpm e2e:canonical-templates
+
+      - name: Check generated support matrix
+        run: pnpm support-matrix:check
+
+      - name: Upload canonical template artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: canonical-template-artifacts-${{ github.run_id }}
+          path: |
+            templates/weapp-vite-tailwindcss-v4/dist/**
+            templates/uni-app-tailwindcss-v4/dist/**
+            templates/taro-vite-tailwindcss-v4/dist/**
+          if-no-files-found: ignore
+          retention-days: 7

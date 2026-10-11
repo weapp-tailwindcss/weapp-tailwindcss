@@ -138,7 +138,7 @@ export class IgnoredExportsTracker {
           if (!exportedName || !names.has(exportedName)) {
             continue
           }
-          const local = spec.get('local') as NodePath<BabelNode | null | undefined>
+          const local = spec.get('local') as NodePath<BabelNode | null>
           analysis.walker.walkNode(local)
           names.delete(exportedName)
         }

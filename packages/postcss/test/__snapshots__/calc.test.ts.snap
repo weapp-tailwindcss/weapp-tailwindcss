@@ -24,7 +24,6 @@ exports[`calc > cssCalc 传入 true 示例 1`] = `
 }
 .h-2 {
   height: 16rpx;
-  height: calc(var(--spacing)*2);
 }"
 `;
 
@@ -41,7 +40,6 @@ view,text,::after,::before {
   padding: 0;
 }
 .w-1 {
-  width: 8rpx;
   width: var(--spacing);
 }"
 `;
@@ -62,9 +60,9 @@ view,text,::after,::before {
 }"
 `;
 
-exports[`calc > px 转化 + root 变量运算去除 1`] = `"page,.tw-root,wx-root-portal-content,:host{--ch:2}; .a{ width: 2rpx; width: calc(var(--ch)*1rpx);}"`;
+exports[`calc > px 转化 + root 变量运算去除 1`] = `"page,.tw-root,wx-root-portal-content,:host{--ch:2}; .a{ width: 2rpx;}"`;
 
-exports[`calc > rpx + root 变量运算 1`] = `"page,.tw-root,wx-root-portal-content,:host{--ch:2}; .a{ width: 2rpx; width: calc(var(--ch)*1rpx);}"`;
+exports[`calc > rpx + root 变量运算 1`] = `"page,.tw-root,wx-root-portal-content,:host{--ch:2}; .a{ width: 2rpx;}"`;
 
 exports[`calc > rpx + root 变量运算去除 1`] = `"page,.tw-root,wx-root-portal-content,:host{--ch:2}; .a{ width: 2rpx;}"`;
 
@@ -81,7 +79,6 @@ view,text,::after,::before {
   padding: 0;
 }
 .w-1 {
-  width: .25rem;
   width: var(--spacing);
 }"
 `;
@@ -97,7 +94,6 @@ view,text,::after,::before {
   padding: 0;
 }
 .w-1 {
-  width: .25rem;
   width: var(--spacing);
 }"
 `;
@@ -113,7 +109,6 @@ view,text,::after,::before {
   padding: 0;
 }
 .w-1 {
-  width: .25rem;
   width: var(--spacing);
 }"
 `;

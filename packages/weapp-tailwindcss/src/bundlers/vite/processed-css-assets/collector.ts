@@ -1,10 +1,11 @@
 import type { OutputBundle } from 'rollup'
 import type { CollectViteProcessedCssAssetOptions, InjectViteProcessedCssAssetOptions } from './markers-imports'
-import { containsCssAfterMinify, filterExistingCssRules, mergeCoveredCssRuleDeclarations, mergeMiniProgramPreflightRuleDeclarations, mergeMiniProgramThemeScopeRuleDeclarations } from '@weapp-tailwindcss/postcss'
+import { containsCssAfterMinify, filterExistingCssRules, mergeCoveredCssRuleDeclarations, mergeMiniProgramPreflightRuleDeclarations, mergeMiniProgramThemeScopeRuleDeclarations } from '@weapp-tailwindcss/postcss/transform'
+import { extractMarkedUserLayerComponentsCss, mergeMarkedUserLayerComponentsCss } from '../../../generation/user-layer-order'
 import { stripBundlerGeneratedCssMarkers } from '../../shared/generated-css-marker'
-import { extractMarkedUserLayerComponentsCss, mergeMarkedUserLayerComponentsCss } from '../../shared/generator-css/user-layer-order'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
 import { isSubpackageOutputFile } from '../generate-bundle/subpackages'
+import { getActiveViteSourceOutputRelationOwner } from '../source-output-relations'
 import { collectBundleAssetFiles, collectImportedBundleCssSources, findBundleAssetByOutputFile, isCoveredViteGeneratedSourceAsset, removeCommentOnlyAtRules, resolveConfiguredCssEntryRootInjectionTarget, resolveViteGeneratedCssMarkerOutputFile, restoreCssImportAtRules } from './cleanup'
 import { collectSingleViteGeneratedCssMarkerFile, prepareImportedCssCoverage, removeCssCoveredByRootStyleBundleSources, shouldFilterRootGeneratedCssMarkerForScopedAsset } from './coverage'
 import { isRootStyleOutputFile, isViteProcessedCssResultCoveredByImportedBundleAsset, isViteProcessedCssResultImported, removeCoveredInjectedSourceAssets, removeCssCoveredByImportedViteResults, removeCssRulesCoveredBySources, resolvePreservedImportShellInjectionTarget, shouldInjectViteProcessedCssResult, shouldPreserveMiniProgramImportShell, shouldReplayViteProcessedCssIntoMainCss, shouldUseCssAssetAsMainInjectionTarget } from './injection-plan'
@@ -21,16 +22,24 @@ export function collectViteProcessedCssAssetResults(
       continue
     }
     const file = getAssetFile(bundleFile, output)
-    if (!isCssOutputFile(file) || !options.isViteProcessedCssAsset?.(output, file)) {
+    if (!isCssOutputFile(file)) {
       continue
     }
     const rawSource = readAssetSource(output)
+    const singleMarkerFile = collectSingleViteGeneratedCssMarkerFile(rawSource)
+    if (singleMarkerFile) {
+      // 框架可能改变样式文件名；生成标记提供源码与实际产物的身份关系。
+      getActiveViteSourceOutputRelationOwner()?.recordOwnedOutput(singleMarkerFile, file)
+      options.debug?.('css marker ownership: %s -> %s', singleMarkerFile, file)
+    }
+    if (!options.isViteProcessedCssAsset?.(output, file)) {
+      continue
+    }
     let nextCss = resolveViteProcessedCssAssetSource(
       file,
       rawSource,
       options.resolveViteProcessedCssOutputFile,
     )
-    const singleMarkerFile = collectSingleViteGeneratedCssMarkerFile(rawSource)
     if (
       singleMarkerFile
       && (
@@ -213,7 +222,7 @@ export function injectViteProcessedCssIntoMainCssAssets(
     const fileKey = normalizeOutputPathKey(file)
     const mainFileKey = normalizeOutputPathKey(file)
     const normalizedOriginalCss = measure('normalizeTarget', () => normalizeInjectableCssForTargetWithImports(
-      transformCss(removeTailwindEntryDirectivesFromCss(originalSource), file),
+      transformCss(removeTailwindEntryDirectivesFromCss(originalSource, options.createCssPipelineContext?.(file)?.currentGeneratorBranch?.isWeb === true), file),
       file,
     ))
     let nextCss = normalizedOriginalCss.css

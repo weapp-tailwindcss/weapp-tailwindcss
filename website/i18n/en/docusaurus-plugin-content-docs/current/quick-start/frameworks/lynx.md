@@ -7,11 +7,22 @@ keywords:
   - Rspeedy
   - Tailwind CSS 4
   - weapp-tailwindcss
+  - quick start
+  - installation
+  - configuration
+  - frameworks
+  - cross-platform
+  - mini app
+  - uni-app
+  - Taro
+  - React Native
 ---
 
 # ReactLynx / Rspeedy
 
 `@weapp-tailwindcss/lynx` uses Rspeedy's Rspack lifecycle to generate standard CSS that Lynx can consume. It preserves ReactLynx's native `className` and does not introduce a runtime stylesheet or JSX transform.
+
+See the [ReactLynx / Rspeedy configuration reference](../../config/react-lynx) for options, fixed fields, and encoder boundaries.
 
 ## Install
 
@@ -19,7 +30,7 @@ keywords:
 npm install -D @weapp-tailwindcss/lynx tailwindcss
 ```
 
-The integration requires Node.js `>=22.12.0`, Rspeedy `>=0.16.0`, and Tailwind CSS `>=4.0.0`. It currently supports only ReactLynx projects built with Rspeedy.
+The integration requires Node.js `^22.18.0 || >=24.11.0`, Rspeedy `>=0.16.0`, and Tailwind CSS `>=4.0.0`. It currently supports only ReactLynx projects built with Rspeedy.
 
 ## Register the Rspeedy plugin
 
@@ -81,14 +92,16 @@ A full `@import "tailwindcss"` includes browser preflight. Rspeedy may report an
 
 ## Validation and example
 
-The complete repository example is available under [`examples/react-lynx`](https://github.com/sonofmagic/weapp-tailwindcss/tree/main/examples/react-lynx). Repository contributors can run:
+The complete repository example is available under [`examples/react-lynx`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/tree/main/examples/react-lynx) for project structure and CSS entry reference. Your Rspeedy project should use its own development or build command.
 
-```bash
-pnpm --filter @weapp-tailwindcss/lynx test
-pnpm --filter @weapp-tailwindcss/example-react-lynx build
-pnpm e2e:lynx
-```
+`examples/react-lynx` is pinned to Tailwind CSS `4.3.3`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.16`. Representative cases cover every official utility family, variant kind, directive, and arbitrary syntax branch.
 
-A static build only proves that CSS was generated and included in the bundle. For visual validation with iOS Simulator and LynxExplorer, run `pnpm e2e:lynx:ios`.
+The static gate records Tailwind generation and Lynx encoder retention separately. Cross-platform support is determined only by runtime reports from Pixel 7/API 35 and iPhone 16 Pro/iOS 18.5; css-defines cannot replace runtime evidence:
 
-The initial release does not cover Rspeedy Web output, non-React Lynx frameworks, Tailwind CSS 3, or React Native-style runtime style mapping.
+In your own Android and iOS targets, verify:
+
+- Tailwind rules enter the bundle and the encoder does not unexpectedly remove target utilities or selectors.
+- Runtime layout, pseudo-classes, media queries, gradients, and arbitrary values match expectations.
+- Unsupported properties, complex selectors, and device differences are recorded explicitly; a successful generation step does not replace runtime validation.
+
+The current integration only covers ReactLynx + Rspeedy build targets. It does not cover Rspeedy Web output, non-React Lynx frameworks, or React Native-style runtime style mapping.

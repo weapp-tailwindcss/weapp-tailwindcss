@@ -1,7 +1,7 @@
 import type { JSX } from 'react'
 import { formatGitHubStarCount, useGitHubStars } from '../utils/github'
 
-const GITHUB_OWNER = 'sonofmagic'
+const GITHUB_OWNER = 'weapp-tailwindcss'
 const GITHUB_REPO = 'weapp-tailwindcss'
 
 interface HeroGithubBadgeProps {
@@ -23,10 +23,10 @@ export default function HeroGithubBadge({ className }: HeroGithubBadgeProps = {}
         dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200
         ${className ?? ''}
       `}
-      href="https://github.com/sonofmagic/weapp-tailwindcss"
+      href="https://github.com/weapp-tailwindcss/weapp-tailwindcss"
       target="_blank"
       rel="noreferrer"
-      aria-label="Star sonofmagic/weapp-tailwindcss on GitHub"
+      aria-label="Star weapp-tailwindcss/weapp-tailwindcss on GitHub"
     >
       <i aria-hidden="true" className="icon-[mdi--github] text-[1.1rem] text-slate-800 dark:text-slate-100"></i>
       <span className={`

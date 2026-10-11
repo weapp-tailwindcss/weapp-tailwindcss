@@ -17,8 +17,8 @@ keywords:
 
 # WeappTailwindcssGeneratorTarget
 
-## 属性
+## 类型
 
-### length
-
-> **length**: `number`
+```ts
+type WeappTailwindcssGeneratorTarget = 'weapp' | 'web'
+```

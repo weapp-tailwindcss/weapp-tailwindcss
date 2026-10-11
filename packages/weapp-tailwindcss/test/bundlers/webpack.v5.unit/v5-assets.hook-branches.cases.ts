@@ -982,7 +982,7 @@ describe('bundlers/webpack v5-assets hook branch coverage', () => {
   it('rethrows generator errors for explicit Tailwind css sources', async () => {
     vi.resetModules()
     const generateError = new Error('forced generator failure')
-    vi.doMock('@/bundlers/shared/v4-generation-core', () => ({
+    vi.doMock('@/generation/service', () => ({
       generateTailwindV4Css: vi.fn(async () => {
         throw generateError
       }),
@@ -1008,7 +1008,7 @@ describe('bundlers/webpack v5-assets hook branch coverage', () => {
     })
 
     await expect(harness.processAssets()).rejects.toThrow(generateError)
-    vi.doUnmock('@/bundlers/shared/v4-generation-core')
+    vi.doUnmock('@/generation/service')
   })
 
   it('regenerates dependency-affected scopes once and keeps the dependency revision stable', async () => {
@@ -1027,7 +1027,7 @@ describe('bundlers/webpack v5-assets hook branch coverage', () => {
         outputFile: options.outputFile,
       },
     }))
-    vi.doMock('@/bundlers/shared/v4-generation-core', () => ({
+    vi.doMock('@/generation/service', () => ({
       generateTailwindV4Css,
     }))
     try {
@@ -1089,7 +1089,7 @@ describe('bundlers/webpack v5-assets hook branch coverage', () => {
       expect(compilationPool.getScopeDependencyRevision('explicit.css')).toBe(1)
     }
     finally {
-      vi.doUnmock('@/bundlers/shared/v4-generation-core')
+      vi.doUnmock('@/generation/service')
       vi.resetModules()
     }
   })

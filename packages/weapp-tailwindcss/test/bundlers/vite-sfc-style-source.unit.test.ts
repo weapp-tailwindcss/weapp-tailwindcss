@@ -30,7 +30,7 @@ describe('bundlers/vite sfc style source resolver', () => {
       file => file.endsWith('.wxss'),
       () => [
         '<template><view /></template>',
-        '<style scoped>',
+        '<style lang="scss" scoped>',
         '.hello-world-shell { @apply flex; }',
         '</style>',
       ].join('\n'),
@@ -40,7 +40,7 @@ describe('bundlers/vite sfc style source resolver', () => {
     expect(remembered).toMatchObject({
       outputFile: 'components/HelloWorld.wxss',
       rawSource: expect.stringContaining('@apply flex'),
-      sourceFile: `${sourceFile}?vue&type=style&index=0&scoped=true`,
+      sourceFile: `${sourceFile}?vue&type=style&index=0&scoped=true&lang=scss`,
     })
   })
 

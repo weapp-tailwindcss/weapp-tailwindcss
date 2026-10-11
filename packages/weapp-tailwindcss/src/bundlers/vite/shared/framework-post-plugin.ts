@@ -2,12 +2,13 @@ import type { Plugin } from 'vite'
 import path from 'node:path'
 import process from 'node:process'
 import { logger } from '@weapp-tailwindcss/logger'
-import { removeTailwindPostcssPlugins, resolvePostcssConfig } from '@weapp-tailwindcss/postcss'
+import { removeTailwindPostcssPlugins, resolvePostcssConfig } from '@weapp-tailwindcss/postcss/transform'
 import { vitePluginName } from '@/constants'
-import { captureFrameworkPostcssOptions } from '../../shared/framework-postcss'
+import { captureFrameworkPostcssOptions } from '../../../generation/framework-postcss'
 import { disableAndRemoveTailwindVitePlugins, removeTailwindVitePlugins } from '../official-tailwind-plugins'
 import { resolveImplicitAppTypeFromViteRoot } from '../resolve-app-type'
 import { resolveImplicitTailwindcssBasedirFromViteRoot } from '../tailwind-basedir'
+import { installFrameworkCssEmission } from './framework-css-emission'
 
 export function createFrameworkPostPlugin(options: any): Plugin {
   const plugin: Plugin & { api?: unknown } = {
@@ -75,14 +76,31 @@ export function createFrameworkPostPlugin(options: any): Plugin {
           }
         }
         if (options.shouldInferAppType && resolvedRoot) {
-          const nextAppType = resolveImplicitAppTypeFromViteRoot(resolvedRoot)
+          const nextAppType = resolveImplicitAppTypeFromViteRoot(resolvedRoot, { searchUp: false })
           if (nextAppType && options.opts.appType !== nextAppType) {
             const previousAppType = options.opts.appType
             options.opts.appType = nextAppType
-            logger.info('根据 Vite 项目根目录自动推断 appType -> %s', nextAppType)
+            logger.debug('根据 Vite 项目根目录自动推断 appType -> %s', nextAppType)
             options.debug('align appType with vite root: %s -> %s', previousAppType ?? 'undefined', nextAppType)
             shouldRefreshRuntime = true
           }
+        }
+        if (
+          options.frameworkName === 'generic'
+          && !options.hasExplicitGeneratorTarget
+          && options.opts.generator !== false
+          && options.opts.appType === undefined
+          && options.opts.platform === undefined
+          && options.opts.cssOptions?.platform === undefined
+          && !options.resolveViteStylePlatform()
+        ) {
+          const generator = options.opts.generator && typeof options.opts.generator === 'object'
+            ? options.opts.generator
+            : {}
+          options.opts.generator = { ...generator, target: 'web' }
+          logger.debug('Generic Vite 项目未指定目标，自动使用 generator.target -> web')
+          options.debug('default generic vite generator target to web after configResolved')
+          shouldRefreshRuntime = true
         }
         if (shouldRefreshRuntime) {
           await options.refreshRuntimeState(true)
@@ -103,12 +121,23 @@ export function createFrameworkPostPlugin(options: any): Plugin {
             ? config.css.postcss
             : undefined,
         )
+        if (options.transformEmittedWebCss) {
+          installFrameworkCssEmission(config, options.transformEmittedWebCss, options.shouldRehashEmittedWebCssAsset)
+        }
       }, { emit: false })
     },
-    generateBundle: {
+    buildStart() {
+      const config = options.getResolvedConfig?.()
+      if (config && options.transformEmittedWebCss) {
+        installFrameworkCssEmission(config, options.transformEmittedWebCss, options.shouldRehashEmittedWebCssAsset)
+      }
+    },
+  }
+  if (typeof options.generateBundleHook === 'function') {
+    plugin.generateBundle = {
       order: 'post',
       handler: options.generateBundleHook,
-    },
+    }
   }
   if (options.api) {
     plugin.api = options.api

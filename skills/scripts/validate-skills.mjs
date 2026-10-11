@@ -9,6 +9,7 @@ const casesFile = path.join(skillsRoot, 'evals', 'trigger-cases.json')
 const expectedSkills = [
   'weapp-tailwindcss',
   'weapp-tailwindcss-custom-build',
+  'weapp-tailwindcss-lynx',
   'weapp-tailwindcss-migrate',
   'weapp-tailwindcss-react-native',
   'weapp-tailwindcss-runtime',

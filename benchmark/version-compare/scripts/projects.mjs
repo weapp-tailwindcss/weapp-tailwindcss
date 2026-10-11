@@ -189,8 +189,8 @@ export const benchmarkProjects = [
     hmrNote: 'HBuilderX H5 dev 依赖本地 HBuilderX 环境；CI 不使用 uni CLI 冒充该链路',
   },
   {
-    key: 'demo-uni-app-x-hbuilderx-tailwindcss-v4__mp-weixin',
-    project: 'demo/uni-app-x-hbuilderx-tailwindcss-v4',
+    key: 'demo-uni-app-x-vdom-tailwindcss-v4__mp-weixin',
+    project: 'demo/uni-app-x-vdom-tailwindcss-v4',
     target: 'mp-weixin',
     buildMode: 'unsupported',
     buildNote: 'uni-app x HBuilderX 项目没有 CI 可用的 build 脚本',
@@ -198,8 +198,8 @@ export const benchmarkProjects = [
     hmrNote: 'uni-app x HBuilderX mp-weixin HMR 依赖本地 HBuilderX/设备环境',
   },
   {
-    key: 'demo-uni-app-x-hbuilderx-tailwindcss-v4__h5',
-    project: 'demo/uni-app-x-hbuilderx-tailwindcss-v4',
+    key: 'demo-uni-app-x-vdom-tailwindcss-v4__h5',
+    project: 'demo/uni-app-x-vdom-tailwindcss-v4',
     target: 'h5',
     buildMode: 'unsupported',
     buildNote: 'uni-app x HBuilderX 项目没有 CI 可用的 h5 build 脚本',

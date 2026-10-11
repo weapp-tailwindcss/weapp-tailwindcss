@@ -1,0 +1,44 @@
+name: E2E Coverage PR
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-coverage-pr-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  coverage-gate:
+    name: Multiplatform Coverage Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Runner health
+        run: pnpm e2e:runner:health
+      - name: Coverage contract
+        run: pnpm e2e:coverage:contract
+      - name: Generate hosted coverage diagnostic
+        run: pnpm e2e:coverage:report --source aggregate --include-baselines --out e2e/.artifacts/coverage/pr-diagnostic-report.json
+      - name: Upload coverage diagnostic
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-diagnostic-${{ github.sha }}
+          path: e2e/.artifacts/coverage/**
+          if-no-files-found: error
+          retention-days: 14

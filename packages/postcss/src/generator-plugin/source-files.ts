@@ -3,146 +3,66 @@ import type { TailwindSourceEntry } from '../source-scan'
 import type { TailwindCandidateSource, WeappTailwindcssPostcssPluginOptions } from './types'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
-import { extractValidCandidates } from '@tailwindcss-mangle/engine'
-import { loadConfig } from 'tailwindcss-config'
-import {
-  collectCssInlineSourceCandidates,
-  createSourceScanPattern,
-  DEFAULT_SOURCE_SCAN_EXTENSIONS,
-  expandTailwindSourceEntries,
-  normalizeLegacyContentEntries,
-  parseConfigParam,
-  resolveCssSourceEntries,
-} from '../source-scan'
+import { extractValidCandidates } from '@weapp-tailwindcss/engine'
+import { createSourceScanPattern, DEFAULT_SOURCE_SCAN_EXTENSIONS, expandTailwindSourceEntries } from '../source-scan'
+import { resolveCssScanSources } from '../source-scan/resolve'
 import { resolvePostcssBase, resolvePostcssProjectRoot } from './context'
 import { hasTailwindApplyDirective, hasTailwindRootDirectives } from './directives'
 
 const POSTCSS_SOURCE_PATTERN = createSourceScanPattern(DEFAULT_SOURCE_SCAN_EXTENSIONS)
 
-function isTailwindV4ApplyOnlyCss(root: Root, css: string) {
-  return hasTailwindApplyDirective(css)
-    && !hasTailwindRootDirectives(root, { importFallback: true })
+interface ScanContext {
+  css?: string | undefined
+  sourceEntries?: TailwindSourceEntry[] | undefined
 }
 
-function getSourceExtension(file: string) {
-  const extension = path.extname(file).slice(1)
-  return extension || undefined
-}
-
-function collectConfigPaths(root: Root, base: string) {
-  const configPaths: string[] = []
-  root.walkAtRules('config', (rule) => {
-    const configPath = parseConfigParam(rule.params)
-    if (configPath) {
-      configPaths.push(path.isAbsolute(configPath) ? configPath : path.resolve(base, configPath))
-    }
+function resolveCompatibilityScan(root: Root, result: Result, options: WeappTailwindcssPostcssPluginOptions, context: ScanContext, local: boolean) {
+  const css = context.css ?? root.toString()
+  const applyOnly = hasTailwindApplyDirective(css) && !hasTailwindRootDirectives(root, { importFallback: true })
+  const base = resolvePostcssBase(result, options)
+  return resolveCssScanSources([{ root, base }], {
+    base,
+    automatic: local || applyOnly || options.scanSources === false ? 'disabled' : 'auto',
+    pattern: POSTCSS_SOURCE_PATTERN,
+    config: options.config,
+    configResolution: 'path',
+    sourceEntries: context.sourceEntries,
+    loadConfigContent: local,
   })
-  return [...new Set(configPaths)]
 }
 
-function resolveOptionConfigPath(config: string | undefined, base: string) {
-  if (!config) {
-    return undefined
-  }
-  return path.isAbsolute(config) ? config : path.resolve(base, config)
-}
-
-async function collectConfigContentFiles(root: Root, base: string, options: WeappTailwindcssPostcssPluginOptions) {
-  const configPaths = [...new Set([
-    ...(resolveOptionConfigPath(options.config, base) ? [resolveOptionConfigPath(options.config, base)!] : []),
-    ...collectConfigPaths(root, base),
-  ])]
-  const files: string[] = []
-  for (const configPath of configPaths) {
-    const result = await loadConfig({
-      config: configPath,
-      cwd: path.dirname(configPath),
-    })
-    const contentEntries = normalizeLegacyContentEntries(result?.config.content, path.dirname(configPath), {
-      relativeBase: path.dirname(configPath),
-    })
-    files.push(...await expandTailwindSourceEntries(contentEntries))
-  }
-  return {
-    configPaths,
-    files: [...new Set(files)],
-  }
-}
-
-export async function collectAutoTailwindCandidates(
-  root: Root,
-  result: Result,
-  options: WeappTailwindcssPostcssPluginOptions,
-  context: {
-    css?: string | undefined
-    sourceEntries?: TailwindSourceEntry[] | undefined
-  } = {},
-) {
+export async function collectAutoTailwindCandidates(root: Root, result: Result, options: WeappTailwindcssPostcssPluginOptions, context: ScanContext = {}) {
   if (options.scanSources === false) {
     return new Set<string>()
   }
-
-  const base = resolvePostcssBase(result, options)
-  const projectRoot = resolvePostcssProjectRoot(result, options)
-  const css = context.css ?? root.toString()
-  const sourceEntries = []
-  const hasSourceNone = css.includes('source(none)')
-  const shouldSkipAutoScan = isTailwindV4ApplyOnlyCss(root, css)
-  const inlineCandidates = collectCssInlineSourceCandidates(root)
-
-  if (!hasSourceNone && !shouldSkipAutoScan) {
-    sourceEntries.push({
-      base,
-      negated: false,
-      pattern: POSTCSS_SOURCE_PATTERN,
-    })
-  }
-
-  sourceEntries.push(...(context.sourceEntries ?? await resolveCssSourceEntries(root, base, POSTCSS_SOURCE_PATTERN)))
-  const candidates = sourceEntries.length === 0
+  const scan = await resolveCompatibilityScan(root, result, options, context, false)
+  const candidates = !scan.entries.some(entry => !entry.negated)
     ? []
     : await extractValidCandidates({
-        base,
-        css,
-        cwd: projectRoot,
-        sources: sourceEntries,
+        base: resolvePostcssBase(result, options),
+        css: context.css ?? root.toString(),
+        cwd: resolvePostcssProjectRoot(result, options),
+        sources: scan.entries,
       })
-
   return new Set([
-    ...[...candidates].filter(candidate => !inlineCandidates.excluded.has(candidate)),
-    ...inlineCandidates.included,
+    ...[...candidates].filter(candidate => !scan.inlineCandidates.excluded.has(candidate)),
+    ...scan.inlineCandidates.included,
   ])
 }
 
-export async function collectPostcssLocalSources(
-  root: Root,
-  result: Result,
-  options: WeappTailwindcssPostcssPluginOptions,
-  context: {
-    sourceEntries?: TailwindSourceEntry[] | undefined
-  } = {},
-) {
-  const base = resolvePostcssBase(result, options)
-  const sourceEntries = context.sourceEntries ?? await resolveCssSourceEntries(root, base, POSTCSS_SOURCE_PATTERN)
-
-  const configContentFiles = await collectConfigContentFiles(root, base, options)
+export async function collectPostcssLocalSources(root: Root, result: Result, options: WeappTailwindcssPostcssPluginOptions, context: ScanContext = {}) {
+  const scan = await resolveCompatibilityScan(root, result, options, context, true)
+  // 旧适配协议中，CSS 来源与配置 content 各自应用排除规则。
   const files = [...new Set([
-    ...await expandTailwindSourceEntries(sourceEntries),
-    ...configContentFiles.files,
+    ...await expandTailwindSourceEntries(scan.explicitEntries),
+    ...(await Promise.all(scan.configGroups.map(entries => expandTailwindSourceEntries(entries)))).flat(),
   ])]
   const sources: TailwindCandidateSource[] = await Promise.all(files.map(async (file) => {
-    const extension = getSourceExtension(file)
+    const extension = path.extname(file).slice(1)
     return {
       content: await readFile(file, 'utf8'),
-      ...(extension === undefined ? {} : { extension }),
+      ...(extension ? { extension } : {}),
     }
   }))
-
-  return {
-    files: [
-      ...files,
-      ...configContentFiles.configPaths,
-    ],
-    sources,
-  }
+  return { files: [...files, ...scan.configPaths], sources }
 }

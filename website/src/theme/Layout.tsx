@@ -3,7 +3,7 @@ import Head from '@docusaurus/Head'
 import { useLocation } from '@docusaurus/router'
 import { getSiteLanguage } from '@site/config/siteMetadata'
 import { UiManagementProvider } from '@site/src/features/ui-management/context'
-import { localePreferenceStorageKey } from '@site/src/i18n/locale'
+import { localePreferenceStorageKey, stripLocalePrefix } from '@site/src/i18n/locale'
 import { useCurrentSiteLocale } from '@site/src/i18n/runtime'
 import Layout from '@theme-original/Layout'
 import React, { useEffect } from 'react'
@@ -13,7 +13,7 @@ type LayoutWrapperProps = ComponentProps<typeof Layout>
 export default function LayoutWrapper(props: LayoutWrapperProps) {
   const location = useLocation()
   const locale = useCurrentSiteLocale()
-  const isHomepage = location.pathname === '/'
+  const isHomepage = stripLocalePrefix(location.pathname) === '/'
 
   useEffect(() => {
     if (typeof window === 'undefined') {

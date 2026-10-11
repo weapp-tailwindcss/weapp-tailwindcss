@@ -1,9 +1,12 @@
-import type { TailwindV4GenerationCoreInput, TailwindV4GenerationCoreResult } from '../../shared/v4-generation-core'
+import type { TailwindV4GenerationCoreInput, TailwindV4GenerationCoreResult } from '../../../generation/service'
+import { stripDeferredCssSourceMarkers } from '@weapp-tailwindcss/postcss/transform'
+import { hasTailwindRootDirectives } from '../../../generation/directives'
+import { isPureLocalCssImportWrapper } from '../../../generation/local-imports'
+import { generateTailwindV4Css } from '../../../generation/service'
 import { hasBundlerGeneratedCssMarker } from '../../shared/generated-css-marker'
-import { isPureLocalCssImportWrapper } from '../../shared/generator-css/local-imports'
-import { generateTailwindV4Css } from '../../shared/v4-generation-core'
-import { normalizeCssSourceForCompare } from './css-output'
+import { normalizeCssSourceForCompare } from '../css-output'
 import { hasTailwindGenerationSource } from './sfc-style-source'
+import { replaceWebCssModule } from './web-css-module'
 
 export type ViteCssTransformTaskKind = 'tailwind' | 'web' | 'import-shell' | 'style'
 
@@ -51,8 +54,8 @@ export interface ExecuteViteCssTransformTaskOptions {
   vitePipelineCssAsset: boolean
 }
 
-function resolveGeneratorUserRawSource(options: ExecuteViteCssTransformTaskOptions) {
-  const bundleUserRawSource = options.vitePipelineCssAsset
+function resolveBundleUserRawSource(options: ExecuteViteCssTransformTaskOptions) {
+  return options.vitePipelineCssAsset
     && !hasBundlerGeneratedCssMarker(options.rawSource)
     && normalizeCssSourceForCompare(options.rawSource)
     !== normalizeCssSourceForCompare(options.generatorRawSource)
@@ -65,10 +68,6 @@ function resolveGeneratorUserRawSource(options: ExecuteViteCssTransformTaskOptio
         options.outputFile,
       )
     : undefined
-
-  return [options.generatorUserLayerRawSource, bundleUserRawSource]
-    .filter(source => typeof source === 'string' && source.trim().length > 0)
-    .join('\n')
 }
 
 export async function executeViteCssTransformTask(
@@ -78,17 +77,24 @@ export async function executeViteCssTransformTask(
   const previousGeneratorCss = options.previousCss && !options.isWebGeneratorTarget
     ? options.normalizeMiniProgramGeneratorRawSource(options.previousCss, options.outputFile)
     : options.previousCss
-  const shouldGenerateCssWithCore = hasTailwindGenerationSource(options.generatorRawSource)
+  const shouldGenerateCssWithCore = (hasTailwindGenerationSource(options.generatorRawSource)
+    && (!options.isWebGeneratorTarget
+      || !hasBundlerGeneratedCssMarker(options.rawSource)
+      || hasTailwindRootDirectives(options.generatorRawSource, { importFallback: true })))
     || (!options.isWebGeneratorTarget && hasBundlerGeneratedCssMarker(options.rawSource))
 
   if (shouldGenerateCssWithCore) {
-    const generatorUserRawSource = resolveGeneratorUserRawSource(options)
+    const bundleUserRawSource = resolveBundleUserRawSource(options)
+    const generatorUserRawSource = [options.generatorUserLayerRawSource, options.isWebGeneratorTarget ? bundleUserRawSource : undefined]
+      .filter(source => typeof source === 'string' && source.trim().length > 0)
+      .join('\n')
     const generated = await (options.generateCss ?? generateTailwindV4Css)({
       cssHandlerOptions: options.generatorCssHandlerOptions,
       cssStage: 'framework-processed',
       cssUserHandlerOptions: options.cssUserHandlerOptions,
       debug: options.debug,
       file: options.generatorSourceFile,
+      frameworkProcessedUserCss: options.isWebGeneratorTarget ? undefined : bundleUserRawSource,
       generatorPlatform: options.generatorPlatform,
       getSourceCandidatesForEntries: options.getSourceCandidatesForEntries,
       opts: options.opts,
@@ -104,11 +110,15 @@ export async function executeViteCssTransformTask(
     })
     if (generated) {
       const css = options.removeRootCoveredCssFromScopedAsset(
-        options.annotateCss(options.transformWebTargetCss(generated.css)),
+        options.annotateCss(options.transformWebTargetCss(
+          options.isWebGeneratorTarget
+            ? replaceWebCssModule(options.rawSource, options.generatorSourceFile, generated.css) ?? generated.css
+            : generated.css,
+        )),
       )
       return {
         classSet: generated.classSet,
-        css,
+        css: stripDeferredCssSourceMarkers(css),
         dependencies: generated.dependencies,
         diffSource: options.generatorRawSource,
         generatorTarget: generated.target,

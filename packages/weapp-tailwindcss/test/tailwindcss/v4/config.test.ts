@@ -228,22 +228,22 @@ describe('tailwindcss/v4/config', () => {
     expect(logger.warn).toHaveBeenCalledTimes(1)
   })
 
-  it('keeps cssCalc disabled by default when tailwindcss@4 is detected', async () => {
+  it('保留未指定的 cssCalc，交由已解析平台决定默认策略', async () => {
     const runtime = createRuntime(4)
     const { applyV4CssCalcDefaults } = await loadModule()
 
     const result = applyV4CssCalcDefaults(undefined, runtime)
 
-    expect(result).toBe(false)
+    expect(result).toBeUndefined()
   })
 
-  it('applies cssCalc defaults when users explicitly enable it', async () => {
+  it('preserves boolean cssCalc selection when users explicitly enable it', async () => {
     const runtime = createRuntime(4)
     const { applyV4CssCalcDefaults } = await loadModule()
 
     const result = applyV4CssCalcDefaults(true, runtime)
 
-    expect(result).toEqual({ includeCustomProperties: [] })
+    expect(result).toBe(true)
   })
 
   it('merges missing custom properties when defaults are provided', async () => {

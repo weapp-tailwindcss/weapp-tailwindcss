@@ -2,8 +2,6 @@
 
 exports[`jsHandler > "after:content-["对酒当歌，人生几何"]" 1`] = `"const a = 'after_ccontent-_b_qu_x5bf9_u_x9152_u_x5f53_u_x6b4c_u_xff0c_u_x4eba_u_x751f_u_x51e0_u_x4f55__q_B'"`;
 
-exports[`jsHandler > 'common' "after:content-['对酒当歌，人生几何']" 1`] = `"const a = "after_ccontent-_b_au_x5bf9_u_x9152_u_x5f53_u_x6b4c_u_xff0c_u_x4eba_u_x751f_u_x51e0_u_x4f55__a_B""`;
-
 exports[`jsHandler > 'common' TemplateElement case 0 1`] = `"const p = 'text-_b12px_B';const n = \`bg-_burl_p_au_x5929_u_x6c14_u_x597d__a_P_B\${p}text-_b199px_B \\n\\n  flex  \\n\\n  bg-_bred_B '\`"`;
 
 exports[`jsHandler > 'common' img url case 1`] = `
@@ -17,6 +15,8 @@ exports[`jsHandler > 'common' mpx jit classNames 1`] = `
       classNames: "text-_b_h123456_B text-_b50px_B bg-_b_hfff_B"
     }"
 `;
+
+exports[`jsHandler > common "after:content-['对酒当歌，人生几何']" 1`] = `"const a = "after_ccontent-_b_au_x5bf9_u_x9152_u_x5f53_u_x6b4c_u_xff0c_u_x4eba_u_x751f_u_x51e0_u_x4f55__a_B""`;
 
 exports[`jsHandler > empty case 0 1`] = `
 {

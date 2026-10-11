@@ -1,9 +1,9 @@
 # @weapp-tailwindcss/shared
 
-> 简体中文 | [English](./README.en.md)
+> English | [简体中文](./README.zh-CN.md)
 
-这个包是 weapp-tailwindcss 多个子包共用的基础工具层，提供字符串、路径、正则、对象合并和选择器处理等通用能力。
+This package is the shared utility layer used by multiple weapp-tailwindcss packages, covering strings, paths, regex helpers, object merging, selector handling, and related primitives.
 
-## 官网
+## Website
 
-更多接入方式、配置说明和框架示例见 [weapp-tailwindcss 官方文档](https://tw.icebreaker.top)。
+For setup guides, configuration references, and framework examples, see the [official weapp-tailwindcss documentation](https://tw.weapp.dev).

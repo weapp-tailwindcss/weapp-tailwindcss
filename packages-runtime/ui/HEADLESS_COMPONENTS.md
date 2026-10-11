@@ -248,5 +248,5 @@ ISC
 
 ## 联系方式
 
-- 仓库: https://github.com/sonofmagic/weapp-tailwindcss
-- 问题反馈: https://github.com/sonofmagic/weapp-tailwindcss/issues
+- 仓库: https://github.com/weapp-tailwindcss/weapp-tailwindcss
+- 问题反馈: https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues

@@ -165,7 +165,7 @@ describe('options resolver', () => {
     override.postcssOptions.options.extra = 'value'
     const second = resolver.resolve(override)
 
-    expect(first).toBe(second)
+    expect(first).not.toBe(second)
     expect(second.postcssOptions?.options).toMatchObject({
       map: false,
       extra: 'value',

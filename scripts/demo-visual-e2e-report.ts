@@ -13,22 +13,28 @@ import {
 } from './demo-visual-e2e-report/hmr.ts'
 import { writeReport } from './demo-visual-e2e-report/report.ts'
 import { resolveScreenshotsRoot } from './demo-visual-e2e-report/screenshots.ts'
+import { formatWorkflowError } from './e2e-preflight/cleanup'
 
 const repoRoot = path.resolve(import.meta.dirname, '..')
 const defaultArtifactRoot = 'e2e/.artifacts/demo-visual/full'
+const configuredCrossPlatformDiffRatio = Number(process.env['DEMO_VISUAL_MAX_CROSS_PLATFORM_DIFF_RATIO'])
 const context: RuntimeContext = {
   artifactRoot: path.resolve(repoRoot, defaultArtifactRoot),
   repoRoot,
   timeoutMs: Number(process.env['DEMO_VISUAL_TIMEOUT_MS'] ?? 180_000),
   viewport: { width: 390, height: 844 },
+  ...(Number.isFinite(configuredCrossPlatformDiffRatio) && configuredCrossPlatformDiffRatio >= 0
+    ? { maxCrossPlatformDiffRatio: configuredCrossPlatformDiffRatio }
+    : {}),
 }
 
 const uniH5Cases = [
   'uni-app-vite-tailwindcss-v4',
   'uni-app-vite-vue3-hbuilderx-tailwindcss-v4',
-  'uni-app-x-hbuilderx-tailwindcss-v4',
+  'uni-app-x-vdom-tailwindcss-v4',
 ].map(name => ({
   name,
+  theme: E2E_PROJECTS.find(item => item.name === name)?.theme,
   projectDir: `demo/${name}`,
   command: ['run', 'dev:h5'],
   hmr: createUniH5HmrVisualConfig(repoRoot, name),
@@ -82,11 +88,11 @@ function printHelp() {
     'Environment:',
     '  HBUILDERX_CHANNEL=auto|stable|alpha  选择 HBuilderX 版本，默认 auto',
     '  HBUILDERX_HOST=<name>              多实例时选择 listhost 返回的 host',
-    '  DEMO_VISUAL_IDE_CLEANUP=0           不在小程序 case 前后关闭微信开发者工具',
     '  DEMO_VISUAL_IDE_LAUNCH_RETRIES=1    DevTools launch 超时后的重试次数',
-    '  DEMO_VISUAL_IDE_SETTLE_MS=800       清理 DevTools 后等待时间',
+    '  DEMO_VISUAL_IDE_SETTLE_MS=800       启动本次项目之前等待时间',
     '  DEMO_VISUAL_IDE_SCREENSHOT_COMMAND_TIMEOUT_MS=30000  单次 DevTools 截图命令超时',
     '  DEMO_VISUAL_HMR_OUTPUT_TIMEOUT_MS    小程序 visual HMR 初始/增量产物等待超时',
+    '  DEMO_VISUAL_MAX_CROSS_PLATFORM_DIFF_RATIO  H5 与其他端的最大归一化截图差异比例',
     '',
   ].join('\n'))
 }
@@ -280,29 +286,30 @@ async function main() {
     }
   }
   if (!h5Only && !weappOnly) {
-    const [{ uniAppAppCases, uniAppXAppCases }, { runAppCase }] = await Promise.all([
+    const [{ uniAppAppCases, uniAppXAppCases }, { runNativeVisualCases }] = await Promise.all([
       import('../e2e/hbuilderx-local/cases.ts'),
-      import('./demo-visual-e2e-report/app.ts'),
+      import('./demo-visual-e2e-report/app-batch.ts'),
     ])
-    for (const item of [...uniAppAppCases, ...uniAppXAppCases]) {
+    const items = [...uniAppAppCases, ...uniAppXAppCases].filter((item) => {
       const name = item.name.replace(/\s+(?:android|ios)$/, '')
       if (!matchesFilter(name) && !matchesFilter(item.name)) {
-        continue
+        return false
       }
       if (hasArg('--android-only') && item.platform !== 'app-android') {
-        continue
+        return false
       }
       if (hasArg('--ios-only') && item.platform !== 'app-ios') {
-        continue
+        return false
       }
       if (hasArg('--harmony-only') && item.platform !== 'app-harmony') {
-        continue
+        return false
       }
       if (hasArg('--app-only') && !targetPlatforms.includes(item.platform)) {
-        continue
+        return false
       }
-      await runAppCase(item, context, results)
-    }
+      return true
+    })
+    await runNativeVisualCases(items, context, results)
   }
   await writeReport(results, context)
   if (shouldFailOnIncomplete()) {
@@ -322,6 +329,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  process.stderr.write(`${error instanceof Error ? error.stack ?? error.message : String(error)}\n`)
+  process.stderr.write(`${formatWorkflowError(error)}\n`)
   process.exitCode = 1
 })

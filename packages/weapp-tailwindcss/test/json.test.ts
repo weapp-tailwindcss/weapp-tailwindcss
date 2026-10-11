@@ -1,4 +1,4 @@
-import { isAllowedClassName } from '@weapp-core/escape'
+import { isAllowedClassName } from '@weapp-tailwindcss/escape'
 
 describe('json', () => {
   it('class allow', async () => {

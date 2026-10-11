@@ -235,7 +235,8 @@ describe('bundlers/vite WeappTailwindcss rewrite', () => {
     const source = '@import "tailwindcss";'
     const result = await transform?.(source, '/src/app.css') as TransformResult
 
-    expect(result).toBeNull()
+    expect(result?.code).toContain(source)
+    expect(result?.code).toContain('deferred-source:%2Fsrc%2Fapp.css')
     expect(onTailwindRootCss).toHaveBeenCalledWith('/src/app.css', source)
     expect(generateTailwindCss).not.toHaveBeenCalled()
   })
@@ -472,6 +473,26 @@ describe('bundlers/vite WeappTailwindcss rewrite', () => {
     )
     expect(result?.code).toContain('@import "/virtual/weapp-tailwindcss/index.css";')
     expect(result?.code).not.toContain('@config')
+  })
+
+  it('preserves relative @config directives that came from an imported SFC style source', async () => {
+    const generateTailwindCss = vi.fn(async () => undefined)
+    const onTailwindRootCss = vi.fn()
+    const [rewritePlugin] = createRewriteCssImportsPlugins({
+      generateTailwindCss,
+      onTailwindRootCss,
+      shouldOwnTailwindGeneration: true,
+      shouldRewrite: false,
+      weappTailwindcssDirPosix: '/virtual/weapp-tailwindcss',
+    })
+    const transform = getTransformHandler(rewritePlugin!)
+    const source = '@import "tailwindcss";\n@config "./tailwind.config.js";'
+    const id = '/project/pages/index/index.uvue?vue&type=style&index=0&scoped=abc&lang.css'
+
+    await transform?.(source, id)
+
+    expect(onTailwindRootCss).toHaveBeenCalledWith(id, source)
+    expect(generateTailwindCss).toHaveBeenCalledWith(id, source, expect.anything())
   })
 
   it('normalizes relative @config directives from scss source files before generation', async () => {

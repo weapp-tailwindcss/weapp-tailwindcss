@@ -42,28 +42,23 @@ import './style.css'
 
 ## Register Vite plugin
 
-For pure web projects, it is recommended to configure `generator.target: 'web'` explicitly. The result generated in this way will retain the browser's native Tailwind CSS selector and will not generate the class escaped by the mini program.
-
 ```ts title="vite.config.ts"
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
-import { WeappTailwindcss } from 'weapp-tailwindcss/vite'
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
+import { WeappTailwindcssWeb } from 'weapp-tailwindcss/vite/web'
 
 export default defineConfig({
-  plugins: [
-    WeappTailwindcss({
-      generator: {
-        target: 'web',
-      },
-      cssEntries: [
-        path.resolve(__dirname, 'src/style.css'),
-      ],
-    }),
-  ],
+  plugins: [WeappTailwindcssWeb()],
 })
 ```
 
+Pure Vite Web projects can use the dedicated CSS-only entry. An unmarked Generic Vite project using the main entry automatically selects the same Web profile after Vite resolves its configuration; the entry CSS still needs to be imported by the application, and the plugin discovers the root stylesheet from Vite's module graph.
+
+`vite/web` only handles Tailwind CSS generation, CSS transforms, CSS HMR, entry diagnostics and Web CSS finalization. It does not register JavaScript/template transforms, framework extensions, subpackage processing or mini-program finalizers. The built-in `styleInjector` is disabled by default and is enabled only when explicitly configured.
+
+SSR, library mode, `optimizeDeps`, `cssMinify` and sourcemaps remain Vite responsibilities. Tailwind CSS is generated only for styles that actually enter Vite's CSS module graph; `cssEntries` does not replace importing the stylesheet from the application.
+
+For small-program compatibility, framework extensions, or explicit multiple entries, continue using the main `weapp-tailwindcss/vite` entry with explicit options. Historical Generic mini-program projects should set `generator.target: 'weapp'` or `platform` explicitly.
+
 After selecting this link, do not register `@tailwindcss/vite` or `@tailwindcss/postcss` at the same time to generate the same Tailwind CSS. Multi-end frameworks such as Taro H5, uni-app H5, Mpx Web, Weapp-vite Web, etc. will automatically switch to the `web` target according to environment variables; explicit configuration is recommended for custom web builds or pure Vite projects. For more target judgment rules, see [Cross-multi-terminal development CSS compatibility] (/docs/multi-platform).
+
+Runnable Generic Vite, uni-app, Taro, and weapp-vite examples are available in the [repository canonical templates](https://github.com/weapp-tailwindcss/weapp-tailwindcss/tree/main/templates). See the [support matrix](/docs/reference/support-matrix) for build and HMR evidence.

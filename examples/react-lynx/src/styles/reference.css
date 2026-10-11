@@ -1,0 +1,5 @@
+@reference '../global.css';
+
+.lynx-reference {
+  @apply p-[16px];
+}

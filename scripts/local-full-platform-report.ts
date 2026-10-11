@@ -1,11 +1,17 @@
+import type { CoverageEvidence, CoverageResultStatus } from '../e2e/coverageReport'
 import type { DemoCoverageEntry, DemoCoverageStatus, DemoPlatformCoverage } from '../e2e/demoCoverageMatrix'
 import type { DemoE2eMemorySample, DemoE2eMemoryStepReport } from './demo-e2e-memory'
 import { spawn } from 'node:child_process'
 import { copyFile, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
+import { fileURLToPath } from 'node:url'
+import { collectCoverageIdentity } from '../e2e/coverageIdentity'
+import { createCoverageReport, readCommittedCompatibilityEvidence } from '../e2e/coverageReport'
 import { DEMO_COVERAGE_MATRIX } from '../e2e/demoCoverageMatrix'
 import { createDemoE2eMemoryReport, sampleProcessTree, summarizeMemorySamples } from './demo-e2e-memory'
+import { formatWorkflowError, runWithCleanup } from './e2e-preflight/cleanup'
+import { enterFullTestGate } from './e2e-preflight/gate'
 
 type StepStatus = 'passed' | 'failed' | 'skipped'
 
@@ -13,7 +19,6 @@ interface LocalFullRunStep {
   name: string
   command: string[]
   env?: Record<string, string>
-  optional?: boolean
   metric?: StepMetric
   artifactFiles?: Array<{
     from: string
@@ -143,7 +148,7 @@ const DEFAULT_PLATFORM_BUILD_CASES = [
 const DEFAULT_PLATFORM_REPORT_CASES = [
   ...DEFAULT_PLATFORM_BUILD_CASES,
   'uni-app-vite-vue3-hbuilderx-tailwindcss-v4',
-  'uni-app-x-hbuilderx-tailwindcss-v4',
+  'uni-app-x-vdom-tailwindcss-v4',
 ]
 const DEFAULT_H5_DEV_CASES = [
   'uni-app-vite-tailwindcss-v4',
@@ -207,7 +212,7 @@ function buildProfileSteps(profile: string): LocalFullRunStep[] {
   const miniCases = selectedCases('LOCAL_FULL_REPORT_MINI_CASES', DEFAULT_MINI_CASES)
   const hbuilderxCases = selectedCases('LOCAL_FULL_REPORT_HBUILDERX_CASES', [
     'uni-app-vite-vue3-hbuilderx-tailwindcss-v4',
-    'uni-app-x-hbuilderx-tailwindcss-v4',
+    'uni-app-x-vdom-tailwindcss-v4',
   ])
   const weappMemoryStage = profile === 'hmr-smoke' ? ['--stage', 'hmr'] : []
 
@@ -222,6 +227,8 @@ function buildProfileSteps(profile: string): LocalFullRunStep[] {
       env: {
         DEMO_WEAPP_MEMORY_CASE: miniCases.join(','),
         WEAPP_TW_HMR_MEMORY_DEBUG: '1',
+        // 本机全端报告与 CI watch 矩阵使用同一插件处理预算，避免把平台启动/编译开销误判为产品回归。
+        E2E_WATCH_MAX_PLUGIN_PROCESS_MS: process.env.E2E_WATCH_MAX_PLUGIN_PROCESS_MS ?? '6000',
         ...(fastHmr ? { E2E_WATCH_MAIN_STYLE_ONLY: '1' } : {}),
       },
       artifactFiles: [
@@ -251,7 +258,6 @@ function buildProfileSteps(profile: string): LocalFullRunStep[] {
     {
       name: 'visual-weapp-h5-app',
       command: ['pnpm', 'exec', 'tsx', 'scripts/demo-visual-e2e-report.ts', '--fail-on-incomplete'],
-      optional: true,
       artifactGlobs: [
         {
           fromDir: 'e2e/.artifacts/demo-visual/full',
@@ -265,19 +271,16 @@ function buildProfileSteps(profile: string): LocalFullRunStep[] {
       name: 'hbuilderx-android',
       command: ['pnpm', 'e2e:hbuilderx:local:android'],
       env: caseEnv('E2E_HBUILDERX_CASE', hbuilderxCases),
-      optional: true,
     },
     {
       name: 'hbuilderx-ios',
       command: ['pnpm', 'e2e:hbuilderx:local:ios'],
       env: caseEnv('E2E_HBUILDERX_CASE', hbuilderxCases),
-      optional: true,
     },
     {
       name: 'hbuilderx-harmony',
       command: ['pnpm', 'e2e:hbuilderx:local:harmony'],
       env: caseEnv('E2E_HBUILDERX_CASE', hbuilderxCases),
-      optional: true,
     },
   ]
 
@@ -400,7 +403,7 @@ async function copyArtifactGlobSince(root: string, glob: NonNullable<LocalFullRu
   return copied
 }
 
-async function runMeasuredStep(step: LocalFullRunStep, outputDir: string): Promise<StepReport> {
+async function runMeasuredStep(step: LocalFullRunStep, outputDir: string, preflightEnv: Record<string, string> = {}): Promise<StepReport> {
   const startedAt = new Date()
   const startedAtMs = startedAt.getTime()
   const samples: DemoE2eMemorySample[] = []
@@ -411,6 +414,7 @@ async function runMeasuredStep(step: LocalFullRunStep, outputDir: string): Promi
     env: {
       ...process.env,
       ...(step.env ?? {}),
+      ...preflightEnv,
     },
     shell: process.platform === 'win32',
     stdio: 'inherit',
@@ -455,9 +459,7 @@ async function runMeasuredStep(step: LocalFullRunStep, outputDir: string): Promi
     }
     catch (error) {
       copiedArtifacts.push(`missing:${artifact.from}`)
-      if (!step.optional) {
-        process.stderr.write(`[local-full-report] artifact missing for ${step.name}: ${artifact.from}\n`)
-      }
+      process.stderr.write(`[local-full-report] artifact missing for ${step.name}: ${artifact.from}\n`)
       if (error instanceof Error) {
         process.stderr.write(`[local-full-report] ${error.message}\n`)
       }
@@ -786,9 +788,10 @@ function renderMarkdown(report: LocalFullRunReport) {
     '',
     '- 该报告统计本机命令进程树 RSS，不包含已在命令外常驻的 IDE/模拟器进程。',
     '- 全端平台数据来自覆盖矩阵、weapp memory summary、HMR full report 与本脚本的 per-platform build step；没有实测的 local/optional 平台会保留为 local/not-run/exempt。',
+    '- `coverage-report.json` 使用 coverage-report.v3 契约记录每个 cell 的 executor、evidence schema、状态、checkout identity 和 required 未验证数量；blocked/not-run 不计为通过。',
     '- runtime/HMR 列既承载真实端到端 HMR 数据，也承载 H5 dev CSS 运行态验证数据；source/note 会标明具体来源。',
     '- HMR 细分耗时请看同目录下复制或生成的 HMR report；端到端 HMR、H5 dev 运行态耗时与插件处理耗时是不同口径。',
-    '- optional step 失败会保留在报告中，便于说明本机缺少 SDK/设备/IDE 时的覆盖边界。',
+    '- full 模式必须先通过全部环境预检；必需平台失败立即停止，不按 optional 放行。',
     '',
   )
   return `${lines.join('\n')}\n`
@@ -803,55 +806,106 @@ async function writeReport(report: LocalFullRunReport, outputDir: string) {
   await mkdir(outputDir, { recursive: true })
   await writeFile(path.join(outputDir, 'summary.json'), `${JSON.stringify(nextReport, null, 2)}\n`, 'utf8')
   await writeFile(path.join(outputDir, 'README.md'), renderMarkdown(nextReport), 'utf8')
+  const evidence: CoverageEvidence[] = []
+  for (const item of platformReports) {
+    const cellId = `demo/${item.project}:${item.platform}`
+    const status = (value: PlatformMeasuredMetric['status']): CoverageResultStatus => {
+      if (value === 'passed') {
+        return 'passed'
+      }
+      if (value === 'failed') {
+        return 'failed'
+      }
+      if (value === 'not-run') {
+        return 'blocked'
+      }
+      if (value === 'exempt') {
+        return 'not-applicable'
+      }
+      return 'blocked'
+    }
+    const build = item.build
+    evidence.push({
+      cellId,
+      layer: 'static',
+      status: status(build.status),
+      executor: build.source ?? 'local-full-report',
+      evidenceSchema: 'demo-static-v1',
+      ...(build.reason ? { reason: build.reason } : {}),
+    })
+    const hmr = item.hmr
+    evidence.push({
+      cellId,
+      layer: 'hmr',
+      status: status(hmr.status),
+      executor: hmr.source ?? 'local-full-report',
+      evidenceSchema: 'demo-hmr-v1',
+      ...(hmr.reason ? { reason: hmr.reason } : {}),
+    })
+  }
+  evidence.push(...await readCommittedCompatibilityEvidence(process.cwd()))
+  const coverageReport = createCoverageReport(evidence, 'local', undefined, {
+    identity: await collectCoverageIdentity(process.cwd()),
+  })
+  await writeFile(path.join(outputDir, 'coverage-report.json'), `${JSON.stringify(coverageReport, null, 2)}\n`, 'utf8')
 }
 
-async function main() {
+export async function runLocalFullPlatformReport() {
   const profile = getArgValue('--profile') ?? process.env['LOCAL_FULL_REPORT_PROFILE'] ?? 'full'
-  const timestamp = getArgValue('--timestamp') ?? formatTimestamp()
-  const outputRoot = getArgValue('--out-root') ?? DEFAULT_OUT_ROOT
-  const outputDir = path.resolve(outputRoot, timestamp)
-  const stopOnFailure = hasFlag('--fail-fast')
-  const steps = buildProfileSteps(profile)
-  const reports: StepReport[] = []
+  if (!['full', 'smoke', 'hmr-smoke'].includes(profile)) {
+    throw new Error(`未知报告 profile：${profile}`)
+  }
+  const gate = profile === 'full' ? await enterFullTestGate(getArgValue('--preflight-report')) : undefined
+  await runWithCleanup(async () => {
+    const timestamp = getArgValue('--timestamp') ?? formatTimestamp()
+    const outputRoot = getArgValue('--out-root') ?? DEFAULT_OUT_ROOT
+    const outputDir = path.resolve(outputRoot, timestamp)
+    const stopOnFailure = profile === 'full' || hasFlag('--fail-fast')
+    const steps = buildProfileSteps(profile)
+    const reports: StepReport[] = []
 
-  await mkdir(outputDir, { recursive: true })
-  for (const step of steps) {
-    const report = await runMeasuredStep(step, outputDir)
-    reports.push(report)
-    await writeReport({
+    await mkdir(outputDir, { recursive: true })
+    for (const step of steps) {
+      await gate?.check(step.name)
+      const report = await runMeasuredStep(step, outputDir, gate?.env)
+      reports.push(report)
+      await writeReport({
+        generatedAt: new Date().toISOString(),
+        repositoryRoot: process.cwd(),
+        profile,
+        steps: reports,
+        platformReports: [],
+        summary: summarizeSteps(reports),
+      }, outputDir)
+      if (report.status === 'failed' && stopOnFailure) {
+        break
+      }
+    }
+
+    const report: LocalFullRunReport = {
       generatedAt: new Date().toISOString(),
       repositoryRoot: process.cwd(),
       profile,
       steps: reports,
       platformReports: [],
       summary: summarizeSteps(reports),
-    }, outputDir)
-    if (report.status === 'failed' && stopOnFailure && !step.optional) {
-      break
     }
-  }
+    await writeReport(report, outputDir)
 
-  const report: LocalFullRunReport = {
-    generatedAt: new Date().toISOString(),
-    repositoryRoot: process.cwd(),
-    profile,
-    steps: reports,
-    platformReports: [],
-    summary: summarizeSteps(reports),
-  }
-  await writeReport(report, outputDir)
+    const readme = path.join(outputDir, 'README.md')
+    process.stdout.write(`[local-full-report] report written: ${path.relative(process.cwd(), readme)}\n`)
 
-  const readme = path.join(outputDir, 'README.md')
-  process.stdout.write(`[local-full-report] report written: ${path.relative(process.cwd(), readme)}\n`)
-
-  if (reports.some(step => step.status === 'failed' && !steps.find(item => item.name === step.name)?.optional)) {
-    process.exitCode = 1
-  }
+    const failedSteps = reports.filter(step => step.status === 'failed')
+    if (failedSteps.length) {
+      const reason = failedSteps.map(step => `${step.name} failed with exit=${step.exitCode}${step.reason ? `: ${step.reason}` : ''}`).join('; ')
+      throw Object.assign(new Error(`[local-full-report] ${reason}；报告：${readme}`), { stepReports: failedSteps })
+    }
+  }, () => gate?.close())
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch((error) => {
-    process.stderr.write(`${error instanceof Error ? error.stack ?? error.message : String(error)}\n`)
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  runLocalFullPlatformReport().catch((error) => {
+    process.stderr.write(`${formatWorkflowError(error)}\n`)
     process.exitCode = 1
   })
 }

@@ -1,0 +1,10 @@
+<template>
+  <view id="issue-1164-author" class="author" style="background-color: #ff7a00; height: 100px; width: 100%;">
+    <text style="color: #ffffff;">author</text>
+    <view style="background-color: #f21903; height: 48px; width: 48px; border-radius: 9999px;" />
+  </view>
+</template>
+<style lang="scss" scoped>
+//
+.author { padding: 8px; }
+</style>

@@ -5,7 +5,7 @@ import MagicString from 'magic-string'
 import { createAttributeMatcher } from '../custom-attributes'
 import { templateReplacer } from './template-fragments'
 
-export async function customTemplateHandler(rawSource: string, options: Required<ITemplateHandlerOptions>, cachedMatcher?: AttributeMatcher | undefined) {
+export async function customTemplateHandler(rawSource: string, options: ITemplateHandlerOptions, cachedMatcher?: AttributeMatcher | undefined) {
   const {
     customAttributesEntities = [],
     disabledDefaultTemplateHandler,

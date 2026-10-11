@@ -6,6 +6,9 @@ export default defineConfig({
   format: ['cjs', 'esm'],
   clean: true,
   dts: true,
+  deps: {
+    resolveDepSubpath: true,
+  },
   target: ['es2021'],
   outExtensions({ format }) {
     return {

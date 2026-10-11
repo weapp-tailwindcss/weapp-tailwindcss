@@ -44,6 +44,40 @@ interface ProcessJsBundleEntryOptions {
   useIncrementalMode: boolean
 }
 
+interface ReplayCleanJsBundleEntryOptions {
+  cache: GenerateBundleContext['opts']['cache']
+  debug: GenerateBundleContext['debug']
+  entry: BundleStateEntry
+  metrics: BundleMetrics
+  rememberProcessCacheKey: (cacheKey: string, hashKey?: string | number) => void
+  snapshot: BundleSnapshot
+  transformFilterSignature: string
+  transformRuntimeSignature: string
+  useIncrementalMode: boolean
+}
+
+/** 在增量构建中直接回放 clean chunk，避免创建完整 JS 处理任务。 */
+export function replayCleanJsBundleEntry(options: ReplayCleanJsBundleEntryOptions) {
+  const { cache, debug, entry, metrics, rememberProcessCacheKey, snapshot, transformFilterSignature, transformRuntimeSignature, useIncrementalMode } = options
+  if (!useIncrementalMode || entry.output.type !== 'chunk' || snapshot.processFiles.js.has(entry.file)) {
+    return false
+  }
+  const hashKey = `${entry.file}:js`
+  const sourceHash = snapshot.sourceHashByFile.get(entry.file) ?? cache.computeHash(entry.source)
+  const processHash = `${sourceHash}:${transformRuntimeSignature}:transform-filter:${transformFilterSignature}`
+  rememberProcessCacheKey(entry.file, hashKey)
+  const cachedHash = cache.getHashValue(hashKey)
+  const cachedCode = cachedHash?.hash === processHash ? cache.get<string>(entry.file) : undefined
+  if (cachedCode === undefined) {
+    return false
+  }
+  entry.output.code = cachedCode
+  metrics.js.total++
+  metrics.js.cacheHits++
+  debug('js direct replay hit (planned clean): %s', entry.file)
+  return true
+}
+
 export function processJsBundleEntry(options: ProcessJsBundleEntryOptions) {
   const {
     applyLinkedUpdates,

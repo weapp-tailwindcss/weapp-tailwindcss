@@ -1,15 +1,24 @@
 import postcss from 'postcss'
 
-export function collectEmptyBlockAtRules(source: string) {
+function isKeyframeStepRule(rule: postcss.Rule) {
+  return rule.parent?.type === 'atrule' && rule.parent.name.toLowerCase().endsWith('keyframes')
+}
+
+export function collectEmptyCssBlocks(source: string) {
   try {
     const root = postcss.parse(source)
-    const emptyAtRules: string[] = []
-    root.walkAtRules((atRule) => {
-      if (atRule.nodes !== undefined && atRule.nodes.every(node => node.type === 'comment')) {
-        emptyAtRules.push(atRule.toString())
+    const emptyBlocks: string[] = []
+    root.walk((node) => {
+      if (
+        (node.type === 'atrule' || node.type === 'rule')
+        && node.nodes !== undefined
+        && node.nodes.every(child => child.type === 'comment')
+        && (node.type !== 'rule' || !isKeyframeStepRule(node))
+      ) {
+        emptyBlocks.push(node.toString())
       }
     })
-    return emptyAtRules
+    return emptyBlocks
   }
   catch {
     return []

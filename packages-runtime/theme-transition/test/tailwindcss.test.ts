@@ -104,6 +104,12 @@ describe('tailwindcss', () => {
     expect(css).toContain('[data-theme-transition="to-dark"]::view-transition-new(root)')
     expect(css).toContain('[data-theme-transition="from-dark"]::view-transition-old(root)')
     expect(css).toContain('var(--theme-transition-radius)')
+    expect(css).toContain('[data-theme-transition-preset="circle"]')
+    expect(css).toContain('[data-theme-transition-preset="fade"]')
+    expect(css).toContain('[data-theme-transition-preset="wipe"]')
+    expect(css).toContain('[data-theme-transition-preset="slide"]')
+    expect(css).toContain('inset(0 0 0 100%)')
+    expect(css).toContain('translate3d(16px, 0, 0)')
   })
 
   it('themeTransitionPlugin darkMode selector case 0', async () => {

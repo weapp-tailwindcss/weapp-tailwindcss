@@ -1,0 +1,17 @@
+{
+  "references": [
+    {
+      "path": "./.weapp-vite/tsconfig.app.json"
+    },
+    {
+      "path": "./.weapp-vite/tsconfig.server.json"
+    },
+    {
+      "path": "./.weapp-vite/tsconfig.node.json"
+    },
+    {
+      "path": "./.weapp-vite/tsconfig.shared.json"
+    }
+  ],
+  "files": []
+}

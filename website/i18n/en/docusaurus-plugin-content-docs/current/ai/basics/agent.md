@@ -1,14 +1,13 @@
 ---
 sidebar: aiSidebar
 title: AI Agent
-description: '1. **Perceive** (Perceive): Obtain environmental information'
+description: 'AI Agent: Current concepts, configuration guidance, and practical examples for weapp-tailwindcss users.'
 keywords:
   - AI programming
   - LLM
   - Workflow
   - AI
   - Agent
-  - agent
   - basics
   - weapp-tailwindcss
   - tailwindcss
@@ -16,6 +15,10 @@ keywords:
   - WeChat applet
   - uni-app
   - taro
+  - AI coding
+  - Tailwind CSS 4
+  - cross-platform
+  - mini app
 ---
 
 #AI Agent

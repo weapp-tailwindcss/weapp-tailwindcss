@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises'
+import path from 'node:path'
 import process from 'node:process'
-import path from 'pathe'
+import ts from 'typescript'
 import { readUtf8 } from '../../e2e/hbuilderx-local/process.ts'
 
 export interface StyleIsolationVariant {
@@ -36,112 +37,59 @@ export async function writeStyleIsolationVariantManifest(projectRoot: string, va
   await writeManifest(projectRoot, next)
 }
 
-function setStyleIsolationVersion(source: string, version: '2') {
-  const property = findUniAppXObject(source)
+function findUniAppXObject(source: string) {
+  const document = ts.parseJsonText('manifest.json', source)
+  const statement = document.statements[0]
+  if (!statement || !ts.isExpressionStatement(statement) || !ts.isObjectLiteralExpression(statement.expression)) {
+    return undefined
+  }
+  const property = statement.expression.properties.find(item =>
+    ts.isPropertyAssignment(item) && ts.isStringLiteral(item.name) && item.name.text === 'uni-app-x',
+  )
+  if (!property || !ts.isPropertyAssignment(property) || !ts.isObjectLiteralExpression(property.initializer)) {
+    return undefined
+  }
+  return { document, object: property.initializer }
+}
+
+function removeStyleIsolationVersion(source: string): string {
+  const parsed = findUniAppXObject(source)
+  if (!parsed) {
+    return source
+  }
+  const { document, object } = parsed
+  const property = object.properties.find(item =>
+    ts.isPropertyAssignment(item) && ts.isStringLiteral(item.name) && item.name.text === 'styleIsolationVersion',
+  )
   if (!property) {
     return source
   }
-  const body = removeStyleIsolationVersion(source.slice(property.openBraceIndex + 1, property.closeBraceIndex)).replace(/^\s*,\s*$/m, '')
-  const lineStart = source.lastIndexOf('\n', property.keyIndex)
-  const indent = source.slice(lineStart + 1, property.keyIndex).replace(/[^\t ]/g, '') || '\t'
+  // 只移除目标对象的直接属性；注释和条件指令不属于属性或逗号 token。
+  const children = object.getChildren(document).find(item => item.kind === ts.SyntaxKind.SyntaxList)!.getChildren(document)
+  const index = children.indexOf(property)
+  const comma = [children[index + 1], children[index - 1]].find(item => item?.kind === ts.SyntaxKind.CommaToken)
+  const edits = [property, ...comma ? [comma] : []].sort((a, b) => b.pos - a.pos)
+  for (const item of edits) {
+    source = source.slice(0, item.getStart(document)) + source.slice(item.end)
+  }
+  return removeStyleIsolationVersion(source)
+}
+
+function setStyleIsolationVersion(source: string, version: '2') {
+  source = removeStyleIsolationVersion(source)
+  const parsed = findUniAppXObject(source)
+  if (!parsed) {
+    return source
+  }
+  const { document, object } = parsed
+  const open = object.getStart(document)
+  const close = object.end - 1
+  const lineStart = source.lastIndexOf('\n', open)
+  const indent = source.slice(lineStart + 1, open).match(/^[\t ]*/)?.[0] ?? ''
   const childIndent = `${indent}\t`
-  const trimmedBody = body.trim()
-  const separator = trimmedBody.length > 0 && !trimmedBody.endsWith(',') ? ',' : ''
-  const nextBody = trimmedBody.length > 0
-    ? `\n${body.trimEnd()}${separator}\n${childIndent}"styleIsolationVersion": "${version}"\n${indent}`
-    : `\n${childIndent}"styleIsolationVersion": "${version}"\n${indent}`
-  return `${source.slice(0, property.openBraceIndex + 1)}${nextBody}${source.slice(property.closeBraceIndex)}`
-}
-
-function removeStyleIsolationVersion(source: string) {
-  return source
-    .replace(/\n[ \t]*"styleIsolationVersion"\s*:\s*"2"\s*,?/g, '')
-    .replace(/,\s*(\n[ \t]*\})/g, '$1')
-}
-
-function findUniAppXObject(source: string) {
-  const key = '"uni-app-x"'
-  const keyIndex = source.indexOf(key)
-  if (keyIndex < 0) {
-    return undefined
-  }
-  const colonIndex = source.indexOf(':', keyIndex + key.length)
-  if (colonIndex < 0) {
-    return undefined
-  }
-  const openBraceIndex = source.indexOf('{', colonIndex + 1)
-  if (openBraceIndex < 0) {
-    return undefined
-  }
-  const closeBraceIndex = findMatchingBrace(source, openBraceIndex)
-  if (closeBraceIndex < 0) {
-    return undefined
-  }
-  return {
-    closeBraceIndex,
-    keyIndex,
-    openBraceIndex,
-  }
-}
-
-function findMatchingBrace(source: string, openBraceIndex: number) {
-  let depth = 0
-  let quote: '"' | '\'' | undefined
-  let inLineComment = false
-  let inBlockComment = false
-
-  for (let i = openBraceIndex; i < source.length; i++) {
-    const char = source[i]
-    const next = source[i + 1]
-
-    if (inLineComment) {
-      if (char === '\n') {
-        inLineComment = false
-      }
-      continue
-    }
-    if (inBlockComment) {
-      if (char === '*' && next === '/') {
-        inBlockComment = false
-        i++
-      }
-      continue
-    }
-    if (quote) {
-      if (char === '\\') {
-        i++
-        continue
-      }
-      if (char === quote) {
-        quote = undefined
-      }
-      continue
-    }
-    if (char === '/' && next === '/') {
-      inLineComment = true
-      i++
-      continue
-    }
-    if (char === '/' && next === '*') {
-      inBlockComment = true
-      i++
-      continue
-    }
-    if (char === '"' || char === '\'') {
-      quote = char
-      continue
-    }
-    if (char === '{') {
-      depth++
-      continue
-    }
-    if (char === '}') {
-      depth--
-      if (depth === 0) {
-        return i
-      }
-    }
-  }
-
-  return -1
+  const body = source.slice(open + 1, close).trim()
+  // 新属性位于条件块之前，避免被条件编译移除或被末尾行注释吞掉分隔符。
+  const separator = object.properties.length ? ',' : ''
+  const nextBody = `\n${childIndent}"styleIsolationVersion": "${version}"${separator}\n${body ? `${childIndent}${body}\n` : ''}${indent}`
+  return source.slice(0, open + 1) + nextBody + source.slice(close)
 }

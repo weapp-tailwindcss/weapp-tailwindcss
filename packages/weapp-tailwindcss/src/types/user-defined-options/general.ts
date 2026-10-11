@@ -2,7 +2,7 @@ import type { ParserOptions } from '@babel/parser'
 import type { CssOptions, LoadedPostcssOptions } from '@weapp-tailwindcss/postcss/types'
 import type { ICreateCacheReturnType } from '../../cache'
 import type { WeappTailwindcssGeneratorUserOptions } from '../../generator'
-import type { WeappTailwindcssStyleInjectorUserOptions } from '../../style-injector/internal'
+import type { WeappTailwindcssStyleInjectorUserOptions } from '../../style-injector/options'
 import type { AppType, IArbitraryValues, IUnocssCompatibilityOptions } from '../shared'
 import type { LengthUnitsRuntimeOptions, TailwindCssRuntimeOptions } from '@/tailwindcss/runtime-types'
 
@@ -19,7 +19,7 @@ export interface UserDefinedOptionsGeneralPart {
    * @group 0.重要配置
    * @see https://github.com/sonofmagic/weapp-tailwindcss/issues/110
    * @remarks
-   * TailwindCSS 3.2.0 起对任意值执行长度单位校验，会将未声明的 `rpx` 识别为颜色。本选项默认开启，并由构建运行时自动接管。
+   * Tailwind CSS v4 会对任意值执行类型推断，未声明的 `rpx` 可能被识别为颜色。本选项默认开启，并由构建运行时自动接管。
    */
   supportCustomLengthUnits?: LengthUnitsRuntimeOptions | boolean | undefined
 

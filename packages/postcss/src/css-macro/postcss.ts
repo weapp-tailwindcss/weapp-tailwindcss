@@ -1,4 +1,5 @@
-import type { AtRule, Helpers, PluginCreator, Rule } from 'postcss'
+import type { AtRule, Helpers, Plugin, PluginCreator, Rule } from 'postcss'
+import { registerPurePluginPreparation } from '../plugin-cache-policy'
 import { ifdef, ifdefAtRule, ifndef, ifndefAtRule, matchCustomPropertyFromValue, parseConditionalAtRuleParam } from './constants'
 
 const IFDEF_ENDIF_RE = /#(?:ifn?def|endif)/
@@ -21,151 +22,152 @@ function cloneConditionalNodes(atRule: AtRule) {
   return nodes
 }
 
-const creator: PluginCreator<Options> = () => {
-  return {
-    postcssPlugin: CSS_MACRO_POSTCSS_PLUGIN_NAME,
-    prepare() {
-      function replaceAtRuleWithConditionalComments(
-        atRule: AtRule,
-        helper: Helpers,
-        comment: ReturnType<typeof ifdef>,
-      ) {
-        const hasPreviousNode = Boolean(atRule.prev())
-        const clonedNodes = cloneConditionalNodes(atRule)
-        const startComment = helper.comment({
-          raws: {
-            left: CONDITIONAL_COMMENT_SPACING,
-            right: CONDITIONAL_COMMENT_SPACING,
-          },
-          text: comment.start,
-        })
-        const endComment = helper.comment({
-          raws: {
-            left: CONDITIONAL_COMMENT_SPACING,
-            right: CONDITIONAL_COMMENT_SPACING,
-          },
-          text: comment.end,
-        })
-        const nextNodes = [
-          startComment,
-          ...clonedNodes,
-          endComment,
-        ]
-        atRule.replaceWith(nextNodes)
+const implementation: Plugin = {
+  postcssPlugin: CSS_MACRO_POSTCSS_PLUGIN_NAME,
+  prepare() {
+    function replaceAtRuleWithConditionalComments(
+      atRule: AtRule,
+      helper: Helpers,
+      comment: ReturnType<typeof ifdef>,
+    ) {
+      const hasPreviousNode = Boolean(atRule.prev())
+      const clonedNodes = cloneConditionalNodes(atRule)
+      const startComment = helper.comment({
+        raws: {
+          left: CONDITIONAL_COMMENT_SPACING,
+          right: CONDITIONAL_COMMENT_SPACING,
+        },
+        text: comment.start,
+      })
+      const endComment = helper.comment({
+        raws: {
+          left: CONDITIONAL_COMMENT_SPACING,
+          right: CONDITIONAL_COMMENT_SPACING,
+        },
+        text: comment.end,
+      })
+      const nextNodes = [
+        startComment,
+        ...clonedNodes,
+        endComment,
+      ]
+      atRule.replaceWith(nextNodes)
 
-        startComment.raws.before = hasPreviousNode ? '\n' : ''
-        startComment.raws['after'] = '\n'
-        if (clonedNodes[0]) {
-          clonedNodes[0].raws.before = '\n'
-        }
-        endComment.raws.before = '\n'
-        endComment.raws['after'] = '\n'
+      startComment.raws.before = hasPreviousNode ? '\n' : ''
+      startComment.raws['after'] = '\n'
+      if (clonedNodes[0]) {
+        clonedNodes[0].raws.before = '\n'
+      }
+      endComment.raws.before = '\n'
+      endComment.raws['after'] = '\n'
 
-        const nextNode = endComment?.next()
-        if (nextNode) {
-          nextNode.raws.before = '\n'
-        }
+      const nextNode = endComment?.next()
+      if (nextNode) {
+        nextNode.raws.before = '\n'
+      }
+    }
+
+    function replaceNestedAtRuleWithConditionalRule(
+      atRule: AtRule,
+      helper: Helpers,
+      comment: ReturnType<typeof ifdef>,
+    ) {
+      if (atRule.parent?.type !== 'rule') {
+        return false
       }
 
-      function replaceNestedAtRuleWithConditionalRule(
-        atRule: AtRule,
-        helper: Helpers,
-        comment: ReturnType<typeof ifdef>,
-      ) {
-        if (atRule.parent?.type !== 'rule') {
-          return false
-        }
+      const parentRule = atRule.parent as Rule
+      const clonedNodes = cloneConditionalNodes(atRule)
+      const conditionalRule = parentRule.clone()
+      conditionalRule.removeAll()
+      conditionalRule.append(...clonedNodes)
 
-        const parentRule = atRule.parent as Rule
-        const clonedNodes = cloneConditionalNodes(atRule)
-        const conditionalRule = parentRule.clone()
-        conditionalRule.removeAll()
-        conditionalRule.append(...clonedNodes)
+      const startComment = helper.comment({
+        raws: {
+          left: CONDITIONAL_COMMENT_SPACING,
+          right: CONDITIONAL_COMMENT_SPACING,
+        },
+        text: comment.start,
+      })
+      const endComment = helper.comment({
+        raws: {
+          left: CONDITIONAL_COMMENT_SPACING,
+          right: CONDITIONAL_COMMENT_SPACING,
+        },
+        text: comment.end,
+      })
+      const nextNodes = [
+        startComment,
+        conditionalRule,
+        endComment,
+      ]
+      const hasPreviousNode = Boolean(parentRule.prev())
 
-        const startComment = helper.comment({
-          raws: {
-            left: CONDITIONAL_COMMENT_SPACING,
-            right: CONDITIONAL_COMMENT_SPACING,
-          },
-          text: comment.start,
-        })
-        const endComment = helper.comment({
-          raws: {
-            left: CONDITIONAL_COMMENT_SPACING,
-            right: CONDITIONAL_COMMENT_SPACING,
-          },
-          text: comment.end,
-        })
-        const nextNodes = [
-          startComment,
-          conditionalRule,
-          endComment,
-        ]
-        const hasPreviousNode = Boolean(parentRule.prev())
-
-        atRule.remove()
-        if ((parentRule.nodes?.length ?? 0) === 0) {
-          parentRule.replaceWith(nextNodes)
-        }
-        else {
-          parentRule.after(nextNodes)
-        }
-
-        startComment.raws.before = hasPreviousNode ? '\n' : ''
-        startComment.raws['after'] = '\n'
-        conditionalRule.raws.before = '\n'
-        endComment.raws.before = '\n'
-        endComment.raws['after'] = '\n'
-
-        const nextNode = endComment.next()
-        if (nextNode) {
-          nextNode.raws.before = '\n'
-        }
-
-        return true
+      atRule.remove()
+      if ((parentRule.nodes?.length ?? 0) === 0) {
+        parentRule.replaceWith(nextNodes)
+      }
+      else {
+        parentRule.after(nextNodes)
       }
 
-      return {
-        AtRule(atRule, helper) {
-          if (atRule.name === ifdefAtRule || atRule.name === ifndefAtRule) {
-            const text = parseConditionalAtRuleParam(atRule.params)
-            const comment = atRule.name === ifndefAtRule ? ifndef(text) : ifdef(text)
+      startComment.raws.before = hasPreviousNode ? '\n' : ''
+      startComment.raws['after'] = '\n'
+      conditionalRule.raws.before = '\n'
+      endComment.raws.before = '\n'
+      endComment.raws['after'] = '\n'
+
+      const nextNode = endComment.next()
+      if (nextNode) {
+        nextNode.raws.before = '\n'
+      }
+
+      return true
+    }
+
+    return {
+      AtRule(atRule, helper) {
+        if (atRule.name === ifdefAtRule || atRule.name === ifndefAtRule) {
+          const text = parseConditionalAtRuleParam(atRule.params)
+          const comment = atRule.name === ifndefAtRule ? ifndef(text) : ifdef(text)
+          if (replaceNestedAtRuleWithConditionalRule(atRule, helper, comment)) {
+            return
+          }
+          replaceAtRuleWithConditionalComments(atRule, helper, comment)
+          return
+        }
+
+        if (atRule.name === 'media') {
+          const values: string[] = []
+          matchCustomPropertyFromValue(atRule.params, (arr) => {
+            const value = arr[1]
+            if (value) {
+              values.push(value)
+            }
+          })
+          if (values.length > 0) {
+            const isNegative = atRule.params.includes('not')
+            const text = values.join(' ')
+            const comment = isNegative ? ifndef(text) : ifdef(text)
             if (replaceNestedAtRuleWithConditionalRule(atRule, helper, comment)) {
               return
             }
             replaceAtRuleWithConditionalComments(atRule, helper, comment)
-            return
           }
-
-          if (atRule.name === 'media') {
-            const values: string[] = []
-            matchCustomPropertyFromValue(atRule.params, (arr) => {
-              const value = arr[1]
-              if (value) {
-                values.push(value)
-              }
-            })
-            if (values.length > 0) {
-              const isNegative = atRule.params.includes('not')
-              const text = values.join(' ')
-              const comment = isNegative ? ifndef(text) : ifdef(text)
-              if (replaceNestedAtRuleWithConditionalRule(atRule, helper, comment)) {
-                return
-              }
-              replaceAtRuleWithConditionalComments(atRule, helper, comment)
-            }
-          }
-        },
-        CommentExit(comment) {
-          if (IFDEF_ENDIF_RE.test(comment.text)) {
-            comment.raws.left = CONDITIONAL_COMMENT_SPACING
-            comment.raws.right = CONDITIONAL_COMMENT_SPACING
-          }
-        },
-      }
-    },
-  }
+        }
+      },
+      CommentExit(comment) {
+        if (IFDEF_ENDIF_RE.test(comment.text)) {
+          comment.raws.left = CONDITIONAL_COMMENT_SPACING
+          comment.raws.right = CONDITIONAL_COMMENT_SPACING
+        }
+      },
+    }
+  },
 }
+
+registerPurePluginPreparation(CSS_MACRO_POSTCSS_PLUGIN_NAME, implementation.prepare!)
+const creator: PluginCreator<Options> = () => ({ ...implementation })
 
 creator.postcss = true
 

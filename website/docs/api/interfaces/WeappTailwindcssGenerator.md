@@ -39,6 +39,39 @@ weapp-tailwindcss 统一生成器实例。
 
 ***
 
+### source
+
+> **source**: `TailwindV4ResolvedSource`
+
+解析后的 Tailwind v4 source。
+
+#### cwd?
+
+> 可选 | **cwd**: `string`
+#### projectRoot
+
+> **projectRoot**: `string`
+#### cssSources?
+
+> 可选 | **cssSources**: `TailwindV4CssSource[]`
+#### sources?
+
+> 可选 | **sources**: `TailwindV4SourcePattern[]`
+
+***
+
+### dispose()?
+
+> 可选 | **dispose()**: `() => void`
+
+释放生成会话及其缓存。
+
+#### 返回
+
+`void`
+
+***
+
 ### loadDesignSystem()
 
 > **loadDesignSystem()**: `() => Promise<TailwindV4DesignSystem>`
@@ -62,24 +95,3 @@ weapp-tailwindcss 统一生成器实例。
 #### 返回
 
 `Promise<Set<string>>`
-
-***
-
-### source
-
-> **source**: `TailwindV4ResolvedSource`
-
-解析后的 Tailwind v4 source。
-
-#### cwd?
-
-> 可选 | **cwd**: `string`
-#### projectRoot
-
-> **projectRoot**: `string`
-#### cssSources?
-
-> 可选 | **cssSources**: `TailwindV4CssSource[]`
-#### sources?
-
-> 可选 | **sources**: `TailwindV4SourcePattern[]`

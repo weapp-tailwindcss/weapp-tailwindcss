@@ -6,6 +6,9 @@ export default defineConfig({
   clean: true,
   dts: true,
   shims: true,
+  deps: {
+    resolveDepSubpath: true,
+  },
   outExtensions({ format }) {
     return {
       js: format === 'es' ? '.mjs' : '.cjs',

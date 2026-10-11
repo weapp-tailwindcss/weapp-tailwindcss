@@ -1,4 +1,4 @@
-import 'react-native'
+import type {} from 'react-native'
 
 /** 供业务组件复用的 React Native className 属性。 */
 export interface NativeClassNameProps {

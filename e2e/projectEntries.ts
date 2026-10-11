@@ -83,8 +83,9 @@ export const E2E_PROJECTS = ([
     requiresHBuilderX: true,
   },
   {
-    name: 'uni-app-x-hbuilderx-tailwindcss-v4',
-    projectPath: 'uni-app-x-hbuilderx-tailwindcss-v4/unpackage/dist/dev/mp-weixin',
+    name: 'uni-app-x-vdom-tailwindcss-v4',
+    theme: { manualClass: 'dark_cbg-_b_h3498db_B', backgroundColor: [52, 152, 219], scrollContainer: '.content-scroll' },
+    projectPath: 'uni-app-x-vdom-tailwindcss-v4/unpackage/dist/dev/mp-weixin',
     cssFile: 'app.wxss',
     requiresHBuilderX: true,
   },
@@ -127,5 +128,16 @@ export function isE2EProjectSupportedOnPlatform(
   project: ProjectEntry,
   platform: NodeJS.Platform = process.platform,
 ) {
-  return !(project.requiresHBuilderX && platform === 'linux')
+  if (!project.requiresHBuilderX) {
+    return true
+  }
+
+  // Hosted runners do not provide HBuilderX. Keep the local macOS/Windows
+  // coverage available, while allowing workflows to explicitly skip these
+  // local-only projects without changing the matrix contract.
+  if (process.env['E2E_SKIP_HBUILDERX'] === '1') {
+    return false
+  }
+
+  return platform !== 'linux'
 }

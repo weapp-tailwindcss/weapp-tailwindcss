@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
+import { setTimeout as delay } from 'node:timers/promises'
 import { sleep } from './session'
 
 const CRLF_RE = /\r\n/g
@@ -94,11 +95,15 @@ export async function writeFilePreserveEol(
   options: {
     retries?: number
     retryDelayMs?: number
+    writeMode?: 'atomic-replace' | 'in-place'
+    /** 恢复已保存的原文时关闭换行归一化，保留混合换行。 */
+    normalizeEol?: boolean
   } = {},
 ) {
   const retries = options.retries ?? 12
   const retryDelayMs = options.retryDelayMs ?? 100
-  const alignedContent = alignContentEol(content, source)
+  const writeMode = options.writeMode ?? 'atomic-replace'
+  const alignedContent = options.normalizeEol === false ? content : alignContentEol(content, source)
 
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     const temporaryFile = path.join(
@@ -116,11 +121,20 @@ export async function writeFilePreserveEol(
       catch {
       }
 
-      await fs.writeFile(temporaryFile, alignedContent, {
-        encoding: 'utf8',
-        ...(previousMode == null ? {} : { mode: previousMode }),
-      })
-      await fs.rename(temporaryFile, file)
+      if (writeMode === 'in-place') {
+        await fs.writeFile(file, alignedContent, {
+          encoding: 'utf8',
+          flag: 'w',
+          ...(previousMode == null ? {} : { mode: previousMode }),
+        })
+      }
+      else {
+        await fs.writeFile(temporaryFile, alignedContent, {
+          encoding: 'utf8',
+          ...(previousMode == null ? {} : { mode: previousMode }),
+        })
+        await fs.rename(temporaryFile, file)
+      }
       const currentStats = await fs.stat(file)
       if (currentStats.mtimeMs <= previousMtime) {
         const nextMtime = new Date(previousMtime + 10)
@@ -138,6 +152,15 @@ export async function writeFilePreserveEol(
   }
 }
 
+/**
+ * 更新 dev server 正在监听的文件时保留文件身份，避免连续原子替换使 watcher 仍绑定旧文件。
+ */
+export async function writeWatchedFilePreserveEol(file: string, content: string, source: string) {
+  await writeFilePreserveEol(file, content, source, {
+    writeMode: 'in-place',
+  })
+}
+
 export async function waitFor(
   predicate: () => Promise<boolean> | boolean,
   options: {
@@ -145,17 +168,34 @@ export async function waitFor(
     pollMs: number
     message: string
     onTick?: () => void
+    signal?: AbortSignal | undefined
+    /** 多阶段等待共享的绝对截止，不为后续阶段重新分配预算。 */
+    deadlineAt?: number
   },
   startedAt = Date.now(),
 ) {
-  while (Date.now() - startedAt <= options.timeoutMs) {
+  const deadlineAt = Math.min(startedAt + options.timeoutMs, options.deadlineAt ?? Number.POSITIVE_INFINITY)
+  while (Date.now() <= deadlineAt) {
+    options.signal?.throwIfAborted()
     options.onTick?.()
-    if (await predicate()) {
+    const matched = await predicate()
+    options.signal?.throwIfAborted()
+    options.onTick?.()
+    if (Date.now() > deadlineAt) {
+      break
+    }
+    if (matched) {
       return Date.now() - startedAt
     }
-    options.onTick?.()
-    await sleep(options.pollMs)
+    try {
+      await delay(Math.min(options.pollMs, Math.max(0, deadlineAt - Date.now())), undefined, { signal: options.signal })
+    }
+    catch (error) {
+      options.signal?.throwIfAborted()
+      throw error
+    }
   }
+  options.signal?.throwIfAborted()
   throw new Error(options.message)
 }
 

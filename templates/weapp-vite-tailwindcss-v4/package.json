@@ -1,0 +1,24 @@
+{
+  "name": "weapp-vite-tailwindcss-v4",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Native WeChat Mini Program + weapp-vite + Tailwind CSS v4 canonical template",
+  "engines": {
+    "node": "^22.18.0 || >=24.11.0"
+  },
+  "scripts": {
+    "build": "weapp-vite build",
+    "dev": "weapp-vite dev",
+    "up:pkg": "pnpm up -rLi"
+  },
+  "dependencies": {
+    "@weapp-tailwindcss/merge": "^2.2.3",
+    "weapp-vite": "7.1.0"
+  },
+  "devDependencies": {
+    "tailwindcss": "^4.3.3",
+    "weapp-tailwindcss": "^5.5.5"
+  },
+  "packageManager": "pnpm@12.9.1"
+}

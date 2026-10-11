@@ -1,4 +1,4 @@
-import { escape as escapeClassName } from '@weapp-core/escape'
+import { escape as escapeClassName } from '@weapp-tailwindcss/escape'
 import { describe, expect, it } from 'vitest'
 import {
   create,
@@ -159,6 +159,19 @@ describe('merge behavior reference', () => {
     expect(merge('ring-[2rpx]', 'ring-[4rpx]', 'ring-[1rpx]', 'ring-red-500')).toBe(
       esc('ring-[1rpx] ring-red-500'),
     )
+  })
+
+  it('supports numeric-leading variants like 2xl: in miniprogram', () => {
+    // 场景 1: 转义类名输入（小程序运行时常态）
+    expect(merge('_2xl_cp-2 _2xl_cp-4')).toBe('_2xl_cp-4')
+
+    // 场景 2: 原始类名输入且数字变体不在首位
+    expect(merge('p-1 2xl:p-2 2xl:p-4')).toBe(`p-1 ${esc('2xl:p-4')}`)
+  })
+
+  it('supports whitespace-separated numeric-leading variants', () => {
+    expect(merge('_2xl_cp-2\t_2xl_cp-4')).toBe('_2xl_cp-4')
+    expect(merge('_2xl_cp-2\n_2xl_cp-4')).toBe('_2xl_cp-4')
   })
 })
 

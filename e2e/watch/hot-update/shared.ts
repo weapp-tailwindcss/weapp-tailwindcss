@@ -2,12 +2,16 @@ import type { ConcreteOrPlatformWatchCaseName, WatchCaseArtifacts } from '../../
 import type { PerformanceBudgetFailure } from './performance-confirmation'
 import fs from 'node:fs/promises'
 import process from 'node:process'
-import { execa } from 'execa'
 import path from 'pathe'
 import { expect } from 'vitest'
-import { buildCases, demoWatchShardCases, getBaseWatchCaseName, isDemoWatchShardName, isLocalOnlyWatchCase } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cases'
+import { buildCases, demoWatchShardCases, getBaseWatchCaseName, isDemoWatchShardName, isLocalOnlyWatchCase, pickCases } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cases'
+import { createWatchProcessEnv } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/environment'
 import { DEFAULT_PLUGIN_PROCESS_BUDGET_MS } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/types'
 import { assertDevHmrArtifactSnapshotGate } from '../../watchArtifactSnapshotGate'
+import { runWatchCommand } from './command'
+import { resolveWatchCommandTimeoutMs } from './command-budget'
+import { resolveWatchCommandScopes } from './command-scopes'
+import { assertIssue33SnapshotGate, listIssue33SnapshotEntries, readNewIssue33Snapshots } from './issue33-snapshot-gate'
 import {
   listWatchHmrFailureLogs,
   readNewPerformanceBudgetFailure,
@@ -408,7 +412,7 @@ const noApplyValidationCases = new Set<ConcreteWatchCaseName>([
 ])
 const noFunctionValidationCases = new Set<ConcreteWatchCaseName>([
   'mpx-tailwindcss-v4',
-  'uni-app-x-hbuilderx-tailwindcss-v4',
+  'uni-app-x-vdom-tailwindcss-v4',
   'taro-vite-react-tailwindcss-v4',
   'taro-webpack-react-tailwindcss-v4',
   'weapp-vite-tailwindcss-v4',
@@ -418,7 +422,7 @@ const referenceDirectiveRequiredCases = new Set<ConcreteWatchCaseName>([
   'mpx-tailwindcss-v4',
   'uni-app-vite-tailwindcss-v4',
   'uni-app-vite-vue3-hbuilderx-tailwindcss-v4',
-  'uni-app-x-hbuilderx-tailwindcss-v4',
+  'uni-app-x-vdom-tailwindcss-v4',
   'taro-vite-react-tailwindcss-v4',
   'taro-vite-vue3-tailwindcss-v4',
   'taro-webpack-react-tailwindcss-v4',
@@ -485,35 +489,6 @@ function toNumberEnv(name: string, fallback: number) {
   return Number.isFinite(numeric) ? numeric : fallback
 }
 
-function resolveSelectedWatchCaseCount(target: WatchCaseName) {
-  if (target === 'all') {
-    return configuredWatchCases.length
-  }
-
-  if (target === 'demo') {
-    return configuredWatchCases.filter(item => item.group === target).length
-  }
-
-  if (isDemoWatchShardName(target)) {
-    return demoWatchShardCases[target].length
-  }
-
-  if (target === 'both') {
-    return bothCases.size
-  }
-
-  if (configuredWatchCases.some(item => item.name === target)) {
-    return 1
-  }
-
-  return isLocalOnlyWatchCase(target) ? 1 : 0
-}
-
-function resolveDefaultWatchCommandTimeoutMs(target: WatchCaseName, timeoutMs: number) {
-  const selectedCaseCount = Math.max(1, resolveSelectedWatchCaseCount(target))
-  return Math.max(timeoutMs * selectedCaseCount + 180_000, 240_000)
-}
-
 function createReportFilePath(cwd: string, target: WatchCaseName) {
   const reportDir = path.resolve(cwd, './benchmark/e2e-watch-hmr')
   const timestamp = new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-')
@@ -554,7 +529,7 @@ export function resolveCaseName() {
     || value === 'mpx-tailwindcss-v4'
     || configuredWatchCaseNames.has(value as ConcreteWatchCaseName)
     || value === 'uni-app-vite-vue3-hbuilderx-tailwindcss-v4'
-    || value === 'uni-app-x-hbuilderx-tailwindcss-v4'
+    || value === 'uni-app-x-vdom-tailwindcss-v4'
     || value === 'weapp-vite-tailwindcss-v4'
     || value === 'both'
     || value === 'all'
@@ -619,20 +594,8 @@ async function runWatchHmrCommand(cwd: string, args: string[], commandTimeoutMs:
   const maxAttempts = Math.max(1, toNumberEnv('E2E_WATCH_MAX_ATTEMPTS', 2))
   const confirmPerformanceBudget = toBoolEnv('E2E_WATCH_CONFIRM_PERFORMANCE_BUDGET', false)
   const heartbeatIntervalMs = Math.max(30_000, toNumberEnv('E2E_WATCH_HEARTBEAT_INTERVAL_MS', 60_000))
-  const env = { ...process.env }
+  const env = createWatchProcessEnv(process.env)
   let performanceBudgetConfirmation: PerformanceBudgetFailure | undefined
-
-  for (const key of Object.keys(env)) {
-    if (key === 'VITEST' || key.startsWith('VITEST_')) {
-      delete env[key]
-    }
-  }
-  if (env.NODE_ENV === 'test') {
-    delete env.NODE_ENV
-  }
-  if (env.BABEL_ENV === 'test') {
-    delete env.BABEL_ENV
-  }
 
   for (let attempt = 1; attempt <= maxAttempts + 1; attempt += 1) {
     const failureLogsBeforeAttempt = confirmPerformanceBudget
@@ -648,14 +611,11 @@ async function runWatchHmrCommand(cwd: string, args: string[], commandTimeoutMs:
     }, heartbeatIntervalMs)
 
     try {
-      await execa('pnpm', args, {
+      await runWatchCommand({
+        args,
         cwd,
-        stdio: 'inherit',
         env,
-        extendEnv: false,
-        timeout: commandTimeoutMs,
-        killSignal: 'SIGKILL',
-        forceKillAfterDelay: 1000,
+        timeoutMs: commandTimeoutMs,
       })
       if (performanceBudgetConfirmation) {
         process.stdout.write(
@@ -711,11 +671,7 @@ async function runWatchHmrCommand(cwd: string, args: string[], commandTimeoutMs:
 }
 
 function expectStyleRollbackMetric(metric: StyleMutationMetric, message: string) {
-  if (metric.rollbackNeedleCleared === false) {
-    expect(metric.rollbackOutputMs, `${message} fallback rollback output latency should be recorded`).toBeGreaterThanOrEqual(0)
-    return
-  }
-
+  expect(metric.rollbackNeedleCleared, `${message} rollback marker clearance must be verified`).toBe(true)
   expect(metric.rollbackEffectiveMs, `${message} rollback marker clearance should be positive`).toBeGreaterThan(0)
 }
 
@@ -1123,6 +1079,19 @@ function assertMainStyleOnlyHotUpdateReport(report: HotUpdateReport, target: Wat
 }
 
 export function assertHotUpdateReport(report: HotUpdateReport, target: WatchCaseName, maxHotUpdateMs: number) {
+  // 所有 profile 统一拒绝缺证或 fallback，分包专用分支同样必须证明真实清理。
+  for (const item of report.cases) {
+    for (const metric of item.mutationMetrics ?? []) {
+      if (metric.mutationKind === 'style') {
+        expectStyleRollbackMetric(metric as StyleMutationMetric, `[${item.name}] style`)
+      }
+    }
+    for (const metric of item.subPackageMutationMetrics ?? []) {
+      if (metric.style) {
+        expectStyleRollbackMetric(metric.style, `[${item.name}/${metric.root}] subpackage style`)
+      }
+    }
+  }
   if (isWebOnlyProfile(report)) {
     assertWebOnlyHotUpdateReport(report, target, maxHotUpdateMs)
     return
@@ -1311,7 +1280,7 @@ export function assertHotUpdateReport(report: HotUpdateReport, target: WatchCase
       expect(styleMetric).toBeUndefined()
     }
 
-    if (item.name === 'uni-app-vite-tailwindcss-v4' || item.name === 'uni-app-x-hbuilderx-tailwindcss-v4') {
+    if (item.name === 'uni-app-vite-tailwindcss-v4' || item.name === 'uni-app-x-vdom-tailwindcss-v4') {
       const userReportedHotUpdate = item.userReportedHotUpdate
       expect(userReportedHotUpdate, `[${item.project}] should include the user reported hot-update scenario`).toBeDefined()
       if (!userReportedHotUpdate) {
@@ -1590,24 +1559,50 @@ export function assertHotUpdateReport(report: HotUpdateReport, target: WatchCase
   }
 }
 
-export async function runHotUpdateTarget(target: WatchCaseName) {
+export async function runHotUpdateTarget(target: WatchCaseName, scopeOverride?: string) {
   const cwd = path.resolve(__dirname, '../..')
   const caseName = resolveCaseName()
   const runTarget = isConcreteWatchCaseName(caseName) && getBaseWatchCaseName(caseName) === target
     ? caseName
     : target
+  if (scopeOverride === undefined) {
+    const selected = configuredWatchCasesByName.get(getBaseWatchCaseName(runTarget) ?? runTarget as ConcreteWatchCaseName)
+    const scopes = resolveWatchCommandScopes({
+      splitSubPackageWatchSessions: selected?.splitSubPackageWatchSessions === true,
+      requestedScope: process.env.E2E_WATCH_MINI_PROGRAM_SCOPE,
+      webOnly: isWebOnlyProfile(),
+      mainStyleOnly: toBoolEnv('E2E_WATCH_MAIN_STYLE_ONLY', false),
+    })
+    if (scopes.length > 1) {
+      for (const scope of scopes) {
+        await runHotUpdateTarget(target, scope)
+      }
+      return
+    }
+  }
   const timeoutMs = toNumberEnv('E2E_WATCH_TIMEOUT_MS', 240000)
   const pollMs = toNumberEnv('E2E_WATCH_POLL_MS', 40)
   const maxHotUpdateMs = toNumberEnv('E2E_WATCH_MAX_HOT_UPDATE_MS', timeoutMs)
   const maxPluginProcessMs = toNumberEnv('E2E_WATCH_MAX_PLUGIN_PROCESS_MS', DEFAULT_PLUGIN_PROCESS_BUDGET_MS)
-  const commandTimeoutMs = toNumberEnv('E2E_WATCH_COMMAND_TIMEOUT_MS', resolveDefaultWatchCommandTimeoutMs(runTarget, timeoutMs))
   const skipBuild = toBoolEnv('E2E_WATCH_SKIP_BUILD', true)
   const quietSass = toBoolEnv('E2E_WATCH_QUIET_SASS', true)
   const miniProgramOnly = toBoolEnv('E2E_WATCH_MINI_PROGRAM_ONLY', false)
-  const miniProgramScope = process.env.E2E_WATCH_MINI_PROGRAM_SCOPE
+  const miniProgramScope = scopeOverride ?? process.env.E2E_WATCH_MINI_PROGRAM_SCOPE
   const mainStyleOnly = toBoolEnv('E2E_WATCH_MAIN_STYLE_ONLY', false)
   const mainStyleSubPackageLimit = process.env.E2E_WATCH_MAIN_STYLE_SUBPACKAGE_LIMIT
+  const selectedCases = pickCases(buildCases(path.resolve(cwd, '..'), { includeLocalOnly: isLocalOnlyWatchCase(runTarget) }), runTarget)
+  const commandTimeoutMs = toNumberEnv('E2E_WATCH_COMMAND_TIMEOUT_MS', resolveWatchCommandTimeoutMs(selectedCases, timeoutMs, {
+    miniProgramScope,
+    miniProgramOnly,
+    webOnly: isWebOnlyProfile(),
+    mainStyleOnly,
+    mainStyleSubPackageLimit: mainStyleSubPackageLimit === undefined ? undefined : Number(mainStyleSubPackageLimit),
+  }))
   const reportFile = createReportFilePath(cwd, runTarget)
+  const snapshotsDir = path.resolve(cwd, './benchmark/e2e-watch-hmr/snapshots')
+  const previousSnapshotEntries = isIssue33RoundProfile()
+    ? await listIssue33SnapshotEntries(snapshotsDir)
+    : undefined
 
   const args = [
     '--filter',
@@ -1663,15 +1658,8 @@ export async function runHotUpdateTarget(target: WatchCaseName) {
   process.stdout.write(`[e2e-watch] hmr report saved: ${reportFile}\n`)
   assertHotUpdateReport(report, runTarget, maxHotUpdateMs)
 
-  if (isIssue33RoundProfile()) {
-    const snapshotsDir = path.resolve(cwd, './benchmark/e2e-watch-hmr/snapshots')
-    const entries = await fs.readdir(snapshotsDir).catch(() => [])
-    const expectedPhases = ['-template-add-success', '-template-modify-success', '-template-delete-success', '-script-add-success', '-script-modify-success', '-script-delete-success']
-    for (const phaseSuffix of expectedPhases) {
-      expect(
-        entries.some(item => item.includes(phaseSuffix)),
-        `[issue33] missing snapshot phase output: ${phaseSuffix}`,
-      ).toBe(true)
-    }
+  if (previousSnapshotEntries) {
+    const snapshots = await readNewIssue33Snapshots(snapshotsDir, previousSnapshotEntries)
+    assertIssue33SnapshotGate(report, snapshots)
   }
 }

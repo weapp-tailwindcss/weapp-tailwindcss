@@ -1,6 +1,6 @@
 ---
 name: weapp-tailwindcss-troubleshoot
-description: 诊断 weapp-tailwindcss 的样式未生成、JS/模板 class 未转译、classNameSet、@source/cssEntries、rpx、space/group/peer、CSS 变量、组件隔离、压缩、watch/HMR、H5/Web/App/uni-app x 多端产物问题。Use for debugging, troubleshooting, classes not working, broken hot reload, wrong output, or runtime compatibility；不用于新项目配置或自研 API 设计。
+description: 诊断 weapp-tailwindcss 与 `weapp-tw` CLI 的样式未生成、JS/模板 class 未转译、classNameSet、@source/cssEntries、source candidates、rpx、伪类/custom variant、组件隔离、Rspack、压缩、watch/HMR、H5/Web/App/uni-app x 多端产物问题。Use for debugging, troubleshooting, CLI output failures, classes not working, broken hot reload, wrong output, or runtime compatibility；不用于新项目配置、自研 API 设计或 Lynx 专属接入。
 ---
 
 # weapp-tailwindcss troubleshoot
@@ -15,7 +15,8 @@ description: 诊断 weapp-tailwindcss 的样式未生成、JS/模板 class 未�
 4. 检查是否存在第二个 Tailwind 生成器，或 H5/Web 被错误 `disabled`。
 5. 分别验证 CSS 候选、模板/JS safe class、最终平台样式文件和真实页面；不要只看固定的 `app.wxss` 文件名。
 6. watch/HMR 问题要在同一进程连续新增 class，区分首次构建成功与增量图失效。
-7. 只有根因确认后才修改配置，并补一条可重复的回归验证。
+7. CLI 问题先确认 `web`/`weapp` target、stdin/stdout、source map 与 watch 模式，不期待它改写模板或脚本。
+8. 只有根因确认后才修改配置，并补一条可重复的回归验证。
 
 ## 安全边界
 
@@ -23,8 +24,8 @@ description: 诊断 weapp-tailwindcss 的样式未生成、JS/模板 class 未�
 - `space-*` 先处理结构和组件虚拟节点，再最小扩展 `cssOptions.cssChildCombinatorReplaceValue`。
 - App WebView 兼容必须记录 Android Chromium、iOS WebKit 或 Harmony/HBuilderX 环境，并以真实运行截图或日志为证据。
 - 不为排障临时加入 `@tailwindcss/vite` 或 `@tailwindcss/postcss`。
+- ReactLynx/Rspeedy 构建与 CSS encoder 问题转到 `$weapp-tailwindcss-lynx`。
 
 ## 输出要求
 
 先给根因层级和证据，再给最小修复、验证命令、预期结果和未解决时的下一条观测点。
-

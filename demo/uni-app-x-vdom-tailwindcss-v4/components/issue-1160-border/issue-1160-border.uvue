@@ -1,0 +1,54 @@
+<script lang="uts">
+export default {
+  styleIsolation: 'app',
+}
+</script>
+
+<template>
+  <view class="issue-1160-panel">
+    <text>Issue 1160</text>
+    <view id="issue-1160-original" class="flex flex-row items-center justify-between mt-[12px] pt-[10px] border-t-[1px] border-solid border-[red]">
+      <text class="text-[11px] text-[#94a3b8] leading-[16px]">1</text>
+      <view class="flex flex-row items-center">
+        <view class="flex flex-row items-center mr-[16px]">
+          <text class="text-[11px] text-[#94a3b8] ml-[3px] leading-[14px]">2</text>
+        </view>
+        <view class="flex flex-row items-center">
+          <text class="text-[11px] text-[#94a3b8] ml-[3px] leading-[14px]">3</text>
+        </view>
+      </view>
+    </view>
+    <view id="issue-1160-native" class="issue-1160-box issue-1160-native"><text>Native top</text></view>
+    <view id="issue-1160-top" class="issue-1160-box border-t-[1px] border-solid border-[red]"><text>Top 1px</text></view>
+    <view id="issue-1160-right" class="issue-1160-box border-r-[1px] border-solid border-[red]"><text>Right 1px</text></view>
+    <view id="issue-1160-bottom" class="issue-1160-box border-b-[1px] border-solid border-[red]"><text>Bottom 1px</text></view>
+    <view id="issue-1160-left" class="issue-1160-box border-l-[1px] border-solid border-[red]"><text>Left 1px</text></view>
+    <view id="issue-1160-pair" class="issue-1160-box border-t-[1px] border-l-[2px] border-solid border-[red]"><text>Top 1px + left 2px</text></view>
+    <view id="issue-1160-all" class="issue-1160-box border-[2px] border-solid border-[red]"><text>All 2px</text></view>
+    <view id="issue-1160-override" class="issue-1160-box border-[2px] border-t-0 border-solid border-[red]"><text>All 2px + top 0</text></view>
+    <view id="issue-1160-dashed" class="issue-1160-box border-t-[1px] border-dashed border-[red]"><text>Dashed top</text></view>
+    <view id="issue-1160-none" class="issue-1160-box border-t-[1px] border-none border-[red]"><text>None</text></view>
+    <view id="issue-1160-apply" class="issue-1160-box issue-1160-apply"><text>Apply top</text></view>
+  </view>
+</template>
+
+<style>
+@reference "../../main.css";
+.issue-1160-panel {
+  padding: 16px;
+  background-color: #ffffff;
+}
+.issue-1160-box {
+  margin-top: 8px;
+  height: 28px;
+  background-color: #f1f5f9;
+}
+.issue-1160-native {
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: red;
+}
+.issue-1160-apply {
+  @apply border-t-[1px] border-solid border-[red];
+}
+</style>

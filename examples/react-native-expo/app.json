@@ -6,7 +6,8 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "ios": { "supportsTablet": true },
-    "android": { "adaptiveIcon": { "backgroundColor": "#ffffff" } }
+    "ios": { "supportsTablet": true, "bundleIdentifier": "com.weapptailwindcss.rncompat" },
+    "android": { "package": "com.weapptailwindcss.rncompat", "adaptiveIcon": { "backgroundColor": "#ffffff" } },
+    "web": { "bundler": "metro" }
   }
 }

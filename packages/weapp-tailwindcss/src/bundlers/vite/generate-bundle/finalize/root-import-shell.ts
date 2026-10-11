@@ -4,10 +4,10 @@ import type { ViteFrameworkCssPipelineContext, ViteFrameworkCssPipelineStrategy 
 import type { BundleMetrics } from '../metrics'
 import type { GenerateBundleContext, PendingRememberedCssReplayUpdate } from '../types'
 import path from 'node:path'
-import { transformWebCssCompat, transformWebCssSafeSelectors } from '@weapp-tailwindcss/postcss'
+import { transformWebCssCompat, transformWebCssSafeSelectors } from '@weapp-tailwindcss/postcss/transform'
 import { AssetEmissionPlan } from '@/compiler'
 import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
-import { isPureLocalCssImportWrapper } from '../../../shared/generator-css/local-imports'
+import { isPureLocalCssImportWrapper } from '../../../../generation/local-imports'
 import { normalizeOutputPathKey } from '../../../shared/module-graph'
 import { applyViteAssetEmissionPlan } from '../asset-emission-plan'
 import { resolveSingleCssImportOutputFile } from '../root-style-output'
@@ -27,7 +27,7 @@ export interface FinalizeGenerateBundleOptions {
   formatIteration: number
   generatorCandidateSignature: string
   generatorRuntime: Set<string>
-  getCssHandlerOptions: (file: string) => ReturnType<ReturnType<typeof import('./css-handler-options').createCssHandlerOptionsCache>['getCssHandlerOptions']>
+  getCssHandlerOptions: (file: string) => ReturnType<ReturnType<typeof import('../../css-handler-options').createCssHandlerOptionsCache>['getCssHandlerOptions']>
   getSourceCandidateSourcesForEntries: GenerateBundleContext['getSourceCandidateSourcesForEntries']
   getSourceCandidatesForEntries: GenerateBundleContext['getSourceCandidatesForEntries']
   getViteCssCacheStats: GenerateBundleContext['getViteCssCacheStats']

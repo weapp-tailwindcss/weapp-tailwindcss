@@ -4,7 +4,8 @@ const styleHandlerFactory = vi.fn(() => vi.fn())
 const jsHandlerFactory = vi.fn(() => vi.fn())
 const templateHandlerFactory = vi.fn(() => vi.fn())
 
-vi.mock('@weapp-tailwindcss/postcss', () => ({
+vi.mock('@weapp-tailwindcss/postcss/transform', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@weapp-tailwindcss/postcss/transform')>(),
   createStyleHandler: styleHandlerFactory,
 }))
 
@@ -296,7 +297,8 @@ describe('resolveStyleOptionsFromContext', () => {
     }))
     expect(styleOptions).not.toHaveProperty('escapeMap')
     expect(styleOptions).not.toHaveProperty('injectAdditionalCssVarScope')
-    expect(styleOptions).not.toHaveProperty('majorVersion')
+    expect(styleOptions.majorVersion).toBeUndefined()
+    expect(resolveStyleOptionsFromContext(ctx, 4).majorVersion).toBe(4)
   })
 
   it('prefers cssOptions over top-level CSS options', async () => {

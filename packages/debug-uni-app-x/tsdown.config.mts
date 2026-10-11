@@ -7,6 +7,7 @@ export default defineConfig({
   dts: true,
   shims: true,
   deps: {
+    resolveDepSubpath: true,
     neverBundle: ['vite'],
     onlyBundle: false,
   },

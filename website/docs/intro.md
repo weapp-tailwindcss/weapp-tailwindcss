@@ -1,6 +1,6 @@
 ---
 title: 简介
-description: 由于小程序运行时，本身有自己的一套 **独特的** 技术规范标准。这导致你无法使用 web 开发中的很多的特性，
+description: weapp-tailwindcss 使用 Tailwind CSS 4 为 Web、小程序、App WebView、React Native 与 Lynx 生成目标端产物。
 keywords:
   - 简介
   - intro
@@ -14,60 +14,29 @@ keywords:
 ---
 # 简介
 
-<!-- :::tip
-自从 `2.3.3` 版本开始，我发布了一个额外的包叫 [`weapp-tailwindcss`](https://www.npmjs.com/package/weapp-tailwindcss),它和 [`weapp-tailwindcss-webpack-plugin`](https://www.npmjs.com/package/weapp-tailwindcss-webpack-plugin) 代码版本完全一致，且保持发布版本的同步。以后可以都去安装那个包(当然安装现在这个包也行)。为什么要这么做的原因，主要是因为 `weapp-tailwindcss-webpack-plugin` 这个名字，已经不适合现在这种，多插件并存的状态了，为了以后的发展改个名字。
-::: -->
-
 ## 总览
 
-由于小程序运行时，本身有自己的一套 **独特的** 技术规范标准。这导致你无法使用 `web` 开发中的很多的特性，
+`weapp-tailwindcss` 是 Tailwind CSS 4 的跨端编译与构建集成层。它根据目标端生成 Web CSS、小程序兼容 CSS、App WebView 样式，并为 React Native 与 Lynx 集成提供共享的候选类和 token 基础。
 
-你也无法 **直接** 使用像 [`tailwindcss`](https://www.tailwindcss.com/) 这种原子化 `css` 生成器来提升你的开发效率。
-
-而 `weapp-tailwindcss` 就能让你，在小程序开发中使用 `tailwindcss` **大部分** 特性。
-
-它支持目前上所有使用 `webpack` 和 `vite` 的主流多端小程序框架和使用 `webpack` / `gulp` 的原生小程序打包方式。
-
-你可以很容易在各个框架，或原生开发中集成 `tailwindcss`。
-
-现在，就让我们开始使用吧！
+核心包支持 Vite、Webpack、Rspack、Gulp 和 Node.js。小程序构建还会同步转换模板与脚本中的已生成类名；React Native 和 Lynx 由对应平台包接入。
 
 :::info
-从本质上讲，它是一个字符串转义器。它负责把 `tailwindcss` 中，所采集的类名，以及生成的结果，转化成小程序中可以接受的方式。
+核心生成器先通过 Tailwind CSS 4 编译候选类，再按目标端处理选择器、CSS 能力和类名映射。JS/WXML 转换只处理生成器确认过的候选集合。
 :::
 
 ## 环境要求
 
-- `weapp-tailwindcss@5.2.0` 起要求 Node.js `>=22.12.0`。Node.js 22 从该版本开始默认支持从 CommonJS 加载 ESM。
+- 当前版本要求 Node.js `^22.18.0 || >=24.11.0`。
 - 使用 HBuilderX 的 `uni-app` / `uni-app x` 项目要求 HBuilderX `>=5.11`。
 
-## Why `weapp-tailwindcss`?
+## 能力概览
 
-- ✅ 自动处理所有文件：以微信小程序为例，不但可以处理和转义 `wxml` / `wxss`，还能处理 `js` 和 `wxs` 产物
-- ✅ 支持最原生的小程序开发，也支持许多框架如 `taro`、`uni-app`、`mpx` 等等..
-- ✅ 提供多种使用方式，方便项目集成：包括 `webpack` / `vite` / `gulp` 插件和直接的 `nodejs api`
-- ✅ 生态好，解决方案丰富，提供大量现成模板，可以利用许多 `tailwindcss` 现有的生态来构建小程序。
-- ✅ 高效的解析和缓存机制，热更新响应时间快
-- ✅ 贴合 `tailwindcss` 的设计思路，智能提示友好
+- 为 Web、小程序和 App WebView 生成目标端 CSS，并提供 Vite、Webpack、Rspack、Gulp 与 Node.js 接入。
+- 小程序构建会同步转换模板和脚本中的已生成类名；React Native 与 Lynx 使用对应平台包。
+- 生成器只转换 Tailwind CSS 确认过的候选类，便于在多端构建中保持 CSS 与模板一致。
 
-## 快速开始 :rocket:
+## 下一步
 
-### 👉 [安装依赖](/docs/quick-start/install)
-
-当前文档默认使用 `tailwindcss@4` 与 `weapp-tailwindcss` 当前版本。
-
-### 👉 [各框架模板](/docs/community/templates)
-
-如果你想直接对照可运行项目，可以优先查看模板项目。
-
-### 👉 [Tailwind CSS 4 默认模式参考](/docs/tailwindcss/v4-reference)
-
-这里有 CSS-first、`@source`、`@apply`、`@layer` 和 IntelliSense 的补充说明。
-
-## 演示视频
-
-<iframe src="//player.bilibili.com/player.html?aid=835925684&bvid=BV1fg4y1D7xx&cid=1398844948&p=1&autoplay=0" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"> </iframe>
-
-## 另外特别感谢 [舜岳同学](https://space.bilibili.com/475498258) 为 `weapp-tailwindcss` 制作的视频
-
-<iframe src="//player.bilibili.com/player.html?aid=1850100366&bvid=BV1kp421Z7HL&cid=1428939742&p=1&autoplay=0" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"> </iframe>
+1. [安装依赖](/docs/quick-start/install)：安装 Tailwind CSS 与 `weapp-tailwindcss`，也可选择独立 CLI。
+2. [各框架注册方式](/docs/quick-start/frameworks/uni-app-vite)：按项目构建工具接入插件。
+3. [模板项目](/docs/community/templates) 或 [Tailwind CSS 4 默认模式参考](/docs/tailwindcss/v4-reference)：查看可运行示例与 CSS-first 约定。

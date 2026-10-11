@@ -57,5 +57,5 @@ pnpm open:build
 
 ## 相关文档
 
-- `weapp-tailwindcss`：<https://tw.icebreaker.top/>
+- `weapp-tailwindcss`：<https://tw.weapp.dev/>
 - `uni-app`：<https://uniapp.dcloud.net.cn/>

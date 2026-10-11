@@ -1,6 +1,5 @@
-/*! weapp-tailwindcss vite-generated-css:%3Cproject-root%3E%2Fsrc%2Fsub-normal%2Fpages%2Findex.css */ /*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
 @layer properties;
-@layer theme,base,components,utilities;
+@layer theme, base, components, utilities;
 @layer theme {
   :root,
   :host {
@@ -335,7 +334,7 @@
     background-color: #000089;
   }
   .bg-\[rgb\(12\,34\,56\)\] {
-    background-color: #0c2238;
+    background-color: rgb(12, 34, 56);
   }
  /*tokens: bg-normal-subpackage-marker <= src/sub-normal/pages/index.tsx */
   .bg-normal-subpackage-marker {
@@ -344,7 +343,7 @@
   .\[mask-type\:luminance\] {
     mask-type: luminance;
   }
- /*tokens: p-4 <= src/pages/index/index.tsx, src/pages/issue-998/index.css, src/pages/issue-998/index.tsx */
+ /*tokens: p-4 <= <tailwind generated> */
   .p-4 {
     padding: calc(var(--spacing) * 4);
   }
@@ -636,5 +635,154 @@
       --tw-backdrop-saturate: initial;
       --tw-backdrop-sepia: initial;
     }
+  }
+}
+/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+@layer properties;
+@layer theme, base, components, utilities;
+@layer theme {
+}
+@layer base {
+  @supports (not (-webkit-appearance: -apple-pay-button)) or (contain-intrinsic-size: 1px) {
+  }
+}
+@layer utilities {
+  @supports ((-webkit-backdrop-filter: blur(2px)) or (backdrop-filter: blur(2px))) {
+  }
+  @supports (display: grid) {
+  }
+  @media (width < 712px) {
+  }
+  @supports (display: grid) {
+  }
+}
+@property --tw-translate-x {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-translate-y {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-translate-z {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-space-y-reverse {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-shadow {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-shadow-color {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-shadow-alpha {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-inset-shadow {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-inset-shadow-color {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-inset-shadow-alpha {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-ring-color {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-ring-shadow {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-inset-ring-color {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-inset-ring-shadow {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-ring-inset {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-ring-offset-width {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0rem;
+}
+@property --tw-ring-offset-color {
+  syntax: '*';
+  inherits: false;
+  initial-value: #fff;
+}
+@property --tw-ring-offset-shadow {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-content {
+  syntax: '*';
+  initial-value: '';
+  inherits: false;
+}
+@property --tw-backdrop-blur {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-backdrop-brightness {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-backdrop-contrast {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-backdrop-grayscale {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-backdrop-hue-rotate {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-backdrop-invert {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-backdrop-opacity {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-backdrop-saturate {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-backdrop-sepia {
+  syntax: '*';
+  inherits: false;
+}
+@layer properties {
+  @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
   }
 }

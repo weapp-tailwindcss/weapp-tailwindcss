@@ -1,4 +1,4 @@
 interface:
   display_name: "weapp-tailwindcss React Native"
-  short_description: "配置 Expo Metro、Native 编译器与运行时样式行为"
-  default_prompt: "使用 $weapp-tailwindcss-react-native 配置 Expo 项目。Use $weapp-tailwindcss-react-native to add Tailwind CSS 4 to React Native."
+  short_description: "配置 Expo Metro、React Native manifest 与运行时样式"
+  default_prompt: "使用 $weapp-tailwindcss-react-native 配置 Expo 原生样式。Use $weapp-tailwindcss-react-native to add Tailwind CSS 4 to React Native."

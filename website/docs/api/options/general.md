@@ -64,8 +64,8 @@ false
 
 #### 备注
 
-当前仅在调用侧关闭 source map，且没有模块图、模块替换、ignore 调用/标签模板语义时尝试 OXC。
-`weapp-tailwindcss@5.2.0` 起要求 Node `>=22.12.0`。OXC 加载失败时仍会自动回退到 Babel。
+bundler watch/serve 链路默认在关闭 source map，且没有模块图、模块替换或 ignore 调用语义时尝试 OXC；普通 build 默认使用 Babel，避免同时加载双解析器。配置了标签模板 ignore 且源码含标签模板时回退 Babel。可显式传入 `true` 或 `'oxc'` 强制尝试，传入 `false` 可关闭。
+Babel 8 链路要求 Node `^22.18.0 || >=24.11.0`。OXC 加载失败时仍会自动回退到 Babel。
 
 ### postcssOptions
 

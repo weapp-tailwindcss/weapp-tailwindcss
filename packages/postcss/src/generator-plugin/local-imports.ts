@@ -72,7 +72,12 @@ function isLocalCssImportAtRule(node: AtRule) {
   return request !== undefined && isLocalCssImportRequest(request)
 }
 
-function isTailwindSourceDirective(node: Node, options: TailwindCssDirectiveOptions = {}) {
+interface RemoveTailwindSourceDirectivesOptions extends TailwindCssDirectiveOptions {
+  /** Web 输出中的 layer 声明负责层叠排序，不能作为源指令清理。 */
+  preserveCssLayers?: boolean | undefined
+}
+
+function isTailwindSourceDirective(node: Node, options: RemoveTailwindSourceDirectivesOptions = {}) {
   if (node.type !== 'atrule') {
     return false
   }
@@ -84,12 +89,15 @@ function isTailwindSourceDirective(node: Node, options: TailwindCssDirectiveOpti
     return true
   }
   if (atRule.name === 'layer') {
+    if (options.preserveCssLayers) {
+      return false
+    }
     return !atRule.nodes || atRule.nodes.length === 0
   }
   return TAILWIND_REMOVABLE_SOURCE_DIRECTIVE_NAMES.has(atRule.name)
 }
 
-export function removeTailwindSourceDirectivesRoot(root: Root, options: TailwindCssDirectiveOptions = {}) {
+export function removeTailwindSourceDirectivesRoot(root: Root, options: RemoveTailwindSourceDirectivesOptions = {}) {
   let removed = false
   root.walk((node) => {
     if (isTailwindSourceDirective(node, options)) {

@@ -3,18 +3,20 @@ import type { RuntimeClassSetManager } from '../../shared/runtime-class-set'
 import type { IStyleHandlerOptions, ITemplateHandlerOptions, JsModuleGraphOptions, UserDefinedOptions } from '@/types'
 import path from 'node:path'
 import process from 'node:process'
-import { prependConfigDirective } from '@/bundlers/shared/generator-css/config-directive'
-import { hasTailwindRootDirectives, normalizeTailwindConfigDirectives, normalizeTailwindSourceForGenerator } from '@/bundlers/shared/generator-css/directives'
-import { createSourceCandidateCollector } from '@/bundlers/shared/source-candidates'
-import { resolveSourceScanEntries } from '@/bundlers/shared/source-scan'
 import { beginCompilerShadowRun as beginShadowRun, createCompilationDependencyChanges, createRuntimeCompilationBuildState, disposeCompilerOwner, finalizeCompilerShadowRun, getCompilationScopeDependencyRevision, getCompilerShadowRunSnapshot, invalidateCompilationScope, recordCompilationDependencyChanges, removeRuntimeCompilationBuildStateFiles, updateRuntimeCompilationBuildState } from '@/compiler'
+import { COMPILATION_EVENT_SCHEMA_VERSION } from '@/compiler/events'
+import { createCompilerRuntimeState } from '@/compiler/runtime-state'
 import { getCompilerContext } from '@/context'
 import { normalizeStyleHandlerMajorVersion } from '@/context/style-options'
 import { createDebug } from '@/debug'
+import { prependConfigDirective } from '@/generation/config-directive'
+import { hasTailwindRootDirectives, normalizeTailwindConfigDirectives, normalizeTailwindSourceForGenerator } from '@/generation/directives'
+import { resolveSourceScanEntries } from '@/project-sources'
+import { createSourceCandidateCollector } from '@/project-sources/candidates'
 import { createTailwindRuntimeReadyPromise, ensureRuntimeClassSet } from '@/tailwindcss/runtime'
 import { getRuntimeClassSetSignature } from '@/tailwindcss/runtime/cache'
 import { hasConfiguredTailwindV4CssRoots, removeTailwindV4CssSource, upsertTailwindV4CssSource } from '@/tailwindcss/v4/css-sources'
-import { splitLocalCssImports } from '../../shared/generator-css/local-imports'
+import { splitLocalCssImports } from '../../../generation/local-imports'
 import { createRuntimeClassSetManager } from '../../shared/runtime-class-set'
 import { createGulpModuleGraphOptions } from '../module-graph'
 import { createGulpRuntimeSnapshot } from '../runtime-snapshot'
@@ -31,7 +33,7 @@ const GULP_COMPILATION_SCOPE_CACHE_MAX = 512
 /**
  * @name weapp-tw-gulp
  * @description native framework 的插件组合实现
- * @link https://tw.icebreaker.top/docs/quick-start/frameworks/native
+ * @link https://tw.weapp.dev/docs/quick-start/frameworks/native
  */
 export function createNativeGulpPlugins(options: UserDefinedOptions = {}) {
   const hasInitialTailwindCssRoots = hasConfiguredTailwindV4CssRoots(options)
@@ -47,11 +49,12 @@ export function createNativeGulpPlugins(options: UserDefinedOptions = {}) {
   const readyPromise = createTailwindRuntimeReadyPromise(initialTailwindRuntime)
 
   let runtimeSet = new Set<string>()
-  const runtimeState = {
+  const runtimeState = createCompilerRuntimeState({
     tailwindRuntime: initialTailwindRuntime,
     readyPromise,
     refreshTailwindcssRuntime,
-  }
+  })
+  void runtimeState.events.emit({ schemaVersion: COMPILATION_EVENT_SCHEMA_VERSION, type: 'diagnostic', timestamp: new Date().toISOString(), adapter: 'gulp', phase: 'emit', revision: runtimeState.revision, operationId: `gulp-init-${Date.now()}`, evidence: ['createNativeGulpPlugins'] })
   const defaultStyleHandlerOptionsCache = new Map<number | 'unknown', Partial<IStyleHandlerOptions>>()
   let cachedDefaultTemplateHandlerOptions: Partial<ITemplateHandlerOptions> | undefined
   let cachedDefaultTemplateRuntimeSet: Set<string> | undefined
@@ -370,6 +373,7 @@ export function createNativeGulpPlugins(options: UserDefinedOptions = {}) {
       createCompilationDependencyChanges([file]),
     )
     invalidateGulpSourceCandidates()
+    runtimeSetDirty = true
     if (change.event === 'delete') {
       const removedRuntimeSource = runtimeSourcesByFile.delete(file)
       const removedCssSource = removeTailwindV4CssSource(opts, file)

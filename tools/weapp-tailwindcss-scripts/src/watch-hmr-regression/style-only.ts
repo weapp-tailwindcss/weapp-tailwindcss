@@ -76,14 +76,14 @@ export async function runStyleOnlyCase(
 ): Promise<StyleOnlyCaseMetrics & { watchCaseMetrics: WatchCaseMetrics }> {
   const caseStartedAt = Date.now()
   const styleSourceOriginal = await fs.readFile(watchCase.styleMutation.sourceFile, 'utf8')
-  const sessionStartedAt = Date.now()
   let outputIntegrityMonitor: ReturnType<typeof createOutputIntegrityMonitor>
-  const session = createWatchSession(
+  const session = await createWatchSession(
     watchCase.cwd,
     watchCase.devScript,
     { quietSass: options.quietSass },
     watchCase.env,
   )
+  const sessionStartedAt = session.startedAt ?? Date.now()
 
   try {
     await waitForInitialWarmup(watchCase, options, session, sessionStartedAt)

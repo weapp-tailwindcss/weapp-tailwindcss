@@ -1,0 +1,110 @@
+name: E2E Coverage Nightly
+
+on:
+  schedule:
+    - cron: '30 18 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-coverage-nightly
+  cancel-in-progress: false
+
+jobs:
+  contract:
+    name: Coverage contract (Node 22)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm e2e:coverage:contract
+      - name: Generate hosted coverage diagnostic
+        run: pnpm e2e:coverage:report --source aggregate --include-baselines --out e2e/.artifacts/coverage/nightly-diagnostic-report.json
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: coverage-diagnostic-${{ github.sha }}
+          path: e2e/.artifacts/coverage/**
+          if-no-files-found: warn
+          retention-days: 14
+
+  framework-matrix:
+    name: Framework static matrix (${{ matrix.host.os }}, Node ${{ matrix.host.node }}, shard ${{ matrix.shard }}/4)
+    runs-on: ${{ matrix.host.os }}
+    timeout-minutes: 45
+    env:
+      E2E_SKIP_OPEN_AUTOMATOR: '1'
+      E2E_SKIP_HBUILDERX: '1'
+    strategy:
+      fail-fast: false
+      matrix:
+        # 每个 host 完整覆盖同一套用例；按文件分片分配串行构建，避免单个 job 累积到超时。
+        shard: [1, 2, 3, 4]
+        host:
+          - os: ubuntu-latest
+            node: 22
+          - os: macos-15
+            node: 22
+          - os: windows-latest
+            node: 22
+          - os: ubuntu-latest
+            node: 24
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.host.node }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Build workspace test dependencies
+        run: pnpm build:ci
+      - name: Install Playwright browsers
+        shell: bash
+        run: pnpm exec playwright install chromium chromium-headless-shell
+      - name: Run hosted static suite
+        run: pnpm e2e:static --shard=${{ matrix.shard }}/4
+      - name: Validate framework coverage matrix
+        if: matrix.shard == 1
+        run: pnpm e2e:frameworks:matrix
+      - name: Validate multiplatform build outputs
+        if: matrix.shard == 1
+        run: pnpm e2e:multiplatform-build
+
+  browser-and-native-static:
+    name: Browser and native compatibility catalogs
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install chromium chromium-headless-shell
+      - run: pnpm e2e:react-native-compatibility
+      - run: pnpm e2e:react-native:web
+      - run: pnpm e2e:lynx
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: e2e-coverage-native-${{ github.run_id }}
+          path: |
+            e2e/.artifacts/react-native-*/**
+            e2e/.artifacts/lynx-*/**
+          if-no-files-found: warn
+          include-hidden-files: true
+          retention-days: 14

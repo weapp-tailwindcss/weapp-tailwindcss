@@ -10,13 +10,14 @@ const projectRoot = path.resolve(__dirname, '../demo/uni-app-vite-tailwindcss-v4
 const cssOutputPattern = '**/*.{css,wxss,acss,qss}'
 const textOutputPattern = '**/*.{html,js,css,wxml,wxss}'
 
-async function buildPlatform(platform: 'mp-weixin' | 'h5') {
+async function buildPlatform(platform: 'mp-weixin' | 'h5', webCompat?: string) {
   await clearProjectBuildState(projectRoot)
   await execa('pnpm', ['run', `build:${platform}`], {
     cwd: projectRoot,
     stdio: process.env.E2E_DEBUG_BUILD === '1' ? 'inherit' : 'pipe',
     env: {
       ...process.env,
+      ...(webCompat === undefined ? {} : { WEAPP_TW_WEB_COMPAT: webCompat }),
       NODE_ENV: 'production',
       BROWSERSLIST_ENV: 'production',
       UNI_BUILD_STRICT: '1',
@@ -66,6 +67,7 @@ describe('uni-app vite vue3 Tailwind v4 cascade layer output', () => {
     expect(css.match(/(?:^|[\n,{])\s*button::after/g), 'mp-weixin css should not replay base layer rules').toHaveLength(1)
     expect(css.match(/\.layer-card-v4/g), 'mp-weixin css should not replay component layer rules').toHaveLength(1)
     expect(css.match(/wx-button\s*\{\s*background:\s*#000/g), 'mp-weixin css should not replay layer declarations').toHaveLength(1)
+    expect(css.search(/wx-button\s*\{\s*background:\s*#000/), 'base background should precede utilities').toBeLessThan(utilityIndex)
     expect(css.match(/wx-button\s*\{\s*background:\s*#444/g), 'mp-weixin css should preserve the unlayered override').toHaveLength(1)
   }, 600_000)
 
@@ -100,5 +102,19 @@ describe('uni-app vite vue3 Tailwind v4 cascade layer output', () => {
     expect(helloWorldCss?.text ?? '', 'HelloWorld scoped variants should not keep CSS escapes').not.toContain('.before\\:')
     expect(helloWorldCss?.text ?? '', 'HelloWorld scoped component css should not inject mini-program preflight').not.toContain('view,text,::after,::before')
     expect(helloWorldCss?.text ?? '', 'HelloWorld scoped component css should not inject reset declarations').not.toMatch(/box-sizing:\s*border-box/)
+  }, 600_000)
+
+  it.each(['0', '1'])('keeps order-only utilities in their H5 stylesheet with webCompat=%s', async (webCompat) => {
+    await buildPlatform('h5', webCompat)
+    const styles = await collectOutput(cssOutputPattern, 'dist/build/h5')
+    const main = styles.filter(entry => entry.text.includes('.layer-card-v4'))
+    expect(main).toHaveLength(1)
+    expect(main[0]!.text).not.toMatch(/\.mt-8\s*\{/)
+    expect(main[0]!.text).not.toMatch(/\.border-emerald-500\s*\{/)
+    const order = styles.filter(entry => /\.mt-8\s*\{/.test(entry.text))
+    expect(order).toHaveLength(1)
+    expect(order[0]!.text).toMatch(/\.border-emerald-500\s*\{/)
+    const scripts = await collectOutput('**/*.js', 'dist/build/h5')
+    expect(scripts.some(entry => entry.text.includes(path.basename(order[0]!.file))), 'order CSS must remain referenced by the emitted module graph').toBe(true)
   }, 600_000)
 })

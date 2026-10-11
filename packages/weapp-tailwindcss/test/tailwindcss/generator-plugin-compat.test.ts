@@ -344,6 +344,7 @@ async function createRealIconifyTailwind4OptionMatrixSource(root: string) {
 describe('tailwindcss generator plugin compatibility', () => {
   it('supports config-loaded official plugins, custom plugins, and icon plugins in the v4 engine', async () => {
     const root = await createPluginFixture(tailwindcss4Root)
+    await linkPackage(root, '@iconify/tailwind4')
     const source = await createV4Source(root)
     const engine = createTailwindV4Engine(source)
 

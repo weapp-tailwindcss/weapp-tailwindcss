@@ -1,7 +1,7 @@
 import type { NodePath } from '@babel/traverse'
 import type { CallExpression, TemplateElement } from '@babel/types'
 import { NodePath as BabelNodePath } from '@babel/traverse'
-import { MappingChars2String } from '@weapp-core/escape'
+import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { describe, expect, it, vi } from 'vitest'
 import { parse, traverse } from '@/babel'
 import * as babel from '@/js/babel'

@@ -243,12 +243,12 @@
       "hasBuildScript": true
     },
     {
-      "id": "demo/uni-app-x-hbuilderx-tailwindcss4",
+      "id": "demo/uni-app-x-vdom-tailwindcss4",
       "type": "demo",
       "typeLabel": "示例",
-      "packageName": "@weapp-tailwindcss-demo/uni-app-x-hbuilderx-tailwindcss4",
-      "displayName": "uni-app-x-hbuilderx-tailwindcss4",
-      "benchmarkKey": "uni-app-x-hbuilderx-tailwindcss4",
+      "packageName": "@weapp-tailwindcss-demo/uni-app-x-vdom-tailwindcss4",
+      "displayName": "uni-app-x-vdom-tailwindcss4",
+      "benchmarkKey": "uni-app-x-vdom-tailwindcss4",
       "buildScript": "build",
       "hasBuildScript": true
     },

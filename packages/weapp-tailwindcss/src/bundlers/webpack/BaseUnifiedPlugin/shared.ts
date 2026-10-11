@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { isSourceStyleRequest, stripRequestQuery } from '@/bundlers/shared/style-requests'
+import { isSourceStyleRequest, stripRequestQuery } from '@/generation/style-requests'
 
 export function getCacheKey(filename: string) {
   return filename

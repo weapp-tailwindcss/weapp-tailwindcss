@@ -1,4 +1,4 @@
-import { MappingChars2StringEntries } from '@weapp-core/escape'
+import { MappingChars2StringEntries } from '@weapp-tailwindcss/escape'
 
 function check(e: [string, string][], allowUnderline = false) {
   const set = new Set()

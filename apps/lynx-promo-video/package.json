@@ -1,0 +1,49 @@
+{
+  "name": "@weapp-tailwindcss/lynx-promo-video",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "assets": "tsx scripts/prepare-assets.ts && tsx scripts/generate-ambient.ts",
+    "capture": "tsx scripts/capture-native.ts all",
+    "capture:android": "tsx scripts/capture-native.ts android",
+    "capture:ios": "tsx scripts/capture-native.ts ios",
+    "voice:zh": "tsx scripts/generate-narration.ts zh",
+    "voice:en": "tsx scripts/generate-narration.ts en",
+    "voice": "tsx scripts/generate-narration.ts all",
+    "studio": "pnpm assets && remotion studio src/index.ts",
+    "render:zh": "pnpm assets && remotion render src/index.ts LynxPromoZh out/lynx-promo-zh-1080p.mp4 --codec=h264 --pixel-format=yuv420p --audio-codec=aac --audio-bitrate=192k && tsx scripts/normalize-video.ts zh",
+    "render:en": "pnpm assets && remotion render src/index.ts LynxPromoEn out/lynx-promo-en-1080p.mp4 --codec=h264 --pixel-format=yuv420p --audio-codec=aac --audio-bitrate=192k && tsx scripts/normalize-video.ts en",
+    "render": "pnpm render:zh",
+    "render:cover:zh": "pnpm assets && remotion still src/index.ts LynxPromoCoverZh out/lynx-promo-cover-1920x1080.png",
+    "render:cover:en": "pnpm assets && remotion still src/index.ts LynxPromoCoverEn out/lynx-promo-cover-en-1920x1080.png",
+    "render:cover": "pnpm render:cover:zh",
+    "render:frames:zh": "pnpm assets && tsx scripts/render-keyframes.ts zh",
+    "render:frames:en": "pnpm assets && tsx scripts/render-keyframes.ts en",
+    "render:frames": "pnpm render:frames:zh",
+    "fonts": "tsx scripts/prepare-fonts.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "verify": "pnpm test && pnpm typecheck && tsx scripts/verify-media.ts"
+  },
+  "dependencies": {
+    "@fontsource-variable/jetbrains-mono": "5.3.0",
+    "@fontsource-variable/noto-sans-sc": "5.3.0",
+    "@remotion/media": "4.0.524",
+    "qrcode": "1.5.4",
+    "react": "catalog:react19",
+    "react-dom": "catalog:react19",
+    "remotion": "4.0.524"
+  },
+  "devDependencies": {
+    "@remotion/cli": "4.0.524",
+    "@types/node": "catalog:typesNode2410",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "catalog:react19",
+    "@types/react-dom": "catalog:react19",
+    "execa": "^9.6.1",
+    "tsx": "catalog:tsx",
+    "typescript": "^5.9.0",
+    "vitest": "catalog:vitest"
+  }
+}

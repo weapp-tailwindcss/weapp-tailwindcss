@@ -48,7 +48,7 @@ export function createRuntimeCompilationBuildState(): RuntimeCompilationBuildSta
     runtimeAffectingHashByFile: new Map<string, string>(),
     linkedByEntry: new Map<string, Set<string>>(),
     dependentsByLinkedFile: new Map<string, Set<string>>(),
-    bundleMarkupCandidatesByFile: new Map<string, Set<string>>(),
+    bundleMarkupCandidatesByFile: new Map(),
     generatorCandidateSignature: undefined,
   }
 }

@@ -1,6 +1,6 @@
 ---
 title: at property
-description: 'In CSS, @property is a new feature of **Registering Custom Properties (CSS Custom Properties)**, which solves some of the shortcomings of the original --var: value "pure string variable". It mainly provides **type constraints, initial values, inheritance control** and other capabilities, allowing the browser to handle this more efficiently...'
+description: 'at property: Current concepts, configuration guidance, and practical examples for weapp-tailwindcss users.'
 keywords:
   - at
   - property

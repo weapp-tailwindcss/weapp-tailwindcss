@@ -11,7 +11,7 @@ interface ViteServeJsTransformOptions {
   getCommand: () => string | undefined
   jsHandler: InternalUserDefinedOptions['jsHandler']
   shouldTransform: () => boolean
-  transformRuntime: () => Promise<Set<string>> | Set<string>
+  transformRuntime: (id: string, source: string) => Promise<Set<string>> | Set<string>
 }
 
 function isViteServeJsRequest(id: string, command: string | undefined) {
@@ -34,7 +34,7 @@ export function createViteServeJsTransformPlugin(options: ViteServeJsTransformOp
       if (shouldSkipViteJsTransform(code, handlerOptions)) {
         return
       }
-      const runtime = await options.transformRuntime()
+      const runtime = await options.transformRuntime(id, code)
       const { code: transformed } = await options.jsHandler(code, runtime, handlerOptions)
       if (transformed === code) {
         return

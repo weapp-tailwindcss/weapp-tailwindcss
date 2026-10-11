@@ -46,6 +46,6 @@ For example, `w-2`, `h-4` are all potential impacts of the box model.
 
 ## Reference documentation
 
-https://tw.icebreaker.top/docs/api/options/important#cssoptions
+https://tw.weapp.dev/docs/api/options/important#cssoptions
 
 https://github.com/sonofmagic/weapp-tailwindcss/issues/604

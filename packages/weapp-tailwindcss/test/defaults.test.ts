@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest'
 
 describe('defaults getDefaultOptions', () => {
+  it.each(['screens/card', '/screens/card', 'C:\\screens\\card', 'screens\\card'])('recognizes DingTalk output assets at %s', async (base) => {
+    const { getDefaultOptions } = await import('@/defaults')
+    const options = getDefaultOptions()
+    expect(typeof options.cssMatcher === 'function' && options.cssMatcher(`${base}.ddss`)).toBe(true)
+    expect(typeof options.htmlMatcher === 'function' && options.htmlMatcher(`${base}.ddml`)).toBe(true)
+    expect(typeof options.cssMatcher === 'function' && options.cssMatcher(`${base}.ddss.map`)).toBe(false)
+    expect(typeof options.htmlMatcher === 'function' && options.htmlMatcher(`${base}.ddml.js`)).toBe(false)
+  })
+
   it('ignores call expression identifiers by default', async () => {
     const { getDefaultOptions } = await import('@/defaults')
     const options = getDefaultOptions()
@@ -45,6 +54,7 @@ describe('defaults getDefaultOptions', () => {
 
     expect(typeof options.htmlMatcher === 'function' && options.htmlMatcher('foo.wxml')).toBe(true)
     expect(typeof options.htmlMatcher === 'function' && options.htmlMatcher('foo.axml')).toBe(true)
+    expect(typeof options.htmlMatcher === 'function' && options.htmlMatcher('foo.qxml')).toBe(true)
     expect(typeof options.htmlMatcher === 'function' && options.htmlMatcher('foo.html')).toBe(false)
 
     expect(typeof options.jsMatcher === 'function' && options.jsMatcher('foo.js')).toBe(true)

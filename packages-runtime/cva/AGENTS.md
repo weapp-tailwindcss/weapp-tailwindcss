@@ -22,7 +22,7 @@
 - `pnpm --filter @weapp-tailwindcss/cva test`
 - `pnpm --filter @weapp-tailwindcss/cva tsd`
 - 定向回归：
-  - `pnpm --filter @weapp-tailwindcss/cva vitest run test/cva.test.ts`
+  - `pnpm --filter @weapp-tailwindcss/cva exec vitest run test/cva.test.ts`
 
 ## 提交前检查
 

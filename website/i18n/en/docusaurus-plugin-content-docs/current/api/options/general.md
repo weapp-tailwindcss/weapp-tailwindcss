@@ -65,7 +65,7 @@ Experimental JS transpilation fast path.
 #### Remark
 
 Currently OXC is only attempted when source maps are turned off on the call side and there are no module graphs, module replacements, ignore call/tag template semantics.
-Starting from `weapp-tailwindcss@5.2.0` requires Node `>=22.12.0`. OXC will still automatically fall back to Babel when loading fails.
+The current release line requires Node `^22.18.0 || >=24.11.0`. OXC will still automatically fall back to Babel when loading fails.
 
 ### postcssOptions
 

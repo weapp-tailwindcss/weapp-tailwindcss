@@ -402,6 +402,7 @@ exports[`styleHandler > main chunk build error 1`] = `
   --tw-backdrop-opacity: ;
   --tw-backdrop-saturate: ;
   --tw-backdrop-sepia: ;
+  box-sizing: border-box;
   border-width: 0;
   border-style: solid;
   border-color: currentColor;

@@ -1,67 +1,16 @@
+import type { ComparableCssCoverage } from '@weapp-tailwindcss/postcss/transform'
 import type { OutputBundle } from 'rollup'
 import type { CssAssetMarkerMatcher, CssAssetResultRecorder } from './markers-imports'
-import { postcss } from '@weapp-tailwindcss/postcss'
+import { collectRootScopedComparableCssCoverage, removeCssCoveredByRootStyleSources } from '@weapp-tailwindcss/postcss/transform'
 import { parseBundlerGeneratedCssMarkerBlocks, stripBundlerGeneratedCssMarkers } from '../../shared/generated-css-marker'
 import { isSubpackageOutputFile } from '../generate-bundle/subpackages'
-import { collectRootStyleBundleCssSources, getAssetFile, hasNonCommentCss, isCssOutputFile, isMatchingGeneratedCssMarkerFile, normalizeMarkerOutputFile, readAssetSource } from './markers-imports'
-import { hasVueScopedAttr, isLikelyTailwindGlobalRule, isLikelyTailwindLayerOrderAtRule, isLikelyTailwindPropertyAtRule, isScopedMiniProgramTailwindContentInitRule, isScopedUniAppWebTailwindPreflightRule, isScopedUniversalTailwindPreflightRule, isUnscopedMiniProgramTailwindPreflightRule, normalizeCssSignatureValue } from './scoped-tailwind-noise'
+import { collectRootStyleBundleCssSources, getAssetFile, isCssOutputFile, isMatchingGeneratedCssMarkerFile, normalizeMarkerOutputFile, readAssetSource } from './markers-imports'
+import { hasVueScopedAttr } from './scoped-tailwind-noise'
 import { isMiniProgramStyleOutputFile, isRootStyleOutputFile } from './style-files'
 
 export { normalizeCssSignatureValue } from './scoped-tailwind-noise'
 
-function createDeclarationSignature(rule: postcss.Rule) {
-  return createDeclarationKeys(rule).sort().join(';')
-}
-
-function createRuleCoverageKey(selector: string, declarations: string) {
-  return `${normalizeCssSignatureValue(selector)}\0${declarations}`
-}
-
-function createDeclarationKeys(rule: postcss.Rule) {
-  return (rule.nodes ?? [])
-    .filter((node): node is postcss.Declaration => node.type === 'decl')
-    .map(node => `${node.prop}:${normalizeCssSignatureValue(node.value)}${node.important ? '!important' : ''}`)
-}
-
-function createAtRuleCoverageKey(atRule: postcss.AtRule) {
-  return `${atRule.name}\0${normalizeCssSignatureValue(atRule.params)}\0${normalizeCssSignatureValue(atRule.toString())}`
-}
-
-export function collectRootScopedComparableCssCoverage(cssSources: string[]) {
-  const rules = new Set<string>()
-  const atRules = new Set<string>()
-  const declarationsBySelector = new Map<string, Set<string>>()
-  const normalizedRuleCss = new Set<string>()
-  for (const source of cssSources) {
-    try {
-      const root = postcss.parse(source)
-      root.walkRules((rule) => {
-        normalizedRuleCss.add(normalizeCssSignatureValue(rule.toString()))
-        const declarations = createDeclarationSignature(rule)
-        if (declarations.length === 0) {
-          return
-        }
-        for (const selector of rule.selectors ?? [rule.selector]) {
-          const normalizedSelector = normalizeCssSignatureValue(selector)
-          rules.add(`${normalizedSelector}\0${declarations}`)
-          const selectorDeclarations = declarationsBySelector.get(normalizedSelector) ?? new Set<string>()
-          for (const declaration of createDeclarationKeys(rule)) {
-            selectorDeclarations.add(declaration)
-          }
-          declarationsBySelector.set(normalizedSelector, selectorDeclarations)
-        }
-      })
-      root.walkAtRules((atRule) => {
-        atRules.add(createAtRuleCoverageKey(atRule))
-      })
-    }
-    catch {
-    }
-  }
-  return { rules, atRules, declarationsBySelector, normalizedRuleCss }
-}
-
-export type ComparableCssCoverage = ReturnType<typeof collectRootScopedComparableCssCoverage>
+export { collectRootScopedComparableCssCoverage, type ComparableCssCoverage, isRuleCoveredByRootCss, removeScopedTailwindPreflightCss } from '@weapp-tailwindcss/postcss/transform'
 
 export function prepareImportedCssCoverage(importedCssSources: string[]) {
   const sources = importedCssSources
@@ -74,80 +23,6 @@ export function prepareImportedCssCoverage(importedCssSources: string[]) {
     coverage: collectRootScopedComparableCssCoverage(sources),
     sources,
   }
-}
-
-export function isRuleCoveredByRootCss(rule: postcss.Rule, coverage: ReturnType<typeof collectRootScopedComparableCssCoverage>) {
-  const declarations = createDeclarationSignature(rule)
-  if (declarations.length === 0) {
-    return false
-  }
-  const selectors = rule.selectors ?? [rule.selector]
-  if (selectors.every(selector => coverage.rules.has(createRuleCoverageKey(selector, declarations)))) {
-    return true
-  }
-  const declarationKeys = createDeclarationKeys(rule)
-  return declarationKeys.length > 0
-    && selectors.every((selector) => {
-      const rootDeclarations = coverage.declarationsBySelector.get(normalizeCssSignatureValue(selector))
-      return rootDeclarations != null && declarationKeys.every(declaration => rootDeclarations.has(declaration))
-    })
-}
-
-function removeScopedCssCoveredByRootStyleSources(css: string, rootSources: string[]) {
-  if (!hasVueScopedAttr(css)) {
-    return css
-  }
-  const hasScopedTailwindGeneratedCss = /tailwindcss v\d/i.test(css)
-  const coverage = collectRootScopedComparableCssCoverage(rootSources)
-  try {
-    const root = postcss.parse(css)
-    let changed = false
-    root.walkComments((comment) => {
-      if (/tailwindcss v\d/i.test(comment.text)) {
-        comment.remove()
-        changed = true
-      }
-    })
-    root.walkRules((rule) => {
-      if (
-        isRuleCoveredByRootCss(rule, coverage)
-        || (
-          hasScopedTailwindGeneratedCss
-          && isLikelyTailwindGlobalRule(rule)
-        )
-        || isUnscopedMiniProgramTailwindPreflightRule(rule)
-        || isScopedMiniProgramTailwindContentInitRule(rule)
-        || isScopedUniAppWebTailwindPreflightRule(rule)
-        || isScopedUniversalTailwindPreflightRule(rule)
-      ) {
-        rule.remove()
-        changed = true
-      }
-    })
-    root.walkAtRules((atRule) => {
-      if (
-        coverage.atRules.has(createAtRuleCoverageKey(atRule))
-        || isLikelyTailwindPropertyAtRule(atRule)
-        || isLikelyTailwindLayerOrderAtRule(atRule)
-      ) {
-        atRule.remove()
-        changed = true
-        return
-      }
-      if (atRule.nodes !== undefined && atRule.nodes.length === 0) {
-        atRule.remove()
-        changed = true
-      }
-    })
-    return changed ? removeDanglingCssSourceTraceComments(root.toString()).trim() : css
-  }
-  catch {
-    return css
-  }
-}
-
-export function removeScopedTailwindPreflightCss(css: string) {
-  return removeScopedCssCoveredByRootStyleSources(css, [])
 }
 
 export function collectSingleViteGeneratedCssMarkerFile(rawSource: string) {
@@ -176,112 +51,8 @@ export function shouldFilterRootGeneratedCssMarkerForScopedAsset(
   return !isMatchingGeneratedCssMarkerFile(targetFile, markerFile, resolveViteProcessedCssOutputFile)
 }
 
-export function removeCssCoveredByRootStyleBundleSources(
-  bundle: OutputBundle,
-  file: string,
-  css: string,
-) {
-  const rootSources = collectRootStyleBundleCssSources(bundle, file)
-  if (css.trim().length === 0) {
-    return css
-  }
-  const hasScopedCss = hasVueScopedAttr(css)
-  const hasScopedTailwindGeneratedCss = hasScopedCss && /tailwindcss v\d/i.test(css)
-  if (
-    rootSources.length === 0
-    && !hasScopedCss
-  ) {
-    return css
-  }
-  const coverage = collectRootScopedComparableCssCoverage(rootSources)
-  let nextCss = css
-  try {
-    const root = postcss.parse(css)
-    let changed = false
-    root.walkRules((rule) => {
-      if (
-        coverage.normalizedRuleCss.has(normalizeCssSignatureValue(rule.toString()))
-        || (
-          hasScopedCss
-          && (
-            isRuleCoveredByRootCss(rule, coverage)
-            || (hasScopedTailwindGeneratedCss && isLikelyTailwindGlobalRule(rule))
-            || isUnscopedMiniProgramTailwindPreflightRule(rule)
-            || isScopedMiniProgramTailwindContentInitRule(rule)
-            || isScopedUniAppWebTailwindPreflightRule(rule)
-            || isScopedUniversalTailwindPreflightRule(rule)
-          )
-        )
-      ) {
-        rule.remove()
-        changed = true
-      }
-    })
-    if (hasScopedCss) {
-      root.walkAtRules((atRule) => {
-        if (
-          coverage.atRules.has(createAtRuleCoverageKey(atRule))
-          || isLikelyTailwindPropertyAtRule(atRule)
-          || isLikelyTailwindLayerOrderAtRule(atRule)
-        ) {
-          atRule.remove()
-          changed = true
-          return
-        }
-        if (atRule.nodes !== undefined && atRule.nodes.length === 0) {
-          atRule.remove()
-          changed = true
-        }
-      })
-    }
-    root.walkComments((comment) => {
-      if (hasScopedCss && /tailwindcss v\d/i.test(comment.text)) {
-        comment.remove()
-        changed = true
-        return
-      }
-      if (!comment.text.trim().startsWith('tokens:')) {
-        return
-      }
-      const next = comment.next()
-      if (next?.type === 'rule' || next?.type === 'atrule') {
-        return
-      }
-      comment.remove()
-      changed = true
-    })
-    if (changed) {
-      nextCss = root.toString().trim()
-    }
-  }
-  catch {
-  }
-  return hasNonCommentCss(nextCss) ? nextCss : ''
-}
-
-function removeDanglingCssSourceTraceComments(css: string) {
-  if (!css.includes('/* tokens:')) {
-    return css
-  }
-  try {
-    const root = postcss.parse(css)
-    let changed = false
-    root.each((node) => {
-      if (node.type !== 'comment' || !node.text.trim().startsWith('tokens:')) {
-        return
-      }
-      const next = node.next()
-      if (next?.type === 'rule' || next?.type === 'atrule') {
-        return
-      }
-      node.remove()
-      changed = true
-    })
-    return changed ? root.toString().trim() : css
-  }
-  catch {
-    return css
-  }
+export function removeCssCoveredByRootStyleBundleSources(bundle: OutputBundle, file: string, css: string) {
+  return removeCssCoveredByRootStyleSources(css, collectRootStyleBundleCssSources(bundle, file))
 }
 
 export function removeCssCoveredByRootStyleAssets(
@@ -297,6 +68,8 @@ export function removeCssCoveredByRootStyleAssets(
   },
 ) {
   let updated = 0
+  let previousRootSources: string[] | undefined
+  let rootCoverage: ComparableCssCoverage | undefined
   for (const [bundleFile, output] of Object.entries(bundle)) {
     if (output.type !== 'asset') {
       continue
@@ -311,6 +84,7 @@ export function removeCssCoveredByRootStyleAssets(
       && !isMiniProgramStyleOutputFile(file)
     if (
       !(options.cssMatcher(file) || (hasScopedCss && isCssOutputFile(file)) || shouldIncludeTailwindGeneratedCssAsset)
+      || rawSource.trim().length === 0
       || isRootStyleOutputFile(file)
       || (
         options.isViteProcessedCssAsset?.(output, file) === true
@@ -324,7 +98,15 @@ export function removeCssCoveredByRootStyleAssets(
     ) {
       continue
     }
-    const nextCss = removeCssCoveredByRootStyleBundleSources(bundle, file, rawSource)
+    const rootSources = collectRootStyleBundleCssSources(bundle, file)
+    // 只在本轮产物处理内复用；回调修改根样式时必须重新建立覆盖索引。
+    if (!previousRootSources
+      || rootSources.length !== previousRootSources.length
+      || rootSources.some((source, index) => source !== previousRootSources?.[index])) {
+      previousRootSources = rootSources
+      rootCoverage = collectRootScopedComparableCssCoverage(rootSources)
+    }
+    const nextCss = removeCssCoveredByRootStyleSources(rawSource, rootSources, rootCoverage)
     if (nextCss === rawSource) {
       continue
     }

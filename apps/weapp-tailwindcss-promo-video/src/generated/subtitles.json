@@ -1,0 +1,324 @@
+{
+  "zh": {
+    "landscape": [
+      {
+        "start": 0.196291,
+        "end": 1.631499,
+        "text": "Tailwind，不止 Web"
+      },
+      {
+        "start": 3.216291,
+        "end": 4.350541,
+        "text": "用熟悉的 class"
+      },
+      {
+        "start": 4.570458,
+        "end": 6.6075,
+        "text": "控制间距、圆角和色彩"
+      },
+      {
+        "start": 9.216291,
+        "end": 11.137583,
+        "text": "生成样式，转译类名"
+      },
+      {
+        "start": 11.334332999999999,
+        "end": 12.630624,
+        "text": "再按目标端适配"
+      },
+      {
+        "start": 15.246291000000001,
+        "end": 17.827332,
+        "text": "覆盖 Web、小程序和 App WebView"
+      },
+      {
+        "start": 18.116666000000002,
+        "end": 20.535666,
+        "text": "接入 uni-app x、React Native"
+      },
+      {
+        "start": 20.755541,
+        "end": 21.426832,
+        "text": "还有 Lynx"
+      },
+      {
+        "start": 27.216291000000002,
+        "end": 29.207041,
+        "text": "支持 Tailwind CSS 4"
+      },
+      {
+        "start": 29.484833000000002,
+        "end": 31.614458,
+        "text": "接入熟悉的框架和构建工具"
+      },
+      {
+        "start": 35.246291,
+        "end": 36.866665999999995,
+        "text": "以 Vite 的 Web 项目为例"
+      },
+      {
+        "start": 37.040290999999996,
+        "end": 39.551833,
+        "text": "安装依赖，引入 CSS 入口"
+      },
+      {
+        "start": 39.760166,
+        "end": 41.507875,
+        "text": "注册插件，开始构建"
+      },
+      {
+        "start": 46.216291,
+        "end": 48.658415999999995,
+        "text": "CLI 支持独立构建和监听"
+      },
+      {
+        "start": 48.936208,
+        "end": 50.903791,
+        "text": "运行时工具管理类名合并"
+      },
+      {
+        "start": 51.12370799999999,
+        "end": 52.350583,
+        "text": "以及组件变体"
+      },
+      {
+        "start": 55.216291,
+        "end": 57.114458,
+        "text": "选你的框架，开始构建"
+      },
+      {
+        "start": 57.643165999999994,
+        "end": 58.800540999999996,
+        "text": "文档就在官网"
+      }
+    ],
+    "portrait": [
+      {
+        "start": 0.146291,
+        "end": 0.8291660000000001,
+        "text": "不止 Web"
+      },
+      {
+        "start": 2.196291,
+        "end": 3.3652490000000004,
+        "text": "写熟悉的 class"
+      },
+      {
+        "start": 3.585166,
+        "end": 5.6222080000000005,
+        "text": "控制间距、圆角和色彩"
+      },
+      {
+        "start": 7.216291,
+        "end": 8.616791,
+        "text": "从 Web、小程序"
+      },
+      {
+        "start": 8.871375,
+        "end": 10.734832,
+        "text": "到 React Native 和 Lynx"
+      },
+      {
+        "start": 10.966291,
+        "end": 12.632958,
+        "text": "按目标端生成样式"
+      },
+      {
+        "start": 16.196291000000002,
+        "end": 17.712499,
+        "text": "Tailwind CSS 4"
+      },
+      {
+        "start": 17.955541,
+        "end": 19.552791000000003,
+        "text": "接入熟悉的框架生态"
+      },
+      {
+        "start": 22.176291,
+        "end": 24.28275,
+        "text": "安装，配置，开始构建"
+      },
+      {
+        "start": 26.176291,
+        "end": 27.102207,
+        "text": "选你的框架"
+      },
+      {
+        "start": 27.299,
+        "end": 29.011916,
+        "text": "打开官网，开始构建"
+      }
+    ]
+  },
+  "en": {
+    "landscape": [
+      {
+        "start": 0.198083,
+        "end": 1.4000000000000001,
+        "text": "Tailwind beyond the web."
+      },
+      {
+        "start": 3.218083,
+        "end": 4.42,
+        "text": "Use familiar classes"
+      },
+      {
+        "start": 4.432,
+        "end": 6.859874,
+        "text": "to shape spacing, corners, and color."
+      },
+      {
+        "start": 9.218083,
+        "end": 11.453665999999998,
+        "text": "Generate styles, transform classes,"
+      },
+      {
+        "start": 11.549790999999999,
+        "end": 12.871915999999999,
+        "text": "adapt to each target."
+      },
+      {
+        "start": 15.248083000000001,
+        "end": 17.063,
+        "text": "Build for the web, mini programs,"
+      },
+      {
+        "start": 17.171166,
+        "end": 18.228875000000002,
+        "text": "and app WebViews."
+      },
+      {
+        "start": 19.05625,
+        "end": 21.412041000000002,
+        "text": "Reach native ecosystems\nwith uni-app x,"
+      },
+      {
+        "start": 21.56825,
+        "end": 23.202874,
+        "text": "React Native, and Lynx."
+      },
+      {
+        "start": 27.218083,
+        "end": 29.032999,
+        "text": "Built for Tailwind CSS 4."
+      },
+      {
+        "start": 29.860375,
+        "end": 30.906041000000002,
+        "text": "Connect your framework"
+      },
+      {
+        "start": 30.918083000000003,
+        "end": 31.927708000000003,
+        "text": "and your build tools."
+      },
+      {
+        "start": 35.248083,
+        "end": 36.570208,
+        "text": "For a Vite web project,"
+      },
+      {
+        "start": 36.690374999999996,
+        "end": 37.868291,
+        "text": "install the packages,"
+      },
+      {
+        "start": 37.988458,
+        "end": 39.538958,
+        "text": "import your CSS entry,"
+      },
+      {
+        "start": 39.743249999999996,
+        "end": 40.969249,
+        "text": "then register the plugin."
+      },
+      {
+        "start": 41.796625,
+        "end": 43.359123999999994,
+        "text": "Choose the guide for your target."
+      },
+      {
+        "start": 46.218083,
+        "end": 48.309416,
+        "text": "Build CSS and watch for changes."
+      },
+      {
+        "start": 49.136832999999996,
+        "end": 50.470957,
+        "text": "Merge classes and manage"
+      },
+      {
+        "start": 50.483,
+        "end": 51.624790999999995,
+        "text": "component variants."
+      },
+      {
+        "start": 55.218083,
+        "end": 56.227666,
+        "text": "Pick your framework."
+      },
+      {
+        "start": 57.055082999999996,
+        "end": 57.896457999999996,
+        "text": "Start building."
+      }
+    ],
+    "portrait": [
+      {
+        "start": 0.14808300000000002,
+        "end": 0.9653740000000001,
+        "text": "Beyond the web."
+      },
+      {
+        "start": 2.198083,
+        "end": 4.625957,
+        "text": "Control spacing, corners, and color."
+      },
+      {
+        "start": 7.218083,
+        "end": 8.564249,
+        "text": "From web and mini programs"
+      },
+      {
+        "start": 8.57625,
+        "end": 10.006541,
+        "text": "to React Native and Lynx."
+      },
+      {
+        "start": 10.833957999999999,
+        "end": 12.672916,
+        "text": "Generate styles for each target."
+      },
+      {
+        "start": 16.198083,
+        "end": 17.616374,
+        "text": "Tailwind CSS 4."
+      },
+      {
+        "start": 18.44375,
+        "end": 19.789874,
+        "text": "Connect your favorite framework"
+      },
+      {
+        "start": 19.801916000000002,
+        "end": 20.691375,
+        "text": "and build tools."
+      },
+      {
+        "start": 22.178082999999997,
+        "end": 24.149207999999998,
+        "text": "Install, configure, build."
+      },
+      {
+        "start": 26.178082999999997,
+        "end": 27.151623999999998,
+        "text": "Open the docs."
+      },
+      {
+        "start": 27.979041,
+        "end": 28.820415999999998,
+        "text": "Start building."
+      }
+    ]
+  }
+}

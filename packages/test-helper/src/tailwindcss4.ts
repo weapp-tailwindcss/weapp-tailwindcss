@@ -20,7 +20,11 @@ export async function generateCss(input: string | string[], options?: IGenerateC
     twConfig: undefined,
     isContentGlob: false,
   })
-  const source = await resolveSourceInput(input, { isContentGlob, twConfig })
+  const sourceOptions: SourceInputOptions = { isContentGlob }
+  if (twConfig !== undefined) {
+    sourceOptions.twConfig = twConfig
+  }
+  const source = await resolveSourceInput(input, sourceOptions)
   const normalizedCss = normalizeLegacyTailwindDirectives(css)
   const rewrittenCss = rewriteTailwindcssImportStatements(
     injectSourceDirectives(normalizedCss, source),
@@ -56,11 +60,17 @@ async function resolveSourceInput(
   const values = Array.isArray(input) ? input : [input]
   if (options.isContentGlob) {
     const base = await mkdtemp(path.join(tmpdir(), 'weapp-tw-test-helper-'))
-    return {
-      base,
-      sources: values,
-      config: await writeConfig(options.twConfig, base),
-    }
+    const config = await writeConfig(options.twConfig, base)
+    return config
+      ? {
+          base,
+          sources: values,
+          config,
+        }
+      : {
+          base,
+          sources: values,
+        }
   }
 
   if (typeof input === 'string' && isLikelyBasePath(input) && !options.twConfig) {
@@ -73,11 +83,17 @@ async function resolveSourceInput(
   const base = await mkdtemp(path.join(tmpdir(), 'weapp-tw-test-helper-'))
   const sourceFile = path.join(base, 'source.html')
   await writeFile(sourceFile, normalizeInlineContent(values), 'utf8')
-  return {
-    base,
-    sources: ['./source.html'],
-    config: await writeConfig(options.twConfig, base),
-  }
+  const config = await writeConfig(options.twConfig, base)
+  return config
+    ? {
+        base,
+        sources: ['./source.html'],
+        config,
+      }
+    : {
+        base,
+        sources: ['./source.html'],
+      }
 }
 
 async function writeConfig(config: Record<string, unknown> | undefined, base = process.cwd()) {

@@ -1,7 +1,7 @@
 import path from 'node:path'
 import process from 'node:process'
 import { getCss } from '#test/helpers/getTwCss'
-import { MappingChars2String } from '@weapp-core/escape'
+import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { createJsHandler } from '@/js/index'
 import { createGetCase, jsCasePath } from './util'
 
@@ -60,7 +60,7 @@ describe('taro app', () => {
     }
   })
 
-  it.each(testTable)('$name break taro-terser-minify case', async ({ strategy }) => {
+  it.each(testTable)("'$name' break taro-terser-minify case", async ({ strategy }) => {
     const testCase = await getCase('taro-terser-minify.js')
     const set: Set<string> = new Set()
     process.env.NODE_ENV = 'production'
@@ -78,7 +78,7 @@ describe('taro app', () => {
     // expect(set.size).toBeGreaterThan(0)
   })
 
-  it.each(testTable)('$name vue3SaticNodeStr case', async ({ strategy }) => {
+  it.each(testTable)("'$name' vue3SaticNodeStr case", async ({ strategy }) => {
     const testCase = await getCase('taro-vue-static-node.js')
     await getCss(testCase)
     const set: Set<string> = new Set()
@@ -87,7 +87,7 @@ describe('taro app', () => {
     expect(code).toMatchSnapshot()
   })
 
-  it.each(testTable)('$name vue3SaticNodeStr short case', async ({ strategy }) => {
+  it.each(testTable)("'$name' vue3SaticNodeStr short case", async ({ strategy }) => {
     const testCase = await getCase('taro-vue-static-node-short.js')
     await getCss(testCase)
     const set: Set<string> = new Set()

@@ -5,11 +5,11 @@ export default defineAppConfig({
   subPackages: [
     {
       root: 'sub-normal',
-      pages: ['pages/index'],
+      pages: ['pages/index/index'],
     },
     {
       root: 'sub-independent',
-      pages: ['pages/index'],
+      pages: ['pages/index/index'],
       independent: true,
     },
   ],

@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { describe, expect, it } from 'vitest'
 import {
@@ -14,6 +14,30 @@ import {
 } from '@/bundlers/vite/source-scan/css-entries'
 
 describe('vite source scan css entries', () => {
+  it.each([
+    resolveTailwindV4EntriesFromCssCached,
+    resolveTailwindConfigEntriesFromCssCached,
+  ])('配置修改、删除和重建后重新解析来源：%s', async (resolveEntries) => {
+    const root = await mkdtemp(path.join(tmpdir(), 'weapp-tw-config-signature-'))
+    const config = path.join(root, 'tailwind.config.js')
+    const css = '@config "./tailwind.config.js"; @import "tailwindcss";'
+    const positivePatterns = async () => (await resolveEntries(css, root))?.entries
+      .filter(entry => !entry.negated).map(entry => entry.pattern)
+    try {
+      await writeFile(config, 'module.exports = { content: ["./pages/**/*.wxml"] }')
+      expect(await positivePatterns()).toEqual(['pages/**/*.wxml'])
+      await writeFile(config, 'module.exports = { content: ["./components/**/*.qxml"] }')
+      expect(await positivePatterns()).toEqual(['components/**/*.qxml'])
+      await rm(config)
+      expect(await positivePatterns()).toEqual([])
+      await writeFile(config, 'module.exports = { content: ["./recreated/**/*.wxml"] }')
+      expect(await positivePatterns()).toEqual(['recreated/**/*.wxml'])
+    }
+    finally {
+      await rm(root, { recursive: true, force: true })
+    }
+  })
+
   it('merges inline candidates with excludes taking precedence', () => {
     const merged = mergeTailwindInlineSourceCandidates([
       { included: new Set(['flex', 'grid']), excluded: new Set(['hidden']) },

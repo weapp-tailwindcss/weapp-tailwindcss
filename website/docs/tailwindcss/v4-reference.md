@@ -17,16 +17,10 @@ keywords:
 :::info
 当前版本的 `weapp-tailwindcss` 已经默认按 Tailwind CSS 4 生成模式组织配置与文档。本页不是新的快速开始入口，而是补充说明默认模式下仍需要理解的 CSS-first、`@source`、`cssEntries`、`@apply`、`@layer`、IntelliSense 与多端兼容细节。
 
-第一次接入请从 [安装依赖](/docs/quick-start/install) 和对应框架注册页开始；从 v3 或旧 v4 示例迁移时，再回到本页核对需要保留或删除的配置。
+第一次接入请从 [安装依赖](/docs/quick-start/install) 和对应框架注册页开始；从旧项目迁移时，再回到本页核对需要保留或删除的配置。
 :::
 
-<!-- 旧版兼容说明已移除。
-
-目前用户汇报了部分手机，可能是由于内部使用的 `webview` 版本太低，或者一些其他的因素，导致了样式不生效的问题，尤其是华为手机。
-
-`tailwindcss@4.x` 生成的样式，对现代的浏览器来说刚刚好，可是对那些移动设备来说，就不一定了。 -->
-
-本页只维护 Tailwind CSS 4 默认生成模式相关说明；Tailwind CSS 3 或历史实验接入方式请优先参考迁移文档。
+本页只维护 Tailwind CSS 4 默认生成模式相关说明。
 
 ## 定位的变化: 样式预处理器
 

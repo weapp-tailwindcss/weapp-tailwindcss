@@ -1,0 +1,14 @@
+{
+  "rules": {
+    "tw-authored-height-small": [
+      "8rpx"
+    ],
+    "tw-authored-display": [
+      "flex"
+    ],
+    "tw-authored-color": [
+      "#123456"
+    ]
+  },
+  "coverage": "authored-styles"
+}

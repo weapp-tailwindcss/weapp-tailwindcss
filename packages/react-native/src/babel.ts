@@ -1,7 +1,6 @@
 /* eslint-disable style/max-statements-per-line */
 
-import type { PluginObject, PluginPass } from '@babel/core'
-import type { NodePath } from '@babel/traverse'
+import type { NodePath, PluginObject, PluginPass } from '@babel/core'
 import * as t from '@babel/types'
 
 export interface WeappReactNativeBabelOptions {
@@ -48,6 +47,10 @@ function shouldSkipFile(filename: string | undefined) {
 function hasKnownStaticTokens(value: string, classNameSet: Set<string> | undefined) {
   if (!classNameSet) { return false }
   return classTokens(value).every(token => classNameSet.has(token))
+}
+
+function findStyleAttribute(attributes: (t.JSXAttribute | t.JSXSpreadAttribute)[]) {
+  return attributes.find((attribute): attribute is t.JSXAttribute => t.isJSXAttribute(attribute) && attribute.name.name === 'style')
 }
 
 function styleExpression(attribute: t.JSXAttribute | undefined) {
@@ -124,13 +127,13 @@ export default function weappReactNativeBabel(): PluginObject<PluginState> {
         if (!classAttribute || !t.isJSXAttribute(classAttribute)) { return }
         if (t.isStringLiteral(classAttribute.value)) {
           if (!hasKnownStaticTokens(classAttribute.value.value, state.opts.classNameSet ? new Set(state.opts.classNameSet) : undefined)) { return }
-          const style = composeExpression(program, state, staticStyleExpression(program, state, classAttribute.value.value), styleExpression(path.node.attributes.find(attribute => t.isJSXAttribute(attribute) && attribute.name.name === 'style')))
+          const style = composeExpression(program, state, staticStyleExpression(program, state, classAttribute.value.value), styleExpression(findStyleAttribute(path.node.attributes)))
           applyStyleAttribute(path, style)
           path.node.attributes = path.node.attributes.filter(attribute => attribute !== classAttribute)
           return
         }
         if (t.isJSXExpressionContainer(classAttribute.value) && classAttribute.value.expression) {
-          const existing = path.node.attributes.find(attribute => t.isJSXAttribute(attribute) && attribute.name.name === 'style') as t.JSXAttribute | undefined
+          const existing = findStyleAttribute(path.node.attributes)
           const style = composeExpression(program, state, dynamicStyleExpression(program, state, classAttribute.value.expression as t.Expression), styleExpression(existing))
           applyStyleAttribute(path, style)
           path.node.attributes = path.node.attributes.filter(attribute => attribute !== classAttribute)

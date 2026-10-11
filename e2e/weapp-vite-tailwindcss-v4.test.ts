@@ -18,6 +18,21 @@ defineProjectTest(project, {
 defineTaroBareSelectorRegression(project)
 
 describe('e2e', () => {
+  it('generates independent subpackage utilities only once across build phases', async () => {
+    const projectBase = path.resolve(__dirname, '../demo')
+    const root = path.resolve(projectBase, project.name)
+    const projectPath = path.resolve(projectBase, project.projectPath)
+
+    if (process.env.E2E_SKIP_BUILD !== '1') {
+      await ensureProjectBuilt(root)
+    }
+
+    const css = await fs.readFile(path.resolve(projectPath, 'dist/sub-independent/pages/index.wxss'), 'utf8')
+    const selector = replaceWxml('before:content-[\'independent_subpackage_weapp-vite-tailwindcss-v4\']')
+
+    expect(css.split(`.${selector}::before`)).toHaveLength(2)
+  })
+
   it('keeps non-class WXML expression strings unescaped in weapp-vite v4 output', async () => {
     const projectBase = path.resolve(__dirname, '../demo')
     const root = path.resolve(projectBase, project.name)

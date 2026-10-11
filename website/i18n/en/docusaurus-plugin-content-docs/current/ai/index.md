@@ -1,5 +1,6 @@
 ---
 sidebar: aiSidebar
+audience: maintainer
 title: AI generates small program code
 description: This page is about using AI to quickly build small programs. I hope it can help everyone continuously improve their development efficiency.
 keywords:
@@ -27,7 +28,7 @@ At the same time, I also hope that everyone can discuss and participate together
 
 ## AI Learning Center: Skill Quick Installation
 
-The official skill has been split by task into 1 compatible coordination portal and 6 dedicated workflows. It is recommended to install the entire suite to cover onboarding, migration, troubleshooting, runtime, custom builds, and Expo React Native:
+The official skill suite is split into 1 compatibility router and 7 dedicated workflows. Install the full suite for setup, migration, troubleshooting, runtime, custom builds, Expo React Native, and ReactLynx/Rspeedy:
 
 ```bash
 npx skills add sonofmagic/skills \
@@ -38,12 +39,17 @@ npx skills add sonofmagic/skills \
   --skill weapp-tailwindcss-runtime \
   --skill weapp-tailwindcss-custom-build \
   --skill weapp-tailwindcss-react-native \
+  --skill weapp-tailwindcss-lynx \
   -y
 ```
 
 The original `weapp-tailwindcss` name continues to serve as the lightweight coordination entry, and the old installation commands will not become invalid.
 
 For detailed instructions, see: [Skill (Skill System)](/docs/ai/basics/skill)
+
+:::warning Maintainers only
+The following commands are for repository contributors and documentation maintainers, not for integrating `weapp-tailwindcss` into an application.
+:::
 
 ## How to contribute
 
@@ -55,7 +61,7 @@ For detailed instructions, see: [Skill (Skill System)](/docs/ai/basics/skill)
 
 ### start
 
-Click [`fork weapp-tailwindcss`](https://github.com/sonofmagic/weapp-tailwindcss/fork), then go to `git clone` locally and open this directory:
+Click [`fork weapp-tailwindcss`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/fork), then go to `git clone` locally and open this directory:
 
 1. Execute `pnpm i` to install dependencies
 2. Execute `pnpm build:pkg` to build the local dependency package of `website`

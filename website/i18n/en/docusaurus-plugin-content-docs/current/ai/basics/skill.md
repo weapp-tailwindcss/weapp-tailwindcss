@@ -13,13 +13,14 @@ keywords:
   - taro
   - mpx
   - React Native
+  - ReactLynx
 ---
 
 # Skill (skill system)
 
 `weapp-tailwindcss` official skill is for business project users. It splits the current v5 access, migration, troubleshooting and advanced capabilities into independent workflows, avoiding the need for one big Skill to maintain all frameworks and APIs at the same time.
 
-This project uses [`vercel-labs/skills`](https://github.com/vercel-labs/skills) to install Skill. `sonofmagic/weapp-tailwindcss` is the content source of fact, and `sonofmagic/skills` is the user-facing aggregated installation repository.
+This project uses [`vercel-labs/skills`](https://github.com/vercel-labs/skills) to install Skill. `weapp-tailwindcss/weapp-tailwindcss` is the content source of fact, and `sonofmagic/skills` is the user-facing aggregated installation repository.
 
 ## Install the complete package
 
@@ -32,6 +33,7 @@ npx skills add sonofmagic/skills \
   --skill weapp-tailwindcss-runtime \
   --skill weapp-tailwindcss-custom-build \
   --skill weapp-tailwindcss-react-native \
+  --skill weapp-tailwindcss-lynx \
   -y
 ```
 
@@ -51,15 +53,16 @@ npx skills add sonofmagic/skills --list
 
 ## Skill division of labor
 
-| Skill                            | Usage scenarios                                                                     |
-| -------------------------------- | ----------------------------------------------------------------------------------- |
-| `weapp-tailwindcss`              | Generalized request, task identification, security baseline and compatibility entry |
-| `weapp-tailwindcss-setup`        | New access, framework selection, Tailwind CSS 4 and multi-terminal configuration    |
-| `weapp-tailwindcss-migrate`      | v4 to v5, old patch/generated plug-in and environment migration                     |
-| `weapp-tailwindcss-troubleshoot` | Style generation, class translation, rpx, HMR and runtime troubleshooting           |
-| `weapp-tailwindcss-runtime`      | Dynamic class, merge, cva, variants and escape/unescape                             |
-| `weapp-tailwindcss-custom-build` | Core API, self-developed bundler, style injection and sub-packaging isolation       |
-| `weapp-tailwindcss-react-native` | Expo Metro, Native manifest and Android/iOS runtime                                 |
+| Skill                            | Usage scenarios                                                                      |
+| -------------------------------- | ------------------------------------------------------------------------------------ |
+| `weapp-tailwindcss`              | Generalized request, task identification, security baseline and compatibility entry  |
+| `weapp-tailwindcss-setup`        | New setup, framework selection, standalone CLI, Tailwind CSS 4, and multiple targets |
+| `weapp-tailwindcss-migrate`      | v4 to v5, legacy patch, CLI, generator, and environment migration                    |
+| `weapp-tailwindcss-troubleshoot` | CLI, style generation, class translation, rpx, HMR, and runtime troubleshooting      |
+| `weapp-tailwindcss-runtime`      | Dynamic class, merge, cva, variants and escape/unescape                              |
+| `weapp-tailwindcss-custom-build` | Core API, self-developed bundler, style injection and sub-packaging isolation        |
+| `weapp-tailwindcss-react-native` | Expo Metro, Native manifest and Android/iOS runtime                                  |
+| `weapp-tailwindcss-lynx`         | ReactLynx, Rspeedy, Lynx native CSS, and encoder compatibility                       |
 
 ## Current common baseline
 
@@ -69,6 +72,8 @@ npx skills add sonofmagic/skills --list
 - Tailwind entry uses pure CSS and must be actually imported by the project; `cssEntries` uses absolute paths and cannot replace the build map import.
 - H5/Web usually retains plug-ins, and the generator automatically selects the Web target.
 - JavaScript class only converts Tailwind-verified exact candidates of `classNameSet`.
+- `@weapp-tailwindcss/cli` emits Web CSS by default; `--target weapp` only converts generated CSS and does not replace a full mini-program bundler.
+- React Native uses a style manifest, while ReactLynx preserves `className` and emits Lynx native CSS; these pipelines are not interchangeable.
 
 ## Local development installation
 
@@ -83,6 +88,7 @@ npx skills add . \
   --skill weapp-tailwindcss-runtime \
   --skill weapp-tailwindcss-custom-build \
   --skill weapp-tailwindcss-react-native \
+  --skill weapp-tailwindcss-lynx \
   -y
 ```
 
@@ -106,6 +112,10 @@ Use $weapp-tailwindcss-custom-build to design in-memory conversion and sub-packa
 
 ```text
 Configure Metro for Expo SDK 54 and verify manifest warnings using $weapp-tailwindcss-react-native.
+```
+
+```text
+Use $weapp-tailwindcss-lynx to configure Tailwind CSS 4 for ReactLynx and Rspeedy and inspect encoder warnings.
 ```
 
 ## Maintenance and verification

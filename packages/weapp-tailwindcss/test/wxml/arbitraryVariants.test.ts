@@ -1,4 +1,4 @@
-import { MappingChars2String } from '@weapp-core/escape'
+import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { getCompilerContext } from '@/context'
 
 async function simpleHandler(str: string) {

@@ -1,0 +1,91 @@
+{
+  "initial": {
+    ".-mt-0_d5": [
+      "-0.5rpx"
+    ],
+    ".-mt-4": [
+      "-4rpx"
+    ],
+    ".mt-4": [
+      "4rpx"
+    ],
+    ".h-32": [
+      "32rpx"
+    ],
+    ".w-32": [
+      "32rpx"
+    ],
+    ".gap-4": [
+      "4rpx"
+    ],
+    ".p-0_d5": [
+      "0.5rpx"
+    ],
+    ".p-4": [
+      "4rpx"
+    ]
+  },
+  "theme-updated": {
+    ".-mt-0_d5": [
+      "-1rpx"
+    ],
+    ".-mt-4": [
+      "-8rpx"
+    ],
+    ".mt-4": [
+      "8rpx"
+    ],
+    ".h-32": [
+      "64rpx"
+    ],
+    ".w-32": [
+      "64rpx"
+    ],
+    ".gap-4": [
+      "8rpx"
+    ],
+    ".p-0_d5": [
+      "1rpx"
+    ],
+    ".p-4": [
+      "8rpx"
+    ]
+  },
+  "removed": {
+    ".p-4": [
+      "8rpx"
+    ]
+  },
+  "restored": {
+    ".w-32": [
+      "64rpx"
+    ],
+    ".p-4": [
+      "8rpx"
+    ]
+  },
+  "override-3rpx": {
+    ".w-32": [
+      "calc(var(--spacing)*32)"
+    ],
+    ".p-4": [
+      "calc(var(--spacing)*4)"
+    ]
+  },
+  "override-4rpx": {
+    ".w-32": [
+      "calc(var(--spacing)*32)"
+    ],
+    ".p-4": [
+      "calc(var(--spacing)*4)"
+    ]
+  },
+  "override-cleared": {
+    ".w-32": [
+      "64rpx"
+    ],
+    ".p-4": [
+      "8rpx"
+    ]
+  }
+}

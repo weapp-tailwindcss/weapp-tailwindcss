@@ -72,11 +72,12 @@ export function createWeappTailwindcssPostcssPlugin(
         const rawCss = sourceOptions.css ?? root.toString()
         const base = resolvePostcssBase(result, options)
         const projectRoot = resolvePostcssProjectRoot(result, options)
-        const sourceEntries = await resolveCssSourceEntries(root, base, POSTCSS_SOURCE_PATTERN)
+        const compiledScan = adapters.compiledSourceScan && scanSources !== false
+        const sourceEntries = compiledScan ? [] : await resolveCssSourceEntries(root, base, POSTCSS_SOURCE_PATTERN)
 
         const [collectedSources, autoCandidates] = await Promise.all([
-          collectPostcssLocalSources(root, result, options, { sourceEntries }),
-          collectAutoTailwindCandidates(root, result, options, { css: rawCss, sourceEntries }),
+          compiledScan ? { files: [], sources: [] } : collectPostcssLocalSources(root, result, options, { sourceEntries }),
+          compiledScan ? new Set<string>() : collectAutoTailwindCandidates(root, result, options, { css: rawCss, sourceEntries }),
         ])
         const generatorConfig = generatorOptions.config ?? options.config
         const isApplyOnlyTailwindV4Css = isTailwindV4ApplyOnlyCss(rawCss, root)
@@ -97,34 +98,40 @@ export function createWeappTailwindcssPostcssPlugin(
           ...generatorOptions.styleOptions,
           ...styleOptions,
         }
-        const generated = await generator.generate({
-          candidates: new Set([
-            ...autoCandidates,
-            ...(candidates ?? []),
-          ]),
-          scanSources: scanSources ?? false,
-          sources: [
-            ...collectedSources.sources,
-            ...(sources ?? []),
-          ],
-          styleOptions: generatorStyleOptions,
-          target: generatorOptions.target,
-        })
-        const css = isApplyOnlyTailwindV4Css
-          ? filterApplyOnlyGeneratedCss(generated.css, applyOnlyCssSelectors ?? new Set())
-          : generated.css
-        const finalCss = finalizeGeneratedCss(css, generated.target, generatorStyleOptions, generatorOptions.webCompat)
+        try {
+          const generated = await generator.generate({
+            candidates: new Set([
+              ...autoCandidates,
+              ...(candidates ?? []),
+            ]),
+            scanSources: compiledScan ? true : scanSources ?? false,
+            ...(compiledScan ? { scanMode: 'compiled' as const, excludeFiles: result.opts.to ? [result.opts.to] : [] } : {}),
+            sources: [
+              ...collectedSources.sources,
+              ...(sources ?? []),
+            ],
+            styleOptions: generatorStyleOptions,
+            target: generatorOptions.target,
+          })
+          const css = isApplyOnlyTailwindV4Css
+            ? filterApplyOnlyGeneratedCss(generated.css, applyOnlyCssSelectors ?? new Set())
+            : generated.css
+          const finalCss = finalizeGeneratedCss(css, generated.target, generatorStyleOptions, generatorOptions.webCompat)
 
-        replaceRootCss(root, finalCss, result)
-        addDependencyMessages(result, generated)
-        addSourceDependencyMessages(result, collectedSources.files)
-        result.messages.push({
-          type: 'weapp-tailwindcss:generated',
-          plugin: PLUGIN_NAME,
-          target: generated.target,
-          classSet: generated.classSet,
-          rawCss: generated.rawCss,
-        })
+          replaceRootCss(root, finalCss, result)
+          addDependencyMessages(result, generated)
+          addSourceDependencyMessages(result, collectedSources.files)
+          result.messages.push({
+            type: 'weapp-tailwindcss:generated',
+            plugin: PLUGIN_NAME,
+            target: generated.target,
+            classSet: generated.classSet,
+            rawCss: generated.rawCss,
+          })
+        }
+        finally {
+          generator.dispose?.()
+        }
       },
     }
   }

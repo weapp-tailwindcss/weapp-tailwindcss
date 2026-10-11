@@ -1,0 +1,35 @@
+{
+  "rules": {
+    "h-8": [
+      "calc(var(--spacing)*8)"
+    ],
+    "h-20": [
+      "calc(var(--spacing)*20)"
+    ],
+    "h-50": [
+      "calc(var(--spacing)*50)"
+    ],
+    "mt-2": [
+      "calc(var(--spacing)*2)"
+    ],
+    "flex": [
+      "flex"
+    ],
+    "text-slate-500": [
+      "#62748e"
+    ],
+    "h-[4rem]": [
+      "4rem"
+    ],
+    "h-[25rem]": [
+      "25rem"
+    ],
+    "bg-emerald-50/80": [
+      "rgba(236,253,245,.8)"
+    ]
+  },
+  "spacing": [
+    ".25rem",
+    "0.25rem"
+  ]
+}

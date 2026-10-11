@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import * as sharedCandidates from '@/bundlers/shared/source-candidates'
+import * as sharedCandidates from '@/project-sources/candidates'
 import * as sharedScan from '@/bundlers/shared/source-scan'
 import * as sharedSignature from '@/bundlers/shared/source-candidate-scan-signature'
 import * as viteCandidates from '@/bundlers/vite/source-candidates'

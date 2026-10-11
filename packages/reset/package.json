@@ -1,18 +1,18 @@
 {
   "name": "@weapp-tailwindcss/reset",
   "type": "module",
-  "version": "0.1.2",
-  "description": "weapp-tailwindcss 的静态 reset 样式资源集合",
+  "version": "0.1.5",
+  "description": "Cross-platform reset styles for weapp-tailwindcss projects. weapp-tailwindcss 项目的跨端 reset 样式资源。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",
-  "homepage": "https://tw.icebreaker.top",
+  "homepage": "https://tw.weapp.dev",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sonofmagic/weapp-tailwindcss.git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
     "directory": "packages/reset"
   },
   "bugs": {
-    "url": "https://github.com/sonofmagic/weapp-tailwindcss/issues"
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues"
   },
   "keywords": [
     "weapp-tailwindcss",

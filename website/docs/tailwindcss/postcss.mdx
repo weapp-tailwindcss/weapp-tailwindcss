@@ -88,6 +88,20 @@ import TailwindTopicHero from '@site/src/components/docs/TailwindTopicHero'
 
 ## 典型配置与顺序示例
 
+## 小程序 CSS 最终化 API
+
+`@weapp-tailwindcss/postcss` 提供字符串和 AST 两种最终化入口，用于移除 `@plugin`、`@source`、`@theme`、`@utility` 等构建期指令，并完成小程序不支持语法的兼容处理：
+
+```ts
+import { finalizeMiniProgramCss, finalizeMiniProgramCssRoot, postcss } from '@weapp-tailwindcss/postcss'
+
+const css = finalizeMiniProgramCss('@source "./src"; .card { display: flex; }')
+const root = postcss.parse('@plugin "example"; .card { display: flex; }')
+finalizeMiniProgramCssRoot(root)
+```
+
+Root 入口会原地更新传入 AST；`weapp-tailwindcss/core` 的 `compiler.finalizeCssRoot()` 会先 clone，再返回最终化后的 Root。Compiler 的 `transformCss()` 和 `transformCssRoot()` 在 `snapshot.target === 'weapp'` 时默认执行相同最终化，可传 `finalize: false` 保留构建期 at-rule。
+
 ```js title="postcss.config.cjs"
 module.exports = {
   plugins: [

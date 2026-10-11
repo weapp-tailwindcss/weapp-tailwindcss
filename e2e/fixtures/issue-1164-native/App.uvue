@@ -1,0 +1,5 @@
+<script lang="uts">
+export default {
+  onLaunch() { console.log('App Launch') },
+}
+</script>

@@ -154,7 +154,7 @@ describe('source negation e2e', () => {
 
       const css = await readBuiltCss(project.root)
       expect(css).toContain('.probe')
-      expect(css).toContain('width: 100px')
+      expect(css).toMatch(/width:\s*100px/)
       expect(css).not.toContain('.text-_b77rpx_B')
       expect(css).not.toContain('.bg-_b_h445566_B')
     }

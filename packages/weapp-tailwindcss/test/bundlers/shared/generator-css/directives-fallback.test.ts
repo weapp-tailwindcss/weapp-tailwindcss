@@ -3,7 +3,7 @@ import {
   extractConfigRequestFromSource,
   extractTailwindDirectiveLines,
   extractTailwindSourceForPostcssFallback,
-} from '@/bundlers/shared/generator-css/directives/fallback'
+} from '@/generation/directives/fallback'
 
 describe('generator css directive fallback extraction', () => {
   it('normalizes extractable directives and filters unrelated imports', () => {

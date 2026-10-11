@@ -1,0 +1,46 @@
+<template>
+  <view class="issue-1210">
+    <text class="title">Issue 1210 · H5 运行时变量</text>
+    <view id="issue-1210-two" class="probe h-[40px] bg-gradient-to-r from-cyan-500 to-blue-500">两色渐变</view>
+    <view id="issue-1210-via" class="probe h-[40px] bg-gradient-to-r from-cyan-500 via-red-500 to-blue-500">三色渐变</view>
+    <view id="issue-1210-position" class="probe h-[40px] bg-gradient-to-r from-cyan-500 from-20% to-blue-500 to-80%">自定义位置</view>
+    <view id="issue-1210-shadow" class="probe shadow-md">普通阴影</view>
+    <view id="issue-1210-colored" class="probe shadow-md shadow-red-500">彩色阴影</view>
+    <view id="issue-1210-ring" class="probe shadow-md ring-2 ring-blue-500">阴影与 ring 组合</view>
+    <view id="issue-1210-drop" class="probe drop-shadow-md">滤镜阴影</view>
+    <view id="issue-1210-apply" class="probe local-apply">局部 @apply</view>
+    <view id="issue-1210-author" class="probe author-gradient">手写渐变对照</view>
+    <text id="issue-1210-marker">issue-1210-initial</text>
+  </view>
+</template>
+
+<style lang="scss" scoped>
+@reference "../../main.css";
+
+.issue-1210 {
+  padding: 24px;
+  background: #f8fafc;
+}
+
+.title {
+  display: block;
+  margin-bottom: 20px;
+  font-size: 20px;
+}
+
+.probe {
+  margin-bottom: 20px;
+  min-height: 40px;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: white;
+}
+
+.local-apply {
+  @apply bg-gradient-to-r from-cyan-500 to-blue-500 shadow-md;
+}
+
+.author-gradient {
+  background-image: linear-gradient(to right, #00b6d4, #3280ff);
+}
+</style>

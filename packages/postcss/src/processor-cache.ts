@@ -2,9 +2,10 @@ import type { ProcessOptions, Processor } from 'postcss'
 import type { FeatureSignal } from './content-probe'
 import type { StyleProcessingPipeline } from './pipeline'
 import type { IStyleHandlerOptions } from './types'
+import { LRUCache } from 'lru-cache'
 import postcss from 'postcss'
 import { signalToCacheKey } from './content-probe'
-import { fingerprintOptions } from './fingerprint'
+import { fingerprintOptions, fingerprintStyleOptions } from './fingerprint'
 import { createStylePipeline } from './pipeline'
 
 function createProcessOptions(options: IStyleHandlerOptions): ProcessOptions {
@@ -47,18 +48,17 @@ function getSimpleProcessOptionsCacheKey(options: Record<string, unknown>) {
 }
 
 export class StyleProcessorCache {
-  private readonly pipelineCacheByKey = new Map<string, StyleProcessingPipeline>()
+  private readonly pipelineCacheByKey = new LRUCache<string, StyleProcessingPipeline>({ max: 64 })
   private readonly processOptionsCache = new WeakMap<IStyleHandlerOptions, { value: ProcessOptions, cacheKey?: string | undefined }>()
-  private readonly processorCacheByKey = new Map<string, Processor>()
-  private readonly processorKeyCache = new WeakMap<IStyleHandlerOptions, string>()
+  private readonly processorCacheByKey = new LRUCache<string, Processor>({ max: 64 })
 
   private createProcessorCacheKey(options: IStyleHandlerOptions) {
     const from = options.postcssOptions?.options?.from
     if (from == null) {
-      return fingerprintOptions(options)
+      return fingerprintStyleOptions(options)
     }
 
-    return fingerprintOptions({
+    return fingerprintStyleOptions({
       ...options,
       postcssOptions: {
         ...(options.postcssOptions ?? {}),
@@ -81,12 +81,12 @@ export class StyleProcessorCache {
   }
 
   getPipeline(options: IStyleHandlerOptions, signal?: FeatureSignal) {
-    let optionsKey = this.processorKeyCache.get(options)
-    if (!optionsKey) {
-      optionsKey = this.createProcessorCacheKey(options)
-      this.processorKeyCache.set(options, optionsKey)
-    }
+    const optionsKey = this.createProcessorCacheKey(options)
     const compositeKey = this.createCompositeCacheKey(optionsKey, signal)
+    return this.getPipelineByKey(compositeKey, options, signal)
+  }
+
+  private getPipelineByKey(compositeKey: string, options: IStyleHandlerOptions, signal?: FeatureSignal) {
     let pipeline = this.pipelineCacheByKey.get(compositeKey)
     if (!pipeline) {
       pipeline = createStylePipeline(options, signal)
@@ -112,16 +112,13 @@ export class StyleProcessorCache {
   }
 
   getProcessor(options: IStyleHandlerOptions, signal?: FeatureSignal) {
-    let optionsKey = this.processorKeyCache.get(options)
-    if (!optionsKey) {
-      optionsKey = this.createProcessorCacheKey(options)
-      this.processorKeyCache.set(options, optionsKey)
-    }
+    const optionsKey = this.createProcessorCacheKey(options)
     const compositeKey = this.createCompositeCacheKey(optionsKey, signal)
 
     let processor = this.processorCacheByKey.get(compositeKey)
     if (!processor) {
-      const pipeline = this.getPipeline(options, signal)
+      // 同次处理的选项快照未变，直接传递签名，避免 miss 路径重复遍历嵌套配置。
+      const pipeline = this.getPipelineByKey(compositeKey, options, signal)
       processor = postcss(pipeline.plugins)
       this.processorCacheByKey.set(compositeKey, processor)
     }

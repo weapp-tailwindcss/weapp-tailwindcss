@@ -1,3 +1,4 @@
+import type { ThemeTransitionDirection, ThemeTransitionPreset } from './presets'
 import type {
   AnimationTarget,
   DocumentWithViewTransition,
@@ -7,6 +8,7 @@ import type {
   ToggleThemeCapabilities,
   ToggleThemeEnvironment,
 } from './utils/types'
+import { createThemeTransitionPreset } from './presets'
 import {
   bindViewTransition,
   detectReducedMotion,
@@ -16,12 +18,12 @@ import {
   supportsElementAnimate,
 } from './utils/environment'
 import {
-  createClipPathKeyframes,
   resolveCoordinates,
   resolveViewport,
 } from './utils/geometry'
 import { invokeMaybePromise } from './utils/promise'
 
+export type { ThemeTransitionPreset } from './presets'
 export type { FallbackCoordinatesResolver, ToggleThemeCapabilities, ToggleThemeEnvironment } from './utils/types'
 
 export interface UseToggleThemeOptions {
@@ -44,6 +46,10 @@ export interface UseToggleThemeOptions {
   duration?: number
 
   easing?: string
+  /**
+   * 内置动画预设，默认使用 circle。
+   */
+  preset?: ThemeTransitionPreset
   document?: DocumentWithViewTransition
   window?: Window & typeof globalThis
   animationTarget?: AnimationTarget
@@ -58,10 +64,10 @@ export interface UseToggleThemeResult {
   environment: ToggleThemeEnvironment
 }
 
-type ThemeTransitionDirection = 'to-dark' | 'from-dark'
 type ThemeTransitionStyleDeclaration = Pick<CSSStyleDeclaration, 'removeProperty' | 'setProperty'>
 
 const themeTransitionAttribute = 'data-theme-transition'
+const themeTransitionPresetAttribute = 'data-theme-transition-preset'
 const themeTransitionCustomProperties = [
   '--theme-transition-x',
   '--theme-transition-y',
@@ -86,16 +92,19 @@ function applyTransitionState(
   x: number,
   y: number,
   endRadius: number,
+  preset: ThemeTransitionPreset,
 ) {
   const style = getStyleDeclaration(target)
 
   target?.setAttribute?.(themeTransitionAttribute, direction)
+  target?.setAttribute?.(themeTransitionPresetAttribute, preset)
   style?.setProperty('--theme-transition-x', `${x}px`)
   style?.setProperty('--theme-transition-y', `${y}px`)
   style?.setProperty('--theme-transition-radius', `${endRadius}px`)
 
   return () => {
     target?.removeAttribute?.(themeTransitionAttribute)
+    target?.removeAttribute?.(themeTransitionPresetAttribute)
     for (const property of themeTransitionCustomProperties) {
       style?.removeProperty(property)
     }
@@ -107,8 +116,9 @@ export function useToggleTheme(options: UseToggleThemeOptions): UseToggleThemeRe
     toggle,
     viewTransition,
     isCurrentDark,
-    duration = 400,
-    easing = 'ease-in',
+    duration,
+    easing,
+    preset = 'circle',
     document: documentLike,
     window: windowLike,
     animationTarget,
@@ -173,18 +183,25 @@ export function useToggleTheme(options: UseToggleThemeOptions): UseToggleThemeRe
       Math.max(x, viewport.viewportWidth - x),
       Math.max(y, viewport.viewportHeight - y),
     )
-    const { clipPath, reverseClipPath } = createClipPathKeyframes({ x, y, endRadius })
-
     let transitionWorkExecuted = false
+    let animation: Animation | undefined
     let cleanupTransitionState: (() => void) | undefined
     try {
       const isDark = Boolean(isCurrentDark?.())
+      const direction: ThemeTransitionDirection = isDark ? 'from-dark' : 'to-dark'
+      const presetDefinition = createThemeTransitionPreset(preset, {
+        direction,
+        endRadius,
+        x,
+        y,
+      })
       cleanupTransitionState = applyTransitionState(
         environment.target,
-        isDark ? 'from-dark' : 'to-dark',
+        direction,
         x,
         y,
         endRadius,
+        preset,
       )
       const transition = startViewTransition!(async () => {
         transitionWorkExecuted = true
@@ -193,13 +210,12 @@ export function useToggleTheme(options: UseToggleThemeOptions): UseToggleThemeRe
 
       await transition.ready
 
-      const animation = environment.target.animate?.(
+      animation = environment.target.animate?.(
+        presetDefinition.keyframes,
         {
-          clipPath: isDark ? reverseClipPath : clipPath,
-        },
-        {
-          duration,
-          easing,
+          duration: duration ?? presetDefinition.duration,
+          easing: easing ?? presetDefinition.easing,
+          fill: 'forwards',
           pseudoElement: isDark
             ? '::view-transition-old(root)'
             : '::view-transition-new(root)',
@@ -216,6 +232,12 @@ export function useToggleTheme(options: UseToggleThemeOptions): UseToggleThemeRe
       }
     }
     finally {
+      try {
+        animation?.cancel()
+      }
+      catch (error) {
+        logger?.warn?.('[theme-transition] Failed to release theme transition animation.', error)
+      }
       cleanupTransitionState?.()
     }
   }

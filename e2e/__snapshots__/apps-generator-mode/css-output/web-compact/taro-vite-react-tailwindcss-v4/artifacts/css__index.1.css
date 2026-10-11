@@ -1,4 +1,3 @@
-/*! weapp-tailwindcss vite-generated-css:%3Cproject-root%3E%2Fsrc%2Fsub-normal%2Fpages%2Findex.css */
 ::-webkit-backdrop {
   --tw-translate-x: 0;
   --tw-translate-y: 0;
@@ -49,7 +48,8 @@
   --tw-ring-offset-color: #fff;
   --tw-ring-offset-shadow: 0 0 #0000;
   --tw-content: '';
-} /*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+}
+/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
 @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
   ::-webkit-backdrop {
     --tw-translate-x: 0;
@@ -417,7 +417,7 @@ taro-input-core:where([type='button'], [type='reset'], [type='submit']),
   background-color: #000089;
 }
 .bg-\[rgb\(12\,34\,56\)\] {
-  background-color: #0c2238;
+  background-color: rgb(12, 34, 56);
 }
  /*tokens: bg-normal-subpackage-marker <= src/sub-normal/pages/index.tsx */
 .bg-normal-subpackage-marker {
@@ -426,7 +426,7 @@ taro-input-core:where([type='button'], [type='reset'], [type='submit']),
 .\[mask-type\:luminance\] {
   mask-type: luminance;
 }
- /*tokens: p-4 <= src/pages/index/index.tsx, src/pages/issue-998/index.css, src/pages/issue-998/index.tsx */
+ /*tokens: p-4 <= <tailwind generated> */
 .p-4 {
   padding: calc(var(--spacing) * 4);
 }
@@ -437,11 +437,11 @@ taro-input-core:where([type='button'], [type='reset'], [type='submit']),
   font-size: 0.85rem;
 }
 .text-black\/\[0\.00\] {
-  color: #0000;
+  color: rgba(0, 0, 0, 0);
 }
 @supports (color: color-mix(in lch, red, blue)) {
   .text-black\/\[0\.00\] {
-    color: #0000;
+    color: rgba(0, 0, 0, 0);
   }
 }
 .ring-\[1\.9px\] {
@@ -498,3 +498,4 @@ taro-input-core:where([type='button'], [type='reset'], [type='submit']),
     display: grid;
   }
 }
+/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */

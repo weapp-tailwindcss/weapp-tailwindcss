@@ -1,9 +1,9 @@
 # @weapp-tailwindcss/debug-uni-app-x
 
-> 简体中文 | [English](./README.en.md)
+> English | [简体中文](./README.zh-CN.md)
 
-这个包用于调试 uni-app x / uvue 的 Vite 构建过程，会把 transform 和 bundle 阶段的中间产物落盘，方便定位样式、模板和模块转换问题。
+This package helps debug uni-app x / uvue Vite builds by writing transform and bundle artifacts to disk, making style, template, and module transform issues easier to inspect.
 
-## 官网
+## Website
 
-更多接入方式、配置说明和框架示例见 [weapp-tailwindcss 官方文档](https://tw.icebreaker.top)。
+For setup guides, configuration references, and framework examples, see the [official weapp-tailwindcss documentation](https://tw.weapp.dev).

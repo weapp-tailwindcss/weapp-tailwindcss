@@ -1,0 +1,16 @@
+<script lang="uts">
+import Empty from '../../components/empty.uvue'
+import Line from '../../components/line.uvue'
+import Block from '../../components/block.uvue'
+import Author from '../../components/author.uvue'
+export default {
+  components: { Empty, Line, Block, Author },
+  data() { return { count: 0 } },
+}
+</script>
+<template>
+  <scroll-view scroll-y style="flex: 1;">
+    <button @click="count++">state={{ count }}</button>
+    <Empty /><Line /><Block /><Author />
+  </scroll-view>
+</template>

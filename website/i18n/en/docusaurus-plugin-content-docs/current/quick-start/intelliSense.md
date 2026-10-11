@@ -9,7 +9,6 @@ keywords:
   - Configuration
   - IDE
   - Smart reminder settings
-  - quick start
   - intelliSense
   - weapp-tailwindcss
   - tailwindcss
@@ -18,6 +17,9 @@ keywords:
   - uni-app
   - taro
   - mpx
+  - installation
+  - smart
+  - prompt
 ---
 
 # IDE smart prompt settings

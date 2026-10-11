@@ -37,22 +37,25 @@ import TailwindTopicHero from '@site/src/components/docs/TailwindTopicHero'
 - Shadow DOM / iframe: browser-level boundary; the strongest isolation, but styles need to be injected independently within the boundary.
 - Preflight control: close/rewrite base to avoid reset contaminating the host; often combined with the above solutions.
 
-## Namespace (Tailwind prefix + important)
+## Namespace (Tailwind prefix)
 
-- **Principle**: Add a prefix (such as `tw-btn`) to all generated class names, and increase the selector priority through `important: '#app'` or `[data-scope=root]` to reduce host style coverage.
+- **Principle**: Use a Tailwind CSS 4 import parameter to prefix generated class names and reduce collisions with host classes.
 - **Configuration Example**:
 
-```ts
-// tailwind.config.ts
-export default {
-  prefix: 'tw-',
-important: '[data-scope=widget]', // or '#app'
-  content: ['./src/**/*.{tsx,vue,html}'],
-}
+```css
+/* app.css */
+@import "tailwindcss" prefix(tw);
+@source "../src/**/*.{tsx,vue,html}";
+```
+
+```html
+<section class="tw:flex tw:rounded-lg tw:bg-white">
+  Namespaced content
+</section>
 ```
 
 - **Applicable**: Micro front-end, third-party embedding, and scenarios that only need to be "not covered".
-- **Note**: It is still a global style, and the host's `!important` may still interfere; preflight will still affect the host (can be turned off).
+- **Note**: This is still global CSS, and host `!important` rules can interfere. Preflight also affects the host unless disabled. Use `@import "tailwindcss" important;` when all utilities need higher priority.
 
 ## Compile-time hashing (CSS Modules/vanilla-extract)
 
@@ -134,9 +137,13 @@ return <div className={styles.card}> isolated card </div>
 ## preflight control (optional combination)
 
 - **Principle**: Turn off or partially enable Tailwind preflight to avoid global reset affecting the host.
-- **How  to do**:
-- Configure `tailwind.config.ts` in `corePlugins: { preflight: false }`, or introduce `@tailwind base;` only in a specific entry.
-- Do not introduce preflight in the component library and let the host decide the global reset by itself.
+- **How to do it**: Import theme and utilities without importing `preflight.css`, leaving the global reset to the host.
+
+```css
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+```
 - **Applicable**: Publishable component libraries, micro-frontends, and when coexisting with existing UI libraries.
 
 ## Select suggestions

@@ -1,0 +1,12 @@
+import App from './App.uvue'
+import { initTheme } from './stores/theme.uts'
+
+import { createSSRApp } from 'vue'
+export function createApp() {
+	// 在创建应用前恢复主题，减少深色模式启动时的闪白。
+	initTheme()
+	const app = createSSRApp(App)
+	return {
+		app
+	}
+}

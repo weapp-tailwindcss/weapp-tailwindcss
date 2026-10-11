@@ -11,11 +11,12 @@ import type {
   WatchCaseRoundComparison,
   WatchSession,
 } from '../types'
-import { readdir } from 'node:fs/promises'
-import path from 'node:path'
 import { replaceWxml } from '../../core/replace-wxml'
+import { collectImportedStyleFiles } from '../artifacts/imports'
 import { getBaseWatchCaseName } from '../cases'
 import { formatPath } from '../cli'
+import { expandOutputFileEntries, isOutputFileCandidate, isOutputFilePattern } from '../outputs/file-entries'
+import { getOutputMtimeOnce } from '../outputs/read'
 import { getMtime, readFileIfExists, waitFor } from '../text'
 import {
   DEFAULT_STYLE_APPLY_VALIDATION,
@@ -24,67 +25,7 @@ import {
   STYLE_REFERENCE_REQUIRED_CASES,
 } from '../types'
 
-const GLOB_TOKEN_RE = /\*/
-const VIRTUAL_OUTPUT_ID_RE = /[\0?#]/
-const REGEXP_ESCAPE_RE = /[.*+?^${}()|[\]\\]/g
-
-function escapeRegExp(value: string) {
-  return value.replace(REGEXP_ESCAPE_RE, '\\$&')
-}
-
-function createGlobRegExp(pattern: string) {
-  return new RegExp(`^${pattern.split('*').map(escapeRegExp).join('.*')}$`)
-}
-
-export function isOutputFilePattern(file: string) {
-  return GLOB_TOKEN_RE.test(path.basename(file))
-}
-
-export function isOutputFileCandidate(file: string) {
-  return !VIRTUAL_OUTPUT_ID_RE.test(file)
-}
-
-export async function expandOutputFileEntries(files: string[]) {
-  const resolved = new Set<string>()
-
-  for (const file of files) {
-    if (!isOutputFileCandidate(file)) {
-      continue
-    }
-
-    if (!isOutputFilePattern(file)) {
-      const content = await readFileIfExists(file)
-      if (content != null) {
-        resolved.add(file)
-      }
-      continue
-    }
-
-    const dir = path.dirname(file)
-    const pattern = createGlobRegExp(path.basename(file))
-    let entries: string[] = []
-
-    try {
-      entries = await readdir(dir)
-    }
-    catch {
-      continue
-    }
-
-    for (const entry of entries) {
-      if (!pattern.test(entry)) {
-        continue
-      }
-      const matchedFile = path.join(dir, entry)
-      const content = await readFileIfExists(matchedFile)
-      if (content != null) {
-        resolved.add(matchedFile)
-      }
-    }
-  }
-
-  return [...resolved]
-}
+export { expandOutputFileEntries, isOutputFileCandidate, isOutputFilePattern } from '../outputs/file-entries'
 
 export async function waitForOutputsReady(
   watchCase: WatchCase,
@@ -138,6 +79,7 @@ export async function waitForOutputsReady(
       pollMs: options.pollMs,
       message: `[${outputLabel}] initial outputs were not generated in time`,
       onTick: session.ensureRunning,
+      signal: session.signal,
     },
   )
 }
@@ -185,6 +127,7 @@ export async function waitForInitialWarmup(
       pollMs: options.pollMs,
       message: `[${watchCase.label}] initial watch warmup did not finish in time`,
       onTick: session.ensureRunning,
+      signal: session.signal,
     },
   )
 }
@@ -245,47 +188,86 @@ export function assertNoUnsupportedMiniProgramCssImport(
   throw new Error(`[${watchCase.label}] ${phase} emitted unsupported mini-program CSS import in ${file}: ${unsupportedImport}`)
 }
 
+export function resolveCompileStableWindowMs(options: Pick<CliOptions, 'pollMs'>) {
+  return Math.min(Math.max(options.pollMs * 2, 600), 1500)
+}
+
+export function getLatestCompileSignalAt(session: WatchSession, phaseStartedAt: number) {
+  const samples = session.pluginProcessSamplesSince?.(phaseStartedAt) ?? []
+  return Math.max(
+    session.lastCompileSuccessAt(),
+    0,
+    ...samples.filter(sample => sample.metric === 'total' || sample.phase === 'total').map(sample => sample.at),
+  )
+}
+
 export async function waitForCompileSettled(
   watchCase: WatchCase,
   options: CliOptions,
   session: WatchSession,
   phaseStartedAt: number,
+  settleOutputCandidates?: string[],
+  deadlineAt?: number,
 ) {
-  const stableWindowMs = Math.min(Math.max(options.pollMs * 2, 600), 1500)
+  const settleStartedAt = Date.now()
   const timeoutMs = resolveCompileSettleTimeoutMs(options)
+  const settleDeadlineAt = Math.min(settleStartedAt + timeoutMs, deadlineAt ?? Number.POSITIVE_INFINITY)
+  const ensureWithinDeadline = () => {
+    session.signal?.throwIfAborted()
+    session.ensureRunning()
+    if (Date.now() > settleDeadlineAt) {
+      throw new Error(`[${watchCase.label}] watch compile did not settle in time`)
+    }
+  }
+  ensureWithinDeadline()
+  const probeOptions = { presenceOnly: true, ensureActive: ensureWithinDeadline }
+  const probeOutputMtime = (candidate: string) => getOutputMtimeOnce(candidate, ensureWithinDeadline)
+  // 编译成功日志可能早于 bundler 写完 CSS；默认同时观察当前 case 声明的样式产物。
+  // 取所有信号中最后一次发生的时间，确保快照不会落在中间产物状态。
+  const outputCandidates = (settleOutputCandidates ?? [
+    watchCase.outputWxml,
+    watchCase.outputJs,
+    ...(watchCase.outputStyleCandidates ?? []),
+    ...(watchCase.globalStyleCandidates ?? []),
+  ])
+    .filter((candidate): candidate is string => typeof candidate === 'string' && candidate.length > 0)
+  const stableWindowMs = resolveCompileStableWindowMs(options)
+  const requiredOutputCandidates = new Set<string>()
+  for (const candidate of outputCandidates) {
+    const entries = await expandOutputFileEntries([candidate], probeOptions)
+    if (entries.length > 0) {
+      requiredOutputCandidates.add(candidate)
+    }
+  }
+  ensureWithinDeadline()
   return waitFor(
     async () => {
-      const lastCompileSuccessAt = session.lastCompileSuccessAt()
-      if (lastCompileSuccessAt > 0 && lastCompileSuccessAt >= phaseStartedAt) {
-        return Date.now() - lastCompileSuccessAt >= stableWindowMs
+      const outputMtimes: number[] = []
+      for (const candidate of outputCandidates) {
+        const entries = await expandOutputFileEntries([candidate], probeOptions)
+        const mtimes = await Promise.all(entries.map(probeOutputMtime))
+        // 保留当前消费表达式的存在要求，不把已替换的旧 content-hash 路径当作必需产物。
+        if (requiredOutputCandidates.has(candidate) && !mtimes.some(mtime => mtime > 0)) {
+          return false
+        }
+        outputMtimes.push(...mtimes)
       }
-
-      const pluginProcessSamples = session.pluginProcessSamplesSince?.(phaseStartedAt) ?? []
-      const latestPluginTotalAt = Math.max(
-        0,
-        ...pluginProcessSamples
-          .filter(sample => sample.metric === 'total' || sample.phase === 'total')
-          .map(sample => sample.at),
-      )
-      if (latestPluginTotalAt > 0 && latestPluginTotalAt >= phaseStartedAt) {
-        return Date.now() - latestPluginTotalAt >= stableWindowMs
-      }
-
-      const [wxmlMtime, jsMtime] = await Promise.all([
-        getMtime(watchCase.outputWxml),
-        getMtime(watchCase.outputJs),
-      ])
-      const latestOutputMtime = Math.max(wxmlMtime, jsMtime)
-      return latestOutputMtime > 0
-        && latestOutputMtime >= phaseStartedAt
-        && Date.now() - latestOutputMtime >= stableWindowMs
+      const latestOutputMtime = Math.max(0, ...outputMtimes)
+      // 扫描期间可能收到新的完成信号，稳定窗口以 I/O 结束后的最新状态为准。
+      const latestSignalAt = Math.max(getLatestCompileSignalAt(session, phaseStartedAt), latestOutputMtime)
+      return latestSignalAt > 0
+        && latestSignalAt >= phaseStartedAt
+        && Date.now() - latestSignalAt >= stableWindowMs
     },
     {
       timeoutMs,
       pollMs: options.pollMs,
       message: `[${watchCase.label}] watch compile did not settle in time`,
       onTick: session.ensureRunning,
+      signal: session.signal,
+      deadlineAt: settleDeadlineAt,
     },
+    settleStartedAt,
   )
 }
 
@@ -343,6 +325,7 @@ export async function waitForOutputsUpdated(
       pollMs: options.pollMs,
       message: `[${watchCase.label}] outputs were not updated after source change`,
       onTick: session.ensureRunning,
+      signal: session.signal,
     },
     startedAt,
   )
@@ -394,6 +377,7 @@ export async function waitForClassOutputBaseline(
       pollMs: options.pollMs,
       message: `[${watchCase.label}] baseline outputs are missing for ${mutationKind}: ${lastReason}`,
       onTick: session.ensureRunning,
+      signal: session.signal,
     },
     waitStartedAt,
   )
@@ -441,15 +425,22 @@ export async function waitForOutputFilesUpdatedWithDiagnostics(
     label?: string
   } = {},
 ): Promise<OutputWaitDiagnostics> {
+  let semanticFailure: { error: unknown } | undefined
   const acceptsSemanticOutput = async () => {
     if (!acceptWhen) {
       return false
     }
 
     try {
-      return await acceptWhen()
+      ensureActive()
+      const accepted = await acceptWhen()
+      ensureActive()
+      semanticFailure = undefined
+      return accepted
     }
-    catch {
+    catch (error) {
+      ensureActive()
+      semanticFailure = { error }
       return false
     }
   }
@@ -466,6 +457,15 @@ export async function waitForOutputFilesUpdatedWithDiagnostics(
     updatedFiles: [],
   }
 
+  const timeoutMessage = `[${watchCase.label}] ${diagnostics.label ? `${diagnostics.label} ` : ''}output files were not updated after source change: ${files.map(formatPath).join(', ')}`
+  const deadlineAt = startedAt + options.timeoutMs
+  const ensureActive = () => {
+    session.signal?.throwIfAborted()
+    session.ensureRunning()
+    if (Date.now() > deadlineAt) {
+      throw new Error(timeoutMessage)
+    }
+  }
   const elapsedMs = await waitFor(
     async () => {
       const missingExactFiles: string[] = []
@@ -479,7 +479,7 @@ export async function waitForOutputFilesUpdatedWithDiagnostics(
           continue
         }
 
-        const currentMtime = await getMtime(file)
+        const currentMtime = await getOutputMtimeOnce(file, ensureActive)
         if (currentMtime === 0) {
           missingExactFiles.push(file)
           if (await acceptsSemanticOutput()) {
@@ -521,11 +521,11 @@ export async function waitForOutputFilesUpdatedWithDiagnostics(
         return true
       }
 
-      const resolvedFiles = await expandOutputFileEntries(files)
+      const resolvedFiles = await expandOutputFileEntries(files, { presenceOnly: true, ensureActive })
       let globFileUpdated = false
       for (const file of resolvedFiles) {
         const baselineMtime = baselineMtimes.get(file) ?? 0
-        const currentMtime = await getMtime(file)
+        const currentMtime = await getOutputMtimeOnce(file, ensureActive)
         if (baselineMtime === 0 || currentMtime > baselineMtime) {
           if (acceptWhen) {
             globFileUpdated = true
@@ -576,11 +576,20 @@ export async function waitForOutputFilesUpdatedWithDiagnostics(
     {
       timeoutMs: options.timeoutMs,
       pollMs: options.pollMs,
-      message: `[${watchCase.label}] ${diagnostics.label ? `${diagnostics.label} ` : ''}output files were not updated after source change: ${files.map(formatPath).join(', ')}`,
-      onTick: session.ensureRunning,
+      message: timeoutMessage,
+      onTick: ensureActive,
+      signal: session.signal,
+      deadlineAt,
     },
     startedAt,
-  )
+  ).catch((error: unknown) => {
+    // 允许构建替换产物时短暂缺失；超时后保留最后一次读图/语义失败，不能只留下 mtime 提示。
+    if (error instanceof Error && error.message === timeoutMessage && semanticFailure) {
+      const cause = semanticFailure.error
+      throw new Error(`${timeoutMessage}\nLast output validation error: ${cause instanceof Error ? cause.message : String(cause)}`, { cause })
+    }
+    throw error
+  })
 
   return {
     ...lastDiagnostics,
@@ -624,6 +633,7 @@ export async function waitForMarkerState(
         ? `[${outputLabel}] marker was not propagated to outputs`
         : `[${outputLabel}] marker was not removed from outputs`,
       onTick: session.ensureRunning,
+      signal: session.signal,
     },
     startedAt,
   )
@@ -762,6 +772,7 @@ export async function resolveOutputFiles(
       pollMs: options.pollMs,
       message: `[${watchCase.label}] could not resolve ${label} output from candidates: ${candidates.map(formatPath).join(', ')}`,
       onTick: session.ensureRunning,
+      signal: session.signal,
     },
   )
 
@@ -773,7 +784,7 @@ export async function resolveOutputFiles(
 }
 
 export async function readJoinedOutputFiles(files: string[]) {
-  const resolvedFiles = await expandOutputFileEntries(files)
+  const resolvedFiles = await collectImportedStyleFiles(await expandOutputFileEntries(files))
   const parts = await Promise.all(resolvedFiles.map(file => readFileIfExists(file)))
   return parts.filter((item): item is string => item != null).join('\n')
 }

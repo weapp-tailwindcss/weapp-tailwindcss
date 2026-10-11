@@ -594,6 +594,48 @@ describe('v5 Tailwind CSS v4 upgrade generator coverage', () => {
     expect(normalizedWeappCss).not.toContain('@source')
   })
 
+  it('supports decimal spacing theme keys with Tailwind v4 syntax', async () => {
+    const fixture = await createFixtureBase()
+    const css = `
+      @import "tailwindcss" source(none);
+      @theme {
+        --spacing-3.5: 0.875rem;
+      }
+      @source inline("p-3.5");
+    `
+    const [officialResult, webResult, weappResult] = await Promise.all([
+      postcss([tailwindcssPostcss({ optimize: false })]).process(css, {
+        from: fixture.cssEntry,
+      }),
+      postcss([
+        weappTailwindcss({
+          generator: {
+            target: 'web',
+          },
+        }),
+      ]).process(css, {
+        from: fixture.cssEntry,
+      }),
+      postcss([
+        weappTailwindcss({
+          generator: {
+            target: 'weapp',
+          },
+        }),
+      ]).process(css, {
+        from: fixture.cssEntry,
+      }),
+    ])
+
+    expect(webResult.css).toBe(officialResult.css)
+    expect(officialResult.css).toContain('--spacing-3\\.5: 0.875rem')
+    expect(officialResult.css).toContain('.p-3\\.5')
+    expect(officialResult.css).toContain('padding: var(--spacing-3\\.5)')
+    expect(weappResult.css).toContain('--spacing-3\\.5: 0.875rem')
+    expect(weappResult.css).toContain('padding: var(--spacing-3\\.5)')
+    expect(weappResult.css).not.toContain('--spacing-3_5')
+  })
+
   it('supports custom theme reset, inline variables, static variables, and theme variable references', async () => {
     const fixture = await createFixtureBase()
     const css = `

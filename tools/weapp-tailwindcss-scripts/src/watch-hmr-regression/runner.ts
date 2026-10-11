@@ -24,6 +24,7 @@ import {
   createWatchCaseArtifacts,
   HMR_ARTIFACT_COUNT,
 } from './artifacts'
+import { createWatchCaseCleanup, WatchHmrPartialMetricsError } from './cleanup'
 import { summarizeMemoryDebugSamples, summarizeMemorySamples } from './memory-report'
 import {
   createSubPackageWatchCase,
@@ -40,9 +41,9 @@ import { resolvePreferredRound } from './mutations/shared'
 import { createOutputIntegrityMonitor } from './output-integrity'
 import { createWatchSession, runPnpmCommand, sleep } from './session'
 import { summarizeMutationMetricsByKind } from './summary'
-import { writeFilePreserveEol } from './text'
 import { runWebHmr } from './web'
 
+export { WatchHmrPartialMetricsError } from './cleanup'
 export { summarizeMemorySamples } from './memory-report'
 
 interface HotUpdateBudgetSample {
@@ -64,16 +65,6 @@ interface MemoryBudgetSample {
 interface HeapBudgetSample {
   label: string
   heapUsedMb: number
-}
-
-export class WatchHmrPartialMetricsError extends Error {
-  readonly metrics: WatchCaseMetrics
-
-  constructor(message: string, metrics: WatchCaseMetrics) {
-    super(message)
-    this.name = 'WatchHmrPartialMetricsError'
-    this.metrics = metrics
-  }
 }
 
 interface SubPackageMutationRunResult {
@@ -107,10 +98,11 @@ async function runSubPackageMutationInNewSession(
   sourceOriginals: Map<string, string>,
 ): Promise<SubPackageMutationRunResult> {
   const subWatchCase = createSubPackageWatchCase(watchCase, subPackageMutation)
-  const sessionStartedAt = Date.now()
-  const session = createWatchSession(watchCase.cwd, watchCase.devScript, {
+  const session = await createWatchSession(watchCase.cwd, watchCase.devScript, {
     quietSass: options.quietSass,
   }, watchCase.env)
+  const sessionStartedAt = session.startedAt ?? Date.now()
+  const cleanup = createWatchCaseCleanup(subWatchCase.label)
 
   try {
     const outputsReadyMs = await waitForOutputsReady(subWatchCase, options, session, sessionStartedAt)
@@ -140,10 +132,10 @@ async function runSubPackageMutationInNewSession(
   }
   catch (error) {
     const message = error instanceof Error ? error.message : String(error)
-    throw new Error(`${message}\n[${subWatchCase.label}] recent split subpackage watch logs:\n${session.logs()}`)
+    throw cleanup.recordFailure(new Error(`${message}\n[${subWatchCase.label}] recent split subpackage watch logs:\n${session.logs()}`, { cause: error }))
   }
   finally {
-    await session.stop()
+    await cleanup.finish({ stopSession: () => session.stop() })
   }
 }
 
@@ -165,6 +157,7 @@ export async function runSubPackagesOnlyCase(watchCase: WatchCase, options: CliO
     await runPnpmCommand(watchCase.cwd, ['run', watchCase.initialBuildScript], 'prebuild')
   }
 
+  const cleanup = createWatchCaseCleanup(watchCase.label, sourceOriginals)
   try {
     const results = []
     for (const subPackageMutation of subPackageMutations) {
@@ -227,22 +220,16 @@ export async function runSubPackagesOnlyCase(watchCase: WatchCase, options: CliO
       memoryRssDeltaMb: memorySummary.rssDeltaMb,
     }
 
-    process.stdout.write(
+    cleanup.recordSuccess(
       `[watch-hmr] ${watchCase.label} subpackages-only passed (subpackages=${subPackageMutationMetrics.length})\n`,
     )
     return metrics
   }
+  catch (error) {
+    throw cleanup.recordFailure(error)
+  }
   finally {
-    for (const [sourcePath, original] of sourceOriginals.entries()) {
-      try {
-        const current = await fs.readFile(sourcePath, 'utf8')
-        if (current !== original) {
-          await writeFilePreserveEol(sourcePath, original, original)
-        }
-      }
-      catch {
-      }
-    }
+    await cleanup.finish()
   }
 }
 
@@ -260,12 +247,13 @@ export async function runCase(watchCase: WatchCase, options: CliOptions): Promis
     await runPnpmCommand(watchCase.cwd, ['run', watchCase.initialBuildScript], 'prebuild')
   }
 
-  const sessionStartedAt = Date.now()
   let outputIntegrityMonitor: ReturnType<typeof createOutputIntegrityMonitor>
-  const session = createWatchSession(watchCase.cwd, watchCase.devScript, {
+  const session = await createWatchSession(watchCase.cwd, watchCase.devScript, {
     quietSass: options.quietSass,
   }, watchCase.env)
+  const sessionStartedAt = session.startedAt ?? Date.now()
   let sessionStopped = false
+  const cleanup = createWatchCaseCleanup(watchCase.label, sourceOriginals)
 
   try {
     const outputsReadyMs = await waitForOutputsReady(watchCase, options, session, sessionStartedAt)
@@ -532,7 +520,7 @@ export async function runCase(watchCase: WatchCase, options: CliOptions): Promis
       artifacts,
     }
 
-    process.stdout.write(
+    cleanup.recordSuccess(
       `[watch-hmr] ${watchCase.label} passed (${contentMetrics ? `content=${contentMetrics.hotUpdateEffectiveMs}ms, ` : ''}template=${templateMetrics.hotUpdateEffectiveMs}ms, script=${scriptMetrics.hotUpdateEffectiveMs}ms${styleMetrics ? `, style=${styleMetrics.hotUpdateEffectiveMs}ms` : ''}${webHmrMetrics ? `, web=${webHmrMetrics.hotUpdateEffectiveMs}ms` : ''}, subpackage=${subPackageMutationMetrics.length})\n`,
     )
 
@@ -551,23 +539,17 @@ export async function runCase(watchCase: WatchCase, options: CliOptions): Promis
       }
     }
     const logs = session.logs()
-    throw new Error(`${integrityMessage}${message}\n[${watchCase.label}] recent watch logs:\n${logs}`)
+    throw cleanup.recordFailure(new Error(`${integrityMessage}${message}\n[${watchCase.label}] recent watch logs:\n${logs}`, { cause: error }))
   }
   finally {
-    for (const [sourcePath, original] of sourceOriginals.entries()) {
-      try {
-        const current = await fs.readFile(sourcePath, 'utf8')
-        if (current !== original) {
-          await writeFilePreserveEol(sourcePath, original, original)
+    await cleanup.finish({
+      stopMonitor: async () => { await outputIntegrityMonitor?.stop() },
+      stopSession: async () => {
+        if (!sessionStopped) {
+          await session.stop()
         }
-      }
-      catch {
-      }
-    }
-    await outputIntegrityMonitor?.stop()
-    if (!sessionStopped) {
-      await session.stop()
-    }
+      },
+    })
   }
 }
 
@@ -587,6 +569,7 @@ export async function runWebOnlyCase(watchCase: WatchCase, options: CliOptions):
     sourceOriginals.set(sourceFile, await fs.readFile(sourceFile, 'utf8'))
   }
 
+  const cleanup = createWatchCaseCleanup(watchCase.label, sourceOriginals)
   try {
     const webHmrMetrics = await runWebHmr(watchCase, options, sourceOriginals)
     if (!webHmrMetrics) {
@@ -634,20 +617,17 @@ export async function runWebOnlyCase(watchCase: WatchCase, options: CliOptions):
       memoryRssDeltaMb: memorySummary.rssDeltaMb,
     }
 
-    process.stdout.write(
+    cleanup.recordSuccess(
       `[watch-hmr] ${watchCase.label} web-only passed (web=${webHmrMetrics.hotUpdateEffectiveMs}ms)\n`,
     )
 
     return metrics
   }
+  catch (error) {
+    throw cleanup.recordFailure(error)
+  }
   finally {
-    for (const [sourcePath, original] of sourceOriginals.entries()) {
-      try {
-        await writeFilePreserveEol(sourcePath, original, original)
-      }
-      catch {
-      }
-    }
+    await cleanup.finish()
   }
 }
 
@@ -662,9 +642,9 @@ function createMainStyleOnlyMetrics(params: {
   watchCase: WatchCase
   caseStartedAt: number
   sessionStartedAt: number
-  session: ReturnType<typeof createWatchSession>
+  session: Awaited<ReturnType<typeof createWatchSession>>
   initialReadyMs: number
-  mainStyleHotUpdate: WatchCaseMetrics['mainStyleHotUpdate']
+  mainStyleHotUpdate: NonNullable<WatchCaseMetrics['mainStyleHotUpdate']>
   subPackageMainStyleHotUpdates: NonNullable<WatchCaseMetrics['subPackageMainStyleHotUpdates']>
 }) {
   const {
@@ -728,13 +708,14 @@ export async function runMainStyleOnlyCase(watchCase: WatchCase, options: CliOpt
   const sourceOriginal = await fs.readFile(sourcePath, 'utf8')
   sourceOriginals.set(sourcePath, sourceOriginal)
 
-  const sessionStartedAt = Date.now()
-  const session = createWatchSession(watchCase.cwd, watchCase.devScript, {
+  const session = await createWatchSession(watchCase.cwd, watchCase.devScript, {
     quietSass: options.quietSass,
   }, watchCase.env)
+  const sessionStartedAt = session.startedAt ?? Date.now()
   let initialReadyMs = 0
   let mainStyleHotUpdate: WatchCaseMetrics['mainStyleHotUpdate'] | undefined
   const subPackageMainStyleHotUpdates: NonNullable<WatchCaseMetrics['subPackageMainStyleHotUpdates']> = []
+  const cleanup = createWatchCaseCleanup(watchCase.label, sourceOriginals)
 
   try {
     const outputsReadyMs = await waitForOutputsReady(watchCase, options, session, sessionStartedAt)
@@ -799,7 +780,7 @@ export async function runMainStyleOnlyCase(watchCase: WatchCase, options: CliOpt
       subPackageMainStyleHotUpdates,
     })
 
-    process.stdout.write(
+    cleanup.recordSuccess(
       `[watch-hmr] ${watchCase.label} main-style-only passed (main-style=${mainStyleHotUpdate.hotUpdateEffectiveMs}ms)\n`,
     )
 
@@ -818,19 +799,12 @@ export async function runMainStyleOnlyCase(watchCase: WatchCase, options: CliOpt
         mainStyleHotUpdate,
         subPackageMainStyleHotUpdates,
       })
-      throw new WatchHmrPartialMetricsError(`${message}\n[${watchCase.label}] recent watch logs:\n${logs}`, metrics)
+      throw cleanup.recordFailure(new WatchHmrPartialMetricsError(`${message}\n[${watchCase.label}] recent watch logs:\n${logs}`, metrics, { cause: error }))
     }
-    throw new Error(`${message}\n[${watchCase.label}] recent watch logs:\n${logs}`)
+    throw cleanup.recordFailure(new Error(`${message}\n[${watchCase.label}] recent watch logs:\n${logs}`, { cause: error }))
   }
   finally {
-    for (const [restorePath, original] of sourceOriginals.entries()) {
-      try {
-        await writeFilePreserveEol(restorePath, original, original)
-      }
-      catch {
-      }
-    }
-    await session.stop()
+    await cleanup.finish({ stopSession: () => session.stop() })
   }
 }
 
@@ -877,6 +851,10 @@ export function assertPluginProcessBudget(metrics: WatchCaseMetrics, options: Cl
 
 export function assertMemoryBudget(metrics: WatchCaseMetrics, options: CliOptions) {
   const maxMemoryRssMb = options.maxMemoryRssMb
+  const maxMemoryRssDeltaMb = options.maxMemoryRssDeltaMb
+  if (((maxMemoryRssMb ?? 0) > 0 || (maxMemoryRssDeltaMb ?? 0) > 0) && metrics.memorySummary.count === 0) {
+    throw new Error(`[${metrics.label}] process memory sampling is unavailable; configured RSS budget cannot be verified`)
+  }
   if (maxMemoryRssMb != null && maxMemoryRssMb > 0) {
     const samples: MemoryBudgetSample[] = [{
       label: 'case',
@@ -893,7 +871,6 @@ export function assertMemoryBudget(metrics: WatchCaseMetrics, options: CliOption
     }
   }
 
-  const maxMemoryRssDeltaMb = options.maxMemoryRssDeltaMb
   if (maxMemoryRssDeltaMb != null && maxMemoryRssDeltaMb > 0) {
     const samples: MemoryBudgetSample[] = [{
       label: 'case',

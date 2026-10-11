@@ -23,3 +23,9 @@ keywords:
 - [🧩 File Match](../options/matchers.md) (7)
 - [🧭 life cycle](../options/lifecycle.md) (4)
 - [⚙️ General configuration](../options/general.md) (6)
+
+## Framework configuration references
+
+- [uni-app x](../../config/uni-app-x)
+- [ReactLynx / Rspeedy](../../config/react-lynx)
+- [React Native / Expo](../../config/react-native)

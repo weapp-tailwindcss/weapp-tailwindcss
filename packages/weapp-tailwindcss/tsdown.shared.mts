@@ -11,6 +11,7 @@ export const runtimeEntries = {
   'gulp': 'src/gulp.ts',
   'generator': 'src/generator/index.ts',
   'vite': 'src/vite.ts',
+  'vite/web': 'src/vite-web.ts',
   'postcss': 'src/postcss.ts',
   'defaults': 'src/defaults.ts',
   'framework': 'src/framework/index.ts',
@@ -21,10 +22,6 @@ export const runtimeEntries = {
   'types': 'src/types/index.ts',
   'reset': 'src/reset/index.ts',
   'postcss-html-transform': 'src/postcss-html-transform.ts',
-} as const
-
-export const cliEntries = {
-  cli: 'src/cli.ts',
 } as const
 
 export const escapeEntries = {
@@ -94,6 +91,7 @@ export function createTsdownConfigs(options: WatchAwareOptions = {}) {
       shims: true,
       format: ['esm'],
       deps: {
+        resolveDepSubpath: true,
         neverBundle: externalizeEsmRuntimeDeps,
         onlyBundle: false,
       },
@@ -108,34 +106,7 @@ export function createTsdownConfigs(options: WatchAwareOptions = {}) {
       shims: true,
       format: ['cjs'],
       deps: {
-        alwaysBundle: bundleCjsRuntimeDeps,
-        neverBundle: externalizeCommonRuntimeDeps,
-        onlyBundle: false,
-      },
-      target: ['es2020'],
-      outExtensions: moduleOutExtensions,
-    },
-    {
-      // CLI 单独构建，避免依赖污染 runtime 入口共享 chunk。
-      entry: cliEntries,
-      dts: false,
-      clean: false,
-      shims: true,
-      format: ['esm'],
-      deps: {
-        neverBundle: externalizeEsmRuntimeDeps,
-        onlyBundle: false,
-      },
-      target: ['es2020'],
-      outExtensions: moduleOutExtensions,
-    },
-    {
-      entry: cliEntries,
-      dts: false,
-      clean: false,
-      shims: true,
-      format: ['cjs'],
-      deps: {
+        resolveDepSubpath: true,
         alwaysBundle: bundleCjsRuntimeDeps,
         neverBundle: externalizeCommonRuntimeDeps,
         onlyBundle: false,

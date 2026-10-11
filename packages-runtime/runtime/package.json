@@ -1,18 +1,18 @@
 {
   "name": "@weapp-tailwindcss/runtime",
   "type": "module",
-  "version": "0.1.6",
-  "description": "Shared runtime helpers (transformers, clsx wrappers, metadata) for weapp-tailwindcss 在小程序运行时的适配层。",
+  "version": "0.1.11",
+  "description": "Shared runtime adapters for cross-platform Tailwind CSS class utilities. 跨端 Tailwind CSS 类名工具的共享运行时适配层。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",
-  "homepage": "https://tw.icebreaker.top/docs/community/merge/runtime-api",
+  "homepage": "https://tw.weapp.dev/docs/community/merge/runtime-api",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sonofmagic/weapp-tailwindcss.git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
     "directory": "packages-runtime/runtime"
   },
   "bugs": {
-    "url": "https://github.com/sonofmagic/weapp-tailwindcss/issues"
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues"
   },
   "keywords": [
     "tailwindcss",
@@ -56,7 +56,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@weapp-core/escape": "^8.0.0",
+    "@weapp-tailwindcss/escape": "workspace:*",
     "clsx": "catalog:clsx"
   }
 }

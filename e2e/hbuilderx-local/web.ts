@@ -1,92 +1,42 @@
-import type { ChildProcess } from 'node:child_process'
-import type { Page } from 'playwright'
+import type { Browser, Page } from 'playwright'
 import type { WebHmrStep, WebRuntimeStyleAssertion } from './cases'
+import type { AttachedWebServer } from './web/attached'
+import type { WebPageDiagnostics } from './web/runtime'
+import type { WebServerSession } from './web/session'
 
 import fs from 'node:fs/promises'
-import process from 'node:process'
 
-import path from 'pathe'
+import path from 'node:path'
 import { chromium } from 'playwright'
+import { cleanupHBuilderXResources } from '../../scripts/hbuilderx-project-resources'
 
 import {
-  collectProcessOutput,
   fetchText,
-  findFreePort,
   joinUrl,
   pollIntervalMs,
-  readUtf8,
   resolveBaseUrls,
   resolveChromeExecutable,
-  runPnpm,
   serverTimeoutMs,
-  spawnPnpm,
   wait,
 } from './process'
 import { appendHmrSourceMutation, createHmrSourceRestore } from './source-mutations'
+import { cleanupWebHmrSession } from './web/cleanup'
+import { captureHBuilderXFailure } from './web/diagnostics'
+import { assertServerIdentity, sameSourceFile } from './web/identity'
+import { readRuntimeStyles, waitForHmrMarker, waitForInitialPageText, waitForRuntimeStyles } from './web/runtime'
+import { createWebSession } from './web/session'
+import { rewriteHmrMarker } from './web/source'
 
-let devProcess: ChildProcess | undefined
+export { clearDevProcess, getDevProcess } from './web/dev-server'
 
-interface WebPageDiagnostics {
-  errors: string[]
-  requests: string[]
-  warnings: string[]
-}
-
-export function getDevProcess() {
-  return devProcess
-}
-
-export function clearDevProcess() {
-  devProcess = undefined
-}
-
-function createDevServer(projectRoot: string, port: number) {
-  const childEnv: Record<string, string | undefined> = {
-    BROWSER: 'none',
-    BROWSERSLIST_ENV: 'development',
-    NODE_ENV: 'development',
-    WEAPP_TW_HMR_TIMING: '1',
-    WEAPP_TW_WATCH_REGRESSION: '1',
-    VITE_WEAPP_TW_WATCH_REGRESSION: '1',
-    HOST: '127.0.0.1',
-    PORT: String(port),
-    UNI_CLI_SERVER_HOST: '127.0.0.1',
-    UNI_CLI_SERVER_PORT: String(port),
-    CHOKIDAR_USEPOLLING: process.env['CHOKIDAR_USEPOLLING'] ?? '1',
-    CHOKIDAR_INTERVAL: process.env['CHOKIDAR_INTERVAL'] ?? '50',
-  }
-  childEnv['VITEST'] = undefined
-  for (const key of Object.keys(process.env)) {
-    if (key.startsWith('VITEST_')) {
-      childEnv[key] = undefined
-    }
-  }
-
-  const child = spawnPnpm(projectRoot, [
-    'exec',
-    'cross-env',
-    'WEAPP_TW_HMR_TIMING=1',
-    'UNI_INPUT_DIR=.',
-    'uni',
-    '--host',
-    '127.0.0.1',
-    '--port',
-    String(port),
-  ], childEnv)
-  devProcess = child
-  return child
-}
-
-async function waitForUrl(url: string, child: ChildProcess, logs: string[], timeoutMs = serverTimeoutMs) {
+async function waitForUrl(url: string, session: WebServerSession, logs: string[], timeoutMs = serverTimeoutMs) {
   let lastError: unknown
   const startedAt = Date.now()
 
   while (Date.now() - startedAt < timeoutMs) {
-    if (child.exitCode != null) {
-      throw new Error(`dev:h5 提前退出，exit=${child.exitCode}\n${logs.join('')}`)
-    }
+    await session.ensureRunning()
     try {
-      return await fetchText(url)
+      return await fetchText(url, Math.max(1, timeoutMs - (Date.now() - startedAt)))
     }
     catch (error) {
       lastError = error
@@ -97,7 +47,7 @@ async function waitForUrl(url: string, child: ChildProcess, logs: string[], time
   throw new Error(`等待 URL 超时：${url}\nlast=${lastError instanceof Error ? lastError.message : String(lastError)}\n${logs.join('')}`)
 }
 
-async function waitForPath(baseUrl: string, requestPath: string, child: ChildProcess, logs: string[], timeoutMs = serverTimeoutMs) {
+async function waitForPath(baseUrl: string, requestPath: string, session: WebServerSession, logs: string[], timeoutMs = serverTimeoutMs) {
   let lastError: unknown
   const startedAt = Date.now()
 
@@ -106,14 +56,12 @@ async function waitForPath(baseUrl: string, requestPath: string, child: ChildPro
       try {
         return {
           baseUrl: candidate,
-          text: await waitForUrl(joinUrl(candidate, requestPath), child, logs, pollIntervalMs * 2),
+          text: await waitForUrl(joinUrl(candidate, requestPath), session, logs, pollIntervalMs * 2),
         }
       }
       catch (error) {
         lastError = error
-        if (child.exitCode != null) {
-          throw error
-        }
+        await session.ensureRunning()
       }
     }
     await wait(pollIntervalMs)
@@ -122,11 +70,11 @@ async function waitForPath(baseUrl: string, requestPath: string, child: ChildPro
   throw new Error(`等待路径超时：${requestPath}\nlast=${lastError instanceof Error ? lastError.message : String(lastError)}\n${logs.join('')}`)
 }
 
-async function waitForCss(url: string, entries: Array<string | RegExp>, child: ChildProcess, logs: string[]) {
+async function waitForCss(url: string, entries: Array<string | RegExp>, session: WebServerSession, logs: string[]) {
   const startedAt = Date.now()
   let latest = ''
   while (Date.now() - startedAt < serverTimeoutMs) {
-    latest = await waitForUrl(url, child, logs, pollIntervalMs * 2)
+    latest = await waitForUrl(url, session, logs, pollIntervalMs * 2)
     const ok = entries.every((entry) => {
       return typeof entry === 'string' ? latest.includes(entry) : entry.test(latest)
     })
@@ -141,151 +89,6 @@ async function waitForCss(url: string, entries: Array<string | RegExp>, child: C
   throw new Error(`等待 CSS 内容超时：${url}\nmissing=${missing.map(String).join(', ')}\n${latest.slice(0, 1000)}\n${logs.join('')}`)
 }
 
-function formatRuntimeStyleAssertions(assertions: WebRuntimeStyleAssertion[]) {
-  return assertions.map((assertion) => {
-    const scope = assertion.scopeAttribute ? ` scope=${assertion.scopeAttribute}` : ''
-    return `${assertion.selector}${scope}: ${Object.keys(assertion.styles).join(', ')}`
-  }).join('; ')
-}
-
-function matchRuntimeStyles(actual: Record<string, string | string[]>, assertion: WebRuntimeStyleAssertion) {
-  if (assertion.scopeAttribute) {
-    const attributeNames = actual.__attributeNames
-    if (!Array.isArray(attributeNames) || !attributeNames.some(name => assertion.scopeAttribute!.test(name))) {
-      return false
-    }
-  }
-  for (const [property, expected] of Object.entries(assertion.styles)) {
-    const value = actual[property]
-    if (typeof expected === 'string') {
-      if (value !== expected) {
-        return false
-      }
-    }
-    else if (!expected.test(typeof value === 'string' ? value : '')) {
-      return false
-    }
-  }
-  return true
-}
-
-async function readRuntimeStyles(page: Page, assertion: WebRuntimeStyleAssertion) {
-  try {
-    return await page.evaluate(({ selector, properties }) => {
-      const element = document.querySelector(selector)
-      if (!element) {
-        return null
-      }
-      const computed = getComputedStyle(element)
-      return {
-        ...Object.fromEntries(properties.map(property => [property, computed[property as keyof CSSStyleDeclaration]?.toString() ?? ''])),
-        __attributeNames: element.getAttributeNames(),
-      }
-    }, {
-      properties: Object.keys(assertion.styles),
-      selector: assertion.selector,
-    })
-  }
-  catch (error) {
-    if (error instanceof Error && /Execution context was destroyed|Cannot find context with specified id/.test(error.message)) {
-      return null
-    }
-    throw error
-  }
-}
-
-async function collectPageSnapshot(page: Page) {
-  try {
-    return await page.evaluate(() => {
-      return {
-        body: document.body?.innerHTML.slice(0, 1200) ?? '',
-        readyState: document.readyState,
-        title: document.title,
-        url: location.href,
-      }
-    })
-  }
-  catch (error) {
-    return {
-      body: '',
-      readyState: 'unknown',
-      title: '',
-      url: page.url(),
-      error: error instanceof Error ? error.message : String(error),
-    }
-  }
-}
-
-async function isShellPage(page: Page) {
-  try {
-    return await page.evaluate(() => document.body?.innerHTML.includes('<!--app-html-->') ?? false)
-  }
-  catch {
-    return false
-  }
-}
-
-async function waitForRuntimeStyles(page: Page, assertions: WebRuntimeStyleAssertion[] | undefined, label: string, logs: string[], diagnostics: WebPageDiagnostics, reloadShell = false) {
-  if (!assertions?.length) {
-    return
-  }
-
-  const startedAt = Date.now()
-  let shellReloaded = false
-  let latest: Array<{ actual: Record<string, string> | null, selector: string }> = []
-  while (Date.now() - startedAt < serverTimeoutMs) {
-    latest = []
-    let ok = true
-    for (const assertion of assertions) {
-      const actual = await readRuntimeStyles(page, assertion)
-      latest.push({ actual, selector: assertion.selector })
-      if (!actual || !matchRuntimeStyles(actual, assertion)) {
-        ok = false
-        break
-      }
-    }
-    if (ok) {
-      return
-    }
-    if (reloadShell && !shellReloaded && latest.every(item => item.actual == null) && Date.now() - startedAt > 10_000 && await isShellPage(page)) {
-      shellReloaded = true
-      await page.reload({ waitUntil: 'domcontentloaded' })
-    }
-    await wait(pollIntervalMs)
-  }
-
-  const snapshot = await collectPageSnapshot(page)
-  throw new Error(`等待 Web 运行时样式超时：${label}\nexpected=${formatRuntimeStyleAssertions(assertions)}\nactual=${JSON.stringify(latest)}\npage=${JSON.stringify(snapshot)}\npageRequests=${diagnostics.requests.join('\n')}\npageErrors=${diagnostics.errors.join('\n')}\npageWarnings=${diagnostics.warnings.join('\n')}\n${logs.join('')}`)
-}
-
-function resolveAnchor(source: string, anchors: string[]) {
-  return anchors.find(anchor => source.includes(anchor))
-}
-
-async function rewriteHmrMarker(file: string, anchors: string[], steps: WebHmrStep[], stepIndex: number) {
-  const source = await readUtf8(file)
-  const persistentMarkerRE = /<view class="[^"]*\bhbuilderx-web-hmr-probe\b[^"]*">[^<]*<\/view>/
-  const step = steps[stepIndex]
-  if (!step) {
-    throw new Error(`缺少 Web HMR 步骤：${stepIndex}`)
-  }
-  const persistentMarker = `<view class="hbuilderx-web-hmr-probe ${step.markerClass.replace(/\bhbuilderx-web-hmr-probe\b/g, '').trim()}">${step.markerText}</view>`
-  if (persistentMarkerRE.test(source)) {
-    await fs.writeFile(file, source.replace(persistentMarkerRE, persistentMarker), 'utf8')
-    return
-  }
-  const markerRE = /\n\t\t<view class="[^"]+">hbuilderx-web-hmr-[^<]+<\/view>/g
-  const cleaned = source.replace(markerRE, '')
-  const anchor = resolveAnchor(cleaned, anchors)
-  const index = anchor ? cleaned.indexOf(anchor) : -1
-  if (index < 0) {
-    throw new Error(`找不到 HMR 插入锚点：${file}`)
-  }
-  const insertion = persistentMarker
-  const next = `${cleaned.slice(0, index)}${insertion}\n\t\t${cleaned.slice(index)}`
-  await fs.writeFile(file, next, 'utf8')
-}
-
 export async function runWebHmr(
   projectRoot: string,
   sourceFile: string,
@@ -296,27 +99,46 @@ export async function runWebHmr(
   initialRuntimeStyles: WebRuntimeStyleAssertion[] | undefined,
   persistentRuntimeStyles: WebRuntimeStyleAssertion[] | undefined,
   hmrSteps: WebHmrStep[],
+  launchWithHBuilderX = false,
+  initialTextContains: string[] = [],
+  serverIdentityPath?: string,
+  attached?: AttachedWebServer,
 ) {
-  const port = await findFreePort()
-  await runPnpm(projectRoot, ['run', 'predev:h5'], serverTimeoutMs)
-  const child = createDevServer(projectRoot, port)
-  const logs = collectProcessOutput(child)
-  const baseUrl = `http://127.0.0.1:${port}/`
-  const executablePath = await resolveChromeExecutable()
-  const browser = await chromium.launch({
-    ...(executablePath ? { executablePath } : {}),
-    headless: true,
-  })
+  const artifactRoot = attached?.artifactRoot ?? path.resolve(__dirname, '../.artifacts/web-hmr', `${path.basename(projectRoot)}-${Date.now()}`)
+  await fs.mkdir(artifactRoot, { recursive: true })
+  const logFile = path.join(artifactRoot, 'server.log')
+  await fs.writeFile(logFile, '')
+  let session: WebServerSession | undefined
+  let browser: Browser | undefined
+  let page: Page | undefined
+  const diagnostics: WebPageDiagnostics = { errors: [], requests: [], warnings: [] }
   let restore: (() => Promise<void>) | undefined
 
+  let failure: { error: unknown } | undefined
+  let result!: {
+    hmrCss: string[]
+    initialCss: string
+    pageErrors: WebPageDiagnostics['errors']
+    pageHtml: string
+    pageOverlayText: string | null | undefined
+    pageWarnings: WebPageDiagnostics['warnings']
+    serverLogs: string
+  }
   try {
-    const ready = await waitForPath(baseUrl, '/', child, logs)
-    const page = await browser.newPage()
-    const diagnostics: WebPageDiagnostics = {
-      errors: [],
-      requests: [],
-      warnings: [],
+    session = await createWebSession(projectRoot, launchWithHBuilderX, logFile, attached, serverIdentityPath)
+    const { logs, baseUrl } = session
+    const executablePath = await resolveChromeExecutable()
+    browser = await chromium.launch({
+      ...(executablePath ? { executablePath } : {}),
+      headless: true,
+    })
+    const ready = await waitForPath(baseUrl, '/', session, logs)
+    if (serverIdentityPath) {
+      const identity = JSON.parse(await fetchText(joinUrl(ready.baseUrl, serverIdentityPath)))
+      assertServerIdentity(identity, await fs.realpath(projectRoot))
+      await fs.writeFile(path.join(artifactRoot, 'identity.json'), JSON.stringify(identity, null, 2))
     }
+    page = await browser.newPage()
     page.on('requestfailed', (request) => {
       diagnostics.requests.push(`failed ${request.url()} ${request.failure()?.errorText ?? ''}`.trim())
     })
@@ -340,46 +162,111 @@ export async function runWebHmr(
     })
     await page.goto(joinUrl(ready.baseUrl, '/'), { waitUntil: 'domcontentloaded' })
     await page.waitForFunction(() => document.readyState !== 'loading')
+    await waitForInitialPageText(page, initialTextContains, logs, diagnostics)
 
     await waitForRuntimeStyles(page, initialRuntimeStyles, 'initial', logs, diagnostics, true)
-    const initialCss = await waitForCss(joinUrl(ready.baseUrl, initialCssPath), initialCssContains, child, logs)
-    restore = await createHmrSourceRestore([
-      sourceFile,
-      ...hmrSteps.flatMap(step => step.sourceMutation ? [path.resolve(projectRoot, step.sourceMutation.file)] : []),
-    ])
+    const initialCss = await waitForCss(joinUrl(ready.baseUrl, initialCssPath), initialCssContains, session, logs)
+    await fs.writeFile(path.join(artifactRoot, 'initial.css'), initialCss)
+    await page.screenshot({ path: path.join(artifactRoot, 'initial.png') })
+    restore = attached
+      ? undefined
+      : await createHmrSourceRestore([
+          sourceFile,
+          ...hmrSteps.flatMap(step => step.sourceMutation ? [path.resolve(projectRoot, step.sourceMutation.file)] : []),
+        ])
     const hmrCss: string[] = []
     for (const [index, step] of hmrSteps.entries()) {
-      if (step.sourceMutation) {
-        await appendHmrSourceMutation(projectRoot, step.sourceMutation)
+      await session.ensureRunning()
+      const sameFileReplace = step.sourceMutation?.replace && sameSourceFile(projectRoot, step.sourceMutation.file, sourceFile)
+      if (step.sourceMutation && !sameFileReplace) {
+        await appendHmrSourceMutation(projectRoot, step.sourceMutation, attached?.writeSource)
         if (step.sourceMutation.cssContains?.length) {
-          hmrCss.push(await waitForCss(joinUrl(ready.baseUrl, hmrCssPath), step.sourceMutation.cssContains, child, logs))
+          hmrCss.push(await waitForCss(joinUrl(ready.baseUrl, hmrCssPath), step.sourceMutation.cssContains, session, logs))
         }
       }
-      await rewriteHmrMarker(sourceFile, markerAnchors, hmrSteps, index)
+      await rewriteHmrMarker(sourceFile, markerAnchors, hmrSteps, index, sameFileReplace ? step.sourceMutation?.replace : undefined, attached?.writeSource)
+      await waitForHmrMarker(page, step.markerText)
       await waitForRuntimeStyles(page, [
         ...(persistentRuntimeStyles ?? []),
         ...(step.runtimeStyles ?? []),
       ], `hmr:${step.markerText}`, logs, diagnostics)
-      hmrCss.push(await waitForCss(joinUrl(ready.baseUrl, hmrCssPath), step.cssContains, child, logs))
+      const css = await waitForCss(joinUrl(ready.baseUrl, hmrCssPath), step.cssContains, session, logs)
+      hmrCss.push(css)
+      await fs.writeFile(path.join(artifactRoot, `save-${index + 1}.css`), css)
+      await page.screenshot({ path: path.join(artifactRoot, `save-${index + 1}.png`) })
+      if (step.reload) {
+        await page.reload({ waitUntil: 'domcontentloaded' })
+        await waitForHmrMarker(page, step.markerText)
+        await waitForRuntimeStyles(page, [...(persistentRuntimeStyles ?? []), ...(step.runtimeStyles ?? [])], `reload:${step.markerText}`, logs, diagnostics)
+      }
+      await fs.writeFile(path.join(artifactRoot, `save-${index + 1}.json`), JSON.stringify({
+        marker: step.markerText,
+        styles: await Promise.all((step.runtimeStyles ?? []).map(assertion => readRuntimeStyles(page!, assertion))),
+      }, null, 2))
     }
     const errorOverlay = page.locator('vite-error-overlay')
     const pageOverlayText = await errorOverlay.count() > 0
       ? await errorOverlay.first().textContent()
       : undefined
+    await session.ensureRunning()
 
-    return {
+    result = {
       hmrCss,
       initialCss,
       pageErrors: diagnostics.errors,
       pageHtml: ready.text,
       pageOverlayText,
       pageWarnings: diagnostics.warnings,
+      serverLogs: await session.readLogs(),
+    }
+  }
+  catch (error) {
+    failure = { error }
+    try {
+      await cleanupHBuilderXResources([
+        async () => {
+          if (attached) {
+            await fs.copyFile(attached.logFile, logFile)
+          }
+        },
+        async () => {
+          if (launchWithHBuilderX && !attached) {
+            await captureHBuilderXFailure(artifactRoot)
+          }
+        },
+        () => fs.writeFile(path.join(artifactRoot, 'failure.txt'), error instanceof Error ? error.stack ?? error.message : String(error)),
+      ])
+    }
+    catch (reportError) {
+      failure = { error: new AggregateError([error, reportError], 'HBuilderX Web 验证与失败取证均失败。', { cause: error }) }
     }
   }
   finally {
-    if (restore) {
-      await restore()
+    try {
+      await cleanupHBuilderXResources([
+        async () => {
+          await fs.writeFile(path.join(artifactRoot, 'diagnostics.json'), JSON.stringify(diagnostics, null, 2))
+          if (page) {
+            await fs.writeFile(path.join(artifactRoot, 'page.html'), await page.content().catch(() => ''))
+            await page.screenshot({ path: path.join(artifactRoot, 'final.png') }).catch(() => {})
+          }
+        },
+        () => cleanupWebHmrSession({
+          closeBrowser: async () => browser?.close(),
+          stopServer: async () => session?.stop(),
+          restoreSource: async () => restore?.(),
+          closeProject: async () => session?.closeProject(),
+        }),
+      ])
     }
-    await browser.close()
+    catch (error) {
+      failure = { error: failure
+        ? new AggregateError([failure.error, error], 'HBuilderX Web 验证与收尾均失败。', { cause: failure.error })
+        : error }
+    }
   }
+  if (failure) {
+    throw failure.error
+  }
+  return result
 }

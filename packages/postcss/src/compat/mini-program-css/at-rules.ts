@@ -48,19 +48,23 @@ function removeAtRulesByScan(css: string, names: Set<string>) {
   return result
 }
 
+export function removeUnsupportedMiniProgramAtRulesRoot(root: postcss.Root) {
+  root.walkAtRules((atRule) => {
+    if (MINI_PROGRAM_UNSUPPORTED_AT_RULES.has(atRule.name)) {
+      atRule.remove()
+    }
+  })
+  root.walkAtRules((atRule) => {
+    if (atRule.nodes && atRule.nodes.length === 0) {
+      atRule.remove()
+    }
+  })
+}
+
 export function removeUnsupportedMiniProgramAtRules(css: string) {
   try {
     const root = postcss.parse(css)
-    root.walkAtRules((atRule) => {
-      if (MINI_PROGRAM_UNSUPPORTED_AT_RULES.has(atRule.name)) {
-        atRule.remove()
-      }
-    })
-    root.walkAtRules((atRule) => {
-      if (atRule.nodes && atRule.nodes.length === 0) {
-        atRule.remove()
-      }
-    })
+    removeUnsupportedMiniProgramAtRulesRoot(root)
     return root.toString()
   }
   catch {

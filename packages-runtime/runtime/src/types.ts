@@ -1,4 +1,4 @@
-import type { EscapeOptions, UnescapeOptions } from '@weapp-core/escape'
+import type { EscapeOptions, UnescapeOptions } from '@weapp-tailwindcss/escape'
 import type { ClassValue } from 'clsx'
 
 export type EscapeConfig = boolean | EscapeOptions

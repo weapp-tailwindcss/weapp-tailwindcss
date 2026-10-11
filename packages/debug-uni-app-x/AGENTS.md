@@ -28,4 +28,4 @@
 - `pnpm --filter @weapp-tailwindcss/debug-uni-app-x test`
 - `pnpm --filter @weapp-tailwindcss/debug-uni-app-x build`
 - 定向回归：
-  - `pnpm --filter @weapp-tailwindcss/debug-uni-app-x vitest run test/index.test.ts`
+  - `pnpm --filter @weapp-tailwindcss/debug-uni-app-x exec vitest run test/index.test.ts`

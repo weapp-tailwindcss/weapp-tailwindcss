@@ -1,0 +1,95 @@
+// 此文件由 main.css 自动生成，请勿手动修改。
+import { computed } from 'vue'
+import type { ComputedRef } from 'vue'
+import { useTheme } from '@/stores/theme.uts'
+
+const theme = useTheme()
+const themeValues: Map<string, string> = new Map<string, string>([
+	["--spacing", "1px"],
+	["--color-brand-gradient", "linear-gradient(to right, #6a88fd, #b4b0bb)"],
+	["--color-page", "var(--theme-page)"],
+	["--color-surface", "var(--theme-surface)"],
+	["--color-surface-muted", "var(--theme-surface-muted)"],
+	["--color-content", "var(--theme-content)"],
+	["--color-content-muted", "var(--theme-content-muted)"],
+	["--color-line", "var(--theme-line)"],
+	["--color-primary", "var(--theme-primary)"],
+	["--color-secondary", "var(--theme-secondary)"],
+	["--color-on-primary", "var(--theme-on-primary)"],
+	["--text-xs", "12px"],
+	["--text-xs--line-height", "16px"],
+	["--text-sm", "14px"],
+	["--text-sm--line-height", "20px"],
+	["--text-base", "16px"],
+	["--text-base--line-height", "24px"],
+	["--text-lg", "18px"],
+	["--text-lg--line-height", "28px"],
+	["--text-xl", "20px"],
+	["--text-xl--line-height", "28px"],
+	["--text-2xl", "24px"],
+	["--text-2xl--line-height", "32px"],
+	["--text-3xl", "30px"],
+	["--text-3xl--line-height", "36px"],
+	["--text-4xl", "36px"],
+	["--text-4xl--line-height", "40px"],
+	["--radius-xs", "2px"],
+	["--radius-sm", "4px"],
+	["--radius-md", "6px"],
+	["--radius-lg", "8px"],
+	["--radius-xl", "12px"],
+	["--radius-2xl", "16px"],
+	["--radius-3xl", "24px"],
+	["--radius-4xl", "32px"]
+])
+
+const themeClassValues: Map<string, string> = new Map<string, string>([
+	["light:--theme-page", "#f7f8fa"],
+	["light:--theme-surface", "#ffffff"],
+	["light:--theme-surface-muted", "#f1f3f5"],
+	["light:--theme-content", "#1f2329"],
+	["light:--theme-content-muted", "#646a73"],
+	["light:--theme-line", "#dee0e3"],
+	["light:--theme-primary", "#3366ff"],
+	["light:--theme-secondary", "#13c2c2"],
+	["light:--theme-on-primary", "#ffffff"],
+	["dark:--theme-page", "#111318"],
+	["dark:--theme-surface", "#1a1d23"],
+	["dark:--theme-surface-muted", "#242830"],
+	["dark:--theme-content", "#f2f3f5"],
+	["dark:--theme-content-muted", "#a6aab2"],
+	["dark:--theme-line", "#343943"],
+	["dark:--theme-primary", "#6b8cff"],
+	["dark:--theme-secondary", "#35d4d4"],
+	["dark:--theme-on-primary", "#ffffff"],
+	["ocean-light:--theme-page", "#f7f8fa"],
+	["ocean-light:--theme-surface", "#ffffff"],
+	["ocean-light:--theme-surface-muted", "#f1f3f5"],
+	["ocean-light:--theme-content", "#1f2329"],
+	["ocean-light:--theme-content-muted", "#646a73"],
+	["ocean-light:--theme-line", "#dee0e3"],
+	["ocean-light:--theme-primary", "#0f766e"],
+	["ocean-light:--theme-secondary", "#0891b2"],
+	["ocean-light:--theme-on-primary", "#ffffff"],
+	["ocean-dark:--theme-page", "#181c23"],
+	["ocean-dark:--theme-surface", "#1a1d23"],
+	["ocean-dark:--theme-surface-muted", "#242830"],
+	["ocean-dark:--theme-content", "#f2f3f5"],
+	["ocean-dark:--theme-content-muted", "#a6aab2"],
+	["ocean-dark:--theme-line", "#343943"],
+	["ocean-dark:--theme-primary", "#2dd4bf"],
+	["ocean-dark:--theme-secondary", "#38bdf8"],
+	["ocean-dark:--theme-on-primary", "#ffffff"]
+])
+
+export function getThemeValue(name: string): ComputedRef<string> {
+	return computed((): string => {
+		const classValue = themeClassValues.get(theme.themeClass + ":" + name)
+		if (classValue != null) return classValue
+		const value = themeValues.get(name)
+		if (value == null) {
+			console.warn('未定义的主题变量：' + name)
+			return ''
+		}
+		return value
+	})
+}

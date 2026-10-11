@@ -26,7 +26,7 @@ import {
   shouldPreserveFrameworkRootMiniProgramImportShell,
 } from '@/bundlers/vite/generate-bundle/root-style-output'
 import { resolveCurrentSourceCandidateFile, resolveCurrentSourceCandidateSource } from '@/bundlers/vite/generate-bundle/source-candidate-source'
-import { scoreTailwindV4CssSourceFileMatch } from '@/bundlers/shared/generator-css/source-resolver/matching'
+import { scoreTailwindV4CssSourceFileMatch } from '@/generation/source-resolver/matching'
 import { resolveSourceStyleSourceFromOutputFile } from '@/bundlers/vite/generate-bundle/sfc-style-source'
 import {
   collectTailwindV4SourceFingerprint,

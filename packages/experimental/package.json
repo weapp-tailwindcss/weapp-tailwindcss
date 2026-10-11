@@ -1,17 +1,18 @@
 {
   "name": "@weapp-tailwindcss/experimental",
   "type": "module",
-  "version": "0.0.34",
-  "description": "@weapp-tailwindcss/experimental",
+  "version": "0.0.50",
+  "description": "Experimental integrations for cross-platform Tailwind CSS. 跨端 Tailwind CSS 实验性集成能力。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "ISC",
+  "homepage": "https://tw.weapp.dev",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sonofmagic/weapp-tailwindcss.git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
     "directory": "packages/experimental"
   },
   "bugs": {
-    "url": "https://github.com/sonofmagic/weapp-tailwindcss/issues"
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues"
   },
   "keywords": [],
   "sideEffects": false,

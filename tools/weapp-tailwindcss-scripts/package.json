@@ -3,6 +3,7 @@
   "type": "module",
   "version": "0.0.0",
   "private": true,
+  "description": "Internal build scripts for the cross-platform weapp-tailwindcss workspace. weapp-tailwindcss 跨端工作区的内部构建脚本。",
   "scripts": {
     "build:css": "tsx src/build-css.ts",
     "build:weapp-theme": "tsx src/build-weapp-theme.ts",
@@ -21,13 +22,13 @@
     "test:watch-hmr": "node --import tsx src/watch-hmr-regression/index.ts"
   },
   "dependencies": {
-    "@csstools/css-color-parser": "^4.1.10",
-    "@csstools/css-parser-algorithms": "^4.0.0",
-    "@csstools/css-tokenizer": "^4.0.0",
-    "@weapp-core/escape": "~8.0.0",
+    "@csstools/css-color-parser": "catalog:csstools",
+    "@csstools/css-parser-algorithms": "catalog:csstools",
+    "@csstools/css-tokenizer": "catalog:csstools",
+    "@weapp-tailwindcss/escape": "workspace:~",
     "colorette": "^2.0.20",
-    "del": "^8.0.1",
-    "execa": "^9.6.1",
+    "del": "catalog:tooling",
+    "execa": "catalog:tooling",
     "fast-glob": "catalog:buildUtilities",
     "fs-extra": "catalog:buildUtilities",
     "lightningcss": "^1.33.0",
@@ -35,11 +36,11 @@
     "picocolors": "catalog:buildUtilities",
     "postcss": "catalog:postcss85",
     "tailwindcss": "catalog:tailwindcss4",
-    "traverse": "^0.6.11"
+    "traverse": "catalog:tooling"
   },
   "devDependencies": {
     "@types/node": "catalog:typesNode2410",
-    "playwright": "^1.62.1",
+    "playwright": "^1.63.0",
     "tsx": "catalog:tsx",
     "typescript": "catalog:typescript59"
   }

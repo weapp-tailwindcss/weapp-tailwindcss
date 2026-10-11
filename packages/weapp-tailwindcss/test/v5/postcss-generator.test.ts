@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import postcss from 'postcss'
@@ -417,18 +417,25 @@ describe('v5 postcss generator', () => {
   })
 
   it('treats generator false as the default generator path', async () => {
+    const root = await mkdtemp(path.join(tmpdir(), 'weapp-tw-v5-postcss-default-'))
     const css = '.card { color: red; }'
-    const result = await postcss([
-      weappTailwindcss({
-        candidates: ['w-[100px]'],
-      }),
-    ]).process(css, {
-      from: undefined,
-    })
+    try {
+      const result = await postcss([
+        weappTailwindcss({
+          generator: false,
+          candidates: ['w-[100px]'],
+        }),
+      ]).process(css, {
+        from: path.join(root, 'app.css'),
+      })
 
-    expect(result.css.replace(/\s+/g, ' ').trim()).toBe(css)
-    expect(result.messages).toContainEqual(expect.objectContaining({
-      type: 'weapp-tailwindcss:generated',
-    }))
+      expect(result.css.replace(/\s+/g, ' ').trim()).toBe(css)
+      expect(result.messages).toContainEqual(expect.objectContaining({
+        type: 'weapp-tailwindcss:generated',
+      }))
+    }
+    finally {
+      await rm(root, { recursive: true, force: true })
+    }
   })
 })

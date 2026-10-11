@@ -1,6 +1,6 @@
 <p align="center">
 
-<a href="https://tw.icebreaker.top">
+<a href="https://tw.weapp.dev">
 
 <img src="./assets/logo.png" alt="weapp-tailwindcss-logo" width="128">
 </a>
@@ -13,18 +13,18 @@
 
 > 简体中文(zh-cn) | [English](./README_en.md)
 
-![star](https://badgen.net/github/stars/sonofmagic/weapp-tailwindcss)
+![star](https://badgen.net/github/stars/weapp-tailwindcss/weapp-tailwindcss)
 ![dm0](https://badgen.net/npm/dm/weapp-tailwindcss)
 ![license](https://badgen.net/npm/license/weapp-tailwindcss)
-[![test](https://github.com/sonofmagic/weapp-tailwindcss/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/sonofmagic/weapp-tailwindcss/actions/workflows/test.yml)
-[![codecov](https://codecov.io/gh/sonofmagic/weapp-tailwindcss/branch/main/graph/badge.svg?token=zn05qXYznt)](https://codecov.io/gh/sonofmagic/weapp-tailwindcss)
+[![test](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/weapp-tailwindcss/weapp-tailwindcss/branch/main/graph/badge.svg?token=zn05qXYznt)](https://codecov.io/gh/weapp-tailwindcss/weapp-tailwindcss)
 
 > [!NOTE]
 > 降低开发维护成本，提升开发效率的 `小程序` `tailwindcss` 全方面解决方案
 >
-> `weapp-tailwindcss@4.2.x` 现已支持 `uni-app x` 同时构建 `Web`,`小程序`,`安卓`,`IOS`,`鸿蒙`，详见 [**uni-app x 专题**](https://tw.icebreaker.top/docs/uni-app-x)
+> `weapp-tailwindcss@4.2.x` 现已支持 `uni-app x` 同时构建 `Web`,`小程序`,`安卓`,`IOS`,`鸿蒙`，详见 [**uni-app x 专题**](https://tw.weapp.dev/docs/uni-app-x)
 
-\[[文档地址](https://tw.icebreaker.top)\] \| \[[备用文档地址](https://ice-tw.netlify.app/)\] \| \[[加入技术交流群](https://tw.icebreaker.top/docs/community/group)\]
+\[[文档地址](https://tw.weapp.dev)\] \| \[[备用文档地址](https://ice-tw.netlify.app/)\] \| \[[加入技术交流群](https://tw.weapp.dev/docs/community/group)\]
 
 - [特性](#特性)
 - [版本对应](#版本对应)
@@ -61,17 +61,17 @@
 
 > `weapp-tailwindcss@5` 面向 Tailwind CSS v4 和现代构建链路，不再内置 Webpack4、PostCSS7、Tailwind CSS v2 兼容入口。从 `weapp-tailwindcss@5.2.0` 开始，需要 Node.js `>=22.12.0`；使用 HBuilderX 时还需要 HBuilderX `>=5.11`。建议安装 Node.js LTS，详见 [nodejs/release](https://github.com/nodejs/release)。
 
-## [安装与使用方式](https://tw.icebreaker.top/docs/quick-start/install)
+## [安装与使用方式](https://tw.weapp.dev/docs/quick-start/install)
 
-## [生态和解决方案](https://tw.icebreaker.top/docs/community/templates)
+## [生态和解决方案](https://tw.weapp.dev/docs/community/templates)
 
-## [常见问题](https://tw.icebreaker.top/docs/issues/)
+## [常见问题](https://tw.weapp.dev/docs/issues/)
 
-## [各个框架的模板](https://tw.icebreaker.top/docs/community/templates)
+## [各个框架的模板](https://tw.weapp.dev/docs/community/templates)
 
-## [旧版本迁移指南](https://tw.icebreaker.top/docs/migrations/v2)
+## [旧版本迁移指南](https://tw.weapp.dev/docs/migrations/v2)
 
-## [配置项参考](https://tw.icebreaker.top/docs/api/interfaces/UserDefinedOptions)
+## [配置项参考](https://tw.weapp.dev/docs/api/interfaces/UserDefinedOptions)
 
 ## Contribute
 
@@ -90,7 +90,7 @@
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=sonofmagic/weapp-tailwindcss&type=Date)](https://star-history.com/#sonofmagic/weapp-tailwindcss&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=weapp-tailwindcss/weapp-tailwindcss&type=Date)](https://star-history.com/#weapp-tailwindcss/weapp-tailwindcss&Date)
 
 ## Related projects
 

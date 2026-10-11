@@ -4,7 +4,6 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import {
-  HBuilderXCommandError,
   classifyHBuilderXOutput,
   createHBuilderXRunner,
   createLaunchArgs,
@@ -17,12 +16,11 @@ import {
   parseHBuilderXVersion,
   parseHdcTargets,
   parseIosSimulatorDevices,
-  resolveIosSimulatorDeviceId,
-  selectPreferredIosSimulatorDevice,
   resolveHBuilderXCli,
-  resolveHBuilderXCliInfo,
+  resolveIosSimulatorDeviceId,
   runCommand,
   selectHBuilderXCliCandidatesForChannel,
+  selectPreferredIosSimulatorDevice,
 } from '../src'
 
 describe('hbuilderx-runner', () => {
@@ -139,11 +137,6 @@ describe('hbuilderx-runner', () => {
     const cli = path.join(dir, process.platform === 'win32' ? 'cli.cmd' : 'cli')
     await writeFile(cli, '', 'utf8')
     await expect(resolveHBuilderXCli([path.join(dir, 'missing'), cli])).resolves.toBe(cli)
-    await expect(resolveHBuilderXCliInfo([cli], { HBUILDERX_CLI_PATH: cli } as NodeJS.ProcessEnv)).resolves.toMatchObject({
-      path: cli,
-      isRunning: false,
-      source: 'env',
-    })
   })
 
   it('orders stable and Alpha default installations by channel', () => {
@@ -174,14 +167,10 @@ describe('hbuilderx-runner', () => {
     const dir = await mkdtemp(path.join(tmpdir(), 'hbuilderx-explicit-'))
     const cli = path.join(dir, 'custom-cli')
     await writeFile(cli, '', 'utf8')
-    await expect(resolveHBuilderXCliInfo({
+    await expect(resolveHBuilderXCli({
       channel: 'alpha',
       env: { HBUILDERX_CLI_PATH: cli } as NodeJS.ProcessEnv,
-    })).resolves.toMatchObject({
-      path: cli,
-      source: 'env',
-      channel: 'unknown',
-    })
+    })).resolves.toBe(cli)
   })
 
   it('extracts HBuilderX executables from process listings', () => {
@@ -333,7 +322,7 @@ describe('hbuilderx-runner', () => {
           kind: 'timeout',
         },
       },
-    } satisfies Partial<HBuilderXCommandError>)
+    })
   })
 
   it('includes classified output when commands fail', async () => {

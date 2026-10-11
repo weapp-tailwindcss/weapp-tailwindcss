@@ -1,12 +1,16 @@
-import { mkdtempSync, mkdirSync, rmSync, unlinkSync, utimesSync, writeFileSync } from 'node:fs'
+import { spawn } from 'node:child_process'
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, unlinkSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   buildTargets,
   collectPackageEntryStamps,
   resolveTargetStamps,
+  shouldSkipAutoBuild,
   shouldBuild,
+  withBuildLock,
 } from '../../scripts/ensure-weapp-tailwindcss-built.mjs'
 
 const temporaryRoots: string[] = []
@@ -42,6 +46,11 @@ afterEach(() => {
 })
 
 describe('ensure-weapp-tailwindcss-built', () => {
+  it('聚合构建时跳过 demo 的自动依赖构建', () => {
+    expect(shouldSkipAutoBuild({ WEAPP_TW_SKIP_AUTO_BUILD: '1' })).toBe(true)
+    expect(shouldSkipAutoBuild({})).toBe(false)
+  })
+
   it('从 package exports 推导 ESM 与 CJS 产物扩展名', () => {
     const postcssCalc = buildTargets.find(target => target.filter === '@weapp-tailwindcss/postcss-calc')!
     const reset = buildTargets.find(target => target.filter === '@weapp-tailwindcss/reset')!
@@ -56,6 +65,14 @@ describe('ensure-weapp-tailwindcss-built', () => {
       'dist/index.cjs',
       'dist/index.d.ts',
     ]))
+  })
+
+  it('为嵌套 vite/web 导出保留声明构建标记', () => {
+    const packageJson = JSON.parse(readFileSync(path.join(process.cwd(), 'packages/weapp-tailwindcss/package.json'), 'utf8'))
+    const entryDtsScript = readFileSync(path.join(process.cwd(), 'tools/weapp-tailwindcss-scripts/src/create-entry-dts.ts'), 'utf8')
+
+    expect(packageJson.exports['./vite/web'].types).toBe('./dist/vite/web.d.ts')
+    expect(entryDtsScript).toContain("'vite/web.d.ts'")
   })
 
   it('只在公共入口缺失或源码更新后触发重建', () => {
@@ -77,5 +94,61 @@ describe('ensure-weapp-tailwindcss-built', () => {
     utimesSync(outputFile, now, now)
     utimesSync(sourceFile, now + 10, now + 10)
     expect(shouldBuild({ packageRoot })).toBe(true)
+  })
+
+  it('跨进程串行化同一个包的构建', async () => {
+    const packageRoot = mkdtempSync(path.join(tmpdir(), 'weapp-tailwindcss-lock-'))
+    temporaryRoots.push(packageRoot)
+    const eventFile = path.join(packageRoot, 'events.log')
+    const scriptPath = fileURLToPath(new URL('../../scripts/ensure-weapp-tailwindcss-built.mjs', import.meta.url))
+    const childSource = `
+      import { appendFileSync } from 'node:fs'
+      import { withBuildLock } from ${JSON.stringify(pathToFileURL(scriptPath).href)}
+
+      withBuildLock(process.argv[1], () => {
+        appendFileSync(process.argv[2], 'start\\n')
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 180)
+        appendFileSync(process.argv[2], 'end\\n')
+      })
+    `
+
+    const runChild = () => new Promise<void>((resolve, reject) => {
+      const child = spawn(process.execPath, [
+        '--input-type=module',
+        '-e',
+        childSource,
+        packageRoot,
+        eventFile,
+      ], { stdio: 'ignore' })
+      child.once('error', reject)
+      child.once('exit', (code) => {
+        if (code === 0) {
+          resolve()
+        }
+        else {
+          reject(new Error(`lock child exited with code ${code}`))
+        }
+      })
+    })
+
+    await Promise.all([runChild(), runChild()])
+
+    expect(readFileSync(eventFile, 'utf8').trim().split('\n')).toEqual([
+      'start',
+      'end',
+      'start',
+      'end',
+    ])
+  })
+
+  it('释放锁后允许同一进程再次进入', () => {
+    const packageRoot = mkdtempSync(path.join(tmpdir(), 'weapp-tailwindcss-lock-reentry-'))
+    temporaryRoots.push(packageRoot)
+    const calls: number[] = []
+
+    withBuildLock(packageRoot, () => calls.push(1))
+    withBuildLock(packageRoot, () => calls.push(2))
+
+    expect(calls).toEqual([1, 2])
   })
 })

@@ -4,15 +4,15 @@
     "description": "简单计数器组件，提供 mp-weixin / uni-app vue3 / taro react 三套模板",
     "frameworks": {
       "mp-weixin": [
-        { "path": "counter/mp-weixin/index.ts", "src": "https://tw.icebreaker.top/wetw/templates/counter/mp-weixin/index.ts" },
-        { "path": "counter/mp-weixin/index.wxml", "src": "https://tw.icebreaker.top/wetw/templates/counter/mp-weixin/index.wxml" },
-        { "path": "counter/mp-weixin/index.json", "src": "https://tw.icebreaker.top/wetw/templates/counter/mp-weixin/index.json" }
+        { "path": "counter/mp-weixin/index.ts", "src": "https://tw.weapp.dev/wetw/templates/counter/mp-weixin/index.ts" },
+        { "path": "counter/mp-weixin/index.wxml", "src": "https://tw.weapp.dev/wetw/templates/counter/mp-weixin/index.wxml" },
+        { "path": "counter/mp-weixin/index.json", "src": "https://tw.weapp.dev/wetw/templates/counter/mp-weixin/index.json" }
       ],
       "uni-app-vue3": [
-        { "path": "counter/uni-app-vue3/index.vue", "src": "https://tw.icebreaker.top/wetw/templates/counter/uni-app-vue3/index.vue" }
+        { "path": "counter/uni-app-vue3/index.vue", "src": "https://tw.weapp.dev/wetw/templates/counter/uni-app-vue3/index.vue" }
       ],
       "taro-react": [
-        { "path": "counter/taro-react/index.tsx", "src": "https://tw.icebreaker.top/wetw/templates/counter/taro-react/index.tsx" }
+        { "path": "counter/taro-react/index.tsx", "src": "https://tw.weapp.dev/wetw/templates/counter/taro-react/index.tsx" }
       ]
     }
   },
@@ -21,15 +21,15 @@
     "description": "语义色标签组件，提供 mp-weixin / uni-app vue3 / taro react 三套模板",
     "frameworks": {
       "mp-weixin": [
-        { "path": "tag/mp-weixin/index.ts", "src": "https://tw.icebreaker.top/wetw/templates/tag/mp-weixin/index.ts" },
-        { "path": "tag/mp-weixin/index.wxml", "src": "https://tw.icebreaker.top/wetw/templates/tag/mp-weixin/index.wxml" },
-        { "path": "tag/mp-weixin/index.json", "src": "https://tw.icebreaker.top/wetw/templates/tag/mp-weixin/index.json" }
+        { "path": "tag/mp-weixin/index.ts", "src": "https://tw.weapp.dev/wetw/templates/tag/mp-weixin/index.ts" },
+        { "path": "tag/mp-weixin/index.wxml", "src": "https://tw.weapp.dev/wetw/templates/tag/mp-weixin/index.wxml" },
+        { "path": "tag/mp-weixin/index.json", "src": "https://tw.weapp.dev/wetw/templates/tag/mp-weixin/index.json" }
       ],
       "uni-app-vue3": [
-        { "path": "tag/uni-app-vue3/index.vue", "src": "https://tw.icebreaker.top/wetw/templates/tag/uni-app-vue3/index.vue" }
+        { "path": "tag/uni-app-vue3/index.vue", "src": "https://tw.weapp.dev/wetw/templates/tag/uni-app-vue3/index.vue" }
       ],
       "taro-react": [
-        { "path": "tag/taro-react/index.tsx", "src": "https://tw.icebreaker.top/wetw/templates/tag/taro-react/index.tsx" }
+        { "path": "tag/taro-react/index.tsx", "src": "https://tw.weapp.dev/wetw/templates/tag/taro-react/index.tsx" }
       ]
     }
   }

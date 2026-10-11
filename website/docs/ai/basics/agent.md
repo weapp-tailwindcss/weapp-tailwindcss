@@ -1,7 +1,7 @@
 ---
 sidebar: aiSidebar
 title: AI Agent（智能体）
-description: 1. **感知** (Perceive)：获取环境信息
+description: AI Agent（智能体），覆盖 AI 工作流、提示词和工程化实践。
 keywords:
   - AI 编程
   - LLM

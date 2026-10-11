@@ -1,17 +1,18 @@
 {
   "name": "tailwindcss-injector",
   "type": "module",
-  "version": "1.0.15",
-  "description": "tsdown build package template",
+  "version": "1.0.25",
+  "description": "Tailwind CSS generation and source injection helpers for cross-platform builds. 跨端构建的 Tailwind CSS 生成与源码注入工具。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",
+  "homepage": "https://tw.weapp.dev",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sonofmagic/weapp-tailwindcss.git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
     "directory": "packages/tailwindcss-injector"
   },
   "bugs": {
-    "url": "https://github.com/sonofmagic/weapp-tailwindcss/issues"
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues"
   },
   "keywords": [],
   "sideEffects": false,
@@ -56,11 +57,11 @@
     "types": "./dist/index.d.ts"
   },
   "dependencies": {
+    "@weapp-tailwindcss/postcss": "workspace:*",
     "@weapp-tailwindcss/shared": "workspace:*",
     "fs-extra": "catalog:buildUtilities",
     "htmlparser2": "catalog:buildUtilities",
     "magic-string": "catalog:buildUtilities",
-    "postcss": "catalog:postcss85",
     "tailwindcss": "catalog:tailwindcss4",
     "tailwindcss-config": "workspace:*"
   }

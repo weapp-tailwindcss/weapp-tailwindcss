@@ -1,0 +1,32 @@
+name: Setup pnpm workspace
+description: Install the repository with shared pnpm and Playwright caches.
+inputs:
+  node-version:
+    description: Node.js version
+    required: false
+    default: '22'
+runs:
+  using: composite
+  steps:
+    - uses: pnpm/action-setup@v4
+    - uses: actions/setup-node@v6
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: pnpm
+        cache-dependency-path: pnpm-lock.yaml
+    - name: Cache Playwright browsers
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/ms-playwright
+          ~/Library/Caches/ms-playwright
+          ~\AppData\Local\ms-playwright
+        key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: |
+          playwright-${{ runner.os }}-
+    - name: Install dependencies with timeout and retry
+      shell: bash
+      env:
+        PNPM_INSTALL_ATTEMPTS: '2'
+        PNPM_INSTALL_TIMEOUT_MS: '600000'
+      run: node scripts/ci/install-workspace.mjs

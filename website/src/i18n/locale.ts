@@ -1,13 +1,13 @@
-export const siteLocales = ['zh-cn', 'en'] as const
+export const siteLocales = ['en', 'zh-cn'] as const
 
 export type SiteLocale = (typeof siteLocales)[number]
 
-export const defaultSiteLocale: SiteLocale = 'zh-cn'
+export const defaultSiteLocale: SiteLocale = 'en'
 export const localePreferenceStorageKey = 'weapp-tailwindcss:website:locale'
 
 const ENGLISH_PREFIX_RE = /^en(?:[-_]|$)/i
 const CHINESE_PREFIX_RE = /^zh(?:[-_]|$)/i
-const EN_LOCALE_PATH_RE = /^\/en(?=\/|$)/
+const CHINESE_LOCALE_PATH_RE = /^\/zh-cn(?=\/|$)/i
 const REPEATED_PATH_SEPARATOR_RE = /\/{2,}/g
 
 function normalizePathname(pathname: string): string {
@@ -36,14 +36,14 @@ export function isEnglishLocale(locale: SiteLocale): boolean {
 }
 
 export function getLocalePrefix(locale: SiteLocale): string {
-  return isEnglishLocale(locale) ? '/en' : ''
+  return isEnglishLocale(locale) ? '' : '/zh-cn'
 }
 
 export function stripLocalePrefix(pathname: string): string {
   let normalizedPathname = normalizePathname(pathname)
 
-  while (EN_LOCALE_PATH_RE.test(normalizedPathname)) {
-    normalizedPathname = normalizedPathname.replace(EN_LOCALE_PATH_RE, '') || '/'
+  while (CHINESE_LOCALE_PATH_RE.test(normalizedPathname)) {
+    normalizedPathname = normalizedPathname.replace(CHINESE_LOCALE_PATH_RE, '') || '/'
   }
 
   return normalizedPathname
@@ -52,8 +52,8 @@ export function stripLocalePrefix(pathname: string): string {
 export function toLocalePath(pathname: string, locale: SiteLocale): string {
   const strippedPath = stripLocalePrefix(pathname)
 
-  if (locale === 'en') {
-    return strippedPath === '/' ? '/en/' : `/en${strippedPath}`
+  if (locale === 'zh-cn') {
+    return strippedPath === '/' ? '/zh-cn/' : `/zh-cn${strippedPath}`
   }
 
   return strippedPath

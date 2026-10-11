@@ -139,7 +139,7 @@ export function debugX(options?: DebugOptions): Plugin[] {
           return
         }
 
-        const bundleKeys = Object.keys(bundle)
+        const bundleKeys = Object.keys(bundle).sort()
         if (log) {
           console.log('generateBundle\n', bundleKeys)
         }
@@ -152,7 +152,7 @@ export function debugX(options?: DebugOptions): Plugin[] {
         const metaFilePath = path.join(cwd, targetDir, dir, '_meta.json')
         await metaWriter.writeDebugFile(
           path.join(cwd, targetDir, dir, '_keys.txt'),
-          matchedBundleKeys.sort().join('\n'),
+          matchedBundleKeys.join('\n'),
           { stage: prefix, type: 'bundle', id: '_keys.txt' },
         )
         const tasks: Promise<unknown>[] = []

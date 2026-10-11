@@ -10,6 +10,7 @@ import {
   identity,
   resolveTransformers,
   weappTwIgnore,
+  wrapRuntimeAggregator,
 } from '..'
 
 expectType<string>(clsx('text-sm', false))
@@ -39,3 +40,9 @@ expectType<string>(runtime.twMerge('text-sm', false as ClassValue))
 expectType<string>(runtime.twJoin('text-sm', 'text-lg'))
 expectType<string>(runtime.extendTailwindMerge()('text-sm'))
 expectType<string>(runtime.createTailwindMerge()('text-sm'))
+
+const wrapped = wrapRuntimeAggregator(
+  (value: string) => value,
+  resolveTransformers(),
+)
+expectType<string>(wrapped('text-sm', false as ClassValue))

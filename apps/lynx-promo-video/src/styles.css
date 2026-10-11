@@ -1,0 +1,34 @@
+@font-face {
+  font-family: 'Noto Sans SC Variable';
+  font-style: normal;
+  font-display: block;
+  font-weight: 100 900;
+  src: url('./assets/fonts/noto-sans-sc-video-subset.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-family: 'JetBrains Mono Variable';
+  font-style: normal;
+  font-display: block;
+  font-weight: 100 800;
+  src: url('./assets/fonts/jetbrains-mono-latin.woff2') format('woff2-variations');
+}
+
+:root {
+  color-scheme: dark;
+  font-family: 'Noto Sans SC Variable', 'PingFang SC', sans-serif;
+  background: #0b0f10;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #0b0f10;
+}
+
+.mono {
+  font-family: 'JetBrains Mono Variable', monospace;
+}

@@ -1,4 +1,4 @@
-import { mkdir, rm, writeFile } from 'node:fs/promises'
+import { mkdir, realpath, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -39,6 +39,21 @@ describe('bundlers/vite source candidates', () => {
     expect(collector.values()).toEqual(new Set(['text-[23px]', 'bg-[#123456]']))
   })
 
+  it('reuses extraction across scan and transform layers for the same file source', async () => {
+    const { createSourceCandidateCollector } = await import('@/bundlers/vite/source-candidates')
+    const extractor = vi.fn((source: string) => source.split(/\s+/).filter(Boolean))
+    const collector = createSourceCandidateCollector({ extractor })
+    const file = '/project/pages/index.vue'
+    const source = '<view class="text-red-500" />'
+
+    await collector.sync(file, source)
+    await collector.merge(file, source)
+    await collector.syncCurrentSource(file, source)
+
+    expect(extractor).toHaveBeenCalledTimes(1)
+    expect(collector.getRevision()).toBeGreaterThan(0)
+  })
+
   it('exposes a shared source candidate store API for bundlers', async () => {
     const { createSourceCandidateStore } = await import('@/bundlers/vite/source-candidates')
     const store = createSourceCandidateStore()
@@ -48,6 +63,18 @@ describe('bundlers/vite source candidates', () => {
 
     expect(store.values()).toEqual(new Set(['text-[24rpx]', 'bg-[#123456]']))
     expect(store.source('/project/pages/index.wxml')).toBe('<view class="text-[24rpx]"></view>')
+  })
+
+  it('extracts compiled SFC modules as JavaScript while preserving their source identity', async () => {
+    const { createSourceCandidateStore } = await import('@/bundlers/vite/source-candidates')
+    const store = createSourceCandidateStore()
+    const root = await realpath(await createTempDir('weapp-tw-compiled-sfc'))
+    const file = path.join(root, 'page.vue')
+    const source = 'export function render() { return "h-[64rpx] bg-white/70" }'
+    expect(await store.syncModuleSource(file, source, 'js')).toEqual(new Set(['h-[64rpx]', 'bg-white/70']))
+    expect(store.sourcesForEntries([]).get('h-[64rpx]')).toEqual(new Set([file]))
+    store.remove(file)
+    expect(store.values()).toEqual(new Set())
   })
 
   it('collects configured custom template attributes as Tailwind v4 source candidates', async () => {
@@ -213,6 +240,73 @@ describe('bundlers/vite source candidates', () => {
       negated: false,
       pattern: 'src/subpackages/normal/**/*.{wxml,js,ts}',
     }])).toEqual(new Set(['bg-normal']))
+  })
+
+  it('keeps active module graph candidates across positive source gaps and explicit exclusions', async () => {
+    const { createSourceCandidateCollector } = await import('@/bundlers/vite/source-candidates')
+    const createCollector = () => createSourceCandidateCollector({
+      extractor: source => source.split(/\s+/).filter(Boolean),
+    })
+    const root = '/project'
+    const pageFile = '/project/src/pages/index.uvue'
+    const subpageFile = '/project/src/sub/tailwindcss/index.uvue'
+    const excludedFile = '/project/uni_modules/example/index.uvue'
+    const entries = [
+      {
+        base: root,
+        negated: false,
+        pattern: 'src/pages/**/*.{uts,uvue}',
+      },
+      {
+        base: root,
+        negated: true,
+        pattern: 'uni_modules/**/*',
+      },
+    ]
+    const collector = createCollector()
+
+    await collector.sync(pageFile, 'bg-page')
+    await collector.syncModuleSource(subpageFile, 'dark:bg-[#3498db]')
+    await collector.syncModuleSource(excludedFile, 'bg-excluded')
+
+    expect(collector.valuesForEntries(entries)).toEqual(new Set([
+      'bg-page',
+      'dark:bg-[#3498db]',
+    ]))
+    expect(collector.sourcesForEntries(entries).get('dark:bg-[#3498db]')).toEqual(new Set([subpageFile]))
+    expect(collector.valuesForEntries([])).toEqual(new Set([
+      'dark:bg-[#3498db]',
+      'bg-excluded',
+    ]))
+
+    const restored = createCollector()
+    restored.restore(collector.snapshot())
+    expect(restored.valuesForEntries(entries)).toEqual(new Set([
+      'bg-page',
+      'dark:bg-[#3498db]',
+    ]))
+  })
+
+  it('invalidates scoped candidate views after a source update', async () => {
+    const { createSourceCandidateCollector } = await import('@/bundlers/vite/source-candidates')
+    const collector = createSourceCandidateCollector({
+      extractor: source => source.split(/\s+/).filter(Boolean),
+    })
+    const file = '/project/src/pages/index.wxml'
+    const entries = [{
+      base: '/project',
+      negated: false,
+      pattern: 'src/pages/**/*',
+    }]
+
+    await collector.sync(file, 'bg-before')
+    expect(collector.valuesForEntries(entries)).toEqual(new Set(['bg-before']))
+    expect(collector.sourcesForEntries(entries).get('bg-before')).toEqual(new Set([file]))
+
+    await collector.sync(file, 'bg-after')
+    expect(collector.valuesForEntries(entries)).toEqual(new Set(['bg-after']))
+    expect(collector.sourcesForEntries(entries).get('bg-after')).toEqual(new Set([file]))
+    expect(collector.sourcesForEntries(entries).has('bg-before')).toBe(false)
   })
 
   it('refreshes Tailwind v4 Vue arbitrary candidates after a source update', async () => {

@@ -1,5 +1,7 @@
 import { spawnSync } from 'node:child_process'
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
+import { createHash, randomUUID } from 'node:crypto'
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
@@ -7,6 +9,9 @@ import { createPnpmCommand } from './pnpm-command.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(__dirname, '..')
+const buildLockRoot = path.join(tmpdir(), 'weapp-tailwindcss-build-locks')
+const buildLockWaitMs = 50
+const buildLockStaleMs = 30 * 60 * 1000
 const runtimeBuildTargets = [
   {
     name: '@weapp-tailwindcss/runtime',
@@ -41,6 +46,11 @@ const runtimeBuildTargets = [
 ]
 export const buildTargets = [
   {
+    filter: '@weapp-tailwindcss/env',
+    label: '@weapp-tailwindcss/env',
+    packageRoot: path.join(repoRoot, 'packages/env'),
+  },
+  {
     filter: '@weapp-tailwindcss/shared',
     label: '@weapp-tailwindcss/shared',
     packageRoot: path.join(repoRoot, 'packages/shared'),
@@ -66,6 +76,11 @@ export const buildTargets = [
     packageRoot: path.join(repoRoot, 'packages/reset'),
   },
   {
+    filter: '@weapp-tailwindcss/css-compat',
+    label: '@weapp-tailwindcss/css-compat',
+    packageRoot: path.join(repoRoot, 'packages/css-compat'),
+  },
+  {
     filter: '@weapp-tailwindcss/postcss',
     label: '@weapp-tailwindcss/postcss',
     packageRoot: path.join(repoRoot, 'packages/postcss'),
@@ -84,10 +99,7 @@ export const buildTargets = [
     filter: 'weapp-tailwindcss',
     label: '核心包',
     packageRoot: path.join(repoRoot, 'packages/weapp-tailwindcss'),
-    extraStamps: [
-      'dist/cli.cjs',
-      'dist/weapp-tw-runtime-classset-loader.cjs',
-    ],
+    extraStamps: ['dist/weapp-tw-runtime-classset-loader.cjs'],
   },
 ]
 
@@ -210,6 +222,107 @@ export function shouldBuild(target) {
   return latestSource > latestDist
 }
 
+function sleepSync(milliseconds) {
+  const signal = new Int32Array(new SharedArrayBuffer(4))
+  Atomics.wait(signal, 0, 0, milliseconds)
+}
+
+function buildLockPath(packageRoot) {
+  const packageKey = createHash('sha256').update(path.resolve(packageRoot)).digest('hex')
+  return path.join(buildLockRoot, packageKey)
+}
+
+function readBuildLockOwner(lockPath) {
+  try {
+    return JSON.parse(readFileSync(path.join(lockPath, 'owner.json'), 'utf8'))
+  }
+  catch {
+    return undefined
+  }
+}
+
+function isProcessAlive(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) {
+    return false
+  }
+
+  try {
+    process.kill(pid, 0)
+    return true
+  }
+  catch (error) {
+    return error?.code === 'EPERM'
+  }
+}
+
+function isBuildLockStale(lockPath) {
+  const owner = readBuildLockOwner(lockPath)
+  if (owner && isProcessAlive(owner.pid)) {
+    return false
+  }
+
+  try {
+    return Date.now() - statSync(lockPath).mtimeMs > buildLockStaleMs
+  }
+  catch {
+    return false
+  }
+}
+
+function acquireBuildLock(packageRoot) {
+  mkdirSync(buildLockRoot, { recursive: true })
+  const lockPath = buildLockPath(packageRoot)
+  const token = randomUUID()
+
+  while (true) {
+    try {
+      // mkdir 是跨平台的原子创建操作，适合协调多个 demo 进程。
+      mkdirSync(lockPath)
+      writeFileSync(path.join(lockPath, 'owner.json'), JSON.stringify({
+        pid: process.pid,
+        token,
+        createdAt: Date.now(),
+      }))
+      return { lockPath, token }
+    }
+    catch (error) {
+      if (error?.code !== 'EEXIST') {
+        throw error
+      }
+
+      if (isBuildLockStale(lockPath)) {
+        rmSync(lockPath, { recursive: true, force: true })
+        continue
+      }
+
+      sleepSync(buildLockWaitMs)
+    }
+  }
+}
+
+function releaseBuildLock(lock) {
+  const owner = readBuildLockOwner(lock.lockPath)
+  if (owner?.token !== lock.token) {
+    return
+  }
+
+  rmSync(lock.lockPath, { recursive: true, force: true })
+}
+
+export function withBuildLock(packageRoot, callback) {
+  const lock = acquireBuildLock(packageRoot)
+  try {
+    return callback()
+  }
+  finally {
+    releaseBuildLock(lock)
+  }
+}
+
+export function shouldSkipAutoBuild(env = process.env) {
+  return env.WEAPP_TW_SKIP_AUTO_BUILD === '1'
+}
+
 function expandRuntimeBuildTargets() {
   const dependencyNames = collectWorkspaceRuntimeDependencyNames()
   if (dependencyNames.size === 0) {
@@ -246,25 +359,41 @@ function expandRuntimeBuildTargets() {
 }
 
 export function main() {
+  if (shouldSkipAutoBuild()) {
+    return
+  }
+
   const staleTargets = [
     ...buildTargets,
     ...expandRuntimeBuildTargets(),
   ].filter(shouldBuild)
 
   for (const target of staleTargets) {
-    console.log(`[weapp-tailwindcss] ${target.label} dist 已过期，正在构建供 demo 使用...`)
-    const command = createPnpmCommand(['--filter', target.filter, 'build'])
-    const result = spawnSync(
-      command.command,
-      command.args,
-      {
-        cwd: repoRoot,
-        stdio: 'inherit',
-        env: process.env,
-        shell: command.shell,
-      },
-    )
+    const result = withBuildLock(target.packageRoot, () => {
+      // 等待其他进程完成后重新判断，避免重复构建或读取半成品声明。
+      if (!shouldBuild(target)) {
+        return undefined
+      }
 
+      console.log(`[weapp-tailwindcss] ${target.label} dist 已过期，正在构建供 demo 使用...`)
+      const command = createPnpmCommand(['--filter', target.filter, 'build'])
+      const result = spawnSync(
+        command.command,
+        command.args,
+        {
+          cwd: repoRoot,
+          stdio: 'inherit',
+          env: process.env,
+          shell: command.shell,
+        },
+      )
+
+      return result
+    })
+
+    if (!result) {
+      continue
+    }
     if (result.error) {
       console.error(result.error)
       process.exit(1)

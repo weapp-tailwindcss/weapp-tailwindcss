@@ -15,6 +15,9 @@ export default defineConfig({
   dts: true,
   shims: true,
   clean: true,
+  deps: {
+    resolveDepSubpath: true,
+  },
   target: 'es2022',
   outExtensions({ format }) {
     return { js: format === 'es' ? '.js' : '.cjs', dts: '.d.ts' }

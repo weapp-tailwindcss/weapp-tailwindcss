@@ -23,6 +23,8 @@ describe('bundlers/rspack patchRspackConfig basic loader patching', () => {
 
     patchRspackConfig(config)
 
+    expect((config.module.rules[0]!.oneOf[0]!.use.at(-1) as any).options).toMatchObject({ generateCss: true })
+
     expect(getUseLoaders(config)).toEqual([
       'css-loader',
       'builtin:lightningcss-loader',

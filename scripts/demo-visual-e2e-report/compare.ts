@@ -4,6 +4,14 @@ import path from 'pathe'
 import pixelmatch from 'pixelmatch'
 import { PNG } from 'pngjs'
 
+export interface ImageComparison {
+  diff: string
+  differentPixels: number
+  ratio: number
+  maxRatio?: number
+  withinLimit?: boolean
+}
+
 function resizePng(source: PNG, width: number, height: number) {
   if (source.width === width && source.height === height) {
     return source
@@ -25,7 +33,7 @@ function resizePng(source: PNG, width: number, height: number) {
   return resized
 }
 
-export function compareImages(actual: string, expected: string, name: string, context: RuntimeContext) {
+export function compareImages(actual: string, expected: string, name: string, context: RuntimeContext): ImageComparison {
   const diff = path.join(context.artifactRoot, 'diffs', `${name}.png`)
   const width = context.viewport.width
   const height = context.viewport.height
@@ -37,9 +45,16 @@ export function compareImages(actual: string, expected: string, name: string, co
   })
   fs.mkdirSync(path.dirname(diff), { recursive: true })
   fs.writeFileSync(diff, PNG.sync.write(diffPng))
+  const ratio = Math.round((differentPixels / (width * height)) * 10000) / 10000
   return {
     diff,
     differentPixels,
-    ratio: Math.round((differentPixels / (width * height)) * 10000) / 10000,
+    ratio,
+    ...(context.maxCrossPlatformDiffRatio === undefined
+      ? {}
+      : {
+          maxRatio: context.maxCrossPlatformDiffRatio,
+          withinLimit: ratio <= context.maxCrossPlatformDiffRatio,
+        }),
   }
 }

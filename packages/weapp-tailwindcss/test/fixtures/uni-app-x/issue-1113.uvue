@@ -1,0 +1,9 @@
+<template>
+  <view class="!mt-6 mt-6!">important utility</view>
+</template>
+
+<style lang="scss">
+.important-apply {
+  @apply !mt-6 mt-6!;
+}
+</style>

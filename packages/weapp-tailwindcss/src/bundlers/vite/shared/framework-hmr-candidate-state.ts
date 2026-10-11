@@ -1,5 +1,5 @@
-import { hasUserCssLayerBlocks } from '@/bundlers/shared/generator-css/user-css'
-import { isSourceStyleRequest } from '../../shared/style-requests'
+import { hasUserCssLayerBlocks } from '@/generation/user-css'
+import { isSourceStyleRequest } from '../../../generation/style-requests'
 import { normalizeVitePersistentCacheKey } from '../plugin-cache'
 import { cleanUrl } from '../utils'
 

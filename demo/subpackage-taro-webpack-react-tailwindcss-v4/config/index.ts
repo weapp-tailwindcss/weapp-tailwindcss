@@ -131,6 +131,7 @@ export default defineConfig<'webpack5'>(async (merge) => {
       webpackChain: installWeappTailwindcss,
     },
     rn: {
+      entry: 'app.rn',
       appName: 'taroSubpackageDemo',
       postcss: {
         cssModules: {

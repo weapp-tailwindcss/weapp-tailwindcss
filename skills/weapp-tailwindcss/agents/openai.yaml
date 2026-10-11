@@ -1,4 +1,4 @@
 interface:
   display_name: "weapp-tailwindcss"
-  short_description: "协调并路由 weapp-tailwindcss 的接入、迁移与排障任务"
-  default_prompt: "使用 $weapp-tailwindcss 为我的请求选择正确工作流。Use $weapp-tailwindcss to route my request to the right workflow."
+  short_description: "协调并路由 weapp-tailwindcss 的全端接入、迁移与排障任务"
+  default_prompt: "使用 $weapp-tailwindcss 为我的全端 Tailwind 请求选择工作流。Use $weapp-tailwindcss to route my cross-platform request."

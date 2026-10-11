@@ -6,6 +6,7 @@ import { rememberLastCssResult } from './vite-css-cache'
 
 export interface ApplyViteCssCacheResultOptions {
   applyCssResult: (source: string) => void
+  recordCssResult?: ((source: string) => void) | undefined
   cssRuntimeAffectingHash: string
   generatorRawSource: string
   generatorSourceFile: string
@@ -25,6 +26,7 @@ export function applyViteCssCacheResult(
   source: string,
 ) {
   options.applyCssResult(source)
+  options.recordCssResult?.(source)
   rememberLastCssResult(
     options.lastCssResultByFile,
     options.lastCssSourceHashByFile,

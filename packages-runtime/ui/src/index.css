@@ -1,5 +1,7 @@
 /* Generated utilities and component styles are provided via the preset plugin. */
 @config "../tailwind.config.ts";
+@source ".";
+@source "../test";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

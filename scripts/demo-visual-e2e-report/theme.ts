@@ -1,5 +1,6 @@
 import type { Page } from 'playwright'
 import type { PNG } from 'pngjs'
+import type { MiniProgramThemeExpectation } from './types'
 import fs from 'node:fs/promises'
 import path from 'pathe'
 import postcss from 'postcss'
@@ -115,7 +116,7 @@ function isLightText(value: string) {
   return Boolean((color && color.red > 220 && color.green > 220 && color.blue > 220) || (lightness !== undefined && lightness > 0.85))
 }
 
-function ensureH5ThemeEvidence(evidence: Awaited<ReturnType<typeof readH5ThemeEvidence>>) {
+function ensureH5ThemeEvidence(evidence: Awaited<ReturnType<typeof readH5ThemeEvidence>>, expectation?: Pick<MiniProgramThemeExpectation, 'backgroundColor'>) {
   if (!evidence.found) {
     throw new Error('H5 主题视觉回归缺少 .theme-mode-demo')
   }
@@ -130,9 +131,13 @@ function ensureH5ThemeEvidence(evidence: Awaited<ReturnType<typeof readH5ThemeEv
       `H5 theme-dark class 切换未让根示例变暗: background=${evidence.rootManualDark.backgroundColor}, color=${evidence.rootManualDark.color}`,
     )
   }
-  if (!isDarkColor(evidence.manualDark.backgroundColor) || !isLightText(evidence.manualDark.color)) {
+  const manualColor = parseRgb(evidence.manualDark.backgroundColor)
+  const matchesManualBackground = expectation
+    ? Boolean(manualColor && expectation.backgroundColor.every((channel, index) => channel === [manualColor.red, manualColor.green, manualColor.blue][index]))
+    : isDarkColor(evidence.manualDark.backgroundColor)
+  if (!matchesManualBackground || !isLightText(evidence.manualDark.color)) {
     throw new Error(
-      `H5 手动暗色示例未渲染为暗色: background=${evidence.manualDark.backgroundColor}, color=${evidence.manualDark.color}`,
+      `H5 手动暗色示例不符合主题预期: background=${evidence.manualDark.backgroundColor}, color=${evidence.manualDark.color}, expected=${expectation?.backgroundColor.join(',') ?? 'dark'}`,
     )
   }
 }
@@ -177,14 +182,14 @@ async function readH5ThemeEvidence(page: Page) {
   })()`)
 }
 
-export async function collectH5ThemeEvidence(page: Page) {
+export async function collectH5ThemeEvidence(page: Page, expectation?: Pick<MiniProgramThemeExpectation, 'backgroundColor'>) {
   const startedAt = Date.now()
   let evidence = await readH5ThemeEvidence(page)
   while (!evidence.found && Date.now() - startedAt < 30_000) {
     await page.waitForTimeout(150)
     evidence = await readH5ThemeEvidence(page)
   }
-  ensureH5ThemeEvidence(evidence)
+  ensureH5ThemeEvidence(evidence, expectation)
   return evidence
 }
 
@@ -262,14 +267,16 @@ async function queryFirstElement(page: any, selectors: string[]) {
   }
 }
 
-export async function collectMiniProgramThemeWxmlEvidence(page: any, wxml: string) {
+export async function collectMiniProgramThemeWxmlEvidence(page: any, wxml: string, expectation?: MiniProgramThemeExpectation) {
   const root = await queryFirstElement(page, ['.theme-mode-demo'])
-  const manual = await queryFirstElement(page, ['.theme-dark_cbg-zinc-950', '.dark_cbg-zinc-950'])
+  const manual = await queryFirstElement(page, ['.theme-dark', '.theme-dark_cbg-zinc-950', '.dark_cbg-zinc-950'])
   const rootClassName = await root?.attribute?.('class').catch(() => '') ?? ''
   const manualClassName = await manual?.attribute?.('class').catch(() => '') ?? ''
   const evidence = {
     hasThemeDarkClass: /\btheme-dark\b/.test(wxml) || /\btheme-dark\b/.test(manualClassName),
-    hasManualDarkClass: /(?:theme-dark|dark)_cbg-zinc-950/.test(wxml) || /(?:theme-dark|dark).*bg-zinc-950/.test(manualClassName),
+    hasManualDarkClass: expectation
+      ? manualClassName.split(/\s+/).includes(expectation.manualClass) || wxml.includes(expectation.manualClass)
+      : /(?:theme-dark|dark)_cbg-zinc-950/.test(wxml) || /(?:theme-dark|dark).*bg-zinc-950/.test(manualClassName),
     hasRootSystemDarkClass: /system-dark_cbg-slate-900/.test(wxml) || /system-dark.*bg-slate-900/.test(rootClassName),
     hasThemeDemo: /theme-mode-demo/.test(wxml) || Boolean(root),
     manualClassName,
@@ -322,25 +329,32 @@ async function readElementRect(element: any) {
   }
 }
 
-export async function collectMiniProgramThemeScreenshotEvidence(page: any, png: PNG) {
-  const pageSize = await page?.size?.().catch(() => undefined)
-  const root = await queryFirstElement(page, ['.theme-mode-demo'])
-  const manual = await queryFirstElement(page, ['.theme-dark_cbg-zinc-950', '.dark_cbg-zinc-950'])
-  const rootRect = await readElementRect(root)
-  const manualRect = await readElementRect(manual)
+export async function collectMiniProgramThemeScreenshotEvidence(page: any, png: PNG, geometry?: {
+  rootRect: Rect
+  manualRect: Rect
+  windowWidth: number
+}, expectation?: MiniProgramThemeExpectation) {
+  const pageSize = geometry ? { width: geometry.windowWidth } : await page?.size?.().catch(() => undefined)
+  const root = geometry ? undefined : await queryFirstElement(page, ['.theme-mode-demo'])
+  const manual = geometry ? undefined : await queryFirstElement(page, ['.theme-dark', '.theme-dark_cbg-zinc-950', '.dark_cbg-zinc-950'])
+  const rootRect = geometry?.rootRect ?? await readElementRect(root)
+  const manualRect = geometry?.manualRect ?? await readElementRect(manual)
   if (!pageSize || !rootRect || !manualRect || manualRect.width <= 0 || manualRect.height <= 0) {
     throw new Error('小程序 IDE 主题视觉回归无法读取暗色示例节点位置')
   }
 
   const scaleX = png.width / Number(pageSize.width)
-  const scaleY = png.height / Number(pageSize.height)
+  const scaleY = scaleX
   const manualScreenshotRect = expandRect(scaleRect(manualRect, scaleX, scaleY), -2)
-  const manualDarkPixels = countDarkPixels(png, manualScreenshotRect)
+  const manualDarkPixels = expectation
+    ? countThemeColorPixels(png, manualScreenshotRect, expectation.backgroundColor)
+    : countDarkPixels(png, manualScreenshotRect)
   const minDarkPixels = Math.max(120, Math.floor(manualScreenshotRect.width * manualScreenshotRect.height * 0.2))
   const screenshotDarkPixels = countTotalDarkPixels(png)
   const minScreenshotDarkPixels = Math.max(120, Math.floor(png.width * png.height * 0.005))
   const evidence = {
     manualDarkPixels,
+    expectedBackgroundColor: expectation?.backgroundColor ?? [9, 9, 11],
     manualRect,
     manualScreenshotRect,
     minDarkPixels,
@@ -351,10 +365,23 @@ export async function collectMiniProgramThemeScreenshotEvidence(page: any, png: 
     scaleX,
     scaleY,
   }
-  if (manualDarkPixels < minDarkPixels && screenshotDarkPixels < minScreenshotDarkPixels) {
+  if (manualDarkPixels < minDarkPixels) {
     throw new Error(
       `小程序 IDE 手动暗色示例截图暗色像素不足: rect=${manualDarkPixels}/${minDarkPixels}, screenshot=${screenshotDarkPixels}/${minScreenshotDarkPixels}`,
     )
   }
   return evidence
+}
+
+export function countThemeColorPixels(png: PNG, rect: Rect, color: [number, number, number]) {
+  let pixels = 0
+  for (let y = Math.max(0, Math.ceil(rect.top)); y < Math.min(png.height, Math.floor(rect.top + rect.height)); y++) {
+    for (let x = Math.max(0, Math.ceil(rect.left)); x < Math.min(png.width, Math.floor(rect.left + rect.width)); x++) {
+      const index = (y * png.width + x) * 4
+      if (png.data[index + 3]! > 180 && color.every((channel, offset) => Math.abs(png.data[index + offset]! - channel) <= 8)) {
+        pixels++
+      }
+    }
+  }
+  return pixels
 }

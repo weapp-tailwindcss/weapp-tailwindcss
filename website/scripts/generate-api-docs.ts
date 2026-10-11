@@ -35,7 +35,7 @@ function getGitCommitHash(): string {
   }
 }
 
-const repoUrl = `https://github.com/sonofmagic/weapp-tailwindcss/blob/${getGitCommitHash()}/`
+const repoUrl = `https://github.com/weapp-tailwindcss/weapp-tailwindcss/blob/${getGitCommitHash()}/`
 const groupSlugMap: Record<string, string> = {
   重要配置: 'important',
   文件匹配: 'matchers',
@@ -84,6 +84,7 @@ interface InterfaceDoc {
   description?: string
   tags: Record<string, string[]>
   kind: 'interface' | 'type'
+  typeText?: string
   group?: string
   properties: PropertyDoc[]
 }
@@ -179,6 +180,10 @@ function normalizeSeoText(value: string): string {
   return value.replace(WHITESPACE_COLLAPSE_RE, ' ').trim()
 }
 
+function normalizeSeoDescription(value: string): string {
+  return normalizeSeoText(value.replace(BACKTICK_RE, ''))
+}
+
 function uniqKeywords(values: string[]): string[] {
   const seen = new Set<string>()
   const normalized: string[] = []
@@ -239,7 +244,7 @@ function pushFrontmatter(
 
 export function buildInterfaceSeoFrontmatter(doc: InterfaceDoc) {
   const fallbackDescription = `${doc.name} 的类型说明，列出公开属性、参数和使用边界。`
-  const rawDescription = normalizeSeoText(doc.description || '')
+  const rawDescription = normalizeSeoDescription(doc.description || '')
   const description = rawDescription.length >= 16 ? rawDescription : fallbackDescription
   return {
     title: doc.name,
@@ -399,7 +404,7 @@ function isProjectSourceFile(node: Node): boolean {
 
 function readTagText(tag: JSDocTag): string {
   const structuredText = tag.getStructure().text
-  if (structuredText) {
+  if (typeof structuredText === 'string' && structuredText) {
     return structuredText.trim()
   }
   const comment = tag.getComment()
@@ -603,13 +608,34 @@ function collectProperties(type: Type): PropertyDoc[] {
   return docs.sort((a, b) => a.orderKey - b.orderKey)
 }
 
+function getScalarTypeAliasText(decl: TypeAliasDeclaration): string | undefined {
+  const type = decl.getType()
+  const members = type.isUnion() ? type.getUnionTypes() : [type]
+  const scalarFlags = ts.TypeFlags.String
+    | ts.TypeFlags.StringLiteral
+    | ts.TypeFlags.Number
+    | ts.TypeFlags.NumberLiteral
+    | ts.TypeFlags.Boolean
+    | ts.TypeFlags.BooleanLiteral
+    | ts.TypeFlags.Null
+    | ts.TypeFlags.Undefined
+
+  if (!members.every(member => (member.getFlags() & scalarFlags) !== 0)) {
+    return undefined
+  }
+  return formatTypeText(decl.getTypeNodeOrThrow().getText())
+}
+
 export function buildInterfaceDoc(name: string, decl: InterfaceDeclaration | TypeAliasDeclaration): InterfaceDoc | undefined {
   const jsDoc = readJsDoc(decl)
   const source = getDefinitionLink(decl)
   const group = jsDoc.tags.group?.[0]
   const type = decl.getType()
 
-  const properties = collectProperties(type)
+  const typeText = Node.isTypeAliasDeclaration(decl)
+    ? getScalarTypeAliasText(decl)
+    : undefined
+  const properties = typeText ? [] : collectProperties(type)
   if (!properties.length && Node.isTypeAliasDeclaration(decl)) {
     return {
       name,
@@ -619,6 +645,7 @@ export function buildInterfaceDoc(name: string, decl: InterfaceDeclaration | Typ
       tags: jsDoc.tags,
       group,
       properties: [],
+      typeText,
     }
   }
 
@@ -630,6 +657,7 @@ export function buildInterfaceDoc(name: string, decl: InterfaceDeclaration | Typ
     tags: jsDoc.tags,
     group,
     properties,
+    typeText,
   }
 }
 
@@ -972,6 +1000,15 @@ export function renderInterfaceDoc(doc: InterfaceDoc, context: TypeRenderContext
     else {
       lines.push(doc.tags.see[0])
     }
+    lines.push('')
+  }
+
+  if (doc.typeText) {
+    lines.push('## 类型')
+    lines.push('')
+    lines.push('```ts')
+    lines.push(`type ${doc.name} = ${doc.typeText}`)
+    lines.push('```')
     lines.push('')
   }
 

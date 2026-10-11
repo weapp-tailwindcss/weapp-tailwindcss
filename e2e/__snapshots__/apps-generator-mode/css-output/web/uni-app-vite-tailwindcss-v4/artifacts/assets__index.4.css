@@ -1,3 +1,282 @@
-/*! weapp-tailwindcss vite-generated-css:%3Cproject-root%3E%2Fsrc%2Fsub-normal%2Fpages%2Findex.css */@layer base{code[data-v-0a5a82ca],kbd[data-v-0a5a82ca],samp[data-v-0a5a82ca],pre[data-v-0a5a82ca]{font-family:var(--default-mono-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);font-feature-settings:var(--default-mono-font-feature-settings, normal);font-variation-settings:var(--default-mono-font-variation-settings, normal);font-size:1em}:-moz-focusring:where([data-v-0a5a82ca]:not(iframe)){outline:auto}img[data-v-0a5a82ca],svg[data-v-0a5a82ca],uni-video[data-v-0a5a82ca],uni-canvas[data-v-0a5a82ca],uni-audio[data-v-0a5a82ca],iframe[data-v-0a5a82ca],embed[data-v-0a5a82ca],object[data-v-0a5a82ca]{display:block;vertical-align:middle}img[data-v-0a5a82ca],uni-video[data-v-0a5a82ca]{max-width:100%;height:auto}uni-button[data-v-0a5a82ca],uni-input[data-v-0a5a82ca],select[data-v-0a5a82ca],optgroup[data-v-0a5a82ca],uni-textarea[data-v-0a5a82ca],[data-v-0a5a82ca]::file-selector-button{font:inherit;font-feature-settings:inherit;font-variation-settings:inherit;letter-spacing:inherit;color:inherit;border-radius:0;background-color:transparent;opacity:1}:where(select:is([multiple],[size])) optgroup[data-v-0a5a82ca]{font-weight:bolder}:where(select:is([multiple],[size])) optgroup option[data-v-0a5a82ca]{padding-inline-start:20px}@supports (not (-webkit-appearance: -apple-pay-button)) or (contain-intrinsic-size: 1px){@supports (color: color-mix(in lab,red,red)){{color:color-mix(in oklab,currentcolor 50%,transparent)}}@supports (color: color-mix(in lab,red,red)){{color:color-mix(in oklab,currentcolor 50%,transparent)}}}uni-textarea[data-v-0a5a82ca]{resize:vertical}[data-v-0a5a82ca]:-moz-ui-invalid{box-shadow:none}uni-button[data-v-0a5a82ca],uni-input:where([type=button][data-v-0a5a82ca],[type=reset][data-v-0a5a82ca],[type=submit][data-v-0a5a82ca]),[data-v-0a5a82ca]::file-selector-button{-webkit-appearance:button;-moz-appearance:button;appearance:button}[hidden]:where([data-v-0a5a82ca]:not([hidden=until-found])){display:none!important}}@layer utilities{
+@layer properties;
+@layer theme, base, components, utilities;
+@layer theme {
+  :root,
+  :host {
+    --font-sans:
+      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 'Noto Sans', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+      'Noto Color Emoji';
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    --default-font-family: var(--font-sans);
+    --default-mono-font-family: var(--font-mono);
+  }
+}
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0 solid;
+  }
+  html,
+  :host {
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+    -moz-tab-size: 4;
+    -o-tab-size: 4;
+    tab-size: 4;
+    font-family: var(
+      --default-font-family,
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      Roboto,
+      'Helvetica Neue',
+      'Noto Sans',
+      Arial,
+      sans-serif,
+      'Apple Color Emoji',
+      'Segoe UI Emoji',
+      'Segoe UI Symbol',
+      'Noto Color Emoji'
+    );
+    font-feature-settings: var(--default-font-feature-settings, normal);
+    font-variation-settings: var(--default-font-variation-settings, normal);
+    -webkit-tap-highlight-color: transparent;
+  }
+  hr {
+    height: 0;
+    color: inherit;
+    border-top-width: 1px;
+  }
+  abbr:where([title]) {
+    -webkit-text-decoration: underline dotted;
+    text-decoration: underline dotted;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+  a {
+    color: inherit;
+    -webkit-text-decoration: inherit;
+    text-decoration: inherit;
+  }
+  b,
+  strong {
+    font-weight: bolder;
+  }
+  code,
+  kbd,
+  samp,
+  pre {
+    font-family: var(--default-mono-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace);
+    font-feature-settings: var(--default-mono-font-feature-settings, normal);
+    font-variation-settings: var(--default-mono-font-variation-settings, normal);
+    font-size: 1em;
+  }
+  small {
+    font-size: 80%;
+  }
+  sub,
+  sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+  }
+  sub {
+    bottom: -0.25em;
+  }
+  sup {
+    top: -0.5em;
+  }
+  table {
+    text-indent: 0;
+    border-color: inherit;
+    border-collapse: collapse;
+  }
+  :-moz-focusring:where(:not(iframe)) {
+    outline: auto;
+  }
+  uni-progress {
+    vertical-align: baseline;
+  }
+  summary {
+    display: list-item;
+  }
+  ol,
+  ul,
+  menu {
+    list-style: none;
+  }
+  img,
+  svg,
+  uni-video,
+  uni-canvas,
+  uni-audio,
+  iframe,
+  embed,
+  object {
+    display: block;
+    vertical-align: middle;
+  }
+  img,
+  uni-video {
+    max-width: 100%;
+    height: auto;
+  }
+  uni-button,
+  uni-input,
+  select,
+  optgroup,
+  uni-textarea,
+  ::file-selector-button {
+    font: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    border-radius: 0;
+    background-color: transparent;
+    opacity: 1;
+  }
+  :where(select:is([multiple], [size])) optgroup {
+    font-weight: bolder;
+  }
+  :where(select:is([multiple], [size])) optgroup option {
+    padding-inline-start: 20px;
+  }
+  ::file-selector-button {
+    margin-inline-end: 4px;
+  }
+  ::-moz-placeholder {
+    opacity: 1;
+  }
+  ::placeholder {
+    opacity: 1;
+  }
+  @supports (not (-webkit-appearance: -apple-pay-button)) or (contain-intrinsic-size: 1px) {
+    ::-moz-placeholder {
+      color: currentcolor;
+      @supports (color: color-mix(in lab, red, red)) {
+        color: color-mix(in oklab, currentcolor 50%, transparent);
+      }
+    }
+    ::placeholder {
+      color: currentcolor;
+      @supports (color: color-mix(in lab, red, red)) {
+        color: color-mix(in oklab, currentcolor 50%, transparent);
+      }
+    }
+  }
+  uni-textarea {
+    resize: vertical;
+  }
+  ::-webkit-search-decoration {
+    -webkit-appearance: none;
+  }
+  ::-webkit-date-and-time-value {
+    min-height: 1lh;
+    text-align: inherit;
+  }
+  ::-webkit-datetime-edit {
+    display: inline-flex;
+  }
+  ::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
+  }
+  ::-webkit-datetime-edit,
+  ::-webkit-datetime-edit-year-field,
+  ::-webkit-datetime-edit-month-field,
+  ::-webkit-datetime-edit-day-field,
+  ::-webkit-datetime-edit-hour-field,
+  ::-webkit-datetime-edit-minute-field,
+  ::-webkit-datetime-edit-second-field,
+  ::-webkit-datetime-edit-millisecond-field,
+  ::-webkit-datetime-edit-meridiem-field {
+    padding-block: 0;
+  }
+  ::-webkit-calendar-picker-indicator {
+    line-height: 1;
+  }
+  :-moz-ui-invalid {
+    box-shadow: none;
+  }
+  uni-button,
+  uni-input:where([type='button'], [type='reset'], [type='submit']),
+  ::file-selector-button {
+    -webkit-appearance: button;
+    -moz-appearance: button;
+    appearance: button;
+  }
+  ::-webkit-inner-spin-button,
+  ::-webkit-outer-spin-button {
+    height: auto;
+  }
+  [hidden]:where(:not([hidden='until-found'])) {
+    display: none !important;
+  }
+}
+@layer utilities {
  /*tokens: bg-normal-subpackage-marker <= src/sub-normal/pages/index.vue */
-.bg-normal-subpackage-marker[data-v-0a5a82ca]{background-color:#2563eb}.before\:content-\[\'normal_subpackage_uni-app-vite-tailwindcss-v4\'\][data-v-0a5a82ca]::before{--tw-content: "normal subpackage uni-app-vite-tailwindcss-v4";content:var(--tw-content)}.before\:content-\[\'现在，让我们开始神奇的_tailwindcss_开发之旅吧！\'\][data-v-0a5a82ca]::before{--tw-content: "现在，让我们开始神奇的 tailwindcss 开发之旅吧！";content:var(--tw-content)}.before\:content-\[\'现在，让我们继续神奇的_tailwindcss_HMR_回归之旅吧！\'\][data-v-0a5a82ca]::before{--tw-content: "现在，让我们继续神奇的 tailwindcss HMR 回归之旅吧！";content:var(--tw-content)}}@layer properties{}
+  .bg-normal-subpackage-marker {
+    background-color: #2563eb;
+  }
+  .before\:content-\[\'normal_subpackage_uni-app-vite-tailwindcss-v4\'\]::before {
+    --tw-content: 'normal subpackage uni-app-vite-tailwindcss-v4';
+    content: var(--tw-content);
+  }
+  .before\:content-\[\'现在，让我们开始神奇的_tailwindcss_开发之旅吧！\'\]::before {
+    --tw-content: '现在，让我们开始神奇的 tailwindcss 开发之旅吧！';
+    content: var(--tw-content);
+  }
+  .before\:content-\[\'现在，让我们继续神奇的_tailwindcss_HMR_回归之旅吧！\'\]::before {
+    --tw-content: '现在，让我们继续神奇的 tailwindcss HMR 回归之旅吧！';
+    content: var(--tw-content);
+  }
+}
+@property --tw-content {
+  syntax: '*';
+  initial-value: '';
+  inherits: false;
+}
+@layer properties {
+  @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
+    *,
+    ::before,
+    ::after,
+    ::backdrop {
+      --tw-content: '';
+    }
+  }
+}
+/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+@layer properties;
+@layer theme, base, components, utilities;
+@layer theme {
+}
+@layer base {
+  @supports (not (-webkit-appearance: -apple-pay-button)) or (contain-intrinsic-size: 1px) {
+  }
+}
+@layer utilities {
+}
+@property --tw-content {
+  syntax: '*';
+  initial-value: '';
+  inherits: false;
+}
+@layer properties {
+  @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
+  }
+}

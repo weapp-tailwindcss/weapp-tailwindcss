@@ -9,7 +9,9 @@ import process from 'node:process'
 import path from 'pathe'
 import { chromium } from 'playwright'
 import { afterEach, describe, it } from 'vitest'
+import { writeFilePreserveEol } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/text'
 import { resolveChromeExecutable } from './hbuilderx-local/process'
+import { withWebHmrEvidence } from './web-hmr/evidence'
 import { webViteHmrCases } from './web-vite-demo-hmr-cases'
 
 interface ViteHmrUpdate {
@@ -206,7 +208,7 @@ async function mutateSource(item: WebViteHmrCase, sourceFile: string, kind: Sour
   if (next === current) {
     throw new Error(`${item.name} Web HMR 源码替换没有产生变化`)
   }
-  await fs.writeFile(sourceFile, next, 'utf8')
+  await writeFilePreserveEol(sourceFile, next, current)
   return {
     previous: current,
     next,
@@ -281,9 +283,9 @@ async function runWebIconifyHmr(page: Page, item: WebViteHmrCase, sourceFile: st
     throw new Error(`${item.name} Web Iconify HMR probe 缺少 before content class`)
   }
   const sourceWithUpdatedContent = sourceWithProbe.replace(iconifyBeforeContentClass, iconifyAfterContentClass)
-  await fs.writeFile(sourceFile, sourceWithProbe, 'utf8')
+  await writeFilePreserveEol(sourceFile, sourceWithProbe, original)
   await waitForIconifyCss(page, item, iconifyBeforeContentClass)
-  await fs.writeFile(sourceFile, sourceWithUpdatedContent, 'utf8')
+  await writeFilePreserveEol(sourceFile, sourceWithUpdatedContent, original)
   await waitForIconifyCss(page, item, iconifyAfterContentClass)
 }
 
@@ -464,9 +466,9 @@ async function waitForTitleHmrAfterMutation(page: Page, item: WebViteHmrCase, so
     firstError = error
   }
 
-  await fs.writeFile(sourceFile, mutation.previous, 'utf8')
+  await writeFilePreserveEol(sourceFile, mutation.previous, mutation.previous)
   await wait(500)
-  await fs.writeFile(sourceFile, mutation.next, 'utf8')
+  await writeFilePreserveEol(sourceFile, mutation.next, mutation.previous)
 
   const elapsedMs = Date.now() - startedAt
   try {
@@ -699,50 +701,60 @@ describe('demo/web source HMR', () => {
       headless: true,
     })
     const page = await browser.newPage()
-    const hmrMessages = collectViteHmrMessages(page)
-    const original = await fs.readFile(sourceFile, 'utf8')
-    restoreSource = async () => {
-      await fs.writeFile(sourceFile, original, 'utf8')
-    }
-    await page.goto(baseUrl, {
-      waitUntil: 'domcontentloaded',
-      timeout: Math.min(serverTimeoutMs, 60_000),
-    })
-    await waitForInitialRender(page, item, baseUrl)
-    await markPageSession(page)
-    if (item.matrixCoverage !== false) {
-      await runWebIconifyHmr(page, item, sourceFile, original)
-      await expectPageSessionPreserved(page, item)
-    }
-
-    if (item.expectedViteHmrPath || item.expectedViteHmrPathIncludes) {
-      const titleMessageStart = hmrMessages.length
-      if (item.titleFrom && item.titleTo) {
-        const titleMutation = await mutateSource(item, sourceFile, 'title')
-        await waitForTitleHmrAfterMutation(page, item, sourceFile, titleMutation, hmrMessages, titleMessageStart)
+    await withWebHmrEvidence({
+      artifactRoot: path.resolve(repoRoot, 'e2e/.artifacts/web-vite-hmr'),
+      caseName: `${item.name}-title-color`,
+      page,
+      projectRoot,
+      selector: item.targetSelector ?? 'h1',
+      serverLogs: () => logs,
+    }, async (capture) => {
+      const hmrMessages = collectViteHmrMessages(page)
+      const original = await fs.readFile(sourceFile, 'utf8')
+      restoreSource = async () => {
+        await writeFilePreserveEol(sourceFile, original, original)
+      }
+      await page.goto(baseUrl, {
+        waitUntil: 'domcontentloaded',
+        timeout: Math.min(serverTimeoutMs, 60_000),
+      })
+      await waitForInitialRender(page, item, baseUrl)
+      await capture('before')
+      await markPageSession(page)
+      if (item.matrixCoverage !== false) {
+        await runWebIconifyHmr(page, item, sourceFile, original)
         await expectPageSessionPreserved(page, item)
-        expectNoViteFullReload(item, hmrMessages, titleMessageStart)
-        expectViteSourceHmrUpdate(item, hmrMessages, titleMessageStart)
       }
 
-      const classMessageStart = hmrMessages.length
-      await mutateSource(item, sourceFile, 'class')
-      if (item.classUpdateRequired === false) {
+      if (item.expectedViteHmrPath || item.expectedViteHmrPathIncludes) {
+        const titleMessageStart = hmrMessages.length
+        if (item.titleFrom && item.titleTo) {
+          const titleMutation = await mutateSource(item, sourceFile, 'title')
+          await waitForTitleHmrAfterMutation(page, item, sourceFile, titleMutation, hmrMessages, titleMessageStart)
+          await expectPageSessionPreserved(page, item)
+          expectNoViteFullReload(item, hmrMessages, titleMessageStart)
+          expectViteSourceHmrUpdate(item, hmrMessages, titleMessageStart)
+        }
+
+        const classMessageStart = hmrMessages.length
+        await mutateSource(item, sourceFile, 'class')
+        if (item.classUpdateRequired === false) {
+          await expectPageSessionPreserved(page, item)
+          return
+        }
+        await waitForClassHmr(page, item, hmrMessages, classMessageStart)
         await expectPageSessionPreserved(page, item)
+        if (!item.reloadAllowed) {
+          expectNoViteFullReload(item, hmrMessages, classMessageStart)
+        }
+        expectViteSourceHmrUpdate(item, hmrMessages, classMessageStart)
         return
       }
-      await waitForClassHmr(page, item, hmrMessages, classMessageStart)
-      await expectPageSessionPreserved(page, item)
-      if (!item.reloadAllowed) {
-        expectNoViteFullReload(item, hmrMessages, classMessageStart)
-      }
-      expectViteSourceHmrUpdate(item, hmrMessages, classMessageStart)
-      return
-    }
 
-    const messageStart = hmrMessages.length
-    await mutateSource(item, sourceFile)
-    await waitForDomHmr(page, item, hmrMessages, messageStart)
+      const messageStart = hmrMessages.length
+      await mutateSource(item, sourceFile)
+      await waitForDomHmr(page, item, hmrMessages, messageStart)
+    })
   }, serverTimeoutMs + 30_000)
 
   it.each(webViteHmrCases)('adds modifies and removes Tailwind classes for $name', async (item) => {
@@ -761,94 +773,110 @@ describe('demo/web source HMR', () => {
       headless: true,
     })
     const page = await browser.newPage()
-    const hmrMessages = collectViteHmrMessages(page)
     const original = await fs.readFile(sourceFile, 'utf8')
     const flow = createTailwindClassFlowMutation(item, original)
-    restoreSource = async () => {
-      await fs.writeFile(sourceFile, original, 'utf8')
-    }
-    await page.goto(baseUrl, {
-      waitUntil: 'domcontentloaded',
-      timeout: Math.min(serverTimeoutMs, 60_000),
-    })
-    await waitForInitialRender(page, item, baseUrl)
-    await markPageSession(page)
-    const targetSelector = flow.selector
-    const readFlowState = async () => {
-      return await page.locator(targetSelector).evaluate((element) => {
-        const style = window.getComputedStyle(element)
-        return {
-          backgroundColor: style.backgroundColor.replace(/\s+/g, ' '),
-          borderTopColor: style.borderTopColor.replace(/\s+/g, ' '),
-          borderTopWidth: style.borderTopWidth,
-          className: element.getAttribute('class') ?? '',
-        }
+    await withWebHmrEvidence({
+      artifactRoot: path.resolve(repoRoot, 'e2e/.artifacts/web-vite-hmr'),
+      caseName: `${item.name}-class-flow`,
+      page,
+      projectRoot,
+      selector: flow.selector,
+      serverLogs: () => logs,
+    }, async (capture) => {
+      const hmrMessages = collectViteHmrMessages(page)
+      restoreSource = async () => {
+        await writeFilePreserveEol(sourceFile, original, original)
+      }
+      await page.goto(baseUrl, {
+        waitUntil: 'domcontentloaded',
+        timeout: Math.min(serverTimeoutMs, 60_000),
       })
-    }
+      await waitForInitialRender(page, item, baseUrl)
+      await capture('before')
+      await markPageSession(page)
+      const targetSelector = flow.selector
+      const readFlowState = async () => {
+        return await page.locator(targetSelector).evaluate((element) => {
+          const style = window.getComputedStyle(element)
+          return {
+            backgroundColor: style.backgroundColor.replace(/\s+/g, ' '),
+            borderTopColor: style.borderTopColor.replace(/\s+/g, ' '),
+            borderTopWidth: style.borderTopWidth,
+            className: element.getAttribute('class') ?? '',
+          }
+        })
+      }
 
-    const originalState = await readFlowState()
-    if (originalState.backgroundColor !== 'rgb(255, 255, 255)') {
-      throw new Error(`${item.name} Web HMR class flow 初始样式不符合预期：${JSON.stringify(originalState)}`)
-    }
+      const originalState = await readFlowState()
+      if (originalState.backgroundColor !== 'rgb(255, 255, 255)') {
+        throw new Error(`${item.name} Web HMR class flow 初始样式不符合预期：${JSON.stringify(originalState)}`)
+      }
 
-    const addMessageStart = hmrMessages.length
-    await measureHmrLatency(`${item.name} class add`, async () => {
-      await fs.writeFile(sourceFile, flow.addedSource, 'utf8')
-      await waitForFlowElementStyle(page, item, flow.selector, {
-        backgroundColor: 'rgb(255, 255, 255)',
-        borderTopColor: 'rgb(0, 255, 0)',
-        borderTopWidth: '1px',
-        className: originalState.className.replace('bg-white', 'border border-[#00ff00] bg-white'),
+      const addMessageStart = hmrMessages.length
+      await measureHmrLatency(`${item.name} class add`, async () => {
+        await writeFilePreserveEol(sourceFile, flow.addedSource, original)
+        await waitForFlowElementStyle(page, item, flow.selector, {
+          backgroundColor: 'rgb(255, 255, 255)',
+          borderTopColor: 'rgb(0, 255, 0)',
+          borderTopWidth: '1px',
+          className: originalState.className.replace('bg-white', 'border border-[#00ff00] bg-white'),
+        })
       })
-    })
-    if (!item.reloadAllowed) {
-      expectNoViteFullReload(item, hmrMessages, addMessageStart)
-    }
-    await expectPageSessionPreserved(page, item)
+      if (!item.reloadAllowed) {
+        expectNoViteFullReload(item, hmrMessages, addMessageStart)
+      }
+      await expectPageSessionPreserved(page, item)
 
-    const modifyMessageStart = hmrMessages.length
-    await measureHmrLatency(`${item.name} class modify`, async () => {
-      await fs.writeFile(sourceFile, flow.modifiedSource, 'utf8')
-      await waitForFlowElementStyle(page, item, flow.selector, {
-        backgroundColor: 'rgb(255, 255, 255)',
-        borderTopColor: 'rgb(255, 0, 170)',
-        borderTopWidth: '1px',
-        className: originalState.className.replace('bg-white', 'border border-[#ff00aa] bg-white'),
-      })
-    })
-    if (!item.reloadAllowed) {
-      expectNoViteFullReload(item, hmrMessages, modifyMessageStart)
-    }
-    await expectPageSessionPreserved(page, item)
+      await capture('class-added')
 
-    const removeClassMessageStart = hmrMessages.length
-    await measureHmrLatency(`${item.name} class remove`, async () => {
-      await fs.writeFile(sourceFile, flow.removedClassSource, 'utf8')
-      await waitForFlowElementStyle(page, item, flow.selector, {
-        backgroundColor: 'rgb(255, 255, 255)',
-        borderTopColor: originalState.borderTopColor,
-        borderTopWidth: originalState.borderTopWidth,
-        className: originalState.className,
+      const modifyMessageStart = hmrMessages.length
+      await measureHmrLatency(`${item.name} class modify`, async () => {
+        await writeFilePreserveEol(sourceFile, flow.modifiedSource, original)
+        await waitForFlowElementStyle(page, item, flow.selector, {
+          backgroundColor: 'rgb(255, 255, 255)',
+          borderTopColor: 'rgb(255, 0, 170)',
+          borderTopWidth: '1px',
+          className: originalState.className.replace('bg-white', 'border border-[#ff00aa] bg-white'),
+        })
       })
-    })
-    if (!item.reloadAllowed) {
-      expectNoViteFullReload(item, hmrMessages, removeClassMessageStart)
-    }
-    await expectPageSessionPreserved(page, item)
+      if (!item.reloadAllowed) {
+        expectNoViteFullReload(item, hmrMessages, modifyMessageStart)
+      }
+      await expectPageSessionPreserved(page, item)
 
-    const rollbackMessageStart = hmrMessages.length
-    await measureHmrLatency(`${item.name} class rollback`, async () => {
-      await fs.writeFile(sourceFile, original, 'utf8')
-      await waitForFlowElementStyle(page, item, flow.selector, {
-        backgroundColor: 'rgb(255, 255, 255)',
-        borderTopColor: originalState.borderTopColor,
-        borderTopWidth: originalState.borderTopWidth,
-        className: originalState.className,
+      await capture('class-modified')
+
+      const removeClassMessageStart = hmrMessages.length
+      await measureHmrLatency(`${item.name} class remove`, async () => {
+        await writeFilePreserveEol(sourceFile, flow.removedClassSource, original)
+        await waitForFlowElementStyle(page, item, flow.selector, {
+          backgroundColor: 'rgb(255, 255, 255)',
+          borderTopColor: originalState.borderTopColor,
+          borderTopWidth: originalState.borderTopWidth,
+          className: originalState.className,
+        })
       })
+      if (!item.reloadAllowed) {
+        expectNoViteFullReload(item, hmrMessages, removeClassMessageStart)
+      }
+      await expectPageSessionPreserved(page, item)
+
+      await capture('class-removed')
+
+      const rollbackMessageStart = hmrMessages.length
+      await measureHmrLatency(`${item.name} class rollback`, async () => {
+        await writeFilePreserveEol(sourceFile, original, original)
+        await waitForFlowElementStyle(page, item, flow.selector, {
+          backgroundColor: 'rgb(255, 255, 255)',
+          borderTopColor: originalState.borderTopColor,
+          borderTopWidth: originalState.borderTopWidth,
+          className: originalState.className,
+        })
+      })
+      if (!item.reloadAllowed) {
+        expectNoViteFullReload(item, hmrMessages, rollbackMessageStart)
+      }
+      await expectPageSessionPreserved(page, item)
     })
-    if (!item.reloadAllowed) {
-      expectNoViteFullReload(item, hmrMessages, rollbackMessageStart)
-    }
-    await expectPageSessionPreserved(page, item)
   }, serverTimeoutMs + 30_000)
 })

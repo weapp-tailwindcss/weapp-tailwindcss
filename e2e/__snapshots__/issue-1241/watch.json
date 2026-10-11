@@ -1,0 +1,523 @@
+[
+  {
+    "phase": "initial",
+    "declarations": {
+      ".-mt-0_d5": [
+        "-0.5rpx"
+      ],
+      ".-mt-4": [
+        "-4rpx"
+      ],
+      ".mt-4": [
+        "4rpx"
+      ],
+      ".h-32": [
+        "32rpx"
+      ],
+      ".w-32": [
+        "32rpx"
+      ],
+      ".gap-4": [
+        "4rpx"
+      ],
+      ".p-0_d5": [
+        "0.5rpx"
+      ],
+      ".p-4": [
+        "4rpx"
+      ]
+    },
+    "author": []
+  },
+  {
+    "phase": "theme-2",
+    "declarations": {
+      ".-mt-0_d5": [
+        "calc(var(--spacing)*-0.5)"
+      ],
+      ".-mt-4": [
+        "calc(var(--spacing)*-4)"
+      ],
+      ".mt-4": [
+        "calc(var(--spacing)*4)"
+      ],
+      ".h-32": [
+        "calc(var(--spacing)*32)"
+      ],
+      ".w-32": [
+        "calc(var(--spacing)*32)"
+      ],
+      ".gap-4": [
+        "calc(var(--spacing)*4)"
+      ],
+      ".p-0_d5": [
+        "calc(var(--spacing)*0.5)"
+      ],
+      ".p-4": [
+        "calc(var(--spacing)*4)"
+      ]
+    },
+    "author": []
+  },
+  {
+    "phase": "remove",
+    "declarations": {
+      ".p-4": [
+        "calc(var(--spacing)*4)"
+      ]
+    },
+    "author": []
+  },
+  {
+    "phase": "restore",
+    "declarations": {
+      ".-mt-0_d5": [
+        "calc(var(--spacing)*-0.5)"
+      ],
+      ".-mt-4": [
+        "calc(var(--spacing)*-4)"
+      ],
+      ".mt-4": [
+        "calc(var(--spacing)*4)"
+      ],
+      ".h-32": [
+        "calc(var(--spacing)*32)"
+      ],
+      ".w-32": [
+        "calc(var(--spacing)*32)"
+      ],
+      ".gap-4": [
+        "calc(var(--spacing)*4)"
+      ],
+      ".p-0_d5": [
+        "calc(var(--spacing)*0.5)"
+      ],
+      ".p-4": [
+        "calc(var(--spacing)*4)"
+      ]
+    },
+    "author": []
+  },
+  {
+    "phase": "source-empty",
+    "declarations": {
+      ".-mt-0_d5": [
+        "-0.5rpx"
+      ],
+      ".-mt-4": [
+        "-4rpx"
+      ],
+      ".mt-4": [
+        "4rpx"
+      ],
+      ".h-32": [
+        "32rpx"
+      ],
+      ".w-32": [
+        "32rpx"
+      ],
+      ".gap-4": [
+        "4rpx"
+      ],
+      ".p-0_d5": [
+        "0.5rpx"
+      ],
+      ".p-4": [
+        "4rpx"
+      ]
+    },
+    "author": []
+  },
+  {
+    "phase": "detach",
+    "declarations": {
+      ".-mt-0_d5": [
+        "-0.5rpx"
+      ],
+      ".-mt-4": [
+        "-4rpx"
+      ],
+      ".mt-4": [
+        "4rpx"
+      ],
+      ".h-32": [
+        "32rpx"
+      ],
+      ".w-32": [
+        "32rpx"
+      ],
+      ".gap-4": [
+        "4rpx"
+      ],
+      ".p-0_d5": [
+        "0.5rpx"
+      ],
+      ".p-4": [
+        "4rpx"
+      ]
+    },
+    "author": []
+  },
+  {
+    "phase": "reimport",
+    "declarations": {
+      ".-mt-0_d5": [
+        "-0.5rpx"
+      ],
+      ".-mt-4": [
+        "-4rpx"
+      ],
+      ".mt-4": [
+        "4rpx"
+      ],
+      ".h-32": [
+        "32rpx"
+      ],
+      ".w-32": [
+        "32rpx"
+      ],
+      ".gap-4": [
+        "4rpx"
+      ],
+      ".p-0_d5": [
+        "0.5rpx"
+      ],
+      ".p-4": [
+        "4rpx"
+      ]
+    },
+    "author": []
+  },
+  {
+    "phase": "source-restored",
+    "declarations": {
+      ".-mt-0_d5": [
+        "calc(var(--spacing)*-0.5)"
+      ],
+      ".-mt-4": [
+        "calc(var(--spacing)*-4)"
+      ],
+      ".mt-4": [
+        "calc(var(--spacing)*4)"
+      ],
+      ".h-32": [
+        "calc(var(--spacing)*32)"
+      ],
+      ".w-32": [
+        "calc(var(--spacing)*32)"
+      ],
+      ".gap-4": [
+        "calc(var(--spacing)*4)"
+      ],
+      ".p-0_d5": [
+        "calc(var(--spacing)*0.5)"
+      ],
+      ".p-4": [
+        "calc(var(--spacing)*4)"
+      ]
+    },
+    "author": []
+  },
+  {
+    "phase": "themes-match",
+    "declarations": {
+      ".-mt-0_d5": [
+        "-1rpx"
+      ],
+      ".-mt-4": [
+        "-8rpx"
+      ],
+      ".mt-4": [
+        "8rpx"
+      ],
+      ".h-32": [
+        "64rpx"
+      ],
+      ".w-32": [
+        "64rpx"
+      ],
+      ".gap-4": [
+        "8rpx"
+      ],
+      ".p-0_d5": [
+        "1rpx"
+      ],
+      ".p-4": [
+        "8rpx"
+      ]
+    },
+    "author": []
+  },
+  {
+    "phase": "author-add",
+    "declarations": {
+      ".-mt-0_d5": [
+        "calc(var(--spacing)*-0.5)"
+      ],
+      ".-mt-4": [
+        "calc(var(--spacing)*-4)"
+      ],
+      ".mt-4": [
+        "calc(var(--spacing)*4)"
+      ],
+      ".h-32": [
+        "calc(var(--spacing)*32)"
+      ],
+      ".w-32": [
+        "calc(var(--spacing)*32)"
+      ],
+      ".gap-4": [
+        "calc(var(--spacing)*4)"
+      ],
+      ".p-0_d5": [
+        "calc(var(--spacing)*0.5)"
+      ],
+      ".p-4": [
+        "calc(var(--spacing)*4)"
+      ]
+    },
+    "author": [
+      "active"
+    ]
+  },
+  {
+    "phase": "author-remove",
+    "declarations": {
+      ".-mt-0_d5": [
+        "-1rpx"
+      ],
+      ".-mt-4": [
+        "-8rpx"
+      ],
+      ".mt-4": [
+        "8rpx"
+      ],
+      ".h-32": [
+        "64rpx"
+      ],
+      ".w-32": [
+        "64rpx"
+      ],
+      ".gap-4": [
+        "8rpx"
+      ],
+      ".p-0_d5": [
+        "1rpx"
+      ],
+      ".p-4": [
+        "8rpx"
+      ]
+    },
+    "author": []
+  },
+  {
+    "phase": "first-source-empty",
+    "declarations": {
+      ".-mt-0_d5": [
+        "-1rpx"
+      ],
+      ".-mt-4": [
+        "-8rpx"
+      ],
+      ".mt-4": [
+        "8rpx"
+      ],
+      ".h-32": [
+        "64rpx"
+      ],
+      ".w-32": [
+        "64rpx"
+      ],
+      ".gap-4": [
+        "8rpx"
+      ],
+      ".p-0_d5": [
+        "1rpx"
+      ],
+      ".p-4": [
+        "8rpx"
+      ]
+    },
+    "author": []
+  },
+  {
+    "phase": "source-retarget",
+    "declarations": {
+      ".p-4": [
+        "8rpx"
+      ]
+    },
+    "author": []
+  },
+  {
+    "phase": "alternate-add",
+    "declarations": {
+      ".w-32": [
+        "64rpx"
+      ],
+      ".p-4": [
+        "8rpx"
+      ]
+    },
+    "author": []
+  },
+  {
+    "phase": "alternate-remove",
+    "declarations": {
+      ".p-4": [
+        "8rpx"
+      ]
+    },
+    "author": []
+  },
+  {
+    "phase": "source-retarget-restore",
+    "declarations": {
+      ".-mt-0_d5": [
+        "-1rpx"
+      ],
+      ".-mt-4": [
+        "-8rpx"
+      ],
+      ".mt-4": [
+        "8rpx"
+      ],
+      ".h-32": [
+        "64rpx"
+      ],
+      ".w-32": [
+        "64rpx"
+      ],
+      ".gap-4": [
+        "8rpx"
+      ],
+      ".p-0_d5": [
+        "1rpx"
+      ],
+      ".p-4": [
+        "8rpx"
+      ]
+    },
+    "author": []
+  },
+  {
+    "phase": "page-author-add",
+    "declarations": {
+      ".-mt-0_d5": [
+        "calc(var(--spacing)*-0.5)"
+      ],
+      ".-mt-4": [
+        "calc(var(--spacing)*-4)"
+      ],
+      ".mt-4": [
+        "calc(var(--spacing)*4)"
+      ],
+      ".h-32": [
+        "calc(var(--spacing)*32)"
+      ],
+      ".w-32": [
+        "calc(var(--spacing)*32)"
+      ],
+      ".gap-4": [
+        "calc(var(--spacing)*4)"
+      ],
+      ".p-0_d5": [
+        "calc(var(--spacing)*0.5)"
+      ],
+      ".p-4": [
+        "calc(var(--spacing)*4)"
+      ]
+    },
+    "author": []
+  },
+  {
+    "phase": "page-author-remove",
+    "declarations": {
+      ".-mt-0_d5": [
+        "-1rpx"
+      ],
+      ".-mt-4": [
+        "-8rpx"
+      ],
+      ".mt-4": [
+        "8rpx"
+      ],
+      ".h-32": [
+        "64rpx"
+      ],
+      ".w-32": [
+        "64rpx"
+      ],
+      ".gap-4": [
+        "8rpx"
+      ],
+      ".p-0_d5": [
+        "1rpx"
+      ],
+      ".p-4": [
+        "8rpx"
+      ]
+    },
+    "author": []
+  },
+  {
+    "phase": "page-author-restore",
+    "declarations": {
+      ".-mt-0_d5": [
+        "calc(var(--spacing)*-0.5)"
+      ],
+      ".-mt-4": [
+        "calc(var(--spacing)*-4)"
+      ],
+      ".mt-4": [
+        "calc(var(--spacing)*4)"
+      ],
+      ".h-32": [
+        "calc(var(--spacing)*32)"
+      ],
+      ".w-32": [
+        "calc(var(--spacing)*32)"
+      ],
+      ".gap-4": [
+        "calc(var(--spacing)*4)"
+      ],
+      ".p-0_d5": [
+        "calc(var(--spacing)*0.5)"
+      ],
+      ".p-4": [
+        "calc(var(--spacing)*4)"
+      ]
+    },
+    "author": []
+  },
+  {
+    "phase": "page-author-empty",
+    "declarations": {
+      ".-mt-0_d5": [
+        "-1rpx"
+      ],
+      ".-mt-4": [
+        "-8rpx"
+      ],
+      ".mt-4": [
+        "8rpx"
+      ],
+      ".h-32": [
+        "64rpx"
+      ],
+      ".w-32": [
+        "64rpx"
+      ],
+      ".gap-4": [
+        "8rpx"
+      ],
+      ".p-0_d5": [
+        "1rpx"
+      ],
+      ".p-4": [
+        "8rpx"
+      ]
+    },
+    "author": []
+  }
+]

@@ -35,8 +35,7 @@ import TabItem from '@theme/TabItem'
 
 ## 测量命令（可选）
 
-- 运行 React Demo（Tailwind/Headless 版本已内置）：`pnpm --filter react-app dev`
-- 运行 Vue Demo：`pnpm --filter vue-app dev`
+- 运行 React 或 Vue Demo：进入对应 demo 目录，执行该项目 `package.json` 中的 dev 脚本。
 - 若在独立 HTML 中测试：用 `npx serve` 或 VSCode Live Server 打开 HTML，配合浏览器 Coverage 查看实际 CSS 命中。
 
 ## Demo 片段
@@ -275,6 +274,6 @@ import { cn } from '@/lib/utils'
 
 ## 如何在本仓库验证这些方案
 
-1. Tailwind / Headless：直接运行 `pnpm --filter react-app dev` 或 `pnpm --filter vue-app dev`，对应代码已内置。
+1. Tailwind / Headless：进入对应 demo 目录并运行项目自己的 dev 脚本，对应代码已内置。
 2. Raw/Sass/CSS Modules/CSS-in-JS：将上方片段复制到 `tmp/style-demos/`（或现有 app），用 `npx serve tmp/style-demos` 打开，对比样式与产物；Coverage 面板可查看实际命中。
 3. 若需要稳定截图，在对应 HTML 旁添加注释占位：`<!-- screenshot: style-demo-css-modules -->`，再用浏览器截图工具生成并放入文档。

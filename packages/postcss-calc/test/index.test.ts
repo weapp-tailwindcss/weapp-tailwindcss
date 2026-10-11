@@ -66,6 +66,18 @@ test(
 
 test('should reduce simple calc (3)', testValue('calc(1rem * 1.5)', '1.5rem'));
 
+test('resolves configured custom properties with fallback', testValue(
+  'calc(var(--spacing, .25rem) * 2)',
+  '0.5rem',
+  { customPropertyValues: new Map([['--spacing', '.25rem']]), includeCustomProperties: ['--spacing'] },
+));
+
+test('resolves custom property chains and keeps cycles unresolved', testValue(
+  'calc(var(--space-lg) * 2)',
+  'calc(var(--space-lg)*2)',
+  { customPropertyValues: new Map([['--space-lg', 'var(--space-md)'], ['--space-md', 'var(--space-lg)']]), includeCustomProperties: ['--space-lg', '--space-md'] },
+));
+
 test('should reduce simple calc (4)', testValue('calc(3em - 1em)', '2em'));
 
 test('should reduce simple calc (5', testValue('calc(2ex / 2)', '1ex'));

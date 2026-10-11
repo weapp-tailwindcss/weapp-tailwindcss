@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "types": ["node"],
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "include": ["src", "scripts", "vitest.config.ts"]
+}

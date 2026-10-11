@@ -1,5 +1,5 @@
 import type { RuntimeEntryType } from '@/compiler'
-import { isSourceStyleRequest } from './style-requests'
+import { isSourceStyleRequest } from '../../generation/style-requests'
 
 const CSS_REQUEST_RE = /\.(?:css|less|sass|scss|styl|stylus|pcss|postcss)(?:$|\?)/
 const HTML_REQUEST_RE = /\.html?(?:$|\?)/

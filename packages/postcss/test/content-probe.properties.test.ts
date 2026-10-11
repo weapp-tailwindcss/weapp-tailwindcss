@@ -198,10 +198,10 @@ describe('Feature: postcss-pipeline-pruning, Property 3: 信号隔离性', () =>
     // 预先获取选项控制的插件列表（使用 FULL_SIGNAL 作为基线）
     const baseIds = getNodeIds(options, FULL_SIGNAL)
     const optionControlledPlugins = [
+      'normal:calc',
       'normal:units-to-px',
       'normal:px-transform',
       'normal:rem-transform',
-      'normal:calc',
       'normal:calc-duplicate-cleaner',
       'normal:custom-property-cleaner',
     ].filter(id => baseIds.includes(id))

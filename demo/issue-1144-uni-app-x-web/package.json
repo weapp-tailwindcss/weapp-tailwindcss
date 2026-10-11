@@ -1,0 +1,29 @@
+{
+  "name": "@weapp-tailwindcss-demo/issue-1144-uni-app-x-web",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "uni-app x Web HMR regression demo for issue #1144.",
+  "license": "MIT",
+  "scripts": {
+    "dev:h5": "cross-env WEAPP_TW_HMR_TIMING=1 UNI_INPUT_DIR=. uni",
+    "predev:h5": "node ../../scripts/ensure-weapp-tailwindcss-built.mjs",
+    "test": "node scripts/theme-plugin.mjs"
+  },
+  "dependencies": {
+    "@dcloudio/uni-app": "3.0.0-alpha-5020220260725001",
+    "@dcloudio/uni-components": "3.0.0-alpha-5020220260725001",
+    "@dcloudio/uni-h5": "3.0.0-alpha-5020220260725001",
+    "vue": "^3.5.41"
+  },
+  "devDependencies": {
+    "@dcloudio/uni-uts-v1": "3.0.0-alpha-5020220260725001",
+    "@dcloudio/vite-plugin-uni": "3.0.0-alpha-5020220260725001",
+    "cross-env": "catalog:crossEnv",
+    "sass-embedded": "catalog:sass195",
+    "tailwindcss": "catalog:tailwindcss4",
+    "vite": "^5.4.21",
+    "weapp-tailwindcss": "workspace:*"
+  },
+  "packageManager": "pnpm@12.4.1"
+}

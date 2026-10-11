@@ -1,0 +1,1560 @@
+{
+  "schemaVersion": 1,
+  "catalogHash": "a8c3b45f993d9aa28782f308fc959a09e160d67a9097d11b1bc6a8a38b93c886",
+  "verifiedAt": "2026-10-06T01:38:07.800Z",
+  "versions": {
+    "tailwindcss": "4.3.3",
+    "lynxEngine": "4.0.1",
+    "engineVersion": "3.9",
+    "cssDefines": "0.0.16"
+  },
+  "environments": {
+    "ios": {
+      "osName": "iOS",
+      "osBuild": "23F77",
+      "deviceName": "iPhone 17 Pro iOS 26.5",
+      "osVersion": "26.5",
+      "abi": "arm64",
+      "runtimeIdentifier": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
+      "viewport": {
+        "width": 402,
+        "height": 874,
+        "pixelRatio": 3
+      },
+      "deviceModel": "iPhone18,1"
+    },
+    "android": {
+      "deviceName": "sdk_gphone_arm64",
+      "deviceModel": "sdk_gphone_arm64",
+      "osName": "Android",
+      "osVersion": "11",
+      "osBuild": "RSR1.240422.006",
+      "runtimeIdentifier": "android-30",
+      "abi": "arm64-v8a",
+      "viewport": {
+        "width": 1080,
+        "height": 2340,
+        "pixelRatio": 2.75
+      },
+      "apiLevel": 30
+    }
+  },
+  "results": [
+    {
+      "id": "layout-aspect",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "layout-columns",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：columns"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：columns"
+      }
+    },
+    {
+      "id": "layout-box-sizing",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "layout-display",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "layout-float",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：float"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：float"
+      }
+    },
+    {
+      "id": "layout-isolation",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：isolation"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：isolation"
+      }
+    },
+    {
+      "id": "layout-object-fit",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：object-fit"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：object-fit"
+      }
+    },
+    {
+      "id": "layout-overflow",
+      "generated": true,
+      "bundled": true,
+      "failureStage": "runtime",
+      "ios": {
+        "status": "unsupported",
+        "reason": "probe/control 元素截图没有可观察的像素差异"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "probe/control 元素截图没有可观察的像素差异"
+      }
+    },
+    {
+      "id": "layout-position",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "layout-visibility",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "layout-z-index",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "flex-direction",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "flex-alignment",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "flex-grow",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "grid-template",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "spacing-margin",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "spacing-padding",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "spacing-logical",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：padding-inline"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：padding-inline"
+      }
+    },
+    {
+      "id": "sizing-fixed",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "sizing-min-max",
+      "generated": true,
+      "bundled": true,
+      "failureStage": "runtime",
+      "ios": {
+        "status": "unsupported",
+        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "table-layout",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：table-layout, border-collapse"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：table-layout, border-collapse"
+      }
+    },
+    {
+      "id": "type-size",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "type-weight-style",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "type-tracking",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "type-align-overflow",
+      "generated": true,
+      "bundled": true,
+      "failureStage": "runtime",
+      "ios": {
+        "status": "unsupported",
+        "reason": "probe/control 元素截图没有可观察的像素差异"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "probe/control 元素截图没有可观察的像素差异"
+      }
+    },
+    {
+      "id": "type-decoration",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：text-decoration-line"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：text-decoration-line"
+      }
+    },
+    {
+      "id": "background-color",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "background-gradient",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "background-size",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "border-width-color",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "border-radius",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "effect-opacity",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "effect-shadow",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "effect-blend",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：mix-blend-mode"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：mix-blend-mode"
+      }
+    },
+    {
+      "id": "filter-blur",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "filter-backdrop",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：backdrop-filter"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：backdrop-filter"
+      }
+    },
+    {
+      "id": "svg-fill-stroke",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：fill, stroke-width, stroke"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：fill, stroke-width, stroke"
+      }
+    },
+    {
+      "id": "accessibility-sr",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "transform-translate",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：translate"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：translate"
+      }
+    },
+    {
+      "id": "transform-rotate",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：rotate"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：rotate"
+      }
+    },
+    {
+      "id": "transform-scale",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：scale"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：scale"
+      }
+    },
+    {
+      "id": "transform-origin",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "transition-basic",
+      "generated": true,
+      "bundled": true,
+      "failureStage": "runtime",
+      "ios": {
+        "status": "unsupported",
+        "reason": "transition 的开始、中间和结束 checkpoint 未形成连续变化"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "transition 的开始、中间和结束 checkpoint 未形成连续变化"
+      }
+    },
+    {
+      "id": "animation-spin",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "interaction-pointer",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "interaction-select",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：user-select"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：user-select"
+      }
+    },
+    {
+      "id": "interaction-scroll",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：scroll-behavior, scroll-snap-type"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：scroll-behavior, scroll-snap-type"
+      }
+    },
+    {
+      "id": "variant-responsive",
+      "generated": true,
+      "bundled": true,
+      "failureStage": "runtime",
+      "ios": {
+        "status": "unsupported",
+        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
+      }
+    },
+    {
+      "id": "variant-dark",
+      "generated": true,
+      "bundled": true,
+      "failureStage": "runtime",
+      "ios": {
+        "status": "unsupported",
+        "reason": "深色模式未仅将相同字形变为白色并保持背景及 control 不变"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "深色模式未仅将相同字形变为白色并保持背景及 control 不变"
+      }
+    },
+    {
+      "id": "variant-state",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "variant-structural",
+      "generated": true,
+      "bundled": true,
+      "failureStage": "runtime",
+      "ios": {
+        "status": "unsupported",
+        "reason": "结构选择器未在首项、偶数项和第三项同时呈现预期粗体与透明度"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "结构选择器未在首项、偶数项和第三项同时呈现预期粗体与透明度"
+      }
+    },
+    {
+      "id": "variant-group-peer",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*), .peer-checked\\:opacity-100:is(:where(.peer):checked~*)"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*), .peer-checked\\:opacity-100:is(:where(.peer):checked~*)"
+      }
+    },
+    {
+      "id": "variant-data-aria",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：text-decoration-line"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：text-decoration-line"
+      }
+    },
+    {
+      "id": "variant-supports",
+      "generated": true,
+      "bundled": true,
+      "failureStage": "runtime",
+      "ios": {
+        "status": "unsupported",
+        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
+      }
+    },
+    {
+      "id": "variant-pseudo-element",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "TASM 未保留完整 selector 或声明"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "TASM 未保留完整 selector 或声明"
+      }
+    },
+    {
+      "id": "variant-arbitrary",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "syntax-negative",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：translate"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：translate"
+      }
+    },
+    {
+      "id": "syntax-important",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "TASM 未保留完整 selector 或声明"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "TASM 未保留完整 selector 或声明"
+      }
+    },
+    {
+      "id": "syntax-opacity-modifier",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "TASM 未保留完整 selector 或声明"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "TASM 未保留完整 selector 或声明"
+      }
+    },
+    {
+      "id": "syntax-arbitrary-property",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：mask-type"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：mask-type"
+      }
+    },
+    {
+      "id": "syntax-css-variable",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "syntax-type-hint",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "directive-import",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "directive-theme",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "directive-source",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：text-decoration-line"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：text-decoration-line"
+      }
+    },
+    {
+      "id": "directive-utility",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：content-visibility"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：content-visibility"
+      }
+    },
+    {
+      "id": "directive-variant",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除 selector：.theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *)"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除 selector：.theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *)"
+      }
+    },
+    {
+      "id": "directive-apply",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "directive-reference",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "directive-config-plugin",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "TASM 未保留完整 selector 或声明"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "TASM 未保留完整 selector 或声明"
+      }
+    },
+    {
+      "id": "directive-prefix-important",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "TASM 未保留完整 selector 或声明"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "TASM 未保留完整 selector 或声明"
+      }
+    },
+    {
+      "id": "layout-break",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：break-before, break-after, break-inside"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：break-before, break-after, break-inside"
+      }
+    },
+    {
+      "id": "layout-decoration-clear",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：box-decoration-break, clear"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：box-decoration-break, clear"
+      }
+    },
+    {
+      "id": "layout-object-position",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：object-position"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：object-position"
+      }
+    },
+    {
+      "id": "layout-overscroll",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：overscroll-behavior"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：overscroll-behavior"
+      }
+    },
+    {
+      "id": "flex-wrap-order",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "flex-shorthand-shrink",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "grid-placement",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "grid-auto",
+      "generated": true,
+      "bundled": true,
+      "failureStage": "runtime",
+      "ios": {
+        "status": "unsupported",
+        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
+      }
+    },
+    {
+      "id": "grid-place",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：place-content, place-items, place-self"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：place-content, place-items, place-self"
+      }
+    },
+    {
+      "id": "grid-justify-self",
+      "generated": true,
+      "bundled": true,
+      "failureStage": "runtime",
+      "ios": {
+        "status": "unsupported",
+        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
+      }
+    },
+    {
+      "id": "grid-align-content-self",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "spacing-space-between",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：margin-block-start"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：margin-block-start"
+      }
+    },
+    {
+      "id": "sizing-size",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "type-family-smoothing-stretch",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：-webkit-font-smoothing, font-stretch"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：-webkit-font-smoothing, font-stretch"
+      }
+    },
+    {
+      "id": "type-numeric",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：font-variant-numeric"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：font-variant-numeric"
+      }
+    },
+    {
+      "id": "type-line-clamp",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：-webkit-line-clamp"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：-webkit-line-clamp"
+      }
+    },
+    {
+      "id": "type-list",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：list-style-position, list-style-type, list-style-image"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：list-style-position, list-style-type, list-style-image"
+      }
+    },
+    {
+      "id": "type-decoration-full",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：text-decoration-style, text-underline-offset"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：text-decoration-style, text-underline-offset"
+      }
+    },
+    {
+      "id": "type-transform-wrap-indent",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：text-transform, text-wrap"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：text-transform, text-wrap"
+      }
+    },
+    {
+      "id": "type-flow",
+      "generated": true,
+      "bundled": true,
+      "failureStage": "runtime",
+      "ios": {
+        "status": "unsupported",
+        "reason": "行内中部对齐、双空格保留、显式换行与软换行未同时满足"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "行内中部对齐、双空格保留、显式换行与软换行未同时满足"
+      }
+    },
+    {
+      "id": "type-breaking",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：overflow-wrap"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：overflow-wrap"
+      }
+    },
+    {
+      "id": "type-content",
+      "generated": true,
+      "bundled": true,
+      "failureStage": "runtime",
+      "ios": {
+        "status": "unsupported",
+        "reason": "probe/control 元素截图没有可观察的像素差异"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "probe/control 元素截图没有可观察的像素差异"
+      }
+    },
+    {
+      "id": "background-attachment-clip-origin",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：background-attachment"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：background-attachment"
+      }
+    },
+    {
+      "id": "background-linear-gradient",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "border-divide",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除 selector：:where(.divide-y-2>:not(:last-child)), :where(.divide-y-2>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child))"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除 selector：:where(.divide-y-2>:not(:last-child)), :where(.divide-y-2>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child))"
+      }
+    },
+    {
+      "id": "border-outline",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：outline-offset"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：outline-offset"
+      }
+    },
+    {
+      "id": "effect-ring",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "effect-inset-text-shadow",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "effect-background-blend",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：background-blend-mode"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：background-blend-mode"
+      }
+    },
+    {
+      "id": "effect-mask-box",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：mask-mode"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：mask-mode"
+      }
+    },
+    {
+      "id": "effect-mask-image-composite",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：mask-type"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：mask-type"
+      }
+    },
+    {
+      "id": "filter-color-adjustments",
+      "generated": true,
+      "bundled": true,
+      "failureStage": "runtime",
+      "ios": {
+        "status": "unsupported",
+        "reason": "probe/control 元素截图没有可观察的像素差异"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "probe/control 元素截图没有可观察的像素差异"
+      }
+    },
+    {
+      "id": "filter-color-rotation",
+      "generated": true,
+      "bundled": true,
+      "failureStage": "runtime",
+      "ios": {
+        "status": "unsupported",
+        "reason": "probe/control 元素截图没有可观察的像素差异"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "probe/control 元素截图没有可观察的像素差异"
+      }
+    },
+    {
+      "id": "filter-drop-shadow",
+      "generated": true,
+      "bundled": true,
+      "failureStage": "runtime",
+      "ios": {
+        "status": "unsupported",
+        "reason": "probe/control 元素截图没有可观察的像素差异"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "probe/control 元素截图没有可观察的像素差异"
+      }
+    },
+    {
+      "id": "filter-backdrop-adjustments",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：backdrop-filter"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：backdrop-filter"
+      }
+    },
+    {
+      "id": "table-spacing-caption",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：border-spacing, caption-side"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：border-spacing, caption-side"
+      }
+    },
+    {
+      "id": "transform-skew",
+      "generated": true,
+      "bundled": true,
+      "ios": {
+        "status": "supported"
+      },
+      "android": {
+        "status": "supported"
+      }
+    },
+    {
+      "id": "transform-perspective",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：perspective-origin"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：perspective-origin"
+      }
+    },
+    {
+      "id": "transform-style-backface",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：transform-style, backface-visibility"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：transform-style, backface-visibility"
+      }
+    },
+    {
+      "id": "transition-complete",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：transition-behavior"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：transition-behavior"
+      }
+    },
+    {
+      "id": "interaction-form-colors",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：accent-color"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：accent-color"
+      }
+    },
+    {
+      "id": "interaction-form-control",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：appearance, field-sizing, resize"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：appearance, field-sizing, resize"
+      }
+    },
+    {
+      "id": "interaction-cursor-scheme",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：color-scheme"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：color-scheme"
+      }
+    },
+    {
+      "id": "interaction-scroll-spacing",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：scroll-margin, scroll-padding"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：scroll-margin, scroll-padding"
+      }
+    },
+    {
+      "id": "interaction-snap-touch",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：scroll-snap-align, scroll-snap-stop, touch-action"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：scroll-snap-align, scroll-snap-stop, touch-action"
+      }
+    },
+    {
+      "id": "interaction-will-change",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：will-change"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：will-change"
+      }
+    },
+    {
+      "id": "accessibility-forced-colors",
+      "generated": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "ios": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：forced-color-adjust"
+      },
+      "android": {
+        "status": "unsupported",
+        "reason": "encoder 删除属性：forced-color-adjust"
+      }
+    }
+  ]
+}

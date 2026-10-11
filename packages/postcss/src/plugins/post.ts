@@ -57,6 +57,9 @@ function createHostSelectorAppender(options: IStyleHandlerOptions) {
   }
 
   return (rule: Rule) => {
+    if (!DEFAULT_ROOT_SELECTORS.every(selector => rule.selector.includes(selector))) {
+      return false
+    }
     const selectors = rule.selectors ?? []
     if (selectors.includes(':host')) {
       return false
@@ -174,7 +177,7 @@ const postcssWeappTailwindcssPostPlugin: PostcssWeappTailwindcssRenamePlugin = (
 
         dedupeDeclarations(rule)
 
-        if (rule.selectors.length === 0 || (rule.selectors.length === 1 && rule.selector.trim() === '')) {
+        if (rule.selector.trim() === '' || (rule.selector.includes(',') && rule.selectors.length === 0)) {
           rule.remove()
         }
 

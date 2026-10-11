@@ -1,0 +1,212 @@
+{
+  "unimported-file": {
+    "declarations": {
+      ".-mt-0_d5": [
+        "-0.5rpx"
+      ],
+      ".-mt-4": [
+        "-4rpx"
+      ],
+      ".mt-4": [
+        "4rpx"
+      ],
+      ".h-32": [
+        "32rpx"
+      ],
+      ".w-32": [
+        "32rpx"
+      ],
+      ".gap-4": [
+        "4rpx"
+      ],
+      ".p-0_d5": [
+        "0.5rpx"
+      ],
+      ".p-4": [
+        "4rpx"
+      ]
+    },
+    "authorPhase": null,
+    "hasOverride": false
+  },
+  "import-added": {
+    "declarations": {
+      ".-mt-0_d5": [
+        "calc(var(--spacing)*-0.5)"
+      ],
+      ".-mt-4": [
+        "calc(var(--spacing)*-4)"
+      ],
+      ".mt-4": [
+        "calc(var(--spacing)*4)"
+      ],
+      ".h-32": [
+        "calc(var(--spacing)*32)"
+      ],
+      ".w-32": [
+        "calc(var(--spacing)*32)"
+      ],
+      ".gap-4": [
+        "calc(var(--spacing)*4)"
+      ],
+      ".p-0_d5": [
+        "calc(var(--spacing)*0.5)"
+      ],
+      ".p-4": [
+        "calc(var(--spacing)*4)"
+      ]
+    },
+    "authorPhase": "initial-file",
+    "hasOverride": true
+  },
+  "override-removed": {
+    "declarations": {
+      ".-mt-0_d5": [
+        "-0.5rpx"
+      ],
+      ".-mt-4": [
+        "-4rpx"
+      ],
+      ".mt-4": [
+        "4rpx"
+      ],
+      ".h-32": [
+        "32rpx"
+      ],
+      ".w-32": [
+        "32rpx"
+      ],
+      ".gap-4": [
+        "4rpx"
+      ],
+      ".p-0_d5": [
+        "0.5rpx"
+      ],
+      ".p-4": [
+        "4rpx"
+      ]
+    },
+    "authorPhase": "cleared",
+    "hasOverride": false
+  },
+  "override-restored": {
+    "declarations": {
+      ".-mt-0_d5": [
+        "calc(var(--spacing)*-0.5)"
+      ],
+      ".-mt-4": [
+        "calc(var(--spacing)*-4)"
+      ],
+      ".mt-4": [
+        "calc(var(--spacing)*4)"
+      ],
+      ".h-32": [
+        "calc(var(--spacing)*32)"
+      ],
+      ".w-32": [
+        "calc(var(--spacing)*32)"
+      ],
+      ".gap-4": [
+        "calc(var(--spacing)*4)"
+      ],
+      ".p-0_d5": [
+        "calc(var(--spacing)*0.5)"
+      ],
+      ".p-4": [
+        "calc(var(--spacing)*4)"
+      ]
+    },
+    "authorPhase": "restored",
+    "hasOverride": true
+  },
+  "import-removed": {
+    "declarations": {
+      ".-mt-0_d5": [
+        "-0.5rpx"
+      ],
+      ".-mt-4": [
+        "-4rpx"
+      ],
+      ".mt-4": [
+        "4rpx"
+      ],
+      ".h-32": [
+        "32rpx"
+      ],
+      ".w-32": [
+        "32rpx"
+      ],
+      ".gap-4": [
+        "4rpx"
+      ],
+      ".p-0_d5": [
+        "0.5rpx"
+      ],
+      ".p-4": [
+        "4rpx"
+      ]
+    },
+    "authorPhase": null,
+    "hasOverride": false
+  },
+  "import-restored": {
+    "declarations": {
+      ".-mt-0_d5": [
+        "calc(var(--spacing)*-0.5)"
+      ],
+      ".-mt-4": [
+        "calc(var(--spacing)*-4)"
+      ],
+      ".mt-4": [
+        "calc(var(--spacing)*4)"
+      ],
+      ".h-32": [
+        "calc(var(--spacing)*32)"
+      ],
+      ".w-32": [
+        "calc(var(--spacing)*32)"
+      ],
+      ".gap-4": [
+        "calc(var(--spacing)*4)"
+      ],
+      ".p-0_d5": [
+        "calc(var(--spacing)*0.5)"
+      ],
+      ".p-4": [
+        "calc(var(--spacing)*4)"
+      ]
+    },
+    "authorPhase": "restored",
+    "hasOverride": true
+  },
+  "override-final-removed": {
+    "declarations": {
+      ".-mt-0_d5": [
+        "-0.5rpx"
+      ],
+      ".-mt-4": [
+        "-4rpx"
+      ],
+      ".mt-4": [
+        "4rpx"
+      ],
+      ".h-32": [
+        "32rpx"
+      ],
+      ".w-32": [
+        "32rpx"
+      ],
+      ".gap-4": [
+        "4rpx"
+      ],
+      ".p-0_d5": [
+        "0.5rpx"
+      ],
+      ".p-4": [
+        "4rpx"
+      ]
+    },
+    "authorPhase": "final-cleared",
+    "hasOverride": false
+  }
+}

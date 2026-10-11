@@ -62,5 +62,29 @@
   "item.label.v4 最新版本": {
     "message": "Latest v4",
     "description": "Navbar item with label v4 最新版本"
+  },
+  "item.label.Guide": {
+    "message": "Guide",
+    "description": "Navbar item with label Guide"
+  },
+  "item.label.Showcase": {
+    "message": "Showcase",
+    "description": "Navbar item with label Showcase"
+  },
+  "item.label.Options": {
+    "message": "Options",
+    "description": "Navbar item with label Options"
+  },
+  "item.label.Blog": {
+    "message": "Blog",
+    "description": "Navbar item with label Blog"
+  },
+  "item.label.Current v5": {
+    "message": "Current v5",
+    "description": "Navbar item with label Current v5"
+  },
+  "item.label.Latest v4": {
+    "message": "Latest v4",
+    "description": "Navbar item with label Latest v4"
   }
 }

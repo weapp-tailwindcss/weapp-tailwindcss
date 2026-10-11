@@ -1,0 +1,141 @@
+name: 每周发布版接入成本
+
+on:
+  schedule:
+    - cron: '30 0 * * 1'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: npm latest 或确切发布版本
+        default: latest
+        type: string
+      only:
+        description: 可选目标 ID，逗号分隔；留空运行完整 CLI 清单
+        default: ''
+        type: string
+  workflow_call:
+    inputs:
+      version:
+        default: latest
+        type: string
+      only:
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: demo-cost-weekly-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      ready: ${{ steps.plan.outputs.ready }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: 安装测量工具，消费项目另行隔离安装
+        run: pnpm install --frozen-lockfile --ignore-scripts --filter weapp-tailwindcss-monorepo --filter @weapp-tailwindcss-demo/web-vue-vite7-tailwindcss-v4
+      - name: 安装样式观察回归所需的 Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:perf:demo
+      - id: plan
+        name: 一次解析发布版与完整预期清单
+        env:
+          COST_VERSION: ${{ inputs.version || 'latest' }}
+          COST_ONLY: ${{ inputs.only || '' }}
+        run: pnpm perf:demo:report --plan --version "$COST_VERSION" --only "$COST_ONLY" --out-dir .tmp/weekly-plan
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: weekly-cost-plan
+          path: .tmp/weekly-plan/**
+          retention-days: 90
+          if-no-files-found: error
+
+  measure:
+    needs: plan
+    if: needs.plan.outputs.ready == 'true'
+    name: ${{ matrix.shard }} / ${{ matrix.os }} / Node ${{ matrix.node }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts --filter weapp-tailwindcss-monorepo --filter @weapp-tailwindcss-demo/web-vue-vite7-tailwindcss-v4
+      - name: 验证当前系统的短进程 RSS 与超时清理
+        run: pnpm exec vitest run -c benchmark/performance/demo/vitest.config.mjs test/process.test.mjs --update=none
+      - run: pnpm exec playwright install --with-deps chromium
+      - uses: actions/download-artifact@v4
+        with:
+          name: weekly-cost-plan
+          path: .tmp/weekly-plan
+      - name: 串行对照与语义检查
+        env:
+          COST_JOB: ${{ matrix.id }}
+          CI: '1'
+          NODE_OPTIONS: --max-old-space-size=6144
+        shell: bash
+        run: pnpm perf:demo:report --manifest .tmp/weekly-plan/manifest.json --job "$COST_JOB" --out-dir .tmp/weekly-result
+      - name: 保留部分失败数据、锁文件与日志
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: weekly-cost-${{ matrix.id }}
+          path: .tmp/weekly-result/**
+          retention-days: 90
+          if-no-files-found: error
+
+  report:
+    name: 中文周报与完整性门禁
+    if: always()
+    needs: [plan, measure]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - run: pnpm install --frozen-lockfile --ignore-scripts --filter weapp-tailwindcss-monorepo --filter @weapp-tailwindcss-demo/web-vue-vite7-tailwindcss-v4
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: weekly-cost-plan
+          path: .tmp/weekly-plan
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: weekly-cost-shard-*
+          path: .tmp/weekly-shards
+      - name: 合并全部预期分片，缺失或失败不得通过
+        env:
+          COST_VERSION: ${{ inputs.version || 'latest' }}
+          COST_ONLY: ${{ inputs.only || '' }}
+        run: pnpm perf:demo:report --manifest .tmp/weekly-plan/manifest.json --merge .tmp/weekly-shards --version "$COST_VERSION" --only "$COST_ONLY" --out-dir .tmp/weekly-report
+      - name: 下载 HTML、Markdown、JSON 与本轮固定版本清单
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: 每周接入成本报告-${{ github.run_id }}
+          path: .tmp/weekly-report/**
+          retention-days: 90
+          if-no-files-found: error

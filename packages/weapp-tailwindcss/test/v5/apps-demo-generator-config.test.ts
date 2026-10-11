@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
-import { resolveCssEntrySource } from '@/bundlers/shared/generator-css'
+import { resolveCssEntrySource } from '@/generation/index'
 
 const repositoryRoot = path.resolve(__dirname, '../../../..')
 
@@ -161,7 +161,7 @@ describe('demo matrix generator config', () => {
 
   it('keeps Tailwind CSS v4 demos on explicit absolute CSS entries', async () => {
     const configPaths = [
-      'demo/gulp-tailwindcss-v4/gulpfile.ts',
+      'demo/gulp-tailwindcss-v4/gulpfile.mts',
       'demo/mpx-tailwindcss-v4/mpx.config.js',
       'demo/taro-webpack-react-tailwindcss-v4/config/index.ts',
       'demo/taro-webpack-vue3-tailwindcss-v4/config/index.ts',

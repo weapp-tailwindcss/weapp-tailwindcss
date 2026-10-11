@@ -1,17 +1,25 @@
 import type { SourceCandidateFilterOptions } from '../source-candidates'
 import type { TailwindSourceEntry } from '@/tailwindcss/source-scan'
-import path from 'node:path'
+import { analyzeTailwindV4EntrySource } from '@weapp-tailwindcss/postcss/transform'
+import { sourcePathApi } from '@weapp-tailwindcss/source-scan'
 import { hasCssMacroTailwindV4CustomVariantConditionalComments } from '@/css-macro/auto'
 import { resolveTailwindV4EntriesFromCssCached } from '../source-scan'
 import { createCandidateSignature } from './signatures'
 
-function hasOwnSourceDirectives(rawSource: string) {
-  return rawSource.includes('@source') || rawSource.includes('@config')
+export function hasOwnSourceDirectives(rawSource: string, scopeToSource = false) {
+  const analysis = analyzeTailwindV4EntrySource(rawSource)
+  if (!analysis) {
+    return false
+  }
+  const directives = analysis.getSourceDirectives()
+  return analysis.configRequests.length > 0 || (scopeToSource && directives.hasSourceNone)
+    || Boolean(directives.importSourcePath) || directives.sourceRequests.length > 0
+    || directives.inlineCandidates.included.size > 0 || directives.inlineCandidates.excluded.size > 0
 }
 
 function createLocalSourceEntries(sourceFile: string): TailwindSourceEntry[] {
   return [{
-    base: path.dirname(path.resolve(sourceFile.replace(/[?#].*$/, ''))),
+    base: sourcePathApi(sourceFile).dirname(sourcePathApi(sourceFile).resolve(sourceFile.replace(/[?#].*$/, ''))),
     negated: false,
     pattern: '**/*',
   }]
@@ -41,8 +49,8 @@ function canFallbackToOutputCandidates(rawSource: string, entries: TailwindSourc
     && entries.every(entry => !entry.negated)
 }
 
-function resolveScopedSourceEntries(rawSource: string, sourceFile: string, resolvedEntries: TailwindSourceEntry[] | undefined) {
-  if (!hasOwnSourceDirectives(rawSource)) {
+function resolveScopedSourceEntries(rawSource: string, sourceFile: string, resolvedEntries: TailwindSourceEntry[] | undefined, scopeToSource = false) {
+  if (!hasOwnSourceDirectives(rawSource, scopeToSource)) {
     return {
       entries: resolvedEntries,
       localEntries: undefined,
@@ -58,10 +66,10 @@ function resolveScopedSourceEntries(rawSource: string, sourceFile: string, resol
   }
 }
 
-async function resolveScopedGeneratorSourceEntries(rawSource: string, sourceFile: string) {
-  const sourceBase = path.dirname(path.resolve(sourceFile.replace(/[?#].*$/, '')))
+async function resolveScopedGeneratorSourceEntries(rawSource: string, sourceFile: string, scopeToSource = false) {
+  const sourceBase = sourcePathApi(sourceFile).dirname(sourcePathApi(sourceFile).resolve(sourceFile.replace(/[?#].*$/, '')))
   const resolved = await resolveTailwindV4EntriesFromCssCached(rawSource, sourceBase)
-  return resolveScopedSourceEntries(rawSource, sourceFile, resolved?.entries)
+  return resolveScopedSourceEntries(rawSource, sourceFile, resolved?.entries, scopeToSource)
 }
 
 export async function createScopedGeneratorCandidateSignature(
@@ -69,12 +77,12 @@ export async function createScopedGeneratorCandidateSignature(
   sourceFile: string,
   fallbackSignature: string,
   getSourceCandidatesForEntries: ((entries: TailwindSourceEntry[] | undefined, options?: SourceCandidateFilterOptions) => Set<string>) | undefined,
-  options: { includeFallbackSignature?: boolean | undefined, majorVersion?: number | undefined } = {},
+  options: { includeFallbackSignature?: boolean | undefined, majorVersion?: number | undefined, scopeToSource?: boolean | undefined } = {},
 ) {
-  if (!getSourceCandidatesForEntries || !hasOwnSourceDirectives(rawSource)) {
+  if (!getSourceCandidatesForEntries || !hasOwnSourceDirectives(rawSource, options.scopeToSource)) {
     return fallbackSignature
   }
-  const { entries } = await resolveScopedGeneratorSourceEntries(rawSource, sourceFile)
+  const { entries } = await resolveScopedGeneratorSourceEntries(rawSource, sourceFile, options.scopeToSource)
   if (entries === undefined) {
     return fallbackSignature
   }
@@ -89,11 +97,12 @@ export async function createScopedGeneratorSourceTraceMap(
   rawSource: string,
   sourceFile: string,
   getSourceCandidateSourcesForEntries: ((entries: TailwindSourceEntry[] | undefined, options?: SourceCandidateFilterOptions) => Map<string, Set<string>>) | undefined,
+  options: { scopeToSource?: boolean | undefined } = {},
 ) {
-  if (!getSourceCandidateSourcesForEntries || !hasOwnSourceDirectives(rawSource)) {
+  if (!getSourceCandidateSourcesForEntries || !hasOwnSourceDirectives(rawSource, options.scopeToSource)) {
     return getSourceCandidateSourcesForEntries?.(undefined)
   }
-  const { entries } = await resolveScopedGeneratorSourceEntries(rawSource, sourceFile)
+  const { entries } = await resolveScopedGeneratorSourceEntries(rawSource, sourceFile, options.scopeToSource)
   if (entries === undefined) {
     return getSourceCandidateSourcesForEntries(undefined)
   }
@@ -109,6 +118,7 @@ export async function createScopedGeneratorRuntime(options: {
   rawSource?: string | undefined
   shouldExcludeSubpackageSourceCandidates: (outputFile: string, cssHandlerOptions: { isMainChunk?: boolean | undefined }) => boolean
   sourceFile?: string | undefined
+  scopeToSource?: boolean | undefined
   scopedSourceCandidateGetter: ((entries: TailwindSourceEntry[] | undefined, options?: SourceCandidateFilterOptions) => Set<string>) | undefined
 }) {
   const {
@@ -119,11 +129,12 @@ export async function createScopedGeneratorRuntime(options: {
     rawSource,
     shouldExcludeSubpackageSourceCandidates,
     sourceFile,
+    scopeToSource,
     scopedSourceCandidateGetter,
   } = options
   if (getSourceCandidatesForEntries && rawSource && sourceFile) {
-    const { entries } = await resolveScopedGeneratorSourceEntries(rawSource, sourceFile)
-    if (entries !== undefined && (entries.length > 0 || hasOwnSourceDirectives(rawSource))) {
+    const { entries } = await resolveScopedGeneratorSourceEntries(rawSource, sourceFile, scopeToSource)
+    if (entries !== undefined && (entries.length > 0 || hasOwnSourceDirectives(rawSource, scopeToSource))) {
       const explicitCandidates = getSourceCandidatesForEntries(entries)
       const outputCandidates = scopedSourceCandidateGetter?.(undefined)
       const scopedCandidates = outputCandidates

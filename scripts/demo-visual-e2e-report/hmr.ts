@@ -8,6 +8,10 @@ import fs from 'node:fs/promises'
 import process from 'node:process'
 import path from 'pathe'
 import { webCases } from '../../e2e/hbuilderx-local/cases.ts'
+import { appendHmrSourceMutation, createHmrSourceRestore } from '../../e2e/hbuilderx-local/source-mutations.ts'
+import { sameSourceFile } from '../../e2e/hbuilderx-local/web/identity.ts'
+import { matchRuntimeStyles, readRuntimeStyles } from '../../e2e/hbuilderx-local/web/runtime.ts'
+import { rewriteHmrMarker } from '../../e2e/hbuilderx-local/web/source.ts'
 import { buildCases } from '../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cases/index.ts'
 import { writeFilePreserveEol } from '../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/text.ts'
 
@@ -139,26 +143,28 @@ function removeMiniProgramVisualSnippets(source: string) {
     .replace(/\n[ \t]*<View className="[^"]*">tw-visual-weapp-[^<]+<\/View>/g, '')
 }
 
-function resolveAnchor(source: string, anchors: string[]) {
-  return anchors.find(anchor => source.includes(anchor))
-}
-
-async function insertHBuilderXWebMarker(sourceFile: string, item: WebCase, stepIndex: number) {
+async function insertHBuilderXWebMarker(projectRoot: string, sourceFile: string, item: WebCase, stepIndex: number) {
   const anchors = item.markerAnchorCandidates?.length ? item.markerAnchorCandidates : [item.markerAnchor]
-  return await mutateFile(sourceFile, (source) => {
-    const markerRE = /\n\t\t<view class="[^"]+">hbuilderx-web-hmr-[^<]+<\/view>/g
-    const cleaned = source.replace(markerRE, '')
-    const anchor = resolveAnchor(cleaned, anchors)
-    const index = anchor ? cleaned.indexOf(anchor) : -1
-    if (index < 0) {
-      throw new Error(`${item.name} 找不到 HBuilderX Web HMR 插入锚点：${sourceFile}`)
+  const restore = await createHmrSourceRestore([
+    sourceFile,
+    ...item.hmrSteps.flatMap(step => step.sourceMutation ? [path.resolve(projectRoot, step.sourceMutation.file)] : []),
+  ])
+  const mutation = item.hmrSteps[stepIndex]?.sourceMutation
+  const sameFileReplace = mutation?.replace && sameSourceFile(projectRoot, mutation.file, sourceFile)
+  const writeSource = async (file: string, source: string) => {
+    await writeFilePreserveEol(file, source, await fs.readFile(file, 'utf8'))
+  }
+  try {
+    if (mutation && !sameFileReplace) {
+      await appendHmrSourceMutation(projectRoot, mutation, writeSource)
     }
-    const insertion = item.hmrSteps
-      .slice(0, stepIndex + 1)
-      .map(step => `<view class="${step.markerClass}">${step.markerText}</view>`)
-      .join('\n\t\t')
-    return `${cleaned.slice(0, index)}${insertion}\n\t\t${cleaned.slice(index)}`
-  })
+    await rewriteHmrMarker(sourceFile, anchors, item.hmrSteps, stepIndex, sameFileReplace ? mutation?.replace : undefined, writeSource)
+    return restore
+  }
+  catch (error) {
+    await restore()
+    throw error
+  }
 }
 
 async function waitForVisualHmrDomMarker(
@@ -244,32 +250,6 @@ async function reloadForScreenshot(page: Page, url: string) {
   await page.waitForFunction(() => document.readyState !== 'loading', undefined, { timeout: 30_000 })
 }
 
-function matchesExpectedStyle(actual: string, expected: string | RegExp) {
-  return typeof expected === 'string' ? actual === expected : expected.test(actual)
-}
-
-async function collectRuntimeStyle(page: Page, selector: string) {
-  return await page.locator(selector).first().evaluate((element) => {
-    const style = window.getComputedStyle(element)
-    return {
-      alignItems: style.alignItems,
-      backgroundColor: style.backgroundColor.replace(/\s+/g, ' '),
-      borderBottomWidth: style.borderBottomWidth,
-      borderLeftWidth: style.borderLeftWidth,
-      borderRadius: style.borderRadius,
-      borderRightWidth: style.borderRightWidth,
-      borderTopWidth: style.borderTopWidth,
-      color: style.color.replace(/\s+/g, ' '),
-      display: style.display,
-      flexDirection: style.flexDirection,
-      height: style.height,
-      marginTop: style.marginTop,
-      text: element.textContent?.trim() ?? '',
-      width: style.width,
-    }
-  })
-}
-
 async function collectRuntimePageEvidence(page: Page) {
   return await page.evaluate(() => {
     const pick = (selector: string) => {
@@ -322,14 +302,11 @@ async function waitForRuntimeAssertions(page: Page, assertions: WebRuntimeStyleA
           }
           return undefined
         }
-        const actual = await collectRuntimeStyle(page, assertion.selector)
+        const actual = await readRuntimeStyles(page, assertion)
         evidence[assertion.selector] = actual
         latestEvidence = evidence
-        for (const [key, expected] of Object.entries(assertion.styles)) {
-          const actualValue = actual[key as keyof typeof actual]
-          if (typeof actualValue !== 'string' || !matchesExpectedStyle(actualValue, expected)) {
-            return undefined
-          }
+        if (!actual || !matchRuntimeStyles(actual, assertion)) {
+          return undefined
         }
       }
       return evidence
@@ -342,19 +319,27 @@ async function waitForRuntimeAssertions(page: Page, assertions: WebRuntimeStyleA
 }
 
 async function waitForCssIncludes(url: string, expected: Array<string | RegExp>, label: string) {
-  return await waitFor(label, async () => {
-    const css = await fetchText(url)
-    const missing = expected.filter(item => typeof item === 'string' ? !css.includes(item) : !item.test(css))
-    if (missing.length === 0) {
-      return { cssPath: url, matched: expected.map(String) }
-    }
-    return undefined
-  })
+  let missing = expected
+  try {
+    return await waitFor(label, async () => {
+      const css = await fetchText(url)
+      missing = expected.filter(item => typeof item === 'string' ? !css.includes(item) : !item.test(css))
+      if (missing.length === 0) {
+        return { cssPath: url, matched: expected.map(String) }
+      }
+      return undefined
+    })
+  }
+  catch (error) {
+    throw new Error(`${label}: CSS=${url}, missing=${missing.map(String).join(', ')}`, { cause: error })
+  }
 }
 
 function createHBuilderXWebHmrVisualConfig(item: WebCase): H5HmrVisualConfig {
   return {
     label: `${item.name} HBuilderX Web visual HMR`,
+    // 共享用例中的 rpx 尺寸按 375px 基准视口断言。
+    viewport: { width: 375, height: 844 },
     steps: item.hmrSteps.map((_, index) => `hbuilderx-step-${index + 1}`),
     async waitForReady(page, url) {
       const cssEvidence = await waitForCssIncludes(
@@ -367,23 +352,36 @@ function createHBuilderXWebHmrVisualConfig(item: WebCase): H5HmrVisualConfig {
     },
     async mutate(projectRoot, stepIndex) {
       const sourceFile = path.resolve(projectRoot, item.sourceFile)
-      return await insertHBuilderXWebMarker(sourceFile, item, stepIndex)
+      return await insertHBuilderXWebMarker(projectRoot, sourceFile, item, stepIndex)
     },
     async waitForUpdate(page, url, _logs, stepIndex) {
       const step = item.hmrSteps[Math.min(stepIndex, item.hmrSteps.length - 1)]!
       const cssEvidence = await waitForCssIncludes(
         joinUrl(url, item.hmrCssPath),
-        step.cssContains,
+        [...(step.sourceMutation?.cssContains ?? []), ...step.cssContains],
         `${item.name} HBuilderX Web CSS HMR`,
       )
-      const runtimeEvidence = await waitForRuntimeAssertions(page, step.runtimeStyles, `${item.name} HBuilderX Web runtime HMR`)
+      const assertions = [...(item.persistentRuntimeStyles ?? []), ...(step.runtimeStyles ?? [])]
+      const runtimeEvidence = await waitForRuntimeAssertions(page, assertions, `${item.name} HBuilderX Web runtime HMR`)
       await reloadForScreenshot(page, url)
       await page.locator(`text=${step.markerText}`).first().waitFor({ timeout: 30_000 })
+      await waitForRuntimeAssertions(page, assertions, `${item.name} HBuilderX Web runtime reload`)
+      // 内部 scroll-view 会裁剪 fullPage 截图，先将本轮探针滚入实际可见区域。
+      const marker = page.locator('.hbuilderx-web-hmr-probe').first()
+      await marker.scrollIntoViewIfNeeded()
+      const markerViewport = await marker.evaluate((element) => {
+        const rect = element.getBoundingClientRect()
+        return { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right, width: innerWidth, height: innerHeight }
+      })
+      if (markerViewport.bottom <= 0 || markerViewport.top >= markerViewport.height || markerViewport.right <= 0 || markerViewport.left >= markerViewport.width) {
+        throw new Error(`${item.name} HMR 截图探针仍不在视口内: ${JSON.stringify(markerViewport)}`)
+      }
       return {
         classLiteral: step.markerClass,
         css: cssEvidence,
         expectedBackgroundColor: String(step.runtimeStyles?.[0]?.styles.backgroundColor ?? ''),
         runtime: runtimeEvidence,
+        markerViewport,
         text: step.markerText,
       }
     },

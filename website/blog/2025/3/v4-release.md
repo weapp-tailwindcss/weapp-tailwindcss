@@ -33,7 +33,7 @@ weapp-tailwindcss v4.0 正式发布，核心亮点是兼容 `tailwindcss@4` 并�
 
 > 因为 `tailwindcss@4` 直接变成了一个样式预处理器，定位上类似 `Sass` / `Less`，所以相关的改动还是挺大的。当前文档站以 Tailwind CSS 4 为主线。
 
-想快速上手集成？欢迎访问 [weapp-tailwindcss 官网](https://tw.icebreaker.top/)！
+想快速上手集成？欢迎访问 [weapp-tailwindcss 官网](https://tw.weapp.dev/)！
 如果你想进一步了解细节，下面有个示例，看看就懂了。
 
 ---
@@ -152,7 +152,7 @@ cn(a, 'xx', 'yy')
 
 当然，另一种方式是 **自上而下查找**，通过 `import` 语句分析模块依赖关系，甚至可以利用打包工具的模块分析图进行静态分析。
 
-当然这块的实现被用在了 **`@weapp-tailwindcss/merge`** 中，详见 [tailwind-merge 快速开始](https://tw.icebreaker.top/docs/community/merge)。
+当然这块的实现被用在了 **`@weapp-tailwindcss/merge`** 中，详见 [tailwind-merge 快速开始](https://tw.weapp.dev/docs/community/merge)。
 
 ---
 
@@ -211,8 +211,8 @@ cn(a, 'xx', 'yy')
 
 ## **参考链接**
 
-- [weapp-tailwindcss 迁移文档](https://tw.icebreaker.top/docs/migrations/v3)
-- [Tailwindcss@4 各个框架集成方式](https://tw.icebreaker.top/docs/quick-start/v4)
+- [weapp-tailwindcss 迁移文档](https://tw.weapp.dev/docs/migrations/v5)
+- [Tailwindcss@4 各个框架集成方式](https://tw.weapp.dev/docs/tailwindcss/v4-reference)
 - [Tailwindcss@4 升级指南](https://tailwindcss.com/docs/upgrade-guide)
 - [uni-app-tailwindcss-v4 参考模板](https://github.com/icebreaker-template/uni-app-tailwindcss-v4)
 

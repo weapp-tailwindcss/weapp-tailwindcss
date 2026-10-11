@@ -22,32 +22,7 @@ keywords:
 
 这里我们以 `taro@4` 的配置 `config/index.ts` 配置为例
 
-## Tailwindcss@3
-
-```ts
-const config = {
-  webpackChain(chain) {
-    chain.merge({
-      plugin: {
-        install: {
-          plugin: WeappTailwindcss,
-          args: [
-            {
-              cssOptions: {
-                rem2rpx: true,
-              },
-              // highlight-next-line
-              tailwindcssBasedir: path.resolve(__dirname, '../'),
-            },
-          ],
-        },
-      },
-    })
-  },
-}
-```
-
-## Tailwindcss@4
+## Tailwind CSS 4
 
 ```ts
 const config = {

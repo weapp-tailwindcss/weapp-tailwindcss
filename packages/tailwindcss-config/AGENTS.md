@@ -32,5 +32,5 @@
 - `pnpm --filter tailwindcss-config test`
 - `pnpm --filter tailwindcss-config build`
 - 定向回归：
-  - `pnpm --filter tailwindcss-config vitest run test/index.test.ts`
-  - `pnpm --filter tailwindcss-config vitest run test/utils.test.ts`
+  - `pnpm --filter tailwindcss-config exec vitest run test/index.test.ts`
+  - `pnpm --filter tailwindcss-config exec vitest run test/utils.test.ts`

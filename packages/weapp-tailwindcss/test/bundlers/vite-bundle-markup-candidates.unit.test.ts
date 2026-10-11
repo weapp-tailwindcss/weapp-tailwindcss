@@ -17,6 +17,27 @@ function createOptions() {
 }
 
 describe('bundlers/vite bundle markup candidates', () => {
+  it.each(['/project/src/card.vue', 'C:\\workspace\\src\\card.vue', '\\\\server\\share\\src\\card.vue', 'src/card.vue'])('removes output ownership without losing sibling candidates for %s', async (sourceFile) => {
+    const rootDir = path.resolve('/project')
+    const previousCandidatesByFile = new Map([
+      ['first/card.wxml', { sourceFile, candidates: new Set(['h-8']) }],
+      ['second/card.wxml', { sourceFile, candidates: new Set(['h-20']) }],
+    ])
+    const snapshot = buildBundleSnapshotForBuild({}, createOptions(), path.join(rootDir, 'dist'))
+    snapshot.removedFiles.add('first/card.wxml')
+    const collection = await collectBundleMarkupCandidates({
+      previousCandidatesByFile,
+      preserveMissingFiles: true,
+      resolveSourceCandidateFile: () => undefined,
+      rootDir,
+      snapshot,
+      transformFilter: undefined,
+    })
+    expect(collection.values).toEqual(new Set(['h-20']))
+    expect([...collection.candidatesByFile.keys()]).toEqual(['second/card.wxml'])
+    expect(previousCandidatesByFile.size).toBe(2)
+  })
+
   it('collects current bundle classes without mutating source candidate ownership', async () => {
     const rootDir = '/project'
     const firstSource = '<layout><view class="source-only bundle-added" /></layout>'
@@ -49,6 +70,7 @@ describe('bundlers/vite bundle markup candidates', () => {
 
     expect(extractSourceCandidates).toHaveBeenCalledTimes(2)
     expect(collection.values).toEqual(new Set(['source-only', 'bundle-added', 'second-added']))
+    expect(collection.valuesForEntries([])).toEqual(new Set())
     expect(collection.valuesForEntries([{
       base: path.join(rootDir, 'src'),
       negated: false,
@@ -95,8 +117,8 @@ describe('bundlers/vite bundle markup candidates', () => {
   it('preserves omitted files only for partial incremental bundles', async () => {
     const rootDir = '/project'
     const previousCandidatesByFile = new Map([
-      [path.join(rootDir, 'src/pages/first/index.wxml'), new Set(['first-candidate'])],
-      [path.join(rootDir, 'src/pages/second/index.wxml'), new Set(['stale-second-candidate'])],
+      ['pages/first/index.wxml', { sourceFile: path.join(rootDir, 'src/pages/first/index.wxml'), candidates: new Set(['first-candidate']) }],
+      ['pages/second/index.wxml', { sourceFile: path.join(rootDir, 'src/pages/second/index.wxml'), candidates: new Set(['stale-second-candidate']) }],
     ])
     const snapshot = buildBundleSnapshotForBuild({
       'pages/second/index.wxml': {

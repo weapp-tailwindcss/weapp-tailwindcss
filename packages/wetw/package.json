@@ -1,17 +1,18 @@
 {
   "name": "wetw",
   "type": "module",
-  "version": "0.1.4",
-  "description": "tsdown bundler template",
+  "version": "0.1.7",
+  "description": "Cross-platform Tailwind CSS component registry and project CLI. 跨端 Tailwind CSS 组件注册与项目 CLI。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",
+  "homepage": "https://tw.weapp.dev",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sonofmagic/weapp-tailwindcss.git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
     "directory": "packages/wetw"
   },
   "bugs": {
-    "url": "https://github.com/sonofmagic/weapp-tailwindcss/issues"
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues"
   },
   "keywords": [],
   "sideEffects": false,

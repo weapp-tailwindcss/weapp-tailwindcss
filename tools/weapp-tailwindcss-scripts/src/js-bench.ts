@@ -17,7 +17,7 @@ import path from 'node:path'
 import { performance } from 'node:perf_hooks'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
-import { MappingChars2String } from '@weapp-core/escape'
+import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import fg from 'fast-glob'
 import fs from 'fs-extra'
 import pc from 'picocolors'
@@ -135,8 +135,7 @@ function useSwc() {
 }
 
 function useOxc() {
-  const { oxcJsHandler } = require('weapp-tailwindcss/src/js/fast-path/oxc') as typeof import('weapp-tailwindcss/src/js/fast-path/oxc')
-  return oxcJsHandler
+  return import('weapp-tailwindcss/src/js/fast-path/oxc').then(({ oxcJsHandler }) => oxcJsHandler)
 }
 
 async function runEngine(
@@ -146,7 +145,7 @@ async function runEngine(
   iter: number,
   warmup: number,
 ) {
-  let handler: (code: string, opts: IJsHandlerOptions) => JsHandlerResult
+  let handler: (code: string, opts: IJsHandlerOptions) => JsHandlerResult | undefined
   let fallbackHandler: ((code: string, opts: IJsHandlerOptions) => JsHandlerResult) | undefined
   if (id === 'babel') {
     handler = useBabel()
@@ -155,7 +154,7 @@ async function runEngine(
     handler = useSwc()
   }
   else if (id === 'oxc') {
-    handler = useOxc()
+    handler = await useOxc()
     fallbackHandler = useBabel()
   }
   else {

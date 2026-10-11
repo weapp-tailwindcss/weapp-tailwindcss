@@ -42,6 +42,10 @@ function normalizeSimpleMiniProgramSelector(selector: Selector) {
 }
 
 function collectMiniProgramSelectorSet(selector: string) {
+  // preflight 和 theme 都要求多个独立选择器；单一选择器无需建立 selector AST。
+  if (!selector.includes(',')) {
+    return undefined
+  }
   try {
     const selectorSet = new Set<string>()
     const ast = selectorParser().astSync(selector)

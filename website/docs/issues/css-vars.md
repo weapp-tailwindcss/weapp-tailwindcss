@@ -19,6 +19,8 @@ keywords:
 ---
 # CSS 变量失效问题
 
+如果变量已经生成，但 `--spacing: 1rpx`、`3rpx` 等配置导致尺寸或间距偏差，请查看 [微信小程序 --spacing 与 rpx 计算限制](./spacing-rpx.md)。这种情况需要检查运行时计算，补充变量初始化区域不能直接解决。
+
 ## 问题的现象
 
 在 `Taro`、`uni-app` 等小程序项目中，可能会遇到 Tailwind CSS 变量丢失的问题。

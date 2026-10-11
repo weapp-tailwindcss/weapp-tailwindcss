@@ -36,6 +36,21 @@ const HYPHEN_UNDERSCORE_RE = /[-_]/g
 const WHITESPACE_RE = /\s+/g
 const TRAILING_SLASH_RE = /\/$/
 
+export function toAbsoluteUrl(siteUrl: string, value?: string | null) {
+  if (!value) {
+    return undefined
+  }
+  if (value.startsWith('http')) {
+    return value
+  }
+  try {
+    return new URL(value, siteUrl).toString()
+  }
+  catch {
+    return undefined
+  }
+}
+
 function normalizeKeywords(input?: string[] | string | null): string[] {
   if (!input) {
     return []
@@ -163,6 +178,7 @@ export function buildBreadcrumbJsonLd(params: {
   return {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
+    '@id': `${rootUrl}${params.permalink}#breadcrumb`,
     'itemListElement': names.map((name, index) => ({
       '@type': 'ListItem',
       'position': index + 1,

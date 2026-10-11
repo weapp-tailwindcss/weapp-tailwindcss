@@ -1,9 +1,12 @@
+import type { FrameworkIdeHotUpdateProbe } from './frameworkIdeHotUpdate'
 import fs from 'node:fs/promises'
 import process from 'node:process'
-import { Launcher } from '@weapp-vite/miniprogram-automator'
 import path from 'pathe'
+import { formatWorkflowError } from '../scripts/e2e-preflight/cleanup'
+import { Launcher } from '../scripts/wechat/automator'
+import { withFrameworkIdeProject } from './framework-ide/project-lifecycle'
 import { collectFrameworkIdeDiagnostics } from './frameworkIdeDiagnostics'
-import { runFrameworkIdeHotUpdateProbe } from './frameworkIdeHotUpdate'
+import { withFrameworkIdeHotUpdateProbe } from './frameworkIdeHotUpdate'
 import { installFrameworkIdeRuntimeErrorCollector } from './frameworkIdeRuntimeErrors'
 import { FRAMEWORK_SUPPORT_CASES } from './frameworkSupportMatrix'
 import { resolveFrameworkSupportPaths } from './frameworkSupportPaths'
@@ -28,33 +31,9 @@ if (entry.ide.tier !== 'required') {
 
 const supportEntry = entry
 const { appJsonPath, miniprogramRoot, projectPath, root } = resolveFrameworkSupportPaths(supportEntry)
-let miniProgram: any
-const projectConfigPath = path.resolve(projectPath, 'project.config.json')
-let projectConfigOriginal: string | undefined
 
 function shouldRunHotUpdateProbe() {
   return process.env['E2E_IDE_HOT_UPDATE'] !== '0'
-}
-
-async function snapshotProjectConfig() {
-  try {
-    projectConfigOriginal = await fs.readFile(projectConfigPath, 'utf8')
-  }
-  catch {
-    projectConfigOriginal = undefined
-  }
-}
-
-async function restoreProjectConfig() {
-  if (projectConfigOriginal == null) {
-    return
-  }
-  try {
-    await fs.writeFile(projectConfigPath, projectConfigOriginal)
-  }
-  catch (error) {
-    process.stderr.write(`Framework IDE probe failed to restore project.config.json for ${supportCaseName}: ${String(error)}\n`)
-  }
 }
 
 async function ensureMiniProgramEntry() {
@@ -109,21 +88,33 @@ async function withStageTimeout<T>(stage: string, task: Promise<T>, stageTimeout
   }
 }
 
-async function closeMiniProgram() {
-  if (!miniProgram) {
-    return
-  }
-  try {
-    await Promise.race([
-      miniProgram.close(),
-      new Promise<void>((resolve) => {
-        setTimeout(resolve, closeTimeoutMs)
-      }),
-    ])
-  }
-  catch (error) {
-    process.stderr.write(`Framework IDE probe close failed for ${supportCaseName}: ${String(error)}\n`)
-  }
+async function runProbe(hotUpdate?: FrameworkIdeHotUpdateProbe) {
+  const pageUrl = await ensureMiniProgramEntry()
+  const automator = new Launcher()
+  const launchProjectPath = projectPath
+  await withFrameworkIdeProject({
+    projectPath: launchProjectPath,
+    closeTimeoutMs,
+    launch: () => automator.launch({ cliPath: process.env.E2E_PREFLIGHT_WECHAT_CLI, projectPath: launchProjectPath, timeout: timeoutMs }),
+    run: async (miniProgram) => {
+      const runtimeErrors = await installFrameworkIdeRuntimeErrorCollector(supportCaseName, miniProgram)
+      await runtimeErrors.assertNoErrors('launch')
+
+      const page: any = await withStageTimeout('reLaunch', miniProgram.reLaunch(pageUrl), relaunchTimeoutMs)
+      if (!page) {
+        throw new Error(`Failed to relaunch page for ${supportCaseName}`)
+      }
+      await runtimeErrors.assertNoErrors('reLaunch')
+
+      const currentPage = await withStageTimeout('currentPage', miniProgram.currentPage({ timeout: timeoutMs }).catch(() => page))
+      if (!currentPage) {
+        throw new Error(`Failed to resolve current page for ${supportCaseName}`)
+      }
+
+      await hotUpdate?.(miniProgram, page, pageUrl, launchProjectPath, runtimeErrors)
+      await runtimeErrors.assertNoErrors('probe complete')
+    },
+  })
 }
 
 async function main() {
@@ -134,49 +125,23 @@ async function main() {
     })
   }
 
-  const pageUrl = await ensureMiniProgramEntry()
-  const automator = new Launcher()
-  const launchProjectPath = projectPath
-  await snapshotProjectConfig()
-
-  try {
-    miniProgram = await withStageTimeout('launch', automator.launch({ projectPath: launchProjectPath, timeout: timeoutMs }))
-    const runtimeErrors = await installFrameworkIdeRuntimeErrorCollector(supportCaseName, miniProgram)
-    await runtimeErrors.assertNoErrors('launch')
-
-    const page: any = await withStageTimeout('reLaunch', miniProgram.reLaunch(pageUrl), relaunchTimeoutMs)
-    if (!page) {
-      throw new Error(`Failed to relaunch page for ${supportCaseName}`)
-    }
-    await runtimeErrors.assertNoErrors('reLaunch')
-
-    const currentPage = await withStageTimeout('currentPage', miniProgram.currentPage({ timeout: timeoutMs }).catch(() => page))
-    if (!currentPage) {
-      throw new Error(`Failed to resolve current page for ${supportCaseName}`)
-    }
-
-    if (shouldRunHotUpdateProbe()) {
-      await runFrameworkIdeHotUpdateProbe(supportEntry, miniProgram, page, pageUrl, launchProjectPath, runtimeErrors)
-    }
-    await runtimeErrors.assertNoErrors('probe complete')
+  if (shouldRunHotUpdateProbe()) {
+    await withFrameworkIdeHotUpdateProbe(supportEntry, runProbe)
   }
-  finally {
-    await closeMiniProgram()
-    await restoreProjectConfig()
+  else {
+    await runProbe()
   }
 }
 
 main().then(() => {
   process.exit(0)
 }).catch(async (error) => {
-  await closeMiniProgram()
-  await restoreProjectConfig()
   try {
     process.stderr.write(`${await collectFrameworkIdeDiagnostics(supportCaseName)}\n`)
   }
   catch (diagnosticError) {
     process.stderr.write(`[e2e:ide] failed to collect diagnostics: ${diagnosticError instanceof Error ? diagnosticError.stack : String(diagnosticError)}\n`)
   }
-  process.stderr.write(`${error instanceof Error ? error.stack : String(error)}\n`)
+  process.stderr.write(`${formatWorkflowError(error)}\n`)
   process.exit(1)
 })

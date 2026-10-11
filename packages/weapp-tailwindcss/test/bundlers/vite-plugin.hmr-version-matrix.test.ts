@@ -199,7 +199,7 @@ async function runWatchHmrReplayCase(viteSpecifier: string) {
   }
 }
 
-describe.sequential('bundlers/vite hmr version matrix', () => {
+describe('bundlers/vite hmr version matrix', () => {
   afterEach(async () => {
     await Promise.all(
       createdDirs.splice(0).map(dir => rm(dir, { recursive: true, force: true })),

@@ -14,7 +14,7 @@ exports[`get options > default options 1`] = `
     "sourceType": "unambiguous",
   },
   "cache": "<cache>",
-  "cssCalc": false,
+  "cssCalc": undefined,
   "cssChildCombinatorReplaceValue": [
     "view",
     "text",

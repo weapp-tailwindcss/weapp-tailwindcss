@@ -9,7 +9,7 @@ export {
   transformCssMacroCss,
   transformCssMacroTailwindV4Source,
   withCssMacroStyleOptions,
-} from '@weapp-tailwindcss/postcss'
+} from '@weapp-tailwindcss/postcss/transform'
 
 export const CSS_MACRO_PLUGIN_MARKER = '__weappTailwindcssCssMacro'
 

@@ -16,6 +16,7 @@ const fallbackRemoveCache = new WeakMap<object, {
 }>()
 const fallbackDefaultKey: object = {}
 const FALLBACK_TRANSFORM_OPTIONS = normalizeTransformOptions()
+const PLAIN_CLASS_OR_ID = /^[.#][\w-]+$/
 
 function isInsidePseudo(node: psp.Node, pseudoValue: string) {
   let parent = node.parent
@@ -130,6 +131,10 @@ export function getFallbackRemove(_rule?: Rule, options?: IStyleHandlerOptions) 
     const transformRule = (targetRule: Rule, transformOptions = FALLBACK_TRANSFORM_OPTIONS) => {
       const sourceSelector = targetRule.selector
       if (!sourceSelector) {
+        return
+      }
+      // 单个未转义 class/id 没有可清理节点，且已是默认 lossless:false 的规范形式。
+      if (targetRule.parent && transformOptions === FALLBACK_TRANSFORM_OPTIONS && PLAIN_CLASS_OR_ID.test(sourceSelector)) {
         return
       }
 

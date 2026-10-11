@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { postcss } from '@weapp-tailwindcss/postcss'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { captureFrameworkPostcssOptions } from '@/bundlers/shared/framework-postcss'
-import { withGeneratorSourceMetadata } from '@/bundlers/shared/generator-css/source-resolver/metadata'
+import { captureFrameworkPostcssOptions } from '@/generation/framework-postcss'
+import { withGeneratorSourceMetadata } from '@/generation/source-resolver/metadata'
 
 function withTestGeneratorSourceMetadata<T extends object>(
   source: T,
@@ -70,7 +70,7 @@ function expectMiniProgramPreflight(css: string | undefined) {
 describe('bundlers/shared generator css', () => {
   afterEach(() => {
     vi.doUnmock('@/generator')
-    vi.doUnmock('@/bundlers/shared/generator-css')
+    vi.doUnmock('@/generation/index')
     vi.doUnmock('node:fs')
     vi.resetModules()
   })
@@ -81,7 +81,7 @@ describe('bundlers/shared generator css', () => {
       createWeappTailwindcssGenerator,
     }))
 
-    const { generateTailwindV4Css } = await import('@/bundlers/shared/v4-generation-core')
+    const { generateTailwindV4Css } = await import('@/generation/service')
     const result = await generateTailwindV4Css({
       opts: {
         cssPreflight: 'view',
@@ -130,7 +130,7 @@ describe('bundlers/shared generator css', () => {
       createWeappTailwindcssGenerator,
     }))
 
-    const { validateCandidatesByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { validateCandidatesByGenerator } = await import('@/generation/index')
     const result = await validateCandidatesByGenerator({
       opts: {
         generator: false,
@@ -180,7 +180,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateTailwindV4Css } = await import('@/bundlers/shared/v4-generation-core')
+    const { generateTailwindV4Css } = await import('@/generation/service')
     const result = await generateTailwindV4Css({
       opts: {
         cssPreflight: 'view',
@@ -268,7 +268,7 @@ describe('bundlers/shared generator css', () => {
       tailwindRuntime: { majorVersion: 4 } as any,
       readyPromise: Promise.resolve(),
     }
-    const { generateTailwindV4Css } = await import('@/bundlers/shared/v4-generation-core')
+    const { generateTailwindV4Css } = await import('@/generation/service')
     const { disposeCompilerOwner } = await import('@/compiler')
     const generation = generateTailwindV4Css({
       opts: {
@@ -302,6 +302,79 @@ describe('bundlers/shared generator css', () => {
     expect(dispose).toHaveBeenCalledTimes(1)
   })
 
+  it('acquires compiler sessions before asynchronous source resolution', async () => {
+    let continueResolution: (() => void) | undefined
+    let markResolutionStarted: (() => void) | undefined
+    const resolutionGate = new Promise<void>((resolve) => {
+      continueResolution = resolve
+    })
+    const resolutionStarted = new Promise<void>((resolve) => {
+      markResolutionStarted = resolve
+    })
+    const dispose = vi.fn()
+    vi.doMock('@/generator', () => createDefaultGeneratorMock({
+      createWeappTailwindcssGenerator: vi.fn(() => ({
+        dispose,
+        async generate() {
+          return {
+            css: '.text-\\[24rpx\\]{font-size:24rpx}',
+            rawCss: '.text-\\[24rpx\\]{font-size:24rpx}',
+            target: 'weapp',
+            classSet: new Set(['text-[24rpx]']),
+            dependencies: [],
+            root: null,
+          }
+        },
+      })),
+      async resolveTailwindV4Source(options: any = {}) {
+        markResolutionStarted?.()
+        await resolutionGate
+        return {
+          projectRoot: process.cwd(),
+          base: process.cwd(),
+          baseFallbacks: [],
+          css: options.css ?? '@import "tailwindcss";',
+          dependencies: options.cssEntries ?? [],
+        }
+      },
+    }))
+
+    const runtimeState = {
+      tailwindRuntime: { majorVersion: 4 } as any,
+      readyPromise: Promise.resolve(),
+    }
+    const { generateTailwindV4Css } = await import('@/generation/service')
+    const { disposeCompilerOwner } = await import('@/compiler')
+    const generation = generateTailwindV4Css({
+      opts: {
+        generator: { target: 'weapp' },
+        styleHandler: vi.fn(async (code: string) => ({ css: code })),
+      } as any,
+      runtimeState,
+      runtime: new Set(['text-[24rpx]']),
+      rawSource: '@import "tailwindcss";',
+      file: '/workspace/src/app.css',
+      outputFile: 'app.wxss',
+      cssHandlerOptions: {
+        isMainChunk: true,
+        majorVersion: 4,
+      } as any,
+      cssUserHandlerOptions: {} as any,
+      styleHandler: vi.fn(async (code: string) => ({ css: code })),
+      debug: vi.fn(),
+    })
+
+    await resolutionStarted
+    const disposal = disposeCompilerOwner(runtimeState)
+    continueResolution?.()
+
+    await expect(generation).resolves.toMatchObject({
+      classSet: new Set(['text-[24rpx]']),
+    })
+    await disposal
+    expect(dispose).toHaveBeenCalledTimes(1)
+  })
+
   it('adapts generated mini-program CSS through the complete framework PostCSS pipeline', async () => {
     const frameworkPlugin = {
       postcssPlugin: 'framework-token-transform',
@@ -309,7 +382,7 @@ describe('bundlers/shared generator css', () => {
         decl.value = decl.value.replaceAll('framework-token', 'processed-token')
       },
     }
-    vi.doMock('@/bundlers/shared/generator-css', () => ({
+    vi.doMock('@/generation/index', () => ({
       generateCssByGenerator: vi.fn(async (options: { deferCssAdaptation?: boolean }) => {
         expect(options.deferCssAdaptation).toBe(true)
         return {
@@ -336,7 +409,7 @@ describe('bundlers/shared generator css', () => {
     } as any
     const opts = { ...frameworkPostcssOwner }
     captureFrameworkPostcssOptions(frameworkPostcssOwner, { plugins: [frameworkPlugin] })
-    const { generateTailwindV4Css } = await import('@/bundlers/shared/v4-generation-core')
+    const { generateTailwindV4Css } = await import('@/generation/service')
     const result = await generateTailwindV4Css({
       opts,
       runtimeState: {
@@ -361,7 +434,7 @@ describe('bundlers/shared generator css', () => {
     expect(styleHandler).toHaveBeenCalledTimes(1)
   })
 
-  it('keeps late web generation on the native framework PostCSS pipeline', async () => {
+  it('replays the framework pipeline for late web generation', async () => {
     const frameworkPlugin = {
       postcssPlugin: 'framework-token-transform',
       Declaration(decl: { value: string }) {
@@ -393,7 +466,7 @@ describe('bundlers/shared generator css', () => {
       styleHandler,
     } as any
     captureFrameworkPostcssOptions(opts, { plugins: [frameworkPlugin] })
-    const { generateTailwindV4Css } = await import('@/bundlers/shared/v4-generation-core')
+    const { generateTailwindV4Css } = await import('@/generation/service')
     const result = await generateTailwindV4Css({
       opts,
       runtimeState: {
@@ -411,7 +484,7 @@ describe('bundlers/shared generator css', () => {
       cssStage: 'framework-processed',
     })
 
-    expect(result?.css).toBe(':root{--spacing:4px}')
+    expect(result?.css).toBe(':root{--spacing:processed-token}')
     expect(result?.metadata).toMatchObject({
       file: '/workspace/src/app.css',
       majorVersion: 4,
@@ -421,7 +494,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('rejects non-v4 Tailwind generation', async () => {
-    const { generateTailwindV4Css } = await import('@/bundlers/shared/v4-generation-core')
+    const { generateTailwindV4Css } = await import('@/generation/service')
     await expect(generateTailwindV4Css({
       opts: {} as any,
       runtimeState: {
@@ -439,7 +512,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('fills standard metadata when generation returns no metadata', async () => {
-    vi.doMock('@/bundlers/shared/generator-css', () => ({
+    vi.doMock('@/generation/index', () => ({
       generateCssByGenerator: vi.fn(async () => ({
         css: '.p-4{padding:1rem}',
         target: 'web',
@@ -447,7 +520,7 @@ describe('bundlers/shared generator css', () => {
         dependencies: [],
       })),
     }))
-    const { generateTailwindV4Css } = await import('@/bundlers/shared/v4-generation-core')
+    const { generateTailwindV4Css } = await import('@/generation/service')
     const result = await generateTailwindV4Css({
       opts: {} as any,
       runtimeState: {
@@ -501,7 +574,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const result = await generateCssByGenerator({
       opts: {
         cssPreflight: {
@@ -573,7 +646,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const result = await generateCssByGenerator({
       opts: {
         generator: {
@@ -635,7 +708,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateTailwindV4Css } = await import('@/bundlers/shared/v4-generation-core')
+    const { generateTailwindV4Css } = await import('@/generation/service')
     const result = await generateTailwindV4Css({
       opts: {
         generator: {
@@ -677,8 +750,50 @@ describe('bundlers/shared generator css', () => {
     expect(result?.css).not.toContain('.px-4{')
   })
 
+  it('precomputes configured rpx theme calc in deferred mini-program css', async () => {
+    const { generateTailwindV4Css } = await import('@/generation/service')
+    const result = await generateTailwindV4Css({
+      opts: {
+        cssOptions: {
+          cssCalc: ['--spacing'],
+        },
+        generator: {
+          target: 'weapp',
+        },
+      } as any,
+      runtimeState: {
+        tailwindRuntime: {
+          majorVersion: 4,
+        } as any,
+        readyPromise: Promise.resolve(),
+      },
+      runtime: new Set(['w-32', 'p-4']),
+      rawSource: [
+        '@import "tailwindcss" source(none);',
+        '@theme { --spacing: 1rpx; }',
+      ].join('\n'),
+      file: '/workspace/src/components/Spacing.scss',
+      cssHandlerOptions: {
+        isMainChunk: false,
+        majorVersion: 4,
+        sourceOptions: {
+          requestFile: '/workspace/src/components/Spacing.vue?vue&type=style&index=0&scoped=true&lang=scss',
+        },
+      } as any,
+      cssUserHandlerOptions: {} as any,
+      styleHandler: vi.fn(),
+      debug: vi.fn(),
+      deferCssAdaptation: true,
+      generatorPlatform: 'mp-weixin',
+    })
+
+    expect(result?.css).toMatch(/width:\s*32rpx/)
+    expect(result?.css).toMatch(/padding:\s*4rpx/)
+    expect(result?.css).not.toContain('calc(var(--spacing)')
+  })
+
   it('matches hashed css assets back to their Tailwind v4 source css file', async () => {
-    const { scoreTailwindV4CssSourceFileMatch } = await import('@/bundlers/shared/generator-css/source-resolver/matching')
+    const { scoreTailwindV4CssSourceFileMatch } = await import('@/generation/source-resolver/matching')
     const score = scoreTailwindV4CssSourceFileMatch(
       '/project/dist/wx/styles/app0671d720.wxss',
       '/project/src/app.css',
@@ -693,7 +808,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('detects generated Tailwind CSS markers without treating plain css as generated', async () => {
-    const { hasTailwindGeneratedCssMarkers } = await import('@/bundlers/shared/generator-css')
+    const { hasTailwindGeneratedCssMarkers } = await import('@/generation/index')
     expect(hasTailwindGeneratedCssMarkers('.flex{display:flex}')).toBe(false)
     expect(hasTailwindGeneratedCssMarkers('.hover\\:bg-sky-500:hover{background-color:var(--color-sky-500)}')).toBe(true)
     expect(hasTailwindGeneratedCssMarkers('@property --tw-gradient-from{syntax:"*";inherits:false}')).toBe(true)
@@ -701,7 +816,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('finalizes Tailwind v4 gradient interpolation for wx generator css', async () => {
-    const { finalizeMiniProgramGeneratorCss } = await import('@/bundlers/shared/generator-css/generation-helpers')
+    const { finalizeMiniProgramGeneratorCss } = await import('@/generation/generation-helpers')
 
     const css = finalizeMiniProgramGeneratorCss([
       '.bg-gradient-to-r {',
@@ -715,7 +830,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('unwraps Tailwind v4 user layer blocks for mini-program generator user css', async () => {
-    const { transformGeneratorUserCss } = await import('@/bundlers/shared/generator-css/user-css')
+    const { transformGeneratorUserCss } = await import('@/generation/user-css')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
 
     const css = await transformGeneratorUserCss([
@@ -740,7 +855,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('keeps processed webpack user css without running the style handler again', async () => {
-    const { transformGeneratorUserCss } = await import('@/bundlers/shared/generator-css/user-css')
+    const { transformGeneratorUserCss } = await import('@/generation/user-css')
     const styleHandler = vi.fn(async (code: string) => ({ css: `handled:${code}` }))
 
     const css = await transformGeneratorUserCss('@charset "UTF-8";.nut-icon{display:inline-block}.nut-icon:hover{color:red}', {
@@ -759,7 +874,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('preserves empty user css rules while removing Tailwind v4 generator at-rules', async () => {
-    const { transformGeneratorUserCss } = await import('@/bundlers/shared/generator-css/user-css')
+    const { transformGeneratorUserCss } = await import('@/generation/user-css')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
 
     const css = await transformGeneratorUserCss([
@@ -785,7 +900,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('removes Tailwind v4 generated preflight artifacts before preserving mini-program user css', async () => {
-    const { transformGeneratorUserCss } = await import('@/bundlers/shared/generator-css/user-css')
+    const { transformGeneratorUserCss } = await import('@/generation/user-css')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
 
     const css = await transformGeneratorUserCss([
@@ -802,6 +917,7 @@ describe('bundlers/shared generator css', () => {
       '@keyframes weappTwUserUiRotation{to{transform:rotate(360deg)}}',
     ].join('\n'), {
       generatorTarget: 'weapp',
+      generatedSource: ':root,:host{--color-slate-900:#0f172a;--font-sans:ui-sans-serif;--default-font-family:var(--font-sans)}',
       generatorStyleOptions: {},
       cssUserHandlerOptions: {} as any,
       styleHandler,
@@ -823,7 +939,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('removes Tailwind v4 source media wrappers before preserving web user css', async () => {
-    const { transformGeneratorUserCss } = await import('@/bundlers/shared/generator-css/user-css')
+    const { transformGeneratorUserCss } = await import('@/generation/user-css')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
 
     const css = await transformGeneratorUserCss([
@@ -851,7 +967,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('removes Tailwind v4 source media wrappers from processed web user css', async () => {
-    const { transformGeneratorUserCss } = await import('@/bundlers/shared/generator-css/user-css')
+    const { transformGeneratorUserCss } = await import('@/generation/user-css')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
 
     const css = await transformGeneratorUserCss([
@@ -877,7 +993,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('removes post-transform Tailwind v4 preflight fragments without generated css markers', async () => {
-    const { removeTailwindV4GeneratedUserCssArtifacts } = await import('@/bundlers/shared/generator-css/user-css')
+    const { removeTailwindV4GeneratedUserCssArtifacts } = await import('@/generation/user-css')
 
     const css = removeTailwindV4GeneratedUserCssArtifacts([
       '.weapp-tw-user-ui-card {',
@@ -932,7 +1048,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('removes Tailwind v4 generated preflight artifacts before appending legacy compat css', async () => {
-    const { appendLegacyCompatCss } = await import('@/bundlers/shared/generator-css/legacy-compat')
+    const { appendLegacyCompatCss } = await import('@/generation/legacy-compat')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const css = await appendLegacyCompatCss(
       '.bg-page-marker{background-color:#2563eb}',
@@ -949,6 +1065,7 @@ describe('bundlers/shared generator css', () => {
       styleHandler,
       {} as any,
       {},
+      { generatedSource: ':root,:host{--font-sans:ui-sans-serif;--default-font-family:var(--font-sans)}' },
     )
 
     expect(css).toContain('.bg-page-marker')
@@ -996,7 +1113,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const result = await generateCssByGenerator({
       opts: {
         cssPreflight: 'view',
@@ -1083,7 +1200,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -1202,7 +1319,7 @@ describe('bundlers/shared generator css', () => {
         })),
       }))
 
-      const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+      const { generateCssByGenerator } = await import('@/generation/index')
       const styleHandler = vi.fn(async (code: string) => ({ css: code }))
       const baseOptions = {
         opts: {
@@ -1335,7 +1452,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -1406,7 +1523,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -1488,7 +1605,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -1599,7 +1716,7 @@ describe('bundlers/shared generator css', () => {
     }))
 
     try {
-      const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+      const { generateCssByGenerator } = await import('@/generation/index')
       const styleHandler = vi.fn(async (code: string) => ({ css: code }))
       const result = await generateCssByGenerator({
         opts: {
@@ -1674,7 +1791,7 @@ describe('bundlers/shared generator css', () => {
       await writeFile(page, 'export default <div className="flex grid items-center bg-[#0284c7]"></div>', 'utf8')
 
       const { createContext } = await import('./vite-plugin.testkit')
-      const { generateTailwindV4Css } = await import('@/bundlers/shared/v4-generation-core')
+      const { generateTailwindV4Css } = await import('@/generation/service')
       const styleHandler = vi.fn(async (code: string) => ({ css: code }))
       const ctx = createContext({
         generator: {
@@ -1770,7 +1887,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -1855,7 +1972,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -1929,7 +2046,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -1998,7 +2115,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const baseOptions = {
       opts: {
@@ -2074,7 +2191,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -2161,7 +2278,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -2203,7 +2320,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('normalizes duplicate fallback imports before resolving Tailwind v4 source', async () => {
-    const { resolveCssEntrySource } = await import('@/bundlers/shared/generator-css')
+    const { resolveCssEntrySource } = await import('@/generation/index')
     const source = resolveCssEntrySource(
       '@import "tailwindcss";\n@import "weapp-tailwindcss";\n@import "weapp-tailwindcss/theme.css";',
       process.cwd(),
@@ -2214,7 +2331,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('extracts Tailwind directives from Sass and Less sources when PostCSS cannot parse them', async () => {
-    const { hasTailwindSourceDirectives, resolveCssEntrySource } = await import('@/bundlers/shared/generator-css')
+    const { hasTailwindSourceDirectives, resolveCssEntrySource } = await import('@/generation/index')
     const rawSource = [
       '$brand: #123456;',
       '// sass comment',
@@ -2251,7 +2368,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('keeps Tailwind v4 @plugin option blocks from preprocessor sources', async () => {
-    const { normalizeTailwindSourceForGenerator, resolveCssEntrySource } = await import('@/bundlers/shared/generator-css')
+    const { normalizeTailwindSourceForGenerator, resolveCssEntrySource } = await import('@/generation/index')
     const rawSource = [
       '$brand: #123456;',
       '@import "tailwindcss";',
@@ -2281,7 +2398,7 @@ describe('bundlers/shared generator css', () => {
       hasTailwindNonRootGenerationDirectives,
       hasTailwindRootDirectives,
       hasTailwindSourceDirectives,
-    } = await import('@/bundlers/shared/generator-css/directives')
+    } = await import('@/generation/directives')
     const rawSource = [
       '@import "weapp-tailwindcss";',
       '@plugin "@iconify/tailwind4" {',
@@ -2306,7 +2423,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('normalizes registered generator sources from preprocessor syntax', async () => {
-    const { normalizeTailwindSourceForGenerator, removeTailwindSourceDirectives } = await import('@/bundlers/shared/generator-css')
+    const { normalizeTailwindSourceForGenerator, removeTailwindSourceDirectives } = await import('@/generation/index')
     const rawSource = [
       '// source comment',
       '$brand: #123456;',
@@ -2325,8 +2442,8 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('keeps Tailwind layer blocks from preprocessor sources when extracting fallback sources', async () => {
-    const { normalizeTailwindSourceForGenerator, removeTailwindSourceDirectives, resolveCssEntrySource } = await import('@/bundlers/shared/generator-css')
-    const { hasTailwindApplyDirective } = await import('@/bundlers/shared/generator-css/directives')
+    const { normalizeTailwindSourceForGenerator, removeTailwindSourceDirectives, resolveCssEntrySource } = await import('@/generation/index')
+    const { hasTailwindApplyDirective } = await import('@/generation/directives')
     const rawSource = [
       '$brand: #123456;',
       '@use "tailwindcss";',
@@ -2367,7 +2484,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('keeps fallback layer blocks with Less variables and quoted double-slash values', async () => {
-    const { normalizeTailwindSourceForGenerator, removeTailwindSourceDirectives } = await import('@/bundlers/shared/generator-css')
+    const { normalizeTailwindSourceForGenerator, removeTailwindSourceDirectives } = await import('@/generation/index')
     const rawSource = [
       '@brand: #123456;',
       '@import "tailwindcss";',
@@ -2397,7 +2514,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('keeps Tailwind v4 top-level layer statements when extracting fallback sources', async () => {
-    const { normalizeTailwindSourceForGenerator } = await import('@/bundlers/shared/generator-css')
+    const { normalizeTailwindSourceForGenerator } = await import('@/generation/index')
     const rawSource = [
       '// force fallback extraction',
       '@layer theme, base, components, utilities;',
@@ -2417,7 +2534,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('extracts Tailwind v4 @tailwind directives from Less sources', async () => {
-    const { resolveCssEntrySource } = await import('@/bundlers/shared/generator-css')
+    const { resolveCssEntrySource } = await import('@/generation/index')
     const rawSource = [
       '@brand: #123456;',
       '// less comment',
@@ -2436,8 +2553,8 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('extracts Tailwind v4 Sass @use root imports before preprocessing', async () => {
-    const { hasTailwindSourceDirectives, resolveCssEntrySource } = await import('@/bundlers/shared/generator-css')
-    const { hasTailwindRootDirectives } = await import('@/bundlers/shared/generator-css/directives')
+    const { hasTailwindSourceDirectives, resolveCssEntrySource } = await import('@/generation/index')
+    const { hasTailwindRootDirectives } = await import('@/generation/directives')
     const rawSource = [
       '$brand: #123456;',
       '@use "tailwindcss";',
@@ -2490,7 +2607,7 @@ describe('bundlers/shared generator css', () => {
       resolveTailwindV4Source,
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -2579,7 +2696,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -2660,7 +2777,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -2740,7 +2857,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({
       css: code.replace('/*! tailwindcss v4.2.4 | MIT License | https://tailwindcss.com */\n', ''),
     }))
@@ -2823,7 +2940,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code.replaceAll('rem', 'rpx') }))
     const result = await generateCssByGenerator({
       opts: {
@@ -2891,7 +3008,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -2971,7 +3088,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -3090,7 +3207,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -3168,7 +3285,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `user:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -3252,7 +3369,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -3346,7 +3463,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -3427,7 +3544,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `user:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -3513,7 +3630,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `user:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -3591,7 +3708,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `user:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -3677,7 +3794,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -3756,7 +3873,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `user:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -3829,7 +3946,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `user:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -3914,7 +4031,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `user:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -3989,7 +4106,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -4032,7 +4149,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('keeps local import wrapper assets out of forced generator replacement', async () => {
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -4092,7 +4209,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -4167,7 +4284,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -4234,7 +4351,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -4337,7 +4454,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async () => ({ css: 'legacy:.card{color:red}' }))
     const baseOptions = {
       opts: {
@@ -4448,7 +4565,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -4522,7 +4639,7 @@ describe('bundlers/shared generator css', () => {
       }
     })
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const result = await generateCssByGenerator({
       opts: {
         generator: {
@@ -4600,7 +4717,7 @@ describe('bundlers/shared generator css', () => {
       }
     })
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const result = await generateCssByGenerator({
       opts: {
         generator: {
@@ -4681,7 +4798,7 @@ describe('bundlers/shared generator css', () => {
       }
     })
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const baseOptions = {
       opts: {
         generator: {
@@ -4760,7 +4877,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const result = await generateCssByGenerator({
       opts: {
         generator: {
@@ -4816,7 +4933,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('keeps user-defined Tailwind layer blocks when removing source directives', async () => {
-    const { removeTailwindSourceDirectives } = await import('@/bundlers/shared/generator-css')
+    const { removeTailwindSourceDirectives } = await import('@/generation/index')
     const rawSource = [
       '@tailwind base;',
       '@tailwind components;',
@@ -4844,7 +4961,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('preserves Tailwind apply context while disabling source scanning', async () => {
-    const { removeTailwindSourceDirectives } = await import('@/bundlers/shared/generator-css')
+    const { removeTailwindSourceDirectives } = await import('@/generation/index')
     const result = removeTailwindSourceDirectives([
       '@import "tailwindcss" source(none);',
       '@source inline("bg-primary");',
@@ -4876,7 +4993,7 @@ describe('bundlers/shared generator css', () => {
       '@tailwind components;',
       '@tailwind utilities;',
     ].join('\n')
-    const { resolveCssEntrySource } = await import('@/bundlers/shared/generator-css')
+    const { resolveCssEntrySource } = await import('@/generation/index')
     const source = resolveCssEntrySource(rawSource, __dirname)
     expect(source).toEqual(expect.objectContaining({
       css: [
@@ -4894,7 +5011,7 @@ describe('bundlers/shared generator css', () => {
       '@config "#tw-config";',
       '@import "#tailwind.css";',
     ].join('\n')
-    const { resolveCssEntrySource } = await import('@/bundlers/shared/generator-css')
+    const { resolveCssEntrySource } = await import('@/generation/index')
     const source = resolveCssEntrySource(rawSource, __dirname, { removeConfig: false })
     expect(source).toEqual(expect.objectContaining({
       css: rawSource,
@@ -4910,7 +5027,7 @@ describe('bundlers/shared generator css', () => {
       '  @apply flex bg-[#123456];',
       '}',
     ].join('\n')
-    const { resolveCssEntrySource } = await import('@/bundlers/shared/generator-css')
+    const { resolveCssEntrySource } = await import('@/generation/index')
     const source = resolveCssEntrySource(rawSource, __dirname)
     expect(source).toEqual(expect.objectContaining({
       css: rawSource,
@@ -4936,7 +5053,7 @@ describe('bundlers/shared generator css', () => {
       '  }',
       '}',
     ].join('\n')
-    const { hasTailwindSourceDirectives, resolveCssEntrySource } = await import('@/bundlers/shared/generator-css')
+    const { hasTailwindSourceDirectives, resolveCssEntrySource } = await import('@/generation/index')
 
     expect(hasTailwindSourceDirectives(rawSource)).toBe(false)
     expect(resolveCssEntrySource(rawSource, __dirname)).toBeUndefined()
@@ -4968,7 +5085,7 @@ describe('bundlers/shared generator css', () => {
       }),
     }))
 
-    const { resolveGeneratorSource } = await import('@/bundlers/shared/generator-css/source-resolver')
+    const { resolveGeneratorSource } = await import('@/generation/source-resolver')
     await resolveGeneratorSource(
       4,
       {
@@ -5021,7 +5138,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { resolveGeneratorSource } = await import('@/bundlers/shared/generator-css/source-resolver')
+    const { resolveGeneratorSource } = await import('@/generation/source-resolver')
     await resolveGeneratorSource(
       4,
       {
@@ -5075,7 +5192,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -5135,7 +5252,7 @@ describe('bundlers/shared generator css', () => {
       })),
       normalizeWeappTailwindcssGeneratorOptions: normalizeGeneratorOptions,    }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -5205,7 +5322,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `user:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -5288,7 +5405,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `user:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -5372,7 +5489,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `user:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -5454,7 +5571,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `user:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -5529,7 +5646,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -5600,7 +5717,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -5679,7 +5796,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -5760,7 +5877,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async () => ({ css: legacyCss }))
     const result = await generateCssByGenerator({
       opts: {
@@ -5849,7 +5966,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async () => ({ css: legacyCss }))
     const result = await generateCssByGenerator({
       opts: {
@@ -5960,7 +6077,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -6070,8 +6187,8 @@ describe('bundlers/shared generator css', () => {
     vi.doMock('@/generator', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: vi.fn(async () => ({
-          css: '.main-only{}.sub-normal-only{}.sub-independent-only{}',
-          rawCss: '.main-only{}.sub-normal-only{}.sub-independent-only{}',
+          css: '.main-only{display:block}.sub-normal-only{display:block}.sub-independent-only{display:block}',
+          rawCss: '.main-only{display:block}.sub-normal-only{display:block}.sub-independent-only{display:block}',
           target: 'weapp',
           classSet: runtimeSet,
           dependencies: [],
@@ -6099,7 +6216,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const result = await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -6193,7 +6310,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -6288,7 +6405,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const result = await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -6379,7 +6496,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const result = await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -6480,7 +6597,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -6585,7 +6702,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const result = await generateCssByGenerator({
       opts: {
         cssPreflight: {
@@ -6706,7 +6823,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const result = await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -6826,7 +6943,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const result = await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -6931,7 +7048,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const result = await generateCssByGenerator({
       opts: {
         cssPreflight: {
@@ -7022,7 +7139,7 @@ describe('bundlers/shared generator css', () => {
     }))
 
     try {
-      const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+      const { generateCssByGenerator } = await import('@/generation/index')
       const result = await generateCssByGenerator({
         opts: {
           cssEntries: [mainCssFile, subCssFile],
@@ -7122,7 +7239,7 @@ describe('bundlers/shared generator css', () => {
     }))
 
     try {
-      const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+      const { generateCssByGenerator } = await import('@/generation/index')
       const result = await generateCssByGenerator({
         opts: {
           cssEntries: [mainCssFile, scopedCssFile],
@@ -7225,7 +7342,7 @@ describe('bundlers/shared generator css', () => {
     }))
 
     try {
-      const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+      const { generateCssByGenerator } = await import('@/generation/index')
       const result = await generateCssByGenerator({
         opts: {
           cssEntries: [mainCssFile, scopedCssFile],
@@ -7340,7 +7457,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const result = await generateCssByGenerator({
       opts: {
         cssPreflight: {
@@ -7459,7 +7576,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const result = await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -7559,7 +7676,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const result = await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -7649,7 +7766,7 @@ describe('bundlers/shared generator css', () => {
     const collector = createSourceCandidateCollector()
     await collector.merge(subWxmlFile, '<view class="bg-[#000000] text-[46px] h-[28px]"></view>')
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -7734,7 +7851,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const result = await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -7828,7 +7945,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -7923,7 +8040,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -8006,7 +8123,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -8102,7 +8219,7 @@ describe('bundlers/shared generator css', () => {
     }))
 
     try {
-      const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+      const { generateCssByGenerator } = await import('@/generation/index')
       await generateCssByGenerator({
         opts: {
           styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -8149,10 +8266,10 @@ describe('bundlers/shared generator css', () => {
   it('does not append unrelated generated raw css when a Tailwind v4 cssSource is path matched', async () => {
     const appCss = '@import "tailwindcss" source(none);\n@source "./pages/**/*.{ts,tsx}";'
     const subCss = '@import "tailwindcss" source(none);\n@source "./sub-independent/**/*.{ts,tsx}";'
-    const rawAppGeneratedCss = '/*! tailwindcss v4.3.0 | MIT License | https://tailwindcss.com */\n.main-only{}'
+    const rawAppGeneratedCss = '/*! tailwindcss v4.3.0 | MIT License | https://tailwindcss.com */\n.main-only{display:block}'
     const generateMock = vi.fn(async () => ({
-      css: '/*! tailwindcss v4.3.0 | MIT License | https://tailwindcss.com */\n.sub-only{}',
-      rawCss: '.sub-only{}',
+      css: '/*! tailwindcss v4.3.0 | MIT License | https://tailwindcss.com */\n.sub-only{display:block}',
+      rawCss: '.sub-only{display:block}',
       target: 'weapp',
       classSet: new Set(['sub-only']),
       dependencies: [],
@@ -8197,7 +8314,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const result = await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -8293,7 +8410,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -8356,7 +8473,7 @@ describe('bundlers/shared generator css', () => {
         generate: generateMock,
       })),    }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     await generateCssByGenerator({
       opts: {
         generator: {
@@ -8445,7 +8562,7 @@ describe('bundlers/shared generator css', () => {
     }))
 
     try {
-      const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+      const { generateCssByGenerator } = await import('@/generation/index')
       await generateCssByGenerator({
         opts: {
           styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -8560,7 +8677,7 @@ describe('bundlers/shared generator css', () => {
     }))
 
     try {
-      const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+      const { generateCssByGenerator } = await import('@/generation/index')
       await generateCssByGenerator({
         opts: {
           styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -8655,7 +8772,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const result = await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -8725,7 +8842,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -8794,7 +8911,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator, hasTailwindSourceDirectives } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator, hasTailwindSourceDirectives } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -8881,7 +8998,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -8965,7 +9082,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -9070,7 +9187,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code.includes('.container') ? '.container{width:100%}' : code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -9172,7 +9289,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -9272,7 +9389,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -9376,7 +9493,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -9486,7 +9603,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -9585,7 +9702,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -9676,7 +9793,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -9792,7 +9909,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -9873,7 +9990,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({
       css: code
         .replaceAll('.from-\\[\\#2f73f1\\]', '.from-_b_h2f73f1_B')
@@ -9924,7 +10041,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('deduplicates identical rules when merging multiple Tailwind v4 sources', async () => {
-    const { deduplicateGeneratedCssRules } = await import('@/bundlers/shared/generator-css/generation-helpers')
+    const { deduplicateGeneratedCssRules } = await import('@/generation/generation-helpers')
     const css = deduplicateGeneratedCssRules([
       'view,text,::after,::before{border:0 solid;box-sizing:border-box}',
       '.before_ccontent-_b_aindependent_a_B::before{--tw-content:"independent";content:var(--tw-content)}',
@@ -9981,7 +10098,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -10032,7 +10149,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('uses cssOptions for Tailwind v4 gradient fallback in generator finalization', async () => {
-    const { finalizeMiniProgramGeneratorCss } = await import('@/bundlers/shared/generator-css/generation-helpers')
+    const { finalizeMiniProgramGeneratorCss } = await import('@/generation/generation-helpers')
     const css = finalizeMiniProgramGeneratorCss([
       ':root,:host{--color-cyan-500:#06b6d4;--color-blue-500:#3b82f6}',
       '.bg-linear-to-r{--tw-gradient-position:to right;background-image:linear-gradient(var(--tw-gradient-stops))}',
@@ -10051,7 +10168,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('preserves incremental at-rule placeholders during generator finalization', async () => {
-    const { finalizeMiniProgramGeneratorCss } = await import('@/bundlers/shared/generator-css/generation-helpers')
+    const { finalizeMiniProgramGeneratorCss } = await import('@/generation/generation-helpers')
     const css = finalizeMiniProgramGeneratorCss('@media screen{/* incremental placeholder */}', 'weapp', 4, false, {
       injectPreflight: false,
       removeEmptyAtRuleAncestors: false,
@@ -10061,7 +10178,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('does not inject Tailwind v4 mini-program preflight twice when generator css already has reset', async () => {
-    const { finalizeMiniProgramGeneratorCss } = await import('@/bundlers/shared/generator-css/generation-helpers')
+    const { finalizeMiniProgramGeneratorCss } = await import('@/generation/generation-helpers')
     const css = finalizeMiniProgramGeneratorCss([
       'view,text,::after,::before{box-sizing:border-box;margin:0;padding:0;border:0 solid;--tw-content:""}',
       ':host,page,.tw-root,wx-root-portal-content{--spacing:8rpx;--default-font-family:var(--font-sans)}',
@@ -10077,7 +10194,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('drops Tailwind v4 mini-program reset but keeps runtime defaults when cssPreflight is disabled', async () => {
-    const { finalizeMiniProgramGeneratorCss } = await import('@/bundlers/shared/generator-css/generation-helpers')
+    const { finalizeMiniProgramGeneratorCss } = await import('@/generation/generation-helpers')
     const css = finalizeMiniProgramGeneratorCss([
       'view,text,::after,::before{box-sizing:border-box;margin:0;padding:0;border:0 solid;--tw-border-style:solid}',
       '.border{border-style:var(--tw-border-style);border-width:1px}',
@@ -10090,7 +10207,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('skips mini-program preflight for scoped Vue style sources', async () => {
-    const { finalizeMiniProgramGeneratorCss } = await import('@/bundlers/shared/generator-css/generation-helpers')
+    const { finalizeMiniProgramGeneratorCss } = await import('@/generation/generation-helpers')
     const css = finalizeMiniProgramGeneratorCss([
       '.card{padding:16px}',
     ].join('\n'), 'weapp', 4, {
@@ -10114,7 +10231,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('disables generator preflight mode for scoped Vue style sources', async () => {
-    const { resolveMiniProgramPreflightModeForGeneratorCss } = await import('@/bundlers/shared/generator-css/generation-helpers')
+    const { resolveMiniProgramPreflightModeForGeneratorCss } = await import('@/generation/generation-helpers')
     const mode = resolveMiniProgramPreflightModeForGeneratorCss({
       cssPreflight: 'view',
     } as any, {
@@ -10140,7 +10257,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('disables generator preflight mode for Vite scoped Vue style ids', async () => {
-    const { resolveMiniProgramPreflightModeForGeneratorCss } = await import('@/bundlers/shared/generator-css/generation-helpers')
+    const { resolveMiniProgramPreflightModeForGeneratorCss } = await import('@/generation/generation-helpers')
     const mode = resolveMiniProgramPreflightModeForGeneratorCss({
       cssPreflight: 'view',
     } as any, {
@@ -10163,7 +10280,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('removes preflight style options for scoped Vue style sources', async () => {
-    const { resolveGeneratorStyleOptions } = await import('@/bundlers/shared/generator-css/generation-helpers')
+    const { resolveGeneratorStyleOptions } = await import('@/generation/generation-helpers')
     const styleOptions = resolveGeneratorStyleOptions({
       cssPreflight: 'view',
       cssPreflightRange: 'all',
@@ -10183,7 +10300,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('uses configured mini-program theme scope when finalizing generator css', async () => {
-    const { finalizeMiniProgramGeneratorCss } = await import('@/bundlers/shared/generator-css/generation-helpers')
+    const { finalizeMiniProgramGeneratorCss } = await import('@/generation/generation-helpers')
     const css = finalizeMiniProgramGeneratorCss([
       ':host,page,.tw-root,wx-root-portal-content{--color-blue-500:#155dfc}',
       '.text-blue-500{color:var(--color-blue-500)}',
@@ -10236,7 +10353,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -10316,7 +10433,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -10399,7 +10516,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -10488,7 +10605,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -10557,7 +10674,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/bundlers/shared/generator-css')
+    const { generateCssByGenerator } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `handled:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -11270,7 +11387,7 @@ describe('bundlers/shared generator css', () => {
         ],
       })),
     }))
-    const { resolveGeneratorSource } = await import('@/bundlers/shared/generator-css/source-resolver')
+    const { resolveGeneratorSource } = await import('@/generation/source-resolver')
 
     const source = await resolveGeneratorSource(
       4,
@@ -11331,7 +11448,7 @@ describe('bundlers/shared generator css', () => {
         baseFallbacks: [root],
       })),
     }))
-    const { resolveGeneratorSource } = await import('@/bundlers/shared/generator-css/source-resolver')
+    const { resolveGeneratorSource } = await import('@/generation/source-resolver')
 
     const source = await resolveGeneratorSource(
       4,
@@ -11362,6 +11479,70 @@ describe('bundlers/shared generator css', () => {
     expect(source?.css).not.toContain('../../../tailwind.config.sub-normal.js')
     expect(resolveTailwindV4Source).toHaveBeenCalledWith(expect.objectContaining({
       base: path.dirname(sourceFile),
+      css: expect.stringContaining(`@config "${configFile}";`),
+    }))
+  })
+
+  it('resolves imported SFC @config from its configured cssSource file', async () => {
+    const root = await mkdtemp(path.join(tmpdir(), 'weapp-tw-sfc-import-config-'))
+    const mainCssFile = path.join(root, 'main.css')
+    const configFile = path.join(root, 'tailwind.config.js')
+    const pageFile = path.join(root, 'pages/index/index.uvue')
+    const mainCss = '@import "tailwindcss" source(none);\n@config "./tailwind.config.js";'
+    const flattenedCss = `${mainCss}\n.probe { @apply flex; }`
+    await mkdir(path.dirname(pageFile), { recursive: true })
+    await writeFile(mainCssFile, mainCss)
+    await writeFile(configFile, 'export default {}')
+    await writeFile(pageFile, '<style scoped>\n@import "../../main.css";\n.probe { @apply flex; }\n</style>')
+    const resolveTailwindV4Source = vi.fn(async (options: any = {}) => ({
+      projectRoot: root,
+      base: options.base ?? root,
+      baseFallbacks: [],
+      css: options.css ?? '@import "tailwindcss";',
+      dependencies: [],
+      version: 4,
+    }))
+    vi.doMock('@/generator', () => createDefaultGeneratorMock({
+      resolveTailwindV4Source,
+      resolveTailwindV4SourceOptionsFromRuntime: vi.fn(() => ({
+        projectRoot: root,
+        cwd: root,
+        base: root,
+        baseFallbacks: [root],
+        cssSources: [{
+          file: mainCssFile,
+          base: root,
+          css: mainCss,
+        }],
+      })),
+    }))
+    const { resolveGeneratorSource } = await import('@/generation/source-resolver')
+
+    const source = await resolveGeneratorSource(
+      4,
+      { tailwindRuntime: { majorVersion: 4 } as any },
+      flattenedCss,
+      `${pageFile}?vue&type=style&index=0&scoped=abc&lang.css`,
+      {
+        isMainChunk: false,
+        majorVersion: 4,
+        postcssOptions: { options: { from: pageFile } },
+      } as any,
+      normalizeGeneratorOptions(),
+      {
+        cssSources: [{
+          file: pageFile,
+          base: path.dirname(pageFile),
+          css: flattenedCss,
+        }],
+      },
+    )
+
+    expect(source?.css).toContain(`@config "${configFile}";`)
+    expect(source?.css).toContain('.probe { @apply flex; }')
+    expect(source?.css).not.toContain(path.join(path.dirname(pageFile), 'tailwind.config.js'))
+    expect(resolveTailwindV4Source).toHaveBeenCalledWith(expect.objectContaining({
+      base: root,
       css: expect.stringContaining(`@config "${configFile}";`),
     }))
   })

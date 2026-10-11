@@ -133,6 +133,7 @@
 import { twMerge } from '@weapp-tailwindcss/merge'
 import { weappTwIgnore } from "weapp-tailwindcss/escape"
 import HelloWorld from "@/components/HelloWorld.vue"
+import TButton from "@/components/TButton.vue"
 import { onMounted, ref } from 'vue'
 
 interface WebviewInfoRow {

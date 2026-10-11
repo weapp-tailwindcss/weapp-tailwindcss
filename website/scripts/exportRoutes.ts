@@ -1,56 +1,40 @@
-import { parse } from '@babel/parser'
-import traverse from '@babel/traverse'
 import fs from 'fs-extra'
 import path from 'pathe'
 
+async function collectHtmlFiles(directory: string): Promise<string[]> {
+  const entries = await fs.readdir(directory, { withFileTypes: true })
+  const files = await Promise.all(entries.map(async (entry) => {
+    const entryPath = path.join(directory, entry.name)
+    if (entry.isDirectory()) {
+      return collectHtmlFiles(entryPath)
+    }
+    return entry.isFile() && entry.name.endsWith('.html') ? [entryPath] : []
+  }))
+  return files.flat()
+}
+
 async function exportRoutes() {
-  const code = await fs.readFile(
-    path.resolve(
-      __dirname,
-      '../.docusaurus/routes.js',
-    ),
-    {
-      encoding: 'utf8',
-    },
-  )
-  const ast = parse(code, {
-    sourceType: 'unambiguous',
-  })
+  const buildDirectory = path.resolve(__dirname, '../build')
+  const htmlFiles = await collectHtmlFiles(buildDirectory)
+  const routes = htmlFiles
+    .map(file => path.relative(buildDirectory, file))
+    .filter(file => path.basename(file) !== '404.html')
+    .map((file) => {
+      const withoutExtension = file.slice(0, -'.html'.length)
+      const routePath = withoutExtension === 'index'
+        ? ''
+        : withoutExtension.replace(/\/index$/, '')
+      return `/${routePath}`
+    })
+    .sort((left, right) => left.localeCompare(right, 'en'))
 
-  const set = new Set()
-
-  traverse(ast, {
-    ObjectExpression: {
-      exit(p) {
-        const propertiesPath = p.get('properties')
-        const property = propertiesPath.find((x) => {
-          return x.isObjectProperty() && x.get('key').isIdentifier({ name: 'exact' }) && x.get('value').isBooleanLiteral({ value: true })
-        })
-        if (property) {
-          propertiesPath.find((x) => {
-            if (x.isObjectProperty()) {
-              const valuePath = x.get('value')
-              const flag = x.get('key').isIdentifier({ name: 'path' }) && valuePath.isStringLiteral()
-              if (flag) {
-                set.add(valuePath.node.value)
-              }
-              return flag
-            }
-            return false
-          })
-        }
-      },
-    },
-  })
-  // console.log(set)
   await fs.outputJSON(
     path.resolve(__dirname, '../routes.json'),
-    [...set],
+    routes,
     {
       spaces: 2,
     },
   )
-  // console.log('Routes exported to routes.json')
 }
 
 exportRoutes()

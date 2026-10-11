@@ -15,7 +15,7 @@ export type ConcreteWatchCaseName
     | 'taro-vite-vue3-tailwindcss-v4'
     | 'uni-app-vite-tailwindcss-v4'
     | 'uni-app-vite-vue3-hbuilderx-tailwindcss-v4'
-    | 'uni-app-x-hbuilderx-tailwindcss-v4'
+    | 'uni-app-x-vdom-tailwindcss-v4'
     | 'weapp-vite-tailwindcss-v4'
 export type TaroMiniProgramWatchPlatform = 'weapp' | 'alipay' | 'tt'
 export type UniAppMiniProgramWatchPlatform = 'mp-weixin' | 'mp-alipay' | 'mp-qq' | 'mp-toutiao'
@@ -94,6 +94,7 @@ export interface MemoryPeakSample {
 }
 
 export interface MemoryUsageSummary {
+  availability?: 'available' | 'unavailable'
   count: number
   baselineRssMb: number
   peakRssMb: number
@@ -195,6 +196,11 @@ export interface MutationScenario extends ClassMutationPayload {
   mutatedSource: string
 }
 
+export interface CssRuleRemovalExpectation {
+  utility: string
+  condition: 'supports' | 'hover'
+}
+
 export interface ClassMutationConfig {
   sourceFile: string
   verifyEscapedIn: Array<'wxml' | 'js'>
@@ -202,8 +208,17 @@ export interface ClassMutationConfig {
   verifyAllEscapedClasses?: boolean
   verifyAllClassLiterals?: boolean
   forbidBgHexTruncationIn?: Array<'wxml' | 'js'>
+  /** 平台契约明确移除的规则；仍验证 token 传播、CSS 缺失和回滚，不因实际缺失自动豁免。 */
+  expectedRemovedCssUtilities?: readonly CssRuleRemovalExpectation[]
   roundConfigs?: MutationRoundConfig[]
   skipExtendedHmr?: boolean
+  /**
+   * comment-carrier 热更新是否要求新增候选同时出现在全局样式中。
+   *
+   * JavaScript 注释不会被 Tailwind v4 的候选扫描器视为 class 候选，
+   * 因此这类场景可以只验证 marker 传播和回滚结果。
+   */
+  commentCarrierMinRequiredGlobalStyleEscapedClasses?: number
   mutate: (source: string, payload: ClassMutationPayload) => string
   mutateCommentCarrier?: (source: string, payload: ClassMutationPayload) => string
 }
@@ -357,6 +372,10 @@ export interface WebHmrSourceDomReplacement {
 }
 
 export interface WatchSession {
+  /** 真实业务 spawn 的起点，不包含采集器冷准备。 */
+  startedAt?: number
+  /** 可选探针取消信号，由发起该轮探针的生命周期持有。 */
+  signal?: AbortSignal | undefined
   child: ChildProcessWithoutNullStreams
   ensureRunning: () => void
   lastCompileSuccessAt: () => number
@@ -835,6 +854,7 @@ export interface WatchReport {
 }
 
 export interface HmrMemoryProjectReport {
+  availability?: 'available' | 'unavailable'
   name: WatchCase['name']
   label: string
   project: string
@@ -890,7 +910,7 @@ export const STYLE_APPLY_UNSUPPORTED_CASES = new Set<ConcreteWatchCaseName>([
   'mpx-tailwindcss-v4',
   'uni-app-vite-tailwindcss-v4',
   'uni-app-vite-vue3-hbuilderx-tailwindcss-v4',
-  'uni-app-x-hbuilderx-tailwindcss-v4',
+  'uni-app-x-vdom-tailwindcss-v4',
   'taro-vite-react-tailwindcss-v4',
   'taro-webpack-react-tailwindcss-v4',
   'weapp-vite-tailwindcss-v4',
@@ -898,7 +918,7 @@ export const STYLE_APPLY_UNSUPPORTED_CASES = new Set<ConcreteWatchCaseName>([
 
 export const STYLE_FUNCTION_UNSUPPORTED_CASES = new Set<ConcreteWatchCaseName>([
   'mpx-tailwindcss-v4',
-  'uni-app-x-hbuilderx-tailwindcss-v4',
+  'uni-app-x-vdom-tailwindcss-v4',
   'taro-vite-react-tailwindcss-v4',
   'taro-webpack-react-tailwindcss-v4',
   'weapp-vite-tailwindcss-v4',
@@ -908,7 +928,7 @@ export const STYLE_REFERENCE_REQUIRED_CASES = new Set<ConcreteWatchCaseName>([
   'gulp-tailwindcss-v4',
   'uni-app-vite-tailwindcss-v4',
   'uni-app-vite-vue3-hbuilderx-tailwindcss-v4',
-  'uni-app-x-hbuilderx-tailwindcss-v4',
+  'uni-app-x-vdom-tailwindcss-v4',
   'mpx-tailwindcss-v4',
   'taro-vite-react-tailwindcss-v4',
   'taro-vite-vue3-tailwindcss-v4',

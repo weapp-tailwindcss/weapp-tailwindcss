@@ -1,8 +1,13 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createRuntimeAffectingSourceSignature } from '@/bundlers/vite/runtime-affecting-signature'
 import { babelParse, parseCache } from '@/js/babel/parse'
+import * as oxcParser from '@/js/oxc-parser'
 
 describe('bundlers/vite runtime-affecting signature', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.unstubAllEnvs()
+  })
   it('keeps html comment content in runtime-affecting signature', () => {
     const first = createRuntimeAffectingSourceSignature(
       '<view class="card"></view><!-- text-[#123456] -->',
@@ -33,11 +38,26 @@ describe('bundlers/vite runtime-affecting signature', () => {
     expect(second).toContain('c: text-[#654321] ')
   })
 
-  it('seeds the parser cache for the downstream JS transform', () => {
+  it('does not retain a Babel AST for signature-only analysis of large generated chunks', () => {
+    parseCache.clear()
+    const source = Array.from({ length: 1000 }, (_, index) => `const cls${index} = "w-[${index}px]"`).join('\n')
+
+    const signature = createRuntimeAffectingSourceSignature(source, 'js')
+
+    expect(signature).toContain('s:w-[0px]')
+    expect(signature).toContain('s:w-[999px]')
+    expect(parseCache.size).toBe(0)
+  })
+
+  it('falls back to the cached Babel parser when the native parser is unavailable', () => {
+    vi.stubEnv('WEAPP_TW_NATIVE', 'off')
+    const parse = vi.spyOn(oxcParser, 'parseOxcSync').mockReturnValue(undefined)
     parseCache.clear()
     const source = 'const cls = "card"'
 
-    createRuntimeAffectingSourceSignature(source, 'js')
+    expect(createRuntimeAffectingSourceSignature(source, 'js')).toBe('s:card')
+    expect(parse).toHaveBeenCalledOnce()
+    expect(parseCache.size).toBe(1)
     const cached = babelParse(source, {
       cache: true,
       cacheKey: 'st:unambiguous',
@@ -50,6 +70,32 @@ describe('bundlers/vite runtime-affecting signature', () => {
       cacheKey: 'st:unambiguous',
       sourceType: 'unambiguous',
     })).toBe(cached)
+  })
+
+  it('keeps JSX, escaped strings, nested templates, TS literals and comments', () => {
+    const source = [
+      'type Size = "w-[3rpx]"',
+      'const value = "w-\\u005b1rpx\\u005d"',
+      // eslint-disable-next-line no-template-curly-in-string -- 被测源码需要保留模板插值。
+      'const text = `p-[2px] ${active ? `m-[3px]` : "gap-[4px]"}`',
+      'const view = <view className="h-[5px]"> bg-[red] </view>',
+      '// text-[6px]',
+    ].join('\n')
+    const signature = createRuntimeAffectingSourceSignature(source, 'js')
+
+    for (const text of ['s:w-[3rpx]', 's:w-[1rpx]', 't:p-[2px] ', 't:m-[3px]', 's:gap-[4px]', 's:h-[5px]', 'x:bg-[red]', 'c: text-[6px]']) {
+      expect(signature).toContain(text)
+    }
+    expect(createRuntimeAffectingSourceSignature(source.replace('m-[3px]', 'm-[7px]'), 'js')).not.toBe(signature)
+  })
+
+  it('falls back to Babel if the native parser throws', () => {
+    vi.stubEnv('WEAPP_TW_NATIVE', 'off')
+    const parse = vi.spyOn(oxcParser, 'parseOxcSync').mockImplementation(() => {
+      throw new Error('native parser unavailable')
+    })
+    expect(createRuntimeAffectingSourceSignature('const cls = "w-[3rpx]"', 'js')).toBe('s:w-[3rpx]')
+    expect(parse).toHaveBeenCalledOnce()
   })
 
   it('skips js parser work when source has no runtime-affecting text hint', () => {
@@ -73,10 +119,12 @@ describe('bundlers/vite runtime-affecting signature', () => {
 
   it('keeps template expression string content in js signature', () => {
     const first = createRuntimeAffectingSourceSignature(
+      // eslint-disable-next-line no-template-curly-in-string -- 被测源码需要保留模板插值。
       'const cls = `card ${active ? "text-[#123456]" : "text-[#111111]"}`',
       'js',
     )
     const second = createRuntimeAffectingSourceSignature(
+      // eslint-disable-next-line no-template-curly-in-string -- 被测源码需要保留模板插值。
       'const cls = `card ${active ? "text-[#654321]" : "text-[#111111]"}`',
       'js',
     )
@@ -104,6 +152,16 @@ describe('bundlers/vite runtime-affecting signature', () => {
     const second = createRuntimeAffectingSourceSignature('.card { color: blue; }', 'css')
 
     expect(first).not.toBe(second)
+  })
+
+  it.each([
+    ['.a { content: "a  b" }', '.a { content: "a b" }'],
+    ['.a { content: "/* visible */" }', '.a { content: "" }'],
+    ['.a :hover { color: red }', '.a:hover { color: red }'],
+  ])('preserves meaningful CSS differences: %s', (previous, next) => {
+    expect(createRuntimeAffectingSourceSignature(previous, 'css'))
+      .not
+      .toBe(createRuntimeAffectingSourceSignature(next, 'css'))
   })
 
   it('falls back to raw source when js parsing fails', () => {

@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
   generateTailwindV4Css: vi.fn(),
 }))
 
-vi.mock('@/bundlers/shared/v4-generation-core', () => ({
+vi.mock('@/generation/service', () => ({
   generateTailwindV4Css: mocks.generateTailwindV4Css,
 }))
 
@@ -473,6 +473,28 @@ describe('vite css finalizer output plugin', () => {
     const css = String(output.source)
     expect(css).toContain(UNI_APP_X_WEB_PREFLIGHT_RESET_MARKER)
     expect(css).toContain('uni-app uni-view')
+    expect(css.indexOf(UNI_APP_X_WEB_PREFLIGHT_RESET_MARKER)).toBeLessThan(css.indexOf('.border'))
+    expect(opts.styleHandler).not.toHaveBeenCalled()
+  })
+
+  it('injects uni-app x Web border reset after a split framework medium rule', async () => {
+    const { context, opts } = createContext()
+    opts.appType = 'uni-app-x'
+    opts.cssMatcher = (file: string) => file.endsWith('.css')
+    opts.generator = {
+      target: 'web',
+    }
+    context.cssPipelineStrategy = uniAppXFinalizerStrategy
+    const output = asset('app.css', 'uni-app uni-view{position:relative;border-width:medium}.border{border-width:1px;}')
+    const bundle: OutputBundle = {
+      'app.css': output,
+    }
+
+    await getHandler(createViteCssFinalizerOutputPlugin(context as any)).call({}, {}, bundle)
+
+    const css = String(output.source)
+    expect(css).toContain(UNI_APP_X_WEB_PREFLIGHT_RESET_MARKER)
+    expect(css.indexOf(UNI_APP_X_WEB_PREFLIGHT_RESET_MARKER)).toBeGreaterThan(css.indexOf('border-width:medium'))
     expect(css.indexOf(UNI_APP_X_WEB_PREFLIGHT_RESET_MARKER)).toBeLessThan(css.indexOf('.border'))
     expect(opts.styleHandler).not.toHaveBeenCalled()
   })

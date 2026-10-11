@@ -4,7 +4,7 @@ import { normalizeStringListOption } from '@/utils/options'
 import { isTailwindV4CssEntry } from './css-entries'
 import { hasConfiguredTailwindV4CssRoots } from './css-sources'
 
-// 默认保留列表暂为空，后续若有新增默认变量再补充到该数组
+// 默认不限定变量名称，由用户通过 cssCalc 数组或 includeCustomProperties 指定。
 export const DEFAULT_CSS_CALC_CUSTOM_PROPERTIES: (string | RegExp)[] = []
 
 function includesToken(list: (string | RegExp)[], token: string | RegExp) {
@@ -30,9 +30,8 @@ function ensureDefaultsIncluded(
   value: InternalUserDefinedOptions['cssCalc'],
 ): InternalUserDefinedOptions['cssCalc'] {
   if (value === true) {
-    return {
-      includeCustomProperties: [...DEFAULT_CSS_CALC_CUSTOM_PROPERTIES],
-    }
+    // true 表示选择所有可证明固定的变量，不能降为一个空白名单。
+    return true
   }
 
   if (Array.isArray(value)) {
@@ -124,7 +123,8 @@ export function applyV4CssCalcDefaults(
   cssCalc: InternalUserDefinedOptions['cssCalc'],
   tailwindRuntime: TailwindcssRuntimeLike | undefined,
 ): InternalUserDefinedOptions['cssCalc'] {
-  const cssCalcOptions = cssCalc ?? false
+  // 未指定的策略留到平台解析完成后决定，不能与显式关闭合并。
+  const cssCalcOptions = cssCalc
 
   if (tailwindRuntime && cssCalcOptions) {
     return ensureDefaultsIncluded(cssCalcOptions)

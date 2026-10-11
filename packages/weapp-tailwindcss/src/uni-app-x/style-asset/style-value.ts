@@ -1,40 +1,48 @@
 import type { OutputChunk, SourceMap } from 'rollup'
-import path from 'node:path'
-import { splitCandidateTokens } from '@tailwindcss-mangle/engine'
-import { postcss } from '@weapp-tailwindcss/postcss'
-import { replaceWxml } from '@/wxml'
+import { splitCandidateTokens } from '@weapp-tailwindcss/engine'
+import {
+  collectCssApplyUtilities,
+  cssToClassStyleValue,
+  expandCssApplySourcesToStyleValue,
+  normalizeUniAppXStyleProperty,
+  normalizeUniAppXStyleValue,
+  rewriteUniAppXStyleReferences,
+} from '@weapp-tailwindcss/postcss/transform'
+import { resolveStyleReferencePath } from '../style-reference-path'
 
 const GEN_APP_STYLES_RE = /const\s+GenAppStyles\s*=\s*\[_uM\(\[([\s\S]*?)\]\)\]/
 const STYLE_ENTRY_RE = /\[\s*("((?:\\.|[^"\\])+)")\s*,\s*(_pS\(_uM\(\[[\s\S]*?\]\)\))\s*\]/g
 const STRING_LITERAL_RE = /(['"`])((?:\\.|(?!\1)[\s\S])*?)\1/g
 const SFC_STYLE_BLOCK_RE = /<style\b[^>]*>([\s\S]*?)<\/style>/gi
 const STYLE_EXPORT_PREFIX_RE = /^\s*export\s+default\s+/
-const CLASS_SELECTOR_PREFIX_RE = /^\.((?:\\[^\n\r\f]|[\w-])+)(?=$|[.:#[])/
 
 type StyleDeclarations = Record<string, string | number>
 export type StyleValue = Record<string, Record<string, StyleDeclarations>>
 
-function toCamelCase(prop: string) {
-  return prop.replace(/-([a-z])/g, (_, char: string) => char.toUpperCase())
+function cloneStyleEntry(entry: Record<string, StyleDeclarations>): Record<string, StyleDeclarations> {
+  return Object.fromEntries(
+    Object.entries(entry).map(([state, declarations]) => [state, { ...declarations }]),
+  )
 }
 
-function normalizeValue(value: string) {
-  const trimmed = value.trim()
-  if (/^-?\d+(?:\.\d+)?px$/.test(trimmed)) {
-    return Number(trimmed.slice(0, -2))
+function mergeStyleEntry(
+  local: Record<string, StyleDeclarations> | undefined,
+  generated: Record<string, StyleDeclarations>,
+) {
+  const merged = local ? cloneStyleEntry(local) : {}
+  for (const [state, declarations] of Object.entries(generated)) {
+    merged[state] = {
+      ...(merged[state] ?? {}),
+      ...declarations,
+    }
   }
-  return trimmed.replace(/\s*,\s*/g, ',')
+  return merged
 }
 
-function normalizeStyleValue(value: string | number) {
-  if (typeof value === 'number') {
-    return value
-  }
-  return normalizeValue(value)
-}
-
-function unescapeCssClassSelector(className: string) {
-  return className.replace(/\\([^\n\r\f0-9a-f])/gi, '$1')
+function cloneStyleValue(style: StyleValue): StyleValue {
+  return Object.fromEntries(
+    Object.entries(style).map(([className, entry]) => [className, cloneStyleEntry(entry)]),
+  )
 }
 
 export function parseStyleExport(source: string): StyleValue | undefined {
@@ -86,7 +94,7 @@ export function styleExportToUtsMap(styleExport: StyleValue) {
       continue
     }
     const declarationEntries = Object.entries(declarations).map(([prop, value]) => {
-      return `[${JSON.stringify(toCamelCase(prop))}, ${JSON.stringify(normalizeStyleValue(value))}]`
+      return `[${JSON.stringify(normalizeUniAppXStyleProperty(prop))}, ${JSON.stringify(normalizeUniAppXStyleValue(prop, value))}]`
     })
     if (declarationEntries.length === 0) {
       continue
@@ -160,41 +168,10 @@ export function createUtsStyleArrayFromAppStyles(code: string, appSource?: strin
   return createUtsStyleArray([...used].map(className => entries.get(className)!).filter(Boolean))
 }
 
-function cssToStyleExport(source: string): StyleValue | undefined {
-  let root: postcss.Root
-  try {
-    root = postcss.parse(source)
-  }
-  catch {
-    return
-  }
-  const result: StyleValue = {}
-  root.walkRules((rule) => {
-    const selectors = rule.selectors ?? []
-    for (const selector of selectors) {
-      const match = selector.trim().match(CLASS_SELECTOR_PREFIX_RE)
-      if (!match?.[1]) {
-        continue
-      }
-      const declarations: Record<string, string | number> = {}
-      rule.walkDecls((decl) => {
-        declarations[toCamelCase(decl.prop)] = normalizeValue(decl.value)
-      })
-      if (Object.keys(declarations).length > 0) {
-        result[match[1]] = { '': declarations }
-        const className = unescapeCssClassSelector(match[1])
-        result[className] = { '': declarations }
-        result[replaceWxml(className)] = { '': declarations }
-      }
-    }
-  })
-  return Object.keys(result).length > 0 ? result : undefined
-}
-
 export function cssSourceToStyleValue(source: string) {
   return STYLE_EXPORT_PREFIX_RE.test(source)
     ? parseStyleExport(source)
-    : cssToStyleExport(source)
+    : cssToClassStyleValue(source)
 }
 
 export function mergeStyleValues(...items: Array<StyleValue | undefined>) {
@@ -222,76 +199,21 @@ export function createStyleValueFromApplySources(sources: string[], utilityStyle
       ? [...source.matchAll(SFC_STYLE_BLOCK_RE)].map(styleBlock => styleBlock[1] ?? '')
       : [source]
     for (const styleSource of styleSources) {
-      let root: postcss.Root
-      try {
-        root = postcss.parse(styleSource)
-      }
-      catch {
+      const applied = expandCssApplySourcesToStyleValue(styleSource, utilityStyles)
+      if (!applied) {
         continue
       }
-      root.walkRules((rule) => {
-        const applyRules = rule.nodes?.filter((node): node is postcss.AtRule => node.type === 'atrule' && node.name === 'apply') ?? []
-        if (applyRules.length === 0) {
-          return
-        }
-        const selectors = rule.selectors ?? [rule.selector]
-        for (const selector of selectors) {
-          const className = selector.trim().match(CLASS_SELECTOR_PREFIX_RE)?.[1]
-          if (!className) {
-            continue
-          }
-          const declarations: Record<string, string | number> = {}
-          for (const applyRule of applyRules) {
-            for (const utility of splitCandidateTokens(applyRule.params)) {
-              const utilityDeclarations = utilityStyles[utility]?.[''] ?? utilityStyles[replaceWxml(utility)]?.['']
-              if (utilityDeclarations) {
-                Object.assign(declarations, utilityDeclarations)
-              }
-            }
-          }
-          if (Object.keys(declarations).length > 0) {
-            const unescapedClassName = unescapeCssClassSelector(className)
-            result[className] = { '': declarations }
-            result[unescapedClassName] = { '': declarations }
-            result[replaceWxml(unescapedClassName)] = { '': declarations }
-          }
-        }
-      })
+      Object.assign(result, applied)
     }
   }
   return Object.keys(result).length > 0 ? result : undefined
 }
 
 function resolveReferencePaths(styleSource: string, sourceId?: string) {
-  if (!sourceId || !styleSource.includes('@reference')) {
-    return styleSource
-  }
-  let root: postcss.Root
-  try {
-    root = postcss.parse(styleSource)
-  }
-  catch {
-    return styleSource
-  }
-  const cleanSourceId = sourceId.replace(/\?.*$/, '')
-  const pathApi = /^[a-z]:[\\/]/i.test(cleanSourceId) ? path.win32 : path
-  root.walkAtRules('reference', (rule) => {
-    const quote = rule.params[0]
-    if (quote !== '"' && quote !== '\'') {
-      return
-    }
-    const closingQuoteIndex = rule.params.indexOf(quote, 1)
-    if (closingQuoteIndex <= 1) {
-      return
-    }
-    const referencePath = rule.params.slice(1, closingQuoteIndex)
-    if (!referencePath.startsWith('.')) {
-      return
-    }
-    const resolvedPath = pathApi.resolve(pathApi.dirname(cleanSourceId), referencePath).replaceAll('\\', '/')
-    rule.params = `${quote}${resolvedPath}${quote}${rule.params.slice(closingQuoteIndex + 1)}`
-  })
-  return root.toString()
+  const cleanSourceId = sourceId?.replace(/\?.*$/, '')
+  return rewriteUniAppXStyleReferences(styleSource, sourceId
+    ? reference => resolveStyleReferencePath(cleanSourceId!, reference)
+    : undefined)
 }
 
 export function collectUniAppXHarmonyApplyStyleSourcesFromSource(source: string, sourceId?: string) {
@@ -307,18 +229,9 @@ export function collectUniAppXHarmonyApplyUtilitiesFromSources(sources: Iterable
   const utilities = new Set<string>()
   for (const source of sources) {
     for (const styleSource of collectUniAppXHarmonyApplyStyleSourcesFromSource(source)) {
-      let root: postcss.Root
-      try {
-        root = postcss.parse(styleSource)
+      for (const utility of collectCssApplyUtilities(styleSource)) {
+        utilities.add(utility)
       }
-      catch {
-        continue
-      }
-      root.walkAtRules('apply', (rule) => {
-        for (const utility of splitCandidateTokens(rule.params)) {
-          utilities.add(utility)
-        }
-      })
     }
   }
   return utilities
@@ -329,15 +242,18 @@ export function createMergedStyleValue(code: string, localStyle: StyleValue | un
   if (used.size === 0) {
     return
   }
-  const merged: StyleValue = {
-    ...(localStyle ?? {}),
-  }
+  const merged = localStyle ? cloneStyleValue(localStyle) : {}
   let changed = false
   for (const className of used) {
-    if (merged[className] || !appStyle[className]) {
+    const generatedStyle = appStyle[className]
+    if (!generatedStyle) {
       continue
     }
-    merged[className] = appStyle[className]
+    const next = mergeStyleEntry(merged[className], generatedStyle)
+    if (JSON.stringify(next) === JSON.stringify(merged[className])) {
+      continue
+    }
+    merged[className] = next
     changed = true
   }
   return changed ? merged : undefined
@@ -351,7 +267,7 @@ export function createMergedStyleValues(code: string, localStyles: StyleValue[],
   if (used.size === 0) {
     return
   }
-  const merged = localStyles.map(style => ({ ...style }))
+  const merged = localStyles.map(cloneStyleValue)
   let changed = false
   for (const className of used) {
     const generatedStyle = appStyle[className]
@@ -360,15 +276,16 @@ export function createMergedStyleValues(code: string, localStyles: StyleValue[],
     }
     const indexes = merged.flatMap((style, index) => style[className] ? [index] : [])
     if (indexes.length === 0) {
-      merged[0][className] = generatedStyle
+      merged[0]![className] = mergeStyleEntry(undefined, generatedStyle)
       changed = true
       continue
     }
     for (const index of indexes) {
-      if (JSON.stringify(merged[index][className]) === JSON.stringify(generatedStyle)) {
+      const next = mergeStyleEntry(merged[index]![className], generatedStyle)
+      if (JSON.stringify(merged[index]![className]) === JSON.stringify(next)) {
         continue
       }
-      merged[index][className] = generatedStyle
+      merged[index]![className] = next
       changed = true
     }
   }

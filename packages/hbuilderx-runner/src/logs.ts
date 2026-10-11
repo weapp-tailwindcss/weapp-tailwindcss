@@ -57,8 +57,9 @@ export function createLogBuffer(maxChunks = 160) {
 
 export function collectProcessOutput(child: ChildProcess, maxChunks = 160) {
   const buffer = createLogBuffer(maxChunks)
-  child.stdout?.on('data', chunk => buffer.push(chunk))
-  child.stderr?.on('data', chunk => buffer.push(chunk))
+  // 每条流独立解码，避免 Windows 管道等分块边界截断 UTF-8 字符。
+  child.stdout?.setEncoding('utf8').on('data', chunk => buffer.push(chunk))
+  child.stderr?.setEncoding('utf8').on('data', chunk => buffer.push(chunk))
   return buffer.logs
 }
 

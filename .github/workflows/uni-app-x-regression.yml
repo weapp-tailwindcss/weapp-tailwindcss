@@ -1,0 +1,137 @@
+name: Uni-app x portable regressions
+
+on:
+  workflow_dispatch:
+    inputs:
+      runtime_case:
+        description: 选择实际 IDE 验证场景
+        type: choice
+        default: all
+        options: [all, 1170-LF, 1170-CRLF, 1144-options, 1144-setup, vanilla-cli, vanilla-powershell, vanilla-file, vanilla-stdin]
+      compare_before:
+        description: 独立构建修复前版本并复现首次保存丢样式
+        type: boolean
+        default: false
+  pull_request:
+    paths:
+      - .github/workflows/uni-app-x-regression.yml
+      - packages/hbuilderx-runner/**
+      - packages/weapp-tailwindcss/src/uni-app-x/**
+      - packages/weapp-tailwindcss/test/uni-app-x/**
+      - e2e/hbuilderx-local/**
+      - e2e/issue-11*
+      - e2e/hbuilderx-project-alias.test.ts
+      - e2e/hbuilderx-attach.test.ts
+      - e2e/issue-hbuilderx-attach.test.ts
+      - demo/issue-1144-uni-app-x-web/**
+      - scripts/hbuilderx-project-alias.mjs
+      - scripts/ci/hbuilderx-*
+      - scripts/ci/issue-hbuilderx-*
+
+permissions:
+  contents: read
+
+concurrency:
+  group: uni-app-x-regression-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  portable:
+    name: Portable (${{ matrix.os }}, Node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node: [22, 24]
+    env:
+      CI: '1'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          node-version: ${{ matrix.node }}
+      - run: pnpm --filter @weapp-tailwindcss/hbuilderx-runner test --update=none
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm exec vitest run -c scripts/ci/demo-matrix/vitest.config.mts scripts/ci/demo-matrix/browser-navigation.test.mjs --update=none
+      - run: pnpm --filter weapp-tailwindcss... run build
+      - run: pnpm --filter weapp-tailwindcss exec vitest run test/uni-app-x --update=none
+      - run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/issue-1144-runner.test.ts e2e/hbuilderx-project-alias.test.ts e2e/hbuilderx-attach.test.ts --update=none
+
+  windows-uni-app-x:
+    if: github.event_name == 'workflow_dispatch'
+    name: Windows HBuilderX ${{ matrix.channel }} issues 1170 and 1144
+    runs-on: windows-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - channel: stable
+            version: 5.24.2026081301
+          - channel: alpha
+            version: 5.25.2026082902-alpha
+    env:
+      CI: '1'
+      HBUILDERX_CHANNEL: ${{ matrix.channel }}
+      HBUILDERX_VERSION: ${{ matrix.version }}
+      E2E_ISSUE_1170_WEB: '1'
+      E2E_ISSUE_1144_STABLE: ${{ matrix.channel == 'stable' && '1' || '0' }}
+      E2E_ISSUE_1144_ALPHA: ${{ matrix.channel == 'alpha' && '1' || '0' }}
+      E2E_HBUILDERX_WEB_TIMEOUT_MS: '120000'
+      E2E_WINDOWS_CASE: ${{ inputs.runtime_case || 'all' }}
+      E2E_WINDOWS_REPEATS: '2'
+    steps:
+      - uses: actions/checkout@v6
+      - run: git config core.longpaths true
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          node-version: '24'
+      - name: Build current source and dependencies
+        run: pnpm --filter weapp-tailwindcss... run build
+      - name: Install browser
+        run: pnpm exec playwright install chromium
+      - name: Cache official HBuilderX toolchain
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/issue-hbuilderx-${{ matrix.version }}
+          key: issue-hbuilderx-win-${{ matrix.version }}-v2
+      - name: Prepare official Windows IDE
+        id: ide
+        run: node scripts/ci/issue-hbuilderx-windows.mjs
+      - name: Verify path ownership and real Web HMR
+        shell: pwsh
+        env:
+          E2E_HBUILDERX_ALIAS_ROOT: ${{ runner.temp }}/HBuilderX 中文 & 项目
+        run: |
+          pnpm --filter weapp-tailwindcss exec vitest run test/uni-app-x/vite-style-requests.test.ts --update=none
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ($env:E2E_WINDOWS_CASE -in @('vanilla-cli', 'vanilla-powershell', 'vanilla-file', 'vanilla-stdin')) {
+            node scripts/ci/hbuilderx-vanilla.mjs
+          } else {
+            node scripts/ci/issue-hbuilderx-verify.mjs
+          }
+          exit $LASTEXITCODE
+      - name: Preserve current-source evidence before the baseline build
+        if: ${{ !cancelled() && steps.ide.outcome == 'success' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-current-issues-1170-1144-${{ matrix.channel }}
+          path: |
+            e2e/.artifacts/issue-hbuilderx-windows/**
+            e2e/.artifacts/web-hmr/**
+          if-no-files-found: error
+          retention-days: 14
+      - name: Reproduce the pre-fix failure on the same Windows IDE
+        if: ${{ !cancelled() && steps.ide.outcome == 'success' && inputs.compare_before }}
+        run: node scripts/ci/issue-hbuilderx-compare.mjs
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: windows-issues-1170-1144-${{ matrix.channel }}
+          path: |
+            e2e/.artifacts/issue-hbuilderx-windows/**
+            e2e/.artifacts/web-hmr/**
+          if-no-files-found: error
+          retention-days: 14

@@ -1933,6 +1933,14 @@ page {
     -webkit-transition-timing-function: var(--ease-in-out);
     transition-timing-function: var(--ease-in-out);
   }
+  .before\:content-\[\'independent_subpackage_taro-webpack-vue3-tailwindcss-v4\'\]::before {
+    --tw-content: 'independent subpackage taro-webpack-vue3-tailwindcss-v4';
+    content: var(--tw-content);
+  }
+  .before\:content-\[\'normal_subpackage_taro-webpack-vue3-tailwindcss-v4\'\]::before {
+    --tw-content: 'normal subpackage taro-webpack-vue3-tailwindcss-v4';
+    content: var(--tw-content);
+  }
   .before\:content-\[\'现在，让我们开始神奇的_tailwindcss_开发之旅吧！\'\]::before {
     --tw-content: '现在，让我们开始神奇的 tailwindcss 开发之旅吧！';
     content: var(--tw-content);

@@ -56,3 +56,80 @@
   --default-font-family: var(--font-sans);
   --default-mono-font-family: var(--font-mono);
 }
+ /*tokens: mt-8 <= src/pages-order/pages/user/user.vue */
+.mt-8 {
+  margin-top: calc(var(--spacing) * 8);
+}
+ /*tokens: min-h-screen <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue */
+.min-h-screen {
+  min-height: 100vh;
+}
+ /*tokens: flex-1 <= src/pages-order/pages/user/user.vue */
+.flex-1 {
+  flex: 1;
+}
+ /*tokens: justify-center <= src/pages-order/pages/user/user.vue */
+.justify-center {
+  justify-content: center;
+}
+ /*tokens: gap-1 <= src/pages-order/pages/user/user.vue */
+.gap-1 {
+  gap: var(--spacing);
+}
+ /*tokens: border-emerald-500 <= src/pages-order/pages/user/user.vue */
+.border-emerald-500 {
+  border-color: rgb(0, 185, 129);
+}
+ /*tokens: bg-emerald-100 <= src/pages-order/pages/user/user.vue */
+.bg-emerald-100 {
+  background-color: rgb(208, 250, 229);
+}
+ /*tokens: bg-slate-50 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue */
+.bg-slate-50 {
+  background-color: rgb(248, 250, 252);
+}
+ /*tokens: p-5 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue */
+.p-5 {
+  padding: calc(var(--spacing) * 5);
+}
+ /*tokens: py-6 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue */
+.py-6 {
+  padding-block: calc(var(--spacing) * 6);
+}
+ /*tokens: text-lg <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue */
+.text-lg {
+  font-size: var(--text-lg);
+  line-height: var(--tw-leading, var(--text-lg--line-height));
+}
+ /*tokens: text-xl <= src/pages-order/pages/user/user.vue */
+.text-xl {
+  font-size: var(--text-xl);
+  line-height: var(--tw-leading, var(--text-xl--line-height));
+}
+ /*tokens: leading-6 <= src/pages-order/pages/user/user.vue */
+.leading-6 {
+  --tw-leading: calc(var(--spacing) * 6);
+  line-height: calc(var(--spacing) * 6);
+}
+ /*tokens: font-medium <= src/pages-order/pages/user/user.vue */
+.font-medium {
+  --tw-font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-medium);
+}
+ /*tokens: text-[#929292] <= src/pages-order/pages/home/home.vue */
+.text-_b_h929292_B {
+  color: #929292;
+}
+ /*tokens: text-emerald-600 <= src/pages-order/pages/user/user.vue */
+.text-emerald-600 {
+  color: rgb(0, 150, 105);
+}
+ /*tokens: shadow <= src/pages-order/pages/home/home.vue */
+.shadow {
+  --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgba(0, 0, 0, 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgba(0, 0, 0, 0.1));
+  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+}
+ /*tokens: active:bg-emerald-50 <= src/pages-order/pages/user/user.vue */
+.active_cbg-emerald-50:active {
+  background-color: rgb(236, 253, 245);
+}

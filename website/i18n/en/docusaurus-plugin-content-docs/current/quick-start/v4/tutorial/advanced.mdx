@@ -3,7 +3,10 @@ sidebar_label: Advanced level
 sidebar_position: 3
 toc_max_heading_level: 4
 title: 'Advanced chapter: performance, compatibility and team collaboration'
-description: Tailwind CSS 4 brings more powerful native syntax, but it still needs to balance compatibility and team collaboration in a small program environment. This article starts from an engineering perspective to help you stably implement, optimize and maintain it in real projects.
+description: >-
+  Tailwind CSS 4 brings more powerful native syntax, but it still needs to balance compatibility and team collaboration
+  in a small program environment. This article starts from an engineering perspective to help you stably implement,
+  optimize and maintain it in real projects.
 keywords:
   - quick start
   - Install
@@ -11,7 +14,6 @@ keywords:
   - Advanced level
   - performance
   - Compatible with teamwork
-  - quick start
   - v4
   - tutorial
   - advanced
@@ -21,6 +23,7 @@ keywords:
   - WeChat applet
   - uni-app
   - taro
+  - installation
 ---
 # Advanced chapter: performance, compatibility and team collaboration
 
@@ -68,7 +71,7 @@ Extra tips:
 
 With the variables injected by `cssOptions.cssPreflight` or customized `@theme`, the theme color, gradient background, etc. of the tab bar can be managed by Tailwind. If you need to override other container names, you can still extend `cssOptions.cssSelectorReplacement.root` to include more selectors through configuration.
 
-- `cssOptions.cssPresetEnv` will participate in the final build. Please execute the `pnpm build:apps` or corresponding `pnpm build` command to confirm the product before publishing.
+- `cssOptions.cssPresetEnv` participates in the final build. Use your own project's build command to confirm the final CSS before publishing.
 
 ## 2. Multi-terminal coexistence and on-demand construction
 
@@ -106,7 +109,7 @@ In this way, Tailwind will only generate atomic classes for the templates actual
 - **Visual positioning**: Use the `outline` class to temporarily mark component boundaries, for example, add `outline outline-1 outline-dashed outline-brand/60` during debugging
 - **Assertion style exists**: core components can introduce snapshot tests or DOM assertions, combined with Vitest + @testing-library to verify key class names
 - **lint constraint**: In `eslint-plugin-tailwindcss` or the lint rule agreed by the team, the custom class name must be restricted to `@utility`
-- **Regression Verification**: When upgrading Tailwind, execute `pnpm test`,
+- **Regression Verification**: When upgrading Tailwind, run your project's unit and end-to-end tests, then preview the result on representative devices.
 
 ## 5. Upgrade and maintenance strategy
 

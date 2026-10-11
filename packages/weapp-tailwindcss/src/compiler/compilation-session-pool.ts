@@ -16,6 +16,7 @@ export interface CompilationScopeSource extends CompilationScopeGraphSource {
 export interface CompilationScopeGenerationResult {
   classSet: Iterable<string>
   dependenciesBySource?: Iterable<readonly [string, Iterable<CompilationScopeDependency>]> | undefined
+  snapshot?: unknown
 }
 
 export interface CompilationScopeRequest {

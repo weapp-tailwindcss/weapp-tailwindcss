@@ -47,8 +47,7 @@ function shouldUseAppearanceTransition() {
 function Toggler(props: Props) {
   const isTransitioning = useRef(false)
   const { toggleTheme } = useToggleTheme({
-    duration: 220,
-    easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+    preset: 'fade',
     isCurrentDark() {
       return props.value === 'dark'
     },

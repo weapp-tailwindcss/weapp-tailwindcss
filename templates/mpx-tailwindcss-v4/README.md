@@ -51,5 +51,5 @@ pnpm open    # 打开微信开发者工具
 
 ## 相关文档
 
-- `weapp-tailwindcss`：<https://tw.icebreaker.top/>
+- `weapp-tailwindcss`：<https://tw.weapp.dev/>
 - `Mpx`：<https://mpxjs.cn/>

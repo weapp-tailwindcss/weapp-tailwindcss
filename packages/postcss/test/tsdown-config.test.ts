@@ -2,6 +2,7 @@ import { createRequire } from 'node:module'
 import { describe, expect, it } from 'vitest'
 import {
   createPostcssTsdownConfigs,
+  postcssBundledDependencies,
   postcssEsmOnlyDependencies,
 } from '../tsdown.config.mts'
 
@@ -23,10 +24,14 @@ describe('postcss tsdown config', () => {
     expect(cjs.clean).toBe(false)
     expect(cjs.dts).toBe(false)
     expect(cjs.deps?.neverBundle).toBe(postcssEsmOnlyDependencies)
-    expect(matchesDependency(postcssEsmOnlyDependencies, '@csstools/css-color-parser')).toBe(true)
+    expect(esm.deps?.resolveDepSubpath).toBe(true)
+    expect(cjs.deps?.resolveDepSubpath).toBe(true)
+    expect(matchesDependency(postcssEsmOnlyDependencies, '@csstools/css-color-parser')).toBe(false)
     expect(matchesDependency(postcssEsmOnlyDependencies, 'postcss-preset-env')).toBe(true)
     expect(matchesDependency(postcssEsmOnlyDependencies, 'postcss-rule-unit-converter')).toBe(false)
-    expect(cjs.deps?.alwaysBundle).toBeUndefined()
+    expect(cjs.deps?.alwaysBundle).toBe(postcssBundledDependencies)
+    expect(esm.deps?.alwaysBundle).toBe(postcssBundledDependencies)
+    expect(matchesDependency(postcssBundledDependencies, 'postcss-plugin-shared')).toBe(true)
   })
 
   it('emits .js/.cjs and disables clean while watching', () => {

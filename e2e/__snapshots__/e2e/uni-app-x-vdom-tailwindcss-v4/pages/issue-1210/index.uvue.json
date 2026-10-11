@@ -1,0 +1,18 @@
+{
+  "file": "pages/issue-1210/index.uvue",
+  "count": 12,
+  "tokens": [
+    "bg-gradient-to-r",
+    "drop-shadow-md",
+    "from-20%",
+    "from-cyan-500",
+    "h-[40px]",
+    "ring-2",
+    "ring-blue-500",
+    "shadow-md",
+    "shadow-red-500",
+    "to-80%",
+    "to-blue-500",
+    "via-red-500"
+  ]
+}

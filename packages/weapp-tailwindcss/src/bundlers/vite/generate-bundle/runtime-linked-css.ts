@@ -2,7 +2,7 @@ import type { BundleSnapshot } from '../bundle-state'
 import path from 'node:path'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
 
-const MINI_PROGRAM_TEMPLATE_OUTPUT_EXT_RE = /\.(?:wxml|axml|jxml|ksml|ttml|qml|tyml|xhsml|swan)$/i
+const MINI_PROGRAM_TEMPLATE_OUTPUT_EXT_RE = /\.(?:wxml|axml|jxml|ksml|ttml|qml|qxml|tyml|xhsml|swan)$/i
 const JS_STYLE_IMPORT_RE = /\b(?:import|require)\s*(?:\(\s*)?["']([^"']+\.(?:css|less|sass|scss|styl|stylus|pcss|postcss))(?:[?#][^"']*)?["']/g
 
 function addSiblingCssFile(files: Set<string>, file: string, extensionByStem: Map<string, string>, fallbackExtension: string) {

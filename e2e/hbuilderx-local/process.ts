@@ -119,8 +119,8 @@ export function resolveBaseUrls(logs: string[], fallbackUrl: string) {
   return Array.from(urls)
 }
 
-export async function fetchText(url: string) {
-  const response = await fetch(url)
+export async function fetchText(url: string, timeoutMs = 5000) {
+  const response = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) })
   if (!response.ok) {
     throw new Error(`${url} -> HTTP ${response.status} ${response.statusText}`)
   }

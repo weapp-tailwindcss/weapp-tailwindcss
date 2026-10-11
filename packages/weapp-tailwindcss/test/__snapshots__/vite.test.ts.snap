@@ -61,6 +61,7 @@ exports[`vite > v4-vite-plugin > css 1`] = `
   .first-letter_cmarker_ctext-clip::first-letter::-webkit-details-marker {
     text-overflow: clip;
   }
+
 "
 `;
 
@@ -120,18 +121,7 @@ exports[`vite > v4-vite-postcss > css 1`] = `
   .text-_b_h123456_B {
     color: #123456;
   }
-  .first-letter_cmarker_ctext-clip::first-letter ::marker {
-    text-overflow: clip;
-  }
-  .first-letter_cmarker_ctext-clip::first-letter::marker {
-    text-overflow: clip;
-  }
-  .first-letter_cmarker_ctext-clip::first-letter ::-webkit-details-marker {
-    text-overflow: clip;
-  }
-  .first-letter_cmarker_ctext-clip::first-letter::-webkit-details-marker {
-    text-overflow: clip;
-  }
+
 "
 `;
 

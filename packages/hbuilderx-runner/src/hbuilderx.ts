@@ -1,8 +1,10 @@
 import type { HBuilderXCliResolveOptions, HBuilderXLaunchOptions, HBuilderXProjectOptions } from './types'
 import path from 'node:path'
 import process from 'node:process'
+import { resolveConfiguredCli } from './hbuilderx/configured-cli'
 import {
   getDefaultHBuilderXCliCandidates,
+  resolveHBuilderXChannel,
   resolveHBuilderXCliInfoFromOptions,
 } from './hbuilderx/discovery'
 import { createHBuilderXRunner } from './hbuilderx/runner'
@@ -22,14 +24,17 @@ export async function resolveHBuilderXCliInfo(
 export async function resolveHBuilderXCli(options?: HBuilderXCliResolveOptions): Promise<string>
 export async function resolveHBuilderXCli(candidates?: string[]): Promise<string>
 export async function resolveHBuilderXCli(candidatesOrOptions?: string[] | HBuilderXCliResolveOptions) {
-  return (await resolveHBuilderXCliInfo(candidatesOrOptions as HBuilderXCliResolveOptions)).path
+  const options = Array.isArray(candidatesOrOptions) ? { candidates: candidatesOrOptions } : candidatesOrOptions ?? {}
+  resolveHBuilderXChannel(options.channel ?? (options.env ?? process.env)['HBUILDERX_CHANNEL'])
+  const configured = await resolveConfiguredCli(options)
+  return configured?.path ?? (await resolveHBuilderXCliInfoFromOptions(options)).path
 }
 
 export function createHBuilderXEnv(options: { hbuilderxCliPath?: string, env?: Record<string, string | undefined> } = {}) {
   return {
     ...options.env,
-    HBUILDERX_CLI_PATH: options.hbuilderxCliPath ?? options.env?.HBUILDERX_CLI_PATH ?? process.env.HBUILDERX_CLI_PATH ?? getDefaultHBuilderXCliCandidates()[0],
-    NODE_OPTIONS: options.env?.NODE_OPTIONS ?? process.env.NODE_OPTIONS ?? '--max-old-space-size=8192',
+    HBUILDERX_CLI_PATH: options.hbuilderxCliPath ?? options.env?.['HBUILDERX_CLI_PATH'] ?? process.env['HBUILDERX_CLI_PATH'] ?? getDefaultHBuilderXCliCandidates()[0],
+    NODE_OPTIONS: options.env?.['NODE_OPTIONS'] ?? process.env['NODE_OPTIONS'] ?? '--max-old-space-size=8192',
   }
 }
 
@@ -42,8 +47,8 @@ export async function runPnpmCommand(options: HBuilderXProjectOptions & { args: 
     command: 'pnpm',
     args: options.args,
     cwd: options.cwd,
-    timeoutMs: options.timeoutMs,
-    allowFailure: options.allowFailure,
+    ...(options.timeoutMs !== undefined ? { timeoutMs: options.timeoutMs } : {}),
+    ...(options.allowFailure !== undefined ? { allowFailure: options.allowFailure } : {}),
     env: createHBuilderXEnv(options),
   })
 }

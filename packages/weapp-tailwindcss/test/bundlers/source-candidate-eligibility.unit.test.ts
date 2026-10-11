@@ -2,11 +2,20 @@ import path from 'node:path'
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import { afterEach, describe, expect, it } from 'vitest'
-import { createSourceCandidateEligibilityMatcher, resolveSourceCandidateScanFiles } from '@/bundlers/shared/source-candidates/scan-root'
+import { createSourceCandidateEligibilityMatcher, resolveSourceCandidateScanFiles } from '@/project-sources/candidates/scan-root'
 
 const createdDirs: string[] = []
 
 describe('source candidate eligibility', () => {
+  it('显式空来源不扫描项目，且与增量资格判断一致', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'empty-explicit-scan-'))
+    createdDirs.push(root)
+    const file = path.join(root, 'page.qxml')
+    await writeFile(file, '<view class="flex" />')
+    const scan = { root, explicit: true, entries: [] }
+    expect(await resolveSourceCandidateScanFiles({ ...scan, filter: () => true })).toEqual([])
+    expect(createSourceCandidateEligibilityMatcher([scan])(file)).toBe(false)
+  })
   afterEach(async () => {
     await Promise.all(createdDirs.splice(0).map(dir => rm(dir, { recursive: true, force: true })))
   })

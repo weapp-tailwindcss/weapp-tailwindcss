@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { pushConcurrentTaskFactories, resolveTaskConcurrency, runWithConcurrency } from '@/bundlers/shared/run-tasks'
+import { pushConcurrentTaskFactories, resolveTaskConcurrency, runWithConcurrency } from '@/utils/run-tasks'
 
 describe('bundlers/shared run tasks', () => {
   afterEach(() => {

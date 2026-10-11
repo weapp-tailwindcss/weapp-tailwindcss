@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MappingChars2String } from '@weapp-core/escape'
+import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import {
   addRuntimeTransformCandidates,
   collectGeneratedCssRuntimeCandidates,

@@ -16,6 +16,7 @@ import type {
 import { createHash } from 'node:crypto'
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
+import { collectImportedStyleFiles } from './artifacts/imports'
 import { expandOutputFileEntries } from './mutations/shared'
 
 const TEXT_ARTIFACT_RE = /\.(?:acss|css|html|js|json|jsx|map|qml|qs|qss|sjs|ttml|ttss|txml|wxml|wxs|wxss|xml)$/i
@@ -63,7 +64,7 @@ export async function collectWatchArtifactFiles(watchCase: WatchCase) {
     }
   }
   const expanded = await expandOutputFileEntries([...candidates])
-  return [...new Set(expanded)].sort()
+  return collectImportedStyleFiles(expanded)
 }
 
 async function collectArtifactEntry(root: string, file: string): Promise<WatchArtifactEntry> {
@@ -97,7 +98,7 @@ async function collectArtifactEntry(root: string, file: string): Promise<WatchAr
     entry.contentOmittedReason = 'large-text'
   }
   else {
-    entry.content = buffer.toString('utf8').replace(/\r\n/g, '\n')
+    entry.content = buffer.toString('utf8')
   }
   return entry
 }

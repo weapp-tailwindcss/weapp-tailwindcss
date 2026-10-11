@@ -23,6 +23,22 @@
 
 保留业务 PostCSS 插件、框架插件和独立纯 Web 应用自己的生成链路。
 
+### 旧 CLI 迁移
+
+npm 上 `@weapp-tailwindcss/cli` 3.x 与 4.0.0-alpha.x 属于旧原生小程序 Gulp 工具链。当前 CLI 从 5.x 重新发布：
+
+- CLI 从 `weapp-tailwindcss` 核心包拆到独立 `@weapp-tailwindcss/cli`。
+- 不再提供旧版 `init`、Sass/Less 或项目目录扫描流程。
+- 预处理器、模板/脚本转换和项目 asset graph 由现有 bundler 集成负责。
+- 新 CLI 默认 Web target；`--target weapp` 只处理生成 CSS。
+
+迁移后安装三个显式依赖，并更新脚本：
+
+```bash
+pnpm add -D @weapp-tailwindcss/cli weapp-tailwindcss tailwindcss
+pnpm exec weapp-tw -i src/input.css -o dist/output.css --watch
+```
+
 ## 4. 重建 Tailwind CSS 入口
 
 ```css
@@ -72,4 +88,4 @@
 | H5 是 safe class | 目标环境识别错误，必要时显式 `generator.target: 'web'` |
 | App 缺样式 | preset、入口、平台识别或真实运行产物未命中 |
 | JS 字符串没转 | `@source` 未覆盖，或 class set 刷新时序错误 |
-
+| 新 CLI 没改 WXML/JS | 这是 5.x 的职责边界；完整项目改用 bundler 插件 |

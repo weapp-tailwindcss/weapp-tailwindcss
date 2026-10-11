@@ -1,18 +1,18 @@
 {
   "name": "@weapp-tailwindcss/variants",
   "type": "module",
-  "version": "0.2.3",
-  "description": "tailwind-variants 的运行时封装，提供 tv/cn 等 API 的小程序增强版本。",
+  "version": "0.2.10",
+  "description": "Cross-platform tailwind-variants runtime with Tailwind CSS class compatibility. 兼容 Tailwind CSS 类名的跨端 tailwind-variants 运行时封装。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",
-  "homepage": "https://tw.icebreaker.top/docs/community/merge/cva-and-variants",
+  "homepage": "https://tw.weapp.dev/docs/community/merge/cva-and-variants",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sonofmagic/weapp-tailwindcss.git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
     "directory": "packages-runtime/variants"
   },
   "bugs": {
-    "url": "https://github.com/sonofmagic/weapp-tailwindcss/issues"
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues"
   },
   "keywords": [
     "tailwindcss",
@@ -59,6 +59,6 @@
   "dependencies": {
     "@weapp-tailwindcss/merge": "workspace:*",
     "@weapp-tailwindcss/runtime": "workspace:*",
-    "tailwind-variants": "^3.3.1"
+    "tailwind-variants": "catalog:runtimeVariants"
   }
 }

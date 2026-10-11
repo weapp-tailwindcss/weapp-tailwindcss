@@ -4,7 +4,7 @@ import type { CreateJsHandlerOptions } from '@/types'
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { MappingChars2String } from '@weapp-core/escape'
+import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createJsHandler } from '@/js'
 import { replaceWxml } from '@/wxml'
@@ -213,7 +213,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
     vi.doUnmock('node:fs/promises')
     vi.doUnmock('@/bundlers/vite/incremental-runtime-class-set')
     vi.doUnmock('@/bundlers/vite/source-scan')
-    vi.doUnmock('@/bundlers/shared/generator-css')
+    vi.doUnmock('@/generation/index')
     vi.doUnmock('@/generator')
     vi.doMock('@/bundlers/vite/resolve-app-type', () => ({
       resolveImplicitAppTypeFromViteRoot: vi.fn(() => undefined),
@@ -1333,7 +1333,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
     expect(createdSources[0]?.css).not.toContain('../../../tailwind.config.js')
   }, TEST_TIMEOUT_MS)
 
-  it('preserves Vite vue hmr result while supplementing Tailwind root css updates for web target', async () => {
+  it('keeps the Tailwind root CSS in the normal Vite Web HMR transaction', async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), 'weapp-tw-vite-hmr-root-css-'))
     createdDirs.push(root)
     const pageFile = path.join(root, 'src/pages/index/index.vue')
@@ -1442,14 +1442,15 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
     expect(result).toEqual([vueModule, cssModule])
     expect(invalidateModule).toHaveBeenCalledWith(cssModule)
     await Promise.resolve()
+    expect(wsSend).toHaveBeenCalledTimes(1)
     expect(wsSend).toHaveBeenCalledWith({
       type: 'update',
       updates: [
         {
-          acceptedPath: styleId,
+          acceptedPath: '/src/pages/index/index.vue',
           explicitImportRequired: false,
           isWithinCircularImport: false,
-          path: styleId,
+          path: '/src/pages/index/index.vue',
           timestamp: 123456,
           type: 'js-update',
         },
@@ -1837,8 +1838,8 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
       return createMockGeneratorCssResult(css, 4)
     })
     vi.resetModules()
-    vi.doMock('@/bundlers/shared/generator-css', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('@/bundlers/shared/generator-css')>()
+    vi.doMock('@/generation/index', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@/generation/index')>()
       return {
         ...actual,
         generateCssByGenerator: generateCssByGeneratorMock,
@@ -2266,19 +2267,18 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
       sourceModule,
       expect.objectContaining({ id: cssFile, url: '/app.css' }),
     ])
+    expect(wsSend).toHaveBeenCalledTimes(1)
     expect(wsSend).toHaveBeenCalledWith({
       type: 'update',
-      updates: expect.arrayContaining([
-        expect.objectContaining({
-          acceptedPath: '/app.css',
-          path: '/app.css',
-          type: expect.stringMatching(/^(?:css|js)-update$/),
-        }),
-      ]),
+      updates: [expect.objectContaining({
+        acceptedPath: '/src/pages/index/index.tsx',
+        path: '/src/pages/index/index.tsx',
+        type: 'js-update',
+      })],
     })
   }, TEST_TIMEOUT_MS)
 
-  it('lets uni-app H5 vue source hot updates continue while sending supplemental Tailwind css updates', async () => {
+  it('keeps uni-app H5 source and Tailwind CSS in one normal Vite HMR transaction', async () => {
     const previousUniPlatform = process.env.UNI_PLATFORM
     process.env.UNI_PLATFORM = 'h5'
     try {
@@ -2397,14 +2397,15 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
       })
       expect(invalidateModule).toHaveBeenCalledWith(cssModule)
       await Promise.resolve()
+      expect(wsSend).toHaveBeenCalledTimes(1)
       expect(wsSend).toHaveBeenCalledWith({
         type: 'update',
         updates: [
           {
-            acceptedPath: styleId,
+            acceptedPath: '/src/pages/index/index.vue',
             explicitImportRequired: false,
             isWithinCircularImport: false,
-            path: styleId,
+            path: '/src/pages/index/index.vue',
             timestamp: 123456,
             type: 'js-update',
           },
@@ -2737,19 +2738,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
     expect(result).toEqual([vueModule, cssModule])
     expect(invalidateModule).toHaveBeenCalledWith(cssModule)
     await Promise.resolve()
-    expect(wsSend).toHaveBeenCalledWith({
-      type: 'update',
-      updates: [
-        {
-          acceptedPath: styleId,
-          explicitImportRequired: false,
-          isWithinCircularImport: false,
-          path: styleId,
-          timestamp: 123456,
-          type: 'js-update',
-        },
-      ],
-    })
+    expect(wsSend).not.toHaveBeenCalled()
   }, TEST_TIMEOUT_MS)
 
   it('regenerates serve css hmr from updated wxml expression candidates', async () => {
@@ -3543,8 +3532,8 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
         ? ['bg-normal']
         : [...options.candidates]
       return {
-        css: candidates.map(candidate => `.${candidate}{}`).join('\n'),
-        rawCss: candidates.map(candidate => `.${candidate}{}`).join('\n'),
+        css: candidates.map(candidate => `.${candidate}{display:block}`).join('\n'),
+        rawCss: candidates.map(candidate => `.${candidate}{display:block}`).join('\n'),
       target: 'weapp',
         classSet: new Set(candidates),
       dependencies: [],
@@ -3620,11 +3609,11 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
     const generatedCandidateSets = generateMock.mock.calls.map(call => [...call[0].candidates])
     expect(generatedCandidateSets).toContainEqual(['bg-main'])
     expect(String(bundle['app.css'].source)).toBe('')
-    expect(String(bundle['src/app.css'].source)).toContain('.bg-main{}')
-    expect(String(bundle['src/app.css'].source)).not.toContain('.bg-normal{}')
+    expect(String(bundle['src/app.css'].source)).toContain('.bg-main{display:block}')
+    expect(String(bundle['src/app.css'].source)).not.toContain('.bg-normal{display:block}')
     expect(String(bundle['subpackages/normal/pages/entry/index.css'].source)).toBe('')
-    expect(String(bundle['src/subpackages/normal/pages/entry/index.css'].source)).toContain('.bg-normal{}')
-    expect(String(bundle['src/subpackages/normal/pages/entry/index.css'].source)).not.toContain('.bg-main{}')
+    expect(String(bundle['src/subpackages/normal/pages/entry/index.css'].source)).toContain('.bg-normal{display:block}')
+    expect(String(bundle['src/subpackages/normal/pages/entry/index.css'].source)).not.toContain('.bg-main{display:block}')
   }, TEST_TIMEOUT_MS)
 
   it('scans Tailwind v4 @config content for vite source candidates', async () => {
@@ -3637,8 +3626,8 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
     await writeFile(configFile, 'module.exports = { content: ["./pages/**/*.{wxml,ts}"] }\n', 'utf8')
     await writeFile(pageFile, '<view class="bg-[#010721] text-[35px] h-[29px]">ok</view>\n', 'utf8')
     const generateMock = vi.fn(async (options: { candidates: Set<string> }) => ({
-      css: [...options.candidates].map(candidate => `.${replaceWxml(candidate)}{}`).join(''),
-      rawCss: [...options.candidates].map(candidate => `.${candidate}{}`).join(''),
+      css: [...options.candidates].map(candidate => `.${replaceWxml(candidate)}{display:block}`).join(''),
+      rawCss: [...options.candidates].map(candidate => `.${candidate}{display:block}`).join(''),
       target: 'weapp',
       classSet: new Set(options.candidates),
       dependencies: [cssEntry, configFile],
@@ -3723,8 +3712,8 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
     await writeFile(featureBCss, '@config "./tailwind.config.cjs";\n@tailwind utilities;\n', 'utf8')
 
     const generateMock = vi.fn(async (options: { candidates: Set<string> }) => ({
-      css: [...options.candidates].sort().map(candidate => `.${candidate}{}`).join(''),
-      rawCss: [...options.candidates].sort().map(candidate => `.${candidate}{}`).join(''),
+      css: [...options.candidates].sort().map(candidate => `.${candidate}{display:block}`).join(''),
+      rawCss: [...options.candidates].sort().map(candidate => `.${candidate}{display:block}`).join(''),
       target: 'weapp',
       classSet: new Set(options.candidates),
       dependencies: [],
@@ -3801,12 +3790,12 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
 
     const featureAOutput = String(bundle['src/features/a/index.css'].source)
     const featureBOutput = String(bundle['src/features/b/index.css'].source)
-    expect(featureAOutput).toContain('.bg-feature-a{}')
-    expect(featureAOutput).not.toContain('.bg-feature-b{}')
-    expect(featureAOutput).not.toContain('.bg-global{}')
-    expect(featureBOutput).toContain('.bg-feature-b{}')
-    expect(featureBOutput).not.toContain('.bg-feature-a{}')
-    expect(featureBOutput).not.toContain('.bg-global{}')
+    expect(featureAOutput).toContain('.bg-feature-a{display:block}')
+    expect(featureAOutput).not.toContain('.bg-feature-b{display:block}')
+    expect(featureAOutput).not.toContain('.bg-global{display:block}')
+    expect(featureBOutput).toContain('.bg-feature-b{display:block}')
+    expect(featureBOutput).not.toContain('.bg-feature-a{display:block}')
+    expect(featureBOutput).not.toContain('.bg-global{display:block}')
   }, TEST_TIMEOUT_MS)
 
   it('generates Tailwind v4 css entries from their own @source and @config content in main-package directories', async () => {
@@ -3826,8 +3815,8 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
     await writeFile(featureBCss, '@import "tailwindcss" source(none);\n@config "./tailwind.config.cjs";\n', 'utf8')
 
     const generateMock = vi.fn(async (options: { candidates: Set<string> }) => ({
-      css: [...options.candidates].sort().map(candidate => `.${candidate}{}`).join(''),
-      rawCss: [...options.candidates].sort().map(candidate => `.${candidate}{}`).join(''),
+      css: [...options.candidates].sort().map(candidate => `.${candidate}{display:block}`).join(''),
+      rawCss: [...options.candidates].sort().map(candidate => `.${candidate}{display:block}`).join(''),
       target: 'weapp',
       classSet: new Set(options.candidates),
       dependencies: [],
@@ -3920,12 +3909,12 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
 
     const featureAOutput = String(bundle['src/features/a/index.css'].source)
     const featureBOutput = String(bundle['src/features/b/index.css'].source)
-    expect(featureAOutput).toContain('.bg-feature-a{}')
-    expect(featureAOutput).not.toContain('.bg-feature-b{}')
-    expect(featureAOutput).not.toContain('.bg-global{}')
-    expect(featureBOutput).toContain('.bg-feature-b{}')
-    expect(featureBOutput).not.toContain('.bg-feature-a{}')
-    expect(featureBOutput).not.toContain('.bg-global{}')
+    expect(featureAOutput).toContain('.bg-feature-a{display:block}')
+    expect(featureAOutput).not.toContain('.bg-feature-b{display:block}')
+    expect(featureAOutput).not.toContain('.bg-global{display:block}')
+    expect(featureBOutput).toContain('.bg-feature-b{display:block}')
+    expect(featureBOutput).not.toContain('.bg-feature-a{display:block}')
+    expect(featureBOutput).not.toContain('.bg-global{display:block}')
   }, TEST_TIMEOUT_MS)
 
   it('keeps explicit Tailwind v4 @source candidates when inferred local source candidates are empty', async () => {
@@ -4474,9 +4463,21 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
 
     const scopedGetter = scope.createScopedSourceCandidateGetter('sub-independent/pages/index.acss', { isMainChunk: false })
     const scopedSourceGetter = scope.createScopedSourceCandidateSourceGetter('sub-independent/pages/index.acss', { isMainChunk: false })
+    const temporaryScopedGetter = scope.createScopedSourceCandidateGetter(
+      'index2.css',
+      { isMainChunk: false },
+      independentCssFile,
+    )
+    const temporaryScopedSourceGetter = scope.createScopedSourceCandidateSourceGetter(
+      'index2.css',
+      { isMainChunk: false },
+      independentCssFile,
+    )
 
     expect(scopedGetter?.(broadEntries)).toEqual(new Set(['bg-independent-subpackage-marker']))
     expect([...(scopedSourceGetter?.(broadEntries).keys() ?? [])]).toEqual(['bg-independent-subpackage-marker'])
+    expect(temporaryScopedGetter?.(broadEntries)).toEqual(new Set(['bg-independent-subpackage-marker']))
+    expect([...(temporaryScopedSourceGetter?.(broadEntries).keys() ?? [])]).toEqual(['bg-independent-subpackage-marker'])
   }, TEST_TIMEOUT_MS)
 
   it('falls back to scoped source candidates when subpackage entries cannot narrow broad matches', () => {
@@ -4682,8 +4683,8 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
       return createMockGeneratorCssResult(css, 4)
     })
     vi.resetModules()
-    vi.doMock('@/bundlers/shared/generator-css', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('@/bundlers/shared/generator-css')>()
+    vi.doMock('@/generation/index', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@/generation/index')>()
       return {
         ...actual,
         generateCssByGenerator: generateCssByGeneratorMock,
@@ -4995,7 +4996,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
       build: { outDir: 'dist' },
     } as ResolvedConfig)
 
-    const processedCss = '.graph-source-root{}'
+    const processedCss = '.graph-source-root{display:block}'
     registerProcessedCssAsset(postPlugin, {
       css: processedCss,
       injectIntoMain: true,
@@ -5014,7 +5015,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
         originalFileNames: [path.join(root, 'src/app.css')],
       },
       'app.wxss': {
-        ...createRollupAsset('.app{}'),
+        ...createRollupAsset('.app{display:block}'),
         fileName: 'app.wxss',
       },
     }
@@ -5024,7 +5025,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
 
     const appCss = (bundle['app.wxss'] as OutputAsset).source.toString()
     expect(appCss).toContain('view,text,::after,::before')
-    expect(appCss).toContain('.app{}')
+    expect(appCss).toContain('.app{display:block}')
     expect(appCss).toContain(processedCss)
   }, TEST_TIMEOUT_MS)
 
@@ -5246,6 +5247,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
           ...actual,
           createWeappTailwindcssGenerator: vi.fn((source: { css: string }) => ({
             generate: vi.fn((options: { candidates: Set<string>, target: string }) => generateMock(options, source)),
+            validateCandidates: vi.fn(async (candidates: Set<string>) => candidates),
           })),
         }
       })
@@ -6076,7 +6078,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
       build: { outDir: 'dist' },
     } as ResolvedConfig)
 
-    const processedCss = '.independent-only{}'
+    const processedCss = '.independent-only{display:block}'
     registerProcessedCssAsset(postPlugin, {
       css: processedCss,
       outputFile: 'sub-independent/pages/index.wxss',
@@ -6122,7 +6124,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
     const root = await mkdtemp(path.join(os.tmpdir(), 'weapp-tw-vite-remember-loop-'))
     createdDirs.push(root)
     const sourceFile = path.join(root, 'pages/index/index.scss')
-    const sourceCss = '@tailwind utilities;\n.text-red-500{}'
+    const sourceCss = '@tailwind utilities;\n.text-red-500{display:block}'
 
     const WeappTailwindcss = await loadWeappTailwindcssPlugin()
     setCurrentContext(createContext({
@@ -6681,8 +6683,8 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
       }
     })
     vi.resetModules()
-    vi.doMock('@/bundlers/shared/generator-css', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('@/bundlers/shared/generator-css')>()
+    vi.doMock('@/generation/index', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@/generation/index')>()
       return {
         ...actual,
         generateCssByGenerator: generateCssByGeneratorMock,
@@ -6827,8 +6829,8 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
       build: { outDir: 'dist' },
     } as ResolvedConfig)
 
-    const independentCss = '.independent-only{}'
-    const normalCss = '.normal-only{}'
+    const independentCss = '.independent-only{display:block}'
+    const normalCss = '.normal-only{display:block}'
     const independentSource = path.join(root, 'sub-independent/pages/index.css')
     const normalSource = path.join(root, 'sub-normal/pages/index.css')
     registerProcessedCssAsset(postPlugin, {
@@ -6961,7 +6963,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
     createdDirs.push(root)
     const subCssFile = path.join(root, 'miniprogram/sub-normal/pages/index.css')
     const rawSubCss = '@config "../../../tailwind.config.sub-normal.js";\n@tailwind utilities;'
-    const processedSubCss = '.bg-normal-subpackage-marker{}'
+    const processedSubCss = '.bg-normal-subpackage-marker{display:block}'
     await writeFile(path.join(root, 'tailwind.config.js'), 'module.exports = { content: [] }\n', 'utf8')
     await writeFile(path.join(root, 'tailwind.config.sub-normal.js'), 'module.exports = { content: [] }\n', 'utf8')
     const runtimeSet = new Set(['global-regenerated'])
@@ -7207,13 +7209,13 @@ module.exports = {
       rawSource: string
     }) => {
       const css = options.file.includes('sub-independent')
-        ? '.bg-independent-subpackage-marker{}.before_ccontent-_b_aindependent_a_B::before{}'
-        : '.bg-normal-subpackage-marker{}.before_ccontent-_b_anormal_a_B::before{}'
+        ? '.bg-independent-subpackage-marker{display:block}.before_ccontent-_b_aindependent_a_B::before{display:block}'
+        : '.bg-normal-subpackage-marker{display:block}.before_ccontent-_b_anormal_a_B::before{display:block}'
       return createMockGeneratorCssResult(css, 4)
     })
     vi.resetModules()
-    vi.doMock('@/bundlers/shared/generator-css', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('@/bundlers/shared/generator-css')>()
+    vi.doMock('@/generation/index', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@/generation/index')>()
       return {
         ...actual,
         generateCssByGenerator: generateCssByGeneratorMock,
@@ -7433,7 +7435,7 @@ module.exports = {
     expect(appCss).not.toContain('font-size: 222px')
   }, TEST_TIMEOUT_MS)
 
-  it('injects replayed main package vite css into app wxss without leaking subpackage css', async () => {
+  it('keeps replayed main package and subpackage vite css in their own outputs', async () => {
     const generateCssByGeneratorMock = vi.fn(async (options: {
       rawSource: string
     }) => {
@@ -7455,8 +7457,8 @@ module.exports = {
       }
     })
     vi.resetModules()
-    vi.doMock('@/bundlers/shared/generator-css', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('@/bundlers/shared/generator-css')>()
+    vi.doMock('@/generation/index', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@/generation/index')>()
       return {
         ...actual,
         generateCssByGenerator: generateCssByGeneratorMock,
@@ -7568,13 +7570,13 @@ module.exports = {
     const appCss = (bundle['app.wxss'] as OutputAsset).source.toString()
     const mainPageCss = emitted.find(file => file.fileName === 'pages/index/index.wxss')?.source
     const subPageCss = emitted.find(file => file.fileName === 'sub-normal/pages/index.wxss')?.source
-    expect(appCss).toMatch(/\.tw-main-watch\s*\{[^}]*display:\s*block/)
+    expect(appCss).not.toContain('.tw-main-watch')
     expect(appCss).not.toContain('.tw-sub-watch')
     expect(bundle['pages/index/index.wxss' as keyof typeof bundle]).toBeUndefined()
     expect(mainPageCss).toMatch(/\.tw-main-watch\s*\{[^}]*display:\s*block/)
     expect(mainPageCss).not.toContain('.tw-sub-watch')
     expect(subPageCss).toMatch(/\.tw-sub-watch\s*\{[^}]*display:\s*block/)
-    expect(viteProcessedCssAssetResults.get(mainSourceFile)?.injectIntoMain).toBe(true)
+    expect(viteProcessedCssAssetResults.get(mainSourceFile)?.injectIntoMain).toBe(false)
     expect(viteProcessedCssAssetResults.get(subSourceFile)?.injectIntoMain).toBe(false)
   }, TEST_TIMEOUT_MS)
 
@@ -7609,8 +7611,8 @@ module.exports = {
       }
     })
     vi.resetModules()
-    vi.doMock('@/bundlers/shared/generator-css', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('@/bundlers/shared/generator-css')>()
+    vi.doMock('@/generation/index', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@/generation/index')>()
       return {
         ...actual,
         generateCssByGenerator: generateCssByGeneratorMock,
@@ -9401,6 +9403,7 @@ const trace = "at App.vue:4"
 
     setCurrentContext(createContext({
       cssMatcher: (file: string) => file.endsWith('.css'),
+      cssSourceTrace: true,
       tailwindcss: {
         v4: {
           cssEntries: [cssEntry],
@@ -10080,8 +10083,8 @@ const trace = "at App.vue:4"
     const runtimeSet = new Set<string>()
     const rawTailwindCss = '/*! weapp-tailwindcss generator-placeholder */'
     const generateMock = vi.fn(async ({ candidates }: { candidates: Set<string> }) => ({
-      css: [...candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
-      rawCss: [...candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
+      css: [...candidates].sort().map(candidate => `.${candidate}{display:block}`).join('\n'),
+      rawCss: [...candidates].sort().map(candidate => `.${candidate}{display:block}`).join('\n'),
       target: 'weapp',
       classSet: new Set(candidates),
       dependencies: [],
@@ -10155,7 +10158,7 @@ const trace = "at App.vue:4"
     const candidates = generateMock.mock.calls.at(-1)?.[0].candidates as Set<string>
     expect(candidates).toContain('text-[188rpx]')
     expect(candidates).toContain('font-bold')
-    expect(String((bundle['app.css'] as OutputAsset).source)).toContain('.text-[188rpx]{}')
+    expect(String((bundle['app.css'] as OutputAsset).source)).toContain('.text-[188rpx]{display:block}')
   }, TEST_TIMEOUT_MS)
 
   it('finalizes css assets emitted after the main generateBundle pass through Rollup output plugins', async () => {
@@ -11118,8 +11121,8 @@ const trace = "at App.vue:4"
     })
 
     vi.resetModules()
-    vi.doMock('@/bundlers/shared/generator-css', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('@/bundlers/shared/generator-css')>()
+    vi.doMock('@/generation/index', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@/generation/index')>()
       return {
         ...actual,
         generateCssByGenerator: generateCssByGeneratorMock,
@@ -11227,7 +11230,7 @@ const trace = "at App.vue:4"
 
     expect(generateCssByGeneratorMock).toHaveBeenCalledTimes(1)
     expect(generatedOptions[0]).toEqual(expect.objectContaining({
-      file: 'index.html',
+      file: path.join(root, 'index.html'),
       outputFile: 'assets/index-A1B2C3.css',
       rawSource: expect.stringContaining('@media source(none)'),
     }))
@@ -11278,8 +11281,8 @@ const trace = "at App.vue:4"
     })
 
     vi.resetModules()
-    vi.doMock('@/bundlers/shared/generator-css', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('@/bundlers/shared/generator-css')>()
+    vi.doMock('@/generation/index', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@/generation/index')>()
       return {
         ...actual,
         generateCssByGenerator: generateCssByGeneratorMock,
@@ -11418,7 +11421,8 @@ const trace = "at App.vue:4"
 
     await generateBundle.call({ addWatchFile: vi.fn() }, {} as any, bundle)
 
-    expect(generateCssByGeneratorMock).toHaveBeenCalledTimes(2)
+    // 每个分包的空样式壳与编译后作者样式是独立输入，不能只按生成入口共享结果。
+    expect(generateCssByGeneratorMock).toHaveBeenCalledTimes(4)
     expect(generatedOptions).toEqual(expect.arrayContaining([
       expect.objectContaining({
         file: normalSourceFile,
@@ -12246,8 +12250,8 @@ const cls = "w-[1.5px]"
 
   it('replays clean css results when only script candidates change in incremental runs', async () => {
     const generateMock = vi.fn(async (options: { candidates: Set<string> }) => ({
-      css: [...options.candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
-      rawCss: [...options.candidates].sort().map(candidate => `.${candidate}{}`).join('\n'),
+      css: [...options.candidates].sort().map(candidate => `.${candidate}{display:block}`).join('\n'),
+      rawCss: [...options.candidates].sort().map(candidate => `.${candidate}{display:block}`).join('\n'),
       target: 'weapp',
       classSet: new Set(options.candidates),
       rawCandidates: new Set(options.candidates),
@@ -12403,8 +12407,8 @@ const cls = "w-[1.5px]"
         packageName: 'tailwindcss',
       })),
     }))
-    vi.doMock('@/bundlers/shared/generator-css', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('@/bundlers/shared/generator-css')>()
+    vi.doMock('@/generation/index', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@/generation/index')>()
       return {
         ...actual,
         generateCssByGenerator: vi.fn(async (options: { runtime: Set<string> }) => {
@@ -12501,7 +12505,7 @@ ${generatedBanner}`
 
     const nextAppCss = (secondBundle['app.wxss'] as OutputAsset).source.toString()
     const nextAppOriginCss = (secondBundle['app-origin.wxss'] as OutputAsset).source.toString()
-    expect(nextAppCss).toContain('@import "app-origin.wxss";')
+    expect(nextAppCss).toContain('@import "./app-origin.wxss";')
     expect(nextAppCss).not.toContain('text-[#222222]')
     expect(nextAppOriginCss).toContain('/*! tailwindcss v4.3.0 | MIT License | https://tailwindcss.com */')
     expect(nextAppOriginCss).not.toContain('text-[#222222]')
@@ -12714,8 +12718,8 @@ ${generatedBanner}`
       },
     }))
     vi.resetModules()
-    vi.doMock('@/bundlers/shared/generator-css', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('@/bundlers/shared/generator-css')>()
+    vi.doMock('@/generation/index', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@/generation/index')>()
       return {
         ...actual,
         generateCssByGenerator: generateCssByGeneratorMock,
@@ -12814,8 +12818,8 @@ ${generatedBanner}`
       version: 4,
     }))
     vi.resetModules()
-    vi.doMock('@/bundlers/shared/generator-css', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('@/bundlers/shared/generator-css')>()
+    vi.doMock('@/generation/index', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@/generation/index')>()
       return {
         ...actual,
         generateCssByGenerator: generateCssByGeneratorMock,
@@ -13430,8 +13434,8 @@ ${utilities}
       version: 4,
     }))
     vi.resetModules()
-    vi.doMock('@/bundlers/shared/generator-css', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('@/bundlers/shared/generator-css')>()
+    vi.doMock('@/generation/index', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@/generation/index')>()
       return {
         ...actual,
         generateCssByGenerator: generateCssByGeneratorMock,
@@ -13598,6 +13602,7 @@ ${utilities}
       },
     }
     await generateBundle?.call(postPlugin, {} as any, firstBundle)
+    expect(generateMock).toHaveBeenCalledTimes(1)
 
     runtimeSet.clear()
     runtimeSet.add('text-[123rpx]')
@@ -13613,7 +13618,7 @@ ${utilities}
     }
     await generateBundle?.call(postPlugin, {} as any, secondBundle)
 
-    expect(generateMock).toHaveBeenCalledTimes(3)
+    expect(generateMock).toHaveBeenCalledTimes(2)
   }, TEST_TIMEOUT_MS)
 
   it('refreshes runtime-linked toutiao ttss when only ttml changes', async () => {
@@ -13675,6 +13680,7 @@ ${utilities}
       },
     }
     await generateBundle?.call(postPlugin, {} as any, firstBundle)
+    expect(generateMock).toHaveBeenCalledTimes(1)
 
     runtimeSet.clear()
     runtimeSet.add('text-[123rpx]')
@@ -13690,7 +13696,7 @@ ${utilities}
     }
     await generateBundle?.call(postPlugin, {} as any, secondBundle)
 
-    expect(generateMock).toHaveBeenCalledTimes(3)
+    expect(generateMock).toHaveBeenCalledTimes(2)
   }, TEST_TIMEOUT_MS)
 
   it('replays remembered vite pipeline css when source rolls back without css bundle asset', async () => {
@@ -13828,8 +13834,8 @@ ${utilities}
       }
     })
     vi.resetModules()
-    vi.doMock('@/bundlers/shared/generator-css', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('@/bundlers/shared/generator-css')>()
+    vi.doMock('@/generation/index', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@/generation/index')>()
       return {
         ...actual,
         generateCssByGenerator: generateCssByGeneratorMock,
@@ -13950,8 +13956,8 @@ ${utilities}
       return createMockGeneratorCssResult(css)
     })
     vi.resetModules()
-    vi.doMock('@/bundlers/shared/generator-css', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('@/bundlers/shared/generator-css')>()
+    vi.doMock('@/generation/index', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@/generation/index')>()
       return {
         ...actual,
         generateCssByGenerator: generateCssByGeneratorMock,
@@ -14059,8 +14065,8 @@ ${utilities}
         rawSource: string
       }) => createMockGeneratorCssResult(`/* vite ${major} */\n${options.rawSource}`))
       vi.resetModules()
-      vi.doMock('@/bundlers/shared/generator-css', async (importOriginal) => {
-        const actual = await importOriginal<typeof import('@/bundlers/shared/generator-css')>()
+      vi.doMock('@/generation/index', async (importOriginal) => {
+        const actual = await importOriginal<typeof import('@/generation/index')>()
         return {
           ...actual,
           generateCssByGenerator: generateCssByGeneratorMock,
@@ -14260,8 +14266,8 @@ ${utilities}
       rawSource: string
     }) => createMockGeneratorCssResult(`/* generated */\n${options.rawSource}`))
     vi.resetModules()
-    vi.doMock('@/bundlers/shared/generator-css', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('@/bundlers/shared/generator-css')>()
+    vi.doMock('@/generation/index', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@/generation/index')>()
       return {
         ...actual,
         generateCssByGenerator: generateCssByGeneratorMock,
@@ -14355,8 +14361,8 @@ ${utilities}
       return createMockGeneratorCssResult(css)
     })
     vi.resetModules()
-    vi.doMock('@/bundlers/shared/generator-css', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('@/bundlers/shared/generator-css')>()
+    vi.doMock('@/generation/index', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@/generation/index')>()
       return {
         ...actual,
         generateCssByGenerator: generateCssByGeneratorMock,
@@ -14977,7 +14983,7 @@ ${utilities}
       for (const candidate of missingCandidates) {
         generatedCandidates.add(candidate)
       }
-      const createCss = (items: string[]) => items.map(candidate => `.${candidate}{}`).join('\n')
+      const createCss = (items: string[]) => items.map(candidate => `.${candidate}{display:block}`).join('\n')
       return {
         css: createCss(candidates),
         rawCss: createCss(candidates),
@@ -15066,7 +15072,7 @@ ${utilities}
     const secondCss = (secondBundle['app.wxss'] as OutputAsset).source.toString()
 
     expect(generateMock).toHaveBeenCalledTimes(2)
-    expect(secondCss).toBe(`${firstCss}\n.text-[#222222]{}`)
+    expect(secondCss).toBe(`${firstCss}\n.text-[#222222]{display:block}`)
     expect(secondCss).toContain('text-[#111111]')
     expect(secondCss).toContain('text-[#222222]')
     expect(currentContext.styleHandler).not.toHaveBeenCalled()
@@ -15080,7 +15086,7 @@ ${utilities}
       for (const candidate of missingCandidates) {
         generatedCandidates.add(candidate)
       }
-      const createCss = (items: string[]) => items.map(candidate => `.${candidate}{}`).join('\n')
+      const createCss = (items: string[]) => items.map(candidate => `.${candidate}{display:block}`).join('\n')
       const preflight = 'view,text,::after,::before{box-sizing:border-box;margin:0;padding:0;border:0 solid;}'
       return {
         css: `${preflight}\n${createCss(candidates)}`,
@@ -15172,7 +15178,7 @@ ${utilities}
     expect(generateMock).toHaveBeenCalledTimes(2)
     expect(firstCss.match(/box-sizing:border-box/g) ?? []).toHaveLength(1)
     expect(secondCss.match(/box-sizing:border-box/g) ?? []).toHaveLength(1)
-    expect(secondCss).toBe(`${firstCss}\n.text-[#222222]{}`)
+    expect(secondCss).toBe(`${firstCss}\n.text-[#222222]{display:block}`)
     expect(currentContext.styleHandler).not.toHaveBeenCalled()
   }, TEST_TIMEOUT_MS)
 
@@ -15184,7 +15190,7 @@ ${utilities}
       for (const candidate of missingCandidates) {
         generatedCandidates.add(candidate)
       }
-      const createCss = (items: string[]) => items.map(candidate => `.${candidate}{}`).join('\n')
+      const createCss = (items: string[]) => items.map(candidate => `.${candidate}{display:block}`).join('\n')
       return {
         css: createCss([...generatedCandidates].sort()),
         rawCss: createCss([...generatedCandidates].sort()),
@@ -15274,7 +15280,7 @@ ${utilities}
     const secondCss = (secondBundle['app.wxss'] as OutputAsset).source.toString()
 
     expect(generateMock).toHaveBeenCalledTimes(2)
-    expect(secondCss).toBe(`${firstCss}\n.text-[#222222]{}`)
+    expect(secondCss).toBe(`${firstCss}\n.text-[#222222]{display:block}`)
     expect(secondCss).toContain('text-[#111111]')
     expect(secondCss).toContain('text-[#222222]')
   }, TEST_TIMEOUT_MS)
@@ -15517,7 +15523,7 @@ page {
     const plugins = WeappTailwindcss()
     const postPlugin = plugins?.find(plugin => plugin.name === 'weapp-tailwindcss:adaptor:post') as Plugin
     expect(postPlugin).toBeTruthy()
-    const loggerInfoSpy = vi.spyOn(loggerModule.logger, 'info').mockImplementation(() => {})
+    const loggerDebugSpy = vi.spyOn(loggerModule.logger, 'debug').mockImplementation(() => {})
 
     await (postPlugin.configResolved as any)?.call(postPlugin, {
       command: 'build',
@@ -15527,7 +15533,7 @@ page {
     } as ResolvedConfig)
 
     expect(currentContext.appType).toBe('taro')
-    expect(loggerInfoSpy).toHaveBeenCalledWith('根据 Vite 项目根目录自动推断 appType -> %s', 'taro')
+    expect(loggerDebugSpy).toHaveBeenCalledWith('根据 Vite 项目根目录自动推断 appType -> %s', 'taro')
 
     const bundle = {
       'app.wxss': {
@@ -15566,7 +15572,7 @@ page {
     const plugins = WeappTailwindcss()
     const postPlugin = plugins?.find(plugin => plugin.name === 'weapp-tailwindcss:adaptor:post') as Plugin
     expect(postPlugin).toBeTruthy()
-    const loggerInfoSpy = vi.spyOn(loggerModule.logger, 'info').mockImplementation(() => {})
+    const loggerDebugSpy = vi.spyOn(loggerModule.logger, 'debug').mockImplementation(() => {})
 
     await (postPlugin.configResolved as any)?.call(postPlugin, {
       command: 'build',
@@ -15576,7 +15582,41 @@ page {
     } as ResolvedConfig)
 
     expect(currentContext.appType).toBeUndefined()
-    expect(loggerInfoSpy).not.toHaveBeenCalledWith('根据 Vite 项目根目录自动推断 appType -> %s', 'weapp-vite')
+    expect(loggerDebugSpy).not.toHaveBeenCalledWith('根据 Vite 项目根目录自动推断 appType -> %s', 'weapp-vite')
+  })
+
+  it('does not emit runtime Tailwind info logs for implicit Generic Web builds', async () => {
+    vi.doUnmock('@/bundlers/vite/resolve-app-type')
+    const loggerModule = await import('@weapp-tailwindcss/logger')
+    const projectRoot = await mkdtemp(path.join(os.tmpdir(), 'weapp-tw-vite-generic-log-root-'))
+    createdDirs.push(projectRoot)
+
+    setCurrentContext(createContext({
+      appType: undefined,
+      tailwindRuntime: {
+        packageInfo: {
+          rootPath: path.join(projectRoot, 'node_modules', 'tailwindcss'),
+          version: '4.3.3',
+        },
+      },
+    }))
+    const loggerInfoSpy = vi.spyOn(loggerModule.logger, 'info').mockImplementation(() => {})
+    const loggerSuccessSpy = vi.spyOn(loggerModule.logger, 'success').mockImplementation(() => {})
+
+    const WeappTailwindcss = await loadWeappTailwindcssPlugin()
+    const plugins = WeappTailwindcss()
+    const postPlugin = plugins?.find(plugin => plugin.name === 'weapp-tailwindcss:adaptor:post') as Plugin
+    expect(postPlugin).toBeTruthy()
+
+    await (postPlugin.configResolved as any)?.call(postPlugin, {
+      command: 'build',
+      root: projectRoot,
+      css: { postcss: { plugins: [] } },
+      build: { outDir: 'dist' },
+    } as ResolvedConfig)
+
+    expect(loggerInfoSpy).not.toHaveBeenCalledWith('%s 使用 Tailwind CSS%s', 'Weapp-tailwindcss', ' (v4.3.3)')
+    expect(loggerSuccessSpy).not.toHaveBeenCalled()
   })
 
   it('defaults uni-app H5 serve mode to web generator target without mini-program appType inference', async () => {
@@ -15604,7 +15644,7 @@ page {
       const plugins = WeappTailwindcss()
       const postPlugin = plugins?.find(plugin => plugin.name === 'weapp-tailwindcss:adaptor:post') as Plugin
       expect(postPlugin).toBeTruthy()
-      const loggerInfoSpy = vi.spyOn(loggerModule.logger, 'info').mockImplementation(() => {})
+      const loggerDebugSpy = vi.spyOn(loggerModule.logger, 'debug').mockImplementation(() => {})
 
       await (postPlugin.configResolved as any)?.call(postPlugin, {
         command: 'serve',
@@ -15615,7 +15655,7 @@ page {
 
       expect(currentContext.generator?.target).toBeUndefined()
       expect(currentContext.appType).toBeUndefined()
-      expect(loggerInfoSpy).not.toHaveBeenCalledWith('根据 Vite 项目根目录自动推断 appType -> %s', expect.any(String))
+      expect(loggerDebugSpy).not.toHaveBeenCalledWith('根据 Vite 项目根目录自动推断 appType -> %s', expect.any(String))
     }
     finally {
       if (previousUniPlatform === undefined) {
@@ -16110,8 +16150,8 @@ const fallback = "bg-[#434332] px-[32px]"
       }
     })
     vi.resetModules()
-    vi.doMock('@/bundlers/shared/generator-css', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('@/bundlers/shared/generator-css')>()
+    vi.doMock('@/generation/index', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@/generation/index')>()
       return {
         ...actual,
         generateCssByGenerator: generateCssByGeneratorMock,
@@ -16245,8 +16285,8 @@ const fallback = "bg-[#434332] px-[32px]"
       }
     })
     vi.resetModules()
-    vi.doMock('@/bundlers/shared/generator-css', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('@/bundlers/shared/generator-css')>()
+    vi.doMock('@/generation/index', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@/generation/index')>()
       return {
         ...actual,
         generateCssByGenerator: generateCssByGeneratorMock,
@@ -16378,8 +16418,8 @@ const fallback = "bg-[#434332] px-[32px]"
       }
     })
     vi.resetModules()
-    vi.doMock('@/bundlers/shared/generator-css', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('@/bundlers/shared/generator-css')>()
+    vi.doMock('@/generation/index', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@/generation/index')>()
       return {
         ...actual,
         generateCssByGenerator: generateCssByGeneratorMock,
@@ -16509,8 +16549,8 @@ const fallback = "bg-[#434332] px-[32px]"
       }
     })
     vi.resetModules()
-    vi.doMock('@/bundlers/shared/generator-css', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('@/bundlers/shared/generator-css')>()
+    vi.doMock('@/generation/index', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@/generation/index')>()
       return {
         ...actual,
         generateCssByGenerator: generateCssByGeneratorMock,

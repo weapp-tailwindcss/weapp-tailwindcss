@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>weapp-tailwindcss 原始标识居中校正版</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+        background: #e2e8f0;
+        color: #0f172a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 32px;
+      }
+      header {
+        max-width: 1180px;
+        margin: 0 auto 28px;
+      }
+      h1 {
+        margin: 0 0 10px;
+        font-size: clamp(24px, 4vw, 42px);
+        letter-spacing: 0;
+      }
+      header p {
+        max-width: 820px;
+        margin: 0;
+        color: #475569;
+        line-height: 1.6;
+      }
+      .grid {
+        max-width: 1180px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+        gap: 18px;
+      }
+      .candidate {
+        min-width: 0;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 10px 24px rgb(15 23 42 / 12%);
+      }
+      .swatches {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+      .panel {
+        min-height: 190px;
+        display: grid;
+        place-items: center;
+        padding: 26px;
+      }
+      .panel.light {
+        background: #f8fafc;
+      }
+      .panel.dark {
+        background: #0b1114;
+      }
+      .panel img {
+        width: min(154px, 100%);
+        height: 154px;
+        object-fit: contain;
+      }
+      .info {
+        padding: 16px 18px 18px;
+      }
+      .number {
+        display: inline-grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        margin-right: 8px;
+        border-radius: 50%;
+        background: #0f172a;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 700;
+        vertical-align: middle;
+      }
+      h2 {
+        display: inline;
+        margin: 0;
+        font-size: 17px;
+        letter-spacing: 0;
+      }
+      .wordmark {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 14px;
+        min-width: 0;
+      }
+      .wordmark img {
+        width: 38px;
+        height: 38px;
+        flex: 0 0 auto;
+      }
+      .wordmark strong {
+        overflow-wrap: anywhere;
+        font-size: 15px;
+        letter-spacing: 0;
+      }
+      .wordmark strong span:first-child {
+        color: #07a95a;
+      }
+      .wordmark strong span:last-child {
+        color: #0284c7;
+      }
+      .caption {
+        margin-top: 8px;
+        font-size: 12px;
+        line-height: 1.5;
+        color: #64748b;
+      }
+      @media (max-width: 640px) {
+        body {
+          padding: 18px;
+        }
+        .panel {
+          min-height: 154px;
+          padding: 18px;
+        }
+        .panel img {
+          height: 120px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>原始小程序标识：居中校正版</h1>
+      <p>
+        10
+        个透明正方形候选。绿色小程序图形和中间连续路径全部保留，只调整透明画布、缩放、留白与蓝色波纹的编排。背景色属于预览环境，不属于
+        logo。
+      </p>
+    </header>
+    <main class="grid">
+      <article class="candidate">
+        <div class="swatches">
+          <div class="panel light"><img src="01-original-centered.svg" alt="原始标识精确居中" /></div>
+          <div class="panel dark"><img src="01-original-centered.svg" alt="原始标识精确居中" /></div>
+        </div>
+        <div class="info">
+          <span class="number">01</span>
+          <h2>原始标识精确居中</h2>
+          <div class="wordmark">
+            <img src="01-original-centered.svg" alt="" /><strong><span>weapp-</span><span>tailwindcss</span></strong>
+          </div>
+          <div class="caption">只修正正方形透明画布中的位置，作为最接近原稿的校正版。</div>
+        </div>
+      </article>
+      <article class="candidate">
+        <div class="swatches">
+          <div class="panel light"><img src="02-wave-inset.svg" alt="波纹内收" /></div>
+          <div class="panel dark"><img src="02-wave-inset.svg" alt="波纹内收" /></div>
+        </div>
+        <div class="info">
+          <span class="number">02</span>
+          <h2>波纹内收</h2>
+          <div class="wordmark">
+            <img src="02-wave-inset.svg" alt="" /><strong><span>weapp-</span><span>tailwindcss</span></strong>
+          </div>
+          <div class="caption">波纹缩短并向绿色核心收拢，减少右上角外伸。</div>
+        </div>
+      </article>
+      <article class="candidate">
+        <div class="swatches">
+          <div class="panel light"><img src="03-wave-aligned.svg" alt="波纹边界对齐" /></div>
+          <div class="panel dark"><img src="03-wave-aligned.svg" alt="波纹边界对齐" /></div>
+        </div>
+        <div class="info">
+          <span class="number">03</span>
+          <h2>波纹边界对齐</h2>
+          <div class="wordmark">
+            <img src="03-wave-aligned.svg" alt="" /><strong><span>weapp-</span><span>tailwindcss</span></strong>
+          </div>
+          <div class="caption">两层波纹端点与绿色圆形的视觉边界对齐。</div>
+        </div>
+      </article>
+      <article class="candidate">
+        <div class="swatches">
+          <div class="panel light"><img src="04-core-enlarged.svg" alt="核心放大" /></div>
+          <div class="panel dark"><img src="04-core-enlarged.svg" alt="核心放大" /></div>
+        </div>
+        <div class="info">
+          <span class="number">04</span>
+          <h2>核心放大</h2>
+          <div class="wordmark">
+            <img src="04-core-enlarged.svg" alt="" /><strong><span>weapp-</span><span>tailwindcss</span></strong>
+          </div>
+          <div class="caption">绿色核心略放大，蓝色波纹缩小，优先照顾小尺寸识别。</div>
+        </div>
+      </article>
+      <article class="candidate">
+        <div class="swatches">
+          <div class="panel light"><img src="05-wave-stacked.svg" alt="波纹上下紧凑排列" /></div>
+          <div class="panel dark"><img src="05-wave-stacked.svg" alt="波纹上下紧凑排列" /></div>
+        </div>
+        <div class="info">
+          <span class="number">05</span>
+          <h2>波纹上下紧凑排列</h2>
+          <div class="wordmark">
+            <img src="05-wave-stacked.svg" alt="" /><strong><span>weapp-</span><span>tailwindcss</span></strong>
+          </div>
+          <div class="caption">保留波纹方向，以更紧凑的双层间距收拢轮廓。</div>
+        </div>
+      </article>
+      <article class="candidate">
+        <div class="swatches">
+          <div class="panel light"><img src="06-wave-orbit.svg" alt="波纹沿圆周排列" /></div>
+          <div class="panel dark"><img src="06-wave-orbit.svg" alt="波纹沿圆周排列" /></div>
+        </div>
+        <div class="info">
+          <span class="number">06</span>
+          <h2>波纹沿圆周排列</h2>
+          <div class="wordmark">
+            <img src="06-wave-orbit.svg" alt="" /><strong><span>weapp-</span><span>tailwindcss</span></strong>
+          </div>
+          <div class="caption">波纹贴合右上圆周，整体外轮廓更接近稳定的圆形。</div>
+        </div>
+      </article>
+      <article class="candidate">
+        <div class="swatches">
+          <div class="panel light"><img src="07-short-double-wave.svg" alt="短双弧波纹" /></div>
+          <div class="panel dark"><img src="07-short-double-wave.svg" alt="短双弧波纹" /></div>
+        </div>
+        <div class="info">
+          <span class="number">07</span>
+          <h2>短双弧波纹</h2>
+          <div class="wordmark">
+            <img src="07-short-double-wave.svg" alt="" /><strong><span>weapp-</span><span>tailwindcss</span></strong>
+          </div>
+          <div class="caption">用更短的双层蓝色弧线降低视觉噪声，适合导航栏。</div>
+        </div>
+      </article>
+      <article class="candidate">
+        <div class="swatches">
+          <div class="panel light"><img src="08-safe-margin.svg" alt="大安全边距" /></div>
+          <div class="panel dark"><img src="08-safe-margin.svg" alt="大安全边距" /></div>
+        </div>
+        <div class="info">
+          <span class="number">08</span>
+          <h2>大安全边距</h2>
+          <div class="wordmark">
+            <img src="08-safe-margin.svg" alt="" /><strong><span>weapp-</span><span>tailwindcss</span></strong>
+          </div>
+          <div class="caption">为头像、favicon 和第三方容器保留更宽的透明留白。</div>
+        </div>
+      </article>
+      <article class="candidate">
+        <div class="swatches">
+          <div class="panel light"><img src="09-monochrome.svg" alt="单色适配" /></div>
+          <div class="panel dark"><img src="09-monochrome.svg" alt="单色适配" /></div>
+        </div>
+        <div class="info">
+          <span class="number">09</span>
+          <h2>单色适配</h2>
+          <div class="wordmark">
+            <img src="09-monochrome.svg" alt="" /><strong><span>weapp-</span><span>tailwindcss</span></strong>
+          </div>
+          <div class="caption">构图不变，整体改为单色深蓝，便于反色和印刷场景。</div>
+        </div>
+      </article>
+      <article class="candidate">
+        <div class="swatches">
+          <div class="panel light"><img src="10-min-size.svg" alt="最小尺寸版" /></div>
+          <div class="panel dark"><img src="10-min-size.svg" alt="最小尺寸版" /></div>
+        </div>
+        <div class="info">
+          <span class="number">10</span>
+          <h2>最小尺寸版</h2>
+          <div class="wordmark">
+            <img src="10-min-size.svg" alt="" /><strong><span>weapp-</span><span>tailwindcss</span></strong>
+          </div>
+          <div class="caption">波纹压缩到最低干扰，重点保证 16px 下仍能识别核心图形。</div>
+        </div>
+      </article>
+    </main>
+  </body>
+</html>

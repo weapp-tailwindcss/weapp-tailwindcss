@@ -1,0 +1,20 @@
+{
+  ".mt-2": {
+    "margin-top": "0.5rem"
+  },
+  ".gap-2": {
+    "gap": "0.5rem"
+  },
+  ".p-2": {
+    "padding": "0.5rem"
+  },
+  ".raw-btn": {
+    "gap": "0.5rem"
+  },
+  ".raw-btn:hover": {
+    "margin-top": "0.5rem"
+  },
+  ".unselected": {
+    "width": "calc(var(--other)*2)"
+  }
+}

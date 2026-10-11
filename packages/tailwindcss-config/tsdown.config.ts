@@ -7,6 +7,7 @@ export default defineConfig({
   clean: true,
   dts: false,
   deps: {
+    resolveDepSubpath: true,
     onlyBundle: false,
   },
   target: ['es2020'],

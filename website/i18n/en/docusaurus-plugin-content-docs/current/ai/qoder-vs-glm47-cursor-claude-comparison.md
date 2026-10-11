@@ -567,8 +567,8 @@ According to [GLM Coding Plan official pricing](https://bigmodel.cn/glm-coding):
 >
 > **Daily price (paid monthly)**:
 >
-> - Lite：¥40/month
-> - Pro：¥100/month
+> - Lite: ¥40/month
+> - Pro: ¥100/month
 > - Max: ¥400/month
 
 | User Level   | Monthly Interactions | GLM-4.7 Cost (/person/month)           | Qoder Cost (/person/month)      | Savings   |
@@ -708,7 +708,7 @@ Claude Code CLI has a powerful plug-in market that supports docking with various
 | Plug-in type              | Function description                                                                            | Installation command                                                               |
 | ------------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | **PR Review Toolkit**     | Automated code review (testing, error handling, type design, code quality, code simplification) | `npx claude-plugins install @anthropics/claude-code-plugins/pr-review-toolkit`     |
-| **Python Development**    | Python 3.12+、Django、FastAPI、async patterns                                                   | `npx claude-plugins install @wshobson/claude-code-workflows/python-development`    |
+| **Python Development**    | Python 3.12+, Django, FastAPI, async patterns                                                   | `npx claude-plugins install @wshobson/claude-code-workflows/python-development`    |
 | **JavaScript/TypeScript** | ES6+, Node.js, React, modern web frameworks                                                     | `npx claude-plugins install @wshobson/claude-code-workflows/javascript-typescript` |
 | **Backend Development**   | API design, GraphQL architecture, TDD backend development                                       | `npx claude-plugins install @wshobson/claude-code-workflows/backend-development`   |
 | **Frontend Excellence**   | React 19, Next.js 15, component architecture, state management                                  | `npx claude-plugins install @dotclaude/dotclaude-plugins/frontend-excellence`      |
@@ -914,7 +914,7 @@ Assume that the team has 10 developers and the average annual salary is ¥300,00
 **Claude Code native solution**:
 
 - Claude Code Teams: $40 × 10 = $400 ≈ ¥2800 (**required subscription fee**)
-- Claude Opus API：$857 ≈ ¥6000
+- Claude Opus API: $857 ≈ ¥6000
 - Available tokens: approximately 3.5 million/month
 - **Total: $1257/month (approximately ¥8800/month)**
 
@@ -922,7 +922,7 @@ Assume that the team has 10 developers and the average annual salary is ¥300,00
 
 - Claude Code CLI: ¥0 (free)
 - GLM-4.7 Professional Edition Subscription: ¥400
-- GLM-4.7 API：¥9600
+- GLM-4.7 API: ¥9600
 - Available tokens: approximately **4.8 billion/month**
 - **Total: ¥10,000/month (approximately $1,400/month)**
 

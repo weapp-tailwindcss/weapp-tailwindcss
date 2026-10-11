@@ -6,6 +6,10 @@ export default defineProject({
     setupFiles: ['./test/setup/esbuild-cleanup.ts'],
     alias: [
       {
+        find: '@weapp-tailwindcss/postcss/experimental/lightningcss',
+        replacement: path.resolve(__dirname, '../postcss/src/experimental/lightningcss/index.ts'),
+      },
+      {
         find: '@',
         replacement: path.resolve(__dirname, './src'),
       },

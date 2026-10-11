@@ -13,6 +13,26 @@ function getTransformHandler(plugin: ReturnType<typeof createFrameworkSourceCand
 }
 
 describe('Vite source candidate HMR transactions', () => {
+  it('skips source candidate lifecycle work after Generic Web production profile resolves', async () => {
+    const prepareTailwindGeneration = vi.fn()
+    const preGenerateBundleHook = vi.fn()
+    const plugin = createFrameworkSourceCandidatesPlugin({
+      hmrTimingRecorder: { measure: (_name: string, task: () => unknown) => task() },
+      preGenerateBundleHook,
+      prepareTailwindGeneration,
+      shouldSkipSourceCandidateState: () => true,
+    })
+
+    await plugin.buildStart?.call(plugin)
+    await plugin.generateBundle?.call(plugin, {}, {})
+    await expect(getTransformHandler(plugin)?.call(plugin, 'const cls = "text-red-500"', '/project/src/page.ts')).resolves.toBeUndefined()
+    await plugin.watchChange?.('/project/src/page.ts', { event: 'update' } as any)
+    await getHandleHotUpdateHandler(plugin)?.call(plugin, { file: '/project/src/page.ts' } as any)
+
+    expect(prepareTailwindGeneration).not.toHaveBeenCalled()
+    expect(preGenerateBundleHook).not.toHaveBeenCalled()
+  })
+
   it('keeps weapp-vite sidecar requests out of source candidate memory', async () => {
     const rememberKnownSfcSource = vi.fn()
     const rememberTailwindRootCssModule = vi.fn()
@@ -158,16 +178,7 @@ describe('Vite source candidate HMR transactions', () => {
         expect.objectContaining({ path: '/pages/index.uvue' }),
       ]),
     })
-    expect(wsSend).toHaveBeenCalledWith({
-      type: 'update',
-      updates: expect.arrayContaining([
-        expect.objectContaining({
-          acceptedPath: '/main.css?direct',
-          path: '/main.css?direct',
-          type: 'js-update',
-        }),
-      ]),
-    })
+    expect(wsSend).not.toHaveBeenCalled()
   })
 
   it('keeps a regular candidate update in the same Web source and CSS transaction', async () => {
@@ -228,16 +239,7 @@ describe('Vite source candidate HMR transactions', () => {
 
     expect(result).toEqual([pageModule, cssModule])
     await Promise.resolve()
-    expect(wsSend).toHaveBeenCalledWith({
-      type: 'update',
-      updates: expect.arrayContaining([
-        expect.objectContaining({
-          acceptedPath: '/main.css?direct',
-          path: '/main.css?direct',
-          type: 'js-update',
-        }),
-      ]),
-    })
+    expect(wsSend).not.toHaveBeenCalled()
   })
 
   it('falls back to a full reload for a Nuxt route transaction without the page module', async () => {

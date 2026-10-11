@@ -22,8 +22,8 @@
 - `pnpm --filter @weapp-tailwindcss/merge test`
 - `pnpm --filter @weapp-tailwindcss/merge tsd`
 - 定向回归：
-  - `pnpm --filter @weapp-tailwindcss/merge vitest run test/twMerge.test.ts`
-  - `pnpm --filter @weapp-tailwindcss/merge vitest run test/v4.unit.test.ts`
+  - `pnpm --filter @weapp-tailwindcss/merge exec vitest run test/twMerge.test.ts`
+  - `pnpm --filter @weapp-tailwindcss/merge exec vitest run test/v4.unit.test.ts`
 
 ## 提交前检查
 

@@ -22,7 +22,7 @@ import TailwindTopicHero from '@site/src/components/docs/TailwindTopicHero'
 
 <TailwindTopicHero topicId="tailwindcss/bem-and-oocss" title="BEM and OOCSS methodology" />
 
-## BEM（Block / Element / Modifier）
+## BEM (Block / Element / Modifier)
 
 - Goal: Reduce hierarchical selectors through naming conventions to ensure components are cohesive and easy to combine.
 - Naming: `block` describes independent components, `block__element` represents internal elements, and `block--modifier` represents single-dimensional variants/states; do not pile multi-dimensional states on the same modifier.
@@ -53,7 +53,7 @@ import TailwindTopicHero from '@site/src/components/docs/TailwindTopicHero'
 - Common pitfalls: The nesting level may still increase (`card__header__title` violates BEM); when the modifier explodes, it is necessary to recycle public styles or introduce tokens.
 - With Tailwind: If you turn to atomization, you can keep block/element as a data hook and leave the vision to utilities; or maintain BEM on a small number of containers that need to be globally reused.
 
-## OOCSS（Object-Oriented CSS）
+## OOCSS (Object-Oriented CSS)
 
 - Goal: Split styles into "structure objects" and "skin objects" to encourage reuse and combination and reduce coupling.
 - Core principles: separation of structure and skin (layout vs. visual), decoupling of containers and content (object independence, nestable), single responsibility (one class only takes care of one dimension).

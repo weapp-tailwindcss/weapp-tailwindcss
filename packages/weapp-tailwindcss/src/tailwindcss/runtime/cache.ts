@@ -2,7 +2,7 @@ import type { TailwindcssRuntimeLike } from '@/types'
 import { existsSync, readFileSync, statSync } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
-import { resolveTailwindV4EntriesFromCssCached } from '@/bundlers/shared/source-scan'
+import { resolveTailwindV4EntriesFromCssCached } from '@/project-sources'
 import { resolveTailwindcssOptions } from '@/tailwindcss/runtime-options'
 import { expandTailwindSourceEntries } from '@/tailwindcss/source-scan'
 

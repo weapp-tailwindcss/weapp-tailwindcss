@@ -11,11 +11,11 @@ export { weappTailwindcssPackageDir } from '../shared/create-framework-plugin'
 /**
  * @name WeappTailwindcss
  * @description Webpack 入口只负责早期识别框架分支，具体 hook 由 framework 目录下的插件拥有。
- * @link https://tw.icebreaker.top/docs/intro
+ * @link https://tw.weapp.dev/docs/intro
  */
 export class WeappTailwindcss implements IBaseWebpackPlugin {
   options: InternalUserDefinedOptions
-  appType?: AppType
+  appType: AppType | undefined
 
   constructor(options: UserDefinedOptions = {}) {
     this.options = getCompilerContext({

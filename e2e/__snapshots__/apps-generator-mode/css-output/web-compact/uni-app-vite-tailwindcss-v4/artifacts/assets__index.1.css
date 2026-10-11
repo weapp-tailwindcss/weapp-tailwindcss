@@ -339,7 +339,7 @@ uni-page-head[uni-page-head-type='default'] ~ uni-page-wrapper {
 }
 .uni-page-head-shadow-yellow::after {
   background-image: url(https://cdn.dcloud.net.cn/img/shadow-yellow.png);
-} /*! weapp-tailwindcss vite-generated-css:%3Cproject-root%3E%2Fsrc%2Fmain.css */
+}
 *,
 ::before,
 ::after,
@@ -365,7 +365,8 @@ uni-page-head[uni-page-head-type='default'] ~ uni-page-wrapper {
   --tw-ring-offset-color: #fff;
   --tw-ring-offset-shadow: 0 0 #0000;
   --tw-content: '';
-} /*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+}
+/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
 @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
   *,
   ::before,
@@ -413,12 +414,7 @@ uni-page-head[uni-page-head-type='default'] ~ uni-page-wrapper {
   --text-sm: 0.875rem;
   --text-sm--line-height: calc(1.25 / 0.875);
   --text-base: 1rem;
-  --text-base--line-height: 1.5;
-  --text-lg: 1.125rem;
-  --text-lg--line-height: calc(1.75 / 1.125);
-  --text-xl: 1.25rem;
-  --text-xl--line-height: calc(1.75 / 1.25);
-  --font-weight-medium: 500;
+  --text-base--line-height: calc(1.5 / 1);
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
   --default-font-family: var(--font-sans);
@@ -683,7 +679,7 @@ wx-button {
 .mt-1 {
   margin-top: var(--spacing);
 }
- /*tokens: mt-2 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
+ /*tokens: mt-2 <= src/pages/index/index.vue */
 .mt-2 {
   margin-top: calc(var(--spacing) * 2);
 }
@@ -691,17 +687,13 @@ wx-button {
 .mt-3 {
   margin-top: calc(var(--spacing) * 3);
 }
- /*tokens: mt-4 <= src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
+ /*tokens: mt-4 <= src/pages/index/index.vue */
 .mt-4 {
   margin-top: calc(var(--spacing) * 4);
 }
- /*tokens: mt-6 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
+ /*tokens: mt-6 <= src/pages/index/index.vue */
 .mt-6 {
   margin-top: calc(var(--spacing) * 6);
-}
- /*tokens: mt-8 <= src/pages-order/pages/user/user.vue */
-.mt-8 {
-  margin-top: calc(var(--spacing) * 8);
 }
  /*tokens: ml-2 <= src/pages/index/index.vue */
 .ml-2 {
@@ -759,11 +751,11 @@ wx-button {
   mask-size: 100% 100%;
   --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='black' d='M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z' opacity='.25'/%3E%3Cpath fill='black' d='M12,4a8,8,0,0,1,7.89,6.7A1.53,1.53,0,0,0,21.38,12h0a1.5,1.5,0,0,0,1.48-1.75,11,11,0,0,0-21.72,0A1.5,1.5,0,0,0,2.62,12h0a1.53,1.53,0,0,0,1.49-1.3A8,8,0,0,1,12,4Z'%3E%3CanimateTransform attributeName='transform' dur='0.75s' repeatCount='indefinite' type='rotate' values='0 12 12;360 12 12'/%3E%3C/path%3E%3C/svg%3E");
 }
- /*tokens: block <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
+ /*tokens: block <= src/pages/index/index.vue */
 .block {
   display: block;
 }
- /*tokens: flex <= src/components/HelloWorld.vue, src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
+ /*tokens: flex <= src/components/HelloWorld.vue, src/pages/index/index.vue */
 .flex {
   display: flex;
 }
@@ -771,9 +763,9 @@ wx-button {
   aspect-ratio: var(--my-aspect-ratio);
 }
 .aspect-\[calc\(4\*3\+1\)\/3\] {
-  aspect-ratio: 13 /3;
+  aspect-ratio: calc(4 * 3 + 1) / 3;
 }
- /*tokens: h-12 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
+ /*tokens: h-12 <= src/pages/index/index.vue */
 .h-12 {
   height: calc(var(--spacing) * 12);
 }
@@ -788,11 +780,7 @@ wx-button {
 .h-\[45px\] {
   height: 45px;
 }
- /*tokens: min-h-screen <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue */
-.min-h-screen {
-  min-height: 100vh;
-}
- /*tokens: w-12 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
+ /*tokens: w-12 <= src/pages/index/index.vue */
 .w-12 {
   width: calc(var(--spacing) * 12);
 }
@@ -807,11 +795,7 @@ wx-button {
 .w-\[323px\] {
   width: 323px;
 }
- /*tokens: flex-1 <= src/pages-order/pages/user/user.vue */
-.flex-1 {
-  flex: 1;
-}
- /*tokens: flex-col <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
+ /*tokens: flex-col <= src/pages/index/index.vue */
 .flex-col {
   flex-direction: column;
 }
@@ -823,7 +807,7 @@ wx-button {
 .flex-row-reverse {
   flex-direction: row-reverse;
 }
- /*tokens: items-center <= src/components/HelloWorld.vue, src/main.css, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
+ /*tokens: items-center <= src/components/HelloWorld.vue, src/pages/index/index.vue */
 .items-center {
   align-items: center;
 }
@@ -831,19 +815,11 @@ wx-button {
 .justify-between {
   justify-content: space-between;
 }
- /*tokens: justify-center <= src/pages-order/pages/user/user.vue */
-.justify-center {
-  justify-content: center;
-}
- /*tokens: gap-1 <= src/pages-order/pages/user/user.vue */
-.gap-1 {
-  gap: var(--spacing);
-}
- /*tokens: gap-2 <= src/components/HelloWorld.vue, src/main.css, src/pages/index/index.vue */
+ /*tokens: gap-2 <= src/components/HelloWorld.vue, src/pages/index/index.vue */
 .gap-2 {
   gap: calc(var(--spacing) * 2);
 }
- /*tokens: gap-3 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
+ /*tokens: gap-3 <= src/pages/index/index.vue */
 .gap-3 {
   gap: calc(var(--spacing) * 3);
 }
@@ -922,11 +898,11 @@ wx-button {
 .rounded-full {
   border-radius: 9999px;
 }
- /*tokens: rounded-xl <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
+ /*tokens: rounded-xl <= src/pages/index/index.vue */
 .rounded-xl {
   border-radius: 0.5rem;
 }
- /*tokens: border <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
+ /*tokens: border <= src/pages/index/index.vue */
 .border {
   border-style: var(--tw-border-style);
   border-width: 1px;
@@ -938,15 +914,11 @@ wx-button {
 }
  /*tokens: border-emerald-200 <= src/pages/index/index.vue */
 .border-emerald-200 {
-  border-color: #a4f4cf;
+  border-color: rgb(164, 244, 207);
 }
- /*tokens: border-emerald-500 <= src/pages-order/pages/user/user.vue */
-.border-emerald-500 {
-  border-color: #00b981;
-}
- /*tokens: border-slate-200 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
+ /*tokens: border-slate-200 <= src/pages/index/index.vue */
 .border-slate-200 {
-  border-color: #e2e8f0;
+  border-color: rgb(226, 232, 240);
 }
  /*tokens: border-slate-200/80 <= src/pages/index/index.vue */
 .border-slate-200\/80 {
@@ -962,7 +934,7 @@ wx-button {
   background-color: gray !important;
 }
 .bg-\[\#0000ff\] {
-  background-color: #00f;
+  background-color: #0000ff;
 }
 .bg-\[\#68c828\] {
   background-color: #68c828;
@@ -978,19 +950,15 @@ wx-button {
 }
  /*tokens: bg-emerald-50 <= src/pages/index/index.vue */
 .bg-emerald-50 {
-  background-color: #ecfdf5;
+  background-color: rgb(236, 253, 245);
 }
- /*tokens: bg-emerald-100 <= src/pages-order/pages/user/user.vue */
-.bg-emerald-100 {
-  background-color: #d0fae5;
-}
- /*tokens: bg-emerald-500 <= src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
+ /*tokens: bg-emerald-500 <= src/pages/index/index.vue */
 .bg-emerald-500 {
-  background-color: #00b981;
+  background-color: rgb(0, 185, 129);
 }
  /*tokens: bg-emerald-600 <= src/pages/index/index.vue */
 .bg-emerald-600 {
-  background-color: #009669;
+  background-color: rgb(0, 150, 105);
 }
  /*tokens: bg-green-200/70 <= src/pages/index/index.vue */
 .bg-green-200\/70 {
@@ -1012,17 +980,13 @@ wx-button {
 }
  /*tokens: bg-red-300 <= src/pages/index/index.vue */
 .bg-red-300 {
-  background-color: #ffa3a4;
-}
- /*tokens: bg-slate-50 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue */
-.bg-slate-50 {
-  background-color: #f8fafc;
+  background-color: rgb(255, 163, 164);
 }
  /*tokens: bg-slate-900 <= src/pages/index/index.vue */
 .bg-slate-900 {
-  background-color: #0f172b;
+  background-color: rgb(15, 23, 43);
 }
- /*tokens: bg-white <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
+ /*tokens: bg-white <= src/pages/index/index.vue */
 .bg-white {
   background-color: #fff;
 }
@@ -1088,15 +1052,11 @@ wx-button {
 .p-4 {
   padding: calc(var(--spacing) * 4);
 }
- /*tokens: p-5 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue */
-.p-5 {
-  padding: calc(var(--spacing) * 5);
-}
  /*tokens: px-3 <= src/pages/index/index.vue */
 .px-3 {
   padding-inline: calc(var(--spacing) * 3);
 }
- /*tokens: px-4 <= src/components/HelloWorld.vue, src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
+ /*tokens: px-4 <= src/components/HelloWorld.vue, src/pages/index/index.vue */
 .px-4 {
   padding-inline: calc(var(--spacing) * 4);
 }
@@ -1110,17 +1070,13 @@ wx-button {
 .py-1 {
   padding-block: var(--spacing);
 }
- /*tokens: py-2 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
+ /*tokens: py-2 <= src/pages/index/index.vue */
 .py-2 {
   padding-block: calc(var(--spacing) * 2);
 }
  /*tokens: py-3 <= src/components/HelloWorld.vue, src/pages/index/index.vue */
 .py-3 {
   padding-block: calc(var(--spacing) * 3);
-}
- /*tokens: py-6 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue */
-.py-6 {
-  padding-block: calc(var(--spacing) * 6);
 }
 .py-\[24rpx\] {
   padding-block: 0.75rem;
@@ -1129,31 +1085,21 @@ wx-button {
 .pt-2 {
   padding-top: calc(var(--spacing) * 2);
 }
- /*tokens: text-center <= src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
+ /*tokens: text-center <= src/pages/index/index.vue */
 .text-center {
   text-align: center;
 }
- /*tokens: text-base <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
+ /*tokens: text-base <= src/pages/index/index.vue */
 .text-base {
   font-size: var(--text-base);
   line-height: var(--tw-leading, var(--text-base--line-height));
 }
- /*tokens: text-lg <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue */
-.text-lg {
-  font-size: var(--text-lg);
-  line-height: var(--tw-leading, var(--text-lg--line-height));
-}
- /*tokens: text-sm <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
+ /*tokens: text-sm <= src/pages/index/index.vue */
 .text-sm {
   font-size: var(--text-sm);
   line-height: var(--tw-leading, var(--text-sm--line-height));
 }
- /*tokens: text-xl <= src/pages-order/pages/user/user.vue */
-.text-xl {
-  font-size: var(--text-xl);
-  line-height: var(--tw-leading, var(--text-xl--line-height));
-}
- /*tokens: text-xs <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
+ /*tokens: text-xs <= src/pages/index/index.vue */
 .text-\[100rpx\] {
   font-size: 3.125rem;
 }
@@ -1181,22 +1127,12 @@ wx-button {
   --tw-leading: calc(var(--spacing) * 5);
   line-height: calc(var(--spacing) * 5);
 }
- /*tokens: leading-6 <= src/pages-order/pages/user/user.vue */
-.leading-6 {
-  --tw-leading: calc(var(--spacing) * 6);
-  line-height: calc(var(--spacing) * 6);
-}
- /*tokens: font-bold <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
+ /*tokens: font-bold <= src/pages/index/index.vue */
 .font-bold {
   --tw-font-weight: var(--font-weight-bold);
   font-weight: var(--font-weight-bold);
 }
- /*tokens: font-medium <= src/pages-order/pages/user/user.vue */
-.font-medium {
-  --tw-font-weight: var(--font-weight-medium);
-  font-weight: var(--font-weight-medium);
-}
- /*tokens: font-semibold <= src/main.css, src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
+ /*tokens: font-semibold <= src/pages/index/index.vue */
 .font-semibold {
   --tw-font-weight: var(--font-weight-semibold);
   font-weight: var(--font-weight-semibold);
@@ -1211,42 +1147,35 @@ wx-button {
 .text-\[\#123456\] {
   color: #123456;
 }
-.text-\[\#929292\] {
-  color: #929292;
-}
- /*tokens: text-emerald-600 <= src/pages-order/pages/user/user.vue */
-.text-emerald-600 {
-  color: #009669;
-}
  /*tokens: text-emerald-700 <= src/pages/index/index.vue */
 .text-emerald-700 {
-  color: #007857;
+  color: rgb(0, 120, 87);
 }
  /*tokens: text-neutral-66 <= src/pages/index/index.vue */
 .text-neutral-66 {
   color: #666;
 }
- /*tokens: text-slate-500 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
+ /*tokens: text-slate-500 <= src/pages/index/index.vue */
 .text-slate-500 {
-  color: #62748e;
+  color: rgb(98, 116, 142);
 }
  /*tokens: text-slate-700 <= src/components/HelloWorld.vue, src/pages/index/index.vue */
 .text-slate-700 {
-  color: #314158;
+  color: rgb(49, 65, 88);
 }
- /*tokens: text-slate-800 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
+ /*tokens: text-slate-800 <= src/pages/index/index.vue */
 .text-slate-800 {
-  color: #1d293d;
+  color: rgb(29, 41, 61);
 }
- /*tokens: text-slate-900 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
+ /*tokens: text-slate-900 <= src/pages/index/index.vue */
 .text-slate-900 {
-  color: #0f172b;
+  color: rgb(15, 23, 43);
 }
  /*tokens: text-tahiti <= src/pages/index/index.vue */
 .text-tahiti {
   color: #3ab7bf;
 }
- /*tokens: text-white <= src/main.css, src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
+ /*tokens: text-white <= src/pages/index/index.vue */
 .text-white {
   color: #fff;
 }
@@ -1254,8 +1183,7 @@ wx-button {
 .underline {
   text-decoration-line: underline;
 }
- /*tokens: shadow <= src/pages-order/pages/home/home.vue | shadow-sm <= src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
-.shadow,
+ /*tokens: shadow-sm <= src/pages/index/index.vue */
 .shadow-sm {
   --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgba(0, 0, 0, 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgba(0, 0, 0, 0.1));
   box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
@@ -1282,60 +1210,68 @@ wx-button {
   --tw-content: 'good work!' !important;
   content: var(--tw-content) !important;
 }
- /*tokens: active:bg-emerald-50 <= src/pages-order/pages/user/user.vue */
-.active\:bg-emerald-50:active {
-  background-color: #ecfdf5;
-}
- /*tokens: active:bg-emerald-600 <= src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
+ /*tokens: active:bg-emerald-600 <= src/pages/index/index.vue */
 .active\:bg-emerald-600:active {
-  background-color: #009669;
+  background-color: rgb(0, 150, 105);
 }
  /*tokens: active:bg-emerald-700 <= src/pages/index/index.vue */
 .active\:bg-emerald-700:active {
-  background-color: #007857;
+  background-color: rgb(0, 120, 87);
 }
  /*tokens: active:bg-slate-700 <= src/pages/index/index.vue */
 .active\:bg-slate-700:active {
-  background-color: #314158;
+  background-color: rgb(49, 65, 88);
 }
  /*tokens: dark:bg-red-300 <= src/pages/index/index.vue | theme-dark <= src/pages/index/index.vue */
-.dark\:bg-red-300.theme-dark,
+.dark\:bg-red-300.theme-dark {
+  background-color: rgb(255, 163, 164);
+}
+ /*tokens: theme-dark <= src/pages/index/index.vue | dark:bg-red-300 <= src/pages/index/index.vue */
 .theme-dark .dark\:bg-red-300 {
-  background-color: #ffa3a4;
+  background-color: rgb(255, 163, 164);
 }
  /*tokens: dark:bg-zinc-900 <= src/pages/index/index.vue | theme-dark <= src/pages/index/index.vue */
-.dark\:bg-zinc-900.theme-dark,
+.dark\:bg-zinc-900.theme-dark {
+  background-color: rgb(24, 24, 27);
+}
+ /*tokens: theme-dark <= src/pages/index/index.vue | dark:bg-zinc-900 <= src/pages/index/index.vue */
 .theme-dark .dark\:bg-zinc-900 {
-  background-color: #18181b;
+  background-color: rgb(24, 24, 27);
 }
  /*tokens: dark:bg-zinc-950 <= src/pages/index/index.vue | theme-dark <= src/pages/index/index.vue */
-.dark\:bg-zinc-950.theme-dark,
+.dark\:bg-zinc-950.theme-dark {
+  background-color: rgb(9, 9, 11);
+}
+ /*tokens: theme-dark <= src/pages/index/index.vue | dark:bg-zinc-950 <= src/pages/index/index.vue */
 .theme-dark .dark\:bg-zinc-950 {
-  background-color: #09090b;
+  background-color: rgb(9, 9, 11);
 }
  /*tokens: dark:text-zinc-50 <= src/pages/index/index.vue | theme-dark <= src/pages/index/index.vue */
-.dark\:text-zinc-50.theme-dark,
+.dark\:text-zinc-50.theme-dark {
+  color: rgb(250, 250, 250);
+}
+ /*tokens: theme-dark <= src/pages/index/index.vue | dark:text-zinc-50 <= src/pages/index/index.vue */
 .theme-dark .dark\:text-zinc-50 {
-  color: #fafafa;
+  color: rgb(250, 250, 250);
 }
 @media (prefers-color-scheme: dark) {
  /*tokens: system-dark:bg-slate-900 <= src/pages/index/index.vue */
   .system-dark\:bg-slate-900 {
-    background-color: #0f172b;
+    background-color: rgb(15, 23, 43);
   }
  /*tokens: system-dark:text-slate-100 <= src/pages/index/index.vue */
   .system-dark\:text-slate-100 {
-    color: #f1f5f9;
+    color: rgb(241, 245, 249);
   }
 }
  /*tokens: not-wx:bg-red-500 <= src/pages/index/index.vue */
 .not-wx\:bg-red-500 {
-  background-color: #fb2c36;
+  background-color: rgb(251, 44, 54);
 }
 @media (any-hover: hover) {
  /*tokens: any-hover:bg-slate-800 <= src/pages/index/index.vue */
   .any-hover\:bg-slate-800:hover {
-    background-color: #1d293d;
+    background-color: rgb(29, 41, 61);
   }
 }
 wx-button {

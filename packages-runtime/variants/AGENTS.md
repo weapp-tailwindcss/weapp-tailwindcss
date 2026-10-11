@@ -23,8 +23,8 @@
 - `pnpm --filter @weapp-tailwindcss/variants test`
 - `pnpm --filter @weapp-tailwindcss/variants tsd`
 - 定向回归：
-  - `pnpm --filter @weapp-tailwindcss/variants vitest run test/variants.test.ts`
-  - `pnpm --filter @weapp-tailwindcss/variants vitest run test/snapshot.test.ts`
+  - `pnpm --filter @weapp-tailwindcss/variants exec vitest run test/variants.test.ts`
+  - `pnpm --filter @weapp-tailwindcss/variants exec vitest run test/snapshot.test.ts`
 
 ## 提交前检查
 

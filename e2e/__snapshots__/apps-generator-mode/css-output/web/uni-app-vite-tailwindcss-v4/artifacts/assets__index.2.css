@@ -1,92 +1,572 @@
-/*! weapp-tailwindcss vite-generated-css:%3Cproject-root%3E%2Fsrc%2Fpages-order%2Findex.css *//*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */@layer properties;@layer theme,base,components,utilities;@layer theme{:root,:host{--font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";--font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;--color-emerald-50: oklch(97.9% .021 166.113);--color-emerald-100: oklch(95% .052 163.051);--color-emerald-500: oklch(69.6% .17 162.48);--color-emerald-600: oklch(59.6% .145 163.225);--color-slate-50: oklch(98.4% .003 247.858);--color-slate-200: oklch(92.9% .013 255.508);--color-slate-500: oklch(55.4% .046 257.417);--color-slate-800: oklch(27.9% .041 260.031);--color-slate-900: oklch(20.8% .042 265.755);--color-white: #fff;--spacing: .25rem;--text-xs: .75rem;--text-xs--line-height: calc(1 / .75);--text-sm: .875rem;--text-sm--line-height: calc(1.25 / .875);--text-base: 1rem;--text-base--line-height: 1.5 ;--text-lg: 1.125rem;--text-lg--line-height: calc(1.75 / 1.125);--text-xl: 1.25rem;--text-xl--line-height: calc(1.75 / 1.25);--font-weight-medium: 500;--font-weight-semibold: 600;--font-weight-bold: 700;--default-font-family: var(--font-sans);--default-mono-font-family: var(--font-mono)}}@layer base{*,::after,::before,::backdrop,::file-selector-button{box-sizing:border-box;margin:0;padding:0;border:0 solid}html,:host{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;-o-tab-size:4;tab-size:4;font-family:var(--default-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");font-feature-settings:var(--default-font-feature-settings, normal);font-variation-settings:var(--default-font-variation-settings, normal);-webkit-tap-highlight-color:transparent}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;-webkit-text-decoration:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,samp,pre{font-family:var(--default-mono-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);font-feature-settings:var(--default-mono-font-feature-settings, normal);font-variation-settings:var(--default-mono-font-variation-settings, normal);font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}:-moz-focusring:where(:not(iframe)){outline:auto}uni-progress{vertical-align:baseline}summary{display:list-item}ol,ul,menu{list-style:none}img,svg,uni-video,uni-canvas,uni-audio,iframe,embed,object{display:block;vertical-align:middle}img,uni-video{max-width:100%;height:auto}uni-button,uni-input,select,optgroup,uni-textarea,::file-selector-button{font:inherit;font-feature-settings:inherit;font-variation-settings:inherit;letter-spacing:inherit;color:inherit;border-radius:0;background-color:transparent;opacity:1}:where(select:is([multiple],[size])) optgroup{font-weight:bolder}:where(select:is([multiple],[size])) optgroup option{padding-inline-start:20px}::file-selector-button{margin-inline-end:4px}::-moz-placeholder{opacity:1}::placeholder{opacity:1}@supports (not (-webkit-appearance: -apple-pay-button)) or (contain-intrinsic-size: 1px){::-moz-placeholder{color:currentcolor}@supports (color: color-mix(in lab,red,red)){{color:color-mix(in oklab,currentcolor 50%,transparent)}}::placeholder{color:currentcolor}@supports (color: color-mix(in lab,red,red)){{color:color-mix(in oklab,currentcolor 50%,transparent)}}}uni-textarea{resize:vertical}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-date-and-time-value{min-height:1lh;text-align:inherit}::-webkit-datetime-edit{display:inline-flex}::-webkit-datetime-edit-fields-wrapper{padding:0}::-webkit-datetime-edit,::-webkit-datetime-edit-year-field,::-webkit-datetime-edit-month-field,::-webkit-datetime-edit-day-field,::-webkit-datetime-edit-hour-field,::-webkit-datetime-edit-minute-field,::-webkit-datetime-edit-second-field,::-webkit-datetime-edit-millisecond-field,::-webkit-datetime-edit-meridiem-field{padding-block:0}::-webkit-calendar-picker-indicator{line-height:1}:-moz-ui-invalid{box-shadow:none}uni-button,uni-input:where([type=button],[type=reset],[type=submit]),::file-selector-button{-webkit-appearance:button;-moz-appearance:button;appearance:button}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[hidden]:where(:not([hidden=until-found])){display:none!important}}@layer utilities{
- /*tokens: mt-2 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
-.mt-2{margin-top:calc(var(--spacing) * 2)}
- /*tokens: mt-4 <= src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
-.mt-4{margin-top:calc(var(--spacing) * 4)}
- /*tokens: mt-6 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
-.mt-6{margin-top:calc(var(--spacing) * 6)}
+@layer properties;
+@layer theme, base, components, utilities;
+@layer theme {
+  :root,
+  :host {
+    --font-sans:
+      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 'Noto Sans', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+      'Noto Color Emoji';
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    --color-emerald-50: oklch(97.9% 0.021 166.113);
+    --color-emerald-100: oklch(95% 0.052 163.051);
+    --color-emerald-500: oklch(69.6% 0.17 162.48);
+    --color-emerald-600: oklch(59.6% 0.145 163.225);
+    --color-slate-50: oklch(98.4% 0.003 247.858);
+    --color-slate-200: oklch(92.9% 0.013 255.508);
+    --color-slate-500: oklch(55.4% 0.046 257.417);
+    --color-slate-800: oklch(27.9% 0.041 260.031);
+    --color-slate-900: oklch(20.8% 0.042 265.755);
+    --color-white: #fff;
+    --spacing: 0.25rem;
+    --text-xs: 0.75rem;
+    --text-xs--line-height: calc(1 / 0.75);
+    --text-sm: 0.875rem;
+    --text-sm--line-height: calc(1.25 / 0.875);
+    --text-base: 1rem;
+    --text-base--line-height: calc(1.5 / 1);
+    --text-lg: 1.125rem;
+    --text-lg--line-height: calc(1.75 / 1.125);
+    --text-xl: 1.25rem;
+    --text-xl--line-height: calc(1.75 / 1.25);
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    --default-font-family: var(--font-sans);
+    --default-mono-font-family: var(--font-mono);
+  }
+}
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0 solid;
+  }
+  html,
+  :host {
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+    -moz-tab-size: 4;
+    -o-tab-size: 4;
+    tab-size: 4;
+    font-family: var(
+      --default-font-family,
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      Roboto,
+      'Helvetica Neue',
+      'Noto Sans',
+      Arial,
+      sans-serif,
+      'Apple Color Emoji',
+      'Segoe UI Emoji',
+      'Segoe UI Symbol',
+      'Noto Color Emoji'
+    );
+    font-feature-settings: var(--default-font-feature-settings, normal);
+    font-variation-settings: var(--default-font-variation-settings, normal);
+    -webkit-tap-highlight-color: transparent;
+  }
+  hr {
+    height: 0;
+    color: inherit;
+    border-top-width: 1px;
+  }
+  abbr:where([title]) {
+    -webkit-text-decoration: underline dotted;
+    text-decoration: underline dotted;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+  a {
+    color: inherit;
+    -webkit-text-decoration: inherit;
+    text-decoration: inherit;
+  }
+  b,
+  strong {
+    font-weight: bolder;
+  }
+  code,
+  kbd,
+  samp,
+  pre {
+    font-family: var(--default-mono-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace);
+    font-feature-settings: var(--default-mono-font-feature-settings, normal);
+    font-variation-settings: var(--default-mono-font-variation-settings, normal);
+    font-size: 1em;
+  }
+  small {
+    font-size: 80%;
+  }
+  sub,
+  sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+  }
+  sub {
+    bottom: -0.25em;
+  }
+  sup {
+    top: -0.5em;
+  }
+  table {
+    text-indent: 0;
+    border-color: inherit;
+    border-collapse: collapse;
+  }
+  :-moz-focusring:where(:not(iframe)) {
+    outline: auto;
+  }
+  uni-progress {
+    vertical-align: baseline;
+  }
+  summary {
+    display: list-item;
+  }
+  ol,
+  ul,
+  menu {
+    list-style: none;
+  }
+  img,
+  svg,
+  uni-video,
+  uni-canvas,
+  uni-audio,
+  iframe,
+  embed,
+  object {
+    display: block;
+    vertical-align: middle;
+  }
+  img,
+  uni-video {
+    max-width: 100%;
+    height: auto;
+  }
+  uni-button,
+  uni-input,
+  select,
+  optgroup,
+  uni-textarea,
+  ::file-selector-button {
+    font: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    border-radius: 0;
+    background-color: transparent;
+    opacity: 1;
+  }
+  :where(select:is([multiple], [size])) optgroup {
+    font-weight: bolder;
+  }
+  :where(select:is([multiple], [size])) optgroup option {
+    padding-inline-start: 20px;
+  }
+  ::file-selector-button {
+    margin-inline-end: 4px;
+  }
+  ::-moz-placeholder {
+    opacity: 1;
+  }
+  ::placeholder {
+    opacity: 1;
+  }
+  @supports (not (-webkit-appearance: -apple-pay-button)) or (contain-intrinsic-size: 1px) {
+    ::-moz-placeholder {
+      color: currentcolor;
+      @supports (color: color-mix(in lab, red, red)) {
+        color: color-mix(in oklab, currentcolor 50%, transparent);
+      }
+    }
+    ::placeholder {
+      color: currentcolor;
+      @supports (color: color-mix(in lab, red, red)) {
+        color: color-mix(in oklab, currentcolor 50%, transparent);
+      }
+    }
+  }
+  uni-textarea {
+    resize: vertical;
+  }
+  ::-webkit-search-decoration {
+    -webkit-appearance: none;
+  }
+  ::-webkit-date-and-time-value {
+    min-height: 1lh;
+    text-align: inherit;
+  }
+  ::-webkit-datetime-edit {
+    display: inline-flex;
+  }
+  ::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
+  }
+  ::-webkit-datetime-edit,
+  ::-webkit-datetime-edit-year-field,
+  ::-webkit-datetime-edit-month-field,
+  ::-webkit-datetime-edit-day-field,
+  ::-webkit-datetime-edit-hour-field,
+  ::-webkit-datetime-edit-minute-field,
+  ::-webkit-datetime-edit-second-field,
+  ::-webkit-datetime-edit-millisecond-field,
+  ::-webkit-datetime-edit-meridiem-field {
+    padding-block: 0;
+  }
+  ::-webkit-calendar-picker-indicator {
+    line-height: 1;
+  }
+  :-moz-ui-invalid {
+    box-shadow: none;
+  }
+  uni-button,
+  uni-input:where([type='button'], [type='reset'], [type='submit']),
+  ::file-selector-button {
+    -webkit-appearance: button;
+    -moz-appearance: button;
+    appearance: button;
+  }
+  ::-webkit-inner-spin-button,
+  ::-webkit-outer-spin-button {
+    height: auto;
+  }
+  [hidden]:where(:not([hidden='until-found'])) {
+    display: none !important;
+  }
+}
+@layer utilities {
+ /*tokens: mt-2 <= src/pages-order/pages/user/user.vue */
+  .mt-2 {
+    margin-top: calc(var(--spacing) * 2);
+  }
+ /*tokens: mt-4 <= src/pages-order/pages/home/home.vue */
+  .mt-4 {
+    margin-top: calc(var(--spacing) * 4);
+  }
+ /*tokens: mt-6 <= src/pages-order/pages/user/user.vue */
+  .mt-6 {
+    margin-top: calc(var(--spacing) * 6);
+  }
  /*tokens: mt-8 <= src/pages-order/pages/user/user.vue */
-.mt-8{margin-top:calc(var(--spacing) * 8)}
- /*tokens: block <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
-.block{display:block}
- /*tokens: flex <= src/components/HelloWorld.vue, src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
-.flex{display:flex}
- /*tokens: h-12 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
-.h-12{height:calc(var(--spacing) * 12)}
+  .mt-8 {
+    margin-top: calc(var(--spacing) * 8);
+  }
+ /*tokens: block <= src/pages-order/pages/user/user.vue */
+  .block {
+    display: block;
+  }
+ /*tokens: flex <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue */
+  .flex {
+    display: flex;
+  }
+ /*tokens: h-12 <= src/pages-order/pages/user/user.vue */
+  .h-12 {
+    height: calc(var(--spacing) * 12);
+  }
  /*tokens: min-h-screen <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue */
-.min-h-screen{min-height:100vh}
- /*tokens: w-12 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
-.w-12{width:calc(var(--spacing) * 12)}
+  .min-h-screen {
+    min-height: 100vh;
+  }
+ /*tokens: w-12 <= src/pages-order/pages/user/user.vue */
+  .w-12 {
+    width: calc(var(--spacing) * 12);
+  }
  /*tokens: flex-1 <= src/pages-order/pages/user/user.vue */
-.flex-1{flex:1}
- /*tokens: flex-col <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
-.flex-col{flex-direction:column}
- /*tokens: items-center <= src/components/HelloWorld.vue, src/main.css, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
-.items-center{align-items:center}
+  .flex-1 {
+    flex: 1;
+  }
+ /*tokens: flex-col <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue */
+  .flex-col {
+    flex-direction: column;
+  }
+ /*tokens: items-center <= src/pages-order/pages/user/user.vue */
+  .items-center {
+    align-items: center;
+  }
  /*tokens: justify-center <= src/pages-order/pages/user/user.vue */
-.justify-center{justify-content:center}
+  .justify-center {
+    justify-content: center;
+  }
  /*tokens: gap-1 <= src/pages-order/pages/user/user.vue */
-.gap-1{gap:var(--spacing)}
- /*tokens: gap-3 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
-.gap-3{gap:calc(var(--spacing) * 3)}
- /*tokens: rounded-xl <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
-.rounded-xl{border-radius:.5rem}
- /*tokens: border <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
-.border{border-style:var(--tw-border-style);border-width:1px}
+  .gap-1 {
+    gap: var(--spacing);
+  }
+ /*tokens: gap-3 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue */
+  .gap-3 {
+    gap: calc(var(--spacing) * 3);
+  }
+ /*tokens: rounded-xl <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue */
+  .rounded-xl {
+    border-radius: 0.5rem;
+  }
+ /*tokens: border <= src/pages-order/pages/user/user.vue */
+  .border {
+    border-style: var(--tw-border-style);
+    border-width: 1px;
+  }
  /*tokens: border-emerald-500 <= src/pages-order/pages/user/user.vue */
-.border-emerald-500{border-color:var(--color-emerald-500)}
- /*tokens: border-slate-200 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
-.border-slate-200{border-color:var(--color-slate-200)}
+  .border-emerald-500 {
+    border-color: var(--color-emerald-500);
+  }
+ /*tokens: border-slate-200 <= src/pages-order/pages/user/user.vue */
+  .border-slate-200 {
+    border-color: var(--color-slate-200);
+  }
  /*tokens: bg-emerald-100 <= src/pages-order/pages/user/user.vue */
-.bg-emerald-100{background-color:var(--color-emerald-100)}
- /*tokens: bg-emerald-500 <= src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
-.bg-emerald-500{background-color:var(--color-emerald-500)}
+  .bg-emerald-100 {
+    background-color: var(--color-emerald-100);
+  }
+ /*tokens: bg-emerald-500 <= src/pages-order/pages/home/home.vue */
+  .bg-emerald-500 {
+    background-color: var(--color-emerald-500);
+  }
  /*tokens: bg-slate-50 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue */
-.bg-slate-50{background-color:var(--color-slate-50)}
- /*tokens: bg-white <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
-.bg-white{background-color:var(--color-white)}
+  .bg-slate-50 {
+    background-color: var(--color-slate-50);
+  }
+ /*tokens: bg-white <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue */
+  .bg-white {
+    background-color: var(--color-white);
+  }
  /*tokens: p-5 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue */
-.p-5{padding:calc(var(--spacing) * 5)}
- /*tokens: px-4 <= src/components/HelloWorld.vue, src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
-.px-4{padding-inline:calc(var(--spacing) * 4)}
- /*tokens: py-2 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
-.py-2{padding-block:calc(var(--spacing) * 2)}
+  .p-5 {
+    padding: calc(var(--spacing) * 5);
+  }
+ /*tokens: px-4 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue */
+  .px-4 {
+    padding-inline: calc(var(--spacing) * 4);
+  }
+ /*tokens: py-2 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue */
+  .py-2 {
+    padding-block: calc(var(--spacing) * 2);
+  }
  /*tokens: py-6 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue */
-.py-6{padding-block:calc(var(--spacing) * 6)}
- /*tokens: text-center <= src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
-.text-center{text-align:center}
- /*tokens: text-base <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
-.text-base{font-size:var(--text-base);line-height:var(--tw-leading, var(--text-base--line-height))}
+  .py-6 {
+    padding-block: calc(var(--spacing) * 6);
+  }
+ /*tokens: text-center <= src/pages-order/pages/home/home.vue */
+  .text-center {
+    text-align: center;
+  }
+ /*tokens: text-base <= src/pages-order/pages/user/user.vue */
+  .text-base {
+    font-size: var(--text-base);
+    line-height: var(--tw-leading, var(--text-base--line-height));
+  }
  /*tokens: text-lg <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue */
-.text-lg{font-size:var(--text-lg);line-height:var(--tw-leading, var(--text-lg--line-height))}
- /*tokens: text-sm <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
-.text-sm{font-size:var(--text-sm);line-height:var(--tw-leading, var(--text-sm--line-height))}
+  .text-lg {
+    font-size: var(--text-lg);
+    line-height: var(--tw-leading, var(--text-lg--line-height));
+  }
+ /*tokens: text-sm <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue */
+  .text-sm {
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+  }
  /*tokens: text-xl <= src/pages-order/pages/user/user.vue */
-.text-xl{font-size:var(--text-xl);line-height:var(--tw-leading, var(--text-xl--line-height))}
- /*tokens: text-xs <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
-.text-xs{font-size:var(--text-xs);line-height:var(--tw-leading, var(--text-xs--line-height))}
+  .text-xl {
+    font-size: var(--text-xl);
+    line-height: var(--tw-leading, var(--text-xl--line-height));
+  }
+ /*tokens: text-xs <= src/pages-order/pages/user/user.vue */
+  .text-xs {
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+  }
  /*tokens: leading-6 <= src/pages-order/pages/user/user.vue */
-.leading-6{--tw-leading: calc(var(--spacing) * 6);line-height:calc(var(--spacing) * 6)}
- /*tokens: font-bold <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
-.font-bold{--tw-font-weight: var(--font-weight-bold);font-weight:var(--font-weight-bold)}
+  .leading-6 {
+    --tw-leading: calc(var(--spacing) * 6);
+    line-height: calc(var(--spacing) * 6);
+  }
+ /*tokens: font-bold <= src/pages-order/pages/user/user.vue */
+  .font-bold {
+    --tw-font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-bold);
+  }
  /*tokens: font-medium <= src/pages-order/pages/user/user.vue */
-.font-medium{--tw-font-weight: var(--font-weight-medium);font-weight:var(--font-weight-medium)}
- /*tokens: font-semibold <= src/main.css, src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
-.font-semibold{--tw-font-weight: var(--font-weight-semibold);font-weight:var(--font-weight-semibold)}
-.text-\[\#929292\]{color:#929292}
+  .font-medium {
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+  }
+ /*tokens: font-semibold <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue */
+  .font-semibold {
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+  }
+.text-\[\#929292\] {
+    color: #929292;
+  }
  /*tokens: text-emerald-600 <= src/pages-order/pages/user/user.vue */
-.text-emerald-600{color:var(--color-emerald-600)}
- /*tokens: text-slate-500 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
-.text-slate-500{color:var(--color-slate-500)}
- /*tokens: text-slate-800 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
-.text-slate-800{color:var(--color-slate-800)}
- /*tokens: text-slate-900 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
-.text-slate-900{color:var(--color-slate-900)}
- /*tokens: text-white <= src/main.css, src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
-.text-white{color:var(--color-white)}
- /*tokens: shadow <= src/pages-order/pages/home/home.vue | shadow-sm <= src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
-.shadow,.shadow-sm{--tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgba(0, 0, 0, 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgba(0, 0, 0, 0.1));box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.before\:content-\[\'现在，让我们开始神奇的_tailwindcss_开发之旅吧！\'\]::before{--tw-content: "现在，让我们开始神奇的 tailwindcss 开发之旅吧！";content:var(--tw-content)}.before\:content-\[\'现在，让我们继续神奇的_tailwindcss_HMR_回归之旅吧！\'\]::before{--tw-content: "现在，让我们继续神奇的 tailwindcss HMR 回归之旅吧！";content:var(--tw-content)}
+  .text-emerald-600 {
+    color: var(--color-emerald-600);
+  }
+ /*tokens: text-slate-500 <= src/pages-order/pages/user/user.vue */
+  .text-slate-500 {
+    color: var(--color-slate-500);
+  }
+ /*tokens: text-slate-800 <= src/pages-order/pages/user/user.vue */
+  .text-slate-800 {
+    color: var(--color-slate-800);
+  }
+ /*tokens: text-slate-900 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue */
+  .text-slate-900 {
+    color: var(--color-slate-900);
+  }
+ /*tokens: text-white <= src/pages-order/pages/home/home.vue */
+  .text-white {
+    color: var(--color-white);
+  }
+ /*tokens: shadow <= src/pages-order/pages/home/home.vue */
+  .shadow {
+    --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgba(0, 0, 0, 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgba(0, 0, 0, 0.1));
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  }
+ /*tokens: shadow-sm <= src/pages-order/pages/home/home.vue */
+  .shadow-sm {
+    --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgba(0, 0, 0, 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgba(0, 0, 0, 0.1));
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  }
+  .before\:content-\[\'现在，让我们开始神奇的_tailwindcss_开发之旅吧！\'\]::before {
+    --tw-content: '现在，让我们开始神奇的 tailwindcss 开发之旅吧！';
+    content: var(--tw-content);
+  }
+  .before\:content-\[\'现在，让我们继续神奇的_tailwindcss_HMR_回归之旅吧！\'\]::before {
+    --tw-content: '现在，让我们继续神奇的 tailwindcss HMR 回归之旅吧！';
+    content: var(--tw-content);
+  }
  /*tokens: active:bg-emerald-50 <= src/pages-order/pages/user/user.vue */
-.active\:bg-emerald-50:active{background-color:var(--color-emerald-50)}
- /*tokens: active:bg-emerald-600 <= src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
-.active\:bg-emerald-600:active{background-color:var(--color-emerald-600)}}@property --tw-border-style{syntax: "*"; inherits: false; initial-value: solid;}@property --tw-leading{syntax: "*"; inherits: false;}@property --tw-font-weight{syntax: "*"; inherits: false;}@property --tw-shadow{syntax: "*"; inherits: false; initial-value: 0 0 #0000;}@property --tw-shadow-color{syntax: "*"; inherits: false;}@property --tw-shadow-alpha{syntax: "<percentage>"; inherits: false; initial-value: 100%;}@property --tw-inset-shadow{syntax: "*"; inherits: false; initial-value: 0 0 #0000;}@property --tw-inset-shadow-color{syntax: "*"; inherits: false;}@property --tw-inset-shadow-alpha{syntax: "<percentage>"; inherits: false; initial-value: 100%;}@property --tw-ring-color{syntax: "*"; inherits: false;}@property --tw-ring-shadow{syntax: "*"; inherits: false; initial-value: 0 0 #0000;}@property --tw-inset-ring-color{syntax: "*"; inherits: false;}@property --tw-inset-ring-shadow{syntax: "*"; inherits: false; initial-value: 0 0 #0000;}@property --tw-ring-inset{syntax: "*"; inherits: false;}@property --tw-ring-offset-width{syntax: "<length>"; inherits: false; initial-value: 0px;}@property --tw-ring-offset-color{syntax: "*"; inherits: false; initial-value: #fff;}@property --tw-ring-offset-shadow{syntax: "*"; inherits: false; initial-value: 0 0 #0000;}@property --tw-content{syntax: "*"; initial-value: ""; inherits: false;}@layer properties{@supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))){*,::before,::after,::backdrop{--tw-border-style: solid;--tw-leading: initial;--tw-font-weight: initial;--tw-shadow: 0 0 #0000;--tw-shadow-color: initial;--tw-shadow-alpha: 100%;--tw-inset-shadow: 0 0 #0000;--tw-inset-shadow-color: initial;--tw-inset-shadow-alpha: 100%;--tw-ring-color: initial;--tw-ring-shadow: 0 0 #0000;--tw-inset-ring-color: initial;--tw-inset-ring-shadow: 0 0 #0000;--tw-ring-inset: initial;--tw-ring-offset-width: 0px;--tw-ring-offset-color: #fff;--tw-ring-offset-shadow: 0 0 #0000;--tw-content: ""}}}
+  .active\:bg-emerald-50:active {
+    background-color: var(--color-emerald-50);
+  }
+ /*tokens: active:bg-emerald-600 <= src/pages-order/pages/home/home.vue */
+  .active\:bg-emerald-600:active {
+    background-color: var(--color-emerald-600);
+  }
+}
+@property --tw-border-style {
+  syntax: '*';
+  inherits: false;
+  initial-value: solid;
+}
+@property --tw-leading {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-font-weight {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-shadow {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-shadow-color {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-shadow-alpha {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-inset-shadow {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-inset-shadow-color {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-inset-shadow-alpha {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-ring-color {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-ring-shadow {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-inset-ring-color {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-inset-ring-shadow {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-ring-inset {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-ring-offset-width {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --tw-ring-offset-color {
+  syntax: '*';
+  inherits: false;
+  initial-value: #fff;
+}
+@property --tw-ring-offset-shadow {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-content {
+  syntax: '*';
+  initial-value: '';
+  inherits: false;
+}
+@layer properties {
+  @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
+    *,
+    ::before,
+    ::after,
+    ::backdrop {
+      --tw-border-style: solid;
+      --tw-leading: initial;
+      --tw-font-weight: initial;
+      --tw-shadow: 0 0 #0000;
+      --tw-shadow-color: initial;
+      --tw-shadow-alpha: 100%;
+      --tw-inset-shadow: 0 0 #0000;
+      --tw-inset-shadow-color: initial;
+      --tw-inset-shadow-alpha: 100%;
+      --tw-ring-color: initial;
+      --tw-ring-shadow: 0 0 #0000;
+      --tw-inset-ring-color: initial;
+      --tw-inset-ring-shadow: 0 0 #0000;
+      --tw-ring-inset: initial;
+      --tw-ring-offset-width: 0px;
+      --tw-ring-offset-color: #fff;
+      --tw-ring-offset-shadow: 0 0 #0000;
+      --tw-content: '';
+    }
+  }
+}

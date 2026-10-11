@@ -32,7 +32,7 @@ export interface ExportAllDeclarationImportToken {
 
 export type ImportToken = ImportSpecifierImportToken | ImportDefaultSpecifierImportToken | ExportAllDeclarationImportToken
 
-export function maybeAddImportToken(imports: Set<ImportToken>, arg: NodePath<Node | null | undefined>) {
+export function maybeAddImportToken(imports: Set<ImportToken>, arg: NodePath<Node | null>) {
   if (
     !((arg.isImportSpecifier() && arg.node.importKind !== 'type')
       || arg.isImportDefaultSpecifier())

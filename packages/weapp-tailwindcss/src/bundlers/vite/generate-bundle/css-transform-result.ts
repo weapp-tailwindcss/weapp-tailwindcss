@@ -52,24 +52,7 @@ export function applyViteCssTransformTaskResult(
     for (const candidate of result.classSet ?? []) {
       options.transformRuntime.add(candidate)
     }
-    if (options.shouldRecordVitePipelineCssByOutput) {
-      options.recordViteProcessedCssAssetResult?.(
-        options.vitePipelineCssInjectionOutputFile,
-        result.css,
-        {
-          injectIntoMain: options.outputIsMainChunk
-            ? false
-            : options.shouldInjectVitePipelineCssIntoMain,
-          outputFile: options.vitePipelineCssInjectionOutputFile,
-        },
-      )
-    }
-    if (options.vitePipelineCssAsset && options.shouldInjectVitePipelineCssIntoMain) {
-      options.recordViteProcessedCssAssetResult?.(options.file, result.css, {
-        injectIntoMain: true,
-        outputFile: options.vitePipelineCssInjectionOutputFile,
-      })
-    }
+    recordViteCssContribution(options, result.css)
     options.debug(
       'css handle via tailwind v%s engine(%s): %s',
       options.tailwindcssMajorVersion,
@@ -85,4 +68,29 @@ export function applyViteCssTransformTaskResult(
   }
 
   return result.css
+}
+
+/** 新生成与缓存回放共同提交样式贡献，避免回滚后注入记录仍指向上一轮。 */
+export function recordViteCssContribution(
+  options: Pick<ApplyViteCssTransformTaskResultOptions, 'file' | 'outputIsMainChunk' | 'recordViteProcessedCssAssetResult' | 'shouldRecordVitePipelineCssByOutput' | 'shouldInjectVitePipelineCssIntoMain' | 'vitePipelineCssAsset' | 'vitePipelineCssInjectionOutputFile'>,
+  css: string,
+) {
+  if (options.shouldRecordVitePipelineCssByOutput) {
+    options.recordViteProcessedCssAssetResult?.(
+      options.vitePipelineCssInjectionOutputFile,
+      css,
+      {
+        injectIntoMain: options.outputIsMainChunk
+          ? false
+          : options.shouldInjectVitePipelineCssIntoMain,
+        outputFile: options.vitePipelineCssInjectionOutputFile,
+      },
+    )
+  }
+  if (options.vitePipelineCssAsset && options.shouldInjectVitePipelineCssIntoMain) {
+    options.recordViteProcessedCssAssetResult?.(options.file, css, {
+      injectIntoMain: true,
+      outputFile: options.vitePipelineCssInjectionOutputFile,
+    })
+  }
 }

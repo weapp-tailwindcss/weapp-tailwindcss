@@ -1,13 +1,15 @@
 ---
 title: weapp-tailwindcss export overview
-description: weapp-tailwindcss provides both ESM and CommonJS entrances, and has multiple built-in secondary exports to adapt to different combinations of webpack, Vite, Gulp, Tailwind macros, etc. The following is a description based on usage classification.
+description: >-
+  weapp-tailwindcss provides both ESM and CommonJS entrances, and has multiple built-in secondary exports to adapt to
+  different combinations of webpack, Vite, Gulp, Tailwind macros, etc. The following is a description based on usage
+  classification.
 keywords:
   - Configuration items
   - Plug-in parameters
   - Options
   - weapp-tailwindcss
   - Export overview
-  - options
   - exports
   - tailwindcss
   - Mini program
@@ -15,6 +17,10 @@ keywords:
   - uni-app
   - taro
   - mpx
+  - plugin options
+  - export
+  - configuration
+  - overview
 ---
 # weapp-tailwindcss export overview
 
@@ -29,7 +35,7 @@ weapp-tailwindcss provides both ESM and CommonJS entrances, and has multiple bui
 |
 | `weapp-tailwindcss/webpack` | webpack@5 adaptation entrance (uni-app CLI, mpx, native applets, etc.) |
 | `weapp-tailwindcss/vite` | Vite plug-in entrance (Taro Vite, weapp-vite, etc.) | `import { WeappTailwindcss } from 'weapp-tailwindcss/vite'`
-| `weapp-tailwindcss/core` | Expose underlying APIs such as `createContext` and customize the transform process |
+| `weapp-tailwindcss/core` | Exposes framework-level `createCompiler` and the compatible `createContext` API for generation, snapshots, and transforms | `import { createCompiler } from 'weapp-tailwindcss/core'`
 
 ## Configuration, tools and peripherals
 
@@ -47,6 +53,10 @@ weapp-tailwindcss provides both ESM and CommonJS entrances, and has multiple bui
 | `weapp-tailwindcss/package.json` | Package metadata | Read version number and other information
 
 > Supplement: If you need "static reset style resources that can be directly imported", please use the independent package [`@weapp-tailwindcss/reset`](/docs/community/reset) instead of the `weapp-tailwindcss/reset` plug-in entry here.
+
+### Generic Vite Web
+
+Standard Vite Web or SSR projects use the main `weapp-tailwindcss/vite` entry directly. Unmarked Generic Vite projects default to the Web target after config resolution; explicit `appType`, `generator.target`, `platform`, and `cssEntries` always take precedence. Historical Generic mini-program projects should set `generator.target: 'weapp'` or `platform` explicitly.
 
 :::tip plugin naming
 Vite, Webpack and Gulp entries all export the two aliases `WeappTailwindcss` and `weappTailwindcss`. The document recommends using uppercase `WeappTailwindcss`; lowercase `weappTailwindcss` is suitable for projects with partial functional naming.

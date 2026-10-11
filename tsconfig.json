@@ -18,6 +18,12 @@
   },
   "references": [
     {
+      "path": "./packages/escape"
+    },
+    {
+      "path": "./packages/engine"
+    },
+    {
       "path": "./packages-runtime/cva"
     },
     {

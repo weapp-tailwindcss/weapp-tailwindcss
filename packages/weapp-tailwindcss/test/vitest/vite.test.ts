@@ -14,6 +14,7 @@ async function assertSnap(
   plugin?: Plugin | Plugin[] | undefined,
   options?: InlineConfig,
   fn?: (result: RollupOutput) => void,
+  normalizeTailwindBanner = false,
 ) {
   // if (plugin === undefined) {
   //   return
@@ -67,7 +68,10 @@ async function assertSnap(
       const r = await prettier.format(output[1].source.toString(), {
         parser: 'css',
       })
-      expect(r.replace(/[ \t]+$/gm, '')).toMatchSnapshot()
+      const normalizedCss = normalizeTailwindBanner
+        ? r.replace(/\/\*! tailwindcss v[^*]+\*\/\s*/g, '')
+        : r
+      expect(normalizedCss.replace(/[ \t]+$/gm, '')).toMatchSnapshot()
     }
     expect(/\.html$/.test(output[2].fileName)).toBe(true)
     expect(output[2].type).toBe('asset')
@@ -78,6 +82,7 @@ async function assertSnap(
       expect(normalizeHtmlAssetHashes(r)).toMatchSnapshot()
     }
   }
+  return res
 }
 
 function normalizeHtmlAssetHashes(html: string) {
@@ -130,7 +135,7 @@ describe('vite test', () => {
   it('vite common build twice for cache', async () => {
     let timeStart: number
     let timeTaken: number
-    await assertSnap(
+    const first = await assertSnap(
       weappTw({
         htmlMatcher,
         onStart() {
@@ -142,8 +147,11 @@ describe('vite test', () => {
           void timeTaken
         },
       }),
+      undefined,
+      undefined,
+      true,
     )
-    await assertSnap(
+    const second = await assertSnap(
       weappTw({
         htmlMatcher,
         onStart() {
@@ -155,7 +163,16 @@ describe('vite test', () => {
           void timeTaken
         },
       }),
+      undefined,
+      undefined,
+      true,
     )
+    const cssSource = (result: RollupOutput) => result.output
+      .filter(asset => asset.type === 'asset' && asset.fileName.endsWith('.css'))
+      .map(asset => asset.type === 'asset' ? asset.source.toString() : '')
+      .join('\n')
+    expect(cssSource(first)).toContain('display:flex')
+    expect(cssSource(second)).toBe(cssSource(first))
   })
 
   it('vite disabled build', async () => {

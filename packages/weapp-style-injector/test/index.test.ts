@@ -159,6 +159,7 @@ describe('package exports', () => {
 
     expect(Object.keys(packageJson.exports).sort()).toEqual([
       '.',
+      './types',
       './vite',
       './vite/taro',
       './vite/uni-app',
@@ -1284,6 +1285,25 @@ describe('vite presets', () => {
     expect(pluginContainer.resolveId).toHaveBeenCalledWith(path.join(tempDir, 'manual.css'))
     expect(pluginContainer.transform).toHaveBeenCalled()
     expect((bundle as TestBundle)['manual/manual.wxss'].source).toContain('color: blue')
+  })
+
+  it('watches scoped sources and refreshes generated styles on each build', async () => {
+    const tempDir = createTempDir()
+    const source = path.join(tempDir, 'manual.css')
+    fs.writeFileSync(source, '.manual { height: 8px; }')
+    const plugins = UniAppStyleInjector({ styleScopes: { style: source, scope: 'manual' } }) as Plugin[]
+    const emitter = findNamedPlugin(plugins, UNI_APP_SUB_PACKAGES_PLUGIN_NAME)
+    const injector = findNamedPlugin(plugins, WEAPP_STYLE_INJECTOR_PLUGIN_NAME)
+    const buildStart = emitter.buildStart as (this: unknown) => Promise<void>
+    const addWatchFile = vi.fn()
+    for (const height of [8, 12, 20, 8]) {
+      fs.writeFileSync(source, `.manual { height: ${height}px; }`)
+      await buildStart.call({ addWatchFile })
+      const bundle: TestBundle = { 'manual/pages/home.wxss': createAsset('.home {}', 'manual/pages/home.wxss') }
+      await invokeGenerateBundleOnly(injector, bundle)
+      expect(bundle['manual/manual.wxss']!.source).toContain(`height: ${height}px`)
+    }
+    expect(addWatchFile).toHaveBeenCalledWith(source)
   })
 
   it('falls back to Tailwind transform handlers when pluginContainer is unavailable', async () => {

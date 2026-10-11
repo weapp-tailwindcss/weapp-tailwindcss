@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { bench, describe } from 'vitest'
+import { test } from 'vitest'
 import { shouldSkipJsTransform } from '@/js/precheck'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -58,24 +58,22 @@ var doubled = computed(function() { return count.value * 2; });
 function increment() { count.value++; }
 `
 
-describe('JS precheck benchmark - shouldSkipJsTransform 开销', () => {
-  bench('precheck: 大文件 (211KB, 含 className)', () => {
-    shouldSkipJsTransform(jsLarge)
-  })
-
-  bench('precheck: 中等文件 (537B, 含 import)', () => {
-    shouldSkipJsTransform(jsMedium)
-  })
-
-  bench('precheck: 无类名模式 (可跳过)', () => {
-    shouldSkipJsTransform(jsNoClassPatterns)
-  })
-
-  bench('precheck: 含类名模式 (不可跳过)', () => {
-    shouldSkipJsTransform(jsWithClassNames)
-  })
-
-  bench('precheck: 含 import 语句 (不可跳过)', () => {
-    shouldSkipJsTransform(jsWithImports)
-  })
+test('JS precheck benchmark - shouldSkipJsTransform 开销', async ({ bench }) => {
+  await bench.compare(
+    bench('precheck: 大文件 (211KB, 含 className)', () => {
+      shouldSkipJsTransform(jsLarge)
+    }),
+    bench('precheck: 中等文件 (537B, 含 import)', () => {
+      shouldSkipJsTransform(jsMedium)
+    }),
+    bench('precheck: 无类名模式 (可跳过)', () => {
+      shouldSkipJsTransform(jsNoClassPatterns)
+    }),
+    bench('precheck: 含类名模式 (不可跳过)', () => {
+      shouldSkipJsTransform(jsWithClassNames)
+    }),
+    bench('precheck: 含 import 语句 (不可跳过)', () => {
+      shouldSkipJsTransform(jsWithImports)
+    }),
+  )
 })

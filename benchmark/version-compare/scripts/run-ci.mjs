@@ -8,12 +8,11 @@ import { classifyPerformanceChanges, performanceRelevantPaths, summarizeFiles } 
 import {
   asInformationalPerformanceGuard,
   buildSummary,
-  confirmHmrMemoryViolations,
   evaluatePerformanceGuard,
-  markHmrMemoryConfirmationUnavailable,
   requiresHmrMemoryConfirmation,
   toMarkdown,
 } from './ci-report.mjs'
+import { runHmrMemoryConfirmation } from './memory-confirmation.mjs'
 import { benchmarkProjectDirs } from './projects.mjs'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -23,6 +22,7 @@ const packageJsonPath = path.join(repoRoot, 'packages/weapp-tailwindcss/package.
 const dependencyFields = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']
 const publishedResolverDependencyNames = [
   '@weapp-core/escape',
+  '@weapp-tailwindcss/escape',
 ]
 function parseArg(name, fallback = '') {
   const index = process.argv.indexOf(name)
@@ -473,9 +473,34 @@ async function main() {
     baselineRef,
     resolverDependencies,
   })
+  const gcDiagnosticsEnabled = process.env.WEAPP_TW_BENCH_GC_DIAGNOSTICS === '1'
+  let diagnosticIdentity
+  if (gcDiagnosticsEnabled) {
+    try {
+      diagnosticIdentity = {
+        current: {
+          role: 'current',
+          sourceCommit: (await runCapture(repoRoot, 'git', ['rev-parse', 'HEAD'])).trim(),
+          sourceWorkingTreeStatus: (await runCapture(repoRoot, 'git', ['status', '--porcelain'])).trim(),
+        },
+        baseline: {
+          role: baselineRef ? 'base' : 'published',
+          sourceCommit: baselineRef ? (await runCapture(repoRoot, 'git', ['rev-parse', `${baselineRef}^{commit}`])).trim() : undefined,
+          packageSpec: baselineRef ? undefined : normalizePackageSpec(baseline),
+        },
+      }
+    }
+    catch (error) {
+      const sourceIdentityError = error instanceof Error ? error.message : String(error)
+      diagnosticIdentity = { current: { role: 'current', sourceIdentityError }, baseline: { role: baselineRef ? 'base' : 'published', sourceIdentityError } }
+      process.stderr.write(`[benchmark-gc] 源码身份缺证：${sourceIdentityError}\n`)
+    }
+  }
+  const currentVersion = { version: currentLabel, root: currentRoot, ...(diagnosticIdentity ? { diagnosticIdentity: diagnosticIdentity.current } : {}) }
+  const baselineVersion = { version: baselineLabel, root: baselineRoot, ...(diagnosticIdentity ? { diagnosticIdentity: diagnosticIdentity.baseline } : {}) }
   await fs.writeFile(versionsPath, JSON.stringify([
-    { version: baselineLabel, root: baselineRoot },
-    { version: currentLabel, root: currentRoot },
+    baselineVersion,
+    currentVersion,
   ], null, 2), 'utf8')
 
   const runMatrix = async ({ versionsFile, outputFile, matrixBuildRuns }) => {
@@ -497,6 +522,9 @@ async function main() {
     if (only) {
       matrixArgs.push('--only', only)
     }
+    if (gcDiagnosticsEnabled) {
+      matrixArgs.push('--gc-diagnostic-dir', path.join(resultDir, 'gc-diagnostics', path.basename(outputFile, '.json')))
+    }
     await run(repoRoot, process.execPath, matrixArgs)
   }
   await runMatrix({ versionsFile: versionsPath, outputFile: rawPath, matrixBuildRuns: buildRuns })
@@ -504,7 +532,7 @@ async function main() {
   const raw = JSON.parse(await fs.readFile(rawPath, 'utf8'))
   const performanceChanges = baselineRef
     ? await classifyPerformanceChanges(repoRoot, baselineRef)
-    : { relevant: true, relevantFiles: performanceRelevantPaths, ignoredReleaseMetadataFiles: [] }
+    : { relevant: true, relevantFiles: performanceRelevantPaths, ignoredReleaseMetadataFiles: [], ignoredNonPerformanceFiles: [] }
   const performanceRelevantChanges = performanceChanges.relevant
   if (baselineRef && !process.argv.includes('--skip-core-metrics')) {
     const coreMetricSpecs = [
@@ -545,48 +573,31 @@ async function main() {
   if (baselineRef) {
     let performanceGuard = evaluatePerformanceGuard(summary, {
       regressionPercent: parseNumber('--regression-percent', 5),
+      minimumTailRegressionSamples: parseNumber('--minimum-tail-samples', 2),
+      minimumTimingRegressionMs: parseNumber('--minimum-timing-ms', 10),
+      minimumMemoryRegressionMb: parseNumber('--minimum-memory-mb', 64),
     })
     if (
       performanceRelevantChanges
       && requiresHmrMemoryConfirmation(performanceGuard)
       && !process.argv.includes('--skip-memory-confirmation')
     ) {
-      const confirmationVersionsPath = path.join(resultDir, 'memory-confirmation-versions.json')
-      const confirmationRawPath = path.join(resultDir, 'memory-confirmation-raw.json')
-      const confirmationSummaryPath = path.join(resultDir, 'memory-confirmation-summary.json')
-      await fs.writeFile(confirmationVersionsPath, JSON.stringify([
-        { version: currentLabel, root: currentRoot },
-        { version: baselineLabel, root: baselineRoot },
-      ], null, 2), 'utf8')
-      process.stdout.write('[benchmark] confirming HMR memory regression with reversed current->baseline order\n')
-      await runMatrix({
-        versionsFile: confirmationVersionsPath,
-        outputFile: confirmationRawPath,
-        matrixBuildRuns: 0,
-      })
-      const confirmationRaw = JSON.parse(await fs.readFile(confirmationRawPath, 'utf8'))
-      const confirmationSummary = buildSummary(confirmationRaw, baselineLabel, currentLabel)
-      const confirmationGuard = evaluatePerformanceGuard(confirmationSummary, {
+      performanceGuard = await runHmrMemoryConfirmation({
+        resultDir,
+        currentVersion,
+        baselineVersion,
+        performanceGuard,
         regressionPercent: parseNumber('--regression-percent', 5),
+        runMatrix,
       })
-      await fs.writeFile(confirmationSummaryPath, `${JSON.stringify(confirmationSummary, null, 2)}\n`, 'utf8')
-      const confirmationError = confirmationSummary.errors.length > 0
-        ? `matrix has ${confirmationSummary.errors.length} failed row(s)`
-        : confirmationGuard.violations.some(violation => violation.metric === 'hmrMemorySamples')
-          ? 'matrix has incomplete RSS samples'
-          : undefined
-      if (confirmationError) {
-        performanceGuard = markHmrMemoryConfirmationUnavailable(performanceGuard, confirmationError)
-      }
-      else {
-        performanceGuard = confirmHmrMemoryViolations(performanceGuard, confirmationGuard)
-      }
-      process.stdout.write(`[benchmark] HMR memory confirmation -> ${confirmationSummaryPath}\n`)
     }
     const relevantFiles = summarizeFiles(performanceChanges.relevantFiles)
     const ignoredFiles = summarizeFiles(performanceChanges.ignoredReleaseMetadataFiles)
-    const informationalReason = ignoredFiles
-      ? `PR 仅修改版本号或内部包发布范围等发版元数据：${ignoredFiles}`
+    const ignoredNonPerformanceFiles = summarizeFiles(performanceChanges.ignoredNonPerformanceFiles)
+    const informationalReason = ignoredNonPerformanceFiles
+      ? `PR 仅修改不影响性能的构建守卫文件：${ignoredNonPerformanceFiles}`
+      : ignoredFiles
+        ? `PR 仅修改版本号或内部包发布范围等发版元数据：${ignoredFiles}`
       : 'PR 未修改性能相关源码、依赖或 demo'
     summary.performanceGuard = performanceRelevantChanges
       ? { ...performanceGuard, blocking: true, relevantChanges: performanceChanges.relevantFiles }
@@ -594,6 +605,7 @@ async function main() {
     process.stdout.write(`[benchmark] performance guard mode: ${performanceRelevantChanges ? 'blocking' : 'informational'}\n`)
     process.stdout.write(`[benchmark] performance relevant files: ${relevantFiles || 'none'}\n`)
     process.stdout.write(`[benchmark] ignored release metadata files: ${ignoredFiles || 'none'}\n`)
+    process.stdout.write(`[benchmark] ignored non-performance files: ${ignoredNonPerformanceFiles || 'none'}\n`)
   }
   const markdown = toMarkdown(summary, baselineRef || baseline)
   await fs.writeFile(summaryPath, `${JSON.stringify(summary, null, 2)}\n`, 'utf8')

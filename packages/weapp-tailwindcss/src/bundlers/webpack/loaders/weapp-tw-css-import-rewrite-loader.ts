@@ -5,22 +5,23 @@ import { Buffer } from 'node:buffer'
 import path from 'node:path'
 import process from 'node:process'
 import { inspect } from 'node:util'
-import { filterExistingCssRules, transformLynxCssCompat } from '@weapp-tailwindcss/postcss'
+import { filterExistingCssRules, normalizeTailwindcssV4InfinityRadiusCss, rewriteCssConfigRequests, transformLynxCssCompat } from '@weapp-tailwindcss/postcss/transform'
 import { ensurePosix } from '@weapp-tailwindcss/shared'
 import { rewriteTailwindcssImportsInCode } from '@/bundlers/shared/css-imports'
 import { createBundlerGeneratedCssMarker } from '@/bundlers/shared/generated-css-marker'
-import { hasTailwindApplyDirective, hasTailwindRootDirectives, normalizeTailwindSourceForGenerator, removeTailwindSourceDirectives } from '@/bundlers/shared/generator-css/directives'
-import { createSourceCandidateStore, isSourceCandidateRequest } from '@/bundlers/shared/source-candidates'
-import { resolveSourceCandidateScanFiles } from '@/bundlers/shared/source-candidates/scan-root'
-import { resolveTailwindV4EntriesFromCssCached } from '@/bundlers/shared/source-scan'
-import { generateTailwindV4Css } from '@/bundlers/shared/v4-generation-core'
 import { normalizeStyleHandlerMajorVersion } from '@/context/style-options'
+import { hasTailwindApplyDirective, hasTailwindRootDirectives, hasTailwindRootImportDirectives, normalizeTailwindSourceForGenerator, removeTailwindSourceDirectives } from '@/generation/directives'
+import { generateTailwindV4Css } from '@/generation/service'
 import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
+import { resolveTailwindV4EntriesFromCssCached } from '@/project-sources'
+import { createSourceCandidateStore, isSourceCandidateRequest } from '@/project-sources/candidates'
+import { forEachSourceCandidateFile } from '@/project-sources/candidates/file-io'
+import { resolveSourceCandidateScanFiles } from '@/project-sources/candidates/scan-root'
 import { resolveTailwindcssOptions } from '@/tailwindcss/runtime-options'
 import { resolveSourceScanPath } from '@/tailwindcss/source-scan'
 import { collectWebpackBareSelectorUserCss } from '../BaseUnifiedPlugin/v5-assets/pipeline-helpers'
 import { getLatestWebpackLoaderRuntime, getWebpackLoaderRuntime } from './runtime-registry'
-import { registerWebpackWatchFile } from './watch-dependencies'
+import { registerWebpackSourceContexts, registerWebpackWatchFile } from './watch-dependencies'
 
 interface CssImportRewriteLoaderOptions extends WebpackCssImportRewriteLoaderOptions {}
 
@@ -68,12 +69,12 @@ function normalizeCssConfigDirectives(source: string, resourcePath?: string) {
     return source
   }
   const base = path.dirname(resourcePath)
-  return source.replace(/@config\s+(["'])(.+?)\1\s*;?/g, (full, quote: string, request: string) => {
+  return rewriteCssConfigRequests(source, (request) => {
     if (path.isAbsolute(request) || isPackageJsonImportRequest(request)) {
-      return full
+      return undefined
     }
     const resolved = path.resolve(base, request)
-    return `@config ${quote}${ensurePosix(resolved)}${quote};`
+    return ensurePosix(resolved)
   })
 }
 
@@ -83,7 +84,7 @@ function createCssHandlerOptions(
   file: string,
   appType?: AppType,
 ) {
-  const tailwindOptions = resolveTailwindcssOptions(options.tailwindRuntimeOptions)
+  const tailwindOptions = resolveTailwindcssOptions(options.tailwindcssRuntimeOptions)
   const cssEntries = [
     ...(options.cssEntries ?? []),
     ...(tailwindOptions?.v4?.cssEntries ?? []),
@@ -126,9 +127,11 @@ async function resolveWebpackLoaderSourceCandidates(
     disabledDefaultTemplateHandler: compilerOptions.disabledDefaultTemplateHandler,
   })
   collector.syncInline(resolved.inlineCandidates)
-  const outDir = loaderContext.rootContext
-    ? path.resolve(loaderContext.rootContext, 'dist')
-    : undefined
+  const outDir = loaderContext._compiler?.options.output.path
+  await registerWebpackSourceContexts(loaderContext, { ...resolved, root })
+  for (const dependency of resolved.dependencies) {
+    await registerWebpackWatchFile(loaderContext, dependency)
+  }
   const scanFiles = await resolveSourceCandidateScanFiles({
     entries: resolved.entries,
     explicit: resolved.explicit,
@@ -136,11 +139,11 @@ async function resolveWebpackLoaderSourceCandidates(
     outDir,
     root,
   })
-  await Promise.all(scanFiles.map(async (file) => {
+  await forEachSourceCandidateFile(scanFiles, async (file) => {
     const normalizedFile = resolveSourceScanPath(file)
-    registerWebpackWatchFile(loaderContext, normalizedFile)
+    await registerWebpackWatchFile(loaderContext, normalizedFile)
     await collector.syncFile(normalizedFile)
-  }))
+  })
   const candidates = collector.valuesForEntries(resolved.entries)
   if (candidates.size === 0) {
     return undefined
@@ -203,7 +206,10 @@ export async function generateCssForWebpackPipeline(
     },
     cssStage: 'raw',
     styleHandler: compilerOptions.styleHandler,
-    debug: () => undefined,
+    incrementalCache: false,
+    debug: process.env['WEAPP_TW_LOADER_DEBUG']
+      ? (message, ...args) => process.stdout.write(`[weapp-tw-css-import-rewrite-loader] ${message} ${inspect(args)}\n`)
+      : () => undefined,
     deferCssAdaptation: generatorTarget !== 'web',
   })
   if (!generated) {
@@ -211,7 +217,7 @@ export async function generateCssForWebpackPipeline(
   }
   rewriteOptions.markGeneratedCssSource?.(file)
   for (const dependency of generated.dependencies) {
-    registerWebpackWatchFile(loaderContext, dependency)
+    await registerWebpackWatchFile(loaderContext, dependency)
   }
   const generatedCssSource = removeTailwindSourceDirectives(generated.css, { importFallback: true })
   const generatedCss = (compilerOptions.cssOptions?.platform ?? compilerOptions.platform) === 'lynx'
@@ -221,9 +227,22 @@ export async function generateCssForWebpackPipeline(
   const missingBareUserCss = bareUserCss.trim().length === 0
     ? ''
     : filterExistingCssRules(generatedCss, bareUserCss)
-  const css = missingBareUserCss.trim().length === 0
+  const combinedCss = missingBareUserCss.trim().length === 0
     ? generatedCss
     : `${generatedCss}\n${missingBareUserCss}`
+  // 先消除旧版 calc 无法解析的无限圆角，其余适配仍留在最终产物阶段。
+  const css = generatorTarget === 'weapp' && runtimeState.tailwindRuntime.majorVersion === 4
+    ? normalizeTailwindcssV4InfinityRadiusCss(combinedCss)
+    : combinedCss
+  if (process.env['WEAPP_TW_LOADER_DEBUG']) {
+    process.stdout.write(`[weapp-tw-css-import-rewrite-loader] generated ${inspect({
+      classes: generated.classSet.size,
+      cssLength: css.length,
+      file,
+      preview: css.slice(0, 160),
+      target: generated.target,
+    })}\n`)
+  }
   rewriteOptions.registerGeneratedCss?.({
     classSet: generated.classSet,
     css,
@@ -242,6 +261,13 @@ export function registerWebpackCssGeneratorSource(
     normalizeTailwindSourceForGenerator(source, { importFallback: true }),
     resourcePath,
   )
+  if (process.env['WEAPP_TW_LOADER_DEBUG']) {
+    process.stdout.write(`[weapp-tw-css-import-rewrite-loader] register source ${inspect({
+      cssLength: css.length,
+      file: resourcePath,
+      preview: css.slice(0, 240),
+    })}\n`)
+  }
   options?.tailwindcssImportRewrite?.registerCssSourceFile?.({
     file: resourcePath,
     css,
@@ -286,8 +312,16 @@ const WeappTwCssImportRewriteLoader: webpack.LoaderDefinitionFunction<CssImportR
     hasTailwindRootDirectives(input, { importFallback: true })
     || hasTailwindApplyDirective(input)
   )
-  const registerTask = hasTailwindGeneratorSource
-    ? registerWebpackCssGeneratorSource(input, this.resourcePath, opt)
+  const isLynxPipeline = opt?.tailwindcssImportRewrite?.compilerOptions?.platform === 'lynx'
+  const hasLynxEntrySource = !isLynxPipeline || (
+    hasTailwindRootImportDirectives(input, { importFallback: true })
+    || hasTailwindApplyDirective(input)
+  )
+  const shouldRegisterGeneratorSource = hasTailwindGeneratorSource
+    && hasLynxEntrySource
+    && (!isLynxPipeline || opt?.generateCss === true)
+  const register = shouldRegisterGeneratorSource
+    ? () => registerWebpackCssGeneratorSource(input, this.resourcePath, opt)
     : undefined
   const transform = () => {
     const transformed = transformCssImportRewriteSource(source, opt)
@@ -296,8 +330,9 @@ const WeappTwCssImportRewriteLoader: webpack.LoaderDefinitionFunction<CssImportR
     }
     return transformed
   }
-  const canGenerate = opt?.generateCss !== false
+  const canGenerate = opt?.generateCss === true
     && hasTailwindGeneratorSource
+    && hasLynxEntrySource
     && opt?.tailwindcssImportRewrite?.compilerOptions
     && opt.tailwindcssImportRewrite.runtimeState
     && opt.tailwindcssImportRewrite.getRuntimeSet
@@ -307,16 +342,17 @@ const WeappTwCssImportRewriteLoader: webpack.LoaderDefinitionFunction<CssImportR
       return generated ?? transform()
     }
     : undefined
-  if (registerTask && typeof (registerTask as PromiseLike<void>).then === 'function') {
-    return Promise.resolve(registerTask).then(async () => {
-      if (generate) {
-        return generate()
-      }
-      return transform()
+  if (generate) {
+    return Promise.resolve().then(async () => {
+      await register?.()
+      return generate()
     })
   }
-  if (generate) {
-    return generate()
+  const registerTask = register?.()
+  if (registerTask && typeof (registerTask as PromiseLike<void>).then === 'function') {
+    return Promise.resolve(registerTask).then(async () => {
+      return transform()
+    })
   }
   return transform()
 }

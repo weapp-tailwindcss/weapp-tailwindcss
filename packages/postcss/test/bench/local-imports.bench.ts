@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest'
+import { test } from 'vitest'
 import {
   cleanLocalCssImportWrapperTailwindDirectives,
   cleanLocalCssImportWrapperTailwindDirectivesRoot,
@@ -38,25 +38,24 @@ const wrapperCss = [
   '@source "../src";',
 ].join('\n')
 
-describe('local css import benchmark', () => {
-  bench('generator pipeline with string helpers', () => {
-    isPureLocalCssImportWrapper(css)
-    splitLocalCssImports(css)
-    rewriteLocalCssImportRequestsForOutput(css, { styleOutputExtension: 'wxss' })
-  })
-
-  bench('generator pipeline with one parsed root', () => {
-    const root = postcss.parse(css)
-    isPureLocalCssImportWrapperRoot(root)
-    splitLocalCssImportsRoot(root)
-    rewriteLocalCssImportRequestsForOutputRoot(root, { styleOutputExtension: 'wxss' })
-  })
-
-  bench('clean wrapper string helper', () => {
-    cleanLocalCssImportWrapperTailwindDirectives(wrapperCss)
-  })
-
-  bench('clean wrapper root helper', () => {
-    cleanLocalCssImportWrapperTailwindDirectivesRoot(postcss.parse(wrapperCss))
-  })
+test('local css import benchmark', async ({ bench }) => {
+  await bench.compare(
+    bench('generator pipeline with string helpers', () => {
+      isPureLocalCssImportWrapper(css)
+      splitLocalCssImports(css)
+      rewriteLocalCssImportRequestsForOutput(css, { styleOutputExtension: 'wxss' })
+    }),
+    bench('generator pipeline with one parsed root', () => {
+      const root = postcss.parse(css)
+      isPureLocalCssImportWrapperRoot(root)
+      splitLocalCssImportsRoot(root)
+      rewriteLocalCssImportRequestsForOutputRoot(root, { styleOutputExtension: 'wxss' })
+    }),
+    bench('clean wrapper string helper', () => {
+      cleanLocalCssImportWrapperTailwindDirectives(wrapperCss)
+    }),
+    bench('clean wrapper root helper', () => {
+      cleanLocalCssImportWrapperTailwindDirectivesRoot(postcss.parse(wrapperCss))
+    }),
+  )
 })

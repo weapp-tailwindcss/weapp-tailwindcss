@@ -3,10 +3,10 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { PNG } from 'pngjs'
 import { describe, expect, it } from 'vitest'
-import { createArtifactVisualSeed, createPortAwareCommand, disableDevToolsCompileHotReload, miniProgramPageMatchesRoute, miniProgramProjectStartsAtRoute } from '../scripts/demo-visual-e2e-report/cases'
+import { createPortAwareCommand, disableDevToolsCompileHotReload, miniProgramPageMatchesRoute, miniProgramProjectStartsAtRoute } from '../scripts/demo-visual-e2e-report/cases'
 import { parseWechatDevToolsWindowBounds } from '../scripts/demo-visual-e2e-report/ide'
 import { createHmrComparisons, mergeCaseResults } from '../scripts/demo-visual-e2e-report/report'
-import { analyzeThemeCss, countDarkPixels } from '../scripts/demo-visual-e2e-report/theme'
+import { analyzeThemeCss, collectMiniProgramThemeScreenshotEvidence, countDarkPixels, countThemeColorPixels } from '../scripts/demo-visual-e2e-report/theme'
 import { miniProgramCases, rawTailwindDirectiveRE, uniAppXAppCases, webCases } from './hbuilderx-local/cases'
 
 describe('demo visual theme evidence', () => {
@@ -42,21 +42,15 @@ describe('demo visual theme evidence', () => {
     expect(() => parseWechatDevToolsWindowBounds('not-bounds')).toThrow('无法解析')
   })
 
-  it('derives diagnostic visual evidence from the built artifact state', () => {
-    const before = createArtifactVisualSeed([{ content: '.bg-red{}', file: 'app.wxss' }])
-    const after = createArtifactVisualSeed([{ content: '.bg-blue{}', file: 'app.wxss' }])
-    expect(before).not.toBe(after)
-  })
-
   it('keeps the uni-app x App entry valid for native App compilation', async () => {
     const files = [
-      'demo/uni-app-x-hbuilderx-tailwindcss-v4/App.uvue',
-      'demo/uni-app-x-hbuilderx-tailwindcss-v4/pages/index/index.uvue',
-      'demo/uni-app-x-hbuilderx-tailwindcss-v4/components/BindClass.uvue',
-      'demo/uni-app-x-hbuilderx-tailwindcss-v4/components/WeappTailwindcss.uvue',
-      'demo/uni-app-x-hbuilderx-tailwindcss-v4/components/a-navbar/a-navbar.uvue',
-      'demo/uni-app-x-hbuilderx-tailwindcss-v4/sub-normal/pages/index.uvue',
-      'demo/uni-app-x-hbuilderx-tailwindcss-v4/sub-independent/pages/index.uvue',
+      'demo/uni-app-x-vdom-tailwindcss-v4/App.uvue',
+      'demo/uni-app-x-vdom-tailwindcss-v4/pages/index/index.uvue',
+      'demo/uni-app-x-vdom-tailwindcss-v4/components/BindClass.uvue',
+      'demo/uni-app-x-vdom-tailwindcss-v4/components/WeappTailwindcss.uvue',
+      'demo/uni-app-x-vdom-tailwindcss-v4/components/a-navbar/a-navbar.uvue',
+      'demo/uni-app-x-vdom-tailwindcss-v4/sub-normal/pages/index.uvue',
+      'demo/uni-app-x-vdom-tailwindcss-v4/sub-independent/pages/index.uvue',
     ]
     for (const file of files) {
       const source = await fs.readFile(path.resolve(file), 'utf8')
@@ -67,15 +61,15 @@ describe('demo visual theme evidence', () => {
 
   it('keeps the uni-app x navbar slot and custom class prop regression probe', async () => {
     const [component, page, config] = await Promise.all([
-      fs.readFile(path.resolve('demo/uni-app-x-hbuilderx-tailwindcss-v4/components/a-navbar/a-navbar.uvue'), 'utf8'),
-      fs.readFile(path.resolve('demo/uni-app-x-hbuilderx-tailwindcss-v4/pages/index/index.uvue'), 'utf8'),
-      fs.readFile(path.resolve('demo/uni-app-x-hbuilderx-tailwindcss-v4/vite.config.ts'), 'utf8'),
+      fs.readFile(path.resolve('demo/uni-app-x-vdom-tailwindcss-v4/components/a-navbar/a-navbar.uvue'), 'utf8'),
+      fs.readFile(path.resolve('demo/uni-app-x-vdom-tailwindcss-v4/pages/index/index.uvue'), 'utf8'),
+      fs.readFile(path.resolve('demo/uni-app-x-vdom-tailwindcss-v4/vite.config.ts'), 'utf8'),
     ])
 
     expect(component).toContain('class="issue-navbar-side" :class="leftClass"')
     expect(component).toContain('<slot name="left" />')
-    expect(page).toContain('leftClass="issue-navbar-left bg-primary w-[100rpx]! h-[100rpx] px-[30rpx]"')
-    expect(page).toContain('class="issue-navbar-image w-[100rpx]! h-[100rpx] rounded-[10rpx]"')
+    expect(page).toContain('leftClass="issue-navbar-left bg-primary w-[100rpx] h-[100rpx] px-[30rpx]"')
+    expect(page).toContain('class="issue-navbar-image w-[100rpx] h-[100rpx] rounded-[10rpx]"')
     expect(page).toContain('<template #left>')
     expect(config).toContain('\'a-navbar\': [\'leftClass\', \'rightClass\']')
   })
@@ -84,9 +78,9 @@ describe('demo visual theme evidence', () => {
     const android = uniAppXAppCases.find(item => item.platform === 'app-android')
     const ios = uniAppXAppCases.find(item => item.platform === 'app-ios')
     const harmony = uniAppXAppCases.find(item => item.platform === 'app-harmony')
-    const miniProgram = miniProgramCases.find(item => item.name === 'uni-app-x-hbuilderx-tailwindcss-v4')
-    const web = webCases.find(item => item.name === 'uni-app-x-hbuilderx-tailwindcss-v4')
-    const component = await fs.readFile(path.resolve('demo/uni-app-x-hbuilderx-tailwindcss-v4/components/BindClass.uvue'), 'utf8')
+    const miniProgram = miniProgramCases.find(item => item.name === 'uni-app-x-vdom-tailwindcss-v4')
+    const web = webCases.find(item => item.name === 'uni-app-x-vdom-tailwindcss-v4')
+    const component = await fs.readFile(path.resolve('demo/uni-app-x-vdom-tailwindcss-v4/components/BindClass.uvue'), 'utf8')
 
     expect(component).toContain('class="issue-822-component-child h-[200px] w-full bg-[#87add3]"')
     expect(component).toContain('class="text-[#111111]"')
@@ -125,9 +119,9 @@ describe('demo visual theme evidence', () => {
 
   it('keeps issue #1002 utilities in the uni-app x native runtime probes', async () => {
     const [component, mainCss, page] = await Promise.all([
-      fs.readFile(path.resolve('demo/uni-app-x-hbuilderx-tailwindcss-v4/components/BindClass.uvue'), 'utf8'),
-      fs.readFile(path.resolve('demo/uni-app-x-hbuilderx-tailwindcss-v4/main.css'), 'utf8'),
-      fs.readFile(path.resolve('demo/uni-app-x-hbuilderx-tailwindcss-v4/pages/index/index.uvue'), 'utf8'),
+      fs.readFile(path.resolve('demo/uni-app-x-vdom-tailwindcss-v4/components/BindClass.uvue'), 'utf8'),
+      fs.readFile(path.resolve('demo/uni-app-x-vdom-tailwindcss-v4/main.css'), 'utf8'),
+      fs.readFile(path.resolve('demo/uni-app-x-vdom-tailwindcss-v4/pages/index/index.uvue'), 'utf8'),
     ])
 
     for (const utility of ['text-xs', 'text-sm', 'text-base', 'text-xl', 'text-white', 'rounded-full']) {
@@ -141,7 +135,10 @@ describe('demo visual theme evidence', () => {
     expect(mainCss).not.toContain('text-blue-600/50')
     expect(page).not.toContain('text-blue-600/50')
 
-    for (const item of uniAppXAppCases) {
+    const issue1002AppCases = uniAppXAppCases.filter(
+      item => item.projectDir === 'demo/uni-app-x-vdom-tailwindcss-v4',
+    )
+    for (const item of issue1002AppCases) {
       if (item.platform === 'app-android') {
         expect(item.markerClass).toContain('rounded-[9998px]')
         expect(item.markerTextClass).toContain('text-[39rpx]')
@@ -191,8 +188,8 @@ describe('demo visual theme evidence', () => {
 
   it('keeps uview-ultra and z-paging scoped author css probes intact', async () => {
     const [button, paging] = await Promise.all([
-      fs.readFile(path.resolve('demo/uni-app-x-hbuilderx-tailwindcss-v4/components/issue-1019-button/issue-1019-button.uvue'), 'utf8'),
-      fs.readFile(path.resolve('demo/uni-app-x-hbuilderx-tailwindcss-v4/components/z-paging-probe/z-paging-probe.uvue'), 'utf8'),
+      fs.readFile(path.resolve('demo/uni-app-x-vdom-tailwindcss-v4/components/issue-1019-button/issue-1019-button.uvue'), 'utf8'),
+      fs.readFile(path.resolve('demo/uni-app-x-vdom-tailwindcss-v4/components/z-paging-probe/z-paging-probe.uvue'), 'utf8'),
     ])
 
     for (const source of [button, paging]) {
@@ -214,7 +211,7 @@ describe('demo visual theme evidence', () => {
   })
 
   it('keeps issue #822 component-local styles enabled for both isolation versions', async () => {
-    const config = await fs.readFile(path.resolve('demo/uni-app-x-hbuilderx-tailwindcss-v4/vite.config.ts'), 'utf8')
+    const config = await fs.readFile(path.resolve('demo/uni-app-x-vdom-tailwindcss-v4/vite.config.ts'), 'utf8')
     expect(config).toContain('uniAppX({')
     expect(config).toContain('componentLocalStyles: {')
     expect(config).toContain('enabled: true')
@@ -223,9 +220,9 @@ describe('demo visual theme evidence', () => {
 
   it('keeps native App builds outside the Iconify CSS module graph', async () => {
     const [app, config, iconify] = await Promise.all([
-      fs.readFile(path.resolve('demo/uni-app-x-hbuilderx-tailwindcss-v4/App.uvue'), 'utf8'),
-      fs.readFile(path.resolve('demo/uni-app-x-hbuilderx-tailwindcss-v4/vite.config.ts'), 'utf8'),
-      fs.readFile(path.resolve('demo/uni-app-x-hbuilderx-tailwindcss-v4/main.iconify.css'), 'utf8'),
+      fs.readFile(path.resolve('demo/uni-app-x-vdom-tailwindcss-v4/App.uvue'), 'utf8'),
+      fs.readFile(path.resolve('demo/uni-app-x-vdom-tailwindcss-v4/vite.config.ts'), 'utf8'),
+      fs.readFile(path.resolve('demo/uni-app-x-vdom-tailwindcss-v4/main.iconify.css'), 'utf8'),
     ])
     expect(app).toContain('/*  #ifndef  APP  */\n@import \'./main.iconify.css\';\n/*  #endif  */')
     expect(config).toContain('process.env.UNI_UTS_PLATFORM?.startsWith(\'app-\')')
@@ -336,5 +333,73 @@ describe('demo visual theme evidence', () => {
       artifactRoot: '/missing/artifacts',
     } as never)).not.toThrow()
     expect(results[0].status).toBe('passed')
+  })
+
+  it('fails cross-platform comparisons above the configured ratio limit', async () => {
+    const artifactRoot = await fs.mkdtemp(path.join(tmpdir(), 'demo-visual-diff-limit-'))
+    const width = 390
+    const height = 844
+    const createImage = (value: number) => {
+      const png = new PNG({ width, height })
+      png.data.fill(value)
+      return png
+    }
+    const h5 = path.join(artifactRoot, 'h5.png')
+    const harmony = path.join(artifactRoot, 'harmony.png')
+    await fs.writeFile(h5, PNG.sync.write(createImage(0)))
+    await fs.writeFile(harmony, PNG.sync.write(createImage(255)))
+    const results = [
+      { name: 'demo', platform: 'h5' as const, status: 'passed' as const, screenshot: h5 },
+      { name: 'demo', platform: 'app-harmony' as const, status: 'passed' as const, screenshot: harmony },
+    ]
+
+    const { createCrossPlatformComparisons } = await import('../scripts/demo-visual-e2e-report/report')
+    createCrossPlatformComparisons(results, {
+      artifactRoot,
+      viewport: { width, height },
+      maxCrossPlatformDiffRatio: 0.05,
+    } as never)
+
+    expect(results[0].status).toBe('failed')
+    expect(results[1].status).toBe('failed')
+    expect(results[1].error).toContain('超过上限 0.05')
+    expect(results[1].comparison).toMatchObject({
+      maxRatio: 0.05,
+      target: 'h5',
+      withinLimit: false,
+    })
+    await fs.rm(artifactRoot, { recursive: true, force: true })
+  })
+})
+
+describe('theme screenshot evidence boundaries', () => {
+  it('does not use unrelated dark pixels to pass a missing target background', async () => {
+    const png = new PNG({ width: 100, height: 200 })
+    for (let index = 0; index < png.data.length; index += 4) {
+      png.data.set([255, 255, 255, 255], index)
+    }
+    for (let y = 100; y < 200; y++) {
+      for (let x = 0; x < 100; x++) {
+        png.data.set([0, 0, 0, 255], (y * 100 + x) * 4)
+      }
+    }
+    const node = {
+      offset: async () => ({ left: 10, top: 10 }),
+      size: async () => ({ width: 60, height: 60 }),
+    }
+    const page = { size: async () => ({ width: 100, height: 800 }), $: async () => node }
+    await expect(collectMiniProgramThemeScreenshotEvidence(page, png)).rejects.toThrow('暗色像素不足')
+  })
+})
+
+describe('explicit theme fixture colors', () => {
+  it('matches the configured blue fixture and rejects a dark substitute', () => {
+    const png = new PNG({ width: 10, height: 10 })
+    for (let offset = 0; offset < png.data.length; offset += 4) {
+      png.data.set([52, 152, 219, 255], offset)
+    }
+    const rect = { left: 0, top: 0, width: 10, height: 10 }
+    expect(countThemeColorPixels(png, rect, [52, 152, 219])).toBe(100)
+    expect(countThemeColorPixels(png, rect, [9, 9, 11])).toBe(0)
   })
 })

@@ -20,6 +20,8 @@ describe('typography tsdown config', () => {
     expect(pluginCjs.format).toEqual(['cjs'])
     expect(pluginCjs.deps?.alwaysBundle).toBe(typographyCjsBundledDependencies)
     expect(pluginCjs.deps?.neverBundle).toBe(typographyExternalDependencies)
+    expect(pluginEsm.deps?.resolveDepSubpath).toBe(true)
+    expect(pluginCjs.deps?.resolveDepSubpath).toBe(true)
     expect(transformEsm.dts).toBe(true)
     expect(transformCjs.dts).toBe(false)
   })

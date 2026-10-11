@@ -1,12 +1,11 @@
 ---
 title: Join the technical exchange group
-description: If you encounter any problems during use, you are also welcome to enter the communication group to ask questions.
+description: 'If you encounter any problems during use, you are also welcome to enter the communication group to ask questions.'
 keywords:
   - Community
   - template
   - Case
   - Join the technical exchange group
-  - community
   - group
   - weapp-tailwindcss
   - tailwindcss
@@ -15,6 +14,10 @@ keywords:
   - uni-app
   - taro
   - mpx
+  - templates
+  - case studies
+  - Join
+  - the
 ---
 
 # Join the technical exchange group

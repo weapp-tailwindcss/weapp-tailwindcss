@@ -2,8 +2,8 @@ import type { RuntimeCompilationSnapshot, RuntimeSnapshotEntry } from '@/compile
 import type { TailwindV4DesignSystem, TailwindV4ResolvedSource } from '@/tailwindcss/v4-engine'
 import type { TailwindcssRuntimeLike } from '@/types'
 import type { IArbitraryValues } from '@/types/shared'
-import { extractRawCandidatesWithPositions, extractValidCandidates, resolveValidTailwindV4Candidates } from '@tailwindcss-mangle/engine'
-import { MappingChars2String } from '@weapp-core/escape'
+import { extractRawCandidatesWithPositions, extractValidCandidates, resolveValidTailwindV4Candidates } from '@weapp-tailwindcss/engine'
+import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { createDebug } from '@/debug'
 import { getRuntimeClassSetSignature } from '@/tailwindcss/runtime/cache'
 import { loadTailwindV4DesignSystem, resolveTailwindV4SourceFromRuntime } from '@/tailwindcss/v4-engine'
@@ -236,6 +236,8 @@ export function createRuntimeClassSetManager(
 
     runtimeSignature = nextSignature
     const nextBaseClassSet = options.baseClassSet
+      ? createNonSourceBaseClassSet(options.baseClassSet, candidateCountByClass)
+      : undefined
     const canUseBaseWithoutInitialFullScan = Boolean(fullRebuild
       && !hadTrackedRuntimeFiles
       && options.skipInitialFullScanWithBase === true

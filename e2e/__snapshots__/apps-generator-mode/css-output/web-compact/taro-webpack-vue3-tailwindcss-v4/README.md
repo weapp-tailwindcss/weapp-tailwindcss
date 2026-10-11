@@ -7,7 +7,7 @@ Entry: taro-webpack-vue3-tailwindcss-v4/dist
 
 | Bytes | Selectors | @supports | :hover | Tailwind banner | System dark media | Manual dark selector | Raw arbitrary selector | Weapp escaped arbitrary selector |
 | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |
-| 567631 | 1799 | true | true | true | true | true | true | false |
+| 632576 | 1795 | true | true | true | true | true | true | false |
 
 ## Generator CSS Files
 
@@ -22,7 +22,7 @@ Entry: taro-webpack-vue3-tailwindcss-v4/dist
 
 | File | Artifact | Bytes | Selectors | @supports | :hover | Tailwind banner | System dark media | Manual dark selector | Raw arbitrary selector | Weapp escaped arbitrary selector |
 | --- | --- | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |
-| `css/app.css` | [artifacts/css__app.css](artifacts/css__app.css) | 315065 | 1790 | true | true | true | true | true | true | false |
-| `css/chunk.1.css` | [artifacts/css__chunk.1.css](artifacts/css__chunk.1.css) | 239319 | 1602 | true | true | true | true | true | true | false |
+| `css/app.css` | [artifacts/css__app.css](artifacts/css__app.css) | 315451 | 1792 | true | true | true | true | true | true | false |
+| `css/chunk.1.css` | [artifacts/css__chunk.1.css](artifacts/css__chunk.1.css) | 303878 | 1628 | true | true | true | true | true | true | false |
 | `css/chunk.2.css` | [artifacts/css__chunk.2.css](artifacts/css__chunk.2.css) | 6636 | 18 | true | false | true | false | false | true | false |
 | `css/chunk.3.css` | [artifacts/css__chunk.3.css](artifacts/css__chunk.3.css) | 6611 | 18 | true | false | true | false | false | true | false |

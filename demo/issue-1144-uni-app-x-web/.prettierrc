@@ -1,0 +1,30 @@
+{
+	"printWidth": 100,
+	"tabWidth": 4,
+	"useTabs": true,
+	"semi": false,
+	"singleQuote": true,
+	"quoteProps": "consistent",
+	"trailingComma": "none",
+	"bracketSpacing": true,
+	"objectWrap": "preserve",
+	"bracketSameLine": false,
+	"arrowParens": "always",
+	"htmlWhitespaceSensitivity": "ignore",
+	"vueIndentScriptAndStyle": false,
+	"plugins": ["./prettier-plugin-uts.js"],
+	"overrides": [
+		{
+			"files": "*.uvue",
+			"options": {
+				"parser": "vue"
+			}
+		},
+		{
+			"files": "*.uts",
+			"options": {
+				"parser": "typescript"
+			}
+		}
+	]
+}

@@ -2,7 +2,7 @@
   "name": "my-project",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@11.8.0",
+  "packageManager": "pnpm@12.9.1",
   "scripts": {
     "serve": "pnpm dev:h5",
     "build": "pnpm build:h5",
@@ -53,7 +53,7 @@
     "up:uni-app": "pnpm dlx @dcloudio/uvm@latest"
   },
   "dependencies": {
-    "@babel/runtime": "~7.29.2",
+    "@babel/runtime": "~7.29.7",
     "@dcloudio/uni-app": "2.0.2-5000720260410001",
     "@dcloudio/uni-app-plus": "2.0.2-5000720260410001",
     "@dcloudio/uni-h5": "2.0.2-5000720260410001",
@@ -76,7 +76,7 @@
     "@dcloudio/uni-stat": "2.0.2-5000720260410001",
     "@vue/shared": "^3.0.0",
     "@weapp-core/escape": "^8.0.0",
-    "@weapp-tailwindcss/merge": "^2.2.1",
+    "@weapp-tailwindcss/merge": "^2.2.3",
     "@weapp-tailwindcss/runtime": "^0.1.6",
     "clsx": "^2.1.1",
     "core-js": "^3.45.1",
@@ -110,11 +110,11 @@
     "postcss": "^8.5.15",
     "postcss-comment": "^2.0.0",
     "postcss-loader": "^8.1.1",
-    "tailwindcss": "^4.3.1",
+    "tailwindcss": "^4.3.3",
     "typescript": "~6.0.3",
     "vue-template-compiler": ">= 2.6.14 < 2.7",
-    "weapp-ide-cli": "^5.4.10",
-    "weapp-tailwindcss": "^5.1.3"
+    "weapp-ide-cli": "^5.4.12",
+    "weapp-tailwindcss": "^5.5.5"
   },
   "browserslist": [
     "Android >= 4.4",
@@ -122,11 +122,5 @@
   ],
   "uni-app": {
     "scripts": {}
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "weapp-tailwindcss",
-      "@weapp-tailwindcss/merge"
-    ]
   }
 }

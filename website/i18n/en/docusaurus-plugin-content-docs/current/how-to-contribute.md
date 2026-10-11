@@ -1,9 +1,11 @@
 ---
 title: How to contribute
-description: It's actually very simple. You don't necessarily need to contribute code. You raise an issue, answer a question, and write a related article. These are all contributions to the project, and there is no need to stick to specific forms.
+audience: maintainer
+description: >-
+  It's actually very simple. You don't necessarily need to contribute code. You raise an issue, answer a question, and
+  write a related article. These are all contributions to the project, and there is no need to stick to specific forms.
 keywords:
   - How to contribute
-  - how to contribute
   - weapp-tailwindcss
   - tailwindcss
   - Mini program
@@ -11,6 +13,14 @@ keywords:
   - uni-app
   - taro
   - mpx
+  - How
+  - to
+  - contribute
+  - Tailwind CSS 4
+  - cross-platform
+  - mini app
+  - React Native
+  - Lynx
 ---
 
 # How to contribute
@@ -25,15 +35,15 @@ No matter what you do, as long as you play a positive role in helping the develo
 
 ## Contribution Guidelines
 
-First, you must `fork` [`weapp-tailwindcss`](https://github.com/sonofmagic/weapp-tailwindcss) this project to your own account, and then you `git clone` it to your local.
+First, you must `fork` [`weapp-tailwindcss`](https://github.com/weapp-tailwindcss/weapp-tailwindcss) this project to your own account, and then you `git clone` it to your local.
 
 ### Documentation contribution
 
-Currently, all documents on this website are in the [weapp-tailwindcss/website](https://github.com/sonofmagic/weapp-tailwindcss/tree/main/website) directory.
+Currently, all documents on this website are in the [weapp-tailwindcss/website](https://github.com/weapp-tailwindcss/weapp-tailwindcss/tree/main/website) directory.
 
 You can add articles, modify articles, delete articles in it, and then submit them to your `fork` branch, and then from `pr` to the `weapp-tailwindcss` branch of `main`.
 
-The `website` project will be deployed under the domain name `https://tw.icebreaker.top` and displayed as the document of [`weapp-tailwindcss`](https://github.com/sonofmagic/weapp-tailwindcss).
+The `website` project will be deployed under the domain name `https://tw.weapp.dev` and displayed as the document of [`weapp-tailwindcss`](https://github.com/weapp-tailwindcss/weapp-tailwindcss).
 
 As far as the project is concerned, this is a project of `docusaurus@2`. Similar to `vuepress`/`vitepress`, it is also an open source document generation tool, but it is written by `react`.
 
@@ -75,7 +85,7 @@ Currently `weapp-tailwindcss` uses:
 - `htmlparser2` to handle `wxml`
 - `postcss` to handle `wxss`
 
-Why？
+Why?
 
 #### wxml htmlparser2
 
@@ -123,7 +133,11 @@ There are more evolutions here, which is equivalent to adding multiple postcss p
 - `wxml`: Where to handle `wxml`
 - `*`: `src` Some other files, mostly export files
 
-If you want to know what each has done, please see [In-depth Core Principles](./principle)
+For the current Tailwind generation, design-token, and component-boundary model, see [Tailwind design principles](./tailwindcss/tailwind-core).
+
+:::warning Maintainers only
+The local debugging, build, and test instructions on this page are for repository contributors and maintainers, not for application integration.
+:::
 
 ## How to debug locally
 

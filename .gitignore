@@ -108,11 +108,16 @@ stats/*.html
 packages/weapp-tailwindcss/stats/*.html
 benchmark/app/public/data/
 benchmark/framework-compare/projects/
+benchmark/tailwindcss4/bench-report.json
 e2e/benchmark/e2e-watch-hmr/
 
 .DS_Store
 coverage-vitest
+.vitest/
 docs
+!/docs/
+/docs/*
+!/docs/engineering/
 
 miniprogram_npm
 .cloudbase
@@ -131,6 +136,9 @@ website/tests/index.spec.ts-snapshots
 /.playwright-cli/
 /.playwright-mcp/
 e2e/.artifacts/
+examples/react-native-expo/.expo/
+examples/react-native-expo/android/
+examples/react-native-expo/ios/
 .e2e-runtime/
 .tmp/
 .codex-tmp/
@@ -143,3 +151,9 @@ submodules/tailwindcss-mangle/
 # Python cache
 __pycache__/
 *.pyc
+
+# 本地 IDE 验收身份与恢复账本只存在于本机。
+/demo/**/.hbuilderx-acceptance.json
+
+# 跨平台原生 CSS 编译产物与元数据由 CI 暂存。
+/packages/postcss/native/bindings/

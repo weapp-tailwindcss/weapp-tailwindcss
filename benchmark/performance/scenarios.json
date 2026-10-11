@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "warmups": 2,
+  "runs": 7,
+  "groups": ["postcss", "core", "hmr", "bundler", "runtime"],
+  "postcssScales": [1000, 2000, 5000],
+  "postcssStressScales": [10000],
+  "postcssStructuredScales": [1000, 2000, 5000],
+  "postcssCacheScales": [1000, 2000, 5000],
+  "coreScales": [50, 100, 200],
+  "coreStressScales": [600, 5000],
+  "coreIncrementalScales": [50, 100, 200],
+  "hmrScales": [25, 50, 100],
+  "bundlerScales": [50, 100, 200],
+  "runtimeScales": [100, 500, 1000],
+  "runtimeModes": ["steady", "cold", "cache-hit", "cache-miss", "custom-map", "hot-churn"]
+}

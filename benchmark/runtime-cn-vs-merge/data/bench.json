@@ -1,0 +1,2910 @@
+{
+  "env": {
+    "timestamp": "2026-09-30T17:12:44.303Z",
+    "commit": "bc42340685067d13e0ddc665197662848faaacfa",
+    "node": "v24.18.0",
+    "platform": "darwin",
+    "release": "27.0.0",
+    "arch": "arm64",
+    "cpu": "Apple M4 Max",
+    "totalMemoryBytes": 137438953472
+  },
+  "subjects": [
+    {
+      "subjectId": "weapp-cn",
+      "cases": [
+        {
+          "id": "short-no-conflict",
+          "title": "短 class、无冲突",
+          "conflict": false,
+          "coldStartNs": 485375,
+          "steady": {
+            "samples": 400,
+            "medianNs": 43.36,
+            "p50Ns": 43.36,
+            "p95Ns": 93.32,
+            "p99Ns": 316.64,
+            "minNs": 33.32,
+            "maxNs": 15921.68,
+            "opsPerSecond": 23062730.627306275
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "last-wins",
+          "title": "last-wins 冲突",
+          "conflict": true,
+          "coldStartNs": 167542,
+          "steady": {
+            "samples": 400,
+            "medianNs": 185,
+            "p50Ns": 185,
+            "p95Ns": 303.36,
+            "p99Ns": 571.64,
+            "minNs": 161.68,
+            "maxNs": 5658.32,
+            "opsPerSecond": 5405405.405405405
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "clsx-object-array",
+          "title": "clsx 对象/数组/falsy",
+          "conflict": false,
+          "coldStartNs": 80084,
+          "steady": {
+            "samples": 400,
+            "medianNs": 116.66,
+            "p50Ns": 116.64,
+            "p95Ns": 221.68,
+            "p99Ns": 291.64,
+            "minNs": 110,
+            "maxNs": 2903.32,
+            "opsPerSecond": 8571918.395336878
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "refinement-padding",
+          "title": "padding refinement（p-3 px-5）",
+          "conflict": true,
+          "coldStartNs": 21375,
+          "steady": {
+            "samples": 400,
+            "medianNs": 81.68,
+            "p50Ns": 81.68,
+            "p95Ns": 88.36,
+            "p99Ns": 293.36,
+            "minNs": 70,
+            "maxNs": 843.32,
+            "opsPerSecond": 12242899.118511263
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "rpx-width",
+          "title": "rpx 宽度冲突",
+          "conflict": true,
+          "coldStartNs": 252000,
+          "steady": {
+            "samples": 400,
+            "medianNs": 133.32,
+            "p50Ns": 133.32,
+            "p95Ns": 158.36,
+            "p99Ns": 165,
+            "minNs": 126.64,
+            "maxNs": 638.32,
+            "opsPerSecond": 7500750.075007501
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "rpx-text-length",
+          "title": "text-[12rpx] 与 text-[24rpx]",
+          "conflict": true,
+          "coldStartNs": 81375,
+          "steady": {
+            "samples": 400,
+            "medianNs": 141.68,
+            "p50Ns": 141.68,
+            "p95Ns": 161.68,
+            "p99Ns": 171.68,
+            "minNs": 135,
+            "maxNs": 2605,
+            "opsPerSecond": 7058159.232072275
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "rpx-text-color-keep",
+          "title": "text-red 与 text-[80rpx] 是否同时保留",
+          "conflict": true,
+          "coldStartNs": 52125,
+          "steady": {
+            "samples": 400,
+            "medianNs": 140.82,
+            "p50Ns": 140,
+            "p95Ns": 146.68,
+            "p99Ns": 175,
+            "minNs": 133.32,
+            "maxNs": 181.68,
+            "opsPerSecond": 7101264.02499645
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "escaped-modifier",
+          "title": "已转义 hover modifier",
+          "conflict": true,
+          "coldStartNs": 197334,
+          "steady": {
+            "samples": 400,
+            "medianNs": 135,
+            "p50Ns": 135,
+            "p95Ns": 161.64,
+            "p99Ns": 191.68,
+            "minNs": 130,
+            "maxNs": 3863.36,
+            "opsPerSecond": 7407407.407407408
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "stacked-modifiers",
+          "title": "堆叠 modifier",
+          "conflict": true,
+          "coldStartNs": 66917,
+          "steady": {
+            "samples": 400,
+            "medianNs": 153.32,
+            "p50Ns": 153.32,
+            "p95Ns": 161.68,
+            "p99Ns": 248.32,
+            "minNs": 148.32,
+            "maxNs": 3691.68,
+            "opsPerSecond": 6522306.287503261
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "important-postfix",
+          "title": "important 与普通 padding 共存",
+          "conflict": true,
+          "coldStartNs": 38041,
+          "steady": {
+            "samples": 400,
+            "medianNs": 155,
+            "p50Ns": 155,
+            "p95Ns": 161.64,
+            "p99Ns": 163.32,
+            "minNs": 145,
+            "maxNs": 238.32,
+            "opsPerSecond": 6451612.903225807
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "custom-plus-tailwind",
+          "title": "自定义类 + utility 冲突",
+          "conflict": true,
+          "coldStartNs": 16125,
+          "steady": {
+            "samples": 400,
+            "medianNs": 168.36,
+            "p50Ns": 168.36,
+            "p95Ns": 180,
+            "p99Ns": 206.68,
+            "minNs": 158.32,
+            "maxNs": 4005,
+            "opsPerSecond": 5939653.124257543
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "arbitrary-variant",
+          "title": "arbitrary variant",
+          "conflict": true,
+          "coldStartNs": 60667,
+          "steady": {
+            "samples": 400,
+            "medianNs": 173.32,
+            "p50Ns": 173.32,
+            "p95Ns": 183.32,
+            "p99Ns": 218.32,
+            "minNs": 165,
+            "maxNs": 3040,
+            "opsPerSecond": 5769674.590353104
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "numeric-leading-escaped",
+          "title": "已转义 2xl 数字变体",
+          "conflict": true,
+          "coldStartNs": 49917,
+          "steady": {
+            "samples": 400,
+            "medianNs": 141.64,
+            "p50Ns": 141.64,
+            "p95Ns": 150,
+            "p99Ns": 170,
+            "minNs": 131.68,
+            "maxNs": 183.32,
+            "opsPerSecond": 7060152.499293986
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "slim-excluded-fill",
+          "title": "slim 可能未覆盖的 SVG fill 冲突",
+          "conflict": true,
+          "coldStartNs": 13625,
+          "steady": {
+            "samples": 400,
+            "medianNs": 156.64,
+            "p50Ns": 156.64,
+            "p95Ns": 163.32,
+            "p99Ns": 166.68,
+            "minNs": 146.68,
+            "maxNs": 233.32,
+            "opsPerSecond": 6384065.372829419
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "long-list",
+          "title": "长 class 列表含冲突",
+          "conflict": true,
+          "coldStartNs": 133417,
+          "steady": {
+            "samples": 400,
+            "medianNs": 726.64,
+            "p50Ns": 726.64,
+            "p95Ns": 738.32,
+            "p99Ns": 778.32,
+            "minNs": 708.36,
+            "maxNs": 3908.36,
+            "opsPerSecond": 1376197.2916437301
+          },
+          "heapDeltaBytes": -16576
+        },
+        {
+          "id": "component-call",
+          "title": "组件最常见调用：cn(base, variant, cond && extra)，参数引用稳定",
+          "conflict": true,
+          "coldStartNs": 37834,
+          "steady": {
+            "samples": 400,
+            "medianNs": 210,
+            "p50Ns": 210,
+            "p95Ns": 231.64,
+            "p99Ns": 288.32,
+            "minNs": 195,
+            "maxNs": 2568.32,
+            "opsPerSecond": 4761904.761904762
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "arbitrary-heavy",
+          "title": "大量 arbitrary value",
+          "conflict": true,
+          "coldStartNs": 414166,
+          "steady": {
+            "samples": 400,
+            "medianNs": 273.32,
+            "p50Ns": 273.32,
+            "p95Ns": 330,
+            "p99Ns": 395,
+            "minNs": 260,
+            "maxNs": 5868.32,
+            "opsPerSecond": 3658715.0592711843
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "cache-hit",
+          "title": "同一输入重复调用（每次新数组，字符串字面量稳定）",
+          "conflict": true,
+          "coldStartNs": 20000,
+          "steady": {
+            "samples": 400,
+            "medianNs": 215.82,
+            "p50Ns": 215,
+            "p95Ns": 278.32,
+            "p99Ns": 498.32,
+            "minNs": 175,
+            "maxNs": 908.32,
+            "opsPerSecond": 4633490.872022983
+          },
+          "heapDeltaBytes": -5224
+        },
+        {
+          "id": "cache-miss",
+          "title": "每次唯一输入（缓存未命中）",
+          "conflict": true,
+          "coldStartNs": 126917,
+          "steady": {
+            "samples": 400,
+            "medianNs": 2907.48,
+            "p50Ns": 2906.64,
+            "p95Ns": 5693.32,
+            "p99Ns": 14645,
+            "minNs": 2273.36,
+            "maxNs": 17946.68,
+            "opsPerSecond": 343940.4570280793
+          },
+          "heapDeltaBytes": 869800
+        },
+        {
+          "id": "component-call-fresh",
+          "title": "同样的组件调用，但每次新建参数数组",
+          "conflict": true,
+          "coldStartNs": 22791,
+          "steady": {
+            "samples": 400,
+            "medianNs": 547.5,
+            "p50Ns": 546.68,
+            "p95Ns": 835,
+            "p99Ns": 1293.32,
+            "minNs": 206.64,
+            "maxNs": 1935,
+            "opsPerSecond": 1826484.0182648401
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "working-set",
+          "title": "64 组稳定参数循环（工作集缓存）",
+          "conflict": true,
+          "coldStartNs": 33708,
+          "steady": {
+            "samples": 400,
+            "medianNs": 310,
+            "p50Ns": 310,
+            "p95Ns": 458.32,
+            "p99Ns": 615,
+            "minNs": 205,
+            "maxNs": 1275,
+            "opsPerSecond": 3225806.4516129033
+          },
+          "heapDeltaBytes": 4352
+        }
+      ]
+    },
+    {
+      "subjectId": "weapp-merge",
+      "cases": [
+        {
+          "id": "short-no-conflict",
+          "title": "短 class、无冲突",
+          "conflict": false,
+          "coldStartNs": 2041750,
+          "steady": {
+            "samples": 400,
+            "medianNs": 65,
+            "p50Ns": 65,
+            "p95Ns": 146.64,
+            "p99Ns": 5625,
+            "minNs": 35,
+            "maxNs": 23963.36,
+            "opsPerSecond": 15384615.384615384
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "last-wins",
+          "title": "last-wins 冲突",
+          "conflict": true,
+          "coldStartNs": 411500,
+          "steady": {
+            "samples": 400,
+            "medianNs": 223.32,
+            "p50Ns": 223.32,
+            "p95Ns": 375,
+            "p99Ns": 848.32,
+            "minNs": 178.32,
+            "maxNs": 29846.68,
+            "opsPerSecond": 4477879.276374709
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "clsx-object-array",
+          "title": "clsx 对象/数组/falsy",
+          "conflict": false,
+          "coldStartNs": 104709,
+          "steady": {
+            "samples": 400,
+            "medianNs": 121.68,
+            "p50Ns": 121.68,
+            "p95Ns": 298.32,
+            "p99Ns": 541.68,
+            "minNs": 116.64,
+            "maxNs": 20206.68,
+            "opsPerSecond": 8218277.44904668
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "refinement-padding",
+          "title": "padding refinement（p-3 px-5）",
+          "conflict": true,
+          "coldStartNs": 35500,
+          "steady": {
+            "samples": 400,
+            "medianNs": 76.68,
+            "p50Ns": 76.68,
+            "p95Ns": 88.36,
+            "p99Ns": 166.68,
+            "minNs": 71.64,
+            "maxNs": 11155,
+            "opsPerSecond": 13041210.224308815
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "rpx-width",
+          "title": "rpx 宽度冲突",
+          "conflict": true,
+          "coldStartNs": 261625,
+          "steady": {
+            "samples": 400,
+            "medianNs": 135,
+            "p50Ns": 135,
+            "p95Ns": 160,
+            "p99Ns": 165,
+            "minNs": 128.32,
+            "maxNs": 510,
+            "opsPerSecond": 7407407.407407408
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "rpx-text-length",
+          "title": "text-[12rpx] 与 text-[24rpx]",
+          "conflict": true,
+          "coldStartNs": 87542,
+          "steady": {
+            "samples": 400,
+            "medianNs": 148.32,
+            "p50Ns": 148.32,
+            "p95Ns": 170,
+            "p99Ns": 173.32,
+            "minNs": 141.68,
+            "maxNs": 3118.32,
+            "opsPerSecond": 6742179.07227616
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "rpx-text-color-keep",
+          "title": "text-red 与 text-[80rpx] 是否同时保留",
+          "conflict": true,
+          "coldStartNs": 33500,
+          "steady": {
+            "samples": 400,
+            "medianNs": 146.64,
+            "p50Ns": 146.64,
+            "p95Ns": 178.36,
+            "p99Ns": 183.32,
+            "minNs": 138.32,
+            "maxNs": 4290,
+            "opsPerSecond": 6819421.713038735
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "escaped-modifier",
+          "title": "已转义 hover modifier",
+          "conflict": true,
+          "coldStartNs": 170958,
+          "steady": {
+            "samples": 400,
+            "medianNs": 145,
+            "p50Ns": 145,
+            "p95Ns": 170,
+            "p99Ns": 233.32,
+            "minNs": 136.64,
+            "maxNs": 606.64,
+            "opsPerSecond": 6896551.724137931
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "stacked-modifiers",
+          "title": "堆叠 modifier",
+          "conflict": true,
+          "coldStartNs": 65375,
+          "steady": {
+            "samples": 400,
+            "medianNs": 155,
+            "p50Ns": 155,
+            "p95Ns": 161.68,
+            "p99Ns": 225,
+            "minNs": 150,
+            "maxNs": 5625,
+            "opsPerSecond": 6451612.903225807
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "important-postfix",
+          "title": "important 与普通 padding 共存",
+          "conflict": true,
+          "coldStartNs": 23334,
+          "steady": {
+            "samples": 400,
+            "medianNs": 165,
+            "p50Ns": 165,
+            "p95Ns": 178.32,
+            "p99Ns": 206.64,
+            "minNs": 155,
+            "maxNs": 3740,
+            "opsPerSecond": 6060606.060606061
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "custom-plus-tailwind",
+          "title": "自定义类 + utility 冲突",
+          "conflict": true,
+          "coldStartNs": 29334,
+          "steady": {
+            "samples": 400,
+            "medianNs": 163.32,
+            "p50Ns": 163.32,
+            "p95Ns": 201.64,
+            "p99Ns": 215,
+            "minNs": 155,
+            "maxNs": 2421.68,
+            "opsPerSecond": 6122948.81214793
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "arbitrary-variant",
+          "title": "arbitrary variant",
+          "conflict": true,
+          "coldStartNs": 18375,
+          "steady": {
+            "samples": 400,
+            "medianNs": 171.68,
+            "p50Ns": 171.68,
+            "p95Ns": 181.64,
+            "p99Ns": 208.36,
+            "minNs": 165,
+            "maxNs": 2683.36,
+            "opsPerSecond": 5824790.307548928
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "numeric-leading-escaped",
+          "title": "已转义 2xl 数字变体",
+          "conflict": true,
+          "coldStartNs": 33209,
+          "steady": {
+            "samples": 400,
+            "medianNs": 140,
+            "p50Ns": 140,
+            "p95Ns": 173.32,
+            "p99Ns": 180,
+            "minNs": 131.64,
+            "maxNs": 191.68,
+            "opsPerSecond": 7142857.142857143
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "slim-excluded-fill",
+          "title": "slim 可能未覆盖的 SVG fill 冲突",
+          "conflict": true,
+          "coldStartNs": 9917,
+          "steady": {
+            "samples": 400,
+            "medianNs": 153.36,
+            "p50Ns": 153.36,
+            "p95Ns": 161.68,
+            "p99Ns": 188.32,
+            "minNs": 145,
+            "maxNs": 2485,
+            "opsPerSecond": 6520605.112154407
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "long-list",
+          "title": "长 class 列表含冲突",
+          "conflict": true,
+          "coldStartNs": 159292,
+          "steady": {
+            "samples": 400,
+            "medianNs": 725,
+            "p50Ns": 725,
+            "p95Ns": 841.68,
+            "p99Ns": 971.64,
+            "minNs": 701.68,
+            "maxNs": 3310,
+            "opsPerSecond": 1379310.3448275863
+          },
+          "heapDeltaBytes": -20360
+        },
+        {
+          "id": "component-call",
+          "title": "组件最常见调用：cn(base, variant, cond && extra)，参数引用稳定",
+          "conflict": true,
+          "coldStartNs": 34959,
+          "steady": {
+            "samples": 400,
+            "medianNs": 200,
+            "p50Ns": 200,
+            "p95Ns": 220,
+            "p99Ns": 291.64,
+            "minNs": 188.32,
+            "maxNs": 633.32,
+            "opsPerSecond": 5000000
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "arbitrary-heavy",
+          "title": "大量 arbitrary value",
+          "conflict": true,
+          "coldStartNs": 502250,
+          "steady": {
+            "samples": 400,
+            "medianNs": 281.68,
+            "p50Ns": 281.68,
+            "p95Ns": 351.64,
+            "p99Ns": 876.68,
+            "minNs": 266.68,
+            "maxNs": 5496.68,
+            "opsPerSecond": 3550127.8046009657
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "cache-hit",
+          "title": "同一输入重复调用（每次新数组，字符串字面量稳定）",
+          "conflict": true,
+          "coldStartNs": 28667,
+          "steady": {
+            "samples": 400,
+            "medianNs": 221.66,
+            "p50Ns": 221.64,
+            "p95Ns": 295,
+            "p99Ns": 416.64,
+            "minNs": 178.32,
+            "maxNs": 1005,
+            "opsPerSecond": 4511413.877109086
+          },
+          "heapDeltaBytes": -7288
+        },
+        {
+          "id": "cache-miss",
+          "title": "每次唯一输入（缓存未命中）",
+          "conflict": true,
+          "coldStartNs": 119291,
+          "steady": {
+            "samples": 400,
+            "medianNs": 3344.98,
+            "p50Ns": 3343.32,
+            "p95Ns": 5245,
+            "p99Ns": 12251.68,
+            "minNs": 2838.36,
+            "maxNs": 19846.68,
+            "opsPerSecond": 298955.4496588918
+          },
+          "heapDeltaBytes": 50224
+        },
+        {
+          "id": "component-call-fresh",
+          "title": "同样的组件调用，但每次新建参数数组",
+          "conflict": true,
+          "coldStartNs": 246125,
+          "steady": {
+            "samples": 400,
+            "medianNs": 535.8399999999999,
+            "p50Ns": 535,
+            "p95Ns": 818.32,
+            "p99Ns": 933.32,
+            "minNs": 201.68,
+            "maxNs": 1526.68,
+            "opsPerSecond": 1866228.7249925353
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "working-set",
+          "title": "64 组稳定参数循环（工作集缓存）",
+          "conflict": true,
+          "coldStartNs": 13667,
+          "steady": {
+            "samples": 400,
+            "medianNs": 301.64,
+            "p50Ns": 301.64,
+            "p95Ns": 411.68,
+            "p99Ns": 526.64,
+            "minNs": 201.68,
+            "maxNs": 841.68,
+            "opsPerSecond": 3315210.184325686
+          },
+          "heapDeltaBytes": 4352
+        }
+      ]
+    },
+    {
+      "subjectId": "weapp-merge-slim",
+      "cases": [
+        {
+          "id": "short-no-conflict",
+          "title": "短 class、无冲突",
+          "conflict": false,
+          "coldStartNs": 1400709,
+          "steady": {
+            "samples": 400,
+            "medianNs": 46.68,
+            "p50Ns": 46.68,
+            "p95Ns": 95,
+            "p99Ns": 326.64,
+            "minNs": 35,
+            "maxNs": 23561.64,
+            "opsPerSecond": 21422450.728363324
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "last-wins",
+          "title": "last-wins 冲突",
+          "conflict": true,
+          "coldStartNs": 263375,
+          "steady": {
+            "samples": 400,
+            "medianNs": 198.32,
+            "p50Ns": 198.32,
+            "p95Ns": 311.64,
+            "p99Ns": 563.32,
+            "minNs": 161.64,
+            "maxNs": 8358.36,
+            "opsPerSecond": 5042355.788624446
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "clsx-object-array",
+          "title": "clsx 对象/数组/falsy",
+          "conflict": false,
+          "coldStartNs": 48416,
+          "steady": {
+            "samples": 400,
+            "medianNs": 118.36,
+            "p50Ns": 118.36,
+            "p95Ns": 215,
+            "p99Ns": 393.32,
+            "minNs": 110,
+            "maxNs": 2956.68,
+            "opsPerSecond": 8448800.270361608
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "refinement-padding",
+          "title": "padding refinement（p-3 px-5）",
+          "conflict": true,
+          "coldStartNs": 23417,
+          "steady": {
+            "samples": 400,
+            "medianNs": 86.64,
+            "p50Ns": 86.64,
+            "p95Ns": 91.68,
+            "p99Ns": 283.36,
+            "minNs": 80,
+            "maxNs": 3453.32,
+            "opsPerSecond": 11542012.927054478
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "rpx-width",
+          "title": "rpx 宽度冲突",
+          "conflict": true,
+          "coldStartNs": 252709,
+          "steady": {
+            "samples": 400,
+            "medianNs": 135,
+            "p50Ns": 135,
+            "p95Ns": 161.68,
+            "p99Ns": 436.68,
+            "minNs": 126.64,
+            "maxNs": 1228.32,
+            "opsPerSecond": 7407407.407407408
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "rpx-text-length",
+          "title": "text-[12rpx] 与 text-[24rpx]",
+          "conflict": true,
+          "coldStartNs": 140791,
+          "steady": {
+            "samples": 400,
+            "medianNs": 150,
+            "p50Ns": 150,
+            "p95Ns": 170,
+            "p99Ns": 190,
+            "minNs": 143.32,
+            "maxNs": 3731.68,
+            "opsPerSecond": 6666666.666666667
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "rpx-text-color-keep",
+          "title": "text-red 与 text-[80rpx] 是否同时保留",
+          "conflict": true,
+          "coldStartNs": 49625,
+          "steady": {
+            "samples": 400,
+            "medianNs": 145,
+            "p50Ns": 145,
+            "p95Ns": 151.64,
+            "p99Ns": 155,
+            "minNs": 136.68,
+            "maxNs": 2415,
+            "opsPerSecond": 6896551.724137931
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "escaped-modifier",
+          "title": "已转义 hover modifier",
+          "conflict": true,
+          "coldStartNs": 145000,
+          "steady": {
+            "samples": 400,
+            "medianNs": 141.64,
+            "p50Ns": 141.64,
+            "p95Ns": 160,
+            "p99Ns": 166.64,
+            "minNs": 133.32,
+            "maxNs": 491.64,
+            "opsPerSecond": 7060152.499293986
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "stacked-modifiers",
+          "title": "堆叠 modifier",
+          "conflict": true,
+          "coldStartNs": 45333,
+          "steady": {
+            "samples": 400,
+            "medianNs": 148.36,
+            "p50Ns": 148.36,
+            "p95Ns": 153.32,
+            "p99Ns": 161.68,
+            "minNs": 143.36,
+            "maxNs": 2651.64,
+            "opsPerSecond": 6740361.283364788
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "important-postfix",
+          "title": "important 与普通 padding 共存",
+          "conflict": true,
+          "coldStartNs": 20209,
+          "steady": {
+            "samples": 400,
+            "medianNs": 155,
+            "p50Ns": 155,
+            "p95Ns": 163.32,
+            "p99Ns": 193.32,
+            "minNs": 148.32,
+            "maxNs": 276.64,
+            "opsPerSecond": 6451612.903225807
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "custom-plus-tailwind",
+          "title": "自定义类 + utility 冲突",
+          "conflict": true,
+          "coldStartNs": 11500,
+          "steady": {
+            "samples": 400,
+            "medianNs": 163.32,
+            "p50Ns": 163.32,
+            "p95Ns": 170,
+            "p99Ns": 190,
+            "minNs": 155,
+            "maxNs": 1436.68,
+            "opsPerSecond": 6122948.81214793
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "arbitrary-variant",
+          "title": "arbitrary variant",
+          "conflict": true,
+          "coldStartNs": 27458,
+          "steady": {
+            "samples": 400,
+            "medianNs": 175,
+            "p50Ns": 175,
+            "p95Ns": 181.68,
+            "p99Ns": 196.68,
+            "minNs": 166.68,
+            "maxNs": 2956.64,
+            "opsPerSecond": 5714285.714285715
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "numeric-leading-escaped",
+          "title": "已转义 2xl 数字变体",
+          "conflict": true,
+          "coldStartNs": 35375,
+          "steady": {
+            "samples": 400,
+            "medianNs": 138.32,
+            "p50Ns": 138.32,
+            "p95Ns": 146.64,
+            "p99Ns": 156.64,
+            "minNs": 130,
+            "maxNs": 180,
+            "opsPerSecond": 7229612.492770388
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "slim-excluded-fill",
+          "title": "slim 可能未覆盖的 SVG fill 冲突",
+          "conflict": true,
+          "coldStartNs": 6750,
+          "steady": {
+            "samples": 400,
+            "medianNs": 151.64,
+            "p50Ns": 151.64,
+            "p95Ns": 161.64,
+            "p99Ns": 201.68,
+            "minNs": 143.32,
+            "maxNs": 4105,
+            "opsPerSecond": 6594566.077552098
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "long-list",
+          "title": "长 class 列表含冲突",
+          "conflict": true,
+          "coldStartNs": 153834,
+          "steady": {
+            "samples": 400,
+            "medianNs": 718.36,
+            "p50Ns": 718.36,
+            "p95Ns": 735,
+            "p99Ns": 1056.64,
+            "minNs": 685,
+            "maxNs": 4685,
+            "opsPerSecond": 1392059.6915195724
+          },
+          "heapDeltaBytes": -14432
+        },
+        {
+          "id": "component-call",
+          "title": "组件最常见调用：cn(base, variant, cond && extra)，参数引用稳定",
+          "conflict": true,
+          "coldStartNs": 80834,
+          "steady": {
+            "samples": 400,
+            "medianNs": 196.68,
+            "p50Ns": 196.68,
+            "p95Ns": 231.64,
+            "p99Ns": 415,
+            "minNs": 186.64,
+            "maxNs": 1243.32,
+            "opsPerSecond": 5084401.057555419
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "arbitrary-heavy",
+          "title": "大量 arbitrary value",
+          "conflict": true,
+          "coldStartNs": 386084,
+          "steady": {
+            "samples": 400,
+            "medianNs": 281.68,
+            "p50Ns": 281.68,
+            "p95Ns": 328.36,
+            "p99Ns": 383.36,
+            "minNs": 270,
+            "maxNs": 10793.32,
+            "opsPerSecond": 3550127.8046009657
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "cache-hit",
+          "title": "同一输入重复调用（每次新数组，字符串字面量稳定）",
+          "conflict": true,
+          "coldStartNs": 25541,
+          "steady": {
+            "samples": 400,
+            "medianNs": 221.68,
+            "p50Ns": 221.68,
+            "p95Ns": 271.68,
+            "p99Ns": 463.36,
+            "minNs": 178.32,
+            "maxNs": 970,
+            "opsPerSecond": 4511006.856730422
+          },
+          "heapDeltaBytes": -7120
+        },
+        {
+          "id": "cache-miss",
+          "title": "每次唯一输入（缓存未命中）",
+          "conflict": true,
+          "coldStartNs": 134334,
+          "steady": {
+            "samples": 400,
+            "medianNs": 3359.1800000000003,
+            "p50Ns": 3358.36,
+            "p95Ns": 13218.36,
+            "p99Ns": 26346.64,
+            "minNs": 2923.32,
+            "maxNs": 59515,
+            "opsPerSecond": 297691.69856929366
+          },
+          "heapDeltaBytes": 18104
+        },
+        {
+          "id": "component-call-fresh",
+          "title": "同样的组件调用，但每次新建参数数组",
+          "conflict": true,
+          "coldStartNs": 217500,
+          "steady": {
+            "samples": 400,
+            "medianNs": 532.5,
+            "p50Ns": 531.68,
+            "p95Ns": 820,
+            "p99Ns": 941.68,
+            "minNs": 206.64,
+            "maxNs": 1531.68,
+            "opsPerSecond": 1877934.2723004695
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "working-set",
+          "title": "64 组稳定参数循环（工作集缓存）",
+          "conflict": true,
+          "coldStartNs": 24167,
+          "steady": {
+            "samples": 400,
+            "medianNs": 318.34000000000003,
+            "p50Ns": 318.32,
+            "p95Ns": 775,
+            "p99Ns": 3426.68,
+            "minNs": 211.64,
+            "maxNs": 6226.68,
+            "opsPerSecond": 3141295.470251932
+          },
+          "heapDeltaBytes": 4352
+        }
+      ]
+    },
+    {
+      "subjectId": "weapp-merge-lite",
+      "cases": [
+        {
+          "id": "short-no-conflict",
+          "title": "短 class、无冲突",
+          "conflict": false,
+          "coldStartNs": 140875,
+          "steady": {
+            "samples": 400,
+            "medianNs": 48.36,
+            "p50Ns": 48.36,
+            "p95Ns": 100,
+            "p99Ns": 411.68,
+            "minNs": 36.64,
+            "maxNs": 17578.36,
+            "opsPerSecond": 20678246.4846981
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "last-wins",
+          "title": "last-wins 冲突",
+          "conflict": true,
+          "coldStartNs": 94834,
+          "steady": {
+            "samples": 400,
+            "medianNs": 195,
+            "p50Ns": 195,
+            "p95Ns": 286.68,
+            "p99Ns": 751.64,
+            "minNs": 163.32,
+            "maxNs": 5856.68,
+            "opsPerSecond": 5128205.128205128
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "clsx-object-array",
+          "title": "clsx 对象/数组/falsy",
+          "conflict": false,
+          "coldStartNs": 33875,
+          "steady": {
+            "samples": 400,
+            "medianNs": 121.68,
+            "p50Ns": 121.68,
+            "p95Ns": 223.36,
+            "p99Ns": 370,
+            "minNs": 111.68,
+            "maxNs": 4466.64,
+            "opsPerSecond": 8218277.44904668
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "refinement-padding",
+          "title": "padding refinement（p-3 px-5）",
+          "conflict": true,
+          "coldStartNs": 8000,
+          "steady": {
+            "samples": 400,
+            "medianNs": 90,
+            "p50Ns": 90,
+            "p95Ns": 95,
+            "p99Ns": 186.64,
+            "minNs": 76.68,
+            "maxNs": 575,
+            "opsPerSecond": 11111111.111111112
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "rpx-width",
+          "title": "rpx 宽度冲突",
+          "conflict": true,
+          "coldStartNs": 235584,
+          "steady": {
+            "samples": 400,
+            "medianNs": 133.32,
+            "p50Ns": 133.32,
+            "p95Ns": 158.36,
+            "p99Ns": 590,
+            "minNs": 126.68,
+            "maxNs": 3550,
+            "opsPerSecond": 7500750.075007501
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "rpx-text-length",
+          "title": "text-[12rpx] 与 text-[24rpx]",
+          "conflict": true,
+          "coldStartNs": 156291,
+          "steady": {
+            "samples": 400,
+            "medianNs": 143.36,
+            "p50Ns": 143.36,
+            "p95Ns": 163.36,
+            "p99Ns": 466.68,
+            "minNs": 138.32,
+            "maxNs": 3735,
+            "opsPerSecond": 6975446.428571428
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "rpx-text-color-keep",
+          "title": "text-red 与 text-[80rpx] 是否同时保留",
+          "conflict": true,
+          "coldStartNs": 27583,
+          "steady": {
+            "samples": 400,
+            "medianNs": 141.68,
+            "p50Ns": 141.68,
+            "p95Ns": 146.68,
+            "p99Ns": 153.36,
+            "minNs": 138.32,
+            "maxNs": 158.36,
+            "opsPerSecond": 7058159.232072275
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "escaped-modifier",
+          "title": "已转义 hover modifier",
+          "conflict": true,
+          "coldStartNs": 143042,
+          "steady": {
+            "samples": 400,
+            "medianNs": 141.68,
+            "p50Ns": 141.68,
+            "p95Ns": 158.32,
+            "p99Ns": 395,
+            "minNs": 133.32,
+            "maxNs": 5480,
+            "opsPerSecond": 7058159.232072275
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "stacked-modifiers",
+          "title": "堆叠 modifier",
+          "conflict": true,
+          "coldStartNs": 33208,
+          "steady": {
+            "samples": 400,
+            "medianNs": 153.36,
+            "p50Ns": 153.36,
+            "p95Ns": 165,
+            "p99Ns": 265,
+            "minNs": 148.32,
+            "maxNs": 5420,
+            "opsPerSecond": 6520605.112154407
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "important-postfix",
+          "title": "important 与普通 padding 共存",
+          "conflict": true,
+          "coldStartNs": 24583,
+          "steady": {
+            "samples": 400,
+            "medianNs": 160,
+            "p50Ns": 160,
+            "p95Ns": 176.68,
+            "p99Ns": 220,
+            "minNs": 153.32,
+            "maxNs": 1503.32,
+            "opsPerSecond": 6250000
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "custom-plus-tailwind",
+          "title": "自定义类 + utility 冲突",
+          "conflict": true,
+          "coldStartNs": 7625,
+          "steady": {
+            "samples": 400,
+            "medianNs": 163.36,
+            "p50Ns": 163.36,
+            "p95Ns": 375,
+            "p99Ns": 901.68,
+            "minNs": 155,
+            "maxNs": 4323.36,
+            "opsPerSecond": 6121449.559255632
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "arbitrary-variant",
+          "title": "arbitrary variant",
+          "conflict": true,
+          "coldStartNs": 24542,
+          "steady": {
+            "samples": 400,
+            "medianNs": 176.68,
+            "p50Ns": 176.68,
+            "p95Ns": 185,
+            "p99Ns": 206.68,
+            "minNs": 166.68,
+            "maxNs": 300,
+            "opsPerSecond": 5659950.192438306
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "numeric-leading-escaped",
+          "title": "已转义 2xl 数字变体",
+          "conflict": true,
+          "coldStartNs": 54875,
+          "steady": {
+            "samples": 400,
+            "medianNs": 141.64,
+            "p50Ns": 141.64,
+            "p95Ns": 186.68,
+            "p99Ns": 361.68,
+            "minNs": 131.68,
+            "maxNs": 1461.68,
+            "opsPerSecond": 7060152.499293986
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "slim-excluded-fill",
+          "title": "slim 可能未覆盖的 SVG fill 冲突",
+          "conflict": true,
+          "coldStartNs": 5834,
+          "steady": {
+            "samples": 400,
+            "medianNs": 153.32,
+            "p50Ns": 153.32,
+            "p95Ns": 160,
+            "p99Ns": 175,
+            "minNs": 143.32,
+            "maxNs": 238.36,
+            "opsPerSecond": 6522306.287503261
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "long-list",
+          "title": "长 class 列表含冲突",
+          "conflict": true,
+          "coldStartNs": 47917,
+          "steady": {
+            "samples": 400,
+            "medianNs": 721.64,
+            "p50Ns": 721.64,
+            "p95Ns": 801.64,
+            "p99Ns": 950,
+            "minNs": 701.64,
+            "maxNs": 5516.64,
+            "opsPerSecond": 1385732.4981985479
+          },
+          "heapDeltaBytes": -13280
+        },
+        {
+          "id": "component-call",
+          "title": "组件最常见调用：cn(base, variant, cond && extra)，参数引用稳定",
+          "conflict": true,
+          "coldStartNs": 19750,
+          "steady": {
+            "samples": 400,
+            "medianNs": 198.36,
+            "p50Ns": 198.36,
+            "p95Ns": 248.32,
+            "p99Ns": 443.36,
+            "minNs": 186.64,
+            "maxNs": 2303.32,
+            "opsPerSecond": 5041338.97963299
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "arbitrary-heavy",
+          "title": "大量 arbitrary value",
+          "conflict": true,
+          "coldStartNs": 32708,
+          "steady": {
+            "samples": 400,
+            "medianNs": 276.68,
+            "p50Ns": 276.68,
+            "p95Ns": 350,
+            "p99Ns": 950,
+            "minNs": 263.32,
+            "maxNs": 5200,
+            "opsPerSecond": 3614283.648980772
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "cache-hit",
+          "title": "同一输入重复调用（每次新数组，字符串字面量稳定）",
+          "conflict": true,
+          "coldStartNs": 6833,
+          "steady": {
+            "samples": 400,
+            "medianNs": 220,
+            "p50Ns": 220,
+            "p95Ns": 290,
+            "p99Ns": 565,
+            "minNs": 175,
+            "maxNs": 1143.32,
+            "opsPerSecond": 4545454.545454546
+          },
+          "heapDeltaBytes": -2304
+        },
+        {
+          "id": "cache-miss",
+          "title": "每次唯一输入（缓存未命中）",
+          "conflict": true,
+          "coldStartNs": 55334,
+          "steady": {
+            "samples": 400,
+            "medianNs": 1846.68,
+            "p50Ns": 1846.68,
+            "p95Ns": 2946.68,
+            "p99Ns": 9120,
+            "minNs": 1610,
+            "maxNs": 11928.32,
+            "opsPerSecond": 541512.3356510061
+          },
+          "heapDeltaBytes": 7040
+        },
+        {
+          "id": "component-call-fresh",
+          "title": "同样的组件调用，但每次新建参数数组",
+          "conflict": true,
+          "coldStartNs": 6500,
+          "steady": {
+            "samples": 400,
+            "medianNs": 559.1600000000001,
+            "p50Ns": 558.32,
+            "p95Ns": 850,
+            "p99Ns": 1003.32,
+            "minNs": 220,
+            "maxNs": 2886.64,
+            "opsPerSecond": 1788396.8810358392
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "working-set",
+          "title": "64 组稳定参数循环（工作集缓存）",
+          "conflict": true,
+          "coldStartNs": 3709,
+          "steady": {
+            "samples": 400,
+            "medianNs": 317.5,
+            "p50Ns": 316.68,
+            "p95Ns": 431.64,
+            "p99Ns": 528.36,
+            "minNs": 208.32,
+            "maxNs": 1106.68,
+            "opsPerSecond": 3149606.2992125982
+          },
+          "heapDeltaBytes": 4368
+        }
+      ]
+    },
+    {
+      "subjectId": "upstream-cn",
+      "cases": [
+        {
+          "id": "short-no-conflict",
+          "title": "短 class、无冲突",
+          "conflict": false,
+          "coldStartNs": 615334,
+          "steady": {
+            "samples": 400,
+            "medianNs": 30,
+            "p50Ns": 30,
+            "p95Ns": 61.68,
+            "p99Ns": 215,
+            "minNs": 16.64,
+            "maxNs": 1061.68,
+            "opsPerSecond": 33333333.333333332
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "last-wins",
+          "title": "last-wins 冲突",
+          "conflict": true,
+          "coldStartNs": 191584,
+          "steady": {
+            "samples": 400,
+            "medianNs": 30,
+            "p50Ns": 30,
+            "p95Ns": 88.36,
+            "p99Ns": 326.68,
+            "minNs": 26.64,
+            "maxNs": 13253.36,
+            "opsPerSecond": 33333333.333333332
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "clsx-object-array",
+          "title": "clsx 对象/数组/falsy",
+          "conflict": false,
+          "coldStartNs": 97041,
+          "steady": {
+            "samples": 400,
+            "medianNs": 86.68,
+            "p50Ns": 86.68,
+            "p95Ns": 260,
+            "p99Ns": 495,
+            "minNs": 71.68,
+            "maxNs": 653.36,
+            "opsPerSecond": 11536686.663590215
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "refinement-padding",
+          "title": "padding refinement（p-3 px-5）",
+          "conflict": true,
+          "coldStartNs": 73750,
+          "steady": {
+            "samples": 400,
+            "medianNs": 30,
+            "p50Ns": 30,
+            "p95Ns": 51.64,
+            "p99Ns": 65,
+            "minNs": 28.32,
+            "maxNs": 1308.36,
+            "opsPerSecond": 33333333.333333332
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "rpx-width",
+          "title": "rpx 宽度冲突",
+          "conflict": true,
+          "coldStartNs": 83042,
+          "steady": {
+            "samples": 400,
+            "medianNs": 18.32,
+            "p50Ns": 18.32,
+            "p95Ns": 21.68,
+            "p99Ns": 33.32,
+            "minNs": 16.64,
+            "maxNs": 511.68,
+            "opsPerSecond": 54585152.838427946
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "rpx-text-length",
+          "title": "text-[12rpx] 与 text-[24rpx]",
+          "conflict": true,
+          "coldStartNs": 212166,
+          "steady": {
+            "samples": 400,
+            "medianNs": 28.36,
+            "p50Ns": 28.36,
+            "p95Ns": 63.36,
+            "p99Ns": 90,
+            "minNs": 28.32,
+            "maxNs": 268.32,
+            "opsPerSecond": 35260930.88857546
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "rpx-text-color-keep",
+          "title": "text-red 与 text-[80rpx] 是否同时保留",
+          "conflict": true,
+          "coldStartNs": 18625,
+          "steady": {
+            "samples": 400,
+            "medianNs": 16.68,
+            "p50Ns": 16.68,
+            "p95Ns": 56.68,
+            "p99Ns": 81.68,
+            "minNs": 15,
+            "maxNs": 415,
+            "opsPerSecond": 59952038.36930456
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "escaped-modifier",
+          "title": "已转义 hover modifier",
+          "conflict": true,
+          "coldStartNs": 11042,
+          "steady": {
+            "samples": 400,
+            "medianNs": 15,
+            "p50Ns": 15,
+            "p95Ns": 61.64,
+            "p99Ns": 90,
+            "minNs": 15,
+            "maxNs": 2793.32,
+            "opsPerSecond": 66666666.666666664
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "stacked-modifiers",
+          "title": "堆叠 modifier",
+          "conflict": true,
+          "coldStartNs": 115750,
+          "steady": {
+            "samples": 400,
+            "medianNs": 18.32,
+            "p50Ns": 18.32,
+            "p95Ns": 21.64,
+            "p99Ns": 25,
+            "minNs": 15,
+            "maxNs": 341.68,
+            "opsPerSecond": 54585152.838427946
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "important-postfix",
+          "title": "important 与普通 padding 共存",
+          "conflict": true,
+          "coldStartNs": 10333,
+          "steady": {
+            "samples": 400,
+            "medianNs": 23.36,
+            "p50Ns": 23.36,
+            "p95Ns": 40,
+            "p99Ns": 161.68,
+            "minNs": 16.64,
+            "maxNs": 703.32,
+            "opsPerSecond": 42808219.17808219
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "custom-plus-tailwind",
+          "title": "自定义类 + utility 冲突",
+          "conflict": true,
+          "coldStartNs": 19084,
+          "steady": {
+            "samples": 400,
+            "medianNs": 16.68,
+            "p50Ns": 16.68,
+            "p95Ns": 20,
+            "p99Ns": 25,
+            "minNs": 16.64,
+            "maxNs": 233.32,
+            "opsPerSecond": 59952038.36930456
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "arbitrary-variant",
+          "title": "arbitrary variant",
+          "conflict": true,
+          "coldStartNs": 18208,
+          "steady": {
+            "samples": 400,
+            "medianNs": 16.64,
+            "p50Ns": 16.64,
+            "p95Ns": 18.36,
+            "p99Ns": 21.68,
+            "minNs": 15,
+            "maxNs": 21.68,
+            "opsPerSecond": 60096153.84615384
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "numeric-leading-escaped",
+          "title": "已转义 2xl 数字变体",
+          "conflict": true,
+          "coldStartNs": 5708,
+          "steady": {
+            "samples": 400,
+            "medianNs": 15,
+            "p50Ns": 15,
+            "p95Ns": 18.32,
+            "p99Ns": 21.68,
+            "minNs": 13.32,
+            "maxNs": 2405,
+            "opsPerSecond": 66666666.666666664
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "slim-excluded-fill",
+          "title": "slim 可能未覆盖的 SVG fill 冲突",
+          "conflict": true,
+          "coldStartNs": 6375,
+          "steady": {
+            "samples": 400,
+            "medianNs": 15,
+            "p50Ns": 15,
+            "p95Ns": 16.68,
+            "p99Ns": 16.68,
+            "minNs": 13.32,
+            "maxNs": 28.32,
+            "opsPerSecond": 66666666.666666664
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "long-list",
+          "title": "长 class 列表含冲突",
+          "conflict": true,
+          "coldStartNs": 97750,
+          "steady": {
+            "samples": 400,
+            "medianNs": 16.64,
+            "p50Ns": 16.64,
+            "p95Ns": 18.32,
+            "p99Ns": 20,
+            "minNs": 13.32,
+            "maxNs": 28.32,
+            "opsPerSecond": 60096153.84615384
+          },
+          "heapDeltaBytes": -8312
+        },
+        {
+          "id": "component-call",
+          "title": "组件最常见调用：cn(base, variant, cond && extra)，参数引用稳定",
+          "conflict": true,
+          "coldStartNs": 21167,
+          "steady": {
+            "samples": 400,
+            "medianNs": 11.68,
+            "p50Ns": 11.68,
+            "p95Ns": 16.64,
+            "p99Ns": 16.68,
+            "minNs": 10,
+            "maxNs": 31.68,
+            "opsPerSecond": 85616438.35616438
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "arbitrary-heavy",
+          "title": "大量 arbitrary value",
+          "conflict": true,
+          "coldStartNs": 186167,
+          "steady": {
+            "samples": 400,
+            "medianNs": 11.64,
+            "p50Ns": 11.64,
+            "p95Ns": 11.68,
+            "p99Ns": 13.36,
+            "minNs": 8.36,
+            "maxNs": 33.32,
+            "opsPerSecond": 85910652.9209622
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "cache-hit",
+          "title": "同一输入重复调用（每次新数组，字符串字面量稳定）",
+          "conflict": true,
+          "coldStartNs": 8416,
+          "steady": {
+            "samples": 400,
+            "medianNs": 20,
+            "p50Ns": 20,
+            "p95Ns": 38.32,
+            "p99Ns": 43.32,
+            "minNs": 18.32,
+            "maxNs": 291.68,
+            "opsPerSecond": 50000000
+          },
+          "heapDeltaBytes": -1048
+        },
+        {
+          "id": "cache-miss",
+          "title": "每次唯一输入（缓存未命中）",
+          "conflict": true,
+          "coldStartNs": 22292,
+          "steady": {
+            "samples": 400,
+            "medianNs": 3520.86,
+            "p50Ns": 3518.36,
+            "p95Ns": 6020,
+            "p99Ns": 13430,
+            "minNs": 1451.68,
+            "maxNs": 67528.32,
+            "opsPerSecond": 284021.5174701635
+          },
+          "heapDeltaBytes": -25136
+        },
+        {
+          "id": "component-call-fresh",
+          "title": "同样的组件调用，但每次新建参数数组",
+          "conflict": true,
+          "coldStartNs": 13041,
+          "steady": {
+            "samples": 400,
+            "medianNs": 27.5,
+            "p50Ns": 26.68,
+            "p95Ns": 33.32,
+            "p99Ns": 41.68,
+            "minNs": 21.64,
+            "maxNs": 408.32,
+            "opsPerSecond": 36363636.36363637
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "working-set",
+          "title": "64 组稳定参数循环（工作集缓存）",
+          "conflict": true,
+          "coldStartNs": 7333,
+          "steady": {
+            "samples": 400,
+            "medianNs": 125.82,
+            "p50Ns": 125,
+            "p95Ns": 160,
+            "p99Ns": 403.32,
+            "minNs": 51.64,
+            "maxNs": 608.32,
+            "opsPerSecond": 7947862.025115244
+          },
+          "heapDeltaBytes": -3912
+        }
+      ]
+    },
+    {
+      "subjectId": "upstream-cn-twmerge",
+      "cases": [
+        {
+          "id": "short-no-conflict",
+          "title": "短 class、无冲突",
+          "conflict": false,
+          "coldStartNs": 400875,
+          "steady": {
+            "samples": 400,
+            "medianNs": 26.64,
+            "p50Ns": 26.64,
+            "p95Ns": 46.68,
+            "p99Ns": 168.32,
+            "minNs": 13.32,
+            "maxNs": 350,
+            "opsPerSecond": 37537537.53753754
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "last-wins",
+          "title": "last-wins 冲突",
+          "conflict": true,
+          "coldStartNs": 128208,
+          "steady": {
+            "samples": 400,
+            "medianNs": 161.68,
+            "p50Ns": 161.68,
+            "p95Ns": 225,
+            "p99Ns": 458.32,
+            "minNs": 128.32,
+            "maxNs": 20751.64,
+            "opsPerSecond": 6185056.902523503
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "clsx-object-array",
+          "title": "clsx 对象/数组/falsy",
+          "conflict": false,
+          "coldStartNs": 114042,
+          "steady": {
+            "samples": 400,
+            "medianNs": 75,
+            "p50Ns": 75,
+            "p95Ns": 190,
+            "p99Ns": 365,
+            "minNs": 68.32,
+            "maxNs": 6210,
+            "opsPerSecond": 13333333.333333334
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "refinement-padding",
+          "title": "padding refinement（p-3 px-5）",
+          "conflict": true,
+          "coldStartNs": 25000,
+          "steady": {
+            "samples": 400,
+            "medianNs": 56.68,
+            "p50Ns": 56.68,
+            "p95Ns": 105,
+            "p99Ns": 143.32,
+            "minNs": 51.68,
+            "maxNs": 651.68,
+            "opsPerSecond": 17642907.551164433
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "rpx-width",
+          "title": "rpx 宽度冲突",
+          "conflict": true,
+          "coldStartNs": 94583,
+          "steady": {
+            "samples": 400,
+            "medianNs": 61.68,
+            "p50Ns": 61.68,
+            "p95Ns": 105,
+            "p99Ns": 130,
+            "minNs": 58.32,
+            "maxNs": 2771.68,
+            "opsPerSecond": 16212710.765239948
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "rpx-text-length",
+          "title": "text-[12rpx] 与 text-[24rpx]",
+          "conflict": true,
+          "coldStartNs": 170458,
+          "steady": {
+            "samples": 400,
+            "medianNs": 73.36,
+            "p50Ns": 73.36,
+            "p95Ns": 78.32,
+            "p99Ns": 81.68,
+            "minNs": 66.68,
+            "maxNs": 85,
+            "opsPerSecond": 13631406.761177754
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "rpx-text-color-keep",
+          "title": "text-red 与 text-[80rpx] 是否同时保留",
+          "conflict": true,
+          "coldStartNs": 9250,
+          "steady": {
+            "samples": 400,
+            "medianNs": 65,
+            "p50Ns": 65,
+            "p95Ns": 70,
+            "p99Ns": 81.68,
+            "minNs": 63.32,
+            "maxNs": 85,
+            "opsPerSecond": 15384615.384615384
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "escaped-modifier",
+          "title": "已转义 hover modifier",
+          "conflict": true,
+          "coldStartNs": 6708,
+          "steady": {
+            "samples": 400,
+            "medianNs": 63.32,
+            "p50Ns": 63.32,
+            "p95Ns": 68.32,
+            "p99Ns": 73.36,
+            "minNs": 60,
+            "maxNs": 288.32,
+            "opsPerSecond": 15792798.483891346
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "stacked-modifiers",
+          "title": "堆叠 modifier",
+          "conflict": true,
+          "coldStartNs": 139167,
+          "steady": {
+            "samples": 400,
+            "medianNs": 85,
+            "p50Ns": 85,
+            "p95Ns": 88.32,
+            "p99Ns": 91.64,
+            "minNs": 81.64,
+            "maxNs": 158.36,
+            "opsPerSecond": 11764705.88235294
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "important-postfix",
+          "title": "important 与普通 padding 共存",
+          "conflict": true,
+          "coldStartNs": 10958,
+          "steady": {
+            "samples": 400,
+            "medianNs": 63.36,
+            "p50Ns": 63.36,
+            "p95Ns": 68.32,
+            "p99Ns": 71.68,
+            "minNs": 61.64,
+            "maxNs": 2486.68,
+            "opsPerSecond": 15782828.282828283
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "custom-plus-tailwind",
+          "title": "自定义类 + utility 冲突",
+          "conflict": true,
+          "coldStartNs": 27416,
+          "steady": {
+            "samples": 400,
+            "medianNs": 75,
+            "p50Ns": 75,
+            "p95Ns": 78.32,
+            "p99Ns": 80,
+            "minNs": 71.64,
+            "maxNs": 83.32,
+            "opsPerSecond": 13333333.333333334
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "arbitrary-variant",
+          "title": "arbitrary variant",
+          "conflict": true,
+          "coldStartNs": 25167,
+          "steady": {
+            "samples": 400,
+            "medianNs": 91.68,
+            "p50Ns": 91.68,
+            "p95Ns": 95,
+            "p99Ns": 115,
+            "minNs": 88.32,
+            "maxNs": 173.32,
+            "opsPerSecond": 10907504.363001745
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "numeric-leading-escaped",
+          "title": "已转义 2xl 数字变体",
+          "conflict": true,
+          "coldStartNs": 7417,
+          "steady": {
+            "samples": 400,
+            "medianNs": 60,
+            "p50Ns": 60,
+            "p95Ns": 63.32,
+            "p99Ns": 66.68,
+            "minNs": 58.32,
+            "maxNs": 4913.32,
+            "opsPerSecond": 16666666.666666666
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "slim-excluded-fill",
+          "title": "slim 可能未覆盖的 SVG fill 冲突",
+          "conflict": true,
+          "coldStartNs": 20208,
+          "steady": {
+            "samples": 400,
+            "medianNs": 73.32,
+            "p50Ns": 73.32,
+            "p95Ns": 76.68,
+            "p99Ns": 78.36,
+            "minNs": 68.32,
+            "maxNs": 91.68,
+            "opsPerSecond": 13638843.42607747
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "long-list",
+          "title": "长 class 列表含冲突",
+          "conflict": true,
+          "coldStartNs": 131542,
+          "steady": {
+            "samples": 400,
+            "medianNs": 658.32,
+            "p50Ns": 658.32,
+            "p95Ns": 671.64,
+            "p99Ns": 738.32,
+            "minNs": 636.68,
+            "maxNs": 1801.64,
+            "opsPerSecond": 1519018.1066958318
+          },
+          "heapDeltaBytes": -7568
+        },
+        {
+          "id": "component-call",
+          "title": "组件最常见调用：cn(base, variant, cond && extra)，参数引用稳定",
+          "conflict": true,
+          "coldStartNs": 29917,
+          "steady": {
+            "samples": 400,
+            "medianNs": 125,
+            "p50Ns": 125,
+            "p95Ns": 133.32,
+            "p99Ns": 158.32,
+            "minNs": 111.64,
+            "maxNs": 165,
+            "opsPerSecond": 8000000
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "arbitrary-heavy",
+          "title": "大量 arbitrary value",
+          "conflict": true,
+          "coldStartNs": 209375,
+          "steady": {
+            "samples": 400,
+            "medianNs": 193.36,
+            "p50Ns": 193.36,
+            "p95Ns": 198.32,
+            "p99Ns": 205,
+            "minNs": 188.32,
+            "maxNs": 653.32,
+            "opsPerSecond": 5171700.45510964
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "cache-hit",
+          "title": "同一输入重复调用（每次新数组，字符串字面量稳定）",
+          "conflict": true,
+          "coldStartNs": 12958,
+          "steady": {
+            "samples": 400,
+            "medianNs": 110,
+            "p50Ns": 110,
+            "p95Ns": 133.36,
+            "p99Ns": 296.68,
+            "minNs": 93.32,
+            "maxNs": 471.68,
+            "opsPerSecond": 9090909.090909092
+          },
+          "heapDeltaBytes": 5192
+        },
+        {
+          "id": "cache-miss",
+          "title": "每次唯一输入（缓存未命中）",
+          "conflict": true,
+          "coldStartNs": 28583,
+          "steady": {
+            "samples": 400,
+            "medianNs": 885,
+            "p50Ns": 885,
+            "p95Ns": 2825,
+            "p99Ns": 9996.68,
+            "minNs": 793.36,
+            "maxNs": 22988.36,
+            "opsPerSecond": 1129943.5028248588
+          },
+          "heapDeltaBytes": 32560
+        },
+        {
+          "id": "component-call-fresh",
+          "title": "同样的组件调用，但每次新建参数数组",
+          "conflict": true,
+          "coldStartNs": 20792,
+          "steady": {
+            "samples": 400,
+            "medianNs": 163.32,
+            "p50Ns": 163.32,
+            "p95Ns": 173.32,
+            "p99Ns": 326.68,
+            "minNs": 136.68,
+            "maxNs": 545,
+            "opsPerSecond": 6122948.81214793
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "working-set",
+          "title": "64 组稳定参数循环（工作集缓存）",
+          "conflict": true,
+          "coldStartNs": 11875,
+          "steady": {
+            "samples": 400,
+            "medianNs": 166.68,
+            "p50Ns": 166.68,
+            "p95Ns": 173.36,
+            "p99Ns": 273.36,
+            "minNs": 153.36,
+            "maxNs": 386.64,
+            "opsPerSecond": 5999520.038396928
+          },
+          "heapDeltaBytes": -4624
+        }
+      ]
+    },
+    {
+      "subjectId": "upstream-twmerge",
+      "cases": [
+        {
+          "id": "short-no-conflict",
+          "title": "短 class、无冲突",
+          "conflict": false,
+          "coldStartNs": 2016000,
+          "steady": {
+            "samples": 400,
+            "medianNs": 33.36,
+            "p50Ns": 33.36,
+            "p95Ns": 118.32,
+            "p99Ns": 295,
+            "minNs": 21.64,
+            "maxNs": 14516.68,
+            "opsPerSecond": 29976019.18465228
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "last-wins",
+          "title": "last-wins 冲突",
+          "conflict": true,
+          "coldStartNs": 190875,
+          "steady": {
+            "samples": 400,
+            "medianNs": 140,
+            "p50Ns": 140,
+            "p95Ns": 211.64,
+            "p99Ns": 446.68,
+            "minNs": 118.32,
+            "maxNs": 8941.68,
+            "opsPerSecond": 7142857.142857143
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "clsx-object-array",
+          "title": "clsx 对象/数组/falsy",
+          "conflict": false,
+          "coldStartNs": 75875,
+          "steady": {
+            "samples": 400,
+            "medianNs": 75.82,
+            "p50Ns": 75,
+            "p95Ns": 185,
+            "p99Ns": 315,
+            "minNs": 66.64,
+            "maxNs": 1136.68,
+            "opsPerSecond": 13189132.155104196
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "refinement-padding",
+          "title": "padding refinement（p-3 px-5）",
+          "conflict": true,
+          "coldStartNs": 25458,
+          "steady": {
+            "samples": 400,
+            "medianNs": 53.32,
+            "p50Ns": 53.32,
+            "p95Ns": 100,
+            "p99Ns": 178.36,
+            "minNs": 50,
+            "maxNs": 5356.64,
+            "opsPerSecond": 18754688.672168043
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "rpx-width",
+          "title": "rpx 宽度冲突",
+          "conflict": true,
+          "coldStartNs": 69166,
+          "steady": {
+            "samples": 400,
+            "medianNs": 65,
+            "p50Ns": 65,
+            "p95Ns": 78.36,
+            "p99Ns": 81.64,
+            "minNs": 63.32,
+            "maxNs": 276.68,
+            "opsPerSecond": 15384615.384615384
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "rpx-text-length",
+          "title": "text-[12rpx] 与 text-[24rpx]",
+          "conflict": true,
+          "coldStartNs": 214833,
+          "steady": {
+            "samples": 400,
+            "medianNs": 68.32,
+            "p50Ns": 68.32,
+            "p95Ns": 71.64,
+            "p99Ns": 76.68,
+            "minNs": 65,
+            "maxNs": 83.32,
+            "opsPerSecond": 14637002.341920376
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "rpx-text-color-keep",
+          "title": "text-red 与 text-[80rpx] 是否同时保留",
+          "conflict": true,
+          "coldStartNs": 9083,
+          "steady": {
+            "samples": 400,
+            "medianNs": 68.32,
+            "p50Ns": 68.32,
+            "p95Ns": 71.68,
+            "p99Ns": 76.68,
+            "minNs": 65,
+            "maxNs": 165,
+            "opsPerSecond": 14637002.341920376
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "escaped-modifier",
+          "title": "已转义 hover modifier",
+          "conflict": true,
+          "coldStartNs": 7208,
+          "steady": {
+            "samples": 400,
+            "medianNs": 63.36,
+            "p50Ns": 63.36,
+            "p95Ns": 68.32,
+            "p99Ns": 100,
+            "minNs": 61.64,
+            "maxNs": 4683.36,
+            "opsPerSecond": 15782828.282828283
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "stacked-modifiers",
+          "title": "堆叠 modifier",
+          "conflict": true,
+          "coldStartNs": 85459,
+          "steady": {
+            "samples": 400,
+            "medianNs": 75,
+            "p50Ns": 75,
+            "p95Ns": 78.32,
+            "p99Ns": 80,
+            "minNs": 73.32,
+            "maxNs": 100,
+            "opsPerSecond": 13333333.333333334
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "important-postfix",
+          "title": "important 与普通 padding 共存",
+          "conflict": true,
+          "coldStartNs": 17625,
+          "steady": {
+            "samples": 400,
+            "medianNs": 61.68,
+            "p50Ns": 61.68,
+            "p95Ns": 91.64,
+            "p99Ns": 156.68,
+            "minNs": 60,
+            "maxNs": 186.68,
+            "opsPerSecond": 16212710.765239948
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "custom-plus-tailwind",
+          "title": "自定义类 + utility 冲突",
+          "conflict": true,
+          "coldStartNs": 11208,
+          "steady": {
+            "samples": 400,
+            "medianNs": 70,
+            "p50Ns": 70,
+            "p95Ns": 75,
+            "p99Ns": 245,
+            "minNs": 68.32,
+            "maxNs": 3625,
+            "opsPerSecond": 14285714.285714285
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "arbitrary-variant",
+          "title": "arbitrary variant",
+          "conflict": true,
+          "coldStartNs": 14250,
+          "steady": {
+            "samples": 400,
+            "medianNs": 91.64,
+            "p50Ns": 91.64,
+            "p95Ns": 95,
+            "p99Ns": 298.32,
+            "minNs": 88.32,
+            "maxNs": 413.36,
+            "opsPerSecond": 10912265.386294195
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "numeric-leading-escaped",
+          "title": "已转义 2xl 数字变体",
+          "conflict": true,
+          "coldStartNs": 19500,
+          "steady": {
+            "samples": 400,
+            "medianNs": 60,
+            "p50Ns": 60,
+            "p95Ns": 65,
+            "p99Ns": 343.32,
+            "minNs": 58.32,
+            "maxNs": 521.64,
+            "opsPerSecond": 16666666.666666666
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "slim-excluded-fill",
+          "title": "slim 可能未覆盖的 SVG fill 冲突",
+          "conflict": true,
+          "coldStartNs": 12334,
+          "steady": {
+            "samples": 400,
+            "medianNs": 78.36,
+            "p50Ns": 78.36,
+            "p95Ns": 88.32,
+            "p99Ns": 90,
+            "minNs": 70,
+            "maxNs": 95,
+            "opsPerSecond": 12761613.067891782
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "long-list",
+          "title": "长 class 列表含冲突",
+          "conflict": true,
+          "coldStartNs": 139750,
+          "steady": {
+            "samples": 400,
+            "medianNs": 650,
+            "p50Ns": 650,
+            "p95Ns": 668.32,
+            "p99Ns": 701.64,
+            "minNs": 635,
+            "maxNs": 1035,
+            "opsPerSecond": 1538461.5384615385
+          },
+          "heapDeltaBytes": -17792
+        },
+        {
+          "id": "component-call",
+          "title": "组件最常见调用：cn(base, variant, cond && extra)，参数引用稳定",
+          "conflict": true,
+          "coldStartNs": 29458,
+          "steady": {
+            "samples": 400,
+            "medianNs": 116.64,
+            "p50Ns": 116.64,
+            "p95Ns": 120,
+            "p99Ns": 123.32,
+            "minNs": 110,
+            "maxNs": 138.32,
+            "opsPerSecond": 8573388.203017833
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "arbitrary-heavy",
+          "title": "大量 arbitrary value",
+          "conflict": true,
+          "coldStartNs": 225917,
+          "steady": {
+            "samples": 400,
+            "medianNs": 188.32,
+            "p50Ns": 188.32,
+            "p95Ns": 191.68,
+            "p99Ns": 203.32,
+            "minNs": 183.32,
+            "maxNs": 391.68,
+            "opsPerSecond": 5310110.450297367
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "cache-hit",
+          "title": "同一输入重复调用（每次新数组，字符串字面量稳定）",
+          "conflict": true,
+          "coldStartNs": 9667,
+          "steady": {
+            "samples": 400,
+            "medianNs": 100,
+            "p50Ns": 100,
+            "p95Ns": 120,
+            "p99Ns": 241.68,
+            "minNs": 93.32,
+            "maxNs": 668.32,
+            "opsPerSecond": 10000000
+          },
+          "heapDeltaBytes": 5192
+        },
+        {
+          "id": "cache-miss",
+          "title": "每次唯一输入（缓存未命中）",
+          "conflict": true,
+          "coldStartNs": 25542,
+          "steady": {
+            "samples": 400,
+            "medianNs": 1291.66,
+            "p50Ns": 1291.64,
+            "p95Ns": 3261.68,
+            "p99Ns": 13276.68,
+            "minNs": 1111.64,
+            "maxNs": 56683.32,
+            "opsPerSecond": 774197.5442453896
+          },
+          "heapDeltaBytes": 75656
+        },
+        {
+          "id": "component-call-fresh",
+          "title": "同样的组件调用，但每次新建参数数组",
+          "conflict": true,
+          "coldStartNs": 224667,
+          "steady": {
+            "samples": 400,
+            "medianNs": 131.68,
+            "p50Ns": 131.68,
+            "p95Ns": 146.68,
+            "p99Ns": 171.64,
+            "minNs": 120,
+            "maxNs": 760,
+            "opsPerSecond": 7594167.6792223565
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "working-set",
+          "title": "64 组稳定参数循环（工作集缓存）",
+          "conflict": true,
+          "coldStartNs": 13083,
+          "steady": {
+            "samples": 400,
+            "medianNs": 153.36,
+            "p50Ns": 153.36,
+            "p95Ns": 160,
+            "p99Ns": 196.68,
+            "minNs": 146.64,
+            "maxNs": 365,
+            "opsPerSecond": 6520605.112154407
+          },
+          "heapDeltaBytes": -4624
+        }
+      ]
+    },
+    {
+      "subjectId": "upstream-twmerge-clsx",
+      "cases": [
+        {
+          "id": "short-no-conflict",
+          "title": "短 class、无冲突",
+          "conflict": false,
+          "coldStartNs": 2046250,
+          "steady": {
+            "samples": 400,
+            "medianNs": 48.36,
+            "p50Ns": 48.36,
+            "p95Ns": 206.68,
+            "p99Ns": 410,
+            "minNs": 36.68,
+            "maxNs": 17138.36,
+            "opsPerSecond": 20678246.4846981
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "last-wins",
+          "title": "last-wins 冲突",
+          "conflict": true,
+          "coldStartNs": 286791,
+          "steady": {
+            "samples": 400,
+            "medianNs": 151.66,
+            "p50Ns": 151.64,
+            "p95Ns": 278.36,
+            "p99Ns": 521.64,
+            "minNs": 131.64,
+            "maxNs": 9690,
+            "opsPerSecond": 6593696.426216537
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "clsx-object-array",
+          "title": "clsx 对象/数组/falsy",
+          "conflict": false,
+          "coldStartNs": 60458,
+          "steady": {
+            "samples": 400,
+            "medianNs": 96.68,
+            "p50Ns": 96.68,
+            "p95Ns": 246.64,
+            "p99Ns": 453.32,
+            "minNs": 93.32,
+            "maxNs": 15563.36,
+            "opsPerSecond": 10343400.91021928
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "refinement-padding",
+          "title": "padding refinement（p-3 px-5）",
+          "conflict": true,
+          "coldStartNs": 24583,
+          "steady": {
+            "samples": 400,
+            "medianNs": 66.68,
+            "p50Ns": 66.68,
+            "p95Ns": 73.32,
+            "p99Ns": 178.32,
+            "minNs": 61.64,
+            "maxNs": 12940,
+            "opsPerSecond": 14997000.599880023
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "rpx-width",
+          "title": "rpx 宽度冲突",
+          "conflict": true,
+          "coldStartNs": 112125,
+          "steady": {
+            "samples": 400,
+            "medianNs": 68.36,
+            "p50Ns": 68.36,
+            "p95Ns": 85,
+            "p99Ns": 106.64,
+            "minNs": 66.64,
+            "maxNs": 918.36,
+            "opsPerSecond": 14628437.682855472
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "rpx-text-length",
+          "title": "text-[12rpx] 与 text-[24rpx]",
+          "conflict": true,
+          "coldStartNs": 219958,
+          "steady": {
+            "samples": 400,
+            "medianNs": 78.32,
+            "p50Ns": 78.32,
+            "p95Ns": 81.68,
+            "p99Ns": 93.32,
+            "minNs": 73.32,
+            "maxNs": 710,
+            "opsPerSecond": 12768130.745658837
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "rpx-text-color-keep",
+          "title": "text-red 与 text-[80rpx] 是否同时保留",
+          "conflict": true,
+          "coldStartNs": 12625,
+          "steady": {
+            "samples": 400,
+            "medianNs": 71.64,
+            "p50Ns": 71.64,
+            "p95Ns": 73.36,
+            "p99Ns": 80,
+            "minNs": 68.32,
+            "maxNs": 3356.68,
+            "opsPerSecond": 13958682.300390843
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "escaped-modifier",
+          "title": "已转义 hover modifier",
+          "conflict": true,
+          "coldStartNs": 9333,
+          "steady": {
+            "samples": 400,
+            "medianNs": 70,
+            "p50Ns": 70,
+            "p95Ns": 73.36,
+            "p99Ns": 86.64,
+            "minNs": 66.64,
+            "maxNs": 90,
+            "opsPerSecond": 14285714.285714285
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "stacked-modifiers",
+          "title": "堆叠 modifier",
+          "conflict": true,
+          "coldStartNs": 78375,
+          "steady": {
+            "samples": 400,
+            "medianNs": 81.68,
+            "p50Ns": 81.68,
+            "p95Ns": 85,
+            "p99Ns": 101.68,
+            "minNs": 78.32,
+            "maxNs": 401.68,
+            "opsPerSecond": 12242899.118511263
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "important-postfix",
+          "title": "important 与普通 padding 共存",
+          "conflict": true,
+          "coldStartNs": 13708,
+          "steady": {
+            "samples": 400,
+            "medianNs": 73.32,
+            "p50Ns": 73.32,
+            "p95Ns": 200,
+            "p99Ns": 266.68,
+            "minNs": 70,
+            "maxNs": 5258.36,
+            "opsPerSecond": 13638843.42607747
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "custom-plus-tailwind",
+          "title": "自定义类 + utility 冲突",
+          "conflict": true,
+          "coldStartNs": 15458,
+          "steady": {
+            "samples": 400,
+            "medianNs": 76.68,
+            "p50Ns": 76.68,
+            "p95Ns": 81.68,
+            "p99Ns": 218.32,
+            "minNs": 75,
+            "maxNs": 1630,
+            "opsPerSecond": 13041210.224308815
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "arbitrary-variant",
+          "title": "arbitrary variant",
+          "conflict": true,
+          "coldStartNs": 17750,
+          "steady": {
+            "samples": 400,
+            "medianNs": 96.68,
+            "p50Ns": 96.68,
+            "p95Ns": 100,
+            "p99Ns": 108.32,
+            "minNs": 95,
+            "maxNs": 120,
+            "opsPerSecond": 10343400.91021928
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "numeric-leading-escaped",
+          "title": "已转义 2xl 数字变体",
+          "conflict": true,
+          "coldStartNs": 7000,
+          "steady": {
+            "samples": 400,
+            "medianNs": 66.68,
+            "p50Ns": 66.68,
+            "p95Ns": 70,
+            "p99Ns": 75,
+            "minNs": 65,
+            "maxNs": 203.36,
+            "opsPerSecond": 14997000.599880023
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "slim-excluded-fill",
+          "title": "slim 可能未覆盖的 SVG fill 冲突",
+          "conflict": true,
+          "coldStartNs": 10292,
+          "steady": {
+            "samples": 400,
+            "medianNs": 76.68,
+            "p50Ns": 76.68,
+            "p95Ns": 80,
+            "p99Ns": 91.64,
+            "minNs": 75,
+            "maxNs": 3551.68,
+            "opsPerSecond": 13041210.224308815
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "long-list",
+          "title": "长 class 列表含冲突",
+          "conflict": true,
+          "coldStartNs": 130750,
+          "steady": {
+            "samples": 400,
+            "medianNs": 650,
+            "p50Ns": 650,
+            "p95Ns": 663.36,
+            "p99Ns": 725,
+            "minNs": 636.64,
+            "maxNs": 755,
+            "opsPerSecond": 1538461.5384615385
+          },
+          "heapDeltaBytes": -23344
+        },
+        {
+          "id": "component-call",
+          "title": "组件最常见调用：cn(base, variant, cond && extra)，参数引用稳定",
+          "conflict": true,
+          "coldStartNs": 24250,
+          "steady": {
+            "samples": 400,
+            "medianNs": 120,
+            "p50Ns": 120,
+            "p95Ns": 123.36,
+            "p99Ns": 128.32,
+            "minNs": 116.64,
+            "maxNs": 133.36,
+            "opsPerSecond": 8333333.333333333
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "arbitrary-heavy",
+          "title": "大量 arbitrary value",
+          "conflict": true,
+          "coldStartNs": 222208,
+          "steady": {
+            "samples": 400,
+            "medianNs": 198.32,
+            "p50Ns": 198.32,
+            "p95Ns": 206.64,
+            "p99Ns": 250,
+            "minNs": 190,
+            "maxNs": 453.32,
+            "opsPerSecond": 5042355.788624446
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "cache-hit",
+          "title": "同一输入重复调用（每次新数组，字符串字面量稳定）",
+          "conflict": true,
+          "coldStartNs": 11500,
+          "steady": {
+            "samples": 400,
+            "medianNs": 98.32,
+            "p50Ns": 98.32,
+            "p95Ns": 113.32,
+            "p99Ns": 341.68,
+            "minNs": 91.64,
+            "maxNs": 2881.68,
+            "opsPerSecond": 10170870.626525631
+          },
+          "heapDeltaBytes": 6064
+        },
+        {
+          "id": "cache-miss",
+          "title": "每次唯一输入（缓存未命中）",
+          "conflict": true,
+          "coldStartNs": 23084,
+          "steady": {
+            "samples": 400,
+            "medianNs": 1266.68,
+            "p50Ns": 1266.68,
+            "p95Ns": 1968.32,
+            "p99Ns": 9608.32,
+            "minNs": 1120,
+            "maxNs": 15720,
+            "opsPerSecond": 789465.3740486942
+          },
+          "heapDeltaBytes": 63544
+        },
+        {
+          "id": "component-call-fresh",
+          "title": "同样的组件调用，但每次新建参数数组",
+          "conflict": true,
+          "coldStartNs": 227333,
+          "steady": {
+            "samples": 400,
+            "medianNs": 165,
+            "p50Ns": 165,
+            "p95Ns": 171.68,
+            "p99Ns": 281.68,
+            "minNs": 155,
+            "maxNs": 695,
+            "opsPerSecond": 6060606.060606061
+          },
+          "heapDeltaBytes": null
+        },
+        {
+          "id": "working-set",
+          "title": "64 组稳定参数循环（工作集缓存）",
+          "conflict": true,
+          "coldStartNs": 20792,
+          "steady": {
+            "samples": 400,
+            "medianNs": 170,
+            "p50Ns": 170,
+            "p95Ns": 181.68,
+            "p99Ns": 393.36,
+            "minNs": 153.32,
+            "maxNs": 3458.32,
+            "opsPerSecond": 5882352.94117647
+          },
+          "heapDeltaBytes": -3624
+        }
+      ]
+    }
+  ]
+}

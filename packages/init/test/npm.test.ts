@@ -14,6 +14,14 @@ describe('getLatestVersion', () => {
     const res = await getDevDepsVersions(fetchOptions)
     expect(res).toMatchObject({
       tailwindcss: expect.stringMatching(/^\^4\./u),
+      'weapp-tailwindcss': expect.stringMatching(/^\^5\./u),
+    })
+  })
+
+  it('resolves legacy dependencies only when requested', async () => {
+    const res = await getDevDepsVersions(fetchOptions, 'legacy')
+    expect(res).toMatchObject({
+      tailwindcss: expect.stringMatching(/^\^3\./u),
       postcss: expect.stringMatching(/^\^8\./u),
       autoprefixer: expect.stringMatching(/^\^10\./u),
       'weapp-tailwindcss': expect.stringMatching(/^\^4\./u),

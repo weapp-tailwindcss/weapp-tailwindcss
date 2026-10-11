@@ -1,0 +1,93 @@
+name: Portable Demo Matrix
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  catalog:
+    name: Enumerate portable demos
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.catalog.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          node-version: 24
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:demo:matrix
+      - id: catalog
+        shell: bash
+        run: |
+          matrix=$(node scripts/ci/demo-matrix/run.mjs --matrix)
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
+  demos:
+    name: ${{ matrix.shard }} (${{ matrix.os }}, Node ${{ matrix.node }})
+    needs: catalog
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix: ${{ fromJSON(needs.catalog.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Build current packages on this OS
+        run: pnpm build:ci
+      - name: Install browser
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Production, normal dev and live source updates
+        env:
+          DEMO_MATRIX_CASES: ${{ toJSON(matrix.cases) }}
+          CI: '1'
+          NODE_OPTIONS: --max-old-space-size=6144
+          DEMO_MATRIX_PROCESS_DIAGNOSTICS: '1'
+        run: pnpm e2e:demo:matrix
+      - name: Upload logs and output evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: portable-demo-${{ matrix.os }}-node${{ matrix.node }}-${{ matrix.shard }}
+          path: e2e/.artifacts/demo-matrix/**
+          if-no-files-found: error
+          retention-days: 14
+          overwrite: true
+
+  gate:
+    name: Portable Demo Gate
+    needs: [catalog, demos]
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: portable-demo-*
+          path: e2e/.artifacts/portable-reports
+      - name: Require execution and complete evidence
+        env:
+          CATALOG_RESULT: ${{ needs.catalog.result }}
+          DEMOS_RESULT: ${{ needs.demos.result }}
+          DEMO_MATRIX_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        shell: bash
+        run: |
+          test "$CATALOG_RESULT" = success
+          test "$DEMOS_RESULT" = success
+          node scripts/ci/demo-matrix/gate.mjs e2e/.artifacts/portable-reports

@@ -1,120 +1,320 @@
+# repoctl-managed: release/v2
 name: Release
 
 on:
   push:
-    branches:
-      - main
-      - alpha
-      - beta
-      - rc
-      - next
+    branches: [main]
+  pull_request_target:
+    types: [closed]
+    branches: [main]
   workflow_dispatch:
+    inputs:
+      mode:
+        description: Release operation (auto 仅用于预发布分支)
+        required: true
+        default: prepare
+        type: choice
+        options:
+          - auto
+          - prepare
+          - publish
+          - publish-unpublished
+      package:
+        description: Package used for unpublished-version recovery
+        required: false
+        type: string
+      version:
+        description: Version used for unpublished-version recovery
+        required: false
+        type: string
+      version_pr:
+        description: 已合并受管版本 PR 编号（自动调度与该版本恢复，固定其 merge SHA）
+        required: false
+        type: string
+      oidc_audit:
+        description: 仅核验全部公开包的 npm OIDC 凭据交换
+        required: false
+        default: false
+        type: boolean
 
-concurrency: ${{ github.workflow }}-${{ github.ref }}
 env:
-  CHANGESETS_RELEASE_TOKEN_SET: ${{ secrets.CHANGESETS_RELEASE_TOKEN != '' }}
   HUSKY: 0
+  NPM_CONFIG_PROVENANCE: true
+  npm_config_registry: https://registry.npmjs.org
 
 permissions:
-  actions: write # to dispatch CI workflows for release PRs created by GITHUB_TOKEN
-  contents: write # to create release (changesets/action)
-  issues: write # to post issue comments (changesets/action)
-  pull-requests: write # to create pull request (changesets/action)
-  id-token: write # to use OpenID Connect token for provenance (changesets/action)
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request_target' && format('dispatch-{0}', github.run_id) || (!inputs.oidc_audit && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'prepare')) && 'prepare' || 'publish') }}-refs/heads/${{ github.ref_name }}${{ inputs.oidc_audit && '-oidc-audit' || '' }}${{ github.event_name == 'workflow_dispatch' && !inputs.oidc_audit && ((github.ref_name == 'main' && inputs.mode == 'auto') || (github.ref_name != 'main' && inputs.mode == 'prepare')) && format('-ignored-{0}', github.run_id) || '' }}
+  cancel-in-progress: ${{ !inputs.oidc_audit && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'prepare')) }}
 
 jobs:
-  release:
-    name: Release
+  dispatch:
+    name: Dispatch merged version PR release
+    if: >-
+      ${{ github.event_name == 'pull_request_target' && github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'release/pnpm-version' &&
+      github.event.pull_request.base.repo.full_name == github.repository &&
+      github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      # PR 身份只调度；npm OIDC 始终由 main 上原 release.yml 的 dispatch 身份取得。
+      - run: node scripts/ci/release-dispatch.mjs
 
-      - uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v6
+  plan:
+    name: Route release work
+    if: >-
+      ${{ !inputs.oidc_audit && ((github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      github.event_name == 'workflow_dispatch') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO_RELEASE_MODE: ${{ inputs.mode || 'prepare' }}
+      REPO_RELEASE_PACKAGE: ${{ inputs.package }}
+      REPO_RELEASE_VERSION: ${{ inputs.version }}
+      REPO_RELEASE_VERSION_PR: ${{ inputs.version_pr }}
+    outputs:
+      run: ${{ steps.plan.outputs.run }}
+      ref: ${{ steps.route.outputs.ref }}
+      mode: ${{ steps.route.outputs.mode }}
+      branch: ${{ steps.route.outputs.branch }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.after || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate release event
+        id: route
+        run: node scripts/ci/release-route.mjs --github-output "$GITHUB_OUTPUT"
+      - name: Pin workflow release driver
+        if: steps.route.outputs.run == 'true'
+        run: node scripts/ci/release-stage.mjs --pin
+      - name: Checkout validated release source
+        if: steps.route.outputs.run == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.route.outputs.ref }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
           cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      # 此处只消费路由结果；正式 job 在自身 checkout 重新规划和验证。
+      - name: Plan release route
+        id: plan
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CI_RELEASE_SOURCE_SHA: ${{ steps.route.outputs.ref }}
+          CI_RELEASE_BRANCH: ${{ steps.route.outputs.branch }}
+          REPO_RELEASE_MODE: ${{ steps.route.outputs.mode }}
+        if: steps.route.outputs.run == 'true'
+        run: |
+          if test -n "$REPO_RELEASE_VERSION_PR"; then
+            node "$RELEASE_STAGE_DRIVER" plan
+          else
+            node scripts/ci/auto-prepare-plan.mjs
+          fi
+
+  native-artifacts:
+    needs: plan
+    if: needs.plan.outputs.run == 'true'
+    uses: ./.github/workflows/native.yml
+    with:
+      ref: ${{ needs.plan.outputs.ref }}
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: [plan, native-artifacts]
+    if: ${{ !cancelled() && github.event_name != 'pull_request_target' && needs.plan.result == 'success' && needs.plan.outputs.run == 'true' && needs.native-artifacts.result == 'success' }}
+    timeout-minutes: 45
+    permissions:
+      actions: read
+      contents: write
+      pull-requests: write
+      id-token: write
+    env:
+      GITHUB_TOKEN: ${{ secrets.REPOCTL_RELEASE_TOKEN || secrets.CHANGESETS_RELEASE_TOKEN || github.token }}
+      CI_RELEASE_SOURCE_SHA: ${{ needs.plan.outputs.ref }}
+      CI_RELEASE_BRANCH: ${{ needs.plan.outputs.branch }}
+      REPO_RELEASE_MODE: ${{ needs.plan.outputs.mode }}
+      REPO_RELEASE_PACKAGE: ${{ inputs.package }}
+      REPO_RELEASE_VERSION: ${{ inputs.version }}
+    steps:
+      - name: Checkout workflow control revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Pin workflow release driver
+        run: node scripts/ci/release-stage.mjs --pin
+
+      - name: Checkout validated release source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.plan.outputs.ref }}
+          fetch-depth: 0
+          token: ${{ secrets.REPOCTL_RELEASE_TOKEN || secrets.CHANGESETS_RELEASE_TOKEN || github.token }}
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
 
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Verify packed deps are resolved
-        run: |
-          set -euo pipefail
-          TMP_DIR="$(mktemp -d)"
-          PACKAGES=(
-            "@weapp-tailwindcss/runtime"
-            "@weapp-tailwindcss/merge"
-            "@weapp-tailwindcss/variants"
-            "@weapp-tailwindcss/cva"
-            "@weapp-tailwindcss/typography"
-            "@weapp-tailwindcss/ui"
-            "theme-transition"
-          )
-          for pkg in "${PACKAGES[@]}"; do
-            SAFE_PKG="${pkg//@/}"
-            SAFE_PKG="${SAFE_PKG//\//_}"
-            PKG_DIR="$TMP_DIR/$SAFE_PKG"
-            mkdir -p "$PKG_DIR"
-            pnpm --filter "$pkg" pack --pack-destination "$PKG_DIR"
-            TARBALL="$(ls "$PKG_DIR"/*.tgz | head -n 1)"
-            tar -xzf "$TARBALL" -C "$PKG_DIR" package/package.json
-            if grep -n '"workspace:\\*"' "$PKG_DIR/package/package.json"; then
-              echo "ERROR: workspace:* found in packed package.json for $pkg"
-              exit 1
-            fi
-          done
-
-      - name: Create Release Pull Request or Publish to npm
-        id: changesets
-        uses: changesets/action@v1
+      - name: Download native artifacts from this run
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
-          # This expects you to have a script called release which does a build for your packages and calls changeset publish
-          # A PAT or GitHub App token avoids GitHub's GITHUB_TOKEN recursion guard,
-          # so pull_request workflows run automatically for Version Packages PRs.
-          # The fallback keeps publishing working even before the secret is configured.
-          github-token: ${{ secrets.CHANGESETS_RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
-          publish: pnpm publish-packages
-          version: pnpm publish-packages -- --phase version
-        env:
-          GITHUB_TOKEN: ${{ secrets.CHANGESETS_RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
-          npm_config_registry: https://registry.npmjs.org
-          # https://github.com/changesets/changesets/pull/1659
-          NPM_CONFIG_PROVENANCE: true
+          pattern: native-*
+          merge-multiple: true
+          path: packages
 
-      - name: Trigger npmmirror sync
-        if: steps.changesets.outputs.published == 'true'
-        continue-on-error: true
-        env:
-          PUBLISHED_PACKAGES: ${{ steps.changesets.outputs['published-packages'] }}
-        run: node scripts/sync-npmmirror.mjs
+      - name: Stage and verify all native platform packages
+        run: pnpm native:artifacts:stage
 
-      - name: Trigger release PR checks
-        if: steps.changesets.outputs.hasChangesets == 'true' && steps.changesets.outputs.published != 'true' && env.CHANGESETS_RELEASE_TOKEN_SET != 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_PR_BRANCH: changeset-release/${{ github.ref_name }}
+      - name: Plan release
+        run: node "$RELEASE_STAGE_DRIVER" plan
+
+      - name: Install Playwright Chromium
         run: |
-          set -euo pipefail
+          for attempt in 1 2 3 4; do
+            if pnpm exec playwright install chromium chromium-headless-shell; then
+              exit 0
+            fi
+            echo "Playwright Chromium install failed, retrying (${attempt}/4)"
+            sleep $((attempt * 10))
+          done
+          pnpm exec playwright install chromium chromium-headless-shell
 
-          echo "Dispatching release PR checks for ${RELEASE_PR_BRANCH}"
+      - name: Download same-commit coverage certificate
+        if: "!inputs.version_pr && (inputs.mode == 'publish' || inputs.mode == 'publish-unpublished')"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_CERTIFICATE_RUN_ID: ${{ vars.RELEASE_CERTIFICATE_RUN_ID }}
+        run: |
+          run_id="$RELEASE_CERTIFICATE_RUN_ID"
+          test -n "$run_id" || {
+            echo "Release certificate is not configured. Set RELEASE_CERTIFICATE_RUN_ID to a completed run that uploaded the signed certificate artifact for this commit." >&2
+            exit 1
+          }
+          run_metadata="$(gh run view "$run_id" --json headSha,status,conclusion)"
+          run_head_sha="$(jq -r '.headSha' <<<"$run_metadata")"
+          run_status="$(jq -r '.status' <<<"$run_metadata")"
+          run_conclusion="$(jq -r '.conclusion' <<<"$run_metadata")"
+          test "$run_head_sha" = "$GITHUB_SHA" || {
+            echo "Release certificate run $run_id belongs to $run_head_sha, expected $GITHUB_SHA" >&2
+            exit 1
+          }
+          test "$run_status" = completed && test "$run_conclusion" = success || {
+            echo "Release certificate run $run_id is not a successful completed run (status=$run_status conclusion=$run_conclusion)" >&2
+            exit 1
+          }
+          certificate_name="coverage-certificate-$GITHUB_SHA"
+          certificate_artifact="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/artifacts" --paginate --jq '.artifacts[] | select(.expired == false) | .name' | grep -Fx "$certificate_name" || true)"
+          test "$certificate_artifact" = "$certificate_name" || {
+            echo "Run $run_id did not upload the required $certificate_name artifact" >&2
+            exit 1
+          }
+          rm -rf e2e/.artifacts/release-certificate
+          mkdir -p e2e/.artifacts/release-certificate
+          gh run download "$run_id" --name "$certificate_name" --dir e2e/.artifacts/release-certificate
 
-          gh workflow run ci.yml --ref "${RELEASE_PR_BRANCH}"
-          gh workflow run release-gate.yml --ref "${RELEASE_PR_BRANCH}"
-          gh workflow run benchmark.yml --ref "${RELEASE_PR_BRANCH}" \
-            -f baseline=auto \
-            -f build_runs=1 \
-            -f hmr_runs=1 \
-            -f only=demo-weapp-vite-tailwindcss-v4__mp-weixin,demo-uni-app-vite-tailwindcss-v4__mp-weixin,demo-web-vue-vite-tailwindcss-v4__web
-          gh workflow run e2e-watch.yml --ref "${RELEASE_PR_BRANCH}" \
-            -f run_pr_quick_gate=true
+      - name: Validate release certificate
+        if: "!inputs.version_pr && (inputs.mode == 'publish' || inputs.mode == 'publish-unpublished')"
+        shell: bash
+        run: |
+          report="$(find e2e/.artifacts/release-certificate -type f \( -name 'nightly-report.json' -o -name 'pr-report.json' -o -name 'coverage-report.json' \) -print -quit)"
+          test -n "$report" || { echo "Coverage report is missing from certificate artifact" >&2; exit 1; }
+          pnpm e2e:coverage:release-gate --report "$report"
+
+      - name: Verify release
+        run: node "$RELEASE_STAGE_DRIVER" verify
+
+      - name: Require latest main before automatic prepare
+        if: github.event_name == 'push'
+        run: node scripts/ci/auto-prepare-plan.mjs --assert-current-main
+
+      - name: Prepare release
+        id: prepare
+        run: node "$RELEASE_STAGE_DRIVER" prepare
+
+      - name: Audit publishing OIDC identity
+        if: steps.prepare.outputs.publish == 'true'
+        run: pnpm exec repo release ci --mode oidc-audit
+
+      - name: Upload npm packages
+        if: steps.prepare.outputs.publish == 'true'
+        run: node "$RELEASE_STAGE_DRIVER" upload
+
+      - name: Confirm public npm registry
+        if: steps.prepare.outputs.publish == 'true'
+        run: node "$RELEASE_STAGE_DRIVER" confirm
+
+      - name: Finalize release metadata
+        if: steps.prepare.outputs.publish == 'true'
+        run: node "$RELEASE_STAGE_DRIVER" finalize
+
+      - name: Upload release progress
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-progress-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            repoctl-ci-progress.json
+            repoctl-publish-progress.json
+            repoctl-release-progress.json
+            pnpm-publish-summary.json
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  oidc-audit:
+    name: Audit npm OIDC
+    if: inputs.oidc_audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Audit npm OIDC
+        run: pnpm exec repo release ci --mode oidc-audit

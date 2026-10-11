@@ -1,9 +1,11 @@
 import fs from 'node:fs/promises'
 import process from 'node:process'
 import path from 'pathe'
+import postcss from 'postcss'
 import { describe, expect, it } from 'vitest'
 import { getE2EProject } from './projectEntries'
 import { defineProjectTest, ensureProjectBuilt } from './projectTest'
+import { getProjectCssFiles } from './shared'
 import { defineTaroBareSelectorRegression } from './taroBareSelectorRegression'
 
 const project = getE2EProject('taro-vite-react-tailwindcss-v4')
@@ -47,6 +49,33 @@ async function readCssWithLocalImports(projectPath: string, file: string, seen =
 }
 
 describe('e2e', () => {
+  it('保留 NutUI 多选择器规则之后的单选择器覆盖', async () => {
+    const root = path.resolve(__dirname, '../demo', project.projectPath)
+    if (process.env.E2E_SKIP_BUILD !== '1') {
+      await ensureProjectBuilt(root)
+    }
+    const css = (await Promise.all(getProjectCssFiles(project).map(file => readCssWithLocalImports(root, file)))).join('\n')
+    const parsed = postcss.parse(css)
+    const values = (selector: string, property: string) => {
+      const result: string[] = []
+      parsed.walkRules((rule) => {
+        if (rule.selectors.includes(selector)) {
+          rule.walkDecls(property, (decl) => {
+            result.push(decl.value.replace(/\s*,\s*/g, ','))
+          })
+        }
+      })
+      return result
+    }
+    // NutUI 原始 CSS 先声明组合选择器，再对其中一个选择器覆盖；覆盖必须继续生效。
+    expect(values('.nut-tabs-titles-item-smile', 'bottom').at(-1))
+      .toBe('var(--nutui-tabs-titles-item-smile-bottom,-10%)')
+    expect(values('.nut-tabs-titles-item-line', 'bottom').at(-1))
+      .toBe('var(--nutui-tabs-line-bottom,15%)')
+    expect(values('.nut-indicator-white .nut-indicator-line', 'opacity').at(-1)).toBe('0')
+    expect(values('.nut-indicator-white .nut-indicator-dot', 'opacity').at(-1)).toBe('1')
+  })
+
   it('converts Tailwind v4 spacing variables with Taro designWidth in issue 998 page CSS', async () => {
     const projectBase = path.resolve(__dirname, '../demo')
     const root = path.resolve(projectBase, project.name)

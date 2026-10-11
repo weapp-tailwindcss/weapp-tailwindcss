@@ -1,9 +1,9 @@
 # tailwindcss-core-plugins-extractor
 
-> 简体中文 | [English](./README.en.md)
+> English | [简体中文](./README.zh-CN.md)
 
-这个包用于提取 Tailwind CSS core plugins 和主题相关数据，供构建工具、运行时和兼容逻辑复用。
+This package extracts Tailwind CSS core plugin and theme-related data for reuse by build tools, runtime packages, and compatibility logic.
 
-## 官网
+## Website
 
-更多接入方式、配置说明和框架示例见 [weapp-tailwindcss 官方文档](https://tw.icebreaker.top)。
+For setup guides, configuration references, and framework examples, see the [official weapp-tailwindcss documentation](https://tw.weapp.dev).

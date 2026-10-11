@@ -1,9 +1,9 @@
 # @weapp-tailwindcss/typography
 
-> 简体中文 | [English](./README.en.md)
+> English | [简体中文](./README.zh-CN.md)
 
-这个包是 Tailwind Typography 的小程序适配版本，用于在小程序和 Web 场景中处理 prose 样式与 HTML class 注入。
+This package is the mini program adapted version of Tailwind Typography, handling prose styles and HTML class injection across mini program and web scenarios.
 
-## 官网
+## Website
 
-更多接入方式、配置说明和框架示例见 [weapp-tailwindcss 官方文档](https://tw.icebreaker.top)。
+For setup guides, configuration references, and framework examples, see the [official weapp-tailwindcss documentation](https://tw.weapp.dev).

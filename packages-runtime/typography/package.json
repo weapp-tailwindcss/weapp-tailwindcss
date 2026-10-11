@@ -1,18 +1,18 @@
 {
   "name": "@weapp-tailwindcss/typography",
   "type": "module",
-  "version": "1.0.2",
-  "description": "The tailwindcss typography plugin for weapp",
+  "version": "1.0.7",
+  "description": "Tailwind CSS Typography plugin and markup transforms for cross-platform apps. 面向跨端应用的 Tailwind CSS Typography 插件与标记转换工具。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",
-  "homepage": "https://tw.icebreaker.top/docs/community/typography",
+  "homepage": "https://tw.weapp.dev/docs/community/plugins",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sonofmagic/weapp-tailwindcss.git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
     "directory": "packages-runtime/typography"
   },
   "bugs": {
-    "url": "https://github.com/sonofmagic/weapp-tailwindcss/issues"
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues"
   },
   "keywords": [
     "weapp",
@@ -57,13 +57,13 @@
     "test:dev": "vitest",
     "tsd": "tsd",
     "release": "pnpm publish",
-    "sync": "cnpm sync @weapp-tailwindcss/typography"
+    "sync": "repo release sync-npmmirror --package @weapp-tailwindcss/typography"
   },
   "dependencies": {
     "htmlparser2": "catalog:buildUtilities",
-    "lodash.castarray": "^4.4.0",
-    "lodash.isplainobject": "^4.0.6",
-    "lodash.merge": "^4.6.2",
+    "lodash.castarray": "catalog:runtimeLodash",
+    "lodash.isplainobject": "catalog:runtimeLodash",
+    "lodash.merge": "catalog:runtimeLodash",
     "magic-string": "catalog:buildUtilities",
     "postcss-selector-parser": "catalog:buildUtilities"
   },

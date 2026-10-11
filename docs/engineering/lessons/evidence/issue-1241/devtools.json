@@ -1,0 +1,1130 @@
+[
+  {
+    "base": 1,
+    "marker": "release-workspace-1-fe357af0-300f-4f8c-844b-79e21c413eb5",
+    "observedAt": "2026-09-24T17:55:07.977Z",
+    "renderer": {
+      "app": {
+        "default": "webview",
+        "allUsed": [
+          "webview"
+        ]
+      },
+      "page": [
+        {
+          "route": "pages/index",
+          "renderer": "webview"
+        }
+      ]
+    },
+    "measurements": {
+      "rawRects": [
+        {
+          "id": "utility-box",
+          "dataset": {},
+          "left": 8,
+          "right": 24,
+          "top": 39,
+          "bottom": 55,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "utility-padding",
+          "dataset": {},
+          "left": 8,
+          "right": 141,
+          "top": 75,
+          "bottom": 95,
+          "width": 133,
+          "height": 20
+        },
+        {
+          "id": "utility-padding-child",
+          "dataset": {},
+          "left": 10,
+          "right": 26,
+          "top": 77,
+          "bottom": 93,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "utility-anchor",
+          "dataset": {},
+          "left": 8,
+          "right": 74,
+          "top": 115,
+          "bottom": 148,
+          "width": 66,
+          "height": 33
+        },
+        {
+          "id": "utility-margin",
+          "dataset": {},
+          "left": 8,
+          "right": 24,
+          "top": 146,
+          "bottom": 162,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "utility-gap-first",
+          "dataset": {},
+          "left": 8,
+          "right": 24,
+          "top": 253,
+          "bottom": 269,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "utility-gap-second",
+          "dataset": {},
+          "left": 26,
+          "right": 42,
+          "top": 253,
+          "bottom": 269,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "utility-positive-anchor",
+          "dataset": {},
+          "left": 8,
+          "right": 74,
+          "top": 182,
+          "bottom": 215,
+          "width": 66,
+          "height": 33
+        },
+        {
+          "id": "utility-positive-margin",
+          "dataset": {},
+          "left": 8,
+          "right": 24,
+          "top": 217,
+          "bottom": 233,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "reference-box",
+          "dataset": {},
+          "left": 206,
+          "right": 222,
+          "top": 39,
+          "bottom": 55,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "reference-padding",
+          "dataset": {},
+          "left": 206,
+          "right": 339,
+          "top": 75,
+          "bottom": 95,
+          "width": 133,
+          "height": 20
+        },
+        {
+          "id": "reference-padding-child",
+          "dataset": {},
+          "left": 208,
+          "right": 224,
+          "top": 77,
+          "bottom": 93,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "reference-anchor",
+          "dataset": {},
+          "left": 206,
+          "right": 272,
+          "top": 115,
+          "bottom": 148,
+          "width": 66,
+          "height": 33
+        },
+        {
+          "id": "reference-margin",
+          "dataset": {},
+          "left": 206,
+          "right": 222,
+          "top": 146,
+          "bottom": 162,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "reference-gap-first",
+          "dataset": {},
+          "left": 206,
+          "right": 222,
+          "top": 253,
+          "bottom": 269,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "reference-gap-second",
+          "dataset": {},
+          "left": 224,
+          "right": 240,
+          "top": 253,
+          "bottom": 269,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "reference-positive-anchor",
+          "dataset": {},
+          "left": 206,
+          "right": 272,
+          "top": 182,
+          "bottom": 215,
+          "width": 66,
+          "height": 33
+        },
+        {
+          "id": "reference-positive-margin",
+          "dataset": {},
+          "left": 206,
+          "right": 222,
+          "top": 217,
+          "bottom": 233,
+          "width": 16,
+          "height": 16
+        }
+      ],
+      "comparison": {
+        "passed": true,
+        "comparisons": [
+          {
+            "name": "width",
+            "measured": 16,
+            "referencePx": 16,
+            "expectedPx": 16.64,
+            "theoreticalDeviationPx": -0.6400000000000006,
+            "referenceTheoreticalDeviationPx": -0.6400000000000006,
+            "tolerancePx": 1e-06,
+            "passed": true
+          },
+          {
+            "name": "height",
+            "measured": 16,
+            "referencePx": 16,
+            "expectedPx": 16.64,
+            "theoreticalDeviationPx": -0.6400000000000006,
+            "referenceTheoreticalDeviationPx": -0.6400000000000006,
+            "tolerancePx": 1e-06,
+            "passed": true
+          },
+          {
+            "name": "paddingLeft",
+            "measured": 2,
+            "referencePx": 2,
+            "expectedPx": 2.08,
+            "theoreticalDeviationPx": -0.08000000000000007,
+            "referenceTheoreticalDeviationPx": -0.08000000000000007,
+            "tolerancePx": 1e-06,
+            "passed": true
+          },
+          {
+            "name": "paddingTop",
+            "measured": 2,
+            "referencePx": 2,
+            "expectedPx": 2.08,
+            "theoreticalDeviationPx": -0.08000000000000007,
+            "referenceTheoreticalDeviationPx": -0.08000000000000007,
+            "tolerancePx": 1e-06,
+            "passed": true
+          },
+          {
+            "name": "negativeMargin",
+            "measured": -2,
+            "referencePx": -2,
+            "expectedPx": -2.08,
+            "theoreticalDeviationPx": 0.08000000000000007,
+            "referenceTheoreticalDeviationPx": 0.08000000000000007,
+            "tolerancePx": 1e-06,
+            "passed": true
+          },
+          {
+            "name": "gap",
+            "measured": 2,
+            "referencePx": 2,
+            "expectedPx": 2.08,
+            "theoreticalDeviationPx": -0.08000000000000007,
+            "referenceTheoreticalDeviationPx": -0.08000000000000007,
+            "tolerancePx": 1e-06,
+            "passed": true
+          }
+        ]
+      },
+      "positiveMargin": {
+        "utility": 2,
+        "reference": 2,
+        "passed": true
+      },
+      "passed": true
+    },
+    "devtools": "2.02.2608070",
+    "system": {
+      "platform": "devtools",
+      "SDKVersion": "3.16.3",
+      "windowWidth": 390,
+      "pixelRatio": 3
+    },
+    "screenshot": "layout-1.png"
+  },
+  {
+    "base": 2,
+    "marker": "release-workspace-2-fe05b27e-9bdf-44f8-a7b2-cca7bf4a772c",
+    "observedAt": "2026-09-24T17:55:17.023Z",
+    "renderer": {
+      "app": {
+        "default": "webview",
+        "allUsed": [
+          "webview"
+        ]
+      },
+      "page": [
+        {
+          "route": "pages/index",
+          "renderer": "webview"
+        }
+      ]
+    },
+    "measurements": {
+      "rawRects": [
+        {
+          "id": "utility-box",
+          "dataset": {},
+          "left": 8,
+          "right": 41,
+          "top": 39,
+          "bottom": 72,
+          "width": 33,
+          "height": 33
+        },
+        {
+          "id": "utility-padding",
+          "dataset": {},
+          "left": 8,
+          "right": 141,
+          "top": 92,
+          "bottom": 116,
+          "width": 133,
+          "height": 24
+        },
+        {
+          "id": "utility-padding-child",
+          "dataset": {},
+          "left": 12,
+          "right": 28,
+          "top": 96,
+          "bottom": 112,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "utility-anchor",
+          "dataset": {},
+          "left": 8,
+          "right": 74,
+          "top": 136,
+          "bottom": 169,
+          "width": 66,
+          "height": 33
+        },
+        {
+          "id": "utility-margin",
+          "dataset": {},
+          "left": 8,
+          "right": 24,
+          "top": 165,
+          "bottom": 181,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "utility-gap-first",
+          "dataset": {},
+          "left": 8,
+          "right": 24,
+          "top": 274,
+          "bottom": 290,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "utility-gap-second",
+          "dataset": {},
+          "left": 28,
+          "right": 44,
+          "top": 274,
+          "bottom": 290,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "utility-positive-anchor",
+          "dataset": {},
+          "left": 8,
+          "right": 74,
+          "top": 201,
+          "bottom": 234,
+          "width": 66,
+          "height": 33
+        },
+        {
+          "id": "utility-positive-margin",
+          "dataset": {},
+          "left": 8,
+          "right": 24,
+          "top": 238,
+          "bottom": 254,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "reference-box",
+          "dataset": {},
+          "left": 206,
+          "right": 239,
+          "top": 39,
+          "bottom": 72,
+          "width": 33,
+          "height": 33
+        },
+        {
+          "id": "reference-padding",
+          "dataset": {},
+          "left": 206,
+          "right": 339,
+          "top": 92,
+          "bottom": 116,
+          "width": 133,
+          "height": 24
+        },
+        {
+          "id": "reference-padding-child",
+          "dataset": {},
+          "left": 210,
+          "right": 226,
+          "top": 96,
+          "bottom": 112,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "reference-anchor",
+          "dataset": {},
+          "left": 206,
+          "right": 272,
+          "top": 136,
+          "bottom": 169,
+          "width": 66,
+          "height": 33
+        },
+        {
+          "id": "reference-margin",
+          "dataset": {},
+          "left": 206,
+          "right": 222,
+          "top": 165,
+          "bottom": 181,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "reference-gap-first",
+          "dataset": {},
+          "left": 206,
+          "right": 222,
+          "top": 274,
+          "bottom": 290,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "reference-gap-second",
+          "dataset": {},
+          "left": 226,
+          "right": 242,
+          "top": 274,
+          "bottom": 290,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "reference-positive-anchor",
+          "dataset": {},
+          "left": 206,
+          "right": 272,
+          "top": 201,
+          "bottom": 234,
+          "width": 66,
+          "height": 33
+        },
+        {
+          "id": "reference-positive-margin",
+          "dataset": {},
+          "left": 206,
+          "right": 222,
+          "top": 238,
+          "bottom": 254,
+          "width": 16,
+          "height": 16
+        }
+      ],
+      "comparison": {
+        "passed": true,
+        "comparisons": [
+          {
+            "name": "width",
+            "measured": 33,
+            "referencePx": 33,
+            "expectedPx": 33.28,
+            "theoreticalDeviationPx": -0.28000000000000114,
+            "referenceTheoreticalDeviationPx": -0.28000000000000114,
+            "tolerancePx": 1e-06,
+            "passed": true
+          },
+          {
+            "name": "height",
+            "measured": 33,
+            "referencePx": 33,
+            "expectedPx": 33.28,
+            "theoreticalDeviationPx": -0.28000000000000114,
+            "referenceTheoreticalDeviationPx": -0.28000000000000114,
+            "tolerancePx": 1e-06,
+            "passed": true
+          },
+          {
+            "name": "paddingLeft",
+            "measured": 4,
+            "referencePx": 4,
+            "expectedPx": 4.16,
+            "theoreticalDeviationPx": -0.16000000000000014,
+            "referenceTheoreticalDeviationPx": -0.16000000000000014,
+            "tolerancePx": 1e-06,
+            "passed": true
+          },
+          {
+            "name": "paddingTop",
+            "measured": 4,
+            "referencePx": 4,
+            "expectedPx": 4.16,
+            "theoreticalDeviationPx": -0.16000000000000014,
+            "referenceTheoreticalDeviationPx": -0.16000000000000014,
+            "tolerancePx": 1e-06,
+            "passed": true
+          },
+          {
+            "name": "negativeMargin",
+            "measured": -4,
+            "referencePx": -4,
+            "expectedPx": -4.16,
+            "theoreticalDeviationPx": 0.16000000000000014,
+            "referenceTheoreticalDeviationPx": 0.16000000000000014,
+            "tolerancePx": 1e-06,
+            "passed": true
+          },
+          {
+            "name": "gap",
+            "measured": 4,
+            "referencePx": 4,
+            "expectedPx": 4.16,
+            "theoreticalDeviationPx": -0.16000000000000014,
+            "referenceTheoreticalDeviationPx": -0.16000000000000014,
+            "tolerancePx": 1e-06,
+            "passed": true
+          }
+        ]
+      },
+      "positiveMargin": {
+        "utility": 4,
+        "reference": 4,
+        "passed": true
+      },
+      "passed": true
+    },
+    "devtools": "2.02.2608070",
+    "system": {
+      "platform": "devtools",
+      "SDKVersion": "3.16.3",
+      "windowWidth": 390,
+      "pixelRatio": 3
+    },
+    "screenshot": "layout-2.png"
+  },
+  {
+    "base": 3,
+    "marker": "release-workspace-3-ea23b37f-2bb0-437a-a204-be658220896f",
+    "observedAt": "2026-09-24T17:55:26.086Z",
+    "renderer": {
+      "app": {
+        "default": "webview",
+        "allUsed": [
+          "webview"
+        ]
+      },
+      "page": [
+        {
+          "route": "pages/index",
+          "renderer": "webview"
+        }
+      ]
+    },
+    "measurements": {
+      "rawRects": [
+        {
+          "id": "utility-box",
+          "dataset": {},
+          "left": 8,
+          "right": 57,
+          "top": 39,
+          "bottom": 88,
+          "width": 49,
+          "height": 49
+        },
+        {
+          "id": "utility-padding",
+          "dataset": {},
+          "left": 8,
+          "right": 141,
+          "top": 108,
+          "bottom": 136,
+          "width": 133,
+          "height": 28
+        },
+        {
+          "id": "utility-padding-child",
+          "dataset": {},
+          "left": 14,
+          "right": 30,
+          "top": 114,
+          "bottom": 130,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "utility-anchor",
+          "dataset": {},
+          "left": 8,
+          "right": 74,
+          "top": 156,
+          "bottom": 189,
+          "width": 66,
+          "height": 33
+        },
+        {
+          "id": "utility-margin",
+          "dataset": {},
+          "left": 8,
+          "right": 24,
+          "top": 183,
+          "bottom": 199,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "utility-gap-first",
+          "dataset": {},
+          "left": 8,
+          "right": 24,
+          "top": 294,
+          "bottom": 310,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "utility-gap-second",
+          "dataset": {},
+          "left": 30,
+          "right": 46,
+          "top": 294,
+          "bottom": 310,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "utility-positive-anchor",
+          "dataset": {},
+          "left": 8,
+          "right": 74,
+          "top": 219,
+          "bottom": 252,
+          "width": 66,
+          "height": 33
+        },
+        {
+          "id": "utility-positive-margin",
+          "dataset": {},
+          "left": 8,
+          "right": 24,
+          "top": 258,
+          "bottom": 274,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "reference-box",
+          "dataset": {},
+          "left": 206,
+          "right": 255,
+          "top": 39,
+          "bottom": 88,
+          "width": 49,
+          "height": 49
+        },
+        {
+          "id": "reference-padding",
+          "dataset": {},
+          "left": 206,
+          "right": 339,
+          "top": 108,
+          "bottom": 136,
+          "width": 133,
+          "height": 28
+        },
+        {
+          "id": "reference-padding-child",
+          "dataset": {},
+          "left": 212,
+          "right": 228,
+          "top": 114,
+          "bottom": 130,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "reference-anchor",
+          "dataset": {},
+          "left": 206,
+          "right": 272,
+          "top": 156,
+          "bottom": 189,
+          "width": 66,
+          "height": 33
+        },
+        {
+          "id": "reference-margin",
+          "dataset": {},
+          "left": 206,
+          "right": 222,
+          "top": 183,
+          "bottom": 199,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "reference-gap-first",
+          "dataset": {},
+          "left": 206,
+          "right": 222,
+          "top": 294,
+          "bottom": 310,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "reference-gap-second",
+          "dataset": {},
+          "left": 228,
+          "right": 244,
+          "top": 294,
+          "bottom": 310,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "reference-positive-anchor",
+          "dataset": {},
+          "left": 206,
+          "right": 272,
+          "top": 219,
+          "bottom": 252,
+          "width": 66,
+          "height": 33
+        },
+        {
+          "id": "reference-positive-margin",
+          "dataset": {},
+          "left": 206,
+          "right": 222,
+          "top": 258,
+          "bottom": 274,
+          "width": 16,
+          "height": 16
+        }
+      ],
+      "comparison": {
+        "passed": true,
+        "comparisons": [
+          {
+            "name": "width",
+            "measured": 49,
+            "referencePx": 49,
+            "expectedPx": 49.92,
+            "theoreticalDeviationPx": -0.9200000000000017,
+            "referenceTheoreticalDeviationPx": -0.9200000000000017,
+            "tolerancePx": 1e-06,
+            "passed": true
+          },
+          {
+            "name": "height",
+            "measured": 49,
+            "referencePx": 49,
+            "expectedPx": 49.92,
+            "theoreticalDeviationPx": -0.9200000000000017,
+            "referenceTheoreticalDeviationPx": -0.9200000000000017,
+            "tolerancePx": 1e-06,
+            "passed": true
+          },
+          {
+            "name": "paddingLeft",
+            "measured": 6,
+            "referencePx": 6,
+            "expectedPx": 6.24,
+            "theoreticalDeviationPx": -0.2400000000000002,
+            "referenceTheoreticalDeviationPx": -0.2400000000000002,
+            "tolerancePx": 1e-06,
+            "passed": true
+          },
+          {
+            "name": "paddingTop",
+            "measured": 6,
+            "referencePx": 6,
+            "expectedPx": 6.24,
+            "theoreticalDeviationPx": -0.2400000000000002,
+            "referenceTheoreticalDeviationPx": -0.2400000000000002,
+            "tolerancePx": 1e-06,
+            "passed": true
+          },
+          {
+            "name": "negativeMargin",
+            "measured": -6,
+            "referencePx": -6,
+            "expectedPx": -6.24,
+            "theoreticalDeviationPx": 0.2400000000000002,
+            "referenceTheoreticalDeviationPx": 0.2400000000000002,
+            "tolerancePx": 1e-06,
+            "passed": true
+          },
+          {
+            "name": "gap",
+            "measured": 6,
+            "referencePx": 6,
+            "expectedPx": 6.24,
+            "theoreticalDeviationPx": -0.2400000000000002,
+            "referenceTheoreticalDeviationPx": -0.2400000000000002,
+            "tolerancePx": 1e-06,
+            "passed": true
+          }
+        ]
+      },
+      "positiveMargin": {
+        "utility": 6,
+        "reference": 6,
+        "passed": true
+      },
+      "passed": true
+    },
+    "devtools": "2.02.2608070",
+    "system": {
+      "platform": "devtools",
+      "SDKVersion": "3.16.3",
+      "windowWidth": 390,
+      "pixelRatio": 3
+    },
+    "screenshot": "layout-3.png"
+  },
+  {
+    "base": 8,
+    "marker": "release-workspace-8-fbec3ef9-31b2-4b9d-a661-16549759cc74",
+    "observedAt": "2026-09-24T17:55:35.151Z",
+    "renderer": {
+      "app": {
+        "default": "webview",
+        "allUsed": [
+          "webview"
+        ]
+      },
+      "page": [
+        {
+          "route": "pages/index",
+          "renderer": "webview"
+        }
+      ]
+    },
+    "measurements": {
+      "rawRects": [
+        {
+          "id": "utility-box",
+          "dataset": {},
+          "left": 8,
+          "right": 141,
+          "top": 39,
+          "bottom": 172,
+          "width": 133,
+          "height": 133
+        },
+        {
+          "id": "utility-padding",
+          "dataset": {},
+          "left": 8,
+          "right": 141,
+          "top": 192,
+          "bottom": 240,
+          "width": 133,
+          "height": 48
+        },
+        {
+          "id": "utility-padding-child",
+          "dataset": {},
+          "left": 24,
+          "right": 40,
+          "top": 208,
+          "bottom": 224,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "utility-anchor",
+          "dataset": {},
+          "left": 8,
+          "right": 74,
+          "top": 260,
+          "bottom": 293,
+          "width": 66,
+          "height": 33
+        },
+        {
+          "id": "utility-margin",
+          "dataset": {},
+          "left": 8,
+          "right": 24,
+          "top": 277,
+          "bottom": 293,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "utility-gap-first",
+          "dataset": {},
+          "left": 8,
+          "right": 24,
+          "top": 398,
+          "bottom": 414,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "utility-gap-second",
+          "dataset": {},
+          "left": 40,
+          "right": 56,
+          "top": 398,
+          "bottom": 414,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "utility-positive-anchor",
+          "dataset": {},
+          "left": 8,
+          "right": 74,
+          "top": 313,
+          "bottom": 346,
+          "width": 66,
+          "height": 33
+        },
+        {
+          "id": "utility-positive-margin",
+          "dataset": {},
+          "left": 8,
+          "right": 24,
+          "top": 362,
+          "bottom": 378,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "reference-box",
+          "dataset": {},
+          "left": 206,
+          "right": 339,
+          "top": 39,
+          "bottom": 172,
+          "width": 133,
+          "height": 133
+        },
+        {
+          "id": "reference-padding",
+          "dataset": {},
+          "left": 206,
+          "right": 339,
+          "top": 192,
+          "bottom": 240,
+          "width": 133,
+          "height": 48
+        },
+        {
+          "id": "reference-padding-child",
+          "dataset": {},
+          "left": 222,
+          "right": 238,
+          "top": 208,
+          "bottom": 224,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "reference-anchor",
+          "dataset": {},
+          "left": 206,
+          "right": 272,
+          "top": 260,
+          "bottom": 293,
+          "width": 66,
+          "height": 33
+        },
+        {
+          "id": "reference-margin",
+          "dataset": {},
+          "left": 206,
+          "right": 222,
+          "top": 277,
+          "bottom": 293,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "reference-gap-first",
+          "dataset": {},
+          "left": 206,
+          "right": 222,
+          "top": 398,
+          "bottom": 414,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "reference-gap-second",
+          "dataset": {},
+          "left": 238,
+          "right": 254,
+          "top": 398,
+          "bottom": 414,
+          "width": 16,
+          "height": 16
+        },
+        {
+          "id": "reference-positive-anchor",
+          "dataset": {},
+          "left": 206,
+          "right": 272,
+          "top": 313,
+          "bottom": 346,
+          "width": 66,
+          "height": 33
+        },
+        {
+          "id": "reference-positive-margin",
+          "dataset": {},
+          "left": 206,
+          "right": 222,
+          "top": 362,
+          "bottom": 378,
+          "width": 16,
+          "height": 16
+        }
+      ],
+      "comparison": {
+        "passed": true,
+        "comparisons": [
+          {
+            "name": "width",
+            "measured": 133,
+            "referencePx": 133,
+            "expectedPx": 133.12,
+            "theoreticalDeviationPx": -0.12000000000000455,
+            "referenceTheoreticalDeviationPx": -0.12000000000000455,
+            "tolerancePx": 1e-06,
+            "passed": true
+          },
+          {
+            "name": "height",
+            "measured": 133,
+            "referencePx": 133,
+            "expectedPx": 133.12,
+            "theoreticalDeviationPx": -0.12000000000000455,
+            "referenceTheoreticalDeviationPx": -0.12000000000000455,
+            "tolerancePx": 1e-06,
+            "passed": true
+          },
+          {
+            "name": "paddingLeft",
+            "measured": 16,
+            "referencePx": 16,
+            "expectedPx": 16.64,
+            "theoreticalDeviationPx": -0.6400000000000006,
+            "referenceTheoreticalDeviationPx": -0.6400000000000006,
+            "tolerancePx": 1e-06,
+            "passed": true
+          },
+          {
+            "name": "paddingTop",
+            "measured": 16,
+            "referencePx": 16,
+            "expectedPx": 16.64,
+            "theoreticalDeviationPx": -0.6400000000000006,
+            "referenceTheoreticalDeviationPx": -0.6400000000000006,
+            "tolerancePx": 1e-06,
+            "passed": true
+          },
+          {
+            "name": "negativeMargin",
+            "measured": -16,
+            "referencePx": -16,
+            "expectedPx": -16.64,
+            "theoreticalDeviationPx": 0.6400000000000006,
+            "referenceTheoreticalDeviationPx": 0.6400000000000006,
+            "tolerancePx": 1e-06,
+            "passed": true
+          },
+          {
+            "name": "gap",
+            "measured": 16,
+            "referencePx": 16,
+            "expectedPx": 16.64,
+            "theoreticalDeviationPx": -0.6400000000000006,
+            "referenceTheoreticalDeviationPx": -0.6400000000000006,
+            "tolerancePx": 1e-06,
+            "passed": true
+          }
+        ]
+      },
+      "positiveMargin": {
+        "utility": 16,
+        "reference": 16,
+        "passed": true
+      },
+      "passed": true
+    },
+    "devtools": "2.02.2608070",
+    "system": {
+      "platform": "devtools",
+      "SDKVersion": "3.16.3",
+      "windowWidth": 390,
+      "pixelRatio": 3
+    },
+    "screenshot": "layout-8.png"
+  }
+]

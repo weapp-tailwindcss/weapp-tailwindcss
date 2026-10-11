@@ -18,8 +18,8 @@
 
 ## 推荐验证命令
 - `pnpm --filter tailwindcss-injector test`
-- `pnpm --filter tailwindcss-injector vitest run test/postcss.cache.test.ts`
-- `pnpm --filter tailwindcss-injector vitest run test/wxml.test.ts`
+- `pnpm --filter tailwindcss-injector exec vitest run test/postcss.cache.test.ts`
+- `pnpm --filter tailwindcss-injector exec vitest run test/wxml.test.ts`
 
 ## 提交前检查
 - 涉及 `src/postcss.ts` 变更时，至少验证一条“指令插入位置”用例。

@@ -86,6 +86,7 @@ describe('bundlers/vite serve JS transform', () => {
       '/repo/src/main.ts',
     )).resolves.toBeUndefined()
     expect(transformRuntime).toHaveBeenCalledTimes(1)
+    expect(transformRuntime).toHaveBeenCalledWith('/repo/src/main.ts', 'export const cls = "text-[32px]"')
     expect(jsHandler).toHaveBeenCalledWith(
       'export const cls = "text-[32px]"',
       expect.any(Set),

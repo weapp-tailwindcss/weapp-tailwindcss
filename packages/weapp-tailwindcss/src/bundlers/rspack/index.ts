@@ -88,7 +88,7 @@ function includesLoaderName(item: RspackUseItem | undefined, name: string) {
 function createCssImportRewriteLoaderEntry(options: PatchRspackCssImportRewriteLoaderOptions): RspackUseItem {
   return {
     loader: options.loader ?? path.resolve(__dirname, `./${CSS_IMPORT_REWRITE_LOADER_NAME}.cjs`),
-    ...(options.options === undefined ? {} : { options: options.options }),
+    options: { generateCss: true, ...options.options },
   }
 }
 

@@ -1,0 +1,191 @@
+{
+  "version": 1,
+  "generatedFrom": "ubuntu-canonical",
+  "headroomPercent": 20,
+  "default": {
+    "medianMs": 120000,
+    "p95Ms": 180000,
+    "peakRssMb": 4096,
+    "outputBytes": 8388608
+  },
+  "bundles": {
+    "@weapp-tailwindcss/cn": {
+      "gzipBytes": 20000,
+      "brotliBytes": 18000
+    },
+    "@weapp-tailwindcss/merge": {
+      "gzipBytes": 20000,
+      "brotliBytes": 18000
+    }
+  },
+  "cases": {
+    "postcss-v4-main-1000": {
+      "medianMs": 152,
+      "p95Ms": 155,
+      "peakRssMb": 341,
+      "outputBytes": 64667
+    },
+    "postcss-v4-main-2000": {
+      "medianMs": 215,
+      "p95Ms": 222,
+      "peakRssMb": 459,
+      "outputBytes": 130667
+    },
+    "postcss-v4-main-5000": {
+      "medianMs": 540,
+      "p95Ms": 541,
+      "peakRssMb": 530,
+      "outputBytes": 328667
+    },
+    "postcss-v4-main-10000": {
+      "medianMs": 1100,
+      "p95Ms": 1200,
+      "peakRssMb": 615,
+      "outputBytes": 658667
+    },
+    "postcss-v4-content-1000": {
+      "medianMs": 126,
+      "p95Ms": 183,
+      "peakRssMb": 348,
+      "outputBytes": 64751
+    },
+    "postcss-v4-content-2000": {
+      "medianMs": 227,
+      "p95Ms": 229,
+      "peakRssMb": 519,
+      "outputBytes": 130751
+    },
+    "postcss-v4-content-5000": {
+      "medianMs": 582,
+      "p95Ms": 653,
+      "peakRssMb": 575,
+      "outputBytes": 328751
+    },
+    "postcss-v4-content-10000": {
+      "medianMs": 1200,
+      "p95Ms": 1400,
+      "peakRssMb": 645,
+      "outputBytes": 658751
+    },
+    "core-wxss-50": {
+      "medianMs": 60000,
+      "p95Ms": 90000,
+      "peakRssMb": 4096,
+      "outputBytes": 4194304
+    },
+    "core-wxss-100": {
+      "medianMs": 60000,
+      "p95Ms": 90000,
+      "peakRssMb": 4096,
+      "outputBytes": 4194304
+    },
+    "core-wxss-200": {
+      "medianMs": 60000,
+      "p95Ms": 90000,
+      "peakRssMb": 4096,
+      "outputBytes": 4194304
+    },
+    "core-wxml-50": {
+      "medianMs": 5000,
+      "p95Ms": 8000,
+      "peakRssMb": 4096,
+      "outputBytes": 4194304
+    },
+    "core-wxml-100": {
+      "medianMs": 5000,
+      "p95Ms": 8000,
+      "peakRssMb": 4096,
+      "outputBytes": 4194304
+    },
+    "core-wxml-200": {
+      "medianMs": 5000,
+      "p95Ms": 8000,
+      "peakRssMb": 4096,
+      "outputBytes": 4194304
+    },
+    "core-js-50": {
+      "medianMs": 15000,
+      "p95Ms": 25000,
+      "peakRssMb": 4096,
+      "outputBytes": 4194304
+    },
+    "core-js-100": {
+      "medianMs": 15000,
+      "p95Ms": 25000,
+      "peakRssMb": 4096,
+      "outputBytes": 4194304
+    },
+    "core-js-200": {
+      "medianMs": 15000,
+      "p95Ms": 25000,
+      "peakRssMb": 4096,
+      "outputBytes": 4194304
+    },
+    "runtime-cn-100": {
+      "medianMs": 2000,
+      "p95Ms": 4000,
+      "peakRssMb": 4096,
+      "rssDeltaMb": 512,
+      "outputBytes": 1048576
+    },
+    "runtime-cn-1000": {
+      "medianMs": 10000,
+      "p95Ms": 16000,
+      "peakRssMb": 4096,
+      "rssDeltaMb": 512,
+      "outputBytes": 1048576
+    },
+    "runtime-merge-100": {
+      "medianMs": 2000,
+      "p95Ms": 4000,
+      "peakRssMb": 4096,
+      "rssDeltaMb": 512,
+      "outputBytes": 1048576
+    },
+    "runtime-merge-1000": {
+      "medianMs": 10000,
+      "p95Ms": 16000,
+      "peakRssMb": 4096,
+      "rssDeltaMb": 512,
+      "outputBytes": 1048576
+    },
+    "postcss-v4-structured-1000": {
+      "medianMs": 171,
+      "p95Ms": 176,
+      "peakRssMb": 645,
+      "outputBytes": 89764
+    },
+    "postcss-v4-structured-2000": {
+      "medianMs": 336,
+      "p95Ms": 336,
+      "peakRssMb": 647,
+      "outputBytes": 182164
+    },
+    "postcss-v4-structured-5000": {
+      "medianMs": 860,
+      "p95Ms": 867,
+      "peakRssMb": 652,
+      "outputBytes": 459364
+    },
+    "postcss-v4-cache-hit-1000": {
+      "medianMs": 1,
+      "p95Ms": 1,
+      "peakRssMb": 651,
+      "outputBytes": 64667
+    },
+    "postcss-v4-cache-hit-2000": {
+      "medianMs": 1,
+      "p95Ms": 1,
+      "peakRssMb": 651,
+      "outputBytes": 130667
+    },
+    "postcss-v4-cache-hit-5000": {
+      "medianMs": 3,
+      "p95Ms": 3,
+      "peakRssMb": 652,
+      "outputBytes": 328667
+    }
+  },
+  "generatedAt": "2026-09-24T07:22:13.714Z",
+  "commit": "13d6a7c01b2053422595e6efa5286a745ba45077"
+}

@@ -49,7 +49,8 @@ const localOnlyDemoProjects = new Set([
   'demo/subpackage-taro-webpack-react-tailwindcss-v4',
   'demo/subpackage-uni-app-vite-tailwindcss-v4',
   'demo/uni-app-vite-vue3-hbuilderx-tailwindcss-v4',
-  'demo/uni-app-x-hbuilderx-tailwindcss-v4',
+  'demo/uni-app-x-vapor-tailwindcss-v4',
+  'demo/uni-app-x-vdom-tailwindcss-v4',
 ])
 function isIssueRegressionDemoProject(project: string) {
   return /^demo\/issue-/.test(project)
@@ -524,7 +525,7 @@ describe('watch-hmr coverage matrix', () => {
       expect(relaxedCases).toEqual([
         'taro-webpack-react-tailwindcss-v4',
         'uni-app-vite-vue3-hbuilderx-tailwindcss-v4',
-        'uni-app-x-hbuilderx-tailwindcss-v4',
+        'uni-app-x-vdom-tailwindcss-v4',
       ])
     }
     finally {

@@ -46,18 +46,17 @@ import TailwindTopicHero from '@site/src/components/docs/TailwindTopicHero'
 
 **Demo（整体串联）**
 
-```ts
-// tailwind.config.ts
-export default {
-  content: ['./src/**/*.{tsx,jsx,html}'],
-  theme: {
-    extend: {
-      colors: { brand: { 50: '#f1f5ff', 500: '#3b82f6' } },
-      spacing: { 3.5: '0.875rem' },
-      borderRadius: { pill: '999px' },
-    },
-  },
-  plugins: [require('@tailwindcss/typography')],
+```css
+/* src/styles/app.css */
+@import "tailwindcss";
+@source "../**/*.{tsx,jsx,html}";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --color-brand-50: #f1f5ff;
+  --color-brand-500: #3b82f6;
+  --spacing-3.5: 0.875rem;
+  --radius-pill: 999px;
 }
 ```
 
@@ -94,30 +93,26 @@ export function Button({ tone, size, className, ...props }) {
 
 **Demo：token 定义**
 
-```ts
-// tailwind.config.ts 片段
-export default {
-  theme: {
-    extend: {
-      colors: {
-        brand: { 50: 'var(--brand-50)', 500: 'var(--brand-500)' },
-      },
-      spacing: { 3.5: 'var(--space-3_5)' },
-      borderRadius: { pill: 'var(--radius-pill)' },
-    },
-  },
-}
-```
-
 ```css
 /* src/styles/theme.css */
 :root {
   --brand-50: #eef2ff;
   --brand-500: #4f46e5;
   --space-3_5: 0.875rem;
-  --radius-pill: 999px;
+  --app-radius-pill: 999px;
+}
+
+@theme inline {
+  --color-brand-50: var(--brand-50);
+  --color-brand-500: var(--brand-500);
+  --spacing-3_5: var(--space-3_5);
+  --radius-pill: var(--app-radius-pill);
 }
 ```
+
+:::warning 微信小程序中的 rpx spacing
+把全局 `--spacing` 设置为 `1rpx`、`3rpx` 等值时，生成的运行时乘法可能产生尺寸偏差。`@theme inline` 不会自动完成乘法；成功预计算成静态长度后，属性也不再响应对 `--spacing` 的运行时覆盖。详见 [微信小程序 --spacing 与 rpx 计算限制](../issues/spacing-rpx.md)。
+:::
 
 ## 中段：Tailwind 的生成逻辑
 
@@ -125,7 +120,7 @@ export default {
 
 ### 生成机制
 
-- **JIT + content**：Tailwind 只会生成它扫描到的类，所以 `content` 写得越准，最终 CSS 越干净。很多包体问题，不是 Tailwind 本身慢，而是扫描范围太宽或者动态类太随意。
+- **候选扫描 + `@source`**：Tailwind 只会生成它扫描到的类，所以 `@source` 写得越准，最终 CSS 越干净。很多包体问题，不是 Tailwind 本身慢，而是扫描范围太宽或者动态类太随意。
 - **`@layer`**：它决定了 `base / components / utilities` 的覆盖顺序。`@apply` 可以用，但更适合做稳定复用，不适合偷偷塞业务逻辑。
 - **插件**：适合把你们已经稳定下来的设计规则翻译成类，不适合把临时需求塞成新的语法糖。
 
@@ -143,21 +138,13 @@ export default {
 - 不要把 `@apply`、plugins、variants、组件工厂混成同一层东西。前两者更偏生成机制，后两者更偏团队封装策略。
 - 不要把 Tailwind 理解成“类越少越好”或“绝不能写自定义 CSS”。真正重要的是边界清晰，而不是形式纯度。
 
-**Demo：content 精准 + 局部 @layer**
-
-```ts
-// tailwind.config.ts 片段
-export default {
-  content: ['./src/app/**/*.{tsx,jsx}', './src/pages/**/*.{tsx,jsx}'],
-  plugins: [],
-}
-```
+**Demo：`@source` 精准 + 局部 `@layer`**
 
 ```css
 /* src/styles/components.css */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss" source(none);
+@source "../app/**/*.{tsx,jsx}";
+@source "../pages/**/*.{tsx,jsx}";
 
 @layer components {
   .card {

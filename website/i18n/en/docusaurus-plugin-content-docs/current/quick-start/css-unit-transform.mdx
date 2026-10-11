@@ -1,14 +1,15 @@
 ---
 toc_max_heading_level: 4
 title: CSS unit conversion
-description: Configure px2rpx and unitsToPx through cssOptions to handle unit conversion in applet, multi-terminal and uni-app x scenarios.
+description: >-
+  Configure px2rpx and unitsToPx through cssOptions to handle unit conversion in applet, multi-terminal and uni-app x
+  scenarios.
 keywords:
   - quick start
   - Install
   - Configuration
   - CSS
   - unit conversion
-  - quick start
   - css unit transform
   - weapp-tailwindcss
   - tailwindcss
@@ -17,6 +18,9 @@ keywords:
   - uni-app
   - taro
   - mpx
+  - installation
+  - unit
+  - conversion
 ---
 # CSS unit conversion
 
@@ -31,6 +35,10 @@ WeappTailwindcss({
 ```
 
 `true` means `1rem = 32rpx`. This page only talks about two other situations: `px` to `rpx`, and multi-unit conversion to `px`.
+
+:::warning Spacing calculations in WeChat mini programs
+Successful unit conversion does not guarantee correct sizing for `calc(var(--spacing) * N)`. Bases such as `1rpx` and `3rpx` can exhibit runtime conversion differences in WeChat; even bases are not guaranteed workarounds either. The current fix limits `cssCalc` to build-time fixed values without known scope conflicts; scope overrides known at build time and unresolved variables retain expressions. Vite builds evaluate lengths within the shared scopes of final CSS assets before converting units. Future JavaScript and inline-style changes cannot be predicted at build time, and WeChat runtime conversion limits still apply. See [WeChat --spacing and rpx calculation limits](../issues/spacing-rpx.md) for configuration tradeoffs.
+:::
 
 ## px to rpx
 

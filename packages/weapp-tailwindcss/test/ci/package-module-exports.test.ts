@@ -19,6 +19,7 @@ interface PackageJson {
 const repoRoot = fileURLToPath(new URL('../../../../', import.meta.url))
 const packageRoots = ['packages', 'packages-runtime'].map(root => path.join(repoRoot, root))
 const migratedPackages = new Set([
+  '@weapp-tailwindcss/cli',
   '@weapp-tailwindcss/babel',
   '@weapp-tailwindcss/debug-uni-app-x',
   '@weapp-tailwindcss/init',

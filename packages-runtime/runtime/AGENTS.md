@@ -32,6 +32,6 @@
 - `pnpm --filter @weapp-tailwindcss/runtime test`
 - `pnpm --filter @weapp-tailwindcss/runtime tsd`
 - 定向回归：
-  - `pnpm --filter @weapp-tailwindcss/runtime vitest run test/create-runtime.test.ts`
-  - `pnpm --filter @weapp-tailwindcss/runtime vitest run test/transformers.test.ts`
-  - `pnpm --filter @weapp-tailwindcss/runtime vitest run test/rpx-length.test.ts`
+  - `pnpm --filter @weapp-tailwindcss/runtime exec vitest run test/create-runtime.test.ts`
+  - `pnpm --filter @weapp-tailwindcss/runtime exec vitest run test/transformers.test.ts`
+  - `pnpm --filter @weapp-tailwindcss/runtime exec vitest run test/rpx-length.test.ts`

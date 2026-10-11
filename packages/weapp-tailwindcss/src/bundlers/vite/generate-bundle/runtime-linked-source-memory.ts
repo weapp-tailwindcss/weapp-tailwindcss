@@ -2,7 +2,7 @@ import type { BundleSnapshot } from '../bundle-state'
 import type { RememberedCssSource } from './types'
 import type { InternalUserDefinedOptions } from '@/types'
 import path from 'node:path'
-import { resolveViteCssPipelineOutputFile } from './css-output'
+import { resolveViteCssPipelineOutputFile } from '../css-output'
 import { hasTailwindGenerationSource, resolveSourceStyleSourceFromOutputFile } from './sfc-style-source'
 
 export interface RememberRuntimeLinkedCssSourcesOptions {

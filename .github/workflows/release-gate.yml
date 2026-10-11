@@ -3,32 +3,86 @@ name: Release Gate
 on:
   pull_request:
     types: [opened, synchronize]
-    paths-ignore:
-      - '**/*.md'
-      - '.changeset/**'
+    paths:
+      - package.json
+      - pnpm-lock.yaml
+      - repoctl.config.ts
+      - packages/*/package.json
+      - packages-runtime/*/package.json
+      - packages-native/**
+      - packages/weapp-tailwindcss/**
+      - packages/postcss/**
+      - packages/css-compat/**
+      - packages/env/**
+      - pnpm-workspace.yaml
+      - .github/workflows/native.yml
+      - .github/workflows/release.yml
+      - scripts/verify-packed-packages.mjs
+      - scripts/release-certificate.ts
+      - .github/workflows/release-gate.yml
+      - .github/workflows/ci-scope.yml
+      - scripts/ci/**
+      - tools/ci-scope/**
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      full_verification:
+        description: 审批后完整执行版本 PR 验收，默认保留自动范围
+        type: boolean
+        required: false
+        default: false
 
 concurrency:
-  group: release-gate-${{ github.event.pull_request.number || github.ref }}
+  group: release-gate-${{ inputs.full_verification && format('full-{0}', github.run_id) || github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
+  scope:
+    uses: ./.github/workflows/ci-scope.yml
+    with:
+      full_verification: ${{ inputs.full_verification || false }}
+
+  native-artifacts:
+    needs: scope
+    if: needs.scope.outputs.core == 'true'
+    uses: ./.github/workflows/native.yml
+    with:
+      ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
+
   release-gate:
     name: Release Gate (ubuntu-latest, 24)
     runs-on: ubuntu-latest
+    needs: [scope, native-artifacts]
+    if: always() && !cancelled()
     timeout-minutes: 30
     env:
       HUSKY: 0
     steps:
+      - name: Require scope and enabled native checks
+        env:
+          SCOPE_RESULT: ${{ needs.scope.result }}
+          CORE_ENABLED: ${{ needs.scope.outputs.core }}
+          NATIVE_RESULT: ${{ needs.native-artifacts.result }}
+        run: |
+          test "$SCOPE_RESULT" = success
+          test "$CORE_ENABLED" = true || test "$CORE_ENABLED" = false
+          if test "$CORE_ENABLED" = true; then
+            test "$NATIVE_RESULT" = success
+          fi
       - name: Checkout Repo
+        if: needs.scope.outputs.core == 'true'
         uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
 
       - uses: pnpm/action-setup@v4
+        if: needs.scope.outputs.core == 'true'
 
       - name: Setup Node.js environment
+        if: needs.scope.outputs.core == 'true'
         uses: actions/setup-node@v6
         with:
           node-version: 24
@@ -36,37 +90,25 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install Dependencies
+        if: needs.scope.outputs.core == 'true'
         run: pnpm install --frozen-lockfile
 
-      - name: Verify packed deps are resolved
-        run: |
-          set -euo pipefail
-          TMP_DIR="$(mktemp -d)"
-          PACKAGES=(
-            "@weapp-tailwindcss/runtime"
-            "@weapp-tailwindcss/merge"
-            "@weapp-tailwindcss/variants"
-            "@weapp-tailwindcss/cva"
-            "@weapp-tailwindcss/typography"
-            "@weapp-tailwindcss/ui"
-            "theme-transition"
-          )
-          for pkg in "${PACKAGES[@]}"; do
-            SAFE_PKG="${pkg//@/}"
-            SAFE_PKG="${SAFE_PKG//\//_}"
-            PKG_DIR="$TMP_DIR/$SAFE_PKG"
-            mkdir -p "$PKG_DIR"
-            pnpm --filter "$pkg" pack --pack-destination "$PKG_DIR"
-            TARBALL="$(ls "$PKG_DIR"/*.tgz | head -n 1)"
-            tar -xzf "$TARBALL" -C "$PKG_DIR" package/package.json
-            if grep -n '"workspace:\*"' "$PKG_DIR/package/package.json"; then
-              echo "ERROR: workspace:* found in packed package.json for $pkg"
-              exit 1
-            fi
-          done
+      - name: Download native artifacts from this run
+        if: needs.scope.outputs.core == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          pattern: native-*
+          merge-multiple: true
+          path: packages
+
+      - name: Stage and verify all native platform packages
+        if: needs.scope.outputs.core == 'true'
+        run: pnpm native:artifacts:stage
 
       - name: Build release artifacts
+        if: needs.scope.outputs.core == 'true'
         run: pnpm build
 
-      - name: Test release artifacts
-        run: pnpm test:release
+      - name: Verify release artifacts
+        if: needs.scope.outputs.core == 'true'
+        run: pnpm release:verify

@@ -199,65 +199,6 @@ declare module '*.webmanifest' {
   export default src
 }
 
-declare module '@docusaurus/plugin-content-blog/client' {
-  export interface BlogAuthor {
-    name?: string
-    url?: string
-  }
-
-  export interface BlogTag {
-    label: string
-    permalink?: string
-  }
-
-  export interface BlogPostMetadata {
-    title: string
-    description?: string
-    permalink: string
-    date: string
-    modifiedDate?: string
-    image?: string
-    excerpt?: string
-    tags?: BlogTag[]
-    authors?: BlogAuthor[]
-  }
-
-  export interface BlogPostFrontMatter {
-    image?: string
-    geo?: unknown
-    category?: string
-    lang?: string
-  }
-
-  export function useBlogPost(): {
-    metadata: BlogPostMetadata
-    frontMatter: BlogPostFrontMatter
-  }
-}
-
-declare module '@docusaurus/plugin-content-docs/client' {
-  export interface DocFrontMatter {
-    image?: string
-    geo?: unknown
-    date?: string | number
-    last_updated_at?: string | number
-    keywords?: string[]
-    description?: string
-  }
-
-  export interface DocMetadata {
-    title: string
-    description?: string
-    permalink: string
-    lastUpdatedAt?: number
-    frontMatter: DocFrontMatter
-    keywords?: string[]
-  }
-
-  export function useDoc(): {
-    metadata: DocMetadata
-  }
-}
 declare module '*.pdf' {
   const src: string
   export default src

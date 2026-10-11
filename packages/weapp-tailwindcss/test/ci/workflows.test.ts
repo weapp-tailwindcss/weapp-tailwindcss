@@ -1,12 +1,15 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import semver from 'semver'
 import { describe, expect, it } from 'vitest'
 import YAML from 'yaml'
+import { resolveWorkflowMatrixEnv, resolveWorkflowMatrixValue } from './workflow-matrix'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(dirname, '../../../..')
 const workflowsRoot = path.join(repoRoot, '.github/workflows')
+const uploadArtifactAction = 'actions/upload-artifact@v7'
 
 function readWorkflow(filename: string) {
   const source = fs.readFileSync(path.join(workflowsRoot, filename), 'utf8')
@@ -107,6 +110,188 @@ function matrixCaseNames(rows: Array<Record<string, unknown>>) {
 }
 
 describe('ci workflows', () => {
+  it('defines a stable PR gate with cross-platform smoke coverage', () => {
+    const { workflow, source } = readWorkflow('pr-gate.yml')
+    const platformJob = workflow.jobs['platform-watch']
+    const rows: Array<Record<string, unknown>> = platformJob.strategy.matrix.include
+    const runners = rows.map(row => row.runner_label)
+
+    expect(workflow.on.pull_request.types).toEqual([
+      'opened',
+      'synchronize',
+      'reopened',
+      'ready_for_review',
+    ])
+    expect(runners).toEqual(expect.arrayContaining(['linux', 'macos', 'windows']))
+    expect(rows).toEqual(expect.arrayContaining([
+      expect.objectContaining({ runner_label: 'macos', case_name: 'uni-app-vite-tailwindcss-v4:mp-weixin', web_only: '0' }),
+    ]))
+    expect(platformJob.strategy['fail-fast']).toBe(false)
+    const platformDevJob = workflow.jobs['platform-dev']
+    expect(platformDevJob.strategy['fail-fast']).toBe(false)
+    expect(platformDevJob.strategy.matrix.include).toEqual(expect.arrayContaining([
+      expect.objectContaining({ runner_label: 'linux' }),
+      expect.objectContaining({ runner_label: 'macos' }),
+      expect.objectContaining({ runner_label: 'windows' }),
+    ]))
+    expect(platformDevJob.steps.some((step: Record<string, unknown>) => String(step.run ?? '').includes('e2e:dev:smoke'))).toBe(true)
+    expect(workflow.jobs['pr-gate'].needs).toEqual(['scope', 'quality', 'core-smoke', 'platform-watch', 'platform-dev', 'windows-utilities', 'portable-demos', 'css-compat', 'env'])
+    expect(source).toContain('test "$result" = success')
+    expect(source).toContain('pr-gate-package-build-${{ github.run_id }}')
+  })
+
+  it('bounds PR unit test concurrency without relaxing memory or coverage gates', () => {
+    const { workflow } = readWorkflow('pr-gate.yml')
+    const quality = workflow.jobs.quality
+    const run = stepRuns(workflow, 'quality').find(run => run.includes('pnpm exec vitest run'))!
+
+    expect(quality.strategy.matrix.shard).toEqual([1, 2, 3])
+    expect(run).toContain('--max-rss-mb 5632 --max-rss-delta-mb 4608')
+    expect(run).toContain('--shard=${{ matrix.shard }}/3')
+    expect(run).toContain('--maxWorkers=2')
+    expect(run).toContain('--update=none')
+    expect(run).not.toMatch(/--(?:exclude|testNamePattern|passWithNoTests)/)
+    expect(quality['continue-on-error']).toBeUndefined()
+  })
+
+  it('requires current-commit portable demo evidence in the PR gate', () => {
+    const { workflow: gate, source } = readWorkflow('pr-gate.yml')
+    expect(gate.jobs['portable-demos'].uses).toBe('./.github/workflows/demo-matrix.yml')
+    expect(gate.jobs['portable-demos'].if).toBe("needs.scope.outputs.core == 'true'")
+    expect(source).toContain('test "$DEMOS_RESULT" = success')
+    expect(source).toContain('"$DEV_RESULT" "$UTILITIES_RESULT"')
+    const { workflow } = readWorkflow('demo-matrix.yml')
+    expect(workflow.jobs.demos.strategy['fail-fast']).toBe(false)
+    expect(workflow.jobs.demos['timeout-minutes']).toBeLessThanOrEqual(30)
+    expect(workflow.jobs.demos.steps[0].with.ref).toBe('${{ github.event.pull_request.head.sha || github.sha }}')
+    const runs = stepRuns(workflow, 'demos')
+    expect(runs).toContain('pnpm build:ci')
+    expect(runs).toContain('pnpm e2e:demo:matrix')
+    expect(runs.join('\n')).not.toMatch(/--(?:update|build-only)/)
+    // 局部重跑复用分片身份，必须替换旧报告，避免汇总读到上一轮失败证据。
+    const upload = workflow.jobs.demos.steps.find((step: Record<string, unknown>) => step.uses === uploadArtifactAction)
+    expect(upload.with.name).toBe('portable-demo-${{ matrix.os }}-node${{ matrix.node }}-${{ matrix.shard }}')
+    expect(upload.with.overwrite).toBe(true)
+    expect(workflow.jobs.gate.needs).toEqual(['catalog', 'demos'])
+    expect(workflow.jobs.gate.if).toBe('always() && !cancelled()')
+    const evidence = stepRuns(workflow, 'gate').join('\n')
+    expect(evidence).toContain('test "$CATALOG_RESULT" = success')
+    expect(evidence).toContain('test "$DEMOS_RESULT" = success')
+    expect(evidence).toContain('node scripts/ci/demo-matrix/gate.mjs')
+  })
+
+  it('keeps heavyweight legacy CI jobs out of automatic pull requests while allowing approved full verification', () => {
+    const { workflow } = readWorkflow('ci.yml')
+    for (const jobName of ['quality-static', 'unit-tests', 'e2e-static', 'e2e-focused', 'e2e-multiplatform', 'e2e-watch', 'compatibility']) {
+      expect(workflow.jobs[jobName].if, `${jobName} should require approval for the full PR path`).toBe('(inputs.full_verification || github.event_name != \'pull_request\') && needs.scope.outputs.core == \'true\'')
+    }
+  })
+
+  it('gates expensive workflows by scope and keeps website validation in one job', () => {
+    const { workflow: benchmark } = readWorkflow('benchmark.yml')
+    const { workflow: releaseGate } = readWorkflow('release-gate.yml')
+    const { workflow: coveragePr } = readWorkflow('e2e-coverage-pr.yml')
+    const { workflow: coverageNightly } = readWorkflow('e2e-coverage-nightly.yml')
+    const { workflow: docs } = readWorkflow('docs.yml')
+    const { source: websiteSource } = readWorkflow('website-seo-quality.yml')
+
+    expect(benchmark.on.pull_request.paths).toEqual(expect.arrayContaining([
+      'benchmark/**',
+      'packages/weapp-tailwindcss/src/bundlers/**',
+      'packages/weapp-tailwindcss/src/generator/**',
+    ]))
+    expect(releaseGate.on.pull_request.paths).toEqual(expect.arrayContaining([
+      'package.json',
+      'repoctl.config.ts',
+      'packages/*/package.json',
+    ]))
+    expect(coveragePr.on.pull_request).toBeUndefined()
+    expect(coverageNightly.on.push).toBeUndefined()
+    expect(docs.on.pull_request).toBeUndefined()
+    expect(websiteSource).toContain('Build website')
+    expect(websiteSource).toContain('Verify Worker routing locally')
+    expect(websiteSource).toContain('Validate Worker bundle')
+    const sharedSetup = readText('.github/actions/setup-pnpm/action.yml')
+    expect(sharedSetup).toContain('key: playwright-${{ runner.os }}-${{ hashFiles(\'pnpm-lock.yaml\') }}')
+    expect(sharedSetup).toContain('PNPM_INSTALL_TIMEOUT_MS: \'600000\'')
+    expect(sharedSetup).toContain('node scripts/ci/install-workspace.mjs')
+  })
+
+  it('keeps pnpm updates within the verified compatibility boundaries', () => {
+    const workspace = YAML.parse(readText('pnpm-workspace.yaml')) as {
+      update?: { ignoreDeps?: string[] }
+    }
+    const packageJson = readPackageJson<{ scripts: Record<string, string> }>('package.json')
+
+    expect(workspace.update?.ignoreDeps).toEqual([
+      '@babel/*',
+      'babel-*',
+      '@tarojs/*',
+      'eslint-config-taro',
+      '@dcloudio/*',
+      '@mpxjs/*',
+      '@expo/*',
+      'expo',
+      '@react-native/*',
+      '@react-native-community/*',
+      '@react-native-picker/*',
+      '@rnx-kit/*',
+      'react-native',
+      'react-native-*',
+      'metro*',
+      'react',
+      'react-dom',
+      'react-refresh',
+      '@types/react',
+      '@types/react-dom',
+      'vite',
+      '@vitejs/plugin-*',
+      'vite-plugin-*',
+      'vite4',
+      'vite5',
+      'vite6',
+      'vite7',
+      'vite8',
+      'rollup',
+      'webpack',
+      'webpack-dev-server',
+      'typescript',
+      'typescript-eslint',
+      '@typescript-eslint/*',
+      'vue',
+      '@vue/*',
+      'vue-i18n',
+      'vue-router',
+      'vue-tsc',
+      'pinia',
+      '@nutui/*',
+      'c12',
+      'cac',
+      'execa',
+      'jsdom',
+      '@types/jsdom',
+      'pako',
+      '@types/pako',
+      '@types/gulp-replace',
+      'gulp-util',
+      'unplugin-vue-router',
+    ])
+    expect(packageJson.scripts['up:pkg:latest']).toBe('tsx scripts/update-packages.ts up -rLi --filter "./packages/*" --filter "./packages-runtime/*" --filter "./demo/*" --filter "./demo/web/*" --filter "!./demo/*uni-app*" --filter "!./demo/issue-uview-plus-cssentries"')
+    expect(packageJson.scripts['up:pkg']).toBe('tsx scripts/update-packages.ts up -ri --filter "./packages/*" --filter "./packages-runtime/*" --filter "./demo/*" --filter "./demo/web/*" --filter "!./demo/*uni-app*" --filter "!./demo/issue-uview-plus-cssentries"')
+  })
+
+  it('uses a simulator-reachable Metro host for Expo iOS CI', () => {
+    const { workflow } = readWorkflow('react-native-compatibility.yml')
+    const iosSteps: Array<Record<string, unknown>> = workflow.jobs.ios.steps
+    const runStep = iosSteps.find(step => step.name === 'Run Expo iOS compatibility')
+
+    expect(runStep).toMatchObject({
+      env: { RN_IOS_HOST: '127.0.0.1' },
+      run: 'pnpm e2e:react-native:ios',
+    })
+    expect(readText('e2e/react-native/run-native.ts')).toContain("runtimeHost !== '127.0.0.1' ? '--lan' : '--localhost'")
+  })
+
   it('keeps the core CI quality gate on package changes', () => {
     const { workflow } = readWorkflow('ci.yml')
 
@@ -121,19 +306,19 @@ describe('ci workflows', () => {
     const qualityRuns = stepRuns(workflow, 'quality-static')
     const unitRuns = stepRuns(workflow, 'unit-tests')
     expect(qualityRuns).toEqual(expect.arrayContaining([
-      'pnpm install --frozen-lockfile',
+      'node scripts/ci/install-workspace.mjs',
       'pnpm lint',
     ]))
     expect(hasStepRunCommand(qualityRuns, 'pnpm build:ci')).toBe(true)
     expectPlaywrightInstallRetry(
       unitRuns.find(run => run.includes('playwright install chromium'))!,
-      'pnpm exec playwright install chromium',
+      'pnpm exec playwright install chromium chromium-headless-shell',
     )
     expect(hasStepRunCommand(unitRuns, 'pnpm build:ci')).toBe(true)
     expect(unitRuns.join('\n')).toContain('pnpm exec vitest run --shard=${{ matrix.shard }}/${{ matrix.shard_total }}')
     expect(workflow.jobs['unit-tests'].strategy.matrix.shard).toEqual([1, 2, 3])
     expect(workflow.jobs['unit-tests'].strategy.matrix.shard_total).toEqual([3])
-    expect(workflow.jobs.quality.needs).toEqual(['quality-static', 'unit-tests'])
+    expect(workflow.jobs.quality.needs).toEqual(['scope', 'quality-static', 'unit-tests'])
     expect(stepRuns(workflow, 'quality').join('\n')).toContain('test "$STATIC_RESULT" = success')
     expect(stepRuns(workflow, 'quality').join('\n')).toContain('test "$UNIT_RESULT" = success')
     expect(hasStepRunCommand(unitRuns, 'pnpm test:release')).toBe(false)
@@ -156,16 +341,18 @@ describe('ci workflows', () => {
     expect(hasStepRunCommand(qualityRuns, 'pnpm build:ci')).toBe(true)
     expect(staticJob['timeout-minutes']).toBe(15)
     expect(staticJob.strategy['fail-fast']).toBe(false)
+    expect(staticJob.strategy['max-parallel']).toBe(1)
     expect(staticJob.strategy.matrix.shard).toEqual([1, 2, 3])
     expect(staticJob.strategy.matrix.shard_total).toEqual([3])
-    expect(staticRuns.join('\n')).toContain('pnpm exec playwright install chromium')
+    expect(staticRuns.join('\n')).toContain('pnpm exec playwright install chromium chromium-headless-shell')
     expect(hasStepRunCommand(staticRuns, 'pnpm build:ci')).toBe(true)
-    expect(hasStepRunCommand(staticRuns, 'pnpm e2e:static --exclude e2e/taro-h5-build-smoke.test.ts --shard=${{ matrix.shard }}/${{ matrix.shard_total }}')).toBe(true)
+    expect(hasStepRunCommand(staticRuns, 'pnpm e2e:static --exclude e2e/apps-generator-mode-compare.test.ts --exclude e2e/taro-h5-build-smoke.test.ts --shard=${{ matrix.shard }}/${{ matrix.shard_total }}')).toBe(true)
     expect(hasStepRunCommand(focusedRuns, 'pnpm build:ci')).toBe(true)
     expect(hasStepRunCommand(multiplatformRuns, 'pnpm build:ci')).toBe(true)
 
     expect(workflow.jobs['e2e-focused'].strategy['fail-fast']).toBe(false)
     expect(matrixCaseNames(focusedRows)).toEqual([
+      'apps-generator',
       'generator-web-parity',
       'lynx-rspeedy',
       'preprocessor-source',
@@ -176,11 +363,13 @@ describe('ci workflows', () => {
       'uni-h5-dev-hmr',
       'demo-user-workflow',
       'demo-platform-output-matrix',
+      'coverage-contract',
       'issues-977-978',
       'vite-web-hmr-unit',
       'watch-hmr-coverage-contract',
     ])
     expect(focusedRows.map(row => row.command)).toEqual([
+      'pnpm e2e:apps-generator',
       'pnpm e2e:generator-parity',
       'pnpm e2e:lynx',
       'pnpm e2e:preprocessor',
@@ -191,6 +380,7 @@ describe('ci workflows', () => {
       'pnpm e2e:uni:h5-dev',
       'pnpm e2e:demo-user-workflow',
       'pnpm exec vitest run -c ./e2e/vitest.e2e.config.ts e2e/e2e-matrix.test.ts',
+      'pnpm e2e:coverage:contract',
       'pnpm e2e:issues-977-978',
       'pnpm --filter weapp-tailwindcss exec vitest run test/bundlers/vite-plugin.bundle.unit.test.ts -t "keeps the full web runtime" --coverage.enabled=false',
       'pnpm --filter weapp-tailwindcss exec vitest run test/watch-hmr-coverage-matrix.unit.test.ts --coverage.enabled=false',
@@ -215,7 +405,7 @@ describe('ci workflows', () => {
     for (const jobName of ['e2e-static', 'e2e-focused', 'e2e-multiplatform'] as const) {
       const installRun = stepRuns(workflow, jobName).find(run => run.includes('playwright install chromium'))
       expect(installRun, `${jobName} should install Playwright Chromium`).toBeDefined()
-      expectPlaywrightInstallRetry(installRun!, 'pnpm exec playwright install chromium')
+      expectPlaywrightInstallRetry(installRun!, 'pnpm exec playwright install chromium chromium-headless-shell')
     }
   })
 
@@ -237,12 +427,16 @@ describe('ci workflows', () => {
       }
     }
 
-    expect(benchmarkWorkflow.jobs['benchmark-shard']['timeout-minutes']).toContain("github.event_name == 'pull_request' && 30")
+    expect(benchmarkWorkflow.jobs['benchmark-shard']['timeout-minutes']).toContain('(github.event_name == \'pull_request\' && !inputs.full_verification) && 30')
     expect(releaseGateWorkflow.jobs['release-gate']['timeout-minutes']).toBe(30)
 
     const watchRows: Array<Record<string, unknown>> = watchWorkflow.jobs['pr-quick-gate'].strategy.matrix.include
-    expect(watchRows.every(row => Number(row.timeout_minutes) <= 30)).toBe(true)
-    expect(watchRows.every(row => Number(row.watch_command_timeout_ms) <= 1_500_000)).toBe(true)
+    const extendedWindowsToutiaoRows = watchRows.filter(row => row.os === 'windows-latest' && row.watch_case === 'uni-app-vite-tailwindcss-v4:mp-toutiao')
+    const standardWatchRows = watchRows.filter(row => !extendedWindowsToutiaoRows.includes(row))
+    expect(extendedWindowsToutiaoRows).toHaveLength(1)
+    expect(extendedWindowsToutiaoRows[0]).toMatchObject({ timeout_minutes: 60, watch_command_timeout_ms: '3000000' })
+    expect(standardWatchRows.every(row => Number(row.timeout_minutes) <= 30)).toBe(true)
+    expect(standardWatchRows.every(row => Number(row.watch_command_timeout_ms) <= 1_500_000)).toBe(true)
     for (const jobName of ['root-style-import-shell-hmr', 'uni-app-css-post-hmr']) {
       expect(
         watchWorkflow.jobs[jobName]['timeout-minutes'],
@@ -288,36 +482,35 @@ describe('ci workflows', () => {
     expect(readText('demo/weapp-vite-tailwindcss-v4/tailwind.css')).toContain('@import "tailwindcss" source(none);')
   })
 
-  it('keeps @tailwindcss-mangle/engine managed by the workspace catalog', () => {
+  it('builds the generator dependency chain before React Native Web smoke', () => {
+    const packageJson = readPackageJson<{ scripts: Record<string, string> }>('package.json')
+    const script = packageJson.scripts['e2e:react-native-compatibility']
+
+    expect(script).toContain('pnpm --filter weapp-tailwindcss... run build')
+    expect(script.indexOf('pnpm --filter weapp-tailwindcss... run build')).toBeLessThan(script.indexOf('pnpm --filter @weapp-tailwindcss/react-native build'))
+  })
+
+  it('uses the workspace v4 engine in every product package', () => {
     const workspace = YAML.parse(readText('pnpm-workspace.yaml')) as {
       catalogs?: Record<string, Record<string, string>>
       overrides?: Record<string, string>
     }
-    const lockfile = YAML.parse(readText('pnpm-lock.yaml')) as {
-      catalogs?: Record<string, Record<string, { specifier?: string, version?: string }>>
+    const lockfile = YAML.parseAllDocuments(readText('pnpm-lock.yaml'))[1]?.toJS() as {
       importers?: Record<string, {
         dependencies?: Record<string, { specifier?: string, version?: string }>
       }>
     }
-    const catalogVersion = workspace.catalogs?.tailwindcssMangleEngine?.['@tailwindcss-mangle/engine']
-    const tailwindVersion = lockfile.catalogs?.tailwindcss4?.tailwindcss?.version
-
-    expect(catalogVersion).toBeDefined()
-    expect(tailwindVersion).toBeDefined()
+    expect(workspace.catalogs?.tailwindcssMangleEngine).toBeUndefined()
     expect(workspace.overrides?.['@tailwindcss-mangle/engine']).toBeUndefined()
-    expect(lockfile.catalogs?.tailwindcssMangleEngine?.['@tailwindcss-mangle/engine']).toEqual({
-      specifier: catalogVersion,
-      version: catalogVersion,
-    })
-
-    for (const importer of ['packages/postcss', 'packages/weapp-tailwindcss'] as const) {
-      const packageJson = readPackageJson<{ dependencies?: Record<string, string> }>(`${importer}/package.json`)
-      const dependency = lockfile.importers?.[importer]?.dependencies?.['@tailwindcss-mangle/engine']
-
-      expect(packageJson.dependencies?.['@tailwindcss-mangle/engine'], importer)
-        .toBe('catalog:tailwindcssMangleEngine')
-      expect(dependency?.specifier, importer).toBe('catalog:tailwindcssMangleEngine')
-      expect(dependency?.version, importer).toBe(`${catalogVersion}(tailwindcss@${tailwindVersion})`)
+    for (const importer of ['packages/engine', 'packages/postcss', 'packages/weapp-tailwindcss', 'packages/cli']) {
+      const manifest = readPackageJson<{ dependencies?: Record<string, string> }>(`${importer}/package.json`)
+      expect(manifest.dependencies?.['@tailwindcss-mangle/engine']).toBeUndefined()
+      expect(lockfile.importers?.[importer]?.dependencies?.['@tailwindcss-mangle/engine']).toBeUndefined()
+      if (importer !== 'packages/engine') {
+        expect(manifest.dependencies?.['@weapp-tailwindcss/engine']).toBe('workspace:*')
+        expect(lockfile.importers?.[importer]?.dependencies?.['@weapp-tailwindcss/engine'])
+          .toEqual({ specifier: 'workspace:*', version: 'link:../engine' })
+      }
     }
   })
 
@@ -327,7 +520,7 @@ describe('ci workflows', () => {
 
     expect(workflow.jobs.compatibility.strategy['fail-fast']).toBe(false)
     expect(matrixIds(workflowDispatchRows)).toEqual(expect.arrayContaining([
-      'ubuntu-latest:22.12.0:node22-min-core',
+      'ubuntu-latest:22.18.0:node22-min-core',
       'ubuntu-latest:24:node24-core',
       'windows-latest:22:windows-node22-core',
       'windows-latest:24:windows-node24-core',
@@ -341,6 +534,64 @@ describe('ci workflows', () => {
     expect(compatibilityRuns).toContain('pnpm build:ci')
     expect(compatibilityRuns).toContain('test/bundlers/vite-plugin.uni-app-x.unit.test.ts')
     expect(compatibilityRuns).toContain('test/watch-hmr-coverage-matrix.unit.test.ts')
+    const regressionRun = workflow.jobs.compatibility.steps.find(step => step.name === 'Run core compatibility regression tests')?.run
+    expect(regressionRun).toContain('test/watch-hmr-memory-sampler.unit.test.ts')
+    expect(regressionRun).toContain('test/watch-hmr-memory-source.unit.test.ts')
+    expect(regressionRun).toContain('--update=none')
+  })
+
+  it('keeps hosted coverage reports diagnostic until complete evidence executors are available', () => {
+    const { workflow: prWorkflow, source: prSource } = readWorkflow('e2e-coverage-pr.yml')
+    const { workflow: nightlyWorkflow, source: nightlySource } = readWorkflow('e2e-coverage-nightly.yml')
+    const prRuns = stepRuns(prWorkflow, 'coverage-gate').join('\n')
+    const nightlyRuns = stepRuns(nightlyWorkflow, 'contract').join('\n')
+
+    expect(prRuns).toContain('pnpm e2e:coverage:report --source aggregate --include-baselines')
+    expect(nightlyRuns).toContain('pnpm e2e:coverage:report --source aggregate --include-baselines')
+    expect(prSource).toContain('coverage-diagnostic-${{ github.sha }}')
+    expect(nightlySource).toContain('coverage-diagnostic-${{ github.sha }}')
+    expect(prSource).not.toContain('--source ci')
+    expect(nightlySource).not.toContain('--source nightly')
+  })
+
+  it('keeps nightly hosted static invocation cross-platform', () => {
+    const { workflow } = readWorkflow('e2e-coverage-nightly.yml')
+    const job = workflow.jobs['framework-matrix']
+    const matrix = job.strategy.matrix
+    const runStep = job.steps.find((step: Record<string, unknown>) => {
+      return step.name === 'Run hosted static suite'
+    })
+    const setupNode = job.steps.find((step: Record<string, unknown>) => String(step.uses ?? '').startsWith('actions/setup-node@'))
+
+    expect(matrix.shard).toEqual([1, 2, 3, 4])
+    expect(matrix.host).toEqual([
+      { os: 'ubuntu-latest', node: 22 },
+      { os: 'macos-15', node: 22 },
+      { os: 'windows-latest', node: 22 },
+      { os: 'ubuntu-latest', node: 24 },
+    ])
+    expect(matrix.include).toBeUndefined()
+    expect(matrix.exclude).toBeUndefined()
+    expect(job.strategy['fail-fast']).toBe(false)
+    expect(job['continue-on-error']).toBeUndefined()
+    expect(job['timeout-minutes']).toBe(45)
+    expect(job.env).toEqual({ E2E_SKIP_OPEN_AUTOMATOR: '1', E2E_SKIP_HBUILDERX: '1' })
+    expect(runStep.env).toBeUndefined()
+    expect(runStep['working-directory']).toBeUndefined()
+    // 每个 host 都执行同一完整 suite 的四个分片，不能用 include/exclude 或环境过滤缩小范围。
+    for (const host of matrix.host) {
+      const commands = matrix.shard.map((shard: number) => {
+        const row = { host, shard }
+        expect(resolveWorkflowMatrixValue(job['runs-on'], row)).toBe(host.os)
+        expect(resolveWorkflowMatrixValue(setupNode.with['node-version'], row)).toBe(String(host.node))
+        return resolveWorkflowMatrixValue(runStep.run, row)
+      })
+      expect(commands).toEqual([1, 2, 3, 4].map(shard => `pnpm e2e:static --shard=${shard}/4`))
+    }
+    for (const command of ['pnpm e2e:frameworks:matrix', 'pnpm e2e:multiplatform-build']) {
+      const step = job.steps.find((step: Record<string, unknown>) => step.run === command)
+      expect(step.if).toBe('matrix.shard == 1')
+    }
   })
 
   it('keeps a lightweight cross-platform e2e watch gate in CI', () => {
@@ -372,12 +623,12 @@ describe('ci workflows', () => {
     expect(stepRuns(workflow, 'e2e-watch')).toContain('pnpm e2e:watch')
     expectPlaywrightInstallRetry(
       stepRuns(workflow, 'e2e-watch').find(run => run.includes('playwright install chromium'))!,
-      'pnpm --filter @weapp-tailwindcss/scripts exec playwright install chromium',
+      'pnpm --filter @weapp-tailwindcss/scripts exec playwright install chromium chromium-headless-shell',
     )
     expect(runStep.env.E2E_WATCH_WEB_ONLY).toBe("${{ matrix.watch_web_only || '0' }}")
     expect(runStep.env.E2E_WATCH_MAX_PLUGIN_PROCESS_MS).toBe("${{ matrix.watch_max_plugin_process_ms || '6000' }}")
     const uploadSteps = job.steps.filter((step: Record<string, unknown>) => {
-      return step.uses === 'actions/upload-artifact@v4'
+      return step.uses === uploadArtifactAction
     })
     expect(uploadSteps).toHaveLength(2)
     for (const step of uploadSteps) {
@@ -387,7 +638,7 @@ describe('ci workflows', () => {
     }
     expect(job.steps.some((step: Record<string, unknown>) => {
       const withConfig = step.with as Record<string, unknown> | undefined
-      return step.uses === 'actions/upload-artifact@v4'
+      return step.uses === uploadArtifactAction
         && typeof withConfig?.path === 'string'
         && withConfig.path.includes('e2e/benchmark/e2e-watch-hmr/hmr-speed-report.md')
     })).toBe(true)
@@ -443,33 +694,97 @@ describe('ci workflows', () => {
   })
 
   it('keeps release publishing on npm trusted publishing', () => {
-    const { workflow } = readWorkflow('release.yml')
-    const setupNodeStep = workflow.jobs.release.steps.find((step: Record<string, unknown>) => {
-      return step.uses === 'actions/setup-node@v6'
+    const { source, workflow } = readWorkflow('release.yml')
+    const releaseSteps: Array<Record<string, any>> = workflow.jobs.release.steps
+    const checkoutStep = releaseSteps.find((step: Record<string, unknown>) => {
+      return String(step.uses).startsWith('actions/checkout@')
     })
-    const releaseStep = workflow.jobs.release.steps.find((step: Record<string, unknown>) => {
-      return step.id === 'changesets'
+    const pnpmSetupStep = releaseSteps.find((step: Record<string, unknown>) => {
+      return String(step.uses).startsWith('pnpm/action-setup@')
+    })
+    const setupNodeStep = releaseSteps.find((step: Record<string, unknown>) => {
+      return String(step.uses).startsWith('actions/setup-node@')
+    })
+    const playwrightStep = releaseSteps.find((step: Record<string, unknown>) => {
+      return step.name === 'Install Playwright Chromium'
+    })
+    const releaseStep = releaseSteps.find((step: Record<string, unknown>) => {
+      return step.name === 'Verify release'
     })
 
+    expect(source).toContain('# repoctl-managed: release/v2')
+    expect(checkoutStep.uses).toBe('actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1')
+    expect(pnpmSetupStep.uses).toBe('pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86')
+    expect(setupNodeStep.uses).toBe('actions/setup-node@820762786026740c76f36085b0efc47a31fe5020')
     expect(setupNodeStep.with['node-version']).toBe(24)
-    expect(workflow.permissions['id-token']).toBe('write')
-    expect(releaseStep.env.NPM_CONFIG_PROVENANCE).toBe(true)
-    expect(releaseStep.env.NPM_TOKEN).toBeUndefined()
-    expect(releaseStep.env.NODE_AUTH_TOKEN).toBeUndefined()
+    expect(setupNodeStep.with['registry-url']).toBeUndefined()
+    expect(workflow.concurrency.group).toContain(`&& 'prepare' || 'publish'`)
+    expect(workflow.concurrency.group).toContain(`inputs.oidc_audit && '-oidc-audit'`)
+    expect(workflow.concurrency['cancel-in-progress']).toBe(`\${{ !inputs.oidc_audit && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'prepare')) }}`)
+    expect(workflow.jobs.release.needs).toEqual(['plan', 'native-artifacts'])
+    // eslint-disable-next-line no-template-curly-in-string -- 按字面量核验 GitHub Actions 表达式。
+    expect(workflow.jobs.release.if).toBe("${{ !cancelled() && github.event_name != 'pull_request_target' && needs.plan.result == 'success' && needs.plan.outputs.run == 'true' && needs.native-artifacts.result == 'success' }}")
+    expect(workflow.jobs.release.permissions['id-token']).toBe('write')
+    expect(workflow.env.NPM_CONFIG_PROVENANCE).toBe(true)
+    expect(workflow.env.npm_config_registry).toBe('https://registry.npmjs.org')
+    expectPlaywrightInstallRetry(playwrightStep.run, 'pnpm exec playwright install chromium chromium-headless-shell')
+    expect(releaseSteps.indexOf(playwrightStep)).toBeLessThan(releaseSteps.indexOf(releaseStep))
+    expect(releaseStep.run).toBe('node "$RELEASE_STAGE_DRIVER" verify')
+    expect(workflow.jobs.release.env.GITHUB_TOKEN).toContain('secrets.REPOCTL_RELEASE_TOKEN || secrets.CHANGESETS_RELEASE_TOKEN || github.token')
+    expect(workflow.jobs.release.env.NPM_TOKEN).toBeUndefined()
+    expect(workflow.jobs.release.env.NODE_AUTH_TOKEN).toBeUndefined()
+    expect(source).not.toContain('changesets/action')
+    expect(source).not.toContain('NPM_TOKEN:')
+    expect(source).not.toContain('NODE_AUTH_TOKEN:')
   })
 
-  it('triggers npmmirror sync only after a successful npm publish', () => {
-    const { workflow } = readWorkflow('release.yml')
-    const syncStep = workflow.jobs.release.steps.find((step: Record<string, unknown>) => {
-      return step.name === 'Trigger npmmirror sync'
-    })
+  it('requires a certificate only for explicit release publishing', () => {
+    const { source, workflow } = readWorkflow('release.yml')
+    const releaseSteps: Array<Record<string, any>> = workflow.jobs.release.steps
+    const downloadStep = releaseSteps.find(step => step.name === 'Download same-commit coverage certificate')
+    const validateStep = releaseSteps.find(step => step.name === 'Validate release certificate')
 
-    expect(syncStep).toMatchObject({
-      if: "steps.changesets.outputs.published == 'true'",
-      'continue-on-error': true,
-      run: 'node scripts/sync-npmmirror.mjs',
-    })
-    expect(syncStep.env.PUBLISHED_PACKAGES).toContain("steps.changesets.outputs['published-packages']")
+    expect(downloadStep.if).toBe("!inputs.version_pr && (inputs.mode == 'publish' || inputs.mode == 'publish-unpublished')")
+    expect(validateStep.if).toBe("!inputs.version_pr && (inputs.mode == 'publish' || inputs.mode == 'publish-unpublished')")
+    expect(source).toContain('RELEASE_CERTIFICATE_RUN_ID: ${{ vars.RELEASE_CERTIFICATE_RUN_ID }}')
+    expect(source).toContain('Release certificate is not configured')
+    expect(source).toContain('gh run view "$run_id" --json headSha,status,conclusion')
+    expect(source).toContain('test "$run_head_sha" = "$GITHUB_SHA"')
+    expect(source).toContain('test "$run_status" = completed && test "$run_conclusion" = success')
+    expect(source).toContain('certificate_name="coverage-certificate-$GITHUB_SHA"')
+    expect(source).toContain('did not upload the required $certificate_name artifact')
+    expect(source).not.toContain('gh run list --workflow e2e-coverage-nightly.yml')
+  })
+
+  it('核验 OIDC 时独立检查全部包并阻断发布、证书和覆盖率步骤', () => {
+    const { workflow } = readWorkflow('release.yml')
+    const job = workflow.jobs['oidc-audit']
+    expect(workflow.on.workflow_dispatch.inputs.oidc_audit).toMatchObject({ type: 'boolean', default: false })
+    expect(workflow.jobs.plan.if).toContain('!inputs.oidc_audit')
+    expect(job.if).toBe('inputs.oidc_audit')
+    expect(job.needs).toBeUndefined()
+    expect(job.env).toBeUndefined()
+    expect(job.steps.find((step: Record<string, unknown>) => step.name === 'Audit npm OIDC').run)
+      .toBe('pnpm exec repo release ci --mode oidc-audit')
+    expect(job.steps.some((step: Record<string, unknown>) => /native|certificate|Codecov/.test(String(step.name)))).toBe(false)
+  })
+
+  it('runs release verification and npmmirror sync through repoctl hooks', () => {
+    const config = readText('repoctl.config.ts')
+    const packageJson = readPackageJson<{ scripts: Record<string, string> }>('package.json')
+
+    expect(config).toContain("verify: ['release:verify']")
+    expect(config).toContain('beforeVersion: [\'native:artifacts:before-version\']')
+    expect(config).toContain('afterVersion: [\'native:artifacts:after-version\']')
+    expect(config).toContain('beforePublish: [\'native:artifacts:verify\']')
+    expect(config).toContain("script: 'release:sync-npmmirror'")
+    expect(config).toContain('continueOnError: true')
+    expect(config).toContain('idempotent: true')
+    expect(packageJson.scripts['release:verify']).toBe('pnpm native:artifacts:verify && node scripts/verify-packed-packages.mjs && pnpm test:release')
+    expect(packageJson.scripts['native:artifacts:before-version']).toBe('node packages/weapp-tailwindcss/native/release.mjs before-version')
+    expect(packageJson.scripts['native:artifacts:after-version']).toBe('node packages/weapp-tailwindcss/native/release.mjs after-version')
+    expect(packageJson.scripts['release:sync-npmmirror']).toBe('repo release sync-npmmirror --published')
+    expect(packageJson.scripts['sync:npmmirror']).toBe('repo release sync-npmmirror --all')
   })
 
   it('keeps PR benchmark coverage on the smoke demo matrix', () => {
@@ -484,16 +799,16 @@ describe('ci workflows', () => {
     expect(matrixJob.outputs.include).toContain('steps.matrix.outputs.include')
     expect(job.needs).toBe('benchmark-matrix')
     expect(job.strategy['fail-fast']).toBe(false)
-    expect(job.strategy['max-parallel']).toBe(6)
-    expect(job['timeout-minutes']).toContain("github.event_name == 'pull_request' && 30")
+    expect(job.strategy['max-parallel']).toBe(2)
+    expect(job['timeout-minutes']).toContain('(github.event_name == \'pull_request\' && !inputs.full_verification) && 30')
     expect(job['timeout-minutes']).toContain('|| 45')
     expect(matrixInclude).toContain('needs.benchmark-matrix.outputs.include')
     expect(job.env.BENCH_ONLY).toBe('${{ matrix.bench_only }}')
-    expect(job.env.BENCH_BUILD_RUNS).toContain("github.event_name == 'pull_request' && '3'")
-    expect(job.env.BENCH_HMR_RUNS).toContain("github.event_name == 'pull_request' && '6'")
+    expect(job.env.BENCH_BUILD_RUNS).toBe("${{ github.event.inputs.build_runs || '3' }}")
+    expect(job.env.BENCH_HMR_RUNS).toContain('(github.event_name == \'pull_request\' && !inputs.full_verification) && \'3\'')
     expect(runCommand).toContain('--baseline-ref')
     expect(runCommand).toContain('--only "$BENCH_ONLY"')
-    expect(workflow.jobs['current-vs-published'].needs).toBe('benchmark-shard')
+    expect(workflow.jobs['current-vs-published'].needs).toEqual(['scope', 'benchmark-shard'])
     const publishedRuns = stepRuns(workflow, 'current-vs-published').join('\n')
     expect(publishedRuns).toContain('test "$BENCHMARK_RESULT" = success')
     expect(publishedRuns).toContain('report-shard-failures.mjs')
@@ -507,29 +822,63 @@ describe('ci workflows', () => {
     })).toBe(true)
   })
 
-  it('keeps release version phase lightweight inside changesets action', () => {
-    const { workflow } = readWorkflow('release.yml')
-    const releaseStep = workflow.jobs.release.steps.find((step: Record<string, unknown>) => {
-      return step.id === 'changesets'
+  it('grants the PR benchmark reporter permission to publish pull request comments', () => {
+    const { source, workflow } = readWorkflow('benchmark-pr-report.yml')
+    const commentStep = workflow.jobs.publish.steps.find((step: Record<string, unknown>) => {
+      return step.name === 'Update PR comment'
     })
-    const publishScript = readText('scripts/publish-packages.mjs')
-    const latestScript = publishScript.match(/function publishLatest\(options\) \{\n([\s\S]*?)\n\}/)?.[1] ?? ''
-    const prereleaseScript = publishScript.match(/function publishPrerelease\(tag, options\) \{\n([\s\S]*?)\n\}/)?.[1] ?? ''
-    const latestVersionBranch = latestScript.match(
-      /if \(options\.phase === 'version'\) \{\n([\s\S]*?)\n  \}/,
-    )?.[1] ?? ''
-    const prereleaseVersionBranch = prereleaseScript.match(
-      /if \(options\.phase === 'version'\) \{\n([\s\S]*?)\n    return\n  \}/,
-    )?.[1] ?? ''
 
-    expect(releaseStep.with.version).toBe('pnpm publish-packages -- --phase version')
-    expect(publishScript).toContain('runWithRetry(\'pnpm\', [\'changeset\', \'version\']')
-    expect(publishScript).toContain('/Premature close/i')
-    expect(latestVersionBranch).toContain('runChangesetVersion(options)')
-    expect(latestVersionBranch).not.toContain('pnpm\', [\'build')
-    expect(latestVersionBranch).not.toContain('pnpm\', [\'test')
-    expect(prereleaseVersionBranch).toContain('enterPreMode(tag, options)')
-    expect(prereleaseVersionBranch).toContain('runChangesetVersion(options)')
+    expect(workflow.permissions).toMatchObject({
+      actions: 'read',
+      contents: 'read',
+      'pull-requests': 'write',
+    })
+    expect(workflow.permissions.issues).toBeUndefined()
+    expect(commentStep).toMatchObject({
+      uses: 'actions/github-script@v7',
+    })
+    expect(String(commentStep.if)).toContain("steps.report.outcome == 'success'")
+    expect(commentStep['continue-on-error']).not.toBe(true)
+    expect(source).toContain('github.rest.issues.createComment')
+  })
+
+  it('delegates the complete package lifecycle to repoctl', () => {
+    const { source, workflow } = readWorkflow('release.yml')
+    const { workflow: releaseGateWorkflow } = readWorkflow('release-gate.yml')
+    const packageJson = readPackageJson<{ scripts: Record<string, string>, devDependencies: Record<string, string> }>('package.json')
+    expect(workflow.on.workflow_dispatch.inputs.mode.options).toEqual([
+      'auto',
+      'prepare',
+      'publish',
+      'publish-unpublished',
+    ])
+    expect(workflow.jobs.release.env.REPO_RELEASE_MODE).toBe('${{ needs.plan.outputs.mode }}')
+    expect(workflow.jobs.release.env.REPO_RELEASE_PACKAGE).toContain('inputs.package')
+    expect(workflow.jobs.release.env.REPO_RELEASE_VERSION).toContain('inputs.version')
+    expect(source.match(/node "\$RELEASE_STAGE_DRIVER" (?:plan|verify|prepare|upload|confirm|finalize)/g)).toHaveLength(7)
+    expect(packageJson.scripts.release).toBe('pnpm change')
+    expect(packageJson.scripts['version-packages']).toBe('pnpm version -r')
+    expect(packageJson.scripts.cv).toBe('pnpm version -r')
+    expect(packageJson.scripts['publish-packages']).toBe('repo release stable publish')
+    expect(packageJson.scripts['release:pre']).toBe('repo release pre publish')
+    expect(packageJson.scripts.pr).toBe('pnpm pr:alpha')
+    expect(packageJson.scripts['pr:alpha']).toBe('repo release pre enter alpha')
+    expect(packageJson.scripts['pr:beta']).toBe('repo release pre enter beta')
+    expect(packageJson.scripts['pr:rc']).toBe('repo release pre enter rc')
+    expect(packageJson.scripts['pr:next']).toBe('repo release pre enter next')
+    expect(packageJson.scripts['pr:exit']).toBe('repo release pre exit')
+    expect(semver.validRange(packageJson.devDependencies.repoctl)).not.toBeNull()
+    expect(packageJson.devDependencies.repoctl).not.toBe('*')
+    expect(packageJson.devDependencies['@changesets/cli']).toBeUndefined()
+    expect(packageJson.devDependencies['@changesets/changelog-github']).toBeUndefined()
+    expect(packageJson.devDependencies['@icebreakers/changelog-github']).toBeUndefined()
+    expect(fs.existsSync(path.join(repoRoot, '.changeset/config.json'))).toBe(false)
+    expect(fs.existsSync(path.join(repoRoot, 'scripts/publish-packages.mjs'))).toBe(false)
+    expect(fs.existsSync(path.join(repoRoot, 'scripts/setPrivate.ts'))).toBe(false)
+    expect(stepRuns(releaseGateWorkflow, 'release-gate').slice(-2)).toEqual([
+      'pnpm build',
+      'pnpm release:verify',
+    ])
   })
 
   it('runs base-ref performance guards on pull requests and published trends elsewhere', () => {
@@ -554,11 +903,11 @@ describe('ci workflows', () => {
       'next',
     ])
     expect(workflow.on.workflow_dispatch.inputs.baseline.default).toBe('auto')
-    expect(job['timeout-minutes']).toContain("github.event_name == 'pull_request' && 30")
+    expect(job['timeout-minutes']).toContain('(github.event_name == \'pull_request\' && !inputs.full_verification) && 30')
     expect(job['timeout-minutes']).toContain('|| 45')
     expect(job.env.WEAPP_TW_BENCH_BASELINE).toContain('auto')
-    expect(job.env.BENCH_BUILD_RUNS).toContain("github.event_name == 'pull_request' && '3'")
-    expect(job.env.BENCH_HMR_RUNS).toContain("github.event_name == 'pull_request' && '6'")
+    expect(job.env.BENCH_BUILD_RUNS).toBe("${{ github.event.inputs.build_runs || '3' }}")
+    expect(job.env.BENCH_HMR_RUNS).toContain('(github.event_name == \'pull_request\' && !inputs.full_verification) && \'3\'')
     expect(job.env.BENCH_ONLY).toBe('${{ matrix.bench_only }}')
     expect(runs).toContain('pnpm install --frozen-lockfile')
     expect(runs).toContain('pnpm perf:guard --')
@@ -567,7 +916,7 @@ describe('ci workflows', () => {
     expect(runs).toContain('--result-dir .tmp/benchmark-ci/result')
     expect(job.steps.some((step: Record<string, unknown>) => {
       const withConfig = step.with as Record<string, unknown> | undefined
-      return step.uses === 'actions/upload-artifact@v4'
+      return step.uses === uploadArtifactAction
         && withConfig?.name === 'benchmark-performance-${{ matrix.case_name }}'
     })).toBe(true)
   })
@@ -579,6 +928,7 @@ describe('ci workflows', () => {
     expect(source).toContain('pnpm\', [\'view\', normalizePackageSpec(baseline), \'dependencies\', \'--json\']')
     expect(source).toContain('patchPublishedResolverDependencies(json, resolverDependencies)')
     expect(source).toContain('\'@weapp-core/escape\'')
+    expect(source).toContain('\'@weapp-tailwindcss/escape\'')
   })
 
   it('keeps local e2e:ide fail-fast and exposes focused case scripts', () => {
@@ -626,7 +976,7 @@ describe('ci workflows', () => {
     expect(scripts['e2e:hbuilderx:harmony']).toBe('pnpm e2e:hbuilderx:local:harmony')
 
     expect(scripts['e2e:hbuilderx:local:demo']).toContain('E2E_HBUILDERX_LOCAL=1')
-    expect(scripts['e2e:hbuilderx:local:demo']).toContain('E2E_HBUILDERX_CASE=uni-app-vite-vue3-hbuilderx-tailwindcss-v4,uni-app-x-hbuilderx-tailwindcss-v4')
+    expect(scripts['e2e:hbuilderx:local:demo']).toContain('E2E_HBUILDERX_CASE=uni-app-vite-vue3-hbuilderx-tailwindcss-v4,uni-app-x-vdom-tailwindcss-v4')
     expect(scripts['e2e:hbuilderx:local:demo:mp']).toContain('E2E_HBUILDERX_CASE_GROUP=mp')
     expect(scripts['e2e:hbuilderx:local:demo:mp-extra']).toBe('pnpm e2e:hbuilderx:local:demo:mp-alipay && pnpm e2e:hbuilderx:local:demo:mp-baidu && pnpm e2e:hbuilderx:local:demo:mp-toutiao')
     expect(scripts['e2e:hbuilderx:local:demo:mp-alipay']).toContain('E2E_HBUILDERX_MP_PLATFORM=mp-alipay')
@@ -763,7 +1113,7 @@ describe('e2e watch workflow', () => {
         const isViteCase = watchCase.startsWith('taro-vite-')
         const subpackagePluginProcessMs
           = runner === 'macos' && watchCase === 'taro-vite-react-tailwindcss-v4'
-            ? '12000'
+            ? '18000'
             : isViteCase ? '10000' : '60000'
         const scopeRows = rows.filter(row => row.runner_label === runner && row.watch_case === watchCase && String(row.round_profile).startsWith('mini-program-'))
         expect(scopeRows).toEqual(expect.arrayContaining([
@@ -804,7 +1154,9 @@ describe('e2e watch workflow', () => {
     }
     for (const runner of ['linux', 'windows']) {
       for (const watchCase of completeMiniProgramCases) {
-        const profile = watchCase.startsWith('taro-')
+        const windowsReducedCase = runner === 'windows'
+          && watchCase.startsWith('uni-app-vite-tailwindcss-v4:mp-')
+        const profile = windowsReducedCase || watchCase.startsWith('taro-')
           ? 'main-style'
           : 'default'
         expect(cases, `${runner} should cover ${watchCase}`).toContain(`${runner}:22:${watchCase}:${profile}`)
@@ -851,7 +1203,7 @@ describe('e2e watch workflow', () => {
     })
     expectPlaywrightInstallRetry(
       stepRuns(workflow, 'pr-quick-gate').find(run => run.includes('playwright install chromium'))!,
-      'pnpm --filter @weapp-tailwindcss/scripts exec playwright install chromium',
+      'pnpm --filter @weapp-tailwindcss/scripts exec playwright install chromium chromium-headless-shell',
     )
   })
 
@@ -877,8 +1229,84 @@ describe('e2e watch workflow', () => {
     expect(stepRuns(workflow, 'nightly-full-regression')).toContain('pnpm e2e:watch')
     expectPlaywrightInstallRetry(
       stepRuns(workflow, 'nightly-full-regression').find(run => run.includes('playwright install chromium'))!,
-      'pnpm --filter @weapp-tailwindcss/scripts exec playwright install chromium',
+      'pnpm --filter @weapp-tailwindcss/scripts exec playwright install chromium chromium-headless-shell',
     )
+  })
+
+  it('splits macOS Taro Webpack nightly workloads by runtime boundary', () => {
+    const { workflow } = readWorkflow('e2e-watch.yml')
+    const job = workflow.jobs['nightly-full-regression']
+    const rows: Array<Record<string, unknown>> = job.strategy.matrix.include
+    const issue33Rows = rows.filter((row) => {
+      return row.runner_label === 'macos'
+        && row.watch_case === 'taro-webpack-react-tailwindcss-v4'
+        && row.round_profile === 'issue33'
+    })
+
+    expect(job.name).toContain('${{ matrix.artifact_case || matrix.watch_case }}')
+    expect(issue33Rows).toEqual([
+      expect.objectContaining({
+        artifact_case: 'taro-webpack-react-tailwindcss-v4-issue33-main',
+        watch_mini_program_only: '1',
+        watch_mini_program_scope: 'main-package',
+        watch_max_attempts: '1',
+        timeout_minutes: 35,
+        watch_max_plugin_process_ms: '18000',
+        watch_command_timeout_ms: '1500000',
+      }),
+      expect.objectContaining({
+        artifact_case: 'taro-webpack-react-tailwindcss-v4-issue33-subpackages',
+        watch_mini_program_only: '1',
+        watch_mini_program_scope: 'subpackages',
+        watch_max_attempts: '1',
+        timeout_minutes: 30,
+        watch_max_plugin_process_ms: '24000',
+        watch_command_timeout_ms: '1200000',
+      }),
+    ])
+
+    for (const framework of ['react', 'vue3']) {
+      const baseCase = `taro-webpack-${framework}-tailwindcss-v4`
+      const platformCase = `${baseCase}:weapp`
+      const platformRows = rows.filter(row => row.watch_case === platformCase)
+      const webRows = rows.filter((row) => {
+        return row.watch_case === baseCase && row.round_profile === 'web-only'
+      })
+
+      expect(platformRows).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          round_profile: 'mini-program-main',
+          watch_mini_program_only: '1',
+          watch_mini_program_scope: 'main-package',
+          watch_max_attempts: '1',
+          timeout_minutes: 35,
+          watch_max_plugin_process_ms: '18000',
+          watch_command_timeout_ms: '1500000',
+        }),
+        expect.objectContaining({
+          round_profile: 'mini-program-subpackages',
+          watch_mini_program_only: '1',
+          watch_mini_program_scope: 'subpackages',
+          watch_max_attempts: '1',
+          timeout_minutes: 30,
+          watch_max_plugin_process_ms: '24000',
+          watch_command_timeout_ms: '1200000',
+        }),
+      ]))
+      expect(platformRows).toHaveLength(2)
+      expect(webRows).toEqual([
+        expect.objectContaining({
+          artifact_case: `${baseCase}-web`,
+          watch_web_only: '1',
+          watch_max_attempts: '1',
+          timeout_minutes: 25,
+          watch_command_timeout_ms: '1200000',
+        }),
+      ])
+      expect(rows.some((row) => {
+        return row.watch_case === platformCase && row.round_profile === 'default'
+      })).toBe(false)
+    }
   })
 
   it('runs the uni-app scoped CSS post regression in PR watch CI', () => {
@@ -1122,15 +1550,6 @@ describe('e2e watch workflow', () => {
         watch_command_timeout_ms: '720000',
       },
       {
-        os: 'macos-latest',
-        runner_label: 'macos',
-        watch_case: 'taro-webpack-react-tailwindcss-v4',
-        round_profile: 'issue33',
-        timeout_minutes: 70,
-        watch_timeout_ms: '600000',
-        watch_command_timeout_ms: '1800000',
-      },
-      {
         os: 'windows-latest',
         runner_label: 'windows',
         watch_case: 'weapp-vite-tailwindcss-v4',
@@ -1173,8 +1592,12 @@ describe('e2e watch workflow', () => {
       },
     ]
 
-    expect(prRows.every(row => Number(row.timeout_minutes) <= 30)).toBe(true)
-    expect(prRows.every(row => Number(row.watch_command_timeout_ms) <= 1_500_000)).toBe(true)
+    const extendedWindowsToutiaoRows = prRows.filter(row => row.os === 'windows-latest' && row.watch_case === 'uni-app-vite-tailwindcss-v4:mp-toutiao')
+    const standardPrRows = prRows.filter(row => !extendedWindowsToutiaoRows.includes(row))
+    expect(extendedWindowsToutiaoRows).toHaveLength(1)
+    expect(extendedWindowsToutiaoRows[0]).toMatchObject({ timeout_minutes: 60, watch_command_timeout_ms: '3000000' })
+    expect(standardPrRows.every(row => Number(row.timeout_minutes) <= 30)).toBe(true)
+    expect(standardPrRows.every(row => Number(row.watch_command_timeout_ms) <= 1_500_000)).toBe(true)
 
     for (const budget of slowMacosUniAppPrBudgets) {
       expect(prRows).toContainEqual(expect.objectContaining({
@@ -1206,7 +1629,7 @@ describe('e2e watch workflow', () => {
         const platformBudget = runner.label === 'macos'
           && budget.watch_case === 'taro-vite-react-tailwindcss-v4'
           && budget.round_profile === 'mini-program-subpackages'
-          ? { ...budget, watch_max_plugin_process_ms: '12000' }
+          ? { ...budget, watch_max_plugin_process_ms: '18000' }
           : budget
         expect(prRows).toContainEqual(expect.objectContaining({
           os: runner.os,
@@ -1325,12 +1748,33 @@ describe('e2e watch workflow', () => {
       return step.name === 'Run e2e watch suite (nightly/full)'
     })
 
-    expect(prRunStep.env.E2E_WATCH_MAX_PLUGIN_PROCESS_MS).toBe("${{ matrix.watch_max_plugin_process_ms || '6000' }}")
-    expect(nightlyRunStep.env.E2E_WATCH_MAX_PLUGIN_PROCESS_MS).toBe("${{ matrix.watch_max_plugin_process_ms || '6000' }}")
-    expect(prRunStep.env.E2E_WATCH_MAX_ATTEMPTS).toBe("${{ matrix.watch_max_attempts || '2' }}")
-    expect(prRunStep.env.E2E_WATCH_CONFIRM_PERFORMANCE_BUDGET).toBe('1')
-    expect(nightlyRunStep.env.E2E_WATCH_MAX_ATTEMPTS).toBe("${{ matrix.watch_max_attempts || '2' }}")
-    expect(nightlyRunStep.env.E2E_WATCH_CONFIRM_PERFORMANCE_BUDGET).toBeUndefined()
+    expect(nightlyRunStep.env).toEqual(prRunStep.env)
+    for (const [jobName, runStep] of [['pr-quick-gate', prRunStep], ['nightly-full-regression', nightlyRunStep]] as const) {
+      expect(runStep.run).toBe('pnpm e2e:watch')
+      for (const row of workflow.jobs[jobName].strategy.matrix.include) {
+        const env = resolveWorkflowMatrixEnv(runStep.env, row)
+        expect(env.E2E_WATCH_MAX_PLUGIN_PROCESS_MS).toBe(String(row.watch_max_plugin_process_ms ?? '6000'))
+        expect(env.E2E_WATCH_MAX_ATTEMPTS).toBe(String(row.watch_max_attempts ?? '2'))
+        expect(env.E2E_WATCH_CONFIRM_PERFORMANCE_BUDGET).toBe('1')
+        expect(env.E2E_WATCH_CASE).toBe(row.watch_case)
+        expect(env.E2E_WATCH_ROUND_PROFILE).toBe(row.round_profile)
+        expect(env.E2E_WATCH_WEB_ONLY).toBe(row.watch_web_only ?? '0')
+        expect(env.E2E_WATCH_MINI_PROGRAM_ONLY).toBe(row.watch_mini_program_only ?? '0')
+        expect(env.E2E_WATCH_MINI_PROGRAM_SCOPE).toBe(row.watch_mini_program_scope ?? '')
+        expect(env.E2E_WATCH_MAIN_STYLE_ONLY).toBe(row.watch_main_style_only ?? '0')
+        expect(env.E2E_WATCH_MAIN_STYLE_SUBPACKAGE_LIMIT).toBe(row.watch_main_style_subpackage_limit ?? '')
+        if (env.E2E_WATCH_MINI_PROGRAM_SCOPE) {
+          expect(env.E2E_WATCH_MINI_PROGRAM_ONLY).toBe('1')
+          expect(env.E2E_WATCH_WEB_ONLY).toBe('0')
+          expect(['main-package', 'subpackages']).toContain(env.E2E_WATCH_MINI_PROGRAM_SCOPE)
+        }
+        if (env.E2E_WATCH_WEB_ONLY === '1') {
+          expect(env.E2E_WATCH_MINI_PROGRAM_ONLY).toBe('0')
+          expect(env.E2E_WATCH_MINI_PROGRAM_SCOPE).toBe('')
+        }
+      }
+      expect(resolveWorkflowMatrixEnv(runStep.env, {}).E2E_WATCH_MAX_PLUGIN_PROCESS_MS).toBe('6000')
+    }
   })
 
   it('keeps any explicit e2e watch plugin processing matrix budget within 60000ms', () => {
@@ -1359,14 +1803,21 @@ describe('e2e watch workflow', () => {
 
   it('uses node-version specific artifact names for matrix rows that share case names', () => {
     const { workflow } = readWorkflow('e2e-watch.yml')
-    const uploadSteps = [
-      ...workflow.jobs['pr-quick-gate'].steps,
-      ...workflow.jobs['nightly-full-regression'].steps,
-    ].filter((step: Record<string, unknown>) => step.uses === 'actions/upload-artifact@v4')
-
-    expect(uploadSteps.length).toBe(4)
-    for (const step of uploadSteps) {
-      expect(step.with?.name).toContain("node${{ matrix['node-version'] || 22 }}")
+    for (const jobName of ['pr-quick-gate', 'nightly-full-regression']) {
+      const job = workflow.jobs[jobName]
+      const setupNode = job.steps.find((step: Record<string, unknown>) => String(step.uses ?? '').startsWith('actions/setup-node@'))
+      const uploadSteps = job.steps.filter((step: Record<string, unknown>) => step.uses === uploadArtifactAction)
+      expect(uploadSteps).toHaveLength(2)
+      for (const step of uploadSteps) {
+        const names = job.strategy.matrix.include.map((row: Record<string, unknown>) => {
+          const nodeVersion = resolveWorkflowMatrixValue(setupNode.with['node-version'], row)
+          expect(nodeVersion).toBe(String(jobName === 'pr-quick-gate' ? 22 : row['node-version'] ?? 22))
+          const artifact = resolveWorkflowMatrixValue(step.with.name, row, { run_id: 'contract-run' })
+          expect(artifact).toContain(`-${row.runner_label}-node${nodeVersion}-${row.artifact_case || row.watch_case}-${row.round_profile}-contract-run`)
+          return artifact
+        })
+        expect(new Set(names).size).toBe(names.length)
+      }
     }
   })
 
@@ -1382,7 +1833,7 @@ describe('e2e watch workflow', () => {
       expect(runs).toContain('node .github/scripts/e2e-watch-report.cjs job-summary')
       expect(job.steps.some((step: Record<string, unknown>) => {
         const withConfig = step.with as Record<string, unknown> | undefined
-        return step.uses === 'actions/upload-artifact@v4'
+        return step.uses === uploadArtifactAction
           && typeof withConfig?.path === 'string'
           && withConfig.path.includes('e2e/benchmark/e2e-watch-hmr/hmr-speed-report.md')
       })).toBe(true)

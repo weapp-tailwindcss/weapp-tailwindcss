@@ -1,6 +1,7 @@
 import type { ConfiguredCssSourceEntry } from './configured-css-sources'
 import type { RememberedCssSourcePlan, ResolveRememberedCssSourcePlanOptions } from './remembered-css-plan'
 import type { RememberedCssSource } from './types'
+import { readDeferredCssSourceMarkers } from '@weapp-tailwindcss/postcss/transform'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
 import { resolveRememberedCssSourcePlan } from './remembered-css-plan'
 import {
@@ -81,6 +82,36 @@ function finalizeSourcePlan(
 export async function resolveViteCssSourcePlan(
   options: ResolveViteCssSourcePlanOptions,
 ): Promise<ViteCssSourcePlan> {
+  const markedSources = options.rawSource.includes('weapp-tailwindcss deferred-source:')
+    ? readDeferredCssSourceMarkers(options.rawSource).map((file) => {
+        const source = options.getSourceStyleSource?.(file)
+        if (source === undefined) {
+          throw new Error(`Missing transformed CSS source for deferred generation: ${file}`)
+        }
+        return {
+          sourceFile: file,
+          rawSource: source,
+          // Rollup 临时 CSS 资产以及 Web/页面 CSS 仍需先写回当前资产，再由
+          // 各自的 bundler 映射交给最终输出；这里只修正真实小程序根样式入口，
+          // 避免 emitFile 产生未纳入当前 bundle 的重复资产。
+          outputFile: options.temporaryOutput || !options.isCurrentRootMiniProgramStyleOutput
+            ? options.outputFile
+            : options.resolveMatchedOutputFile(file) ?? options.outputFile,
+        }
+      })
+    : []
+  if (markedSources.length > 0) {
+    options.debug('deferred css source markers: %O', markedSources.map(source => ({ sourceFile: source.sourceFile, outputFile: source.outputFile })))
+    return {
+      forceNonMainChunk: false,
+      hasUsableTailwindSource: true,
+      outputFile: markedSources[0]?.outputFile ?? options.outputFile,
+      resolution: 'remembered',
+      resolvedFromTemporarySource: false,
+      sources: markedSources,
+      usedConfiguredSourceFiles: markedSources.map(source => options.normalizeConfiguredSourceFile(source.sourceFile)),
+    }
+  }
   const rememberedPlan = await resolveRememberedCssSourcePlan(options)
   if (rememberedPlan.hasUsableTailwindSource) {
     return finalizeSourcePlan({

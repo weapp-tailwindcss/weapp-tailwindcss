@@ -1,4 +1,4 @@
-@charset "UTF-8"; /*! weapp-tailwindcss vite-generated-css:%3Cproject-root%3E%2Fsrc%2Fapp.css */
+@charset "UTF-8";
 ::-webkit-backdrop {
   --tw-space-y-reverse: 0;
   --tw-border-style: solid;
@@ -61,7 +61,8 @@
   --tw-ring-offset-color: #fff;
   --tw-ring-offset-shadow: 0 0 #0000;
   --tw-content: '';
-} /*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+}
+/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
 @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
   ::-webkit-backdrop {
     --tw-space-y-reverse: 0;
@@ -539,12 +540,12 @@ wx-button {
 }
  /*tokens: border-slate-200/80 <= src/pages/index/index.tsx */
 .border-slate-200\/80 {
-  border-color: #e2e8f0cc;
+  border-color: rgba(226, 232, 240, 0.8);
 }
 @supports (color: color-mix(in lch, red, blue)) {
  /*tokens: border-slate-200/80 <= src/pages/index/index.tsx */
   .border-slate-200\/80 {
-    border-color: #e2e8f0cc;
+    border-color: rgba(226, 232, 240, 0.8);
   }
 }
 .\!bg-\[gray\] {
@@ -564,17 +565,17 @@ wx-button {
 }
  /*tokens: bg-green-200/70 <= src/pages/index/index.tsx */
 .bg-green-200\/70 {
-  background-color: #b9f8cfb3;
+  background-color: rgba(185, 248, 207, 0.7);
 }
 @supports (color: color-mix(in lch, red, blue)) {
  /*tokens: bg-green-200/70 <= src/pages/index/index.tsx */
   .bg-green-200\/70 {
-    background-color: #b9f8cfb3;
+    background-color: rgba(185, 248, 207, 0.7);
   }
 }
  /*tokens: bg-purple-300 <= src/pages/index/index.tsx */
 .bg-purple-300 {
-  background-color: #d8b4ff;
+  background-color: rgb(216, 180, 255);
 }
  /*tokens: bg-white <= src/pages/index/index.tsx */
 .bg-white {
@@ -582,12 +583,12 @@ wx-button {
 }
  /*tokens: bg-white/70 <= src/pages/index/index.tsx */
 .bg-white\/70 {
-  background-color: #ffffffb3;
+  background-color: rgba(255, 255, 255, 0.7);
 }
 @supports (color: color-mix(in lch, red, blue)) {
  /*tokens: bg-white/70 <= src/pages/index/index.tsx */
   .bg-white\/70 {
-    background-color: #ffffffb3;
+    background-color: rgba(255, 255, 255, 0.7);
   }
 }
  /*tokens: bg-linear-to-r <= src/pages/index/index.tsx */
@@ -602,7 +603,7 @@ wx-button {
   background-image: -webkit-linear-gradient(var(--tw-gradient-stops));
   background-image: linear-gradient(var(--tw-gradient-stops));
 }
- /*tokens: bg-gradient-to-r <= src/app.css, src/pages/index/index.tsx */
+ /*tokens: bg-gradient-to-r <= src/pages/index/index.tsx */
 .bg-gradient-to-r {
   --tw-gradient-position: to right;
   background-image: -webkit-linear-gradient(var(--tw-gradient-stops));
@@ -638,7 +639,7 @@ wx-button {
     --tw-gradient-from: rgba(15, 23, 43, 0.95);
   }
 }
- /*tokens: to-blue-500 <= src/app.css, src/pages/index/index.tsx */
+ /*tokens: to-blue-500 <= src/pages/index/index.tsx */
 .to-blue-500 {
   --tw-gradient-to: rgb(50, 128, 255);
   --tw-gradient-stops: var(
@@ -664,7 +665,7 @@ wx-button {
     --tw-gradient-to: rgba(49, 65, 88, 0.95);
   }
 }
- /*tokens: p-4 <= src/pages/index/index.tsx, src/pages/issue-998/index.css, src/pages/issue-998/index.tsx */
+ /*tokens: p-4 <= src/pages/index/index.tsx, src/pages/issue-998/index.tsx */
 .p-4 {
   padding: calc(var(--spacing) * 4);
 }
@@ -720,13 +721,13 @@ wx-button {
 }
  /*tokens: text-slate-700 <= src/pages/index/index.tsx */
 .text-slate-700 {
-  color: #314158;
+  color: rgb(49, 65, 88);
 }
  /*tokens: text-slate-900 <= src/pages/index/index.tsx */
 .text-slate-900 {
-  color: #0f172b;
+  color: rgb(15, 23, 43);
 }
- /*tokens: text-white <= src/app.css, src/pages/index/index.tsx */
+ /*tokens: text-white <= src/pages/index/index.tsx */
 .text-white {
   color: #fff;
 }
@@ -750,38 +751,47 @@ wx-button {
   content: var(--tw-content) !important;
 }
  /*tokens: dark:bg-zinc-900 <= src/pages/index/index.tsx | theme-dark <= src/pages/index/index.tsx */
-.dark\:bg-zinc-900.theme-dark,
+.dark\:bg-zinc-900.theme-dark {
+  background-color: rgb(24, 24, 27);
+}
+ /*tokens: theme-dark <= src/pages/index/index.tsx | dark:bg-zinc-900 <= src/pages/index/index.tsx */
 .theme-dark .dark\:bg-zinc-900 {
-  background-color: #18181b;
+  background-color: rgb(24, 24, 27);
 }
  /*tokens: dark:bg-zinc-950 <= src/pages/index/index.tsx | theme-dark <= src/pages/index/index.tsx */
-.dark\:bg-zinc-950.theme-dark,
+.dark\:bg-zinc-950.theme-dark {
+  background-color: rgb(9, 9, 11);
+}
+ /*tokens: theme-dark <= src/pages/index/index.tsx | dark:bg-zinc-950 <= src/pages/index/index.tsx */
 .theme-dark .dark\:bg-zinc-950 {
-  background-color: #09090b;
+  background-color: rgb(9, 9, 11);
 }
  /*tokens: dark:text-zinc-50 <= src/pages/index/index.tsx | theme-dark <= src/pages/index/index.tsx */
-.dark\:text-zinc-50.theme-dark,
+.dark\:text-zinc-50.theme-dark {
+  color: rgb(250, 250, 250);
+}
+ /*tokens: theme-dark <= src/pages/index/index.tsx | dark:text-zinc-50 <= src/pages/index/index.tsx */
 .theme-dark .dark\:text-zinc-50 {
-  color: #fafafa;
+  color: rgb(250, 250, 250);
 }
 @media (prefers-color-scheme: dark) {
  /*tokens: system-dark:bg-slate-900 <= src/pages/index/index.tsx */
   .system-dark\:bg-slate-900 {
-    background-color: #0f172b;
+    background-color: rgb(15, 23, 43);
   }
  /*tokens: system-dark:text-slate-100 <= src/pages/index/index.tsx */
   .system-dark\:text-slate-100 {
-    color: #f1f5f9;
+    color: rgb(241, 245, 249);
   }
 }
  /*tokens: not-wx:bg-red-500 <= src/pages/index/index.tsx */
 .not-wx\:bg-red-500 {
-  background-color: #fb2c36;
+  background-color: rgb(251, 44, 54);
 }
 @media (any-hover: hover) {
  /*tokens: any-hover:bg-slate-800 <= src/pages/index/index.tsx */
   .any-hover\:bg-slate-800:hover {
-    background-color: #1d293d;
+    background-color: rgb(29, 41, 61);
   }
 }
 @font-face {
@@ -1026,6 +1036,7 @@ page {
   --nutui-radius-xxl: var(--nutui-radius-14);
   --nutui-radius-xxxl: var(--nutui-radius-16);
 }
+@charset "UTF-8";
 @-webkit-keyframes nutFadeIn {
   0% {
     opacity: 0;
@@ -1520,7 +1531,10 @@ page {
 .nut-watermark {
   position: absolute;
   z-index: var(--nutui-watermark-z-index, 1200);
-  inset: 0;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
   pointer-events: none;
   background-repeat: repeat;
 }
@@ -5595,7 +5609,10 @@ page {
 .nut-progress-outer .nut-progress-active::before {
   content: '';
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   border-radius: var(--nutui-progress-border-radius, 0.3rem);
   -webkit-animation: progressActive 2s ease-in-out infinite;
   animation: progressActive 2s ease-in-out infinite;
@@ -6807,7 +6824,10 @@ page {
 }
 .nut-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
   width: 100%;
   height: 100%;
   background-color: var(--nutui-overlay-bg-color, var(--nutui-color-mask, rgba(0, 0, 0, 0.7)));
@@ -9760,7 +9780,10 @@ page {
 .nut-countdown-number-primary::after {
   content: '';
   position: absolute;
-  inset: -50%;
+  top: -50%;
+  bottom: -50%;
+  left: -50%;
+  right: -50%;
   -webkit-transform: scale(0.5);
   -ms-transform: scale(0.5);
   transform: scale(0.5);
@@ -11835,7 +11858,10 @@ page {
 .nut-badge-icon::after {
   content: '';
   position: absolute;
-  inset: -50%;
+  top: -50%;
+  bottom: -50%;
+  left: -50%;
+  right: -50%;
   -webkit-transform: scale(0.5);
   -ms-transform: scale(0.5);
   transform: scale(0.5);

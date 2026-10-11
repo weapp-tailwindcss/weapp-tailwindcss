@@ -134,7 +134,7 @@ export default function ShowcaseCard({
           ) : null}
           {github ? (
             <p>
-              <strong>GitHub：</strong>
+              <strong>{locale === 'en' ? 'GitHub: ' : 'GitHub：'}</strong>
               <ShowcaseExternalLink value={github} />
             </p>
           ) : null}
@@ -167,7 +167,9 @@ export default function ShowcaseCard({
             >
               <span className="showcase-card__caret" aria-hidden="true" />
               <span className="showcase-card__toggle-label">{locale === 'en' ? 'Screenshots' : '作品截图'}</span>
-              <span className="showcase-card__count">（{locale === 'en' ? `${screenshots.length}` : `${screenshots.length} 张`}）</span>
+              <span className="showcase-card__count">
+                {locale === 'en' ? `(${screenshots.length})` : `（${screenshots.length} 张）`}
+              </span>
             </button>
 
             <div id={panelId} className="showcase-card__shot-panel" hidden={!expanded}>

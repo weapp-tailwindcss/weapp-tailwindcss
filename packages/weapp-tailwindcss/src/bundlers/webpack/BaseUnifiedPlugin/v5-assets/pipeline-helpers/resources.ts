@@ -48,7 +48,7 @@ export function resolveWebpackCssAssetModuleResource(
     cssMatcher: (file: string) => boolean
   },
 ) {
-  if (!isCssLikeModuleResource(resource, options.cssMatcher, options.appType)) {
+  if (!isCssLikeModuleResource(resource, options.cssMatcher)) {
     return undefined
   }
   const normalized = stripResourceQuery(resource)

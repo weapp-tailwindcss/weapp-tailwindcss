@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { MappingChars2String } from '@weapp-core/escape'
+import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { describe, expect, it } from 'vitest'
 import { transformLiteralText } from '@/js'
 import { collectRuntimeClassSet } from '@/tailwindcss/runtime'

@@ -1,4 +1,4 @@
-import type postcss from 'postcss'
+import type { postcss } from '@weapp-tailwindcss/postcss'
 import type { Config } from 'tailwindcss'
 
 export type InlineTailwindcssOptions = string | Partial<Config> | undefined

@@ -5,7 +5,7 @@ import { execa } from 'execa'
 import fg from 'fast-glob'
 import path from 'pathe'
 import { expect } from 'vitest'
-import { collectEmptyBlockAtRules } from '../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/css-integrity'
+import { collectEmptyCssBlocks } from '../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/css-integrity'
 import { clearProjectBuildState } from '../projectTest'
 
 const styleExtensions = /\.(?:css|wxss|acss|jxss|qss|ttss)$/i
@@ -168,8 +168,8 @@ export async function verifyBuildOutputCase(item: BuildOutputCase) {
     for (const file of styleFiles.filter(file => styleExtensions.test(file))) {
       const source = await fs.readFile(file, 'utf8')
       expect(
-        collectEmptyBlockAtRules(source),
-        `${item.name} ${path.relative(projectRoot, file)} should not emit empty block at-rules`,
+        collectEmptyCssBlocks(source),
+        `${item.name} ${path.relative(projectRoot, file)} should not emit empty CSS blocks`,
       ).toEqual([])
     }
   }

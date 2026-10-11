@@ -117,6 +117,20 @@ describe('issues 977 and 978 demo regressions', () => {
       await ensureProjectBuilt(root)
     }
 
+    if (project.name === 'uni-app-vite-tailwindcss-v4') {
+      const pageFile = path.join(projectPath, 'pages/index/index.json')
+      const page = JSON.parse(await fs.readFile(pageFile, 'utf8'))
+      const buttonRequest = page.usingComponents?.['t-button']
+      expect(buttonRequest, 't-class 探针必须注册真实组件').toBeTypeOf('string')
+      const buttonFile = path.resolve(path.dirname(pageFile), buttonRequest)
+      const template = await fs.readFile(`${buttonFile}.wxml`, 'utf8')
+      const script = await fs.readFile(`${buttonFile}.js`, 'utf8')
+      expect(template).toContain('<button')
+      expect(template).toContain('<slot')
+      expect(script).toContain('tClass')
+      expect(script).toContain('tClassContent')
+    }
+
     const css = await readProjectCss(projectPath, getProjectCssFiles(project))
     for (const variable of ISSUE_978_VARIABLES) {
       expect(css, `${project.name} should preserve issue 978 variable ${variable}`).toContain(variable)

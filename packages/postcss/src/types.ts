@@ -178,7 +178,8 @@ export interface CssOptions {
   cssRemoveHoverPseudoClass?: boolean | undefined
   cssRemoveFocusPseudoClass?: boolean | undefined
   cssRemoveProperty?: boolean | undefined
-  cssCalc?: boolean | CssCalcOptions | (string | RegExp)[] | undefined
+  /** 微信 v4 自动模式仅计算固定 rpx；false 显式退出，其他显式形式保持原有选择语义。 */
+  cssCalc?: 'auto' | boolean | CssCalcOptions | (string | RegExp)[] | undefined
   /**
    * 是否显式追加 Tailwind CSS v4 渐变字面量组合兜底。
    */
@@ -186,6 +187,13 @@ export interface CssOptions {
 }
 
 export type IStyleHandlerOptions = {
+  /** 编译诊断回调；由上层 bundler 注入，保持 PostCSS 包与 compiler 解耦。 */
+  onDiagnostic?: (event: {
+    phase: 'postcss'
+    durationMs: number
+    cache?: { hit: boolean, key?: string }
+    error?: { name?: string, message: string }
+  }) => void | Promise<void>
   appType?: PostcssAppType | undefined
   ctx?: PostcssContext | undefined
   /**
@@ -227,7 +235,7 @@ export type IStyleHandlerOptions = {
   /**
    * @deprecated 请使用 `cssOptions.cssCalc`。
    */
-  cssCalc?: boolean | CssCalcOptions | (string | RegExp)[] | undefined
+  cssCalc?: 'auto' | boolean | CssCalcOptions | (string | RegExp)[] | undefined
   uniAppX?: boolean | undefined
   /** uni-app x 的 CSS 输出目标；`uvue` 表示原生 uvue/nvue 样式链路，未设置时按 WebView CSS 处理。 */
   uniAppXCssTarget?: UniAppXCssTarget | undefined
@@ -236,6 +244,26 @@ export type IStyleHandlerOptions = {
    * @internal
    */
   customPropertyValues?: ReadonlyMap<string, string> | undefined
+  /**
+   * 增量生成的主题值，仅供颜色降级和 UVUE 兼容转换，不作为 calc 的显式常量。
+   * @internal
+   */
+  customPropertyCompatibilityValues?: ReadonlyMap<string, string> | undefined
+  /**
+   * 用于 calc 安全分析的完整 CSS 作用域，须在主题选择器改写前传入。
+   * @internal
+   */
+  customPropertyContextCss?: string | undefined
+  /**
+   * 构建器已按实际消费图汇总完整 CSS 作用域，允许自动模式推导固定变量。
+   * @internal
+   */
+  cssCalcContextComplete?: boolean | undefined
+  /**
+   * 已对本轮完整作用域执行安全分析的变量；仅由最终产物阶段提供，不写回生成缓存。
+   * @internal
+   */
+  cssCalcContextValues?: ReadonlyMap<string, string> | undefined
   majorVersion?: 4 | undefined
 } & RequiredStyleHandlerOptions
 
@@ -330,7 +358,7 @@ export interface StyleHandler {
   /**
    * 处理调用方持有的 CSS AST。输入 Root 不会被原地修改，返回结果也不会与内部缓存共享可变节点。
    */
-  transformRoot: (root: Root, opt?: Partial<IStyleHandlerOptions>) => Promise<PostcssResult>
+  transformRoot: (root: Root, opt?: Partial<IStyleHandlerOptions>) => Promise<PostcssResult<Root>>
   // getPipeline 允许外部在不同配置下获取预组装的流水线信息
   getPipeline: (opt?: Partial<IStyleHandlerOptions>) => StyleProcessingPipeline
 }

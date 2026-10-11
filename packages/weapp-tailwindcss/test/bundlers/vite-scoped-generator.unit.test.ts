@@ -4,10 +4,33 @@ import {
   createScopedGeneratorRuntime,
   createScopedGeneratorSourceTraceMap,
 } from '@/bundlers/vite/generate-bundle/scoped-generator'
+import { hasScopedSourceDirectives } from '@/bundlers/vite/generate-bundle/scoped-generator-sources'
 import { createCandidateSignature } from '@/bundlers/vite/generate-bundle/signatures'
 import type { TailwindSourceEntry } from '@/tailwindcss/source-scan'
 
 describe('bundlers/vite scoped generator runtime', () => {
+  it('仅在多来源中存在显式 source 配置时启用隔离路径', () => {
+    expect(hasScopedSourceDirectives([
+      { outputFile: 'app.wxss', rawSource: '@import "tailwindcss";', sourceFile: '/project/app.css' },
+      { outputFile: 'app.wxss', rawSource: '.author { color: red; }', sourceFile: '/project/author.css' },
+    ])).toBe(false)
+    expect(hasScopedSourceDirectives([
+      { outputFile: 'app.wxss', rawSource: '@source "./pages/**/*.{wxml,vue}";', sourceFile: '/project/app.css' },
+      { outputFile: 'app.wxss', rawSource: '.author { color: red; }', sourceFile: '/project/author.css' },
+    ])).toBe(true)
+  })
+
+  it.each([
+    ['/project/styles/a.css', '/project/styles'],
+    [String.raw`C:\project\styles\a.css`, 'C:/project/styles'],
+    ['/a.css', '/'],
+  ])('扫描目录保留来源路径语义：%s', async (sourceFile, expectedBase) => {
+    const getter = vi.fn((_entries: TailwindSourceEntry[] | undefined) => new Set(['owned']))
+    await createScopedGeneratorCandidateSignature('@source "./template.vue";', sourceFile, 'fallback', getter)
+    const entries = getter.mock.calls[0]?.[0] as TailwindSourceEntry[] | undefined
+    expect(entries?.[0]?.base.replaceAll('\\', '/')).toBe(expectedBase)
+  })
+
   it('keeps runtime-confirmed custom variant conditional comment candidates when css has @source', async () => {
     const rawSource = [
       '@custom-variant wx {',

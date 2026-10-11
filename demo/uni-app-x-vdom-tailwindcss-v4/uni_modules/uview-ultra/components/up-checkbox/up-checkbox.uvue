@@ -1,0 +1,13 @@
+<template>
+	<view class="issue-1095-up-checkbox text-white">issue 1095 SCSS component</view>
+</template>
+
+<style lang="scss" scoped>
+	@reference "../../../../main.css";
+	$up-checkbox-icon-wrap-margin-right: 6px !default;
+
+	.issue-1095-up-checkbox {
+		margin-right: $up-checkbox-icon-wrap-margin-right;
+		@apply text-white;
+	}
+</style>

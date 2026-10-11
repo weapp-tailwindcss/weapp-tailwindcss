@@ -1,9 +1,9 @@
 # @weapp-tailwindcss/logger
 
-> 简体中文 | [English](./README.en.md)
+> English | [简体中文](./README.zh-CN.md)
 
-这个包提供 weapp-tailwindcss 仓库内共享的日志和颜色输出能力，让 CLI、构建插件和脚本保持一致的终端输出体验。
+This package provides shared logging and color output helpers for weapp-tailwindcss CLIs, build plugins, and scripts.
 
-## 官网
+## Website
 
-更多接入方式、配置说明和框架示例见 [weapp-tailwindcss 官方文档](https://tw.icebreaker.top)。
+For setup guides, configuration references, and framework examples, see the [official weapp-tailwindcss documentation](https://tw.weapp.dev).

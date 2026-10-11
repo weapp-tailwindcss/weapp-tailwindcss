@@ -1,6 +1,8 @@
 ---
 title: WeappTailwindcssPostcssPluginOptions
-description: '`weapp-tailwindcss` PostCSS plugin configuration.'
+description: >-
+  WeappTailwindcssPostcssPluginOptions: API contracts, types, and integration details for cross-platform Tailwind CSS
+  workflows.
 keywords:
   - weapp-tailwindcss
   - API

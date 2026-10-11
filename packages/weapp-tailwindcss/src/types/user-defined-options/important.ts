@@ -15,6 +15,13 @@ import type { TailwindCssRuntimeOptions } from '@/tailwindcss/runtime-types'
 
 export interface UniAppXComponentLocalStylesOptions {
   /**
+   * 判断模块是否按组件局部样式处理。
+   *
+   * @remarks
+   * 回调接收已移除 query/hash 并统一为正斜杠的模块路径。配置后会覆盖默认的 `components` 目录匹配规则。
+   */
+  componentMatcher?: ((id: string) => boolean) | undefined
+  /**
    * 是否开启组件级局部 Tailwind 样式注入。
    *
    * @default true
@@ -26,6 +33,13 @@ export interface UniAppXComponentLocalStylesOptions {
    * @default true
    */
   onlyWhenStyleIsolationVersion2?: boolean | undefined
+  /**
+   * 判断模块是否按页面局部样式处理。
+   *
+   * @remarks
+   * 回调接收已移除 query/hash 并统一为正斜杠的模块路径。配置后会覆盖默认的 `pages` 目录匹配规则。
+   */
+  pageMatcher?: ((id: string) => boolean) | undefined
 }
 
 export interface UniAppXOptions {
@@ -105,7 +119,7 @@ export interface UserDefinedOptionsImportantPart {
    *
    * @group 0.重要配置
    * @remarks
-   * 默认策略会将小程序不允许的字符映射为等长度的替代字符串，因此无法通过结果反推出原始类名。如需完全自定义，可传入 `Record<string, string>`，只需确保生成的类名不会与已有样式冲突。示例参考 [dic.ts](https://github.com/sonofmagic/weapp-core/blob/main/packages/escape/src/dic.ts)。
+   * 默认策略会将小程序不允许的字符映射为等长度的替代字符串，因此无法通过结果反推出原始类名。如需完全自定义，可传入 `Record<string, string>`，只需确保生成的类名不会与已有样式冲突。示例参考 [constants.ts](https://github.com/weapp-tailwindcss/weapp-tailwindcss/blob/main/packages/escape/src/constants.ts)。
    * @default MappingChars2String
    */
   customReplaceDictionary?: Record<string, string> | undefined
@@ -171,13 +185,14 @@ export interface UserDefinedOptionsImportantPart {
    */
   cssPreflightRange?: 'all' | undefined
   /**
-   * 预计算 CSS 变量或 `calc` 表达式的结果。
+   * 预计算构建期可确定的 `calc()` 表达式。
    *
    * @group 0.重要配置
    * @since ^4.3.0
    * @remarks
-   * 解决部分机型对 `calc` 计算不一致的问题，可传入布尔值、选项对象或自定义匹配列表（支持正则）。该能力默认关闭；启用后会补充预计算声明并保留原始 `calc()` 声明。需要避免后续原始声明覆盖预计算结果时，可通过 `includeCustomProperties` 指定要清理的 CSS 变量。
-   * @default false
+   * 可传入 'auto'、布尔值、选项对象或变量匹配列表（支持正则）。明确的微信 v4 默认采用 'auto'，只在完整样式作用域下静态化固定 rpx 主题及字面量计算；其他平台不默认计算。
+   * 局部、条件或冲突覆盖及无法解析的变量保留运行时表达式。成功求值时默认替换原声明；显式设置 `preserve: true` 才同时保留原声明。
+   * 普通 `var()` 不会因此全局展开。需要 JavaScript 或内联样式动态修改主题时，请显式设置 `cssOptions.cssCalc: false`，自动分析无法预测这些未来覆盖。
    * @example
    * ```css
    * // 原始输出
@@ -191,27 +206,27 @@ export interface UserDefinedOptionsImportantPart {
    * ```
    *
    * ```css
-   * // 显式启用 cssCalc 后，默认保留原始 calc 声明
+   * // cssCalc: ['--spacing']，变量固定时默认替换为最终值
    * .h-2 {
    *   height: 16rpx;
-   *   height: calc(var(--spacing) * 2);
    * }
    * ```
    *
    * ```js
    * cssCalc: ['--spacing']
-   * cssCalc: { includeCustomProperties: ['--spacing'] }
+   * cssCalc: { includeCustomProperties: ['--spacing'], preserve: true }
    * ```
    *
    * ```css
-   * // 指定 --spacing 后，会删除匹配变量的原始 calc 声明
+   * // preserve: true 时保留原声明；后声明仍参与运行时层叠
    * .h-2 {
    *   height: 16rpx;
+   *   height: calc(var(--spacing) * 2);
    * }
    * ```
    * @deprecated 请使用 `cssOptions.cssCalc`。
    */
-  cssCalc?: boolean | CssCalcOptions | (string | RegExp)[] | undefined
+  cssCalc?: 'auto' | boolean | CssCalcOptions | (string | RegExp)[] | undefined
 
   /**
    * 是否额外注入 `tailwindcss css var scope`。
@@ -374,7 +389,7 @@ export interface UserDefinedOptionsImportantPart {
   autoprefixer?: WeappAutoprefixerOptions | undefined
 
   /**
-   * 为不同版本的 Tailwind 配置行为。
+   * 配置 Tailwind CSS v4 的运行时行为。
    *
    * @since ^4.0.0
    * @group 0.重要配置

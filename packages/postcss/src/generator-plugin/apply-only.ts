@@ -1,24 +1,9 @@
 import type { Root, Rule } from 'postcss'
 import { postcss } from '../postcss-runtime'
-
-function normalizeSelector(selector: string) {
-  return selector.replace(/:not\(#\\#\)/g, '').trim()
-}
+import { analyzeApplyOnlySourceRoot, normalizeGeneratedSelector } from '../utils/apply-source'
 
 export function collectApplyOnlyCssSelectorsRoot(root: Root) {
-  const selectors = new Set<string>()
-  root.walkRules((rule) => {
-    if (!rule.nodes?.some(node => node.type === 'atrule' && node.name === 'apply')) {
-      return
-    }
-    for (const selector of rule.selectors ?? [rule.selector]) {
-      const normalized = normalizeSelector(selector)
-      if (normalized) {
-        selectors.add(normalized)
-      }
-    }
-  })
-  return selectors
+  return analyzeApplyOnlySourceRoot(root).selectors
 }
 
 export function collectApplyOnlyCssSelectors(css: string) {
@@ -32,7 +17,7 @@ export function collectApplyOnlyCssSelectors(css: string) {
 
 function ruleMatchesApplyOnlySelector(rule: Rule, selectors: Set<string>) {
   const ruleSelectors = rule.selectors ?? [rule.selector]
-  return ruleSelectors.some(selector => selectors.has(normalizeSelector(selector)))
+  return ruleSelectors.some(selector => selectors.has(normalizeGeneratedSelector(selector)))
 }
 
 export function filterApplyOnlyGeneratedCssRoot(root: Root, selectors: Set<string>) {

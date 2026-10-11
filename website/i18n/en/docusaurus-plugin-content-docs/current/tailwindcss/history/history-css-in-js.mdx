@@ -175,7 +175,7 @@ export function StylexButton({ hoverable = true }) {
 ```mermaid
 %%{ init: { "flowchart": { "curve": "basis" } } }%%
 flowchart LR
-A["Source code: styled-components / Emotion"] --> B{"Runtime injection？"}
+A["Source code: styled-components / Emotion"] --> B{"Runtime injection?"}
 B -->|Yes| C["Client-generated style tag\nFirst screen water injection + HMR cost"]
 B -->|No| D["Generate CSS at compile time\nvanilla-extract / Linaria produces static CSS"]
 D --> E["Only className is passed\nThe runtime overhead is small"]

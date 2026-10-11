@@ -3,6 +3,8 @@ title: Node.js API
 description: Use weapp-tailwindcss/core to handle Tailwind CSS, applet templates, and JavaScript in self-developed builders or scripts, and correctly maintain runtime class name collections.
 keywords:
   - Node.js API
+  - createCompiler
+  - snapshot
   - createContext
   - transformJs
   - transformWxml
@@ -17,7 +19,7 @@ keywords:
 
 # Node.js API
 
-`weapp-tailwindcss/core` provides a text conversion API that does not rely on the Vite, Webpack or Gulp lifecycle. It is suitable for self-developed builders, batch scripts, build platform adapters, and tools that need to directly manage memory products.
+`weapp-tailwindcss/core` provides a framework compiler and text transforms without depending on Vite, Webpack, or Gulp lifecycles. New integrations should use `createCompiler()` for Tailwind roots, revisions, and immutable snapshots. `createContext()` remains available with its existing automatic runtime behavior.
 
 :::caution Advanced entrance
 
@@ -40,6 +42,60 @@ The Core API only processes incoming memory text. It will not scan the output di
 | watch / HMR                        | Reuse runtime cache in the same context                                                  | Monitor source code and configuration changes and re-collect the runtime collection after changes           |
 
 Style generation for Tailwind CSS v4 must continue to be taken over by the `weapp-tailwindcss` link. Do not additionally register `@tailwindcss/postcss` or `@tailwindcss/vite` as a build fallback for the Core API.
+
+## Framework API with `createCompiler()`
+
+`createCompiler()` is intended for framework authors such as vite-plugin-taro and weapp-vite that already own a module graph and asset lifecycle. It reuses the Tailwind engine, Scanner, candidate index, and source graph without guessing source directories, normalizing module IDs, or writing build output.
+
+```ts
+import path from 'node:path'
+import { createCompiler } from 'weapp-tailwindcss/core'
+
+const projectRoot = process.cwd()
+const compiler = createCompiler({ appType: 'taro' })
+const generated = await compiler.generate({
+  id: 'virtual:tailwind/main',
+  sourceOptions: {
+    projectRoot,
+    cssEntries: [path.resolve(projectRoot, 'src/tailwind.css')],
+  },
+  candidates: ['p-4', 'w-[10px]'],
+  scanSources: false,
+  target: 'web',
+})
+
+const cssResult = await compiler.transformCss(generated.css, generated.snapshot)
+const template = await compiler.transformTemplate(rawTemplate, generated.snapshot)
+const jsResult = await compiler.transformJavaScript(rawJs, generated.snapshot)
+```
+
+| Method                      | Contract                                                                                                                                                                    |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `generate(request)`         | Generates `web`, `weapp`, or raw Tailwind CSS for an opaque root ID and returns revision, incremental CSS, dependencies, source patterns, cache reuse state, and a snapshot |
+| `createSnapshot(request)`   | Imports a classSet already validated by another Tailwind generation chain without sharing the input Set                                                                     |
+| `mergeSnapshots(snapshots)` | Deterministically merges roots reachable in the caller's module graph and rejects conflicting revisions, content, or targets                                                |
+| `transformCss()`            | Transforms CSS text without scanning the runtime classSet                                                                                                                   |
+| `transformCssRoot()`        | Transforms a PostCSS Root without mutating the input or sharing mutable output ASTs                                                                                         |
+| `transformTemplate()`       | Transforms only static classes and expression candidates that exactly match the snapshot                                                                                    |
+| `transformJavaScript()`     | Returns the existing `JsHandlerResult`, including `error`, `map`, and `linked`                                                                                              |
+| `invalidate(ids)`           | Exactly matches root and dependency IDs and returns affected roots without path or query normalization                                                                      |
+| `remove(id)` / `dispose()`  | Idempotently wait for active work and release root, generator, and Scanner state                                                                                            |
+
+Generations for one root commit serially while different roots can run in parallel. Candidate-only updates reuse the engine. CSS or configuration dependency invalidation replaces the session. A failed generation does not replace the last successful snapshot, and no new work is accepted after disposal begins.
+
+Normal subpackages usually merge the main and current subpackage snapshots. Independent subpackages keep their own snapshot:
+
+```ts
+const normalSnapshot = compiler.mergeSnapshots([main.snapshot, subpackage.snapshot])
+const independentSnapshot = independent.snapshot
+
+const affectedRoots = compiler.invalidate(changedModuleIds)
+// Schedule generate() for affected roots and write assets through the bundler API.
+```
+
+The public classSet is immutable and isolated. Transform hot paths retrieve the internal Set in O(1); do not rebuild snapshots with heuristic candidates.
+
+The default `graph` path of the official Vite, Webpack, Rspack, and Gulp adapters shares one compiler session. Adapters still own the module graph, watch/HMR scheduling, subpackage reachability, and asset writeback; Core receives only explicit sources, dependencies, and candidates. Third-party frameworks can follow the same boundary without importing bundler types or treating module IDs as filesystem paths.
 
 ## Configure Tailwind CSS entry
 
@@ -68,7 +124,7 @@ const ctx = createContext({
 
 Multiple entry, subcontracted or individually subcontracted projects should list all true entries. `cssEntries` is equivalent to the quick configuration of `tailwindcss.v4.cssEntries`. See [`UserDefinedOptions`](/docs/api/interfaces/UserDefinedOptions) and [`cssEntries`](/docs/api/options/important#cssentries) for complete configuration types.
 
-## API at a glance
+## Compatible `createContext()` API
 
 The four methods returned by `createContext(options)` share the same set of Tailwind runtime states and class names.
 

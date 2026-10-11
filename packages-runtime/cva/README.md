@@ -1,9 +1,37 @@
 # @weapp-tailwindcss/cva
 
-> 简体中文 | [English](./README.en.md)
+> English | [简体中文](./README.zh-CN.md)
 
-这个包是 class-variance-authority 的小程序运行时封装，在保留 cva 使用体验的同时自动处理小程序 class 的 escape 和 unescape。
+A cross-platform `class-variance-authority` runtime that preserves the familiar `cva` API while producing class names compatible with mini-program escaping.
 
-## 官网
+## Installation
 
-更多接入方式、配置说明和框架示例见 [weapp-tailwindcss 官方文档](https://tw.icebreaker.top)。
+```bash
+pnpm add @weapp-tailwindcss/cva
+```
+
+## Usage
+
+```ts
+import { cva } from '@weapp-tailwindcss/cva'
+
+const button = cva('rounded px-4 py-2', {
+  variants: {
+    intent: {
+      primary: 'bg-sky-500 text-white',
+      secondary: 'bg-slate-100 text-slate-900',
+    },
+  },
+  defaultVariants: {
+    intent: 'primary',
+  },
+})
+
+const className = button({ intent: 'secondary' })
+```
+
+Use `create({ escape: false })` when the target runtime accepts raw Tailwind class names.
+
+## Documentation
+
+See the [runtime utilities documentation](https://tw.weapp.dev/docs/community/merge/overview) for the shared escaping model.

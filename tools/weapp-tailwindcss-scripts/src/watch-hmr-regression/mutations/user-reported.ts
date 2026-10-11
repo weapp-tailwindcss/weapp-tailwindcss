@@ -6,16 +6,16 @@ import type {
   WatchCase,
   WatchSession,
 } from '../types'
+import type { ClassOutputEvidence } from './class/evidence'
 import process from 'node:process'
 import { replaceWxml } from '../../core/replace-wxml'
 import { formatPath } from '../cli'
 import {
-  assertContainsOneOf,
-  assertNotContains,
   getMtime,
   readFileIfExists,
   writeFilePreserveEol,
 } from '../text'
+import { assertClassTokensInOutput, assertPreviousClassEvidenceRemoved } from './class/evidence'
 import {
   collectPluginProcessMetrics,
   expandOutputFileEntries,
@@ -29,22 +29,6 @@ interface UserReportedOutputs {
   wxml: string
   js: string
   globalStyle: string
-}
-
-function htmlEscapeClassToken(value: string) {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-}
-
-function createClassTokenExpectedValues(classToken: string, escaped: string) {
-  return [
-    escaped,
-    classToken,
-    htmlEscapeClassToken(classToken),
-  ]
 }
 
 async function collectOutputMtimes(files: string[]) {
@@ -68,51 +52,19 @@ async function loadOutputs(watchCase: WatchCase, globalStyleOutputs: string[]): 
   }
 }
 
-function assertUserReportedOutputs(
+export function assertUserReportedOutputs(
   watchCase: WatchCase,
   config: UserReportedHotUpdateConfig,
   phase: 'hot-update' | 'rollback',
   classTokens: string[],
   escapedClasses: string[],
   outputs: UserReportedOutputs,
-  forbiddenClassTokens: string[] = [],
+  previousEvidence: ClassOutputEvidence[] = [],
 ) {
   const verifyClassLiteralIn = config.verifyClassLiteralIn ?? []
-
-  for (const [index, classToken] of classTokens.entries()) {
-    const escaped = escapedClasses[index]
-    if (!escaped) {
-      continue
-    }
-    const expectedValues = createClassTokenExpectedValues(classToken, escaped)
-    if (config.verifyEscapedIn.includes('wxml')) {
-      assertContainsOneOf(outputs.wxml, expectedValues, `[${watchCase.label}] user reported ${config.label} ${phase} wxml`)
-    }
-    if (config.verifyEscapedIn.includes('js')) {
-      assertContainsOneOf(outputs.js, expectedValues, `[${watchCase.label}] user reported ${config.label} ${phase} js`)
-    }
-    if (verifyClassLiteralIn.includes('wxml')) {
-      assertContainsOneOf(outputs.wxml, expectedValues, `[${watchCase.label}] user reported ${config.label} ${phase} wxml literal`)
-    }
-    if (verifyClassLiteralIn.includes('js')) {
-      assertContainsOneOf(outputs.js, expectedValues, `[${watchCase.label}] user reported ${config.label} ${phase} js literal`)
-    }
-  }
-
-  for (const classToken of forbiddenClassTokens) {
-    const escaped = replaceWxml(classToken)
-    const forbiddenValues = createClassTokenExpectedValues(classToken, escaped)
-    if (config.verifyEscapedIn.includes('wxml')) {
-      for (const value of forbiddenValues) {
-        assertNotContains(outputs.wxml, value, `[${watchCase.label}] user reported ${config.label} ${phase} stale wxml class`)
-      }
-    }
-    if (config.verifyEscapedIn.includes('js')) {
-      for (const value of forbiddenValues) {
-        assertNotContains(outputs.js, value, `[${watchCase.label}] user reported ${config.label} ${phase} stale js class`)
-      }
-    }
-  }
+  const label = `[${watchCase.label}] user reported ${config.label} ${phase}`
+  const evidence = assertClassTokensInOutput(outputs, classTokens, escapedClasses, [...new Set([...config.verifyEscapedIn, ...verifyClassLiteralIn])], label, true, (config.minRequiredGlobalStyleEscapedClasses ?? 1) > 0)
+  assertPreviousClassEvidenceRemoved(outputs, previousEvidence, classTokens, label)
 
   const matchedGlobalEscapedClasses = escapedClasses.filter(escaped => outputs.globalStyle.includes(escaped))
   const minRequiredGlobalStyleEscapedClasses = config.minRequiredGlobalStyleEscapedClasses ?? 1
@@ -122,7 +74,7 @@ function assertUserReportedOutputs(
     )
   }
 
-  return matchedGlobalEscapedClasses
+  return { matchedGlobalEscapedClasses, evidence }
 }
 
 function resolveReplacementDirection(sourceOriginal: string, config: UserReportedHotUpdateConfig) {
@@ -165,9 +117,12 @@ export async function runUserReportedHotUpdate(
   } = resolveReplacementDirection(sourceOriginal, config)
   const escapedClasses = classTokens.map(token => replaceWxml(token))
   const rollbackEscapedClasses = rollbackClassTokens.map(token => replaceWxml(token))
+  const baselineOutputs = await loadOutputs(watchCase, globalStyleOutputs)
+  const baselineEvidence = assertClassTokensInOutput(baselineOutputs, rollbackClassTokens, rollbackEscapedClasses, [...new Set([...config.verifyEscapedIn, ...(config.verifyClassLiteralIn ?? [])])], `[${watchCase.label}] user reported ${config.label} baseline`, true, (config.minRequiredGlobalStyleEscapedClasses ?? 1) > 0)
   const sourcePath = config.sourceFile
   const outputFiles = [watchCase.outputWxml, watchCase.outputJs, ...globalStyleOutputs]
   let verifiedGlobalStyleEscapedClasses: string[] = []
+  let hotUpdateEvidence: ClassOutputEvidence[] = []
 
   const sourceForHotUpdate = sourceOriginal.replace(from, to)
   if (sourceForHotUpdate === sourceOriginal) {
@@ -189,15 +144,17 @@ export async function runUserReportedHotUpdate(
     hotUpdateStartedAt,
     async () => {
       const outputs = await loadOutputs(watchCase, globalStyleOutputs)
-      verifiedGlobalStyleEscapedClasses = assertUserReportedOutputs(
+      const assertion = assertUserReportedOutputs(
         watchCase,
         config,
         'hot-update',
         classTokens,
         escapedClasses,
         outputs,
-        rollbackClassTokens.filter(token => !classTokens.includes(token)),
+        baselineEvidence,
       )
+      verifiedGlobalStyleEscapedClasses = assertion.matchedGlobalEscapedClasses
+      hotUpdateEvidence = assertion.evidence
       return true
     },
     {
@@ -230,7 +187,7 @@ export async function runUserReportedHotUpdate(
         rollbackClassTokens,
         rollbackEscapedClasses,
         outputs,
-        classTokens.filter(token => !rollbackClassTokens.includes(token)),
+        hotUpdateEvidence,
       )
       return true
     },

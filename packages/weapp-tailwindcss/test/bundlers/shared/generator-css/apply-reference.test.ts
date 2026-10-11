@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createTailwindV4ApplyReferenceSource } from '@/bundlers/shared/generator-css/source-resolver/apply-reference'
+import { createTailwindV4ApplyReferenceSource } from '@/generation/source-resolver/apply-reference'
 
 describe('generator css apply reference', () => {
   it('references the only configured Tailwind root for component apply rules', () => {

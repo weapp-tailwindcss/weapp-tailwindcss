@@ -41,6 +41,8 @@
     "predev:ios": "node ../../scripts/ensure-weapp-tailwindcss-built.mjs"
   },
   "dependencies": {
+    "@react-native-community/slider": "catalog:reactNativeSlider442",
+    "@react-native-picker/picker": "catalog:reactNativePicker261",
     "@babel/runtime": "catalog:babelRuntime7284",
     "@tarojs/components": "catalog:taro4",
     "@tarojs/components-rn": "catalog:taro4rn",
@@ -61,7 +63,14 @@
     "expo": "catalog:expo50",
     "react": "catalog:react18",
     "react-dom": "catalog:react18",
-    "react-native": "catalog:reactNative073"
+    "react-native": "catalog:reactNative073",
+    "react-native-device-info": "catalog:reactNativeDeviceInfo14",
+    "react-native-gesture-handler": "catalog:reactNativeGestureHandler214",
+    "react-native-pager-view": "catalog:reactNativePagerView623",
+    "react-native-root-siblings": "catalog:reactNativeRootSiblings5",
+    "react-native-screens": "catalog:reactNativeScreens329",
+    "react-native-svg": "catalog:reactNativeSvg141",
+    "react-native-webview": "catalog:reactNativeWebview136"
   },
   "devDependencies": {
     "@babel/core": "catalog:babelCore7285",
@@ -69,7 +78,7 @@
     "@iconify-json/mdi": "catalog:iconifyJson",
     "@iconify-json/svg-spinners": "catalog:iconifyJson",
     "@iconify/tailwind4": "^1.2.3",
-    "@pmmmwh/react-refresh-webpack-plugin": "^0.6.2",
+    "@pmmmwh/react-refresh-webpack-plugin": "catalog:webpackTools",
     "@react-native/metro-config": "catalog:reactNativeMetroConfig073",
     "@tailwindcss/postcss": "catalog:tailwindcss4",
     "@tarojs/cli": "catalog:taro4",
@@ -80,11 +89,12 @@
     "@types/node": "catalog:typesNode2410",
     "@types/react": "catalog:react18",
     "babel-preset-taro": "catalog:taro4",
+    "metro-react-native-babel-preset": "catalog:metroReactNativeBabelPreset077",
     "postcss": "catalog:postcss85",
     "react-refresh": "catalog:reactRefresh018",
     "tailwindcss": "catalog:tailwindcss4",
     "tailwindcss-patch": "catalog:tailwindcssPatch",
-    "tsconfig-paths-webpack-plugin": "^4.1.0",
+    "tsconfig-paths-webpack-plugin": "catalog:webpackTools",
     "typescript": "catalog:typescript59",
     "weapp-tailwindcss": "workspace:*",
     "webpack": "5.105.4"

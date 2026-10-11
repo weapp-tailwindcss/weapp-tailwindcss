@@ -1,12 +1,13 @@
 {
   "name": "@weapp-tailwindcss/react-native",
   "type": "module",
-  "version": "0.2.1",
-  "description": "Tailwind CSS 4 compiler and Expo Metro integration for React Native.",
+  "version": "0.3.2",
+  "description": "Tailwind CSS compiler and Expo Metro integration for cross-platform React Native apps. 面向跨端 React Native 应用的 Tailwind CSS 编译器与 Expo Metro 集成。",
   "license": "MIT",
+  "homepage": "https://tw.weapp.dev/docs/quick-start/react-native-expo",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sonofmagic/weapp-tailwindcss.git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
     "directory": "packages/react-native"
   },
   "sideEffects": true,
@@ -65,6 +66,7 @@
   "scripts": {
     "build": "tsdown",
     "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.typecheck.json --pretty false",
     "bench": "vitest bench",
     "test:dev": "vitest",
     "lint": "eslint .",
@@ -99,13 +101,13 @@
   },
   "dependencies": {
     "@babel/types": "catalog:babel8",
-    "postcss": "catalog:postcss85",
-    "weapp-tailwindcss": "workspace:^"
+    "@weapp-tailwindcss/postcss": "workspace:*",
+    "weapp-tailwindcss": "workspace:*"
   },
   "devDependencies": {
     "@babel/core": "catalog:babel8",
     "@types/react": "catalog:react19",
     "react": "catalog:react19",
-    "vitest": "^4.1.0"
+    "vitest": "catalog:vitest"
   }
 }

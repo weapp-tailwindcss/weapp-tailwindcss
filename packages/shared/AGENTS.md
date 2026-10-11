@@ -22,8 +22,8 @@
 ## 推荐验证命令
 
 - `pnpm --filter @weapp-tailwindcss/shared test`
-- `pnpm --filter @weapp-tailwindcss/shared vitest run test/index.test.ts`
-- `pnpm --filter @weapp-tailwindcss/shared vitest run test/extractors.test.ts`
+- `pnpm --filter @weapp-tailwindcss/shared exec vitest run test/index.test.ts`
+- `pnpm --filter @weapp-tailwindcss/shared exec vitest run test/extractors.test.ts`
 
 ## 提交前检查
 

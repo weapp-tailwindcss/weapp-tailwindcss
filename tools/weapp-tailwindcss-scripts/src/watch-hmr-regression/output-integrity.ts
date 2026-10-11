@@ -5,7 +5,7 @@ import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { setTimeout as delay } from 'node:timers/promises'
 import { formatPath } from './cli'
-import { collectEmptyBlockAtRules } from './css-integrity'
+import { collectEmptyCssBlocks } from './css-integrity'
 
 const OUTPUT_INTEGRITY_CONFIRMATION_MS = 10
 const STYLE_OUTPUT_EXTENSION_RE = /\.(?:acss|css|jxss|qss|ttss|wxss)$/i
@@ -55,7 +55,7 @@ export function createOutputIntegrityMonitor(guards: OutputIntegrityGuard[] | un
       }
       const matchedFragments = (guard.forbiddenFragments ?? []).filter(forbiddenFragment => content.includes(forbiddenFragment))
       if (guard.forbidEmptyBlockAtRules) {
-        matchedFragments.push(...collectEmptyBlockAtRules(content))
+        matchedFragments.push(...collectEmptyCssBlocks(content))
       }
       if (matchedFragments.length === 0) {
         continue

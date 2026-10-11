@@ -65,11 +65,15 @@ pnpm lint:fix             # Fix linting issues
 
 ### Release
 ```bash
-pnpm release              # Create changeset
+pnpm release              # Create a pnpm change intent
+pnpm version-packages     # Apply pending versions and changelogs
+pnpm publish-packages     # Publish stable packages through repoctl
+pnpm release:pre          # Publish the current prerelease lane
 pnpm pr                   # Enter alpha prerelease mode
 pnpm pr:beta              # Enter beta prerelease mode
+pnpm pr:rc                # Enter rc prerelease mode
+pnpm pr:next              # Enter next prerelease mode
 pnpm pr:exit              # Exit prerelease mode
-pnpm publish-packages     # Build, test, version, and publish
 ```
 
 ### Demo Management
@@ -121,6 +125,6 @@ weapp-tw patch             # Shorthand alias
 ## Special Conventions
 - ES modules throughout (`type: "module"`)
 - TypeScript strict mode
-- Changesets for version management
+- repoctl with pnpm change intents for versioning and release management
 - Commitlint enforces conventional commits
-- Primary documentation is in Chinese (tw.icebreaker.top)
+- Primary documentation is in Chinese (tw.weapp.dev)

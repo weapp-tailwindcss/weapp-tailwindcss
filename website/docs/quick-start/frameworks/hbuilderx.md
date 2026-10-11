@@ -102,41 +102,4 @@ WeappTailwindcss({
 
 生成模式下不要再注册 Tailwind 官方生成插件，不要注册 `@tailwindcss/postcss` 或 `@tailwindcss/vite`。项目已有 PostCSS 配置时，只保留框架或业务需要的非 Tailwind 插件。
 
-`hbuilderx` 正式版本的 `vue2` 项目由于使用 `webpack4` 和 `postcss7`，不再适配当前版本。存量项目请继续停留在旧版本，或者迁移到 `HBuilderX Vue3 Vite` / `uni-app cli vue2 webpack5` 链路。
-
-## HBuilderX 与 uni-app CLI 环境汇总
-
-先确认项目实际使用的构建链路。下面是文档维护时的常见组合，项目以本机 HBuilderX 安装的编译插件为准：
-
-|                  | webpack  | vite | postcss  |
-| ---------------- | -------- | ---- | -------- |
-| HBuilderX Vue2 | webpack4 | x | postcss7 |
-| uni-app CLI Vue2 | webpack5 | x | postcss8 |
-| HBuilderX Vue3 | x | √ | postcss8 |
-| uni-app CLI Vue3 | x | √ | postcss8 |
-
-当前版本推荐使用 Vite 或 Webpack5 链路。HBuilderX Vue2 Webpack4 项目建议停留在旧版插件，或迁移到 Vue3 Vite / uni-app CLI Vue2 Webpack5。
-
-## HBuilderX Vue2 Webpack（存量项目） {#hbuilderx-vue2-webpack}
-
-当前版本不再内置 Webpack4 / PostCSS7 / Tailwind CSS v2 兼容入口。如果你必须维护 `hbuilderx vue2` 项目，请继续使用旧版 `weapp-tailwindcss`，或迁移到上方推荐的 Vite / Webpack5 链路。
-
-## 不建议全局改 HBuilderX Vue2 编译器
-
-:::caution
-下面这种做法会改动 HBuilderX 内置编译器，影响同一台机器上的所有 HBuilderX Vue2 项目。除非你清楚回滚成本，否则不要在日常项目里使用。
-:::
-
-早期 HBuilderX Vue2 项目通常锁在 Webpack4 / PostCSS7。有人会直接升级 `HBuilderX/plugins/uniapp-cli` 里的 `@vue/cli-*`、loader、`postcss` 和 `postcss-loader`，把内置链路改到 Webpack5 / PostCSS8。
-
-这不是推荐路径。它会让 HBuilderX 的全局编译环境和官方插件状态不一致，升级 HBuilderX 或重新安装编译插件后也可能失效。
-
-> macOS uniapp-cli 路径在 /Applications/HBuilderX.app/Contents/HBuilderX/plugins/uniapp-cli
->
-> Windows 的路径通常也在 HBuilderX 安装目录下。需要先安装 Vue2 编译插件，这个目录才会出现。
-
-更稳的做法是迁移项目，或者用 uni-app CLI 单独维护 Vue2 Webpack5 链路。这样一个项目对应一套依赖，排查问题也简单。
-
-## 视频演示
-
-<iframe src="//player.bilibili.com/player.html?aid=411561123&bvid=BV1EV41197Ps&cid=1413438914&p=1&autoplay=0" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"> </iframe>
+当前文档只维护 HBuilderX Vue3 Vite 链路。使用 Webpack4 / PostCSS7 的 HBuilderX Vue2 项目不在当前版本支持范围内，请迁移到 Vue3 Vite 或由 uni-app CLI 管理的 Webpack5 链路。

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { createGeneratorSourceRecord, getGeneratorSourceMetadata } from '@/bundlers/shared/generator-css/source-resolver'
-import { withGeneratorSourceMetadata } from '@/bundlers/shared/generator-css/source-resolver/metadata'
+import { createGeneratorSourceRecord, getGeneratorSourceMetadata } from '@/generation/source-resolver'
+import { withGeneratorSourceMetadata } from '@/generation/source-resolver/metadata'
 
 describe('generator source metadata', () => {
   it('survives source cloning without exposing string metadata fields', () => {

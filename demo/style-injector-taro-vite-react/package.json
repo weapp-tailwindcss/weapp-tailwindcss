@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "pnpm run build:weapp",
-    "build:weapp": "taro build --type weapp",
+    "build:weapp": "node ../../scripts/taro-build-guard.mjs",
     "build:h5": "cross-env BROWSERSLIST_ENV=production taro build --type h5",
     "dev": "cross-env WEAPP_TW_HMR_TIMING=1 pnpm run dev:weapp",
     "dev:weapp": "cross-env WEAPP_TW_HMR_TIMING=1 taro build --type weapp --watch",
@@ -27,6 +27,8 @@
   },
   "devDependencies": {
     "@babel/core": "catalog:babelCore7285",
+    "@babel/plugin-proposal-decorators": "^7.29.7",
+    "@babel/plugin-transform-class-properties": "^7.29.7",
     "@babel/preset-react": "catalog:babelPresetReact7285",
     "@iconify-json/mdi": "catalog:iconifyJson",
     "@iconify-json/svg-spinners": "catalog:iconifyJson",

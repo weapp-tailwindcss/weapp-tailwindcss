@@ -1,0 +1,100 @@
+{
+  "issue-1160-original": [
+    "border-width:0",
+    "border-top-style:var(--tw-border-style)",
+    "border-top-width:1px",
+    "--tw-border-style:solid",
+    "border-style:solid",
+    "border-color:red"
+  ],
+  "issue-1160-native": [
+    "border-width:0",
+    "border-top-width:1px",
+    "border-top-style:solid",
+    "border-top-color:red"
+  ],
+  "issue-1160-top": [
+    "border-width:0",
+    "border-top-style:var(--tw-border-style)",
+    "border-top-width:1px",
+    "--tw-border-style:solid",
+    "border-style:solid",
+    "border-color:red"
+  ],
+  "issue-1160-right": [
+    "border-width:0",
+    "--tw-border-style:solid",
+    "border-style:solid",
+    "border-color:red",
+    "border-right-style:var(--tw-border-style)",
+    "border-right-width:1px"
+  ],
+  "issue-1160-bottom": [
+    "border-width:0",
+    "--tw-border-style:solid",
+    "border-style:solid",
+    "border-color:red",
+    "border-bottom-style:var(--tw-border-style)",
+    "border-bottom-width:1px"
+  ],
+  "issue-1160-left": [
+    "border-width:0",
+    "--tw-border-style:solid",
+    "border-style:solid",
+    "border-color:red",
+    "border-left-style:var(--tw-border-style)",
+    "border-left-width:1px"
+  ],
+  "issue-1160-pair": [
+    "border-width:0",
+    "border-top-style:var(--tw-border-style)",
+    "border-top-width:1px",
+    "--tw-border-style:solid",
+    "border-style:solid",
+    "border-color:red",
+    "border-left-style:var(--tw-border-style)",
+    "border-left-width:2px"
+  ],
+  "issue-1160-all": [
+    "border-width:0",
+    "--tw-border-style:solid",
+    "border-style:solid",
+    "border-color:red",
+    "border-style:var(--tw-border-style)",
+    "border-width:2px"
+  ],
+  "issue-1160-override": [
+    "border-width:0",
+    "--tw-border-style:solid",
+    "border-style:solid",
+    "border-color:red",
+    "border-style:var(--tw-border-style)",
+    "border-width:2px",
+    "border-top-style:var(--tw-border-style)",
+    "border-top-width:0px"
+  ],
+  "issue-1160-dashed": [
+    "border-width:0",
+    "border-top-style:var(--tw-border-style)",
+    "border-top-width:1px",
+    "border-color:red",
+    "--tw-border-style:dashed",
+    "border-style:dashed"
+  ],
+  "issue-1160-none": [
+    "border-width:0",
+    "border-top-style:var(--tw-border-style)",
+    "border-top-width:1px",
+    "border-color:red",
+    "--tw-border-style:none",
+    "border-style:none"
+  ],
+  "issue-1160-apply": [
+    "border-width:0",
+    "border-top-style:var(--tw-border-style)",
+    "border-top-width:1px",
+    "--tw-border-style:solid",
+    "border-style:solid",
+    "border-color:red"
+  ]
+}

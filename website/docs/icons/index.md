@@ -65,8 +65,6 @@ module.exports = {
 
 `<view class="i-mdi-home text-3xl text-red-600"></view>`
 
-> 假如不起作用，`Tailwindcss@3` 的话，请检查你的 `@tailwind components;` / `@import 'tailwindcss/components';`(scss) 是否在入口 `css/scss` 中引入
-
 ## Tailwindcss v4
 
 在 `Tailwindcss@4` 中，不会自动读取 `tailwind.config.js` 文件，所以你需要使用 [@config](https://tailwindcss.com/docs/functions-and-directives#config-directive) 指令，手动引入 `tailwindcss` 的配置文件。

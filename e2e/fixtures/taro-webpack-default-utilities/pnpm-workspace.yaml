@@ -1,0 +1,15 @@
+packages:
+  - .
+allowBuilds:
+  '@parcel/watcher': false
+  '@swc/core': false
+  '@tarojs/binding': false
+  '@tarojs/cli': false
+  core-js: false
+  core-js-pure: false
+  esbuild: true
+  sharp: true
+minimumReleaseAge: 1440
+minimumReleaseAgeExclude:
+  - '@weapp-tailwindcss/postcss@3.3.2'
+  - weapp-tailwindcss@5.5.1

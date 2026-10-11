@@ -174,7 +174,8 @@ describe('bundlers/vite incremental runtime class set', () => {
         fileName: stableFile,
       },
     }, opts, outDir, state)
-    await expect(manager.sync(runtime, first)).resolves.toEqual(new Set(['old-only', 'stable']))
+    const previousRuntime = await manager.sync(runtime, first, { baseClassSet: new Set(['baseline-only']) })
+    expect(previousRuntime).toEqual(new Set(['baseline-only', 'old-only', 'stable']))
     updateBundleBuildState(state, first, new Map())
 
     const partial = buildBundleSnapshot({
@@ -187,7 +188,7 @@ describe('bundlers/vite incremental runtime class set', () => {
       removedFiles: [removedFile],
     })
 
-    await expect(manager.sync(runtime, partial)).resolves.toEqual(new Set(['stable']))
+    await expect(manager.sync(runtime, partial, { baseClassSet: previousRuntime })).resolves.toEqual(new Set(['baseline-only', 'stable']))
     updateBundleBuildState(state, partial, new Map(), { incremental: true })
     expect(state.sourceHashByFile.has(removedFile)).toBe(false)
   })

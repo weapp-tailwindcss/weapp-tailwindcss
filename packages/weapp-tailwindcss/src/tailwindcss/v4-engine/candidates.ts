@@ -1,4 +1,4 @@
-const UNSUPPORTED_MINI_PROGRAM_TAILWIND_V4_CANDIDATE_RE = /(?:^|:)(?:group|peer|in|not-in)-[^\s:]*\/|(?:^|:)(?:in|not-in)-\[/
+const UNSUPPORTED_MINI_PROGRAM_TAILWIND_V4_CANDIDATE_RE = /(?:^|:)(?:has-)?(?:group|peer|in|not-in)-[^\s:]*\/|(?:^|:)(?:has-)?(?:in|not-in)-\[/
 
 export function isUnsupportedMiniProgramTailwindV4Candidate(candidate: string) {
   return UNSUPPORTED_MINI_PROGRAM_TAILWIND_V4_CANDIDATE_RE.test(candidate)

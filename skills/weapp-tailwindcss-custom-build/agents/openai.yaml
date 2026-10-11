@@ -1,4 +1,4 @@
 interface:
   display_name: "weapp-tailwindcss 自定义构建"
-  short_description: "接入 Core API、生成器、构建生命周期与分包样式注入"
-  default_prompt: "使用 $weapp-tailwindcss-custom-build 接入自研构建链。Use $weapp-tailwindcss-custom-build for my custom pipeline."
+  short_description: "接入 Core API、模块图、source candidates 与分包样式注入"
+  default_prompt: "使用 $weapp-tailwindcss-custom-build 设计自研构建图。Use $weapp-tailwindcss-custom-build for my custom asset pipeline."

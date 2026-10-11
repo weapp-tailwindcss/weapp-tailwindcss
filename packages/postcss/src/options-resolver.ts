@@ -1,8 +1,8 @@
 import type { IStyleHandlerOptions } from './types'
 import { defuOverrideArray } from '@weapp-tailwindcss/shared'
-import { fingerprintOptions } from './fingerprint'
+import { LRUCache } from 'lru-cache'
+import { fingerprintOptions, fingerprintStyleOptions } from './fingerprint'
 
-const BASE_CACHE_KEY = 'base'
 const SIMPLE_OVERRIDE_UNSET = '__unset__'
 const CSS_OPTION_KEYS = [
   'cssPreflight',
@@ -227,53 +227,39 @@ export interface OptionsResolver {
 
 export function createOptionsResolver(baseOptions: IStyleHandlerOptions): OptionsResolver {
   const normalizedBaseOptions = normalizeCssOptions(baseOptions)
-  const cacheByKey = new Map<string, IStyleHandlerOptions>()
-  const cacheByRef = new WeakMap<Partial<IStyleHandlerOptions>, IStyleHandlerOptions>()
-  const cacheKeyByRef = new WeakMap<Partial<IStyleHandlerOptions>, string>()
-  const emptyOverrideRefs = new WeakSet<Partial<IStyleHandlerOptions>>()
-  cacheByKey.set(BASE_CACHE_KEY, normalizedBaseOptions)
+  const cacheByKey = new LRUCache<string, { options: IStyleHandlerOptions, fingerprint: string }>({ max: 256 })
 
   const resolve = (overrides?: Partial<IStyleHandlerOptions>) => {
     if (!overrides) {
       return normalizedBaseOptions
     }
 
-    const refCached = cacheByRef.get(overrides)
-    if (refCached) {
-      return refCached
-    }
-
-    if (emptyOverrideRefs.has(overrides)) {
-      return normalizedBaseOptions
-    }
-
     if (!hasOverrides(overrides)) {
-      emptyOverrideRefs.add(overrides)
       return normalizedBaseOptions
     }
 
-    let key = cacheKeyByRef.get(overrides)
-    if (!key) {
-      key = getSimpleOverrideCacheKey(overrides) ?? fingerprintOptions(overrides)
-      cacheKeyByRef.set(overrides, key)
-    }
+    // 调用方可以原位修改 Map、白名单或嵌套选项，不能只按对象身份复用旧签名。
+    const key = getSimpleOverrideCacheKey(overrides) ?? fingerprintOptions(overrides)
 
     const cached = cacheByKey.get(key)
-    if (cached) {
-      cacheByRef.set(overrides, cached)
-      return cached
+    if (cached && fingerprintStyleOptions(cached.options) === cached.fingerprint) {
+      return cached.options
     }
 
+    const normalizedOverrides = normalizeCssOptions({ ...overrides }, true)
+    // 调用阶段新引入 cssOptions 时，也须把基线默认值镜像到同一层，避免 undefined 清空安全 preset。
+    const base = normalizedOverrides.cssOptions === undefined
+      ? normalizedBaseOptions
+      : normalizeCssOptions(normalizedBaseOptions, true)
     const merged = defuOverrideArray<
       IStyleHandlerOptions,
       Partial<IStyleHandlerOptions>[]
     >(
-      normalizeCssOptions({ ...overrides }, true) as IStyleHandlerOptions,
-      normalizedBaseOptions,
+      normalizedOverrides as IStyleHandlerOptions,
+      base,
     )
     const normalized = normalizeCssOptions(merged)
-    cacheByKey.set(key, normalized)
-    cacheByRef.set(overrides, normalized)
+    cacheByKey.set(key, { options: normalized, fingerprint: fingerprintStyleOptions(normalized) })
     return normalized
   }
 

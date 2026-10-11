@@ -1,0 +1,100 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`framework root ownership in partial bundles > preserves ownership before an importing root is processed (acss) 1`] = `
+{
+  "initial": {
+    "bootstrap.acss": "@import "/framework.acss"; .author{color:blue}",
+    "framework.acss": "@import "./theme.acss";
+",
+    "theme.acss": ".generated{color:red}
+page{height:100%}",
+  },
+  "rebuild": {
+    "bootstrap.acss": "@import "/framework.acss"; .author{color:blue}",
+    "framework.acss": "@import "./theme.acss";
+",
+    "theme.acss": ".generated{color:red}
+page{height:100%}",
+  },
+  "removed": {
+    "bootstrap.acss": "@import "/framework.acss"; .author{color:blue}",
+    "framework.acss": "@import "./theme.acss";
+",
+    "theme.acss": ".generated{color:red}
+",
+  },
+  "restored": {
+    "bootstrap.acss": "@import "/framework.acss"; .author{color:blue}",
+    "framework.acss": "@import "./theme.acss";
+",
+    "theme.acss": ".generated{color:red}
+page{height:100%}",
+  },
+}
+`;
+
+exports[`framework root ownership in partial bundles > preserves ownership before an importing root is processed (ttss) 1`] = `
+{
+  "initial": {
+    "bootstrap.ttss": "@import "/framework.ttss"; .author{color:blue}",
+    "framework.ttss": "@import "./theme.ttss";
+",
+    "theme.ttss": ".generated{color:red}
+page{height:100%}",
+  },
+  "rebuild": {
+    "bootstrap.ttss": "@import "/framework.ttss"; .author{color:blue}",
+    "framework.ttss": "@import "./theme.ttss";
+",
+    "theme.ttss": ".generated{color:red}
+page{height:100%}",
+  },
+  "removed": {
+    "bootstrap.ttss": "@import "/framework.ttss"; .author{color:blue}",
+    "framework.ttss": "@import "./theme.ttss";
+",
+    "theme.ttss": ".generated{color:red}
+",
+  },
+  "restored": {
+    "bootstrap.ttss": "@import "/framework.ttss"; .author{color:blue}",
+    "framework.ttss": "@import "./theme.ttss";
+",
+    "theme.ttss": ".generated{color:red}
+page{height:100%}",
+  },
+}
+`;
+
+exports[`framework root ownership in partial bundles > preserves ownership before an importing root is processed (wxss) 1`] = `
+{
+  "initial": {
+    "bootstrap.wxss": "@import "/framework.wxss"; .author{color:blue}",
+    "framework.wxss": "@import "./theme.wxss";
+",
+    "theme.wxss": ".generated{color:red}
+page{height:100%}",
+  },
+  "rebuild": {
+    "bootstrap.wxss": "@import "/framework.wxss"; .author{color:blue}",
+    "framework.wxss": "@import "./theme.wxss";
+",
+    "theme.wxss": ".generated{color:red}
+page{height:100%}",
+  },
+  "removed": {
+    "bootstrap.wxss": "@import "/framework.wxss"; .author{color:blue}",
+    "framework.wxss": "@import "./theme.wxss";
+",
+    "theme.wxss": ".generated{color:red}
+",
+  },
+  "restored": {
+    "bootstrap.wxss": "@import "/framework.wxss"; .author{color:blue}",
+    "framework.wxss": "@import "./theme.wxss";
+",
+    "theme.wxss": ".generated{color:red}
+page{height:100%}",
+  },
+}
+`;
