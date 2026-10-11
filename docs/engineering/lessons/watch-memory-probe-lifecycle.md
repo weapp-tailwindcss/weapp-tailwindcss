@@ -1,7 +1,7 @@
 ---
 status: partial
 issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38117853346
-baseline: cccaade51feb06f6d6e65752fa745b5b58c75a88
+baseline: 4581346f478e40c8952a059e9f434891e3ab957b
 regressions:
   - packages/weapp-tailwindcss/test/watch-hmr-memory-sampler.unit.test.ts
   - packages/weapp-tailwindcss/test/watch-hmr-web-cleanup.unit.test.ts
@@ -16,7 +16,7 @@ Windows Watch 内存脚本把进程 ID 写入大小写不敏感的 PowerShell �
 
 ## 根因与纠正
 
-遍历变量改为 `$processId`，CIM 只请求进程 ID、父 ID、working set 和 command 四字段，脚本明确失败退出并输出 UTF-8 无 BOM。进程树采集独立到私有工具的 memory 模块；Windows 查询保留 5 秒绝对截止，POSIX 查询保留 1 秒截止，避免以极短冷启动预算丢掉全部实际样本。
+遍历变量改为 `$processId`，CIM 只请求进程 ID、父 ID、working set 和 command 四字段，脚本明确失败退出并输出 UTF-8 无 BOM。进程树采集独立到私有工具的 memory 模块；原无截止的同步查询改为 Windows 5 秒、POSIX 1 秒的异步绝对截止，不改变业务 HMR 或插件处理门槛。
 
 每个 Watch/Web 会话使用异步单飞采样，上轮完成后再等待 1 秒开始下一轮。停止会话先停止调度并取消活动探针，只通过本轮创建的 ChildProcess 句柄终止，并在独立 1 秒截止内确认 close。发送 kill、查询失败或遥测内容不能成为归属与退出证据；未确认 close 或 kill 失败属于不可忽略的收尾错误。输出有大小限制，流错误被接收，绝对截止在 close 与解析后的接收边界再次检查。
 
@@ -30,6 +30,7 @@ Web 收尾复用已有逐项清理器，依次恢复本轮模板与 CSS、关闭
 - 原 Watch、Web Iconify 与候选来源回归共 150 项通过；Windows 脚本实际执行用例在本机 macOS 不执行，由 Windows CI 验证。该用例独立验证固定数据遍历；真实 CIM 测量先用独立 15 秒基础设施准备，再验证原 5 秒生产采样预算。
 - 新 memory 模块通过独立 strict TypeScript 检查。私有 scripts 全量 TypeScript 检查仍受既有跨包与 mutation 类型错误阻断，不把它记录为通过。
 - 当前源码 CLI 的真实 Taro React Web Watch 约 12.1 秒通过，采集 8 个有效进程树样本，项目报告 `availability: available`，RSS peak 为 738 MB。源码摘要恢复，headless Chromium 与任务子进程均已回收。
+- 逐项 Web 收尾补充后的真实验证约 11.3 秒通过，采集 7 个有效样本，RSS peak 为 739 MB，源码和任务资源全部回收。合入主工作树后，Web Iconify、实际候选、快照来源、Watch、memory sampler 与 Web cleanup 的 6 文件定向复验为 177 项通过、1 项 Windows 专属协议未执行；修改模块严格 ESLint 和规则检查通过。
 
 ## 适用边界
 

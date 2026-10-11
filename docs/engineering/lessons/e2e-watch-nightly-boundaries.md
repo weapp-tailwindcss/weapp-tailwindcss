@@ -6,6 +6,9 @@ regressions:
   - e2e/hosted-workflow-contract.test.ts
   - e2e/demo-workflow-command.test.ts
   - e2e/demo-workflow-process-identity.test.ts
+  - e2e/demo-workflow-process-observer.test.ts
+  - e2e/demo-workflow-observer-memory.test.ts
+  - e2e/demo-workflow-windows-observer.test.ts
   - e2e/demo-workflow-windows-cleanup.test.ts
   - e2e/demo-workflow-sampling.test.ts
   - e2e/demo-workflow-short-process.test.ts
@@ -19,6 +22,8 @@ regressions:
   - packages/weapp-tailwindcss/test/bundlers/generator-css-deferred-selectors.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-framework-universal.integration.test.ts
   - packages/weapp-tailwindcss/test/watch-hmr-uni-rule-removal.unit.test.ts
+  - packages/weapp-tailwindcss/test/watch-hmr-memory-sampler.unit.test.ts
+  - packages/weapp-tailwindcss/test/watch-hmr-web-cleanup.unit.test.ts
   - packages/weapp-tailwindcss/test/ci/workflows.test.ts
   - packages/weapp-tailwindcss/test/watch-hmr-regression.unit.test.ts
   - packages/weapp-tailwindcss/test/ci/watch-issue33-snapshot-gate.test.ts
@@ -51,6 +56,10 @@ regressions:
 - Windows 的“独立后代”回归实际创建非 detached 子进程，父退出时由 Job 管理终止，无法执行合作恢复。fixture 改为真正跨平台 detached/unref 后代，并在父 close 后明确验证后代仍已登记、源码仍处于修改态；只有取消触发恢复并确认退出后才通过。
 - 正常短命令约 50 毫秒退出时，`runStep` 立即用 2 秒清理截止收紧已经启动的 5 秒身份采集。Windows 冷 PowerShell 的首轮扫描因此被中止。正常退出先停止新增采样，等待已开始的有界采集落定，再进入原清理预算；取消和采集失败仍立即停止。保留原采集/清理绝对截止，覆盖慢首次扫描、取消期间迟到拒绝和身份失败，不放宽预算。
 - Windows shard 1 的取消夹具只报告握手文件 ENOENT，原入口忽略 stderr，无法从该日志独立还原活动 CLI 分支。确定性构造 Windows pnpm 包装入口后，证明夹具替换为原生 `node -e` 时错误继承 `shell:true` 会在写文件前语法退出；先复现 SIGINT/SIGTERM 两例失败，再以 `shell:false` 恢复原生参数语义。测试保留 error/exit/stderr，隔离与取消语义无关的活动 CLI 身份；文件握手后还等待真实采集同时登记本体与独立后代，再取消。CLI 身份仍由专门命令回归验收，没有放宽启动轮询或进程预算。
+- head `de3c9f448a265bf6023f3b6a73633b598426de2b` 的 [Coverage Windows shard 2](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38117862257/job/114408980241) 在 499 项通过后仍有 1 项失败：正常短命令已经结束，首次 `Get-CimInstance` 查询超过原 5 秒采集截止；紧接的相同探针约 0.4 秒完成。此前生命周期修复只消除了 2 秒清理截止对在途采集的收紧，每次查询冷启动 PowerShell 的机制仍存在。改为业务 spawn 前准备本轮专属采集器：15 秒基础设施准备预算内完成真实 CIM 查询，并按同一 parser 验证采集器本体 PID 和出生身份；准备失败或取消时不启动业务。准备数据丢弃，运行与清理复用热采集器，每次重新查询必要身份字段，继续保留从请求入队计时的 5 秒采集和 2 秒清理绝对截止，超时后不重启续预算。所有退出路径确认采集器回收；坏响应、流错误、异常退出和迟到响应均使会话失效，空范围不能掩盖采集器故障。准备耗时不计入业务阶段报告。
+- 同一 `record` 的身份采集后紧接内存采样，原内存实现也逐轮新启 PowerShell；仅复用身份查询会保留第二个冷入口。内存采样一并使用同一热会话和固定操作，身份与内存准备共享上述 15 秒总截止，运行内存查询仍受原 5 秒截止约束。测量中的 cwd/命令匹配保留原统计范围，不用于进程归属或清理。原脚本在后代遍历中赋值 `$pid`，命中 PowerShell 大小写不敏感的只读 `$PID`；统一改用任务变量 `processPid`，两个入口共用内存脚本，真实父子进程回归核对实际 PID。协议显式使用无 BOM UTF-8，保留中文诊断。
+- 同一 head 的 [Taro React 完整 Watch](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38117853346/job/114406359206) 两次 Web 内容更新均超时。原文案同时覆盖图标与内容选择器断言，不能独立证明图标 CSS 丢失；真实 TSX 两阶段候选提取显示，Web 默认探针将类写入 JS 注释，而增量收集按设计排除注释。首次注入依赖完整扫描偶然读取注释，第二轮的新内容类没有进入增量生成。Web 探针改为复用真实模板载体，保留新鲜内容标识与 `CSS.escape` 精确身份断言，并保留最后一个具体缺失项及 CSS 证据；不修改产品候选收集来消费注释。
+- Watch 工具的独立 Windows 内存脚本也存在只读 `$PID` 冲突，并每秒通过无截止的 `spawnSync` 阻塞 HMR 循环。采样改为异步单飞，查询仅请求原指标所需字段，按绝对截止接受结果；停止时只取消并确认持有的探针退出。没有有效样本时，case 与项目报告明确记录 `availability: unavailable`，显式 RSS 或增长预算直接拒绝验收，不能用零值放行。探针回收失败属于资源错误，必须阻断任务；Web 收尾复用既有逐项清理器，在恢复源码、关闭浏览器或停止会话失败后仍继续其余清理，并聚合原始 HMR 与回收错误。
 
 ## 验证
 
@@ -73,6 +82,9 @@ regressions:
 - 显式生产者来源身份补充后 `CI=1 pnpm --filter weapp-tailwindcss exec vitest run test/ci/watch-issue33-snapshot-gate.test.ts test/watch-hmr-regression.unit.test.ts --update=none`：2 文件、139 项通过，含 23 项快照验收与实际 metadata 工厂回归；目标文件以 `eslint --no-ignore --max-warnings=0` 严格检查通过。
 - `CI=1 E2E_WATCH_CASE=weapp-vite-tailwindcss-v4 E2E_WATCH_ROUND_PROFILE=issue33 E2E_WATCH_MINI_PROGRAM_ONLY=1 E2E_WATCH_MINI_PROGRAM_SCOPE=subpackages E2E_WATCH_TIMEOUT_MS=320000 E2E_WATCH_COMMAND_TIMEOUT_MS=1680000 E2E_WATCH_MAX_PLUGIN_PROCESS_MS=6000 E2E_WATCH_MAX_ATTEMPTS=1 E2E_WATCH_SAVE_SNAPSHOTS=1 pnpm e2e:watch e2e/watch/hot-update/demo/weapp-vite-tailwindcss-v4.test.ts --update=none`：真实分包 watch 1 项通过，202.86 秒。两个分包均完成 baseline、complex、hex、issue33 增删改和新增类回归，外层通过本轮源码身份与六份成功阶段元数据验收。报告为 `e2e/benchmark/e2e-watch-hmr/2026-10-11T06-15-24-087Z-weapp-vite-tailwindcss-v4.json`；结束后源码恢复，按本工作树 cwd 检查没有遗留 Node 测试进程。
 - 合入取消夹具补充后 `CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/demo-workflow-cancellation.test.ts --update=none`：5 项通过，确定性覆盖 Windows fallback 的 shell 属性与 SIGINT/SIGTERM 真实登记后代取消；目标文件严格 ESLint 通过。
+- 合入热采集器后 `CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/demo-workflow e2e/preflight-report-output.test.ts --testTimeout=30000 --update=none`：19 文件、144 项通过；1 文件中的 2 项真实 Windows PowerShell 协议/父子内存采样测试在 macOS 未执行，必须由新 head 的 Windows CI 验收。17 个修改/新增脚本与测试严格 ESLint 通过。
+- Web Iconify 的 18 项实际候选提取和诊断回归，以及重建当前工作树依赖后的真实 Taro React Web watch 通过；热更新 382 毫秒、回滚 330 毫秒，保持原 420 秒阶段截止。结束后源码字节恢复、headless Chromium 与构建进程全部回收，完整命令见 [真实源码消费位置复盘](watch-web-iconify-source-consumer.md)。本次探针没有永久修改 demo，无新增 static 基线。
+- 合入异步内存与 Web 收尾后，`CI=1 pnpm --filter weapp-tailwindcss exec vitest run test/watch-hmr-web-iconify.unit.test.ts test/watch-hmr-web-iconify-candidates.unit.test.ts test/ci/watch-issue33-snapshot-gate.test.ts test/watch-hmr-regression.unit.test.ts test/watch-hmr-memory-sampler.unit.test.ts test/watch-hmr-web-cleanup.unit.test.ts --update=none`：6 文件、177 项通过，1 项 Windows 专属协议在 macOS 未执行。严格 ESLint、`pnpm agents:check` 与 `git diff --check` 通过；真实异步采样与逐项收尾结果见 [内存探针复盘](watch-memory-probe-lifecycle.md)。
 
 ## 适用边界
 
