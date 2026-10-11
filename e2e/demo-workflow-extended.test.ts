@@ -3,6 +3,8 @@ import process from 'node:process'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { runDemoE2eWorkflow } from '../scripts/demo-e2e-workflow'
 
+vi.mock('../scripts/demo-e2e-workflow/process-observer', () => ({ prepareWorkflowProcessObserver: async () => undefined }))
+
 const mocks = vi.hoisted(() => ({ enter: vi.fn(), spawn: vi.fn(), execFile: vi.fn(), writeReport: vi.fn() }))
 vi.mock('node:child_process', () => ({ spawn: mocks.spawn, execFile: mocks.execFile }))
 vi.mock('../scripts/e2e-preflight/gate', () => ({ enterFullTestGate: mocks.enter }))

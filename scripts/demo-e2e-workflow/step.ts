@@ -1,4 +1,5 @@
 import type { DemoE2eMemorySample, DemoE2eMemoryStepReport } from '../demo-e2e-memory'
+import type { WorkflowProcessObserver } from './process-observer'
 import type { WorkflowStep } from './quality-steps'
 import { spawn } from 'node:child_process'
 import process from 'node:process'
@@ -6,9 +7,48 @@ import { sampleProcessTreeAsync, summarizeMemorySamples } from '../demo-e2e-memo
 import { formatWorkflowError } from '../e2e-preflight/cleanup'
 import { createPnpmCommand } from '../pnpm-command.mjs'
 import { WorkflowCancellationError } from './cancellation'
+import { prepareWorkflowProcessObserver } from './process-observer'
 import { createWorkflowProcessTree } from './process-tree'
 
 export async function runStep(step: WorkflowStep, index: number, total: number, preflightEnv: Record<string, string> = {}, workflowEnv = process.env, cancellation?: AbortSignal) {
+  const observer = await prepareWorkflowProcessObserver(cancellation)
+  let failure: unknown
+  let report: DemoE2eMemoryStepReport | undefined
+  try {
+    // 准备完成与业务启动之间再次检查取消；基础设施耗时不计入业务阶段报告。
+    cancellation?.throwIfAborted()
+    report = await runObservedStep(step, index, total, preflightEnv, workflowEnv, cancellation, observer)
+  }
+  catch (error) {
+    failure = error
+  }
+  try {
+    await observer?.close()
+  }
+  catch (error) {
+    const errors = [...new Set([failure, error].filter(item => item !== undefined))]
+    const combined = new AggregateError(errors, '身份采集器回收失败；业务阶段不能放行。', { cause: errors[0] })
+    if (report) {
+      report.exitCode = 1
+      report.error = formatWorkflowError(error)
+      Object.assign(combined, { stepReport: report })
+    }
+    else if (failure && typeof failure === 'object' && 'stepReport' in failure) {
+      const failedReport = failure.stepReport as DemoE2eMemoryStepReport | undefined
+      if (failedReport) {
+        failedReport.error = [...new Set([failedReport.error, formatWorkflowError(error)].filter(Boolean))].join('\n')
+      }
+      Object.assign(combined, { stepReport: failure.stepReport })
+    }
+    failure = combined
+  }
+  if (failure !== undefined) {
+    throw failure
+  }
+  return report!
+}
+
+async function runObservedStep(step: WorkflowStep, index: number, total: number, preflightEnv: Record<string, string>, workflowEnv: NodeJS.ProcessEnv, cancellation?: AbortSignal, observer?: WorkflowProcessObserver) {
   cancellation?.throwIfAborted()
   process.stdout.write(`[demo-e2e] ${index}/${total}${step.local ? ' local' : ''} ${step.name}: ${step.command} ${step.args.join(' ')}\n`)
   const startedAt = Date.now()
@@ -32,7 +72,7 @@ export async function runStep(step: WorkflowStep, index: number, total: number, 
     })
     child.once('close', code => resolve(code ?? 1))
   })
-  const tree = createWorkflowProcessTree(child, closed)
+  const tree = createWorkflowProcessTree(child, closed, { observer })
   let cleanup: Promise<{ error?: unknown }> | undefined
   let recording = true
   let timer: NodeJS.Timeout | undefined
@@ -64,7 +104,7 @@ export async function runStep(step: WorkflowStep, index: number, total: number, 
       if (!recording) {
         return
       }
-      const sample = await sampleProcessTreeAsync(child.pid)
+      const sample = await sampleProcessTreeAsync(child.pid, observer)
       if (sample) {
         samples.push(sample)
       }

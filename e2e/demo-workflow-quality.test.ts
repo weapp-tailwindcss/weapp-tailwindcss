@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('node:child_process', () => ({ spawn: mocks.spawn }))
 vi.mock('../scripts/e2e-preflight/gate', () => ({ enterFullTestGate: mocks.enter }))
+vi.mock('../scripts/demo-e2e-workflow/process-observer', () => ({ prepareWorkflowProcessObserver: async () => undefined }))
 vi.mock('../scripts/demo-e2e-memory', async importOriginal => ({
   ...await importOriginal<typeof import('../scripts/demo-e2e-memory')>(),
   sampleProcessTreeAsync: async () => undefined,

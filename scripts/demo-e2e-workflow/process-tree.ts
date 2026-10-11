@@ -1,4 +1,5 @@
 import type { ChildProcess } from 'node:child_process'
+import type { WorkflowProcessObserver } from './process-observer'
 import type { ProcessIdentity } from './process-table'
 import process from 'node:process'
 import { setTimeout as delay } from 'node:timers/promises'
@@ -8,6 +9,7 @@ import { collectOwnedProcesses, readProcessSubset, readProcessTable } from './pr
 interface CleanupOptions {
   cooperativeMs?: number
   cleanupMs?: number
+  observer?: WorkflowProcessObserver
 }
 
 /** 仅清理独立组和已证明身份的后代；未登记的 double-fork 不属于确认范围。 */
@@ -19,6 +21,12 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
   let didClose = false
   let pending: { promise: Promise<Map<number, ProcessIdentity>>, controller: AbortController, budget: { deadline: number } } | undefined
   let identityError: unknown
+  const readTable = (timeoutMs: number, signal: AbortSignal) => options.observer
+    ? readProcessTable(timeoutMs, signal, options.observer)
+    : readProcessTable(timeoutMs, signal)
+  const readSubset = (group: number | undefined, pids: number[], timeoutMs: number, signal?: AbortSignal) => options.observer
+    ? readProcessSubset(group, pids, timeoutMs, signal, options.observer)
+    : readProcessSubset(group, pids, timeoutMs, signal)
   void closed.then(() => {
     didClose = true
   })
@@ -43,8 +51,8 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
       }
       const exited = child.exitCode !== null || child.signalCode !== null
       const rows = initialized && (didClose || exited)
-        ? await readProcessSubset(group, [...owned.keys()], remaining, controller.signal)
-        : await readProcessTable(remaining, controller.signal)
+        ? await readSubset(group, [...owned.keys()], remaining, controller.signal)
+        : await readTable(remaining, controller.signal)
       assertCurrent()
       return rows
     }
@@ -195,7 +203,7 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
       else if (available) {
         let latestRows: ProcessIdentity[] = []
         try {
-          latestRows = await readProcessSubset(group, [...current.keys()], deadline - Date.now())
+          latestRows = await readSubset(group, [...current.keys()], deadline - Date.now())
         }
         catch (error) {
           errors.push(error)

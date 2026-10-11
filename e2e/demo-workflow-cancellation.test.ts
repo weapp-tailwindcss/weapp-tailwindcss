@@ -8,7 +8,7 @@ import { setTimeout as delay } from 'node:timers/promises'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { runDemoE2eWorkflow } from '../scripts/demo-e2e-workflow'
 
-const mocks = vi.hoisted(() => ({ enter: vi.fn(), pnpm: vi.fn(), spawn: vi.fn(), tree: vi.fn(), writeReport: vi.fn() }))
+const mocks = vi.hoisted(() => ({ enter: vi.fn(), pnpm: vi.fn(), ready: vi.fn(), spawn: vi.fn(), tree: vi.fn(), writeReport: vi.fn() }))
 vi.mock('node:child_process', async importOriginal => ({
   ...await importOriginal<typeof import('node:child_process')>(),
   spawn: mocks.spawn,
@@ -16,14 +16,26 @@ vi.mock('node:child_process', async importOriginal => ({
 vi.mock('../scripts/demo-e2e-workflow/process-tree', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../scripts/demo-e2e-workflow/process-tree')>()
   return {
-    createWorkflowProcessTree: (child: ChildProcess, closed: Promise<unknown>) => {
-      const tree = actual.createWorkflowProcessTree(child, closed, { cooperativeMs: 25 })
+    createWorkflowProcessTree: (child: ChildProcess, closed: Promise<unknown>, options: Parameters<typeof actual.createWorkflowProcessTree>[2]) => {
+      const tree = actual.createWorkflowProcessTree(child, closed, { ...options, cooperativeMs: 25 })
       mocks.tree(tree)
       return tree
     },
   }
 })
 vi.mock('../scripts/e2e-preflight/gate', () => ({ enterFullTestGate: mocks.enter }))
+vi.mock('../scripts/demo-e2e-workflow/process-observer', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../scripts/demo-e2e-workflow/process-observer')>()
+  const { spawn } = await vi.importActual<typeof import('node:child_process')>('node:child_process')
+  return {
+    ...actual,
+    prepareWorkflowProcessObserver: async (signal?: AbortSignal) => {
+      const observer = await actual.prepareWorkflowProcessObserver(signal, { spawn })
+      mocks.ready()
+      return observer
+    },
+  }
+})
 vi.mock('../scripts/pnpm-command.mjs', () => ({ createPnpmCommand: mocks.pnpm }))
 vi.mock('../scripts/demo-e2e-memory', async importOriginal => ({
   ...await importOriginal<typeof import('../scripts/demo-e2e-memory')>(),
@@ -139,6 +151,9 @@ describe('全面工作流的取消与阶段进程所有权', () => {
     })
     let finished = false
     let workflowResult: unknown
+    const prepared = new Promise<void>((resolve) => {
+      mocks.ready.mockImplementation(resolve)
+    })
     const running = runDemoE2eWorkflow(['--local', '--quality']).catch(error => error).then((outcome) => {
       finished = true
       workflowResult = outcome
@@ -149,6 +164,10 @@ describe('全面工作流的取消与阶段进程所有权', () => {
       : undefined
     let pids: number[] = []
     try {
+      // 启动握手的原 2.5 秒窗口只覆盖业务启动；独立冷准备由自己的 15 秒截止约束。
+      await Promise.race([prepared, running.then((outcome) => {
+        throw new Error('取消测试在采集器准备完成前结束。', { cause: outcome })
+      })])
       await until(async () => {
         pids = JSON.parse(await readFile(ids, 'utf8'))
         expect(await readFile(heartbeat, 'utf8')).not.toBe('')
@@ -184,7 +203,7 @@ describe('全面工作流的取消与阶段进程所有权', () => {
         killKnown(pid)
       }
     }
-  }, 15_000)
+  }, 15_000 + 15_000)
 
   it('阶段复查期间取消，等待复查结束后不启动子进程并释放门禁', async () => {
     let release!: () => void

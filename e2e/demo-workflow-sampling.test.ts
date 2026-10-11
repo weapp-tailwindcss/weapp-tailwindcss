@@ -6,6 +6,7 @@ import { runStep } from '../scripts/demo-e2e-workflow/step'
 const mocks = vi.hoisted(() => ({ spawn: vi.fn(), capture: vi.fn(), sample: vi.fn(), stop: vi.fn() }))
 vi.mock('node:child_process', () => ({ spawn: mocks.spawn }))
 vi.mock('../scripts/demo-e2e-workflow/process-tree', () => ({ createWorkflowProcessTree: () => ({ capture: mocks.capture, stop: mocks.stop }) }))
+vi.mock('../scripts/demo-e2e-workflow/process-observer', () => ({ prepareWorkflowProcessObserver: async () => undefined }))
 vi.mock('../scripts/demo-e2e-memory', async importOriginal => ({ ...await importOriginal<object>(), sampleProcessTreeAsync: mocks.sample }))
 
 afterEach(() => {
