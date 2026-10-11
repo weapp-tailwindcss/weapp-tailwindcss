@@ -3,6 +3,7 @@ import fs from 'node:fs/promises'
 import net from 'node:net'
 import path from 'node:path'
 import process from 'node:process'
+import { fileURLToPath } from 'node:url'
 import { createProcessMemorySampler } from './process-memory.mjs'
 import { benchmarkProjects as projects } from './projects.mjs'
 import { resolvePluginTimingSample } from './timing.mjs'
@@ -103,7 +104,9 @@ function summarizeTimingPhases(timings) {
   for (const timing of timings) {
     const phase = timing?.phase
     const durationMs = timing?.durationMs
-    if (typeof phase !== 'string' || typeof durationMs !== 'number' || !Number.isFinite(durationMs)) continue
+    if (typeof phase !== 'string' || typeof durationMs !== 'number' || !Number.isFinite(durationMs)) {
+      continue
+    }
     const values = phases.get(phase) ?? []
     values.push(durationMs)
     phases.set(phase, values)
@@ -375,6 +378,7 @@ async function runBuildOnce(cwd, buildScript, timeoutMs, buildEnv = {}) {
 
   const pluginTiming = resolvePluginTimingSample(logs.split(/\r?\n/))
   return {
+    rootPid: child.pid,
     durationMs: now() - start,
     pluginProcessMs: pluginTiming?.durationMs,
     pluginTiming,
@@ -644,13 +648,14 @@ async function runDevServerHmrRounds({
   }
 }
 
-async function runCase(versionMeta, projectMeta, options) {
+export async function runCase(versionMeta, projectMeta, options) {
   const cwd = path.join(versionMeta.root, projectMeta.project)
   const buildMs = []
   const buildPluginMs = []
   const buildPluginTimings = []
   const buildPeakRssMb = []
   const buildSteadyRssMb = []
+  const buildMemorySamples = []
 
   const buildMode = projectMeta.buildMode ?? 'build'
   if (buildMode === 'unsupported') {
@@ -659,6 +664,7 @@ async function runCase(versionMeta, projectMeta, options) {
   else {
     for (let i = 0; i < options.buildRuns; i += 1) {
       const sample = await runBuildOnce(cwd, projectMeta.buildScript, options.timeoutMs, projectMeta.buildEnv)
+      buildMemorySamples.push({ run: i + 1, ...sample })
       buildMs.push(sample.durationMs)
       if (typeof sample.pluginProcessMs === 'number') {
         buildPluginMs.push(sample.pluginProcessMs)
@@ -733,6 +739,7 @@ async function runCase(versionMeta, projectMeta, options) {
     buildPluginTimings,
     buildPeakRssMb,
     buildSteadyRssMb,
+    buildMemorySamples,
     hmrMs,
     hmrPluginMs,
     hmrPluginTimings,
@@ -805,7 +812,9 @@ async function main() {
   process.stdout.write(`matrix raw -> ${path.resolve(output)}\n`)
 }
 
-main().catch((error) => {
-  console.error(error)
-  process.exitCode = 1
-})
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((error) => {
+    console.error(error)
+    process.exitCode = 1
+  })
+}
