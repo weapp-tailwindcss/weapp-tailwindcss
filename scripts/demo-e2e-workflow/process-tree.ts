@@ -55,16 +55,30 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
       const running = () => child.exitCode === null && child.signalCode === null
       const wasRunning = running()
       let rows = await scan()
+      if (!initialized) {
+        // 系统快照可能先观察到退出，ChildProcess 的 close/exit 尚未进入 JS；同一绝对预算内等待身份或退出。
+        while (running() && !rows.some(row => row.pid === child.pid && !row.zombie)) {
+          const remaining = budget.deadline - Date.now()
+          if (remaining <= 0) {
+            throw new Error(`本轮仍运行的子进程 pid=${child.pid} 缺少启动身份，采集预算已耗尽，不能确认后代归属。`)
+          }
+          await Promise.race([closed, delay(Math.min(25, remaining))])
+          assertCurrent()
+          if (running()) {
+            if (Date.now() >= budget.deadline) {
+              throw new Error(`本轮仍运行的子进程 pid=${child.pid} 缺少启动身份，采集预算已耗尽，不能确认后代归属。`)
+            }
+            rows = await scan()
+          }
+        }
+      }
       if (!initialized && wasRunning && !running() && group && rows.some(row => row.group === group && !row.zombie)) {
         // 首次扫描跨越本体退出时，旧快照不能证明根身份；同一预算内重采，仅空组可自然收尾。
         rows = await scan()
       }
       assertCurrent()
       if (!initialized) {
-        const root = rows.find(row => row.pid === child.pid)
-        if (!root && running()) {
-          throw new Error(`本轮仍运行的子进程 pid=${child.pid} 缺少启动身份，不能确认后代归属。`)
-        }
+        const root = rows.find(row => row.pid === child.pid && !row.zombie)
         if (root && running()) {
           owned.set(root.pid, root)
         }

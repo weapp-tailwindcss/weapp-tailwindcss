@@ -11,6 +11,7 @@ const row = (pid: number, parent: number, group: number, second: number) => ({ p
 const platform = process.platform
 afterEach(() => {
   Object.defineProperty(process, 'platform', { value: platform })
+  vi.useRealTimers()
   vi.restoreAllMocks()
 })
 
@@ -102,13 +103,49 @@ describe('取消只能清理仍有身份证据的本轮进程', () => {
     expect(subsetScan).toHaveBeenCalledWith(target === 'win32' ? undefined : 123, [123, 200], expect.any(Number), expect.any(AbortSignal))
   })
 
-  it.each(['linux', 'win32'])('%s 仍运行的根进程缺少身份时阻断，后续完整快照才能建立归属', async (target) => {
+  it.each(['linux', 'win32'])('%s 初次快照缺少根身份时在同一预算内复核，不提交空归属', async (target) => {
     Object.defineProperty(process, 'platform', { value: target })
     const root = row(123, 1, target === 'win32' ? 0 : 123, 10)
-    vi.spyOn(table, 'readProcessTable').mockResolvedValueOnce([]).mockResolvedValueOnce([root])
+    const scan = vi.spyOn(table, 'readProcessTable').mockResolvedValueOnce([]).mockResolvedValueOnce([root])
     const child = Object.assign(new EventEmitter(), { pid: 123, exitCode: null, signalCode: null }) as ChildProcess
     const tree = createWorkflowProcessTree(child, new Promise(() => {}))
-    await expect(tree.capture()).rejects.toThrow('缺少启动身份')
     await expect(tree.capture()).resolves.toEqual(new Map([[123, root]]))
+    expect(scan).toHaveBeenCalledTimes(2)
+    expect(scan.mock.calls[1]?.[0]).toBeLessThan(scan.mock.calls[0]![0]!)
+  })
+
+  it.each(['linux', 'win32'])('%s 系统已无短命令但 close 异步到达时正常结束，不误报缺根身份', async (target) => {
+    Object.defineProperty(process, 'platform', { value: target })
+    const scan = vi.spyOn(table, 'readProcessTable').mockResolvedValue([])
+    const child = Object.assign(new EventEmitter(), { pid: 123, exitCode: null, signalCode: null }) as ChildProcess
+    let close!: () => void
+    const tree = createWorkflowProcessTree(child, new Promise<void>((resolve) => {
+      close = resolve
+    }))
+    const captured = tree.capture()
+    await new Promise(resolve => setTimeout(resolve, 5))
+    Object.assign(child, { exitCode: 0 })
+    close()
+    await expect(captured).resolves.toEqual(new Map())
+    await expect(tree.stop()).resolves.toBeUndefined()
+    expect(scan).toHaveBeenCalledOnce()
+  })
+
+  it.each(['linux', 'win32'])('%s 持续存活却缺少根身份只使用原绝对预算，不能延后截止', async (target) => {
+    Object.defineProperty(process, 'platform', { value: target })
+    vi.useFakeTimers()
+    vi.setSystemTime(0)
+    const scan = vi.spyOn(table, 'readProcessTable').mockImplementation(async () => {
+      vi.setSystemTime(Date.now() + 2500)
+      return []
+    })
+    const child = Object.assign(new EventEmitter(), { pid: 123, exitCode: null, signalCode: null }) as ChildProcess
+    const tree = createWorkflowProcessTree(child, new Promise(() => {}))
+    const captured = tree.capture().catch(error => error)
+    expect(String(await captured)).toContain('采集预算已耗尽')
+    expect(Date.now()).toBe(5000)
+    expect(scan.mock.calls[0]?.[0]).toBe(5000)
+    expect(scan).toHaveBeenCalledTimes(2)
+    expect(scan.mock.calls.at(-1)?.[0]).toBe(2500)
   })
 })
