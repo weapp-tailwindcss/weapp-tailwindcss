@@ -1,7 +1,7 @@
 ---
 status: verified
 issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1282
-baseline: 30e17cc63381076eea802b40bd9c7905ead88108
+baseline: 70ff7cc0c0adba5ab22aa65d8429c80e086fdad2
 regressions:
   - packages/weapp-tailwindcss/test/ci/install-frozen-config.test.ts
   - packages/weapp-tailwindcss/test/ci/install-workspace.test.ts
@@ -26,7 +26,9 @@ regressions:
 
 ## 验证
 
-新增回归建立三个完全本地的 workspace package，没有 registry 依赖和 `packageManager` 字段，避免自动版本分派。使用活动 pnpm CLI 生成锁文件，再调用真实 `install-workspace.mjs`；打印 Node 和 CLI 路径、Node 版本及 CLI 的 `--version` 输出，并断言安装 footer 版本一致。正向检查 `resolution step is skipped`、锁文件及 workspace 配置字节不变；修改 manifest 后检查 `ERR_PNPM_OUTDATED_LOCKFILE`，仍不得写锁文件。
+新增回归建立本地 workspace 和一个不属于 workspace 的 `file:` 依赖，没有 registry 依赖和 `packageManager` 字段，避免自动版本分派与单纯链接 workspace 的空物化。使用活动 pnpm CLI 生成锁文件，再调用真实 `install-workspace.mjs`；打印 Node 和 CLI 路径、Node 版本及 CLI 的 `--version` 输出，并断言安装 footer 版本一致。
+
+解析证据使用官方 `.pnpmfile.cjs` 的 `afterAllResolved` 钩子：生成锁文件时先确认记录实际写入，清除记录后执行冻结安装。必须安装出此前不存在的准确依赖 manifest 与 JS 字节，产物 realpath 不能等于原始本地包；同时解析记录仍不存在，锁文件及 workspace 配置字节不变。修改 manifest 后检查 `ERR_PNPM_OUTDATED_LOCKFILE`，不得写锁文件或触发解析钩子。钩子内容在两阶段保持一致，因此锁文件中的 pnpmfile checksum 不发生变化。
 
 macOS 本地验证使用 Node 24.18.0。pnpm 11.9.0 的 JavaScript 入口直接通过 `npm_execpath` 指定，修复前回归因未跳过解析而失败，修复后通过；pnpm 12.9.1 使用 Corepack 缓存中的实际 `pnpm-native` 入口，也通过相同回归。两者实际 CLI 包版本与 `--version` 输出分别为 11.9.0 和 12.9.1。不能以兼容版本的 exec 子命令认定测试身份：该命令在本地可能先隐式安装，测试子进程还可能经 PATH 回退后切换版本，因此本次使用直接 Vitest 入口保留已确认的 CLI 身份。
 
@@ -38,6 +40,14 @@ CI=1 npm_execpath="<pnpm-12.9.1实际原生入口>" node ../../node_modules/vite
 ```
 
 兼容矩阵新增真实冻结配置回归及安装入口回归，以实际 Windows、macOS 和 Linux 的活动 pnpm 11 执行；工作流契约检查确保该用例持续接入。远端修复后的结果由 PR 最终准确 head 的 CI 记录确认，本地通过不能代替 hosted 环境证据。
+
+### Windows 默认 reporter 的文案误判
+
+[CI run 38135060800](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38135060800) 的准确提交 `70ff7cc0c0adba5ab22aa65d8429c80e086fdad2`、attempt 1，Windows / Node 24 与 Node 22 均完成真实 workspace 冻结安装和构建。安装日志明确跳过解析，分别耗时 1 分 41.3 秒和 1 分 25.3 秒，实际 CLI 都是 pnpm 11.9.0；两项兼容测试均为 367 项通过、仅新增 fixture 文案断言失败。
+
+fixture 的安装退出码为 0，日志有 scope、策略校验和准确版本 footer，却没有固定的 `resolution step is skipped` 文案。该文案在 pnpm 11.9.0 的 `tryFrozenInstall` 内部晚于 `lockfileOnly` 与空锁判断，属于默认 reporter 展示，不是可移植的解析协议。本机未复现 Windows 的展示差异，不能仅凭缺少文案断言发生全量解析。
+
+改用上述实际物化与官方解析钩子后，将真实安装器恢复为不含 `--config.update=false` 的旧实现，准确 pnpm 11.9.0 回归因再次写入 `resolved` 记录而失败；恢复覆盖后通过。pnpm 12.9.1 同用例也通过。准确源码中，`afterAllResolved` 只在真实解析完成后执行，冻结路径不会调用它；先校准钩子再检查新物化，排除探针没加载或只写锁文件的空断言。该测试纠正保留原始 Windows 失败，并等待新提交的远端矩阵验证，不通过删断言或反复重跑将旧结果改为成功。
 
 ## 适用边界
 
