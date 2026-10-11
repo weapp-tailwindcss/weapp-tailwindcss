@@ -14,6 +14,7 @@ const expectedHomepages = {
   '@weapp-tailwindcss/css-compat': '/',
   '@weapp-tailwindcss/debug-uni-app-x': '/docs/config/uni-app-x',
   '@weapp-tailwindcss/engine': '/',
+  '@weapp-tailwindcss/env': '/',
   '@weapp-tailwindcss/escape': '/',
   '@weapp-tailwindcss/experimental': '/',
   '@weapp-tailwindcss/hbuilderx-runner': '/docs/quick-start/frameworks/hbuilderx',

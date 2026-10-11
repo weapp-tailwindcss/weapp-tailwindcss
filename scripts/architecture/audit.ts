@@ -1,5 +1,6 @@
 import type { Graph } from './graph'
 import fs from 'node:fs'
+import { isBuiltin } from 'node:module'
 import path from 'node:path'
 import ts from 'typescript'
 import { auditClientBoundaries } from './client-boundaries'
@@ -17,12 +18,18 @@ export function auditArchitecture(root: string) {
   const packageGraph: Graph = new Map(packages.map(pkg => [pkg.name, new Set(pkg.dependencies.filter(name => names.has(name)))]))
   const errors: string[] = []
   for (const pkg of packages) {
+    if (pkg.name === '@weapp-tailwindcss/env' && pkg.dependencies.length > 0) {
+      errors.push(`环境包不允许生产依赖：${pkg.dependencies.join(', ')}`)
+    }
     for (const file of pkg.files) {
       const valueEdges = new Set<string>()
       const allEdges = new Set<string>()
       values.set(file, valueEdges)
       all.set(file, allEdges)
       for (const edge of readImports(file, fs.readFileSync(file, 'utf8'))) {
+        if (pkg.name === '@weapp-tailwindcss/env' && !edge.specifier.startsWith('.') && !isBuiltin(edge.specifier)) {
+          errors.push(`环境包只能依赖 Node 内置模块：${path.relative(root, file)} -> ${edge.specifier}`)
+        }
         const dependency = packages.find(item => edge.specifier === item.name || edge.specifier.startsWith(`${item.name}/`))
         const resolved = ts.resolveModuleName(edge.specifier, file, pkg.options, ts.sys).resolvedModule
         const candidate = dependency ? resolveWorkspaceEntry(dependency, edge.specifier) : resolved?.resolvedFileName
@@ -69,11 +76,14 @@ export function auditArchitecture(root: string) {
   }
   const mainSource = path.join(root, 'packages', 'weapp-tailwindcss', 'src')
   for (const [name, forbiddenNames] of [
+    ['env', ['source-scan', 'engine', 'css-compat', 'postcss', 'weapp-tailwindcss', 'cli', 'weapp-style-injector', 'tailwindcss-config']],
     ['source-scan', ['engine', 'postcss', 'weapp-tailwindcss', 'cli', 'weapp-style-injector']],
     ['engine', ['postcss', 'weapp-tailwindcss', 'cli', 'weapp-style-injector']],
   ] as const) {
     const sourceRoot = path.join(root, 'packages', name, 'src')
-    const forbiddenRoots = forbiddenNames.map(name => path.join(root, 'packages', name))
+    const forbiddenRoots = name === 'env'
+      ? packages.filter(pkg => pkg.name !== '@weapp-tailwindcss/env').map(pkg => pkg.root)
+      : forbiddenNames.map(name => path.join(root, 'packages', name))
     for (const start of files) {
       if (!inside(sourceRoot, start)) {
         continue
@@ -84,8 +94,8 @@ export function auditArchitecture(root: string) {
       }
     }
   }
-  const coreDirs = ['core', 'compiler', 'context', 'generator', 'generation', 'tailwindcss', 'js', 'wxml', 'cache', 'project-sources']
-  const corePackages = ['source-scan', 'engine'].map(name => path.join(root, 'packages', name, 'src'))
+  const coreDirs = ['framework', 'core', 'compiler', 'context', 'generator', 'generation', 'tailwindcss', 'js', 'wxml', 'cache', 'project-sources']
+  const corePackages = ['env', 'source-scan', 'engine'].map(name => path.join(root, 'packages', name, 'src'))
   const postcssSource = path.join(root, 'packages', 'postcss', 'src')
   const starts = [...files].filter(file => corePackages.some(directory => inside(directory, file))
     || ['syntax.ts', 'transform.ts'].some(entry => file === path.join(postcssSource, entry)) || file === path.join(mainSource, 'core.ts') || coreDirs.some(directory => inside(path.join(mainSource, directory), file)))

@@ -94,6 +94,45 @@ describe('架构检查器', () => {
     }
     expect(auditArchitecture(root).errors.join('\n')).toContain('基础包反向依赖')
   })
+  it.each([
+    "import 'weapp-tailwindcss'",
+    "import type { Options } from 'weapp-tailwindcss'",
+    "export * from '../../weapp-tailwindcss/src/index'",
+    "export type { Options } from '../../weapp-tailwindcss/src/index'",
+  ])('环境包不得反向引用主包：%s', async (source) => {
+    const { root } = await fixture({ 'index.ts': 'export interface Options {}' })
+    const base = path.join(root, 'packages', 'env')
+    await mkdir(path.join(base, 'src'), { recursive: true })
+    await writeFile(path.join(base, 'package.json'), JSON.stringify({ name: '@weapp-tailwindcss/env', exports: { '.': './dist/index.js' } }))
+    await writeFile(path.join(base, 'src', 'index.ts'), source)
+    expect(auditArchitecture(root).errors.join('\n')).toContain('基础包反向依赖')
+  })
+  it.each(['dependencies', 'optionalDependencies', 'peerDependencies'])('环境包不允许未使用的 %s', async (field) => {
+    const { root } = await fixture({})
+    const base = path.join(root, 'packages', 'env')
+    await mkdir(path.join(base, 'src'), { recursive: true })
+    await writeFile(path.join(base, 'package.json'), JSON.stringify({ name: '@weapp-tailwindcss/env', [field]: { tailwindcss: '*' } }))
+    await writeFile(path.join(base, 'src', 'index.ts'), 'export const value = 1')
+    expect(auditArchitecture(root).errors.join('\n')).toContain('环境包不允许生产依赖')
+  })
+  it('环境包不能通过相对路径引用其他基础包', async () => {
+    const { root } = await fixture({})
+    for (const name of ['env', 'logger']) {
+      const base = path.join(root, 'packages', name)
+      await mkdir(path.join(base, 'src'), { recursive: true })
+      await writeFile(path.join(base, 'package.json'), JSON.stringify({ name: `@weapp-tailwindcss/${name}` }))
+      await writeFile(path.join(base, 'src', 'index.ts'), name === 'env' ? "export * from '../../logger/src/index'" : 'export const value = 1')
+    }
+    expect(auditArchitecture(root).errors.join('\n')).toContain('基础包反向依赖')
+  })
+  it('允许主包使用环境包的根入口与 Node 内置模块', async () => {
+    const { root } = await fixture({ 'framework/index.ts': "export * from '@weapp-tailwindcss/env'" })
+    const base = path.join(root, 'packages', 'env')
+    await mkdir(path.join(base, 'src'), { recursive: true })
+    await writeFile(path.join(base, 'package.json'), JSON.stringify({ name: '@weapp-tailwindcss/env', exports: { '.': './dist/index.js' } }))
+    await writeFile(path.join(base, 'src', 'index.ts'), "import 'node:fs'; export const value = 1")
+    expect(auditArchitecture(root).errors).toEqual([])
+  })
   it('动态 import 与 require 也不能构成循环', async () => {
     const { root } = await fixture({ 'a.ts': "export const load = () => import('./b')", 'b.ts': "require('./a')" })
     expect(auditArchitecture(root).errors.join('\n')).toContain('值依赖循环')

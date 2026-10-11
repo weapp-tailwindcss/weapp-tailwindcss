@@ -8,6 +8,8 @@ import { sourceFiles } from '../../../../scripts/architecture/workspace'
 
 const repositoryRoot = path.resolve(__dirname, '../../../..')
 const entries = [
+  ['env', 'index'],
+  ['weapp-tailwindcss', 'framework'],
   ['source-scan', 'index'],
   ['engine', 'index'],
   ['postcss', 'index'], ['postcss', 'syntax'], ['postcss', 'transform'], ['postcss', 'plugin'],

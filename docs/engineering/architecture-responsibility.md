@@ -4,6 +4,7 @@
 
 | 所有者 | 职责 | 不应承担 |
 | --- | --- | --- |
+| env | 框架、环境、HBuilderX 与平台事实识别 | 构建器选择、生成器 target、样式策略、Vite package boundary |
 | source-scan | 路径身份、glob、匹配排除、来源分组、扫描策略 | CSS 解析、文件枚举、Tailwind 生成、构建器接入 |
 | engine | Oxide 文件枚举、候选提取与验证、Tailwind 编译会话、依赖失效与释放 | 平台 CSS 兼容、主包或构建器实现 |
 | tailwindcss-config | 配置搜索、模块加载与最新配置读取 | 扫描策略、生成或产物提交 |
@@ -42,4 +43,4 @@ CLI 使用 scanMode: compiled，在生成会话内复用 Tailwind 已编译的�
 
 generation-ownership 回归保证旧生成与候选目录仅含重导出，避免通用实现重新流回构建器层。构建器负责把源码与目录变化传入核心，Webpack/Rspack 注册扫描目录及配置依赖，Gulp 的 watchChange 同时失效扫描缓存与运行时候选集合。
 
-检查器同时阻止 source-scan、engine 向上层包的类型或值引用，并拒绝通过生产源码范围之外的本地模块绕过检查。动态路径常量按词法作用域解析；运行时才能确定的模块请求不属于静态图。
+检查器同时阻止 env、source-scan、engine 向上层包的类型或值引用，并拒绝通过生产源码范围之外的本地模块绕过检查。动态路径常量按词法作用域解析；运行时才能确定的模块请求不属于静态图。

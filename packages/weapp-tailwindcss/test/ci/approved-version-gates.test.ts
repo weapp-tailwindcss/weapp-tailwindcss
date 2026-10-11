@@ -1,5 +1,5 @@
 /* eslint-disable no-template-curly-in-string -- 测试按字面量核验工作流表达式。 */
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { runInNewContext } from 'node:vm'
 import { describe, expect, it } from 'vitest'
@@ -7,7 +7,7 @@ import { parse } from 'yaml'
 
 const root = resolve(import.meta.dirname, '../../../..')
 const workflow = (name: string) => parse(readFileSync(join(root, '.github', 'workflows', name), 'utf8'))
-const children = ['pr-gate.yml', 'release-gate.yml', 'website-seo-quality.yml', 'package-readme-quality.yml', 'architecture.yml', 'agents.yml', 'ci.yml', 'benchmark.yml', 'react-native-compatibility.yml', 'lynx-native.yml', 'css-compat.yml']
+const children = ['pr-gate.yml', 'release-gate.yml', 'website-seo-quality.yml', 'package-readme-quality.yml', 'architecture.yml', 'agents.yml', 'ci.yml', 'benchmark.yml', 'react-native-compatibility.yml', 'lynx-native.yml', 'css-compat.yml', 'env.yml']
 
 describe('审批后的版本 PR 完整验收链路', () => {
   it.each([...children, 'ci-scope.yml'])('%s 默认保持自动路径，完整执行必须由调用方显式传入', (name) => {
@@ -23,8 +23,33 @@ describe('审批后的版本 PR 完整验收链路', () => {
       if (job.uses === './.github/workflows/ci-scope.yml') {
         expect(job.with.full_verification).toBe('${{ inputs.full_verification || false }}')
       }
-      if (job.uses === './.github/workflows/css-compat.yml') {
+      if (job.uses?.startsWith('./.github/workflows/')) {
+        const called = parse(readFileSync(resolve(root, job.uses), 'utf8'))
+        if (!called.on.workflow_call?.inputs?.full_verification) {
+          continue
+        }
         expect(job.with.full_verification).toBe('${{ inputs.full_verification || false }}')
+      }
+    }
+  })
+
+  it('所有本地可复用工作流调用满足输入声明与必填参数', () => {
+    for (const name of readdirSync(join(root, '.github', 'workflows')).filter(name => name.endsWith('.yml'))) {
+      const caller = workflow(name)
+      for (const [id, job] of Object.entries(caller.jobs) as Array<[string, { uses?: string, with?: Record<string, unknown> }]>) {
+        if (!job.uses?.startsWith('./.github/workflows/')) {
+          continue
+        }
+        const called = parse(readFileSync(resolve(root, job.uses), 'utf8'))
+        const inputs = called.on.workflow_call?.inputs ?? {}
+        for (const key of Object.keys(job.with ?? {})) {
+          expect(Object.hasOwn(inputs, key), `${name}:${id} 传入未声明参数 ${key}`).toBe(true)
+        }
+        for (const [key, input] of Object.entries(inputs) as Array<[string, { required?: boolean }]>) {
+          if (input.required) {
+            expect(Object.hasOwn(job.with ?? {}, key), `${name}:${id} 缺少必填参数 ${key}`).toBe(true)
+          }
+        }
       }
     }
   })

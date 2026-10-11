@@ -5,6 +5,7 @@ export default defineConfig({
   test: {
     setupFiles: ['./test/setup/esbuild-cleanup.ts'],
     alias: [
+      { find: /^@weapp-tailwindcss\/env$/, replacement: path.resolve(__dirname, '../env/src/index.ts') },
       { find: '@weapp-tailwindcss/postcss/transform', replacement: path.resolve(__dirname, '../postcss/src/transform.ts') },
       { find: '@weapp-tailwindcss/postcss/syntax', replacement: path.resolve(__dirname, '../postcss/src/syntax.ts') },
       { find: '@weapp-tailwindcss/postcss/plugin', replacement: path.resolve(__dirname, '../postcss/src/plugin.ts') },
