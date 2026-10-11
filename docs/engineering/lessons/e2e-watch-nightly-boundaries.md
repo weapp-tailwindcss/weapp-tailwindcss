@@ -14,6 +14,7 @@ regressions:
   - e2e/demo-workflow-short-process.test.ts
   - e2e/demo-workflow-native-cancellation.test.ts
   - e2e/demo-workflow-cancellation.test.ts
+  - e2e/demo-workflow-cooperative-budget.test.ts
   - e2e/snapshot-source-path.test.ts
   - e2e/apps-generator-mode-compare.test.ts
   - e2e/uni-app-app-js-misescape.test.ts
@@ -62,6 +63,13 @@ regressions:
 - Watch 工具的独立 Windows 内存脚本也存在只读 `$PID` 冲突，并每秒通过无截止的 `spawnSync` 阻塞 HMR 循环。采样改为异步单飞，查询仅请求原指标所需字段，按绝对截止接受结果；停止时只取消并确认持有的探针退出。没有有效样本时，case 与项目报告明确记录 `availability: unavailable`，显式 RSS 或增长预算直接拒绝验收，不能用零值放行。探针回收失败属于资源错误，必须阻断任务；Web 收尾复用既有逐项清理器，在恢复源码、关闭浏览器或停止会话失败后仍继续其余清理，并聚合原始 HMR 与回收错误。
 
 ## 验证
+
+- head `683bcb402ab7d97b57dd864451d4f263224e193d` 的 Coverage Windows 四分片完成后，仅 shard 1 的 SIGINT/SIGTERM 两项取消回归失败。测试的 25 毫秒合作窗口被直接作为热 CIM 查询预算，100 毫秒的正常查询使唯一采集会话失效，后续原 2 秒清理窗口无法核对独立后代。合作窗口改为只决定何时转入强制清理，查询仍受原 5 秒上限和预先固定的“合作起点 + 合作窗口 + 2 秒”绝对截止约束；跨边界查询消耗已有预算，不能重开清理窗口。继续等待已登记的独立后代，主进程先 close 不能提前强杀正在恢复源码的后代；默认合作期可提前确认全部退出。
+- 采集器 close 在退出已确认后仍重抛历史查询 fatal，外层把同一错误误标为新增回收失败。按对象身份遍历 cause/errors 图去重，循环图不阻断查询；同文案的不同错误不合并。真正新增的 kill/reap 错误继续聚合并阻断，顶层消息和阶段报告保留 SIGINT/SIGTERM 与收尾原始原因。`e2e/demo-workflow-cooperative-budget.test.ts` 固化 25/100 毫秒失败边界、独立后代自然退出和不续借总截止；observer memory 回归覆盖历史错误与新回收错误的区别。
+- Windows 内存协议单测此前仅由 Ubuntu 单测消费，Windows 专属项没有执行入口。将 `test/watch-hmr-memory-sampler.unit.test.ts` 接入原 Windows compatibility step，显式 `--update=none`，工作流合同直接读取该执行 step；先复现缺失入口，再验证接入后合同通过。真实 Watch 的非零样本证据与该单测的执行结论分别记录。
+- 合作/query 分离修复的 `CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/demo-workflow e2e/preflight-report-output.test.ts --testTimeout=30000 --update=none`：152 项通过、2 项 Windows 专属未在本地 macOS 执行。最终错误循环图补充后的 19 项定向用例、修改脚本和测试严格 ESLint、定向 TypeScript 均通过。Windows compatibility 合同与 memory sampler 定向 2 文件：61 项通过、1 项 Windows 专属未执行；`actionlint .github/workflows/ci.yml` 通过。原 `workflows.test.ts` 强制取消 ignore 的 lint 存在 46 项历史诊断，准确 `683b` 基线与新增三行合同后诊断逐项相同，新增 0；该强制 lint 不能记为全文件通过。
+- 同一 `683b` 的 Benchmark Taro React 原 3 次 build/3 次 HMR、5% 阈值下，远端构建中位数 +8.54%、插件 +7.42% 失败；其余四框架与 Synthetic Gate 通过。前一 `de3` 与该提交的产品源码、demo、依赖和 Benchmark 消费入口完全相同，而同一 `e976` 基线跨 run 构建中位数也升高 32.39%。保留两轮完整原始样本，在本地 Node 22.22.3/macOS 以同配置作一次有限对照：构建 +0.40%、插件 +4.03%、HMR +0.19%、HMR 插件 +1.93%，guard 无违例，未复现远端热点差异。不据此断言基础设施噪声，也不制造性能补丁或放宽阈值；由下一准确 head 的正常 Benchmark 继续验收，不重跑旧 head 掩盖失败。
+- 主工作树合入后，`CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/demo-workflow-cooperative-budget.test.ts e2e/demo-workflow-observer-memory.test.ts e2e/demo-workflow-cancellation.test.ts e2e/demo-workflow-process-observer.test.ts e2e/demo-workflow-short-process.test.ts --testTimeout=30000 --update=none`：5 文件、59 项通过，包含真实 SIGINT/SIGTERM 父子进程取消、短命令及确定性采集预算。修改的 5 个脚本/测试严格 ESLint、`pnpm agents:check`、`git diff --check` 通过。本轮未启动本地全面测试或操作 IDE 登录态；最终准确提交的全部远端结论保存在 PR 验证记录中。
 
 - `pnpm install --frozen-lockfile`、`pnpm --filter weapp-tailwindcss... run build`：通过。
 - `CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/hosted-workflow-contract.test.ts e2e/snapshot-source-path.test.ts e2e/snapshotUtils.test.ts e2e/tailwind-patch-extraction.test.ts e2e/uni-app-x-toolchain.test.ts e2e/frameworkIdeDiagnostics.test.ts e2e/demo-workflow-command.test.ts e2e/demo-workflow-cancellation.test.ts e2e/demo-workflow-native-cancellation.test.ts e2e/demo-workflow-process-identity.test.ts e2e/demo-workflow-short-process.test.ts e2e/demo-workflow-windows-cleanup.test.ts --update=none`：12 文件、135 项通过。
