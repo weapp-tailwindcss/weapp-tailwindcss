@@ -83,6 +83,9 @@ export function validateFixedGroups(workspace, updates) {
     }
     const members = [...workspace.names.keys()].filter(name => group.some(pattern => path.posix.matchesGlob(name, pattern)))
     const changed = members.filter(name => updates.has(name))
+    if (changed.some(name => updates.get(name).initialRelease)) {
+      throw new Error('fixed group 的首发必须提升到组共享版本')
+    }
     if (changed.length && (changed.length !== members.length || new Set(changed.map(name => updates.get(name).newVersion)).size !== 1)) {
       throw new Error('fixed group 必须同步到同一版本')
     }

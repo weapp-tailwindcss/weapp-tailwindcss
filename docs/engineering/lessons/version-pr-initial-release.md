@@ -20,6 +20,8 @@ regressions:
 
 分类器显式收集首发记录：包在 base/head 均已注册，manifest 完全相同且版本合法，包非 private，base 无 changelog 和任何该包 ledger 历史。新建 changelog、有效且完整消费的 intent、匹配包名/当前版本/目录/intent 的新增 ledger 缺一不可。首发采用当前版本；已有版本继续校验请求的最小升版，fixed group 与历史不可改写约束保留。
 
+固定版本组有独立边界：pnpm 的组共享升版优先于首发保留版本，不能接受组成员仅新增 changelog 却保留原 manifest。回归同时拒绝伪造的同版本首发，并接受首发包和已有成员一起按有效 intent 升至同一组版本。上游依据见 [pnpm 12.9.1 的组版本求解](https://github.com/pnpm/pnpm/blob/v12.9.1/pnpm/crates/versioning/src/plan/versions.rs)。
+
 独立审查复现了混合发布的证据缺口：若同时遗漏首发 intent 和 ledger，原有全局一致性校验可能只覆盖其他升版包。补充每个首发记录必须有独立新增 ledger 的约束，其内容继续要求关联该包的有效消费 intent，并保留两者同时缺失的回归。
 
 修复提交 main，由自动 prepare 重新生成受管版本分支；不得直接修改版本 PR 或以普通范围判定代替审批后的完整验收。
