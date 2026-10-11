@@ -4,6 +4,10 @@ issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38137
 baseline: e976c47772afcdaea3cbe674c84b5146f7d6edc7
 regressions:
   - benchmark/version-compare/test/build-memory-artifact.test.mjs
+  - benchmark/version-compare/test/gc-natural-process.test.mjs
+  - benchmark/version-compare/test/gc-bounds.test.mjs
+  - benchmark/version-compare/test/gc-diagnostics.test.mjs
+  - benchmark/version-compare/test/gc-workload-isolation.test.mjs
   - packages/postcss/test/generated-css-ast-lifecycle.test.ts
   - packages/postcss/test/generated-framework-selectors.test.ts
   - packages/weapp-tailwindcss/test/compiler/runtime-snapshot.test.ts
@@ -75,7 +79,20 @@ createAmbiguous 的 self 分配从 48.020 到 179.050 MiB，但完整子树仅�
 
 两侧源码均恢复到原 SHA256 `a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b`，服务及基线全部 6 个采样 PID 已确认退出。基线诊断后恢复候选分支及 postcss/core dist，分别 274/719 个文件与候选备份逐文件字节和 hash 一致，工作树干净。没有启动浏览器、操作 IDE 登录态或运行本地全面验收。
 
-本次仅新增诊断复盘，`CI=1 pnpm agents:check` 为 0 errors，`git diff --check` 通过；未为文档再运行产品测试。frontmatter 引用已有持久回归，不把这些合同当作本轮 Linux 门禁已通过。
+最初诊断复盘提交只新增文档，规则与 diff 检查通过，没有为文档重跑产品测试；该提交不代表本轮 Linux 门禁已通过。
+
+### Hosted 原轮次的自然 GC 补证
+
+为下一准确 head 的 Linux 原轮次加入私有自然 GC 记录。base/current 与既有反向确认使用同一控制器提交的 preload/helper，每个 case/run 独占会话目录，分别保存两文件 SHA256。仅匹配实际 Mpx CLI 的 realpath，记录 PID、PPID、Node 版本、角色及双时钟；控制器记录原有 spawn、ready、mutation/rollback 边界，不插入等待。
+
+PerformanceObserver 的自然 GC 回调同步写入 NDJSON，限制为 2048 个事件、每批 256 项和实际写入 2 MiB。短写逐次计入真实字节，完整行才计入成功记录；读取端保留损坏尾行之前的有效前缀，明确报告缺证、截断、写入成本和记录完整性。major 内存仍是回调交付时的快照，不是准确的 GC 后保留量。
+
+不增加 timer、signal/exit hook、inspector 或 force GC；原 3/3、mutation/rollback、RSS sampler、统计、反向确认及 guard 不消费诊断数据。真实 Node 子进程验证自然 GC、默认 SIGINT/SIGTERM 退出与非目标入口隔离；工作流合同逐字段比较开关前后的 raw、summary 和 guard，并检查原进程数、采样器数、写入及回滚次数。
+
+- `CI=1 pnpm exec vitest run -c benchmark/version-compare/vitest.config.mjs --update=none`：集成树 10 文件、42 项通过。
+- 同一最终诊断实现分别在 Node 22.22.3、24.18.0 执行该定向套件，各 42 项通过；新增模块严格 lint、工作流 actionlint 通过。
+
+这是诊断补证，尚未解释或撤销原 Linux 两项内存失败。保留 `partial`，最终按新准确 head 的 hosted 原始证据继续判断。
 
 ## 适用边界
 
