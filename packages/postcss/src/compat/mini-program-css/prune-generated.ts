@@ -1,9 +1,11 @@
 import type { ApplyConfiguredCssCalcOptions } from '../../plugins/applyConfiguredCssCalc'
+import type { IStyleHandlerOptions } from '../../types'
 import postcss from 'postcss'
 import postcssPresetEnv from 'postcss-preset-env'
 import { applyConfiguredCssCalc } from '../../plugins/applyConfiguredCssCalc'
 import { normalizeMiniProgramPrefixedDeclaration, removeUnsupportedMiniProgramPrefixedAtRule } from '../mini-program-prefixes'
 import { removeUnsupportedCascadeLayers } from './at-rules'
+import { prepareMiniProgramFrameworkSelectors } from './framework-selectors'
 import {
   isBrowserElementPreflightRule,
   isCustomPropertyRule,
@@ -20,7 +22,7 @@ const DEFAULT_WEAPP_VARIABLE_SCOPE = 'page,.tw-root,wx-root-portal-content,:host
 const MINI_PROGRAM_PSEUDO_CONTENT_SCOPE_SELECTOR = '::before,\n::after'
 const CLASS_SELECTOR_RE = /(?:^|[^\w-])\.[_a-z\u00A0-\uFFFF\\-]/i
 
-export interface PruneMiniProgramGeneratedCssOptions extends Pick<ApplyConfiguredCssCalcOptions, 'cssCalc' | 'cssOptions' | 'customPropertyValues' | 'customPropertyContextCss' | 'contextCss'> {
+export interface PruneMiniProgramGeneratedCssOptions extends Pick<ApplyConfiguredCssCalcOptions, 'cssCalc' | 'cssOptions' | 'customPropertyValues' | 'customPropertyContextCss' | 'contextCss'>, Pick<IStyleHandlerOptions, 'cssSelectorReplacement'> {
   preserveContentInit?: boolean
   preservePreflight?: boolean
   preserveConditionalComments?: boolean
@@ -28,7 +30,7 @@ export interface PruneMiniProgramGeneratedCssOptions extends Pick<ApplyConfigure
 }
 
 /**
- * 在主题作用域改写前按配置预计算 calc，再展开 Tailwind 生成的嵌套规则并裁剪 Web-only 结构。
+ * 在主题作用域改写前按配置预计算 calc、展开嵌套并准备框架可保留的选择器，再裁剪 Web-only 结构。
  */
 export async function normalizeMiniProgramGeneratedCssForPostcss(
   css: string,
@@ -50,7 +52,8 @@ export async function normalizeMiniProgramGeneratedCssForPostcss(
       autoprefixer: false,
     }),
   ]).process(calculatedCss, { from: undefined })
-  return pruneMiniProgramGeneratedCss(result.css, options)
+  prepareMiniProgramFrameworkSelectors(result.root, options)
+  return pruneMiniProgramGeneratedCss(result.root.toString(), options)
 }
 
 function isConditionalCompilationComment(text: string) {

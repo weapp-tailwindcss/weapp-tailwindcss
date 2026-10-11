@@ -517,6 +517,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       sourceFile: path.resolve(baseCwd, 'demo/mpx-tailwindcss-v4/src/custom-tab-bar/index.mpx'),
       verifyEscapedIn: ['wxml'],
       verifyClassLiteralIn: [],
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: buildHexScriptRoundConfigs(),
       mutate(source, payload) {
         const snippet = `  <view class="${payload.classLiteral}">${payload.marker}-template</view>`
@@ -551,6 +552,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       distRoot: 'dist/wx',
       version: 'v4',
       pageKind: 'mpx',
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       styleSourceFile(subPackage) {
         return path.resolve(baseCwd, `demo/mpx-tailwindcss-v4/src/${subPackage}/index.css`)
       },
@@ -640,6 +642,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       sourceFile: path.resolve(baseCwd, 'demo/taro-vite-react-tailwindcss-v4/src/pages/index/index.tsx'),
       verifyEscapedIn: ['js'],
       verifyClassLiteralIn: ['js'],
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: buildHexScriptRoundConfigs(),
       mutate(source, payload) {
         const snippet = `      <View className={${JSON.stringify(payload.classLiteral)}}>${payload.marker}-template</View>`
@@ -650,6 +653,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       sourceFile: path.resolve(baseCwd, 'demo/taro-vite-react-tailwindcss-v4/src/pages/index/index.tsx'),
       verifyEscapedIn: ['js'],
       verifyClassLiteralIn: ['js'],
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: buildHexScriptRoundConfigs(),
       mutate(source, payload) {
         return mutateTsxScriptByReturnAnchor(source, payload)
@@ -667,6 +671,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       distRoot: 'dist',
       version: 'v4',
       pageKind: 'tsx',
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       globalStyleCandidates(subPackage) {
         return [
           path.resolve(baseCwd, `demo/taro-vite-react-tailwindcss-v4/dist/${subPackage}/pages/index.wxss`),
@@ -766,6 +771,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       sourceFile: path.resolve(baseCwd, 'demo/taro-webpack-react-tailwindcss-v4/src/pages/index/index.tsx'),
       verifyEscapedIn: ['js'],
       verifyClassLiteralIn: ['js'],
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: buildHexScriptRoundConfigs(),
       mutate(source, payload) {
         const snippet = `      <View className={${JSON.stringify(payload.classLiteral)}}>${payload.marker}-template</View>`
@@ -777,6 +783,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       verifyEscapedIn: ['js'],
       verifyClassLiteralIn: ['js'],
       forbidBgHexTruncationIn: ['js'],
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: buildHexScriptRoundConfigs(),
       mutate(source, payload) {
         return mutateTsxScriptByReturnAnchor(source, payload)
@@ -794,6 +801,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       distRoot: 'dist',
       version: 'v4',
       pageKind: 'tsx',
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       globalStyleCandidates(subPackage) {
         return [
           path.resolve(baseCwd, `demo/taro-webpack-react-tailwindcss-v4/dist/${subPackage}/pages/index.wxss`),
@@ -902,8 +910,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       sourceFile: path.resolve(baseCwd, 'demo/taro-vite-vue3-tailwindcss-v4/src/pages/index/index.vue'),
       verifyEscapedIn: ['js'],
       verifyClassLiteralIn: ['js'],
-      verifyAllEscapedClasses: false,
-      verifyAllClassLiterals: false,
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: buildHexScriptRoundConfigs(),
       mutate(source, payload) {
         const snippet = `    <view class="${payload.classLiteral}">${payload.marker}-template</view>`
@@ -914,6 +921,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       sourceFile: path.resolve(baseCwd, 'demo/taro-vite-vue3-tailwindcss-v4/src/pages/index/index.vue'),
       verifyEscapedIn: ['js'],
       verifyClassLiteralIn: ['js'],
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: buildHexScriptRoundConfigs(),
       mutate(source, payload) {
         return mutateVueScriptWithTemplateConsumer(source, payload)
@@ -931,6 +939,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       distRoot: 'dist',
       version: 'v4',
       pageKind: 'vue',
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       templateVerifyEscapedIn: ['js'],
       templateVerifyClassLiteralIn: ['js'],
       globalStyleCandidates(subPackage) {
@@ -1015,6 +1024,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       sourceFile: path.resolve(baseCwd, 'demo/taro-webpack-vue3-tailwindcss-v4/src/pages/index/index.vue'),
       verifyEscapedIn: ['js'],
       verifyClassLiteralIn: ['js'],
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: buildHexScriptRoundConfigs(),
       mutate(source, payload) {
         const snippet = `    <view class="${payload.classLiteral}">${payload.marker}-template</view>`
@@ -1025,6 +1035,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       sourceFile: path.resolve(baseCwd, 'demo/taro-webpack-vue3-tailwindcss-v4/src/pages/index/index.vue'),
       verifyEscapedIn: ['js'],
       verifyClassLiteralIn: ['js'],
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       roundConfigs: buildHexScriptRoundConfigs(),
       mutate(source, payload) {
         return mutateVueScriptWithTemplateConsumer(source, payload)
@@ -1042,6 +1053,7 @@ export function buildDemoExtendedCases(baseCwd: string): WatchCase[] {
       distRoot: 'dist',
       version: 'v4',
       pageKind: 'vue',
+      expectedRemovedCssUtilities: MINI_PROGRAM_REMOVED_CSS_UTILITIES,
       templateVerifyEscapedIn: ['js'],
       templateVerifyClassLiteralIn: ['js'],
       templateVerifyAllClassLiterals: false,
