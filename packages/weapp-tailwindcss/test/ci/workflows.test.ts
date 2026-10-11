@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import semver from 'semver'
 import { describe, expect, it } from 'vitest'
 import YAML from 'yaml'
+import { resolveWorkflowMatrixEnv, resolveWorkflowMatrixValue } from './workflow-matrix'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(dirname, '../../../..')
@@ -551,12 +552,42 @@ describe('ci workflows', () => {
 
   it('keeps nightly hosted static invocation cross-platform', () => {
     const { workflow } = readWorkflow('e2e-coverage-nightly.yml')
-    const runStep = workflow.jobs['framework-matrix'].steps.find((step: Record<string, unknown>) => {
+    const job = workflow.jobs['framework-matrix']
+    const matrix = job.strategy.matrix
+    const runStep = job.steps.find((step: Record<string, unknown>) => {
       return step.name === 'Run hosted static suite'
     })
+    const setupNode = job.steps.find((step: Record<string, unknown>) => String(step.uses ?? '').startsWith('actions/setup-node@'))
 
-    expect(runStep.run).toBe('pnpm e2e:static')
-    expect(workflow.jobs['framework-matrix'].env.E2E_SKIP_OPEN_AUTOMATOR).toBe('1')
+    expect(matrix.shard).toEqual([1, 2, 3, 4])
+    expect(matrix.host).toEqual([
+      { os: 'ubuntu-latest', node: 22 },
+      { os: 'macos-15', node: 22 },
+      { os: 'windows-latest', node: 22 },
+      { os: 'ubuntu-latest', node: 24 },
+    ])
+    expect(matrix.include).toBeUndefined()
+    expect(matrix.exclude).toBeUndefined()
+    expect(job.strategy['fail-fast']).toBe(false)
+    expect(job['continue-on-error']).toBeUndefined()
+    expect(job['timeout-minutes']).toBe(45)
+    expect(job.env).toEqual({ E2E_SKIP_OPEN_AUTOMATOR: '1', E2E_SKIP_HBUILDERX: '1' })
+    expect(runStep.env).toBeUndefined()
+    expect(runStep['working-directory']).toBeUndefined()
+    // 每个 host 都执行同一完整 suite 的四个分片，不能用 include/exclude 或环境过滤缩小范围。
+    for (const host of matrix.host) {
+      const commands = matrix.shard.map((shard: number) => {
+        const row = { host, shard }
+        expect(resolveWorkflowMatrixValue(job['runs-on'], row)).toBe(host.os)
+        expect(resolveWorkflowMatrixValue(setupNode.with['node-version'], row)).toBe(String(host.node))
+        return resolveWorkflowMatrixValue(runStep.run, row)
+      })
+      expect(commands).toEqual([1, 2, 3, 4].map(shard => `pnpm e2e:static --shard=${shard}/4`))
+    }
+    for (const command of ['pnpm e2e:frameworks:matrix', 'pnpm e2e:multiplatform-build']) {
+      const step = job.steps.find((step: Record<string, unknown>) => step.run === command)
+      expect(step.if).toBe('matrix.shard == 1')
+    }
   })
 
   it('keeps a lightweight cross-platform e2e watch gate in CI', () => {
@@ -1713,12 +1744,33 @@ describe('e2e watch workflow', () => {
       return step.name === 'Run e2e watch suite (nightly/full)'
     })
 
-    expect(prRunStep.env.E2E_WATCH_MAX_PLUGIN_PROCESS_MS).toBe("${{ matrix.watch_max_plugin_process_ms || '6000' }}")
-    expect(nightlyRunStep.env.E2E_WATCH_MAX_PLUGIN_PROCESS_MS).toBe("${{ matrix.watch_max_plugin_process_ms || '6000' }}")
-    expect(prRunStep.env.E2E_WATCH_MAX_ATTEMPTS).toBe("${{ matrix.watch_max_attempts || '2' }}")
-    expect(prRunStep.env.E2E_WATCH_CONFIRM_PERFORMANCE_BUDGET).toBe('1')
-    expect(nightlyRunStep.env.E2E_WATCH_MAX_ATTEMPTS).toBe("${{ matrix.watch_max_attempts || '2' }}")
-    expect(nightlyRunStep.env.E2E_WATCH_CONFIRM_PERFORMANCE_BUDGET).toBeUndefined()
+    expect(nightlyRunStep.env).toEqual(prRunStep.env)
+    for (const [jobName, runStep] of [['pr-quick-gate', prRunStep], ['nightly-full-regression', nightlyRunStep]] as const) {
+      expect(runStep.run).toBe('pnpm e2e:watch')
+      for (const row of workflow.jobs[jobName].strategy.matrix.include) {
+        const env = resolveWorkflowMatrixEnv(runStep.env, row)
+        expect(env.E2E_WATCH_MAX_PLUGIN_PROCESS_MS).toBe(String(row.watch_max_plugin_process_ms ?? '6000'))
+        expect(env.E2E_WATCH_MAX_ATTEMPTS).toBe(String(row.watch_max_attempts ?? '2'))
+        expect(env.E2E_WATCH_CONFIRM_PERFORMANCE_BUDGET).toBe('1')
+        expect(env.E2E_WATCH_CASE).toBe(row.watch_case)
+        expect(env.E2E_WATCH_ROUND_PROFILE).toBe(row.round_profile)
+        expect(env.E2E_WATCH_WEB_ONLY).toBe(row.watch_web_only ?? '0')
+        expect(env.E2E_WATCH_MINI_PROGRAM_ONLY).toBe(row.watch_mini_program_only ?? '0')
+        expect(env.E2E_WATCH_MINI_PROGRAM_SCOPE).toBe(row.watch_mini_program_scope ?? '')
+        expect(env.E2E_WATCH_MAIN_STYLE_ONLY).toBe(row.watch_main_style_only ?? '0')
+        expect(env.E2E_WATCH_MAIN_STYLE_SUBPACKAGE_LIMIT).toBe(row.watch_main_style_subpackage_limit ?? '')
+        if (env.E2E_WATCH_MINI_PROGRAM_SCOPE) {
+          expect(env.E2E_WATCH_MINI_PROGRAM_ONLY).toBe('1')
+          expect(env.E2E_WATCH_WEB_ONLY).toBe('0')
+          expect(['main-package', 'subpackages']).toContain(env.E2E_WATCH_MINI_PROGRAM_SCOPE)
+        }
+        if (env.E2E_WATCH_WEB_ONLY === '1') {
+          expect(env.E2E_WATCH_MINI_PROGRAM_ONLY).toBe('0')
+          expect(env.E2E_WATCH_MINI_PROGRAM_SCOPE).toBe('')
+        }
+      }
+      expect(resolveWorkflowMatrixEnv(runStep.env, {}).E2E_WATCH_MAX_PLUGIN_PROCESS_MS).toBe('6000')
+    }
   })
 
   it('keeps any explicit e2e watch plugin processing matrix budget within 60000ms', () => {
@@ -1747,14 +1799,21 @@ describe('e2e watch workflow', () => {
 
   it('uses node-version specific artifact names for matrix rows that share case names', () => {
     const { workflow } = readWorkflow('e2e-watch.yml')
-    const uploadSteps = [
-      ...workflow.jobs['pr-quick-gate'].steps,
-      ...workflow.jobs['nightly-full-regression'].steps,
-    ].filter((step: Record<string, unknown>) => step.uses === uploadArtifactAction)
-
-    expect(uploadSteps.length).toBe(4)
-    for (const step of uploadSteps) {
-      expect(step.with?.name).toContain("node${{ matrix['node-version'] || 22 }}")
+    for (const jobName of ['pr-quick-gate', 'nightly-full-regression']) {
+      const job = workflow.jobs[jobName]
+      const setupNode = job.steps.find((step: Record<string, unknown>) => String(step.uses ?? '').startsWith('actions/setup-node@'))
+      const uploadSteps = job.steps.filter((step: Record<string, unknown>) => step.uses === uploadArtifactAction)
+      expect(uploadSteps).toHaveLength(2)
+      for (const step of uploadSteps) {
+        const names = job.strategy.matrix.include.map((row: Record<string, unknown>) => {
+          const nodeVersion = resolveWorkflowMatrixValue(setupNode.with['node-version'], row)
+          expect(nodeVersion).toBe(String(jobName === 'pr-quick-gate' ? 22 : row['node-version'] ?? 22))
+          const artifact = resolveWorkflowMatrixValue(step.with.name, row, { run_id: 'contract-run' })
+          expect(artifact).toContain(`-${row.runner_label}-node${nodeVersion}-${row.artifact_case || row.watch_case}-${row.round_profile}-contract-run`)
+          return artifact
+        })
+        expect(new Set(names).size).toBe(names.length)
+      }
     }
   })
 
