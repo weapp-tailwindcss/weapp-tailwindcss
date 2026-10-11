@@ -199,4 +199,4 @@ npx skills add sonofmagic/skills --skill weapp-tailwindcss
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=weapp-tailwindcss/weapp-tailwindcss&type=Date)](https://star-history.com/#weapp-tailwindcss/weapp-tailwindcss&Date)
+[![Star History Chart](https://star-history.dera.page/svg?repos=sonofmagic/weapp-tailwindcss&type=Date)](https://github.com/weapp-tailwindcss/weapp-tailwindcss)
