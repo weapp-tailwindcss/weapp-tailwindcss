@@ -49,7 +49,8 @@ export function isMetadata({ base, head }: ReturnType<typeof fixture>) {
 }
 
 export function git(cwd: string, ...args: string[]) {
-  return execFileSync('git', args, { cwd, encoding: 'utf8' }).trim()
+  // 同步命令返回不代表自动维护已回收；首次 init 也不能继承后台写者策略。
+  return execFileSync('git', ['-c', 'maintenance.auto=false', '-c', 'gc.auto=0', ...args], { cwd, encoding: 'utf8' }).trim()
 }
 
 export function writeFiles(cwd: string, files: Files) {
@@ -63,6 +64,9 @@ export function writeFiles(cwd: string, files: Files) {
 export function gitFixture() {
   const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'release-scope-test-'))
   git(cwd, 'init', '--initial-branch=main')
+  // 仓库级配置覆盖 helper 之外的 Git 消费方，使临时目录回收拥有明确的写入边界。
+  git(cwd, 'config', '--local', 'maintenance.auto', 'false')
+  git(cwd, 'config', '--local', 'gc.auto', '0')
   git(cwd, 'config', 'user.name', 'CI scope test')
   git(cwd, 'config', 'user.email', 'scope@example.test')
   const files = fixture()
