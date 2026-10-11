@@ -73,6 +73,7 @@ it('6 秒冷准备完成真实身份握手；热查询仍按原 5 秒截止失�
   await vi.advanceTimersByTimeAsync(6000)
   reply(0)
   const observer = (await initializing)!
+  expect(requests[0]?.pids).toEqual([own.pid])
   expect(mocks.spawn).toHaveBeenCalledOnce()
   const reading = observer.table(5000).catch(error => error)
   await vi.advanceTimersByTimeAsync(5000)

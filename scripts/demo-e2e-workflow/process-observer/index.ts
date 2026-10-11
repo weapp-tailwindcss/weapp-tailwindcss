@@ -56,7 +56,9 @@ export async function prepareWorkflowProcessObserver(signal?: AbortSignal, optio
   const memory = (rootPid: number, timeoutMs: number, requestSignal?: AbortSignal) => read({ kind: 'memory', rootPid, cwd: process.cwd() }, parseWindowsMemorySample, timeoutMs, requestSignal)
   try {
     // 身份与内存真实查询共用单一 15 秒冷准备截止；结果丢弃，不能领取业务进程或计入报告。
-    const ready = await identity(undefined, prepareDeadline - Date.now(), signal)
+    // 冷准备只需确认采集器本体身份；全表 CIM 查询留到业务启动后的首次 capture，
+    // 否则 Windows 高负载 runner 会在 15 秒准备截止内扫描整个进程表而迟迟不返回。
+    const ready = await identity([transport.pid!], prepareDeadline - Date.now(), signal)
     if (!ready.some(row => row.pid === transport.pid)) {
       throw new Error('身份采集器准备结果缺少本体出生身份，不能启动业务。')
     }
