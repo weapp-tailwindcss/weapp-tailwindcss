@@ -12,6 +12,16 @@ interface CleanupOptions {
   observer?: WorkflowProcessObserver
 }
 
+function remainingProbeBudget(deadline: number) {
+  const remaining = deadline - Date.now()
+  // 只剩最后一个毫秒时不能再建立有界探针；所有实际调度入口必须重新核对，
+  // 不能沿用外层检查后已被调度开销消耗的预算。
+  if (!Number.isFinite(remaining) || remaining <= 1) {
+    throw new Error('进程归属扫描预算已耗尽，禁止继续调度。')
+  }
+  return remaining
+}
+
 /** 仅清理独立组和已证明身份的后代；未登记的 double-fork 不属于确认范围。 */
 export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<unknown>, options: CleanupOptions = {}) {
   let group = process.platform === 'win32' ? undefined : child.pid
@@ -45,10 +55,7 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
     }
     const scan = async () => {
       controller.signal.throwIfAborted()
-      const remaining = budget.deadline - Date.now()
-      if (remaining <= 0) {
-        throw new Error('进程归属扫描预算已耗尽，禁止继续调度。')
-      }
+      const remaining = remainingProbeBudget(budget.deadline)
       const exited = child.exitCode !== null || child.signalCode !== null
       const rows = initialized && (didClose || exited)
         ? await readSubset(group, [...owned.keys()], remaining, controller.signal)
@@ -125,10 +132,11 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
     let current = owned
     let verified = false
     const read = async (deadline: number) => {
-      const remaining = deadline - Date.now()
-      // 只剩最后一个毫秒时无法为子进程探针建立有界命令；继续调度会把已耗尽的
-      // 清理预算伪装成一次新的 1ms 扫描，并让退出收尾结果依赖调度抖动。
-      if (remaining <= 1) {
+      let remaining: number
+      try {
+        remaining = remainingProbeBudget(deadline)
+      }
+      catch {
         return false
       }
       // 已开始的周期扫描也共享截止时间，不能在 stop 后迟到回写旧身份。
@@ -207,7 +215,7 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
       else if (available) {
         let latestRows: ProcessIdentity[] = []
         try {
-          latestRows = await readSubset(group, [...current.keys()], deadline - Date.now())
+          latestRows = await readSubset(group, [...current.keys()], remainingProbeBudget(deadline))
         }
         catch (error) {
           errors.push(error)
@@ -224,7 +232,7 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
             }
             if (process.platform === 'win32') {
               // 每个 PID 均已核对出生时间；禁止 /t 按复用的历史 PPID 扩大范围。
-              await runProcessCommand('taskkill', ['/pid', String(row.pid), '/f'], deadline - Date.now())
+              await runProcessCommand('taskkill', ['/pid', String(row.pid), '/f'], remainingProbeBudget(deadline))
               sent.push({ pid: row.pid, started: row.started, method: 'taskkill /pid /f' })
             }
             else {

@@ -102,6 +102,10 @@ regressions:
 
 ## 适用边界
 
+独立复核还覆盖了外层剩余 2ms、实际扫描时剩余 1ms 的竞态。预算准入统一在实际扫描、终止前身份复查和 Windows 终止命令入口重新计算，外层检查不能替代实际调度检查。确定性 Linux/Windows 回归保留首次真实超时，只允许原 80ms 截止内的首个探针，不能延长截止或把清理失败改成成功。
+
+集成验证：`CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts --update=none e2e/demo-workflow-cleanup-budget.test.ts e2e/demo-workflow-exit-lifecycle.test.ts e2e/demo-workflow-process-identity.test.ts e2e/demo-workflow-windows-cleanup.test.ts e2e/demo-workflow-process-observer.test.ts e2e/demo-workflow-cancellation.test.ts e2e/demo-workflow-native-cancellation.test.ts`，7 文件、53 项通过。新源码与回归严格 ESLint、`pnpm agents:check` 和 diff 检查通过。
+
 本轮本地执行定向回归与受影响构建，没有启动全仓或全端验收，没有操作微信 IDE 登录态。Windows 路径与进程表分支通过明确平台输入的回归覆盖；本机不提供真实 Windows runner，修复后的 hosted 全矩阵结果需要由对应工作流验证。旧 head 的成功和条件跳过均不能作为新实现已通过的证据。
 
 ## 规则评估
