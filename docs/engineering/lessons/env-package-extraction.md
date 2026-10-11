@@ -13,6 +13,7 @@ regressions:
   - packages/weapp-tailwindcss/test/ci/ensure-built-env.test.ts
   - packages/weapp-tailwindcss/test/ci/architecture-graph.test.ts
   - packages/weapp-tailwindcss/test/ci/client-boundaries.test.ts
+  - packages/weapp-tailwindcss/test/ci/env-workflow.test.ts
 ---
 
 # 环境识别包提炼与显式快照隔离
@@ -71,6 +72,14 @@ git diff --check
 本轮只验证包级和主包定向契约。未运行全面测试、真实微信 IDE、HBuilderX、设备或浏览器 E2E，也未验证 Windows/Linux 的真实执行环境；跨平台路径语义通过 POSIX、Windows 反斜杠、盘符、UNC、相对根和根目录终止 fixture 验证。主页检查使用 `--skip-network`，不证明线上可达。
 
 没有修改 demo、issue 复现页或样式输出，因此没有对应 static 基线需要更新。未改变 generator/preset/bundler 的平台策略，不以更宽的 `isWeb` / `isApp` 判断替换现有分支；未知值、JSON 读取失败和父目录查找规则仍与旧实现一致。
+
+## PR 前 CI 接入复核
+
+用户随后要求提交 PR 并跟进 CI/CD，源码整合到 main `e976c4777`。审计确认根 Vitest 自动发现 env，主包生产依赖也让 `build:ci` 自动构建它；但包外消费测试只在 Ubuntu Release Gate 执行，且 Release Gate 的触发路径遗漏 env-only 源码变化。
+
+新增 `env.yml`，在 Linux/macOS/Windows × Node 22/24 执行依赖闭包构建、env 类型、单测与公开 tarball 消费；PR Gate 的 `needs` 与成功断言显式包含 env，维持既有取消生命周期。tarball 同时消费旧 framework 入口，冷 checkout 因此先构建 `weapp-tailwindcss...`。Release Gate 补充 `packages/env/**`，`test:release` 补充 env typecheck，不改变发布权限或实际发布流程。
+
+新增 CI 契约修改前 3 项失败；接入后，env-workflow、workflows、css-compat-workflow 与 workflow-gate-cancellation 共 4 文件 60 项通过。最新 main 上的 22 项依赖闭包构建及 env 类型、包外消费、规则检查再次通过。远端结果以 PR 的准确 head 为准，不复用本地或旧 head 的结论。
 
 ## 规则评估
 

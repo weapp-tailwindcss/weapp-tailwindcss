@@ -240,13 +240,19 @@ jobs:
     needs: scope
     if: needs.scope.outputs.core == 'true'
     uses: ./.github/workflows/css-compat.yml
+
+  env:
+    name: Environment package
+    needs: scope
+    if: needs.scope.outputs.core == 'true'
+    uses: ./.github/workflows/env.yml
     with:
       full_verification: ${{ inputs.full_verification || false }}
 
   pr-gate:
     name: ${{ inputs.full_verification && 'Version PR checks' || github.event_name == 'pull_request' && needs.scope.outputs.metadata_only == 'true' && 'Await manual version verification' || 'PR Gate' }}
     if: always() && !cancelled()
-    needs: [scope, quality, core-smoke, platform-watch, platform-dev, windows-utilities, portable-demos, css-compat]
+    needs: [scope, quality, core-smoke, platform-watch, platform-dev, windows-utilities, portable-demos, css-compat, env]
     runs-on: ubuntu-latest
     steps:
       - name: Require enabled PR checks
@@ -261,6 +267,7 @@ jobs:
           DEMOS_ENABLED: ${{ needs.scope.outputs.core }}
           DEMOS_RESULT: ${{ needs.portable-demos.result }}
           CSS_COMPAT_RESULT: ${{ needs.css-compat.result }}
+          ENV_RESULT: ${{ needs.env.result }}
         run: |
           test "$SCOPE_RESULT" = success
           for enabled in "$DEMOS_ENABLED" "$WATCH_ENABLED"; do
@@ -269,6 +276,7 @@ jobs:
           if test "$DEMOS_ENABLED" = true; then
             test "$DEMOS_RESULT" = success
             test "$CSS_COMPAT_RESULT" = success
+            test "$ENV_RESULT" = success
             for result in "$QUALITY_RESULT" "$SMOKE_RESULT" "$DEV_RESULT" "$UTILITIES_RESULT"; do
               test "$result" = success
             done
