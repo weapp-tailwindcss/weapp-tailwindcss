@@ -93,7 +93,7 @@ async function refreshDevToolsCompile(miniProgram: any, signal?: AbortSignal) {
 export async function runIdeClassHotUpdate(
   options: CliOptions,
   watchCase: IdeWatchCase,
-  session: ReturnType<typeof createWatchSession>,
+  session: Awaited<ReturnType<typeof createWatchSession>>,
   mutationKind: 'template' | 'script',
   sourceOriginal: string,
   miniProgram: any,

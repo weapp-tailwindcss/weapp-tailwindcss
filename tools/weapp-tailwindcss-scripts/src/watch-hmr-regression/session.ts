@@ -6,8 +6,8 @@ import process from 'node:process'
 import { createPnpmCommand } from '../../../../scripts/pnpm-command.mjs'
 import { assertWatchCommandActive } from './cancellation'
 import { createSpawnEnv, createWatchProcessEnv } from './environment'
-import { sampleProcessTreeMemory } from './memory/process-tree'
 import { createMemorySampler } from './memory/sampler'
+import { spawnWithWatchMemorySource } from './memory/source'
 
 export { createSpawnEnv } from './environment'
 export { createWindowsProcessTreeMemoryScript, sampleProcessTreeMemory } from './memory/process-tree'
@@ -465,21 +465,21 @@ export async function ensureLocalPackageBuild(baseCwd: string) {
   await runPnpmCommand(packageRoot, ['run', 'build'], 'build')
 }
 
-export function createWatchSession(
+export async function createWatchSession(
   cwd: string,
   devScript: string,
   options: Pick<CliOptions, 'quietSass'>,
   env: Record<string, string> = {},
-): WatchSession {
+): Promise<WatchSession> {
   return createWatchCommandSession(cwd, ['run', devScript], options, env)
 }
 
-export function createWatchCommandSession(
+export async function createWatchCommandSession(
   cwd: string,
   args: string[],
   options: Pick<CliOptions, 'quietSass'>,
   env: Record<string, string> = {},
-): WatchSession {
+): Promise<WatchSession> {
   assertWatchCommandActive()
   cleanupExistingWatchProcesses(cwd)
   const lines: string[] = []
@@ -488,14 +488,15 @@ export function createWatchCommandSession(
   const memorySamples: MemoryUsageSample[] = []
   let lastCompileSuccessAt = 0
   let compileFatalError: string | undefined
-  const child = spawnPnpm(args, {
+  const { child, memorySource, startedAt } = await spawnWithWatchMemorySource(cwd, () => spawnPnpm(args, {
     cwd,
     env: createWatchSpawnEnv(env),
     detached: process.platform !== 'win32',
     stdio: 'pipe',
-  })
+  }))
   const memorySampler = createMemorySampler({
-    probe: signal => sampleProcessTreeMemory(child.pid, signal, cwd),
+    probe: signal => memorySource.sample(child.pid, signal),
+    close: () => memorySource.close(),
     onSample(sample) {
       memorySamples.push(sample)
       if (memorySamples.length > 1000) {
@@ -680,6 +681,7 @@ export function createWatchCommandSession(
   }
 
   return {
+    startedAt,
     child,
     ensureRunning,
     lastCompileSuccessAt: () => lastCompileSuccessAt,

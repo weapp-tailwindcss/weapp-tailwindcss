@@ -1,8 +1,11 @@
 import type { ChildProcess } from 'node:child_process'
+import type { ObserverLaunchOptions } from '../../../../../scripts/demo-e2e-workflow/process-observer/launch-environment'
 import { Buffer } from 'node:buffer'
 import { spawn } from 'node:child_process'
+import { resolveObserverLaunchEnvironment } from '../../../../../scripts/demo-e2e-workflow/process-observer/launch-environment'
 
 export class MemoryProbeCleanupError extends Error {}
+export class MemoryProbeAbortedError extends Error {}
 
 /** 只管理本次创建的探针句柄；截止后仍必须确认 close，不能以已发送 kill 代表退出。 */
 export function runMemoryProbe(command: string, args: string[], options: {
@@ -11,19 +14,23 @@ export function runMemoryProbe(command: string, args: string[], options: {
   closeTimeoutMs?: number
   maxBuffer?: number
   spawnProcess?: typeof spawn
+  launchOptions?: ObserverLaunchOptions
 }): Promise<string> {
   const { signal } = options
   if (signal.aborted) {
-    return Promise.reject(new Error('memory probe aborted', { cause: signal.reason }))
+    return Promise.reject(new MemoryProbeAbortedError('memory probe aborted', { cause: signal.reason }))
   }
   const expiresAt = Date.now() + options.timeoutMs
   return new Promise((resolve, reject) => {
     let child: ChildProcess
+    const launch = resolveObserverLaunchEnvironment(command, options.launchOptions)
+    const diagnostic = JSON.stringify(launch.diagnostic)
     try {
       child = (options.spawnProcess ?? spawn)(command, args, {
         stdio: ['ignore', 'pipe', 'pipe'],
         windowsHide: true,
         shell: false,
+        env: launch.env,
       })
     }
     catch (error) {
@@ -66,13 +73,13 @@ export function runMemoryProbe(command: string, args: string[], options: {
         child.kill('SIGKILL')
       }
       catch (killError) {
-        failure = new MemoryProbeCleanupError('memory probe kill failed', { cause: killError })
+        failure = new MemoryProbeCleanupError(`memory probe kill failed; launch=${diagnostic}`, { cause: killError })
       }
       closeTimer = setTimeout(() => {
-        finish(new MemoryProbeCleanupError('memory probe close was not confirmed after termination', { cause: failure }))
+        finish(new MemoryProbeCleanupError(`memory probe close was not confirmed after termination; launch=${diagnostic}`, { cause: failure }))
       }, options.closeTimeoutMs ?? 1000)
     }
-    const onAbort = () => terminate(new Error('memory probe aborted', { cause: signal.reason }))
+    const onAbort = () => terminate(new MemoryProbeAbortedError('memory probe aborted', { cause: signal.reason }))
     const onStreamError = (error: Error) => terminate(error)
     const onData = (chunk: Buffer) => {
       bytes += chunk.length
@@ -85,7 +92,7 @@ export function runMemoryProbe(command: string, args: string[], options: {
     const onStderr = (chunk: Buffer) => {
       stderr = `${stderr}${chunk.toString()}`.slice(-1024)
     }
-    const deadlineError = () => new Error(`memory probe exceeded ${options.timeoutMs}ms deadline`)
+    const deadlineError = () => new Error(`memory probe exceeded ${options.timeoutMs}ms deadline; launch=${diagnostic}`)
     const deadline = setTimeout(() => terminate(deadlineError()), Math.max(0, expiresAt - Date.now()))
     child.stdout?.on('data', onData)
     child.stderr?.on('data', onStderr)

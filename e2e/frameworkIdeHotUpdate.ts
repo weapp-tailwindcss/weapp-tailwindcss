@@ -104,7 +104,7 @@ function shouldRunIdeStyleHotUpdate(watchCase: WatchCase) {
 async function waitForTaroViteInitialBuild(
   watchCase: WatchCase,
   options: CliOptions,
-  session: ReturnType<typeof createWatchSession>,
+  session: Awaited<ReturnType<typeof createWatchSession>>,
   sessionStartedAt: number,
 ) {
   const stableWindowMs = Math.min(Math.max(options.pollMs * 4, 1500), 3000)
@@ -135,7 +135,7 @@ async function waitForTaroViteInitialBuild(
 async function waitForIdeWatchReady(
   watchCase: WatchCase,
   options: CliOptions,
-  session: ReturnType<typeof createWatchSession>,
+  session: Awaited<ReturnType<typeof createWatchSession>>,
   sessionStartedAt: number,
 ) {
   const [wxml, js] = await Promise.all([
@@ -184,10 +184,10 @@ export async function withFrameworkIdeHotUpdateProbe<T>(
     await runPnpmCommand(watchCase.cwd, ['run', watchCase.initialBuildScript], 'ide-prebuild')
   }
 
-  const sessionStartedAt = Date.now()
-  const session = createWatchSession(watchCase.cwd, watchCase.devScript, {
+  const session = await createWatchSession(watchCase.cwd, watchCase.devScript, {
     quietSass: options.quietSass,
   }, watchCase.env)
+  const sessionStartedAt = session.startedAt ?? Date.now()
   const errors: Error[] = []
   let result: T | undefined
 

@@ -6,8 +6,8 @@ import { existsSync } from 'node:fs'
 import process from 'node:process'
 import { chromium } from 'playwright'
 import { createWatchCaseCleanup } from './cleanup'
-import { sampleProcessTreeMemory } from './memory/process-tree'
 import { createMemorySampler } from './memory/sampler'
+import { spawnWithWatchMemorySource } from './memory/source'
 import {
   createLineCollector,
   createSpawnEnv,
@@ -649,7 +649,6 @@ export async function runWebHmr(
     throw new Error(`[${watchCase.label}] missing web HMR CSS entry original`)
   }
 
-  const startedAt = Date.now()
   const port = resolveWebPort(watchCase)
   const marker = `tw-watch-web-${watchCase.name}-${Date.now().toString().slice(-6)}`
   const mutation = createWebSourceMutation(config, marker)
@@ -665,7 +664,7 @@ export async function runWebHmr(
   const pluginProcessSamples: PluginProcessSample[] = []
   const memoryDebugSamples: HmrMemoryDebugSample[] = []
   const memorySamples: MemoryUsageSample[] = []
-  const child = spawnPnpm(['run', config.devScript, ...(config.devArgs ?? [])], {
+  const { child, memorySource, startedAt } = await spawnWithWatchMemorySource(watchCase.cwd, () => spawnPnpm(['run', config.devScript, ...(config.devArgs ?? [])], {
     cwd: watchCase.cwd,
     env: createSpawnEnv(process.env, {
       BROWSER: 'none',
@@ -686,10 +685,11 @@ export async function runWebHmr(
     }),
     detached: process.platform !== 'win32',
     stdio: 'pipe',
-  })
+  }))
 
   const memorySampler = createMemorySampler({
-    probe: signal => sampleProcessTreeMemory(child.pid, signal, watchCase.cwd),
+    probe: signal => memorySource.sample(child.pid, signal),
+    close: () => memorySource.close(),
     onSample(sample) {
       memorySamples.push(sample)
       if (memorySamples.length > 1000) {

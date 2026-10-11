@@ -1,16 +1,17 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises'
-import os from 'node:os'
-import path from 'node:path'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { runCase, runMainStyleOnlyCase, runSubPackagesOnlyCase, WatchHmrPartialMetricsError } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/runner'
+import type { WatchHmrPartialMetricsError } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/runner'
 import type {
   CliOptions,
   MutationRoundMetrics,
   WatchCase,
   WatchSession,
 } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/types'
+import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import os from 'node:os'
+import path from 'node:path'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { runCase, runMainStyleOnlyCase, runSubPackagesOnlyCase } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/runner'
 
-const createWatchSessionMock = vi.fn<() => WatchSession>()
+const createWatchSessionMock = vi.fn<() => Promise<WatchSession>>()
 const runClassMutationMock = vi.fn()
 const runStyleMutationMock = vi.fn()
 const runMainStyleHotUpdateMock = vi.fn()
@@ -196,7 +197,7 @@ describe('watch-hmr runner', () => {
       stop: vi.fn(async () => {}),
       pluginProcessSamplesSince: vi.fn(() => []),
     }
-    createWatchSessionMock.mockReturnValue(session)
+    createWatchSessionMock.mockResolvedValue(session)
     runClassMutationMock.mockImplementation((...args: unknown[]) => {
       const mutationKind = args[3] as 'template' | 'script' | 'content'
       return Promise.resolve(createClassMetric(mutationKind, sourceFile))
@@ -279,7 +280,7 @@ describe('watch-hmr runner', () => {
       stop: vi.fn(async () => {}),
       pluginProcessSamplesSince: vi.fn(() => []),
     }
-    createWatchSessionMock.mockReturnValue(session)
+    createWatchSessionMock.mockResolvedValue(session)
     runMainStyleHotUpdateMock.mockImplementation((watchCase: WatchCase) => {
       return Promise.resolve(createMainStyleMetric(watchCase.templateMutation.sourceFile, watchCase.label.includes('sub-normal') ? 24 : 12))
     })
@@ -382,7 +383,7 @@ describe('watch-hmr runner', () => {
       stop: vi.fn(async () => {}),
       pluginProcessSamplesSince: vi.fn(() => []),
     }
-    createWatchSessionMock.mockReturnValue(session)
+    createWatchSessionMock.mockResolvedValue(session)
     runSubPackageMutationMock.mockImplementation((_watchCase: WatchCase, _options: CliOptions, _session: WatchSession, mutation: NonNullable<WatchCase['subPackageMutations']>[number]) => {
       return Promise.resolve({
         root: mutation.root,
@@ -481,7 +482,7 @@ describe('watch-hmr runner', () => {
       stop: vi.fn(async () => {}),
       pluginProcessSamplesSince: vi.fn(() => []),
     }
-    createWatchSessionMock.mockReturnValue(session)
+    createWatchSessionMock.mockResolvedValue(session)
     runMainStyleHotUpdateMock
       .mockResolvedValueOnce(createMainStyleMetric(sourceFile))
       .mockRejectedValueOnce(new Error('subpackage timeout'))

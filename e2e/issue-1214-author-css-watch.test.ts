@@ -29,12 +29,12 @@ it('Issue #1214 同一微信 watch 进程按 author.css 内容和导入关系重
   const withAuthorImport = `${originalMain}\nimport './author.css'\n`
   // 先放置未进入模块图的样式，验证未导入文件不会污染当前输出。
   await writeFile(authorFile, authorSource('initial-file', true))
-  const startedAt = Date.now()
-  const session = createWatchCommandSession(project.root, ['exec', process.execPath, project.uniBin, '-p', 'mp-weixin'], { quietSass: true }, {
+  const session = await createWatchCommandSession(project.root, ['exec', process.execPath, project.uniBin, '-p', 'mp-weixin'], { quietSass: true }, {
     ...project.env,
     NODE_ENV: 'development',
     WEAPP_TW_HMR_TIMING: '0',
   })
+  const startedAt = session.startedAt ?? Date.now()
   const pid = session.child.pid
   const snapshots: Record<string, unknown> = {}
   let lastObserved = ''

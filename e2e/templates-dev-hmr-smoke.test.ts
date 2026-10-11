@@ -116,7 +116,7 @@ async function newestMtime(root: string, outputFiles: string[]) {
   return Math.max(...mtimes)
 }
 
-async function waitForInitialOutputs(root: string, item: TemplateDevHmrCase, startedAt: number, session: ReturnType<typeof createWatchSession>) {
+async function waitForInitialOutputs(root: string, item: TemplateDevHmrCase, startedAt: number, session: Awaited<ReturnType<typeof createWatchSession>>) {
   const stableWindowMs = Math.min(Math.max(pollMs * 4, 1500), 3000)
   await waitFor(
     async () => {
@@ -139,7 +139,7 @@ async function waitForInitialOutputs(root: string, item: TemplateDevHmrCase, sta
   )
 }
 
-async function waitForHmrOutput(root: string, item: TemplateDevHmrCase, mutatedAt: number, session: ReturnType<typeof createWatchSession>) {
+async function waitForHmrOutput(root: string, item: TemplateDevHmrCase, mutatedAt: number, session: Awaited<ReturnType<typeof createWatchSession>>) {
   await waitFor(
     async () => {
       session.ensureRunning()
@@ -176,10 +176,10 @@ describe('templates dev hmr smoke', () => {
       await runPnpmCommand(root, ['run', item.prebuild], `${item.template}:prebuild`)
     }
 
-    const startedAt = Date.now()
     const session = item.devCommand
-      ? createWatchCommandSession(root, item.devCommand, { quietSass: true }, item.devEnv)
-      : createWatchSession(root, item.devScript, { quietSass: true }, item.devEnv)
+      ? await createWatchCommandSession(root, item.devCommand, { quietSass: true }, item.devEnv)
+      : await createWatchSession(root, item.devScript, { quietSass: true }, item.devEnv)
+    const startedAt = session.startedAt ?? Date.now()
 
     try {
       await waitForInitialOutputs(root, item, startedAt, session)

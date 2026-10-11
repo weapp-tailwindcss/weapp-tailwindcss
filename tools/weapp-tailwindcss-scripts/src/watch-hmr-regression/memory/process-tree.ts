@@ -2,6 +2,9 @@ import type { MemoryProcessSample, MemoryUsageSample } from '../types'
 import { Buffer } from 'node:buffer'
 import process from 'node:process'
 import { runMemoryProbe } from './probe'
+import { createWindowsProcessTreeMemoryScript } from './windows'
+
+export { createWindowsProcessTreeMemoryScript } from './windows'
 
 interface ProcessTreeRow {
   pid: number
@@ -123,54 +126,7 @@ function parseProcessTreeMemoryOnPosix(rootPid: number, stdout: string): Omit<Me
   }
 }
 
-export function createWindowsProcessTreeMemoryScript(rootPid: number, cwd = process.cwd()) {
-  const escapedRootPid = JSON.stringify(rootPid)
-  return [
-    '$ErrorActionPreference = "Stop"',
-    '[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)',
-    `$root = [int]${escapedRootPid}`,
-    `$repositoryRoot = '${cwd.replaceAll('\'', '\'\'')}'`,
-    '$watchCommandPatterns = @("weapp-vite(?:\\.js)?\\s+dev", "taro-build-guard\\.mjs\\s+--watch", "taro-build-runner\\.mjs\\s+build\\s+--type\\s+h5\\s+--watch", "taro-build-runner\\.mjs\\s+build\\s+--type\\s+\\S+\\s+--watch", "run-mpx-cli-service\\.js\\s+serve", "webpack(?:\\.js)?\\s+--watch", "gulp[\\s\\S]+gulpfile\\.ts", "\\bpnpm\\b[\\s\\S]+build:weapp[\\s\\S]+--watch", "hbuilderx[\\s\\S]+launch[\\s\\S]+mp-weixin", "uni\\.js[\\s\\S]+-p\\s+mp-weixin")',
-    '$processes = @(Get-CimInstance Win32_Process -Property ProcessId,ParentProcessId,WorkingSetSize,CommandLine | Select-Object ProcessId,ParentProcessId,WorkingSetSize,CommandLine)',
-    '$children = @{}',
-    'foreach ($process in $processes) {',
-    '  $parent = [int]$process.ParentProcessId',
-    '  if (-not $children.ContainsKey($parent)) { $children[$parent] = @() }',
-    '  $children[$parent] += $process',
-    '}',
-    '$tracked = @{}',
-    '$stack = New-Object System.Collections.ArrayList',
-    '$rootProcess = $processes | Where-Object { [int]$_.ProcessId -eq $root } | Select-Object -First 1',
-    'if ($null -ne $rootProcess) { $tracked[[int]$rootProcess.ProcessId] = $rootProcess }',
-    'if ($children.ContainsKey($root)) { foreach ($child in $children[$root]) { [void]$stack.Add($child) } }',
-    'while ($stack.Count -gt 0) {',
-    '  $current = $stack[$stack.Count - 1]',
-    '  $stack.RemoveAt($stack.Count - 1)',
-    '  $processId = [int]$current.ProcessId',
-    '  if ($tracked.ContainsKey($processId)) { continue }',
-    '  $tracked[$processId] = $current',
-    '  if ($children.ContainsKey($processId)) { foreach ($child in $children[$processId]) { [void]$stack.Add($child) } }',
-    '}',
-    'foreach ($process in $processes) {',
-    '  $command = if ($null -eq $process.CommandLine) { "" } else { [string]$process.CommandLine }',
-    '  if ($command.Length -eq 0 -or -not $command.Contains($repositoryRoot)) { continue }',
-    '  foreach ($pattern in $watchCommandPatterns) {',
-    '    if ($command -match $pattern) { $tracked[[int]$process.ProcessId] = $process; break }',
-    '  }',
-    '}',
-    '$total = 0',
-    '$max = 0',
-    'foreach ($process in $tracked.Values) {',
-    '  $workingSet = if ($null -eq $process.WorkingSetSize) { 0 } else { [double]$process.WorkingSetSize }',
-    '  $total += $workingSet',
-    '  if ($workingSet -gt $max) { $max = $workingSet }',
-    '}',
-    '$top = @($tracked.Values | Sort-Object -Property WorkingSetSize -Descending | Select-Object -First 8 | ForEach-Object { $workingSet = if ($null -eq $_.WorkingSetSize) { 0 } else { [double]$_.WorkingSetSize }; $command = if ($null -eq $_.CommandLine) { "" } else { [string]$_.CommandLine }; @{ pid = [int]$_.ProcessId; ppid = [int]$_.ParentProcessId; rssMb = [int][Math]::Round($workingSet / 1MB); command = $command.Substring(0, [Math]::Min(240, $command.Length)) } })',
-    '[Console]::Out.WriteLine((@{ rssMb = [int][Math]::Round($total / 1MB); maxProcessRssMb = [int][Math]::Round($max / 1MB); processCount = [int]$tracked.Count; topProcesses = $top } | ConvertTo-Json -Compress -Depth 4))',
-  ].join('; ')
-}
-
-function parseProcessTreeMemoryOnWindows(stdout: string): Omit<MemoryUsageSample, 'at'> | undefined {
+export function parseProcessTreeMemoryOnWindows(stdout: string): Omit<MemoryUsageSample, 'at'> | undefined {
   try {
     const parsed = JSON.parse(stdout.trim()) as Partial<Omit<MemoryUsageSample, 'at'>>
     if (

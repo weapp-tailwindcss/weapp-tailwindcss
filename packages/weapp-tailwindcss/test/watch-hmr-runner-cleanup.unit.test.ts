@@ -91,7 +91,7 @@ describe('watch runner 收尾失败保留与资源释放', () => {
       stop: vi.fn(async () => {}),
     }
     monitor = { assertClean: vi.fn(), stop: vi.fn() }
-    mocks.session.mockReturnValue(session)
+    mocks.session.mockResolvedValue(session)
     mocks.monitor.mockReturnValue(monitor)
     const templateMutation: WatchCase['templateMutation'] = { sourceFile: template, verifyEscapedIn: ['js'], mutate: source => source }
     const styleMutation: WatchCase['styleMutation'] = { sourceFile: style, mutate: source => source }

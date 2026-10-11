@@ -7,12 +7,12 @@ import { createProject, pageSource, readOutput, readProbeDeclarations, themeSour
 
 it('Issue #1214 同一 uni-app 微信 watch 进程不复用旧主题计算或已移除候选', async () => {
   const project = await createProject()
-  const startedAt = Date.now()
-  const session = createWatchCommandSession(project.root, ['exec', process.execPath, project.uniBin, '-p', 'mp-weixin'], { quietSass: true }, {
+  const session = await createWatchCommandSession(project.root, ['exec', process.execPath, project.uniBin, '-p', 'mp-weixin'], { quietSass: true }, {
     ...project.env,
     NODE_ENV: 'development',
     WEAPP_TW_HMR_TIMING: '0',
   })
+  const startedAt = session.startedAt ?? Date.now()
   const pid = session.child.pid
   const snapshots: Record<string, unknown> = {}
   let lastObserved = ''

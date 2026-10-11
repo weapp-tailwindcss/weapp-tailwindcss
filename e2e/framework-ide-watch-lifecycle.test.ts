@@ -28,7 +28,7 @@ vi.mock('../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cases', () 
 }))
 vi.mock('../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/session', () => ({
   runPnpmCommand: async () => { state.events.push('build') },
-  createWatchSession: () => {
+  createWatchSession: async () => {
     state.events.push('watch:start')
     return {
       logs: () => '',

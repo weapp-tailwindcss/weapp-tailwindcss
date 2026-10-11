@@ -7,8 +7,9 @@ import { PassThrough } from 'node:stream'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { summarizeHmrMemoryReport, summarizeMemoryDebugSamples, summarizeMemorySamples } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/memory-report'
 import { MemoryProbeCleanupError, runMemoryProbe } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/memory/probe'
-import { createWindowsProcessTreeMemoryScript, sampleProcessTreeMemory } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/memory/process-tree'
+import { createWindowsProcessTreeMemoryScript } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/memory/process-tree'
 import { createMemorySampler } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/memory/sampler'
+import { prepareWatchMemorySource } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/memory/source'
 import { assertMemoryBudget } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/runner'
 
 const sample: MemoryUsageSample = { at: 10, rssMb: 640, maxProcessRssMb: 512, processCount: 2 }
@@ -244,13 +245,15 @@ describe('memory telemetry contract', () => {
   })
 
   it('collects actual process tree memory through the current platform probe', async () => {
-    if (process.platform === 'win32') {
-      const script = '$ErrorActionPreference="Stop"; @(Get-CimInstance Win32_Process -Property ProcessId,ParentProcessId,WorkingSetSize,CommandLine).Count'
-      await runMemoryProbe('powershell', ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')], { signal: new AbortController().signal, timeoutMs: 15000 })
+    const source = await prepareWatchMemorySource(process.cwd())
+    try {
+      const measured = await source.sample(process.pid, new AbortController().signal)
+      expect(measured.processCount).toBeGreaterThan(0)
+      expect(measured.rssMb).toBeGreaterThan(0)
     }
-    const measured = await sampleProcessTreeMemory(process.pid, new AbortController().signal)
-    expect(measured.processCount).toBeGreaterThan(0)
-    expect(measured.rssMb).toBeGreaterThan(0)
+    finally {
+      await source.close()
+    }
   })
 
   it.skipIf(process.platform !== 'win32')('executes the Windows traversal with a child row without assigning $PID', async () => {

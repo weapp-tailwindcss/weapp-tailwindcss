@@ -9,13 +9,17 @@ import { PassThrough } from 'node:stream'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { runWebHmr } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/web'
 
-const mocks = vi.hoisted(() => ({ spawn: vi.fn(), browser: vi.fn(), sampler: vi.fn(), mutate: vi.fn() }))
+const mocks = vi.hoisted(() => ({ spawn: vi.fn(), browser: vi.fn(), sampler: vi.fn(), source: vi.fn(), mutate: vi.fn() }))
 
 vi.mock('playwright', () => ({ chromium: { launch: () => mocks.browser() } }))
 vi.mock('../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/session', async importOriginal => ({
   ...await importOriginal<typeof import('../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/session')>(),
   spawnPnpm: (...args: unknown[]) => mocks.spawn(...args),
 }))
+vi.mock('../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/memory/source', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/memory/source')>()
+  return { ...actual, spawnWithWatchMemorySource: (cwd: string, spawnChild: () => unknown) => actual.spawnWithWatchMemorySource(cwd, spawnChild, () => mocks.source()) }
+})
 vi.mock('../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/memory/sampler', () => ({
   createMemorySampler: () => mocks.sampler(),
 }))
@@ -35,6 +39,7 @@ describe('Web watch source and owned resource cleanup', () => {
   let directory: string
   beforeEach(async () => {
     vi.resetAllMocks()
+    mocks.source.mockResolvedValue({ sample: vi.fn(), close: vi.fn(async () => {}) })
     directory = await mkdtemp(path.join(os.tmpdir(), 'web-watch-cleanup-'))
   })
   afterEach(async () => {
@@ -109,5 +114,29 @@ describe('Web watch source and owned resource cleanup', () => {
     if (failure === 'stop' || failure === 'all') {
       expect(errorTree(error)).toContain(stopError)
     }
+  })
+
+  it.each([false, true])('closes only the prepared source when Web spawn fails, close failure=%s', async (closeFails) => {
+    const sourceFile = path.join(directory, 'index.tsx')
+    const primary = new Error('Web spawn failed')
+    const closeError = new Error('source close failed')
+    const source = { sample: vi.fn(), close: vi.fn(async () => {
+      if (closeFails) {
+        throw closeError
+      }
+    }) }
+    mocks.source.mockResolvedValue(source)
+    mocks.spawn.mockImplementation(() => {
+      throw primary
+    })
+    const watchCase = { name: 'taro-vite-react-tailwindcss-v4', label: 'web spawn', cwd: directory, webHmr: { sourceFile, devScript: 'dev', mutate: (value: string) => `${value} changed` } } as WatchCase
+    const error = await runWebHmr(watchCase, {} as CliOptions, new Map([[sourceFile, 'original']])).catch(error => error)
+    expect(source.close).toHaveBeenCalledOnce()
+    expect(mocks.browser).not.toHaveBeenCalled()
+    expect(mocks.sampler).not.toHaveBeenCalled()
+    if (closeFails) {
+      expect(error.errors).toEqual([primary, closeError])
+    }
+    else { expect(error).toBe(primary) }
   })
 })

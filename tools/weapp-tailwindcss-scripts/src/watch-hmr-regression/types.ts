@@ -372,6 +372,8 @@ export interface WebHmrSourceDomReplacement {
 }
 
 export interface WatchSession {
+  /** 真实业务 spawn 的起点，不包含采集器冷准备。 */
+  startedAt?: number
   /** 可选探针取消信号，由发起该轮探针的生命周期持有。 */
   signal?: AbortSignal | undefined
   child: ChildProcessWithoutNullStreams
