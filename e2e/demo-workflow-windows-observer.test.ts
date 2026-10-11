@@ -55,6 +55,8 @@ it.runIf(process.platform === 'win32')('真实 PowerShell 身份握手与中文�
     const memory = parseWindowsMemorySample(await transport.request({ kind: 'memory', rootPid: child!.pid!, cwd: process.cwd() }, 5000))
     expect(memory.processCount).toBeGreaterThanOrEqual(1)
     expect(memory.topProcesses!.some(row => row.pid === child!.pid)).toBe(true)
+    // eslint-disable-next-line no-console -- 记录真实 PowerShell 启动、身份与内存查询阶段，保留 hosted 冷准备诊断依据。
+    console.log(`真实 PowerShell 准备：${JSON.stringify(transport.diagnostics())}`)
     // 故意输入带中文的未知操作，验证真实异常文本未被本机代码页损坏。
     failure = await transport.request({ kind: '中文身份探针' } as never, 5000).catch(error => error)
     expect(failure).toBeInstanceOf(Error)
@@ -79,6 +81,8 @@ it.runIf(process.platform === 'win32')('长 Node 与真实子 Node 连续采样�
     return item
   }) as typeof spawn
   const observer = (await prepareWorkflowProcessObserver(undefined, { spawn: createChild }))!
+  // eslint-disable-next-line no-console -- 准备诊断与业务采样分开，不能以热采样替代真实冷准备证据。
+  console.log(`真实父子 Node 用例采集器准备：${JSON.stringify(observer.diagnostics!())}`)
   let workload: ReturnType<typeof spawn> | undefined
   let done = Promise.resolve()
   try {

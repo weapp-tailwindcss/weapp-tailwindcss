@@ -110,6 +110,10 @@ describe('隔离进程内的真实信号与合作恢复', () => {
     let done = Promise.resolve()
     try {
       observer = await prepareWorkflowProcessObserver()
+      if (observer?.diagnostics) {
+        // eslint-disable-next-line no-console -- 保留准确 Windows 准备阶段证据，不能用业务成功推断 provider 已就绪。
+        console.log(`独立后代用例采集器准备：${JSON.stringify(observer.diagnostics())}`)
+      }
       child = spawn(process.execPath, ['-e', launcher], { detached: process.platform !== 'win32', stdio: 'ignore' })
       done = closed(child)
       const tree = createWorkflowProcessTree(child, done, { cooperativeMs: 2000, observer })

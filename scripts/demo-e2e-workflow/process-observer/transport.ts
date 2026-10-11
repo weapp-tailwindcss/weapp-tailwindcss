@@ -1,4 +1,6 @@
+import type { ObserverRequestDiagnostic } from './diagnostics'
 import { spawn } from 'node:child_process'
+import { createObserverDiagnostics } from './diagnostics'
 
 export type ProcessObserverQuery = { kind: 'identity', pids?: readonly number[] } | { kind: 'memory', rootPid: number, cwd: string }
 
@@ -9,11 +11,13 @@ interface PendingRequest {
   deadline: number
   signal?: AbortSignal
   abort?: () => void
+  diagnostic: ObserverRequestDiagnostic
 }
 
 /** 单个受管采集器的 JSON 行协议；任一超时使会话失效，禁止重启续借预算。 */
 export function createProcessObserverTransport(command: string, args: string[], createChild = spawn) {
   const child = createChild(command, args, { shell: false, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] })
+  const diagnostics = createObserverDiagnostics(child.pid)
   const pending = new Map<number, PendingRequest>()
   let sequence = 0
   let buffer = ''
@@ -103,6 +107,21 @@ export function createProcessObserverTransport(command: string, args: string[], 
       buffer = buffer.slice(boundary + 1)
       try {
         const message = JSON.parse(line)
+        if (message?.event !== undefined) {
+          const request = pending.get(message.id)
+          if (message.event !== 'observer-ready' && (!Number.isInteger(message.id) || !request)) {
+            throw new Error('身份采集器请求进度缺少本轮请求身份。')
+          }
+          const expired = message.event === 'observer-ready'
+            ? [...pending.entries()].find(([, item]) => Date.now() >= item.deadline)
+            : request && Date.now() >= request.deadline ? [message.id, request] : undefined
+          if (expired) {
+            throw new Error(`身份采集器进度超过本轮绝对截止：${command} id=${expired[0]}；diagnostics=${JSON.stringify(diagnostics.snapshot())}。`)
+          }
+          diagnostics.progress(message, request?.diagnostic)
+          boundary = buffer.indexOf('\n')
+          continue
+        }
         const request = pending.get(message.id)
         if (!request || !Number.isInteger(message.id)) {
           throw new Error('身份采集器响应缺少本轮请求身份。')
@@ -112,6 +131,7 @@ export function createProcessObserverTransport(command: string, args: string[], 
         }
         pending.delete(message.id)
         dispose(request)
+        diagnostics.response(request.diagnostic)
         if (typeof message.error === 'string') {
           pending.set(message.id, request)
           fail(new Error(`身份采集器查询失败：${message.error}`))
@@ -128,6 +148,7 @@ export function createProcessObserverTransport(command: string, args: string[], 
   })
   return {
     pid: child.pid,
+    diagnostics: diagnostics.snapshot,
     invalidate: fail,
     assertHealthy() {
       if (fatal !== undefined || closing) {
@@ -147,9 +168,10 @@ export function createProcessObserverTransport(command: string, args: string[], 
         const request: PendingRequest = {
           resolve,
           reject,
-          timer: setTimeout(() => fail(new Error(`身份采集器请求超时：${command} pid=${child.pid} id=${id} timeoutMs=${timeoutMs}。`)), Math.ceil(timeoutMs)),
+          timer: setTimeout(() => fail(new Error(`身份采集器请求超时：${command} pid=${child.pid} id=${id} timeoutMs=${timeoutMs}；diagnostics=${JSON.stringify(diagnostics.snapshot())}。`)), Math.ceil(timeoutMs)),
           deadline: Date.now() + timeoutMs,
           signal,
+          diagnostic: diagnostics.begin(id, query),
         }
         request.abort = () => fail(signal?.reason ?? new Error('身份采集器请求已取消。'))
         pending.set(id, request)
@@ -157,6 +179,9 @@ export function createProcessObserverTransport(command: string, args: string[], 
         child.stdin.write(`${JSON.stringify({ ...query, id })}\n`, (error) => {
           if (error) {
             fail(error)
+          }
+          else {
+            diagnostics.written(request.diagnostic)
           }
         })
       })

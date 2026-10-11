@@ -1,6 +1,7 @@
 import type { spawn } from 'node:child_process'
 import type { DemoE2eMemorySample } from '../../demo-e2e-memory'
 import type { ProcessIdentity } from '../process-table'
+import type { ObserverDiagnostics } from './diagnostics'
 import type { ProcessObserverQuery } from './transport'
 import process from 'node:process'
 import { parseWindowsMemorySample } from '../../demo-e2e-memory/windows'
@@ -13,6 +14,7 @@ export interface WorkflowProcessObserver {
   subset: (pids: readonly number[], timeoutMs: number, signal?: AbortSignal) => Promise<ProcessIdentity[]>
   memory: (rootPid: number, timeoutMs: number, signal?: AbortSignal) => Promise<DemoE2eMemorySample>
   close: () => Promise<void>
+  diagnostics?: () => ObserverDiagnostics
 }
 
 interface ObserverOptions {
@@ -88,5 +90,6 @@ export async function prepareWorkflowProcessObserver(signal?: AbortSignal, optio
     },
     memory,
     close: () => transport.close(),
+    diagnostics: transport.diagnostics,
   }
 }
