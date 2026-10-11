@@ -79,7 +79,7 @@ describe('扩展回归的完整覆盖与门禁', () => {
     for (const name of ['tsd', 'stylelint', 'release:verify', 'agents:test --update=none', 'test:demo:matrix', 'test:perf:demo', 'skills:validate', 'docs:packages:check', 'e2e:preprocessor', 'e2e:demo-user-workflow', 'e2e:templates', 'e2e:templates:hmr', 'e2e:templates:ide', 'e2e:dev:smoke']) {
       expect(commands, name).toContain(`pnpm ${name}`)
     }
-    expect(commands).toContain('pnpm --filter @weapp-tailwindcss/engine --filter @weapp-tailwindcss/source-scan --filter @weapp-tailwindcss/escape --filter @weapp-tailwindcss/website run typecheck')
+    expect(commands).toContain('pnpm --filter @weapp-tailwindcss/engine --filter @weapp-tailwindcss/env --filter @weapp-tailwindcss/source-scan --filter @weapp-tailwindcss/escape --filter @weapp-tailwindcss/website run typecheck')
     expect(commands).toContain('pnpm exec vitest run -c ./e2e/vitest.e2e.config.ts e2e/framework-ci-support.test.ts --update=none')
     const framework = mocks.spawn.mock.calls.find(([, argv]) => argv.includes('e2e/framework-ci-support.test.ts'))
     expect(framework?.[2].env.E2E_FRAMEWORK_SUPPORT).toBe('1')

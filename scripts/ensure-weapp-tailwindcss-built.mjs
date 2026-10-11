@@ -46,6 +46,11 @@ const runtimeBuildTargets = [
 ]
 export const buildTargets = [
   {
+    filter: '@weapp-tailwindcss/env',
+    label: '@weapp-tailwindcss/env',
+    packageRoot: path.join(repoRoot, 'packages/env'),
+  },
+  {
     filter: '@weapp-tailwindcss/shared',
     label: '@weapp-tailwindcss/shared',
     packageRoot: path.join(repoRoot, 'packages/shared'),

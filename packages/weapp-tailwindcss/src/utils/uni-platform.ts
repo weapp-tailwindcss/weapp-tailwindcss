@@ -1,17 +1,2 @@
-import process from 'node:process'
-import { resolveUniUtsPlatform as resolveFrameworkUniUtsPlatform } from '@/framework'
-
-export interface UniUtsPlatformInfo {
-  raw: string | undefined
-  normalized: string | undefined
-  isApp: boolean
-  isAppAndroid: boolean
-  isAppHarmony: boolean
-  isAppIos: boolean
-  isMp: boolean
-  isWeb: boolean
-}
-
-export function resolveUniUtsPlatform(value = process.env['UNI_UTS_PLATFORM']): UniUtsPlatformInfo {
-  return resolveFrameworkUniUtsPlatform(value)
-}
+export { resolveUniUtsPlatform } from '@weapp-tailwindcss/env'
+export type { UniPlatformInfo as UniUtsPlatformInfo } from '@weapp-tailwindcss/env'

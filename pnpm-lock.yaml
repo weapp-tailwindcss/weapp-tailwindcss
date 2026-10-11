@@ -4930,6 +4930,8 @@ importers:
         specifier: catalog:tailwindcss4
         version: 4.3.3
 
+  packages/env: {}
+
   packages/escape:
     devDependencies:
       escape-published:
@@ -5293,6 +5295,9 @@ importers:
       '@weapp-tailwindcss/engine':
         specifier: workspace:*
         version: link:../engine
+      '@weapp-tailwindcss/env':
+        specifier: workspace:*
+        version: link:../env
       '@weapp-tailwindcss/escape':
         specifier: workspace:*
         version: link:../escape

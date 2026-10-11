@@ -22,6 +22,20 @@ async function fixture(bridge: string, name = '@weapp-tailwindcss/runtime') {
 }
 
 describe('客户端入口依赖门禁', () => {
+  it.each([false, true])('客户端对 env 的类型依赖允许、值依赖拒绝：typeOnly=%s', async (typeOnly) => {
+    const root = await fixture(typeOnly ? "export type { Platform } from '@weapp-tailwindcss/env'" : "export * from '@weapp-tailwindcss/env'")
+    const directory = path.join(root, 'packages', 'env')
+    await mkdir(path.join(directory, 'src'), { recursive: true })
+    await writeFile(path.join(directory, 'package.json'), JSON.stringify({ name: '@weapp-tailwindcss/env', exports: { '.': './dist/index.js' } }))
+    await writeFile(path.join(directory, 'src', 'index.ts'), 'export interface Platform {}\nexport const platform = true')
+    const errors = auditArchitecture(root).errors
+    if (typeOnly) {
+      expect(errors).toEqual([])
+    }
+    else {
+      expect(errors.join('\n')).toContain('客户端引入构建依赖')
+    }
+  })
   it.each(['node:fs', 'fs/promises', 'vite', '@tailwindcss/oxide'])('拒绝间接引入 %s', async (specifier) => {
     const root = await fixture(`import '${specifier}'; export const value = 1`)
     const errors = auditArchitecture(root).errors.join('\n')

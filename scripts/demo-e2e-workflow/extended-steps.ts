@@ -26,6 +26,8 @@ export function extendedQualitySteps(): WorkflowStep[] {
       '--filter',
       '@weapp-tailwindcss/engine',
       '--filter',
+      '@weapp-tailwindcss/env',
+      '--filter',
       '@weapp-tailwindcss/source-scan',
       '--filter',
       '@weapp-tailwindcss/escape',

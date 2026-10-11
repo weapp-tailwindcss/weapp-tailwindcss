@@ -241,6 +241,7 @@
     "@babel/types": "catalog:babel8",
     "@vue/compiler-dom": "catalog:vue3",
     "@weapp-tailwindcss/engine": "workspace:*",
+    "@weapp-tailwindcss/env": "workspace:*",
     "@weapp-tailwindcss/escape": "workspace:*",
     "@weapp-tailwindcss/logger": "workspace:*",
     "@weapp-tailwindcss/postcss": "workspace:*",

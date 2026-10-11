@@ -1,0 +1,60 @@
+{
+  "name": "@weapp-tailwindcss/env",
+  "type": "module",
+  "version": "0.1.0",
+  "description": "构建期的环境、框架与平台识别工具。",
+  "author": "ice breaker <1324318532@qq.com>",
+  "license": "MIT",
+  "homepage": "https://tw.weapp.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/weapp-tailwindcss/weapp-tailwindcss.git",
+    "directory": "packages/env"
+  },
+  "bugs": {
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues"
+  },
+  "keywords": [
+    "weapp",
+    "framework",
+    "environment",
+    "taro",
+    "uni-app",
+    "mpx"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": "^22.18.0 || >=24.11.0"
+  },
+  "scripts": {
+    "dev": "tsdown --watch --sourcemap",
+    "build": "tsdown",
+    "test": "vitest run",
+    "test:dev": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test:package": "node scripts/verify-package.mjs"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}
