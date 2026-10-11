@@ -94,6 +94,7 @@ export interface MemoryPeakSample {
 }
 
 export interface MemoryUsageSummary {
+  availability?: 'available' | 'unavailable'
   count: number
   baselineRssMb: number
   peakRssMb: number
@@ -851,6 +852,7 @@ export interface WatchReport {
 }
 
 export interface HmrMemoryProjectReport {
+  availability?: 'available' | 'unavailable'
   name: WatchCase['name']
   label: string
   project: string

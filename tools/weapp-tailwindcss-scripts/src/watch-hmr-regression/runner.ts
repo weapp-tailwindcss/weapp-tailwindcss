@@ -851,6 +851,10 @@ export function assertPluginProcessBudget(metrics: WatchCaseMetrics, options: Cl
 
 export function assertMemoryBudget(metrics: WatchCaseMetrics, options: CliOptions) {
   const maxMemoryRssMb = options.maxMemoryRssMb
+  const maxMemoryRssDeltaMb = options.maxMemoryRssDeltaMb
+  if (((maxMemoryRssMb ?? 0) > 0 || (maxMemoryRssDeltaMb ?? 0) > 0) && metrics.memorySummary.count === 0) {
+    throw new Error(`[${metrics.label}] process memory sampling is unavailable; configured RSS budget cannot be verified`)
+  }
   if (maxMemoryRssMb != null && maxMemoryRssMb > 0) {
     const samples: MemoryBudgetSample[] = [{
       label: 'case',
@@ -867,7 +871,6 @@ export function assertMemoryBudget(metrics: WatchCaseMetrics, options: CliOption
     }
   }
 
-  const maxMemoryRssDeltaMb = options.maxMemoryRssDeltaMb
   if (maxMemoryRssDeltaMb != null && maxMemoryRssDeltaMb > 0) {
     const samples: MemoryBudgetSample[] = [{
       label: 'case',

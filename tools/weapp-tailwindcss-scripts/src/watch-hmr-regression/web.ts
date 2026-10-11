@@ -5,6 +5,9 @@ import { createHash } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import process from 'node:process'
 import { chromium } from 'playwright'
+import { createWatchCaseCleanup } from './cleanup'
+import { sampleProcessTreeMemory } from './memory/process-tree'
+import { createMemorySampler } from './memory/sampler'
 import {
   createLineCollector,
   createSpawnEnv,
@@ -12,7 +15,6 @@ import {
   killProcessTreeOnWindows,
   normalizeLogLine,
   parsePluginProcessSample,
-  sampleProcessTreeMemory,
   sleep,
   spawnPnpm,
 } from './session'
@@ -686,19 +688,16 @@ export async function runWebHmr(
     stdio: 'pipe',
   })
 
-  const recordMemorySample = () => {
-    const sample = sampleProcessTreeMemory(child.pid)
-    if (!sample) {
-      return
-    }
-    memorySamples.push(sample)
-    if (memorySamples.length > 1000) {
-      memorySamples.shift()
-    }
-  }
-  const memoryTimer = setInterval(recordMemorySample, 1000)
-  memoryTimer.unref?.()
-  recordMemorySample()
+  const memorySampler = createMemorySampler({
+    probe: signal => sampleProcessTreeMemory(child.pid, signal, watchCase.cwd),
+    onSample(sample) {
+      memorySamples.push(sample)
+      if (memorySamples.length > 1000) {
+        memorySamples.shift()
+      }
+    },
+    onUnavailable: error => process.stderr.write(`[watch-hmr:memory] unavailable: ${error.message}\n`),
+  })
 
   const collectLine = createLineCollector('web-watch', lines, 240, {
     quietSass: options.quietSass,
@@ -755,8 +754,6 @@ export async function runWebHmr(
       return
     }
     stopped = true
-    clearInterval(memoryTimer)
-    recordMemorySample()
     child.stdout.off('data', collect)
     child.stderr.off('data', collect)
     try {
@@ -809,7 +806,7 @@ export async function runWebHmr(
     await waitForWebCompileSettled(settleOptions)
   }
 
-  const stop = async () => {
+  const stopWatch = async () => {
     if (child.exitCode != null) {
       cleanupProcessResources()
       return
@@ -841,7 +838,24 @@ export async function runWebHmr(
     cleanupProcessResources()
   }
 
+  const stop = async () => {
+    const stoppingMemory = memorySampler.stop().then(() => undefined, error => error as Error)
+    const watchError = await stopWatch().then(() => undefined, error => error as Error)
+    const memoryError = await stoppingMemory
+    if (watchError && memoryError) {
+      throw new AggregateError([watchError, memoryError], 'watch process and memory probe cleanup failed')
+    }
+    if (watchError || memoryError) {
+      throw watchError ?? memoryError
+    }
+  }
+
   let browser: Browser | undefined
+  const ownedSources = new Map([[config.sourceFile, sourceOriginal]])
+  if (config.cssEntryFile && cssEntryOriginal != null) {
+    ownedSources.set(config.cssEntryFile, cssEntryOriginal)
+  }
+  const cleanup = createWatchCaseCleanup(watchCase.label, ownedSources)
   try {
     await waitFor(
       async () => {
@@ -1079,7 +1093,7 @@ export async function runWebHmr(
       waitForCompileSettled,
     )
 
-    process.stdout.write(
+    cleanup.recordSuccess(
       `[watch-hmr] ${watchCase.label} web hmr passed (hotUpdate=${hotUpdateEffectiveMs}ms, rollback=${rollbackEffectiveMs}ms, url=${url})\n`,
     )
 
@@ -1107,18 +1121,14 @@ export async function runWebHmr(
   }
   catch (error) {
     const message = error instanceof Error ? error.message : String(error)
-    throw new Error(`${message}\n[${watchCase.label}] recent web watch logs:\n${lines.join('\n')}`)
+    throw cleanup.recordFailure(new Error(`${message}\n[${watchCase.label}] recent web watch logs:\n${lines.join('\n')}`, { cause: error }))
   }
   finally {
-    try {
-      await writeWatchedFilePreserveEol(config.sourceFile, sourceOriginal, sourceOriginal)
-      if (config.cssEntryFile && cssEntryOriginal != null) {
-        await writeWatchedFilePreserveEol(config.cssEntryFile, cssEntryOriginal, cssEntryOriginal)
-      }
-    }
-    catch {
-    }
-    await browser?.close().catch(() => {})
-    await stop()
+    await cleanup.finish({
+      closeBrowser: async () => {
+        await browser?.close()
+      },
+      stopSession: stop,
+    })
   }
 }
