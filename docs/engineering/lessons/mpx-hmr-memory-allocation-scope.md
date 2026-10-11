@@ -8,6 +8,7 @@ regressions:
   - benchmark/version-compare/test/gc-bounds.test.mjs
   - benchmark/version-compare/test/gc-diagnostics.test.mjs
   - benchmark/version-compare/test/gc-workload-isolation.test.mjs
+  - packages/weapp-tailwindcss/test/ci/benchmark-memory-confirmation.test.ts
   - packages/postcss/test/generated-css-ast-lifecycle.test.ts
   - packages/postcss/test/generated-framework-selectors.test.ts
   - packages/weapp-tailwindcss/test/compiler/runtime-snapshot.test.ts
@@ -93,6 +94,16 @@ PerformanceObserver 的自然 GC 回调同步写入 NDJSON，限制为 2048 个�
 - 同一最终诊断实现分别在 Node 22.22.3、24.18.0 执行该定向套件，各 42 项通过；新增模块严格 lint、工作流 actionlint 通过。
 
 这是诊断补证，尚未解释或撤销原 Linux 两项内存失败。保留 `partial`，最终按新准确 head 的 hosted 原始证据继续判断。
+
+### 反向确认编排的行为回归
+
+准确 head `77a1e7928738874df61b3d853af5d6f73b1b161a` 的 [PR 单测分片 3](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38146715204/job/114494414514) 暴露旧测试边界错误：测试搜索完整对象源码字符串，新增 `diagnosticIdentity` 字段后便失败，未验证实际执行器收到的版本顺序。本地同一用例先复现失败。
+
+将原反向确认块等价提取到私有 `memory-confirmation.mjs`，入口的确认条件与共享 `runMatrix` 闭包保持原样。闭包仍使用主轮的 HMR 次数、超时、轮询与诊断配置；确认只把 build 次数设为 0。新回归落地真实临时 versions/raw/summary 文件，检查实际执行器收到 current→baseline 顺序、两侧完整身份，以及二次超限、错误行、RSS 缺证、进程拒绝和损坏 JSON 的失败传播。调用方阈值仍原样传递，不以测试修复放宽门禁。
+
+- `CI=1 pnpm --filter weapp-tailwindcss exec vitest run --update=none test/ci/benchmark-report.test.ts test/ci/benchmark-memory-confirmation.test.ts`：2 文件 38 项通过，其中新行为回归 8 项。
+
+该改动修复测试合同及可验证的编排边界，未改变 Mpx 产品内存行为，也不撤销此前两项已确认的失败。
 
 ## 适用边界
 

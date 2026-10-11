@@ -884,19 +884,6 @@ describe('benchmark ci report', () => {
     expect(markdown).toContain('HMR 内存独立复测：current->baseline，确认 0 项')
   })
 
-  it('runs HMR memory confirmation without builds and reverses version order', async () => {
-    const fs = await import('node:fs')
-    const path = await import('node:path')
-    const source = fs.readFileSync(path.resolve(__dirname, '../../../../benchmark/version-compare/scripts/run-ci.mjs'), 'utf8')
-
-    expect(source).toContain("{ version: currentLabel, root: currentRoot }")
-    expect(source).toContain("{ version: baselineLabel, root: baselineRoot }")
-    expect(source).toContain('matrixBuildRuns: 0')
-    expect(source).toContain('memory-confirmation-raw.json')
-    expect(source).toContain("violation.metric === 'hmrMemorySamples'")
-    expect(source).toContain('markHmrMemoryConfirmationUnavailable')
-  })
-
   it('ignores sub-10ms timing drift while retaining the percentage guard for larger regressions', async () => {
     const { buildSummary, evaluatePerformanceGuard } = await import('../../../../benchmark/version-compare/scripts/ci-report.mjs')
     const baselineLabel = 'base:main'

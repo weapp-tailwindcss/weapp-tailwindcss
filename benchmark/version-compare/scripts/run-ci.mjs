@@ -8,12 +8,11 @@ import { classifyPerformanceChanges, performanceRelevantPaths, summarizeFiles } 
 import {
   asInformationalPerformanceGuard,
   buildSummary,
-  confirmHmrMemoryViolations,
   evaluatePerformanceGuard,
-  markHmrMemoryConfirmationUnavailable,
   requiresHmrMemoryConfirmation,
   toMarkdown,
 } from './ci-report.mjs'
+import { runHmrMemoryConfirmation } from './memory-confirmation.mjs'
 import { benchmarkProjectDirs } from './projects.mjs'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -583,37 +582,14 @@ async function main() {
       && requiresHmrMemoryConfirmation(performanceGuard)
       && !process.argv.includes('--skip-memory-confirmation')
     ) {
-      const confirmationVersionsPath = path.join(resultDir, 'memory-confirmation-versions.json')
-      const confirmationRawPath = path.join(resultDir, 'memory-confirmation-raw.json')
-      const confirmationSummaryPath = path.join(resultDir, 'memory-confirmation-summary.json')
-      await fs.writeFile(confirmationVersionsPath, JSON.stringify([
+      performanceGuard = await runHmrMemoryConfirmation({
+        resultDir,
         currentVersion,
         baselineVersion,
-      ], null, 2), 'utf8')
-      process.stdout.write('[benchmark] confirming HMR memory regression with reversed current->baseline order\n')
-      await runMatrix({
-        versionsFile: confirmationVersionsPath,
-        outputFile: confirmationRawPath,
-        matrixBuildRuns: 0,
-      })
-      const confirmationRaw = JSON.parse(await fs.readFile(confirmationRawPath, 'utf8'))
-      const confirmationSummary = buildSummary(confirmationRaw, baselineLabel, currentLabel)
-      const confirmationGuard = evaluatePerformanceGuard(confirmationSummary, {
+        performanceGuard,
         regressionPercent: parseNumber('--regression-percent', 5),
+        runMatrix,
       })
-      await fs.writeFile(confirmationSummaryPath, `${JSON.stringify(confirmationSummary, null, 2)}\n`, 'utf8')
-      const confirmationError = confirmationSummary.errors.length > 0
-        ? `matrix has ${confirmationSummary.errors.length} failed row(s)`
-        : confirmationGuard.violations.some(violation => violation.metric === 'hmrMemorySamples')
-          ? 'matrix has incomplete RSS samples'
-          : undefined
-      if (confirmationError) {
-        performanceGuard = markHmrMemoryConfirmationUnavailable(performanceGuard, confirmationError)
-      }
-      else {
-        performanceGuard = confirmHmrMemoryViolations(performanceGuard, confirmationGuard)
-      }
-      process.stdout.write(`[benchmark] HMR memory confirmation -> ${confirmationSummaryPath}\n`)
     }
     const relevantFiles = summarizeFiles(performanceChanges.relevantFiles)
     const ignoredFiles = summarizeFiles(performanceChanges.ignoredReleaseMetadataFiles)
