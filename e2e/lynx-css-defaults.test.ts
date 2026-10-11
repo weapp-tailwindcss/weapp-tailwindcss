@@ -7,7 +7,7 @@ import { transformWebCssCompat } from '../packages/postcss/src/compat/web-css'
 import { compatibilityVersions, exampleDir } from './lynx/catalog'
 
 interface TasmCodec {
-  getEncodeMode: () => (options: unknown) => Promise<{ buffer: Uint8Array, css_diagnostics?: string }>
+  getEncodeMode: (mode?: 'wasm') => (options: unknown) => Promise<{ buffer: Uint8Array, css_diagnostics?: string }>
   decode_wasm: (buffer: Uint8Array) => Promise<{ css: { text?: string } }>
 }
 
@@ -16,7 +16,7 @@ interface EncodedRule {
   style?: Array<{ name: string, defaultValueMap?: Record<string, string> }>
 }
 
-async function encodeCss(css: string) {
+async function encodeCss(css: string, mode?: 'wasm') {
   const exampleRequire = createRequire(new URL('../examples/react-lynx/package.json', import.meta.url))
   const reactRequire = createRequire(exampleRequire.resolve('@lynx-js/react-rsbuild-plugin/package.json'))
   const templateRequire = createRequire(reactRequire.resolve('@lynx-js/template-webpack-plugin/package.json'))
@@ -25,7 +25,7 @@ async function encodeCss(css: string) {
   const decoder = createRequire(import.meta.url)('@lynx-js/tasm') as TasmCodec
   const { cssChunksToMap } = await import(pathToFileURL(templateRequire.resolve('@lynx-js/css-serializer')).href)
   const { cssMap, cssSource } = cssChunksToMap([css], [], true)
-  const encoded = await encoder.getEncodeMode()({
+  const encoded = await encoder.getEncodeMode(mode)({
     compilerOptions: {
       enableFiberArch: true,
       useLepusNG: true,
@@ -102,8 +102,16 @@ describe('Lynx native CSS defaults', () => {
     ]))
   })
 
-  it('continues to report unsupported peer selectors instead of rewriting their meaning', async () => {
-    const encoded = await encodeCss(await generateCss('peer-checked:opacity-100'))
+  it.each([undefined, 'wasm'] as const)('通过 %s 编码保留不支持属性的原始诊断', async (mode) => {
+    const encoded = await encodeCss(await generateCss('columns-2'), mode)
+    expect(encoded.diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: 'property', name: 'columns' }),
+    ]))
+    expect(encoded.css).not.toContain('columns:')
+  })
+
+  it.each([undefined, 'wasm'] as const)('通过 %s 编码保留不支持 selector 的原始诊断', async (mode) => {
+    const encoded = await encodeCss(await generateCss('peer-checked:opacity-100'), mode)
 
     expect(encoded.diagnostics).toEqual(expect.arrayContaining([
       expect.objectContaining({ type: 'selector', name: expect.stringContaining(':checked') }),

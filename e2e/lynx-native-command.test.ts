@@ -65,7 +65,7 @@ it('真实超时不重试，保留首次失败、原 PID 和限量输出', async
 
 it('启动失败也写诊断且不序列化进程环境', async () => {
   const { cwd, file } = await artifact()
-  await expect(command(path.join(cwd, 'missing-executable'), [], cwd, 1000, { file })).rejects.toMatchObject({ code: 'ENOENT' })
+  await expect(command(process.execPath, [], path.join(cwd, 'missing-directory'), 1000, { file })).rejects.toMatchObject({ code: 'ENOENT' })
   const report = JSON.parse(await fs.readFile(file, 'utf8'))
   expect(report.outcome).toBe('failure')
   expect(report.events).toEqual(expect.arrayContaining([expect.objectContaining({ name: 'error', code: 'ENOENT' })]))

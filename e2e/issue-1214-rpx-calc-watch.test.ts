@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises'
+import process from 'node:process'
 import { expect, it } from 'vitest'
 import { createWatchCommandSession } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/session'
 import { waitFor, writeWatchedFilePreserveEol } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/text'
@@ -7,7 +8,7 @@ import { createProject, pageSource, readOutput, readProbeDeclarations, themeSour
 it('Issue #1214 同一 uni-app 微信 watch 进程不复用旧主题计算或已移除候选', async () => {
   const project = await createProject()
   const startedAt = Date.now()
-  const session = createWatchCommandSession(project.root, ['exec', 'uni', '-p', 'mp-weixin'], { quietSass: true }, {
+  const session = createWatchCommandSession(project.root, ['exec', process.execPath, project.uniBin, '-p', 'mp-weixin'], { quietSass: true }, {
     ...project.env,
     NODE_ENV: 'development',
     WEAPP_TW_HMR_TIMING: '0',

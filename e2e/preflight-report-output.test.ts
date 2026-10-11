@@ -1,9 +1,8 @@
 import { mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import process from 'node:process'
 import { execa } from 'execa'
-import { expect, it, vi } from 'vitest'
+import { expect, it } from 'vitest'
 import { createDemoE2eMemoryReport, writeDemoE2eMemoryReport } from '../scripts/demo-e2e-memory'
 import { collectIdentity } from '../scripts/e2e-preflight/io'
 
@@ -17,7 +16,6 @@ it('每阶段写入内存报告不改变全面测试的源码身份，实际源�
     await git('add', '.gitignore', 'source.ts')
     await git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.test', 'commit', '-m', 'fixture')
     const before = await collectIdentity(root)
-    vi.spyOn(process, 'cwd').mockReturnValue(root)
     const report = createDemoE2eMemoryReport({ repositoryRoot: root, includeLocal: true, exitCode: 0, steps: [] })
     const output = await writeDemoE2eMemoryReport({ report })
     expect(JSON.parse(await readFile(output.jsonFile, 'utf8')).repositoryRoot).toBe(root)
@@ -28,7 +26,6 @@ it('每阶段写入内存报告不改变全面测试的源码身份，实际源�
     expect((await collectIdentity(root)).source).not.toBe(before.source)
   }
   finally {
-    vi.restoreAllMocks()
-    await rm(root, { recursive: true, force: true })
+    await rm(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 })
   }
 })

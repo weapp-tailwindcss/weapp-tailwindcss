@@ -1,0 +1,12 @@
+diff --git a/index.js b/index.js
+index 7391698c6673c723af453786679dc00b31e5c2ee..587d6bdc25ffea226b9f871fb68ae6679974f77c 100644
+--- a/index.js
++++ b/index.js
+@@ -75,6 +75,7 @@ async function encode_wasm(options, enableTrace = false) {
+       lepus_code: res.lepus_code,
+       lepus_debug: res.lepus_debug,
+       section_size: res.section_size,
++      css_diagnostics: res.css_diagnostics,
+       trace: res.trace,
+     };
+     const uint8array = new Uint8Array(bufferHandle.size());

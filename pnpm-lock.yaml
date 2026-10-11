@@ -789,6 +789,7 @@ overrides:
 pnpmfileChecksum: sha256-VIhHxkE3DlYGW4jpmh5YBZoirXpyRMuq7rJOkofCfW8=
 
 patchedDependencies:
+  '@lynx-js/tasm@0.0.49': e2e1266af5632f896856ce8dcb33b316bde11f5cd7fec46dd28dab7b80d7b545
   '@mpxjs/vue-cli-plugin-mpx@2.2.30': a26ae7412b1d225b09da9131a7271eb03aa6e17e9b0b3e83c7177bf1d4119eeb
   nitropack@2.13.4: d0cbcb54a52558c28137353e5237e87891cab448f0ef1a833a8e76210a582ded
   rollup@3.30.0: b0e7b942f2190fea1ae08c783d9ff2eb913240d4fcbe3ce13e5da042a4f164bd
@@ -45220,7 +45221,7 @@ snapshots:
     dependencies:
       '@lynx-js/webpack-runtime-globals': 0.0.8
 
-  '@lynx-js/tasm@0.0.49': {}
+  '@lynx-js/tasm@0.0.49(patch_hash=e2e1266af5632f896856ce8dcb33b316bde11f5cd7fec46dd28dab7b80d7b545)': {}
 
   '@lynx-js/tasm@0.0.53': {}
 
@@ -45228,7 +45229,7 @@ snapshots:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       '@lynx-js/css-serializer': 0.1.9
-      '@lynx-js/tasm': 0.0.49
+      '@lynx-js/tasm': 0.0.49(patch_hash=e2e1266af5632f896856ce8dcb33b316bde11f5cd7fec46dd28dab7b80d7b545)
       '@lynx-js/web-core': 0.26.1(tslib@2.8.1)
       '@lynx-js/webpack-runtime-globals': 0.0.8
       '@rspack/lite-tapable': 1.1.5
@@ -45244,7 +45245,7 @@ snapshots:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       '@lynx-js/css-serializer': 0.1.9
-      '@lynx-js/tasm': 0.0.49
+      '@lynx-js/tasm': 0.0.49(patch_hash=e2e1266af5632f896856ce8dcb33b316bde11f5cd7fec46dd28dab7b80d7b545)
       '@lynx-js/web-core': 0.26.2(tslib@2.8.1)
       '@lynx-js/webpack-runtime-globals': 0.0.8
       '@rspack/lite-tapable': 1.1.5
