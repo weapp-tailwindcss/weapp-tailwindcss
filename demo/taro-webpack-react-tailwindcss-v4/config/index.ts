@@ -1,4 +1,5 @@
 import { resolve, win32 } from 'node:path'
+import process from 'node:process'
 import { defineConfig, type UserConfigExport } from '@tarojs/cli'
 import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin'
 import devConfig from './dev'
@@ -151,6 +152,8 @@ export default defineConfig<'webpack5'>(async (merge, { command, mode }) => {
       },
     },
     h5: {
+      // Taro webpack runner 不消费 BROWSER，需显式传入 WDS 的自动打开边界。
+      ...(process.env.BROWSER === 'none' ? { devServer: { open: false } } : {}),
       publicPath: '/',
       staticDirectory: 'static',
       output: {
