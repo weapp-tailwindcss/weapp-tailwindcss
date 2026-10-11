@@ -6,9 +6,9 @@ const script = `
 $ErrorActionPreference = 'Stop'
 [Console]::InputEncoding = [System.Text.UTF8Encoding]::new($false)
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
-${windowsProcessTreeMemoryFunction}
-[Console]::Out.WriteLine((ConvertTo-Json -InputObject @{ event = 'observer-ready'; pid = [int]$PID } -Compress))
+[Console]::Out.WriteLine('{"event":"observer-ready","pid":' + [int]$PID + ',"version":"' + $PSVersionTable.PSVersion.ToString() + '"}')
 [Console]::Out.Flush()
+${windowsProcessTreeMemoryFunction}
 while ($null -ne ($line = [Console]::In.ReadLine())) {
   try {
     $request = ConvertFrom-Json -InputObject $line

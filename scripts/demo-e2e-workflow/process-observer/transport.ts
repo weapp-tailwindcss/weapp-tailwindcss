@@ -1,6 +1,8 @@
 import type { ObserverRequestDiagnostic } from './diagnostics'
+import type { ObserverLaunchOptions } from './launch-environment'
 import { spawn } from 'node:child_process'
 import { createObserverDiagnostics } from './diagnostics'
+import { resolveObserverLaunchEnvironment } from './launch-environment'
 
 export type ProcessObserverQuery = { kind: 'identity', pids?: readonly number[] } | { kind: 'memory', rootPid: number, cwd: string }
 
@@ -15,9 +17,10 @@ interface PendingRequest {
 }
 
 /** 单个受管采集器的 JSON 行协议；任一超时使会话失效，禁止重启续借预算。 */
-export function createProcessObserverTransport(command: string, args: string[], createChild = spawn) {
-  const child = createChild(command, args, { shell: false, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] })
-  const diagnostics = createObserverDiagnostics(child.pid)
+export function createProcessObserverTransport(command: string, args: string[], createChild = spawn, launchOptions: ObserverLaunchOptions = {}) {
+  const launch = resolveObserverLaunchEnvironment(command, launchOptions)
+  const child = createChild(command, args, { shell: false, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'], env: launch.env })
+  const diagnostics = createObserverDiagnostics(child.pid, launch.diagnostic)
   const pending = new Map<number, PendingRequest>()
   let sequence = 0
   let buffer = ''
@@ -25,6 +28,7 @@ export function createProcessObserverTransport(command: string, args: string[], 
   let fatal: unknown
   let closing: Promise<void> | undefined
   let didClose = false
+  let terminationAttempted = false
   let resolveClosed!: () => void
   const closed = new Promise<void>((resolve) => {
     resolveClosed = resolve
@@ -49,30 +53,39 @@ export function createProcessObserverTransport(command: string, args: string[], 
       clearTimeout(timer)
     }
   }
+  const terminate = () => {
+    if (didClose || terminationAttempted) {
+      return
+    }
+    terminationAttempted = true
+    try {
+      child.kill('SIGKILL')
+    }
+    catch (killError) {
+      fatal = new AggregateError([fatal, killError], '身份采集器终止失败。')
+    }
+  }
   const fail = (error: unknown) => {
+    if (fatal !== undefined) {
+      return
+    }
     fatal ??= error
     for (const request of pending.values()) {
       dispose(request)
     }
     const requests = [...pending.values()]
     pending.clear()
-    if (!didClose) {
-      try {
-        child.kill('SIGKILL')
-      }
-      catch (killError) {
-        fatal = new AggregateError([fatal, killError], '身份采集器终止失败。')
-      }
-    }
-    closing ??= reap()
+    terminate()
+    closing ??= reap().catch((reapError) => {
+      throw new AggregateError([fatal, reapError], '身份采集器失败且退出未确认。')
+    })
     void closing.then(() => {
       for (const request of requests) {
         request.reject(fatal)
       }
     }, (reapError) => {
-      const failure = new AggregateError([fatal, reapError], '身份采集器失败且退出未确认。')
       for (const request of requests) {
-        request.reject(failure)
+        request.reject(reapError)
       }
     })
   }
@@ -197,12 +210,7 @@ export function createProcessObserverTransport(command: string, args: string[], 
             return reap()
           }).catch(async (error) => {
             fatal ??= error
-            try {
-              child.kill('SIGKILL')
-            }
-            catch (killError) {
-              fatal = new AggregateError([fatal, killError], '身份采集器终止失败。')
-            }
+            terminate()
             try {
               await reap()
             }

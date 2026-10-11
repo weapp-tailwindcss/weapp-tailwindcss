@@ -52,6 +52,8 @@ it.runIf(process.platform === 'win32')('真实 PowerShell 身份握手与中文�
   try {
     const ready = parseWindowsProcesses(JSON.stringify(await transport.request({ kind: 'identity' }, 15_000)))
     expect(ready.some(row => row.pid === child!.pid)).toBe(true)
+    expect(transport.diagnostics().runtimeVersion).toMatch(/^5\.1\.\d+\.\d+$/)
+    expect(transport.diagnostics().launch?.modulePathPolicy).toBe('windows-powershell-native')
     const memory = parseWindowsMemorySample(await transport.request({ kind: 'memory', rootPid: child!.pid!, cwd: process.cwd() }, 5000))
     expect(memory.processCount).toBeGreaterThanOrEqual(1)
     expect(memory.topProcesses!.some(row => row.pid === child!.pid)).toBe(true)

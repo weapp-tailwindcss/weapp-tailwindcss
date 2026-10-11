@@ -27,7 +27,7 @@ Caused by: 身份采集器请求超时：powershell pid=6420 id=1 timeoutMs=1499
 
 已确认的工程缺口是采集器原来只有完整响应，没有阶段证据。一次首次请求超时会同时覆盖进程启动、命令初始化、输入读取、provider 查询和结果传输，无法选择有依据的下一步。
 
-受管 PowerShell 现在发送并 flush 独立的 `observer-ready`、`request-received`、`query-completed`、`response-ready` 诊断行。它们分别标记编码及脚本初始化完成、输入已解析、真实查询及行转换完成、完整响应 JSON 已生成。父进程记录 stdin 写入及完整响应接收时间，最多保留最近四个请求的阶段；超时错误包含已观察的阶段和耗时，真实 Windows 用例在业务启动前打印准备快照。
+受管 PowerShell 现在发送并 flush 独立的 `observer-ready`、`request-received`、`query-completed`、`response-ready` 诊断行。它们分别标记 UTF-8 配置后已进入脚本执行、输入已解析、真实查询及行转换完成、完整响应 JSON 已生成。首次标记由静态 ASCII JSON 拼接本体 PID 与实际 PowerShell 版本，不调用 `ConvertTo-Json`，也不等待内存函数声明执行，避免把 Utility 模块首次加载混入启动标记。父进程记录 stdin 写入及完整响应接收时间，最多保留最近四个请求的阶段；超时错误包含已观察的阶段和耗时，真实 Windows 用例在业务启动前打印准备快照。
 
 诊断行不返回身份或内存结果，也不重置请求计时。启动行必须属于本体 PID；请求进度必须属于在途请求、操作类型一致且按顺序推进。迟到、未知、重复或乱序进度使会话失效；同一响应块后面的坏行仍由 `assertHealthy` 阻断业务。
 
@@ -45,7 +45,9 @@ CI=1 E2E_SKIP_OPEN_AUTOMATOR=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts 
 
 结果为 62 项通过、2 项既有 Windows 专属用例跳过。新增 12 项覆盖进度不能落定结果或续借预算、启动未知状态、错误 PID/请求/操作/阶段、启动及请求进度迟到、合法握手后坏尾行、四请求存储上限和快照隔离。既有取消、独立后代恢复、完整准备与清理预算回归继续通过；两项 Windows 真实查询待下一准确 head 验收。
 
-后续确认借下一准确 head 原本需要执行的 Coverage Windows 分片，保存实际 checkout、全部原始日志和准备阶段快照。先观察阶段证据，再决定是否需要改变查询边界；不盲目重跑旧失败，不重复启动额外整矩阵。若再次超时，阶段前沿可以区分尚未收到初始化行、输入已读取但查询未完成、查询完成但 JSON 未生成，以及 JSON 已生成但完整响应尚未接收。
+准确提交 `afd51b8e4872e9fbe1c8acc3146ccda0a17efb99` 的 [Coverage run 38137426741](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38137426741/job/114464110049) Windows shard 3 再次在准备前失败：本体 PID 7092，stdin 写入 2ms，15 秒截止耗尽时 `readyAtMs: null`。该版本首次标记仍调用 `ConvertTo-Json`，因此结果只定位到首次标记输出确认前，不能区分进程启动、整段命令解析、UTF-8 配置、Utility 首次加载及序列化或 stdout 传输。没有 `request-received` 或 `query-completed`，不能把延迟归因于 CIM 查询。稍后两次真实准备耗时分别为 3827ms 和 503ms，也不能把先前失败当作环境噪声。
+
+下一准确 head 借原本需要执行的 Coverage Windows 分片，保存实际 checkout、全部原始日志和静态首次标记后的阶段快照；模块启动环境的纠正见 [Windows PowerShell 子进程模块路径边界](windows-powershell-launch-environment.md)。不盲目重跑旧失败，不重复启动额外整矩阵。
 
 ## 适用边界
 
