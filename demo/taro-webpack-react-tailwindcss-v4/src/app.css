@@ -21,6 +21,20 @@ view {
   box-sizing: border-box;
 }
 
+/* Refs #1286：作者样式与生成工具类都应保留字体平滑和显式扩展的 WebKit 属性。 */
+.issue-1286-icon {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-appearance: none;
+}
+
+@utility issue-1286-highlight {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@source inline("antialiased subpixel-antialiased issue-1286-highlight");
+
 @layer base {
   button::after,
   wx-button::after {

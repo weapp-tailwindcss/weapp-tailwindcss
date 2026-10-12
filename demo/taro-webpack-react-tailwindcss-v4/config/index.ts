@@ -16,6 +16,7 @@ const taroPlugins = [
 ]
 const cssOptions = {
   tailwindcssV4GradientFallback,
+  preserveWebkitProperties: ['-webkit-tap-highlight-color'],
 } satisfies UserDefinedOptions['cssOptions']
 const projectRoot = resolve(__dirname, '..')
 const cssEntries = [
