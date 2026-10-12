@@ -12,6 +12,18 @@ import { startProcess } from './process.mjs'
 
 const item = cases.find(item => item.id === 'style-injector-taro-vite-react:h5')
 
+async function closeFixture(root, session, occupant) {
+  const results = await Promise.allSettled([
+    session?.stop(),
+    new Promise((resolve, reject) => occupant.close(error => error ? reject(error) : resolve())),
+  ])
+  results.push(...await Promise.allSettled([rm(root, { recursive: true, force: true })]))
+  const errors = results.filter(result => result.status === 'rejected').map(result => result.reason)
+  if (errors.length) {
+    throw new AggregateError(errors, '开发端口回归资源清理失败')
+  }
+}
+
 it.each(['localhost', '127.0.0.1', '[::1]'])('preserves the announced host and hash route (%s)', (host) => {
   expect(announcedViteUrl(`\u001B[32m  ➜  Local:   http://${host}:49230/\u001B[0m\r\n`, item.route))
     .toBe(`http://${host}:49230${item.route}`)
@@ -47,7 +59,8 @@ it('follows the actual Taro Vite endpoint when another server occupies the reque
   try {
     await new Promise((resolve, reject) => {
       occupant.once('error', reject)
-      occupant.listen(0, '0.0.0.0', resolve)
+      // 占用器与目标统一绑定确切 loopback，避免 wildcard 与其他接口共享端口身份。
+      occupant.listen(0, '127.0.0.1', resolve)
     })
     const port = occupant.address().port
     const require = createRequire(import.meta.url)
@@ -58,21 +71,20 @@ it('follows the actual Taro Vite endpoint when another server occupies the reque
       import { createServer } from ${JSON.stringify(vite)}
       const server = await createServer({
         root: ${JSON.stringify(root)}, configFile: false,
-        server: { host: '0.0.0.0', port: ${port}, strictPort: false },
+        server: { host: '127.0.0.1', port: ${port}, strictPort: false },
       })
       await server.listen()
       server.printUrls()
     `)
     session = startProcess(process.execPath, [fixture], root, {})
     const url = await developmentUrl(item, port, session, 15_000)
+    expect(new URL(url).hostname).toBe('127.0.0.1')
     expect(new URL(url).port).not.toBe(String(port))
     expect(new URL(url).hash).toBe('#/sub-normal/pages/index/index')
     expect(await (await fetch(`http://127.0.0.1:${port}`)).text()).toBe('wrong-server')
-    expect(await (await fetch(url)).text()).toContain('owned-development-server')
+    expect(await (await fetch(url)).text(), `${url}\n${session.log()}`).toContain('owned-development-server')
   }
   finally {
-    await session?.stop()
-    await new Promise((resolve, reject) => occupant.close(error => error ? reject(error) : resolve()))
-    await rm(root, { recursive: true, force: true })
+    await closeFixture(root, session, occupant)
   }
 }, 25_000)
