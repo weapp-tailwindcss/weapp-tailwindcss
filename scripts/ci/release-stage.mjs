@@ -10,6 +10,25 @@ const releaseBranches = new Set(['main', 'alpha', 'beta', 'rc', 'next'])
 const fullShaPattern = /^[a-f\d]{40}$/i
 
 /**
+ * 验证只能消费已提交源码，不能把生成文件或已有暂存改动交给 repoctl 的版本提交。
+ * @param {string} stage 当前阶段。
+ * @param {string} expectedHead 阶段开始时的源码提交。
+ */
+function assertCleanReleaseSource(stage, expectedHead) {
+  /** @type {import('node:child_process').ExecFileSyncOptionsWithStringEncoding} */
+  const options = { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }
+  const head = execFileSync('git', ['rev-parse', 'HEAD'], options).trim()
+  if (head !== expectedHead) {
+    throw new Error(`Release ${stage} 改变了源码 HEAD；请从准确源码重新 plan 和 verify`)
+  }
+  const status = execFileSync('git', ['status', '--porcelain=v1', '-z', '--untracked-files=all'], options)
+  if (status) {
+    const changes = status.split('\0').filter(Boolean).join('\n')
+    throw new Error(`Release ${stage} 存在未提交文件，禁止将验证产物带入版本提交；请先在源码 PR 同步生成基线，再重新 plan 和 verify：\n${changes}`)
+  }
+}
+
+/**
  * 独立校验源码 HEAD，保留 GitHub 签名的工作流身份；后续状态由官方 receipt 校验。
  * @param {string} stage 已校验的发布阶段。
  * @param {{ env?: NodeJS.ProcessEnv, headSha?: string, platform?: NodeJS.Platform }} [options] 调用环境、当前提交及运行平台。
@@ -78,11 +97,17 @@ async function main() {
     return
   }
   const invocation = buildStageInvocation(args[0], { env: process.env, headSha })
+  if (['verify', 'prepare'].includes(args[0])) {
+    assertCleanReleaseSource(args[0], headSha)
+  }
   const result = spawnSync(invocation.command, invocation.args, invocation.options)
   if (result.error) {
     throw result.error
   }
   process.exitCode = result.status ?? 1
+  if (args[0] === 'verify' && result.status === 0) {
+    assertCleanReleaseSource('verify', headSha)
+  }
 }
 
 if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))) {
