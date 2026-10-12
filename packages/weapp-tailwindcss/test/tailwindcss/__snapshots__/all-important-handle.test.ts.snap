@@ -3274,9 +3274,11 @@ exports[`all > common important handle 1`] = `
     text-underline-offset: auto;
   }
   #app .antialiased {
+    -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
   #app .subpixel-antialiased {
+    -webkit-font-smoothing: auto;
     -moz-osx-font-smoothing: auto;
   }
   #app .caret-current {

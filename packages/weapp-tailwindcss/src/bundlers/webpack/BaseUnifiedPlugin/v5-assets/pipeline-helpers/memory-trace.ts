@@ -123,6 +123,7 @@ export function finalizeMiniProgramUserCssAssetSource(
           : undefined,
     isTailwindcssV4: true,
     tailwindcssV4GradientFallback: styleOptions.tailwindcssV4GradientFallback,
+    preserveWebkitProperties: styleOptions.cssOptions?.preserveWebkitProperties,
   })
   const output = removeTailwindV4StandaloneHostPreflightRule(finalized)
   return stripMiniProgramCssSpecificityPlaceholders(output)

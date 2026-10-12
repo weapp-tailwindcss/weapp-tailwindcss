@@ -361,7 +361,23 @@ CSS 生成与兼容后处理的微调配置。
 `cssPreflight`、`cssPreflightRange`、`cssChildCombinatorReplaceValue`、`cssPresetEnv`、`autoprefixer`、
 `atRules`、`injectAdditionalCssVarScope`、`cssSelectorReplacement`、`rem2rpx`、`px2rpx`、`unitsToPx`、
 `unitConversion`、`platform`、`cssRemoveActivePseudoClass`、`cssRemoveHoverPseudoClass`、`cssRemoveFocusPseudoClass`、`cssRemoveProperty`、`cssCalc`
-与 `tailwindcssV4GradientFallback` 都推荐放在这里。
+与 `tailwindcssV4GradientFallback`、`preserveWebkitProperties` 都推荐放在这里。
+
+小程序兼容处理默认保留 `-webkit-font-smoothing`，因此不会因本项目的属性删除策略丢失
+`antialiased` 或 `subpixel-antialiased` 的字体平滑声明。
+`cssOptions.preserveWebkitProperties`（`string[]`）可追加要保留的 `-webkit-` 属性名；传入 `[]` 仍保留默认项。
+属性名去除首尾空白后忽略大小写做精确匹配，非法名称会被忽略，不支持通配符。
+该选项只影响本项目的小程序属性删除策略，不控制额外注册的 Autoprefixer 等外部插件。
+
+#### 示例
+
+```ts
+const options = {
+  cssOptions: {
+    preserveWebkitProperties: ['-webkit-text-size-adjust'],
+  },
+}
+```
 
 ***
 

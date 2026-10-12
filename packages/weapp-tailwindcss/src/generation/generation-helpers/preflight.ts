@@ -35,6 +35,7 @@ export function finalizeMiniProgramGeneratorCss(
         ?? options.styleOptions?.cssSelectorReplacement,
       isTailwindcssV4: true,
       removeEmptyAtRuleAncestors: options.removeEmptyAtRuleAncestors,
+      preserveWebkitProperties: options.styleOptions.cssOptions?.preserveWebkitProperties,
       tailwindcssV4GradientFallback: options.styleOptions?.cssOptions?.tailwindcssV4GradientFallback
         ?? options.styleOptions?.tailwindcssV4GradientFallback,
     })
@@ -55,6 +56,7 @@ export function finalizeMiniProgramGeneratorCss(
       ?? options.styleOptions?.cssSelectorReplacement,
     isTailwindcssV4: true,
     removeEmptyAtRuleAncestors: options.removeEmptyAtRuleAncestors,
+    preserveWebkitProperties: options.styleOptions?.cssOptions?.preserveWebkitProperties,
     tailwindcssV4GradientFallback: options.styleOptions?.cssOptions?.tailwindcssV4GradientFallback
       ?? options.styleOptions?.tailwindcssV4GradientFallback,
   })

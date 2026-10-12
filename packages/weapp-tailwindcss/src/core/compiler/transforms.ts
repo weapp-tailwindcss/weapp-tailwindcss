@@ -15,7 +15,7 @@ function clonePostcssResult<Result extends Awaited<ReturnType<StyleHandler>>>(re
   }) as Result
 }
 
-function resolveStyleOptions(options?: Parameters<StyleHandler>[1]) {
+function resolveStyleOptions(options?: Parameters<StyleHandler>[1]): NonNullable<Parameters<StyleHandler>[1]> {
   if (!options) {
     return DEFAULT_STYLE_OPTIONS
   }
@@ -24,21 +24,32 @@ function resolveStyleOptions(options?: Parameters<StyleHandler>[1]) {
     : options
 }
 
-function resolveCssTransformOptions(options?: CompilerCssTransformOptions) {
+function resolveCssTransformOptions(options: CompilerCssTransformOptions | undefined, baseProperties: string[] | undefined, target: CompilerSnapshot['target']) {
   const { finalize: _finalize, ...styleOptions } = options ?? {}
+  const properties = target === 'web' ? [] : styleOptions.cssOptions?.preserveWebkitProperties ?? baseProperties
+  // 样式处理和最终清理共享本次调用的名单快照，避免异步阶段读取不同配置。
+  const preserveWebkitProperties = Array.isArray(properties) ? [...properties] : properties
+  const resolved = resolveStyleOptions(styleOptions)
   return {
     finalize: _finalize,
-    styleOptions: resolveStyleOptions(styleOptions),
+    preserveWebkitProperties,
+    styleOptions: preserveWebkitProperties === undefined
+      ? resolved
+      : {
+          ...resolved,
+          cssOptions: { ...resolved.cssOptions, preserveWebkitProperties },
+        },
   }
 }
 
-function finalizeResultRoot(result: Awaited<ReturnType<StyleHandler>>, snapshot: CompilerSnapshot, shouldFinalize: boolean) {
+function finalizeResultRoot(result: Awaited<ReturnType<StyleHandler>>, snapshot: CompilerSnapshot, shouldFinalize: boolean, preserveWebkitProperties: string[] | undefined) {
   if (!shouldFinalize) {
     return
   }
   if (result.root.type === 'root') {
     finalizeMiniProgramCssRoot(result.root, {
       isTailwindcssV4: snapshot.target === 'weapp',
+      preserveWebkitProperties,
     })
   }
   if (snapshot.target === 'weapp') {
@@ -94,11 +105,11 @@ export function createCompilerTransforms({ ensureActive, track, userOptions }: C
   function transformCss(css: string, snapshot: CompilerSnapshot, options?: Parameters<Compiler['transformCss']>[2]) {
     ensureActive()
     getInternalCompilerSnapshot(snapshot)
-    const resolved = resolveCssTransformOptions(options)
+    const resolved = resolveCssTransformOptions(options, context.cssOptions?.preserveWebkitProperties, snapshot.target)
     const shouldFinalize = resolved.finalize ?? snapshot.target === 'weapp'
     return track(styleHandler(css, resolved.styleOptions).then((result) => {
       const cloned = clonePostcssResult(result)
-      finalizeResultRoot(cloned, snapshot, shouldFinalize)
+      finalizeResultRoot(cloned, snapshot, shouldFinalize, resolved.preserveWebkitProperties)
       return cloned
     }))
   }
@@ -106,10 +117,10 @@ export function createCompilerTransforms({ ensureActive, track, userOptions }: C
   function transformCssRoot(root: Parameters<Compiler['transformCssRoot']>[0], snapshot: CompilerSnapshot, options?: Parameters<Compiler['transformCssRoot']>[2]) {
     ensureActive()
     getInternalCompilerSnapshot(snapshot)
-    const resolved = resolveCssTransformOptions(options)
+    const resolved = resolveCssTransformOptions(options, context.cssOptions?.preserveWebkitProperties, snapshot.target)
     const shouldFinalize = resolved.finalize ?? snapshot.target === 'weapp'
     return track(styleHandler.transformRoot(root, resolved.styleOptions).then((result) => {
-      finalizeResultRoot(result, snapshot, shouldFinalize)
+      finalizeResultRoot(result, snapshot, shouldFinalize, resolved.preserveWebkitProperties)
       return result
     }))
   }

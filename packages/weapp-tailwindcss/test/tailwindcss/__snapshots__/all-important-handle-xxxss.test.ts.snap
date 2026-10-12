@@ -3274,9 +3274,11 @@ exports[`all > common important handle 1`] = `
     text-underline-offset: auto;
   }
   .abc[class~="logo"] .antialiased {
+    -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
   .abc[class~="logo"] .subpixel-antialiased {
+    -webkit-font-smoothing: auto;
     -moz-osx-font-smoothing: auto;
   }
   .abc[class~="logo"] .caret-current {

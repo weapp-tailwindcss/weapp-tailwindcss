@@ -166,6 +166,12 @@ export interface CssOptions {
   cssChildCombinatorReplaceValue?: string | string[] | undefined
   cssPresetEnv?: PresetEnvOptions | undefined
   autoprefixer?: WeappAutoprefixerOptions | undefined
+  /**
+   * 增补小程序 WebKit 属性保留名单；默认已保留字体平滑、mask、line-clamp 等兼容属性。
+   * 属性名按去除首尾空白后的大小写无关完整名称匹配，非法名称忽略，空数组不移除内置名单。
+   * 仅控制本包属性过滤，不放行 WebKit 关键词值、transition 项或 keyframes，也不改变其他插件行为。
+   */
+  preserveWebkitProperties?: string[] | undefined
   atRules?: CssAtRules | undefined
   injectAdditionalCssVarScope?: boolean | undefined
   cssSelectorReplacement?: CssSelectorReplacement | undefined

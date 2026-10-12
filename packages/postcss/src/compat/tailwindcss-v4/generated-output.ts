@@ -53,6 +53,7 @@ export async function transformTailwindV4CssToWeapp(
   const isUniAppXUvueTarget = options?.uniAppX === true
     && options.uniAppXCssTarget === 'uvue'
   const pruneOptions = {
+    cssOptions: options?.cssOptions,
     ...(isUniAppXUvueTarget ? { preserveContentInit: false } : {}),
     preservePreflight: true,
     preserveConditionalComments: hasCssMacroStyleOptions(options),

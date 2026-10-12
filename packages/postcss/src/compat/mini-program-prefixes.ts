@@ -1,7 +1,9 @@
 import type { AtRule, Declaration } from 'postcss'
+import type { PostcssStyleTarget } from '../style-targets'
 
 const PRESERVED_WEBKIT_DECLARATION_PROPS = new Set([
   '-webkit-box-orient',
+  '-webkit-font-smoothing',
   '-webkit-line-clamp',
   '-webkit-overflow-scrolling',
   '-webkit-text-fill-color',
@@ -19,6 +21,40 @@ const TRANSITION_PROPS = new Set([
   'transition',
   'transition-property',
 ])
+
+/** 将扩展名单归一为完整 WebKit 属性名，不修改调用方数组。 */
+export function normalizePreservedWebkitProperties(properties?: readonly string[]): ReadonlySet<string> | undefined {
+  if (!Array.isArray(properties) || properties.length === 0) {
+    return undefined
+  }
+  const normalized = new Set<string>()
+  for (const property of properties) {
+    if (typeof property !== 'string') {
+      continue
+    }
+    const name = property.trim().toLowerCase()
+    if (/^-webkit-[a-z][a-z0-9-]*$/.test(name)) {
+      normalized.add(name)
+    }
+  }
+  return normalized.size > 0 ? normalized : undefined
+}
+
+export interface MiniProgramPrefixPolicy {
+  preserveProperties: ReadonlySet<string> | undefined
+}
+
+/** 根据样式目标解析 WebKit 前缀策略，统一扩展名单的适用范围。 */
+export function resolveMiniProgramPrefixPolicy(
+  target: PostcssStyleTarget,
+  properties?: readonly string[],
+): MiniProgramPrefixPolicy {
+  return {
+    preserveProperties: target === 'generic' || target === 'mini-program'
+      ? normalizePreservedWebkitProperties(properties)
+      : undefined,
+  }
+}
 
 function splitTopLevelCommaList(value: string) {
   const parts: string[] = []
@@ -65,12 +101,12 @@ function splitTopLevelCommaList(value: string) {
   return parts
 }
 
-function isPreservedWebkitDeclaration(decl: Declaration) {
+function isPreservedWebkitDeclaration(decl: Declaration, preservedProperties?: ReadonlySet<string>) {
   const prop = decl.prop.toLowerCase()
   if (prop.startsWith('-webkit-mask')) {
     return true
   }
-  if (PRESERVED_WEBKIT_DECLARATION_PROPS.has(prop)) {
+  if (PRESERVED_WEBKIT_DECLARATION_PROPS.has(prop) || preservedProperties?.has(prop)) {
     return true
   }
 
@@ -100,7 +136,7 @@ function hasUnsupportedWebkitKeywordValue(decl: Declaration) {
 /**
  * 收敛小程序 CSS 中的 WebKit 前缀，只保留 WXSS 里有实际价值的兼容写法。
  */
-export function normalizeMiniProgramPrefixedDeclaration(decl: Declaration) {
+export function normalizeMiniProgramPrefixedDeclaration(decl: Declaration, preservedProperties?: ReadonlySet<string>) {
   const prop = decl.prop.toLowerCase()
   if (TRANSITION_PROPS.has(prop) && decl.value.toLowerCase().includes('-webkit-')) {
     const value = normalizeTransitionValue(decl.value)
@@ -111,7 +147,7 @@ export function normalizeMiniProgramPrefixedDeclaration(decl: Declaration) {
     decl.value = value
   }
 
-  if (prop.startsWith('-webkit-') && !isPreservedWebkitDeclaration(decl)) {
+  if (prop.startsWith('-webkit-') && !isPreservedWebkitDeclaration(decl, preservedProperties)) {
     decl.remove()
     return
   }

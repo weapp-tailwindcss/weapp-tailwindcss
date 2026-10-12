@@ -3,11 +3,12 @@ import type { Declaration, Plugin, PluginCreator, Root, Rule } from 'postcss'
 import type { IStyleHandlerOptions } from '../types'
 import { defu } from '@weapp-tailwindcss/shared'
 import { getRuleSelectors, isMiniProgramThemeScopeSelector, MINI_PROGRAM_ELEMENT_SCOPE_SELECTOR } from '../compat/mini-program-css/selectors'
-import { normalizeMiniProgramPrefixedDeclaration, removeUnsupportedMiniProgramPrefixedAtRule } from '../compat/mini-program-prefixes'
+import { normalizeMiniProgramPrefixedDeclaration, removeUnsupportedMiniProgramPrefixedAtRule, resolveMiniProgramPrefixPolicy } from '../compat/mini-program-prefixes'
 import { normalizeTailwindcssRpxDeclaration } from '../compat/tailwindcss-rpx'
 import { appendTailwindcssV4MiniProgramGradientRules, collectUsedTailwindcssV4Variables, createMissingCssVarsV4Nodes, mergeTailwindcssV4GradientDirectionRules, normalizeTailwindcssV4Declaration, usesTailwindcssV4ContentVariable } from '../compat/tailwindcss-v4'
 import { shouldRemoveEmptyRuleForUniAppX } from '../compat/uni-app-x'
 import { postcssPlugin } from '../constants'
+import { resolvePostcssStyleTarget } from '../frameworks'
 import { getFallbackRemove } from '../selectorParser'
 import { appendRuleSelector } from '../utils/selector-guard'
 import { dedupeDeclarations, removeRedundantTransitionPropertyFallbacks } from './post/decl-dedupe'
@@ -68,12 +69,12 @@ function createHostSelectorAppender(options: IStyleHandlerOptions) {
   }
 }
 
-function removeLegacyFlexboxPrefix(decl: Declaration) {
+function removeLegacyFlexboxPrefix(decl: Declaration, preservedProperties?: ReadonlySet<string>) {
   if (decl.prop === 'display' && LEGACY_FLEXBOX_DISPLAY_VALUES.has(decl.value)) {
     decl.remove()
     return
   }
-  if (LEGACY_FLEXBOX_DECLARATION_PROPS.has(decl.prop)) {
+  if (LEGACY_FLEXBOX_DECLARATION_PROPS.has(decl.prop) && !preservedProperties?.has(decl.prop.toLowerCase())) {
     decl.remove()
   }
 }
@@ -153,6 +154,8 @@ const postcssWeappTailwindcssPostPlugin: PostcssWeappTailwindcssRenamePlugin = (
   const cleanRootSpecificity = createRootSpecificityCleaner(opts)
   const cleanFallbackPlaceholder = createFallbackPlaceholderCleaner()
   const shouldAppendHostSelector = createHostSelectorAppender(opts)
+  const target = resolvePostcssStyleTarget(opts)
+  const miniProgramPrefixPolicy = resolveMiniProgramPrefixPolicy(target, opts.cssOptions?.preserveWebkitProperties)
   let shouldInjectTailwindcssV4Defaults = false
 
   const enableMainChunkTransforms = opts.isMainChunk !== false
@@ -198,9 +201,9 @@ const postcssWeappTailwindcssPostPlugin: PostcssWeappTailwindcssRenamePlugin = (
     if (enableMainChunkTransforms) {
       normalizeTailwindcssV4Declaration(decl)
     }
-    removeLegacyFlexboxPrefix(decl)
+    removeLegacyFlexboxPrefix(decl, miniProgramPrefixPolicy.preserveProperties)
     if (enableMainChunkTransforms) {
-      normalizeMiniProgramPrefixedDeclaration(decl)
+      normalizeMiniProgramPrefixedDeclaration(decl, miniProgramPrefixPolicy.preserveProperties)
     }
   }
 
@@ -210,7 +213,7 @@ const postcssWeappTailwindcssPostPlugin: PostcssWeappTailwindcssRenamePlugin = (
         normalizeTailwindcssV4Declaration(decl)
       })
       root.walkDecls((decl) => {
-        normalizeMiniProgramPrefixedDeclaration(decl)
+        normalizeMiniProgramPrefixedDeclaration(decl, miniProgramPrefixPolicy.preserveProperties)
       })
       root.walkRules((rule) => {
         removeRedundantTransitionPropertyFallbacks(rule)
