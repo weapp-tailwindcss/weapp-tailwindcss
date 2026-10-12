@@ -1,52 +1,17 @@
 import type { ProjectEntry } from '../e2e/shared.ts'
+import type { CssArtifact, ModeResult, PluginHtmlMode, ProjectReport } from './taro-plugin-html-style-snapshots/report.ts'
 import { Buffer } from 'node:buffer'
 import { spawn } from 'node:child_process'
 import { createHash as createNodeHash } from 'node:crypto'
 import fs from 'node:fs/promises'
+import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { getProjectCssSnapshotFiles } from '../e2e/projectCssSnapshots.ts'
 import { E2E_PROJECTS } from '../e2e/projectEntries.ts'
-import { getProjectCssSnapshotFiles } from '../e2e/shared.ts'
 import { collectCssSnapshots, normalizeCssTextSnapshot } from '../e2e/snapshotUtils.ts'
-
-type PluginHtmlMode = 'with-plugin-html' | 'without-plugin-html'
-
-interface CssArtifact {
-  fileName: string
-  artifact: string
-  bytes: number
-  lines: number
-  selectors: number
-  hasTaroSelector: boolean
-  hasWeappEscapedArbitrarySelector: boolean
-  h5AliasSelectors: number
-  rawHtmlTagSelectors: number
-  cursorDeclarations: number
-  sha256: string
-}
-
-interface ModeResult {
-  mode: PluginHtmlMode
-  status: 'passed' | 'failed'
-  command: string
-  durationMs: number
-  artifacts: CssArtifact[]
-  error?: string
-}
-
-interface ProjectReport {
-  project: string
-  cssFiles: string[]
-  modes: ModeResult[]
-  comparison: {
-    sameArtifactCount: boolean
-    sameHashes: boolean
-    changedFiles: string[]
-    onlyWithPluginHtml: string[]
-    onlyWithoutPluginHtml: string[]
-  }
-}
+import { mergeScopedPluginHtmlReports, renderModeReadme, renderProjectReadme, renderRootReadme, verifyPluginHtmlReports } from './taro-plugin-html-style-snapshots/report.ts'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -144,9 +109,9 @@ async function runCommand(project: ProjectEntry, mode: PluginHtmlMode) {
   })
 }
 
-async function collectProjectArtifacts(project: ProjectEntry, mode: PluginHtmlMode) {
+async function collectProjectArtifacts(project: ProjectEntry, mode: PluginHtmlMode, outputRoot: string) {
   const projectRoot = path.resolve(demoRoot, project.name)
-  const modeRoot = path.join(snapshotRoot, project.name, mode)
+  const modeRoot = path.join(outputRoot, project.name, mode)
   const artifactRoot = path.join(modeRoot, 'artifacts')
   await removeDir(modeRoot)
   await fs.mkdir(artifactRoot, { recursive: true })
@@ -212,105 +177,27 @@ function compareModes(withResult: ModeResult, withoutResult: ModeResult) {
   }
 }
 
-function renderModeReadme(project: string, result: ModeResult) {
-  const rows = result.artifacts.map(item =>
-    `| \`${item.fileName}\` | [${item.artifact}](${item.artifact}) | ${item.bytes} | ${item.lines} | ${item.selectors} | ${item.h5AliasSelectors} | ${item.rawHtmlTagSelectors} | ${item.cursorDeclarations} | ${item.hasTaroSelector} | ${item.hasWeappEscapedArbitrarySelector} | \`${item.sha256}\` |`)
-
-  return normalizeReportText([
-    `# ${project} ${result.mode}`,
-    '',
-    `Status: ${result.status}`,
-    `Command: \`${result.command}\``,
-    `Duration: ${result.durationMs}ms`,
-    '',
-    '| File | Artifact | Bytes | Lines | Selectors | h5-* aliases | Raw HTML tags | Cursor declarations | Taro selector | Weapp escaped arbitrary selector | Hash |',
-    '| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- | --- |',
-    ...rows,
-    result.error ? ['', '## Error', '', '```text', result.error, '```'] : '',
-  ].filter(Boolean).join('\n'))
-}
-
-function sumArtifacts(artifacts: CssArtifact[], key: 'h5AliasSelectors' | 'rawHtmlTagSelectors' | 'cursorDeclarations') {
-  return artifacts.reduce((total, artifact) => total + artifact[key], 0)
-}
-
-function renderProjectReadme(report: ProjectReport) {
-  const withResult = report.modes.find(item => item.mode === 'with-plugin-html')
-  const withoutResult = report.modes.find(item => item.mode === 'without-plugin-html')
-  const rows = report.modes.flatMap(result => result.artifacts.map(item =>
-    `| ${result.mode} | \`${item.fileName}\` | [${result.mode}/${item.artifact}](${result.mode}/${item.artifact}) | ${item.bytes} | ${item.selectors} | ${item.h5AliasSelectors} | ${item.rawHtmlTagSelectors} | ${item.cursorDeclarations} | \`${item.sha256}\` |`))
-  const withArtifacts = withResult?.artifacts ?? []
-  const withoutArtifacts = withoutResult?.artifacts ?? []
-
-  return normalizeReportText([
-    `# ${report.project} Plugin HTML Style Output`,
-    '',
-    '## Core Report',
-    '',
-    `- with-plugin-html: ${withResult?.status ?? 'missing'}`,
-    `- without-plugin-html: ${withoutResult?.status ?? 'missing'}`,
-    `- same hashes: ${report.comparison.sameHashes}`,
-    `- changed files: ${report.comparison.changedFiles.length === 0 ? '-' : report.comparison.changedFiles.map(file => `\`${file}\``).join(', ')}`,
-    `- only with plugin-html: ${report.comparison.onlyWithPluginHtml.length === 0 ? '-' : report.comparison.onlyWithPluginHtml.map(file => `\`${file}\``).join(', ')}`,
-    `- only without plugin-html: ${report.comparison.onlyWithoutPluginHtml.length === 0 ? '-' : report.comparison.onlyWithoutPluginHtml.map(file => `\`${file}\``).join(', ')}`,
-    `- h5-* aliases: ${sumArtifacts(withArtifacts, 'h5AliasSelectors')} / ${sumArtifacts(withoutArtifacts, 'h5AliasSelectors')}`,
-    `- raw HTML tag selectors: ${sumArtifacts(withArtifacts, 'rawHtmlTagSelectors')} / ${sumArtifacts(withoutArtifacts, 'rawHtmlTagSelectors')}`,
-    `- cursor declarations: ${sumArtifacts(withArtifacts, 'cursorDeclarations')} / ${sumArtifacts(withoutArtifacts, 'cursorDeclarations')}`,
-    '',
-    '## File Index',
-    '',
-    '| Mode | File | Artifact | Bytes | Selectors | h5-* aliases | Raw HTML tags | Cursor declarations | Hash |',
-    '| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |',
-    ...rows,
-  ].join('\n'))
-}
-
-function renderRootReadme(reports: ProjectReport[]) {
-  const rows = reports.map((report) => {
-    const withStatus = report.modes.find(item => item.mode === 'with-plugin-html')?.status ?? 'missing'
-    const withoutStatus = report.modes.find(item => item.mode === 'without-plugin-html')?.status ?? 'missing'
-    return `| [${report.project}](${report.project}/README.md) | ${withStatus} | ${withoutStatus} | ${report.comparison.sameHashes} | ${report.comparison.changedFiles.length} |`
-  })
-
-  return normalizeReportText([
-    '# Taro Plugin HTML Style Output',
-    '',
-    '## Core Report',
-    '',
-    `对 ${reports.length} 个 Taro demo 分别执行 \`with-plugin-html\` 与 \`without-plugin-html\` 的 \`build:weapp\`，样式产物按项目和模式保存到子目录。`,
-    '',
-    '| Project | With plugin-html | Without plugin-html | Same hashes | Changed files |',
-    '| --- | --- | --- | --- | ---: |',
-    ...rows,
-    '',
-    '## File Index',
-    '',
-    '- 每个项目目录下的 `README.md` 是该项目核心对比报告。',
-    '- 完整样式产物在 `with-plugin-html/artifacts/` 与 `without-plugin-html/artifacts/`。',
-    '- 结构化结果在 `report.json`。',
-  ].join('\n'))
-}
-
-async function writeProjectReport(report: ProjectReport) {
-  const projectRoot = path.join(snapshotRoot, report.project)
+async function writeProjectReport(report: ProjectReport, outputRoot: string) {
+  const projectRoot = path.join(outputRoot, report.project)
   for (const mode of report.modes) {
+    await fs.mkdir(path.join(projectRoot, mode.mode), { recursive: true })
     await fs.writeFile(path.join(projectRoot, mode.mode, 'README.md'), renderModeReadme(report.project, mode), 'utf8')
   }
   await fs.writeFile(path.join(projectRoot, 'README.md'), renderProjectReadme(report), 'utf8')
 }
 
-async function processProject(project: ProjectEntry) {
+async function processProject(project: ProjectEntry, outputRoot: string) {
   const projectRoot = path.resolve(demoRoot, project.name)
   await removeDir(path.join(projectRoot, 'dist'))
   const withResult = await runCommand(project, 'with-plugin-html')
   if (withResult.status === 'passed') {
-    withResult.artifacts = await collectProjectArtifacts(project, 'with-plugin-html')
+    withResult.artifacts = await collectProjectArtifacts(project, 'with-plugin-html', outputRoot)
   }
 
   await removeDir(path.join(projectRoot, 'dist'))
   const withoutResult = await runCommand(project, 'without-plugin-html')
   if (withoutResult.status === 'passed') {
-    withoutResult.artifacts = await collectProjectArtifacts(project, 'without-plugin-html')
+    withoutResult.artifacts = await collectProjectArtifacts(project, 'without-plugin-html', outputRoot)
   }
 
   const report: ProjectReport = {
@@ -319,7 +206,7 @@ async function processProject(project: ProjectEntry) {
     modes: [withResult, withoutResult],
     comparison: compareModes(withResult, withoutResult),
   }
-  await writeProjectReport(report)
+  await writeProjectReport(report, outputRoot)
   return report
 }
 
@@ -328,23 +215,55 @@ async function main() {
   if (projects.length === 0) {
     throw new Error('No Taro projects selected')
   }
-  if (!isTruthyEnv('WEAPP_TW_KEEP_TARO_PLUGIN_HTML_SNAPSHOTS')) {
-    await removeDir(snapshotRoot)
+  const verify = isTruthyEnv('WEAPP_TW_VERIFY_TARO_PLUGIN_HTML_SNAPSHOTS')
+  const scoped = projects.length !== TARO_PROJECTS.length || isTruthyEnv('WEAPP_TW_KEEP_TARO_PLUGIN_HTML_SNAPSHOTS')
+  const baselinePath = path.join(snapshotRoot, 'report.json')
+  const baseline: ProjectReport[] = verify || scoped
+    ? JSON.parse(await fs.readFile(baselinePath, 'utf8'))
+    : []
+  const stagingRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'weapp-tw-plugin-html-'))
+  try {
+    const reports: ProjectReport[] = []
+    for (const project of projects) {
+      process.stdout.write(`[taro-plugin-html] ${project.name}\n`)
+      reports.push(await processProject(project, stagingRoot))
+    }
+    const failed = reports.flatMap(report => report.modes.filter(mode => mode.status === 'failed').map(mode => `${report.project}:${mode.mode}`))
+    if (failed.length > 0) {
+      throw new Error(`Taro plugin-html style snapshots failed: ${failed.join(', ')}`)
+    }
+    if (verify) {
+      verifyPluginHtmlReports(baseline, reports)
+      for (const report of reports) {
+        for (const mode of report.modes) {
+          for (const artifact of mode.artifacts) {
+            const relative = path.join(report.project, mode.mode, artifact.artifact)
+            const actual = await fs.readFile(path.join(stagingRoot, relative))
+            const expected = await fs.readFile(path.join(snapshotRoot, relative))
+            if (!actual.equals(expected)) {
+              throw new Error(`plugin-html 产物内容不一致：${relative}`)
+            }
+          }
+        }
+      }
+      process.stdout.write(`[taro-plugin-html] 只读复验通过：${reports.length} 个项目\n`)
+      return
+    }
+    if (!scoped) {
+      await removeDir(snapshotRoot)
+    }
+    await fs.mkdir(snapshotRoot, { recursive: true })
+    for (const report of reports) {
+      const target = path.join(snapshotRoot, report.project)
+      await removeDir(target)
+      await fs.cp(path.join(stagingRoot, report.project), target, { recursive: true })
+    }
+    const complete = scoped ? mergeScopedPluginHtmlReports(baseline, reports) : reports
+    await fs.writeFile(baselinePath, `${JSON.stringify(complete, null, 2)}\n`, 'utf8')
+    await fs.writeFile(path.join(snapshotRoot, 'README.md'), renderRootReadme(complete), 'utf8')
   }
-  await fs.mkdir(snapshotRoot, { recursive: true })
-
-  const reports: ProjectReport[] = []
-  for (const project of projects) {
-    process.stdout.write(`[taro-plugin-html] ${project.name}\n`)
-    reports.push(await processProject(project))
-  }
-
-  await fs.writeFile(path.join(snapshotRoot, 'report.json'), `${JSON.stringify(reports, null, 2)}\n`, 'utf8')
-  await fs.writeFile(path.join(snapshotRoot, 'README.md'), renderRootReadme(reports), 'utf8')
-
-  const failed = reports.flatMap(report => report.modes.filter(mode => mode.status === 'failed').map(mode => `${report.project}:${mode.mode}`))
-  if (failed.length > 0) {
-    throw new Error(`Taro plugin-html style snapshots failed: ${failed.join(', ')}`)
+  finally {
+    await removeDir(stagingRoot)
   }
 }
 

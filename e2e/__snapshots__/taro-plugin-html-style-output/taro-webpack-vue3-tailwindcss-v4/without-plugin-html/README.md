@@ -1,9 +1,9 @@
 # taro-webpack-vue3-tailwindcss-v4 without-plugin-html
 Status: passed
 Command: `pnpm run build:weapp`
-Duration: 9146ms
+Duration: 9892ms
 | File | Artifact | Bytes | Lines | Selectors | h5-* aliases | Raw HTML tags | Cursor declarations | Taro selector | Weapp escaped arbitrary selector | Hash |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- | --- |
-| `app.wxss` | [artifacts/app.wxss](artifacts/app.wxss) | 367536 | 10186 | 1908 | 0 | 34 | 51 | true | true | `6c77ba7fc8691e7109892e064adb2bf300c687a36c6d1b50ec2287f6fcba30b3` |
-| `sub-normal/pages/index.wxss` | [artifacts/sub-normal__pages__index.wxss](artifacts/sub-normal__pages__index.wxss) | 19046 | 726 | 172 | 0 | 0 | 0 | true | true | `c1049ac13379d328c6a9bf11daad6397fa06019e5981ed1a760f321dd14950b5` |
-| `sub-independent/pages/index.wxss` | [artifacts/sub-independent__pages__index.wxss](artifacts/sub-independent__pages__index.wxss) | 19728 | 746 | 172 | 0 | 0 | 0 | true | true | `cdadf277b529ca4d4aa2e7f591fcf4a1591f959d4b8929b264e68cec45f8b88a` |
+| `app.wxss` | [artifacts/app.wxss](artifacts/app.wxss) | 238815 | 8508 | 1690 | 0 | 30 | 48 | true | true | `ea2cf41403f578afc537a8c181af0cb76bdb9da514c36c36af7d5b1e1c96aaac` |
+| `sub-normal/pages/index.wxss` | [artifacts/sub-normal__pages__index.wxss](artifacts/sub-normal__pages__index.wxss) | 1034 | 30 | 4 | 0 | 0 | 0 | true | true | `0629617e3672e84552125370dbab512e7fdff0d60984532986b2328764ee9b68` |
+| `sub-independent/pages/index.wxss` | [artifacts/sub-independent__pages__index.wxss](artifacts/sub-independent__pages__index.wxss) | 1929 | 40 | 6 | 0 | 0 | 0 | true | true | `09ec569dd3e61c706517efce30fdb63ee6eb88015c74158214be1141321ab465` |

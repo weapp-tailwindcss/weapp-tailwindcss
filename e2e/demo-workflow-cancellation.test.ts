@@ -7,6 +7,7 @@ import process from 'node:process'
 import { setTimeout as delay } from 'node:timers/promises'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { runDemoE2eWorkflow } from '../scripts/demo-e2e-workflow'
+import { PROCESS_OBSERVER_HOST_STARTUP_MS, PROCESS_OBSERVER_PREPARE_MS } from '../scripts/demo-e2e-workflow/process-observer/transport'
 
 const mocks = vi.hoisted(() => ({ enter: vi.fn(), pnpm: vi.fn(), ready: vi.fn(), spawn: vi.fn(), tree: vi.fn(), writeReport: vi.fn() }))
 vi.mock('node:child_process', async importOriginal => ({
@@ -164,7 +165,7 @@ describe('全面工作流的取消与阶段进程所有权', () => {
       : undefined
     let pids: number[] = []
     try {
-      // 启动握手的原 2.5 秒窗口只覆盖业务启动；独立冷准备由自己的 15 秒截止约束。
+      // 启动握手的原 2.5 秒窗口只覆盖业务启动；独立冷准备由宿主握手与真实查询各自的 15 秒截止约束。
       await Promise.race([prepared, running.then((outcome) => {
         throw new Error('取消测试在采集器准备完成前结束。', { cause: outcome })
       })])
@@ -203,7 +204,7 @@ describe('全面工作流的取消与阶段进程所有权', () => {
         killKnown(pid)
       }
     }
-  }, 15_000 + 15_000)
+  }, PROCESS_OBSERVER_HOST_STARTUP_MS + PROCESS_OBSERVER_PREPARE_MS + 15_000)
 
   it('阶段复查期间取消，等待复查结束后不启动子进程并释放门禁', async () => {
     let release!: () => void

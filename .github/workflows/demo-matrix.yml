@@ -20,7 +20,9 @@ jobs:
       - uses: ./.github/actions/setup-pnpm
         with:
           node-version: 24
-      - run: pnpm exec playwright install --with-deps chromium
+      - name: Prepare verified Chromium
+        timeout-minutes: 5
+        uses: ./.github/actions/setup-chromium
       - run: pnpm test:demo:matrix
       - id: catalog
         shell: bash
@@ -47,7 +49,8 @@ jobs:
       - name: Build current packages on this OS
         run: pnpm build:ci
       - name: Install browser
-        run: pnpm exec playwright install --with-deps chromium
+        timeout-minutes: 5
+        uses: ./.github/actions/setup-chromium
       - name: Production, normal dev and live source updates
         env:
           DEMO_MATRIX_CASES: ${{ toJSON(matrix.cases) }}

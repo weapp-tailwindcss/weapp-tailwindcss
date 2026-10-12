@@ -1,7 +1,47 @@
 diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
 --- a/dist/es/shared/watch.js
 +++ b/dist/es/shared/watch.js
-@@ -9206,2 +9206,9 @@
+@@ -7631,6 +7631,8 @@
+ 	 * @param {Object} handlers container for event listener functions
+ 	 * @returns {Function} closer
+ 	 */
++	const fileStateChanged = (curr, prev) => ['dev', 'ino', 'size', 'mtimeMs', 'ctimeMs'].some(key => curr[key] !== prev[key]);
++
+ 	const setFsWatchFileListener = (path, fullPath, options, handlers) => {
+ 	  const {listener, rawEmitter} = handlers;
+ 	  let cont = FsWatchFileInstances.get(fullPath);
+@@ -7658,8 +7660,7 @@
+ 	        foreach(cont.rawEmitters, (rawEmitter) => {
+ 	          rawEmitter(EV_CHANGE, fullPath, {curr, prev});
+ 	        });
+-	        const currmtime = curr.mtimeMs;
+-	        if (curr.size !== prev.size || currmtime > prev.mtimeMs || currmtime === 0) {
++	        if (fileStateChanged(curr, prev) || curr.mtimeMs === 0) {
+ 	          foreach(cont.listeners, (listener) => listener(path, curr));
+ 	        }
+ 	      })
+@@ -7758,7 +7759,7 @@
+ 	        // Check that change event was not fired because of changed only accessTime.
+ 	        const at = newStats.atimeMs;
+ 	        const mt = newStats.mtimeMs;
+-	        if (!at || at <= mt || mt !== prevStats.mtimeMs) {
++	        if (!at || at <= mt || fileStateChanged(newStats, prevStats)) {
+ 	          this.fsw._emit(EV_CHANGE, file, newStats);
+ 	        }
+ 	        if (isLinux && prevStats.ino !== newStats.ino) {
+@@ -7777,7 +7778,7 @@
+ 	      // Check that change event was not fired because of changed only accessTime.
+ 	      const at = newStats.atimeMs;
+ 	      const mt = newStats.mtimeMs;
+-	      if (!at || at <= mt || mt !== prevStats.mtimeMs) {
++	      if (!at || at <= mt || fileStateChanged(newStats, prevStats)) {
+ 	        this.fsw._emit(EV_CHANGE, file, newStats);
+ 	      }
+ 	      prevStats = newStats;
+@@ -9203,8 +9204,15 @@
+ 	  }
+ 
+ 	  if (event === EV_CHANGE) {
 -	    const isThrottled = !this._throttle(EV_CHANGE, path, 50);
 -	    if (isThrottled) return this;
 +	    // 只合并同一文件状态的重复通知，不丢弃窗口内的新版本。
@@ -13,7 +53,10 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
 +	    const throttle = this._throttle(EV_CHANGE, path, 50);
 +	    if (!throttle) return this;
 +	    throttle.stats = stats;
-@@ -9569,50 +9576,43 @@
+ 	  }
+ 
+ 	  if (opts.alwaysStat && val1 === undefined &&
+@@ -9569,50 +9577,43 @@
  
  class FileWatcher {
      constructor(task, chokidarOptions) {
@@ -79,7 +122,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
          };
          const watcher = chokidar
              .watch([], this.chokidarOptions)
-@@ -9737,6 +9737,7 @@
+@@ -9737,6 +9738,7 @@
          this.watchFiles = [];
          this.closed = false;
          this.invalidated = true;
@@ -87,7 +130,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
          this.watched = new Set();
          this.watcher = watcher;
          this.options = options;
-@@ -9762,6 +9763,7 @@
+@@ -9762,6 +9764,7 @@
      invalidate(id, details) {
          this.invalidated = true;
          if (details.isTransformDependency) {
@@ -95,7 +138,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
              for (const module of this.cache.modules) {
                  if (!module.transformDependencies.includes(id))
                      continue;
-@@ -9776,6 +9778,8 @@
+@@ -9776,6 +9779,8 @@
          if (!this.invalidated)
              return;
          this.invalidated = false;
@@ -104,7 +147,7 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
          const options = {
              ...this.options,
              cache: this.cache
-@@ -9831,6 +9835,12 @@
+@@ -9831,6 +9836,12 @@
          this.watched = new Set();
          this.watchFiles = result.watchFiles;
          this.cache = result.cache;
@@ -230,7 +273,47 @@ diff --git a/dist/shared/watch.js b/dist/shared/watch.js
 diff --git a/dist/shared/index.js b/dist/shared/index.js
 --- a/dist/shared/index.js
 +++ b/dist/shared/index.js
-@@ -9202,2 +9202,9 @@
+@@ -7627,6 +7627,8 @@
+ 	 * @param {Object} handlers container for event listener functions
+ 	 * @returns {Function} closer
+ 	 */
++	const fileStateChanged = (curr, prev) => ['dev', 'ino', 'size', 'mtimeMs', 'ctimeMs'].some(key => curr[key] !== prev[key]);
++
+ 	const setFsWatchFileListener = (path, fullPath, options, handlers) => {
+ 	  const {listener, rawEmitter} = handlers;
+ 	  let cont = FsWatchFileInstances.get(fullPath);
+@@ -7654,8 +7656,7 @@
+ 	        foreach(cont.rawEmitters, (rawEmitter) => {
+ 	          rawEmitter(EV_CHANGE, fullPath, {curr, prev});
+ 	        });
+-	        const currmtime = curr.mtimeMs;
+-	        if (curr.size !== prev.size || currmtime > prev.mtimeMs || currmtime === 0) {
++	        if (fileStateChanged(curr, prev) || curr.mtimeMs === 0) {
+ 	          foreach(cont.listeners, (listener) => listener(path, curr));
+ 	        }
+ 	      })
+@@ -7754,7 +7755,7 @@
+ 	        // Check that change event was not fired because of changed only accessTime.
+ 	        const at = newStats.atimeMs;
+ 	        const mt = newStats.mtimeMs;
+-	        if (!at || at <= mt || mt !== prevStats.mtimeMs) {
++	        if (!at || at <= mt || fileStateChanged(newStats, prevStats)) {
+ 	          this.fsw._emit(EV_CHANGE, file, newStats);
+ 	        }
+ 	        if (isLinux && prevStats.ino !== newStats.ino) {
+@@ -7773,7 +7774,7 @@
+ 	      // Check that change event was not fired because of changed only accessTime.
+ 	      const at = newStats.atimeMs;
+ 	      const mt = newStats.mtimeMs;
+-	      if (!at || at <= mt || mt !== prevStats.mtimeMs) {
++	      if (!at || at <= mt || fileStateChanged(newStats, prevStats)) {
+ 	        this.fsw._emit(EV_CHANGE, file, newStats);
+ 	      }
+ 	      prevStats = newStats;
+@@ -9199,8 +9200,15 @@
+ 	  }
+ 
+ 	  if (event === EV_CHANGE) {
 -	    const isThrottled = !this._throttle(EV_CHANGE, path, 50);
 -	    if (isThrottled) return this;
 +	    // 只合并同一文件状态的重复通知，不丢弃窗口内的新版本。
@@ -242,3 +325,6 @@ diff --git a/dist/shared/index.js b/dist/shared/index.js
 +	    const throttle = this._throttle(EV_CHANGE, path, 50);
 +	    if (!throttle) return this;
 +	    throttle.stats = stats;
+ 	  }
+ 
+ 	  if (opts.alwaysStat && val1 === undefined &&

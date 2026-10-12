@@ -56,3 +56,5 @@ CI=1 E2E_SKIP_OPEN_AUTOMATOR=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts 
 ## 规则评估
 
 不新增 AGENTS 规则。沿用根因证据、原有预算和进程所有权边界，把本次定位缺口落到有界诊断与持久回归；真实 Windows 结果明确后再更新本记录状态。
+
+后续准确 head 的 Windows dev startup 诊断证实宿主冷启动与真实查询共享截止造成预算不足；当前两阶段准备契约、根因和持久回归见 [宿主启动与真实预热边界](windows-observer-startup-boundary.md)。本篇保留此前单一 15 秒设计与失败证据，不作为当前准备契约。

@@ -1,5 +1,7 @@
 import fs from 'node:fs/promises'
 import process from 'node:process'
+import { postcss } from '@weapp-tailwindcss/postcss'
+import fg from 'fast-glob'
 import path from 'pathe'
 import { describe, expect, it } from 'vitest'
 import { getE2EProject } from './projectEntries'
@@ -20,6 +22,30 @@ function compactCss(css: string) {
 }
 
 describe('e2e', () => {
+  it('keeps both font-smoothing declarations in every NutUI font rule', async () => {
+    const root = path.resolve(__dirname, '../demo', project.name)
+    await ensureProjectBuilt(root)
+    const outputRoot = path.resolve(root, 'dist')
+    const files = await fg('**/*.wxss', { cwd: outputRoot, absolute: true, onlyFiles: true })
+    let rules = 0
+    for (const file of files) {
+      const css = postcss.parse(await fs.readFile(file, 'utf8'), { from: file })
+      css.walkRules((rule) => {
+        if (!rule.selectors.includes('.nutui-iconfont')) {
+          return
+        }
+        rules++
+        const declarations = new Map<string, string[]>()
+        rule.walkDecls((decl) => {
+          declarations.set(decl.prop, [...(declarations.get(decl.prop) ?? []), decl.value])
+        })
+        expect(declarations.get('-webkit-font-smoothing'), file).toContain('antialiased')
+        expect(declarations.get('-moz-osx-font-smoothing'), file).toContain('grayscale')
+      })
+    }
+    expect(rules).toBeGreaterThan(0)
+  })
+
   it('keeps Tailwind CSS v4 css entries isolated and emits mini-program preflight reset per full Tailwind entry', async () => {
     const projectBase = path.resolve(__dirname, '../demo')
     const root = path.resolve(projectBase, project.name)

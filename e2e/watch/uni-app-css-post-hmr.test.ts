@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'pathe'
 import { describe, expect, it } from 'vitest'
+import { PROCESS_OBSERVER_HOST_STARTUP_MS, PROCESS_OBSERVER_PREPARE_MS } from '../../scripts/demo-e2e-workflow/process-observer/transport'
 import { createOutputIntegrityMonitor } from '../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/output-integrity'
 import { createWatchSession } from '../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/session'
 import { readFileIfExists, waitFor, writeFilePreserveEol } from '../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/text'
@@ -13,7 +14,7 @@ import {
 import { createUniAppCssPostHmrCases } from '../uniAppCssPostHmr'
 
 const CSS_POST_HMR_TIMEOUT_MS = 180_000
-const CSS_POST_HMR_TEST_TIMEOUT_MS = CSS_POST_HMR_TIMEOUT_MS + 30_000
+const CSS_POST_HMR_TEST_TIMEOUT_MS = CSS_POST_HMR_TIMEOUT_MS + PROCESS_OBSERVER_HOST_STARTUP_MS + PROCESS_OBSERVER_PREPARE_MS + 15_000
 const safeIconSelector = '.i-_bmdi--github-circle_B'
 const unsafeSelectorFragments = ['.i-\\[', '.before\\:']
 

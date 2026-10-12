@@ -7,7 +7,7 @@ import process from 'node:process'
 import { parseWindowsMemorySample } from '../../demo-e2e-memory/windows'
 import { parseWindowsProcesses } from '../process-table'
 import { windowsObserverArgs } from './script'
-import { createProcessObserverTransport } from './transport'
+import { createProcessObserverTransport, PROCESS_OBSERVER_HOST_STARTUP_MS, PROCESS_OBSERVER_PREPARE_MS } from './transport'
 
 export interface WorkflowProcessObserver {
   table: (timeoutMs: number, signal?: AbortSignal) => Promise<ProcessIdentity[]>
@@ -31,7 +31,7 @@ export async function prepareWorkflowProcessObserver(signal?: AbortSignal, optio
   if ((options.platform ?? process.platform) !== 'win32') {
     return undefined
   }
-  const prepareDeadline = Date.now() + (options.prepareMs ?? 15_000)
+  const startupDeadline = Date.now() + PROCESS_OBSERVER_HOST_STARTUP_MS
   const transport = createProcessObserverTransport(options.command ?? 'powershell', options.args ?? windowsObserverArgs, options.spawn)
   const read = async <T>(query: ProcessObserverQuery, parse: (value: unknown) => T, timeoutMs: number, requestSignal?: AbortSignal) => {
     const deadline = Date.now() + timeoutMs
@@ -55,9 +55,13 @@ export async function prepareWorkflowProcessObserver(signal?: AbortSignal, optio
   const identity = (pids: readonly number[] | undefined, timeoutMs: number, requestSignal?: AbortSignal) => read({ kind: 'identity', pids }, value => parseWindowsProcesses(JSON.stringify(value)), timeoutMs, requestSignal)
   const memory = (rootPid: number, timeoutMs: number, requestSignal?: AbortSignal) => read({ kind: 'memory', rootPid, cwd: process.cwd() }, parseWindowsMemorySample, timeoutMs, requestSignal)
   try {
-    // 身份与内存真实查询共用单一 15 秒冷准备截止；结果丢弃，不能领取业务进程或计入报告。
+    const readyAt = await transport.waitUntilReady(startupDeadline - Date.now(), signal)
+    transport.assertHealthy()
+    signal?.throwIfAborted()
+    // 宿主启动与真实查询各有独立绝对截止；身份与内存共享预热预算，结果不领取业务归属。
+    const prepareDeadline = readyAt + (options.prepareMs ?? PROCESS_OBSERVER_PREPARE_MS)
     // 冷准备只需确认采集器本体身份；全表 CIM 查询留到业务启动后的首次 capture，
-    // 否则 Windows 高负载 runner 会在 15 秒准备截止内扫描整个进程表而迟迟不返回。
+    // 否则 Windows 高负载 runner 会在预热截止内扫描整个进程表而迟迟不返回。
     const ready = await identity([transport.pid!], prepareDeadline - Date.now(), signal)
     if (!ready.some(row => row.pid === transport.pid)) {
       throw new Error('身份采集器准备结果缺少本体出生身份，不能启动业务。')
@@ -65,6 +69,9 @@ export async function prepareWorkflowProcessObserver(signal?: AbortSignal, optio
     await memory(transport.pid!, prepareDeadline - Date.now(), signal)
     signal?.throwIfAborted()
     transport.assertHealthy()
+    if (Date.now() >= prepareDeadline) {
+      throw new Error('身份采集器预热超过本轮绝对截止，不能启动业务。')
+    }
   }
   catch (error) {
     transport.invalidate(error)

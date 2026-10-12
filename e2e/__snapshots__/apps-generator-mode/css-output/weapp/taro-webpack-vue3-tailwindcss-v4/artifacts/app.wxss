@@ -100,6 +100,7 @@ wx-root-portal-content {
   font-family: nutui-iconfont !important;
   font-size: 32rpx;
   font-style: normal;
+  -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 .nut-icon-mask-close::before {

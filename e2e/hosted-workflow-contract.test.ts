@@ -3,10 +3,14 @@ import { describe, expect, it } from 'vitest'
 import { parse } from 'yaml'
 
 interface Step {
-  name?: string
-  run?: string
-  if?: string
-  env?: Record<string, string>
+  'name'?: string
+  'run'?: string
+  'if'?: string
+  'env'?: Record<string, string>
+  'id'?: string
+  'uses'?: string
+  'continue-on-error'?: boolean
+  'timeout-minutes'?: number
 }
 
 function workflow(name: string) {
@@ -18,6 +22,36 @@ describe('hosted E2E workflow contract', () => {
   const nightly = watch.jobs['nightly-full-regression']
   const quickGate = watch.jobs['pr-quick-gate']
   const suite = (job: { steps: Step[] }) => job.steps.find(step => step.run === 'pnpm e2e:watch')!
+
+  it('bounds browser setup before both portable catalog and demo execution', () => {
+    const portable = workflow('demo-matrix')
+    for (const job of [portable.jobs.catalog, portable.jobs.demos]) {
+      const steps = job.steps as Step[]
+      const browser = steps.findIndex(step => step.uses === './.github/actions/setup-chromium')
+      const tests = steps.findIndex(step => step.run === 'pnpm test:demo:matrix' || step.run === 'pnpm e2e:demo:matrix')
+      expect(browser).toBeGreaterThan(-1)
+      expect(browser).toBeLessThan(tests)
+      expect(steps[browser]?.['timeout-minutes']).toBe(5)
+      expect(steps[browser]?.['continue-on-error']).not.toBe(true)
+      expect(steps.some(step => step.run?.includes('install --with-deps'))).toBe(false)
+    }
+  })
+
+  it('uses system installation only after a failed Linux probe and still requires rendering', () => {
+    const action = parse(readFileSync(new URL('../.github/actions/setup-chromium/action.yml', import.meta.url), 'utf8'))
+    const steps = action.runs.steps as Step[]
+    expect(steps[0]?.env?.PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT).toBe('30000')
+    expect(steps[1]?.id).toBe('probe')
+    expect(steps[1]?.['continue-on-error']).toBe(true)
+    expect(steps[2]?.if).toBe('steps.probe.outcome == \'failure\' && runner.os == \'Linux\'')
+    expect(steps[2]?.run).toContain('APT_CONFIG=')
+    expect(steps[2]?.run).toContain('Acquire::http::Timeout "30"')
+    expect(steps[2]?.run).toContain('Acquire::https::Timeout "30"')
+    expect(steps[2]?.run).toContain('APT::Update::Error-Mode "any"')
+    expect(steps.at(-1)?.run).toBe('node scripts/ci/verify-chromium.mjs')
+    expect(steps.at(-1)?.if).toBeUndefined()
+    expect(steps.at(-1)?.['continue-on-error']).not.toBe(true)
+  })
 
   it('passes the same complete execution profile to quick gate and nightly shards', () => {
     const env = suite(quickGate).env!

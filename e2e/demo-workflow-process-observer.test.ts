@@ -29,6 +29,13 @@ function reply(index: number, rows: unknown = [own]) {
   child.stdout.write(`${JSON.stringify({ id: requests[index]!.id, rows })}\n`)
 }
 
+async function initialized() {
+  const initializing = prepare(undefined, options)
+  await vi.advanceTimersByTimeAsync(0)
+  reply(0)
+  return (await initializing)!
+}
+
 beforeEach(async () => {
   vi.useFakeTimers()
   vi.setSystemTime(0)
@@ -51,7 +58,10 @@ beforeEach(async () => {
     return true
   })
   child = current
-  mocks.spawn.mockReset().mockReturnValue(child)
+  mocks.spawn.mockReset().mockImplementation(() => {
+    queueMicrotask(() => current.stdout.write(`${JSON.stringify({ event: 'observer-ready', pid: current.pid })}\n`))
+    return current
+  })
 })
 
 afterEach(async () => {
@@ -89,6 +99,7 @@ it('6 秒冷准备完成真实身份握手；热查询仍按原 5 秒截止失�
 it.each([{ rows: [] }, { rows: [{ ...own, started: 'invalid' }] }])('准备必须包含同一 parser 验证的采集器本体身份：%j', async ({ rows }) => {
   vi.spyOn(observerModule, 'prepareWorkflowProcessObserver').mockImplementation(signal => prepare(signal, options))
   const running = runStep({ name: 'unstarted', command: 'workload', args: [] }, 1, 1).catch(error => error)
+  await vi.advanceTimersByTimeAsync(0)
   reply(0, rows)
   expect(await running).toBeInstanceOf(Error)
   expect(mocks.spawn).toHaveBeenCalledOnce()
@@ -99,6 +110,7 @@ it.each([{ rows: [] }, { rows: [{ ...own, started: 'invalid' }] }])('准备必�
 it.each(['invalid JSON', JSON.stringify({ id: 123, rows: [own] })])('同一 chunk 的合法握手与坏尾行不能放行业务：%s', async (tail) => {
   vi.spyOn(observerModule, 'prepareWorkflowProcessObserver').mockImplementation(signal => prepare(signal, options))
   const running = runStep({ name: 'unstarted', command: 'workload', args: [] }, 1, 1).catch(error => error)
+  await vi.advanceTimersByTimeAsync(0)
   child.stdout.write(`${JSON.stringify({ id: requests[0]!.id, rows: [own] })}\n${tail}\n`)
   expect(await running).toBeInstanceOf(Error)
   expect(mocks.spawn).toHaveBeenCalledOnce()
@@ -160,6 +172,7 @@ it('准备完成与业务 spawn 间再次检查取消并关闭热会话', async 
     return observer
   })
   const running = runStep({ name: 'unstarted', command: 'workload', args: [] }, 1, 1, {}, process.env, controller.signal).catch(error => error)
+  await vi.advanceTimersByTimeAsync(0)
   reply(0)
   expect(String(await running)).toContain('cancel between prepare and spawn')
   expect(mocks.spawn).toHaveBeenCalledOnce()
@@ -167,9 +180,7 @@ it('准备完成与业务 spawn 间再次检查取消并关闭热会话', async 
 })
 
 it('stop 将在途 5 秒查询收紧为原 2 秒，迟到身份不能写回', async () => {
-  const initializing = prepare(undefined, options)
-  reply(0)
-  const observer = (await initializing)!
+  const observer = await initialized()
   const workload = Object.assign(new EventEmitter(), { pid: root.pid, exitCode: null, signalCode: null, kill: vi.fn() }) as unknown as ChildProcess
   let closed!: () => void
   const tree = createWorkflowProcessTree(workload, new Promise<void>((resolve) => {
@@ -190,9 +201,7 @@ it('stop 将在途 5 秒查询收紧为原 2 秒，迟到身份不能写回', as
 })
 
 it.each(['stdin', 'stdout', 'stderr'] as const)('%s stream 错误会失效会话、回收并保留原始错误', async (stream) => {
-  const initializing = prepare(undefined, options)
-  reply(0)
-  const observer = (await initializing)!
+  const observer = await initialized()
   const error = new Error(`${stream} broken`)
   child[stream].emit('error', error)
   expect(() => observer.subset([], 2000)).toThrow(error)
@@ -201,9 +210,7 @@ it.each(['stdin', 'stdout', 'stderr'] as const)('%s stream 错误会失效会话
 })
 
 it.each(['close', 'end'] as const)('空范围不能掩盖采集器闲置期间的意外 %s', async (event) => {
-  const initializing = prepare(undefined, options)
-  reply(0)
-  const observer = (await initializing)!
+  const observer = await initialized()
   if (event === 'close') {
     child.emit('close', 1, null)
   }
@@ -215,18 +222,14 @@ it.each(['close', 'end'] as const)('空范围不能掩盖采集器闲置期间�
 })
 
 it.each([{ code: 1, signal: null }, { code: null, signal: 'SIGTERM' }])('正常 close 请求期间异常退出不能被接受：%j', async ({ code, signal }) => {
-  const initializing = prepare(undefined, options)
-  reply(0)
-  const observer = (await initializing)!
+  const observer = await initialized()
   child.stdin.removeAllListeners('finish')
   child.stdin.once('finish', () => queueMicrotask(() => child.emit('close', code, signal)))
   await expect(observer.close()).rejects.toThrow('意外退出')
 })
 
 it('超时后只能回收持有的采集器；缺少 close 证据按独立回收截止失败', async () => {
-  const initializing = prepare(undefined, options)
-  reply(0)
-  const observer = (await initializing)!
+  const observer = await initialized()
   child.kill = vi.fn(() => true)
   const reading = observer.table(5000).catch(error => error)
   await vi.advanceTimersByTimeAsync(6000)
@@ -237,9 +240,7 @@ it('超时后只能回收持有的采集器；缺少 close 证据按独立回收
 })
 
 it('空范围仍执行取消与预算检查，禁止将无身份工作当作成功', async () => {
-  const initializing = prepare(undefined, options)
-  reply(0)
-  const observer = (await initializing)!
+  const observer = await initialized()
   const controller = new AbortController()
   controller.abort(new Error('empty subset aborted'))
   expect(() => observer.subset([], 2000, controller.signal)).toThrow('empty subset aborted')
@@ -248,9 +249,7 @@ it('空范围仍执行取消与预算检查，禁止将无身份工作当作成�
 })
 
 it('异常行数据会使已热会话失效，禁止继续请求', async () => {
-  const initializing = prepare(undefined, options)
-  reply(0)
-  const observer = (await initializing)!
+  const observer = await initialized()
   const reading = observer.table(5000).catch(error => error)
   reply(1, [{ ...root, started: 'invalid' }])
   expect(String(await reading)).toContain('身份表无效')
@@ -260,9 +259,7 @@ it('异常行数据会使已热会话失效，禁止继续请求', async () => {
 })
 
 it('排队等待也消耗本轮绝对预算，定时器迟到时仍拒绝过期响应', async () => {
-  const initializing = prepare(undefined, options)
-  reply(0)
-  const observer = (await initializing)!
+  const observer = await initialized()
   const first = observer.table(5000).catch(error => error)
   const queued = observer.table(2000).catch(error => error)
   vi.setSystemTime(2001)
@@ -275,7 +272,7 @@ it('排队等待也消耗本轮绝对预算，定时器迟到时仍拒绝过期�
 
 it('真实单个热进程连续刷新表和子集；warmup 数据不复用，finally 已回收', async () => {
   vi.useRealTimers()
-  const worker = `const readline=require('node:readline'); let count=0; const input=readline.createInterface({input:process.stdin}); input.on('line',line=>{const request=JSON.parse(line); const rows=request.kind==='memory'?{rssMb:0,maxProcessRssMb:0,processCount:0,topProcesses:[]}:[{pid:process.pid,parent:1,group:0,started:'2026-10-04T12:00:00Z'},{pid:100,parent:1,group:0,started:'2026-10-04T12:00:'+String(++count).padStart(2,'0')+'Z'}].filter(row=>request.pids==null||request.pids.includes(row.pid)); console.log(JSON.stringify({id:request.id,rows}));}); input.on('close',()=>process.exit(0));`
+  const worker = `console.log(JSON.stringify({event:'observer-ready',pid:process.pid})); const readline=require('node:readline'); let count=0; const input=readline.createInterface({input:process.stdin}); input.on('line',line=>{const request=JSON.parse(line); const rows=request.kind==='memory'?{rssMb:0,maxProcessRssMb:0,processCount:0,topProcesses:[]}:[{pid:process.pid,parent:1,group:0,started:'2026-10-04T12:00:00Z'},{pid:100,parent:1,group:0,started:'2026-10-04T12:00:'+String(++count).padStart(2,'0')+'Z'}].filter(row=>request.pids==null||request.pids.includes(row.pid)); console.log(JSON.stringify({id:request.id,rows}));}); input.on('close',()=>process.exit(0));`
   const createChild: typeof spawn = ((...args: Parameters<typeof spawn>) => {
     const item = realSpawn(...args)
     live.push(item)

@@ -1,9 +1,10 @@
 # taro-webpack-react-tailwindcss-v4 with-plugin-html
 Status: passed
 Command: `pnpm run build:weapp`
-Duration: 8229ms
+Duration: 9956ms
 | File | Artifact | Bytes | Lines | Selectors | h5-* aliases | Raw HTML tags | Cursor declarations | Taro selector | Weapp escaped arbitrary selector | Hash |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- | --- |
-| `app.wxss` | [artifacts/app.wxss](artifacts/app.wxss) | 348616 | 11435 | 2036 | 68 | 0 | 0 | true | true | `f1ea6b4c1049b8c1765126e8cbbec0656a7b7d67a08c08d6c5fba7f6e855364b` |
-| `sub-normal/pages/index.wxss` | [artifacts/sub-normal__pages__index.wxss](artifacts/sub-normal__pages__index.wxss) | 24531 | 711 | 155 | 0 | 0 | 0 | true | true | `a1c13003fd2a4dcb10b6b809f1086687772593698eb3aa17854cbecc4ed903cf` |
-| `sub-independent/pages/index.wxss` | [artifacts/sub-independent__pages__index.wxss](artifacts/sub-independent__pages__index.wxss) | 24580 | 720 | 155 | 0 | 0 | 0 | true | true | `cb5303527bd3b28b7506e6a5df87676c9ecd5cc8e5a28a49e56864ee6acd1308` |
+| `app.wxss` | [artifacts/app.wxss](artifacts/app.wxss) | 293621 | 9947 | 1894 | 68 | 0 | 0 | true | true | `b292fea245b45936d0bfef5840b5b8a4b031f3d2a4dbec6e91c2c55e20f26bfc` |
+| `sub-normal/pages/index.wxss` | [artifacts/sub-normal__pages__index.wxss](artifacts/sub-normal__pages__index.wxss) | 1037 | 30 | 4 | 0 | 0 | 0 | true | true | `ea01beae5d1ba00b0d64b01b8c4083d96384c2bcdc6a0f50ed0806dc9bc8a7c8` |
+| `sub-independent/pages/index.wxss` | [artifacts/sub-independent__pages__index.wxss](artifacts/sub-independent__pages__index.wxss) | 2348 | 55 | 9 | 0 | 0 | 0 | true | true | `0b9f9e4862f2d400dc6427432997fc850c2e5221cad0d1fce2b96b1bb935464c` |
+| `pages/issue-998/index.wxss` | [artifacts/pages__issue-998__index.wxss](artifacts/pages__issue-998__index.wxss) | 17200 | 447 | 86 | 0 | 0 | 0 | false | true | `74860b4a48454928129c650e4bbcfa07358b284e6bd51c542cc1351b2ac98934` |

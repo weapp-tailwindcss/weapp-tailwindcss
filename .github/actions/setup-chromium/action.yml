@@ -1,0 +1,32 @@
+name: Setup verified Chromium
+description: Install Chromium and verify it can render before installing missing Linux libraries.
+runs:
+  using: composite
+  steps:
+    - name: Install Chromium binaries
+      shell: bash
+      env:
+        PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: '30000'
+      run: pnpm exec playwright install chromium
+    - name: Probe Chromium before system installation
+      id: probe
+      continue-on-error: true
+      shell: bash
+      run: node scripts/ci/verify-chromium.mjs
+    - name: Install missing Linux libraries with bounded APT requests
+      if: steps.probe.outcome == 'failure' && runner.os == 'Linux'
+      shell: bash
+      run: |
+        apt_config=$(mktemp)
+        trap 'rm -f "$apt_config"' EXIT
+        cat > "$apt_config" <<'APT'
+        Acquire::http::Timeout "30";
+        Acquire::https::Timeout "30";
+        Acquire::Retries "2";
+        APT::Update::Error-Mode "any";
+        APT
+        playwright_cli=$(pnpm exec node -p 'const path = require("node:path"); const manifest = require.resolve("playwright/package.json"); path.resolve(path.dirname(manifest), require(manifest).bin.playwright)')
+        sudo -- env "APT_CONFIG=$apt_config" "$(command -v node)" "$playwright_cli" install-deps chromium
+    - name: Require Chromium rendering readiness
+      shell: bash
+      run: node scripts/ci/verify-chromium.mjs

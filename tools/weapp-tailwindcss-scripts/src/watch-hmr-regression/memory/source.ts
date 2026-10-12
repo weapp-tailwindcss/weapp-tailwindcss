@@ -1,7 +1,7 @@
 import type { spawn } from 'node:child_process'
 import type { MemoryUsageSample } from '../types'
 import process from 'node:process'
-import { createProcessObserverTransport } from '../../../../../scripts/demo-e2e-workflow/process-observer/transport'
+import { createProcessObserverTransport, PROCESS_OBSERVER_HOST_STARTUP_MS, PROCESS_OBSERVER_PREPARE_MS } from '../../../../../scripts/demo-e2e-workflow/process-observer/transport'
 import { assertWatchCommandActive } from '../cancellation'
 import { parseProcessTreeMemoryOnWindows, sampleProcessTreeMemory } from './process-tree'
 import { windowsWatchMemoryArgs } from './windows'
@@ -26,7 +26,7 @@ export async function prepareWatchMemorySource(cwd: string, options: MemorySourc
   if ((options.platform ?? process.platform) !== 'win32') {
     return { sample: (rootPid, signal) => sampleProcessTreeMemory(rootPid, signal, cwd), close: async () => {} }
   }
-  const prepareDeadline = Date.now() + 15_000
+  const startupDeadline = Date.now() + PROCESS_OBSERVER_HOST_STARTUP_MS
   const transport = createProcessObserverTransport(options.command ?? 'powershell', options.args ?? windowsWatchMemoryArgs, options.spawn)
   let failure: MemorySourceError | undefined
   let intentionalAbort: unknown
@@ -76,10 +76,18 @@ export async function prepareWatchMemorySource(cwd: string, options: MemorySourc
     }
   }
   try {
+    const readyAt = await transport.waitUntilReady(startupDeadline - Date.now())
+    transport.assertHealthy()
+    const prepareDeadline = readyAt + PROCESS_OBSERVER_PREPARE_MS
     await read(transport.pid, prepareDeadline - Date.now())
+    transport.assertHealthy()
+    if (Date.now() >= prepareDeadline) {
+      throw new Error('Watch 内存采集器预热超过本轮绝对截止，不能启动业务。')
+    }
   }
   catch (error) {
-    throw new MemorySourceError('业务尚未启动：Watch 内存采集器准备失败。', { cause: error })
+    const preparationError = await fail(error).catch(error => error)
+    throw new MemorySourceError('业务尚未启动：Watch 内存采集器准备失败。', { cause: preparationError })
   }
   return {
     sample: (rootPid, signal) => read(rootPid, 5000, signal),
