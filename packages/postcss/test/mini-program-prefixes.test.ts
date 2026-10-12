@@ -3,7 +3,7 @@ import type { WeappTailwindcssPostcssPluginAdapters } from '@/generator-plugin'
 import postcss from 'postcss'
 import { describe, expect, it, vi } from 'vitest'
 import { finalizeMiniProgramCss, finalizeMiniProgramCssRoot, normalizeMiniProgramGeneratedCssForPostcss, pruneMiniProgramGeneratedCss } from '@/compat/mini-program-css'
-import { normalizeMiniProgramPrefixedDeclaration, normalizePreservedWebkitProperties } from '@/compat/mini-program-prefixes'
+import { normalizeMiniProgramPrefixedDeclaration, normalizePreservedWebkitProperties, resolveMiniProgramPrefixPolicy } from '@/compat/mini-program-prefixes'
 import { transformTailwindV4CssToWeapp } from '@/compat/tailwindcss-v4/generated-output'
 import { createWeappTailwindcssPostcssPlugin } from '@/generator-plugin'
 import { createStyleHandler } from '@/handler'
@@ -45,6 +45,22 @@ describe('小程序 WebKit 属性保留与 Issue 1286', () => {
     expect(normalizePreservedWebkitProperties('-webkit-user-select' as unknown as string[])).toBeUndefined()
     expect(normalizePreservedWebkitProperties(['', 'display', '-webkit-*', '-webkit-', '-webkit-test;'])).toBeUndefined()
     expect(normalizePreservedWebkitProperties([' -WEBKIT-USER-SELECT ', '-webkit-user-select'])).toEqual(new Set(['-webkit-user-select']))
+  })
+
+  it('按样式目标统一解析扩展名单的适用范围', () => {
+    const properties = [' -WEBKIT-USER-SELECT ', '-webkit-user-select', '-webkit-*']
+    const miniProgram = resolveMiniProgramPrefixPolicy('mini-program', properties)
+    const generic = resolveMiniProgramPrefixPolicy('generic', properties)
+    const web = resolveMiniProgramPrefixPolicy('web', properties)
+    const webview = resolveMiniProgramPrefixPolicy('uni-app-x-css-webview', properties)
+    const uvue = resolveMiniProgramPrefixPolicy('uni-app-x-css-uvue', properties)
+
+    expect(miniProgram.preserveProperties).toEqual(new Set(['-webkit-user-select']))
+    expect(generic.preserveProperties).toEqual(new Set(['-webkit-user-select']))
+    expect(web.preserveProperties).toBeUndefined()
+    expect(webview.preserveProperties).toBeUndefined()
+    expect(uvue.preserveProperties).toBeUndefined()
+    expect(properties).toEqual([' -WEBKIT-USER-SELECT ', '-webkit-user-select', '-webkit-*'])
   })
 
   it('默认 helper 保留附着在规则中的字体平滑声明', () => {

@@ -1,4 +1,5 @@
 import type { AtRule, Declaration } from 'postcss'
+import type { PostcssStyleTarget } from '../style-targets'
 
 const PRESERVED_WEBKIT_DECLARATION_PROPS = new Set([
   '-webkit-box-orient',
@@ -37,6 +38,22 @@ export function normalizePreservedWebkitProperties(properties?: readonly string[
     }
   }
   return normalized.size > 0 ? normalized : undefined
+}
+
+export interface MiniProgramPrefixPolicy {
+  preserveProperties: ReadonlySet<string> | undefined
+}
+
+/** 根据样式目标解析 WebKit 前缀策略，统一扩展名单的适用范围。 */
+export function resolveMiniProgramPrefixPolicy(
+  target: PostcssStyleTarget,
+  properties?: readonly string[],
+): MiniProgramPrefixPolicy {
+  return {
+    preserveProperties: target === 'generic' || target === 'mini-program'
+      ? normalizePreservedWebkitProperties(properties)
+      : undefined,
+  }
 }
 
 function splitTopLevelCommaList(value: string) {

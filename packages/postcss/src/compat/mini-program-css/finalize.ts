@@ -1,6 +1,6 @@
 import type { FinalizeMiniProgramCssOptions } from './finalize-options'
 import postcss from 'postcss'
-import { normalizeMiniProgramPrefixedDeclaration, normalizePreservedWebkitProperties, removeUnsupportedMiniProgramPrefixedAtRule } from '../mini-program-prefixes'
+import { normalizeMiniProgramPrefixedDeclaration, removeUnsupportedMiniProgramPrefixedAtRule, resolveMiniProgramPrefixPolicy } from '../mini-program-prefixes'
 import { appendTailwindcssV4MiniProgramGradientRules, collectUsedTailwindcssV4Variables, createMissingCssVarsV4Nodes, mergeTailwindcssV4GradientDirectionRules, normalizeTailwindcssV4Declaration } from '../tailwindcss-v4'
 import { removeUnsupportedCascadeLayers, removeUnsupportedMiniProgramAtRules, removeUnsupportedMiniProgramAtRulesRoot } from './at-rules'
 import {
@@ -33,7 +33,7 @@ export { insertHoistedRules } from './hoist'
 export { collectPreflightRules } from './preflight'
 
 export function finalizeMiniProgramCssRoot(root: postcss.Root, options: FinalizeMiniProgramCssOptions = {}) {
-  const preservedWebkitProperties = normalizePreservedWebkitProperties(options.preserveWebkitProperties)
+  const preservedWebkitProperties = resolveMiniProgramPrefixPolicy('mini-program', options.preserveWebkitProperties).preserveProperties
   const shouldInjectTailwindcssV4Defaults = options.isTailwindcssV4 === true
   const tailwindcssV4DefaultNodes = shouldInjectTailwindcssV4Defaults
     ? createMissingCssVarsV4Nodes(root, collectUsedTailwindcssV4Variables(root))

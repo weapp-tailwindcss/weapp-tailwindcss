@@ -1,7 +1,7 @@
 import type { ApplyConfiguredCssCalcOptions } from '../../plugins/applyConfiguredCssCalc'
 import type { IStyleHandlerOptions } from '../../types'
 import postcss from 'postcss'
-import { normalizeMiniProgramPrefixedDeclaration, normalizePreservedWebkitProperties, removeUnsupportedMiniProgramPrefixedAtRule } from '../mini-program-prefixes'
+import { normalizeMiniProgramPrefixedDeclaration, removeUnsupportedMiniProgramPrefixedAtRule, resolveMiniProgramPrefixPolicy } from '../mini-program-prefixes'
 import { removeUnsupportedCascadeLayers } from './at-rules'
 import {
   isBrowserElementPreflightRule,
@@ -192,7 +192,7 @@ export function pruneMiniProgramGeneratedCssRoot(
   root: postcss.Root,
   options: PruneMiniProgramGeneratedCssOptions = {},
 ) {
-  const preservedWebkitProperties = normalizePreservedWebkitProperties(options.cssOptions?.preserveWebkitProperties)
+  const preservedWebkitProperties = resolveMiniProgramPrefixPolicy('mini-program', options.cssOptions?.preserveWebkitProperties).preserveProperties
   const shouldPreserveContentInit = options.preserveContentInit
     ?? (options.preservePreflight || usesTwContentVariable(root))
 
