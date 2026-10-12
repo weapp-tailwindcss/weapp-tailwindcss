@@ -80,6 +80,7 @@ export function finalizeWebpackCssAssetSource(
       cssPreflight: false,
       isTailwindcssV4: true,
       tailwindcssV4GradientFallback: styleOptions.tailwindcssV4GradientFallback,
+      preserveWebkitProperties: styleOptions.cssOptions?.preserveWebkitProperties,
     })
     finalized = dedupeMiniProgramPreflightSelectorRules(finalized)
     return stripMiniProgramCssSpecificityPlaceholders(removeMiniProgramInteractiveSelectors(finalized, {
@@ -90,6 +91,7 @@ export function finalizeWebpackCssAssetSource(
   try {
     finalized = pruneMiniProgramGeneratedCss(finalized, {
       preservePreflight: options.cssPreflight !== false,
+      cssOptions: styleOptions.cssOptions,
     })
   }
   catch {
@@ -108,6 +110,7 @@ export function finalizeWebpackCssAssetSource(
           : undefined,
     isTailwindcssV4: true,
     tailwindcssV4GradientFallback: styleOptions.tailwindcssV4GradientFallback,
+    preserveWebkitProperties: styleOptions.cssOptions?.preserveWebkitProperties,
   })
   finalized = ensureWebpackMiniProgramTwContentInit(finalized)
   if (shouldRemoveExistingPreflight) {

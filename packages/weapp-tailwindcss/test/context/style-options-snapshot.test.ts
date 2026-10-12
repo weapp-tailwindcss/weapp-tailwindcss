@@ -23,3 +23,14 @@ it('同一次解析复用嵌套配置快照，下一次解析仍反映原位修�
   expect(resolveStyleOptionsFromContext(context).cssCalc).toBe(false)
   expect(reads).toBe(2)
 })
+
+it('保留嵌套 WebKit 扩展名单并反映下一次调用的原位修改', () => {
+  const properties = ['-webkit-tap-highlight-color']
+  const context = {
+    generator: { target: 'weapp' },
+    cssOptions: { preserveWebkitProperties: properties },
+  } as unknown as InternalUserDefinedOptions
+  expect(resolveStyleOptionsFromContext(context).cssOptions?.preserveWebkitProperties).toEqual(properties)
+  properties.push('-webkit-touch-callout')
+  expect(resolveStyleOptionsFromContext(context).cssOptions?.preserveWebkitProperties).toEqual(properties)
+})

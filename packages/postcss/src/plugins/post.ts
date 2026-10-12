@@ -8,6 +8,7 @@ import { normalizeTailwindcssRpxDeclaration } from '../compat/tailwindcss-rpx'
 import { appendTailwindcssV4MiniProgramGradientRules, collectUsedTailwindcssV4Variables, createMissingCssVarsV4Nodes, mergeTailwindcssV4GradientDirectionRules, normalizeTailwindcssV4Declaration, usesTailwindcssV4ContentVariable } from '../compat/tailwindcss-v4'
 import { shouldRemoveEmptyRuleForUniAppX } from '../compat/uni-app-x'
 import { postcssPlugin } from '../constants'
+import { resolvePostcssStyleTarget } from '../frameworks'
 import { getFallbackRemove } from '../selectorParser'
 import { appendRuleSelector } from '../utils/selector-guard'
 import { dedupeDeclarations, removeRedundantTransitionPropertyFallbacks } from './post/decl-dedupe'
@@ -153,7 +154,10 @@ const postcssWeappTailwindcssPostPlugin: PostcssWeappTailwindcssRenamePlugin = (
   const cleanRootSpecificity = createRootSpecificityCleaner(opts)
   const cleanFallbackPlaceholder = createFallbackPlaceholderCleaner()
   const shouldAppendHostSelector = createHostSelectorAppender(opts)
-  const preservedWebkitProperties = normalizePreservedWebkitProperties(opts.cssOptions?.preserveWebkitProperties)
+  const target = resolvePostcssStyleTarget(opts)
+  const preservedWebkitProperties = target === 'generic' || target === 'mini-program'
+    ? normalizePreservedWebkitProperties(opts.cssOptions?.preserveWebkitProperties)
+    : undefined
   let shouldInjectTailwindcssV4Defaults = false
 
   const enableMainChunkTransforms = opts.isMainChunk !== false

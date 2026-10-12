@@ -21,6 +21,7 @@ expectType<Promise<PostcssResult<Root | Document>>>(customContext.transformWxss(
 const compiler = createCompiler({
   appType: 'taro',
   compiler: { maxRoots: 32 },
+  cssOptions: { preserveWebkitProperties: ['-webkit-tap-highlight-color'] },
 })
 const source = {} as TailwindV4ResolvedSource
 const generation = compiler.generate({
@@ -41,6 +42,11 @@ expectType<ReadonlySet<string>>(snapshot.classSet)
 expectType<readonly string[]>(compiler.invalidate(['virtual:dependency']))
 expectType<Promise<PostcssResult<Root | Document>>>(compiler.transformCss('', snapshot))
 expectType<Promise<PostcssResult<Root>>>(compiler.transformCssRoot({} as Root, snapshot))
+expectType<Promise<PostcssResult<Root | Document>>>(compiler.transformCss('', snapshot, { cssOptions: { preserveWebkitProperties: [] } }))
+expectType<Promise<PostcssResult<Root>>>(compiler.transformCssRoot({} as Root, snapshot, { cssOptions: { preserveWebkitProperties: [] } }))
+expectType<string>(compiler.finalizeCss('', { preserveWebkitProperties: ['-webkit-tap-highlight-color'] }))
+expectType<Root>(compiler.finalizeCssRoot({} as Root, { preserveWebkitProperties: [] }))
+expectError(createCompiler({ cssOptions: { preserveWebkitProperties: '-webkit-tap-highlight-color' } }))
 expectType<Promise<string>>(compiler.transformTemplate('<view />', snapshot))
 expectType<Promise<JsHandlerResult>>(compiler.transformJavaScript('const value = 1', snapshot))
 expectType<Promise<void>>(compiler.remove('external-root'))

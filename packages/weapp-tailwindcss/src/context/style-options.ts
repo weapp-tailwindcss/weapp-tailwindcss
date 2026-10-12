@@ -67,6 +67,7 @@ export function resolveStyleOptionsFromContext(
     unitsToPx: inputCssOptions?.unitsToPx ?? ctx.unitsToPx,
     unitConversion: inputCssOptions?.unitConversion ?? ctx.unitConversion,
     injectAdditionalCssVarScope: inputCssOptions?.injectAdditionalCssVarScope ?? ctx.injectAdditionalCssVarScope,
+    preserveWebkitProperties: inputCssOptions?.preserveWebkitProperties,
   } satisfies NonNullable<IStyleHandlerOptions['cssOptions']>
 
   return {

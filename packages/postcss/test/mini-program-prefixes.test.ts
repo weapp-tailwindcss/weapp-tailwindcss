@@ -79,6 +79,18 @@ describe('小程序 WebKit 属性保留与 Issue 1286', () => {
     expect((await handler(css)).css).toBe(css)
   })
 
+  it.each([true, false])('Web 分支不受小程序扩展名单影响，isMainChunk=%s', async (isMainChunk) => {
+    const handler = createStyleHandler({ majorVersion: 4, isMainChunk, cssPreflight: false })
+    const css = '.icon{-webkit-user-select:none;-webkit-flex:1;display:-webkit-inline-flex}'
+    const cssOptions = { platform: 'web', autoprefixer: false } as const
+    const original = await handler(css, { cssOptions })
+    const extended = await handler(css, {
+      cssOptions: { ...cssOptions, preserveWebkitProperties: ['-webkit-user-select', '-webkit-flex'] },
+    })
+    expect(extended.css).toBe(original.css)
+    expect(extended.css).not.toContain('-webkit-flex:')
+  })
+
   it.each(transforms)('%s 扩展仅按完整属性匹配并继续保留默认属性', async (method) => {
     const css = '.icon{-webkit-user-select:none;-webkit-user-select-extra:none;-webkit-font-smoothing:antialiased;-webkit-transform:translateX(1px);transform:translateX(1px)}'
     const result = await transform(css, method, ['-webkit-user-select'])
@@ -150,6 +162,16 @@ describe('小程序 WebKit 属性保留与 Issue 1286', () => {
     expect(onDiagnostic.mock.calls.at(-1)?.[0].cache.hit).toBe(false)
     options.cssOptions.preserveWebkitProperties.splice(0)
     expect((await handler(css, options)).css).not.toContain('-webkit-user-select')
+  })
+
+  it('不同处理器实例的扩展名单互不污染', async () => {
+    const options = { isMainChunk: true, cssPreflight: false, autoprefixer: false }
+    const extended = createStyleHandler({ ...options, cssOptions: { preserveWebkitProperties: ['-webkit-user-select'] } })
+    const defaults = createStyleHandler(options)
+    const css = '.icon{-webkit-user-select:none;-webkit-font-smoothing:antialiased}'
+    const outputs = await Promise.all([extended(css), defaults(css), extended(css), defaults(css)])
+    expect(outputs.map(result => result.css.includes('-webkit-user-select'))).toEqual([true, false, true, false])
+    expect(outputs.every(result => result.css.includes('-webkit-font-smoothing'))).toBe(true)
   })
 
   it('独立生成插件的最终清理透传属性扩展', async () => {
