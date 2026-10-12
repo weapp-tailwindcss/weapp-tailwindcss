@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import semver from 'semver'
 import { describe, expect, it } from 'vitest'
 import YAML from 'yaml'
+import { parseWorkspaceLockfile } from './lockfile'
 import { resolveWorkflowMatrixEnv, resolveWorkflowMatrixValue } from './workflow-matrix'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -495,7 +496,7 @@ describe('ci workflows', () => {
       catalogs?: Record<string, Record<string, string>>
       overrides?: Record<string, string>
     }
-    const lockfile = YAML.parseAllDocuments(readText('pnpm-lock.yaml'))[1]?.toJS() as {
+    const lockfile = parseWorkspaceLockfile(readText('pnpm-lock.yaml')) as {
       importers?: Record<string, {
         dependencies?: Record<string, { specifier?: string, version?: string }>
       }>
