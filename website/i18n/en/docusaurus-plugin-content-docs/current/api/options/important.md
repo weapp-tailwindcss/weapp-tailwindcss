@@ -345,7 +345,22 @@ It is subsequently used to control fine-grained behaviors such as CSS compatibil
 `cssPreflight`, `cssPreflightRange`, `cssChildCombinatorReplaceValue`, `cssPresetEnv`, `autoprefixer`,
 `atRules`, `injectAdditionalCssVarScope`, `cssSelectorReplacement`, `rem2rpx`, `px2rpx`, `unitsToPx`,
 `unitConversion`, `platform`, `cssRemoveActivePseudoClass`, `cssRemoveHoverPseudoClass`, `cssRemoveFocusPseudoClass`, `cssRemoveProperty`, `cssCalc`
-and `tailwindcssV4GradientFallback` are recommended to be placed here.
+`tailwindcssV4GradientFallback`, and `preserveWebkitProperties` are recommended to be placed here.
+
+Mini-program compatibility processing preserves `-webkit-font-smoothing` by default, so this project's property-removal policy retains the font-smoothing declarations used by `antialiased` and `subpixel-antialiased`.
+`cssOptions.preserveWebkitProperties` (`string[]`) adds exact `-webkit-` property names to preserve. An empty array still retains the default properties.
+Names are trimmed and matched without case sensitivity. Invalid names are ignored, and wildcards are not supported.
+This option only affects this project's mini-program property-removal policy; it does not control separately registered external plugins such as Autoprefixer.
+
+#### Example
+
+```ts
+const options = {
+  cssOptions: {
+    preserveWebkitProperties: ['-webkit-text-size-adjust'],
+  },
+}
+```
 
 #### The mini program removes `:active` and `:focus` by default
 

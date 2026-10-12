@@ -26,6 +26,27 @@ keywords:
 
 ## Properties
 
+### cssOptions?
+
+> Optional | **cssOptions**: `CssOptions`
+
+Fine-tuned configuration of CSS generation and post-processing compatibility.
+
+Mini-program compatibility processing preserves `-webkit-font-smoothing` by default, so this project's property-removal policy retains the font-smoothing declarations used by `antialiased` and `subpixel-antialiased`.
+`cssOptions.preserveWebkitProperties` (`string[]`) adds exact `-webkit-` property names to preserve. An empty array still retains the default properties.
+Names are trimmed and matched without case sensitivity. Invalid names are ignored, and wildcards are not supported.
+This option only affects this project's mini-program property-removal policy; it does not control separately registered external plugins such as Autoprefixer.
+
+#### Example
+
+```ts
+const options = {
+  cssOptions: {
+    preserveWebkitProperties: ['-webkit-text-size-adjust'],
+  },
+}
+```
+
 ### compiler?
 
 > Optional | **compiler**: `{ maxRoots?: number }`
