@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "generatedAt": "2026-09-28T11:53:23.457Z",
+  "generatedAt": "2026-10-12T10:37:03.542Z",
   "locale": "en-US",
   "contentTier": "primary",
   "siteUrl": "https://tw.weapp.dev",
@@ -615,6 +615,7 @@
       ],
       "headings": [
         "Properties",
+        "cssOptions?",
         "compiler?"
       ],
       "source": "i18n/en/docs/api/interfaces/CreateCompilerOptions.md"
