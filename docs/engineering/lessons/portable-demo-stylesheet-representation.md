@@ -40,7 +40,15 @@ CI=1 corepack pnpm exec vitest run -c scripts/ci/demo-matrix/vitest.config.mts s
 CI=1 NODE_OPTIONS=--max-old-space-size=6144 DEMO_MATRIX_ARTIFACT_DIR=e2e/.artifacts/issue-1286-ci/nuxt-css-node22 corepack pnpm e2e:demo:matrix web/nuxt-vite-tailwindcss-v4:web
 ```
 
-第一组 29 项全部通过，无跳过。新增 6 项覆盖真实外链连续 initial/replace/add/restore、最终刷新、503、错误 MIME、非法 CSS、正文悬挂及明确跨域链接。Nuxt 定向链路通过 production、initial、replace、add、restore、refresh；production 以不更新模式核对现有 static 基线。测试使用 headless Chromium，finally 关闭自有浏览器和服务器、恢复 demo 源码，工作树没有 demo 或快照差异。
+第一组 29 项全部通过，无跳过。新增 6 项覆盖真实外链连续 initial/replace/add/restore 替换、最终刷新、503、错误 MIME、非法 CSS、正文悬挂及明确跨域链接。Nuxt 定向链路通过 production、initial、replace、add、restore、refresh；production 以不更新模式核对现有 static 基线。测试使用 headless Chromium，finally 关闭自有浏览器和服务器、恢复 demo 源码，工作树没有 demo 或快照差异。
+
+### 夹具同步纠正
+
+首次修复提交 `eb7739dd302b370d33d35f9951f9ba1dbb5817cd` 的 [PR Gate 枚举 job 114946291634](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38289548852/job/114946291634) 及 [Demo Watch Diagnostic run 38289547948](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38289547948) 的 9 个 Ubuntu/Windows、Node 22/24 job 均在新增单测中失败，未进入后续 demo 验收。8 个诊断 job 缺少 add 宽度规则，另一个缺少 restore 高度规则；本地同提交完整 `pnpm test:demo:matrix` 的 274 项通过，不能据此归为远端偶发抖动。
+
+原夹具对同一个 CSS 文件快速连续 `writeFile`，独立 WS 消息先提交新 DOM。Vite 内置 Chokidar 对同路径 `change` 有 50ms 节流，窗口内后续事件不会重放；浏览器尚无请求时的 idle 也不能证明后续文件事件必将发出。因此夹具把采集器测试耦合到原生 watcher 的事件合并，可能持续读旧 transform 缓存。非原子写还存在中间文本风险；仅改原子写不能证明节流问题已消除。
+
+改为在启动前写好四份真实 CSS，每轮经 Vite custom WS 驱动新的外链 URL。新 link 成功 load 后才移除旧 link、更新本轮 DOM；加载错误不会提交 marker。保留相同 10 秒轮询预算、原始色值、计算高度、add 计算宽度及最后来源唯一性检查，没有固定等待或放宽断言。该单测只证明真实 Vite 的 CSS 表示采集与连续换链；实际同路径源码保存、文件监听与 HMR 仍由未改动的 Nuxt matrix 验收。
 
 ## 适用边界
 

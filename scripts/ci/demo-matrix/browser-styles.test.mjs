@@ -1,4 +1,4 @@
-import { mkdtemp, realpath, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises'
 import { createServer as createHttpServer } from 'node:http'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -31,16 +31,33 @@ async function cleanup(root, browser, server, foreign) {
   }
 }
 
-it('按 CSS 表示读取真实 Vite 外链样式，并验证连续更新与刷新', async () => {
+it('按 CSS 表示读取真实 Vite 当前外链样式，并验证连续替换与刷新', async () => {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), 'demo-matrix-styles-')))
-  const file = path.join(root, 'fixture.css')
   let browser
   let server
   try {
     let round = 'initial'
-    await writeFile(file, authoredCss(item, round))
+    // 此回归验证采集边界；预写独立 URL，避免耦合原生 watcher 的同路径事件节流。
+    for (const value of ['initial', 'replace', 'add', 'restore']) {
+      await writeFile(path.join(root, `${value}.css`), authoredCss(item, value))
+    }
     await writeFile(path.join(root, 'entry.js'), `
-      import.meta.hot.on('fixture-round', ({ html }) => { document.body.innerHTML = html })
+      import.meta.hot.on('fixture-round', async ({ html, href }) => {
+        const previous = document.querySelector('link[rel="stylesheet"]')
+        const current = document.createElement('link')
+        current.rel = 'stylesheet'
+        current.href = href
+        await new Promise((resolve, reject) => {
+          current.onload = resolve
+          current.onerror = () => {
+            current.remove()
+            reject(new Error('当前轮次样式加载失败: ' + href))
+          }
+          document.head.append(current)
+        })
+        previous.remove()
+        document.body.innerHTML = html
+      })
     `)
     server = await createServer({
       root,
@@ -55,7 +72,7 @@ it('按 CSS 表示读取真实 Vite 外链样式，并验证连续更新与刷�
               return next()
             }
             res.setHeader('Content-Type', 'text/html')
-            res.end(`<link rel="stylesheet" href="/fixture.css">
+            res.end(`<link rel="stylesheet" href="/${round}.css">
               <script type="module" src="/@vite/client"></script>
               <script type="module" src="/entry.js"></script><body>${markup(round)}</body>`)
           })
@@ -64,7 +81,7 @@ it('按 CSS 表示读取真实 Vite 外链样式，并验证连续更新与刷�
     })
     await server.listen()
     const url = server.resolvedUrls.local[0]
-    const stylesheet = new URL('fixture.css', url)
+    const stylesheet = new URL('initial.css', url)
     // 同一个真实 Vite URL 按 Accept 返回不同表示，不能把 JS proxy 交给 CSS parser。
     const moduleResponse = await fetch(stylesheet)
     expect(moduleResponse.headers.get('content-type')).toContain('javascript')
@@ -77,8 +94,7 @@ it('按 CSS 表示读取真实 Vite 外链样式，并验证连续更新与刷�
     for (round of ['initial', 'replace', 'add', 'restore']) {
       if (round !== 'initial') {
         await browser.waitForUpdateIdle()
-        await writeFile(file, authoredCss(item, round))
-        server.ws.send({ type: 'custom', event: 'fixture-round', data: { html: markup(round) } })
+        server.ws.send({ type: 'custom', event: 'fixture-round', data: { html: markup(round), href: `/${round}.css` } })
       }
       const inspectRound = async () => {
         const result = await browser.inspect(item, round)
@@ -98,6 +114,10 @@ it('按 CSS 表示读取真实 Vite 外链样式，并验证连续更新与刷�
     round = 'restore'
     await browser.reload()
     await until(() => browser.inspect(item, round), undefined, 10_000)
+    await browser.close()
+    browser = undefined
+    const inspection = JSON.parse(await readFile(path.join(root, 'last-inspection.json'), 'utf8'))
+    expect(inspection.styleSources).toEqual([new URL('restore.css', url).href])
   }
   finally {
     await cleanup(root, browser, server)
