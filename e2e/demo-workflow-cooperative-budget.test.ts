@@ -47,7 +47,10 @@ beforeEach(() => {
     return true
   })
   observerChild = held
-  mocks.spawn.mockReset().mockReturnValue(held)
+  mocks.spawn.mockReset().mockImplementation(() => {
+    queueMicrotask(() => held.stdout.write(`${JSON.stringify({ event: 'observer-ready', pid: held.pid })}\n`))
+    return held
+  })
   workload = Object.assign(new EventEmitter(), { pid: 100, exitCode: null, signalCode: null, kill: vi.fn() }) as unknown as ChildProcess
   closed = new Promise(resolve => workload.once('close', () => resolve()))
   mocks.command.mockReset().mockImplementation(async (_command, args) => {

@@ -6,7 +6,7 @@ import { expect, it } from 'vitest'
 import { parseWindowsMemorySample } from '../scripts/demo-e2e-memory/windows'
 import { prepareWorkflowProcessObserver } from '../scripts/demo-e2e-workflow/process-observer'
 import { windowsObserverArgs } from '../scripts/demo-e2e-workflow/process-observer/script'
-import { createProcessObserverTransport } from '../scripts/demo-e2e-workflow/process-observer/transport'
+import { createProcessObserverTransport, PROCESS_OBSERVER_HOST_STARTUP_MS, PROCESS_OBSERVER_PREPARE_MS } from '../scripts/demo-e2e-workflow/process-observer/transport'
 import { parseWindowsProcesses } from '../scripts/demo-e2e-workflow/process-table'
 
 async function bounded<T>(operation: Promise<T>, timeoutMs: number, message: string): Promise<T> {
@@ -47,14 +47,18 @@ it.runIf(process.platform === 'win32')('真实 PowerShell 身份握手与中文�
     child = item
     return item
   }) as typeof spawn
+  const startupDeadline = Date.now() + PROCESS_OBSERVER_HOST_STARTUP_MS
   const transport = createProcessObserverTransport('powershell', windowsObserverArgs, createChild)
   let failure: unknown
   try {
-    const ready = parseWindowsProcesses(JSON.stringify(await transport.request({ kind: 'identity' }, 15_000)))
+    const readyAt = await transport.waitUntilReady(startupDeadline - Date.now())
+    transport.assertHealthy()
+    const prepareDeadline = readyAt + PROCESS_OBSERVER_PREPARE_MS
+    const ready = parseWindowsProcesses(JSON.stringify(await transport.request({ kind: 'identity', pids: [child!.pid!] }, prepareDeadline - Date.now())))
     expect(ready.some(row => row.pid === child!.pid)).toBe(true)
     expect(transport.diagnostics().runtimeVersion).toMatch(/^5\.1\.\d+\.\d+$/)
     expect(transport.diagnostics().launch?.modulePathPolicy).toBe('windows-powershell-native')
-    const memory = parseWindowsMemorySample(await transport.request({ kind: 'memory', rootPid: child!.pid!, cwd: process.cwd() }, 5000))
+    const memory = parseWindowsMemorySample(await transport.request({ kind: 'memory', rootPid: child!.pid!, cwd: process.cwd() }, prepareDeadline - Date.now()))
     expect(memory.processCount).toBeGreaterThanOrEqual(1)
     expect(memory.topProcesses!.some(row => row.pid === child!.pid)).toBe(true)
     // eslint-disable-next-line no-console -- 记录真实 PowerShell 启动、身份与内存查询阶段，保留 hosted 冷准备诊断依据。
@@ -73,7 +77,7 @@ it.runIf(process.platform === 'win32')('真实 PowerShell 身份握手与中文�
     }
   }
   expect(child!.exitCode !== null || child!.signalCode !== null).toBe(true)
-}, 15_000 + 10_000)
+}, PROCESS_OBSERVER_HOST_STARTUP_MS + PROCESS_OBSERVER_PREPARE_MS + 10_000)
 
 it.runIf(process.platform === 'win32')('长 Node 与真实子 Node 连续采样复用一个 PowerShell，指标保留两个实际 PID', async () => {
   const observers: ChildProcess[] = []
@@ -129,4 +133,4 @@ it.runIf(process.platform === 'win32')('长 Node 与真实子 Node 连续采样�
     }
   }
   expect(observers[0]!.exitCode !== null || observers[0]!.signalCode !== null).toBe(true)
-}, 15_000 + 10_000)
+}, PROCESS_OBSERVER_HOST_STARTUP_MS + PROCESS_OBSERVER_PREPARE_MS + 10_000)

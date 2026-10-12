@@ -60,7 +60,7 @@ describe('persistent Watch memory source', () => {
     expect(fixture.child.kill).not.toHaveBeenCalled()
   })
 
-  it('keeps a single 15s preparation deadline and excludes it from business runtime and samples', async () => {
+  it('keeps a single 15s provider warmup deadline after host readiness and excludes it from business runtime and samples', async () => {
     vi.useFakeTimers()
     const fixture = provider()
     fixture.respond(request => setTimeout(() => fixture.reply(request), 12_000))

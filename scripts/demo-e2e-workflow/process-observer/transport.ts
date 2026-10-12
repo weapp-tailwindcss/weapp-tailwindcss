@@ -6,13 +6,19 @@ import { resolveObserverLaunchEnvironment } from './launch-environment'
 
 export type ProcessObserverQuery = { kind: 'identity', pids?: readonly number[] } | { kind: 'memory', rootPid: number, cwd: string }
 
-interface PendingRequest {
+export const PROCESS_OBSERVER_HOST_STARTUP_MS = 15_000
+export const PROCESS_OBSERVER_PREPARE_MS = 15_000
+
+interface PendingOperation {
   resolve: (value: unknown) => void
   reject: (error: unknown) => void
   timer: ReturnType<typeof setTimeout>
   deadline: number
   signal?: AbortSignal | undefined
   abort?: () => void
+}
+
+interface PendingRequest extends PendingOperation {
   diagnostic: ObserverRequestDiagnostic
 }
 
@@ -22,6 +28,8 @@ export function createProcessObserverTransport(command: string, args: string[], 
   const child = createChild(command, args, { shell: false, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'], env: launch.env })
   const diagnostics = createObserverDiagnostics(child.pid, launch.diagnostic)
   const pending = new Map<number, PendingRequest>()
+  const startupWaits = new Set<PendingOperation>()
+  let hostReadyAt: number | undefined
   let sequence = 0
   let buffer = ''
   let stderr = ''
@@ -33,7 +41,7 @@ export function createProcessObserverTransport(command: string, args: string[], 
   const closed = new Promise<void>((resolve) => {
     resolveClosed = resolve
   })
-  const dispose = (request: PendingRequest) => {
+  const dispose = (request: PendingOperation) => {
     clearTimeout(request.timer)
     if (request.abort) {
       request.signal?.removeEventListener('abort', request.abort)
@@ -70,11 +78,12 @@ export function createProcessObserverTransport(command: string, args: string[], 
       return
     }
     fatal ??= error
-    for (const request of pending.values()) {
+    const requests = [...pending.values(), ...startupWaits]
+    for (const request of requests) {
       dispose(request)
     }
-    const requests = [...pending.values()]
     pending.clear()
+    startupWaits.clear()
     terminate()
     closing ??= reap().catch((reapError) => {
       throw new AggregateError([fatal, reapError], '身份采集器失败且退出未确认。')
@@ -131,7 +140,18 @@ export function createProcessObserverTransport(command: string, args: string[], 
           if (expired) {
             throw new Error(`身份采集器进度超过本轮绝对截止：${command} id=${expired[0]}；diagnostics=${JSON.stringify(diagnostics.snapshot())}。`)
           }
+          if (message.event === 'observer-ready' && [...startupWaits].some(item => Date.now() >= item.deadline)) {
+            throw new Error(`身份采集器宿主握手超过本轮绝对截止：${command} pid=${child.pid}。`)
+          }
           diagnostics.progress(message, request?.diagnostic)
+          if (message.event === 'observer-ready') {
+            hostReadyAt = Date.now()
+            for (const waiter of startupWaits) {
+              dispose(waiter)
+              waiter.resolve(hostReadyAt)
+            }
+            startupWaits.clear()
+          }
           boundary = buffer.indexOf('\n')
           continue
         }
@@ -168,6 +188,31 @@ export function createProcessObserverTransport(command: string, args: string[], 
         throw fatal ?? new Error('身份采集器已关闭，禁止继续调度。')
       }
     },
+    /** 仅确认宿主已进入脚本；返回接收时刻，真实查询预热不能从 Promise 续体重新领取预算。 */
+    waitUntilReady(timeoutMs: number, signal?: AbortSignal): Promise<number> {
+      signal?.throwIfAborted()
+      if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
+        return Promise.reject(new Error('身份采集器宿主启动预算已耗尽，禁止继续调度。'))
+      }
+      if (fatal !== undefined || closing) {
+        return Promise.reject(fatal ?? new Error('身份采集器已关闭，禁止继续调度。'))
+      }
+      if (hostReadyAt !== undefined) {
+        return Promise.resolve(hostReadyAt)
+      }
+      return new Promise((resolve, reject) => {
+        const waiter: PendingOperation = {
+          resolve: value => resolve(value as number),
+          reject,
+          timer: setTimeout(() => fail(new Error(`身份采集器宿主启动超时：${command} pid=${child.pid} timeoutMs=${timeoutMs}；diagnostics=${JSON.stringify(diagnostics.snapshot())}。`)), Math.ceil(timeoutMs)),
+          deadline: Date.now() + timeoutMs,
+          signal,
+        }
+        waiter.abort = () => fail(signal?.reason ?? new Error('身份采集器宿主启动已取消。'))
+        startupWaits.add(waiter)
+        signal?.addEventListener('abort', waiter.abort, { once: true })
+      })
+    },
     request(query: ProcessObserverQuery, timeoutMs: number, signal?: AbortSignal): Promise<unknown> {
       signal?.throwIfAborted()
       if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
@@ -201,7 +246,7 @@ export function createProcessObserverTransport(command: string, args: string[], 
     },
     async close() {
       if (!closing) {
-        if (pending.size) {
+        if (pending.size || startupWaits.size) {
           fail(new Error('身份采集器关闭时仍有未落定请求。'))
         }
         else {

@@ -25,6 +25,7 @@ function reply(index: number, rows: unknown) {
 
 async function initialized() {
   const preparing = prepare(undefined, options)
+  await vi.advanceTimersByTimeAsync(0)
   reply(0, [identity])
   await Promise.resolve()
   await Promise.resolve()
@@ -45,7 +46,10 @@ beforeEach(() => {
     return true
   })
   child = current
-  mocks.spawn.mockReset().mockReturnValue(child)
+  mocks.spawn.mockReset().mockImplementation(() => {
+    queueMicrotask(() => current.stdout.write(`${JSON.stringify({ event: 'observer-ready', pid: current.pid })}\n`))
+    return current
+  })
   mocks.command.mockReset()
 })
 

@@ -152,6 +152,8 @@ it('事件循环迟到的进度必须按原绝对截止失败', async () => {
 
 it('合法握手后的坏进度尾行仍阻断业务准备', async () => {
   const preparing = prepareWorkflowProcessObserver(undefined, { platform: 'win32', command: 'fixture', args: [], spawn: createChild }).catch(error => error)
+  emit({ event: 'observer-ready', pid: child.pid })
+  await vi.advanceTimersByTimeAsync(0)
   child.stdout.write(`${JSON.stringify({ id: 1, rows: [{ pid: child.pid, parent: 1, group: 0, started: '2026-10-04T12:00:00Z' }] })}\n${JSON.stringify({ event: 'request-received', id: 999, kind: 'identity' })}\n`)
   expect(await preparing).toBeInstanceOf(Error)
   expect(createChild).toHaveBeenCalledOnce()

@@ -9,6 +9,7 @@ import { setTimeout as delay } from 'node:timers/promises'
 import { pathToFileURL } from 'node:url'
 import { describe, expect, it, vi } from 'vitest'
 import { prepareWorkflowProcessObserver } from '../scripts/demo-e2e-workflow/process-observer'
+import { PROCESS_OBSERVER_HOST_STARTUP_MS, PROCESS_OBSERVER_PREPARE_MS } from '../scripts/demo-e2e-workflow/process-observer/transport'
 import { createWorkflowProcessTree } from '../scripts/demo-e2e-workflow/process-tree'
 
 function stopKnown(pid?: number) {
@@ -95,7 +96,7 @@ describe('隔离进程内的真实信号与合作恢复', () => {
     }
   }, 15_000)
 
-  // 准备阶段独立预算为 15 秒，原业务与清理验证仍使用 10 秒。
+  // 准备阶段的宿主握手与真实查询分别使用 15 秒预算，原业务与清理验证仍使用 10 秒。
   it('父 close 后已登记的独立后代仍获得合作窗口，延迟恢复后退出', async () => {
     const root = await mkdtemp(path.join(tmpdir(), 'workflow-descendant-'))
     const source = path.join(root, 'source')
@@ -141,5 +142,5 @@ describe('隔离进程内的真实信号与合作恢复', () => {
         await rm(root, { recursive: true, force: true })
       }
     }
-  }, 15_000 + 10_000)
+  }, PROCESS_OBSERVER_HOST_STARTUP_MS + PROCESS_OBSERVER_PREPARE_MS + 10_000)
 })

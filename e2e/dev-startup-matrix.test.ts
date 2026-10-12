@@ -1,5 +1,6 @@
 import path from 'pathe'
 import { describe, expect, it } from 'vitest'
+import { PROCESS_OBSERVER_HOST_STARTUP_MS, PROCESS_OBSERVER_PREPARE_MS } from '../scripts/demo-e2e-workflow/process-observer/transport'
 import { buildCases, demoWatchShardCases } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cases'
 import { createWatchSession, sleep } from '../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/session'
 import { hasInitialCompileEvidence } from './dev-startup/readiness'
@@ -48,6 +49,6 @@ describe('demo normal dev startup matrix', () => {
       finally {
         await session.stop()
       }
-    }, startupTimeoutMs + settleMs + 15_000)
+    }, startupTimeoutMs + settleMs + PROCESS_OBSERVER_HOST_STARTUP_MS + PROCESS_OBSERVER_PREPARE_MS + 15_000)
   }
 })
