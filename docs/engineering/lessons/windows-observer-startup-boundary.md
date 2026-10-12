@@ -55,9 +55,11 @@ CI=1 E2E_DEV_STARTUP_RUN=1 E2E_DEV_STARTUP_CASE=weapp-vite-tailwindcss-v4 E2E_DE
 
 第一组最终为 108 项通过、2 项 Windows 专属用例跳过；新增启动边界 20 项通过。第二组为 170 项通过、1 项 Windows 专属 smoke 跳过。实际 dev 入口 2 项通过，初次构建约 4.1 秒，finally 确认本轮进程退出。准备失败、运行与清理边界、真实单个 Node provider、SIGINT/SIGTERM 和独立后代恢复继续覆盖。
 
+修复 head `6d5a5588967797811e3515fe2cf9b18596675df6` 的 [Windows startup job 114908377848](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38277825189/job/114908377848)、attempt 1 已在 Windows / Node 22 通过真实 dev 的 2 项检查；Linux 与 macOS startup 同样通过。该 job 不等于上述本地条件跳过的 3 项独立 Windows 协议测试均已执行。
+
 ## 适用边界
 
-本地定向验证证明截止、协议和生命周期行为，不替代真实 Windows PowerShell 的冷启动验收。等待修复 head 的 Windows startup、真实 PowerShell 与其余必需 CI 门禁；不能把旧 head 成功、排队、取消或条件跳过当作已执行通过。未执行本地全仓或全端验收，没有启动、重置或登录 IDE，也没有创建浏览器资源。此记录保持 `partial`。
+本地定向验证证明截止、协议和生命周期行为，已补充上述准确修复 head 的真实 Windows startup 证据。独立 Windows 协议用例及其余新 head 门禁应分别核对；不能把旧 head 成功、排队、取消或条件跳过当作已执行通过。未执行本地全仓或全端验收，没有启动、重置或登录 IDE，也没有创建浏览器资源。此记录保持 `partial`。
 
 ## 规则评估
 

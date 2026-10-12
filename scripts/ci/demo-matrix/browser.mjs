@@ -130,11 +130,36 @@ export async function openBrowser(url, session, artifactDir, { vueHydration = fa
       async inspect(item, round) {
         const result = await page.evaluate(async ({ expected, round }) => {
           const styles = []
+          const styleSources = []
+          const deadline = Date.now() + 5000
+          const signal = AbortSignal.timeout(5000)
           for (const sheet of document.styleSheets) {
-            try {
-              styles.push(sheet.ownerNode?.nodeName === 'STYLE' ? sheet.ownerNode.textContent : sheet.href ? await (await fetch(sheet.href)).text() : [...sheet.cssRules].map(rule => rule.cssText).join('\n'))
+            // 明确外源的第三方样式不承载本地探针；本地采集错误必须传播。
+            if (sheet.href && new URL(sheet.href).origin !== location.origin) {
+              continue
             }
-            catch { /* 跨域第三方样式不能承载本地探针。 */ }
+            let css
+            if (sheet.ownerNode?.nodeName === 'STYLE') {
+              css = sheet.ownerNode.textContent
+            }
+            else if (sheet.href) {
+              // Vite 的同一 URL 可返回 JS proxy；显式协商 CSS 并保留原始语法证据。
+              const response = await fetch(sheet.href, { headers: { Accept: 'text/css' }, signal })
+              const type = response.headers.get('content-type')?.split(';', 1)[0].trim().toLowerCase()
+              if (!response.ok || type !== 'text/css') {
+                throw new Error(`Stylesheet ${sheet.href}: HTTP ${response.status}, Content-Type ${type ?? 'missing'}`)
+              }
+              css = await response.text()
+            }
+            else {
+              css = [...sheet.cssRules].map(rule => rule.cssText).join('\n')
+            }
+            signal.throwIfAborted()
+            if (Date.now() >= deadline) {
+              throw new Error('Stylesheet collection exceeded 5000ms')
+            }
+            styles.push(css)
+            styleSources.push(sheet.href ?? sheet.ownerNode?.nodeName ?? 'CSSOM')
           }
           const computed = {}
           for (const [key, className] of Object.entries(expected)) {
@@ -148,7 +173,7 @@ export async function openBrowser(url, session, artifactDir, { vueHydration = fa
           if (round === 'restore' && document.getElementById('tw-matrix-added')) {
             throw new Error('Deleted probe remains rendered')
           }
-          return { styles, computed, rootFontSize: Number.parseFloat(getComputedStyle(document.documentElement).fontSize) }
+          return { styles, styleSources, computed, rootFontSize: Number.parseFloat(getComputedStyle(document.documentElement).fontSize) }
         }, { expected: probeClasses(item, round), round })
         lastInspection = { round, ...result }
         const consumed = Object.fromEntries(Object.values(result.computed).map(actual => [actual.expected, actual.className.split(/\s+/)]))
