@@ -27,6 +27,7 @@ function expectDeclaration(selector: string, property: string, value: string) {
 }
 
 describe(`issue #1286 WebKit 属性 ${platform} 产物`, () => {
+  // 共享夹具包含真实 Taro 冷构建，需独立于默认 10 秒 hook 预算。
   beforeAll(async () => {
     if (platform === 'alipay' && process.env['E2E_SKIP_BUILD'] !== '1') {
       throw new Error('支付宝验证只读取产物，请先执行 build:alipay，再设置 E2E_SKIP_BUILD=1。')
@@ -62,7 +63,7 @@ describe(`issue #1286 WebKit 属性 ${platform} 产物`, () => {
     }
     expect([...declarations.keys()].sort()).toEqual([...fixtureSelectors].sort())
     console.info(`[issue-1286] ${platform} ${styleExtension} fixture 产物：${[...fixtureFiles].join(', ')}`)
-  })
+  }, 180_000)
 
   it('作者样式保留字体平滑和自定义白名单，继续移除未配置前缀', () => {
     expectDeclaration('.issue-1286-icon', '-webkit-font-smoothing', 'antialiased')
