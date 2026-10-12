@@ -115,6 +115,8 @@ describe('Release 阶段 CLI', () => {
       expect(result.status, result.stderr).toBe(0)
     }
     headSha = spawnSync('git', ['rev-parse', 'HEAD'], { cwd, encoding: 'utf8' }).stdout.trim()
+    // 测试驱动和报告不属于待发布源码，与真实 receipt 一样由 Git 排除。
+    await writeFile(path.join(cwd, '.git', 'info', 'exclude'), 'pnpm\npnpm.cmd\npnpm-fixture.mjs\ninvocation.json\noutput\ngithub-env\n/runner temp/\n/runner-temp/\n')
     const fixture = path.join(cwd, 'pnpm-fixture.mjs')
     await writeFile(fixture, `
 import { appendFileSync, writeFileSync } from 'node:fs'
