@@ -16,6 +16,12 @@ verification:
     sha: 6a6ce93154f43df97f1d21bb902513ea4fd48c0c
     environment: macOS，Node 24.18.0，pnpm 12.9.1；包含本轮未提交修复，随后提交为 0990abd79a4dab69b0da229f37243a47bd5cfed4
     command: corepack pnpm --filter weapp-tailwindcss exec vitest run test/compiler/core-compiler-webkit-prefixes.test.ts test/bundlers/webkit-prefixes.unit.test.ts test/context/style-options-snapshot.test.ts --update=none --coverage.enabled=false
+  - claim: 生成请求在排队前固定 WebKit 名单，缓存指纹与异步生成结果一致
+    kind: unit
+    status: passed
+    sha: 672646092a2d9d7e4cc02ffc27cea31eb0de8105
+    environment: macOS，Node 24.18.0，pnpm 12.9.1
+    command: env CI=1 corepack pnpm --filter weapp-tailwindcss exec vitest run test/compiler/core-compiler-webkit-prefixes.test.ts --update=none --coverage.enabled=false && corepack pnpm --filter weapp-tailwindcss exec tsc -p tsconfig.typecheck.json --pretty false
   - claim: 微信严格构建、最终 WXSS 和对应 static 基线通过
     kind: integration
     status: passed
@@ -73,9 +79,9 @@ cssOptions: {
 
 扩展数组只追加默认名单；`[]` 不删除默认项。条目先去除首尾空白，再按大小写无关的完整属性名匹配，重复项去重，非法名称忽略，输入数组保持不变。保留下来的声明不改写属性大小写、值或 `!important`。legacy flex 属性清理也消费同一扩展名单；关键词值、transition 值和前缀 keyframes 继续使用既有规则。外部插件仍执行自己的兼容策略。
 
-主包解析、compiler、普通和 Vue scoped preflight、延迟生成、Webpack 最终清理及来源追踪均透传配置。compiler 同一次异步调用对名单取快照，使样式处理和最终清理一致；调用级数组替换实例扩展数组，后续未覆盖调用恢复实例配置。Web 分支和 Web snapshot 不应用小程序扩展名单。
+主包解析、compiler、普通和 Vue scoped preflight、延迟生成、Webpack 最终清理及来源追踪均透传配置。compiler 同一次异步调用对名单取快照，使样式处理和最终清理一致；调用级数组替换实例扩展数组，后续未覆盖调用恢复实例配置。Web 分支和 Web snapshot 不应用小程序扩展名单。生成请求在进入 compiler 队列前复制调用级名单，避免调用方在等待期间原位修改数组，导致缓存 key、异步生成和最终清理分别看到不同配置。
 
-沿用现有配置内容指纹即可处理数组原位修改。曾把恢复 `[]` 后的 `cache.output === true` 判断为缓存未失效；复核确认其合法复用此前 `[]` 的结果，实际 CSS 与首次结果一致。回归改为验证声明移除及完整输出恢复，不改变缓存指标语义。
+沿用现有配置内容指纹即可处理数组原位修改；生成阶段也必须使用同一份调用快照。曾把恢复 `[]` 后的 `cache.output === true` 判断为缓存未失效；复核确认其合法复用此前 `[]` 的结果，实际 CSS 与首次结果一致。回归改为验证声明移除及完整输出恢复，不改变缓存指标语义。
 
 ## 验证
 
@@ -107,7 +113,7 @@ env CI=1 corepack pnpm --filter weapp-tailwindcss exec vitest run test/compiler/
 env CI=1 corepack pnpm --filter weapp-tailwindcss exec vitest run test/ci/architecture-contract.test.ts test/ci/generation-ownership.test.ts --update=none --coverage.enabled=false
 ```
 
-全部通过。最后补充实例隔离和异步名单快照后，单独重跑 `mini-program-prefixes.test.ts`（35 项）与 `core-compiler-webkit-prefixes.test.ts`（11 项）通过。去重统计为 PostCSS 162 项、主包相关回归 27 项、架构契约 11 项。AST 用例的声明挂载到真实规则中，避免对游离节点调用 `remove()` 得出错误结论。
+全部通过。最后补充实例隔离和异步名单快照后，单独重跑 `mini-program-prefixes.test.ts`（35 项）与 `core-compiler-webkit-prefixes.test.ts`（12 项）通过。去重统计为 PostCSS 162 项、主包相关回归 27 项、架构契约 11 项。AST 用例的声明挂载到真实规则中，避免对游离节点调用 `remove()` 得出错误结论。
 
 重建后还以原生 `node` 的 ESM import 和 CJS require 加载当前工作树公共 exports，未使用源码 alias。PostCSS 从包目录运行 `node --input-type=module` / `node`：每种模式验证 7 条路径 × 默认、空数组、扩展、非法名称四种配置，加单参数 helper 兼容，共 29 个场景、141 条断言，分别解析到 `dist/transform.js` / `dist/transform.cjs`。
 
