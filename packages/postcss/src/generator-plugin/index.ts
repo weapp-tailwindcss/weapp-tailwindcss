@@ -45,6 +45,7 @@ function finalizeGeneratedCss(
     return css
   }
   return finalizeMiniProgramCss(css, {
+    preserveWebkitProperties: styleOptions?.cssOptions?.preserveWebkitProperties,
     cssSelectorReplacement: styleOptions?.cssOptions?.cssSelectorReplacement
       ?? styleOptions?.cssSelectorReplacement,
     isTailwindcssV4: true,

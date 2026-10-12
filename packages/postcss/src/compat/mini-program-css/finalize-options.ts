@@ -1,9 +1,11 @@
-import type { CssPreflightOptions, CssSelectorReplacement } from '../../types'
+import type { CssOptions, CssPreflightOptions, CssSelectorReplacement } from '../../types'
 
 export interface FinalizeMiniProgramCssOptions {
   cssPreflight?: CssPreflightOptions | undefined
   cssSelectorReplacement?: CssSelectorReplacement | undefined
   isTailwindcssV4?: boolean | undefined
+  /** 增补小程序 WebKit 属性保留名单，不改变关键词值、transition 项或 keyframes 的清理。 */
+  preserveWebkitProperties?: CssOptions['preserveWebkitProperties']
   /**
    * 是否递归移除子规则被清理而变空的父级条件规则。
    *
