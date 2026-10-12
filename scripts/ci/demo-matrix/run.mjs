@@ -121,7 +121,7 @@ async function runCase(item) {
     activeSession = session
     if (isWeb(item) || item.name.startsWith('web/')) {
       result.endpoint = { requestedPort: port, url: await developmentUrl(item, port, session) }
-      browser = await openBrowser(result.endpoint.url, session, artifactDir)
+      browser = await openBrowser(result.endpoint.url, session, artifactDir, { vueHydration: item.family === 'uni' && item.target === 'h5:ssr' })
     }
     for (const round of ['initial', 'replace', 'add', 'restore']) {
       assert.ok(!interrupted, 'Matrix interrupted')

@@ -4,6 +4,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { parse } from 'yaml'
+import { validateVerification } from './verification.mjs'
 
 const root = fileURLToPath(new URL('../../', import.meta.url))
 const read = file => readFileSync(file, 'utf8')
@@ -67,6 +68,9 @@ export function validateLesson(markdown, repoRoot) {
   }
   if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
     return ['复盘 frontmatter 必须是对象']
+  }
+  if (Object.hasOwn(metadata, 'verification')) {
+    errors.push(...validateVerification(metadata.verification))
   }
   if (!['verified', 'partial', 'superseded'].includes(metadata.status)) {
     errors.push('复盘 status 无效')

@@ -7,7 +7,7 @@ import { inspectStyles } from './output.mjs'
 import { probeClasses } from './probe.mjs'
 import { until } from './process.mjs'
 
-export async function openBrowser(url, session, artifactDir) {
+export async function openBrowser(url, session, artifactDir, { vueHydration = false } = {}) {
   const browser = await chromium.launch({ headless: true })
   const page = await browser.newPage({ viewport: { width: 1200, height: 900 } })
   const events = []
@@ -112,6 +112,11 @@ export async function openBrowser(url, session, artifactDir) {
       await page.locator('#tw-matrix-height').waitFor({ timeout: 5000 })
       // requestfinished 只证明响应已下载，async 脚本可能尚未执行；load 不等待后台 fetch。
       await page.waitForLoadState('load', { timeout: 5000 })
+      if (vueHydration) {
+        // SSR 探针可能先于客户端页面模块出现，保存源码前须确认所属组件已经挂载。
+        const mounted = await page.locator('#tw-matrix-height').evaluate(element => element.__vueParentComponent?.isMounted === true)
+        assert.ok(mounted, 'SSR probe component has not completed Vue hydration')
+      }
       await assertUpdateIdle()
       // 最后一次异步检查也可能跨越导航，返回前同步复核当前文档和连接。
       assert.equal(documentVersion, version, 'Document changed while waiting for local scripts')
