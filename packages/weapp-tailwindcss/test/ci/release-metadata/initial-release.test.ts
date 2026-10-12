@@ -63,6 +63,12 @@ describe('发布元数据中的首发包', () => {
     data.base['packages/new/package.json'] = data.head['packages/new/package.json'] = json({ name: 'pkg-new', version: '1.0.1' })
     data.head['packages/new/CHANGELOG.md'] = data.head['packages/new/CHANGELOG.md'].replace('0.1.0', '1.0.1')
     data.head['.changeset/ledger.yaml'] = data.head['.changeset/ledger.yaml'].replace('pkg-new@0.1.0', 'pkg-new@1.0.1')
+    expect(isMetadata(data)).toBe(false)
+    data.head['packages/new/package.json'] = json({ name: 'pkg-new', version: '1.1.0' })
+    data.head['packages/a/package.json'] = json({ name: 'pkg-a', version: '1.1.0' })
+    for (const file of ['packages/new/CHANGELOG.md', 'packages/a/CHANGELOG.md', '.changeset/ledger.yaml']) {
+      data.head[file] = data.head[file].replaceAll('1.0.1', '1.1.0')
+    }
     expect(isMetadata(data)).toBe(true)
     data.head['packages/a/package.json'] = data.base['packages/a/package.json']
     data.head['packages/a/CHANGELOG.md'] = data.base['packages/a/CHANGELOG.md']
