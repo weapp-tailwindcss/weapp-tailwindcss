@@ -187,11 +187,31 @@ export function createCompiler(options: CreateCompilerOptions = {}): Compiler {
     return entry.latestSnapshot?.roots[0]?.revision
   }
 
+  function snapshotCompilerGenerateRequest(request: CompilerGenerateRequest): CompilerGenerateRequest {
+    const styleOptions = request.styleOptions
+    const cssOptions = styleOptions?.cssOptions
+    const preserveWebkitProperties = cssOptions?.preserveWebkitProperties
+    if (!Array.isArray(preserveWebkitProperties)) {
+      return request
+    }
+    return {
+      ...request,
+      styleOptions: {
+        ...styleOptions,
+        cssOptions: {
+          ...cssOptions,
+          preserveWebkitProperties: [...preserveWebkitProperties],
+        },
+      },
+    }
+  }
+
   function generate(request: CompilerGenerateRequest) {
     ensureActive()
     const entry = rootStore.get(request.id)
+    const stableRequest = snapshotCompilerGenerateRequest(request)
     entry.pendingCount += 1
-    const execution = entry.pending.then(() => runGenerate(entry, request))
+    const execution = entry.pending.then(() => runGenerate(entry, stableRequest))
     const settled = execution.finally(() => {
       entry.pendingCount -= 1
       rootStore.trim()

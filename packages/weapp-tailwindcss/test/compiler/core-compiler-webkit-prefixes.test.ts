@@ -119,4 +119,45 @@ describe('Issue 1286 compiler WebKit preservation', () => {
     expect(removed.css).toBe(first.css)
     expect(removed.css).not.toContain(property)
   })
+
+  it('snapshots the generation whitelist before queued asynchronous work', async () => {
+    const { compiler } = createCase()
+    const properties = [property]
+    let signalReady: (() => void) | undefined
+    let release: (() => void) | undefined
+    const ready = new Promise<void>((resolve) => { signalReady = resolve })
+    const paused = new Promise<void>((resolve) => { release = resolve })
+    const gate = {
+      postcssPlugin: 'issue-1286-generation-gate',
+      Once() {
+        signalReady?.()
+        return paused
+      },
+    }
+    const utilitySource = await resolveTailwindV4Source({
+      base: process.cwd(),
+      css: '@utility issue-1286-generate-gate{-webkit-tap-highlight-color:transparent} @tailwind utilities;',
+    })
+    const request = {
+      id: 'issue-1286-generation-gate',
+      source: utilitySource,
+      candidates: ['issue-1286-generate-gate'],
+      scanSources: false,
+      target: 'weapp' as const,
+      styleOptions: {
+        cssOptions: { preserveWebkitProperties: properties },
+        postcssOptions: { plugins: [gate] },
+      },
+    }
+    const pending = compiler.generate(request)
+    await ready
+    properties.splice(0)
+    release?.()
+    const first = await pending
+    properties.push(property)
+    const second = await compiler.generate(request)
+    expect(first.css).toContain(`${property}: transparent`)
+    expect(second.css).toContain(`${property}: transparent`)
+    expect(second.cache.output).toBe(true)
+  })
 })
