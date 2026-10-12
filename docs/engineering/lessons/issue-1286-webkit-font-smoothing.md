@@ -9,6 +9,10 @@ regressions:
   - packages/weapp-tailwindcss/test/context/style-options-snapshot.test.ts
   - e2e/issue-1286-webkit-properties.test.ts
   - e2e/taro-webpack-react-tailwindcss-v4.test.ts
+  - e2e/taro-webpack-vue3-tailwindcss-v4.test.ts
+  - e2e/taro-plugin-html-style-output.test.ts
+  - e2e/taro-plugin-html-report.test.ts
+  - e2e/projectCssSnapshots.test.ts
 verification:
   - claim: 默认字体平滑、扩展名单、调用覆盖、缓存与 Web 分支边界通过定向回归
     kind: unit
@@ -40,10 +44,34 @@ verification:
     sha: 0990abd79a4dab69b0da229f37243a47bd5cfed4
     environment: macOS，Node 24.18.0，pnpm 12.9.1
     command: corepack pnpm --filter weapp-tailwindcss exec tsc -p tsconfig.typecheck.json --pretty false && corepack pnpm --filter weapp-tailwindcss tsd
+  - claim: 最新 main 的默认与扩展名单通过 55 项定向回归
+    kind: unit
+    status: passed
+    sha: 2c7a9675d64cc3d1921b98fd443861410ad9e5fb
+    environment: macOS，Node 24.18.0，pnpm 12.9.1；生产实现为该 main，测试和脚本包含本轮未提交收尾改动
+    command: env CI=1 corepack pnpm --filter @weapp-tailwindcss/postcss exec vitest run test/mini-program-prefixes.test.ts --update=none --coverage.enabled=false && env CI=1 corepack pnpm --filter weapp-tailwindcss exec vitest run test/compiler/core-compiler-webkit-prefixes.test.ts test/bundlers/webkit-prefixes.unit.test.ts test/context/style-options-snapshot.test.ts --update=none --coverage.enabled=false
+  - claim: React 与 Vue static 的 15 项回归及微信、支付宝各 2 项逐规则声明断言通过
+    kind: integration
+    status: passed
+    sha: 2c7a9675d64cc3d1921b98fd443861410ad9e5fb
+    environment: macOS，Node 24.18.0，pnpm 12.9.1，Taro 4.2.1，Tailwind CSS 4.3.3；包含本轮未提交测试与基线更新
+    command: env CI=1 E2E_SKIP_OPEN_AUTOMATOR=1 E2E_PROJECT_FILTER='^taro-webpack-(react|vue3)-tailwindcss-v4$' corepack pnpm exec vitest run --update=none -c e2e/vitest.e2e.config.ts e2e/taro-webpack-react-tailwindcss-v4.test.ts e2e/taro-webpack-vue3-tailwindcss-v4.test.ts --coverage.enabled=false
+  - claim: 四个 Taro 项目两种 plugin-html 模式的 32 份产物通过只读重建复验，14 项基线与映射回归通过
+    kind: integration
+    status: passed
+    sha: 2c7a9675d64cc3d1921b98fd443861410ad9e5fb
+    environment: macOS，Node 24.18.0，pnpm 12.9.1；包含本轮未提交脚本、测试与基线更新
+    command: env CI=1 WEAPP_TW_VERIFY_TARO_PLUGIN_HTML_SNAPSHOTS=1 corepack pnpm exec tsx scripts/taro-plugin-html-style-snapshots.ts
+  - claim: 两个 webpack 项目的 weapp、web、web-compact 生成对照通过 11 项不更新回归
+    kind: integration
+    status: passed
+    sha: 2c7a9675d64cc3d1921b98fd443861410ad9e5fb
+    environment: macOS，Node 24.18.0，pnpm 12.9.1；包含本轮未提交测试、脚本与基线更新
+    command: env CI=1 E2E_SKIP_OPEN_AUTOMATOR=1 E2E_PROJECT_FILTER='^taro-webpack-(react|vue3)-tailwindcss-v4$' corepack pnpm exec vitest run --update=none -c e2e/vitest.e2e.config.ts e2e/apps-generator-mode-compare.test.ts --coverage.enabled=false
   - claim: 微信及支付宝 IDE、设备中的字体渲染
     kind: native
     status: pending
-    sha: 0990abd79a4dab69b0da229f37243a47bd5cfed4
+    sha: 2c7a9675d64cc3d1921b98fd443861410ad9e5fb
     environment: 微信开发者工具、支付宝开发者工具及小程序设备
     reason: 本轮范围为定向测试和真实构建产物，未连接 IDE 或设备，不能由声明存在推断各宿主的视觉表现
 ---
@@ -149,6 +177,33 @@ git diff --check
 ```
 
 配置说明与 157 对中英文文档检查通过；PostCSS、主包的中文 patch change intent 通过 repoctl 检查，使用 `Refs #1286`。修改的生产源码通过定向 ESLint；提交 hook 使用 ESLint，未调用源码 Prettier。
+
+### 最新 main 的回归与基线收尾（2026-10-12）
+
+PR #1287 合并后的远端 main 为 `2c7a9675d64cc3d1921b98fd443861410ad9e5fb`。在独立分支 `codex/issue-1286-finalize-baselines` 复验，生产源码未改动；本节证据使用该 SHA 加本轮测试、脚本和基线差异，不代表 main 已包含这些收尾改动。按冻结锁文件完整安装依赖，原工作区保持不变。
+
+原始删除声明问题已经修复，但 Vue static 的旧基线缺少 `.nutui-iconfont` 的 `-webkit-font-smoothing: antialiased`。生成模式对照的 Vue weapp 基线也遗漏该声明，React 的 weapp/web/web-compact 基线遗漏已加入的 #1286 fixture。plugin-html 原测试只检查哈希字符串格式，实际报告与文件内容有漂移；新增断言在刷新前得到 5 项失败，确认哈希不符、Vue 字体平滑缺失、React fixture 缺失。
+
+作者与 utility 声明现在逐文件、逐规则断言，避免把多个输出合并后由一份正确规则掩盖另一份缺失。Vue 使用真实字体规则 `.nutui-iconfont` 验证；React 的 `.nut-icon` 是 SVG，不额外要求字体平滑。plugin-html 回归重新计算全部产物的 SHA-256、字节数和行数。
+
+快照脚本将所有构建写入系统临时 staging，目标构建全部成功后才更新持久基线；定向更新合并根报告并保留未选项目。新增只读模式重建后比较确定性元数据和实际字节，忽略构建耗时。直接 tsx 曾因 `shared.ts` 间接加载生成器的 `@/css-macro` 私有别名而失败；抽离轻量 CSS 文件映射模块、保留原入口重导出后恢复，增加 POSIX、Windows 反斜杠、盘符、根路径与空列表回归。该修复不向根配置注入包内 aliases。
+
+基线更新范围为两个 webpack 项目的普通 static、这两个项目的 weapp/web/web-compact 生成对照，以及四个 Taro 项目的两种 plugin-html 模式。plugin-html 同步实际产物结构：Vite `app.wxss` 引入 `app-origin.wxss`，React 同时采集登记在项目配置中的 issue-998 页面样式。这些产物来自当前真实构建及 import 图，未通过写输出目录或布局猜测补造。
+
+```sh
+env CI=1 E2E_SKIP_OPEN_AUTOMATOR=1 E2E_PROJECT_FILTER='^taro-webpack-(react|vue3)-tailwindcss-v4$' corepack pnpm exec vitest run -u -c e2e/vitest.e2e.config.ts e2e/taro-webpack-react-tailwindcss-v4.test.ts e2e/taro-webpack-vue3-tailwindcss-v4.test.ts
+env CI=1 E2E_SKIP_OPEN_AUTOMATOR=1 E2E_PROJECT_FILTER='^taro-webpack-(react|vue3)-tailwindcss-v4$' corepack pnpm exec vitest run -u -c e2e/vitest.e2e.config.ts e2e/apps-generator-mode-compare.test.ts --coverage.enabled=false
+env CI=1 corepack pnpm exec tsx scripts/taro-plugin-html-style-snapshots.ts
+env CI=1 WEAPP_TW_VERIFY_TARO_PLUGIN_HTML_SNAPSHOTS=1 corepack pnpm exec tsx scripts/taro-plugin-html-style-snapshots.ts
+env CI=1 corepack pnpm exec vitest run --update=none -c e2e/vitest.e2e.config.ts e2e/taro-plugin-html-style-output.test.ts e2e/taro-plugin-html-report.test.ts e2e/projectCssSnapshots.test.ts --coverage.enabled=false
+env CI=1 E2E_SKIP_OPEN_AUTOMATOR=1 E2E_PROJECT_FILTER='^taro-webpack-(react|vue3)-tailwindcss-v4$' corepack pnpm exec vitest run --update=none -c e2e/vitest.e2e.config.ts e2e/taro-webpack-react-tailwindcss-v4.test.ts e2e/taro-webpack-vue3-tailwindcss-v4.test.ts --coverage.enabled=false
+env CI=1 E2E_SKIP_BUILD=1 corepack pnpm exec vitest run --update=none -c e2e/vitest.e2e.config.ts e2e/issue-1286-webkit-properties.test.ts --coverage.enabled=false
+env CI=1 TARO_BUILD_STRICT=1 corepack pnpm --filter @weapp-tailwindcss-demo/taro-webpack-react-tailwindcss-v4 build:alipay
+env CI=1 E2E_ISSUE_1286_PLATFORM=alipay E2E_SKIP_BUILD=1 corepack pnpm exec vitest run --update=none -c e2e/vitest.e2e.config.ts e2e/issue-1286-webkit-properties.test.ts --coverage.enabled=false
+env CI=1 E2E_SKIP_OPEN_AUTOMATOR=1 E2E_PROJECT_FILTER='^taro-webpack-(react|vue3)-tailwindcss-v4$' corepack pnpm exec vitest run --update=none -c e2e/vitest.e2e.config.ts e2e/apps-generator-mode-compare.test.ts --coverage.enabled=false
+```
+
+只读 plugin-html 复验通过四项目、八次真实构建与 32 份产物比较；14 项报告、逐规则声明及路径映射回归通过。普通 static 不更新复验 15 项通过，生成模式对照不更新复验 11 项通过，微信、支付宝各 2 项逐规则声明回归通过。生产实现的 55 项定向回归通过，合计 99 项不同平台/测试场景通过，包和依赖重新构建通过。ESLint 为 0 错误，仅保留原 issue 用例的 console 警告；复盘 Markdown 按现有 lint 配置被忽略，内容与引用由 `agents:check` 校验。没有启动 IDE、浏览器或全面验收，没有跳过失败构建，也没有扩大到其他框架的基线。
 
 ## 适用边界
 

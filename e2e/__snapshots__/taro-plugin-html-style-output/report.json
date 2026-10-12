@@ -4,53 +4,67 @@
     "cssFiles": [
       "dist/app.wxss",
       "dist/sub-normal/pages/index.wxss",
-      "dist/sub-independent/pages/index.wxss"
+      "dist/sub-independent/pages/index.wxss",
+      "dist/pages/issue-998/index.wxss"
     ],
     "modes": [
       {
         "mode": "with-plugin-html",
         "status": "passed",
         "command": "pnpm run build:weapp",
-        "durationMs": 8229,
+        "durationMs": 9956,
         "artifacts": [
           {
             "fileName": "app.wxss",
             "artifact": "artifacts/app.wxss",
-            "bytes": 348616,
-            "lines": 11435,
-            "selectors": 2036,
+            "bytes": 293621,
+            "lines": 9947,
+            "selectors": 1894,
             "hasTaroSelector": true,
             "hasWeappEscapedArbitrarySelector": true,
             "h5AliasSelectors": 68,
             "rawHtmlTagSelectors": 0,
             "cursorDeclarations": 0,
-            "sha256": "f1ea6b4c1049b8c1765126e8cbbec0656a7b7d67a08c08d6c5fba7f6e855364b"
+            "sha256": "b292fea245b45936d0bfef5840b5b8a4b031f3d2a4dbec6e91c2c55e20f26bfc"
           },
           {
             "fileName": "sub-normal/pages/index.wxss",
             "artifact": "artifacts/sub-normal__pages__index.wxss",
-            "bytes": 24531,
-            "lines": 711,
-            "selectors": 155,
+            "bytes": 1037,
+            "lines": 30,
+            "selectors": 4,
             "hasTaroSelector": true,
             "hasWeappEscapedArbitrarySelector": true,
             "h5AliasSelectors": 0,
             "rawHtmlTagSelectors": 0,
             "cursorDeclarations": 0,
-            "sha256": "a1c13003fd2a4dcb10b6b809f1086687772593698eb3aa17854cbecc4ed903cf"
+            "sha256": "ea01beae5d1ba00b0d64b01b8c4083d96384c2bcdc6a0f50ed0806dc9bc8a7c8"
           },
           {
             "fileName": "sub-independent/pages/index.wxss",
             "artifact": "artifacts/sub-independent__pages__index.wxss",
-            "bytes": 24580,
-            "lines": 720,
-            "selectors": 155,
+            "bytes": 2348,
+            "lines": 55,
+            "selectors": 9,
             "hasTaroSelector": true,
             "hasWeappEscapedArbitrarySelector": true,
             "h5AliasSelectors": 0,
             "rawHtmlTagSelectors": 0,
             "cursorDeclarations": 0,
-            "sha256": "cb5303527bd3b28b7506e6a5df87676c9ecd5cc8e5a28a49e56864ee6acd1308"
+            "sha256": "0b9f9e4862f2d400dc6427432997fc850c2e5221cad0d1fce2b96b1bb935464c"
+          },
+          {
+            "fileName": "pages/issue-998/index.wxss",
+            "artifact": "artifacts/pages__issue-998__index.wxss",
+            "bytes": 17200,
+            "lines": 447,
+            "selectors": 86,
+            "hasTaroSelector": false,
+            "hasWeappEscapedArbitrarySelector": true,
+            "h5AliasSelectors": 0,
+            "rawHtmlTagSelectors": 0,
+            "cursorDeclarations": 0,
+            "sha256": "74860b4a48454928129c650e4bbcfa07358b284e6bd51c542cc1351b2ac98934"
           }
         ]
       },
@@ -58,46 +72,59 @@
         "mode": "without-plugin-html",
         "status": "passed",
         "command": "pnpm run build:weapp",
-        "durationMs": 8003,
+        "durationMs": 8293,
         "artifacts": [
           {
             "fileName": "app.wxss",
             "artifact": "artifacts/app.wxss",
-            "bytes": 349872,
-            "lines": 11509,
-            "selectors": 2047,
+            "bytes": 294645,
+            "lines": 10008,
+            "selectors": 1902,
             "hasTaroSelector": true,
             "hasWeappEscapedArbitrarySelector": true,
             "h5AliasSelectors": 2,
-            "rawHtmlTagSelectors": 34,
-            "cursorDeclarations": 47,
-            "sha256": "2e756f8ce46cd63db9b1167b247bd0cea50c5320f813edbb26b20d86d39f4d05"
+            "rawHtmlTagSelectors": 33,
+            "cursorDeclarations": 45,
+            "sha256": "d621df5c6e405ca843ace7e9db963ba86ee21b999631bc722b95c5e8e4bb126d"
           },
           {
             "fileName": "sub-normal/pages/index.wxss",
             "artifact": "artifacts/sub-normal__pages__index.wxss",
-            "bytes": 24531,
-            "lines": 711,
-            "selectors": 155,
+            "bytes": 1037,
+            "lines": 30,
+            "selectors": 4,
             "hasTaroSelector": true,
             "hasWeappEscapedArbitrarySelector": true,
             "h5AliasSelectors": 0,
             "rawHtmlTagSelectors": 0,
             "cursorDeclarations": 0,
-            "sha256": "a1c13003fd2a4dcb10b6b809f1086687772593698eb3aa17854cbecc4ed903cf"
+            "sha256": "ea01beae5d1ba00b0d64b01b8c4083d96384c2bcdc6a0f50ed0806dc9bc8a7c8"
           },
           {
             "fileName": "sub-independent/pages/index.wxss",
             "artifact": "artifacts/sub-independent__pages__index.wxss",
-            "bytes": 24580,
-            "lines": 720,
-            "selectors": 155,
+            "bytes": 2348,
+            "lines": 55,
+            "selectors": 9,
             "hasTaroSelector": true,
             "hasWeappEscapedArbitrarySelector": true,
             "h5AliasSelectors": 0,
             "rawHtmlTagSelectors": 0,
             "cursorDeclarations": 0,
-            "sha256": "cb5303527bd3b28b7506e6a5df87676c9ecd5cc8e5a28a49e56864ee6acd1308"
+            "sha256": "0b9f9e4862f2d400dc6427432997fc850c2e5221cad0d1fce2b96b1bb935464c"
+          },
+          {
+            "fileName": "pages/issue-998/index.wxss",
+            "artifact": "artifacts/pages__issue-998__index.wxss",
+            "bytes": 17200,
+            "lines": 447,
+            "selectors": 86,
+            "hasTaroSelector": false,
+            "hasWeappEscapedArbitrarySelector": true,
+            "h5AliasSelectors": 0,
+            "rawHtmlTagSelectors": 0,
+            "cursorDeclarations": 0,
+            "sha256": "74860b4a48454928129c650e4bbcfa07358b284e6bd51c542cc1351b2ac98934"
           }
         ]
       }
@@ -117,53 +144,80 @@
     "cssFiles": [
       "dist/app.wxss",
       "dist/sub-normal/pages/index.wxss",
-      "dist/sub-independent/pages/index.wxss"
+      "dist/sub-independent/pages/index.wxss",
+      "dist/pages/issue-998/index.wxss"
     ],
     "modes": [
       {
         "mode": "with-plugin-html",
         "status": "passed",
         "command": "pnpm run build:weapp",
-        "durationMs": 9367,
+        "durationMs": 10827,
         "artifacts": [
           {
             "fileName": "app.wxss",
             "artifact": "artifacts/app.wxss",
-            "bytes": 572965,
-            "lines": 18799,
-            "selectors": 3646,
+            "bytes": 29,
+            "lines": 1,
+            "selectors": 0,
+            "hasTaroSelector": false,
+            "hasWeappEscapedArbitrarySelector": false,
+            "h5AliasSelectors": 0,
+            "rawHtmlTagSelectors": 0,
+            "cursorDeclarations": 0,
+            "sha256": "5b732775630ae6de39a82cca75817bd15c9b27ee470f3274e757fe072db7d992"
+          },
+          {
+            "fileName": "app-origin.wxss",
+            "artifact": "artifacts/app-origin.wxss",
+            "bytes": 408857,
+            "lines": 14230,
+            "selectors": 2371,
             "hasTaroSelector": true,
             "hasWeappEscapedArbitrarySelector": true,
-            "h5AliasSelectors": 70,
-            "rawHtmlTagSelectors": 34,
-            "cursorDeclarations": 94,
-            "sha256": "38de7a4e5e21ef3c101fb41d6b94c8c66f640e0974a1824655be1c3d0ed36556"
+            "h5AliasSelectors": 81,
+            "rawHtmlTagSelectors": 0,
+            "cursorDeclarations": 63,
+            "sha256": "ec4710b19e10122519ebf8a5116a672dd7d7df4f5ca5c4d56d0f57104d2aac96"
           },
           {
             "fileName": "sub-normal/pages/index.wxss",
             "artifact": "artifacts/sub-normal__pages__index.wxss",
-            "bytes": 1024,
-            "lines": 30,
-            "selectors": 4,
+            "bytes": 6210,
+            "lines": 165,
+            "selectors": 28,
             "hasTaroSelector": true,
             "hasWeappEscapedArbitrarySelector": true,
             "h5AliasSelectors": 0,
             "rawHtmlTagSelectors": 0,
             "cursorDeclarations": 0,
-            "sha256": "5e8e9a05493db34134f1a42a37385ea091ec12e3848c8dfa656a29436958f261"
+            "sha256": "ac1b31500b194bf7eba1fc6dc961f6017d2243e21274243a5bc7a4007fdc35c9"
           },
           {
             "fileName": "sub-independent/pages/index.wxss",
             "artifact": "artifacts/sub-independent__pages__index.wxss",
-            "bytes": 1059,
-            "lines": 30,
-            "selectors": 4,
+            "bytes": 2026,
+            "lines": 45,
+            "selectors": 7,
             "hasTaroSelector": true,
             "hasWeappEscapedArbitrarySelector": true,
             "h5AliasSelectors": 0,
             "rawHtmlTagSelectors": 0,
             "cursorDeclarations": 0,
-            "sha256": "dbcc8c2e8a18aec1776dc5d4d43b8d35f6e328d14d3c2bae94fda34f86a2f907"
+            "sha256": "48232bef06dd2923d553ac33be9a4c33da970cf8cc3fafb0755810e5440b7029"
+          },
+          {
+            "fileName": "pages/issue-998/index.wxss",
+            "artifact": "artifacts/pages__issue-998__index.wxss",
+            "bytes": 2402,
+            "lines": 79,
+            "selectors": 9,
+            "hasTaroSelector": false,
+            "hasWeappEscapedArbitrarySelector": true,
+            "h5AliasSelectors": 0,
+            "rawHtmlTagSelectors": 0,
+            "cursorDeclarations": 0,
+            "sha256": "f7d1c38ca34062feb282d0c17c9bdec803a4d3f564a45891263bfbf3ff525b2a"
           }
         ]
       },
@@ -171,46 +225,72 @@
         "mode": "without-plugin-html",
         "status": "passed",
         "command": "pnpm run build:weapp",
-        "durationMs": 9389,
+        "durationMs": 10882,
         "artifacts": [
           {
             "fileName": "app.wxss",
             "artifact": "artifacts/app.wxss",
-            "bytes": 572965,
-            "lines": 18799,
-            "selectors": 3646,
+            "bytes": 29,
+            "lines": 1,
+            "selectors": 0,
+            "hasTaroSelector": false,
+            "hasWeappEscapedArbitrarySelector": false,
+            "h5AliasSelectors": 0,
+            "rawHtmlTagSelectors": 0,
+            "cursorDeclarations": 0,
+            "sha256": "5b732775630ae6de39a82cca75817bd15c9b27ee470f3274e757fe072db7d992"
+          },
+          {
+            "fileName": "app-origin.wxss",
+            "artifact": "artifacts/app-origin.wxss",
+            "bytes": 408857,
+            "lines": 14230,
+            "selectors": 2371,
             "hasTaroSelector": true,
             "hasWeappEscapedArbitrarySelector": true,
-            "h5AliasSelectors": 70,
-            "rawHtmlTagSelectors": 34,
-            "cursorDeclarations": 94,
-            "sha256": "38de7a4e5e21ef3c101fb41d6b94c8c66f640e0974a1824655be1c3d0ed36556"
+            "h5AliasSelectors": 81,
+            "rawHtmlTagSelectors": 0,
+            "cursorDeclarations": 63,
+            "sha256": "ec4710b19e10122519ebf8a5116a672dd7d7df4f5ca5c4d56d0f57104d2aac96"
           },
           {
             "fileName": "sub-normal/pages/index.wxss",
             "artifact": "artifacts/sub-normal__pages__index.wxss",
-            "bytes": 1024,
-            "lines": 30,
-            "selectors": 4,
+            "bytes": 6210,
+            "lines": 165,
+            "selectors": 28,
             "hasTaroSelector": true,
             "hasWeappEscapedArbitrarySelector": true,
             "h5AliasSelectors": 0,
             "rawHtmlTagSelectors": 0,
             "cursorDeclarations": 0,
-            "sha256": "5e8e9a05493db34134f1a42a37385ea091ec12e3848c8dfa656a29436958f261"
+            "sha256": "ac1b31500b194bf7eba1fc6dc961f6017d2243e21274243a5bc7a4007fdc35c9"
           },
           {
             "fileName": "sub-independent/pages/index.wxss",
             "artifact": "artifacts/sub-independent__pages__index.wxss",
-            "bytes": 1059,
-            "lines": 30,
-            "selectors": 4,
+            "bytes": 2026,
+            "lines": 45,
+            "selectors": 7,
             "hasTaroSelector": true,
             "hasWeappEscapedArbitrarySelector": true,
             "h5AliasSelectors": 0,
             "rawHtmlTagSelectors": 0,
             "cursorDeclarations": 0,
-            "sha256": "dbcc8c2e8a18aec1776dc5d4d43b8d35f6e328d14d3c2bae94fda34f86a2f907"
+            "sha256": "48232bef06dd2923d553ac33be9a4c33da970cf8cc3fafb0755810e5440b7029"
+          },
+          {
+            "fileName": "pages/issue-998/index.wxss",
+            "artifact": "artifacts/pages__issue-998__index.wxss",
+            "bytes": 2402,
+            "lines": 79,
+            "selectors": 9,
+            "hasTaroSelector": false,
+            "hasWeappEscapedArbitrarySelector": true,
+            "h5AliasSelectors": 0,
+            "rawHtmlTagSelectors": 0,
+            "cursorDeclarations": 0,
+            "sha256": "f7d1c38ca34062feb282d0c17c9bdec803a4d3f564a45891263bfbf3ff525b2a"
           }
         ]
       }
@@ -235,46 +315,46 @@
         "mode": "with-plugin-html",
         "status": "passed",
         "command": "pnpm run build:weapp",
-        "durationMs": 9441,
+        "durationMs": 10953,
         "artifacts": [
           {
             "fileName": "app.wxss",
             "artifact": "artifacts/app.wxss",
-            "bytes": 366201,
-            "lines": 10119,
-            "selectors": 1901,
+            "bytes": 237798,
+            "lines": 8456,
+            "selectors": 1686,
             "hasTaroSelector": true,
             "hasWeappEscapedArbitrarySelector": true,
-            "h5AliasSelectors": 44,
+            "h5AliasSelectors": 41,
             "rawHtmlTagSelectors": 0,
             "cursorDeclarations": 0,
-            "sha256": "dd8a95483f9d5334ca189e6e72bec55179529254a646d0560387791a47962475"
+            "sha256": "6d2af6de190d832cf481561484ade091914fba03879ade1e79065c009bec79a8"
           },
           {
             "fileName": "sub-normal/pages/index.wxss",
             "artifact": "artifacts/sub-normal__pages__index.wxss",
-            "bytes": 19046,
-            "lines": 726,
-            "selectors": 172,
+            "bytes": 1034,
+            "lines": 30,
+            "selectors": 4,
             "hasTaroSelector": true,
             "hasWeappEscapedArbitrarySelector": true,
             "h5AliasSelectors": 0,
             "rawHtmlTagSelectors": 0,
             "cursorDeclarations": 0,
-            "sha256": "c1049ac13379d328c6a9bf11daad6397fa06019e5981ed1a760f321dd14950b5"
+            "sha256": "0629617e3672e84552125370dbab512e7fdff0d60984532986b2328764ee9b68"
           },
           {
             "fileName": "sub-independent/pages/index.wxss",
             "artifact": "artifacts/sub-independent__pages__index.wxss",
-            "bytes": 19728,
-            "lines": 746,
-            "selectors": 172,
+            "bytes": 1929,
+            "lines": 40,
+            "selectors": 6,
             "hasTaroSelector": true,
             "hasWeappEscapedArbitrarySelector": true,
             "h5AliasSelectors": 0,
             "rawHtmlTagSelectors": 0,
             "cursorDeclarations": 0,
-            "sha256": "cdadf277b529ca4d4aa2e7f591fcf4a1591f959d4b8929b264e68cec45f8b88a"
+            "sha256": "09ec569dd3e61c706517efce30fdb63ee6eb88015c74158214be1141321ab465"
           }
         ]
       },
@@ -282,46 +362,46 @@
         "mode": "without-plugin-html",
         "status": "passed",
         "command": "pnpm run build:weapp",
-        "durationMs": 9146,
+        "durationMs": 9892,
         "artifacts": [
           {
             "fileName": "app.wxss",
             "artifact": "artifacts/app.wxss",
-            "bytes": 367536,
-            "lines": 10186,
-            "selectors": 1908,
+            "bytes": 238815,
+            "lines": 8508,
+            "selectors": 1690,
             "hasTaroSelector": true,
             "hasWeappEscapedArbitrarySelector": true,
             "h5AliasSelectors": 0,
-            "rawHtmlTagSelectors": 34,
-            "cursorDeclarations": 51,
-            "sha256": "6c77ba7fc8691e7109892e064adb2bf300c687a36c6d1b50ec2287f6fcba30b3"
+            "rawHtmlTagSelectors": 30,
+            "cursorDeclarations": 48,
+            "sha256": "ea2cf41403f578afc537a8c181af0cb76bdb9da514c36c36af7d5b1e1c96aaac"
           },
           {
             "fileName": "sub-normal/pages/index.wxss",
             "artifact": "artifacts/sub-normal__pages__index.wxss",
-            "bytes": 19046,
-            "lines": 726,
-            "selectors": 172,
+            "bytes": 1034,
+            "lines": 30,
+            "selectors": 4,
             "hasTaroSelector": true,
             "hasWeappEscapedArbitrarySelector": true,
             "h5AliasSelectors": 0,
             "rawHtmlTagSelectors": 0,
             "cursorDeclarations": 0,
-            "sha256": "c1049ac13379d328c6a9bf11daad6397fa06019e5981ed1a760f321dd14950b5"
+            "sha256": "0629617e3672e84552125370dbab512e7fdff0d60984532986b2328764ee9b68"
           },
           {
             "fileName": "sub-independent/pages/index.wxss",
             "artifact": "artifacts/sub-independent__pages__index.wxss",
-            "bytes": 19728,
-            "lines": 746,
-            "selectors": 172,
+            "bytes": 1929,
+            "lines": 40,
+            "selectors": 6,
             "hasTaroSelector": true,
             "hasWeappEscapedArbitrarySelector": true,
             "h5AliasSelectors": 0,
             "rawHtmlTagSelectors": 0,
             "cursorDeclarations": 0,
-            "sha256": "cdadf277b529ca4d4aa2e7f591fcf4a1591f959d4b8929b264e68cec45f8b88a"
+            "sha256": "09ec569dd3e61c706517efce30fdb63ee6eb88015c74158214be1141321ab465"
           }
         ]
       }
@@ -348,46 +428,59 @@
         "mode": "with-plugin-html",
         "status": "passed",
         "command": "pnpm run build:weapp",
-        "durationMs": 7325,
+        "durationMs": 8181,
         "artifacts": [
           {
             "fileName": "app.wxss",
             "artifact": "artifacts/app.wxss",
-            "bytes": 453947,
-            "lines": 15407,
-            "selectors": 2964,
+            "bytes": 29,
+            "lines": 1,
+            "selectors": 0,
+            "hasTaroSelector": false,
+            "hasWeappEscapedArbitrarySelector": false,
+            "h5AliasSelectors": 0,
+            "rawHtmlTagSelectors": 0,
+            "cursorDeclarations": 0,
+            "sha256": "5b732775630ae6de39a82cca75817bd15c9b27ee470f3274e757fe072db7d992"
+          },
+          {
+            "fileName": "app-origin.wxss",
+            "artifact": "artifacts/app-origin.wxss",
+            "bytes": 319449,
+            "lines": 11154,
+            "selectors": 1872,
             "hasTaroSelector": true,
             "hasWeappEscapedArbitrarySelector": true,
-            "h5AliasSelectors": 41,
-            "rawHtmlTagSelectors": 31,
-            "cursorDeclarations": 98,
-            "sha256": "e0df0855984e277e9c2abf6fab35a45a1a4ca776588bf3bea629bf199f1f5d43"
+            "h5AliasSelectors": 50,
+            "rawHtmlTagSelectors": 0,
+            "cursorDeclarations": 66,
+            "sha256": "4cb2bf343a2290c619bdd0908e460728ac481d4ac3c213605db2d3e8af7c8ba6"
           },
           {
             "fileName": "sub-normal/pages/index.wxss",
             "artifact": "artifacts/sub-normal__pages__index.wxss",
-            "bytes": 1021,
-            "lines": 30,
-            "selectors": 4,
+            "bytes": 1881,
+            "lines": 40,
+            "selectors": 6,
             "hasTaroSelector": true,
             "hasWeappEscapedArbitrarySelector": true,
             "h5AliasSelectors": 0,
             "rawHtmlTagSelectors": 0,
             "cursorDeclarations": 0,
-            "sha256": "c6b24e88818714728ff2bfd335a9671d787314588e651069ab7b80c240c439ba"
+            "sha256": "24eee8acb1895fd1d7de8bf5e78a31ba753c031c7bef1fad45617244fa9b12ec"
           },
           {
             "fileName": "sub-independent/pages/index.wxss",
             "artifact": "artifacts/sub-independent__pages__index.wxss",
-            "bytes": 1056,
-            "lines": 30,
-            "selectors": 4,
+            "bytes": 1916,
+            "lines": 40,
+            "selectors": 6,
             "hasTaroSelector": true,
             "hasWeappEscapedArbitrarySelector": true,
             "h5AliasSelectors": 0,
             "rawHtmlTagSelectors": 0,
             "cursorDeclarations": 0,
-            "sha256": "03d3c09816dbd184fa37661f5ab0f12ee369b44ea4ef8b4d7fc9720381bcceb1"
+            "sha256": "4349093e6b4ff68012e19c2c29d992c7d845292b9f13abcbdd7f02f62c3d4775"
           }
         ]
       },
@@ -395,46 +488,59 @@
         "mode": "without-plugin-html",
         "status": "passed",
         "command": "pnpm run build:weapp",
-        "durationMs": 7193,
+        "durationMs": 7764,
         "artifacts": [
           {
             "fileName": "app.wxss",
             "artifact": "artifacts/app.wxss",
-            "bytes": 453947,
-            "lines": 15407,
-            "selectors": 2964,
+            "bytes": 29,
+            "lines": 1,
+            "selectors": 0,
+            "hasTaroSelector": false,
+            "hasWeappEscapedArbitrarySelector": false,
+            "h5AliasSelectors": 0,
+            "rawHtmlTagSelectors": 0,
+            "cursorDeclarations": 0,
+            "sha256": "5b732775630ae6de39a82cca75817bd15c9b27ee470f3274e757fe072db7d992"
+          },
+          {
+            "fileName": "app-origin.wxss",
+            "artifact": "artifacts/app-origin.wxss",
+            "bytes": 319449,
+            "lines": 11154,
+            "selectors": 1872,
             "hasTaroSelector": true,
             "hasWeappEscapedArbitrarySelector": true,
-            "h5AliasSelectors": 41,
-            "rawHtmlTagSelectors": 31,
-            "cursorDeclarations": 98,
-            "sha256": "e0df0855984e277e9c2abf6fab35a45a1a4ca776588bf3bea629bf199f1f5d43"
+            "h5AliasSelectors": 50,
+            "rawHtmlTagSelectors": 0,
+            "cursorDeclarations": 66,
+            "sha256": "4cb2bf343a2290c619bdd0908e460728ac481d4ac3c213605db2d3e8af7c8ba6"
           },
           {
             "fileName": "sub-normal/pages/index.wxss",
             "artifact": "artifacts/sub-normal__pages__index.wxss",
-            "bytes": 1021,
-            "lines": 30,
-            "selectors": 4,
+            "bytes": 1881,
+            "lines": 40,
+            "selectors": 6,
             "hasTaroSelector": true,
             "hasWeappEscapedArbitrarySelector": true,
             "h5AliasSelectors": 0,
             "rawHtmlTagSelectors": 0,
             "cursorDeclarations": 0,
-            "sha256": "c6b24e88818714728ff2bfd335a9671d787314588e651069ab7b80c240c439ba"
+            "sha256": "24eee8acb1895fd1d7de8bf5e78a31ba753c031c7bef1fad45617244fa9b12ec"
           },
           {
             "fileName": "sub-independent/pages/index.wxss",
             "artifact": "artifacts/sub-independent__pages__index.wxss",
-            "bytes": 1056,
-            "lines": 30,
-            "selectors": 4,
+            "bytes": 1916,
+            "lines": 40,
+            "selectors": 6,
             "hasTaroSelector": true,
             "hasWeappEscapedArbitrarySelector": true,
             "h5AliasSelectors": 0,
             "rawHtmlTagSelectors": 0,
             "cursorDeclarations": 0,
-            "sha256": "03d3c09816dbd184fa37661f5ab0f12ee369b44ea4ef8b4d7fc9720381bcceb1"
+            "sha256": "4349093e6b4ff68012e19c2c29d992c7d845292b9f13abcbdd7f02f62c3d4775"
           }
         ]
       }

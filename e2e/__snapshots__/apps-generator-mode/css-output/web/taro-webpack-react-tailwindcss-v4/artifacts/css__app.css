@@ -473,6 +473,7 @@ page {
     }
   }
 }
+/* Refs #1286：作者样式与生成工具类都应保留字体平滑和显式扩展的 WebKit 属性。 */
 @charset "UTF-8";
 @-webkit-keyframes nutFadeIn {
   0% {
@@ -13456,6 +13457,20 @@ page {
   .text-slate-900 {
     color: var(--color-slate-900);
   }
+ /*tokens: antialiased <= <tailwind generated> */
+  .antialiased {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+ /*tokens: subpixel-antialiased <= <tailwind generated> */
+  .subpixel-antialiased {
+    -webkit-font-smoothing: auto;
+    -moz-osx-font-smoothing: auto;
+  }
+ /*tokens: issue-1286-highlight <= <tailwind generated> */
+  .issue-1286-highlight {
+    -webkit-tap-highlight-color: transparent;
+  }
   .before\:content-\[\'现在，让我们开始神奇的_tailwindcss_开发之旅吧！\'\]::before {
     --tw-content: '现在，让我们开始神奇的 tailwindcss 开发之旅吧！';
     content: var(--tw-content);
@@ -13502,6 +13517,12 @@ page {
 taro-view-core {
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
+}
+.issue-1286-icon {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-appearance: none;
 }
 @layer base {
   taro-button-core::after,

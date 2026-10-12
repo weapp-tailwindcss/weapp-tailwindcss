@@ -8,17 +8,17 @@
 - changed files: `app.wxss`
 - only with plugin-html: -
 - only without plugin-html: -
-- h5-* aliases: 44 / 0
-- raw HTML tag selectors: 0 / 34
-- cursor declarations: 0 / 51
+- h5-* aliases: 41 / 0
+- raw HTML tag selectors: 0 / 30
+- cursor declarations: 0 / 48
 
 ## File Index
 
 | Mode | File | Artifact | Bytes | Selectors | h5-* aliases | Raw HTML tags | Cursor declarations | Hash |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| with-plugin-html | `app.wxss` | [with-plugin-html/artifacts/app.wxss](with-plugin-html/artifacts/app.wxss) | 366201 | 1901 | 44 | 0 | 0 | `dd8a95483f9d5334ca189e6e72bec55179529254a646d0560387791a47962475` |
-| with-plugin-html | `sub-normal/pages/index.wxss` | [with-plugin-html/artifacts/sub-normal__pages__index.wxss](with-plugin-html/artifacts/sub-normal__pages__index.wxss) | 19046 | 172 | 0 | 0 | 0 | `c1049ac13379d328c6a9bf11daad6397fa06019e5981ed1a760f321dd14950b5` |
-| with-plugin-html | `sub-independent/pages/index.wxss` | [with-plugin-html/artifacts/sub-independent__pages__index.wxss](with-plugin-html/artifacts/sub-independent__pages__index.wxss) | 19728 | 172 | 0 | 0 | 0 | `cdadf277b529ca4d4aa2e7f591fcf4a1591f959d4b8929b264e68cec45f8b88a` |
-| without-plugin-html | `app.wxss` | [without-plugin-html/artifacts/app.wxss](without-plugin-html/artifacts/app.wxss) | 367536 | 1908 | 0 | 34 | 51 | `6c77ba7fc8691e7109892e064adb2bf300c687a36c6d1b50ec2287f6fcba30b3` |
-| without-plugin-html | `sub-normal/pages/index.wxss` | [without-plugin-html/artifacts/sub-normal__pages__index.wxss](without-plugin-html/artifacts/sub-normal__pages__index.wxss) | 19046 | 172 | 0 | 0 | 0 | `c1049ac13379d328c6a9bf11daad6397fa06019e5981ed1a760f321dd14950b5` |
-| without-plugin-html | `sub-independent/pages/index.wxss` | [without-plugin-html/artifacts/sub-independent__pages__index.wxss](without-plugin-html/artifacts/sub-independent__pages__index.wxss) | 19728 | 172 | 0 | 0 | 0 | `cdadf277b529ca4d4aa2e7f591fcf4a1591f959d4b8929b264e68cec45f8b88a` |
+| with-plugin-html | `app.wxss` | [with-plugin-html/artifacts/app.wxss](with-plugin-html/artifacts/app.wxss) | 237798 | 1686 | 41 | 0 | 0 | `6d2af6de190d832cf481561484ade091914fba03879ade1e79065c009bec79a8` |
+| with-plugin-html | `sub-normal/pages/index.wxss` | [with-plugin-html/artifacts/sub-normal__pages__index.wxss](with-plugin-html/artifacts/sub-normal__pages__index.wxss) | 1034 | 4 | 0 | 0 | 0 | `0629617e3672e84552125370dbab512e7fdff0d60984532986b2328764ee9b68` |
+| with-plugin-html | `sub-independent/pages/index.wxss` | [with-plugin-html/artifacts/sub-independent__pages__index.wxss](with-plugin-html/artifacts/sub-independent__pages__index.wxss) | 1929 | 6 | 0 | 0 | 0 | `09ec569dd3e61c706517efce30fdb63ee6eb88015c74158214be1141321ab465` |
+| without-plugin-html | `app.wxss` | [without-plugin-html/artifacts/app.wxss](without-plugin-html/artifacts/app.wxss) | 238815 | 1690 | 0 | 30 | 48 | `ea2cf41403f578afc537a8c181af0cb76bdb9da514c36c36af7d5b1e1c96aaac` |
+| without-plugin-html | `sub-normal/pages/index.wxss` | [without-plugin-html/artifacts/sub-normal__pages__index.wxss](without-plugin-html/artifacts/sub-normal__pages__index.wxss) | 1034 | 4 | 0 | 0 | 0 | `0629617e3672e84552125370dbab512e7fdff0d60984532986b2328764ee9b68` |
+| without-plugin-html | `sub-independent/pages/index.wxss` | [without-plugin-html/artifacts/sub-independent__pages__index.wxss](without-plugin-html/artifacts/sub-independent__pages__index.wxss) | 1929 | 6 | 0 | 0 | 0 | `09ec569dd3e61c706517efce30fdb63ee6eb88015c74158214be1141321ab465` |

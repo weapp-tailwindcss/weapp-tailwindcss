@@ -15,6 +15,8 @@ import { loadTailwindV4DesignSystem, resolveTailwindV4SourceFromRuntimeOptions, 
 import { removeWxmlId } from '../packages/weapp-tailwindcss/test/util'
 import { collectProjectSourceCandidates } from './tokenSourceReports'
 
+export { getProjectCssFiles, getProjectCssSnapshotFiles } from './projectCssSnapshots'
+export type { ProjectCssSnapshotFile } from './projectCssSnapshots'
 export { collectCssSnapshots } from './snapshotUtils'
 export type { CssSnapshotEntry } from './snapshotUtils'
 
@@ -104,45 +106,6 @@ export interface ProjectEntry {
   skipOpenAutomator?: boolean
   forbidEmptyBlockAtRules?: boolean
   extraSnapshots?: Array<'issue-909-transform'>
-}
-
-export interface ProjectCssSnapshotFile {
-  cssFile: string
-  snapshotName: string
-}
-
-const CSS_SNAPSHOT_OUTPUT_PREFIXES = [
-  'unpackage/dist/dev/mp-weixin/',
-  'dist/build/mp-weixin/',
-  'dist/dev/mp-weixin/',
-  'dist/wx/',
-  'dist/',
-]
-
-export function getProjectCssFiles(entry: ProjectEntry): string[] {
-  const files = entry.cssFiles?.length ? entry.cssFiles : [entry.cssFile]
-  return Array.from(new Set(files))
-}
-
-export function getProjectCssSnapshotFiles(entry: ProjectEntry): ProjectCssSnapshotFile[] {
-  return getProjectCssFiles(entry).map((cssFile) => {
-    if (cssFile === entry.cssFile) {
-      return {
-        cssFile,
-        snapshotName: path.basename(cssFile),
-      }
-    }
-
-    const normalized = cssFile.replace(/\\/g, '/')
-    const stripped = CSS_SNAPSHOT_OUTPUT_PREFIXES.reduce((current, prefix) => {
-      return current.startsWith(prefix) ? current.slice(prefix.length) : current
-    }, normalized)
-
-    return {
-      cssFile,
-      snapshotName: stripped || path.basename(cssFile),
-    }
-  })
 }
 
 export function wait(ts = 1000) {

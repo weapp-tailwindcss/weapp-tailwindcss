@@ -6853,6 +6853,7 @@ wx-root-portal-content {
   height: var(--nutui-countup-height, 32rpx);
   overflow: hidden;
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 .nut-countup-listitem-number {
   background-color: var(--nutui-countup-bg-color, inherit);
@@ -8193,6 +8194,7 @@ wx-root-portal-content {
   user-select: none;
   width: 80rpx;
   width: auto;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
   background: var(--nutui-button-default-background-color, transparent);
   border-width: var(--nutui-button-border-width, 0.5rpx);
   color: var(--nutui-button-default-color, var(--nutui-color-title, #1a1a1a));
@@ -9821,6 +9823,20 @@ wx-root-portal-content {
 .text-slate-900 {
   color: var(--color-slate-900);
 }
+ /* tokens: antialiased <= <tailwind generated> */
+.antialiased {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+ /* tokens: subpixel-antialiased <= <tailwind generated> */
+.subpixel-antialiased {
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+}
+ /* tokens: issue-1286-highlight <= <tailwind generated> */
+.issue-1286-highlight {
+  -webkit-tap-highlight-color: transparent;
+}
  /* tokens: before:content-['现在，让我们开始神奇的_tailwindcss_开发之旅吧！'] <= <tailwind generated> */
 .before_ccontent-_b_au_x73b0_u_x5728_u_xff0c_u_x8ba9_u_x6211_u_x4eec_u_x5f00_u_x59cb_u_x795e_u_x5947_u_x7684__tailwindcss_u_x5f00_u_x53d1_u_x4e4b_u_x65c5_u_x5427_u_xff01__a_B::before {
   --tw-content: '现在，让我们开始神奇的 tailwindcss 开发之旅吧！';
@@ -9874,6 +9890,11 @@ view {
 .issue-941-bg-image {
   background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2 2'%3E%3Cpath fill='%230c6' d='M0 0h2v2H0z'/%3E%3C/svg%3E");
 }
+.issue-1286-icon {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
 .weapp-tw-user-ui-card {
   align-items: center;
   animation: weappTwUserUiBreathe 1.2s ease-in-out infinite;
@@ -9914,6 +9935,7 @@ wx-button {
 abc {
   background: #222;
 }
+/* Refs #1286：作者样式与生成工具类都应保留字体平滑和显式扩展的 WebKit 属性。 */
 button::after,
 wx-button::after {
   display: none;

@@ -15,11 +15,15 @@ const projectRoot = path.resolve(__dirname, '../demo/taro-webpack-react-tailwind
 const outputRoot = path.join(projectRoot, 'dist')
 const styleExtension = platform === 'weapp' ? '.wxss' : '.acss'
 const fixtureSelectors = ['.issue-1286-icon', '.issue-1286-highlight', '.antialiased', '.subpixel-antialiased']
-const declarations = new Map<string, Map<string, string[]>>()
+const declarations = new Map<string, Array<{ file: string, properties: Map<string, string[]> }>>()
 
 function expectDeclaration(selector: string, property: string, value: string) {
-  expect(declarations.get(selector)?.get(property), `${platform} ${selector} 应保留 ${property}: ${value}`)
-    .toContain(value)
+  const rules = declarations.get(selector) ?? []
+  expect(rules.length, `${platform} 应输出 ${selector}`).toBeGreaterThan(0)
+  for (const rule of rules) {
+    expect(rule.properties.get(property), `${platform} ${rule.file} ${selector} 应保留 ${property}: ${value}`)
+      .toContain(value)
+  }
 }
 
 describe(`issue #1286 WebKit 属性 ${platform} 产物`, () => {
@@ -44,8 +48,10 @@ describe(`issue #1286 WebKit 属性 ${platform} 产物`, () => {
             continue
           }
           fixtureFiles.add(path.relative(outputRoot, file))
-          const properties = declarations.get(selector) ?? new Map<string, string[]>()
-          declarations.set(selector, properties)
+          const properties = new Map<string, string[]>()
+          const rules = declarations.get(selector) ?? []
+          rules.push({ file: path.relative(outputRoot, file), properties })
+          declarations.set(selector, rules)
           rule.walkDecls((decl) => {
             const values = properties.get(decl.prop) ?? []
             values.push(decl.value)
@@ -62,7 +68,9 @@ describe(`issue #1286 WebKit 属性 ${platform} 产物`, () => {
     expectDeclaration('.issue-1286-icon', '-webkit-font-smoothing', 'antialiased')
     expectDeclaration('.issue-1286-icon', '-moz-osx-font-smoothing', 'grayscale')
     expectDeclaration('.issue-1286-icon', '-webkit-tap-highlight-color', 'transparent')
-    expect(declarations.get('.issue-1286-icon')?.has('-webkit-appearance')).toBe(false)
+    for (const rule of declarations.get('.issue-1286-icon') ?? []) {
+      expect(rule.properties.has('-webkit-appearance'), rule.file).toBe(false)
+    }
   })
 
   it('生成的 Tailwind 工具类在最终清理后仍保留默认和自定义前缀', () => {
