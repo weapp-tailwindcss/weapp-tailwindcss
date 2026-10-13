@@ -77,7 +77,14 @@ export async function withBuiltIosDevice<T>(target: IosBuildTarget, cwd: string,
   // 只有 CI 自建目标可等待并启动；本地借用设备不通过 -b 恢复被用户关闭的模拟器。
   const bootArguments = ['simctl', 'bootstatus', target.id, ...(target.state === 'Shutdown' ? ['-b'] : [])]
   await command('xcrun', bootArguments, cwd, 120_000, { file: path.join(artifactDir, 'boot-readiness-command.json') })
-  const device = await resolveNativeDevice('ios', cwd, bound, { file: path.join(artifactDir, 'device-readiness-command.json') })
+  // CI 自建目标已经在启动前以不可覆盖的库存绑定了 ID、runtime 和 destination。
+  // `bootstatus -b` 针对同一 UDID 等待启动完成；再次 `simctl list` 会重新连接全局
+  // CoreSimulator 服务，在 hosted 高并发 runner 上可能在原 30 秒窗口内卡住，且不会
+  // 提供比已绑定身份更多的有效信息。直接消费该受控目标，避免把全局枚举变成安装前
+  // 的第二个不稳定门槛。本地借用设备仍保留原有查询，用于确认用户当前设备确实 Booted。
+  const device = target.state === 'Shutdown'
+    ? { ...target, state: 'Booted' as const }
+    : await resolveNativeDevice('ios', cwd, bound, { file: path.join(artifactDir, 'device-readiness-command.json') })
   if (device.platform !== 'ios' || device.id !== target.id || device.runtime !== target.runtime || device.destination !== target.destination) {
     throw new Error('iOS 运行设备与本轮构建目标的身份、runtime 或 destination 不一致。')
   }

@@ -81,9 +81,10 @@ it('先完成真实构建，才验证同一设备的运行就绪并执行安装�
   expect(events).toEqual(['build'])
   finish()
   await expect(running).resolves.toMatchObject({ result: 'report', device: { id: 'selected', runtime: 'runtime-selected', state: 'Booted' } })
-  expect(events).toEqual(['build', 'bootstatus', 'list', 'install-launch'])
+  expect(events).toEqual(['build', 'bootstatus', 'install-launch'])
   expect(invoke.mock.calls[0]?.[1]).toEqual(['simctl', 'bootstatus', 'selected', '-b'])
-  expect(invoke.mock.calls.map(call => call[3])).toEqual([120_000, 30_000])
+  expect(invoke).toHaveBeenCalledTimes(1)
+  expect(invoke.mock.calls.map(call => call[3])).toEqual([120_000])
 })
 
 it('构建失败时不查询运行就绪、不安装启动；就绪失败不重试或运行', async () => {
@@ -94,9 +95,9 @@ it('构建失败时不查询运行就绪、不安装启动；就绪失败不重�
   }, run, env)).rejects.toBe(failure)
   expect(invoke).not.toHaveBeenCalled()
   expect(run).not.toHaveBeenCalled()
-  invoke.mockResolvedValueOnce('').mockRejectedValueOnce(new Error('list timed out'))
-  await expect(withBuiltIosDevice(target(), path.resolve('host'), path.resolve('artifact'), async () => {}, run, env)).rejects.toThrow('list timed out')
-  expect(invoke).toHaveBeenCalledTimes(2)
+  invoke.mockRejectedValueOnce(new Error('bootstatus timed out'))
+  await expect(withBuiltIosDevice(target(), path.resolve('host'), path.resolve('artifact'), async () => {}, run, env)).rejects.toThrow('bootstatus timed out')
+  expect(invoke).toHaveBeenCalledTimes(1)
   expect(run).not.toHaveBeenCalled()
 })
 
@@ -110,10 +111,10 @@ it('CI 自建目标启动失败时不查询在线设备、不进入安装启动�
   expect(run).not.toHaveBeenCalled()
 })
 
-it.each([['Shutdown', 'runtime-selected', true], ['Booted', 'changed-runtime', true], ['Booted', 'runtime-selected', false]])('构建后状态/runtime/available 改变（%s/%s/%s）即阻断安装', async (state, runtime, available) => {
+it.each([['Booted', 'changed-runtime', true], ['Booted', 'runtime-selected', false]])('本地借用设备构建后状态/runtime/available 改变（%s/%s/%s）即阻断安装', async (state, runtime, available) => {
   invoke.mockResolvedValueOnce('').mockResolvedValueOnce(inventory(state as string, runtime as string, available as boolean))
   const run = vi.fn()
-  await expect(withBuiltIosDevice(target(), path.resolve('host'), path.resolve('artifact'), async () => {}, run, env)).rejects.toThrow()
+  await expect(withBuiltIosDevice(selectIosDevice(inventory('Booted'), env), path.resolve('host'), path.resolve('artifact'), async () => {}, run, {})).rejects.toThrow()
   expect(run).not.toHaveBeenCalled()
 })
 

@@ -26,7 +26,7 @@ regressions:
 
 CI 在创建自身模拟器后、启动之前，仍按原 30 秒预算查询真实精确库存，要求明确、available 的 Shutdown 目标。准备文件保存原始库存、构建身份和真实 checkout HEAD，并绑定 GitHub run ID 与 attempt；只允许本轮 macOS hosted CI 消费。过期、损坏、缺失、身份冲突或写入失败均阻断，不回退其他设备，也不覆盖旧文件。准备阶段失败和命令诊断始终上传。
 
-runner 以该证据进行 bundle、Pod 和 xcodebuild。真实编译完成后才执行原 120 秒 bootstatus 和原 30 秒精确 Booted 查询；安装前再次核对 ID、runtime、destination 和 available。构建失败不进入就绪查询，就绪失败不安装、不启动、不产生成功报告。查询和启动没有新增重试，原 60 秒 launch、像素断言和提交基线保持原有标准。
+runner 以该证据进行 bundle、Pod 和 xcodebuild。真实编译完成后才执行原 120 秒 bootstatus。CI 自建目标的 ID、runtime 和 destination 已由启动前不可覆盖 manifest 锁定，`bootstatus -b` 又针对同一 UDID 等待启动完成，因此不再在 hosted runner 上重复调用全局 CoreSimulator `list` 查询；该查询在高并发主机上曾在原 30 秒窗口内卡住，且不会增加身份信息。安装前仍核对返回设备与 manifest 的 ID、runtime、destination，并保留本地借用设备的 Booted 查询。构建失败不进入就绪查询，就绪失败不安装、不启动、不产生成功报告。查询和启动没有新增重试，原 60 秒 launch、像素断言和提交基线保持原有标准。
 
 默认本地入口仍先发现已 Booted 的借用设备，不消费 CI 准备文件。就绪等待与现有安装后容器恢复都不通过 `-b` 自动启动本地设备；该能力仅保留给 CI 自建目标。iOS 执行逻辑按职责提取，Android 的运行和报告语义保持原样。
 
@@ -52,9 +52,15 @@ CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-ios-build-target.
 
 跨 workflow 合同回归要求 native runner 前没有 boot/bootstatus，在保留旧 workflow 时真实失败 1 项，移除两条命令后通过。helper 回归明确验证挂起 build 时没有设备命令，完成后才按原 120 秒调用同目标 `bootstatus -b`；启动失败不查询、不安装启动、不重试。Node 22.22.3 的 4 文件、58 项定向测试通过；完整 10 文件定向回归在 Node 22.22.3 与 24.18.0 各 96 项通过。此修正消除明确的资源生命周期重叠，尚不宣称新 head 的 launch 已通过。
 
+## 后续 hosted 就绪枚举失败与收敛
+
+准确作者 head `dbdf97b8acebe6c9964901e29e18cfa0810eaca4` 的 [Lynx Native Compatibility 38364946617](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38364946617) attempt 1 已完成 native build 与 `bootstatus -b`，随后同一 UDID 的 `simctl list devices <ID> --json` 在 30 秒窗口内超时。job `115188014357` 未进入安装、启动、报告或产品断言；主机 load average 约 `276 → 293`、可用内存约 134–156 MB，继续证明 hosted 调度拥塞，但不足以断言 OOM、CoreSimulator 死锁或唯一内部原因。
+
+启动前 manifest 已绑定本轮 run、attempt、checkout SHA、UDID、runtime 和 destination，且不能覆盖；`bootstatus -b` 已针对该精确 UDID 等待成功。CI 自建目标因此直接由受控 bootstatus 产出 Booted 设备身份，不再重复调用会触发全局 CoreSimulator 服务连接的 `list` 查询；本地借用目标仍执行原有 Booted 查询和身份校验。该边界保持原 120 秒启动预算、安装/启动/报告/像素门槛与失败阻断，不添加 sleep、重试或放宽断言。
+
 ## 适用边界
 
-这项修正消除无用的早期运行就绪依赖，并保留安装前真实查询；尚不能宣称已经消除 hosted simulator 启动拥塞。模拟器延后启动是否消除 hosted 资源拥塞，必须由新准确 head 的真实 iOS CI 证明。若仍失败，保留新的最早分歧和诊断继续定位，不增加超时、不加固定 sleep、不跳过设备或产品断言。
+这项修正消除无用的早期运行就绪依赖，也移除了 hosted runner 上启动完成后重复的全局设备枚举；它仍要求原 120 秒 bootstatus 成功，并保留安装、启动、报告和产品断言。是否能在新的准确 head 上完成真实 iOS 验收，必须由新的 Lynx CI 证明。若仍失败，保留新的最早分歧和诊断继续定位，不增加超时、不加固定 sleep、不跳过设备或产品断言。
 
 ## 规则评估
 
