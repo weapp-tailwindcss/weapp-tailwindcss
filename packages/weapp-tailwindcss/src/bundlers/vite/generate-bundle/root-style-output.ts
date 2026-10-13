@@ -164,6 +164,7 @@ export function restoreFrameworkRootMiniProgramImportShellAssets(
   bundle: OutputBundle,
   options: {
     debug?: ((format: string, ...args: unknown[]) => void) | undefined
+    emitOrReplayAsset?: ((file: string, source: string) => OutputAsset | undefined) | undefined
     isWebGeneratorTarget: boolean
     matchesCss: (file: string) => boolean
     onUpdate?: ((file: string, oldVal: string, newVal: string) => void) | undefined
@@ -192,22 +193,24 @@ export function restoreFrameworkRootMiniProgramImportShellAssets(
       candidate.type === 'asset'
       && normalizeOutputPathKey(candidate.fileName || bundleFile) === normalizeOutputPathKey(sourceFile),
     )?.[1]
-    if (output?.type !== 'asset') {
+    if (output?.type !== 'asset' && !options.emitOrReplayAsset) {
       continue
     }
-    const rawSource = output.source.toString()
+    const rawSource = output?.type === 'asset' ? output.source.toString() : ''
     if (!shouldKeepRootMiniProgramStyleAsImportShell(options.shouldKeep(sourceFile, rawSource))) {
       continue
     }
-    if (isPureLocalCssImportWrapper(rawSource)) {
+    if (output?.type === 'asset' && isPureLocalCssImportWrapper(rawSource)) {
       continue
     }
     const nextSource = createCssImportShell(sourceFile, targetFile)
-    if (rawSource === nextSource) {
+    if (output?.type === 'asset' && rawSource === nextSource) {
       continue
     }
     plan.write(sourceFile, nextSource)
-    writeTargets.set(sourceFile, output)
+    if (output?.type === 'asset') {
+      writeTargets.set(sourceFile, output)
+    }
     options.recordCssAssetResult?.(sourceFile, nextSource)
     options.onUpdate?.(sourceFile, rawSource, nextSource)
     options.debug?.('restore framework root css import shell: %s -> %s', sourceFile, targetFile)
@@ -215,6 +218,7 @@ export function restoreFrameworkRootMiniProgramImportShellAssets(
   }
   applyViteAssetEmissionPlan(plan, {
     bundle,
+    emitOrReplayAsset: options.emitOrReplayAsset,
     writeTargets,
   })
   return restored

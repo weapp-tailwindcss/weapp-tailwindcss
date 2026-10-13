@@ -1,5 +1,5 @@
 import type { IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
-import type { OutputAsset } from 'rollup'
+import type { OutputAsset, PluginContext } from 'rollup'
 import type { ResolvedConfig } from 'vite'
 import type { HmrTimingRecorder } from '../../shared/hmr-timing'
 import type { ViteCssAssetIdentity } from '../css-asset-identity'
@@ -52,6 +52,7 @@ export interface CssFinalizerContext {
 
 export interface CssFinalizerThis {
   addWatchFile?: (id: string) => void
+  emitFile?: PluginContext['emitFile']
 }
 
 export function inferPlatformFromViteOutDir(outDir: string | undefined) {
