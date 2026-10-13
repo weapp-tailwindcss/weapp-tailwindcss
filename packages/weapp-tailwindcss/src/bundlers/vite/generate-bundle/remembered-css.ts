@@ -5,6 +5,7 @@ import { normalizeOutputPathKey } from '../../shared/module-graph'
 import { normalizeCssSourceIdentity } from '../css-memory'
 import { CSS_SOURCE_OUTPUT_EXT_RE, resolveViteCssPipelineOutputFileFromSourceFile } from '../css-output'
 import { getActiveViteSourceOutputRelationOwner } from '../source-output-relations'
+import { getLastCssResult, getLastCssSourceHash } from './vite-css-cache'
 
 export function createRememberedCssRuntimeSignature(cssRuntimeSignature: string, cssRuntimeAffectingHash: string) {
   return `${cssRuntimeSignature}:${cssRuntimeAffectingHash}`
@@ -41,6 +42,32 @@ export function createGeneratedReplayCacheSignature(options: {
     options.generatorPlatform,
     options.isMainChunk,
   ])
+}
+
+/** CSS 与生成依赖共同属于一次生成结果，随既有有界缓存一同淘汰。 */
+export function createGeneratedReplayCacheProof(signature: string, dependencies: readonly string[] | undefined) {
+  return JSON.stringify({ signature, dependencies: [...dependencies ?? []] })
+}
+
+/** 归属或依赖证据不完整时重新生成，不能只恢复 CSS 而丢失依赖监听。 */
+export function getGeneratedReplayCache(
+  resultByFile: Map<string, string>,
+  sourceHashByFile: Map<string, string>,
+  file: string,
+  signature: string,
+) {
+  try {
+    const proof = JSON.parse(getLastCssSourceHash(sourceHashByFile, file) ?? 'null') as { signature?: unknown, dependencies?: unknown } | null
+    if (!proof || proof.signature !== signature || !Array.isArray(proof.dependencies)
+      || proof.dependencies.some(dependency => typeof dependency !== 'string')) {
+      return undefined
+    }
+    const css = getLastCssResult(resultByFile, file)
+    return css === undefined ? undefined : { css, dependencies: proof.dependencies as string[] }
+  }
+  catch {
+    return undefined
+  }
 }
 
 export function resolveRememberedCssSourceForTest(

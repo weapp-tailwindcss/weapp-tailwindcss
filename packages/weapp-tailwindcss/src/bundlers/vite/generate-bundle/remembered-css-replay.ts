@@ -16,14 +16,14 @@ import { isHTMLRequest } from '../utils'
 import { applyViteAssetEmissionPlan } from './asset-emission-plan'
 import { createCssRuntimeSignature } from './css-share-scope'
 import { measureElapsed } from './metrics'
-import { collectRememberedCssReplayGroups, createGeneratedReplayCacheKey, createGeneratedReplayCacheSignature, createRememberedCssRuntimeSignature, mergeRememberedCssSources } from './remembered-css'
+import { collectRememberedCssReplayGroups, createGeneratedReplayCacheKey, createGeneratedReplayCacheProof, createGeneratedReplayCacheSignature, createRememberedCssRuntimeSignature, getGeneratedReplayCache, mergeRememberedCssSources } from './remembered-css'
 import { registerGeneratorDependencies } from './rollup-assets'
 import { isRootMiniProgramStyleOutputFile, shouldPreserveFrameworkRootMiniProgramImportShell } from './root-style-output'
 import { createScopedGeneratorCandidateSignature, createScopedGeneratorSourceTraceMap } from './scoped-generator'
 import { hasScopedSourceDirectives } from './scoped-generator-sources'
 import { createCandidateSignature } from './signatures'
 import { createMergedCssSourceTraceMap } from './source-trace'
-import { getLastCssResult, getLastCssSourceHash, rememberLastCssResult } from './vite-css-cache'
+import { rememberLastCssResult } from './vite-css-cache'
 
 function dedupeRememberedCssReplayGroup(
   group: Array<{ key: string, remembered: RememberedCssSource }>,
@@ -334,9 +334,8 @@ export async function processRememberedCssReplay(options: ProcessRememberedCssRe
     })
     // 签名新鲜只能省略生成；缺席的资产仍必须提交到本轮构建图。
     // 通用产物缓存可能包含框架贡献，只能回放有完整归属证明的干净生成结果。
-    const cachedGeneratedReplayCss = allRememberedSignaturesFresh && !cssSourceChanged
-      && getLastCssSourceHash(lastCssSourceHashByFile, generatedReplayKey) === generatedReplaySignature
-      ? getLastCssResult(lastCssResultByFile, generatedReplayKey)
+    const cachedGeneratedReplay = allRememberedSignaturesFresh && !cssSourceChanged
+      ? getGeneratedReplayCache(lastCssResultByFile, lastCssSourceHashByFile, generatedReplayKey, generatedReplaySignature)
       : undefined
     const sourceTraceSources = isCssSourceTraceEnabled(opts) && scopedSourceCandidateSourceGetter
       ? hasScopedSources
@@ -429,15 +428,16 @@ export async function processRememberedCssReplay(options: ProcessRememberedCssRe
         emitRememberedCssAsset(css)
       }
     }
-    if (cachedGeneratedReplayCss !== undefined) {
+    if (cachedGeneratedReplay !== undefined) {
       cssTaskFactories.push(() => timeTask('css.replay', async () => {
         const start = performance.now()
-        const css = annotateCss(cachedGeneratedReplayCss)
+        const css = annotateCss(cachedGeneratedReplay.css)
+        registerGeneratorDependencies({ addWatchFile }, cachedGeneratedReplay.dependencies)
         recordGeneratedReplayCss(css)
         metrics.css.elapsed += measureElapsed(start)
         metrics.css.cacheHits++
         onUpdate(outputFile, rememberedCssSource.rawSource, css)
-        debug('css replay reuse generated cache: %s bytes=%d', outputFile, cachedGeneratedReplayCss.length)
+        debug('css replay reuse generated cache: %s bytes=%d', outputFile, cachedGeneratedReplay.css.length)
       }))
       continue
     }
@@ -461,7 +461,7 @@ export async function processRememberedCssReplay(options: ProcessRememberedCssRe
       })
       const generatedCss = generated?.css ?? (await styleHandler(generatorRawSource, cssHandlerOptions)).css
       // 注释来源按本轮重新标注，缓存保留未混入框架贡献的原始生成结果。
-      rememberLastCssResult(lastCssResultByFile, lastCssSourceHashByFile, generatedReplayKey, generatedCss, generatedReplaySignature)
+      rememberLastCssResult(lastCssResultByFile, lastCssSourceHashByFile, generatedReplayKey, generatedCss, createGeneratedReplayCacheProof(generatedReplaySignature, generated?.dependencies))
       const css = annotateCss(generatedCss)
       recordGeneratedReplayCss(css)
       if (generated) {

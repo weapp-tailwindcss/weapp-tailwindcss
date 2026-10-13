@@ -95,7 +95,7 @@ describe('bundlers/vite remembered css replay cache', () => {
 
   it.each(['.processed { color: red; }', ''])('emits every absent round while reusing only clean generation: %j', async (css) => {
     const { options, remembered, rebuild } = createReplayCase()
-    generateTailwindV4Css.mockResolvedValue({ css, dependencies: [] })
+    generateTailwindV4Css.mockResolvedValue({ css, dependencies: ['/repo/config/nested.cjs', '/repo/plugins/utility.cjs'] })
     expect(await rebuild()).toBe(1)
     options.lastCssResultByFile.set(remembered.outputFile, `${css}.removed-framework-rule{}`)
     expect(await rebuild()).toBe(1)
@@ -105,6 +105,7 @@ describe('bundlers/vite remembered css replay cache', () => {
     expect(options.recordViteProcessedCssAssetResult).toHaveBeenLastCalledWith(remembered.outputFile, css, expect.objectContaining({ outputFile: remembered.outputFile }))
     expect(options.markCssAssetProcessed).toHaveBeenCalledTimes(3)
     expect(options.metrics.css.cacheHits).toBe(2)
+    expect(options.addWatchFile.mock.calls).toEqual(Array.from({ length: 3 }, () => [['/repo/config/nested.cjs'], ['/repo/plugins/utility.cjs']]).flat())
   })
 
   it('does not prepare disabled source trace on either generation or cached emission', async () => {
@@ -129,7 +130,7 @@ describe('bundlers/vite remembered css replay cache', () => {
     expect(options.lastCssResultByFile.get(createGeneratedReplayCacheKey(remembered.outputFile))).toBe('.generated{}')
   })
 
-  it.each(['result', 'proof', 'raw', 'source', 'candidate', 'runtime', 'dependency', 'changed', 'output', 'platform', 'main'])('regenerates instead of trusting a stale %s cache', async (mutation) => {
+  it.each(['result', 'proof', 'missing-dependencies', 'dependencies', 'corrupt', 'raw', 'source', 'candidate', 'runtime', 'dependency', 'changed', 'output', 'platform', 'main'])('regenerates instead of trusting a stale %s cache', async (mutation) => {
     const { options, remembered, rebuild, runtime } = createReplayCase()
     generateTailwindV4Css.mockResolvedValueOnce({ css: '.old{}', dependencies: [] })
     await rebuild()
@@ -139,6 +140,18 @@ describe('bundlers/vite remembered css replay cache', () => {
       case 'result': options.lastCssResultByFile.delete(key)
         break
       case 'proof': options.lastCssSourceHashByFile.delete(key)
+        break
+      case 'missing-dependencies': {
+        const proof = JSON.parse(options.lastCssSourceHashByFile.get(key)!)
+        options.lastCssSourceHashByFile.set(key, JSON.stringify({ signature: proof.signature }))
+        break
+      }
+      case 'dependencies': {
+        const proof = JSON.parse(options.lastCssSourceHashByFile.get(key)!)
+        options.lastCssSourceHashByFile.set(key, JSON.stringify({ ...proof, dependencies: [42] }))
+        break
+      }
+      case 'corrupt': options.lastCssSourceHashByFile.set(key, '{invalid')
         break
       case 'raw': remembered.rawSource += '/* new comment */'
         break

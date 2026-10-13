@@ -24,9 +24,11 @@ remembered replay 用来源/候选签名新鲜直接跳过整个处理，混淆�
 
 缓存保存未标注来源的生成 CSS，每轮使用当前 trace 重新标注。缓存命中和生成共用输出记录、注入、框架合并及资产提交路径。证明失配时不传入可能混有旧框架规则的 previousCss；编译会话仍持有自身候选和生成缓存。框架贡献通过现有 pending merge 合并，不覆盖本轮规则，也不恢复已删除规则。
 
+Rollup 4 每轮会移除未重新登记的依赖监听，现有来源扫描并不覆盖全部嵌套配置与插件模块。缓存 metadata 因此同时保存该次 generated.dependencies，命中时逐轮重新 addWatchFile。CSS 与依赖共用既有 64 项成对缓存的寿命；依赖证据缺失或损坏同样重新生成，不新增无界 Map 或 compiler 私有查询。Rollup 3 原本不允许 output 阶段 addWatchFile 的兼容处理保持不变。
+
 ## 验证
 
-Node 22.22.3 的真实 Vite 4–8 watch 矩阵新增连续 JS-only rebuild 后 5/5 通过；旧实现的 Vite 4 第三轮先失败。干净缓存、空 CSS、连续三轮提交、通用缓存污染、缺结果/证明、raw/source/candidate/runtime/dependency/output/platform/主样式变化、当前与 planned 所有者和框架 root shell 回归通过。Node 22.22.3 与 24.18.0 的 10 个 Vite/缓存/框架合并/架构定向文件各 139 项通过；主包类型检查与构建通过，保留原 mixed exports 提示。
+Node 22.22.3 的真实 Vite 4–8 watch 矩阵新增连续 JS-only rebuild 后 5/5 通过；旧实现的 Vite 4 第三轮先失败。干净缓存、空 CSS、连续三轮提交、通用缓存污染、缺结果/证明、raw/source/candidate/runtime/dependency/output/platform/主样式变化、当前与 planned 所有者和框架 root shell 回归通过。Node 22.22.3 与 24.18.0 的 10 个 Vite/缓存/框架合并/架构定向文件各 142 项通过；依赖逐轮登记的新回归在未恢复依赖的旧回放实现上先失败 2 项（每次生成的两条依赖仅登记首轮，而不是三轮），修正后通过。主包类型检查与构建通过，保留原 mixed exports 提示。
 
 本次扩展包内临时 watch fixture，不改 demo、issue 页面、e2e static fixture 或任何 checked-in CSS 快照。每次矩阵运行均重新生成该临时项目的 dist，并核对 CSS 转义与生成结果；没有对应持久 static 项目基线需要更新。未执行本地全面或设备测试。
 
