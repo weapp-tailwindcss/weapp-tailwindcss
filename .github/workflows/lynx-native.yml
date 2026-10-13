@@ -112,7 +112,7 @@ jobs:
           ruby e2e/lynx/source-patch.test.rb
       - name: Verify iOS evidence storage
         run: pnpm exec tsx e2e/lynx/test-evidence-store.ts ios
-      - name: Boot iOS 18.5 simulator
+      - name: Prepare iOS 18.5 build target
         run: |
           LYNX_IOS_DEVICE_ID="$(xcrun simctl create LynxCompatibility 'iPhone 16 Pro' 'com.apple.CoreSimulator.SimRuntime.iOS-18-5')"
           export LYNX_IOS_DEVICE_ID
@@ -120,8 +120,6 @@ jobs:
           pnpm exec tsx e2e/lynx/prepare-ios-target.ts
           echo "LYNX_IOS_DEVICE_ID=$LYNX_IOS_DEVICE_ID" >> "$GITHUB_ENV"
           echo "LYNX_IOS_BUILD_TARGET_FILE=$LYNX_IOS_BUILD_TARGET_FILE" >> "$GITHUB_ENV"
-          xcrun simctl boot "$LYNX_IOS_DEVICE_ID"
-          xcrun simctl bootstatus "$LYNX_IOS_DEVICE_ID" -b
       - run: pnpm e2e:lynx:ios
       - uses: actions/upload-artifact@v7
         if: always()

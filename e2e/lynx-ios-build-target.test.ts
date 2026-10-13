@@ -82,6 +82,7 @@ it('先完成真实构建，才验证同一设备的运行就绪并执行安装�
   finish()
   await expect(running).resolves.toMatchObject({ result: 'report', device: { id: 'selected', runtime: 'runtime-selected', state: 'Booted' } })
   expect(events).toEqual(['build', 'bootstatus', 'list', 'install-launch'])
+  expect(invoke.mock.calls[0]?.[1]).toEqual(['simctl', 'bootstatus', 'selected', '-b'])
   expect(invoke.mock.calls.map(call => call[3])).toEqual([120_000, 30_000])
 })
 
@@ -96,6 +97,16 @@ it('构建失败时不查询运行就绪、不安装启动；就绪失败不重�
   invoke.mockResolvedValueOnce('').mockRejectedValueOnce(new Error('list timed out'))
   await expect(withBuiltIosDevice(target(), path.resolve('host'), path.resolve('artifact'), async () => {}, run, env)).rejects.toThrow('list timed out')
   expect(invoke).toHaveBeenCalledTimes(2)
+  expect(run).not.toHaveBeenCalled()
+})
+
+it('CI 自建目标启动失败时不查询在线设备、不进入安装启动，不重试', async () => {
+  const run = vi.fn()
+  invoke.mockRejectedValueOnce(new Error('bootstatus timed out'))
+  await expect(withBuiltIosDevice(target(), path.resolve('host'), path.resolve('artifact'), async () => {}, run, env)).rejects.toThrow('bootstatus timed out')
+  expect(invoke).toHaveBeenCalledExactlyOnceWith('xcrun', ['simctl', 'bootstatus', 'selected', '-b'], path.resolve('host'), 120_000, {
+    file: path.resolve('artifact', 'boot-readiness-command.json'),
+  })
   expect(run).not.toHaveBeenCalled()
 })
 

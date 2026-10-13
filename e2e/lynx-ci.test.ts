@@ -65,7 +65,12 @@ it('Lynx iOS 在启动前以有界脚本锁定真实构建目标，准备失败�
   const job = workflow.jobs.ios
   const preparation = job.steps.find((step: { run?: string }) => step.run?.includes('simctl create'))
   expect(preparation.run.indexOf('simctl create')).toBeLessThan(preparation.run.indexOf('prepare-ios-target.ts'))
-  expect(preparation.run.indexOf('prepare-ios-target.ts')).toBeLessThan(preparation.run.indexOf('simctl boot '))
+  // 构建目标保持 Shutdown，真实构建完成后的唯一 readiness 入口才可启动模拟器。
+  const commands = job.steps.map((step: { run?: string }) => step.run ?? '').join('\n')
+  expect(commands).not.toMatch(/simctl\s+(?:boot|bootstatus)\b/)
+  const preparationIndex = job.steps.indexOf(preparation)
+  const nativeRunIndex = job.steps.findIndex((step: { run?: string }) => step.run === 'pnpm e2e:lynx:ios')
+  expect(preparationIndex).toBeLessThan(nativeRunIndex)
   expect(preparation.run).toContain('LYNX_IOS_BUILD_TARGET_FILE')
   expect(job['continue-on-error']).toBeFalsy()
   for (const step of job.steps) {

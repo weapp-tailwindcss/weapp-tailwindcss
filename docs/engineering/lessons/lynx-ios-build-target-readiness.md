@@ -44,9 +44,17 @@ CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-ios-build-target.
 
 作者 head `15e3932c95cea6487408278ea4bb2fe4fb0bf246` 的 [Lynx Native Compatibility 38348833717](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38348833717) attempt 1 已全部成功，Android 与 iOS 均实际执行。iOS job `115136512042` 的准备文件绑定本轮真实 PR merge checkout `705d2f0cb159976ee6a0ae01bbaa12df8ba00c96`，锁定自建 `C7303DB1-EA5E-4495-817D-FC48BEB9AE92` 的 Shutdown 构建目标。构建后 bootstatus 实际用时约 1.74 秒，原 30 秒精确 Booted 查询约 563 毫秒成功，随后安装、启动、原像素/几何断言、支持矩阵基线比较和报告上传成功。原始日志、准备文件、命令事件与报告已保存；该轮成功不替代更新后源码 head 或版本 PR 的全面验收。
 
+## 后续启动失败与跨入口生命周期修正
+
+准确作者 head `00cc20a5ee424022a094e5f1fee1802e410f1cb5` 的 [Lynx Native Compatibility 38354875761](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38354875761) attempt 1，iOS job `115155662740` 在 `simctl launch --terminate-running-process` 原 60 秒上限失败。真实 checkout 为 PR merge `2a66912922e12c9289768109db9cc65f33b2dadb`，父提交为 main 与该作者 head，准备文件绑定正确。此前 xcodebuild、bootstatus、精确 Booted 查询、安装和容器查询均通过；尚未进入报告、截图或产品断言。launch stdout/stderr 均为空，随后真实 SIGTERM/close。采样栈停在 `launchApplicationWithID → _sendBridgeRequest → host_support_mig_launch_app → mach_msg2_trap`；3 核主机 load average 约 328，可用内存约 211 MB，720 个进程，表明严重资源压力，不能单独认定 OOM 或唯一系统内部原因。
+
+继续审查发现 workflow 虽已在 boot 前准备 Shutdown 目标，却仍立即执行 boot 与 bootstatus，让模拟器与约 22 分钟的 bundle、Pod、Xcode 构建重叠。helper 内已有构建后唯一受控 `bootstatus -b`，CI 的早期启动完全冗余。现在 workflow 只 create、准备并导出目标；首次启动留给构建完成后的 helper。本地借用设备、同一 UDID/runtime/destination 核对及所有原时限保持原有边界，不增加 sleep、重试或异步绕过 launch 确认。
+
+跨 workflow 合同回归要求 native runner 前没有 boot/bootstatus，在保留旧 workflow 时真实失败 1 项，移除两条命令后通过。helper 回归明确验证挂起 build 时没有设备命令，完成后才按原 120 秒调用同目标 `bootstatus -b`；启动失败不查询、不安装启动、不重试。Node 22.22.3 的 4 文件、58 项定向测试通过；完整 10 文件定向回归在 Node 22.22.3 与 24.18.0 各 96 项通过。此修正消除明确的资源生命周期重叠，尚不宣称新 head 的 launch 已通过。
+
 ## 适用边界
 
-这项修正消除无用的早期运行就绪依赖，并保留安装前真实查询；尚不能宣称已经消除 hosted simulator 启动拥塞。后台启动工作能否在必要构建期间收敛，必须由新准确 head 的真实 iOS CI 证明。若仍失败，保留新的最早分歧和诊断继续定位，不增加超时、不加固定 sleep、不跳过设备或产品断言。
+这项修正消除无用的早期运行就绪依赖，并保留安装前真实查询；尚不能宣称已经消除 hosted simulator 启动拥塞。模拟器延后启动是否消除 hosted 资源拥塞，必须由新准确 head 的真实 iOS CI 证明。若仍失败，保留新的最早分歧和诊断继续定位，不增加超时、不加固定 sleep、不跳过设备或产品断言。
 
 ## 规则评估
 
