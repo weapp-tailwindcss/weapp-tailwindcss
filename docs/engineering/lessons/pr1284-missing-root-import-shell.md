@@ -31,9 +31,12 @@ CI=1 pnpm --filter weapp-tailwindcss build
 CI=1 pnpm --filter weapp-tailwindcss exec tsc -p tsconfig.typecheck.json --pretty false
 CI=1 E2E_PROJECT_FILTER='^uni-app-vite-tailwindcss-v4$' pnpm exec vitest run --bail=1 -c e2e/vitest.e2e.config.ts e2e/uni-app-vite-tailwindcss-v4.test.ts -u
 CI=1 E2E_PROJECT_FILTER='^uni-app-vite-tailwindcss-v4$' pnpm exec vitest run --bail=1 -c e2e/vitest.e2e.config.ts e2e/uni-app-vite-tailwindcss-v4.test.ts --update=none
+CI=1 E2E_WATCH_CASE='uni-app-vite-tailwindcss-v4:mp-weixin' E2E_WATCH_SAVE_SNAPSHOTS=1 E2E_WATCH_MAX_PLUGIN_PROCESS_MS=9000 pnpm exec vitest run -c e2e/vitest.e2e.watch.config.ts e2e/watch/hot-update/demo/uni-app-vite-tailwindcss-v4.test.ts --update=none
 ```
 
 包回归为 8 文件 94 项通过，构建和类型检查通过。对应 uni-app Vite v4 项目的 static 基线重新生成，13 份快照内容均未变化；本轮修复只恢复增量构建缺席资产，不改变完整构建 CSS 语义。源码 ESLint 通过；测试文件按仓库配置被忽略，未作为 lint 通过证据。
+
+本地真实微信 watch 完整通过，耗时 395.63 秒，覆盖主包模板、脚本、样式、图标、内容和普通/独立分包的修改与回滚，最终 dev/HMR 产物快照门禁通过。报告为忽略的 `e2e/benchmark/e2e-watch-hmr/2026-10-13T14-48-09-454Z-uni-app-vite-tailwindcss-v4-mp-weixin.json`。这项验证未连接或操作微信 IDE。
 
 ## 适用边界
 
