@@ -1,5 +1,25 @@
 # @weapp-tailwindcss/postcss
 
+## 3.4.2
+
+### Patch Changes
+
+- 修复小程序生成样式交给框架 PostCSS 前未转换通配选择器，导致 Taro 的复杂 group 变体样式丢失的问题。
+
+  在同一 PostCSS AST 中完成嵌套展开、选择器准备和裁剪，避免生成样式重复序列化及重建整棵 AST 的瞬时分配。
+
+- 修复小程序样式误删 -webkit-font-smoothing，导致 antialiased 与 subpixel-antialiased 字体平滑声明丢失的问题。新增 cssOptions.preserveWebkitProperties，支持追加需要保留的 WebKit 属性名，并保持默认保留项。Refs #1286
+
+- Updated dependencies:
+  - @weapp-tailwindcss/native-darwin-arm64@5.6.2
+  - @weapp-tailwindcss/native-darwin-x64@5.6.2
+  - @weapp-tailwindcss/native-linux-arm64-gnu@5.6.2
+  - @weapp-tailwindcss/native-linux-arm64-musl@5.6.2
+  - @weapp-tailwindcss/native-linux-x64-gnu@5.6.2
+  - @weapp-tailwindcss/native-linux-x64-musl@5.6.2
+  - @weapp-tailwindcss/native-win32-arm64-msvc@5.6.2
+  - @weapp-tailwindcss/native-win32-x64-msvc@5.6.2
+
 ## 3.4.1
 
 ### Patch Changes
