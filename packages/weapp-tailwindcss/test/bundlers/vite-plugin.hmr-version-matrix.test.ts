@@ -1,6 +1,6 @@
 import type { Plugin } from 'vite'
-import { createRequire } from 'node:module'
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { WeappTailwindcss } from '@/bundlers/vite'
@@ -159,7 +159,7 @@ async function runWatchHmrReplayCase(viteSpecifier: string) {
         cssEntries: [cssFile],
         tailwindcssBasedir: tailwindcss4Basedir,
         tailwindcss: {
-            packageName: 'tailwindcss',
+          packageName: 'tailwindcss',
           v4: {
             cssEntries: [cssFile],
           },
@@ -193,6 +193,13 @@ async function runWatchHmrReplayCase(viteSpecifier: string) {
     const secondCss = await waitForBuiltStyle(distDir)
     expect(secondCss).toContain('.pt-_b12rpx_B')
     expect(secondCss).not.toContain('.pt-\\[12rpx\\]')
+
+    const repeatedRebuild = waitForWatchEnd(watcher)
+    await writeFile(path.join(root, 'src/main.ts'), 'import "./app.css"\nexport const stamp = 2\n')
+    await repeatedRebuild
+    const replayedCss = await waitForBuiltStyle(distDir)
+    expect(replayedCss).toContain('.pt-_b12rpx_B')
+    expect(replayedCss).not.toContain('.pt-\\[12rpx\\]')
   }
   finally {
     await closeWatcher(watcher)

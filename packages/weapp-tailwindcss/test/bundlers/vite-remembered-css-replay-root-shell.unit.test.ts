@@ -106,6 +106,7 @@ describe('bundlers/vite remembered css replay root shell', () => {
       recordCssAssetResult: vi.fn(),
       recordViteProcessedCssAssetResult,
       rootDir: '/repo',
+      runtimeSignature: 'runtime:fixture',
       runtimeState: {
         readyPromise: Promise.resolve(),
         tailwindRuntime: { majorVersion: 4 },
@@ -154,7 +155,7 @@ describe('bundlers/vite remembered css replay root shell', () => {
     })
 
     // 最终产物缓存可能已经合并本轮随后删除的框架规则，不能当作入口源缓存。
-    lastCssResultByFile.set('app-origin.wxss', generatedCss + '\n.removed-framework-rule{color:red}')
+    lastCssResultByFile.set('app-origin.wxss', `${generatedCss}\n.removed-framework-rule{color:red}`)
     const cachedReplayTasks: Array<() => Promise<void>> = []
     const cachedReplayUpdates: typeof pendingRememberedCssReplayUpdates = []
     await processRememberedCssReplay({
@@ -205,7 +206,9 @@ describe('bundlers/vite remembered css replay root shell', () => {
       frameworkRootImportShellTargetByFile: new Map([['framework.acss', 'generated.acss']]),
       opts: { cssMatcher: (file: string) => file.endsWith('.acss'), htmlMatcher: () => false },
       getRememberedCssSources: () => new Map([['entry', {
-        outputFile: 'generated.acss', sourceFile: '/repo/theme.css', rawSource: '@import "tailwindcss";',
+        outputFile: 'generated.acss',
+        sourceFile: '/repo/theme.css',
+        rawSource: '@import "tailwindcss";',
       }]]),
       cssTaskFactories: contributionTasks,
       pendingRememberedCssReplayUpdates: contributionUpdates,
@@ -262,10 +265,11 @@ describe('bundlers/vite remembered css replay root shell', () => {
       }) }),
     }))
     expect(createScopedGeneratorRuntime).toHaveBeenCalledWith('merged.wxss', expect.anything(), expect.any(Set), ownedSources[1]!.rawSource, ownedSources[1]!.sourceFile, true)
-    expect(await replayOwned()).toBe(0)
+    const callsBeforeReplay = generateTailwindV4Css.mock.calls.length
+    expect(await replayOwned()).toBe(1)
+    expect(generateTailwindV4Css).toHaveBeenCalledTimes(callsBeforeReplay)
     swapped = true
     expect(await replayOwned()).toBe(1)
-
   })
 
   it('skips scoped runtime work when the remembered file is already in the bundle', async () => {
@@ -372,6 +376,5 @@ describe('bundlers/vite remembered css replay root shell', () => {
     } as any)
     expect(createScopedGeneratorRuntime).not.toHaveBeenCalled()
     expect(cssTaskFactories).toHaveLength(0)
-
   })
 })

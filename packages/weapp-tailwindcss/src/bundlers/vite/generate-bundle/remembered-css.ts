@@ -2,6 +2,7 @@ import type { OutputAsset } from 'rollup'
 import type { RememberedCssSource } from './types'
 import type { InternalUserDefinedOptions } from '@/types'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
+import { normalizeCssSourceIdentity } from '../css-memory'
 import { CSS_SOURCE_OUTPUT_EXT_RE, resolveViteCssPipelineOutputFileFromSourceFile } from '../css-output'
 import { getActiveViteSourceOutputRelationOwner } from '../source-output-relations'
 
@@ -12,6 +13,34 @@ export function createRememberedCssRuntimeSignature(cssRuntimeSignature: string,
 /** 入口重放的干净生成结果，避免和已合并框架贡献的产物缓存混用。 */
 export function createGeneratedReplayCacheKey(outputFile: string) {
   return `${normalizeOutputPathKey(outputFile)}::__generated_replay__`
+}
+
+/** 干净生成缓存只属于同一来源组、输出目标和运行时，不代表本轮资产已经存在。 */
+export function createGeneratedReplayCacheSignature(options: {
+  outputFile: string
+  rememberedOutputFile: string
+  sources: RememberedCssSource[]
+  computeHash: (source: string) => string
+  rawSource: string
+  generatorRawSource: string
+  rememberedSignature: string
+  runtimeSignature: string
+  dependencyRevision: number
+  generatorPlatform?: string | undefined
+  isMainChunk?: boolean | undefined
+}) {
+  return JSON.stringify([
+    normalizeOutputPathKey(options.outputFile),
+    normalizeOutputPathKey(options.rememberedOutputFile),
+    options.sources.map(source => [normalizeCssSourceIdentity(source.sourceFile), options.computeHash(source.rawSource)]),
+    options.computeHash(options.rawSource),
+    options.computeHash(options.generatorRawSource),
+    options.rememberedSignature,
+    options.runtimeSignature,
+    options.dependencyRevision,
+    options.generatorPlatform,
+    options.isMainChunk,
+  ])
 }
 
 export function resolveRememberedCssSourceForTest(
