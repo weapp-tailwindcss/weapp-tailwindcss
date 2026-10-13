@@ -199,4 +199,10 @@ Issues, reproducible bug reports, framework examples, documentation improvements
 
 ## Star History
 
-[![Star History Chart](https://star-history.dera.page/svg?repos=sonofmagic/weapp-tailwindcss&type=Date)](https://github.com/weapp-tailwindcss/weapp-tailwindcss)
+<a href="https://www.star-history.com/?repos=weapp-tailwindcss%2Fweapp-tailwindcss&type=date&legend=top-left">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=weapp-tailwindcss/weapp-tailwindcss&type=date&theme=dark&legend=top-left" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=weapp-tailwindcss/weapp-tailwindcss&type=date&legend=top-left" />
+    <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=weapp-tailwindcss/weapp-tailwindcss&type=date&legend=top-left" />
+  </picture>
+</a>
