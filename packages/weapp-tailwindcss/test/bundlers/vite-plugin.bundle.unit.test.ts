@@ -7580,27 +7580,28 @@ module.exports = {
     expect(viteProcessedCssAssetResults.get(subSourceFile)?.injectIntoMain).toBe(false)
   }, TEST_TIMEOUT_MS)
 
-  it('passes previous css to unchanged remembered vite css replay', async () => {
+  it('replays clean remembered css without retaining removed framework rules', async () => {
+    const cleanCss = '.tw-replay-base{display:block}.tw-replay-next{display:flex}'
+    const removedFrameworkCss = '.removed-framework-rule{color:red}'
     const generateCalls: Array<{
       rawSource: string
       previousCss?: string | undefined
     }> = []
     const generateCssByGeneratorMock = vi.fn(async (options: {
+      frameworkProcessedUserCss?: string | undefined
       previousCss?: string | undefined
       rawSource: string
+      userRawSource?: string | undefined
     }) => {
       generateCalls.push({
         rawSource: options.rawSource,
         previousCss: options.previousCss,
       })
-      const css = options.previousCss
-        ? `${options.previousCss}\n.tw-replay-next{display:flex}`
-        : '.tw-replay-base{display:block}'
+      const userCss = options.frameworkProcessedUserCss ?? options.userRawSource ?? ''
+      const css = `${options.previousCss ?? ''}${cleanCss}${userCss.includes(removedFrameworkCss) ? removedFrameworkCss : ''}`
       return {
         css,
         rawCss: css,
-        incrementalCss: options.previousCss ? '.tw-replay-next{display:flex}' : undefined,
-        incrementalRawCss: options.previousCss ? '.tw-replay-next{display:flex}' : undefined,
         target: 'weapp',
         classSet: new Set<string>(),
         rawCandidates: new Set<string>(),
@@ -7626,7 +7627,7 @@ module.exports = {
         normalizeWeappTailwindcssGeneratorOptions: normalizeGeneratorOptions,
       }
     })
-    const root = await mkdtemp(path.join(os.tmpdir(), 'weapp-tw-vite-replay-previous-css-'))
+    const root = await mkdtemp(path.join(os.tmpdir(), 'weapp-tw-vite-replay-clean-css-'))
     createdDirs.push(root)
     const runtimeSet = new Set(['tw-replay-base', 'tw-replay-next'])
     const context = createContext({
@@ -7689,7 +7690,7 @@ module.exports = {
     })
     const firstBundle = {
       'pages/index/index.wxss': {
-        ...createRollupAsset(rawSource),
+        ...createRollupAsset(`${rawSource}\n${removedFrameworkCss}`),
         fileName: 'pages/index/index.wxss',
       },
     }
@@ -7713,14 +7714,35 @@ module.exports = {
 
     expect(generateCalls).toHaveLength(2)
     expect(generateCalls[0]?.previousCss).toBeUndefined()
-    expect(generateCalls[1]?.previousCss).toBe(firstCss)
+    expect(firstCss).toBe(`${cleanCss}${removedFrameworkCss}`)
+    expect(generateCalls[1]?.rawSource).toBe(rawSource)
+    expect(generateCalls[1]?.previousCss).toBeUndefined()
     expect(pruneViteCssCaches).toHaveBeenCalledTimes(1)
     const firstPruneOptions = pruneViteCssCaches.mock.calls.at(0)?.[0]
     expect(firstPruneOptions.activeFiles.has('pages/index/index.wxss')).toBe(true)
     expect(firstPruneOptions.activeKnownSfcFiles.has('pages/index/index.wxss')).toBe(true)
-    expect(emitted.find(file => file.fileName === 'pages/index/index.wxss')?.source).toBe(
-      `${firstCss}\n.tw-replay-next{display:flex}`,
-    )
+    expect(emitted).toEqual([{ type: 'asset', fileName: 'pages/index/index.wxss', source: cleanCss }])
+
+    const thirdBundle = {
+      'pages/index/index.js': {
+        ...createRollupChunk('console.log("next")'),
+        fileName: 'pages/index/index.js',
+      },
+    }
+    await generateBundle.call({
+      addWatchFile: vi.fn(),
+      emitFile(file: { type: 'asset', fileName: string, source: string }) {
+        emitted.push(file)
+        return file.fileName
+      },
+    }, {}, thirdBundle)
+
+    expect(generateCalls).toHaveLength(2)
+    expect(emitted).toEqual(Array.from({ length: 2 }, () => ({
+      type: 'asset',
+      fileName: 'pages/index/index.wxss',
+      source: cleanCss,
+    })))
   }, TEST_TIMEOUT_MS)
 
   it('does not inject vite-processed main package page css into app wxss during build', async () => {

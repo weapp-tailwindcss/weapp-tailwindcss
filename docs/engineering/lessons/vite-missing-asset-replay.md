@@ -6,6 +6,7 @@ regressions:
   - packages/weapp-tailwindcss/test/bundlers/vite-plugin.hmr-version-matrix.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-remembered-css-replay-cache.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-remembered-css-replay-root-shell.unit.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-plugin.bundle.unit.test.ts
 ---
 
 # Vite 生成缓存与当前构建图的资产提交分离
@@ -31,6 +32,8 @@ Rollup 4 每轮会移除未重新登记的依赖监听，现有来源扫描并�
 Node 22.22.3 的真实 Vite 4–8 watch 矩阵新增连续 JS-only rebuild 后 5/5 通过；旧实现的 Vite 4 第三轮先失败。干净缓存、空 CSS、连续三轮提交、通用缓存污染、缺结果/证明、raw/source/candidate/runtime/dependency/output/platform/主样式变化、当前与 planned 所有者和框架 root shell 回归通过。Node 22.22.3 与 24.18.0 的 10 个 Vite/缓存/框架合并/架构定向文件各 142 项通过；依赖逐轮登记的新回归在未恢复依赖的旧回放实现上先失败 2 项（每次生成的两条依赖仅登记首轮，而不是三轮），修正后通过。主包类型检查与构建通过，保留原 mixed exports 提示。
 
 本次扩展包内临时 watch fixture，不改 demo、issue 页面、e2e static fixture 或任何 checked-in CSS 快照。每次矩阵运行均重新生成该临时项目的 dist，并核对 CSS 转义与生成结果；没有对应持久 static 项目基线需要更新。未执行本地全面或设备测试。
+
+准确 head `85283d80c47efcfd44201a97e65de2f648406608` 的 [CI 38362402051](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38362402051) attempt 1、Unit 2 job `115179650587` 随后暴露既有 bundle 单测仍要求首次缺席回放传入通用产物缓存。该测试的 mock 根据 previousCss 凭空新增规则，候选与源内容实际上没有变化；本地原用例复现同一断言失败。契约更新保留原 prune 与来源归属检查，改为第一轮框架产物 fixture 含旧规则、第二轮从 remembered 来源重新生成完整干净 CSS、第三轮不再生成但必须再次准确提交同一资产。两轮生成均禁止传入污染的 previousCss，旧规则不得进入第二、三轮；未恢复产品对通用产物缓存的依赖。Node 22.22.3 与 24.18.0 的完整 bundle 文件及 replay/cache/root-shell/真实 Vite 4–8 矩阵共 5 文件，各 247 项通过。强制 ESLint 检查该超大既有 bundle 文件的基线与本次均为 71 条错误，按规则、消息和源码行比对没有新增；未把该文件记为 ESLint 全绿，也未混入无关格式修复。
 
 ## 适用边界
 
