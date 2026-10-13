@@ -5,6 +5,8 @@ import { EventEmitter } from 'node:events'
 import process from 'node:process'
 import { PassThrough } from 'node:stream'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { windowsObserverArgs } from '../../../scripts/demo-e2e-workflow/process-observer/script'
+import { windowsObserverShutdownScript } from '../../../scripts/demo-e2e-workflow/process-observer/shutdown-script'
 import { runMemoryProbe } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/memory/probe'
 import { createMemorySampler } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/memory/sampler'
 import { MemorySourceError, prepareWatchMemorySource, spawnWithWatchMemorySource } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/memory/source'
@@ -188,6 +190,18 @@ describe('persistent Watch memory source', () => {
     expect(script.slice(0, script.indexOf('observer-ready'))).not.toContain('ConvertTo-Json')
     expect(script).toContain('taro-build-runner\\.mjs\\s+build\\s+--type\\s+\\S+\\s+--watch')
     expect(script).toContain('WorkingSetSize,CommandLine')
+  })
+
+  it.each([{ args: windowsObserverArgs }, { args: windowsWatchMemoryArgs }])('ends only its owned PowerShell host after the EOF request loop', ({ args }) => {
+    const script = Buffer.from(args.at(-1)!, 'base64').toString('utf16le')
+    expect(script.trimEnd().endsWith(windowsObserverShutdownScript.trim())).toBe(true)
+    const eof = script.indexOf('while ($null -ne ($line = [Console]::In.ReadLine()))')
+    const shutdown = script.indexOf('observer-stopped')
+    expect(eof).toBeGreaterThan(-1)
+    expect(shutdown).toBeGreaterThan(eof)
+    expect(script.slice(eof, shutdown)).toContain('error = $_.Exception.Message')
+    expect(script).toContain('[Environment]::Exit(0)')
+    expect(script).not.toContain('Stop-Process')
   })
 
   it('reaps a real Node provider after repeated actual memory responses from one held PID', async () => {

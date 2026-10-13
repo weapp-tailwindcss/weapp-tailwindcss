@@ -9,12 +9,17 @@ export interface AndroidDevice {
   id: string
 }
 
-export interface IosDevice {
+export interface IosBuildTarget {
   platform: 'ios'
   id: string
   name: string
   runtime: string
   destination: string
+  state: 'Shutdown' | 'Booted'
+}
+
+export interface IosDevice extends IosBuildTarget {
+  state: 'Booted'
 }
 
 export type NativeDevice = AndroidDevice | IosDevice
@@ -34,23 +39,42 @@ export function selectAndroidDevice(output: string, env: NodeJS.ProcessEnv = pro
   return { platform: 'android', id }
 }
 
-export function selectIosDevice(output: string, env: NodeJS.ProcessEnv = process.env): IosDevice {
+function selectIosTarget(output: string, env: NodeJS.ProcessEnv, states: string[], requireAvailable = false): IosBuildTarget {
   const parsed = JSON.parse(output) as {
     devices: Record<string, Array<{ name: string, udid: string, state: string, isAvailable?: boolean }>>
   }
   const devices = Object.entries(parsed.devices).flatMap(([runtime, items]) => items
-    .filter(item => item.isAvailable !== false)
     .map(item => ({ ...item, runtime })))
   const requested = requestedIosTarget(['LYNX_IOS_DEVICE_ID'], env)
-  const id = selectTarget(devices.filter(device => device.state === 'Booted').map(device => device.udid), requested)
+  const candidates = devices.filter(device => (requireAvailable ? device.isAvailable === true : device.isAvailable !== false) && states.includes(device.state))
+  const id = selectTarget(candidates.map(device => device.udid), requested)
+  if (devices.filter(device => device.udid === id).length !== 1) {
+    throw new Error('iOS 设备库存包含重复身份。')
+  }
   const device = devices.find(device => device.udid === id)!
+  if (typeof device.name !== 'string' || !device.name.trim() || !device.runtime.trim()) {
+    throw new Error('iOS 设备库存缺少名称或 runtime。')
+  }
   return {
     platform: 'ios',
     id,
     name: device.name,
     runtime: device.runtime,
     destination: iosSimulatorDestination(id, env['LYNX_IOS_DESTINATION']),
+    state: device.state as IosBuildTarget['state'],
   }
+}
+
+export function selectIosDevice(output: string, env: NodeJS.ProcessEnv = process.env): IosDevice {
+  return selectIosTarget(output, env, ['Booted']) as IosDevice
+}
+
+/** CI 新建模拟器在启动前只锁定构建身份，不把 Shutdown 目标视为可运行设备。 */
+export function selectIosBuildTarget(output: string, env: NodeJS.ProcessEnv): IosBuildTarget {
+  if (!requestedIosTarget(['LYNX_IOS_DEVICE_ID'], env)) {
+    throw new Error('iOS 构建目标必须显式指定设备。')
+  }
+  return selectIosTarget(output, env, ['Shutdown'], true)
 }
 
 /** 构建前锁定唯一在线设备，后续运行和证据采集只消费该身份。 */

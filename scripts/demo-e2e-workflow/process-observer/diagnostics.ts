@@ -3,6 +3,13 @@ import type { ProcessObserverQuery } from './transport'
 
 const stages = ['request-received', 'query-completed', 'response-ready'] as const
 
+interface ObserverShutdownDiagnostic {
+  stage: 'stdin-end-requested' | 'observer-stopped' | 'terminate-requested' | 'exit' | 'close'
+  elapsedMs: number
+  code?: number | null
+  signal?: NodeJS.Signals | null
+}
+
 export interface ObserverRequestDiagnostic {
   id: number
   kind: ProcessObserverQuery['kind']
@@ -17,8 +24,12 @@ export function createObserverDiagnostics(pid: number | undefined, launch?: Obse
   let readyAt: number | undefined
   let runtimeVersion: string | undefined
   const requests: ObserverRequestDiagnostic[] = []
+  const shutdown: ObserverShutdownDiagnostic[] = []
   const elapsed = () => Math.max(0, Date.now() - startedAt)
   return {
+    shutdown(stage: ObserverShutdownDiagnostic['stage'], result: Pick<ObserverShutdownDiagnostic, 'code' | 'signal'> = {}) {
+      shutdown.push({ stage, elapsedMs: elapsed(), ...result })
+    },
     begin(id: number, query: ProcessObserverQuery) {
       const request: ObserverRequestDiagnostic = { id, kind: query.kind, sentAt: elapsed(), stages: [], progress: 0 }
       requests.push(request)
@@ -57,6 +68,7 @@ export function createObserverDiagnostics(pid: number | undefined, launch?: Obse
         elapsedMs: elapsed(),
         readyAtMs: readyAt ?? null,
         runtimeVersion: runtimeVersion ?? null,
+        shutdown: shutdown.map(stage => ({ ...stage })),
         launch: launch ? { ...launch } : undefined,
         requests: requests.map(request => ({ id: request.id, kind: request.kind, sentAtMs: request.sentAt, stages: request.stages.map(stage => ({ ...stage })) })),
       }

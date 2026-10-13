@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import path from 'node:path'
 import { command } from './native-command'
 
-export async function resolveIosAppContainer(deviceId: string, applicationId: string, cwd: string, recordTimeout: (error: unknown) => Promise<void>) {
+export async function resolveIosAppContainer(deviceId: string, applicationId: string, cwd: string, recordTimeout: (error: unknown) => Promise<void>, allowBoot = false) {
   const query = async () => {
     const container = (await command('xcrun', ['simctl', 'get_app_container', deviceId, applicationId, 'data'], cwd, 30_000)).trim()
     assert.ok(path.isAbsolute(container) && !/[\r\n]/.test(container), 'simctl 未返回有效的应用容器路径')
@@ -18,7 +18,8 @@ export async function resolveIosAppContainer(deviceId: string, applicationId: st
     // 只恢复安装后的只读查询；不重跑构建、安装、启动或样式断言。
     try {
       await recordTimeout(firstError)
-      await command('xcrun', ['simctl', 'bootstatus', deviceId, '-b'], cwd, 120_000)
+      // 借用的本地设备不能通过容器查询恢复自动启动；CI 自建目标保留原有有界恢复。
+      await command('xcrun', ['simctl', 'bootstatus', deviceId, ...(allowBoot ? ['-b'] : [])], cwd, 120_000)
       return await query()
     }
     catch (lastError) {

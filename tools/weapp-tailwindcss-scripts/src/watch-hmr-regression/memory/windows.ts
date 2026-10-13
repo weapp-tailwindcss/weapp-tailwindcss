@@ -1,5 +1,6 @@
 import { Buffer } from 'node:buffer'
 import process from 'node:process'
+import { windowsObserverShutdownScript } from '../../../../../scripts/demo-e2e-workflow/process-observer/shutdown-script'
 
 // 单次 fixture 与持久会话复用同一采集函数，保留 Watch 自身的进程范围。
 export const windowsWatchMemoryFunction = [
@@ -82,6 +83,7 @@ while ($null -ne ($line = [Console]::In.ReadLine())) {
   [Console]::Out.WriteLine($json)
   [Console]::Out.Flush()
 }
+${windowsObserverShutdownScript}
 `
 
 export const windowsWatchMemoryArgs = ['-NoLogo', '-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(observerScript, 'utf16le').toString('base64')]

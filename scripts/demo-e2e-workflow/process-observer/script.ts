@@ -1,5 +1,6 @@
 import { Buffer } from 'node:buffer'
 import { windowsProcessTreeMemoryFunction } from '../../demo-e2e-memory/windows'
+import { windowsObserverShutdownScript } from './shutdown-script'
 
 // 身份与内存指标分开查询；每个请求重新查询，准备阶段结果不领取业务进程也不计入指标。
 const script = `
@@ -42,6 +43,7 @@ while ($null -ne ($line = [Console]::In.ReadLine())) {
   [Console]::Out.WriteLine($json)
   [Console]::Out.Flush()
 }
+${windowsObserverShutdownScript}
 `
 
 export const windowsObserverArgs = ['-NoLogo', '-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')]

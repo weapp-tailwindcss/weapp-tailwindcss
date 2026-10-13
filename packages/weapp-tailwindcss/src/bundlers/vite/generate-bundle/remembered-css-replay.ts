@@ -3,12 +3,12 @@ import type { ViteFrameworkCssPipelineContext, ViteFrameworkCssPipelineStrategy 
 import type { BundleMetrics } from './metrics'
 import type { GenerateBundleContext, PendingRememberedCssReplayUpdate, RememberedCssSource } from './types'
 import { sourcePathApi } from '@weapp-tailwindcss/source-scan'
-import { AssetEmissionPlan } from '@/compiler'
+import { AssetEmissionPlan, getCompilationScopeDependencyRevision } from '@/compiler'
 import { isPureLocalCssImportWrapper } from '../../../generation/local-imports'
 import { normalizeMiniProgramGeneratorCssSource, normalizeMiniProgramImportShell } from '../../../generation/output-import-shell'
 import { generateTailwindV4Css } from '../../../generation/service'
 import { isSourcePreprocessorRequest } from '../../../generation/style-requests'
-import { annotateCssSourceTrace, createCssTokenSourceMap } from '../../shared/css-source-trace'
+import { annotateCssSourceTrace, createCssTokenSourceMap, isCssSourceTraceEnabled } from '../../shared/css-source-trace'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
 import { canProcessViteSourceStyleAsCss, SOURCE_STYLE_OUTPUT_EXT_RE } from '../css-output'
 import { createRuntimeAffectingSourceSignature } from '../runtime-affecting-signature'
@@ -16,14 +16,14 @@ import { isHTMLRequest } from '../utils'
 import { applyViteAssetEmissionPlan } from './asset-emission-plan'
 import { createCssRuntimeSignature } from './css-share-scope'
 import { measureElapsed } from './metrics'
-import { collectRememberedCssReplayGroups, createGeneratedReplayCacheKey, createRememberedCssRuntimeSignature, mergeRememberedCssSources } from './remembered-css'
+import { collectRememberedCssReplayGroups, createGeneratedReplayCacheKey, createGeneratedReplayCacheProof, createGeneratedReplayCacheSignature, createRememberedCssRuntimeSignature, getGeneratedReplayCache, mergeRememberedCssSources } from './remembered-css'
 import { registerGeneratorDependencies } from './rollup-assets'
 import { isRootMiniProgramStyleOutputFile, shouldPreserveFrameworkRootMiniProgramImportShell } from './root-style-output'
 import { createScopedGeneratorCandidateSignature, createScopedGeneratorSourceTraceMap } from './scoped-generator'
 import { hasScopedSourceDirectives } from './scoped-generator-sources'
 import { createCandidateSignature } from './signatures'
 import { createMergedCssSourceTraceMap } from './source-trace'
-import { getLastCssResult, getLastCssSourceHash, rememberLastCssResult } from './vite-css-cache'
+import { rememberLastCssResult } from './vite-css-cache'
 
 function dedupeRememberedCssReplayGroup(
   group: Array<{ key: string, remembered: RememberedCssSource }>,
@@ -87,6 +87,7 @@ interface ProcessRememberedCssReplayOptions {
   recordCssAssetResult: GenerateBundleContext['recordCssAssetResult']
   recordViteProcessedCssAssetResult: GenerateBundleContext['recordViteProcessedCssAssetResult']
   rootDir: string
+  runtimeSignature: string
   runtimeState: GenerateBundleContext['runtimeState']
   setRememberedCssSignature?: ((file: string, cssRuntimeSignature: string) => void) | undefined
   shouldInjectCssIntoMainFromOutput: (
@@ -182,6 +183,7 @@ export async function processRememberedCssReplay(options: ProcessRememberedCssRe
     recordCssAssetResult,
     recordViteProcessedCssAssetResult,
     rootDir,
+    runtimeSignature,
     runtimeState,
     setRememberedCssSignature,
     shouldInjectCssIntoMainFromOutput,
@@ -306,9 +308,6 @@ export async function processRememberedCssReplay(options: ProcessRememberedCssRe
     const cssSourceChanged = changedCssFiles.has(outputFile)
       || changedCssFiles.has(sourceFile)
       || (previousRawSourceHash != null && previousRawSourceHash !== rawSourceHash)
-    const previousCss = useIncrementalMode && !cssSourceChanged && getLastCssSourceHash(lastCssSourceHashByFile, outputFile) === cssRuntimeAffectingHash
-      ? getLastCssResult(lastCssResultByFile, outputFile)
-      : undefined
     const allRememberedSignaturesFresh = rememberedKeys.length > 0
       && rememberedKeys.every(key => getRememberedCssSignature?.(key) === rememberedCssRuntimeSignature)
     const hasCurrentFrameworkContribution = [...frameworkRootImportShellTargetByFile ?? []].some(([file, target]) =>
@@ -320,15 +319,25 @@ export async function processRememberedCssReplay(options: ProcessRememberedCssRe
         && normalizedBundleFiles.has(normalizeOutputPathKey(outputFile)))
     const generatedReplayKey = createGeneratedReplayCacheKey(outputFile)
     activeViteCssCacheFiles.add(generatedReplayKey)
-    const cachedGeneratedReplayCss = allRememberedSignaturesFresh && shouldMergeReplayIntoFrameworkRootTarget
-      ? lastCssResultByFile.get(generatedReplayKey)
+    const generatedReplaySignature = createGeneratedReplayCacheSignature({
+      outputFile,
+      rememberedOutputFile,
+      sources: ownedSources,
+      computeHash: source => cache.computeHash(source),
+      rawSource,
+      generatorRawSource,
+      rememberedSignature: rememberedCssRuntimeSignature,
+      runtimeSignature,
+      dependencyRevision: getCompilationScopeDependencyRevision(runtimeState, outputFile),
+      generatorPlatform,
+      isMainChunk: cssHandlerOptions.isMainChunk,
+    })
+    // 签名新鲜只能省略生成；缺席的资产仍必须提交到本轮构建图。
+    // 通用产物缓存可能包含框架贡献，只能回放有完整归属证明的干净生成结果。
+    const cachedGeneratedReplay = allRememberedSignaturesFresh && !cssSourceChanged
+      ? getGeneratedReplayCache(lastCssResultByFile, lastCssSourceHashByFile, generatedReplayKey, generatedReplaySignature)
       : undefined
-    // 源码签名未变且无需合并框架贡献时，跳过重放。
-    // 需要合并时复用干净生成缓存，避免把已混入框架规则的产物缓存当作增量基线。
-    if (allRememberedSignaturesFresh && !shouldMergeReplayIntoFrameworkRootTarget) {
-      continue
-    }
-    const sourceTraceSources = scopedSourceCandidateSourceGetter
+    const sourceTraceSources = isCssSourceTraceEnabled(opts) && scopedSourceCandidateSourceGetter
       ? hasScopedSources
         ? await createMergedCssSourceTraceMap(signatureSources, source => createScopedGeneratorSourceTraceMap(source.rawSource, source.sourceFile, scopedSourceCandidateSourceGetter, { scopeToSource: true }))
         : await createScopedGeneratorSourceTraceMap(generatorRawSource, sourceFile, scopedSourceCandidateSourceGetter)
@@ -394,24 +403,41 @@ export async function processRememberedCssReplay(options: ProcessRememberedCssRe
       }))
       continue
     }
-    if (cachedGeneratedReplayCss) {
+    const recordGeneratedReplayCss = (css: string) => {
+      lastCssRawSourceHashByFile.set(outputFile, rawSourceHash)
+      rememberLastCssResult(lastCssResultByFile, lastCssSourceHashByFile, outputFile, css, cssRuntimeAffectingHash)
+      for (const key of rememberedKeys) {
+        setRememberedCssSignature?.(key, rememberedCssRuntimeSignature)
+      }
+      recordCssAssetResult?.(outputFile, css)
+      const injectIntoMain = shouldMergeReplayIntoFrameworkRootTarget
+        ? true
+        : outputCssHandlerOptions.isMainChunk
+          ? false
+          : shouldInjectCssIntoMainFromOutput(outputFile, sourceFile, outputCssHandlerOptions)
+      const replayUpdates = createRememberedCssReplayUpdates(css, sourceFile, outputFile, injectIntoMain)
+      if (shouldMergeReplayIntoFrameworkRootTarget) {
+        pendingRememberedCssReplayUpdates.push(...replayUpdates)
+      }
+      else {
+        for (const update of replayUpdates) {
+          recordViteProcessedCssAssetResult?.(update.file, update.css, update)
+        }
+      }
+      if (shouldEmitRememberedReplayCssAsset) {
+        emitRememberedCssAsset(css)
+      }
+    }
+    if (cachedGeneratedReplay !== undefined) {
       cssTaskFactories.push(() => timeTask('css.replay', async () => {
         const start = performance.now()
-        lastCssRawSourceHashByFile.set(outputFile, rawSourceHash)
-        for (const key of rememberedKeys) {
-          setRememberedCssSignature?.(key, rememberedCssRuntimeSignature)
-        }
-        recordCssAssetResult?.(outputFile, cachedGeneratedReplayCss)
-        pendingRememberedCssReplayUpdates.push(...createRememberedCssReplayUpdates(
-          cachedGeneratedReplayCss,
-          sourceFile,
-          outputFile,
-          true,
-        ))
+        const css = annotateCss(cachedGeneratedReplay.css)
+        registerGeneratorDependencies({ addWatchFile }, cachedGeneratedReplay.dependencies)
+        recordGeneratedReplayCss(css)
         metrics.css.elapsed += measureElapsed(start)
         metrics.css.cacheHits++
-        onUpdate(outputFile, rememberedCssSource.rawSource, cachedGeneratedReplayCss)
-        debug('css replay reuse generated cache: %s bytes=%d', outputFile, cachedGeneratedReplayCss.length)
+        onUpdate(outputFile, rememberedCssSource.rawSource, css)
+        debug('css replay reuse generated cache: %s bytes=%d', outputFile, cachedGeneratedReplay.css.length)
       }))
       continue
     }
@@ -431,37 +457,16 @@ export async function processRememberedCssReplay(options: ProcessRememberedCssRe
         generatorPlatform,
         styleHandler,
         debug,
-        previousCss: shouldMergeReplayIntoFrameworkRootTarget ? undefined : previousCss,
+        previousCss: undefined,
       })
-      const css = annotateCss(generated?.css ?? (await styleHandler(generatorRawSource, cssHandlerOptions)).css)
-      lastCssRawSourceHashByFile.set(outputFile, rawSourceHash)
-      rememberLastCssResult(lastCssResultByFile, lastCssSourceHashByFile, outputFile, css, cssRuntimeAffectingHash)
-      rememberLastCssResult(lastCssResultByFile, lastCssSourceHashByFile, generatedReplayKey, css, cssRuntimeAffectingHash)
-      for (const key of rememberedKeys) {
-        setRememberedCssSignature?.(key, rememberedCssRuntimeSignature)
-      }
+      const generatedCss = generated?.css ?? (await styleHandler(generatorRawSource, cssHandlerOptions)).css
+      // 注释来源按本轮重新标注，缓存保留未混入框架贡献的原始生成结果。
+      rememberLastCssResult(lastCssResultByFile, lastCssSourceHashByFile, generatedReplayKey, generatedCss, createGeneratedReplayCacheProof(generatedReplaySignature, generated?.dependencies))
+      const css = annotateCss(generatedCss)
+      recordGeneratedReplayCss(css)
       if (generated) {
         registerGeneratorDependencies({ addWatchFile }, generated.dependencies)
-        recordCssAssetResult?.(outputFile, css)
-        const shouldInjectReplayCssIntoMain = shouldInjectCssIntoMainFromOutput(outputFile, sourceFile, outputCssHandlerOptions)
-        const injectIntoMain = shouldMergeReplayIntoFrameworkRootTarget
-          ? true
-          : outputCssHandlerOptions.isMainChunk
-            ? false
-            : shouldInjectReplayCssIntoMain
-        const replayUpdates = createRememberedCssReplayUpdates(css, sourceFile, outputFile, injectIntoMain)
-        if (shouldMergeReplayIntoFrameworkRootTarget) {
-          pendingRememberedCssReplayUpdates.push(...replayUpdates)
-        }
-        else {
-          for (const update of replayUpdates) {
-            recordViteProcessedCssAssetResult?.(update.file, update.css, update)
-          }
-        }
         debug('css replay generated result: %s bytes=%d', outputFile, css.length)
-      }
-      if (shouldEmitRememberedReplayCssAsset) {
-        emitRememberedCssAsset(css)
       }
       metrics.css.elapsed += measureElapsed(start)
       metrics.css.transformed++

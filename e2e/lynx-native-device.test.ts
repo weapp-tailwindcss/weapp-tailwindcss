@@ -45,6 +45,7 @@ describe('Lynx 原生设备身份', () => {
       name: '选定设备',
       runtime: 'runtime-selected',
       destination: 'platform=iOS Simulator,id=selected',
+      state: 'Booted',
     })
     expect(() => selectIosDevice(iosDevices, {})).toThrow('唯一明确')
   })

@@ -1,5 +1,5 @@
 import type { NativeEvidenceContext, NativePlatformReport, Platform } from '../../examples/react-lynx/src/compatibility/types'
-import type { AndroidDevice, IosDevice } from './native-device'
+import type { AndroidDevice } from './native-device'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
@@ -9,14 +9,16 @@ import { androidSdkRoot } from '../react-native/native-toolchain'
 import { buildCompatibilityBundle } from './build'
 import { exampleDir, lynxIntermediateDir, repoRoot } from './catalog'
 import { collectNativeEvidence, createEvidenceContext, validateNativeEvidence } from './evidence'
-import { resolveIosAppContainer } from './ios-container'
+import { readPreparedIosBuildTarget } from './ios-build-target'
 import { formatNativeFailure, withNativeArtifacts } from './native-artifacts'
 import { command } from './native-command'
 import { adbArgs, resolveNativeDevice } from './native-device'
 import { enrichEnvironment } from './native-environment'
-import { iosPodInstallArguments, parseNativeRunArgs } from './native-options'
+import { parseNativeRunArgs } from './native-options'
+import { waitForReportOrFailure } from './native-report'
 import { finalizeNativePixelEffects, validateNativePixelEvidence } from './pixel-evidence'
 import { defaultReportPath, nativeReportConclusion, validateNativeReport } from './reports'
+import { runIos } from './run-ios'
 
 const options = parseNativeRunArgs(process.argv.slice(2), process.cwd())
 const platform: Platform = options.platform
@@ -26,35 +28,6 @@ const applicationId = 'com.weapptailwindcss.lynxcompat'
 
 async function wait(milliseconds: number) {
   await new Promise(resolve => setTimeout(resolve, milliseconds))
-}
-
-function nativeFailureMessage(source: string) {
-  try {
-    const value = JSON.parse(source) as { message?: unknown }
-    if (typeof value.message === 'string' && value.message.trim()) {
-      return value.message
-    }
-  }
-  catch {
-    // 保留非 JSON host 的原始错误，便于定位旧宿主协议问题。
-  }
-  return source.trim() || 'unknown native evidence failure'
-}
-
-async function waitForReportOrFailure(read: () => Promise<string | undefined>, readFailure: () => Promise<string | undefined>) {
-  const deadline = Date.now() + 300_000
-  while (Date.now() < deadline) {
-    const failure = await readFailure()
-    if (failure?.trim()) {
-      throw new Error(`原生兼容性报告执行失败：${nativeFailureMessage(failure)}`)
-    }
-    const source = await read()
-    if (source) {
-      return source
-    }
-    await new Promise(resolve => setTimeout(resolve, 500))
-  }
-  throw new Error('Timed out waiting for the native compatibility report.')
 }
 
 async function collectAndroidArtifacts(source: string, artifactDir: string, device: AndroidDevice, context: NativeEvidenceContext) {
@@ -70,13 +43,6 @@ async function collectAndroidArtifacts(source: string, artifactDir: string, devi
 async function collectAndroidLogcat(artifactDir: string, device: AndroidDevice) {
   const result = await execa('adb', adbArgs(device, ['logcat', '-d', '-t', '2500']), { all: true, encoding: 'utf8', reject: false })
   await fs.writeFile(path.join(artifactDir, 'logcat.txt'), result.all ?? result.stdout ?? result.stderr ?? '')
-}
-
-async function collectIosArtifacts(source: string, container: string, artifactDir: string, context: NativeEvidenceContext) {
-  await fs.writeFile(path.join(artifactDir, 'raw-report.json'), source)
-  const report = JSON.parse(source) as NativePlatformReport
-  const directory = path.join(container, 'Library', 'Application Support', 'lynx-compat', context.runId, 'artifacts')
-  await collectNativeEvidence(report, artifactDir, context, name => fs.readFile(path.join(directory, name)))
 }
 
 async function installedAndroidCompileSdk() {
@@ -159,76 +125,6 @@ async function runAndroid(hostDir: string, artifactDir: string, device: AndroidD
   }
 }
 
-async function recordIosVideo(deviceId: string, artifactDir: string) {
-  const output = path.join(artifactDir, 'raw.mp4')
-  const recording = execa('xcrun', ['simctl', 'io', deviceId, 'recordVideo', '--codec=h264', output], { reject: false })
-  await wait(options.captureDurationSeconds * 1000)
-  recording.kill('SIGINT')
-  await recording
-}
-
-async function runIos(hostDir: string, artifactDir: string, device: IosDevice, context: NativeEvidenceContext) {
-  if (process.env['LYNX_IOS_SKIP_PROJECT_GENERATION'] !== '1') {
-    await command('xcodegen', ['generate'], hostDir, 60_000)
-  }
-  else if (!await fs.stat(path.join(hostDir, 'LynxCompatibilityHost.xcodeproj')).then(() => true).catch(() => false)) {
-    throw new Error('LYNX_IOS_SKIP_PROJECT_GENERATION=1 requires an existing Xcode project in LYNX_NATIVE_WORK_DIR.')
-  }
-  if (process.env['LYNX_IOS_SKIP_POD_INSTALL'] === '1') {
-    const requiredPaths = [path.join(hostDir, 'Pods'), path.join(hostDir, 'LynxCompatibilityHost.xcworkspace')]
-    const ready = await Promise.all(requiredPaths.map(item => fs.stat(item).then(() => true).catch(() => false)))
-    if (ready.some(item => !item)) {
-      throw new Error('LYNX_IOS_SKIP_POD_INSTALL=1 requires an existing Pods directory and workspace in LYNX_NATIVE_WORK_DIR.')
-    }
-  }
-  else {
-    // Podfile 已固定 Lynx 版本，CI 不需要每次刷新整个 Specs CDN。
-    await command(process.env['LYNX_POD'] ?? 'pod', iosPodInstallArguments(), hostDir, 600_000)
-  }
-  const deviceId = device.id
-  await command('xcrun', ['simctl', 'bootstatus', deviceId, '-b'], hostDir, 120_000)
-  const derivedData = path.join(hostDir, 'DerivedData')
-  await command('xcodebuild', [
-    '-quiet',
-    '-workspace',
-    'LynxCompatibilityHost.xcworkspace',
-    '-scheme',
-    'LynxCompatibilityHost',
-    '-configuration',
-    'Debug',
-    '-sdk',
-    'iphonesimulator',
-    '-destination',
-    device.destination,
-    '-derivedDataPath',
-    derivedData,
-    'COMPILER_INDEX_STORE_ENABLE=NO',
-    'build',
-  ], hostDir, 1_800_000)
-  const appPath = path.join(derivedData, 'Build', 'Products', 'Debug-iphonesimulator', 'LynxCompatibilityHost.app')
-  await command('xcrun', ['simctl', 'install', deviceId, appPath], hostDir, 120_000)
-  const container = await resolveIosAppContainer(deviceId, applicationId, hostDir, async (error) => {
-    const detail = error instanceof Error ? error.stack : String(error)
-    await fs.writeFile(path.join(artifactDir, 'container-query-timeout.txt'), `${detail}\n`)
-    process.stderr.write('iOS 应用容器查询超时；已保留原始错误，等待指定模拟器就绪后仅再查询一次。\n')
-  })
-  const reportPath = path.join(container, 'Library', 'Application Support', 'lynx-compat', context.runId, 'report.json')
-  await command('xcrun', ['simctl', 'launch', '--terminate-running-process', deviceId, applicationId], hostDir, 60_000, { file: path.join(artifactDir, 'launch-command.json') })
-  if (options.captureOnly) {
-    await wait(2200)
-    await command('xcrun', ['simctl', 'io', deviceId, 'screenshot', path.join(artifactDir, 'screen.png')], hostDir, 60_000)
-    await recordIosVideo(deviceId, artifactDir)
-    return undefined
-  }
-  const report = await waitForReportOrFailure(
-    async () => fs.readFile(reportPath, 'utf8').catch(() => undefined),
-    async () => fs.readFile(path.join(container, 'Library', 'Application Support', 'lynx-compat', context.runId, 'failure.json'), 'utf8').catch(() => undefined),
-  )
-  await command('xcrun', ['simctl', 'io', deviceId, 'screenshot', path.join(artifactDir, 'screen.png')], hostDir, 60_000)
-  await collectIosArtifacts(report, container, artifactDir, context)
-  return report
-}
-
 async function compareCommittedReport(actual: NativePlatformReport) {
   const expectedPath = defaultReportPath(platform)
   const expected = await fs.readFile(expectedPath, 'utf8').then(source => JSON.parse(source) as NativePlatformReport).catch(() => undefined)
@@ -243,14 +139,18 @@ async function compareCommittedReport(actual: NativePlatformReport) {
 async function main() {
   const artifactDir = options.outputDir ?? path.join(repoRoot, 'e2e', '.artifacts', 'lynx-native', `${platform}-${Date.now()}`)
   return withNativeArtifacts(platform, artifactDir, async (setStage) => {
-    const device = await resolveNativeDevice(platform, fixtureDir, process.env, { file: path.join(artifactDir, 'device-discovery-command.json') })
+    const target = (platform === 'ios' ? await readPreparedIosBuildTarget(repoRoot) : undefined)
+      ?? await resolveNativeDevice(platform, fixtureDir, process.env, { file: path.join(artifactDir, 'device-discovery-command.json') })
     setStage('host-preparation')
     const temporaryRoot = process.env['LYNX_NATIVE_WORK_DIR']
       ? path.resolve(process.env['LYNX_NATIVE_WORK_DIR'])
       : await fs.mkdtemp(path.join(os.tmpdir(), `weapp-tailwindcss-lynx-${platform}-`))
     const hostDir = path.join(temporaryRoot, 'host')
     await fs.cp(fixtureDir, hostDir, { recursive: true })
-    await fs.writeFile(path.join(artifactDir, 'device.json'), `${JSON.stringify(device, null, 2)}\n`)
+    await fs.writeFile(path.join(artifactDir, target.platform === 'ios' ? 'build-target.json' : 'device.json'), `${JSON.stringify(target, null, 2)}\n`)
+    if (platform === 'ios' && process.env['LYNX_IOS_BUILD_TARGET_FILE']) {
+      await fs.copyFile(process.env['LYNX_IOS_BUILD_TARGET_FILE'], path.join(artifactDir, 'build-target-manifest.json'))
+    }
     setStage('bundle-build')
     const build = options.captureOnly ? undefined : await buildCompatibilityBundle()
     setStage('bundle-staging')
@@ -277,9 +177,10 @@ async function main() {
     await Promise.all(stagedArtifacts)
 
     setStage('native-run')
-    const reportSource = device.platform === 'android'
-      ? await runAndroid(hostDir, artifactDir, device, context)
-      : await runIos(hostDir, artifactDir, device, context)
+    const execution = target.platform === 'android'
+      ? { device: target, result: await runAndroid(hostDir, artifactDir, target, context) }
+      : await runIos(hostDir, artifactDir, target, context, options, setStage)
+    const { device, result: reportSource } = execution
     if (options.captureOnly) {
       process.stdout.write(`${JSON.stringify({ platform, artifactDir, captureDurationSeconds: options.captureDurationSeconds }, null, 2)}\n`)
       return
