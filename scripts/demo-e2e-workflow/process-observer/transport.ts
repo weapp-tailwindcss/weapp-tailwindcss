@@ -37,6 +37,7 @@ export function createProcessObserverTransport(command: string, args: string[], 
   let closing: Promise<void> | undefined
   let didClose = false
   let terminationAttempted = false
+  let hostStopped = false
   let resolveClosed!: () => void
   const closed = new Promise<void>((resolve) => {
     resolveClosed = resolve
@@ -54,7 +55,7 @@ export function createProcessObserverTransport(command: string, args: string[], 
     let timer: ReturnType<typeof setTimeout> | undefined
     try {
       await Promise.race([closed, new Promise<never>((_resolve, reject) => {
-        timer = setTimeout(() => reject(new Error(`身份采集器退出未确认：${command} pid=${child.pid}；禁止继续调度。`, { cause: fatal })), 1000)
+        timer = setTimeout(() => reject(new Error(`身份采集器退出未确认：${command} pid=${child.pid}；禁止继续调度；diagnostics=${JSON.stringify(diagnostics.snapshot())}。`, { cause: fatal })), 1000)
       })])
     }
     finally {
@@ -66,6 +67,7 @@ export function createProcessObserverTransport(command: string, args: string[], 
       return
     }
     terminationAttempted = true
+    diagnostics.shutdown('terminate-requested')
     try {
       child.kill('SIGKILL')
     }
@@ -107,7 +109,9 @@ export function createProcessObserverTransport(command: string, args: string[], 
       fail(new Error(`身份采集器响应流意外结束：${command} pid=${child.pid}。`))
     }
   })
+  child.once('exit', (code, signal) => diagnostics.shutdown('exit', { code, signal }))
   child.once('close', (code, signal) => {
+    diagnostics.shutdown('close', { code, signal })
     didClose = true
     resolveClosed()
     if (pending.size || code !== 0 || signal !== null || (!closing && fatal === undefined)) {
@@ -130,6 +134,15 @@ export function createProcessObserverTransport(command: string, args: string[], 
       try {
         const message = JSON.parse(line)
         if (message?.event !== undefined) {
+          if (message.event === 'observer-stopped') {
+            if (!closing || fatal !== undefined || pending.size || startupWaits.size || hostStopped || message.pid !== child.pid || !Number.isInteger(message.pid) || hostReadyAt === undefined) {
+              throw new Error('身份采集器停止诊断缺少正常关闭阶段或本体 PID，不能接受诊断行。')
+            }
+            hostStopped = true
+            diagnostics.shutdown('observer-stopped')
+            boundary = buffer.indexOf('\n')
+            continue
+          }
           const request = pending.get(message.id)
           if (message.event !== 'observer-ready' && (!Number.isInteger(message.id) || !request)) {
             throw new Error('身份采集器请求进度缺少本轮请求身份。')
@@ -251,6 +264,7 @@ export function createProcessObserverTransport(command: string, args: string[], 
         }
         else {
           closing = Promise.resolve().then(() => {
+            diagnostics.shutdown('stdin-end-requested')
             child.stdin.end()
             return reap()
           }).catch(async (error) => {

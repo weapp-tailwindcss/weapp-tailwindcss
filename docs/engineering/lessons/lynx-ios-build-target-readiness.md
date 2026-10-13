@@ -42,6 +42,8 @@ CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-ios-build-target.
 
 额外按 e2e 配置的 `exactOptionalPropertyTypes`、`noPropertyAccessFromIndexSignature` 等选项检查导入图，发现既有 `native-artifacts.ts`、`native-command-observer.ts` 和 compatibility `geometry.ts` 类型错误；这些报错行与排查基线一致，本次没有将该扩展检查记为通过。未运行本地全面设备验收，未修改 demo、样式用例或 static 基线。
 
+作者 head `15e3932c95cea6487408278ea4bb2fe4fb0bf246` 的 [Lynx Native Compatibility 38348833717](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38348833717) attempt 1 已全部成功，Android 与 iOS 均实际执行。iOS job `115136512042` 的准备文件绑定本轮真实 PR merge checkout `705d2f0cb159976ee6a0ae01bbaa12df8ba00c96`，锁定自建 `C7303DB1-EA5E-4495-817D-FC48BEB9AE92` 的 Shutdown 构建目标。构建后 bootstatus 实际用时约 1.74 秒，原 30 秒精确 Booted 查询约 563 毫秒成功，随后安装、启动、原像素/几何断言、支持矩阵基线比较和报告上传成功。原始日志、准备文件、命令事件与报告已保存；该轮成功不替代更新后源码 head 或版本 PR 的全面验收。
+
 ## 适用边界
 
 这项修正消除无用的早期运行就绪依赖，并保留安装前真实查询；尚不能宣称已经消除 hosted simulator 启动拥塞。后台启动工作能否在必要构建期间收敛，必须由新准确 head 的真实 iOS CI 证明。若仍失败，保留新的最早分歧和诊断继续定位，不增加超时、不加固定 sleep、不跳过设备或产品断言。

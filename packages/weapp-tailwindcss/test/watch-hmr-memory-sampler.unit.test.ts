@@ -251,9 +251,14 @@ describe('memory telemetry contract', () => {
       expect(measured.processCount).toBeGreaterThan(0)
       expect(measured.rssMb).toBeGreaterThan(0)
     }
-    finally {
-      await source.close()
+    catch (error) {
+      try { await source.close() }
+      catch (closeError) {
+        throw new AggregateError([error, closeError], '真实内存采集断言失败且本体收尾失败。')
+      }
+      throw error
     }
+    await source.close()
   })
 
   it.skipIf(process.platform !== 'win32')('executes the Windows traversal with a child row without assigning $PID', async () => {
