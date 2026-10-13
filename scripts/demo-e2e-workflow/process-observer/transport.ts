@@ -114,7 +114,8 @@ export function createProcessObserverTransport(command: string, args: string[], 
     diagnostics.shutdown('close', { code, signal })
     didClose = true
     resolveClosed()
-    if (pending.size || code !== 0 || signal !== null || (!closing && fatal === undefined)) {
+    const expectedForcedClose = closing !== undefined && hostStopped && terminationAttempted && code === null && signal === 'SIGKILL'
+    if (pending.size || (!expectedForcedClose && (code !== 0 || signal !== null)) || (!closing && fatal === undefined)) {
       fail(new Error(`身份采集器意外退出：${command} pid=${child.pid} code=${code} signal=${signal} stderr=${stderr}`))
     }
   })
@@ -263,20 +264,30 @@ export function createProcessObserverTransport(command: string, args: string[], 
           fail(new Error('身份采集器关闭时仍有未落定请求。'))
         }
         else {
+          let eofWaitExpired = false
           closing = Promise.resolve().then(() => {
             diagnostics.shutdown('stdin-end-requested')
             child.stdin.end()
-            return reap()
+            return reap().catch((error) => {
+              eofWaitExpired = true
+              throw error
+            })
           }).catch(async (error) => {
-            fatal ??= error
+            // 停止协议已完成且没有查询或协议首错时，只回收仍未退出的自建宿主。
+            if (!eofWaitExpired || !hostStopped || fatal !== undefined) {
+              fatal ??= error
+            }
             terminate()
             try {
               await reap()
             }
             catch (reapError) {
+              fatal ??= error
               throw new AggregateError([fatal, reapError], '身份采集器失败且退出未确认。')
             }
-            throw fatal
+            if (fatal !== undefined) {
+              throw fatal
+            }
           })
         }
       }

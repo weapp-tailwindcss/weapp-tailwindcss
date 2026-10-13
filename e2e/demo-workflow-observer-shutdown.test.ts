@@ -49,17 +49,82 @@ it('正常 EOF 的本体停止诊断仍等待真实 close，并保存退出阶�
 it('停止诊断和 exit 都不能代替 close 或延长原 1 秒退出确认', async () => {
   vi.useFakeTimers()
   const { child, transport, stopped } = provider()
-  const closing = transport.close().catch(error => error)
+  const closing = transport.close()
   await vi.advanceTimersByTimeAsync(999)
   stopped()
   child.emit('exit', 0, null)
   await vi.advanceTimersByTimeAsync(1)
-  const error = await closing
-  expect(String(error)).toContain('退出未确认')
-  expect(String(error)).toContain('observer-stopped')
+  await closing
   expect(child.kill).toHaveBeenCalledExactlyOnceWith('SIGKILL')
   expect(transport.diagnostics().shutdown.at(-1)).toMatchObject({ stage: 'close', signal: 'SIGKILL' })
+  await transport.close()
+  expect(vi.getTimerCount()).toBe(0)
+})
+
+it('停止标记后的强制收尾仍必须在第二个原 1 秒窗口确认 close', async () => {
+  vi.useFakeTimers()
+  const { child, transport, stopped } = provider()
+  child.kill.mockImplementation(() => true)
+  const closing = transport.close().catch(error => error)
+  let settled = false
+  void closing.then(() => settled = true)
+  await vi.advanceTimersByTimeAsync(999)
+  stopped()
+  await vi.advanceTimersByTimeAsync(1)
+  expect(child.kill).toHaveBeenCalledExactlyOnceWith('SIGKILL')
+  expect(settled).toBe(false)
+  await vi.advanceTimersByTimeAsync(999)
+  child.emit('exit', 0, null)
+  expect(settled).toBe(false)
+  await vi.advanceTimersByTimeAsync(1)
+  const error = await closing
+  expect(error).toBeInstanceOf(AggregateError)
+  expect(error.errors).toHaveLength(2)
+  expect(error.errors.every((item: unknown) => String(item).includes('退出未确认'))).toBe(true)
+  expect(vi.getTimerCount()).toBe(0)
   await expect(transport.close()).rejects.toBe(error)
+  child.emit('close', null, 'SIGKILL')
+  await expect(transport.close()).rejects.toBe(error)
+})
+
+it('停止标记不能掩盖 stdin.end 同步失败', async () => {
+  const { child, transport, stopped } = provider()
+  const primary = new Error('stdin-end-failed')
+  vi.spyOn(child.stdin, 'end').mockImplementation(() => {
+    stopped()
+    throw primary
+  })
+  await expect(transport.close()).rejects.toBe(primary)
+  await expect(transport.close()).rejects.toBe(primary)
+  expect(child.kill).toHaveBeenCalledExactlyOnceWith('SIGKILL')
+})
+
+it.each(['graceful', 'nonzero', 'other-signal', 'protocol', 'stream'] as const)('停止标记后的本体收尾保持 %s 结果', async (kind) => {
+  vi.useFakeTimers()
+  const { child, transport, stopped, send } = provider()
+  child.kill.mockImplementation(() => true)
+  const closing = transport.close().catch(error => error)
+  await vi.advanceTimersByTimeAsync(999)
+  stopped()
+  await vi.advanceTimersByTimeAsync(1)
+  if (kind === 'protocol') {
+    send({ event: 'observer-stopped', pid: child.pid })
+  }
+  if (kind === 'stream') {
+    child.stdout.emit('error', new Error('controlled-stop-stream-failed'))
+  }
+  child.emit('close', kind === 'graceful' ? 0 : kind === 'nonzero' ? 1 : null, kind === 'other-signal' ? 'SIGTERM' : kind === 'graceful' || kind === 'nonzero' ? null : 'SIGKILL')
+  const error = await closing
+  if (kind === 'graceful') {
+    expect(error).toBeUndefined()
+    await transport.close()
+  }
+  else {
+    expect(error).toBeInstanceOf(Error)
+    expect(String(error)).toContain(kind === 'protocol' ? '停止诊断' : kind === 'stream' ? 'controlled-stop-stream-failed' : '意外退出')
+    await expect(transport.close()).rejects.toBe(error)
+  }
+  expect(child.kill).toHaveBeenCalledExactlyOnceWith('SIGKILL')
   expect(vi.getTimerCount()).toBe(0)
 })
 
@@ -165,12 +230,7 @@ it.each([false, true])('真实自建宿主的 EOF 不替代退出，明确结束
     expect(await transport.request({ kind: 'identity' }, 5000)).toEqual([])
   }
   finally {
-    if (explicitExit) {
-      await transport.close()
-    }
-    else {
-      await expect(transport.close()).rejects.toThrow('退出未确认')
-    }
+    await transport.close()
   }
   expect(createChild).toHaveBeenCalledOnce()
   if (explicitExit) {
@@ -183,6 +243,6 @@ it.each([false, true])('真实自建宿主的 EOF 不替代退出，明确结束
     expect(held!.kill).toHaveBeenCalledExactlyOnceWith('SIGKILL')
     expect(transport.diagnostics().shutdown.map(stage => stage.stage)).toEqual(['stdin-end-requested', 'observer-stopped', 'terminate-requested', 'exit', 'close'])
     expect(transport.diagnostics().shutdown.at(-1)).toMatchObject({ stage: 'close' })
-    await expect(transport.close()).rejects.toThrow('退出未确认')
+    await transport.close()
   }
 })
