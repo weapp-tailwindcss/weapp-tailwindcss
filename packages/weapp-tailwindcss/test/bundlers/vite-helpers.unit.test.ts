@@ -226,6 +226,32 @@ describe('bundlers/vite helper modules', () => {
     expect(output.source).toBe('@import "./generated.acss";\n')
   })
 
+  it('re-emits a missing framework root import shell during incremental output', () => {
+    const bundle = {} as Record<string, any>
+    const emitted: Record<string, any> = {}
+
+    expect(restoreFrameworkRootMiniProgramImportShellAssets(bundle as any, {
+      emitOrReplayAsset(file, source) {
+        const asset = { type: 'asset' as const, fileName: file, source }
+        emitted[file] = asset
+        return asset
+      },
+      isWebGeneratorTarget: false,
+      matchesCss: file => file.endsWith('.acss'),
+      shouldKeep: () => true,
+      targetByFile: new Map([
+        ['entry.acss', 'generated.acss'],
+      ]),
+    })).toBe(1)
+
+    expect(emitted['entry.acss']).toEqual({
+      type: 'asset',
+      fileName: 'entry.acss',
+      source: '@import "./generated.acss";\n',
+    })
+    expect(bundle['entry.acss']).toBe(emitted['entry.acss'])
+  })
+
   it('links a framework root style shell from the runtime root style asset', () => {
     const runtimeStyle = {
       type: 'asset' as const,

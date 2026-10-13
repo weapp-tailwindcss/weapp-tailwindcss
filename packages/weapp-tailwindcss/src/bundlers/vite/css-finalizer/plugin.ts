@@ -17,6 +17,7 @@ import { annotateCssSourceTrace, createCssTokenSourceMap } from '../../shared/cs
 import { stripBundlerGeneratedCssMarkers } from '../../shared/generated-css-marker'
 import { resolveMiniProgramStyleOutputExtension, resolveViteCssPipelineOutputFile } from '../generate-bundle'
 import { applyViteAssetEmissionPlan } from '../generate-bundle/asset-emission-plan'
+import { createCssAssetEmitter } from '../generate-bundle/css-assets'
 import { linkEntryChunkStyles } from '../generate-bundle/entry-style-graph'
 import { normalizeRootMiniProgramImportShellAssets } from '../generate-bundle/finalize'
 import { linkFrameworkRootStyleToRuntimeEntry, restoreFrameworkRootMiniProgramImportShellAssets } from '../generate-bundle/root-style-output'
@@ -163,6 +164,7 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
         }
         restoreFrameworkRootMiniProgramImportShellAssets(bundle, {
           debug,
+          emitOrReplayAsset: createCssAssetEmitter(this, bundle),
           isWebGeneratorTarget,
           matchesCss: opts.cssMatcher,
           onUpdate: trackFinalCssAssetUpdate,
