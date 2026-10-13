@@ -105,7 +105,7 @@ jobs:
       - run: brew install cocoapods xcodegen
       - run: pnpm install --frozen-lockfile
       - name: Verify iOS preparation recovery
-        run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-ios-container.test.ts e2e/lynx-native-options.test.ts e2e/lynx-native-artifacts.test.ts e2e/lynx-native-command.test.ts e2e/lynx-command-observer.test.ts e2e/lynx-command-host.test.ts --update=none
+        run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-ios-build-target.test.ts e2e/lynx-native-device.test.ts e2e/lynx-ci.test.ts e2e/lynx-ios-container.test.ts e2e/lynx-native-options.test.ts e2e/lynx-native-artifacts.test.ts e2e/lynx-native-command.test.ts e2e/lynx-command-observer.test.ts e2e/lynx-command-host.test.ts --update=none --coverage.enabled=false
       - name: Verify pinned Lynx source patch
         run: |
           ruby e2e/lynx/podfile.test.rb
@@ -114,16 +114,22 @@ jobs:
         run: pnpm exec tsx e2e/lynx/test-evidence-store.ts ios
       - name: Boot iOS 18.5 simulator
         run: |
-          udid="$(xcrun simctl create LynxCompatibility 'iPhone 16 Pro' 'com.apple.CoreSimulator.SimRuntime.iOS-18-5')"
-          echo "LYNX_IOS_DEVICE_ID=$udid" >> "$GITHUB_ENV"
-          xcrun simctl boot "$udid"
-          xcrun simctl bootstatus "$udid" -b
+          LYNX_IOS_DEVICE_ID="$(xcrun simctl create LynxCompatibility 'iPhone 16 Pro' 'com.apple.CoreSimulator.SimRuntime.iOS-18-5')"
+          export LYNX_IOS_DEVICE_ID
+          export LYNX_IOS_BUILD_TARGET_FILE="$RUNNER_TEMP/lynx-ios-target/build-target.json"
+          pnpm exec tsx e2e/lynx/prepare-ios-target.ts
+          echo "LYNX_IOS_DEVICE_ID=$LYNX_IOS_DEVICE_ID" >> "$GITHUB_ENV"
+          echo "LYNX_IOS_BUILD_TARGET_FILE=$LYNX_IOS_BUILD_TARGET_FILE" >> "$GITHUB_ENV"
+          xcrun simctl boot "$LYNX_IOS_DEVICE_ID"
+          xcrun simctl bootstatus "$LYNX_IOS_DEVICE_ID" -b
       - run: pnpm e2e:lynx:ios
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: lynx-ios-${{ github.run_id }}
-          path: e2e/.artifacts/lynx-*/**
+          name: lynx-ios-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            e2e/.artifacts/lynx-*/**
+            ${{ runner.temp }}/lynx-ios-target/**
           if-no-files-found: warn
           include-hidden-files: true
           retention-days: 14

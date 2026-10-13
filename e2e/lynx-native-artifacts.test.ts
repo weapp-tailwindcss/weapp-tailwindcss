@@ -31,7 +31,7 @@ it('设备发现期真实子进程超时也保留原始错误和结构化诊断'
   expect(await fs.readFile(path.join(directory, 'failure.txt'), 'utf8')).toContain('timed out')
 }, 10_000)
 
-it.each<NativeRunStage>(['host-preparation', 'bundle-build', 'bundle-staging', 'native-run', 'report-validation'])('%s 失败保留阶段、已采集证据和原错误，不展开命令环境', async (stage) => {
+it.each<NativeRunStage>(['host-preparation', 'bundle-build', 'bundle-staging', 'native-build', 'device-readiness', 'native-run', 'report-validation'])('%s 失败保留阶段、已采集证据和原错误，不展开命令环境', async (stage) => {
   const directory = await artifactDirectory()
   const failure = Object.assign(new Error('native command failed'), { exitCode: 7, env: { TEST_SECRET: 'not-for-artifacts' } })
   await expect(withNativeArtifacts('android', directory, async (setStage) => {

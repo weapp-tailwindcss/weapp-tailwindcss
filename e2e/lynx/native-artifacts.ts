@@ -2,7 +2,7 @@ import type { NativePlatform } from './native-options'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
-export type NativeRunStage = 'device-discovery' | 'host-preparation' | 'bundle-build' | 'bundle-staging' | 'native-run' | 'report-validation'
+export type NativeRunStage = 'device-discovery' | 'host-preparation' | 'bundle-build' | 'bundle-staging' | 'native-build' | 'device-readiness' | 'native-run' | 'report-validation'
 
 function commandFailure(error: unknown, seen = new Set<object>()) {
   const result: Record<string, unknown> = error instanceof Error

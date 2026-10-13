@@ -32,9 +32,15 @@ describe('iOS 安装后的数据容器查询', () => {
     expect(record).toHaveBeenCalledWith(first)
     expect(run.mock.calls).toEqual([
       ['xcrun', query, cwd, 30_000],
-      ['xcrun', ['simctl', 'bootstatus', 'selected-device', '-b'], cwd, 120_000],
+      ['xcrun', ['simctl', 'bootstatus', 'selected-device'], cwd, 120_000],
       ['xcrun', query, cwd, 30_000],
     ])
+  })
+
+  it('仅明确拥有的 CI 模拟器在容器查询恢复时保留 -b 启动能力', async () => {
+    run.mockRejectedValueOnce(timedOut()).mockResolvedValueOnce('Booted').mockResolvedValueOnce(container)
+    await expect(resolveIosAppContainer('selected-device', 'test.app', cwd, vi.fn(), true)).resolves.toBe(container)
+    expect(run.mock.calls[1]).toEqual(['xcrun', ['simctl', 'bootstatus', 'selected-device', '-b'], cwd, 120_000])
   })
 
   it('应用不存在等非超时错误立即传播', async () => {
