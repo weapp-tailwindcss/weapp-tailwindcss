@@ -6,10 +6,11 @@ import { expect, it, vi } from 'vitest'
 import { rollupTestRequire } from './rollup-test-runtime.mjs'
 
 const scenarios = ['uni-app-vite-tailwindcss-v4', 'issue-uview-plus-cssentries', 'taro-vite-react-tailwindcss-v4'].flatMap(demo =>
-  ['cjs', 'esm'].flatMap(format => ['file', 'directory'].flatMap(dependency => [false, true].map(accessed => ({ demo, format, dependency, accessed })))),
+  ['cjs', 'esm'].flatMap(format => ['file', 'directory'].flatMap(dependency => [false, true].map(accessed => ({ demo, format, dependency, accessed, delayed: false })))),
 )
+scenarios.push({ demo: 'taro-vite-react-tailwindcss-v4', format: 'cjs', dependency: 'directory', accessed: false, delayed: true })
 
-it.each(scenarios)('$demo / $format / $dependency / atime=$accessed：polling 保留等长且 mtime 不变的真实文件替换', async ({ demo, format, dependency, accessed }) => {
+it.each(scenarios)('$demo / $format / $dependency / atime=$accessed / delayed=$delayed：polling 保留等长且 mtime 不变的真实文件替换', async ({ demo, format, dependency, accessed, delayed }) => {
   const require = rollupTestRequire(demo)
   const dist = path.dirname(require.resolve('rollup'))
   const rollup = format === 'cjs' ? require('rollup') : await import(pathToFileURL(path.join(dist, 'es/rollup.js')).href)
@@ -27,11 +28,27 @@ it.each(scenarios)('$demo / $format / $dependency / atime=$accessed：polling �
   const invalidated = []
   let fsWatcher
   let watcher
+  let registration
+  let releaseRegistration
+  let releaseTimer
+  const registrationGate = new Promise((resolve) => {
+    releaseRegistration = resolve
+  })
   let inspection = 0
   const run = Task.prototype.run
   const observe = vi.spyOn(Task.prototype, 'run').mockImplementation(function (...args) {
     if (!fsWatcher) {
       fsWatcher = this.fileWatcher.watcher
+      if (delayed) {
+        const handler = fsWatcher._nodeFsHandler
+        const add = handler._addToNodeFs
+        registration = vi.spyOn(handler, '_addToNodeFs').mockImplementation(async function (file, ...args) {
+          if (path.resolve(file) === data) {
+            await registrationGate
+          }
+          return add.call(this, file, ...args)
+        })
+      }
       fsWatcher.on('raw', (_event, file, details) => {
         if (path.resolve(file) === data && details.curr) {
           raw.push({ curr: details.curr, prev: details.prev })
@@ -75,6 +92,14 @@ it.each(scenarios)('$demo / $format / $dependency / atime=$accessed：polling �
     }, { timeout: 5000, interval: 1 }).toBe(value)
     await inspect(0)
     await expect.poll(() => fsWatcher?._readyEmitted, { timeout: 5000, interval: 1 }).toBe(true)
+    if (delayed) {
+      // 只在故障注入中延迟叶子文件订阅，证明全局 ready 不能作为目标文件的握手。
+      expect([...(fsWatcher._closers ?? [])].some(([file]) => path.resolve(file) === data)).toBe(false)
+      releaseTimer = setTimeout(releaseRegistration, 50)
+    }
+    // ready 只属于首次扫描；目录依赖必须等到目标叶子的实际订阅已登记。
+    await expect.poll(() => [...(fsWatcher?._closers ?? [])]
+      .some(([file, closers]) => path.resolve(file) === data && closers.length > 0), { timeout: 5000, interval: 1 }).toBe(true)
     await rename(staged, data)
     const after = await stat(data)
     expect(after.size).toBe(before.size)
@@ -91,10 +116,13 @@ it.each(scenarios)('$demo / $format / $dependency / atime=$accessed：polling �
     await inspect(6)
   }
   finally {
+    clearTimeout(releaseTimer)
+    releaseRegistration()
     try {
       await watcher?.close()
     }
     finally {
+      registration?.mockRestore()
       observe.mockRestore()
       await rm(root, { recursive: true, force: true })
     }

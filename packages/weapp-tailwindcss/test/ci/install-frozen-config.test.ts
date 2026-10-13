@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, realpath, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
@@ -91,7 +91,9 @@ update:
       expect(environment.npm_config_update).toBe('true')
     }
     finally {
-      await rm(directory, { recursive: true, force: true })
+      // Windows 在 pnpm 退出后可能短暂保留目录句柄；交给 fs.rm 有界退避，持续占用仍报错。
+      await rm(directory, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 })
     }
+    await expect(stat(directory)).rejects.toMatchObject({ code: 'ENOENT' })
   }, 60000)
 })
