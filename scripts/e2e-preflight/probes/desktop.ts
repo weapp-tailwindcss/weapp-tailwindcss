@@ -9,6 +9,7 @@ import { satisfies } from 'semver'
 import { parseHBuilderXVersion } from '../../../packages/hbuilderx-runner/src/hbuilderx/hosts'
 import { createHBuilderXRunner } from '../../../packages/hbuilderx-runner/src/hbuilderx/runner'
 import { assertNativeSessionsAvailable } from '../../hbuilderx-native-registry'
+import { createPnpmCommand } from '../../pnpm-command.mjs'
 import { assertWechatAppIdBinding, resolveWechatAppId } from '../../wechat-app-id'
 import { closeWechatProject } from '../../wechat-project-cleanup'
 import { assertWechatLogin, existingWechatService, wechatRequest } from '../../wechat/service'
@@ -22,7 +23,8 @@ import { connectWechat } from './wechat-connect'
 
 export async function base(ctx: ProbeContext): Promise<ProbeOutput> {
   const manifest = JSON.parse(await readFile(path.join(ctx.root, 'package.json'), 'utf8'))
-  const pnpm = await command('pnpm', ['--version'])
+  const invocation = createPnpmCommand(['--version'])
+  const pnpm = await command(invocation.command, invocation.args, 15_000, invocation.shell)
   if (!satisfies(process.versions.node, manifest.engines.node) || `pnpm@${pnpm}` !== manifest.packageManager) {
     throw new Error(`需要 Node ${manifest.engines.node} / ${manifest.packageManager}，实际 ${process.version} / pnpm@${pnpm}`)
   }

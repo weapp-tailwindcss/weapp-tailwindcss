@@ -15,6 +15,8 @@ export async function web(ctx: ProbeContext): Promise<ProbeOutput> {
   const websiteChannel = ctx.extended ? process.env.PLAYWRIGHT_CHROMIUM_CHANNEL : undefined
   const launches: Array<{ engine: BrowserType, executablePath?: string, channel?: string }> = [...new Set([command, hbuilderxBrowser])].map(executablePath => ({ engine: chromium, executablePath }))
   if (ctx.extended) {
+    // 默认无头模式可能使用单独安装的 headless shell，必须沿用后续测试的入口。
+    launches.push({ engine: chromium })
     launches.push(...[firefox, webkit].map(engine => ({ engine, executablePath: engine.executablePath() })))
     if (websiteChannel) {
       launches.push({ engine: chromium, channel: websiteChannel })
@@ -35,12 +37,12 @@ export async function web(ctx: ProbeContext): Promise<ProbeOutput> {
       const screenshot = path.join(ctx.dir, `web-${versions.size}.png`)
       await page.screenshot({ path: screenshot })
       await assertImage(screenshot)
-      versions.set(executablePath ?? `channel:${channel}`, browser.version())
+      versions.set(executablePath ?? (channel ? `channel:${channel}` : 'chromium:headless'), browser.version())
       evidence.push(screenshot)
     }, () => browser.close())
   }
   return {
-    detail: `测试使用的 Playwright Chromium/HBuilderX${ctx.extended ? '/Firefox/WebKit' : ''} 浏览器均已验证 DOM、输入、点击和截图。`,
+    detail: `测试使用的 Playwright Chromium/HBuilderX${ctx.extended ? '/默认无头 Chromium/Firefox/WebKit' : ''} 浏览器均已验证 DOM、输入、点击和截图。`,
     binding: {
       command,
       version: versions.get(command)!,
@@ -48,6 +50,7 @@ export async function web(ctx: ProbeContext): Promise<ProbeOutput> {
       hbuilderxVersion: versions.get(hbuilderxBrowser)!,
       ...(ctx.extended
         ? {
+            chromiumHeadlessVersion: versions.get('chromium:headless')!,
             firefox: firefox.executablePath(),
             firefoxVersion: versions.get(firefox.executablePath())!,
             webkit: webkit.executablePath(),

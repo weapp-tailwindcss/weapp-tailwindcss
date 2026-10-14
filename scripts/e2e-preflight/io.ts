@@ -7,11 +7,12 @@ import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { execa } from 'execa'
+import { createPnpmCommand } from '../pnpm-command.mjs'
 
 const { PNG } = createRequire(import.meta.url)('pngjs') as { PNG: { sync: { read: (buffer: Buffer) => { width: number, height: number } } } }
 
-export async function command(file: string, args: string[], timeout = 15_000) {
-  const result = await execa(file, args, { timeout, forceKillAfterDelay: 1000, windowsHide: true })
+export async function command(file: string, args: string[], timeout = 15_000, shell = false) {
+  const result = await execa(file, args, { timeout, shell, forceKillAfterDelay: 1000, windowsHide: true })
   return result.stdout.trim()
 }
 
@@ -144,7 +145,10 @@ export async function collectIdentity(root: string): Promise<Identity> {
     source: hash.digest('hex'),
     host: os.hostname(),
     platform: process.platform,
-    config: Object.fromEntries(configKeys.map(key => [key, process.env[key] ?? ''])),
+    config: {
+      ...Object.fromEntries(configKeys.map(key => [key, process.env[key] ?? ''])),
+      pnpmInvocation: JSON.stringify(createPnpmCommand([])),
+    },
   }
 }
 

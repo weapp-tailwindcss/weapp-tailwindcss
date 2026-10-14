@@ -49,11 +49,12 @@ describe('扩展三浏览器的真实交互预检范围', () => {
     expect(closes[0]).toHaveBeenCalledOnce()
   })
 
-  it('扩展模式逐个交互、截图并绑定 Firefox/WebKit 的路径与版本', async () => {
+  it('扩展模式逐个交互、截图并绑定默认无头 Chromium 与 Firefox/WebKit 的版本', async () => {
     const output = await web({ ...context, extended: true })
-    expect(output.binding).toMatchObject({ firefox: 'firefox-executable', firefoxVersion: '1.0', webkit: 'webkit-executable', webkitVersion: '1.0' })
-    expect(mocks.image).toHaveBeenCalledTimes(3)
-    expect(closes).toHaveLength(3)
+    expect(mocks.chromium).toHaveBeenCalledWith({ headless: true, timeout: 15_000 })
+    expect(output.binding).toMatchObject({ chromiumHeadlessVersion: '1.0', firefox: 'firefox-executable', firefoxVersion: '1.0', webkit: 'webkit-executable', webkitVersion: '1.0' })
+    expect(mocks.image).toHaveBeenCalledTimes(4)
+    expect(closes).toHaveLength(4)
     expect(closes.every(close => close.mock.calls.length === 1)).toBe(true)
   })
 
@@ -69,8 +70,23 @@ describe('扩展三浏览器的真实交互预检范围', () => {
     const output = await web({ ...context, extended: true })
     expect(mocks.chromium).toHaveBeenLastCalledWith(expect.objectContaining({ channel: 'chrome', headless: true }))
     expect(output.binding).toMatchObject({ websiteChannel: 'chrome', websiteChannelVersion: '1.0' })
-    expect(closes).toHaveLength(4)
+    expect(closes).toHaveLength(5)
     expect(closes.every(close => close.mock.calls.length === 1)).toBe(true)
+  })
+
+  it.each([undefined, 'chrome'])('完整 Chromium 可用但默认 headless shell 缺失时阻断，网站 channel 为 %s', async (channel) => {
+    vi.stubEnv('PLAYWRIGHT_CHROMIUM_CHANNEL', channel)
+    mocks.chromium.mockImplementation(async (options) => {
+      if (!options.executablePath && !options.channel) {
+        throw new Error('chromium-headless-shell missing')
+      }
+      return browser()
+    })
+    await expect(web({ ...context, extended: true })).rejects.toThrow('chromium-headless-shell missing')
+    expect(closes).toHaveLength(1)
+    expect(closes[0]).toHaveBeenCalledOnce()
+    expect(mocks.firefox).not.toHaveBeenCalled()
+    expect(mocks.webkit).not.toHaveBeenCalled()
   })
 
   it('交互或截图失败时仍关闭本轮实例，不继续后续浏览器', async () => {

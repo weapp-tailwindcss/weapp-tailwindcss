@@ -8,6 +8,7 @@ regressions:
   - e2e/preflight-runtime-scope.test.ts
   - e2e/preflight-rust.test.ts
   - e2e/preflight-browser.test.ts
+  - e2e/preflight-pnpm.test.ts
   - e2e/packed-pnpm-identity.test.ts
   - packages/weapp-tailwindcss/test/native-targets.test.ts
   - packages/weapp-tailwindcss/test/wxml/Tokenizer.test.ts
@@ -66,6 +67,8 @@ pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/demo-workflow-extended.test
 第 13 阶段真实执行 Rust 1.99 的 `cargo clippy --all-targets -- -D warnings` 时，`wxml/transform.rs` 的 `chunks_exact(3)` 触发 `chunks_exact_to_as_chunks`，流程停止后续 44 个阶段，预检服务正常关闭。原始输出与阶段报告保留在 `e2e/.artifacts/full-validation-20261014/full-run-ce6d-observed.log` 和 `round-ce6d/`。修复使用稳定的 `as_chunks::<3>()` 表达静态 token 的三元组边界，不关闭 lint，也不提升当前 Rust 1.96 的最低要求。[新增 Rust 回归](../../../packages/weapp-tailwindcss/native/src/wxml/transform/tests.rs)核对多个静态候选的顺序与间隔，以及后续相邻动态表达式必须在任何候选回调前整体回退；不改变预期样式输出，因此无需更新 static 基线。
 
 在该 SHA 基础的未提交修复上，定向执行 `pnpm native:ci --target=aarch64-apple-darwin` 全部通过：两个内核的 44/17 项 Rust 单测与严格 Clippy、release 构建、真实 JS/WXML/CSS ABI 差分、隔离打包消费者，以及 13 个 Vitest 文件的 265 项断言。原始输出保留在 `e2e/.artifacts/full-validation-20261014/native-ci-after-clippy-fix.log`；这些结果仅证明本机 ABI，完整扩展流程仍需重新预检和重跑。
+
+独立复核又发现两处入口身份边界：完整 Chromium 与默认无头 Chromium 可能来自不同安装，CSS 和网站的默认测试实际消费后者；预检不能只用 `executablePath()` 覆盖默认无头入口。pnpm 的版本核验与后续执行也必须消费同一活动入口，不能只检查 PATH 命令。扩展 Web 探针因此新增默认无头 launch；基础版本核验复用共享 pnpm 选择器，门禁身份记录其完整 invocation。修复前合成回归有 11 项失败，修复后 7 文件 114 项通过，首次错误摘录与命令保留在 `preflight-shell-first-failure.log`、`preflight-shell-final-validation.log`。这仍是门禁合同回归，真实环境必须由新一轮 prepare 验证。
 
 ## 适用边界
 
