@@ -11,6 +11,21 @@ const { normalizeFrameworkStylePlatform: normalize, ...publicEnv } = env
 afterEach(() => vi.unstubAllEnvs())
 
 describe('framework 兼容层', () => {
+  it('兼容入口不把引号赋值命令的参数当作框架信号', () => {
+    const options = {
+      packageJson: {
+        dependencies: { '@dcloudio/vite-plugin-uni': '*' },
+        scripts: { test: '"NODE_ENV=production" taro build' },
+      },
+      env: {},
+    }
+    expect(framework.detectAppType(options)).toBe('uni-app-vite')
+    const report = framework.detectAppTypeReport(options)
+    expect(report.appType).toBe('uni-app-vite')
+    expect(report.candidates.map(item => item.appType)).toEqual(['uni-app-vite'])
+    expect(report.conflicts).toEqual([])
+  })
+
   it('保留既有导出且委托同一个识别实现', () => {
     expect(Object.keys(framework).sort()).toEqual([...Object.keys(publicEnv), 'resolveImplicitAppTypeFromViteRoot'].sort())
     for (const name of Object.keys(publicEnv) as Array<keyof typeof publicEnv>) {

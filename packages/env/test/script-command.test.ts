@@ -3,6 +3,45 @@ import { detectFrameworkCommands } from '../src/script-command'
 
 describe('framework script command detection', () => {
   it.each([
+    '"NODE_ENV=production" weapp-vite build',
+    "'NODE_ENV=production' taro build",
+    '"NODE_ENV"=production weapp-vite build',
+    'NODE_"ENV"=production taro build',
+    'NODE_""ENV=production taro build',
+    'NODE_ENV"="production mpx build',
+    '""NODE_ENV=production uni build',
+    String.raw`NODE_ENV\=production weapp-vite build`,
+    String.raw`NODE\_ENV=production taro build`,
+    'pnpm exec "NODE_ENV=production" taro build',
+    'NODE_ENV="taro && weapp-vite" node check.js',
+    'NODE_ENV=production "OTHER_ENV=value" taro build',
+    'cross-env-shell "\\"NODE_ENV=production\\" taro build"',
+    'cross-env-shell \'echo ok && "NODE_ENV=production" taro build\'',
+  ])('不把引用或转义的赋值前缀当作 shell 赋值: %s', (script) => {
+    expect(detectFrameworkCommands(script)).toEqual([])
+  })
+
+  it.each([
+    'NODE_ENV="production" weapp-vite build',
+    "NODE_ENV='production' weapp-vite build",
+    'NODE_ENV=pro"duction" weapp-vite build',
+    String.raw`NODE_ENV=pro\ duction weapp-vite build`,
+    'NODE_\\\nENV=production weapp-vite build',
+    'NODE_ENV\\\n=production weapp-vite build',
+    'cross-env "NODE_ENV=production" weapp-vite build',
+    'cross-env "NODE_ENV"=production weapp-vite build',
+    'env "NODE_ENV=production" weapp-vite build',
+    'env -i NODE_ENV="production" cross-env "OTHER_ENV=value" pnpm exec weapp-vite build',
+    'cross-env-shell "NODE_ENV=production" "echo ok && OTHER_ENV=\\"value\\" weapp-vite build"',
+  ])('保留值引用、续行和包装器赋值参数: %s', (script) => {
+    expect(detectFrameworkCommands(script)).toEqual(['weapp-vite'])
+  })
+
+  it('引号命令的参数不影响后续真实命令链', () => {
+    expect(detectFrameworkCommands('"NODE_ENV=production" weapp-vite build && NODE_ENV="production" taro build')).toEqual(['taro'])
+  })
+
+  it.each([
     ['taro build --type weapp', 'taro'],
     ['mpx build', 'mpx'],
     ['mpx-cli-service serve', 'mpx'],

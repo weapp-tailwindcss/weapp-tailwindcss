@@ -2,6 +2,27 @@ import { describe, expect, it } from 'vitest'
 import { detectAppTypeFromPackageJson, isMpxPackage, isTaroPackage, isUniAppPackage, isUniAppXPackage, isWeappVitePackage } from '../src'
 
 describe('script 信号只识别执行命令', () => {
+  it.each([
+    '"NODE_ENV=production" weapp-vite build',
+    '"NODE_ENV"=production weapp-vite build',
+    'NODE_ENV"="production weapp-vite build',
+  ])('引号命令参数不能覆盖实际宿主依赖: %s', (script) => {
+    expect(detectAppTypeFromPackageJson({
+      dependencies: { '@tarojs/runtime': '*' },
+      scripts: { test: script },
+    })).toBe('taro')
+    expect(isWeappVitePackage({ scripts: { test: script } })).toBe(false)
+  })
+
+  it('引用值和包装器赋值仍保留脚本优先级', () => {
+    for (const script of ['NODE_ENV="production" weapp-vite build', 'cross-env "NODE_ENV=production" weapp-vite build', 'env "NODE_ENV=production" weapp-vite build']) {
+      expect(detectAppTypeFromPackageJson({
+        dependencies: { '@tarojs/runtime': '*' },
+        scripts: { build: script },
+      })).toBe('weapp-vite')
+    }
+  })
+
   it('文件参数不能覆盖实际宿主依赖', () => {
     expect(detectAppTypeFromPackageJson({
       dependencies: { '@tarojs/runtime': '*' },

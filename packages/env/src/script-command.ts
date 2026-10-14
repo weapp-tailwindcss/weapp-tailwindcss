@@ -4,6 +4,7 @@ import path from 'node:path'
 interface ScriptToken {
   value: string
   quoted: boolean
+  shellAssignment: boolean
 }
 
 const ASSIGNMENT_RE = /^[A-Z_]\w*=/iu
@@ -52,13 +53,17 @@ function tokenizeCommands(script: string): ScriptToken[][] {
   let value = ''
   let active = false
   let quoted = false
+  let shellAssignment = false
+  let protectedPrefix = false
   let quote: string | undefined
   function flushToken() {
     if (active) {
-      command.push({ value, quoted })
+      command.push({ value, quoted, shellAssignment })
       value = ''
       active = false
       quoted = false
+      shellAssignment = false
+      protectedPrefix = false
     }
   }
   function flushCommand() {
@@ -74,6 +79,7 @@ function tokenizeCommands(script: string): ScriptToken[][] {
     if ((character === '\\' && quote !== '\'' && next && /[\s"'\\$`;&|]/u.test(next))
       || (character === '^' && !quote && next && /[\s"^;&|]/u.test(next))) {
       if (next !== '\n' && next !== '\r') {
+        protectedPrefix = true
         value += next
         active = true
       }
@@ -88,6 +94,7 @@ function tokenizeCommands(script: string): ScriptToken[][] {
         return []
       }
       value += script.slice(index, end + 1)
+      protectedPrefix = true
       active = true
       index = end
     }
@@ -102,6 +109,7 @@ function tokenizeCommands(script: string): ScriptToken[][] {
     else if (character === '"' || character === '\'' || character === '`') {
       quote = character
       quoted = true
+      protectedPrefix = true
       active = true
       if (character === '`') {
         value += character
@@ -129,6 +137,10 @@ function tokenizeCommands(script: string): ScriptToken[][] {
       flushToken()
     }
     else {
+      // 只有未引用、未转义的变量名和等号构成 shell 赋值；值中的引用不影响此前判定。
+      if (character === '=' && !protectedPrefix && ASSIGNMENT_RE.test(`${value}=`)) {
+        shellAssignment = true
+      }
       value += character
       active = true
     }
@@ -152,8 +164,9 @@ function executableName(value: string, allowVersion = false) {
   return allowVersion ? executable.replace(/@[^@]+$/u, '') : executable
 }
 
-function skipAssignments(tokens: ScriptToken[], index: number) {
-  while (tokens[index] && ASSIGNMENT_RE.test(tokens[index]!.value)) {
+function skipAssignments(tokens: ScriptToken[], index: number, shellPosition = false) {
+  // env/cross-env 接收去引用后的参数，shell 命令位置则必须保留赋值前缀的词法信息。
+  while (tokens[index] && (shellPosition ? tokens[index]!.shellAssignment : ASSIGNMENT_RE.test(tokens[index]!.value))) {
     index++
   }
   return index
@@ -189,7 +202,7 @@ function collectCommands(script: string, detected: Set<DetectableAppType>, depth
     return
   }
   for (const tokens of tokenizeCommands(script)) {
-    let index = skipAssignments(tokens, 0)
+    let index = skipAssignments(tokens, 0, true)
     let allowVersion = false
     while (tokens[index]) {
       const name = executableName(tokens[index]!.value, allowVersion)
