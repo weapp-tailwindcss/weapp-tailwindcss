@@ -1,10 +1,12 @@
+import type { Buffer } from 'node:buffer'
+import type { Page } from 'playwright'
 import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import type { Page } from 'playwright'
-import { chromium } from 'playwright'
+import process from 'node:process'
 import pixelmatch from 'pixelmatch'
+import { chromium } from 'playwright'
 import { PNG } from 'pngjs'
 import postcss from 'postcss'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -12,6 +14,7 @@ import weappTailwindcss from '@/postcss'
 
 const require = createRequire(import.meta.url)
 const tailwindcssV4Root = path.dirname(require.resolve('tailwindcss/package.json'))
+const iconifyRoot = path.dirname(require.resolve('@iconify/tailwind4/package.json'))
 const TEST_TIMEOUT = 120_000
 const createdRoots: string[] = []
 
@@ -267,8 +270,10 @@ const COLOR_AND_PAINT_PROPERTIES = [
 async function createFixtureRoot() {
   const root = await mkdtemp(path.join(tmpdir(), 'weapp-tw-web-compat-parity-'))
   createdRoots.push(root)
-  await mkdir(path.join(root, 'node_modules'), { recursive: true })
-  await symlink(tailwindcssV4Root, path.join(root, 'node_modules/tailwindcss'), 'dir')
+  await mkdir(path.join(root, 'node_modules', '@iconify'), { recursive: true })
+  const linkType = process.platform === 'win32' ? 'junction' : 'dir'
+  await symlink(tailwindcssV4Root, path.join(root, 'node_modules', 'tailwindcss'), linkType)
+  await symlink(iconifyRoot, path.join(root, 'node_modules', '@iconify', 'tailwind4'), linkType)
   const iconSetFile = path.join(root, 'test-icons.json')
   await writeFile(iconSetFile, JSON.stringify(TEST_ICON_SET), 'utf8')
   const css = createParityCss(iconSetFile)
@@ -404,6 +409,15 @@ afterEach(async () => {
 })
 
 describe('Tailwind CSS v4 web compat computed parity', () => {
+  it('loads configured CSS plugins from the temporary fixture dependency root', async () => {
+    const fixture = await createFixtureRoot()
+    const css = await generateWebCss(fixture.cssEntry, fixture.css, false)
+
+    expect(css).toContain('.i-\\[tst--home\\]')
+    expect(css).toContain('.icon-\\[tst--wide\\]')
+    expect(css).toContain('data:image/svg+xml')
+  })
+
   it('keeps webCompat on and off visually equivalent in the browser for the Tailwind v4 utility surface', async () => {
     const fixture = await createFixtureRoot()
     const [standardCss, compatCss] = await Promise.all([

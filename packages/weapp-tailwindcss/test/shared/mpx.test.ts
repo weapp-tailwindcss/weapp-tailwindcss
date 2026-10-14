@@ -1,18 +1,18 @@
-import path from 'node:path'
-import { createRequire } from 'node:module'
 import { mkdir, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import os from 'node:os'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import webpack from 'webpack'
-import { afterEach } from 'vitest'
-import { describe, expect, it, vi } from 'vitest'
 import {
   ensureMpxTailwindcssAliases,
   getTailwindcssCssEntry,
   injectMpxCssRewritePreRules,
   isMpx,
   patchMpxLoaderResolve,
-  patchMpxWebpackPluginRequests,
   patchMpxWebpackPluginNormalizeLib,
+  patchMpxWebpackPluginRequests,
   rewriteMpxWebpackPluginRequests,
   setupMpxTailwindcssRedirect,
 } from '@/shared/mpx'
@@ -22,6 +22,9 @@ vi.mock('@/shared/tailwindcss-css-redirect', () => ({
 }))
 
 const createdDirs: string[] = []
+const packageRoot = fileURLToPath(new URL('../../', import.meta.url))
+const packageRequire = createRequire(new URL('../../package.json', import.meta.url))
+const demoRequire = createRequire(new URL('../../../../demo/mpx-tailwindcss-v4/package.json', import.meta.url))
 
 afterEach(async () => {
   await Promise.all(createdDirs.splice(0).map(dir => rm(dir, { recursive: true, force: true })))
@@ -67,8 +70,6 @@ describe('mpx integration helpers', () => {
   })
 
   it('resolves the workspace and demo mpx peer to the same plugin instance', async () => {
-    const packageRequire = createRequire(path.join(process.cwd(), 'package.json'))
-    const demoRequire = createRequire(path.resolve(process.cwd(), '../../demo/mpx-tailwindcss-v4/package.json'))
     const packagePluginPath = await realpath(packageRequire.resolve('@mpxjs/webpack-plugin/package.json'))
     const demoPluginPath = await realpath(demoRequire.resolve('@mpxjs/webpack-plugin/package.json'))
     const packagePlugin = packageRequire(packagePluginPath)
@@ -100,13 +101,12 @@ describe('mpx integration helpers', () => {
   })
 
   it('adds mpx webpack plugin aliases when the plugin can be resolved from project context', () => {
-    const require = createRequire(path.join(process.cwd(), 'package.json'))
-    const pluginPackageJson = require.resolve('@mpxjs/webpack-plugin/package.json')
+    const pluginPackageJson = packageRequire.resolve('@mpxjs/webpack-plugin/package.json')
     const pluginDir = path.dirname(pluginPackageJson)
     const compiler = {
-      context: process.cwd(),
+      context: packageRoot,
       options: {
-        context: process.cwd(),
+        context: packageRoot,
         resolve: { alias: {} },
       },
     }
@@ -200,8 +200,8 @@ describe('mpx integration helpers', () => {
   it('patches normalize.lib from the compiler-owned mpx plugin instance once', async () => {
     const { pluginDir, root } = await createMpxWebpackPluginFixture()
     const compiler = {
-      context: process.cwd(),
-      options: { context: process.cwd() },
+      context: packageRoot,
+      options: { context: packageRoot },
     }
     const projectRequire = createRequire(path.join(root, 'package.json'))
     const normalize = projectRequire('@mpxjs/webpack-plugin/lib/utils/normalize')
@@ -573,12 +573,11 @@ describe('mpx integration helpers', () => {
   })
 
   it('patches loader resolve for mpx webpack plugin requests when resolvable', () => {
-    const require = createRequire(path.join(process.cwd(), 'package.json'))
-    const pluginDir = path.dirname(require.resolve('@mpxjs/webpack-plugin/package.json'))
+    const pluginDir = path.dirname(packageRequire.resolve('@mpxjs/webpack-plugin/package.json'))
     const originalResolve = vi.fn((_context, request, callback) => callback(null, `origin:${request}`))
     const loaderContext = {
-      context: process.cwd(),
-      options: { context: process.cwd() },
+      context: packageRoot,
+      options: { context: packageRoot },
       resolve: originalResolve,
     }
 
@@ -621,7 +620,7 @@ describe('mpx integration helpers', () => {
     const activePluginDir = path.join('/project', 'node_modules/@mpxjs/webpack-plugin')
     const originalImportModule = vi.fn((request: string, options?: any) => Promise.resolve({ request, options }))
     const loaderContext = {
-      context: process.cwd(),
+      context: packageRoot,
       _module: {
         loaders: [
           { loader: path.join(activePluginDir, 'lib/extractor') },

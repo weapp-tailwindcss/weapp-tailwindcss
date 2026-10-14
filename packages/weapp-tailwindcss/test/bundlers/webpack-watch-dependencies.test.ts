@@ -6,8 +6,8 @@ import { expect, it, vi } from 'vitest'
 import webpack from 'webpack'
 import { registerWebpackSourceContexts, registerWebpackWatchFile } from '../../src/bundlers/webpack/loaders/watch-dependencies'
 
-const require = createRequire(import.meta.url)
-const taroRequire = createRequire(require.resolve('@tarojs/webpack5-runner/package.json', { paths: [path.resolve('demo/subpackage-taro-webpack-react-tailwindcss-v4')] }))
+const demoRequire = createRequire(new URL('../../../../demo/subpackage-taro-webpack-react-tailwindcss-v4/package.json', import.meta.url))
+const taroRequire = createRequire(demoRequire.resolve('@tarojs/webpack5-runner/package.json'))
 const VirtualModulesPlugin = taroRequire('webpack-virtual-modules')
 
 it('来源目录监听使用 glob 的静态前缀，并保留新增目录依赖', async () => {
