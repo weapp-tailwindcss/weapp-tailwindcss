@@ -1,5 +1,36 @@
 # weapp-tailwindcss
 
+## 5.6.2
+
+### Patch Changes
+
+- 修复小程序生成样式交给框架 PostCSS 前未转换通配选择器，导致 Taro 的复杂 group 变体样式丢失的问题。
+
+  在同一 PostCSS AST 中完成嵌套展开、选择器准备和裁剪，避免生成样式重复序列化及重建整棵 AST 的瞬时分配。
+
+- 提炼独立的环境、框架与平台识别包 `@weapp-tailwindcss/env`，支持构建期独立使用，并保留主包及 `weapp-tailwindcss/framework` 的既有公开入口。
+
+  修正显式环境变量快照中缺失的 UNI 字段意外回退到进程环境的问题；空快照和部分快照只使用调用方传入的值，省略环境参数时继续读取当前进程环境。
+
+  新包初始化为 `0.1.0`，按 pnpm 首发使用 manifest 版本的规则交给 repoctl 编排；后续发布继续按 change intent 升版。
+
+- 修复小程序样式误删 -webkit-font-smoothing，导致 antialiased 与 subpixel-antialiased 字体平滑声明丢失的问题。新增 cssOptions.preserveWebkitProperties，支持追加需要保留的 WebKit 属性名，并保持默认保留项。Refs #1286
+
+- 修复 Vite watch 连续重建时样式来源与候选未变、当前构建图却缺少 CSS 资产的情况。每轮通过构建器 API 恢复资产，只复用与来源、输出、运行时及依赖版本匹配的干净生成结果，避免遗漏样式或恢复已删除的框架规则。Refs #1286
+
+- 修复 Vite watch 连续重建时框架根样式导入壳缺席的问题，通过构建器资产 API 恢复已登记的导入关系，保留目标 CSS 与组件样式注入。Related to #1284
+
+- Updated dependencies:
+  - @weapp-tailwindcss/native-darwin-arm64@5.6.2
+  - @weapp-tailwindcss/native-darwin-x64@5.6.2
+  - @weapp-tailwindcss/native-linux-arm64-gnu@5.6.2
+  - @weapp-tailwindcss/native-linux-arm64-musl@5.6.2
+  - @weapp-tailwindcss/native-linux-x64-gnu@5.6.2
+  - @weapp-tailwindcss/native-linux-x64-musl@5.6.2
+  - @weapp-tailwindcss/native-win32-arm64-msvc@5.6.2
+  - @weapp-tailwindcss/native-win32-x64-msvc@5.6.2
+  - @weapp-tailwindcss/postcss@3.4.2
+
 ## 5.6.1
 
 ### Patch Changes
