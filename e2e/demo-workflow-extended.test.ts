@@ -90,6 +90,7 @@ describe('扩展回归的完整覆盖与门禁', () => {
     for (const name of ['check:docs-audience', 'seo:quality:strict', 'test:worker', 'deploy:worker:dry-run', 'e2e:local']) {
       expect(commands).toContain(`pnpm --filter @weapp-tailwindcss/website ${name}`)
     }
+    expect(commands).toContain('pnpm --filter @weapp-tailwindcss/website exec vitest run scripts/docs-deployment.test.ts scripts/deploy-docs-cloudflare.test.mjs scripts/local-worker/server.test.ts scripts/local-worker/command.test.ts --update=none')
     const nativeIndex = commands.findIndex(command => command.startsWith('pnpm native:ci --target='))
     expect(nativeIndex).toBeGreaterThan(-1)
     expect(nativeIndex).toBeLessThan(commands.indexOf('pnpm release:verify'))
@@ -162,6 +163,18 @@ describe('扩展回归的完整覆盖与门禁', () => {
     })
     await expect(runDemoE2eWorkflow(args)).rejects.toThrow('failed with exit=1')
     expect(mocks.spawn.mock.calls.at(-1)?.[1][0]).toBe(failed)
+    expect(gate.close).toHaveBeenCalledOnce()
+  })
+
+  it.each(['test:worker', 'deploy:worker:dry-run', 'e2e:local', 'scripts/local-worker/server.test.ts'])('网站 %s 失败后停止后续阶段并释放同一门禁', async (failed) => {
+    mocks.spawn.mockImplementation((_command: string, argv: string[]) => {
+      const child = new EventEmitter()
+      queueMicrotask(() => child.emit('close', argv.includes(failed) ? 1 : 0))
+      return child
+    })
+    await expect(runDemoE2eWorkflow(args)).rejects.toThrow('failed with exit=1')
+    expect(mocks.spawn.mock.calls.at(-1)?.[1]).toContain(failed)
+    expect(mocks.enter).toHaveBeenCalledOnce()
     expect(gate.close).toHaveBeenCalledOnce()
   })
 

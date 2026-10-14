@@ -46,6 +46,7 @@ export function extendedQualitySteps(): WorkflowStep[] {
       command === 'test:browser' ? 'extended CSS browser parity' : `extended CSS compatibility ${command}`,
       ['--filter', '@weapp-tailwindcss/css-compat', command],
     )),
+    step('extended website script regression', ['--filter', '@weapp-tailwindcss/website', 'exec', 'vitest', 'run', 'scripts/docs-deployment.test.ts', 'scripts/deploy-docs-cloudflare.test.mjs', 'scripts/local-worker/server.test.ts', 'scripts/local-worker/command.test.ts', '--update=none']),
     ...['check:docs-audience', 'seo:quality:strict', 'test:worker', 'deploy:worker:dry-run', 'e2e:local'].map(command => step(
       command === 'e2e:local' ? 'extended website browser runtime' : `extended website quality ${command}`,
       ['--filter', '@weapp-tailwindcss/website', command],
