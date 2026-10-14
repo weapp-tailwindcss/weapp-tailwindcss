@@ -13,6 +13,7 @@ regressions:
   - e2e/packed-manifest-pnpm.test.ts
   - scripts/agents/eslint-scope.test.mjs
   - packages/weapp-tailwindcss/test/native-targets.test.ts
+  - packages/weapp-tailwindcss/test/ci/workflows.test.ts
   - packages/weapp-tailwindcss/test/wxml/Tokenizer.test.ts
   - website/scripts/local-worker/server.test.ts
   - website/scripts/local-worker/command.test.ts
@@ -79,6 +80,8 @@ pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/demo-workflow-extended.test
 `2cafadfabb3e896418ea2eb4069af2549a659692` 的报告 `7f15eca3-4a94-4036-9b00-6495b85eba04` 已通过前 13 阶段，包括根 lint 和本机 Rust/native ABI；第 14 阶段的 `release:verify` 却要求八架构分发产物，在读取 `darwin-x64/THIRD_PARTY_LICENSES.txt` 时失败。该入口适用于下载同提交全平台产物后的发布验证，不能直接用于只编译宿主架构的本地验收。将公共包 manifest 与消费回归提取为 `release:verify:packages`，本地阶段在宿主 native 完整验证之后调用；正式发布保留先核验八平台产物再复用公共包验证的顺序。三项合同回归修复前失败，日志为 `host-release-boundary-first-failure.log`；首次完整失败输出和阶段报告保存在 `full-run-7f15.log`、`round-7f15/`。
 
 公共包 manifest 脚本还直接使用 PATH 中的 pnpm，改为复用 `execaPnpm` 后继续保留同一活动入口和 Windows 调用方式；异步 pack 完成后才读取 tarball，失败仍在 `finally` 清理临时目录。使用不同版本的真实 CLI 替身与真实 tarball，修复前确认活动 `99.1.0` 被 PATH `99.2.0` 替代，首次证据为 `packed-manifest-pnpm-first-failure.log`。修复后编排与入口回归 29 项、八平台分发安全回归 15 项及真实 `release:verify:packages` 全部通过，日志为 `host-release-integrated-regression.log`、`host-release-eight-target-regression.log`、`host-release-packages-validation.log`。这些编排和脚本修复不改变公开包或样式输出，无需额外 intent 或 static 基线更新。
+
+`fc4f67b5395acaf50fd9adab6d8e7f4823ec4f8c` 的报告 `ab163651-a302-4f8a-b6d3-f05192eb0141` 在第 2 阶段停止：发布脚本拆分时遗漏更新既有 workflow 合同中的精确字符串断言，另有 Metro 连续原子保存监听未取得首次内容。完整失败输出和阶段报告保留在 `full-run-ab163.log`、`round-ab163/`；本轮 prepare 正常退出且端口拒绝连接。workflow 合同已同步同时核对全平台入口与公共包入口，其 45 项定向回归通过，日志为 `release-hook-contract-validation.log`；Metro 问题单独定位，不以重跑成功替代根因修复。
 
 ## 适用边界
 
