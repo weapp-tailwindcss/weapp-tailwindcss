@@ -19,6 +19,22 @@ async function fixture(pkg: unknown = {}) {
 }
 
 describe('首次命中阶段的检测报告', () => {
+  it('引号命令的参数不产生候选、脚本证据或冲突', () => {
+    const options = {
+      packageJson: {
+        dependencies: { '@tarojs/runtime': '*' },
+        scripts: { test: '"NODE_ENV=production" weapp-vite build' },
+      },
+      env: {},
+    }
+    expect(detectAppType(options)).toBe('taro')
+    expect(detectAppTypeReport(options)).toEqual({
+      appType: 'taro',
+      candidates: [{ appType: 'taro', evidence: [{ source: 'dependency', key: 'dependencies.@tarojs/runtime', value: '*' }] }],
+      conflicts: [],
+    })
+  })
+
   it('聚合同框架证据，保持框架优先级并列出其他家族', () => {
     const report = detectAppTypeReport({
       packageJson: {

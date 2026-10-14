@@ -14,6 +14,24 @@ const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 const repoRoot = path.resolve(packageRoot, '../..')
 const require = createRequire(path.join(repoRoot, 'package.json'))
 
+const scriptRegression = `
+function verifyScriptAssignments(api) {
+  for (const script of ['"NODE_ENV=production" weapp-vite build', '"NODE_ENV"=production weapp-vite build', 'NODE_ENV"="production weapp-vite build']) {
+    const packageJson = { dependencies: { '@tarojs/runtime': '*' }, scripts: { test: script } }
+    assert.equal(api.detectAppTypeFromPackageJson(packageJson), 'taro')
+    const report = api.detectAppTypeReport({ packageJson, env: {} })
+    assert.equal(report.appType, 'taro')
+    assert.deepEqual(report.candidates.map(item => item.appType), ['taro'])
+    assert.deepEqual(report.conflicts, [])
+    assert.ok(report.candidates[0].evidence.every(item => item.source === 'dependency'))
+  }
+  assert.equal(api.detectAppTypeFromPackageJson({ dependencies: { '@dcloudio/vite-plugin-uni': '*' }, scripts: { test: '"NODE_ENV=production" taro build' } }), 'uni-app-vite')
+  for (const script of ['NODE_ENV="production" weapp-vite build', 'cross-env "NODE_ENV=production" weapp-vite build', 'env "NODE_ENV=production" weapp-vite build']) {
+    assert.equal(api.detectAppTypeFromPackageJson({ dependencies: { '@tarojs/runtime': '*' }, scripts: { build: script } }), 'weapp-vite')
+  }
+}
+`
+
 function run(command, args, cwd, shell = false) {
   const result = spawnSync(command, args, { cwd, shell, encoding: 'utf8', env: { ...process.env, CI: '1' }, maxBuffer: 20 * 1024 * 1024 })
   if (result.error) {
@@ -67,6 +85,7 @@ import * as legacy from 'weapp-tailwindcss/framework'
 const require = createRequire(import.meta.url)
 const cjs = require('@weapp-tailwindcss/env')
 const oldCjs = require('weapp-tailwindcss/framework')
+${scriptRegression}
 assert.deepEqual(Object.keys(env).sort(), Object.keys(cjs).sort())
 assert.deepEqual(Object.keys(legacy).sort(), Object.keys(oldCjs).sort())
 for (const name of Object.keys(env).filter(name => name !== 'normalizeFrameworkStylePlatform')) {
@@ -84,6 +103,7 @@ mkdirSync(projectRoot)
 writeFileSync(path.join(projectRoot, 'package.json'), '{"private":true}')
 writeFileSync(path.join(projectRoot, 'manifest.json'), '{ /* manifest comment */ "uni-app-x": {} }')
 for (const api of [env, cjs, legacy, oldCjs]) {
+  verifyScriptAssignments(api)
   assert.equal(api.detectAppTypeFromEnv({}, { cwd: process.cwd() }), undefined)
   assert.equal(api.resolveUniPlatformsFromEnv({}).uniUtsPlatform.normalized, undefined)
   assert.equal(api.resolveUniPlatform().normalized, 'h5')
@@ -198,6 +218,8 @@ import * as core from 'weapp-tailwindcss'
 const require = createRequire(import.meta.url)
 const cjs = require('weapp-tailwindcss')
 const envCjs = require('@weapp-tailwindcss/env')
+${scriptRegression}
+for (const api of [core, cjs]) verifyScriptAssignments(api)
 for (const name of ['resolveTaroPlatformFromEnv', 'resolveMpxPlatformFromEnv', 'resolvePlatformIdentity', 'detectAppTypeReport']) {
   assert.equal(core[name], env[name])
   assert.equal(cjs[name], envCjs[name])
