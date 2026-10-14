@@ -8,5 +8,6 @@ export function execaPnpm(args, options = {}) {
     ? options.env ?? {}
     : { ...process.env, ...options.env }
   const invocation = createPnpmCommand(args, { npmExecPath: environment.npm_execpath })
-  return execa(invocation.command, invocation.args, { ...options, shell: invocation.shell })
+  // Execa 自行处理 Windows cmd 包装和参数转义；shell: true 会将参数直接拼接并丢失边界。
+  return execa(invocation.command, invocation.args, { ...options, shell: false })
 }
