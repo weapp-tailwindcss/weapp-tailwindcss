@@ -23,6 +23,27 @@ export interface UniPlatformInfo {
   isWeb: boolean
 }
 
+export type CanonicalPlatform
+  = | 'mp-weixin'
+    | 'mp-alipay'
+    | 'mp-baidu'
+    | 'mp-jd'
+    | 'mp-qq'
+    | 'mp-toutiao'
+    | 'mp-dingtalk'
+    | 'web'
+    | 'app'
+    | 'app-plus'
+    | 'app-android'
+    | 'app-ios'
+    | 'app-harmony'
+
+export interface PlatformIdentityInfo {
+  raw: string | undefined
+  normalized: string | undefined
+  canonical: CanonicalPlatform | undefined
+}
+
 export interface HBuilderXRuntimeHints {
   cwd?: string | undefined
   env?: FrameworkEnv | undefined

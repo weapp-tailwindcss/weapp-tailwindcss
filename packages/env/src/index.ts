@@ -14,6 +14,7 @@ export {
   normalizeFrameworkStylePlatform,
   resolveMpxPlatform,
   resolvePlatform,
+  resolvePlatformIdentity,
   resolveTaroPlatform,
   resolveUniAppXPlatform,
   resolveUniPlatform,
@@ -22,11 +23,13 @@ export {
 } from './platform'
 export { detectAppType } from './project'
 export type {
+  CanonicalPlatform,
   DetectableAppType,
   DetectAppTypeOptions,
   FrameworkEnv,
   HBuilderXRuntimeHints,
   PackageJsonLike,
+  PlatformIdentityInfo,
   UniAppManifestLike,
   UniPlatformInfo,
 } from './types'
