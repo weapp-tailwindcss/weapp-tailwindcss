@@ -13,18 +13,24 @@ pnpm add @weapp-tailwindcss/env
 ## 使用
 
 ```ts
-import { detectAppType, detectAppTypeReport, resolvePlatformIdentity, resolveUniPlatformsFromEnv } from '@weapp-tailwindcss/env'
+import { detectAppType, detectAppTypeReport, resolveMpxPlatformFromEnv, resolvePlatformIdentity, resolveTaroPlatformFromEnv, resolveUniPlatformsFromEnv } from '@weapp-tailwindcss/env'
 
 const appType = detectAppType({ root: process.cwd(), detectEnv: true })
 const platform = resolvePlatformIdentity('wx', 'mpx')
 // { raw: 'wx', normalized: 'wx', canonical: 'mp-weixin' }
 const report = detectAppTypeReport({ root: process.cwd(), detectEnv: true })
 const { uniPlatform } = resolveUniPlatformsFromEnv({ UNI_PLATFORM: 'h5' })
+const taroPlatform = resolveTaroPlatformFromEnv({ TARO_ENV: 'weapp' })
+const mpxPlatform = resolveMpxPlatformFromEnv({ MPX_CLI_MODE: 'wx' })
 ```
 
 支持 weapp-vite、MPX、Taro、uni-app、uni-app Vite 和 uni-app x。`detectAppType` 按显式 manifest、显式 package 信息、项目文件、环境提示的顺序判断。默认向父目录查找，`searchUp: false` 仅检查传入根目录；无法识别时返回 `undefined`。
 
+项目的 `manifest.json` 支持行注释和块注释，包括官方 uni-app x manifest 的格式。字符串内容保持原样，损坏的 JSON 继续回退到其他识别来源。`package.json` 仍按严格 JSON 解析；不支持尾逗号。
+
 显式 `env` 是隔离快照：缺失字段不会继承进程环境。省略快照时，环境函数在每次调用时读取当前进程。`detectAppType` 仅在 `detectEnv: true` 时读取进程环境；单值平台函数省略参数或传入 `undefined` 时仍使用对应环境变量。
+
+`resolveTaroPlatformFromEnv(env)` 读取 `TARO_ENV`。`resolveMpxPlatformFromEnv(env)` 读取 `MPX_CURRENT_TARGET_MODE ?? MPX_CLI_MODE`，current mode 的空字符串也优先于 CLI mode。传入 `{}` 可在平台缺失时保持隔离；省略快照或传入 `undefined` 则读取当前进程环境。
 
 ## 平台身份
 
@@ -45,7 +51,7 @@ package scripts 仅在实际命令位置出现受支持的框架可执行程序�
 - 框架检测：`detectAppType`、`detectAppTypeReport`、`detectAppTypeFromEnv`、`detectAppTypeFromPackageJson`。
 - 配置判断：`isMpxPackage`、`isTaroPackage`、`isUniAppPackage`、`isUniAppVitePackage`、`isUniAppXPackage`、`isWeappVitePackage`、`isUniAppXManifest`。
 - 环境提示：`isRunningInHBuilderX`。
-- 平台：`resolvePlatform`、`resolvePlatformIdentity`、`resolveMpxPlatform`、`resolveTaroPlatform`、`resolveUniPlatform`、`resolveUniUtsPlatform`、`resolveUniAppXPlatform`、`resolveUniPlatformsFromEnv`、`normalizeFrameworkStylePlatform`。
+- 平台：`resolvePlatform`、`resolvePlatformIdentity`、`resolveMpxPlatform`、`resolveMpxPlatformFromEnv`、`resolveTaroPlatform`、`resolveTaroPlatformFromEnv`、`resolveUniPlatform`、`resolveUniUtsPlatform`、`resolveUniAppXPlatform`、`resolveUniPlatformsFromEnv`、`normalizeFrameworkStylePlatform`。
 - 类型：`DetectableAppType`、`DetectAppTypeOptions`、`AppTypeDetectionReport`、`AppTypeDetectionCandidate`、`AppTypeDetectionEvidence`、`CanonicalPlatform`、`PlatformIdentityInfo`、`FrameworkEnv`、`HBuilderXRuntimeHints`、`PackageJsonLike`、`UniAppManifestLike`、`UniPlatformInfo`。
 
 本包提供事实识别，由调用方决定构建器分支、生成器 target 和样式策略。`weapp-tailwindcss` 与 `weapp-tailwindcss/framework` 的既有导入继续可用，两个新增 API 及其类型也通过主包的 framework 兼容层提供。`normalizeFrameworkStylePlatform` 可从本包导入；Vite 专用的 `resolveImplicitAppTypeFromViteRoot` 保留在主包。

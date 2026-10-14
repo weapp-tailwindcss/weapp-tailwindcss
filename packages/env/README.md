@@ -13,18 +13,24 @@ pnpm add @weapp-tailwindcss/env
 ## Usage
 
 ```ts
-import { detectAppType, detectAppTypeReport, resolvePlatformIdentity, resolveUniPlatformsFromEnv } from '@weapp-tailwindcss/env'
+import { detectAppType, detectAppTypeReport, resolveMpxPlatformFromEnv, resolvePlatformIdentity, resolveTaroPlatformFromEnv, resolveUniPlatformsFromEnv } from '@weapp-tailwindcss/env'
 
 const appType = detectAppType({ root: process.cwd(), detectEnv: true })
 const platform = resolvePlatformIdentity('wx', 'mpx')
 // { raw: 'wx', normalized: 'wx', canonical: 'mp-weixin' }
 const report = detectAppTypeReport({ root: process.cwd(), detectEnv: true })
 const { uniPlatform } = resolveUniPlatformsFromEnv({ UNI_PLATFORM: 'h5' })
+const taroPlatform = resolveTaroPlatformFromEnv({ TARO_ENV: 'weapp' })
+const mpxPlatform = resolveMpxPlatformFromEnv({ MPX_CLI_MODE: 'wx' })
 ```
 
 Framework detection supports weapp-vite, MPX, Taro, uni-app, uni-app Vite and uni-app x. `detectAppType` checks an explicit manifest, explicit package metadata, project files, then environment hints. Parent directory search defaults to enabled; use `searchUp: false` to inspect only the supplied root. Unknown frameworks return `undefined`.
 
+Project `manifest.json` files accept line and block comments, including the official uni-app x manifest format. Strings are preserved and malformed JSON still falls back to other detection sources. `package.json` remains strict JSON; trailing commas are not supported.
+
 An explicit `env` object is an isolated snapshot: missing fields never inherit process variables. Without a snapshot, environment helpers read the current process on each call. `detectAppType` only reads process variables when `detectEnv: true`; individual platform resolvers retain their default environment value when called without a value or with `undefined`.
+
+`resolveTaroPlatformFromEnv(env)` reads `TARO_ENV`. `resolveMpxPlatformFromEnv(env)` reads `MPX_CURRENT_TARGET_MODE ?? MPX_CLI_MODE`, so an empty current mode takes precedence over the CLI mode. Pass `{}` to resolve an absent platform without inheriting process variables; omit the snapshot or pass `undefined` to read the current process.
 
 ## Platform identity
 
@@ -45,7 +51,7 @@ Package scripts provide evidence only when a supported framework executable appe
 - Framework detection: `detectAppType`, `detectAppTypeReport`, `detectAppTypeFromEnv`, `detectAppTypeFromPackageJson`.
 - Metadata predicates: `isMpxPackage`, `isTaroPackage`, `isUniAppPackage`, `isUniAppVitePackage`, `isUniAppXPackage`, `isWeappVitePackage`, `isUniAppXManifest`.
 - Environment hints: `isRunningInHBuilderX`.
-- Platforms: `resolvePlatform`, `resolvePlatformIdentity`, `resolveMpxPlatform`, `resolveTaroPlatform`, `resolveUniPlatform`, `resolveUniUtsPlatform`, `resolveUniAppXPlatform`, `resolveUniPlatformsFromEnv`, `normalizeFrameworkStylePlatform`.
+- Platforms: `resolvePlatform`, `resolvePlatformIdentity`, `resolveMpxPlatform`, `resolveMpxPlatformFromEnv`, `resolveTaroPlatform`, `resolveTaroPlatformFromEnv`, `resolveUniPlatform`, `resolveUniUtsPlatform`, `resolveUniAppXPlatform`, `resolveUniPlatformsFromEnv`, `normalizeFrameworkStylePlatform`.
 - Types: `DetectableAppType`, `DetectAppTypeOptions`, `AppTypeDetectionReport`, `AppTypeDetectionCandidate`, `AppTypeDetectionEvidence`, `CanonicalPlatform`, `PlatformIdentityInfo`, `FrameworkEnv`, `HBuilderXRuntimeHints`, `PackageJsonLike`, `UniAppManifestLike`, `UniPlatformInfo`.
 
 These helpers report facts. Bundler selection, generator targets and CSS policy belong to the caller. Existing imports from `weapp-tailwindcss` and `weapp-tailwindcss/framework` remain supported, and both new APIs and their types are available through the main package's framework facade. `normalizeFrameworkStylePlatform` is available from this package; the Vite-specific `resolveImplicitAppTypeFromViteRoot` stays in the main package.

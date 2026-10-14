@@ -4,6 +4,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { matchEnvironment } from './detect-env'
 import { getProcessEnv } from './environment'
+import { parseManifestJson } from './manifest'
 import { collectMatches, detectionReport, evidence } from './matching'
 import { isUniAppXManifest, matchPackageJson } from './package'
 
@@ -11,12 +12,12 @@ const PACKAGE_JSON_FILE = 'package.json'
 const MANIFEST_JSON_FILE = 'manifest.json'
 const MPX_MARKERS = [['src', 'app.mpx'], ['app.mpx']] as const
 
-function tryReadJson<T>(file: string): T | undefined {
+function tryReadJson<T>(file: string, parse: (text: string) => T = JSON.parse): T | undefined {
   if (!existsSync(file)) {
     return
   }
   try {
-    return JSON.parse(readFileSync(file, 'utf8')) as T
+    return parse(readFileSync(file, 'utf8'))
   }
   catch {
     // 保持历史行为：损坏或不可读取的配置继续交给后续识别阶段。
@@ -50,7 +51,7 @@ function matchRoot(root: string, searchUp: boolean, all: boolean): AppTypeDetect
   let current = resolvedRoot
   while (true) {
     const manifestFile = path.join(current, MANIFEST_JSON_FILE)
-    const manifest = manifestMatches(tryReadJson<UniAppManifestLike>(manifestFile), manifestFile)
+    const manifest = manifestMatches(tryReadJson(manifestFile, parseManifestJson), manifestFile)
     if (manifest.length) {
       return manifest
     }

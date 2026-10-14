@@ -106,12 +106,30 @@ describe('首次命中阶段的检测报告', () => {
 
   it('同层 manifest 优先于 package，配置路径不虚构', async () => {
     const root = await fixture({ dependencies: { 'weapp-vite': '*' } })
-    await writeFile(path.join(root, 'manifest.json'), JSON.stringify({ 'uni-app-x': {} }))
-    expect(detectAppTypeReport({ root }).candidates).toEqual([{ appType: 'uni-app-x', evidence: [{
+    await writeFile(path.join(root, 'manifest.json'), '{ /* uni-app x */ "uni-app-x": {} } // manifest')
+    const report = detectAppTypeReport({ root })
+    expect(report.appType).toBe('uni-app-x')
+    expect(report.appType).toBe(detectAppType({ root }))
+    expect(report.candidates).toEqual([{ appType: 'uni-app-x', evidence: [{
       source: 'manifest',
       key: 'uni-app-x',
       path: path.join(root, 'manifest.json'),
     }] }])
+  })
+
+  it('损坏的注释 manifest 和带注释的 package 仍按既有阶段回退', async () => {
+    const root = await fixture()
+    await writeFile(path.join(root, 'manifest.json'), '{ "uni-app-x": {}, "enabled": tr/* comment */ue }')
+    const packageFile = path.join(root, 'package.json')
+    await writeFile(packageFile, '{ /* comment */ "dependencies": { "@tarojs/runtime": "*" } }')
+    const options = { root, searchUp: false, env: {} }
+    expect(detectAppTypeReport(options)).toEqual({ appType: undefined, candidates: [], conflicts: [] })
+    expect(detectAppType(options)).toBeUndefined()
+    await writeFile(packageFile, '{ "dependencies": { "@tarojs/runtime": "*" } }')
+    const report = detectAppTypeReport(options)
+    expect(report.appType).toBe(detectAppType(options))
+    expect(report.candidates).toEqual([{ appType: 'taro', evidence: [{ source: 'dependency', key: 'dependencies.@tarojs/runtime', value: '*', path: packageFile }] }])
+    expect(report.conflicts).toEqual([])
   })
 
   it('损坏 JSON、父目录 marker、searchUp 与不存在目录保持既有规则', async () => {

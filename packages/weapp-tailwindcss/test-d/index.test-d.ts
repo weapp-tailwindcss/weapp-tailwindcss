@@ -4,10 +4,15 @@ import type { WeappTailwindcssVitePlugin } from 'weapp-tailwindcss/vite'
 import { expectType } from 'tsd'
 import {
   createPlugins,
+  resolveMpxPlatformFromEnv,
+  resolveTaroPlatformFromEnv,
   WeappTailwindcss,
 } from 'weapp-tailwindcss'
 
 const rootOptions: UserDefinedOptions = { appType: 'taro' }
+
+expectType<boolean>(resolveTaroPlatformFromEnv({}).isWeb)
+expectType<boolean>(resolveMpxPlatformFromEnv({}).isMp)
 
 expectType<WeappTailwindcssVitePlugin[] | undefined>(WeappTailwindcss(rootOptions))
 

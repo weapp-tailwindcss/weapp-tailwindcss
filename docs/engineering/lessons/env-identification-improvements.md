@@ -103,6 +103,16 @@ git diff --check
 
 该修复只调整私有验收工具，不改变 demo、样式产物基线、公开包版本或 CI 门槛。没有执行全端 IDE/设备验收；新 head 的远端矩阵仍需独立核验，旧 head 的绿色结果不作为最终合并凭据。
 
+## 合并前的 main 同步
+
+head `b66dc84e26a23ef62f4cabf6aecb512a073d3424` 的远端检查最终为 215 项成功、27 项按范围跳过，无待执行或失败项；其中此前失败的 macOS 微信 polling watch 用例完整通过。最终合并核对时，main 已前进到 `1580162e783e447ff8929847550750f2461425b5`，新增 Uni manifest 注释解析与 Taro/MPX 环境快照入口，PR 因交叉修改发生冲突。因此先正常合并 main，再独立验证新 head，旧 head 的绿色结果不作为最终合并凭据。
+
+冲突按接口并集合并：普通检测与报告共用 manifest 解析回调，package.json 保持严格 JSON；公开导出、双语文档、两侧的 ESM/CJS 与 NodeNext 消费断言全部保留。包外消费新增带注释 manifest 的报告证据与 MPX 快照分类，workspace 主包根入口核对四个新 API 的函数身份。
+
+自动文本合并还暴露语义问题：新的 `resolveMpxPlatformFromEnv` 直接调用通用分类器，丢失 MPX 上下文。新回归修复前出现 `ali/dd` 及大小写变体 4 项失败，其余 47 项通过；改为复用内部 MPX 分类器，避免通过带默认参数的单值入口引入进程环境回退。回归覆盖七个别名、冻结快照和 current mode 优先级；报告覆盖注释 manifest、绝对证据路径、普通检测一致性及损坏配置回退。
+
+合并后本地 env 9 文件 268 项、主包 12 文件 98 项测试通过，共 366 项，无 skip。重新执行前述冻结过滤安装、主包依赖闭包与 CLI 构建、env/主包类型检查、主包 tsd、env 包外消费、定向 ESLint、32 个发布包双语 README 检查、规则检查及 diff 检查；架构检查覆盖 37 包、1400 个源码文件。release status 仅核对已有 intent，不落盘版本或发布。独立只读审查未发现剩余阻断项。
+
 ## 适用边界
 
 本轮为环境识别与公开包契约的定向验收，没有执行全仓测试、设备、IDE 或浏览器 E2E。Linux/Windows 的真实执行及 Node 22 留给既有 Linux/macOS/Windows × Node 22/24 env CI；本地跨平台路径证据来自 POSIX、Windows 盘符、反斜杠、UNC 与相对目录 fixtures，不能换算为原生矩阵通过。
