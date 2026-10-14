@@ -111,6 +111,8 @@ pnpm e2e:demo:workflow:local --quality --extended --baseline-ref <任务起始�
 
 扩展模式要求固定的完整提交 SHA，禁止以移动分支充当性能基线；性能命令及基线会写入阶段报告。新增阶段共享本轮门禁，任一失败均停止。独立质量检查在 static 前完成，模板构建/HMR/微信 IDE 与启动矩阵在标准 IDE 阶段前完成；标准多端截图之后串行执行 RN Web/Android/iOS、Lynx Android/iOS 和 synthetic/framework 性能门禁。canonical template 与 RN/Lynx 静态测试由 static 统一覆盖，不重复执行。
 
+本地原生阶段通过 `native:ci --target=<宿主 target>` 编译并验证当前架构的两个内核及隔离 tarball 消费，随后通过 `release:verify:packages` 检查公开包打包 manifest 和发布消费回归。其他 native 架构单独记录为未执行。正式发布继续使用 `release:verify`，先要求八个平台的真实 binding、摘要和许可证全部通过 `native:artifacts:verify`，再复用公共包检查；不能以本地验证替代八平台发布门槛。
+
 扩展质量阶段还覆盖本机 Rust/native ABI、CSS 兼容内核的类型、打包、属性目录、消费者和 Chromium/Firefox/WebKit 对照，以及网站文档受众、严格 SEO、Worker 本地验证和部署打包 dry-run。原生目标来自当前 Node 宿主的平台、架构和已确认 libc，不猜测 Linux ABI，也不把本机结果视为其他架构通过。扩展预检检查两个 Rust 内核所用编译器、Cargo、Clippy 与宿主标准库；工具链配置变化必须重新 prepare。
 
 网站三浏览器阶段使用 `pnpm --filter website e2e:local`：从本轮 `website/build` 启动独立 loopback Wrangler 服务，确认本进程就绪、端口和当前产物身份后显式传入 `PLAYWRIGHT_BASE_URL`；三个项目均后台运行，禁止更新截图。服务退出、浏览器失败或取消均停止调度并有界回收本轮子进程，不连接已有网站服务。扩展预检同时检查 Firefox/WebKit 和网站所选 Chromium channel，浏览器安装目录与 channel 改变会使旧报告失效。部署 dry-run 只生成本地打包产物，不正式发布。

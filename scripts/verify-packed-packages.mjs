@@ -1,4 +1,3 @@
-import { execFileSync } from 'node:child_process'
 import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -6,8 +5,7 @@ import process from 'node:process'
 import { pathToFileURL } from 'node:url'
 import { getWorkspacePackages } from 'repoctl'
 import { extract } from 'tar'
-
-const pnpmCommand = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'
+import { execaPnpm } from './pnpm-exec.mjs'
 
 export function findWorkspaceProtocols(value, currentPath = '$') {
   if (typeof value === 'string') {
@@ -22,9 +20,9 @@ export function findWorkspaceProtocols(value, currentPath = '$') {
   return Object.entries(value).flatMap(([key, child]) => findWorkspaceProtocols(child, `${currentPath}.${key}`))
 }
 
-function packPackage(pkg, tempRoot) {
+async function packPackage(pkg, tempRoot) {
   const packDir = mkdtempSync(path.join(tempRoot, 'pack-'))
-  execFileSync(pnpmCommand, ['pack', '--pack-destination', packDir], {
+  await execaPnpm(['pack', '--pack-destination', packDir], {
     cwd: pkg.rootDir,
     encoding: 'utf8',
     stdio: 'pipe',
@@ -58,7 +56,7 @@ export async function verifyPackedPackages(repoRoot = process.cwd()) {
   const tempRoot = mkdtempSync(path.join(tmpdir(), 'weapp-tailwindcss-pack-'))
   try {
     for (const pkg of packages) {
-      const tarball = packPackage(pkg, tempRoot)
+      const tarball = await packPackage(pkg, tempRoot)
       const manifest = await readPackedManifest(tarball, tempRoot)
       const workspaceProtocols = findWorkspaceProtocols(manifest)
       if (workspaceProtocols.length) {

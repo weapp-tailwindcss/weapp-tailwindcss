@@ -41,7 +41,7 @@ export function extendedQualitySteps(): WorkflowStep[] {
     ]),
     step('extended stylelint', ['stylelint']),
     step('extended Rust native ABI', ['native:ci', `--target=${hostNativeTarget()}`]),
-    step('extended packed package consumption', ['release:verify']),
+    step('extended packed package consumption', ['release:verify:packages']),
     ...['test:package', 'properties:check', 'test:consumers', 'test:browser'].map(command => step(
       command === 'test:browser' ? 'extended CSS browser parity' : `extended CSS compatibility ${command}`,
       ['--filter', '@weapp-tailwindcss/css-compat', command],

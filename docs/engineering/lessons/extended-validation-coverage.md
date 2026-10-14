@@ -10,6 +10,7 @@ regressions:
   - e2e/preflight-browser.test.ts
   - e2e/preflight-pnpm.test.ts
   - e2e/packed-pnpm-identity.test.ts
+  - e2e/packed-manifest-pnpm.test.ts
   - scripts/agents/eslint-scope.test.mjs
   - packages/weapp-tailwindcss/test/native-targets.test.ts
   - packages/weapp-tailwindcss/test/wxml/Tokenizer.test.ts
@@ -74,6 +75,10 @@ pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/demo-workflow-extended.test
 `fb644a78574572ef66b6563c8dc5a8f6e289af45` 上的新报告 `4f2243e4-e64d-4032-9e71-85f81865642d` 已完成真实探针、Chrome 六动作及 verify。重跑时构建与 9577 项单测通过，但第 3 阶段 lint 扫描了此前 native 验证生成的 Cargo `target` JSON，产生 18866 个错误。crate 自身 `.gitignore` 已排除这些生成物，ESLint 的全局忽略却没有同一边界。不能通过删除编译产物、格式化 Cargo 文件或关闭 JSON 规则放行；新增 `packages/*/native/target/**` 全局忽略，保留原生维护脚本和其他源码目录中名为 `target` 的实现检查。真实配置回归先出现 2 项失败，首次输出保留在 `cargo-eslint-first-failure.log`；完整失败输出和阶段报告保存在 `full-run-4f224.log`、`round-4f224/`。这是工程检查范围修复，不改变公开包或样式输出，无需额外 intent 或 static 基线更新。
 
 修复后 ESLint 范围回归 11 项通过，真实根 `pnpm lint` 通过（0 个错误，4 条既有 `no-console` 警告）；478 个失败文件复核全部属于两内核的 `.rustc_info.json` 与 fingerprint JSON。命令输出保留在 `cargo-eslint-regression.log`、`cargo-eslint-root-lint.log`。
+
+`2cafadfabb3e896418ea2eb4069af2549a659692` 的报告 `7f15eca3-4a94-4036-9b00-6495b85eba04` 已通过前 13 阶段，包括根 lint 和本机 Rust/native ABI；第 14 阶段的 `release:verify` 却要求八架构分发产物，在读取 `darwin-x64/THIRD_PARTY_LICENSES.txt` 时失败。该入口适用于下载同提交全平台产物后的发布验证，不能直接用于只编译宿主架构的本地验收。将公共包 manifest 与消费回归提取为 `release:verify:packages`，本地阶段在宿主 native 完整验证之后调用；正式发布保留先核验八平台产物再复用公共包验证的顺序。三项合同回归修复前失败，日志为 `host-release-boundary-first-failure.log`；首次完整失败输出和阶段报告保存在 `full-run-7f15.log`、`round-7f15/`。
+
+公共包 manifest 脚本还直接使用 PATH 中的 pnpm，改为复用 `execaPnpm` 后继续保留同一活动入口和 Windows 调用方式；异步 pack 完成后才读取 tarball，失败仍在 `finally` 清理临时目录。使用不同版本的真实 CLI 替身与真实 tarball，修复前确认活动 `99.1.0` 被 PATH `99.2.0` 替代，首次证据为 `packed-manifest-pnpm-first-failure.log`。修复后编排与入口回归 29 项、八平台分发安全回归 15 项及真实 `release:verify:packages` 全部通过，日志为 `host-release-integrated-regression.log`、`host-release-eight-target-regression.log`、`host-release-packages-validation.log`。这些编排和脚本修复不改变公开包或样式输出，无需额外 intent 或 static 基线更新。
 
 ## 适用边界
 

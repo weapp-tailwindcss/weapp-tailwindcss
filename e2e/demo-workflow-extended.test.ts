@@ -1,4 +1,5 @@
 import { EventEmitter } from 'node:events'
+import { readFileSync } from 'node:fs'
 import process from 'node:process'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { runDemoE2eWorkflow } from '../scripts/demo-e2e-workflow'
@@ -77,10 +78,16 @@ describe('扩展回归的完整覆盖与门禁', () => {
     expect(gate.close).toHaveBeenCalledOnce()
   })
 
+  it('本地包消费与八架构正式发布验证分别保留完整边界', () => {
+    const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
+    expect(manifest.scripts['release:verify']).toBe('pnpm native:artifacts:verify && pnpm release:verify:packages')
+    expect(manifest.scripts['release:verify:packages']).toBe('node scripts/verify-packed-packages.mjs && pnpm test:release')
+  })
+
   it('独立质量与模板套件进入同一门禁，原生逐平台执行并固定性能基线', async () => {
     await runDemoE2eWorkflow(args)
     const commands = mocks.spawn.mock.calls.map(([command, argv]) => [command === 'pnpm.cmd' ? 'pnpm' : command, ...argv].join(' '))
-    for (const name of ['tsd', 'stylelint', 'release:verify', 'agents:test --update=none', 'test:demo:matrix', 'test:perf:demo', 'skills:validate', 'docs:packages:check', 'e2e:preprocessor', 'e2e:demo-user-workflow', 'e2e:templates', 'e2e:templates:hmr', 'e2e:templates:ide', 'e2e:dev:smoke']) {
+    for (const name of ['tsd', 'stylelint', 'release:verify:packages', 'agents:test --update=none', 'test:demo:matrix', 'test:perf:demo', 'skills:validate', 'docs:packages:check', 'e2e:preprocessor', 'e2e:demo-user-workflow', 'e2e:templates', 'e2e:templates:hmr', 'e2e:templates:ide', 'e2e:dev:smoke']) {
       expect(commands, name).toContain(`pnpm ${name}`)
     }
     expect(commands).toContain('pnpm --filter @weapp-tailwindcss/engine --filter @weapp-tailwindcss/env --filter @weapp-tailwindcss/source-scan --filter @weapp-tailwindcss/escape --filter @weapp-tailwindcss/website --filter @weapp-tailwindcss/css-compat run typecheck')
@@ -93,11 +100,11 @@ describe('扩展回归的完整覆盖与门禁', () => {
     expect(commands).toContain('pnpm --filter @weapp-tailwindcss/website exec vitest run scripts/docs-deployment.test.ts scripts/deploy-docs-cloudflare.test.mjs scripts/local-worker/server.test.ts scripts/local-worker/command.test.ts scripts/local-worker/process-lifecycle.test.ts scripts/local-worker/windows-lifecycle.test.ts --update=none')
     const nativeIndex = commands.findIndex(command => command.startsWith('pnpm native:ci --target='))
     expect(nativeIndex).toBeGreaterThan(-1)
-    expect(nativeIndex).toBeLessThan(commands.indexOf('pnpm release:verify'))
+    expect(nativeIndex).toBeLessThan(commands.indexOf('pnpm release:verify:packages'))
     expect(commands).toContain('pnpm exec vitest run -c ./e2e/vitest.e2e.config.ts e2e/framework-ci-support.test.ts --update=none')
     const framework = mocks.spawn.mock.calls.find(([, argv]) => argv.includes('e2e/framework-ci-support.test.ts'))
     expect(framework?.[2].env.E2E_FRAMEWORK_SUPPORT).toBe('1')
-    expect(commands.indexOf('pnpm release:verify')).toBeLessThan(commands.indexOf('pnpm e2e:static'))
+    expect(commands.indexOf('pnpm release:verify:packages')).toBeLessThan(commands.indexOf('pnpm e2e:static'))
     expect(commands.indexOf('pnpm e2e:templates')).toBeLessThan(commands.indexOf('pnpm e2e:mp:ide'))
     expect(commands.slice(-7)).toEqual([
       'pnpm e2e:react-native:web',
@@ -144,12 +151,12 @@ describe('扩展回归的完整覆盖与门禁', () => {
   it('扩展质量失败时记录失败并停止后续静态、设备和性能测试', async () => {
     mocks.spawn.mockImplementation((_command: string, argv: string[]) => {
       const child = new EventEmitter()
-      queueMicrotask(() => child.emit('close', argv[0] === 'release:verify' ? 2 : 0))
+      queueMicrotask(() => child.emit('close', argv[0] === 'release:verify:packages' ? 2 : 0))
       return child
     })
     await expect(runDemoE2eWorkflow(args)).rejects.toThrow('failed with exit=2')
     const commands = mocks.spawn.mock.calls.map(([, argv]) => argv[0])
-    expect(commands.at(-1)).toBe('release:verify')
+    expect(commands.at(-1)).toBe('release:verify:packages')
     expect(commands).not.toContain('e2e:static')
     expect(mocks.writeReport.mock.calls.at(-1)?.[0].report.exitCode).toBe(1)
     expect(gate.close).toHaveBeenCalledOnce()
