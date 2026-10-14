@@ -12,6 +12,8 @@ regressions:
   - packages/weapp-tailwindcss/test/ci/architecture-graph.test.ts
   - packages/weapp-tailwindcss/test/ci/client-boundaries.test.ts
   - packages/weapp-tailwindcss/test/ci/env-workflow.test.ts
+  - packages/weapp-tailwindcss/test/watch-hmr-uni-scheduler.unit.test.ts
+  - packages/weapp-tailwindcss/test/watch-hmr-uni-build-lifecycle.unit.test.ts
 ---
 
 # 环境识别的命令边界、平台身份与可解释报告
@@ -67,6 +69,39 @@ git diff --check
 - 中文 minor intent 通过 `pnpm change` 生成，覆盖 env 与主包；未手改版本或执行发布。
 
 首次主包类型检查与 env 重建并行，碰到构建清理产物的窗口而失败；调整为 env 构建完成后执行，检查通过。首次架构发布入口测试缺少 CLI dist，补充冻结安装与 CLI 构建后通过。缺产物失败不归因为产品缺陷，不放宽测试。
+
+## PR CI 的 polling watch 竞态
+
+用户要求持续处理 CI 并合并后，在 head `17bbc11c7897d96be98ef70e2afc0118a90f3302` 的 [PR Gate run 38506883860](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38506883860) 中，macOS `uni-app-vite-tailwindcss-v4:mp-weixin` 的 [job 115666440345](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38506883860/job/115666440345) 报错：Iconify content settled 时 WXML 缺少本轮消费者。
+
+日志记录 content 源码在 03:43:30.897 写入，首次构建在 03:43:36.243 完成，下一次构建在 03:43:36.447 开始；03:43:40.817 就执行 settled 断言，早于第二次构建结束。相关 watch 工具与基线相同，不属于 env API 的平台兼容问题。
+
+旧轮询会重叠扫描，并将原子写入器的 `.文件名.pid.UUID.tmp` 纳入快照；该文件出现或消失能额外排队全量构建。内存复现确认单次真实源码 mutation 可以产生两次后续构建，但 CI 没有记录变化文件，不能断定临时文件是该次额外构建的唯一原因。稳定等待只观察前次 DONE 与产物 mtime，且入口时缺失的 WXML 会被降为可选，因此可以读到下一次全量构建清理或重写中的输出。
+
+修复把初始构建、轮询和构建后快照放进同一单飞调度器。仅排除本仓库原子写入器拥有的临时文件；普通隐藏源码与 `.tmp` 文件仍参与检测，ENOENT 不留下幽灵条目，权限错误向上传播。构建期间的实际源码变更由后置快照触发串行追赶；队列未排空、失败或停止都不发成功 idle。
+
+wrapper 在实际构建前发 generation/start，成功退出并确认源码稳定后才发对应 idle。session 在初始扫描前进入 managed 状态，分别为 stdout/stderr 使用 UTF-8 完整行缓冲；旧 DONE、旧 generation idle 与新 plugin/mtime 信号都不能代替本轮 idle。readiness、warmup、baseline 和 settled 检查保留构建状态边界，异步读取后复核 generation。默认 WXML/JS 的必需性不依赖入口时是否存在；可选 CSS 出现后锁存存在要求，仍按当前表达式解析 hash 文件，style-only override 保持其范围。停止时向 owned build 子进程传递信号，测试 runner 仍负责整棵 owned 进程树的清理。
+
+新增失败回归先确认“下一轮 active 时旧成功仍放行”，修复后通过。独立审查另复现“旧 idle 被新 plugin 信号盖过”，增加本轮 idle 时间边界及回归。确定性测试覆盖初始/轮询单飞、追赶、回退、删除、重命名、停止、失败、完整行解析、必需产物暂缺、style-only override、扫描中的 generation 变化和可选 CSS 消失。
+
+定向验证命令与范围：
+
+```sh
+corepack pnpm install --frozen-lockfile --filter @weapp-tailwindcss/runtime... --filter @weapp-tailwindcss/merge... --filter @weapp-tailwindcss/variants... --filter @weapp-tailwindcss/scripts --filter ./demo/uni-app-vite-tailwindcss-v4 --ignore-scripts
+corepack pnpm --filter @weapp-tailwindcss/runtime build
+corepack pnpm --filter weapp-tailwindcss exec cross-env CI=1 vitest run test/watch-hmr-uni-scheduler.unit.test.ts test/watch-hmr-uni-build-lifecycle.unit.test.ts test/watch-hmr-regression.unit.test.ts test/watch-hmr-wait-deadline.unit.test.ts test/watch-hmr-style-rollback.unit.test.ts test/watch-hmr-iconify-evidence.unit.test.ts test/watch-hmr-runner.unit.test.ts test/watch-hmr-runner-cleanup.unit.test.ts test/watch-hmr-environment.unit.test.ts --update=none
+corepack pnpm --filter @weapp-tailwindcss/scripts test:watch-hmr -- --case uni-app-vite-tailwindcss-v4:mp-weixin --timeout 420000 --poll 40 --max-hot-update-ms 420000 --max-plugin-process-ms 500 --report <临时目录>/watch-local-after.json --skip-build --quiet-sass
+corepack pnpm --filter weapp-tailwindcss exec tsc -p tsconfig.typecheck.json --pretty false
+corepack pnpm exec eslint --no-ignore scripts/uni-e2e-watch.mjs scripts/uni-e2e-watch/*.mjs tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/{compile-state,session,types}.ts tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/shared.ts packages/weapp-tailwindcss/test/watch-hmr-uni-*.unit.test.ts
+corepack pnpm agents:check
+git diff --check
+```
+
+九文件子集通过 195 项；审查追加两项后再运行 lifecycle 文件，7 项通过，合计覆盖 197 项。真实 macOS watch case 完整通过，包含模板、脚本、content、样式、分包、用户示例回退与 Iconify 消费链；源码 finally 恢复，owned 进程退出。首次本地尝试缺少 runtime 依赖闭包产物，补充冻结安装及构建后验证通过，未更改锁文件或降低断言。主包类型检查、新源码与新测试定向 ESLint、规则检查及 diff 检查通过。
+
+私有 scripts 的全项目严格类型检查存在既有错误：使用同一 TypeScript CompilerHost 比较当前代码与 `17bbc11` 原始源码，均为 211 项，无新增诊断。大型既有 `watch-hmr-regression.unit.test.ts` 强制 lint 均为 24 项原错误，ESLint 原始/当前文本诊断比较无新增；没有把这些检查写成通过，也没有借本次修复放宽配置。真实 watch 运行覆盖 polling 调度与 managed 边界，最终追加的 native fallback idle 条件由确定性回归覆盖。
+
+该修复只调整私有验收工具，不改变 demo、样式产物基线、公开包版本或 CI 门槛。没有执行全端 IDE/设备验收；新 head 的远端矩阵仍需独立核验，旧 head 的绿色结果不作为最终合并凭据。
 
 ## 适用边界
 

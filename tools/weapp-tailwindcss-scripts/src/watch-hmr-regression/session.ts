@@ -5,6 +5,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { createPnpmCommand } from '../../../../scripts/pnpm-command.mjs'
 import { assertWatchCommandActive } from './cancellation'
+import { createLogLineBuffer, createPollingCompileTracker } from './compile-state'
 import { createSpawnEnv, createWatchProcessEnv } from './environment'
 import { createMemorySampler } from './memory/sampler'
 import { spawnWithWatchMemorySource } from './memory/source'
@@ -553,28 +554,29 @@ export async function createWatchCommandSession(
   }
 
   let collecting = true
+  const compileTracker = createPollingCompileTracker()
   const rawCollect = createLineCollector('watch', lines, 240, {
     quietSass: options.quietSass,
   })
-  const collect = (chunk: Buffer | string) => {
+  const collectLine = (line: string) => {
     if (!collecting) {
       return
     }
-
-    const text = chunk.toString()
-    for (const line of text.split(NEWLINE_SPLIT_RE)) {
-      if (!line) {
-        continue
+    if (line) {
+      const at = Date.now()
+      compileTracker.observe(normalizeLogLine(line), at)
+      const compileState = compileTracker.current()
+      if (compileState) {
+        lastCompileSuccessAt = compileState.idleAt
       }
-      if (isCompileSuccessLine(line)) {
-        lastCompileSuccessAt = Date.now()
+      else if (isCompileSuccessLine(line)) {
+        lastCompileSuccessAt = at
       }
       if (!compileFatalError) {
         compileFatalError = resolveCompileFatalError(line)
       }
       const pluginSample = parsePluginProcessSample(line)
       if (pluginSample) {
-        const at = Date.now()
         pluginProcessSamples.push({
           at,
           ...pluginSample,
@@ -598,8 +600,11 @@ export async function createWatchCommandSession(
       }
     }
 
-    rawCollect(chunk)
+    rawCollect(line)
   }
+  // stdout/stderr 各自保留未完成行，避免跨 chunk 或跨流拼出错误的生命周期信号。
+  const collectStdout = createLogLineBuffer(collectLine)
+  const collectStderr = createLogLineBuffer(collectLine)
 
   let stopped = false
   const cleanupSessionResources = () => {
@@ -608,12 +613,16 @@ export async function createWatchCommandSession(
     }
     stopped = true
     collecting = false
-    child.stdout.off('data', collect)
-    child.stderr.off('data', collect)
+    child.stdout.off('data', collectStdout)
+    child.stderr.off('data', collectStderr)
+    child.stdout.off('end', collectStdout.flush)
+    child.stderr.off('end', collectStderr.flush)
   }
 
-  child.stdout.on('data', collect)
-  child.stderr.on('data', collect)
+  child.stdout.on('data', collectStdout)
+  child.stderr.on('data', collectStderr)
+  child.stdout.on('end', collectStdout.flush)
+  child.stderr.on('end', collectStderr.flush)
 
   const ensureRunning = () => {
     assertWatchCommandActive()
@@ -685,6 +694,7 @@ export async function createWatchCommandSession(
     child,
     ensureRunning,
     lastCompileSuccessAt: () => lastCompileSuccessAt,
+    compileState: compileTracker.current,
     logs: () => lines.join('\n'),
     memorySamplesSince: startedAt => memorySamples.filter(sample => sample.at >= startedAt),
     memoryDebugSamplesSince: startedAt => memoryDebugSamples.filter(sample => sample.at >= startedAt),

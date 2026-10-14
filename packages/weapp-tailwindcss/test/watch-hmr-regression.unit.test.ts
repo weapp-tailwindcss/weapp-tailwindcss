@@ -851,6 +851,7 @@ describe('watch-hmr regression text helpers', () => {
         pluginProcessSamplesSince: () => [],
       } as any,
       phaseStartedAt,
+      [],
     )
 
     expect(elapsed).toBeGreaterThanOrEqual(0)
@@ -957,6 +958,7 @@ describe('watch-hmr regression text helpers', () => {
         }],
       } as any,
       pluginTotalAt - 1,
+      [],
     )
 
     expect(elapsed).toBeGreaterThanOrEqual(0)

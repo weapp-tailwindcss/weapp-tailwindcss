@@ -45,6 +45,10 @@ export async function waitForOutputsReady(
   const outputLabel = outputs.label ?? watchCase.label
   return waitFor(
     async () => {
+      const beforeCompile = session.compileState?.()
+      if (beforeCompile?.building) {
+        return false
+      }
       const [wxml, js, wxmlMtime, jsMtime] = await Promise.all([
         readFileIfExists(outputs.wxml),
         readFileIfExists(outputs.js),
@@ -57,6 +61,10 @@ export async function waitForOutputsReady(
       }
 
       const requireInitialCompileSuccess = watchCase.requireInitialCompileSuccess === true
+      const afterCompile = session.compileState?.()
+      if (afterCompile?.building || beforeCompile?.generation !== afterCompile?.generation) {
+        return false
+      }
       const lastCompileSuccessAt = session.lastCompileSuccessAt()
       if (requireInitialCompileSuccess) {
         return lastCompileSuccessAt > sessionStartedAt
@@ -97,6 +105,10 @@ export async function waitForInitialWarmup(
   const requireInitialCompileSuccess = watchCase.requireInitialCompileSuccess === true
   return waitFor(
     async () => {
+      const beforeCompile = session.compileState?.()
+      if (beforeCompile?.building) {
+        return false
+      }
       const lastCompileSuccessAt = session.lastCompileSuccessAt()
       if (lastCompileSuccessAt > sessionStartedAt) {
         return Date.now() - lastCompileSuccessAt >= warmupStableWindowMs
@@ -106,6 +118,10 @@ export async function waitForInitialWarmup(
         getMtime(watchCase.outputWxml),
         getMtime(watchCase.outputJs),
       ])
+      const afterCompile = session.compileState?.()
+      if (afterCompile?.building || beforeCompile?.generation !== afterCompile?.generation) {
+        return false
+      }
       const latestOutputMtime = Math.max(wxmlMtime, jsMtime)
       if (latestOutputMtime > sessionStartedAt) {
         return Date.now() - latestOutputMtime >= warmupStableWindowMs
@@ -196,6 +212,7 @@ export function getLatestCompileSignalAt(session: WatchSession, phaseStartedAt: 
   const samples = session.pluginProcessSamplesSince?.(phaseStartedAt) ?? []
   return Math.max(
     session.lastCompileSuccessAt(),
+    session.compileState?.()?.idleAt ?? 0,
     0,
     ...samples.filter(sample => sample.metric === 'total' || sample.phase === 'total').map(sample => sample.at),
   )
@@ -235,24 +252,46 @@ export async function waitForCompileSettled(
   const requiredOutputCandidates = new Set<string>()
   for (const candidate of outputCandidates) {
     const entries = await expandOutputFileEntries([candidate], probeOptions)
-    if (entries.length > 0) {
+    const declaredBuildOutput = !settleOutputCandidates && (
+      candidate === watchCase.outputJs
+      || (candidate === watchCase.outputWxml && watchCase.requireInitialTemplateOutput !== false)
+    )
+    if (entries.length > 0 || declaredBuildOutput) {
       requiredOutputCandidates.add(candidate)
     }
   }
   ensureWithinDeadline()
   return waitFor(
     async () => {
+      const beforeCompile = session.compileState?.()
+      if (beforeCompile?.building) {
+        return false
+      }
       const outputMtimes: number[] = []
+      let missingRequiredOutput = false
       for (const candidate of outputCandidates) {
         const entries = await expandOutputFileEntries([candidate], probeOptions)
         const mtimes = await Promise.all(entries.map(probeOutputMtime))
         // 保留当前消费表达式的存在要求，不把已替换的旧 content-hash 路径当作必需产物。
-        if (requiredOutputCandidates.has(candidate) && !mtimes.some(mtime => mtime > 0)) {
-          return false
+        const exists = mtimes.some(mtime => mtime > 0)
+        if (exists) {
+          requiredOutputCandidates.add(candidate)
+        }
+        else if (requiredOutputCandidates.has(candidate)) {
+          missingRequiredOutput = true
         }
         outputMtimes.push(...mtimes)
       }
       const latestOutputMtime = Math.max(0, ...outputMtimes)
+      const afterCompile = session.compileState?.()
+      if (
+        missingRequiredOutput
+        || afterCompile?.building
+        || beforeCompile?.generation !== afterCompile?.generation
+        || (afterCompile && afterCompile.idleAt < phaseStartedAt)
+      ) {
+        return false
+      }
       // 扫描期间可能收到新的完成信号，稳定窗口以 I/O 结束后的最新状态为准。
       const latestSignalAt = Math.max(getLatestCompileSignalAt(session, phaseStartedAt), latestOutputMtime)
       return latestSignalAt > 0
@@ -348,12 +387,20 @@ export async function waitForClassOutputBaseline(
 
   await waitFor(
     async () => {
+      const beforeCompile = session.compileState?.()
+      if (beforeCompile?.building) {
+        return false
+      }
       const [wxml, js, globalStyle, hasGlobalStyleOutputs] = await Promise.all([
         readFileIfExists(watchCase.outputWxml),
         readFileIfExists(watchCase.outputJs),
         readJoinedOutputFiles(globalStyleOutputs),
         hasResolvedOutputFiles(globalStyleOutputs),
       ])
+      const afterCompile = session.compileState?.()
+      if (afterCompile?.building || beforeCompile?.generation !== afterCompile?.generation) {
+        return false
+      }
 
       const requireInitialTemplateOutput = watchCase.requireInitialTemplateOutput !== false
       if ((requireInitialTemplateOutput ? wxml : true) && js && hasGlobalStyleOutputs) {

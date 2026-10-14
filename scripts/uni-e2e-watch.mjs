@@ -1,15 +1,13 @@
 import { spawn } from 'node:child_process'
-import { readdir, stat } from 'node:fs/promises'
-import path from 'node:path'
 import process from 'node:process'
 import { createPnpmCommand } from './pnpm-command.mjs'
+import { createPollingBuildScheduler } from './uni-e2e-watch/scheduler.mjs'
+import { collectSourceSnapshot } from './uni-e2e-watch/source-snapshot.mjs'
 
 const READY_RE = /Build complete|Watching for changes|ready in \d+/i
-const sourceDirs = ['src']
-const ignoredDirs = new Set(['dist', 'node_modules', '.git'])
-const ignoredFiles = new Set(['auto-imports.d.ts', 'components.d.ts', 'uni-pages.d.ts'])
 const useNativeWatch = process.env.UNI_E2E_WATCH_NATIVE === '1'
 const uniPlatform = process.env.UNI_E2E_WATCH_PLATFORM || 'mp-weixin'
+let activeBuild
 
 function spawnPnpm(args, options = {}) {
   const { command, args: commandArgs, shell } = createPnpmCommand(args)
@@ -49,8 +47,12 @@ async function runBuild() {
       },
       stdio: 'inherit',
     })
+    activeBuild = build
     build.on('error', reject)
     build.on('close', (code, signal) => {
+      if (activeBuild === build) {
+        activeBuild = undefined
+      }
       if (code === 0) {
         resolve()
         return
@@ -60,73 +62,9 @@ async function runBuild() {
   })
 }
 
-async function collectFiles(dir, output) {
-  let entries
-  try {
-    entries = await readdir(dir, { withFileTypes: true })
-  }
-  catch {
-    return
-  }
-
-  for (const entry of entries) {
-    if (ignoredDirs.has(entry.name)) {
-      continue
-    }
-
-    const file = path.join(dir, entry.name)
-    if (entry.isDirectory()) {
-      await collectFiles(file, output)
-      continue
-    }
-
-    if (entry.isFile()) {
-      if (ignoredFiles.has(entry.name)) {
-        continue
-      }
-      output.push(file)
-    }
-  }
-}
-
-async function collectSnapshot() {
-  const files = []
-  for (const dir of sourceDirs) {
-    await collectFiles(path.resolve(process.cwd(), dir), files)
-  }
-
-  const snapshot = new Map()
-  await Promise.all(files.map(async (file) => {
-    try {
-      const item = await stat(file)
-      snapshot.set(file, `${item.mtimeMs}:${item.size}`)
-    }
-    catch {
-      snapshot.set(file, 'missing')
-    }
-  }))
-  return snapshot
-}
-
-function hasSnapshotChanged(previous, next) {
-  if (previous.size !== next.size) {
-    return true
-  }
-
-  for (const [file, signature] of next) {
-    if (previous.get(file) !== signature) {
-      return true
-    }
-  }
-  return false
-}
-
 async function main() {
   let stopping = false
-  let building = false
-  let queued = false
   let pollTimer
-  let lastSnapshot = await collectSnapshot()
 
   process.stdout.write(`[uni-e2e-watch] mode=${useNativeWatch ? 'native-watch-with-build-fallback' : 'polling-build'} platform=${uniPlatform} cwd=${process.cwd()}\n`)
 
@@ -148,9 +86,10 @@ async function main() {
     }
     stopping = true
     if (pollTimer) {
-      clearInterval(pollTimer)
+      clearTimeout(pollTimer)
     }
     dev?.kill(signal)
+    activeBuild?.kill(signal)
   }
 
   process.on('SIGINT', () => stop('SIGINT'))
@@ -170,57 +109,29 @@ async function main() {
     }
   })
 
-  await ready
-  if (!stopping) {
-    const rebuild = async () => {
-      if (stopping) {
-        return
-      }
-      if (building) {
-        queued = true
-        return
-      }
-      building = true
-      try {
-        do {
-          if (stopping) {
-            break
-          }
-          queued = false
-          const beforeBuildSnapshot = lastSnapshot
-          await runBuild()
-          const afterBuildSnapshot = await collectSnapshot()
-          if (hasSnapshotChanged(beforeBuildSnapshot, afterBuildSnapshot)) {
-            queued = true
-          }
-          lastSnapshot = afterBuildSnapshot
-        } while (queued)
-      }
-      finally {
-        building = false
+  const scheduler = createPollingBuildScheduler({
+    collectSnapshot: () => collectSourceSnapshot(process.cwd()),
+    runBuild,
+    isStopping: () => stopping,
+    onState: state => process.stdout.write(`[uni-e2e-watch:build] ${JSON.stringify(state)}\n`),
+  })
+  const poll = async () => {
+    try {
+      await scheduler.poll()
+      if (!stopping) {
+        pollTimer = setTimeout(() => {
+          void poll()
+        }, 250)
       }
     }
-    const triggerRebuild = () => {
-      void rebuild().catch((error) => {
-        process.stderr.write(`${error.stack ?? error.message}\n`)
-        process.exitCode = 1
-        stop()
-      })
+    catch (error) {
+      process.stderr.write(`${error.stack ?? error.message}\n`)
+      process.exitCode = 1
+      stop()
     }
-    pollTimer = setInterval(() => {
-      void collectSnapshot().then((nextSnapshot) => {
-        if (hasSnapshotChanged(lastSnapshot, nextSnapshot)) {
-          lastSnapshot = nextSnapshot
-          triggerRebuild()
-        }
-      }).catch((error) => {
-        process.stderr.write(`${error.stack ?? error.message}\n`)
-        process.exitCode = 1
-        stop()
-      })
-    }, 250)
-    await runBuild()
   }
+  await ready
+  await poll()
 }
 
 main().catch((error) => {
