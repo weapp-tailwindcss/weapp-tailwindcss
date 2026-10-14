@@ -1,11 +1,20 @@
 import { Buffer } from 'node:buffer'
 import fs from 'node:fs'
+import { createRequire } from 'node:module'
 import os from 'node:os'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { getRegisteredManifest, getVirtualModuleCode, VIRTUAL_MANIFEST_MODULE, withWeappTailwindcss } from '@/metro'
 import { transform } from '@/metro-transformer'
 
+const expoProjectRoot = fileURLToPath(new URL('../../../examples/react-native-expo', import.meta.url))
+const expoRequire = createRequire(path.join(expoProjectRoot, 'package.json'))
+
 describe('Expo Metro integration', () => {
+  beforeAll(() => {
+    const manifest = JSON.parse(fs.readFileSync(path.join(expoProjectRoot, 'package.json'), 'utf8'))
+    expect(manifest.name).toBe('@weapp-tailwindcss/example-react-native-expo')
+  })
   it('registers CSS and resolves the watched virtual manifest module', async () => {
     const config = withWeappTailwindcss({ resolver: { sourceExts: ['js'] } }, {
       css: '.flex { display: flex; }',
@@ -96,26 +105,29 @@ describe('Expo Metro integration', () => {
           return { type: 'empty' }
         },
       },
-    }, { projectRoot: path.resolve(__dirname, '../../examples/react-native-expo') })
+    }, { projectRoot: expoProjectRoot })
 
     const resolved = config.resolver?.resolveRequest?.({ originModulePath: importer }, 'react-native-web', 'web') as { type: string, filePath: string }
 
-    expect(resolved.type).toBe('sourceFile')
-    expect(String(resolved.filePath)).toContain('react-native-web')
+    expect(resolved).toEqual({
+      type: 'sourceFile',
+      filePath: expoRequire.resolve(path.join(expoProjectRoot, 'node_modules', 'react-native-web')),
+    })
+    expect(resolvedOrigin).toBe('')
   })
 
   it('resolves the Web React Native Web singleton from the project root', () => {
-    const projectRoot = path.resolve(__dirname, '../../examples/react-native-expo')
-    const config = withWeappTailwindcss({}, { projectRoot })
+    const config = withWeappTailwindcss({}, { projectRoot: expoProjectRoot })
     const resolved = config.resolver?.resolveRequest?.({}, 'react-native-web', 'web') as { type: string, filePath: string }
 
-    expect(resolved.type).toBe('sourceFile')
-    expect(String(resolved.filePath)).toContain('react-native-web')
+    expect(resolved).toEqual({
+      type: 'sourceFile',
+      filePath: expoRequire.resolve(path.join(expoProjectRoot, 'node_modules', 'react-native-web')),
+    })
   })
 
   it('resolves the Web React singleton from the project root', () => {
     const importer = path.resolve('packages/workspace-package/index.js')
-    const configRoot = path.resolve(__dirname, '../../examples/react-native-expo')
     let resolvedOrigin = ''
     const config = withWeappTailwindcss({
       resolver: {
@@ -124,12 +136,14 @@ describe('Expo Metro integration', () => {
           return { type: 'empty' }
         },
       },
-    }, { projectRoot: configRoot })
+    }, { projectRoot: expoProjectRoot })
 
     const resolved = config.resolver?.resolveRequest?.({ originModulePath: importer }, 'react', 'web') as { type: string, filePath: string }
 
-    expect(resolved.type).toBe('sourceFile')
-    expect(String(resolved.filePath)).toMatch(/(?:^|[\\/])react[\\/]index\.js$/)
+    expect(resolved).toEqual({
+      type: 'sourceFile',
+      filePath: expoRequire.resolve(path.join(expoProjectRoot, 'node_modules', 'react')),
+    })
     expect(resolvedOrigin).toBe('')
   })
 
