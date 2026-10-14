@@ -1,4 +1,4 @@
-import type { CanonicalPlatform, FrameworkEnv, PlatformIdentityInfo, UniPlatformInfo } from './types'
+import type { CanonicalPlatform, DetectableAppType, FrameworkEnv, PlatformIdentityInfo, UniPlatformInfo } from './types'
 import { getProcessEnv } from './environment'
 
 const MPX_TO_UNI_PLATFORM = new Map<string, CanonicalPlatform>([
@@ -108,7 +108,7 @@ export function normalizeFrameworkStylePlatform(
 
 export function resolvePlatformIdentity(
   platform: string | undefined,
-  appType?: string,
+  appType?: DetectableAppType,
 ): PlatformIdentityInfo {
   const normalized = normalizePlatform(platform)
   const canonical = normalized

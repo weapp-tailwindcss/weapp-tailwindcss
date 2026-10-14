@@ -22,8 +22,13 @@ describe('平台与 HBuilderX 事实', () => {
   })
 
   it.each([
-    ['ali', 'mp-alipay'], ['dd', 'mp-dingtalk'], ['jd', 'mp-jd'],
-    ['qq', 'mp-qq'], ['swan', 'mp-baidu'], ['tt', 'mp-toutiao'], ['wx', 'mp-weixin'],
+    ['ali', 'mp-alipay'],
+    ['dd', 'mp-dingtalk'],
+    ['jd', 'mp-jd'],
+    ['qq', 'mp-qq'],
+    ['swan', 'mp-baidu'],
+    ['tt', 'mp-toutiao'],
+    ['wx', 'mp-weixin'],
   ])('仅 MPX 的 %s 映射为 %s', (value, expected) => {
     expect(normalizeFrameworkStylePlatform(` ${value.toUpperCase()} `, 'mpx')).toBe(expected)
     expect(normalizeFrameworkStylePlatform(value, 'taro')).toBe(value)
@@ -70,7 +75,7 @@ describe('平台与 HBuilderX 事实', () => {
     ['mp-dingtalk', 'uni-app', 'mp-dingtalk'],
     ['h5', 'taro', 'web'],
     ['web', 'mpx', 'web'],
-  ])('平台 %s 在 %s 中的统一身份为 %s', (value, appType, canonical) => {
+  ] as const)('平台 %s 在 %s 中的统一身份为 %s', (value, appType, canonical) => {
     const raw = ` ${value.toUpperCase()} `
     expect(resolvePlatformIdentity(raw, appType)).toEqual({ raw, normalized: value, canonical })
   })

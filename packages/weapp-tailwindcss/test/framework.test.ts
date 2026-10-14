@@ -1,6 +1,6 @@
 import os from 'node:os'
-import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as env from '@weapp-tailwindcss/env'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as framework from '@/framework'
 import { normalizeFrameworkStylePlatform } from '@/framework/platform'
 import { isRunningInHBuilderX as legacyHBuilderX } from '@/utils/hbuilderx'

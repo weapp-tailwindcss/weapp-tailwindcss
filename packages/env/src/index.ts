@@ -21,7 +21,8 @@ export {
   resolveUniPlatformsFromEnv,
   resolveUniUtsPlatform,
 } from './platform'
-export { detectAppType } from './project'
+export { detectAppType, detectAppTypeReport } from './project'
+export type { AppTypeDetectionCandidate, AppTypeDetectionEvidence, AppTypeDetectionReport } from './types'
 export type {
   CanonicalPlatform,
   DetectableAppType,

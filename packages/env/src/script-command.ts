@@ -77,6 +77,9 @@ function tokenizeCommands(script: string): ScriptToken[][] {
         value += next
         active = true
       }
+      else if (next === '\r' && script[index + 2] === '\n') {
+        index++
+      }
       index++
     }
     else if (character === '$' && (next === '(' || next === '{') && quote !== '\'') {
@@ -108,6 +111,12 @@ function tokenizeCommands(script: string): ScriptToken[][] {
       // 不解析 here-document，避免将正文误认作后续命令。
       return []
     }
+    else if (((character === '>' || character === '<') && next === '&') || (character === '&' && next === '>')) {
+      // 重定向中的 & 不划分命令，文件目标仍属于当前命令参数。
+      value += character + next
+      active = true
+      index++
+    }
     else if (character === '#' && !active) {
       while (script[index + 1] && script[index + 1] !== '\n') {
         index++
@@ -132,6 +141,10 @@ function tokenizeCommands(script: string): ScriptToken[][] {
 }
 
 function executableName(value: string, allowVersion = false) {
+  if (allowVersion && value.startsWith('@')) {
+    // Scoped package spec 不能按路径 basename 当作框架命令。
+    return value
+  }
   const name = path.win32.basename(path.posix.basename(value))
   const executable = /\.(?:cmd|bat|exe)$/iu.test(name)
     ? name.replace(/\.(?:cmd|bat|exe)$/iu, '').toLowerCase()

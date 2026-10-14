@@ -58,6 +58,13 @@ describe('framework script command detection', () => {
     'npx --package taro node check.js',
     'npx --unknown-option taro build',
     'npx --package',
+    'npx @unrelated/taro build',
+    'pnpm dlx @unrelated/weapp-vite@latest build',
+    'echo hello ^\r\nmpx',
+    'echo hello \\\r\nweapp-vite',
+    'echo hello >& taro',
+    'echo hello >&weapp-vite',
+    'echo hello <& mpx',
     'env --unknown-option taro build',
     'cross-env TARO_ENV=weapp echo taro',
     'cross-env VALUE="taro && mpx" node check.js',
@@ -94,6 +101,10 @@ describe('framework script command detection', () => {
 
   it('supports an explicitly quoted cross-env-shell command chain', () => {
     expect(detectFrameworkCommands('cross-env-shell NODE_ENV=production "taro build && mpx-cli-service build"')).toEqual(['taro', 'mpx'])
+  })
+
+  it('保留重定向后的真实命令链', () => {
+    expect(detectFrameworkCommands('echo hello 2>&1 && mpx build &>output.log; taro build')).toEqual(['mpx', 'taro'])
   })
 
   it('resumes detection after comments and opaque shell expansions', () => {

@@ -104,3 +104,24 @@ export interface DetectAppTypeOptions {
    */
   hbuilderxVite?: boolean | undefined
 }
+
+/** 框架识别实际命中的配置、文件或环境信号。 */
+export interface AppTypeDetectionEvidence {
+  source: 'manifest' | 'dependency' | 'script' | 'package-field' | 'marker' | 'env' | 'hbuilderx'
+  key: string
+  path?: string | undefined
+  value?: string | undefined
+}
+
+/** 同一框架在首次命中阶段的全部证据。 */
+export interface AppTypeDetectionCandidate {
+  appType: DetectableAppType
+  evidence: AppTypeDetectionEvidence[]
+}
+
+/** 当前识别决定的解释；不扫描被优先阶段遮蔽的项目。 */
+export interface AppTypeDetectionReport {
+  appType: DetectableAppType | undefined
+  candidates: AppTypeDetectionCandidate[]
+  conflicts: DetectableAppType[]
+}
