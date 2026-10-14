@@ -4,12 +4,21 @@ import { rm } from 'node:fs/promises'
 import process from 'node:process'
 import { afterEach, expect, it, vi } from 'vitest'
 import * as processTools from '../../../packages/hbuilderx-runner/src/process'
+import * as processTree from '../../../scripts/demo-e2e-workflow/process-tree'
 import { verifyWorkerRoutes } from './assertions'
 import { runLocalCommand } from './command'
 import { withLocalWorker } from './server'
 import { fixtureHtml, workerFixture } from './test-support'
 
 const roots: string[] = []
+const platform = Object.getOwnPropertyDescriptor(process, 'platform')!
+function mockPosixProcess() {
+  Object.defineProperty(process, 'platform', { ...platform, value: 'linux' })
+  vi.spyOn(processTree, 'createWorkflowProcessTree').mockImplementation(child => ({
+    capture: async () => new Map([[child.pid!, { pid: child.pid!, parent: 1, group: child.pid!, started: new Date().toISOString() }]]),
+    stop: vi.fn(async () => {}),
+  }))
+}
 async function fixture(mode?: string) {
   const result = await workerFixture(mode)
   roots.push(result.root)
@@ -18,6 +27,7 @@ async function fixture(mode?: string) {
 afterEach(async () => {
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
+  Object.defineProperty(process, 'platform', platform)
   await Promise.all(roots.splice(0).map(root => rm(root, { recursive: true, force: true })))
 })
 
@@ -88,13 +98,14 @@ it.each(['SIGINT', 'SIGTERM'] as const)('%s 中断后等待两个进程退出并
 })
 
 it('业务失败与服务收尾失败同时保留，不把服务失败改成通过', async () => {
+  mockPosixProcess()
   const item = await fixture()
   const primary = new Error('browser test failed')
   const cleanup = new Error('worker close unconfirmed')
   vi.stubGlobal('fetch', vi.fn(async () => new Response(fixtureHtml)))
   const stop = vi.fn().mockRejectedValue(cleanup)
   vi.spyOn(processTools, 'spawnCommand').mockImplementationOnce(options => ({
-    child: Object.assign(new EventEmitter(), { pid: 424242 }),
+    child: Object.assign(new EventEmitter(), { pid: 424242, exitCode: null, signalCode: null }),
     logs: [`Ready on http://127.0.0.1:${options.args[1]}`],
     closed: new Promise(() => {}),
     stop,
@@ -106,10 +117,39 @@ it('业务失败与服务收尾失败同时保留，不把服务失败改成通�
   expect(stop).toHaveBeenCalledOnce()
 })
 
+it('首次身份采集失败后的主动停止不会被误报为 Worker 提前退出', async () => {
+  mockPosixProcess()
+  const item = await fixture()
+  const failure = new Error('initial identity capture failed')
+  vi.mocked(processTree.createWorkflowProcessTree).mockReturnValueOnce({
+    capture: vi.fn().mockRejectedValueOnce(failure).mockResolvedValue(new Map()),
+    stop: vi.fn(async () => {}),
+  })
+  const child = Object.assign(new EventEmitter(), { pid: 424242, exitCode: null, signalCode: null })
+  let close!: (exit: { code: number, signal: null }) => void
+  const closed = new Promise<{ code: number, signal: null }>((resolve) => {
+    close = resolve
+  })
+  vi.spyOn(processTools, 'spawnCommand').mockImplementationOnce(options => ({
+    ...options,
+    child,
+    logs: [],
+    closed,
+    stop: vi.fn(async () => {
+      child.emit('exit', 0, null)
+      close({ code: 0, signal: null })
+    }),
+  }) as unknown as SpawnedHBuilderXCommand)
+  const action = vi.fn()
+  await expect(withLocalWorker(action, item.options)).rejects.toBe(failure)
+  expect(action).not.toHaveBeenCalled()
+})
+
 it('服务 exit 早于 close 时立即取消浏览器，并等待浏览器与服务收尾', async () => {
+  mockPosixProcess()
   const item = await fixture()
   vi.stubGlobal('fetch', vi.fn(async () => new Response(fixtureHtml)))
-  const child = Object.assign(new EventEmitter(), { pid: 424242 })
+  const child = Object.assign(new EventEmitter(), { pid: 424242, exitCode: null, signalCode: null })
   let closeWorker!: (exit: { code: number, signal: null }) => void
   const workerClosed = new Promise<{ code: number, signal: null }>((resolve) => {
     closeWorker = resolve
@@ -122,14 +162,14 @@ it('服务 exit 早于 close 时立即取消浏览器，并等待浏览器与服
   const browserStop = vi.fn(async () => closeBrowser({ code: null, signal: 'SIGTERM' }))
   vi.spyOn(processTools, 'spawnCommand')
     .mockImplementationOnce(options => ({ ...options, child, logs: [`Ready on http://127.0.0.1:${options.args[1]}`], closed: workerClosed, stop: workerStop }) as unknown as SpawnedHBuilderXCommand)
-    .mockReturnValueOnce({ child: new EventEmitter(), logs: [], closed: browserClosed, stop: browserStop } as unknown as SpawnedHBuilderXCommand)
+    .mockReturnValueOnce({ child: Object.assign(new EventEmitter(), { pid: 424243, exitCode: null, signalCode: null }), logs: [], closed: browserClosed, stop: browserStop } as unknown as SpawnedHBuilderXCommand)
   await expect(withLocalWorker(async (context) => {
     queueMicrotask(() => child.emit('exit', 0, null))
     await runLocalCommand(item.browserCommand, context.signal)
   }, item.options)).rejects.toThrow('Worker 提前退出：exit=0')
   expect(browserStop).toHaveBeenCalledOnce()
   expect(workerStop).toHaveBeenCalledOnce()
-  expect(browserStop.mock.invocationCallOrder[0]).toBeLessThan(workerStop.mock.invocationCallOrder[0])
+  expect(workerStop.mock.invocationCallOrder[0]).toBeLessThan(browserStop.mock.invocationCallOrder[0])
 })
 
 it('缺少构建时不启动服务，且撤销本轮信号监听器', async () => {
@@ -143,6 +183,7 @@ it('缺少构建时不启动服务，且撤销本轮信号监听器', async () =
 })
 
 it.each([false, true])('收尾期间取消不会报告成功，也保留同时发生的清理失败 (%s)', async (failCleanup) => {
+  mockPosixProcess()
   const item = await fixture()
   const controller = new AbortController()
   const reason = new Error('cancelled during cleanup')
@@ -150,7 +191,7 @@ it.each([false, true])('收尾期间取消不会报告成功，也保留同时�
   vi.stubGlobal('fetch', vi.fn(async () => new Response(fixtureHtml)))
   vi.spyOn(processTools, 'spawnCommand').mockImplementationOnce(options => ({
     ...options,
-    child: Object.assign(new EventEmitter(), { pid: 424242 }),
+    child: Object.assign(new EventEmitter(), { pid: 424242, exitCode: null, signalCode: null }),
     logs: [`Ready on http://127.0.0.1:${options.args[1]}`],
     closed: new Promise(() => {}),
     stop: vi.fn(async () => {

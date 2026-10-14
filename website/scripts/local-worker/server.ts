@@ -5,12 +5,11 @@ import path from 'node:path'
 import process from 'node:process'
 import { setTimeout as delay } from 'node:timers/promises'
 import { stripVTControlCharacters } from 'node:util'
-import { spawnCommand } from '../../../packages/hbuilderx-runner/src/process'
 import { includeWorkflowCancellation } from '../../../scripts/demo-e2e-workflow/cancellation'
-import { runWithCleanup } from '../../../scripts/e2e-preflight/cleanup'
 import { availablePort } from '../../../scripts/e2e-preflight/probes/port'
 import { resolveWranglerCommand } from './command'
 import { requestWorker } from './http'
+import { withLocalCommand } from './lifecycle'
 
 export interface LocalWorkerContext {
   websiteRoot: string
@@ -86,7 +85,6 @@ export async function withLocalWorker<T>(action: (context: LocalWorkerContext) =
   options.signal?.addEventListener('abort', cancelled, { once: true })
   process.on('SIGINT', handlers.SIGINT)
   process.on('SIGTERM', handlers.SIGTERM)
-  let stopping = false
   let command: SpawnedHBuilderXCommand | undefined
   let exited: ((code: number | null, signal: NodeJS.Signals | null) => void) | undefined
   let spawnFailed: ((error: Error) => void) | undefined
@@ -99,37 +97,36 @@ export async function withLocalWorker<T>(action: (context: LocalWorkerContext) =
     const port = await availablePort()
     const invocation = await (options.createCommand ?? resolveWranglerCommand)(options.websiteRoot, port)
     controller.signal.throwIfAborted()
-    const worker = command = spawnCommand(invocation)
-    exited = (code, signal) => {
-      if (!stopping) {
-        controller.abort(workerError(worker, `Worker 提前退出：exit=${code} signal=${signal}`))
+    const trackWorker = (worker: SpawnedHBuilderXCommand, isStopping: () => boolean) => {
+      command = worker
+      exited = (code, signal) => {
+        if (!isStopping()) {
+          controller.abort(workerError(worker, `Worker 提前退出：exit=${code} signal=${signal}`))
+        }
       }
+      spawnFailed = error => controller.abort(workerError(worker, `Worker 启动失败：${error.message}`))
+      // 根进程 exit 可早于后代关闭管道的 close，必须立即停止浏览器动作。
+      worker.child.once('exit', exited)
+      worker.child.once('error', spawnFailed)
+      void worker.closed.then((exit) => {
+        if (!isStopping()) {
+          controller.abort(workerError(worker, `Worker 提前退出：exit=${exit.code} signal=${exit.signal}`))
+        }
+      })
     }
-    spawnFailed = error => controller.abort(workerError(worker, `Worker 启动失败：${error.message}`))
-    // 根进程 exit 可早于后代关闭管道的 close，必须立即停止浏览器动作。
-    worker.child.once('exit', exited)
-    worker.child.once('error', spawnFailed)
-    void worker.closed.then((exit) => {
-      if (!stopping) {
-        controller.abort(workerError(worker, `Worker 提前退出：exit=${exit.code} signal=${exit.signal}`))
+    const result = await withLocalCommand(invocation, controller.signal, async (worker, signal) => {
+      const context: LocalWorkerContext = {
+        websiteRoot: options.websiteRoot,
+        baseUrl: new URL(`http://127.0.0.1:${port}/`),
+        signal,
+        request: pathname => requestWorker(new URL(pathname, context.baseUrl), signal, options.requestTimeoutMs ?? 5000),
       }
-    })
-    const context: LocalWorkerContext = {
-      websiteRoot: options.websiteRoot,
-      baseUrl: new URL(`http://127.0.0.1:${port}/`),
-      signal: controller.signal,
-      request: pathname => requestWorker(new URL(pathname, context.baseUrl), controller.signal, options.requestTimeoutMs ?? 5000),
-    }
-    const result = await runWithCleanup(async () => {
       await waitForWorker(worker, context, expectedHtml, options.readyTimeoutMs ?? 30_000, options.requestTimeoutMs ?? 5000)
-      controller.signal.throwIfAborted()
+      signal.throwIfAborted()
       const result = await action(context)
-      controller.signal.throwIfAborted()
+      signal.throwIfAborted()
       return result
-    }, async () => {
-      stopping = true
-      await worker.stop()
-    })
+    }, trackWorker)
     controller.signal.throwIfAborted()
     return result
   }

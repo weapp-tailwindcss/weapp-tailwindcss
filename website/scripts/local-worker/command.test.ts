@@ -5,14 +5,17 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { afterEach, expect, it, vi } from 'vitest'
 import * as processTools from '../../../packages/hbuilderx-runner/src/process'
+import * as processTree from '../../../scripts/demo-e2e-workflow/process-tree'
 import { localBrowserCommand } from '../browser-local'
 import { resolveWranglerCommand, runLocalCommand } from './command'
 import localConfig from './playwright.config'
 
 const websiteRoot = fileURLToPath(new URL('../..', import.meta.url))
+const platform = Object.getOwnPropertyDescriptor(process, 'platform')!
 afterEach(() => {
   vi.restoreAllMocks()
   vi.unstubAllEnvs()
+  Object.defineProperty(process, 'platform', platform)
 })
 
 it('从导出的包 manifest 解析 Wrangler bin，并固定本地地址与默认环境', async () => {
@@ -56,9 +59,14 @@ it('命令超时后等待真实合成进程关闭，不留下后台命令', asyn
 })
 
 it('命令失败与命令收尾失败同时保留，服务作用域仍可继续收尾', async () => {
+  Object.defineProperty(process, 'platform', { ...platform, value: 'linux' })
+  vi.spyOn(processTree, 'createWorkflowProcessTree').mockImplementation(child => ({
+    capture: async () => new Map([[child.pid!, { pid: child.pid!, parent: 1, group: child.pid!, started: new Date().toISOString() }]]),
+    stop: vi.fn(async () => {}),
+  }))
   const cleanup = new Error('browser close failed')
   vi.spyOn(processTools, 'spawnCommand').mockReturnValueOnce({
-    child: Object.assign(new EventEmitter(), { pid: 424242 }),
+    child: Object.assign(new EventEmitter(), { pid: 424242, exitCode: null, signalCode: null }),
     logs: ['test assertion failed'],
     closed: Promise.resolve({ code: 2, signal: null }),
     stop: vi.fn().mockRejectedValue(cleanup),

@@ -4,8 +4,7 @@ import { createRequire } from 'node:module'
 import path from 'node:path'
 import process from 'node:process'
 import { pathToFileURL } from 'node:url'
-import { spawnCommand } from '../../../packages/hbuilderx-runner/src/process'
-import { runWithCleanup } from '../../../scripts/e2e-preflight/cleanup'
+import { withLocalCommand } from './lifecycle'
 
 /** 从包声明解析 CLI，避免依赖 pnpm 的安装目录结构或未导出的子路径。 */
 export async function resolveWranglerCommand(websiteRoot: string, port: number): Promise<HBuilderXCommandOptions> {
@@ -30,16 +29,15 @@ export async function runLocalCommand(options: HBuilderXCommandOptions, signal: 
     throw new Error('本地命令预算已耗尽，禁止启动。')
   }
   signal.throwIfAborted()
-  const command = spawnCommand(options)
-  let timer: NodeJS.Timeout | undefined
-  let abort!: () => void
-  const interrupted = new Promise<never>((_, reject) => {
-    abort = () => reject(signal.reason)
-    signal.addEventListener('abort', abort, { once: true })
-    timer = setTimeout(() => reject(new Error(`本地命令超时 ${timeoutMs}ms：${options.command} ${options.args.join(' ')}`)), timeoutMs)
-  })
-  try {
-    return await runWithCleanup(async () => {
+  return await withLocalCommand(options, signal, async (command, signal) => {
+    let timer: NodeJS.Timeout | undefined
+    let abort!: () => void
+    const interrupted = new Promise<never>((_, reject) => {
+      abort = () => reject(signal.reason)
+      signal.addEventListener('abort', abort, { once: true })
+      timer = setTimeout(() => reject(new Error(`本地命令超时 ${timeoutMs}ms：${options.command} ${options.args.join(' ')}`)), timeoutMs)
+    })
+    try {
       if (signal.aborted) {
         abort()
       }
@@ -48,10 +46,10 @@ export async function runLocalCommand(options: HBuilderXCommandOptions, signal: 
       if (exit.code !== 0) {
         throw new Error(`本地命令失败：${options.command} ${options.args.join(' ')}\ncwd=${options.cwd}\nexit=${exit.code} signal=${exit.signal}\n${command.logs.join('')}`)
       }
-    }, () => command.stop())
-  }
-  finally {
-    clearTimeout(timer)
-    signal.removeEventListener('abort', abort)
-  }
+    }
+    finally {
+      clearTimeout(timer)
+      signal.removeEventListener('abort', abort)
+    }
+  })
 }

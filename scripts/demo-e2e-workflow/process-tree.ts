@@ -9,7 +9,7 @@ import { collectOwnedProcesses, readProcessSubset, readProcessTable } from './pr
 interface CleanupOptions {
   cooperativeMs?: number
   cleanupMs?: number
-  observer?: WorkflowProcessObserver
+  observer?: Pick<WorkflowProcessObserver, 'table' | 'subset'>
 }
 
 function remainingProbeBudget(deadline: number) {
@@ -32,10 +32,10 @@ export function createWorkflowProcessTree(child: ChildProcess, closed: Promise<u
   let pending: { promise: Promise<Map<number, ProcessIdentity>>, controller: AbortController, budget: { deadline: number } } | undefined
   let identityError: unknown
   const readTable = (timeoutMs: number, signal: AbortSignal) => options.observer
-    ? readProcessTable(timeoutMs, signal, options.observer)
+    ? options.observer.table(timeoutMs, signal)
     : readProcessTable(timeoutMs, signal)
   const readSubset = (group: number | undefined, pids: number[], timeoutMs: number, signal?: AbortSignal) => options.observer
-    ? readProcessSubset(group, pids, timeoutMs, signal, options.observer)
+    ? options.observer.subset(pids, timeoutMs, signal)
     : readProcessSubset(group, pids, timeoutMs, signal)
   void closed.then(() => {
     didClose = true
