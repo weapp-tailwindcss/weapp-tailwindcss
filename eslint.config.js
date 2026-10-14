@@ -102,6 +102,8 @@ export default config
       // 本地验收报告和参考源码不属于仓库维护的代码，避免扫描大型生成文件。
       'e2e/reports/local-full-run/**',
       'submodules/tailwindcss-mangle/**',
+      // Cargo 生成物使用编译器自己的格式，不属于维护中的脚本与配置。
+      'packages/*/native/target/**',
       '**/test-results/**',
       'website/test-results/',
       'website/test-results/**',

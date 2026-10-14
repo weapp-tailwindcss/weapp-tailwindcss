@@ -18,6 +18,9 @@ it.each([
   ['e2e', 'reports', 'local-full-run', 'run-example', 'runner.mjs'],
   ['e2e', 'reports', 'local-full-run', 'run-example', 'coverage', 'prettify.js'],
   ['submodules', 'tailwindcss-mangle', 'packages', 'core', 'src', 'index.ts'],
+  ['packages', 'weapp-tailwindcss', 'native', 'target', 'release', '.fingerprint', 'native', 'lib-native.json'],
+  ['packages', 'postcss', 'native', 'target', 'aarch64-apple-darwin', 'debug', '.fingerprint', 'native', 'lib-native.json'],
+  ['packages', 'weapp-tailwindcss', 'native', 'target', '.rustc_info.json'],
 ])('Lint 不扫描生成报告和本地参考源码：%j', async (...segments) => {
   assert.equal(await eslint.isPathIgnored(path.join(root, ...segments)), true)
 })
@@ -26,6 +29,8 @@ it.each([
   ['scripts', 'agents', 'check.mjs'],
   ['e2e', 'react-native', 'reports.ts'],
   ['packages', 'shared', 'src', 'index.ts'],
+  ['packages', 'weapp-tailwindcss', 'native', 'ci.mjs'],
+  ['packages', 'shared', 'src', 'target', 'index.ts'],
 ])('Lint 继续检查仓库维护的实现：%j', async (...segments) => {
   assert.equal(await eslint.isPathIgnored(path.join(root, ...segments)), false)
 })

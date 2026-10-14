@@ -10,6 +10,7 @@ regressions:
   - e2e/preflight-browser.test.ts
   - e2e/preflight-pnpm.test.ts
   - e2e/packed-pnpm-identity.test.ts
+  - scripts/agents/eslint-scope.test.mjs
   - packages/weapp-tailwindcss/test/native-targets.test.ts
   - packages/weapp-tailwindcss/test/wxml/Tokenizer.test.ts
   - website/scripts/local-worker/server.test.ts
@@ -69,6 +70,10 @@ pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/demo-workflow-extended.test
 在该 SHA 基础的未提交修复上，定向执行 `pnpm native:ci --target=aarch64-apple-darwin` 全部通过：两个内核的 44/17 项 Rust 单测与严格 Clippy、release 构建、真实 JS/WXML/CSS ABI 差分、隔离打包消费者，以及 13 个 Vitest 文件的 265 项断言。原始输出保留在 `e2e/.artifacts/full-validation-20261014/native-ci-after-clippy-fix.log`；这些结果仅证明本机 ABI，完整扩展流程仍需重新预检和重跑。
 
 独立复核又发现两处入口身份边界：完整 Chromium 与默认无头 Chromium 可能来自不同安装，CSS 和网站的默认测试实际消费后者；预检不能只用 `executablePath()` 覆盖默认无头入口。pnpm 的版本核验与后续执行也必须消费同一活动入口，不能只检查 PATH 命令。扩展 Web 探针因此新增默认无头 launch；基础版本核验复用共享 pnpm 选择器，门禁身份记录其完整 invocation。修复前合成回归有 11 项失败，修复后 7 文件 114 项通过，首次错误摘录与命令保留在 `preflight-shell-first-failure.log`、`preflight-shell-final-validation.log`。这仍是门禁合同回归，真实环境必须由新一轮 prepare 验证。
+
+`fb644a78574572ef66b6563c8dc5a8f6e289af45` 上的新报告 `4f2243e4-e64d-4032-9e71-85f81865642d` 已完成真实探针、Chrome 六动作及 verify。重跑时构建与 9577 项单测通过，但第 3 阶段 lint 扫描了此前 native 验证生成的 Cargo `target` JSON，产生 18866 个错误。crate 自身 `.gitignore` 已排除这些生成物，ESLint 的全局忽略却没有同一边界。不能通过删除编译产物、格式化 Cargo 文件或关闭 JSON 规则放行；新增 `packages/*/native/target/**` 全局忽略，保留原生维护脚本和其他源码目录中名为 `target` 的实现检查。真实配置回归先出现 2 项失败，首次输出保留在 `cargo-eslint-first-failure.log`；完整失败输出和阶段报告保存在 `full-run-4f224.log`、`round-4f224/`。这是工程检查范围修复，不改变公开包或样式输出，无需额外 intent 或 static 基线更新。
+
+修复后 ESLint 范围回归 11 项通过，真实根 `pnpm lint` 通过（0 个错误，4 条既有 `no-console` 警告）；478 个失败文件复核全部属于两内核的 `.rustc_info.json` 与 fingerprint JSON。命令输出保留在 `cargo-eslint-regression.log`、`cargo-eslint-root-lint.log`。
 
 ## 适用边界
 
