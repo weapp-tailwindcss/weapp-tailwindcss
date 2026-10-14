@@ -16,6 +16,7 @@ import { runWithCleanup } from '../cleanup'
 import { assertImage, command } from '../io'
 import { hbuilderxTools } from './hbuilderx-tools'
 import { availablePort } from './port'
+import { rustToolchain } from './rust'
 import { waitForProbe } from './wait'
 import { connectWechat } from './wechat-connect'
 
@@ -42,7 +43,8 @@ export async function base(ctx: ProbeContext): Promise<ProbeOutput> {
   finally {
     await rm(temp, { recursive: true, force: true })
   }
-  return { detail: 'Node/pnpm、依赖解析、临时目录和本轮服务端口通过。', binding: { node: process.version, pnpm } }
+  const rust = ctx.extended ? await rustToolchain(ctx) : {}
+  return { detail: `Node/pnpm、依赖解析、临时目录和本轮服务端口通过。${ctx.extended ? '当前宿主 Rust/cargo/Clippy 与 target 标准库已核对，尚未编译。' : ''}`, binding: { node: process.version, pnpm, ...rust } }
 }
 
 export async function hbuilderx(ctx: ProbeContext): Promise<ProbeOutput> {

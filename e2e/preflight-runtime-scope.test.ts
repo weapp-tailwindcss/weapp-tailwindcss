@@ -73,5 +73,20 @@ describe('扩展原生工具链预检范围', () => {
     expect(stageChecks('React Native iOS runtime', true)).toEqual(['ios', 'runtime-ios'])
     expect(stageChecks('HBuilderX uni-app iOS HMR', true)).toEqual(['ios', 'hbuilderx'])
     expect(stageChecks('Lynx Android runtime')).toEqual(['android'])
+    expect(stageChecks('extended Rust native ABI', true)).toEqual(['base'])
+    expect(stageChecks('extended CSS browser parity', true)).toEqual(['web'])
+    expect(stageChecks('extended website browser runtime', true)).toEqual(['web'])
+    expect(stageChecks('extended Rust native ABI')).toEqual([])
+  })
+
+  it('扩展标识传给基础与 Web 探针，但不改变普通预检范围', async () => {
+    const { report, session, dir } = await setup(true)
+    const probe = vi.fn(async id => passingCheck(id))
+    const live = new PreflightSession(report, session.file, dir, probe)
+    await live.probes(['base', 'web'], 'prepare')
+    expect(probe.mock.calls).toHaveLength(2)
+    for (const [, context] of probe.mock.calls) {
+      expect(context).toHaveProperty('extended', true)
+    }
   })
 })

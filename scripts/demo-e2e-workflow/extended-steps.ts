@@ -1,4 +1,5 @@
 import type { WorkflowStep } from './quality-steps'
+import { hostNativeTarget } from '../../packages/weapp-tailwindcss/native/targets.mjs'
 
 function step(name: string, args: string[], env?: Record<string, string>): WorkflowStep {
   return { name, command: 'pnpm', args, env, local: true }
@@ -33,11 +34,22 @@ export function extendedQualitySteps(): WorkflowStep[] {
       '@weapp-tailwindcss/escape',
       '--filter',
       '@weapp-tailwindcss/website',
+      '--filter',
+      '@weapp-tailwindcss/css-compat',
       'run',
       'typecheck',
     ]),
     step('extended stylelint', ['stylelint']),
+    step('extended Rust native ABI', ['native:ci', `--target=${hostNativeTarget()}`]),
     step('extended packed package consumption', ['release:verify']),
+    ...['test:package', 'properties:check', 'test:consumers', 'test:browser'].map(command => step(
+      command === 'test:browser' ? 'extended CSS browser parity' : `extended CSS compatibility ${command}`,
+      ['--filter', '@weapp-tailwindcss/css-compat', command],
+    )),
+    ...['check:docs-audience', 'seo:quality:strict', 'test:worker', 'deploy:worker:dry-run', 'e2e:local'].map(command => step(
+      command === 'e2e:local' ? 'extended website browser runtime' : `extended website quality ${command}`,
+      ['--filter', '@weapp-tailwindcss/website', command],
+    )),
     step('extended agents regression', ['agents:test', '--update=none']),
     step('extended demo matrix regression', ['test:demo:matrix']),
     step('extended performance tooling regression', ['test:perf:demo']),

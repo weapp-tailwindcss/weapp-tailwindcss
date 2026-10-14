@@ -13,6 +13,9 @@ export function stageChecks(name: string, extended = false): ProbeId[] {
     return ['wechat', 'hbuilderx', 'ios', 'android', 'harmony', 'web']
   }
   const ids: ProbeId[] = []
+  if (extended && /Rust native ABI/i.test(name)) {
+    ids.push('base')
+  }
   for (const id of ['ios', 'android', 'harmony'] as const) {
     if (name.toLowerCase().includes(id)) {
       ids.push(id)

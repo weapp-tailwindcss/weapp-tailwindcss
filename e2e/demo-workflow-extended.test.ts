@@ -83,7 +83,16 @@ describe('扩展回归的完整覆盖与门禁', () => {
     for (const name of ['tsd', 'stylelint', 'release:verify', 'agents:test --update=none', 'test:demo:matrix', 'test:perf:demo', 'skills:validate', 'docs:packages:check', 'e2e:preprocessor', 'e2e:demo-user-workflow', 'e2e:templates', 'e2e:templates:hmr', 'e2e:templates:ide', 'e2e:dev:smoke']) {
       expect(commands, name).toContain(`pnpm ${name}`)
     }
-    expect(commands).toContain('pnpm --filter @weapp-tailwindcss/engine --filter @weapp-tailwindcss/env --filter @weapp-tailwindcss/source-scan --filter @weapp-tailwindcss/escape --filter @weapp-tailwindcss/website run typecheck')
+    expect(commands).toContain('pnpm --filter @weapp-tailwindcss/engine --filter @weapp-tailwindcss/env --filter @weapp-tailwindcss/source-scan --filter @weapp-tailwindcss/escape --filter @weapp-tailwindcss/website --filter @weapp-tailwindcss/css-compat run typecheck')
+    for (const name of ['test:package', 'properties:check', 'test:consumers', 'test:browser']) {
+      expect(commands).toContain(`pnpm --filter @weapp-tailwindcss/css-compat ${name}`)
+    }
+    for (const name of ['check:docs-audience', 'seo:quality:strict', 'test:worker', 'deploy:worker:dry-run', 'e2e:local']) {
+      expect(commands).toContain(`pnpm --filter @weapp-tailwindcss/website ${name}`)
+    }
+    const nativeIndex = commands.findIndex(command => command.startsWith('pnpm native:ci --target='))
+    expect(nativeIndex).toBeGreaterThan(-1)
+    expect(nativeIndex).toBeLessThan(commands.indexOf('pnpm release:verify'))
     expect(commands).toContain('pnpm exec vitest run -c ./e2e/vitest.e2e.config.ts e2e/framework-ci-support.test.ts --update=none')
     const framework = mocks.spawn.mock.calls.find(([, argv]) => argv.includes('e2e/framework-ci-support.test.ts'))
     expect(framework?.[2].env.E2E_FRAMEWORK_SUPPORT).toBe('1')
@@ -145,14 +154,14 @@ describe('扩展回归的完整覆盖与门禁', () => {
     expect(gate.close).toHaveBeenCalledOnce()
   })
 
-  it.each(['e2e:react-native:web', 'e2e:react-native:ios', 'e2e:lynx:ios'])('%s 失败后不继续其他运行时或性能阶段', async (failed) => {
+  it.each(['native:ci', 'e2e:react-native:web', 'e2e:react-native:ios', 'e2e:lynx:ios'])('%s 失败后不继续其他运行时或性能阶段', async (failed) => {
     mocks.spawn.mockImplementation((_command: string, argv: string[]) => {
       const child = new EventEmitter()
       queueMicrotask(() => child.emit('close', argv[0] === failed ? 1 : 0))
       return child
     })
     await expect(runDemoE2eWorkflow(args)).rejects.toThrow('failed with exit=1')
-    expect(mocks.spawn.mock.calls.at(-1)?.[1]).toEqual([failed])
+    expect(mocks.spawn.mock.calls.at(-1)?.[1][0]).toBe(failed)
     expect(gate.close).toHaveBeenCalledOnce()
   })
 

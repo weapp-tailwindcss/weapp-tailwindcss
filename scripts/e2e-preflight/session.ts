@@ -44,6 +44,7 @@ export class PreflightSession {
       this.controller.signal.throwIfAborted()
       const previous = this.report.checks.find(check => check.id === id)!
       const pending = this.probe(id, {
+        extended: this.report.extended === true,
         root: this.report.identity.root,
         dir: this.dir,
         runId: this.report.runId,

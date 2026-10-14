@@ -111,6 +111,10 @@ pnpm e2e:demo:workflow:local --quality --extended --baseline-ref <任务起始�
 
 扩展模式要求固定的完整提交 SHA，禁止以移动分支充当性能基线；性能命令及基线会写入阶段报告。新增阶段共享本轮门禁，任一失败均停止。独立质量检查在 static 前完成，模板构建/HMR/微信 IDE 与启动矩阵在标准 IDE 阶段前完成；标准多端截图之后串行执行 RN Web/Android/iOS、Lynx Android/iOS 和 synthetic/framework 性能门禁。canonical template 与 RN/Lynx 静态测试由 static 统一覆盖，不重复执行。
 
+扩展质量阶段还覆盖本机 Rust/native ABI、CSS 兼容内核的类型、打包、属性目录、消费者和 Chromium/Firefox/WebKit 对照，以及网站文档受众、严格 SEO、Worker 本地验证和部署打包 dry-run。原生目标来自当前 Node 宿主的平台、架构和已确认 libc，不猜测 Linux ABI，也不把本机结果视为其他架构通过。扩展预检检查两个 Rust 内核所用编译器、Cargo、Clippy 与宿主标准库；工具链配置变化必须重新 prepare。
+
+网站三浏览器阶段使用 `pnpm --filter website e2e:local`：从本轮 `website/build` 启动独立 loopback Wrangler 服务，确认本进程就绪、端口和当前产物身份后显式传入 `PLAYWRIGHT_BASE_URL`；三个项目均后台运行，禁止更新截图。服务退出、浏览器失败或取消均停止调度并有界回收本轮子进程，不连接已有网站服务。扩展预检同时检查 Firefox/WebKit 和网站所选 Chromium channel，浏览器安装目录与 channel 改变会使旧报告失效。部署 dry-run 只生成本地打包产物，不正式发布。
+
 扩展模式固定 `CI=1`，清除局部用例过滤、旧二进制和原生工作目录复用配置，禁用跳过安装/构建及自动更新基线；工具路径、设备和超时配置仍需与预检一致。RN/Lynx 原生验收使用本轮绑定的 Android/iOS 模拟器；`prepare --extended`、verify、领取前会检查额外工具链，RN/Lynx 对应原生阶段前再次复查命令、版本与组件。检查遵循运行时实际选择：RN 使用 `RN_JAVA_HOME`/Android Studio JBR，Lynx 使用 `LYNX_JAVA_HOME`/`JAVA_HOME` 与 `LYNX_GRADLE`；Java 需 17 以上，当前 Lynx AGP 8.7.3 需 Gradle 8.9 以上的 8.x。Android SDK 两个环境变量同时设置时必须指向同一目录；检查所选 platform 的 `android.jar`、Lynx Build Tools 35.0.0 以及 RN 安装版本声明的 Build Tools/NDK。iOS 分别检查 RN 的 PATH `pod`、Lynx 的 `LYNX_POD` 和 `xcodegen`。工具缺失立即阻断，不自动安装；工具链预检不代表原生编译通过。历史 Issue 的特殊版本对照与人工诊断按关联改动另行执行，不属于扩展模式的默认覆盖。
 
 视觉测试的 `DEMO_VISUAL_STYLE_ISOLATION_VARIANT` 和 IDE 的 `E2E_IDE_REQUIRE_LIVE_PAGE_VISIBILITY` 也会清除：uni-app x 恢复两种样式隔离模式，IDE HMR 恢复默认页面可见性要求。既有用例级可见性例外仍按原逻辑处理，不能将它们的产物证据描述为实时页面验收。

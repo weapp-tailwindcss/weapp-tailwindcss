@@ -44,6 +44,7 @@ export interface PreflightReport {
 }
 
 export interface ProbeContext {
+  extended?: boolean
   root: string
   dir: string
   runId: string

@@ -5,16 +5,13 @@ import { dirname, join, resolve } from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { kernelRoots, stageBinding, writeBindingMetadata } from './distribution.mjs'
-import { bindingFileName, nativeTargets } from './targets.mjs'
+import { bindingFileName, hostNativeTarget, nativeTargets } from './targets.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..')
 const packageRoot = join(root, 'packages', 'weapp-tailwindcss')
 const target = process.argv.find(arg => arg.startsWith('--target='))?.slice('--target='.length)
 assert.ok(target && nativeTargets[target], 'Native CI requires an explicit supported Rust target')
-const hostSuffix = process.platform === 'linux'
-  ? `${process.platform}-${process.arch}-${process.report.getReport().header.glibcVersionRuntime ? 'gnu' : 'musl'}`
-  : `${process.platform}-${process.arch}${process.platform === 'win32' ? '-msvc' : ''}`
-assert.equal(nativeTargets[target].suffix, hostSuffix, 'Native verification must execute on the actual target architecture and libc')
+assert.equal(target, hostNativeTarget(), 'Native verification must execute on the actual target architecture and libc')
 assert.ok(existsSync(join(packageRoot, 'native', 'test', 'js.ts')), 'Native JS ABI verification must exist before enabling this gate')
 
 function run(command, args, cwd = root, env = process.env) {
