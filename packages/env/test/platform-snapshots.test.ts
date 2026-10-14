@@ -15,6 +15,15 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs())
 
 describe('Taro/MPX 平台环境快照', () => {
+  it.each(['ali', 'dd', 'jd', 'qq', 'swan', 'tt', 'wx', ' ALI ', ' DD '])('MPX 快照和单值入口保持别名分类一致：%s', (value) => {
+    const snapshot = Object.freeze({ MPX_CLI_MODE: value })
+    const info = resolveMpxPlatformFromEnv(snapshot)
+    expect(info.isMp).toBe(true)
+    expect(info).toEqual(resolveMpxPlatform(value))
+    expect(resolveMpxPlatformFromEnv(Object.freeze({ MPX_CURRENT_TARGET_MODE: value, MPX_CLI_MODE: 'web' }))).toEqual(info)
+    expect(snapshot).toEqual({ MPX_CLI_MODE: value })
+  })
+
   it.each([
     [{}, undefined],
     [{ TARO_ENV: undefined }, undefined],

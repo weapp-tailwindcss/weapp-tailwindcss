@@ -3,6 +3,7 @@ export {
   detectAppType,
   detectAppTypeFromEnv,
   detectAppTypeFromPackageJson,
+  detectAppTypeReport,
   isMpxPackage,
   isRunningInHBuilderX,
   isTaroPackage,
@@ -14,6 +15,7 @@ export {
   resolveMpxPlatform,
   resolveMpxPlatformFromEnv,
   resolvePlatform,
+  resolvePlatformIdentity,
   resolveTaroPlatform,
   resolveTaroPlatformFromEnv,
   resolveUniAppXPlatform,
@@ -22,11 +24,16 @@ export {
   resolveUniUtsPlatform,
 } from '@weapp-tailwindcss/env'
 export type {
+  AppTypeDetectionCandidate,
+  AppTypeDetectionEvidence,
+  AppTypeDetectionReport,
+  CanonicalPlatform,
   DetectableAppType,
   DetectAppTypeOptions,
   FrameworkEnv,
   HBuilderXRuntimeHints,
   PackageJsonLike,
+  PlatformIdentityInfo,
   UniAppManifestLike,
   UniPlatformInfo,
 } from '@weapp-tailwindcss/env'

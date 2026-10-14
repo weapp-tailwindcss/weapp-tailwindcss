@@ -15,6 +15,7 @@ export {
   resolveMpxPlatform,
   resolveMpxPlatformFromEnv,
   resolvePlatform,
+  resolvePlatformIdentity,
   resolveTaroPlatform,
   resolveTaroPlatformFromEnv,
   resolveUniAppXPlatform,
@@ -22,13 +23,16 @@ export {
   resolveUniPlatformsFromEnv,
   resolveUniUtsPlatform,
 } from './platform'
-export { detectAppType } from './project'
+export { detectAppType, detectAppTypeReport } from './project'
+export type { AppTypeDetectionCandidate, AppTypeDetectionEvidence, AppTypeDetectionReport } from './types'
 export type {
+  CanonicalPlatform,
   DetectableAppType,
   DetectAppTypeOptions,
   FrameworkEnv,
   HBuilderXRuntimeHints,
   PackageJsonLike,
+  PlatformIdentityInfo,
   UniAppManifestLike,
   UniPlatformInfo,
 } from './types'

@@ -371,6 +371,12 @@ export interface WebHmrSourceDomReplacement {
   expectedCssIncludes?: string[]
 }
 
+export interface WatchCompileState {
+  generation: number
+  building: boolean
+  idleAt: number
+}
+
 export interface WatchSession {
   /** 真实业务 spawn 的起点，不包含采集器冷准备。 */
   startedAt?: number
@@ -379,6 +385,8 @@ export interface WatchSession {
   child: ChildProcessWithoutNullStreams
   ensureRunning: () => void
   lastCompileSuccessAt: () => number
+  /** polling 全量构建的世代边界；其它宿主继续使用完成日志与产物信号。 */
+  compileState?: () => WatchCompileState | undefined
   logs: () => string
   stop: () => Promise<void>
   memorySamplesSince: (startedAt: number) => MemoryUsageSample[]

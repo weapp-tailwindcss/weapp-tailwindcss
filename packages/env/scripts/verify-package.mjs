@@ -95,6 +95,41 @@ for (const api of [env, cjs, legacy, oldCjs]) {
   assert.equal(api.resolveMpxPlatformFromEnv().raw, 'web')
   assert.equal(api.detectAppType({ root: projectRoot, searchUp: false, env: {} }), 'uni-app-x')
   assert.equal(api.detectAppTypeFromPackageJson({ dependencies: { 'weapp-vite': '*' } }), 'weapp-vite')
+  assert.deepEqual(api.resolvePlatformIdentity(' WX ', 'mpx'), { raw: ' WX ', normalized: 'wx', canonical: 'mp-weixin' })
+  assert.equal(api.resolvePlatformIdentity('weapp', 'taro').canonical, 'mp-weixin')
+  assert.equal(api.resolvePlatformIdentity('mp-weixin', 'uni-app').canonical, 'mp-weixin')
+  assert.equal(api.resolvePlatformIdentity('ali', 'mpx').canonical, 'mp-alipay')
+  assert.equal(api.resolvePlatformIdentity('dd', 'mpx').canonical, 'mp-dingtalk')
+  assert.equal(api.resolvePlatformIdentity('ali', 'taro').canonical, undefined)
+  assert.equal(api.resolvePlatformIdentity('dd').canonical, undefined)
+  assert.equal(api.resolvePlatformIdentity('constructor', 'mpx').canonical, undefined)
+  assert.equal(api.resolvePlatformIdentity('__proto__', 'mpx').canonical, undefined)
+  assert.equal(api.resolvePlatformIdentity('h5').canonical, 'web')
+  assert.equal(api.resolvePlatformIdentity('app').canonical, 'app')
+  assert.equal(api.resolvePlatformIdentity('app-plus').canonical, 'app-plus')
+  assert.deepEqual(api.resolvePlatformIdentity(undefined), { raw: undefined, normalized: undefined, canonical: undefined })
+  assert.equal(api.resolveMpxPlatform('ali').isMp, true)
+  assert.equal(api.resolveMpxPlatform('dd').isMp, true)
+  assert.equal(api.resolveMpxPlatformFromEnv(Object.freeze({ MPX_CLI_MODE: 'ali' })).isMp, true)
+  assert.equal(api.resolveMpxPlatformFromEnv(Object.freeze({ MPX_CURRENT_TARGET_MODE: 'dd', MPX_CLI_MODE: 'web' })).isMp, true)
+  assert.equal(Object.hasOwn(api.resolvePlatform('h5'), 'canonical'), false)
+  assert.deepEqual(api.detectAppTypeReport({ env: {}, cwd: process.cwd() }), { appType: undefined, candidates: [], conflicts: [] })
+  const options = { packageJson: { dependencies: { '@tarojs/runtime': '*' }, scripts: { lint: 'eslint weapp-vite.config.ts' } }, env: { MPX_CLI_MODE: 'wx' } }
+  const report = api.detectAppTypeReport(options)
+  assert.equal(report.appType, api.detectAppType(options))
+  assert.equal(report.appType, 'taro')
+  assert.equal(report.candidates.length, 1)
+  assert.equal(report.candidates[0].appType, 'taro')
+  assert.ok(report.candidates[0].evidence.some(item => item.source === 'dependency' && item.key === 'dependencies.@tarojs/runtime' && item.value === '*'))
+  assert.deepEqual(report.conflicts, [])
+  const manifestReport = api.detectAppTypeReport({ root: projectRoot, searchUp: false, env: {} })
+  assert.equal(manifestReport.appType, api.detectAppType({ root: projectRoot, searchUp: false, env: {} }))
+  assert.deepEqual(manifestReport.candidates, [{ appType: 'uni-app-x', evidence: [{ source: 'manifest', key: 'uni-app-x', path: path.join(projectRoot, 'manifest.json') }] }])
+  assert.deepEqual(manifestReport.conflicts, [])
+  const mixed = api.detectAppTypeReport({ packageJson: { dependencies: { 'weapp-vite': '*', '@mpxjs/core': '*', '@tarojs/runtime': '*' } } })
+  assert.equal(mixed.appType, 'weapp-vite')
+  assert.deepEqual(mixed.candidates.map(item => item.appType), ['weapp-vite', 'mpx', 'taro'])
+  assert.deepEqual(mixed.conflicts, ['mpx', 'taro'])
 }
 process.env.TARO_ENV = 'weapp'
 delete process.env.MPX_CURRENT_TARGET_MODE
@@ -103,19 +138,38 @@ for (const api of [env, cjs, legacy, oldCjs]) {
   assert.equal(api.resolveMpxPlatformFromEnv(undefined).raw, 'qq')
 }
 assert.equal(env.normalizeFrameworkStylePlatform('wx', 'mpx'), 'mp-weixin')
+assert.equal(env.normalizeFrameworkStylePlatform('constructor', 'mpx'), 'constructor')
+assert.equal(env.normalizeFrameworkStylePlatform('__proto__', 'mpx'), '__proto__')
 assert.equal(legacy.resolveImplicitAppTypeFromViteRoot(process.cwd(), { searchUp: false }), undefined)
 `
   await writeFile(path.join(consumerRoot, 'runtime.mjs'), runtime)
   run(process.execPath, ['runtime.mjs'], consumerRoot)
 
   const types = `
-import { detectAppType, resolveMpxPlatformFromEnv, resolveTaroPlatformFromEnv, resolveUniPlatformsFromEnv, normalizeFrameworkStylePlatform } from '@weapp-tailwindcss/env'
-import type { DetectableAppType, FrameworkEnv, UniPlatformInfo } from '@weapp-tailwindcss/env'
-import { detectAppType as legacyDetect, resolveMpxPlatformFromEnv as legacyMpx, resolveTaroPlatformFromEnv as legacyTaro } from 'weapp-tailwindcss/framework'
+import { detectAppType, detectAppTypeReport, resolveMpxPlatformFromEnv, resolvePlatformIdentity, resolveTaroPlatformFromEnv, resolveUniPlatformsFromEnv, normalizeFrameworkStylePlatform } from '@weapp-tailwindcss/env'
+import type { AppTypeDetectionCandidate, AppTypeDetectionEvidence, AppTypeDetectionReport, CanonicalPlatform, DetectableAppType, FrameworkEnv, PlatformIdentityInfo, UniPlatformInfo } from '@weapp-tailwindcss/env'
+import { detectAppType as legacyDetect, detectAppTypeReport as legacyReport, resolveMpxPlatformFromEnv as legacyMpx, resolvePlatformIdentity as legacyIdentity, resolveTaroPlatformFromEnv as legacyTaro } from 'weapp-tailwindcss/framework'
+import type { AppTypeDetectionCandidate as LegacyCandidate, AppTypeDetectionEvidence as LegacyEvidence, AppTypeDetectionReport as LegacyReport, CanonicalPlatform as LegacyCanonical, PlatformIdentityInfo as LegacyIdentity } from 'weapp-tailwindcss/framework'
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
 type Expect<T extends true> = T
 type AppReturn = Expect<Equal<ReturnType<typeof detectAppType>, DetectableAppType | undefined>>
 type LegacyReturn = Expect<Equal<ReturnType<typeof legacyDetect>, DetectableAppType | undefined>>
+type ReportReturn = Expect<Equal<ReturnType<typeof detectAppTypeReport>, AppTypeDetectionReport>>
+type IdentityReturn = Expect<Equal<ReturnType<typeof resolvePlatformIdentity>, PlatformIdentityInfo>>
+type IdentityContext = Expect<Equal<Parameters<typeof resolvePlatformIdentity>[1], DetectableAppType | undefined>>
+type LegacyReportReturn = Expect<Equal<ReturnType<typeof legacyReport>, AppTypeDetectionReport>>
+type LegacyIdentityReturn = Expect<Equal<ReturnType<typeof legacyIdentity>, PlatformIdentityInfo>>
+type LegacyIdentityContext = Expect<Equal<Parameters<typeof legacyIdentity>[1], DetectableAppType | undefined>>
+type Canonical = Expect<Equal<PlatformIdentityInfo['canonical'], CanonicalPlatform | undefined>>
+type KnownCanonical = Expect<Equal<CanonicalPlatform, 'mp-weixin' | 'mp-alipay' | 'mp-baidu' | 'mp-qq' | 'mp-toutiao' | 'mp-jd' | 'mp-dingtalk' | 'web' | 'app' | 'app-plus' | 'app-android' | 'app-ios' | 'app-harmony'>>
+type IdentityRaw = Expect<Equal<PlatformIdentityInfo['raw'], string | undefined>>
+type IdentityNormalized = Expect<Equal<PlatformIdentityInfo['normalized'], string | undefined>>
+type ReportApp = Expect<Equal<AppTypeDetectionReport['appType'], DetectableAppType | undefined>>
+type ReportCandidates = Expect<Equal<AppTypeDetectionReport['candidates'], AppTypeDetectionCandidate[]>>
+type ReportConflicts = Expect<Equal<AppTypeDetectionReport['conflicts'], DetectableAppType[]>>
+type CandidateEvidence = Expect<Equal<AppTypeDetectionCandidate['evidence'], AppTypeDetectionEvidence[]>>
+type EvidenceSource = Expect<Equal<AppTypeDetectionEvidence['source'], 'manifest' | 'dependency' | 'script' | 'package-field' | 'marker' | 'env' | 'hbuilderx'>>
+type LegacyTypeExports = Expect<Equal<[LegacyCandidate, LegacyEvidence, LegacyReport, LegacyCanonical, LegacyIdentity], [AppTypeDetectionCandidate, AppTypeDetectionEvidence, AppTypeDetectionReport, CanonicalPlatform, PlatformIdentityInfo]>>
 type MpxReturn = Expect<Equal<ReturnType<typeof resolveMpxPlatformFromEnv>, UniPlatformInfo>>
 type TaroReturn = Expect<Equal<ReturnType<typeof resolveTaroPlatformFromEnv>, UniPlatformInfo>>
 type LegacyMpxReturn = Expect<Equal<ReturnType<typeof legacyMpx>, UniPlatformInfo>>
@@ -127,6 +181,11 @@ const info: UniPlatformInfo = resolveUniPlatformsFromEnv(snapshot).uniPlatform
 const mpx: UniPlatformInfo = resolveMpxPlatformFromEnv(Object.freeze({ MPX_CLI_MODE: 'wx' }))
 const taro: UniPlatformInfo = resolveTaroPlatformFromEnv({})
 const platform: string | undefined = normalizeFrameworkStylePlatform('wx', 'mpx')
+const identity: PlatformIdentityInfo = resolvePlatformIdentity('wx', 'mpx')
+const canonical: CanonicalPlatform | undefined = identity.canonical
+const report: AppTypeDetectionReport = detectAppTypeReport({ env: snapshot })
+const legacyDetectionReport: AppTypeDetectionReport = legacyReport({ env: snapshot })
+const legacyPlatformIdentity: PlatformIdentityInfo = legacyIdentity(undefined)
 `
   await writeFile(path.join(consumerRoot, 'types.mts'), types)
   await writeFile(path.join(consumerRoot, 'types.cts'), types)
@@ -139,15 +198,17 @@ import * as core from 'weapp-tailwindcss'
 const require = createRequire(import.meta.url)
 const cjs = require('weapp-tailwindcss')
 const envCjs = require('@weapp-tailwindcss/env')
-for (const name of ['resolveTaroPlatformFromEnv', 'resolveMpxPlatformFromEnv']) {
+for (const name of ['resolveTaroPlatformFromEnv', 'resolveMpxPlatformFromEnv', 'resolvePlatformIdentity', 'detectAppTypeReport']) {
   assert.equal(core[name], env[name])
   assert.equal(cjs[name], envCjs[name])
+}
+for (const name of ['resolveTaroPlatformFromEnv', 'resolveMpxPlatformFromEnv']) {
   assert.equal(core[name]({}).raw, undefined)
   assert.equal(cjs[name]({}).raw, undefined)
 }
 `
   run(process.execPath, ['--input-type=module', '--eval', rootRuntime], path.join(repoRoot, 'packages', 'weapp-tailwindcss'))
-  process.stdout.write('env 与主包 framework 的 tarball、ESM/CJS、快照隔离、manifest 注释和 NodeNext 类型消费验证通过；workspace 主包根入口 ESM/CJS 导出验证通过。\n')
+  process.stdout.write('env 与主包 framework 的 tarball、ESM/CJS、平台身份、检测报告、快照隔离、manifest 注释和 NodeNext 类型消费验证通过；workspace 主包根入口 ESM/CJS 导出验证通过。\n')
 }
 finally {
   await rm(temporaryRoot, { recursive: true, force: true })
