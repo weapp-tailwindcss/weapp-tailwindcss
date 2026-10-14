@@ -32,4 +32,28 @@ describe('framework 兼容层', () => {
     expect(framework.resolveUniPlatformsFromEnv({}).uniUtsPlatform.normalized).toBeUndefined()
     expect(framework.detectAppTypeFromEnv({}, { cwd: os.tmpdir() })).toBeUndefined()
   })
+
+  it('主包提供统一平台身份且不改动旧平台对象', () => {
+    expect(framework.resolvePlatformIdentity('wx', 'mpx').canonical).toBe('mp-weixin')
+    expect(framework.resolvePlatformIdentity('weapp', 'taro').canonical).toBe('mp-weixin')
+    expect(framework.resolvePlatformIdentity('mp-weixin', 'uni-app').canonical).toBe('mp-weixin')
+    expect(framework.resolvePlatformIdentity('dd', 'mpx').canonical).toBe('mp-dingtalk')
+    expect(framework.resolvePlatformIdentity('dd', 'taro').canonical).toBeUndefined()
+    expect(framework.resolveMpxPlatform('ali')).toMatchObject({ raw: 'ali', normalized: 'ali', isMp: true })
+    expect(framework.resolvePlatform('h5')).not.toHaveProperty('canonical')
+  })
+
+  it('主包提供检测证据并沿用普通检测的阶段优先级', () => {
+    const options = {
+      packageJson: { dependencies: { '@tarojs/runtime': '*' }, scripts: { lint: 'eslint weapp-vite.config.ts' } },
+      env: { MPX_CLI_MODE: 'wx' },
+    }
+    const report = framework.detectAppTypeReport(options)
+    expect(report.appType).toBe(framework.detectAppType(options))
+    expect(report.appType).toBe('taro')
+    expect(report.candidates).toHaveLength(1)
+    expect(report.candidates[0]).toMatchObject({ appType: 'taro' })
+    expect(report.candidates[0]?.evidence).toContainEqual(expect.objectContaining({ source: 'dependency', key: 'dependencies.@tarojs/runtime', value: '*' }))
+    expect(report.conflicts).toEqual([])
+  })
 })
