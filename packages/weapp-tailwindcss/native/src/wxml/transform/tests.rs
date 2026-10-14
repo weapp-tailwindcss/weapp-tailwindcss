@@ -51,6 +51,37 @@ fn distinguishes_wxml_token_whitespace_from_exact_candidate_whitespace() {
 }
 
 #[test]
+fn visits_all_static_candidates_in_order_and_preserves_gaps() {
+    let input = " w-[1px]\tw-[2px] w-[1px] ";
+    let mut candidates = Vec::new();
+    let output = transformer()
+        .transform::<()>(&input.encode_utf16().collect::<Vec<_>>(), true, |value| {
+            let candidate = String::from_utf16(value).unwrap();
+            let matches = candidate == "w-[1px]";
+            candidates.push(candidate);
+            Ok(matches)
+        })
+        .unwrap()
+        .unwrap();
+    assert_eq!(candidates, ["w-[1px]", "w-[2px]", "w-[1px]"]);
+    assert_eq!(
+        String::from_utf16(&output).unwrap(),
+        " w-_b1px_B\tw-[2px] w-_b1px_B "
+    );
+}
+
+#[test]
+fn rejects_later_adjacent_expressions_before_visiting_static_candidates() {
+    let input = "w-[1px] w-[2px] {{a}}{{b}} tail";
+    let output = transformer()
+        .transform::<()>(&input.encode_utf16().collect::<Vec<_>>(), true, |_| {
+            panic!("动态表达式出现时不能执行静态候选回调")
+        })
+        .unwrap();
+    assert!(output.is_none());
+}
+
+#[test]
 fn rejects_dynamic_values_before_calling_the_predicate() {
     let mut calls = 0;
     let output = transformer()

@@ -45,7 +45,7 @@ impl WxmlTransformer {
         }
         let mut output = Vec::with_capacity(input.len());
         let mut previous_end = 0;
-        for token in spans.chunks_exact(3) {
+        for token in spans.as_chunks::<3>().0 {
             let start = token[0] as usize;
             let end = token[1] as usize;
             self.escape

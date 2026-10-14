@@ -10,6 +10,7 @@ regressions:
   - e2e/preflight-browser.test.ts
   - e2e/packed-pnpm-identity.test.ts
   - packages/weapp-tailwindcss/test/native-targets.test.ts
+  - packages/weapp-tailwindcss/test/wxml/Tokenizer.test.ts
   - website/scripts/local-worker/server.test.ts
   - website/scripts/local-worker/command.test.ts
   - website/scripts/local-worker/process-lifecycle.test.ts
@@ -59,6 +60,12 @@ pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/demo-workflow-extended.test
 当前修复保存在独立工作树的本地提交，尚未推送 main。实际执行 `pnpm e2e:preflight prepare --extended`，基础工具、微信 IDE 真实连接、HBuilderX、iOS、Android、Harmony、三浏览器交互与 RN/Lynx 两端工具链共 9 项脚本探针通过；原生 UI 工具此前返回 `The Mac is locked and automatic unlock could not unlock it`，当前会话 computer use 无法完成。本轮使用 `e2e:preflight block` 保存原始错误并关闭服务，报告保留在 `e2e/.artifacts/preflight/c8f94e0a-963a-46a7-a15b-7a3e17ee7ed9/report.json`。用户解锁后必须重新 prepare，不能复用已阻断报告。完整扩展验收和真实网站 Worker 尚未启动，changeset 收尾和 main 推送尚未执行。
 
 用户解锁后，`7a2d4265-464f-45af-87f9-92e99c3d526e` 的原生 Chrome 六类动作证据与 verify 已全部通过。审查同时发现隔离 cwd 的裸 pnpm 实际选择全局 `12.11.2`，入口却是 `12.9.1`；为修复源码而结束该服务并保留通过时的原始报告，未领取全面门禁。首次合成 CLI 的 pack/install 两项失败保存于 `e2e/.artifacts/full-validation-20261014/packed-pnpm-first-failure.log`；修复后共享执行边界在真实临时目录保持 `12.9.1`。源码改变后必须新 prepare，不能用这份已结束报告启动全面入口。
+
+随后在 `18040b279079613cf96097a037b184c245415fbd` 上，新报告 `ce6d5ba6-b50b-4220-9668-3e1c1e474535` 的脚本探针、原生 Chrome 六类动作和 verify 全部通过。完整扩展流程前 12 阶段通过，包括根构建的 71 个任务、9577 项单测、基础质量检查、网站构建和完整类型检查；单测另有 1 项预期失败与 44 项条件跳过，不计入已执行通过。该提交已直接推送 main。
+
+第 13 阶段真实执行 Rust 1.99 的 `cargo clippy --all-targets -- -D warnings` 时，`wxml/transform.rs` 的 `chunks_exact(3)` 触发 `chunks_exact_to_as_chunks`，流程停止后续 44 个阶段，预检服务正常关闭。原始输出与阶段报告保留在 `e2e/.artifacts/full-validation-20261014/full-run-ce6d-observed.log` 和 `round-ce6d/`。修复使用稳定的 `as_chunks::<3>()` 表达静态 token 的三元组边界，不关闭 lint，也不提升当前 Rust 1.96 的最低要求。[新增 Rust 回归](../../../packages/weapp-tailwindcss/native/src/wxml/transform/tests.rs)核对多个静态候选的顺序与间隔，以及后续相邻动态表达式必须在任何候选回调前整体回退；不改变预期样式输出，因此无需更新 static 基线。
+
+在该 SHA 基础的未提交修复上，定向执行 `pnpm native:ci --target=aarch64-apple-darwin` 全部通过：两个内核的 44/17 项 Rust 单测与严格 Clippy、release 构建、真实 JS/WXML/CSS ABI 差分、隔离打包消费者，以及 13 个 Vitest 文件的 265 项断言。原始输出保留在 `e2e/.artifacts/full-validation-20261014/native-ci-after-clippy-fix.log`；这些结果仅证明本机 ABI，完整扩展流程仍需重新预检和重跑。
 
 ## 适用边界
 
