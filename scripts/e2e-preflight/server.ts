@@ -90,8 +90,8 @@ export async function serve(session: PreflightSession) {
   report.endpoint = `http://127.0.0.1:${address.port}`
   return {
     onFinish(callback: () => void) { onFinish = callback },
-    close: () => new Promise<void>((resolve) => {
-      server.close(() => resolve())
+    close: () => new Promise<void>((resolve, reject) => {
+      server.close(error => error ? reject(error) : resolve())
       server.closeAllConnections()
     }),
   }

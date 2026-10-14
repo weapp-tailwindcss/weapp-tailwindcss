@@ -1,17 +1,15 @@
-import type { PreflightReport, ProbeId } from './types'
+import type { PreflightReport } from './types'
 import { randomUUID } from 'node:crypto'
 import { mkdir } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { parseArgs } from 'node:util'
+import { formatWorkflowError } from './cleanup'
 import { readReport, request } from './client'
 import { recordComputerUseBlock } from './computer-use'
+import { runPreflightDaemon } from './daemon'
 import { collectIdentity } from './io'
-import { consumerAlive } from './lifecycle'
-import { acquireLock } from './lock'
-import { serve } from './server'
 import { initialChecks, PreflightSession } from './session'
-import { maxAgeMs, requiredCheckIds } from './types'
 
 async function prepare(root: string, extended = false) {
   const runId = randomUUID()
@@ -32,81 +30,7 @@ async function prepare(root: string, extended = false) {
   }
   const session = new PreflightSession(report, file, dir)
   await session.save()
-  let release: (() => Promise<void>) | undefined
-  let server: Awaited<ReturnType<typeof serve>> | undefined
-  let expire: ReturnType<typeof setInterval> | undefined
-  let settle: (() => void) | undefined
-  const closed = new Promise<void>((resolve) => {
-    settle = resolve
-  })
-  let stopping = false
-  const stop = async () => {
-    if (stopping) {
-      return
-    }
-    stopping = true
-    await session.cancel()
-    if (expire) {
-      clearInterval(expire)
-    }
-    if (report.status !== 'finished') {
-      report.status = 'blocked'
-      delete report.verifiedAt
-      await session.save()
-    }
-    try {
-      await server?.close()
-    }
-    finally {
-      await release?.()
-      settle?.()
-    }
-  }
-  const interrupted = () => {
-    process.exitCode = 1
-    void stop()
-  }
-  process.once('SIGINT', interrupted)
-  process.once('SIGTERM', interrupted)
-  try {
-    release = await acquireLock(runId)
-    server = await serve(session)
-    server.onFinish(() => {
-      void stop()
-    })
-    await session.save()
-    process.stdout.write(`[preflight] 报告：${file}\n`)
-    await session.probes(requiredCheckIds(extended).filter((id): id is ProbeId => id !== 'computer-use'), 'prepare')
-    if (report.checks.some(check => check.id !== 'computer-use' && check.status !== 'passed')) {
-      process.stderr.write(`[preflight] 环境已阻断；全面测试未启动。请查看 ${path.join(dir, 'report.md')}\n`)
-      process.exitCode = 1
-      return
-    }
-    process.stdout.write(`[preflight] 等待当前 AI 会话的 computer use 验证，尚未放行。\n页面：${report.endpoint}/challenge/${report.challenge}\n证据：${path.join(dir, 'computer-use.json')}\n验证：pnpm e2e:preflight verify --report ${JSON.stringify(file)}\n`)
-    expire = setInterval(() => {
-      if (report.status === 'running' && !consumerAlive(report.consumer)) {
-        report.interruption = '全面测试进程已退出，本轮失效；恢复时必须重新 prepare。'
-        process.stderr.write(`[preflight] ${report.interruption}\n`)
-        interrupted()
-      }
-      else if (report.status !== 'running' && Date.now() - Date.parse(report.createdAt) > maxAgeMs) {
-        process.stderr.write('[preflight] 等待验证超时，本轮失效。\n')
-        interrupted()
-      }
-    }, 1000)
-    await closed
-  }
-  catch (error) {
-    const check = report.checks.find(item => item.id === 'base')!
-    Object.assign(check, { status: 'blocked', checkedAt: new Date().toISOString(), detail: String(error) })
-    await session.save()
-    throw error
-  }
-  finally {
-    await stop()
-    process.removeListener('SIGINT', interrupted)
-    process.removeListener('SIGTERM', interrupted)
-  }
+  await runPreflightDaemon(session)
 }
 
 async function main() {
@@ -142,6 +66,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  process.stderr.write(`[preflight] 全面测试已阻断：${String(error)}\n`)
+  process.stderr.write(`[preflight] 全面测试已阻断：${formatWorkflowError(error)}\n`)
   process.exitCode = 1
 })

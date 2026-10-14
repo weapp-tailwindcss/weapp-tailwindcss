@@ -14,6 +14,7 @@ export class PreflightSession {
   private lease?: string
   private controller = new AbortController()
   private workers = new Set<Promise<Check>>()
+  private saving = Promise.resolve()
 
   async cancel() {
     this.controller.abort()
@@ -23,7 +24,10 @@ export class PreflightSession {
   constructor(readonly report: PreflightReport, readonly file: string, readonly dir: string, private probe: Probe = runProbe) {}
 
   async save() {
-    await writeReport(this.file, this.report)
+    const saved = this.saving.then(() => writeReport(this.file, this.report))
+    // 每个调用者保留自己的写入错误，后续阻断报告仍可排队保存。
+    this.saving = saved.catch(() => {})
+    await saved
   }
 
   async exclusive<T>(action: () => Promise<T>) {
