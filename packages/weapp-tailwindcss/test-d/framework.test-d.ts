@@ -8,8 +8,10 @@ import {
   isRunningInHBuilderX,
   isUniAppXPackage,
   resolveMpxPlatform,
+  resolveMpxPlatformFromEnv,
   resolvePlatform,
   resolveTaroPlatform,
+  resolveTaroPlatformFromEnv,
   resolveUniAppXPlatform,
   resolveUniPlatform,
   resolveUniPlatformsFromEnv,
@@ -24,6 +26,8 @@ expectType<boolean>(isUniAppXPackage({ devDependencies: { '@dcloudio/uni-uts-v1'
 expectType<boolean>(isRunningInHBuilderX({ cwd: '/Applications/HBuilderX.app/Contents/HBuilderX/plugins/uniapp-cli-vite' }))
 expectType<boolean>(resolveTaroPlatform().isWeb)
 expectType<boolean>(resolveMpxPlatform().isMp)
+expectType<boolean>(resolveTaroPlatformFromEnv({ TARO_ENV: 'h5' }).isWeb)
+expectType<boolean>(resolveMpxPlatformFromEnv({ MPX_CLI_MODE: 'wx' }).isMp)
 expectType<boolean>(resolvePlatform('h5').isWeb)
 expectType<boolean>(resolveUniPlatform().isWeb)
 expectType<boolean>(resolveUniAppXPlatform().isApp)
