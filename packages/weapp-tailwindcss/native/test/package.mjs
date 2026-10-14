@@ -5,9 +5,9 @@ import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import process from 'node:process'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { execa } from 'execa'
 import { satisfies } from 'semver'
 import { extract } from 'tar'
+import { execaPnpm } from '../../../../scripts/pnpm-exec.mjs'
 import { getNativeBindingSuffix, requireNativeBinding } from '../../src/native/resolve.ts'
 import { thirdPartyLicenseFile } from '../distribution.mjs'
 
@@ -24,7 +24,7 @@ async function main() {
 
   async function packAndExtract(source, destination) {
     const tarballRoot = await mkdtemp(join(tempRoot, 'tarball-'))
-    await execa('pnpm', ['pack', '--pack-destination', tarballRoot], { cwd: source })
+    await execaPnpm(['pack', '--pack-destination', tarballRoot], { cwd: source })
     const tarballs = (await readdir(tarballRoot)).filter(file => file.endsWith('.tgz'))
     assert.equal(tarballs.length, 1)
     await mkdir(destination, { recursive: true })
@@ -111,7 +111,7 @@ async function main() {
       private: true,
       optionalDependencies: { [name]: tarballsByPackage.get(name) },
     }))
-    await execa('pnpm', ['install', '--offline', '--ignore-scripts'], { cwd: installation })
+    await execaPnpm(['install', '--offline', '--ignore-scripts'], { cwd: installation })
     const installedRequire = createRequire(join(installation, 'package.json'))
     if (!cssOnly) {
       verifyCore(installedRequire(name))

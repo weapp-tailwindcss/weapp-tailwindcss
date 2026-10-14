@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { execa } from 'execa'
 import { extract } from 'tar'
+import { execaPnpm } from '../../../scripts/pnpm-exec.mjs'
 import { install, pack, packageRoot, repositoryRoot } from './package-utils.mjs'
 import { assertPackedPackageVersion, assertPackedWorkspaceDependency } from './package-versions.mjs'
 
@@ -53,7 +54,7 @@ console.log(JSON.stringify(exports))
       assert.ok(output.indexOf('blue') < output.indexOf('red'))
     }
   }
-  const tree = JSON.parse((await execa('pnpm', ['list', '--depth', 'Infinity', '--json'], { cwd: consumer })).stdout)
+  const tree = JSON.parse((await execaPnpm(['list', '--depth', 'Infinity', '--json'], { cwd: consumer })).stdout)
   const forbidden = /^(?:@tailwindcss\/|tailwindcss$|@pandacss\/|@babel\/|@weapp-tailwindcss\/(?:engine|source-scan|native)|lightningcss$|mdn-data$)/
   function inspect(value) {
     if (!value || typeof value !== 'object') {
@@ -81,7 +82,7 @@ void diagnostics; void CascadeLayerError
 compileCascadeLayers(root, {})
 `)
   }
-  await execa('pnpm', ['exec', 'tsc', '--ignoreConfig', '--noEmit', '--strict', '--module', 'NodeNext', '--moduleResolution', 'NodeNext', '--target', 'ES2022', '--skipLibCheck', 'false', path.join(consumer, 'types.mts'), path.join(consumer, 'types.cts')], { cwd: repositoryRoot })
+  await execaPnpm(['exec', 'tsc', '--ignoreConfig', '--noEmit', '--strict', '--module', 'NodeNext', '--moduleResolution', 'NodeNext', '--target', 'ES2022', '--skipLibCheck', 'false', path.join(consumer, 'types.mts'), path.join(consumer, 'types.cts')], { cwd: repositoryRoot })
   const postcssRoot = path.join(repositoryRoot, 'packages', 'postcss')
   const postcssSourceManifest = JSON.parse(await readFile(path.join(postcssRoot, 'package.json'), 'utf8'))
   const postcssTarball = await pack(tempRoot, postcssRoot)

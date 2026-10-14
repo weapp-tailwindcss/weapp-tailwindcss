@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { execa } from 'execa'
+import { execaPnpm } from '../../../scripts/pnpm-exec.mjs'
 import { install, pack, repositoryRoot } from './package-utils.mjs'
 
 const tempRoot = await mkdtemp(path.join(tmpdir(), 'css-compat-consumers-'))
@@ -68,7 +69,7 @@ const expectedSelectors = JSON.parse(selectors)
   preflight: false, include: [], outdir: 'styled-system', polyfill: false,
   staticCss: { css: [{ properties: { display: ['flex'], width: ['13px'], color: ['red', 'blue'] } }] },
 }\n`)
-  await execa('pnpm', ['exec', 'panda', 'cssgen', '--outfile', 'panda.css', '--minimal'], { cwd: panda })
+  await execaPnpm(['exec', 'panda', 'cssgen', '--outfile', 'panda.css', '--minimal'], { cwd: panda })
   await check('panda-2.1.2', await readFile(path.join(panda, 'panda.css'), 'utf8'), ['.display_flex', '.width_13px', '.color_red', '.color_blue'])
 
   const facade = await import(pathToFileURL(path.join(repositoryRoot, 'packages', 'postcss', 'dist', 'transform.js')).href)

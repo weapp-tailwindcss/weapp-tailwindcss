@@ -3,7 +3,7 @@ import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { execa } from 'execa'
+import { execaPnpm } from '../../../scripts/pnpm-exec.mjs'
 
 export const packageRoot = fileURLToPath(new URL('..', import.meta.url))
 export const repositoryRoot = path.resolve(packageRoot, '..', '..')
@@ -11,7 +11,7 @@ export const repositoryRoot = path.resolve(packageRoot, '..', '..')
 export async function pack(tempRoot, source = packageRoot) {
   const destination = path.join(tempRoot, 'packed', path.basename(source))
   await mkdir(destination, { recursive: true })
-  await execa('pnpm', ['pack', '--pack-destination', destination], { cwd: source })
+  await execaPnpm(['pack', '--pack-destination', destination], { cwd: source })
   const tarballs = (await readdir(destination)).filter(file => file.endsWith('.tgz'))
   assert.equal(tarballs.length, 1)
   return path.join(destination, tarballs[0])
@@ -52,7 +52,7 @@ export async function install(directory, dependencies, tarballs = {}) {
       }
     }
     await writeFile(path.join(directory, 'package.json'), JSON.stringify({ name: 'css-compat-isolated-consumer', private: true, type: 'module', dependencies: installed }))
-    await execa('pnpm', ['install', '--ignore-scripts', '--no-frozen-lockfile'], { cwd: directory, env: { CI: '1' } })
+    await execaPnpm(['install', '--ignore-scripts', '--no-frozen-lockfile'], { cwd: directory, env: { CI: '1' } })
   }
   finally {
     if (server.listening) {
