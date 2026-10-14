@@ -45,12 +45,22 @@ export function resolveTaroPlatform(value: string | undefined = getProcessEnv().
   return resolvePlatform(value)
 }
 
+/** 读取 Taro 环境快照；省略快照时才使用调用时的进程环境。 */
+export function resolveTaroPlatformFromEnv(env: FrameworkEnv = getProcessEnv()) {
+  return resolvePlatform(env.TARO_ENV)
+}
+
 function resolveMpxPlatformValue(env: FrameworkEnv = getProcessEnv()) {
   return env.MPX_CURRENT_TARGET_MODE ?? env.MPX_CLI_MODE
 }
 
 export function resolveMpxPlatform(value: string | undefined = resolveMpxPlatformValue()) {
   return resolvePlatform(value)
+}
+
+/** 读取 MPX 环境快照，保留 current mode 的空字符串优先级。 */
+export function resolveMpxPlatformFromEnv(env: FrameworkEnv = getProcessEnv()) {
+  return resolvePlatform(resolveMpxPlatformValue(env))
 }
 
 export function resolveUniPlatform(value: string | undefined = getProcessEnv().UNI_PLATFORM) {

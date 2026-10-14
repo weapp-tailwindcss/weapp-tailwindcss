@@ -1,22 +1,23 @@
-import type { DetectableAppType, DetectAppTypeOptions, PackageJsonLike, UniAppManifestLike } from './types'
+import type { DetectableAppType, DetectAppTypeOptions, PackageJsonLike } from './types'
 import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { detectAppTypeFromEnv } from './detect-env'
 import { getProcessEnv } from './environment'
+import { parseManifestJson } from './manifest'
 import { detectAppTypeFromPackageJson, isUniAppXManifest } from './package'
 
 const PACKAGE_JSON_FILE = 'package.json'
 const MANIFEST_JSON_FILE = 'manifest.json'
 const MPX_MARKERS = [['src', 'app.mpx'], ['app.mpx']] as const
 
-function tryReadJson<T>(file: string): T | undefined {
+function tryReadJson<T>(file: string, parse: (text: string) => T = JSON.parse): T | undefined {
   if (!existsSync(file)) {
     return
   }
 
   try {
-    return JSON.parse(readFileSync(file, 'utf8')) as T
+    return parse(readFileSync(file, 'utf8'))
   }
   catch {
 
@@ -44,7 +45,7 @@ function detectAppTypeFromRoot(root: string, searchUp = true): DetectableAppType
 
   let current = resolvedRoot
   while (true) {
-    const manifest = tryReadJson<UniAppManifestLike>(path.join(current, MANIFEST_JSON_FILE))
+    const manifest = tryReadJson(path.join(current, MANIFEST_JSON_FILE), parseManifestJson)
     if (isUniAppXManifest(manifest)) {
       return 'uni-app-x'
     }

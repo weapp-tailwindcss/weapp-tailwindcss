@@ -13,8 +13,10 @@ export {
 export {
   normalizeFrameworkStylePlatform,
   resolveMpxPlatform,
+  resolveMpxPlatformFromEnv,
   resolvePlatform,
   resolveTaroPlatform,
+  resolveTaroPlatformFromEnv,
   resolveUniAppXPlatform,
   resolveUniPlatform,
   resolveUniPlatformsFromEnv,

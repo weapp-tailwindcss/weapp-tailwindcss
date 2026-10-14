@@ -1,6 +1,6 @@
 import os from 'node:os'
-import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as env from '@weapp-tailwindcss/env'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as framework from '@/framework'
 import { normalizeFrameworkStylePlatform } from '@/framework/platform'
 import { isRunningInHBuilderX as legacyHBuilderX } from '@/utils/hbuilderx'
@@ -29,7 +29,11 @@ describe('framework 兼容层', () => {
   it('旧入口的显式环境快照也保持隔离', () => {
     vi.stubEnv('UNI_PLATFORM', 'h5')
     vi.stubEnv('UNI_UTS_PLATFORM', 'app-android')
+    vi.stubEnv('TARO_ENV', 'h5')
+    vi.stubEnv('MPX_CURRENT_TARGET_MODE', 'web')
     expect(framework.resolveUniPlatformsFromEnv({}).uniUtsPlatform.normalized).toBeUndefined()
+    expect(framework.resolveTaroPlatformFromEnv({}).raw).toBeUndefined()
+    expect(framework.resolveMpxPlatformFromEnv({ MPX_CLI_MODE: 'wx' }).raw).toBe('wx')
     expect(framework.detectAppTypeFromEnv({}, { cwd: os.tmpdir() })).toBeUndefined()
   })
 })
