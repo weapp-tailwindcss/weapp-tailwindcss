@@ -245,7 +245,9 @@ describe('Expo Metro integration', () => {
       const transformerConfig = { ...(config.transformer ?? {}) } as Record<string, unknown>
       const originalTransformerPath = transformerConfig.weappTailwindcssOriginalTransformerPath
       for (const key of Object.keys(transformerConfig)) {
-        if (key.startsWith('weappTailwindcss')) { delete transformerConfig[key] }
+        if (key.startsWith('weappTailwindcss')) {
+          delete transformerConfig[key]
+        }
       }
       transformerConfig.weappTailwindcssOriginalTransformerPath = originalTransformerPath
       const result = await transform(transformerConfig, temporaryRoot, path.join(temporaryRoot, 'Screen.tsx'), Buffer.from('<View className="flex" />'), {}) as { code: string }
