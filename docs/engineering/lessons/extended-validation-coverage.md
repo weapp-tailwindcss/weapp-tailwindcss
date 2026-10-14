@@ -11,6 +11,8 @@ regressions:
   - packages/weapp-tailwindcss/test/native-targets.test.ts
   - website/scripts/local-worker/server.test.ts
   - website/scripts/local-worker/command.test.ts
+  - website/scripts/local-worker/process-lifecycle.test.ts
+  - website/scripts/local-worker/windows-lifecycle.test.ts
 ---
 
 # 扩展验收的遗漏阶段必须进入同一次门禁
@@ -29,6 +31,8 @@ regressions:
 
 网站本地入口需要绑定本轮构建身份与独立 Wrangler 子进程，显式传入测试 URL，禁止更新截图；提前退出、取消、请求或响应体挂起和清理失败均属于阻断边界。具体操作维护在[多端手册](../../../e2e/LOCAL-MULTI-PLATFORM-E2E.md)。
 
+进程退出和后代结束属于不同的边界。Playwright 在 POSIX 上启动的浏览器使用独立进程组，根 CLI 退出后仅停止原进程组会遗漏这类后代；Windows 的历史根 PID 也不能用于重新领取树归属。网站作用域应在根仍存活时捕获身份并持续观察，收尾核验已登记后代的出生身份，不按进程名称或旧 PPID 扩大清理范围。初始身份不足、查询超时和晚到结果必须阻断，取消与 observer 关闭失败均需保留。
+
 ## 验证
 
 在 macOS arm64、Node 24.18.0、pnpm 12.9.1 的本任务工作树中，修复前的宿主目标 12 项回归全部失败，扩展编排 2 项失败，证明新合同原先没有实现。修复后主包目标映射 13 项通过，编排与预检相关 8 文件共 144 项通过，使用 `CI=1` 和 `--update=none`。其中环境、浏览器和设备探针采用合成替身，只证明门禁合同，不证明真实设备或浏览器验收。
@@ -40,13 +44,22 @@ pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/demo-workflow-extended.test
 pnpm --filter weapp-tailwindcss exec vitest run test/native-targets.test.ts --update=none --coverage.enabled=false
 ```
 
-网站合成 HTTP/Node 生命周期定向回归 2 文件共 20 项通过，新入口定向 TypeScript 与 ESLint 通过；尚未构建运行时包时，网站完整类型检查因 `cva`、`merge`、`variants` 声明缺失而失败，需在门禁内构建后复验，不能将定向检查替代完整网站类型验收。
+网站生命周期修复在合入主任务工作树后，部署与生命周期 6 文件共 55 项回归通过，其中新增生命周期 4 文件共 37 项；扩展编排与共享进程树/observer 6 文件共 66 项通过。定向 TypeScript 与 ESLint 通过。真实合成 Node 进程证明同组及独立组后代收尾行为；Windows 分支仍是受控身份替身，不能作为 Windows 原机验收。两次首次失败原始输出保存在 `e2e/.artifacts/full-validation-20261014/website-lifecycle-first-failure.log` 与 `website-detached-first-failure.log`。
 
-本条记录对应基线上的未提交改动和本任务网站提交。实际执行 `pnpm e2e:preflight prepare --extended`，基础工具、微信 IDE 真实连接、HBuilderX、iOS、Android、Harmony、三浏览器交互与 RN/Lynx 两端工具链共 9 项脚本探针通过；原生 UI 工具此前返回 `The Mac is locked and automatic unlock could not unlock it`，当前会话 computer use 无法完成。本轮使用 `e2e:preflight block` 保存原始错误并关闭服务，报告保留在 `e2e/.artifacts/preflight/c8f94e0a-963a-46a7-a15b-7a3e17ee7ed9/report.json`。用户解锁后必须重新 prepare，不能复用已阻断报告。完整扩展验收和真实网站 Worker 尚未启动，changeset 收尾和 main 推送尚未执行。
+```bash
+pnpm --filter @weapp-tailwindcss/website exec vitest run scripts/docs-deployment.test.ts scripts/deploy-docs-cloudflare.test.mjs scripts/local-worker/server.test.ts scripts/local-worker/command.test.ts scripts/local-worker/process-lifecycle.test.ts scripts/local-worker/windows-lifecycle.test.ts --update=none
+pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/demo-workflow-extended.test.ts e2e/demo-workflow-process-identity.test.ts e2e/demo-workflow-exit-lifecycle.test.ts e2e/demo-workflow-windows-cleanup.test.ts e2e/demo-workflow-capture-flight.test.ts e2e/demo-workflow-process-observer.test.ts --update=none
+```
+
+尚未构建运行时包时，网站完整类型检查因 `cva`、`merge`、`variants` 声明缺失而失败，需在门禁内构建后复验，不能将定向检查替代完整网站类型验收。
+
+当前修复保存在独立工作树的本地提交，尚未推送 main。实际执行 `pnpm e2e:preflight prepare --extended`，基础工具、微信 IDE 真实连接、HBuilderX、iOS、Android、Harmony、三浏览器交互与 RN/Lynx 两端工具链共 9 项脚本探针通过；原生 UI 工具此前返回 `The Mac is locked and automatic unlock could not unlock it`，当前会话 computer use 无法完成。本轮使用 `e2e:preflight block` 保存原始错误并关闭服务，报告保留在 `e2e/.artifacts/preflight/c8f94e0a-963a-46a7-a15b-7a3e17ee7ed9/report.json`。用户解锁后必须重新 prepare，不能复用已阻断报告。完整扩展验收和真实网站 Worker 尚未启动，changeset 收尾和 main 推送尚未执行。
 
 ## 适用边界
 
 本轮宿主为 macOS arm64。Windows/Linux 原机、其他原生架构和历史特殊版本对照未执行，合成目标映射不能替代这些环境。全面验收未完成前保持 `partial`，不以门禁单测通过宣称全仓通过。
+
+共享 POSIX 身份源沿用基线的 `ps lstart` 秒级出生时间；纯函数检查只能确认相同 PID、相同秒级时间的替代行无法区分，未诱发真实系统 PID 复用。本轮没有修复这一既有精度边界，也没有证明两次采集之间丢失全部活身份锚的孤儿归属；不得把本轮生命周期回归写成完整进程身份保证。
 
 ## 规则评估
 
