@@ -49,6 +49,7 @@
     "verify:domain-migration": "tsx scripts/verify-domain-migration.ts",
     "test:worker": "tsx scripts/verify-worker-local.ts",
     "e2e": "playwright test",
+    "e2e:local": "tsx scripts/browser-local.ts",
     "e2e:u": "playwright test -u",
     "exportRoutes": "tsx scripts/exportRoutes.ts"
   },
