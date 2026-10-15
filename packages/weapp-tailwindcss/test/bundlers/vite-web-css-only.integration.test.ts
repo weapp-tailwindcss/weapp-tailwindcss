@@ -42,6 +42,8 @@ describe('vite/web CSS-only 真实构建', () => {
   async function buildFixture(plugins: ReturnType<typeof WeappTailwindcssWeb>) {
     const root = await mkdtemp(path.join(process.cwd(), '.tmp-vite-web-css-only-'))
     try {
+      // 声明独立项目边界，避免继承外层仓库的框架依赖与扫描范围。
+      await writeFile(path.join(root, 'package.json'), JSON.stringify({ name: 'vite-web-css-only-fixture', private: true, type: 'module' }))
       await writeFile(path.join(root, 'index.html'), '<script type="module" src="/main.ts"></script><div class="text-red-500 bg-slate-100">hello</div>')
       await writeFile(path.join(root, 'main.css'), '@import "tailwindcss";\n@source "./index.html";')
       await writeFile(path.join(root, 'main.ts'), 'import "./main.css"; console.log("text-blue-500")')
@@ -67,6 +69,9 @@ describe('vite/web CSS-only 真实构建', () => {
       const js = await readFile(path.join(assetsDir, jsFile!), 'utf8')
       expect(css).toContain('.text-red-500')
       expect(css).toContain('.bg-slate-100')
+      expect(css).toContain(':root')
+      expect(css).toContain(':host')
+      expect(css).not.toContain('page {')
       expect(js).toContain('text-blue-500')
     }
     finally {
@@ -82,10 +87,13 @@ describe('vite/web CSS-only 真实构建', () => {
     await buildFixture(WeappTailwindcss())
   }, 120_000)
 
-  it('CSS-only 构建只消费源码候选，不额外生成项目级运行时类集合', async () => {
+  it.each([
+    ['专用入口', WeappTailwindcssWeb],
+    ['主入口', WeappTailwindcss],
+  ] as const)('%s 的 CSS-only 构建只消费源码候选，不额外生成项目级运行时类集合', async (_label, createPlugins) => {
     const collect = vi.spyOn(tailwindRuntime, 'collectRuntimeClassSet')
     try {
-      await buildFixture(WeappTailwindcssWeb())
+      await buildFixture(createPlugins())
       expect(collect).not.toHaveBeenCalled()
     }
     finally {
@@ -98,6 +106,7 @@ describe('vite/web CSS-only 真实构建', () => {
     const sourceFile = path.join(root, 'main.ts')
     const initialSource = 'import "./main.css"; console.log("text-red-500")'
     const updatedSource = 'import "./main.css"; console.log("text-emerald-400")'
+    await writeFile(path.join(root, 'package.json'), JSON.stringify({ name: 'vite-web-css-only-hmr-fixture', private: true, type: 'module' }))
     await writeFile(path.join(root, 'index.html'), '<script type="module" src="/main.ts"></script>')
     await writeFile(path.join(root, 'main.css'), '@import "tailwindcss";\n@source "./main.ts";')
     await writeFile(sourceFile, initialSource)
