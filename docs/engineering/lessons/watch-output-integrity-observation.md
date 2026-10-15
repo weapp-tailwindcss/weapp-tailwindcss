@@ -35,7 +35,7 @@ CI=1 pnpm --filter weapp-tailwindcss exec vitest run test/watch-output-integrity
 
 新工作树首次扩大验证因 workspace 导出尚未构建而失败，保留 `scoped-final.log` 和 `scoped-after-dependency.log`。执行 `pnpm exec turbo run build --filter='weapp-tailwindcss^...'` 后，13 项依赖构建成功，完整定向结果保存在 `scoped-complete.log`。正常核心包 `pnpm --filter weapp-tailwindcss exec tsc -p tsconfig.typecheck.json --pretty false`、两个改动测试的显式 ESLint、规则与 diff 检查通过。
 
-额外按工具包真实严格配置扩展的类型探针发现未修改 CLI 的 10 条诊断。以未修改监控源码为入口的基线探针产生完全相同的诊断；该探针本轮未通过，单独跟进 CLI 类型边界，不能写成所有类型检查均通过。全面验收尚须在集成提交重新预检并从入口运行，本文保持 `partial`。
+额外按工具包真实严格配置扩展的类型探针发现未修改 CLI 的 10 条诊断。以未修改监控源码为入口的基线探针产生完全相同的诊断；该探针在观察顺序提交中未通过，不能写成所有类型检查均通过。后续[CLI 严格可选参数修复](watch-cli-strict-options.md)保留原始失败，并通过真实配置的持久类型回归验证修复。全面验收尚须在集成提交重新预检并从入口运行，本文保持 `partial`。
 
 ## 适用边界
 

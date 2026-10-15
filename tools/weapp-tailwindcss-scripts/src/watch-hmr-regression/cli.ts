@@ -60,8 +60,19 @@ function parseMiniProgramScope(value: string | undefined): MiniProgramScope | un
 export function resolveOptions(): CliOptions {
   const argv = process.argv.slice(2)
   const miniProgramScope = parseMiniProgramScope(
-    parseArg('--mini-program-scope', argv) ?? process.env.E2E_WATCH_MINI_PROGRAM_SCOPE,
+    parseArg('--mini-program-scope', argv) ?? process.env['E2E_WATCH_MINI_PROGRAM_SCOPE'],
   )
+  const mainStyleSubPackageLimit = parseOptionalNumber(parseArg('--main-style-subpackage-limit', argv))
+    ?? parseOptionalNumber(process.env['E2E_WATCH_MAIN_STYLE_SUBPACKAGE_LIMIT'])
+  const reportFile = parseFirstArg(['--report', '--report-file'], argv)
+  const maxHotUpdateMs = parseOptionalNumber(parseArg('--max-hot-update-ms', argv))
+    ?? parseOptionalNumber(process.env['E2E_WATCH_MAX_HOT_UPDATE_MS'])
+  const maxMemoryRssMb = parseOptionalNumber(parseArg('--max-memory-rss-mb', argv))
+    ?? parseOptionalNumber(process.env['E2E_WATCH_MAX_MEMORY_RSS_MB'])
+  const maxMemoryRssDeltaMb = parseOptionalNumber(parseArg('--max-memory-rss-delta-mb', argv))
+    ?? parseOptionalNumber(process.env['E2E_WATCH_MAX_MEMORY_RSS_DELTA_MB'])
+  const maxMemoryHeapUsedMb = parseOptionalNumber(parseArg('--max-memory-heap-used-mb', argv))
+    ?? parseOptionalNumber(process.env['E2E_WATCH_MAX_MEMORY_HEAP_USED_MB'])
   return {
     caseName: (parseArg('--case', argv) ?? 'all') as CliOptions['caseName'],
     timeoutMs: parseNumber(parseArg('--timeout', argv), 240000),
@@ -72,23 +83,18 @@ export function resolveOptions(): CliOptions {
     miniProgramOnly: parseBooleanFlag('--mini-program-only', argv)
       || parseBooleanEnv('E2E_WATCH_MINI_PROGRAM_ONLY')
       || miniProgramScope != null,
-    miniProgramScope,
+    ...(miniProgramScope !== undefined ? { miniProgramScope } : {}),
     styleOnly: parseBooleanFlag('--style-only', argv),
     mainStyleOnly: parseBooleanFlag('--main-style-only', argv),
-    mainStyleSubPackageLimit: parseOptionalNumber(parseArg('--main-style-subpackage-limit', argv))
-      ?? parseOptionalNumber(process.env.E2E_WATCH_MAIN_STYLE_SUBPACKAGE_LIMIT),
-    reportFile: parseFirstArg(['--report', '--report-file'], argv),
-    maxHotUpdateMs: parseOptionalNumber(parseArg('--max-hot-update-ms', argv))
-      ?? parseOptionalNumber(process.env.E2E_WATCH_MAX_HOT_UPDATE_MS),
+    ...(mainStyleSubPackageLimit !== undefined ? { mainStyleSubPackageLimit } : {}),
+    ...(reportFile !== undefined ? { reportFile } : {}),
+    ...(maxHotUpdateMs !== undefined ? { maxHotUpdateMs } : {}),
     maxPluginProcessMs: parseOptionalNumber(parseArg('--max-plugin-process-ms', argv))
-      ?? parseOptionalNumber(process.env.E2E_WATCH_MAX_PLUGIN_PROCESS_MS)
+      ?? parseOptionalNumber(process.env['E2E_WATCH_MAX_PLUGIN_PROCESS_MS'])
       ?? DEFAULT_PLUGIN_PROCESS_BUDGET_MS,
-    maxMemoryRssMb: parseOptionalNumber(parseArg('--max-memory-rss-mb', argv))
-      ?? parseOptionalNumber(process.env.E2E_WATCH_MAX_MEMORY_RSS_MB),
-    maxMemoryRssDeltaMb: parseOptionalNumber(parseArg('--max-memory-rss-delta-mb', argv))
-      ?? parseOptionalNumber(process.env.E2E_WATCH_MAX_MEMORY_RSS_DELTA_MB),
-    maxMemoryHeapUsedMb: parseOptionalNumber(parseArg('--max-memory-heap-used-mb', argv))
-      ?? parseOptionalNumber(process.env.E2E_WATCH_MAX_MEMORY_HEAP_USED_MB),
+    ...(maxMemoryRssMb !== undefined ? { maxMemoryRssMb } : {}),
+    ...(maxMemoryRssDeltaMb !== undefined ? { maxMemoryRssDeltaMb } : {}),
+    ...(maxMemoryHeapUsedMb !== undefined ? { maxMemoryHeapUsedMb } : {}),
   }
 }
 
@@ -115,8 +121,9 @@ function findWorkspaceRoot(start: string) {
 }
 
 export function resolveBaseCwd() {
-  const start = process.env.INIT_CWD
-    ? path.resolve(process.env.INIT_CWD)
+  const initialCwd = process.env['INIT_CWD']
+  const start = initialCwd
+    ? path.resolve(initialCwd)
     : process.cwd()
   return findWorkspaceRoot(start)
 }

@@ -1,16 +1,33 @@
-import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises'
+import type {
+  CliOptions,
+  MainStyleHotUpdateMetrics,
+  MutationRoundMetrics,
+  WatchCase,
+  WatchCaseMetrics,
+  WatchCaseMutationMetrics,
+} from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/types'
 import { promises as fs } from 'node:fs'
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { parse } from 'yaml'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { parse } from 'yaml'
 import {
-  buildDemoBaseCases,
-} from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cases/demo/base'
+  buildWatchHmrArgs,
+  resolveWatchCommandOptions,
+} from '../../../e2e/run-hot-update'
 import {
   collectWatchArtifactSnapshot,
   createWatchCaseArtifacts,
 } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/artifacts'
+import {
+  buildCases,
+  filterCasesForPlatform,
+  pickCases,
+} from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cases'
+import {
+  buildDemoBaseCases,
+} from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cases/demo/base'
 import {
   buildDemoExtendedCases,
 } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cases/demo/extended'
@@ -18,18 +35,63 @@ import {
   buildUniAppHBuilderXCases,
 } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cases/demo/hbuilderx'
 import {
-  buildCases,
-  filterCasesForPlatform,
-  pickCases,
-} from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cases'
-import {
   buildHexScriptRoundConfigs,
   buildIssue33HighRiskRoundConfigs,
   buildTailwindV4JsContentRoundConfigs,
 } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cases/round-configs'
 import {
+  resolveOptions,
+} from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cli'
+import {
   summarizeHmrDurations,
 } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/hmr-durations'
+import {
+  summarizeMemoryDebugSamples,
+  summarizeMemorySamples,
+} from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/memory-report'
+import {
+  runAddedClassMutation,
+} from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/class/added-class'
+import {
+  assertNoUnsupportedMiniProgramCssImport,
+  collectPluginProcessMetrics,
+  createClassMutationScenario,
+  createStyleMutationPayload,
+  expandOutputFileEntries,
+  hasResolvedOutputFiles,
+  isOutputFileCandidate,
+  readJoinedOutputFiles,
+  resolveCompileSettleTimeoutMs,
+  waitForCompileSettled,
+  waitForInitialWarmup,
+  waitForOutputFilesUpdated,
+  waitForOutputFilesUpdatedWithDiagnostics,
+  waitForOutputsReady,
+  waitForOutputsUpdated,
+} from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/shared'
+import {
+  collectSubPackageStyleOutputs,
+} from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/subpackage'
+import {
+  ISSUE33_ADD_CLASS_TOKENS,
+  ISSUE33_MODIFY_CLASS_TOKENS,
+} from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/tokens'
+import {
+  assertHotUpdateBudget,
+  assertMemoryBudget,
+  assertPluginProcessBudget,
+} from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/runner'
+import {
+  createWindowsProcessTreeMemoryScript,
+  isCompileSuccessLine,
+  parsePluginProcessSample,
+} from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/session'
+import {
+  buildSpeedReport,
+  collectSpeedSamplesFromReport,
+  renderSpeedReportMarkdown,
+  summarizeSpeedSamples,
+} from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/speed-report'
 import {
   resolveReportPath,
   resolveRepositoryRootLabel,
@@ -43,53 +105,6 @@ import {
   writeReport,
 } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/summary'
 import {
-  buildSpeedReport,
-  collectSpeedSamplesFromReport,
-  renderSpeedReportMarkdown,
-  summarizeSpeedSamples,
-} from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/speed-report'
-import {
-  assertMemoryBudget,
-  assertHotUpdateBudget,
-  assertPluginProcessBudget,
-} from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/runner'
-import {
-  summarizeMemoryDebugSamples,
-  summarizeMemorySamples,
-} from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/memory-report'
-import {
-  createWindowsProcessTreeMemoryScript,
-  isCompileSuccessLine,
-  parsePluginProcessSample,
-} from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/session'
-import {
-  resolveOptions,
-} from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/cli'
-import {
-  createStyleMutationPayload,
-  expandOutputFileEntries,
-  assertNoUnsupportedMiniProgramCssImport,
-  createClassMutationScenario,
-  collectPluginProcessMetrics,
-  hasResolvedOutputFiles,
-  isOutputFileCandidate,
-  readJoinedOutputFiles,
-  resolveCompileSettleTimeoutMs,
-  waitForCompileSettled,
-  waitForInitialWarmup,
-  waitForOutputsReady,
-  waitForOutputsUpdated,
-  waitForOutputFilesUpdated,
-  waitForOutputFilesUpdatedWithDiagnostics,
-} from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/shared'
-import {
-  ISSUE33_ADD_CLASS_TOKENS,
-  ISSUE33_MODIFY_CLASS_TOKENS,
-} from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/tokens'
-import {
-  runAddedClassMutation,
-} from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/class/added-class'
-import {
   alignContentEol,
   appendTrailingSnippet,
   assertContains,
@@ -97,8 +112,8 @@ import {
   assertNotContains,
   createStyleRuleSnippet,
   escapeRegExp,
-  findCssRuleBody,
   findCssRuleBodies,
+  findCssRuleBody,
   getMtime,
   insertBeforeAnchor,
   insertBeforeClosingTag,
@@ -108,14 +123,14 @@ import {
   mutateTsxScriptByReturnAnchor,
   mutateTsxScriptByReturnAnchorWithCommentCarrier,
   mutateVueRefStringLiteral,
-  mutateVueScriptSetupObjectKeyByAnchor,
-  mutateVueScriptSetupObjectKeyByAnchorWithCommentCarrier,
   mutateVueScriptSetupArrayByAnchor,
   mutateVueScriptSetupArrayByAnchorWithCommentCarrier,
+  mutateVueScriptSetupObjectKeyByAnchor,
+  mutateVueScriptSetupObjectKeyByAnchorWithCommentCarrier,
   normalizeCssDeclaration,
-  replaceExactSnippet,
   readFileIfExists,
   readFileWithRetry,
+  replaceExactSnippet,
   waitFor,
   writeFilePreserveEol,
   writeWatchedFilePreserveEol,
@@ -128,31 +143,16 @@ import {
   resolveWebHmrDomAttachTimeout,
   resolveWebHmrMarkerAttachTimeout,
   resolveWebHmrReloadStallMs,
-  waitForWebPageReloadReady,
   waitForWebPageReady,
+  waitForWebPageReloadReady,
 } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/web'
 import {
   resolveReloadAcceptAttemptTimeout,
   resolveWebCompileSettleTimeoutMs,
   waitForWebCompileSettled,
 } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/web-compile-settle'
-import {
-  buildWatchHmrArgs,
-  resolveWatchCommandOptions,
-} from '../../../e2e/run-hot-update'
-import {
-  collectSubPackageStyleOutputs,
-} from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/subpackage'
 import { replaceWxml } from '../src/wxml/shared'
 import { resolveWorkflowMatrixEnv } from './ci/workflow-matrix'
-import type {
-  CliOptions,
-  MainStyleHotUpdateMetrics,
-  MutationRoundMetrics,
-  WatchCase,
-  WatchCaseMetrics,
-  WatchCaseMutationMetrics,
-} from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/types'
 
 const payload = {
   marker: 'tw-watch-20260313',
@@ -1534,11 +1534,13 @@ describe('watch-hmr regression cli options', () => {
     process.env.E2E_WATCH_MAIN_STYLE_SUBPACKAGE_LIMIT = ''
 
     try {
-      expect(resolveOptions()).toMatchObject({
+      const options = resolveOptions()
+      expect(options).toMatchObject({
         caseName: 'mpx-tailwindcss-v4',
         mainStyleOnly: true,
-        mainStyleSubPackageLimit: undefined,
       })
+      expect(options.mainStyleSubPackageLimit).toBeUndefined()
+      expect(Object.hasOwn(options, 'mainStyleSubPackageLimit')).toBe(false)
     }
     finally {
       process.argv = originalArgv
@@ -3489,8 +3491,8 @@ describe('watch-hmr regression cases', () => {
       'utf8',
     )
 
-    expect(configSource).toMatch(/compiler:\s*{\s*type:\s*'webpack5',\s*prebundle:\s*{\s*enable:\s*false,/)
-    expect(configSource).not.toMatch(/h5:\s*{[\s\S]*?prebundle:\s*{\s*enable:\s*false,/)
+    expect(configSource).toMatch(/compiler:\s*\{\s*type:\s*'webpack5',\s*prebundle:\s*\{\s*enable:\s*false,/)
+    expect(configSource).not.toMatch(/h5:\s*\{[\s\S]*?prebundle:\s*\{\s*enable:\s*false,/)
   })
 
   it('waits for existing Web/H5 DOM nodes before source DOM replacement', () => {
@@ -3663,7 +3665,7 @@ describe('watch-hmr regression cases', () => {
         watch_max_attempts: '1',
       }),
     ]))
-    expect(String(workflowSource)).toContain('${{ matrix.artifact_case || matrix.watch_case }}')
+    expect(String(workflowSource)).toContain(`\${{ matrix.artifact_case || matrix.watch_case }}`)
     expect(prMatrixEntries.filter(entry => String(entry.watch_case).startsWith('weapp-vite-tailwindcss-'))).toEqual([
       expect.objectContaining({
         os: 'windows-latest',
