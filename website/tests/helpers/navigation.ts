@@ -1,6 +1,7 @@
 import type { Frame, Page, Request, Response } from '@playwright/test'
 import { randomUUID } from 'node:crypto'
 import { expect } from '@playwright/test'
+import { commitCacheRepresentation, matchesCacheRepresentation, readCacheRepresentation } from './document-cache'
 
 const reportingOrigins = new Set([
   'https://www.google-analytics.com',
@@ -27,7 +28,7 @@ async function readDocument(page: Page) {
     if (ready) {
       await document.fonts.ready
     }
-    const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined
+    const navigation = performance.getEntriesByType('navigation')[0] as (PerformanceNavigationTiming & { deliveryType?: string }) | undefined
     return {
       identity: Reflect.get(document, symbol) as string,
       url: document.URL,
@@ -35,6 +36,7 @@ async function readDocument(page: Page) {
       navigationUrl: navigation?.name,
       responseStatus: navigation?.responseStatus,
       decodedBodySize: navigation?.decodedBodySize,
+      deliveryType: navigation?.deliveryType,
     }
   }, { key: documentIdentityKey, identity: randomUUID() })
 }
@@ -47,7 +49,7 @@ function isReportingRequest(page: Page, request: Request) {
   return reportingOrigins.has(url.origin) && url.pathname === '/g/collect'
 }
 
-function successfulResponse(response: Response, runtime?: Awaited<ReturnType<typeof readDocument>>) {
+async function successfulResponse(page: Page, response: Response, runtime?: Awaited<ReturnType<typeof readDocument>>) {
   if (response.ok()) {
     return true
   }
@@ -56,19 +58,30 @@ function successfulResponse(response: Response, runtime?: Awaited<ReturnType<typ
   }
   // Firefox 暴露网络层 304，但导航性能记录保存浏览器合并缓存后的状态和正文大小。
   // 自动重验证头不出现在 Firefox 的 Playwright Request 中，不能据此判断缓存是否存在。
-  return Boolean(runtime?.navigationUrl && documentUrl(runtime.navigationUrl) === documentUrl(response.url())
-    && typeof runtime.responseStatus === 'number' && runtime.responseStatus >= 200 && runtime.responseStatus < 300
-    && typeof runtime.decodedBodySize === 'number' && runtime.decodedBodySize > 0)
+  if (!runtime?.navigationUrl || documentUrl(runtime.navigationUrl) !== documentUrl(response.url())) {
+    return false
+  }
+  if (typeof runtime.responseStatus === 'number' && runtime.responseStatus >= 200 && runtime.responseStatus < 300
+    && typeof runtime.decodedBodySize === 'number' && runtime.decodedBodySize > 0) {
+    return true
+  }
+  return matchesCacheRepresentation(page, response, runtime.deliveryType)
 }
 
-function assertDocumentResponse(response: Response | null | undefined, runtime?: Awaited<ReturnType<typeof readDocument>>) {
-  if (!response || !successfulResponse(response, runtime)) {
+async function assertDocumentResponse(page: Page, response: Response | null | undefined, runtime?: Awaited<ReturnType<typeof readDocument>>) {
+  if (!response || !await successfulResponse(page, response, runtime)) {
     throw new Error(`网站导航失败：HTTP ${response?.status() ?? '无响应'} ${response?.url() ?? ''}`)
   }
 }
 
 async function navigate(page: Page, action: () => Promise<Response | null>) {
   const pending = new Set<Request>()
+  const representations = new Map<Request, {
+    response: Response
+    evidence: ReturnType<typeof readCacheRepresentation>
+    finished: boolean
+    failed: boolean
+  }>()
   let generation = 0
   let lastActivity = Date.now()
   let documentRequest: Request | undefined
@@ -94,11 +107,21 @@ async function navigate(page: Page, action: () => Promise<Response | null>) {
     }
   }
   const onResponse = (response: Response) => {
-    if (response.request() === documentRequest) {
+    const request = response.request()
+    if (request.isNavigationRequest() && request.frame() === page.mainFrame() && request.method() === 'GET' && response.ok()) {
+      // 语言跳转的中间文档也可能完成 HTTP 缓存；来源只证明表示，不代替最终运行时。
+      // 无法读取正文的响应不提供缓存证据，后续 304 仍必须拒绝缺证来源。
+      representations.set(request, { response, evidence: readCacheRepresentation(response).catch(() => undefined), finished: false, failed: false })
+    }
+    if (request === documentRequest) {
       documentResponse = response
     }
   }
   const onFinished = (request: Request) => {
+    const representation = representations.get(request)
+    if (representation) {
+      representation.finished = true
+    }
     if (request === documentRequest) {
       documentFinished = true
     }
@@ -108,6 +131,10 @@ async function navigate(page: Page, action: () => Promise<Response | null>) {
   }
   const onFailed = (request: Request) => {
     onFinished(request)
+    const representation = representations.get(request)
+    if (representation) {
+      representation.failed = true
+    }
     if (request === documentRequest) {
       documentFailure = request.failure()?.errorText ?? '文档请求失败'
     }
@@ -132,7 +159,7 @@ async function navigate(page: Page, action: () => Promise<Response | null>) {
     const retainedResponse = previous?.identity === initialDocument.identity ? previous.response : undefined
     const actionResponse = await action()
     if (actionResponse && actionResponse.status() >= 400) {
-      assertDocumentResponse(actionResponse)
+      await assertDocumentResponse(page, actionResponse)
     }
     let accepted: { identity: string, response: Response, generation: number } | undefined
     let latestRuntime: Awaited<ReturnType<typeof readDocument>> | undefined
@@ -162,7 +189,11 @@ async function navigate(page: Page, action: () => Promise<Response | null>) {
       }
       latestRuntime = runtime
       const response = documentRequest ? documentResponse : retainedResponse
-      if (response && !successfulResponse(response, runtime)) {
+      const responseSuccessful = response && await successfulResponse(page, response, runtime)
+      if (currentGeneration !== generation) {
+        return 'pending'
+      }
+      if (response && !responseSuccessful) {
         return 'failed'
       }
       const ownsDocument = documentRequest
@@ -182,11 +213,25 @@ async function navigate(page: Page, action: () => Promise<Response | null>) {
     }).not.toBe('pending')
     expect(documentFailure, '最终文档请求必须成功').toBeUndefined()
     const finalResponse = documentRequest ? documentResponse : retainedResponse
-    assertDocumentResponse(finalResponse, latestRuntime)
+    if (!accepted) {
+      await assertDocumentResponse(page, finalResponse, latestRuntime)
+    }
     expect(accepted, '最终文档必须拥有已确认的响应、运行时和资源证据').toBeDefined()
     expect(accepted!.generation, '验收期间不能切换文档代际').toBe(generation)
     expect(accepted!.response, '验收响应必须仍属于最终文档').toBe(finalResponse)
+    const cacheEvidence = await Promise.all([...representations.values()]
+      .filter(source => source.finished && !source.failed)
+      .map(async source => ({ response: source.response, representation: await source.evidence })))
+    const finalRuntime = await readDocument(page)
+    expect(finalRuntime.ready, '读取缓存证据后运行时必须仍就绪').toBe(true)
+    expect(finalRuntime.identity, '读取缓存证据期间不能替换 Document').toBe(accepted!.identity)
+    expect(finalRuntime.url, '读取缓存证据期间不能改变文档 URL').toBe(latestRuntime!.url)
+    expect(generation, '读取缓存证据期间不能切换文档代际').toBe(accepted!.generation)
     expect(pending.size, '验收期间不能产生新的非统计资源').toBe(0)
+    expect(Date.now() - lastActivity, '读取缓存证据后资源必须仍连续空闲').toBeGreaterThanOrEqual(500)
+    for (const source of cacheEvidence) {
+      commitCacheRepresentation(page, source.response, source.representation)
+    }
     verifiedDocuments.set(page, accepted!)
     return accepted!.response
   }

@@ -76,6 +76,76 @@ test.describe('website document evidence', () => {
     }
   })
 
+  test('retains the same Vary request identity during real cached round trips', async ({ page, browserName }) => {
+    const fixture = await createDocumentFixture({ vary: 'Accept-Language' })
+    try {
+      await page.setExtraHTTPHeaders({ 'Accept-Language': 'zh-CN' })
+      await navigateWebsite(page, fixture.url('/cached'))
+      for (let round = 0; round < 2; round += 1) {
+        await navigateWebsite(page, fixture.url('/ready'))
+        const response = await navigateWebsite(page, fixture.url('/cached'))
+        expect(response.status()).toBe(browserName === 'chromium' ? 200 : 304)
+        expect(fixture.requests.filter(request => request.path === '/cached').at(-1))
+          .toMatchObject({ status: 304, validator: '"ready-v1"' })
+        await expect(page.locator('output')).toHaveText('ready')
+      }
+    }
+    finally {
+      await fixture.dispose()
+    }
+  })
+
+  test('reuses a complete intermediate locale representation without reusing its old runtime', async ({ page, browserName }) => {
+    const fixture = await createDocumentFixture()
+    const before = listenerCounts(page)
+    try {
+      await navigateWebsite(page, fixture.url('/locale'))
+      await expect(page).toHaveURL(fixture.url('/ready'))
+      await page.evaluate(() => localStorage.setItem('locale', 'en'))
+      for (let round = 0; round < 2; round += 1) {
+        const response = await navigateWebsite(page, fixture.url('/locale'))
+        expect(response.status()).toBe(browserName === 'chromium' ? 200 : 304)
+        expect(fixture.requests.filter(request => request.path === '/locale').at(-1))
+          .toMatchObject({ status: 304, validator: '"ready-v1"' })
+        await expect(page.locator('output')).toHaveText('ready')
+        await expect(page.locator('button')).toHaveCSS('color', 'rgb(12, 34, 56)')
+        await navigateWebsite(page, fixture.url('/ready'))
+      }
+      expect(listenerCounts(page)).toEqual(before)
+    }
+    finally {
+      await fixture.dispose()
+    }
+  })
+
+  for (const historyRoute of [false, true]) {
+    test(`revalidates a cached document across two round trips (History API: ${historyRoute})`, async ({ page, browserName }) => {
+      const fixture = await createDocumentFixture()
+      const before = listenerCounts(page)
+      try {
+        expect((await navigateWebsite(page, fixture.url('/cached'))).status()).toBe(200)
+        for (let round = 0; round < 2; round += 1) {
+          if (historyRoute) {
+            await page.evaluate(() => history.pushState(null, '', '/client-route'))
+          }
+          else {
+            await navigateWebsite(page, fixture.url('/ready'))
+          }
+          const response = await navigateWebsite(page, fixture.url('/cached'))
+          expect(fixture.requests.filter(request => request.path === '/cached').at(-1))
+            .toMatchObject({ status: 304, validator: '"ready-v1"' })
+          expect(response.status()).toBe(browserName === 'chromium' ? 200 : 304)
+          await expect(page.locator('output')).toHaveText('ready')
+          await expect(page.locator('button')).toHaveCSS('color', 'rgb(12, 34, 56)')
+        }
+        expect(listenerCounts(page)).toEqual(before)
+      }
+      finally {
+        await fixture.dispose()
+      }
+    })
+  }
+
   for (const historyRoute of [false, true]) {
     test(`reuses the verified document on fragment navigation and waits for business requests (History API: ${historyRoute})`, async ({ page }) => {
       const fixture = await createDocumentFixture()

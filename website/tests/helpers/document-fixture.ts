@@ -13,7 +13,15 @@ function deferred(released: boolean) {
 }
 
 /** 使用真实 HTTP 缓存，不注册会关闭浏览器缓存的 page.route。 */
-export async function createDocumentFixture(options: { holdResources?: boolean } = {}) {
+export async function createDocumentFixture(options: {
+  holdResources?: boolean
+  cacheControl?: string
+  vary?: string
+  revalidationEtag?: string | null
+  forceRevalidation?: boolean
+  partial?: boolean
+  contentRange?: string
+} = {}) {
   const css = deferred(!options.holdResources)
   const runtime = deferred(!options.holdResources)
   const business = deferred(false)
@@ -26,9 +34,10 @@ export async function createDocumentFixture(options: { holdResources?: boolean }
   async function respond(request: IncomingMessage, response: ServerResponse) {
     const pathname = new URL(request.url ?? '/', 'http://fixture.test').pathname
     const validator = request.headers['if-none-match']
-    const status = pathname === '/invalid304' || (pathname === '/cached' && validator === '"ready-v1"')
+    const status = pathname === '/invalid304' || ((pathname === '/cached' || pathname === '/locale' || pathname === '/unfinished-locale')
+      && (validator === '"ready-v1"' || (options.forceRevalidation && requests.some(request => request.path === '/cached'))))
       ? 304
-      : pathname === '/error' ? 500 : 200
+      : pathname === '/error' ? 500 : pathname === '/cached' && options.partial ? 206 : 200
     requests.push({ path: pathname, status, validator: typeof validator === 'string' ? validator : undefined })
     if (pathname === '/failed') {
       request.socket.destroy()
@@ -58,12 +67,24 @@ export async function createDocumentFixture(options: { holdResources?: boolean }
     }
     response.writeHead(status, {
       'Content-Type': 'text/html; charset=utf-8',
-      'Cache-Control': 'public, max-age=0, must-revalidate',
-      'ETag': '"ready-v1"',
+      'Cache-Control': options.cacheControl ?? 'public, max-age=0, must-revalidate',
+      ...(options.vary ? { Vary: options.vary } : {}),
+      ...(options.contentRange ? { 'Content-Range': options.contentRange } : {}),
+      ...(status === 304 && options.revalidationEtag === null ? {} : { ETag: status === 304 ? options.revalidationEtag ?? '"ready-v1"' : '"ready-v1"' }),
       ...(pathname === '/invalid304' ? { 'X-Cache': 'HIT' } : {}),
     })
     if (status === 304) {
       response.end()
+      return
+    }
+    if (pathname === '/unfinished-locale') {
+      response.write(`<script>if (localStorage.getItem('locale') !== 'en') location.replace('/ready')</script>`)
+      await obsolete.promise
+      response.end(html)
+      return
+    }
+    if (pathname === '/locale') {
+      response.end(html.replace('<script defer', `<script>if (localStorage.getItem('locale') !== 'en') location.replace('/ready')</script><script defer`))
       return
     }
     if (pathname.startsWith('/redirect')) {

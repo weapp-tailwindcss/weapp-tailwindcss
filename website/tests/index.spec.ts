@@ -448,24 +448,39 @@ test.describe('homepage hero layout', () => {
   })
 
   test('React Native and Lynx platform links reach their localized documentation', async ({ page }) => {
+    async function switchDocumentationLocale(locale: 'en' | 'zh-cn') {
+      const dropdown = page.locator('.navbar__item.dropdown').filter({ hasText: locale === 'en' ? '中文' : 'English' })
+      await dropdown.hover()
+      const link = dropdown.locator(`a[lang^="${locale === 'en' ? 'en' : 'zh'}"]`)
+      const pathname = `${locale === 'en' ? '' : '/zh-cn'}/docs/quick-start/frameworks/lynx`
+      await expect(link).toHaveAttribute('href', pathname)
+      await link.click()
+      await expect(page).toHaveURL(new URL(pathname, baseURL).toString())
+    }
+
     await setStoredLocale(page, 'zh-cn')
-    await navigateWebsite(page, baseURL)
+    for (let round = 0; round < 2; round += 1) {
+      if (round > 0) {
+        await switchDocumentationLocale('zh-cn')
+      }
+      await navigateWebsite(page, baseURL)
 
-    await page.getByRole('link', { name: 'React Native' }).click()
-    await expect(page).toHaveURL(/\/zh-cn\/docs\/quick-start\/react-native-expo\/?$/)
+      await page.getByRole('link', { name: 'React Native' }).click()
+      await expect(page).toHaveURL(/\/zh-cn\/docs\/quick-start\/react-native-expo\/?$/)
 
-    await navigateWebsite(page, baseURL)
-    await page.getByRole('link', { name: 'Lynx' }).click()
-    await expect(page).toHaveURL(/\/zh-cn\/docs\/quick-start\/frameworks\/lynx\/?$/)
+      await navigateWebsite(page, baseURL)
+      await page.getByRole('link', { name: 'Lynx' }).click()
+      await expect(page).toHaveURL(/\/zh-cn\/docs\/quick-start\/frameworks\/lynx\/?$/)
 
-    await page.evaluate(key => window.localStorage.setItem(key, 'en'), localeStorageKey)
-    await navigateWebsite(page, baseURL)
-    await page.getByRole('link', { name: 'React Native' }).click()
-    await expect(page).toHaveURL(/\/docs\/quick-start\/react-native-expo\/?$/)
+      await switchDocumentationLocale('en')
+      await navigateWebsite(page, baseURL)
+      await page.getByRole('link', { name: 'React Native' }).click()
+      await expect(page).toHaveURL(/\/docs\/quick-start\/react-native-expo\/?$/)
 
-    await navigateWebsite(page, baseURL)
-    await page.getByRole('link', { name: 'Lynx' }).click()
-    await expect(page).toHaveURL(/\/docs\/quick-start\/frameworks\/lynx\/?$/)
+      await navigateWebsite(page, baseURL)
+      await page.getByRole('link', { name: 'Lynx' }).click()
+      await expect(page).toHaveURL(/\/docs\/quick-start\/frameworks\/lynx\/?$/)
+    }
   })
 
   test('primary CTA remains readable in light mode', async ({ page }) => {
