@@ -1,4 +1,3 @@
-import type { FSWatcher, WatchListener } from 'node:fs'
 import type { MetroConfigLike } from '../src/metro'
 import fs from 'node:fs'
 import os from 'node:os'
@@ -8,18 +7,19 @@ import { getRegisteredManifest, getRegisteredVirtualModule, VIRTUAL_MANIFEST_MOD
 import { readPublishedManifest } from '../src/metro/manifest-store'
 import { createNativeStyleRuntime } from '../src/runtime'
 
-const { generate } = vi.hoisted(() => ({ generate: vi.fn() }))
+const { generate, watch } = vi.hoisted(() => ({ generate: vi.fn(), watch: vi.fn() }))
 vi.mock('../src/tailwind', () => ({ generateNativeStylesheet: generate }))
+vi.mock('../src/metro/watch', () => ({ watchInput: watch }))
 
 async function fixture(prepare?: () => void, waitForReady = true) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rn-refresh-'))
   const input = path.join(root, 'style.css')
   fs.writeFileSync(input, '.probe { background-color: #10b981 }')
-  let changed: WatchListener<string> | undefined
-  vi.spyOn(fs, 'watch').mockImplementation(((_file: string, _options: unknown, listener: WatchListener<string>) => {
+  let changed: (() => void) | undefined
+  // 刷新一致性测试显式安排通知，文件监听与遗漏通知恢复由独立回归验证。
+  watch.mockImplementation((_file: string, listener: () => void) => {
     changed = listener
-    return { close() {} } as FSWatcher
-  }) as typeof fs.watch)
+  })
   generate.mockImplementation(async () => compileNativeStylesheet(await fs.promises.readFile(input, 'utf8')))
   prepare?.()
   const config = withWeappTailwindcss({}, { projectRoot: root, input }) as MetroConfigLike
@@ -32,9 +32,11 @@ async function fixture(prepare?: () => void, waitForReady = true) {
     input,
     entry,
     id: config.transformer!.weappTailwindcssMetroId as string,
-    change: () => changed!('change', path.basename(input)),
+    change: () => changed!(),
     async cleanup() {
       await entry.ready.catch(() => {})
+      changed = undefined
+      watch.mockReset()
       vi.restoreAllMocks()
       fs.rmSync(root, { recursive: true, force: true })
       fs.rmSync(entry.manifestPath, { force: true })

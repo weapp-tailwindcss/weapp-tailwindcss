@@ -1,5 +1,5 @@
 import type { FSWatcher, WatchListener } from 'node:fs'
-import { once } from 'node:events'
+import { EventEmitter, once } from 'node:events'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -34,7 +34,7 @@ it('同一文件连续原子保存后仍能读取新内容，监听可显式释�
   })
   for (const content of ['first', 'second']) {
     pending = content
-    // 直接等待原生事件，异步集成边界由项目 testTimeout 统一约束。
+    // 等待生产监听回调，异步集成边界由项目 testTimeout 统一约束。
     const nextChange = new Promise<string>((resolve) => {
       changed = resolve
     })
@@ -52,10 +52,14 @@ it('父目录监听过滤相邻文件，未知文件名事件仍核对当前输�
   const file = path.join(root, 'style.css')
   fs.writeFileSync(file, 'initial')
   let changed!: WatchListener<string>
-  const close = vi.fn()
+  const native = new EventEmitter() as FSWatcher
+  const close = vi.fn(() => {
+    native.emit('close')
+  })
+  native.close = close
   const watch = vi.spyOn(fs, 'watch').mockImplementation(((_target: string, _options: unknown, callback: WatchListener<string>) => {
     changed = callback
-    return { close } as unknown as FSWatcher
+    return native
   }) as typeof fs.watch)
   const notify = vi.fn()
   const watcher = watchInput(file, notify)

@@ -1,5 +1,6 @@
 ---
-status: partial
+status: superseded
+supersededBy: docs/engineering/lessons/react-native-metro-watch-reconciliation.md
 issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss
 baseline: fc4f67b5395acaf50fd9adab6d8e7f4823ec4f8c
 regressions:
@@ -9,6 +10,8 @@ regressions:
 ---
 
 # Metro 原子保存回归应等待真实文件事件
+
+后续完整验证在 `b46a8ead75026bdb53d7e311461ba45be91b3ab6` 的原有 30 秒边界内没有收到任何原生事件，说明测试同步修订不足以补齐生产通知遗漏。当前产品修复和回归见 [Metro 文件监听版本核对](react-native-metro-watch-reconciliation.md)。以下保留首次排查的证据、当时结论和限制，不以独立诊断通过替代后续失败。
 
 ## 症状
 
