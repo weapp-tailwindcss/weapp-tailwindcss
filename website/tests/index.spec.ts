@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test'
 import { URL } from 'node:url'
 import { devices, expect, test } from '@playwright/test'
 import routes from '../routes.json'
+import { expectFullPageScreenshot } from './helpers/full-page/screenshot'
 import { navigateWebsite, reloadWebsite } from './helpers/navigation'
 
 declare global {
@@ -1060,9 +1061,7 @@ for (const viewport of viewports) {
         const url = new URL(route, baseURL)
         await navigateWebsite(page, url.toString())
 
-        await expect(page).toHaveScreenshot({
-          fullPage: true,
-        })
+        await expectFullPageScreenshot(page)
       })
     }
   })
