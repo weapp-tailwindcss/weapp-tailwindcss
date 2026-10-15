@@ -1,14 +1,16 @@
 import type { SpawnedHBuilderXCommand } from '../../../packages/hbuilderx-runner/src/types'
+import { execFile } from 'node:child_process'
 import { EventEmitter } from 'node:events'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { promisify } from 'node:util'
 import { afterEach, expect, it, vi } from 'vitest'
 import * as processTools from '../../../packages/hbuilderx-runner/src/process'
 import * as processTree from '../../../scripts/demo-e2e-workflow/process-tree'
 import { localBrowserCommand } from '../browser-local'
 import { resolveWranglerCommand, runLocalCommand } from './command'
-import localConfig from './playwright.config'
+import localConfig from './playwright.config.mts'
 
 const websiteRoot = fileURLToPath(new URL('../..', import.meta.url))
 const platform = Object.getOwnPropertyDescriptor(process, 'platform')!
@@ -33,13 +35,28 @@ it('三浏览器只访问本轮 URL，显式后台运行且禁止更新基线', 
   const command = localBrowserCommand({ websiteRoot, baseUrl: new URL('http://127.0.0.1:45678/'), signal: new AbortController().signal, request: vi.fn() })
   expect(command.env).toMatchObject({ CI: '1', PLAYWRIGHT_BASE_URL: 'http://127.0.0.1:45678/', PLAYWRIGHT_HTML_OPEN: 'never' })
   expect(command.env.PLAYWRIGHT_CHROMIUM_CHANNEL).toBe('chrome')
-  expect(command.args).toEqual([expect.stringMatching(/cli\.js$/), 'test', '--config', path.join(websiteRoot, 'scripts', 'local-worker', 'playwright.config.ts'), '--project=chromium', '--project=firefox', '--project=webkit', '--update-snapshots=none'])
+  expect(command.args).toEqual([expect.stringMatching(/cli\.js$/), 'test', '--config', path.join(websiteRoot, 'scripts', 'local-worker', 'playwright.config.mts'), '--project=chromium', '--project=firefox', '--project=webkit', '--update-snapshots=none'])
   expect(localConfig.testDir).toBe(path.join(websiteRoot, 'tests'))
   expect(localConfig.use?.headless).toBe(true)
   expect(localConfig.projects?.map(project => project.name)).toEqual(['chromium', 'firefox', 'webkit'])
   expect(localConfig.projects?.every(project => project.use?.headless === true)).toBe(true)
   expect(localConfig.updateSnapshots).toBe('none')
 })
+
+it.each(['local', 'default'] as const)('由实际 Playwright CLI 加载 %s 配置并发现三浏览器用例', async (mode) => {
+  const command = localBrowserCommand({ websiteRoot, baseUrl: new URL('http://127.0.0.1:45678/'), signal: new AbortController().signal, request: vi.fn() })
+  const args = mode === 'local' ? command.args : [command.args[0], 'test']
+  const { stdout } = await promisify(execFile)(command.command, [...args, '--list', '--reporter=json'], {
+    cwd: command.cwd,
+    env: command.env,
+    timeout: 20_000,
+    maxBuffer: 10 * 1024 * 1024,
+  })
+  const report = JSON.parse(stdout)
+  expect(report.errors).toEqual([])
+  expect(report.config.projects.map((project: { name: string }) => project.name)).toEqual(['chromium', 'firefox', 'webkit'])
+  expect(report.suites.length).toBeGreaterThan(0)
+}, 25_000)
 
 it('取消已发生时不启动任何命令', async () => {
   const controller = new AbortController()

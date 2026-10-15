@@ -13,6 +13,7 @@
         "./*"
       ]
     },
+    "allowImportingTsExtensions": true,
     "allowJs": true,
     "noEmit": true,
     "esModuleInterop": true,
@@ -26,7 +27,7 @@
     "docusaurus.config.ts",
     "sidebars.ts",
     "tailwind.config.ts",
-    "playwright.config.ts",
+    "playwright.config.mts",
     "env.d.ts"
   ],
   "exclude": [

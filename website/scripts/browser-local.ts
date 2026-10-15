@@ -13,7 +13,7 @@ export function localBrowserCommand(context: LocalWorkerContext) {
   const env: NodeJS.ProcessEnv = { ...process.env, CI: '1', PLAYWRIGHT_BASE_URL: context.baseUrl.href, PLAYWRIGHT_HTML_OPEN: 'never' }
   return {
     command: process.execPath,
-    args: [require.resolve('@playwright/test/cli'), 'test', '--config', path.join(context.websiteRoot, 'scripts', 'local-worker', 'playwright.config.ts'), '--project=chromium', '--project=firefox', '--project=webkit', '--update-snapshots=none'],
+    args: [require.resolve('@playwright/test/cli'), 'test', '--config', path.join(context.websiteRoot, 'scripts', 'local-worker', 'playwright.config.mts'), '--project=chromium', '--project=firefox', '--project=webkit', '--update-snapshots=none'],
     cwd: context.websiteRoot,
     env,
     stdio: 'inherit' as const,

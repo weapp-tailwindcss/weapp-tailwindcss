@@ -1,7 +1,7 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from '@playwright/test'
-import baseConfig from '../../playwright.config'
+import baseConfig from '../../playwright.config.mts'
 
 const websiteRoot = fileURLToPath(new URL('../..', import.meta.url))
 
