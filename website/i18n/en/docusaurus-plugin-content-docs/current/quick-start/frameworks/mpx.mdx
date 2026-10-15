@@ -19,11 +19,15 @@ keywords:
   - cross-platform
   - mini app
 ---
-import ExternalClassesReminder from '@site/fragments/ExternalClassesReminder.mdx'
-
 # Mpx
 
-<ExternalClassesReminder framework="mpx" />
+:::tip externalClasses reminder
+
+If a mpx custom component declares `externalClasses`, list those attributes in the plugin's `customAttributes`. Otherwise, WeChat DevTools can split values such as `my-class="bg-[#fafa00] text-[40px]"` into invalid fragments and the styles will not apply.
+
+See **[External style classes (externalClasses)](../../issues/externalClasses.md)** for details and additional examples.
+
+:::
 
 Mpx uses Webpack link, `cssEntries` should be configured explicitly so that `weapp-tailwindcss` can stably locate the Tailwind CSS entry.
 

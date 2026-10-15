@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { processMarkdownFile } from 'docusaurus-plugin-llms/lib/processor.js'
 import { describe, expect, it } from 'vitest'
 import {
   getOrganizationJsonLd,
@@ -24,6 +25,27 @@ function readPngSize(filePath) {
 }
 
 describe('website SEO and GEO contracts', () => {
+  it.each([
+    ['en', ['i18n', 'en', 'docusaurus-plugin-content-docs', 'current'], 'External style classes (externalClasses)'],
+    ['zh-cn', ['docs'], '组件外部样式类（externalClasses）的支持'],
+  ])('保留 %s Mpx 文档的静态提示，LLM 导出不泄漏组件实现', async (locale, directories, label) => {
+    const docsRoot = path.join(websiteRoot, ...directories)
+    const doc = await processMarkdownFile(path.join(docsRoot, 'quick-start', 'frameworks', 'mpx.mdx'), docsRoot, 'https://tw.weapp.dev/', 'docs', {
+      siteDir: websiteRoot,
+      excludeImports: true,
+      removeDuplicateHeadings: true,
+    })
+    expect(doc.content).toContain('customAttributes')
+    expect(doc.content).toContain('my-class="bg-[#fafa00] text-[40px]"')
+    expect(doc.content).toContain(label)
+    expect(doc.content).toContain('issues/externalClasses.md')
+    expect(doc.content).not.toContain('export default function')
+    expect(doc.content).not.toContain('useCurrentSiteLocale')
+    if (locale === 'en') {
+      expect(doc.content).not.toMatch(/[\u3000-\u303F\u3400-\u9FFF\uF900-\uFAFF\uFE10-\uFE1F\uFF01-\uFF60]/)
+    }
+  })
+
   it('uses root canonicals for English and /zh-cn for Chinese', () => {
     const english = createGeoIndexPayload('en', 'primary', '2026-01-01T00:00:00.000Z')
     const chinese = createGeoIndexPayload('zh-cn', 'primary', '2026-01-01T00:00:00.000Z')

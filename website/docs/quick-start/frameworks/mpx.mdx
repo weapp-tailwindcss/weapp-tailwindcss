@@ -16,11 +16,15 @@ keywords:
   - uni-app
   - taro
 ---
-import ExternalClassesReminder from '@site/fragments/ExternalClassesReminder.mdx'
-
 # Mpx
 
-<ExternalClassesReminder framework="mpx" />
+:::tip externalClasses 提醒
+
+mpx 自定义组件如果声明了 `externalClasses`，请在插件配置的 `customAttributes` 中列出这些属性。否则像 `my-class="bg-[#fafa00] text-[40px]"` 这样的写法会被微信开发者工具拆成无效片段，导致样式失效。
+
+详细说明与更多示例请查阅 **[👉 《组件外部样式类（externalClasses）的支持》](../../issues/externalClasses.md)**。
+
+:::
 
 Mpx 使用 Webpack 链路，应显式配置 `cssEntries`，让 `weapp-tailwindcss` 稳定定位 Tailwind CSS 入口。
 
