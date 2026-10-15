@@ -102,3 +102,46 @@ it('复盘要求状态、基线、持久回归和非空验证章节', () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+it.each(['test', 'spec'])('复盘同等接受 .%s 测试，保留扩展名和仓库路径边界', (suffix) => {
+  const directory = mkdtempSync(path.join(tmpdir(), 'agents-regressions-'))
+  const root = path.join(directory, 'repo')
+  const tests = path.join(root, 'website', 'tests')
+  const lesson = file => [
+    '---',
+    'status: verified',
+    'issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss',
+    `baseline: "${'a'.repeat(40)}"`,
+    `regressions: ${JSON.stringify([file])}`,
+    '---',
+    ...['症状', '根因与纠正', '验证', '适用边界', '规则评估'].map(title => `## ${title}\n证据\n`),
+  ].join('\n')
+  try {
+    mkdirSync(tests, { recursive: true })
+    for (const extension of ['ts', 'js', 'mts', 'cts', 'mjs', 'cjs', 'rb']) {
+      const file = path.join('website', 'tests', `english-content.${suffix}.${extension}`)
+      writeFileSync(path.resolve(root, file), '')
+      assert.deepEqual(validateLesson(lesson(file), root), [], file)
+    }
+
+    const outside = path.join(directory, `outside.${suffix}.ts`)
+    writeFileSync(outside, '')
+    const unsupported = path.join('website', 'tests', `english-content.${suffix}.tsx`)
+    writeFileSync(path.resolve(root, unsupported), '')
+    for (const invalid of [
+      path.join('website', 'tests', `missing.${suffix}.ts`),
+      unsupported,
+      path.join(tests, `english-content.${suffix}.ts`),
+      path.relative(root, outside),
+      `/repo/english-content.${suffix}.ts`,
+      `C:/repo/english-content.${suffix}.ts`,
+      `C:\\repo\\english-content.${suffix}.ts`,
+      `\\\\server\\share\\english-content.${suffix}.ts`,
+    ]) {
+      assert.deepEqual(validateLesson(lesson(invalid), root), [`复盘回归路径无效：${invalid}`], invalid)
+    }
+  }
+  finally {
+    rmSync(directory, { recursive: true, force: true })
+  }
+})

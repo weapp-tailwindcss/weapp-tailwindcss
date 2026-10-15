@@ -87,7 +87,7 @@ export function validateLesson(markdown, repoRoot) {
   else {
     for (const file of metadata.regressions) {
       if (typeof file !== 'string' || path.isAbsolute(file) || path.win32.isAbsolute(file)
-        || !/\.test\.(?:[cm]?[jt]s|rb)$/.test(file)
+        || !/\.(?:test|spec)\.(?:[cm]?[jt]s|rb)$/.test(file)
         || !existsSync(path.resolve(repoRoot, file))
         || path.relative(repoRoot, path.resolve(repoRoot, file)).startsWith('..')) {
         errors.push(`复盘回归路径无效：${file}`)
