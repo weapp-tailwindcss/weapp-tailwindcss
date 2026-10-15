@@ -202,4 +202,11 @@ Taro Vite 也应显式配置 `cssEntries`。它只负责让 `weapp-tailwindcss` 
 
 ## 视频演示
 
-<iframe src="//player.bilibili.com/player.html?aid=966499437&bvid=BV1UW4y1w7VM&cid=1411385502&p=1&autoplay=0" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"> </iframe>
+<details>
+<summary>加载视频演示</summary>
+
+<iframe loading="lazy" title="Taro 视频演示" src="//player.bilibili.com/player.html?aid=966499437&bvid=BV1UW4y1w7VM&cid=1411385502&p=1&autoplay=0" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"> </iframe>
+
+</details>
+
+[在哔哩哔哩观看](https://www.bilibili.com/video/BV1UW4y1w7VM/)

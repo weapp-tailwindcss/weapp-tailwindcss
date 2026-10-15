@@ -206,4 +206,11 @@ Taro Vite should also explicitly configure `cssEntries`. It is only responsible 
 
 ## Video demonstration
 
-<iframe src="//player.bilibili.com/player.html?aid=966499437&bvid=BV1UW4y1w7VM&cid=1411385502&p=1&autoplay=0" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"> </iframe>
+<details>
+<summary>Load video demonstration</summary>
+
+<iframe loading="lazy" title="Taro video demonstration" src="//player.bilibili.com/player.html?aid=966499437&bvid=BV1UW4y1w7VM&cid=1411385502&p=1&autoplay=0" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"> </iframe>
+
+</details>
+
+[Watch on Bilibili](https://www.bilibili.com/video/BV1UW4y1w7VM/)

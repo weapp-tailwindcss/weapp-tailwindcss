@@ -140,4 +140,11 @@ npx degit dcloudio/uni-preset-vue#vite-ts my-vue3-project
 
 ## 视频演示
 
-<iframe src="//player.bilibili.com/player.html?aid=326378691&bvid=BV14w411773C&cid=1409199088&p=1&autoplay=0" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"> </iframe>
+<details>
+<summary>加载视频演示</summary>
+
+<iframe loading="lazy" title="uni-app Vite 视频演示" src="//player.bilibili.com/player.html?aid=326378691&bvid=BV14w411773C&cid=1409199088&p=1&autoplay=0" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"> </iframe>
+
+</details>
+
+[在哔哩哔哩观看](https://www.bilibili.com/video/BV14w411773C/)

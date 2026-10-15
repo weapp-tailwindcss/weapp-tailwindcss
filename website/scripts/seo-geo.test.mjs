@@ -26,6 +26,21 @@ function readPngSize(filePath) {
 
 describe('website SEO and GEO contracts', () => {
   it.each([
+    [['docs'], 'taro', 'BV1UW4y1w7VM', '在哔哩哔哩观看'],
+    [['docs'], 'uni-app-vite', 'BV14w411773C', '在哔哩哔哩观看'],
+    [['i18n', 'en', 'docusaurus-plugin-content-docs', 'current'], 'taro', 'BV1UW4y1w7VM', 'Watch on Bilibili'],
+    [['i18n', 'en', 'docusaurus-plugin-content-docs', 'current'], 'uni-app-vite', 'BV14w411773C', 'Watch on Bilibili'],
+  ])('保留 %s/%s 视频的本地化链接与 LLM 导出地址', async (directories, framework, bvid, label) => {
+    const docsRoot = path.join(websiteRoot, ...directories)
+    const doc = await processMarkdownFile(path.join(docsRoot, 'quick-start', 'frameworks', `${framework}.md`), docsRoot, 'https://tw.weapp.dev/', 'docs', {
+      siteDir: websiteRoot,
+      excludeImports: true,
+      removeDuplicateHeadings: true,
+    })
+    expect(doc.content).toContain(`[${label}](https://www.bilibili.com/video/${bvid}/)`)
+  })
+
+  it.each([
     ['en', ['i18n', 'en', 'docusaurus-plugin-content-docs', 'current'], 'External style classes (externalClasses)'],
     ['zh-cn', ['docs'], '组件外部样式类（externalClasses）的支持'],
   ])('保留 %s Mpx 文档的静态提示，LLM 导出不泄漏组件实现', async (locale, directories, label) => {
