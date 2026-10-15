@@ -37,6 +37,10 @@
   dir: packages/css-compat
   intents:
     - thick-shirts-study
+"@weapp-tailwindcss/css-compat@0.1.2":
+  dir: packages/css-compat
+  intents:
+    - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
 "@weapp-tailwindcss/cva@0.1.12":
   dir: packages-runtime/cva
   intents:
@@ -62,6 +66,10 @@
   intents:
     - dependency-update-608f3999-75d0-44c2-b9f4-7f6cfc138a09
     - organization-repository-metadata
+"@weapp-tailwindcss/debug-uni-app-x@1.0.9":
+  dir: packages/debug-uni-app-x
+  intents:
+    - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
 "@weapp-tailwindcss/e2e@0.0.0":
   dir: e2e
   intents:
@@ -92,10 +100,21 @@
   dir: packages/engine
   intents:
     - source-candidate-file-budget
+"@weapp-tailwindcss/engine@0.1.6":
+  dir: packages/engine
+  intents:
+    - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
 "@weapp-tailwindcss/env@0.1.0":
   dir: packages/env
   intents:
     - extract-framework-env
+"@weapp-tailwindcss/env@0.2.0":
+  dir: packages/env
+  intents:
+    - bright-dragons-press
+    - lucky-monkeys-travel
+    - smooth-bears-study
+    - strong-squids-help
 "@weapp-tailwindcss/escape@0.0.2":
   dir: packages/escape
   intents:
@@ -200,6 +219,10 @@
   dir: packages/lynx
   intents:
     - dependency-update-ad964c2e-870c-4709-9297-17214f27a954
+"@weapp-tailwindcss/lynx@0.4.4":
+  dir: packages/lynx
+  intents:
+    - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
 "@weapp-tailwindcss/merge@2.2.3":
   dir: packages-runtime/merge
   intents:
@@ -223,6 +246,10 @@
     - dependency-update-3f0f42c6-8aba-4052-b905-acea66028956
     - dependency-update-608f3999-75d0-44c2-b9f4-7f6cfc138a09
     - organization-repository-metadata
+"@weapp-tailwindcss/postcss-calc@1.0.11":
+  dir: packages/postcss-calc
+  intents:
+    - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
 "@weapp-tailwindcss/postcss-calc@1.0.5":
   dir: packages/postcss-calc
   intents:
@@ -349,6 +376,10 @@
   intents:
     - breezy-peaches-shake
     - friendly-lemons-return
+"@weapp-tailwindcss/postcss@3.4.3":
+  dir: packages/postcss
+  intents:
+    - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
 "@weapp-tailwindcss/react-native@0.2.19":
   dir: packages/react-native
   intents:
@@ -376,6 +407,10 @@
     - organization-repository-metadata
     - react-native-metro-refresh-consistency
     - react-native-style-type-contract
+"@weapp-tailwindcss/react-native@0.3.4":
+  dir: packages/react-native
+  intents:
+    - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
 "@weapp-tailwindcss/reset@0.1.4":
   dir: packages/reset
   intents:
@@ -456,6 +491,10 @@
   intents:
     - dependency-update-608f3999-75d0-44c2-b9f4-7f6cfc138a09
     - organization-repository-metadata
+"@weapp-tailwindcss/ui@0.0.19":
+  dir: packages-runtime/ui
+  intents:
+    - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
 "@weapp-tailwindcss/variants@0.2.10":
   dir: packages-runtime/variants
   intents:
@@ -728,6 +767,14 @@ weapp-tailwindcss@5.6.2:
     - friendly-lemons-return
     - vite-missing-replay-asset
     - weak-rice-wait
+weapp-tailwindcss@5.6.3:
+  dir: packages/weapp-tailwindcss
+  intents:
+    - bright-dragons-press
+    - calm-dragons-compile
+    - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
+    - lucky-monkeys-travel
+    - smooth-bears-study
 weapp-tw@0.0.3:
   dir: packages/weapp-tw
   intents:
@@ -746,3 +793,7 @@ wetw@0.1.7:
     - dependency-update-3f0f42c6-8aba-4052-b905-acea66028956
     - dependency-update-608f3999-75d0-44c2-b9f4-7f6cfc138a09
     - organization-repository-metadata
+wetw@0.1.8:
+  dir: packages/wetw
+  intents:
+    - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90

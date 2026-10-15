@@ -1,5 +1,38 @@
 # weapp-tailwindcss
 
+## 5.6.3
+
+### Patch Changes
+
+- 增加 Taro 和 MPX 的显式环境快照平台解析入口，并通过主包根入口及 framework 兼容入口导出，保持旧单值 API 的默认环境契约。Refs #1300。
+
+- 调整原生 WXML 转换中的固定长度分组遍历，兼容新版 Rust Clippy，并保持候选匹配顺序、空白保留与动态表达式回退行为。
+
+- 升级兼容范围内的编译、样式、测试和开发工具依赖，同步 catalog 与锁文件。
+
+  - 对齐 Babel 8、Oxc parser/types 和 PostCSS 的兼容版本，更新单位转换依赖。
+  - 将 Vitest、覆盖率与 UI 统一到 5.0.4，更新 Lynx、Storybook 及相关开发依赖。
+  - 保留需要补丁迁移或完整框架、IDE 与设备验证的版本组。
+
+  升级范围、模板兼容修正、审计结果和本地验证见 docs/engineering/lessons/dependency-upgrade-2026-10.md。
+
+- 修复带行注释或块注释的 Uni manifest 无法识别 uni-app x 的问题，保留严格 package.json 与损坏文件回退行为。Refs #1299。
+
+- 新增统一平台身份与可解释的框架检测报告，修复 MPX 别名安全查找、ali/dd 小程序分类及脚本文件参数误识别，并通过主包 framework 入口同步提供函数与类型。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/engine@0.1.6
+  - @weapp-tailwindcss/env@0.2.0
+  - @weapp-tailwindcss/native-darwin-arm64@5.6.3
+  - @weapp-tailwindcss/native-darwin-x64@5.6.3
+  - @weapp-tailwindcss/native-linux-arm64-gnu@5.6.3
+  - @weapp-tailwindcss/native-linux-arm64-musl@5.6.3
+  - @weapp-tailwindcss/native-linux-x64-gnu@5.6.3
+  - @weapp-tailwindcss/native-linux-x64-musl@5.6.3
+  - @weapp-tailwindcss/native-win32-arm64-msvc@5.6.3
+  - @weapp-tailwindcss/native-win32-x64-msvc@5.6.3
+  - @weapp-tailwindcss/postcss@3.4.3
+
 ## 5.6.2
 
 ### Patch Changes
