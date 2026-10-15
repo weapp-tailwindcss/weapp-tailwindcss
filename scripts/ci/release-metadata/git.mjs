@@ -72,7 +72,7 @@ export function readSnapshot(ref, cwd) {
       if (!entry) {
         return null
       }
-      if (entry.mode !== '100644' || entry.type !== 'blob') {
+      if (!['100644', '100755'].includes(entry.mode) || entry.type !== 'blob') {
         throw new Error(`元数据不是普通文本文件：${file}`)
       }
       if (!cache.has(file)) {
