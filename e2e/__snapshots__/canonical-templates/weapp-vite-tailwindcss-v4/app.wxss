@@ -1,5 +1,4 @@
-/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
-    view,text,::after,::before {
+view,text,::after,::before {
       border: 0 solid;
       box-sizing: border-box;
       margin: 0;

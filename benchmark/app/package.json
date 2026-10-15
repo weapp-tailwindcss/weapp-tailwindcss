@@ -39,7 +39,7 @@
     "unplugin-vue-router": "^0.19.2",
     "vite": "catalog:vite724",
     "vite-plugin-inspect": "catalog:vitePluginInspect",
-    "vue-echarts": "^8.3.0",
+    "vue-echarts": "^8.3.2",
     "vue-tsc": "catalog:vueTsc318",
     "weapp-tailwindcss": "workspace:*"
   }

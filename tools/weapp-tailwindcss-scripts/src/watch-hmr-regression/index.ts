@@ -5,6 +5,7 @@ import process from 'node:process'
 import { assertWatchCommandActive } from './cancellation'
 import { buildCases, isLocalOnlyWatchCase, pickCases } from './cases'
 import { formatPath, resolveBaseCwd, resolveOptions } from './cli'
+import { formatWatchFailure } from './error-report'
 import { assertHotUpdateBudget, assertMemoryBudget, assertPluginProcessBudget, logSummary, runCase, runMainStyleOnlyCase, runSubPackagesOnlyCase, runWebOnlyCase, WatchHmrPartialMetricsError } from './runner'
 import { ensureLocalPackageBuild, sleep } from './session'
 import { runStyleOnlyCase } from './style-only'
@@ -110,7 +111,7 @@ export async function main() {
 }
 
 main().catch(async (error) => {
-  const message = error instanceof Error ? error.stack ?? error.message : String(error)
+  const message = formatWatchFailure(error)
   const baseCwd = resolveBaseCwd()
   try {
     await writeFailureLog(baseCwd, message)
