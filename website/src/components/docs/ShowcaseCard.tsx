@@ -15,6 +15,7 @@ type ShowcaseLink = {
 
 type ShowcaseCardProps = {
   title: string
+  anchorId?: string
   titleHref?: string
   authorLogin?: string
   authorUrl?: string
@@ -67,6 +68,7 @@ function ShowcaseImageButton({
 
 export default function ShowcaseCard({
   title,
+  anchorId,
   titleHref,
   authorLogin,
   authorUrl,
@@ -106,11 +108,11 @@ export default function ShowcaseCard({
   }, [previewImage])
 
   return (
-    <article className={`showcase-card${hasScreenshots ? ' showcase-card--with-screenshots' : ''}`}>
+    <article id={anchorId ? title : undefined} className={`showcase-card${hasScreenshots ? ' showcase-card--with-screenshots' : ''}`}>
       <header className="showcase-card__header">
-        <h3 id={title}>
+        <h3 id={anchorId ?? title}>
           {titleContent}
-          <a className="showcase-card__anchor" href={`#${title}`} aria-label={locale === 'en' ? `Direct link to ${title}` : `${title} 的直接链接`}>
+          <a className="showcase-card__anchor" href={`#${anchorId ?? title}`} aria-label={locale === 'en' ? `Direct link to ${title}` : `${title} 的直接链接`}>
             #
           </a>
         </h3>

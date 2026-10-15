@@ -18,7 +18,7 @@
     "docusaurus": "cross-env NO_UPDATE_NOTIFIER=1 docusaurus",
     "dev": "pnpm run build:deps:if-needed && node scripts/dev-public.mjs",
     "dev:type": "cross-env NO_UPDATE_NOTIFIER=1 TYPEDOC_WATCH=true docusaurus start --port 4000",
-    "build": "pnpm run check:config-docs && pnpm run check:docs-i18n && pnpm run build:deps && node scripts/clear-webpack-cache.mjs && node scripts/generate-geo-index.mjs && node scripts/redirects.mjs && node scripts/seo-quality-report.mjs && cross-env NO_UPDATE_NOTIFIER=1 docusaurus build",
+    "build": "pnpm run check:config-docs && pnpm run check:docs-i18n && pnpm run check:showcase && pnpm run build:deps && node scripts/clear-webpack-cache.mjs && node scripts/generate-geo-index.mjs && node scripts/redirects.mjs && node scripts/seo-quality-report.mjs && cross-env NO_UPDATE_NOTIFIER=1 docusaurus build",
     "build:deps": "node scripts/build-deps.mjs",
     "build:deps:if-needed": "node scripts/build-deps.mjs --if-needed",
     "check:docs-audience": "node scripts/check-docs-audience.mjs",
@@ -51,7 +51,8 @@
     "e2e": "playwright test",
     "e2e:local": "tsx scripts/browser-local.ts",
     "e2e:u": "playwright test -u",
-    "exportRoutes": "tsx scripts/exportRoutes.ts"
+    "exportRoutes": "tsx scripts/exportRoutes.ts",
+    "check:showcase": "tsx scripts/check-showcase.mts"
   },
   "dependencies": {
     "@docusaurus/core": "3.10.2",

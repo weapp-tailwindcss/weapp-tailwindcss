@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 import fs from 'fs-extra'
 import { Agent, fetch, ProxyAgent, setGlobalDispatcher } from 'undici'
+import { renderShowcaseCatalog, renderShowcaseMarkdown, validateShowcaseLocalization } from './showcase/render'
 
 setDefaultResultOrder('ipv4first')
 
@@ -165,6 +166,9 @@ const __dirname = path.dirname(__filename)
 const repoRoot = path.resolve(__dirname, '..')
 
 const showcaseDocsPath = path.resolve(repoRoot, 'website/docs/showcase/index.mdx')
+const showcaseDataPath = path.resolve(repoRoot, 'website/src/components/docs/showcase/catalog.json')
+const showcaseEnglishTitlesPath = path.resolve(repoRoot, 'website/src/components/docs/showcase/en.json')
+const showcaseEnglishDocsPath = path.resolve(repoRoot, 'website/i18n/en/docusaurus-plugin-content-docs/current/showcase/index.mdx')
 const showcaseImageRoot = path.resolve(repoRoot, 'website/static/img/showcase')
 const showcaseConfigPath = path.resolve(repoRoot, 'website/docs/showcase/config.json')
 const wechatQrScannerPath = path.resolve(repoRoot, 'scripts/scan-wechat-qrcode.py')
@@ -272,17 +276,6 @@ const mediaHeaders: Record<string, string> = {
   ...baseHeaders,
   Accept: 'image/avif,image/webp,image/png,image/jpeg;q=0.9,*/*;q=0.8',
 }
-
-const dateFormatter = new Intl.DateTimeFormat('zh-CN', {
-  dateStyle: 'medium',
-  timeZone: 'Asia/Shanghai',
-})
-
-const dateTimeFormatter = new Intl.DateTimeFormat('zh-CN', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-  timeZone: 'Asia/Shanghai',
-})
 
 async function loadShowcaseConfig(): Promise<ShowcaseConfig> {
   try {
@@ -772,65 +765,6 @@ function slugifySegment(value: string, fallback: string): string {
   return normalized || fallback
 }
 
-function renderJsxValue(value: string | undefined): string {
-  return JSON.stringify(value ?? '')
-}
-
-function renderDisplayProp(name: string, display?: DisplayValue): string[] {
-  if (!display) {
-    return []
-  }
-
-  const lines = [`  ${name}={{`]
-  lines.push(`    text: ${renderJsxValue(display.text)},`)
-  if (display.url) {
-    lines.push(`    url: ${renderJsxValue(display.url)},`)
-  }
-  lines.push('  }}')
-  return lines
-}
-
-function renderImageObject(image: ShowcaseImage, altFallback = ''): string[] {
-  return [
-    '{',
-    `    src: ${renderJsxValue(image.src)},`,
-    `    alt: ${renderJsxValue(image.alt || altFallback)},`,
-    '  }',
-  ]
-}
-
-function renderImageArrayProp(name: string, images: ShowcaseImage[], altFallback = ''): string[] {
-  const lines = [`  ${name}={[`]
-  for (const image of images) {
-    lines.push('    {')
-    lines.push(`      src: ${renderJsxValue(image.src)},`)
-    lines.push(`      alt: ${renderJsxValue(image.alt || altFallback)},`)
-    lines.push('    },')
-  }
-  lines.push('  ]}')
-  return lines
-}
-
-function renderShowcaseIndexItems(entries: GeneratedEntry[]): string[] {
-  const lines = ['  items={[']
-  for (const entry of entries) {
-    const screenshotsCount = Math.max(entry.images.length - 1, 0)
-    lines.push('    {')
-    lines.push(`      title: ${renderJsxValue(entry.name)},`)
-    lines.push(`      href: ${renderJsxValue(`#${entry.name}`)},`)
-    lines.push(`      createdAt: ${renderJsxValue(dateFormatter.format(new Date(entry.createdAt)))},`)
-    if (entry.author?.login) {
-      lines.push(`      authorLogin: ${renderJsxValue(entry.author.login)},`)
-    }
-    lines.push(`      screenshotCount: ${screenshotsCount},`)
-    lines.push(`      hasLink: ${entry.link?.url ? 'true' : 'false'},`)
-    lines.push(`      hasGithub: ${entry.github ? 'true' : 'false'},`)
-    lines.push('    },')
-  }
-  lines.push('  ]}')
-  return lines
-}
-
 function resolveImageExtension(contentType: string | null, url: string): string {
   const contentMap: Record<string, string> = {
     'image/jpeg': 'jpg',
@@ -936,88 +870,6 @@ async function downloadImageWithRetry(
   return null
 }
 
-function renderEntry(entry: GeneratedEntry): string {
-  const lines: string[] = []
-  const titleText = entry.name
-  const [primary, ...others] = entry.images
-
-  if (!primary) {
-    return ''
-  }
-
-  lines.push('<ShowcaseCard')
-  lines.push(`  title={${renderJsxValue(titleText)}}`)
-  if (entry.link?.url) {
-    lines.push(`  titleHref={${renderJsxValue(entry.link.url)}}`)
-  }
-  if (entry.author?.login && entry.author.html_url) {
-    lines.push(`  authorLogin={${renderJsxValue(entry.author.login)}}`)
-    lines.push(`  authorUrl={${renderJsxValue(entry.author.html_url)}}`)
-  }
-  lines.push(`  createdAt={${renderJsxValue(dateFormatter.format(new Date(entry.createdAt)))}}`)
-  lines.push(`  commentUrl={${renderJsxValue(entry.commentUrl)}}`)
-  lines.push(...renderDisplayProp('link', entry.link))
-  lines.push(...renderDisplayProp('github', entry.github))
-  lines.push('  primaryImage={{')
-  lines.push(...renderImageObject(primary, titleText).slice(1, -1))
-  lines.push('  }}')
-  lines.push(...renderImageArrayProp('screenshots', others, titleText))
-
-  if (entry.description) {
-    lines.push('>')
-    lines.push('')
-    lines.push(entry.description)
-    lines.push('')
-    lines.push('</ShowcaseCard>')
-    return lines.join('\n')
-  }
-
-  lines.push('/>')
-  return lines.join('\n')
-}
-
-function renderMdx(issue: GitHubIssue, entries: GeneratedEntry[]): string {
-  const generatedAt = dateTimeFormatter.format(new Date())
-  const header = `<!-- ⚠️ 该文件由 scripts/update-showcase.ts 自动生成。请运行 \`pnpm showcase:update\` 以刷新数据。 -->`
-  const frontMatter = [
-    '---',
-    'title: 优秀案例展示',
-    `description: 以下内容来自 ${issue.title}，列表顺序按照提交时间排序。`,
-    'keywords:',
-    '  - 优秀案例展示',
-    '  - showcase',
-    '  - weapp-tailwindcss',
-    '  - tailwindcss',
-    '  - 小程序',
-    '  - 微信小程序',
-    '  - uni-app',
-    '  - taro',
-    '  - mpx',
-    '---',
-  ]
-  const intro = [
-    `import ShowcaseCard from '@site/src/components/docs/ShowcaseCard'`,
-    `import ShowcaseIndex from '@site/src/components/docs/ShowcaseIndex'`,
-    '',
-    '# 优秀案例展示',
-    '',
-    `以下内容来自 [${issue.title}](${issue.html_url})，列表顺序按照提交时间排序。`,
-    '',
-    '<ShowcaseIndex',
-    `  issueUrl={${renderJsxValue(issue.html_url)}}`,
-    `  generatedAt={${renderJsxValue(generatedAt)}}`,
-    ...renderShowcaseIndexItems(entries),
-    '/>',
-    '',
-    '<div className="showcase-grid">',
-  ]
-
-  const cards = entries.map(renderEntry)
-  const footer = ['</div>', '']
-
-  return [...frontMatter, header, '', ...intro, ...cards, ...footer].join('\n')
-}
-
 async function main() {
   console.log(`🔄 Fetching issue #${issueNumber} from ${repo}...`)
   const issue = await fetchJson<GitHubIssue>(issueApiUrl)
@@ -1035,6 +887,17 @@ async function main() {
   }
 
   parsed.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+
+  // 翻译缺失必须在清图或写入之前失败，避免留下半套本地化产物。
+  const eligible = parsed.filter(entry => entry.remoteImages.length > 0 && !config.entries?.[slugifySegment(entry.name, `entry-${entry.id}`)]?.hidden)
+  const englishTitles = JSON.parse(await fs.readFile(showcaseEnglishTitlesPath, 'utf8'))
+  const englishMarkdown = await fs.readFile(showcaseEnglishDocsPath, 'utf8')
+  validateShowcaseLocalization(
+    eligible.map(entry => String(entry.id)),
+    englishTitles,
+    englishMarkdown,
+    eligible.filter(entry => entry.description?.trim()).map(entry => String(entry.id)),
+  )
 
   if (!skipImageDownload) {
     await fs.emptyDir(showcaseImageRoot)
@@ -1149,7 +1012,9 @@ async function main() {
     })
   }
 
-  const mdxContent = renderMdx(issue, generatedEntries)
+  const catalog = renderShowcaseCatalog(issue.html_url, generatedEntries, new Date().toISOString())
+  const mdxContent = renderShowcaseMarkdown(issue, generatedEntries)
+  await fs.writeFile(showcaseDataPath, `${JSON.stringify(catalog, null, 2)}\n`, 'utf8')
   await fs.writeFile(showcaseDocsPath, mdxContent, 'utf8')
   console.log(`✅ Showcase updated with ${generatedEntries.length} entries.`)
 }
