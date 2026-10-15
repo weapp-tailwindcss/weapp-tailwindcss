@@ -38,8 +38,8 @@ export default defineConfig({
     /* Base URL to use in actions like `await page.goto('/')`. */
     // baseURL: 'http://127.0.0.1:3000',
 
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    // 保留首个失败 attempt 的 trace，不能用重试成功的轨迹解释首次失败。
+    trace: 'retain-on-failure',
     viewport: {
       width: 1920, // 1280,
       height: 1080, // 720,

@@ -12,6 +12,8 @@ export default defineConfig({
   reporter: [['html', { outputFolder: path.join(websiteRoot, 'playwright-report'), open: 'never' }]],
   forbidOnly: true,
   workers: 1,
+  retries: 0,
+  maxFailures: 1,
   use: { ...baseConfig.use, headless: true },
   projects: baseConfig.projects?.map(project => ({ ...project, use: { ...project.use, headless: true } })),
   updateSnapshots: 'none',

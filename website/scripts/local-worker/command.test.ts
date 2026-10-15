@@ -1,9 +1,11 @@
 import type { SpawnedHBuilderXCommand } from '../../../packages/hbuilderx-runner/src/types'
 import { execFile } from 'node:child_process'
 import { EventEmitter } from 'node:events'
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { promisify } from 'node:util'
 import { afterEach, expect, it, vi } from 'vitest'
 import * as processTools from '../../../packages/hbuilderx-runner/src/process'
@@ -42,6 +44,9 @@ it('三浏览器只访问本轮 URL，显式后台运行且禁止更新基线', 
   expect(localConfig.projects?.every(project => project.use?.headless === true)).toBe(true)
   expect(localConfig.updateSnapshots).toBe('none')
   expect(localConfig.workers).toBe(1)
+  expect(localConfig.retries).toBe(0)
+  expect(localConfig.maxFailures).toBe(1)
+  expect(localConfig.use?.trace).toBe('retain-on-failure')
   expect(localConfig.timeout).toBe(60_000)
   expect(localConfig.expect?.timeout).toBe(60_000)
   expect(localConfig.expect?.toHaveScreenshot?.maxDiffPixels).toBe(5)
@@ -60,6 +65,54 @@ it.each(['local', 'default'] as const)('由实际 Playwright CLI 加载 %s 配�
   expect(report.errors).toEqual([])
   expect(report.config.projects.map((project: { name: string }) => project.name)).toEqual(['chromium', 'firefox', 'webkit'])
   expect(report.suites.length).toBeGreaterThan(0)
+  if (mode === 'local') {
+    expect(report.config.maxFailures).toBe(1)
+    expect(report.config.projects.every((project: { retries: number }) => project.retries === 0)).toBe(true)
+  }
+}, 25_000)
+
+it('真实本地 CLI 在首个失败后不重试或调度后续用例', async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'website-first-failure-'))
+  const sentinel = path.join(directory, 'executed.jsonl')
+  const reportPath = path.join(directory, 'report.json')
+  const playwrightUrl = pathToFileURL(path.join(websiteRoot, 'node_modules', '@playwright', 'test', 'index.mjs')).href
+  const configPath = path.join(directory, 'playwright.config.mts')
+  try {
+    await writeFile(path.join(directory, 'package.json'), JSON.stringify({ type: 'module' }))
+    await writeFile(configPath, `
+      import { defineConfig } from ${JSON.stringify(playwrightUrl)}
+      import config from ${JSON.stringify(pathToFileURL(path.join(websiteRoot, 'scripts', 'local-worker', 'playwright.config.mts')).href)}
+      export default defineConfig({ ...config, testDir: ${JSON.stringify(directory)}, testMatch: '**/gate.spec.ts', outputDir: ${JSON.stringify(path.join(directory, 'results'))}, reporter: [['json', { outputFile: ${JSON.stringify(reportPath)} }]] })
+    `)
+    await writeFile(path.join(directory, 'gate.spec.ts'), `
+      import { appendFile } from 'node:fs/promises'
+      import { expect, test } from ${JSON.stringify(playwrightUrl)}
+      test('first failure', async () => {
+        await appendFile(${JSON.stringify(sentinel)}, JSON.stringify({ test: 'first', retry: test.info().retry }) + '\\n')
+        expect(false).toBe(true)
+      })
+      test('must not run', async () => {
+        await appendFile(${JSON.stringify(sentinel)}, JSON.stringify({ test: 'later' }) + '\\n')
+      })
+    `)
+    const command = localBrowserCommand({ websiteRoot, baseUrl: new URL('http://127.0.0.1:45678/'), signal: new AbortController().signal, request: vi.fn() })
+    const failure = await runLocalCommand({
+      ...command,
+      args: [command.args[0], 'test', '--config', configPath],
+    }, new AbortController().signal, 20_000).then(() => undefined, error => error)
+    expect(failure?.message).toContain('exit=1 signal=null')
+    const report = JSON.parse(await readFile(reportPath, 'utf8'))
+    expect(report.errors).toEqual([{ message: 'Testing stopped early after 1 maximum allowed failures.' }])
+    const executed = (await readFile(sentinel, 'utf8')).trim().split('\n').map(line => JSON.parse(line))
+    expect(executed).toEqual([{ test: 'first', retry: 0 }])
+    expect(report.config.maxFailures).toBe(1)
+    expect(report.stats.unexpected).toBe(1)
+    expect(report.stats.flaky).toBe(0)
+    expect(report.config.projects.every((project: { retries: number }) => project.retries === 0)).toBe(true)
+  }
+  finally {
+    await rm(directory, { recursive: true, force: true })
+  }
 }, 25_000)
 
 it('取消已发生时不启动任何命令', async () => {

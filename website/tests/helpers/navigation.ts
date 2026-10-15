@@ -2,6 +2,7 @@ import type { Frame, Page, Request, Response } from '@playwright/test'
 import { randomUUID } from 'node:crypto'
 import { expect } from '@playwright/test'
 import { commitCacheRepresentation, matchesCacheRepresentation, readCacheRepresentation } from './document-cache'
+import { createNavigationDiagnostics } from './navigation-diagnostics'
 
 const reportingOrigins = new Set([
   'https://www.google-analytics.com',
@@ -89,6 +90,18 @@ async function navigate(page: Page, action: () => Promise<Response | null>) {
   let documentFailure: string | undefined
   let documentFinished = false
   let committedRequest: Request | undefined
+  let initialDocumentIdentity: string | undefined
+  const diagnostics = createNavigationDiagnostics(page, () => ({
+    generation,
+    lastActivity,
+    pending,
+    documentRequest,
+    documentResponse,
+    documentFailure,
+    documentFinished,
+    committedRequest,
+    initialDocumentIdentity,
+  }), documentIdentityKey)
 
   const onRequest = (request: Request) => {
     if (request.isNavigationRequest() && request.frame() === page.mainFrame()) {
@@ -101,10 +114,12 @@ async function navigate(page: Page, action: () => Promise<Response | null>) {
       documentFinished = false
       committedRequest = undefined
     }
-    if (!isReportingRequest(page, request)) {
+    const reporting = isReportingRequest(page, request)
+    if (!reporting) {
       pending.add(request)
       lastActivity = Date.now()
     }
+    diagnostics.record('request', request, { reporting })
   }
   const onResponse = (response: Response) => {
     const request = response.request()
@@ -116,8 +131,9 @@ async function navigate(page: Page, action: () => Promise<Response | null>) {
     if (request === documentRequest) {
       documentResponse = response
     }
+    diagnostics.record('response', request, { response: diagnostics.describeResponse(response) })
   }
-  const onFinished = (request: Request) => {
+  const settleRequest = (request: Request) => {
     const representation = representations.get(request)
     if (representation) {
       representation.finished = true
@@ -129,8 +145,12 @@ async function navigate(page: Page, action: () => Promise<Response | null>) {
       lastActivity = Date.now()
     }
   }
+  const onFinished = (request: Request) => {
+    settleRequest(request)
+    diagnostics.record('finished', request)
+  }
   const onFailed = (request: Request) => {
-    onFinished(request)
+    settleRequest(request)
     const representation = representations.get(request)
     if (representation) {
       representation.failed = true
@@ -138,6 +158,7 @@ async function navigate(page: Page, action: () => Promise<Response | null>) {
     if (request === documentRequest) {
       documentFailure = request.failure()?.errorText ?? '文档请求失败'
     }
+    diagnostics.record('failed', request)
   }
   const onNavigated = (frame: Frame) => {
     if (frame === page.mainFrame()) {
@@ -145,6 +166,7 @@ async function navigate(page: Page, action: () => Promise<Response | null>) {
       if (documentResponse && documentUrl(frame.url()) === documentUrl(documentResponse.url())) {
         committedRequest = documentRequest
       }
+      diagnostics.record('commit', undefined, { url: frame.url() })
     }
   }
 
@@ -155,6 +177,7 @@ async function navigate(page: Page, action: () => Promise<Response | null>) {
   page.on('framenavigated', onNavigated)
   try {
     const initialDocument = await readDocument(page)
+    initialDocumentIdentity = initialDocument.identity
     const previous = verifiedDocuments.get(page)
     const retainedResponse = previous?.identity === initialDocument.identity ? previous.response : undefined
     const actionResponse = await action()
@@ -164,6 +187,7 @@ async function navigate(page: Page, action: () => Promise<Response | null>) {
     let accepted: { identity: string, response: Response, generation: number } | undefined
     let latestRuntime: Awaited<ReturnType<typeof readDocument>> | undefined
     await expect.poll(async () => {
+      diagnostics.observe()
       if (documentFailure || (documentResponse && documentResponse.status() !== 304 && !documentResponse.ok())) {
         return 'failed'
       }
@@ -171,8 +195,10 @@ async function navigate(page: Page, action: () => Promise<Response | null>) {
         return 'failed'
       }
       if (pending.size > 0 || Date.now() - lastActivity < 500) {
+        diagnostics.checkpoint('resources-or-idle')
         return 'pending'
       }
+      diagnostics.checkpoint('runtime')
       const currentGeneration = generation
       let runtime: Awaited<ReturnType<typeof readDocument>>
       try {
@@ -201,6 +227,7 @@ async function navigate(page: Page, action: () => Promise<Response | null>) {
         && response && documentUrl(runtime.url) === documentUrl(response.url())
         // History API 可以改 URL；同文档复用以已验证的 Document 身份为准。
         : runtime.identity === initialDocument.identity
+      diagnostics.checkpoint('document', { currentGeneration, ready: runtime.ready, ownsDocument, responseSuccessful })
       if (runtime.ready && ownsDocument && response && currentGeneration === generation
         && pending.size === 0 && Date.now() - lastActivity >= 500) {
         accepted = { identity: runtime.identity, response, generation }
@@ -234,6 +261,10 @@ async function navigate(page: Page, action: () => Promise<Response | null>) {
     }
     verifiedDocuments.set(page, accepted!)
     return accepted!.response
+  }
+  catch (error) {
+    await diagnostics.attach(error)
+    throw error
   }
   finally {
     page.off('request', onRequest)
