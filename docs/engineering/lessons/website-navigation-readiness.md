@@ -42,6 +42,8 @@ pnpm agents:check
 
 只解决网站私有测试的同步边界，不涉及公开包行为，不新增 change intent。未来统计 endpoint、资源类型或 Docusaurus hydration 协议变化时，必须重新检查真实浏览器证据并补回归，不能扩大为忽略全部外部请求。
 
+Firefox 的客户端跳转 null、真实缓存重验证 304 与同文档导航需要额外的最终文档证据，后续纠正与回归见[网站最终文档与缓存响应证据](website-document-navigation-evidence.md)。不能只凭导航 API 的 Response 判断最终文档。
+
 ## 规则评估
 
 未新增 AGENTS，沿用既有环境预检与快照门禁。
