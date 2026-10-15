@@ -9,6 +9,8 @@ regressions:
   - e2e/issue-uview-plus-cssentries.test.ts
   - e2e/wechat-session-boundary.test.ts
   - packages/test-helper/test/dependency-update-scope.test.ts
+  - packages/weapp-tailwindcss/test/watch-hmr-error-report.unit.test.ts
+  - packages/weapp-tailwindcss/test/ci/workflows.test.ts
 verification:
   - claim: 升级后的三个规范模板完成冻结安装与真实构建
     kind: integration
@@ -189,9 +191,21 @@ CI=1 E2E_CANONICAL_TEMPLATE_CASE=weapp-vite-tailwindcss-v4 pnpm exec vitest run 
 
 ## 适用边界
 
+### PR CI 的 Windows 诊断缺口
+
+PR #1305 的首轮提交 `54f715f13b4d57ca91ecf22f950f353fff5c2d34` 在 Windows platform watch 的业务启动前失败，约 15 秒后报“Watch 内存采集器准备失败”。原始 job 为 [116217263650](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/38672016615/job/116217263650)。此时不能判定是宿主握手还是首次查询超时，也不能归因于依赖升级。
+
+CLI 原先只输出顶层 `error.stack`，遗漏 `cause` 和 `AggregateError.errors` 中的阶段证据；该 job 没有上传 watch 诊断产物。本轮改为用 Node `inspect` 保留嵌套错误，并始终上传 watch 失败日志、报告及快照。未延长采集器预算、重启采集会话或放宽 CI 门禁。
+
+新增回归在旧格式化逻辑下复现错误链丢失；修复后以下定向验证为 88 通过、1 个既有跳过。Windows 采集器的实际根因等待补全诊断后的当前 head CI 证据。
+
+```sh
+CI=1 pnpm --filter weapp-tailwindcss exec vitest run test/watch-hmr-error-report.unit.test.ts test/watch-hmr-memory-source.unit.test.ts test/watch-hmr-memory-sampler.unit.test.ts test/ci/workflows.test.ts --update=none
+```
+
 本轮验证系统为 macOS，Node 26.10.0，pnpm 12.9.1。候选直接依赖已核对仓库 Node 22.18.0 / 24.11.0 下限；未在这些 Node 版本及 Windows/Linux 实际执行。
 
-未运行全仓测试或全端预检，未执行微信 IDE、HBuilderX、iOS/Android/Harmony 的设备验收，也未等待远端 CI/CD。六个 build-only case 只能证明构建和静态产物；真实浏览器 HMR 结论仅适用于两个 Vite 8 demo。微信会话边界通过属于代码契约验证，不等价于真实 IDE 登录与设备测试通过。
+未运行本地全仓测试或全端预检，未执行微信 IDE、HBuilderX、iOS/Android/Harmony 的设备验收。用户追加要求后，已创建 PR 并跟进远端 CI/CD，具体通过范围以准确 head 的检查为准。六个 build-only case 只能证明构建和静态产物；本地真实浏览器 HMR 结论仅适用于两个 Vite 8 demo。微信会话边界通过属于代码契约验证，不等价于真实 IDE 登录与设备测试通过。
 
 Storybook 既有失败、保留版本的框架迁移、安全告警修复和原生全端验收需要分别安排，因此本文状态为 `partial`。
 

@@ -157,6 +157,14 @@ jobs:
           E2E_WATCH_SAVE_SNAPSHOTS: '1'
           NODE_OPTIONS: --max-old-space-size=6144
         run: pnpm e2e:watch
+      - name: Upload platform watch diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: platform-watch-${{ strategy.job-index }}-${{ runner.os }}
+          path: e2e/benchmark/e2e-watch-hmr/**
+          if-no-files-found: warn
+          retention-days: 14
 
   platform-dev:
     name: Platform dev startup smoke (${{ matrix.runner_label }})

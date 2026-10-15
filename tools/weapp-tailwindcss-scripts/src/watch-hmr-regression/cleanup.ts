@@ -79,7 +79,7 @@ export function createWatchCaseCleanup(label: string, sources: ReadonlyMap<strin
       }
 
       const errors = [...(failure ? [failure.error] : []), ...cleanupErrors]
-      // CLI 打印顶层 stack；完整失败文本必须在 message 中可见，cause 另保留原始对象。
+      // message 提供收尾摘要，cause 与 errors 保留完整首错及资源回收证据。
       const aggregate = new AggregateError(errors, `[${label}] watch/HMR 收尾失败：\n${errors.map(errorMessage).join('\n')}`, failure ? { cause: failure.error } : undefined)
       if (failure?.error instanceof WatchHmrPartialMetricsError) {
         throw new WatchHmrPartialMetricsError(aggregate.message, failure.error.metrics, { cause: aggregate })

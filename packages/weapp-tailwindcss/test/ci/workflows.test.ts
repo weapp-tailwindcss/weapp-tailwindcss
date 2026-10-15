@@ -155,6 +155,20 @@ describe('ci workflows', () => {
     expect(quality['continue-on-error']).toBeUndefined()
   })
 
+  it('retains platform watch diagnostics even when preparation fails before metrics exist', () => {
+    const { workflow } = readWorkflow('pr-gate.yml')
+    const steps = workflow.jobs['platform-watch'].steps
+    const upload = steps.find((step: Record<string, unknown>) => step.uses === uploadArtifactAction)
+    expect(upload).toMatchObject({
+      if: 'always()',
+      with: {
+        name: 'platform-watch-${{ strategy.job-index }}-${{ runner.os }}',
+        path: 'e2e/benchmark/e2e-watch-hmr/**',
+      },
+    })
+    expect(steps.indexOf(upload)).toBeGreaterThan(steps.findIndex((step: Record<string, unknown>) => step.run === 'pnpm e2e:watch'))
+  })
+
   it('requires current-commit portable demo evidence in the PR gate', () => {
     const { workflow: gate, source } = readWorkflow('pr-gate.yml')
     expect(gate.jobs['portable-demos'].uses).toBe('./.github/workflows/demo-matrix.yml')
