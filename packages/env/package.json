@@ -1,7 +1,7 @@
 {
   "name": "@weapp-tailwindcss/env",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "构建期的环境、框架与平台识别工具。",
   "author": "ice breaker <1324318532@qq.com>",
   "license": "MIT",

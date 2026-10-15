@@ -1,5 +1,30 @@
 # @weapp-tailwindcss/postcss
 
+## 3.4.3
+
+### Patch Changes
+
+- 升级兼容范围内的编译、样式、测试和开发工具依赖，同步 catalog 与锁文件。
+
+  - 对齐 Babel 8、Oxc parser/types 和 PostCSS 的兼容版本，更新单位转换依赖。
+  - 将 Vitest、覆盖率与 UI 统一到 5.0.4，更新 Lynx、Storybook 及相关开发依赖。
+  - 保留需要补丁迁移或完整框架、IDE 与设备验证的版本组。
+
+  升级范围、模板兼容修正、审计结果和本地验证见 docs/engineering/lessons/dependency-upgrade-2026-10.md。
+
+- Updated dependencies:
+  - @weapp-tailwindcss/css-compat@0.1.2
+  - @weapp-tailwindcss/engine@0.1.6
+  - @weapp-tailwindcss/native-darwin-arm64@5.6.3
+  - @weapp-tailwindcss/native-darwin-x64@5.6.3
+  - @weapp-tailwindcss/native-linux-arm64-gnu@5.6.3
+  - @weapp-tailwindcss/native-linux-arm64-musl@5.6.3
+  - @weapp-tailwindcss/native-linux-x64-gnu@5.6.3
+  - @weapp-tailwindcss/native-linux-x64-musl@5.6.3
+  - @weapp-tailwindcss/native-win32-arm64-msvc@5.6.3
+  - @weapp-tailwindcss/native-win32-x64-msvc@5.6.3
+  - @weapp-tailwindcss/postcss-calc@1.0.11
+
 ## 3.4.2
 
 ### Patch Changes
