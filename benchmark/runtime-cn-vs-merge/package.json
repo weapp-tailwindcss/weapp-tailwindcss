@@ -28,7 +28,7 @@
     "@weapp-tailwindcss/merge": "workspace:*",
     "@weapp-tailwindcss/runtime": "workspace:*",
     "clsx": "catalog:clsx",
-    "cn": "^0.3.0",
+    "cn": "^0.3.3",
     "tailwind-merge": "catalog:tailwindMerge"
   },
   "devDependencies": {

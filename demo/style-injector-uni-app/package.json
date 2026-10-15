@@ -29,7 +29,7 @@
     "@vue/runtime-core": "^3.5.41",
     "@vue/tsconfig": "^0.9.1",
     "cross-env": "catalog:crossEnv",
-    "less": "^4.6.6",
+    "less": "^4.9.1",
     "sass": "catalog:sass195",
     "sass-embedded": "catalog:sass195",
     "typescript": "catalog:typescript59",
