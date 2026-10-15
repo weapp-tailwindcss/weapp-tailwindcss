@@ -41,6 +41,10 @@ it('三浏览器只访问本轮 URL，显式后台运行且禁止更新基线', 
   expect(localConfig.projects?.map(project => project.name)).toEqual(['chromium', 'firefox', 'webkit'])
   expect(localConfig.projects?.every(project => project.use?.headless === true)).toBe(true)
   expect(localConfig.updateSnapshots).toBe('none')
+  expect(localConfig.workers).toBe(1)
+  expect(localConfig.timeout).toBe(60_000)
+  expect(localConfig.expect?.timeout).toBe(60_000)
+  expect(localConfig.expect?.toHaveScreenshot?.maxDiffPixels).toBe(5)
 })
 
 it.each(['local', 'default'] as const)('由实际 Playwright CLI 加载 %s 配置并发现三浏览器用例', async (mode) => {

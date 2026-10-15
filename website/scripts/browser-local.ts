@@ -5,6 +5,7 @@ import process from 'node:process'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { formatWorkflowError } from '../../scripts/e2e-preflight/cleanup'
 import { verifyWorkerRoutes } from './local-worker/assertions'
+import { discoverBrowserBudget } from './local-worker/browser-budget'
 import { runLocalCommand } from './local-worker/command'
 import { withLocalWorker } from './local-worker/server'
 
@@ -24,7 +25,10 @@ export async function verifyBrowserLocal(options: Partial<LocalWorkerOptions> = 
   const websiteRoot = options.websiteRoot ?? fileURLToPath(new URL('..', import.meta.url))
   await withLocalWorker(async (context) => {
     await verifyWorkerRoutes(context)
-    await runLocalCommand(localBrowserCommand(context), context.signal)
+    const command = localBrowserCommand(context)
+    const budget = await discoverBrowserBudget(command, context.signal)
+    process.stdout.write(`[website-browser] command capacity: ${JSON.stringify(budget)}\n`)
+    await runLocalCommand(command, context.signal, budget.timeoutMs)
   }, { ...options, websiteRoot })
 }
 
