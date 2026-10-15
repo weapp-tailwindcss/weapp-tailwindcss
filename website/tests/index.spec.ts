@@ -4,6 +4,7 @@ import { devices, expect, test } from '@playwright/test'
 import routes from '../routes.json'
 import { expectFullPageScreenshot } from './helpers/full-page/screenshot'
 import { navigateWebsite, reloadWebsite } from './helpers/navigation'
+import { visualTest } from './helpers/visual-test'
 
 declare global {
   interface Window {
@@ -1046,18 +1047,18 @@ test.describe('color mode transition strategy', () => {
 })
 
 for (const viewport of viewports) {
-  test.describe(`${viewport.name} viewport`, () => {
-    test.use(viewport.use)
+  visualTest.describe(`${viewport.name} viewport`, () => {
+    visualTest.use(viewport.use)
 
     if (viewport.onlyBrowser) {
-      test.skip(
+      visualTest.skip(
         ({ browserName }) => browserName !== viewport.onlyBrowser,
         `Only run on ${viewport.onlyBrowser} to keep the suite fast`,
       )
     }
 
     for (const route of routes) {
-      test(`${viewport.name} ${route} screenshot`, async ({ page }) => {
+      visualTest(`${viewport.name} ${route} screenshot`, async ({ page }) => {
         const url = new URL(route, baseURL)
         await navigateWebsite(page, url.toString())
 

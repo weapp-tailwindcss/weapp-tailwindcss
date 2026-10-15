@@ -29,6 +29,8 @@ verification:
 
 这补充了[统计上报同步边界](website-navigation-readiness.md)的适用范围。第五个首页截图的 788 像素差异只完成一次失败采样，重试被主动中断；它是另一条证据，不能算成已确认的第五个导航失败。
 
+后续独立调查确认该截图由 Firefox 跨 context 的访问历史造成，修复与准确的前序测试计数见[黄金截图的访问历史隔离](website-visual-history-isolation.md)。
+
 ## 根因与纠正
 
 导航 API 返回值不等于最终主文档的身份。Firefox 的同步 `location.replace()` 可以令 `goto` 返回 null，但最终页面已有真实请求和响应；同文档 hash 导航也按 Playwright 协议返回 null。不能直接放行 null，必须先取得其对应的文档证据。
