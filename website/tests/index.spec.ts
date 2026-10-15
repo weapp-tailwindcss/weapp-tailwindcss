@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test'
 import { URL } from 'node:url'
 import { devices, expect, test } from '@playwright/test'
 import routes from '../routes.json'
+import { navigateWebsite, reloadWebsite } from './helpers/navigation'
 
 declare global {
   interface Window {
@@ -152,9 +153,7 @@ test.describe('homepage hero layout', () => {
   test('desktop hero actions and platform icons stay visually compact', async ({ page }) => {
     await setStoredLocale(page, 'zh-cn')
     await page.setViewportSize({ width: 1440, height: 1000 })
-    await page.goto(baseURL, {
-      waitUntil: 'networkidle',
-    })
+    await navigateWebsite(page, baseURL)
 
     const hero = page.locator('.home-hero')
     const platformIcons = page.locator('.home-hero__platform-icon')
@@ -308,9 +307,7 @@ test.describe('homepage hero layout', () => {
   test('English homepage keeps the semantic platform icon order', async ({ page }) => {
     await setStoredLocale(page, 'en')
     await page.setViewportSize({ width: 1440, height: 1000 })
-    await page.goto(baseURL, {
-      waitUntil: 'networkidle',
-    })
+    await navigateWebsite(page, baseURL)
 
     const platformLabels = await page.locator('.home-hero__platform-icon')
       .evaluateAll(elements => elements.map(element => element.getAttribute('aria-label')))
@@ -338,9 +335,7 @@ test.describe('homepage hero layout', () => {
   test('desktop support tracks keep an asymmetric readable layout', async ({ page }) => {
     await setStoredLocale(page, 'zh-cn')
     await page.setViewportSize({ width: 1440, height: 1000 })
-    await page.goto(baseURL, {
-      waitUntil: 'networkidle',
-    })
+    await navigateWebsite(page, baseURL)
 
     const support = page.locator('.home-support')
     const anchor = support.locator('.home-support__anchor')
@@ -425,7 +420,7 @@ test.describe('homepage hero layout', () => {
       npmKey: npmVersionCacheKey,
       settingsKey: uiStorageKey,
     })
-    await page.goto(baseURL, { waitUntil: 'networkidle' })
+    await navigateWebsite(page, baseURL)
 
     await expect(page.locator('.ui-homepage-github-badge')).toContainText('1.2k')
     await expect(page.locator('.ui-homepage-npm-version-badge')).toContainText('v9.9.9')
@@ -443,7 +438,7 @@ test.describe('homepage hero layout', () => {
         },
       }))
     }, uiStorageKey)
-    await page.reload({ waitUntil: 'networkidle' })
+    await reloadWebsite(page)
 
     await expect(page.locator('.ui-homepage-github-badge')).toHaveCount(0)
     await expect(page.locator('.ui-homepage-npm-version-badge')).toHaveCount(0)
@@ -452,21 +447,21 @@ test.describe('homepage hero layout', () => {
 
   test('React Native and Lynx platform links reach their localized documentation', async ({ page }) => {
     await setStoredLocale(page, 'zh-cn')
-    await page.goto(baseURL, { waitUntil: 'networkidle' })
+    await navigateWebsite(page, baseURL)
 
     await page.getByRole('link', { name: 'React Native' }).click()
     await expect(page).toHaveURL(/\/zh-cn\/docs\/quick-start\/react-native-expo\/?$/)
 
-    await page.goto(baseURL, { waitUntil: 'networkidle' })
+    await navigateWebsite(page, baseURL)
     await page.getByRole('link', { name: 'Lynx' }).click()
     await expect(page).toHaveURL(/\/zh-cn\/docs\/quick-start\/frameworks\/lynx\/?$/)
 
     await page.evaluate(key => window.localStorage.setItem(key, 'en'), localeStorageKey)
-    await page.goto(baseURL, { waitUntil: 'networkidle' })
+    await navigateWebsite(page, baseURL)
     await page.getByRole('link', { name: 'React Native' }).click()
     await expect(page).toHaveURL(/\/docs\/quick-start\/react-native-expo\/?$/)
 
-    await page.goto(baseURL, { waitUntil: 'networkidle' })
+    await navigateWebsite(page, baseURL)
     await page.getByRole('link', { name: 'Lynx' }).click()
     await expect(page).toHaveURL(/\/docs\/quick-start\/frameworks\/lynx\/?$/)
   })
@@ -476,9 +471,7 @@ test.describe('homepage hero layout', () => {
     await page.addInitScript(() => {
       window.localStorage.setItem('theme', 'light')
     })
-    await page.goto(baseURL, {
-      waitUntil: 'networkidle',
-    })
+    await navigateWebsite(page, baseURL)
 
     const primaryCta = page.locator('.home-hero__actions .home-cta')
     const colors = await primaryCta.evaluate((element) => {
@@ -508,9 +501,7 @@ test.describe('homepage hero layout', () => {
   test('mobile hero actions fit without horizontal overflow', async ({ page }) => {
     await setStoredLocale(page, 'zh-cn')
     await page.setViewportSize({ width: 390, height: 844 })
-    await page.goto(baseURL, {
-      waitUntil: 'networkidle',
-    })
+    await navigateWebsite(page, baseURL)
 
     await expect(page.locator('.home-hero__platform-strip')).toBeHidden()
     const primaryCta = page.locator('.home-hero__actions .home-cta')
@@ -797,9 +788,7 @@ test.describe('mobile navbar sidebar', () => {
 
   test('keeps the document menu visible and navigable', async ({ page }) => {
     await setStoredLocale(page, 'zh-cn')
-    await page.goto(new URL('/zh-cn/docs/intro', baseURL).toString(), {
-      waitUntil: 'networkidle',
-    })
+    await navigateWebsite(page, new URL('/zh-cn/docs/intro', baseURL).toString())
 
     await page.locator('.navbar__toggle').tap()
 
@@ -832,9 +821,7 @@ test.describe('color mode transition strategy', () => {
     await setStoredLocale(page, 'zh-cn')
     await page.setViewportSize({ width: 1440, height: 900 })
     await instrumentThemeTransitions(page)
-    await page.goto(baseURL, {
-      waitUntil: 'networkidle',
-    })
+    await navigateWebsite(page, baseURL)
 
     const html = page.locator('html')
     const toggle = page.locator('button[aria-label*="浅色/暗黑模式"]:visible')
@@ -935,9 +922,7 @@ test.describe('color mode transition strategy', () => {
     await setStoredLocale(page, 'zh-cn')
     await page.setViewportSize({ width: 1440, height: 900 })
     await instrumentThemeTransitions(page)
-    await page.goto(baseURL, {
-      waitUntil: 'networkidle',
-    })
+    await navigateWebsite(page, baseURL)
 
     const html = page.locator('html')
     const toggle = page.locator('button[aria-label*="浅色/暗黑模式"]:visible')
@@ -988,9 +973,7 @@ test.describe('color mode transition strategy', () => {
         },
       })
     })
-    await page.goto(baseURL, {
-      waitUntil: 'networkidle',
-    })
+    await navigateWebsite(page, baseURL)
 
     await page.locator('button[aria-label*="浅色/暗黑模式"]:visible').click()
 
@@ -1009,9 +992,7 @@ test.describe('color mode transition strategy', () => {
         value: undefined,
       })
     })
-    await page.goto(baseURL, {
-      waitUntil: 'networkidle',
-    })
+    await navigateWebsite(page, baseURL)
 
     await page.locator('button[aria-label*="浅色/暗黑模式"]:visible').click()
 
@@ -1053,9 +1034,7 @@ test.describe('color mode transition strategy', () => {
         },
       })
     })
-    await page.goto(baseURL, {
-      waitUntil: 'networkidle',
-    })
+    await navigateWebsite(page, baseURL)
 
     await page.locator('button[aria-label*="浅色/暗黑模式"]:visible').click()
 
@@ -1079,9 +1058,7 @@ for (const viewport of viewports) {
     for (const route of routes) {
       test(`${viewport.name} ${route} screenshot`, async ({ page }) => {
         const url = new URL(route, baseURL)
-        await page.goto(url.toString(), {
-          waitUntil: 'networkidle',
-        })
+        await navigateWebsite(page, url.toString())
 
         await expect(page).toHaveScreenshot({
           fullPage: true,

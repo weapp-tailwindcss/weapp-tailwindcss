@@ -1,13 +1,12 @@
 import { expect, test } from '@playwright/test'
+import { navigateWebsite } from './helpers/navigation'
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'https://tw.weapp.dev/'
 
 test.describe('showcase page', () => {
   test('shows a first-screen mini program index and compact screenshots', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 1000 })
-    await page.goto(new URL('/docs/showcase', baseURL).toString(), {
-      waitUntil: 'networkidle',
-    })
+    await navigateWebsite(page, new URL('/docs/showcase', baseURL).toString())
 
     const index = page.locator('.showcase-index')
     await expect(index).toBeVisible()
@@ -67,9 +66,7 @@ test.describe('showcase page', () => {
 
   test('keeps the showcase index usable on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
-    await page.goto(new URL('/docs/showcase', baseURL).toString(), {
-      waitUntil: 'networkidle',
-    })
+    await navigateWebsite(page, new URL('/docs/showcase', baseURL).toString())
 
     const index = page.locator('.showcase-index')
     await expect(index).toBeVisible()
