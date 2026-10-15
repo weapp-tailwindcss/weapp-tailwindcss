@@ -6,10 +6,16 @@ import { collectEmptyCssBlocks } from '../../../tools/weapp-tailwindcss-scripts/
 import { createOutputIntegrityMonitor } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/output-integrity'
 
 const createdDirs: string[] = []
+const monitors: NonNullable<ReturnType<typeof createOutputIntegrityMonitor>>[] = []
 
 describe('watch output integrity monitor', () => {
   afterEach(async () => {
-    await Promise.all(createdDirs.splice(0).map(dir => rm(dir, { recursive: true, force: true })))
+    try {
+      await Promise.all(monitors.splice(0).map(monitor => monitor.stop()))
+    }
+    finally {
+      await Promise.all(createdDirs.splice(0).map(dir => rm(dir, { recursive: true, force: true })))
+    }
   })
 
   it('records an invalid intermediate output even when the final file is corrected', async () => {
@@ -20,13 +26,14 @@ describe('watch output integrity monitor', () => {
       file: outputFile,
       forbiddenFragments: ['.i-\\['],
     }])!
+    monitors.push(monitor)
 
     await writeFile(outputFile, '.i-\\[mdi--github-circle\\]{display:inline-block}', 'utf8')
-    await new Promise(resolve => setTimeout(resolve, 40))
+    // 先确认中间违例确已记录，再验证最终修正不能抹掉历史；固定等待不是观察屏障。
+    await expect(monitor.assertClean('invalid intermediate output')).rejects.toThrow('output integrity violation')
     await writeFile(outputFile, '.i-_bmdi--github-circle_B{display:inline-block}', 'utf8')
 
     await expect(monitor.assertClean('test update')).rejects.toThrow('output integrity violation')
-    await monitor.stop()
   })
 
   it('records empty conditional at-rules in final style outputs', async () => {
@@ -40,9 +47,9 @@ describe('watch output integrity monitor', () => {
       directory: outputDirectory,
       forbidEmptyBlockAtRules: true,
     }])!
+    monitors.push(monitor)
 
     await expect(monitor.assertClean('incremental finalization')).rejects.toThrow('@media (prefers-color-scheme: dark)')
-    await monitor.stop()
   })
 
   it('collects empty selector rules and block at-rules', () => {
