@@ -75,14 +75,27 @@ for (const route of ['/docs/quick-start/install', '/zh-cn/docs/quick-start/insta
       await expandCategory(page, category)
     }
 
-    const items = page.locator('.theme-doc-sidebar-menu .framework-sidebar-item')
-    await expect(items).toHaveCount(15)
+    const isChinese = route.startsWith('/zh-cn/')
+    const sidebar = page.locator('.theme-doc-sidebar-menu')
+    const setup = sidebar.getByRole('button', { name: isChinese ? '各框架注册方式' : 'Framework-specific setup', exact: true }).locator('..').locator('..')
+    await expect(setup.locator('.framework-sidebar-item')).toHaveCount(15)
+
+    const references = sidebar.getByRole('button', { name: isChinese ? '框架配置参考' : 'Framework configuration references', exact: true }).locator('..').locator('..')
+    await expect(references.locator('.framework-sidebar-item')).toHaveCount(3)
+    const prefix = isChinese ? '/zh-cn' : ''
+    for (const [slug, logo] of [['uni-app-x', 'uni-app-x'], ['react-lynx', 'lynx'], ['react-native', 'expo']]) {
+      await expect(references.locator(`.framework-sidebar-item--${logo} > a`)).toHaveAttribute('href', `${prefix}/docs/config/${slug}`)
+    }
 
     for (const logo of frameworkLogos) {
-      const logoItems = page.locator(`.framework-sidebar-item--${logo}`)
+      const logoItems = setup.locator(`.framework-sidebar-item--${logo}`)
       expect(await logoItems.count()).toBeGreaterThan(0)
+    }
 
-      const style = await logoItems.first().locator(':scope > .menu__link, :scope > .menu__list-item-collapsible > .menu__link').first().evaluate((element) => {
+    const items = sidebar.locator('.framework-sidebar-item')
+    await expect(items).toHaveCount(18)
+    for (const item of await items.all()) {
+      const style = await item.locator(':scope > .menu__link, :scope > .menu__list-item-collapsible > .menu__link').first().evaluate((element) => {
         const pseudo = getComputedStyle(element, '::before')
         const label = element.querySelector('span')?.getBoundingClientRect()
         const link = element.getBoundingClientRect()
