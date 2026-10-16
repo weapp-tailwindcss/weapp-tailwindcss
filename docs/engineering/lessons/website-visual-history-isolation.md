@@ -49,6 +49,8 @@ Playwright 1.64.1 的 runner 自动为公开 launch/newContext API 注入本轮 
 
 真实 HTTP 消费回归在 Chromium、Firefox、WebKit 各运行一次，内部连续创建两轮视觉 fixture。Firefox 控制组在同 browser 的新 context 仍绘制访问后的红像素，独立视觉 fixture 保持未访问蓝像素；在 fixture 内真实点击后仍绘制红像素。两轮独立 browser 身份不同。其他浏览器断言沿用内置 browser，没有强加 Firefox 的历史实现。
 
+后续完整流程暴露消费回归曾把导航完成当成 visited 像素同步绘制完成。原失败和定向复现均保留；[visited 状态观察复盘](website-visited-state-observation.md)记录有界真实像素断言、未访问负控制及证据持久化的纠正，不将本文的历史通过解释为同步绘制保证。
+
 回归验证 viewport、deviceScaleFactor、userAgent、locale、timezoneId、colorScheme、reducedMotion、storageState 以及真实请求携带的 extraHTTPHeaders。首版回归误把 `hasTouch` 等同于各浏览器的 `navigator.maxTouchPoints`，并误要求 Chromium 隐私 context 绘制 visited，导致首轮失败；这些观察已保留，纠正测试预期后通过，不改产品或隔离实现。
 
 外部临时负例故意失败以检查记录能力，没有把失败用例留在正式套件中。两次 Firefox 实际启动命令均包含 `-headless`，两个进程均有退出回执；保留失败 PNG、trace ZIP 及 trace 内的 411×377、fr-FR 等 context 配置和真实 HTTP 导航。另一轮 video=on 在创建独立 browser 前报错，实际 exit 1 回执保留；正式消费回归也覆盖此拒绝和其他浏览器的录像透传。
