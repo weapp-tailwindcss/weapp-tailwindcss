@@ -105,7 +105,8 @@ describe('Harmony 合成探针的工具与设备边界', () => {
     expect(result.binding).toEqual({ ...fixture, version: 'synthetic hdc 1', system: 'OpenHarmony synthetic 6.0' })
     expect(result.evidence).toEqual([layout, screenshot])
     expect(run.mock.calls.some(([, args]) => args.includes('snapshot_display'))).toBe(true)
-    expect(run.mock.calls.some(([, args]) => args.includes('screenCap'))).toBe(true)
+    // 回退会捕获 screenCap 内部错误，完整参数须在回退结束后独立核对。
+    expect(run).toHaveBeenCalledWith(fixture.command, ['-t', fixture.device, 'shell', 'uitest', 'screenCap', '-p', `${remote}.png`])
     expect(run).toHaveBeenLastCalledWith(fixture.command, ['-t', fixture.device, 'shell', 'rm', '-f', `${remote}.json`, `${remote}.png`, `${remote}.jpeg`])
     await expect(assertImage(screenshot)).resolves.toBeUndefined()
   })
