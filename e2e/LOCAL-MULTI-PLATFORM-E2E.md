@@ -240,6 +240,8 @@ pnpm e2e:hbuilderx:mp
 
 设置按完整项目路径保存，换 worktree 或临时目录后不自动继承。E2E 不直接修改 IDE 内部存储、不增加 Tool 协议白名单、不为恢复截图重启或重置登录。截图比例失败会打印原图和运行时尺寸；#928 的像素基线还拒绝非整数采样比例。模板 smoke 可独立保存原图证据，但像素测试不能切到原图绕过裁剪。详见[截图缩放与渐变基线复盘](../docs/engineering/lessons/wechat-screenshot-pixel-alignment.md)。
 
+#928 支持 1920×1080 和 3840×2160 宿主；根据本轮截图宽度除以运行时 CSS 视口宽度，唯一选择已登记的 1x 或 2x 基线。显示器分辨率、HiDPI 设置和设备 `pixelRatio` 不直接决定选择。两种密度的圆角栅格不同，不能交叉比较、按最小差异回退、缩放当前截图或放宽原门槛。非整数、未登记密度、缺失或损坏基线继续阻断。限定更新只写当前密度，保留另一份；更新和禁更新复验分开执行。采集条件和离线原图见[基线说明](fixtures/issue-928-baselines/README.md)，原因及验证边界见[密度基线复盘](../docs/engineering/lessons/wechat-screenshot-density-baselines.md)。
+
 ### 3.3 Android、iOS、Harmony
 
 先做 HBuilderX 本地结构/HMR，再做截图：

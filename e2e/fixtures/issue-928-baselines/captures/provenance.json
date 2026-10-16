@@ -1,0 +1,38 @@
+{
+  "records": [
+    {
+      "file": "viewport-1x.png",
+      "sha256": "254b1cc9985eef3c4bd6ca722a878c07779ccab2c30b1f2ae3359eeca670e3b3",
+      "bytes": 102111,
+      "samplingScale": 1,
+      "sourceKind": "真实微信IDE视口原图",
+      "sourceCapture": "2026-10-16 候选 e1af8b2b4e600c50f02800e4184568cc12eb05d6 定向诊断"
+    },
+    {
+      "file": "geometry-1x.json",
+      "sha256": "1c0a09cd477a50614085b91cc792133c88cb8bdda6f80f1d4c677a441cd16b38",
+      "bytes": 602,
+      "samplingScale": 1,
+      "sourceKind": "真实运行时几何记录",
+      "sourceCapture": "2026-10-16 候选 e1af8b2b4e600c50f02800e4184568cc12eb05d6 定向诊断"
+    },
+    {
+      "file": "viewport-2x.png",
+      "sha256": "32ba5541133fed7f78d2debdf9d36d144cb8983856b8414de69f19c790f6b3a2",
+      "bytes": 382872,
+      "samplingScale": 2,
+      "sourceKind": "真实微信IDE视口原图",
+      "sourceCapture": "2026-10-05 verified 历史采集；准确捕获提交和独立原执行日志缺失，不代表本轮4K实机验收"
+    },
+    {
+      "file": "geometry-2x.json",
+      "sha256": "f4c3caa6cbe01a0e9271869ea7a9b3e7303aa8d404f3f00f8f3b789000ccbec2",
+      "bytes": 603,
+      "samplingScale": 2,
+      "sourceKind": "真实运行时几何记录",
+      "sourceCapture": "2026-10-05 verified 历史采集；准确捕获提交和独立原执行日志缺失，不代表本轮4K实机验收"
+    }
+  ],
+  "runtimeSha256": "451072937f48279d2781da5aa06b409d499e6f79b93cc85f5cb513a7c2542d37",
+  "notes": "两份原图均未缩放或重采样；相同运行时pixelRatio=2，实际截图采样分别为1和2。"
+}

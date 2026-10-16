@@ -7,7 +7,7 @@ import { captureMiniProgramViewport } from '../scripts/demo-visual-e2e-report/mi
 import { closeWechatProject } from '../scripts/wechat-project-cleanup'
 import { Launcher } from '../scripts/wechat/automator'
 import { collectFrameworkIdeDiagnostics } from './frameworkIdeDiagnostics'
-import { artifactDir, issue928BaselineDir, timeoutMs } from './issue-928/config'
+import { artifactDir, issue928CompareBaselinePaths, timeoutMs } from './issue-928/config'
 import { assertIssue928GradientRuntime } from './issue-928/gradient'
 import { countAmberPixels, countBluePixels, countCyanPixels, countEmeraldPixels, countPurplePixels, countRedPixels, countYellowPixels, expandRect, scaleRect } from './issue-928/visual'
 import { assertMiniProgramPreflight } from './preflight-assertions'
@@ -221,7 +221,7 @@ describeIde('issues 909/916/928 IDE runtime', () => {
       radialSelector: '.issue-928-radial-custom',
       conicSelector: '.issue-928-conic-angle',
       arbitraryImageSelector: '.issue-928-arbitrary-image',
-      compareBaselinePath: path.resolve(issue928BaselineDir, 'v4-compare.png'),
+      compareBaselinePaths: issue928CompareBaselinePaths,
       extraVisualAssertions: async ({ page, scaleX, scaleY, screenshot }) => {
         const stopVarGradientNode = await page.$('.issue-928-stop-var')
         const arbitraryGradientNode = await page.$('.issue-928-linear-custom')
@@ -293,7 +293,7 @@ describeIde('issues 909/916/928 IDE runtime', () => {
       radialSelector: '.issue-928-radial-custom',
       conicSelector: '.issue-928-conic-angle',
       arbitraryImageSelector: '.issue-928-arbitrary-image',
-      compareBaselinePath: path.resolve(issue928BaselineDir, 'v4-compare.png'),
+      compareBaselinePaths: issue928CompareBaselinePaths,
     })
   }, 120_000)
 })

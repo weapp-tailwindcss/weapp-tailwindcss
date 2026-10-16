@@ -1,0 +1,43 @@
+{
+  "cssRects": [
+    {
+      "left": 24,
+      "top": 72,
+      "width": 112,
+      "height": 56
+    },
+    {
+      "left": 148,
+      "top": 72,
+      "width": 112,
+      "height": 56
+    },
+    {
+      "left": 24,
+      "top": 140,
+      "width": 112,
+      "height": 56
+    }
+  ],
+  "compareRect": {
+    "left": 22,
+    "top": 70,
+    "width": 240,
+    "height": 128
+  },
+  "viewportWidth": 375,
+  "scaleX": 1,
+  "scaleY": 1,
+  "screenshot": {
+    "width": 375,
+    "height": 603
+  },
+  "baseline": {
+    "width": 240,
+    "height": 128
+  },
+  "actual": {
+    "width": 240,
+    "height": 128
+  }
+}

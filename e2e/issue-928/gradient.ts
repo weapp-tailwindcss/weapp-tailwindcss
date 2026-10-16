@@ -1,12 +1,13 @@
+import type { Issue928BaselinePaths } from './baseline'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import pixelmatch from 'pixelmatch'
 import { PNG } from 'pngjs'
 import { expect } from 'vitest'
 import { captureMiniProgramViewport } from '../../scripts/demo-visual-e2e-report/mini-program-screenshot'
+import { compareIssue928Baseline, selectIssue928Baseline } from './baseline'
 import { artifactDir, issue928PageUrl, shouldUpdateIssue928CompareBaseline, timeoutMs } from './config'
 import { cropCssPixelRegion } from './css-pixel-region'
-import { countBluePixels, countCyanPixels, countPurplePixels, cropPng, expandRect, scaleRect, unionRect } from './visual'
+import { countBluePixels, countCyanPixels, countPurplePixels, expandRect, scaleRect, unionRect } from './visual'
 
 interface Issue928ProbeOptions {
   artifactPrefix: string
@@ -20,6 +21,7 @@ interface Issue928ProbeOptions {
   conicSelector: string
   arbitraryImageSelector: string
   compareBaselinePath?: string
+  compareBaselinePaths?: Issue928BaselinePaths
   extraVisualAssertions?: (context: {
     screenshot: PNG
     scaleX: number
@@ -90,6 +92,8 @@ export async function assertIssue928GradientRuntime(miniProgram: any, options: I
   const compareRect = expandRect(unionRect(...cssRects), 2)
   const viewportWidth = (await gradientPage.size()).width
   const comparePng = cropCssPixelRegion(gradientScreenshot, viewportWidth, compareRect, { requireIntegerScale: true })
+  const baselinePaths = options.compareBaselinePaths ?? (options.compareBaselinePath ? { 2: options.compareBaselinePath } : undefined)
+  const compareBaseline = baselinePaths ? selectIssue928Baseline(gradientScreenshot.width, viewportWidth, baselinePaths) : undefined
   const comparePath = path.resolve(artifactDir, `${options.artifactPrefix}-issue-928-compare.png`)
   await fs.writeFile(comparePath, PNG.sync.write(comparePng))
   let compareBaselineInitialized = false
@@ -97,15 +101,15 @@ export async function assertIssue928GradientRuntime(miniProgram: any, options: I
   let compareDiffPath: string | undefined
   let compareDifferentPixels: number | undefined
   let compareRatio: number | undefined
-  if (options.compareBaselinePath) {
+  if (compareBaseline) {
     const shouldWriteBaseline = shouldUpdateIssue928CompareBaseline
     if (shouldWriteBaseline) {
-      await fs.mkdir(path.dirname(options.compareBaselinePath), { recursive: true })
-      await fs.writeFile(options.compareBaselinePath, PNG.sync.write(comparePng))
+      await fs.mkdir(path.dirname(compareBaseline.path), { recursive: true })
+      await fs.writeFile(compareBaseline.path, PNG.sync.write(comparePng))
       compareBaselineInitialized = false
       compareBaselineUpdated = shouldUpdateIssue928CompareBaseline
     }
-    const baselinePng = PNG.sync.read(await fs.readFile(options.compareBaselinePath))
+    const baselinePng = PNG.sync.read(await fs.readFile(compareBaseline.path))
     await fs.writeFile(path.resolve(artifactDir, `${options.artifactPrefix}-issue-928-compare-geometry.json`), `${JSON.stringify({
       cssRects,
       compareRect,
@@ -115,30 +119,14 @@ export async function assertIssue928GradientRuntime(miniProgram: any, options: I
       screenshot: { width: gradientScreenshot.width, height: gradientScreenshot.height },
       baseline: { width: baselinePng.width, height: baselinePng.height },
       actual: { width: comparePng.width, height: comparePng.height },
+      compareBaselinePath: compareBaseline.path,
+      compareBaselineScale: compareBaseline.scale,
     }, null, 2)}\n`)
-    expect(Math.abs(baselinePng.width - comparePng.width)).toBeLessThanOrEqual(1)
-    expect(Math.abs(baselinePng.height - comparePng.height)).toBeLessThanOrEqual(1)
-    const stableCompareWidth = Math.min(comparePng.width, baselinePng.width)
-    const stableCompareHeight = Math.min(comparePng.height, baselinePng.height)
-    const stableComparePng = cropPng(comparePng, {
-      height: stableCompareHeight,
-      left: 0,
-      top: 0,
-      width: stableCompareWidth,
-    })
-    const stableBaselinePng = cropPng(baselinePng, {
-      height: stableCompareHeight,
-      left: 0,
-      top: 0,
-      width: stableCompareWidth,
-    })
-    const diffPng = new PNG({ width: stableCompareWidth, height: stableCompareHeight })
-    compareDifferentPixels = pixelmatch(stableComparePng.data, stableBaselinePng.data, diffPng.data, stableCompareWidth, stableCompareHeight, {
-      threshold: 0.1,
-    })
+    const comparison = compareIssue928Baseline(comparePng, baselinePng)
+    compareDifferentPixels = comparison.differentPixels
     compareDiffPath = path.resolve(artifactDir, `${options.artifactPrefix}-issue-928-compare-diff.png`)
-    await fs.writeFile(compareDiffPath, PNG.sync.write(diffPng))
-    compareRatio = Math.round((compareDifferentPixels / (stableCompareWidth * stableCompareHeight)) * 10000) / 10000
+    await fs.writeFile(compareDiffPath, PNG.sync.write(comparison.diff))
+    compareRatio = comparison.ratio
   }
   const extraVisual = await options.extraVisualAssertions?.({
     page: gradientPage,
@@ -160,7 +148,8 @@ export async function assertIssue928GradientRuntime(miniProgram: any, options: I
       gradientRect,
       compareDiffPath,
       compareBaselineInitialized,
-      compareBaselinePath: options.compareBaselinePath,
+      compareBaselinePath: compareBaseline?.path,
+      compareBaselineScale: compareBaseline?.scale,
       compareBaselineUpdated,
       compareDifferentPixels,
       comparePath,
@@ -180,7 +169,7 @@ export async function assertIssue928GradientRuntime(miniProgram: any, options: I
     }, null, 2)}\n`,
   )
 
-  if (options.compareBaselinePath) {
+  if (compareBaseline) {
     expect(compareDifferentPixels).toBeLessThan(10)
   }
 }

@@ -1,0 +1,18 @@
+{
+  "pixelRatio": 2,
+  "safeArea": {
+    "top": 20,
+    "left": 0,
+    "right": 375,
+    "bottom": 667,
+    "width": 375,
+    "height": 647
+  },
+  "screenWidth": 375,
+  "screenHeight": 667,
+  "screenTop": 64,
+  "windowWidth": 375,
+  "windowHeight": 603,
+  "statusBarHeight": 20,
+  "hasNativeTabBar": false
+}
