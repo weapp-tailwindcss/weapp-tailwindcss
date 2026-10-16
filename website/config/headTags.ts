@@ -191,13 +191,6 @@ const headTags: NonNullable<Config['headTags']> = [
   {
     tagName: 'link',
     attributes: {
-      rel: 'preconnect',
-      href: 'https://hm.baidu.com',
-    },
-  },
-  {
-    tagName: 'link',
-    attributes: {
       rel: 'alternate',
       type: 'application/rss+xml',
       title: copy.blog.feedTitle,

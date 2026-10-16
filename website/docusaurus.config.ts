@@ -59,7 +59,8 @@ const config: Config = {
     },
   },
   headTags,
-  scripts: [{ src: 'https://hm.baidu.com/hm.js?61f3de7065e36044e6d5f201632bc368', async: true }],
+  // 生产构建仍在浏览器运行时核对 canonical origin，避免预览部署加载线上统计。
+  clientModules: isProd ? ['./src/features/analytics/client.ts'] : [],
   customFields: {
     footer: footerCustomFields,
   },
@@ -92,12 +93,6 @@ const config: Config = {
           // 升级到 docusaurus@3 之后 docusaurus-plugin-sass 似乎挂了
           customCss: ['./src/css/tailwind.css', './src/css/custom.scss'], // require.resolve('./src/css/custom.scss'),
         },
-        // 在本地开发/局域网联调时关闭 gtag，避免外网脚本加载失败导致 window.gtag 未定义
-        gtag: isProd
-          ? {
-              trackingID: 'G-S81Q4GRTPM',
-            }
-          : undefined,
         sitemap: {
           changefreq: 'weekly',
           priority: 0.5,
