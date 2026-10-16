@@ -1,13 +1,16 @@
-import type { Dispatcher } from 'undici'
+import type { Dispatcher, RequestInit, Response } from 'undici'
+import type { ShowcaseCatalog } from '../website/src/components/docs/showcase/types'
 import { Buffer } from 'node:buffer'
 import { execFile } from 'node:child_process'
 import { setDefaultResultOrder } from 'node:dns'
 import path from 'node:path'
 import process from 'node:process'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { promisify } from 'node:util'
 import fs from 'fs-extra'
 import { Agent, fetch, ProxyAgent, setGlobalDispatcher } from 'undici'
+import { reuseShowcaseImages } from './showcase/assets'
+import { publishShowcase } from './showcase/publication'
 import { renderShowcaseCatalog, renderShowcaseMarkdown, validateShowcaseLocalization } from './showcase/render'
 
 setDefaultResultOrder('ipv4first')
@@ -165,12 +168,6 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const repoRoot = path.resolve(__dirname, '..')
 
-const showcaseDocsPath = path.resolve(repoRoot, 'website/docs/showcase/index.mdx')
-const showcaseDataPath = path.resolve(repoRoot, 'website/src/components/docs/showcase/catalog.json')
-const showcaseEnglishTitlesPath = path.resolve(repoRoot, 'website/src/components/docs/showcase/en.json')
-const showcaseEnglishDocsPath = path.resolve(repoRoot, 'website/i18n/en/docusaurus-plugin-content-docs/current/showcase/index.mdx')
-const showcaseImageRoot = path.resolve(repoRoot, 'website/static/img/showcase')
-const showcaseConfigPath = path.resolve(repoRoot, 'website/docs/showcase/config.json')
 const wechatQrScannerPath = path.resolve(repoRoot, 'scripts/scan-wechat-qrcode.py')
 
 const env = process.env as NodeJS.ProcessEnv & {
@@ -228,7 +225,6 @@ const parsedTimeout = Number(env.SHOWCASE_IMAGE_TIMEOUT ?? '20000')
 const imageTimeoutMs = Number.isFinite(parsedTimeout) && parsedTimeout > 0 ? parsedTimeout : 20000
 const parsedAttempts = Number(env.SHOWCASE_IMAGE_RETRY ?? '3')
 const maxDownloadAttempts = Number.isFinite(parsedAttempts) && parsedAttempts > 0 ? parsedAttempts : 3
-const skipImageDownload = /^1|true$/i.test(env.SHOWCASE_SKIP_IMAGES ?? '')
 const proxyOption = parseProxyOption(process.argv.slice(2))
 const defaultProxyUrl
   = env.SHOWCASE_PROXY
@@ -277,7 +273,7 @@ const mediaHeaders: Record<string, string> = {
   Accept: 'image/avif,image/webp,image/png,image/jpeg;q=0.9,*/*;q=0.8',
 }
 
-async function loadShowcaseConfig(): Promise<ShowcaseConfig> {
+async function loadShowcaseConfig(showcaseConfigPath: string): Promise<ShowcaseConfig> {
   try {
     const raw = await fs.readFile(showcaseConfigPath, 'utf8')
     return JSON.parse(raw) as ShowcaseConfig
@@ -870,13 +866,31 @@ async function downloadImageWithRetry(
   return null
 }
 
-async function main() {
+interface UpdateShowcaseOptions {
+  root?: string
+  skipImages?: boolean
+  loadSource?: () => Promise<{ issue: GitHubIssue, comments: GitHubComment[] }>
+  download?: typeof downloadImageWithRetry
+  rank?: typeof rankShowcaseImagesByMiniProgramCode
+}
+
+/** 生成入口允许注入外部来源，回归测试仍执行真实解析、筛选、本地化和发布流程。 */
+export async function updateShowcase(options: UpdateShowcaseOptions = {}) {
+  const root = options.root ?? repoRoot
+  const showcaseDocsPath = path.resolve(root, 'website/docs/showcase/index.mdx')
+  const showcaseDataPath = path.resolve(root, 'website/src/components/docs/showcase/catalog.json')
+  const showcaseEnglishTitlesPath = path.resolve(root, 'website/src/components/docs/showcase/en.json')
+  const showcaseEnglishDocsPath = path.resolve(root, 'website/i18n/en/docusaurus-plugin-content-docs/current/showcase/index.mdx')
+  const showcaseImageRoot = path.resolve(root, 'website/static/img/showcase')
+  const showcaseConfigPath = path.resolve(root, 'website/docs/showcase/config.json')
+  const skipImageDownload = options.skipImages ?? /^1|true$/i.test(env.SHOWCASE_SKIP_IMAGES ?? '')
+  const download = options.download ?? downloadImageWithRetry
+  const rank = options.rank ?? rankShowcaseImagesByMiniProgramCode
   console.log(`🔄 Fetching issue #${issueNumber} from ${repo}...`)
-  const issue = await fetchJson<GitHubIssue>(issueApiUrl)
-  const comments = await fetchAllComments()
+  const { issue, comments } = await (options.loadSource?.() ?? (async () => ({ issue: await fetchJson<GitHubIssue>(issueApiUrl), comments: await fetchAllComments() }))())
   console.log(`📥 Received ${comments.length} comments, parsing entries...`)
 
-  const config = await loadShowcaseConfig()
+  const config = await loadShowcaseConfig(showcaseConfigPath)
 
   const parsed = comments
     .map(comment => parseComment(comment))
@@ -899,127 +913,108 @@ async function main() {
     eligible.filter(entry => entry.description?.trim()).map(entry => String(entry.id)),
   )
 
-  if (!skipImageDownload) {
-    await fs.emptyDir(showcaseImageRoot)
-  }
-  else {
-    console.log('⚠️  Skipping local image downloads (SHOWCASE_SKIP_IMAGES=1). Existing assets will be preserved.')
-  }
+  const previousCatalog = skipImageDownload
+    ? JSON.parse(await fs.readFile(showcaseDataPath, 'utf8')) as ShowcaseCatalog
+    : undefined
+  await publishShowcase({ imageRoot: showcaseImageRoot, catalogFile: showcaseDataPath, markdownFile: showcaseDocsPath, skipImages: skipImageDownload }, async (preparedImageRoot) => {
+    const generatedEntries: GeneratedEntry[] = []
 
-  const generatedEntries: GeneratedEntry[] = []
+    for (const [index, entry] of parsed.entries()) {
+      const titleText = entry.name
+      const slug = slugifySegment(entry.name, `entry-${entry.id}`)
+      const dirName = `${String(index + 1).padStart(3, '0')}.${slug}`
+      const entryDir = path.join(preparedImageRoot, dirName)
+      const entryTag = `${titleText}（slug: ${slug}）`
 
-  for (const [index, entry] of parsed.entries()) {
-    const titleText = entry.name
-    const slug = slugifySegment(entry.name, `entry-${entry.id}`)
-    const dirName = `${String(index + 1).padStart(3, '0')}.${slug}`
-    const entryDir = path.join(showcaseImageRoot, dirName)
-    const entryTag = `${titleText}（slug: ${slug}）`
-
-    if (!entry.remoteImages.length) {
-      console.warn(`⚠️  跳过 ${entryTag}（${entry.commentUrl}），因为没有提供任何图片。`)
-      continue
-    }
-
-    const allImages: ShowcaseImage[] = []
-
-    if (skipImageDownload) {
-      entry.remoteImages.forEach((remote) => {
-        allImages.push({
-          alt: remote.alt?.trim() || '',
-          src: remote.url,
-          originUrl: remote.url,
-          downloaded: false,
-        })
-      })
-    }
-    else {
-      await fs.ensureDir(entryDir)
-      const downloads = entry.remoteImages.map((image, imgIndex) =>
-        downloadImageWithRetry(image, entryDir, dirName, imgIndex),
-      )
-      const resolved = await Promise.all(downloads)
-      resolved.forEach((local, idx) => {
-        if (local) {
-          allImages.push(local)
-          return
-        }
-
-        const fallback = entry.remoteImages[idx]
-        if (!fallback) {
-          return
-        }
-        allImages.push({
-          alt: fallback.alt?.trim() || '',
-          src: fallback.url,
-          originUrl: fallback.url,
-          downloaded: false,
-          width: null,
-          height: null,
-        })
-      })
-    }
-
-    if (!allImages.length) {
-      console.warn(`⚠️  跳过 ${entryTag}（${entry.commentUrl}），因为图片下载失败。`)
-      continue
-    }
-
-    const configEntry = config.entries?.[slug]
-    if (configEntry?.hidden) {
-      console.log(`ℹ️  ${entryTag} 已被 config.json 隐藏。`)
-      continue
-    }
-
-    const manualSelectors = configEntry?.images?.filter(value => value && value.trim())
-    let selectedImages: ShowcaseImage[] = []
-
-    if (manualSelectors?.length) {
-      const missingSelectors: string[] = []
-      selectedImages = manualSelectors
-        .map((selector) => {
-          const matched = allImages.find(img => matchImageSelector(img, selector))
-          if (!matched) {
-            missingSelectors.push(selector)
-          }
-          return matched
-        })
-        .filter((img): img is ShowcaseImage => Boolean(img))
-
-      if (missingSelectors.length) {
-        console.warn(
-          `⚠️  ${entryTag} 的 config.json 中部分 images 无法匹配：${missingSelectors.join(', ')}`,
-        )
+      if (!entry.remoteImages.length) {
+        console.warn(`⚠️  跳过 ${entryTag}（${entry.commentUrl}），因为没有提供任何图片。`)
+        continue
       }
-    }
-    else {
-      selectedImages = allImages
+      const configEntry = config.entries?.[slug]
+      if (configEntry?.hidden) {
+        console.log(`ℹ️  ${entryTag} 已被 config.json 隐藏。`)
+        continue
+      }
+
+      const allImages: ShowcaseImage[] = []
+
+      if (skipImageDownload) {
+        allImages.push(...await reuseShowcaseImages(previousCatalog!, entry.id, showcaseImageRoot))
+      }
+      else {
+        await fs.ensureDir(entryDir)
+        const downloads = entry.remoteImages.map((image, imgIndex) =>
+          download(image, entryDir, dirName, imgIndex),
+        )
+        const resolved = await Promise.allSettled(downloads)
+        for (const [imageIndex, result] of resolved.entries()) {
+          if (result.status === 'rejected' || !result.value) {
+            throw new Error(`Showcase 图片下载失败：${entry.remoteImages[imageIndex]!.url}；旧图片、目录和正文尚未改写。`, { cause: result.status === 'rejected' ? result.reason : undefined })
+          }
+          allImages.push(result.value)
+        }
+      }
+
+      if (!allImages.length) {
+        console.warn(`⚠️  跳过 ${entryTag}（${entry.commentUrl}），因为图片下载失败。`)
+        continue
+      }
+
+      const manualSelectors = configEntry?.images?.filter(value => value && value.trim())
+      let selectedImages: ShowcaseImage[] = []
+
+      if (manualSelectors?.length) {
+        const missingSelectors: string[] = []
+        selectedImages = manualSelectors
+          .map((selector) => {
+            const matched = allImages.find(img => matchImageSelector(img, selector))
+            if (!matched) {
+              missingSelectors.push(selector)
+            }
+            return matched
+          })
+          .filter((img): img is ShowcaseImage => Boolean(img))
+
+        if (missingSelectors.length) {
+          if (skipImageDownload) {
+            throw new Error(`Showcase 跳过下载时无法证明图片选择归属：${missingSelectors.join(', ')}；请使用已发布的本地图片 URL/文件名，或完整下载生成。`)
+          }
+          console.warn(
+            `⚠️  ${entryTag} 的 config.json 中部分 images 无法匹配：${missingSelectors.join(', ')}`,
+          )
+        }
+      }
+      else {
+        selectedImages = allImages
+      }
+
+      if (!selectedImages.length) {
+        console.warn(`⚠️  ${entryTag} 的图片选择为空，将展示全部图片。`)
+        selectedImages = allImages
+      }
+
+      if (!manualSelectors?.length && !skipImageDownload) {
+        selectedImages = await rank(selectedImages, entryTag)
+      }
+
+      generatedEntries.push({
+        ...entry,
+        order: index + 1,
+        slug,
+        images: selectedImages,
+      })
     }
 
-    if (!selectedImages.length) {
-      console.warn(`⚠️  ${entryTag} 的图片选择为空，将展示全部图片。`)
-      selectedImages = allImages
-    }
-
-    if (!manualSelectors?.length) {
-      selectedImages = await rankShowcaseImagesByMiniProgramCode(selectedImages, entryTag)
-    }
-
-    generatedEntries.push({
-      ...entry,
-      order: index + 1,
-      slug,
-      images: selectedImages,
-    })
-  }
-
-  const catalog = renderShowcaseCatalog(issue.html_url, generatedEntries, new Date().toISOString())
-  const mdxContent = renderShowcaseMarkdown(issue, generatedEntries)
-  await fs.writeFile(showcaseDataPath, `${JSON.stringify(catalog, null, 2)}\n`, 'utf8')
-  await fs.writeFile(showcaseDocsPath, mdxContent, 'utf8')
-  console.log(`✅ Showcase updated with ${generatedEntries.length} entries.`)
+    const catalog = renderShowcaseCatalog(issue.html_url, generatedEntries, new Date().toISOString())
+    const mdxContent = renderShowcaseMarkdown(issue, generatedEntries)
+    return { catalog, markdown: mdxContent }
+  })
+  console.log('✅ Showcase 图片、共享目录和中文正文已一起更新。')
 }
 
-main().catch((error) => {
-  console.error(error)
-  process.exitCode = 1
-})
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  updateShowcase().catch((error) => {
+    console.error(error)
+    process.exitCode = 1
+  })
+}

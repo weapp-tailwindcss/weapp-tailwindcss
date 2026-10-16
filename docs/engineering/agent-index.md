@@ -57,6 +57,7 @@
 - [packages/wetw/AGENTS.md](../../packages/wetw/AGENTS.md)
 - [scripts/AGENTS.md](../../scripts/AGENTS.md)
 - [scripts/e2e-preflight/AGENTS.md](../../scripts/e2e-preflight/AGENTS.md)
+- [scripts/showcase/AGENTS.md](../../scripts/showcase/AGENTS.md)
 - [starter/AGENTS.md](../../starter/AGENTS.md)
 - [tools/AGENTS.md](../../tools/AGENTS.md)
 - [tools/ci-scope/AGENTS.md](../../tools/ci-scope/AGENTS.md)

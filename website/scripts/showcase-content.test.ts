@@ -1,7 +1,8 @@
 import type { ShowcaseSourceEntry } from '../../scripts/showcase/render'
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { cp, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
+import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { processMarkdownFile } from 'docusaurus-plugin-llms/lib/processor.js'
 import { expect, it } from 'vitest'
@@ -44,6 +45,8 @@ it.each([
   const result = resolveShowcaseAsset(root, '/img/showcase/001.%E5%8C%BA%E7%99%BD%E7%99%BD/image%2520name.png', paths)
   expect(result).toBe(paths.resolve(root, 'img', 'showcase', '001.区白白', 'image%20name.png'))
   expect(() => resolveShowcaseAsset(root, 'https://other.test/img/showcase/file.png', paths)).toThrow('本地 static')
+  expect(() => resolveShowcaseAsset(root, 'https://showcase.invalid/img/showcase/file.png', paths)).toThrow('本地 static')
+  expect(() => resolveShowcaseAsset(root, '//showcase.invalid/img/showcase/file.png', paths)).toThrow('本地 static')
   expect(() => resolveShowcaseAsset(root, '/img/showcase/..%2F..%2F..%2Foutside.png', paths)).toThrow('越出 static')
 })
 
@@ -80,6 +83,38 @@ it('构建检查根据中文正文阻断英文空壳，先于图片资源检查�
       await writeFile(path.join(directory, 'index.mdx'), markdown)
     }
     await expect(checkShowcase(root)).rejects.toThrow('英文描述为空')
+  }
+  finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
+it.each(['empty', 'symlink'])('构建检查实际入口拒绝 %s 本地图片', async (failure) => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'showcase-assets-'))
+  try {
+    for (const directories of [['docs'], ['i18n', 'en', 'docusaurus-plugin-content-docs', 'current']]) {
+      const relative = path.join(...directories, 'showcase', 'index.mdx')
+      await mkdir(path.dirname(path.join(root, relative)), { recursive: true })
+      await writeFile(path.join(root, relative), await readFile(path.join(websiteRoot, relative)))
+    }
+    for (const entry of showcaseCatalog.entries) {
+      for (const image of [entry.primaryImage, ...entry.screenshots]) {
+        const file = resolveShowcaseAsset(path.join(root, 'static'), image.src)
+        await mkdir(path.dirname(file), { recursive: true })
+        await writeFile(file, 'local asset')
+      }
+    }
+    const target = resolveShowcaseAsset(path.join(root, 'static'), showcaseCatalog.entries[0].primaryImage.src)
+    if (failure === 'empty') {
+      await writeFile(target, '')
+    }
+    else {
+      const external = path.join(root, 'external')
+      await cp(path.dirname(target), external, { recursive: true })
+      await rm(path.dirname(target), { recursive: true })
+      await symlink(external, path.dirname(target), process.platform === 'win32' ? 'junction' : 'dir')
+    }
+    await expect(checkShowcase(root)).rejects.toThrow('本地有效文件')
   }
   finally {
     await rm(root, { recursive: true, force: true })
