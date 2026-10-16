@@ -11,9 +11,11 @@ import process from 'node:process'
 import os from 'node:os'
 import { execa } from 'execa'
 import { PNG } from 'pngjs'
+import { runWithCleanup } from '../../scripts/e2e-preflight/cleanup'
 import { assessNativeScreenshot } from './native-screenshot'
 import type { ReactNativePlatform, ReactNativeReport } from './catalog'
 import { androidExpoDevice } from './android-device'
+import { createAndroidEnvironment } from './android-environment'
 import { androidScreenProbes, findAndroidAnrWaitTap } from './android-window'
 import { getHttpText } from './native-http'
 import { captureMetroEvidence } from './metro-evidence'
@@ -26,13 +28,14 @@ import { createRuntimeArtifacts } from './runtime-artifacts'
 import { validateReactNativeReport } from './reports'
 
 interface ReportEnvelope { hmrMarker: string, cssHmrColor: string, report: ReactNativeReport, visualProbes: NativeVisualProbe[] }
+type NativeProcess = ReturnType<typeof startExpo>
 
 interface ReportWaitOptions {
   cssHmrColor?: string
   recover?: () => Promise<void>
   reportTimeout?: number
   startupTimeout?: number
-  reconcileLaunch?: () => Promise<void>
+  reconcileLaunch?: (() => Promise<void>) | undefined
   requireLaunchCompletion?: boolean
 }
 
@@ -52,7 +55,7 @@ const updateBaseline = process.env['RN_UPDATE_BASELINE'] === '1'
 
 function startReporter(host: string) {
   let server: Server
-  const ready = new Promise<number>((resolve) => {
+  const ready = new Promise<number>((resolve, reject) => {
     server = createServer((request, response) => {
       if (request.method !== 'POST') { response.writeHead(404).end(); return }
       const chunks: Buffer[] = []
@@ -67,15 +70,30 @@ function startReporter(host: string) {
         }
       })
     })
+    server.once('error', reject)
     server.listen(0, host, () => {
       const address = server.address()
       resolve(typeof address === 'object' && address ? address.port : 0)
     })
   })
-  return { ready, close: () => new Promise<void>(resolve => server.close(() => resolve())) }
+  return { ready, close: () => new Promise<void>((resolve, reject) => {
+    if (!server.listening) { resolve(); return }
+    server.close(error => error ? reject(error) : resolve())
+  }) }
 }
 
-async function waitForMetro(metro: ReturnType<typeof execa>, timeout = 120_000) {
+function startExpo(args: string[], env: NodeJS.ProcessEnv, log: Awaited<ReturnType<typeof fs.open>>) {
+  return execa('pnpm', args, {
+    cwd: repoRoot,
+    detached: process.platform !== 'win32',
+    env,
+    stdout: log.createWriteStream(),
+    stderr: log.createWriteStream(),
+    reject: false,
+  })
+}
+
+async function waitForMetro(metro: NativeProcess, timeout = 120_000) {
   const started = Date.now()
   while (Date.now() - started < timeout) {
     if (typeof metro.exitCode === 'number') { throw new TypeError(`Metro exited with code ${metro.exitCode}; see ${path.resolve(artifacts, 'metro.log')}`) }
@@ -88,7 +106,7 @@ async function waitForMetro(metro: ReturnType<typeof execa>, timeout = 120_000) 
   throw new Error('Timed out waiting for Metro on port 8081')
 }
 
-async function waitForReportOrExit(marker: string, run: ReturnType<typeof execa>, metro: ReturnType<typeof execa>, options: ReportWaitOptions = {}) {
+async function waitForReportOrExit(marker: string, run: NativeProcess, metro: NativeProcess, options: ReportWaitOptions = {}) {
   const {
     cssHmrColor,
     recover,
@@ -200,11 +218,11 @@ async function captureVerified(name: string, device: string, envelope: ReportEnv
   }
 }
 
-async function captureFailureDiagnostics(device: string) {
+async function captureFailureDiagnostics(device: string, logcatSince?: string) {
   await captureMetroEvidence(exampleRoot, path.join(artifacts, 'metro-failure'), { 'global.css': cssFile, 'hmr-marker.ts': markerFile })
     .catch(error => process.stderr.write(`Failed to preserve Metro compilation evidence: ${String(error)}\n`))
   if (platform === 'android') {
-    const logcat = await execa('adb', ['-s', device, 'logcat', '-d', '-v', 'threadtime'], { reject: false })
+    const logcat = await execa('adb', ['-s', device, 'logcat', '-d', '-v', 'threadtime', ...(logcatSince ? ['-T', logcatSince] : [])], { reject: false })
     await fs.writeFile(path.resolve(artifacts, 'logcat.txt'), logcat.stdout, 'utf8')
     const dumpResult = await execa('adb', ['-s', device, 'shell', 'uiautomator', 'dump', '/sdcard/window.xml'], { reject: false })
     if (dumpResult.exitCode === 0) {
@@ -332,43 +350,40 @@ async function main() {
   const expoDevice = platform === 'android' ? await androidExpoDevice(device) : device
   const nativeEnvironment = await collectNativeEnvironment(device)
   const reporter = startReporter(platform === 'ios' ? '0.0.0.0' : runtimeHost)
-  const port = await reporter.ready
-  const reportUrl = `http://${runtimeHost}:${port}`
+  let androidEnvironment: ReturnType<typeof createAndroidEnvironment> | undefined
   let stopAndroidDialogGuard: (() => void) | undefined
-  if (platform === 'android') {
-    await execa('adb', ['-s', device, 'reverse', `tcp:${port}`, `tcp:${port}`])
-    await execa('adb', ['-s', device, 'reverse', 'tcp:8081', 'tcp:8081'])
-    await execa('adb', ['-s', device, 'shell', 'settings', 'put', 'global', 'hide_error_dialogs', '1'])
-    await execa('adb', ['-s', device, 'shell', 'settings', 'put', 'global', 'anr_show_background', '0'])
-    await execa('adb', ['-s', device, 'shell', 'settings', 'put', 'global', 'show_first_crash_dialog', '0'])
-    await execa('adb', ['-s', device, 'shell', 'am', 'broadcast', '-a', 'android.intent.action.CLOSE_SYSTEM_DIALOGS'], { reject: false })
-    await execa('adb', ['-s', device, 'logcat', '-c'], { reject: false })
-    stopAndroidDialogGuard = startAndroidDialogGuard(device)
-  }
-  const logFile = await fs.open(path.resolve(artifacts, 'expo-run.log'), 'w')
-  const metroLogFile = await fs.open(metroLogPath, 'w')
-  const javaHome = toolchain?.javaHome
-  const androidHome = toolchain?.sdk
-  const env: NodeJS.ProcessEnv = {
-    ...createExpoNativeEnvironment(runtimeHost, reportUrl),
-    ...(javaHome ? { JAVA_HOME: javaHome } : {}),
-    ...(platform === 'android' ? { ANDROID_HOME: androidHome } : {}),
-  }
-  if (javaHome) { env['PATH'] = `${path.join(javaHome, 'bin')}${path.delimiter}${process.env['PATH'] ?? ''}` }
-  // iOS Simulator 与宿主机共享网络栈时使用 localhost，避免 CI 的虚拟网卡地址无法被 simctl openurl 访问。
-  const metroHost = platform === 'ios' && runtimeHost !== '127.0.0.1' ? '--lan' : '--localhost'
-  const metro = execa('pnpm', ['--filter', '@weapp-tailwindcss/example-react-native-expo', 'exec', 'expo', 'start', metroHost, '--port', '8081', '--clear'], {
-    cwd: repoRoot,
-    detached: process.platform !== 'win32',
-    env,
-    stdout: metroLogFile.createWriteStream(),
-    stderr: metroLogFile.createWriteStream(),
-    reject: false,
-  })
-  let run: ReturnType<typeof execa> | undefined
+  let logFile: Awaited<ReturnType<typeof fs.open>> | undefined
+  let metroLogFile: Awaited<ReturnType<typeof fs.open>> | undefined
+  let metro: NativeProcess | undefined
+  let run: NativeProcess | undefined
   let completed = false
-  try {
-    await waitForMetro(metro)
+  let markerChanged = false
+  let cssChanged = false
+  await runWithCleanup(async () => {
+    const port = await reporter.ready
+    const reportUrl = `http://${runtimeHost}:${port}`
+    androidEnvironment = platform === 'android'
+      ? createAndroidEnvironment({ device, ports: [port, 8081], artifacts })
+      : undefined
+    if (androidEnvironment) {
+      await androidEnvironment.prepare()
+      await execa('adb', ['-s', device, 'shell', 'am', 'broadcast', '-a', 'android.intent.action.CLOSE_SYSTEM_DIALOGS'], { reject: false })
+      stopAndroidDialogGuard = startAndroidDialogGuard(device)
+    }
+    logFile = await fs.open(path.resolve(artifacts, 'expo-run.log'), 'w')
+    metroLogFile = await fs.open(metroLogPath, 'w')
+    const javaHome = toolchain?.javaHome
+    const androidHome = toolchain?.sdk
+    const env: NodeJS.ProcessEnv = {
+      ...createExpoNativeEnvironment(runtimeHost, reportUrl),
+      ...(javaHome ? { JAVA_HOME: javaHome } : {}),
+      ...(platform === 'android' ? { ANDROID_HOME: androidHome } : {}),
+    }
+    if (javaHome) { env['PATH'] = `${path.join(javaHome, 'bin')}${path.delimiter}${process.env['PATH'] ?? ''}` }
+    // iOS Simulator 与宿主机共享网络栈时使用 localhost，避免 CI 的虚拟网卡地址无法被 simctl openurl 访问。
+    const metroHost = platform === 'ios' && runtimeHost !== '127.0.0.1' ? '--lan' : '--localhost'
+    const activeMetro = metro = startExpo(['--filter', '@weapp-tailwindcss/example-react-native-expo', 'exec', 'expo', 'start', metroHost, '--port', '8081', '--clear'], env, metroLogFile)
+    await waitForMetro(activeMetro)
     const runArgs = ['--filter', '@weapp-tailwindcss/example-react-native-expo', 'exec', 'expo', 'run', platform === 'android' ? 'android' : 'ios', '--no-bundler']
     runArgs.push('--device', expoDevice)
     if (platform === 'android' && process.env['RN_ANDROID_BINARY']) {
@@ -382,16 +397,9 @@ async function main() {
           deadline: Date.now() + 1_800_000,
         })
       : undefined
-    run = execa('pnpm', runArgs, {
-      cwd: repoRoot,
-      detached: process.platform !== 'win32',
-      env,
-      stdout: logFile.createWriteStream(),
-      stderr: logFile.createWriteStream(),
-      reject: false,
-    })
+    run = startExpo(runArgs, env, logFile)
     // 首次原生构建包含 CocoaPods/Gradle 依赖准备，不能使用 HMR 的短超时。
-    const baseline = await waitForReportOrExit('rn-hmr-baseline', run, metro, {
+    const baseline = await waitForReportOrExit('rn-hmr-baseline', run, activeMetro, {
       cssHmrColor: '#10b981',
       recover: () => relaunchRuntime(device, runtimeHost),
       reportTimeout: 300_000,
@@ -405,16 +413,18 @@ async function main() {
     const beforeScreenshot = await captureVerified('runtime-before.png', device, baseline)
 
     const updated = originalMarker.replace('rn-hmr-baseline', 'rn-hmr-updated').replace('bg-emerald-500', 'bg-rose-500')
+    markerChanged = true
     await fs.writeFile(markerFile, updated, 'utf8')
-    const hmr = await waitForReportOrExit('rn-hmr-updated', run, metro, { cssHmrColor: '#10b981', reportTimeout: 120_000, reconcileLaunch })
+    const hmr = await waitForReportOrExit('rn-hmr-updated', run, activeMetro, { cssHmrColor: '#10b981', reportTimeout: 120_000, reconcileLaunch })
     const hmrReport = withNativeEnvironment(hmr.report, nativeEnvironment)
     validateReactNativeReport(hmrReport, platform)
     if (platform === 'android') { await assertAndroidMarker(device, 'rn-hmr-updated') }
     const afterTsxScreenshot = await captureVerified('runtime-tsx-after.png', device, hmr)
     const updatedCss = originalCss.replace('#10b981', '#f59e0b')
     if (updatedCss === originalCss) { throw new Error('CSS HMR probe color was not found') }
+    cssChanged = true
     await fs.writeFile(cssFile, updatedCss, 'utf8')
-    const cssHmr = await waitForReportOrExit('rn-hmr-updated', run, metro, { cssHmrColor: '#f59e0b', reportTimeout: 120_000, reconcileLaunch })
+    const cssHmr = await waitForReportOrExit('rn-hmr-updated', run, activeMetro, { cssHmrColor: '#f59e0b', reportTimeout: 120_000, reconcileLaunch })
     const cssHmrReport = withNativeEnvironment(cssHmr.report, nativeEnvironment)
     validateReactNativeReport(cssHmrReport, platform)
     if (platform === 'android') { await assertAndroidMarker(device, 'rn-hmr-updated') }
@@ -439,29 +449,26 @@ async function main() {
       await fs.writeFile(path.resolve(reportsDir, `${platform}.json`), `${JSON.stringify(cssHmrReport, null, 2)}\n`, 'utf8')
     }
     completed = true
-  }
-  finally {
-    stopAndroidDialogGuard?.()
-    if (!completed) { await captureFailureDiagnostics(device) }
-    await fs.writeFile(markerFile, originalMarker, 'utf8')
-    await fs.writeFile(cssFile, originalCss, 'utf8')
-    await stopOwnedProcess(run)
-    await run?.catch(() => undefined)
-    await stopOwnedProcess(metro)
-    await metro.catch(() => undefined)
-    await logFile.close()
-    await metroLogFile.close()
-    await reporter.close()
-    if (platform === 'android') {
-      await execa('adb', ['-s', device, 'reverse', '--remove', `tcp:${port}`], { reject: false })
-      await execa('adb', ['-s', device, 'reverse', '--remove', 'tcp:8081'], { reject: false })
+  }, async () => {
+    const errors: unknown[] = []
+    const attempt = async (cleanup: () => unknown | Promise<unknown>) => {
+      try { await cleanup() }
+      catch (error) { errors.push(error) }
     }
-  }
+    await attempt(() => stopAndroidDialogGuard?.())
+    if (!completed && metro) { await attempt(() => captureFailureDiagnostics(device, androidEnvironment?.receipt.logcat.since)) }
+    if (markerChanged) { await attempt(() => fs.writeFile(markerFile, originalMarker, 'utf8')) }
+    if (cssChanged) { await attempt(() => fs.writeFile(cssFile, originalCss, 'utf8')) }
+    await attempt(() => stopOwnedProcess(run))
+    await attempt(() => run?.catch(() => undefined))
+    await attempt(() => stopOwnedProcess(metro))
+    await attempt(() => metro?.catch(() => undefined))
+    await attempt(() => logFile?.close())
+    await attempt(() => metroLogFile?.close())
+    await attempt(() => reporter.close())
+    await attempt(() => androidEnvironment?.restore())
+    if (errors.length) { throw new AggregateError(errors, 'React Native 运行收尾失败') }
+  })
 }
 
-try {
-  await main()
-}
-finally {
-  await artifactSession.publish()
-}
+await runWithCleanup(main, () => artifactSession.publish())
