@@ -112,6 +112,7 @@ function waitForCleanup(closed: Promise<CommandExit>, isGroupGone: () => boolean
 export async function stopProcessTree(child: ChildProcess, closed: Promise<CommandExit>, signal: NodeJS.Signals) {
   let group = ownedGroups.get(child)
   const errors: unknown[] = []
+  const exitRaces: unknown[] = []
   const isGroupGone = () => {
     if (!group) {
       return true
@@ -136,7 +137,13 @@ export async function stopProcessTree(child: ChildProcess, closed: Promise<Comma
       signalOwnedTree(child, nextSignal, group)
     }
     catch (error) {
-      errors.push(error)
+      if (process.platform === 'darwin' && group && (child.exitCode !== null || child.signalCode !== null) && (error as NodeJS.ErrnoException).code === 'EPERM') {
+        // 已退出根的组可能仍在回收；保留原错，只有原预算内 close 与组消失双确认才能解除。
+        exitRaces.push(error)
+      }
+      else {
+        errors.push(error)
+      }
     }
     try {
       if (await waitForCleanup(closed, isGroupGone)) {
@@ -150,6 +157,7 @@ export async function stopProcessTree(child: ChildProcess, closed: Promise<Comma
       errors.push(error)
     }
   }
-  const details = errors.map(error => error instanceof Error ? error.message : String(error)).join('\n')
-  throw new AggregateError(errors, `子进程 pid=${child.pid ?? 'unknown'} 的有界清理未成功：需确认 close 和本轮进程组结束\n${details}`.trim())
+  const failures = [...errors, ...exitRaces]
+  const details = failures.map(error => error instanceof Error ? error.message : String(error)).join('\n')
+  throw new AggregateError(failures, `子进程 pid=${child.pid ?? 'unknown'} 的有界清理未成功：需确认 close 和本轮进程组结束\n${details}`.trim())
 }
