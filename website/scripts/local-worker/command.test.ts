@@ -10,6 +10,7 @@ import { promisify } from 'node:util'
 import { afterEach, expect, it, vi } from 'vitest'
 import * as processTools from '../../../packages/hbuilderx-runner/src/process'
 import * as processTree from '../../../scripts/demo-e2e-workflow/process-tree'
+import { formatWorkflowError } from '../../../scripts/e2e-preflight/cleanup'
 import { localBrowserCommand } from '../browser-local'
 import { resolveWranglerCommand, runLocalCommand } from './command'
 import localConfig from './playwright.config.mts'
@@ -100,7 +101,7 @@ it('真实本地 CLI 在首个失败后不重试或调度后续用例', async ()
       ...command,
       args: [command.args[0], 'test', '--config', configPath],
     }, new AbortController().signal, 20_000).then(() => undefined, error => error)
-    expect(failure?.message).toContain('exit=1 signal=null')
+    expect(failure?.message, formatWorkflowError(failure)).toContain('exit=1 signal=null')
     const report = JSON.parse(await readFile(reportPath, 'utf8'))
     expect(report.errors).toEqual([{ message: 'Testing stopped early after 1 maximum allowed failures.' }])
     const executed = (await readFile(sentinel, 'utf8')).trim().split('\n').map(line => JSON.parse(line))

@@ -31,6 +31,24 @@ verification:
     sha: 0838260c57c8088fafd35a380dcb1e66c52e2873
     environment: macOS arm64，未提交诊断候选，原四份 spec 全文和 index 用例正文保持一致，只添加只读 CDP 观察
     command: pnpm exec tsx <本轮证据目录>/prefix-once.mts <候选工作树> <本轮证据目录> <原 canonical 提取报告>
+  - claim: 后续完整流程的首错停止回归收到执行与收尾聚合错误，内层原因未留存
+    kind: integration
+    status: failed
+    sha: 174cd17c8e710073f983ad149386c97ec6b073db
+    environment: macOS arm64，Node 24.18.0、pnpm 12.9.1，本轮 bf248624 扩展预检和原生 Chrome 证据已通过
+    command: pnpm e2e:demo:workflow:local --quality --extended --baseline-ref 14bd2ee5d186586b6359caa2ca374db37e996b38 --preflight-report <bf248624-2981-4fec-9699-506b075e0af2 本轮报告>
+  - claim: 加入完整异常断言上下文后，同文件 8 项定向回归通过，未复现聚合错误
+    kind: integration
+    status: passed
+    sha: 174cd17c8e710073f983ad149386c97ec6b073db
+    environment: macOS arm64，Node 24.18.0、pnpm 12.9.1，包含未提交的断言上下文增强，CI=1、禁止更新快照；真实 CLI 夹具不使用浏览器 fixture
+    command: pnpm --filter @weapp-tailwindcss/website exec vitest run scripts/local-worker/command.test.ts --update=none
+  - claim: 一次四进程 CPU 竞争下，同文件 8 项定向回归通过，未复现聚合错误
+    kind: integration
+    status: passed
+    sha: 174cd17c8e710073f983ad149386c97ec6b073db
+    environment: macOS arm64，Node 24.18.0、pnpm 12.9.1，包含未提交的断言上下文增强；16 个可用逻辑处理器上启动 4 个 CPU 子进程，单进程硬预算 10 秒、套件上限 30 秒
+    command: node <website-cli-cleanup-q17zlgfu 证据目录>/bounded-competition.mjs
   - claim: 最终同一提交仍须重新预检并完成本机扩展矩阵
     kind: integration
     status: pending
@@ -79,6 +97,16 @@ verification:
 外部 fixture 只读启用 CDP 网络与页面观察，不拦截、不清缓存、不更改请求。6 份 ledger 均有效，Playwright report 的业务错误、全局错误及 ledger 的 secondaryErrors 均为空。该外部诊断 fixture 的 `use(page)` 不会把业务异常抛回 fixture，因此不能依靠缺失 `ledger.primaryError` 判断业务成功；附件失败分支本轮未触发，结论直接依据 Playwright attempt 的原始状态与错误。正常导航 helper 的独立失败附加逻辑不受此限制。
 
 进程与端口收尾按本轮归属核对：记录的 19 个 PID 均退出，本轮 7 个监听端口及此前超时探针 2 个端口均无监听。没有执行全局清理，也没有触碰用户微信 IDE 登录态。所有验证均为定向证据，同提交扩展 57 阶段验收仍待主任务完成。
+
+## 后续完整流程的聚合异常
+
+`174cd17c8e710073f983ad149386c97ec6b073db` 上的完整流程 `bf248624-2981-4fec-9699-506b075e0af2` 在第 2 阶段单测停止：906 文件、9714 项通过，1 文件、1 项失败，另有 1 项预期失败，5 文件、44 项跳过。失败为真实 CLI 首错停止回归预期 `exit=1 signal=null`，实际最外层消息为 `全面测试执行与会话收尾均失败。`。原日志没有输出执行与收尾聚合异常的内层原因，夹具目录又已按既有 finally 删除，无法事后还原精确原因；执行异常也可能来自身份观察或中断，尚无证据确认为 CLI 业务退出失败，不得将静态推测的进程表时序认定为本轮根因。
+
+现只给原退出码断言增加 `formatWorkflowError(failure)` 作为失败上下文，完整展示后续可能出现的 `errors` 与 `cause`。通过条件及其后首例仅执行 retry 0、后例不执行、最大失败数、失败数和重试配置的全部断言不变，不把聚合错误接受为通过，也不改生命周期、进程树身份归属或任何清理时限。
+
+先用同配置的独立真实 CLI 夹具取得正常 `exit=1 signal=null`，首例仅执行一次、其余 5 项未执行，聚合错误未复现。增加断言上下文后，同文件常规定向套件 8 项通过；再执行唯一一次有界竞争诊断，在 4 个 CPU 子进程运行时同文件 8 项仍通过。两次通过不能覆盖原首次失败，也不能证明收尾逻辑已修复。原完整流程日志保存在 `e2e/.artifacts/full-validation-recovery/canonical-bf248624-2981-4fec-9699-506b075e0af2/workflow.log`；独立诊断的 `exact-first-error.txt`、`exact-summary.json`、`command-directed.log`、`command-competition.log` 和 `competition-summary.json` 保留在本轮 `website-cli-cleanup-q17zlgfu` 证据目录。
+
+竞争诊断明确拥有的 4 个 CPU 子进程均在套件结束后逐个 SIGTERM 并等待 close，套件本身以 0 退出，后续按记录 PID 核对均不存在。夹具不使用浏览器 fixture、未创建页面或服务监听；没有操作微信 IDE、用户浏览器或其他任务的进程。下一轮必须在源码改变后重新预检，再运行唯一完整入口取得必要数据；本次仅增强取证，原聚合异常根因和最终同提交扩展验收仍待确认。
 
 ## 适用边界
 
