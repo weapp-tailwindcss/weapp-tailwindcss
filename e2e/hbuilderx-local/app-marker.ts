@@ -2,10 +2,11 @@ interface AppMarker {
   className: string
   textClassName?: string
   text: string
+  structureToken?: string
 }
 
 const legacyMarkerRE = /\n[ \t]*<view class="[^"]+">(?:<text class="[^"]+">)?hbuilderx-app-(?:dynamic|hmr)-[^<]+(?:<\/text>)?<\/view>/g
-const persistentMarkerRE = /<view(?:\s+id="native-hmr-probe")?\s+class="[^"]*\bhbuilderx-app-native-hmr-probe\b[^"]*"(?:\s+style="[^"]*")?>[\s\S]*?<\/view>/g
+const persistentMarkerRE = /<view(?:\s+id="native-hmr-probe")?\s+class="[^"]*\bhbuilderx-app-native-hmr-probe\b[^"]*"(?:\s+style="[^"]*")?(?:\s+data-wt-runtime-token="[a-z\d-]+")?>[\s\S]*?<\/view>/gi
 
 /** 仅移除旧测试插入物，保留 demo 已有的持久探针及其原始源码。 */
 export function removeLegacyAppMarkers(source: string) {
@@ -18,7 +19,11 @@ export function rewriteAppMarker(source: string, anchors: string[], marker: AppM
   const markerClassName = `hbuilderx-app-native-hmr-probe ${marker.className.replace(/\bhbuilderx-app-native-hmr-probe\b/g, '').trim()}`
   const content = marker.textClassName ? `<text class="${marker.textClassName}">${marker.text}</text>` : marker.text
   // 位移验收需要独立展示空间，避免后续业务节点遮挡 translate 后的标记。
-  const element = `<view id="native-hmr-probe" class="${markerClassName}" style="margin-bottom: 40px;">${content}</view>`
+  if (marker.structureToken && !/^[a-z\d-]+$/i.test(marker.structureToken)) {
+    throw new Error('App 运行时结构 token 只允许字母、数字与连字符')
+  }
+  const token = marker.structureToken ? ` data-wt-runtime-token="${marker.structureToken}"` : ''
+  const element = `<view id="native-hmr-probe" class="${markerClassName}" style="margin-bottom: 40px;"${token}>${content}</view>`
   const existing = [...cleaned.matchAll(persistentMarkerRE)]
   if (existing.length > 1) {
     throw new Error('App E2E 源码存在多个受管探针，不能确定运行时节点身份')

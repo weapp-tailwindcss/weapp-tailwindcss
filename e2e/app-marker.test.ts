@@ -36,4 +36,13 @@ describe('App 结构与视觉探针的共同身份', () => {
     expect(() => rewriteAppMarker(first + first, [anchor], initial)).toThrow('多个受管探针')
     expect(() => rewriteAppMarker('<template />', [anchor], initial)).toThrow('插入锚点')
   })
+
+  it('每次保存替换真实节点上的challenge token，保持单一探针', () => {
+    const first = rewriteAppMarker(anchor, [anchor], { ...initial, structureToken: 'save-1' })
+    const next = rewriteAppMarker(first, [anchor], { ...initial, structureToken: 'save-2' })
+    expect(next.match(/id="native-hmr-probe"/g)).toHaveLength(1)
+    expect(next).toContain('data-wt-runtime-token="save-2"')
+    expect(next).not.toContain('save-1')
+    expect(() => rewriteAppMarker(first, [anchor], { ...initial, structureToken: 'bad"token' })).toThrow('token')
+  })
 })

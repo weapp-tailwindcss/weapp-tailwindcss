@@ -42,6 +42,7 @@ import {
   wait,
 } from './process'
 import { findMissingRuntimeLogs, resolveAppRuntimeLogContract } from './render-mode'
+import { createRuntimeStructureProbe } from './runtime-structure'
 import { appendHmrSourceMutation, createHmrOutputSnapshot, haveHmrOutputsChanged } from './source-mutations'
 import { collectMiniProgramStyleFiles, readReachableMiniProgramStyles, resolveMiniProgramRuntimeStyleEntry } from './styles'
 import { runWebHmr } from './web'
@@ -470,6 +471,7 @@ async function writeAppMarker(
     className: string
     textClassName?: string
     text: string
+    structureToken?: string
   },
 ) {
   await fs.writeFile(file, rewriteAppMarker(await readUtf8(file), anchors, marker), 'utf8')
@@ -539,6 +541,9 @@ export async function verifyAppHmrWithHBuilderX(item: AppCase) {
     ? path.resolve(process.env['E2E_HBUILDERX_RUNTIME_EVIDENCE_ROOT'], item.name.replace(/[^\w-]+/g, '-'))
     : path.resolve(os.tmpdir(), 'weapp-tailwindcss-hbuilderx-runtime', `${process.pid}-${item.name.replace(/[^\w-]+/g, '-')}`)
   const domProbe = item.platform === 'app-harmony' && item.renderMode === 'vapor' ? createHarmonyDomProbe() : undefined
+  const iosProbe = item.platform === 'app-ios' ? createRuntimeStructureProbe(item.sourceFile) : undefined
+  let iosObserver: ReturnType<NonNullable<typeof iosProbe>['observe']> | undefined
+  let iosToken = iosProbe?.nextToken()
   let logs: string[] = []
   let domObserver: ReturnType<NonNullable<typeof domProbe>['observe']> | undefined
   let nativeLog: ReturnType<typeof captureNativeLog> | undefined
@@ -565,9 +570,13 @@ export async function verifyAppHmrWithHBuilderX(item: AppCase) {
       className: item.markerClass,
       textClassName: item.markerTextClass,
       text: item.markerText,
+      structureToken: iosToken,
     })
     if (domProbe) {
       await fs.writeFile(sourceFile, domProbe.inject(await readUtf8(sourceFile)), 'utf8')
+    }
+    if (iosProbe) {
+      await fs.writeFile(sourceFile, iosProbe.inject(await readUtf8(sourceFile)), 'utf8')
     }
     await fs.mkdir(runtimeEvidenceRoot, { recursive: true })
     await cleanAppOutput(item)
@@ -584,6 +593,7 @@ export async function verifyAppHmrWithHBuilderX(item: AppCase) {
     const { child } = launch
     nativeLog = captureNativeLog(child, path.resolve(runtimeEvidenceRoot, 'hbuilderx.log'))
     domObserver = domProbe?.observe(child)
+    iosObserver = iosProbe?.observe(child)
     logs = launch.logs
     let exit: CommandExit | undefined
     void launch.closed.then((result) => {
@@ -670,6 +680,7 @@ export async function verifyAppHmrWithHBuilderX(item: AppCase) {
         deviceId: readAppLaunchOption(launchArgs, '--deviceId'),
         ensureRunning: ensureLaunchRunning,
         markerClass: item.markerClass,
+        structure: { runId: iosProbe!.runId, step: 'initial', markerText: item.markerText, token: iosToken!, read: () => iosObserver?.read() },
         screenshot: path.resolve(runtimeEvidenceRoot, 'initial.png'),
         timeoutMs: hbuilderxAppTimeoutMs,
       })
@@ -697,9 +708,11 @@ export async function verifyAppHmrWithHBuilderX(item: AppCase) {
           ].join('\n'))
         }
       }
+      iosToken = iosProbe?.nextToken()
       await writeAppMarker(sourceFile, resolveAppMarkerAnchors(item), {
         className: step.markerClass,
         text: step.markerText,
+        structureToken: iosToken,
         ...(step.markerTextClass ? { textClassName: step.markerTextClass } : {}),
       })
       hmrOutputRoot = await waitForAppTransformedContent(item, step.transformedContains, hbuilderxAppTimeoutMs, ensureLaunchRunning, async () => {
@@ -712,17 +725,18 @@ export async function verifyAppHmrWithHBuilderX(item: AppCase) {
         ].join('\n')
       }, step.styleContains, [...(item.transformedNotContains ?? []), ...(step.transformedNotContains ?? [])])
       const iosEvidence = await hmrLifecycle.waitForCompletion(hbuilderxAppTimeoutMs, ensureLaunchRunning, item.platform === 'app-ios'
-        ? remainingMs => waitForIosRuntimeEvidence({
-          deviceId: readAppLaunchOption(launchArgs, '--deviceId'),
-          ensureRunning: () => {
-            ensureLaunchRunning()
-            hmrLifecycle?.assertNoFallback()
-          },
-          markerClass: step.markerClass,
-          previous: { screenshot: previousRuntimeScreenshot!, markerClass: previousRuntimeMarkerClass },
-          screenshot: path.resolve(runtimeEvidenceRoot, `${step.name}.png`),
-          timeoutMs: remainingMs,
-        })
+        ? (remainingMs, transfer) => waitForIosRuntimeEvidence({
+            deviceId: readAppLaunchOption(launchArgs, '--deviceId'),
+            ensureRunning: () => {
+              ensureLaunchRunning()
+              hmrLifecycle?.assertNoFallback()
+            },
+            markerClass: step.markerClass,
+            structure: { runId: iosProbe!.runId, step: step.name, markerText: step.markerText, token: iosToken!, transfer, read: () => iosObserver?.read() },
+            previous: { screenshot: previousRuntimeScreenshot!, markerClass: previousRuntimeMarkerClass },
+            screenshot: path.resolve(runtimeEvidenceRoot, `${step.name}.png`),
+            timeoutMs: remainingMs,
+          })
         : undefined)
       if (iosEvidence) {
         previousRuntimeScreenshot = iosEvidence.screenshot
@@ -775,7 +789,7 @@ export async function verifyAppHmrWithHBuilderX(item: AppCase) {
       }
       hmrLifecycle?.assertNoFallback()
       process.stdout.write(`${JSON.stringify({ step: step.name, updateLifecycle: hmrLifecycle.snapshot() })}\n`)
-      process.stdout.write(`[hbuilderx-app-hmr] ${item.name} step=${step.name} ${item.platform === 'app-ios' ? '当轮编译、同步与可见样式标记检查通过（未验证节点文字）' : '产物与传输检查通过'}\n`)
+      process.stdout.write(`[hbuilderx-app-hmr] ${item.name} step=${step.name} ${item.platform === 'app-ios' ? '当轮产物、同步、运行时节点文字与可见样式标记检查通过' : '产物与传输检查通过'}\n`)
     }
     await assertAppOutputHasNoUnsupportedContent(item, hmrOutputRoot)
     expectNoContent(logs.join(''), item.logNotContains, `${item.name} HBuilderX 日志`)
@@ -796,7 +810,7 @@ export async function verifyAppHmrWithHBuilderX(item: AppCase) {
         stop: async () => { await launch?.stop('SIGINT') },
         nativeStopReason: () => hmrLifecycle?.nativeStopReason(),
         afterStop: () => hmrLifecycle?.assertNoFallback(),
-        safe: [() => hmrLifecycle?.dispose(), () => domObserver?.dispose(), async () => { await nativeLog?.close() }],
+        safe: [() => hmrLifecycle?.dispose(), () => domObserver?.dispose(), () => iosObserver?.dispose(), async () => { await nativeLog?.close() }],
         release: [async () => { await projectSession?.cleanup() }],
       }), async () => {
         if (recovery.cleanupComplete) {

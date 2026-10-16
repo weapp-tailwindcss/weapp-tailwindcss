@@ -99,7 +99,7 @@ export function observeHmrStep(
         ? `Harmony 本轮更新已进入 ${observed} / native fallback，缺少按 session 的停止完成证明`
         : undefined
     },
-    async waitForCompletion<T>(timeoutMs: number, ensureRunning: () => void, verifyRuntime?: (remainingMs: number) => Promise<T>): Promise<T | undefined> {
+    async waitForCompletion<T>(timeoutMs: number, ensureRunning: () => void, verifyRuntime?: (remainingMs: number, transfer: string) => Promise<T>): Promise<T | undefined> {
       // Android 由调用方的运行时探针确认；iOS 必须把设备取证纳入完成契约。
       if (platform === 'app-android') {
         ensureRunning()
@@ -117,7 +117,7 @@ export function observeHmrStep(
           const transfer = readIosTransfer()
           if (transfer) {
             assertNoFallback()
-            const evidence = await verifyRuntime!(Math.max(1, timeoutMs - (Date.now() - startedAt)))
+            const evidence = await verifyRuntime!(Math.max(1, timeoutMs - (Date.now() - startedAt)), transfer)
             ensureRunning()
             assertNoFallback()
             if (readIosTransfer() !== transfer) {

@@ -1,3 +1,4 @@
+import type { RuntimeStructureReceipt } from './hbuilderx-local/runtime-structure'
 import { Buffer } from 'node:buffer'
 import { EventEmitter } from 'node:events'
 import { writeFileSync } from 'node:fs'
@@ -18,6 +19,21 @@ vi.mock('node:child_process', async importOriginal => ({
 const initialClass = 'w-[120px] h-[30px] bg-[#102938]'
 const changedClass = 'w-[120px] h-[30px] bg-[#3b0764]'
 let directory: string
+let receipt: RuntimeStructureReceipt | undefined
+let sampleEnabled = true
+
+function runtimeStructure() {
+  return { runId: 'current-run', step: 'step-1', markerText: 'current-text', token: 'step-token', transfer: '0:10:20', read: () => receipt }
+}
+
+function freshReceipt(): RuntimeStructureReceipt {
+  const marker = { id: 'native-hmr-probe', tagName: 'VIEW', text: 'current-text', rect: { left: 20, top: 60, width: 120, height: 30 } }
+  return {
+    ordinal: (receipt?.ordinal ?? 0) + 1,
+    receivedAt: new Date().toISOString(),
+    sample: { schemaVersion: 1, runId: 'current-run', adapter: 'uni-app-x-element', instanceId: 'instance-1', token: 'step-token', sequence: 1, pixelRatio: 1, markerCount: 1, marker, nodes: [marker] },
+  }
+}
 
 function rectangle(image: PNG, x: number, y: number, width: number, height: number, color: number[]) {
   for (let row = y; row < y + height; row++) {
@@ -42,6 +58,9 @@ function mockScreenshots(images: PNG[]) {
       throw new Error('意外的额外截图')
     }
     writeFileSync(args[args.length - 1]!, PNG.sync.write(image))
+    if (sampleEnabled) {
+      receipt = freshReceipt()
+    }
     queueMicrotask(() => child.emit('close', 0, null))
     return child
   })
@@ -50,12 +69,25 @@ function mockScreenshots(images: PNG[]) {
 beforeEach(async () => {
   directory = await mkdtemp(path.join(tmpdir(), 'ios-runtime-test-'))
   state.spawn.mockReset()
+  receipt = undefined
+  sampleEnabled = true
 })
 afterEach(async () => {
   await rm(directory, { recursive: true, force: true })
 })
 
 describe('iOS 样式标记运行时证据', () => {
+  it('正确截图缺少独立运行时结构时仍必须失败', async () => {
+    mockScreenshots([screenshot()])
+    await expect(waitForIosRuntimeEvidence({
+      deviceId: 'bound-device-uuid',
+      ensureRunning: () => {},
+      markerClass: initialClass,
+      screenshot: path.join(directory, 'after.png'),
+      timeoutMs: 1000,
+    })).rejects.toThrow('运行时结构')
+  })
+
   it('只改变状态栏或滚动条不能证明样式更新', () => {
     const before = screenshot()
     const after = screenshot()
@@ -95,6 +127,7 @@ describe('iOS 样式标记运行时证据', () => {
       deviceId: 'bound-device-uuid',
       ensureRunning: () => {},
       markerClass: changedClass,
+      structure: runtimeStructure(),
       previous: { screenshot: before, markerClass: initialClass },
       screenshot: path.join(directory, 'after.png'),
       screenshotTimeoutMs: 25,
@@ -104,6 +137,13 @@ describe('iOS 样式标记运行时证据', () => {
     expect(state.spawn).toHaveBeenCalledTimes(2)
     expect(state.spawn.mock.calls.every(([, args]) => args[2] === 'bound-device-uuid')).toBe(true)
     expect(state.spawn.mock.calls.every(([, , options]) => options.timeout <= 25)).toBe(true)
+    expect(JSON.parse(await readFile(evidence.structureFile, 'utf8'))).toMatchObject({
+      runId: 'current-run',
+      step: 'step-1',
+      transfer: '0:10:20',
+      structureReady: true,
+      structure: { ordinal: 2, sample: { marker: { text: 'current-text' } } },
+    })
   })
 
   it('截图期间的生命周期失败不能被正确色块覆盖', async () => {
@@ -115,9 +155,51 @@ describe('iOS 样式标记运行时证据', () => {
       deviceId: 'bound-device-uuid',
       ensureRunning,
       markerClass: initialClass,
+      structure: runtimeStructure(),
       screenshot: path.join(directory, 'after.png'),
       timeoutMs: 1000,
     })).rejects.toThrow('restarted')
+  })
+
+  it.each(['cached', 'wrong-run', 'wrong-step', 'wrong-token', 'duplicate', 'zero-rect'] as const)('正确色块不能覆盖无效结构：%s', async (kind) => {
+    sampleEnabled = false
+    const candidate = freshReceipt()
+    if (kind === 'cached') {
+      receipt = candidate
+    }
+    else {
+      if (kind === 'wrong-run') {
+        candidate.sample.runId = 'old-run'
+      }
+      if (kind === 'wrong-step') {
+        candidate.sample.marker.text = 'previous-step'
+      }
+      if (kind === 'wrong-token') {
+        candidate.sample.token = 'old-save-token'
+      }
+      if (kind === 'duplicate') {
+        candidate.sample.markerCount = 2
+      }
+      if (kind === 'zero-rect') {
+        candidate.sample.marker.rect.width = 0
+      }
+    }
+    mockScreenshots([screenshot()])
+    state.spawn.mockImplementationOnce((...args: unknown[]) => {
+      const implementation = state.spawn.getMockImplementation()!
+      const child = implementation(...args)
+      receipt = candidate
+      return child
+    })
+    await expect(waitForIosRuntimeEvidence({
+      deviceId: 'bound-device-uuid',
+      ensureRunning: () => {},
+      markerClass: initialClass,
+      screenshot: path.join(directory, 'after.png'),
+      timeoutMs: 1,
+      structure: runtimeStructure(),
+    })).rejects.toThrow('运行时结构与可见样式标记')
+    expect(JSON.parse(await readFile(path.join(directory, 'after.structure.json'), 'utf8')).structureReady).toBe(false)
   })
 
   it('截图必须绑定确定设备，不允许 booted 别名重新选择目标', async () => {

@@ -1,5 +1,6 @@
 import type { ChildProcess } from 'node:child_process'
 import type { AppCase } from '../../e2e/hbuilderx-local/cases.ts'
+import type { RuntimeStructureExpectation } from '../../e2e/hbuilderx-local/runtime-structure/index.ts'
 import type { HBuilderXRunner } from '../../packages/hbuilderx-runner/src/types.ts'
 import type { StyleIsolationVariant } from './style-isolation.ts'
 import type { CaseResult, RuntimeContext, VisualHmrStepResult } from './types.ts'
@@ -40,6 +41,7 @@ import {
   wait,
 } from '../../e2e/hbuilderx-local/process.ts'
 import { findForbiddenRuntimeLogs, findMissingRuntimeLogs, resolveAppRuntimeLogContract } from '../../e2e/hbuilderx-local/render-mode.ts'
+import { createRuntimeStructureProbe } from '../../e2e/hbuilderx-local/runtime-structure/index.ts'
 import { appendHmrSourceMutation } from '../../e2e/hbuilderx-local/source-mutations.ts'
 import { runWithCleanup } from '../e2e-preflight/cleanup'
 import { createHBuilderXAppProject } from '../hbuilderx-app-project'
@@ -261,6 +263,7 @@ async function writeAppMarker(
     className: string
     textClassName?: string
     text: string
+    structureToken?: string
   },
 ) {
   await fs.writeFile(file, rewriteAppMarker(await readUtf8(file), anchors, marker), 'utf8')
@@ -517,6 +520,7 @@ async function waitForAppScreenshotReady(
   expectedBackgroundColor?: string,
   previous?: { screenshot: string, markerClass: string },
   timeoutMs = appReadyTimeoutMs,
+  structure?: RuntimeStructureExpectation,
 ) {
   const startedAt = Date.now()
   let latest: Record<string, unknown> | undefined
@@ -530,6 +534,7 @@ async function waitForAppScreenshotReady(
           screenshot,
           screenshotTimeoutMs: iosScreenshotTimeoutMs,
           timeoutMs: Math.max(1, timeoutMs - (Date.now() - startedAt)),
+          structure,
           ...(previous ? { previous } : {}),
         })
       : undefined
@@ -621,6 +626,9 @@ async function runAppCaseVariant(
   let projectRoot = path.resolve(context.repoRoot, item.projectDir)
   const sourceFile = path.resolve(projectRoot, item.sourceFile)
   const domProbe = item.platform === 'app-harmony' && item.renderMode === 'vapor' ? createHarmonyDomProbe() : undefined
+  const iosProbe = item.platform === 'app-ios' ? createRuntimeStructureProbe(item.sourceFile) : undefined
+  let iosObserver: ReturnType<NonNullable<typeof iosProbe>['observe']> | undefined
+  let iosToken = iosProbe?.nextToken()
   let domObserver: ReturnType<NonNullable<typeof domProbe>['observe']> | undefined
   let nativeLog: ReturnType<typeof captureNativeLog> | undefined
   const domOptions = domProbe ? { readDomProbe: () => domObserver?.read() } : {}
@@ -678,9 +686,13 @@ async function runAppCaseVariant(
       className: item.markerClass,
       textClassName: item.markerTextClass,
       text: item.markerText,
+      structureToken: iosToken,
     })
     if (domProbe) {
       await fs.writeFile(activeSourceFile, domProbe.inject(await readUtf8(activeSourceFile)), 'utf8')
+    }
+    if (iosProbe) {
+      await fs.writeFile(activeSourceFile, iosProbe.inject(await readUtf8(activeSourceFile)), 'utf8')
     }
     process.stdout.write(`[app-${platform}] ${name}${variant.key ? ` ${variant.key}` : ''}: clean output\n`)
     await cleanAppOutput(item, projectRoot)
@@ -692,6 +704,7 @@ async function runAppCaseVariant(
     await fs.mkdir(path.dirname(hmrBeforeScreenshot), { recursive: true })
     nativeLog = captureNativeLog(launch.child, path.join(path.dirname(hmrBeforeScreenshot), 'hbuilderx.log'))
     domObserver = domProbe?.observe(launch.child)
+    iosObserver = iosProbe?.observe(launch.child)
     const ensureInitialRunning = () => launch?.tracker.ensureRunning(launch.logs)
 
     process.stdout.write(`[app-${platform}] ${name}${variant.key ? ` ${variant.key}` : ''}: wait initial output\n`)
@@ -701,7 +714,7 @@ async function runAppCaseVariant(
     const runtimeLogContract = await waitForAppRuntimeLogContract(item, launch.logs, ensureInitialRunning)
     await wait(Number(process.env['DEMO_VISUAL_APP_SCREENSHOT_DELAY_MS'] ?? 3000))
     process.stdout.write(`[app-${platform}] ${name}${variant.key ? ` ${variant.key}` : ''}: screenshot before\n`)
-    beforeScreenshotEvidence = await waitForAppScreenshotReady(item, hmrBeforeScreenshot, toolEnv, `${item.name} HMR 前`, ensureInitialRunning, item.markerClass, item.markerTextClass, item.runtime?.backgroundColor)
+    beforeScreenshotEvidence = await waitForAppScreenshotReady(item, hmrBeforeScreenshot, toolEnv, `${item.name} HMR 前`, ensureInitialRunning, item.markerClass, item.markerTextClass, item.runtime?.backgroundColor, undefined, appReadyTimeoutMs, iosProbe ? { runId: iosProbe.runId, step: 'initial', markerText: item.markerText, token: iosToken!, read: () => iosObserver?.read() } : undefined)
     const initialHarmony = item.platform === 'app-harmony'
       ? await waitForHarmonyRuntimeEvidence({
           ...domOptions,
@@ -750,9 +763,11 @@ async function runAppCaseVariant(
       if (step.sourceMutation) {
         await appendHmrSourceMutation(projectRoot, step.sourceMutation)
       }
+      iosToken = iosProbe?.nextToken()
       await writeAppMarker(activeSourceFile, resolveAppMarkerAnchors(item), {
         className: step.markerClass,
         text: step.markerText,
+        structureToken: iosToken,
         ...(step.markerTextClass ? { textClassName: step.markerTextClass } : {}),
       })
       await wait(Number(process.env['DEMO_VISUAL_APP_HMR_MUTATION_DELAY_MS'] ?? 1000))
@@ -770,7 +785,7 @@ async function runAppCaseVariant(
       process.stdout.write(`[app-${platform}] ${name}${variant.key ? ` ${variant.key}` : ''}: hmr output ${step.name} ${hmrOutputRoot}\n`)
       await wait(Number(process.env['DEMO_VISUAL_APP_SCREENSHOT_DELAY_MS'] ?? 3000))
       process.stdout.write(`[app-${platform}] ${name}${variant.key ? ` ${variant.key}` : ''}: screenshot after ${step.name}\n`)
-      const captureEvidence = (timeoutMs = appReadyTimeoutMs) => waitForAppScreenshotReady(item, stepAfterScreenshot, toolEnv, `${item.name} HMR ${step.name} 后`, ensureHmrRunning, step.markerClass, step.markerTextClass, step.runtime?.backgroundColor, { screenshot: stepBeforeScreenshot, markerClass: previousMarkerClass }, timeoutMs)
+      const captureEvidence = (timeoutMs = appReadyTimeoutMs, transfer?: string) => waitForAppScreenshotReady(item, stepAfterScreenshot, toolEnv, `${item.name} HMR ${step.name} 后`, ensureHmrRunning, step.markerClass, step.markerTextClass, step.runtime?.backgroundColor, { screenshot: stepBeforeScreenshot, markerClass: previousMarkerClass }, timeoutMs, iosProbe ? { runId: iosProbe.runId, step: step.name, markerText: step.markerText, token: iosToken!, transfer, read: () => iosObserver?.read() } : undefined)
       const evidence = item.platform === 'app-ios'
         ? await hmrLifecycle.waitForCompletion(appOutputTimeoutMs, ensureHmrRunning, captureEvidence)
         : await captureEvidence()
@@ -890,7 +905,7 @@ async function runAppCaseVariant(
         stop: () => stopAppLaunch(launch),
         nativeStopReason: () => hmrLifecycle?.nativeStopReason(),
         afterStop: () => hmrLifecycle?.assertNoFallback(),
-        safe: [() => hmrLifecycle?.dispose(), () => domObserver?.dispose(), async () => { await nativeLog?.close() }],
+        safe: [() => hmrLifecycle?.dispose(), () => domObserver?.dispose(), () => iosObserver?.dispose(), async () => { await nativeLog?.close() }],
         release: [() => {
           if (item.platform === 'app-android') {
             cleanupAndroidAppRuntime(shared?.toolEnv ?? {}, resolveAndroidScreenshotDeviceId(item))

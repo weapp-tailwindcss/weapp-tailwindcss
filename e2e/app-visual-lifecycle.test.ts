@@ -31,6 +31,8 @@ const state = vi.hoisted(() => ({
   screenshot: vi.fn(),
   restart: 'mutation' as 'mutation' | 'screenshot' | 'stop' | 'none',
   variants: 1,
+  runtimeText: 'initial',
+  runtimeToken: 'initial-token',
   writeReport: vi.fn(),
 }))
 vi.mock('node:child_process', async importOriginal => ({
@@ -109,7 +111,9 @@ vi.mock('./hbuilderx-local/render-mode', () => ({
 vi.mock('./hbuilderx-local/app-output', () => ({ readExistingAppTransformedOutput: async () => 'compiled' }))
 vi.mock('./hbuilderx-local/app-marker', () => ({
   removeLegacyAppMarkers: (source: string) => source.replace('legacy-marker', ''),
-  rewriteAppMarker: (_source: string, _anchors: string[], marker: { text: string }) => {
+  rewriteAppMarker: (_source: string, _anchors: string[], marker: { text: string, structureToken?: string }) => {
+    state.runtimeText = marker.text
+    state.runtimeToken = marker.structureToken ?? ''
     if (marker.text === 'changed') {
       state.child!.stdout!.emit('data', '开始差量编译\n项目 fixture 编译成功。\n同步手机端程序文件成功\n')
       if (state.restart === 'mutation') {
@@ -118,6 +122,25 @@ vi.mock('./hbuilderx-local/app-marker', () => ({
     }
     return marker.text
   },
+}))
+vi.mock('./hbuilderx-local/runtime-structure', async importOriginal => ({
+  ...await importOriginal<typeof import('./hbuilderx-local/runtime-structure')>(),
+  createRuntimeStructureProbe: () => ({
+    runId: 'fixture-run',
+    nextToken: () => 'fixture-token',
+    inject: (source: string) => source,
+    observe: () => ({
+      read: () => {
+        const marker = { id: 'native-hmr-probe', tagName: 'VIEW', text: state.runtimeText, rect: { left: 0, top: 0, width: 20, height: 20 } }
+        return {
+          ordinal: state.capture.mock.calls.length,
+          receivedAt: new Date().toISOString(),
+          sample: { schemaVersion: 1, runId: 'fixture-run', adapter: 'uni-app-x-element', instanceId: 'fixture-instance', token: state.runtimeToken, sequence: 1, pixelRatio: 1, markerCount: 1, marker, nodes: [marker] },
+        }
+      },
+      dispose: () => {},
+    }),
+  }),
 }))
 vi.mock('./hbuilderx-local/android-runtime', async importOriginal => ({
   ...await importOriginal<typeof import('./hbuilderx-local/android-runtime')>(),

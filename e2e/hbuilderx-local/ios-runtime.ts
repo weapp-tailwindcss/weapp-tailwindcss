@@ -1,4 +1,5 @@
 import type { MarkerColor } from '../../scripts/demo-visual-e2e-report/app-marker-visual'
+import type { RuntimeStructureExpectation } from './runtime-structure'
 import { spawn } from 'node:child_process'
 import fs from 'node:fs/promises'
 import path from 'node:path'
@@ -6,6 +7,7 @@ import { setTimeout } from 'node:timers/promises'
 import { PNG } from 'pngjs'
 import { countMarkerPixelChanges, locateMarkerColor } from '../../scripts/demo-visual-e2e-report/app-marker-visual'
 import { parseHexColorFromClass } from './android-runtime'
+import { hasRuntimeStructureMarker } from './runtime-structure'
 
 /** 只使用启动时绑定的设备，异步截图让生命周期日志在取证期间继续到达。 */
 export async function captureIosScreenshot(screenshot: string, deviceId: string | undefined, timeoutMs = 30_000) {
@@ -89,23 +91,49 @@ export async function waitForIosRuntimeEvidence(options: {
   previous?: { screenshot: string, markerClass: string }
   screenshot: string
   screenshotTimeoutMs?: number
+  structure?: RuntimeStructureExpectation
   timeoutMs: number
 }) {
+  if (!options.structure) {
+    throw new Error('iOS 验收缺少本轮独立运行时结构探针')
+  }
+  const expectation = options.structure
+  // 当前同步完成后重新收样；缓存的正确文字也不能代替本次设备取证。
+  const ordinalFloor = expectation.read()?.ordinal ?? 0
+  const structureFile = path.join(path.dirname(options.screenshot), `${path.basename(options.screenshot, path.extname(options.screenshot))}.structure.json`)
   const previous = options.previous
     ? { image: PNG.sync.read(await fs.readFile(options.previous.screenshot)), markerClass: options.previous.markerClass }
     : undefined
   const startedAt = Date.now()
   let latest: ReturnType<typeof analyzeIosRuntimeScreenshot> | undefined
+  let structure = expectation.read()
   while (Date.now() - startedAt < options.timeoutMs) {
     options.ensureRunning()
     await captureIosScreenshot(options.screenshot, options.deviceId, Math.max(1, Math.min(options.screenshotTimeoutMs ?? 30_000, options.timeoutMs - (Date.now() - startedAt))))
     options.ensureRunning()
     latest = analyzeIosRuntimeScreenshot(PNG.sync.read(await fs.readFile(options.screenshot)), options.markerClass, previous)
+    structure = expectation.read()
     options.ensureRunning()
-    if (latest.ready) {
-      return { ...latest, deviceId: options.deviceId, markerClass: options.markerClass, screenshot: options.screenshot, capturedAt: new Date().toISOString() }
+    const structureReady = structure && structure.ordinal > ordinalFloor
+      && hasRuntimeStructureMarker(structure.sample, expectation.runId, expectation.markerText, expectation.token)
+    const binding = {
+      runId: expectation.runId,
+      step: expectation.step,
+      markerText: expectation.markerText,
+      token: expectation.token,
+      transfer: expectation.transfer,
+      ordinalFloor,
+      structure,
+      structureReady: Boolean(structureReady),
+      screenshot: options.screenshot,
+      capturedAt: new Date().toISOString(),
+    }
+    await fs.writeFile(structureFile, `${JSON.stringify(binding, null, 2)}\n`)
+    options.ensureRunning()
+    if (latest.ready && structureReady) {
+      return { ...latest, evidenceKind: 'runtime-structure-and-visual-style-marker' as const, deviceId: options.deviceId, markerClass: options.markerClass, structureFile, ...binding }
     }
     await setTimeout(100)
   }
-  throw new Error(`iOS 设备未出现本轮可见样式标记：${JSON.stringify(latest)}\nscreenshot=${options.screenshot}`)
+  throw new Error(`iOS 设备未同时出现本轮运行时结构与可见样式标记：${JSON.stringify({ visual: latest, structure })}\nscreenshot=${options.screenshot}\nstructure=${structureFile}`)
 }

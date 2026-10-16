@@ -55,7 +55,7 @@ describe('iOS 本轮 HMR 完成契约', () => {
   it('当轮编译、传输、设备取证全部完成后才记录 updated', async () => {
     const { stdout, observer } = createStep()
     let release!: () => void
-    const runtime = vi.fn(() => new Promise<void>((resolve) => {
+    const runtime = vi.fn((_remainingMs: number, _transfer: string) => new Promise<void>((resolve) => {
       release = resolve
     }))
     try {
@@ -66,6 +66,7 @@ describe('iOS 本轮 HMR 完成契约', () => {
       release()
       await completed
       expect(observer.snapshot()).toMatchObject({ state: 'updated', runtimeVerified: true })
+      expect(runtime.mock.calls[0]).toEqual([expect.any(Number), expect.stringMatching(/^\d+:\d+:\d+$/)])
     }
     finally { observer.dispose() }
   })
@@ -84,7 +85,7 @@ describe('iOS 本轮 HMR 完成契约', () => {
 
   it.each([false, true])('取证期间新编译 complete=%s 必须作废旧证据', async (complete) => {
     const { stdout, observer } = createStep()
-    const runtime = vi.fn(async () => 'current').mockImplementationOnce(async () => {
+    const runtime = vi.fn(async (_remainingMs: number, _transfer: string) => 'current').mockImplementationOnce(async () => {
       stdout.emit('data', complete ? transfer : '开始差量编译...\n')
       return 'stale'
     })
@@ -94,6 +95,7 @@ describe('iOS 本轮 HMR 完成契约', () => {
       if (complete) {
         await expect(completed).resolves.toBe('current')
         expect(runtime).toHaveBeenCalledTimes(2)
+        expect(runtime.mock.calls[0]?.[1]).not.toBe(runtime.mock.calls[1]?.[1])
       }
       else {
         await expect(completed).rejects.toThrow('编译与同步完成')

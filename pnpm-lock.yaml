@@ -968,6 +968,12 @@ importers:
       '@vitest/ui':
         specifier: catalog:vitest
         version: 5.0.4(vitest@5.0.4)
+      '@vue/compiler-dom':
+        specifier: catalog:vue3
+        version: 3.5.43
+      '@vue/compiler-sfc':
+        specifier: catalog:vue3
+        version: 3.5.43
       '@weapp-tailwindcss/shared':
         specifier: workspace:*
         version: link:packages/shared

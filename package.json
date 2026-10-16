@@ -374,6 +374,8 @@
     "@types/webpack-sources": "^3.2.3",
     "@vitest/coverage-v8": "catalog:vitest",
     "@vitest/ui": "catalog:vitest",
+    "@vue/compiler-dom": "catalog:vue3",
+    "@vue/compiler-sfc": "catalog:vue3",
     "@weapp-tailwindcss/shared": "workspace:*",
     "@weapp-tailwindcss/test-helper": "workspace:*",
     "@weapp-vite/miniprogram-automator": "^1.2.18",

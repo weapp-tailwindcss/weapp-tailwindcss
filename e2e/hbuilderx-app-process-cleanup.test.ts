@@ -57,6 +57,9 @@ vi.mock('./hbuilderx-local/app-target', () => ({
 vi.mock('./hbuilderx-local/ios-runtime', () => ({
   waitForIosRuntimeEvidence: async ({ screenshot }: { screenshot: string }) => ({ screenshot }),
 }))
+vi.mock('./hbuilderx-local/runtime-structure', () => ({
+  createRuntimeStructureProbe: () => ({ runId: 'fixture-run', nextToken: () => 'fixture-token', inject: (source: string) => source, observe: () => ({ read: () => undefined, dispose: () => {} }) }),
+}))
 vi.mock('./hbuilderx-local/harmony-runtime', () => ({
   waitForHarmonyRuntimeEvidence: async () => ({ pid: '100', afterPid: '100' }),
   captureHarmonyRuntimeEvidence: async () => ({}),
