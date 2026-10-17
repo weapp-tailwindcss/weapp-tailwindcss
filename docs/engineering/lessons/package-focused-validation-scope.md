@@ -2,6 +2,8 @@
 status: partial
 issue: https://github.com/sonofmagic/weapp-tailwindcss
 baseline: ae906eba230c8bc139973b76d247e43cdf0c22bc
+checked-at: 2026-10-17
+environment: Node 24.18.0 / pnpm 12.9.1 / darwin-arm64
 regressions:
   - packages/weapp-tailwindcss/test/js.test.ts
   - packages/weapp-tailwindcss/test/wxml/index.test.ts
@@ -26,17 +28,31 @@ website 构建、website 三浏览器运行、website 截图审查和 website st
 
 ## 验证
 
-包级验证使用当前候选提交和冻结依赖，命令应记录实际解析到的 Node、pnpm 以及本地构建产物：
+包级验证使用当前候选提交和冻结依赖，实际环境为 Node 24.18.0、pnpm 12.9.1、darwin-arm64；证据保存在 `e2e/.artifacts/package-validation-ae906/`。本轮结果如下：
+
+- 最终提交上的 `test:core --update=none`：533 个文件通过、3 个既有 skip；6003 个测试通过、30 个既有 skip。
+- 覆盖率：Statements 94.65%（19193/20277）、Branches 88.89%（14780/16627）、Functions 96.67%（3753/3882）、Lines 94.62%（18626/19685）。
+- 依赖闭包构建、主包 typecheck、tsd、lint、architecture:check（37 包、1400 个源码文件）、agents:check（61 rules、332 documents、943 commands、0 errors）和 diff-check 均通过。
+- issue-928 静态回归 23/23 通过，覆盖 1x 与 2x 基线选择；1920×1080 的 1x 微信截图已完成真实验证，3840×2160 的 2x 证据沿用历史真实截图并通过本轮离线像素回归，当前机器没有 2x Retina 输出，因此没有宣称本轮完成 4K 实机验收。
+- `native:ci --target=aarch64-apple-darwin` 通过 Rust 44 项与 PostCSS 17 项测试；主包 native verify、native package verify 以及原生性能/ABI 报告均通过。
+- `release:verify:packages` 通过，验证 40 个公开包的打包 manifest，并完成发布包闭包测试；完整输出见 `release-verify-packages.log`。
+
+复验命令为：
 
 ```sh
-pnpm --filter weapp-tailwindcss test
-pnpm --filter weapp-tailwindcss build
-pnpm --filter weapp-tailwindcss test:native
-pnpm --filter weapp-tailwindcss test:native:package
-CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/public-package-types.test.ts e2e/template-contract.test.ts --update=none
+rtk pnpm test:core --update=none
+rtk pnpm --filter weapp-tailwindcss... run build
+rtk pnpm --filter weapp-tailwindcss exec tsc -p tsconfig.typecheck.json --pretty false
+rtk pnpm --filter weapp-tailwindcss tsd
+rtk pnpm --filter weapp-tailwindcss lint
+rtk pnpm architecture:check
+CI=1 rtk pnpm native:ci --target=aarch64-apple-darwin
+rtk pnpm release:verify:packages
 ```
 
 定向验证需要保持公开接口、跨平台路径和原生分发断言；修复缺陷时先补包内回归，再运行受影响的直接消费契约。若把这些命令编排成包级全面验收，仍须先完成本轮 `prepare`、当前会话 computer use 证据和 `verify`；只有定向单测或预检自身回归可以不要求全端环境。不能用历史 website 报告代替当前包验证。
+
+本轮未执行 `website` 构建、三浏览器运行、website 截图与 Worker，也未执行原扩展入口的 57 阶段全端矩阵；这些项目属于用户明确排除的范围，交付时单独列为未执行，不换算为通过。
 
 ## 适用边界
 
