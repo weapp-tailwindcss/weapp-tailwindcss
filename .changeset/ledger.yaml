@@ -162,6 +162,10 @@
   intents:
     - hbuilderx-process-closure
     - organization-repository-metadata
+"@weapp-tailwindcss/hbuilderx-runner@0.1.8":
+  dir: packages/hbuilderx-runner
+  intents:
+    - weak-bats-knock
 "@weapp-tailwindcss/init@1.0.16":
   dir: packages/init
   intents:
@@ -411,6 +415,10 @@
   dir: packages/react-native
   intents:
     - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
+"@weapp-tailwindcss/react-native@0.3.5":
+  dir: packages/react-native
+  intents:
+    - wise-wolves-eat
 "@weapp-tailwindcss/reset@0.1.4":
   dir: packages/reset
   intents:
