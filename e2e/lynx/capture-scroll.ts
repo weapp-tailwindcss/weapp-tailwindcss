@@ -27,7 +27,7 @@ export function validateCaptureScrollEvidence(source: string, context: NativeEvi
     || after - before < 1 || after > minimum + range + 1 || after < minimum - 1
     || Math.abs(returned - minimum) > 1 || after - returned < 1
     || !(started > 0 && measured > started && returning > measured && completed > returning)
-    || returning < duration - 0.55 || returning > duration + 0.25
+    || returning < duration - 0.55 || returning > duration + 2
     || dates.some((date, index) => !Number.isFinite(date) || (index > 0 && date < dates[index - 1]!))) {
     throw new Error('iOS 原生滚动没有有效往返偏移、滚动范围或时间证据；已保留 capture-scroll.json。')
   }

@@ -66,6 +66,35 @@ it.each([8, 15, 18, 180])('accepts native return timing bound to a %s-second cap
   expect(() => validateCaptureScrollEvidence(JSON.stringify(timed), context, duration + 1)).toThrow('原生滚动')
 })
 
+it('accepts measured iOS dispatch jitter while preserving identity and actual movement checks', () => {
+  const measured = {
+    ...evidence,
+    scrollRange: 202,
+    targetOffset: 202,
+    afterOffset: 202,
+    scrollStartedSeconds: 5.078655416611582,
+    afterSeconds: 6.036015749908984,
+    returnStartedSeconds: 18.405550958239473,
+    completedSeconds: 19.35633741656784,
+    startedAt: '2026-10-18T09:55:49Z',
+    scrollStartedAt: '2026-10-18T09:55:54Z',
+    afterAt: '2026-10-18T09:55:55Z',
+    returnStartedAt: '2026-10-18T09:56:07Z',
+    completedAt: '2026-10-18T09:56:08Z',
+  }
+  expect(() => validateCaptureScrollEvidence(JSON.stringify(measured), context, 18)).not.toThrow()
+  expect(() => validateCaptureScrollEvidence(JSON.stringify({ ...measured, runId: 'old' }), context, 18)).toThrow('本轮 bundle/run')
+  expect(() => validateCaptureScrollEvidence(JSON.stringify({ ...measured, afterOffset: 0 }), context, 18)).toThrow('原生滚动')
+})
+
+it.each([
+  { returnStartedSeconds: 20.001, completedSeconds: 20.95 },
+  { returnStartedSeconds: 18.40555, completedSeconds: 18.3 },
+  { returnStartedSeconds: 17.4, completedSeconds: 18.3 },
+])('rejects implausible late, unordered or premature native return times: %j', (change) => {
+  expect(() => validateCaptureScrollEvidence(JSON.stringify({ ...evidence, ...change }), context, 18)).toThrow('原生滚动')
+})
+
 it('copies failed raw evidence before validation and preserves an existing run artifact', async () => {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'lynx-scroll-'))
   directories.push(directory)
