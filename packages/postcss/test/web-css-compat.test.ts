@@ -51,6 +51,25 @@ describe('web css compatibility transform', () => {
     expect(result).not.toContain('background-color: color-mix(')
   })
 
+  it('静态化无条件主题层变量并保留局部覆盖的运行时级联', () => {
+    const css = [
+      '@layer theme { :root { --color-brand: oklch(63% .2 40); } }',
+      '.stable { color: var(--color-brand); }',
+    ].join('\n')
+    const result = transformWebCssCompat(css, true)
+
+    expect(result).toContain('.stable { color: rgb(')
+    expect(result).not.toContain('var(--color-brand)')
+    expect(result).not.toContain('oklch(')
+
+    const dynamic = transformWebCssCompat([
+      '@layer theme { :root { --color-brand: oklch(63% .2 40); } }',
+      '.theme-dark { --color-brand: #00f; }',
+      '.dynamic { color: var(--color-brand); }',
+    ].join('\n'), true)
+    expect(dynamic).toContain('.dynamic { color: var(--color-brand); }')
+  })
+
   it('preserves runtime spacing and adds the WebKit text clip fallback once', () => {
     const css = [
       ':root { --spacing: 0.25rem; }',
