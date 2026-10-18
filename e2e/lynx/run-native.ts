@@ -6,6 +6,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { execa } from 'execa'
 import { androidSdkRoot } from '../react-native/native-toolchain'
+import { performAndroidCaptureScroll } from './android-capture-scroll'
 import { buildCompatibilityBundle } from './build'
 import { exampleDir, lynxIntermediateDir, repoRoot } from './catalog'
 import { collectNativeEvidence, createEvidenceContext, validateNativeEvidence } from './evidence'
@@ -63,10 +64,9 @@ async function recordAndroidVideo(hostDir: string, artifactDir: string, device: 
   const devicePath = '/sdcard/lynx-promo-capture.mp4'
   await execa('adb', adbArgs(device, ['shell', 'rm', '-f', devicePath]), { reject: false })
   const recording = execa('adb', adbArgs(device, ['shell', 'screenrecord', '--time-limit', String(options.captureDurationSeconds), '--bit-rate', '6000000', devicePath]), { reject: false })
-  await wait(2600)
-  await execa('adb', adbArgs(device, ['shell', 'input', 'swipe', '540', '1480', '540', '720', '700']), { reject: false })
-  await wait(2200)
-  await execa('adb', adbArgs(device, ['shell', 'input', 'swipe', '540', '760', '540', '1320', '650']), { reject: false })
+  await performAndroidCaptureScroll(options.captureDurationSeconds, async (gesture) => {
+    await command('adb', adbArgs(device, ['shell', 'input', 'swipe', '540', String(gesture.fromY), '540', String(gesture.toY), String(gesture.durationMilliseconds)]), hostDir, 30_000)
+  })
   await recording
   await command('adb', adbArgs(device, ['pull', devicePath, path.join(artifactDir, 'raw.mp4')]), hostDir, 120_000)
   await execa('adb', adbArgs(device, ['shell', 'rm', '-f', devicePath]), { reject: false })
