@@ -58,7 +58,7 @@ export function verifyDevelopmentTimeline(events: DevelopmentEvent[], clips: Dev
     if (!scene || selected.length === 0) {
       throw new Error(`缺少 ${sceneId} 的真实开发剪辑。`)
     }
-    let duration = 0
+    let durationInFrames = 0
     for (const clip of selected) {
       verifyRange(clip.startSeconds, clip.endSeconds, videoSeconds, clip.sceneId)
       if (clip.startSeconds < previousClipEnd) {
@@ -73,11 +73,31 @@ export function verifyDevelopmentTimeline(events: DevelopmentEvent[], clips: Dev
       if (!Number.isFinite(rate) || rate <= 0) {
         throw new Error(`${sceneId} 播放速度必须大于零。`)
       }
-      duration += (clip.endSeconds - clip.startSeconds) / rate
+      // 与 DevelopmentCapture 的逐段取整保持一致，不能用秒数容差掩盖空帧。
+      const clipFrames = Math.round((clip.endSeconds - clip.startSeconds) / rate * fps)
+      if (clipFrames < 1) {
+        throw new Error(`${sceneId} 录屏剪辑时长不足一帧。`)
+      }
+      durationInFrames += clipFrames
     }
-    if (Math.abs(duration - scene.duration / fps) > 1 / fps) {
+    if (durationInFrames !== scene.duration) {
       throw new Error(`${sceneId} 录屏剪辑时长与场景不一致。`)
     }
+  }
+}
+
+export function verifyDevelopmentMetadata(content: string, clips: readonly DevelopmentClip[]) {
+  const generated = JSON.parse(content) as { clips?: DevelopmentClip[] } | null
+  if (!Array.isArray(generated?.clips) || generated.clips.length !== clips.length || clips.some((clip, index) => {
+    const actual = generated.clips![index]
+    return !actual
+      || actual.sceneId !== clip.sceneId
+      || actual.eventId !== clip.eventId
+      || actual.startSeconds !== clip.startSeconds
+      || actual.endSeconds !== clip.endSeconds
+      || (actual.playbackRate === undefined ? 1 : Number(actual.playbackRate)) !== (clip.playbackRate ?? 1)
+  })) {
+    throw new Error('烧录开发剪辑与素材清单不一致，请重新生成素材并导出。')
   }
 }
 
