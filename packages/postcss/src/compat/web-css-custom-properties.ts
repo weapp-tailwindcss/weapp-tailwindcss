@@ -6,7 +6,10 @@ const cssWideKeywords = new Set(['initial', 'inherit', 'unset', 'revert', 'rever
 
 export interface CustomPropertyValues {
   values: Map<string, string>
+  dependencies: Set<string>
 }
+
+const customPropertyReferencePattern = /var\(\s*(--(?:\\.|[-\w])+)/gi
 
 function isRootScopeSelector(selector: string) {
   return postcss.list.comma(selector).every((part) => {
@@ -39,17 +42,29 @@ function isUnconditionalLayerScope(rule: postcss.Rule, root: postcss.Root) {
  * 混合 selector、`!important` 以及重复冲突声明都必须保留原生变量级联，避免
  * 在颜色兼容阶段提前删除运行时主题覆盖。
  */
-export function collectCustomPropertyValues(root: postcss.Root): CustomPropertyValues {
+export function collectCustomPropertyValues(
+  root: postcss.Root,
+  referencedProperties?: ReadonlySet<string> | undefined,
+): CustomPropertyValues {
   const candidates = new Map<string, string>()
   const dynamic = new Set<string>()
+  const dependencies = new Set<string>()
 
   root.walkDecls((decl) => {
     if (!decl.prop.startsWith('--') || decl.prop.startsWith('--tw-')) {
       return
     }
+    if (referencedProperties && !referencedProperties.has(decl.prop)) {
+      return
+    }
 
     const rule = decl.parent?.type === 'rule' ? decl.parent : undefined
     const value = decl.value.trim()
+    if (referencedProperties?.has(decl.prop)) {
+      for (const match of value.matchAll(customPropertyReferencePattern)) {
+        dependencies.add(match[1])
+      }
+    }
     const isStableDeclaration = !!rule
       && isUnconditionalLayerScope(rule, root)
       && isRootScopeSelector(rule.selector)
@@ -82,7 +97,7 @@ export function collectCustomPropertyValues(root: postcss.Root): CustomPropertyV
     }
   }
 
-  return { values }
+  return { values, dependencies }
 }
 
 function getCustomPropertyReference(node: Node) {

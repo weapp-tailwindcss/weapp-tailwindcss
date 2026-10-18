@@ -8,6 +8,8 @@ import { removeUnsupportedCascadeLayers } from './mini-program-css/at-rules'
 import { normalizeTailwindcssV4GradientPosition, normalizeTailwindcssV4InfinityCalcValue } from './tailwindcss-v4'
 import { collectCustomPropertyValues, resolveCustomPropertyVarValue, usesResolvableTailwindColorVariable } from './web-css-custom-properties'
 
+const customPropertyReferencePattern = /var\(\s*(--(?:\\.|[-\w])+)/gi
+
 export interface NormalizedWebCssCompatOptions {
   preset: 'off' | 'legacy-web'
   features: Required<WebCssCompatFeatures>
@@ -165,7 +167,27 @@ function normalizeModernColorDeclarations(root: postcss.Root, features: Required
   if (!features.oklch && !features.colorFunctions) {
     return
   }
-  const customPropertyValues = collectCustomPropertyValues(root).values
+  const referencedProperties = new Set<string>()
+  root.walkDecls((decl) => {
+    if (!decl.value.includes('var(')) {
+      return
+    }
+    for (const match of decl.value.matchAll(customPropertyReferencePattern)) {
+      referencedProperties.add(match[1])
+    }
+  })
+  let customPropertyValues: Map<string, string> = new Map()
+  while (true) {
+    const collected = collectCustomPropertyValues(root, referencedProperties)
+    customPropertyValues = collected.values
+    const previousSize = referencedProperties.size
+    for (const dependency of collected.dependencies) {
+      referencedProperties.add(dependency)
+    }
+    if (referencedProperties.size === previousSize) {
+      break
+    }
+  }
   root.walkDecls((decl) => {
     const value = resolveCustomPropertyVarValue(decl.value, customPropertyValues)
     const normalized = normalizeModernColorValue(value, customPropertyValues)
