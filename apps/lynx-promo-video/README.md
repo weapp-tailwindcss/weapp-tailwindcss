@@ -2,7 +2,7 @@
 
 75 秒、1920×1080、30 FPS 的 Remotion 技术宣传片，提供中文和英文两个版本。核心画面展示真实的编辑器、构建终端与 Lynx 原生页面；两种语言共用本轮开发实录、双端设备录屏和兼容性截图。
 
-**本轮交付状态（2026-10-18）：完整开发实录、阶段归档与双端原生素材已采集，双语成片正在渲染。** 原片、实际剪辑区间和设备信息见下文。最终媒体校验、修改前后关键帧审看与中英文完整回看仍待完成。
+**本轮交付状态（2026-10-18）：中英文成片、封面、SRT/VTT 与完整开发原片已完成。** 最终媒体校验、两版共 4500 帧完整解码、修改前后关键帧审看及两版完整播放均已通过。原片、实际剪辑区间和设备信息见下文。
 
 ## 分镜与开发操作
 
@@ -110,7 +110,9 @@ pnpm --filter @weapp-tailwindcss/lynx-promo-video assets
 pnpm --filter @weapp-tailwindcss/lynx-promo-video fonts
 ```
 
-`voice` 可一次生成双语旁白。TTS 使用 `edge-tts`：中文 `zh-CN-XiaoxiaoNeural`、英文 `en-US-AriaNeural`，语速均为 `+8%`，生成需要网络。先生成逐句旁白时间，再由 `assets` 汇总 SRT/VTT 与字幕数据；字体子集依据最终文字生成。预览、渲染和媒体验证读取本地素材。
+`voice` 可一次生成双语旁白。开发段使用逐句计划与静默间隔，对齐本轮剪辑：中文场景内起点为 0.1、3.2、9.1、15.1 秒，英文为 0.1、2.2、9.1、15.1、23.1 秒。每句原始 MP3/VTT 和 `plan.json` 保留在 `03-classname-parts/`；字幕按实际语音结束，不铺满静默区间。仅重生成开发段可执行 `pnpm exec tsx scripts/generate-narration.ts all --scene classname`。
+
+TTS 使用 `edge-tts`：中文 `zh-CN-XiaoxiaoNeural`、英文 `en-US-AriaNeural`，语速均为 `+8%`，生成需要网络。先生成逐句旁白时间，再由 `assets` 汇总 SRT/VTT 与字幕数据；字体子集依据最终文字生成。预览、渲染和媒体验证读取本地素材。
 
 素材目录包括：
 
@@ -145,7 +147,9 @@ pnpm --filter @weapp-tailwindcss/lynx-promo-video verify
 
 正常测试设置 `CI=1`。Static 基线更新仅限宣传 Demo，更新与不更新验证命令见[示例说明](../../examples/react-lynx-promo/README.md)。这里的定向测试不代表完成全端环境验收；全面测试仍需本轮预检全部通过。
 
-本轮已记录的视频工程定向 Vitest 45 项、宣传 Demo Vitest 2 项，以及宣传 static / 原生参数定向回归 37 项通过。宣传 static 仅对 `e2e/lynx-promo.test.ts` 执行 `-u` 更新，再以 `--update=none` 重验，3 项通过；两端 production bundle、阶段摘要和原生画面核对按本轮清单保留。最终 `verify` 与完整回看结果另行登记。
+本轮视频工程定向 Vitest 63 项、宣传 Demo Vitest 2 项通过；录制滚动、host 上下文、Android 编码器就绪与参数定向回归 57 项通过。宣传 static 仅对 `e2e/lynx-promo.test.ts` 执行 `-u` 更新，再以 `--update=none` 重验，3 项通过；Demo 类型检查和 production 构建通过。最终 `verify` 包含 63 项测试、视频工程类型检查和全部媒体校验，结果通过；阶段摘要及原生画面按本轮清单保留。
+
+默认渲染配置位于 `remotion.config.ts`：软件 `swangle`、PNG 帧、单并发。桌面 Chrome 默认 GPU 在本轮曾产生孤立的整屏网格帧；保留失败版用于排查，切换后须对最终文件完整解码全部 2250 帧。`verify` 检测三帧邻域中的孤立突变，保存 `out/lynx-promo-{zh,en}-frame-qa.json`，发现候选立即失败并要求逐帧审查。该检查是闪帧筛查，不能代替布局与内容审看。
 
 Composition 为 `LynxPromoZh`、`LynxPromoEn`、`LynxPromoCoverZh`、`LynxPromoCoverEn`；旧 `LynxPromo` 和 `LynxPromoCover` 保留为中文别名。输出位于 `out/`：
 
@@ -158,6 +162,18 @@ lynx-promo-cover-en-1920x1080.png
 
 媒体验收检查来源与阶段摘要、素材存在、有效剪辑区间、双语逐句字幕、旁白不越界、双端素材长度及最终 H.264/yuv420p、1920×1080、30 FPS、75 秒和 AAC/48 kHz 音轨。自动检查通过后仍需审看两次修改前后关键帧，核对代码字号、终端结果、原生布局与滚动，并完整回看中英文成片。
 
-**最终验收待填写：双语 MP4、封面、SRT/VTT 的实际输出与媒体校验结果；两次修改前后关键帧审看及中英文完整回看结论。当前渲染进行中，尚不宣称成片交付验收完成。**
+本轮两版 MP4 均为 H.264/yuv420p、1920×1080、30 FPS、2250 帧，视频轨严格 75 秒；AAC 立体声 48 kHz 的封装时长为 75.050667 秒，包含编码补齐。每版全帧扫描均为 0 个孤立闪帧候选，独立网格检查也为 0。两次编辑、保存、构建成功和原生结果的关键帧，以及双端布局、滚动、兼容性来源、封面与 CTA 已审看；中英文最终文件已分别完整播放至结束。
+
+音频信号检查结果为中文 −16.8 LUFS / −2.8 dBFS true peak、英文 −18.1 LUFS / −3.0 dBFS true peak，无削波；逐句音频时间与字幕、操作起点已核对。`out/verification.json` 保存最终文件摘要、验证范围、全帧结果和完整播放时间。未执行全仓或全平台全面验收，也未在 Android 16 重跑历史 118 项兼容性用例；本轮没有失败、跳过或阻塞的定向验收项。
+
+## 交付打包
+
+最终验收记录的 `status` 为 `passed` 后执行：
+
+```bash
+pnpm --filter @weapp-tailwindcss/lynx-promo-video delivery
+```
+
+命令在 `out/delivery-*` 创建独占新目录，保留双语 MP4、封面、四份字幕、300.08 秒完整桌面原片、EDL、阶段源码与 bundle、双端原始证据、视频工程及复现说明。包内素材清单转换为可迁移相对路径，原清单另存；`SHA256SUMS` 覆盖所有交付文件。复现需要对应提交的完整仓库和 Node/pnpm 依赖，交付包不包含完整 monorepo 或 `node_modules`。失败 GPU 导出版、准备缓存与审看临时文件不进入交付包。
 
 视频只宣称 ReactLynx + Rspeedy + Tailwind CSS 4 的已验证集成能力，不宣称 Lynx 支持全部 Tailwind utility。中文 CTA 为 `/zh-cn/docs/quick-start/frameworks/lynx`，英文为 `/docs/quick-start/frameworks/lynx`。

@@ -96,7 +96,7 @@ describe('可迁移交付包', () => {
       await file(path.join(appRoot, name, 'asset.txt'))
     }
     await file(path.join(appRoot, 'src', 'assets', 'fonts', 'OFL-Noto-Sans-SC.txt'))
-    for (const name of ['package.json', 'tsconfig.json', 'vitest.config.ts', 'README.md']) {
+    for (const name of ['package.json', 'tsconfig.json', 'vitest.config.ts', 'remotion.config.ts', 'README.md']) {
       await file(path.join(appRoot, name))
     }
     for (const name of ['package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml']) {

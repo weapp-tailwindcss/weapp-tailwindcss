@@ -1,11 +1,13 @@
 ---
-status: partial
+status: verified
 issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss
 baseline: 89a1c7ddf5130baa94e01734ffb7888f2c492d14
 regressions:
   - apps/lynx-promo-video/src/capture-pipeline.test.ts
   - e2e/lynx-native-artifacts.test.ts
   - e2e/lynx-promo.test.ts
+  - apps/lynx-promo-video/src/narration-plan.test.ts
+  - apps/lynx-promo-video/src/frame-scan.test.ts
 ---
 
 # Lynx 宣传录制的输出目录归属与素材绑定
@@ -14,7 +16,7 @@ regressions:
 
 原宣传录制入口在调用原生 runner 前创建 `.capture/<platform>`，再把该现成目录传入 `--output`。runner 要求本轮目录不存在，并以不带 `recursive` 的 `mkdir` 独占创建；两个入口同时声称拥有目录创建权，触发 `EEXIST`，还没有进入有效原生录制。
 
-原入口先删除固定目录、FFmpeg 用 `-y` 覆盖公开素材，重试会丢失上一轮原片。只保留 `ios.mp4`、`android.mp4` 和封面，也无法核实视频对应哪次源码、哪份 bundle、哪个设备；旧截图和旧片段可能混入新成片。2026-10-18 已完成完整桌面实录、阶段归档和双端素材采集；双语 75 秒成片正在渲染，最终媒体检查与完整回看尚待完成，因此本记录保持 `partial`。
+原入口先删除固定目录、FFmpeg 用 `-y` 覆盖公开素材，重试会丢失上一轮原片。只保留 `ios.mp4`、`android.mp4` 和封面，也无法核实视频对应哪次源码、哪份 bundle、哪个设备；旧截图和旧片段可能混入新成片。2026-10-18 已完成完整桌面实录、阶段归档、双端采集与中英文 75 秒成片，并完成最终媒体检查、关键帧审看和两版完整播放。
 
 ## 根因与纠正
 
@@ -66,7 +68,7 @@ iOS fixture 驱动真实 `LynxScrollView` / `UIScrollView` 的内容偏移，并
 
 已有 `e2e/lynx-native-artifacts.test.ts` 继续约束原生证据目录的独占归属与失败附件。新增 `e2e/lynx-promo.test.ts` 重新构建宣传示例，保存完整 encoder CSS 基线，并解码真实 bundle 检查最终颜色、四角圆角及四边内边距。Static 回归只证明样式生成与编码，不证明原生视觉结果。
 
-本轮主任务已记录的视频工程定向 Vitest 45 项、宣传 Demo Vitest 2 项及宣传 static / 原生参数定向回归 37 项通过。宣传 Demo 的类型检查和 production 构建通过；仅对 `e2e/lynx-promo.test.ts` 执行 `-u` 更新基线，再以 `--update=none` 重验，3 项通过。早期示例拆分和 static 回归在独立工作树形成 `6778c62783b9c27b248bb5f42c0218f046797bb0` 与 `3e8c8c6c174136524e7ef905daa14483ede1b0c1`，后续已集成录制、媒体与布局回归；文首排查基线不包含这些修改。
+本轮主任务视频工程定向 Vitest 63 项、宣传 Demo Vitest 2 项，以及录制滚动、host 上下文、Android 编码器就绪与参数定向回归 57 项通过。宣传 Demo 的类型检查和 production 构建通过；仅对 `e2e/lynx-promo.test.ts` 执行 `-u` 更新基线，再以 `--update=none` 重验，3 项通过。早期示例拆分和 static 回归在独立工作树形成 `6778c62783b9c27b248bb5f42c0218f046797bb0` 与 `3e8c8c6c174136524e7ef905daa14483ede1b0c1`，后续已集成录制、媒体与布局回归；文首排查基线不包含这些修改。
 
 集成后复现入口：
 
@@ -80,7 +82,19 @@ pnpm --filter @weapp-tailwindcss/lynx-promo-video verify
 
 正常测试设置 `CI=1`。以上为本地定向验证，不代表已完成全端环境验收。`verify` 需要全部新素材存在，不以旧视频、旧报告或占位时间点代替。操作、归档和交付清单见[视频工程说明](../../../apps/lynx-promo-video/README.md)。
 
-**最终验收待填写：双语成片、封面和字幕的实际输出、完整媒体校验、修改前后关键帧审看及中英文完整回看结论。当前渲染进行中，尚不宣称成片交付验收完成。**
+最终 `verify` 通过视频工程 63 项测试、类型检查与全部来源、剪辑、字幕、音频、封面、双端素材和成片校验。中英文 MP4 均为 H.264/yuv420p、1920×1080、30 FPS、2250 帧、75 秒视频轨，AAC 48 kHz 封装时长 75.050667 秒。完整 EOF 解码分别为 2250 帧、0 个孤立突变候选；独立全帧网格检查均为 0。
+
+修改前后代码、保存、真实构建成功及原生结果已逐段审看；双端布局与滚动、兼容性日期和截图来源、封面和文档二维码已核对。两版最终文件在当前会话分别完整播放至结束，结束时间为 2026-10-18T13:34:26.411Z 与 13:35:41.690Z。音频信号为中文 −16.8 LUFS / −2.8 dBFS true peak、英文 −18.1 LUFS / −3.0 dBFS true peak；逐句时间和字幕对齐通过，不以信号分析代替主观听感结论。
+
+完整开发原片、阶段源码、原生证据、最终摘要与验收记录通过 `delivery` 打包，并附可迁移清单和 `SHA256SUMS`。本轮未执行全仓或全端全面验收，未重验 Android 16 的历史 118 项兼容性用例；定向验收无失败、跳过或阻塞项。
+
+## 音画时间与渲染闪帧复查
+
+首次逐句素材虽有真实 TTS 时间，但整段连续播报让英文第二次修改早于实际镜头，末句字幕也被延长到场景末尾。纠正为逐句生成并按操作起点放置，真实间隔保持静默；字幕采用实际结束时间。`src/narration-plan.test.ts` 和 `src/subtitles.test.ts` 覆盖间隔、重叠、越界及音频解码，完整逐句原片与计划进入交付包。
+
+另一次逐帧审查发现默认桌面 Chrome GPU 导出会在孤立帧重复左侧画面成网格：英文第 1605 帧（53.5 秒）及多处其他帧均可从头顺序解码复现。早期逐秒图审未覆盖这些帧，且曾把局部重复误判为联系图拼接问题；单独 PNG 与顺序解码证明它来自已导出视频。
+
+软件 `swangle`、PNG 帧、单并发对 1480–1620 帧局部重渲后，141 帧均无网格或孤立突变。相同配置持久化到 `remotion.config.ts`，并重渲双语全片；最终共 4500 帧重新检查通过。新增 `src/frame-scan.test.ts` 将完整 EOF 解码、准确 2250 帧、残帧和解码错误设为约束；三帧滚动缓冲检测大幅孤立突变，正常切场不作为闪帧。仅局部重渲成功或播放结束不能证明最终全部帧通过。
 
 ## 适用边界
 

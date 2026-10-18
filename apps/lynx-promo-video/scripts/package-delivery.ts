@@ -166,7 +166,7 @@ export async function packageDelivery(options: { appRoot?: string, repoRoot?: st
   for (const directory of ['src', 'scripts', path.join('public', 'audio'), path.join('public', 'brand')]) {
     await copyTree(path.join(appRoot, directory))
   }
-  for (const name of ['package.json', 'tsconfig.json', 'vitest.config.ts', 'README.md']) {
+  for (const name of ['package.json', 'tsconfig.json', 'vitest.config.ts', 'remotion.config.ts', 'README.md']) {
     await copyFile(path.join(appRoot, name))
   }
   for (const name of ['package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml']) {

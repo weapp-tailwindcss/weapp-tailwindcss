@@ -78,7 +78,7 @@ describe('complete frame scan', () => {
     expect(result.frameCount).toBe(2250)
     expect(result.suspiciousFrames.map(frame => frame.frame)).toEqual([2248])
     for (const count of [2249, 2251]) {
-      await expect(scanGrayFrames(grayFrames(Array.from({ length: count }).fill(20)), 2250, 30)).rejects.toThrow(`${count} 帧，必须准确为 2250 帧`)
+      await expect(scanGrayFrames(grayFrames(Array.from<number>({ length: count }).fill(20)), 2250, 30)).rejects.toThrow(`${count} 帧，必须准确为 2250 帧`)
     }
   })
 
