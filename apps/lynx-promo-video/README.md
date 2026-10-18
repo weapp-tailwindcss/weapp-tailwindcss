@@ -141,7 +141,7 @@ pnpm --filter @weapp-tailwindcss/lynx-promo-video verify
 
 沿用 `remotion.config.ts` 中的软件 `swangle`、PNG 帧和单并发配置。最终每版应为 H.264/yuv420p、1920×1080、30 FPS、2250 帧、75 秒，带 AAC/48 kHz 音轨。两版共 4500 帧完整解码与闪帧筛查后，仍需审看修改前后关键帧、双端布局和滚动、字幕旁白对齐，并分别完整回看；自动媒体检查不能代替这些视觉验收。
 
-`out/verification.json` 登记本轮实际文件摘要、命令、帧检查、关键帧及完整回看结果。这里的定向检查不代表全仓或全平台全面验收；全面测试仍需先通过本轮环境预检。不得将旧版成功报告绑定到新素材。
+`out/verification.json` 登记本轮实际文件摘要、命令、帧检查、关键帧及完整回看结果。交付打包还会强制核对 `captureManifest: { file, sha256 }`、`media.zh`/`media.en`、完整的 `coversAndSubtitles`（两张封面与四份字幕）、`developmentRaw`，以及 `provenance.finalSourceSha256` 和 `provenance.finalBundleSha256`。其中 `captureManifest.sha256` 必须等于当前 `public/captures/manifest.json` 的实际字节摘要，`media.*.file` 使用 `media/<文件名>`，原片可使用 `project/<路径>`；报告缺少这些身份字段，或成片、字幕、原片在报告生成后被替换，`delivery` 都会拒绝。这里的定向检查不代表全仓或全平台全面验收；全面测试仍需先通过本轮环境预检。不得将旧版成功报告绑定到新素材。
 
 最终验收记录为 `passed` 后打包：
 

@@ -16,11 +16,20 @@ interface Snapshot {
   files: Array<{ path: string, sha256: string }>
 }
 interface Bundle { path: string, sha256: string }
+interface VerificationDigest { file: string, sha256: string, bytes?: number }
+interface VerificationReport {
+  status?: string
+  captureManifest?: { file: string, sha256: string }
+  media?: Record<'zh' | 'en', VerificationDigest>
+  coversAndSubtitles?: VerificationDigest[]
+  developmentRaw?: { file: string, sha256: string }
+  provenance?: { finalSourceSha256?: string, finalBundleSha256?: string }
+}
 interface Manifest {
   version: number
   source: Snapshot
   platforms: Record<string, { rawVideo: string, video: string, cover: string, bundle: Bundle } & CaptureAssets>
-  development: { rawVideo: string, video: string, events: Array<{ source: Snapshot, bundle: Bundle } & CaptureAssets>, shots?: DevelopmentShot[] }
+  development: { rawVideo: string, video: string, events: Array<{ id: string, sourceSha256?: string, bundleSha256?: string, source: Snapshot, bundle: Bundle } & CaptureAssets>, shots?: DevelopmentShot[] }
   compatibility: { source: string, screenshot: string }
 }
 
@@ -50,12 +59,92 @@ async function digest(file: string) {
   return hash.digest('hex')
 }
 
+/** 报告中的路径是交付逻辑路径；先核对其形状，再映射到当前工作树的真实来源。 */
+function logicalPath(file: string) {
+  return file.replaceAll('\\', '/')
+}
+
+function requireLogicalReportPath(file: string, label: string) {
+  const value = logicalPath(file)
+  if (!value || value.startsWith('/') || /^[A-Za-z]:\//.test(value) || value.split('/').includes('..')) {
+    throw new Error(`${label} 必须是安全的相对交付路径。`)
+  }
+  return value
+}
+
+async function verifyVerificationIdentity(report: VerificationReport, manifestFile: string, manifest: Manifest, appRoot: string, output: string) {
+  if (!report.captureManifest?.file || !/^[a-f\d]{64}$/i.test(report.captureManifest.sha256)) {
+    throw new Error('验收报告缺少 captureManifest.file/sha256，拒绝复用旧版 passed 报告。')
+  }
+  const reportedManifestPath = requireLogicalReportPath(report.captureManifest.file, 'captureManifest.file')
+  if (!reportedManifestPath.endsWith('public/captures/manifest.json') && reportedManifestPath !== 'manifest.json') {
+    throw new Error('captureManifest.file 必须指向 public/captures/manifest.json。')
+  }
+  if (await digest(manifestFile) !== report.captureManifest.sha256) {
+    throw new Error('验收报告 captureManifest 摘要与当前录制清单不一致。')
+  }
+  if (!report.media?.zh || !report.media.en || !report.coversAndSubtitles || !report.developmentRaw) {
+    throw new Error('验收报告缺少中英文媒体、封面字幕或开发原片摘要。')
+  }
+  const expectedMedia = {
+    zh: 'lynx-promo-zh-1080p.mp4',
+    en: 'lynx-promo-en-1080p.mp4',
+  } as const
+  for (const locale of ['zh', 'en'] as const) {
+    const entry = report.media[locale]
+    const reported = requireLogicalReportPath(entry.file, `media.${locale}.file`)
+    if (reported !== `media/${expectedMedia[locale]}` && reported !== `out/${expectedMedia[locale]}` && reported !== expectedMedia[locale]) {
+      throw new Error(`media.${locale}.file 必须绑定 ${expectedMedia[locale]}。`)
+    }
+    const file = path.join(output, expectedMedia[locale])
+    if (await digest(file) !== entry.sha256) {
+      throw new Error(`media.${locale} 摘要与当前成片不一致：${file}`)
+    }
+  }
+  const expectedAuxiliary = [
+    ['lynx-promo-cover-1920x1080.png', path.join(output, 'lynx-promo-cover-1920x1080.png')],
+    ['lynx-promo-cover-en-1920x1080.png', path.join(output, 'lynx-promo-cover-en-1920x1080.png')],
+    ['lynx-promo-zh.srt', path.join(appRoot, 'lynx-promo-zh.srt')],
+    ['lynx-promo-zh.vtt', path.join(appRoot, 'lynx-promo-zh.vtt')],
+    ['lynx-promo-en.srt', path.join(appRoot, 'lynx-promo-en.srt')],
+    ['lynx-promo-en.vtt', path.join(appRoot, 'lynx-promo-en.vtt')],
+  ] as const
+  if (report.coversAndSubtitles.length !== expectedAuxiliary.length) {
+    throw new Error('coversAndSubtitles 必须完整记录两张封面和四份字幕。')
+  }
+  const seenAuxiliary = new Set<string>()
+  for (const entry of report.coversAndSubtitles) {
+    const reported = requireLogicalReportPath(entry.file, 'coversAndSubtitles.file')
+    const name = path.posix.basename(reported)
+    const match = expectedAuxiliary.find(([expected]) => expected === name)
+    if (!match || seenAuxiliary.has(name) || (reported !== `media/${name}` && reported !== `out/${name}` && reported !== name)) {
+      throw new Error(`coversAndSubtitles.file 不是本轮唯一交付媒体：${entry.file}`)
+    }
+    seenAuxiliary.add(name)
+    if (await digest(match[1]) !== entry.sha256) {
+      throw new Error(`coversAndSubtitles 摘要与当前文件不一致：${match[1]}`)
+    }
+  }
+  const rawReported = requireLogicalReportPath(report.developmentRaw.file, 'developmentRaw.file')
+  if (!rawReported.startsWith('project/') && !rawReported.startsWith('raw/')) {
+    throw new Error('developmentRaw.file 必须保留 project/ 或 raw/ 交付路径。')
+  }
+  const rawFile = path.resolve(path.dirname(manifestFile), manifest.development.rawVideo)
+  if (path.posix.basename(rawReported) !== path.basename(rawFile) || await digest(rawFile) !== report.developmentRaw.sha256) {
+    throw new Error('developmentRaw 摘要与当前完整桌面原片不一致。')
+  }
+  const finalEvent = manifest.development.events.find(event => event.id === 'color')
+  if (!finalEvent || report.provenance?.finalSourceSha256 !== manifest.source.sha256 || report.provenance.finalBundleSha256 !== (finalEvent.bundleSha256 ?? finalEvent.bundle.sha256)) {
+    throw new Error('验收报告 provenance 未绑定当前最终源码与 color bundle。')
+  }
+}
+
 export async function packageDelivery(options: { appRoot?: string, repoRoot?: string, manifestFile?: string } = {}) {
   const appRoot = path.resolve(options.appRoot ?? defaultAppRoot)
   const repoRoot = path.resolve(options.repoRoot ?? defaultRepoRoot)
   const output = path.join(appRoot, 'out')
   const verificationFile = path.join(output, 'verification.json')
-  const verification = JSON.parse(await fs.readFile(verificationFile, 'utf8')) as { status?: string }
+  const verification = JSON.parse(await fs.readFile(verificationFile, 'utf8')) as VerificationReport
   if (verification.status !== 'passed') {
     throw new Error('交付打包要求 out/verification.json 的 status 为 passed。')
   }
@@ -65,6 +154,7 @@ export async function packageDelivery(options: { appRoot?: string, repoRoot?: st
   if (manifest.version !== 1 || !manifest.source || !manifest.platforms?.ios || !manifest.platforms.android || !manifest.development || !manifest.compatibility) {
     throw new Error('交付打包要求完整的本轮双端、开发和兼容性素材清单。')
   }
+  await verifyVerificationIdentity(verification, manifestFile, manifest, appRoot, output)
   const resolveInput = (file: string) => path.resolve(path.dirname(manifestFile), file)
   await fs.mkdir(output, { recursive: true })
   const delivery = await fs.mkdtemp(path.join(output, 'delivery-'))
@@ -226,7 +316,11 @@ export async function packageDelivery(options: { appRoot?: string, repoRoot?: st
   await copyFile(verificationFile, path.join(delivery, 'verification.json'))
   await fs.mkdir(path.dirname(packagedManifest), { recursive: true })
   await fs.writeFile(packagedManifest, `${JSON.stringify(manifest, null, 2)}\n`, { flag: 'wx' })
-  await fs.writeFile(path.join(delivery, 'provenance-original-manifest.json'), original, { flag: 'wx' })
+  const provenanceManifest = path.join(delivery, 'provenance-original-manifest.json')
+  await fs.writeFile(provenanceManifest, original, { flag: 'wx' })
+  if (await digest(provenanceManifest) !== verification.captureManifest!.sha256) {
+    throw new Error('交付包 provenance-original-manifest.json 与验收报告 captureManifest 不一致。')
+  }
   let revision = '未取得 Git 提交；请使用原仓库与包内锁文件核对。'
   try {
     revision = execFileSync('git', ['rev-parse', 'HEAD'], {

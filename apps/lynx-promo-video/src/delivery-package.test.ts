@@ -85,7 +85,9 @@ describe('可迁移交付包', () => {
     const events = []
     for (const stage of ['initial', 'spacing', 'color']) {
       const root = path.join(development, 'stages', stage)
-      events.push({ id: stage, source: await snapshot(root), bundle: await bundle(root), ...await assets(root) })
+      const stageSource = await snapshot(root)
+      const stageBundle = await bundle(root)
+      events.push({ id: stage, sourceSha256: stageSource.sha256, bundleSha256: stageBundle.sha256, source: stageSource, bundle: stageBundle, ...await assets(root) })
       await file(path.join(development, `${stage}-native`, 'screen.png'))
     }
     for (const excluded of ['edit', 'review', '.tmp-build']) {
@@ -132,7 +134,27 @@ describe('可迁移交付包', () => {
         await file(path.join(appRoot, `lynx-promo-${locale}.${extension}`))
       }
     }
-    await file(path.join(appRoot, 'out', 'verification.json'), '{"status":"passed"}')
+    const mediaFile = async (name: string) => hash(await fs.readFile(path.join(appRoot, 'out', name)))
+    const subtitleFile = async (name: string) => hash(await fs.readFile(path.join(appRoot, name)))
+    const verificationContent = JSON.stringify({
+      status: 'passed',
+      captureManifest: { file: 'public/captures/manifest.json', sha256: hash(await fs.readFile(manifestFile)) },
+      media: {
+        zh: { file: 'media/lynx-promo-zh-1080p.mp4', sha256: await mediaFile('lynx-promo-zh-1080p.mp4') },
+        en: { file: 'media/lynx-promo-en-1080p.mp4', sha256: await mediaFile('lynx-promo-en-1080p.mp4') },
+      },
+      coversAndSubtitles: [
+        ['lynx-promo-cover-1920x1080.png', await mediaFile('lynx-promo-cover-1920x1080.png')],
+        ['lynx-promo-cover-en-1920x1080.png', await mediaFile('lynx-promo-cover-en-1920x1080.png')],
+        ['lynx-promo-zh.srt', await subtitleFile('lynx-promo-zh.srt')],
+        ['lynx-promo-zh.vtt', await subtitleFile('lynx-promo-zh.vtt')],
+        ['lynx-promo-en.srt', await subtitleFile('lynx-promo-en.srt')],
+        ['lynx-promo-en.vtt', await subtitleFile('lynx-promo-en.vtt')],
+      ].map(([name, sha256]) => ({ file: `media/${name}`, sha256 })),
+      developmentRaw: { file: 'project/apps/lynx-promo-video/.capture/development/development-raw.mov', sha256: hash(await fs.readFile(path.join(development, 'development-raw.mov'))) },
+      provenance: { finalSourceSha256: source.sha256, finalBundleSha256: events[2].bundleSha256 },
+    })
+    await file(path.join(appRoot, 'out', 'verification.json'), verificationContent)
     const result = await packageDelivery({ appRoot, repoRoot })
     const relocated = JSON.parse(await fs.readFile(result.manifest, 'utf8'))
     const resolve = (input: string) => path.resolve(path.dirname(result.manifest), input)
@@ -177,6 +199,12 @@ describe('可迁移交付包', () => {
       const [expected, name] = line.split('  ')
       expect(hash(await fs.readFile(path.resolve(result.directory, name)))).toBe(expected)
     }
+    await fs.writeFile(path.join(appRoot, 'out', 'verification.json'), '{"status":"passed"}')
+    await expect(packageDelivery({ appRoot, repoRoot })).rejects.toThrow('缺少 captureManifest')
+    await fs.writeFile(path.join(appRoot, 'out', 'verification.json'), verificationContent)
+    await fs.writeFile(path.join(appRoot, 'out', 'lynx-promo-zh-1080p.mp4'), 'replaced final video')
+    await expect(packageDelivery({ appRoot, repoRoot })).rejects.toThrow('media.zh 摘要')
+    await fs.writeFile(path.join(appRoot, 'out', 'lynx-promo-zh-1080p.mp4'), 'fixture')
     const originalAssets = manifest.development.events[0].assets
     await fs.writeFile(path.resolve(captureRoot, originalAssets[0].path), 'tampered image fixture')
     await expect(packageDelivery({ appRoot, repoRoot })).rejects.toThrow('镜头素材摘要不匹配')
