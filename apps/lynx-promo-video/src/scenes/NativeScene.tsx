@@ -13,7 +13,7 @@ export function NativeScene({ copy }: { copy: PromoCopy['native'] }) {
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
         <div>
           <div style={{ color: COLORS.green, fontFamily: 'JetBrains Mono Variable, monospace', fontSize: 22, fontWeight: 650 }}>{copy.eyebrow}</div>
-          <h2 style={{ margin: '18px 0 0', fontSize: 64, lineHeight: 1.12, fontWeight: 720, letterSpacing: 0 }}>
+          <h2 style={{ margin: '18px 0 0', maxWidth: 490, fontSize: 64, lineHeight: 1.12, fontWeight: 720, letterSpacing: 0 }}>
             {copy.title[0]}
             <br />
             {copy.title[1]}
