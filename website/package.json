@@ -112,6 +112,7 @@
     "sass-loader": "^17.0.1",
     "tailwindcss": "catalog:tailwindcss4",
     "theme-transition": "workspace:*",
+    "tsx": "catalog:tsx",
     "typedoc": "^0.28.20",
     "typedoc-plugin-markdown": "4.13.0",
     "webpack": "5.105.4",

@@ -6016,6 +6016,9 @@ importers:
       theme-transition:
         specifier: workspace:*
         version: link:../packages-runtime/theme-transition
+      tsx:
+        specifier: catalog:tsx
+        version: 4.23.15
       typedoc:
         specifier: ^0.28.20
         version: 0.28.20(typescript@6.0.3)
