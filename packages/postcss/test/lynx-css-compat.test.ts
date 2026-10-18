@@ -91,6 +91,23 @@ describe('Lynx CSS compatibility transform', () => {
     expect(result).not.toContain('var(--color-sky-500)')
   })
 
+  it.each([
+    ['--color-brand: #f00;', '--color-brand'],
+    ['--brand-color: #f00;', '--brand-color'],
+    ['--brand-color: oklch(63% .2 40);', '--brand-color'],
+  ])('preserves a visible color override through the web-to-Lynx pipeline (%s)', (rootDeclaration, property) => {
+    const css = [
+      `:root { ${rootDeclaration} }`,
+      `.theme-dark { ${property}: #00f; }`,
+      `.bg-brand { background-color: var(${property}); }`,
+    ].join('\n')
+
+    const result = transformLynxCssCompat(transformWebCssCompat(css, true))
+
+    expect(result).toContain(`.bg-brand { background-color: var(${property}); }`)
+    expect(result).toContain(`.theme-dark { ${property}: #00f; }`)
+  })
+
   it('keeps registered Tailwind defaults on selectors accepted by the native encoder without theme variables', () => {
     const webCss = transformWebCssCompat([
       '@property --tw-border-style { syntax: "*"; inherits: false; initial-value: solid; }',

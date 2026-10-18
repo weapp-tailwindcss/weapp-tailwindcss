@@ -115,6 +115,52 @@ describe('web css compatibility transform', () => {
     expect(result).not.toContain('oklch(')
   })
 
+  it.each([
+    ['Tailwind color', ':root { --color-brand: #f00; }'],
+    ['application hex', ':root { --brand-color: #f00; }'],
+    ['application modern color', ':root { --brand-color: oklch(63% .2 40); }'],
+  ])('keeps %s use-site variables when a visible theme override exists', (_name, rootDeclaration) => {
+    const property = rootDeclaration.includes('--color-brand') ? '--color-brand' : '--brand-color'
+    const result = transformWebCssCompat([
+      rootDeclaration,
+      `.theme-dark { ${property}: #00f; }`,
+      `.bg-brand { background-color: var(${property}); }`,
+    ].join('\n'), true)
+
+    expect(result).toContain(`.bg-brand { background-color: var(${property}); }`)
+    expect(result).toContain(`.theme-dark { ${property}: #00f; }`)
+    expect(result).not.toContain('.bg-brand { background-color: #f00; }')
+    expect(result).not.toContain('oklch(')
+  })
+
+  it.each([
+    ['a mixed root selector', ':root, .theme-dark { --color-brand: #00f; }'],
+    ['a conditional root rule', '@media (prefers-color-scheme: dark) { :root { --color-brand: #00f; } }'],
+    ['an important root declaration', ':root { --color-brand: #00f !important; }'],
+    ['a repeated root declaration', ':root { --color-brand: #f00; } :root { --color-brand: #00f; }'],
+  ])('preserves var() with %s', (_name, override) => {
+    const result = transformWebCssCompat([
+      ':root { --color-brand: #f00; }',
+      override,
+      '.bg-brand { background-color: var(--color-brand); }',
+    ].join('\n'), true)
+
+    expect(result).toContain('.bg-brand { background-color: var(--color-brand); }')
+  })
+
+  it('only inlines aliases whose complete root dependency chain is stable', () => {
+    const result = transformWebCssCompat([
+      ':root { --color-base: #f00; --color-alias: var(--color-base, #0f0); --color-dynamic: var(--runtime-brand, #0f0); }',
+      '.theme-dark { --runtime-brand: #00f; }',
+      '.stable { background-color: var(--color-alias); }',
+      '.dynamic { background-color: var(--color-dynamic); }',
+    ].join('\n'), true)
+
+    expect(result).toContain('.stable { background-color: #f00; }')
+    expect(result).toContain('.dynamic { background-color: var(--color-dynamic); }')
+    expect(result).toContain('--color-dynamic: var(--runtime-brand, #0f0)')
+  })
+
   it('maps WebView utility selectors to safe class names without changing declarations', () => {
     const css = [
       '.rounded-\\[20rpx\\] { border-radius: 0.625rem; }',

@@ -1,3 +1,4 @@
+import type { Node } from 'postcss-value-parser'
 import type { WebCssCompatFeatures, WebCssCompatOptions, WebCssCompatUserOptions } from '../types'
 import postcss from 'postcss'
 import postcssPresetEnv from 'postcss-preset-env'
@@ -62,20 +63,70 @@ function isWebCssCompatEnabled(options: NormalizedWebCssCompatOptions) {
   return Object.values(options.features).some(Boolean)
 }
 
-function collectCustomPropertyValues(root: postcss.Root) {
-  const values = new Map<string, string>()
-  root.walkRules((rule) => {
-    if (!rule.selectors.some(selector => selector.trim() === ':root' || selector.trim() === ':host')) {
+const cssWideKeywords = new Set(['initial', 'inherit', 'unset', 'revert', 'revert-layer'])
+
+interface CustomPropertyValues {
+  values: Map<string, string>
+}
+
+function isRootScopeSelector(selector: string) {
+  return postcss.list.comma(selector).every((part) => {
+    const normalized = part.trim()
+    return normalized === ':root' || normalized === ':host'
+  })
+}
+
+/**
+ * 收集可以安全在 use-site 静态化的作者变量。
+ *
+ * 只有顶层纯 `:root`/`:host` 规则中的单一值才具备全局稳定性。局部、条件、
+ * 混合 selector、`!important` 以及重复冲突声明都必须保留原生变量级联，避免
+ * 在颜色兼容阶段提前删除运行时主题覆盖。
+ */
+function collectCustomPropertyValues(root: postcss.Root): CustomPropertyValues {
+  const candidates = new Map<string, string>()
+  const dynamic = new Set<string>()
+
+  root.walkDecls((decl) => {
+    if (!decl.prop.startsWith('--') || decl.prop.startsWith('--tw-')) {
       return
     }
-    rule.each((node) => {
-      if (node.type === 'decl' && node.prop.startsWith('--') && !node.prop.startsWith('--tw-')) {
-        const decl = node
-        values.set(decl.prop, decl.value.trim())
-      }
-    })
+
+    const rule = decl.parent?.type === 'rule' ? decl.parent : undefined
+    const value = decl.value.trim()
+    const isStableDeclaration = !!rule
+      && rule.parent === root
+      && isRootScopeSelector(rule.selector)
+      && !decl.important
+      && !cssWideKeywords.has(value.toLowerCase())
+
+    if (!isStableDeclaration) {
+      dynamic.add(decl.prop)
+      return
+    }
+
+    const previous = candidates.get(decl.prop)
+    if (previous && previous !== value) {
+      dynamic.add(decl.prop)
+      return
+    }
+    candidates.set(decl.prop, value)
   })
-  return values
+
+  for (const property of dynamic) {
+    candidates.delete(property)
+  }
+
+  // 别名只有在其完整依赖链也静态可解析时才可参与 use-site 替换。
+  const values = new Map<string, string>()
+  for (const property of candidates.keys()) {
+    const value = resolveStaticCustomPropertyValue(property, candidates)
+    if (value !== undefined) {
+      values.set(property, value)
+    }
+  }
+
+  return { values }
 }
 
 interface RegisteredCustomProperty {
@@ -177,6 +228,49 @@ function unwrapThemeAtRules(root: postcss.Root) {
   })
 }
 
+function getCustomPropertyReference(node: Node) {
+  if (node.type !== 'function' || node.value.toLowerCase() !== 'var') {
+    return undefined
+  }
+  return node.nodes.find(child => child.type === 'word' && child.value.startsWith('--'))?.value
+}
+
+function replaceValueParserNode(node: Node, value: string) {
+  const mutableNode = node as Node & { nodes?: Node[] }
+  mutableNode.type = 'word'
+  mutableNode.value = value
+  delete mutableNode.nodes
+}
+
+function resolveStaticCustomPropertyValue(
+  property: string,
+  customPropertyValues: ReadonlyMap<string, string>,
+  resolving: ReadonlySet<string> = new Set(),
+): string | undefined {
+  const value = customPropertyValues.get(property)
+  if (value === undefined || resolving.has(property)) {
+    return undefined
+  }
+
+  const nextResolving = new Set(resolving)
+  nextResolving.add(property)
+  const parsed = valueParser(value)
+  let unresolved = false
+  parsed.walk((node) => {
+    const referencedProperty = getCustomPropertyReference(node)
+    if (!referencedProperty) {
+      return
+    }
+    const referencedValue = resolveStaticCustomPropertyValue(referencedProperty, customPropertyValues, nextResolving)
+    if (referencedValue === undefined) {
+      unresolved = true
+      return
+    }
+    replaceValueParserNode(node, referencedValue)
+  })
+  return unresolved ? undefined : parsed.toString()
+}
+
 function resolveCustomPropertyVarValue(
   value: string,
   customPropertyValues: ReadonlyMap<string, string>,
@@ -188,21 +282,15 @@ function resolveCustomPropertyVarValue(
   const parsed = valueParser(value)
   let changed = false
   parsed.walk((node) => {
-    if (node.type !== 'function' || node.value.toLowerCase() !== 'var') {
+    const property = getCustomPropertyReference(node)
+    if (!property) {
       return
     }
-    const propertyNode = node.nodes.find(child => child.type === 'word' && child.value.startsWith('--'))
-    if (!propertyNode) {
+    const customPropertyValue = customPropertyValues.get(property)
+    if (customPropertyValue === undefined) {
       return
     }
-    const customPropertyValue = customPropertyValues.get(propertyNode.value)
-    if (!customPropertyValue) {
-      return
-    }
-    const mutableNode = node as any
-    mutableNode.type = 'word'
-    mutableNode.value = customPropertyValue
-    delete mutableNode.nodes
+    replaceValueParserNode(node, customPropertyValue)
     changed = true
   })
   return changed ? parsed.toString() : value
@@ -222,8 +310,8 @@ function usesResolvableTailwindColorVariable(
     if (node.type !== 'function' || node.value.toLowerCase() !== 'var') {
       return
     }
-    const propertyNode = node.nodes.find(child => child.type === 'word' && child.value.startsWith('--color-'))
-    if (propertyNode && customPropertyValues.has(propertyNode.value)) {
+    const property = getCustomPropertyReference(node)
+    if (property?.startsWith('--color-') && customPropertyValues.has(property)) {
       usesColorVariable = true
     }
   })
@@ -234,7 +322,7 @@ function normalizeModernColorDeclarations(root: postcss.Root, features: Required
   if (!features.oklch && !features.colorFunctions) {
     return
   }
-  const customPropertyValues = collectCustomPropertyValues(root)
+  const customPropertyValues = collectCustomPropertyValues(root).values
   root.walkDecls((decl) => {
     const value = resolveCustomPropertyVarValue(decl.value, customPropertyValues)
     const normalized = normalizeModernColorValue(value, customPropertyValues)
