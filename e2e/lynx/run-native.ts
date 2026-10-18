@@ -10,6 +10,7 @@ import { recordAndroidVideo } from './android-recording'
 import { buildCompatibilityBundle } from './build'
 import { stageCaptureHostContext } from './capture-host-context'
 import { stageCaptureAssets } from './capture-assets'
+import { validateAndroidCaptureImages } from './capture-image-evidence'
 import { exampleDir, lynxIntermediateDir, repoRoot } from './catalog'
 import { collectNativeEvidence, createEvidenceContext, validateNativeEvidence } from './evidence'
 import { readPreparedIosBuildTarget } from './ios-build-target'
@@ -44,7 +45,9 @@ async function collectAndroidArtifacts(source: string, artifactDir: string, devi
 }
 
 async function collectAndroidLogcat(artifactDir: string, device: AndroidDevice) {
-  const result = await execa('adb', adbArgs(device, ['logcat', '-d', '-t', '2500']), { all: true, encoding: 'utf8', reject: false })
+  const pid = await execa('adb', adbArgs(device, ['shell', 'pidof', applicationId]), { reject: false })
+  const currentPid = /^\d+$/.test(pid.stdout.trim()) ? pid.stdout.trim() : undefined
+  const result = await execa('adb', adbArgs(device, ['logcat', '-d', '-t', '2500', ...(currentPid ? ['--pid', currentPid] : [])]), { all: true, encoding: 'utf8', reject: false })
   await fs.writeFile(path.join(artifactDir, 'logcat.txt'), result.all ?? result.stdout ?? result.stderr ?? '')
 }
 
@@ -177,6 +180,10 @@ async function main() {
       : await runIos(hostDir, artifactDir, target, context, options, setStage)
     const { device, result: reportSource } = execution
     if (options.captureOnly) {
+      if (platform === 'android' && assets) {
+        const images = validateAndroidCaptureImages(await fs.readFile(path.join(artifactDir, 'logcat.txt'), 'utf8'), assets)
+        await fs.writeFile(path.join(artifactDir, 'capture-images.json'), `${JSON.stringify({ ...images, runId: context.runId, bundleSha256: context.bundleSha256 }, null, 2)}\n`, { flag: 'wx' })
+      }
       process.stdout.write(`${JSON.stringify({ platform, artifactDir, captureDurationSeconds: options.captureDurationSeconds }, null, 2)}\n`)
       return
     }

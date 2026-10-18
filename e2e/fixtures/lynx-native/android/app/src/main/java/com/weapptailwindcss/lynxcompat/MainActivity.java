@@ -13,6 +13,10 @@ import com.lynx.tasm.LynxView;
 import com.lynx.tasm.LynxViewBuilder;
 import com.lynx.tasm.LynxColorScheme;
 import com.lynx.tasm.ThreadStrategyForRendering;
+import com.lynx.tasm.behavior.Behavior;
+import com.lynx.tasm.behavior.LynxContext;
+import com.lynx.tasm.behavior.ui.LynxUI;
+import com.lynx.tasm.behavior.ui.image.UIImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.File;
@@ -47,6 +51,22 @@ public final class MainActivity extends Activity {
         .setColorScheme(LynxColorScheme.LIGHT);
       if (captureAssets) {
         builder.setImageFetcher(new CaptureImageFetcher());
+        builder.addBehavior(new Behavior("image", false) {
+          @Override
+          public LynxUI createUI(LynxContext context) {
+            return new UIImage(context);
+          }
+
+          @Override
+          public LynxUI createUIFiber(LynxContext context) {
+            return new UIImage(context);
+          }
+
+          @Override
+          public LynxUI createUIWithParams(LynxContext context, Object params) {
+            return new UIImage(context, params);
+          }
+        });
       }
       builder.registerModule("CompatibilityReporter", CompatibilityReporterModule.class, binding);
       lynxView = builder.build(this);

@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import com.lynx.tasm.image.ImageContent;
 import com.lynx.tasm.image.model.AnimationListener;
 import com.lynx.tasm.image.model.ImageInfo;
@@ -15,6 +16,7 @@ import com.lynx.tasm.image.model.LynxImageFetcher;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import org.json.JSONObject;
 
 /** 宣传录制只解码随本轮 bundle 归档的本地位图。 */
 public final class CaptureImageFetcher implements LynxImageFetcher {
@@ -41,8 +43,14 @@ public final class CaptureImageFetcher implements LynxImageFetcher {
           Bitmap bitmap = BitmapFactory.decodeStream(input);
           if (bitmap == null) throw new IOException("Unable to decode capture image");
           listener.onSuccess(new ImageContent(bitmap), request, new ImageInfo(bitmap.getWidth(), bitmap.getHeight(), false));
+          JSONObject receipt = new JSONObject();
+          receipt.put("name", String.join("/", parts));
+          receipt.put("width", bitmap.getWidth());
+          receipt.put("height", bitmap.getHeight());
+          Log.i("LynxCaptureImage", "LYNX_CAPTURE_IMAGE " + receipt.toString());
         }
       } catch (Exception error) {
+        Log.e("LynxCaptureImage", "Local capture image failed", error);
         listener.onFailure(1, error);
       }
     });
