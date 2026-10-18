@@ -19,10 +19,10 @@ export function developmentFixture() {
     const isNative = view === 'before' || view === 'result'
     return {
       kind: 'video', id, sceneId: round ? 'classname' : 'config', round, view, stage, eventId: stage,
-      media: { ...(isNative ? native : desktop) }, crop: isNative ? { ...crop } : { x: 0, y: 0, width: 1200, height: 1200 },
-      outputWidth: isNative ? 900 : 1200, cardRect: isNative ? { ...cardRect } : undefined,
-      sourceCodeFontSize: isNative ? undefined : 36, startSeconds, endSeconds, displayFrames: (endSeconds - startSeconds) * 30,
-      preview: view === 'editor' ? structuredClone(images[round === 1 ? 'initial' : 'spacing']) : undefined,
+      media: { ...(isNative ? native : desktop) }, crop: isNative ? { ...crop } : { x: 0, y: 0, width: 1600, height: 800 },
+      outputWidth: isNative ? 900 : 1100, cardRect: isNative ? { ...cardRect } : undefined,
+      sourceCodeFontSize: isNative ? undefined : 48, startSeconds, endSeconds, displayFrames: (endSeconds - startSeconds) * 30,
+      preview: view === 'editor' ? { ...structuredClone(images[round === 1 ? 'initial' : 'spacing']), outputWidth: 500 } : undefined,
     }
   }
   const shots: DevelopmentShot[] = [video('config', 'config', 'initial', 0, 8)]

@@ -3,6 +3,28 @@ import type { FileDigest } from './manifest'
 export type DevelopmentStage = 'initial' | 'spacing' | 'color'
 export type DevelopmentView = 'config' | 'before' | 'editor' | 'terminal' | 'result'
 
+export const DEVELOPMENT_LAYOUT = {
+  width: 1780,
+  height: 780,
+  border: 1,
+  videoPaddingX: 36,
+  videoPaddingY: 24,
+  videoGap: 28,
+  headerHeight: 32,
+  headerGap: 22,
+  previewHeadingHeight: 28,
+  previewHeadingGap: 16,
+  nativeCaptionHeight: 42,
+  nativeCaptionGap: 30,
+  comparisonPaddingX: 50,
+  comparisonPaddingY: 30,
+  comparisonGap: 32,
+  comparisonHeadingHeight: 36,
+  comparisonHeadingGap: 22,
+  comparisonCaptionHeight: 42,
+  comparisonCaptionGap: 42,
+} as const
+
 export interface CaptureRect {
   x: number
   y: number

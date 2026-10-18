@@ -1,4 +1,5 @@
 import type { CaptureRect, DevelopmentEvent, DevelopmentScreenshot, DevelopmentShot, DevelopmentVideoShot } from '../capture/manifest'
+import { verifyDevelopmentShotLayout } from './development-layout'
 
 interface Scene { id: string, duration: number }
 
@@ -47,7 +48,7 @@ function verifyScreenshot(screenshot: DevelopmentScreenshot, events: Development
   const nativeShot = shots.find(shot => shot.kind === 'video' && ['before', 'result'].includes(shot.view)
     && shot.stage === screenshot.stage && shot.media.path === source.path && shot.media.sha256 === source.sha256
     && shot.media.width === source.width && shot.media.height === source.height && shot.media.durationSeconds === source.durationSeconds
-    && screenshot.sourceSeconds >= shot.startSeconds && screenshot.sourceSeconds <= shot.endSeconds)
+    && screenshot.sourceSeconds >= shot.startSeconds && screenshot.sourceSeconds < shot.endSeconds)
   if (!nativeShot) {
     throw new Error(`${screenshot.stage} 截图未绑定实际展示的原生录像及来源时间。`)
   }
@@ -82,6 +83,7 @@ export function verifyDevelopmentShots(events: DevelopmentEvent[], shots: Develo
       if (shot.before.media.path === shot.after.media.path || shot.before.media.sha256 === shot.after.media.sha256) {
         throw new Error('前后对比必须绑定不同阶段的真实截图。')
       }
+      verifyDevelopmentShotLayout(shot)
       continue
     }
     requireEvent(events, shot.stage, shot.eventId)
@@ -98,10 +100,10 @@ export function verifyDevelopmentShots(events: DevelopmentEvent[], shots: Develo
       throw new Error(`${shot.id} 同一视频素材的摘要或尺寸不一致。`)
     }
     mediaIdentity.set(shot.media.path, identity)
-    if (shot.startSeconds < (previousEnd.get(shot.media.path) ?? 0) - 0.001) {
+    if (shot.startSeconds < (previousEnd.get(shot.media.sha256) ?? 0) - 0.001) {
       throw new Error(`${shot.id} 视频片段重复或逆序。`)
     }
-    previousEnd.set(shot.media.path, shot.endSeconds)
+    previousEnd.set(shot.media.sha256, shot.endSeconds)
     if (shot.view === 'editor' || shot.view === 'config') {
       if (!shot.sourceCodeFontSize || shot.sourceCodeFontSize * shot.outputWidth / shot.crop.width < 32) {
         throw new Error(`${shot.id} 关键代码展示字号至少需要 32px。`)
@@ -113,6 +115,7 @@ export function verifyDevelopmentShots(events: DevelopmentEvent[], shots: Develo
     if (shot.preview) {
       verifyScreenshot(shot.preview, events, shots)
     }
+    verifyDevelopmentShotLayout(shot)
     if (['before', 'result'].includes(shot.view)) {
       if (anchor && (!sameRect(anchor.crop, shot.crop) || anchor.outputWidth !== shot.outputWidth)) {
         throw new Error('原生修改前后镜头必须使用相同裁切位置、比例和顶部锚点。')

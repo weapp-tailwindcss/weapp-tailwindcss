@@ -87,6 +87,46 @@ describe('原生更新分镜验收', () => {
     expect(() => verify(fixture)).toThrow(failure === 'stage' ? '摘要' : failure === 'scale' ? '顶部锚点' : failure === 'width' ? '660px' : '来源时间')
   })
 
+  it('截图来源时间不能落在视频剪辑排除的结束边界', () => {
+    const fixture = developmentFixture()
+    const comparison = fixture.shots.find(shot => shot.id === '1-comparison')! as DevelopmentComparisonShot
+    comparison.after.sourceSeconds = 6
+    expect(() => verify(fixture)).toThrow('来源时间')
+  })
+
+  it('不能复制同一视频并改名来绕过禁止重复播放的限制', () => {
+    const fixture = developmentFixture()
+    const shot = fixture.shots.find(shot => shot.id === '1-success')! as DevelopmentVideoShot
+    shot.media.path = 'same-recording-copy.mp4'
+    shot.startSeconds = 14
+    shot.endSeconds = 15
+    expect(() => verify(fixture)).toThrow('逆序')
+  })
+
+  it.each(['editor-width', 'native-height', 'comparison-width', 'comparison-height', 'preview-height'])('拒绝单个面板合格但最终画布溢出的取景：%s', (failure) => {
+    const fixture = developmentFixture()
+    const editor = fixture.shots.find(shot => shot.id === '1-editor')! as DevelopmentVideoShot
+    const result = fixture.shots.find(shot => shot.id === '1-result')! as DevelopmentVideoShot
+    const comparison = fixture.shots.find(shot => shot.id === '1-comparison')! as DevelopmentComparisonShot
+    if (failure === 'editor-width') {
+      editor.outputWidth = 1200
+      editor.preview!.outputWidth = 780
+    }
+    if (failure === 'native-height') {
+      result.crop.height = 650
+    }
+    if (failure === 'comparison-width') {
+      comparison.before.outputWidth = comparison.after.outputWidth = 900
+    }
+    if (failure === 'comparison-height') {
+      comparison.before.crop.height = comparison.after.crop.height = 700
+    }
+    if (failure === 'preview-height') {
+      editor.preview!.crop.height = 1300
+    }
+    expect(() => verify(fixture)).toThrow('展示画布预算')
+  })
+
   it('要求初始、间距和颜色三个源码阶段且禁止轮次倒放', () => {
     const fixture = developmentFixture()
     fixture.events.shift()
