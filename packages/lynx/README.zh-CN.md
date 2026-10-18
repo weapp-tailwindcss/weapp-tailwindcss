@@ -10,6 +10,12 @@ ReactLynx + Rspeedy 的 Tailwind CSS v4 集成。它通过 Rspeedy 的 Rspack �
 pnpm add @weapp-tailwindcss/lynx tailwindcss
 ```
 
+## 版本与运行要求
+
+当前适配器版本为 `0.4.4`，适配器自身要求 Node.js `>=22.12.0`，peer 依赖为 Rspeedy `>=0.16.0` 与 Tailwind CSS `>=4.0.0`。适配器依赖的 `weapp-tailwindcss` 当前为 `5.6.3`，其依赖链要求 Node.js `^22.18.0 || >=24.11.0`；使用核心依赖时应按较高要求准备 Node.js。
+
+仓库示例固定 `@lynx-js/rspeedy` `0.17.2`、`@lynx-js/react-rsbuild-plugin` `0.20.2`、`@lynx-js/react` `0.126.1`、Tailwind CSS `4.3.3`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 和 `@lynx-js/css-defines` `0.0.16`。这些是本仓库回归矩阵的版本，不会替代消费项目自己的兼容性验证。
+
 ## 配置
 
 ```ts
@@ -34,13 +40,31 @@ export default defineConfig({
 @source "./**/*.{ts,tsx}";
 ```
 
-`pluginLynxTailwindcss` 固定使用 `platform: 'lynx'`、`generator.target: 'web'` 与 Lynx 原生兼容输出。Tailwind v4 theme 变量会在构建期静态化，确保 `bg-sky-500`、`p-6`、`text-lg` 等标准 utility 能进入 Lynx 原生样式表；应用自行定义的动态 CSS 变量保持不变。
+`pluginLynxTailwindcss` 固定使用 `platform: 'lynx'`、`generator.target: 'web'` 与 Lynx 原生兼容输出。稳定的 Tailwind theme token 可能在构建期静态化，确保 `bg-sky-500`、`p-6`、`text-lg` 等标准 utility 能进入 Lynx 原生样式表；同一 CSS 中可见的应用变量覆盖会保留 `var()` 依赖。跨文件 stylesheet 或 inline style 的覆盖关系不在该静态分析保证范围内。
 
 递归变量路径要求 Lynx runtime 3.6 以上，以及 ReactLynx 插件 0.12.4 以上公开的模板 API；更旧的构建器需要升级。源码支持边界不等于设备验收，当前原生测试仍使用固定 4.0.1 矩阵。
 
 插件在模板编码前，通过 ReactLynx 构建器公开的 hook 将未配置的 `enableCSSInlineVariables` 默认设为 `true`，使嵌套 utility 变量进入原生递归解析路径；保留显式页面配置与动态 CSS 依赖。需要同时注册 `pluginReactLynx()`，缺少模板 API 时明确构建失败。此设置不改变目标 SDK，也不代表所有 CSS 属性已通过原生验收。
 
 完整的 `generator`、`rspack`、CSS loader 和 encoder 配置项见 [ReactLynx / Rspeedy 配置参考](https://tw.weapp.dev/zh-cn/docs/config/react-lynx)。
+
+### 构建诊断
+
+可以开启结构化的 Lynx encoder 诊断。默认只输出 warning 和报告，不改变已有构建结果；`strict: true` 只会让未被 `ignore` 且确认属于业务规则、并在 encoder 阶段被删除的声明写入 compilation error。preflight、Tailwind 默认规则和 `unknown` 诊断在 strict 模式下不会失败。
+
+```ts
+pluginLynxTailwindcss({
+  diagnostics: {
+    strict: true,
+    ignore: [{ property: 'padding-inline' }],
+    onReport(report) {
+      console.log(report)
+    },
+  },
+})
+```
+
+报告包含分类、selector、utility、property/value、来源位置、拒绝原因与替代建议；无法可靠关联或无法解析的日志会保留为 `unknown`。诊断消费的是构建生命周期中的 CSS 和 encoder 数据，不扫描 `dist`，也不把进入 bundle 视为 Lynx 原生支持。
 
 当前集成支持 ReactLynx + Rspeedy 与 Tailwind CSS v4；不覆盖 Rspeedy Web 输出、非 React Lynx 框架或 React Native 风格的运行时样式映射。
 
@@ -110,7 +134,11 @@ pnpm e2e:lynx
 
 仓库中的 `examples/react-lynx` 是多页面兼容性实验室，固定 Tailwind CSS `4.3.3`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 和 `@lynx-js/css-defines` `0.0.16`。它以代表值覆盖官方 utility 功能族、variant、指令和任意语法分支。
 
-静态 gate 使用 PostCSS 解析真实 `main.css`，并结合 `tasm.json.css.cssMap` 与 encoder removal 日志分别记录 `generated` 和 `bundled`。原生结论只来自固定 iOS/Android host 的已提交报告，`css-defines` 只用于版本提示。
+静态 gate 使用 PostCSS 解析真实 `main.css`，并结合 `tasm.json.css.cssMap` 与 encoder removal 日志分别记录 `generated` 和 `bundled`。CI 默认使用 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro；这些 runner 设备用于门禁，不等同于已提交原生报告设备。
+
+当前已提交的原生报告基线记录 `verifiedAt: 2026-10-06T01:38:07.800Z`、`catalogHash: a8c3b45f993d9aa28782f308fc959a09e160d67a9097d11b1bc6a8a38b93c886`，Android 为 `sdk_gphone_arm64`（Android 11/API 30，arm64-v8a），iOS 为 iPhone 17 Pro（iOS 26.5，arm64）。只有与相同 catalog 和版本匹配的完整双端报告才能更新基线。
+
+`--capture-only` 是显式指定 bundle 和目标设备后的采集模式，只保存截图/视频用于观察，不生成或更新原生支持报告，也不能替代 CI runner 或已提交基线设备的验收。
 
 ```bash
 pnpm e2e:lynx:android
@@ -119,4 +147,4 @@ pnpm e2e:lynx:native
 pnpm e2e:lynx:update
 ```
 
-原生 host 分别固定 Pixel 7/API 35 x86_64 与 iPhone 16 Pro/iOS 18.5。更新器要求同一 catalog 与 Engine 版本的完整双端报告同时存在；缺失结果、能力退化或意外新增支持都会失败，不能手工编辑基线。
+更新器要求同一 catalog 与 Engine 版本的完整双端报告同时存在；缺失结果、能力退化或意外新增支持都会失败，不能手工编辑基线。

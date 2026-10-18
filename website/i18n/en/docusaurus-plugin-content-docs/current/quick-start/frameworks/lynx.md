@@ -30,7 +30,9 @@ See the [ReactLynx / Rspeedy configuration reference](../../config/react-lynx) f
 npm install -D @weapp-tailwindcss/lynx tailwindcss
 ```
 
-The integration requires Node.js `^22.18.0 || >=24.11.0`, Rspeedy `>=0.16.0`, and Tailwind CSS `>=4.0.0`. It currently supports only ReactLynx projects built with Rspeedy.
+The current `@weapp-tailwindcss/lynx` adapter is `0.4.4` and requires Node.js `>=22.12.0`. Its `weapp-tailwindcss` core dependency is `5.6.3`, whose dependency chain requires Node.js `^22.18.0 || >=24.11.0`. The adapter peers on Rspeedy `>=0.16.0` and Tailwind CSS `>=4.0.0`, and supports only ReactLynx projects built with Rspeedy.
+
+The repository fixture and regression matrix pin Rspeedy `0.17.2`, ReactLynx plugin `0.20.2`, ReactLynx runtime `0.126.1`, Tailwind CSS `4.3.3`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.16`.
 
 ## Register the Rspeedy plugin
 
@@ -44,7 +46,7 @@ export default defineConfig({
 })
 ```
 
-The plugin fixes `platform` to `'lynx'`, sets `generator.target` to `'web'`, and enables Lynx-compatible output. Tailwind CSS 4 theme variables are resolved at build time, while application-defined dynamic CSS variables remain unchanged.
+The plugin fixes `platform` to `'lynx'`, sets `generator.target` to `'web'`, and enables Lynx-compatible output. Stable Tailwind theme tokens may be resolved at build time, while a variable override visible in the same CSS keeps its `var()` dependency. Overrides from another stylesheet or an inline style are outside this static analysis guarantee.
 
 ## Configure the Tailwind CSS entry
 
@@ -90,13 +92,31 @@ A full `@import "tailwindcss"` includes browser preflight. Rspeedy may report an
 - For browser-only preflight warnings, use the theme and utilities imports shown above.
 - For warnings caused by a property or selector emitted for an application utility, change the Tailwind expression instead of merely ignoring the warning.
 
+## Build diagnostics
+
+Configure `diagnostics` to receive an encoder compatibility report. The default only emits a warning; `strict: true` turns an unignored rule into a compilation error only when it is confirmed as a business rule removed during encoding. Preflight rules, Tailwind default rules, and `unknown` diagnostics never fail strict mode.
+
+```ts
+pluginLynxTailwindcss({
+  diagnostics: {
+    strict: true,
+    ignore: [{ property: 'padding-inline' }],
+    onReport: report => console.log(report),
+  },
+})
+```
+
+Reports consume CSS and encoder data from the Rspack/Rspeedy lifecycle, do not scan `dist`, and do not equate bundle inclusion with native support. See the [configuration reference](../../config/react-lynx#diagnostics) for the complete API.
+
 ## Validation and example
 
 The complete repository example is available under [`examples/react-lynx`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/tree/main/examples/react-lynx) for project structure and CSS entry reference. Your Rspeedy project should use its own development or build command.
 
 `examples/react-lynx` is pinned to Tailwind CSS `4.3.3`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.16`. Representative cases cover every official utility family, variant kind, directive, and arbitrary syntax branch.
 
-The static gate records Tailwind generation and Lynx encoder retention separately. Cross-platform support is determined only by runtime reports from Pixel 7/API 35 and iPhone 16 Pro/iOS 18.5; css-defines cannot replace runtime evidence:
+The static gate records Tailwind generation and Lynx encoder retention separately. CI defaults to Android API 30 on a Pixel 2 x86_64 runner and iOS 18.5 on an iPhone 16 Pro simulator; these are distinct from the committed native report devices. The committed baseline has `verifiedAt` `2026-10-06T01:38:07.800Z` and `catalogHash` `a8c3b45f993d9aa28782f308fc959a09e160d67a9097d11b1bc6a8a38b93c886`; its reports come from Android `sdk_gphone_arm64` (Android 11/API 30, arm64-v8a) and iPhone 17 Pro (iOS 26.5, arm64). css-defines cannot replace runtime evidence.
+
+`--capture-only` captures screenshots/video only after an explicit bundle and target device are supplied. It does not update a native support report or committed baseline.
 
 In your own Android and iOS targets, verify:
 

@@ -18,10 +18,11 @@ This page explains every Lynx-specific option in `pluginLynxTailwindcss()`. Star
 
 ## Support baseline
 
-- `@weapp-tailwindcss/lynx` `0.3.2`
+- `@weapp-tailwindcss/lynx` `0.4.4`; adapter Node.js `>=22.12.0`
+- Core `weapp-tailwindcss` `5.6.3`; dependency-chain Node.js `^22.18.0 || >=24.11.0`
 - `@lynx-js/rspeedy` `>=0.16.0`
 - Tailwind CSS `4.x`
-- Node.js `>=22.12.0`
+- The repository fixture pins Rspeedy `0.17.2`, ReactLynx plugin `0.20.2`, ReactLynx runtime `0.126.1`, Tailwind CSS `4.3.3`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `css-defines` `0.0.16`
 - ReactLynx + Rspeedy native builds only; Rspeedy Web, non-React Lynx, and React Native are out of scope
 
 ## Minimal configuration
@@ -47,18 +48,19 @@ export default defineConfig({
 
 The plugin fixes `platform: 'lynx'`, `generator.target: 'web'`, and Lynx-compatible Web CSS output. ReactLynx keeps the original `className`; it does not create mini-program safe classes or a React Native style manifest.
 
-Recursive variables require Lynx runtime 3.6 or later and the exposed template API from ReactLynx plugin 0.12.4 or later. Older builders must be upgraded; native behavior is currently tested on the pinned 4.0.1 matrix.
+Recursive variables require Lynx runtime 3.6 or later and the exposed template API from ReactLynx plugin 0.12.4 or later. Older builders must be upgraded. Stable Tailwind theme tokens may be resolved at build time; an override visible in the same CSS keeps its `var()` dependency. Overrides from another stylesheet or an inline style are outside this static analysis guarantee. Native behavior is currently tested on the pinned 4.0.1 matrix.
 
 Before encoding, the plugin uses the ReactLynx builder’s exposed `LynxTemplatePlugin` hooks to default `enableCSSInlineVariables` to `true`. This selects native recursive resolution for nested Tailwind utility variables, preserving explicit page configuration and dynamic dependencies. A missing template API fails the build. The setting does not change `engineVersion` or replace device verification of gradients, shadows, and other effects. The encoding regression uses `engineVersion: '3.9'`; the native matrix uses Lynx `4.0.1`.
 
 ## Option index
 
-| Option                                                                | Type                            | Default                | Description                                  |
-| --------------------------------------------------------------------- | ------------------------------- | ---------------------- | -------------------------------------------- |
-| [`generator`](#generator)                                             | `LynxGeneratorOptions \| false` | Fixed Lynx settings    | Override non-target generator fields         |
-| [`rspack`](#rspack)                                                   | `PatchRspackConfigOptions`      | CSS rule patch enabled | Control Rspeedy/Rspack loader patches        |
-| [`rspack.cssImportRewriteLoader`](#rspack-cssimportrewriteloader)     | `boolean \| object`             | `true`                 | Inject the Tailwind CSS entry rewrite loader |
-| [`rspack.removeLightningCssLoader`](#rspack-removelightningcssloader) | `boolean`                       | `false`                | Remove the built-in Lightning CSS loader     |
+| Option                                                                | Type                            | Default                | Description                                         |
+| --------------------------------------------------------------------- | ------------------------------- | ---------------------- | --------------------------------------------------- |
+| [`generator`](#generator)                                             | `LynxGeneratorOptions \| false` | Fixed Lynx settings    | Override non-target generator fields                |
+| [`rspack`](#rspack)                                                   | `PatchRspackConfigOptions`      | CSS rule patch enabled | Control Rspeedy/Rspack loader patches               |
+| [`rspack.cssImportRewriteLoader`](#rspack-cssimportrewriteloader)     | `boolean \| object`             | `true`                 | Inject the Tailwind CSS entry rewrite loader        |
+| [`rspack.removeLightningCssLoader`](#rspack-removelightningcssloader) | `boolean`                       | `false`                | Remove the built-in Lightning CSS loader            |
+| [`diagnostics`](#diagnostics)                                         | `LynxDiagnosticsOptions`        | `{}`                   | Emit encoder compatibility reports; opt into strict |
 
 The plugin also inherits core [`UserDefinedOptions`](/docs/api/interfaces/UserDefinedOptions). Common fields include `cssEntries`, `cssOptions`, cache, file matchers, and lifecycle callbacks. The adapter owns `platform`, `rewriteCssImports`, `generator.target`, and the Lynx style platform; those fields cannot switch output to mini-program or React Native.
 
@@ -136,6 +138,28 @@ rspack: { removeLightningCssLoader: true }
 
 **Caution** Removing it changes minification, syntax lowering, and the browser CSS processing chain. It is not a general way to silence warnings; compare the final bundle and device result before and after.
 
+### `diagnostics` {#diagnostics}
+
+**Purpose** Consume encoder CSS diagnostics at the template-encoding boundary and associate them with generated selectors, properties/values, utilities, and source locations.
+
+**When to use** The default is suitable for observing compatibility in local builds and CI. Set `strict` only when a confirmed business rule removed by the encoder should become a build gate. `preflight`, Tailwind default rules, and `unknown` diagnostics remain reports and never fail strict mode.
+
+**Usage** `ignore` can match a selector, property, or reason. `onReport` receives versions, counts, categories, rejection reasons, and replacement suggestions:
+
+```ts
+pluginLynxTailwindcss({
+  diagnostics: {
+    strict: true,
+    ignore: [{ property: 'padding-inline' }],
+    onReport(report) {
+      console.log(report)
+    },
+  },
+})
+```
+
+Diagnostics use CSS and encoder data registered through the Rspack/Rspeedy lifecycle. They do not scan `dist` or equate bundle inclusion with native support. Unknown log formats remain `unknown` and never fail strict mode.
+
 ## CSS and candidates
 
 Lynx should normally import theme and utilities only, avoiding unrelated warnings from browser preflight rules such as `:root`, `:host`, and `:where(...)`. Arbitrary values must be complete static candidates:
@@ -161,6 +185,12 @@ Do not construct `w-[${width}px]`; Tailwind cannot know the final token at build
 | Device runtime      | Android/iOS pixels, layout, and interaction states            | The current Lynx runtime supports the behavior |
 
 `padding-inline`, complex `:is()` / `:where()`, pseudo-elements, hover, dark, data, supports, media queries, and complex gradients must pass all three layers. Generated Tailwind CSS does not replace encoder and device evidence.
+
+## Devices and evidence
+
+CI defaults to Android API 30 on a Pixel 2 x86_64 runner and iOS 18.5 on an iPhone 16 Pro simulator. The committed native reports come from Android `sdk_gphone_arm64` (Android 11/API 30, arm64-v8a) and iPhone 17 Pro (iOS 26.5, arm64), with baseline `verifiedAt` `2026-10-06T01:38:07.800Z` and `catalogHash` `a8c3b45f993d9aa28782f308fc959a09e160d67a9097d11b1bc6a8a38b93c886`. These device roles are distinct and their evidence must not be interchanged.
+
+`--capture-only` captures screenshots/video only after an explicit bundle and target device are supplied. It does not write a native support report or update the committed baseline.
 
 ## Validation
 
