@@ -89,7 +89,7 @@ describe('ReactLynx 宣传示例真实 static 产物', () => {
     expect(encoderCss.replace(/\r\n/g, '\n')).toMatchSnapshot()
   })
 
-  it('状态卡的任意值颜色、圆角与间距进入真实原生 bundle', () => {
+  it('任意值颜色、圆角、间距与滚动说明卡进入真实原生 bundle', () => {
     expect(declarations(encoderCss, '.bg-\\[\\#10241b\\]')).toMatchObject({ 'background-color': '#10241b' })
     // decoder 的诊断选择器不保留 CSS 转义，shorthand 已按原生属性展开。
     expect(declarations(decodedCss, '.bg-[#10241b]')).toMatchObject({ 'background-color': '#10241b' })
@@ -105,6 +105,7 @@ describe('ReactLynx 宣传示例真实 static 产物', () => {
       'padding-right': '1rem',
       'padding-top': '1rem',
     })
+    expect(declarations(decodedCss, '.min-h-[260px]')).toEqual({ 'min-height': '260px' })
   })
 
   it('示例仍为可滚动的真实组件，状态卡有唯一的录制编辑入口', async () => {

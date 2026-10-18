@@ -26,6 +26,9 @@ exports[`ReactLynx 宣传示例真实 static 产物 > 重新生成 Tailwind CSS 
   .h-\\[4px\\] {
     height: 4px;
   }
+  .min-h-\\[260px\\] {
+    min-height: 260px;
+  }
   .min-h-screen {
     min-height: 100vh;
   }

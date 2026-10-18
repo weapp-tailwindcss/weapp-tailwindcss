@@ -61,6 +61,25 @@ export function App() {
             </text>
           </view>
         ))}
+
+        <view className="mt-6 min-h-[260px] rounded-[18px] border border-[#263236] bg-[#151b1d] p-4">
+          <text className="text-[13px] font-bold text-[#e8efed]">Build &amp; reload</text>
+          <text className="mt-2 text-[11px] text-[#9baaae]">From a className edit to native styles.</text>
+          <view className="mt-4 rounded-[12px] bg-[#1c2528] p-3">
+            <text className="text-[10px] font-bold text-[#75dfa6]">01 / EDIT THE COMPONENT</text>
+            <text className="mt-2 text-[11px] text-[#dde7e4]">src/components/BuildStatus.tsx</text>
+          </view>
+          <view className="mt-3 rounded-[12px] bg-[#1c2528] p-3">
+            <text className="text-[10px] font-bold text-[#75dfa6]">02 / BUILD WITH RSPEEDY</text>
+            <text className="mt-2 text-[12px] font-bold text-[#dde7e4]">pnpm build</text>
+            <text className="mt-2 text-[10px] text-[#9baaae]">pluginLynxTailwindcss() generates the styles.</text>
+          </view>
+          <view className="mt-3 rounded-[12px] bg-[#1c2528] p-3">
+            <text className="text-[10px] font-bold text-[#75dfa6]">03 / CHECK THE NATIVE RESULT</text>
+            <text className="mt-2 text-[11px] text-[#dde7e4]">Install or reload main.lynx.bundle.</text>
+            <text className="mt-2 text-[10px] text-[#9baaae]">View the updated styles on iOS and Android.</text>
+          </view>
+        </view>
       </view>
     </scroll-view>
   )
