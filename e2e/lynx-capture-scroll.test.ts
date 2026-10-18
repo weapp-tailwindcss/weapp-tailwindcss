@@ -110,3 +110,49 @@ it('copies failed raw evidence before validation and preserves an existing run a
   await expect(collectCaptureScrollEvidence(input, artifactDir, context)).rejects.toMatchObject({ code: 'EEXIST' })
   expect(await fs.readFile(output, 'utf8')).toBe(source)
 })
+
+it('waits for the real native return callback instead of collecting the partial return-start record', async () => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'lynx-scroll-complete-'))
+  directories.push(directory)
+  const artifactDir = path.join(directory, 'artifacts')
+  await fs.mkdir(artifactDir)
+  const input = path.join(directory, 'native-scroll.json')
+  const pending = { ...evidence, returnedOffset: undefined, completedAt: undefined, completedSeconds: undefined }
+  await fs.writeFile(input, JSON.stringify(pending))
+  const completion = new Promise<void>(resolve => setTimeout(resolve, 50)).then(async () => {
+    const atomic = path.join(directory, 'native-scroll-complete.json')
+    await fs.writeFile(atomic, JSON.stringify(evidence))
+    await fs.rename(atomic, input)
+  })
+  try {
+    await expect(collectCaptureScrollEvidence(input, artifactDir, context, 18, { timeoutMs: 1000, pollIntervalMs: 10 })).resolves.toEqual(evidence)
+    expect(JSON.parse(await fs.readFile(path.join(artifactDir, 'capture-scroll.json'), 'utf8'))).toEqual(evidence)
+  }
+  finally {
+    await completion
+  }
+})
+
+it('bounds the native completion wait and preserves its last incomplete evidence on timeout', async () => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'lynx-scroll-timeout-'))
+  directories.push(directory)
+  const artifactDir = path.join(directory, 'artifacts')
+  await fs.mkdir(artifactDir)
+  const input = path.join(directory, 'native-scroll.json')
+  const pending = JSON.stringify({ ...evidence, returnedOffset: undefined, completedAt: undefined, completedSeconds: undefined })
+  await fs.writeFile(input, pending)
+  await expect(collectCaptureScrollEvidence(input, artifactDir, context, 18, { timeoutMs: 30, pollIntervalMs: 5 })).rejects.toThrow('等待 iOS 原生滚动完成超时')
+  expect(await fs.readFile(path.join(artifactDir, 'capture-scroll.json'), 'utf8')).toBe(pending)
+})
+
+it.each([{ runId: 'old-run' }, { error: '原生滚动失败' }])('preserves and rejects an incomplete foreign or failed run without accepting later evidence: %j', async (change) => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'lynx-scroll-failed-'))
+  directories.push(directory)
+  const artifactDir = path.join(directory, 'artifacts')
+  await fs.mkdir(artifactDir)
+  const input = path.join(directory, 'native-scroll.json')
+  const source = JSON.stringify({ ...evidence, returnedOffset: undefined, completedAt: undefined, completedSeconds: undefined, ...change })
+  await fs.writeFile(input, source)
+  await expect(collectCaptureScrollEvidence(input, artifactDir, context, 18)).rejects.toThrow(/本轮 bundle\/run|原生滚动/)
+  expect(await fs.readFile(path.join(artifactDir, 'capture-scroll.json'), 'utf8')).toBe(source)
+})

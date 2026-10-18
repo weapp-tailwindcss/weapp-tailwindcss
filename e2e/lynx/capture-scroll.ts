@@ -34,8 +34,48 @@ export function validateCaptureScrollEvidence(source: string, context: NativeEvi
   return value
 }
 
-export async function collectCaptureScrollEvidence(sourceFile: string, artifactDir: string, context: NativeEvidenceContext, expectedDurationSeconds?: number) {
-  const source = await fs.readFile(sourceFile, 'utf8')
-  await fs.writeFile(path.join(artifactDir, 'capture-scroll.json'), source, { flag: 'wx' })
-  return validateCaptureScrollEvidence(source, context, expectedDurationSeconds)
+export async function collectCaptureScrollEvidence(
+  sourceFile: string,
+  artifactDir: string,
+  context: NativeEvidenceContext,
+  expectedDurationSeconds?: number,
+  { timeoutMs = 10_000, pollIntervalMs = 100 } = {},
+) {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0 || !Number.isFinite(pollIntervalMs) || pollIntervalMs <= 0) {
+    throw new Error('iOS 原生滚动等待时间必须为有限正数。')
+  }
+  const output = path.join(artifactDir, 'capture-scroll.json')
+  const preserve = (source: string) => fs.writeFile(output, source, { flag: 'wx' })
+  const deadline = Date.now() + timeoutMs
+  let latest: string | undefined
+  while (true) {
+    const source = await fs.readFile(sourceFile, 'utf8').catch((error: NodeJS.ErrnoException) => {
+      if (error.code === 'ENOENT') return undefined
+      throw error
+    })
+    if (source !== undefined) {
+      latest = source
+      let value: Record<string, unknown>
+      try {
+        value = JSON.parse(source) as Record<string, unknown>
+        if (!value || typeof value !== 'object') throw new Error('iOS 原生滚动证据格式无效。')
+      }
+      catch (error) {
+        await preserve(source)
+        throw error
+      }
+      const terminal = ['returnedOffset', 'completedSeconds', 'completedAt'].every(key => Object.hasOwn(value, key))
+      const identityMatches = value.version === context.version && value.runId === context.runId && value.bundleSha256 === context.bundleSha256
+      if (terminal || !identityMatches || value.error) {
+        await preserve(source)
+        return validateCaptureScrollEvidence(source, context, expectedDurationSeconds)
+      }
+    }
+    const remaining = deadline - Date.now()
+    if (remaining <= 0) {
+      if (latest !== undefined) await preserve(latest)
+      throw new Error('等待 iOS 原生滚动完成超时；已保留本轮最后的 capture-scroll.json（若已生成）。')
+    }
+    await new Promise(resolve => setTimeout(resolve, Math.min(pollIntervalMs, remaining)))
+  }
 }
