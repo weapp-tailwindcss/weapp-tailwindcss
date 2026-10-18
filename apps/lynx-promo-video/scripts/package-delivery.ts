@@ -1,4 +1,5 @@
 import type { DevelopmentShot } from './capture/manifest'
+import type { CaptureAssets } from './capture/assets'
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { constants, createReadStream } from 'node:fs'
@@ -6,6 +7,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { captureAssetIdentity } from './capture/assets'
 import { appRoot as defaultAppRoot, repoRoot as defaultRepoRoot } from './paths'
 
 interface Snapshot {
@@ -17,8 +19,8 @@ interface Bundle { path: string, sha256: string }
 interface Manifest {
   version: number
   source: Snapshot
-  platforms: Record<string, { rawVideo: string, video: string, cover: string, bundle: Bundle }>
-  development: { rawVideo: string, video: string, events: Array<{ source: Snapshot, bundle: Bundle }>, shots?: DevelopmentShot[] }
+  platforms: Record<string, { rawVideo: string, video: string, cover: string, bundle: Bundle } & CaptureAssets>
+  development: { rawVideo: string, video: string, events: Array<{ source: Snapshot, bundle: Bundle } & CaptureAssets>, shots?: DevelopmentShot[] }
   compatibility: { source: string, screenshot: string }
 }
 
@@ -146,6 +148,18 @@ export async function packageDelivery(options: { appRoot?: string, repoRoot?: st
     await copyFile(source)
     media.path = relative(media.path)
   }
+  async function copyAssets(capture: CaptureAssets) {
+    captureAssetIdentity(capture, manifestFile, '交付包')
+    if (capture.assetsRoot) {
+      register(resolveInput(capture.assetsRoot))
+    }
+    for (const asset of capture.assets ?? []) {
+      await copyShotMedia(asset)
+    }
+    if (capture.assetsRoot) {
+      capture.assetsRoot = relative(capture.assetsRoot)
+    }
+  }
   await copySnapshot(manifest.source)
   for (const capture of Object.values(manifest.platforms)) {
     await copyTree(path.dirname(resolveInput(capture.rawVideo)))
@@ -154,6 +168,7 @@ export async function packageDelivery(options: { appRoot?: string, repoRoot?: st
       capture[key] = relative(capture[key])
     }
     await copyBundle(capture.bundle)
+    await copyAssets(capture)
   }
   await copyTree(path.dirname(resolveInput(manifest.development.rawVideo)))
   for (const key of ['rawVideo', 'video'] as const) {
@@ -166,6 +181,7 @@ export async function packageDelivery(options: { appRoot?: string, repoRoot?: st
     }
     await copySnapshot(event.source)
     await copyBundle(event.bundle)
+    await copyAssets(event)
   }
   for (const shot of manifest.development.shots ?? []) {
     if (shot.kind === 'video') {

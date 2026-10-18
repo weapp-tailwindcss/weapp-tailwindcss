@@ -61,6 +61,13 @@ describe('可迁移交付包', () => {
     async function bundle(root: string) {
       return { path: relative(await file(path.join(root, 'main.lynx.bundle'), 'bundle')), sha256: hash('bundle') }
     }
+    async function assets(root: string) {
+      const assetsRoot = path.join(root, 'capture-assets')
+      return {
+        assetsRoot: relative(assetsRoot),
+        assets: [{ path: relative(await file(path.join(assetsRoot, 'static', 'avatar.jpg'), 'local JPEG fixture')), sha256: hash('local JPEG fixture') }],
+      }
+    }
     const source = await snapshot(path.join(repoRoot, 'examples', 'react-lynx-promo'))
     const platforms: Record<string, unknown> = {}
     for (const platform of ['ios', 'android']) {
@@ -70,6 +77,7 @@ describe('可迁移交付包', () => {
         video: relative(await file(path.join(captureRoot, `${platform}.mp4`))),
         cover: relative(await file(path.join(captureRoot, `${platform}-cover.png`))),
         bundle: await bundle(raw),
+        ...await assets(raw),
       }
       await file(path.join(raw, 'device.json'))
     }
@@ -77,7 +85,7 @@ describe('可迁移交付包', () => {
     const events = []
     for (const stage of ['initial', 'spacing', 'color']) {
       const root = path.join(development, 'stages', stage)
-      events.push({ id: stage, source: await snapshot(root), bundle: await bundle(root) })
+      events.push({ id: stage, source: await snapshot(root), bundle: await bundle(root), ...await assets(root) })
       await file(path.join(development, `${stage}-native`, 'screen.png'))
     }
     for (const excluded of ['edit', 'review', '.tmp-build']) {
@@ -140,6 +148,14 @@ describe('可迁移交付包', () => {
     for (const event of relocated.development.events) {
       expect(await digestSnapshot(event.source, resolve)).toBe('source')
     }
+    for (const capture of [...Object.values(relocated.platforms), ...relocated.development.events] as Array<{ assetsRoot: string, assets: Array<{ path: string, sha256: string }> }>) {
+      expect(path.isAbsolute(capture.assetsRoot)).toBe(false)
+      for (const asset of capture.assets) {
+        expect(path.isAbsolute(asset.path)).toBe(false)
+        expect(path.relative(resolve(capture.assetsRoot), resolve(asset.path))).toBe(path.join('static', 'avatar.jpg'))
+        expect(hash(await fs.readFile(resolve(asset.path)))).toBe(asset.sha256)
+      }
+    }
     for (const shot of relocated.development.shots) {
       const sources = shot.kind === 'video'
         ? [shot.media, ...(shot.preview ? [shot.preview.media, shot.preview.sourceVideo] : [])]
@@ -161,6 +177,9 @@ describe('可迁移交付包', () => {
       const [expected, name] = line.split('  ')
       expect(hash(await fs.readFile(path.resolve(result.directory, name)))).toBe(expected)
     }
+    const originalAssets = manifest.development.events[0].assets
+    await fs.writeFile(path.resolve(captureRoot, originalAssets[0].path), 'tampered image fixture')
+    await expect(packageDelivery({ appRoot, repoRoot })).rejects.toThrow('镜头素材摘要不匹配')
   })
 })
 

@@ -1,6 +1,7 @@
 import type { CaptureManifest, FileDigest, SourceSnapshot } from './manifest'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { assertCaptureAssets, captureAssetIdentity } from './assets'
 import { assertDevelopmentShotArtifacts } from './development-artifacts'
 import { resolveManifestPath, sha256, snapshotSources } from './manifest'
 
@@ -64,6 +65,7 @@ export async function assertDevelopmentArtifacts(manifest: CaptureManifest, mani
     }
     await assertSourceSnapshot(event.source, manifestFile, event.id)
     await assertBundle(event.bundle, manifestFile, event.id)
+    await assertCaptureAssets(event, manifestFile, event.id)
   }
   const spacing = events.find(event => event.id === 'spacing')
   const color = events.find(event => event.id === 'color')
@@ -85,6 +87,14 @@ export async function assertDevelopmentArtifacts(manifest: CaptureManifest, mani
     || (['ios', 'android'] as const).some(platform => manifest.platforms[platform]?.bundle.sha256 !== color.bundleSha256)) {
     throw new Error('color 最终源码与双端 bundle 必须对应同一录制版本。')
   }
+  const finalAssets = captureAssetIdentity(color, manifestFile, 'color')
+  for (const platform of ['ios', 'android'] as const) {
+    const native = manifest.platforms[platform]!
+    const nativeAssets = captureAssetIdentity(native, manifestFile, platform)
+    if (JSON.stringify(nativeAssets) !== JSON.stringify(finalAssets)) {
+      throw new Error(`color 最终资源与 ${platform} 原生资源清单必须对应同一录制版本。`)
+    }
+  }
 }
 
 export async function assertCaptureInputs(manifest: CaptureManifest, manifestFile: string, captureDir: string) {
@@ -98,6 +108,7 @@ export async function assertCaptureInputs(manifest: CaptureManifest, manifestFil
       throw new Error(`${platform} 录屏未绑定当前源码版本，请重新录制。`)
     }
     await assertBundle(native.bundle, manifestFile, platform)
+    await assertCaptureAssets(native, manifestFile, platform)
     for (const file of [native.video, native.rawVideo, native.cover]) {
       await requireFile(resolveManifestPath(manifestFile, file))
     }

@@ -26,6 +26,8 @@ export interface NativeCapture {
   video: string
   cover: string
   bundle: FileDigest
+  assetsRoot?: string
+  assets?: FileDigest[]
 }
 
 export interface DevelopmentEvent {
@@ -36,6 +38,8 @@ export interface DevelopmentEvent {
   bundleSha256: string
   source?: SourceSnapshot
   bundle?: FileDigest
+  assetsRoot?: string
+  assets?: FileDigest[]
   rawStartSeconds?: number
   rawEndSeconds?: number
 }
