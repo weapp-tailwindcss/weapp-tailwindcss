@@ -15,26 +15,38 @@
     {
       "sceneId": "classname",
       "from": 393,
-      "to": 483,
-      "text": "在真实编辑器里修改状态卡。"
+      "to": 452,
+      "text": "先改间距和圆角。"
     },
     {
       "sceneId": "classname",
-      "from": 486,
-      "to": 553,
-      "text": "先调整间距和圆角。"
+      "from": 543,
+      "to": 624,
+      "text": "保存，构建，重新加载。"
     },
     {
       "sceneId": "classname",
-      "from": 663,
-      "to": 753,
-      "text": "保存并构建，查看原生结果。"
+      "from": 633,
+      "to": 728,
+      "text": "间距更宽松，头像圆角更明显。"
     },
     {
       "sceneId": "classname",
       "from": 843,
-      "to": 960,
-      "text": "再修改背景色，重新构建并查看变化。"
+      "to": 905,
+      "text": "再把蓝色改成绿色。"
+    },
+    {
+      "sceneId": "classname",
+      "from": 993,
+      "to": 1074,
+      "text": "保存，构建，重新加载。"
+    },
+    {
+      "sceneId": "classname",
+      "from": 1083,
+      "to": 1150,
+      "text": "原生背景变成绿色。"
     },
     {
       "sceneId": "pipeline",
@@ -77,32 +89,44 @@
     {
       "sceneId": "classname",
       "from": 393,
-      "to": 455,
-      "text": "Here is the real editor."
+      "to": 463,
+      "text": "Change the padding and radius."
     },
     {
       "sceneId": "classname",
-      "from": 456,
-      "to": 559,
-      "text": "First, change the spacing and corner radius."
+      "from": 543,
+      "to": 623,
+      "text": "Save, build, and reload."
     },
     {
       "sceneId": "classname",
-      "from": 663,
-      "to": 760,
-      "text": "Save, build, and check the native result."
+      "from": 633,
+      "to": 681,
+      "text": "More space."
+    },
+    {
+      "sceneId": "classname",
+      "from": 681,
+      "to": 745,
+      "text": "Rounder photo corners."
     },
     {
       "sceneId": "classname",
       "from": 843,
-      "to": 937,
-      "text": "Then change the background color and build again."
+      "to": 910,
+      "text": "Now change blue to green."
+    },
+    {
+      "sceneId": "classname",
+      "from": 993,
+      "to": 1073,
+      "text": "Save, build, and reload."
     },
     {
       "sceneId": "classname",
       "from": 1083,
-      "to": 1182,
-      "text": "Every change you see comes from the actual component."
+      "to": 1146,
+      "text": "The native card is green."
     },
     {
       "sceneId": "pipeline",

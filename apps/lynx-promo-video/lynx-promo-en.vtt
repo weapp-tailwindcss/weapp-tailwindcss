@@ -6,20 +6,26 @@ You can write Tailwind CSS directly in Lynx.
 00:00:05.100 --> 00:00:10.667
 @weapp-tailwindcss/lynx brings Tailwind CSS 4 to ReactLynx and Rspeedy.
 
-00:00:13.100 --> 00:00:15.167
-Here is the real editor.
+00:00:13.100 --> 00:00:15.433
+Change the padding and radius.
 
-00:00:15.200 --> 00:00:18.633
-First, change the spacing and corner radius.
+00:00:18.100 --> 00:00:20.767
+Save, build, and reload.
 
-00:00:22.100 --> 00:00:25.333
-Save, build, and check the native result.
+00:00:21.100 --> 00:00:22.700
+More space.
 
-00:00:28.100 --> 00:00:31.233
-Then change the background color and build again.
+00:00:22.700 --> 00:00:24.833
+Rounder photo corners.
 
-00:00:36.100 --> 00:00:39.400
-Every change you see comes from the actual component.
+00:00:28.100 --> 00:00:30.333
+Now change blue to green.
+
+00:00:33.100 --> 00:00:35.767
+Save, build, and reload.
+
+00:00:36.100 --> 00:00:38.200
+The native card is green.
 
 00:00:43.100 --> 00:00:47.367
 Styles become CSS at build time and enter the native bundle.

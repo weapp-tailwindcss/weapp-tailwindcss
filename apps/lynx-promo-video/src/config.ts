@@ -103,14 +103,14 @@ const chineseCopy: PromoCopy = {
   },
   classname: {
     eyebrow: '真实开发实录',
-    title: '改代码，构建，看原生结果',
+    title: '保存 → 构建 → 原生更新',
     runtimeNote: '间距与圆角 → 背景色',
-    jsxNote: '构建等待已压缩',
+    jsxNote: '真实录制 · 操作正常速度',
   },
   pipeline: {
     eyebrow: '构建阶段完成转换',
     title: 'CSS 留在构建图里',
-    note: 'Theme 变量在构建期静态化，应用动态变量保持不变。',
+    note: '扫描类名、生成兼容 CSS，再由 Rspeedy 编码为 Lynx bundle。',
   },
   native: {
     eyebrow: '真实原生运行',
@@ -133,7 +133,7 @@ const chineseCopy: PromoCopy = {
   narration: {
     hook: '在 Lynx 里，也可以直接写 Tailwind CSS。',
     config: '@weapp-tailwindcss/lynx，把 Tailwind CSS 4 接入 ReactLynx 和 Rspeedy。',
-    classname: '在真实编辑器里修改状态卡。先调整间距和圆角。保存并构建，查看原生结果。再修改背景色，重新构建并查看变化。',
+    classname: '先改间距和圆角。保存，构建，重新加载。间距更宽松，头像圆角更明显。再把蓝色改成绿色。保存，构建，重新加载。原生背景变成绿色。',
     pipeline: '样式在构建时生成 CSS，进入 Lynx 原生 bundle。',
     native: '同一套组件代码，在 iOS 和 Android 上真实运行。',
     evidence: '从生成、编码到双端运行，支持边界都有真实证据。',
@@ -156,14 +156,14 @@ const englishCopy: PromoCopy = {
   },
   classname: {
     eyebrow: 'Recorded development',
-    title: 'Edit, build, see the native result',
+    title: 'Save → build → native update',
     runtimeNote: 'Spacing and radius → background color',
-    jsxNote: 'Build waits condensed',
+    jsxNote: 'Real recording · normal speed',
   },
   pipeline: {
     eyebrow: 'Build-time transformation',
     title: 'CSS stays in the build graph',
-    note: 'Theme variables are static at build time; dynamic app variables remain dynamic.',
+    note: 'Scan classes, generate compatible CSS, and encode with Rspeedy.',
   },
   native: {
     eyebrow: 'Real native runtime',
@@ -186,7 +186,7 @@ const englishCopy: PromoCopy = {
   narration: {
     hook: 'You can write Tailwind CSS directly in Lynx.',
     config: '@weapp-tailwindcss/lynx brings Tailwind CSS 4 to ReactLynx and Rspeedy.',
-    classname: 'Here is the real editor. First, change the spacing and corner radius. Save, build, and check the native result. Then change the background color and build again. Every change you see comes from the actual component.',
+    classname: 'Change the padding and radius. Save, build, and reload. More space. Rounder photo corners. Now change blue to green. Save, build, and reload. The native card is green.',
     pipeline: 'Styles become CSS at build time and enter the native bundle.',
     native: 'The same component code runs natively on iOS and Android.',
     evidence: 'From generation and encoding to native runtime, every boundary has evidence.',

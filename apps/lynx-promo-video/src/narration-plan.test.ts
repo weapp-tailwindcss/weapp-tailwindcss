@@ -15,14 +15,13 @@ const plan = [{ text: 'First.', startSeconds: 0.1 }, { text: 'Second.', startSec
 
 describe('operation narration plan', () => {
   it('uses the approved Chinese sentences and separate operation starts in both languages', () => {
-    expect(getClassnameNarrationPlan('zh')).toEqual([
-      { text: '在真实编辑器里修改状态卡。', startSeconds: 0.1 },
-      { text: '先调整间距和圆角。', startSeconds: 3.2 },
-      { text: '保存并构建，查看原生结果。', startSeconds: 9.1 },
-      { text: '再修改背景色，重新构建并查看变化。', startSeconds: 15.1 },
-    ])
-    expect(getClassnameNarrationPlan('en').map(sentence => sentence.startSeconds)).toEqual([0.1, 2.2, 9.1, 15.1, 23.1])
-    expect(getClassnameNarrationPlan('en')[3].text).toBe('Then change the background color and build again.')
+    for (const locale of ['zh', 'en'] as const) {
+      const sentences = getClassnameNarrationPlan(locale)
+      expect(sentences.map(sentence => sentence.startSeconds)).toEqual([0.1, 5.1, 8.1, 15.1, 20.1, 23.1])
+      expect(sentences[1].text).toBe(sentences[4].text)
+    }
+    expect(getClassnameNarrationPlan('zh')[2].text).toContain('头像圆角更明显')
+    expect(getClassnameNarrationPlan('en')[5].text).toContain('green')
   })
 
   it('selects only the requested scene without changing scene numbering or other languages', () => {

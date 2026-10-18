@@ -22,17 +22,20 @@ export interface SentenceAssembly {
 export function getClassnameNarrationPlan(locale: PromoLocale): readonly NarrationSentence[] {
   return locale === 'zh'
     ? [
-        { text: '在真实编辑器里修改状态卡。', startSeconds: 0.1 },
-        { text: '先调整间距和圆角。', startSeconds: 3.2 },
-        { text: '保存并构建，查看原生结果。', startSeconds: 9.1 },
-        { text: '再修改背景色，重新构建并查看变化。', startSeconds: 15.1 },
+        { text: '先改间距和圆角。', startSeconds: 0.1 },
+        { text: '保存，构建，重新加载。', startSeconds: 5.1 },
+        { text: '间距更宽松，头像圆角更明显。', startSeconds: 8.1 },
+        { text: '再把蓝色改成绿色。', startSeconds: 15.1 },
+        { text: '保存，构建，重新加载。', startSeconds: 20.1 },
+        { text: '原生背景变成绿色。', startSeconds: 23.1 },
       ]
     : [
-        { text: 'Here is the real editor.', startSeconds: 0.1 },
-        { text: 'First, change the spacing and corner radius.', startSeconds: 2.2 },
-        { text: 'Save, build, and check the native result.', startSeconds: 9.1 },
-        { text: 'Then change the background color and build again.', startSeconds: 15.1 },
-        { text: 'Every change you see comes from the actual component.', startSeconds: 23.1 },
+        { text: 'Change the padding and radius.', startSeconds: 0.1 },
+        { text: 'Save, build, and reload.', startSeconds: 5.1 },
+        { text: 'More space. Rounder photo corners.', startSeconds: 8.1 },
+        { text: 'Now change blue to green.', startSeconds: 15.1 },
+        { text: 'Save, build, and reload.', startSeconds: 20.1 },
+        { text: 'The native card is green.', startSeconds: 23.1 },
       ]
 }
 

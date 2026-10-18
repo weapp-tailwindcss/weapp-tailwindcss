@@ -1,22 +1,659 @@
 {
-  "clips": [
+  "clips": [],
+  "shots": [
     {
+      "kind": "video",
+      "id": "config-import",
       "sceneId": "config",
-      "eventId": "config",
-      "startSeconds": 0,
-      "endSeconds": 8
+      "view": "config",
+      "stage": "initial",
+      "eventId": "initial",
+      "media": {
+        "path": "captures/development.mp4",
+        "sha256": "e3ac6244cc44dd67ddbd8836216ef2e73dfdf0db0f65c4d98f20e6ae918be53e",
+        "width": 3456,
+        "height": 2234,
+        "durationSeconds": 600.033333
+      },
+      "crop": {
+        "x": 160,
+        "y": 190,
+        "width": 2150,
+        "height": 650
+      },
+      "outputWidth": 1600,
+      "startSeconds": 40,
+      "endSeconds": 44,
+      "displayFrames": 120,
+      "sourceCodeFontSize": 64
     },
     {
+      "kind": "video",
+      "id": "config-plugins",
+      "sceneId": "config",
+      "view": "config",
+      "stage": "initial",
+      "eventId": "initial",
+      "media": {
+        "path": "captures/development.mp4",
+        "sha256": "e3ac6244cc44dd67ddbd8836216ef2e73dfdf0db0f65c4d98f20e6ae918be53e",
+        "width": 3456,
+        "height": 2234,
+        "durationSeconds": 600.033333
+      },
+      "crop": {
+        "x": 160,
+        "y": 1570,
+        "width": 2150,
+        "height": 500
+      },
+      "outputWidth": 1600,
+      "startSeconds": 65,
+      "endSeconds": 69,
+      "displayFrames": 120,
+      "sourceCodeFontSize": 64
+    },
+    {
+      "kind": "video",
+      "id": "round-1-before",
       "sceneId": "classname",
+      "view": "before",
+      "stage": "initial",
+      "eventId": "initial",
+      "media": {
+        "path": "captures/development.mp4",
+        "sha256": "e3ac6244cc44dd67ddbd8836216ef2e73dfdf0db0f65c4d98f20e6ae918be53e",
+        "width": 3456,
+        "height": 2234,
+        "durationSeconds": 600.033333
+      },
+      "crop": {
+        "x": 2400,
+        "y": 680,
+        "width": 800,
+        "height": 490
+      },
+      "outputWidth": 960,
+      "startSeconds": 120,
+      "endSeconds": 121,
+      "displayFrames": 30,
+      "round": 1,
+      "cardRect": {
+        "x": 2433,
+        "y": 699,
+        "width": 732,
+        "height": 398
+      }
+    },
+    {
+      "kind": "video",
+      "id": "round-1-editor-0",
+      "sceneId": "classname",
+      "view": "editor",
+      "stage": "spacing",
       "eventId": "spacing",
-      "startSeconds": 8,
-      "endSeconds": 23
+      "media": {
+        "path": "captures/development.mp4",
+        "sha256": "e3ac6244cc44dd67ddbd8836216ef2e73dfdf0db0f65c4d98f20e6ae918be53e",
+        "width": 3456,
+        "height": 2234,
+        "durationSeconds": 600.033333
+      },
+      "crop": {
+        "x": 150,
+        "y": 850,
+        "width": 2100,
+        "height": 1200
+      },
+      "outputWidth": 1160,
+      "startSeconds": 132.4,
+      "endSeconds": 134.4,
+      "displayFrames": 60,
+      "round": 1,
+      "sourceCodeFontSize": 64,
+      "preview": {
+        "stage": "initial",
+        "eventId": "initial",
+        "media": {
+          "path": "captures/remake-initial.png",
+          "sha256": "261c26a0fb2f502c1cfbe3b484502d6e339adc97ddf2930dbdd0d56a07dcc0ef",
+          "width": 3456,
+          "height": 2234
+        },
+        "sourceVideo": {
+          "path": "captures/development.mp4",
+          "sha256": "e3ac6244cc44dd67ddbd8836216ef2e73dfdf0db0f65c4d98f20e6ae918be53e",
+          "width": 3456,
+          "height": 2234,
+          "durationSeconds": 600.033333
+        },
+        "sourceSeconds": 120.5,
+        "crop": {
+          "x": 2400,
+          "y": 680,
+          "width": 800,
+          "height": 490
+        },
+        "cardRect": {
+          "x": 2433,
+          "y": 699,
+          "width": 732,
+          "height": 398
+        },
+        "outputWidth": 500
+      }
     },
     {
+      "kind": "video",
+      "id": "round-1-editor-1",
       "sceneId": "classname",
+      "view": "editor",
+      "stage": "spacing",
+      "eventId": "spacing",
+      "media": {
+        "path": "captures/development.mp4",
+        "sha256": "e3ac6244cc44dd67ddbd8836216ef2e73dfdf0db0f65c4d98f20e6ae918be53e",
+        "width": 3456,
+        "height": 2234,
+        "durationSeconds": 600.033333
+      },
+      "crop": {
+        "x": 150,
+        "y": 850,
+        "width": 2100,
+        "height": 1200
+      },
+      "outputWidth": 1160,
+      "startSeconds": 174.7,
+      "endSeconds": 176.7,
+      "displayFrames": 60,
+      "round": 1,
+      "sourceCodeFontSize": 64,
+      "preview": {
+        "stage": "initial",
+        "eventId": "initial",
+        "media": {
+          "path": "captures/remake-initial.png",
+          "sha256": "261c26a0fb2f502c1cfbe3b484502d6e339adc97ddf2930dbdd0d56a07dcc0ef",
+          "width": 3456,
+          "height": 2234
+        },
+        "sourceVideo": {
+          "path": "captures/development.mp4",
+          "sha256": "e3ac6244cc44dd67ddbd8836216ef2e73dfdf0db0f65c4d98f20e6ae918be53e",
+          "width": 3456,
+          "height": 2234,
+          "durationSeconds": 600.033333
+        },
+        "sourceSeconds": 120.5,
+        "crop": {
+          "x": 2400,
+          "y": 680,
+          "width": 800,
+          "height": 490
+        },
+        "cardRect": {
+          "x": 2433,
+          "y": 699,
+          "width": 732,
+          "height": 398
+        },
+        "outputWidth": 500
+      }
+    },
+    {
+      "kind": "video",
+      "id": "round-1-terminal-0",
+      "sceneId": "classname",
+      "view": "terminal",
+      "stage": "spacing",
+      "eventId": "spacing",
+      "media": {
+        "path": "captures/development.mp4",
+        "sha256": "e3ac6244cc44dd67ddbd8836216ef2e73dfdf0db0f65c4d98f20e6ae918be53e",
+        "width": 3456,
+        "height": 2234,
+        "durationSeconds": 600.033333
+      },
+      "crop": {
+        "x": 30,
+        "y": 190,
+        "width": 2250,
+        "height": 850
+      },
+      "outputWidth": 1600,
+      "startSeconds": 187.5,
+      "endSeconds": 188.5,
+      "displayFrames": 30,
+      "round": 1,
+      "waitTrimmed": true
+    },
+    {
+      "kind": "video",
+      "id": "round-1-terminal-1",
+      "sceneId": "classname",
+      "view": "terminal",
+      "stage": "spacing",
+      "eventId": "spacing",
+      "media": {
+        "path": "captures/development.mp4",
+        "sha256": "e3ac6244cc44dd67ddbd8836216ef2e73dfdf0db0f65c4d98f20e6ae918be53e",
+        "width": 3456,
+        "height": 2234,
+        "durationSeconds": 600.033333
+      },
+      "crop": {
+        "x": 30,
+        "y": 190,
+        "width": 2250,
+        "height": 850
+      },
+      "outputWidth": 1600,
+      "startSeconds": 194,
+      "endSeconds": 195,
+      "displayFrames": 30,
+      "round": 1,
+      "waitTrimmed": true
+    },
+    {
+      "kind": "video",
+      "id": "round-1-terminal-2",
+      "sceneId": "classname",
+      "view": "terminal",
+      "stage": "spacing",
+      "eventId": "spacing",
+      "media": {
+        "path": "captures/development.mp4",
+        "sha256": "e3ac6244cc44dd67ddbd8836216ef2e73dfdf0db0f65c4d98f20e6ae918be53e",
+        "width": 3456,
+        "height": 2234,
+        "durationSeconds": 600.033333
+      },
+      "crop": {
+        "x": 30,
+        "y": 1100,
+        "width": 2250,
+        "height": 850
+      },
+      "outputWidth": 1600,
+      "startSeconds": 246,
+      "endSeconds": 247,
+      "displayFrames": 30,
+      "round": 1,
+      "waitTrimmed": true
+    },
+    {
+      "kind": "video",
+      "id": "round-1-result",
+      "sceneId": "classname",
+      "view": "result",
+      "stage": "spacing",
+      "eventId": "spacing",
+      "media": {
+        "path": "captures/development.mp4",
+        "sha256": "e3ac6244cc44dd67ddbd8836216ef2e73dfdf0db0f65c4d98f20e6ae918be53e",
+        "width": 3456,
+        "height": 2234,
+        "durationSeconds": 600.033333
+      },
+      "crop": {
+        "x": 2400,
+        "y": 680,
+        "width": 800,
+        "height": 490
+      },
+      "outputWidth": 960,
+      "startSeconds": 248,
+      "endSeconds": 252,
+      "displayFrames": 120,
+      "round": 1,
+      "cardRect": {
+        "x": 2433,
+        "y": 699,
+        "width": 732,
+        "height": 456
+      }
+    },
+    {
+      "kind": "comparison",
+      "id": "round-1-compare",
+      "sceneId": "classname",
+      "round": 1,
+      "displayFrames": 90,
+      "before": {
+        "stage": "initial",
+        "eventId": "initial",
+        "media": {
+          "path": "captures/remake-initial.png",
+          "sha256": "261c26a0fb2f502c1cfbe3b484502d6e339adc97ddf2930dbdd0d56a07dcc0ef",
+          "width": 3456,
+          "height": 2234
+        },
+        "sourceVideo": {
+          "path": "captures/development.mp4",
+          "sha256": "e3ac6244cc44dd67ddbd8836216ef2e73dfdf0db0f65c4d98f20e6ae918be53e",
+          "width": 3456,
+          "height": 2234,
+          "durationSeconds": 600.033333
+        },
+        "sourceSeconds": 120.5,
+        "crop": {
+          "x": 2400,
+          "y": 680,
+          "width": 800,
+          "height": 490
+        },
+        "cardRect": {
+          "x": 2433,
+          "y": 699,
+          "width": 732,
+          "height": 398
+        },
+        "outputWidth": 800
+      },
+      "after": {
+        "stage": "spacing",
+        "eventId": "spacing",
+        "media": {
+          "path": "captures/remake-spacing.png",
+          "sha256": "6b82a303e95503d16ee7bbbb4d1bf7aa87d2d8f498668c0b947156dc3c3ae500",
+          "width": 3456,
+          "height": 2234
+        },
+        "sourceVideo": {
+          "path": "captures/development.mp4",
+          "sha256": "e3ac6244cc44dd67ddbd8836216ef2e73dfdf0db0f65c4d98f20e6ae918be53e",
+          "width": 3456,
+          "height": 2234,
+          "durationSeconds": 600.033333
+        },
+        "sourceSeconds": 250,
+        "crop": {
+          "x": 2400,
+          "y": 680,
+          "width": 800,
+          "height": 490
+        },
+        "cardRect": {
+          "x": 2433,
+          "y": 699,
+          "width": 732,
+          "height": 456
+        },
+        "outputWidth": 800
+      }
+    },
+    {
+      "kind": "video",
+      "id": "round-2-before",
+      "sceneId": "classname",
+      "view": "before",
+      "stage": "spacing",
+      "eventId": "spacing",
+      "media": {
+        "path": "captures/development.mp4",
+        "sha256": "e3ac6244cc44dd67ddbd8836216ef2e73dfdf0db0f65c4d98f20e6ae918be53e",
+        "width": 3456,
+        "height": 2234,
+        "durationSeconds": 600.033333
+      },
+      "crop": {
+        "x": 2400,
+        "y": 680,
+        "width": 800,
+        "height": 490
+      },
+      "outputWidth": 960,
+      "startSeconds": 300,
+      "endSeconds": 301,
+      "displayFrames": 30,
+      "round": 2,
+      "cardRect": {
+        "x": 2433,
+        "y": 699,
+        "width": 732,
+        "height": 456
+      }
+    },
+    {
+      "kind": "video",
+      "id": "round-2-editor-0",
+      "sceneId": "classname",
+      "view": "editor",
+      "stage": "color",
       "eventId": "color",
-      "startSeconds": 23,
-      "endSeconds": 38
+      "media": {
+        "path": "captures/development.mp4",
+        "sha256": "e3ac6244cc44dd67ddbd8836216ef2e73dfdf0db0f65c4d98f20e6ae918be53e",
+        "width": 3456,
+        "height": 2234,
+        "durationSeconds": 600.033333
+      },
+      "crop": {
+        "x": 150,
+        "y": 850,
+        "width": 2100,
+        "height": 1200
+      },
+      "outputWidth": 1160,
+      "startSeconds": 327.7,
+      "endSeconds": 331.7,
+      "displayFrames": 120,
+      "round": 2,
+      "sourceCodeFontSize": 64,
+      "preview": {
+        "stage": "spacing",
+        "eventId": "spacing",
+        "media": {
+          "path": "captures/remake-spacing.png",
+          "sha256": "6b82a303e95503d16ee7bbbb4d1bf7aa87d2d8f498668c0b947156dc3c3ae500",
+          "width": 3456,
+          "height": 2234
+        },
+        "sourceVideo": {
+          "path": "captures/development.mp4",
+          "sha256": "e3ac6244cc44dd67ddbd8836216ef2e73dfdf0db0f65c4d98f20e6ae918be53e",
+          "width": 3456,
+          "height": 2234,
+          "durationSeconds": 600.033333
+        },
+        "sourceSeconds": 250,
+        "crop": {
+          "x": 2400,
+          "y": 680,
+          "width": 800,
+          "height": 490
+        },
+        "cardRect": {
+          "x": 2433,
+          "y": 699,
+          "width": 732,
+          "height": 456
+        },
+        "outputWidth": 500
+      }
+    },
+    {
+      "kind": "video",
+      "id": "round-2-terminal-0",
+      "sceneId": "classname",
+      "view": "terminal",
+      "stage": "color",
+      "eventId": "color",
+      "media": {
+        "path": "captures/development.mp4",
+        "sha256": "e3ac6244cc44dd67ddbd8836216ef2e73dfdf0db0f65c4d98f20e6ae918be53e",
+        "width": 3456,
+        "height": 2234,
+        "durationSeconds": 600.033333
+      },
+      "crop": {
+        "x": 30,
+        "y": 190,
+        "width": 2250,
+        "height": 850
+      },
+      "outputWidth": 1600,
+      "startSeconds": 361.5,
+      "endSeconds": 362.5,
+      "displayFrames": 30,
+      "round": 2,
+      "waitTrimmed": true
+    },
+    {
+      "kind": "video",
+      "id": "round-2-terminal-1",
+      "sceneId": "classname",
+      "view": "terminal",
+      "stage": "color",
+      "eventId": "color",
+      "media": {
+        "path": "captures/development.mp4",
+        "sha256": "e3ac6244cc44dd67ddbd8836216ef2e73dfdf0db0f65c4d98f20e6ae918be53e",
+        "width": 3456,
+        "height": 2234,
+        "durationSeconds": 600.033333
+      },
+      "crop": {
+        "x": 30,
+        "y": 190,
+        "width": 2250,
+        "height": 850
+      },
+      "outputWidth": 1600,
+      "startSeconds": 371,
+      "endSeconds": 372,
+      "displayFrames": 30,
+      "round": 2,
+      "waitTrimmed": true
+    },
+    {
+      "kind": "video",
+      "id": "round-2-terminal-2",
+      "sceneId": "classname",
+      "view": "terminal",
+      "stage": "color",
+      "eventId": "color",
+      "media": {
+        "path": "captures/development.mp4",
+        "sha256": "e3ac6244cc44dd67ddbd8836216ef2e73dfdf0db0f65c4d98f20e6ae918be53e",
+        "width": 3456,
+        "height": 2234,
+        "durationSeconds": 600.033333
+      },
+      "crop": {
+        "x": 30,
+        "y": 1100,
+        "width": 2250,
+        "height": 850
+      },
+      "outputWidth": 1600,
+      "startSeconds": 405,
+      "endSeconds": 406,
+      "displayFrames": 30,
+      "round": 2,
+      "waitTrimmed": true
+    },
+    {
+      "kind": "video",
+      "id": "round-2-result",
+      "sceneId": "classname",
+      "view": "result",
+      "stage": "color",
+      "eventId": "color",
+      "media": {
+        "path": "captures/development.mp4",
+        "sha256": "e3ac6244cc44dd67ddbd8836216ef2e73dfdf0db0f65c4d98f20e6ae918be53e",
+        "width": 3456,
+        "height": 2234,
+        "durationSeconds": 600.033333
+      },
+      "crop": {
+        "x": 2400,
+        "y": 680,
+        "width": 800,
+        "height": 490
+      },
+      "outputWidth": 960,
+      "startSeconds": 410,
+      "endSeconds": 414,
+      "displayFrames": 120,
+      "round": 2,
+      "cardRect": {
+        "x": 2433,
+        "y": 699,
+        "width": 732,
+        "height": 456
+      }
+    },
+    {
+      "kind": "comparison",
+      "id": "round-2-compare",
+      "sceneId": "classname",
+      "round": 2,
+      "displayFrames": 90,
+      "before": {
+        "stage": "spacing",
+        "eventId": "spacing",
+        "media": {
+          "path": "captures/remake-spacing.png",
+          "sha256": "6b82a303e95503d16ee7bbbb4d1bf7aa87d2d8f498668c0b947156dc3c3ae500",
+          "width": 3456,
+          "height": 2234
+        },
+        "sourceVideo": {
+          "path": "captures/development.mp4",
+          "sha256": "e3ac6244cc44dd67ddbd8836216ef2e73dfdf0db0f65c4d98f20e6ae918be53e",
+          "width": 3456,
+          "height": 2234,
+          "durationSeconds": 600.033333
+        },
+        "sourceSeconds": 250,
+        "crop": {
+          "x": 2400,
+          "y": 680,
+          "width": 800,
+          "height": 490
+        },
+        "cardRect": {
+          "x": 2433,
+          "y": 699,
+          "width": 732,
+          "height": 456
+        },
+        "outputWidth": 800
+      },
+      "after": {
+        "stage": "color",
+        "eventId": "color",
+        "media": {
+          "path": "captures/remake-color.png",
+          "sha256": "d8ced64c2c60ec242e647d7cbcce1f17a43bc1625222ddfd7b32d695e2e609fa",
+          "width": 3456,
+          "height": 2234
+        },
+        "sourceVideo": {
+          "path": "captures/development.mp4",
+          "sha256": "e3ac6244cc44dd67ddbd8836216ef2e73dfdf0db0f65c4d98f20e6ae918be53e",
+          "width": 3456,
+          "height": 2234,
+          "durationSeconds": 600.033333
+        },
+        "sourceSeconds": 412,
+        "crop": {
+          "x": 2400,
+          "y": 680,
+          "width": 800,
+          "height": 490
+        },
+        "cardRect": {
+          "x": 2433,
+          "y": 699,
+          "width": 732,
+          "height": 456
+        },
+        "outputWidth": 800
+      }
     }
   ]
 }

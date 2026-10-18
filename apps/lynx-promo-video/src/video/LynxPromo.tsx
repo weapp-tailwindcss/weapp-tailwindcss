@@ -21,8 +21,8 @@ export function LynxPromo(props: LynxPromoProps) {
         return (
           <Sequence key={scene.id} from={scene.from} durationInFrames={scene.duration}>
             {scene.id === 'hook' && <HookScene copy={copy.hook} />}
-            {scene.id === 'config' && <ConfigScene copy={copy.config} />}
-            {scene.id === 'classname' && <ClassNameScene copy={copy.classname} />}
+            {scene.id === 'config' && <ConfigScene copy={copy.config} locale={locale} />}
+            {scene.id === 'classname' && <ClassNameScene copy={copy.classname} locale={locale} />}
             {scene.id === 'pipeline' && <PipelineScene copy={copy.pipeline} />}
             {scene.id === 'native' && <NativeScene copy={copy.native} locale={locale} />}
             {scene.id === 'evidence' && <EvidenceScene evidence={props.evidence} copy={copy.evidence} locale={locale} />}

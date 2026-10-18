@@ -3,7 +3,7 @@ import { DevelopmentCapture } from '../components/DevelopmentCapture'
 import { eyebrowStyle, SceneShell } from '../components/SceneShell'
 import { COLORS } from '../config'
 
-export function ClassNameScene({ copy }: { copy: PromoCopy['classname'] }) {
+export function ClassNameScene({ copy, locale }: { locale: 'zh' | 'en', copy: PromoCopy['classname'] }) {
   return (
     <SceneShell style={{ padding: '42px 70px 114px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
@@ -16,7 +16,7 @@ export function ClassNameScene({ copy }: { copy: PromoCopy['classname'] }) {
           <div style={{ color: COLORS.muted }}>{copy.jsxNote}</div>
         </div>
       </div>
-      <DevelopmentCapture sceneId="classname" />
+      <DevelopmentCapture sceneId="classname" locale={locale} />
     </SceneShell>
   )
 }
