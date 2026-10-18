@@ -4,6 +4,7 @@ import process from 'node:process'
 import { scenes, VIDEO } from '../src/config'
 import { assertCaptureInputs, compatibilityScreenshot } from './capture/inputs'
 import { readCaptureManifest, resolveManifestPath } from './capture/manifest'
+import { assertNoSuspiciousFrames, inspectVideoFrames } from './media/frame-scan'
 import { mediaDuration, probe, rawVideoDuration, verifyCaptureVideo, verifyNarration } from './media/probe'
 import { assembleSubtitleCues } from './media/subtitles'
 import { verifyDevelopmentMetadata, verifyDevelopmentTimeline, verifySubtitleTimeline } from './media/timeline'
@@ -85,6 +86,10 @@ async function main() {
 
   for (const locale of ['zh', 'en'] as const) {
     await verifyVideo(locale)
+    const finalPath = path.join(outputDir, `lynx-promo-${locale}-1080p.mp4`)
+    const frames = await inspectVideoFrames(finalPath, VIDEO.durationInFrames, VIDEO.fps)
+    await fs.writeFile(path.join(outputDir, `lynx-promo-${locale}-frame-qa.json`), `${JSON.stringify(frames, null, 2)}\n`)
+    assertNoSuspiciousFrames(frames, finalPath)
     await verifyCover(locale)
     await verifySubtitles(locale)
     for (const [index, scene] of scenes.entries()) {
