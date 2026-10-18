@@ -3,8 +3,8 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { assertCaptureInputs, compatibilityScreenshot } from '../scripts/capture/inputs'
-import { resolveManifestPath, sha256, snapshotSources } from '../scripts/capture/manifest'
+import { assertCaptureInputs, assertDevelopmentArtifacts, compatibilityScreenshot } from '../scripts/capture/inputs'
+import { digestFile, manifestRelativePath, resolveManifestPath, sha256, snapshotSources } from '../scripts/capture/manifest'
 import { allocateCaptureOutput, preservePublishedCapture } from '../scripts/capture/output'
 import { verifyCaptureVideo, verifyNarration } from '../scripts/media/probe'
 import { verifyDevelopmentTimeline, verifySubtitleTimeline } from '../scripts/media/timeline'
@@ -19,6 +19,34 @@ async function temporaryDirectory() {
 afterEach(async () => {
   await Promise.all(directories.splice(0).map(directory => fs.rm(directory, { recursive: true, force: true })))
 })
+
+async function stageArtifactFixture() {
+  const root = await temporaryDirectory()
+  const manifestFile = path.join(root, 'manifest.json')
+  async function stage(name: string) {
+    const directory = path.join(root, name)
+    await fs.mkdir(path.join(directory, 'src'), { recursive: true })
+    await fs.writeFile(path.join(directory, 'src', 'Card.tsx'), `${name} source fixture`)
+    const bundleFile = path.join(directory, 'bundle-fixture.bin')
+    await fs.writeFile(bundleFile, `${name} bundle fixture`)
+    const source = await snapshotSources(directory)
+    source.root = manifestRelativePath(manifestFile, directory)
+    const bundle = await digestFile(bundleFile)
+    bundle.path = manifestRelativePath(manifestFile, bundleFile)
+    return { id: name, startSeconds: 0, endSeconds: 10, sourceSha256: source.sha256, bundleSha256: bundle.sha256, source, bundle }
+  }
+  const spacing = await stage('spacing')
+  const color = await stage('color')
+  const native = { device: 'unit fixture', runtime: 'unit fixture', sourceSha256: color.sourceSha256, rawVideo: '', video: '', cover: '', bundle: color.bundle }
+  const manifest: CaptureManifest = {
+    version: 1,
+    createdAt: new Date().toISOString(),
+    source: color.source,
+    platforms: { ios: { ...native }, android: { ...native } },
+    development: { rawVideo: '', video: '', events: [spacing, color], clips: [] },
+  }
+  return { root, manifestFile, manifest }
+}
 
 describe('capture output ownership', () => {
   it('lets the native runner create its output and retains previous runs', async () => {
@@ -82,6 +110,22 @@ describe('capture provenance', () => {
     await expect(compatibilityScreenshot(manifest, manifestFile)).rejects.toThrow('缺少必需')
   })
 
+  it.each(['add', 'remove'])('rejects a changed source file set: %s', async (operation) => {
+    const root = await temporaryDirectory()
+    await fs.mkdir(path.join(root, 'src'))
+    const component = path.join(root, 'src', 'Card.tsx')
+    await fs.writeFile(component, 'recorded-source')
+    const source = await snapshotSources(root)
+    const manifest: CaptureManifest = { version: 1, createdAt: new Date().toISOString(), source, platforms: {} }
+    if (operation === 'add') {
+      await fs.writeFile(path.join(root, 'src', 'New.tsx'), 'unrecorded-source')
+    }
+    else {
+      await fs.unlink(component)
+    }
+    await expect(assertCaptureInputs(manifest, path.join(root, 'manifest.json'), root)).rejects.toThrow('源码文件集与录制摘要不一致')
+  })
+
   it('rejects a source tree changed after the recorded bundle was produced', async () => {
     const root = await temporaryDirectory()
     await fs.mkdir(path.join(root, 'src'))
@@ -134,5 +178,37 @@ describe('media timeline acceptance', () => {
     expect(() => verifyNarration(audio, 'config', 7.8)).not.toThrow()
     expect(() => verifyNarration(audio, 'config', 5)).toThrow('超出')
     expect(() => verifyNarration(video, 'config', 20)).toThrow('缺少旁白音轨')
+  })
+})
+
+describe('development stage provenance', () => {
+  it('verifies archived source and bundle bytes for both edits', async () => {
+    const { manifest, manifestFile } = await stageArtifactFixture()
+    await expect(assertDevelopmentArtifacts(manifest, manifestFile)).resolves.toBeUndefined()
+    await fs.writeFile(resolveManifestPath(manifestFile, manifest.development!.events[0].bundle!.path), 'tampered bundle fixture')
+    await expect(assertDevelopmentArtifacts(manifest, manifestFile)).rejects.toThrow('spacing bundle 与录制摘要不一致')
+  })
+
+  it('rejects missing stage archives and source bytes changed after recording', async () => {
+    const { root, manifest, manifestFile } = await stageArtifactFixture()
+    const event = manifest.development!.events[0]
+    const source = event.source
+    event.source = undefined
+    await expect(assertDevelopmentArtifacts(manifest, manifestFile)).rejects.toThrow('缺少阶段源码与 bundle 归档')
+    event.source = source
+    await fs.writeFile(path.join(root, 'spacing', 'src', 'Card.tsx'), 'tampered source fixture')
+    await expect(assertDevelopmentArtifacts(manifest, manifestFile)).rejects.toThrow('spacing 当前源码与录制摘要不一致')
+  })
+
+  it('requires two distinct edits and the final native bundle identity', async () => {
+    const { manifest, manifestFile } = await stageArtifactFixture()
+    const events = manifest.development!.events
+    events[0].id = 'baseline'
+    await expect(assertDevelopmentArtifacts(manifest, manifestFile)).rejects.toThrow('spacing 与 color 两次真实修改')
+    events[0] = { ...events[1], id: 'spacing' }
+    await expect(assertDevelopmentArtifacts(manifest, manifestFile)).rejects.toThrow('不同的源码及 bundle')
+    const other = await stageArtifactFixture()
+    other.manifest.platforms.android!.bundle = { ...other.manifest.platforms.android!.bundle, sha256: sha256('old bundle fixture') }
+    await expect(assertDevelopmentArtifacts(other.manifest, other.manifestFile)).rejects.toThrow('color 最终源码与双端 bundle')
   })
 })

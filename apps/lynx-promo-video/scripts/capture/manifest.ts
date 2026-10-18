@@ -31,6 +31,8 @@ export interface DevelopmentEvent {
   endSeconds: number
   sourceSha256: string
   bundleSha256: string
+  source?: SourceSnapshot
+  bundle?: FileDigest
   rawStartSeconds?: number
   rawEndSeconds?: number
 }
