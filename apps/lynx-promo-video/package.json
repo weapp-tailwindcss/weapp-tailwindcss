@@ -24,7 +24,8 @@
     "fonts": "tsx scripts/prepare-fonts.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "verify": "pnpm test && pnpm typecheck && tsx scripts/verify-media.ts"
+    "verify": "pnpm test && pnpm typecheck && tsx scripts/verify-media.ts",
+    "delivery": "tsx scripts/package-delivery.ts"
   },
   "dependencies": {
     "@fontsource-variable/jetbrains-mono": "5.3.0",
