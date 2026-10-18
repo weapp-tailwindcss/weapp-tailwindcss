@@ -67,6 +67,11 @@ export async function runIos(hostDir: string, artifactDir: string, target: IosBu
     await fs.writeFile(path.join(artifactDir, 'device.json'), `${JSON.stringify(device, null, 2)}\n`)
     const deviceId = device.id
     const appPath = path.join(derivedData, 'Build', 'Products', 'Debug-iphonesimulator', 'LynxCompatibilityHost.app')
+    if (options.assetsPath) {
+      const assets = path.join(appPath, 'capture-assets')
+      await fs.rm(assets, { recursive: true, force: true })
+      await fs.cp(path.join(hostDir, 'App', 'capture-assets'), assets, { recursive: true })
+    }
     await command('xcrun', ['simctl', 'install', deviceId, appPath], hostDir, 120_000)
     const container = await resolveIosAppContainer(deviceId, applicationId, hostDir, async (error) => {
       const detail = error instanceof Error ? error.stack : String(error)

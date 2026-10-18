@@ -38,6 +38,8 @@ async function capture(platform: CapturePlatform, bundlePath: string, source: So
     '--capture-only',
     '--bundle',
     bundlePath,
+    '--assets',
+    path.dirname(bundlePath),
     '--output',
     rawDir,
     '--duration',
@@ -89,6 +91,16 @@ async function capture(platform: CapturePlatform, bundlePath: string, source: So
   await fs.copyFile(coverPath, publishedCover)
   const device = JSON.parse(await fs.readFile(path.join(rawDir, 'device.json'), 'utf8')) as Record<string, unknown>
   const stagedBundle = await digestFile(path.join(rawDir, 'main.lynx.bundle'))
+  const assetRoot = path.join(rawDir, 'capture-assets')
+  const assetManifest = JSON.parse(await fs.readFile(path.join(rawDir, 'capture-assets.json'), 'utf8')) as { files: Array<{ name: string, sha256: string }> }
+  const assets = await Promise.all(assetManifest.files.map(async (asset) => {
+    // 这里的 name 是扫描层生成的 bundler 资产名，不是文件系统路径。
+    const file = await digestFile(path.join(assetRoot, ...asset.name.split('/')))
+    if (file.sha256 !== asset.sha256) {
+      throw new Error(`本轮原生图片归档摘要不一致：${asset.name}`)
+    }
+    return { ...file, path: manifestRelativePath(manifestFile, file.path) }
+  }))
   manifest.createdAt = new Date().toISOString()
   manifest.source = { ...source, root: manifestRelativePath(manifestFile, source.root) }
   manifest.platforms[platform] = {
@@ -99,6 +111,7 @@ async function capture(platform: CapturePlatform, bundlePath: string, source: So
     video: manifestRelativePath(manifestFile, publishedVideo),
     cover: manifestRelativePath(manifestFile, publishedCover),
     bundle: { ...stagedBundle, path: manifestRelativePath(manifestFile, stagedBundle.path) },
+    ...(assets.length ? { assets, assetsRoot: manifestRelativePath(manifestFile, assetRoot) } : {}),
   }
   await writeCaptureManifest(manifestFile, manifest)
   process.stdout.write(`${JSON.stringify({ platform, rawDir, manifestFile }, null, 2)}\n`)

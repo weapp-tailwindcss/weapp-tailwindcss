@@ -6,6 +6,10 @@
 #import <Lynx/LynxConfig.h>
 #import <Lynx/LynxEnv.h>
 #import <Lynx/LynxView.h>
+#import <Lynx/LynxImageFetcher.h>
+
+@interface ViewController () <LynxImageFetcher>
+@end
 
 @implementation ViewController {
   ReporterBinding *_binding;
@@ -37,6 +41,9 @@
     [builder setThreadStrategyForRender:LynxThreadStrategyForRenderAllOnUI];
     builder.colorScheme = LynxColorSchemeLight;
   }];
+  if ([context[@"captureAssets"] isEqual:@YES]) {
+    lynxView.imageFetcher = self;
+  }
   [_binding attach:lynxView];
   lynxView.frame = self.view.bounds;
   lynxView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
@@ -53,6 +60,28 @@
       durationSeconds:[context[@"captureDurationSeconds"] doubleValue]];
     [_captureScroll start];
   }
+}
+- (dispatch_block_t)loadImageWithURL:(NSURL *)url size:(CGSize)targetSize
+                       contextInfo:(NSDictionary *)contextInfo completion:(LynxImageLoadCompletionBlock)completion {
+  NSString *scheme = url.scheme.lowercaseString;
+  NSString *relative = url.path ?: @"";
+  if ([scheme isEqualToString:@"assets"] && url.host.length > 0 && ![url.host isEqualToString:@"main.lynx.bundle"]) {
+    relative = [url.host stringByAppendingString:relative];
+  }
+  BOOL valid = scheme.length == 0 || [scheme isEqualToString:@"assets"];
+  NSMutableArray<NSString *> *components = [NSMutableArray new];
+  for (NSString *part in [relative componentsSeparatedByString:@"/"]) {
+    if (part.length == 0) continue;
+    if ([part isEqualToString:@"."] || [part isEqualToString:@".."] || [part containsString:@"\\"]) valid = NO;
+    [components addObject:part];
+  }
+  NSString *file = [NSBundle.mainBundle.resourcePath stringByAppendingPathComponent:@"capture-assets"];
+  for (NSString *component in components) file = [file stringByAppendingPathComponent:component];
+  UIImage *image = valid && components.count > 0 ? [UIImage imageWithContentsOfFile:file] : nil;
+  NSError *error = image == nil ? [NSError errorWithDomain:@"LynxCaptureAsset" code:1
+    userInfo:@{NSLocalizedDescriptionKey: @"录制图片不是已归档的本地位图"}] : nil;
+  dispatch_async(dispatch_get_main_queue(), ^{ completion(image, error, url); });
+  return nil;
 }
 - (void)dealloc {
   ReporterBinding *binding = _binding;

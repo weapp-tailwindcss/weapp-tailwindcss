@@ -6,6 +6,7 @@ export type NativePlatform = 'android' | 'ios'
 export interface NativeRunOptions {
   platform: NativePlatform
   bundlePath: string | undefined
+  assetsPath?: string
   captureOnly: boolean
   captureScroll: boolean
   outputDir: string | undefined
@@ -36,11 +37,12 @@ function optionValue(argv: string[], name: string) {
 export function parseNativeRunArgs(argv: string[], cwd = process.cwd()): NativeRunOptions {
   const [platform] = argv
   if (platform !== 'android' && platform !== 'ios') {
-    throw new Error('Usage: tsx e2e/lynx/run-native.ts <android|ios> [--capture-only --bundle <path> --output <dir> --duration <seconds> [--scroll]]')
+    throw new Error('Usage: tsx e2e/lynx/run-native.ts <android|ios> [--capture-only --bundle <path> --assets <dir> --output <dir> --duration <seconds> [--scroll]]')
   }
   const captureOnly = argv.includes('--capture-only')
   const captureScroll = argv.includes('--scroll')
   const bundle = optionValue(argv, '--bundle')
+  const assets = optionValue(argv, '--assets')
   const output = optionValue(argv, '--output')
   const durationSource = optionValue(argv, '--duration')
   const captureDurationSeconds = durationSource ? Number(durationSource) : 15
@@ -49,6 +51,9 @@ export function parseNativeRunArgs(argv: string[], cwd = process.cwd()): NativeR
   }
   if (captureOnly && !bundle) {
     throw new Error('--capture-only requires --bundle.')
+  }
+  if (assets && !captureOnly) {
+    throw new Error('--assets requires --capture-only.')
   }
   if (captureScroll && (!captureOnly || platform !== 'ios')) {
     throw new Error('--scroll requires ios --capture-only.')
@@ -61,6 +66,7 @@ export function parseNativeRunArgs(argv: string[], cwd = process.cwd()): NativeR
     captureOnly,
     captureScroll,
     bundlePath: bundle ? path.resolve(cwd, bundle) : undefined,
+    ...(assets ? { assetsPath: path.resolve(cwd, assets) } : {}),
     outputDir: output ? path.resolve(cwd, output) : undefined,
     captureDurationSeconds,
   }

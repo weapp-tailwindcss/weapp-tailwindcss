@@ -9,6 +9,7 @@ import { androidSdkRoot } from '../react-native/native-toolchain'
 import { recordAndroidVideo } from './android-recording'
 import { buildCompatibilityBundle } from './build'
 import { stageCaptureHostContext } from './capture-host-context'
+import { stageCaptureAssets } from './capture-assets'
 import { exampleDir, lynxIntermediateDir, repoRoot } from './catalog'
 import { collectNativeEvidence, createEvidenceContext, validateNativeEvidence } from './evidence'
 import { readPreparedIosBuildTarget } from './ios-build-target'
@@ -150,7 +151,11 @@ async function main() {
     await fs.mkdir(path.dirname(stagedBundle), { recursive: true })
     const bundle = await fs.readFile(bundlePath)
     const context = createEvidenceContext(bundle)
-    const stagedContext = stageCaptureHostContext(stageNativeRunContext(context, options), options)
+    const assets = options.assetsPath ? await stageCaptureAssets(options.assetsPath, path.dirname(stagedBundle), artifactDir) : undefined
+    const stagedContext = {
+      ...stageCaptureHostContext(stageNativeRunContext(context, options), options),
+      ...(assets ? { captureAssets: true } : {}),
+    }
     const contextSource = `${JSON.stringify(stagedContext, null, 2)}\n`
     const stagedArtifacts = [
       fs.writeFile(stagedBundle, bundle),

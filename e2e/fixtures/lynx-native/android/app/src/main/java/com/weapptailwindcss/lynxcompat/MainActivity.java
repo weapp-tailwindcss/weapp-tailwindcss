@@ -31,6 +31,7 @@ public final class MainActivity extends Activity {
     try (InputStream input = getAssets().open("main.lynx.bundle")) {
       byte[] bundle = readAllBytes(input);
       boolean captureOnly;
+      boolean captureAssets;
       try (InputStream contextInput = getAssets().open("run-context.json")) {
         JSONObject context = new JSONObject(new String(readAllBytes(contextInput), StandardCharsets.UTF_8));
         if (context.getInt("version") != 1) {
@@ -39,10 +40,14 @@ public final class MainActivity extends Activity {
         binding = new ReporterBinding(new EvidenceStore(
           new File(getFilesDir(), "lynx-compat"), context.getString("runId"), bundle, context.getString("bundleSha256")));
         captureOnly = context.optBoolean("captureOnly", false);
+        captureAssets = context.optBoolean("captureAssets", false);
       }
       LynxViewBuilder builder = new LynxViewBuilder()
         .setThreadStrategyForRendering(ThreadStrategyForRendering.ALL_ON_UI)
         .setColorScheme(LynxColorScheme.LIGHT);
+      if (captureAssets) {
+        builder.setImageFetcher(new CaptureImageFetcher());
+      }
       builder.registerModule("CompatibilityReporter", CompatibilityReporterModule.class, binding);
       lynxView = builder.build(this);
       binding.attach(lynxView);
