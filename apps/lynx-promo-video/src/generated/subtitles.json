@@ -1,0 +1,126 @@
+{
+  "zh": [
+    {
+      "sceneId": "hook",
+      "from": 3,
+      "to": 144,
+      "text": "在 Lynx 里，也可以直接写 Tailwind CSS。"
+    },
+    {
+      "sceneId": "config",
+      "from": 153,
+      "to": 384,
+      "text": "@weapp-tailwindcss/lynx，把 Tailwind CSS 4 接入 ReactLynx 和 Rspeedy。"
+    },
+    {
+      "sceneId": "classname",
+      "from": 393,
+      "to": 482,
+      "text": "在真实编辑器里修改状态卡。"
+    },
+    {
+      "sceneId": "classname",
+      "from": 482,
+      "to": 587,
+      "text": "先调整间距和圆角，再换上主题色。"
+    },
+    {
+      "sceneId": "classname",
+      "from": 587,
+      "to": 1284,
+      "text": "每次保存后重新构建，直接查看原生页面的变化。"
+    },
+    {
+      "sceneId": "pipeline",
+      "from": 1293,
+      "to": 1464,
+      "text": "样式在构建时生成 CSS，进入 Lynx 原生 bundle。"
+    },
+    {
+      "sceneId": "native",
+      "from": 1473,
+      "to": 1824,
+      "text": "同一套组件代码，在 iOS 和 Android 上真实运行。"
+    },
+    {
+      "sceneId": "evidence",
+      "from": 1833,
+      "to": 2094,
+      "text": "从生成、编码到双端运行，支持边界都有真实证据。"
+    },
+    {
+      "sceneId": "cta",
+      "from": 2103,
+      "to": 2244,
+      "text": "打开 Lynx 接入文档，开始构建。"
+    }
+  ],
+  "en": [
+    {
+      "sceneId": "hook",
+      "from": 3,
+      "to": 144,
+      "text": "You can write Tailwind CSS directly in Lynx."
+    },
+    {
+      "sceneId": "config",
+      "from": 153,
+      "to": 384,
+      "text": "@weapp-tailwindcss/lynx brings Tailwind CSS 4 to ReactLynx and Rspeedy."
+    },
+    {
+      "sceneId": "classname",
+      "from": 393,
+      "to": 454,
+      "text": "Here is the real editor."
+    },
+    {
+      "sceneId": "classname",
+      "from": 454,
+      "to": 557,
+      "text": "First, change the spacing and corner radius."
+    },
+    {
+      "sceneId": "classname",
+      "from": 557,
+      "to": 654,
+      "text": "Save, build, and check the native result."
+    },
+    {
+      "sceneId": "classname",
+      "from": 654,
+      "to": 748,
+      "text": "Then change the background color and build again."
+    },
+    {
+      "sceneId": "classname",
+      "from": 748,
+      "to": 1284,
+      "text": "Every change you see comes from the actual component."
+    },
+    {
+      "sceneId": "pipeline",
+      "from": 1293,
+      "to": 1464,
+      "text": "Styles become CSS at build time and enter the native bundle."
+    },
+    {
+      "sceneId": "native",
+      "from": 1473,
+      "to": 1824,
+      "text": "The same component code runs natively on iOS and Android."
+    },
+    {
+      "sceneId": "evidence",
+      "from": 1833,
+      "to": 2094,
+      "text": "From generation and encoding to native runtime, every boundary has evidence."
+    },
+    {
+      "sceneId": "cta",
+      "from": 2103,
+      "to": 2244,
+      "text": "Open the Lynx integration docs and start building."
+    }
+  ]
+}

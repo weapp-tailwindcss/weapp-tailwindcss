@@ -165,9 +165,9 @@ describe('media timeline acceptance', () => {
 
   it('validates the current 75-second subtitle timeline and rejects an old 60-second tail', () => {
     const ending = [{ id: 'cta', from: 2100, duration: 150 }]
-    expect(() => verifySubtitleTimeline('00:01:10,267 --> 00:01:14,733', ending, 30, 75)).not.toThrow()
-    expect(() => verifySubtitleTimeline('00:00:56,267 --> 00:00:59,733', ending, 30, 75)).toThrow()
-    expect(() => verifySubtitleTimeline('00:01:10,267 --> 00:01:15,733', ending, 30, 75)).toThrow('越界')
+    expect(() => verifySubtitleTimeline('00:01:10,267 --> 00:01:14,733\nFinal sentence.', ending, 30, 75)).not.toThrow()
+    expect(() => verifySubtitleTimeline('00:00:56,267 --> 00:00:59,733\nOld sentence.', ending, 30, 75)).toThrow()
+    expect(() => verifySubtitleTimeline('00:01:10,267 --> 00:01:15,733\nOverrun sentence.', ending, 30, 75)).toThrow('越界')
   })
 
   it('rejects short captures and narration that spills beyond its scene', () => {

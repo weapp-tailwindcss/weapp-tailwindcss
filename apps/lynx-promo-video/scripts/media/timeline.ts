@@ -1,4 +1,6 @@
 import type { DevelopmentClip, DevelopmentEvent } from '../capture/manifest'
+import type { SubtitleCue } from './subtitles'
+import { parseSubtitleCues } from './subtitles'
 
 interface Scene {
   id: string
@@ -6,28 +8,34 @@ interface Scene {
   duration: number
 }
 
-function subtitleSeconds(value: string) {
-  const [hours, minutes, seconds] = value.replace(',', '.').split(':').map(Number)
-  return hours * 3600 + minutes * 60 + seconds
-}
-
-export function verifySubtitleTimeline(content: string, scenes: readonly Scene[], fps: number, totalSeconds: number) {
-  const entries = [...content.matchAll(/(\d{2}:\d{2}:\d{2}[,.]\d{3})\s+-->\s+(\d{2}:\d{2}:\d{2}[,.]\d{3})/g)]
-  if (entries.length !== scenes.length) {
-    throw new Error(`字幕必须包含 ${scenes.length} 个完整场景。`)
-  }
+export function verifySubtitleTimeline(content: string, scenes: readonly Scene[], fps: number, totalSeconds: number, expectedCues?: readonly SubtitleCue[]) {
+  const entries = parseSubtitleCues(content)
+  const covered = new Map<string, { start: number, end: number }>()
   let previousEnd = 0
-  for (const [index, entry] of entries.entries()) {
-    const start = subtitleSeconds(entry[1])
-    const end = subtitleSeconds(entry[2])
-    const scene = scenes[index]
-    if (start < previousEnd || end <= start || start < scene.from / fps || end > (scene.from + scene.duration) / fps + 0.001 || end > totalSeconds) {
-      throw new Error(`字幕 ${scene.id} 包含重叠、越界或无效时间。`)
+  for (const entry of entries) {
+    const { startSeconds: start, endSeconds: end } = entry
+    const scene = scenes.find(scene => start >= scene.from / fps && start < (scene.from + scene.duration) / fps)
+    if (!scene || start < previousEnd || end > (scene.from + scene.duration) / fps + 0.001 || end > totalSeconds) {
+      throw new Error('字幕包含重叠、越界或无效时间。')
     }
+    const coverage = covered.get(scene.id)
+    covered.set(scene.id, { start: coverage?.start ?? start, end })
     previousEnd = end
+  }
+  for (const scene of scenes) {
+    const coverage = covered.get(scene.id)
+    if (!coverage || coverage.start > scene.from / fps + 0.6 || coverage.end < (scene.from + scene.duration) / fps - 1) {
+      throw new Error(`字幕未覆盖完整 ${scene.id} 场景。`)
+    }
   }
   if (previousEnd < totalSeconds - 1) {
     throw new Error(`字幕未覆盖完整 ${totalSeconds} 秒时间线。`)
+  }
+  if (expectedCues && (expectedCues.length !== entries.length || entries.some((entry, index) => {
+    const expected = expectedCues[index]
+    return entry.text !== expected.text || Math.abs(entry.startSeconds - expected.from / fps) > 0.001 || Math.abs(entry.endSeconds - expected.to / fps) > 0.001
+  }))) {
+    throw new Error('字幕与实际旁白逐句时间或文字不一致。')
   }
 }
 

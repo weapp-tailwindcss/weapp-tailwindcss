@@ -5,15 +5,25 @@ import { scenes, VIDEO } from '../src/config'
 import { assertCaptureInputs, compatibilityScreenshot } from './capture/inputs'
 import { readCaptureManifest, resolveManifestPath } from './capture/manifest'
 import { mediaDuration, probe, rawVideoDuration, verifyCaptureVideo, verifyNarration } from './media/probe'
+import { assembleSubtitleCues } from './media/subtitles'
 import { verifyDevelopmentTimeline, verifySubtitleTimeline } from './media/timeline'
 import { appRoot, outputDir, publicDir } from './paths'
 
 async function verifySubtitles(locale: 'zh' | 'en') {
   const expectedEnd = VIDEO.durationInFrames / VIDEO.fps
+  const narration = Object.fromEntries(await Promise.all(scenes.map(async (scene, index) => {
+    const file = path.join(publicDir, 'audio', 'narration', locale, `${String(index + 1).padStart(2, '0')}-${scene.id}.vtt`)
+    return [scene.id, await fs.readFile(file, 'utf8')]
+  })))
+  const expected = assembleSubtitleCues(scenes, VIDEO.fps, narration)
+  const generated = JSON.parse(await fs.readFile(path.join(appRoot, 'src', 'generated', 'subtitles.json'), 'utf8')) as Record<string, unknown>
+  if (JSON.stringify(generated[locale]) !== JSON.stringify(expected)) {
+    throw new Error(`${locale} 烧录字幕与实际旁白不一致，请重新生成素材。`)
+  }
   for (const extension of ['srt', 'vtt'] as const) {
     const file = path.join(appRoot, `lynx-promo-${locale}.${extension}`)
     const content = await fs.readFile(file, 'utf8')
-    verifySubtitleTimeline(content, scenes, VIDEO.fps, expectedEnd)
+    verifySubtitleTimeline(content, scenes, VIDEO.fps, expectedEnd, expected)
   }
 }
 
@@ -43,6 +53,11 @@ async function verifyVideo(locale: 'zh' | 'en') {
 }
 
 async function main() {
+  const ambientFile = path.join(publicDir, 'audio', 'ambient.wav')
+  const ambientSeconds = mediaDuration(await probe(ambientFile), ambientFile)
+  if (Math.abs(ambientSeconds - VIDEO.durationInFrames / VIDEO.fps) > 1 / VIDEO.fps) {
+    throw new Error(`环境音必须覆盖完整 ${VIDEO.durationInFrames / VIDEO.fps} 秒视频。`)
+  }
   const captureDir = path.join(publicDir, 'captures')
   const manifestFile = path.resolve(process.env.LYNX_PROMO_CAPTURE_MANIFEST ?? path.join(captureDir, 'manifest.json'))
   const manifest = await readCaptureManifest(manifestFile)
