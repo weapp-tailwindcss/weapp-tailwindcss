@@ -23,7 +23,7 @@ export function getClassnameNarrationPlan(locale: PromoLocale): readonly Narrati
   return locale === 'zh'
     ? [
         { text: '在真实编辑器里修改状态卡。', startSeconds: 0.1 },
-        { text: '先调整间距和圆角。', startSeconds: 3.1 },
+        { text: '先调整间距和圆角。', startSeconds: 3.2 },
         { text: '保存并构建，查看原生结果。', startSeconds: 9.1 },
         { text: '再修改背景色，重新构建并查看变化。', startSeconds: 15.1 },
       ]

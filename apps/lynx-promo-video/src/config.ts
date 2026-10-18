@@ -133,7 +133,7 @@ const chineseCopy: PromoCopy = {
   narration: {
     hook: '在 Lynx 里，也可以直接写 Tailwind CSS。',
     config: '@weapp-tailwindcss/lynx，把 Tailwind CSS 4 接入 ReactLynx 和 Rspeedy。',
-    classname: '在真实编辑器里修改状态卡。先调整间距和圆角，再换上主题色。每次保存后重新构建，直接查看原生页面的变化。',
+    classname: '在真实编辑器里修改状态卡。先调整间距和圆角。保存并构建，查看原生结果。再修改背景色，重新构建并查看变化。',
     pipeline: '样式在构建时生成 CSS，进入 Lynx 原生 bundle。',
     native: '同一套组件代码，在 iOS 和 Android 上真实运行。',
     evidence: '从生成、编码到双端运行，支持边界都有真实证据。',
