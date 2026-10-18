@@ -2,6 +2,9 @@
 
 exports[`ReactLynx 宣传示例真实 static 产物 > 重新生成 Tailwind CSS 并匹配完整样式基线 1`] = `
 "/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+  .fixed {
+    position: fixed;
+  }
   .mt-1 {
     margin-top: 0.25rem;
   }
@@ -26,8 +29,8 @@ exports[`ReactLynx 宣传示例真实 static 产物 > 重新生成 Tailwind CSS 
   .flex {
     display: flex;
   }
-  .h-\\[96px\\] {
-    height: 96px;
+  .h-\\[128px\\] {
+    height: 128px;
   }
   .h-screen {
     height: 100vh;
@@ -38,8 +41,8 @@ exports[`ReactLynx 宣传示例真实 static 产物 > 重新生成 Tailwind CSS 
   .w-\\[48\\%\\] {
     width: 48%;
   }
-  .w-\\[96px\\] {
-    width: 96px;
+  .w-\\[128px\\] {
+    width: 128px;
   }
   .flex-row {
     flex-direction: row;

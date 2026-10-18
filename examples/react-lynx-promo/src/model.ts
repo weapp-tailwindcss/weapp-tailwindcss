@@ -1,7 +1,8 @@
-export const buildStatus = {
-  label: 'Bundle ready',
-  detail: 'main.lynx.bundle',
-  target: 'ReactLynx',
+export const creatorProfile = {
+  name: 'sonofmagic',
+  project: 'weapp-tailwindcss',
+  detail: 'Tailwind CSS × Lynx',
+  caption: 'Style with utility classes',
 } as const
 
 export const pipelineSteps = [

@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { buildStatus, pipelineSteps } from './model'
+import { creatorProfile, pipelineSteps } from './model'
 
 describe('promo dashboard model', () => {
-  it('keeps the recording at the bundle result without simulated progress', () => {
-    expect(buildStatus).toEqual({
-      label: 'Bundle ready',
-      detail: 'main.lynx.bundle',
-      target: 'ReactLynx',
+  it('keeps the creator identity and content fixed while styles change', () => {
+    expect(creatorProfile).toEqual({
+      name: 'sonofmagic',
+      project: 'weapp-tailwindcss',
+      detail: 'Tailwind CSS × Lynx',
+      caption: 'Style with utility classes',
     })
   })
 

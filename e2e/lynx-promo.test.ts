@@ -26,6 +26,7 @@ interface BuildOutput {
   decodedText: string
   bundle: Uint8Array
   tasm: string
+  images: { assetName: string, bytes: Uint8Array }[]
 }
 const outputs = new Map<StageId, BuildOutput>()
 let temporaryRoot: string | undefined
@@ -50,7 +51,8 @@ async function runPnpm(args: string[], logName: string, debug = '', cwd = repoRo
 }
 
 async function readBuildOutput(directory: string, stage: StageId): Promise<BuildOutput> {
-  const intermediate = path.join(directory, 'dist', '.lynx', 'main')
+  const dist = path.join(directory, 'dist')
+  const intermediate = path.join(dist, '.lynx', 'main')
   const [encoderCss, bundleBytes, tasm, source] = await Promise.all([
     fs.readFile(path.join(intermediate, 'main.css'), 'utf8'),
     fs.readFile(path.join(directory, 'dist', 'main.lynx.bundle')),
@@ -72,7 +74,18 @@ async function readBuildOutput(directory: string, stage: StageId): Promise<Build
     fs.writeFile(path.join(stageArtifacts, 'main.lynx.bundle'), bundle),
     fs.writeFile(path.join(stageArtifacts, 'BuildStatus.tsx'), source),
   ])
-  return { encoderCss, decodedCss: decoded.css.text.replace(/\{\{(--[a-z0-9-]+)\}\}/gi, 'var($1)'), decodedText: JSON.stringify(decoded), bundle, tasm }
+  const entries = await fs.readdir(dist, { recursive: true, withFileTypes: true })
+  const images = await Promise.all(entries.filter(entry => entry.isFile() && path.extname(entry.name) === '.jpg').map(async (entry) => {
+    const file = path.join(entry.parentPath, entry.name)
+    const relative = path.relative(dist, file)
+    const bytes = new Uint8Array(await fs.readFile(file))
+    const archive = path.join(stageArtifacts, relative)
+    await fs.mkdir(path.dirname(archive), { recursive: true })
+    await fs.writeFile(archive, bytes)
+    // 从文件系统路径进入 bundle asset URL 边界，URL 的分隔符统一为 /。
+    return { assetName: relative.split(path.sep).join('/'), bytes }
+  }))
+  return { encoderCss, decodedCss: decoded.css.text.replace(/\{\{(--[a-z0-9-]+)\}\}/gi, 'var($1)'), decodedText: JSON.stringify(decoded), bundle, tasm, images }
 }
 
 async function buildStageFixture(stage: typeof stages[number]) {
@@ -149,7 +162,7 @@ describe('ReactLynx 宣传示例真实 static 产物', () => {
   })
 
   it.each(stages)('$id 阶段的颜色、px 间距、任意值圆角和真实头像进入原生 bundle', async (stage) => {
-    const { bundle, decodedCss, decodedText, encoderCss } = outputs.get(stage.id)!
+    const { bundle, decodedCss, decodedText, encoderCss, images } = outputs.get(stage.id)!
     expect(bundle.byteLength).toBeGreaterThan(1024)
     expect(declarations(encoderCss, `.bg-\\[\\${stage.color}\\]`)).toMatchObject({ 'background-color': stage.color })
     // decoder 的诊断选择器不保留 CSS 转义，shorthand 已按原生属性展开。
@@ -169,11 +182,17 @@ describe('ReactLynx 宣传示例真实 static 产物', () => {
     expect(declarations(decodedCss, '.text-white')).toEqual({ color: '#ffffff' })
     expect(declarations(decodedCss, '.text-[20px]')).toEqual({ 'font-size': '20px' })
     expect(declarations(decodedCss, '.text-[16px]')).toEqual({ 'font-size': '16px' })
-    expect(declarations(decodedCss, '.h-[96px]')).toEqual({ height: '96px' })
-    expect(declarations(decodedCss, '.w-[96px]')).toEqual({ width: '96px' })
+    expect(declarations(decodedCss, '.h-[128px]')).toEqual({ height: '128px' })
+    expect(declarations(decodedCss, '.w-[128px]')).toEqual({ width: '128px' })
     expect(declarations(decodedCss, '.mr-[16px]')).toEqual({ 'margin-right': '16px' })
     const avatar = await fs.readFile(path.join(exampleDir, 'src', 'assets', 'github-avatar.jpg'))
-    expect(decodedText).toContain(`data:image/jpeg;base64,${avatar.toString('base64')}`)
+    expect(images).toHaveLength(1)
+    expect(images[0]!.bytes).toEqual(new Uint8Array(avatar))
+    expect(decodedText).toContain(images[0]!.assetName)
+    expect(decodedText).not.toContain('data:image/')
+    for (const content of ['sonofmagic', 'weapp-tailwindcss', 'Tailwind CSS × Lynx', 'Style with utility classes']) {
+      expect(decodedText).toContain(content)
+    }
     expect(declarations(decodedCss, '.min-h-[260px]')).toEqual({ 'min-height': '260px' })
     expect(declarations(decodedCss, '.h-screen')).toEqual({ height: '100vh' })
   })
@@ -191,7 +210,8 @@ describe('ReactLynx 宣传示例真实 static 产物', () => {
     expect(card).toContain('text-[20px] font-bold text-white')
     expect(card).toContain('<image')
     expect(card).toContain('src={githubAvatar}')
-    expect(card).toContain('h-[96px] w-[96px] rounded-[28px]')
+    expect(card).toContain('h-[128px] w-[128px] rounded-[28px]')
+    expect(card).toContain('{creatorProfile.name}')
     expect(card).not.toContain('setInterval')
     expect(JSON.parse(outputs.get('color')!.tasm).sourceContent.config.enableCSSInlineVariables).toBe(true)
   })
