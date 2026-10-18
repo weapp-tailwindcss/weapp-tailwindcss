@@ -1,0 +1,197 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ReactLynx 宣传示例真实 static 产物 > 重新生成 Tailwind CSS 并匹配完整样式基线 1`] = `
+"/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+  .mt-1 {
+    margin-top: 0.25rem;
+  }
+  .mt-2 {
+    margin-top: 0.5rem;
+  }
+  .mt-3 {
+    margin-top: 0.75rem;
+  }
+  .mt-4 {
+    margin-top: 1rem;
+  }
+  .mt-6 {
+    margin-top: 1.5rem;
+  }
+  .mb-3 {
+    margin-bottom: 0.75rem;
+  }
+  .flex {
+    display: flex;
+  }
+  .h-\\[4px\\] {
+    height: 4px;
+  }
+  .min-h-screen {
+    min-height: 100vh;
+  }
+  .w-\\[48\\%\\] {
+    width: 48%;
+  }
+  .flex-row {
+    flex-direction: row;
+  }
+  .items-center {
+    align-items: center;
+  }
+  .justify-between {
+    justify-content: space-between;
+  }
+  .rounded-\\[4px\\] {
+    border-radius: 4px;
+  }
+  .rounded-\\[12px\\] {
+    border-radius: 12px;
+  }
+  .rounded-\\[14px\\] {
+    border-radius: 14px;
+  }
+  .rounded-\\[16px\\] {
+    border-radius: 16px;
+  }
+  .rounded-\\[18px\\] {
+    border-radius: 18px;
+  }
+  .border {
+    border-style: var(--tw-border-style);
+    border-width: 1px;
+  }
+  .border-\\[\\#2c383c\\] {
+    border-color: #2c383c;
+  }
+  .border-\\[\\#2d3a3e\\] {
+    border-color: #2d3a3e;
+  }
+  .border-\\[\\#263236\\] {
+    border-color: #263236;
+  }
+  .bg-\\[\\#0d1112\\] {
+    background-color: #0d1112;
+  }
+  .bg-\\[\\#1c2528\\] {
+    background-color: #1c2528;
+  }
+  .bg-\\[\\#07c160\\] {
+    background-color: #07c160;
+  }
+  .bg-\\[\\#151b1d\\] {
+    background-color: #151b1d;
+  }
+  .bg-\\[\\#10241b\\] {
+    background-color: #10241b;
+  }
+  .bg-\\[\\#17201d\\] {
+    background-color: #17201d;
+  }
+  .bg-\\[\\#182023\\] {
+    background-color: #182023;
+  }
+  .p-3 {
+    padding: 0.75rem;
+  }
+  .p-4 {
+    padding: 1rem;
+  }
+  .pt-2 {
+    padding-top: 0.5rem;
+  }
+  .pt-\\[72px\\] {
+    padding-top: 72px;
+  }
+  .pr-3 {
+    padding-right: 0.75rem;
+  }
+  .pr-5 {
+    padding-right: 1.25rem;
+  }
+  .pb-2 {
+    padding-bottom: 0.5rem;
+  }
+  .pb-8 {
+    padding-bottom: 2rem;
+  }
+  .pl-3 {
+    padding-left: 0.75rem;
+  }
+  .pl-5 {
+    padding-left: 1.25rem;
+  }
+  .text-\\[10px\\] {
+    font-size: 10px;
+  }
+  .text-\\[11px\\] {
+    font-size: 11px;
+  }
+  .text-\\[12px\\] {
+    font-size: 12px;
+  }
+  .text-\\[13px\\] {
+    font-size: 13px;
+  }
+  .text-\\[25px\\] {
+    font-size: 25px;
+  }
+  .text-\\[26px\\] {
+    font-size: 26px;
+  }
+  .font-bold {
+    --tw-font-weight: 700;
+    font-weight: 700;
+  }
+  .text-\\[\\#6f8086\\] {
+    color: #6f8086;
+  }
+  .text-\\[\\#9baaae\\] {
+    color: #9baaae;
+  }
+  .text-\\[\\#75dfa6\\] {
+    color: #75dfa6;
+  }
+  .text-\\[\\#87979c\\] {
+    color: #87979c;
+  }
+  .text-\\[\\#718187\\] {
+    color: #718187;
+  }
+  .text-\\[\\#829196\\] {
+    color: #829196;
+  }
+  .text-\\[\\#aebdc2\\] {
+    color: #aebdc2;
+  }
+  .text-\\[\\#b8c6ca\\] {
+    color: #b8c6ca;
+  }
+  .text-\\[\\#dde7e4\\] {
+    color: #dde7e4;
+  }
+  .text-\\[\\#e8efed\\] {
+    color: #e8efed;
+  }
+  .text-\\[\\#edf4f1\\] {
+    color: #edf4f1;
+  }
+  .text-\\[\\#f1f6f4\\] {
+    color: #f1f6f4;
+  }
+page {
+  min-height: 100vh;
+  background-color: #0d1112;
+}
+*, ::before, ::after {
+    --tw-border-style: solid;
+}
+/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+  @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {
+    *, ::before, ::after {
+      --tw-border-style: solid;
+    }
+  }
+
+
+/*# sourceMappingURL=http://192.168.10.33:3000/.lynx/main/main.css.map*/"
+`;
