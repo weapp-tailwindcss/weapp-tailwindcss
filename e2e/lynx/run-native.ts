@@ -161,7 +161,8 @@ async function main() {
     await fs.mkdir(path.dirname(stagedBundle), { recursive: true })
     const bundle = await fs.readFile(bundlePath)
     const context = createEvidenceContext(bundle)
-    const contextSource = `${JSON.stringify(context, null, 2)}\n`
+    const stagedContext = options.captureScroll ? { ...context, captureScroll: true } : context
+    const contextSource = `${JSON.stringify(stagedContext, null, 2)}\n`
     const stagedArtifacts = [
       fs.writeFile(stagedBundle, bundle),
       fs.writeFile(path.join(artifactDir, 'main.lynx.bundle'), bundle),

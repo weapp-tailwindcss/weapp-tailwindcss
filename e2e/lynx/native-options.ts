@@ -7,6 +7,7 @@ export interface NativeRunOptions {
   platform: NativePlatform
   bundlePath: string | undefined
   captureOnly: boolean
+  captureScroll: boolean
   outputDir: string | undefined
   captureDurationSeconds: number
 }
@@ -30,9 +31,10 @@ function optionValue(argv: string[], name: string) {
 export function parseNativeRunArgs(argv: string[], cwd = process.cwd()): NativeRunOptions {
   const [platform] = argv
   if (platform !== 'android' && platform !== 'ios') {
-    throw new Error('Usage: tsx e2e/lynx/run-native.ts <android|ios> [--capture-only --bundle <path> --output <dir> --duration <seconds>]')
+    throw new Error('Usage: tsx e2e/lynx/run-native.ts <android|ios> [--capture-only --bundle <path> --output <dir> --duration <seconds> [--scroll]]')
   }
   const captureOnly = argv.includes('--capture-only')
+  const captureScroll = argv.includes('--scroll')
   const bundle = optionValue(argv, '--bundle')
   const output = optionValue(argv, '--output')
   const durationSource = optionValue(argv, '--duration')
@@ -43,9 +45,16 @@ export function parseNativeRunArgs(argv: string[], cwd = process.cwd()): NativeR
   if (captureOnly && !bundle) {
     throw new Error('--capture-only requires --bundle.')
   }
+  if (captureScroll && (!captureOnly || platform !== 'ios')) {
+    throw new Error('--scroll requires ios --capture-only.')
+  }
+  if (captureScroll && captureDurationSeconds < 8) {
+    throw new Error('--scroll requires --duration of at least 8 seconds to record both native offsets.')
+  }
   return {
     platform,
     captureOnly,
+    captureScroll,
     bundlePath: bundle ? path.resolve(cwd, bundle) : undefined,
     outputDir: output ? path.resolve(cwd, output) : undefined,
     captureDurationSeconds,

@@ -42,6 +42,7 @@ async function capture(platform: CapturePlatform, bundlePath: string, source: So
     rawDir,
     '--duration',
     '15',
+    ...(platform === 'ios' ? ['--scroll'] : []),
   ], repoRoot)
 
   const videoPath = path.join(runDir, `${platform}.mp4`)

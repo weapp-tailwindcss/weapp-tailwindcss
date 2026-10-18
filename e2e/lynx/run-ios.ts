@@ -6,6 +6,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { execa } from 'execa'
+import { collectCaptureScrollEvidence } from './capture-scroll'
 import { collectNativeEvidence } from './evidence'
 import { withBuiltIosDevice } from './ios-build-target'
 import { resolveIosAppContainer } from './ios-container'
@@ -78,6 +79,9 @@ export async function runIos(hostDir: string, artifactDir: string, target: IosBu
       await new Promise(resolve => setTimeout(resolve, 2200))
       await command('xcrun', ['simctl', 'io', deviceId, 'screenshot', path.join(artifactDir, 'screen.png')], hostDir, 60_000)
       await recordIosVideo(deviceId, artifactDir, options.captureDurationSeconds)
+      if (options.captureScroll) {
+        await collectCaptureScrollEvidence(path.join(path.dirname(reportPath), 'capture-scroll.json'), artifactDir, context)
+      }
       return undefined
     }
     const source = await waitForReportOrFailure(

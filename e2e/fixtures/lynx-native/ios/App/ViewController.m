@@ -2,12 +2,14 @@
 #import "CompatibilityReporter.h"
 #import "EvidenceStore.h"
 #import "ReporterBinding.h"
+#import "CaptureScrollRecorder.h"
 #import <Lynx/LynxConfig.h>
 #import <Lynx/LynxEnv.h>
 #import <Lynx/LynxView.h>
 
 @implementation ViewController {
   ReporterBinding *_binding;
+  CaptureScrollRecorder *_captureScroll;
 }
 - (void)viewDidLoad {
   [super viewDidLoad];
@@ -45,6 +47,11 @@
   [self.view addSubview:lynxView];
   [lynxView loadTemplate:data withURL:@"assets://main.lynx.bundle" initData:nil];
   [lynxView triggerLayout];
+  if ([context[@"captureScroll"] isEqual:@YES]) {
+    NSURL *directory = [[root URLByAppendingPathComponent:@"lynx-compat"] URLByAppendingPathComponent:context[@"runId"]];
+    _captureScroll = [[CaptureScrollRecorder alloc] initWithView:lynxView directory:directory context:store.context];
+    [_captureScroll start];
+  }
 }
 - (void)dealloc {
   ReporterBinding *binding = _binding;
