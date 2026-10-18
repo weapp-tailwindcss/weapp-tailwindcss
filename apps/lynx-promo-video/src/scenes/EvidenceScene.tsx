@@ -52,7 +52,7 @@ export function EvidenceScene({ evidence, copy, locale }: { evidence: EvidenceSu
         <Img src={staticFile('captures/compatibility-lab.png')} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
         <div style={{ position: 'absolute', left: 20, right: 20, bottom: 20, padding: '16px 18px', borderRadius: 8, background: 'rgba(9, 13, 14, 0.92)', color: '#cbd7d4', fontSize: 18, lineHeight: 1.5 }}>
           <div style={{ color: COLORS.green, fontWeight: 680 }}>{labels.capture}</div>
-          <div style={{ marginTop: 6 }}>{labels.source}</div>
+          <div style={{ marginTop: 6, color: '#cbd7d4' }}>{labels.source}</div>
         </div>
       </div>
     </SceneShell>

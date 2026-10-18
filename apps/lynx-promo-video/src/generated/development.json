@@ -1,0 +1,22 @@
+{
+  "clips": [
+    {
+      "sceneId": "config",
+      "eventId": "config",
+      "startSeconds": 0,
+      "endSeconds": 8
+    },
+    {
+      "sceneId": "classname",
+      "eventId": "spacing",
+      "startSeconds": 8,
+      "endSeconds": 23
+    },
+    {
+      "sceneId": "classname",
+      "eventId": "color",
+      "startSeconds": 23,
+      "endSeconds": 38
+    }
+  ]
+}

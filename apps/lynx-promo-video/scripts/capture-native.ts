@@ -69,7 +69,7 @@ async function capture(platform: CapturePlatform, bundlePath: string, source: So
   await command('ffmpeg', [
     '-n',
     '-ss',
-    '3',
+    '1',
     '-i',
     videoPath,
     '-frames:v',

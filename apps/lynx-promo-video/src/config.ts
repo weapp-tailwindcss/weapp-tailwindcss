@@ -4,7 +4,7 @@ export const VIDEO = {
   width: 1920,
   height: 1080,
   fps: 30,
-  durationInFrames: 1800,
+  durationInFrames: 2250,
 } as const
 
 export const COLORS = {
@@ -25,11 +25,11 @@ export const DOCS_URL = DOCS_URL_ZH
 export const scenes = [
   { id: 'hook', from: 0, duration: 150 },
   { id: 'config', from: 150, duration: 240 },
-  { id: 'classname', from: 390, duration: 330 },
-  { id: 'pipeline', from: 720, duration: 330 },
-  { id: 'native', from: 1050, duration: 360 },
-  { id: 'evidence', from: 1410, duration: 270 },
-  { id: 'cta', from: 1680, duration: 120 },
+  { id: 'classname', from: 390, duration: 900 },
+  { id: 'pipeline', from: 1290, duration: 180 },
+  { id: 'native', from: 1470, duration: 360 },
+  { id: 'evidence', from: 1830, duration: 270 },
+  { id: 'cta', from: 2100, duration: 150 },
 ] as const
 
 export type SceneId = typeof scenes[number]['id']
@@ -98,14 +98,14 @@ const chineseCopy: PromoCopy = {
   },
   config: {
     eyebrow: '一个 Rspeedy 插件',
-    title: '接入只需要一处配置',
-    note: '插件进入既有 Rspack 生命周期，不改变组件写法。',
+    title: '打开真实项目，从配置开始',
+    note: 'ReactLynx + Rspeedy + Tailwind CSS 4',
   },
   classname: {
-    eyebrow: '原生 className',
-    title: '熟悉的 utility，直接写进组件',
-    runtimeNote: '无运行时样式表',
-    jsxNote: '无 JSX 改写',
+    eyebrow: '真实开发实录',
+    title: '改代码，构建，看原生结果',
+    runtimeNote: '间距与圆角 → 背景色',
+    jsxNote: '构建等待已压缩',
   },
   pipeline: {
     eyebrow: '构建阶段完成转换',
@@ -115,7 +115,7 @@ const chineseCopy: PromoCopy = {
   native: {
     eyebrow: '真实原生运行',
     title: ['同一套组件代码', '两个原生目标'],
-    note: '滚动、构建状态和界面布局均来自实际 ReactLynx bundle。',
+    note: '最终样式与滚动画面，来自同一份 ReactLynx bundle。',
   },
   evidence: {
     eyebrow: '兼容性实验室',
@@ -133,8 +133,8 @@ const chineseCopy: PromoCopy = {
   narration: {
     hook: '在 Lynx 里，也可以直接写 Tailwind CSS。',
     config: '@weapp-tailwindcss/lynx，把 Tailwind CSS 4 接入 ReactLynx 和 Rspeedy。',
-    classname: '保留原生 className，不需要运行时样式表，也不改写 JSX。',
-    pipeline: '样式在构建阶段生成普通 CSS，进入 Lynx 原生 bundle。',
+    classname: '在真实编辑器里修改状态卡。先调整间距和圆角，再换上主题色。每次保存后重新构建，直接查看原生页面的变化。',
+    pipeline: '样式在构建时生成 CSS，进入 Lynx 原生 bundle。',
     native: '同一套组件代码，在 iOS 和 Android 上真实运行。',
     evidence: '从生成、编码到双端运行，支持边界都有真实证据。',
     cta: '打开 Lynx 接入文档，开始构建。',
@@ -151,14 +151,14 @@ const englishCopy: PromoCopy = {
   },
   config: {
     eyebrow: 'One Rspeedy plugin',
-    title: 'One config is all it takes',
-    note: 'The plugin joins the existing Rspack lifecycle without changing component syntax.',
+    title: 'Start in a real project',
+    note: 'ReactLynx + Rspeedy + Tailwind CSS 4',
   },
   classname: {
-    eyebrow: 'Native className',
-    title: 'Familiar utilities, directly in your components',
-    runtimeNote: 'No runtime stylesheet',
-    jsxNote: 'No JSX rewriting',
+    eyebrow: 'Recorded development',
+    title: 'Edit, build, see the native result',
+    runtimeNote: 'Spacing and radius → background color',
+    jsxNote: 'Build waits condensed',
   },
   pipeline: {
     eyebrow: 'Build-time transformation',
@@ -168,7 +168,7 @@ const englishCopy: PromoCopy = {
   native: {
     eyebrow: 'Real native runtime',
     title: ['One component codebase', 'Two native targets'],
-    note: 'Scrolling, build status, and layout come from the real ReactLynx bundle.',
+    note: 'The final styles and scrolling are recorded from the same ReactLynx bundle.',
   },
   evidence: {
     eyebrow: 'Compatibility lab',
@@ -186,8 +186,8 @@ const englishCopy: PromoCopy = {
   narration: {
     hook: 'You can write Tailwind CSS directly in Lynx.',
     config: '@weapp-tailwindcss/lynx brings Tailwind CSS 4 to ReactLynx and Rspeedy.',
-    classname: 'Keep native className, with no runtime stylesheet and no JSX rewriting.',
-    pipeline: 'Styles become ordinary CSS at build time and enter the Lynx native bundle.',
+    classname: 'Here is the real editor. First, change the spacing and corner radius. Save, build, and check the native result. Then change the background color and build again. Every change you see comes from the actual component.',
+    pipeline: 'Styles become CSS at build time and enter the native bundle.',
     native: 'The same component code runs natively on iOS and Android.',
     evidence: 'From generation and encoding to native runtime, every boundary has evidence.',
     cta: 'Open the Lynx integration docs and start building.',
