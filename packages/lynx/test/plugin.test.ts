@@ -74,6 +74,47 @@ describe('pluginLynxTailwindcss', () => {
     }
   })
 
+  it('在 beforeEmit 生成结构化诊断，并按 strict 选项报告业务 encoder 删除', () => {
+    const { api, getBundlerHandler } = createApi()
+    const beforeEmit = vi.fn()
+    const templatePlugin = {
+      getLynxTemplatePluginHooks: vi.fn(() => ({
+        beforeEncode: { tap: vi.fn() },
+        beforeEmit: { tap: beforeEmit },
+      })),
+    }
+    api.useExposed.mockReturnValue({ LynxTemplatePlugin: templatePlugin })
+    const report = vi.fn()
+    pluginLynxTailwindcss({ diagnostics: { strict: true, onReport: report } }).setup(api as never)
+    const use = vi.fn()
+    getBundlerHandler()?.({ plugin: () => ({ use }) })
+    const [Plugin, [host, options]] = use.mock.calls[1]!
+    expect(options).toMatchObject({ strict: true })
+    const compilation = { warnings: [], errors: [] }
+    new Plugin(host, options).apply({ hooks: { thisCompilation: { tap: (_name: string, callback: (value: unknown) => void) => callback(compilation) } } })
+    const args = {
+      finalEncodeOptions: {
+        compilerOptions: { targetSdkVersion: '3.9', engineVersion: '4.0.1' },
+        css: {
+          cssMap: {
+            main: [{
+              type: 'StyleRule',
+              selectorText: { value: '.px-\\[7.5px\\]', loc: { line: 1, column: 1 } },
+              style: [{ name: 'padding-inline', value: '7.5px', keyLoc: { line: 1, column: 20 } }],
+            }],
+          },
+        },
+      },
+      cssDiagnostics: JSON.stringify([{ type: 'property', name: 'padding-inline', line: 1, column: 20 }]),
+    }
+    const result = beforeEmit.mock.calls[0]![1](args)
+
+    expect(result).toBe(args)
+    expect(report).toHaveBeenCalledWith(expect.objectContaining({ counts: { generated: 1, encoderRejected: 1, unknown: 0 } }))
+    expect(compilation.errors).toHaveLength(1)
+    expect(compilation.warnings).toHaveLength(0)
+  })
+
   it('缺少宿主模板 API 时明确失败，不静默回退旧变量解析', () => {
     const { api, getBundlerHandler } = createApi()
     pluginLynxTailwindcss().setup(api as never)
