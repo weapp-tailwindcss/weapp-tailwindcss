@@ -109,6 +109,12 @@ function resolveStaticCustomPropertyValue(
     return undefined
   }
 
+  // Tailwind 主题变量绝大多数是直接颜色或长度值。它们不包含变量引用，
+  // 无需为每个声明构造 value-parser AST；只有别名链才需要递归解析。
+  if (!value.includes('var(')) {
+    return value
+  }
+
   const nextResolving = new Set(resolving)
   nextResolving.add(property)
   const parsed = valueParser(value)
