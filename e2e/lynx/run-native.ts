@@ -6,7 +6,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { execa } from 'execa'
 import { androidSdkRoot } from '../react-native/native-toolchain'
-import { performAndroidCaptureScroll } from './android-capture-scroll'
+import { recordAndroidVideo } from './android-recording'
 import { buildCompatibilityBundle } from './build'
 import { stageCaptureHostContext } from './capture-host-context'
 import { exampleDir, lynxIntermediateDir, repoRoot } from './catalog'
@@ -61,18 +61,6 @@ async function installedAndroidCompileSdk() {
   return versions.length > 0 ? Math.max(...versions) : undefined
 }
 
-async function recordAndroidVideo(hostDir: string, artifactDir: string, device: AndroidDevice) {
-  const devicePath = '/sdcard/lynx-promo-capture.mp4'
-  await execa('adb', adbArgs(device, ['shell', 'rm', '-f', devicePath]), { reject: false })
-  const recording = execa('adb', adbArgs(device, ['shell', 'screenrecord', '--time-limit', String(options.captureDurationSeconds), '--bit-rate', '6000000', devicePath]), { reject: false })
-  await performAndroidCaptureScroll(options.captureDurationSeconds, async (gesture) => {
-    await command('adb', adbArgs(device, ['shell', 'input', 'swipe', '540', String(gesture.fromY), '540', String(gesture.toY), String(gesture.durationMilliseconds)]), hostDir, 30_000)
-  })
-  await recording
-  await command('adb', adbArgs(device, ['pull', devicePath, path.join(artifactDir, 'raw.mp4')]), hostDir, 120_000)
-  await execa('adb', adbArgs(device, ['shell', 'rm', '-f', devicePath]), { reject: false })
-}
-
 async function runAndroid(hostDir: string, artifactDir: string, device: AndroidDevice, context: NativeEvidenceContext) {
   await command('adb', adbArgs(device, ['get-state']), hostDir, 30_000)
   const compileSdk = await installedAndroidCompileSdk()
@@ -99,7 +87,7 @@ async function runAndroid(hostDir: string, artifactDir: string, device: AndroidD
         throw new Error('Unable to capture the Android promo screenshot.')
       }
       await fs.writeFile(path.join(artifactDir, 'screen.png'), screenshot.stdout)
-      await recordAndroidVideo(hostDir, artifactDir, device)
+      await recordAndroidVideo(hostDir, artifactDir, device, options.captureDurationSeconds, context)
       return undefined
     }
     const report = await waitForReportOrFailure(async () => {
