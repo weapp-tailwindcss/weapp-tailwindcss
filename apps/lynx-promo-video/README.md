@@ -2,7 +2,7 @@
 
 75 秒、1920×1080、30 FPS 的 Remotion 技术宣传片，提供中文和英文两个版本。核心画面展示真实的编辑器、构建终端与 Lynx 原生页面；两种语言共用本轮开发实录、双端设备录屏和兼容性截图。
 
-**本轮交付状态：实录仍在准备。** 以下说明定义复现与验收流程；最终原片位置、设备系统版本、操作时间点、成片与完整回看结果均待本轮录制完成后填写。仓库中的旧视频、旧设备说明和占位剪辑区间不能作为本轮完成证据。
+**本轮交付状态（2026-10-18）：完整开发实录、阶段归档与双端原生素材已采集，双语成片正在渲染。** 原片、实际剪辑区间和设备信息见下文。最终媒体校验、修改前后关键帧审看与中英文完整回看仍待完成。
 
 ## 分镜与开发操作
 
@@ -34,7 +34,7 @@ pnpm --filter @weapp-tailwindcss/example-react-lynx-promo build
 
 ## 设备录制与独立输出
 
-工具链和设备操作边界遵循[本地多端手册](../../e2e/LOCAL-MULTI-PLATFORM-E2E.md)。本轮目标设备为 iPhone 17 Pro 与已安装的 Pixel 9；实际 OS、设备 ID、Lynx 版本和录制结果以本轮 `device.json`、构建记录与素材清单为准，均待填写。
+工具链和设备操作边界遵循[本地多端手册](../../e2e/LOCAL-MULTI-PLATFORM-E2E.md)。本轮设备为 iPhone 17 Pro 模拟器（iOS 26.5）与 Pixel 9 模拟器（Android 16、API 36），两端 host 均使用 Lynx Engine 4.0.1，ReactLynx 编码目标为 3.9。实际设备 ID 与装载 bundle 记录在本轮 `device.json`、构建记录和素材清单中。
 
 Android 链路需要 Java 17、Gradle 8.9 或兼容的更新 8.x，以及 fixture 声明的 Android SDK platform 和 Build Tools。路径可通过 `LYNX_JAVA_HOME`、`LYNX_GRADLE`、`ANDROID_HOME` / `ANDROID_SDK_ROOT` 配置；两个 SDK 环境变量同时存在时应指向同一 SDK。iOS 需要 PATH 中的 XcodeGen、Xcode 命令行工具和 CocoaPods；可通过 `LYNX_POD` 选择 CocoaPods。使用 `LYNX_IOS_DEVICE_ID`、`LYNX_ANDROID_DEVICE_ID` 明确绑定本轮设备，不把本机绝对路径或设备 ID 提交到配置。
 
@@ -48,6 +48,10 @@ pnpm --filter @weapp-tailwindcss/lynx-promo-video capture:android
 `capture` 可串行采集两端。入口重新构建宣传 Demo，将 bundle 注入临时原生 fixture host。每轮在工程 `.capture/` 下分配独占目录；父目录由入口创建，`raw/` 由原生 runner 独占创建，调用方不得预建它。终端输出本轮 `rawDir` 与 `manifestFile`。失败时保留该轮目录与失败证据，重试分配新目录，禁止删除旧轮次来回避 `EEXIST`。
 
 本轮运行目录包含原始设备录像、设备记录和实际装载的 `main.lynx.bundle`；归一化录像为 720 像素宽、30 FPS、H.264、无音频。入口发布到 `public/captures/ios.mp4`、`android.mp4` 及对应封面前，将已有文件和清单复制至 `.capture/previous-*/`，保留原素材。
+
+本轮原生采集请求时长为 18 秒。设备原片可能使用可变帧率，FFmpeg 转为 30 FPS 后的实际时长须重新测量，不能把请求时长当作素材时长。`NativeScene` 从第 70 帧开始使用 12 秒素材，归一化后每端至少需要 `70 / 30 + 12` 秒；不足时重新采集并检查归一化结果。
+
+iOS 滚动由 fixture 驱动真实 `LynxScrollView` / `UIScrollView`，本轮 `capture-scroll.json` 记录偏移 `0 → 202 → 0` 像素及最终 bundle 摘要；Android 使用 `adb input swipe` 手势。录制方法与原生结果一并保留，不把桌面工具的拖拽调用等同于已成功触发设备滚动。
 
 默认清单为 `public/captures/manifest.json`，也可用 `LYNX_PROMO_CAPTURE_MANIFEST` 指向本轮清单。清单记录源码逐文件 SHA256、总摘要、设备、runner 来源、raw/处理后视频、封面与 bundle 摘要；文件路径相对清单所在目录解析。该清单路径和对应归档必须一起保留，不能只交付公开 MP4。
 
@@ -71,13 +75,33 @@ pnpm --filter @weapp-tailwindcss/lynx-promo-video capture:android
 | `clips[].sceneId` / `eventId` | 片段对应的成片场景和已归档事件 |
 | `clips[].playbackRate` | 片段播放速度，默认 1；加速须在画面说明 |
 
-`config` 片段累计播放时长须为 8 秒，`classname` 为 30 秒，误差不超过一帧；按顺序选取片段，不能重复使用或逆序播放同一开发区间。所有区间应落在有效素材与对应事件范围内。`assets` 从清单生成 `src/generated/development.json`，不要手改该生成文件来掩盖素材缺失。
+逐段按 `Math.round((endSeconds - startSeconds) / playbackRate * 30)` 计算播放帧数后求和：`config` 必须严格等于 240 帧，`classname` 必须严格等于 900 帧，没有一帧容差。按顺序选取片段，不能重复使用或逆序播放同一开发区间。所有区间应落在有效素材与对应事件范围内。`assets` 从清单生成 `src/generated/development.json`，不要手改该生成文件来掩盖素材缺失。
 
-最终待补录的交付记录：完整原片与归一化视频位置；各事件的两条时间区间；三阶段源码及 bundle 归档位置/摘要；两端设备与系统信息；两次修改前后截图；双语成片路径、校验结果和完整回看结论。当前不以旧录像或占位区间宣称这些项目已完成。
+### 本轮实录记录
+
+完整原片为 `.capture/development-master-el114qz2/development-raw.mov`：H.264、3840×2160、可变帧率、实测 300.08 秒，由录制器在 300 秒设置下自动结束并封装。原片完整保留；`edit-decision-list.json` 记录以下原速选段，裁去准备和等待时间。本轮没有加速片段。
+
+| 阶段 | 原片区间（秒） | 归一化区间（秒） | 播放帧数 |
+| --- | --- | --- | --- |
+| 配置 | 10–18 | 0–8 | 240 |
+| 间距与圆角 | 77–86、92–95、112–115 | 8–17、17–20、20–23 | 270 + 90 + 90 = 450 |
+| 背景色 | 180–189、197–200、214–217 | 23–32、32–35、35–38 | 270 + 90 + 90 = 450 |
+
+归一化开发视频为 `public/captures/development.mp4`：H.264、1920×1080、30 FPS、38 秒、1140 帧。三阶段归档位于同轮原片目录的 `stages/initial/`、`stages/spacing/`、`stages/color/`，各自含源码、实际 bundle 与 `evidence.json`。以下摘要取前 12 位便于核对，完整 SHA256 在清单与归档内：
+
+| 阶段 | 源码 SHA256 前缀 | bundle SHA256 前缀 |
+| --- | --- | --- |
+| `initial` / `config` | `080de13ce861` | `a1890dbf09f9` |
+| `spacing` | `1af3aa439b37` | `f962f3be7bad` |
+| `color` / 最终双端 | `472d91fde26c` | `e8fed542c426` |
+
+最终源码 SHA256 为 `472d91fde26c74e925e1c31fc2ba6da48e4f994e0099fa9ef7ad8f36eb639f7b`；两端装载的最终 bundle SHA256 均为 `e8fed542c426a6ea7efaf75e7c56195957e33532928ae8aba590214faf81aea3`。两次修改、独立设备原片及当前兼容性截图的路径继续以 `public/captures/manifest.json` 为准。
 
 ## 生成旁白、字幕与其他素材
 
 先准备实录清单、开发视频、两端设备素材与显式兼容性截图，再执行素材生成。兼容性截图通过 `LYNX_PROMO_COMPATIBILITY_SCREENSHOT` 明确指定，或登记在 `manifest.compatibility`；不要从某次旧报告目录静默选取。统计仍读取 `examples/react-lynx/src/compatibility/baseline.json`。
+
+本轮画面中的 118 个用例统计来自 **2026-10-06 已提交双端基线**：45 项双端支持、72 项双端不支持、1 项平台差异，基线环境为 iOS 26.5 与 Android 11 / API 30。展示截图来自 2026-10-18 Pixel 9 / Android 16 的 `capture-only` 运行，显式来源为 `.capture/compatibility-20261018-android-sdk/screen.png`；它展示当前运行画面，不代表已在 Android 16 重新验证全部 118 个用例。
 
 ```bash
 pnpm --filter @weapp-tailwindcss/lynx-promo-video voice:zh
@@ -121,6 +145,8 @@ pnpm --filter @weapp-tailwindcss/lynx-promo-video verify
 
 正常测试设置 `CI=1`。Static 基线更新仅限宣传 Demo，更新与不更新验证命令见[示例说明](../../examples/react-lynx-promo/README.md)。这里的定向测试不代表完成全端环境验收；全面测试仍需本轮预检全部通过。
 
+本轮已记录的视频工程定向 Vitest 45 项、宣传 Demo Vitest 2 项，以及宣传 static / 原生参数定向回归 37 项通过。宣传 static 仅对 `e2e/lynx-promo.test.ts` 执行 `-u` 更新，再以 `--update=none` 重验，3 项通过；两端 production bundle、阶段摘要和原生画面核对按本轮清单保留。最终 `verify` 与完整回看结果另行登记。
+
 Composition 为 `LynxPromoZh`、`LynxPromoEn`、`LynxPromoCoverZh`、`LynxPromoCoverEn`；旧 `LynxPromo` 和 `LynxPromoCover` 保留为中文别名。输出位于 `out/`：
 
 ```text
@@ -130,6 +156,8 @@ lynx-promo-cover-1920x1080.png
 lynx-promo-cover-en-1920x1080.png
 ```
 
-媒体验收检查来源与阶段摘要、素材存在、有效剪辑区间、双语逐句字幕、旁白不越界、双端素材长度及最终 H.264/yuv420p、1920×1080、30 FPS、75 秒和 AAC/48 kHz 音轨。自动检查通过后仍需审看两次修改前后关键帧，核对代码字号、终端结果、原生布局与滚动，并完整回看中英文成片。最终验收记录待本轮素材完成后填写。
+媒体验收检查来源与阶段摘要、素材存在、有效剪辑区间、双语逐句字幕、旁白不越界、双端素材长度及最终 H.264/yuv420p、1920×1080、30 FPS、75 秒和 AAC/48 kHz 音轨。自动检查通过后仍需审看两次修改前后关键帧，核对代码字号、终端结果、原生布局与滚动，并完整回看中英文成片。
+
+**最终验收待填写：双语 MP4、封面、SRT/VTT 的实际输出与媒体校验结果；两次修改前后关键帧审看及中英文完整回看结论。当前渲染进行中，尚不宣称成片交付验收完成。**
 
 视频只宣称 ReactLynx + Rspeedy + Tailwind CSS 4 的已验证集成能力，不宣称 Lynx 支持全部 Tailwind utility。中文 CTA 为 `/zh-cn/docs/quick-start/frameworks/lynx`，英文为 `/docs/quick-start/frameworks/lynx`。
