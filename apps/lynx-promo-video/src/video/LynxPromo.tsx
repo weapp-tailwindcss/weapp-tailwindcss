@@ -25,7 +25,7 @@ export function LynxPromo(props: LynxPromoProps) {
             {scene.id === 'classname' && <ClassNameScene copy={copy.classname} />}
             {scene.id === 'pipeline' && <PipelineScene copy={copy.pipeline} />}
             {scene.id === 'native' && <NativeScene copy={copy.native} />}
-            {scene.id === 'evidence' && <EvidenceScene evidence={props.evidence} copy={copy.evidence} />}
+            {scene.id === 'evidence' && <EvidenceScene evidence={props.evidence} copy={copy.evidence} locale={locale} />}
             {scene.id === 'cta' && <CtaScene packageName={props.packageName} docsUrl={props.docsUrl} copy={copy.cta} qrAsset={locale === 'en' ? 'brand/docs-qr-en.png' : 'brand/docs-qr.png'} />}
             <Audio src={narrationFile} volume={1} />
           </Sequence>

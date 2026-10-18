@@ -21,7 +21,7 @@ export function HookScene({ copy }: { copy: PromoCopy['hook'] }) {
         </h1>
         <div className="mono" style={{ marginTop: 38, color: COLORS.muted, fontSize: 23 }}>
           className=
-          <span style={{ color: '#86d8aa', opacity: codeProgress }}>"flex rounded-[18px] bg-[#0d1112] p-6"</span>
+          <span style={{ color: '#86d8aa', opacity: codeProgress }}>"rounded-[18px] p-4 bg-[#10241b]"</span>
         </div>
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', opacity: deviceProgress, transform: `translateY(${(1 - deviceProgress) * 90}px) scale(${0.94 + deviceProgress * 0.06})` }}>
