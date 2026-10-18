@@ -80,7 +80,7 @@ export async function runIos(hostDir: string, artifactDir: string, target: IosBu
       await command('xcrun', ['simctl', 'io', deviceId, 'screenshot', path.join(artifactDir, 'screen.png')], hostDir, 60_000)
       await recordIosVideo(deviceId, artifactDir, options.captureDurationSeconds)
       if (options.captureScroll) {
-        await collectCaptureScrollEvidence(path.join(path.dirname(reportPath), 'capture-scroll.json'), artifactDir, context)
+        await collectCaptureScrollEvidence(path.join(path.dirname(reportPath), 'capture-scroll.json'), artifactDir, context, options.captureDurationSeconds)
       }
       return undefined
     }

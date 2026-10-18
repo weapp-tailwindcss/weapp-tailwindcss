@@ -6,14 +6,17 @@
   NSURL *_output;
   NSMutableDictionary *_evidence;
   NSTimeInterval _startUptime;
+  NSTimeInterval _durationSeconds;
 }
 
-- (instancetype)initWithView:(UIView *)view directory:(NSURL *)directory context:(NSDictionary *)context {
+- (instancetype)initWithView:(UIView *)view directory:(NSURL *)directory context:(NSDictionary *)context
+            durationSeconds:(NSTimeInterval)durationSeconds {
   self = [super init];
   if (self == nil) return nil;
   _root = view;
   _output = [directory URLByAppendingPathComponent:@"capture-scroll.json"];
   _evidence = [context mutableCopy];
+  _durationSeconds = durationSeconds;
   return self;
 }
 
@@ -93,8 +96,15 @@
 - (void)start {
   _startUptime = NSProcessInfo.processInfo.systemUptime;
   _evidence[@"startedAt"] = [self timestamp];
+  if (!isfinite(_durationSeconds) || _durationSeconds < 8 || _durationSeconds > 180) {
+    _evidence[@"error"] = @"原生滚动录制缺少有效的本轮 captureDurationSeconds";
+    [self write];
+    return;
+  }
+  _evidence[@"captureDurationSeconds"] = @(_durationSeconds);
   [self write];
   dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4.8 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{ [self scrollDown]; });
-  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(8.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{ [self returnToTop]; });
+  // 末尾保留真实原生运动，避免可变帧率录屏提前结束于静止画面。
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)((_durationSeconds - 0.5) * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{ [self returnToTop]; });
 }
 @end

@@ -9,7 +9,7 @@ it('records real native motion near the end of a fifteen-second capture', () => 
   expect(back!.atMilliseconds + back!.durationMilliseconds).toBeLessThan(15_000)
 })
 
-it.each([5, 8, 15, 60, 180])('keeps ordered complete native gestures inside a %s-second capture', (duration) => {
+it.each([5, 8, 15, 18, 60, 180])('keeps ordered complete native gestures inside a %s-second capture', (duration) => {
   const [down, back] = androidCaptureScrollSchedule(duration)
   expect(down!.atMilliseconds + down!.durationMilliseconds).toBeLessThan(back!.atMilliseconds)
   expect(back!.atMilliseconds + back!.durationMilliseconds).toBe(duration * 1000 - 300)

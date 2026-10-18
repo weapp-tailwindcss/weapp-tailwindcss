@@ -15,7 +15,7 @@ import { formatNativeFailure, withNativeArtifacts } from './native-artifacts'
 import { command } from './native-command'
 import { adbArgs, resolveNativeDevice } from './native-device'
 import { enrichEnvironment } from './native-environment'
-import { parseNativeRunArgs } from './native-options'
+import { parseNativeRunArgs, stageNativeRunContext } from './native-options'
 import { waitForReportOrFailure } from './native-report'
 import { finalizeNativePixelEffects, validateNativePixelEvidence } from './pixel-evidence'
 import { defaultReportPath, nativeReportConclusion, validateNativeReport } from './reports'
@@ -161,7 +161,7 @@ async function main() {
     await fs.mkdir(path.dirname(stagedBundle), { recursive: true })
     const bundle = await fs.readFile(bundlePath)
     const context = createEvidenceContext(bundle)
-    const stagedContext = options.captureScroll ? { ...context, captureScroll: true } : context
+    const stagedContext = stageNativeRunContext(context, options)
     const contextSource = `${JSON.stringify(stagedContext, null, 2)}\n`
     const stagedArtifacts = [
       fs.writeFile(stagedBundle, bundle),

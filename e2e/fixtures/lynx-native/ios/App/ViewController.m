@@ -49,7 +49,8 @@
   [lynxView triggerLayout];
   if ([context[@"captureScroll"] isEqual:@YES]) {
     NSURL *directory = [[root URLByAppendingPathComponent:@"lynx-compat"] URLByAppendingPathComponent:context[@"runId"]];
-    _captureScroll = [[CaptureScrollRecorder alloc] initWithView:lynxView directory:directory context:store.context];
+    _captureScroll = [[CaptureScrollRecorder alloc] initWithView:lynxView directory:directory context:store.context
+      durationSeconds:[context[@"captureDurationSeconds"] doubleValue]];
     [_captureScroll start];
   }
 }

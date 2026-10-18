@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { iosPodInstallArguments, parseNativeRunArgs } from './lynx/native-options'
+import { iosPodInstallArguments, parseNativeRunArgs, stageNativeRunContext } from './lynx/native-options'
 
 const workspace = path.resolve('workspace')
 
@@ -45,5 +45,12 @@ describe('native Lynx runner options', () => {
   it('requires enough recording time to observe both native offsets', () => {
     expect(() => parseNativeRunArgs(['ios', '--capture-only', '--bundle', 'demo.bundle', '--scroll', '--duration', '7'])).toThrow('at least 8 seconds')
     expect(parseNativeRunArgs(['ios', '--capture-only', '--bundle', 'demo.bundle', '--scroll', '--duration', '8']).captureDurationSeconds).toBe(8)
+  })
+
+  it('stages duration only for an explicitly requested native scroll recording', () => {
+    const context = { version: 1, runId: 'current' }
+    const options = parseNativeRunArgs(['ios', '--capture-only', '--bundle', 'demo.bundle', '--scroll', '--duration', '18'])
+    expect(stageNativeRunContext(context, options)).toEqual({ ...context, captureScroll: true, captureDurationSeconds: 18 })
+    expect(stageNativeRunContext(context, { ...options, captureScroll: false })).toBe(context)
   })
 })

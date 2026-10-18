@@ -41,7 +41,7 @@ async function capture(platform: CapturePlatform, bundlePath: string, source: So
     '--output',
     rawDir,
     '--duration',
-    '15',
+    '18',
     ...(platform === 'ios' ? ['--scroll'] : []),
   ], repoRoot)
 

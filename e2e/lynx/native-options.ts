@@ -16,6 +16,11 @@ export function iosPodInstallArguments(repoUpdate = process.env['LYNX_IOS_POD_RE
   return repoUpdate ? ['install', '--repo-update'] : ['install']
 }
 
+/** 兼容性回归沿用原有 context，仅显式原生滚动录制携带本轮时长。 */
+export function stageNativeRunContext<T extends object>(context: T, options: Pick<NativeRunOptions, 'captureScroll' | 'captureDurationSeconds'>) {
+  return options.captureScroll ? { ...context, captureScroll: true, captureDurationSeconds: options.captureDurationSeconds } : context
+}
+
 function optionValue(argv: string[], name: string) {
   const index = argv.indexOf(name)
   if (index === -1) {
