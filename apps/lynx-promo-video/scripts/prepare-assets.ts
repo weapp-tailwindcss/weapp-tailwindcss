@@ -4,6 +4,8 @@ import path from 'node:path'
 import process from 'node:process'
 import QRCode from 'qrcode'
 import { getPromoCopy, scenes, VIDEO } from '../src/config'
+import { assertCaptureInputs, compatibilityScreenshot } from './capture/inputs'
+import { manifestRelativePath, readCaptureManifest, writeCaptureManifest } from './capture/manifest'
 import { appRoot, publicDir, repoRoot } from './paths'
 
 interface CompatibilityBaseline {
@@ -37,23 +39,14 @@ function subtitleFile(locale: PromoLocale, format: 'srt' | 'vtt') {
   return format === 'vtt' ? `WEBVTT\n\n${entries}` : `${entries}`
 }
 
-async function latestCompatibilityScreenshot() {
-  const root = path.join(repoRoot, 'e2e', '.artifacts', 'lynx-native')
-  const entries = await fs.readdir(root, { withFileTypes: true }).catch(() => [])
-  const candidates = await Promise.all(entries
-    .filter(entry => entry.isDirectory())
-    .map(async (entry) => {
-      const file = path.join(root, entry.name, 'screen.png')
-      const stat = await fs.stat(file).catch(() => undefined)
-      return stat ? { file, modified: stat.mtimeMs } : undefined
-    }))
-  return candidates.filter(item => item !== undefined).sort((a, b) => b.modified - a.modified)[0]?.file
-}
-
 async function main() {
   const brandDir = path.join(publicDir, 'brand')
   const captureDir = path.join(publicDir, 'captures')
   const generatedDir = path.join(appRoot, 'src', 'generated')
+  const manifestFile = path.resolve(process.env.LYNX_PROMO_CAPTURE_MANIFEST ?? path.join(captureDir, 'manifest.json'))
+  const manifest = await readCaptureManifest(manifestFile)
+  await assertCaptureInputs(manifest, manifestFile, captureDir)
+  const screenshot = await compatibilityScreenshot(manifest, manifestFile, process.env.LYNX_PROMO_COMPATIBILITY_SCREENSHOT)
   await Promise.all([
     fs.mkdir(brandDir, { recursive: true }),
     fs.mkdir(captureDir, { recursive: true }),
@@ -82,10 +75,15 @@ async function main() {
     QRCode.toFile(path.join(brandDir, 'docs-qr-en.png'), getPromoCopy('en').docsUrl, { width: 552, margin: 2, color: { dark: '#0b0f10', light: '#f2f7f5' } }),
   ])
 
-  const screenshot = await latestCompatibilityScreenshot()
-  if (screenshot) {
-    await fs.copyFile(screenshot, path.join(captureDir, 'compatibility-lab.png'))
+  const publicScreenshot = path.join(captureDir, 'compatibility-lab.png')
+  if (screenshot !== publicScreenshot) {
+    await fs.copyFile(screenshot, publicScreenshot)
   }
+  manifest.compatibility = {
+    screenshot: manifestRelativePath(manifestFile, publicScreenshot),
+    source: process.env.LYNX_PROMO_COMPATIBILITY_SCREENSHOT ?? manifest.compatibility?.source ?? screenshot,
+  }
+  await writeCaptureManifest(manifestFile, manifest)
 
   await Promise.all((['zh', 'en'] as const).flatMap(locale => [
     fs.writeFile(path.join(appRoot, `lynx-promo-${locale}.srt`), subtitleFile(locale, 'srt')),
