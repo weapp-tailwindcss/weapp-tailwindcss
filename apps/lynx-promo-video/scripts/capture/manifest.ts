@@ -1,6 +1,9 @@
+import type { DevelopmentShot } from './development'
 import { createHash } from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+
+export type { CaptureRect, DevelopmentComparisonShot, DevelopmentImageSource, DevelopmentScreenshot, DevelopmentShot, DevelopmentStage, DevelopmentVideoShot, DevelopmentVideoSource, DevelopmentView } from './development'
 
 export type CapturePlatform = 'android' | 'ios'
 
@@ -55,6 +58,7 @@ export interface CaptureManifest {
     rawVideo: string
     events: DevelopmentEvent[]
     clips: DevelopmentClip[]
+    shots?: DevelopmentShot[]
   }
   compatibility?: {
     screenshot: string

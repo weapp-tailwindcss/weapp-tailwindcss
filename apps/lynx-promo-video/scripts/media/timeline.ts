@@ -1,6 +1,9 @@
-import type { DevelopmentClip, DevelopmentEvent } from '../capture/manifest'
+import type { DevelopmentClip, DevelopmentEvent, DevelopmentShot } from '../capture/manifest'
 import type { SubtitleCue } from './subtitles'
+import { verifyDevelopmentShots } from './development-shots'
 import { parseSubtitleCues } from './subtitles'
+
+export { verifyDevelopmentShots } from './development-shots'
 
 interface Scene {
   id: string
@@ -36,7 +39,7 @@ export function verifySubtitleTimeline(content: string, scenes: readonly Scene[]
   }
 }
 
-export function verifyDevelopmentTimeline(events: DevelopmentEvent[], clips: DevelopmentClip[], scenes: readonly Scene[], fps: number, videoSeconds: number, rawSeconds: number) {
+export function verifyDevelopmentTimeline(events: DevelopmentEvent[], clips: DevelopmentClip[], scenes: readonly Scene[], fps: number, videoSeconds: number, rawSeconds: number, shots?: DevelopmentShot[]) {
   const ids = new Set<string>()
   for (const event of events) {
     if (!event.id || ids.has(event.id)) {
@@ -47,6 +50,10 @@ export function verifyDevelopmentTimeline(events: DevelopmentEvent[], clips: Dev
     if (event.rawStartSeconds !== undefined || event.rawEndSeconds !== undefined) {
       verifyRange(event.rawStartSeconds, event.rawEndSeconds, rawSeconds, `${event.id} 原片`)
     }
+  }
+  if (shots) {
+    verifyDevelopmentShots(events, shots, scenes, fps)
+    return
   }
   let previousClipEnd = 0
   for (const sceneId of ['config', 'classname']) {
@@ -83,8 +90,8 @@ export function verifyDevelopmentTimeline(events: DevelopmentEvent[], clips: Dev
   }
 }
 
-export function verifyDevelopmentMetadata(content: string, clips: readonly DevelopmentClip[]) {
-  const generated = JSON.parse(content) as { clips?: DevelopmentClip[] } | null
+export function verifyDevelopmentMetadata(content: string, clips: readonly DevelopmentClip[], shots?: readonly DevelopmentShot[]) {
+  const generated = JSON.parse(content) as { clips?: DevelopmentClip[], shots?: DevelopmentShot[] } | null
   if (!Array.isArray(generated?.clips) || generated.clips.length !== clips.length || clips.some((clip, index) => {
     const actual = generated.clips![index]
     return !actual
@@ -93,7 +100,7 @@ export function verifyDevelopmentMetadata(content: string, clips: readonly Devel
       || actual.startSeconds !== clip.startSeconds
       || actual.endSeconds !== clip.endSeconds
       || (actual.playbackRate === undefined ? 1 : Number(actual.playbackRate)) !== (clip.playbackRate ?? 1)
-  })) {
+  }) || JSON.stringify(generated?.shots) !== JSON.stringify(shots)) {
     throw new Error('烧录开发剪辑与素材清单不一致，请重新生成素材并导出。')
   }
 }

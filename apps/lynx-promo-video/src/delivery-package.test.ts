@@ -4,6 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { deliveryProjectPath, packageDelivery } from '../scripts/package-delivery'
+import { developmentFixture } from './test-fixtures/development'
 
 const directories: string[] = []
 afterEach(async () => {
@@ -88,8 +89,20 @@ describe('可迁移交付包', () => {
       version: 1,
       source,
       platforms,
-      development: { rawVideo: relative(await file(path.join(development, 'development-raw.mov'))), video: relative(await file(path.join(captureRoot, 'development.mp4'))), events },
+      development: { rawVideo: relative(await file(path.join(development, 'development-raw.mov'))), video: relative(await file(path.join(captureRoot, 'development.mp4'))), events, shots: developmentFixture().shots },
       compatibility: { source: external, screenshot: relative(await file(path.join(captureRoot, 'compatibility-lab.png'), 'compatibility')) },
+    }
+    for (const shot of manifest.development.shots) {
+      const sources = shot.kind === 'video'
+        ? [shot.media, ...(shot.preview ? [shot.preview.media, shot.preview.sourceVideo] : [])]
+        : [shot.before.media, shot.before.sourceVideo, shot.after.media, shot.after.sourceVideo]
+      for (const source of sources) {
+        const target = path.resolve(captureRoot, source.path)
+        if (!await fs.stat(target).catch(() => undefined)) {
+          await file(target, `shot fixture: ${source.path}`)
+        }
+        source.sha256 = hash(await fs.readFile(target))
+      }
     }
     await file(manifestFile, JSON.stringify(manifest))
     for (const name of ['src', 'scripts', path.join('public', 'audio'), path.join('public', 'brand')]) {
@@ -126,6 +139,15 @@ describe('可迁移交付包', () => {
     }
     for (const event of relocated.development.events) {
       expect(await digestSnapshot(event.source, resolve)).toBe('source')
+    }
+    for (const shot of relocated.development.shots) {
+      const sources = shot.kind === 'video'
+        ? [shot.media, ...(shot.preview ? [shot.preview.media, shot.preview.sourceVideo] : [])]
+        : [shot.before.media, shot.before.sourceVideo, shot.after.media, shot.after.sourceVideo]
+      for (const source of sources) {
+        expect(path.isAbsolute(source.path)).toBe(false)
+        expect(hash(await fs.readFile(resolve(source.path)))).toBe(source.sha256)
+      }
     }
     const rawDirectory = path.dirname(resolve(relocated.development.rawVideo))
     expect(await fs.readdir(rawDirectory)).toEqual(expect.arrayContaining(['development-raw.mov', 'edit-decision-list.json', 'initial-native', 'spacing-native', 'color-native']))

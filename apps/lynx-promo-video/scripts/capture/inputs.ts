@@ -1,6 +1,7 @@
 import type { CaptureManifest, FileDigest, SourceSnapshot } from './manifest'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { assertDevelopmentShotArtifacts } from './development-artifacts'
 import { resolveManifestPath, sha256, snapshotSources } from './manifest'
 
 async function requireFile(file: string) {
@@ -72,6 +73,14 @@ export async function assertDevelopmentArtifacts(manifest: CaptureManifest, mani
   if (spacing.sourceSha256 === color.sourceSha256 || spacing.bundleSha256 === color.bundleSha256) {
     throw new Error('spacing 与 color 必须绑定不同的源码及 bundle。')
   }
+  if (manifest.development?.shots) {
+    const initial = events.find(event => event.id === 'initial')
+    if (!initial || new Set([initial, spacing, color].map(event => event.sourceSha256)).size !== 3
+      || new Set([initial, spacing, color].map(event => event.bundleSha256)).size !== 3) {
+      throw new Error('新开发镜头必须归档 initial、spacing、color 三阶段独立源码与 bundle。')
+    }
+    await assertDevelopmentShotArtifacts(manifest.development.shots, manifestFile)
+  }
   if (color.sourceSha256 !== manifest.source.sha256
     || (['ios', 'android'] as const).some(platform => manifest.platforms[platform]?.bundle.sha256 !== color.bundleSha256)) {
     throw new Error('color 最终源码与双端 bundle 必须对应同一录制版本。')
@@ -96,7 +105,7 @@ export async function assertCaptureInputs(manifest: CaptureManifest, manifestFil
       throw new Error(`${platform} 清单必须绑定当前公开素材。`)
     }
   }
-  if (!manifest.development || manifest.development.events.length === 0 || manifest.development.clips.length === 0) {
+  if (!manifest.development || manifest.development.events.length === 0 || (manifest.development.clips.length === 0 && !manifest.development.shots?.length)) {
     throw new Error('缺少真实开发录屏与操作时间区间。')
   }
   await assertDevelopmentArtifacts(manifest, manifestFile)

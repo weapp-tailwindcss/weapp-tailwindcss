@@ -7,6 +7,8 @@ import QRCode from 'qrcode'
 import { getPromoCopy, scenes, VIDEO } from '../src/config'
 import { assertCaptureInputs, compatibilityScreenshot } from './capture/inputs'
 import { manifestRelativePath, readCaptureManifest, resolveManifestPath, writeCaptureManifest } from './capture/manifest'
+import { developmentRenderMetadata } from './capture/render-metadata'
+import { verifyDevelopmentMedia } from './media/development-media'
 import { probe, rawVideoDuration, verifyCaptureVideo } from './media/probe'
 import { assembleSubtitleCues, serializeSubtitles } from './media/subtitles'
 import { verifyDevelopmentTimeline } from './media/timeline'
@@ -29,7 +31,8 @@ async function main() {
   const developmentFile = resolveManifestPath(manifestFile, development.video)
   const developmentSeconds = verifyCaptureVideo(await probe(developmentFile), developmentFile, 0)
   const rawSeconds = rawVideoDuration(await probe(resolveManifestPath(manifestFile, development.rawVideo)), '开发原片')
-  verifyDevelopmentTimeline(development.events, development.clips, scenes, VIDEO.fps, developmentSeconds, rawSeconds)
+  verifyDevelopmentTimeline(development.events, development.clips, scenes, VIDEO.fps, developmentSeconds, rawSeconds, development.shots)
+  await verifyDevelopmentMedia(development.shots ?? [], manifestFile)
   const screenshot = await compatibilityScreenshot(manifest, manifestFile, process.env.LYNX_PROMO_COMPATIBILITY_SCREENSHOT)
   await Promise.all([
     fs.mkdir(brandDir, { recursive: true }),
@@ -55,7 +58,7 @@ async function main() {
     fs.copyFile(path.join(repoRoot, 'assets', 'logo-square.svg'), path.join(brandDir, 'weapp-tailwindcss.svg')),
     fs.copyFile(path.join(repoRoot, 'website', 'src', 'assets', 'framework-logos', 'lynx.svg'), path.join(brandDir, 'lynx.svg')),
     fs.writeFile(path.join(generatedDir, 'evidence.json'), `${JSON.stringify(evidence, null, 2)}\n`),
-    fs.writeFile(path.join(generatedDir, 'development.json'), `${JSON.stringify({ clips: manifest.development!.clips }, null, 2)}\n`),
+    fs.writeFile(path.join(generatedDir, 'development.json'), `${JSON.stringify(developmentRenderMetadata(development, manifestFile, publicDir), null, 2)}\n`),
     QRCode.toFile(path.join(brandDir, 'docs-qr.png'), getPromoCopy('zh').docsUrl, { width: 552, margin: 2, color: { dark: '#0b0f10', light: '#f2f7f5' } }),
     QRCode.toFile(path.join(brandDir, 'docs-qr-en.png'), getPromoCopy('en').docsUrl, { width: 552, margin: 2, color: { dark: '#0b0f10', light: '#f2f7f5' } }),
   ])

@@ -4,6 +4,8 @@ import process from 'node:process'
 import { scenes, VIDEO } from '../src/config'
 import { assertCaptureInputs, compatibilityScreenshot } from './capture/inputs'
 import { readCaptureManifest, resolveManifestPath } from './capture/manifest'
+import { developmentRenderMetadata } from './capture/render-metadata'
+import { verifyDevelopmentMedia } from './media/development-media'
 import { assertNoSuspiciousFrames, inspectVideoFrames } from './media/frame-scan'
 import { mediaDuration, probe, rawVideoDuration, verifyCaptureVideo, verifyNarration } from './media/probe'
 import { assembleSubtitleCues } from './media/subtitles'
@@ -78,11 +80,13 @@ async function main() {
   }
   const development = manifest.development!
   const developmentMetadata = await fs.readFile(path.join(appRoot, 'src', 'generated', 'development.json'), 'utf8')
-  verifyDevelopmentMetadata(developmentMetadata, development.clips)
+  const expectedDevelopment = developmentRenderMetadata(development, manifestFile, publicDir)
+  verifyDevelopmentMetadata(developmentMetadata, expectedDevelopment.clips, expectedDevelopment.shots)
   const developmentFile = resolveManifestPath(manifestFile, development.video)
   const developmentSeconds = verifyCaptureVideo(await probe(developmentFile), developmentFile, 0)
   const rawSeconds = rawVideoDuration(await probe(resolveManifestPath(manifestFile, development.rawVideo)), '开发原片')
-  verifyDevelopmentTimeline(development.events, development.clips, scenes, VIDEO.fps, developmentSeconds, rawSeconds)
+  verifyDevelopmentTimeline(development.events, development.clips, scenes, VIDEO.fps, developmentSeconds, rawSeconds, development.shots)
+  await verifyDevelopmentMedia(development.shots ?? [], manifestFile)
 
   for (const locale of ['zh', 'en'] as const) {
     await verifyVideo(locale)

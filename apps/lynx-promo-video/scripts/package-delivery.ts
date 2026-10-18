@@ -1,3 +1,4 @@
+import type { DevelopmentShot } from './capture/manifest'
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { constants, createReadStream } from 'node:fs'
@@ -17,7 +18,7 @@ interface Manifest {
   version: number
   source: Snapshot
   platforms: Record<string, { rawVideo: string, video: string, cover: string, bundle: Bundle }>
-  development: { rawVideo: string, video: string, events: Array<{ source: Snapshot, bundle: Bundle }> }
+  development: { rawVideo: string, video: string, events: Array<{ source: Snapshot, bundle: Bundle }>, shots?: DevelopmentShot[] }
   compatibility: { source: string, screenshot: string }
 }
 
@@ -137,6 +138,14 @@ export async function packageDelivery(options: { appRoot?: string, repoRoot?: st
     await copyFile(source)
     bundle.path = relative(bundle.path)
   }
+  async function copyShotMedia(media: Bundle) {
+    const source = resolveInput(media.path)
+    if (await digest(source) !== media.sha256) {
+      throw new Error(`镜头素材摘要不匹配：${source}`)
+    }
+    await copyFile(source)
+    media.path = relative(media.path)
+  }
   await copySnapshot(manifest.source)
   for (const capture of Object.values(manifest.platforms)) {
     await copyTree(path.dirname(resolveInput(capture.rawVideo)))
@@ -157,6 +166,21 @@ export async function packageDelivery(options: { appRoot?: string, repoRoot?: st
     }
     await copySnapshot(event.source)
     await copyBundle(event.bundle)
+  }
+  for (const shot of manifest.development.shots ?? []) {
+    if (shot.kind === 'video') {
+      await copyShotMedia(shot.media)
+      if (shot.preview) {
+        await copyShotMedia(shot.preview.media)
+        await copyShotMedia(shot.preview.sourceVideo)
+      }
+    }
+    else {
+      for (const screenshot of [shot.before, shot.after]) {
+        await copyShotMedia(screenshot.media)
+        await copyShotMedia(screenshot.sourceVideo)
+      }
+    }
   }
   const compatibilitySource = resolveInput(manifest.compatibility.source)
   await copyTree(path.dirname(compatibilitySource))
