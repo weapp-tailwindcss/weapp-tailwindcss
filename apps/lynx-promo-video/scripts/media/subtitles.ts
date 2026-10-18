@@ -55,7 +55,7 @@ export function parseSubtitleCues(content: string): ParsedSubtitleCue[] {
   return cues
 }
 
-/** 每场旁白从场景首帧播放，字幕使用相同偏移；末句保留到场景结束前 0.2 秒。 */
+/** 字幕与实际旁白使用相同偏移及结束时间，保留真实停顿。 */
 export function assembleSubtitleCues(scenes: readonly SubtitleScene[], fps: number, narration: Record<string, string>): SubtitleCue[] {
   return scenes.flatMap((scene) => {
     const parsed = parseSubtitleCues(narration[scene.id] ?? '')
@@ -63,9 +63,7 @@ export function assembleSubtitleCues(scenes: readonly SubtitleScene[], fps: numb
     return parsed.map((cue, index) => {
       const from = scene.from + Math.round(cue.startSeconds * fps)
       const nextStart = parsed[index + 1]?.startSeconds
-      const to = index === parsed.length - 1
-        ? lastFrame
-        : Math.min(scene.from + Math.round(cue.endSeconds * fps), scene.from + Math.round(nextStart! * fps))
+      const to = Math.min(scene.from + Math.round(cue.endSeconds * fps), nextStart === undefined ? lastFrame : scene.from + Math.round(nextStart * fps))
       if (cue.endSeconds > scene.duration / fps - 0.2 + 1 / fps || from < scene.from || to <= from || to > lastFrame) {
         throw new Error(`${scene.id} 旁白字幕超出场景时间。`)
       }

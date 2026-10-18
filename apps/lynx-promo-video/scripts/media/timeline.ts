@@ -24,12 +24,9 @@ export function verifySubtitleTimeline(content: string, scenes: readonly Scene[]
   }
   for (const scene of scenes) {
     const coverage = covered.get(scene.id)
-    if (!coverage || coverage.start > scene.from / fps + 0.6 || coverage.end < (scene.from + scene.duration) / fps - 1) {
-      throw new Error(`字幕未覆盖完整 ${scene.id} 场景。`)
+    if (!coverage || coverage.start > scene.from / fps + 0.6) {
+      throw new Error(`字幕缺少 ${scene.id} 场景的实际旁白。`)
     }
-  }
-  if (previousEnd < totalSeconds - 1) {
-    throw new Error(`字幕未覆盖完整 ${totalSeconds} 秒时间线。`)
   }
   if (expectedCues && (expectedCues.length !== entries.length || entries.some((entry, index) => {
     const expected = expectedCues[index]

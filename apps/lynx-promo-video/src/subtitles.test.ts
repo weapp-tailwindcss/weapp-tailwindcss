@@ -23,11 +23,21 @@ describe('sentence subtitles', () => {
     expect(() => parseSubtitleCues('00:00:00,100 --> 00:00:01,000')).toThrow('空句')
   })
 
-  it('keeps sentence start times, removes TTS overlap and holds the final sentence', () => {
+  it('keeps actual sentence times and removes TTS overlap without extending the final sentence', () => {
     const cues = assembleSubtitleCues(scenes, 30, narration)
-    expect(cues.map(cue => [cue.from, cue.to])).toEqual([[3, 59], [59, 144], [153, 384]])
+    expect(cues.map(cue => [cue.from, cue.to])).toEqual([[3, 59], [59, 102], [153, 270]])
     expect(cues.map(cue => cue.text)).toEqual(['First sentence.', 'Second sentence.', 'Edit and build.'])
     expect(() => assembleSubtitleCues([{ id: 'intro', from: 0, duration: 60 }], 30, narration)).toThrow('超出场景')
+  })
+
+  it('preserves real gaps and scene endings after narration finishes', () => {
+    const cues = assembleSubtitleCues([{ id: 'edit', from: 390, duration: 900 }], 30, {
+      edit: 'WEBVTT\n\n00:00:00.100 --> 00:00:01.500\nFirst.\n\n00:00:15.100 --> 00:00:18.000\nSecond.\n',
+    })
+    expect(cues.map(cue => [cue.from, cue.to])).toEqual([[393, 435], [843, 930]])
+    expect(() => verifySubtitleTimeline(serializeSubtitles(cues, 30, 'vtt'), [{ id: 'edit', from: 390, duration: 900 }], 30, 43, cues)).not.toThrow()
+    const extended = [{ ...cues[0], to: cues[1].from }, { ...cues[1], to: 1284 }]
+    expect(() => verifySubtitleTimeline(serializeSubtitles(extended, 30, 'vtt'), [{ id: 'edit', from: 390, duration: 900 }], 30, 43, cues)).toThrow('实际旁白')
   })
 
   it('exports multiple cues per scene and validates their actual narration alignment', () => {
