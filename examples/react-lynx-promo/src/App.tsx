@@ -13,7 +13,7 @@ function Metric({ label, value, detail }: { label: string, value: string, detail
 
 export function App() {
   return (
-    <scroll-view scroll-y className="min-h-screen bg-[#0d1112] text-[#edf4f1]">
+    <scroll-view scroll-y className="h-screen bg-[#0d1112] text-[#edf4f1]">
       <view className="pb-8 pl-5 pr-5 pt-[72px]">
         <view className="flex flex-row items-center justify-between">
           <view>

@@ -106,6 +106,7 @@ describe('ReactLynx 宣传示例真实 static 产物', () => {
       'padding-top': '1rem',
     })
     expect(declarations(decodedCss, '.min-h-[260px]')).toEqual({ 'min-height': '260px' })
+    expect(declarations(decodedCss, '.h-screen')).toEqual({ height: '100vh' })
   })
 
   it('示例仍为可滚动的真实组件，状态卡有唯一的录制编辑入口', async () => {
