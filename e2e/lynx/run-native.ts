@@ -8,6 +8,7 @@ import { execa } from 'execa'
 import { androidSdkRoot } from '../react-native/native-toolchain'
 import { performAndroidCaptureScroll } from './android-capture-scroll'
 import { buildCompatibilityBundle } from './build'
+import { stageCaptureHostContext } from './capture-host-context'
 import { exampleDir, lynxIntermediateDir, repoRoot } from './catalog'
 import { collectNativeEvidence, createEvidenceContext, validateNativeEvidence } from './evidence'
 import { readPreparedIosBuildTarget } from './ios-build-target'
@@ -161,7 +162,7 @@ async function main() {
     await fs.mkdir(path.dirname(stagedBundle), { recursive: true })
     const bundle = await fs.readFile(bundlePath)
     const context = createEvidenceContext(bundle)
-    const stagedContext = stageNativeRunContext(context, options)
+    const stagedContext = stageCaptureHostContext(stageNativeRunContext(context, options), options)
     const contextSource = `${JSON.stringify(stagedContext, null, 2)}\n`
     const stagedArtifacts = [
       fs.writeFile(stagedBundle, bundle),
