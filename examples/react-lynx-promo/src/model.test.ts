@@ -1,14 +1,21 @@
 import { describe, expect, it } from 'vitest'
-import { buildStates, nextBuildState, recentBuilds } from './model'
+import { buildStatus, pipelineSteps } from './model'
 
 describe('promo dashboard model', () => {
-  it('cycles through deterministic build states', () => {
-    expect(nextBuildState(0)).toBe(1)
-    expect(nextBuildState(buildStates.length - 1)).toBe(0)
+  it('keeps the recording at the bundle result without simulated progress', () => {
+    expect(buildStatus).toEqual({
+      label: 'Bundle ready',
+      detail: 'main.lynx.bundle',
+      target: 'ReactLynx',
+    })
   })
 
-  it('keeps the visible build data stable for recordings', () => {
-    expect(buildStates.at(-1)?.progress).toBe('100%')
-    expect(recentBuilds).toHaveLength(3)
+  it('describes the actual source, style plugin, and native output', () => {
+    expect(pipelineSteps.map(step => step.id)).toEqual(['source', 'styles', 'bundle'])
+    expect(pipelineSteps.map(step => step.detail)).toEqual([
+      'TypeScript + TSX',
+      '@weapp-tailwindcss/lynx',
+      'Rspeedy + Lynx encoder',
+    ])
   })
 })
