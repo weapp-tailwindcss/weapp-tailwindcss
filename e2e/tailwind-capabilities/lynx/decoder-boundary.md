@@ -20,10 +20,20 @@
 
 本轮 135 个批次均产生非空编码 buffer，encoder 输入没有 `{{`，decoder 展示文本全部含有 `{{`。因此这些批次记录的 `conversion-executed:false` 实际源自展示文本的二次解析失败。修正后的报告保留编码完成断言、完整原始展示文本、输入 AST 和诊断；没有独立输出读取器时保持 `not-run`。这项边界修复不构成 Lynx 全部转换语义通过。
 
-## 读取器的后续范围
+## 当前字面子集
 
-通用读取器需要 decoder 提供结构化的编码后选择器、属性值、变量与 fallback、条件、important 和顺序信息，或一份可校验的私有输出语法合同。既有 serializer 输入能用于诊断位置归属，不能提供编码后已经保留相同值的证明。
+`decoder-literal.ts` 直接读取实际 WASM decoder 文本。它只接受 ASCII 单类名、无条件的完整单类选择器，以及不含函数、模板、字符串、数组、custom property 的字面声明。它保留所有关联规则、重复声明、important 和输出顺序；空规则、缺少属性、改值及后续覆盖均参与完整比较，不会去重成成功。
 
-可以优先研究字面子集：只接受不含冒号、方括号、点等歧义字符的 class、无条件规则和纯字面属性值，再用运行前冻结的正向 oracle 验证。即便如此，也必须排除关联的条件规则和后续覆盖，并按来源位置独立归属 encoder 诊断；不能把无关批次诊断算给每个候选，或把整个批次诊断删除后声称没有诊断。
+关联条件、复杂选择器、转义歧义、残缺块和未知展示语法保留 `not-run`。输入 AST 的 selector/key/value 位置信息只用于定位诊断；属性和值始终来自 decoder 输出。没有位置、找不到唯一归属或归属选择器存在歧义的诊断会阻断语义判定。已明确归属于其他候选的诊断继续保留在批次原始产物，不冒充本候选诊断。
 
-复杂选择器、条件、变量和未知格式仍需逐项保留缺口。不能通过替换 `{{变量}}`、复制 serializer 输入值、忽略解析错误，或把本轮失败改成 `unsupported` 来得到全绿报告。现有 `lynx-css-defaults.test.ts` 固定真实编码/解码格式，`tailwind-static-conversion.test.ts` 固定分层结果及原始产物保留，`tailwind-conversion-audit.test.ts` 拒绝没有输出读取器却使用输入 oracle 判通过。
+`conversion-oracles/lynx.ts` 在目标转换前登记 41 个固定的正向合同，涵盖基础 flex、position、尺寸、对齐、文本对齐和 `p-px` 简写展开。每个合同还必须与固定官方参考的完整无条件字面声明一致；主题变化、重复声明和未知形态不会自动扩大合同。生成规则、编码语义、运行时和像素仍是独立层级。
+
+真实生产 encoder + WASM decoder 回归中，41 个正向合同完整匹配。另一个固定反例 `inline-flex` 的 `display:inline-flex` 被静默丢弃：输入 AST 仍有声明，decoder 输出 `.inline-flex { }`，诊断为空。[Lynx 官方 display 文档](https://lynxjs.org/api/css/properties/display.html) 明确说明没有 Web flow layout，且不支持 `block`、`inline`、`inline-block`、`inline-flex`、`inline-grid`；该限制来自独立文档，不能强制映射成 `flex` 改变外部布局语义。额外回归固定 Web 语义保留预期，并确认审计会判 `failed`，不能靠无诊断或输入 AST 得到正向成功。
+
+`inline-block`、`inline-flex`、`inline-grid` 在执行前独立登记三个负向合同，记录上述官方 URL。只有这三个准确的 Lynx `display` 值允许没有诊断的拒绝判定；其他目标和其他负向合同继续要求已审查的实际诊断。负向验收必须同时证明官方参考确有该声明、实际 encoder 输入保留完整无条件声明、真实编码 buffer 非空，以及独立 decoder 输出完整为空。缺少输入或 buffer 证据保持 `not-run`；输入丢失、条件混入、重复声明、错误改成 `flex` 或出现其他输出声明均失败。真实 WASM 回归验证三个拒绝合同；生成仍应通过，编码负向合同通过不代表这些写法得到运行时支持。
+
+`tailwind-lynx-literal.test.ts` 固定字面读取和反例，`lynx-css-defaults.test.ts` 执行真实生产编码/WASM 解码并验证篡改产物会失败，`tailwind-static-conversion.test.ts` 验证执行前登记及实际输出判定。定向验证不启动浏览器、IDE 或设备。
+
+## 尚未覆盖的范围
+
+通用读取器仍需要 decoder 提供结构化的编码后选择器、属性值、变量与 fallback、条件、important 和顺序信息，或一份可校验的私有输出语法合同。复杂选择器、条件、变量和未知格式继续保留缺口。不能通过替换 `{{变量}}`、复制 serializer 输入值、忽略解析错误，或把本轮失败改成 `unsupported` 来得到全绿报告。

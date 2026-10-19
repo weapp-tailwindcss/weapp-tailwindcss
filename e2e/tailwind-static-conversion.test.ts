@@ -8,17 +8,17 @@ import { conversionTargets } from './tailwind-capabilities/conversion-audit'
 import { assertCapabilitySuccess } from './tailwind-capabilities/report'
 import { runStatic } from './tailwind-capabilities/static'
 
-const mocks = vi.hoisted(() => ({ generate: vi.fn(), native: vi.fn(), lynx: vi.fn(), persist: vi.fn() }))
+const mocks = vi.hoisted(() => ({ generate: vi.fn(), native: vi.fn(), lynx: vi.fn(), persist: vi.fn(), literalCase: false, rejectionCase: false }))
 const source = '.size-8{width:2rem;height:2rem}'
 
-vi.mock('./tailwind-capabilities/reference', () => ({ defaultReferenceBuilder: async () => async (candidates: string[]) => candidates.map(candidate => source.replaceAll('size-8', candidate)).join('') }))
+vi.mock('./tailwind-capabilities/reference', () => ({ defaultReferenceBuilder: async () => async (candidates: string[]) => candidates.map(candidate => candidate === 'size-full' ? '.size-full{width:100%;height:100%}' : candidate === 'inline-flex' ? '.inline-flex{display:inline-flex}' : source.replaceAll('size-8', candidate)).join('') }))
 vi.mock('weapp-tailwindcss/escape', () => ({ escape: (value: string) => value }))
 vi.mock('../packages/react-native/src/compiler', () => ({ compileNativeStylesheet: mocks.native }))
 vi.mock('./lynx/batch-encode', () => ({ encodeLynxCss: mocks.lynx }))
 vi.mock('./tailwind-capabilities/fixture', () => ({ withGeneratorFixture: async (_root: string, _css: string, _files: unknown, run: (generator: unknown) => Promise<void>) => run({ generate: mocks.generate }) }))
 vi.mock('./tailwind-capabilities/inventory/value-cases', () => ({ valueCases: () => [] }))
 vi.mock('./tailwind-capabilities/inventory/index', () => ({
-  loadInventory: async () => ({ completions: [{ candidate: 'size-8' }, { candidate: 'size-9' }], utilities: [], variants: [] }),
+  loadInventory: async () => ({ completions: mocks.rejectionCase ? [{ candidate: 'inline-flex' }] : mocks.literalCase ? [{ candidate: 'size-full' }] : [{ candidate: 'size-8' }, { candidate: 'size-9' }], utilities: [], variants: [] }),
   collectInventory: async () => ({}),
   validateInventory: () => {},
   loadDefaultDesignSystem: async () => ({ candidatesToCss: (candidates: string[]) => candidates.map(candidate => source.replaceAll('size-8', candidate)) }),
@@ -35,6 +35,8 @@ vi.mock('./tailwind-capabilities/context', () => ({
 const directories: string[] = []
 beforeEach(() => {
   vi.clearAllMocks()
+  mocks.literalCase = false
+  mocks.rejectionCase = false
   mocks.generate.mockImplementation(async ({ target }: { target: string }) => {
     if (target === 'weapp') {
       return { css: '' }
@@ -59,6 +61,33 @@ async function execute() {
 }
 
 describe('static runner 的生成与三目标转换分层', () => {
+  it('生成通过与官方负向编码合同分层，错误 flex 替换不能成为负向成功', async () => {
+    mocks.rejectionCase = true
+    const sourceCss = '.inline-flex{display:inline-flex}'
+    mocks.generate.mockResolvedValue({ rawCss: sourceCss, css: sourceCss, classSet: new Set(['inline-flex']) })
+    const output = { sourceCss, css: '.inline-flex { }', rules: [], diagnostics: [], encodedByteLength: 10 }
+    mocks.lynx.mockResolvedValue(output)
+    const rejected = await execute()
+    expect(rejected.report.results.find(result => result.id === 'completion/inline-flex')?.status).toBe('passed')
+    expect(rejected.report.results.find(result => result.id === 'conversion/lynx/completion/inline-flex')).toMatchObject({ status: 'passed', support: 'unsupported' })
+    mocks.lynx.mockResolvedValue({ ...output, css: '.inline-flex { display: flex; }' })
+    const substituted = await execute()
+    expect(substituted.report.results.find(result => result.id === 'conversion/lynx/completion/inline-flex')).toMatchObject({ status: 'failed', support: 'unsupported' })
+  })
+
+  it('Lynx 字面合同先登记，完整输出通过而丢属性不能由输入 AST 代证', async () => {
+    mocks.literalCase = true
+    mocks.generate.mockResolvedValue({ rawCss: '.size-full{width:100%;height:100%}', css: '.size-full{width:100%;height:100%}', classSet: new Set(['size-full']) })
+    const output = { sourceCss: '.size-full{width:100%;height:100%}', css: '.size-full { height: 100%; width: 100%; }', rules: [{ selectorText: { value: '.size-full' }, style: [{ name: 'width', value: '100%' }, { name: 'height', value: '100%' }] }], diagnostics: [] }
+    mocks.lynx.mockResolvedValue(output)
+    const complete = await execute()
+    expect(complete.report.results.find(result => result.id === 'conversion/lynx/completion/size-full')?.status).toBe('passed')
+    expect(JSON.parse(await readFile(path.join(complete.directory, 'conversion-oracle-coverage.json'), 'utf8')).lynxOracles).toMatchObject([{ id: 'lynx/literal-v1/size-full' }])
+    mocks.lynx.mockResolvedValue({ ...output, css: '.size-full { width: 100%; }' })
+    const partial = await execute()
+    expect(partial.report.results.find(result => result.id === 'conversion/lynx/completion/size-full')).toMatchObject({ status: 'failed', support: 'supported' })
+  })
+
   it('三个真实转换调用全抛时生成仍通过，三目标分别失败', async () => {
     mocks.generate.mockImplementation(async ({ target }: { target: string }) => {
       if (target === 'weapp') {

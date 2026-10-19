@@ -1,3 +1,4 @@
+import type { LynxEncoderDiagnostic, SerializedLynxRule } from './encoding-types'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -10,15 +11,7 @@ interface TasmCodec {
   decode_wasm: (buffer: Uint8Array) => Promise<{ css: { text?: string } }>
 }
 
-export interface LynxEncoderDiagnostic {
-  type: string
-  name: string
-}
-
-export interface SerializedLynxRule {
-  selectorText?: { value: string }
-  style?: Array<{ name: string, defaultValueMap?: Record<string, string> }>
-}
+export type { LynxEncoderDiagnostic, SerializedLynxRule } from './encoding-types'
 
 /** 批量静态验收复用真实生产 serializer/encoder，并保留编码后的 CSS 与原始诊断。 */
 export async function encodeLynxCss(css: string, options: { applyCompatibility?: boolean, mode?: 'wasm' } = {}) {

@@ -1,10 +1,15 @@
+import type { ReviewedConversionOracle } from './tailwind-capabilities/conversion-audit'
 import { describe, expect, it } from 'vitest'
 import { createWeappTailwindcssGenerator, resolveTailwindV4Source } from 'weapp-tailwindcss/generator'
 import { transformLynxCssCompat } from '../packages/postcss/src/compat/lynx-css'
 import { transformWebCssCompat } from '../packages/postcss/src/compat/web-css'
 import { encodeLynxCss } from './lynx/batch-encode'
 import { exampleDir } from './lynx/catalog'
+import { conversionCaseResult } from './tailwind-capabilities/conversion-audit'
+import { lynxLiteralOracles, reviewedLynxOracles } from './tailwind-capabilities/conversion-oracles/lynx'
 import { cssDeclarations } from './tailwind-capabilities/css'
+import { lynxLiteralObservation } from './tailwind-capabilities/lynx/decoder-literal'
+import { lynxRejectedDisplayValues } from './tailwind-capabilities/lynx/display-contract'
 
 async function encodeCss(css: string, mode?: 'wasm') {
   return encodeLynxCss(css, { mode, applyCompatibility: false })
@@ -25,6 +30,59 @@ async function generateCss(candidates: string) {
 }
 
 describe('Lynx native CSS defaults', () => {
+  it('真实生产 encoder 与 WASM decoder 逐项核对冻结的正向字面合同', async () => {
+    const candidates = lynxLiteralOracles.map(item => item.candidate)
+    const css = await generateCss(candidates.join(' '))
+    const oracles = reviewedLynxOracles(candidates, css)
+    expect(oracles).toHaveLength(candidates.length)
+    const encoded = await encodeCss(css, 'wasm')
+    expect(encoded.encodedByteLength).toBeGreaterThan(0)
+    const results = oracles.map(oracle => conversionCaseResult({ id: oracle.candidate, candidate: oracle.candidate, features: [] }, 'lynx', lynxLiteralObservation(oracle.candidate, encoded), [], oracle))
+    expect(results.filter(result => result.status !== 'passed')).toEqual([])
+    expect(results.filter(result => result.status === 'passed')).toHaveLength(41)
+  })
+
+  it('官方不支持的 inline-flex 虽无诊断仍不能证明 Web 语义保留', async () => {
+    // https://lynxjs.org/api/css/properties/display.html 明确排除 inline-flex，禁止映射为 flex 冒充兼容。
+    const css = '.inline-flex{display:inline-flex}'
+    const preservationOracle: ReviewedConversionOracle = {
+      id: 'counterexample/web-display-preservation/inline-flex',
+      target: 'lynx',
+      candidate: 'inline-flex',
+      support: 'supported',
+      expected: { statements: [{ selector: '.inline-flex', conditions: [], property: 'display', value: 'inline-flex', important: false }], diagnostics: [] },
+    }
+    const encoded = await encodeCss(css, 'wasm')
+    expect(encoded.diagnostics).toEqual([])
+    expect(lynxLiteralObservation('inline-flex', encoded)).toMatchObject({ snapshot: { statements: [], diagnostics: [] } })
+    expect(conversionCaseResult({ id: 'inline-flex', candidate: 'inline-flex', features: [] }, 'lynx', lynxLiteralObservation('inline-flex', encoded), [], preservationOracle)).toMatchObject({ status: 'failed', support: 'supported' })
+    expect(reviewedLynxOracles(['inline-flex'], css)[0]?.support).toBe('unsupported')
+  })
+
+  it.each(lynxRejectedDisplayValues)('真实 WASM 对官方限制 %s 完成拒绝，错写 flex 则不满足负向合同', async (value) => {
+    const css = `.${value}{display:${value}}`
+    const fixed = reviewedLynxOracles([value], css)[0]!
+    const encoded = await encodeCss(css, 'wasm')
+    const item = { id: value, candidate: value, features: [] }
+    expect(conversionCaseResult(item, 'lynx', lynxLiteralObservation(value, encoded), [], fixed)).toMatchObject({ status: 'passed', support: 'unsupported' })
+    expect(conversionCaseResult(item, 'lynx', lynxLiteralObservation(value, { ...encoded, css: `.${value}{display:flex}` }), [], fixed).status).toBe('failed')
+  })
+
+  it('真实 decoder 产物篡改或 serializer 输入保留均不能掩盖输出丢失', async () => {
+    const css = '.size-full{width:100%;height:100%}.other{columns:2}'
+    const oracle = reviewedLynxOracles(['size-full'], css)[0]!
+    const encoded = await encodeCss(css, 'wasm')
+    expect(encoded.diagnostics.length).toBeGreaterThan(0)
+    const item = { id: 'size-full', candidate: 'size-full', features: [] }
+    const check = (output: typeof encoded) => conversionCaseResult(item, 'lynx', lynxLiteralObservation('size-full', output), [], oracle).status
+    expect(check(encoded)).toBe('passed')
+    expect(check({ ...encoded, css: encoded.css.replace('width: 100%;', '') })).toBe('failed')
+    expect(check({ ...encoded, css: encoded.css.replace('width: 100%;', 'width: 90%;') })).toBe('failed')
+    expect(check({ ...encoded, css: `${encoded.css}.size-full { width: 90%; }` })).toBe('failed')
+    expect(check({ ...encoded, css: `${encoded.css}@media screen {.size-full { width: 90%; }}` })).toBe('not-run')
+    expect(check({ ...encoded, css: '' })).toBe('failed')
+  })
+
   it('真实 decoder 的变量展示文本不能作为标准 CSS 或 serializer 输入的语义替身', async () => {
     const input = '.probe{width:32px;color:var(--probe-color,red)}'
     const encoded = await encodeCss(input, 'wasm')

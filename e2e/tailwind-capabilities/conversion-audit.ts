@@ -1,4 +1,6 @@
+import type { LynxDisplayRejection } from './lynx/display-contract'
 import type { CapabilityResult, CaseContract } from './types'
+import { validLynxDisplayRejection } from './lynx/display-contract'
 
 export const conversionTargets = ['weapp', 'react-native', 'lynx'] as const
 export type ConversionTarget = typeof conversionTargets[number]
@@ -20,6 +22,7 @@ export type ConversionObservation = {
   execution: 'completed'
   snapshot: ConversionSnapshot
   diagnosticsScope: 'candidate' | 'batch'
+  rejectionProof?: { input: ConversionSnapshot, encodedByteLength: number }
 } | {
   execution: 'completed'
   outputFormat: 'lynx-decoder-template'
@@ -37,6 +40,7 @@ export interface ReviewedConversionOracle {
   support: 'supported' | 'unsupported'
   reason?: string
   expected: ConversionSnapshot
+  rejection?: LynxDisplayRejection
 }
 
 interface ConversionCase {
@@ -65,7 +69,12 @@ function validateOracle(oracle: ReviewedConversionOracle) {
   if (oracle.support === 'supported' && !oracle.expected.statements.length) {
     throw new Error('正向转换 oracle 不能使用空规则证明支持')
   }
-  if (oracle.support === 'unsupported' && (!oracle.reason?.trim() || !oracle.expected.diagnostics.length)) {
+  if (oracle.rejection && (oracle.target !== 'lynx' || oracle.support !== 'unsupported'
+    || oracle.candidate !== oracle.rejection.value || !validLynxDisplayRejection(oracle.rejection)
+    || oracle.expected.statements.length || oracle.expected.diagnostics.length)) {
+    throw new Error('无诊断拒绝合同仅适用于官方明确排除的 Lynx inline display 值及空解码输出')
+  }
+  if (oracle.support === 'unsupported' && (!oracle.reason?.trim() || (!oracle.expected.diagnostics.length && !oracle.rejection))) {
     throw new Error('负向转换 oracle 必须预先声明限制原因与实际诊断')
   }
   if (oracle.expected.diagnostics.some(diagnostic => !diagnostic.trim())) {
@@ -93,8 +102,8 @@ export function conversionCaseContract(item: ConversionCase, target: ConversionT
     fixture: oracle ? JSON.stringify(oracle) : `尚无独立 ${target} 转换 oracle`,
     // 未登记 oracle 时保留待证明的正向预期，结果固定为 not-run，不声明实际支持。
     expectation: { support: oracle?.support ?? 'supported', stage: 'encoding', ...(oracle?.reason ? { reason: oracle.reason } : {}) },
-    requiredAssertions: ['conversion-executed', 'semantic-oracle', 'reviewed-oracle'],
-    expectedValues: { 'conversion-executed': true, 'semantic-oracle': true, 'reviewed-oracle': oracle ? canonical(oracle) : 'unreviewed' },
+    requiredAssertions: ['conversion-executed', 'semantic-oracle', 'reviewed-oracle', ...oracle?.rejection ? ['documented-rejection-input'] : []],
+    expectedValues: { 'conversion-executed': true, 'semantic-oracle': true, 'reviewed-oracle': oracle ? canonical(oracle) : 'unreviewed', ...oracle?.rejection ? { 'documented-rejection-input': true } : {} },
   }
 }
 
@@ -121,11 +130,16 @@ export function conversionCaseResult(item: ConversionCase, target: ConversionTar
   if (oracle.support === 'unsupported' && observation.diagnosticsScope !== 'candidate') {
     return { ...base, status: 'not-run', reason: '仅有批次诊断，不能证明本候选满足已审查的负向转换合同。' }
   }
-  const passed = canonical(observation.snapshot) === canonical(oracle.expected)
+  if (oracle.rejection && !observation.rejectionProof) {
+    return { ...base, status: 'not-run', reason: 'Lynx 已审查负向合同缺少实际 encoder 输入声明或非空编码 buffer 的证据。' }
+  }
+  const rejectionInputRetained = !oracle.rejection || (Number.isSafeInteger(observation.rejectionProof!.encodedByteLength) && observation.rejectionProof!.encodedByteLength > 0
+    && canonical(observation.rejectionProof!.input) === canonical({ statements: [{ selector: `.${item.candidate}`, conditions: [], property: oracle.rejection.property, value: oracle.rejection.value, important: false }], diagnostics: [] }))
+  const passed = rejectionInputRetained && canonical(observation.snapshot) === canonical(oracle.expected)
   return {
     ...base,
     status: passed ? 'passed' : 'failed',
-    assertions: [...base.assertions, { name: 'semantic-oracle', stage: 'encoding', actual: passed, expected: true }, { name: 'reviewed-oracle', stage: 'encoding', actual: canonical(oracle), expected: contract.expectedValues['reviewed-oracle']! }],
+    assertions: [...base.assertions, { name: 'semantic-oracle', stage: 'encoding', actual: passed, expected: true }, { name: 'reviewed-oracle', stage: 'encoding', actual: canonical(oracle), expected: contract.expectedValues['reviewed-oracle']! }, ...oracle.rejection ? [{ name: 'documented-rejection-input', stage: 'encoding' as const, actual: rejectionInputRetained, expected: true }] : []],
     ...(passed ? oracle.reason ? { reason: oracle.reason } : {} : { reason: `${target} 转换结果与预先登记的完整语义 oracle 不一致。` }),
   }
 }
