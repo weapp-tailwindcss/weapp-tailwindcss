@@ -69,7 +69,7 @@ async function main() {
       persist: () => writeExecutionRecord(context.directory, metadata, stages),
       classify: async (target) => {
         const base = path.join(context.directory, target)
-        const files = target.startsWith('web-') ? [path.join(base, 'report.json'), path.join(base, 'registry', 'report.json'), path.join(base, 'hmr', 'report.json'), path.join(base, 'authoring', 'report.json'), path.join(base, 'context', 'report.json'), path.join(base, 'framework-source', 'report.json')] : [path.join(base, 'report.json')]
+        const files = target.startsWith('web-') ? [path.join(base, 'report.json'), path.join(base, 'registry', 'report.json'), path.join(base, 'hmr', 'report.json'), path.join(base, 'authoring', 'report.json'), path.join(base, 'context', 'report.json'), path.join(base, 'framework-source', 'report.json'), path.join(base, 'lifecycle', 'report.json')] : [path.join(base, 'report.json')]
         const loaded = await Promise.allSettled(files.map(async file => JSON.parse(await readFile(file, 'utf8')) as CapabilityReport))
         const reports = loaded.flatMap(item => item.status === 'fulfilled' ? [item.value] : [])
         if (!reports.length) {

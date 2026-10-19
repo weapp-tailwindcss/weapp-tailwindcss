@@ -12,6 +12,8 @@ import { assertCapabilitySuccess } from './report'
 import { runWeb, webProbes } from './web'
 import { contextWebProbes } from './web-context/fixtures'
 import { runContextWeb } from './web-context/run'
+import { lifecycleWebProbes } from './web-lifecycle/fixtures'
+import { runLifecycleWeb } from './web-lifecycle/run'
 
 /** 每个引擎复用本轮同一个后台浏览器；子 runner 只清理各自的 context。 */
 export async function runWebSuite(context: RunContext, engine: BrowserEngine) {
@@ -23,6 +25,7 @@ export async function runWebSuite(context: RunContext, engine: BrowserEngine) {
     hmr: [hmrContract().id],
     context: contextWebProbes.map(probe => `runtime/${probe.id}`),
     framework: frameworkSourceProfiles.map(profile => profile.id),
+    lifecycle: lifecycleWebProbes.map(probe => `runtime/${probe.id}`),
   })
   const browser = await { chromium, firefox, webkit }[engine].launch({ headless: true })
   const reports: CapabilityReport[] = []
@@ -34,6 +37,7 @@ export async function runWebSuite(context: RunContext, engine: BrowserEngine) {
     { group: 'hmr', run: () => runHmr(context, engine, browser) },
     { group: 'context', run: () => runContextWeb(context, engine, browser) },
     { group: 'framework', run: () => runFrameworkSource(context, engine, browser) },
+    { group: 'lifecycle', run: () => runLifecycleWeb(context, engine, browser) },
   ]
   try {
     for (const { group, run } of runners) {

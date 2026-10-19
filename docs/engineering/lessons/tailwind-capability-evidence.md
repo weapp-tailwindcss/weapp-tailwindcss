@@ -46,7 +46,7 @@ regressions:
 - 扫描不能只检查 classSet：独立参考逐候选检查实际声明、条件、全局依赖和排除结果，产品候选只能来自真实源码。
 - 原生负向结果必须有明确的候选诊断；空规则或静默丢失是失败，不能自动变为“不支持”。复杂选择器通过 AST 提取精确候选后明确拒绝；双轴 skew 在最终变量层叠后组合，不能只保留最后一轴。
 - Web 状态在触发前、触发后和恢复后验证，具名作用域和组合条件增加中间负控制；源码 HMR 通过真实 Vite 服务连续增、替、删并刷新，保存标识、样式、WebSocket 消息和同页面身份共同验真。
-- React/Vue 源码经真实框架编译并执行分支；服务使用真实临时目录身份，保存屏障等待完整 Vite 更新周期，不能在原始 watcher 回调中提前读取旧产物。上下文变体用实际 browser context 和原生表单事件取证；剩余 8 类变体继续登记未执行。
+- React/Vue 源码经真实框架编译并执行分支；服务使用真实临时目录身份，保存屏障等待完整 Vite 更新周期，不能在原始 watcher 回调中提前读取旧产物。上下文变体用实际 browser context 和原生表单事件取证；starting 与 details-content 另外采用原生生命周期/像素夹具；剩余 6 类变体继续登记未执行。
 - RN 实例分别维护注册表与元数据，工厂 revision 使缓存失效；深层样式数组迭代解析并明确拒绝循环引用。近零非零阴影透明度按宿主可消费的小数保留，不能由格式化舍入为透明。
 - RN 五个构建指令重读本轮稳定发布的 Metro manifest 并回放独立编码预期；运行时增加无效果 control，宿主同时忽略 probe/reference 样式时拒绝通过。组合效果不能替代其中每个默认属性的独立证明。
 - 目标转换先固定独立参考和已审查转换规则，再执行产品管线。首批 848 个默认补全具备完整 WXSS 关键字兼容 oracle，其余候选不由声明存在推导转换支持。
@@ -75,6 +75,10 @@ regressions:
 首轮还发现 CLI 将工具环境错误作为普通目标失败捕获并继续启动 Lynx。已保存 `environment-block.json` 和原始索引，将故障后的产物排除出本轮通过率。调度器现以独立环境错误立即停止全部后续 check/execute；纯回归使用真实失败子进程证明这一边界。RN iOS 明确使用 prebuild、CocoaPods、xcodebuild 和 simctl；这属于新的原生 runner 实现，必须重新 extended prepare、当前会话 computer use、verify 后才能实际验收。
 
 转换 oracle 新增 RN 独立映射（默认补全 1,599 项），WXSS 扩至 848 项；两端未审查范围分别为 21,687 和 22,438。修复 place 多关键词展开、RN spacing 函数拆分、非法布局枚举及组合平台变体丢条件，并增加完整四边、四角、双维度和动态阶段比较。缺少独立原生几何回执的 Lynx 案例不能通过，混合案例也不传播为所有子能力通过。
+
+Lynx 的几何采集由双端原生宿主独立量六个节点，写出 probe/control PNG 与身份绑定的坐标 sidecar，JS 只能提交 PNG，不能伪造几何回执。普通 run context、缺 sidecar、旧 run、错误 hash 或无效矩形均不能通过。混合案例采集可保留精确的 pending 候选，但最终基线和统一 v2 验收继续拒绝缺少能力证据；active 不代证 hover。
+
+Expo 示例的 Babel preset 现按实际 Expo 包身份解析，避免 monorepo 的旧 preset 被 Metro 选中。修复后 Web、Android、iOS 三种真实 Metro export 已通过；这是构建证据，不能替代设备运行。
 
 ## 适用边界
 

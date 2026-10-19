@@ -44,7 +44,8 @@ pnpm e2e:tailwind --list
 - `static`：每批 256 个唯一候选，保存 raw CSS、WXSS、RN manifest、Lynx 解码 CSS、诊断与审计。生成合同比较完整声明、选择器及媒体/容器条件，并核对主题变量、动画帧和 property 注册。每个候选另有三端独立转换结果；没有已审查转换 oracle 的项目保持未执行，异常保持失败，不由产物存在推导支持。已审查的 `weapp-keyword-compatibility-v2` 覆盖默认补全中的 848 项，其余 22,438 项仍有转换 oracle 缺口。RN 的 `react-native-literal-mapping-v1` 覆盖 1,599 项（1,511 正向、88 预先声明的拒绝），其余 21,687 项保留缺口；另行覆盖的语法样本单独计数。转换审计不能直接判成运行时支持。
 - `authoring`：18 个指令/配置夹具及 11 个真实扫描语法夹具，分别创建隔离目录；扫描候选只存在于各自源码，完整参考检查声明、条件和依赖。29 例另有隔离的浏览器语义参考；扫描后的 DOM 消费不等同于执行 JSX/Vue 条件分支。
 - Web 子目录 `framework-source`：18 个真实 React JSX / Vue SFC 案例，执行条件、数组、对象、模板、映射、merge、cva、variants 和动态插值负例；四版源码分别刷新并验证 A→B→A 分支、精确类名、独立宽度、节点和页面身份。候选只由唯一源码扫描，不能由 inline source 补齐。
-- Web 子目录 `context`：7 类上下文变体、27 个状态，原生触摸/鼠标、禁用脚本、表单编辑/提交/失焦及恢复；与普通状态夹具合计为 80/88 个 variant 提供夹具。其余 8 类保留在 [缺口清单](web-context/remaining-variants.md)，有夹具不等于各引擎实际通过。
+- Web 子目录 `context`：7 类上下文变体、27 个状态，原生触摸/鼠标、禁用脚本、表单编辑/提交/失焦及恢复；与普通状态夹具及生命周期夹具合计为 82/88 个 variant 提供夹具。其余 6 类保留在 [缺口清单](web-context/remaining-variants.md)，有夹具不等于各引擎实际通过。
+- Web 子目录 `lifecycle`：starting 使用自然 rAF/transition 时间线、真实 CSSTransition 的起中终像素及移除重插；details-content 使用原生 summary 点击/键盘开合、UA 伪元素与无 class 对照像素。独立保存逐引擎结果，功能探针不能自动改判不支持。
 - Web 子目录 `hmr`：同一真实 Vite 服务连续新增、替换、删除类名及最终刷新，检查每轮保存标识、计算样式、源码 update 消息、服务身份与页面是否被整刷。
 - `e2e/.artifacts/tailwind/<run-id>/index.json` 和 `index.md`：本轮调度结果。各目标保留 v2 报告、原始证据和覆盖缺口；原生报告归档到本轮 `native` 目录，不引用下次会被覆盖的共享目录。
 - `mini-builds`：逐个登记的小程序项目复用完整构建、样式、模板及分包断言，立即归档本轮 bundle，写入逐案例 v2 报告。旧矩阵中只有登记信息、执行空命令的条目保留未执行；不能以 package.json 冒充样式产物。此层级不贡献设备运行覆盖。

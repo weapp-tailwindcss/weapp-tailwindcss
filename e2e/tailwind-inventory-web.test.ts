@@ -5,6 +5,7 @@ import { arbitrarySyntaxCases } from '../tools/tailwindcss-test-catalog/src'
 import { loadDefaultDesignSystem, loadInventory } from './tailwind-capabilities/inventory'
 import { assertionPassed, validateCapabilityReport } from './tailwind-capabilities/report'
 import { contextWebProbes } from './tailwind-capabilities/web-context/fixtures'
+import { lifecycleWebProbes } from './tailwind-capabilities/web-lifecycle/fixtures'
 import { renderWebProbe, webContract } from './tailwind-capabilities/web/contract'
 import { webRuntimeCoverage } from './tailwind-capabilities/web/coverage'
 import { webFeatureBindings } from './tailwind-capabilities/web/features'
@@ -71,8 +72,9 @@ describe('Web 语义夹具合同', () => {
     const coverage = webRuntimeCoverage(inventory)
     expect(coverage.map(item => item.featureId).sort()).toEqual([...featureIds].sort())
     expect(new Set(coverage.map(item => item.featureId)).size).toBe(features.length)
+    const probes: readonly { id: string, features: readonly string[] }[] = [...webProbes, ...contextWebProbes, ...lifecycleWebProbes]
     for (const row of coverage) {
-      const caseIds = [...webProbes, ...contextWebProbes].filter(item => item.features.includes(row.featureId)).map(item => `runtime/${item.id}`)
+      const caseIds = probes.filter(item => item.features.includes(row.featureId)).map(item => `runtime/${item.id}`)
       expect(row.caseIds).toEqual(caseIds)
       expect(row.status).toBe(caseIds.length ? 'fixture-defined' : 'not-run')
       if (!caseIds.length) {

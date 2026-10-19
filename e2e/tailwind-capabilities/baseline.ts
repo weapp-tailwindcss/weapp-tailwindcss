@@ -7,12 +7,14 @@ import { hmrCss, hmrSource, hmrStates } from './hmr/fixture'
 import { digest } from './identity'
 import { weappProbes } from './weapp/fixtures'
 import { contextWebCandidates, contextWebFixtureCss, contextWebProbes } from './web-context/fixtures'
+import { lifecycleWebCandidates, lifecycleWebFixtureCss, lifecycleWebProbes } from './web-lifecycle/fixtures'
 import { webFixtureCss, webProbes } from './web/probes'
 
 export async function fixtureOutputs(root: string) {
   const web = await withGeneratorFixture(root, webFixtureCss, {}, generator => generator.generate({ target: 'web', candidates: [...new Set(webProbes.flatMap(probe => probe.candidate.match(/\S+/g) ?? []))], scanSources: false }))
   const weapp = await withGeneratorFixture(root, '@import "tailwindcss" source(none);', {}, generator => generator.generate({ target: 'weapp', candidates: [...new Set(weappProbes.flatMap(probe => [...probe.candidates]))], scanSources: false }))
   const context = await withGeneratorFixture(root, contextWebFixtureCss, {}, generator => generator.generate({ target: 'web', candidates: contextWebCandidates, scanSources: false }))
+  const lifecycle = await withGeneratorFixture(root, lifecycleWebFixtureCss, {}, generator => generator.generate({ target: 'web', candidates: lifecycleWebCandidates, scanSources: false }))
   const frameworkFixtures = sourceFrameworks.flatMap(framework => sourceRevisions.map(revision => ({ framework, revision, css: frameworkSourceCss(framework), files: { [`Probe.${framework === 'react' ? 'tsx' : 'vue'}`]: frameworkSource(framework, revision, 'static-baseline') } })))
   const frameworkFiles = Object.fromEntries<string>(await Promise.all(frameworkFixtures.map(async (fixture) => {
     const output = await withGeneratorFixture(root, fixture.css, fixture.files, generator => generator.generate({ target: 'web', candidates: [], scanSources: true }))
@@ -30,7 +32,7 @@ export async function fixtureOutputs(root: string) {
     const output = await withGeneratorFixture(root, fixture.css, fixture.files, generator => generator.generate({ target: 'web', candidates: fixture.candidates, scanSources: true }))
     return [`authoring-${fixture.id}.css`, output.css] as const
   })))
-  return { fixtureHash: digest({ webFixtureCss, webProbes, weappProbes, contextWebFixtureCss, contextWebProbes, hmrCss, hmrStates, authoring, frameworkFixtures }), files: { 'web.css': web.css, 'weapp.wxss': weapp.css, 'context.css': context.css, ...hmr, ...authoringFiles, ...frameworkFiles } }
+  return { fixtureHash: digest({ webFixtureCss, webProbes, weappProbes, contextWebFixtureCss, contextWebProbes, lifecycleWebFixtureCss, lifecycleWebProbes, hmrCss, hmrStates, authoring, frameworkFixtures }), files: { 'web.css': web.css, 'weapp.wxss': weapp.css, 'context.css': context.css, 'lifecycle.css': lifecycle.css, ...hmr, ...authoringFiles, ...frameworkFiles } }
 }
 
 export async function fixtureBaseline(root: string, update = false) {

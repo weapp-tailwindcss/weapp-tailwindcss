@@ -64,7 +64,7 @@ describe('受控 variant 的触发与恢复', () => {
         expect(coverage.find(item => item.featureId === feature)?.caseIds).toContain(`runtime/${probe.id}`)
       }
     }
-    const uncovered = ['any-pointer-none', 'autofill', 'contrast-less', 'details-content', 'inverted-colors', 'pointer-none', 'starting', 'visited']
+    const uncovered = ['any-pointer-none', 'autofill', 'contrast-less', 'inverted-colors', 'pointer-none', 'visited']
     expect(coverage.filter(item => item.featureId.startsWith('variant/') && item.status === 'not-run').map(item => item.featureId)).toEqual(uncovered.map(root => `variant/static/${root}`))
   })
 
