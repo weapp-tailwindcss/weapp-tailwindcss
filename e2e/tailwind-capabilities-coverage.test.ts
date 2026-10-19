@@ -24,6 +24,7 @@ const contract: CaseContract = { id: 'display-flex', features: ['display'], cand
 async function fixture(contracts = [contract]) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'capability coverage '))
   directories.push(root)
+  const observedAt = new Date().toISOString()
   const file = path.join(root, 'raw.css')
   await fs.writeFile(file, '.flex { display: flex }')
   const artifact = await receipt(file, root, 'run-one', contracts.map(item => item.id), 'css')
@@ -31,7 +32,7 @@ async function fixture(contracts = [contract]) {
     schemaVersion: 2,
     runId: 'run-one',
     target: 'web-chromium',
-    observedAt: new Date().toISOString(),
+    observedAt,
     identity,
     environment: { browser: 'chromium' },
     artifacts: [artifact],

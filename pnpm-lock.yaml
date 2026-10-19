@@ -977,6 +977,9 @@ importers:
       '@weapp-tailwindcss/shared':
         specifier: workspace:*
         version: link:packages/shared
+      '@weapp-tailwindcss/test-catalog':
+        specifier: workspace:*
+        version: link:tools/tailwindcss-test-catalog
       '@weapp-tailwindcss/test-helper':
         specifier: workspace:*
         version: link:packages/test-helper
@@ -4495,6 +4498,9 @@ importers:
 
   examples/react-lynx:
     dependencies:
+      '@weapp-tailwindcss/test-catalog':
+        specifier: workspace:*
+        version: link:../../tools/tailwindcss-test-catalog
       '@lynx-js/react':
         specifier: 0.126.1
         version: 0.126.1(@lynx-js/types@4.2.1)(@types/react@19.2.18)
@@ -5786,6 +5792,8 @@ importers:
       yaml:
         specifier: 2.9.1
         version: 2.9.1
+
+  tools/tailwindcss-test-catalog: {}
 
   tools/weapp-tailwindcss-scripts:
     dependencies:

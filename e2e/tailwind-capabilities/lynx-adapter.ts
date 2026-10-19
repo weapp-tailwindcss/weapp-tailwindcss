@@ -4,7 +4,7 @@ import type { LynxTarget } from './lynx/contracts'
 import type { CapabilityResult } from './types'
 import { writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { newReport } from './context'
+import { newReport, persistReport } from './context'
 import { lynxAdapterFixture, lynxCaseContracts } from './lynx/contracts'
 import { lynxArtifactReceipts } from './lynx/evidence'
 import { validateLynxCase } from './lynx/validate'
@@ -23,6 +23,9 @@ export async function buildLynxCapabilityReport(context: RunContext, target: Lyn
     adapter: 'lynx-native-v2',
     ...(raw ? { platform: raw.platform, deviceName: raw.environment?.deviceName ?? 'unresolved', osVersion: raw.environment?.osVersion ?? 'unresolved', runtimeIdentifier: raw.environment?.runtimeIdentifier ?? 'unresolved' } : {}),
   })
+  if (raw) {
+    report.identity.versions = { ...report.identity.versions, ...raw.versions }
+  }
   let invalid = validationError === undefined ? undefined : `原生运行或完整报告验证失败：${message(validationError)}`
   let incomplete = !raw ? '本轮没有生成可验证的 Lynx 原始报告' : undefined
   if (raw && !invalid) {
@@ -71,5 +74,6 @@ export async function buildLynxCapabilityReport(context: RunContext, target: Lyn
     report.results = report.results.map(item => ({ ...item, status: 'failed', reason: invalid, assertions: [] }))
     await writeCapabilityReport(output, report)
   }
+  await persistReport(context, report, contracts)
   return { report, contracts }
 }

@@ -1,0 +1,78 @@
+view,text,::after,::before {
+      --tw-border-style: solid;
+      --tw-content: "";
+    }
+  page,.tw-root,wx-root-portal-content,:host {
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 'Noto Sans', Arial,
+    sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+    --default-font-family: var(--font-sans);
+    --default-mono-font-family: var(--font-mono);
+  }
+  view,text,::after,::before {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0 solid;
+  }
+  .-mt-_b7px_B {
+    margin-top: calc(7px * -1);
+  }
+  .size-_b44px_B {
+    width: 44px;
+    height: 44px;
+  }
+  .h-_b48px_B {
+    height: 48px;
+  }
+  ._bwidth_c71px_B {
+    width: 71px;
+  }
+  .w-_plength_c--probe-width_P {
+    width: var(--probe-width);
+  }
+  .w-1_f2 {
+    width: calc(1 / 2 * 100%);
+  }
+  .w-_b32px_B {
+    width: 32px;
+  }
+  .w-_b64px_B {
+    width: 64px;
+  }
+  .w-_b67px_B_e {
+    width: 67px !important;
+  }
+  .w-_b123px_B {
+    width: 123px;
+  }
+  .w-_bcalc_p100_v-17px_P_B {
+    width: calc(100% - 17px);
+  }
+  .rounded-_b17px_B {
+    border-radius: 17px;
+  }
+  .border-_b3px_B {
+    border-style: var(--tw-border-style);
+    border-width: 3px;
+  }
+  .border-solid {
+    --tw-border-style: solid;
+    border-style: solid;
+  }
+  .bg-_b_h123456_B {
+    background-color: #123456;
+  }
+  .p-_b17px_B {
+    padding: 17px;
+  }
+  .text-_b23px_B {
+    font-size: 23px;
+  }
+  .text-_b_h123456_B {
+    color: #123456;
+  }
+  .opacity-_b_d67_B {
+    opacity: .67;
+  }

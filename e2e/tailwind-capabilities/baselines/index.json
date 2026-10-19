@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 2,
+  "fixtureHash": "85383ec08bfc0902334c8020aa26c95a8e947273a3f0ee1315fb2045ff587210",
+  "files": {
+    "web.css": "c487de957e6611d54af6ef19ef95155b9678200a5b0949fdba349961539f049c",
+    "weapp.wxss": "61f6e7306cae8c8012dd0117461595e65dbbdc8b2313750d244c0cf1d654f586"
+  }
+}

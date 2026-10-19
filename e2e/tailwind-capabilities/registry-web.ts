@@ -4,14 +4,14 @@ import type { BrowserEngine } from './types'
 import { writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { chromium, firefox, webkit } from 'playwright'
-import { newReport } from './context'
+import { newReport, persistReport } from './context'
 import { withGeneratorFixture } from './fixture'
 import { collectInventory, loadInventory, validateInventory } from './inventory'
 import { registryAssertions, registryWebContracts, registryWebCoverage } from './registry-web/contract'
 import { observeRegistry } from './registry-web/measure'
 import { registryWebProfile, renderRegistryProfile } from './registry-web/profiles'
 import { buildRegistryReference } from './registry-web/reference'
-import { receipt, validateCapabilityReport, verifyReportArtifacts, writeCapabilityReport } from './report'
+import { receipt, validateCapabilityReport, verifyReportArtifacts } from './report'
 
 export { registryAssertions, registryWebContracts, registryWebCoverage } from './registry-web/contract'
 export { registryWebProfile } from './registry-web/profiles'
@@ -109,6 +109,6 @@ export async function runRegistryWeb(context: RunContext, engine: BrowserEngine,
   }
   validateCapabilityReport(report, contracts, report.identity, output.runId, `web-${engine}`)
   await verifyReportArtifacts(report, output.directory)
-  await writeCapabilityReport(path.join(output.directory, 'report.json'), report)
+  await persistReport(output, report, contracts)
   return report
 }

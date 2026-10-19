@@ -18,7 +18,7 @@ export async function collectStaticEvidence() {
     projectRoot: exampleRoot,
     cssEntries: ['global.css', 'styles/legacy.css', 'styles/prefix.css', 'styles/reference.css'].map(file => path.resolve(exampleRoot, file)),
     candidates,
-    sourceGlobs: ['./src/**/*.{js,jsx,ts,tsx}', './App.tsx', '../../tools/tailwindcss-test-catalog/src/**/*.{ts,json}'],
+    sourceGlobs: ['./src/**/*.{js,jsx,ts,tsx}', './App.tsx', '../../tools/tailwindcss-test-catalog/compatibility-candidates.txt'],
   })
   const { manifest, rawCss, generatedClassSet } = evidence
   const rules = generatedRules(rawCss)

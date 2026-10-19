@@ -4,10 +4,10 @@ import type { BrowserEngine, CapabilityResult, SemanticAssertion } from './types
 import { writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { chromium, firefox, webkit } from 'playwright'
-import { newReport } from './context'
+import { newReport, persistReport } from './context'
 import { withGeneratorFixture } from './fixture'
 import { loadInventory } from './inventory'
-import { assertionPassed, receipt, validateCapabilityReport, verifyReportArtifacts, writeCapabilityReport } from './report'
+import { assertionPassed, receipt, validateCapabilityReport, verifyReportArtifacts } from './report'
 import { activateProbe, readProbe } from './web/actions'
 import { renderWebProbe, webContract } from './web/contract'
 import { webRuntimeCoverage } from './web/coverage'
@@ -141,6 +141,6 @@ export async function runWeb(context: RunContext, engine: BrowserEngine) {
   }
   validateCapabilityReport(report, contracts, report.identity, context.runId, `web-${engine}`)
   await verifyReportArtifacts(report, context.directory)
-  await writeCapabilityReport(path.join(context.directory, 'report.json'), report)
+  await persistReport(context, report, contracts)
   return report
 }

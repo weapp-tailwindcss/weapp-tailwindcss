@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "catalogHash": "a8c3b45f993d9aa28782f308fc959a09e160d67a9097d11b1bc6a8a38b93c886",
-  "generatedAt": "2026-10-06T00:16:17.793Z",
+  "catalogHash": "f49f290b4a53439b5b8a16e888b5ac9cd0a0b58fdac54440c43ffc8d4b473353",
+  "generatedAt": "2026-10-19T03:36:54.748Z",
   "versions": {
     "tailwindcss": "4.3.3",
     "lynxEngine": "4.0.1",
     "engineVersion": "3.9",
-    "cssDefines": "0.0.16"
+    "cssDefines": "0.0.18"
   },
   "results": [
     {
@@ -27,6 +27,13 @@
       ],
       "cssDefinesKnown": [
         "aspect-ratio"
+      ],
+      "candidates": [
+        {
+          "className": "aspect-[4/3]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -34,7 +41,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：columns",
+      "reason": "columns-2: encoder 删除属性：columns",
       "generatedDeclarations": [
         {
           "property": "columns",
@@ -47,7 +54,16 @@
           "value": "2"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "columns-2",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：columns"
+        }
+      ]
     },
     {
       "id": "layout-box-sizing",
@@ -67,6 +83,13 @@
       ],
       "cssDefinesKnown": [
         "box-sizing"
+      ],
+      "candidates": [
+        {
+          "className": "box-border",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -87,6 +110,13 @@
       ],
       "cssDefinesKnown": [
         "display"
+      ],
+      "candidates": [
+        {
+          "className": "block",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -94,7 +124,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：float",
+      "reason": "float-left: encoder 删除属性：float",
       "generatedDeclarations": [
         {
           "property": "float",
@@ -107,14 +137,23 @@
           "value": "left"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "float-left",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：float"
+        }
+      ]
     },
     {
       "id": "layout-isolation",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：isolation",
+      "reason": "isolate: encoder 删除属性：isolation",
       "generatedDeclarations": [
         {
           "property": "isolation",
@@ -127,14 +166,23 @@
           "value": "isolate"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "isolate",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：isolation"
+        }
+      ]
     },
     {
       "id": "layout-object-fit",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：object-fit",
+      "reason": "object-cover: encoder 删除属性：object-fit",
       "generatedDeclarations": [
         {
           "property": "object-fit",
@@ -147,7 +195,16 @@
           "value": "cover"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "object-cover",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：object-fit"
+        }
+      ]
     },
     {
       "id": "layout-overflow",
@@ -167,6 +224,13 @@
       ],
       "cssDefinesKnown": [
         "overflow"
+      ],
+      "candidates": [
+        {
+          "className": "overflow-hidden",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -205,6 +269,23 @@
         "position",
         "left",
         "top"
+      ],
+      "candidates": [
+        {
+          "className": "absolute",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "left-[7px]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "top-[9px]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -225,6 +306,13 @@
       ],
       "cssDefinesKnown": [
         "visibility"
+      ],
+      "candidates": [
+        {
+          "className": "invisible",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -245,6 +333,13 @@
       ],
       "cssDefinesKnown": [
         "z-index"
+      ],
+      "candidates": [
+        {
+          "className": "z-10",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -274,6 +369,18 @@
       "cssDefinesKnown": [
         "display",
         "flex-direction"
+      ],
+      "candidates": [
+        {
+          "className": "flex",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "flex-row",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -303,6 +410,18 @@
       "cssDefinesKnown": [
         "align-items",
         "justify-content"
+      ],
+      "candidates": [
+        {
+          "className": "items-center",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "justify-between",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -332,6 +451,18 @@
       "cssDefinesKnown": [
         "flex-grow",
         "flex-basis"
+      ],
+      "candidates": [
+        {
+          "className": "grow",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "basis-1/2",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -370,6 +501,23 @@
         "display",
         "grid-template-columns",
         "gap"
+      ],
+      "candidates": [
+        {
+          "className": "grid",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "grid-cols-[80px_1fr]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "gap-2",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -399,6 +547,18 @@
       "cssDefinesKnown": [
         "margin-top",
         "margin-left"
+      ],
+      "candidates": [
+        {
+          "className": "-mt-2",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "ml-[11px]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -437,6 +597,23 @@
         "padding",
         "padding-left",
         "padding-right"
+      ],
+      "candidates": [
+        {
+          "className": "p-[13px]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "pl-[7px]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "pr-[7px]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -444,7 +621,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：padding-inline",
+      "reason": "px-[7.5px]: encoder 删除属性：padding-inline",
       "generatedDeclarations": [
         {
           "property": "padding-inline",
@@ -457,7 +634,16 @@
           "value": "7.5px"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "px-[7.5px]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：padding-inline"
+        }
+      ]
     },
     {
       "id": "sizing-fixed",
@@ -486,6 +672,18 @@
       "cssDefinesKnown": [
         "height",
         "width"
+      ],
+      "candidates": [
+        {
+          "className": "h-[45rpx]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "w-[123px]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -515,6 +713,18 @@
       "cssDefinesKnown": [
         "min-width",
         "max-height"
+      ],
+      "candidates": [
+        {
+          "className": "min-w-[calc(100%-2rem)]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "max-h-[240px]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -522,7 +732,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：table-layout, border-collapse",
+      "reason": "table-fixed: encoder 删除属性：table-layout; border-collapse: encoder 删除属性：border-collapse",
       "generatedDeclarations": [
         {
           "property": "display",
@@ -553,6 +763,27 @@
       ],
       "cssDefinesKnown": [
         "display"
+      ],
+      "candidates": [
+        {
+          "className": "table",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "table-fixed",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：table-layout"
+        },
+        {
+          "className": "border-collapse",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：border-collapse"
+        }
       ]
     },
     {
@@ -582,6 +813,18 @@
       "cssDefinesKnown": [
         "font-size",
         "line-height"
+      ],
+      "candidates": [
+        {
+          "className": "text-[length:23px]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "leading-[1.25]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -611,6 +854,18 @@
       "cssDefinesKnown": [
         "font-weight",
         "font-style"
+      ],
+      "candidates": [
+        {
+          "className": "font-bold",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "italic",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -631,6 +886,13 @@
       ],
       "cssDefinesKnown": [
         "letter-spacing"
+      ],
+      "candidates": [
+        {
+          "className": "tracking-[0.12em]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -660,6 +922,18 @@
       "cssDefinesKnown": [
         "text-align",
         "text-overflow"
+      ],
+      "candidates": [
+        {
+          "className": "truncate",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "text-center",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -667,7 +941,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：text-decoration-line",
+      "reason": "underline: encoder 删除属性：text-decoration-line",
       "generatedDeclarations": [
         {
           "property": "text-decoration-line",
@@ -690,6 +964,20 @@
       ],
       "cssDefinesKnown": [
         "text-decoration-thickness"
+      ],
+      "candidates": [
+        {
+          "className": "underline",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：text-decoration-line"
+        },
+        {
+          "className": "decoration-2",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -710,6 +998,13 @@
       ],
       "cssDefinesKnown": [
         "background-color"
+      ],
+      "candidates": [
+        {
+          "className": "bg-[#123456]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -730,6 +1025,13 @@
       ],
       "cssDefinesKnown": [
         "background-image"
+      ],
+      "candidates": [
+        {
+          "className": "bg-[radial-gradient(circle_at_20%_20%,#fff,#000)]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -768,6 +1070,23 @@
         "background-size",
         "background-position",
         "background-repeat"
+      ],
+      "candidates": [
+        {
+          "className": "bg-cover",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "bg-center",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "bg-no-repeat",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -797,6 +1116,23 @@
       "cssDefinesKnown": [
         "border-style",
         "border-color"
+      ],
+      "candidates": [
+        {
+          "className": "border-2",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "border-solid",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "border-[#16a34a]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -817,6 +1153,13 @@
       ],
       "cssDefinesKnown": [
         "border-radius"
+      ],
+      "candidates": [
+        {
+          "className": "rounded-[18px]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -837,6 +1180,13 @@
       ],
       "cssDefinesKnown": [
         "opacity"
+      ],
+      "candidates": [
+        {
+          "className": "opacity-50",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -857,6 +1207,13 @@
       ],
       "cssDefinesKnown": [
         "box-shadow"
+      ],
+      "candidates": [
+        {
+          "className": "shadow-lg",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -864,7 +1221,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：mix-blend-mode",
+      "reason": "mix-blend-multiply: encoder 删除属性：mix-blend-mode",
       "generatedDeclarations": [
         {
           "property": "mix-blend-mode",
@@ -877,7 +1234,16 @@
           "value": "multiply"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "mix-blend-multiply",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：mix-blend-mode"
+        }
+      ]
     },
     {
       "id": "filter-blur",
@@ -905,6 +1271,13 @@
       ],
       "cssDefinesKnown": [
         "filter"
+      ],
+      "candidates": [
+        {
+          "className": "blur-[2px]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -912,7 +1285,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：backdrop-filter",
+      "reason": "backdrop-blur-[2px]: encoder 删除属性：backdrop-filter",
       "generatedDeclarations": [
         {
           "property": "backdrop-filter",
@@ -925,14 +1298,23 @@
           "value": "{{--tw-backdrop-blur}}  {{--tw-backdrop-brightness}}  {{--tw-backdrop-contrast}}  {{--tw-backdrop-grayscale}}  {{--tw-backdrop-hue-rotate}}  {{--tw-backdrop-invert}}  {{--tw-backdrop-opacity}}  {{--tw-backdrop-saturate}}  {{--tw-backdrop-sepia}}"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "backdrop-blur-[2px]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：backdrop-filter"
+        }
+      ]
     },
     {
       "id": "svg-fill-stroke",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：fill, stroke-width, stroke",
+      "reason": "fill-[#0284c7]: encoder 删除属性：fill; stroke-2: encoder 删除属性：stroke-width; stroke-[#0f172a]: encoder 删除属性：stroke",
       "generatedDeclarations": [
         {
           "property": "fill",
@@ -961,7 +1343,30 @@
           "value": "#0f172a"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "fill-[#0284c7]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：fill"
+        },
+        {
+          "className": "stroke-2",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：stroke-width"
+        },
+        {
+          "className": "stroke-[#0f172a]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：stroke"
+        }
+      ]
     },
     {
       "id": "accessibility-sr",
@@ -999,6 +1404,13 @@
         "position",
         "width",
         "height"
+      ],
+      "candidates": [
+        {
+          "className": "sr-only",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1006,7 +1418,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：translate",
+      "reason": "translate-x-[12px]: encoder 删除属性：translate; translate-y-[4px]: encoder 删除属性：translate",
       "generatedDeclarations": [
         {
           "property": "--tw-translate-x",
@@ -1035,14 +1447,30 @@
           "value": "{{--tw-translate-x}}  {{--tw-translate-y}}"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "translate-x-[12px]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：translate"
+        },
+        {
+          "className": "translate-y-[4px]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：translate"
+        }
+      ]
     },
     {
       "id": "transform-rotate",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：rotate",
+      "reason": "rotate-[12deg]: encoder 删除属性：rotate",
       "generatedDeclarations": [
         {
           "property": "rotate",
@@ -1055,14 +1483,23 @@
           "value": "12deg"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "rotate-[12deg]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：rotate"
+        }
+      ]
     },
     {
       "id": "transform-scale",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：scale",
+      "reason": "scale-110: encoder 删除属性：scale",
       "generatedDeclarations": [
         {
           "property": "--tw-scale-x",
@@ -1091,7 +1528,16 @@
           "value": "{{--tw-scale-x}}  {{--tw-scale-y}}"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "scale-110",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：scale"
+        }
+      ]
     },
     {
       "id": "transform-origin",
@@ -1111,6 +1557,13 @@
       ],
       "cssDefinesKnown": [
         "transform-origin"
+      ],
+      "candidates": [
+        {
+          "className": "origin-top-left",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1140,6 +1593,23 @@
       "cssDefinesKnown": [
         "transition-property",
         "transition-duration"
+      ],
+      "candidates": [
+        {
+          "className": "transition-opacity",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "duration-300",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "ease-in-out",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1160,6 +1630,13 @@
       ],
       "cssDefinesKnown": [
         "animation"
+      ],
+      "candidates": [
+        {
+          "className": "animate-spin",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1180,6 +1657,13 @@
       ],
       "cssDefinesKnown": [
         "pointer-events"
+      ],
+      "candidates": [
+        {
+          "className": "pointer-events-none",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1187,7 +1671,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：user-select",
+      "reason": "select-none: encoder 删除属性：user-select",
       "generatedDeclarations": [
         {
           "property": "user-select",
@@ -1200,14 +1684,23 @@
           "value": "none"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "select-none",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：user-select"
+        }
+      ]
     },
     {
       "id": "interaction-scroll",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：scroll-behavior, scroll-snap-type",
+      "reason": "scroll-smooth: encoder 删除属性：scroll-behavior; snap-y: encoder 删除属性：scroll-snap-type",
       "generatedDeclarations": [
         {
           "property": "scroll-behavior",
@@ -1228,7 +1721,28 @@
           "value": "y {{--tw-scroll-snap-strictness}}"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "scroll-smooth",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：scroll-behavior"
+        },
+        {
+          "className": "snap-y",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：scroll-snap-type"
+        },
+        {
+          "className": "snap-mandatory",
+          "generated": true,
+          "bundled": true
+        }
+      ]
     },
     {
       "id": "variant-responsive",
@@ -1248,6 +1762,13 @@
       ],
       "cssDefinesKnown": [
         "width"
+      ],
+      "candidates": [
+        {
+          "className": "max-md:w-[200px]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1268,6 +1789,13 @@
       ],
       "cssDefinesKnown": [
         "color"
+      ],
+      "candidates": [
+        {
+          "className": "dark:text-[#ffffff]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1288,6 +1816,18 @@
       ],
       "cssDefinesKnown": [
         "background-color"
+      ],
+      "candidates": [
+        {
+          "className": "active:bg-[#dc2626]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "hover:bg-[#ef4444]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1317,6 +1857,18 @@
       "cssDefinesKnown": [
         "font-weight",
         "opacity"
+      ],
+      "candidates": [
+        {
+          "className": "first:font-bold",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "odd:opacity-50",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1324,7 +1876,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*), .peer-checked\\:opacity-100:is(:where(.peer):checked~*)",
+      "reason": "peer-checked:opacity-100: encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*), .peer-checked\\:opacity-100:is(:where(.peer):checked~*)",
       "generatedDeclarations": [
         {
           "property": "display",
@@ -1348,6 +1900,20 @@
       "cssDefinesKnown": [
         "display",
         "opacity"
+      ],
+      "candidates": [
+        {
+          "className": "group-hover:block",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "peer-checked:opacity-100",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*), .peer-checked\\:opacity-100:is(:where(.peer):checked~*)"
+        }
       ]
     },
     {
@@ -1355,7 +1921,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：text-decoration-line",
+      "reason": "aria-[sort=ascending]:underline: encoder 删除属性：text-decoration-line",
       "generatedDeclarations": [
         {
           "property": "opacity",
@@ -1378,6 +1944,20 @@
       ],
       "cssDefinesKnown": [
         "opacity"
+      ],
+      "candidates": [
+        {
+          "className": "data-[state=open]:opacity-100",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "aria-[sort=ascending]:underline",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：text-decoration-line"
+        }
       ]
     },
     {
@@ -1398,6 +1978,13 @@
       ],
       "cssDefinesKnown": [
         "display"
+      ],
+      "candidates": [
+        {
+          "className": "supports-[display:grid]:grid",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1405,7 +1992,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "TASM 未保留完整 selector 或声明",
+      "reason": "before:content-['lynx']: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "--tw-content",
@@ -1413,7 +2000,16 @@
         }
       ],
       "bundledDeclarations": [],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "before:content-['lynx']",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        }
+      ]
     },
     {
       "id": "variant-arbitrary",
@@ -1433,6 +2029,13 @@
       ],
       "cssDefinesKnown": [
         "font-weight"
+      ],
+      "candidates": [
+        {
+          "className": "[&_.target]:font-bold",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1440,7 +2043,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：translate",
+      "reason": "-translate-x-[5px]: encoder 删除属性：translate",
       "generatedDeclarations": [
         {
           "property": "--tw-translate-x",
@@ -1461,14 +2064,23 @@
           "value": "{{--tw-translate-x}}  {{--tw-translate-y}}"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "-translate-x-[5px]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：translate"
+        }
+      ]
     },
     {
       "id": "syntax-important",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "TASM 未保留完整 selector 或声明",
+      "reason": "!bg-[#737373]: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "background-color",
@@ -1479,6 +2091,15 @@
       "bundledDeclarations": [],
       "cssDefinesKnown": [
         "background-color"
+      ],
+      "candidates": [
+        {
+          "className": "!bg-[#737373]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        }
       ]
     },
     {
@@ -1486,7 +2107,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "TASM 未保留完整 selector 或声明",
+      "reason": "text-black/[.35]: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "color",
@@ -1496,6 +2117,15 @@
       "bundledDeclarations": [],
       "cssDefinesKnown": [
         "color"
+      ],
+      "candidates": [
+        {
+          "className": "text-black/[.35]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        }
       ]
     },
     {
@@ -1503,7 +2133,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：mask-type",
+      "reason": "[mask-type:luminance]: encoder 删除属性：mask-type",
       "generatedDeclarations": [
         {
           "property": "mask-type",
@@ -1516,7 +2146,16 @@
           "value": "luminance"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "[mask-type:luminance]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：mask-type"
+        }
+      ]
     },
     {
       "id": "syntax-css-variable",
@@ -1544,6 +2183,18 @@
       ],
       "cssDefinesKnown": [
         "max-height"
+      ],
+      "candidates": [
+        {
+          "className": "[--panel-height:240px]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "max-h-[var(--panel-height)]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1564,6 +2215,13 @@
       ],
       "cssDefinesKnown": [
         "color"
+      ],
+      "candidates": [
+        {
+          "className": "text-[color:#c31d6b]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1572,7 +2230,8 @@
       "bundled": true,
       "generatedDeclarations": [],
       "bundledDeclarations": [],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": []
     },
     {
       "id": "directive-theme",
@@ -1592,6 +2251,13 @@
       ],
       "cssDefinesKnown": [
         "background-color"
+      ],
+      "candidates": [
+        {
+          "className": "bg-lynx-brand",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1599,7 +2265,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：text-decoration-line",
+      "reason": "underline: encoder 删除属性：text-decoration-line",
       "generatedDeclarations": [
         {
           "property": "text-decoration-line",
@@ -1622,6 +2288,20 @@
       ],
       "cssDefinesKnown": [
         "background-color"
+      ],
+      "candidates": [
+        {
+          "className": "underline",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：text-decoration-line"
+        },
+        {
+          "className": "focus:bg-red-600",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1629,7 +2309,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：content-visibility",
+      "reason": "content-auto: encoder 删除属性：content-visibility",
       "generatedDeclarations": [
         {
           "property": "content-visibility",
@@ -1642,14 +2322,23 @@
           "value": "auto"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "content-auto",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：content-visibility"
+        }
+      ]
     },
     {
       "id": "directive-variant",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除 selector：.theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *)",
+      "reason": "theme-midnight:bg-black: encoder 删除 selector：.theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *); lynx-at-variant: encoder 删除 selector：.lynx-at-variant:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *)",
       "generatedDeclarations": [
         {
           "property": "background-color",
@@ -1673,6 +2362,22 @@
       "cssDefinesKnown": [
         "background-color",
         "color"
+      ],
+      "candidates": [
+        {
+          "className": "theme-midnight:bg-black",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除 selector：.theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *)"
+        },
+        {
+          "className": "lynx-at-variant",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除 selector：.lynx-at-variant:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *)"
+        }
       ]
     },
     {
@@ -1693,6 +2398,13 @@
       ],
       "cssDefinesKnown": [
         "display"
+      ],
+      "candidates": [
+        {
+          "className": "lynx-applied",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1713,6 +2425,13 @@
       ],
       "cssDefinesKnown": [
         "padding"
+      ],
+      "candidates": [
+        {
+          "className": "lynx-reference",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1720,7 +2439,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "TASM 未保留完整 selector 或声明",
+      "reason": "p-legacy: TASM 未保留该候选的完整 selector 或声明; lynx-plugin-utility: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "padding",
@@ -1737,6 +2456,22 @@
       "cssDefinesKnown": [
         "padding",
         "opacity"
+      ],
+      "candidates": [
+        {
+          "className": "p-legacy",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        },
+        {
+          "className": "lynx-plugin-utility",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        }
       ]
     },
     {
@@ -1744,7 +2479,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "TASM 未保留完整 selector 或声明",
+      "reason": "p-legacy: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "display",
@@ -1765,6 +2500,20 @@
       "cssDefinesKnown": [
         "display",
         "padding"
+      ],
+      "candidates": [
+        {
+          "className": "tw:flex",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "p-legacy",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        }
       ]
     },
     {
@@ -1772,7 +2521,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：break-before, break-after, break-inside",
+      "reason": "break-before-page: encoder 删除属性：break-before; break-after-page: encoder 删除属性：break-after; break-inside-avoid: encoder 删除属性：break-inside",
       "generatedDeclarations": [
         {
           "property": "break-before",
@@ -1801,14 +2550,37 @@
           "value": "avoid"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "break-before-page",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：break-before"
+        },
+        {
+          "className": "break-after-page",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：break-after"
+        },
+        {
+          "className": "break-inside-avoid",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：break-inside"
+        }
+      ]
     },
     {
       "id": "layout-decoration-clear",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：box-decoration-break, clear",
+      "reason": "box-decoration-clone: encoder 删除属性：box-decoration-break; clear-both: encoder 删除属性：clear",
       "generatedDeclarations": [
         {
           "property": "box-decoration-break",
@@ -1829,14 +2601,30 @@
           "value": "both"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "box-decoration-clone",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：box-decoration-break"
+        },
+        {
+          "className": "clear-both",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：clear"
+        }
+      ]
     },
     {
       "id": "layout-object-position",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：object-position",
+      "reason": "object-[35%_65%]: encoder 删除属性：object-position",
       "generatedDeclarations": [
         {
           "property": "object-position",
@@ -1849,14 +2637,23 @@
           "value": "35% 65%"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "object-[35%_65%]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：object-position"
+        }
+      ]
     },
     {
       "id": "layout-overscroll",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：overscroll-behavior",
+      "reason": "overscroll-contain: encoder 删除属性：overscroll-behavior",
       "generatedDeclarations": [
         {
           "property": "overscroll-behavior",
@@ -1869,7 +2666,16 @@
           "value": "contain"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "overscroll-contain",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：overscroll-behavior"
+        }
+      ]
     },
     {
       "id": "flex-wrap-order",
@@ -1898,6 +2704,18 @@
       "cssDefinesKnown": [
         "flex-wrap",
         "order"
+      ],
+      "candidates": [
+        {
+          "className": "flex-wrap",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "order-2",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1927,6 +2745,18 @@
       "cssDefinesKnown": [
         "flex",
         "flex-shrink"
+      ],
+      "candidates": [
+        {
+          "className": "flex-1",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "shrink-0",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1956,6 +2786,28 @@
       "cssDefinesKnown": [
         "grid-column",
         "grid-row"
+      ],
+      "candidates": [
+        {
+          "className": "col-span-2",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "col-start-1",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "row-span-2",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "row-start-1",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1994,6 +2846,23 @@
         "grid-auto-flow",
         "grid-auto-columns",
         "grid-auto-rows"
+      ],
+      "candidates": [
+        {
+          "className": "grid-flow-col",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "auto-cols-fr",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "auto-rows-min",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2001,7 +2870,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：place-content, place-items, place-self",
+      "reason": "place-content-center: encoder 删除属性：place-content; place-items-center: encoder 删除属性：place-items; place-self-center: encoder 删除属性：place-self",
       "generatedDeclarations": [
         {
           "property": "place-content",
@@ -2030,7 +2899,30 @@
           "value": "center"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "place-content-center",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：place-content"
+        },
+        {
+          "className": "place-items-center",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：place-items"
+        },
+        {
+          "className": "place-self-center",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：place-self"
+        }
+      ]
     },
     {
       "id": "grid-justify-self",
@@ -2059,6 +2951,18 @@
       "cssDefinesKnown": [
         "justify-items",
         "justify-self"
+      ],
+      "candidates": [
+        {
+          "className": "justify-items-center",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "justify-self-end",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2088,6 +2992,18 @@
       "cssDefinesKnown": [
         "align-content",
         "align-self"
+      ],
+      "candidates": [
+        {
+          "className": "content-center",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "self-end",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2095,7 +3011,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：margin-block-start",
+      "reason": "space-x-2: encoder 删除 selector：:where(.space-x-2>:not(:last-child)), :where(.space-x-2>:not(:last-child)); space-y-2: encoder 删除属性：margin-block-start",
       "generatedDeclarations": [
         {
           "property": "margin-inline-start",
@@ -2118,6 +3034,22 @@
       ],
       "cssDefinesKnown": [
         "margin-inline-start"
+      ],
+      "candidates": [
+        {
+          "className": "space-x-2",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除 selector：:where(.space-x-2>:not(:last-child)), :where(.space-x-2>:not(:last-child))"
+        },
+        {
+          "className": "space-y-2",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：margin-block-start"
+        }
       ]
     },
     {
@@ -2147,6 +3079,13 @@
       "cssDefinesKnown": [
         "width",
         "height"
+      ],
+      "candidates": [
+        {
+          "className": "size-[44px]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2154,7 +3093,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：-webkit-font-smoothing, font-stretch",
+      "reason": "antialiased: encoder 删除属性：-webkit-font-smoothing; font-stretch-expanded: encoder 删除属性：font-stretch",
       "generatedDeclarations": [
         {
           "property": "font-family",
@@ -2185,6 +3124,27 @@
       ],
       "cssDefinesKnown": [
         "font-family"
+      ],
+      "candidates": [
+        {
+          "className": "font-sans",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "antialiased",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：-webkit-font-smoothing"
+        },
+        {
+          "className": "font-stretch-expanded",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：font-stretch"
+        }
       ]
     },
     {
@@ -2192,7 +3152,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：font-variant-numeric",
+      "reason": "tabular-nums: encoder 删除属性：font-variant-numeric; slashed-zero: encoder 删除属性：font-variant-numeric",
       "generatedDeclarations": [
         {
           "property": "font-variant-numeric",
@@ -2205,14 +3165,30 @@
           "value": "{{--tw-ordinal}}  {{--tw-slashed-zero}}  {{--tw-numeric-figure}}  {{--tw-numeric-spacing}}  {{--tw-numeric-fraction}}"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "tabular-nums",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：font-variant-numeric"
+        },
+        {
+          "className": "slashed-zero",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：font-variant-numeric"
+        }
+      ]
     },
     {
       "id": "type-line-clamp",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：-webkit-line-clamp",
+      "reason": "line-clamp-2: encoder 删除属性：-webkit-line-clamp",
       "generatedDeclarations": [
         {
           "property": "-webkit-line-clamp",
@@ -2225,14 +3201,23 @@
           "value": "2"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "line-clamp-2",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：-webkit-line-clamp"
+        }
+      ]
     },
     {
       "id": "type-list",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：list-style-position, list-style-type, list-style-image",
+      "reason": "list-inside: encoder 删除属性：list-style-position; list-disc: encoder 删除属性：list-style-type; list-image-none: encoder 删除属性：list-style-image",
       "generatedDeclarations": [
         {
           "property": "list-style-position",
@@ -2261,14 +3246,37 @@
           "value": "none"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "list-inside",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：list-style-position"
+        },
+        {
+          "className": "list-disc",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：list-style-type"
+        },
+        {
+          "className": "list-image-none",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：list-style-image"
+        }
+      ]
     },
     {
       "id": "type-decoration-full",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：text-decoration-style, text-underline-offset",
+      "reason": "decoration-dashed: encoder 删除属性：text-decoration-style; underline-offset-4: encoder 删除属性：text-underline-offset",
       "generatedDeclarations": [
         {
           "property": "text-decoration-color",
@@ -2299,6 +3307,27 @@
       ],
       "cssDefinesKnown": [
         "text-decoration-color"
+      ],
+      "candidates": [
+        {
+          "className": "decoration-[#e11d48]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "decoration-dashed",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：text-decoration-style"
+        },
+        {
+          "className": "underline-offset-4",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：text-underline-offset"
+        }
       ]
     },
     {
@@ -2306,7 +3335,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：text-transform, text-wrap",
+      "reason": "uppercase: encoder 删除属性：text-transform; text-balance: encoder 删除属性：text-wrap",
       "generatedDeclarations": [
         {
           "property": "text-transform",
@@ -2337,6 +3366,27 @@
       ],
       "cssDefinesKnown": [
         "text-indent"
+      ],
+      "candidates": [
+        {
+          "className": "uppercase",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：text-transform"
+        },
+        {
+          "className": "text-balance",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：text-wrap"
+        },
+        {
+          "className": "indent-4",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2366,6 +3416,18 @@
       "cssDefinesKnown": [
         "vertical-align",
         "white-space"
+      ],
+      "candidates": [
+        {
+          "className": "align-middle",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "whitespace-pre-wrap",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2373,7 +3435,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：overflow-wrap",
+      "reason": "wrap-break-word: encoder 删除属性：overflow-wrap",
       "generatedDeclarations": [
         {
           "property": "word-break",
@@ -2405,6 +3467,25 @@
       "cssDefinesKnown": [
         "word-break",
         "hyphens"
+      ],
+      "candidates": [
+        {
+          "className": "break-all",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "wrap-break-word",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：overflow-wrap"
+        },
+        {
+          "className": "hyphens-auto",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2425,6 +3506,13 @@
       ],
       "cssDefinesKnown": [
         "content"
+      ],
+      "candidates": [
+        {
+          "className": "content-['lynx']",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2432,7 +3520,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：background-attachment",
+      "reason": "bg-fixed: encoder 删除属性：background-attachment",
       "generatedDeclarations": [
         {
           "property": "background-attachment",
@@ -2464,6 +3552,25 @@
       "cssDefinesKnown": [
         "background-clip",
         "background-origin"
+      ],
+      "candidates": [
+        {
+          "className": "bg-fixed",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：background-attachment"
+        },
+        {
+          "className": "bg-clip-padding",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "bg-origin-border",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2500,6 +3607,28 @@
       ],
       "cssDefinesKnown": [
         "background-image"
+      ],
+      "candidates": [
+        {
+          "className": "bg-linear-to-r",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "from-[#0284c7]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "via-[#22c55e]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "to-[#facc15]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2507,7 +3636,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除 selector：:where(.divide-y-2>:not(:last-child)), :where(.divide-y-2>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child))",
+      "reason": "divide-y-2: encoder 删除 selector：:where(.divide-y-2>:not(:last-child)), :where(.divide-y-2>:not(:last-child)); divide-[#64748b]: encoder 删除 selector：:where(.divide-\\[\\#64748b\\]>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child)); divide-dashed: encoder 删除 selector：:where(.divide-dashed>:not(:last-child)), :where(.divide-dashed>:not(:last-child))",
       "generatedDeclarations": [
         {
           "property": "border-bottom-width",
@@ -2540,6 +3669,29 @@
         "border-bottom-width",
         "border-color",
         "border-style"
+      ],
+      "candidates": [
+        {
+          "className": "divide-y-2",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除 selector：:where(.divide-y-2>:not(:last-child)), :where(.divide-y-2>:not(:last-child))"
+        },
+        {
+          "className": "divide-[#64748b]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除 selector：:where(.divide-\\[\\#64748b\\]>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child))"
+        },
+        {
+          "className": "divide-dashed",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除 selector：:where(.divide-dashed>:not(:last-child)), :where(.divide-dashed>:not(:last-child))"
+        }
       ]
     },
     {
@@ -2547,7 +3699,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：outline-offset",
+      "reason": "outline-offset-2: encoder 删除属性：outline-offset",
       "generatedDeclarations": [
         {
           "property": "outline-width",
@@ -2588,6 +3740,30 @@
         "outline-width",
         "outline-color",
         "outline-style"
+      ],
+      "candidates": [
+        {
+          "className": "outline-2",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "outline-[#2563eb]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "outline-dashed",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "outline-offset-2",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：outline-offset"
+        }
       ]
     },
     {
@@ -2608,6 +3784,28 @@
       ],
       "cssDefinesKnown": [
         "box-shadow"
+      ],
+      "candidates": [
+        {
+          "className": "ring-2",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "ring-[#2563eb]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "inset-ring-1",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "inset-ring-[#16a34a]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2637,6 +3835,18 @@
       "cssDefinesKnown": [
         "box-shadow",
         "text-shadow"
+      ],
+      "candidates": [
+        {
+          "className": "inset-shadow-sm",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "text-shadow-sm",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2644,7 +3854,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：background-blend-mode",
+      "reason": "bg-blend-multiply: encoder 删除属性：background-blend-mode",
       "generatedDeclarations": [
         {
           "property": "background-blend-mode",
@@ -2657,14 +3867,23 @@
           "value": "multiply"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "bg-blend-multiply",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：background-blend-mode"
+        }
+      ]
     },
     {
       "id": "effect-mask-box",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：mask-mode",
+      "reason": "mask-alpha: encoder 删除属性：mask-mode",
       "generatedDeclarations": [
         {
           "property": "mask-clip",
@@ -2723,6 +3942,40 @@
         "mask-repeat",
         "mask-size",
         "mask-position"
+      ],
+      "candidates": [
+        {
+          "className": "mask-clip-padding",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "mask-origin-border",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "mask-alpha",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：mask-mode"
+        },
+        {
+          "className": "mask-no-repeat",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "mask-cover",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "mask-center",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2730,7 +3983,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：mask-type",
+      "reason": "[mask-type:luminance]: encoder 删除属性：mask-type",
       "generatedDeclarations": [
         {
           "property": "mask-image",
@@ -2762,6 +4015,25 @@
       "cssDefinesKnown": [
         "mask-image",
         "mask-composite"
+      ],
+      "candidates": [
+        {
+          "className": "mask-[linear-gradient(black,transparent)]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "mask-add",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "[mask-type:luminance]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：mask-type"
+        }
       ]
     },
     {
@@ -2782,6 +4054,23 @@
       ],
       "cssDefinesKnown": [
         "filter"
+      ],
+      "candidates": [
+        {
+          "className": "brightness-110",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "contrast-125",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "grayscale",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2802,6 +4091,28 @@
       ],
       "cssDefinesKnown": [
         "filter"
+      ],
+      "candidates": [
+        {
+          "className": "hue-rotate-30",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "invert",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "saturate-150",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "sepia",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2822,6 +4133,13 @@
       ],
       "cssDefinesKnown": [
         "filter"
+      ],
+      "candidates": [
+        {
+          "className": "drop-shadow-md",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2829,7 +4147,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：backdrop-filter",
+      "reason": "backdrop-brightness-110: encoder 删除属性：backdrop-filter; backdrop-contrast-125: encoder 删除属性：backdrop-filter; backdrop-grayscale: encoder 删除属性：backdrop-filter; backdrop-hue-rotate-30: encoder 删除属性：backdrop-filter; backdrop-invert: encoder 删除属性：backdrop-filter; backdrop-opacity-50: encoder 删除属性：backdrop-filter; backdrop-saturate-150: encoder 删除属性：backdrop-filter; backdrop-sepia: encoder 删除属性：backdrop-filter",
       "generatedDeclarations": [
         {
           "property": "backdrop-filter",
@@ -2842,14 +4160,72 @@
           "value": "{{--tw-backdrop-blur}}  {{--tw-backdrop-brightness}}  {{--tw-backdrop-contrast}}  {{--tw-backdrop-grayscale}}  {{--tw-backdrop-hue-rotate}}  {{--tw-backdrop-invert}}  {{--tw-backdrop-opacity}}  {{--tw-backdrop-saturate}}  {{--tw-backdrop-sepia}}"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "backdrop-brightness-110",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：backdrop-filter"
+        },
+        {
+          "className": "backdrop-contrast-125",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：backdrop-filter"
+        },
+        {
+          "className": "backdrop-grayscale",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：backdrop-filter"
+        },
+        {
+          "className": "backdrop-hue-rotate-30",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：backdrop-filter"
+        },
+        {
+          "className": "backdrop-invert",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：backdrop-filter"
+        },
+        {
+          "className": "backdrop-opacity-50",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：backdrop-filter"
+        },
+        {
+          "className": "backdrop-saturate-150",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：backdrop-filter"
+        },
+        {
+          "className": "backdrop-sepia",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：backdrop-filter"
+        }
+      ]
     },
     {
       "id": "table-spacing-caption",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：border-spacing, caption-side",
+      "reason": "border-spacing-2: encoder 删除属性：border-spacing; caption-bottom: encoder 删除属性：caption-side",
       "generatedDeclarations": [
         {
           "property": "border-spacing",
@@ -2870,7 +4246,28 @@
           "value": "bottom"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "border-separate",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "border-spacing-2",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：border-spacing"
+        },
+        {
+          "className": "caption-bottom",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：caption-side"
+        }
+      ]
     },
     {
       "id": "transform-skew",
@@ -2890,6 +4287,18 @@
       ],
       "cssDefinesKnown": [
         "transform"
+      ],
+      "candidates": [
+        {
+          "className": "skew-x-6",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "skew-y-3",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2897,7 +4306,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：perspective-origin",
+      "reason": "perspective-origin-top: encoder 删除属性：perspective-origin",
       "generatedDeclarations": [
         {
           "property": "perspective",
@@ -2920,6 +4329,20 @@
       ],
       "cssDefinesKnown": [
         "perspective"
+      ],
+      "candidates": [
+        {
+          "className": "perspective-near",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "perspective-origin-top",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：perspective-origin"
+        }
       ]
     },
     {
@@ -2927,7 +4350,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：transform-style, backface-visibility",
+      "reason": "transform-3d: encoder 删除属性：transform-style; backface-hidden: encoder 删除属性：backface-visibility",
       "generatedDeclarations": [
         {
           "property": "transform-style",
@@ -2948,14 +4371,30 @@
           "value": "hidden"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "transform-3d",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：transform-style"
+        },
+        {
+          "className": "backface-hidden",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：backface-visibility"
+        }
+      ]
     },
     {
       "id": "transition-complete",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：transition-behavior",
+      "reason": "transition-discrete: encoder 删除属性：transition-behavior",
       "generatedDeclarations": [
         {
           "property": "transition-property",
@@ -2987,6 +4426,25 @@
       "cssDefinesKnown": [
         "transition-property",
         "transition-delay"
+      ],
+      "candidates": [
+        {
+          "className": "transition-transform",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "delay-150",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "transition-discrete",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：transition-behavior"
+        }
       ]
     },
     {
@@ -2994,7 +4452,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：accent-color",
+      "reason": "accent-[#2563eb]: encoder 删除属性：accent-color",
       "generatedDeclarations": [
         {
           "property": "accent-color",
@@ -3017,6 +4475,20 @@
       ],
       "cssDefinesKnown": [
         "caret-color"
+      ],
+      "candidates": [
+        {
+          "className": "accent-[#2563eb]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：accent-color"
+        },
+        {
+          "className": "caret-[#e11d48]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -3024,7 +4496,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：appearance, field-sizing, resize",
+      "reason": "appearance-none: encoder 删除属性：appearance; field-sizing-content: encoder 删除属性：field-sizing; resize-x: encoder 删除属性：resize",
       "generatedDeclarations": [
         {
           "property": "appearance",
@@ -3053,14 +4525,37 @@
           "value": "horizontal"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "appearance-none",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：appearance"
+        },
+        {
+          "className": "field-sizing-content",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：field-sizing"
+        },
+        {
+          "className": "resize-x",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：resize"
+        }
+      ]
     },
     {
       "id": "interaction-cursor-scheme",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：color-scheme",
+      "reason": "scheme-dark: encoder 删除属性：color-scheme",
       "generatedDeclarations": [
         {
           "property": "cursor",
@@ -3083,6 +4578,20 @@
       ],
       "cssDefinesKnown": [
         "cursor"
+      ],
+      "candidates": [
+        {
+          "className": "cursor-pointer",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "scheme-dark",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：color-scheme"
+        }
       ]
     },
     {
@@ -3090,7 +4599,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：scroll-margin, scroll-padding",
+      "reason": "scroll-m-4: encoder 删除属性：scroll-margin; scroll-p-4: encoder 删除属性：scroll-padding",
       "generatedDeclarations": [
         {
           "property": "scroll-margin",
@@ -3111,14 +4620,30 @@
           "value": "1rem"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "scroll-m-4",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：scroll-margin"
+        },
+        {
+          "className": "scroll-p-4",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：scroll-padding"
+        }
+      ]
     },
     {
       "id": "interaction-snap-touch",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：scroll-snap-align, scroll-snap-stop, touch-action",
+      "reason": "snap-center: encoder 删除属性：scroll-snap-align; snap-always: encoder 删除属性：scroll-snap-stop; touch-pan-x: encoder 删除属性：touch-action",
       "generatedDeclarations": [
         {
           "property": "scroll-snap-align",
@@ -3147,14 +4672,37 @@
           "value": "{{--tw-pan-x}}  {{--tw-pan-y}}  {{--tw-pinch-zoom}}"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "snap-center",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：scroll-snap-align"
+        },
+        {
+          "className": "snap-always",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：scroll-snap-stop"
+        },
+        {
+          "className": "touch-pan-x",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：touch-action"
+        }
+      ]
     },
     {
       "id": "interaction-will-change",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：will-change",
+      "reason": "will-change-transform: encoder 删除属性：will-change",
       "generatedDeclarations": [
         {
           "property": "will-change",
@@ -3167,14 +4715,23 @@
           "value": "transform"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "will-change-transform",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：will-change"
+        }
+      ]
     },
     {
       "id": "accessibility-forced-colors",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：forced-color-adjust",
+      "reason": "forced-color-adjust-none: encoder 删除属性：forced-color-adjust",
       "generatedDeclarations": [
         {
           "property": "forced-color-adjust",
@@ -3187,7 +4744,16 @@
           "value": "none"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "forced-color-adjust-none",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除属性：forced-color-adjust"
+        }
+      ]
     }
   ]
 }
