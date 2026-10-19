@@ -24,7 +24,7 @@ const fixtureFeatures: Record<string, string[]> = {
   'flex-direction': ['utility/static/flex-row'],
   'flex-alignment': ['utility/static/items-center', 'utility/static/justify-between'],
   'spacing-margin': ['utility/functional/mt', 'utility/functional/ml'],
-  'spacing-padding': ['utility/functional/py', 'utility/functional/px'],
+  'spacing-padding': ['utility/functional/p', 'utility/functional/pl', 'utility/functional/pr'],
   'spacing-logical': ['utility/functional/px'],
   'type-size': ['utility/functional/text', 'utility/functional/leading'],
   'type-weight-style': ['utility/functional/font', 'utility/static/italic'],
