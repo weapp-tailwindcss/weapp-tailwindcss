@@ -54,7 +54,7 @@ pnpm e2e:tailwind --list
 
 v2 报告绑定源码、锁文件、工具版本、catalog、夹具及预期 hash。每个案例声明支持状态、验证层级、具体预期值和允许误差；验收重新检查原始文件 hash、字节数、归属和时间。错误样式、缺属性、缺运行时证据、擅改支持预期、缺案例、旧版本、旧截图、目标浏览器不符均拒绝。报告还读取实际 Vite、平台适配器、生产 encoder/serializer、独立 decoder 与 CSS defines 版本。旧 v1 报告保留历史展示，不能贡献本轮通过覆盖。
 
-RN iOS 明确采用 Expo prebuild → CocoaPods → xcodebuild → simctl，使用预检绑定的设备，重读本轮产物与已安装容器的主程序、Info.plist 和 Debug dylib 后才请求深链，不依赖 Simulator.app GUI。RN 的构建指令须回放实际归档 manifest 并匹配独立预期；运行时使用 probe、显式 reference 和无效果 control 三个节点，避免宿主同时忽略属性造成相等误报。预检拒绝也会生成调度索引，全部目标保留“阻塞、未尝试”。
+RN iOS 明确采用 Expo prebuild → CocoaPods → xcodebuild → simctl，使用预检绑定的设备，重读本轮产物与已安装容器的主程序、Info.plist 和 Debug dylib 后，直接启动已核对的 bundle ID，并传入 RN 实际消费的 Metro 参数，不依赖 Simulator.app GUI。RN 的构建指令须回放实际归档 manifest 并匹配独立预期；运行时使用 probe、显式 reference 和无效果 control 三个节点，避免宿主同时忽略属性造成相等误报。客户端报告预算与已认证的宿主采集分别核算，每例采集仍有硬截止、数量上限和取消机制；首帧或第二帧迟到均不能通过。预检拒绝也会生成调度索引，全部目标保留“阻塞、未尝试”。
 
 Lynx 宿主的桥接缺失、视图失效及回执超时使用白名单结构化信号跨子进程传播，立即阻断后续调度；缺节点、无效矩形、错误 receipt 以及几何语义不符继续作为失败。几何必须由本轮双端原生宿主测量，并重读 probe/control PNG、坐标 sidecar 和 SHA 回执，普通 JS report 或 run context 不能代证。
 

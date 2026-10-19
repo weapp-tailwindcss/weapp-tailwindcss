@@ -137,6 +137,10 @@ Benchmark run `39223188622` 首轮 Taro Vite steady 插件 P95 从 1980ms 增至
 
 Lynx run `39223188341`（head `2633f77a8`）双端在 `validateMediaGateEvidence` 拒绝后提前退出，旧失败路径没有导出六张原图和原生侧车，PrimJS 的 stack 又未包含 Error.message；这些产物不足以判定具体媒体行为。失败取证现使用本轮独占目录、固定八文件白名单和诊断专用目录，分别记录缺失和导出错误，并保留原异常；诊断不能作为通过证据或 crops，也不修改预先媒体合同。真实失败子进程和 stack-only 回归先红后绿，整合后相关六文件 61 项通过；新回归已接入双端 workflow 与统一合同。独立诊断分支 `codex/tailwind-lynx-ci` 的 run `39226463939` 绑定源码 `a52da250608531731ce4600b92f3e4bd37f459ec`，用于收取新证据，不能代替 PR 最新提交的正式检查。
 
+该诊断的 Android artifact `12173413807` 经大小及 SHA-256 核对后，确认原生 getter 实际返回 `0.0.1`；无条件正向探针是绿色 32×16，但 `min-width` 仍是红色 16×16。六帧与侧车完整落盘，结果不符合运行前合同，仍记失败。官方 `org.lynxsdk.lynx:lynx:4.0.1` AAR 的 SHA-256 为 `e04d7b62a8ecb9255b7993cbbae93abca3196949a1c7c23477618ec07cc557e2`，其 Java getter 字节码直接返回常量 `0.0.1`；不能把配置版本覆写为原生读数，也不能仅凭该 getter 判定实际安装版本。
+
+编码侧另确认，生产 TASM 0.0.49 在未启用页面配置 `enableCSSRule` 时会静默忽略媒体规则。独立分支 `codex/lynx-cssrule-probe`（源码 `faddad5af9edc014e2a005247e5207134572c394`）只通过官方 `pluginLynxConfig` 启用该页面开关，保留原 encoder、engine 3.9、SDK 和六帧预期。纯构建通过，真实 bundle 包含开关；Lynx run `39230554994` 用于核对原生效果，尚不能算修复通过。该模式还暴露独立 Greedy decoder 的读取边界，静态定向解码失败；serializer 输入或 bundle 中出现开关均不能代替编码及运行时通过证据，诊断配置暂不进入主修复分支。
+
 能力清单覆盖固定版本的注册项和有限补全，任意值按语法分支取样。runtime 夹具缺口、缺少独立转换 oracle、不可触发状态及设备阻塞均须保留，不能自动变成“不支持”，也不能用同属性的其他案例填充。第三方插件任意实现需另行登记。
 
 ## 规则评估
