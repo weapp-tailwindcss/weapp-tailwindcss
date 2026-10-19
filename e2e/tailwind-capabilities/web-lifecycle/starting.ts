@@ -44,15 +44,17 @@ export async function observeStarting(page: Page, runId: string, capture: Captur
         state.events.push({ type, trusted: event.isTrusted, target: (event.target as Element).id, time: performance.now(), cycle: state.cycle, phase: state.phase, property: event.propertyName, elapsedTime: event.elapsedTime, pseudoElement: event.pseudoElement })
       }, true)
     }
-    const sample = () => {
-      const probe = document.querySelector('#probe')
-      const control = document.querySelector('#control')
-      if (state.phase === 'natural' && probe && control) {
-        state.frames.push({ cycle: state.cycle, time: performance.now(), probe: Number(getComputedStyle(probe).opacity), control: Number(getComputedStyle(control).opacity) })
-      }
-      state.raf = requestAnimationFrame(sample)
+    const sampler = {
+      tick() {
+        const probe = document.querySelector('#probe')
+        const control = document.querySelector('#control')
+        if (state.phase === 'natural' && probe && control) {
+          state.frames.push({ cycle: state.cycle, time: performance.now(), probe: Number(getComputedStyle(probe).opacity), control: Number(getComputedStyle(control).opacity) })
+        }
+        state.raf = requestAnimationFrame(() => sampler.tick())
+      },
     }
-    state.raf = requestAnimationFrame(sample)
+    state.raf = requestAnimationFrame(() => sampler.tick())
   }, runId)
   await insertCycle(page, 1)
   await page.waitForFunction(() => {

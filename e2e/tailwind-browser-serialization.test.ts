@@ -114,4 +114,40 @@ describe('CLI 编译后的浏览器闭包传输边界', () => {
     expect(result.events).toEqual(events)
     expect(result.values).toMatchObject({ 'fixture': 'input', 'script': 'ready', 'rendered': true, 'media/(prefers-contrast: more)': true, 'native/input-current': true, 'native/change-current': true, 'native/blur-current': true, 'native/invalid': true, 'native/submit': true, 'native/reset': true, 'native/untrusted': false })
   })
+
+  it('真实tsx加载的starting递归采样在隔离realm记录自然帧与原生事件', async () => {
+    const loaded = await tsImport(pathToFileURL(path.join(root, 'e2e', 'tailwind-capabilities', 'web-lifecycle', 'starting.ts')).href, import.meta.url)
+    let serialized = ''
+    const page = { evaluate: async (callback: () => unknown) => {
+      if (serialized) {
+        throw new Error('stop-after-initialize')
+      }
+      serialized = String(callback)
+    } } as unknown as Page
+    await expect(loaded.observeStarting(page, 'serialized-starting', async () => {
+      throw new Error('截图不应执行')
+    })).rejects.toThrow('stop-after-initialize')
+    const frames: Array<() => void> = []
+    const listeners = new Map<string, (event: unknown) => void>()
+    const realm = {
+      document: {
+        addEventListener: (type: string, callback: (event: unknown) => void) => listeners.set(type, callback),
+        querySelector: (selector: string) => ({ opacity: selector === '#probe' ? '0.25' : '1' }),
+      },
+      requestAnimationFrame: (callback: () => void) => frames.push(callback),
+      performance: { now: () => 100 },
+      getComputedStyle: (target: { opacity: string }) => target,
+    }
+    runInNewContext(`(${serialized})('serialized-starting')`, realm)
+    const journal = Reflect.get(realm, '__tailwindLifecycle') as { runId: string, cycle: number, phase: string, frames: unknown[], events: unknown[] }
+    journal.phase = 'natural'
+    journal.cycle = 2
+    frames.shift()!()
+    expect(frames).toHaveLength(1)
+    expect(journal.frames).toEqual([{ cycle: 2, time: 100, probe: 0.25, control: 1 }])
+    listeners.get('transitionstart')!({ isTrusted: true, target: { id: 'probe' }, propertyName: 'opacity', elapsedTime: 0, pseudoElement: '' })
+    expect(journal.events).toEqual([{ type: 'transitionstart', trusted: true, target: 'probe', time: 100, cycle: 2, phase: 'natural', property: 'opacity', elapsedTime: 0, pseudoElement: '' }])
+    expect(journal.runId).toBe('serialized-starting')
+    expect(serialized).not.toMatch(/\b__(?:name|defProp)\b/)
+  })
 })
