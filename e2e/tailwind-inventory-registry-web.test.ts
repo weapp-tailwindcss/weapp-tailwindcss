@@ -1,13 +1,14 @@
+import type { Page } from 'playwright'
 import type { RegistryObservation } from './tailwind-capabilities/registry-web/measure'
 import type { CapabilityReport } from './tailwind-capabilities/types'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { loadInventory } from './tailwind-capabilities/inventory'
 import { registryAssertions, registryWebContracts, registryWebCoverage } from './tailwind-capabilities/registry-web/contract'
 import { registryEmittedNegativeDeclaration, registryLimitAssertions, registryWebLimit } from './tailwind-capabilities/registry-web/limits'
 import { registryGeometryEqual, registryReferenceEffective } from './tailwind-capabilities/registry-web/measure'
 import { registryWebProfile, renderRegistryProfile } from './tailwind-capabilities/registry-web/profiles'
 import { buildRegistryReference } from './tailwind-capabilities/registry-web/reference'
-import { registryBidiOptions, registryBidiProfiles } from './tailwind-capabilities/registry-web/transport'
+import { registryBidiOptions, registryBidiProfiles, registryFrames } from './tailwind-capabilities/registry-web/transport'
 import { assertionPassed, validateCapabilityReport } from './tailwind-capabilities/report'
 
 describe('Web 全量 utility 独立运行时参考合同', () => {
@@ -78,6 +79,21 @@ describe('Web 全量 utility 独立运行时参考合同', () => {
     expect(registryBidiProfiles('firefox', profiles).map(profile => profile.candidate)).toEqual(['scrollbar-auto', 'scrollbar-none', 'scrollbar-thin'])
     expect(registryBidiProfiles('chromium', profiles)).toEqual([])
     expect(registryBidiOptions('firefox-executable')).toEqual({ headless: true, channel: 'moz-firefox', executablePath: 'firefox-executable' })
+  })
+
+  it('BiDi 未提供 frame.name 时从 iframe 宿主解析 context 并释放节点句柄', async () => {
+    const names = ['baseline', 'reference', 'product']
+    const frames = names.map(() => ({ setContent: vi.fn(async () => {}) }))
+    const handles = names.map((_, index) => ({ contentFrame: vi.fn(async () => frames[index]), dispose: vi.fn(async () => {}) }))
+    const page = { setContent: vi.fn(async () => {}), frames: () => [], locator: (selector: string) => ({ elementHandle: async () => handles[names.findIndex(name => selector.includes(name))] }) } as unknown as Page
+    const resolved = await registryFrames(page, [], '.reference {}', '.product {}')
+    expect(resolved).toEqual(frames)
+    expect(frames[0]!.setContent).toHaveBeenCalledWith(expect.stringContaining('.reference {}'))
+    expect(frames[2]!.setContent).toHaveBeenCalledWith(expect.stringContaining('.product {}'))
+    expect(handles.every(handle => handle.dispose.mock.calls.length === 1)).toBe(true)
+    handles[0]!.contentFrame.mockResolvedValue(undefined)
+    await expect(registryFrames(page, [], '', '')).rejects.toThrow('baseline iframe')
+    expect(handles[0]!.dispose.mock.calls.length).toBe(2)
   })
 
   it('全部注册 kind/root 都有固定声明、组件上下文和可观测普通属性', async () => {

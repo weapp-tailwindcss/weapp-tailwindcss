@@ -14,7 +14,20 @@ export function registryBidiOptions(executablePath: string) {
 
 export async function registryFrames(page: Page, batch: readonly RegistryWebProfile[], referenceCss: string, productCss: string) {
   await page.setContent(`<!doctype html><html><body style="margin:0;display:flex;align-items:start"><iframe name="baseline" style="border:0;width:320px;height:${batch.length * 240}px;flex:none"></iframe><iframe name="reference" style="border:0;width:320px;height:${batch.length * 240}px;flex:none"></iframe><iframe name="product" style="border:0;width:320px;height:${batch.length * 240}px;flex:none"></iframe></body></html>`)
-  const frames = ['baseline', 'reference', 'product'].map(name => page.frames().find(frame => frame.name() === name)!)
+  // BiDi 的 frame tree 不提供 iframe.name；由真实宿主节点解析所属 context。
+  const frames = await Promise.all(['baseline', 'reference', 'product'].map(async (name) => {
+    const element = await page.locator(`iframe[name="${name}"]`).elementHandle()
+    try {
+      const frame = await element?.contentFrame()
+      if (!frame) {
+        throw new Error(`注册 utility 的 ${name} iframe 尚未建立可访问的浏览上下文`)
+      }
+      return frame
+    }
+    finally {
+      await element?.dispose()
+    }
+  }))
   for (const [index, frame] of frames.entries()) {
     const css = index === 2 ? productCss : referenceCss
     const body = batch.map(profile => renderRegistryProfile(profile, index === 0)).join('\n')
