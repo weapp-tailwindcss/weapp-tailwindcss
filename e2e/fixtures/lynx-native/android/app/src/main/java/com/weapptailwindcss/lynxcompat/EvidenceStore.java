@@ -66,6 +66,11 @@ public final class EvidenceStore {
     return saveArtifact(requestedRunId, id + "-geometry.json", data, "[a-z0-9-]+-geometry\\.json");
   }
 
+  /** 保留固定侧车名；此通道不暴露给 JS 的 PNG 写入方法。 */
+  synchronized Receipt saveMediaGate(String requestedRunId, byte[] data) throws IOException {
+    return saveArtifact(requestedRunId, "media-hover-v1.native.json", data, "media-hover-v1\\.native\\.json");
+  }
+
   private Receipt saveArtifact(String requestedRunId, String name, byte[] data, String pattern) throws IOException {
     try {
       checkRun(requestedRunId);

@@ -1,6 +1,7 @@
 #import "CompatibilityReporter.h"
 #import "EvidenceStore.h"
 #import "GeometryEvidence.h"
+#import "MediaGateEvidence.h"
 #import "ColorSchemeSession.h"
 #import "ReporterBinding.h"
 #import <Lynx/LynxEvent.h>
@@ -8,6 +9,7 @@
 #import <Lynx/LynxUI.h>
 #import <Lynx/LynxUIContext.h>
 #import <Lynx/LynxView.h>
+#import <Lynx/LynxVersion.h>
 #import <math.h>
 
 @implementation CompatibilityReporter {
@@ -35,6 +37,7 @@
     @"measure" : NSStringFromSelector(@selector(measure:callback:)),
     @"capture" : NSStringFromSelector(@selector(capture:callback:)),
     @"captureGeometry" : NSStringFromSelector(@selector(captureGeometry:identifier:callback:)),
+    @"captureMediaGate" : NSStringFromSelector(@selector(captureMediaGate:callback:)),
     @"setColorScheme" : NSStringFromSelector(@selector(setColorScheme:requestId:scheme:callback:)),
     @"captureColorScheme" : NSStringFromSelector(@selector(captureColorScheme:requestId:identifier:callback:)),
     @"pointerEventsNone" : NSStringFromSelector(@selector(pointerEventsNone:callback:)),
@@ -108,6 +111,28 @@
       return [self captureDataNow:node afterScreenUpdates:YES];
     } error:&error];
     if (result == nil) NSLog(@"Lynx native geometry evidence failed: %@", error);
+    callback(result ?: [NSNull null]);
+  });
+}
+
+- (void)captureMediaGate:(NSString *)runId callback:(LynxCallbackBlock)callback {
+  dispatch_async(dispatch_get_main_queue(), ^{
+    if (![self requireView:callback]) return;
+    MediaGateEvidence *evidence = [[MediaGateEvidence alloc] initWithStore:_binding.store];
+    NSError *error = nil;
+    NSDictionary *result = [evidence captureRunId:runId sdkVersion:^NSString *{
+      return [LynxVersion versionString];
+    } measure:^NSDictionary *(NSString *node) {
+      LynxUI *ui = [_binding.view uiWithIdSelector:node];
+      if (ui == nil || ui.view == nil) return nil;
+      CGRect rect = [ui getBoundingClientRectToScreen];
+      return @{@"left": @(CGRectGetMinX(rect)), @"top": @(CGRectGetMinY(rect)),
+        @"right": @(CGRectGetMaxX(rect)), @"bottom": @(CGRectGetMaxY(rect)),
+        @"width": @(CGRectGetWidth(rect)), @"height": @(CGRectGetHeight(rect))};
+    } capture:^NSData *(NSString *node) {
+      return [self captureDataNow:node afterScreenUpdates:YES];
+    } error:&error];
+    if (result == nil) NSLog(@"Lynx native media evidence failed: %@", error);
     callback(result ?: [NSNull null]);
   });
 }

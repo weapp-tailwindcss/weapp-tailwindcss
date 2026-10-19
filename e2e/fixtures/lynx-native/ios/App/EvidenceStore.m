@@ -106,6 +106,23 @@
   }
 }
 
+// 只有原生采集器能写固定侧车；JS 的一般写入桥仍仅允许 PNG。
+- (NSDictionary *)saveMediaGate:(NSDictionary *)mediaGate runId:(NSString *)runId error:(NSError **)error {
+  @synchronized(self) {
+    if (![self checkRun:runId error:error]) return nil;
+    if (![mediaGate isKindOfClass:NSDictionary.class] || ![NSJSONSerialization isValidJSONObject:mediaGate]
+        || ![mediaGate[@"runId"] isEqual:self.context[@"runId"]]
+        || ![mediaGate[@"bundleSha256"] isEqual:self.context[@"bundleSha256"]]) {
+      [self reject:@"Invalid native media payload or identity" error:error];
+      return nil;
+    }
+    NSDictionary *sidecar = @{@"version": @1, @"source": @"lynx-native-media-gate-v1", @"context": self.context, @"mediaGate": mediaGate};
+    NSData *data = [NSJSONSerialization dataWithJSONObject:sidecar options:0 error:error];
+    if (data == nil) { [self reject:@"Cannot encode native media sidecar" error:error]; return nil; }
+    return [self persistArtifact:@"media-hover-v1.native.json" runId:runId data:data error:error];
+  }
+}
+
 - (NSDictionary *)persistArtifact:(NSString *)name runId:(NSString *)runId data:(NSData *)data error:(NSError **)error {
   NSURL *output = [[self.directory URLByAppendingPathComponent:@"artifacts"] URLByAppendingPathComponent:name];
   if (![self writeData:data to:output error:error]) return nil;

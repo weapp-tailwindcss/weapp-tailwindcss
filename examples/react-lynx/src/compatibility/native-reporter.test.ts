@@ -1,7 +1,8 @@
-import type { NativeArtifactReceipt, NativeColorSchemeReceipt, NativePlatformReport, StaticEvidenceReport } from './types'
+import type { NativeArtifactReceipt, NativeColorSchemeReceipt, NativeMediaGateCapture, NativePlatformReport, StaticEvidenceReport } from './types'
 import { afterEach, expect, it, vi } from 'vitest'
 import { submitNativeCompatibilityReport } from './native-reporter'
 import staticEvidence from './static-evidence.json'
+import { mediaCapture } from './test-utils/native-media'
 
 vi.mock('./catalog', async (importOriginal) => {
   const original = await importOriginal<typeof import('./catalog')>()
@@ -89,6 +90,7 @@ async function collect(options: { missingFrame?: boolean, missingLayout?: boolea
   vi.stubGlobal('NativeModules', {
     CompatibilityReporter: {
       getEvidenceContext: (callback: (value: object) => void) => callback({ version: 1, runId, bundleSha256: 'a'.repeat(64) }),
+      captureMediaGate: (_run: string, callback: (value: NativeMediaGateCapture) => void) => callback(mediaCapture()),
       setColorScheme: (run: string, requestId: string, scheme: 'light' | 'dark', callback: (value: NativeColorSchemeReceipt | null) => void) => {
         callback(++schemeRequests === 3 && options.restoreFailed ? null : { runId: run, requestId, scheme })
       },
@@ -210,7 +212,7 @@ it('probe 布局未就绪时持久化失败原因并拒绝发布报告', async (
 it('等待最后一帧的真实写入回执后才发布报告', async () => {
   const { report, error } = await collect({ receipt: 'late' })
   expect(error).toBeUndefined()
-  expect(report.evidence?.artifacts).toHaveLength(29)
+  expect(report.evidence?.artifacts).toHaveLength(36)
 })
 
 it.each(['wrong-run', 'missing', 'failed'] as const)('%s 回执禁止发布报告', async (receipt) => {

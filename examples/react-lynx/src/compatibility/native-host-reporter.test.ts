@@ -1,8 +1,9 @@
 import type { NativeGeometryCapture } from './native-geometry'
-import type { NativePlatformReport } from './types'
+import type { NativeMediaGateCapture, NativePlatformReport } from './types'
 import { afterEach, expect, it, vi } from 'vitest'
 import { geometryArtifactNames } from './native-geometry'
 import { submitNativeCompatibilityReport } from './native-reporter'
+import { mediaCapture } from './test-utils/native-media'
 
 vi.mock('./catalog', async (importOriginal) => {
   const original = await importOriginal<typeof import('./catalog')>()
@@ -14,7 +15,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-async function collect(missingHost = false, fault?: 'view-expired' | 'measure-timeout' | 'geometry-null') {
+async function collect(missingHost = false, fault?: 'view-expired' | 'measure-timeout' | 'geometry-null' | 'media-null' | 'media-missing') {
   vi.useFakeTimers()
   const runId = '00000000-0000-4000-8000-000000000001'
   const rect = (left: number, top: number, width: number, height: number) => ({ left, top, width, height, right: left + width, bottom: top + height })
@@ -49,6 +50,7 @@ async function collect(missingHost = false, fault?: 'view-expired' | 'measure-ti
     getEvidenceContext: (callback: (value: object) => void) => callback({ version: 1, runId, bundleSha256: 'a'.repeat(64) }),
     measure,
     captureGeometry: missingHost ? undefined : captureGeometry,
+    captureMediaGate: fault === 'media-missing' ? undefined : (_run: string, callback: (value: NativeMediaGateCapture | null) => void) => callback(fault === 'media-null' ? null : mediaCapture()),
     submitArtifact: vi.fn(),
     fail,
     submit: (_run: string, value: string, callback: (value: boolean) => void) => {
@@ -67,7 +69,8 @@ it('reporter只用captureGeometry回传的原生坐标和已落盘三回执', as
   expect(captureGeometry.mock.calls[0]!.slice(0, 2)).toEqual([report!.evidence!.runId, 'sizing-fixed'])
   expect(measure.mock.calls.every(([id]) => !id.includes('sizing-fixed'))).toBe(true)
   expect(report!.results[0]).toMatchObject({ status: 'supported', geometry: capture.geometry })
-  expect(report!.evidence!.artifacts).toEqual(capture.artifacts)
+  expect(report!.mediaGate).toEqual(mediaCapture().mediaGate)
+  expect(report!.evidence!.artifacts).toEqual([...mediaCapture().artifacts, ...capture.artifacts])
 })
 
 it('旧宿主即使能measure也不能发布没有独立几何落盘的报告', async () => {
@@ -97,4 +100,12 @@ it('原生平台完全缺桥不再静默返回', async () => {
   vi.stubGlobal('SystemInfo', { platform: 'Android' })
   vi.stubGlobal('NativeModules', {})
   await expect(submitNativeCompatibilityReport()).rejects.toMatchObject({ code: 'bridge-unavailable' })
+})
+
+it.each(['media-null', 'media-missing'] as const)('reporter拒绝%s，不能发布缺少媒体侧车的能力报告', async (fault) => {
+  const { report, error, captureGeometry, fail } = await collect(false, fault)
+  expect(report).toBeUndefined()
+  expect(error).toBeInstanceOf(Error)
+  expect(captureGeometry).not.toHaveBeenCalled()
+  expect(fail).toHaveBeenCalledOnce()
 })

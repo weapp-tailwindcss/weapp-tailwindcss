@@ -1,0 +1,48 @@
+.media-hover-v1-fixtures {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.media-hover-v1-container {
+  box-sizing: border-box;
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border-width: 0;
+  background-color: #fff;
+}
+
+.media-hover-v1-target {
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  background-color: #dc2626;
+}
+
+.media-hover-v1-unguarded {
+  width: 32px;
+  background-color: #16a34a;
+}
+
+@media (min-width: 1px) {
+  .media-hover-v1-min-width {
+    width: 32px;
+    background-color: #16a34a;
+  }
+}
+
+@media (hover: hover) {
+  .media-hover-v1-hover-hover {
+    width: 32px;
+    background-color: #16a34a;
+  }
+}
+
+@media (hover: none) {
+  .media-hover-v1-hover-none {
+    width: 32px;
+    background-color: #16a34a;
+  }
+}

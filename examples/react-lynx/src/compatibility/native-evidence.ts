@@ -1,6 +1,7 @@
 import type { NativeBridgeResult } from './native-failure'
 import type { NativeGeometryCapture } from './native-geometry'
-import type { NativeArtifactReceipt, NativeEvidenceContext, NativePlatformReport } from './types'
+import type { NativeArtifactReceipt, NativeEvidenceContext, NativeMediaGateCapture, NativePlatformReport } from './types'
+import { mediaGateArtifactNames, validateMediaGateEvidence } from './media-gate-contract'
 import { NativeEvidenceUnavailableError, requestNativeReceipt as request } from './native-failure'
 import { geometryArtifactNames, validNativeGeometry } from './native-geometry'
 
@@ -8,6 +9,7 @@ export interface EvidenceModule {
   getEvidenceContext?: (callback: (value: NativeBridgeResult<NativeEvidenceContext | null>) => void) => void
   submitArtifact?: (runId: string, name: string, data: string, callback: (value: NativeBridgeResult<NativeArtifactReceipt | null>) => void) => void
   captureGeometry?: (runId: string, id: string, callback: (value: NativeBridgeResult<NativeGeometryCapture | null>) => void) => void
+  captureMediaGate?: (runId: string, callback: (value: NativeBridgeResult<NativeMediaGateCapture | null>) => void) => void
   submit?: (runId: string, report: string, callback: (value: NativeBridgeResult<boolean>) => void) => void
   fail?: (runId: string, message: string, callback: (value: boolean) => void) => void
 }
@@ -34,6 +36,34 @@ export async function createNativeEvidence(reporter: EvidenceModule) {
   }
   return {
     runId: context.runId,
+    async mediaGate() {
+      pending++
+      try {
+        if (failed || submitted) {
+          throw new Error('evidence 已失败或结束')
+        }
+        if (!reporter.captureMediaGate) {
+          throw new Error('原生 host 缺少 media gate 采集协议')
+        }
+        const capture = await request<NativeMediaGateCapture | null>(callback => reporter.captureMediaGate!(context.runId, callback), 5000)
+        validateMediaGateEvidence(capture?.mediaGate, context)
+        const names = mediaGateArtifactNames()
+        if (!capture || !Array.isArray(capture.artifacts) || capture.artifacts.length !== names.length) {
+          throw new Error('原生 media gate 落盘清单不完整')
+        }
+        for (const name of names) {
+          register(capture.artifacts.find(item => item.name === name), name)
+        }
+        return capture.mediaGate!
+      }
+      catch (error) {
+        failed = true
+        throw error
+      }
+      finally {
+        pending--
+      }
+    },
     async geometry(id: string) {
       pending++
       try {

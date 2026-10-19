@@ -1,7 +1,7 @@
 import type { ColorSchemeModule } from './native-color-scheme'
 import type { EvidenceModule, NativeEvidenceWriter } from './native-evidence'
 import type { NativeBridgeResult } from './native-failure'
-import type { CompatibilityCase, NativeCaseResult, NativePlatformReport, NativeRect, NativeRuntimeEnvironment, Platform, StaticEvidenceReport } from './types'
+import type { CompatibilityCase, NativeCaseResult, NativeMediaGateEvidence, NativePlatformReport, NativeRect, NativeRuntimeEnvironment, Platform, StaticEvidenceReport } from './types'
 import { combineCandidateEvidence } from './candidate-evidence'
 import { compatibilityCases } from './catalog'
 import { evidenceSequence, lynxEvidenceStrategy, requiresPixelEffect } from './evidence'
@@ -155,7 +155,7 @@ async function collectPixel(item: CompatibilityCase, reporter: ReporterModule, e
   }
 }
 
-async function collectInteraction(item: CompatibilityCase, reporter: ReporterModule, evidence: NativeEvidenceWriter): Promise<NativeCaseResult> {
+async function collectInteraction(item: CompatibilityCase, reporter: ReporterModule, evidence: NativeEvidenceWriter, mediaGate: NativeMediaGateEvidence): Promise<NativeCaseResult> {
   if (item.id === 'interaction-pointer') {
     const [styled, control] = reporter.pointerEventsNone
       ? await Promise.all([
@@ -196,7 +196,7 @@ async function collectInteraction(item: CompatibilityCase, reporter: ReporterMod
       status: passed ? 'supported' : measured ? 'unsupported' : 'not-tested',
       reason: passed ? undefined : measured ? '原生 active 伪状态前后没有产生预期像素变化' : '测试 host 未返回完整的伪状态注入或截图结果',
       checkpoints: [{ name: 'interaction:pseudo-active', passed, actual: before?.data && active?.data ? `${fingerprint(before.data)} -> ${fingerprint(active.data)}` : 'missing' }],
-    }])
+    }], mediaGate)
   }
   if (item.id === 'animation-spin') {
     const before = await capture(`probe-container-${item.id}`, reporter)
@@ -246,18 +246,18 @@ async function collectInteraction(item: CompatibilityCase, reporter: ReporterMod
   }
 }
 
-async function collectCase(item: CompatibilityCase, reporter: ReporterModule, evidence: NativeEvidenceWriter): Promise<NativeCaseResult> {
+async function collectCase(item: CompatibilityCase, reporter: ReporterModule, evidence: NativeEvidenceWriter, mediaGate: NativeMediaGateEvidence): Promise<NativeCaseResult> {
   const staticResult = staticById.get(item.id)
   if (item.evidence === 'build' && staticResult?.generated) {
     return { id: item.id, status: 'supported', checkpoints: [{ name: 'build:generated', passed: true }] }
   }
   if (item.id === 'variant-group-peer') {
-    return combineCandidateEvidence(item, staticResult)
+    return combineCandidateEvidence(item, staticResult, [], mediaGate)
   }
   if (item.id === 'variant-state') {
     return evidenceSequence(item, staticResult) && staticResult?.candidates
-      ? collectInteraction(item, reporter, evidence)
-      : combineCandidateEvidence(item, staticResult)
+      ? collectInteraction(item, reporter, evidence, mediaGate)
+      : combineCandidateEvidence(item, staticResult, [], mediaGate)
   }
   if (!staticResult?.generated || !staticResult.bundled) {
     return {
@@ -288,7 +288,7 @@ async function collectCase(item: CompatibilityCase, reporter: ReporterModule, ev
     return collectColorScheme(reporter, evidence)
   }
   if (strategy === 'interaction') {
-    return collectInteraction(item, reporter, evidence)
+    return collectInteraction(item, reporter, evidence, mediaGate)
   }
   return collectPixel(item, reporter, evidence)
 }
@@ -309,9 +309,10 @@ export async function submitNativeCompatibilityReport() {
     if (!await waitForProbeLayout(id => measure(id, reporter))) {
       throw new Error('原生 probe 布局在等待期限内未就绪')
     }
+    const mediaGate = await evidence.mediaGate()
     const results: NativeCaseResult[] = []
     for (const item of compatibilityCases) {
-      results.push(await collectCase(item, reporter, evidence))
+      results.push(await collectCase(item, reporter, evidence, mediaGate))
     }
     const report: NativePlatformReport = {
       schemaVersion: 1,
@@ -321,6 +322,7 @@ export async function submitNativeCompatibilityReport() {
       versions: staticEvidence.versions,
       environment: runtimeEnvironment(platform),
       results,
+      mediaGate,
     }
     await evidence.submit(report)
   }

@@ -11,11 +11,11 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import android.view.View;
 import com.lynx.react.bridge.Callback;
-import com.lynx.react.bridge.JavaOnlyArray;
 import com.lynx.react.bridge.JavaOnlyMap;
 import com.lynx.jsbridge.LynxMethod;
 import com.lynx.jsbridge.LynxModule;
 import com.lynx.tasm.LynxView;
+import com.lynx.tasm.LynxEnv;
 import com.lynx.tasm.behavior.event.EventTarget;
 import com.lynx.tasm.behavior.ui.LynxBaseUI;
 import com.lynx.tasm.behavior.ui.LynxUI;
@@ -129,12 +129,7 @@ public final class CompatibilityReporterModule extends LynxModule {
       try {
         String payload = data.startsWith("data:image/png;base64,") ? data.substring(22) : data;
         EvidenceStore.Receipt receipt = binding.store.save(runId, name, Base64.decode(payload, Base64.DEFAULT));
-        JavaOnlyMap result = new JavaOnlyMap();
-        result.putString("runId", receipt.runId);
-        result.putString("name", receipt.name);
-        result.putString("sha256", receipt.sha256);
-        result.putInt("byteLength", receipt.byteLength);
-        callback.invoke(result);
+        callback.invoke(EvidenceBridge.receipt(receipt));
       } catch (Exception error) {
         failEvidence(error);
         callback.invoke((Object) null);
@@ -171,6 +166,25 @@ public final class CompatibilityReporterModule extends LynxModule {
   }
 
   @LynxMethod
+  public void captureMediaGate(String runId, Callback callback) {
+    mainHandler.post(() -> {
+      if (!requireView(callback)) return;
+      try {
+        MediaGateEvidence.Capture capture = MediaGateEvidence.capture(binding.store, runId, new MediaGateEvidence.Host() {
+          public boolean isUiThread() { return Looper.myLooper() == Looper.getMainLooper(); }
+          public String sdkVersion() { return LynxEnv.inst().getLynxVersion(); }
+          public double[] measure(String id) { return measureNow(id); }
+          public byte[] capture(String id) { return captureBytes(id); }
+        });
+        callback.invoke(EvidenceBridge.mediaGate(binding.store, capture));
+      } catch (Exception error) {
+        failEvidence(error);
+        callback.invoke((Object) null);
+      }
+    });
+  }
+
+  @LynxMethod
   public void captureGeometry(String runId, String identifier, Callback callback) {
     mainHandler.post(() -> {
       if (!requireView(callback)) return;
@@ -181,20 +195,11 @@ public final class CompatibilityReporterModule extends LynxModule {
         });
         JavaOnlyMap geometry = new JavaOnlyMap();
         for (java.util.Map.Entry<String, double[]> entry : capture.geometry.entrySet()) {
-          geometry.putMap(entry.getKey(), rectMap(entry.getValue()));
-        }
-        JavaOnlyArray artifacts = new JavaOnlyArray();
-        for (EvidenceStore.Receipt receipt : capture.artifacts) {
-          JavaOnlyMap artifact = new JavaOnlyMap();
-          artifact.putString("runId", receipt.runId);
-          artifact.putString("name", receipt.name);
-          artifact.putString("sha256", receipt.sha256);
-          artifact.putInt("byteLength", receipt.byteLength);
-          artifacts.pushMap(artifact);
+          geometry.putMap(entry.getKey(), EvidenceBridge.rect(entry.getValue()));
         }
         JavaOnlyMap result = new JavaOnlyMap();
         result.putMap("geometry", geometry);
-        result.putArray("artifacts", artifacts);
+        result.putArray("artifacts", EvidenceBridge.artifacts(capture.artifacts));
         callback.invoke(result);
       } catch (Exception error) {
         failEvidence(error);
@@ -207,7 +212,7 @@ public final class CompatibilityReporterModule extends LynxModule {
   public void measure(String identifier, Callback callback) {
     mainHandler.post(() -> {
       if (!requireView(callback)) return;
-      callback.invoke(rectMap(measureNow(identifier)));
+      callback.invoke(EvidenceBridge.rect(measureNow(identifier)));
     });
   }
 
@@ -218,14 +223,6 @@ public final class CompatibilityReporterModule extends LynxModule {
     return GeometryBounds.fromCorners(new float[][] {
       corners.left_top, corners.right_top, corners.right_bottom, corners.left_bottom,
     }, ui.getLynxContext().getScreenMetrics().density);
-  }
-
-  private static JavaOnlyMap rectMap(double[] rect) {
-    if (rect == null) return null;
-    JavaOnlyMap result = new JavaOnlyMap();
-    String[] fields = {"left", "top", "right", "bottom", "width", "height"};
-    for (int index = 0; index < fields.length; index++) result.putDouble(fields[index], rect[index]);
-    return result;
   }
 
   @LynxMethod
