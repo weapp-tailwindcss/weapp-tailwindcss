@@ -12,7 +12,7 @@ export const reviewedLynxSupport: Record<string, readonly ['supported' | 'unsupp
   'layout-float': ['unsupported', 'unsupported'],
   'layout-isolation': ['unsupported', 'unsupported'],
   'layout-object-fit': ['unsupported', 'unsupported'],
-  'layout-overflow': ['unsupported', 'unsupported'],
+  'layout-overflow': ['supported', 'supported'],
   'layout-position': ['supported', 'supported'],
   'layout-visibility': ['supported', 'supported'],
   'layout-z-index': ['supported', 'supported'],
