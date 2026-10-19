@@ -1,4 +1,4 @@
-import type { NativeCandidateResult, NativeEvidenceContext, NativeMediaGateEvidence, StaticMediaGuardEvidence } from './types'
+import type { NativeCandidateResult, NativeEvidenceContext, NativeMediaGateEvidence, StaticCandidateEvidence, StaticMediaGuardEvidence } from './types'
 
 /** 此限制在运行前登记，只拒绝必要媒体条件，不替代 hover 输入或伪状态取证。 */
 export const MEDIA_GATE_LIMITATION_ID = 'lynx4.0.1-media-hover-unknown-v1' as const
@@ -11,10 +11,21 @@ export function mediaGateArtifactNames() {
   return [...MEDIA_GATE_PROBE_IDS.map(id => `media-hover-v1-${id}.png`), 'media-hover-v1.native.json']
 }
 
-export function mediaGuardValid(proof: StaticMediaGuardEvidence | undefined) {
+export function mediaGuardValid(proof: StaticMediaGuardEvidence | undefined, className = proof?.className) {
+  const needle = className ? `.${className.replace(/[^a-z0-9_-]/gi, '\\$&')}` : ''
+  const ownsSelector = (selector: string) => {
+    let offset = selector.indexOf(needle)
+    while (needle && offset >= 0) {
+      const next = selector[offset + needle.length]
+      if (next === undefined || !/[\w\\-]/.test(next)) return true
+      offset = selector.indexOf(needle, offset + needle.length)
+    }
+    return false
+  }
   return proof?.limitationId === MEDIA_GATE_LIMITATION_ID && proof.sourceSha256 === MEDIA_GATE_SOURCE_SHA256
+    && proof.className === className && (MEDIA_GATE_CANDIDATES as readonly (string | undefined)[]).includes(className)
     && proof.condition === '(hover:hover)' && [proof.generatedRules, proof.bundledRules].every(rules => Array.isArray(rules) && rules.length > 0
-      && rules.every(rule => typeof rule.selector === 'string' && Array.isArray(rule.mediaConditions) && rule.mediaConditions.includes('(hover:hover)')))
+      && rules.every(rule => typeof rule.selector === 'string' && ownsSelector(rule.selector) && Array.isArray(rule.mediaConditions) && rule.mediaConditions.includes('(hover:hover)')))
 }
 
 /** 宿主的身份和几何是必要条件；验收端还必须独立读取侧车和 PNG。 */
@@ -43,7 +54,7 @@ export function validateMediaGateEvidence(evidence: NativeMediaGateEvidence | un
 
 export function mediaGateRejection(className: string, proof: StaticMediaGuardEvidence | undefined, evidence: NativeMediaGateEvidence): NativeCandidateResult {
   validateMediaGateEvidence(evidence)
-  if (!(MEDIA_GATE_CANDIDATES as readonly string[]).includes(className) || !mediaGuardValid(proof)) {
+  if (!(MEDIA_GATE_CANDIDATES as readonly string[]).includes(className) || !mediaGuardValid(proof, className)) {
     throw new Error(`${className} 缺少固定来源及所有规则的必要 media guard`)
   }
   return {
@@ -53,4 +64,20 @@ export function mediaGateRejection(className: string, proof: StaticMediaGuardEvi
     mediaGate: { limitationId: MEDIA_GATE_LIMITATION_ID, stage: 'runtime', gate: 'media', condition: '(hover:hover)', evidenceId: 'media-hover-v1', downstream: { hoverInput: 'not-tested', pseudoState: 'not-tested' } },
     checkpoints: [{ name: 'media:necessary-guard-v1', passed: true }],
   }
+}
+
+function sameData(actual: unknown, expected: unknown): boolean {
+  if (actual === expected) return true
+  if (!actual || !expected || typeof actual !== 'object' || typeof expected !== 'object') return false
+  const keys = Object.keys(actual)
+  return keys.length === Object.keys(expected).length && keys.every(key => Object.hasOwn(expected, key)
+    && sameData(Reflect.get(actual, key), Reflect.get(expected, key)))
+}
+
+/** 媒体 gate 是独立拒绝分支，不接受失败或成功的 interaction checkpoint 作为替代。 */
+export function validateMediaGateCandidate(candidate: NativeCandidateResult, built: StaticCandidateEvidence | undefined, evidence: NativeMediaGateEvidence | undefined, context?: NativeEvidenceContext) {
+  validateMediaGateEvidence(evidence, context)
+  if (!built?.generated || !built.bundled) throw new Error(`${candidate.className} 的媒体拒绝不能掩盖生成或 encoder 失败`)
+  const expected = mediaGateRejection(candidate.className, built.mediaGuard, evidence)
+  if (!sameData(candidate, expected)) throw new Error(`${candidate.className} 的必要媒体条件证据不完整或混淆了未执行的 hover 输入`)
 }

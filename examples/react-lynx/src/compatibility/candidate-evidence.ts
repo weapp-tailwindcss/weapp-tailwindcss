@@ -1,4 +1,5 @@
-import type { CompatibilityCase, NativeCandidateResult, NativeCaseResult, StaticCaseEvidence } from './types'
+import type { CompatibilityCase, NativeCandidateResult, NativeCaseResult, NativeEvidenceContext, NativeMediaGateEvidence, StaticCaseEvidence } from './types'
+import { mediaGateRejection, validateMediaGateCandidate } from './media-gate-contract'
 
 export function requiresCandidateEvidence(id: string) {
   return id === 'variant-state' || id === 'variant-group-peer'
@@ -25,6 +26,7 @@ export function combineCandidateEvidence(
   item: CompatibilityCase,
   built: StaticCaseEvidence | undefined,
   measured: NativeCandidateResult[] = [],
+  mediaGate?: NativeMediaGateEvidence,
 ): NativeCaseResult {
   const candidates = item.className.trim().split(/\s+/).filter(Boolean).map((className): NativeCandidateResult => {
     const candidate = built?.candidates?.find(candidate => candidate.className === className)
@@ -40,6 +42,9 @@ export function combineCandidateEvidence(
       }
     }
     const observed = measured.find(candidate => candidate.className === className)
+    if (!observed && mediaGate && candidate.mediaGuard) {
+      return mediaGateRejection(className, candidate.mediaGuard, mediaGate)
+    }
     return observed ?? {
       className,
       status: 'not-tested',
@@ -57,13 +62,13 @@ export function combineCandidateEvidence(
     candidates,
     checkpoints: [
       ...candidates.flatMap(candidate => candidate.checkpoints),
-      { name: 'interaction:candidates-complete', passed: pending.length === 0, actual: candidates.map(candidate => `${candidate.className}=${candidate.status}`).join('; ') },
+      { name: candidates.some(candidate => candidate.mediaGate) ? 'candidate:conclusions-complete' : 'interaction:candidates-complete', passed: pending.length === 0, actual: candidates.map(candidate => `${candidate.className}=${candidate.status}`).join('; ') },
     ],
   }
 }
 
 /** 采集可保留合法待测候选，最终验收仍要求候选全部完成；两者均核验独立证据。 */
-export function validateCandidateEvidence(item: CompatibilityCase, built: StaticCaseEvidence | undefined, result: NativeCaseResult, options: { allowPending?: boolean } = {}) {
+export function validateCandidateEvidence(item: CompatibilityCase, built: StaticCaseEvidence | undefined, result: NativeCaseResult, options: { allowPending?: boolean, mediaGate?: NativeMediaGateEvidence, context?: NativeEvidenceContext } = {}) {
   if (!requiresCandidateEvidence(item.id)) {
     return
   }
@@ -87,6 +92,10 @@ export function validateCandidateEvidence(item: CompatibilityCase, built: Static
   }
   for (const candidate of result.candidates ?? []) {
     const staticCandidate = built?.candidates?.find(item => item.className === candidate.className)
+    if (candidate.mediaGate) {
+      validateMediaGateCandidate(candidate, staticCandidate, options.mediaGate, options.context)
+      continue
+    }
     const rejectedByStatic = !staticCandidate?.generated || !staticCandidate.bundled
     const stateCheckpoint = candidate.checkpoints.find(checkpoint => checkpoint.name === candidateCheckpoint(candidate.className))
     const staticCheckpointsMatch = candidate.checkpoints.some(checkpoint => checkpoint.name === 'generated' && checkpoint.passed === staticCandidate?.generated)

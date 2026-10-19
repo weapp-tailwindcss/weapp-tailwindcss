@@ -43,6 +43,7 @@ export interface StaticCandidateEvidence {
 }
 
 export interface StaticMediaGuardEvidence {
+  className: string
   limitationId: 'lynx4.0.1-media-hover-unknown-v1'
   sourceSha256: string
   condition: '(hover:hover)'

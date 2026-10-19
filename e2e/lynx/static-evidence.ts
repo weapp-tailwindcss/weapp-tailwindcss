@@ -1,8 +1,9 @@
-import type { ExpectedDeclaration, StaticCaseEvidence, StaticEvidenceReport } from '../../examples/react-lynx/src/compatibility/types'
+import type { ExpectedDeclaration, StaticCaseEvidence, StaticEvidenceReport, StaticMediaGuardEvidence } from '../../examples/react-lynx/src/compatibility/types'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import postcss from 'postcss'
 import { compatibilityCases } from '../../examples/react-lynx/src/compatibility/catalog'
+import { MEDIA_GATE_CANDIDATES, MEDIA_GATE_LIMITATION_ID, MEDIA_GATE_SOURCE_SHA256 } from '../../examples/react-lynx/src/compatibility/media-gate-contract'
 import { compatibilityVersions, getCatalogHash, lynxIntermediateDir, readCssDefinesProperties } from './catalog'
 
 interface EncodedDeclaration {
@@ -11,12 +12,13 @@ interface EncodedDeclaration {
   important?: boolean
 }
 
-interface EncodedRule {
+export interface EncodedRule {
   type: string
   selectorText?: { value: string }
   style?: EncodedDeclaration[]
   variables?: Record<string, string>
   rules?: EncodedRule[]
+  prelude?: { value: string }
 }
 
 interface TasmJson {
@@ -28,6 +30,7 @@ interface TasmJson {
 export interface RuleEvidence {
   selector: string
   declarations: ExpectedDeclaration[]
+  mediaConditions?: string[]
 }
 
 function escapeClassName(value: string) {
@@ -111,14 +114,16 @@ export function evaluateCase(rules: RuleEvidence[], item: typeof compatibilityCa
   }
 }
 
-function flattenEncodedRules(rules: EncodedRule[]): RuleEvidence[] {
+export function flattenEncodedRules(rules: EncodedRule[], ancestors: string[] = []): RuleEvidence[] {
   return rules.flatMap((rule) => {
-    const nested = rule.rules ? flattenEncodedRules(rule.rules) : []
+    const conditions = rule.type === 'MediaRule' ? [...ancestors, rule.prelude?.value.replace(/\s+/g, '') ?? 'unknown-media'] : ancestors
+    const nested = rule.rules ? flattenEncodedRules(rule.rules, conditions) : []
     if (rule.type !== 'StyleRule' || !rule.selectorText) {
       return nested
     }
     return [{
       selector: rule.selectorText.value,
+      mediaConditions: [...conditions],
       declarations: (rule.style ?? []).map(declaration => ({
         property: declaration.name,
         value: declaration.value,
@@ -128,9 +133,13 @@ function flattenEncodedRules(rules: EncodedRule[]): RuleEvidence[] {
   })
 }
 
-function parseGeneratedRules(css: string) {
+export function parseGeneratedRules(css: string) {
   const rules: RuleEvidence[] = []
   postcss.parse(css).walkRules((rule) => {
+    const mediaConditions: string[] = []
+    for (let parent = rule.parent; parent; parent = parent.parent) {
+      if (parent.type === 'atrule' && parent.name === 'media') mediaConditions.unshift(parent.params.replace(/\s+/g, ''))
+    }
     const declarations: ExpectedDeclaration[] = []
     rule.walkDecls((declaration) => {
       declarations.push({
@@ -139,9 +148,18 @@ function parseGeneratedRules(css: string) {
         ...(declaration.important ? { important: true } : {}),
       })
     })
-    rules.push({ selector: rule.selector, declarations })
+    rules.push({ selector: rule.selector, declarations, mediaConditions })
   })
   return rules
+}
+
+/** 所有生成与编码规则都必须具有必要 guard；任一无条件替代规则都拒绝该限制证明。 */
+export function staticMediaGuard(className: string, generated: RuleEvidence[], bundled: RuleEvidence[]): StaticMediaGuardEvidence | undefined {
+  if (!(MEDIA_GATE_CANDIDATES as readonly string[]).includes(className)) return undefined
+  const sources = [generated, bundled].map(rules => matchingRules(rules, [className]))
+  if (sources.some(rules => rules.length === 0 || rules.some(rule => !rule.mediaConditions?.includes('(hover:hover)')))) return undefined
+  const [generatedRules, bundledRules] = sources.map(rules => rules.map(rule => ({ selector: rule.selector, mediaConditions: rule.mediaConditions! })))
+  return { className, limitationId: MEDIA_GATE_LIMITATION_ID, sourceSha256: MEDIA_GATE_SOURCE_SHA256, condition: '(hover:hover)', generatedRules: generatedRules!, bundledRules: bundledRules! }
 }
 
 function parseEncoderRemovals(log: string) {
@@ -173,6 +191,7 @@ export function analyzeStaticCase(
     const removedProperties = declarations.filter(declaration => removals.properties.has(declaration.property)).map(declaration => declaration.property)
     const removedSelectors = removals.selectors.filter(selector => selectorHasCandidate(selector, className))
     const retained = candidateGenerated && candidateBundled && removedProperties.length === 0 && removedSelectors.length === 0
+    const mediaGuard = retained ? staticMediaGuard(className, generatedRules, bundledRules) : undefined
     const failureStage = !candidateGenerated ? 'generation' : !retained ? 'encoder' : undefined
     const reason = !candidateGenerated
       ? 'Tailwind 未生成候选 selector'
@@ -187,6 +206,7 @@ export function analyzeStaticCase(
       bundled: retained,
       ...(failureStage ? { failureStage: failureStage as 'generation' | 'encoder' } : {}),
       ...(reason ? { reason } : {}),
+      ...(mediaGuard ? { mediaGuard } : {}),
     }
   })
   const isBundled = generated.matched && bundled.matched && candidates.every(candidate => candidate.bundled)
