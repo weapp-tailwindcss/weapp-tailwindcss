@@ -9,10 +9,11 @@ export interface AuthoringWebMeasurement {
   reference: string[]
   baseline: string[]
   referenceSupported: boolean[]
+  excluded?: boolean
 }
 
 export function authoringStates(profile: AuthoringWebProfile) {
-  return profile.action ? ['before', 'after', 'restored'] : ['computed']
+  return profile.action || profile.groups.some(group => group.interaction) ? ['before', 'after', 'restored'] : ['computed']
 }
 
 function measurementNames(profile: AuthoringWebProfile, state: string) {
@@ -44,7 +45,7 @@ export function authoringMeasurementAssertions(state: string, measurement: Autho
     const actual = measurement.product[index]
     return [
       { name: `${state}/reference-observable/${suffix}`, stage: 'runtime' as const, actual: measurement.referenceSupported[index] === true && typeof reference === 'string' && reference.trim() !== '', expected: true },
-      { name: `${state}/computed/${suffix}`, stage: 'runtime' as const, actual: typeof actual === 'string' && actual.trim() !== '' && actual === reference, expected: true },
+      { name: `${state}/computed/${suffix}`, stage: 'runtime' as const, actual: typeof actual === 'string' && actual.trim() !== '' && actual === (measurement.excluded ? measurement.baseline[index] : reference), expected: true },
       ...(state === 'computed' || state === 'after' ? [{ name: `${state}/reference-effective/${suffix}`, stage: 'runtime' as const, actual: typeof reference === 'string' && reference.trim() !== '' && reference !== measurement.baseline[index], expected: true }] : []),
     ]
   })

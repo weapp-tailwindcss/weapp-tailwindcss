@@ -7,6 +7,7 @@ import { chromium, firefox, webkit } from 'playwright'
 import { observeAuthoring } from './authoring-web/browser'
 import { authoringMeasurementAssertions, authoringStates, authoringWebContract, authoringWebOutcome } from './authoring-web/contract'
 import { authoringWebCoverage, authoringWebProfiles } from './authoring-web/profiles'
+import { buildAuthoringReference } from './authoring-web/reference'
 import { newReport, persistReport } from './context'
 import { cssDeclarations } from './css'
 import { withGeneratorFixture } from './fixture'
@@ -19,7 +20,7 @@ export async function runAuthoringWeb(context: RunContext, engine: BrowserEngine
   const contracts = profiles.map(authoringWebContract)
   const output = { ...context, directory: path.join(context.directory, 'authoring') }
   const coverage = authoringWebCoverage()
-  const report = await newReport(output, `web-${engine}`, contracts, { profiles, coverage }, { engine, browserVersion: 'not-started', mode: 'authoring-isolated-inline-reference', headless: true })
+  const report = await newReport(output, `web-${engine}`, contracts, { profiles, coverage }, { engine, browserVersion: 'not-started', mode: 'authoring-isolated-reference', headless: true })
   const coverageName = 'authoring-coverage.json'
   await writeFile(path.join(output.directory, coverageName), `${JSON.stringify(coverage, null, 2)}\n`)
   report.artifacts.push(await receipt(path.join(output.directory, coverageName), output.directory, output.runId, profiles.map(profile => profile.id), 'measurements'))
@@ -44,12 +45,20 @@ export async function runAuthoringWeb(context: RunContext, engine: BrowserEngine
         const assertions: SemanticAssertion[] = []
         let result: CapabilityResult
         try {
+          const reference = await buildAuthoringReference(profile)
+          if (reference) {
+            const referenceName = `${profile.fixture.id}.reference.css`
+            await writeFile(path.join(output.directory, referenceName), reference.css || '\n')
+            report.artifacts.push(await receipt(path.join(output.directory, referenceName), output.directory, output.runId, [profile.id], 'css'))
+            evidence.push(referenceName)
+            measurements.push({ referenceIdentity: reference.identity })
+          }
           await withGeneratorFixture(output.root, profile.fixture.css, profile.fixture.files, async (generator) => {
             // 源码扫描仍只消费隔离文件；渲染探针发生在生成之后，不把探针候选补回生成器。
             const generated = await generator.generate({ target: 'web', candidates: profile.fixture.candidates, scanSources: true })
             const parsed = cssDeclarations(generated.rawCss)
             assertions.push(
-              { name: 'generated', stage: 'generation', actual: profile.groups.every(group => group.sourceCandidate ? generated.classSet.has(group.sourceCandidate) : parsed.bySelector.has(group.sourceSelector!)), expected: true },
+              { name: 'generated', stage: 'generation', actual: profile.groups.filter(group => !group.excluded).every(group => group.sourceCandidate ? generated.classSet.has(group.sourceCandidate) : parsed.bySelector.has(group.sourceSelector!)), expected: true },
               { name: 'excluded', stage: 'generation', actual: (profile.fixture.absentCandidates ?? []).every(candidate => !generated.classSet.has(candidate) && !parsed.byClass.has(candidate)), expected: true },
             )
             const cssName = `${profile.fixture.id}.css`
@@ -57,7 +66,7 @@ export async function runAuthoringWeb(context: RunContext, engine: BrowserEngine
             report.artifacts.push(await receipt(path.join(output.directory, cssName), output.directory, output.runId, [profile.id], 'css'))
             evidence.push(cssName)
             for (const state of authoringStates(profile)) {
-              const observed = await observeAuthoring(page, profile, generated.css, state)
+              const observed = await observeAuthoring(page, profile, generated.css, state, reference)
               measurements.push({ state, observed })
               assertions.push(...observed.flatMap(measurement => authoringMeasurementAssertions(state, measurement)))
               const screenshot = `${profile.fixture.id}-${state}.png`

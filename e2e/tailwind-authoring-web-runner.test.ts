@@ -37,20 +37,20 @@ async function run(caseFilter?: RegExp) {
 }
 
 describe('authoring 浏览器执行边界', () => {
-  it('浏览器不可用时只记录阻塞，缺 oracle 的条目仍明确未执行', async () => {
+  it('浏览器不可用时29条独立参考用例都记录阻塞，不冒充执行成功', async () => {
     const report = await run()
-    expect(report.results.filter(result => result.status === 'blocked')).toHaveLength(15)
-    expect(report.results.filter(result => result.status === 'not-run')).toHaveLength(14)
+    expect(report.results.filter(result => result.status === 'blocked')).toHaveLength(29)
+    expect(report.results.filter(result => result.status === 'not-run')).toHaveLength(0)
     expect(report.results.some(result => result.status === 'passed')).toBe(false)
     expect(mocks.launch).toHaveBeenCalledExactlyOnceWith({ headless: true })
     expect(mocks.persist).toHaveBeenCalled()
   })
 
-  it('只选扫描 runtime 缺口时不启动浏览器，不用空测量冒充通过', async () => {
+  it('扫描语法也进入真实浏览器执行路径，启动失败留下逐例阻塞', async () => {
     const report = await run(/^authoring\/scan-/)
     expect(report.results).toHaveLength(11)
-    expect(report.results.every(result => result.status === 'not-run')).toBe(true)
-    expect(mocks.launch).not.toHaveBeenCalled()
+    expect(report.results.every(result => result.status === 'blocked')).toBe(true)
+    expect(mocks.launch).toHaveBeenCalledExactlyOnceWith({ headless: true })
   })
 
   it('空过滤报错，清理失败保留错误与本任务资源身份', async () => {

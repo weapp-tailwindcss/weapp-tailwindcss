@@ -8,14 +8,16 @@ const measurement: AuthoringWebMeasurement = { group: 0, properties: ['display',
 const profile = (id: string) => authoringWebProfiles.find(profile => profile.fixture.id === id)!
 
 describe('authoring 浏览器独立参考合同', () => {
-  it('18 authoring 与 11 scanning 全部可追踪，缺具体运行值与 HMR 真链路保留缺口', () => {
+  it('18 authoring 与 11 scanning 全部登记独立语义，单夹具 HMR 范围与通用 HMR 分开记录', () => {
     expect(authoringWebProfiles).toHaveLength(29)
-    expect(authoringWebProfiles.filter(profile => !profile.reason)).toHaveLength(15)
-    expect(authoringWebProfiles.filter(profile => profile.fixture.id.startsWith('scan-')).every(profile => profile.reason)).toBe(true)
+    expect(authoringWebProfiles.filter(profile => !profile.reason)).toHaveLength(29)
+    expect(authoringWebProfiles.filter(profile => profile.fixture.id.startsWith('scan-')).every(profile => profile.official && profile.groups.length)).toBe(true)
     for (const id of ['source-inline', 'source-not-inline', 'theme-function']) {
-      expect(profile(id).reason).toBeTruthy()
+      expect(profile(id).official).toBeTruthy()
     }
-    expect(authoringWebCoverage().every(entry => entry.hmr === 'not-run')).toBe(true)
+    expect(authoringWebCoverage().every(entry => entry.hmr === 'not-run' && entry.hmrScope === 'authoring-fixture-only')).toBe(true)
+    expect(authoringWebCoverage().filter(entry => entry.id.startsWith('authoring/scan-')).every(entry => entry.runtimeScope === 'scanned-css-dom-semantics' && entry.sourceExecution === 'scanner-only-no-jsx-vue-branch-execution')).toBe(true)
+    expect(profile('source-inline').groups.map(group => group.className)).toEqual(['hover:bg-red-500', 'focus:bg-red-600', 'hover:bg-red-600', 'focus:bg-red-500', 'bg-red-500', 'bg-red-600'])
   })
 
   it('错误值或部分声明丢失时不能用其余相同属性通过', () => {
@@ -31,7 +33,7 @@ describe('authoring 浏览器独立参考合同', () => {
   })
 
   it('条件 before/after/restored 逐态登记，恢复错误不能由 after 代证', () => {
-    for (const id of ['variant', 'custom-variant']) {
+    for (const id of ['variant', 'custom-variant', 'source-inline']) {
       const item = profile(id)
       expect(authoringStates(item)).toEqual(['before', 'after', 'restored'])
       const contract = authoringWebContract(item)
@@ -74,5 +76,15 @@ describe('authoring 浏览器独立参考合同', () => {
       expect(item.fixture.css).not.toContain('@source inline')
       expect(Object.keys(item.fixture.files).length).toBeGreaterThan(0)
     }
+  })
+
+  it('负向产物必须与基线相同且参考有真实效果，非法候选使用显式独立观测对照', () => {
+    const negative = { ...measurement, excluded: true, product: measurement.baseline }
+    expect(authoringWebOutcome(authoringMeasurementAssertions('computed', negative))).toBe('passed')
+    expect(authoringWebOutcome(authoringMeasurementAssertions('computed', { ...negative, product: measurement.reference }))).toBe('failed')
+    expect(authoringWebOutcome(authoringMeasurementAssertions('computed', { ...negative, reference: measurement.baseline }))).toBe('not-run')
+    expect(profile('scan-interpolation-negative').groups.every(group => group.excluded)).toBe(true)
+    expect(profile('scan-business-text').official!.control).toContain('padding:17px')
+    expect(profile('source-not-inline').groups.find(group => group.className === 'p-2')?.excluded).toBe(true)
   })
 })
