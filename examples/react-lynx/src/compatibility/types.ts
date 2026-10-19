@@ -39,6 +39,15 @@ export interface StaticCandidateEvidence {
   bundled: boolean
   failureStage?: Extract<FailureStage, 'generation' | 'encoder'>
   reason?: string
+  mediaGuard?: StaticMediaGuardEvidence
+}
+
+export interface StaticMediaGuardEvidence {
+  limitationId: 'lynx4.0.1-media-hover-unknown-v1'
+  sourceSha256: string
+  condition: '(hover:hover)'
+  generatedRules: { selector: string, mediaConditions: string[] }[]
+  bundledRules: { selector: string, mediaConditions: string[] }[]
 }
 
 export interface StaticEvidenceReport {
@@ -84,9 +93,36 @@ export interface NativeCaseResult extends PlatformResult {
   candidates?: NativeCandidateResult[]
 }
 
-export interface NativeCandidateResult extends PlatformResult {
+interface NativeCandidateBase extends PlatformResult {
   className: string
   checkpoints: RuntimeCheckpoint[]
+}
+
+export type NativeCandidateResult = (NativeCandidateBase & { mediaGate?: never }) | (NativeCandidateBase & {
+  status: 'unsupported'
+  mediaGate: {
+    limitationId: 'lynx4.0.1-media-hover-unknown-v1'
+    stage: 'runtime'
+    gate: 'media'
+    condition: '(hover:hover)'
+    evidenceId: 'media-hover-v1'
+    downstream: { hoverInput: 'not-tested', pseudoState: 'not-tested' }
+  }
+})
+
+export type NativeMediaGateProbeId = 'base' | 'control' | 'unguarded' | 'min-width' | 'hover-hover' | 'hover-none'
+
+export interface NativeMediaGateEvidence {
+  limitationId: 'lynx4.0.1-media-hover-unknown-v1'
+  runId: string
+  bundleSha256: string
+  sdkVersion: string
+  probes: { id: NativeMediaGateProbeId, probe: NativeRect, container: NativeRect }[]
+}
+
+export interface NativeMediaGateCapture {
+  mediaGate: NativeMediaGateEvidence
+  artifacts: NativeArtifactReceipt[]
 }
 
 export interface NativeColorSchemeReceipt {
@@ -119,6 +155,7 @@ export interface NativePlatformReport {
   versions: CompatibilityBaseline['versions']
   environment: NativeRuntimeEnvironment
   results: NativeCaseResult[]
+  mediaGate?: NativeMediaGateEvidence
   // 历史结论仍可展示；实时验收及基线更新必须携带完整的新证据协议。
   evidence?: NativeEvidenceContext & { artifacts: NativeArtifactReceipt[] }
 }
