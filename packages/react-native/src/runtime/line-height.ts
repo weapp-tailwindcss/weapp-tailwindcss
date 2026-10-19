@@ -5,11 +5,34 @@ export interface RelativeLineHeight {
   importantFontSize?: number | undefined
 }
 
-export function flattenInlineStyle(value: unknown): Record<string, unknown> {
-  if (Array.isArray(value)) {
-    return Object.assign({}, ...value.map(flattenInlineStyle))
+export function flattenInlineStyle(value: unknown, resolveRegistered?: (value: number) => Record<string, unknown> | undefined): Record<string, unknown> {
+  const style: Record<string, unknown> = {}
+  const active = new Set<unknown[]>()
+  const pending: Array<{ value: unknown, exit?: boolean }> = [{ value }]
+  while (pending.length) {
+    const current = pending.pop()!
+    if (Array.isArray(current.value)) {
+      if (current.exit) {
+        active.delete(current.value)
+        continue
+      }
+      if (active.has(current.value)) {
+        throw new Error('内联 style 数组包含循环引用')
+      }
+      active.add(current.value)
+      pending.push({ value: current.value, exit: true })
+      for (let index = current.value.length - 1; index >= 0; index--) {
+        pending.push({ value: current.value[index] })
+      }
+    }
+    else if (current.value && typeof current.value === 'object') {
+      Object.assign(style, current.value)
+    }
+    else if (typeof current.value === 'number') {
+      Object.assign(style, resolveRegistered?.(current.value))
+    }
   }
-  return value && typeof value === 'object' ? value as Record<string, unknown> : {}
+  return style
 }
 
 /** 字号级联完成后再计算；继承字号未知时不猜测平台默认值。 */

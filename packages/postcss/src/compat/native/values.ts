@@ -58,12 +58,13 @@ function oklchToHex(value: string) {
 }
 
 export function normalizeColor(value: string) {
-  const normalized = normalizeStandaloneColorFunction(value)
+  const normalized = normalizeStandaloneColorFunction(value, { preserveAlpha: true })
   if (normalized === undefined) {
     return undefined
   }
   if (/^oklch\(/i.test(value)) {
-    return oklchToHex(value) ?? normalized
+    const hex = oklchToHex(value)
+    return hex?.length === 7 ? hex : normalized
   }
   return value.includes('(') ? normalized : value
 }

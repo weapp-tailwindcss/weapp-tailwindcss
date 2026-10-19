@@ -2,6 +2,15 @@ import { describe, expect, it } from 'vitest'
 import { compileNativeCss } from '../src/native'
 
 describe('原生完整 boxShadow 编码', () => {
+  it('近零 OKLCH 与 RGB alpha 不得被量化成完全透明而删除', () => {
+    const result = compileNativeCss('.probe { box-shadow: 0 1px oklch(0 0 0 / 0.0001), 0 2px rgb(0 0 0 / 0.0001), 0 3px oklch(0 0 0 / 0), 0 4px rgb(0 0 0 / 0.0000001); }')
+    expect(result.rules.probe?.[0]?.style.boxShadow).toEqual([
+      { offsetX: 0, offsetY: 1, blurRadius: 0, spreadDistance: 0, color: 'rgba(0, 0, 0, 0.0001)' },
+      { offsetX: 0, offsetY: 2, blurRadius: 0, spreadDistance: 0, color: 'rgba(0, 0, 0, 0.0001)' },
+      { offsetX: 0, offsetY: 4, blurRadius: 0, spreadDistance: 0, color: 'rgba(0, 0, 0, 0.0000001)' },
+    ])
+  })
+
   it('独立保留每层的偏移、模糊、spread、颜色与 inset', () => {
     const result = compileNativeCss(`
       .shadow { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), inset 2px -4px 6px 1px rgba(255, 0, 0, 0.25); }
