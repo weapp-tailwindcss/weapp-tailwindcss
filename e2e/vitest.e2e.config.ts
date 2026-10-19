@@ -7,6 +7,14 @@ const workspaceAliases = [
     replacement: path.resolve(__dirname, '../packages/engine/src/index.ts'),
   },
   {
+    find: /^@weapp-tailwindcss\/source-scan$/,
+    replacement: path.resolve(__dirname, '../packages/source-scan/src/index.ts'),
+  },
+  {
+    find: /^@weapp-tailwindcss\/env$/,
+    replacement: path.resolve(__dirname, '../packages/env/src/index.ts'),
+  },
+  {
     find: /^@weapp-tailwindcss\/shared$/,
     replacement: path.resolve(__dirname, '../packages/shared/src/index.ts'),
   },

@@ -9,6 +9,8 @@ const repository = path.resolve(import.meta.dirname, '..')
 
 it.each([
   ['@weapp-tailwindcss/engine', 'engine', 'index.ts'],
+  ['@weapp-tailwindcss/source-scan', 'source-scan', 'index.ts'],
+  ['@weapp-tailwindcss/env', 'env', 'index.ts'],
   ['@weapp-tailwindcss/postcss-calc', 'postcss-calc', 'index.ts'],
   ['@weapp-tailwindcss/escape', 'escape', 'index.ts'],
   ['@weapp-tailwindcss/css-compat/legacy', 'css-compat', 'legacy.ts'],
