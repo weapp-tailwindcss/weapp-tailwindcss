@@ -31,10 +31,11 @@ async function execute(target: ExecutionTarget, context: RunContext) {
     const engine = browserEngines.find(item => target === `web-${item}`)!
     const { runRegistryWeb } = await import('./registry-web')
     const { runHmr } = await import('./hmr')
+    const { runAuthoringWeb, authoringWebProfiles } = await import('./authoring-web')
     const { hmrContract } = await import('./hmr/contract')
     const { loadInventory } = await import('./inventory')
     const inventory = await loadInventory()
-    const groups = selectCaseGroups(context.caseFilter, { authored: webProbes.map(probe => `runtime/${probe.id}`), registry: inventory.utilities.map(item => `registry/${item.id}`), hmr: [hmrContract().id] })
+    const groups = selectCaseGroups(context.caseFilter, { authored: webProbes.map(probe => `runtime/${probe.id}`), registry: inventory.utilities.map(item => `registry/${item.id}`), hmr: [hmrContract().id], authoring: authoringWebProfiles.map(profile => profile.id) })
     const reports: CapabilityReport[] = []
     if (groups.authored) {
       reports.push(await runWeb(selected, engine))
@@ -44,6 +45,9 @@ async function execute(target: ExecutionTarget, context: RunContext) {
     }
     if (groups.hmr) {
       reports.push(await runHmr(selected, engine))
+    }
+    if (groups.authoring) {
+      reports.push(await runAuthoringWeb(selected, engine))
     }
     for (const report of reports) {
       assertCapabilitySuccess(report)
@@ -84,7 +88,7 @@ async function main() {
         stage.status = 'failed'
         try {
           const base = path.join(context.directory, stage.target)
-          const files = stage.target.startsWith('web-') ? [path.join(base, 'report.json'), path.join(base, 'registry', 'report.json'), path.join(base, 'hmr', 'report.json')] : [path.join(base, 'report.json')]
+          const files = stage.target.startsWith('web-') ? [path.join(base, 'report.json'), path.join(base, 'registry', 'report.json'), path.join(base, 'hmr', 'report.json'), path.join(base, 'authoring', 'report.json')] : [path.join(base, 'report.json')]
           const loaded = await Promise.allSettled(files.map(async file => JSON.parse(await readFile(file, 'utf8')) as CapabilityReport))
           const reports = loaded.flatMap(item => item.status === 'fulfilled' ? [item.value] : [])
           if (!reports.length) {

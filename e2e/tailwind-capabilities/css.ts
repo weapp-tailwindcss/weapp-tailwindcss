@@ -130,7 +130,7 @@ export function stylesheetDependenciesRetained(actual: string, expected: string)
     root.walkRules((rule) => {
       const selectors: string[] = []
       let candidateScoped = false
-      let parent: postcss.Container | undefined = rule
+      let parent: postcss.AnyNode | undefined = rule
       while (parent && parent.type !== 'root') {
         if (parent.type === 'rule') {
           selectors.unshift(parent.selector)
