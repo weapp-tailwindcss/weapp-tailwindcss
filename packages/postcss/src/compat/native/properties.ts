@@ -1,4 +1,6 @@
-/* eslint-disable style/max-statements-per-line, regexp/no-super-linear-backtracking */
+/* eslint-disable style/max-statements-per-line */
+
+import { resolveNativeVariables } from './variables'
 
 const COLOR_PROPERTIES = new Set(['color', 'backgroundColor', 'borderColor', 'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor', 'shadowColor', 'textDecorationColor'])
 const NUMERIC_PROPERTIES = new Set([
@@ -111,7 +113,7 @@ function splitValue(value: string) {
   return value.trim().split(/\s+/).filter(Boolean)
 }
 
-function parseNumber(value: string, variables: Record<string, string>) {
+function parseNumber(value: string, variables: Record<string, string>): number | string | undefined {
   const resolved = resolveVariables(value, variables)
   const fraction = resolved.match(/^(-?(?:\d+\.\d+|\d+|\.\d+))\s*\/\s*(-?(?:\d+\.\d+|\d+|\.\d+))$/)
   if (fraction && Number(fraction[2]) !== 0) { return Number(fraction[1]) / Number(fraction[2]) }
@@ -129,7 +131,7 @@ function parseNumber(value: string, variables: Record<string, string>) {
 }
 
 function resolveVariables(value: string, variables: Record<string, string>) {
-  return value.replace(/var\((--[\w-]+)(?:,\s*([^)]*))?\)/g, (_, key: string, fallback: string | undefined) => variables[key] ?? fallback ?? `var(${key})`)
+  return resolveNativeVariables(value, variables) ?? value
 }
 
 function isColor(value: string) {
@@ -205,7 +207,8 @@ function parseShadow(value: string, variables: Record<string, string>) {
 }
 
 function parseValue(property: string, value: string, variables: Record<string, string>) {
-  const trimmed = value.trim()
+  const trimmed = resolveNativeVariables(value.trim(), variables)
+  if (trimmed === undefined) { return undefined }
   if (UNSUPPORTED_PROPERTIES.has(property)) { return undefined }
   if (trimmed.includes('linear-gradient(') || trimmed.includes('url(')) { return undefined }
   if (COLOR_PROPERTIES.has(property)) {
