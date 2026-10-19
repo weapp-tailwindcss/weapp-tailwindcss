@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { NativeCaseReceipt, NativePairEvidence, ReactNativePlatform, ReactNativeReport } from '../../examples/react-native-expo/src/compatibility/protocol'
 import { Buffer } from 'node:buffer'
 import { nativeFixtures } from '../../examples/react-native-expo/src/compatibility/protocol'
+import { createNativeCaptureBudget } from './capture-budget'
 
 interface SemanticContext { runId: string, fixtureHash: string, catalogHash: string, versions: Record<string, string> }
 interface ReportEnvelope { hmrMarker: string, cssHmrColor: string, report: ReactNativeReport }
@@ -16,13 +17,16 @@ class ProtocolRejection extends Error {
   constructor(readonly status: number, message: string) { super(message) }
 }
 
-export function createSemanticReporter<Envelope extends ReportEnvelope = ReportEnvelope>(context: SemanticContext, capture: (pair: NativePairEvidence) => Promise<NativeCaseReceipt>, options: ReporterOptions<Envelope>) {
+export function createSemanticReporter<Envelope extends ReportEnvelope = ReportEnvelope>(context: SemanticContext, capture: (pair: NativePairEvidence, cancelSignal: AbortSignal) => Promise<NativeCaseReceipt>, options: ReporterOptions<Envelope>) {
   const errors: Error[] = []
   const receipts = new Map<string, NativeCaseReceipt>()
   const completed = new Map<string, string>()
   const revisions = new Set([options.revision])
   let revision = options.revision
   let pending = false
+  const registeredCases = Object.values(nativeFixtures).reduce((count, fixture) => count + (fixture.phases?.length ?? 1), 0)
+  let captureBudget = createNativeCaptureBudget(registeredCases)
+  let previousCaptureElapsed = 0
 
   function assertReady() {
     if (errors.length) {
@@ -90,7 +94,7 @@ export function createSemanticReporter<Envelope extends ReportEnvelope = ReportE
     }
     pending = true
     try {
-      const receipt = await capture(pair)
+      const receipt = await captureBudget.capture(cancelSignal => capture(pair, cancelSignal))
       if (receipt.runId !== pair.runId || receipt.id !== pair.id || receipt.phase !== pair.phase) {
         throw new Error('Native host returned a mismatched receipt')
       }
@@ -133,7 +137,10 @@ export function createSemanticReporter<Envelope extends ReportEnvelope = ReportE
       }
       revision = next
       revisions.add(next)
+      previousCaptureElapsed += captureBudget.elapsed()
+      captureBudget = createNativeCaptureBudget(registeredCases)
     },
+    captureElapsed: () => previousCaptureElapsed + captureBudget.elapsed(),
     assertReady,
     assertReceipts,
   }

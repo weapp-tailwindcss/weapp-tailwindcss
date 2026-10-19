@@ -1,4 +1,11 @@
+import { once } from 'node:events'
+import fs from 'node:fs/promises'
+import os from 'node:os'
+import path from 'node:path'
+import process from 'node:process'
+import { execa } from 'execa'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { createNativeCaptureBudget, NATIVE_CAPTURE_TIMEOUT } from './react-native/capture-budget'
 import { awaitNativeExitCompletion, canAcceptNativeReport, evaluateNativeWait } from './react-native/native-wait'
 
 afterEach(() => vi.useRealTimers())
@@ -48,6 +55,99 @@ describe('React Native runtime wait state', () => {
       phase: 'runtime report',
       timedOut: true,
     })
+  })
+
+  it('只扣除当前 runtime 阶段实际宿主采集时间，编译仍使用墙钟预算', () => {
+    const state = { ...defaults, now: 135_001, reportTimeout: 120_000, runCompletedAt: 1, hostCaptureElapsed: 130_000 }
+    expect(evaluateNativeWait(state).timedOut).toBe(false)
+    expect(evaluateNativeWait({ ...state, now: 250_001 }).timedOut).toBe(true)
+    expect(evaluateNativeWait({ ...defaults, now: 1_800_001, hostCaptureElapsed: 130_000 }).timedOut).toBe(true)
+    expect(evaluateNativeWait({ ...state, hostCaptureElapsed: 0 }).timedOut).toBe(true)
+  })
+
+  it('宿主采集按区间记账，重叠请求不能双倍抵扣或延长单例 deadline', async () => {
+    vi.useFakeTimers()
+    const budget = createNativeCaptureBudget(2)
+    let release!: () => void
+    const first = budget.capture(() => new Promise<void>((resolve) => {
+      release = resolve
+    }))
+    await vi.advanceTimersByTimeAsync(4_000)
+    expect(budget.elapsed()).toBe(4_000)
+    await expect(budget.capture(async () => {})).rejects.toThrow(/already pending/)
+    expect(budget.elapsed()).toBe(4_000)
+    release()
+    await first
+    await vi.advanceTimersByTimeAsync(5_000)
+    expect(budget.elapsed()).toBe(4_000)
+    await budget.capture(async () => {})
+    await expect(budget.capture(async () => {})).rejects.toThrow(/registered case budget/)
+    expect(budget.elapsed()).toBe(4_000)
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
+  it('采集卡死按既有 10 秒上限中止，之后无进展不能继续增加抵扣', async () => {
+    vi.useFakeTimers()
+    const budget = createNativeCaptureBudget(1)
+    let signal!: AbortSignal
+    const hanging = budget.capture(async (input) => {
+      signal = input
+      await new Promise(() => {})
+    })
+    const failure = expect(hanging).rejects.toThrow(/host capture.*10000ms/)
+    await vi.advanceTimersByTimeAsync(NATIVE_CAPTURE_TIMEOUT)
+    await failure
+    expect(signal.aborted).toBe(true)
+    expect(budget.elapsed()).toBe(10_000)
+    await vi.advanceTimersByTimeAsync(120_000)
+    expect(budget.elapsed()).toBe(10_000)
+    expect(evaluateNativeWait({ ...defaults, now: 130_001, runCompletedAt: 1, reportTimeout: 120_000, hostCaptureElapsed: budget.elapsed() }).timedOut).toBe(true)
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
+  it('deadline 取消真实所属截图子进程，退出后不能再写入迟到产物', async () => {
+    vi.useFakeTimers()
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'rn-capture-cancel-'))
+    const output = path.join(directory, 'late.png')
+    let child: ReturnType<typeof execa> | undefined
+    try {
+      const budget = createNativeCaptureBudget(1)
+      const captured = budget.capture(async (cancelSignal) => {
+        child = execa(process.execPath, ['-e', 'process.stdout.write("ready"); setTimeout(() => require("node:fs").writeFileSync(process.argv[1], "late"), 30000)', output], { cancelSignal, forceKillAfterDelay: 100 })
+        await child
+      })
+      const failure = expect(captured).rejects.toThrow(/host capture.*10000ms/)
+      if (!child?.stdout) {
+        throw new Error('Missing owned screenshot process')
+      }
+      const closed = child.catch(error => error as { isCanceled?: boolean })
+      await once(child.stdout, 'data')
+      await vi.advanceTimersByTimeAsync(NATIVE_CAPTURE_TIMEOUT)
+      await failure
+      expect((await closed).isCanceled).toBe(true)
+      expect(child.exitCode !== null || child.signalCode !== null).toBe(true)
+      await expect(fs.stat(output)).rejects.toMatchObject({ code: 'ENOENT' })
+      expect(budget.elapsed()).toBe(10_000)
+    }
+    finally {
+      if (child?.exitCode === null && child.signalCode === null) {
+        child.kill('SIGKILL')
+      }
+      await fs.rm(directory, { recursive: true, force: true })
+    }
+  })
+
+  it('事件循环迟到的成功回调也不能越过单例 deadline', async () => {
+    let now = 0
+    const clock = vi.spyOn(performance, 'now').mockImplementation(() => now)
+    try {
+      const budget = createNativeCaptureBudget(1)
+      await expect(budget.capture(async () => {
+        now = 10_001
+      })).rejects.toThrow(/host capture.*10000ms/)
+      expect(budget.elapsed()).toBe(10_000)
+    }
+    finally { clock.mockRestore() }
   })
 
   it('does not relaunch a runtime after Metro completed its bundle', () => {

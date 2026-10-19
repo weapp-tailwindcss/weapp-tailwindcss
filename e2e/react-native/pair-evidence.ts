@@ -5,6 +5,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { PNG } from 'pngjs'
 import { expectedFixtureStyle, nativeFixtures } from '../../examples/react-native-expo/src/compatibility/protocol'
+import { NATIVE_CAPTURE_TIMEOUT } from './capture-budget'
 
 function sameTargetGeometry(target: NativePairEvidence['target'], frame: NativePairEvidence['probe'], otherTarget: NativePairEvidence['target'], otherFrame: NativePairEvidence['probe']) {
   return Math.abs(target.width - otherTarget.width) <= 0.75
@@ -77,6 +78,7 @@ export function assessNativePair(image: PNG, pair: NativePairEvidence) {
 export async function captureNativePair(pair: NativePairEvidence, options: {
   runId: string
   artifacts: string
+  cancelSignal?: AbortSignal
   capture: (filename: string) => Promise<string>
 }): Promise<NativeCaseReceipt> {
   if (pair.runId !== options.runId || !/^[\w.-]+$/.test(pair.id) || !/^[\w.-]+$/.test(pair.phase) || !/^[\w.-]+$/.test(pair.revision)) {
@@ -87,13 +89,15 @@ export async function captureNativePair(pair: NativePairEvidence, options: {
   let checkpoints: ReturnType<typeof assessNativePair> = []
   let contents: Buffer | undefined
   let consecutive = 0
-  const deadline = Date.now() + 10_000
+  const deadline = Date.now() + NATIVE_CAPTURE_TIMEOUT
   while (Date.now() < deadline) {
+    options.cancelSignal?.throwIfAborted()
     const file = await options.capture(name)
+    options.cancelSignal?.throwIfAborted()
     contents = await fs.readFile(file)
     checkpoints = assessNativePair(PNG.sync.read(contents), pair)
     consecutive = checkpoints.every(checkpoint => checkpoint.passed) ? consecutive + 1 : 0
-    if (consecutive >= 2) {
+    if (consecutive >= 2 && Date.now() < deadline) {
       break
     }
     await new Promise(resolve => setTimeout(resolve, 100))
@@ -101,6 +105,10 @@ export async function captureNativePair(pair: NativePairEvidence, options: {
   if (!contents) {
     throw new Error('React Native pair screenshot is missing')
   }
+  if (consecutive < 2 || Date.now() >= deadline) {
+    throw new Error('Native pair requires two consecutive passing frames within its capture deadline')
+  }
+  options.cancelSignal?.throwIfAborted()
   const receipt: NativeCaseReceipt = {
     runId: options.runId,
     id: pair.id,
@@ -108,7 +116,7 @@ export async function captureNativePair(pair: NativePairEvidence, options: {
     checkpoints,
     artifact: { name, sha256: createHash('sha256').update(contents).digest('hex'), byteLength: contents.length },
   }
-  await fs.writeFile(path.join(options.artifacts, `${name}.json`), `${JSON.stringify({ pair, receipt }, null, 2)}\n`)
+  await fs.writeFile(path.join(options.artifacts, `${name}.json`), `${JSON.stringify({ pair, receipt }, null, 2)}\n`, { signal: options.cancelSignal })
   return receipt
 }
 

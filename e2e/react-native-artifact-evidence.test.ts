@@ -42,6 +42,30 @@ function pixels() {
 }
 
 describe('原生宿主截图证据', () => {
+  it.each([1, 2])('第 %i 帧迟到仍然失败，不写可接受的双帧回执', async (lateFrame) => {
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'rn-single-frame-'))
+    const now = vi.spyOn(Date, 'now')
+    try {
+      now.mockReturnValue(0)
+      const pair = input()
+      let frames = 0
+      const capture = vi.fn(async (name: string) => {
+        const file = path.join(directory, name)
+        await fs.writeFile(file, pixels())
+        frames++
+        now.mockReturnValue(frames === lateFrame ? 10_001 : 9_000)
+        return file
+      })
+      await expect(captureNativePair(pair, { runId: pair.runId, artifacts: directory, capture })).rejects.toThrow(/two consecutive/)
+      expect(capture).toHaveBeenCalledTimes(lateFrame)
+      await expect(fs.stat(path.join(directory, 'case-baseline-background-color-default.png.json'))).rejects.toMatchObject({ code: 'ENOENT' })
+    }
+    finally {
+      now.mockRestore()
+      await fs.rm(directory, { recursive: true, force: true })
+    }
+  })
+
   it('重读截图和坐标，拒绝被替换的字节与跨阶段 sidecar', async () => {
     const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'rn-artifact-'))
     try {

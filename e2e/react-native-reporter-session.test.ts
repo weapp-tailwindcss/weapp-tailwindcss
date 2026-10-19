@@ -1,6 +1,8 @@
 import type { NativeCaseReceipt, NativePairEvidence, ReactNativeReport } from '../examples/react-native-expo/src/compatibility/protocol'
 import { createServer } from 'node:http'
 import { describe, expect, it, vi } from 'vitest'
+import { nativeFixtures } from '../examples/react-native-expo/src/compatibility/protocol'
+import { evaluateNativeWait } from './react-native/native-wait'
 import { createSemanticReporter } from './react-native/semantic-reporter'
 import { allocateExpoWebPort } from './react-native/web-session'
 
@@ -60,6 +62,44 @@ async function withReporter(action: (session: {
 }
 
 describe('React Native 采集客户端与 revision 隔离', () => {
+  it('只有当前认证的唯一 case 获得实际采集预算；旧回执和下一轮不能重用抵扣', async () => {
+    let now = 0
+    const clock = vi.spyOn(performance, 'now').mockImplementation(() => now)
+    try {
+      await withReporter(async ({ post, reporter, capture, complete }) => {
+        capture.mockImplementation(async (input) => {
+          now += 4_000
+          return receipt(input)
+        })
+        for (const invalid of [{ runId: 'old' }, { revision: 'old' }, { id: 'unknown' }, { phase: 'old' }]) {
+          expect((await post('/case', pair(invalid))).status).toBe(409)
+        }
+        expect((await post('/case', pair(), 'unrelated-page')).status).toBe(401)
+        expect(reporter.captureElapsed()).toBe(0)
+        expect((await post('/case', pair())).status).toBe(200)
+        expect(reporter.captureElapsed()).toBe(4_000)
+        now += 100_000
+        expect((await post('/case', pair())).status).toBe(409)
+        expect(reporter.captureElapsed()).toBe(4_000)
+        const phases = Object.entries(nativeFixtures).flatMap(([id, fixture]) => (fixture.phases ?? ['default']).map(phase => ({ id, phase })))
+        for (const candidate of phases.filter(candidate => candidate.id !== pair().id || candidate.phase !== pair().phase)) {
+          expect((await post('/case', pair(candidate))).status).toBe(200)
+        }
+        expect(reporter.captureElapsed()).toBe(phases.length * 4_000)
+        expect(evaluateNativeWait({ now: reporter.captureElapsed() + 120_001, runCompletedAt: 1, startedAt: 0, reportTimeout: 120_000, startupTimeout: 1_800_000, recovered: true, recoveryDelay: 180_000, hostCaptureElapsed: reporter.captureElapsed() }).timedOut).toBe(true)
+        expect(complete).not.toHaveBeenCalled()
+        reporter.setRevision('rn-hmr-updated-10b981')
+        const nextStarted = reporter.captureElapsed()
+        expect((await post('/case', pair())).status).toBe(409)
+        expect(reporter.captureElapsed() - nextStarted).toBe(0)
+        expect((await post('/case', pair({ revision: 'rn-hmr-updated-10b981' }))).status).toBe(200)
+        expect(reporter.captureElapsed() - nextStarted).toBe(4_000)
+        expect(capture).toHaveBeenCalledTimes(phases.length + 1)
+      })
+    }
+    finally { clock.mockRestore() }
+  })
+
   it('context 不授予身份，其他 Expo 页面不能读取或提交本轮证据', async () => {
     await withReporter(async ({ endpoint, post, reporter, capture, complete }) => {
       expect((await fetch(`${endpoint}/context`)).status).toBe(401)

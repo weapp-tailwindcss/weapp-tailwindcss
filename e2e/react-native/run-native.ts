@@ -60,13 +60,13 @@ const updateBaseline = process.env['RN_UPDATE_BASELINE'] === '1'
 const runId = process.env['TAILWIND_E2E_RUN_ID'] ?? randomUUID()
 const clientToken = randomUUID()
 let semanticDevice = ''
-const semanticReporter = createSemanticReporter<ReportEnvelope>({ runId, catalogHash: RN_CATALOG_HASH, fixtureHash: RN_FIXTURE_HASH, versions: reactNativeVersions() }, async (pair) => {
+const semanticReporter = createSemanticReporter<ReportEnvelope>({ runId, catalogHash: RN_CATALOG_HASH, fixtureHash: RN_FIXTURE_HASH, versions: reactNativeVersions() }, async (pair, cancelSignal) => {
   if (platform === 'android') {
-    await execa('adb', ['-s', semanticDevice, 'shell', 'uiautomator', 'dump', '/sdcard/window.xml'])
-    const window = await execa('adb', ['-s', semanticDevice, 'exec-out', 'cat', '/sdcard/window.xml'])
+    await execa('adb', ['-s', semanticDevice, 'shell', 'uiautomator', 'dump', '/sdcard/window.xml'], { cancelSignal, forceKillAfterDelay: 1_000 })
+    const window = await execa('adb', ['-s', semanticDevice, 'exec-out', 'cat', '/sdcard/window.xml'], { cancelSignal, forceKillAfterDelay: 1_000 })
     pair = androidPairCoordinates(window.stdout, pair)
   }
-  return captureNativePair(pair, { runId, artifacts, capture: name => capture(name, semanticDevice) })
+  return captureNativePair(pair, { runId, artifacts, cancelSignal, capture: name => capture(name, semanticDevice, cancelSignal) })
 }, {
   clientToken,
   revision: 'rn-hmr-baseline-10b981',
@@ -135,6 +135,7 @@ async function waitForReportOrExit(marker: string, run: NativeProcess, metro: Na
   let runCompletedAt: number | undefined
   let bundleCompletedAt: number | undefined
   let recovered = false
+  let captureStarted = semanticReporter.captureElapsed()
   while (true) {
     semanticReporter.assertReady()
     const now = Date.now()
@@ -153,7 +154,10 @@ async function waitForReportOrExit(marker: string, run: NativeProcess, metro: Na
       launchReconciled = true
     }
     if (envelope && canAcceptNativeReport(run.exitCode, launchReconciled, requireLaunchCompletion)) { return envelope }
-    if ((run.exitCode === 0 || launchReconciled) && !runCompletedAt) { runCompletedAt = now }
+    if ((run.exitCode === 0 || launchReconciled) && !runCompletedAt) {
+      runCompletedAt = now
+      captureStarted = semanticReporter.captureElapsed()
+    }
     if (recover && runCompletedAt && !recovered && !launchReconciled) {
       if (!bundleCompletedAt) {
         const metroLog = await fs.readFile(metroLogPath, 'utf8').catch(() => '')
@@ -168,11 +172,13 @@ async function waitForReportOrExit(marker: string, run: NativeProcess, metro: Na
         runCompletedAt,
         startedAt: started,
         startupTimeout,
+        hostCaptureElapsed: semanticReporter.captureElapsed() - captureStarted,
       })
       if (state.shouldRecover) {
         await recover()
         recovered = true
         runCompletedAt = Date.now()
+        captureStarted = semanticReporter.captureElapsed()
       }
     }
     if (typeof metro.exitCode === 'number') { throw new TypeError(`Metro exited with code ${metro.exitCode}; see ${path.resolve(artifacts, 'metro.log')}`) }
@@ -185,6 +191,7 @@ async function waitForReportOrExit(marker: string, run: NativeProcess, metro: Na
       runCompletedAt,
       startedAt: started,
       startupTimeout,
+      hostCaptureElapsed: semanticReporter.captureElapsed() - captureStarted,
     })
     if (state.timedOut) {
       throw new Error(`Timed out waiting for ${platform} ${state.phase} marker=${marker} css=${cssHmrColor ?? 'any'}`)
@@ -197,15 +204,17 @@ async function fileHash(file: string) {
   return createHash('sha256').update(await fs.readFile(file)).digest('hex')
 }
 
-async function capture(name: string, device: string) {
+async function capture(name: string, device: string, cancelSignal?: AbortSignal) {
   const output = path.resolve(artifacts, name)
   if (platform === 'android') {
-    const result = await execa('adb', ['-s', device, 'exec-out', 'screencap', '-p'], { encoding: 'buffer' })
+    const result = await execa('adb', ['-s', device, 'exec-out', 'screencap', '-p'], { encoding: 'buffer', cancelSignal, forceKillAfterDelay: 1_000 })
+    cancelSignal?.throwIfAborted()
     await fs.writeFile(output, result.stdout)
   }
   else {
-    await execa('xcrun', ['simctl', 'io', device, 'screenshot', output])
+    await execa('xcrun', ['simctl', 'io', device, 'screenshot', output], { cancelSignal, forceKillAfterDelay: 1_000 })
   }
+  cancelSignal?.throwIfAborted()
   const stat = await fs.stat(output)
   if (stat.size < 1024) { throw new Error(`${platform} screenshot is unexpectedly small: ${stat.size}`) }
   return output

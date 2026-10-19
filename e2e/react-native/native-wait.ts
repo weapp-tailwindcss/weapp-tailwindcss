@@ -7,18 +7,21 @@ export interface NativeWaitState {
   runCompletedAt?: number
   startedAt: number
   startupTimeout: number
+  hostCaptureElapsed?: number
 }
 
 export function evaluateNativeWait(state: NativeWaitState) {
   const phase = state.runCompletedAt ? 'runtime report' : 'native build and launch'
   const phaseStartedAt = state.runCompletedAt ?? state.startedAt
   const phaseTimeout = state.runCompletedAt ? state.reportTimeout : state.startupTimeout
-  const phaseTimedOut = state.now - phaseStartedAt >= phaseTimeout
+  const hostCaptureElapsed = state.runCompletedAt ? state.hostCaptureElapsed ?? 0 : 0
+  const phaseElapsed = state.now - phaseStartedAt - hostCaptureElapsed
+  const phaseTimedOut = phaseElapsed >= phaseTimeout
   const shouldRecover = Boolean(
     state.runCompletedAt
     && !state.recovered
     && (
-      (!state.bundleCompletedAt && state.now - state.runCompletedAt >= state.recoveryDelay)
+      (!state.bundleCompletedAt && phaseElapsed >= state.recoveryDelay)
       || phaseTimedOut
     ),
   )
