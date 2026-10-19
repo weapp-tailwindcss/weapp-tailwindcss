@@ -157,7 +157,7 @@ it('预期encoder限制不能仅凭generated/bundled布尔形成通过', async (
   expect(report.results[0]).toMatchObject({ support: 'unsupported', status: 'blocked' })
 })
 
-it('预期负向runtime也必须从有效控制夹具重算，不能更换支持预期', async () => {
+it('已审查支持的 supports 必须从控制夹具重算，原始 unsupported 不能更换预期', async () => {
   const { context, raw, save, saveGeometry } = await fixture('variant-supports', 'unsupported')
   raw.results[0]!.geometry = {
     probe: rect(6, 6, 100, 44),
@@ -170,13 +170,19 @@ it('预期负向runtime也必须从有效控制夹具重算，不能更换支持
   await saveGeometry()
   await save()
   const { report, contracts } = await buildLynxCapabilityReport(context, 'lynx-ios', raw)
-  expect(contracts[0]!.expectation).toMatchObject({ support: 'unsupported', stage: 'runtime' })
-  expect(report.results[0]).toMatchObject({ support: 'unsupported', status: 'passed', assertions: [{ actual: 'unsupported', expected: 'unsupported', stage: 'runtime' }] })
+  expect(contracts[0]!.expectation).toMatchObject({ support: 'supported', stage: 'runtime' })
+  expect(report.results[0]).toMatchObject({ support: 'supported', status: 'failed', assertions: [], reason: expect.stringContaining('偏离独立审查') })
+  raw.results[0]!.status = 'supported'
+  delete raw.results[0]!.reason
+  delete raw.results[0]!.failureStage
+  await save()
+  const ineffective = await buildLynxCapabilityReport(context, 'lynx-ios', raw)
+  expect(ineffective.report.results[0]).toMatchObject({ support: 'supported', status: 'failed', assertions: [{ actual: 'unsupported', expected: 'supported', stage: 'runtime' }] })
   raw.results[0]!.geometry!.probeChild = rect(50, 6, 20, 12)
   await saveGeometry()
   await save()
   const recomputed = await buildLynxCapabilityReport(context, 'lynx-ios', raw)
-  expect(recomputed.report.results[0]).toMatchObject({ support: 'unsupported', status: 'failed', assertions: [{ actual: 'supported', expected: 'unsupported', stage: 'runtime' }] })
+  expect(recomputed.report.results[0]).toMatchObject({ support: 'supported', status: 'passed', assertions: [{ actual: 'supported', expected: 'supported', stage: 'runtime' }] })
 })
 
 it('encoder已拒绝的案例不能由完整几何和runtime负向结果覆盖失败阶段', async () => {

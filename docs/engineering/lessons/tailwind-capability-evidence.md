@@ -184,6 +184,10 @@ RN 三阶段采集现分别持久保存 baseline、TSX HMR、CSS HMR 的报告�
 
 基线更新器的原始目录搬迁回归另暴露：原入口只写 JSON，未保存其依赖的 bundle、截图、run-context 和 Android SDK 工件。现在先将同 catalog 的双端完整运行目录复制到受控 `e2e/.artifacts/lynx-baselines/baseline-*`，保存相对路径片段及逐文件摘要索引，并从副本运行生产报告验收，成功后才写历史报告与基线。真实 PNG/几何协议的搬迁整合、源变化拒绝、缺件/篡改/增加文件、路径和符号链接边界等四文件 60 项通过；新增回归登记到统一合同和 Lynx 双端 CI。独立重放入口为 `pnpm exec tsx e2e/lynx/verify-baseline-archive.ts <归档目录>`。APK/AAR 不进入 Git；tracked JSON 仍为历史记录，clean clone 缺原始证据时继续拒绝 runtime 放行，CI 仍验收本轮实际工件。本次尚未运行正式双端 updater。
 
+本轮 Android run `39247836641` 的 artifact `12185065108` 与 iOS PR run `39248652614` 的 artifact `12186041659` 均已独立核原始字节及运行身份。Android 118 例、153 份回执完整，官方 AAR、构建/安装 APK、实际加载库和 bundle 身份一致；iOS 实际 checkout 为 PR merge `eb7393a4ed25d65e0045a7493a5ba86ead642a04`，SDK 原生读数 4.0.1。双端重新读取 CSS 和实际 bundle，重算深色六帧、important 灰/红/灰竞争及 supports 正负几何后，明确把这三项支持合同升级为 supported；不是由失败自动降级。`pnpm e2e:lynx:static:update` 后 118 项静态结论不变，仅 catalog 与时间更新；统一 static 入口重跑无差异。旧报告不能刷新 hash 后复用，新 catalog 仍需完整双端重跑。
+
+响应式四阶段实际根尺寸均跨过原生 48rem 标尺且恢复，control 保持 80px，但两端 probe 始终 200px，继续保持原登记限制。iOS 的 overflow 却暴露通用截图差异误判：最小宽度覆盖原夹具，子项没有真正溢出，两图只有微小对齐差异。此项不能升级支持表，正在增加明确几何及容器外像素的独立语义夹具与失败回归。
+
 ## 规则评估
 
 诊断 run `39240820531` 的 Android 已完成 118 项实际原生采集，独立审查发现 responsive、dark、supports 和 important 四项报告与既有支持合同不同；这些变化尚未自动放宽。iOS 在 CocoaPods 安装阶段被固定原始 checksum 阻断，没有设备证据。CDN 与原夹具的完整 JSON 相等，仅文本空白/转义变化；生产校验改为完整 `Specification#to_hash` 的规范语义 SHA-256，保留所有属性、数组顺序和值类型，并继续独立核来源、版本及 getter 源码。新旧完整原始 Podspec 均固定字节身份，真实 CocoaPods/PBX 回归覆盖格式等价与实质变更拒绝。
