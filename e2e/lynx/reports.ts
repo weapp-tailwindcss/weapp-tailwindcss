@@ -1,7 +1,7 @@
 import type { NativePlatformReport, Platform, StaticEvidenceReport } from '../../examples/react-lynx/src/compatibility/types'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { validateCandidateEvidence } from '../../examples/react-lynx/src/compatibility/candidate-evidence'
+import { requiresCandidateEvidence, validateCandidateEvidence } from '../../examples/react-lynx/src/compatibility/candidate-evidence'
 import { compatibilityCases } from '../../examples/react-lynx/src/compatibility/catalog'
 import { lynxEvidenceStrategy } from '../../examples/react-lynx/src/compatibility/evidence'
 import { evaluateGeometry } from '../../examples/react-lynx/src/compatibility/geometry'
@@ -18,7 +18,7 @@ function assert(condition: unknown, message: string): asserts condition {
   }
 }
 
-export function validateNativeReport(report: NativePlatformReport, platform: Platform, options: { historical?: boolean, requireGeometryEvidence?: boolean, requireCandidateEvidence?: boolean } = {}) {
+export function validateNativeReport(report: NativePlatformReport, platform: Platform, options: { historical?: boolean, requireGeometryEvidence?: boolean, requireCandidateEvidence?: boolean, allowPendingCandidates?: boolean } = {}) {
   assert(report.schemaVersion === 1, `${platform} report schemaVersion must be 1`)
   assert(report.platform === platform, `expected ${platform} report, received ${report.platform}`)
   assert(options.historical || report.catalogHash === getCatalogHash(), `${platform} report catalog hash is stale; historical reports cannot verify the current run`)
@@ -59,13 +59,18 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
     const staticResult = staticById.get(result.id)
     assert(item && staticResult, `${platform}:${result.id} is missing catalog or static evidence`)
     const strategy = lynxEvidenceStrategy(item)
-    assert(result.status === 'supported' || result.status === 'unsupported', `${platform}:${result.id} has no final runtime status`)
-    if (!options.historical) {
+    const pending = options.allowPendingCandidates && result.status === 'not-tested' && requiresCandidateEvidence(item.id)
+    assert(result.status === 'supported' || result.status === 'unsupported' || pending, `${platform}:${result.id} has no final runtime status`)
+    if (!options.historical && !pending) {
       assertReviewedLynxOutcome(result, platform, staticResult)
     }
     assert(result.checkpoints.length > 0, `${platform}:${result.id} has no runtime checkpoint`)
     assert(result.checkpoints.every(checkpoint => typeof checkpoint.passed === 'boolean'), `${platform}:${result.id} has an invalid checkpoint`)
-    if (!staticResult.generated || (!staticResult.bundled && (item.evidence !== 'build' || options.historical))) {
+    if (pending) {
+      assert(staticResult.generated, `${platform}:${result.id} 的 generation 回归不能作为待测候选`)
+      validateCandidateEvidence(item, staticResult, result, { allowPending: true })
+    }
+    else if (!staticResult.generated || (!staticResult.bundled && (item.evidence !== 'build' || options.historical))) {
       assert(result.status === 'unsupported', `${platform}:${result.id} cannot be supported after a static generation or encoder failure`)
       assert(result.checkpoints.some(checkpoint => checkpoint.name === 'generated'), `${platform}:${result.id} is missing its generated checkpoint`)
       assert(result.checkpoints.some(checkpoint => checkpoint.name === 'bundled'), `${platform}:${result.id} is missing its bundled checkpoint`)
@@ -83,7 +88,7 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
         `${platform}:${result.id} is missing a ${checkpointPrefix} checkpoint`,
       )
     }
-    if (options.requireCandidateEvidence) {
+    if (options.requireCandidateEvidence && !pending) {
       validateCandidateEvidence(item, staticResult, result)
     }
     if (options.requireGeometryEvidence && staticResult.generated && staticResult.bundled && strategy === 'native-geometry') {

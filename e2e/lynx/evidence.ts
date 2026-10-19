@@ -1,4 +1,4 @@
-import type { NativeArtifactReceipt, NativeEvidenceContext, NativePlatformReport } from '../../examples/react-lynx/src/compatibility/types'
+import type { NativeArtifactReceipt, NativeEvidenceContext, NativePlatformReport, StaticEvidenceReport } from '../../examples/react-lynx/src/compatibility/types'
 import { createHash, randomUUID } from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
@@ -31,7 +31,7 @@ export function validateEvidenceManifest(report: NativePlatformReport, expected:
   if (evidence.runId !== expected.runId || evidence.bundleSha256 !== expected.bundleSha256) {
     throw new Error('Lynx 报告不属于本轮运行或实际 bundle')
   }
-  const builtById = new Map(staticEvidence.results.map(item => [item.id, item]))
+  const builtById = new Map((staticEvidence as StaticEvidenceReport).results.map(item => [item.id, item]))
   const names = compatibilityCases.flatMap(item => evidenceArtifactNames(item, builtById.get(item.id)))
   if (!Array.isArray(evidence.artifacts) || evidence.artifacts.length !== names.length) {
     throw new Error('Lynx evidence 截图清单缺帧或包含额外帧')
@@ -75,7 +75,7 @@ export async function validateNativeEvidence(report: NativePlatformReport, artif
   for (const receipt of receipts) {
     validateBytes(receipt, await fs.readFile(path.join(directory, receipt.name)))
   }
-  const builtById = new Map(staticEvidence.results.map(item => [item.id, item]))
+  const builtById = new Map((staticEvidence as StaticEvidenceReport).results.map(item => [item.id, item]))
   for (const item of compatibilityCases) {
     const built = builtById.get(item.id)
     if (built?.generated && built.bundled && lynxEvidenceStrategy(item) === 'native-geometry') {

@@ -62,8 +62,8 @@ export function combineCandidateEvidence(
   }
 }
 
-/** 本轮验收只接受候选齐全且汇总一致的报告；历史展示无需补造这些结果。 */
-export function validateCandidateEvidence(item: CompatibilityCase, built: StaticCaseEvidence | undefined, result: NativeCaseResult) {
+/** 采集可保留合法待测候选，最终验收仍要求候选全部完成；两者均核验独立证据。 */
+export function validateCandidateEvidence(item: CompatibilityCase, built: StaticCaseEvidence | undefined, result: NativeCaseResult, options: { allowPending?: boolean } = {}) {
   if (!requiresCandidateEvidence(item.id)) {
     return
   }
@@ -73,8 +73,17 @@ export function validateCandidateEvidence(item: CompatibilityCase, built: Static
     throw new Error(`${item.id} 缺少完整且唯一的候选证据，历史报告不能作为本轮验收`)
   }
   const combined = combineCandidateEvidence(item, built, result.candidates)
-  if (combined.status === 'not-tested' || combined.status !== result.status) {
+  if ((combined.status === 'not-tested' && !options.allowPending) || combined.status !== result.status) {
     throw new Error(`${item.id} 的候选尚未全部验证或汇总结论不一致`)
+  }
+  if (combined.status === 'not-tested') {
+    const sameCheckpoints = combined.checkpoints.length === result.checkpoints.length && combined.checkpoints.every((expected, index) => {
+      const actual = result.checkpoints[index]!
+      return Object.entries(expected).every(([key, value]) => actual[key as keyof typeof expected] === value)
+    })
+    if (!sameCheckpoints || !result.reason || result.reason !== combined.reason) {
+      throw new Error(`${item.id} 的部分候选汇总与独立证据不一致`)
+    }
   }
   for (const candidate of result.candidates ?? []) {
     const staticCandidate = built?.candidates?.find(item => item.className === candidate.className)
@@ -82,7 +91,9 @@ export function validateCandidateEvidence(item: CompatibilityCase, built: Static
     const stateCheckpoint = candidate.checkpoints.find(checkpoint => checkpoint.name === candidateCheckpoint(candidate.className))
     const staticCheckpointsMatch = candidate.checkpoints.some(checkpoint => checkpoint.name === 'generated' && checkpoint.passed === staticCandidate?.generated)
       && candidate.checkpoints.some(checkpoint => checkpoint.name === 'bundled' && checkpoint.passed === staticCandidate?.bundled)
-    if (!['supported', 'unsupported'].includes(candidate.status)
+    const pendingValid = options.allowPending && candidate.status === 'not-tested' && !rejectedByStatic && Boolean(candidate.reason)
+      && candidate.checkpoints.length === 1 && candidate.checkpoints[0]?.name === 'interaction:candidate-input' && candidate.checkpoints[0]?.passed === false
+    if ((!['supported', 'unsupported'].includes(candidate.status) && !pendingValid)
       || !candidate.checkpoints.length || candidate.checkpoints.some(checkpoint => typeof checkpoint.passed !== 'boolean')
       || (rejectedByStatic && (candidate.status !== 'unsupported' || !staticCheckpointsMatch))
       || (candidate.status === 'supported' && (candidate.checkpoints.some(checkpoint => !checkpoint.passed)

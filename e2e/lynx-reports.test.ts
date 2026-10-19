@@ -1,11 +1,22 @@
 import type { NativeCaseResult, NativePlatformReport, StaticEvidenceReport } from '../examples/react-lynx/src/compatibility/types'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import { candidateCheckpoint, combineCandidateEvidence } from '../examples/react-lynx/src/compatibility/candidate-evidence'
 import { compatibilityCases } from '../examples/react-lynx/src/compatibility/catalog'
 import { lynxEvidenceStrategy } from '../examples/react-lynx/src/compatibility/evidence'
 import staticEvidenceJson from '../examples/react-lynx/src/compatibility/static-evidence.json'
 import { compatibilityVersions, getCatalogHash } from './lynx/catalog'
 import { assertReviewedLynxOutcome, reviewedLynxSupport } from './lynx/expectations'
+import { assertNativeConclusionsMatch } from './lynx/report-comparison'
 import { nativeReportConclusion, validateNativeReport } from './lynx/reports'
+
+vi.mock('../examples/react-lynx/src/compatibility/static-evidence.json', async (importOriginal) => {
+  const original = await importOriginal<{ default: StaticEvidenceReport }>()
+  const { compatibilityCases } = await import('../examples/react-lynx/src/compatibility/catalog')
+  return { default: { ...original.default, results: original.default.results.map(result => ({
+    ...result,
+    candidates: compatibilityCases.find(item => item.id === result.id)!.className.split(/\s+/).map(className => ({ className, generated: result.generated, bundled: result.bundled })),
+  })) } }
+})
 
 const staticById = new Map((staticEvidenceJson as StaticEvidenceReport).results.map(item => [item.id, item]))
 
@@ -57,6 +68,71 @@ function report(overrides: Partial<NativePlatformReport> = {}): NativePlatformRe
 }
 
 describe('Lynx native report gate', () => {
+  function pendingReport() {
+    const value = report()
+    const item = compatibilityCases.find(item => item.id === 'variant-state')!
+    const built = staticById.get(item.id)!
+    const active = built.candidates!.find(candidate => candidate.className.startsWith('active:'))!.className
+    Object.assign(value.results.find(result => result.id === item.id)!, combineCandidateEvidence(item, built, [{
+      className: active,
+      status: 'supported',
+      checkpoints: [{ name: candidateCheckpoint(active), passed: true }],
+    }]))
+    return value
+  }
+
+  it('采集允许active完成与hover待测的合法mixed报告，最终基线验收仍拒绝', () => {
+    const partial = pendingReport()
+    expect(validateNativeReport(partial, 'ios', { allowPendingCandidates: true })).toBe(partial)
+    expect(partial.results.find(result => result.id === 'variant-state')!.candidates!.map(candidate => candidate.status)).toEqual(['supported', 'not-tested'])
+    expect(() => validateNativeReport(partial, 'ios')).toThrow(/no final runtime status/)
+  })
+
+  it('部分采集可独立保存待测清单，默认最终结论比较仍拒绝', () => {
+    const actual = pendingReport()
+    const expected = report()
+    expect(assertNativeConclusionsMatch(actual, expected, { allowPendingCandidates: true })).toEqual([
+      expect.objectContaining({ id: 'variant-state', className: expect.stringContaining('hover:'), reason: expect.stringContaining('独立状态') }),
+    ])
+    expect(() => assertNativeConclusionsMatch(actual, expected)).toThrow(/不能比较或更新最终基线/)
+  })
+
+  it.each(['completed-case', 'metadata', 'invalid-partial'] as const)('部分采集不能掩盖 %s 漂移', (mode) => {
+    const actual = pendingReport()
+    const expected = report()
+    if (mode === 'completed-case') {
+      actual.results[0]!.status = 'unsupported'
+    }
+    if (mode === 'metadata') {
+      actual.versions = { ...actual.versions, lynxEngine: 'wrong' }
+    }
+    if (mode === 'invalid-partial') {
+      actual.results.find(item => item.id === 'variant-state')!.checkpoints.at(-1)!.passed = true
+    }
+    expect(() => assertNativeConclusionsMatch(actual, expected, { allowPendingCandidates: true })).toThrow()
+  })
+
+  it.each(['missing-candidate', 'wrong-input-proof', 'false-complete', 'false-supported', 'unrelated-case'] as const)('采集也拒绝 %s 的伪partial报告', (mode) => {
+    const partial = pendingReport()
+    const result = partial.results.find(result => result.id === 'variant-state')!
+    if (mode === 'missing-candidate') {
+      result.candidates!.pop()
+    }
+    if (mode === 'wrong-input-proof') {
+      result.candidates![1]!.checkpoints = [{ name: 'interaction:pseudo-active', passed: false }]
+    }
+    if (mode === 'false-complete') {
+      result.checkpoints.at(-1)!.passed = true
+    }
+    if (mode === 'false-supported') {
+      result.status = 'supported'
+    }
+    if (mode === 'unrelated-case') {
+      partial.results[0]!.status = 'not-tested'
+    }
+    expect(() => validateNativeReport(partial, 'ios', { allowPendingCandidates: true, requireCandidateEvidence: true })).toThrow()
+  })
+
   it('已审查支持的案例失败不能自动降级为 unsupported', () => {
     const invalid = report()
     Object.assign(invalid.results.find(item => item.id === 'layout-aspect')!, { status: 'unsupported', reason: '本轮 encoder 异常删除 aspect-ratio' })

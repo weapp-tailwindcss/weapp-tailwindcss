@@ -23,6 +23,29 @@ describe('混合候选独立证据', () => {
     expect(() => validateCandidateEvidence(item, built, result)).toThrow(/尚未全部验证/)
   })
 
+  it('采集协议允许完整且精确的部分候选记录，最终验收仍拒绝待测', () => {
+    const result = combineCandidateEvidence(item, built, [observed(built.candidates![0]!.className)])
+    expect(() => validateCandidateEvidence(item, built, result, { allowPending: true })).not.toThrow()
+    expect(() => validateCandidateEvidence(item, built, result)).toThrow(/尚未全部验证/)
+  })
+
+  it.each(['summary', 'reason', 'pending-proof', 'active-proof', 'static-missing'] as const)('部分候选的 %s 不完整时仍拒绝协议', (mode) => {
+    const result = combineCandidateEvidence(item, built, [observed(built.candidates![0]!.className)])
+    if (mode === 'summary') {
+      result.checkpoints.at(-1)!.passed = true
+    }
+    if (mode === 'reason') {
+      result.candidates![1]!.reason = ''
+    }
+    if (mode === 'pending-proof') {
+      result.candidates![1]!.checkpoints = [{ name: 'interaction:pseudo-active', passed: false }]
+    }
+    if (mode === 'active-proof') {
+      result.candidates![0]!.checkpoints = [{ name: 'interaction:pseudo-hover', passed: true }]
+    }
+    expect(() => validateCandidateEvidence(item, mode === 'static-missing' ? { ...built, candidates: undefined } : built, result, { allowPending: true })).toThrow()
+  })
+
   it('必须包含每一个不同候选，重复和额外候选不能凑齐数量', () => {
     const result = combineCandidateEvidence(item, built, built.candidates!.map(candidate => observed(candidate.className)))
     expect(result.status).toBe('supported')

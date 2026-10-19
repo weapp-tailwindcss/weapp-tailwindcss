@@ -17,7 +17,8 @@ import { enrichEnvironment } from './native-environment'
 import { parseNativeRunArgs } from './native-options'
 import { waitForReportOrFailure } from './native-report'
 import { finalizeNativePixelEffects, validateNativePixelEvidence } from './pixel-evidence'
-import { defaultReportPath, nativeReportConclusion, validateNativeReport } from './reports'
+import { assertNativeConclusionsMatch } from './report-comparison'
+import { defaultReportPath, validateNativeReport } from './reports'
 import { runIos } from './run-ios'
 
 const options = parseNativeRunArgs(process.argv.slice(2), process.cwd())
@@ -131,9 +132,7 @@ async function compareCommittedReport(actual: NativePlatformReport) {
   if (!expected) {
     throw new Error(`缺少已提交的 ${platform} 报告：${path.relative(repoRoot, expectedPath)}`)
   }
-  if (JSON.stringify(nativeReportConclusion(actual)) !== JSON.stringify(nativeReportConclusion(expected))) {
-    throw new Error(`${platform} 运行时结论与已提交报告不一致，请审查 artifact 后显式刷新双端基线。`)
-  }
+  return assertNativeConclusionsMatch(actual, expected, { allowPendingCandidates: true })
 }
 
 async function main() {
@@ -199,10 +198,10 @@ async function main() {
     const crops = await validateNativeEvidence(raw, artifactDir, context)
     const report = await finalizeNativePixelEffects(raw, crops)
     await fs.writeFile(path.join(artifactDir, 'report.json'), `${JSON.stringify(report, null, 2)}\n`)
-    validateNativeReport(report, platform, { requireGeometryEvidence: true, requireCandidateEvidence: true })
+    validateNativeReport(report, platform, { requireGeometryEvidence: true, requireCandidateEvidence: true, allowPendingCandidates: true })
     await validateNativePixelEvidence(report, crops)
-    await compareCommittedReport(report)
-    process.stdout.write(`${JSON.stringify({ platform, artifactDir, cases: report.results.length }, null, 2)}\n`)
+    const pendingCandidates = await compareCommittedReport(report)
+    process.stdout.write(`${JSON.stringify({ platform, artifactDir, cases: report.results.length, completion: pendingCandidates.length ? 'partial' : 'complete', pendingCandidates }, null, 2)}\n`)
   })
 }
 
