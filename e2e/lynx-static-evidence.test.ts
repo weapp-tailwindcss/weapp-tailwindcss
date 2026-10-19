@@ -1,7 +1,6 @@
 import type { StaticEvidenceReport } from '../examples/react-lynx/src/compatibility/types'
 import { describe, expect, it } from 'vitest'
 import { compatibilityCases } from '../examples/react-lynx/src/compatibility/catalog'
-import historical from '../examples/react-lynx/src/compatibility/static-evidence.json'
 import { compatibilityVersions, getCatalogHash } from './lynx/catalog'
 import { analyzeStaticCase, declarationMatches, selectorHasCandidate } from './lynx/static-evidence'
 import { assertCurrentStaticEvidence } from './lynx/static-report'
@@ -96,9 +95,10 @@ describe('Lynx 历史与本轮静态证据边界', () => {
   function currentProtocolFixture(): StaticEvidenceReport {
     // 此处只构造协议回归数据，不冒充真实构建或原生验收产物。
     return {
-      ...structuredClone(historical) as StaticEvidenceReport,
+      schemaVersion: 1,
+      generatedAt: '2026-01-01T00:00:00.000Z',
       catalogHash: getCatalogHash(),
-      versions: compatibilityVersions,
+      versions: { ...compatibilityVersions },
       results: compatibilityCases.map(item => ({
         id: item.id,
         generated: true,
@@ -111,12 +111,19 @@ describe('Lynx 历史与本轮静态证据边界', () => {
     }
   }
 
-  it('保留历史数据但拒绝拿旧 catalog 或依赖版本启动本轮验收', () => {
-    expect(historical.results).toHaveLength(118)
-    expect(() => assertCurrentStaticEvidence(historical as StaticEvidenceReport)).toThrow(/历史 catalog 或依赖版本/)
+  it('本轮完整协议可通过，结果不依赖已提交基线是否已更新', () => {
+    expect(() => assertCurrentStaticEvidence(currentProtocolFixture())).not.toThrow()
+  })
+
+  it.each(['catalog', 'cssDefines'] as const)('固定旧 %s 身份不能启动本轮验收', (field) => {
     const report = currentProtocolFixture()
-    expect(() => assertCurrentStaticEvidence(report)).not.toThrow()
-    report.versions = { ...report.versions, cssDefines: '0.0.0' }
+    // 固定于共享目录迁移前的真实身份；正常更新静态基线不能把反例变成本轮报告。
+    if (field === 'catalog') {
+      report.catalogHash = 'a8c3b45f993d9aa28782f308fc959a09e160d67a9097d11b1bc6a8a38b93c886'
+    }
+    else {
+      report.versions.cssDefines = '0.0.16'
+    }
     expect(() => assertCurrentStaticEvidence(report)).toThrow(/历史 catalog 或依赖版本/)
   })
 
