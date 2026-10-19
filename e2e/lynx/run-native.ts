@@ -137,6 +137,11 @@ async function compareCommittedReport(actual: NativePlatformReport) {
 }
 
 async function main() {
+  if (!options.captureOnly) {
+    const { assertCurrentStaticEvidence } = await import('./static-report')
+    const { default: staticEvidence } = await import('../../examples/react-lynx/src/compatibility/static-evidence.json')
+    assertCurrentStaticEvidence(staticEvidence as import('../../examples/react-lynx/src/compatibility/types').StaticEvidenceReport)
+  }
   const artifactDir = options.outputDir ?? path.join(repoRoot, 'e2e', '.artifacts', 'lynx-native', `${platform}-${Date.now()}`)
   return withNativeArtifacts(platform, artifactDir, async (setStage) => {
     const target = (platform === 'ios' ? await readPreparedIosBuildTarget(repoRoot) : undefined)
@@ -160,7 +165,7 @@ async function main() {
       : path.join(hostDir, 'App', 'main.lynx.bundle')
     await fs.mkdir(path.dirname(stagedBundle), { recursive: true })
     const bundle = await fs.readFile(bundlePath)
-    const context = createEvidenceContext(bundle)
+    const context = createEvidenceContext(bundle, process.env['TAILWIND_E2E_RUN_ID'])
     const contextSource = `${JSON.stringify(context, null, 2)}\n`
     const stagedArtifacts = [
       fs.writeFile(stagedBundle, bundle),
@@ -192,8 +197,9 @@ async function main() {
     await fs.writeFile(path.join(artifactDir, 'raw-report.json'), `${reportSource.trim()}\n`)
     const raw = await enrichEnvironment(JSON.parse(reportSource) as NativePlatformReport, hostDir, device)
     const crops = await validateNativeEvidence(raw, artifactDir, context)
-    const report = validateNativeReport(await finalizeNativePixelEffects(raw, crops), platform, { requireGeometryEvidence: true })
+    const report = await finalizeNativePixelEffects(raw, crops)
     await fs.writeFile(path.join(artifactDir, 'report.json'), `${JSON.stringify(report, null, 2)}\n`)
+    validateNativeReport(report, platform, { requireGeometryEvidence: true, requireCandidateEvidence: true })
     await validateNativePixelEvidence(report, crops)
     await compareCommittedReport(report)
     process.stdout.write(`${JSON.stringify({ platform, artifactDir, cases: report.results.length }, null, 2)}\n`)

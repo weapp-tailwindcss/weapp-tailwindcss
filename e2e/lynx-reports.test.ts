@@ -10,7 +10,7 @@ const staticById = new Map((staticEvidenceJson as StaticEvidenceReport).results.
 
 function validResult(item: typeof compatibilityCases[number]): NativeCaseResult {
   const staticResult = staticById.get(item.id)!
-  if (!staticResult.generated || !staticResult.bundled) {
+  if (!staticResult.generated || (!staticResult.bundled && item.evidence !== 'build')) {
     return {
       id: item.id,
       status: 'unsupported',

@@ -1,51 +1,12 @@
-import { createRequire } from 'node:module'
-import { pathToFileURL } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { createWeappTailwindcssGenerator, resolveTailwindV4Source } from 'weapp-tailwindcss/generator'
 import { transformLynxCssCompat } from '../packages/postcss/src/compat/lynx-css'
 import { transformWebCssCompat } from '../packages/postcss/src/compat/web-css'
-import { compatibilityVersions, exampleDir } from './lynx/catalog'
-
-interface TasmCodec {
-  getEncodeMode: (mode?: 'wasm') => (options: unknown) => Promise<{ buffer: Uint8Array, css_diagnostics?: string }>
-  decode_wasm: (buffer: Uint8Array) => Promise<{ css: { text?: string } }>
-}
-
-interface EncodedRule {
-  selectorText?: { value: string }
-  style?: Array<{ name: string, defaultValueMap?: Record<string, string> }>
-}
+import { encodeLynxCss } from './lynx/batch-encode'
+import { exampleDir } from './lynx/catalog'
 
 async function encodeCss(css: string, mode?: 'wasm') {
-  const exampleRequire = createRequire(new URL('../examples/react-lynx/package.json', import.meta.url))
-  const reactRequire = createRequire(exampleRequire.resolve('@lynx-js/react-rsbuild-plugin/package.json'))
-  const templateRequire = createRequire(reactRequire.resolve('@lynx-js/template-webpack-plugin/package.json'))
-  // 使用生产 encoder 和独立 WASM decoder，避免不同版本的原生库在同一进程发生 ABI 冲突。
-  const encoder = templateRequire('@lynx-js/tasm') as TasmCodec
-  const decoder = createRequire(import.meta.url)('@lynx-js/tasm') as TasmCodec
-  const { cssChunksToMap } = await import(pathToFileURL(templateRequire.resolve('@lynx-js/css-serializer')).href)
-  const { cssMap, cssSource } = cssChunksToMap([css], [], true)
-  const encoded = await encoder.getEncodeMode(mode)({
-    compilerOptions: {
-      enableFiberArch: true,
-      useLepusNG: true,
-      enableReuseContext: true,
-      bundleModuleMode: 'ReturnByFunction',
-      enableCSSSelector: true,
-      targetSdkVersion: compatibilityVersions.engineVersion,
-    },
-    sourceContent: { dsl: 'react_nodiff', appType: 'card', config: { lepusStrict: true } },
-    css: { cssMap, cssSource },
-    lepusCode: { root: '', lepusChunk: {}, filename: 'main.js' },
-    manifest: {},
-    customSections: {},
-  })
-  const decoded = await decoder.decode_wasm(encoded.buffer)
-  return {
-    css: decoded.css.text ?? '',
-    rules: Object.values(cssMap).flat() as EncodedRule[],
-    diagnostics: JSON.parse(encoded.css_diagnostics ?? '[]') as Array<{ type: string, name: string }>,
-  }
+  return encodeLynxCss(css, { mode, applyCompatibility: false })
 }
 
 async function generateCss(candidates: string) {

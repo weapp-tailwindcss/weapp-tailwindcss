@@ -14,6 +14,10 @@
 
 禁止根据 `@lynx-js/css-defines` 或静态 encoder 结果手工填写这里的报告。
 
+共享 catalog、已安装 Tailwind CSS / css-defines、两端原生 host 或 bundle SDK 版本变化后，历史报告继续用于展示，但本轮 runner 会在设备发现前拒绝过期静态证据。先通过本轮全端预检，再运行 `pnpm e2e:lynx:static:update`，随后重新采集原生报告。测试中的合成协议 fixture 不可复制为正式 JSON。
+
+混合交互 case 的 `candidates` 必须与 catalog 的完整类名一一对应：`active` 不能替代 `hover`，`group-hover` 不能替代 `peer-checked`。静态 encoder 拒绝需要保留该候选的生成及编码 checkpoint；已保留规则的支持或不支持结论都需要候选自己的状态 checkpoint。当前 host 尚未独立注入 hover，必须保持未测并阻断完整性验收，不能从 active 的图片或旧报告推断。
+
 实时报告使用 `evidence.version: 1`，`run-context.json` 和 `main.lynx.bundle` 与报告一起保存。runner 生成唯一 runId；两个原生 host 计算实际加载 bundle 的 SHA-256，写图后返回 runId、文件名、PNG 字节哈希及长度，全部确认后才发布报告。文件写入失败、迟到/旧 run 回执、重复帧及复制失败均拒绝继续。每个平台的原生证据也写入 `lynx-compat/<runId>/`，不复用旧报告或截图。
 
 更新器核对独立的 run context、bundle 和完整帧清单，再逐文件验哈希、解码 PNG 和比较可见像素。历史 `schemaVersion: 1` 报告仍可展示和比较结论，但缺少新版证据不能重新验收或更新基线。不要单独复制 JSON；保留整份运行目录。存储回归可分别运行 `pnpm exec tsx e2e/lynx/test-evidence-store.ts android` 和 macOS 上的 `pnpm exec tsx e2e/lynx/test-evidence-store.ts ios`；后者验证 iOS 使用的 Foundation 存储实现，不等同于模拟器像素验收。

@@ -32,7 +32,7 @@ function screenshot(width = 8, height = 4, color = [14, 165, 233, 255], deflateL
 
 // 像素算法独立回归；完整实时门禁及更新器入口由 lynx-evidence.test.ts 覆盖。
 async function readPixelReport(reportPath: string, platform: 'android') {
-  const report = validateNativeReport(JSON.parse(await fs.readFile(reportPath, 'utf8')), platform)
+  const report = validateNativeReport(JSON.parse(await fs.readFile(reportPath, 'utf8')), platform, { historical: true })
   await validateNativePixelEvidence(report, path.join(path.dirname(reportPath), 'crops'))
   return report
 }

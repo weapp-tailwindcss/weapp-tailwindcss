@@ -1,13 +1,15 @@
-import type { NativePlatformReport } from '../examples/react-lynx/src/compatibility/types'
+import type { NativePlatformReport, StaticEvidenceReport } from '../examples/react-lynx/src/compatibility/types'
 import { Buffer } from 'node:buffer'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, expect, it } from 'vitest'
+import { afterEach, expect, it, vi } from 'vitest'
+import { candidateCheckpoint, combineCandidateEvidence, requiresCandidateEvidence } from '../examples/react-lynx/src/compatibility/candidate-evidence'
 import { compatibilityCases } from '../examples/react-lynx/src/compatibility/catalog'
 import { evidenceSequence, requiresPixelEffect } from '../examples/react-lynx/src/compatibility/evidence'
 import { evaluateGeometry } from '../examples/react-lynx/src/compatibility/geometry'
 import staticEvidence from '../examples/react-lynx/src/compatibility/static-evidence.json'
+import { compatibilityVersions, getCatalogHash } from './lynx/catalog'
 import { collectNativeEvidence, createEvidenceContext, cropsDirectory, sha256, validateNativeEvidence } from './lynx/evidence'
 import { darkReceipts } from './lynx/fixtures/dark-images'
 import { effectFixtureImage } from './lynx/fixtures/effect-images'
@@ -16,15 +18,60 @@ import { PNG } from './lynx/png'
 import { readNativeReport } from './lynx/reports'
 import androidReport from './lynx/reports/android.json'
 
+// 该套仅验证证据协议：显式构造本轮合成静态输入，不改写或冒充已提交的历史报告。
+vi.mock('../examples/react-lynx/src/compatibility/static-evidence.json', async (importOriginal) => {
+  const original = await importOriginal<{ default: StaticEvidenceReport }>()
+  const { compatibilityVersions, getCatalogHash } = await import('./lynx/catalog')
+  const { compatibilityCases } = await import('../examples/react-lynx/src/compatibility/catalog')
+  return {
+    default: {
+      ...original.default,
+      catalogHash: getCatalogHash(),
+      versions: compatibilityVersions,
+      results: original.default.results.map(result => ({
+        ...result,
+        candidates: compatibilityCases.find(item => item.id === result.id)!.className.split(/\s+/).filter(Boolean).map(className => ({
+          className,
+          generated: result.generated,
+          bundled: result.bundled,
+          reason: result.reason,
+        })),
+      })),
+    },
+  }
+})
+
 const directories: string[] = []
 afterEach(async () => {
   await Promise.all(directories.splice(0).map(directory => fs.rm(directory, { recursive: true, force: true })))
+})
+
+it('统一入口可以传递同轮 UUID，非法身份在原生运行之前拒绝', () => {
+  const runId = '00000000-0000-4000-8000-000000000001'
+  expect(createEvidenceContext(Buffer.from('bundle'), runId)).toMatchObject({ version: 1, runId })
+  expect(() => createEvidenceContext(Buffer.from('bundle'), '../old-run')).toThrow(/evidence 身份/)
 })
 
 async function fixture() {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'lynx bound evidence '))
   directories.push(directory)
   const report = structuredClone(androidReport) as NativePlatformReport
+  report.catalogHash = getCatalogHash()
+  report.versions = compatibilityVersions
+  for (const item of compatibilityCases) {
+    const result = report.results.find(result => result.id === item.id)!
+    const built = staticEvidence.results.find(result => result.id === item.id)!
+    if (requiresCandidateEvidence(item.id)) {
+      Object.assign(result, combineCandidateEvidence(item, built, item.className.split(/\s+/).map(className => ({
+        className,
+        status: 'supported',
+        checkpoints: [{ name: candidateCheckpoint(className), passed: true }],
+      }))))
+    }
+    if (item.evidence === 'build' && built.generated) {
+      Object.assign(result, { status: 'supported', reason: undefined, checkpoints: [{ name: 'build:generated', passed: true }] })
+    }
+  }
   // 此 fixture 验证取证协议：几何节点使用同布局、不同屏幕原点，结论应为不支持。
   const rect = (left: number, top: number, width: number, height: number) => ({ left, top, width, height, right: left + width, bottom: top + height })
   const layoutControls: Record<string, number[]> = {
@@ -205,7 +252,7 @@ it('拒绝新报告配合上轮残留的有效截图，历史报告不能刷新�
   }
   const reportPath = path.join(directory, 'report.json')
   await fs.writeFile(reportPath, JSON.stringify(report))
-  await expect(readNativeReport(reportPath, 'android')).rejects.toThrow(/本轮|证据|evidence/)
+  await expect(readNativeReport(reportPath, 'android')).rejects.toThrow(/catalog hash is stale/)
 })
 
 it('基线更新拒绝只有支持结论而缺少原始几何证据的报告', async () => {

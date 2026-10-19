@@ -1,6 +1,7 @@
 import type { NativePlatformReport, Platform, StaticEvidenceReport } from '../../examples/react-lynx/src/compatibility/types'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { validateCandidateEvidence } from '../../examples/react-lynx/src/compatibility/candidate-evidence'
 import { compatibilityCases } from '../../examples/react-lynx/src/compatibility/catalog'
 import { lynxEvidenceStrategy } from '../../examples/react-lynx/src/compatibility/evidence'
 import { evaluateGeometry } from '../../examples/react-lynx/src/compatibility/geometry'
@@ -8,6 +9,7 @@ import staticEvidenceJson from '../../examples/react-lynx/src/compatibility/stat
 import { compatibilityVersions, getCatalogHash } from './catalog'
 import { readEvidenceContext, validateNativeEvidence } from './evidence'
 import { validateNativePixelEvidence } from './pixel-evidence'
+import { assertCurrentStaticEvidence } from './static-report'
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {
@@ -15,15 +17,15 @@ function assert(condition: unknown, message: string): asserts condition {
   }
 }
 
-export function validateNativeReport(report: NativePlatformReport, platform: Platform, options: { requireGeometryEvidence?: boolean } = {}) {
+export function validateNativeReport(report: NativePlatformReport, platform: Platform, options: { historical?: boolean, requireGeometryEvidence?: boolean, requireCandidateEvidence?: boolean } = {}) {
   assert(report.schemaVersion === 1, `${platform} report schemaVersion must be 1`)
   assert(report.platform === platform, `expected ${platform} report, received ${report.platform}`)
-  assert(report.catalogHash === getCatalogHash(), `${platform} report catalog hash is stale`)
+  assert(options.historical || report.catalogHash === getCatalogHash(), `${platform} report catalog hash is stale; historical reports cannot verify the current run`)
   const versions = report.versions
   assert(
-    versions && typeof versions === 'object' && !Array.isArray(versions)
-    && Object.keys(versions).length === Object.keys(compatibilityVersions).length
-    && Object.entries(compatibilityVersions).every(([key, value]) => Object.hasOwn(versions, key) && versions[key as keyof typeof versions] === value),
+    options.historical || (versions && typeof versions === 'object' && !Array.isArray(versions)
+      && Object.keys(versions).length === Object.keys(compatibilityVersions).length
+      && Object.entries(compatibilityVersions).every(([key, value]) => Object.hasOwn(versions, key) && versions[key as keyof typeof versions] === value)),
     `${platform} report versions do not match the pinned matrix`,
   )
   assert(!Number.isNaN(Date.parse(report.verifiedAt)), `${platform} report verifiedAt is invalid`)
@@ -59,7 +61,7 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
     assert(result.status === 'supported' || result.status === 'unsupported', `${platform}:${result.id} has no final runtime status`)
     assert(result.checkpoints.length > 0, `${platform}:${result.id} has no runtime checkpoint`)
     assert(result.checkpoints.every(checkpoint => typeof checkpoint.passed === 'boolean'), `${platform}:${result.id} has an invalid checkpoint`)
-    if (!staticResult.generated || !staticResult.bundled) {
+    if (!staticResult.generated || (!staticResult.bundled && (item.evidence !== 'build' || options.historical))) {
       assert(result.status === 'unsupported', `${platform}:${result.id} cannot be supported after a static generation or encoder failure`)
       assert(result.checkpoints.some(checkpoint => checkpoint.name === 'generated'), `${platform}:${result.id} is missing its generated checkpoint`)
       assert(result.checkpoints.some(checkpoint => checkpoint.name === 'bundled'), `${platform}:${result.id} is missing its bundled checkpoint`)
@@ -76,6 +78,9 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
         result.checkpoints.some(checkpoint => checkpoint.name.startsWith(checkpointPrefix)),
         `${platform}:${result.id} is missing a ${checkpointPrefix} checkpoint`,
       )
+    }
+    if (options.requireCandidateEvidence) {
+      validateCandidateEvidence(item, staticResult, result)
     }
     if (options.requireGeometryEvidence && staticResult.generated && staticResult.bundled && strategy === 'native-geometry') {
       const measured = evaluateGeometry(item, result.geometry)
@@ -97,8 +102,9 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
 }
 
 export async function readNativeReport(reportPath: string, platform: Platform) {
+  assertCurrentStaticEvidence(staticEvidenceJson as StaticEvidenceReport)
   const report = JSON.parse(await fs.readFile(reportPath, 'utf8')) as NativePlatformReport
-  validateNativeReport(report, platform, { requireGeometryEvidence: true })
+  validateNativeReport(report, platform, { requireGeometryEvidence: true, requireCandidateEvidence: true })
   const artifactDir = path.dirname(reportPath)
   const context = await readEvidenceContext(artifactDir)
   const crops = await validateNativeEvidence(report, artifactDir, context)
@@ -122,6 +128,13 @@ export function nativeReportConclusion(report: NativePlatformReport) {
         name: checkpoint.name,
         passed: checkpoint.passed,
       })),
+      ...(result.candidates
+        ? { candidates: result.candidates.map(candidate => ({
+            className: candidate.className,
+            status: candidate.status,
+            checkpoints: candidate.checkpoints.map(checkpoint => ({ name: checkpoint.name, passed: checkpoint.passed })),
+          })) }
+        : {}),
     })),
   }
 }

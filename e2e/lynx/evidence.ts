@@ -10,8 +10,10 @@ export function sha256(data: Uint8Array) {
   return createHash('sha256').update(data).digest('hex')
 }
 
-export function createEvidenceContext(bundle: Uint8Array): NativeEvidenceContext {
-  return { version: 1, runId: randomUUID(), bundleSha256: sha256(bundle) }
+export function createEvidenceContext(bundle: Uint8Array, runId: string = randomUUID()): NativeEvidenceContext {
+  const context: NativeEvidenceContext = { version: 1, runId, bundleSha256: sha256(bundle) }
+  validateEvidenceContext(context)
+  return context
 }
 
 export function validateEvidenceContext(value: NativeEvidenceContext | undefined): asserts value is NativeEvidenceContext {

@@ -1,48 +1,10 @@
-export const featureFamilies = [
-  'layout',
-  'flex-grid',
-  'spacing',
-  'sizing',
-  'typography',
-  'background',
-  'border',
-  'effect',
-  'filter',
-  'table',
-  'transform',
-  'transition-animation',
-  'interactivity',
-  'svg',
-  'accessibility',
-  'variants',
-  'directives',
-] as const
+import type { ExpectedDeclaration } from '@weapp-tailwindcss/test-catalog'
 
-export type FeatureFamily = typeof featureFamilies[number]
-export type EvidenceLevel = 'build' | 'runtime'
-export type ProbeType = 'css' | 'geometry' | 'interaction' | 'pixel' | 'directive'
+export { featureFamilies } from '@weapp-tailwindcss/test-catalog'
+export type { CompatibilityCase, EvidenceLevel, ExpectedDeclaration, FeatureFamily, ProbeType } from '@weapp-tailwindcss/test-catalog'
 export type RuntimeStatus = 'supported' | 'unsupported' | 'not-tested'
 export type Platform = 'ios' | 'android'
 export type FailureStage = 'generation' | 'encoder' | 'runtime' | 'version-limit'
-
-export interface ExpectedDeclaration {
-  property: string
-  value?: string
-  important?: boolean
-}
-
-export interface CompatibilityCase {
-  id: string
-  family: FeatureFamily
-  page: 'layout' | 'visual' | 'motion' | 'variants' | 'syntax'
-  title: string
-  className: string
-  evidence: EvidenceLevel
-  probe: ProbeType
-  declarations: ExpectedDeclaration[]
-  alternative?: string
-  note?: string
-}
 
 export interface PlatformResult {
   status: RuntimeStatus
@@ -67,6 +29,16 @@ export interface StaticCaseEvidence {
   generatedDeclarations: ExpectedDeclaration[]
   bundledDeclarations: ExpectedDeclaration[]
   cssDefinesKnown: string[]
+  /** 候选独立记录生成与编码结果，避免同组中一项失败掩盖其它项。 */
+  candidates?: StaticCandidateEvidence[]
+}
+
+export interface StaticCandidateEvidence {
+  className: string
+  generated: boolean
+  bundled: boolean
+  failureStage?: Extract<FailureStage, 'generation' | 'encoder'>
+  reason?: string
 }
 
 export interface StaticEvidenceReport {
@@ -108,6 +80,13 @@ export interface NativeCaseResult extends PlatformResult {
   checkpoints: RuntimeCheckpoint[]
   geometry?: NativeGeometryEvidence
   colorScheme?: Record<'light' | 'dark' | 'restored', NativeColorSchemeReceipt>
+  /** 混合交互必须逐候选取证；旧报告缺失此字段时仅可历史展示。 */
+  candidates?: NativeCandidateResult[]
+}
+
+export interface NativeCandidateResult extends PlatformResult {
+  className: string
+  checkpoints: RuntimeCheckpoint[]
 }
 
 export interface NativeColorSchemeReceipt {

@@ -1,6 +1,7 @@
 import type { ColorSchemeModule } from './native-color-scheme'
 import type { EvidenceModule, NativeEvidenceWriter } from './native-evidence'
 import type { CompatibilityCase, NativeCaseResult, NativePlatformReport, NativeRect, NativeRuntimeEnvironment, Platform, StaticEvidenceReport } from './types'
+import { combineCandidateEvidence } from './candidate-evidence'
 import { compatibilityCases } from './catalog'
 import { evidenceSequence, lynxEvidenceStrategy, requiresPixelEffect } from './evidence'
 import { collectGeometry } from './geometry'
@@ -202,13 +203,12 @@ async function collectInteraction(item: CompatibilityCase, reporter: ReporterMod
     const activatedValue = nativeBoolean(activated)
     const measured = activatedValue !== undefined && captured
     const passed = activatedValue === true && captured && fingerprint(before!.data) !== fingerprint(active!.data)
-    return {
-      id: item.id,
+    return combineCandidateEvidence(item, staticById.get(item.id), [{
+      className: item.className.split(/\s+/).find(candidate => candidate.startsWith('active:'))!,
       status: passed ? 'supported' : measured ? 'unsupported' : 'not-tested',
       reason: passed ? undefined : measured ? '原生 active 伪状态前后没有产生预期像素变化' : '测试 host 未返回完整的伪状态注入或截图结果',
-      failureStage: passed || !measured ? undefined : 'runtime',
       checkpoints: [{ name: 'interaction:pseudo-active', passed, actual: before?.data && active?.data ? `${fingerprint(before.data)} -> ${fingerprint(active.data)}` : 'missing' }],
-    }
+    }])
   }
   if (item.id === 'animation-spin') {
     const before = await capture(`probe-container-${item.id}`, reporter)
@@ -260,6 +260,17 @@ async function collectInteraction(item: CompatibilityCase, reporter: ReporterMod
 
 async function collectCase(item: CompatibilityCase, reporter: ReporterModule, evidence: NativeEvidenceWriter): Promise<NativeCaseResult> {
   const staticResult = staticById.get(item.id)
+  if (item.evidence === 'build' && staticResult?.generated) {
+    return { id: item.id, status: 'supported', checkpoints: [{ name: 'build:generated', passed: true }] }
+  }
+  if (item.id === 'variant-group-peer') {
+    return combineCandidateEvidence(item, staticResult)
+  }
+  if (item.id === 'variant-state') {
+    return evidenceSequence(item, staticResult) && staticResult?.candidates
+      ? collectInteraction(item, reporter, evidence)
+      : combineCandidateEvidence(item, staticResult)
+  }
   if (!staticResult?.generated || !staticResult.bundled) {
     return {
       id: item.id,

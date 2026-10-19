@@ -29,8 +29,12 @@ export function lynxEvidenceStrategy(item: CompatibilityCase) {
 }
 
 /** 采集端与验收端共用帧契约，不能用报告自报的列表决定完整性。 */
-export function evidenceSequence(item: CompatibilityCase, built: Pick<StaticCaseEvidence, 'generated' | 'bundled'> | undefined) {
+export function evidenceSequence(item: CompatibilityCase, built: Pick<StaticCaseEvidence, 'generated' | 'bundled' | 'candidates'> | undefined) {
   const strategy = lynxEvidenceStrategy(item)
+  if (item.id === 'variant-state' && built?.candidates) {
+    const active = built.candidates.find(candidate => candidate.className.startsWith('active:'))
+    return active?.generated && active.bundled ? { checkpoint: 'interaction:pseudo-active', frames: ['before', 'active'] } : undefined
+  }
   if (!built?.generated || !built.bundled || strategy === 'build' || strategy === 'native-geometry') {
     return undefined
   }

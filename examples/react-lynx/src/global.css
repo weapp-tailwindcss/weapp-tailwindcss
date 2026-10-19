@@ -7,6 +7,7 @@
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities) source(none);
 @source './**/*.{ts,tsx}';
+@source '../../../tools/tailwindcss-test-catalog/src/**/*.{ts,json}';
 @source inline('underline {hover:,focus:,}bg-red-{500,600}');
 @source not './compatibility/excluded.ts';
 

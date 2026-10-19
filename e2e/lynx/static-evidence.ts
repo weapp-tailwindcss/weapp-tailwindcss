@@ -25,7 +25,7 @@ interface TasmJson {
   }
 }
 
-interface RuleEvidence {
+export interface RuleEvidence {
   selector: string
   declarations: ExpectedDeclaration[]
 }
@@ -69,15 +69,28 @@ function matchingRules(rules: RuleEvidence[], candidates: string[]) {
   if (candidates.length === 0) {
     return rules
   }
-  const selectors = candidates.map(candidate => `.${escapeClassName(candidate)}`)
-  return rules.filter(rule => selectors.some(selector => rule.selector.includes(selector)))
+  return rules.filter(rule => candidates.some(candidate => selectorHasCandidate(rule.selector, candidate)))
 }
 
-function evaluateCase(rules: RuleEvidence[], item: typeof compatibilityCases[number], checkImportant: boolean) {
+/** 类名边界必须精确匹配，不能用 .flex-col 证明 .flex 或用已转义后缀证明前缀。 */
+export function selectorHasCandidate(selector: string, candidate: string) {
+  const needle = `.${escapeClassName(candidate)}`
+  let offset = selector.indexOf(needle)
+  while (offset >= 0) {
+    const next = selector[offset + needle.length]
+    if (next === undefined || !/[\w\\-]/.test(next)) {
+      return true
+    }
+    offset = selector.indexOf(needle, offset + needle.length)
+  }
+  return false
+}
+
+export function evaluateCase(rules: RuleEvidence[], item: typeof compatibilityCases[number], checkImportant: boolean) {
   const candidates = classCandidates(item.className)
   const matched = matchingRules(rules, candidates)
   const selectorMatches = candidates.length === 0 || candidates.every(candidate => (
-    rules.some(rule => rule.selector.includes(`.${escapeClassName(candidate)}`))
+    rules.some(rule => selectorHasCandidate(rule.selector, candidate))
   ))
   const declarations = item.declarations.flatMap((expected) => {
     const actual = matched
@@ -93,7 +106,7 @@ function evaluateCase(rules: RuleEvidence[], item: typeof compatibilityCases[num
     }]
   })
   return {
-    matched: selectorMatches && (item.declarations.length === 0 || declarations.length === item.declarations.length),
+    matched: rules.length > 0 && selectorMatches && (item.declarations.length === 0 || declarations.length === item.declarations.length),
     declarations,
   }
 }
@@ -138,6 +151,61 @@ function parseEncoderRemovals(log: string) {
   }
 }
 
+/** 同组候选逐项保留，生成型指令的成功与 encoder 保留相互独立。 */
+export function analyzeStaticCase(
+  item: typeof compatibilityCases[number],
+  generatedRules: RuleEvidence[],
+  bundledRules: RuleEvidence[],
+  encoderLog = '',
+  cssDefinesProperties = new Set<string>(),
+): StaticCaseEvidence {
+  const generated = evaluateCase(generatedRules, item, true)
+  const bundled = evaluateCase(bundledRules, item, false)
+  const removals = parseEncoderRemovals(encoderLog)
+  const candidates = classCandidates(item.className).map((className) => {
+    const ownGenerated = matchingRules(generatedRules, [className])
+    const declarations = item.declarations.filter(expected => ownGenerated.some(rule => (
+      rule.declarations.some(actual => declarationMatches(actual, expected, true))
+    )))
+    const candidate = { ...item, className, declarations }
+    const candidateGenerated = evaluateCase(generatedRules, candidate, true).matched
+    const candidateBundled = evaluateCase(bundledRules, candidate, false).matched
+    const removedProperties = declarations.filter(declaration => removals.properties.has(declaration.property)).map(declaration => declaration.property)
+    const removedSelectors = removals.selectors.filter(selector => selectorHasCandidate(selector, className))
+    const retained = candidateGenerated && candidateBundled && removedProperties.length === 0 && removedSelectors.length === 0
+    const failureStage = !candidateGenerated ? 'generation' : !retained ? 'encoder' : undefined
+    const reason = !candidateGenerated
+      ? 'Tailwind 未生成候选 selector'
+      : removedProperties.length > 0
+        ? `encoder 删除属性：${removedProperties.join(', ')}`
+        : removedSelectors.length > 0
+          ? `encoder 删除 selector：${removedSelectors.join(', ')}`
+          : !candidateBundled ? 'TASM 未保留该候选的完整 selector 或声明' : undefined
+    return {
+      className,
+      generated: candidateGenerated,
+      bundled: retained,
+      ...(failureStage ? { failureStage: failureStage as 'generation' | 'encoder' } : {}),
+      ...(reason ? { reason } : {}),
+    }
+  })
+  const isBundled = generated.matched && bundled.matched && candidates.every(candidate => candidate.bundled)
+  const failureStage = !generated.matched ? 'generation' : !isBundled ? 'encoder' : undefined
+  return {
+    id: item.id,
+    generated: generated.matched,
+    bundled: isBundled,
+    ...(failureStage ? { failureStage } : {}),
+    ...(!generated.matched
+      ? { reason: 'Tailwind 未生成完整 selector 或声明' }
+      : !isBundled ? { reason: candidates.filter(candidate => !candidate.bundled).map(candidate => `${candidate.className}: ${candidate.reason}`).join('; ') || 'TASM 未保留完整 selector 或声明' } : {}),
+    generatedDeclarations: generated.declarations,
+    bundledDeclarations: bundled.declarations,
+    cssDefinesKnown: item.declarations.map(declaration => declaration.property).filter(property => cssDefinesProperties.has(property)),
+    candidates,
+  }
+}
+
 export async function analyzeStaticEvidence(generatedAt = new Date().toISOString(), encoderLog = ''): Promise<StaticEvidenceReport> {
   const generatedCssPath = path.join(lynxIntermediateDir, 'main.css')
   const tasmPath = path.join(lynxIntermediateDir, 'tasm.json')
@@ -149,34 +217,7 @@ export async function analyzeStaticEvidence(generatedAt = new Date().toISOString
   const generatedRules = parseGeneratedRules(generatedCss)
   const tasm = JSON.parse(tasmSource) as TasmJson
   const bundledRules = flattenEncodedRules(Object.values(tasm.css.cssMap).flat())
-  const removals = parseEncoderRemovals(encoderLog)
-  const results: StaticCaseEvidence[] = compatibilityCases.map((item) => {
-    const generated = evaluateCase(generatedRules, item, true)
-    const bundled = evaluateCase(bundledRules, item, false)
-    const removedProperties = item.declarations.map(declaration => declaration.property).filter(property => removals.properties.has(property))
-    const candidates = classCandidates(item.className).map(escapeClassName)
-    const removedSelectors = removals.selectors.filter(selector => candidates.some(candidate => selector.includes(`.${candidate}`)))
-    const encoderRemoved = removedProperties.length > 0 || removedSelectors.length > 0
-    const isBundled = bundled.matched && !encoderRemoved
-    const failureStage = !generated.matched ? 'generation' : !isBundled ? 'encoder' : undefined
-    const reason = !generated.matched
-      ? 'Tailwind 未生成完整 selector 或声明'
-      : removedProperties.length > 0
-        ? `encoder 删除属性：${removedProperties.join(', ')}`
-        : removedSelectors.length > 0
-          ? `encoder 删除 selector：${removedSelectors.join(', ')}`
-          : !bundled.matched ? 'TASM 未保留完整 selector 或声明' : undefined
-    return {
-      id: item.id,
-      generated: generated.matched,
-      bundled: isBundled,
-      ...(failureStage ? { failureStage } : {}),
-      ...(reason ? { reason } : {}),
-      generatedDeclarations: generated.declarations,
-      bundledDeclarations: bundled.declarations,
-      cssDefinesKnown: item.declarations.map(declaration => declaration.property).filter(property => cssDefinesProperties.has(property)),
-    }
-  })
+  const results = compatibilityCases.map(item => analyzeStaticCase(item, generatedRules, bundledRules, encoderLog, cssDefinesProperties))
   return {
     schemaVersion: 1,
     catalogHash: getCatalogHash(),
