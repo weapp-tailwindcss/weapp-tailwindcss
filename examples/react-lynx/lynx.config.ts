@@ -1,3 +1,4 @@
+import { pluginLynxConfig } from '@lynx-js/config-rsbuild-plugin'
 import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin'
 import { defineConfig } from '@lynx-js/rspeedy'
 import { pluginLynxTailwindcss } from '@weapp-tailwindcss/lynx'
@@ -9,5 +10,9 @@ export default defineConfig({
       root: 'dist',
     },
   },
-  plugins: [pluginReactLynx({ engineVersion: '3.9' }), pluginLynxTailwindcss()],
+  plugins: [
+    pluginReactLynx({ engineVersion: '3.9' }),
+    pluginLynxConfig({ enableCSSRule: true }),
+    pluginLynxTailwindcss(),
+  ],
 })
