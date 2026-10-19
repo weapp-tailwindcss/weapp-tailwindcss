@@ -3,6 +3,10 @@ import { defineConfig } from 'vitest/config'
 
 const workspaceAliases = [
   {
+    find: /^@weapp-tailwindcss\/engine$/,
+    replacement: path.resolve(__dirname, '../packages/engine/src/index.ts'),
+  },
+  {
     find: /^@weapp-tailwindcss\/shared$/,
     replacement: path.resolve(__dirname, '../packages/shared/src/index.ts'),
   },
