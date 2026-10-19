@@ -1,0 +1,33 @@
+--- a/core/template_bundle/template_codec/binary_decoder/lynx_binary_base_template_reader.cc
++++ b/core/template_bundle/template_codec/binary_decoder/lynx_binary_base_template_reader.cc
+@@ -47,10 +47,11 @@
+       BinarySection::STRING,
+       BinarySection::PARSED_STYLES,
+       BinarySection::ELEMENT_TEMPLATE,
++      // CSS 规则的二进制格式依赖页面配置，必须先读取配置。
++      BinarySection::CONFIG,
+       BinarySection::CSS,
+       BinarySection::JS,
+       BinarySection::JS_BYTECODE,
+-      BinarySection::CONFIG,
+       BinarySection::ROOT_LEPUS,
+       BinarySection::LEPUS_CHUNK,
+       BinarySection::CUSTOM_SECTIONS,
+--- a/core/template_bundle/template_codec/binary_decoder/lynx_binary_base_template_reader_impl.cc
++++ b/core/template_bundle/template_codec/binary_decoder/lynx_binary_base_template_reader_impl.cc
+@@ -355,13 +355,14 @@
+   const static std::vector<BinarySection> kSectionOrder{
+       BinarySection::STRING,
+       BinarySection::PARSED_STYLES,
++      // CSS 规则的二进制格式依赖页面配置，必须先读取配置。
++      BinarySection::CONFIG,
+       BinarySection::CSS,
+       BinarySection::JS,
+       BinarySection::JS_BYTECODE,
+       BinarySection::COMPONENT,
+       BinarySection::APP,
+       BinarySection::PAGE,
+-      BinarySection::CONFIG,
+       BinarySection::DYNAMIC_COMPONENT,
+       BinarySection::USING_DYNAMIC_COMPONENT_INFO,
+       BinarySection::THEMED,
