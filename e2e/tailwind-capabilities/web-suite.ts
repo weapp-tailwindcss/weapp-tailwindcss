@@ -9,6 +9,8 @@ import { selectCaseGroups } from './plan'
 import { runRegistryWeb } from './registry-web'
 import { assertCapabilitySuccess } from './report'
 import { runWeb, webProbes } from './web'
+import { contextWebProbes } from './web-context/fixtures'
+import { runContextWeb } from './web-context/run'
 
 /** 每个引擎复用本轮同一个后台浏览器；子 runner 只清理各自的 context。 */
 export async function runWebSuite(context: RunContext, engine: BrowserEngine) {
@@ -18,6 +20,7 @@ export async function runWebSuite(context: RunContext, engine: BrowserEngine) {
     registry: inventory.utilities.map(item => `registry/${item.id}`),
     authoring: authoringWebProfiles.map(profile => profile.id),
     hmr: [hmrContract().id],
+    context: contextWebProbes.map(probe => `runtime/${probe.id}`),
   })
   const browser = await { chromium, firefox, webkit }[engine].launch({ headless: true })
   const reports: CapabilityReport[] = []
@@ -33,6 +36,9 @@ export async function runWebSuite(context: RunContext, engine: BrowserEngine) {
     }
     if (groups.hmr) {
       reports.push(await runHmr(context, engine, browser))
+    }
+    if (groups.context) {
+      reports.push(await runContextWeb(context, engine, browser))
     }
   }
   finally {

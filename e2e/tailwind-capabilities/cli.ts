@@ -65,7 +65,7 @@ async function main() {
         stage.status = 'failed'
         try {
           const base = path.join(context.directory, stage.target)
-          const files = stage.target.startsWith('web-') ? [path.join(base, 'report.json'), path.join(base, 'registry', 'report.json'), path.join(base, 'hmr', 'report.json'), path.join(base, 'authoring', 'report.json')] : [path.join(base, 'report.json')]
+          const files = stage.target.startsWith('web-') ? [path.join(base, 'report.json'), path.join(base, 'registry', 'report.json'), path.join(base, 'hmr', 'report.json'), path.join(base, 'authoring', 'report.json'), path.join(base, 'context', 'report.json')] : [path.join(base, 'report.json')]
           const loaded = await Promise.allSettled(files.map(async file => JSON.parse(await readFile(file, 'utf8')) as CapabilityReport))
           const reports = loaded.flatMap(item => item.status === 'fulfilled' ? [item.value] : [])
           if (!reports.length) {

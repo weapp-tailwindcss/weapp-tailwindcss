@@ -1,5 +1,5 @@
 import type { ViteDevServer } from 'vite'
-import { mkdtemp, rm, symlink, writeFile } from 'node:fs/promises'
+import { mkdtemp, realpath, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
@@ -9,9 +9,10 @@ import { digest } from '../identity'
 import { hmrCss, hmrSource, hmrStates } from './fixture'
 
 export async function withHmrServer<T>(root: string, runId: string, logs: string[], run: (server: { url: string, instance: string, source: string }) => Promise<T>) {
-  const directory = await mkdtemp(path.join(tmpdir(), 'tailwind-vite-hmr-'))
+  const allocated = await mkdtemp(path.join(tmpdir(), 'tailwind-vite-hmr-'))
   let server: ViteDevServer | undefined
   try {
+    const directory = await realpath(allocated)
     const instance = digest({ root: directory, runId })
     await symlink(path.join(root, 'node_modules'), path.join(directory, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir')
     const source = path.join(directory, 'probe.js')
@@ -22,7 +23,8 @@ export async function withHmrServer<T>(root: string, runId: string, logs: string
     logger.error = message => logs.push(`error:${message}`)
     logger.warn = message => logs.push(`warn:${message}`)
     logger.info = message => logs.push(`info:${message}`)
-    server = await createServer({ root: directory, configFile: false, customLogger: logger, clearScreen: false, plugins: WeappTailwindcssWeb({ tailwindcssBasedir: directory, cssEntries: [path.join(directory, 'entry.css')], rem2rpx: false }) ?? [], server: { host: '127.0.0.1', port: 0, open: false, fs: { allow: [directory, root] } } })
+    // 夹具只有原生 JS 和 CSS，不启动无依赖的预打包扫描，避免关闭时留下异步扫描任务。
+    server = await createServer({ root: directory, configFile: false, customLogger: logger, clearScreen: false, optimizeDeps: { noDiscovery: true, include: [] }, plugins: WeappTailwindcssWeb({ tailwindcssBasedir: directory, cssEntries: [path.join(directory, 'entry.css')], rem2rpx: false }) ?? [], server: { host: '127.0.0.1', port: 0, open: false, fs: { allow: [directory, root] } } })
     await server.listen()
     const address = server.httpServer?.address()
     if (!address || typeof address === 'string' || path.resolve(server.config.root) !== path.resolve(directory)) {
@@ -35,7 +37,7 @@ export async function withHmrServer<T>(root: string, runId: string, logs: string
       await server?.close()
     }
     finally {
-      await rm(directory, { recursive: true, force: true })
+      await rm(allocated, { recursive: true, force: true })
     }
   }
 }
