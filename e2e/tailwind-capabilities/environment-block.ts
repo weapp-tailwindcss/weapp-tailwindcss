@@ -13,6 +13,9 @@ export function environmentFailure(output: string): string | undefined {
     /(?:spawn|command) [^\r\n]*\bENOENT\b[^\r\n]*/,
     /(?:device|emulator)[^\r\n]*(?:offline|disconnected|not found|unavailable)/i,
     /(?:No booted|Unable to find a destination matching)[^\r\n]*/,
+    /com\.apple\.CoreSimulator\.SimError[^\r\n]*\r?\nUnable to lookup in current state:\s*Shutdown\b[^\r\n]*/i,
+    /CoreSimulatorService connection (?:became invalid|interrupted|lost)\b[^\r\n]*/i,
+    /iOS target app termination failed:[^\r\n]*/,
     /(?:微信|wechat)[^\r\n]*(?:登录失效|未登录|认证失败|not logged in|invalid session)/i,
   ]
   return patterns.map(pattern => output.match(pattern)?.[0]).find(Boolean)

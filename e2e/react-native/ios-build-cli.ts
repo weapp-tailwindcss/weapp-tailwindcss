@@ -1,7 +1,7 @@
 import path from 'node:path'
 import process from 'node:process'
-import { execa } from 'execa'
 import { buildAndLaunchIos } from './ios-build'
+import { executeIosCommand } from './ios-command'
 
 const [device, url, artifacts] = process.argv.slice(2)
 if (!device || !url || !artifacts || process.argv.length !== 5) {
@@ -9,7 +9,4 @@ if (!device || !url || !artifacts || process.argv.length !== 5) {
 }
 const project = path.resolve(import.meta.dirname, '../../examples/react-native-expo')
 // eslint-disable-next-line antfu/no-top-level-await
-await buildAndLaunchIos({ project, device, url, artifacts, bundleId: 'com.weapptailwindcss.rncompat' }, async (file, args, cwd, stream) => {
-  const result = await execa(file, args, { cwd, stdout: stream ? 'inherit' : 'pipe', stderr: 'inherit', stdin: 'ignore', timeout: 1_800_000 })
-  return result.stdout ?? ''
-})
+await buildAndLaunchIos({ project, device, url, artifacts, bundleId: 'com.weapptailwindcss.rncompat' }, executeIosCommand)

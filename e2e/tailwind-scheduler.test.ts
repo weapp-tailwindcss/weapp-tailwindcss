@@ -53,7 +53,30 @@ it('真实子进程的明确环境错误保留日志并传播结构化阻断', a
 })
 
 it('缺截图和错误样式不会被正则升级成环境问题', () => {
-  for (const message of ['padding is incorrect', 'iOS screenshot is missing', 'Android geometry assertion failed', 'case registry incomplete']) {
+  for (const message of ['padding is incorrect', 'iOS screenshot is missing', 'Android geometry assertion failed', 'case registry incomplete', 'rendered text should say Shutdown', 'CoreSimulator geometry assertion failed']) {
     expect(environmentFailure(message)).toBeUndefined()
+  }
+})
+
+it.each([
+  'An error was encountered processing the command (domain=com.apple.CoreSimulator.SimError, code=405):\nUnable to lookup in current state: Shutdown',
+  'CoreSimulatorService connection became invalid. Simulator services will no longer be available.',
+  'EnvironmentBlockedError: iOS target app termination failed: IosCommandError: invalid device',
+])('真实子进程的 CoreSimulator 故障阻断全部后续目标：%s', async (message) => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'tailwind-coresimulator-'))
+  const { stages, dependencies } = fixture()
+  dependencies.execute.mockImplementation(async () => {
+    await runPnpmStage({ root: path.resolve(import.meta.dirname, '..'), directory, runId: 'test', env: {} }, ['exec', 'node', '-e', `console.error(${JSON.stringify(message)}); process.exitCode=1`], 'ios')
+  })
+  try {
+    await expect(scheduleTargets(stages, dependencies)).rejects.toThrow(EnvironmentBlockedError)
+    expect(dependencies.execute.mock.calls).toEqual([['react-native-ios']])
+    expect(dependencies.check.mock.calls).toEqual([['react-native-ios']])
+    expect(dependencies.classify).not.toHaveBeenCalled()
+    expect(stages.map(stage => stage.status)).toEqual(['blocked', 'blocked', 'blocked'])
+    expect(await readFile(path.join(directory, 'ios.log'), 'utf8')).toContain(message)
+  }
+  finally {
+    await rm(directory, { recursive: true, force: true })
   }
 })

@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto'
 import { readdir, readFile, realpath, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
+import { EnvironmentBlockedError } from '../tailwind-capabilities/environment-block'
+import { iosAppWasNotRunning } from './ios-command'
 
 export interface IosBuildOptions {
   project: string
@@ -63,7 +65,7 @@ export async function buildAndLaunchIos(options: IosBuildOptions, execute: IosBu
   await save()
   try {
     await execute('pnpm', ['exec', 'expo', 'prebuild', '--platform', 'ios', '--no-install'], project, true)
-    await execute('pod', ['install', '--project-directory', directory], project, true)
+    await execute('pod', ['install', `--project-directory=${directory}`], project, true)
     const build = await iosBuildProject(directory)
     Object.assign(evidence, build, { stage: 'build' })
     await save()
@@ -90,7 +92,19 @@ export async function buildAndLaunchIos(options: IosBuildOptions, execute: IosBu
     if (JSON.stringify(built) !== JSON.stringify(installed)) {
       throw new Error('iOS 模拟器内应用与本轮构建二进制不一致')
     }
-    Object.assign(evidence, { stage: 'openurl', container, binarySha256: built })
+    Object.assign(evidence, { stage: 'terminate', container, binarySha256: built })
+    await save()
+    try {
+      await execute('xcrun', ['simctl', 'terminate', device, bundleId], project)
+      evidence.termination = { status: 'terminated' }
+    }
+    catch (error) {
+      if (!iosAppWasNotRunning(error)) {
+        throw new EnvironmentBlockedError(`iOS target app termination failed: ${String(error)}`, { cause: error })
+      }
+      evidence.termination = { status: 'not-running', exitCode: error.exitCode, stdout: error.stdout, stderr: error.stderr }
+    }
+    evidence.stage = 'openurl'
     await save()
     await execute('xcrun', ['simctl', 'openurl', device, url], project, true)
     evidence.stage = 'launch-request-completed'
