@@ -7,6 +7,10 @@ regressions:
   - packages/react-native/test/tailwind-entries.test.ts
   - packages/postcss/test/native-typography.test.ts
   - packages/postcss/test/native-shadow.test.ts
+  - packages/postcss/test/native-selectors.test.ts
+  - packages/react-native/test/transform-cascade.test.ts
+  - e2e/tailwind-weapp-conversion-oracle.test.ts
+  - e2e/tailwind-browser-lifecycle.test.ts
   - packages/react-native/test/relative-line-height.test.ts
   - e2e/react-native-evidence-protocol.test.ts
   - e2e/tailwind-hmr.test.ts
@@ -32,8 +36,9 @@ regressions:
 - 字重的主题变量必须递归解析；未解析和循环变量产生诊断，不能把 `var(...)` 交给原生宿主。相对行高保留倍率元数据，在最终字号层叠后换算，不能输出 1.25px。多层阴影与 spread 必须完整编码，不能近似为首层；规则局部变量也不能污染全局默认值。
 - 报告从每条 required assertion 的层级推导证据要求，视觉子断言必须有本例本轮截图。布局案例检查真实子项与几何，避免 preflight 默认值或未被布局消费的 computed property 掩盖失败。
 - 扫描不能只检查 classSet：独立参考逐候选检查实际声明、条件、全局依赖和排除结果，产品候选只能来自真实源码。
-- 原生负向结果必须有明确的候选诊断；空规则或静默丢失是失败，不能自动变为“不支持”。
+- 原生负向结果必须有明确的候选诊断；空规则或静默丢失是失败，不能自动变为“不支持”。复杂选择器通过 AST 提取精确候选后明确拒绝；双轴 skew 在最终变量层叠后组合，不能只保留最后一轴。
 - Web 状态在触发前、触发后和恢复后验证，具名作用域和组合条件增加中间负控制；源码 HMR 通过真实 Vite 服务连续增、替、删并刷新，保存标识、样式、WebSocket 消息和同页面身份共同验真。
+- 目标转换先固定独立参考和已审查转换规则，再执行产品管线。首批 490 个默认补全具备完整 WXSS 字面量 oracle，其余候选不由声明存在推导转换支持。
 - 候选规则同时比较选择器、条件和同一属性的声明顺序；另行检查完整官方参考中的全局变量、动画帧与 property 注册，避免只保留 class 声明的误报。
 
 ## 验证

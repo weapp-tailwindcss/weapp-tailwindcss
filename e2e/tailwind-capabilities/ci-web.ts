@@ -1,13 +1,9 @@
 import { randomUUID } from 'node:crypto'
 import path from 'node:path'
 import process from 'node:process'
-import { runAuthoringWeb } from './authoring-web'
 import { fixtureBaseline } from './baseline'
-import { runHmr } from './hmr'
-import { runRegistryWeb } from './registry-web'
-import { assertCapabilitySuccess } from './report'
 import { browserEngines } from './types'
-import { runWeb } from './web'
+import { runWebSuite } from './web-suite'
 
 if (process.env.GITHUB_ACTIONS !== 'true') {
   throw new Error('此入口仅用于普通 GitHub CI；本地验证请使用带 --preflight-report 的 pnpm e2e:tailwind')
@@ -22,10 +18,7 @@ const runId = randomUUID()
 async function main() {
   await fixtureBaseline(root)
   const context = { root, runId, directory: path.join(root, 'e2e', '.artifacts', 'tailwind', runId, `web-${engine}`), startedAt: new Date().toISOString() }
-  const reports = [await runWeb(context, engine), await runRegistryWeb(context, engine), await runHmr(context, engine), await runAuthoringWeb(context, engine)]
-  for (const report of reports) {
-    assertCapabilitySuccess(report)
-  }
+  await runWebSuite(context, engine)
 }
 main().catch((error) => {
   process.stderr.write(`${String(error)}\n`)

@@ -80,7 +80,7 @@ describe('static runner 的生成与三目标转换分层', () => {
     const { report, directory } = await execute()
     for (const candidate of ['size-8', 'size-9']) {
       for (const target of conversionTargets) {
-        expect(report.results.find(result => result.id === `conversion/${target}/completion/${candidate}`)).toMatchObject({ status: 'not-run', support: 'supported' })
+        expect(report.results.find(result => result.id === `conversion/${target}/completion/${candidate}`)).toMatchObject({ status: target === 'weapp' ? 'failed' : 'not-run', support: 'supported' })
       }
     }
     expect(report.results.filter(result => result.id.startsWith('completion/')).every(result => result.status === 'passed')).toBe(true)
@@ -91,13 +91,14 @@ describe('static runner 的生成与三目标转换分层', () => {
     expect(mocks.persist).toHaveBeenCalledWith(expect.anything(), report, expect.arrayContaining([expect.objectContaining({ id: 'conversion/lynx/completion/size-9' })]))
   })
 
-  it('部分转换声明和无 oracle 的完整转换同样不得通过', async () => {
+  it('已审查合同拒绝部分声明并接受完整声明，未审查目标仍保留未执行', async () => {
     mocks.generate.mockImplementation(async ({ target }: { target: string }) => target === 'weapp'
       ? { css: '.size-8{width:2rem}.size-9{width:2rem;height:2rem}' }
       : { rawCss: `${source}${source.replaceAll('size-8', 'size-9')}`, classSet: new Set(['size-8', 'size-9']) })
     const { report } = await execute()
-    expect(report.results.find(result => result.id === 'conversion/weapp/completion/size-8')?.status).toBe('not-run')
-    expect(report.results.find(result => result.id === 'conversion/weapp/completion/size-9')?.status).toBe('not-run')
+    expect(report.results.find(result => result.id === 'conversion/weapp/completion/size-8')?.status).toBe('failed')
+    expect(report.results.find(result => result.id === 'conversion/weapp/completion/size-9')?.status).toBe('passed')
+    expect(report.results.filter(result => /^conversion\/(?:react-native|lynx)\//.test(result.id)).every(result => result.status === 'not-run')).toBe(true)
     expect(report.results).toHaveLength(8)
   })
 

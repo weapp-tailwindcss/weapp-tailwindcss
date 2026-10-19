@@ -18,7 +18,7 @@ export { renderWebProbe, webContract } from './web/contract'
 export { webRuntimeCoverage } from './web/coverage'
 export { webFixtureCss, webProbes } from './web/probes'
 
-export async function runWeb(context: RunContext, engine: BrowserEngine) {
+export async function runWeb(context: RunContext, engine: BrowserEngine, borrowedBrowser?: Browser) {
   const probes = webProbes.filter(probe => !context.caseFilter || context.caseFilter.test(`runtime/${probe.id}`))
   if (!probes.length) {
     throw new Error('Web 运行时过滤条件没有匹配任何语义夹具')
@@ -31,12 +31,16 @@ export async function runWeb(context: RunContext, engine: BrowserEngine) {
     report.artifacts.push(await receipt(path.join(context.directory, 'runtime-coverage.json'), context.directory, context.runId, contracts.map(item => item.id), 'measurements'))
   }
   let browser: Browser | undefined
+  let closeContext: (() => Promise<void>) | undefined
   let page: Page | undefined
   const errors: string[] = []
   try {
-    browser = await { chromium, firefox, webkit }[engine].launch({ headless: true })
+    browser = borrowedBrowser ?? await { chromium, firefox, webkit }[engine].launch({ headless: true })
     report.environment.browserVersion = browser.version()
     const browserContext = await browser.newContext({ viewport: { width: 640, height: 480 }, colorScheme: 'light', reducedMotion: 'reduce' })
+    if (borrowedBrowser) {
+      closeContext = () => browserContext.close()
+    }
     page = await browserContext.newPage()
     page.on('pageerror', error => errors.push(error.message))
     page.on('console', (message) => {
@@ -141,7 +145,7 @@ export async function runWeb(context: RunContext, engine: BrowserEngine) {
   }
   finally {
     try {
-      await browser?.close()
+      await (closeContext ? closeContext() : browser?.close())
     }
     catch (error) {
       const reason = `本任务 ${engine} 浏览器关闭失败：${error instanceof Error ? error.message : String(error)}`

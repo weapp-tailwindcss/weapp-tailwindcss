@@ -11,6 +11,7 @@ import { compileNativeStylesheet } from '../../packages/react-native/src/compile
 import { encodeLynxCss } from '../lynx/batch-encode'
 import { newReport, persistReport } from './context'
 import { conversionCaseContract, conversionCaseResult, conversionTargets, staticCandidateResults } from './conversion-audit'
+import { reviewedWeappOracleCoverage, reviewedWeappOracles } from './conversion-oracles/weapp'
 import { cssDeclarations, retainsDeclarations, retainsRuleContexts, stylesheetDependenciesRetained } from './css'
 import { withGeneratorFixture } from './fixture'
 import { collectInventory, loadDefaultDesignSystem, loadInventory, validateInventory } from './inventory/index'
@@ -42,23 +43,31 @@ export async function runStatic(context: RunContext) {
   validateInventory(await collectInventory(), inventory)
   const cases = all.filter(item => !context.caseFilter || context.caseFilter.test(item.id))
   const markers = new Set(['group', 'peer'])
-  const contracts: CaseContract[] = cases.flatMap(item => [
-    { ...item, fixture: 'default-theme', expectation: { support: 'supported' as const, stage: 'generation' as const }, requiredAssertions: ['generated', 'declarations', 'context', 'dependencies'], expectedValues: { generated: !markers.has(item.candidate), declarations: true, context: true, dependencies: true } },
-    ...conversionTargets.map(target => conversionCaseContract(item, target)),
-  ])
-  const report = await newReport(context, 'static', contracts, inventory, { mode: 'generation-and-conversion-audit', batchSize: 256 })
-  const buildReference = await defaultReferenceBuilder()
   const byCandidate = new Map<string, typeof cases>()
   for (const item of cases) {
     byCandidate.set(item.candidate, [...byCandidate.get(item.candidate) ?? [], item])
   }
   const candidates = [...byCandidate.keys()]
+  const buildReference = await defaultReferenceBuilder()
+  // 先固定官方参考和已审查规则的合同，再执行任何目标端转换。
+  const attempts = reviewedWeappOracles(candidates, await buildReference(candidates))
+  const oracles = new Map(attempts.map(attempt => [attempt.candidate, attempt.oracle ? [attempt.oracle] : []]))
+  const oracleFor = (candidate: string, target: typeof conversionTargets[number]) => oracles.get(candidate)?.find(oracle => oracle.target === target)
+  const contracts: CaseContract[] = cases.flatMap(item => [
+    { ...item, fixture: 'default-theme', expectation: { support: 'supported' as const, stage: 'generation' as const }, requiredAssertions: ['generated', 'declarations', 'context', 'dependencies'], expectedValues: { generated: !markers.has(item.candidate), declarations: true, context: true, dependencies: true } },
+    ...conversionTargets.map(target => conversionCaseContract(item, target, oracleFor(item.candidate, target))),
+  ])
+  const coverage = reviewedWeappOracleCoverage(attempts)
+  const report = await newReport(context, 'static', contracts, { inventory, coverage }, { mode: 'generation-and-conversion-audit', batchSize: 256 })
+  const coverageFile = path.join(context.directory, 'conversion-oracle-coverage.json')
+  await writeFile(coverageFile, JSON.stringify({ coverage, attempts }, null, 2))
+  report.artifacts.push(await receipt(coverageFile, context.directory, context.runId, contracts.map(item => item.id), 'measurements'))
   const css = '@import "tailwindcss" source(none);'
   await withGeneratorFixture(context.root, css, {}, async (generator) => {
     for (let start = 0; start < candidates.length; start += 256) {
       const batch = candidates.slice(start, start + 256)
       const batchCases = batch.flatMap(candidate => byCandidate.get(candidate)!)
-      const ids = batchCases.flatMap(item => [item.id, ...conversionTargets.map(target => conversionCaseContract(item, target).id)])
+      const ids = batchCases.flatMap(item => [item.id, ...conversionTargets.map(target => conversionCaseContract(item, target, oracleFor(item.candidate, target)).id)])
       const stem = `batch-${String(start / 256).padStart(4, '0')}`
       try {
         const generated = await generator.generate({ target: 'web', candidates: batch, scanSources: false })
@@ -132,7 +141,7 @@ export async function runStatic(context: RunContext) {
             ]
             const passed = assertions.every(assertionPassed)
             const evidence = artifacts.map(value => value.name)
-            report.results.push(...staticCandidateResults(item, { id: item.id, status: passed ? 'passed' : 'failed', support: 'supported', assertions, warnings: [], artifacts: evidence, ...(!passed ? { reason: '生成候选或声明与固定 Tailwind 注册表参考不符' } : {}) }, observed.observations, evidence))
+            report.results.push(...staticCandidateResults(item, { id: item.id, status: passed ? 'passed' : 'failed', support: 'supported', assertions, warnings: [], artifacts: evidence, ...(!passed ? { reason: '生成候选或声明与固定 Tailwind 注册表参考不符' } : {}) }, observed.observations, evidence, oracles.get(item.candidate)))
           }
         }
       }
@@ -148,8 +157,8 @@ export async function runStatic(context: RunContext) {
             report.results.push({ id: item.id, status: 'failed', support: 'supported', assertions: [], artifacts: [artifact.path], reason, warnings: [] })
           }
           for (const target of conversionTargets) {
-            if (!completed.has(conversionCaseContract(item, target).id)) {
-              report.results.push(conversionCaseResult(item, target, { execution: 'not-run', reason: `批次未完成，缺少可验证的 ${target} 转换证据：${reason}` }, [artifact.path]))
+            if (!completed.has(conversionCaseContract(item, target, oracleFor(item.candidate, target)).id)) {
+              report.results.push(conversionCaseResult(item, target, { execution: 'not-run', reason: `批次未完成，缺少可验证的 ${target} 转换证据：${reason}` }, [artifact.path], oracleFor(item.candidate, target)))
             }
           }
         }

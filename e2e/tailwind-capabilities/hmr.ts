@@ -12,7 +12,7 @@ import { assertionPassed, receipt, validateCapabilityReport, verifyReportArtifac
 
 interface UpdateMessage { type?: string, updates?: Array<{ path?: string, acceptedPath?: string }> }
 
-export async function runHmr(context: RunContext, engine: BrowserEngine) {
+export async function runHmr(context: RunContext, engine: BrowserEngine, borrowedBrowser?: Browser) {
   const contract = hmrContract()
   const output = { ...context, directory: path.join(context.directory, 'hmr') }
   const report = await newReport(output, `web-${engine}`, [contract], { hmrCss, hmrStates }, { engine, browserVersion: 'not-started', mode: 'real-vite-source-hmr', headless: true })
@@ -23,6 +23,7 @@ export async function runHmr(context: RunContext, engine: BrowserEngine) {
   const artifacts: string[] = []
   const assertions: SemanticAssertion[] = []
   let browser: Browser | undefined
+  let closeContext: (() => Promise<void>) | undefined
   let failure: string | undefined
   let failureCapture: (() => Promise<void>) | undefined
   const save = async (name: string, content: string | Uint8Array, kind: 'css' | 'bundle' | 'measurements' | 'screenshot' | 'log') => {
@@ -35,9 +36,12 @@ export async function runHmr(context: RunContext, engine: BrowserEngine) {
     await withHmrServer(context.root, context.runId, logs, async (server) => {
       report.environment.url = server.url
       report.environment.instance = server.instance
-      browser = await { chromium, firefox, webkit }[engine].launch({ headless: true })
+      browser = borrowedBrowser ?? await { chromium, firefox, webkit }[engine].launch({ headless: true })
       report.environment.browserVersion = browser.version()
       const browserContext = await browser.newContext({ viewport: { width: 640, height: 480 } })
+      if (borrowedBrowser) {
+        closeContext = () => browserContext.close()
+      }
       await browserContext.addInitScript(() => {
         (globalThis as any).__tailwindHmrSession = crypto.randomUUID()
       })
@@ -113,7 +117,7 @@ export async function runHmr(context: RunContext, engine: BrowserEngine) {
   }
   finally {
     try {
-      await browser?.close()
+      await (closeContext ? closeContext() : browser?.close())
     }
     catch (error) {
       failure = `${failure ?? ''}\n浏览器关闭失败：${String(error)}`

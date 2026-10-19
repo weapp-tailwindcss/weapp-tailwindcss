@@ -16,7 +16,7 @@ import { receipt, validateCapabilityReport, verifyReportArtifacts } from './repo
 export { registryAssertions, registryWebContracts, registryWebCoverage } from './registry-web/contract'
 export { registryWebProfile } from './registry-web/profiles'
 
-export async function runRegistryWeb(context: RunContext, engine: BrowserEngine, batchSize = 20) {
+export async function runRegistryWeb(context: RunContext, engine: BrowserEngine, batchSize = 20, borrowedBrowser?: Browser) {
   if (!Number.isInteger(batchSize) || batchSize < 1 || batchSize > 40) {
     throw new Error('注册 utility 对照的 batchSize 必须为 1 到 40 的整数')
   }
@@ -42,14 +42,18 @@ export async function runRegistryWeb(context: RunContext, engine: BrowserEngine,
   await save('reference.css', reference.css, 'css')
   await save('fixtures.json', { profiles, reference: reference.identity, coverage: registryWebCoverage(inventory) }, 'measurements')
   let browser: Browser | undefined
+  let closeContext: (() => Promise<void>) | undefined
   const errors: string[] = []
   try {
     await withGeneratorFixture(output.root, reference.productInput, {}, async (generator) => {
       const generated = await generator.generate({ target: 'web', candidates: [...new Set(profiles.map(item => item.candidate))], scanSources: false })
       await save('generated.css', generated.css, 'css')
-      browser = await { chromium, firefox, webkit }[engine].launch({ headless: true })
+      browser = borrowedBrowser ?? await { chromium, firefox, webkit }[engine].launch({ headless: true })
       report.environment.browserVersion = browser.version()
       const browserContext = await browser.newContext({ viewport: { width: 960, height: 900 }, colorScheme: 'light', reducedMotion: 'reduce' })
+      if (borrowedBrowser) {
+        closeContext = () => browserContext.close()
+      }
       const page = await browserContext.newPage()
       page.on('pageerror', error => errors.push(error.message))
       page.on('console', (message) => {
@@ -96,7 +100,7 @@ export async function runRegistryWeb(context: RunContext, engine: BrowserEngine,
   }
   finally {
     try {
-      await browser?.close()
+      await (closeContext ? closeContext() : browser?.close())
     }
     catch (error) {
       const reason = `本任务 ${engine} registry 浏览器关闭失败：${error instanceof Error ? error.message : String(error)}`

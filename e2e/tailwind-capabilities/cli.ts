@@ -9,7 +9,7 @@ import { runWithCleanup } from '../../scripts/e2e-preflight/cleanup'
 import { enterFullTestGate } from '../../scripts/e2e-preflight/gate'
 import { targetContext } from './context'
 import { runExternalTarget, runPnpmStage } from './external'
-import { parseOptions, selectCaseGroups, stageName } from './plan'
+import { parseOptions, stageName } from './plan'
 import { assertCapabilitySuccess } from './report'
 import { browserEngines } from './types'
 
@@ -27,32 +27,9 @@ async function execute(target: ExecutionTarget, context: RunContext) {
     return assertCapabilitySuccess(await runAuthoring(selected))
   }
   if (target.startsWith('web-')) {
-    const { runWeb, webProbes } = await import('./web')
+    const { runWebSuite } = await import('./web-suite')
     const engine = browserEngines.find(item => target === `web-${item}`)!
-    const { runRegistryWeb } = await import('./registry-web')
-    const { runHmr } = await import('./hmr')
-    const { runAuthoringWeb, authoringWebProfiles } = await import('./authoring-web')
-    const { hmrContract } = await import('./hmr/contract')
-    const { loadInventory } = await import('./inventory')
-    const inventory = await loadInventory()
-    const groups = selectCaseGroups(context.caseFilter, { authored: webProbes.map(probe => `runtime/${probe.id}`), registry: inventory.utilities.map(item => `registry/${item.id}`), hmr: [hmrContract().id], authoring: authoringWebProfiles.map(profile => profile.id) })
-    const reports: CapabilityReport[] = []
-    if (groups.authored) {
-      reports.push(await runWeb(selected, engine))
-    }
-    if (groups.registry) {
-      reports.push(await runRegistryWeb(selected, engine))
-    }
-    if (groups.hmr) {
-      reports.push(await runHmr(selected, engine))
-    }
-    if (groups.authoring) {
-      reports.push(await runAuthoringWeb(selected, engine))
-    }
-    for (const report of reports) {
-      assertCapabilitySuccess(report)
-    }
-    return
+    return runWebSuite(selected, engine)
   }
   if (target === 'weapp') {
     return runPnpmStage(selected, ['exec', 'tsx', 'e2e/tailwind-capabilities/weapp-cli.ts', selected.directory, selected.runId, ...(selected.caseFilter ? [selected.caseFilter.source, selected.caseFilter.flags] : [])], 'weapp')

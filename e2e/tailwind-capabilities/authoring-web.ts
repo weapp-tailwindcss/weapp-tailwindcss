@@ -15,7 +15,7 @@ import { receipt, validateCapabilityReport, verifyReportArtifacts } from './repo
 
 export { authoringWebCoverage, authoringWebProfiles } from './authoring-web/profiles'
 
-export async function runAuthoringWeb(context: RunContext, engine: BrowserEngine) {
+export async function runAuthoringWeb(context: RunContext, engine: BrowserEngine, borrowedBrowser?: Browser) {
   const profiles = authoringWebProfiles.filter(profile => !context.caseFilter || new RegExp(context.caseFilter.source, context.caseFilter.flags).test(profile.id))
   const contracts = profiles.map(authoringWebContract)
   const output = { ...context, directory: path.join(context.directory, 'authoring') }
@@ -25,12 +25,16 @@ export async function runAuthoringWeb(context: RunContext, engine: BrowserEngine
   await writeFile(path.join(output.directory, coverageName), `${JSON.stringify(coverage, null, 2)}\n`)
   report.artifacts.push(await receipt(path.join(output.directory, coverageName), output.directory, output.runId, profiles.map(profile => profile.id), 'measurements'))
   let browser: Browser | undefined
+  let closeContext: (() => Promise<void>) | undefined
   const errors: string[] = []
   try {
     if (profiles.some(profile => !profile.reason)) {
-      browser = await { chromium, firefox, webkit }[engine].launch({ headless: true })
+      browser = borrowedBrowser ?? await { chromium, firefox, webkit }[engine].launch({ headless: true })
       report.environment.browserVersion = browser.version()
       const browserContext = await browser.newContext({ viewport: { width: 960, height: 300 }, colorScheme: 'light', reducedMotion: 'reduce' })
+      if (borrowedBrowser) {
+        closeContext = () => browserContext.close()
+      }
       const page = await browserContext.newPage()
       page.on('pageerror', error => errors.push(error.message))
       page.on('console', (message) => {
@@ -99,7 +103,7 @@ export async function runAuthoringWeb(context: RunContext, engine: BrowserEngine
   }
   finally {
     try {
-      await browser?.close()
+      await (closeContext ? closeContext() : browser?.close())
     }
     catch (error) {
       report.environment.cleanupError = String(error)
