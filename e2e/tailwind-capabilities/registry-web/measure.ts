@@ -8,6 +8,7 @@ export interface RegistryObservation {
   pseudoStyles: Record<string, string>
   geometry: number[]
   unavailableProperties: string[]
+  declarationEvidence?: Array<{ property: string, value: string, supported: boolean, cssom: string }>
 }
 
 export async function observeRegistry(frame: Frame, profiles: readonly RegistryWebProfile[]): Promise<RegistryObservation[]> {
@@ -22,7 +23,7 @@ export async function observeRegistry(frame: Frame, profiles: readonly RegistryW
       const origin = section.getBoundingClientRect()
       const children = Array.from(section.querySelectorAll('[data-child]'))
       // 序列化到浏览器的函数不能捕获 tsx 为具名局部函数生成的模块级 helper。
-      const readings = [{ element: probe, pseudo: undefined }, ...children.map(element => ({ element, pseudo: undefined })), ...(profile.properties.includes('content') ? [{ element: probe, pseudo: '::before' }] : [])].map(({ element, pseudo }) => {
+      const readings = [{ element: probe, pseudo: undefined }, ...children.map(element => ({ element, pseudo: undefined })), ...(profile.pseudo ? [{ element: probe, pseudo: profile.pseudo }] : [])].map(({ element, pseudo }) => {
         const style = window.getComputedStyle(element, pseudo)
         return Object.fromEntries(profile.properties.map(property => [property, style.getPropertyValue(property).trim().replace(/\s+/g, ' ')]))
       })
@@ -31,9 +32,14 @@ export async function observeRegistry(frame: Frame, profiles: readonly RegistryW
         const rect = element.getBoundingClientRect()
         return [rect.left - origin.left, rect.top - origin.top, rect.width, rect.height, element.scrollWidth, element.scrollHeight]
       })
-      return { id: profile.id, styles, childStyles: readings.slice(1, children.length + 1), pseudoStyles: profile.properties.includes('content') ? readings.at(-1)! : {}, geometry, unavailableProperties: profile.properties.filter(property => !styles[property] && !property.startsWith('--')) }
+      const declarationEvidence = profile.declarations.filter(item => !item.property.startsWith('--') && !['syntax', 'inherits', 'initial-value'].includes(item.property)).map(({ property, value }) => {
+        const style = document.createElement('div').style
+        style.setProperty(property, value)
+        return { property, value, supported: CSS.supports(property, value), cssom: style.getPropertyValue(property) }
+      })
+      return { id: profile.id, styles, childStyles: readings.slice(1, children.length + 1), pseudoStyles: profile.pseudo ? readings.at(-1)! : {}, geometry, declarationEvidence, unavailableProperties: profile.properties.filter(property => !styles[property] && !property.startsWith('--')) }
     })
-  }, profiles.map(({ id, index, properties }) => ({ id, index, properties })))
+  }, profiles.map(({ id, index, properties, pseudo, declarations }) => ({ id, index, properties, pseudo, declarations })))
 }
 
 export function registryStyleEqual(left: RegistryObservation, right: RegistryObservation) {

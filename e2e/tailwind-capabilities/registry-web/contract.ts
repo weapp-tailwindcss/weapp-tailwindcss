@@ -1,20 +1,26 @@
 import type { TailwindInventory } from '../inventory'
-import type { CaseContract, SemanticAssertion } from '../types'
+import type { BrowserEngine, CaseContract, SemanticAssertion } from '../types'
 import type { RegistryObservation } from './measure'
 import type { RegistryWebProfile } from './profiles'
+import { registryLimitContract, registryWebLimit } from './limits'
 import { registryGeometryEqual, registryReferenceEffective, registryStyleEqual } from './measure'
 
-export function registryWebContracts(profiles: readonly RegistryWebProfile[]): CaseContract[] {
-  return profiles.map(profile => ({
-    id: profile.id,
-    features: [profile.featureId],
-    candidate: profile.candidate,
-    fixture: JSON.stringify({ ...profile, geometryTolerance: 0.25, animationTimeMs: 137, oracle: 'independent-official-tailwindcss-reference-with-baseline' }),
-    expectation: { support: 'supported', stage: 'runtime' },
-    requiredAssertions: ['generated', 'reference-measurable', 'reference-effective', 'styles-match-reference', 'geometry-match-reference'],
-    expectedValues: { 'generated': true, 'reference-measurable': true, 'reference-effective': true, 'styles-match-reference': true, 'geometry-match-reference': true },
-    assertionStages: { generated: 'generation' },
-  }))
+export function registryWebContracts(profiles: readonly RegistryWebProfile[], engine?: BrowserEngine, platform = ''): CaseContract[] {
+  return profiles.map((profile) => {
+    const limit = engine ? registryWebLimit(profile, engine, platform) : undefined
+    return limit
+      ? registryLimitContract(profile, limit)
+      : ({
+          id: profile.id,
+          features: [profile.featureId],
+          candidate: profile.candidate,
+          fixture: JSON.stringify({ ...profile, geometryTolerance: 0.25, animationTimeMs: 137, oracle: 'independent-official-tailwindcss-reference-with-baseline' }),
+          expectation: { support: 'supported', stage: 'runtime' },
+          requiredAssertions: ['generated', 'reference-measurable', 'reference-effective', 'styles-match-reference', 'geometry-match-reference'],
+          expectedValues: { 'generated': true, 'reference-measurable': true, 'reference-effective': true, 'styles-match-reference': true, 'geometry-match-reference': true },
+          assertionStages: { generated: 'generation' },
+        })
+  })
 }
 
 export function registryWebCoverage(inventory: TailwindInventory) {

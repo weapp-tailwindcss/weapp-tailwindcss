@@ -1,3 +1,14 @@
+// 编译器会接受无类型任意值；运行时见证必须同时符合对应 CSS 属性的值域。
+export const utilitySemanticWitnesses: Record<string, string> = {
+  '-col': '-col-1',
+  '-row': '-row-1',
+  'contain': 'contain-[layout]',
+  'cursor': 'cursor-[crosshair]',
+  'will-change': 'will-change-[opacity]',
+  'mask-conic-from': 'mask-conic-from-[25%]',
+  'mask-conic-to': 'mask-conic-to-[75%]',
+}
+
 export const utilityWitnessSupplements: Record<string, string[]> = {
   'max-w-screen': ['max-w-screen-sm'],
   'bg-size': ['bg-size-[17px_23px]'],

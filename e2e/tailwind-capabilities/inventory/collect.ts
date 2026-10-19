@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { functionalValueProfiles } from '../../../tools/tailwindcss-test-catalog/src/value-profiles'
-import { utilityWitnessSupplements, variantWitnessSupplements } from './supplements'
+import { utilitySemanticWitnesses, utilityWitnessSupplements, variantWitnessSupplements } from './supplements'
 
 const require = createRequire(import.meta.url)
 
@@ -62,7 +62,7 @@ export async function collectInventory(designSystem?: DefaultDesignSystem): Prom
   const supplements: TailwindInventory['supplements'] = []
   for (const kind of ['static', 'functional'] as const) {
     for (const root of ds.utilities.keys(kind).sort()) {
-      const preferred = kind === 'static' ? [root] : []
+      const preferred = kind === 'static' ? [root] : utilitySemanticWitnesses[root] ? [utilitySemanticWitnesses[root]!] : []
       const candidates = [...preferred, ...(completionByIdentity.get(`${kind}/${root}`) ?? []), ...(utilityWitnessSupplements[root] ?? [])]
       const profileWitnesses: UtilityInventoryEntry['profileWitnesses'] = []
       if (kind === 'functional') {

@@ -74,11 +74,12 @@ describe('CLI 编译后的浏览器闭包传输边界', () => {
     const child = { getBoundingClientRect: () => ({ left: 14, top: 26, width: 20, height: 10 }), scrollWidth: 20, scrollHeight: 10 }
     const section = { querySelector: () => probe, querySelectorAll: (selector: string) => selector === '[data-child]' ? [child] : [], getBoundingClientRect: () => ({ left: 8, top: 12 }) }
     const result = runInNewContext(`(${serialized})(definitions)`, {
-      definitions: [{ id: 'unit/color', index: 3, properties: ['color', 'content'] }],
-      document: { getAnimations: () => [], querySelector: () => section },
+      definitions: [{ id: 'unit/color', index: 3, properties: ['color', 'content'], pseudo: '::before', declarations: [{ property: 'color', value: 'red' }] }],
+      document: { getAnimations: () => [], querySelector: () => section, createElement: () => ({ style: { setProperty: () => {}, getPropertyValue: () => 'red' } }) },
+      CSS: { supports: () => true },
       window: { getComputedStyle: (_element: unknown, pseudo: string | undefined) => ({ getPropertyValue: (property: string) => property === 'color' ? ' rgb(18, 52, 86) ' : pseudo ? '"probe"' : 'normal' }) },
     })
-    expect(result).toEqual([{ id: 'unit/color', styles: { color: 'rgb(18, 52, 86)', content: 'normal' }, childStyles: [{ color: 'rgb(18, 52, 86)', content: 'normal' }], pseudoStyles: { color: 'rgb(18, 52, 86)', content: '"probe"' }, geometry: [2, 8, 80, 48, 80, 48, 6, 14, 20, 10, 20, 10], unavailableProperties: [] }])
+    expect(result).toEqual([{ id: 'unit/color', styles: { color: 'rgb(18, 52, 86)', content: 'normal' }, childStyles: [{ color: 'rgb(18, 52, 86)', content: 'normal' }], pseudoStyles: { color: 'rgb(18, 52, 86)', content: '"probe"' }, geometry: [2, 8, 80, 48, 80, 48, 6, 14, 20, 10, 20, 10], declarationEvidence: [{ property: 'color', value: 'red', supported: true, cssom: 'red' }], unavailableProperties: [] }])
   })
 
   it('真实tsx加载的context测量保留原生事件与媒体证据且不需要模块helper', async () => {
