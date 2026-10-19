@@ -4,6 +4,7 @@ import { transformLynxCssCompat } from '../packages/postcss/src/compat/lynx-css'
 import { transformWebCssCompat } from '../packages/postcss/src/compat/web-css'
 import { encodeLynxCss } from './lynx/batch-encode'
 import { exampleDir } from './lynx/catalog'
+import { cssDeclarations } from './tailwind-capabilities/css'
 
 async function encodeCss(css: string, mode?: 'wasm') {
   return encodeLynxCss(css, { mode, applyCompatibility: false })
@@ -24,6 +25,20 @@ async function generateCss(candidates: string) {
 }
 
 describe('Lynx native CSS defaults', () => {
+  it('真实 decoder 的变量展示文本不能作为标准 CSS 或 serializer 输入的语义替身', async () => {
+    const input = '.probe{width:32px;color:var(--probe-color,red)}'
+    const encoded = await encodeCss(input, 'wasm')
+    expect(encoded.sourceCss).toBe(input)
+    expect(encoded.sourceCss).not.toContain('{{')
+    expect(encoded.encodedByteLength).toBeGreaterThan(0)
+    expect(encoded.css).toContain('color: {{--probe-color}}')
+    expect(encoded.css).not.toContain('var(--probe-color,red)')
+    expect(() => cssDeclarations(encoded.css)).toThrow()
+    expect(encoded.rules.find(rule => rule.selectorText?.value === '.probe')?.style).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'color', defaultValueMap: { '--probe-color': 'red' } }),
+    ]))
+  })
+
   it('将 Tailwind v4 百分比透明度编码为 Lynx 原生数值', async () => {
     const css = await generateCss('opacity-50')
     expect(css).toContain('opacity: 0.5')
