@@ -14,6 +14,8 @@ For repeated comparisons against one CSS string, `createCssRuleMatcher(baseCss)`
 
 The isolated `@weapp-tailwindcss/postcss/native` entry provides `compileNativeCss(css, options)` for CSS-to-native style translation. It returns rules, variables, and warnings. React Native manifest IDs, Tailwind generation, and runtime integration remain in `@weapp-tailwindcss/react-native`; importing its `/runtime` entry does not load this compiler.
 
+`unsupportedVariant(className)` returns the first variant outside `dark`, `ios`, `android`, and `native`, allowing native adapters to reject compound browser conditions before deriving a rule from a generated base class.
+
 `@weapp-tailwindcss/postcss/native-runtime` exposes the pure JavaScript `resolveNativeBoxShadow()` value interpreter. It resolves class variables using each declaration's source defaults, without loading the PostCSS compiler, Node APIs, or Tailwind generation.
 
 ## Experimental transforms

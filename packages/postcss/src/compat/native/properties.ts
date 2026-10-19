@@ -1,5 +1,6 @@
 /* eslint-disable style/max-statements-per-line */
 
+import valueParser from 'postcss-value-parser'
 import { parseNativeBoxShadow } from './shadow'
 import { parseNativeTransform } from './transform'
 import { isColor, normalizeColor, parseNumber, resolveVariables } from './values'
@@ -73,10 +74,21 @@ const STRING_PROPERTIES = new Set([
   'textTransform',
   'writingDirection',
 ])
-const SHORTHANDS: Record<string, string[]> = {
+/** RN 0.81 布局 API 的封闭枚举；CSS 独有关键字必须诊断，不能静默透传。 */
+const LAYOUT_KEYWORDS: Readonly<Record<string, readonly string[]>> = {
+  display: ['flex', 'none', 'contents'],
+  position: ['relative', 'absolute', 'static'],
+  flexDirection: ['row', 'column', 'row-reverse', 'column-reverse'],
+  flexWrap: ['wrap', 'nowrap', 'wrap-reverse'],
+  alignItems: ['flex-start', 'flex-end', 'center', 'stretch', 'baseline'],
+  alignSelf: ['auto', 'flex-start', 'flex-end', 'center', 'stretch', 'baseline'],
+  alignContent: ['flex-start', 'flex-end', 'center', 'stretch', 'space-between', 'space-around', 'space-evenly'],
+  justifyContent: ['flex-start', 'flex-end', 'center', 'space-between', 'space-around', 'space-evenly'],
+}
+const SHORTHANDS = {
   margin: ['marginTop', 'marginRight', 'marginBottom', 'marginLeft'],
   padding: ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft'],
-}
+} as const
 const UNSUPPORTED_PROPERTIES = new Set([
   'filter',
   'backdropFilter',
@@ -113,7 +125,18 @@ export function propertyName(property: string) {
 }
 
 function splitValue(value: string) {
-  return value.trim().split(/\s+/).filter(Boolean)
+  const parts: string[] = []
+  let current = ''
+  for (const node of valueParser(value).nodes) {
+    if (node.type === 'space' || node.type === 'comment') {
+      if (current) { parts.push(current); current = '' }
+    }
+    else {
+      current += valueParser.stringify(node)
+    }
+  }
+  if (current) { parts.push(current) }
+  return parts
 }
 
 export function relativeLineHeight(value: string, variables: Record<string, string>) {
@@ -142,15 +165,15 @@ function parseValue(property: string, value: string, variables: Record<string, s
   }
   if (property === 'transform') { return parseNativeTransform(trimmed) }
   if (property === 'boxShadow') { return parseNativeBoxShadow(trimmed) }
-  if (property === 'display' && !['flex', 'none'].includes(trimmed)) { return undefined }
+  if (LAYOUT_KEYWORDS[property] && !LAYOUT_KEYWORDS[property]!.includes(trimmed)) { return undefined }
   return STRING_PROPERTIES.has(property) ? trimmed : undefined
 }
 
 export function expandDeclaration(property: string, value: string, variables: Record<string, string>) {
   if (property === 'margin' || property === 'padding') {
     const parts = splitValue(value).map(item => parseNumber(item, variables))
-    if (parts.includes(undefined)) { return undefined }
-    const values = parts as number[]
+    if (!parts.length || parts.length > 4 || parts.includes(undefined)) { return undefined }
+    const values = parts as Array<string | number>
     const [top, right = top, bottom = top, left = right] = values
     return Object.fromEntries(SHORTHANDS[property].map((key, index) => [key, [top, right, bottom, left][index]]))
   }
