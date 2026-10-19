@@ -31,6 +31,9 @@ regressions:
   - e2e/tailwind-web-lifecycle-runner.test.ts
   - e2e/tailwind-browser-serialization.test.ts
   - e2e/react-native-ios-build.test.ts
+  - e2e/react-native-native-wait.test.ts
+  - e2e/react-native-artifact-evidence.test.ts
+  - e2e/react-native-reporter-session.test.ts
   - e2e/lynx-reports.test.ts
   - e2e/lynx-native-failure.test.ts
   - e2e/lynx-failure-evidence.test.ts
@@ -127,6 +130,10 @@ Lynx 首轮双端已采集运行时报告，但与历史提交的 catalog 身份
 后续为固定 Lynx 4.0.1 预先登记独立媒体必要条件合同：原生宿主实际读取 SDK 版本、12 个矩形、6 张 PNG 与保留名侧车，要求无条件和 min-width 正向对照生效，hover:hover 与 hover:none 两组保持基线；缺证或任一结果不符均失败。验收端重新读取原始 PNG、侧车和本轮 CSS/TASM 的全部候选规则，不能仅信报告 metadata。只有完整原生证据符合时，原候选才在 runtime/media 必要门禁处拒绝，hover 输入和伪状态明确保持 not-tested，不向 v2 原子状态能力传播覆盖。主树整合后 152 项证据/报告/adapter 定向回归和 178 项示例测试通过；双端 SDK 纯编译通过，实际六帧仍等待 CI，不手工更新最终历史报告。新增三份媒体回归已纳入统一合同和 Lynx 显式入口。
 
 独立审查随后发现，字面 selector 匹配会漏掉十六进制等价转义的无 guard 替代规则。离线静态层现复用 CSS AST 的 class 语义匹配所有分支，runtime 仅接受两条已审查的完整规范 selector，不引入解析器；CSS/TASM 等价转义、属性字面量和原始产物重读新增 12 项回归，其中 8 项先红后绿。整合后 CI=1 pnpm e2e:tailwind:contract 为 61 文件、868 项通过；Lynx 真实构建/编码/扫描另 45 项通过。第二轮旧 head 6d1f54587 的 Benchmark 全部分片首次通过，Windows 启动、三平台 watch、Chromium、RN Android/Web 通过；这些旧 head 结果不能代替后续提交的 CI。
+
+head `2633f77a8` 的 RN Android 和 Expo Web CI 已通过，iOS 已收到基线报告；TSX HMR 也已生效，37 项宿主采集和 118 项结果无失败，但采集约 134 秒，超过原 120 秒等待，完整报告在失败收尾时才到达。现在累计计算客户端原 120 秒预算，只扣除本轮认证 revision、预登记唯一 case 的实际宿主采集区间；单例仍有 10 秒硬截止、登记数量总上限和子进程取消，旧身份、重复或重叠采集不能续命，构建启动继续按墙钟。审查同时发现循环退出后可能只有一个通过帧，已补回归并严格拒绝缺两连续帧、首帧迟到和第二帧迟到。9 文件 117 项、Expo 示例 8 项和核心类型检查通过；主树整合相关 8 文件 123 项通过。新行为尚待实际 CI，诊断 run `39228158639` 绑定 `8258978c3`；没有调整像素阈值、减少案例或更新 CSS/static。
+
+Benchmark run `39223188622` 首轮 Taro Vite steady 插件 P95 从 1980ms 增至 2555ms，两个样本均越界，是真实门禁失败，原始 artifact `12173201020` 保留。同一 SHA/base、三轮构建与 HMR、同一阈值下只定向复测一次，attempt 2 的插件样本从 `[1773,1647]` 至 `[1699,1634]`，门禁 -4.17%、无 violations；聚合只选择新 artifact `12174092954`，其余四项目继续用首轮成功证据。复测与聚合均通过，仅说明本次未复现，不证明首轮样本无效或环境噪声；未改生产优化或阈值，复测预算已耗尽。head `2633f77a8` 的三浏览器、quality 三组、Windows 默认 utility、三系统 startup/watch 和 macOS 微信 watch 也已通过，portable 矩阵当时仍未完成，旧 head 结果不能代替后续提交。
 
 Lynx run `39223188341`（head `2633f77a8`）双端在 `validateMediaGateEvidence` 拒绝后提前退出，旧失败路径没有导出六张原图和原生侧车，PrimJS 的 stack 又未包含 Error.message；这些产物不足以判定具体媒体行为。失败取证现使用本轮独占目录、固定八文件白名单和诊断专用目录，分别记录缺失和导出错误，并保留原异常；诊断不能作为通过证据或 crops，也不修改预先媒体合同。真实失败子进程和 stack-only 回归先红后绿，整合后相关六文件 61 项通过；新回归已接入双端 workflow 与统一合同。独立诊断分支 `codex/tailwind-lynx-ci` 的 run `39226463939` 绑定源码 `a52da250608531731ce4600b92f3e4bd37f459ec`，用于收取新证据，不能代替 PR 最新提交的正式检查。
 
