@@ -6,8 +6,8 @@ import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { compatibilityCases } from '@weapp-tailwindcss/test-catalog'
 import { expectedFixtureStyle, nativeBuildCases, nativeBuildFixtures, nativeFixtures, rejectedNativeCases, styleContains } from '../../examples/react-native-expo/src/compatibility/protocol'
-import { validateNativeEncodingArtifacts } from '../react-native/encoding-evidence'
 import { validateNativeArtifacts } from '../react-native/pair-evidence'
+import { validateNativeRuntimePhases } from '../react-native/phase-evidence'
 import { validateReactNativeReport } from '../react-native/reports'
 import { newReport, persistReport } from './context'
 import { loadInventory } from './inventory'
@@ -128,8 +128,21 @@ export async function buildNativeCapabilityReport(context: RunContext, target: N
     const platform = target.startsWith('expo-') ? 'web' : target.slice('react-native-'.length) as 'android' | 'ios'
     validateReactNativeReport(raw, platform, { runId: context.runId, revision: 'rn-hmr-updated-f59e0b' })
     await validateNativeArtifacts(raw, directory)
-    for (const file of await validateNativeEncodingArtifacts(raw, directory)) {
+    const archived = await validateNativeRuntimePhases(raw, directory)
+    record(await receipt(archived.indexFile, context.directory, context.runId, compatibilityCases.map(item => caseId(item.id)), 'bundle'))
+    for (const file of archived.compatibilityFiles) {
       record(await receipt(file, context.directory, context.runId, [...nativeBuildCases].map(caseId), 'bundle'))
+    }
+    for (const phase of archived.phases) {
+      record(await receipt(phase.reportFile, context.directory, context.runId, compatibilityCases.map(item => caseId(item.id)), 'bundle'))
+      for (const file of [...phase.encodingFiles, ...phase.sourceFiles]) {
+        record(await receipt(file, context.directory, context.runId, compatibilityCases.map(item => caseId(item.id)), 'bundle'))
+      }
+      for (const saved of phase.report.receipts) {
+        for (const [name, kind] of [[saved.artifact.name, 'screenshot'], [`${saved.artifact.name}.json`, 'measurements']] as const) {
+          record(await receipt(path.join(directory, name), context.directory, context.runId, [caseId(saved.id)], kind))
+        }
+      }
     }
     if (target.startsWith('expo-') && raw.environment.browser?.name !== target.slice('expo-'.length)) {
       throw new Error('Expo 原始报告的浏览器与本轮目标不一致')

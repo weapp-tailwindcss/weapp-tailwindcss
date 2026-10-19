@@ -1,3 +1,4 @@
+import type { NativeStyleManifest } from '../../packages/react-native/src/types'
 import type { ReactNativeReport } from './catalog'
 import { createHash } from 'node:crypto'
 import { mkdir, writeFile } from 'node:fs/promises'
@@ -9,14 +10,14 @@ import { collectStaticEvidence } from './static-evidence'
 let generatedFixture: ReturnType<typeof collectStaticEvidence> | undefined
 
 /** 单测模拟宿主归档的真实文件形状，错误产物由各反例显式修改。 */
-export async function writeEncodingFixture(directory: string, report: ReactNativeReport) {
+export async function writeEncodingFixture(directory: string, report: ReactNativeReport, options: { manifest?: NativeStyleManifest, publication?: { revision: string, virtualPath: string } } = {}) {
   const evidence = structuredClone(await (generatedFixture ??= collectStaticEvidence()))
-  const manifest = evidence.manifest
+  const manifest = options.manifest ?? evidence.manifest
   const source = JSON.stringify(manifest)
-  const staticInput = JSON.stringify({ schemaVersion: 2, fixtureHash: RN_FIXTURE_HASH, rawCss: evidence.rawCss, manifest, generation: evidence.generation })
+  const staticInput = JSON.stringify({ schemaVersion: 2, fixtureHash: RN_FIXTURE_HASH, rawCss: evidence.rawCss, manifest: evidence.manifest, generation: evidence.generation })
   const runtimeInput = evidence.generation.runtimeInput.config.source
   const digest = (value: string) => createHash('sha256').update(value).digest('hex')
-  const ready = JSON.stringify({ revision: 'metro-publication', virtualPath: 'virtual.js' })
+  const ready = JSON.stringify(options.publication ?? { revision: 'metro-publication', virtualPath: 'virtual.js' })
   const output = path.join(directory, 'encoding')
   await mkdir(output, { recursive: true })
   await writeFile(path.join(output, 'manifest.json'), source)

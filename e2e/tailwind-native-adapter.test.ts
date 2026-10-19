@@ -1,16 +1,14 @@
-import type { NativePairEvidence, ReactNativeReport } from '../examples/react-native-expo/src/compatibility/protocol'
+import type { ReactNativeReport } from '../examples/react-native-expo/src/compatibility/protocol'
 import type { RunContext } from './tailwind-capabilities/context'
 import type { CapabilityReport } from './tailwind-capabilities/types'
-import { createHash } from 'node:crypto'
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { PNG } from 'pngjs'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { expectedFixtureStyle, nativeBuildCases, nativeBuildFixtures, nativeFixtures, rejectedNativeCases } from '../examples/react-native-expo/src/compatibility/protocol'
-import { compatibilityCases, reactNativeVersions, RN_CATALOG_HASH, RN_FIXTURE_HASH } from './react-native/catalog'
-import { writeEncodingFixture } from './react-native/encoding-fixture'
-import { assessNativePair } from './react-native/pair-evidence'
+import { nativeBuildCases, nativeBuildFixtures, nativeFixtures, rejectedNativeCases } from '../examples/react-native-expo/src/compatibility/protocol'
+import { nativeEncodingArtifactNames, nativeRuntimePhases } from './react-native/phase-contract'
+import { updateNativePhaseFixtureReport, writeNativePhaseFixture } from './react-native/phase-fixture'
+import { writeRuntimeFixture } from './react-native/runtime-fixture'
 import { buildNativeCapabilityReport } from './tailwind-capabilities/native-adapter'
 
 vi.mock('./tailwind-capabilities/context', async importOriginal => ({
@@ -37,101 +35,44 @@ async function fixture(platform: ReactNativeReport['platform'] = 'web') {
   directories.push(directory)
   const context: RunContext = { root: directory, directory, runId: 'adapter-current-run', startedAt: new Date().toISOString() }
   const artifacts = path.join(directory, 'native')
-  await mkdir(artifacts)
-  const image = new PNG({ width: 64, height: 64 })
-  for (let y = 0; y < image.height; y++) {
-    for (let x = 0; x < image.width; x++) {
-      const offset = (y * image.width + x) * 4
-      image.data[offset] = (x % 32) * 7
-      image.data[offset + 1] = y * 9
-      image.data[offset + 2] = (x % 32 + y) * 3
-      image.data[offset + 3] = 255
+  const raw = await writeRuntimeFixture(artifacts, platform, context.runId, context.startedAt!)
+  await writeNativePhaseFixture(artifacts, raw)
+  const save = async () => {
+    await writeFile(path.join(artifacts, 'report.json'), JSON.stringify(raw))
+    if (nativeRuntimePhases.some(phase => phase.revision === raw.revision)) {
+      await updateNativePhaseFixtureReport(artifacts, raw)
     }
   }
-  const raw: ReactNativeReport = {
-    schemaVersion: 2,
-    stage: 'runtime',
-    revision: 'rn-hmr-updated-f59e0b',
-    platform,
-    catalogHash: RN_CATALOG_HASH,
-    fixtureHash: RN_FIXTURE_HASH,
-    runId: context.runId,
-    verifiedAt: context.startedAt!,
-    versions: reactNativeVersions(),
-    environment: { deviceName: 'synthetic-unit-fixture', osName: platform, osVersion: '1', runtimeIdentifier: 'unit', abi: 'unit', viewport: { width: 64, height: 64, pixelRatio: 1 }, ...(platform === 'web' ? { browser: { name: 'chromium', version: '1' } as const } : {}) },
-    results: [],
-    receipts: [],
-  }
-  for (const item of compatibilityCases) {
-    const rejected = rejectedNativeCases.has(item.id)
-    const result: ReactNativeReport['results'][number] = {
-      id: item.id,
-      status: rejected ? 'unsupported' : 'supported',
-      ...(rejected ? { reason: '独立编码边界' } : {}),
-      generated: true,
-      encoded: !rejected,
-      warnings: rejected ? ['此单测的独立候选编码拒绝诊断'] : [],
-      generatedDeclarations: [],
-      encodedStyle: nativeBuildFixtures[item.id]?.style ?? {},
-      checkpoints: [
-        { name: 'generation:candidates', passed: true },
-        ...item.declarations.map((declaration, index) => ({ name: `generation:declaration:${index}:${declaration.property}`, passed: true })),
-        { name: 'encoder:complete', passed: !rejected },
-        ...(rejected ? [{ name: 'encoder:expected-rejection', passed: true }] : []),
-      ],
-    }
-    for (const phase of nativeFixtures[item.id]?.phases ?? (nativeFixtures[item.id] ? ['default'] : [])) {
-      const pair: NativePairEvidence = {
-        runId: raw.runId,
-        platform,
-        revision: raw.revision,
-        id: item.id,
-        phase,
-        probe: { x: 0, y: 0, width: 24, height: 24 },
-        reference: { x: 32, y: 0, width: 24, height: 24 },
-        control: { x: 0, y: 32, width: 24, height: 24 },
-        target: { x: 2, y: 2, width: 8, height: 8 },
-        referenceTarget: { x: 34, y: 2, width: 8, height: 8 },
-        controlTarget: { x: 2, y: 34, width: 8, height: 8 },
-        viewport: raw.environment.viewport,
-      }
-      const expectsEffect = Object.keys(expectedFixtureStyle(item.id, phase, platform)!).length > 0
-      for (let y = 0; y < 24; y++) {
-        for (let x = 0; x < 24; x++) {
-          const source = (y * image.width + x) * 4
-          const destination = ((y + 32) * image.width + x) * 4
-          image.data.set(expectsEffect ? [226, 232, 240, 255] : image.data.subarray(source, source + 4), destination)
-        }
-      }
-      if (item.id === 'syntax-important') {
-        const rgba = phase.endsWith('-normal') ? [220, 38, 38, 255] : [115, 115, 115, 255]
-        for (const side of ['probe', 'reference', 'control'] as const) {
-          const rect = pair[side]
-          for (let y = rect.y; y < rect.y + rect.height; y++) {
-            for (let x = rect.x; x < rect.x + rect.width; x++) {
-              image.data.set(side === 'control' ? [192, 38, 211, 255] : rgba, (y * image.width + x) * 4)
-            }
-          }
-        }
-      }
-      const png = PNG.sync.write(image)
-      const checkpoints = assessNativePair(image, pair)
-      const name = `case-${raw.revision}-${item.id}-${phase}.png`
-      const receipt = { id: item.id, phase, runId: raw.runId, checkpoints, artifact: { name, sha256: createHash('sha256').update(png).digest('hex'), byteLength: png.length } }
-      raw.receipts.push(receipt)
-      result.checkpoints.push({ name: `runtime:${phase}:style`, passed: true, actual: JSON.stringify(expectedFixtureStyle(item.id, phase, platform)) }, ...checkpoints)
-      await writeFile(path.join(artifacts, name), png)
-      await writeFile(path.join(artifacts, `${name}.json`), JSON.stringify({ pair, receipt }))
-    }
-    raw.results.push(result)
-  }
-  const save = () => writeFile(path.join(artifacts, 'report.json'), JSON.stringify(raw))
-  await save()
-  await writeEncodingFixture(artifacts, raw)
   return { context, raw, artifacts, save }
 }
 
 describe('原生统一能力报告', () => {
+  it.each(['expo-chromium', 'expo-firefox', 'expo-webkit', 'react-native-android', 'react-native-ios'] as const)('%s 逐阶段登记全部编码回执，不会遗漏新增文件', async (target) => {
+    const platform = target.startsWith('expo-') ? 'web' : target.endsWith('android') ? 'android' : 'ios'
+    const { context, raw, artifacts, save } = await fixture(platform)
+    if (platform === 'web') {
+      raw.environment.browser!.name = target.slice('expo-'.length) as 'chromium' | 'firefox' | 'webkit'
+      await writeNativePhaseFixture(artifacts, raw)
+      await save()
+    }
+    const { report } = await buildNativeCapabilityReport(context, target, raw)
+    expect(report.results.filter(item => item.id.startsWith('compatibility/')).every(item => item.status === 'passed')).toBe(true)
+    for (const phase of nativeRuntimePhases) {
+      for (const name of nativeEncodingArtifactNames) {
+        const file = path.join('native', 'phases', phase.id, 'encoding', name)
+        expect(report.artifacts.some(item => item.path === file && item.kind === 'bundle')).toBe(true)
+        expect(report.results.find(item => item.id === 'compatibility/directive-apply')!.artifacts).toContain(file)
+      }
+    }
+  })
+
+  it.each(['baseline', 'tsx-hmr'])('缺少 %s 编码时，最终兼容入口完整也必须阻断统一报告', async (id) => {
+    const { context, raw, artifacts } = await fixture()
+    await rm(path.join(artifacts, 'phases', id, 'encoding', 'manifest.json'))
+    const { report } = await buildNativeCapabilityReport(context, 'expo-chromium', raw)
+    expect(report.results.filter(item => item.status === 'passed')).toEqual([])
+  })
+
   it('分别记录 26 项运行时、5 项编码和 87 项拒绝，并保留未覆盖的注册能力', async () => {
     const { context, raw } = await fixture()
     const { report, contracts } = await buildNativeCapabilityReport(context, 'expo-chromium', raw)
@@ -150,11 +91,11 @@ describe('原生统一能力报告', () => {
       expect(missing.some(item => item.id === `inventory/${id}`)).toBe(true)
     }
     expect(missing.some(item => item.id === 'inventory/utility/functional/bg')).toBe(false)
-    const screenshot = report.artifacts.find(item => item.kind === 'screenshot')!
+    const screenshot = report.artifacts.find(item => item.kind === 'screenshot' && item.path === path.join('native', raw.receipts[0]!.artifact.name))!
     expect(screenshot.sha256).toBe(raw.receipts[0]!.artifact.sha256)
     expect(screenshot.path).toBe(path.join('native', raw.receipts[0]!.artifact.name))
     const phases = Object.values(nativeFixtures).reduce((count, item) => count + (item.phases?.length ?? 1), 0)
-    expect(report.artifacts.filter(item => item.kind === 'measurements')).toHaveLength(phases)
+    expect(report.artifacts.filter(item => item.kind === 'measurements')).toHaveLength(phases * nativeRuntimePhases.length)
     expect(await readFile(path.join(context.directory, 'report.md'), 'utf8')).toContain('未执行')
   })
 
