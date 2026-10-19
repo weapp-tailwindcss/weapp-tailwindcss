@@ -1,0 +1,55 @@
+--- a/core/renderer/css/ng/selector/lynx_css_selector.cc
++++ b/core/renderer/css/ng/selector/lynx_css_selector.cc
+@@ -14,6 +14,39 @@
+ 
+ namespace lynx {
+ namespace css {
++
++namespace {
++
++void AppendCSSIdentifier(std::string& result, const std::string& identifier) {
++  constexpr char kHexDigits[] = "0123456789abcdef";
++  for (size_t index = 0; index < identifier.size(); ++index) {
++    const auto character = static_cast<unsigned char>(identifier[index]);
++    if (character == 0) {
++      result += "\xef\xbf\xbd";
++    } else if (character <= 0x1f || character == 0x7f ||
++               (character >= '0' && character <= '9' &&
++                (index == 0 || (index == 1 && identifier[0] == '-')))) {
++      // CSSOM 的码点转义后保留空格，避免后续十六进制字符被合并。
++      result.push_back('\\');
++      if (character >= 0x10) result.push_back(kHexDigits[character >> 4]);
++      result.push_back(kHexDigits[character & 0xf]);
++      result.push_back(' ');
++    } else if (character == '-' && identifier.size() == 1) {
++      result += "\\-";
++    } else if (character >= 0x80 || character == '-' || character == '_' ||
++               (character >= '0' && character <= '9') ||
++               (character >= 'A' && character <= 'Z') ||
++               (character >= 'a' && character <= 'z')) {
++      // 非 ASCII 的 UTF-8 字节保持原样，不改变已解码的标识符。
++      result.push_back(static_cast<char>(character));
++    } else {
++      result.push_back('\\');
++      result.push_back(static_cast<char>(character));
++    }
++  }
++}
++
++}  // namespace
+ 
+ void LynxCSSSelector::FromLepus(LynxCSSSelector& s, const lepus_value& value) {
+   if (!value.IsArray()) {
+@@ -196,10 +229,10 @@
+        selector = selector->TagHistory()) {
+     if (selector->Match() == kId) {
+       result.push_back('#');
+-      result += selector->Value();
++      AppendCSSIdentifier(result, selector->Value());
+     } else if (selector->Match() == kClass) {
+       result.push_back('.');
+-      result += selector->Value();
++      AppendCSSIdentifier(result, selector->Value());
+     } else if (selector->Match() == kPseudoClass) {
+       result.push_back(':');
+       result += selector->Value();

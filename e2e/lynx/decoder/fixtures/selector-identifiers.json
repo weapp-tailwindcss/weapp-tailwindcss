@@ -1,0 +1,159 @@
+{
+  "kind": "实际 Lynx bundle 的 selector 标识符回归夹具",
+  "encoder": {
+    "package": "@lynx-js/tasm",
+    "version": "0.0.53",
+    "gitHead": "3526f07a8cb25cfb2841736c76b54deadc7e6e46",
+    "engineVersion": "4.0",
+    "enableCSSRule": true
+  },
+  "bundle": {
+    "bytes": 1946,
+    "sha256": "0b751511fd435c1e54ef84ba932f3abe947d069dd91ea30b7bb165f4d80a6035",
+    "base64": "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"
+  },
+  "sourceCss": ".aspect-\\[4\\/3\\]{width:1px}\n.\\!shrink{width:2px}\n.text-\\[length\\:23px\\]{width:3px}\n.before\\:content-\\[\\'lynx\\'\\]::before{width:4px}\n.\\31 row{width:5px}\n.\\-1row{width:6px}\n.punct\\,comma{width:7px}\n.back\\\\slash{width:8px}\n.control\\1 z{width:9px}\n.delete\\7f z{width:10px}\n.中文.💚{width:11px}\n.\\-{width:12px}\n.nul\\0 z{width:13px}\n#id\\:with\\[value\\]{width:14px}\n#\\32 id{width:15px}\n:not(.a\\[b\\], #x\\:y){width:16px}\n.group\\/card:hover .group-hover\\/card\\:opacity-50{width:17px}",
+  "expectedCssSha256": "9adde11b9a2d6744d5ff270ce6442f713d60a4316decec694565e55e7a386ebf",
+  "expectedRules": [
+    {
+      "width": "1px",
+      "selector": ".aspect-\\[4\\/3\\]",
+      "classes": [
+        "aspect-[4/3]"
+      ],
+      "ids": []
+    },
+    {
+      "width": "2px",
+      "selector": ".\\!shrink",
+      "classes": [
+        "!shrink"
+      ],
+      "ids": []
+    },
+    {
+      "width": "3px",
+      "selector": ".text-\\[length\\:23px\\]",
+      "classes": [
+        "text-[length:23px]"
+      ],
+      "ids": []
+    },
+    {
+      "width": "4px",
+      "selector": ".before\\:content-\\[\\'lynx\\'\\]::before",
+      "classes": [
+        "before:content-['lynx']"
+      ],
+      "ids": []
+    },
+    {
+      "width": "5px",
+      "selector": ".\\31 row",
+      "classes": [
+        "1row"
+      ],
+      "ids": []
+    },
+    {
+      "width": "6px",
+      "selector": ".-\\31 row",
+      "classes": [
+        "-1row"
+      ],
+      "ids": []
+    },
+    {
+      "width": "7px",
+      "selector": ".punct\\,comma",
+      "classes": [
+        "punct,comma"
+      ],
+      "ids": []
+    },
+    {
+      "width": "8px",
+      "selector": ".back\\\\slash",
+      "classes": [
+        "back\\slash"
+      ],
+      "ids": []
+    },
+    {
+      "width": "9px",
+      "selector": ".control\\1 z",
+      "classes": [
+        "control\u0001z"
+      ],
+      "ids": []
+    },
+    {
+      "width": "10px",
+      "selector": ".delete\\7f z",
+      "classes": [
+        "deletez"
+      ],
+      "ids": []
+    },
+    {
+      "width": "11px",
+      "selector": ".中文.💚",
+      "classes": [
+        "中文",
+        "💚"
+      ],
+      "ids": []
+    },
+    {
+      "width": "12px",
+      "selector": ".\\-",
+      "classes": [
+        "-"
+      ],
+      "ids": []
+    },
+    {
+      "width": "13px",
+      "selector": ".nul�z",
+      "classes": [
+        "nul�z"
+      ],
+      "ids": []
+    },
+    {
+      "width": "14px",
+      "selector": "#id\\:with\\[value\\]",
+      "classes": [],
+      "ids": [
+        "id:with[value]"
+      ]
+    },
+    {
+      "width": "15px",
+      "selector": "#\\32 id",
+      "classes": [],
+      "ids": [
+        "2id"
+      ]
+    },
+    {
+      "width": "16px",
+      "selector": ":not(.a\\[b\\], #x\\:y)",
+      "classes": [
+        "a[b]"
+      ],
+      "ids": [
+        "x:y"
+      ]
+    },
+    {
+      "width": "17px",
+      "selector": ".group\\/card:hover .group-hover\\/card\\:opacity-50",
+      "classes": [
+        "group/card",
+        "group-hover/card:opacity-50"
+      ],
+      "ids": []
+    }
+  ]
+}

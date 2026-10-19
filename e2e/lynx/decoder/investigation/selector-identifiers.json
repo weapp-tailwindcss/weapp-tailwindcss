@@ -1,0 +1,154 @@
+{
+  "kind": "本机 decoder selector 文本序列化根因调查，非跨端验收报告",
+  "source": {
+    "package": "@lynx-js/tasm",
+    "version": "0.0.53",
+    "gitHead": "3526f07a8cb25cfb2841736c76b54deadc7e6e46",
+    "patchSha256": "f14ab36c1aa7e26b1021ff4b31af3030a82cd4fe21952c7af5f6dba5834c0b76"
+  },
+  "comparisonBundle": {
+    "bytes": 1946,
+    "sha256": "0b751511fd435c1e54ef84ba932f3abe947d069dd91ea30b7bb165f4d80a6035"
+  },
+  "before": {
+    "decodedCssSha256": "87da1ab8ce2dfb933b19430363db7d23a18fa12ee1e7ab9daa51870a19329688",
+    "cases": 17,
+    "accepted": 2,
+    "identityAccepted": 8
+  },
+  "after": {
+    "decodedCssSha256": "9adde11b9a2d6744d5ff270ce6442f713d60a4316decec694565e55e7a386ebf",
+    "cases": 17,
+    "accepted": 17,
+    "identityAccepted": 17
+  },
+  "comparison": [
+    {
+      "width": "1px",
+      "beforeSelector": ".aspect-[4/3]",
+      "afterSelector": ".aspect-\\[4\\/3\\]",
+      "identityBefore": false,
+      "identityAfter": true
+    },
+    {
+      "width": "2px",
+      "beforeSelector": ".!shrink",
+      "afterSelector": ".\\!shrink",
+      "identityBefore": false,
+      "identityAfter": true
+    },
+    {
+      "width": "3px",
+      "beforeSelector": ".text-[length:23px]",
+      "afterSelector": ".text-\\[length\\:23px\\]",
+      "identityBefore": false,
+      "identityAfter": true
+    },
+    {
+      "width": "4px",
+      "beforeSelector": ".before:content-['lynx']::before",
+      "afterSelector": ".before\\:content-\\[\\'lynx\\'\\]::before",
+      "identityBefore": false,
+      "identityAfter": true
+    },
+    {
+      "width": "5px",
+      "beforeSelector": ".1row",
+      "afterSelector": ".\\31 row",
+      "identityBefore": true,
+      "identityAfter": true
+    },
+    {
+      "width": "6px",
+      "beforeSelector": ".-1row",
+      "afterSelector": ".-\\31 row",
+      "identityBefore": true,
+      "identityAfter": true
+    },
+    {
+      "width": "7px",
+      "beforeSelector": ".punct,comma",
+      "afterSelector": ".punct\\,comma",
+      "identityBefore": false,
+      "identityAfter": true
+    },
+    {
+      "width": "8px",
+      "beforeSelector": ".back\\slash",
+      "afterSelector": ".back\\\\slash",
+      "identityBefore": false,
+      "identityAfter": true
+    },
+    {
+      "width": "9px",
+      "beforeSelector": ".control\u0001z",
+      "afterSelector": ".control\\1 z",
+      "identityBefore": true,
+      "identityAfter": true
+    },
+    {
+      "width": "10px",
+      "beforeSelector": ".deletez",
+      "afterSelector": ".delete\\7f z",
+      "identityBefore": true,
+      "identityAfter": true
+    },
+    {
+      "width": "11px",
+      "beforeSelector": ".中文.💚",
+      "afterSelector": ".中文.💚",
+      "identityBefore": true,
+      "identityAfter": true
+    },
+    {
+      "width": "12px",
+      "beforeSelector": ".-",
+      "afterSelector": ".\\-",
+      "identityBefore": true,
+      "identityAfter": true
+    },
+    {
+      "width": "13px",
+      "beforeSelector": ".nul�z",
+      "afterSelector": ".nul�z",
+      "identityBefore": true,
+      "identityAfter": true
+    },
+    {
+      "width": "14px",
+      "beforeSelector": "#id:with[value]",
+      "afterSelector": "#id\\:with\\[value\\]",
+      "identityBefore": false,
+      "identityAfter": true
+    },
+    {
+      "width": "15px",
+      "beforeSelector": "#2id",
+      "afterSelector": "#\\32 id",
+      "identityBefore": true,
+      "identityAfter": true
+    },
+    {
+      "width": "16px",
+      "beforeSelector": ":not(.a[b], #x:y)",
+      "afterSelector": ":not(.a\\[b\\], #x\\:y)",
+      "identityBefore": false,
+      "identityAfter": true
+    },
+    {
+      "width": "17px",
+      "beforeSelector": ".group/card:hover .group-hover/card:opacity-50",
+      "afterSelector": ".group\\/card:hover .group-hover\\/card\\:opacity-50",
+      "identityBefore": false,
+      "identityAfter": true
+    }
+  ],
+  "fullExample": {
+    "encoderVersion": "0.0.49",
+    "mode": "development",
+    "bundleBytes": 1623624,
+    "bundleSha256": "4c0e8dc7ac8b6ff0a29626da0dbfb0cab6d44bc0ccba1251ab32adccc4f5bcb7",
+    "decodedCssChars": 41186,
+    "decodedCssSha256": "1cb5cbf324dcd4b3fe5054aab096db09ada1eebf44c015c4ac22296d2f83b49f"
+  }
+}
