@@ -1,8 +1,9 @@
 import type { CoverageIdentity } from '../coverageIdentity'
 import type { CoverageCell, CoverageLayer, CoverageLayerContract } from '../coverageRegistry'
-import type { CoverageEvidence } from '../coverageReport'
+import type { CoverageArtifact, CoverageEvidence } from '../coverageReport'
 import type { CapabilityIdentity, CapabilityReport, CaseContract, EvidenceStage, TailwindTarget } from './types'
 import path from 'node:path'
+import { jsonArray, writeJsonFile } from './json'
 import { validateCapabilityReport, verifyReportArtifacts } from './report'
 
 const layerStages: Partial<Record<CoverageLayer, EvidenceStage[]>> = {
@@ -22,8 +23,8 @@ function command(target: TailwindTarget) {
 }
 
 /** 每个案例显式保留能力、浏览器和层级；编译结果不能填充运行时或截图覆盖。 */
-export function createTailwindCoverageCells(target: TailwindTarget, contracts: readonly CaseContract[]): CoverageCell[] {
-  return contracts.map((contract) => {
+function* coverageCells(target: TailwindTarget, contracts: readonly CaseContract[]): Generator<CoverageCell> {
+  for (const contract of contracts) {
     const required = stages(contract)
     const layers = Object.fromEntries(['static', 'dev', 'runtime', 'hmr', 'visual', 'negative'].map((name) => {
       const layer = name as CoverageLayer
@@ -36,7 +37,7 @@ export function createTailwindCoverageCells(target: TailwindTarget, contracts: r
       } satisfies CoverageLayerContract]
     })) as Record<CoverageLayer, CoverageLayerContract>
     const browserEngine = /^(?:web|expo)-(chromium|firefox|webkit)$/.exec(target)?.[1] as CoverageCell['browserEngine']
-    return {
+    yield {
       id: `tailwind/${target}/${contract.id}`,
       source: 'tailwind',
       caseId: contract.id,
@@ -52,48 +53,81 @@ export function createTailwindCoverageCells(target: TailwindTarget, contracts: r
       subpackage: false,
       layers,
     }
-  })
+  }
 }
 
-/** 只有本轮语义协议和原始产物均有效时，才把对应层级转成覆盖证据。 */
-export async function capabilityCoverageEvidence(report: CapabilityReport, contracts: readonly CaseContract[], options: {
+export function createTailwindCoverageCells(target: TailwindTarget, contracts: readonly CaseContract[]): CoverageCell[] {
+  return [...coverageCells(target, contracts)]
+}
+
+interface CoverageOptions {
   expected: CapabilityIdentity
   runId: string
   target: TailwindTarget
   repositoryRoot: string
   artifactRoot: string
   coverageIdentity?: CoverageIdentity
-}): Promise<CoverageEvidence[]> {
+}
+
+/** 只有本轮语义协议和原始产物均有效时，才把对应层级转成覆盖证据。 */
+async function prepareCoverage(report: CapabilityReport, contracts: readonly CaseContract[], options: CoverageOptions) {
   if (report.target !== options.target) {
     throw new Error('能力覆盖报告的目标平台或浏览器与本轮预期不一致')
   }
   validateCapabilityReport(report, contracts, options.expected, options.runId, options.target)
   await verifyReportArtifacts(report, options.artifactRoot)
-  const registry = createTailwindCoverageCells(report.target, contracts)
-  return registry.flatMap((cell) => {
-    const result = report.results.find(result => result.id === cell.caseId)!
-    const receipts = report.artifacts.filter(artifact => result.artifacts.includes(artifact.path))
-    return Object.entries(cell.layers).filter(([, contract]) => contract.status !== 'not-applicable').map(([name, contract]) => {
-      const layer = name as CoverageLayer
-      const assertions = result.assertions.filter(assertion => layerStages[layer]?.includes(assertion.stage)
-        || (layer === 'negative' && result.support === 'unsupported'))
-      const status = result.status === 'passed' && assertions.length ? result.support === 'unsupported' && layer === 'negative' ? 'unsupported' : 'passed' : result.status === 'passed' ? 'not-run' : result.status
-      return {
-        cellId: cell.id,
-        layer,
-        status,
-        executor: contract.executor,
-        evidenceSchema: contract.evidenceSchema,
-        ...((result.reason || status === 'not-run') ? { reason: result.reason ?? `缺少独立 ${layer} 断言，不能从其它层级推断。` } : {}),
-        checkpoints: assertions.map(assertion => assertion.name),
-        artifactManifest: receipts.map(artifact => ({
-          path: path.relative(options.repositoryRoot, path.resolve(options.artifactRoot, artifact.path)),
-          sha256: artifact.sha256,
-          kind: artifact.kind === 'screenshot' ? 'screenshot' : artifact.kind === 'bundle' ? 'bundle' : artifact.kind === 'log' ? 'log' : 'other',
-        })),
-        environment: report.environment,
-        ...(options.coverageIdentity ? { identity: options.coverageIdentity } : {}),
-      } satisfies CoverageEvidence
-    })
-  })
+  const results = new Map(report.results.map(result => [result.id, result]))
+  const artifacts = new Map(report.artifacts.map((artifact, index) => [artifact.path, {
+    index,
+    manifest: {
+      path: path.relative(options.repositoryRoot, path.resolve(options.artifactRoot, artifact.path)),
+      sha256: artifact.sha256,
+      kind: artifact.kind === 'screenshot' ? 'screenshot' : artifact.kind === 'bundle' ? 'bundle' : artifact.kind === 'log' ? 'log' : 'other',
+    } satisfies CoverageArtifact,
+  }]))
+  const manifests = new WeakMap<string[], CoverageArtifact[]>()
+  const registry = () => coverageCells(report.target, contracts)
+  function* evidence(): Generator<CoverageEvidence> {
+    for (const cell of registry()) {
+      const result = results.get(cell.caseId!)!
+      let manifest = manifests.get(result.artifacts)
+      if (!manifest) {
+        // 保留原报告中的产物顺序，并维持旧 filter 对重复引用的去重语义。
+        manifest = [...new Set(result.artifacts)].flatMap(file => artifacts.get(file) ?? []).sort((left, right) => left.index - right.index).map(item => item.manifest)
+        manifests.set(result.artifacts, manifest)
+      }
+      for (const [name, contract] of Object.entries(cell.layers)) {
+        if (contract.status === 'not-applicable') {
+          continue
+        }
+        const layer = name as CoverageLayer
+        const assertions = result.assertions.filter(assertion => layerStages[layer]?.includes(assertion.stage)
+          || (layer === 'negative' && result.support === 'unsupported'))
+        const status = result.status === 'passed' && assertions.length ? result.support === 'unsupported' && layer === 'negative' ? 'unsupported' : 'passed' : result.status === 'passed' ? 'not-run' : result.status
+        yield {
+          cellId: cell.id,
+          layer,
+          status,
+          executor: contract.executor,
+          evidenceSchema: contract.evidenceSchema,
+          ...((result.reason || status === 'not-run') ? { reason: result.reason ?? `缺少独立 ${layer} 断言，不能从其它层级推断。` } : {}),
+          checkpoints: assertions.map(assertion => assertion.name),
+          artifactManifest: manifest,
+          environment: report.environment,
+          ...(options.coverageIdentity ? { identity: options.coverageIdentity } : {}),
+        } satisfies CoverageEvidence
+      }
+    }
+  }
+  return { registry, evidence }
+}
+
+export async function capabilityCoverageEvidence(report: CapabilityReport, contracts: readonly CaseContract[], options: CoverageOptions): Promise<CoverageEvidence[]> {
+  return [...(await prepareCoverage(report, contracts, options)).evidence()]
+}
+
+/** 保留 v2 的逐例完整字段，以迭代器写入而不创建整份双重 registry/evidence 副本。 */
+export async function writeCapabilityCoverage(file: string, report: CapabilityReport, contracts: readonly CaseContract[], options: CoverageOptions) {
+  const prepared = await prepareCoverage(report, contracts, options)
+  await writeJsonFile(file, { schemaVersion: 2, runId: report.runId, registry: jsonArray(prepared.registry()), evidence: jsonArray(prepared.evidence()) })
 }

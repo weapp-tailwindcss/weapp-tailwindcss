@@ -1,7 +1,8 @@
 import type { CapabilityReport, CaseContract, TailwindTarget } from './types'
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir } from 'node:fs/promises'
 import path from 'node:path'
 import { capabilityIdentity } from './identity'
+import { writeJsonFile } from './json'
 
 export interface RunContext {
   root: string
@@ -28,8 +29,7 @@ export function targetContext(context: RunContext, target: string): RunContext {
 export async function persistReport(context: RunContext, report: CapabilityReport, contracts: readonly CaseContract[]) {
   const { writeCapabilityReport } = await import('./report')
   await writeCapabilityReport(path.join(context.directory, 'report.json'), report)
-  await writeFile(path.join(context.directory, 'contracts.json'), `${JSON.stringify(contracts, null, 2)}\n`)
-  const { capabilityCoverageEvidence, createTailwindCoverageCells } = await import('./coverage')
-  const evidence = await capabilityCoverageEvidence(report, contracts, { expected: report.identity, runId: context.runId, target: report.target, repositoryRoot: context.root, artifactRoot: context.directory })
-  await writeFile(path.join(context.directory, 'coverage.json'), `${JSON.stringify({ schemaVersion: 2, runId: context.runId, registry: createTailwindCoverageCells(report.target, contracts), evidence }, null, 2)}\n`)
+  await writeJsonFile(path.join(context.directory, 'contracts.json'), contracts)
+  const { writeCapabilityCoverage } = await import('./coverage')
+  await writeCapabilityCoverage(path.join(context.directory, 'coverage.json'), report, contracts, { expected: report.identity, runId: context.runId, target: report.target, repositoryRoot: context.root, artifactRoot: context.directory })
 }

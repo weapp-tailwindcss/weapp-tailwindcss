@@ -2,6 +2,7 @@ import type { ArtifactReceipt, CapabilityIdentity, CapabilityReport, CapabilityR
 import { readFile, realpath, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { digest } from './identity'
+import { writeJsonFile } from './json'
 
 const sha256 = /^[a-f\d]{64}$/
 
@@ -49,10 +50,18 @@ export function validateCapabilityReport(report: CapabilityReport, contracts: re
   if (artifacts.size !== report.artifacts.length) {
     fail('产物回执重复')
   }
+  const owners = new Map<string, ReadonlySet<string>>()
+  const ownerSets = new WeakMap<string[], ReadonlySet<string>>()
   for (const artifact of report.artifacts) {
     if (artifact.runId !== runId || !sha256.test(artifact.sha256) || artifact.byteLength <= 0 || !artifact.caseIds.length) {
       fail(`产物缺少本轮身份：${artifact.path}`)
     }
+    let cases = ownerSets.get(artifact.caseIds)
+    if (!cases) {
+      cases = new Set(artifact.caseIds)
+      ownerSets.set(artifact.caseIds, cases)
+    }
+    owners.set(artifact.path, cases)
   }
   for (const result of report.results) {
     const contract = definitions.get(result.id)
@@ -102,7 +111,7 @@ export function validateCapabilityReport(report: CapabilityReport, contracts: re
     }
     for (const file of result.artifacts) {
       const artifact = artifacts.get(file)
-      if (!artifact?.caseIds.includes(result.id)) {
+      if (!artifact || !owners.get(file)?.has(result.id)) {
         fail(`${result.id} 产物不属于本案例：${file}`)
       }
     }
@@ -155,7 +164,7 @@ export async function writeCapabilityReport(file: string, report: CapabilityRepo
   if (path.extname(file) !== '.json') {
     fail('报告文件必须使用 .json 扩展名')
   }
-  await writeFile(file, `${JSON.stringify(report, null, 2)}\n`)
+  await writeJsonFile(file, report)
   const counts = (status: CapabilityResult['status']) => report.results.filter(item => item.status === status).length
   const lines = ['# Tailwind CSS 能力验证', '', `目标：${report.target}；run ID：${report.runId}`, '', `通过 ${counts('passed')}，失败 ${counts('failed')}，阻塞 ${counts('blocked')}，未执行 ${counts('not-run')}。`, '', '| 案例 | 支持预期 | 本轮结果 | 原因 |', '| --- | --- | --- | --- |', ...report.results.map(item => `| ${item.id} | ${item.support} | ${item.status} | ${(item.reason ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' ')} |`), '']
   await writeFile(file.replace(/\.json$/, '.md'), lines.join('\n'))
