@@ -42,6 +42,13 @@ regressions:
   - e2e/lynx/build-metadata.test.rb
   - e2e/tailwind-scheduler.test.ts
   - e2e/tailwind-css.test.ts
+verification:
+  - claim: RN Web Chromium、Android 和 iOS 的三阶段原始回执及独立重要性竞争均通过，完整 served bundle 仍未捕获
+    kind: native
+    status: passed
+    sha: d78d1f81d392751dc11549da554cc79be02fc1ab
+    environment: GitHub hosted Ubuntu 与 macOS；实际 PR 合并态 eb7393a4ed25d65e0045a7493a5ba86ead642a04
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/39248652500
 ---
 
 # Tailwind 四端能力与证据边界
@@ -187,6 +194,10 @@ RN 三阶段采集现分别持久保存 baseline、TSX HMR、CSS HMR 的报告�
 本轮 Android run `39247836641` 的 artifact `12185065108` 与 iOS PR run `39248652614` 的 artifact `12186041659` 均已独立核原始字节及运行身份。Android 118 例、153 份回执完整，官方 AAR、构建/安装 APK、实际加载库和 bundle 身份一致；iOS 实际 checkout 为 PR merge `eb7393a4ed25d65e0045a7493a5ba86ead642a04`，SDK 原生读数 4.0.1。双端重新读取 CSS 和实际 bundle，重算深色六帧、important 灰/红/灰竞争及 supports 正负几何后，明确把这三项支持合同升级为 supported；不是由失败自动降级。`pnpm e2e:lynx:static:update` 后 118 项静态结论不变，仅 catalog 与时间更新；统一 static 入口重跑无差异。旧报告不能刷新 hash 后复用，新 catalog 仍需完整双端重跑。
 
 响应式四阶段实际根尺寸均跨过原生 48rem 标尺且恢复，control 保持 80px，但两端 probe 始终 200px，继续保持原登记限制。iOS 的 overflow 却暴露通用截图差异误判：最小宽度覆盖原夹具，子项没有真正溢出，两图只有微小对齐差异。此项不能升级支持表，正在增加明确几何及容器外像素的独立语义夹具与失败回归。
+
+RN 正式 run [`39248652500`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/39248652500) 绑定 head `d78d1f81d392751dc11549da554cc79be02fc1ab`，实际合并态为 `eb7393a4ed25d65e0045a7493a5ba86ead642a04`。scope、Web Chromium、Android、iOS 四个 job 均最终 success，iOS 在 2026-10-19T12:41:43Z 完成 post checkout。三端的 baseline、TSX HMR、CSS HMR 各有 40 份唯一回执，共 360 份；独立审查逐件重读报告、六件编码、三件源码、虚拟 JS、manifest、phase-index 和全部 PNG。每端三个阶段的 manifest 与虚拟 JS 摘要分别变化，important 四状态的 probe/reference/control 绝对颜色均 100% 匹配。不能以根目录末阶段报告替代前两阶段。
+
+三份 ZIP 均逐文件与解压件比对，独立 SHA-256 与 API digest 一致：Web artifact `12184378336`（404 文件）、Android `12185382253`（413 文件，ZIP SHA-256 `978ab4d1cbb432652e3df4c8714b01a8dddeb080d32f478c85c697252233576a`）、iOS `12185369293`（410 文件）。最终 workflow/job 元数据、日志、三端 `independent-audit.json`、`archive-verification.json` 和汇总保留在独立审查树 `e2e/.artifacts/ci-audit/39248652500/`。fixture 身份为 `2559da5cb52b9cc408e59406d03b6c85bfa8d270a0dfb55699681b59b1a98f7d`，catalog 为 `ccd8a53672fd5b3fb2a8c3529b15e2715617be350cb62df98e8f3d2c0048aa9a`。此结论只覆盖该提交和 Chromium；`servedBundle=not-captured` 的边界仍保留，新 head 需要重新验收。Taro RSS 首轮失败及唯一确认复测另见[独立记录](tailwind-taro-build-rss-confirmation.md)，第二组未复现不代表生产根因已修复。
 
 ## 规则评估
 
