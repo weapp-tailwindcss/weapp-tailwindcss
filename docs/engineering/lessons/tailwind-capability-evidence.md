@@ -172,6 +172,12 @@ decoder 缓存另有真实篡改回归：首次成功解码后修改 gzip，下�
 
 审查同时发现，编码比较的布尔参数混合了阶段选择与 `important` 校验，共享 `syntax-important` 也缺少 `important: true` 的独立预期。数据缺项的一条和实际 WASM 编码缺标志的五条回归先失败后通过；阶段现显式区分 generation/encoding，编码展开的每一边均须保留预期标志。主树整合的四文件 42 项通过。已分别执行 `pnpm e2e:lynx:static:update`、`pnpm e2e:react-native:static:update`、`pnpm e2e:tailwind:static:update`：Lynx 仅清单身份及时间变化，RN 仅清单身份、预期标志及时间变化，Web 基线无差异；样式、manifest 和运行时支持合同没有因该修复改变。
 
+RN 后续审查确认，旧 static 把 global、legacy/config、prefix、reference 四入口的全部候选编码后合并；`important: true` 因而污染普通 utility，不能代表 Metro 实际运行的单 global 入口。现在 Metro 与 static 消费同一份显式输入；三个 authoring 入口分别生成并保存源码、CSS 和 manifest，只在对应指令案例内组合。主归档的真实生成与相同 Metro 配置逐字段相等，四阶段竞争恢复为灰、红、灰、红。原始 static 模块及 Metro 输入也进入稳定发布归档，协议 v2 绑定三份摘要、重读当前输入、独立重编码和指令 oracle；旧混合工件与重新计算摘要的语义篡改均拒绝。整合后的八文件 92 项回归通过。`pnpm e2e:react-native:static:update` 已正常重生成并审查：主 CSS 从 72,671 减为 40,860 字符，三个独立 authoring 作用域另行归档，支持表未改；新身份仍需本轮三端实际 CI 证明。
+
+Lynx 的新增重要性夹具采用同层 ID 竞争规则与独立颜色参考，并从实际 bundle 核验完整声明；深色模式同时要求 light、dark、restored 六张原图；`@supports` 的真、假条件分别从生成 CSS 和实际 decoder AST 重读。每次报告验收都无条件重新校验 important 与 supports 的原始样式产物，不能由媒体门禁开关跳过。相关变异回归拒绝丢标志、错值、错条件、无条件替代及缺恢复图，没有据此自动升级支持表。
+
+PR head `d85d76507` 的 Lynx run `39243691735` 又在设备启动前暴露 engine 缺 `dist`，该失败没有原生证据。修复继续使用精确源码别名，并补齐 source-scan 与 env 两个生成依赖。独立工作树的所有 workspace 均无 `dist`，双端预备测试并集与新增工件/报告回归共 22 文件、361 项全部执行通过；没有通过预先构建或修改生产导出掩盖干净环境问题。
+
 ## 规则评估
 
 诊断 run `39240820531` 的 Android 已完成 118 项实际原生采集，独立审查发现 responsive、dark、supports 和 important 四项报告与既有支持合同不同；这些变化尚未自动放宽。iOS 在 CocoaPods 安装阶段被固定原始 checksum 阻断，没有设备证据。CDN 与原夹具的完整 JSON 相等，仅文本空白/转义变化；生产校验改为完整 `Specification#to_hash` 的规范语义 SHA-256，保留所有属性、数组顺序和值类型，并继续独立核来源、版本及 getter 源码。新旧完整原始 Podspec 均固定字节身份，真实 CocoaPods/PBX 回归覆盖格式等价与实质变更拒绝。
