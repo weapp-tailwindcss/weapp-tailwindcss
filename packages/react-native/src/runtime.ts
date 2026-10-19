@@ -4,6 +4,7 @@ import type { RelativeLineHeight } from './runtime/line-height'
 import type { DeferredBoxShadow } from './runtime/shadow'
 import type { NativeClassValue, NativeStyleEnvironment, NativeStyleRuntime, NativeStyleValue } from './runtime/types'
 import type { NativePlatform, NativeStyleManifest, NativeStyleRule } from './types'
+import { resolveNativeTransform } from '@weapp-tailwindcss/postcss/native-runtime'
 import { flattenInlineStyle, relativeLineHeightStyle } from './runtime/line-height'
 import { deferredBoxShadowStyle, inlineBoxShadowStyle } from './runtime/shadow'
 
@@ -88,6 +89,7 @@ function resolveRules(ids: readonly string[], manifest: NativeStyleManifest | un
   const importantStyle: StyleValue = {}
   let relative: RelativeLineHeight | undefined
   let boxShadow: DeferredBoxShadow | undefined
+  let transform: { expression: NonNullable<NativeStyleRule['transformExpression']>, important: boolean } | undefined
   const apply = (rule: NativeStyleRule, isImportant: boolean) => {
     Object.assign(style, rule.style)
     if (isImportant) { Object.assign(importantStyle, rule.style) }
@@ -98,9 +100,17 @@ function resolveRules(ids: readonly string[], manifest: NativeStyleManifest | un
     else if ('lineHeight' in rule.style) { relative = undefined }
     if (rule.boxShadowExpression) { boxShadow = { expression: rule.boxShadowExpression, bindings: customProperties, important: isImportant } }
     else if ('boxShadow' in rule.style) { boxShadow = undefined }
+    if (rule.transformExpression) { transform = { expression: rule.transformExpression, important: isImportant } }
+    else if ('transform' in rule.style) { transform = undefined }
   }
   for (const { rule } of normal) { apply(rule, false) }
   for (const { rule } of important) { apply(rule, true) }
+  if (transform) {
+    const computed = resolveNativeTransform(transform.expression, customProperties)
+    if (!computed) { throw new Error(`无法将当前 class 组合的 transform 编译为原生变换：${transform.expression.value}`) }
+    style.transform = computed
+    if (transform.important) { importantStyle.transform = computed }
+  }
   if (boxShadow) {
     boxShadow.color = typeof style.color === 'string' ? style.color : environment.color
     boxShadow.importantColor = typeof importantStyle.color === 'string' ? importantStyle.color : undefined
@@ -124,7 +134,7 @@ function resolveRules(ids: readonly string[], manifest: NativeStyleManifest | un
   const importantIds = important.map(item => item.id)
   const asStyleValue = (ids: string[], fallback: StyleValue): NativeStyleValue => {
     // 相对值依赖本次组合，不能返回缺少最终行高的静态注册 ID。
-    if (relative || boxShadow) { return fallback }
+    if (relative || boxShadow || transform) { return fallback }
     if (!styleSheetFactory) { return fallback }
     const values = ids.map(id => nativeStyleSheet[id]).filter(value => value !== undefined)
     if (values.length === 1) { return values[0] }

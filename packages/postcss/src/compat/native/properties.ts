@@ -1,6 +1,7 @@
 /* eslint-disable style/max-statements-per-line */
 
 import { parseNativeBoxShadow } from './shadow'
+import { parseNativeTransform } from './transform'
 import { isColor, normalizeColor, parseNumber, resolveVariables } from './values'
 import { resolveNativeVariables } from './variables'
 
@@ -123,32 +124,6 @@ export function relativeLineHeight(value: string, variables: Record<string, stri
   return match[2] === '%' ? number / 100 : number
 }
 
-function parseTransform(value: string, variables: Record<string, string>) {
-  const transform: Array<Record<string, unknown>> = []
-  for (const match of value.matchAll(/(translateX|translateY|translate|scaleX|scaleY|scale|rotate|skewX|skewY)\(([^)]*)\)/g)) {
-    const name = match[1]
-    const values = splitValue(resolveVariables(match[2] ?? '', variables).replace(',', ' '))
-    if (!name || !values.length) { continue }
-    if (name.startsWith('scale')) {
-      const number = Number(values[0] ?? '')
-      if (Number.isFinite(number)) { transform.push({ [name]: number }) }
-      continue
-    }
-    if (name === 'translate') {
-      const x = parseNumber(values[0] ?? '', variables)
-      const y = parseNumber(values[1] ?? '0', variables)
-      if (x !== undefined && y !== undefined) { transform.push({ translateX: x }, { translateY: y }) }
-      continue
-    }
-    const property = name.replace(/^translate$/, 'translateX')
-    const parsed = name.startsWith('rotate') || name.startsWith('skew')
-      ? values[0]
-      : parseNumber(values[0] ?? '', variables)
-    if (parsed !== undefined) { transform.push({ [property]: parsed }) }
-  }
-  return transform.length ? transform : undefined
-}
-
 function parseValue(property: string, value: string, variables: Record<string, string>) {
   const trimmed = resolveNativeVariables(value.trim(), variables)
   if (trimmed === undefined) { return undefined }
@@ -165,7 +140,7 @@ function parseValue(property: string, value: string, variables: Record<string, s
     }
     return number
   }
-  if (property === 'transform') { return parseTransform(trimmed, variables) }
+  if (property === 'transform') { return parseNativeTransform(trimmed) }
   if (property === 'boxShadow') { return parseNativeBoxShadow(trimmed) }
   if (property === 'display' && !['flex', 'none'].includes(trimmed)) { return undefined }
   return STRING_PROPERTIES.has(property) ? trimmed : undefined

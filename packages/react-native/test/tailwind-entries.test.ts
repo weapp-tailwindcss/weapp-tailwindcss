@@ -37,6 +37,13 @@ async function fixture() {
 }
 
 describe('原生 Tailwind 独立 CSS 入口', () => {
+  it('真实 Tailwind 双轴 skew 保留全部变量组成的 transform', async () => {
+    const projectRoot = await fixture()
+    const result = await generateNativeStylesheetEvidence({ projectRoot, css: tailwindImport('index.css'), candidates: ['skew-x-6', 'skew-y-3'], sourceGlobs: [] })
+    expect(createNativeStyleRuntime(result.manifest).tw('skew-x-6 skew-y-3')).toEqual({ transform: [{ skewX: '6deg' }, { skewY: '3deg' }] })
+    expect(result.manifest.warnings).toEqual([])
+  })
+
   it('透传宿主 boxShadow 能力边界，并完整保留真实 Tailwind 双层阴影', async () => {
     const projectRoot = await fixture()
     const options = { projectRoot, css: tailwindImport('index.css'), candidates: ['shadow-lg', 'ring-2', 'inset-shadow-sm'], sourceGlobs: [] }

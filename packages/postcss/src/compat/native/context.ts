@@ -1,5 +1,3 @@
-/* eslint-disable style/max-statements-per-line */
-
 import type { NativeVariableDefinition } from './types'
 import valueParser from 'postcss-value-parser'
 
@@ -21,7 +19,9 @@ export function nativeVariableDefinition(value: string, inherited: Record<string
   for (let index = 0; index < pending.length; index++) {
     const name = pending[index]!
     const binding = inherited[name]
-    if (binding === undefined || name in defaults) { continue }
+    if (binding === undefined || name in defaults) {
+      continue
+    }
     defaults[name] = binding
     pending.push(...dependencies(binding))
   }
@@ -30,17 +30,23 @@ export function nativeVariableDefinition(value: string, inherited: Record<string
 
 /** 每个变量引用保留所属入口的默认值，同时允许选中的 class 覆盖该变量。 */
 export function resolveNativeContextValue(value: string, defaults: Record<string, string>, bindings: Record<string, NativeVariableDefinition>, seen = new Set<string>()): string | undefined {
-  if (seen.size > 64) { return undefined }
+  if (seen.size > 64) {
+    return undefined
+  }
   const output: string[] = []
   for (const node of valueParser(value).nodes) {
     if (node.type !== 'function') {
       output.push(valueParser.stringify(node))
       continue
     }
-    if (node.unclosed) { return undefined }
+    if (node.unclosed) {
+      return undefined
+    }
     if (node.value !== 'var') {
       const nested = resolveNativeContextValue(valueParser.stringify(node.nodes), defaults, bindings, seen)
-      if (nested === undefined) { return undefined }
+      if (nested === undefined) {
+        return undefined
+      }
       output.push(valueParser.stringify({ ...node, nodes: valueParser(nested).nodes }))
       continue
     }
@@ -54,7 +60,9 @@ export function resolveNativeContextValue(value: string, defaults: Record<string
     if (resolved === undefined && comma >= 0) {
       resolved = resolveNativeContextValue(valueParser.stringify(node.nodes.slice(comma + 1)), defaults, bindings, seen)
     }
-    if (resolved === undefined) { return undefined }
+    if (resolved === undefined) {
+      return undefined
+    }
     output.push(resolved)
   }
   return output.join('')

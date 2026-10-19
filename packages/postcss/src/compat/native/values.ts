@@ -1,22 +1,28 @@
-/* eslint-disable style/max-statements-per-line */
-
 import { normalizeStandaloneColorFunction } from '../color-mix/parse'
 import { resolveNativeVariables } from './variables'
 
 export function parseNumber(value: string, variables: Record<string, string>): number | string | undefined {
   const resolved = resolveVariables(value, variables)
   const fraction = resolved.match(/^(-?(?:\d+\.\d+|\d+|\.\d+))\s*\/\s*(-?(?:\d+\.\d+|\d+|\.\d+))$/)
-  if (fraction && Number(fraction[2]) !== 0) { return Number(fraction[1]) / Number(fraction[2]) }
+  if (fraction && Number(fraction[2]) !== 0) {
+    return Number(fraction[1]) / Number(fraction[2])
+  }
   const calculated = resolved.match(/^calc\(\s*(-?(?:\d+\.\d+|\d+|\.\d+))(px|rem|em|%)?\s*\*\s*(-?(?:\d+\.\d+|\d+|\.\d+))\s*\)$/)
   if (calculated) {
     const base = parseNumber(`${calculated[1]}${calculated[2] ?? ''}`, variables)
     return typeof base === 'number' ? base * Number(calculated[3]) : undefined
   }
   const match = resolved.match(/^(-?(?:\d+\.\d+|\d+|\.\d+))(px|rem|em|%)?$/)
-  if (!match) { return undefined }
+  if (!match) {
+    return undefined
+  }
   const number = Number(match[1])
-  if (match[2] === '%') { return `${number}%` }
-  if (match[2] === 'rem' || match[2] === 'em') { return number * 16 }
+  if (match[2] === '%') {
+    return `${number}%`
+  }
+  if (match[2] === 'rem' || match[2] === 'em') {
+    return number * 16
+  }
   return number
 }
 
@@ -30,7 +36,9 @@ export function isColor(value: string) {
 
 function oklchToHex(value: string) {
   const match = value.match(/^oklch\(\s*([\d.]+)%?\s+([\d.]+)\s+([\d.]+)(?:\s+\/\s*([\d.]+))?\s*\)$/i)
-  if (!match) { return undefined }
+  if (!match) {
+    return undefined
+  }
   const lightness = Number(match[1]) > 1 ? Number(match[1]) / 100 : Number(match[1])
   const chroma = Number(match[2])
   const hue = Number(match[3]) * Math.PI / 180
@@ -51,7 +59,11 @@ function oklchToHex(value: string) {
 
 export function normalizeColor(value: string) {
   const normalized = normalizeStandaloneColorFunction(value)
-  if (normalized === undefined) { return undefined }
-  if (/^oklch\(/i.test(value)) { return oklchToHex(value) ?? normalized }
+  if (normalized === undefined) {
+    return undefined
+  }
+  if (/^oklch\(/i.test(value)) {
+    return oklchToHex(value) ?? normalized
+  }
   return value.includes('(') ? normalized : value
 }
