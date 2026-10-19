@@ -1,8 +1,8 @@
 {
   "name": "@weapp-tailwindcss/test-catalog",
+  "type": "module",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
   "exports": {
     ".": "./src/index.ts",
     "./authoring": "./src/authoring.ts",
