@@ -22,7 +22,7 @@ vi.mock('../examples/react-lynx/src/compatibility/static-evidence.json', async (
   // 历史报告的 bundled checkpoint 缺失时，代表当时已经进入运行时取证。
   return { default: { ...original.default, results: original.default.results.map((result) => {
     const checkpoints = report.results.find(item => item.id === result.id)!.checkpoints
-    return { ...result, generated: checkpoints.find(item => item.name === 'generated')?.passed ?? true, bundled: checkpoints.find(item => item.name === 'bundled')?.passed ?? true }
+    return { ...result, generated: checkpoints.find(item => item.name === 'generated')?.passed ?? true, bundled: result.id === 'syntax-important' || (checkpoints.find(item => item.name === 'bundled')?.passed ?? true) }
   }) } }
 })
 
@@ -245,6 +245,7 @@ it('宿主只判定待验收效果，保留原始采集报告且无效图不能�
   expect(JSON.stringify(report)).toBe(original)
   expect(Object.fromEntries(final.results.filter(result => requiresPixelEffect(result.id)).map(result => [result.id, result.status]))).toEqual({
     'background-linear-gradient': 'unsupported',
+    'syntax-important': 'unsupported',
     'effect-shadow': 'unsupported',
     'transform-skew': 'supported',
     'variant-structural': 'supported',

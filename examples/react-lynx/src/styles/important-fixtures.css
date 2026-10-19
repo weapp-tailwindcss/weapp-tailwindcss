@@ -1,0 +1,17 @@
+.probe-important-body {
+  width: 96px;
+  height: 64px;
+}
+
+.probe-important-reference {
+  background-color: #737373;
+}
+
+/* 同一 ID 普通规则必须胜过普通 utility；只有 important 可覆盖该竞争者。 */
+#probe-syntax-important {
+  background-color: #dc2626;
+}
+
+#control-syntax-important {
+  background-color: #dc2626;
+}

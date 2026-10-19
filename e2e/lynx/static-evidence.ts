@@ -8,6 +8,7 @@ import { walkClasses } from '../../packages/postcss/src/compat/native/selectors'
 import { compatibilityVersions, exampleDir, getCatalogHash, lynxIntermediateDir, readCssDefinesProperties } from './catalog'
 import { decodeLynxBundle } from './decoder'
 import { matchEncodedDeclaration } from './encoded-declarations'
+import { assertImportantPriorityRules } from './important-static'
 
 interface EncodedDeclaration {
   name: string
@@ -226,6 +227,8 @@ export async function analyzeStaticEvidence(generatedAt = new Date().toISOString
   const generatedRules = parseGeneratedRules(generatedCss)
   const decoded = await decodeLynxBundle(bundle)
   const bundledRules = parseDecodedRules(decoded.css.text)
+  assertImportantPriorityRules(generatedRules, 'generation')
+  assertImportantPriorityRules(bundledRules, 'encoding')
   const results = compatibilityCases.map(item => analyzeStaticCase(item, generatedRules, bundledRules, encoderLog, cssDefinesProperties))
   return {
     schemaVersion: 1,

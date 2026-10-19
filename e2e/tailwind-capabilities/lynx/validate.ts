@@ -4,6 +4,7 @@ import type { CapabilityResult, CaseContract } from '../types'
 import { compatibilityCases } from '@weapp-tailwindcss/test-catalog'
 import { evaluateGeometry } from '../../../examples/react-lynx/src/compatibility/geometry'
 import { evaluateColorScheme, validateColorSchemeReceipts } from '../../lynx/color-scheme'
+import { evaluateImportantPriority } from '../../lynx/important-priority'
 import { evaluatePixelEffect } from '../../lynx/pixel-effects'
 import { evaluateStructural } from '../../lynx/structural'
 import { evaluateTextFlow } from '../../lynx/text-flow'
@@ -35,6 +36,9 @@ export async function validateLynxCase(context: RunContext, raw: NativePlatformR
     }
     else if (contract.id === 'type-flow') {
       measured = evaluateTextFlow(images)
+    }
+    else if (contract.id === 'syntax-important') {
+      measured = evaluateImportantPriority(images)
     }
     else {
       measured = evaluatePixelEffect(contract.id, images[0]!, images[1]!)

@@ -43,7 +43,7 @@ vi.mock('../examples/react-lynx/src/compatibility/static-evidence.json', async (
       results: original.default.results.map((result) => {
         const checkpoints = protocolReport.results.find(item => item.id === result.id)!.checkpoints
         const generated = checkpoints.find(item => item.name === 'generated')?.passed ?? true
-        const bundled = checkpoints.find(item => item.name === 'bundled')?.passed ?? true
+        const bundled = result.id === 'syntax-important' || (checkpoints.find(item => item.name === 'bundled')?.passed ?? true)
         return {
           ...result,
           generated,

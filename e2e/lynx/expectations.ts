@@ -1,5 +1,6 @@
 import type { NativeCaseResult, Platform, StaticCaseEvidence } from '../../examples/react-lynx/src/compatibility/types'
 import { compatibilityCases } from '../../examples/react-lynx/src/compatibility/catalog'
+import { importantPriorityContract } from '../../examples/react-lynx/src/compatibility/important-priority-contract'
 
 // 此表是独立审查的双端契约（顺序为 iOS/Android），不从本轮静态失败推导 unsupported。
 // 构建指令按生成语义登记支持；修改支持范围必须审查真实证据并显式修改此表。
@@ -188,7 +189,7 @@ const reviewedEncodingRejections = new Set([
 // :is/:where 的参数形式被固定 encoder 拒绝；逐候选保留该阶段，不能改用宿主 media 拒绝。
 export const reviewedCandidateEncodingRejections = ['group-hover:block', 'peer-checked:opacity-100'] as const
 
-export const reviewedLynxContract = { support: reviewedLynxSupport, encodingRejections: [...reviewedEncodingRejections], candidateEncodingRejections: reviewedCandidateEncodingRejections }
+export const reviewedLynxContract = { support: reviewedLynxSupport, encodingRejections: [...reviewedEncodingRejections], candidateEncodingRejections: reviewedCandidateEncodingRejections, importantPriority: importantPriorityContract }
 
 const expectedIds = Object.keys(reviewedLynxSupport).sort()
 if (JSON.stringify(expectedIds) !== JSON.stringify(compatibilityCases.map(item => item.id).sort())) {

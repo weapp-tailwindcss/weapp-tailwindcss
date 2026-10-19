@@ -1,9 +1,10 @@
 import type { CompatibilityCase, StaticCaseEvidence } from './types'
+import { importantPriorityContract } from './important-priority-contract'
 import { geometryArtifactNames } from './native-geometry'
 
 /** 这些效果必须由宿主解码 PNG 后核对，截图指纹不同不能证明支持。 */
 export function requiresPixelEffect(id: string) {
-  return id === 'background-linear-gradient' || id === 'effect-shadow' || id === 'transform-skew' || id === 'variant-structural' || id === 'type-flow'
+  return id === 'background-linear-gradient' || id === 'effect-shadow' || id === 'transform-skew' || id === 'variant-structural' || id === 'type-flow' || id === importantPriorityContract.id
 }
 
 /** Lynx 的 Canvas 变换不一定进入 View 矩阵；保持共享 catalog，集中选择实际取证路径。 */
@@ -47,6 +48,9 @@ export function evidenceSequence(item: CompatibilityCase, built: Pick<StaticCase
   }
   if (item.id === 'type-flow') {
     return { checkpoint: 'pixel:text-flow-v1', frames: ['probe', 'control', 'reference'] }
+  }
+  if (item.id === importantPriorityContract.id) {
+    return { checkpoint: importantPriorityContract.checkpoint, frames: [...importantPriorityContract.frames] }
   }
   if (strategy !== 'interaction') {
     return { checkpoint: 'pixel:probe-vs-control', frames: ['probe', 'control'] }

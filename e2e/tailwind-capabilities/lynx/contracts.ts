@@ -26,6 +26,7 @@ export const pixelValidators = new Map([
   ['variant-dark', ['light-probe', 'light-control', 'dark-probe', 'dark-control']],
   ['variant-structural', ['probe', 'control', 'reference']],
   ['type-flow', ['probe', 'control', 'reference']],
+  ['syntax-important', ['probe', 'control', 'reference']],
 ])
 
 export function lynxCaseContracts(target: LynxTarget, filter?: RegExp): CaseContract[] {

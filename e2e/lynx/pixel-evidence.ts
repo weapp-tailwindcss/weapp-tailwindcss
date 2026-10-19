@@ -6,6 +6,7 @@ import { compatibilityCases } from '../../examples/react-lynx/src/compatibility/
 import { evidenceSequence, requiresPixelEffect } from '../../examples/react-lynx/src/compatibility/evidence'
 import staticEvidenceJson from '../../examples/react-lynx/src/compatibility/static-evidence.json'
 import { evaluateColorScheme, validateColorSchemeReceipts } from './color-scheme'
+import { evaluateImportantPriority } from './important-priority'
 import { evaluatePixelEffect } from './pixel-effects'
 import { PNG } from './png'
 import { evaluateStructural } from './structural'
@@ -15,6 +16,7 @@ const sequenceEvaluators: Record<string, (images: PngPixels[]) => ReturnType<typ
   'variant-dark': evaluateColorScheme,
   'variant-structural': evaluateStructural,
   'type-flow': evaluateTextFlow,
+  'syntax-important': evaluateImportantPriority,
 }
 
 const staticById = new Map((staticEvidenceJson as StaticEvidenceReport).results.map(item => [item.id, item]))
