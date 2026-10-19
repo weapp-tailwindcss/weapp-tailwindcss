@@ -9,6 +9,7 @@ import { skewImage } from './lynx/fixtures/skew-images'
 import { PNG } from './lynx/png'
 import { digest } from './tailwind-capabilities/identity'
 import { buildLynxCapabilityReport, lynxCaseContracts } from './tailwind-capabilities/lynx-adapter'
+import { geometryValidators } from './tailwind-capabilities/lynx/contracts'
 import { validateCapabilityReport, verifyReportArtifacts } from './tailwind-capabilities/report'
 
 vi.mock('./tailwind-capabilities/identity', async (original) => {
@@ -43,7 +44,7 @@ function geometry(): NativeGeometryEvidence {
   }
 }
 
-async function fixture(id = 'sizing-size', status: NativeCaseResult['status'] = 'supported') {
+async function fixture(id = 'sizing-size', status: NativeCaseResult['status'] = 'supported', hostGeometry = true) {
   const root = await mkdtemp(path.join(os.tmpdir(), 'lynx adapter 中文 '))
   directories.push(root)
   const context: RunContext = { root, directory: root, runId: '0b12a000-0000-4000-8000-000000000001', startedAt: new Date(Date.now() - 1000).toISOString(), caseFilter: new RegExp(`^${id}$`) }
@@ -72,9 +73,29 @@ async function fixture(id = 'sizing-size', status: NativeCaseResult['status'] = 
   }
   await writeFile(path.join(native, 'main.lynx.bundle'), bundle)
   await writeFile(path.join(native, 'run-context.json'), JSON.stringify(identity))
+  const saveGeometry = async () => {
+    const crops = path.join(native, 'crops', context.runId)
+    await mkdir(crops, { recursive: true })
+    const sidecar = { ...identity, source: 'lynx-native-host-geometry-v1', id, platform: raw.platform, geometry: raw.results[0]!.geometry }
+    const files: Array<[string, Uint8Array]> = [[`${id}-geometry.json`, Buffer.from(JSON.stringify(sidecar))]]
+    for (const frame of ['probe', 'control'] as const) {
+      const rect = sidecar.geometry![`${frame}Container`]
+      const image = new PNG({ width: rect.width, height: rect.height })
+      image.data.fill(255)
+      files.push([`${id}-geometry-${frame}.png`, PNG.sync.write(image)])
+    }
+    for (const [name, bytes] of files) {
+      await writeFile(path.join(crops, name), bytes)
+      raw.evidence!.artifacts = raw.evidence!.artifacts.filter(item => item.name !== name)
+      raw.evidence!.artifacts.push({ name, runId: context.runId, sha256: digest(bytes), byteLength: bytes.byteLength })
+    }
+  }
   const save = () => writeFile(path.join(native, 'report.json'), JSON.stringify(raw))
+  if (hostGeometry && geometryValidators.has(id)) {
+    await saveGeometry()
+  }
   await save()
-  return { context, raw, native, save }
+  return { context, raw, native, save, saveGeometry }
 }
 
 it('固定的支持与阶段不从本轮 checkpoint 或失败推导', () => {
@@ -101,8 +122,9 @@ it('从完整尺寸重算语义，保存原始报告和bundle回执并写JSON/Ma
 })
 
 it('伪造的通过checkpoint不能遮住不符合44px的实际测量', async () => {
-  const { context, raw, save } = await fixture()
+  const { context, raw, save, saveGeometry } = await fixture()
   raw.results[0]!.geometry!.probe = rect(6, 6, 90, 60)
+  await saveGeometry()
   await save()
   const { report } = await buildLynxCapabilityReport(context, 'lynx-ios', raw)
   expect(report.results[0]).toMatchObject({ status: 'failed', support: 'supported', assertions: [{ actual: 'unsupported', expected: 'supported' }] })
@@ -125,7 +147,7 @@ it('预期encoder限制不能仅凭generated/bundled布尔形成通过', async (
 })
 
 it('预期负向runtime也必须从有效控制夹具重算，不能更换支持预期', async () => {
-  const { context, raw, save } = await fixture('grid-auto', 'unsupported')
+  const { context, raw, save, saveGeometry } = await fixture('grid-auto', 'unsupported')
   raw.results[0]!.geometry = {
     probe: rect(6, 6, 140, 68),
     control: rect(206, 6, 140, 68),
@@ -134,6 +156,7 @@ it('预期负向runtime也必须从有效控制夹具重算，不能更换支持
     probeChild: rect(6, 42, 40, 24),
     controlChild: rect(206, 42, 40, 24),
   }
+  await saveGeometry()
   await save()
   const { report } = await buildLynxCapabilityReport(context, 'lynx-ios', raw)
   expect(report.results[0]).toMatchObject({ support: 'unsupported', status: 'passed', assertions: [{ actual: 'unsupported', expected: 'unsupported' }] })
@@ -159,7 +182,8 @@ it('没有raw且没有过滤条件时保留全部案例，而不是生成空的�
   const { context } = await fixture()
   const { report, contracts } = await buildLynxCapabilityReport({ ...context, caseFilter: undefined }, 'lynx-ios', undefined)
   expect(report.results).toHaveLength(lynxCaseContracts('lynx-ios').length)
-  expect(report.results.every(item => item.status === 'blocked')).toBe(true)
+  expect(report.results.filter(item => !item.id.startsWith('capability/')).every(item => item.status === 'blocked')).toBe(true)
+  expect(report.results.filter(item => item.id.startsWith('capability/')).every(item => item.status === 'not-run')).toBe(true)
   expect(() => validateCapabilityReport(report, contracts, report.identity, context.runId, 'lynx-ios')).not.toThrow()
 })
 
@@ -207,4 +231,55 @@ it('专用效果必须核对原始PNG回执并从像素重算，伪造hash不可
   await save()
   const altered = await buildLynxCapabilityReport(context, 'lynx-ios', raw)
   expect(altered.report.results[0]).toMatchObject({ status: 'blocked', reason: expect.stringContaining('截图字节') })
+})
+
+it('几何数字和运行身份不构成宿主几何侧车及截图证据', async () => {
+  const { context, raw } = await fixture('sizing-size', 'supported', false)
+  const { report } = await buildLynxCapabilityReport(context, 'lynx-ios', raw)
+  expect(report.results[0]!.status).toBe('blocked')
+  expect(report.results[0]!.reason).toMatch(/几何.*(侧车|宿主|回执)/)
+  expect(report.artifacts.some(item => item.kind === 'measurements')).toBe(false)
+})
+
+it('混合案例不能把整体支持或拒绝扩散成每个原子能力', () => {
+  const contracts = lynxCaseContracts('lynx-ios')
+  expect(contracts.find(item => item.id === 'sizing-min-max')!.features).toEqual(['authoring/sizing-min-max'])
+  expect(contracts.find(item => item.id === 'grid-auto')!.features).toEqual(['authoring/grid-auto'])
+  for (const id of ['min-width', 'max-width', 'min-height', 'max-height', 'grid-auto-flow', 'grid-auto-columns', 'grid-auto-rows']) {
+    expect(contracts.find(item => item.id === `capability/${id}`)!.fixture).toBe('missing-lynx-atomic-runtime-fixture')
+  }
+})
+
+it.each(['missing-sidecar', 'missing-frame', 'unreceipted-frame', 'wrong-id', 'wrong-bundle', 'report-mismatch', 'transparent-frame'])('几何侧车 %s 不能由已通过数字或其它 JSON 放行', async (kind) => {
+  const { context, raw, native, save } = await fixture()
+  const crops = path.join(native, 'crops', context.runId)
+  const sidecarName = 'sizing-size-geometry.json'
+  if (kind === 'missing-sidecar') {
+    await rm(path.join(crops, sidecarName))
+  }
+  else if (kind === 'missing-frame') {
+    await rm(path.join(crops, 'sizing-size-geometry-control.png'))
+  }
+  else if (kind === 'unreceipted-frame') {
+    raw.evidence!.artifacts = raw.evidence!.artifacts.filter(item => item.name !== 'sizing-size-geometry-probe.png')
+  }
+  else if (kind === 'report-mismatch') {
+    raw.results[0]!.geometry!.probe.left += 1
+  }
+  else {
+    const name = kind === 'transparent-frame' ? 'sizing-size-geometry-probe.png' : sidecarName
+    const value = JSON.parse(await readFile(path.join(crops, sidecarName), 'utf8'))
+    if (kind === 'wrong-id') {
+      value.id = 'layout-aspect'
+    }
+    else if (kind === 'wrong-bundle') {
+      value.bundleSha256 = 'f'.repeat(64)
+    }
+    const bytes = kind === 'transparent-frame' ? PNG.sync.write(new PNG({ width: 160, height: 140 })) : Buffer.from(JSON.stringify(value))
+    await writeFile(path.join(crops, name), bytes)
+    Object.assign(raw.evidence!.artifacts.find(item => item.name === name)!, { sha256: digest(bytes), byteLength: bytes.byteLength })
+  }
+  await save()
+  const { report } = await buildLynxCapabilityReport(context, 'lynx-ios', raw)
+  expect(report.results[0]!.status).toBe('blocked')
 })

@@ -9,6 +9,7 @@ import { evaluateStructural } from '../../lynx/structural'
 import { evaluateTextFlow } from '../../lynx/text-flow'
 import { geometryValidators, pixelValidators } from './contracts'
 import { readLynxFrame } from './evidence'
+import { readLynxGeometry } from './geometry-evidence'
 
 export async function validateLynxCase(context: RunContext, raw: NativePlatformReport, contract: CaseContract): Promise<Pick<CapabilityResult, 'status' | 'assertions' | 'reason'>> {
   const results = raw.results.filter(item => item.id === contract.id)
@@ -21,7 +22,7 @@ export async function validateLynxCase(context: RunContext, raw: NativePlatformR
   }
   let measured: NativeCaseResult | undefined
   if (geometryValidators.has(contract.id) && contract.expectation.stage === 'runtime') {
-    measured = evaluateGeometry(compatibilityCases.find(item => item.id === contract.id)!, result.geometry)
+    measured = evaluateGeometry(compatibilityCases.find(item => item.id === contract.id)!, await readLynxGeometry(context, raw, contract.id))
   }
   else if (pixelValidators.has(contract.id) && contract.expectation.stage === 'visual') {
     const images = await Promise.all(pixelValidators.get(contract.id)!.map(frame => readLynxFrame(context, raw, `${contract.id}-${frame}.png`)))

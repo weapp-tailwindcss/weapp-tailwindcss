@@ -47,7 +47,7 @@ export async function lynxArtifactReceipts(context: RunContext, raw: NativePlatf
           ? 'screenshot'
           : extension === '.bundle'
             ? 'bundle'
-            : extension === '.css' ? 'css' : ['.txt', '.log'].includes(extension) ? 'log' : 'measurements'
+            : extension === '.css' ? 'css' : ['.txt', '.log'].includes(extension) ? 'log' : entry.name.endsWith('-geometry.json') ? 'measurements' : 'bundle'
         receipts.push(await receipt(file, context.directory, context.runId, owners, kind))
       }
     }
