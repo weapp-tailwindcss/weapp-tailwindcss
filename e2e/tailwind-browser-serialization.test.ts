@@ -144,7 +144,7 @@ describe('CLI 编译后的浏览器闭包传输边界', () => {
     journal.cycle = 2
     frames.shift()!()
     expect(frames).toHaveLength(1)
-    expect(journal.frames).toEqual([{ cycle: 2, time: 100, probe: 0.25, control: 1 }])
+    expect(journal.frames).toEqual([{ cycle: 2, time: 100, probe: 0.25, control: 1, phase: 'rendered' }])
     listeners.get('transitionstart')!({ isTrusted: true, target: { id: 'probe' }, propertyName: 'opacity', elapsedTime: 0, pseudoElement: '' })
     expect(journal.events).toEqual([{ type: 'transitionstart', trusted: true, target: 'probe', time: 100, cycle: 2, phase: 'natural', property: 'opacity', elapsedTime: 0, pseudoElement: '' }])
     expect(journal.runId).toBe('serialized-starting')

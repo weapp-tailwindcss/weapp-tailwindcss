@@ -55,8 +55,24 @@ export async function applyControl(page: Page, control: WebControl, active: bool
       }, { key: control.key, tag: control.tag, position: control.position, count: active ? control.after : control.before })
     case 'viewport':
       return page.setViewportSize(active ? control.after : control.before)
-    case 'media':
-      return page.emulateMedia(active ? control.after : control.before)
+    case 'media': {
+      const options = active ? control.after : control.before
+      await page.emulateMedia(options)
+      if (options.contrast !== undefined) {
+        const viewport = page.viewportSize()
+        if (!viewport) {
+          throw new Error('contrast 媒体夹具缺少可恢复的固定 viewport')
+        }
+        // Firefox 的 contrast 协议会更新 matchMedia，但需要真实 resize 才重算既有样式。
+        try {
+          await page.setViewportSize({ ...viewport, width: viewport.width + 1 })
+        }
+        finally {
+          await page.setViewportSize(viewport)
+        }
+      }
+      return
+    }
     case 'move':
       return page.locator(control.selector).evaluate((element, parent) => {
         document.querySelector(parent)!.append(element)

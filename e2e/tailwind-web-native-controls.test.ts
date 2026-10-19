@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest'
 import { assertionPassed } from './tailwind-capabilities/report'
 import { activateProbe, prepareProbe, readProbe } from './tailwind-capabilities/web/actions'
 import { webContract, webRuntimeAssertions, webRuntimeOutcome } from './tailwind-capabilities/web/contract'
+import { applyControl } from './tailwind-capabilities/web/controls'
 import { pseudoVariantProbes } from './tailwind-capabilities/web/variants/pseudo'
 
 const focus = pseudoVariantProbes.find(probe => probe.id === 'controlled-focus-visible')!
@@ -24,6 +25,16 @@ function assertions(changes: Partial<WebObservation> = {}, generated = true) {
 }
 
 describe('真实键盘与媒体环境的观测边界', () => {
+  it('contrast 协议通过真实 viewport 重算媒体样式并恢复原尺寸，不能只看 matchMedia', async () => {
+    const calls: unknown[] = []
+    const page = {
+      emulateMedia: async (options: unknown) => { calls.push(options) },
+      viewportSize: () => ({ width: 640, height: 480 }),
+      setViewportSize: async (size: unknown) => { calls.push(size) },
+    } as unknown as Page
+    await applyControl(page, contrast.controls![0]!, true)
+    expect(calls).toEqual([{ contrast: 'more' }, { width: 641, height: 480 }, { width: 640, height: 480 }])
+  })
   it('键盘夹具采用跨平台可Tab导航的文本输入，并单独证明focus和focus-visible', async () => {
     expect(focus.html).toContain('<input id="anchor" type="text"')
     expect(focus.html).toContain('<input id="probe" type="text"')

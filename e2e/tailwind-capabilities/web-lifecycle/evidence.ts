@@ -8,7 +8,12 @@ function object(value: unknown): Record<string, unknown> {
 
 /** 自然帧允许重复进度，但必须有多次严格递增并覆盖中段。 */
 export function naturalStartingTimeline(frames: readonly StartingFrame[], cycle: number, completed: boolean) {
-  const selected = frames.filter(frame => frame.cycle === cycle)
+  const raw = frames.filter(frame => frame.cycle === cycle)
+  // 同步插入时 Firefox 尚未提交 starting 样式；原始值保留，但不能当作已渲染帧。
+  if (raw.some((frame, index) => frame.phase === 'insertion' && (index !== 0 || !Number.isFinite(frame.time) || frame.control !== 1))) {
+    return false
+  }
+  const selected = raw.filter(frame => frame.phase !== 'insertion')
   return selected.length >= 3
     && selected.every((frame, index) => Number.isFinite(frame.time) && Number.isFinite(frame.probe) && frame.control === 1 && frame.probe >= 0 && frame.probe <= 1 && (!index || (frame.time >= selected[index - 1]!.time && frame.probe >= selected[index - 1]!.probe)))
     && selected.at(-1)!.time > selected[0]!.time
@@ -19,13 +24,20 @@ export function naturalStartingTimeline(frames: readonly StartingFrame[], cycle:
 }
 
 function nativeTransition(events: readonly LifecycleEvent[], cycle: number) {
-  const selected = events.filter(event => event.cycle === cycle && event.target === 'probe' && event.property === 'opacity')
-  if (selected.length !== 3 || selected.some(event => !event.trusted || event.pseudoElement !== '')) {
+  const raw = events.filter(event => event.cycle === cycle && event.target === 'probe' && event.property === 'opacity')
+  // WebKit 对同一 transition 回拨到零、再恢复自然时间时会重新派发 start。
+  const seeks = raw.filter(event => event.type === 'transitionstart' && event.phase !== 'natural')
+  if (seeks.some(event => cycle !== 2 || !['evidence', 'restoration'].includes(event.phase ?? '') || event.elapsedTime !== 0)) {
+    return false
+  }
+  const selected = raw.filter(event => !seeks.includes(event))
+  if (selected.length !== 3 || raw.some(event => !event.trusted || event.pseudoElement !== '')) {
     return false
   }
   return ['transitionrun', 'transitionstart', 'transitionend'].every((type, index) => {
     const event = selected[index]!
-    return event.type === type && event.phase === (index === 2 && cycle === 2 ? 'restoration' : 'natural') && event.elapsedTime === (index === 2 ? 1.2 : 0)
+    // TransitionEvent.elapsedTime 在 Firefox 经 float32 序列化，误差上限为一微秒。
+    return event.type === type && event.phase === (index === 2 && cycle === 2 ? 'restoration' : 'natural') && typeof event.elapsedTime === 'number' && Math.abs(event.elapsedTime - (index === 2 ? 1.2 : 0)) <= 0.000001
   })
 }
 

@@ -76,6 +76,28 @@ it.each(['frames', 'events', 'pixels', 'restoration'] as const)('删除 starting
   expect(assertions(result).some(assertion => !assertionPassed(assertion))).toBe(true)
 })
 
+it('自然时间线从渲染开始采样，保留插入时尚未刷新样式的原始记录', () => {
+  const result = goldStarting()
+  result.frames!.unshift({ cycle: 1, time: -1, probe: 1, control: 1, phase: 'insertion' })
+  expect(assertions(result).filter(assertion => !assertionPassed(assertion))).toEqual([])
+  result.frames!.splice(3, 0, { cycle: 1, time: 17, probe: 1, control: 1, phase: 'insertion' })
+  expect(assertions(result).find(assertion => assertion.name === 'natural/first')?.actual).toBe(false)
+})
+
+it('原生事件接受秒数的浮点序列化及同一 transition 回拨产生的 start 事件', () => {
+  const result = goldStarting()
+  result.events.filter(event => event.type === 'transitionend').forEach(event => event.elapsedTime = 1.2000000476837158)
+  result.events.splice(
+    5,
+    0,
+    { type: 'transitionstart', target: 'probe', trusted: true, time: 4201, cycle: 2, phase: 'evidence', property: 'opacity', pseudoElement: '', elapsedTime: 0 },
+    { type: 'transitionstart', target: 'probe', trusted: true, time: 4202, cycle: 2, phase: 'restoration', property: 'opacity', pseudoElement: '', elapsedTime: 0 },
+  )
+  expect(assertions(result).filter(assertion => !assertionPassed(assertion))).toEqual([])
+  result.events[5]!.type = 'transitionrun'
+  expect(assertions(result).find(assertion => assertion.name === 'native/transition-events')?.actual).toBe(false)
+})
+
 it.each(['events', 'pixels', 'restoration'] as const)('删除 details 原始 %s 不能用缓存成功值放行', (field) => {
   const result = goldDetails()
   result.values = Object.fromEntries(assertions(result).map(assertion => [assertion.name, assertion.actual]))

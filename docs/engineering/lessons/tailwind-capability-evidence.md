@@ -105,6 +105,10 @@ Expo 示例的 Babel preset 现按实际 Expo 包身份解析，避免 monorepo 
 
 ## 适用边界
 
+PR #1311 的首轮 CI（head `8275b8888`）暴露生命周期观测边界：Firefox 在同步插入时尚未提交 starting 样式，事件秒数带有 float32 误差；WebKit 对同一 transition 回拨到零再恢复会额外派发 start。修复保留同步插入的原始记录并显式标注阶段，要求真实渲染帧单调递增；原生事件仍要求正确顺序、来源、持续时间及恢复，只接受取证阶段的 start 回拨事件。两条失败回归先红后绿，四文件 43 项合同通过，Firefox/WebKit 的 `runtime/lifecycle-starting` 分别在真实后台浏览器单例中通过。
+
+同轮 Firefox contrast 协议只更新 matchMedia，等待一秒仍未刷新既有原生 CSS。独立 CSS 最小复现证明真实 viewport resize 会触发重算；媒体适配器现在原生调整一像素并在 finally 恢复尺寸，继续检查候选、独立 CSS、媒体查询及两帧渲染。`runtime/controlled-contrast-more` 的触发和恢复单例通过，没有注入替代样式或刷新页面。相关 static 由 `pnpm e2e:tailwind:static:update` 重新生成，内容不变。以上是针对 CI 失败的有界复现，不能代替仍被预检阻塞的本地全面验收。
+
 能力清单覆盖固定版本的注册项和有限补全，任意值按语法分支取样。runtime 夹具缺口、缺少独立转换 oracle、不可触发状态及设备阻塞均须保留，不能自动变成“不支持”，也不能用同属性的其他案例填充。第三方插件任意实现需另行登记。
 
 ## 规则评估

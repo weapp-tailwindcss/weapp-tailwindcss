@@ -21,7 +21,7 @@ async function insertCycle(page: Page, cycle: number) {
     state.cycle = cycle
     state.phase = 'natural'
     document.querySelector('#host')!.append((document.querySelector('#starting-template') as HTMLTemplateElement).content.cloneNode(true))
-    state.frames.push({ cycle, time: performance.now(), probe: Number(getComputedStyle(document.querySelector('#probe')!).opacity), control: Number(getComputedStyle(document.querySelector('#control')!).opacity) })
+    state.frames.push({ cycle, time: performance.now(), probe: Number(getComputedStyle(document.querySelector('#probe')!).opacity), control: Number(getComputedStyle(document.querySelector('#control')!).opacity), phase: 'insertion' })
   }, cycle)
 }
 
@@ -49,7 +49,7 @@ export async function observeStarting(page: Page, runId: string, capture: Captur
         const probe = document.querySelector('#probe')
         const control = document.querySelector('#control')
         if (state.phase === 'natural' && probe && control) {
-          state.frames.push({ cycle: state.cycle, time: performance.now(), probe: Number(getComputedStyle(probe).opacity), control: Number(getComputedStyle(control).opacity) })
+          state.frames.push({ cycle: state.cycle, time: performance.now(), probe: Number(getComputedStyle(probe).opacity), control: Number(getComputedStyle(control).opacity), phase: 'rendered' })
         }
         state.raf = requestAnimationFrame(() => sampler.tick())
       },

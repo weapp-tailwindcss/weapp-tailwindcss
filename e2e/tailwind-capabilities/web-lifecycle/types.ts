@@ -26,6 +26,7 @@ export interface StartingFrame {
   time: number
   probe: number
   control: number
+  phase?: 'insertion' | 'rendered'
 }
 
 export interface LifecycleObservation {
