@@ -329,22 +329,142 @@
   .\[--probe\:17px\] {
     --probe: 17px;
   }
+  :is(.\*\:bg-\[\#123456\] > *) {
+    background-color: #123456;
+  }
+  :is(.\*\*\:bg-\[\#123456\] *) {
+    background-color: #123456;
+  }
+  .not-hover\:bg-\[\#123456\]:not(:hover) {
+    background-color: #123456;
+  }
+  @media not (hover: hover) {
+    .not-hover\:bg-\[\#123456\] {
+      background-color: #123456;
+    }
+  }
   @media (hover: hover) {
     .group-hover\/card\:bg-\[\#123456\]:is(:where(.group\/card):hover *) {
       background-color: #123456;
     }
   }
+  .group-active\/card\:bg-\[\#123456\]:is(:where(.group\/card):active *) {
+    background-color: #123456;
+  }
   .peer-checked\/choice\:bg-\[\#123456\]:is(:where(.peer\/choice):checked ~ *) {
+    background-color: #123456;
+  }
+  .first-letter\:text-\[\#123456\]::first-letter {
+    color: #123456;
+  }
+  .first-line\:text-\[\#123456\]::first-line {
+    color: #123456;
+  }
+  .marker\:text-\[\#123456\] ::marker {
+    color: #123456;
+  }
+  .marker\:text-\[\#123456\]::marker {
+    color: #123456;
+  }
+  .marker\:text-\[\#123456\] ::-webkit-details-marker {
+    color: #123456;
+  }
+  .marker\:text-\[\#123456\]::-webkit-details-marker {
+    color: #123456;
+  }
+  .selection\:text-\[\#123456\] ::selection {
+    color: #123456;
+  }
+  .selection\:text-\[\#123456\]::selection {
+    color: #123456;
+  }
+  .file\:text-\[\#123456\]::file-selector-button {
+    color: #123456;
+  }
+  .placeholder\:text-\[\#123456\]::placeholder {
+    color: #123456;
+  }
+  .backdrop\:bg-\[\#123456\]::backdrop {
     background-color: #123456;
   }
   .before\:content-\[\"probe\"\]::before {
     --tw-content: "probe";
     content: var(--tw-content);
   }
+  .after\:content-\[\"tailwind\"\]::after {
+    --tw-content: "tailwind";
+    content: var(--tw-content);
+  }
+  .first\:bg-\[\#123456\]:first-child {
+    background-color: #123456;
+  }
   .first\:opacity-50:first-child {
     opacity: 50%;
   }
+  .last\:bg-\[\#123456\]:last-child {
+    background-color: #123456;
+  }
+  .only\:bg-\[\#123456\]:only-child {
+    background-color: #123456;
+  }
+  .odd\:bg-\[\#123456\]:nth-child(odd) {
+    background-color: #123456;
+  }
+  .even\:bg-\[\#123456\]:nth-child(even) {
+    background-color: #123456;
+  }
+  .first-of-type\:bg-\[\#123456\]:first-of-type {
+    background-color: #123456;
+  }
+  .last-of-type\:bg-\[\#123456\]:last-of-type {
+    background-color: #123456;
+  }
+  .only-of-type\:bg-\[\#123456\]:only-of-type {
+    background-color: #123456;
+  }
+  .target\:bg-\[\#123456\]:target {
+    background-color: #123456;
+  }
+  .open\:bg-\[\#123456\]:is([open], :popover-open, :open) {
+    background-color: #123456;
+  }
+  .default\:bg-\[\#123456\]:default {
+    background-color: #123456;
+  }
   .checked\:bg-\[\#123456\]:checked {
+    background-color: #123456;
+  }
+  .indeterminate\:bg-\[\#123456\]:indeterminate {
+    background-color: #123456;
+  }
+  .placeholder-shown\:bg-\[\#123456\]:placeholder-shown {
+    background-color: #123456;
+  }
+  .optional\:bg-\[\#123456\]:optional {
+    background-color: #123456;
+  }
+  .required\:bg-\[\#123456\]:required {
+    background-color: #123456;
+  }
+  .valid\:bg-\[\#123456\]:valid {
+    background-color: #123456;
+  }
+  .invalid\:bg-\[\#123456\]:invalid {
+    background-color: #123456;
+  }
+  .in-range\:bg-\[\#123456\]:in-range {
+    background-color: #123456;
+  }
+  .out-of-range\:bg-\[\#123456\]:out-of-range {
+    background-color: #123456;
+  }
+  .read-only\:bg-\[\#123456\]:read-only {
+    background-color: #123456;
+  }
+  .empty\:bg-\[\#123456\]:empty {
+    background-color: #123456;
+  }
+  .focus-within\:bg-\[\#123456\]:focus-within {
     background-color: #123456;
   }
   @media (hover: hover) {
@@ -355,7 +475,25 @@
   .focus\:bg-\[\#123456\]:focus {
     background-color: #123456;
   }
+  .focus-visible\:bg-\[\#123456\]:focus-visible {
+    background-color: #123456;
+  }
   .active\:bg-\[\#123456\]:active {
+    background-color: #123456;
+  }
+  .enabled\:bg-\[\#123456\]:enabled {
+    background-color: #123456;
+  }
+  .disabled\:bg-\[\#123456\]:disabled {
+    background-color: #123456;
+  }
+  .inert\:bg-\[\#123456\]:is([inert], [inert] *) {
+    background-color: #123456;
+  }
+  :where(:is(.active)) .in-\[\.active\]\:bg-\[\#123456\] {
+    background-color: #123456;
+  }
+  .has-\[\:checked\]\:bg-\[\#123456\]:has(:is(:checked)) {
     background-color: #123456;
   }
   .aria-checked\:bg-\[\#123456\][aria-checked="true"] {
@@ -364,24 +502,130 @@
   .data-\[state\=open\]\:bg-\[\#123456\][data-state="open"] {
     background-color: #123456;
   }
+  .nth-3\:bg-\[\#123456\]:nth-child(3) {
+    background-color: #123456;
+  }
+  .nth-last-3\:bg-\[\#123456\]:nth-last-child(3) {
+    background-color: #123456;
+  }
+  .nth-of-type-3\:bg-\[\#123456\]:nth-of-type(3) {
+    background-color: #123456;
+  }
+  .nth-last-of-type-3\:bg-\[\#123456\]:nth-last-of-type(3) {
+    background-color: #123456;
+  }
   @supports (display:grid) {
     .supports-\[display\:grid\]\:grid {
       display: grid;
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .motion-safe\:bg-\[\#123456\] {
+      background-color: #123456;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .motion-reduce\:bg-\[\#123456\] {
+      background-color: #123456;
+    }
+  }
+  @media (prefers-contrast: more) {
+    .contrast-more\:opacity-50 {
+      opacity: 50%;
+    }
+  }
+  @media (width < 700px) {
+    .max-\[700px\]\:bg-\[\#123456\] {
+      background-color: #123456;
     }
   }
   @media (width >= 700px) {
     .min-\[700px\]\:w-\[123px\] {
       width: 123px;
     }
+    @media (hover: hover) {
+      .min-\[700px\]\:hover\:bg-\[\#123456\]:hover {
+        background-color: #123456;
+      }
+    }
+  }
+  @media (width >= 40rem) {
+    .sm\:bg-\[\#123456\] {
+      background-color: #123456;
+    }
+  }
+  @media (width >= 48rem) {
+    .md\:bg-\[\#123456\] {
+      background-color: #123456;
+    }
+  }
+  @media (width >= 64rem) {
+    .lg\:bg-\[\#123456\] {
+      background-color: #123456;
+    }
+  }
+  @media (width >= 80rem) {
+    .xl\:bg-\[\#123456\] {
+      background-color: #123456;
+    }
+  }
+  @media (width >= 96rem) {
+    .\32 xl\:bg-\[\#123456\] {
+      background-color: #123456;
+    }
+  }
+  @container (width < 200px) {
+    .\@max-\[200px\]\:bg-\[\#123456\] {
+      background-color: #123456;
+    }
   }
   @container (width >= 200px) {
     .\@min-\[200px\]\:w-\[123px\] {
       width: 123px;
     }
+    .\@\[200px\]\:bg-\[\#123456\] {
+      background-color: #123456;
+    }
+  }
+  @container card (width >= 200px) {
+    .\@min-\[200px\]\/card\:bg-\[\#123456\] {
+      background-color: #123456;
+    }
+  }
+  @container (width >= 200px) {
+    .\@min-\[200px\]\:data-\[state\=open\]\:bg-\[\#123456\][data-state="open"] {
+      background-color: #123456;
+    }
+  }
+  @media (orientation: portrait) {
+    .portrait\:bg-\[\#123456\] {
+      background-color: #123456;
+    }
+  }
+  @media (orientation: landscape) {
+    .landscape\:bg-\[\#123456\] {
+      background-color: #123456;
+    }
+  }
+  .ltr\:bg-\[\#123456\]:where(:dir(ltr), [dir="ltr"], [dir="ltr"] *) {
+    background-color: #123456;
+  }
+  .rtl\:bg-\[\#123456\]:where(:dir(rtl), [dir="rtl"], [dir="rtl"] *) {
+    background-color: #123456;
   }
   @media (prefers-color-scheme: dark) {
     .dark\:bg-\[\#123456\] {
       background-color: #123456;
+    }
+  }
+  @media print {
+    .print\:bg-\[\#123456\] {
+      background-color: #123456;
+    }
+  }
+  @media (forced-colors: active) {
+    .forced-colors\:opacity-50 {
+      opacity: 50%;
     }
   }
   .\[\&\>span\]\:text-\[\#123456\] > span {
@@ -405,6 +649,15 @@
     background-color: #010203;
     color: #040506;
     transition: none;
+  }
+  .box-model {
+    box-sizing: content-box;
+  }
+  .pseudo-baseline::placeholder,.pseudo-baseline::first-letter,.pseudo-baseline::first-line,.pseudo-baseline::file-selector-button,.pseudo-baseline::marker,.pseudo-baseline::selection {
+    color: #040506;
+  }
+  .pseudo-baseline::backdrop {
+    background-color: #010203;
   }
 }
 @property --tw-border-style {

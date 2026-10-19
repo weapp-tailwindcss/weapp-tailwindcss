@@ -1,0 +1,5 @@
+/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+.catalog-reference {
+  background-color: var(--color-catalog-brand, #123456);
+  padding: 17px;
+}

@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
+import { authoringFixtures, sourceSyntaxCases } from '@weapp-tailwindcss/test-catalog'
 import { withGeneratorFixture } from './fixture'
 import { hmrCss, hmrSource, hmrStates } from './hmr/fixture'
 import { digest } from './identity'
@@ -13,7 +14,15 @@ export async function fixtureOutputs(root: string) {
     const output = await withGeneratorFixture(root, hmrCss, { 'probe.js': hmrSource('static-baseline', state) }, generator => generator.generate({ target: 'web', candidates: [], scanSources: true }))
     return [`hmr-${state.id}.css`, output.css] as const
   })))
-  return { fixtureHash: digest({ webFixtureCss, webProbes, weappProbes, hmrCss, hmrStates }), files: { 'web.css': web.css, 'weapp.wxss': weapp.css, ...hmr } }
+  const authoring = [
+    ...authoringFixtures,
+    ...sourceSyntaxCases.map(item => ({ id: `scan-${item.id}`, css: `@import "tailwindcss" source(none);\n@source "./probe.${item.language}";`, files: { [`probe.${item.language}`]: item.source }, candidates: [] })),
+  ]
+  const authoringFiles = Object.fromEntries<string>(await Promise.all(authoring.map(async (fixture) => {
+    const output = await withGeneratorFixture(root, fixture.css, fixture.files, generator => generator.generate({ target: 'web', candidates: fixture.candidates, scanSources: true }))
+    return [`authoring-${fixture.id}.css`, output.css] as const
+  })))
+  return { fixtureHash: digest({ webFixtureCss, webProbes, weappProbes, hmrCss, hmrStates, authoring }), files: { 'web.css': web.css, 'weapp.wxss': weapp.css, ...hmr, ...authoringFiles } }
 }
 
 export async function fixtureBaseline(root: string, update = false) {
