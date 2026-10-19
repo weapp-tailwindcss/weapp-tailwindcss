@@ -28,20 +28,21 @@ export function webContract(probe: WebProbe): CaseContract {
   const layout = states.flatMap(state => layoutValues(probe).map(item => ({ ...item, name: `${state}/layout/${item.key}` })))
   const guards = states.flatMap(state => (probe.guards ?? []).map(guard => ({ name: `${state}/guard/${guard.name}`, expected: (state === 'before' || state === 'restored') ? guard.before ?? guard.expected : guard.expected })))
   const render = probe.controls?.some(control => control.kind === 'media') ? states.map(state => ({ name: `${state}/render-checkpoint`, expected: true })) : []
+  const styles = states.flatMap(state => Object.entries(probe.styles ?? {}).map(([property, expected]) => ({ name: `${state}/style/${property}`, expected })))
   return {
     id: `runtime/${probe.id}`,
     features: probe.features,
     candidate: probe.candidate,
     fixture: probe.html,
     expectation: { support: 'supported', stage: 'runtime' },
-    requiredAssertions: ['generated', ...states, ...layout.map(item => item.name), ...guards.map(item => item.name), ...render.map(item => item.name), ...pixels.map(item => item.name)],
-    expectedValues: { generated: true, ...expectedValues, ...Object.fromEntries([...layout, ...guards, ...render, ...pixels].map(item => [item.name, item.expected])) },
+    requiredAssertions: ['generated', ...states, ...layout.map(item => item.name), ...guards.map(item => item.name), ...styles.map(item => item.name), ...render.map(item => item.name), ...pixels.map(item => item.name)],
+    expectedValues: { generated: true, ...expectedValues, ...Object.fromEntries([...layout, ...guards, ...styles, ...render, ...pixels].map(item => [item.name, item.expected])) },
     ...(pixels.length || layout.length ? { tolerances: Object.fromEntries([...layout, ...pixels].filter(item => item.tolerance !== undefined).map(item => [item.name, item.tolerance!])) } : {}),
     assertionStages: { generated: 'generation', ...Object.fromEntries(pixels.map(item => [item.name, 'visual' as const])) },
   }
 }
 
-export function webRuntimeAssertions(probe: WebProbe, state: string, observation: Pick<WebObservation, 'actual' | 'layout' | 'guards' | 'renderFrames'>): SemanticAssertion[] {
+export function webRuntimeAssertions(probe: WebProbe, state: string, observation: Pick<WebObservation, 'actual' | 'layout' | 'guards' | 'renderFrames' | 'styles'>): SemanticAssertion[] {
   const values: Record<string, string | number> = observation.layout
     ? {
         'display': observation.layout.display,
@@ -53,6 +54,7 @@ export function webRuntimeAssertions(probe: WebProbe, state: string, observation
     : {}
   return [
     { name: state, stage: 'runtime', actual: observation.actual, expected: probe.checkpoints?.find(item => item.name === state)?.expected ?? (state === 'before' || state === 'restored' ? probe.before! : probe.expected) },
+    ...Object.entries(probe.styles ?? {}).map(([property, expected]) => ({ name: `${state}/style/${property}`, stage: 'runtime' as const, actual: observation.styles?.[property] ?? null, expected })),
     ...layoutValues(probe).map(item => ({ name: `${state}/layout/${item.key}`, stage: 'runtime' as const, actual: values[item.key] ?? null, expected: item.expected, ...(item.tolerance !== undefined ? { tolerance: item.tolerance } : {}) })),
     ...(probe.guards ?? []).map(guard => ({ name: `${state}/guard/${guard.name}`, stage: 'runtime' as const, actual: observation.guards?.[guard.name] ?? null, expected: (state === 'before' || state === 'restored') ? guard.before ?? guard.expected : guard.expected })),
     ...(probe.controls?.some(control => control.kind === 'media') ? [{ name: `${state}/render-checkpoint`, stage: 'runtime' as const, actual: observation.renderFrames?.length === 2 && observation.renderFrames.every(Number.isFinite) && observation.renderFrames[1]! > observation.renderFrames[0]!, expected: true }] : []),

@@ -2,6 +2,7 @@ import type { RuntimeProbe } from '../types'
 import type { WebControl } from './controls'
 import type { WebGuard } from './guards'
 import type { WebPixelSample } from './pixels'
+import { borderProperties, paddingProperties, radiusProperties } from '../style-properties'
 import { webFeatureBindings } from './features'
 import { variantWebProbes } from './variants'
 
@@ -30,6 +31,7 @@ export interface WebProbe extends RuntimeProbe {
   controls?: WebControl[]
   checkpoints?: Array<{ afterControl: number, name: string, expected: string }>
   guards?: WebGuard[]
+  styles?: Record<string, string>
 }
 
 const element = '<div id="probe" class="probe CANDIDATE">Tailwind probe</div>'
@@ -55,7 +57,7 @@ const authoredWebProbes: Omit<WebProbe, 'features'>[] = [
   { id: 'flex-shrink', candidate: 'shrink-0', html: '<div style="display:flex;width:100px;height:100px"><div id="probe" class="probe CANDIDATE" style="width:80px;height:20px"></div><div style="width:80px;height:20px"></div></div>', component: 'view', property: 'flex-shrink', expected: '0', layout: { display: 'block', width: 80, height: 20, children: [] } },
   { id: 'gap', candidate: 'flex gap-4', html: layoutElement, component: 'children', property: 'column-gap', expected: '16px', layout: { display: 'flex', width: 200, height: 100, children: [rect(0, 0, 20, 20), rect(36, 0, 30, 40)] } },
   { id: 'grid', candidate: 'grid grid-cols-[80px_120px]', html: '<div id="probe" class="probe CANDIDATE" style="width:200px;height:100px"><div data-layout-child style="height:20px"></div><div data-layout-child style="height:30px"></div></div>', component: 'children', property: 'grid-template-columns', expected: '80px 120px', layout: { display: 'grid', width: 200, height: 100, children: [rect(0, 0, 80, 20), rect(80, 0, 120, 30)] } },
-  { id: 'padding', candidate: 'p-[13px]', html: element, component: 'view', property: 'padding-top', expected: '13px' },
+  { id: 'padding', candidate: 'p-[13px]', html: element, component: 'view', property: 'padding-top', expected: '13px', styles: paddingProperties('13px') },
   { id: 'margin', candidate: 'ml-[11px]', html: element, component: 'view', property: 'margin-left', expected: '11px' },
   { id: 'negative', candidate: '-mt-[7px]', html: element, component: 'view', property: 'margin-top', expected: '-7px' },
   { id: 'logical-padding', candidate: 'ps-[17px]', html: element, component: 'view', property: 'padding-inline-start', expected: '17px' },
@@ -63,7 +65,7 @@ const authoredWebProbes: Omit<WebProbe, 'features'>[] = [
   { id: 'height', candidate: 'h-[45px]', html: element, component: 'view', property: 'height', expected: '45px' },
   { id: 'min-width', candidate: 'min-w-[101px]', html: element, component: 'view', property: 'min-width', expected: '101px' },
   { id: 'max-height', candidate: 'max-h-[240px]', html: element, component: 'view', property: 'max-height', expected: '240px' },
-  { id: 'size', candidate: 'size-[37px]', html: element, component: 'view', property: 'width', expected: '37px' },
+  { id: 'size', candidate: 'size-[37px]', html: element, component: 'view', property: 'width', expected: '37px', styles: { width: '37px', height: '37px' } },
   { id: 'font-size', candidate: 'text-[length:22px]', html: text, component: 'text', property: 'font-size', expected: '22px' },
   { id: 'font-weight', candidate: 'font-[650]', html: text, component: 'text', property: 'font-weight', expected: '650' },
   { id: 'line-height', candidate: 'leading-[26px]', html: text, component: 'text', property: 'line-height', expected: '26px' },
@@ -75,8 +77,8 @@ const authoredWebProbes: Omit<WebProbe, 'features'>[] = [
   { id: 'background', candidate: 'bg-[#123456]', html: element, component: 'view', property: 'background-color', expected: 'rgb(18, 52, 86)' },
   { id: 'gradient', candidate: 'bg-linear-to-r from-[#ff0000] from-50% to-[#0000ff] to-50%', html: '<div id="probe" class="probe CANDIDATE" style="width:100px;height:60px"></div>', component: 'view', property: 'width', expected: '100px', pixels: [{ id: 'left-red', x: 0.25, y: 0.5, expected: [255, 0, 0, 255], tolerance: 2 }, { id: 'right-blue', x: 0.75, y: 0.5, expected: [0, 0, 255, 255], tolerance: 2 }] },
   { id: 'shadow', candidate: 'shadow-[8px_0_0_0_#123456]', html: '<div id="probe" class="probe CANDIDATE" style="width:100px;height:60px"></div>', component: 'view', property: 'width', expected: '100px', pixels: [{ id: 'outside-right-shadow', x: 1.04, y: 0.5, expected: [18, 52, 86, 255], tolerance: 2 }, { id: 'outside-left-clear', x: -0.04, y: 0.5, expected: [255, 255, 255, 255], tolerance: 2 }] },
-  { id: 'border-width', candidate: 'border-[3px]', html: element, component: 'view', property: 'border-top-width', expected: '3px' },
-  { id: 'border-radius', candidate: 'rounded-[17px]', html: element, component: 'view', property: 'border-top-left-radius', expected: '17px' },
+  { id: 'border-width', candidate: 'border-[3px]', html: element, component: 'view', property: 'border-top-width', expected: '3px', styles: borderProperties('3px') },
+  { id: 'border-radius', candidate: 'rounded-[17px]', html: element, component: 'view', property: 'border-top-left-radius', expected: '17px', styles: radiusProperties('17px') },
   { id: 'opacity', candidate: 'opacity-[.67]', html: element, component: 'view', property: 'opacity', expected: '0.67' },
   { id: 'rotate', candidate: 'rotate-[17deg]', html: element, component: 'view', property: 'rotate', expected: '17deg' },
   { id: 'transition-duration', candidate: 'duration-[125ms]', html: element, component: 'view', property: 'transition-duration', expected: '0.125s' },
@@ -85,7 +87,7 @@ const authoredWebProbes: Omit<WebProbe, 'features'>[] = [
   { id: 'arbitrary-property', candidate: '[line-height:23px]', html: text, component: 'text', property: 'line-height', expected: '23px' },
   { id: 'variable', candidate: '[--probe:17px] w-(--probe)', html: element, component: 'view', property: 'width', expected: '17px' },
   { id: 'calc', candidate: 'w-[calc(100px+23px)]', html: element, component: 'view', property: 'width', expected: '123px' },
-  { id: 'important', candidate: 'p-[17px]!', html: '<div id="probe" class="probe CANDIDATE" style="padding:4px">important</div>', component: 'view', property: 'padding-top', expected: '17px' },
+  { id: 'important', candidate: 'p-[17px]!', html: '<div id="probe" class="probe CANDIDATE" style="padding:4px">important</div>', component: 'view', property: 'padding-top', expected: '17px', styles: paddingProperties('17px') },
   { id: 'structural-first', candidate: 'first:opacity-50', html: '<div><div id="probe" class="probe CANDIDATE">first</div><div>second</div></div>', component: 'children', property: 'opacity', expected: '0.5' },
   { id: 'arbitrary-selector', candidate: '[&>span]:text-[#123456]', html: '<div id="probe" class="probe CANDIDATE"><span id="target">child</span></div>', selector: '#target', component: 'children', property: 'color', expected: 'rgb(18, 52, 86)' },
   { id: 'supports', candidate: 'supports-[display:grid]:grid', html: element, component: 'view', property: 'display', expected: 'grid', weapp: nativeUnsupported },

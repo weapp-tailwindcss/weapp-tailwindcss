@@ -1,5 +1,5 @@
 import type { RunContext } from './context'
-import type { CaseContract, SemanticAssertion } from './types'
+import type { SemanticAssertion } from './types'
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { escape } from 'weapp-tailwindcss/escape'
@@ -11,33 +11,15 @@ import { newReport, persistReport } from './context'
 import { withGeneratorFixture } from './fixture'
 import { loadInventory } from './inventory'
 import { assertionPassed, receipt, validateCapabilityReport, verifyReportArtifacts, writeCapabilityReport } from './report'
-import { weappCoverageGaps, weappFeatureBindings } from './weapp/coverage'
+import { weappContract, weappExpectedStyles, weappPhases, weappRuntimeAssertions } from './weapp/contract'
+import { weappCoverageGaps } from './weapp/coverage'
 import { weappProbes } from './weapp/fixtures'
-import { sampleWeappPixel, weappPixelAssertions, weappPixelContract } from './weapp/pixels'
+import { sampleWeappPixel, weappPixelAssertions } from './weapp/pixels'
 
 export async function runWeapp(context: RunContext) {
   const env = context.env
   const probes = weappProbes.filter(item => !context.caseFilter || context.caseFilter.test(item.id))
-  const contracts: CaseContract[] = probes.map((item) => {
-    const expectedValues: CaseContract['expectedValues'] = {}
-    if ('dynamic' in item) {
-      Object.assign(expectedValues, { before: '32px', after: '64px', restored: '32px' })
-    }
-    else {
-      Object.assign(expectedValues, { style: item.expected, reference: item.expected })
-    }
-    return { id: item.id, features: weappFeatureBindings[item.id]!, candidate: item.candidates.join(' '), fixture: JSON.stringify(item), expectation: { support: 'supported', stage: 'runtime' }, requiredAssertions: Object.keys(expectedValues), expectedValues }
-  })
-  for (const [index, probe] of probes.entries()) {
-    if ('pixel' in probe) {
-      const pixel = weappPixelContract(probe.pixel)
-      const contract = contracts[index]!
-      contract.requiredAssertions.push(...pixel.requiredAssertions)
-      Object.assign(contract.expectedValues, pixel.expectedValues)
-      contract.tolerances = pixel.tolerances
-      contract.assertionStages = pixel.assertionStages
-    }
-  }
+  const contracts = probes.map(weappContract)
   const gaps = context.caseFilter ? [] : weappCoverageGaps(await loadInventory(), contracts)
   contracts.push(...gaps)
   const report = await newReport(context, 'weapp', contracts, probes, { provider: 'devtools', appid: resolveWechatAppId(env), httpPort: env?.E2E_PREFLIGHT_WECHAT_HTTP_PORT ?? '', scopeGaps: gaps.length })
@@ -74,7 +56,7 @@ export async function runWeapp(context: RunContext) {
         const artifacts: string[] = ['generated.wxss']
         const assertions: SemanticAssertion[] = []
         await page.setData({ probe, className: ('dynamic' in probe && probe.dynamic) ? escape('w-[32px]') : probe.className, reference: probe.reference, on: false })
-        const phases = ('dynamic' in probe && probe.dynamic) ? ['before', 'after', 'restored'] : ['default']
+        const phases = weappPhases(probe)
         const measurements: unknown[] = []
         for (const phase of phases) {
           if (phase === 'after' || phase === 'restored') {
@@ -86,13 +68,11 @@ export async function runWeapp(context: RunContext) {
           if (!node || !reference) {
             throw new Error(`${probe.id} 未渲染目标与独立参考节点`)
           }
-          const actual = await node.style(probe.property)
-          const expected = phase === 'after' ? '64px' : probe.expected
-          assertions.push({ name: phase === 'default' ? 'style' : phase, stage: 'runtime', actual, expected })
-          const referenceValue = await reference.style(probe.property)
-          if (phase === 'default') {
-            assertions.push({ name: 'reference', stage: 'runtime', actual: referenceValue, expected })
-          }
+          const expected = weappExpectedStyles(probe, phase)
+          const properties = Object.keys(expected)
+          const actual = Object.fromEntries(await Promise.all(properties.map(async property => [property, await node.style(property)])))
+          const referenceValues = Object.fromEntries(await Promise.all(properties.map(async property => [property, await reference.style(property)])))
+          assertions.push(...weappRuntimeAssertions(probe, phase, actual, referenceValues))
           const screenshot = path.join(context.directory, `${probe.id}-${phase}.png`)
           const png = await captureMiniProgramViewport(mini, screenshot, 30_000)
           if ('pixel' in probe) {
@@ -112,7 +92,7 @@ export async function runWeapp(context: RunContext) {
           const image = await receipt(screenshot, context.directory, context.runId, [probe.id], 'screenshot')
           report.artifacts.push(image)
           artifacts.push(image.path)
-          measurements.push({ phase, actual, expected, reference: referenceValue, offset: await node.offset(), size: await node.size() })
+          measurements.push({ phase, actual, expected, reference: referenceValues, offset: await node.offset(), size: await node.size() })
         }
         const file = path.join(context.directory, `${probe.id}.json`)
         await writeFile(file, JSON.stringify({ runId: context.runId, measurements }, null, 2))

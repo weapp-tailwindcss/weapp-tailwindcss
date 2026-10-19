@@ -12,6 +12,7 @@ export interface WebObservation {
   renderFrames?: number[]
   layout?: WebLayout
   guards?: Record<string, string>
+  styles?: Record<string, string>
 }
 
 export async function prepareProbe(page: Page, probe: WebProbe): Promise<() => Promise<void>> {
@@ -121,7 +122,7 @@ export async function activateProbe(page: Page, probe: WebProbe, observeCheckpoi
 }
 
 export async function readProbe(page: Page, probe: WebProbe): Promise<WebObservation> {
-  return page.locator(probe.selector ?? '#probe').evaluate(async (element, { property, measureLayout, guards, settleMedia }) => {
+  return page.locator(probe.selector ?? '#probe').evaluate(async (element, { property, properties, measureLayout, guards, settleMedia }) => {
     // 原生媒体协议返回后跨越两次渲染帧，再读取同一文档的候选和独立对照。
     const renderFrames = settleMedia
       ? await new Promise<number[]>((resolve, reject) => {
@@ -144,6 +145,7 @@ export async function readProbe(page: Page, probe: WebProbe): Promise<WebObserva
     const rect = element.getBoundingClientRect()
     return {
       actual: style.getPropertyValue(separator >= 0 ? property.slice(separator + 1) : property).trim().replace(/\s+/g, ' '),
+      styles: Object.fromEntries(properties.map(name => [name, style.getPropertyValue(name).trim().replace(/\s+/g, ' ')])),
       className: element.getAttribute('class'),
       attributes: Object.fromEntries(Array.from(element.attributes, item => [item.name, item.value])),
       rect: { width: rect.width, height: rect.height, top: rect.top, left: rect.left },
@@ -175,5 +177,5 @@ export async function readProbe(page: Page, probe: WebProbe): Promise<WebObserva
           } }
         : {}),
     }
-  }, { property: probe.property, measureLayout: !!probe.layout, guards: probe.guards ?? [], settleMedia: probe.controls?.some(control => control.kind === 'media') ?? false })
+  }, { property: probe.property, properties: Object.keys(probe.styles ?? {}), measureLayout: !!probe.layout, guards: probe.guards ?? [], settleMedia: probe.controls?.some(control => control.kind === 'media') ?? false })
 }
