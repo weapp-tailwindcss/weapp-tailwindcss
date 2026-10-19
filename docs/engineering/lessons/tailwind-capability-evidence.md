@@ -33,6 +33,7 @@ regressions:
   - e2e/react-native-ios-build.test.ts
   - e2e/lynx-reports.test.ts
   - e2e/lynx-native-failure.test.ts
+  - e2e/lynx-failure-evidence.test.ts
   - e2e/tailwind-scheduler.test.ts
   - e2e/tailwind-css.test.ts
 ---
@@ -126,6 +127,8 @@ Lynx 首轮双端已采集运行时报告，但与历史提交的 catalog 身份
 后续为固定 Lynx 4.0.1 预先登记独立媒体必要条件合同：原生宿主实际读取 SDK 版本、12 个矩形、6 张 PNG 与保留名侧车，要求无条件和 min-width 正向对照生效，hover:hover 与 hover:none 两组保持基线；缺证或任一结果不符均失败。验收端重新读取原始 PNG、侧车和本轮 CSS/TASM 的全部候选规则，不能仅信报告 metadata。只有完整原生证据符合时，原候选才在 runtime/media 必要门禁处拒绝，hover 输入和伪状态明确保持 not-tested，不向 v2 原子状态能力传播覆盖。主树整合后 152 项证据/报告/adapter 定向回归和 178 项示例测试通过；双端 SDK 纯编译通过，实际六帧仍等待 CI，不手工更新最终历史报告。新增三份媒体回归已纳入统一合同和 Lynx 显式入口。
 
 独立审查随后发现，字面 selector 匹配会漏掉十六进制等价转义的无 guard 替代规则。离线静态层现复用 CSS AST 的 class 语义匹配所有分支，runtime 仅接受两条已审查的完整规范 selector，不引入解析器；CSS/TASM 等价转义、属性字面量和原始产物重读新增 12 项回归，其中 8 项先红后绿。整合后 CI=1 pnpm e2e:tailwind:contract 为 61 文件、868 项通过；Lynx 真实构建/编码/扫描另 45 项通过。第二轮旧 head 6d1f54587 的 Benchmark 全部分片首次通过，Windows 启动、三平台 watch、Chromium、RN Android/Web 通过；这些旧 head 结果不能代替后续提交的 CI。
+
+Lynx run `39223188341`（head `2633f77a8`）双端在 `validateMediaGateEvidence` 拒绝后提前退出，旧失败路径没有导出六张原图和原生侧车，PrimJS 的 stack 又未包含 Error.message；这些产物不足以判定具体媒体行为。失败取证现使用本轮独占目录、固定八文件白名单和诊断专用目录，分别记录缺失和导出错误，并保留原异常；诊断不能作为通过证据或 crops，也不修改预先媒体合同。真实失败子进程和 stack-only 回归先红后绿，整合后相关六文件 61 项通过；新回归已接入双端 workflow 与统一合同。独立诊断分支 `codex/tailwind-lynx-ci` 的 run `39226463939` 绑定源码 `a52da250608531731ce4600b92f3e4bd37f459ec`，用于收取新证据，不能代替 PR 最新提交的正式检查。
 
 能力清单覆盖固定版本的注册项和有限补全，任意值按语法分支取样。runtime 夹具缺口、缺少独立转换 oracle、不可触发状态及设备阻塞均须保留，不能自动变成“不支持”，也不能用同属性的其他案例填充。第三方插件任意实现需另行登记。
 
