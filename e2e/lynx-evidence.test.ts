@@ -17,11 +17,14 @@ import { finalizeNativePixelEffects } from './lynx/pixel-evidence'
 import { PNG } from './lynx/png'
 import { readNativeReport } from './lynx/reports'
 import androidReport from './lynx/reports/android.json'
+import { validateStyleFixtureArtifacts } from './lynx/style-fixture-artifacts'
 
 // 本文件隔离验证存储/几何协议，支持预期漂移由 lynx-reports.test.ts 的真实门禁单独回归。
 // 官方 AAR/APK 身份由 lynx-android-sdk.test.ts 独立验证，不以此处合成几何夹具冒充。
 vi.mock('../examples/react-lynx/src/compatibility/android-sdk-contract', () => ({ validatePlatformSdk: () => {} }))
 vi.mock('./lynx/android-sdk', () => ({ validateAndroidSdkEvidence: async () => {} }))
+// 此套使用 dummy bundle 隔离存储/几何协议；真实样式门禁由 lynx-style-fixture-artifacts.test.ts 验证。
+vi.mock('./lynx/style-fixture-artifacts', () => ({ validateStyleFixtureArtifacts: vi.fn(async () => {}) }))
 vi.mock('./lynx/expectations', async importOriginal => ({
   ...await importOriginal<typeof import('./lynx/expectations')>(),
   assertReviewedLynxOutcome: () => {},
@@ -177,8 +180,16 @@ async function fixture() {
 }
 
 it('完整协议入口接受同轮落盘回执、绑定的 bundle 字节和合成像素夹具', async () => {
-  const { reportPath, report } = await fixture()
+  const { reportPath, report, directory } = await fixture()
   await expect(readNativeReport(reportPath, 'android')).resolves.toEqual(report)
+  expect(validateStyleFixtureArtifacts).toHaveBeenCalledWith(directory)
+})
+
+it('报告没有 mediaGate 时也传播样式夹具门禁失败', async () => {
+  const { reportPath, report } = await fixture()
+  expect(report.mediaGate).toBeUndefined()
+  vi.mocked(validateStyleFixtureArtifacts).mockRejectedValueOnce(new Error('style fixture rejected'))
+  await expect(readNativeReport(reportPath, 'android')).rejects.toThrow('style fixture rejected')
 })
 
 it('整份旧报告和旧截图同时残留也不能冒充新 run', async () => {

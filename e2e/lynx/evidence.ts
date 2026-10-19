@@ -11,6 +11,7 @@ import { validateAndroidSdkEvidence } from './android-sdk'
 import { readNativeHostGeometry } from './geometry-evidence'
 import { validateMediaGateArtifacts } from './media-gate'
 import { validateMediaGuardArtifacts } from './media-guard-artifacts'
+import { validateStyleFixtureArtifacts } from './style-fixture-artifacts'
 
 export function sha256(data: Uint8Array) {
   return createHash('sha256').update(data).digest('hex')
@@ -91,6 +92,7 @@ export async function validateNativeEvidence(report: NativePlatformReport, artif
   for (const receipt of receipts) {
     validateBytes(receipt, await fs.readFile(path.join(directory, receipt.name)))
   }
+  await validateStyleFixtureArtifacts(artifactDir)
   const builtById = new Map((staticEvidence as StaticEvidenceReport).results.map(item => [item.id, item]))
   for (const item of compatibilityCases) {
     const built = builtById.get(item.id)
