@@ -174,4 +174,6 @@ decoder 缓存另有真实篡改回归：首次成功解码后修改 gzip，下�
 
 ## 规则评估
 
+诊断 run `39240820531` 的 Android 已完成 118 项实际原生采集，独立审查发现 responsive、dark、supports 和 important 四项报告与既有支持合同不同；这些变化尚未自动放宽。iOS 在 CocoaPods 安装阶段被固定原始 checksum 阻断，没有设备证据。CDN 与原夹具的完整 JSON 相等，仅文本空白/转义变化；生产校验改为完整 `Specification#to_hash` 的规范语义 SHA-256，保留所有属性、数组顺序和值类型，并继续独立核来源、版本及 getter 源码。新旧完整原始 Podspec 均固定字节身份，真实 CocoaPods/PBX 回归覆盖格式等价与实质变更拒绝。
+
 继续采用独立 worktree、精确候选、生成器单一归属、预检强门禁和微信登录态保护。无需放宽上级安全规则；新增共享目录和能力 runner 的领域规则已登记到规则索引。

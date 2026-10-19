@@ -22,7 +22,7 @@ def pod_target(sandbox, podfile, spec)
                     [podfile.target_definitions.fetch('LynxCompatibilityHost')])
 end
 
-def fixture
+def fixture(podspec: 'Lynx.podspec.json.gz', sha256: '3a7cbc6a32e99f1b23e732f52d720a87e5665f3b5fa8b8a5768d21438b4762df')
   Dir.mktmpdir('lynx-podfile-') do |root|
     podfile = Pod::Podfile.from_file(Pathname.new(PODFILE))
     sandbox = Pod::Sandbox.new(File.join(root, 'Pods'))
@@ -33,12 +33,12 @@ def fixture
       FileUtils.mkdir_p(File.dirname(destination))
       FileUtils.cp(File.join(FIXTURES, name), destination)
     end
-    json = Zlib::GzipReader.open(File.join(FIXTURES, 'Lynx.podspec.json.gz'), &:read)
-    assert(Digest::SHA256.hexdigest(json) == '3a7cbc6a32e99f1b23e732f52d720a87e5665f3b5fa8b8a5768d21438b4762df', '官方 Podspec 原始字节不符')
+    json = Zlib::GzipReader.open(File.join(FIXTURES, podspec), &:read)
+    assert(Digest::SHA256.hexdigest(json) == sha256, '官方 Podspec 原始字节不符')
     spec_file = File.join(root, 'Lynx.podspec.json')
     File.binwrite(spec_file, json)
     spec = Pod::Specification.from_file(Pathname.new(spec_file))
-    assert(spec.checksum == 'ccabb2322b26f64a8d9ce4b8d7ae9871cda6c441', '真实 Podspec checksum 不符')
+    assert(spec.checksum == Digest::SHA1.hexdigest(json), '真实 Podspec checksum 不符')
     pod = pod_target(sandbox, podfile, spec)
     assert(!pod.respond_to?(:native_target), '回归不得为 PodTarget 虚构 native_target API')
     project = Pod::Project.new(File.join(root, 'Pods.xcodeproj'))
@@ -79,6 +79,13 @@ fixture do |state|
   assert(reloaded.targets.find { |target| target.name == 'Lynx' }.build_configurations.all? { |config| config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] == ['$(inherited)', DEFINITION] }, '版本宏未进入保存的真实 PBX 工程')
 end
 
+# CDN 的完整 JSON 内容不变而转义/空白不同，不能依原始文件 SHA1 判定源码被替换。
+fixture(podspec: 'Lynx.cdn-2026-10-19.podspec.json.gz', sha256: '8599a4df7ac29438f6e00aca8f031fc771f0f2bc13a53618dfed33d434807412') do |state|
+  assert(state[:spec].checksum == '1a461f83f48104309f7e2031dabf3af84b181807', 'CDN 新文本的原始 checksum 不符')
+  state[:podfile].post_install!(state[:installer])
+  assert(state[:native].build_configurations.all? { |config| config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] == ['$(inherited)', DEFINITION] }, '格式变化后未生成精确版本宏')
+end
+
 def rejects(message)
   fixture do |state|
     yield state
@@ -115,4 +122,19 @@ rejects('原生目标') do |s|
 end
 rejects('安装结果') { |s| s[:results]['foreign'] = GENERATOR::TargetInstallationResult.new(pod_target(s[:sandbox], s[:podfile], s[:spec]), s[:native]) }
 
-puts "Podfile 真实对象回归通过（CocoaPods #{Pod::VERSION}）：官方 spec/checksum、安装结果唯一映射、PBX 工程持久化、缺失/重复/错绑拒绝"
+# 实际 CocoaPods 完整对象的非身份字段变化也必须在写入 PBX 设置前拒绝。
+[
+  ->(hash) { hash['license'] = { 'type' => 'MIT' } },
+  ->(hash) { hash['subspecs'].reverse! },
+  ->(hash) { hash['new_build_flag'] = true },
+].each do |change|
+  rejects('Podspec 语义校验失败') do |state|
+    hash = state[:spec].to_hash
+    change.call(hash)
+    changed = Pod::Specification.from_hash(hash)
+    state[:pod].instance_variable_set(:@root_spec, changed)
+    assert(state[:pod].root_spec.equal?(changed), '负控未绑定实际 Podspec 对象')
+  end
+end
+
+puts "Podfile 真实对象回归通过（CocoaPods #{Pod::VERSION}）：官方完整 spec 语义与源码、格式等价、语义篡改拒绝、安装结果唯一映射、PBX 工程持久化、缺失/重复/错绑拒绝"

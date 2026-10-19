@@ -1,14 +1,28 @@
 require 'digest'
+require 'json'
 
 # 官方 source Pod 的 LynxVersion.m 要求由构建方提供带五字符前缀的版本宏。
 # 只为已核实的 4.0.1 发布源码补齐构建输入，不改写 getter 或运行时证据。
 module LynxBuildMetadata
   SOURCE = File.join('platform', 'darwin', 'common', 'lynx', 'base', 'LynxVersion.m')
   SOURCE_SHA = '4a0a2e32bceed9063e344cc632faeb0248984c6035b64134eff8e08f19ab55b8'
-  SPEC_CHECKSUM = 'ccabb2322b26f64a8d9ce4b8d7ae9871cda6c441'
+  SPEC_SHA256 = '490dcea9b6a2fb6efeff6210679e9bef9f028dc298e56f2f0c5cdc86b6128be4'
   SOURCE_URL = 'https://github.com/lynx-family/lynx/releases/download/4.0.1/Lynx-4.0.1.zip'
   SETTING = 'GCC_PREPROCESSOR_DEFINITIONS'
   MACRO = 'Lynx_POD_VERSION'
+
+  # CDN 可改变空白、转义和对象键序；完整语义身份保留所有属性、数组顺序与值类型。
+  def self.canonical_specification(value)
+    case value
+    when Hash
+      raise 'Lynx Podspec 语义键类型无效' unless value.keys.all? { |key| key.is_a?(String) }
+      value.keys.sort.each_with_object({}) { |key, output| output[key] = canonical_specification(value.fetch(key)) }
+    when Array
+      value.map { |entry| canonical_specification(entry) }
+    else
+      value
+    end
+  end
 
   # PodTarget 是解析模型；生成的 PBX 目标只从安装结果的正式映射读取。
   def self.resolve!(installer)
@@ -41,7 +55,10 @@ module LynxBuildMetadata
     raise '版本元数据缺少受管 Lynx Pod' unless specification && specification.name == 'Lynx'
     version = specification.version.to_s
     raise "Lynx source 版本元数据仅适用 4.0.1，当前为 #{version}" unless version == '4.0.1'
-    raise 'Lynx 4.0.1 Podspec 校验失败' unless specification.checksum == SPEC_CHECKSUM
+    semantic = specification.to_hash
+    raise 'Lynx 4.0.1 Podspec 语义类型无效' unless semantic.is_a?(Hash)
+    digest = Digest::SHA256.hexdigest(JSON.generate(canonical_specification(semantic)))
+    raise "Lynx 4.0.1 Podspec 语义校验失败：#{digest}" unless digest == SPEC_SHA256
     source = specification.source
     raise 'Lynx 4.0.1 来源校验失败' unless source.is_a?(Hash) && source.size == 1 && source.transform_keys(&:to_s) == { 'http' => SOURCE_URL }
     file = File.join(root, SOURCE)
