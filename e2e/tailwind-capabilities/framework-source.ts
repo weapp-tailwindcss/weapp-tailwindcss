@@ -7,7 +7,7 @@ import { writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { chromium, firefox, webkit } from 'playwright'
 import { newReport, persistReport } from './context'
-import { readFrameworkSource } from './framework-source/browser'
+import { readFrameworkSource, saveFrameworkSourceAndSettle } from './framework-source/browser'
 import { frameworkSourceContract, sourceCssAssertions, sourceRuntimeAssertions } from './framework-source/contract'
 import { frameworkSource, frameworkSourceCss, frameworkSourceProfiles, sourceBranchStates, sourceFrameworks, sourceRevisions } from './framework-source/fixtures'
 import { withFrameworkSourceServer } from './framework-source/server'
@@ -70,7 +70,7 @@ export async function runFrameworkSource(context: RunContext, engine: BrowserEng
           await page!.goto(server.url, { waitUntil: 'networkidle' })
           let previousSession = ''
           for (const revision of sourceRevisions) {
-            const source = revision === 'initial' ? frameworkSource(framework, revision, context.runId) : await server.updateSource(revision)
+            const source = revision === 'initial' ? frameworkSource(framework, revision, context.runId) : await saveFrameworkSourceAndSettle(page!, framework, revision, context.runId, server.updateSource)
             artifacts.push(await save(`${framework}-${revision}.source.${framework === 'react' ? 'tsx' : 'vue'}`, source, 'bundle', selected))
             if (revision !== 'initial') {
               await page!.reload({ waitUntil: 'networkidle' })

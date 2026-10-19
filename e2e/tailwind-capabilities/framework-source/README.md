@@ -6,7 +6,7 @@ React JSX 和 Vue SFC 各有条件、数组、对象、静态模板、映射、m
 
 样式由 `WeappTailwindcssWeb` 生成。React 和 React DOM 复用已安装的 Taro React demo 依赖，JSX 由 Vite 转换；Vue 复用现有 Vue 与官方 `@vitejs/plugin-vue`。merge/cva/variants/runtime/escape 通过精确别名绑定当前工作树源码；Web 夹具显式使用 `escape:false, unescape:false`。此处证明 Web raw 模式下的动态合并、变体切换和 A→B→A 缓存消费，不能代证小程序转义、React Native 或 Lynx 原生宿主。
 
-夹具从 initial 空宽度开始，实际保存 added、replaced、deleted 源码并刷新；每轮执行按钮切换的 before、after、restored。断言覆盖完整 class token、宽度、padding、活动分支、准确源码 marker、服务实例、当前文档 session 及同轮节点身份。刷新必须换文档，按钮切换必须保留文档和节点。源码 CSS 同时检查两支候选及动态插值排除；动态拼接会在 DOM 形成类名，但其宽度必须仍为 80px 基线，不能假装可静态扫描。
+夹具从 initial 空宽度开始，实际保存 added、replaced、deleted 源码并刷新；每轮执行按钮切换的 before、after、restored。保存前先登记自动更新信号：React 等待默认 Vite 完整导航及准确 marker，Vue 等待真实 SFC marker 更新，两者网络空闲后才执行明确刷新，避免自动导航与手动刷新竞争。断言覆盖完整 class token、宽度、padding、活动分支、准确源码 marker、服务实例、当前文档 session 及同轮节点身份。明确刷新必须换文档，按钮切换必须保留文档和节点。源码 CSS 同时检查两支候选及动态插值排除；动态拼接会在 DOM 形成类名，但其宽度必须仍为 80px 基线，不能假装可静态扫描。
 
 这组用例验证真实框架消费和刷新后的源码增删替换，不声明 WebSocket、同页面 HMR 或像素通过。通用 HMR 由独立 runner 提供。截图只作人工审查材料；源码、最终 CSS、逐态测量、日志和失败页面一并保存。
 

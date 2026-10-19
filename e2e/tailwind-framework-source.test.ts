@@ -1,5 +1,7 @@
+import type { Page } from 'playwright'
 import type { FrameworkSourceObservation } from './tailwind-capabilities/framework-source/contract'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import { saveFrameworkSourceAndSettle } from './tailwind-capabilities/framework-source/browser'
 import { frameworkSourceContract, sourceCssAssertions, sourceRuntimeAssertions } from './tailwind-capabilities/framework-source/contract'
 import { frameworkSource, frameworkSourceCss, frameworkSourceProfiles, sourceCandidate, sourceFrameworks, sourceRevisions } from './tailwind-capabilities/framework-source/fixtures'
 import { assertionPassed } from './tailwind-capabilities/report'
@@ -95,5 +97,84 @@ describe('真实框架源码与语义合同', () => {
     expect(contract.features).not.toContain('hmr')
     expect(new Set(contract.requiredAssertions).size).toBe(contract.requiredAssertions.length)
     expect(frameworkSourceContract(negative).assertionStages!['added/css-excluded']).toBe('negative')
+  })
+})
+
+describe('真实框架自动更新与明确刷新边界', () => {
+  it('React在保存前登记自动导航，完整导航和marker完成前不能继续明确刷新', async () => {
+    const events: string[] = []
+    let completeNavigation!: () => void
+    const navigation = new Promise<void>((resolve) => {
+      completeNavigation = resolve
+    })
+    const page = { waitForNavigation: vi.fn(() => {
+      events.push('navigation-armed')
+      return navigation
+    }), waitForFunction: vi.fn(async (_predicate, marker) => {
+      events.push(`marker:${marker}`)
+    }), waitForLoadState: vi.fn(async () => {
+      events.push('idle')
+    }), reload: vi.fn(async () => {
+      events.push('explicit-refresh')
+    }) } as unknown as Page
+    const saving = saveFrameworkSourceAndSettle(page, 'react', 'added', 'run', async () => {
+      events.push('saved')
+      return 'source'
+    }).then(async (source) => {
+      await page.reload()
+      return source
+    })
+    await new Promise<void>(resolve => setImmediate(resolve))
+    expect(events).toEqual(['navigation-armed', 'saved'])
+    expect(page.reload).not.toHaveBeenCalled()
+    completeNavigation()
+    await expect(saving).resolves.toBe('source')
+    expect(events).toEqual(['navigation-armed', 'saved', 'marker:run/react/added', 'idle', 'explicit-refresh'])
+    expect(page.waitForNavigation).toHaveBeenCalledExactlyOnceWith({ waitUntil: 'networkidle', timeout: 15_000 })
+  })
+
+  it('Vue等待实际SFC marker和网络空闲，不把保存完成当页面已经更新', async () => {
+    const events: string[] = []
+    let completeMarker!: () => void
+    let completeIdle!: () => void
+    const marker = new Promise<void>((resolve) => {
+      completeMarker = resolve
+    })
+    const idle = new Promise<void>((resolve) => {
+      completeIdle = resolve
+    })
+    const page = { waitForNavigation: vi.fn(), waitForFunction: vi.fn((_predicate, value) => {
+      events.push(`marker-armed:${value}`)
+      return marker
+    }), waitForLoadState: vi.fn(() => {
+      events.push('idle-armed')
+      return idle
+    }), reload: vi.fn(async () => {
+      events.push('explicit-refresh')
+    }) } as unknown as Page
+    const saving = saveFrameworkSourceAndSettle(page, 'vue', 'replaced', 'run', async () => {
+      events.push('saved')
+      return 'source'
+    }).then(() => page.reload())
+    await new Promise<void>(resolve => setImmediate(resolve))
+    expect(events).toEqual(['marker-armed:run/vue/replaced', 'saved'])
+    completeMarker()
+    await new Promise<void>(resolve => setImmediate(resolve))
+    expect(events).toEqual(['marker-armed:run/vue/replaced', 'saved', 'idle-armed'])
+    expect(page.reload).not.toHaveBeenCalled()
+    completeIdle()
+    await saving
+    expect(events.at(-1)).toBe('explicit-refresh')
+    expect(page.waitForNavigation).not.toHaveBeenCalled()
+  })
+
+  it('自动导航失败不能继续明确刷新或把旧marker当本轮成功', async () => {
+    const page = { waitForNavigation: vi.fn(async () => {
+      throw new Error('automatic navigation failed')
+    }), waitForFunction: vi.fn(), waitForLoadState: vi.fn(), reload: vi.fn() } as unknown as Page
+    await expect(saveFrameworkSourceAndSettle(page, 'react', 'deleted', 'run', async () => 'source').then(() => page.reload())).rejects.toThrow('automatic navigation failed')
+    expect(page.waitForFunction).not.toHaveBeenCalled()
+    expect(page.waitForLoadState).not.toHaveBeenCalled()
+    expect(page.reload).not.toHaveBeenCalled()
   })
 })
