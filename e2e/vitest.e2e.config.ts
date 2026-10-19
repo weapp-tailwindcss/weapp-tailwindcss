@@ -43,6 +43,10 @@ const workspaceAliases = [
     replacement: path.resolve(__dirname, '../packages/postcss/src/native.ts'),
   },
   {
+    find: /^@weapp-tailwindcss\/postcss\/native-runtime$/,
+    replacement: path.resolve(__dirname, '../packages/postcss/src/native-runtime.ts'),
+  },
+  {
     find: /^@weapp-tailwindcss\/postcss\/transform$/,
     replacement: path.resolve(__dirname, '../packages/postcss/src/transform.ts'),
   },

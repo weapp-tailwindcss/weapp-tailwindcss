@@ -5,7 +5,7 @@ import type { NativeCaseReceipt, NativePairEvidence, NativeRect, ReactNativeCase
 import { composeStyle, tw } from '@weapp-tailwindcss/react-native/runtime'
 import { useEffect, useRef, useState } from 'react'
 import { Dimensions, PixelRatio, Platform, StyleSheet, Text, View } from 'react-native'
-import { expectedFixtureStyle, fixtureClassValue, nativeFixtures, styleContains } from './protocol'
+import { expectedFixtureStyle, fixtureClassValue, fixtureInlineStyle, nativeFixtures, styleContains } from './protocol'
 import { nativeReportHeaders } from './report-client'
 
 interface RuntimeInput {
@@ -46,7 +46,7 @@ export function SemanticRun({ evidence, revision, onComplete }: { evidence: Runt
   const fixture = active && nativeFixtures[active.id]
   const scheme = active?.phase === 'dark' || active?.phase === 'dark-ios' ? 'dark' : 'light'
   const platform = Platform.OS as 'ios' | 'android' | 'web'
-  const inlineStyle = active?.phase.startsWith('inline-') ? { color: '#654321' } : undefined
+  const inlineStyle = active ? fixtureInlineStyle(active.id, active.phase) : undefined
   const actualStyle = active ? StyleSheet.flatten(composeStyle(tw(fixtureClassValue(active.className, active.id, active.phase), { colorScheme: scheme, platform }), inlineStyle)) as Record<string, unknown> : {}
   const expectedStyle = active ? expectedFixtureStyle(active.id, active.phase, platform) ?? {} : {}
 

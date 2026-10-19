@@ -103,6 +103,17 @@ async function fixture(platform: ReactNativeReport['platform'] = 'web') {
           image.data.set(expectsEffect ? [226, 232, 240, 255] : image.data.subarray(source, source + 4), destination)
         }
       }
+      if (item.id === 'syntax-important') {
+        const rgba = phase.endsWith('-normal') ? [220, 38, 38, 255] : [115, 115, 115, 255]
+        for (const side of ['probe', 'reference', 'control'] as const) {
+          const rect = pair[side]
+          for (let y = rect.y; y < rect.y + rect.height; y++) {
+            for (let x = rect.x; x < rect.x + rect.width; x++) {
+              image.data.set(side === 'control' ? [192, 38, 211, 255] : rgba, (y * image.width + x) * 4)
+            }
+          }
+        }
+      }
       const png = PNG.sync.write(image)
       const checkpoints = assessNativePair(image, pair)
       const name = `case-${raw.revision}-${item.id}-${phase}.png`
@@ -142,7 +153,8 @@ describe('原生统一能力报告', () => {
     const screenshot = report.artifacts.find(item => item.kind === 'screenshot')!
     expect(screenshot.sha256).toBe(raw.receipts[0]!.artifact.sha256)
     expect(screenshot.path).toBe(path.join('native', raw.receipts[0]!.artifact.name))
-    expect(report.artifacts.filter(item => item.kind === 'measurements')).toHaveLength(37)
+    const phases = Object.values(nativeFixtures).reduce((count, item) => count + (item.phases?.length ?? 1), 0)
+    expect(report.artifacts.filter(item => item.kind === 'measurements')).toHaveLength(phases)
     expect(await readFile(path.join(context.directory, 'report.md'), 'utf8')).toContain('未执行')
   })
 

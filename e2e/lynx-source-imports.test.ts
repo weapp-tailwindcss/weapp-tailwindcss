@@ -11,7 +11,8 @@ it.each([
   ['@weapp-tailwindcss/postcss-calc', 'postcss-calc', 'index.ts'],
   ['@weapp-tailwindcss/escape', 'escape', 'index.ts'],
   ['@weapp-tailwindcss/css-compat/legacy', 'css-compat', 'legacy.ts'],
-])('Lynx E2E 使用真实配置解析 %s 源码，不依赖 workspace 包的预构建产物', async (specifier, packageName, source) => {
+  ['@weapp-tailwindcss/postcss/native-runtime', 'postcss', 'native-runtime.ts'],
+])('E2E 使用真实配置解析 %s 源码，不依赖 workspace 包的预构建产物', async (specifier, packageName, source) => {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'lynx source import '))
   let server: Awaited<ReturnType<typeof createServer>> | undefined
   try {

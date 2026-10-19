@@ -14,6 +14,32 @@ function sameTargetGeometry(target: NativePairEvidence['target'], frame: NativeP
     && Math.abs((target.y - frame.y) - (otherTarget.y - otherFrame.y)) <= 0.75
 }
 
+function solidTargetColor(image: PNG, rect: NativePairEvidence['target'], ratio: number, color: unknown) {
+  if (typeof color !== 'string' || !/^#[a-f\d]{6}$/i.test(color)) {
+    throw new Error('React Native priority fixture requires an independent solid color')
+  }
+  const rgb = [1, 3, 5].map(index => Number.parseInt(color.slice(index, index + 2), 16))
+  const left = Math.round((rect.x + rect.width / 4) * ratio)
+  const right = Math.round((rect.x + rect.width * 3 / 4) * ratio)
+  const top = Math.round((rect.y + rect.height / 4) * ratio)
+  const bottom = Math.round((rect.y + rect.height * 3 / 4) * ratio)
+  const pixels = (right - left) * (bottom - top)
+  if (left < 0 || top < 0 || right > image.width || bottom > image.height || pixels < 16) {
+    return false
+  }
+  let matched = 0
+  for (let y = top; y < bottom; y++) {
+    for (let x = left; x < right; x++) {
+      const offset = (y * image.width + x) * 4
+      if (rgb.every((channel, index) => Math.abs(image.data[offset + index]! - channel) <= 2)
+        && image.data[offset + 3] === 255) {
+        matched++
+      }
+    }
+  }
+  return matched / pixels >= 0.98
+}
+
 /** 对同屏节点采样；参考节点必须能与无效果对照区分，宿主同时忽略属性不能通过。 */
 export function assessNativePair(image: PNG, pair: NativePairEvidence) {
   const fixture = nativeFixtures[pair.id]
@@ -68,10 +94,18 @@ export function assessNativePair(image: PNG, pair: NativePairEvidence) {
   const controlGeometry = !sameTargetGeometry(pair.referenceTarget, pair.reference, pair.controlTarget, pair.control)
   const observable = controlGeometry || controlPixels >= 16
   const expectsEffect = Object.keys(expected).length > 0
+  // 优先级案例还核独立绝对色，防 probe/reference 同时错误或无效果 control 被替换。
+  const priorityColors = fixture.priorityCompetition
+    ? {
+        probe: solidTargetColor(image, pair.target, ratio, expected['backgroundColor']),
+        reference: solidTargetColor(image, pair.referenceTarget, ratio, expected['backgroundColor']),
+        control: solidTargetColor(image, pair.controlTarget, ratio, fixture.base?.['backgroundColor']),
+      }
+    : undefined
   return [
     { name: `runtime:${pair.phase}:geometry`, passed: geometry, actual: JSON.stringify(pair.target), expected: JSON.stringify(pair.referenceTarget) },
-    { name: `runtime:${pair.phase}:pixel`, passed: active >= 16 && mismatchRatio <= 0.05 && meanDifference <= 4, actual: JSON.stringify({ active, mismatchRatio, meanDifference }), expected: '同屏显式参考节点的几何与前景像素一致' },
-    { name: `runtime:${pair.phase}:control`, passed: observable === expectsEffect, actual: JSON.stringify({ controlGeometry, controlPixels, observable }), expected: expectsEffect ? '显式参考样式相对无效果 control 存在可测的几何或像素差异' : '条件未命中时与无效果 control 一致' },
+    { name: `runtime:${pair.phase}:pixel`, passed: active >= 16 && mismatchRatio <= 0.05 && meanDifference <= 4 && (!priorityColors || (priorityColors.probe && priorityColors.reference)), actual: JSON.stringify({ active, mismatchRatio, meanDifference, ...(priorityColors ? { priorityColors } : {}) }), expected: '同屏显式参考节点的几何与前景像素一致；优先级夹具同时满足独立颜色预期' },
+    { name: `runtime:${pair.phase}:control`, passed: observable === expectsEffect && (!priorityColors || priorityColors.control), actual: JSON.stringify({ controlGeometry, controlPixels, observable, ...(priorityColors ? { priorityColor: priorityColors.control } : {}) }), expected: expectsEffect ? '显式参考样式相对无效果 control 存在可测的几何或像素差异' : '条件未命中时与无效果 control 一致' },
   ]
 }
 
