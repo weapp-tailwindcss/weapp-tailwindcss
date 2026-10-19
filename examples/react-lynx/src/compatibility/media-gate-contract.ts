@@ -12,25 +12,14 @@ export function mediaGateArtifactNames() {
 }
 
 export function mediaGuardValid(proof: StaticMediaGuardEvidence | undefined, className = proof?.className) {
-  const needle = className ? `.${className.replace(/[^\w-]/g, '\\$&')}` : ''
-  const ownsSelector = (selector: string) => {
-    if (!needle) {
-      return false
-    }
-    let offset = selector.indexOf(needle)
-    while (offset >= 0) {
-      const next = selector[offset + needle.length]
-      if (next === undefined || !/[\w\\-]/.test(next)) {
-        return true
-      }
-      offset = selector.indexOf(needle, offset + needle.length)
-    }
-    return false
-  }
+  // 运行时只接受已审查的完整规范选择器；全部分支的语义解析留在离线产物验收层。
+  const canonicalSelector = className === MEDIA_GATE_CANDIDATES[0]
+    ? String.raw`.hover\:bg-\[\#ef4444\]:hover`
+    : className === MEDIA_GATE_CANDIDATES[1] ? String.raw`.group-hover\:block:is(:where(.group):hover *)` : undefined
   return proof?.limitationId === MEDIA_GATE_LIMITATION_ID && proof.sourceSha256 === MEDIA_GATE_SOURCE_SHA256
     && proof.className === className && (MEDIA_GATE_CANDIDATES as readonly (string | undefined)[]).includes(className)
     && proof.condition === '(hover:hover)' && [proof.generatedRules, proof.bundledRules].every(rules => Array.isArray(rules) && rules.length > 0
-      && rules.every(rule => typeof rule.selector === 'string' && ownsSelector(rule.selector) && Array.isArray(rule.mediaConditions) && rule.mediaConditions.includes('(hover:hover)')))
+      && rules.every(rule => rule.selector === canonicalSelector && Array.isArray(rule.mediaConditions) && rule.mediaConditions.includes('(hover:hover)')))
 }
 
 /** 宿主的身份和几何是必要条件；验收端还必须独立读取侧车和 PNG。 */

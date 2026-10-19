@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { MEDIA_GATE_CANDIDATES, mediaGuardValid } from '../examples/react-lynx/src/compatibility/media-gate-contract'
 import { validateMediaGateSources } from './lynx/media-gate-source'
 import { validateMediaGuardArtifacts } from './lynx/media-guard-artifacts'
-import { flattenEncodedRules, parseGeneratedRules, staticMediaGuard } from './lynx/static-evidence'
+import { flattenEncodedRules, parseGeneratedRules, selectorHasCandidate, staticMediaGuard } from './lynx/static-evidence'
 
 const selectors = ['.hover\\:bg-\\[\\#ef4444\\]:hover', '.group-hover\\:block:is(:where(.group):hover *)']
 const css = selectors.map(selector => `@media (hover: hover){${selector}{display:block}}`).join('\n')
@@ -36,6 +36,25 @@ describe('必要媒体 guard 的全部规则证明', () => {
     const bundled = flattenEncodedRules([...tasm.css.cssMap.entry, tasm.css.cssMap.entry[0]!.rules[0]!])
     expect(staticMediaGuard(MEDIA_GATE_CANDIDATES[0], parseGeneratedRules(css), bundled)).toBeUndefined()
   })
+  const equivalentSelectors = [String.raw`.\68 over\:bg-\[\#ef4444\]:hover`, String.raw`.\000068over\:bg-\[\#ef4444\]:hover`, String.raw`.\67 roup-hover\:block:is(:where(.group):hover *)`]
+  it.each(equivalentSelectors)('CSS 的等价转义 %s 无 guard 时不能遗漏替代分支', (selector) => {
+    const candidate = selector.includes('roup-hover') ? MEDIA_GATE_CANDIDATES[1] : MEDIA_GATE_CANDIDATES[0]
+    expect(selectorHasCandidate(selector, candidate)).toBe(true)
+    expect(staticMediaGuard(candidate, parseGeneratedRules(`${css}\n${selector}{display:block}`), flattenEncodedRules(tasm.css.cssMap.entry))).toBeUndefined()
+  })
+  it.each(equivalentSelectors)('TASM 的等价转义 %s 无 guard 时不能遗漏替代分支', (selector) => {
+    const candidate = selector.includes('roup-hover') ? MEDIA_GATE_CANDIDATES[1] : MEDIA_GATE_CANDIDATES[0]
+    const unguarded = { type: 'StyleRule', selectorText: { value: selector }, style: [{ name: 'display', value: 'block' }] }
+    expect(staticMediaGuard(candidate, parseGeneratedRules(css), flattenEncodedRules([...tasm.css.cssMap.entry, unguarded]))).toBeUndefined()
+  })
+  it('属性值中的类名字面量不能冒充 class 节点', () => {
+    expect(selectorHasCandidate(`[data-proof="${selectors[0]}"]`, MEDIA_GATE_CANDIDATES[0])).toBe(false)
+  })
+  it.each([`[data-proof="${selectors[0]}"]`, ...equivalentSelectors.slice(0, 2)])('runtime 拒绝未登记的非 canonical selector %s', (selector) => {
+    const proof = build().results[0]!.candidates![0]!.mediaGuard!
+    proof.generatedRules[0]!.selector = selector
+    expect(mediaGuardValid(proof, MEDIA_GATE_CANDIDATES[0])).toBe(false)
+  })
   it.each(['class', 'source', 'selector'] as const)('拒绝伪造的 %s proof', (mode) => {
     const proof = build().results[0]!.candidates![0]!.mediaGuard!
     if (mode === 'class') {
@@ -49,14 +68,21 @@ describe('必要媒体 guard 的全部规则证明', () => {
     }
     expect(mediaGuardValid(proof, MEDIA_GATE_CANDIDATES[0])).toBe(false)
   })
-  it.each(['none', 'css', 'tasm', 'metadata'] as const)('从本轮产物重新验证 %s，不能信任报告 metadata', async (mode) => {
+  it.each(['none', 'css', 'tasm', 'hex-css', 'hex-tasm', 'metadata'] as const)('从本轮产物重新验证 %s，不能信任报告 metadata', async (mode) => {
     const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'lynx media guard '))
     directories.push(directory)
     const built = build()
-    await fs.writeFile(path.join(directory, 'main.css'), mode === 'css' ? `${css}\n${selectors[0]}{display:block}` : css)
+    const alternate = mode === 'hex-css' ? equivalentSelectors[0] : selectors[0]
+    await fs.writeFile(path.join(directory, 'main.css'), mode === 'css' || mode === 'hex-css' ? `${css}\n${alternate}{display:block}` : css)
     const encoded = structuredClone(tasm)
     if (mode === 'tasm') {
       encoded.css.cssMap.entry[0]!.prelude.value = 'not (hover:hover)'
+    }
+    if (mode === 'hex-tasm') {
+      const branch = structuredClone(encoded.css.cssMap.entry[0]!)
+      branch.prelude.value = '(min-width:1px)'
+      branch.rules[0]!.selectorText.value = equivalentSelectors[0]!
+      encoded.css.cssMap.entry.push(branch)
     }
     if (mode === 'metadata') {
       built.results[0]!.candidates![0]!.mediaGuard!.generatedRules[0]!.selector = '.forged'

@@ -4,6 +4,7 @@ import path from 'node:path'
 import postcss from 'postcss'
 import { compatibilityCases } from '../../examples/react-lynx/src/compatibility/catalog'
 import { MEDIA_GATE_CANDIDATES, MEDIA_GATE_LIMITATION_ID, MEDIA_GATE_SOURCE_SHA256 } from '../../examples/react-lynx/src/compatibility/media-gate-contract'
+import { walkClasses } from '../../packages/postcss/src/compat/native/selectors'
 import { compatibilityVersions, getCatalogHash, lynxIntermediateDir, readCssDefinesProperties } from './catalog'
 
 interface EncodedDeclaration {
@@ -31,16 +32,6 @@ export interface RuleEvidence {
   selector: string
   declarations: ExpectedDeclaration[]
   mediaConditions?: string[]
-}
-
-function escapeClassName(value: string) {
-  return [...value].map((character, index) => {
-    const code = character.codePointAt(0) ?? 0
-    if ((code >= 48 && code <= 57 && index > 0) || (code >= 65 && code <= 90) || (code >= 97 && code <= 122) || character === '-' || character === '_') {
-      return character
-    }
-    return `\\${character}`
-  }).join('')
 }
 
 function classCandidates(className: string) {
@@ -75,18 +66,9 @@ function matchingRules(rules: RuleEvidence[], candidates: string[]) {
   return rules.filter(rule => candidates.some(candidate => selectorHasCandidate(rule.selector, candidate)))
 }
 
-/** 类名边界必须精确匹配，不能用 .flex-col 证明 .flex 或用已转义后缀证明前缀。 */
+/** 复用 CSS AST 的 class 语义，等价转义不能漏掉替代分支，属性字面量不能冒充 class。 */
 export function selectorHasCandidate(selector: string, candidate: string) {
-  const needle = `.${escapeClassName(candidate)}`
-  let offset = selector.indexOf(needle)
-  while (offset >= 0) {
-    const next = selector[offset + needle.length]
-    if (next === undefined || !/[\w\\-]/.test(next)) {
-      return true
-    }
-    offset = selector.indexOf(needle, offset + needle.length)
-  }
-  return false
+  return walkClasses(selector).includes(candidate)
 }
 
 export function evaluateCase(rules: RuleEvidence[], item: typeof compatibilityCases[number], checkImportant: boolean) {
