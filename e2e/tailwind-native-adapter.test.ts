@@ -108,7 +108,7 @@ async function fixture(platform: ReactNativeReport['platform'] = 'web') {
 }
 
 describe('原生统一能力报告', () => {
-  it('分别记录 23 项运行时、5 项编码和 90 项拒绝，并保留未覆盖的注册能力', async () => {
+  it('分别记录 26 项运行时、5 项编码和 87 项拒绝，并保留未覆盖的注册能力', async () => {
     const { context, raw } = await fixture()
     const { report, contracts } = await buildNativeCapabilityReport(context, 'expo-chromium', raw)
     const reviewed = report.results.filter(item => item.id.startsWith('compatibility/'))
@@ -126,7 +126,7 @@ describe('原生统一能力报告', () => {
     const screenshot = report.artifacts.find(item => item.kind === 'screenshot')!
     expect(screenshot.sha256).toBe(raw.receipts[0]!.artifact.sha256)
     expect(screenshot.path).toBe(path.join('native', raw.receipts[0]!.artifact.name))
-    expect(report.artifacts.filter(item => item.kind === 'measurements')).toHaveLength(34)
+    expect(report.artifacts.filter(item => item.kind === 'measurements')).toHaveLength(37)
     expect(await readFile(path.join(context.directory, 'report.md'), 'utf8')).toContain('未执行')
   })
 
