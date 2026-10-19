@@ -20,7 +20,7 @@ describe('compileNativeStylesheet', () => {
 
   it('maps common shadows and reports unsupported CSS values', () => {
     const manifest = compileNativeStylesheet('.shadow { box-shadow: 0 1px 2px #000; } .blur { filter: blur(4px); } .text-shadow { text-shadow: 0 1px 2px #000; } .columns { columns: 2; }')
-    expect(manifest.rules.shadow?.[0]?.style).toMatchObject({ shadowOffset: { width: 0, height: 1 }, shadowRadius: 2, shadowColor: '#000' })
+    expect(manifest.rules.shadow?.[0]?.style).toEqual({ boxShadow: [{ offsetX: 0, offsetY: 1, blurRadius: 2, spreadDistance: 0, color: '#000' }] })
     expect(manifest.warnings).toEqual([
       expect.objectContaining({ className: 'blur', property: 'filter' }),
       expect.objectContaining({ className: 'text-shadow', property: 'textShadow' }),
@@ -60,7 +60,7 @@ describe('compileNativeStylesheet', () => {
       style: { transform: [{ translateX: 12 }, { rotate: '5deg' }] },
     })
     expect(manifest.rules['rounded-lg']?.[0]?.style).toEqual({ borderRadius: 8 })
-    expect(manifest.rules.shadow?.[0]?.style).toMatchObject({ shadowOpacity: 0.25 })
+    expect(manifest.rules.shadow?.[0]?.style).toEqual({ boxShadow: [{ offsetX: 0, offsetY: 2, blurRadius: 4, spreadDistance: 0, color: 'rgba(0, 0, 0, 0.25)' }] })
   })
 
   it('rejects state and responsive variants instead of applying them unconditionally', () => {

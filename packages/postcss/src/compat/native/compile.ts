@@ -1,9 +1,10 @@
 /* eslint-disable style/max-statements-per-line */
 
-import type { AtRule, Declaration, Root, Rule } from 'postcss'
+import type { AtRule, Declaration, Rule } from 'postcss'
 import type { CompileNativeStylesheetOptions, NativeCompilerWarning, NativeCssStylesheet, NativeStyleRule } from './types'
 import { postcss } from '../../postcss-runtime'
 import { expandDeclaration, propertyName, relativeLineHeight } from './properties'
+import { collectNativeVariables, nativeRuleVariables } from './scope'
 import { atRuleVariant, unsupportedVariant, variantForClass, walkClasses } from './selectors'
 
 function ancestors(node: Rule | Declaration) {
@@ -16,19 +17,11 @@ function ancestors(node: Rule | Declaration) {
   return result
 }
 
-function collectVariables(root: Root) {
-  const variables: Record<string, string> = {}
-  root.walkDecls((decl) => {
-    if (decl.prop.startsWith('--')) { variables[decl.prop] = decl.value.trim() }
-  })
-  return variables
-}
-
 function addWarning(warnings: NativeCompilerWarning[], warning: NativeCompilerWarning) {
   if (!warnings.some(item => item.message === warning.message && item.property === warning.property && item.className === warning.className)) { warnings.push(warning) }
 }
 
-function compileRule(rule: Rule, className: string, variables: Record<string, string>, warnings: NativeCompilerWarning[], order: number) {
+function compileRule(rule: Rule, className: string, inherited: Record<string, string>, warnings: NativeCompilerWarning[], order: number, options: CompileNativeStylesheetOptions) {
   const unsupported = unsupportedVariant(className)
   if (unsupported) {
     addWarning(warnings, {
@@ -40,12 +33,18 @@ function compileRule(rule: Rule, className: string, variables: Record<string, st
   }
   const styles: Record<'normal' | 'important', Record<string, unknown>> = { normal: {}, important: {} }
   const lineHeights: Partial<Record<'normal' | 'important', number>> = {}
-  rule.walkDecls((decl) => {
+  const variables = nativeRuleVariables(rule, inherited)
+  rule.each((decl) => {
+    if (decl.type !== 'decl') { return }
     if (decl.prop.startsWith('--')) { return }
     const property = propertyName(decl.prop)
     const important = decl.important || /!important\s*$/i.test(decl.value)
     const value = decl.value.replace(/\s*!important\s*$/i, '')
     const kind = important ? 'important' : 'normal'
+    if (property === 'boxShadow' && options.boxShadow === false) {
+      addWarning(warnings, { className, property, message: '当前宿主已禁用现代 boxShadow，无法保留多层、spread 与 inset 阴影语义' })
+      return
+    }
     if (property === 'lineHeight') {
       const multiplier = relativeLineHeight(value, variables)
       if (multiplier !== undefined) {
@@ -79,7 +78,7 @@ function compileRule(rule: Rule, className: string, variables: Record<string, st
 
 export function compileNativeCss(css: string, options: CompileNativeStylesheetOptions = {}): NativeCssStylesheet {
   const root = postcss.parse(css)
-  const variables = collectVariables(root)
+  const variables = collectNativeVariables(root)
   const allowed = options.classSet ? new Set(options.classSet) : undefined
   const rules: Record<string, NativeStyleRule[]> = {}
   const warnings: NativeCompilerWarning[] = []
@@ -90,7 +89,7 @@ export function compileNativeCss(css: string, options: CompileNativeStylesheetOp
     for (const selector of rule.selectors) {
       for (const className of walkClasses(selector)) {
         if (allowed && !allowed.has(className)) { continue }
-        const compiled = compileRule(rule, className, variables, warnings, order++)
+        const compiled = compileRule(rule, className, variables, warnings, order++, options)
         if (compiled.length) {
           const existing = rules[className] ??= []
           existing.push(...compiled)

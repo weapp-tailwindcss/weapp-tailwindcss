@@ -45,6 +45,8 @@ Metro 会扫描源码、生成精确候选集合和 manifest，并把 Babel JSX 
 
 无单位、百分比和 `em` 行高在 class 与内联样式完成级联后，按最终字号计算；倍率保存在规则元数据中，不写入静态 StyleSheet。字号来自父元素时，可通过 `tw(value, { fontSize })` 或 `getStaticStyle(ids, { fontSize })` 显式提供已知继承字号；字号未知时不会猜测平台默认值。自定义运行时接入可把 `StyleSheet.flatten` 作为 `setStyleSheetFactory` 的第二个参数，使已注册的内联样式也参与计算；Metro 会自动接入。
 
+阴影使用现代 React Native `boxShadow` 数组，保留所有层的模糊、spread、颜色与 inset。宿主需要启用新架构并满足平台要求：Android 外阴影要求 Android 9+，内阴影要求 Android 10+。不支持的宿主可向 `compileNativeStylesheet()` 或 `generateNativeStylesheet()` 传入 `boxShadow: false`；相关声明会产生告警，不会静默降级为丢失层或 spread 的旧阴影属性。
+
 ## 公开入口
 
 包提供 `compiler`、`tailwind`、`babel`、`metro`、`runtime` 与中性类型入口 `env`。非 Expo 或定制 Metro 场景可以显式组合这些入口。

@@ -20,6 +20,8 @@ export interface NativeCompilerWarning {
 export interface CompileNativeStylesheetOptions {
   classSet?: Iterable<string> | undefined
   ignorePreflight?: boolean | undefined
+  /** 宿主需支持现代 boxShadow；旧架构或不支持的平台必须显式禁用。 */
+  boxShadow?: boolean | undefined
 }
 
 export interface NativeCssStylesheet {

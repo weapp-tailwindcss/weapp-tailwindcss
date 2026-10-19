@@ -1,13 +1,13 @@
 /* eslint-disable style/max-statements-per-line */
 
 import type { TailwindV4SourceOptions } from 'weapp-tailwindcss/generator'
-import type { NativeStyleManifest } from '../types'
+import type { CompileNativeStylesheetOptions, NativeStyleManifest } from '../types'
 import process from 'node:process'
 import { createWeappTailwindcssGenerator, resolveTailwindV4Source } from 'weapp-tailwindcss/generator'
 import { addNativeVariantRules, baseClassName, compileNativeStylesheet, finalizeNativeManifest } from '../compiler'
 import { mergeNativeManifests } from './merge'
 
-export interface GenerateNativeStylesheetOptions extends Omit<TailwindV4SourceOptions, 'projectRoot' | 'cssEntries'> {
+export interface GenerateNativeStylesheetOptions extends Omit<TailwindV4SourceOptions, 'projectRoot' | 'cssEntries'>, Pick<CompileNativeStylesheetOptions, 'boxShadow'> {
   /** Tailwind source 扫描根目录；用于 workspace 示例和 Metro 项目。 */
   projectRoot?: string | undefined
   /** Tailwind CSS 入口文件；相对路径会按 projectRoot 解析。 */
@@ -27,7 +27,7 @@ export interface NativeStylesheetEvidence {
   manifest: NativeStyleManifest
 }
 
-async function generateSourceEvidence(source: Awaited<ReturnType<typeof resolveTailwindV4Source>>, options: Pick<GenerateNativeStylesheetOptions, 'candidates' | 'sourceGlobs'>): Promise<NativeStylesheetEvidence> {
+async function generateSourceEvidence(source: Awaited<ReturnType<typeof resolveTailwindV4Source>>, options: Pick<GenerateNativeStylesheetOptions, 'candidates' | 'sourceGlobs' | 'boxShadow'>): Promise<NativeStylesheetEvidence> {
   const generator = createWeappTailwindcssGenerator(source)
   try {
     const sourcePatterns = options.sourceGlobs?.map(pattern => ({ base: source.projectRoot, pattern, negated: false }))
@@ -60,7 +60,7 @@ async function generateSourceEvidence(source: Awaited<ReturnType<typeof resolveT
       if (base && generated.classSet.has(base) && /^(?:dark|ios|android|native):/.test(candidate)) { requestedCandidates.add(candidate) }
     }
     for (const candidate of requestedCandidates) { classSet.add(candidate) }
-    const manifest = compileNativeStylesheet(generated.rawCss, { classSet })
+    const manifest = compileNativeStylesheet(generated.rawCss, { classSet, boxShadow: options.boxShadow })
     addNativeVariantRules(manifest, requestedCandidates)
     finalizeNativeManifest(manifest)
     return { rawCss: generated.rawCss, generatedClassSet: [...generated.classSet], manifest }
@@ -71,7 +71,7 @@ async function generateSourceEvidence(source: Awaited<ReturnType<typeof resolveT
 }
 
 export async function generateNativeStylesheetEvidence(options: GenerateNativeStylesheetOptions = {}): Promise<NativeStylesheetEvidence> {
-  const { projectRoot = process.cwd(), cssEntries, cssSources, css, candidates, sourceGlobs, ...sourceOptions } = options
+  const { projectRoot = process.cwd(), cssEntries, cssSources, css, candidates, sourceGlobs, boxShadow, ...sourceOptions } = options
   const shared = { ...sourceOptions, projectRoot }
   const inputs: TailwindV4SourceOptions[] = css !== undefined
     ? [{ ...shared, css }]
@@ -83,7 +83,7 @@ export async function generateNativeStylesheetEvidence(options: GenerateNativeSt
     inputs.push(shared)
   }
   // Iterable 可能只能遍历一次；所有独立入口必须使用同一批精确候选。
-  const generationOptions = { candidates: [...candidates ?? []], ...(sourceGlobs ? { sourceGlobs } : {}) }
+  const generationOptions = { candidates: [...candidates ?? []], boxShadow, ...(sourceGlobs ? { sourceGlobs } : {}) }
   const entries: NativeStylesheetEvidence[] = []
   for (const input of inputs) {
     entries.push(await generateSourceEvidence(await resolveTailwindV4Source(input), generationOptions))

@@ -37,6 +37,20 @@ async function fixture() {
 }
 
 describe('原生 Tailwind 独立 CSS 入口', () => {
+  it('透传宿主 boxShadow 能力边界，并完整保留真实 Tailwind 双层阴影', async () => {
+    const projectRoot = await fixture()
+    const options = { projectRoot, css: tailwindImport('index.css'), candidates: ['shadow-lg', 'ring-2', 'inset-shadow-sm'], sourceGlobs: [] }
+    const result = await generateNativeStylesheetEvidence(options)
+    const layers = result.manifest.rules['shadow-lg']?.[0]?.style.boxShadow as Record<string, unknown>[]
+    expect(layers.slice(-2)).toEqual([
+      { offsetX: 0, offsetY: 10, blurRadius: 15, spreadDistance: -3, color: 'rgb(0 0 0 / 0.1)' },
+      { offsetX: 0, offsetY: 4, blurRadius: 6, spreadDistance: -4, color: 'rgb(0 0 0 / 0.1)' },
+    ])
+    const disabled = await generateNativeStylesheetEvidence({ ...options, boxShadow: false })
+    expect(disabled.manifest.rules['shadow-lg']).toBeUndefined()
+    expect(disabled.manifest.warnings).toContainEqual(expect.objectContaining({ className: 'shadow-lg', property: 'boxShadow', message: expect.stringContaining('宿主') }))
+  })
+
   it('普通 reference/apply 与 prefix 入口独立生成，前缀不能泄漏', async () => {
     const projectRoot = await fixture()
     await writeFile(path.join(projectRoot, 'styles', 'reference.css'), `@reference ${JSON.stringify(require.resolve('tailwindcss/index.css').replaceAll('\\', '/'))}; .reference { @apply p-[16px]; }`)

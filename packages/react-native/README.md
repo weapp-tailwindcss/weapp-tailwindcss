@@ -45,6 +45,8 @@ On Android and iOS, the Metro integration resolves `react` and `react-native` fr
 
 Unitless, percentage, and `em` line heights are resolved against the final font size after class and inline style precedence. The compiler retains their multiplier outside the static StyleSheet values. When font size comes from a parent, pass its known value through `tw(value, { fontSize })` or `getStaticStyle(ids, { fontSize })`; an unknown inherited size is not replaced with an assumed default. Custom runtime integrations can pass `StyleSheet.flatten` as the second argument to `setStyleSheetFactory` so registered inline styles participate in this calculation; Metro does this automatically.
 
+Shadows use the modern React Native `boxShadow` array, preserving all layers, blur, spread, color, and inset. The host must support this property: use the New Architecture and check its OS requirements (Android outset shadows require Android 9+, inset shadows Android 10+). Pass `boxShadow: false` to `compileNativeStylesheet()` or `generateNativeStylesheet()` for an unsupported host; declarations then produce warnings rather than a partial legacy shadow approximation.
+
 ## Public entry points
 
 The package exposes `compiler`, `tailwind`, `babel`, `metro`, `runtime`, and the platform-neutral `env` type entry. Custom Metro setups can compose these entry points directly.
