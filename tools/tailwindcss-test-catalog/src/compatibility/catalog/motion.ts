@@ -1,0 +1,13 @@
+import type { CompatibilityCase } from '../types'
+
+export const motionCases: CompatibilityCase[] = [
+  { id: 'transform-translate', family: 'transform', page: 'motion', title: 'Translate', className: 'translate-x-[12px] translate-y-[4px]', evidence: 'runtime', probe: 'geometry', declarations: [{ property: '--tw-translate-x', value: '12px' }, { property: '--tw-translate-y', value: '4px' }, { property: 'translate', value: 'var(--tw-translate-x) var(--tw-translate-y)' }] },
+  { id: 'transform-rotate', family: 'transform', page: 'motion', title: 'Rotate', className: 'rotate-[12deg]', evidence: 'runtime', probe: 'geometry', declarations: [{ property: 'rotate', value: '12deg' }] },
+  { id: 'transform-scale', family: 'transform', page: 'motion', title: 'Scale', className: 'scale-110', evidence: 'runtime', probe: 'geometry', declarations: [{ property: '--tw-scale-x', value: '110%' }, { property: '--tw-scale-y', value: '110%' }, { property: 'scale', value: 'var(--tw-scale-x) var(--tw-scale-y)' }] },
+  { id: 'transform-origin', family: 'transform', page: 'motion', title: 'Transform origin', className: 'origin-top-left', evidence: 'runtime', probe: 'geometry', declarations: [{ property: 'transform-origin', value: '0 0' }] },
+  { id: 'transition-basic', family: 'transition-animation', page: 'motion', title: 'Transition', className: 'transition-opacity duration-300 ease-in-out', evidence: 'runtime', probe: 'interaction', declarations: [{ property: 'transition-property', value: 'opacity' }, { property: 'transition-duration', value: '300ms' }] },
+  { id: 'animation-spin', family: 'transition-animation', page: 'motion', title: 'Keyframe animation', className: 'animate-spin', evidence: 'runtime', probe: 'interaction', declarations: [{ property: 'animation', value: 'spin 1s linear infinite' }] },
+  { id: 'interaction-pointer', family: 'interactivity', page: 'motion', title: 'Pointer events', className: 'pointer-events-none', evidence: 'runtime', probe: 'interaction', declarations: [{ property: 'pointer-events', value: 'none' }] },
+  { id: 'interaction-select', family: 'interactivity', page: 'motion', title: 'User select', className: 'select-none', evidence: 'runtime', probe: 'interaction', declarations: [{ property: 'user-select', value: 'none' }] },
+  { id: 'interaction-scroll', family: 'interactivity', page: 'motion', title: 'Scroll behavior', className: 'scroll-smooth snap-y snap-mandatory', evidence: 'runtime', probe: 'interaction', declarations: [{ property: 'scroll-behavior', value: 'smooth' }, { property: 'scroll-snap-type', value: 'y var(--tw-scroll-snap-strictness)' }] },
+]

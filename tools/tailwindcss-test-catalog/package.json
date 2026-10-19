@@ -1,0 +1,12 @@
+{
+  "name": "@weapp-tailwindcss/test-catalog",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./authoring": "./src/authoring.ts",
+    "./parity-candidates": "./src/parity-candidates.ts",
+    "./value-profiles": "./src/value-profiles.ts"
+  }
+}

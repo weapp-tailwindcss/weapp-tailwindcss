@@ -1,0 +1,15 @@
+export const modifiersAndArbitrarySyntax = [
+  '!mt-0',
+  '!rounded-full',
+  'hover:!bg-red-500',
+  'bg-[length:200px_100px]',
+  'bg-[position:var(--hero-position)]',
+  'grid-cols-[repeat(3,minmax(0,1fr))]',
+  'content-["hello_world"]',
+  'content-[attr(data-label)]',
+  'min-h-[calc(100vh-20px)]',
+  'translate-x-[calc(var(--offset)*1px)]',
+  'shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]',
+  '[--card-gap:16px]',
+  '[mask-type:luminance]',
+]
