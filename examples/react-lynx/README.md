@@ -13,7 +13,9 @@
 @import "tailwindcss/utilities.css" layer(utilities) source(none);
 
 @source "./**/*.{ts,tsx}";
-@source "../../../tools/tailwindcss-test-catalog/src/**/*.{ts,json}";
+@source not "./**/*.test.{ts,tsx}";
+@source not "./**/*.d.ts";
+@source "../../../tools/tailwindcss-test-catalog/compatibility-candidates.txt";
 ```
 
 实验室另有独立 fixture 验证 `@reference`、`@config`、`@plugin`、prefix 和 important。Tailwind CSS 仍完全由 `weapp-tailwindcss` 生成，没有接入官方 PostCSS/Vite 生成插件。
