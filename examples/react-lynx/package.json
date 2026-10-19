@@ -17,6 +17,7 @@
     "react": "catalog:react19"
   },
   "devDependencies": {
+    "@lynx-js/config-rsbuild-plugin": "0.2.5",
     "@lynx-js/rspeedy": "0.17.2",
     "@types/react": "catalog:react19",
     "tailwindcss": "4.3.3",
