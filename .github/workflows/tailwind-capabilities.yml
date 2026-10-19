@@ -1,19 +1,6 @@
 name: Tailwind CSS Capabilities
 
 on:
-  pull_request:
-    types: [opened, synchronize]
-    paths:
-      - 'tools/tailwindcss-test-catalog/**'
-      - 'e2e/tailwind-capabilities/**'
-      - 'e2e/tailwind-capabilities-*.test.ts'
-      - e2e/tailwind-inventory.test.ts
-      - 'packages/engine/**'
-      - 'packages/postcss/**'
-      - 'packages/weapp-tailwindcss/**'
-      - package.json
-      - pnpm-lock.yaml
-      - .github/workflows/tailwind-capabilities.yml
   workflow_dispatch:
   workflow_call:
     inputs:
