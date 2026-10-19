@@ -158,6 +158,28 @@ it('预期encoder限制不能仅凭generated/bundled布尔形成通过', async (
 })
 
 it('预期负向runtime也必须从有效控制夹具重算，不能更换支持预期', async () => {
+  const { context, raw, save, saveGeometry } = await fixture('variant-supports', 'unsupported')
+  raw.results[0]!.geometry = {
+    probe: rect(6, 6, 100, 44),
+    control: rect(206, 6, 100, 44),
+    probeContainer: rect(0, 0, 160, 140),
+    controlContainer: rect(200, 0, 160, 140),
+    probeChild: rect(6, 22, 20, 12),
+    controlChild: rect(206, 22, 20, 12),
+  }
+  await saveGeometry()
+  await save()
+  const { report, contracts } = await buildLynxCapabilityReport(context, 'lynx-ios', raw)
+  expect(contracts[0]!.expectation).toMatchObject({ support: 'unsupported', stage: 'runtime' })
+  expect(report.results[0]).toMatchObject({ support: 'unsupported', status: 'passed', assertions: [{ actual: 'unsupported', expected: 'unsupported', stage: 'runtime' }] })
+  raw.results[0]!.geometry!.probeChild = rect(50, 6, 20, 12)
+  await saveGeometry()
+  await save()
+  const recomputed = await buildLynxCapabilityReport(context, 'lynx-ios', raw)
+  expect(recomputed.report.results[0]).toMatchObject({ support: 'unsupported', status: 'failed', assertions: [{ actual: 'supported', expected: 'unsupported', stage: 'runtime' }] })
+})
+
+it('encoder已拒绝的案例不能由完整几何和runtime负向结果覆盖失败阶段', async () => {
   const { context, raw, save, saveGeometry } = await fixture('grid-auto', 'unsupported')
   raw.results[0]!.geometry = {
     probe: rect(6, 6, 140, 68),
@@ -169,8 +191,10 @@ it('预期负向runtime也必须从有效控制夹具重算，不能更换支持
   }
   await saveGeometry()
   await save()
-  const { report } = await buildLynxCapabilityReport(context, 'lynx-ios', raw)
-  expect(report.results[0]).toMatchObject({ support: 'unsupported', status: 'passed', assertions: [{ actual: 'unsupported', expected: 'unsupported' }] })
+  const { report, contracts } = await buildLynxCapabilityReport(context, 'lynx-ios', raw)
+  expect(contracts[0]!.expectation).toMatchObject({ support: 'unsupported', stage: 'encoding' })
+  expect(raw.results[0]).toMatchObject({ status: 'unsupported', failureStage: 'runtime' })
+  expect(report.results[0]).toMatchObject({ support: 'unsupported', status: 'blocked', assertions: [], reason: expect.stringContaining('encoding') })
 })
 
 it('归档证据仍可验证时，支持回归明确失败而不自动降级为平台限制', async () => {
