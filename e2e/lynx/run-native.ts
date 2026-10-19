@@ -9,6 +9,8 @@ import { androidSdkRoot } from '../react-native/native-toolchain'
 import { buildCompatibilityBundle } from './build'
 import { exampleDir, lynxIntermediateDir, repoRoot } from './catalog'
 import { collectNativeEvidence, createEvidenceContext, validateNativeEvidence } from './evidence'
+import { withNativeFailureEvidence } from './failure-evidence'
+import { androidFailureReaders } from './failure-evidence-readers'
 import { readPreparedIosBuildTarget } from './ios-build-target'
 import { formatNativeFailure, withNativeArtifacts } from './native-artifacts'
 import { command } from './native-command'
@@ -87,35 +89,37 @@ async function runAndroid(hostDir: string, artifactDir: string, device: AndroidD
   const hiddenErrorDialogs = (await command('adb', adbArgs(device, ['shell', 'settings', 'get', 'global', 'hide_error_dialogs']), hostDir, 30_000)).trim()
   await command('adb', adbArgs(device, ['shell', 'settings', 'put', 'global', 'hide_error_dialogs', '1']), hostDir, 30_000)
   try {
-    await execa('adb', adbArgs(device, ['shell', 'input', 'keyevent', 'KEYCODE_WAKEUP']), { reject: false })
-    await execa('adb', adbArgs(device, ['shell', 'wm', 'dismiss-keyguard']), { reject: false })
-    await execa('adb', adbArgs(device, ['shell', 'am', 'broadcast', '-a', 'android.intent.action.CLOSE_SYSTEM_DIALOGS']), { reject: false })
-    await execa('adb', adbArgs(device, ['shell', 'input', 'keyevent', 'KEYCODE_BACK']), { reject: false })
-    await command('adb', adbArgs(device, ['shell', 'am', 'start', '-W', '-n', `${applicationId}/.MainActivity`]), hostDir, 60_000)
-    if (options.captureOnly) {
-      await wait(2200)
-      const screenshot = await execa('adb', adbArgs(device, ['exec-out', 'screencap', '-p']), { encoding: 'buffer', reject: false })
-      if (screenshot.exitCode !== 0 || !screenshot.stdout) {
-        throw new Error('Unable to capture the Android promo screenshot.')
+    return await withNativeFailureEvidence(artifactDir, context, androidFailureReaders(device, context), async () => {
+      await execa('adb', adbArgs(device, ['shell', 'input', 'keyevent', 'KEYCODE_WAKEUP']), { reject: false })
+      await execa('adb', adbArgs(device, ['shell', 'wm', 'dismiss-keyguard']), { reject: false })
+      await execa('adb', adbArgs(device, ['shell', 'am', 'broadcast', '-a', 'android.intent.action.CLOSE_SYSTEM_DIALOGS']), { reject: false })
+      await execa('adb', adbArgs(device, ['shell', 'input', 'keyevent', 'KEYCODE_BACK']), { reject: false })
+      await command('adb', adbArgs(device, ['shell', 'am', 'start', '-W', '-n', `${applicationId}/.MainActivity`]), hostDir, 60_000)
+      if (options.captureOnly) {
+        await wait(2200)
+        const screenshot = await execa('adb', adbArgs(device, ['exec-out', 'screencap', '-p']), { encoding: 'buffer', reject: false })
+        if (screenshot.exitCode !== 0 || !screenshot.stdout) {
+          throw new Error('Unable to capture the Android promo screenshot.')
+        }
+        await fs.writeFile(path.join(artifactDir, 'screen.png'), screenshot.stdout)
+        await recordAndroidVideo(hostDir, artifactDir, device)
+        return undefined
       }
-      await fs.writeFile(path.join(artifactDir, 'screen.png'), screenshot.stdout)
-      await recordAndroidVideo(hostDir, artifactDir, device)
-      return undefined
-    }
-    const report = await waitForReportOrFailure(async () => {
-      const result = await execa('adb', adbArgs(device, ['shell', 'run-as', applicationId, 'cat', `files/lynx-compat/${context.runId}/report.json`]), { reject: false })
-      return result.exitCode === 0 && result.stdout.trim().startsWith('{') ? result.stdout : undefined
-    }, async () => {
-      const result = await execa('adb', adbArgs(device, ['shell', 'run-as', applicationId, 'cat', `files/lynx-compat/${context.runId}/failure.json`]), { reject: false })
-      return result.exitCode === 0 ? result.stdout : undefined
+      const report = await waitForReportOrFailure(async () => {
+        const result = await execa('adb', adbArgs(device, ['shell', 'run-as', applicationId, 'cat', `files/lynx-compat/${context.runId}/report.json`]), { reject: false })
+        return result.exitCode === 0 && result.stdout.trim().startsWith('{') ? result.stdout : undefined
+      }, async () => {
+        const result = await execa('adb', adbArgs(device, ['shell', 'run-as', applicationId, 'cat', `files/lynx-compat/${context.runId}/failure.json`]), { reject: false })
+        return result.exitCode === 0 ? result.stdout : undefined
+      })
+      const screenshotPath = path.join(artifactDir, 'screen.png')
+      const screenshot = await execa('adb', adbArgs(device, ['exec-out', 'screencap', '-p']), { encoding: 'buffer', reject: false })
+      if (screenshot.exitCode === 0 && screenshot.stdout) {
+        await fs.writeFile(screenshotPath, screenshot.stdout)
+      }
+      await collectAndroidArtifacts(report, artifactDir, device, context)
+      return report
     })
-    const screenshotPath = path.join(artifactDir, 'screen.png')
-    const screenshot = await execa('adb', adbArgs(device, ['exec-out', 'screencap', '-p']), { encoding: 'buffer', reject: false })
-    if (screenshot.exitCode === 0 && screenshot.stdout) {
-      await fs.writeFile(screenshotPath, screenshot.stdout)
-    }
-    await collectAndroidArtifacts(report, artifactDir, device, context)
-    return report
   }
   finally {
     await collectAndroidLogcat(artifactDir, device)

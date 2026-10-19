@@ -328,7 +328,8 @@ export async function submitNativeCompatibilityReport() {
   }
   catch (error) {
     const failure = nativeEvidenceFailureIn(error)
-    const message = failure ? JSON.stringify(failure) : error instanceof Error ? error.stack ?? error.message : String(error)
+    const detail = error instanceof Error ? `${error.name}: ${error.message}${error.stack ? `\n${error.stack}` : ''}` : String(error)
+    const message = failure ? JSON.stringify(failure) : detail
     if (runId && reporter.fail) {
       await callReporter<boolean>(callback => reporter.fail!(runId!, message, callback), 3000).catch(() => undefined)
     }

@@ -15,7 +15,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-async function collect(missingHost = false, fault?: 'view-expired' | 'measure-timeout' | 'geometry-null' | 'media-null' | 'media-missing') {
+async function collect(missingHost = false, fault?: 'view-expired' | 'measure-timeout' | 'geometry-null' | 'media-null' | 'media-missing' | 'stack-only') {
   vi.useFakeTimers()
   const runId = '00000000-0000-4000-8000-000000000001'
   const rect = (left: number, top: number, width: number, height: number) => ({ left, top, width, height, right: left + width, bottom: top + height })
@@ -50,7 +50,16 @@ async function collect(missingHost = false, fault?: 'view-expired' | 'measure-ti
     getEvidenceContext: (callback: (value: object) => void) => callback({ version: 1, runId, bundleSha256: 'a'.repeat(64) }),
     measure,
     captureGeometry: missingHost ? undefined : captureGeometry,
-    captureMediaGate: fault === 'media-missing' ? undefined : (_run: string, callback: (value: NativeMediaGateCapture | null) => void) => callback(fault === 'media-null' ? null : mediaCapture()),
+    captureMediaGate: fault === 'media-missing'
+      ? undefined
+      : (_run: string, callback: (value: NativeMediaGateCapture | null) => void) => {
+          if (fault === 'stack-only') {
+            const error = new Error('media geometry contract failed: hover-none')
+            error.stack = '    at nativeMediaGate (background.js:3628:476)'
+            throw error
+          }
+          callback(fault === 'media-null' ? null : mediaCapture())
+        },
     submitArtifact: vi.fn(),
     fail,
     submit: (_run: string, value: string, callback: (value: boolean) => void) => {
@@ -108,4 +117,13 @@ it.each(['media-null', 'media-missing'] as const)('reporter拒绝%s，不能发�
   expect(error).toBeInstanceOf(Error)
   expect(captureGeometry).not.toHaveBeenCalled()
   expect(fail).toHaveBeenCalledOnce()
+})
+
+it('Lynx stack 不含 message 时仍落盘原始拒绝条件和调用栈', async () => {
+  const { report, error, fail } = await collect(false, 'stack-only')
+  expect(report).toBeUndefined()
+  expect(error).toBeInstanceOf(Error)
+  expect(fail.mock.calls[0]![1]).toContain('media geometry contract failed: hover-none')
+  expect(fail.mock.calls[0]![1]).toContain('at nativeMediaGate')
+  expect(fail.mock.calls[0]![1]).not.toContain('"category":"environment"')
 })
