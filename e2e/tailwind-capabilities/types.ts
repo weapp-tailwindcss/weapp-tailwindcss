@@ -1,6 +1,6 @@
 export const browserEngines = ['chromium', 'firefox', 'webkit'] as const
 export type BrowserEngine = typeof browserEngines[number]
-export type TailwindTarget = `web-${BrowserEngine}` | `expo-${BrowserEngine}` | 'weapp' | 'react-native-android' | 'react-native-ios' | 'lynx-android' | 'lynx-ios' | 'static'
+export type TailwindTarget = `web-${BrowserEngine}` | `expo-${BrowserEngine}` | 'weapp' | 'react-native-android' | 'react-native-ios' | 'lynx-android' | 'lynx-ios' | 'static' | 'mini-builds'
 export type EvidenceStage = 'generation' | 'encoding' | 'runtime' | 'hmr' | 'visual' | 'negative'
 export type Outcome = 'passed' | 'failed' | 'blocked' | 'not-run'
 

@@ -10,6 +10,7 @@
 - [demo/AGENTS.md](../../demo/AGENTS.md)
 - [e2e/AGENTS.md](../../e2e/AGENTS.md)
 - [e2e/tailwind-capabilities/AGENTS.md](../../e2e/tailwind-capabilities/AGENTS.md)
+- [e2e/tailwind-capabilities/build-matrix/AGENTS.md](../../e2e/tailwind-capabilities/build-matrix/AGENTS.md)
 - [examples/AGENTS.md](../../examples/AGENTS.md)
 - [examples/react-native-expo/AGENTS.md](../../examples/react-native-expo/AGENTS.md)
 - [packages-native/AGENTS.md](../../packages-native/AGENTS.md)

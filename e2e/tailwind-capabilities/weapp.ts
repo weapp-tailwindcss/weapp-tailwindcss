@@ -13,7 +13,7 @@ import { loadInventory } from './inventory'
 import { assertionPassed, receipt, validateCapabilityReport, verifyReportArtifacts, writeCapabilityReport } from './report'
 import { weappCoverageGaps, weappFeatureBindings } from './weapp/coverage'
 import { weappProbes } from './weapp/fixtures'
-import { sampleWeappPixel } from './weapp/pixels'
+import { sampleWeappPixel, weappPixelAssertions, weappPixelContract } from './weapp/pixels'
 
 export async function runWeapp(context: RunContext) {
   const env = context.env
@@ -30,12 +30,12 @@ export async function runWeapp(context: RunContext) {
   })
   for (const [index, probe] of probes.entries()) {
     if ('pixel' in probe) {
-      for (const [channel, value] of probe.pixel.entries()) {
-        const name = `pixel-${channel}`
-        contracts[index]!.requiredAssertions.push(name)
-        contracts[index]!.expectedValues[name] = value
-        contracts[index]!.assertionStages = { ...contracts[index]!.assertionStages, [name]: 'visual' }
-      }
+      const pixel = weappPixelContract(probe.pixel)
+      const contract = contracts[index]!
+      contract.requiredAssertions.push(...pixel.requiredAssertions)
+      Object.assign(contract.expectedValues, pixel.expectedValues)
+      contract.tolerances = pixel.tolerances
+      contract.assertionStages = pixel.assertionStages
     }
   }
   const gaps = context.caseFilter ? [] : weappCoverageGaps(await loadInventory(), contracts)
@@ -100,8 +100,14 @@ export async function runWeapp(context: RunContext) {
             const offset = await node.offset()
             const size = await node.size()
             const pixel = sampleWeappPixel(png, viewport.windowWidth, { ...offset, ...size })
-            assertions.push(...probe.pixel.map((expected, channel) => ({ name: `pixel-${channel}`, stage: 'visual' as const, actual: pixel[channel]!, expected })))
-            measurements.push({ pixel, viewport })
+            const referencePixel = sampleWeappPixel(png, viewport.windowWidth, { ...await reference.offset(), ...await reference.size() })
+            assertions.push(...weappPixelAssertions(pixel, referencePixel, probe.pixel))
+            measurements.push({ pixel, referencePixel, viewport })
+            for (const [file, kind] of [[`${screenshot}.full.png`, 'screenshot'], [`${screenshot}.viewport.json`, 'measurements']] as const) {
+              const raw = await receipt(file, context.directory, context.runId, [probe.id], kind)
+              report.artifacts.push(raw)
+              artifacts.push(raw.path)
+            }
           }
           const image = await receipt(screenshot, context.directory, context.runId, [probe.id], 'screenshot')
           report.artifacts.push(image)

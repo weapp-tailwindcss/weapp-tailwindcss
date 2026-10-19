@@ -1,5 +1,11 @@
+import type { CapabilityResult, Outcome } from './types'
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
+
+/** 子组抛错而未写报告时不能由其它通过报告改判为未执行。 */
+export function classifyTargetFailure(results: readonly Pick<CapabilityResult, 'status'>[]): Outcome {
+  return results.some(item => item.status === 'failed') ? 'failed' : results.some(item => item.status === 'blocked') ? 'blocked' : results.some(item => item.status === 'not-run') ? 'not-run' : 'failed'
+}
 
 export interface ExecutionStage {
   target: string

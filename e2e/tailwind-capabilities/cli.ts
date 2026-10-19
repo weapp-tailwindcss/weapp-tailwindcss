@@ -8,7 +8,7 @@ import process from 'node:process'
 import { runWithCleanup } from '../../scripts/e2e-preflight/cleanup'
 import { enterFullTestGate } from '../../scripts/e2e-preflight/gate'
 import { targetContext } from './context'
-import { recordPreflightRejection, writeExecutionRecord } from './execution-record'
+import { classifyTargetFailure, recordPreflightRejection, writeExecutionRecord } from './execution-record'
 import { runExternalTarget, runPnpmStage } from './external'
 import { parseOptions, stageName } from './plan'
 import { assertCapabilitySuccess } from './report'
@@ -64,6 +64,7 @@ async function main() {
       await gate.check(stageName(stage.target as ExecutionTarget))
       process.stdout.write(`[tailwind] ${stage.target}\n`)
       stage.attempted = true
+      await writeExecutionRecord(context.directory, metadata, stages)
       try {
         await execute(stage.target as ExecutionTarget, context)
         stage.status = 'passed'
@@ -79,7 +80,7 @@ async function main() {
             throw new Error('目标未产生能力报告')
           }
           const results = reports.flatMap(report => report.results)
-          stage.status = results.some(item => item.status === 'failed') ? 'failed' : results.some(item => item.status === 'blocked') ? 'blocked' : 'not-run'
+          stage.status = classifyTargetFailure(results)
         }
         catch {}
         stage.reason = String(error)

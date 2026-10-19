@@ -34,7 +34,7 @@ export async function runPnpmStage(context: RunContext, args: string[], name: st
 
 export async function runExternalTarget(target: ExecutionTarget, context: RunContext) {
   if (target === 'mini-builds') {
-    return runPnpmStage(context, ['exec', 'vitest', 'run', '-c', 'e2e/vitest.e2e.config.ts', 'e2e/multiplatform-build-output.test.ts', '--update=none'], target, { E2E_MULTIPLATFORM_BUILD_STATUS: 'all', ...(context.caseFilter ? { E2E_MULTIPLATFORM_BUILD_CASE: context.caseFilter.source } : {}) })
+    return runPnpmStage(context, ['exec', 'vitest', 'run', '-c', 'e2e/tailwind-capabilities/build-matrix/vitest.config.ts', '--update=none'], target, { TAILWIND_E2E_MATRIX_DIRECTORY: context.directory, E2E_MULTIPLATFORM_BUILD_STATUS: 'all', ...(context.caseFilter ? { E2E_MULTIPLATFORM_BUILD_CASE: context.caseFilter.source } : {}) })
   }
   if (target === 'framework-regressions') {
     return runPnpmStage(context, ['e2e:frameworks:mp'], target)
