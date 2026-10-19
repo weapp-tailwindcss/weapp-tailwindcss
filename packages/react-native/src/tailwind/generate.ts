@@ -56,7 +56,7 @@ async function generateSourceEvidence(source: Awaited<ReturnType<typeof resolveT
     const requestedCandidates = new Set(options.candidates ?? [])
     for (const candidate of generated.rawCandidates ?? []) {
       const base = baseClassName(candidate)
-      if (base && generated.classSet.has(base) && /^(?:dark|ios|android|native):/.test(candidate)) { requestedCandidates.add(candidate) }
+      if (base && /^(?:dark|ios|android|native):/.test(candidate)) { requestedCandidates.add(candidate) }
     }
     // 已生成 CSS 的精确 selector 是编码边界；Tailwind 候选集合不包含自定义 @apply 类。
     const manifest = compileNativeStylesheet(generated.rawCss, { boxShadow: options.boxShadow })
