@@ -2,7 +2,7 @@ import type { ReactNativeCaseResult, ReactNativeReport } from './catalog'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
-import { nativeBuildCases, nativeFixtures, rejectedNativeCases } from '../../examples/react-native-expo/src/compatibility/protocol'
+import { nativeBuildCases, nativeBuildFixtures, nativeFixtures, rejectedNativeCases } from '../../examples/react-native-expo/src/compatibility/protocol'
 import { createNativeStyleRuntime } from '../../packages/react-native/src/runtime'
 import { generateNativeStylesheetEvidence } from '../../packages/react-native/src/tailwind/generate'
 import { compatibilityCases, reactNativeVersions, RN_CATALOG_HASH, RN_FIXTURE_HASH } from './catalog'
@@ -32,7 +32,7 @@ export async function collectStaticEvidence() {
     const warnings = manifest.warnings.filter(entry => entry.className && tokens.includes(entry.className)).map(entry => entry.message)
     const encodedStyle = runtime.tw(tokens, { colorScheme: 'dark', platform: 'ios' }) as Record<string, unknown>
     const completeTokens = tokens.every(token => Boolean(manifest.rules[token]?.length))
-    const expectedStyle = nativeFixtures[item.id]?.style
+    const expectedStyle = nativeFixtures[item.id]?.style ?? nativeBuildFixtures[item.id]?.style
     const encoded = completeTokens && warnings.length === 0 && (!expectedStyle || styleContains(encodedStyle, expectedStyle))
     const rejected = rejectedNativeCases.has(item.id)
     const explicitRejection = generated && !encoded && warnings.some(warning => warning.trim().length > 0)

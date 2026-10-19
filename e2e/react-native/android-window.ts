@@ -72,7 +72,7 @@ export function androidScreenProbes(windowXml: string, probes: NativeVisualProbe
 export function androidPairCoordinates(windowXml: string, pair: NativePairEvidence): NativePairEvidence {
   const nodes = [...windowXml.matchAll(/<node\b[^>]*>/g)].map(match => getNodeAttributes(match[0]))
   const adjusted = { ...pair }
-  for (const side of ['probe', 'reference'] as const) {
+  for (const side of ['probe', 'reference', 'control'] as const) {
     const matches = nodes.filter(node => node.get('resource-id') === `tw-rn-case-${side}` && node.get('package') === 'com.weapptailwindcss.rncompat')
     const bounds = matches[0]?.get('bounds')?.match(/^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$/)
     if (matches.length !== 1 || matches[0]?.get('content-desc') !== `${pair.id}:${pair.phase}` || !bounds) {
@@ -84,7 +84,7 @@ export function androidPairCoordinates(windowXml: string, pair: NativePairEviden
     if (Math.abs(rect.width - pair[side].width) > 0.75 || Math.abs(rect.height - pair[side].height) > 0.75) {
       throw new Error(`Clipped Android semantic pair ${side}`)
     }
-    const target = side === 'probe' ? 'target' : 'referenceTarget'
+    const target = side === 'probe' ? 'target' : side === 'reference' ? 'referenceTarget' : 'controlTarget'
     adjusted[target] = { ...pair[target], x: pair[target].x + rect.x - pair[side].x, y: pair[target].y + rect.y - pair[side].y }
     adjusted[side] = rect
   }

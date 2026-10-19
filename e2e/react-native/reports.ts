@@ -1,5 +1,5 @@
 import type { ReactNativeCaseResult, ReactNativePlatform, ReactNativeReport } from './catalog'
-import { nativeBuildCases, nativeFixtures, rejectedNativeCases } from '../../examples/react-native-expo/src/compatibility/protocol'
+import { nativeBuildCases, nativeBuildFixtures, nativeFixtures, rejectedNativeCases, styleContains } from '../../examples/react-native-expo/src/compatibility/protocol'
 import { compatibilityCases, reactNativeVersions, RN_CATALOG_HASH, RN_FIXTURE_HASH } from './catalog'
 
 function fail(message: string): never {
@@ -74,11 +74,14 @@ export function validateReactNativeReport(report: ReactNativeReport, platform: R
       fail(`${result.id} changed from expected support to ${result.status}`)
     }
     if (nativeBuildCases.has(result.id)) {
+      if (!styleContains(result.encodedStyle, nativeBuildFixtures[result.id]!.style)) {
+        fail(`${result.id} encoding does not match the independent native style oracle`)
+      }
       continue
     }
     const phases = nativeFixtures[result.id]!.phases ?? ['default']
     for (const phase of phases) {
-      for (const kind of ['geometry', 'pixel', 'style']) {
+      for (const kind of ['geometry', 'pixel', 'control', 'style']) {
         if (!result.checkpoints.some(checkpoint => checkpoint.name === `runtime:${phase}:${kind}` && checkpoint.passed)) {
           fail(`${result.id} is missing runtime ${phase} ${kind}`)
         }
@@ -87,8 +90,8 @@ export function validateReactNativeReport(report: ReactNativeReport, platform: R
       const receipt = receipts[0]
       if (receipts.length !== 1 || !receipt || receipt.runId !== report.runId || !/^[a-f0-9]{64}$/.test(receipt.artifact.sha256)
         || receipt.artifact.name !== `case-${report.revision}-${result.id}-${phase}.png`
-        || receipt.artifact.byteLength < 100 || receipt.checkpoints.length !== 2
-        || ['geometry', 'pixel'].some(kind => !receipt.checkpoints.some(checkpoint => checkpoint.name === `runtime:${phase}:${kind}` && checkpoint.passed === true))) {
+        || receipt.artifact.byteLength < 100 || receipt.checkpoints.length !== 3
+        || ['geometry', 'pixel', 'control'].some(kind => !receipt.checkpoints.some(checkpoint => checkpoint.name === `runtime:${phase}:${kind}` && checkpoint.passed === true))) {
         fail(`${result.id} is missing fresh native artifact receipt for ${phase}`)
       }
     }

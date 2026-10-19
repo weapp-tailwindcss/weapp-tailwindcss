@@ -12,19 +12,22 @@ import { createSemanticReporter } from './react-native/semantic-reporter'
 function input(): NativePairEvidence {
   return {
     runId: 'run',
+    platform: 'web',
     revision: 'baseline',
     id: 'background-color',
     phase: 'default',
     probe: { x: 0, y: 0, width: 40, height: 40 },
     reference: { x: 50, y: 0, width: 40, height: 40 },
+    control: { x: 0, y: 50, width: 40, height: 40 },
     target: { x: 10, y: 10, width: 20, height: 20 },
     referenceTarget: { x: 60, y: 10, width: 20, height: 20 },
-    viewport: { width: 100, height: 50, pixelRatio: 1 },
+    controlTarget: { x: 10, y: 60, width: 20, height: 20 },
+    viewport: { width: 100, height: 100, pixelRatio: 1 },
   }
 }
 
 function pixels() {
-  const image = new PNG({ width: 100, height: 50 })
+  const image = new PNG({ width: 100, height: 100 })
   for (let offset = 0; offset < image.data.length; offset += 4) {
     image.data.set([226, 232, 240, 255], offset)
   }
@@ -48,7 +51,7 @@ describe('原生宿主截图证据', () => {
         await fs.writeFile(file, pixels())
         return file
       } })
-      const report = { runId: pair.runId, revision: pair.revision, receipts: [receipt] } as ReactNativeReport
+      const report = { runId: pair.runId, revision: pair.revision, receipts: [receipt] } as unknown as ReactNativeReport
       await expect(validateNativeArtifacts(report, directory)).resolves.toBeUndefined()
       const file = path.join(directory, receipt.artifact.name)
       const saved = await fs.readFile(`${file}.json`, 'utf8')
@@ -69,7 +72,8 @@ describe('原生宿主截图证据', () => {
     const pair = input()
     const xml = '<node package="com.weapptailwindcss.rncompat" resource-id="tw-rn-case-probe" content-desc="background-color:default" bounds="[0,24][40,64]" />'
       + '<node package="com.weapptailwindcss.rncompat" resource-id="tw-rn-case-reference" content-desc="background-color:default" bounds="[50,24][90,64]" />'
-    expect(androidPairCoordinates(xml, pair)).toMatchObject({ probe: { y: 24 }, target: { y: 34 }, referenceTarget: { y: 34 } })
+      + '<node package="com.weapptailwindcss.rncompat" resource-id="tw-rn-case-control" content-desc="background-color:default" bounds="[0,74][40,114]" />'
+    expect(androidPairCoordinates(xml, pair)).toMatchObject({ probe: { y: 24 }, target: { y: 34 }, referenceTarget: { y: 34 }, control: { y: 74 }, controlTarget: { y: 84 } })
     expect(() => androidPairCoordinates(xml.replaceAll(':default', ':old'), pair)).toThrow(/Missing current/)
     expect(() => androidPairCoordinates(xml.replace('[0,24][40,64]', '[0,24][40,60]'), pair)).toThrow(/Clipped/)
   })
@@ -94,7 +98,7 @@ describe('原生宿主截图证据', () => {
       expect(await (await fetch(`${endpoint}/context`)).json()).toMatchObject({ runId: pair.runId })
       const accepted = await fetch(`${endpoint}/case`, { method: 'POST', body: JSON.stringify(pair) })
       expect(accepted.ok).toBe(true)
-      const report = { runId: pair.runId, revision: pair.revision, receipts: [receipt] } as ReactNativeReport
+      const report = { runId: pair.runId, revision: pair.revision, receipts: [receipt] } as unknown as ReactNativeReport
       expect(() => reporter.assertReceipts(report)).not.toThrow()
       expect(() => reporter.assertReceipts({ ...report, receipts: [{ ...receipt, phase: 'old' }] })).toThrow(/Missing host/)
       const stale = await fetch(`${endpoint}/case`, { method: 'POST', body: JSON.stringify({ ...pair, runId: 'old' }) })

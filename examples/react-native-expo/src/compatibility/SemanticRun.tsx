@@ -34,8 +34,10 @@ export function SemanticRun({ evidence, revision, onComplete }: { evidence: Runt
   const [index, setIndex] = useState(0)
   const probe = useRef<View>(null)
   const reference = useRef<View>(null)
+  const control = useRef<View>(null)
   const target = useRef<View | Text>(null)
   const referenceTarget = useRef<View | Text>(null)
+  const controlTarget = useRef<View | Text>(null)
   const receipts = useRef<NativeCaseReceipt[]>([])
   const runId = useRef('')
   const checkpoints = useRef(new Map<string, ReactNativeCaseResult['checkpoints']>())
@@ -73,15 +75,18 @@ export function SemanticRun({ evidence, revision, onComplete }: { evidence: Runt
       if (canceled) {
         return
       }
-      const [probeRect, referenceRect, targetRect, referenceTargetRect] = await Promise.all([
+      const [probeRect, referenceRect, targetRect, referenceTargetRect, controlRect, controlTargetRect] = await Promise.all([
         measure(probe.current),
         measure(reference.current),
         measure(target.current),
         measure(referenceTarget.current),
+        measure(control.current),
+        measure(controlTarget.current),
       ])
       const viewport = Dimensions.get('window')
       const pair: NativePairEvidence = {
         runId: context.runId,
+        platform,
         revision,
         id: active.id,
         phase: active.phase,
@@ -89,6 +94,8 @@ export function SemanticRun({ evidence, revision, onComplete }: { evidence: Runt
         reference: referenceRect,
         target: targetRect,
         referenceTarget: referenceTargetRect,
+        control: controlRect,
+        controlTarget: controlTargetRect,
         viewport: { width: viewport.width, height: viewport.height, pixelRatio: PixelRatio.get() },
       }
       const response = await fetch(`${reportUrl}/case`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(pair) })
@@ -160,13 +167,15 @@ export function SemanticRun({ evidence, revision, onComplete }: { evidence: Runt
         </>
       )
     : undefined
-  const render = (isReference: boolean) => {
-    const style = [base, fixture.base, isReference ? expectedStyle : actualStyle] as StyleProp<ViewStyle & TextStyle>
+  const render = (side: 'probe' | 'reference' | 'control') => {
+    const frameRef = side === 'probe' ? probe : side === 'reference' ? reference : control
+    const targetRef = side === 'probe' ? target : side === 'reference' ? referenceTarget : controlTarget
+    const style = [base, fixture.base, side === 'control' ? undefined : side === 'reference' ? expectedStyle : actualStyle] as StyleProp<ViewStyle & TextStyle>
     return (
-      <View ref={isReference ? reference : probe} testID={isReference ? 'tw-rn-case-reference' : 'tw-rn-case-probe'} accessibilityLabel={`${active.id}:${active.phase}`} collapsable={false} style={{ width: 160, height: 128, padding: 16, position: 'relative', backgroundColor: '#e2e8f0' }}>
+      <View ref={frameRef} testID={`tw-rn-case-${side}`} accessibilityLabel={`${active.id}:${active.phase}`} collapsable={false} style={{ width: 160, height: 128, padding: 16, position: 'relative', backgroundColor: '#e2e8f0' }}>
         {fixture.component === 'text'
-          ? <Text ref={(node) => { (isReference ? referenceTarget : target).current = node }} style={style}>Tailwind 23</Text>
-          : <View ref={(node) => { (isReference ? referenceTarget : target).current = node }} style={style}>{children}</View>}
+          ? <Text ref={(node) => { targetRef.current = node }} style={style}>Tailwind 23</Text>
+          : <View ref={(node) => { targetRef.current = node }} style={style}>{children}</View>}
         {active.id === 'layout-z-index' && <View style={{ position: 'absolute', top: 24, left: 24, width: 40, height: 40, backgroundColor: '#facc15', zIndex: 1 }} />}
       </View>
     )
@@ -181,9 +190,10 @@ export function SemanticRun({ evidence, revision, onComplete }: { evidence: Runt
         {active.phase}
       </Text>
       <View style={{ flexDirection: 'row', gap: 8 }}>
-        {render(false)}
-        {render(true)}
+        {render('probe')}
+        {render('reference')}
       </View>
+      {render('control')}
     </View>
   )
 }

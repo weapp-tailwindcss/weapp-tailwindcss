@@ -5,7 +5,8 @@ import type { ArtifactReceipt, CapabilityResult, CaseContract, SemanticAssertion
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { compatibilityCases } from '@weapp-tailwindcss/test-catalog'
-import { expectedFixtureStyle, nativeBuildCases, nativeFixtures, rejectedNativeCases, styleContains } from '../../examples/react-native-expo/src/compatibility/protocol'
+import { expectedFixtureStyle, nativeBuildCases, nativeBuildFixtures, nativeFixtures, rejectedNativeCases, styleContains } from '../../examples/react-native-expo/src/compatibility/protocol'
+import { validateNativeEncodingArtifacts } from '../react-native/encoding-evidence'
 import { validateNativeArtifacts } from '../react-native/pair-evidence'
 import { validateReactNativeReport } from '../react-native/reports'
 import { newReport, persistReport } from './context'
@@ -20,7 +21,7 @@ const fixtureFeatures: Record<string, string[]> = {
   'layout-overflow': ['utility/static/overflow-hidden'],
   'layout-position': ['utility/static/absolute', 'utility/functional/left', 'utility/functional/top'],
   'layout-z-index': ['utility/functional/z'],
-  'flex-direction': ['utility/static/flex', 'utility/static/flex-row'],
+  'flex-direction': ['utility/static/flex-row'],
   'flex-alignment': ['utility/static/items-center', 'utility/static/justify-between'],
   'spacing-margin': ['utility/functional/mt', 'utility/functional/ml'],
   'spacing-padding': ['utility/functional/py', 'utility/functional/px'],
@@ -29,7 +30,7 @@ const fixtureFeatures: Record<string, string[]> = {
   'type-weight-style': ['utility/functional/font', 'utility/static/italic'],
   'type-tracking': ['utility/functional/tracking'],
   'background-color': ['utility/functional/bg'],
-  'border-width-color': ['utility/functional/border', 'utility/static/border-solid'],
+  'border-width-color': ['utility/functional/border'],
   'border-radius': ['utility/functional/rounded'],
   'syntax-opacity-modifier': ['utility/functional/text'],
   'effect-ring': ['utility/functional/ring', 'utility/functional/inset-ring'],
@@ -39,8 +40,8 @@ const fixtureFeatures: Record<string, string[]> = {
   'variant-dark': ['variant/static/dark', 'utility/functional/text'],
   'syntax-important': ['utility/functional/bg'],
   'syntax-type-hint': ['utility/functional/text'],
-  'flex-shorthand-shrink': ['utility/functional/flex', 'utility/functional/shrink'],
-  'grid-align-content-self': ['utility/static/content-center', 'utility/static/self-end'],
+  'flex-shorthand-shrink': ['utility/functional/flex'],
+  'grid-align-content-self': ['utility/static/self-end'],
   'sizing-size': ['utility/functional/size'],
 }
 
@@ -55,12 +56,12 @@ export function nativeContracts(inventory: TailwindInventory) {
     if (!negative && !build && !fixture) {
       throw new Error(`${item.id} 缺少独立审查的原生支持预期`)
     }
-    const requiredAssertions = negative ? ['generated', 'rejected'] : build ? ['generated', 'encoded'] : (fixture!.phases ?? ['default']).flatMap(phase => [`${phase}:style`, `${phase}:geometry`, `${phase}:pixel`])
+    const requiredAssertions = negative ? ['generated', 'rejected'] : build ? ['generated', 'encoded'] : (fixture!.phases ?? ['default']).flatMap(phase => [`${phase}:style`, `${phase}:geometry`, `${phase}:pixel`, `${phase}:control`])
     return {
       id: caseId(item.id),
       features: fixtureFeatures[item.id] ?? [`authoring/${item.id}`],
       candidate: item.className,
-      fixture: JSON.stringify({ native: fixture, declarations: item.declarations }),
+      fixture: JSON.stringify({ native: fixture ?? nativeBuildFixtures[item.id], declarations: item.declarations }),
       expectation: { support: negative ? 'unsupported' : 'supported', stage: negative ? 'negative' : build ? 'encoding' : 'runtime', ...(negative ? { reason: '已审查的原生编码边界；仅验证此完整组合的拒绝。' } : {}) },
       requiredAssertions,
       expectedValues: Object.fromEntries(requiredAssertions.map(name => [name, true])),
@@ -90,7 +91,7 @@ function runtimeAssertions(result: ReactNativeCaseResult, platform: ReactNativeR
     // 几何和像素检查点已经由 validateNativeArtifacts 从 PNG 与原始坐标重新计算。
     return [
       { name: `${phase}:style`, stage: 'runtime' as const, actual: stylePassed, expected: true },
-      ...(['geometry', 'pixel'] as const).map(kind => ({ name: `${phase}:${kind}`, stage: 'runtime' as const, actual: result.checkpoints.some(item => item.name === `runtime:${phase}:${kind}` && item.passed === true), expected: true })),
+      ...(['geometry', 'pixel', 'control'] as const).map(kind => ({ name: `${phase}:${kind}`, stage: 'runtime' as const, actual: result.checkpoints.some(item => item.name === `runtime:${phase}:${kind}` && item.passed === true), expected: true })),
     ]
   })
 }
@@ -100,7 +101,7 @@ export async function buildNativeCapabilityReport(context: RunContext, target: N
   const all = nativeContracts(inventory)
   const contracts = all.contracts.filter(item => !context.caseFilter || context.caseFilter.test(item.id))
   const coverage = all.coverage
-  const report = await newReport(context, target, contracts, { nativeFixtures, build: [...nativeBuildCases], rejected: [...rejectedNativeCases], fixtureFeatures, coverage }, { provider: 'react-native', platform: raw?.platform ?? target, nativeRevision: raw?.revision ?? 'missing', scopeGaps: coverage.filter(item => item.status === 'not-run').length })
+  const report = await newReport(context, target, contracts, { nativeFixtures, build: nativeBuildFixtures, rejected: [...rejectedNativeCases], fixtureFeatures, coverage }, { provider: 'react-native', platform: raw?.platform ?? target, nativeRevision: raw?.revision ?? 'missing', scopeGaps: coverage.filter(item => item.status === 'not-run').length })
   if (raw) {
     report.identity.versions = { ...report.identity.versions, ...raw.versions }
     report.environment.nativeEnvironment = JSON.stringify(raw.environment)
@@ -127,6 +128,9 @@ export async function buildNativeCapabilityReport(context: RunContext, target: N
     const platform = target.startsWith('expo-') ? 'web' : target.slice('react-native-'.length) as 'android' | 'ios'
     validateReactNativeReport(raw, platform, { runId: context.runId, revision: 'rn-hmr-updated-f59e0b' })
     await validateNativeArtifacts(raw, directory)
+    for (const file of await validateNativeEncodingArtifacts(raw, directory)) {
+      record(await receipt(file, context.directory, context.runId, [...nativeBuildCases].map(caseId), 'bundle'))
+    }
     if (target.startsWith('expo-') && raw.environment.browser?.name !== target.slice('expo-'.length)) {
       throw new Error('Expo 原始报告的浏览器与本轮目标不一致')
     }
@@ -174,7 +178,7 @@ export async function buildNativeCapabilityReport(context: RunContext, target: N
       const assertions: SemanticAssertion[] = rejectedNativeCases.has(id)
         ? [{ name: 'generated', stage: 'generation', actual: original.generated, expected: true }, { name: 'rejected', stage: 'negative', actual: !original.encoded && original.status === 'unsupported' && original.warnings.some(warning => warning.trim().length > 0), expected: true }]
         : nativeBuildCases.has(id)
-          ? [{ name: 'generated', stage: 'generation', actual: original.generated, expected: true }, { name: 'encoded', stage: 'encoding', actual: original.encoded && original.warnings.length === 0, expected: true }]
+          ? [{ name: 'generated', stage: 'generation', actual: original.generated, expected: true }, { name: 'encoded', stage: 'encoding', actual: original.encoded && original.warnings.length === 0 && styleContains(original.encodedStyle, nativeBuildFixtures[id]!.style), expected: true }]
           : runtimeAssertions(original, raw!.platform)
       const passed = assertions.every(assertionPassed)
       result = { id: contract.id, support: contract.expectation.support, status: passed ? 'passed' : 'failed', assertions, artifacts: evidence.get(contract.id) ?? [], warnings: original.warnings, ...(rejectedNativeCases.has(id) ? { reason: original.reason! } : !passed ? { reason: '原始运行时样式与独立原生夹具的语义不符' } : {}) }

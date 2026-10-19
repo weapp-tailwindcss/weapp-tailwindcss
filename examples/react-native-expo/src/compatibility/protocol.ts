@@ -30,6 +30,7 @@ export interface NativeRect { x: number, y: number, width: number, height: numbe
 
 export interface NativePairEvidence {
   runId: string
+  platform: ReactNativePlatform
   revision: string
   id: string
   phase: string
@@ -37,6 +38,8 @@ export interface NativePairEvidence {
   reference: NativeRect
   target: NativeRect
   referenceTarget: NativeRect
+  control: NativeRect
+  controlTarget: NativeRect
   viewport: { width: number, height: number, pixelRatio: number }
 }
 
@@ -101,12 +104,21 @@ export const nativeFixtures: Record<string, NativeFixture> = {
   'transform-skew': { component: 'view', style: { transform: [{ skewX: '6deg' }, { skewY: '3deg' }] } },
   'effect-opacity': { component: 'view', style: { opacity: 0.5 } },
   'effect-shadow': { component: 'view', style: { boxShadow: [{ offsetX: 0, offsetY: 10, blurRadius: 15, spreadDistance: -3, color: 'rgba(0, 0, 0, 0.1)' }, { offsetX: 0, offsetY: 4, blurRadius: 6, spreadDistance: -4, color: 'rgba(0, 0, 0, 0.1)' }] } },
-  'variant-dark': { component: 'text', style: { color: '#ffffff' }, phases: ['light', 'dark', 'restored', 'ios', 'android', 'native', 'dark-ios', 'dynamic-array', 'dynamic-object', 'unknown-token', 'inline-normal', 'inline-important'] },
+  'variant-dark': { component: 'text', base: { color: '#7c2d12' }, style: { color: '#ffffff' }, phases: ['light', 'dark', 'restored', 'ios', 'android', 'native', 'dark-ios', 'dynamic-array', 'dynamic-object', 'unknown-token', 'inline-normal', 'inline-important'] },
   'syntax-important': { component: 'view', style: { backgroundColor: '#737373' } },
   'syntax-type-hint': { component: 'text', style: { color: '#c31d6b' } },
   'flex-shorthand-shrink': { component: 'view', children: true, style: { flex: 1, flexShrink: 0 } },
   'grid-align-content-self': { component: 'view', children: true, style: { alignContent: 'center', alignSelf: 'flex-end' } },
   'sizing-size': { component: 'view', style: { width: 44, height: 44 } },
+}
+
+/** 构建指令的原生编码 oracle 独立于本轮生成器和 manifest。 */
+export const nativeBuildFixtures: Record<string, { candidates: string[], style: Record<string, unknown> }> = {
+  'directive-import': { candidates: ['flex'], style: { display: 'flex' } },
+  'directive-theme': { candidates: ['bg-lynx-brand'], style: { backgroundColor: '#0ea5e9' } },
+  'directive-apply': { candidates: ['lynx-applied'], style: { display: 'flex', alignItems: 'center' } },
+  'directive-reference': { candidates: ['lynx-reference'], style: { paddingTop: 16, paddingRight: 16, paddingBottom: 16, paddingLeft: 16 } },
+  'directive-config-plugin': { candidates: ['p-legacy', 'lynx-plugin-utility'], style: { paddingTop: 19, paddingRight: 19, paddingBottom: 19, paddingLeft: 19, opacity: 0.73 } },
 }
 
 export function expectedFixtureStyle(id: string, phase = 'default', platform: ReactNativePlatform = 'ios') {
@@ -275,4 +287,4 @@ export const rejectedNativeCases = new Set([
   'border-divide',
 ])
 
-export const nativeBuildCases = new Set(['directive-import', 'directive-theme', 'directive-apply', 'directive-reference', 'directive-config-plugin'])
+export const nativeBuildCases = new Set(Object.keys(nativeBuildFixtures))

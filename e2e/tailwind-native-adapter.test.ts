@@ -7,8 +7,9 @@ import os from 'node:os'
 import path from 'node:path'
 import { PNG } from 'pngjs'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { expectedFixtureStyle, nativeBuildCases, nativeFixtures, rejectedNativeCases } from '../examples/react-native-expo/src/compatibility/protocol'
+import { expectedFixtureStyle, nativeBuildCases, nativeBuildFixtures, nativeFixtures, rejectedNativeCases } from '../examples/react-native-expo/src/compatibility/protocol'
 import { compatibilityCases, reactNativeVersions, RN_CATALOG_HASH, RN_FIXTURE_HASH } from './react-native/catalog'
+import { writeEncodingFixture } from './react-native/encoding-fixture'
 import { assessNativePair } from './react-native/pair-evidence'
 import { buildNativeCapabilityReport } from './tailwind-capabilities/native-adapter'
 
@@ -37,7 +38,7 @@ async function fixture(platform: ReactNativeReport['platform'] = 'web') {
   const context: RunContext = { root: directory, directory, runId: 'adapter-current-run', startedAt: new Date().toISOString() }
   const artifacts = path.join(directory, 'native')
   await mkdir(artifacts)
-  const image = new PNG({ width: 64, height: 24 })
+  const image = new PNG({ width: 64, height: 64 })
   for (let y = 0; y < image.height; y++) {
     for (let x = 0; x < image.width; x++) {
       const offset = (y * image.width + x) * 4
@@ -47,7 +48,6 @@ async function fixture(platform: ReactNativeReport['platform'] = 'web') {
       image.data[offset + 3] = 255
     }
   }
-  const png = PNG.sync.write(image)
   const raw: ReactNativeReport = {
     schemaVersion: 2,
     stage: 'runtime',
@@ -58,7 +58,7 @@ async function fixture(platform: ReactNativeReport['platform'] = 'web') {
     runId: context.runId,
     verifiedAt: context.startedAt!,
     versions: reactNativeVersions(),
-    environment: { deviceName: 'synthetic-unit-fixture', osName: platform, osVersion: '1', runtimeIdentifier: 'unit', abi: 'unit', viewport: { width: 64, height: 24, pixelRatio: 1 }, ...(platform === 'web' ? { browser: { name: 'chromium', version: '1' } as const } : {}) },
+    environment: { deviceName: 'synthetic-unit-fixture', osName: platform, osVersion: '1', runtimeIdentifier: 'unit', abi: 'unit', viewport: { width: 64, height: 64, pixelRatio: 1 }, ...(platform === 'web' ? { browser: { name: 'chromium', version: '1' } as const } : {}) },
     results: [],
     receipts: [],
   }
@@ -72,7 +72,7 @@ async function fixture(platform: ReactNativeReport['platform'] = 'web') {
       encoded: !rejected,
       warnings: rejected ? ['此单测的独立候选编码拒绝诊断'] : [],
       generatedDeclarations: [],
-      encodedStyle: {},
+      encodedStyle: nativeBuildFixtures[item.id]?.style ?? {},
       checkpoints: [
         { name: 'generation:candidates', passed: true },
         ...item.declarations.map((declaration, index) => ({ name: `generation:declaration:${index}:${declaration.property}`, passed: true })),
@@ -83,15 +83,27 @@ async function fixture(platform: ReactNativeReport['platform'] = 'web') {
     for (const phase of nativeFixtures[item.id]?.phases ?? (nativeFixtures[item.id] ? ['default'] : [])) {
       const pair: NativePairEvidence = {
         runId: raw.runId,
+        platform,
         revision: raw.revision,
         id: item.id,
         phase,
         probe: { x: 0, y: 0, width: 24, height: 24 },
         reference: { x: 32, y: 0, width: 24, height: 24 },
+        control: { x: 0, y: 32, width: 24, height: 24 },
         target: { x: 2, y: 2, width: 8, height: 8 },
         referenceTarget: { x: 34, y: 2, width: 8, height: 8 },
+        controlTarget: { x: 2, y: 34, width: 8, height: 8 },
         viewport: raw.environment.viewport,
       }
+      const expectsEffect = Object.keys(expectedFixtureStyle(item.id, phase, platform)!).length > 0
+      for (let y = 0; y < 24; y++) {
+        for (let x = 0; x < 24; x++) {
+          const source = (y * image.width + x) * 4
+          const destination = ((y + 32) * image.width + x) * 4
+          image.data.set(expectsEffect ? [226, 232, 240, 255] : image.data.subarray(source, source + 4), destination)
+        }
+      }
+      const png = PNG.sync.write(image)
       const checkpoints = assessNativePair(image, pair)
       const name = `case-${raw.revision}-${item.id}-${phase}.png`
       const receipt = { id: item.id, phase, runId: raw.runId, checkpoints, artifact: { name, sha256: createHash('sha256').update(png).digest('hex'), byteLength: png.length } }
@@ -104,6 +116,7 @@ async function fixture(platform: ReactNativeReport['platform'] = 'web') {
   }
   const save = () => writeFile(path.join(artifacts, 'report.json'), JSON.stringify(raw))
   await save()
+  await writeEncodingFixture(artifacts, raw)
   return { context, raw, artifacts, save }
 }
 
@@ -122,12 +135,30 @@ describe('原生统一能力报告', () => {
     expect(missing.length).toBeGreaterThan(500)
     expect(missing.every(item => item.status === 'not-run' && item.artifacts.length === 0)).toBe(true)
     expect(missing.some(item => item.id === 'inventory/utility/static/grid')).toBe(true)
+    for (const id of ['utility/static/flex', 'utility/static/border-solid', 'utility/functional/shrink', 'utility/static/content-center']) {
+      expect(missing.some(item => item.id === `inventory/${id}`)).toBe(true)
+    }
     expect(missing.some(item => item.id === 'inventory/utility/functional/bg')).toBe(false)
     const screenshot = report.artifacts.find(item => item.kind === 'screenshot')!
     expect(screenshot.sha256).toBe(raw.receipts[0]!.artifact.sha256)
     expect(screenshot.path).toBe(path.join('native', raw.receipts[0]!.artifact.name))
     expect(report.artifacts.filter(item => item.kind === 'measurements')).toHaveLength(37)
     expect(await readFile(path.join(context.directory, 'report.md'), 'utf8')).toContain('未执行')
+  })
+
+  it.each(Object.keys(nativeBuildFixtures))('空 %s 编码不能由 encoded=true 放行', async (id) => {
+    const { context, raw, save } = await fixture()
+    raw.results.find(item => item.id === id)!.encodedStyle = {}
+    await save()
+    const { report } = await buildNativeCapabilityReport(context, 'expo-chromium', raw)
+    expect(report.results.find(item => item.id === `compatibility/${id}`)!.status).toBe('failed')
+  })
+
+  it('缺少本轮实际 manifest 归档不能通过编码', async () => {
+    const { context, raw, artifacts } = await fixture()
+    await rm(path.join(artifacts, 'encoding', 'manifest.json'))
+    const { report } = await buildNativeCapabilityReport(context, 'expo-chromium', raw)
+    expect(report.results.filter(item => item.status === 'passed')).toEqual([])
   })
 
   it('没有原始报告时仍持久化完整阻塞报告', async () => {

@@ -42,6 +42,7 @@ function report(): ReactNativeReport {
           { name: 'encoder:complete', passed: true },
           { name: 'runtime:default:geometry', passed: true },
           { name: 'runtime:default:pixel', passed: true },
+          { name: 'runtime:default:control', passed: true },
           { name: 'runtime:default:style', passed: true },
         ],
       },
@@ -66,7 +67,7 @@ function report(): ReactNativeReport {
       runId: 'current-run',
       id: 'background-color',
       phase: 'default',
-      checkpoints: [{ name: 'runtime:default:geometry', passed: true }, { name: 'runtime:default:pixel', passed: true }],
+      checkpoints: [{ name: 'runtime:default:geometry', passed: true }, { name: 'runtime:default:pixel', passed: true }, { name: 'runtime:default:control', passed: true }],
       artifact: { name: 'case-baseline-background-color-default.png', sha256: 'a'.repeat(64), byteLength: 1_024 },
     }],
   }
@@ -161,7 +162,7 @@ describe('React Native fresh semantic evidence', () => {
 })
 
 function pairFixture() {
-  const image = new PNG({ width: 100, height: 60 })
+  const image = new PNG({ width: 100, height: 100 })
   for (let offset = 0; offset < image.data.length; offset += 4) {
     image.data.set([226, 232, 240, 255], offset)
   }
@@ -174,14 +175,17 @@ function pairFixture() {
   }
   const pair: NativePairEvidence = {
     runId: 'run',
+    platform: 'web',
     revision: 'baseline',
     id: 'background-color',
     phase: 'default',
     probe: { x: 5, y: 5, width: 40, height: 40 },
     reference: { x: 55, y: 5, width: 40, height: 40 },
+    control: { x: 5, y: 55, width: 40, height: 40 },
     target: { x: 10, y: 10, width: 20, height: 20 },
     referenceTarget: { x: 60, y: 10, width: 20, height: 20 },
-    viewport: { width: 100, height: 60, pixelRatio: 1 },
+    controlTarget: { x: 10, y: 60, width: 20, height: 20 },
+    viewport: { width: 100, height: 100, pixelRatio: 1 },
   }
   return { image, pair }
 }

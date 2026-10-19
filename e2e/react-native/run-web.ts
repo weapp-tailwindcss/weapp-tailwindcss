@@ -1,5 +1,6 @@
 /* eslint-disable antfu/no-top-level-await, perfectionist/sort-imports, style/max-statements-per-line */
 
+import { captureNativeEncoding } from './encoding-evidence'
 import type { Server } from 'node:http'
 import { Buffer } from 'node:buffer'
 import { createHash, randomUUID } from 'node:crypto'
@@ -155,6 +156,7 @@ async function main() {
     semanticReporter.assertReceipts(baselineReport)
     validateReactNativeReport(baselineReport, 'web', { runId, revision: 'rn-hmr-baseline-10b981' })
     await validateNativeArtifacts(baselineReport, artifacts)
+    await captureNativeEncoding(exampleRoot, artifacts, baselineReport)
     await page.screenshot({ path: path.resolve(artifacts, 'runtime-before.png'), fullPage: true })
 
     const updatedMarker = originalMarker.replace('rn-hmr-baseline', 'rn-hmr-updated').replace('bg-emerald-500', 'bg-rose-500')
@@ -164,6 +166,7 @@ async function main() {
     semanticReporter.assertReceipts(tsxHmr.report)
     validateReactNativeReport(enrich(tsxHmr.report), 'web', { runId, revision: 'rn-hmr-updated-10b981' })
     await validateNativeArtifacts(tsxHmr.report, artifacts)
+    await captureNativeEncoding(exampleRoot, artifacts, enrich(tsxHmr.report))
     await page.getByText('rn-hmr-updated').waitFor()
     await page.screenshot({ path: path.resolve(artifacts, 'runtime-tsx-after.png'), fullPage: true })
 
@@ -176,6 +179,7 @@ async function main() {
     semanticReporter.assertReceipts(cssHmrReport)
     validateReactNativeReport(cssHmrReport, 'web', { runId, revision: 'rn-hmr-updated-f59e0b' })
     await validateNativeArtifacts(cssHmrReport, artifacts)
+    await captureNativeEncoding(exampleRoot, artifacts, cssHmrReport)
     await page.waitForFunction(() => getComputedStyle(document.querySelector('[data-testid="tw-rn-css-hmr"]')!).backgroundColor === 'rgb(245, 158, 11)')
     await page.screenshot({ path: path.resolve(artifacts, 'runtime-after.png'), fullPage: true })
 
