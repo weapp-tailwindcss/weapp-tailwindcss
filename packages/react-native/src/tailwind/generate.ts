@@ -5,6 +5,7 @@ import type { NativeStyleManifest } from '../types'
 import process from 'node:process'
 import { createWeappTailwindcssGenerator, resolveTailwindV4Source } from 'weapp-tailwindcss/generator'
 import { addNativeVariantRules, baseClassName, compileNativeStylesheet, finalizeNativeManifest } from '../compiler'
+import { mergeNativeManifests } from './merge'
 
 export interface GenerateNativeStylesheetOptions extends Omit<TailwindV4SourceOptions, 'projectRoot' | 'cssEntries'> {
   /** Tailwind source 扫描根目录；用于 workspace 示例和 Metro 项目。 */
@@ -26,9 +27,7 @@ export interface NativeStylesheetEvidence {
   manifest: NativeStyleManifest
 }
 
-export async function generateNativeStylesheetEvidence(options: GenerateNativeStylesheetOptions = {}): Promise<NativeStylesheetEvidence> {
-  const { projectRoot = process.cwd(), cssEntries, ...sourceOptions } = options
-  const source = await resolveTailwindV4Source({ ...sourceOptions, projectRoot, ...(cssEntries ? { cssEntries } : {}) })
+async function generateSourceEvidence(source: Awaited<ReturnType<typeof resolveTailwindV4Source>>, options: Pick<GenerateNativeStylesheetOptions, 'candidates' | 'sourceGlobs'>): Promise<NativeStylesheetEvidence> {
   const generator = createWeappTailwindcssGenerator(source)
   try {
     const sourcePatterns = options.sourceGlobs?.map(pattern => ({ base: source.projectRoot, pattern, negated: false }))
@@ -68,6 +67,32 @@ export async function generateNativeStylesheetEvidence(options: GenerateNativeSt
   }
   finally {
     generator.dispose?.()
+  }
+}
+
+export async function generateNativeStylesheetEvidence(options: GenerateNativeStylesheetOptions = {}): Promise<NativeStylesheetEvidence> {
+  const { projectRoot = process.cwd(), cssEntries, cssSources, css, candidates, sourceGlobs, ...sourceOptions } = options
+  const shared = { ...sourceOptions, projectRoot }
+  const inputs: TailwindV4SourceOptions[] = css !== undefined
+    ? [{ ...shared, css }]
+    : [
+        ...(cssEntries ?? []).map(entry => ({ ...shared, cssEntries: [entry] })),
+        ...(cssSources ?? []).map(source => ({ ...shared, cssSources: [source] })),
+      ]
+  if (!inputs.length) {
+    inputs.push(shared)
+  }
+  // Iterable 可能只能遍历一次；所有独立入口必须使用同一批精确候选。
+  const generationOptions = { candidates: [...candidates ?? []], ...(sourceGlobs ? { sourceGlobs } : {}) }
+  const entries: NativeStylesheetEvidence[] = []
+  for (const input of inputs) {
+    entries.push(await generateSourceEvidence(await resolveTailwindV4Source(input), generationOptions))
+  }
+  return {
+    // 拼接仅用于保存原始生成诊断，绝不重新解析它来编码跨入口变量。
+    rawCss: entries.map(entry => entry.rawCss).join('\n'),
+    generatedClassSet: [...new Set(entries.flatMap(entry => entry.generatedClassSet))],
+    manifest: mergeNativeManifests(entries.map(entry => entry.manifest)),
   }
 }
 
