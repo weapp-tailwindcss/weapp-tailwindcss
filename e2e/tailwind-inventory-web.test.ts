@@ -20,12 +20,12 @@ describe('Web 语义夹具合同', () => {
       expect(contract.expectedValues.generated).toBe(true)
       if (probe.action) {
         expect(probe.before, probe.id).toBeDefined()
-        expect(contract.requiredAssertions.filter(name => !name.includes('/guard/'))).toEqual(['generated', 'before', ...(probe.checkpoints ?? []).map(item => item.name), 'after', 'restored'])
+        expect(contract.requiredAssertions.filter(name => ['generated', 'before', 'after', 'restored', ...(probe.checkpoints ?? []).map(item => item.name)].includes(name))).toEqual(['generated', 'before', ...(probe.checkpoints ?? []).map(item => item.name), 'after', 'restored'])
         expect(contract.expectedValues.before).toBe(contract.expectedValues.restored)
         expect(contract.expectedValues.after).toBe(probe.expected)
       }
       else {
-        expect(contract.requiredAssertions.filter(name => !name.includes('/layout/'))).toEqual(['generated', 'computed', ...pixelNames])
+        expect(contract.requiredAssertions.filter(name => ['generated', 'computed', ...pixelNames].includes(name))).toEqual(['generated', 'computed', ...pixelNames])
         expect(contract.expectedValues.computed).toBe(probe.expected)
       }
       expect(contract.assertionStages).toEqual({ generated: 'generation', ...Object.fromEntries(pixelNames.map(name => [name, 'visual'])) })

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "catalogHash": "fdd78c05c683cab490bd1726347b4c65e3ff13ed3f353d1245ffb2697692585f",
+  "catalogHash": "f81326e81667dfb1b57b4f577b5799dfff88cfb88d835e01ea6cf1e4f92a2598",
   "fixtureHash": "b72eead784db419c4a7e22b0817aa4d64d12ef2167479342be23bccf3d64157f",
   "cases": [
     {
@@ -2063,10 +2063,10 @@
     "stage": "static",
     "revision": "static",
     "platform": "web",
-    "catalogHash": "fdd78c05c683cab490bd1726347b4c65e3ff13ed3f353d1245ffb2697692585f",
+    "catalogHash": "f81326e81667dfb1b57b4f577b5799dfff88cfb88d835e01ea6cf1e4f92a2598",
     "fixtureHash": "b72eead784db419c4a7e22b0817aa4d64d12ef2167479342be23bccf3d64157f",
     "runId": "static-generation",
-    "verifiedAt": "2026-10-19T04:49:44.110Z",
+    "verifiedAt": "2026-10-19T05:49:16.261Z",
     "versions": {
       "tailwindcss": "4.3.3",
       "expo": "54.0.37",
@@ -11068,9 +11068,19 @@
         "message": "不支持将 group-hover: 变体编译为 React Native 条件样式"
       },
       {
+        "className": "group",
+        "property": "selector",
+        "message": "不支持将选择器 .group-hover\\:block:is(:where(.group):hover *) 编译为 React Native 条件样式"
+      },
+      {
         "className": "peer-checked:opacity-100",
         "property": "variant",
         "message": "不支持将 peer-checked: 变体编译为 React Native 条件样式"
+      },
+      {
+        "className": "peer",
+        "property": "selector",
+        "message": "不支持将选择器 .peer-checked\\:opacity-100:is(:where(.peer):checked ~ *) 编译为 React Native 条件样式"
       },
       {
         "className": "before:content-['lynx']",
@@ -11143,9 +11153,19 @@
         "message": "不支持将 theme-midnight: 变体编译为 React Native 条件样式"
       },
       {
+        "className": "theme-midnight",
+        "property": "selector",
+        "message": "不支持将选择器 .theme-midnight\\:bg-black:where(.theme-midnight, .theme-midnight *) 编译为 React Native 条件样式"
+      },
+      {
         "className": "[&_.target]:font-bold",
         "property": "variant",
         "message": "不支持将 [&_.target]: 变体编译为 React Native 条件样式"
+      },
+      {
+        "className": "target",
+        "property": "selector",
+        "message": "不支持将选择器 .\\[\\&_\\.target\\]\\:font-bold .target 编译为 React Native 条件样式"
       },
       {
         "className": "lynx-at-variant",
@@ -11153,29 +11173,34 @@
         "message": "不支持将选择器 .lynx-at-variant:where(.theme-midnight, .theme-midnight *) 编译为 React Native 条件样式"
       },
       {
-        "className": "transition-opacity",
-        "property": "transitionTimingFunction",
-        "message": "不支持将 transition-timing-function: var(--tw-ease, ease) 编译为 React Native style"
-      },
-      {
-        "className": "transition-opacity",
-        "property": "transitionDuration",
-        "message": "不支持将 transition-duration: var(--tw-duration, 0s) 编译为 React Native style"
-      },
-      {
-        "className": "transition-transform",
-        "property": "transitionTimingFunction",
-        "message": "不支持将 transition-timing-function: var(--tw-ease, ease) 编译为 React Native style"
-      },
-      {
-        "className": "transition-transform",
-        "property": "transitionDuration",
-        "message": "不支持将 transition-duration: var(--tw-duration, 0s) 编译为 React Native style"
+        "className": "theme-midnight",
+        "property": "selector",
+        "message": "不支持将选择器 .lynx-at-variant:where(.theme-midnight, .theme-midnight *) 编译为 React Native 条件样式"
       },
       {
         "className": "tw:flex",
         "property": "variant",
         "message": "不支持将 tw: 变体编译为 React Native 条件样式"
+      },
+      {
+        "className": "transition-opacity",
+        "property": "transitionTimingFunction",
+        "message": "不支持将 transition-timing-function: var(--tw-ease, ease) 编译为 React Native style"
+      },
+      {
+        "className": "transition-opacity",
+        "property": "transitionDuration",
+        "message": "不支持将 transition-duration: var(--tw-duration, 0s) 编译为 React Native style"
+      },
+      {
+        "className": "transition-transform",
+        "property": "transitionTimingFunction",
+        "message": "不支持将 transition-timing-function: var(--tw-ease, ease) 编译为 React Native style"
+      },
+      {
+        "className": "transition-transform",
+        "property": "transitionDuration",
+        "message": "不支持将 transition-duration: var(--tw-duration, 0s) 编译为 React Native style"
       }
     ],
     "styleSheet": {

@@ -7,17 +7,18 @@ import path from 'node:path'
 import process from 'node:process'
 import { arbitrarySyntaxCases, compatibilityCandidateMap, tailwindParityCandidates } from '@weapp-tailwindcss/test-catalog'
 import { escape } from 'weapp-tailwindcss/escape'
-import { compileNativeStylesheet } from '../../packages/react-native/src/compiler'
 import { encodeLynxCss } from '../lynx/batch-encode'
 import { newReport, persistReport } from './context'
 import { conversionCaseContract, conversionCaseResult, conversionTargets, staticCandidateResults } from './conversion-audit'
 import { reviewedLynxOracles } from './conversion-oracles/lynx'
+import { reactNativeReferenceCandidates, reviewedReactNativeOracleCoverage, reviewedReactNativeOracles } from './conversion-oracles/react-native'
 import { reviewedWeappOracleCoverage, reviewedWeappOracles } from './conversion-oracles/weapp'
 import { cssDeclarations, retainsDeclarations, retainsRuleContexts, stylesheetDependenciesRetained } from './css'
 import { withGeneratorFixture } from './fixture'
 import { collectInventory, loadDefaultDesignSystem, loadInventory, validateInventory } from './inventory/index'
 import { valueCases } from './inventory/value-cases'
 import { lynxLiteralObservation } from './lynx/decoder-literal'
+import { convertNativeCandidates, nativeConversionSnapshot } from './native-conversion'
 import { defaultReferenceBuilder } from './reference'
 import { assertionPassed, receipt, validateCapabilityReport, verifyReportArtifacts } from './report'
 
@@ -55,8 +56,9 @@ export async function runStatic(context: RunContext) {
   const fixedReference = await buildReference(candidates)
   const attempts = reviewedWeappOracles(candidates, fixedReference)
   const lynxOracles = reviewedLynxOracles(candidates, fixedReference)
+  const nativeAttempts = reviewedReactNativeOracles(candidates, await buildReference(reactNativeReferenceCandidates(candidates)))
   const oracles = new Map(attempts.map(attempt => [attempt.candidate, attempt.oracle ? [attempt.oracle] : []]))
-  for (const oracle of lynxOracles) {
+  for (const oracle of [...lynxOracles, ...nativeAttempts.flatMap(attempt => attempt.oracle ? [attempt.oracle] : [])]) {
     oracles.set(oracle.candidate, [...oracles.get(oracle.candidate) ?? [], oracle])
   }
   const oracleFor = (candidate: string, target: typeof conversionTargets[number]) => oracles.get(candidate)?.find(oracle => oracle.target === target)
@@ -65,9 +67,10 @@ export async function runStatic(context: RunContext) {
     ...conversionTargets.map(target => conversionCaseContract(item, target, oracleFor(item.candidate, target))),
   ])
   const coverage = reviewedWeappOracleCoverage(attempts)
-  const report = await newReport(context, 'static', contracts, { inventory, coverage, lynxOracles }, { mode: 'generation-and-conversion-audit', batchSize: 256 })
+  const nativeCoverage = reviewedReactNativeOracleCoverage(nativeAttempts)
+  const report = await newReport(context, 'static', contracts, { inventory, coverage, lynxOracles, nativeCoverage }, { mode: 'generation-and-conversion-audit', batchSize: 256 })
   const coverageFile = path.join(context.directory, 'conversion-oracle-coverage.json')
-  await writeFile(coverageFile, JSON.stringify({ coverage, attempts, lynxOracles }, null, 2))
+  await writeFile(coverageFile, JSON.stringify({ coverage, attempts, lynxOracles, nativeCoverage, nativeAttempts }, null, 2))
   report.artifacts.push(await receipt(coverageFile, context.directory, context.runId, contracts.map(item => item.id), 'measurements'))
   const css = '@import "tailwindcss" source(none);'
   await withGeneratorFixture(context.root, css, {}, async (generator) => {
@@ -80,7 +83,8 @@ export async function runStatic(context: RunContext) {
         const generated = await generator.generate({ target: 'web', candidates: batch, scanSources: false })
         const conversionErrors: Record<string, string> = {}
         let weappCss = ''
-        let native: ReturnType<typeof compileNativeStylesheet> | undefined
+        let native: ReturnType<typeof convertNativeCandidates> | undefined
+        let nativeCss = ''
         let lynx: Awaited<ReturnType<typeof encodeLynxCss>> | undefined
         let converted = cssDeclarations('')
         try {
@@ -89,7 +93,9 @@ export async function runStatic(context: RunContext) {
         }
         catch (error) { conversionErrors.weapp = String(error) }
         try {
-          native = compileNativeStylesheet(generated.rawCss, { classSet: generated.classSet })
+          const expanded = await generator.generate({ target: 'web', candidates: reactNativeReferenceCandidates(batch), scanSources: false })
+          nativeCss = expanded.rawCss
+          native = convertNativeCandidates(nativeCss, expanded.classSet, batch)
         }
         catch (error) { conversionErrors['react-native'] = String(error) }
         try {
@@ -108,10 +114,7 @@ export async function runStatic(context: RunContext) {
             'weapp': { execution: 'completed', snapshot: cssSnapshot(converted.contextsByClass.get(escape(candidate)) ?? []), diagnosticsScope: 'candidate' },
             'react-native': {
               execution: 'completed',
-              snapshot: {
-                statements: (native?.rules[candidate] ?? []).flatMap(rule => Object.entries(rule.style).map(([property, value]) => ({ selector: candidate, conditions: [rule.colorScheme ? `color-scheme:${rule.colorScheme}` : '', rule.platform ? `platform:${rule.platform}` : ''].filter(Boolean), property, value, important: Boolean(rule.important) }))),
-                diagnostics: (native?.warnings ?? []).filter(warning => warning.className === candidate).map(warning => `${warning.property ?? ''}:${warning.message}`),
-              },
+              snapshot: nativeConversionSnapshot(native, candidate),
               diagnosticsScope: 'candidate',
             },
             'lynx': oracleFor(candidate, 'lynx')
@@ -130,6 +133,7 @@ export async function runStatic(context: RunContext) {
           { name: `${stem}.css`, content: generated.rawCss, kind: 'css' as const },
           { name: `${stem}.wxss`, content: weappCss, kind: 'css' as const },
           { name: `${stem}.native.json`, content: JSON.stringify(native ?? { conversionErrors }), kind: 'bundle' as const },
+          { name: `${stem}.native.css`, content: nativeCss, kind: 'css' as const },
           { name: `${stem}.lynx.json`, content: JSON.stringify(lynx ?? { conversionErrors }), kind: 'bundle' as const },
           { name: `${stem}.audit.json`, content: JSON.stringify(audit), kind: 'measurements' as const },
         ]

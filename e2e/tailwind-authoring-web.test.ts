@@ -66,7 +66,8 @@ describe('authoring 浏览器独立参考合同', () => {
     expect(profile('theme').variables).toEqual({})
     expect(profile('theme').groups[0]!.declarations[0]!.value).toBe('#123456')
     expect(profile('theme-inline').variables).toEqual({ '--brand': '#456789' })
-    expect(profile('reference').variables).toEqual({ '--color-catalog-brand': '#123456' })
+    expect(profile('reference').variables).toEqual({})
+    expect(profile('reference').groups[0]!.declarations).toContainEqual({ property: 'background-color', value: '#123456' })
   })
 
   it('真实源扫描 fixture 不从渲染探针反向注入 candidates 或 inline source', () => {

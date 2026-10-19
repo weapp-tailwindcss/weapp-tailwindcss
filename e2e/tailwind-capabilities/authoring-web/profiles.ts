@@ -56,7 +56,7 @@ function sourceProfile(fixture: AuthoringFixture, candidates: string[]): Authori
 const resolvedVariables: Record<string, Record<string, string>> = {
   'theme': { 'var(--color-catalog-brand)': '#123456' },
   'theme-inline': { 'var(--brand)': '#456789' },
-  'reference': { 'var(--color-catalog-brand)': '#123456' },
+  'reference': { 'var(--color-catalog-brand, #123456)': '#123456' },
 }
 
 export function authoringWebProfile(fixture: AuthoringFixture): AuthoringWebProfile {
@@ -73,10 +73,6 @@ export function authoringWebProfile(fixture: AuthoringFixture): AuthoringWebProf
   }
   if (fixture.id === 'theme-inline') {
     base.variables['--brand'] = '#456789'
-  }
-  if (fixture.id === 'reference') {
-    // @reference 不输出共享主题；此夹具只验证消费者的 @apply 与已声明宿主变量。
-    base.variables['--color-catalog-brand'] = '#123456'
   }
   for (const expected of fixture.expectedDeclarations) {
     const className = expected.candidate ?? /^\.([a-z][a-z0-9-]*)$/i.exec(expected.selector ?? '')?.[1]

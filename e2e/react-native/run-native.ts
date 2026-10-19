@@ -1,7 +1,7 @@
 /* eslint-disable antfu/no-top-level-await, perfectionist/sort-imports, style/max-statements-per-line */
 
 import { captureNativeEncoding } from './encoding-evidence'
-import { environmentFailure, EnvironmentBlockedError } from '../tailwind-capabilities/environment-block'
+import { EnvironmentBlockedError, environmentFailure } from '../tailwind-capabilities/environment-block'
 import type { Server } from 'node:http'
 import type { NativeVisualProbe } from '../../examples/react-native-expo/src/visual-probes'
 import { createHash, randomUUID } from 'node:crypto'

@@ -28,7 +28,7 @@ pnpm e2e:preflight verify --report <本轮-report.json>
 pnpm e2e:tailwind --preflight-report <本轮-report.json>
 ```
 
-环境不通过立即停止全面调度。协议单测不依赖设备：
+环境不通过立即停止全面调度。子进程明确报告工具缺失、设备离线或会话失效时，当前目标和所有后续目标立即阻断；普通样式断言失败仍保存其它目标的诊断。协议单测不依赖设备：
 
 ```sh
 pnpm e2e:tailwind:contract
@@ -41,7 +41,7 @@ pnpm e2e:tailwind --list
 
 - 共享包：`tools/tailwindcss-test-catalog`，合并旧 118 个兼容案例及 361 个 parity 候选，保留旧 ID 与独立候选子 ID。
 - 注册表：`inventory/tailwind-4.3.3.json`；functional 值域、任意语法和补全遗漏项另行覆盖。
-- `static`：每批 256 个唯一候选，保存 raw CSS、WXSS、RN manifest、Lynx 解码 CSS、诊断与审计。生成合同比较完整声明、选择器及媒体/容器条件，并核对主题变量、动画帧和 property 注册。每个候选另有三端独立转换结果；没有已审查转换 oracle 的项目保持未执行，异常保持失败，不由产物存在推导支持。已审查的 `weapp-literal-preservation-v1` 覆盖默认补全中的 490 项，其余 22,796 项仍有转换 oracle 缺口；另行覆盖的语法样本单独计数。转换审计不能直接判成运行时支持。
+- `static`：每批 256 个唯一候选，保存 raw CSS、WXSS、RN manifest、Lynx 解码 CSS、诊断与审计。生成合同比较完整声明、选择器及媒体/容器条件，并核对主题变量、动画帧和 property 注册。每个候选另有三端独立转换结果；没有已审查转换 oracle 的项目保持未执行，异常保持失败，不由产物存在推导支持。已审查的 `weapp-keyword-compatibility-v2` 覆盖默认补全中的 848 项，其余 22,438 项仍有转换 oracle 缺口。RN 的 `react-native-literal-mapping-v1` 覆盖 1,599 项（1,511 正向、88 预先声明的拒绝），其余 21,687 项保留缺口；另行覆盖的语法样本单独计数。转换审计不能直接判成运行时支持。
 - `authoring`：18 个指令/配置夹具及 11 个真实扫描语法夹具，分别创建隔离目录；扫描候选只存在于各自源码，完整参考检查声明、条件和依赖。29 例另有隔离的浏览器语义参考；扫描后的 DOM 消费不等同于执行 JSX/Vue 条件分支。
 - Web 子目录 `framework-source`：18 个真实 React JSX / Vue SFC 案例，执行条件、数组、对象、模板、映射、merge、cva、variants 和动态插值负例；四版源码分别刷新并验证 A→B→A 分支、精确类名、独立宽度、节点和页面身份。候选只由唯一源码扫描，不能由 inline source 补齐。
 - Web 子目录 `context`：7 类上下文变体、27 个状态，原生触摸/鼠标、禁用脚本、表单编辑/提交/失焦及恢复；与普通状态夹具合计为 80/88 个 variant 提供夹具。其余 8 类保留在 [缺口清单](web-context/remaining-variants.md)，有夹具不等于各引擎实际通过。
@@ -51,7 +51,7 @@ pnpm e2e:tailwind --list
 
 v2 报告绑定源码、锁文件、工具版本、catalog、夹具及预期 hash。每个案例声明支持状态、验证层级、具体预期值和允许误差；验收重新检查原始文件 hash、字节数、归属和时间。错误样式、缺属性、缺运行时证据、擅改支持预期、缺案例、旧版本、旧截图、目标浏览器不符均拒绝。报告还读取实际 Vite、平台适配器、生产 encoder/serializer、独立 decoder 与 CSS defines 版本。旧 v1 报告保留历史展示，不能贡献本轮通过覆盖。
 
-RN 的构建指令须回放实际归档 manifest 并匹配独立预期；运行时使用 probe、显式 reference 和无效果 control 三个节点，避免宿主同时忽略属性造成相等误报。预检拒绝也会生成调度索引，全部目标保留“阻塞、未尝试”。
+RN iOS 明确采用 Expo prebuild → CocoaPods → xcodebuild → simctl，使用预检绑定的设备，重读本轮产物与已安装容器的主程序、Info.plist 和 Debug dylib 后才请求深链，不依赖 Simulator.app GUI。RN 的构建指令须回放实际归档 manifest 并匹配独立预期；运行时使用 probe、显式 reference 和无效果 control 三个节点，避免宿主同时忽略属性造成相等误报。预检拒绝也会生成调度索引，全部目标保留“阻塞、未尝试”。
 
 微信像素使用同屏独立 inline 参考，并保存原始带色彩配置的截图、规范化截图和视口信息。ICC 转换的 RGB 量化允许一级误差，alpha 精确匹配；probe 与 reference 的采样必须完全一致。样式值仍精确匹配预先声明的配置。
 

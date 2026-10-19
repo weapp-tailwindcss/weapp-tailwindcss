@@ -4,7 +4,7 @@
 
 29 个夹具均已登记独立语义目标。其中 15 个 authoring 夹具使用具体 `expectedDeclarations` 值作为 inline 参考，其余扫描与指令用例使用独立官方编译器、预先声明的候选/指令输入及隔离 CSS 作为参考。产品 CSS 始终由 `weapp-tailwindcss` 在每例独立临时目录内生成，再载入产品 iframe；其它 iframe 分别载入独立参考和无工具类基线。只有参考确实产生不同于基线的可测效果、产品计算值一致、扫描/排除结果正确且浏览器无错误时，该例才能通过。浏览器不支持或参考效果不可测时，逐例记录 `not-run`。
 
-自定义祖先变体与 dark 指令分别验证 before、after、restored。`important` 需要打败产品节点上的普通 inline 声明。主题具体值独立登记；`@theme` 夹具不向产品补入它应自行生成的主题变量。`@reference` 的宿主变量显式登记，只证明消费者的应用效果。截图用于审查，不贡献像素语义通过。
+自定义祖先变体与 dark 指令分别验证 before、after、restored。`important` 需要打败产品节点上的普通 inline 声明。主题具体值独立登记；`@theme` 夹具不向产品补入它应自行生成的主题变量。`@reference` 独立验证消费者输出的变量 fallback，不补入宿主变量掩盖缺失 fallback。截图用于审查，不贡献像素语义通过。
 
 `source-inline` 实际触发 hover/focus 并验证 before、after、restored；读取每个文档后才操作下个文档，避免焦点和指针被参考抢走。`hover-class` 的伪元素读取 `::after` 内容。透明度探针使用独立 `0.37` 基线，避免 `opacity-100` 与默认值相同造成假通过。负向候选必须既不出现在生成结果中、也与基线效果一致；独立参考必须与基线不同。无效业务候选另外声明 `padding:17px` 观测对照并在 oracle 身份中记录，不把该对照注入产品。产品扫描仍只消费真实源码，候选不会从参考、共享目录或渲染探针补入。
 

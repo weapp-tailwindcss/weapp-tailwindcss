@@ -13,7 +13,7 @@ const source = '.size-8{width:2rem;height:2rem}'
 
 vi.mock('./tailwind-capabilities/reference', () => ({ defaultReferenceBuilder: async () => async (candidates: string[]) => candidates.map(candidate => candidate === 'size-full' ? '.size-full{width:100%;height:100%}' : candidate === 'inline-flex' ? '.inline-flex{display:inline-flex}' : source.replaceAll('size-8', candidate)).join('') }))
 vi.mock('weapp-tailwindcss/escape', () => ({ escape: (value: string) => value }))
-vi.mock('../packages/react-native/src/compiler', () => ({ compileNativeStylesheet: mocks.native }))
+vi.mock('../packages/react-native/src/compiler', () => ({ compileNativeStylesheet: mocks.native, addNativeVariantRules: () => {}, finalizeNativeManifest: (manifest: unknown) => manifest }))
 vi.mock('./lynx/batch-encode', () => ({ encodeLynxCss: mocks.lynx }))
 vi.mock('./tailwind-capabilities/fixture', () => ({ withGeneratorFixture: async (_root: string, _css: string, _files: unknown, run: (generator: unknown) => Promise<void>) => run({ generate: mocks.generate }) }))
 vi.mock('./tailwind-capabilities/inventory/value-cases', () => ({ valueCases: () => [] }))
@@ -109,7 +109,7 @@ describe('static runner 的生成与三目标转换分层', () => {
     const { report, directory } = await execute()
     for (const candidate of ['size-8', 'size-9']) {
       for (const target of conversionTargets) {
-        expect(report.results.find(result => result.id === `conversion/${target}/completion/${candidate}`)).toMatchObject({ status: target === 'weapp' ? 'failed' : 'not-run', support: 'supported' })
+        expect(report.results.find(result => result.id === `conversion/${target}/completion/${candidate}`)).toMatchObject({ status: target === 'lynx' ? 'not-run' : 'failed', support: 'supported' })
       }
     }
     expect(report.results.filter(result => result.id.startsWith('completion/')).every(result => result.status === 'passed')).toBe(true)
@@ -127,7 +127,8 @@ describe('static runner 的生成与三目标转换分层', () => {
     const { report } = await execute()
     expect(report.results.find(result => result.id === 'conversion/weapp/completion/size-8')?.status).toBe('failed')
     expect(report.results.find(result => result.id === 'conversion/weapp/completion/size-9')?.status).toBe('passed')
-    expect(report.results.filter(result => /^conversion\/(?:react-native|lynx)\//.test(result.id)).every(result => result.status === 'not-run')).toBe(true)
+    expect(report.results.filter(result => result.id.startsWith('conversion/lynx/')).every(result => result.status === 'not-run')).toBe(true)
+    expect(report.results.filter(result => result.id.startsWith('conversion/react-native/')).every(result => result.status === 'failed')).toBe(true)
     expect(report.results).toHaveLength(8)
   })
 

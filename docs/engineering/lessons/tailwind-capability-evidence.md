@@ -49,7 +49,7 @@ regressions:
 - React/Vue 源码经真实框架编译并执行分支；服务使用真实临时目录身份，保存屏障等待完整 Vite 更新周期，不能在原始 watcher 回调中提前读取旧产物。上下文变体用实际 browser context 和原生表单事件取证；剩余 8 类变体继续登记未执行。
 - RN 实例分别维护注册表与元数据，工厂 revision 使缓存失效；深层样式数组迭代解析并明确拒绝循环引用。近零非零阴影透明度按宿主可消费的小数保留，不能由格式化舍入为透明。
 - RN 五个构建指令重读本轮稳定发布的 Metro manifest 并回放独立编码预期；运行时增加无效果 control，宿主同时忽略 probe/reference 样式时拒绝通过。组合效果不能替代其中每个默认属性的独立证明。
-- 目标转换先固定独立参考和已审查转换规则，再执行产品管线。首批 490 个默认补全具备完整 WXSS 字面量 oracle，其余候选不由声明存在推导转换支持。
+- 目标转换先固定独立参考和已审查转换规则，再执行产品管线。首批 848 个默认补全具备完整 WXSS 关键字兼容 oracle，其余候选不由声明存在推导转换支持。
 - 候选规则同时比较选择器、条件和同一属性的声明顺序；另行检查完整官方参考中的全局变量、动画帧与 property 注册，避免只保留 class 声明的误报。
 
 ## 验证
@@ -65,6 +65,16 @@ regressions:
 2026-10-19 的本地定向记录：能力合同 37 文件、368 项通过；React Native 包 70 项、PostCSS 包 25 项、Lynx 编码/扫描与微信会话边界 50 项、Expo 示例 5 项通过。RN 产物及 catalog 定向验证另有 8 项通过，Expo 导出项未被该定向过滤选中，不能算作本次实际导出验收。任务文件 ESLint、`git diff --check` 及 agents 检查通过。完整 e2e 类型图仍有既有依赖、别名和原生 runner 类型诊断，不声明完整类型检查通过。日志保留在 `e2e/.artifacts/tailwind-development/`。
 
 全面验收必须另取本轮 extended 预检、当前会话 computer use 与 verify，再运行 `pnpm e2e:tailwind --preflight-report <本轮报告>`。实际执行记录位于 `e2e/.artifacts/tailwind/<run-id>/index.md`，包含通过、失败、阻塞和未执行范围；没有本轮记录时，本复盘不声明四端通过。
+
+## 本轮完整运行与后续修复
+
+2026-10-19 的完整调度 `7b5aa8bb-888a-4d97-b4f7-f61594a09b34` 已因 RN iOS 环境故障停止。CocoaPods 已完成安装，但 Expo 的 GUI 发现要求本机不存在的 Simulator.app。只读诊断确认 Xcode 路径、simctl 与已启动模拟器可用；没有修改 Xcode、重新登录微信或重置设备。该轮预检 `4cbd59f8-96cd-45ae-b12d-2efc249f3107` 已失效，不能复用。
+
+首轮 Chromium 基础语义 127 项通过，Firefox 126/127、WebKit 126/127、微信 17/18；其它子组及原生未验收范围保留原报告。发现的颜色量化、序列化 `__name`、字体引号比较、Lynx decoder 边界、大报告序列化、独立参考 fallback、自定义 RN 样式及平台规则身份问题，均已补失败回归后修复。这些修复仍需新的实际运行证明，不将旧记录改为通过。
+
+首轮还发现 CLI 将工具环境错误作为普通目标失败捕获并继续启动 Lynx。已保存 `environment-block.json` 和原始索引，将故障后的产物排除出本轮通过率。调度器现以独立环境错误立即停止全部后续 check/execute；纯回归使用真实失败子进程证明这一边界。RN iOS 明确使用 prebuild、CocoaPods、xcodebuild 和 simctl；这属于新的原生 runner 实现，必须重新 extended prepare、当前会话 computer use、verify 后才能实际验收。
+
+转换 oracle 新增 RN 独立映射（默认补全 1,599 项），WXSS 扩至 848 项；两端未审查范围分别为 21,687 和 22,438。修复 place 多关键词展开、RN spacing 函数拆分、非法布局枚举及组合平台变体丢条件，并增加完整四边、四角、双维度和动态阶段比较。缺少独立原生几何回执的 Lynx 案例不能通过，混合案例也不传播为所有子能力通过。
 
 ## 适用边界
 

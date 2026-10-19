@@ -8,6 +8,17 @@ import { createPnpmCommand } from '../../scripts/pnpm-command.mjs'
 import { EnvironmentBlockedError, environmentFailure } from './environment-block'
 import { assertCapabilitySuccess } from './report'
 
+async function preserveEnvironmentFailure(error: EnvironmentBlockedError, source: string, context: RunContext): Promise<never> {
+  let archiveError: unknown
+  try {
+    // 故障目录只供诊断，不进入能力报告或通过率；其中可能包含未完成的报告。
+    await cp(source, path.join(context.directory, 'blocked-native-diagnostics'), { recursive: true })
+  }
+  catch (failure) { archiveError = String(failure) }
+  await writeFile(path.join(context.directory, 'environment-block.json'), `${JSON.stringify({ runId: context.runId, status: 'blocked', reason: String(error), archiveError }, null, 2)}\n`)
+  throw error
+}
+
 export async function runPnpmStage(context: RunContext, args: string[], name: string, env: NodeJS.ProcessEnv = {}) {
   await mkdir(context.directory, { recursive: true })
   const invocation = createPnpmCommand(args)
@@ -60,7 +71,7 @@ export async function runExternalTarget(target: ExecutionTarget, context: RunCon
     }
     catch (error) {
       if (error instanceof EnvironmentBlockedError) {
-        throw error
+        return preserveEnvironmentFailure(error, destination, context)
       }
       executionError = error
     }
@@ -87,7 +98,7 @@ export async function runExternalTarget(target: ExecutionTarget, context: RunCon
     }
     catch (error) {
       if (error instanceof EnvironmentBlockedError) {
-        throw error
+        return preserveEnvironmentFailure(error, archived, context)
       }
       executionError = error
     }
