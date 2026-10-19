@@ -32,20 +32,30 @@ vi.mock('../examples/react-lynx/src/compatibility/static-evidence.json', async (
   const original = await importOriginal<{ default: StaticEvidenceReport }>()
   const { compatibilityVersions, getCatalogHash } = await import('./lynx/catalog')
   const { compatibilityCases } = await import('../examples/react-lynx/src/compatibility/catalog')
+  const { default: protocolReport } = await import('./lynx/reports/android.json')
   return {
     default: {
       ...original.default,
       catalogHash: getCatalogHash(),
       versions: compatibilityVersions,
-      results: original.default.results.map(result => ({
-        ...result,
-        candidates: compatibilityCases.find(item => item.id === result.id)!.className.split(/\s+/).filter(Boolean).map(className => ({
-          className,
-          generated: result.generated,
-          bundled: result.bundled,
-          reason: result.reason,
-        })),
-      })),
+      // 历史协议夹具决定本测试覆盖的取证分支，不让本轮 encoder 的变化跳过几何或像素反例。
+      // 真实静态字节与阶段合同由 decoder、static-evidence 和 reports 测试独立核验。
+      results: original.default.results.map((result) => {
+        const checkpoints = protocolReport.results.find(item => item.id === result.id)!.checkpoints
+        const generated = checkpoints.find(item => item.name === 'generated')?.passed ?? true
+        const bundled = checkpoints.find(item => item.name === 'bundled')?.passed ?? true
+        return {
+          ...result,
+          generated,
+          bundled,
+          candidates: compatibilityCases.find(item => item.id === result.id)!.className.split(/\s+/).filter(Boolean).map(className => ({
+            className,
+            generated,
+            bundled,
+            reason: result.reason,
+          })),
+        }
+      }),
     },
   }
 })
@@ -166,7 +176,7 @@ async function fixture() {
   return { directory, reportPath, report: final, context, crops: cropsDirectory(directory, context), images }
 }
 
-it('完整入口接受本轮落盘回执、实际 bundle 和可见像素证据', async () => {
+it('完整协议入口接受同轮落盘回执、绑定的 bundle 字节和合成像素夹具', async () => {
   const { reportPath, report } = await fixture()
   await expect(readNativeReport(reportPath, 'android')).resolves.toEqual(report)
 })
