@@ -5,6 +5,9 @@ import { encodeLynxCss } from './lynx/batch-encode'
 import { compatibilityVersions, getCatalogHash } from './lynx/catalog'
 import { analyzeStaticCase, declarationMatches, parseDecodedRules, parseGeneratedRules, selectorHasCandidate } from './lynx/static-evidence'
 import { assertCurrentStaticEvidence } from './lynx/static-report'
+import { assertSupportsGuards } from './lynx/supports-guard'
+
+const supportsSource = String.raw`@supports(display:grid){.supports-\[display\:grid\]\:grid{display:grid}}@supports(display:weapp-invalid){.supports-\[display\:weapp-invalid\]\:grid{display:grid}}`
 
 describe('Lynx static declaration evidence', () => {
   it('类名必须完整命中，不能从 flex-col 或 escaped variant 前缀借用声明', () => {
@@ -76,6 +79,57 @@ describe('Lynx static declaration evidence', () => {
       candidates: [{ className: item.className, generated: true, bundled: false, failureStage: 'encoder' }],
     })
     expect(analyzeStaticCase(item, dropped, intact)).toMatchObject({ generated: false, bundled: false, failureStage: 'generation' })
+  })
+
+  it('supports 真/假条件均从真实 WASM 解码 CSS 提取准确 guard', async () => {
+    const encoded = await encodeLynxCss(supportsSource, { mode: 'wasm', applyCompatibility: false })
+    const decoded = parseDecodedRules(encoded.css)
+    for (const value of ['grid', 'weapp-invalid']) {
+      const candidate = `supports-[display:${value}]:grid`
+      expect(decoded.find(rule => selectorHasCandidate(rule.selector, candidate))).toMatchObject({
+        supportsConditions: [`(display:${value})`],
+        declarations: [{ property: 'display', value: 'grid' }],
+      })
+    }
+    const generated = parseGeneratedRules(supportsSource)
+    const item = compatibilityCases.find(item => item.id === 'variant-supports')!
+    expect(analyzeStaticCase(item, generated, decoded)).toMatchObject({ generated: true, bundled: true })
+    expect(() => assertSupportsGuards(generated, decoded)).not.toThrow()
+  })
+
+  it('supports 的真实 bundle 展平 guard 后不能因 selector 和声明相同而通过', async () => {
+    const item = compatibilityCases.find(item => item.id === 'variant-supports')!
+    const unguarded = String.raw`.supports-\[display\:grid\]\:grid{display:grid}.supports-\[display\:weapp-invalid\]\:grid{display:grid}`
+    const encoded = await encodeLynxCss(unguarded, { mode: 'wasm', applyCompatibility: false })
+    expect(analyzeStaticCase(item, parseGeneratedRules(supportsSource), parseDecodedRules(encoded.css))).toMatchObject({ generated: true, bundled: false, failureStage: 'encoder' })
+  })
+
+  it.each([
+    ['valid-condition', supportsSource.replace('(display:grid)', '(display:flex)')],
+    ['control-condition', supportsSource.replace('(display:weapp-invalid)', '(display:grid)')],
+    ['control-lost', supportsSource.slice(0, supportsSource.indexOf('@supports(display:weapp-invalid)'))],
+    ['negated-condition', supportsSource.replace('@supports(display:grid)', '@supports not (display:grid)')],
+    ['nested-condition', `@supports(display:grid){${supportsSource}}`],
+    ['additional-media', `@media(min-width:1px){${supportsSource}}`],
+    ['unconditional-valid', `${supportsSource}${String.raw`.supports-\[display\:grid\]\:grid{display:grid}`}`],
+    ['unconditional-control', `${supportsSource}${String.raw`.supports-\[display\:weapp-invalid\]\:grid{display:grid}`}`],
+    ['hex-alternate', `${supportsSource}${String.raw`.\73 upports-\[display\:grid\]\:grid{display:grid}`}`],
+    ['wrong-guard-alternate', `${supportsSource}${String.raw`@supports(display:flex){.supports-\[display\:grid\]\:grid{display:grid}}`}`],
+    ['control-declaration', supportsSource.replace('weapp-invalid\\]\\:grid{display:grid}', 'weapp-invalid\\]\\:grid{display:flex}')],
+    ['disabled-cssrule', supportsSource],
+  ])('supports 的 %s 真实 WASM 负控不能由正确 serializer 输入或另一候选补回', async (mode, mutated) => {
+    const item = compatibilityCases.find(item => item.id === 'variant-supports')!
+    const generated = parseGeneratedRules(supportsSource)
+    const encoded = await encodeLynxCss(mutated, { mode: 'wasm', applyCompatibility: false, enableCSSRule: mode !== 'disabled-cssrule' })
+    const decoded = parseDecodedRules(encoded.css)
+    // serializer 输入即使仍存在规则，也不能代替实际二进制的条件树。
+    if (mode === 'disabled-cssrule') {
+      expect(JSON.stringify(encoded.rules)).toContain('SupportsRule')
+    }
+    expect(analyzeStaticCase(item, generated, decoded)).toMatchObject({ generated: true, bundled: false, failureStage: 'encoder' })
+    expect(analyzeStaticCase(item, decoded, generated)).toMatchObject({ generated: false, bundled: false, failureStage: 'generation' })
+    expect(() => assertSupportsGuards(generated, decoded)).toThrow(/@supports guard/)
+    expect(() => assertSupportsGuards(decoded, generated)).toThrow(/@supports guard/)
   })
 
   it.each(['top', 'right', 'bottom', 'left'])('shorthand 实际编码的 %s 边缺 important 时拒绝完整保留', async (missing) => {

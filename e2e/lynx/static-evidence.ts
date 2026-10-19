@@ -9,6 +9,7 @@ import { compatibilityVersions, exampleDir, getCatalogHash, lynxIntermediateDir,
 import { decodeLynxBundle } from './decoder'
 import { matchEncodedDeclaration } from './encoded-declarations'
 import { assertImportantPriorityRules } from './important-static'
+import { supportsGuardsMatch } from './supports-guard'
 
 interface EncodedDeclaration {
   name: string
@@ -29,6 +30,7 @@ export interface RuleEvidence {
   selector: string
   declarations: ExpectedDeclaration[]
   mediaConditions?: string[]
+  supportsConditions?: string[]
 }
 
 function classCandidates(className: string) {
@@ -87,9 +89,11 @@ export function evaluateCase(rules: RuleEvidence[], item: typeof compatibilityCa
     ...(actual.value === undefined ? {} : { value: actual.value }),
     ...(actual.important === true ? { important: true } : {}),
   })))
+  const guardsMatched = item.id !== 'variant-supports' || supportsGuardsMatch(rules)
   return {
-    matched: rules.length > 0 && selectorMatches && matches.every(Boolean),
+    matched: rules.length > 0 && selectorMatches && matches.every(Boolean) && guardsMatched,
     declarations,
+    guardsMatched,
   }
 }
 
@@ -116,9 +120,13 @@ export function parseGeneratedRules(css: string) {
   const rules: RuleEvidence[] = []
   postcss.parse(css).walkRules((rule) => {
     const mediaConditions: string[] = []
-    for (let parent = rule.parent; parent; parent = parent.parent) {
+    const supportsConditions: string[] = []
+    for (let parent: postcss.AnyNode | undefined = rule.parent; parent; parent = parent.parent) {
       if (parent.type === 'atrule' && parent.name === 'media') {
         mediaConditions.unshift(parent.params.replace(/\s+/g, ''))
+      }
+      if (parent.type === 'atrule' && parent.name === 'supports') {
+        supportsConditions.unshift(parent.params.replace(/\s+/g, ''))
       }
     }
     const declarations: ExpectedDeclaration[] = []
@@ -129,7 +137,7 @@ export function parseGeneratedRules(css: string) {
         ...(declaration.important ? { important: true } : {}),
       })
     })
-    rules.push({ selector: rule.selector, declarations, mediaConditions })
+    rules.push({ selector: rule.selector, declarations, mediaConditions, supportsConditions })
   })
   return rules
 }
@@ -176,20 +184,22 @@ export function analyzeStaticCase(
       rule.declarations.some(actual => declarationMatches(actual, expected, true))
     )))
     const candidate = { ...item, className, declarations }
-    const candidateGenerated = evaluateCase(generatedRules, candidate, 'generation').matched
-    const candidateBundled = evaluateCase(bundledRules, candidate, 'encoding').matched
+    const generatedEvidence = evaluateCase(generatedRules, candidate, 'generation')
+    const bundledEvidence = evaluateCase(bundledRules, candidate, 'encoding')
+    const candidateGenerated = generatedEvidence.matched
+    const candidateBundled = bundledEvidence.matched
     const removedProperties = declarations.filter(declaration => removals.properties.has(declaration.property)).map(declaration => declaration.property)
     const removedSelectors = removals.selectors.filter(selector => selectorHasCandidate(selector, className))
     const retained = candidateGenerated && candidateBundled && removedProperties.length === 0 && removedSelectors.length === 0
     const mediaGuard = retained ? staticMediaGuard(className, generatedRules, bundledRules) : undefined
     const failureStage = !candidateGenerated ? 'generation' : !retained ? 'encoder' : undefined
     const reason = !candidateGenerated
-      ? 'Tailwind 未生成候选 selector'
+      ? !generatedEvidence.guardsMatched ? 'Tailwind 未保留真/假条件的准确 @supports guard' : 'Tailwind 未生成候选 selector'
       : removedProperties.length > 0
         ? `encoder 删除属性：${removedProperties.join(', ')}`
         : removedSelectors.length > 0
           ? `encoder 删除 selector：${removedSelectors.join(', ')}`
-          : !candidateBundled ? 'TASM 未保留该候选的完整 selector 或声明' : undefined
+          : !candidateBundled ? !bundledEvidence.guardsMatched ? '实际 bundle 未保留真/假条件的准确 @supports guard' : 'TASM 未保留该候选的完整 selector 或声明' : undefined
     return {
       className,
       generated: candidateGenerated,
@@ -207,7 +217,7 @@ export function analyzeStaticCase(
     bundled: isBundled,
     ...(failureStage ? { failureStage } : {}),
     ...(!generated.matched
-      ? { reason: 'Tailwind 未生成完整 selector 或声明' }
+      ? { reason: !generated.guardsMatched ? 'Tailwind 未保留真/假条件的准确 @supports guard' : 'Tailwind 未生成完整 selector 或声明' }
       : !isBundled ? { reason: candidates.filter(candidate => !candidate.bundled).map(candidate => `${candidate.className}: ${candidate.reason}`).join('; ') || 'TASM 未保留完整 selector 或声明' } : {}),
     generatedDeclarations: generated.declarations,
     bundledDeclarations: bundled.declarations,
