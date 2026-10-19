@@ -6,7 +6,7 @@ import path from 'node:path'
 import { afterEach, expect, it, vi } from 'vitest'
 import { candidateCheckpoint, combineCandidateEvidence, requiresCandidateEvidence } from '../examples/react-lynx/src/compatibility/candidate-evidence'
 import { compatibilityCases } from '../examples/react-lynx/src/compatibility/catalog'
-import { evidenceSequence, requiresPixelEffect } from '../examples/react-lynx/src/compatibility/evidence'
+import { evidenceArtifactNames, evidenceSequence, requiresPixelEffect } from '../examples/react-lynx/src/compatibility/evidence'
 import { evaluateGeometry } from '../examples/react-lynx/src/compatibility/geometry'
 import staticEvidence from '../examples/react-lynx/src/compatibility/static-evidence.json'
 import { compatibilityVersions, getCatalogHash } from './lynx/catalog'
@@ -131,6 +131,21 @@ async function fixture() {
       images.set(name, data)
       report.evidence.artifacts.push({ runId: context.runId, name, sha256: sha256(data), byteLength: data.byteLength })
     }
+    for (const name of evidenceArtifactNames(compatibilityCases.find(item => item.id === result.id)!, staticEvidence.results.find(item => item.id === result.id)).filter(name => !images.has(name))) {
+      // 仅供协议反例的合成宿主文件，不能作为真实设备支持证据。
+      let data: Buffer
+      if (name.endsWith('.json')) {
+        data = Buffer.from(JSON.stringify({ version: 1, source: 'lynx-native-host-geometry-v1', platform: report.platform, id: result.id, runId: context.runId, bundleSha256: context.bundleSha256, geometry: result.geometry }))
+      }
+      else {
+        const rect = name.endsWith('-probe.png') ? result.geometry!.probeContainer : result.geometry!.controlContainer
+        const png = new PNG({ width: Math.round(rect.width * report.environment.viewport.pixelRatio), height: Math.round(rect.height * report.environment.viewport.pixelRatio) })
+        png.data.fill(255)
+        data = PNG.sync.write(png)
+      }
+      images.set(name, data)
+      report.evidence.artifacts.push({ runId: context.runId, name, sha256: sha256(data), byteLength: data.byteLength })
+    }
     if (requiresPixelEffect(result.id) || result.id === 'variant-dark') {
       result.status = 'not-tested'
     }
@@ -176,7 +191,9 @@ it.each(['hash', 'length', 'name-swap', 'missing', 'duplicate', 'wrong-run', 'ol
     receipts[0]!.byteLength += 1
   }
   if (kind === 'name-swap') {
-    [receipts[0]!.name, receipts[1]!.name] = [receipts[1]!.name, receipts[0]!.name]
+    const probe = receipts.find(item => item.name === 'layout-overflow-probe.png')!
+    const control = receipts.find(item => item.name === 'layout-overflow-control.png')!
+    ;[probe.name, control.name] = [control.name, probe.name]
   }
   if (kind === 'missing') {
     receipts.pop()
@@ -224,7 +241,7 @@ it('复制失败不会使用输出目录中的旧 crops，并阻止同 run 重�
 
 it('unsupported 结论也拒绝未绑定的截图', async () => {
   const { report, reportPath, crops } = await fixture()
-  const frame = report.evidence!.artifacts[0]!
+  const frame = report.evidence!.artifacts.find(item => item.name === 'layout-overflow-probe.png')!
   const result = report.results.find(item => `${item.id}-probe.png` === frame.name)!
   result.status = 'unsupported'
   result.reason = 'no visible difference'
@@ -232,6 +249,36 @@ it('unsupported 结论也拒绝未绑定的截图', async () => {
   await fs.writeFile(reportPath, JSON.stringify(report))
   await fs.writeFile(path.join(crops, frame.name), 'stale PNG')
   await expect(readNativeReport(reportPath, 'android')).rejects.toThrow(/字节与本轮回执不符/)
+})
+
+it.each(['source', 'id', 'platform', 'bundle', 'report-mismatch', 'invalid-corners'] as const)('离线验收拒绝hash有效但 %s 不符的几何侧车', async (mode) => {
+  const { report, directory, context, crops } = await fixture()
+  const receipt = report.evidence!.artifacts.find(item => item.name === 'layout-aspect-geometry.json')!
+  const file = path.join(crops, receipt.name)
+  const value = JSON.parse(await fs.readFile(file, 'utf8'))
+  if (mode === 'source') {
+    value.source = 'report-json'
+  }
+  if (mode === 'id') {
+    value.id = 'another-case'
+  }
+  if (mode === 'platform') {
+    value.platform = 'ios'
+  }
+  if (mode === 'bundle') {
+    value.bundleSha256 = 'f'.repeat(64)
+  }
+  if (mode === 'report-mismatch') {
+    value.geometry.probe.left += 1
+  }
+  if (mode === 'invalid-corners') {
+    value.geometry.probe.right += 1
+    report.results.find(item => item.id === value.id)!.geometry = value.geometry
+  }
+  const bytes = Buffer.from(JSON.stringify(value))
+  await fs.writeFile(file, bytes)
+  Object.assign(receipt, { sha256: sha256(bytes), byteLength: bytes.byteLength })
+  await expect(validateNativeEvidence(report, directory, context)).rejects.toThrow(/几何宿主侧车/)
 })
 
 it('拒绝新报告配合上轮残留的有效截图，历史报告不能刷新基线', async () => {

@@ -4,7 +4,7 @@ import type { CompatibilityCase, NativeCaseResult, NativePlatformReport, NativeR
 import { combineCandidateEvidence } from './candidate-evidence'
 import { compatibilityCases } from './catalog'
 import { evidenceSequence, lynxEvidenceStrategy, requiresPixelEffect } from './evidence'
-import { collectGeometry } from './geometry'
+import { evaluateGeometry } from './geometry'
 import { collectColorScheme } from './native-color-scheme'
 import { createNativeEvidence } from './native-evidence'
 import { waitForProbeLayout } from './runtime-ready'
@@ -294,7 +294,7 @@ async function collectCase(item: CompatibilityCase, reporter: ReporterModule, ev
     }
   }
   if (strategy === 'native-geometry') {
-    return collectGeometry(item, id => measure(id, reporter))
+    return evaluateGeometry(item, await evidence.geometry(item.id))
   }
   if (strategy === 'color-scheme') {
     return collectColorScheme(reporter, evidence)

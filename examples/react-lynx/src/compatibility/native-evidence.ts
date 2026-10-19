@@ -1,8 +1,11 @@
+import type { NativeGeometryCapture } from './native-geometry'
 import type { NativeArtifactReceipt, NativeEvidenceContext, NativePlatformReport } from './types'
+import { geometryArtifactNames, validNativeGeometry } from './native-geometry'
 
 export interface EvidenceModule {
   getEvidenceContext?: (callback: (value: NativeEvidenceContext | null) => void) => void
   submitArtifact?: (runId: string, name: string, data: string, callback: (value: NativeArtifactReceipt | null) => void) => void
+  captureGeometry?: (runId: string, id: string, callback: (value: NativeGeometryCapture | null) => void) => void
   submit?: (runId: string, report: string, callback: (value: boolean) => void) => void
   fail?: (runId: string, message: string, callback: (value: boolean) => void) => void
 }
@@ -37,8 +40,38 @@ export async function createNativeEvidence(reporter: EvidenceModule) {
   let failed = false
   let pending = 0
   let submitted = false
+  function register(receipt: NativeArtifactReceipt | null | undefined, name: string) {
+    if (!receipt || receipt.runId !== context!.runId || receipt.name !== name || !/^[a-f0-9]{64}$/.test(receipt.sha256) || !Number.isSafeInteger(receipt.byteLength) || receipt.byteLength <= 0 || artifacts.some(item => item.name === name)) {
+      throw new Error(`原生截图写入回执无效：${name}`)
+    }
+    artifacts.push(receipt)
+  }
   return {
     runId: context.runId,
+    async geometry(id: string) {
+      pending++
+      try {
+        if (failed || submitted || !reporter.captureGeometry) {
+          throw new Error('evidence 已失败、结束或缺少原生几何采集协议')
+        }
+        const names = geometryArtifactNames(id)
+        const capture = await request<NativeGeometryCapture | null>(callback => reporter.captureGeometry!(context.runId, id, callback), 5000)
+        if (!capture || !validNativeGeometry(capture.geometry) || !Array.isArray(capture.artifacts) || capture.artifacts.length !== names.length) {
+          throw new Error(`原生几何或落盘清单无效：${id}`)
+        }
+        for (const name of names) {
+          register(capture.artifacts.find(item => item.name === name), name)
+        }
+        return capture.geometry
+      }
+      catch (error) {
+        failed = true
+        throw error
+      }
+      finally {
+        pending--
+      }
+    },
     async save(name: string, data: string | undefined) {
       pending++
       try {
@@ -49,10 +82,7 @@ export async function createNativeEvidence(reporter: EvidenceModule) {
           throw new Error(`原生截图缺失：${name}`)
         }
         const receipt = await request<NativeArtifactReceipt | null>(callback => reporter.submitArtifact!(context.runId, name, data, callback))
-        if (!receipt || receipt.runId !== context.runId || receipt.name !== name || !/^[a-f0-9]{64}$/.test(receipt.sha256) || !Number.isSafeInteger(receipt.byteLength) || receipt.byteLength <= 0 || artifacts.some(item => item.name === name)) {
-          throw new Error(`原生截图写入回执无效：${name}`)
-        }
-        artifacts.push(receipt)
+        register(receipt, name)
       }
       catch (error) {
         failed = true

@@ -1,4 +1,5 @@
 import type { CompatibilityCase, StaticCaseEvidence } from './types'
+import { geometryArtifactNames } from './native-geometry'
 
 /** 这些效果必须由宿主解码 PNG 后核对，截图指纹不同不能证明支持。 */
 export function requiresPixelEffect(id: string) {
@@ -56,4 +57,12 @@ export function evidenceSequence(item: CompatibilityCase, built: Pick<StaticCase
     case 'transition-basic': return { checkpoint: 'interaction:transition-progress', frames: ['before', 'during', 'after'] }
     default: return undefined
   }
+}
+
+/** 原生几何侧车和 PNG 与普通像素序列共用精确清单，拒绝遗漏或额外文件。 */
+export function evidenceArtifactNames(item: CompatibilityCase, built: Pick<StaticCaseEvidence, 'generated' | 'bundled' | 'candidates'> | undefined) {
+  if (built?.generated && built.bundled && lynxEvidenceStrategy(item) === 'native-geometry') {
+    return geometryArtifactNames(item.id)
+  }
+  return evidenceSequence(item, built)?.frames.map(frame => `${item.id}-${frame}.png`) ?? []
 }

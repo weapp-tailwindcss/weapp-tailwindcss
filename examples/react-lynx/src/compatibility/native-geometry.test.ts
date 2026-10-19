@@ -1,12 +1,6 @@
-import type { CompatibilityCase, NativePlatformReport } from './types'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { CompatibilityCase } from './types'
+import { describe, expect, it, vi } from 'vitest'
 import { collectGeometry } from './geometry'
-import { submitNativeCompatibilityReport } from './native-reporter'
-
-vi.mock('./catalog', async (importOriginal) => {
-  const original = await importOriginal<typeof import('./catalog')>()
-  return { ...original, compatibilityCases: original.compatibilityCases.filter(item => item.id === 'flex-direction') }
-})
 
 function rect(left: number, top: number, width = 80, height = 40) {
   return { left, top, width, height, right: left + width, bottom: top + height }
@@ -26,34 +20,10 @@ function measurements(probeLeft = 10, probeTop = 20, controlLeft = 200, controlT
 type Measurements = Record<string, ReturnType<typeof rect> | null>
 
 async function collect(boxes: Measurements) {
-  vi.useFakeTimers()
-  let submitted: NativePlatformReport | undefined
-  const measure = vi.fn((id: string, callback: (value: object | null) => void) => {
-    // 首屏就绪探针使用独立节点，case 的缺证不能被默认矩形补齐。
-    callback(id.includes('layout-aspect') ? rect(0, 0) : boxes[id] ?? null)
-  })
-  vi.stubGlobal('SystemInfo', { platform: 'Android' })
-  vi.stubGlobal('NativeModules', {
-    CompatibilityReporter: {
-      getEvidenceContext: (callback: (value: object) => void) => callback({ version: 1, runId: '00000000-0000-4000-8000-000000000001', bundleSha256: 'a'.repeat(64) }),
-      measure,
-      submitArtifact: vi.fn(),
-      submit: (_run: string, value: string, callback: (value: boolean) => void) => {
-        submitted = JSON.parse(value)
-        callback(true)
-      },
-    },
-  })
-  const pending = submitNativeCompatibilityReport()
-  await vi.runAllTimersAsync()
-  await pending
-  return { result: submitted!.results[0]!, measured: measure.mock.calls.map(([id]) => id) }
+  const measure = vi.fn(async (id: string) => boxes[id] ?? undefined)
+  const result = await collectGeometry({ id: 'flex-direction' } as CompatibilityCase, measure)
+  return { result, measured: measure.mock.calls.map(([id]) => id) }
 }
-
-afterEach(() => {
-  vi.useRealTimers()
-  vi.unstubAllGlobals()
-})
 
 describe('Lynx native geometry evidence', () => {
   it.each([

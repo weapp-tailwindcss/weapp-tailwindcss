@@ -11,6 +11,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import android.view.View;
 import com.lynx.react.bridge.Callback;
+import com.lynx.react.bridge.JavaOnlyArray;
 import com.lynx.react.bridge.JavaOnlyMap;
 import com.lynx.jsbridge.LynxMethod;
 import com.lynx.jsbridge.LynxModule;
@@ -150,30 +151,57 @@ public final class CompatibilityReporterModule extends LynxModule {
   }
 
   @LynxMethod
-  public void measure(String identifier, Callback callback) {
+  public void captureGeometry(String runId, String identifier, Callback callback) {
     mainHandler.post(() -> {
-      LynxBaseUI ui = findUI(identifier);
-      if (ui == null) {
+      try {
+        GeometryEvidence.Capture capture = GeometryEvidence.capture(binding.store, runId, identifier, new GeometryEvidence.Host() {
+          public double[] measure(String id) { return measureNow(id); }
+          public byte[] capture(String id) { return captureBytes(id); }
+        });
+        JavaOnlyMap geometry = new JavaOnlyMap();
+        for (java.util.Map.Entry<String, double[]> entry : capture.geometry.entrySet()) {
+          geometry.putMap(entry.getKey(), rectMap(entry.getValue()));
+        }
+        JavaOnlyArray artifacts = new JavaOnlyArray();
+        for (EvidenceStore.Receipt receipt : capture.artifacts) {
+          JavaOnlyMap artifact = new JavaOnlyMap();
+          artifact.putString("runId", receipt.runId);
+          artifact.putString("name", receipt.name);
+          artifact.putString("sha256", receipt.sha256);
+          artifact.putInt("byteLength", receipt.byteLength);
+          artifacts.pushMap(artifact);
+        }
+        JavaOnlyMap result = new JavaOnlyMap();
+        result.putMap("geometry", geometry);
+        result.putArray("artifacts", artifacts);
+        callback.invoke(result);
+      } catch (Exception error) {
+        failEvidence(error);
         callback.invoke((Object) null);
-        return;
       }
-      LynxBaseUI.TransOffset corners = ui.getTransformValue(0, 0, 0, 0);
-      double[] rect = GeometryBounds.fromCorners(new float[][] {
-        corners.left_top, corners.right_top, corners.right_bottom, corners.left_bottom,
-      }, ui.getLynxContext().getScreenMetrics().density);
-      if (rect == null) {
-        callback.invoke((Object) null);
-        return;
-      }
-      JavaOnlyMap result = new JavaOnlyMap();
-      result.putDouble("left", rect[0]);
-      result.putDouble("top", rect[1]);
-      result.putDouble("right", rect[2]);
-      result.putDouble("bottom", rect[3]);
-      result.putDouble("width", rect[4]);
-      result.putDouble("height", rect[5]);
-      callback.invoke(result);
     });
+  }
+
+  @LynxMethod
+  public void measure(String identifier, Callback callback) {
+    mainHandler.post(() -> callback.invoke(rectMap(measureNow(identifier))));
+  }
+
+  private double[] measureNow(String identifier) {
+    LynxBaseUI ui = findUI(identifier);
+    if (ui == null) return null;
+    LynxBaseUI.TransOffset corners = ui.getTransformValue(0, 0, 0, 0);
+    return GeometryBounds.fromCorners(new float[][] {
+      corners.left_top, corners.right_top, corners.right_bottom, corners.left_bottom,
+    }, ui.getLynxContext().getScreenMetrics().density);
+  }
+
+  private static JavaOnlyMap rectMap(double[] rect) {
+    if (rect == null) return null;
+    JavaOnlyMap result = new JavaOnlyMap();
+    String[] fields = {"left", "top", "right", "bottom", "width", "height"};
+    for (int index = 0; index < fields.length; index++) result.putDouble(fields[index], rect[index]);
+    return result;
   }
 
   @LynxMethod
@@ -182,18 +210,21 @@ public final class CompatibilityReporterModule extends LynxModule {
   }
 
   private void captureNow(String identifier, Callback callback) {
+    byte[] data = captureBytes(identifier);
+    callback.invoke(data == null ? null : Base64.encodeToString(data, Base64.NO_WRAP));
+  }
+
+  private byte[] captureBytes(String identifier) {
     LynxBaseUI ui = findUI(identifier);
     if (!(ui instanceof LynxUI<?>)) {
-      callback.invoke((Object) null);
-      return;
+      return null;
     }
     View view = ((LynxUI<?>) ui).getView();
     if (view == null || view.getWidth() <= 0 || view.getHeight() <= 0) {
-      callback.invoke((Object) null);
-      return;
+      return null;
     }
     // JS 传入固定大小且非 flatten 的父容器，由 Android 合成子节点的可见性、透明度与变换。
-    callback.invoke(captureView(view));
+    return captureView(view);
   }
 
   @LynxMethod
@@ -226,18 +257,16 @@ public final class CompatibilityReporterModule extends LynxModule {
     return lynxView == null ? null : lynxView.findUIByIdSelector(identifier);
   }
 
-  private static String captureView(View view) {
+  private static byte[] captureView(View view) {
     Bitmap bitmap = Bitmap.createBitmap(view.getWidth(), view.getHeight(), Bitmap.Config.ARGB_8888);
     view.draw(new Canvas(bitmap));
-    String data = encodeBitmap(bitmap);
-    bitmap.recycle();
-    return data;
-  }
-
-  private static String encodeBitmap(Bitmap bitmap) {
-    ByteArrayOutputStream output = new ByteArrayOutputStream();
-    bitmap.compress(Bitmap.CompressFormat.PNG, 100, output);
-    return Base64.encodeToString(output.toByteArray(), Base64.NO_WRAP);
+    try {
+      ByteArrayOutputStream output = new ByteArrayOutputStream();
+      if (!bitmap.compress(Bitmap.CompressFormat.PNG, 100, output)) return null;
+      return output.toByteArray();
+    } finally {
+      bitmap.recycle();
+    }
   }
 
 }
