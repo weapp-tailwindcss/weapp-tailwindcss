@@ -23,3 +23,7 @@
 实时报告使用 `evidence.version: 1`，`run-context.json` 和 `main.lynx.bundle` 与报告一起保存。runner 生成唯一 runId；两个原生 host 计算实际加载 bundle 的 SHA-256，写图后返回 runId、文件名、PNG 字节哈希及长度，全部确认后才发布报告。文件写入失败、迟到/旧 run 回执、重复帧及复制失败均拒绝继续。每个平台的原生证据也写入 `lynx-compat/<runId>/`，不复用旧报告或截图。
 
 更新器核对独立的 run context、bundle 和完整帧清单，再逐文件验哈希、解码 PNG 和比较可见像素。历史 `schemaVersion: 1` 报告仍可展示和比较结论，但缺少新版证据不能重新验收或更新基线。不要单独复制 JSON；保留整份运行目录。存储回归可分别运行 `pnpm exec tsx e2e/lynx/test-evidence-store.ts android` 和 macOS 上的 `pnpm exec tsx e2e/lynx/test-evidence-store.ts ios`；后者验证 iOS 使用的 Foundation 存储实现，不等同于模拟器像素验收。
+
+正常更新器先把双端完整原始运行目录复制到仓库受控的 `e2e/.artifacts/lynx-baselines/baseline-*`，再从副本重新执行报告、bundle、PNG、宿主侧车及 Android SDK 验收。归档保留 APK/AAR 等原始工件，不进入 Git；CLI 输出本次 `archive-index.json` 的位置。索引只登记平台相对路径片段、catalog、runId、bundle SHA-256 和每个原始文件的大小/摘要，不保存本机外部下载路径；索引本身不递归纳入文件摘要。缺失、增加、篡改文件或归档期间报告变化均阻止更新历史结论。
+
+归档整体搬迁后可以从仓库根执行 `pnpm exec tsx e2e/lynx/verify-baseline-archive.ts <归档目录>`，入口调用 `validateNativeBaselineArchive` 重新验真；外部输入目录不再参与读取。`ios.json`、`android.json` 和示例 `baseline.json` 仍是已审查的历史记录；仅复制这些 tracked JSON 或 clean clone 不具备原始工件，不能重新放行 runtime。CI 始终验证本轮新运行目录的实际证据，归档不会替代本轮 CI；需要长期保存时应另行保存完整受控归档，不能依赖有保留期限的 CI artifact 或本机下载缓存。

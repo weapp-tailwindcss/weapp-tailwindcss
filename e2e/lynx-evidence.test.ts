@@ -1,4 +1,4 @@
-import type { NativePlatformReport, StaticEvidenceReport } from '../examples/react-lynx/src/compatibility/types'
+import type { NativePlatformReport, Platform, StaticEvidenceReport } from '../examples/react-lynx/src/compatibility/types'
 import { Buffer } from 'node:buffer'
 import fs from 'node:fs/promises'
 import os from 'node:os'
@@ -9,6 +9,7 @@ import { compatibilityCases } from '../examples/react-lynx/src/compatibility/cat
 import { evidenceArtifactNames, evidenceSequence, requiresPixelEffect } from '../examples/react-lynx/src/compatibility/evidence'
 import { evaluateGeometry } from '../examples/react-lynx/src/compatibility/geometry'
 import staticEvidence from '../examples/react-lynx/src/compatibility/static-evidence.json'
+import { archiveNativeBaseline, validateNativeBaselineArchive } from './lynx/baseline-archive'
 import { compatibilityVersions, getCatalogHash } from './lynx/catalog'
 import { collectNativeEvidence, createEvidenceContext, cropsDirectory, sha256, validateNativeEvidence } from './lynx/evidence'
 import { darkReceipts } from './lynx/fixtures/dark-images'
@@ -75,10 +76,12 @@ it('统一入口可以传递同轮 UUID，非法身份在原生运行之前拒�
   expect(() => createEvidenceContext(Buffer.from('bundle'), '../old-run')).toThrow(/evidence 身份/)
 })
 
-async function fixture() {
+async function fixture(platform: Platform = 'android') {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'lynx bound evidence '))
   directories.push(directory)
   const report = structuredClone(androidReport) as NativePlatformReport
+  report.platform = platform
+  report.environment.osName = platform === 'ios' ? 'iOS' : 'Android'
   report.catalogHash = getCatalogHash()
   report.versions = compatibilityVersions
   for (const item of compatibilityCases) {
@@ -190,6 +193,24 @@ it('完整协议入口接受同轮落盘回执、绑定的 bundle 字节和合�
   const { reportPath, report, directory } = await fixture()
   await expect(readNativeReport(reportPath, 'android')).resolves.toEqual(report)
   expect(validateStyleFixtureArtifacts).toHaveBeenCalledWith(directory)
+})
+
+it('双端归档搬迁后仍重读本轮 run context、bundle、全部 PNG 和宿主侧车，历史 JSON 不能补证', async () => {
+  const ios = await fixture('ios')
+  const android = await fixture()
+  const archiveRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'lynx archived evidence '))
+  directories.push(archiveRoot)
+  const expected = { ios: await readNativeReport(ios.reportPath, 'ios'), android: await readNativeReport(android.reportPath, 'android') }
+  const archive = await archiveNativeBaseline({ ios: { file: ios.reportPath, report: expected.ios }, android: { file: android.reportPath, report: expected.android } }, archiveRoot)
+  await fs.rm(ios.directory, { recursive: true })
+  await fs.rm(android.directory, { recursive: true })
+  const moved = path.join(archiveRoot, 'relocated')
+  await fs.rename(archive.directory, moved)
+  const result = await validateNativeBaselineArchive(moved)
+  expect(result.reports).toEqual(expected)
+  const historical = path.join(archiveRoot, 'ios.json')
+  await fs.writeFile(historical, JSON.stringify(ios.report))
+  await expect(readNativeReport(historical, 'ios')).rejects.toThrow('本轮 Lynx evidence 身份和 bundle')
 })
 
 it('报告没有 mediaGate 时也传播样式夹具门禁失败', async () => {
