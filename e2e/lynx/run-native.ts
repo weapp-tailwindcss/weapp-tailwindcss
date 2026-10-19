@@ -175,6 +175,7 @@ async function main() {
     if (!options.captureOnly && build) {
       stagedArtifacts.push(
         fs.copyFile(path.join(lynxIntermediateDir, 'main.css'), path.join(artifactDir, 'main.css')),
+        fs.copyFile(path.join(lynxIntermediateDir, 'tasm.json'), path.join(artifactDir, 'tasm.json')),
         fs.writeFile(path.join(artifactDir, 'encoder.log'), build.encoderLog),
       )
     }

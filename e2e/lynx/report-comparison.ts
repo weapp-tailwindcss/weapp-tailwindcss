@@ -14,7 +14,7 @@ export function pendingNativeCandidates(report: NativePlatformReport) {
     if (!item || !requiresCandidateEvidence(item.id)) {
       throw new Error(`${result.id} 不是允许部分采集的混合候选案例`)
     }
-    validateCandidateEvidence(item, (staticEvidence as StaticEvidenceReport).results.find(item => item.id === result.id), result, { allowPending: true })
+    validateCandidateEvidence(item, (staticEvidence as StaticEvidenceReport).results.find(item => item.id === result.id), result, { allowPending: true, mediaGate: report.mediaGate, context: report.evidence })
     return result.candidates!.filter(candidate => candidate.status === 'not-tested').map(candidate => ({ id: result.id, className: candidate.className, reason: candidate.reason! }))
   })
 }

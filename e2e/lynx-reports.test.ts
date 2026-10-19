@@ -1,8 +1,9 @@
-import type { NativeCaseResult, NativePlatformReport, StaticEvidenceReport } from '../examples/react-lynx/src/compatibility/types'
+import type { NativeCaseResult, NativeMediaGateEvidence, NativePlatformReport, StaticEvidenceReport } from '../examples/react-lynx/src/compatibility/types'
 import { describe, expect, it, vi } from 'vitest'
 import { candidateCheckpoint, combineCandidateEvidence } from '../examples/react-lynx/src/compatibility/candidate-evidence'
 import { compatibilityCases } from '../examples/react-lynx/src/compatibility/catalog'
 import { lynxEvidenceStrategy } from '../examples/react-lynx/src/compatibility/evidence'
+import { MEDIA_GATE_LIMITATION_ID, MEDIA_GATE_PROBE_IDS } from '../examples/react-lynx/src/compatibility/media-gate-contract'
 import staticEvidenceJson from '../examples/react-lynx/src/compatibility/static-evidence.json'
 import { compatibilityVersions, getCatalogHash } from './lynx/catalog'
 import { assertReviewedLynxOutcome, reviewedLynxSupport } from './lynx/expectations'
@@ -12,16 +13,27 @@ import { nativeReportConclusion, validateNativeReport } from './lynx/reports'
 vi.mock('../examples/react-lynx/src/compatibility/static-evidence.json', async (importOriginal) => {
   const original = await importOriginal<{ default: StaticEvidenceReport }>()
   const { compatibilityCases } = await import('../examples/react-lynx/src/compatibility/catalog')
+  const { parseGeneratedRules, staticMediaGuard } = await import('./lynx/static-evidence')
+  const rules = parseGeneratedRules('@media (hover:hover){.hover\\:bg-\\[\\#ef4444\\]:hover{background-color:#ef4444}}')
   return { default: { ...original.default, results: original.default.results.map(result => ({
     ...result,
-    candidates: compatibilityCases.find(item => item.id === result.id)!.className.split(/\s+/).map(className => ({ className, generated: result.generated, bundled: result.bundled })),
+    candidates: compatibilityCases.find(item => item.id === result.id)!.className.split(/\s+/).map(className => ({ className, generated: result.generated, bundled: result.bundled, mediaGuard: staticMediaGuard(className, rules, rules) })),
   })) } }
 })
 
 const staticById = new Map((staticEvidenceJson as StaticEvidenceReport).results.map(item => [item.id, item]))
 
+function mediaGate(): NativeMediaGateEvidence {
+  const rect = (width: number, height: number) => ({ width, height, left: 0, top: 0, right: width, bottom: height })
+  return { limitationId: MEDIA_GATE_LIMITATION_ID, sdkVersion: '4.0.1', runId: '00000000-0000-4000-8000-000000000001', bundleSha256: 'a'.repeat(64), probes: MEDIA_GATE_PROBE_IDS.map(id => ({ id, probe: rect(id === 'unguarded' || id === 'min-width' ? 32 : 16, 16), container: rect(64, 64) })) }
+}
+
 function validResult(item: typeof compatibilityCases[number]): NativeCaseResult {
   const staticResult = staticById.get(item.id)!
+  if (item.id === 'variant-state' || item.id === 'variant-group-peer') {
+    const active = item.className.split(/\s+/).find(candidate => candidate.startsWith('active:'))
+    return combineCandidateEvidence(item, staticResult, active ? [{ className: active, status: 'supported', checkpoints: [{ name: candidateCheckpoint(active), passed: true }] }] : [], mediaGate())
+  }
   if (!staticResult.generated || (!staticResult.bundled && item.evidence !== 'build')) {
     return {
       id: item.id,
@@ -52,6 +64,7 @@ function report(overrides: Partial<NativePlatformReport> = {}): NativePlatformRe
     catalogHash: getCatalogHash(),
     verifiedAt: '2026-08-17T00:00:00.000Z',
     versions: compatibilityVersions,
+    mediaGate: mediaGate(),
     environment: {
       deviceName: 'iPhone 17 Pro',
       deviceModel: 'iPhone18,1',
@@ -137,6 +150,20 @@ describe('Lynx native report gate', () => {
     const invalid = report()
     Object.assign(invalid.results.find(item => item.id === 'layout-aspect')!, { status: 'unsupported', reason: '本轮 encoder 异常删除 aspect-ratio' })
     expect(() => validateNativeReport(invalid, 'ios')).toThrow(/已审查支持预期 supported/)
+  })
+
+  it('媒体限制不能掩盖同组 active 的支持退化', () => {
+    const invalid = report()
+    const item = compatibilityCases.find(item => item.id === 'variant-state')!
+    const active = { className: 'active:bg-[#dc2626]', status: 'unsupported' as const, reason: '本轮 active 失效', checkpoints: [{ name: 'interaction:pseudo-active', passed: false }] }
+    Object.assign(invalid.results.find(result => result.id === item.id)!, combineCandidateEvidence(item, staticById.get(item.id), [active], invalid.mediaGate))
+    expect(() => validateNativeReport(invalid, 'ios')).toThrow(/必须保留 active 支持/)
+  })
+
+  it('完整媒体候选缺少本轮宿主证明时拒绝最终报告', () => {
+    const invalid = report()
+    delete invalid.mediaGate
+    expect(() => validateNativeReport(invalid, 'ios')).toThrow(/media gate/)
   })
 
   it('已审查的平台限制也不能在缺少显式审查时自动改成支持', () => {

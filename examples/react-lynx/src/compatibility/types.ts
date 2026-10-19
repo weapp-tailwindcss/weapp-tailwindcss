@@ -106,6 +106,7 @@ export type NativeCandidateResult = (NativeCandidateBase & { mediaGate?: never }
     stage: 'runtime'
     gate: 'media'
     condition: '(hover:hover)'
+    sourceSha256: string
     evidenceId: 'media-hover-v1'
     downstream: { hoverInput: 'not-tested', pseudoState: 'not-tested' }
   }

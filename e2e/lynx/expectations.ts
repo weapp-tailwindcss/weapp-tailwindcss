@@ -53,7 +53,7 @@ export const reviewedLynxSupport: Record<string, readonly ['supported' | 'unsupp
   'interaction-scroll': ['unsupported', 'unsupported'],
   'variant-responsive': ['unsupported', 'unsupported'],
   'variant-dark': ['unsupported', 'unsupported'],
-  'variant-state': ['supported', 'supported'],
+  'variant-state': ['unsupported', 'unsupported'],
   'variant-structural': ['unsupported', 'unsupported'],
   'variant-group-peer': ['unsupported', 'unsupported'],
   'variant-data-aria': ['unsupported', 'unsupported'],
@@ -198,5 +198,12 @@ export function assertReviewedLynxOutcome(result: NativeCaseResult, platform: Pl
   }
   if (expected === 'unsupported' && reviewedEncodingRejections.has(result.id) === built.bundled) {
     throw new Error(`Lynx ${platform}:${result.id} 的失败阶段偏离已审查平台限制，不能把本轮其它失败归为 unsupported`)
+  }
+  if (result.id === 'variant-state') {
+    const active = result.candidates?.find(candidate => candidate.className === 'active:bg-[#dc2626]')
+    const hover = result.candidates?.find(candidate => candidate.className === 'hover:bg-[#ef4444]')
+    if (active?.status !== 'supported' || hover?.status !== 'unsupported' || hover.mediaGate?.gate !== 'media') {
+      throw new Error('variant-state 必须保留 active 支持与必要媒体条件拒绝，不能用其它运行失败替代已登记限制')
+    }
   }
 }

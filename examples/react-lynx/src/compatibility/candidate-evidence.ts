@@ -81,7 +81,7 @@ export function validateCandidateEvidence(item: CompatibilityCase, built: Static
   if ((combined.status === 'not-tested' && !options.allowPending) || combined.status !== result.status) {
     throw new Error(`${item.id} 的候选尚未全部验证或汇总结论不一致`)
   }
-  if (combined.status === 'not-tested') {
+  if (combined.status === 'not-tested' || result.candidates?.some(candidate => candidate.mediaGate)) {
     const sameCheckpoints = combined.checkpoints.length === result.checkpoints.length && combined.checkpoints.every((expected, index) => {
       const actual = result.checkpoints[index]!
       return Object.entries(expected).every(([key, value]) => actual[key as keyof typeof expected] === value)
@@ -95,6 +95,9 @@ export function validateCandidateEvidence(item: CompatibilityCase, built: Static
     if (candidate.mediaGate) {
       validateMediaGateCandidate(candidate, staticCandidate, options.mediaGate, options.context)
       continue
+    }
+    if (staticCandidate?.generated && staticCandidate.bundled && staticCandidate.mediaGuard && candidate.status !== 'not-tested') {
+      throw new Error(`${item.id}:${candidate.className} 必须按已登记的必要媒体条件验证，不能替换为 interaction checkpoint`)
     }
     const rejectedByStatic = !staticCandidate?.generated || !staticCandidate.bundled
     const stateCheckpoint = candidate.checkpoints.find(checkpoint => checkpoint.name === candidateCheckpoint(candidate.className))

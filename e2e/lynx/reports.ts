@@ -5,6 +5,7 @@ import { requiresCandidateEvidence, validateCandidateEvidence } from '../../exam
 import { compatibilityCases } from '../../examples/react-lynx/src/compatibility/catalog'
 import { lynxEvidenceStrategy } from '../../examples/react-lynx/src/compatibility/evidence'
 import { evaluateGeometry } from '../../examples/react-lynx/src/compatibility/geometry'
+import { validateMediaGateEvidence } from '../../examples/react-lynx/src/compatibility/media-gate-contract'
 import staticEvidenceJson from '../../examples/react-lynx/src/compatibility/static-evidence.json'
 import { compatibilityVersions, getCatalogHash } from './catalog'
 import { readEvidenceContext, validateNativeEvidence } from './evidence'
@@ -54,6 +55,9 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
   assert(JSON.stringify(actualIds) === JSON.stringify(expectedIds), `${platform} report must contain every catalog case exactly once`)
   const caseById = new Map(compatibilityCases.map(item => [item.id, item]))
   const staticById = new Map((staticEvidenceJson as StaticEvidenceReport).results.map(item => [item.id, item]))
+  if (!options.historical && report.mediaGate) {
+    validateMediaGateEvidence(report.mediaGate, report.evidence)
+  }
   for (const result of report.results) {
     const item = caseById.get(result.id)
     const staticResult = staticById.get(result.id)
@@ -68,7 +72,7 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
     assert(result.checkpoints.every(checkpoint => typeof checkpoint.passed === 'boolean'), `${platform}:${result.id} has an invalid checkpoint`)
     if (pending) {
       assert(staticResult.generated, `${platform}:${result.id} 的 generation 回归不能作为待测候选`)
-      validateCandidateEvidence(item, staticResult, result, { allowPending: true })
+      validateCandidateEvidence(item, staticResult, result, { allowPending: true, mediaGate: report.mediaGate, context: report.evidence })
     }
     else if (!staticResult.generated || (!staticResult.bundled && (item.evidence !== 'build' || options.historical))) {
       assert(result.status === 'unsupported', `${platform}:${result.id} cannot be supported after a static generation or encoder failure`)
@@ -84,12 +88,12 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
             ? 'interaction:'
             : 'pixel:'
       assert(
-        result.checkpoints.some(checkpoint => checkpoint.name.startsWith(checkpointPrefix)),
+        result.checkpoints.some(checkpoint => checkpoint.name.startsWith(checkpointPrefix)) || result.candidates?.some(candidate => candidate.mediaGate),
         `${platform}:${result.id} is missing a ${checkpointPrefix} checkpoint`,
       )
     }
-    if (options.requireCandidateEvidence && !pending) {
-      validateCandidateEvidence(item, staticResult, result)
+    if ((options.requireCandidateEvidence || !options.historical) && !pending) {
+      validateCandidateEvidence(item, staticResult, result, { mediaGate: report.mediaGate, context: report.evidence })
     }
     if (options.requireGeometryEvidence && staticResult.generated && staticResult.bundled && strategy === 'native-geometry') {
       const measured = evaluateGeometry(item, result.geometry)
@@ -128,6 +132,7 @@ export function nativeReportConclusion(report: NativePlatformReport) {
     catalogHash: report.catalogHash,
     // 原生 JSON 序列化不承诺属性顺序，结论比较固定键顺序并保留所有版本值。
     versions: Object.fromEntries(Object.entries(report.versions).sort(([a], [b]) => a.localeCompare(b))),
+    ...(report.mediaGate ? { mediaGate: { limitationId: report.mediaGate.limitationId, sdkVersion: report.mediaGate.sdkVersion } } : {}),
     results: report.results.map(result => ({
       id: result.id,
       status: result.status,
@@ -141,6 +146,17 @@ export function nativeReportConclusion(report: NativePlatformReport) {
         ? { candidates: result.candidates.map(candidate => ({
             className: candidate.className,
             status: candidate.status,
+            ...(candidate.mediaGate
+              ? { mediaGate: {
+                  limitationId: candidate.mediaGate.limitationId,
+                  stage: candidate.mediaGate.stage,
+                  gate: candidate.mediaGate.gate,
+                  condition: candidate.mediaGate.condition,
+                  sourceSha256: candidate.mediaGate.sourceSha256,
+                  evidenceId: candidate.mediaGate.evidenceId,
+                  downstream: { hoverInput: candidate.mediaGate.downstream.hoverInput, pseudoState: candidate.mediaGate.downstream.pseudoState },
+                } }
+              : {}),
             checkpoints: candidate.checkpoints.map(checkpoint => ({ name: checkpoint.name, passed: checkpoint.passed })),
           })) }
         : {}),

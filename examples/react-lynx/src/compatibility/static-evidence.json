@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "catalogHash": "19a224190db7a801ac1c96f16279dbdf8d592d7914ec69b975ea0ccf291da24e",
-  "generatedAt": "2026-10-19T06:16:57.880Z",
+  "catalogHash": "98c3505c683c60da7642c85a604fc89e1102f5a9c2e78a19b094fa98b4dc1e32",
+  "generatedAt": "2026-10-19T08:09:46.945Z",
   "versions": {
     "tailwindcss": "4.3.3",
     "lynxEngine": "4.0.1",
@@ -1826,7 +1826,29 @@
         {
           "className": "hover:bg-[#ef4444]",
           "generated": true,
-          "bundled": true
+          "bundled": true,
+          "mediaGuard": {
+            "className": "hover:bg-[#ef4444]",
+            "limitationId": "lynx4.0.1-media-hover-unknown-v1",
+            "sourceSha256": "46d718942757e574136fdb02ce32c0acddbc2de0c80b421c5b7023d64ee13f73",
+            "condition": "(hover:hover)",
+            "generatedRules": [
+              {
+                "selector": ".hover\\:bg-\\[\\#ef4444\\]:hover",
+                "mediaConditions": [
+                  "(hover:hover)"
+                ]
+              }
+            ],
+            "bundledRules": [
+              {
+                "selector": ".hover\\:bg-\\[\\#ef4444\\]:hover",
+                "mediaConditions": [
+                  "(hover:hover)"
+                ]
+              }
+            ]
+          }
         }
       ]
     },
@@ -1905,7 +1927,29 @@
         {
           "className": "group-hover:block",
           "generated": true,
-          "bundled": true
+          "bundled": true,
+          "mediaGuard": {
+            "className": "group-hover:block",
+            "limitationId": "lynx4.0.1-media-hover-unknown-v1",
+            "sourceSha256": "46d718942757e574136fdb02ce32c0acddbc2de0c80b421c5b7023d64ee13f73",
+            "condition": "(hover:hover)",
+            "generatedRules": [
+              {
+                "selector": ".group-hover\\:block:is(:where(.group):hover *)",
+                "mediaConditions": [
+                  "(hover:hover)"
+                ]
+              }
+            ],
+            "bundledRules": [
+              {
+                "selector": ".group-hover\\:block:is(:where(.group):hover *)",
+                "mediaConditions": [
+                  "(hover:hover)"
+                ]
+              }
+            ]
+          }
         },
         {
           "className": "peer-checked:opacity-100",

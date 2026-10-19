@@ -12,12 +12,17 @@ export function mediaGateArtifactNames() {
 }
 
 export function mediaGuardValid(proof: StaticMediaGuardEvidence | undefined, className = proof?.className) {
-  const needle = className ? `.${className.replace(/[^a-z0-9_-]/gi, '\\$&')}` : ''
+  const needle = className ? `.${className.replace(/[^\w-]/g, '\\$&')}` : ''
   const ownsSelector = (selector: string) => {
+    if (!needle) {
+      return false
+    }
     let offset = selector.indexOf(needle)
-    while (needle && offset >= 0) {
+    while (offset >= 0) {
       const next = selector[offset + needle.length]
-      if (next === undefined || !/[\w\\-]/.test(next)) return true
+      if (next === undefined || !/[\w\\-]/.test(next)) {
+        return true
+      }
       offset = selector.indexOf(needle, offset + needle.length)
     }
     return false
@@ -61,14 +66,18 @@ export function mediaGateRejection(className: string, proof: StaticMediaGuardEvi
     className,
     status: 'unsupported',
     reason: MEDIA_GATE_REASON,
-    mediaGate: { limitationId: MEDIA_GATE_LIMITATION_ID, stage: 'runtime', gate: 'media', condition: '(hover:hover)', evidenceId: 'media-hover-v1', downstream: { hoverInput: 'not-tested', pseudoState: 'not-tested' } },
+    mediaGate: { limitationId: MEDIA_GATE_LIMITATION_ID, stage: 'runtime', gate: 'media', condition: '(hover:hover)', sourceSha256: MEDIA_GATE_SOURCE_SHA256, evidenceId: 'media-hover-v1', downstream: { hoverInput: 'not-tested', pseudoState: 'not-tested' } },
     checkpoints: [{ name: 'media:necessary-guard-v1', passed: true }],
   }
 }
 
 function sameData(actual: unknown, expected: unknown): boolean {
-  if (actual === expected) return true
-  if (!actual || !expected || typeof actual !== 'object' || typeof expected !== 'object') return false
+  if (actual === expected) {
+    return true
+  }
+  if (!actual || !expected || typeof actual !== 'object' || typeof expected !== 'object') {
+    return false
+  }
   const keys = Object.keys(actual)
   return keys.length === Object.keys(expected).length && keys.every(key => Object.hasOwn(expected, key)
     && sameData(Reflect.get(actual, key), Reflect.get(expected, key)))
@@ -77,7 +86,11 @@ function sameData(actual: unknown, expected: unknown): boolean {
 /** 媒体 gate 是独立拒绝分支，不接受失败或成功的 interaction checkpoint 作为替代。 */
 export function validateMediaGateCandidate(candidate: NativeCandidateResult, built: StaticCandidateEvidence | undefined, evidence: NativeMediaGateEvidence | undefined, context?: NativeEvidenceContext) {
   validateMediaGateEvidence(evidence, context)
-  if (!built?.generated || !built.bundled) throw new Error(`${candidate.className} 的媒体拒绝不能掩盖生成或 encoder 失败`)
+  if (!built?.generated || !built.bundled) {
+    throw new Error(`${candidate.className} 的媒体拒绝不能掩盖生成或 encoder 失败`)
+  }
   const expected = mediaGateRejection(candidate.className, built.mediaGuard, evidence)
-  if (!sameData(candidate, expected)) throw new Error(`${candidate.className} 的必要媒体条件证据不完整或混淆了未执行的 hover 输入`)
+  if (!sameData(candidate, expected)) {
+    throw new Error(`${candidate.className} 的必要媒体条件证据不完整或混淆了未执行的 hover 输入`)
+  }
 }

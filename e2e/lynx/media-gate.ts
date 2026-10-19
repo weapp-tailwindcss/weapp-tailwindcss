@@ -15,16 +15,22 @@ export async function validateMediaGateArtifacts(report: NativePlatformReport, d
   }
   validateMediaGateEvidence(sidecar.mediaGate, report.evidence)
   for (const key of ['limitationId', 'runId', 'bundleSha256', 'sdkVersion'] as const) {
-    if (sidecar.mediaGate[key] !== evidence[key]) throw new Error(`Lynx media gate 原生侧车 ${key} 不符`)
+    if (sidecar.mediaGate[key] !== evidence[key]) {
+      throw new Error(`Lynx media gate 原生侧车 ${key} 不符`)
+    }
   }
   const ratio = report.environment.viewport.pixelRatio
-  if (!Number.isFinite(ratio) || ratio <= 0) throw new Error('Lynx media gate 缺少真实像素比')
+  if (!Number.isFinite(ratio) || ratio <= 0) {
+    throw new Error('Lynx media gate 缺少真实像素比')
+  }
   for (const id of MEDIA_GATE_PROBE_IDS) {
     const probe = evidence.probes.find(item => item.id === id)!
     const raw = sidecar.mediaGate.probes.find((item: { id: string }) => item.id === id)
     for (const role of ['probe', 'container'] as const) {
       for (const key of ['width', 'height', 'left', 'right', 'top', 'bottom'] as const) {
-        if (raw[role][key] !== probe[role][key]) throw new Error(`Lynx media gate ${id} 原生几何侧车不符`)
+        if (raw[role][key] !== probe[role][key]) {
+          throw new Error(`Lynx media gate ${id} 原生几何侧车不符`)
+        }
       }
     }
     const image = PNG.sync.read(await fs.readFile(path.join(directory, `media-hover-v1-${id}.png`)))
@@ -42,13 +48,19 @@ export async function validateMediaGateArtifacts(report: NativePlatformReport, d
         const cssX = (x + 0.5) / ratio
         const cssY = (y + 0.5) / ratio
         const width = positive ? 32 : 16
-        if (Math.abs(cssX - width) < 1 / ratio || Math.abs(cssY - 16) < 1 / ratio) continue
+        if (Math.abs(cssX - width) < 1 / ratio || Math.abs(cssY - 16) < 1 / ratio) {
+          continue
+        }
         const inside = cssX < width && cssY < 16
         const expected = inside ? color : [255, 255, 255]
         const offset = (y * image.width + x) * 4
-        if (image.data[offset + 3]! < 250 || expected.some((value, channel) => Math.abs(image.data[offset + channel]! - value) > 4)) invalid++
-        if (inside) foreground++
-        else background++
+        if (image.data[offset + 3]! < 250 || expected.some((value, channel) => Math.abs(image.data[offset + channel]! - value) > 4)) {
+          invalid++
+        }
+        if (inside) {
+          foreground++
+        }
+        else { background++ }
       }
     }
     if (foreground < 100 * ratio * ratio || background < 2000 * ratio * ratio || invalid > 0) {

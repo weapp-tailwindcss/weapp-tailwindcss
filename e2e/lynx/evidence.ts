@@ -4,8 +4,11 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { compatibilityCases } from '../../examples/react-lynx/src/compatibility/catalog'
 import { evidenceArtifactNames, lynxEvidenceStrategy } from '../../examples/react-lynx/src/compatibility/evidence'
+import { mediaGateArtifactNames, validateMediaGateEvidence } from '../../examples/react-lynx/src/compatibility/media-gate-contract'
 import staticEvidence from '../../examples/react-lynx/src/compatibility/static-evidence.json'
 import { readNativeHostGeometry } from './geometry-evidence'
+import { validateMediaGateArtifacts } from './media-gate'
+import { validateMediaGuardArtifacts } from './media-guard-artifacts'
 
 export function sha256(data: Uint8Array) {
   return createHash('sha256').update(data).digest('hex')
@@ -33,6 +36,13 @@ export function validateEvidenceManifest(report: NativePlatformReport, expected:
   }
   const builtById = new Map((staticEvidence as StaticEvidenceReport).results.map(item => [item.id, item]))
   const names = compatibilityCases.flatMap(item => evidenceArtifactNames(item, builtById.get(item.id)))
+  if (report.mediaGate) {
+    validateMediaGateEvidence(report.mediaGate, expected)
+    names.push(...mediaGateArtifactNames())
+  }
+  else if (report.results.some(result => result.candidates?.some(candidate => candidate.mediaGate))) {
+    throw new Error('Lynx media gate 候选缺少本轮宿主证据')
+  }
   if (!Array.isArray(evidence.artifacts) || evidence.artifacts.length !== names.length) {
     throw new Error('Lynx evidence 截图清单缺帧或包含额外帧')
   }
@@ -81,6 +91,10 @@ export async function validateNativeEvidence(report: NativePlatformReport, artif
     if (built?.generated && built.bundled && lynxEvidenceStrategy(item) === 'native-geometry') {
       await readNativeHostGeometry(report, directory, expected, item.id)
     }
+  }
+  if (report.mediaGate) {
+    await validateMediaGuardArtifacts(artifactDir, staticEvidence as StaticEvidenceReport)
+    await validateMediaGateArtifacts(report, directory)
   }
   return directory
 }

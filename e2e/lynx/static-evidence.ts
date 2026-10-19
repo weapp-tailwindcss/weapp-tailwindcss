@@ -138,7 +138,9 @@ export function parseGeneratedRules(css: string) {
   postcss.parse(css).walkRules((rule) => {
     const mediaConditions: string[] = []
     for (let parent = rule.parent; parent; parent = parent.parent) {
-      if (parent.type === 'atrule' && parent.name === 'media') mediaConditions.unshift(parent.params.replace(/\s+/g, ''))
+      if (parent.type === 'atrule' && parent.name === 'media') {
+        mediaConditions.unshift(parent.params.replace(/\s+/g, ''))
+      }
     }
     const declarations: ExpectedDeclaration[] = []
     rule.walkDecls((declaration) => {
@@ -155,9 +157,13 @@ export function parseGeneratedRules(css: string) {
 
 /** 所有生成与编码规则都必须具有必要 guard；任一无条件替代规则都拒绝该限制证明。 */
 export function staticMediaGuard(className: string, generated: RuleEvidence[], bundled: RuleEvidence[]): StaticMediaGuardEvidence | undefined {
-  if (!(MEDIA_GATE_CANDIDATES as readonly string[]).includes(className)) return undefined
+  if (!(MEDIA_GATE_CANDIDATES as readonly string[]).includes(className)) {
+    return undefined
+  }
   const sources = [generated, bundled].map(rules => matchingRules(rules, [className]))
-  if (sources.some(rules => rules.length === 0 || rules.some(rule => !rule.mediaConditions?.includes('(hover:hover)')))) return undefined
+  if (sources.some(rules => rules.length === 0 || rules.some(rule => !rule.mediaConditions?.includes('(hover:hover)')))) {
+    return undefined
+  }
   const [generatedRules, bundledRules] = sources.map(rules => rules.map(rule => ({ selector: rule.selector, mediaConditions: rule.mediaConditions! })))
   return { className, limitationId: MEDIA_GATE_LIMITATION_ID, sourceSha256: MEDIA_GATE_SOURCE_SHA256, condition: '(hover:hover)', generatedRules: generatedRules!, bundledRules: bundledRules! }
 }

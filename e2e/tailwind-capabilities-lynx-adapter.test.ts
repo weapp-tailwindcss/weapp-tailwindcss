@@ -109,6 +109,17 @@ it('固定的支持与阶段不从本轮 checkpoint 或失败推导', () => {
   expect(ios.find(item => item.id === 'sizing-size')!.features).toContain('size')
 })
 
+it('媒体必要条件的拒绝不能传播为 hover 输入或原子状态已经执行', async () => {
+  const { context, raw, save } = await fixture('variant-state', 'unsupported', false)
+  context.caseFilter = /^(?:variant-state|capability\/state)$/
+  raw.results[0]!.checkpoints = [{ name: 'media:necessary-guard-v1', passed: true }]
+  await save()
+  const { report, contracts } = await buildLynxCapabilityReport(context, 'lynx-ios', raw)
+  expect(contracts.find(item => item.id === 'variant-state')!.features).toEqual(['authoring/variant-state'])
+  expect(report.results.find(item => item.id === 'variant-state')).toMatchObject({ status: 'blocked', assertions: [] })
+  expect(report.results.find(item => item.id === 'capability/state')).toMatchObject({ status: 'not-run', assertions: [] })
+})
+
 it('从完整尺寸重算语义，保存原始报告和bundle回执并写JSON/Markdown', async () => {
   const { context, raw } = await fixture()
   const { report, contracts } = await buildLynxCapabilityReport(context, 'lynx-ios', raw)
