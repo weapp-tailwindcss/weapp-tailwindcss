@@ -1,5 +1,6 @@
 import { createRequire } from 'node:module'
 import postcss from 'postcss'
+import { cssValueSignature } from './css/value'
 
 const selectorParser = createRequire(new URL('../../packages/postcss/package.json', import.meta.url))('postcss-selector-parser')
 
@@ -146,7 +147,7 @@ export function stylesheetDependenciesRetained(actual: string, expected: string)
       for (const decl of rule.nodes) {
         if (decl.type === 'decl' && decl.prop.startsWith('--')) {
           for (const selector of resolveSelectors(selectors)) {
-            append(`global/${conditions(rule)}/${selector}/${decl.prop}`, JSON.stringify([decl.value.replace(/\s+/g, ' ').trim(), Boolean(decl.important)]))
+            append(`global/${conditions(rule)}/${selector}/${decl.prop}`, JSON.stringify([cssValueSignature(decl.value), Boolean(decl.important)]))
           }
         }
       }
@@ -163,7 +164,7 @@ export function stylesheetDependenciesRetained(actual: string, expected: string)
           parents.unshift(parent.type === 'rule' ? parent.selector : `@${parent.name} ${parent.params}`)
           parent = parent.parent
         }
-        declarations.push([parents, decl.prop, decl.value.replace(/\s+/g, ' ').trim(), Boolean(decl.important)])
+        declarations.push([parents, decl.prop, cssValueSignature(decl.value), Boolean(decl.important)])
       })
       append(`@${rule.name}/${conditions(rule)}/${rule.params}`, JSON.stringify(declarations))
     })

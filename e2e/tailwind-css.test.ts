@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { cssDeclarations, retainsRuleContexts, stylesheetDependenciesRetained } from './tailwind-capabilities/css'
+import { cssValueSignature } from './tailwind-capabilities/css/value'
 import { defaultReferenceBuilder } from './tailwind-capabilities/reference'
 
 function retains(actual: string, expected: string, candidate = 'probe') {
@@ -35,6 +36,40 @@ describe('候选选择器与条件上下文', () => {
     }
     expect(stylesheetDependenciesRetained(':root,:host{--spacing:.25rem;--spacing:1rem}', ':root,:host{--spacing:.25rem}')).toBe(false)
     expect(stylesheetDependenciesRetained('@media print{:root,:host{--spacing:.25rem}}', ':root,:host{--spacing:.25rem}')).toBe(false)
+  })
+
+  it('主题字体的单双引号等价，不会让同批候选误报丢失依赖', () => {
+    const expected = ':root,:host{--font-sans:Arial,\'Segoe UI\',sans-serif;--font-mono:\'Courier New\',monospace}'
+    const actual = ':root,:host{--font-sans:Arial,"Segoe UI",sans-serif;--font-mono:"Courier New",monospace}'
+    expect(stylesheetDependenciesRetained(actual, expected)).toBe(true)
+    expect(stylesheetDependenciesRetained(`${actual}.probe{display:flex}`, `${expected}.probe{display:flex}`)).toBe(true)
+    expect(stylesheetDependenciesRetained(actual.replace('Segoe UI', 'Segoe UI Variable'), expected)).toBe(false)
+    expect(stylesheetDependenciesRetained(actual.replace('Courier New', 'Courier  New'), expected)).toBe(false)
+  })
+
+  it('字符串的引号和 CSS escape 可等价，内容及 token 边界仍保持独立', () => {
+    expect(cssValueSignature('\'A B\'')).toBe(cssValueSignature('"A B"'))
+    expect(cssValueSignature(String.raw`'A\20 B'`)).toBe(cssValueSignature('"A B"'))
+    expect(cssValueSignature('calc(1px   +\n 2px)')).toBe(cssValueSignature('calc(1px + 2px)'))
+    for (const [actual, expected] of [
+      ['"A  B"', '"A B"'],
+      ['"A\\tB"', '"A B"'],
+      ['"A B"', 'A B'],
+      ['A B', 'AB'],
+      ['1 px', '1px'],
+      ['calc(1px+2px)', 'calc(1px + 2px)'],
+      ['var(--a, "A  B")', 'var(--a, "A B")'],
+    ]) {
+      expect(cssValueSignature(actual)).not.toBe(cssValueSignature(expected))
+    }
+  })
+
+  it('property 注册和 keyframes 也保留引号等价及字符串中的空白语义', () => {
+    const expected = '@property --probe{syntax:\'<string>\';inherits:false;initial-value:\'A B\'}@keyframes content{to{--label:\'A B\'}}'
+    const actual = '@property --probe{syntax:"<string>";inherits:false;initial-value:"A B"}@keyframes content{to{--label:"A B"}}'
+    expect(stylesheetDependenciesRetained(actual, expected)).toBe(true)
+    expect(stylesheetDependenciesRetained(actual.replaceAll('A B', 'A  B'), expected)).toBe(false)
+    expect(stylesheetDependenciesRetained(actual.replace('<string>', '<number>'), expected)).toBe(false)
   })
 
   it('hover 条件丢失或改为 focus 不能仅靠相同声明通过', () => {

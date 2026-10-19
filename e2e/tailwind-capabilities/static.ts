@@ -76,7 +76,6 @@ export async function runStatic(context: RunContext) {
         let native: ReturnType<typeof compileNativeStylesheet> | undefined
         let lynx: Awaited<ReturnType<typeof encodeLynxCss>> | undefined
         let converted = cssDeclarations('')
-        let encoded = cssDeclarations('')
         try {
           weappCss = (await generator.generate({ target: 'weapp', candidates: batch, scanSources: false })).css
           converted = cssDeclarations(weappCss)
@@ -88,7 +87,6 @@ export async function runStatic(context: RunContext) {
         catch (error) { conversionErrors['react-native'] = String(error) }
         try {
           lynx = await encodeLynxCss(generated.rawCss)
-          encoded = cssDeclarations(lynx.css)
         }
         catch (error) { conversionErrors.lynx = String(error) }
         const reference = await buildReference(batch)
@@ -109,14 +107,15 @@ export async function runStatic(context: RunContext) {
               },
               diagnosticsScope: 'candidate',
             },
-            'lynx': { execution: 'completed', snapshot: { ...cssSnapshot(encoded.contextsByClass.get(candidate) ?? []), diagnostics: (lynx?.diagnostics ?? []).map(diagnostic => `${diagnostic.type}:${diagnostic.name}`) }, diagnosticsScope: 'batch' },
+            // decoder 的展示格式含 {{变量}} 和未转义选择器，不能当作标准 CSS 或输入 AST 的等价输出。
+            'lynx': { execution: 'completed', outputFormat: 'lynx-decoder-template', reason: 'Lynx 编码已完成；decoder 展示文本不是标准 CSS，尚无独立输出语义读取器，原始展示文本、serializer 输入和诊断保留在批次产物中。' },
           }
           for (const target of conversionTargets) {
             if (conversionErrors[target]) {
               observations[target] = { execution: 'failed', reason: conversionErrors[target] }
             }
           }
-          return { candidate, conversionErrors, observations, contextRetained, dependenciesRetained, reference: expected, raw: declarations, weapp: converted.byClass.get(escape(candidate)) ?? [], lynx: encoded.byClass.get(candidate) ?? [], reactNative: native?.rules[candidate] ?? [], generated: generated.classSet.has(candidate), declarationsRetained: markers.has(candidate) || retainsDeclarations(declarations, expected) }
+          return { candidate, conversionErrors, observations, contextRetained, dependenciesRetained, reference: expected, raw: declarations, weapp: converted.byClass.get(escape(candidate)) ?? [], reactNative: native?.rules[candidate] ?? [], generated: generated.classSet.has(candidate), declarationsRetained: markers.has(candidate) || retainsDeclarations(declarations, expected) }
         })
         const artifacts = [
           { name: `${stem}.reference.css`, content: reference, kind: 'css' as const },

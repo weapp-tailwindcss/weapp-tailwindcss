@@ -112,6 +112,29 @@ describe('static runner 的生成与三目标转换分层', () => {
     expect(mocks.lynx).not.toHaveBeenCalled()
   })
 
+  it('Lynx 私有展示文本不再误入标准 CSS parser，且输入 AST 不能代证编码输出', async () => {
+    const lynxOutput = {
+      sourceCss: source,
+      css: '.size-8 { width: {{--size}}; }.hover:flex:hover { display: flex; }',
+      rules: [{ selectorText: { value: '.size-8' }, style: [{ name: 'width', value: '2rem' }, { name: 'height', value: '2rem' }] }],
+      diagnostics: [],
+      encodedByteLength: 100,
+    }
+    mocks.lynx.mockResolvedValue(lynxOutput)
+    const { report, directory } = await execute()
+    expect(mocks.lynx).toHaveBeenCalledWith(`${source}${source.replaceAll('size-8', 'size-9')}`)
+    const output = JSON.parse(await readFile(path.join(directory, 'batch-0000.lynx.json'), 'utf8'))
+    expect(output).toEqual(lynxOutput)
+    const audit = JSON.parse(await readFile(path.join(directory, 'batch-0000.audit.json'), 'utf8'))
+    expect(audit[0].conversionErrors).toEqual({})
+    expect(audit[0].observations.lynx).toMatchObject({ execution: 'completed', outputFormat: 'lynx-decoder-template' })
+    expect(audit[0].observations.lynx).not.toHaveProperty('snapshot')
+    const results = report.results.filter(result => result.id.startsWith('conversion/lynx/'))
+    expect(results).toHaveLength(2)
+    expect(results.every(result => result.status === 'not-run' && result.support === 'supported')).toBe(true)
+    expect(results.every(result => result.assertions[0]?.actual === true)).toBe(true)
+  })
+
   it('转换产物不能解析时只使对应转换失败，生成证据仍保留', async () => {
     mocks.generate.mockImplementation(async ({ target }: { target: string }) => target === 'weapp'
       ? { css: '.size-8{' }

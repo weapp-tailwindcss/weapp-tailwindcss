@@ -41,6 +41,15 @@ describe('逐候选转换审计的独立合同', () => {
     }
   })
 
+  it('原生编码完成但展示格式尚无读取器时不能伪造输入快照通过 oracle', () => {
+    const observation: ConversionObservation = { execution: 'completed', outputFormat: 'lynx-decoder-template', reason: '原生展示文本尚无独立语义读取器' }
+    for (const reviewed of [undefined, { ...oracle, target: 'lynx' as const }]) {
+      const result = conversionCaseResult(item, 'lynx', observation, artifacts, reviewed)
+      expect(result).toMatchObject({ status: 'not-run', support: 'supported', reason: observation.reason })
+      expect(result.assertions).toEqual([{ name: 'conversion-executed', stage: 'encoding', actual: true, expected: true }])
+    }
+  })
+
   it('部分声明、错误条件和后续覆盖均不满足完整正向 oracle', () => {
     const wrong: ConversionSnapshot[] = [
       { ...snapshot, statements: snapshot.statements.slice(0, 1) },

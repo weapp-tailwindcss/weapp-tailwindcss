@@ -21,6 +21,10 @@ export type ConversionObservation = {
   snapshot: ConversionSnapshot
   diagnosticsScope: 'candidate' | 'batch'
 } | {
+  execution: 'completed'
+  outputFormat: 'lynx-decoder-template'
+  reason: string
+} | {
   execution: 'failed' | 'not-run'
   reason: string
 }
@@ -107,6 +111,9 @@ export function conversionCaseResult(item: ConversionCase, target: ConversionTar
   }
   if (!executed) {
     return { ...base, status: observation.execution === 'failed' ? 'failed' : 'not-run', reason: observation.reason }
+  }
+  if (!('snapshot' in observation)) {
+    return { ...base, status: 'not-run', reason: observation.reason }
   }
   if (!oracle) {
     return { ...base, status: 'not-run', reason: `${target} 转换已执行；未登记独立语义 oracle，产物存在或为空均不能证明平台支持。` }
