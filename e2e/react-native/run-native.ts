@@ -29,6 +29,8 @@ import { validateReactNativeReport } from './reports'
 import { reactNativeVersions, RN_CATALOG_HASH, RN_FIXTURE_HASH } from './catalog'
 import { captureNativePair, validateNativeArtifacts } from './pair-evidence'
 import { createSemanticReporter } from './semantic-reporter'
+import { executeIosCommand } from './ios-command'
+import { launchIosRuntime } from './ios-runtime'
 
 interface ReportEnvelope { hmrMarker: string, cssHmrColor: string, report: ReactNativeReport, visualProbes: NativeVisualProbe[] }
 type NativeProcess = ReturnType<typeof startExpo>
@@ -279,8 +281,8 @@ async function relaunchRuntime(device: string, metroHost: string) {
     await execa('adb', ['-s', device, 'shell', 'am', 'start', '-a', 'android.intent.action.VIEW', '-d', url], { reject: false })
     return
   }
-  await execa('xcrun', ['simctl', 'terminate', device, appId], { reject: false })
-  await execa('xcrun', ['simctl', 'openurl', device, url])
+  const launch = await launchIosRuntime({ device, bundleId: appId, metroUrl: `http://${metroHost}:8081`, project: exampleRoot }, executeIosCommand)
+  await fs.writeFile(path.join(artifacts, 'ios-runtime-relaunch.json'), `${JSON.stringify(launch, null, 2)}\n`)
 }
 
 function iosHostAddress() {
@@ -401,12 +403,12 @@ async function main() {
       ...(platform === 'android' ? { ANDROID_HOME: androidHome } : {}),
     }
     if (javaHome) { env['PATH'] = `${path.join(javaHome, 'bin')}${path.delimiter}${process.env['PATH'] ?? ''}` }
-    // iOS Simulator 与宿主机共享网络栈时使用 localhost，避免 CI 的虚拟网卡地址无法被 simctl openurl 访问。
+    // iOS Simulator 与宿主机共享网络栈时使用 localhost，避免 CI 虚拟网卡地址导致 Metro 连接失败。
     const metroHost = platform === 'ios' && runtimeHost !== '127.0.0.1' ? '--lan' : '--localhost'
     const activeMetro = metro = startExpo(['--filter', '@weapp-tailwindcss/example-react-native-expo', 'exec', 'expo', 'start', metroHost, '--port', '8081', '--clear'], env, metroLogFile)
     await waitForMetro(activeMetro)
     const runArgs = platform === 'ios'
-      ? ['exec', 'tsx', 'e2e/react-native/ios-build-cli.ts', device, `com.weapptailwindcss.rncompat://expo-development-client/?url=${encodeURIComponent(`http://${runtimeHost}:8081`)}`, artifacts]
+      ? ['exec', 'tsx', 'e2e/react-native/ios-build-cli.ts', device, `http://${runtimeHost}:8081`, artifacts]
       : ['--filter', '@weapp-tailwindcss/example-react-native-expo', 'exec', 'expo', 'run', 'android', '--no-bundler', '--device', expoDevice]
     if (platform === 'android' && process.env['RN_ANDROID_BINARY']) {
       runArgs.push('--binary', path.resolve(repoRoot, process.env['RN_ANDROID_BINARY']))

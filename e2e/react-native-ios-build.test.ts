@@ -5,7 +5,12 @@ import process from 'node:process'
 import { afterEach, expect, it, vi } from 'vitest'
 import { buildAndLaunchIos, iosBuildApplication, iosBuildProject } from './react-native/ios-build'
 import { executeIosCommand, IosCommandError } from './react-native/ios-command'
+import { inspectIosBundleProvider } from './react-native/ios-provider'
 import { EnvironmentBlockedError } from './tailwind-capabilities/environment-block'
+
+vi.mock('./react-native/ios-provider', () => ({
+  inspectIosBundleProvider: vi.fn((project: string) => ({ path: path.join(project, 'ios', 'Resolved', 'AppDelegate.swift'), contents: 'generated delegate', language: 'swift', sha256: 'provider-sha256', debugProvider: 'RCTBundleURLProvider.sharedSettings', bundleRoot: '.expo/.virtual-metro-entry', releaseResource: 'main.jsbundle' })),
+}))
 
 const directories: string[] = []
 const bundleId = 'com.weapptailwindcss.rncompat'
@@ -32,7 +37,7 @@ async function fixture() {
   }
   await cp(application, container, { recursive: true })
   const settings = JSON.stringify([{ buildSettings: { PRODUCT_BUNDLE_IDENTIFIER: bundleId, WRAPPER_EXTENSION: 'app', TARGET_BUILD_DIR: path.dirname(application), FULL_PRODUCT_NAME: path.basename(application) } }])
-  const options = { project, artifacts, bundleId, device, url: `${bundleId}://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081` }
+  const options = { project, artifacts, bundleId, device, metroUrl: 'http://127.0.0.1:8081' }
   const execute = vi.fn(async (file: string, args: string[], _cwd?: string, _stream?: boolean) => {
     if (file === 'xcodebuild' && args.includes('-showBuildSettings')) {
       return settings
@@ -43,6 +48,9 @@ async function fixture() {
     if (file === 'xcrun' && args[1] === 'get_app_container') {
       return container
     }
+    if (file === 'xcrun' && args[1] === 'launch') {
+      return `${bundleId}: 12345\n`
+    }
     return ''
   })
   return { options, execute, application, container, derived, settings, ios }
@@ -52,7 +60,7 @@ afterEach(async () => {
   await Promise.all(directories.splice(0).map(directory => rm(directory, { recursive: true, force: true })))
 })
 
-it('明确构建链无需 Simulator GUI，并核对本轮安装二进制后才启动深链', async () => {
+it('核对本轮安装二进制后直接启动应用，不经过系统深链确认弹窗', async () => {
   const current = await fixture()
   await buildAndLaunchIos(current.options, current.execute)
   const calls = current.execute.mock.calls
@@ -62,17 +70,37 @@ it('明确构建链无需 Simulator GUI，并核对本轮安装二进制后才�
     if (file === 'xcodebuild') {
       expect(args).toContain(`id=${device}`)
     }
-    if (file === 'xcrun') {
+    if (file === 'xcrun' && args[1] !== 'launch') {
       expect(args[2]).toBe(device)
     }
     expect(args).not.toContain('boot')
   }
-  expect(calls.at(-1)).toEqual(['xcrun', ['simctl', 'openurl', device, current.options.url], current.options.project, true])
+  expect(calls.at(-1)).toEqual(['xcrun', ['simctl', 'launch', '--terminate-running-process', device, bundleId, '-RCT_jsLocation', '127.0.0.1:8081', '-RCT_packager_scheme', 'http'], current.options.project, true])
+  expect(calls.some(([, args]) => args[1] === 'openurl')).toBe(false)
   expect(calls.at(-2)).toEqual(['xcrun', ['simctl', 'terminate', device, bundleId], current.options.project])
-  expect(JSON.parse(await readFile(path.join(current.options.artifacts, 'ios-build.json'), 'utf8'))).toMatchObject({ stage: 'launch-request-completed', device, bundleId, termination: { status: 'terminated' }, binarySha256: { 'RNApp': expect.any(String), 'RNApp.debug.dylib': expect.any(String) } })
+  expect(JSON.parse(await readFile(path.join(current.options.artifacts, 'ios-build.json'), 'utf8'))).toMatchObject({ stage: 'launch-request-completed', device, bundleId, termination: { status: 'terminated' }, launch: { provider: 'simctl-launch-nsargumentdomain', pid: 12345 }, bundleProvider: { sha256: 'provider-sha256', debugProvider: 'RCTBundleURLProvider.sharedSettings' }, binarySha256: { 'RNApp': expect.any(String), 'RNApp.debug.dylib': expect.any(String) } })
+  expect(await readFile(path.join(current.options.artifacts, 'ios-app-delegate.swift'), 'utf8')).toBe('generated delegate')
 })
 
-it.each([notRunning, nothingToTerminate])('明确的未运行错误可继续深链，并保留错误码和日志：%s', async (diagnostic) => {
+it('实际宿主没有消费 Debug provider 时在构建和设备操作前阻断', async () => {
+  const current = await fixture()
+  vi.mocked(inspectIosBundleProvider).mockImplementationOnce(() => {
+    throw new Error('provider mismatch')
+  })
+  await expect(buildAndLaunchIos(current.options, current.execute)).rejects.toThrow('provider mismatch')
+  expect(current.execute.mock.calls.map(([file]) => file)).toEqual(['pnpm'])
+  expect(JSON.parse(await readFile(path.join(current.options.artifacts, 'ios-build.json'), 'utf8'))).toMatchObject({ stage: 'bundle-provider', failure: 'Error: provider mismatch' })
+})
+
+it.each(['', 'other.app: 12345', `${bundleId}: 0`, `${bundleId}: 12345\n${bundleId}: 23456`])('命令成功但没有唯一目标 PID 不能标记启动完成：%s', async (stdout) => {
+  const current = await fixture()
+  const execute = current.execute.getMockImplementation()!
+  current.execute.mockImplementation(async (file, args) => args[1] === 'launch' ? stdout : execute(file, args))
+  await expect(buildAndLaunchIos(current.options, current.execute)).rejects.toThrow('PID')
+  expect(JSON.parse(await readFile(path.join(current.options.artifacts, 'ios-build.json'), 'utf8'))).toMatchObject({ stage: 'launch', failure: expect.stringContaining('PID') })
+})
+
+it.each([notRunning, nothingToTerminate])('明确的未运行错误可继续启动，并保留错误码和日志：%s', async (diagnostic) => {
   const current = await fixture()
   const execute = current.execute.getMockImplementation()!
   current.execute.mockImplementation(async (file, args) => {
@@ -82,7 +110,7 @@ it.each([notRunning, nothingToTerminate])('明确的未运行错误可继续深�
     return execute(file, args)
   })
   await buildAndLaunchIos(current.options, current.execute)
-  expect(current.execute.mock.calls.at(-1)?.[1][1]).toBe('openurl')
+  expect(current.execute.mock.calls.at(-1)?.[1][1]).toBe('launch')
   expect(JSON.parse(await readFile(path.join(current.options.artifacts, 'ios-build.json'), 'utf8')).termination).toEqual({ status: 'not-running', exitCode: 3, stdout: '', stderr: diagnostic })
 })
 
@@ -94,7 +122,7 @@ it.each([
   new IosCommandError(3, '', 'found nothing to terminate'),
   new IosCommandError(3, '', nothingToTerminate.replace('NSPOSIXErrorDomain', 'CoreSimulatorService')),
   new Error(notRunning),
-])('其它 terminate 失败立即阻断，不启动深链：%s', async (failure) => {
+])('其它 terminate 失败立即阻断，不启动应用：%s', async (failure) => {
   const current = await fixture()
   const execute = current.execute.getMockImplementation()!
   current.execute.mockImplementation(async (file, args) => {
@@ -104,7 +132,7 @@ it.each([
     return execute(file, args)
   })
   await expect(buildAndLaunchIos(current.options, current.execute)).rejects.toMatchObject({ name: 'EnvironmentBlockedError', cause: failure })
-  expect(current.execute.mock.calls.some(([, args]) => args[1] === 'openurl')).toBe(false)
+  expect(current.execute.mock.calls.some(([, args]) => args[1] === 'launch')).toBe(false)
   expect(JSON.parse(await readFile(path.join(current.options.artifacts, 'ios-build.json'), 'utf8'))).toMatchObject({ stage: 'terminate', failure: String(new EnvironmentBlockedError(`iOS target app termination failed: ${String(failure)}`)) })
 })
 
@@ -117,7 +145,7 @@ it.each(['RNApp', 'RNApp.debug.dylib', 'Info.plist'])('旧安装文件 %s 不得
   const current = await fixture()
   await writeFile(path.join(current.container, file), 'old build')
   await expect(buildAndLaunchIos(current.options, current.execute)).rejects.toThrow('二进制不一致')
-  expect(current.execute.mock.calls.some(([, args]) => args[1] === 'openurl')).toBe(false)
+  expect(current.execute.mock.calls.some(([, args]) => args[1] === 'launch')).toBe(false)
 })
 
 it('构建失败不安装，保留原始失败阶段', async () => {
@@ -142,6 +170,6 @@ it('工程歧义、越界产物和错误应用身份必须拒绝', async () => {
   expect(() => iosBuildApplication(current.settings, path.join(current.derived, 'Other'), bundleId)).toThrow('越过')
   expect(() => iosBuildApplication(current.settings.replace('RN App.app', '../RN App.app'), current.derived, bundleId)).toThrow('路径')
   await expect(buildAndLaunchIos({ ...current.options, device: '' }, current.execute)).rejects.toThrow('明确设备')
-  await expect(buildAndLaunchIos({ ...current.options, url: 'other.app://invalid' }, current.execute)).rejects.toThrow('深链')
+  await expect(buildAndLaunchIos({ ...current.options, metroUrl: 'other.app://invalid' }, current.execute)).rejects.toThrow('Metro')
   expect(current.execute).not.toHaveBeenCalled()
 })

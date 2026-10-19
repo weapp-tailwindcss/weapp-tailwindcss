@@ -3,11 +3,13 @@ import { readdir, readFile, realpath, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { EnvironmentBlockedError } from '../tailwind-capabilities/environment-block'
 import { iosAppWasNotRunning } from './ios-command'
+import { inspectIosBundleProvider } from './ios-provider'
+import { iosRuntimeArguments, launchIosRuntime } from './ios-runtime'
 
 export interface IosBuildOptions {
   project: string
   device: string
-  url: string
+  metroUrl: string
   artifacts: string
   bundleId: string
 }
@@ -52,19 +54,22 @@ async function binaryHashes(application: string, executable: string) {
   return Object.fromEntries(await Promise.all(files.map(async name => [name, createHash('sha256').update(await readFile(path.join(application, name))).digest('hex')])))
 }
 
-/** 构建、安装和深链均绑定预检指定的设备，不依赖 Simulator.app 的 GUI 发现。 */
+/** 构建、安装和直接启动均绑定预检指定的设备，不依赖 Simulator.app 的 GUI 发现。 */
 export async function buildAndLaunchIos(options: IosBuildOptions, execute: IosBuildCommand) {
-  const { project, device, artifacts, bundleId, url } = options
-  if (!device || !url.startsWith(`${bundleId}://`)) {
-    throw new Error('iOS 构建缺少明确设备或正确的应用深链')
-  }
+  const { project, device, artifacts, bundleId, metroUrl } = options
+  iosRuntimeArguments(options)
   const directory = path.join(project, 'ios')
   const derivedData = path.join(directory, '.tailwind-derived-data')
-  const evidence: Record<string, unknown> = { provider: 'expo-prebuild-xcodebuild-simctl', device, bundleId, url, stage: 'prebuild' }
+  const evidence: Record<string, unknown> = { provider: 'expo-prebuild-xcodebuild-simctl', device, bundleId, metroUrl, stage: 'prebuild' }
   const save = () => writeFile(path.join(artifacts, 'ios-build.json'), `${JSON.stringify(evidence, null, 2)}\n`)
   await save()
   try {
     await execute('pnpm', ['exec', 'expo', 'prebuild', '--platform', 'ios', '--no-install'], project, true)
+    evidence.stage = 'bundle-provider'
+    await save()
+    const { contents, ...bundleProvider } = inspectIosBundleProvider(project)
+    await writeFile(path.join(artifacts, 'ios-app-delegate.swift'), contents)
+    evidence.bundleProvider = bundleProvider
     await execute('pod', ['install', `--project-directory=${directory}`], project, true)
     const build = await iosBuildProject(directory)
     Object.assign(evidence, build, { stage: 'build' })
@@ -104,9 +109,9 @@ export async function buildAndLaunchIos(options: IosBuildOptions, execute: IosBu
       }
       evidence.termination = { status: 'not-running', exitCode: error.exitCode, stdout: error.stdout, stderr: error.stderr }
     }
-    evidence.stage = 'openurl'
+    evidence.stage = 'launch'
     await save()
-    await execute('xcrun', ['simctl', 'openurl', device, url], project, true)
+    evidence.launch = await launchIosRuntime(options, execute)
     evidence.stage = 'launch-request-completed'
     await save()
   }
