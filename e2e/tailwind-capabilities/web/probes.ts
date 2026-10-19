@@ -2,6 +2,20 @@ import type { RuntimeProbe } from '../types'
 import type { WebPixelSample } from './pixels'
 import { webFeatureBindings } from './features'
 
+export interface WebLayoutRect {
+  left: number
+  top: number
+  width: number
+  height: number
+}
+
+export interface WebLayout {
+  display: string
+  width: number
+  height: number
+  children: WebLayoutRect[]
+}
+
 export interface WebProbe extends RuntimeProbe {
   features: string[]
   selector?: string
@@ -9,28 +23,32 @@ export interface WebProbe extends RuntimeProbe {
   attribute?: { name: string, value: string }
   active?: boolean
   pixels?: WebPixelSample[]
+  layout?: WebLayout
 }
 
 const element = '<div id="probe" class="probe CANDIDATE">Tailwind probe</div>'
 const text = '<span id="probe" class="probe CANDIDATE">Tailwind probe</span>'
 const stateElement = '<button id="probe" class="probe CANDIDATE" style="height:40px">Tailwind probe</button>'
+const layoutChildren = '<div data-layout-child style="width:20px;height:20px;flex:none"></div><div data-layout-child style="width:30px;height:40px;flex:none"></div>'
+const layoutElement = `<div id="probe" class="probe CANDIDATE" style="width:200px;height:100px">${layoutChildren}</div>`
+const rect = (left: number, top: number, width: number, height: number): WebLayoutRect => ({ left, top, width, height })
 const nativeUnsupported = { support: 'unsupported' as const, reason: '此语义依赖浏览器 DOM、CSS 状态或浏览器专用组件，微信需独立负向验证。' }
 
 const authoredWebProbes: Omit<WebProbe, 'features'>[] = [
   { id: 'display-flex', candidate: 'flex', html: element, component: 'view', property: 'display', expected: 'flex' },
-  { id: 'box-sizing', candidate: 'box-border', html: element, component: 'view', property: 'box-sizing', expected: 'border-box' },
+  { id: 'box-sizing', candidate: 'box-border', html: '<div id="probe" class="probe box-model CANDIDATE" style="width:100px;height:60px;padding:10px;border:5px solid transparent"></div>', component: 'view', property: 'box-sizing', expected: 'border-box', layout: { display: 'block', width: 100, height: 60, children: [] } },
   { id: 'position', candidate: 'relative', html: element, component: 'view', property: 'position', expected: 'relative' },
   { id: 'visibility', candidate: 'invisible', html: element, component: 'view', property: 'visibility', expected: 'hidden' },
   { id: 'z-index', candidate: 'z-[17]', html: element, component: 'view', property: 'z-index', expected: '17' },
   { id: 'overflow', candidate: 'overflow-hidden', html: element, component: 'view', property: 'overflow', expected: 'hidden' },
   { id: 'isolation', candidate: 'isolate', html: element, component: 'view', property: 'isolation', expected: 'isolate', weapp: nativeUnsupported },
-  { id: 'flex-direction', candidate: 'flex flex-col', html: element, component: 'view', property: 'flex-direction', expected: 'column' },
-  { id: 'flex-alignment', candidate: 'flex items-center', html: element, component: 'view', property: 'align-items', expected: 'center' },
-  { id: 'justify-content', candidate: 'flex justify-between', html: element, component: 'view', property: 'justify-content', expected: 'space-between' },
-  { id: 'flex-grow', candidate: 'grow-[2]', html: element, component: 'view', property: 'flex-grow', expected: '2' },
-  { id: 'flex-shrink', candidate: 'shrink-0', html: element, component: 'view', property: 'flex-shrink', expected: '0' },
-  { id: 'gap', candidate: 'flex gap-4', html: element, component: 'children', property: 'column-gap', expected: '16px' },
-  { id: 'grid', candidate: 'grid grid-cols-[80px_120px]', html: '<div id="probe" class="probe CANDIDATE" style="width:200px"><div>A</div><div>B</div></div>', component: 'children', property: 'grid-template-columns', expected: '80px 120px' },
+  { id: 'flex-direction', candidate: 'flex flex-col', html: layoutElement, component: 'children', property: 'flex-direction', expected: 'column', layout: { display: 'flex', width: 200, height: 100, children: [rect(0, 0, 20, 20), rect(0, 20, 30, 40)] } },
+  { id: 'flex-alignment', candidate: 'flex items-center', html: layoutElement, component: 'children', property: 'align-items', expected: 'center', layout: { display: 'flex', width: 200, height: 100, children: [rect(0, 40, 20, 20), rect(20, 30, 30, 40)] } },
+  { id: 'justify-content', candidate: 'flex justify-between', html: layoutElement, component: 'children', property: 'justify-content', expected: 'space-between', layout: { display: 'flex', width: 200, height: 100, children: [rect(0, 0, 20, 20), rect(170, 0, 30, 40)] } },
+  { id: 'flex-grow', candidate: 'grow-[2]', html: '<div style="display:flex;width:200px;height:100px"><div id="probe" class="probe CANDIDATE" style="width:20px;height:20px;flex-basis:20px"></div><div style="width:20px;height:20px;flex-grow:1"></div></div>', component: 'view', property: 'flex-grow', expected: '2', layout: { display: 'block', width: 380 / 3, height: 20, children: [] } },
+  { id: 'flex-shrink', candidate: 'shrink-0', html: '<div style="display:flex;width:100px;height:100px"><div id="probe" class="probe CANDIDATE" style="width:80px;height:20px"></div><div style="width:80px;height:20px"></div></div>', component: 'view', property: 'flex-shrink', expected: '0', layout: { display: 'block', width: 80, height: 20, children: [] } },
+  { id: 'gap', candidate: 'flex gap-4', html: layoutElement, component: 'children', property: 'column-gap', expected: '16px', layout: { display: 'flex', width: 200, height: 100, children: [rect(0, 0, 20, 20), rect(36, 0, 30, 40)] } },
+  { id: 'grid', candidate: 'grid grid-cols-[80px_120px]', html: '<div id="probe" class="probe CANDIDATE" style="width:200px;height:100px"><div data-layout-child style="height:20px"></div><div data-layout-child style="height:30px"></div></div>', component: 'children', property: 'grid-template-columns', expected: '80px 120px', layout: { display: 'grid', width: 200, height: 100, children: [rect(0, 0, 80, 20), rect(80, 0, 120, 30)] } },
   { id: 'padding', candidate: 'p-[13px]', html: element, component: 'view', property: 'padding-top', expected: '13px' },
   { id: 'margin', candidate: 'ml-[11px]', html: element, component: 'view', property: 'margin-left', expected: '11px' },
   { id: 'negative', candidate: '-mt-[7px]', html: element, component: 'view', property: 'margin-top', expected: '-7px' },
@@ -88,4 +106,4 @@ export const webProbes: WebProbe[] = authoredWebProbes.map((probe) => {
   return { ...probe, features }
 })
 
-export const webFixtureCss = '@import "tailwindcss" source(none);\n@layer base { html { font-size:16px; } body { margin:0; } .stage { position:relative; margin:32px; width:500px; } .probe { width:80px; background-color:#010203; color:#040506; transition:none; } }'
+export const webFixtureCss = '@import "tailwindcss" source(none);\n@layer base { html { font-size:16px; } body { margin:0; } .stage { position:relative; margin:32px; width:500px; } .probe { width:80px; background-color:#010203; color:#040506; transition:none; } .box-model { box-sizing:content-box; } }'

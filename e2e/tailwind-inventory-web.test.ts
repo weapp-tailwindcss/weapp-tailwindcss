@@ -24,7 +24,7 @@ describe('Web 语义夹具合同', () => {
         expect(contract.expectedValues.after).toBe(probe.expected)
       }
       else {
-        expect(contract.requiredAssertions).toEqual(['generated', 'computed', ...pixelNames])
+        expect(contract.requiredAssertions.filter(name => !name.includes('/layout/'))).toEqual(['generated', 'computed', ...pixelNames])
         expect(contract.expectedValues.computed).toBe(probe.expected)
       }
       expect(contract.assertionStages).toEqual({ generated: 'generation', ...Object.fromEntries(pixelNames.map(name => [name, 'visual'])) })

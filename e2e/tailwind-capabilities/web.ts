@@ -9,7 +9,7 @@ import { withGeneratorFixture } from './fixture'
 import { loadInventory } from './inventory'
 import { assertionPassed, receipt, validateCapabilityReport, verifyReportArtifacts } from './report'
 import { activateProbe, readProbe } from './web/actions'
-import { renderWebProbe, webContract } from './web/contract'
+import { renderWebProbe, webContract, webRuntimeAssertions } from './web/contract'
 import { webRuntimeCoverage } from './web/coverage'
 import { pixelAssertions, readPixels } from './web/pixels'
 import { webFixtureCss, webProbes } from './web/probes'
@@ -61,7 +61,7 @@ export async function runWeb(context: RunContext, engine: BrowserEngine) {
         const observe = async (state: string, expected: string) => {
           const observation = await readProbe(page!, probe)
           measurements.push({ state, property: probe.property, expected, ...observation })
-          assertions.push({ name: state, stage: 'runtime', actual: observation.actual, expected })
+          assertions.push(...webRuntimeAssertions(probe, state, observation))
           const name = `${probe.id}-${state}.png`
           const screenshot = await page!.screenshot({ path: path.join(context.directory, name), fullPage: true, scale: 'css' })
           if (probe.pixels?.length) {

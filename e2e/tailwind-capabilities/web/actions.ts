@@ -1,5 +1,14 @@
 import type { Page } from 'playwright'
-import type { WebProbe } from './probes'
+import type { WebLayout, WebProbe } from './probes'
+
+export interface WebObservation {
+  actual: string
+  className: string | null
+  attributes: Record<string, string>
+  rect: { width: number, height: number, top: number, left: number }
+  scroll: { x: number, y: number }
+  layout?: WebLayout
+}
 
 export async function activateProbe(page: Page, probe: WebProbe): Promise<() => Promise<void>> {
   const locator = page.locator(probe.actionTarget ?? '#probe')
@@ -62,8 +71,8 @@ export async function activateProbe(page: Page, probe: WebProbe): Promise<() => 
   }
 }
 
-export async function readProbe(page: Page, probe: WebProbe) {
-  return page.locator(probe.selector ?? '#probe').evaluate((element, property) => {
+export async function readProbe(page: Page, probe: WebProbe): Promise<WebObservation> {
+  return page.locator(probe.selector ?? '#probe').evaluate((element, { property, measureLayout }) => {
     const isBefore = property.startsWith('before:')
     const style = window.getComputedStyle(element, isBefore ? '::before' : undefined)
     const rect = element.getBoundingClientRect()
@@ -73,6 +82,17 @@ export async function readProbe(page: Page, probe: WebProbe) {
       attributes: Object.fromEntries(Array.from(element.attributes, item => [item.name, item.value])),
       rect: { width: rect.width, height: rect.height, top: rect.top, left: rect.left },
       scroll: { x: window.scrollX, y: window.scrollY },
+      ...(measureLayout
+        ? { layout: {
+            display: style.display,
+            width: rect.width,
+            height: rect.height,
+            children: Array.from(element.querySelectorAll(':scope > [data-layout-child]'), (child) => {
+              const childRect = child.getBoundingClientRect()
+              return { left: childRect.left - rect.left, top: childRect.top - rect.top, width: childRect.width, height: childRect.height }
+            }),
+          } }
+        : {}),
     }
-  }, probe.property)
+  }, { property: probe.property, measureLayout: !!probe.layout })
 }
