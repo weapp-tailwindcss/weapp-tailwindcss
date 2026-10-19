@@ -31,10 +31,14 @@ export async function packagePortableDecoder(options: { source: string, emsdk: s
   const inputs = JSON.parse(await fs.readFile(path.join(decoderRoot, 'rebuild', 'inputs.json'), 'utf8'))
   for (const patch of inputs.patches) {
     const bytes = await fs.readFile(path.resolve(options.patchRoot ?? decoderRoot, patch.file))
-    if (sha256(bytes) !== patch.sha256) { throw new Error(`补丁 SHA-256 不匹配: ${patch.file}`) }
+    if (sha256(bytes) !== patch.sha256) {
+      throw new Error(`补丁 SHA-256 不匹配: ${patch.file}`)
+    }
   }
   const raw = await fs.readFile(options.input)
-  if (!raw.includes(Buffer.from('WebAssembly')) || !raw.includes(Buffer.from('_decode'))) { throw new Error('产物缺少 WASM 或 decode 接口') }
+  if (!raw.includes(Buffer.from('WebAssembly')) || !raw.includes(Buffer.from('_decode'))) {
+    throw new Error('产物缺少 WASM 或 decode 接口')
+  }
   const compressed = gzipSync(raw, { level: 9 })
   const vendor = path.join(decoderRoot, 'vendor')
   await fs.mkdir(path.join(vendor, 'licenses'), { recursive: true })
@@ -69,14 +73,16 @@ export async function packagePortableDecoder(options: { source: string, emsdk: s
 
 async function main() {
   const { values } = parseArgs({ options: { 'source': { type: 'string' }, 'emsdk': { type: 'string' }, 'input': { type: 'string' }, 'patch-root': { type: 'string' } } })
-  if (!values.source || !values.emsdk || !values.input) { throw new Error('需要 --source、--emsdk 和 --input') }
+  if (!values.source || !values.emsdk || !values.input) {
+    throw new Error('需要 --source、--emsdk 和 --input')
+  }
   const manifest = await packagePortableDecoder({ source: path.resolve(values.source), emsdk: path.resolve(values.emsdk), input: path.resolve(values.input), patchRoot: values['patch-root'] ? path.resolve(values['patch-root']) : undefined })
-  console.log(JSON.stringify({ compressed: manifest.compressed, decompressed: manifest.decompressed }))
+  process.stdout.write(`${JSON.stringify({ compressed: manifest.compressed, decompressed: manifest.decompressed })}\n`)
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   main().catch((error: unknown) => {
-    console.error(error)
+    process.stderr.write(`${error instanceof Error ? error.stack : String(error)}\n`)
     process.exitCode = 1
   })
 }

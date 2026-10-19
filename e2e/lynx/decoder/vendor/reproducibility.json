@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "verified": true,
+  "scope": "macOS arm64，同一固定 SDK；两次独立源码归档解压、生成、完整编译和链接；不声称跨操作系统或跨工具链字节可重复",
+  "coreInputsSha256": "5b51e443783b9fdbf76ff2909e956a5a37f33c8e628c4bd91b229341e002d91d",
+  "bootstrapInputsSha256": "f376a22909f457f83790ad1e4d897b9ef39f2811c0b0fd070475aa8082fadb59",
+  "runs": [
+    {
+      "id": "clean-source-1",
+      "schemaVersion": 1,
+      "sourceCommit": "3526f07a8cb25cfb2841736c76b54deadc7e6e46",
+      "compilerCommit": "bebaf7e50e31865b0724f17eaa52e161e2dfef5a",
+      "platform": "darwin",
+      "arch": "arm64",
+      "nodeVersion": "v24.18.0",
+      "sourceDateEpoch": "0",
+      "raw": {
+        "byteLength": 13254390,
+        "sha256": "013cedf5d7fe0db0103b74d2936fba072e0f5a89c0a715af77f30b1d0627878b"
+      },
+      "gzip": {
+        "byteLength": 2235071,
+        "sha256": "69e7b4cedc110e5ccdce3be24341cfb32ff67c171449b9fcc4c74515383d4b1a"
+      },
+      "matchesCommittedRaw": true,
+      "matchesCommittedGzip": true
+    },
+    {
+      "id": "clean-source-2",
+      "schemaVersion": 1,
+      "sourceCommit": "3526f07a8cb25cfb2841736c76b54deadc7e6e46",
+      "compilerCommit": "bebaf7e50e31865b0724f17eaa52e161e2dfef5a",
+      "platform": "darwin",
+      "arch": "arm64",
+      "nodeVersion": "v24.18.0",
+      "sourceDateEpoch": "0",
+      "semanticProbe": {
+        "bundleSha256": "0b751511fd435c1e54ef84ba932f3abe947d069dd91ea30b7bb165f4d80a6035",
+        "cssSha256": "9adde11b9a2d6744d5ff270ce6442f713d60a4316decec694565e55e7a386ebf",
+        "selectorRules": 17
+      },
+      "toolchain": {
+        "receipt": "releases-bebaf7e50e31865b0724f17eaa52e161e2dfef5a-64bit",
+        "emccVersion": "emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 4.0.22 (0f3d2e62bccf8e14497ff19e05a1202c51eb0c65)",
+        "emccSha256": "8aceac1889631c2902b2265c7991a18d187e3deec157e8194e489e0988a564d1",
+        "clangVersion": "clang version 22.0.0git (https:/github.com/llvm/llvm-project c7706d9472fe880ba1d3418919ad4185710c9559)",
+        "clangSha256": "0e966e8d4d52dd12e809f062667c50839173eab6a13ed4c10354604fd0bc0967",
+        "clangByteLength": 114441120,
+        "registeredClangDigest": true
+      },
+      "raw": {
+        "byteLength": 13254390,
+        "sha256": "013cedf5d7fe0db0103b74d2936fba072e0f5a89c0a715af77f30b1d0627878b"
+      },
+      "gzip": {
+        "byteLength": 2235071,
+        "sha256": "69e7b4cedc110e5ccdce3be24341cfb32ff67c171449b9fcc4c74515383d4b1a"
+      },
+      "matchesCommittedRaw": true,
+      "matchesCommittedGzip": true
+    }
+  ]
+}

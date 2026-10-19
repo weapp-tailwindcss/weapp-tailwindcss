@@ -3,13 +3,17 @@ import path from 'node:path'
 import { execa } from 'execa'
 
 export async function linkPortableDecoder(python: string, emsdk: string, directory: string, environment: NodeJS.ProcessEnv) {
+  // 一个隔离目录只能链接一次，防止重试时向上游归档重复追加对象。
+  await fs.writeFile(path.join(directory, 'link.started'), '', { flag: 'wx' })
   const emscripten = path.join(emsdk, 'upstream', 'emscripten')
   const archive = path.join(directory, 'liblepus.a')
   const run = (script: string, args: string[]) => execa(python, [path.join(emscripten, script), ...args], { cwd: directory, env: environment, stdio: 'inherit' })
   // 复现上游 gen_wasm_js.py 的归档与链接步骤，以 argv/fs 避免 shell 通配符和路径引用差异。
   await run('emar.py', ['x', archive])
   const objects = (await fs.readdir(directory)).filter(file => file.endsWith('.o')).sort()
-  if (!objects.length) { throw new Error('WASM 完整归档未生成目标文件') }
+  if (!objects.length) {
+    throw new Error('WASM 完整归档未生成目标文件')
+  }
   await run('emar.py', ['qc', archive, ...objects])
   await run('emranlib.py', [archive])
   await Promise.all(objects.map(file => fs.unlink(path.join(directory, file))))
