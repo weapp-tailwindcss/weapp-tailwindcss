@@ -114,6 +114,7 @@ jobs:
         run: |
           ruby e2e/lynx/podfile.test.rb
           ruby e2e/lynx/source-patch.test.rb
+          ruby e2e/lynx/build-metadata.test.rb
       - name: Verify iOS evidence storage
         run: pnpm exec tsx e2e/lynx/test-evidence-store.ts ios
       - name: Prepare iOS 18.5 build target

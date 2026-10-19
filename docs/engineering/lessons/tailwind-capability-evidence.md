@@ -39,6 +39,7 @@ regressions:
   - e2e/lynx-failure-evidence.test.ts
   - e2e/lynx-android-sdk.test.ts
   - e2e/lynx-zip-entry.test.ts
+  - e2e/lynx/build-metadata.test.rb
   - e2e/tailwind-scheduler.test.ts
   - e2e/tailwind-css.test.ts
 ---
@@ -133,7 +134,7 @@ Lynx 首轮双端已采集运行时报告，但与历史提交的 catalog 身份
 
 独立审查随后发现，字面 selector 匹配会漏掉十六进制等价转义的无 guard 替代规则。离线静态层现复用 CSS AST 的 class 语义匹配所有分支，runtime 仅接受两条已审查的完整规范 selector，不引入解析器；CSS/TASM 等价转义、属性字面量和原始产物重读新增 12 项回归，其中 8 项先红后绿。整合后 CI=1 pnpm e2e:tailwind:contract 为 61 文件、868 项通过；Lynx 真实构建/编码/扫描另 45 项通过。第二轮旧 head 6d1f54587 的 Benchmark 全部分片首次通过，Windows 启动、三平台 watch、Chromium、RN Android/Web 通过；这些旧 head 结果不能代替后续提交的 CI。
 
-head `2633f77a8` 的 RN Android 和 Expo Web CI 已通过，iOS 已收到基线报告；TSX HMR 也已生效，37 项宿主采集和 118 项结果无失败，但采集约 134 秒，超过原 120 秒等待，完整报告在失败收尾时才到达。现在累计计算客户端原 120 秒预算，只扣除本轮认证 revision、预登记唯一 case 的实际宿主采集区间；单例仍有 10 秒硬截止、登记数量总上限和子进程取消，旧身份、重复或重叠采集不能续命，构建启动继续按墙钟。审查同时发现循环退出后可能只有一个通过帧，已补回归并严格拒绝缺两连续帧、首帧迟到和第二帧迟到。9 文件 117 项、Expo 示例 8 项和核心类型检查通过；主树整合相关 8 文件 123 项通过。新行为尚待实际 CI，诊断 run `39228158639` 绑定 `8258978c3`；没有调整像素阈值、减少案例或更新 CSS/static。
+head `2633f77a8` 的 RN Android 和 Expo Web CI 已通过，iOS 已收到基线报告；TSX HMR 也已生效，37 项宿主采集和 118 项结果无失败，但采集约 134 秒，超过原 120 秒等待，完整报告在失败收尾时才到达。现在累计计算客户端原 120 秒预算，只扣除本轮认证 revision、预登记唯一 case 的实际宿主采集区间；单例仍有 10 秒硬截止、登记数量总上限和子进程取消，旧身份、重复或重叠采集不能续命，构建启动继续按墙钟。审查同时发现循环退出后可能只有一个通过帧，已补回归并严格拒绝缺两连续帧、首帧迟到和第二帧迟到。9 文件 117 项、Expo 示例 8 项和核心类型检查通过；主树整合相关 8 文件 123 项通过。诊断 run `39228158639` 绑定 `8258978c3ca6a28361c952d64b19f05f5382db0d`，Web、Android、iOS 三个作业均已通过。独立核验双端 artifact 大小与 SHA、ZIP 安全边界及三阶段各 37 份 receipt/PNG，首尾完整报告均保留 118 个唯一案例，revision 连续变化；这次没有调整像素阈值、减少案例或更新 CSS/static。该诊断成功仍不能代替最终 PR head 的 CI。
 
 Benchmark run `39223188622` 首轮 Taro Vite steady 插件 P95 从 1980ms 增至 2555ms，两个样本均越界，是真实门禁失败，原始 artifact `12173201020` 保留。同一 SHA/base、三轮构建与 HMR、同一阈值下只定向复测一次，attempt 2 的插件样本从 `[1773,1647]` 至 `[1699,1634]`，门禁 -4.17%、无 violations；聚合只选择新 artifact `12174092954`，其余四项目继续用首轮成功证据。复测与聚合均通过，仅说明本次未复现，不证明首轮样本无效或环境噪声；未改生产优化或阈值，复测预算已耗尽。head `2633f77a8` 的三浏览器、quality 三组、Windows 默认 utility、三系统 startup/watch 和 macOS 微信 watch 也已通过，portable 矩阵当时仍未完成，旧 head 结果不能代替后续提交。
 
@@ -146,6 +147,8 @@ Android 身份修复从 Gradle 实际解析的 component、AAR 和各 ABI 的 `l
 编码侧另确认，生产 TASM 0.0.49 在未启用页面配置 `enableCSSRule` 时会静默忽略媒体规则。独立分支 `codex/lynx-cssrule-probe`（源码 `faddad5af9edc014e2a005247e5207134572c394`）只通过官方 `pluginLynxConfig` 启用该页面开关，保留原 encoder、engine 3.9、SDK 和六帧预期。纯构建通过，真实 bundle 包含开关；Lynx run `39230554994` 用于核对原生效果，尚不能算修复通过。该模式还暴露独立 Greedy decoder 的读取边界，静态定向解码失败；serializer 输入或 bundle 中出现开关均不能代替编码及运行时通过证据，诊断配置暂不进入主修复分支。
 
 该开关诊断的 Android artifact `12177540185` 经 SHA-256 `5a9a33e1649d2701b0d687299a26342ea16ae22ca3d46fd942f2b95625bbb462` 核对，原生 `min-width` 已变为绿色 32×16，四个负向探针仍为红色 16×16，无条件正向探针为绿色 32×16。原始 PNG 与侧车支持配置根因，但该分支尚无新 APK 身份协议，旧 getter 门禁仍拒绝发布报告，不能刷新最终基线。前一诊断的 iOS artifact `12175519603` 经完整摘要校验后确认 getter 为 `1.4.0`、`min-width` 仍未生效；其来源须独立修复，不能接受错误读数来放行。
+
+iOS 版本异常来自官方 source Pod 的构建元数据缺失：原始 `LynxVersion.m` 在没有 `Lynx_POD_VERSION` 时回退到 `9999_1.4.0`。现有 post_install 按实际解析的 root_spec 核对 4.0.1、CocoaPods checksum、官方 release URL 和源码 SHA，仅给 Lynx target 补齐官方宏，保留其它配置并拒绝冲突。原 getter 及 JS 均不改写。三组 Ruby 回归、原始源码的 clang/Foundation getter 与真实 Xcode 构建设置均通过；未加宏为 1.4.0、受管构建为 4.0.1。该修复仍需新原生运行验证，不能把构建证明计作设备验收。
 
 能力清单覆盖固定版本的注册项和有限补全，任意值按语法分支取样。runtime 夹具缺口、缺少独立转换 oracle、不可触发状态及设备阻塞均须保留，不能自动变成“不支持”，也不能用同属性的其他案例填充。第三方插件任意实现需另行登记。
 
