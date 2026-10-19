@@ -6,7 +6,11 @@ import path from 'node:path'
 import { isDeepStrictEqual } from 'node:util'
 import { nativeBuildFixtures, styleContains } from '../../examples/react-native-expo/src/compatibility/protocol'
 import { createNativeStyleRuntime } from '../../packages/react-native/src/runtime'
+import { RN_FIXTURE_HASH } from './catalog'
+import { RN_ENTRY_SCOPE_VERSION } from './generation-input'
+import { validateImportantRuntimeManifest } from './important-runtime'
 import { captureMetroEvidence } from './metro-evidence'
+import { validateStaticGenerationInput } from './static-input-evidence'
 
 const hash = (value: string) => createHash('sha256').update(value).digest('hex')
 
@@ -14,9 +18,14 @@ const hash = (value: string) => createHash('sha256').update(value).digest('hex')
 export async function captureNativeEncoding(projectRoot: string, directory: string, report: ReactNativeReport) {
   const output = path.join(directory, 'encoding')
   await mkdir(output, { recursive: true })
-  await captureMetroEvidence(projectRoot, output, {})
+  await captureMetroEvidence(projectRoot, output, {
+    'static-evidence.json': path.resolve(projectRoot, 'src/compatibility/static-evidence.json'),
+    'tailwind-input.cjs': path.resolve(projectRoot, 'tailwind-input.cjs'),
+  })
   const manifest = await readFile(path.join(output, 'manifest.json'), 'utf8')
-  await writeFile(path.join(output, 'run-context.json'), JSON.stringify({ runId: report.runId, revision: report.revision, manifestSha256: hash(manifest) }))
+  const staticInput = await readFile(path.join(output, 'static-evidence.json'), 'utf8')
+  const runtimeInput = await readFile(path.join(output, 'tailwind-input.cjs'), 'utf8')
+  await writeFile(path.join(output, 'run-context.json'), JSON.stringify({ version: RN_ENTRY_SCOPE_VERSION, runId: report.runId, revision: report.revision, manifestSha256: hash(manifest), staticInputSha256: hash(staticInput), runtimeInputSha256: hash(runtimeInput) }))
   await validateNativeEncodingArtifacts(report, directory)
 }
 
@@ -28,14 +37,26 @@ export async function validateNativeEncodingArtifacts(report: ReactNativeReport,
   const context = JSON.parse(await readFile(path.join(output, 'run-context.json'), 'utf8'))
   const snapshot = JSON.parse(await readFile(path.join(output, 'snapshot.json'), 'utf8'))
   const publication = JSON.parse(ready)
-  if (context.runId !== report.runId || context.revision !== report.revision || context.manifestSha256 !== hash(manifestSource)
+  if (context.version !== RN_ENTRY_SCOPE_VERSION || context.runId !== report.runId || context.revision !== report.revision || context.manifestSha256 !== hash(manifestSource)
     || !snapshot.stablePublication || snapshot.readyBefore !== ready || snapshot.readyAfter !== ready
     || snapshot.files?.['manifest.json']?.sha256 !== hash(manifestSource)
     || snapshot.files?.['manifest.ready']?.sha256 !== hash(ready)
     || publication.error || !publication.revision || !publication.virtualPath) {
     throw new Error('React Native encoding manifest 缺少本轮稳定发布身份或字节不匹配')
   }
+  const staticInput = await readFile(path.join(output, 'static-evidence.json'), 'utf8')
+  const runtimeInput = await readFile(path.join(output, 'tailwind-input.cjs'), 'utf8')
+  const input = JSON.parse(staticInput)
+  if (report.fixtureHash !== RN_FIXTURE_HASH || input.fixtureHash !== report.fixtureHash
+    || context.staticInputSha256 !== hash(staticInput) || context.runtimeInputSha256 !== hash(runtimeInput)
+    || snapshot.files?.['static-evidence.json']?.sha256 !== hash(staticInput)
+    || snapshot.files?.['tailwind-input.cjs']?.sha256 !== hash(runtimeInput)
+    || input.generation?.runtimeInput?.config?.sha256 !== hash(runtimeInput)) {
+    throw new Error('React Native encoding 缺少绑定本轮实际 static 模块与 Metro 入口的归档')
+  }
+  await validateStaticGenerationInput(input)
   const manifest = JSON.parse(manifestSource) as NativeStyleManifest
+  validateImportantRuntimeManifest(manifest)
   const runtime = createNativeStyleRuntime(manifest)
   for (const [id, fixture] of Object.entries(nativeBuildFixtures)) {
     const result = report.results.find(item => item.id === id)
@@ -46,5 +67,5 @@ export async function validateNativeEncodingArtifacts(report: ReactNativeReport,
       throw new Error(`${id} 的本轮 manifest 编码与独立原生 oracle 或报告不一致`)
     }
   }
-  return ['manifest.json', 'manifest.ready', 'snapshot.json', 'run-context.json'].map(name => path.join(output, name))
+  return ['manifest.json', 'manifest.ready', 'snapshot.json', 'run-context.json', 'static-evidence.json', 'tailwind-input.cjs'].map(name => path.join(output, name))
 }

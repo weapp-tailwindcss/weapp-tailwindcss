@@ -5,25 +5,27 @@ import process from 'node:process'
 import { nativeBuildCases, nativeBuildFixtures, nativeFixtures, rejectedNativeCases } from '../../examples/react-native-expo/src/compatibility/protocol'
 import { createNativeStyleRuntime } from '../../packages/react-native/src/runtime'
 import { generateNativeStylesheetEvidence } from '../../packages/react-native/src/tailwind/generate'
+import { mergeNativeManifests } from '../../packages/react-native/src/tailwind/merge'
+import { authoringCaseScopes, collectAuthoringEvidence, validateAuthoringEvidence } from './authoring-evidence'
 import { compatibilityCases, reactNativeVersions, RN_CATALOG_HASH, RN_FIXTURE_HASH } from './catalog'
 import { generatedCandidatePresent, generatedRules, matchGeneratedDeclaration, styleContains } from './declarations'
-
-const repoRoot = path.resolve(import.meta.dirname, '../..')
-const exampleRoot = path.resolve(repoRoot, 'examples/react-native-expo')
+import { exampleRoot, readRuntimeStyleInput, RN_ENTRY_SCOPE_VERSION } from './generation-input'
 
 export async function collectStaticEvidence() {
-  const candidates = new Set(compatibilityCases.flatMap(item => item.className.split(/\s+/).filter(Boolean)))
-  candidates.add('flex')
+  const runtimeInput = await readRuntimeStyleInput()
   const evidence = await generateNativeStylesheetEvidence({
     projectRoot: exampleRoot,
-    cssEntries: ['global.css', 'styles/legacy.css', 'styles/prefix.css', 'styles/reference.css'].map(file => path.resolve(exampleRoot, file)),
-    candidates,
-    sourceGlobs: ['./src/**/*.{js,jsx,ts,tsx}', './App.tsx', '../../tools/tailwindcss-test-catalog/compatibility-candidates.txt'],
+    cssEntries: [path.resolve(exampleRoot, runtimeInput.options.input)],
+    sourceGlobs: runtimeInput.options.sourceGlobs,
   })
-  const { manifest, rawCss, generatedClassSet } = evidence
-  const rules = generatedRules(rawCss)
-  const runtime = createNativeStyleRuntime(manifest)
+  const authoring = await collectAuthoringEvidence()
+  await validateAuthoringEvidence(authoring)
   const results: ReactNativeCaseResult[] = compatibilityCases.map((item) => {
+    const scopes = authoringCaseScopes[item.id]?.map(id => authoring.scopes.find(scope => scope.id === id)!)
+    const manifest = scopes ? mergeNativeManifests(scopes.map(scope => scope.manifest)) : evidence.manifest
+    const rules = scopes ? scopes.flatMap(scope => generatedRules(scope.rawCss)) : generatedRules(evidence.rawCss)
+    const generatedClassSet = scopes ? scopes.flatMap(scope => scope.generatedClassSet) : evidence.generatedClassSet
+    const runtime = createNativeStyleRuntime(manifest)
     const tokens = (item.id === 'directive-import' ? 'flex' : item.className).split(/\s+/).filter(Boolean)
     const matched = rules.filter(rule => rule.classes.some(token => tokens.includes(token)))
     const declarations = item.declarations.map(expected => ({ expected, actual: matchGeneratedDeclaration(matched, expected) }))
@@ -61,7 +63,7 @@ export async function collectStaticEvidence() {
       ],
     }
   })
-  return { ...evidence, results }
+  return { ...evidence, results, generation: { version: RN_ENTRY_SCOPE_VERSION, runtimeInput, authoring } }
 }
 
 export async function writeStaticEvidence(outputFile: string) {
@@ -81,6 +83,6 @@ export async function writeStaticEvidence(outputFile: string) {
     receipts: [],
   }
   await fs.mkdir(path.dirname(outputFile), { recursive: true })
-  await fs.writeFile(outputFile, `${JSON.stringify({ schemaVersion: 2, catalogHash: RN_CATALOG_HASH, fixtureHash: RN_FIXTURE_HASH, cases: compatibilityCases, report, manifest: evidence.manifest, generatedClassSet: evidence.generatedClassSet, rawCss: evidence.rawCss }, null, 2)}\n`, 'utf8')
+  await fs.writeFile(outputFile, `${JSON.stringify({ schemaVersion: 2, catalogHash: RN_CATALOG_HASH, fixtureHash: RN_FIXTURE_HASH, cases: compatibilityCases, report, manifest: evidence.manifest, generatedClassSet: evidence.generatedClassSet, rawCss: evidence.rawCss, generation: evidence.generation }, null, 2)}\n`, 'utf8')
   return report
 }
