@@ -2,7 +2,7 @@
   "name": "my-project",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@12.9.1",
+  "packageManager": "pnpm@12.14.0",
   "scripts": {
     "serve": "pnpm dev:h5",
     "build": "pnpm build:h5",
