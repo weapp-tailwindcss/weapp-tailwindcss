@@ -3,6 +3,7 @@ import fs from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import { catalogIdentityPayload } from '../../examples/react-lynx/src/compatibility/catalog'
+import { reviewedLynxContract } from './expectations'
 import { readCompatibilityVersions } from './versions'
 
 export const repoRoot = path.resolve(import.meta.dirname, '../..')
@@ -12,7 +13,7 @@ export const lynxIntermediateDir = path.join(exampleDir, 'dist', '.lynx', 'main'
 export const compatibilityVersions = readCompatibilityVersions(repoRoot)
 
 export function getCatalogHash() {
-  return createHash('sha256').update(catalogIdentityPayload).update(JSON.stringify(compatibilityVersions)).digest('hex')
+  return createHash('sha256').update(catalogIdentityPayload).update(JSON.stringify(compatibilityVersions)).update(JSON.stringify(reviewedLynxContract)).digest('hex')
 }
 
 export async function readCssDefinesProperties() {

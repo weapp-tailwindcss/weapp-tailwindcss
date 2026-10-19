@@ -4,6 +4,7 @@ import { compatibilityCases } from '../examples/react-lynx/src/compatibility/cat
 import { lynxEvidenceStrategy } from '../examples/react-lynx/src/compatibility/evidence'
 import staticEvidenceJson from '../examples/react-lynx/src/compatibility/static-evidence.json'
 import { compatibilityVersions, getCatalogHash } from './lynx/catalog'
+import { assertReviewedLynxOutcome, reviewedLynxSupport } from './lynx/expectations'
 import { nativeReportConclusion, validateNativeReport } from './lynx/reports'
 
 const staticById = new Map((staticEvidenceJson as StaticEvidenceReport).results.map(item => [item.id, item]))
@@ -29,7 +30,8 @@ function validResult(item: typeof compatibilityCases[number]): NativeCaseResult 
       : strategy === 'interaction'
         ? 'interaction:progress'
         : 'pixel:probe-vs-control'
-  return { id: item.id, status: 'supported', checkpoints: [{ name: checkpoint, passed: true }] }
+  const status = reviewedLynxSupport[item.id]![0]
+  return { id: item.id, status, ...(status === 'unsupported' ? { reason: '已审查的 iOS 平台限制' } : {}), checkpoints: [{ name: checkpoint, passed: true }] }
 }
 
 function report(overrides: Partial<NativePlatformReport> = {}): NativePlatformReport {
@@ -55,6 +57,24 @@ function report(overrides: Partial<NativePlatformReport> = {}): NativePlatformRe
 }
 
 describe('Lynx native report gate', () => {
+  it('已审查支持的案例失败不能自动降级为 unsupported', () => {
+    const invalid = report()
+    Object.assign(invalid.results.find(item => item.id === 'layout-aspect')!, { status: 'unsupported', reason: '本轮 encoder 异常删除 aspect-ratio' })
+    expect(() => validateNativeReport(invalid, 'ios')).toThrow(/已审查支持预期 supported/)
+  })
+
+  it('已审查的平台限制也不能在缺少显式审查时自动改成支持', () => {
+    const invalid = report()
+    Object.assign(invalid.results.find(item => item.id === 'layout-columns')!, { status: 'supported', reason: undefined })
+    expect(() => validateNativeReport(invalid, 'ios')).toThrow(/已审查支持预期 unsupported/)
+  })
+
+  it('generation 回归或错误阶段失败不能冒充已审查的 encoder 限制', () => {
+    const built = staticById.get('layout-columns')!
+    const result = validResult(compatibilityCases.find(item => item.id === built.id)!)
+    expect(() => assertReviewedLynxOutcome(result, 'ios', { ...built, generated: false })).toThrow(/generation 回归/)
+    expect(() => assertReviewedLynxOutcome(result, 'ios', { ...built, bundled: true })).toThrow(/失败阶段偏离/)
+  })
   it('accepts one complete pinned report', () => {
     expect(validateNativeReport(report(), 'ios').results).toHaveLength(compatibilityCases.length)
   })

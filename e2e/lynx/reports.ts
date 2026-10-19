@@ -8,6 +8,7 @@ import { evaluateGeometry } from '../../examples/react-lynx/src/compatibility/ge
 import staticEvidenceJson from '../../examples/react-lynx/src/compatibility/static-evidence.json'
 import { compatibilityVersions, getCatalogHash } from './catalog'
 import { readEvidenceContext, validateNativeEvidence } from './evidence'
+import { assertReviewedLynxOutcome } from './expectations'
 import { validateNativePixelEvidence } from './pixel-evidence'
 import { assertCurrentStaticEvidence } from './static-report'
 
@@ -59,6 +60,9 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
     assert(item && staticResult, `${platform}:${result.id} is missing catalog or static evidence`)
     const strategy = lynxEvidenceStrategy(item)
     assert(result.status === 'supported' || result.status === 'unsupported', `${platform}:${result.id} has no final runtime status`)
+    if (!options.historical) {
+      assertReviewedLynxOutcome(result, platform, staticResult)
+    }
     assert(result.checkpoints.length > 0, `${platform}:${result.id} has no runtime checkpoint`)
     assert(result.checkpoints.every(checkpoint => typeof checkpoint.passed === 'boolean'), `${platform}:${result.id} has an invalid checkpoint`)
     if (!staticResult.generated || (!staticResult.bundled && (item.evidence !== 'build' || options.historical))) {

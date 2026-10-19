@@ -18,6 +18,12 @@ import { PNG } from './lynx/png'
 import { readNativeReport } from './lynx/reports'
 import androidReport from './lynx/reports/android.json'
 
+// 本文件隔离验证存储/几何协议，支持预期漂移由 lynx-reports.test.ts 的真实门禁单独回归。
+vi.mock('./lynx/expectations', async importOriginal => ({
+  ...await importOriginal<typeof import('./lynx/expectations')>(),
+  assertReviewedLynxOutcome: () => {},
+}))
+
 // 该套仅验证证据协议：显式构造本轮合成静态输入，不改写或冒充已提交的历史报告。
 vi.mock('../examples/react-lynx/src/compatibility/static-evidence.json', async (importOriginal) => {
   const original = await importOriginal<{ default: StaticEvidenceReport }>()
