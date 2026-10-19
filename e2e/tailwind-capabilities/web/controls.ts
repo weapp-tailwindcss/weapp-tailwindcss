@@ -11,6 +11,10 @@ export type WebControl
     | { kind: 'siblings', selector: string, key: string, tag: string, position: 'before' | 'after', before: number, after: number }
     | { kind: 'viewport', before: Viewport, after: Viewport }
     | { kind: 'media', before: MediaOptions, after: MediaOptions }
+    | { kind: 'move', selector: string, before: string, after: string }
+    | { kind: 'hash', before: string, after: string }
+    | { kind: 'selection' | 'dialog', selector: string, before: boolean, after: boolean }
+    | { kind: 'keyboard-focus', selector: string, start: string, before: boolean, after: boolean }
     | { kind: 'hover' | 'active' | 'checked' | 'focus', selector: string, before: boolean, after: boolean, position?: { x: number, y: number } }
 
 export async function applyControl(page: Page, control: WebControl, active: boolean) {
@@ -53,6 +57,41 @@ export async function applyControl(page: Page, control: WebControl, active: bool
       return page.setViewportSize(active ? control.after : control.before)
     case 'media':
       return page.emulateMedia(active ? control.after : control.before)
+    case 'move':
+      return page.locator(control.selector).evaluate((element, parent) => {
+        document.querySelector(parent)!.append(element)
+      }, active ? control.after : control.before)
+    case 'hash':
+      await page.evaluate((hash) => {
+        window.location.hash = hash
+      }, active ? control.after : control.before)
+      return page.waitForFunction(hash => window.location.hash === hash, active ? control.after : control.before).then(handle => handle.dispose())
+    case 'selection':
+      return page.locator(control.selector).evaluate((element, selected) => {
+        const selection = window.getSelection()!
+        selection.removeAllRanges()
+        if (selected) {
+          const range = document.createRange()
+          range.selectNodeContents(element)
+          selection.addRange(range)
+        }
+      }, active ? control.after : control.before)
+    case 'dialog':
+      return page.locator(control.selector).evaluate((element, open) => {
+        const dialog = element as HTMLDialogElement
+        if (open && !dialog.open) {
+          dialog.showModal()
+        }
+        else if (!open && dialog.open) {
+          dialog.close()
+        }
+      }, active ? control.after : control.before)
+    case 'keyboard-focus':
+      if (active ? control.after : control.before) {
+        await page.locator(control.start).focus()
+        return page.keyboard.press('Tab')
+      }
+      return page.locator(control.selector).blur()
     case 'hover':
       if (active ? control.after : control.before) {
         return page.locator(control.selector).hover({ position: control.position })

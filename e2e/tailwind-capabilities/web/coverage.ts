@@ -1,5 +1,6 @@
 import type { TailwindInventory } from '../inventory'
 import { webProbes } from './probes'
+import { variantRuntimeGaps } from './variants/gaps'
 
 export interface WebRuntimeCoverage {
   featureId: string
@@ -15,7 +16,7 @@ export function webRuntimeCoverage(inventory: TailwindInventory): WebRuntimeCove
       featureId: feature.id,
       caseIds,
       status: caseIds.length ? 'fixture-defined' : 'not-run',
-      ...(!caseIds.length ? { reason: '尚未提供此注册能力的独立运行时语义夹具；静态合法和产物生成不能替代实际运行证据。' } : {}),
+      ...(!caseIds.length ? { reason: variantRuntimeGaps[feature.id] ?? '尚未提供此注册能力的独立运行时语义夹具；静态合法和产物生成不能替代实际运行证据。' } : {}),
     }
   })
 }

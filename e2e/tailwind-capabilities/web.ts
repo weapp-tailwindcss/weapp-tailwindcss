@@ -78,7 +78,7 @@ export async function runWeb(context: RunContext, engine: BrowserEngine) {
         try {
           await page!.mouse.move(0, 0)
           await page!.setViewportSize({ width: 640, height: 480 })
-          await page!.emulateMedia({ colorScheme: 'light', reducedMotion: 'reduce', media: 'screen' })
+          await page!.emulateMedia({ colorScheme: 'light', reducedMotion: 'reduce', media: 'screen', forcedColors: 'none', contrast: 'no-preference' })
           const html = renderWebProbe(probe)
           await page!.setContent(`<!doctype html><html lang="en"><head><meta charset="UTF-8"><style>${generated.css}</style></head><body><main class="stage">${html}</main></body></html>`)
           restorePrepared = await prepareProbe(page!, probe)

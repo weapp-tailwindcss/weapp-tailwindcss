@@ -20,7 +20,7 @@ function reportFor(probe: typeof variantWebProbes[number], changes: Record<strin
     observedAt: new Date().toISOString(),
     identity,
     environment: { engine: 'chromium' },
-    results: [{ id: contract.id, status: 'passed', support: 'supported', assertions: [{ name: 'generated', stage: 'generation', actual: true, expected: true }, ...states.flatMap(([state, expected]) => webRuntimeAssertions(probe, state!, { actual: changes[state!] ?? expected! }))], artifacts: ['measurements.json'], warnings: [] }],
+    results: [{ id: contract.id, status: 'passed', support: 'supported', assertions: [{ name: 'generated', stage: 'generation', actual: true, expected: true }, ...states.flatMap(([state, expected]) => webRuntimeAssertions(probe, state!, { actual: changes[state!] ?? expected!, guards: Object.fromEntries((probe.guards ?? []).map(guard => [guard.name, (state === 'before' || state === 'restored') ? guard.before ?? guard.expected : guard.expected])) }))], artifacts: ['measurements.json'], warnings: [] }],
     artifacts: [{ path: 'measurements.json', sha256: hash, byteLength: 1, kind: 'measurements', runId: 'variant-contract', caseIds: [contract.id] }],
   }
   return { report, verify: () => validateCapabilityReport(report, [contract], identity, report.runId, 'web-chromium') }
@@ -64,7 +64,7 @@ describe('受控 variant 的触发与恢复', () => {
         expect(coverage.find(item => item.featureId === feature)?.caseIds).toContain(`runtime/${probe.id}`)
       }
     }
-    const uncovered = ['*', '**', 'after', 'any-pointer-coarse', 'any-pointer-fine', 'any-pointer-none', 'autofill', 'backdrop', 'contrast-less', 'contrast-more', 'default', 'details-content', 'file', 'first-letter', 'first-line', 'focus-visible', 'forced-colors', 'inverted-colors', 'marker', 'noscript', 'placeholder', 'pointer-coarse', 'pointer-fine', 'pointer-none', 'selection', 'starting', 'target', 'user-invalid', 'user-valid', 'visited']
+    const uncovered = ['any-pointer-coarse', 'any-pointer-fine', 'any-pointer-none', 'autofill', 'contrast-less', 'details-content', 'inverted-colors', 'noscript', 'pointer-coarse', 'pointer-fine', 'pointer-none', 'starting', 'user-invalid', 'user-valid', 'visited']
     expect(coverage.filter(item => item.featureId.startsWith('variant/') && item.status === 'not-run').map(item => item.featureId)).toEqual(uncovered.map(root => `variant/static/${root}`))
   })
 

@@ -1,5 +1,6 @@
 import type { RuntimeProbe } from '../types'
 import type { WebControl } from './controls'
+import type { WebGuard } from './guards'
 import type { WebPixelSample } from './pixels'
 import { webFeatureBindings } from './features'
 import { variantWebProbes } from './variants'
@@ -28,6 +29,7 @@ export interface WebProbe extends RuntimeProbe {
   layout?: WebLayout
   controls?: WebControl[]
   checkpoints?: Array<{ afterControl: number, name: string, expected: string }>
+  guards?: WebGuard[]
 }
 
 const element = '<div id="probe" class="probe CANDIDATE">Tailwind probe</div>'
@@ -110,4 +112,4 @@ export const webProbes: WebProbe[] = [...authoredWebProbes, ...variantWebProbes]
   return { ...probe, features }
 })
 
-export const webFixtureCss = '@import "tailwindcss" source(none);\n@layer base { html { font-size:16px; } body { margin:0; } .stage { position:relative; margin:32px; width:500px; } .probe { width:80px; background-color:#010203; color:#040506; transition:none; } .box-model { box-sizing:content-box; } }'
+export const webFixtureCss = '@import "tailwindcss" source(none);\n@layer base { html { font-size:16px; } body { margin:0; } .stage { position:relative; margin:32px; width:500px; } .probe { width:80px; background-color:#010203; color:#040506; transition:none; } .box-model { box-sizing:content-box; } .pseudo-baseline::placeholder,.pseudo-baseline::first-letter,.pseudo-baseline::first-line,.pseudo-baseline::file-selector-button,.pseudo-baseline::marker,.pseudo-baseline::selection { color:#040506; } .pseudo-baseline::backdrop { background-color:#010203; } }'

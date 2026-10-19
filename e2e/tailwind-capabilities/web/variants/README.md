@@ -1,6 +1,6 @@
 # Web variant 受控夹具
 
-这里维护独立声明的 DOM、状态动作和 computed style 预期。51 个新增场景与原有夹具合计覆盖 58 个 Tailwind 4.3.3 variant root；其余 30 个 root 在覆盖矩阵中保留 `not-run`。`fixture-defined` 只表示夹具存在，实际通过以本轮浏览器报告为准。
+这里维护独立声明的 DOM、状态动作和 computed style 预期。66 个受控场景与原有夹具合计覆盖 73 个 Tailwind 4.3.3 variant root；其余 15 个 root 在覆盖矩阵中保留 `not-run`，限制逐项记录在 `gaps.ts`。`fixture-defined` 只表示夹具存在，实际通过以本轮浏览器报告为准。
 
 | 文件 | 场景 | 实际动作 |
 | --- | --- | --- |
@@ -8,6 +8,7 @@
 | `states.ts` | 表单状态、inert、direction、focus-within、has/in/not | 输入值、属性、原生 checkbox/focus 和真实鼠标动作 |
 | `media.ts` | 五个主题断点、max、orientation、print、motion、container | 改变视口、媒体模拟和实际容器尺寸 |
 | `combinations.ts` | 具名 group/peer/container、viewport+hover、container+data | 先触发错误作用域或分别满足单个条件，再满足完整条件 |
+| `pseudo.ts` | 子代/后代、伪元素、键盘焦点、fragment、原生媒体选项 | 真实迁移节点、选中文本、打开模态、Tab 导航、改变 hash；伪元素额外核对宿主颜色不受影响 |
 
 每个场景必须验证 `before → after → restored`。组合条件分别增加 `only-viewport` / `only-hover` 或 `only-container` / `only-data` 观测，缺失任一条件时均不能被判定为完整条件通过。具名作用域先在错误名称上执行真实动作，并要求目标仍保持原样。
 

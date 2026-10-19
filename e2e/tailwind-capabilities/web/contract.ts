@@ -25,20 +25,21 @@ export function webContract(probe: WebProbe): CaseContract {
   const expectedValues = Object.fromEntries(states.map(state => [state, checkpoints.find(item => item.name === state)?.expected ?? (state === 'before' || state === 'restored' ? probe.before! : probe.expected)]))
   const pixels = (probe.pixels ?? []).flatMap(sample => rgbaChannels.map((channel, index) => ({ name: pixelAssertionName(sample, channel), expected: sample.expected[index]!, tolerance: sample.tolerance })))
   const layout = states.flatMap(state => layoutValues(probe).map(item => ({ ...item, name: `${state}/layout/${item.key}` })))
+  const guards = states.flatMap(state => (probe.guards ?? []).map(guard => ({ name: `${state}/guard/${guard.name}`, expected: (state === 'before' || state === 'restored') ? guard.before ?? guard.expected : guard.expected })))
   return {
     id: `runtime/${probe.id}`,
     features: probe.features,
     candidate: probe.candidate,
     fixture: probe.html,
     expectation: { support: 'supported', stage: 'runtime' },
-    requiredAssertions: ['generated', ...states, ...layout.map(item => item.name), ...pixels.map(item => item.name)],
-    expectedValues: { generated: true, ...expectedValues, ...Object.fromEntries([...layout, ...pixels].map(item => [item.name, item.expected])) },
+    requiredAssertions: ['generated', ...states, ...layout.map(item => item.name), ...guards.map(item => item.name), ...pixels.map(item => item.name)],
+    expectedValues: { generated: true, ...expectedValues, ...Object.fromEntries([...layout, ...guards, ...pixels].map(item => [item.name, item.expected])) },
     ...(pixels.length || layout.length ? { tolerances: Object.fromEntries([...layout, ...pixels].filter(item => item.tolerance !== undefined).map(item => [item.name, item.tolerance!])) } : {}),
     assertionStages: { generated: 'generation', ...Object.fromEntries(pixels.map(item => [item.name, 'visual' as const])) },
   }
 }
 
-export function webRuntimeAssertions(probe: WebProbe, state: string, observation: Pick<WebObservation, 'actual' | 'layout'>): SemanticAssertion[] {
+export function webRuntimeAssertions(probe: WebProbe, state: string, observation: Pick<WebObservation, 'actual' | 'layout' | 'guards'>): SemanticAssertion[] {
   const values: Record<string, string | number> = observation.layout
     ? {
         'display': observation.layout.display,
@@ -51,6 +52,7 @@ export function webRuntimeAssertions(probe: WebProbe, state: string, observation
   return [
     { name: state, stage: 'runtime', actual: observation.actual, expected: probe.checkpoints?.find(item => item.name === state)?.expected ?? (state === 'before' || state === 'restored' ? probe.before! : probe.expected) },
     ...layoutValues(probe).map(item => ({ name: `${state}/layout/${item.key}`, stage: 'runtime' as const, actual: values[item.key] ?? null, expected: item.expected, ...(item.tolerance !== undefined ? { tolerance: item.tolerance } : {}) })),
+    ...(probe.guards ?? []).map(guard => ({ name: `${state}/guard/${guard.name}`, stage: 'runtime' as const, actual: observation.guards?.[guard.name] ?? null, expected: (state === 'before' || state === 'restored') ? guard.before ?? guard.expected : guard.expected })),
   ]
 }
 
