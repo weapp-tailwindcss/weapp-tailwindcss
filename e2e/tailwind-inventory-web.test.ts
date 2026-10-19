@@ -19,7 +19,7 @@ describe('Web 语义夹具合同', () => {
       expect(contract.expectedValues.generated).toBe(true)
       if (probe.action) {
         expect(probe.before, probe.id).toBeDefined()
-        expect(contract.requiredAssertions).toEqual(['generated', 'before', 'after', 'restored'])
+        expect(contract.requiredAssertions).toEqual(['generated', 'before', ...(probe.checkpoints ?? []).map(item => item.name), 'after', 'restored'])
         expect(contract.expectedValues.before).toBe(contract.expectedValues.restored)
         expect(contract.expectedValues.after).toBe(probe.expected)
       }

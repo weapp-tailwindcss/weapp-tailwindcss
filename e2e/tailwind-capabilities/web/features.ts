@@ -1,3 +1,5 @@
+import { variantWebProbes } from './variants'
+
 export const webFeatureBindings: Record<string, string[]> = {
   'display-flex': ['utility/static/flex'],
   'box-sizing': ['utility/static/box-border'],
@@ -60,4 +62,5 @@ export const webFeatureBindings: Record<string, string[]> = {
   'group-hover': ['variant/compound/group', 'syntax/named-group'],
   'peer-checked': ['variant/compound/peer', 'syntax/named-peer'],
   'dynamic-class': ['runtime/dynamic-class'],
+  ...Object.fromEntries(variantWebProbes.map(probe => [probe.id, probe.features])),
 }

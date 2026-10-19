@@ -8,7 +8,7 @@ import { newReport, persistReport } from './context'
 import { withGeneratorFixture } from './fixture'
 import { loadInventory } from './inventory'
 import { assertionPassed, receipt, validateCapabilityReport, verifyReportArtifacts } from './report'
-import { activateProbe, readProbe } from './web/actions'
+import { activateProbe, prepareProbe, readProbe } from './web/actions'
 import { renderWebProbe, webContract, webRuntimeAssertions } from './web/contract'
 import { webRuntimeCoverage } from './web/coverage'
 import { pixelAssertions, readPixels } from './web/pixels'
@@ -74,15 +74,17 @@ export async function runWeb(context: RunContext, engine: BrowserEngine) {
         }
         let result: CapabilityResult
         let restore: (() => Promise<void>) | undefined
+        let restorePrepared: (() => Promise<void>) | undefined
         try {
           await page!.mouse.move(0, 0)
           await page!.setViewportSize({ width: 640, height: 480 })
-          await page!.emulateMedia({ colorScheme: 'light' })
+          await page!.emulateMedia({ colorScheme: 'light', reducedMotion: 'reduce', media: 'screen' })
           const html = renderWebProbe(probe)
           await page!.setContent(`<!doctype html><html lang="en"><head><meta charset="UTF-8"><style>${generated.css}</style></head><body><main class="stage">${html}</main></body></html>`)
+          restorePrepared = await prepareProbe(page!, probe)
           if (probe.action) {
             await observe('before', probe.before!)
-            restore = await activateProbe(page!, probe)
+            restore = await activateProbe(page!, probe, checkpoint => observe(checkpoint.name, checkpoint.expected))
             await observe('after', probe.expected)
             await restore()
             restore = undefined
@@ -105,6 +107,17 @@ export async function runWeb(context: RunContext, engine: BrowserEngine) {
             }
             catch (error) {
               const reason = `状态恢复失败：${error instanceof Error ? error.message : String(error)}`
+              measurements.push({ cleanupError: reason })
+              result!.status = 'failed'
+              result!.reason = reason
+            }
+          }
+          if (restorePrepared) {
+            try {
+              await restorePrepared()
+            }
+            catch (error) {
+              const reason = `前置环境恢复失败：${error instanceof Error ? error.message : String(error)}`
               measurements.push({ cleanupError: reason })
               result!.status = 'failed'
               result!.reason = reason

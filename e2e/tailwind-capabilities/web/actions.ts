@@ -1,5 +1,7 @@
 import type { Page } from 'playwright'
+import type { WebControl } from './controls'
 import type { WebLayout, WebProbe } from './probes'
+import { applyControl, restoreControls } from './controls'
 
 export interface WebObservation {
   actual: string
@@ -10,7 +12,52 @@ export interface WebObservation {
   layout?: WebLayout
 }
 
-export async function activateProbe(page: Page, probe: WebProbe): Promise<() => Promise<void>> {
+export async function prepareProbe(page: Page, probe: WebProbe): Promise<() => Promise<void>> {
+  const prepared: WebControl[] = []
+  try {
+    for (const control of probe.controls ?? []) {
+      prepared.push(control)
+      await applyControl(page, control, false)
+    }
+  }
+  catch (error) {
+    try {
+      await restoreControls(page, prepared)
+    }
+    catch (cleanupError) {
+      throw new AggregateError([error, cleanupError], 'variant 前置设置与恢复失败')
+    }
+    throw error
+  }
+  return () => restoreControls(page, prepared)
+}
+
+export async function activateProbe(page: Page, probe: WebProbe, observeCheckpoint?: (checkpoint: NonNullable<WebProbe['checkpoints']>[number]) => Promise<void>): Promise<() => Promise<void>> {
+  if (probe.controls?.length) {
+    const applied: WebControl[] = []
+    try {
+      for (const [index, control] of probe.controls.entries()) {
+        applied.push(control)
+        await applyControl(page, control, true)
+        for (const checkpoint of (probe.checkpoints ?? []).filter(item => item.afterControl === index + 1)) {
+          if (!observeCheckpoint) {
+            throw new Error(`${probe.id} 缺少实际中间状态观测回调`)
+          }
+          await observeCheckpoint(checkpoint)
+        }
+      }
+    }
+    catch (error) {
+      try {
+        await restoreControls(page, applied)
+      }
+      catch (cleanupError) {
+        throw new AggregateError([error, cleanupError], 'variant 触发与恢复失败')
+      }
+      throw error
+    }
+    return () => restoreControls(page, applied)
+  }
   const locator = page.locator(probe.actionTarget ?? '#probe')
   if (probe.active) {
     await locator.hover()

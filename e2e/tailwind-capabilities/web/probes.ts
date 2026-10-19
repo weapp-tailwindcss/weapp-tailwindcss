@@ -1,6 +1,8 @@
 import type { RuntimeProbe } from '../types'
+import type { WebControl } from './controls'
 import type { WebPixelSample } from './pixels'
 import { webFeatureBindings } from './features'
+import { variantWebProbes } from './variants'
 
 export interface WebLayoutRect {
   left: number
@@ -24,6 +26,8 @@ export interface WebProbe extends RuntimeProbe {
   active?: boolean
   pixels?: WebPixelSample[]
   layout?: WebLayout
+  controls?: WebControl[]
+  checkpoints?: Array<{ afterControl: number, name: string, expected: string }>
 }
 
 const element = '<div id="probe" class="probe CANDIDATE">Tailwind probe</div>'
@@ -98,7 +102,7 @@ const authoredWebProbes: Omit<WebProbe, 'features'>[] = [
   { id: 'dynamic-class', candidate: 'w-[123px]', html: '<div id="probe" class="probe" data-candidate="CANDIDATE">dynamic</div>', component: 'view', property: 'width', before: '80px', expected: '123px', action: 'dynamic' },
 ]
 
-export const webProbes: WebProbe[] = authoredWebProbes.map((probe) => {
+export const webProbes: WebProbe[] = [...authoredWebProbes, ...variantWebProbes].map((probe) => {
   const features = webFeatureBindings[probe.id]
   if (!features?.length) {
     throw new Error(`${probe.id} 缺少显式能力映射`)

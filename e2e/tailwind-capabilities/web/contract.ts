@@ -17,8 +17,12 @@ function layoutValues(probe: WebProbe) {
 }
 
 export function webContract(probe: WebProbe): CaseContract {
-  const states = probe.action ? ['before', 'after', 'restored'] : ['computed']
-  const expectedValues = Object.fromEntries(states.map(state => [state, state === 'before' || state === 'restored' ? probe.before! : probe.expected]))
+  const checkpoints = probe.checkpoints ?? []
+  if (new Set(checkpoints.map(item => item.name)).size !== checkpoints.length || checkpoints.some(item => ['before', 'after', 'restored', 'computed', 'generated'].includes(item.name) || !Number.isInteger(item.afterControl) || item.afterControl < 1 || item.afterControl >= (probe.controls?.length ?? 0))) {
+    throw new Error(`${probe.id} 中间负控制必须位于两个真实动作之间，并使用独立名称`)
+  }
+  const states = probe.action ? ['before', ...checkpoints.map(item => item.name), 'after', 'restored'] : ['computed']
+  const expectedValues = Object.fromEntries(states.map(state => [state, checkpoints.find(item => item.name === state)?.expected ?? (state === 'before' || state === 'restored' ? probe.before! : probe.expected)]))
   const pixels = (probe.pixels ?? []).flatMap(sample => rgbaChannels.map((channel, index) => ({ name: pixelAssertionName(sample, channel), expected: sample.expected[index]!, tolerance: sample.tolerance })))
   const layout = states.flatMap(state => layoutValues(probe).map(item => ({ ...item, name: `${state}/layout/${item.key}` })))
   return {
@@ -45,7 +49,7 @@ export function webRuntimeAssertions(probe: WebProbe, state: string, observation
       }
     : {}
   return [
-    { name: state, stage: 'runtime', actual: observation.actual, expected: state === 'before' || state === 'restored' ? probe.before! : probe.expected },
+    { name: state, stage: 'runtime', actual: observation.actual, expected: probe.checkpoints?.find(item => item.name === state)?.expected ?? (state === 'before' || state === 'restored' ? probe.before! : probe.expected) },
     ...layoutValues(probe).map(item => ({ name: `${state}/layout/${item.key}`, stage: 'runtime' as const, actual: values[item.key] ?? null, expected: item.expected, ...(item.tolerance !== undefined ? { tolerance: item.tolerance } : {}) })),
   ]
 }
