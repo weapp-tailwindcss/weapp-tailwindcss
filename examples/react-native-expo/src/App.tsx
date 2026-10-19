@@ -5,6 +5,7 @@ import type { ReactNativeReport } from './compatibility/protocol'
 import { tw } from '@weapp-tailwindcss/react-native/runtime'
 import { useRef } from 'react'
 import { ScrollView, StyleSheet, Text, useColorScheme, View } from 'react-native'
+import { nativeReportHeaders } from './compatibility/report-client'
 import { SemanticRun } from './compatibility/SemanticRun'
 import evidence from './compatibility/static-evidence.json'
 import { HMR_MARKER, HMR_MARKER_CLASS } from './hmr-marker'
@@ -35,9 +36,9 @@ export default function App() {
           measureVisualProbe(cssRef.current, 'css-hmr', cssHmrStyle.backgroundColor),
         ])
         const body = JSON.stringify({ ...payload, visualProbes })
-        const response = await fetch(reportUrl, {
+        const response = await fetch(`${reportUrl}/report`, {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: nativeReportHeaders(),
           body,
         })
         if (!response.ok) {

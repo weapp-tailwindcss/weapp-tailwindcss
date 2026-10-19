@@ -6,6 +6,7 @@ import { composeStyle, tw } from '@weapp-tailwindcss/react-native/runtime'
 import { useEffect, useRef, useState } from 'react'
 import { Dimensions, PixelRatio, Platform, StyleSheet, Text, View } from 'react-native'
 import { expectedFixtureStyle, fixtureClassValue, nativeFixtures, styleContains } from './protocol'
+import { nativeReportHeaders } from './report-client'
 
 interface RuntimeInput {
   schemaVersion?: number
@@ -62,11 +63,14 @@ export function SemanticRun({ evidence, revision, onComplete }: { evidence: Runt
       if (evidence.schemaVersion !== 2) {
         throw new Error('Historical static evidence is not runnable: regenerate the RN static fixture first')
       }
-      const contextResponse = await fetch(`${reportUrl}/context`)
-      const context = await contextResponse.json() as { runId: string, fixtureHash: string, catalogHash: string, versions: Record<string, string> }
+      const contextResponse = await fetch(`${reportUrl}/context`, { headers: nativeReportHeaders() })
+      if (!contextResponse.ok) {
+        throw new Error(`Native context HTTP ${contextResponse.status}`)
+      }
+      const context = await contextResponse.json() as { runId: string, revision: string, fixtureHash: string, catalogHash: string, versions: Record<string, string> }
       runId.current = context.runId
       const staticReport = evidence.report as ReactNativeReport
-      if (context.fixtureHash !== evidence.fixtureHash || context.catalogHash !== staticReport.catalogHash
+      if (context.revision !== revision || context.fixtureHash !== evidence.fixtureHash || context.catalogHash !== staticReport.catalogHash
         || JSON.stringify(context.versions) !== JSON.stringify(staticReport.versions)) {
         throw new Error('Stale RN static evidence or dependency versions')
       }
@@ -98,7 +102,7 @@ export function SemanticRun({ evidence, revision, onComplete }: { evidence: Runt
         controlTarget: controlTargetRect,
         viewport: { width: viewport.width, height: viewport.height, pixelRatio: PixelRatio.get() },
       }
-      const response = await fetch(`${reportUrl}/case`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(pair) })
+      const response = await fetch(`${reportUrl}/case`, { method: 'POST', headers: nativeReportHeaders(), body: JSON.stringify(pair) })
       if (!response.ok) {
         throw new Error(`Native pair receipt HTTP ${response.status}: ${await response.text()}`)
       }
@@ -145,7 +149,7 @@ export function SemanticRun({ evidence, revision, onComplete }: { evidence: Runt
               : result),
           })
         }
-        await fetch(`${reportUrl}/error`, { method: 'POST', body: String(error) }).catch(() => undefined)
+        await fetch(`${reportUrl}/error`, { method: 'POST', headers: nativeReportHeaders(), body: JSON.stringify({ runId: runId.current, revision, message: String(error) }) }).catch(() => undefined)
       }
     })
     return () => {

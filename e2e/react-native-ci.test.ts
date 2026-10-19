@@ -68,13 +68,14 @@ it.each(['127.0.0.1', '192.168.1.20'])('Expo 独立启动进程沿用显式宿�
   const expoRequire = createRequire(exampleRequire.resolve('expo/package.json'))
   const { UrlCreator } = expoRequire('@expo/cli/build/src/start/server/UrlCreator.js')
   vi.stubEnv('REACT_NATIVE_PACKAGER_HOSTNAME', '192.168.64.4')
-  const env = createExpoNativeEnvironment(host, `http://${host}:4321`)
+  const env = createExpoNativeEnvironment(host, `http://${host}:4321`, 'owned-client')
   vi.stubEnv('REACT_NATIVE_PACKAGER_HOSTNAME', env.REACT_NATIVE_PACKAGER_HOSTNAME)
   for (const hostType of ['localhost', 'lan']) {
     const creator = new UrlCreator({ hostType }, { port: 8081 })
     expect(new URL(creator.constructUrl()).hostname).toBe(host)
   }
   expect(env.EXPO_PUBLIC_RN_REPORT_URL).toBe(`http://${host}:4321`)
+  expect(env.EXPO_PUBLIC_RN_REPORT_CLIENT).toBe('owned-client')
 })
 
 it('模拟器二进制检查必须在 action 安装工具链之后执行', async () => {

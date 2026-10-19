@@ -3,7 +3,6 @@
 import { captureNativeEncoding } from './encoding-evidence'
 import type { Server } from 'node:http'
 import type { NativeVisualProbe } from '../../examples/react-native-expo/src/visual-probes'
-import { Buffer } from 'node:buffer'
 import { createHash, randomUUID } from 'node:crypto'
 import { createServer } from 'node:http'
 import fs from 'node:fs/promises'
@@ -57,14 +56,23 @@ const metroLogPath = path.resolve(artifacts, 'metro.log')
 const reports: ReportEnvelope[] = []
 const updateBaseline = process.env['RN_UPDATE_BASELINE'] === '1'
 const runId = process.env['TAILWIND_E2E_RUN_ID'] ?? randomUUID()
+const clientToken = randomUUID()
 let semanticDevice = ''
-const semanticReporter = createSemanticReporter({ runId, catalogHash: RN_CATALOG_HASH, fixtureHash: RN_FIXTURE_HASH, versions: reactNativeVersions() }, async (pair) => {
+const semanticReporter = createSemanticReporter<ReportEnvelope>({ runId, catalogHash: RN_CATALOG_HASH, fixtureHash: RN_FIXTURE_HASH, versions: reactNativeVersions() }, async (pair) => {
   if (platform === 'android') {
     await execa('adb', ['-s', semanticDevice, 'shell', 'uiautomator', 'dump', '/sdcard/window.xml'])
     const window = await execa('adb', ['-s', semanticDevice, 'exec-out', 'cat', '/sdcard/window.xml'])
     pair = androidPairCoordinates(window.stdout, pair)
   }
   return captureNativePair(pair, { runId, artifacts, capture: name => capture(name, semanticDevice) })
+}, {
+  clientToken,
+  revision: 'rn-hmr-baseline-10b981',
+  platform,
+  complete: async (envelope) => {
+    await fs.writeFile(path.join(artifacts, 'report.json'), `${JSON.stringify(envelope.report, null, 2)}\n`, 'utf8')
+    reports.push(envelope)
+  },
 })
 
 function startReporter(host: string) {
@@ -74,19 +82,7 @@ function startReporter(host: string) {
       if (semanticReporter.handle(request, response)) {
         return
       }
-      if (request.method !== 'POST') { response.writeHead(404).end(); return }
-      const chunks: Buffer[] = []
-      request.on('data', chunk => chunks.push(Buffer.from(chunk)))
-      request.on('end', () => {
-        void (async () => {
-          const envelope = JSON.parse(Buffer.concat(chunks).toString('utf8')) as ReportEnvelope
-          await fs.writeFile(path.join(artifacts, 'report.json'), `${JSON.stringify(envelope.report, null, 2)}\n`, 'utf8')
-          reports.push(envelope)
-          response.writeHead(204).end()
-        })().catch((error) => {
-          response.writeHead(400).end(String(error))
-        })
-      })
+      response.writeHead(404).end()
     })
     server.once('error', reject)
     server.listen(0, host, () => {
@@ -138,6 +134,7 @@ async function waitForReportOrExit(marker: string, run: NativeProcess, metro: Na
   let bundleCompletedAt: number | undefined
   let recovered = false
   while (true) {
+    semanticReporter.assertReady()
     const now = Date.now()
     const envelope = reports.find(item => item.hmrMarker === marker && (!cssHmrColor || item.cssHmrColor === cssHmrColor))
     let launchReconciled = false
@@ -394,7 +391,7 @@ async function main() {
     const javaHome = toolchain?.javaHome
     const androidHome = toolchain?.sdk
     const env: NodeJS.ProcessEnv = {
-      ...createExpoNativeEnvironment(runtimeHost, reportUrl),
+      ...createExpoNativeEnvironment(runtimeHost, reportUrl, clientToken),
       ...(javaHome ? { JAVA_HOME: javaHome } : {}),
       ...(platform === 'android' ? { ANDROID_HOME: androidHome } : {}),
     }
@@ -437,6 +434,7 @@ async function main() {
 
     const updated = originalMarker.replace('rn-hmr-baseline', 'rn-hmr-updated').replace('bg-emerald-500', 'bg-rose-500')
     markerChanged = true
+    semanticReporter.setRevision('rn-hmr-updated-10b981')
     await fs.writeFile(markerFile, updated, 'utf8')
     const hmr = await waitForReportOrExit('rn-hmr-updated', run, activeMetro, { cssHmrColor: '#10b981', reportTimeout: 120_000, reconcileLaunch })
     const hmrReport = withNativeEnvironment(hmr.report, nativeEnvironment)
@@ -450,6 +448,7 @@ async function main() {
     const updatedCss = originalCss.replace('#10b981', '#f59e0b')
     if (updatedCss === originalCss) { throw new Error('CSS HMR probe color was not found') }
     cssChanged = true
+    semanticReporter.setRevision('rn-hmr-updated-f59e0b')
     await fs.writeFile(cssFile, updatedCss, 'utf8')
     const cssHmr = await waitForReportOrExit('rn-hmr-updated', run, activeMetro, { cssHmrColor: '#f59e0b', reportTimeout: 120_000, reconcileLaunch })
     const cssHmrReport = withNativeEnvironment(cssHmr.report, nativeEnvironment)

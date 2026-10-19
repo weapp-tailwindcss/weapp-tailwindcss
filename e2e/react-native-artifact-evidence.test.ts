@@ -82,7 +82,8 @@ describe('原生宿主截图证据', () => {
     const pair = input()
     const receipt = { runId: pair.runId, id: pair.id, phase: pair.phase, checkpoints: [], artifact: { name: 'test.png', sha256: 'a'.repeat(64), byteLength: 100 } }
     const capture = vi.fn(async () => receipt)
-    const reporter = createSemanticReporter({ runId: pair.runId, fixtureHash: 'fixture', catalogHash: 'catalog', versions: {} }, capture)
+    const reporter = createSemanticReporter({ runId: pair.runId, fixtureHash: 'fixture', catalogHash: 'catalog', versions: {} }, capture, { clientToken: 'client', revision: pair.revision, platform: 'web' })
+    const headers = { 'x-rn-e2e-client': 'client' }
     const server = createServer((request, response) => {
       if (!reporter.handle(request, response)) {
         response.writeHead(404).end()
@@ -95,16 +96,16 @@ describe('原生宿主截图证据', () => {
         throw new Error('Missing test reporter address')
       }
       const endpoint = `http://127.0.0.1:${address.port}`
-      expect(await (await fetch(`${endpoint}/context`)).json()).toMatchObject({ runId: pair.runId })
-      const accepted = await fetch(`${endpoint}/case`, { method: 'POST', body: JSON.stringify(pair) })
+      expect(await (await fetch(`${endpoint}/context`, { headers })).json()).toMatchObject({ runId: pair.runId })
+      const accepted = await fetch(`${endpoint}/case`, { method: 'POST', headers, body: JSON.stringify(pair) })
       expect(accepted.ok).toBe(true)
-      const report = { runId: pair.runId, revision: pair.revision, receipts: [receipt] } as unknown as ReactNativeReport
+      const report = { runId: pair.runId, revision: pair.revision, platform: pair.platform, receipts: [receipt] } as unknown as ReactNativeReport
       expect(() => reporter.assertReceipts(report)).not.toThrow()
       expect(() => reporter.assertReceipts({ ...report, receipts: [{ ...receipt, phase: 'old' }] })).toThrow(/Missing host/)
-      const stale = await fetch(`${endpoint}/case`, { method: 'POST', body: JSON.stringify({ ...pair, runId: 'old' }) })
-      expect(stale.status).toBe(500)
+      const stale = await fetch(`${endpoint}/case`, { method: 'POST', headers, body: JSON.stringify({ ...pair, runId: 'old' }) })
+      expect(stale.status).toBe(409)
       expect(capture).toHaveBeenCalledOnce()
-      expect(() => reporter.assertReady()).toThrow(/semantic evidence failed/)
+      expect(() => reporter.assertReady()).not.toThrow()
     }
     finally {
       await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()))
