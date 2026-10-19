@@ -1,10 +1,10 @@
-import type { PromoCopy } from '../config'
+import type { PromoCopy, PromoLocale } from '../config'
 import { interpolate, useCurrentFrame } from 'remotion'
 import { DeviceCapture } from '../components/DeviceCapture'
 import { SceneShell } from '../components/SceneShell'
 import { COLORS } from '../config'
 
-export function NativeScene({ copy }: { copy: PromoCopy['native'] }) {
+export function NativeScene({ copy, locale }: { copy: PromoCopy['native'], locale: PromoLocale }) {
   const frame = useCurrentFrame()
   const iosX = interpolate(frame, [0, 34], [-120, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })
   const androidX = interpolate(frame, [0, 34], [120, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })
@@ -13,13 +13,13 @@ export function NativeScene({ copy }: { copy: PromoCopy['native'] }) {
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
         <div>
           <div style={{ color: COLORS.green, fontFamily: 'JetBrains Mono Variable, monospace', fontSize: 22, fontWeight: 650 }}>{copy.eyebrow}</div>
-          <h2 style={{ margin: '18px 0 0', fontSize: 64, lineHeight: 1.12, fontWeight: 720, letterSpacing: 0 }}>
+          <h2 style={{ margin: '18px 0 0', maxWidth: 560, fontSize: locale === 'en' ? 54 : 64, lineHeight: 1.12, fontWeight: 720, letterSpacing: 0 }}>
             {copy.title[0]}
             <br />
             {copy.title[1]}
           </h2>
         </div>
-        <div className="mono" style={{ color: COLORS.muted, fontSize: 18, textAlign: 'right', lineHeight: 1.7 }}>
+        <div className="mono" style={{ position: 'absolute', left: 112, top: 440, color: COLORS.muted, fontSize: 18, lineHeight: 1.7 }}>
           ReactLynx
           <br />
           Lynx Engine 4.0.1

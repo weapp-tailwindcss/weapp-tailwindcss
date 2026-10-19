@@ -2,9 +2,17 @@ import { spawn } from 'node:child_process'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
+import { scenes, VIDEO } from '../src/config'
 import { appRoot, outputDir } from './paths'
 
-const frames = [0, 150, 390, 720, 1050, 1410, 1680, 1799]
+const frames = [...new Set([
+  0,
+  ...scenes.map(scene => scene.from + Math.min(45, scene.duration - 1)),
+  18 * VIDEO.fps,
+  28 * VIDEO.fps,
+  40 * VIDEO.fps,
+  VIDEO.durationInFrames - 1,
+])].sort((a, b) => a - b)
 const locale = process.argv[2] === 'en' ? 'en' : 'zh'
 const composition = locale === 'en' ? 'LynxPromoEn' : 'LynxPromoZh'
 

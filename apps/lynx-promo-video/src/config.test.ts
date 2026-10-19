@@ -15,7 +15,10 @@ describe('promo timeline', () => {
     expect(sceneAtFrame(0)?.id).toBe('hook')
     expect(sceneAtFrame(149)?.id).toBe('hook')
     expect(sceneAtFrame(150)?.id).toBe('config')
-    expect(sceneAtFrame(1799)?.id).toBe('cta')
+    expect(sceneAtFrame(1289)?.id).toBe('classname')
+    expect(sceneAtFrame(1290)?.id).toBe('pipeline')
+    expect(sceneAtFrame(2249)?.id).toBe('cta')
+    expect(sceneAtFrame(2250)).toBeUndefined()
   })
 
   it('keeps both locale copy sets complete and aligned', () => {

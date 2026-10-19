@@ -1,46 +1,32 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
-import { execa } from 'execa'
 import { scenes, VIDEO } from '../src/config'
+import { assertCaptureInputs, compatibilityScreenshot } from './capture/inputs'
+import { readCaptureManifest, resolveManifestPath } from './capture/manifest'
+import { developmentRenderMetadata } from './capture/render-metadata'
+import { verifyDevelopmentMedia } from './media/development-media'
+import { assertNoSuspiciousFrames, inspectVideoFrames } from './media/frame-scan'
+import { mediaDuration, probe, rawVideoDuration, verifyCaptureVideo, verifyNarration } from './media/probe'
+import { assembleSubtitleCues } from './media/subtitles'
+import { verifyDevelopmentMetadata, verifyDevelopmentTimeline, verifySubtitleTimeline } from './media/timeline'
 import { appRoot, outputDir, publicDir } from './paths'
-
-interface ProbeResult {
-  streams: Array<{ codec_type: string, codec_name: string, width?: number, height?: number, pix_fmt?: string, sample_rate?: string, avg_frame_rate?: string }>
-  format: { duration: string }
-}
-
-async function probe(file: string) {
-  const result = await execa('ffprobe', ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', file])
-  return JSON.parse(result.stdout) as ProbeResult
-}
-
-function subtitleSeconds(value: string) {
-  const [hours, minutes, seconds] = value.replace(',', '.').split(':').map(Number)
-  return hours * 3600 + minutes * 60 + seconds
-}
 
 async function verifySubtitles(locale: 'zh' | 'en') {
   const expectedEnd = VIDEO.durationInFrames / VIDEO.fps
+  const narration = Object.fromEntries(await Promise.all(scenes.map(async (scene, index) => {
+    const file = path.join(publicDir, 'audio', 'narration', locale, `${String(index + 1).padStart(2, '0')}-${scene.id}.vtt`)
+    return [scene.id, await fs.readFile(file, 'utf8')]
+  })))
+  const expected = assembleSubtitleCues(scenes, VIDEO.fps, narration)
+  const generated = JSON.parse(await fs.readFile(path.join(appRoot, 'src', 'generated', 'subtitles.json'), 'utf8')) as Record<string, unknown>
+  if (JSON.stringify(generated[locale]) !== JSON.stringify(expected)) {
+    throw new Error(`${locale} 烧录字幕与实际旁白不一致，请重新生成素材。`)
+  }
   for (const extension of ['srt', 'vtt'] as const) {
     const file = path.join(appRoot, `lynx-promo-${locale}.${extension}`)
     const content = await fs.readFile(file, 'utf8')
-    const entries = [...content.matchAll(/(\d{2}:\d{2}:\d{2}[,.]\d{3})\s+-->\s+(\d{2}:\d{2}:\d{2}[,.]\d{3})/g)]
-    if (entries.length !== scenes.length) {
-      throw new Error(`${file} must contain ${scenes.length} subtitle entries.`)
-    }
-    let previousEnd = 0
-    for (const entry of entries) {
-      const start = subtitleSeconds(entry[1])
-      const end = subtitleSeconds(entry[2])
-      if (start < previousEnd || end <= start) {
-        throw new Error(`${file} contains overlapping or invalid timestamps.`)
-      }
-      previousEnd = end
-    }
-    if (previousEnd < expectedEnd - 1) {
-      throw new Error(`${file} does not cover the complete 60-second timeline.`)
-    }
+    verifySubtitleTimeline(content, scenes, VIDEO.fps, expectedEnd, expected)
   }
 }
 
@@ -57,36 +43,63 @@ async function verifyVideo(locale: 'zh' | 'en') {
   const final = await probe(finalPath)
   const video = final.streams.find(stream => stream.codec_type === 'video')
   const audio = final.streams.find(stream => stream.codec_type === 'audio')
-  const duration = Number(final.format.duration)
-  if (!video || video.codec_name !== 'h264' || video.width !== VIDEO.width || video.height !== VIDEO.height || video.pix_fmt !== 'yuv420p' || video.avg_frame_rate !== '30/1') {
+  const duration = mediaDuration(final, finalPath)
+  if (!video || video.codec_name !== 'h264' || video.width !== VIDEO.width || video.height !== VIDEO.height || video.pix_fmt !== 'yuv420p' || video.avg_frame_rate !== `${VIDEO.fps}/1`) {
     throw new Error(`${finalPath} does not match the required 1080p H.264 output.`)
   }
   if (!audio || audio.codec_name !== 'aac' || audio.sample_rate !== '48000') {
     throw new Error(`${finalPath} audio must be AAC at 48 kHz.`)
   }
   if (Math.abs(duration - VIDEO.durationInFrames / VIDEO.fps) > 0.1) {
-    throw new Error(`${finalPath} must be 60 seconds, received ${duration}.`)
+    throw new Error(`${finalPath} must be ${VIDEO.durationInFrames / VIDEO.fps} seconds, received ${duration}.`)
   }
 }
 
 async function main() {
-  for (const capture of ['ios.mp4', 'android.mp4']) {
-    const file = path.join(publicDir, 'captures', capture)
+  const ambientFile = path.join(publicDir, 'audio', 'ambient.wav')
+  const ambientSeconds = mediaDuration(await probe(ambientFile), ambientFile)
+  if (Math.abs(ambientSeconds - VIDEO.durationInFrames / VIDEO.fps) > 1 / VIDEO.fps) {
+    throw new Error(`环境音必须覆盖完整 ${VIDEO.durationInFrames / VIDEO.fps} 秒视频。`)
+  }
+  const captureDir = path.join(publicDir, 'captures')
+  const manifestFile = path.resolve(process.env.LYNX_PROMO_CAPTURE_MANIFEST ?? path.join(captureDir, 'manifest.json'))
+  const manifest = await readCaptureManifest(manifestFile)
+  await assertCaptureInputs(manifest, manifestFile, captureDir)
+  await compatibilityScreenshot(manifest, manifestFile)
+  const nativeScene = scenes.find(scene => scene.id === 'native')!
+  for (const platform of ['ios', 'android'] as const) {
+    const capture = manifest.platforms[platform]!
+    const file = resolveManifestPath(manifestFile, capture.video)
     const stat = await fs.stat(file)
     if (stat.size >= 10 * 1024 * 1024) {
-      throw new Error(`${capture} must remain below 10 MB.`)
+      throw new Error(`${file} must remain below 10 MB.`)
     }
-    const metadata = await probe(file)
-    const video = metadata.streams.find(stream => stream.codec_type === 'video')
-    if (!video || video.codec_name !== 'h264' || video.avg_frame_rate !== '30/1') {
-      throw new Error(`${capture} must be H.264 at 30 FPS.`)
-    }
+    // NativeScene 从第 70 帧开始播放，必须保留完整场景长度。
+    verifyCaptureVideo(await probe(file), file, (70 + nativeScene.duration) / VIDEO.fps)
+    rawVideoDuration(await probe(resolveManifestPath(manifestFile, capture.rawVideo)), `${platform} 原片`)
   }
+  const development = manifest.development!
+  const developmentMetadata = await fs.readFile(path.join(appRoot, 'src', 'generated', 'development.json'), 'utf8')
+  const expectedDevelopment = developmentRenderMetadata(development, manifestFile, publicDir)
+  verifyDevelopmentMetadata(developmentMetadata, expectedDevelopment.clips, expectedDevelopment.shots)
+  const developmentFile = resolveManifestPath(manifestFile, development.video)
+  const developmentSeconds = verifyCaptureVideo(await probe(developmentFile), developmentFile, 0)
+  const rawSeconds = rawVideoDuration(await probe(resolveManifestPath(manifestFile, development.rawVideo)), '开发原片')
+  verifyDevelopmentTimeline(development.events, development.clips, scenes, VIDEO.fps, developmentSeconds, rawSeconds, development.shots)
+  await verifyDevelopmentMedia(development.shots ?? [], manifestFile)
 
   for (const locale of ['zh', 'en'] as const) {
     await verifyVideo(locale)
+    const finalPath = path.join(outputDir, `lynx-promo-${locale}-1080p.mp4`)
+    const frames = await inspectVideoFrames(finalPath, VIDEO.durationInFrames, VIDEO.fps)
+    await fs.writeFile(path.join(outputDir, `lynx-promo-${locale}-frame-qa.json`), `${JSON.stringify(frames, null, 2)}\n`)
+    assertNoSuspiciousFrames(frames, finalPath)
     await verifyCover(locale)
     await verifySubtitles(locale)
+    for (const [index, scene] of scenes.entries()) {
+      const file = path.join(publicDir, 'audio', 'narration', locale, `${String(index + 1).padStart(2, '0')}-${scene.id}.mp3`)
+      verifyNarration(await probe(file), file, scene.duration / VIDEO.fps - 0.2)
+    }
   }
   process.stdout.write(`${JSON.stringify({ locales: ['zh', 'en'], duration: VIDEO.durationInFrames / VIDEO.fps }, null, 2)}\n`)
 }

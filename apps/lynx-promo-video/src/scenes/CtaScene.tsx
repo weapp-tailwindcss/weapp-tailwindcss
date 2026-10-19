@@ -18,6 +18,7 @@ export function CtaScene({ packageName, docsUrl, copy, qrAsset }: { packageName:
         </h2>
         <div className="mono" style={{ display: 'inline-block', marginTop: 42, padding: '17px 22px', border: `1px solid ${COLORS.border}`, borderRadius: 8, background: COLORS.surface, color: '#dfe9e6', fontSize: 21 }}>
           pnpm add
+          {' '}
           {packageName}
           {' '}
           tailwindcss

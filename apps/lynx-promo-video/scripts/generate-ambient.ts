@@ -2,13 +2,13 @@ import { Buffer } from 'node:buffer'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
+import { pathToFileURL } from 'node:url'
+import { VIDEO } from '../src/config'
 import { publicDir } from './paths'
 
 const sampleRate = 48_000
 const channels = 2
-const seconds = 60
 const bytesPerSample = 2
-const sampleCount = sampleRate * seconds
 
 function writeWavHeader(buffer: Buffer, dataSize: number) {
   buffer.write('RIFF', 0)
@@ -26,15 +26,17 @@ function writeWavHeader(buffer: Buffer, dataSize: number) {
   buffer.writeUInt32LE(dataSize, 40)
 }
 
-function envelope(time: number) {
+function envelope(time: number, seconds: number) {
   const attack = Math.min(1, time / 2)
   const release = Math.min(1, (seconds - time) / 2)
   return Math.max(0, Math.min(attack, release))
 }
 
-async function main() {
-  const audioDir = path.join(publicDir, 'audio')
-  await fs.mkdir(audioDir, { recursive: true })
+export function createAmbientWav(seconds: number) {
+  if (!Number.isFinite(seconds) || seconds <= 0) {
+    throw new Error('环境音时长必须大于零。')
+  }
+  const sampleCount = Math.round(sampleRate * seconds)
   const dataSize = sampleCount * channels * bytesPerSample
   const buffer = Buffer.allocUnsafe(44 + dataSize)
   writeWavHeader(buffer, dataSize)
@@ -45,17 +47,25 @@ async function main() {
       Math.sin(Math.PI * 2 * 55 * time) * 0.34
       + Math.sin(Math.PI * 2 * 82.41 * time) * 0.18
       + Math.sin(Math.PI * 2 * 110 * time) * 0.1
-    ) * envelope(time) * pulse * 0.16
+    ) * envelope(time, seconds) * pulse * 0.16
     const left = Math.max(-1, Math.min(1, signal))
     const right = Math.max(-1, Math.min(1, signal * 0.94))
     const offset = 44 + index * channels * bytesPerSample
     buffer.writeInt16LE(Math.round(left * 32767), offset)
     buffer.writeInt16LE(Math.round(right * 32767), offset + bytesPerSample)
   }
-  await fs.writeFile(path.join(audioDir, 'ambient.wav'), buffer)
+  return buffer
 }
 
-main().catch((error) => {
-  process.stderr.write(`${error instanceof Error ? error.stack : String(error)}\n`)
-  process.exitCode = 1
-})
+async function main() {
+  const audioDir = path.join(publicDir, 'audio')
+  await fs.mkdir(audioDir, { recursive: true })
+  await fs.writeFile(path.join(audioDir, 'ambient.wav'), createAmbientWav(VIDEO.durationInFrames / VIDEO.fps))
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  main().catch((error) => {
+    process.stderr.write(`${error instanceof Error ? error.stack : String(error)}\n`)
+    process.exitCode = 1
+  })
+}

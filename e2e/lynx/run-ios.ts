@@ -5,23 +5,16 @@ import type { NativeRunOptions } from './native-options'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
-import { execa } from 'execa'
+import { collectCaptureScrollEvidence } from './capture-scroll'
 import { collectNativeEvidence } from './evidence'
 import { withBuiltIosDevice } from './ios-build-target'
 import { resolveIosAppContainer } from './ios-container'
+import { recordIosVideo } from './ios-recording'
 import { command } from './native-command'
 import { iosPodInstallArguments } from './native-options'
 import { waitForReportOrFailure } from './native-report'
 
 const applicationId = 'com.weapptailwindcss.lynxcompat'
-
-async function recordIosVideo(deviceId: string, artifactDir: string, duration: number) {
-  const output = path.join(artifactDir, 'raw.mp4')
-  const recording = execa('xcrun', ['simctl', 'io', deviceId, 'recordVideo', '--codec=h264', output], { reject: false })
-  await new Promise(resolve => setTimeout(resolve, duration * 1000))
-  recording.kill('SIGINT')
-  await recording
-}
 
 export async function runIos(hostDir: string, artifactDir: string, target: IosBuildTarget, context: NativeEvidenceContext, options: NativeRunOptions, setStage: (stage: NativeRunStage) => void) {
   setStage('native-build')
@@ -66,6 +59,11 @@ export async function runIos(hostDir: string, artifactDir: string, target: IosBu
     await fs.writeFile(path.join(artifactDir, 'device.json'), `${JSON.stringify(device, null, 2)}\n`)
     const deviceId = device.id
     const appPath = path.join(derivedData, 'Build', 'Products', 'Debug-iphonesimulator', 'LynxCompatibilityHost.app')
+    if (options.assetsPath) {
+      const assets = path.join(appPath, 'capture-assets')
+      await fs.rm(assets, { recursive: true, force: true })
+      await fs.cp(path.join(hostDir, 'App', 'capture-assets'), assets, { recursive: true })
+    }
     await command('xcrun', ['simctl', 'install', deviceId, appPath], hostDir, 120_000)
     const container = await resolveIosAppContainer(deviceId, applicationId, hostDir, async (error) => {
       const detail = error instanceof Error ? error.stack : String(error)
@@ -77,7 +75,9 @@ export async function runIos(hostDir: string, artifactDir: string, target: IosBu
     if (options.captureOnly) {
       await new Promise(resolve => setTimeout(resolve, 2200))
       await command('xcrun', ['simctl', 'io', deviceId, 'screenshot', path.join(artifactDir, 'screen.png')], hostDir, 60_000)
-      await recordIosVideo(deviceId, artifactDir, options.captureDurationSeconds)
+      await recordIosVideo(deviceId, artifactDir, options.captureDurationSeconds, options.captureScroll
+        ? () => collectCaptureScrollEvidence(path.join(path.dirname(reportPath), 'capture-scroll.json'), artifactDir, context, options.captureDurationSeconds)
+        : undefined)
       return undefined
     }
     const source = await waitForReportOrFailure(
