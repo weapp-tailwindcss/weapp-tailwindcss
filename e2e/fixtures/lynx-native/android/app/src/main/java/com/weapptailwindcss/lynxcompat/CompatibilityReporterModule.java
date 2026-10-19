@@ -35,6 +35,7 @@ public final class CompatibilityReporterModule extends LynxModule {
   @LynxMethod
   public void setColorScheme(String runId, String requestId, String scheme, Callback callback) {
     mainHandler.post(() -> {
+      if (!requireView(callback)) return;
       if (binding.colorScheme == null) {
         callback.invoke((Object) null);
         return;
@@ -57,6 +58,7 @@ public final class CompatibilityReporterModule extends LynxModule {
   @LynxMethod
   public void captureColorScheme(String runId, String requestId, String identifier, Callback callback) {
     mainHandler.post(() -> {
+      if (!requireView(callback)) return;
       if (binding.colorScheme == null || !binding.colorScheme.isCurrent(runId, requestId)) {
         callback.invoke((Object) null);
         return;
@@ -68,10 +70,7 @@ public final class CompatibilityReporterModule extends LynxModule {
   @LynxMethod
   public void getEvidenceContext(Callback callback) {
     mainHandler.post(() -> {
-      if (binding.view() == null) {
-        callback.invoke((Object) null);
-        return;
-      }
+      if (!requireView(callback)) return;
       JavaOnlyMap context = new JavaOnlyMap();
       context.putInt("version", 1);
       context.putString("runId", binding.store.runId);
@@ -83,8 +82,8 @@ public final class CompatibilityReporterModule extends LynxModule {
   @LynxMethod
   public void submit(String runId, String report, Callback callback) {
     mainHandler.post(() -> {
+      if (!requireView(callback)) return;
       try {
-        if (binding.view() == null) throw new IllegalStateException("View binding expired");
         JSONObject value = new JSONObject(report);
         JSONObject evidence = new JSONObject();
         evidence.put("version", 1);
@@ -126,8 +125,8 @@ public final class CompatibilityReporterModule extends LynxModule {
   @LynxMethod
   public void submitArtifact(String runId, String name, String data, Callback callback) {
     mainHandler.post(() -> {
+      if (!requireView(callback)) return;
       try {
-        if (binding.view() == null) throw new IllegalStateException("View binding expired");
         String payload = data.startsWith("data:image/png;base64,") ? data.substring(22) : data;
         EvidenceStore.Receipt receipt = binding.store.save(runId, name, Base64.decode(payload, Base64.DEFAULT));
         JavaOnlyMap result = new JavaOnlyMap();
@@ -150,9 +149,31 @@ public final class CompatibilityReporterModule extends LynxModule {
     Log.e("LynxEvidence", "Evidence run failed", error);
   }
 
+  /** 视图失效与真实节点缺失分开回传；JS 尚未取得 runId 时仍由宿主保存失败。 */
+  private boolean requireView(Callback callback) {
+    if (binding.view() != null) return true;
+    JavaOnlyMap failure = new JavaOnlyMap();
+    failure.putInt("version", 1);
+    failure.putString("source", "lynx-native-evidence");
+    failure.putString("category", "environment");
+    failure.putString("code", "view-expired");
+    failure.putString("message", "View binding expired");
+    try {
+      binding.store.publishFailure(binding.store.runId,
+          "{\"version\":1,\"source\":\"lynx-native-evidence\",\"category\":\"environment\",\"code\":\"view-expired\",\"message\":\"View binding expired\"}");
+    } catch (Exception error) {
+      Log.e("LynxEvidence", "Expired view failure could not be persisted", error);
+    }
+    JavaOnlyMap result = new JavaOnlyMap();
+    result.putMap("error", failure);
+    callback.invoke(result);
+    return false;
+  }
+
   @LynxMethod
   public void captureGeometry(String runId, String identifier, Callback callback) {
     mainHandler.post(() -> {
+      if (!requireView(callback)) return;
       try {
         GeometryEvidence.Capture capture = GeometryEvidence.capture(binding.store, runId, identifier, new GeometryEvidence.Host() {
           public double[] measure(String id) { return measureNow(id); }
@@ -184,7 +205,10 @@ public final class CompatibilityReporterModule extends LynxModule {
 
   @LynxMethod
   public void measure(String identifier, Callback callback) {
-    mainHandler.post(() -> callback.invoke(rectMap(measureNow(identifier))));
+    mainHandler.post(() -> {
+      if (!requireView(callback)) return;
+      callback.invoke(rectMap(measureNow(identifier)));
+    });
   }
 
   private double[] measureNow(String identifier) {
@@ -210,6 +234,7 @@ public final class CompatibilityReporterModule extends LynxModule {
   }
 
   private void captureNow(String identifier, Callback callback) {
+    if (!requireView(callback)) return;
     byte[] data = captureBytes(identifier);
     callback.invoke(data == null ? null : Base64.encodeToString(data, Base64.NO_WRAP));
   }
@@ -230,6 +255,7 @@ public final class CompatibilityReporterModule extends LynxModule {
   @LynxMethod
   public void pointerEventsNone(String identifier, Callback callback) {
     mainHandler.post(() -> {
+      if (!requireView(callback)) return;
       LynxBaseUI ui = findUI(identifier);
       callback.invoke(ui == null ? null : ui.pointerEvents() == EventTarget.PointerEventsValue.None);
     });
@@ -238,6 +264,7 @@ public final class CompatibilityReporterModule extends LynxModule {
   @LynxMethod
   public void setPseudoActive(String identifier, boolean active, Callback callback) {
     mainHandler.post(() -> {
+      if (!requireView(callback)) return;
       LynxView lynxView = binding.view();
       LynxBaseUI ui = findUI(identifier);
       if (lynxView == null || ui == null) {

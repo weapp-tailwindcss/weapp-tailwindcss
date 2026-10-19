@@ -71,3 +71,35 @@ it('host 报告写入失败不会被当成发布成功', async () => {
 it('旧 host 缺少回执方法时不开始采集', async () => {
   await expect(createNativeEvidence({ submit: native().submit })).rejects.toThrow(/缺少 evidence 协议/)
 })
+
+it('缺失bridge和geometry协议明确报告环境取证中断', async () => {
+  await expect(createNativeEvidence({})).rejects.toMatchObject({ code: 'bridge-unavailable' })
+  const writer = await createNativeEvidence(native())
+  await expect(writer.geometry('sizing-fixed')).rejects.toMatchObject({ code: 'geometry-unavailable' })
+})
+
+it('写入回执超时与原生明确view-expired保留结构化原因', async () => {
+  vi.useFakeTimers()
+  const reporter = native()
+  reporter.submitArtifact.mockImplementation(() => {})
+  const writer = await createNativeEvidence(reporter)
+  const timeout = writer.save(receipt.name, 'png').catch(error => error as Error)
+  await vi.advanceTimersByTimeAsync(2001)
+  expect(await timeout).toMatchObject({ code: 'receipt-timeout' })
+  reporter.getEvidenceContext.mockImplementation(callback => callback({
+    error: { version: 1, source: 'lynx-native-evidence', category: 'environment', code: 'view-expired', message: 'View binding expired' },
+  } as never))
+  await expect(createNativeEvidence(reporter)).rejects.toMatchObject({ code: 'view-expired' })
+})
+
+it('原生回传空geometry和错误artifact回执保持产品失败', async () => {
+  const reporter = native()
+  const writer = await createNativeEvidence({ ...reporter, captureGeometry: (_run, _id, callback) => callback(null) })
+  const geometry = await writer.geometry('sizing-fixed').catch(error => error as Error)
+  expect(geometry).toBeInstanceOf(Error)
+  expect(geometry).not.toHaveProperty('code')
+  reporter.submitArtifact.mockImplementation((_run, _name, _data, callback) => callback({ ...receipt, runId: 'wrong' }))
+  const receiptWriter = await createNativeEvidence(reporter)
+  const invalid = await receiptWriter.save(receipt.name, 'png').catch(error => error as Error)
+  expect(invalid).not.toHaveProperty('code')
+})

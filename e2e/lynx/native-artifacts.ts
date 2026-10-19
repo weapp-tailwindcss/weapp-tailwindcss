@@ -1,6 +1,7 @@
 import type { NativePlatform } from './native-options'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { formatLynxHarnessFailure } from './native-failure'
 
 export type NativeRunStage = 'device-discovery' | 'host-preparation' | 'bundle-build' | 'bundle-staging' | 'native-build' | 'device-readiness' | 'native-run' | 'report-validation'
 
@@ -32,7 +33,8 @@ function commandFailure(error: unknown, seen = new Set<object>()) {
 
 /** CLI 与附件共用安全错误字段，聚合失败也不得隐藏原始异常。 */
 export function formatNativeFailure(error: unknown): string {
-  return JSON.stringify(commandFailure(error), null, 2)
+  const marker = formatLynxHarnessFailure(error)
+  return `${marker ? `${marker}\n` : ''}${JSON.stringify(commandFailure(error), null, 2)}`
 }
 
 /** 设备发现和准备也属于本轮执行；在任何外部命令之前创建证据目录。 */

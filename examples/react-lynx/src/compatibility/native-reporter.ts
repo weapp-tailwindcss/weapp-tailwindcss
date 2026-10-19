@@ -1,5 +1,6 @@
 import type { ColorSchemeModule } from './native-color-scheme'
 import type { EvidenceModule, NativeEvidenceWriter } from './native-evidence'
+import type { NativeBridgeResult } from './native-failure'
 import type { CompatibilityCase, NativeCaseResult, NativePlatformReport, NativeRect, NativeRuntimeEnvironment, Platform, StaticEvidenceReport } from './types'
 import { combineCandidateEvidence } from './candidate-evidence'
 import { compatibilityCases } from './catalog'
@@ -7,6 +8,7 @@ import { evidenceSequence, lynxEvidenceStrategy, requiresPixelEffect } from './e
 import { evaluateGeometry } from './geometry'
 import { collectColorScheme } from './native-color-scheme'
 import { createNativeEvidence } from './native-evidence'
+import { requestNativeReceipt as callReporter, nativeEvidenceFailureIn, NativeEvidenceUnavailableError } from './native-failure'
 import { waitForProbeLayout } from './runtime-ready'
 import staticEvidenceJson from './static-evidence.json'
 
@@ -15,10 +17,10 @@ interface ScreenshotResult {
 }
 
 interface ReporterModule extends EvidenceModule, ColorSchemeModule {
-  measure?: (id: string, callback: (value: NativeRect | null) => void) => void
-  capture?: (id: string, callback: (value: string | null) => void) => void
-  pointerEventsNone?: (id: string, callback: (value: boolean | number | null) => void) => void
-  setPseudoActive?: (id: string, active: boolean, callback: (value: boolean | number) => void) => void
+  measure?: (id: string, callback: (value: NativeBridgeResult<NativeRect | null>) => void) => void
+  capture?: (id: string, callback: (value: NativeBridgeResult<string | null>) => void) => void
+  pointerEventsNone?: (id: string, callback: (value: NativeBridgeResult<boolean | number | null>) => void) => void
+  setPseudoActive?: (id: string, active: boolean, callback: (value: NativeBridgeResult<boolean | number>) => void) => void
 }
 
 const staticEvidence = staticEvidenceJson as StaticEvidenceReport
@@ -75,20 +77,6 @@ function invoke<T>(id: string, method: string, params: Record<string, unknown>, 
       fail: () => finish(undefined),
     })
     query.exec()
-  })
-}
-
-function callReporter<T>(invokeReporter: (callback: (value: T) => void) => void, timeout = 2000) {
-  return new Promise<T | undefined>((resolve) => {
-    let settled = false
-    const finish = (value: T | undefined) => {
-      if (!settled) {
-        settled = true
-        resolve(value)
-      }
-    }
-    setTimeout(finish, timeout, undefined)
-    invokeReporter(value => finish(value))
   })
 }
 
@@ -308,8 +296,11 @@ async function collectCase(item: CompatibilityCase, reporter: ReporterModule, ev
 export async function submitNativeCompatibilityReport() {
   const reporter = NativeModules.CompatibilityReporter as ReporterModule | undefined
   const platform = currentPlatform()
-  if (!reporter?.submit || !platform || staticEvidence.catalogHash === 'pending-static-e2e') {
+  if (!platform || staticEvidence.catalogHash === 'pending-static-e2e') {
     return
+  }
+  if (!reporter?.submit) {
+    throw new NativeEvidenceUnavailableError('bridge-unavailable', '原生 host 缺少 evidence 协议')
   }
   let runId: string | undefined
   try {
@@ -334,7 +325,8 @@ export async function submitNativeCompatibilityReport() {
     await evidence.submit(report)
   }
   catch (error) {
-    const message = error instanceof Error ? error.stack ?? error.message : String(error)
+    const failure = nativeEvidenceFailureIn(error)
+    const message = failure ? JSON.stringify(failure) : error instanceof Error ? error.stack ?? error.message : String(error)
     if (runId && reporter.fail) {
       await callReporter<boolean>(callback => reporter.fail!(runId!, message, callback), 3000).catch(() => undefined)
     }
