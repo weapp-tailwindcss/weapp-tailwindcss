@@ -91,6 +91,18 @@ Lynx 的几何采集由双端原生宿主独立量六个节点，写出 probe/co
 
 Expo 示例的 Babel preset 现按实际 Expo 包身份解析，避免 monorepo 的旧 preset 被 Metro 选中。修复后 Web、Android、iOS 三种真实 Metro export 已通过；这是构建证据，不能替代设备运行。
 
+## 本轮重新预检的阻塞记录
+
+源码 `015f2b33f2fed2ecb36c1aa894cbb0e79f3c8051` 于 2026-10-19 重新执行 `pnpm e2e:preflight prepare --extended`。run ID 为 `46e01584-5bff-438c-9323-2cc761613619`，最终状态 blocked：
+
+- 通过：基础环境、HBuilderX、iOS 系统与截图、Harmony、五个浏览器探针、RN/Lynx Android 和 iOS 工具链。工具链通过不代表产品实际渲染通过。
+- 阻塞：微信报“微信 IDE 已有服务不可用或超时（isLogin）；保留登录态，不启动或重启 IDE”；Android 报“Android 未取得有效 UI 结构”。没有尝试重启微信、恢复票据、切换账号或重置设备。
+- 未执行：当前会话 computer use、verify 和全面产品运行。失败报告没有复用，也没有降级为单端运行。
+
+预检原始报告保留在 `e2e/.artifacts/preflight/46e01584-5bff-438c-9323-2cc761613619/`。通过 `recordPreflightRejection` 仅整理阻断索引 `e2e/.artifacts/tailwind/8b115b9c-1e7f-4a73-83d7-f93c3915fb06/`，15 个目标全部 blocked、attempted=false；没有调用全面入口或测试 runner，不计为一次已执行验收。prepare 已以退出码 1 结束。本轮没有创建新的 computer use 标签页，已核对 IAB 标签页为空，原有 Chrome 页面未修改。
+
+恢复需要用户确认已打开的微信 IDE 登录状态与服务端口正常，以及 Android 能显示并读取有效 UI。之后在稳定源码上重新 prepare --extended、完成当前会话 computer use 和 verify，再调用统一入口。剩余六类 Web variant、转换 oracle 与原生 runtime 夹具缺口继续保留；本轮不能得出“全部 Tailwind 写法有效”或“四端验收全部通过”。
+
 ## 适用边界
 
 能力清单覆盖固定版本的注册项和有限补全，任意值按语法分支取样。runtime 夹具缺口、缺少独立转换 oracle、不可触发状态及设备阻塞均须保留，不能自动变成“不支持”，也不能用同属性的其他案例填充。第三方插件任意实现需另行登记。
