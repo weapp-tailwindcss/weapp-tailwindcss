@@ -32,6 +32,8 @@ regressions:
   - e2e/tailwind-browser-serialization.test.ts
   - e2e/react-native-ios-build.test.ts
   - e2e/lynx-reports.test.ts
+  - e2e/lynx-native-failure.test.ts
+  - e2e/tailwind-scheduler.test.ts
   - e2e/tailwind-css.test.ts
 ---
 
@@ -84,6 +86,8 @@ regressions:
 转换 oracle 新增 RN 独立映射（默认补全 1,599 项），WXSS 扩至 848 项；两端未审查范围分别为 21,687 和 22,438。修复 place 多关键词展开、RN spacing 函数拆分、非法布局枚举及组合平台变体丢条件，并增加完整四边、四角、双维度和动态阶段比较。缺少独立原生几何回执的 Lynx 案例不能通过，混合案例也不传播为所有子能力通过。
 
 Lynx 的几何采集由双端原生宿主独立量六个节点，写出 probe/control PNG 与身份绑定的坐标 sidecar，JS 只能提交 PNG，不能伪造几何回执。普通 run context、缺 sidecar、旧 run、错误 hash 或无效矩形均不能通过。混合案例采集可保留精确的 pending 候选，但最终基线和统一 v2 验收继续拒绝缺少能力证据；active 不代证 hover。
+
+宿主阻断采用严格白名单结构化信号，支持聚合错误，避免从普通几何错误文本推断环境。主树的结构化阻断、真实子进程调度及 adapter 共 73 项通过；Lynx 示例最终 14 文件、160 项通过，static/扫描只读 21 项通过。更新后的 static 差异仅为生成时间，样式与 catalog 身份不变；原生桥已在双端实际 SDK 编译，但设备执行仍待新的预检与运行。
 
 Expo 示例的 Babel preset 现按实际 Expo 包身份解析，避免 monorepo 的旧 preset 被 Metro 选中。修复后 Web、Android、iOS 三种真实 Metro export 已通过；这是构建证据，不能替代设备运行。
 

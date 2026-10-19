@@ -4,6 +4,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { expect, it, vi } from 'vitest'
+import { formatLynxHarnessFailure, LynxHarnessBlockedError } from './lynx/native-failure'
 import { EnvironmentBlockedError, environmentFailure } from './tailwind-capabilities/environment-block'
 import { runPnpmStage } from './tailwind-capabilities/external'
 import { scheduleTargets } from './tailwind-capabilities/scheduler'
@@ -53,8 +54,31 @@ it('真实子进程的明确环境错误保留日志并传播结构化阻断', a
 })
 
 it('缺截图和错误样式不会被正则升级成环境问题', () => {
-  for (const message of ['padding is incorrect', 'iOS screenshot is missing', 'Android geometry assertion failed', 'case registry incomplete', 'rendered text should say Shutdown', 'CoreSimulator geometry assertion failed']) {
+  for (const message of ['padding is incorrect', 'iOS screenshot is missing', 'Android geometry assertion failed', 'case registry incomplete', 'rendered text should say Shutdown', 'CoreSimulator geometry assertion failed', 'Missing native geometry', '无效几何回执', 'LYNX_NATIVE_HARNESS_FAILURE {"version":1,"code":"unknown","message":"geometry assertion failed"}']) {
     expect(environmentFailure(message)).toBeUndefined()
+  }
+})
+
+it.each(['bridge-unavailable', 'geometry-unavailable', 'view-expired', 'receipt-timeout', 'report-timeout'] as const)('Lynx 明确的 %s 从真实子进程阻断调度且不生成能力判定', async (reason) => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'tailwind-lynx-harness-'))
+  const { stages, dependencies } = fixture()
+  stages[0]!.target = 'lynx-android'
+  const message = `Lynx harness blocked: ${reason}`
+  const marker = formatLynxHarnessFailure(new AggregateError([new LynxHarnessBlockedError(reason, message)], '原生采集或恢复失败'))!
+  expect(environmentFailure(marker)).toBe(message)
+  dependencies.execute.mockImplementation(async () => {
+    await runPnpmStage({ root: path.resolve(import.meta.dirname, '..'), directory, runId: 'test', env: {} }, ['exec', 'node', '-e', `console.error(${JSON.stringify(marker)}); process.exitCode=1`], 'lynx')
+  })
+  try {
+    await expect(scheduleTargets(stages, dependencies)).rejects.toThrow(EnvironmentBlockedError)
+    expect(dependencies.execute.mock.calls).toEqual([['lynx-android']])
+    expect(dependencies.check.mock.calls).toEqual([['lynx-android']])
+    expect(dependencies.classify).not.toHaveBeenCalled()
+    expect(stages.map(stage => stage.status)).toEqual(['blocked', 'blocked', 'blocked'])
+    expect(await readFile(path.join(directory, 'lynx.log'), 'utf8')).toContain(marker)
+  }
+  finally {
+    await rm(directory, { recursive: true, force: true })
   }
 })
 

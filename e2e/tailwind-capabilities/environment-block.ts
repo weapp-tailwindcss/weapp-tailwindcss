@@ -1,3 +1,5 @@
+import { parseLynxHarnessFailure } from '../lynx/native-failure'
+
 /** 环境故障与产品断言失败分开传播，禁止捕获后继续调度。 */
 export class EnvironmentBlockedError extends Error {
   constructor(message: string, options?: ErrorOptions) {
@@ -8,6 +10,10 @@ export class EnvironmentBlockedError extends Error {
 
 /** 仅识别工具明确报告的环境故障；样式、截图及报告断言继续作为测试失败。 */
 export function environmentFailure(output: string): string | undefined {
+  const nativeFailure = parseLynxHarnessFailure(output)
+  if (nativeFailure) {
+    return nativeFailure
+  }
   const patterns = [
     /Can't determine id of Simulator app[^\r\n]*/,
     /(?:spawn|command) [^\r\n]*\bENOENT\b[^\r\n]*/,

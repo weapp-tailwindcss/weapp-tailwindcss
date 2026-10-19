@@ -54,6 +54,8 @@ v2 报告绑定源码、锁文件、工具版本、catalog、夹具及预期 has
 
 RN iOS 明确采用 Expo prebuild → CocoaPods → xcodebuild → simctl，使用预检绑定的设备，重读本轮产物与已安装容器的主程序、Info.plist 和 Debug dylib 后才请求深链，不依赖 Simulator.app GUI。RN 的构建指令须回放实际归档 manifest 并匹配独立预期；运行时使用 probe、显式 reference 和无效果 control 三个节点，避免宿主同时忽略属性造成相等误报。预检拒绝也会生成调度索引，全部目标保留“阻塞、未尝试”。
 
+Lynx 宿主的桥接缺失、视图失效及回执超时使用白名单结构化信号跨子进程传播，立即阻断后续调度；缺节点、无效矩形、错误 receipt 以及几何语义不符继续作为失败。几何必须由本轮双端原生宿主测量，并重读 probe/control PNG、坐标 sidecar 和 SHA 回执，普通 JS report 或 run context 不能代证。
+
 微信像素使用同屏独立 inline 参考，并保存原始带色彩配置的截图、规范化截图和视口信息。ICC 转换的 RGB 量化允许一级误差，alpha 精确匹配；probe 与 reference 的采样必须完全一致。样式值仍精确匹配预先声明的配置。
 
 状态为通过、失败、阻塞、未执行；已知平台限制必须有明确原因和对应负向证据才能通过负向合同。完整验收还需查看全部注册能力的运行时覆盖，不能把已编写夹具全部通过描述成“全部 Tailwind 写法有效”。
