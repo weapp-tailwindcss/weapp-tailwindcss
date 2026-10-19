@@ -44,6 +44,18 @@ function equivalent(property: string, actual: string, expected: string) {
     // 官方 NumberToString 使用 std::to_string，保留六位小数；容差只覆盖该舍入。
     return actualRatio !== undefined && expectedRatio !== undefined && Math.abs(actualRatio - expectedRatio) <= 0.500001e-6
   }
+  if (['transition-duration', 'transition-delay', 'animation-duration', 'animation-delay'].includes(property)) {
+    const time = right.match(/^([+-]?(?:\d+(?:\.\d*)?|\.\d+))(ms|s)$/)
+    if (!time || !number.test(left)) {
+      return false
+    }
+    const milliseconds = Number(time[1]) * (time[2] === 's' ? 1000 : 1)
+    // TimeToNumber 将秒转成毫秒，decoder 的 NUMBER 展示不带单位；不能接受错误单位或时间列表。
+    // https://github.com/lynx-family/lynx/blob/3f35de1c6150c1b94df165a248e8c76789487318/core/renderer/css/parser/css_string_parser.cc#L2579
+    return Number.isFinite(milliseconds) && Number.isFinite(Number(left))
+      && (!property.endsWith('-duration') || milliseconds >= 0)
+      && Math.abs(Number(left) - milliseconds) <= 0.500001e-6
+  }
   if (property === 'background-position') {
     const expanded = (value: string) => value === 'center' ? 'center center' : value
     return expanded(left) === expanded(right)

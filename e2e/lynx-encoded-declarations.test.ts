@@ -98,6 +98,26 @@ describe('Lynx 实际编码声明的有限语义比较', () => {
     expect(matchEncodedDeclaration(actual, animationExpected)).toBeUndefined()
   })
 
+  it.each([
+    ['transition-duration', '300', '300ms', true],
+    ['transition-duration', '300', '0.3s', true],
+    ['transition-duration', '300', '.3s', true],
+    ['transition-duration', '0', '0s', true],
+    ['transition-duration', '300', '300s', false],
+    ['transition-duration', '0.3', '300ms', false],
+    ['transition-duration', '300px', '300ms', false],
+    ['transition-duration', '300', '300px', false],
+    ['transition-duration', '300', '300ms, 1s', false],
+    ['transition-duration', '-300', '-300ms', false],
+    ['transition-delay', '-300', '-0.3s', true],
+    ['animation-duration', '300', '0.3s', true],
+    ['animation-delay', '25', '25ms', true],
+    ['opacity', '300', '300ms', false],
+  ] as const)('仅将 %s 的毫秒实际值 %s 与时间 %s 比较', (property, actual, expected, matches) => {
+    const evidence = [declaration(property, actual)]
+    expect(matchEncodedDeclaration(evidence, declaration(property, expected)) !== undefined).toBe(matches)
+  })
+
   it('value 未声明只证明完整属性结构，不能由部分 flex/span 代替', () => {
     expect(matchEncodedDeclaration(animation, { property: 'animation' })).toEqual(animation)
     expect(matchEncodedDeclaration([declaration('grid-column-span', '2')], { property: 'grid-column' })).toHaveLength(1)
