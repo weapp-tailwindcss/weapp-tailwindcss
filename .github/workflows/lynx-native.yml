@@ -5,11 +5,15 @@ on:
     types: [opened, synchronize]
     paths:
       - 'packages/lynx/**'
+      - 'packages/engine/**'
+      - 'packages/postcss/**'
       - 'packages/weapp-tailwindcss/src/bundlers/**'
       - 'examples/react-lynx/**'
       - 'e2e/lynx/**'
       - 'e2e/lynx-*.test.ts'
       - 'e2e/fixtures/lynx-native/**'
+      - 'tools/tailwindcss-test-catalog/**'
+      - 'e2e/tailwind-capabilities/**'
       - package.json
       - pnpm-lock.yaml
       - .github/workflows/lynx-native.yml

@@ -1,6 +1,9 @@
+import fs from 'node:fs/promises'
+import os from 'node:os'
+import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { COVERAGE_LAYERS, COVERAGE_REGISTRY, validateCoverageRegistry } from './coverageRegistry'
-import { createCoverageReport, validateCoverageReport, validateReleaseCertificate } from './coverageReport'
+import { createCoverageReport, readCommittedCompatibilityEvidence, validateCoverageReport, validateReleaseCertificate } from './coverageReport'
 
 const testIdentity = {
   commitSha: 'a'.repeat(40),
@@ -12,6 +15,42 @@ const testIdentity = {
 }
 
 describe('多端 coverage registry contract', () => {
+  it('逐案例和浏览器登记范围，构建指令没有运行时、截图或开发态覆盖', () => {
+    const web = COVERAGE_REGISTRY.filter(cell => cell.source === 'tailwind' && cell.caseId === 'layout-display')
+    expect(web.map(cell => cell.platform).sort()).toEqual(['weapp', 'web-chromium', 'web-firefox', 'web-webkit'])
+    for (const cell of COVERAGE_REGISTRY.filter(cell => cell.source !== 'demo')) {
+      expect(cell.caseId).toBeTruthy()
+      expect(cell.layers.dev.status).toBe('not-applicable')
+      if (cell.caseId === 'directive-import') {
+        expect(cell.layers.runtime.status).toBe('not-applicable')
+        expect(cell.layers.visual.status).toBe('not-applicable')
+      }
+    }
+  })
+
+  it('历史 supported/unsupported JSON 不能扩张为本轮静态、运行时或截图证据', async () => {
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'historical coverage '))
+    try {
+      const reportDirectory = path.join(directory, 'e2e', 'lynx', 'reports')
+      await fs.mkdir(reportDirectory, { recursive: true })
+      await fs.writeFile(path.join(reportDirectory, 'android.json'), JSON.stringify({
+        schemaVersion: 1,
+        verifiedAt: '2026-10-06T00:00:00Z',
+        results: [{ id: 'layout-aspect', status: 'supported' }, { id: 'layout-columns', status: 'unsupported' }],
+      }))
+      const evidence = await readCommittedCompatibilityEvidence(directory)
+      expect(evidence.length).toBeGreaterThan(0)
+      expect(evidence.every(item => item.status === 'not-run' && item.reason?.includes('仅供历史展示'))).toBe(true)
+      expect(evidence.some(item => item.layer === 'dev')).toBe(false)
+      const report = createCoverageReport(evidence)
+      expect(report.summary.passed).toBe(0)
+      expect(report.summary.unsupported).toBe(0)
+      expect(() => validateCoverageReport(report)).not.toThrow()
+    }
+    finally {
+      await fs.rm(directory, { recursive: true, force: true })
+    }
+  })
   it('keeps every cell unique and every layer executable', () => {
     expect(COVERAGE_REGISTRY.length).toBeGreaterThan(109)
     expect(new Set(COVERAGE_REGISTRY.map(item => item.id)).size).toBe(COVERAGE_REGISTRY.length)

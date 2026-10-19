@@ -5,10 +5,14 @@ on:
     types: [opened, synchronize]
     paths:
       - 'packages/react-native/**'
+      - 'packages/engine/**'
+      - 'packages/postcss/**'
       - 'packages/weapp-tailwindcss/src/generator/**'
       - 'examples/react-native-expo/**'
       - 'e2e/react-native/**'
       - 'e2e/react-native-*.test.ts'
+      - 'tools/tailwindcss-test-catalog/**'
+      - 'e2e/tailwind-capabilities/**'
       - package.json
       - pnpm-lock.yaml
       - .github/workflows/react-native-compatibility.yml

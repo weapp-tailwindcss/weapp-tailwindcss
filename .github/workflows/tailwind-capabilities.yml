@@ -1,0 +1,74 @@
+name: Tailwind CSS Capabilities
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'tools/tailwindcss-test-catalog/**'
+      - 'e2e/tailwind-capabilities/**'
+      - 'e2e/tailwind-capabilities-*.test.ts'
+      - e2e/tailwind-inventory.test.ts
+      - 'packages/engine/**'
+      - 'packages/postcss/**'
+      - 'packages/weapp-tailwindcss/**'
+      - package.json
+      - pnpm-lock.yaml
+      - .github/workflows/tailwind-capabilities.yml
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      full_verification:
+        description: 审批后完整执行版本 PR 验收
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tailwind-capabilities-${{ inputs.full_verification && format('full-{0}', github.run_id) || github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scope:
+    uses: ./.github/workflows/ci-scope.yml
+    with:
+      full_verification: ${{ inputs.full_verification || false }}
+
+  web:
+    needs: scope
+    if: needs.scope.outputs.core == 'true'
+    name: Web semantics (${{ matrix.engine }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm turbo run build --filter=weapp-tailwindcss...
+      - name: Install selected browser
+        run: pnpm exec playwright install --with-deps ${{ matrix.engine }}
+      - name: Verify fresh Web semantics
+        env:
+          CI: '1'
+        run: pnpm e2e:tailwind:web:ci --engine ${{ matrix.engine }}
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: tailwind-web-${{ matrix.engine }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: e2e/.artifacts/tailwind*/**
+          if-no-files-found: warn
+          include-hidden-files: true
+          retention-days: 14

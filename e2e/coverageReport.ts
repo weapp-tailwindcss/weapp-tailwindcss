@@ -129,19 +129,22 @@ export async function readCommittedCompatibilityEvidence(repoRoot: string): Prom
       catch {
         continue
       }
-      const report = JSON.parse(raw) as { results?: Array<{ id: string, status: 'supported' | 'unsupported', reason?: string }> }
+      const report = JSON.parse(raw) as { schemaVersion?: number, verifiedAt?: string, results?: Array<{ id: string, status: string }> }
       for (const result of report.results ?? []) {
         const cellId = `${item.source}/${platform}/${result.id}`
-        const status: CoverageResultStatus = result.status === 'supported' ? 'passed' : 'unsupported'
-        const reason = result.reason ?? (status === 'unsupported' ? '兼容性 catalog 明确标记为 unsupported。' : undefined)
-        for (const layerName of ['static', 'dev', 'runtime', 'visual', 'negative'] as const) {
+        const cell = COVERAGE_REGISTRY.find(cell => cell.id === cellId)
+        if (!cell) {
+          continue
+        }
+        // 已提交 JSON 缺少本轮身份和原始产物，历史 supported/unsupported 都不能填充 fresh 覆盖。
+        for (const layerName of COVERAGE_LAYERS.filter(layerName => cell.layers[layerName].status !== 'not-applicable')) {
           evidence.push({
             cellId,
             layer: layerName,
-            status,
-            executor: `pnpm e2e:${item.source}:${platform}`,
-            evidenceSchema: `${item.source}-${layerName === 'negative' ? 'negative' : layerName}-v1`,
-            ...(reason ? { reason } : {}),
+            status: 'not-run',
+            executor: cell.layers[layerName].executor,
+            evidenceSchema: cell.layers[layerName].evidenceSchema,
+            reason: `已提交 schemaVersion=${report.schemaVersion ?? 'unknown'} 报告仅供历史展示（${result.status}，${report.verifiedAt ?? '时间未知'}）；缺少本轮身份、独立层级验证和原始产物。`,
           })
         }
       }
