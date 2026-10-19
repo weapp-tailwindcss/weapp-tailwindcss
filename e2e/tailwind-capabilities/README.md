@@ -6,14 +6,14 @@
 
 ## 支持矩阵及证据边界
 
-| 目标 | 本轮 runner 的判定方式 | 不可代替的证据 |
-| --- | --- | --- |
-| 普通 Web × Chromium / Firefox / WebKit | 独立语义夹具、计算样式、几何、交互前后恢复、渐变及阴影像素；默认 utility 另以隔离参考夹具验证 | 各引擎实际浏览器版本、逐例测量和 PNG |
-| Expo Web × 三引擎 | 同一 RN 语义夹具经 Expo Web 实际渲染 | 各引擎宿主截图及参考节点；不能用普通 Web 结果代证 |
-| React Native × Android / iOS | 独立 View / Text 参考、样式、几何、像素及动态阶段 | manifest、bundle、实际双端测量和逐阶段宿主 PNG |
-| Lynx × Android / iOS | 生成、生产 encoder 解码、独立几何/像素 oracle 及宿主取证 | run context、bundle hash、逐候选和宿主原始证据 |
-| 微信 IDE | 受保护的已有 IDE 连接、独立 inline 参考、节点样式/尺寸及动态恢复 | 实际 IDE 运行、测量与截图 |
-| 其他登记小程序平台 | 复用现有多平台构建和样式产物矩阵 | 只证明构建及样式产物，不代表设备运行 |
+| 目标                                   | 本轮 runner 的判定方式                                                                        | 不可代替的证据                                    |
+| -------------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| 普通 Web × Chromium / Firefox / WebKit | 独立语义夹具、计算样式、几何、交互前后恢复、渐变及阴影像素；默认 utility 另以隔离参考夹具验证 | 各引擎实际浏览器版本、逐例测量和 PNG              |
+| Expo Web × 三引擎                      | 同一 RN 语义夹具经 Expo Web 实际渲染                                                          | 各引擎宿主截图及参考节点；不能用普通 Web 结果代证 |
+| React Native × Android / iOS           | 独立 View / Text 参考、样式、几何、像素及动态阶段                                             | manifest、bundle、实际双端测量和逐阶段宿主 PNG    |
+| Lynx × Android / iOS                   | 生成、生产 encoder 解码、独立几何/像素 oracle 及宿主取证                                      | run context、bundle hash、逐候选和宿主原始证据    |
+| 微信 IDE                               | 受保护的已有 IDE 连接、独立 inline 参考、节点样式/尺寸及动态恢复                              | 实际 IDE 运行、测量与截图                         |
+| 其他登记小程序平台                     | 复用现有多平台构建和样式产物矩阵                                                              | 只证明构建及样式产物，不代表设备运行              |
 
 RN 的已审查限制位于 `examples/react-native-expo/src/compatibility/protocol.ts`；Lynx 位于 `e2e/lynx/expectations.ts`。这些是预先声明的合同，不能根据新失败自动扩大。尚无可靠语义夹具的注册能力必须继续列为未执行。Lynx 宿主尚不能独立触发 hover；active 不能代证 hover，group 也不能代证 peer。
 
