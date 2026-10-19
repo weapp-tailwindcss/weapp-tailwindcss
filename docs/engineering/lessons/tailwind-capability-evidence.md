@@ -39,6 +39,12 @@ regressions:
   - e2e/lynx-failure-evidence.test.ts
   - e2e/lynx-android-sdk.test.ts
   - e2e/lynx-zip-entry.test.ts
+  - e2e/lynx-overflow.test.ts
+  - e2e/lynx-overflow-static.test.ts
+  - e2e/lynx-overflow-evidence.test.ts
+  - e2e/lynx-pixel-evidence.test.ts
+  - examples/react-lynx/src/compatibility/native-overflow.test.ts
+  - packages/postcss/test/native-selector-ids.test.ts
   - e2e/lynx/build-metadata.test.rb
   - e2e/tailwind-scheduler.test.ts
   - e2e/tailwind-css.test.ts
@@ -194,6 +200,10 @@ RN 三阶段采集现分别持久保存 baseline、TSX HMR、CSS HMR 的报告�
 本轮 Android run `39247836641` 的 artifact `12185065108` 与 iOS PR run `39248652614` 的 artifact `12186041659` 均已独立核原始字节及运行身份。Android 118 例、153 份回执完整，官方 AAR、构建/安装 APK、实际加载库和 bundle 身份一致；iOS 实际 checkout 为 PR merge `eb7393a4ed25d65e0045a7493a5ba86ead642a04`，SDK 原生读数 4.0.1。双端重新读取 CSS 和实际 bundle，重算深色六帧、important 灰/红/灰竞争及 supports 正负几何后，明确把这三项支持合同升级为 supported；不是由失败自动降级。`pnpm e2e:lynx:static:update` 后 118 项静态结论不变，仅 catalog 与时间更新；统一 static 入口重跑无差异。旧报告不能刷新 hash 后复用，新 catalog 仍需完整双端重跑。
 
 响应式四阶段实际根尺寸均跨过原生 48rem 标尺且恢复，control 保持 80px，但两端 probe 始终 200px，继续保持原登记限制。iOS 的 overflow 却暴露通用截图差异误判：最小宽度覆盖原夹具，子项没有真正溢出，两图只有微小对齐差异。此项不能升级支持表，正在增加明确几何及容器外像素的独立语义夹具与失败回归。
+
+overflow 新协议使用独立 160×160px 画布、96×64px 父框和相对位置为 (72,40) 的 48×40px 子项，右侧与底部均真实越界；裁剪后只保留 24×24px 交集。control 专属类显式 visible，probe 的 overflow 唯一来自候选，避免基础样式与 utility 争用。实际 decoder 的 CSS 文本会按 selector 重排，不能用其文本序号推断运行时层叠。离线验收重读六矩形、原生侧车与两张完整 PNG，要求 control 外部子项完整可见、probe 外部只剩画布、内部交集保留；无越界、部分裁剪或缺子项均无有效结论。生成 CSS 与实际二进制 decoder 的门禁无条件核验完整夹具，拒绝额外 class、ID（含等价转义）覆写。历史 iOS 两图及准确来源只用于拒绝假阳性，不作为新一轮运行证据。
+
+新增 overflow 合同进入 Lynx catalog 和统一 adapter fixture 身份；`pnpm e2e:lynx:static:update` 正常刷新后，118 项静态结论完全不变，catalog 更新为 `375d0b5a85143b25c58f842db3f1c8b3fe650a57f7f24a8e2136c79ff105b00c`，统一 static 更新无差异。PostCSS 构建及两条 AST ID helper 回归、20 文件 201 项示例测试、真实 Rspeedy 构建及只读 static 两文件 66 项已通过。最初的像素协议整合因旧合成夹具缺少 overflow 原生侧车而失败；补齐合成几何/PNG并明确其未裁剪结果后，43 项全部通过，保留原门禁。另在 `0a19bf4e8da4437ddf26e0220620072acb86b32b` 的全新独立工作树只执行 frozen/offline/ignore-scripts 安装，97 个 workspace 在测试前后均无 dist，三份新增 E2E 共 63 项以现有源码 alias 直接通过；没有先构建依赖来掩盖导入问题。新夹具仍需双端实际渲染审查，支持表继续保持原预期。此轮仅扩展 PostCSS 内部只读 AST helper，没有新增公开子路径或生产转换行为；既有中文发布 intent 范围不变。
 
 RN 正式 run [`39248652500`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/39248652500) 绑定 head `d78d1f81d392751dc11549da554cc79be02fc1ab`，实际合并态为 `eb7393a4ed25d65e0045a7493a5ba86ead642a04`。scope、Web Chromium、Android、iOS 四个 job 均最终 success，iOS 在 2026-10-19T12:41:43Z 完成 post checkout。三端的 baseline、TSX HMR、CSS HMR 各有 40 份唯一回执，共 360 份；独立审查逐件重读报告、六件编码、三件源码、虚拟 JS、manifest、phase-index 和全部 PNG。每端三个阶段的 manifest 与虚拟 JS 摘要分别变化，important 四状态的 probe/reference/control 绝对颜色均 100% 匹配。不能以根目录末阶段报告替代前两阶段。
 

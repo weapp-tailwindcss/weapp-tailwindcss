@@ -8,6 +8,7 @@ import { evidenceSequence, requiresPixelEffect } from '../examples/react-lynx/sr
 import staticEvidence from '../examples/react-lynx/src/compatibility/static-evidence.json'
 import { darkReceipts } from './lynx/fixtures/dark-images'
 import { effectFixtureImage } from './lynx/fixtures/effect-images'
+import { overflowArtifactFixture } from './lynx/fixtures/overflow-artifacts'
 import { responsiveArtifactFixture } from './lynx/fixtures/responsive-artifacts'
 import { structuralImage } from './lynx/fixtures/structural-images'
 import { textFlowImage } from './lynx/fixtures/text-flow-images'
@@ -56,11 +57,11 @@ async function fixture() {
   await fs.mkdir(crops)
   const report = structuredClone(androidReport) as NativePlatformReport
   report.evidence = { version: 1, runId: '00000000-0000-4000-8000-000000000001', bundleSha256: 'a'.repeat(64), artifacts: [] }
-  for (const [name, bytes] of responsiveArtifactFixture(report)) {
+  for (const [name, bytes] of [...responsiveArtifactFixture(report), ...overflowArtifactFixture(report)]) {
     await fs.writeFile(path.join(crops, name), bytes)
   }
   for (const result of report.results) {
-    if (result.id === 'variant-responsive') {
+    if (result.id === 'variant-responsive' || result.id === 'layout-overflow') {
       continue
     }
     // 此文件只验证像素协议；已改为几何取证的 supports 不再提供伪像素 checkpoint。
@@ -260,6 +261,7 @@ it('宿主只判定待验收效果，保留原始采集报告且无效图不能�
   const final = await finalizeNativePixelEffects(report, crops)
   expect(JSON.stringify(report)).toBe(original)
   expect(Object.fromEntries(final.results.filter(result => requiresPixelEffect(result.id)).map(result => [result.id, result.status]))).toEqual({
+    'layout-overflow': 'unsupported',
     'background-linear-gradient': 'unsupported',
     'syntax-important': 'unsupported',
     'effect-shadow': 'unsupported',
