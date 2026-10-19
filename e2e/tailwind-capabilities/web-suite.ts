@@ -2,6 +2,7 @@ import type { RunContext } from './context'
 import type { BrowserEngine, CapabilityReport } from './types'
 import { chromium, firefox, webkit } from 'playwright'
 import { authoringWebProfiles, runAuthoringWeb } from './authoring-web'
+import { frameworkSourceProfiles, runFrameworkSource } from './framework-source'
 import { runHmr } from './hmr'
 import { hmrContract } from './hmr/contract'
 import { loadInventory } from './inventory'
@@ -21,6 +22,7 @@ export async function runWebSuite(context: RunContext, engine: BrowserEngine) {
     authoring: authoringWebProfiles.map(profile => profile.id),
     hmr: [hmrContract().id],
     context: contextWebProbes.map(probe => `runtime/${probe.id}`),
+    framework: frameworkSourceProfiles.map(profile => profile.id),
   })
   const browser = await { chromium, firefox, webkit }[engine].launch({ headless: true })
   const reports: CapabilityReport[] = []
@@ -39,6 +41,9 @@ export async function runWebSuite(context: RunContext, engine: BrowserEngine) {
     }
     if (groups.context) {
       reports.push(await runContextWeb(context, engine, browser))
+    }
+    if (groups.framework) {
+      reports.push(await runFrameworkSource(context, engine, browser))
     }
   }
   finally {

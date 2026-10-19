@@ -50,7 +50,7 @@ describe('伪元素与真实上下文的独立验收', () => {
 
   it('未受控能力逐项保留真实限制，不能默认为通过', async () => {
     const coverage = webRuntimeCoverage(await loadInventory())
-    for (const root of ['visited', 'autofill', 'starting', 'noscript', 'pointer-coarse', 'contrast-less', 'details-content']) {
+    for (const root of ['visited', 'autofill', 'starting', 'contrast-less', 'details-content']) {
       const feature = coverage.find(item => item.featureId === `variant/static/${root}`)!
       expect(feature.status).toBe('not-run')
       expect(feature.reason).not.toMatch(/尚未提供此注册能力/)

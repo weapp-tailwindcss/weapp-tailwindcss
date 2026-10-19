@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { authoringFixtures, sourceSyntaxCases } from '@weapp-tailwindcss/test-catalog'
 import { withGeneratorFixture } from './fixture'
+import { frameworkSource, frameworkSourceCss, sourceFrameworks, sourceRevisions } from './framework-source/fixtures'
 import { hmrCss, hmrSource, hmrStates } from './hmr/fixture'
 import { digest } from './identity'
 import { weappProbes } from './weapp/fixtures'
@@ -12,6 +13,11 @@ export async function fixtureOutputs(root: string) {
   const web = await withGeneratorFixture(root, webFixtureCss, {}, generator => generator.generate({ target: 'web', candidates: [...new Set(webProbes.flatMap(probe => probe.candidate.match(/\S+/g) ?? []))], scanSources: false }))
   const weapp = await withGeneratorFixture(root, '@import "tailwindcss" source(none);', {}, generator => generator.generate({ target: 'weapp', candidates: [...new Set(weappProbes.flatMap(probe => [...probe.candidates]))], scanSources: false }))
   const context = await withGeneratorFixture(root, contextWebFixtureCss, {}, generator => generator.generate({ target: 'web', candidates: contextWebCandidates, scanSources: false }))
+  const frameworkFixtures = sourceFrameworks.flatMap(framework => sourceRevisions.map(revision => ({ framework, revision, css: frameworkSourceCss(framework), files: { [`Probe.${framework === 'react' ? 'tsx' : 'vue'}`]: frameworkSource(framework, revision, 'static-baseline') } })))
+  const frameworkFiles = Object.fromEntries<string>(await Promise.all(frameworkFixtures.map(async (fixture) => {
+    const output = await withGeneratorFixture(root, fixture.css, fixture.files, generator => generator.generate({ target: 'web', candidates: [], scanSources: true }))
+    return [`framework-${fixture.framework}-${fixture.revision}.css`, output.css] as const
+  })))
   const hmr = Object.fromEntries<string>(await Promise.all(hmrStates.map(async (state) => {
     const output = await withGeneratorFixture(root, hmrCss, { 'probe.js': hmrSource('static-baseline', state) }, generator => generator.generate({ target: 'web', candidates: [], scanSources: true }))
     return [`hmr-${state.id}.css`, output.css] as const
@@ -24,7 +30,7 @@ export async function fixtureOutputs(root: string) {
     const output = await withGeneratorFixture(root, fixture.css, fixture.files, generator => generator.generate({ target: 'web', candidates: fixture.candidates, scanSources: true }))
     return [`authoring-${fixture.id}.css`, output.css] as const
   })))
-  return { fixtureHash: digest({ webFixtureCss, webProbes, weappProbes, contextWebFixtureCss, contextWebProbes, hmrCss, hmrStates, authoring }), files: { 'web.css': web.css, 'weapp.wxss': weapp.css, 'context.css': context.css, ...hmr, ...authoringFiles } }
+  return { fixtureHash: digest({ webFixtureCss, webProbes, weappProbes, contextWebFixtureCss, contextWebProbes, hmrCss, hmrStates, authoring, frameworkFixtures }), files: { 'web.css': web.css, 'weapp.wxss': weapp.css, 'context.css': context.css, ...hmr, ...authoringFiles, ...frameworkFiles } }
 }
 
 export async function fixtureBaseline(root: string, update = false) {

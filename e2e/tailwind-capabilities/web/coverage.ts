@@ -1,4 +1,5 @@
 import type { TailwindInventory } from '../inventory'
+import { contextWebProbes } from '../web-context/fixtures'
 import { webProbes } from './probes'
 import { variantRuntimeGaps } from './variants/gaps'
 
@@ -11,7 +12,7 @@ export interface WebRuntimeCoverage {
 
 export function webRuntimeCoverage(inventory: TailwindInventory): WebRuntimeCoverage[] {
   return [...inventory.utilities, ...inventory.variants].map((feature) => {
-    const caseIds = webProbes.filter(probe => probe.features.includes(feature.id)).map(probe => `runtime/${probe.id}`)
+    const caseIds = [...webProbes, ...contextWebProbes].filter(probe => probe.features.includes(feature.id)).map(probe => `runtime/${probe.id}`)
     return {
       featureId: feature.id,
       caseIds,

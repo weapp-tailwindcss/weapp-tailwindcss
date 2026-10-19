@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "fixtureHash": "96b866fe16dd416940d803e073ed6c70e29fd4e4bf4733d535adb0439eb48514",
+  "fixtureHash": "5375bd7961d9ad9e46b5f78219dd35d260725567238ff9737f5ab158ef040f34",
   "files": {
     "web.css": "0975c9180d665818550de27dd5270090456f84d4adf477481762bbe174fca7ea",
     "weapp.wxss": "61f6e7306cae8c8012dd0117461595e65dbbdc8b2313750d244c0cf1d654f586",
@@ -37,6 +37,14 @@
     "authoring-scan-wxml-conditional.css": "08f9dc364767dc9dfcadb0a21ee187055136a24da12359bb233a7a31b85c9c38",
     "authoring-scan-hover-class.css": "e7c3f25efa08b371603524ef8e259b02fce46c594f0c9bc7ae34ad67a795a56f",
     "authoring-scan-interpolation-negative.css": "c1cc987f6053e78ec8200ed50626270604a8ada387ba31f3e1d065f4f745dc23",
-    "authoring-scan-business-text.css": "c1cc987f6053e78ec8200ed50626270604a8ada387ba31f3e1d065f4f745dc23"
+    "authoring-scan-business-text.css": "c1cc987f6053e78ec8200ed50626270604a8ada387ba31f3e1d065f4f745dc23",
+    "framework-react-initial.css": "26e186ef34af9f96e9ee39347c8e68e560c9e301db389d725625997294f7362e",
+    "framework-react-added.css": "2e1ed38d25a0ac9a5ee972c97da91343e3a2e8619275ff49c1618728b048022c",
+    "framework-react-replaced.css": "70ca6d142fe7d360a9a989ddd328609cb17f9a0b3a1d1daa37c5523c211d08e8",
+    "framework-react-deleted.css": "26e186ef34af9f96e9ee39347c8e68e560c9e301db389d725625997294f7362e",
+    "framework-vue-initial.css": "26e186ef34af9f96e9ee39347c8e68e560c9e301db389d725625997294f7362e",
+    "framework-vue-added.css": "2e1ed38d25a0ac9a5ee972c97da91343e3a2e8619275ff49c1618728b048022c",
+    "framework-vue-replaced.css": "70ca6d142fe7d360a9a989ddd328609cb17f9a0b3a1d1daa37c5523c211d08e8",
+    "framework-vue-deleted.css": "26e186ef34af9f96e9ee39347c8e68e560c9e301db389d725625997294f7362e"
   }
 }

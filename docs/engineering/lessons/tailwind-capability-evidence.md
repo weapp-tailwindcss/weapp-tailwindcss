@@ -11,6 +11,12 @@ regressions:
   - packages/react-native/test/transform-cascade.test.ts
   - e2e/tailwind-weapp-conversion-oracle.test.ts
   - e2e/tailwind-browser-lifecycle.test.ts
+  - e2e/tailwind-hmr-server.test.ts
+  - e2e/tailwind-framework-source-server.test.ts
+  - e2e/tailwind-framework-source.test.ts
+  - e2e/tailwind-web-context.test.ts
+  - packages/react-native/test/runtime-isolation.test.ts
+  - packages/react-native/test/style-arrays.test.ts
   - packages/react-native/test/relative-line-height.test.ts
   - e2e/react-native-evidence-protocol.test.ts
   - e2e/tailwind-hmr.test.ts
@@ -38,6 +44,8 @@ regressions:
 - 扫描不能只检查 classSet：独立参考逐候选检查实际声明、条件、全局依赖和排除结果，产品候选只能来自真实源码。
 - 原生负向结果必须有明确的候选诊断；空规则或静默丢失是失败，不能自动变为“不支持”。复杂选择器通过 AST 提取精确候选后明确拒绝；双轴 skew 在最终变量层叠后组合，不能只保留最后一轴。
 - Web 状态在触发前、触发后和恢复后验证，具名作用域和组合条件增加中间负控制；源码 HMR 通过真实 Vite 服务连续增、替、删并刷新，保存标识、样式、WebSocket 消息和同页面身份共同验真。
+- React/Vue 源码经真实框架编译并执行分支；服务使用真实临时目录身份，保存屏障等待完整 Vite 更新周期，不能在原始 watcher 回调中提前读取旧产物。上下文变体用实际 browser context 和原生表单事件取证；剩余 8 类变体继续登记未执行。
+- RN 实例分别维护注册表与元数据，工厂 revision 使缓存失效；深层样式数组迭代解析并明确拒绝循环引用。近零非零阴影透明度按宿主可消费的小数保留，不能由格式化舍入为透明。
 - 目标转换先固定独立参考和已审查转换规则，再执行产品管线。首批 490 个默认补全具备完整 WXSS 字面量 oracle，其余候选不由声明存在推导转换支持。
 - 候选规则同时比较选择器、条件和同一属性的声明顺序；另行检查完整官方参考中的全局变量、动画帧与 property 注册，避免只保留 class 声明的误报。
 

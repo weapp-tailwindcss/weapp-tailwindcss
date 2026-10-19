@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { arbitrarySyntaxCases } from '../tools/tailwindcss-test-catalog/src'
 import { loadDefaultDesignSystem, loadInventory } from './tailwind-capabilities/inventory'
 import { assertionPassed, validateCapabilityReport } from './tailwind-capabilities/report'
+import { contextWebProbes } from './tailwind-capabilities/web-context/fixtures'
 import { renderWebProbe, webContract } from './tailwind-capabilities/web/contract'
 import { webRuntimeCoverage } from './tailwind-capabilities/web/coverage'
 import { webFeatureBindings } from './tailwind-capabilities/web/features'
@@ -71,7 +72,7 @@ describe('Web 语义夹具合同', () => {
     expect(coverage.map(item => item.featureId).sort()).toEqual([...featureIds].sort())
     expect(new Set(coverage.map(item => item.featureId)).size).toBe(features.length)
     for (const row of coverage) {
-      const caseIds = webProbes.filter(item => item.features.includes(row.featureId)).map(item => `runtime/${item.id}`)
+      const caseIds = [...webProbes, ...contextWebProbes].filter(item => item.features.includes(row.featureId)).map(item => `runtime/${item.id}`)
       expect(row.caseIds).toEqual(caseIds)
       expect(row.status).toBe(caseIds.length ? 'fixture-defined' : 'not-run')
       if (!caseIds.length) {
