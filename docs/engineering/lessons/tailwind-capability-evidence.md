@@ -27,6 +27,11 @@ regressions:
   - e2e/lynx-source-boundary.test.ts
   - e2e/tailwind-report.test.ts
   - e2e/tailwind-web-layout.test.ts
+  - e2e/tailwind-web-lifecycle.test.ts
+  - e2e/tailwind-web-lifecycle-runner.test.ts
+  - e2e/tailwind-browser-serialization.test.ts
+  - e2e/react-native-ios-build.test.ts
+  - e2e/lynx-reports.test.ts
   - e2e/tailwind-css.test.ts
 ---
 
@@ -62,9 +67,11 @@ regressions:
 
 静态基线由 `pnpm e2e:tailwind:static:update`、`pnpm e2e:react-native:static:update`、`pnpm e2e:lynx:static:update` 分别显式更新，正常运行重新生成后与提交基线比较。基线更新只证明生成与编码产物，不能证明原生设备通过。
 
-2026-10-19 的本地定向记录：能力合同 37 文件、368 项通过；React Native 包 70 项、PostCSS 包 25 项、Lynx 编码/扫描与微信会话边界 50 项、Expo 示例 5 项通过。RN 产物及 catalog 定向验证另有 8 项通过，Expo 导出项未被该定向过滤选中，不能算作本次实际导出验收。任务文件 ESLint、`git diff --check` 及 agents 检查通过。完整 e2e 类型图仍有既有依赖、别名和原生 runner 类型诊断，不声明完整类型检查通过。日志保留在 `e2e/.artifacts/tailwind-development/`。
+2026-10-19 的早期本地定向记录：能力合同 37 文件、368 项通过；React Native 包 70 项、PostCSS 包 25 项、Lynx 编码/扫描与微信会话边界 50 项、Expo 示例 5 项通过。RN 产物及 catalog 定向验证另有 8 项通过，Expo 导出项未被该定向过滤选中，不能算作本次实际导出验收。任务文件 ESLint、`git diff --check` 及 agents 检查通过。完整 e2e 类型图仍有既有依赖、别名和原生 runner 类型诊断，不声明完整类型检查通过。日志保留在 `e2e/.artifacts/tailwind-development/`。
 
 全面验收必须另取本轮 extended 预检、当前会话 computer use 与 verify，再运行 `pnpm e2e:tailwind --preflight-report <本轮报告>`。实际执行记录位于 `e2e/.artifacts/tailwind/<run-id>/index.md`，包含通过、失败、阻塞和未执行范围；没有本轮记录时，本复盘不声明四端通过。
+
+源码 `f4ff45010` 的集成合同为 57 文件、764 项全部通过（`contract-lifecycle-fixed.log`）；Lynx 示例 13 文件、151 项通过。此前受影响的 PostCSS 全包为 142 文件、1,489 项通过、3 项既有跳过；RN 包 19 文件、112 项通过，包类型检查通过；Expo 示例 4 文件、8 项及真实 Web/Android/iOS Metro export 通过。新几何协议的 Android JVM 四组与 iOS Foundation 三组测试通过，不能换算为设备渲染验收。生命周期接线的 100 项定向回归、审查后的 static 只读检查、ESLint 与规则检查通过。新增闭包问题由真实 tsx 跨 realm 回归先红后绿拦截，详见 [递归回调复盘](browser-callback-recursion.md)。
 
 ## 本轮完整运行与后续修复
 
