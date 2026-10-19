@@ -180,6 +180,8 @@ PR head `d85d76507` 的 Lynx run `39243691735` 又在设备启动前暴露 engin
 
 响应式夹具已从单次宽度比较改为真实原生根 viewport 的 narrow、wide、narrowed、restored 往返。双端宿主独立记录根尺寸、测量尺寸、48rem 标尺和四节点矩形，经过引擎屏障与刷新后保存四组 probe/control PNG 和 sidecar；JS 不能提交几何。离线报告逐件验 hash、身份、完整画布、断点两侧及恢复，并无条件重读实际 CSS/bundle 的媒体条件。真实 Rspeedy 构建先暴露组件层展开的相同标尺副本；修复要求全部副本的规范 selector、完整声明及无附加条件一致，utility 守卫继续唯一。真实构建/decoder 先红后绿，主树整合的十文件 285 项、Lynx 示例 19 文件 199 项，以及双端存储/状态机可执行回归通过。`pnpm e2e:lynx:static:update` 已正常更新，118 项静态结论不变，仅 catalog 身份与时间改变；原生往返仍需新 CI 证据，支持表尚未修改。
 
+RN 三阶段采集现分别持久保存 baseline、TSX HMR、CSS HMR 的报告、六件编码产物和实际 Metro 输入源码，固定 phase-index 绑定本轮身份、revision、逐件 SHA-256 与大小。统一 adapter 离线重放每阶段 PNG、编码及源码，根兼容入口必须逐字节等于最后阶段；虚拟 JS 从当前 ready 指向的真实文件读取，并与归档 manifest 重新生成结果精确比对。归档明确标注 `sourceArchive.evidence=metro-input`、`servedBundle=not-captured`，完整设备 served bundle 仍为证据缺口。新增两份回归已登记到统一合同、RN 入口与 iOS workflow。`pnpm e2e:react-native:static:update` 正常刷新后，manifest、rawCss、逐案例结果和 generation 完全不变，仅协议身份与时间改变。`CI=1 pnpm e2e:tailwind:contract` 共 83 文件、1,350 项通过；RN static 单例以 `--update=none` 核对通过。另在全部 workspace 均无 dist 的独立工作树，三阶段证据、采集及 adapter 共 79 项通过，没有提前构建依赖。
+
 ## 规则评估
 
 诊断 run `39240820531` 的 Android 已完成 118 项实际原生采集，独立审查发现 responsive、dark、supports 和 important 四项报告与既有支持合同不同；这些变化尚未自动放宽。iOS 在 CocoaPods 安装阶段被固定原始 checksum 阻断，没有设备证据。CDN 与原夹具的完整 JSON 相等，仅文本空白/转义变化；生产校验改为完整 `Specification#to_hash` 的规范语义 SHA-256，保留所有属性、数组顺序和值类型，并继续独立核来源、版本及 getter 源码。新旧完整原始 Podspec 均固定字节身份，真实 CocoaPods/PBX 回归覆盖格式等价与实质变更拒绝。
