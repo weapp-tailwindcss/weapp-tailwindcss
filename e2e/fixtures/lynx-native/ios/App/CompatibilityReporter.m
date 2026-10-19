@@ -1,5 +1,6 @@
 #import "CompatibilityReporter.h"
 #import "EvidenceStore.h"
+#import "GeometryEvidence.h"
 #import "ColorSchemeSession.h"
 #import "ReporterBinding.h"
 #import <Lynx/LynxEvent.h>
@@ -7,6 +8,7 @@
 #import <Lynx/LynxUI.h>
 #import <Lynx/LynxUIContext.h>
 #import <Lynx/LynxView.h>
+#import <math.h>
 
 @implementation CompatibilityReporter {
   ReporterBinding *_binding;
@@ -32,6 +34,7 @@
     @"submitArtifact" : NSStringFromSelector(@selector(submitArtifact:name:data:callback:)),
     @"measure" : NSStringFromSelector(@selector(measure:callback:)),
     @"capture" : NSStringFromSelector(@selector(capture:callback:)),
+    @"captureGeometry" : NSStringFromSelector(@selector(captureGeometry:identifier:callback:)),
     @"setColorScheme" : NSStringFromSelector(@selector(setColorScheme:requestId:scheme:callback:)),
     @"captureColorScheme" : NSStringFromSelector(@selector(captureColorScheme:requestId:identifier:callback:)),
     @"pointerEventsNone" : NSStringFromSelector(@selector(pointerEventsNone:callback:)),
@@ -73,6 +76,25 @@
   });
 }
 
+- (void)captureGeometry:(NSString *)runId identifier:(NSString *)identifier callback:(LynxCallbackBlock)callback {
+  dispatch_async(dispatch_get_main_queue(), ^{
+    GeometryEvidence *evidence = [[GeometryEvidence alloc] initWithStore:_binding.store];
+    NSError *error = nil;
+    NSDictionary *result = [evidence captureRunId:runId identifier:identifier measure:^NSDictionary *(NSString *node) {
+      LynxUI *ui = [_binding.view uiWithIdSelector:node];
+      if (ui == nil || ui.view == nil) return nil;
+      CGRect rect = [ui getBoundingClientRectToScreen];
+      return @{@"left": @(CGRectGetMinX(rect)), @"right": @(CGRectGetMaxX(rect)),
+        @"top": @(CGRectGetMinY(rect)), @"bottom": @(CGRectGetMaxY(rect)),
+        @"width": @(CGRectGetWidth(rect)), @"height": @(CGRectGetHeight(rect))};
+    } capture:^NSData *(NSString *node) {
+      return [self captureDataNow:node afterScreenUpdates:YES];
+    } error:&error];
+    if (result == nil) NSLog(@"Lynx native geometry evidence failed: %@", error);
+    callback(result ?: [NSNull null]);
+  });
+}
+
 - (void)setColorScheme:(NSString *)runId requestId:(NSString *)requestId scheme:(NSString *)scheme callback:(LynxCallbackBlock)callback {
   dispatch_async(dispatch_get_main_queue(), ^{
     if (_binding.colorScheme == nil) { callback([NSNull null]); return; }
@@ -90,19 +112,25 @@
 }
 
 - (void)captureNow:(NSString *)identifier afterScreenUpdates:(BOOL)updates callback:(LynxCallbackBlock)callback {
+  NSData *data = [self captureDataNow:identifier afterScreenUpdates:updates];
+  callback(data == nil ? [NSNull null] : [data base64EncodedStringWithOptions:0]);
+}
+
+- (NSData *)captureDataNow:(NSString *)identifier afterScreenUpdates:(BOOL)updates {
   LynxUI *ui = [_binding.view uiWithIdSelector:identifier];
   UIView *view = ui.view;
-  if (view == nil || CGRectGetWidth(view.bounds) <= 0 || CGRectGetHeight(view.bounds) <= 0) {
-    callback([NSNull null]);
-    return;
-  }
+  if (view == nil || CGRectIsEmpty(view.bounds) || CGRectIsNull(view.bounds) || CGRectIsInfinite(view.bounds)
+      || !isfinite(view.bounds.size.width) || !isfinite(view.bounds.size.height)) return nil;
   UIGraphicsBeginImageContextWithOptions(view.bounds.size, NO, UIScreen.mainScreen.scale);
-  // identifier 指向稳定父容器，保留子节点合成效果，并拒绝失败绘制产生的空白图。
-  BOOL rendered = [view drawViewHierarchyInRect:view.bounds afterScreenUpdates:updates];
-  UIImage *image = rendered ? UIGraphicsGetImageFromCurrentImageContext() : nil;
-  UIGraphicsEndImageContext();
-  NSData *data = image == nil ? nil : UIImagePNGRepresentation(image);
-  callback(data == nil ? [NSNull null] : [data base64EncodedStringWithOptions:0]);
+  @try {
+    // identifier 指向稳定父容器，保留子节点合成效果，并拒绝失败绘制产生的空白图。
+    BOOL rendered = [view drawViewHierarchyInRect:view.bounds afterScreenUpdates:updates];
+    UIImage *image = rendered ? UIGraphicsGetImageFromCurrentImageContext() : nil;
+    return image == nil ? nil : UIImagePNGRepresentation(image);
+  }
+  @finally {
+    UIGraphicsEndImageContext();
+  }
 }
 
 - (void)pointerEventsNone:(NSString *)identifier callback:(LynxCallbackBlock)callback {
