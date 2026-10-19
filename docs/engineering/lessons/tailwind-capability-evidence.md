@@ -55,6 +55,19 @@ verification:
     sha: d78d1f81d392751dc11549da554cc79be02fc1ab
     environment: GitHub hosted Ubuntu 与 macOS；实际 PR 合并态 eb7393a4ed25d65e0045a7493a5ba86ead642a04
     url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/39248652500
+  - claim: 新 catalog 下 Android 的 118 项原生报告与 overflow 支持结论通过独立重放，双端 baseline 仍未刷新
+    kind: native
+    status: passed
+    sha: c4f26618f3a71663941e2ac8d988c7963a8da723
+    environment: GitHub Ubuntu / Android API 30，Lynx 4.0.1；run 39264722778
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/39264722778
+  - claim: 新 catalog 下 iOS 原生设备运行在 simctl launch 60 秒超时，缺少可用于双端 baseline 的原始报告
+    kind: native
+    status: pending
+    sha: c4f26618f3a71663941e2ac8d988c7963a8da723
+    environment: GitHub macOS 15 / iOS 18.5 Simulator，Lynx 4.0.1；run 39264722778
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/39264722778
+    reason: xcrun simctl launch --terminate-running-process 超过 60000ms；保留 iOS failure artifact，未重复调度或绕过超时
 ---
 
 # Tailwind 四端能力与证据边界
@@ -206,6 +219,8 @@ overflow 新协议使用独立 160×160px 画布、96×64px 父框和相对位�
 新增 overflow 合同进入 Lynx catalog 和统一 adapter fixture 身份；`pnpm e2e:lynx:static:update` 正常刷新后，118 项静态结论完全不变，catalog 更新为 `375d0b5a85143b25c58f842db3f1c8b3fe650a57f7f24a8e2136c79ff105b00c`，统一 static 更新无差异。PostCSS 构建及两条 AST ID helper 回归、20 文件 201 项示例测试、真实 Rspeedy 构建及只读 static 两文件 66 项已通过。最初的像素协议整合因旧合成夹具缺少 overflow 原生侧车而失败；补齐合成几何/PNG并明确其未裁剪结果后，43 项全部通过，保留原门禁。另在 `0a19bf4e8da4437ddf26e0220620072acb86b32b` 的全新独立工作树只执行 frozen/offline/ignore-scripts 安装，97 个 workspace 在测试前后均无 dist，三份新增 E2E 共 63 项以现有源码 alias 直接通过；没有先构建依赖来掩盖导入问题。此轮仅扩展 PostCSS 内部只读 AST helper，没有新增公开子路径或生产转换行为；既有中文发布 intent 范围不变。
 
 诊断 run [`39256046456`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/39256046456) 绑定 `32779d475c548ac0c62eed08624dfbdb38c4805e` 与 catalog `375d0b5a85143b25c58f842db3f1c8b3fe650a57f7f24a8e2136c79ff105b00c`。Android job `118071727094` 和 iOS job `118071727191` 均完成完整 118 案例、154 份回执及实际运行，但因旧支持表仍登记 unsupported 而按合同失败。原始报告和 bundle 重新验真后，overflow 几何在 Android `(96×64, 48×40, (72,40))`、iOS 同尺寸均一致；probe 与 control 的六矩形完整，probe 越界区域分别 7,656/9,900 个像素全部为画布，control 同区域全部为子项，内部交集全部为子项。Android report SHA-256 `940ebd2433d31b16f4baa1edaa727d7f6d4b78294c46295c02b4ed0d5ffcee59`、iOS `fe637622974132b399a2f04e20ed7d3b511dbb8a8e59021ee8e5df07ec9d8559`；artifact API digest 分别为 `b1c9f21dcbf741aaf0366e2ce99b545adc6109372f0fab8e11cbf564097f6d47`（Android 12188345116）和 `c8e732648c74c1fdb78568c630fd9dfd1bdafb36b8fee961cf55e3ac08a99199`（iOS 12189855404）。Android AAR `e04d7b62a8ecb9255b7993cbbae93abca3196949a1c7c23477618ec07cc557e2`、build/installed APK `5b1fb59f4951b4dfccef0792e1e273683489275a6989d9400258a5d5d09643be`，bundle SHA `54d36fe8d1083501d2af349e06b3024e2cad822589a6299d47f4d89f16b7b03a`，均与运行身份绑定。独立审计输出在 `e2e/.artifacts/ci-audit/39256046456/{android-audit,ios-audit}.json`。证据明确支持两端升级；本次 catalog hash 尚未按新预期重跑，不能直接刷新历史 baseline。
+
+支持升级后的第二次诊断 run [`39264722778`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/39264722778) 绑定 `c4f26618f3a71663941e2ac8d988c7963a8da723` 和新 catalog `2e3a1a60517c13de507d22ef8b4d209ffcdb86b2dfbf5bf7100df35c40dc3fec`。Android 完成 118 项、154 份回执，独立重放无支持表差异，报告 SHA-256 `0fcde63363d6a037adf978e1b4dbc4204befc36026997b6284bc5045ac8763ea`，artifact `12193900387` 的 API digest 为 `33406e2a2328c7c071e858d63079d94f656bcce0b634a7814fe0e69cfca9329e`；其 overflow probe 外部 7,656 个像素均为画布、control 同区均为子项，六矩形与 run/bundle 身份完整。Android job 仍因提交报告比较要求等待双端正式 baseline 更新而失败，这不影响本轮原始证据结论。iOS job `118101477726` 在 `xcrun simctl launch --terminate-running-process` 60 秒超时，没有完整新报告；其失败工件和日志保留在 run artifact `12195345451`（API digest `630f18e19cc9d1951cf57ba881dce64da5c6b94011f6d925321765fc318aeaca`）。因此尚未执行 `e2e:lynx:update`，不能把 Android 单端结果写入双端历史 baseline；需先恢复 iOS simulator 后用同一 catalog 同一 SDK 重新运行双端。
 
 上述源码与旧像素协议修正整合后，`CI=1 pnpm e2e:tailwind:contract` 共 88 文件、1,467 项全部通过（`overflow-contract-final.log`），没有 skip 或基线自动更新。此前第一轮在协议夹具失败后主动中止，保留 `overflow-contract-integration.log` 与单例失败日志；不能把该中止轮计作通过。ESLint、`git diff --check` 和 agents 检查通过；ESLint 配置忽略的 fixture/test 文件只由对应测试覆盖，不能记作已 lint。
 
