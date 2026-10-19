@@ -6,8 +6,9 @@ import postcss from 'postcss'
 import { beforeAll, describe, expect, it } from 'vitest'
 import staticEvidenceJson from '../examples/react-lynx/src/compatibility/static-evidence.json'
 import { buildCompatibilityBundle } from './lynx/build'
-import { compatibilityDir, exampleDir, getCatalogHash, lynxIntermediateDir, repoRoot } from './lynx/catalog'
+import { compatibilityDir, exampleDir, getCatalogHash, lynxIntermediateDir } from './lynx/catalog'
 import { verifyDarkFixture } from './lynx/dark-fixture-browser'
+import { decodeLynxBundle } from './lynx/decoder'
 import { verifyFlexFixture } from './lynx/flex-fixture-browser'
 import { verifyGridFixtures } from './lynx/grid-fixture-browser'
 import { verifySkewFixture } from './lynx/skew-fixture-browser'
@@ -25,10 +26,8 @@ describe('ReactLynx Rspeedy compatibility evidence', () => {
   beforeAll(async () => {
     const build = await buildCompatibilityBundle()
     encoderLog = build.encoderLog
-    const require = createRequire(path.join(repoRoot, 'e2e', 'package.json'))
-    const tasm = require('@lynx-js/tasm') as { decode_napi: (source: Uint8Array) => unknown, decode_wasm: (source: Uint8Array) => Promise<unknown>, supportNapi: () => boolean }
     const source = new Uint8Array(await fs.readFile(bundlePath))
-    const decoded = tasm.supportNapi() ? tasm.decode_napi(source) : await tasm.decode_wasm(source)
+    const decoded = await decodeLynxBundle(source)
     decodedBundle = decoded as typeof decodedBundle
     // decoder 以双花括号打印变量；仅恢复诊断文本语法，不改写被测字面量或实际 bundle。
     decodedCss = (decoded as { css: { text: string } }).css.text.replace(/\{\{(--[a-z0-9-]+)\}\}/gi, 'var($1)')
@@ -57,6 +56,7 @@ describe('ReactLynx Rspeedy compatibility evidence', () => {
     expect(tasm.sourceContent.config.enableCSSInlineVariables).toBe(true)
     expect(decodedBundle?.['engine-version']).toBe('3.9')
     expect(JSON.parse(decodedBundle!['page-config']).enableCSSInlineVariables).toBe(true)
+    expect(JSON.parse(decodedBundle!['page-config']).enableCSSRule).toBe(true)
     // 保留动态变量依赖，不能跨选择器预先替换成固定值。
     expect(decodedCss).toContain('var(--tw-gradient-stops)')
     expect(decodedCss).toContain('var(--tw-shadow)')

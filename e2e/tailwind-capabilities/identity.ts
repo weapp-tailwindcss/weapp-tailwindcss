@@ -5,6 +5,7 @@ import { createRequire } from 'node:module'
 import path from 'node:path'
 import process from 'node:process'
 import { collectIdentity } from '../../scripts/e2e-preflight/io'
+import { lynxDecoderIdentity } from '../lynx/decoder'
 import { readInstalledVersion } from '../lynx/versions'
 
 export function digest(value: unknown): string {
@@ -36,7 +37,7 @@ export async function capabilityIdentity(root: string, contracts: readonly CaseC
       lynxAdapter: require('./packages/lynx/package.json').version,
       lynxEncoder: readInstalledVersion(templateManifest, '@lynx-js/tasm'),
       lynxSerializer: readInstalledVersion(templateManifest, '@lynx-js/css-serializer'),
-      lynxDecoder: readInstalledVersion(e2eManifest, '@lynx-js/tasm'),
+      lynxDecoder: lynxDecoderIdentity(),
       lynxCssDefines: readInstalledVersion(e2eManifest, '@lynx-js/css-defines'),
     },
   }

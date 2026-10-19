@@ -3,10 +3,12 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
+import { compatibilityCases } from '../examples/react-lynx/src/compatibility/catalog'
 import { MEDIA_GATE_CANDIDATES, mediaGuardValid } from '../examples/react-lynx/src/compatibility/media-gate-contract'
+import { encodeLynxCss } from './lynx/batch-encode'
 import { validateMediaGateSources } from './lynx/media-gate-source'
 import { validateMediaGuardArtifacts } from './lynx/media-guard-artifacts'
-import { flattenEncodedRules, parseGeneratedRules, selectorHasCandidate, staticMediaGuard } from './lynx/static-evidence'
+import { analyzeStaticCase, flattenEncodedRules, parseDecodedRules, parseGeneratedRules, selectorHasCandidate, staticMediaGuard } from './lynx/static-evidence'
 
 const selectors = ['.hover\\:bg-\\[\\#ef4444\\]:hover', '.group-hover\\:block:is(:where(.group):hover *)']
 const css = selectors.map(selector => `@media (hover: hover){${selector}{display:block}}`).join('\n')
@@ -68,29 +70,41 @@ describe('必要媒体 guard 的全部规则证明', () => {
     }
     expect(mediaGuardValid(proof, MEDIA_GATE_CANDIDATES[0])).toBe(false)
   })
-  it.each(['none', 'css', 'tasm', 'hex-css', 'hex-tasm', 'metadata'] as const)('从本轮产物重新验证 %s，不能信任报告 metadata', async (mode) => {
+  it.each(['none', 'css', 'bundle', 'hex-css', 'hex-bundle', 'metadata', 'disabled', 'group-retained', 'peer-retained'] as const)('从本轮实际 bundle 重新验证 %s，不能信任 serializer 输入或报告 metadata', async (mode) => {
     const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'lynx media guard '))
     directories.push(directory)
-    const built = build()
+    const peer = String.raw`.peer-checked\:opacity-100:is(:where(.peer):checked~*)`
+    const hoverCss = `@media (hover: hover){${selectors[0]}{background-color:#ef4444}}`
+    const sourceCss = `${hoverCss}\n@media (hover: hover){${selectors[1]}{display:block}}\n${peer}{opacity:1}`
+    const encoded = await encodeLynxCss(sourceCss, { applyCompatibility: false })
+    const generated = parseGeneratedRules(sourceCss)
+    const bundled = parseDecodedRules(encoded.css)
+    const built = { results: compatibilityCases.filter(item => ['variant-state', 'variant-group-peer'].includes(item.id)).map(item => analyzeStaticCase(item, generated, bundled)) } as StaticEvidenceReport
     const alternate = mode === 'hex-css' ? equivalentSelectors[0] : selectors[0]
-    await fs.writeFile(path.join(directory, 'main.css'), mode === 'css' || mode === 'hex-css' ? `${css}\n${alternate}{display:block}` : css)
-    const encoded = structuredClone(tasm)
-    if (mode === 'tasm') {
-      encoded.css.cssMap.entry[0]!.prelude.value = 'not (hover:hover)'
+    await fs.writeFile(path.join(directory, 'main.css'), mode === 'css' || mode === 'hex-css' ? `${sourceCss}\n${alternate}{background-color:#ef4444}` : sourceCss)
+    let actualCss = sourceCss
+    if (mode === 'bundle') {
+      actualCss = sourceCss.replaceAll('(hover: hover)', 'not (hover:hover)')
     }
-    if (mode === 'hex-tasm') {
-      const branch = structuredClone(encoded.css.cssMap.entry[0]!)
-      branch.prelude.value = '(min-width:1px)'
-      branch.rules[0]!.selectorText.value = equivalentSelectors[0]!
-      encoded.css.cssMap.entry.push(branch)
+    if (mode === 'hex-bundle') {
+      actualCss += `\n${equivalentSelectors[0]}{background-color:#ef4444}`
+    }
+    if (mode === 'group-retained') {
+      actualCss += String.raw` .group-hover\:block{display:block}`
+    }
+    if (mode === 'peer-retained') {
+      actualCss += String.raw` .peer-checked\:opacity-100{opacity:1}`
     }
     if (mode === 'metadata') {
-      built.results[0]!.candidates![0]!.mediaGuard!.generatedRules[0]!.selector = '.forged'
+      built.results.flatMap(item => item.candidates ?? []).find(candidate => candidate.className === MEDIA_GATE_CANDIDATES[0])!.mediaGuard!.generatedRules[0]!.selector = '.forged'
     }
-    await fs.writeFile(path.join(directory, 'tasm.json'), JSON.stringify(encoded))
+    const actual = actualCss === sourceCss && mode !== 'disabled' ? encoded : await encodeLynxCss(actualCss, { applyCompatibility: false, enableCSSRule: mode !== 'disabled' })
+    await fs.writeFile(path.join(directory, 'main.lynx.bundle'), actual.buffer)
+    // 输入始终保留原来的正确 guard，不能代替上方故意篡改的实际二进制。
+    await fs.writeFile(path.join(directory, 'tasm.json'), JSON.stringify(tasm))
     if (mode === 'none') {
       await expect(validateMediaGuardArtifacts(directory, built)).resolves.toBeUndefined()
     }
-    else { await expect(validateMediaGuardArtifacts(directory, built)).rejects.toThrow(/必要 media guard/) }
+    else { await expect(validateMediaGuardArtifacts(directory, built)).rejects.toThrow(/必要 media guard|逐候选 encoder 拒绝/) }
   })
 })

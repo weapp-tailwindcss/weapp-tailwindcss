@@ -181,7 +181,10 @@ const reviewedEncodingRejections = new Set([
   'accessibility-forced-colors',
 ])
 
-export const reviewedLynxContract = { support: reviewedLynxSupport, encodingRejections: [...reviewedEncodingRejections] }
+// :is/:where 的参数形式被固定 encoder 拒绝；逐候选保留该阶段，不能改用宿主 media 拒绝。
+export const reviewedCandidateEncodingRejections = ['group-hover:block', 'peer-checked:opacity-100'] as const
+
+export const reviewedLynxContract = { support: reviewedLynxSupport, encodingRejections: [...reviewedEncodingRejections], candidateEncodingRejections: reviewedCandidateEncodingRejections }
 
 const expectedIds = Object.keys(reviewedLynxSupport).sort()
 if (JSON.stringify(expectedIds) !== JSON.stringify(compatibilityCases.map(item => item.id).sort())) {
@@ -198,6 +201,12 @@ export function assertReviewedLynxOutcome(result: NativeCaseResult, platform: Pl
   }
   if (expected === 'unsupported' && reviewedEncodingRejections.has(result.id) === built.bundled) {
     throw new Error(`Lynx ${platform}:${result.id} 的失败阶段偏离已审查平台限制，不能把本轮其它失败归为 unsupported`)
+  }
+  if (result.id === 'variant-group-peer' && reviewedCandidateEncodingRejections.some((className) => {
+    const candidate = built.candidates?.find(candidate => candidate.className === className)
+    return !candidate?.generated || candidate.bundled || candidate.failureStage !== 'encoder' || candidate.mediaGuard
+  })) {
+    throw new Error('group/peer 的逐候选 encoder 拒绝合同发生变化，不能由媒体或输入失败替代')
   }
   if (result.id === 'variant-state') {
     const active = result.candidates?.find(candidate => candidate.className === 'active:bg-[#dc2626]')

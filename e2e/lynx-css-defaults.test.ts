@@ -69,7 +69,7 @@ describe('Lynx native CSS defaults', () => {
   })
 
   it('真实 decoder 产物篡改或 serializer 输入保留均不能掩盖输出丢失', async () => {
-    const css = '.size-full{width:100%;height:100%}.other{columns:2}'
+    const css = '.size-full{width:100%;height:100%}.other:is(.probe){width:32px}'
     const oracle = reviewedLynxOracles(['size-full'], css)[0]!
     const encoded = await encodeCss(css, 'wasm')
     expect(encoded.diagnostics.length).toBeGreaterThan(0)
@@ -136,11 +136,14 @@ describe('Lynx native CSS defaults', () => {
     ]))
   })
 
-  it.each([undefined, 'wasm'] as const)('通过 %s 编码保留不支持属性的原始诊断', async (mode) => {
+  it.each([undefined, 'wasm'] as const)('通过 %s 编码固定 columns 的静默丢弃，输入与空诊断均不能冒充保留', async (mode) => {
     const encoded = await encodeCss(await generateCss('columns-2'), mode)
-    expect(encoded.diagnostics).toEqual(expect.arrayContaining([
-      expect.objectContaining({ type: 'property', name: 'columns' }),
+    expect(encoded.sourceCss).toContain('columns: 2')
+    expect(encoded.rules.find(rule => rule.selectorText?.value === '.columns-2')?.style).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'columns', value: '2' }),
     ]))
+    expect(encoded.encodedByteLength).toBeGreaterThan(0)
+    expect(encoded.diagnostics).toEqual([])
     expect(encoded.css).not.toContain('columns:')
   })
 

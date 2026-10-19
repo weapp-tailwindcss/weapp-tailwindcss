@@ -41,6 +41,22 @@ describe('Lynx static declaration evidence', () => {
     expect(analyzeStaticCase(item, [underline, focus], [focus], 'Unsupported property "text-decoration-line"')).toMatchObject({ generated: true, bundled: false, failureStage: 'encoder' })
   })
 
+  it('一个 shorthand 的实际四边证据全部保留，不能按声明数量误判编码失败', () => {
+    const item = { ...compatibilityCases[0]!, className: 'probe', declarations: [{ property: 'padding', value: '13px' }] }
+    const generated = [{ selector: '.probe', declarations: item.declarations }]
+    const declarations = ['top', 'right', 'bottom', 'left'].map(side => ({ property: `padding-${side}`, value: '13px' }))
+    expect(analyzeStaticCase(item, generated, [{ selector: '.probe', declarations }])).toMatchObject({ generated: true, bundled: true, bundledDeclarations: declarations })
+    expect(analyzeStaticCase(item, generated, [{ selector: '.probe', declarations: declarations.slice(1) }]).bundled).toBe(false)
+  })
+
+  it('同一个 shorthand 不能从不同候选的 selector 借用缺失边', () => {
+    const item = { ...compatibilityCases[0]!, className: 'probe other', declarations: [{ property: 'padding', value: '13px' }] }
+    const generated = ['.probe', '.other'].map(selector => ({ selector, declarations: item.declarations }))
+    const declarations = ['top', 'right', 'bottom', 'left'].map(side => ({ property: `padding-${side}`, value: '13px' }))
+    const bundled = [{ selector: '.probe', declarations: declarations.slice(0, 2) }, { selector: '.other', declarations: declarations.slice(2) }]
+    expect(analyzeStaticCase(item, generated, bundled)).toMatchObject({ generated: true, bundled: false })
+  })
+
   it('空 CSS 不会因 @import 无候选而被 vacuous every 判为成功', () => {
     const item = compatibilityCases.find(item => item.id === 'directive-import')!
     expect(analyzeStaticCase(item, [], []).generated).toBe(false)

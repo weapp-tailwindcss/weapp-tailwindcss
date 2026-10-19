@@ -185,12 +185,7 @@ describe('Lynx native report gate', () => {
   it('原生 JSON 重排版本字段后仍能校验并序列化为相同结论', () => {
     const first = report()
     const reordered = report({
-      versions: {
-        engineVersion: compatibilityVersions.engineVersion,
-        tailwindcss: compatibilityVersions.tailwindcss,
-        cssDefines: compatibilityVersions.cssDefines,
-        lynxEngine: compatibilityVersions.lynxEngine,
-      },
+      versions: Object.fromEntries(Object.entries(compatibilityVersions).reverse()) as NativePlatformReport['versions'],
     })
     expect(validateNativeReport(reordered, 'ios')).toBe(reordered)
     expect(JSON.stringify(nativeReportConclusion(reordered))).toBe(JSON.stringify(nativeReportConclusion(first)))

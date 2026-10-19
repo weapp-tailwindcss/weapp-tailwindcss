@@ -1,6 +1,8 @@
+import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import path from 'node:path'
+import { lynxDecoderIdentity } from './decoder'
 
 /** 读取解析到的真实包，不以 package.json 中的范围或历史报告冒充已安装版本。 */
 export function readInstalledVersion(fromManifest: string, packageName: string) {
@@ -48,13 +50,22 @@ export function readHostVersions(ios: string, android: string, config: string) {
 
 export function readCompatibilityVersions(repoRoot: string) {
   const host = path.join(repoRoot, 'e2e', 'fixtures', 'lynx-native')
+  const exampleManifest = path.join(repoRoot, 'examples', 'react-lynx', 'package.json')
+  const exampleRequire = createRequire(exampleManifest)
+  const reactRequire = createRequire(exampleRequire.resolve('@lynx-js/react-rsbuild-plugin/package.json'))
+  const templateManifest = reactRequire.resolve('@lynx-js/template-webpack-plugin/package.json')
+  const bundleConfig = readFileSync(path.join(repoRoot, 'examples', 'react-lynx', 'lynx.config.ts'), 'utf8')
   return {
-    tailwindcss: readInstalledVersion(path.join(repoRoot, 'examples', 'react-lynx', 'package.json'), 'tailwindcss'),
+    tailwindcss: readInstalledVersion(exampleManifest, 'tailwindcss'),
     ...readHostVersions(
       readFileSync(path.join(host, 'ios', 'Podfile'), 'utf8'),
       readFileSync(path.join(host, 'android', 'app', 'build.gradle.kts'), 'utf8'),
-      readFileSync(path.join(repoRoot, 'examples', 'react-lynx', 'lynx.config.ts'), 'utf8'),
+      bundleConfig,
     ),
     cssDefines: readInstalledVersion(path.join(repoRoot, 'e2e', 'package.json'), '@lynx-js/css-defines'),
+    tasmEncoder: readInstalledVersion(templateManifest, '@lynx-js/tasm'),
+    cssSerializer: readInstalledVersion(templateManifest, '@lynx-js/css-serializer'),
+    tasmDecoder: lynxDecoderIdentity(),
+    bundleConfig: createHash('sha256').update(bundleConfig).digest('hex'),
   }
 }

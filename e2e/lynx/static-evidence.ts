@@ -5,7 +5,9 @@ import postcss from 'postcss'
 import { compatibilityCases } from '../../examples/react-lynx/src/compatibility/catalog'
 import { MEDIA_GATE_CANDIDATES, MEDIA_GATE_LIMITATION_ID, MEDIA_GATE_SOURCE_SHA256 } from '../../examples/react-lynx/src/compatibility/media-gate-contract'
 import { walkClasses } from '../../packages/postcss/src/compat/native/selectors'
-import { compatibilityVersions, getCatalogHash, lynxIntermediateDir, readCssDefinesProperties } from './catalog'
+import { compatibilityVersions, exampleDir, getCatalogHash, lynxIntermediateDir, readCssDefinesProperties } from './catalog'
+import { decodeLynxBundle } from './decoder'
+import { matchEncodedDeclaration } from './encoded-declarations'
 
 interface EncodedDeclaration {
   name: string
@@ -20,12 +22,6 @@ export interface EncodedRule {
   variables?: Record<string, string>
   rules?: EncodedRule[]
   prelude?: { value: string }
-}
-
-interface TasmJson {
-  css: {
-    cssMap: Record<string, EncodedRule[]>
-  }
 }
 
 export interface RuleEvidence {
@@ -77,21 +73,21 @@ export function evaluateCase(rules: RuleEvidence[], item: typeof compatibilityCa
   const selectorMatches = candidates.length === 0 || candidates.every(candidate => (
     rules.some(rule => selectorHasCandidate(rule.selector, candidate))
   ))
-  const declarations = item.declarations.flatMap((expected) => {
-    const actual = matched
-      .flatMap(rule => rule.declarations)
-      .find(declaration => declarationMatches(declaration, expected, checkImportant))
-    if (!actual) {
-      return []
+  const matches = item.declarations.map((expected) => {
+    if (!checkImportant) {
+      // 编码 shorthand 可以展开成多条；同一预期的证据必须全部来自同一 selector。
+      return matched.map(rule => matchEncodedDeclaration(rule.declarations, expected, false)).find(Boolean)
     }
-    return [{
-      property: actual.property,
-      ...(actual.value === undefined ? {} : { value: actual.value }),
-      ...(actual.important === true ? { important: true } : {}),
-    }]
+    const actual = matched.flatMap(rule => rule.declarations).find(declaration => declarationMatches(declaration, expected, true))
+    return actual ? [actual] : undefined
   })
+  const declarations = matches.flatMap(match => (match ?? []).map(actual => ({
+    property: actual.property,
+    ...(actual.value === undefined ? {} : { value: actual.value }),
+    ...(actual.important === true ? { important: true } : {}),
+  })))
   return {
-    matched: rules.length > 0 && selectorMatches && (item.declarations.length === 0 || declarations.length === item.declarations.length),
+    matched: rules.length > 0 && selectorMatches && matches.every(Boolean),
     declarations,
   }
 }
@@ -135,6 +131,11 @@ export function parseGeneratedRules(css: string) {
     rules.push({ selector: rule.selector, declarations, mediaConditions })
   })
   return rules
+}
+
+/** decoder 用双花括号展示变量；只恢复该固定语法，selector 与声明均来自实际 bundle。 */
+export function parseDecodedRules(css: string) {
+  return parseGeneratedRules(css.replace(/\{\{(--[a-z0-9-]+)\}\}/gi, 'var($1)'))
 }
 
 /** 所有生成与编码规则都必须具有必要 guard；任一无条件替代规则都拒绝该限制证明。 */
@@ -216,15 +217,15 @@ export function analyzeStaticCase(
 
 export async function analyzeStaticEvidence(generatedAt = new Date().toISOString(), encoderLog = ''): Promise<StaticEvidenceReport> {
   const generatedCssPath = path.join(lynxIntermediateDir, 'main.css')
-  const tasmPath = path.join(lynxIntermediateDir, 'tasm.json')
-  const [generatedCss, tasmSource, cssDefinesProperties] = await Promise.all([
+  const bundlePath = path.join(exampleDir, 'dist', 'main.lynx.bundle')
+  const [generatedCss, bundle, cssDefinesProperties] = await Promise.all([
     fs.readFile(generatedCssPath, 'utf8'),
-    fs.readFile(tasmPath, 'utf8'),
+    fs.readFile(bundlePath),
     readCssDefinesProperties(),
   ])
   const generatedRules = parseGeneratedRules(generatedCss)
-  const tasm = JSON.parse(tasmSource) as TasmJson
-  const bundledRules = flattenEncodedRules(Object.values(tasm.css.cssMap).flat())
+  const decoded = await decodeLynxBundle(bundle)
+  const bundledRules = parseDecodedRules(decoded.css.text)
   const results = compatibilityCases.map(item => analyzeStaticCase(item, generatedRules, bundledRules, encoderLog, cssDefinesProperties))
   return {
     schemaVersion: 1,

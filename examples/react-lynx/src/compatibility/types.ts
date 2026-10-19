@@ -204,6 +204,10 @@ export interface CompatibilityBaseline {
     lynxEngine: string
     engineVersion: string
     cssDefines: string
+    tasmEncoder: string
+    cssSerializer: string
+    tasmDecoder: string
+    bundleConfig: string
   }
   environments?: Record<Platform, NativeRuntimeEnvironment>
   results: CaseBaseline[]
