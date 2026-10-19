@@ -1,0 +1,12 @@
+{
+  "component": "org.lynxsdk.lynx:lynx:4.0.1",
+  "artifactVersion": "4.0.1",
+  "reportedVersion": "0.0.1",
+  "aarSha256": "e04d7b62a8ecb9255b7993cbbae93abca3196949a1c7c23477618ec07cc557e2",
+  "libraries": {
+    "arm64-v8a": "142a6f01918ecd31e33559a4edbb1291dd4fc7a06eefe8e75383cf86253f4603",
+    "armeabi-v7a": "ab2894b7ddc47778ad88e1dab0d30d33104a33913be1735c29bc37c11b247470",
+    "x86": "28c6e2b8dae73bc6b4d4a8f620c27dfd035893f5ee56d186fa636440a0ca7f89",
+    "x86_64": "62823d233ddc1d0dc8e5db1c538d2e54f507ff9ae7203c392326084083d7cf61"
+  }
+}

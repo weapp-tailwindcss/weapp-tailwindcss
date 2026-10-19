@@ -32,7 +32,7 @@ async function fixture() {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'lynx media contract '))
   directories.push(directory)
   const mediaGate = evidence()
-  const report = { platform: 'android', mediaGate, evidence: { ...context, artifacts: [] }, environment: { viewport: { pixelRatio: 1 } } } as unknown as NativePlatformReport
+  const report = { platform: 'ios', mediaGate, evidence: { ...context, artifacts: [] }, environment: { viewport: { pixelRatio: 1 } } } as unknown as NativePlatformReport
   for (const probe of mediaGate.probes) {
     const png = new PNG({ width: 64, height: 64 })
     png.data.fill(255)

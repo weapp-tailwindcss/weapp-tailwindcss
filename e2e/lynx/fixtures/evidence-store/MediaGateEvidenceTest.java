@@ -30,6 +30,7 @@ public final class MediaGateEvidenceTest {
     boolean main = true;
     public boolean isUiThread() { return main; }
     public String sdkVersion() { versions++; return version; }
+    public String sdkArtifact() { return "{\"nativeFixture\":\"APK identity inspected by SdkArtifactIdentityTest\"}"; }
     public double[] measure(String id) {
       measured.add(id);
       if (id.equals(missingNode)) return null;
@@ -57,6 +58,7 @@ public final class MediaGateEvidenceTest {
     String json = Files.readString(new File(artifacts, "media-hover-v1.native.json").toPath());
     check(json.contains("\"source\":\"lynx-native-media-gate-v1\"") && json.contains("\"context\":{\"version\":1"), "Reserved native protocol");
     check(json.contains("\"sdkVersion\":\"4.0.1\"") && json.contains(run(1)) && json.contains(value.bundleSha256), "Native SDK and run identity");
+    check(json.contains("\"sdkArtifact\":{\"nativeFixture\""), "Preserve independently collected APK identity in native sidecar");
     check(json.contains("\"id\":\"hover-none\"") && json.contains("\"width\":64.0"), "Actual complete probe payload");
     for (EvidenceStore.Receipt receipt : result.artifacts) {
       byte[] bytes = Files.readAllBytes(new File(artifacts, receipt.name).toPath());
@@ -115,6 +117,11 @@ public final class MediaGateEvidenceTest {
     fails(() -> MediaGateEvidence.capture(sidecarFailure, run(70), new Host()));
     fails(() -> sidecarFailure.publish(run(70), "{}"));
     check(Files.readString(sidecar.toPath()).equals("do not replace prior evidence"), "Do not overwrite existing native sidecar");
+    EvidenceStore raw = store(root, 80);
+    Host reported = new Host();
+    reported.version = "0.0.1";
+    MediaGateEvidence.Capture rawCapture = MediaGateEvidence.capture(raw, run(80), reported);
+    check(rawCapture.sdkVersion.equals("0.0.1"), "Never replace raw SDK getter with Maven release version");
     System.out.println("Android media gate: native SDK, twelve node reads, seven receipts and fail-closed persistence passed");
   }
 }

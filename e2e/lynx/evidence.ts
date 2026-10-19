@@ -2,10 +2,12 @@ import type { NativeArtifactReceipt, NativeEvidenceContext, NativePlatformReport
 import { createHash, randomUUID } from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { validatePlatformSdk } from '../../examples/react-lynx/src/compatibility/android-sdk-contract'
 import { compatibilityCases } from '../../examples/react-lynx/src/compatibility/catalog'
 import { evidenceArtifactNames, lynxEvidenceStrategy } from '../../examples/react-lynx/src/compatibility/evidence'
 import { mediaGateArtifactNames, validateMediaGateEvidence } from '../../examples/react-lynx/src/compatibility/media-gate-contract'
 import staticEvidence from '../../examples/react-lynx/src/compatibility/static-evidence.json'
+import { validateAndroidSdkEvidence } from './android-sdk'
 import { readNativeHostGeometry } from './geometry-evidence'
 import { validateMediaGateArtifacts } from './media-gate'
 import { validateMediaGuardArtifacts } from './media-guard-artifacts'
@@ -80,6 +82,10 @@ export async function collectNativeEvidence(report: NativePlatformReport, artifa
 }
 
 export async function validateNativeEvidence(report: NativePlatformReport, artifactDir: string, expected: NativeEvidenceContext) {
+  validatePlatformSdk(report.mediaGate, report.platform, expected)
+  if (report.platform === 'android') {
+    await validateAndroidSdkEvidence(report, artifactDir, expected)
+  }
   const receipts = validateEvidenceManifest(report, expected)
   const directory = cropsDirectory(artifactDir, expected)
   for (const receipt of receipts) {

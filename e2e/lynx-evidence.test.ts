@@ -19,6 +19,9 @@ import { readNativeReport } from './lynx/reports'
 import androidReport from './lynx/reports/android.json'
 
 // 本文件隔离验证存储/几何协议，支持预期漂移由 lynx-reports.test.ts 的真实门禁单独回归。
+// 官方 AAR/APK 身份由 lynx-android-sdk.test.ts 独立验证，不以此处合成几何夹具冒充。
+vi.mock('../examples/react-lynx/src/compatibility/android-sdk-contract', () => ({ validatePlatformSdk: () => {} }))
+vi.mock('./lynx/android-sdk', () => ({ validateAndroidSdkEvidence: async () => {} }))
 vi.mock('./lynx/expectations', async importOriginal => ({
   ...await importOriginal<typeof import('./lynx/expectations')>(),
   assertReviewedLynxOutcome: () => {},

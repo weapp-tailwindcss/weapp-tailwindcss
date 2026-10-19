@@ -114,11 +114,31 @@ export type NativeCandidateResult = (NativeCandidateBase & { mediaGate?: never }
 
 export type NativeMediaGateProbeId = 'base' | 'control' | 'unguarded' | 'min-width' | 'hover-hover' | 'hover-none'
 
+export interface ResolvedAndroidSdk {
+  version: 1
+  source: 'lynx-gradle-resolved-sdk-v1'
+  runId: string
+  bundleSha256: string
+  component: string
+  artifactVersion: string
+  aarSha256: string
+  libraries: Record<string, string>
+}
+
+export interface NativeAndroidSdkArtifact {
+  resolved: ResolvedAndroidSdk
+  apkSha256: string
+  abi: string
+  librarySha256: string
+}
+
 export interface NativeMediaGateEvidence {
   limitationId: 'lynx4.0.1-media-hover-unknown-v1'
   runId: string
   bundleSha256: string
+  /** 原生 SDK getter 的原始 reported 值，不能替换为 Maven release 版本。 */
   sdkVersion: string
+  sdkArtifact?: NativeAndroidSdkArtifact
   probes: { id: NativeMediaGateProbeId, probe: NativeRect, container: NativeRect }[]
 }
 

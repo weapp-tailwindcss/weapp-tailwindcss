@@ -6,6 +6,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { execa } from 'execa'
 import { androidSdkRoot } from '../react-native/native-toolchain'
+import { saveAndroidSdkBuild, saveInstalledAndroidSdk } from './android-sdk-runner'
 import { buildCompatibilityBundle } from './build'
 import { exampleDir, lynxIntermediateDir, repoRoot } from './catalog'
 import { collectNativeEvidence, createEvidenceContext, validateNativeEvidence } from './evidence'
@@ -84,7 +85,9 @@ async function runAndroid(hostDir: string, artifactDir: string, device: AndroidD
   }
   await command(process.env['LYNX_GRADLE'] ?? 'gradle', gradleArguments, hostDir)
   const apkPath = path.join(hostDir, 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk')
+  await saveAndroidSdkBuild(hostDir, artifactDir, apkPath, context)
   await command('adb', adbArgs(device, ['install', '-r', apkPath]), hostDir, 120_000)
+  await saveInstalledAndroidSdk(hostDir, artifactDir, device, context)
   await command('adb', adbArgs(device, ['shell', 'am', 'force-stop', applicationId]), hostDir, 30_000)
   const hiddenErrorDialogs = (await command('adb', adbArgs(device, ['shell', 'settings', 'get', 'global', 'hide_error_dialogs']), hostDir, 30_000)).trim()
   await command('adb', adbArgs(device, ['shell', 'settings', 'put', 'global', 'hide_error_dialogs', '1']), hostDir, 30_000)
@@ -155,6 +158,9 @@ async function main() {
       : await fs.mkdtemp(path.join(os.tmpdir(), `weapp-tailwindcss-lynx-${platform}-`))
     const hostDir = path.join(temporaryRoot, 'host')
     await fs.cp(fixtureDir, hostDir, { recursive: true })
+    if (platform === 'android') {
+      await fs.copyFile(path.join(exampleDir, 'src', 'compatibility', 'android-sdk-reference.json'), path.join(hostDir, 'sdk-reference.json'))
+    }
     await fs.writeFile(path.join(artifactDir, target.platform === 'ios' ? 'build-target.json' : 'device.json'), `${JSON.stringify(target, null, 2)}\n`)
     if (platform === 'ios' && process.env['LYNX_IOS_BUILD_TARGET_FILE']) {
       await fs.copyFile(process.env['LYNX_IOS_BUILD_TARGET_FILE'], path.join(artifactDir, 'build-target-manifest.json'))

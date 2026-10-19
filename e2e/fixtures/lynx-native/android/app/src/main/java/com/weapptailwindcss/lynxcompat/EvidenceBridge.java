@@ -4,6 +4,8 @@ import com.lynx.react.bridge.JavaOnlyArray;
 import com.lynx.react.bridge.JavaOnlyMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Iterator;
+import org.json.JSONObject;
 
 /** 统一桥接原生已落盘的结果，不接收 JS 自报的取证字段。 */
 final class EvidenceBridge {
@@ -30,12 +32,27 @@ final class EvidenceBridge {
     return result;
   }
 
-  static JavaOnlyMap mediaGate(EvidenceStore store, MediaGateEvidence.Capture capture) {
+  private static JavaOnlyMap jsonMap(JSONObject value) throws Exception {
+    JavaOnlyMap result = new JavaOnlyMap();
+    Iterator<String> keys = value.keys();
+    while (keys.hasNext()) {
+      String key = keys.next();
+      Object item = value.get(key);
+      if (item instanceof JSONObject) result.putMap(key, jsonMap((JSONObject) item));
+      else if (item instanceof Number) result.putInt(key, ((Number) item).intValue());
+      else if (item instanceof String) result.putString(key, (String) item);
+      else throw new IllegalArgumentException("Unsupported native SDK identity field");
+    }
+    return result;
+  }
+
+  static JavaOnlyMap mediaGate(EvidenceStore store, MediaGateEvidence.Capture capture) throws Exception {
     JavaOnlyMap mediaGate = new JavaOnlyMap();
     mediaGate.putString("limitationId", MediaGateEvidence.LIMITATION);
     mediaGate.putString("runId", store.runId);
     mediaGate.putString("bundleSha256", store.bundleSha256);
     mediaGate.putString("sdkVersion", capture.sdkVersion);
+    mediaGate.putMap("sdkArtifact", jsonMap(new JSONObject(capture.sdkArtifact)));
     JavaOnlyArray probes = new JavaOnlyArray();
     for (Map.Entry<String, double[][]> entry : capture.probes.entrySet()) {
       JavaOnlyMap probe = new JavaOnlyMap();

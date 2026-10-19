@@ -1,4 +1,5 @@
 import type { NativeCandidateResult, NativeEvidenceContext, NativeMediaGateEvidence, StaticCandidateEvidence, StaticMediaGuardEvidence } from './types'
+import { validateAndroidSdkArtifact } from './android-sdk-contract'
 
 /** 此限制在运行前登记，只拒绝必要媒体条件，不替代 hover 输入或伪状态取证。 */
 export const MEDIA_GATE_LIMITATION_ID = 'lynx4.0.1-media-hover-unknown-v1' as const
@@ -24,11 +25,14 @@ export function mediaGuardValid(proof: StaticMediaGuardEvidence | undefined, cla
 
 /** 宿主的身份和几何是必要条件；验收端还必须独立读取侧车和 PNG。 */
 export function validateMediaGateEvidence(evidence: NativeMediaGateEvidence | undefined, context?: NativeEvidenceContext): asserts evidence is NativeMediaGateEvidence {
-  if (!evidence || evidence.limitationId !== MEDIA_GATE_LIMITATION_ID || evidence.sdkVersion !== '4.0.1'
+  if (!evidence || evidence.limitationId !== MEDIA_GATE_LIMITATION_ID || (!evidence.sdkArtifact && evidence.sdkVersion !== '4.0.1')
     || !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(evidence.runId) || !/^[a-f0-9]{64}$/.test(evidence.bundleSha256)
     || (context && (evidence.runId !== context.runId || evidence.bundleSha256 !== context.bundleSha256))
     || !Array.isArray(evidence.probes) || evidence.probes.length !== MEDIA_GATE_PROBE_IDS.length) {
     throw new Error('Lynx media gate 缺少固定 SDK、本轮身份或完整探针')
+  }
+  if (evidence.sdkArtifact) {
+    validateAndroidSdkArtifact(evidence.sdkArtifact, { version: 1, runId: evidence.runId, bundleSha256: evidence.bundleSha256 }, evidence.sdkVersion)
   }
   const ids = new Set<string>()
   for (const item of evidence.probes) {

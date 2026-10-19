@@ -15,7 +15,7 @@ async function main() {
   try {
     if (platform === 'android') {
       const source = path.join(hosts, 'android', 'app', 'src', 'main', 'java', 'com', 'weapptailwindcss', 'lynxcompat')
-      for (const name of ['EvidenceStore', 'GeometryBounds', 'ColorSchemeSession', 'GeometryEvidence', 'MediaGateEvidence']) {
+      for (const name of ['EvidenceStore', 'GeometryBounds', 'ColorSchemeSession', 'GeometryEvidence', 'SdkArtifactIdentity', 'MediaGateEvidence']) {
         await execa('javac', ['-cp', directory, '-d', directory, path.join(source, `${name}.java`), path.join(fixtures, `${name}Test.java`)], { stdio: 'inherit' })
         await execa('java', ['-cp', directory, `com.weapptailwindcss.lynxcompat.${name}Test`, directory], { stdio: 'inherit' })
       }

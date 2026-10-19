@@ -1,6 +1,7 @@
 import type { NativePlatformReport } from '../../examples/react-lynx/src/compatibility/types'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { validatePlatformSdk } from '../../examples/react-lynx/src/compatibility/android-sdk-contract'
 import { MEDIA_GATE_PROBE_IDS, validateMediaGateEvidence } from '../../examples/react-lynx/src/compatibility/media-gate-contract'
 import { PNG } from './png'
 
@@ -8,12 +9,14 @@ import { PNG } from './png'
 export async function validateMediaGateArtifacts(report: NativePlatformReport, directory: string) {
   validateMediaGateEvidence(report.mediaGate, report.evidence)
   const evidence = report.mediaGate
+  validatePlatformSdk(evidence, report.platform, { version: 1, runId: evidence.runId, bundleSha256: evidence.bundleSha256 })
   const sidecar = JSON.parse(await fs.readFile(path.join(directory, 'media-hover-v1.native.json'), 'utf8'))
   if (sidecar.version !== 1 || sidecar.source !== 'lynx-native-media-gate-v1'
     || sidecar.context?.version !== 1 || sidecar.context.runId !== evidence.runId || sidecar.context.bundleSha256 !== evidence.bundleSha256) {
     throw new Error('Lynx media gate 原生侧车身份无效')
   }
   validateMediaGateEvidence(sidecar.mediaGate, report.evidence)
+  validatePlatformSdk(sidecar.mediaGate, report.platform, { version: 1, runId: evidence.runId, bundleSha256: evidence.bundleSha256 })
   for (const key of ['limitationId', 'runId', 'bundleSha256', 'sdkVersion'] as const) {
     if (sidecar.mediaGate[key] !== evidence[key]) {
       throw new Error(`Lynx media gate 原生侧车 ${key} 不符`)

@@ -12,17 +12,20 @@ public final class MediaGateEvidence {
   public interface Host {
     boolean isUiThread();
     String sdkVersion();
+    String sdkArtifact() throws Exception;
     double[] measure(String identifier) throws Exception;
     byte[] capture(String identifier) throws Exception;
   }
 
   public static final class Capture {
     public final String sdkVersion;
+    public final String sdkArtifact;
     public final Map<String, double[][]> probes;
     public final List<EvidenceStore.Receipt> artifacts;
 
-    Capture(String sdkVersion, Map<String, double[][]> probes, List<EvidenceStore.Receipt> artifacts) {
+    Capture(String sdkVersion, String sdkArtifact, Map<String, double[][]> probes, List<EvidenceStore.Receipt> artifacts) {
       this.sdkVersion = sdkVersion;
+      this.sdkArtifact = sdkArtifact;
       this.probes = probes;
       this.artifacts = artifacts;
     }
@@ -40,6 +43,8 @@ public final class MediaGateEvidence {
       if (sdkVersion == null || !sdkVersion.matches("[0-9]+\\.[0-9]+\\.[0-9]+")) {
         throw new IOException("Native Lynx SDK did not provide a valid version");
       }
+      String sdkArtifact = host.sdkArtifact();
+      if (sdkArtifact == null || !sdkArtifact.startsWith("{") || !sdkArtifact.endsWith("}")) throw new IOException("Missing native APK identity");
       Map<String, double[][]> probes = new LinkedHashMap<>();
       for (String id : IDS) {
         double[] probe = host.measure("media-hover-v1-" + id);
@@ -55,11 +60,11 @@ public final class MediaGateEvidence {
       }
       String mediaGate = "{\"limitationId\":\"" + LIMITATION + "\",\"runId\":\"" + store.runId
           + "\",\"bundleSha256\":\"" + store.bundleSha256 + "\",\"sdkVersion\":\"" + sdkVersion
-          + "\",\"probes\":" + jsonProbes(probes) + "}";
+          + "\",\"sdkArtifact\":" + sdkArtifact + ",\"probes\":" + jsonProbes(probes) + "}";
       String sidecar = "{\"version\":1,\"source\":\"lynx-native-media-gate-v1\",\"context\":{\"version\":1,\"runId\":\""
           + store.runId + "\",\"bundleSha256\":\"" + store.bundleSha256 + "\"},\"mediaGate\":" + mediaGate + "}";
       artifacts.add(store.saveMediaGate(runId, sidecar.getBytes(StandardCharsets.UTF_8)));
-      return new Capture(sdkVersion, probes, artifacts);
+      return new Capture(sdkVersion, sdkArtifact, probes, artifacts);
     } catch (Exception error) {
       store.fail();
       throw error;

@@ -173,6 +173,7 @@ public final class CompatibilityReporterModule extends LynxModule {
         MediaGateEvidence.Capture capture = MediaGateEvidence.capture(binding.store, runId, new MediaGateEvidence.Host() {
           public boolean isUiThread() { return Looper.myLooper() == Looper.getMainLooper(); }
           public String sdkVersion() { return LynxEnv.inst().getLynxVersion(); }
+          public String sdkArtifact() throws Exception { return AndroidSdkIdentity.capture(binding.view().getContext(), binding.store); }
           public double[] measure(String id) { return measureNow(id); }
           public byte[] capture(String id) { return captureBytes(id); }
         });
