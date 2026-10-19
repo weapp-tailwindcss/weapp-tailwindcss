@@ -2,6 +2,7 @@ import type { ObserverRequestDiagnostic } from './diagnostics'
 import type { ObserverLaunchOptions } from './launch-environment'
 import { spawn } from 'node:child_process'
 import { createObserverDiagnostics } from './diagnostics'
+import { observerInputRequest } from './input'
 import { resolveObserverLaunchEnvironment } from './launch-environment'
 
 export type ProcessObserverQuery = { kind: 'identity', pids?: readonly number[] } | { kind: 'memory', rootPid: number, cwd: string }
@@ -20,6 +21,7 @@ interface PendingOperation {
 
 interface PendingRequest extends PendingOperation {
   diagnostic: ObserverRequestDiagnostic
+  line: string
 }
 
 /** 单个受管采集器的 JSON 行协议；任一超时使会话失效，禁止重启续借预算。 */
@@ -135,6 +137,15 @@ export function createProcessObserverTransport(command: string, args: string[], 
       try {
         const message = JSON.parse(line)
         if (message?.event !== undefined) {
+          if (message.event === 'request-line-received') {
+            const request = observerInputRequest(message, child.pid, pending)
+            if (Date.now() >= request.deadline) {
+              throw new Error(`身份采集器已读行超过本轮绝对截止：${command}；diagnostics=${JSON.stringify(diagnostics.snapshot())}。`)
+            }
+            diagnostics.input(request.diagnostic)
+            boundary = buffer.indexOf('\n')
+            continue
+          }
           if (message.event === 'observer-stopped') {
             if (!closing || fatal !== undefined || pending.size || startupWaits.size || hostStopped || message.pid !== child.pid || !Number.isInteger(message.pid) || hostReadyAt === undefined) {
               throw new Error('身份采集器停止诊断缺少正常关闭阶段或本体 PID，不能接受诊断行。')
@@ -236,6 +247,7 @@ export function createProcessObserverTransport(command: string, args: string[], 
         return Promise.reject(fatal ?? new Error('身份采集器已关闭，禁止继续调度。'))
       }
       const id = ++sequence
+      const line = JSON.stringify({ ...query, id })
       return new Promise((resolve, reject) => {
         const request: PendingRequest = {
           resolve,
@@ -244,11 +256,12 @@ export function createProcessObserverTransport(command: string, args: string[], 
           deadline: Date.now() + timeoutMs,
           signal,
           diagnostic: diagnostics.begin(id, query),
+          line,
         }
         request.abort = () => fail(signal?.reason ?? new Error('身份采集器请求已取消。'))
         pending.set(id, request)
         signal?.addEventListener('abort', request.abort, { once: true })
-        child.stdin.write(`${JSON.stringify({ ...query, id })}\n`, (error) => {
+        child.stdin.write(`${line}\n`, (error) => {
           if (error) {
             fail(error)
           }

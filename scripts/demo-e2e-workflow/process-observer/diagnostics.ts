@@ -16,6 +16,7 @@ export interface ObserverRequestDiagnostic {
   sentAt: number
   stages: Array<{ stage: string, elapsedMs: number }>
   progress: number
+  inputReceived?: boolean
 }
 
 /** 诊断只记录本次传输阶段，不授予业务进程归属，也不重置请求截止。 */
@@ -40,6 +41,13 @@ export function createObserverDiagnostics(pid: number | undefined, launch?: Obse
     },
     written(request: ObserverRequestDiagnostic) {
       request.stages.push({ stage: 'stdin-written', elapsedMs: elapsed() })
+    },
+    input(request: ObserverRequestDiagnostic) {
+      if (readyAt === undefined || request.inputReceived || request.progress !== 0) {
+        throw new Error('身份采集器已读行阶段重复或顺序无效。')
+      }
+      request.inputReceived = true
+      request.stages.push({ stage: 'request-line-received', elapsedMs: elapsed() })
     },
     progress(message: { event: unknown, pid?: unknown, kind?: unknown, version?: unknown }, request?: ObserverRequestDiagnostic) {
       if (message.event === 'observer-ready') {

@@ -1,5 +1,6 @@
 import { Buffer } from 'node:buffer'
 import { windowsProcessTreeMemoryFunction } from '../../demo-e2e-memory/windows'
+import { windowsObserverInputScript } from './input-script'
 import { windowsObserverShutdownScript } from './shutdown-script'
 
 // 身份与内存指标分开查询；每个请求重新查询，准备阶段结果不领取业务进程也不计入指标。
@@ -12,8 +13,9 @@ $ErrorActionPreference = 'Stop'
 ${windowsProcessTreeMemoryFunction}
 while ($null -ne ($line = [Console]::In.ReadLine())) {
   try {
-    $request = ConvertFrom-Json -InputObject $line
-    [Console]::Out.WriteLine((ConvertTo-Json -InputObject @{ event = 'request-received'; id = [int]$request.id; kind = [string]$request.kind } -Compress))
+    ${windowsObserverInputScript}
+    $request = Microsoft.PowerShell.Utility\\ConvertFrom-Json -InputObject $line
+    [Console]::Out.WriteLine((Microsoft.PowerShell.Utility\\ConvertTo-Json -InputObject @{ event = 'request-received'; id = [int]$request.id; kind = [string]$request.kind } -Compress))
     [Console]::Out.Flush()
     if ($request.kind -eq 'identity') {
       $query = 'SELECT ProcessId, ParentProcessId, CreationDate FROM Win32_Process'
@@ -29,15 +31,15 @@ while ($null -ne ($line = [Console]::In.ReadLine())) {
     } else {
       throw "无法识别的身份采集操作：$($request.kind)"
     }
-    [Console]::Out.WriteLine((ConvertTo-Json -InputObject @{ event = 'query-completed'; id = [int]$request.id; kind = [string]$request.kind } -Compress))
+    [Console]::Out.WriteLine((Microsoft.PowerShell.Utility\\ConvertTo-Json -InputObject @{ event = 'query-completed'; id = [int]$request.id; kind = [string]$request.kind } -Compress))
     [Console]::Out.Flush()
     $response = @{ id = [int]$request.id; rows = $rows }
   } catch {
     $response = @{ id = [int]$request.id; error = $_.Exception.Message }
   }
-  $json = ConvertTo-Json -InputObject $response -Depth 5 -Compress
+  $json = Microsoft.PowerShell.Utility\\ConvertTo-Json -InputObject $response -Depth 5 -Compress
   if ($null -eq $response.error) {
-    [Console]::Out.WriteLine((ConvertTo-Json -InputObject @{ event = 'response-ready'; id = [int]$request.id; kind = [string]$request.kind } -Compress))
+    [Console]::Out.WriteLine((Microsoft.PowerShell.Utility\\ConvertTo-Json -InputObject @{ event = 'response-ready'; id = [int]$request.id; kind = [string]$request.kind } -Compress))
     [Console]::Out.Flush()
   }
   [Console]::Out.WriteLine($json)
