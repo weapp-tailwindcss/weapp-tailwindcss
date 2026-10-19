@@ -17,7 +17,8 @@ export function validateResolvedAndroidSdk(value: ResolvedAndroidSdk | undefined
 /** 此处仅检查桥接数据；离线验收仍需重读实际 AAR、APK 和侧车。 */
 export function validateAndroidSdkArtifact(value: NativeAndroidSdkArtifact | undefined, context: NativeEvidenceContext, reportedVersion: string) {
   if (!value || reportedVersion !== reference.reportedVersion || !/^[a-f0-9]{64}$/.test(value.apkSha256)
-    || !Object.hasOwn(reference.libraries, value.abi) || value.librarySha256 !== reference.libraries[value.abi as keyof typeof reference.libraries]) {
+    // eslint-disable-next-line e18e/prefer-object-has-own -- Lynx 4.0.1 的 PrimJS 未提供 Object.hasOwn，仍须检查自有键。
+    || !Object.prototype.hasOwnProperty.call(reference.libraries, value.abi) || value.librarySha256 !== reference.libraries[value.abi as keyof typeof reference.libraries]) {
     throw new Error('Lynx Android SDK artifact 缺失或原始自报值、APK、ABI 身份无效')
   }
   validateResolvedAndroidSdk(value.resolved, context)

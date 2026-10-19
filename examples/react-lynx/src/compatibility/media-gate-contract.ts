@@ -72,7 +72,8 @@ function sameData(actual: unknown, expected: unknown): boolean {
     return false
   }
   const keys = Object.keys(actual)
-  return keys.length === Object.keys(expected).length && keys.every(key => Object.hasOwn(expected, key)
+  // eslint-disable-next-line e18e/prefer-object-has-own -- Lynx 4.0.1 的 PrimJS 未提供 Object.hasOwn，仍须检查自有键。
+  return keys.length === Object.keys(expected).length && keys.every(key => Object.prototype.hasOwnProperty.call(expected, key)
     && sameData(Reflect.get(actual, key), Reflect.get(expected, key)))
 }
 
