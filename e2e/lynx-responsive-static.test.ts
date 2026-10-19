@@ -10,6 +10,28 @@ it('生成与实际bundle解码保留相同媒体条件和独立标尺', () => {
   }
 })
 
+it('允许 CSS 入口展开产生的完整相同标尺副本', () => {
+  const repeated = `${css}.probe-responsive-threshold{width:48rem;height:1px}`
+  for (const stage of ['generation', 'encoding'] as const) {
+    expect(() => assertResponsiveGuard(parseGeneratedRules(repeated), stage)).not.toThrow()
+  }
+})
+
+it.each([
+  '.probe-responsive-threshold{width:768px;height:1px}',
+  '.probe-responsive-threshold{width:48rem;height:2px}',
+  '.probe-responsive-threshold{width:48rem}',
+  '.probe-responsive-threshold{width:48rem;height:1px;opacity:1}',
+  '@media(width < 48rem){.probe-responsive-threshold{width:48rem;height:1px}}',
+  '@supports(display:grid){.probe-responsive-threshold{width:48rem;height:1px}}',
+  '.probe-responsive-threshold.extra{width:48rem;height:1px}',
+  String.raw`.probe-responsive-thr\65shold{width:48rem;height:1px}`,
+])('拒绝错误值、不完整声明、额外条件或复合 selector 的标尺副本 %s', (extra) => {
+  for (const stage of ['generation', 'encoding'] as const) {
+    expect(() => assertResponsiveGuard(parseGeneratedRules(`${css}${extra}`), stage)).toThrow('响应式')
+  }
+})
+
 it.each(['removed', 'unconditional', 'wrong-threshold', 'wrong-rule-width', 'duplicate-unconditional', 'missing-marker', 'changed-marker', 'conditional-marker', 'supports-rule', 'supports-marker'] as const)('拒绝 %s 的媒体生成/编码证据', (mode) => {
   let changed = css
   if (mode === 'removed') {

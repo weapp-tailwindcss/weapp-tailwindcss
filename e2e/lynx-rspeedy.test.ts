@@ -11,8 +11,9 @@ import { verifyDarkFixture } from './lynx/dark-fixture-browser'
 import { decodeLynxBundle } from './lynx/decoder'
 import { verifyFlexFixture } from './lynx/flex-fixture-browser'
 import { verifyGridFixtures } from './lynx/grid-fixture-browser'
+import { assertResponsiveGuard } from './lynx/responsive-static'
 import { verifySkewFixture } from './lynx/skew-fixture-browser'
-import { analyzeStaticEvidence } from './lynx/static-evidence'
+import { analyzeStaticEvidence, parseDecodedRules, parseGeneratedRules } from './lynx/static-evidence'
 import { verifyStructuralFixture } from './lynx/structural-fixture-browser'
 import { verifyTextFlowFixture } from './lynx/text-flow-fixture-browser'
 
@@ -48,6 +49,12 @@ describe('ReactLynx Rspeedy compatibility evidence', () => {
   it('decodes the real bundle with the pinned TASM decoder', () => {
     expect(decodedBundle).toBeTruthy()
     expect(decodedCss).not.toBe('')
+  })
+
+  it('响应式真实构建与实际解码保留唯一媒体 utility 和完整一致的标尺副本', async () => {
+    const css = await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8')
+    expect(() => assertResponsiveGuard(parseGeneratedRules(css), 'generation')).not.toThrow()
+    expect(() => assertResponsiveGuard(parseDecodedRules(decodedCss), 'encoding')).not.toThrow()
   })
 
   it('固定 SDK 的编码配置启用运行时递归变量解析', async () => {

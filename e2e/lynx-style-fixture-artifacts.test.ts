@@ -20,7 +20,8 @@ const directories: string[] = []
 
 beforeAll(async () => {
   const fixture = await fs.readFile(path.join(import.meta.dirname, '..', 'examples', 'react-lynx', 'src', 'styles', 'important-fixtures.css'), 'utf8')
-  source = `${String.raw`.\!bg-\[\#737373\]{background-color:#737373!important}.bg-\[\#737373\]{background-color:#737373}`}${fixture}${responsiveRule}${responsiveMarker}${supports}`
+  // 实际 CSS 入口经 layer import 与 Tailwind 展开会留下完整相同的两份标尺。
+  source = `${String.raw`.\!bg-\[\#737373\]{background-color:#737373!important}.bg-\[\#737373\]{background-color:#737373}`}${fixture}${responsiveRule}${responsiveMarker}${responsiveMarker}${supports}`
   bundle = (await encodeLynxCss(source, { mode: 'wasm', applyCompatibility: false })).buffer
 })
 
@@ -79,11 +80,15 @@ const mutations = [
   ['responsive-wrong-threshold', (css: string) => css.replace('width < 48rem', 'width < 768px'), /响应式/],
   ['responsive-wrong-width', (css: string) => css.replace('width:200px', 'width:80px'), /响应式/],
   ['responsive-duplicate-unconditional', (css: string) => `${css}${String.raw`.max-md\:w-\[200px\]{width:200px}`}`, /响应式/],
-  ['responsive-missing-marker', (css: string) => css.replace(responsiveMarker, ''), /响应式/],
+  ['responsive-missing-marker', (css: string) => css.replaceAll(responsiveMarker, ''), /响应式/],
   ['responsive-changed-marker', (css: string) => css.replace('width:48rem', 'width:768px'), /响应式/],
   ['responsive-conditional-marker', (css: string) => css.replace(responsiveMarker, `@media(width < 48rem){${responsiveMarker}}`), /响应式/],
   ['responsive-supports-rule', (css: string) => css.replace(responsiveRule, `@supports(display:grid){${responsiveRule}}`), /响应式/],
   ['responsive-supports-marker', (css: string) => css.replace(responsiveMarker, `@supports(display:grid){${responsiveMarker}}`), /响应式/],
+  ['responsive-marker-height', (css: string) => css.replace(responsiveMarker, responsiveMarker.replace('height:1px', 'height:2px')), /响应式/],
+  ['responsive-marker-incomplete', (css: string) => css.replace(responsiveMarker, '.probe-responsive-threshold{width:48rem}'), /响应式/],
+  ['responsive-marker-extra', (css: string) => `${css}${responsiveMarker.replace('.probe-responsive-threshold', '.probe-responsive-threshold.extra')}`, /响应式/],
+  ['responsive-marker-escaped-conflict', (css: string) => `${css}${responsiveMarker.replace('.probe-responsive-threshold', String.raw`.probe-responsive-thr\65shold`).replace('height:1px', 'height:2px')}`, /响应式/],
 ] as const
 
 for (const stage of ['generation', 'encoding'] as const) {
