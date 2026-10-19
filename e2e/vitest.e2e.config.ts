@@ -27,6 +27,18 @@ const workspaceAliases = [
     replacement: path.resolve(__dirname, '../packages/postcss/src/index.ts'),
   },
   {
+    find: /^@weapp-tailwindcss\/postcss\/transform$/,
+    replacement: path.resolve(__dirname, '../packages/postcss/src/transform.ts'),
+  },
+  {
+    find: /^@weapp-tailwindcss\/postcss\/syntax$/,
+    replacement: path.resolve(__dirname, '../packages/postcss/src/syntax.ts'),
+  },
+  {
+    find: /^@weapp-tailwindcss\/postcss\/plugin$/,
+    replacement: path.resolve(__dirname, '../packages/postcss/src/plugin.ts'),
+  },
+  {
     find: /^@weapp-tailwindcss\/postcss\/types$/,
     replacement: path.resolve(__dirname, '../packages/postcss/src/types.ts'),
   },

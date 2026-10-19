@@ -1,6 +1,7 @@
 import type { Declaration, Plugin } from 'postcss'
 import postcss from 'postcss'
 import postcssPresetEnv from 'postcss-preset-env'
+import { preservePlaceValueGroups } from './preset-env/place'
 import { preserveTailwindRuntimeVariables } from './preset-env/runtime-variables'
 
 function isolateDeclaration(declaration: Declaration) {
@@ -71,7 +72,18 @@ function preserveIndependentHexAlphaFallback(plugin: Plugin): Plugin {
 
 export function createPresetEnvPlugin(options: Parameters<typeof postcssPresetEnv>[0], preserveRuntimeVariables = false) {
   const preset = postcssPresetEnv(options)
+  if (!('plugins' in preset)) {
+    return preset
+  }
   preset.plugins = preset.plugins.map((plugin) => {
+    if (typeof plugin === 'object' && 'postcssPlugin' in plugin && plugin.postcssPlugin === 'postcss-place') {
+      const feature = options?.features?.['place-properties']
+      const featureOptions = Array.isArray(feature) ? feature[1] : typeof feature === 'object' ? feature : undefined
+      const preserve = typeof featureOptions?.preserve === 'boolean'
+        ? featureOptions.preserve
+        : options?.preserve !== false
+      return preservePlaceValueGroups(plugin, preserve)
+    }
     if (preserveRuntimeVariables && typeof plugin === 'object' && 'postcssPlugin' in plugin && plugin.postcssPlugin === 'postcss-custom-properties') {
       return preserveTailwindRuntimeVariables(plugin)
     }
