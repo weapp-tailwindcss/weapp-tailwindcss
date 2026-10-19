@@ -119,9 +119,13 @@ RN Web 像素失败来自探针与对照的渲染容器位置不同。三者改�
 
 RN iOS 的首轮编译日志已包含 BUILD SUCCEEDED；真正失败是 simctl 对首次安装且未启动的目标返回 ESRCH。现在只接受 exit 3、NSPOSIXErrorDomain 和绑定目标应用的完整 nothing-to-terminate 诊断，其余终止错误继续阻断；同时避免把 deviceYear 等编译符号的 warning 误判为设备不可用。修复经原始日志回归验证，实际 iOS 结果仍待新 head 的 CI。运行时架构合同则用严格纯 JS 值解释闭包及浏览器打包替代旧单文件数量假设，继续拒绝 CSS 编译器、PostCSS root AST、Node、生成器及构建器，公开入口和源码均要求零 external imports。
 
+第二轮 RN iOS 的原始 failure.png 显示 SpringBoard 的 Open in 应用确认弹窗，Metro 没有 Bundled。示例没有 expo-dev-client，却构造开发客户端深链；openurl 的成功回执不能证明应用启动。首次与恢复改为 simctl launch --terminate-running-process 直接启动已核对的 bundle ID，通过 RN 0.81.5 实际消费的 NSArgumentDomain 两键传入明确 Metro host:port 与 scheme；HTTP/HTTPS 标准端口也显式保留。入口检查实际 Expo AppDelegate 和 factory 消费链，保存源码及 hash，严格核对唯一正整数 PID，继续等待本轮 run/token/revision 的完整语义报告。84 项定向回归、Foundation Swift 实际编译执行、ESLint 与类型检查通过，真实设备效果等待新 head CI。新增 build/runtime 回归已加入 iOS workflow 和统一入口。
+
 Lynx 首轮双端已采集运行时报告，但与历史提交的 catalog 身份不一致，且 hover/group-hover 缺独立输入证据。保留原始报告和严格最终基线更新拒绝，不手工刷新历史 hash，也不以 active 代证 hover；这两项仍阻塞最终完整性验收。
 
 后续为固定 Lynx 4.0.1 预先登记独立媒体必要条件合同：原生宿主实际读取 SDK 版本、12 个矩形、6 张 PNG 与保留名侧车，要求无条件和 min-width 正向对照生效，hover:hover 与 hover:none 两组保持基线；缺证或任一结果不符均失败。验收端重新读取原始 PNG、侧车和本轮 CSS/TASM 的全部候选规则，不能仅信报告 metadata。只有完整原生证据符合时，原候选才在 runtime/media 必要门禁处拒绝，hover 输入和伪状态明确保持 not-tested，不向 v2 原子状态能力传播覆盖。主树整合后 152 项证据/报告/adapter 定向回归和 178 项示例测试通过；双端 SDK 纯编译通过，实际六帧仍等待 CI，不手工更新最终历史报告。新增三份媒体回归已纳入统一合同和 Lynx 显式入口。
+
+独立审查随后发现，字面 selector 匹配会漏掉十六进制等价转义的无 guard 替代规则。离线静态层现复用 CSS AST 的 class 语义匹配所有分支，runtime 仅接受两条已审查的完整规范 selector，不引入解析器；CSS/TASM 等价转义、属性字面量和原始产物重读新增 12 项回归，其中 8 项先红后绿。整合后 CI=1 pnpm e2e:tailwind:contract 为 61 文件、868 项通过；Lynx 真实构建/编码/扫描另 45 项通过。第二轮旧 head 6d1f54587 的 Benchmark 全部分片首次通过，Windows 启动、三平台 watch、Chromium、RN Android/Web 通过；这些旧 head 结果不能代替后续提交的 CI。
 
 能力清单覆盖固定版本的注册项和有限补全，任意值按语法分支取样。runtime 夹具缺口、缺少独立转换 oracle、不可触发状态及设备阻塞均须保留，不能自动变成“不支持”，也不能用同属性的其他案例填充。第三方插件任意实现需另行登记。
 
