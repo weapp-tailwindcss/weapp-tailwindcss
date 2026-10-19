@@ -1,3 +1,4 @@
+import type { NativePairEvidence } from '../../examples/react-native-expo/src/compatibility/protocol'
 import type { NativeVisualProbe } from '../../examples/react-native-expo/src/visual-probes'
 
 export interface AndroidWindowTap {
@@ -65,4 +66,27 @@ export function androidScreenProbes(windowXml: string, probes: NativeVisualProbe
     }
     return { ...probe, bounds: { x: left / pixelRatio, y: top / pixelRatio, width: width / pixelRatio, height: height / pixelRatio } }
   })
+}
+
+/** 用本轮原生树校准成对夹具的系统 inset，禁止凭固定状态栏高度平移。 */
+export function androidPairCoordinates(windowXml: string, pair: NativePairEvidence): NativePairEvidence {
+  const nodes = [...windowXml.matchAll(/<node\b[^>]*>/g)].map(match => getNodeAttributes(match[0]))
+  const adjusted = { ...pair }
+  for (const side of ['probe', 'reference'] as const) {
+    const matches = nodes.filter(node => node.get('resource-id') === `tw-rn-case-${side}` && node.get('package') === 'com.weapptailwindcss.rncompat')
+    const bounds = matches[0]?.get('bounds')?.match(/^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$/)
+    if (matches.length !== 1 || matches[0]?.get('content-desc') !== `${pair.id}:${pair.phase}` || !bounds) {
+      throw new Error(`Missing current Android semantic pair ${side}`)
+    }
+    const [, left, top, right, bottom] = bounds.map(Number)
+    const ratio = pair.viewport.pixelRatio
+    const rect = { x: left / ratio, y: top / ratio, width: (right - left) / ratio, height: (bottom - top) / ratio }
+    if (Math.abs(rect.width - pair[side].width) > 0.75 || Math.abs(rect.height - pair[side].height) > 0.75) {
+      throw new Error(`Clipped Android semantic pair ${side}`)
+    }
+    const target = side === 'probe' ? 'target' : 'referenceTarget'
+    adjusted[target] = { ...pair[target], x: pair[target].x + rect.x - pair[side].x, y: pair[target].y + rect.y - pair[side].y }
+    adjusted[side] = rect
+  }
+  return adjusted
 }

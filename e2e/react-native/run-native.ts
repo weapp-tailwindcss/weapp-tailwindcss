@@ -3,7 +3,7 @@
 import type { Server } from 'node:http'
 import type { NativeVisualProbe } from '../../examples/react-native-expo/src/visual-probes'
 import { Buffer } from 'node:buffer'
-import { createHash } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { createServer } from 'node:http'
 import fs from 'node:fs/promises'
 import path from 'node:path'
@@ -16,7 +16,7 @@ import { assessNativeScreenshot } from './native-screenshot'
 import type { ReactNativePlatform, ReactNativeReport } from './catalog'
 import { androidExpoDevice } from './android-device'
 import { createAndroidEnvironment } from './android-environment'
-import { androidScreenProbes, findAndroidAnrWaitTap } from './android-window'
+import { androidPairCoordinates, androidScreenProbes, findAndroidAnrWaitTap } from './android-window'
 import { getHttpText } from './native-http'
 import { captureMetroEvidence } from './metro-evidence'
 import { createIosLaunchReconciler } from './ios-launch'
@@ -26,6 +26,9 @@ import { awaitNativeExitCompletion, canAcceptNativeReport, evaluateNativeWait } 
 import { stopOwnedProcess } from './process'
 import { createRuntimeArtifacts } from './runtime-artifacts'
 import { validateReactNativeReport } from './reports'
+import { reactNativeVersions, RN_CATALOG_HASH, RN_FIXTURE_HASH } from './catalog'
+import { captureNativePair, validateNativeArtifacts } from './pair-evidence'
+import { createSemanticReporter } from './semantic-reporter'
 
 interface ReportEnvelope { hmrMarker: string, cssHmrColor: string, report: ReactNativeReport, visualProbes: NativeVisualProbe[] }
 type NativeProcess = ReturnType<typeof startExpo>
@@ -46,28 +49,42 @@ const repoRoot = path.resolve(import.meta.dirname, '../..')
 const exampleRoot = path.resolve(repoRoot, 'examples/react-native-expo')
 const artifactSession = await createRuntimeArtifacts(path.resolve(repoRoot, `e2e/.artifacts/react-native-${platform}`))
 const artifacts = artifactSession.directory
-const reportsDir = path.resolve(repoRoot, 'e2e/react-native/reports')
+const reportsDir = path.resolve(repoRoot, 'e2e/react-native/reports/v2')
 const markerFile = path.resolve(exampleRoot, 'src/hmr-marker.ts')
 const cssFile = path.resolve(exampleRoot, 'global.css')
 const metroLogPath = path.resolve(artifacts, 'metro.log')
 const reports: ReportEnvelope[] = []
 const updateBaseline = process.env['RN_UPDATE_BASELINE'] === '1'
+const runId = process.env['TAILWIND_E2E_RUN_ID'] ?? randomUUID()
+let semanticDevice = ''
+const semanticReporter = createSemanticReporter({ runId, catalogHash: RN_CATALOG_HASH, fixtureHash: RN_FIXTURE_HASH, versions: reactNativeVersions() }, async (pair) => {
+  if (platform === 'android') {
+    await execa('adb', ['-s', semanticDevice, 'shell', 'uiautomator', 'dump', '/sdcard/window.xml'])
+    const window = await execa('adb', ['-s', semanticDevice, 'exec-out', 'cat', '/sdcard/window.xml'])
+    pair = androidPairCoordinates(window.stdout, pair)
+  }
+  return captureNativePair(pair, { runId, artifacts, capture: name => capture(name, semanticDevice) })
+})
 
 function startReporter(host: string) {
   let server: Server
   const ready = new Promise<number>((resolve, reject) => {
     server = createServer((request, response) => {
+      if (semanticReporter.handle(request, response)) {
+        return
+      }
       if (request.method !== 'POST') { response.writeHead(404).end(); return }
       const chunks: Buffer[] = []
       request.on('data', chunk => chunks.push(Buffer.from(chunk)))
       request.on('end', () => {
-        try {
-          reports.push(JSON.parse(Buffer.concat(chunks).toString('utf8')) as ReportEnvelope)
+        void (async () => {
+          const envelope = JSON.parse(Buffer.concat(chunks).toString('utf8')) as ReportEnvelope
+          await fs.writeFile(path.join(artifacts, 'report.json'), `${JSON.stringify(envelope.report, null, 2)}\n`, 'utf8')
+          reports.push(envelope)
           response.writeHead(204).end()
-        }
-        catch (error) {
+        })().catch((error) => {
           response.writeHead(400).end(String(error))
-        }
+        })
       })
     })
     server.once('error', reject)
@@ -347,6 +364,7 @@ async function main() {
     ? process.env['RN_ANDROID_DEVICE_ID'] ?? 'emulator-5554'
     : process.env['RN_IOS_DEVICE_ID'] ?? (await execa('xcrun', ['simctl', 'list', 'devices', 'booted', '-j'])).stdout.match(/"udid"\s*:\s*"([^"]+)"/)?.[1] ?? ''
   if (!device) { throw new TypeError(`No booted ${platform} simulator was found`) }
+  semanticDevice = device
   const expoDevice = platform === 'android' ? await androidExpoDevice(device) : device
   const nativeEnvironment = await collectNativeEnvironment(device)
   const reporter = startReporter(platform === 'ios' ? '0.0.0.0' : runtimeHost)
@@ -408,7 +426,10 @@ async function main() {
       requireLaunchCompletion: true,
     })
     const baselineReport = withNativeEnvironment(baseline.report, nativeEnvironment)
-    validateReactNativeReport(baselineReport, platform)
+    await fs.writeFile(path.join(artifacts, 'report.json'), `${JSON.stringify(baselineReport, null, 2)}\n`, 'utf8')
+    semanticReporter.assertReceipts(baselineReport)
+    validateReactNativeReport(baselineReport, platform, { runId, revision: 'rn-hmr-baseline-10b981' })
+    await validateNativeArtifacts(baselineReport, artifacts)
     if (platform === 'android') { await assertAndroidMarker(device, 'rn-hmr-baseline') }
     const beforeScreenshot = await captureVerified('runtime-before.png', device, baseline)
 
@@ -417,7 +438,10 @@ async function main() {
     await fs.writeFile(markerFile, updated, 'utf8')
     const hmr = await waitForReportOrExit('rn-hmr-updated', run, activeMetro, { cssHmrColor: '#10b981', reportTimeout: 120_000, reconcileLaunch })
     const hmrReport = withNativeEnvironment(hmr.report, nativeEnvironment)
-    validateReactNativeReport(hmrReport, platform)
+    await fs.writeFile(path.join(artifacts, 'report.json'), `${JSON.stringify(hmrReport, null, 2)}\n`, 'utf8')
+    semanticReporter.assertReceipts(hmrReport)
+    validateReactNativeReport(hmrReport, platform, { runId, revision: 'rn-hmr-updated-10b981' })
+    await validateNativeArtifacts(hmrReport, artifacts)
     if (platform === 'android') { await assertAndroidMarker(device, 'rn-hmr-updated') }
     const afterTsxScreenshot = await captureVerified('runtime-tsx-after.png', device, hmr)
     const updatedCss = originalCss.replace('#10b981', '#f59e0b')
@@ -426,7 +450,10 @@ async function main() {
     await fs.writeFile(cssFile, updatedCss, 'utf8')
     const cssHmr = await waitForReportOrExit('rn-hmr-updated', run, activeMetro, { cssHmrColor: '#f59e0b', reportTimeout: 120_000, reconcileLaunch })
     const cssHmrReport = withNativeEnvironment(cssHmr.report, nativeEnvironment)
-    validateReactNativeReport(cssHmrReport, platform)
+    await fs.writeFile(path.join(artifacts, 'report.json'), `${JSON.stringify(cssHmrReport, null, 2)}\n`, 'utf8')
+    semanticReporter.assertReceipts(cssHmrReport)
+    validateReactNativeReport(cssHmrReport, platform, { runId, revision: 'rn-hmr-updated-f59e0b' })
+    await validateNativeArtifacts(cssHmrReport, artifacts)
     if (platform === 'android') { await assertAndroidMarker(device, 'rn-hmr-updated') }
     const afterScreenshot = await captureVerified('runtime-after.png', device, cssHmr)
     const beforeHash = await fileHash(beforeScreenshot)
