@@ -43,6 +43,15 @@ describe('Tailwind 上游完整能力清单', () => {
     expect(JSON.parse(catalogIdentityPayload)).toEqual(catalogIdentity)
   })
 
+  it('important 修饰必须具有独立优先级预期，且完整共享身份保留该标志', async () => {
+    const item = compatibilityCases.find(item => item.id === 'syntax-important')!
+    const expected = [{ property: 'background-color', value: '#737373', important: true }]
+    expect(item.declarations).toEqual(expected)
+    expect(JSON.parse(catalogIdentityPayload).compatibilityCases.find((entry: { id: string }) => entry.id === item.id).declarations).toEqual(expected)
+    const ds = await loadDefaultDesignSystem()
+    expect(ds.candidatesToCss([item.className])[0]).toContain('!important')
+  })
+
   it('作者语法、源表达式和无限值 profile 有独立输入及明确断言', () => {
     expect(authoringFixtures.map(item => item.id).sort()).toEqual([...cssAuthoringCapabilities].sort())
     for (const item of authoringFixtures) {

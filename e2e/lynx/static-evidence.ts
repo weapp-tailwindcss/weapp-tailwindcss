@@ -67,16 +67,16 @@ export function selectorHasCandidate(selector: string, candidate: string) {
   return walkClasses(selector).includes(candidate)
 }
 
-export function evaluateCase(rules: RuleEvidence[], item: typeof compatibilityCases[number], checkImportant: boolean) {
+export function evaluateCase(rules: RuleEvidence[], item: typeof compatibilityCases[number], stage: 'generation' | 'encoding') {
   const candidates = classCandidates(item.className)
   const matched = matchingRules(rules, candidates)
   const selectorMatches = candidates.length === 0 || candidates.every(candidate => (
     rules.some(rule => selectorHasCandidate(rule.selector, candidate))
   ))
   const matches = item.declarations.map((expected) => {
-    if (!checkImportant) {
+    if (stage === 'encoding') {
       // 编码 shorthand 可以展开成多条；同一预期的证据必须全部来自同一 selector。
-      return matched.map(rule => matchEncodedDeclaration(rule.declarations, expected, false)).find(Boolean)
+      return matched.map(rule => matchEncodedDeclaration(rule.declarations, expected)).find(Boolean)
     }
     const actual = matched.flatMap(rule => rule.declarations).find(declaration => declarationMatches(declaration, expected, true))
     return actual ? [actual] : undefined
@@ -166,8 +166,8 @@ export function analyzeStaticCase(
   encoderLog = '',
   cssDefinesProperties = new Set<string>(),
 ): StaticCaseEvidence {
-  const generated = evaluateCase(generatedRules, item, true)
-  const bundled = evaluateCase(bundledRules, item, false)
+  const generated = evaluateCase(generatedRules, item, 'generation')
+  const bundled = evaluateCase(bundledRules, item, 'encoding')
   const removals = parseEncoderRemovals(encoderLog)
   const candidates = classCandidates(item.className).map((className) => {
     const ownGenerated = matchingRules(generatedRules, [className])
@@ -175,8 +175,8 @@ export function analyzeStaticCase(
       rule.declarations.some(actual => declarationMatches(actual, expected, true))
     )))
     const candidate = { ...item, className, declarations }
-    const candidateGenerated = evaluateCase(generatedRules, candidate, true).matched
-    const candidateBundled = evaluateCase(bundledRules, candidate, false).matched
+    const candidateGenerated = evaluateCase(generatedRules, candidate, 'generation').matched
+    const candidateBundled = evaluateCase(bundledRules, candidate, 'encoding').matched
     const removedProperties = declarations.filter(declaration => removals.properties.has(declaration.property)).map(declaration => declaration.property)
     const removedSelectors = removals.selectors.filter(selector => selectorHasCandidate(selector, className))
     const retained = candidateGenerated && candidateBundled && removedProperties.length === 0 && removedSelectors.length === 0

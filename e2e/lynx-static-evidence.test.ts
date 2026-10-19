@@ -1,8 +1,9 @@
 import type { StaticEvidenceReport } from '../examples/react-lynx/src/compatibility/types'
 import { describe, expect, it } from 'vitest'
 import { compatibilityCases } from '../examples/react-lynx/src/compatibility/catalog'
+import { encodeLynxCss } from './lynx/batch-encode'
 import { compatibilityVersions, getCatalogHash } from './lynx/catalog'
-import { analyzeStaticCase, declarationMatches, selectorHasCandidate } from './lynx/static-evidence'
+import { analyzeStaticCase, declarationMatches, parseDecodedRules, parseGeneratedRules, selectorHasCandidate } from './lynx/static-evidence'
 import { assertCurrentStaticEvidence } from './lynx/static-report'
 
 describe('Lynx static declaration evidence', () => {
@@ -55,6 +56,46 @@ describe('Lynx static declaration evidence', () => {
     const declarations = ['top', 'right', 'bottom', 'left'].map(side => ({ property: `padding-${side}`, value: '13px' }))
     const bundled = [{ selector: '.probe', declarations: declarations.slice(0, 2) }, { selector: '.other', declarations: declarations.slice(2) }]
     expect(analyzeStaticCase(item, generated, bundled)).toMatchObject({ generated: true, bundled: false })
+  })
+
+  it('实际 bundle 缺 important 时不能通过编码判定，原始实际标志不可从生成声明补回', async () => {
+    const item = compatibilityCases.find(item => item.id === 'syntax-important')!
+    const source = String.raw`.\!bg-\[\#737373\]{background-color:#737373!important}`
+    const generated = parseGeneratedRules(source)
+    const encode = async (css: string) => parseDecodedRules((await encodeLynxCss(css, { mode: 'wasm', applyCompatibility: false })).css)
+    const intact = await encode(source)
+    expect(intact[0]!.declarations).toEqual([{ property: 'background-color', value: '#737373', important: true }])
+    expect(analyzeStaticCase(item, generated, intact)).toMatchObject({ generated: true, bundled: true })
+    const dropped = await encode(source.replace('!important', ''))
+    expect(dropped[0]!.declarations).toEqual([{ property: 'background-color', value: '#737373' }])
+    expect(analyzeStaticCase(item, generated, dropped)).toMatchObject({
+      generated: true,
+      bundled: false,
+      failureStage: 'encoder',
+      bundledDeclarations: [],
+      candidates: [{ className: item.className, generated: true, bundled: false, failureStage: 'encoder' }],
+    })
+    expect(analyzeStaticCase(item, dropped, intact)).toMatchObject({ generated: false, bundled: false, failureStage: 'generation' })
+  })
+
+  it.each(['top', 'right', 'bottom', 'left'])('shorthand 实际编码的 %s 边缺 important 时拒绝完整保留', async (missing) => {
+    const item = { ...compatibilityCases[0]!, className: 'probe', declarations: [{ property: 'padding', value: '13px', important: true }] }
+    const source = '.probe{padding:13px!important}'
+    const generated = parseGeneratedRules(source)
+    const encode = async (css: string) => parseDecodedRules((await encodeLynxCss(css, { mode: 'wasm', applyCompatibility: false })).css)
+    const intact = await encode(source)
+    expect(intact[0]!.declarations).toHaveLength(4)
+    expect(intact[0]!.declarations.every(declaration => declaration.important === true)).toBe(true)
+    const intactReport = analyzeStaticCase(item, generated, intact)
+    expect(intactReport).toMatchObject({ generated: true, bundled: true })
+    expect(intactReport.bundledDeclarations).toHaveLength(4)
+    expect(intactReport.bundledDeclarations).toEqual(expect.arrayContaining(intact[0]!.declarations))
+    const sides = ['top', 'right', 'bottom', 'left'].map(side => `padding-${side}:13px${side === missing ? '' : '!important'}`)
+    const dropped = await encode(`.probe{${sides.join(';')}}`)
+    expect(dropped[0]!.declarations.find(declaration => declaration.property === `padding-${missing}`)).toEqual({ property: `padding-${missing}`, value: '13px' })
+    expect(analyzeStaticCase(item, generated, dropped)).toMatchObject({ generated: true, bundled: false, failureStage: 'encoder', bundledDeclarations: [] })
+    // generation 仍要求原始 shorthand，不能因编码层允许四边表示而放宽生成合同。
+    expect(analyzeStaticCase(item, intact, intact)).toMatchObject({ generated: false, bundled: false, failureStage: 'generation' })
   })
 
   it('空 CSS 不会因 @import 无候选而被 vacuous every 判为成功', () => {
