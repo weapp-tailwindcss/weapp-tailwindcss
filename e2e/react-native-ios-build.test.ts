@@ -11,6 +11,12 @@ const directories: string[] = []
 const bundleId = 'com.weapptailwindcss.rncompat'
 const device = 'bound-ios-device'
 const notRunning = 'An error was encountered processing the command (domain=NSPOSIXErrorDomain, code=3):\nApplication termination failed.\nUnderlying error (domain=NSPOSIXErrorDomain, code=3):\n\tThe operation couldn’t be completed. No such process\n\tNo such process\n'
+const nothingToTerminate = `An error was encountered processing the command (domain=NSPOSIXErrorDomain, code=3):
+Simulator device failed to terminate ${bundleId}.
+found nothing to terminate
+Underlying error (domain=NSPOSIXErrorDomain, code=3):
+\tThe request to terminate "${bundleId}" failed. found nothing to terminate
+\tfound nothing to terminate`
 
 async function fixture() {
   const project = await mkdtemp(path.join(tmpdir(), 'tailwind-ios-build-'))
@@ -66,24 +72,27 @@ it('明确构建链无需 Simulator GUI，并核对本轮安装二进制后才�
   expect(JSON.parse(await readFile(path.join(current.options.artifacts, 'ios-build.json'), 'utf8'))).toMatchObject({ stage: 'launch-request-completed', device, bundleId, termination: { status: 'terminated' }, binarySha256: { 'RNApp': expect.any(String), 'RNApp.debug.dylib': expect.any(String) } })
 })
 
-it('明确的未运行错误可继续深链，并保留错误码和日志', async () => {
+it.each([notRunning, nothingToTerminate])('明确的未运行错误可继续深链，并保留错误码和日志：%s', async (diagnostic) => {
   const current = await fixture()
   const execute = current.execute.getMockImplementation()!
   current.execute.mockImplementation(async (file, args) => {
     if (args[1] === 'terminate') {
-      throw new IosCommandError(3, '', notRunning)
+      throw new IosCommandError(3, '', diagnostic)
     }
     return execute(file, args)
   })
   await buildAndLaunchIos(current.options, current.execute)
   expect(current.execute.mock.calls.at(-1)?.[1][1]).toBe('openurl')
-  expect(JSON.parse(await readFile(path.join(current.options.artifacts, 'ios-build.json'), 'utf8')).termination).toEqual({ status: 'not-running', exitCode: 3, stdout: '', stderr: notRunning })
+  expect(JSON.parse(await readFile(path.join(current.options.artifacts, 'ios-build.json'), 'utf8')).termination).toEqual({ status: 'not-running', exitCode: 3, stdout: '', stderr: diagnostic })
 })
 
 it.each([
   new IosCommandError(3, '', 'Invalid device: bound-ios-device'),
   new IosCommandError(3, '', 'CoreSimulatorService connection became invalid. No such process'),
   new IosCommandError(1, '', notRunning),
+  new IosCommandError(3, '', nothingToTerminate.replaceAll(bundleId, 'different.app')),
+  new IosCommandError(3, '', 'found nothing to terminate'),
+  new IosCommandError(3, '', nothingToTerminate.replace('NSPOSIXErrorDomain', 'CoreSimulatorService')),
   new Error(notRunning),
 ])('其它 terminate 失败立即阻断，不启动深链：%s', async (failure) => {
   const current = await fixture()

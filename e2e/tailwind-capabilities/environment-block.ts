@@ -17,7 +17,7 @@ export function environmentFailure(output: string): string | undefined {
   const patterns = [
     /Can't determine id of Simulator app[^\r\n]*/,
     /(?:spawn|command) [^\r\n]*\bENOENT\b[^\r\n]*/,
-    /(?:device|emulator)[^\r\n]*(?:offline|disconnected|not found|unavailable)/i,
+    /\b(?:device|emulator)\b[^\r\n]+(?:offline|disconnected|not found|unavailable)/i,
     /(?:No booted|Unable to find a destination matching)[^\r\n]*/,
     /com\.apple\.CoreSimulator\.SimError[^\r\n]*\r?\nUnable to lookup in current state:\s*Shutdown\b[^\r\n]*/i,
     /CoreSimulatorService connection (?:became invalid|interrupted|lost)\b[^\r\n]*/i,

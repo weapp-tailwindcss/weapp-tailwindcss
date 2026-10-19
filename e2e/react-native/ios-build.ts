@@ -99,7 +99,7 @@ export async function buildAndLaunchIos(options: IosBuildOptions, execute: IosBu
       evidence.termination = { status: 'terminated' }
     }
     catch (error) {
-      if (!iosAppWasNotRunning(error)) {
+      if (!iosAppWasNotRunning(error, bundleId)) {
         throw new EnvironmentBlockedError(`iOS target app termination failed: ${String(error)}`, { cause: error })
       }
       evidence.termination = { status: 'not-running', exitCode: error.exitCode, stdout: error.stdout, stderr: error.stderr }

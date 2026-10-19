@@ -17,9 +17,26 @@ export async function executeIosCommand(file: string, args: string[], cwd: strin
 }
 
 /** simctl 的明确 ESRCH 才表示目标应用未运行；其它失败必须阻断。 */
-export function iosAppWasNotRunning(error: unknown): error is IosCommandError {
-  return error instanceof IosCommandError
-    && error.exitCode === 3
-    && /^An error was encountered processing the command \(domain=NSPOSIXErrorDomain, code=3\):\r?\nApplication termination failed\./.test(error.stderr)
-    && /(?:^|\r?\n)[\t ]*No such process[\t ]*(?:\r?\n|$)/.test(error.stderr)
+export function iosAppWasNotRunning(error: unknown, bundleId: string): error is IosCommandError {
+  if (!(error instanceof IosCommandError) || error.exitCode !== 3) {
+    return false
+  }
+  const header = 'An error was encountered processing the command (domain=NSPOSIXErrorDomain, code=3):'
+  const lines = error.stderr.trim().split(/\r?\n/).map(line => line.trim())
+  if (lines[0] !== header) {
+    return false
+  }
+  if (lines[1] === 'Application termination failed.' && lines.includes('No such process')) {
+    return true
+  }
+  // 新版 simctl 对首次安装、尚未启动的目标报告另一种 ESRCH；同时绑定应用身份。
+  const nothingToTerminate = [
+    header,
+    `Simulator device failed to terminate ${bundleId}.`,
+    'found nothing to terminate',
+    'Underlying error (domain=NSPOSIXErrorDomain, code=3):',
+    `The request to terminate "${bundleId}" failed. found nothing to terminate`,
+    'found nothing to terminate',
+  ]
+  return lines.length === nothingToTerminate.length && lines.every((line, index) => line === nothingToTerminate[index])
 }

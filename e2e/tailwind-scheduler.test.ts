@@ -59,6 +59,23 @@ it('缺截图和错误样式不会被正则升级成环境问题', () => {
   }
 })
 
+it.each([
+  'error: property \'deviceYear\' not found on object of type \'EXConstantsService *\'',
+  'error: use of undeclared identifier \'emulatorConfig\'; symbol not found',
+  'error: deviceInfo is unavailable: introduced in iOS 18.0',
+])('编译器符号诊断不能冒充设备环境故障：%s', (message) => {
+  expect(environmentFailure(message)).toBeUndefined()
+})
+
+it.each([
+  'error: device emulator-5554 offline',
+  'device ABCD-1234 disconnected',
+  'error: device not found',
+  'emulator unavailable',
+])('独立设备名的明确诊断仍判定环境故障：%s', (message) => {
+  expect(environmentFailure(message)).toBe(message.includes('device ') ? message.slice(message.indexOf('device ')) : message)
+})
+
 it.each(['bridge-unavailable', 'geometry-unavailable', 'view-expired', 'receipt-timeout', 'report-timeout'] as const)('Lynx 明确的 %s 从真实子进程阻断调度且不生成能力判定', async (reason) => {
   const directory = await mkdtemp(path.join(tmpdir(), 'tailwind-lynx-harness-'))
   const { stages, dependencies } = fixture()
