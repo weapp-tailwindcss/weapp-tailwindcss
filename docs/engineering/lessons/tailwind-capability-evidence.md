@@ -37,6 +37,8 @@ regressions:
   - e2e/lynx-reports.test.ts
   - e2e/lynx-native-failure.test.ts
   - e2e/lynx-failure-evidence.test.ts
+  - e2e/lynx-android-sdk.test.ts
+  - e2e/lynx-zip-entry.test.ts
   - e2e/tailwind-scheduler.test.ts
   - e2e/tailwind-css.test.ts
 ---
@@ -139,7 +141,11 @@ Lynx run `39223188341`（head `2633f77a8`）双端在 `validateMediaGateEvidence
 
 该诊断的 Android artifact `12173413807` 经大小及 SHA-256 核对后，确认原生 getter 实际返回 `0.0.1`；无条件正向探针是绿色 32×16，但 `min-width` 仍是红色 16×16。六帧与侧车完整落盘，结果不符合运行前合同，仍记失败。官方 `org.lynxsdk.lynx:lynx:4.0.1` AAR 的 SHA-256 为 `e04d7b62a8ecb9255b7993cbbae93abca3196949a1c7c23477618ec07cc557e2`，其 Java getter 字节码直接返回常量 `0.0.1`；不能把配置版本覆写为原生读数，也不能仅凭该 getter 判定实际安装版本。
 
+Android 身份修复从 Gradle 实际解析的 component、AAR 和各 ABI 的 `liblynx.so` 生成受构建图管理的 asset；原生宿主另外读取实际安装 APK、所选 ABI 库、加载 bundle 和本轮 context。runner 保存构建与已安装 APK，离线验收重新比较字节及预先固定的官方指纹，保留错误 getter 原值。Android 强制完整工件身份；iOS 拒绝夹带该 Android 证明。ZIP 只解析必要条目，不向文件系统展开，拒绝重复、损坏、越界和不支持的布局，支持真实 APK 的 zipalign 零填充。整合后的身份、ZIP、媒体、全分支 guard、报告及失败取证 8 文件 173 项通过，Android 六组 Java harness、工作流 20 项和 ESLint 通过。真实 Gradle 构建及 APK 离线验真属于构建证据，不能代替设备运行。
+
 编码侧另确认，生产 TASM 0.0.49 在未启用页面配置 `enableCSSRule` 时会静默忽略媒体规则。独立分支 `codex/lynx-cssrule-probe`（源码 `faddad5af9edc014e2a005247e5207134572c394`）只通过官方 `pluginLynxConfig` 启用该页面开关，保留原 encoder、engine 3.9、SDK 和六帧预期。纯构建通过，真实 bundle 包含开关；Lynx run `39230554994` 用于核对原生效果，尚不能算修复通过。该模式还暴露独立 Greedy decoder 的读取边界，静态定向解码失败；serializer 输入或 bundle 中出现开关均不能代替编码及运行时通过证据，诊断配置暂不进入主修复分支。
+
+该开关诊断的 Android artifact `12177540185` 经 SHA-256 `5a9a33e1649d2701b0d687299a26342ea16ae22ca3d46fd942f2b95625bbb462` 核对，原生 `min-width` 已变为绿色 32×16，四个负向探针仍为红色 16×16，无条件正向探针为绿色 32×16。原始 PNG 与侧车支持配置根因，但该分支尚无新 APK 身份协议，旧 getter 门禁仍拒绝发布报告，不能刷新最终基线。前一诊断的 iOS artifact `12175519603` 经完整摘要校验后确认 getter 为 `1.4.0`、`min-width` 仍未生效；其来源须独立修复，不能接受错误读数来放行。
 
 能力清单覆盖固定版本的注册项和有限补全，任意值按语法分支取样。runtime 夹具缺口、缺少独立转换 oracle、不可触发状态及设备阻塞均须保留，不能自动变成“不支持”，也不能用同属性的其他案例填充。第三方插件任意实现需另行登记。
 
