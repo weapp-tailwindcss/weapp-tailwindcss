@@ -23,8 +23,8 @@ export async function observeContextState(page: Page, step: ContextStep): Promis
     const raw = Reflect.get(globalThis, '__tailwindContextEvents')
     const events: NativeContextEvent[] = Array.isArray(raw) ? raw : []
     const input = target instanceof HTMLInputElement ? target : undefined
-    const native = (type: string) => events.some(event => event.type === type && event.trusted)
-    const edited = (type: string) => events.some(event => event.type === type && event.trusted && event.target === 'probe' && event.value === input?.value)
+    const native = new Set(events.filter(event => event.trusted).map(event => event.type))
+    const edited = new Set(events.filter(event => event.trusted && event.target === 'probe' && event.value === input?.value).map(event => event.type))
     const disabledContent = document.querySelector<HTMLElement>('#disabled-content')
     const values: ContextValues = {
       'fixture': document.body.dataset.contextFixture ?? '',
@@ -50,12 +50,12 @@ export async function observeContextState(page: Page, step: ContextStep): Promis
         'input/value': input.value,
         'matches/user-valid': input.matches(':user-valid'),
         'matches/user-invalid': input.matches(':user-invalid'),
-        'native/input-current': edited('input'),
-        'native/change-current': edited('change'),
-        'native/blur-current': edited('blur'),
-        'native/invalid': native('invalid'),
-        'native/submit': native('submit'),
-        'native/reset': native('reset'),
+        'native/input-current': edited.has('input'),
+        'native/change-current': edited.has('change'),
+        'native/blur-current': edited.has('blur'),
+        'native/invalid': native.has('invalid'),
+        'native/submit': native.has('submit'),
+        'native/reset': native.has('reset'),
       })
     }
     return { values, events }

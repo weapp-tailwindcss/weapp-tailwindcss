@@ -20,17 +20,18 @@ export async function observeRegistry(frame: Frame, profiles: readonly RegistryW
       const section = document.querySelector(`[data-case="${profile.index}"]`)!
       const probe = section.querySelector('[data-probe]')!
       const origin = section.getBoundingClientRect()
-      const read = (element: Element, pseudo?: string) => {
+      const children = Array.from(section.querySelectorAll('[data-child]'))
+      // 序列化到浏览器的函数不能捕获 tsx 为具名局部函数生成的模块级 helper。
+      const readings = [{ element: probe, pseudo: undefined }, ...children.map(element => ({ element, pseudo: undefined })), ...(profile.properties.includes('content') ? [{ element: probe, pseudo: '::before' }] : [])].map(({ element, pseudo }) => {
         const style = window.getComputedStyle(element, pseudo)
         return Object.fromEntries(profile.properties.map(property => [property, style.getPropertyValue(property).trim().replace(/\s+/g, ' ')]))
-      }
-      const children = Array.from(section.querySelectorAll('[data-child]'))
-      const styles = read(probe)
+      })
+      const styles = readings[0]!
       const geometry = [probe, ...children, ...section.querySelectorAll('[data-sibling]')].flatMap((element) => {
         const rect = element.getBoundingClientRect()
         return [rect.left - origin.left, rect.top - origin.top, rect.width, rect.height, element.scrollWidth, element.scrollHeight]
       })
-      return { id: profile.id, styles, childStyles: children.map(element => read(element)), pseudoStyles: profile.properties.includes('content') ? read(probe, '::before') : {}, geometry, unavailableProperties: profile.properties.filter(property => !styles[property] && !property.startsWith('--')) }
+      return { id: profile.id, styles, childStyles: readings.slice(1, children.length + 1), pseudoStyles: profile.properties.includes('content') ? readings.at(-1)! : {}, geometry, unavailableProperties: profile.properties.filter(property => !styles[property] && !property.startsWith('--')) }
     })
   }, profiles.map(({ id, index, properties }) => ({ id, index, properties })))
 }

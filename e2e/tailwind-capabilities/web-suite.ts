@@ -26,31 +26,40 @@ export async function runWebSuite(context: RunContext, engine: BrowserEngine) {
   })
   const browser = await { chromium, firefox, webkit }[engine].launch({ headless: true })
   const reports: CapabilityReport[] = []
+  const errors: Error[] = []
+  const runners: Array<{ group: keyof typeof groups, run: () => Promise<CapabilityReport> }> = [
+    { group: 'authored', run: () => runWeb(context, engine, browser) },
+    { group: 'registry', run: () => runRegistryWeb(context, engine, 20, browser) },
+    { group: 'authoring', run: () => runAuthoringWeb(context, engine, browser) },
+    { group: 'hmr', run: () => runHmr(context, engine, browser) },
+    { group: 'context', run: () => runContextWeb(context, engine, browser) },
+    { group: 'framework', run: () => runFrameworkSource(context, engine, browser) },
+  ]
   try {
-    if (groups.authored) {
-      reports.push(await runWeb(context, engine, browser))
-    }
-    if (groups.registry) {
-      reports.push(await runRegistryWeb(context, engine, 20, browser))
-    }
-    if (groups.authoring) {
-      reports.push(await runAuthoringWeb(context, engine, browser))
-    }
-    if (groups.hmr) {
-      reports.push(await runHmr(context, engine, browser))
-    }
-    if (groups.context) {
-      reports.push(await runContextWeb(context, engine, browser))
-    }
-    if (groups.framework) {
-      reports.push(await runFrameworkSource(context, engine, browser))
+    for (const { group, run } of runners) {
+      if (!groups[group]) {
+        continue
+      }
+      try {
+        const report = await run()
+        reports.push(report)
+        assertCapabilitySuccess(report)
+      }
+      catch (error) {
+        errors.push(new Error(`Web ${engine} ${group}: ${String(error)}`, { cause: error }))
+      }
     }
   }
   finally {
-    await browser.close()
+    try {
+      await browser.close()
+    }
+    catch (error) {
+      errors.push(new Error(`Web ${engine} cleanup: ${String(error)}`, { cause: error }))
+    }
   }
-  for (const report of reports) {
-    assertCapabilitySuccess(report)
+  if (errors.length) {
+    throw new AggregateError(errors, errors.map(error => error.message).join('\n'))
   }
   return reports
 }

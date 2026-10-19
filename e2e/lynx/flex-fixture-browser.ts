@@ -19,14 +19,14 @@ export async function verifyFlexFixture(css: string, id: string) {
     try {
       const render = () => page.setContent(`<style>${css}</style>${fixtureHtml(CaseCard({ item }))}`)
       const read = () => page.evaluate((id) => {
-        const rect = (name: string) => document.getElementById(name)!.getBoundingClientRect().toJSON()
+        const [probe, control, probeContainer, controlContainer, probeChild, controlChild] = [`probe-${id}`, `control-${id}`, `probe-container-${id}`, `control-container-${id}`, `probe-child-${id}-a`, `probe-child-control-${id}-a`].map(name => document.getElementById(name)!.getBoundingClientRect().toJSON())
         return {
-          probe: rect(`probe-${id}`),
-          control: rect(`control-${id}`),
-          probeContainer: rect(`probe-container-${id}`),
-          controlContainer: rect(`control-container-${id}`),
-          probeChild: rect(`probe-child-${id}-a`),
-          controlChild: rect(`probe-child-control-${id}-a`),
+          probe,
+          control,
+          probeContainer,
+          controlContainer,
+          probeChild,
+          controlChild,
         }
       }, id)
       await render()

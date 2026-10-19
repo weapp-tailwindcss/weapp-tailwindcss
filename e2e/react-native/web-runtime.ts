@@ -72,7 +72,7 @@ export async function runWebRuntime(outputDirectory: string, screenshotFile: str
             return { href: sheet.href, rules: 'unreadable' }
           }
         })
-        const describe = (element: Element | null) => element
+        const [cardDescription, themeDescription] = [card, theme].map(element => element
           ? {
               className: element.getAttribute('class'),
               outerHTML: element.outerHTML.slice(0, 500),
@@ -81,12 +81,12 @@ export async function runWebRuntime(outputDirectory: string, screenshotFile: str
               width: getComputedStyle(element).width,
               height: getComputedStyle(element).height,
             }
-          : null
+          : null)
         return {
           readyState: document.readyState,
           styleSheets,
-          card: describe(card),
-          theme: describe(theme),
+          card: cardDescription,
+          theme: themeDescription,
         }
       })
       const details = JSON.stringify({ state, browserDiagnostics })
