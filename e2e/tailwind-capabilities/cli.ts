@@ -2,12 +2,13 @@ import type { RunContext } from './context'
 import type { ExecutionTarget } from './plan'
 import type { CapabilityReport } from './types'
 import { randomUUID } from 'node:crypto'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { runWithCleanup } from '../../scripts/e2e-preflight/cleanup'
 import { enterFullTestGate } from '../../scripts/e2e-preflight/gate'
 import { targetContext } from './context'
+import { recordPreflightRejection, writeExecutionRecord } from './execution-record'
 import { runExternalTarget, runPnpmStage } from './external'
 import { parseOptions, stageName } from './plan'
 import { assertCapabilitySuccess } from './report'
@@ -44,9 +45,15 @@ async function main() {
     return
   }
   const root = path.resolve(import.meta.dirname, '../..')
-  const gate = await enterFullTestGate(options.preflightReport, root, true)
   const runId = randomUUID()
-  const context: RunContext = { root, directory: path.join(root, 'e2e', '.artifacts', 'tailwind', runId), runId, env: { ...process.env, ...gate.env, TAILWIND_E2E_RUN_ID: runId, CI: '1' }, ...(options.caseFilter ? { caseFilter: options.caseFilter } : {}) }
+  const directory = path.join(root, 'e2e', '.artifacts', 'tailwind', runId)
+  const metadata = { runId, preflight: options.preflightReport, filter: options.caseFilter?.source }
+  const gate = await enterFullTestGate(options.preflightReport, root, true).catch(async (error) => {
+    await recordPreflightRejection(directory, metadata, options.targets, error)
+    process.stderr.write(`[tailwind] 预检拒绝，全部目标未尝试；报告：${directory}\n`)
+    throw error
+  })
+  const context: RunContext = { root, directory, runId, env: { ...process.env, ...gate.env, TAILWIND_E2E_RUN_ID: runId, CI: '1' }, ...(options.caseFilter ? { caseFilter: options.caseFilter } : {}) }
   const stages: Array<{ target: string, status: string, attempted: boolean, reason?: string }> = options.targets.map(target => ({ target, status: 'not-run', attempted: false }))
   try {
     await mkdir(context.directory, { recursive: true })
@@ -78,7 +85,7 @@ async function main() {
         stage.reason = String(error)
         process.stderr.write(`[tailwind] ${stage.target}: ${stage.reason}\n`)
       }
-      await writeFile(path.join(context.directory, 'index.json'), JSON.stringify({ schemaVersion: 2, runId, preflight: options.preflightReport, filter: options.caseFilter?.source, stages }, null, 2))
+      await writeExecutionRecord(context.directory, metadata, stages)
     }
     if (stages.some(item => item.status !== 'passed')) {
       throw new Error(`本轮含失败或未执行目标；报告 ${context.directory}`)
@@ -94,10 +101,7 @@ async function main() {
   }
   finally {
     await runWithCleanup(async () => {
-      await mkdir(context.directory, { recursive: true })
-      await writeFile(path.join(context.directory, 'index.json'), JSON.stringify({ schemaVersion: 2, runId, preflight: options.preflightReport, filter: options.caseFilter?.source, stages }, null, 2))
-      const lines = ['# Tailwind CSS 四端执行记录', '', `run ID：${runId}`, '', '| 目标 | 结果 | 原因 |', '| --- | --- | --- |', ...stages.map(item => `| ${item.target} | ${item.status} | ${(item.reason ?? '').replaceAll('|', '\\|').replaceAll('\n', ' ')} |`), '']
-      await writeFile(path.join(context.directory, 'index.md'), lines.join('\n'))
+      await writeExecutionRecord(context.directory, metadata, stages)
     }, () => gate.close())
   }
   process.stdout.write(`[tailwind] 报告：${context.directory}\n`)
