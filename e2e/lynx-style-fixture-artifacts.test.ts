@@ -12,13 +12,15 @@ vi.mock('../examples/react-lynx/src/compatibility/evidence', () => ({ evidenceAr
 vi.mock('../examples/react-lynx/src/compatibility/static-evidence.json', () => ({ default: { results: [] } }))
 
 const supports = String.raw`@supports(display:grid){.supports-\[display\:grid\]\:grid{display:grid}}@supports(display:weapp-invalid){.supports-\[display\:weapp-invalid\]\:grid{display:grid}}`
+const responsiveRule = String.raw`@media(width < 48rem){.max-md\:w-\[200px\]{width:200px}}`
+const responsiveMarker = '.probe-responsive-threshold{width:48rem;height:1px}'
 let source: string
 let bundle: Uint8Array
 const directories: string[] = []
 
 beforeAll(async () => {
   const fixture = await fs.readFile(path.join(import.meta.dirname, '..', 'examples', 'react-lynx', 'src', 'styles', 'important-fixtures.css'), 'utf8')
-  source = `${String.raw`.\!bg-\[\#737373\]{background-color:#737373!important}.bg-\[\#737373\]{background-color:#737373}`}${fixture}${supports}`
+  source = `${String.raw`.\!bg-\[\#737373\]{background-color:#737373!important}.bg-\[\#737373\]{background-color:#737373}`}${fixture}${responsiveRule}${responsiveMarker}${supports}`
   bundle = (await encodeLynxCss(source, { mode: 'wasm', applyCompatibility: false })).buffer
 })
 
@@ -41,7 +43,7 @@ async function fixture(css = source, bytes = bundle) {
   return { directory, report, context }
 }
 
-it('无 mediaGate 自报开关的报告仍验证实际 CSS 和 bundle 的 important 及 supports 夹具', async () => {
+it('无 mediaGate 自报开关的报告仍验证实际 CSS 和 bundle 的 important、supports 及响应式夹具', async () => {
   const { directory, report, context } = await fixture()
   await expect(validateNativeEvidence(report, directory, context)).resolves.toBe(path.join(directory, 'crops', context.runId))
 })
@@ -72,6 +74,16 @@ const mutations = [
   ['supports-control', (css: string) => css.replace('(display:weapp-invalid)', '(display:grid)'), /@supports guard/],
   ['supports-unconditional', (css: string) => `${css}${String.raw`.supports-\[display\:grid\]\:grid{display:grid}`}`, /@supports guard/],
   ['supports-control-lost', (css: string) => css.slice(0, css.indexOf('@supports(display:weapp-invalid)')), /@supports guard/],
+  ['responsive-removed', (css: string) => css.replace(responsiveRule, ''), /响应式/],
+  ['responsive-unconditional', (css: string) => css.replace(responsiveRule, String.raw`.max-md\:w-\[200px\]{width:200px}`), /响应式/],
+  ['responsive-wrong-threshold', (css: string) => css.replace('width < 48rem', 'width < 768px'), /响应式/],
+  ['responsive-wrong-width', (css: string) => css.replace('width:200px', 'width:80px'), /响应式/],
+  ['responsive-duplicate-unconditional', (css: string) => `${css}${String.raw`.max-md\:w-\[200px\]{width:200px}`}`, /响应式/],
+  ['responsive-missing-marker', (css: string) => css.replace(responsiveMarker, ''), /响应式/],
+  ['responsive-changed-marker', (css: string) => css.replace('width:48rem', 'width:768px'), /响应式/],
+  ['responsive-conditional-marker', (css: string) => css.replace(responsiveMarker, `@media(width < 48rem){${responsiveMarker}}`), /响应式/],
+  ['responsive-supports-rule', (css: string) => css.replace(responsiveRule, `@supports(display:grid){${responsiveRule}}`), /响应式/],
+  ['responsive-supports-marker', (css: string) => css.replace(responsiveMarker, `@supports(display:grid){${responsiveMarker}}`), /响应式/],
 ] as const
 
 for (const stage of ['generation', 'encoding'] as const) {

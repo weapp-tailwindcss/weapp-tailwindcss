@@ -2,6 +2,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { decodeLynxBundle } from './decoder'
 import { assertImportantPriorityRules } from './important-static'
+import { assertResponsiveGuard } from './responsive-static'
 import { parseDecodedRules, parseGeneratedRules } from './static-evidence'
 import { assertSupportsGuards } from './supports-guard'
 
@@ -15,5 +16,7 @@ export async function validateStyleFixtureArtifacts(directory: string) {
   const bundled = parseDecodedRules((await decodeLynxBundle(bundle)).css.text)
   assertImportantPriorityRules(generated, 'generation')
   assertImportantPriorityRules(bundled, 'encoding')
+  assertResponsiveGuard(generated, 'generation')
+  assertResponsiveGuard(bundled, 'encoding')
   assertSupportsGuards(generated, bundled)
 }

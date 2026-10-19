@@ -10,7 +10,7 @@ it('生成与实际bundle解码保留相同媒体条件和独立标尺', () => {
   }
 })
 
-it.each(['removed', 'unconditional', 'wrong-threshold', 'wrong-rule-width', 'duplicate-unconditional', 'missing-marker', 'changed-marker', 'conditional-marker'] as const)('拒绝 %s 的媒体生成/编码证据', (mode) => {
+it.each(['removed', 'unconditional', 'wrong-threshold', 'wrong-rule-width', 'duplicate-unconditional', 'missing-marker', 'changed-marker', 'conditional-marker', 'supports-rule', 'supports-marker'] as const)('拒绝 %s 的媒体生成/编码证据', (mode) => {
   let changed = css
   if (mode === 'removed') {
     changed = '.probe-responsive-threshold{width:48rem}'
@@ -35,6 +35,12 @@ it.each(['removed', 'unconditional', 'wrong-threshold', 'wrong-rule-width', 'dup
   }
   if (mode === 'conditional-marker') {
     changed = `${changed.replace('.probe-responsive-threshold', '@media (width < 48rem){.probe-responsive-threshold')}}`
+  }
+  if (mode === 'supports-rule') {
+    changed = `@supports(display:grid){${changed.replace('.probe-responsive-threshold', '}.probe-responsive-threshold')}`
+  }
+  if (mode === 'supports-marker') {
+    changed = `${changed.replace('.probe-responsive-threshold', '@supports(display:grid){.probe-responsive-threshold')}}`
   }
   for (const stage of ['generation', 'encoding'] as const) {
     expect(() => assertResponsiveGuard(parseGeneratedRules(changed), stage)).toThrow('响应式')
