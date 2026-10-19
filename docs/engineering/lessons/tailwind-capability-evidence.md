@@ -19,6 +19,8 @@ regressions:
   - packages/react-native/test/style-arrays.test.ts
   - packages/react-native/test/relative-line-height.test.ts
   - e2e/react-native-evidence-protocol.test.ts
+  - e2e/react-native-control-evidence.test.ts
+  - e2e/react-native-encoding-evidence.test.ts
   - e2e/tailwind-hmr.test.ts
   - e2e/tailwind-authoring-generation.test.ts
   - e2e/tailwind-web-variants.test.ts
@@ -46,6 +48,7 @@ regressions:
 - Web 状态在触发前、触发后和恢复后验证，具名作用域和组合条件增加中间负控制；源码 HMR 通过真实 Vite 服务连续增、替、删并刷新，保存标识、样式、WebSocket 消息和同页面身份共同验真。
 - React/Vue 源码经真实框架编译并执行分支；服务使用真实临时目录身份，保存屏障等待完整 Vite 更新周期，不能在原始 watcher 回调中提前读取旧产物。上下文变体用实际 browser context 和原生表单事件取证；剩余 8 类变体继续登记未执行。
 - RN 实例分别维护注册表与元数据，工厂 revision 使缓存失效；深层样式数组迭代解析并明确拒绝循环引用。近零非零阴影透明度按宿主可消费的小数保留，不能由格式化舍入为透明。
+- RN 五个构建指令重读本轮稳定发布的 Metro manifest 并回放独立编码预期；运行时增加无效果 control，宿主同时忽略 probe/reference 样式时拒绝通过。组合效果不能替代其中每个默认属性的独立证明。
 - 目标转换先固定独立参考和已审查转换规则，再执行产品管线。首批 490 个默认补全具备完整 WXSS 字面量 oracle，其余候选不由声明存在推导转换支持。
 - 候选规则同时比较选择器、条件和同一属性的声明顺序；另行检查完整官方参考中的全局变量、动画帧与 property 注册，避免只保留 class 声明的误报。
 
@@ -58,6 +61,8 @@ regressions:
 - `pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-rspeedy.test.ts e2e/lynx-source-boundary.test.ts e2e/lynx-static-evidence.test.ts e2e/wechat-session-boundary.test.ts --update=none`：真实编码、扫描及微信登录态边界。
 
 静态基线由 `pnpm e2e:tailwind:static:update`、`pnpm e2e:react-native:static:update`、`pnpm e2e:lynx:static:update` 分别显式更新，正常运行重新生成后与提交基线比较。基线更新只证明生成与编码产物，不能证明原生设备通过。
+
+2026-10-19 的本地定向记录：能力合同 37 文件、368 项通过；React Native 包 70 项、PostCSS 包 25 项、Lynx 编码/扫描与微信会话边界 50 项、Expo 示例 5 项通过。RN 产物及 catalog 定向验证另有 8 项通过，Expo 导出项未被该定向过滤选中，不能算作本次实际导出验收。任务文件 ESLint、`git diff --check` 及 agents 检查通过。完整 e2e 类型图仍有既有依赖、别名和原生 runner 类型诊断，不声明完整类型检查通过。日志保留在 `e2e/.artifacts/tailwind-development/`。
 
 全面验收必须另取本轮 extended 预检、当前会话 computer use 与 verify，再运行 `pnpm e2e:tailwind --preflight-report <本轮报告>`。实际执行记录位于 `e2e/.artifacts/tailwind/<run-id>/index.md`，包含通过、失败、阻塞和未执行范围；没有本轮记录时，本复盘不声明四端通过。
 
