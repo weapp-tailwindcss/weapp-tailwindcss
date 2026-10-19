@@ -182,6 +182,8 @@ PR head `d85d76507` 的 Lynx run `39243691735` 又在设备启动前暴露 engin
 
 RN 三阶段采集现分别持久保存 baseline、TSX HMR、CSS HMR 的报告、六件编码产物和实际 Metro 输入源码，固定 phase-index 绑定本轮身份、revision、逐件 SHA-256 与大小。统一 adapter 离线重放每阶段 PNG、编码及源码，根兼容入口必须逐字节等于最后阶段；虚拟 JS 从当前 ready 指向的真实文件读取，并与归档 manifest 重新生成结果精确比对。归档明确标注 `sourceArchive.evidence=metro-input`、`servedBundle=not-captured`，完整设备 served bundle 仍为证据缺口。新增两份回归已登记到统一合同、RN 入口与 iOS workflow。`pnpm e2e:react-native:static:update` 正常刷新后，manifest、rawCss、逐案例结果和 generation 完全不变，仅协议身份与时间改变。`CI=1 pnpm e2e:tailwind:contract` 共 83 文件、1,350 项通过；RN static 单例以 `--update=none` 核对通过。另在全部 workspace 均无 dist 的独立工作树，三阶段证据、采集及 adapter 共 79 项通过，没有提前构建依赖。
 
+基线更新器的原始目录搬迁回归另暴露：原入口只写 JSON，未保存其依赖的 bundle、截图、run-context 和 Android SDK 工件。现在先将同 catalog 的双端完整运行目录复制到受控 `e2e/.artifacts/lynx-baselines/baseline-*`，保存相对路径片段及逐文件摘要索引，并从副本运行生产报告验收，成功后才写历史报告与基线。真实 PNG/几何协议的搬迁整合、源变化拒绝、缺件/篡改/增加文件、路径和符号链接边界等四文件 60 项通过；新增回归登记到统一合同和 Lynx 双端 CI。独立重放入口为 `pnpm exec tsx e2e/lynx/verify-baseline-archive.ts <归档目录>`。APK/AAR 不进入 Git；tracked JSON 仍为历史记录，clean clone 缺原始证据时继续拒绝 runtime 放行，CI 仍验收本轮实际工件。本次尚未运行正式双端 updater。
+
 ## 规则评估
 
 诊断 run `39240820531` 的 Android 已完成 118 项实际原生采集，独立审查发现 responsive、dark、supports 和 important 四项报告与既有支持合同不同；这些变化尚未自动放宽。iOS 在 CocoaPods 安装阶段被固定原始 checksum 阻断，没有设备证据。CDN 与原夹具的完整 JSON 相等，仅文本空白/转义变化；生产校验改为完整 `Specification#to_hash` 的规范语义 SHA-256，保留所有属性、数组顺序和值类型，并继续独立核来源、版本及 getter 源码。新旧完整原始 Podspec 均固定字节身份，真实 CocoaPods/PBX 回归覆盖格式等价与实质变更拒绝。
