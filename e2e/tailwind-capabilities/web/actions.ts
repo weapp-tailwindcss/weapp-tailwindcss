@@ -9,6 +9,7 @@ export interface WebObservation {
   attributes: Record<string, string>
   rect: { width: number, height: number, top: number, left: number }
   scroll: { x: number, y: number }
+  renderFrames?: number[]
   layout?: WebLayout
   guards?: Record<string, string>
 }
@@ -120,7 +121,23 @@ export async function activateProbe(page: Page, probe: WebProbe, observeCheckpoi
 }
 
 export async function readProbe(page: Page, probe: WebProbe): Promise<WebObservation> {
-  return page.locator(probe.selector ?? '#probe').evaluate((element, { property, measureLayout, guards }) => {
+  return page.locator(probe.selector ?? '#probe').evaluate(async (element, { property, measureLayout, guards, settleMedia }) => {
+    // 原生媒体协议返回后跨越两次渲染帧，再读取同一文档的候选和独立对照。
+    const renderFrames = settleMedia
+      ? await new Promise<number[]>((resolve, reject) => {
+          let frame = 0
+          const timeout = setTimeout(() => {
+            cancelAnimationFrame(frame)
+            reject(new Error('原生媒体协议返回后未在5秒内完成两个渲染帧'))
+          }, 5_000)
+          frame = requestAnimationFrame((first) => {
+            frame = requestAnimationFrame((second) => {
+              clearTimeout(timeout)
+              resolve([first, second])
+            })
+          })
+        })
+      : []
     const separator = property.indexOf(':')
     const pseudo = separator >= 0 ? `::${property.slice(0, separator)}` : undefined
     const style = window.getComputedStyle(element, pseudo)
@@ -131,6 +148,7 @@ export async function readProbe(page: Page, probe: WebProbe): Promise<WebObserva
       attributes: Object.fromEntries(Array.from(element.attributes, item => [item.name, item.value])),
       rect: { width: rect.width, height: rect.height, top: rect.top, left: rect.left },
       scroll: { x: window.scrollX, y: window.scrollY },
+      renderFrames,
       guards: Object.fromEntries(guards.map((guard) => {
         if (guard.kind === 'selection') {
           return [guard.name, window.getSelection()?.toString() ?? '']
@@ -139,6 +157,10 @@ export async function readProbe(page: Page, probe: WebProbe): Promise<WebObserva
           return [guard.name, String(window.matchMedia(guard.query).matches)]
         }
         const target = document.querySelector(guard.selector)!
+        if (guard.kind === 'compare-style') {
+          const reference = document.querySelector(guard.reference)!
+          return [guard.name, String(window.getComputedStyle(target).getPropertyValue(guard.property).trim() === window.getComputedStyle(reference).getPropertyValue(guard.property).trim())]
+        }
         return [guard.name, guard.kind === 'matches' ? String(target.matches(guard.condition)) : window.getComputedStyle(target, guard.pseudo).getPropertyValue(guard.property).trim().replace(/\s+/g, ' ')]
       })),
       ...(measureLayout
@@ -153,5 +175,5 @@ export async function readProbe(page: Page, probe: WebProbe): Promise<WebObserva
           } }
         : {}),
     }
-  }, { property: probe.property, measureLayout: !!probe.layout, guards: probe.guards ?? [] })
+  }, { property: probe.property, measureLayout: !!probe.layout, guards: probe.guards ?? [], settleMedia: probe.controls?.some(control => control.kind === 'media') ?? false })
 }

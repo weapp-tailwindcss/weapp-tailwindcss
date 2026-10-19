@@ -18,7 +18,7 @@ function reportFor(probe: typeof pseudoVariantProbes[number], brokenGuard = fals
     observedAt: new Date().toISOString(),
     identity,
     environment: { engine: 'chromium' },
-    results: [{ id: contract.id, status: 'passed', support: 'supported', assertions: [{ name: 'generated', stage: 'generation', actual: true, expected: true }, ...states.flatMap(([state, actual]) => webRuntimeAssertions(probe, state!, { actual: actual!, guards: Object.fromEntries((probe.guards ?? []).map(guard => [guard.name, brokenGuard ? 'wrong-host-or-context' : (state === 'before' || state === 'restored') ? guard.before ?? guard.expected : guard.expected])) }))], artifacts: ['measurement.json'], warnings: [] }],
+    results: [{ id: contract.id, status: 'passed', support: 'supported', assertions: [{ name: 'generated', stage: 'generation', actual: true, expected: true }, ...states.flatMap(([state, actual]) => webRuntimeAssertions(probe, state!, { actual: actual!, renderFrames: [10, 20], guards: Object.fromEntries((probe.guards ?? []).map(guard => [guard.name, brokenGuard ? 'wrong-host-or-context' : (state === 'before' || state === 'restored') ? guard.before ?? guard.expected : guard.expected])) }))], artifacts: ['measurement.json'], warnings: [] }],
     artifacts: [{ path: 'measurement.json', sha256: hash, byteLength: 1, kind: 'measurements', runId: 'pseudo-contract', caseIds: [contract.id] }],
   }
   return { report, verify: () => validateCapabilityReport(report, [contract], identity, report.runId, 'web-chromium') }

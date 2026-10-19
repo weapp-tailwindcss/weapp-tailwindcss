@@ -20,7 +20,7 @@ function reportFor(probe: typeof variantWebProbes[number], changes: Record<strin
     observedAt: new Date().toISOString(),
     identity,
     environment: { engine: 'chromium' },
-    results: [{ id: contract.id, status: 'passed', support: 'supported', assertions: [{ name: 'generated', stage: 'generation', actual: true, expected: true }, ...states.flatMap(([state, expected]) => webRuntimeAssertions(probe, state!, { actual: changes[state!] ?? expected!, guards: Object.fromEntries((probe.guards ?? []).map(guard => [guard.name, (state === 'before' || state === 'restored') ? guard.before ?? guard.expected : guard.expected])) }))], artifacts: ['measurements.json'], warnings: [] }],
+    results: [{ id: contract.id, status: 'passed', support: 'supported', assertions: [{ name: 'generated', stage: 'generation', actual: true, expected: true }, ...states.flatMap(([state, expected]) => webRuntimeAssertions(probe, state!, { actual: changes[state!] ?? expected!, renderFrames: [10, 20], guards: Object.fromEntries((probe.guards ?? []).map(guard => [guard.name, (state === 'before' || state === 'restored') ? guard.before ?? guard.expected : guard.expected])) }))], artifacts: ['measurements.json'], warnings: [] }],
     artifacts: [{ path: 'measurements.json', sha256: hash, byteLength: 1, kind: 'measurements', runId: 'variant-contract', caseIds: [contract.id] }],
   }
   return { report, verify: () => validateCapabilityReport(report, [contract], identity, report.runId, 'web-chromium') }

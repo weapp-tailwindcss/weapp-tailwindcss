@@ -7,9 +7,9 @@ import { chromium, firefox, webkit } from 'playwright'
 import { newReport, persistReport } from './context'
 import { withGeneratorFixture } from './fixture'
 import { loadInventory } from './inventory'
-import { assertionPassed, receipt, validateCapabilityReport, verifyReportArtifacts } from './report'
+import { receipt, validateCapabilityReport, verifyReportArtifacts } from './report'
 import { activateProbe, prepareProbe, readProbe } from './web/actions'
-import { renderWebProbe, webContract, webRuntimeAssertions } from './web/contract'
+import { renderWebProbe, webContract, webRuntimeAssertions, webRuntimeOutcome } from './web/contract'
 import { webRuntimeCoverage } from './web/coverage'
 import { pixelAssertions, readPixels } from './web/pixels'
 import { webFixtureCss, webProbes } from './web/probes'
@@ -97,8 +97,8 @@ export async function runWeb(context: RunContext, engine: BrowserEngine, borrowe
           else {
             await observe('computed', probe.expected)
           }
-          const passed = assertions.every(assertionPassed) && errors.length === startError
-          result = { id, status: passed ? 'passed' : 'failed', support: 'supported', assertions, warnings: errors.slice(startError), artifacts, ...(!passed ? { reason: '实际 computed style 或状态前后恢复与独立预期不符' } : {}) }
+          const outcome = errors.length === startError ? webRuntimeOutcome(probe, assertions) : { status: 'failed' as const, reason: '运行时产生浏览器错误' }
+          result = { id, ...outcome, support: 'supported', assertions, warnings: errors.slice(startError), artifacts }
         }
         catch (error) {
           measurements.push({ error: error instanceof Error ? error.stack : String(error) })
