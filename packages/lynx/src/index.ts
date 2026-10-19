@@ -3,6 +3,7 @@ import type { WeappTailwindcssGeneratorOptions } from 'weapp-tailwindcss/generat
 import type { PatchRspackConfigOptions, RspackConfigLike } from 'weapp-tailwindcss/rspack'
 import type { UserDefinedOptions } from 'weapp-tailwindcss/types'
 import type { LynxTemplatePluginApi } from './css-variables'
+import type { LynxDiagnosticsOptions } from './diagnostics'
 import { patchRspackConfig, WeappTailwindcss } from 'weapp-tailwindcss/rspack'
 import { LynxCssVariablesPlugin } from './css-variables'
 
@@ -16,6 +17,8 @@ export interface LynxTailwindcssOptions extends Omit<UserDefinedOptions, 'platfo
   rspack?: PatchRspackConfigOptions | undefined
   /** Tailwind CSS v4 生成配置，目标固定为 Lynx 可消费的 web CSS。 */
   generator?: LynxGeneratorOptions | false | undefined
+  /** Lynx encoder CSS 诊断；默认只报告，不改变构建成功与否。 */
+  diagnostics?: LynxDiagnosticsOptions | undefined
 }
 
 interface RspackPluginChain {
@@ -97,7 +100,7 @@ export function pluginLynxTailwindcss(options: LynxTailwindcssOptions = {}): Rsb
           throw new Error('Lynx 模板编码 hook 不可用；请注册或升级 ReactLynx 构建插件（至少 0.12.4），确认其提供 LynxTemplatePlugin API。')
         }
         chain.plugin(PLUGIN_NAME).use(WeappTailwindcss, [normalizedOptions])
-        chain.plugin(`${PLUGIN_NAME}:css-variables`).use(LynxCssVariablesPlugin, [templatePlugin])
+        chain.plugin(`${PLUGIN_NAME}:css-variables`).use(LynxCssVariablesPlugin, [templatePlugin, options.diagnostics ?? {}])
         return chain
       })
       rsbuildApi.modifyRspackConfig(config => patchRspackConfig(config, normalizeRspackOptions(options.rspack)))
@@ -106,3 +109,11 @@ export function pluginLynxTailwindcss(options: LynxTailwindcssOptions = {}): Rsb
 }
 
 export { PLUGIN_NAME }
+export type {
+  LynxCssDiagnostic,
+  LynxDiagnosticCategory,
+  LynxDiagnosticIgnore,
+  LynxDiagnosticsOptions,
+  LynxDiagnosticsReport,
+  LynxDiagnosticStatus,
+} from './diagnostics'

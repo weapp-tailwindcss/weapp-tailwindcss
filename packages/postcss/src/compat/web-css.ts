@@ -2,11 +2,13 @@ import type { WebCssCompatFeatures, WebCssCompatOptions, WebCssCompatUserOptions
 import postcss from 'postcss'
 import postcssPresetEnv from 'postcss-preset-env'
 import selectorParser from 'postcss-selector-parser'
-import valueParser from 'postcss-value-parser'
 import { internalCssSelectorReplacer } from '../shared'
 import { normalizeModernColorValue } from './color-mix'
 import { removeUnsupportedCascadeLayers } from './mini-program-css/at-rules'
 import { normalizeTailwindcssV4GradientPosition, normalizeTailwindcssV4InfinityCalcValue } from './tailwindcss-v4'
+import { collectCustomPropertyValues, resolveCustomPropertyVarValue, usesResolvableTailwindColorVariable } from './web-css-custom-properties'
+
+const customPropertyReferencePattern = /var\(\s*(--(?:\\.|[-\w])+)/gi
 
 export interface NormalizedWebCssCompatOptions {
   preset: 'off' | 'legacy-web'
@@ -60,22 +62,6 @@ export function normalizeWebCssCompatOptions(options: WebCssCompatUserOptions | 
 
 function isWebCssCompatEnabled(options: NormalizedWebCssCompatOptions) {
   return Object.values(options.features).some(Boolean)
-}
-
-function collectCustomPropertyValues(root: postcss.Root) {
-  const values = new Map<string, string>()
-  root.walkRules((rule) => {
-    if (!rule.selectors.some(selector => selector.trim() === ':root' || selector.trim() === ':host')) {
-      return
-    }
-    rule.each((node) => {
-      if (node.type === 'decl' && node.prop.startsWith('--') && !node.prop.startsWith('--tw-')) {
-        const decl = node
-        values.set(decl.prop, decl.value.trim())
-      }
-    })
-  })
-  return values
 }
 
 interface RegisteredCustomProperty {
@@ -177,64 +163,31 @@ function unwrapThemeAtRules(root: postcss.Root) {
   })
 }
 
-function resolveCustomPropertyVarValue(
-  value: string,
-  customPropertyValues: ReadonlyMap<string, string>,
-) {
-  if (!value.includes('var(')) {
-    return value
-  }
-
-  const parsed = valueParser(value)
-  let changed = false
-  parsed.walk((node) => {
-    if (node.type !== 'function' || node.value.toLowerCase() !== 'var') {
-      return
-    }
-    const propertyNode = node.nodes.find(child => child.type === 'word' && child.value.startsWith('--'))
-    if (!propertyNode) {
-      return
-    }
-    const customPropertyValue = customPropertyValues.get(propertyNode.value)
-    if (!customPropertyValue) {
-      return
-    }
-    const mutableNode = node as any
-    mutableNode.type = 'word'
-    mutableNode.value = customPropertyValue
-    delete mutableNode.nodes
-    changed = true
-  })
-  return changed ? parsed.toString() : value
-}
-
-function usesResolvableTailwindColorVariable(
-  value: string,
-  customPropertyValues: ReadonlyMap<string, string>,
-) {
-  if (!value.includes('var(')) {
-    return false
-  }
-
-  const parsed = valueParser(value)
-  let usesColorVariable = false
-  parsed.walk((node) => {
-    if (node.type !== 'function' || node.value.toLowerCase() !== 'var') {
-      return
-    }
-    const propertyNode = node.nodes.find(child => child.type === 'word' && child.value.startsWith('--color-'))
-    if (propertyNode && customPropertyValues.has(propertyNode.value)) {
-      usesColorVariable = true
-    }
-  })
-  return usesColorVariable
-}
-
 function normalizeModernColorDeclarations(root: postcss.Root, features: Required<WebCssCompatFeatures>) {
   if (!features.oklch && !features.colorFunctions) {
     return
   }
-  const customPropertyValues = collectCustomPropertyValues(root)
+  const referencedProperties = new Set<string>()
+  root.walkDecls((decl) => {
+    if (!decl.value.includes('var(')) {
+      return
+    }
+    for (const match of decl.value.matchAll(customPropertyReferencePattern)) {
+      referencedProperties.add(match[1])
+    }
+  })
+  let customPropertyValues: Map<string, string> = new Map()
+  while (true) {
+    const collected = collectCustomPropertyValues(root, referencedProperties)
+    customPropertyValues = collected.values
+    const previousSize = referencedProperties.size
+    for (const dependency of collected.dependencies) {
+      referencedProperties.add(dependency)
+    }
+    if (referencedProperties.size === previousSize) {
+      break
+    }
+  }
   root.walkDecls((decl) => {
     const value = resolveCustomPropertyVarValue(decl.value, customPropertyValues)
     const normalized = normalizeModernColorValue(value, customPropertyValues)

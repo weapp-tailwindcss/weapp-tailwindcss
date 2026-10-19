@@ -18,10 +18,11 @@ keywords:
 
 ## 支持基线
 
-- `@weapp-tailwindcss/lynx` `0.3.2`
+- `@weapp-tailwindcss/lynx` `0.4.4`；适配器 Node.js `>=22.12.0`
+- 核心 `weapp-tailwindcss` `5.6.3`；依赖链 Node.js `^22.18.0 || >=24.11.0`
 - `@lynx-js/rspeedy` `>=0.16.0`
 - Tailwind CSS `4.x`
-- Node.js `>=22.12.0`
+- 仓库示例固定 Rspeedy `0.17.2`、ReactLynx 插件 `0.20.2`、ReactLynx runtime `0.126.1`、Tailwind CSS `4.3.3`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 与 `css-defines` `0.0.16`
 - 仅支持 ReactLynx + Rspeedy 原生构建，不覆盖 Rspeedy Web、非 React Lynx 或 React Native
 
 ## 最小配置
@@ -47,7 +48,7 @@ export default defineConfig({
 
 插件固定使用 `platform: 'lynx'`、`generator.target: 'web'` 与 Lynx Web CSS 兼容输出。ReactLynx 保留原始 `className`，不会生成小程序 safe class，也不会创建 React Native style manifest。
 
-递归变量路径要求 Lynx runtime 3.6 以上，以及 ReactLynx 插件 0.12.4 以上公开的模板 API；更旧的构建器需要升级。源码支持边界不等于设备验收，当前原生测试仍使用固定 4.0.1 矩阵。
+递归变量路径要求 Lynx runtime 3.6 以上，以及 ReactLynx 插件 0.12.4 以上公开的模板 API；更旧的构建器需要升级。稳定 Tailwind theme token 可能在构建期静态化；同一 CSS 中可见的覆盖会保留 `var()` 依赖。跨文件 stylesheet 或 inline style 覆盖不在静态分析保证范围内。源码支持边界不等于设备验收，当前原生测试仍使用固定 4.0.1 矩阵。
 
 模板编码前，插件复用 ReactLynx 构建器公开的 `LynxTemplatePlugin` hook，将未配置的 `enableCSSInlineVariables` 默认设为 `true`，让嵌套的 Tailwind utility 变量进入原生递归解析路径。显式页面配置和动态变量依赖保持不变；缺少模板 API 时构建失败，不静默回退。该设置不改变 `engineVersion`，也不代替渐变、阴影等效果的设备验收。当前真实编码回归固定 `engineVersion: '3.9'`，原生矩阵固定 Lynx `4.0.1`。
 
@@ -59,6 +60,7 @@ export default defineConfig({
 | [`rspack`](#rspack) | `PatchRspackConfigOptions` | CSS 规则补丁开启 | 控制 Rspeedy/Rspack loader 补丁 |
 | [`rspack.cssImportRewriteLoader`](#rspack-cssimportrewriteloader) | `boolean \| object` | `true` | 注入 Tailwind CSS 入口重写 loader |
 | [`rspack.removeLightningCssLoader`](#rspack-removelightningcssloader) | `boolean` | `false` | 是否移除内置 Lightning CSS loader |
+| [`diagnostics`](#diagnostics) | `LynxDiagnosticsOptions` | `{}` | 输出 encoder 兼容性报告，按需启用 strict |
 
 除上述字段外，插件继承核心 [`UserDefinedOptions`](/docs/api/interfaces/UserDefinedOptions)。常见可用项包括 `cssEntries`、`cssOptions`、缓存、文件 matcher 与生命周期回调；`platform`、`rewriteCssImports`、`generator.target` 和 Lynx 样式平台由适配器接管，不能用来切换成小程序或 React Native 产物。
 
@@ -136,6 +138,28 @@ rspack: { removeLightningCssLoader: true }
 
 **注意事项** 移除后会改变压缩、语法降级和浏览器 CSS 处理链，不是消除 warning 的通用办法。必须比较修改前后的最终 bundle 与设备结果。
 
+### `diagnostics` {#diagnostics}
+
+**作用** 在模板编码收尾阶段消费 encoder CSS 诊断，输出结构化报告并关联生成阶段的 selector、property/value、utility 与来源位置。
+
+**使用场景** 默认模式适合在 CI 或本地持续观察兼容性；只有希望把已确认删除的业务规则当作门禁时才启用 `strict`。`preflight`、Tailwind 默认规则和无法可靠关联的 `unknown` 诊断始终只报告，不会因 strict 自动失败。
+
+**用法** `ignore` 可按 selector、property 或 reason 忽略业务诊断；`onReport` 接收包含版本、计数、分类、拒绝原因和替代建议的报告：
+
+```ts
+pluginLynxTailwindcss({
+  diagnostics: {
+    strict: true,
+    ignore: [{ property: 'padding-inline' }],
+    onReport(report) {
+      console.log(report)
+    },
+  },
+})
+```
+
+诊断只使用 Rspack/Rspeedy 生命周期中登记的 CSS 与 encoder 数据，不扫描 `dist`，也不把规则进入 bundle 等同于 Lynx 原生支持。未知日志格式保留为 `unknown`，即使 strict 也不会失败。
+
 ## CSS 与候选
 
 Lynx 推荐只引入 theme 和 utilities，避免浏览器 preflight 中的 `:root`、`:host`、`:where(...)` 等规则触发无关 warning。任意值必须是完整静态候选：
@@ -161,6 +185,12 @@ Lynx 推荐只引入 theme 和 utilities，避免浏览器 preflight 中的 `:ro
 | 设备运行时 | Android/iOS 页面像素、布局与交互状态 | 当前 Lynx 版本真实支持该能力 |
 
 `padding-inline`、复杂 `:is()` / `:where()`、伪元素、hover、dark、data、supports、媒体查询和复杂渐变都必须走完三层验证。“Tailwind 已生成”不能替代 encoder 和设备证据。
+
+## 设备与验证证据
+
+CI runner 默认使用 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro。已提交的原生报告来自 Android `sdk_gphone_arm64`（Android 11/API 30，arm64-v8a）和 iPhone 17 Pro（iOS 26.5，arm64），基线 `verifiedAt` 为 `2026-10-06T01:38:07.800Z`，`catalogHash` 为 `a8c3b45f993d9aa28782f308fc959a09e160d67a9097d11b1bc6a8a38b93c886`。两组设备职责不同，不能互换证据。
+
+`--capture-only` 仅在显式指定 bundle 和目标设备时采集截图/视频，不写入 native support report，也不能更新已提交基线。
 
 ## 验证
 

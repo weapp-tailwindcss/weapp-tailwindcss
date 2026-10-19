@@ -16,7 +16,8 @@
       "flex"
     ],
     "text-slate-500": [
-      "#62748e"
+      "#62748e",
+      "var(--color-slate-500)"
     ],
     "h-[64px]": [
       "64px"
@@ -26,7 +27,8 @@
     ],
     "bg-emerald-50/80": [
       "#ecfdf5cc",
-      "rgba(236,253,245,.8)"
+      "rgba(236,253,245,.8)",
+      "var(--color-emerald-50)"
     ]
   },
   "spacing": [

@@ -24,7 +24,9 @@ keywords:
 npm install -D @weapp-tailwindcss/lynx tailwindcss
 ```
 
-当前集成要求 Node.js `^22.18.0 || >=24.11.0`、Rspeedy `>=0.16.0` 和 Tailwind CSS `>=4.0.0`，仅支持 ReactLynx + Rspeedy 构建目标。
+适配器 `@weapp-tailwindcss/lynx` 当前版本为 `0.4.4`，自身要求 Node.js `>=22.12.0`；核心 `weapp-tailwindcss` 当前为 `5.6.3`，依赖链要求 Node.js `^22.18.0 || >=24.11.0`。适配器 peer 依赖为 Rspeedy `>=0.16.0` 与 Tailwind CSS `>=4.0.0`，仅支持 ReactLynx + Rspeedy 构建目标。
+
+仓库示例与回归矩阵固定 Rspeedy `0.17.2`、ReactLynx 插件 `0.20.2`、ReactLynx runtime `0.126.1`、Tailwind CSS `4.3.3`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 与 `@lynx-js/css-defines` `0.0.16`。
 
 ## 注册 Rspeedy 插件
 
@@ -38,7 +40,7 @@ export default defineConfig({
 })
 ```
 
-插件固定使用 `platform: 'lynx'`、`generator.target: 'web'` 与 Lynx 兼容输出。Tailwind CSS 4 的 theme 变量会在构建期静态化；应用自行定义的动态 CSS 变量保持不变。
+插件固定使用 `platform: 'lynx'`、`generator.target: 'web'` 与 Lynx 兼容输出。稳定 Tailwind theme token 可能在构建期静态化；同一 CSS 中可见的变量覆盖会保留 `var()` 依赖。跨文件 stylesheet 或 inline style 覆盖不在静态分析保证范围内。
 
 ## 配置 Tailwind CSS 入口
 
@@ -84,13 +86,31 @@ Tailwind 能生成 CSS 不代表 Lynx 支持每个属性和选择器。当前 Ly
 - 浏览器专用 preflight 警告：改用上面的 theme + utilities 入口。
 - 业务 utility 对应的属性或选择器警告：调整 Tailwind 写法，不能只忽略警告。
 
+## 构建诊断
+
+配置 `diagnostics` 可获得 encoder 兼容性报告。默认只输出 warning；`strict: true` 只对未忽略且确认属于业务规则、并在 encoder 阶段被删除的规则写入 compilation error。preflight、Tailwind 默认规则和 `unknown` 诊断在 strict 模式下不会失败。
+
+```ts
+pluginLynxTailwindcss({
+  diagnostics: {
+    strict: true,
+    ignore: [{ property: 'padding-inline' }],
+    onReport: report => console.log(report),
+  },
+})
+```
+
+报告来自 Rspack/Rspeedy 生命周期中的 CSS 与 encoder 数据，不扫描 `dist`，也不把进入 bundle 等同于 Lynx 原生支持。详情见[配置参考](../../config/react-lynx#diagnostics)。
+
 ## 验证与示例
 
 仓库中的完整示例位于 [`examples/react-lynx`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/tree/main/examples/react-lynx)，可以用来对照项目结构和 CSS 入口。你的 Rspeedy 项目应使用自己的开发或构建命令。
 
 示例固定 Tailwind CSS `4.3.3`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 与 `@lynx-js/css-defines` `0.0.16`。catalog 使用代表值覆盖官方 utility 功能族、variant、指令和任意语法分支。
 
-静态 gate 分别记录 Tailwind 是否生成规则和 Lynx encoder 是否保留规则。双端支持只由固定 Pixel 7/API 35 与 iPhone 16 Pro/iOS 18.5 的 runtime 报告决定，`css-defines` 不能替代运行时结论：
+静态 gate 分别记录 Tailwind 是否生成规则和 Lynx encoder 是否保留规则。CI 默认 runner 是 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro；这与已提交原生报告设备不同。已提交基线 `verifiedAt` 为 `2026-10-06T01:38:07.800Z`、`catalogHash` 为 `a8c3b45f993d9aa28782f308fc959a09e160d67a9097d11b1bc6a8a38b93c886`，Android 为 `sdk_gphone_arm64`（Android 11/API 30，arm64-v8a），iOS 为 iPhone 17 Pro（iOS 26.5，arm64）。`css-defines` 不能替代运行时结论。
+
+`--capture-only` 只在显式指定 bundle 和目标设备后采集截图/视频，不更新 native support report 或已提交基线。
 
 请在自己的 Android 与 iOS 目标中分别检查：
 
