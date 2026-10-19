@@ -152,6 +152,18 @@ iOS 版本异常来自官方 source Pod 的构建元数据缺失：原始 `LynxV
 
 能力清单覆盖固定版本的注册项和有限补全，任意值按语法分支取样。runtime 夹具缺口、缺少独立转换 oracle、不可触发状态及设备阻塞均须保留，不能自动变成“不支持”，也不能用同属性的其他案例填充。第三方插件任意实现需另行登记。
 
+## 本轮 CI 后续与实际 bundle 证据
+
+旧 head `2633f77a8ab31f73bad29a373fc86213559caee1` 的 PR Gate run `39223188607` 已完成，198 个任务成功；该结论不覆盖后续提交。组合 Lynx 诊断 run `39233837439` 进一步确认 Android 的 PrimJS 没有 `Object.hasOwn`，iOS 的真实 `Pod::PodTarget` 没有 `native_target`。前者改为宿主支持的原型方法并有先红后绿回归；后者经正式 installation results 映射到唯一 PBXNativeTarget，真实 CocoaPods 1.16.2、1.17.0 的原异常与修复均已验证，保留官方 Podspec、源码及版本宏校验。
+
+官方 `pluginLynxConfig({ enableCSSRule: true })` 已整合，仍使用生产 TASM 0.0.49。独立 decoder 固定 0.0.53 对应源码及两份只影响解码的补丁，分别修 CONFIG/CSS 读取顺序和 class/id 文本转义；不修改 encoder、原生匹配或 bundle。portable WASM gzip、源码归档、工具链、补丁和许可均登记 SHA-256；在不同临时路径从固定归档完整重建后，raw 与 gzip 逐字节一致。实际 17 条选择器二进制 fixture、生产 bundle 媒体条件及篡改负控已通过。普通 CI 读取同一固定便携产物，失败不得回退系统 NAPI 或 serializer 输入。
+
+static 与媒体 guard 验收现从 `main.lynx.bundle` 实际解码；`tasm.json.cssMap` 只作生成溯源和诊断归属。声明比较只接受已审查的有限等价表示，并返回实际声明；四边、四角、gap、flex、grid span、ratio、渐变、origin 与 animation 的缺项和错值负控保留。一个预期可以对应多个实际声明，不能依声明数量判失败，也不能跨 selector 补齐缺失边。已重新运行 `pnpm e2e:lynx:static:update` 并审查差异；最终 static 与双端历史报告仍需在本轮修复稳定后正常更新和只读重跑。
+
+启用 CSSRule 后，固定 encoder 的 group/peer 参数化 `:is/:where` 被逐候选拒绝，不能再归为运行时媒体拒绝；普通 hover 的媒体门禁继续独立验证。`columns`、`min-content`、`justify-self:flex-end` 与 `white-space:pre-wrap` 的静默丢弃需要从实际二进制证明，空诊断不能证明保留。`!important` 在真实 bundle 中保留，原生支持状态尚待本轮同身份设备证据审查。没有把本轮失败自动改为 unsupported。
+
+采集与像素算法单测使用独立协议夹具，保证 encoder 先行拒绝时仍能验证丢帧、错回执、状态恢复、白空格及像素负控；这些夹具不参与生产门禁。真实构建与 bundle 的 24 条定向回归、示例 181 条及像素协议 39 条已通过。后续最终 CI 和设备运行结果会继续绑定准确源码及 catalog，不能据此宣称完整四端验收完成。
+
 ## 规则评估
 
 继续采用独立 worktree、精确候选、生成器单一归属、预检强门禁和微信登录态保护。无需放宽上级安全规则；新增共享目录和能力 runner 的领域规则已登记到规则索引。

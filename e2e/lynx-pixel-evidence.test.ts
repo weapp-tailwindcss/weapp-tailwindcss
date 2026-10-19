@@ -2,7 +2,7 @@ import type { NativePlatformReport } from '../examples/react-lynx/src/compatibil
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, expect, it } from 'vitest'
+import { afterEach, expect, it, vi } from 'vitest'
 import { compatibilityCases } from '../examples/react-lynx/src/compatibility/catalog'
 import { evidenceSequence, requiresPixelEffect } from '../examples/react-lynx/src/compatibility/evidence'
 import staticEvidence from '../examples/react-lynx/src/compatibility/static-evidence.json'
@@ -14,6 +14,17 @@ import { finalizeNativePixelEffects, validateNativePixelEvidence } from './lynx/
 import { PNG } from './lynx/png'
 import { validateNativeReport } from './lynx/reports'
 import androidReport from './lynx/reports/android.json'
+
+vi.mock('../examples/react-lynx/src/compatibility/static-evidence.json', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../examples/react-lynx/src/compatibility/static-evidence.json')>()
+  const { default: report } = await import('./lynx/reports/android.json')
+  // 像素算法使用历史协议夹具声明的取证阶段；实际字节由 decoder/media-guard 回归及生产验收独立核对。
+  // 历史报告的 bundled checkpoint 缺失时，代表当时已经进入运行时取证。
+  return { default: { ...original.default, results: original.default.results.map((result) => {
+    const checkpoints = report.results.find(item => item.id === result.id)!.checkpoints
+    return { ...result, generated: checkpoints.find(item => item.name === 'generated')?.passed ?? true, bundled: checkpoints.find(item => item.name === 'bundled')?.passed ?? true }
+  }) } }
+})
 
 const directories: string[] = []
 const target = 'type-weight-style'

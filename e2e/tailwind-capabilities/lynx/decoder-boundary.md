@@ -2,7 +2,7 @@
 
 静态生成使用 `generated.rawCss`，经过 `encodeLynxCss` 的 Web/Lynx 兼容处理、生产 serializer、生产 encoder，再交给独立 WASM decoder。这里没有使用小程序 WXSS。serializer 的 `cssMap` 是 encoder 输入，不能用它代替编码后的输出。
 
-当前固定的 encoder 0.0.49、serializer 0.1.9、decoder 0.0.53 中，`decode_wasm` 的 CSS 结构只有 `{ text }`，没有可以直接消费的规则 AST。包的 JavaScript 入口只是对 WASM `_decode` 结果执行 `JSON.parse`，不会补全 CSS 语义。
+当前固定的 encoder 0.0.49、serializer 0.1.9，以及由 0.0.53 准确源码构建的便携 decoder 中，CSS 结构只有 `{ text }`，没有可以直接消费的规则 AST。便携 decoder 已修复配置读取顺序和 class/id 文本转义，来源与 hash 见 `e2e/lynx/decoder/manifest.json`；它不会补全 CSS 语义。
 
 例如合法输入：
 
@@ -16,9 +16,9 @@
 .probe { color: {{--probe-color}}; width: 32px; }
 ```
 
-这个文本不是标准 CSS。它还会展示未经 CSS 转义的候选选择器，例如 `.hover:flex:hover`。将其传给通用 CSS parser 会把变量模板当成语法错误；把变量替换为 `var()` 后再解析，也无法恢复被展示格式省略的 fallback，更不能可靠区分字面 class 与伪类。
+这个变量文本不是标准 CSS。原官方 decoder 还会展示未经 CSS 转义的候选选择器，例如 `.hover:flex:hover`；固定的便携 decoder 已用独立 17 条实际二进制回归修正 class/id 身份。把变量替换为 `var()` 后仍无法恢复被展示格式省略的 fallback，复杂值域的通用合同继续保留缺口。
 
-本轮 135 个批次均产生非空编码 buffer，encoder 输入没有 `{{`，decoder 展示文本全部含有 `{{`。因此这些批次记录的 `conversion-executed:false` 实际源自展示文本的二次解析失败。修正后的报告保留编码完成断言、完整原始展示文本、输入 AST 和诊断；没有独立输出读取器时保持 `not-run`。这项边界修复不构成 Lynx 全部转换语义通过。
+早期调查的 135 个批次均产生非空编码 buffer，encoder 输入没有 `{{`，decoder 展示文本全部含有 `{{`。这些批次记录的 `conversion-executed:false` 源自展示文本的二次解析失败。修正后的报告保留编码完成断言、完整原始展示文本、输入 AST 和诊断；没有独立输出读取器时保持 `not-run`。这项边界修复不构成 Lynx 全部转换语义通过。
 
 ## 当前字面子集
 

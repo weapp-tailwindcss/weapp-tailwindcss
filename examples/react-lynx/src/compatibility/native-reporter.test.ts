@@ -34,11 +34,13 @@ vi.mock('./static-evidence.json', async (importOriginal) => {
       ...original.default,
       results: original.default.results.map(result => ({
         ...result,
+        // 独立验证采集生命周期的正向路径，不以本轮 encoder 是否保留规则决定单测覆盖。
+        generated: true,
+        bundled: true,
         candidates: compatibilityCases.find(item => item.id === result.id)!.className.split(/\s+/).filter(Boolean).map(className => ({
           className,
-          generated: result.generated,
-          bundled: result.bundled,
-          reason: result.reason,
+          generated: true,
+          bundled: true,
         })),
       })),
     },

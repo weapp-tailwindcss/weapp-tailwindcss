@@ -1,6 +1,14 @@
+---
+status: partial
+issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1311
+baseline: 2633f77a8ab31f73bad29a373fc86213559caee1
+regressions:
+  - e2e/lynx-decoder.test.ts
+  - e2e/lynx-media-guard.test.ts
+---
 # Lynx CSSRule 的 Greedy 解码顺序回归
 
-## 问题与边界
+## 症状
 
 开启 `enableCSSRule` 后，Lynx encoder 会输出统一 CSS 规则格式。`@lynx-js/tasm@0.0.53` 的公开 decoder 却先按默认配置读取 CSS，随后才读取页面配置，导致普通规则和媒体规则都可能被误当作旧格式解析。
 
@@ -8,7 +16,7 @@
 
 本记录只确认 decoder 的根因和本机原生构建对照，不代表 Windows、Linux、WASM 或全部原生能力已验收。
 
-## 固定来源与最小补丁
+## 根因与纠正
 
 - 官方包：`@lynx-js/tasm@0.0.53`。
 - 官方源码提交：[`3526f07a8cb25cfb2841736c76b54deadc7e6e46`](https://github.com/lynx-family/lynx/tree/3526f07a8cb25cfb2841736c76b54deadc7e6e46)。
@@ -24,7 +32,7 @@
 
 原生页面加载还存在 `TemplateBinaryReader` 的延迟路径：先读 CSS route，完成 CONFIG，再在渲染时读取规则。因此公开 Greedy decoder 失败不能单独证明实际宿主也失败。Android 的模板预解析 API 另有 Greedy 路径，不能把延迟路径的结论推广到所有原生入口。
 
-## 同一 bundle 的失败与修复对照
+## 验证
 
 输入是实际编码后的 728 字节 bundle，SHA-256 为 `039d2aad9ecd77775d1a9e763d69638d71138fe835463ea0f808ec0cf83b64ba`，目标版本为 `4.0`，页面配置为 `enableCSSRule: true`。
 
@@ -75,3 +83,11 @@
 先运行官方 error-code、feature-count 和 performance-entry 生成脚本，再生成 GN 图并编译。为了适配当前宿主工具链，GN 使用 `use_xcode=true`、`enable_lto=false`、`mac_deployment_target="14.0"`；buildroot 定向增加 `-Wno-error=unused-result`，处理新版 libc++ 给上游 `std::future` 返回值增加的告警。原始和修复 decoder 使用完全相同的宿主配置，宿主适配不属于 decoder 补丁。
 
 本机 `.node` 只用于根因调查，不作为跨平台测试依赖提交。持久 oracle 应固定源码、补丁、工具链和产物 hash，并从实际 bundle 解码 CSS；缺少、过期或不匹配的 oracle 必须阻断，不能静默改用未修复 decoder 或 serializer 输入。原生证据仍由各宿主 runner 独立提供。
+
+## 适用边界
+
+这些记录只证明固定源码、补丁与实际 bundle 的编码或解码行为，不能替代原生运行时、输入状态和像素证据。完整四端验收仍为 partial。
+
+## 规则评估
+
+保持源码与产物身份、生成/编码/运行时分层及严格失败门禁；不放宽平台支持预期，不以 serializer 输入或旧报告替代本轮证据。

@@ -145,7 +145,6 @@ const reviewedEncodingRejections = new Set([
   'variant-data-aria',
   'variant-pseudo-element',
   'syntax-negative',
-  'syntax-important',
   'syntax-opacity-modifier',
   'syntax-arbitrary-property',
   'layout-break',
@@ -154,6 +153,11 @@ const reviewedEncodingRejections = new Set([
   'layout-overscroll',
   'grid-place',
   'spacing-space-between',
+  // 固定 0.0.49 的实际 NAPI/WASM 都拒绝 min-content、flex-end 和 pre-wrap；空诊断不能代替保留。
+  // 支持状态仍沿用上表，只修正由输入 serializer 误判的失败阶段。
+  'grid-auto',
+  'grid-justify-self',
+  'type-flow',
   'type-family-smoothing-stretch',
   'type-numeric',
   'type-line-clamp',

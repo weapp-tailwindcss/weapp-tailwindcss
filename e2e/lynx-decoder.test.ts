@@ -80,7 +80,7 @@ describe('实际 Lynx bundle 的便携解码 oracle', () => {
     directories.push(directory)
     const source = path.join(import.meta.dirname, 'lynx', 'decoder')
     const manifest = JSON.parse(await fs.readFile(path.join(source, 'manifest.json'), 'utf8'))
-    const files: string[] = ['manifest.json', manifest.compressed.file, ...manifest.patches.map((patch: { file: string }) => patch.file)]
+    const files: string[] = ['manifest.json', manifest.inputs.file, manifest.compressed.file, ...manifest.patches.map((patch: { file: string }) => patch.file)]
     for (const file of files) {
       const destination = path.resolve(directory, file)
       await fs.mkdir(path.dirname(destination), { recursive: true })

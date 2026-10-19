@@ -1,12 +1,20 @@
+---
+status: partial
+issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1311
+baseline: 2633f77a8ab31f73bad29a373fc86213559caee1
+regressions:
+  - e2e/lynx-decoder.test.ts
+  - e2e/lynx-media-guard.test.ts
+---
 # Lynx CSSRule 的 group/peer 编码拒绝证据
 
-## 失败层级
+## 症状
 
 Tailwind 4 的 `.group-hover\:block:is(:where(.group):hover *)` 和 `.peer-checked\:opacity-100:is(:where(.peer):checked ~ *)` 能被生成并进入 serializer，Lynx encoder 随后把它们登记为 selector 诊断并丢弃样式规则。开启 `enableCSSRule` 可以保留媒体规则，但不补充 selector 解析能力。
 
 实际 bundle 解码后的 group 结果只有 `@media (hover: hover) { }`；peer 的 CSS 文本为空。空媒体壳不能证明其内部 group 声明存在，也不能作为 group 的媒体运行时门禁。
 
-## 精确源码依据
+## 根因与纠正
 
 npm registry 固定 `@lynx-js/tasm@0.0.49` 的 gitHead 为 `3f35de1c6150c1b94df165a248e8c76789487318`，`0.0.53` 为 `3526f07a8cb25cfb2841736c76b54deadc7e6e46`。
 
@@ -16,7 +24,7 @@ npm registry 固定 `@lynx-js/tasm@0.0.49` 的 gitHead 为 `3f35de1c6150c1b94df1
 
 49 与 53 的 CSSRuleParser、SelectorMatcher 文件逐字一致。CSSSelectorParser 只有 `ANPlusB` 中两处数值 `static_cast<int>` 差异，带参数伪类解析路径一致。文件 SHA 见[调查结果](../../../e2e/lynx/decoder/investigation/group-peer-rejections.json)。
 
-## 33 项实际 encode → bundle → decode 对照
+## 验证
 
 三路 encoder 分别为仓库消费的 0.0.49 NAPI、0.0.49 WASM 和准确源码重建的 0.0.53 NAPI；每路运行相同 11 项，目标为 `3.9`，开启 `enableCSSRule`、`enableCSSSelector` 和 fiber。所有调用返回 status 0，测试另外检查 diagnostics 及实际 bundle 的 CSS 声明，避免把生成成功当作编码支持。
 
@@ -35,3 +43,11 @@ npm registry 固定 `@lynx-js/tasm@0.0.49` 的 gitHead 为 `3f35de1c6150c1b94df1
 原 group 的诊断为 `type: "selector"`、`name: ".group-hover\\:block:is(:where(.group):hover *)"`。其诊断同时出现在三路 encoder；实际 bundle 都缺失 `display: block`。原 peer 也在三路缺失 `opacity: 1`。各 bundle 大小、SHA、诊断和 CSS SHA 均保留在调查结果中。
 
 能力清单应按准确候选登记这项 encoder 限制，并保留可执行负向断言。生成层、serializer 层、bundle 层、宿主运行时需要分别记录；已有 selector 拒绝不能因新媒体开关被误登记为 bundle 已保留。
+
+## 适用边界
+
+这些记录只证明固定源码、补丁与实际 bundle 的编码或解码行为，不能替代原生运行时、输入状态和像素证据。完整四端验收仍为 partial。
+
+## 规则评估
+
+保持源码与产物身份、生成/编码/运行时分层及严格失败门禁；不放宽平台支持预期，不以 serializer 输入或旧报告替代本轮证据。

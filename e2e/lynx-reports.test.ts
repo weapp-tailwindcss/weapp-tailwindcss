@@ -17,7 +17,10 @@ vi.mock('../examples/react-lynx/src/compatibility/static-evidence.json', async (
   const rules = parseGeneratedRules('@media (hover:hover){.hover\\:bg-\\[\\#ef4444\\]:hover{background-color:#ef4444}}')
   return { default: { ...original.default, results: original.default.results.map(result => ({
     ...result,
-    candidates: compatibilityCases.find(item => item.id === result.id)!.className.split(/\s+/).map(className => ({ className, generated: result.generated, bundled: result.bundled, mediaGuard: staticMediaGuard(className, rules, rules) })),
+    candidates: compatibilityCases.find(item => item.id === result.id)!.className.split(/\s+/).map((className) => {
+      const candidate = result.candidates?.find(item => item.className === className)
+      return { ...candidate, className, generated: candidate?.generated ?? result.generated, bundled: candidate?.bundled ?? result.bundled, mediaGuard: staticMediaGuard(className, rules, rules) }
+    }),
   })) } }
 })
 
