@@ -4,6 +4,8 @@ import type { NativePlatform, NativeStyleManifest } from '../types'
 export interface NativeStyleEnvironment {
   colorScheme?: 'light' | 'dark' | undefined
   platform?: NativePlatform | undefined
+  /** 未在当前元素指定字号时，调用方可显式传入已知的继承字号。 */
+  fontSize?: number | undefined
 }
 
 export type NativeClassValue = string | false | null | undefined | NativeClassValue[] | Record<string, boolean>

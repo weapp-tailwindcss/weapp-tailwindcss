@@ -3,7 +3,7 @@
 import type { AtRule, Declaration, Root, Rule } from 'postcss'
 import type { CompileNativeStylesheetOptions, NativeCompilerWarning, NativeCssStylesheet, NativeStyleRule } from './types'
 import { postcss } from '../../postcss-runtime'
-import { expandDeclaration, propertyName } from './properties'
+import { expandDeclaration, propertyName, relativeLineHeight } from './properties'
 import { atRuleVariant, unsupportedVariant, variantForClass, walkClasses } from './selectors'
 
 function ancestors(node: Rule | Declaration) {
@@ -39,26 +39,38 @@ function compileRule(rule: Rule, className: string, variables: Record<string, st
     return []
   }
   const styles: Record<'normal' | 'important', Record<string, unknown>> = { normal: {}, important: {} }
+  const lineHeights: Partial<Record<'normal' | 'important', number>> = {}
   rule.walkDecls((decl) => {
     if (decl.prop.startsWith('--')) { return }
     const property = propertyName(decl.prop)
     const important = decl.important || /!important\s*$/i.test(decl.value)
     const value = decl.value.replace(/\s*!important\s*$/i, '')
+    const kind = important ? 'important' : 'normal'
+    if (property === 'lineHeight') {
+      const multiplier = relativeLineHeight(value, variables)
+      if (multiplier !== undefined) {
+        lineHeights[kind] = multiplier
+        delete styles[kind].lineHeight
+        return
+      }
+    }
     const expanded = expandDeclaration(property, value, variables)
     if (!expanded || Object.values(expanded).includes(undefined)) {
       addWarning(warnings, { className, property, message: `不支持将 ${decl.prop}: ${value} 编译为 React Native style` })
       return
     }
-    Object.assign(styles[important ? 'important' : 'normal'], expanded)
+    if (property === 'lineHeight') { delete lineHeights[kind] }
+    Object.assign(styles[kind], expanded)
   })
   const variant = {
     ...variantForClass(className),
     ...ancestors(rule).reduce((result, node) => ({ ...result, ...atRuleVariant(node) }), {}),
   }
   return (['normal', 'important'] as const)
-    .filter(kind => Object.keys(styles[kind]).length > 0)
+    .filter(kind => Object.keys(styles[kind]).length > 0 || lineHeights[kind] !== undefined)
     .map(kind => ({
       style: styles[kind],
+      ...(lineHeights[kind] === undefined ? {} : { lineHeightMultiplier: lineHeights[kind] }),
       ...variant,
       important: kind === 'important' || undefined,
       order,

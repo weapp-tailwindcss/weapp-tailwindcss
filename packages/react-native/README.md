@@ -43,6 +43,8 @@ On Android and iOS, the Metro integration resolves `react` and `react-native` fr
 
 `tw()` and `getStaticStyle()` return React Native `StyleProp` values, which can be passed directly to View, Text, and Image styles. They may contain registered StyleSheet IDs or arrays; use `StyleSheet.flatten()` when you need to inspect individual properties. `composeStyle()` preserves the inline style type, including `false`, `null`, and nested arrays.
 
+Unitless, percentage, and `em` line heights are resolved against the final font size after class and inline style precedence. The compiler retains their multiplier outside the static StyleSheet values. When font size comes from a parent, pass its known value through `tw(value, { fontSize })` or `getStaticStyle(ids, { fontSize })`; an unknown inherited size is not replaced with an assumed default. Custom runtime integrations can pass `StyleSheet.flatten` as the second argument to `setStyleSheetFactory` so registered inline styles participate in this calculation; Metro does this automatically.
+
 ## Public entry points
 
 The package exposes `compiler`, `tailwind`, `babel`, `metro`, `runtime`, and the platform-neutral `env` type entry. Custom Metro setups can compose these entry points directly.

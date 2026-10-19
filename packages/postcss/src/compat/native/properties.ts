@@ -134,6 +134,14 @@ function resolveVariables(value: string, variables: Record<string, string>) {
   return resolveNativeVariables(value, variables) ?? value
 }
 
+export function relativeLineHeight(value: string, variables: Record<string, string>) {
+  const resolved = resolveNativeVariables(value, variables)?.trim()
+  const match = resolved?.match(/^(\d+(?:\.\d+)?|\.\d+)(em|%)?$/)
+  if (!match) { return undefined }
+  const number = Number(match[1])
+  return match[2] === '%' ? number / 100 : number
+}
+
 function isColor(value: string) {
   return /^(?:#[\da-f]{3,8}|(?:rgb|rgba|hsl|hsla|oklch|oklab)\([^)]*\)|[a-z]+)$/i.test(value)
 }

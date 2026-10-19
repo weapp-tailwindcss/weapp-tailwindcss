@@ -43,6 +43,8 @@ Metro 会扫描源码、生成精确候选集合和 manifest，并把 Babel JSX 
 
 `tw()` 与 `getStaticStyle()` 返回 React Native 的 `StyleProp`，可以直接传给 View、Text、Image 的 style。返回值可能含已注册的 StyleSheet ID 或数组；需要读取具体属性时使用 `StyleSheet.flatten()`。`composeStyle()` 保留内联样式类型，包括 `false`、`null` 和嵌套数组。
 
+无单位、百分比和 `em` 行高在 class 与内联样式完成级联后，按最终字号计算；倍率保存在规则元数据中，不写入静态 StyleSheet。字号来自父元素时，可通过 `tw(value, { fontSize })` 或 `getStaticStyle(ids, { fontSize })` 显式提供已知继承字号；字号未知时不会猜测平台默认值。自定义运行时接入可把 `StyleSheet.flatten` 作为 `setStyleSheetFactory` 的第二个参数，使已注册的内联样式也参与计算；Metro 会自动接入。
+
 ## 公开入口
 
 包提供 `compiler`、`tailwind`、`babel`、`metro`、`runtime` 与中性类型入口 `env`。非 Expo 或定制 Metro 场景可以显式组合这些入口。
