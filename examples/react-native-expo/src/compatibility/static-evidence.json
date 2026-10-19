@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "catalogHash": "f81326e81667dfb1b57b4f577b5799dfff88cfb88d835e01ea6cf1e4f92a2598",
+  "catalogHash": "ccd8a53672fd5b3fb2a8c3529b15e2715617be350cb62df98e8f3d2c0048aa9a",
   "fixtureHash": "b72eead784db419c4a7e22b0817aa4d64d12ef2167479342be23bccf3d64157f",
   "cases": [
     {
@@ -1011,7 +1011,8 @@
       "declarations": [
         {
           "property": "background-color",
-          "value": "#737373"
+          "value": "#737373",
+          "important": true
         }
       ]
     },
@@ -2063,10 +2064,10 @@
     "stage": "static",
     "revision": "static",
     "platform": "web",
-    "catalogHash": "f81326e81667dfb1b57b4f577b5799dfff88cfb88d835e01ea6cf1e4f92a2598",
+    "catalogHash": "ccd8a53672fd5b3fb2a8c3529b15e2715617be350cb62df98e8f3d2c0048aa9a",
     "fixtureHash": "b72eead784db419c4a7e22b0817aa4d64d12ef2167479342be23bccf3d64157f",
     "runId": "static-generation",
-    "verifiedAt": "2026-10-19T07:35:21.687Z",
+    "verifiedAt": "2026-10-19T10:53:05.041Z",
     "versions": {
       "tailwindcss": "4.3.3",
       "expo": "54.0.37",

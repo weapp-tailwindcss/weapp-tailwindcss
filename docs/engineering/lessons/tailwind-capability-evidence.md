@@ -168,6 +168,10 @@ static 与媒体 guard 验收现从 `main.lynx.bundle` 实际解码；`tasm.json
 
 decoder 缓存另有真实篡改回归：首次成功解码后修改 gzip，下一次解码也必须拒绝。每次调用先核构建输入、补丁和压缩产物，再按完整 manifest SHA 复用 factory；每次解码仍创建独立实例。首次加载失败可重试，旧身份的延迟失败不得清除新身份缓存。11 项缓存回归及包含真实 bundle、媒体 guard 的 58 项定向组合通过。存储/几何协议的 30 项继续使用明确的合成夹具，不把历史报告刷新身份后当成实际设备证据；decoder 重建、缓存和 encoder 值回归均已加入统一合同及双端 CI 显式入口。
 
+干净环境修复补齐 `postcss-calc`、`escape` 和 `css-compat/legacy` 三个精确源码别名，没有提前构建或修改生产导出。三个包均没有 `dist` 的独立工作树中，双端预备测试并集和新回归共 18 文件、282 项通过；真实 Vite 解析及 calc 执行另有四项合同。显式入口还逐条检查测试路径存在，防止缺文件被 Vitest 过滤后少跑测试。
+
+审查同时发现，编码比较的布尔参数混合了阶段选择与 `important` 校验，共享 `syntax-important` 也缺少 `important: true` 的独立预期。数据缺项的一条和实际 WASM 编码缺标志的五条回归先失败后通过；阶段现显式区分 generation/encoding，编码展开的每一边均须保留预期标志。主树整合的四文件 42 项通过。已分别执行 `pnpm e2e:lynx:static:update`、`pnpm e2e:react-native:static:update`、`pnpm e2e:tailwind:static:update`：Lynx 仅清单身份及时间变化，RN 仅清单身份、预期标志及时间变化，Web 基线无差异；样式、manifest 和运行时支持合同没有因该修复改变。
+
 ## 规则评估
 
 继续采用独立 worktree、精确候选、生成器单一归属、预检强门禁和微信登录态保护。无需放宽上级安全规则；新增共享目录和能力 runner 的领域规则已登记到规则索引。
