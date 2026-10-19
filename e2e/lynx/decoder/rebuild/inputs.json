@@ -1,0 +1,198 @@
+{
+  "sourceCommit": "3526f07a8cb25cfb2841736c76b54deadc7e6e46",
+  "buildrootCommit": "0d76bc8f966dbc64c69e310346ae5a4bd492570d",
+  "primjsCommit": "76a456ec5ead13e0dce78f519eefc6a2720088f2",
+  "toolsSharedCommit": "bdea62f7b500026aab237b271abc7eff279a5c2d",
+  "emsdkCommit": "15915cad554b707837024dc2758b6a1c5b94b036",
+  "emscriptenVersion": "4.0.22",
+  "compilerCommit": "bebaf7e50e31865b0724f17eaa52e161e2dfef5a",
+  "emsdkScriptSha256": "55b39b85125115e44eae350b7a7424b9303eba6fa193c4d7d28c8fc88d0b3571",
+  "archives": [
+    {
+      "file": "lynx.tar.gz",
+      "url": "https://codeload.github.com/lynx-family/lynx/tar.gz/3526f07a8cb25cfb2841736c76b54deadc7e6e46",
+      "sha256": "8c570a0a56a2cb5926e58b09cbe8774398fb956bd275f65cb6a107e17cdd9c23",
+      "destination": [
+        "source"
+      ],
+      "strip": 1
+    },
+    {
+      "file": "build.tar.gz",
+      "url": "https://codeload.github.com/lynx-family/buildroot/tar.gz/0d76bc8f966dbc64c69e310346ae5a4bd492570d",
+      "sha256": "ce9c2c4061e0fa3504572ced0e24d9320df7abb2cd6b07e5e4861c2e9462d25d",
+      "destination": [
+        "source",
+        "build"
+      ],
+      "strip": 1
+    },
+    {
+      "file": "primjs.tar.gz",
+      "url": "https://codeload.github.com/lynx-family/primjs/tar.gz/76a456ec5ead13e0dce78f519eefc6a2720088f2",
+      "sha256": "22f133fe9c8c0ab5db6f5fce394c41215b93df300e1bb75d8482a5459121972c",
+      "destination": [
+        "source",
+        "third_party",
+        "quickjs",
+        "src"
+      ],
+      "strip": 1
+    },
+    {
+      "file": "tools-shared.tar.gz",
+      "url": "https://codeload.github.com/lynx-family/tools_shared/tar.gz/bdea62f7b500026aab237b271abc7eff279a5c2d",
+      "sha256": "6cd3fe4af044fca37a688aa4d5c6a6dafc50ee83180b31ad92038891c6adfaaa",
+      "destination": [
+        "source",
+        "tools_shared"
+      ],
+      "strip": 1
+    },
+    {
+      "file": "gyp.tar.gz",
+      "url": "https://chromium.googlesource.com/external/gyp/+archive/9d09418933ea2f75cc416e5ce38d15f62acd5c9a.tar.gz",
+      "sha256": "7ffd4d955e3a109b49c9d63df32544f8679e6252d8825e2c88869773bc24794f",
+      "destination": [
+        "source",
+        "third_party",
+        "gyp"
+      ],
+      "strip": 0
+    },
+    {
+      "file": "modp.tar.gz",
+      "url": "https://chromium.googlesource.com/chromium/src/third_party/modp_b64/+archive/50685101d51ef9aabbd60c94f52d9e026d39c509.tar.gz",
+      "sha256": "cef3795d448af2ce39ff5e1884c983d6cf13ad6c8d7ef8b7da143ac731d9f253",
+      "destination": [
+        "source",
+        "third_party",
+        "modp_b64"
+      ],
+      "strip": 0
+    },
+    {
+      "file": "node-addon-api-7.1.0.tgz",
+      "url": "https://registry.npmjs.org/node-addon-api/-/node-addon-api-7.1.0.tgz",
+      "sha256": "8e621f150678b183225c394c0faca7338396eb4fa620b447b88995f8990af522",
+      "destination": [
+        "source",
+        "oliver",
+        "lynx-tasm",
+        "node_modules",
+        "node-addon-api"
+      ],
+      "strip": 1
+    },
+    {
+      "file": "weak-node-api-0.0.9.tgz",
+      "url": "https://registry.npmjs.org/@lynx-js/weak-node-api/-/weak-node-api-0.0.9.tgz",
+      "sha256": "e4a8e36ff7872132f28718c4e53de6472e208245ead6bfcc2cdb04044fc47feb",
+      "destination": [
+        "source",
+        "third_party",
+        "weak-node-api",
+        "node_modules",
+        "@lynx-js",
+        "weak-node-api"
+      ],
+      "strip": 1
+    },
+    {
+      "file": "emsdk.tar.gz",
+      "url": "https://codeload.github.com/emscripten-core/emsdk/tar.gz/15915cad554b707837024dc2758b6a1c5b94b036",
+      "sha256": "b61f041e9cb38a0d439d8ad62c6c4459028348ed2c1d25d090e6fa65b629d358",
+      "destination": [
+        "emsdk"
+      ],
+      "strip": 1
+    },
+    {
+      "file": "typescript-5.9.3.tgz",
+      "url": "https://registry.npmjs.org/typescript/-/typescript-5.9.3.tgz",
+      "sha256": "10e108c9cf7d5f2879053dff18515fb405abf2ccef63eaaf017d9c571687a1d3",
+      "destination": [
+        "typescript"
+      ],
+      "strip": 1
+    }
+  ],
+  "gn": {
+    "darwin-arm64": {
+      "file": "gn-darwin-arm64.tar.gz",
+      "url": "https://github.com/lynx-family/buildtools/releases/download/gn-cc28efe6/buildtools-gn-darwin-arm64.tar.gz",
+      "sha256": "d7663f551216eff24081059441ad981bbab47983b60f5fa2fbc3563073f2c337",
+      "byteLength": 764067,
+      "destination": [
+        "source",
+        "buildtools",
+        "gn"
+      ],
+      "strip": 0
+    },
+    "darwin-x86_64": {
+      "file": "gn-darwin-x86_64.tar.gz",
+      "url": "https://github.com/lynx-family/buildtools/releases/download/gn-cc28efe6/buildtools-gn-darwin-x86_64.tar.gz",
+      "sha256": "cf7ac8ab68346eeede5621b947e7696e3ac868cf6a0af7a2d753c98055780525",
+      "byteLength": 845291,
+      "destination": [
+        "source",
+        "buildtools",
+        "gn"
+      ],
+      "strip": 0
+    },
+    "linux-arm64": {
+      "file": "gn-linux-arm64.tar.gz",
+      "url": "https://github.com/lynx-family/buildtools/releases/download/gn-cc28efe6/buildtools-gn-linux-arm64.tar.gz",
+      "sha256": "03f5f834f95a7625e82f53aeeaabd256433814e32ecd10968061ddd13211b3ee",
+      "byteLength": 2201560,
+      "destination": [
+        "source",
+        "buildtools",
+        "gn"
+      ],
+      "strip": 0
+    },
+    "linux-x86_64": {
+      "file": "gn-linux-x86_64.tar.gz",
+      "url": "https://github.com/lynx-family/buildtools/releases/download/gn-cc28efe6/buildtools-gn-linux-x86_64.tar.gz",
+      "sha256": "07c32935acc8618f5e098048ab5b56f84afc4ff754b825977c2ac705c7787d21",
+      "byteLength": 2237852,
+      "destination": [
+        "source",
+        "buildtools",
+        "gn"
+      ],
+      "strip": 0
+    },
+    "windows-x86_64": {
+      "file": "gn-windows-x86_64.tar.gz",
+      "url": "https://github.com/lynx-family/buildtools/releases/download/gn-cc28efe6/buildtools-gn-windows-x86_64.tar.gz",
+      "sha256": "93800d5f701014eec5b7b4e10269ee459edf7d403b9f29a61022507fe27f24e9",
+      "byteLength": 1094423,
+      "destination": [
+        "source",
+        "buildtools",
+        "gn"
+      ],
+      "strip": 0
+    }
+  },
+  "patches": [
+    {
+      "file": "patches/0001-decode-page-config-before-css.patch",
+      "sha256": "1282e4927efef30ce3a73a5dca4a499daafa5aef0fbef17026593ffb36376f62"
+    },
+    {
+      "file": "patches/0002-serialize-css-identifiers.patch",
+      "sha256": "f14ab36c1aa7e26b1021ff4b31af3030a82cd4fe21952c7af5f6dba5834c0b76"
+    }
+  ],
+  "typescriptVersion": "5.9.3",
+  "compilerArchive": {
+    "url": "https://storage.googleapis.com/webassembly/emscripten-releases-builds/mac/bebaf7e50e31865b0724f17eaa52e161e2dfef5a/wasm-binaries-arm64.tar.xz",
+    "byteLength": 297963416,
+    "sha256": "1a3fb183385682e790cf617824681dc72c2b30e8db2afc9189d0dadea9ccd466"
+  }
+}
