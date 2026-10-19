@@ -3,9 +3,12 @@
 import type { AtRule, Declaration, Rule } from 'postcss'
 import type { CompileNativeStylesheetOptions, NativeCompilerWarning, NativeCssStylesheet, NativeStyleRule } from './types'
 import { postcss } from '../../postcss-runtime'
+import { nativeVariableDefinition } from './context'
 import { expandDeclaration, propertyName, relativeLineHeight } from './properties'
 import { collectNativeVariables, nativeRuleVariables } from './scope'
 import { atRuleVariant, unsupportedVariant, variantForClass, walkClasses } from './selectors'
+import { parseNativeBoxShadow } from './shadow'
+import { resolveNativeVariables } from './variables'
 
 function ancestors(node: Rule | Declaration) {
   const result: AtRule[] = []
@@ -33,14 +36,19 @@ function compileRule(rule: Rule, className: string, inherited: Record<string, st
   }
   const styles: Record<'normal' | 'important', Record<string, unknown>> = { normal: {}, important: {} }
   const lineHeights: Partial<Record<'normal' | 'important', number>> = {}
+  const customProperties: Record<'normal' | 'important', NonNullable<NativeStyleRule['customProperties']>> = { normal: {}, important: {} }
+  const boxShadows: Partial<Record<'normal' | 'important', NonNullable<NativeStyleRule['boxShadowExpression']>>> = {}
   const variables = nativeRuleVariables(rule, inherited)
   rule.each((decl) => {
     if (decl.type !== 'decl') { return }
-    if (decl.prop.startsWith('--')) { return }
     const property = propertyName(decl.prop)
     const important = decl.important || /!important\s*$/i.test(decl.value)
     const value = decl.value.replace(/\s*!important\s*$/i, '')
     const kind = important ? 'important' : 'normal'
+    if (decl.prop.startsWith('--')) {
+      customProperties[kind][decl.prop] = nativeVariableDefinition(value, inherited)
+      return
+    }
     if (property === 'boxShadow' && options.boxShadow === false) {
       addWarning(warnings, { className, property, message: '当前宿主已禁用现代 boxShadow，无法保留多层、spread 与 inset 阴影语义' })
       return
@@ -53,8 +61,16 @@ function compileRule(rule: Rule, className: string, inherited: Record<string, st
         return
       }
     }
+    if (property === 'boxShadow') {
+      if (value.includes('var(') || /currentcolor/i.test(value)) { boxShadows[kind] = nativeVariableDefinition(value, inherited) }
+      else { delete boxShadows[kind] }
+    }
     const expanded = expandDeclaration(property, value, variables)
     if (!expanded || Object.values(expanded).includes(undefined)) {
+      if (property === 'boxShadow' && parseNativeBoxShadow(resolveNativeVariables(value, variables) ?? value, '#000000') !== undefined) {
+        boxShadows[kind] = nativeVariableDefinition(value, inherited)
+        return
+      }
       addWarning(warnings, { className, property, message: `不支持将 ${decl.prop}: ${value} 编译为 React Native style` })
       return
     }
@@ -66,9 +82,11 @@ function compileRule(rule: Rule, className: string, inherited: Record<string, st
     ...ancestors(rule).reduce((result, node) => ({ ...result, ...atRuleVariant(node) }), {}),
   }
   return (['normal', 'important'] as const)
-    .filter(kind => Object.keys(styles[kind]).length > 0 || lineHeights[kind] !== undefined)
+    .filter(kind => Object.keys(styles[kind]).length > 0 || lineHeights[kind] !== undefined || Object.keys(customProperties[kind]).length > 0 || boxShadows[kind] !== undefined)
     .map(kind => ({
       style: styles[kind],
+      ...(Object.keys(customProperties[kind]).length ? { customProperties: customProperties[kind] } : {}),
+      ...(boxShadows[kind] ? { boxShadowExpression: boxShadows[kind] } : {}),
       ...(lineHeights[kind] === undefined ? {} : { lineHeightMultiplier: lineHeights[kind] }),
       ...variant,
       important: kind === 'important' || undefined,

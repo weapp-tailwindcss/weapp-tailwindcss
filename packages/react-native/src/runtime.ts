@@ -1,12 +1,14 @@
 /* eslint-disable style/max-statements-per-line */
 
 import type { RelativeLineHeight } from './runtime/line-height'
+import type { DeferredBoxShadow } from './runtime/shadow'
 import type { NativeClassValue, NativeStyleEnvironment, NativeStyleRuntime, NativeStyleValue } from './runtime/types'
 import type { NativePlatform, NativeStyleManifest, NativeStyleRule } from './types'
 import { flattenInlineStyle, relativeLineHeightStyle } from './runtime/line-height'
+import { deferredBoxShadowStyle, inlineBoxShadowStyle } from './runtime/shadow'
 
 interface StyleValue { [key: string]: unknown }
-interface StyleMeta { important?: NativeStyleValue, relativeLineHeight?: RelativeLineHeight | undefined }
+interface StyleMeta { important?: NativeStyleValue, relativeLineHeight?: RelativeLineHeight | undefined, boxShadow?: DeferredBoxShadow | undefined }
 type StyleSheetFactory = (value: Record<string, StyleValue>) => Record<string, NativeStyleValue>
 type StyleSheetFlattener = (value: NativeStyleValue) => StyleValue | undefined
 
@@ -81,9 +83,11 @@ function resolveRules(ids: readonly string[], manifest: NativeStyleManifest | un
   const order = (left: { rule: NativeStyleRule }, right: { rule: NativeStyleRule }) => (left.rule.order ?? 0) - (right.rule.order ?? 0)
   normal.sort(order)
   important.sort(order)
+  const customProperties = Object.assign({}, ...[...normal, ...important].map(({ rule }) => rule.customProperties))
   const style: StyleValue = {}
   const importantStyle: StyleValue = {}
   let relative: RelativeLineHeight | undefined
+  let boxShadow: DeferredBoxShadow | undefined
   const apply = (rule: NativeStyleRule, isImportant: boolean) => {
     Object.assign(style, rule.style)
     if (isImportant) { Object.assign(importantStyle, rule.style) }
@@ -92,9 +96,21 @@ function resolveRules(ids: readonly string[], manifest: NativeStyleManifest | un
       delete style.lineHeight
     }
     else if ('lineHeight' in rule.style) { relative = undefined }
+    if (rule.boxShadowExpression) { boxShadow = { expression: rule.boxShadowExpression, bindings: customProperties, important: isImportant } }
+    else if ('boxShadow' in rule.style) { boxShadow = undefined }
   }
   for (const { rule } of normal) { apply(rule, false) }
   for (const { rule } of important) { apply(rule, true) }
+  if (boxShadow) {
+    boxShadow.color = typeof style.color === 'string' ? style.color : environment.color
+    boxShadow.importantColor = typeof importantStyle.color === 'string' ? importantStyle.color : undefined
+    const computed = deferredBoxShadowStyle(boxShadow)
+    delete style.boxShadow
+    if (computed) {
+      Object.assign(style, computed)
+      if (boxShadow.important) { Object.assign(importantStyle, computed) }
+    }
+  }
   if (relative) {
     relative.fontSize = typeof style.fontSize === 'number' ? style.fontSize : environment.fontSize
     relative.importantFontSize = typeof importantStyle.fontSize === 'number' ? importantStyle.fontSize : undefined
@@ -108,7 +124,7 @@ function resolveRules(ids: readonly string[], manifest: NativeStyleManifest | un
   const importantIds = important.map(item => item.id)
   const asStyleValue = (ids: string[], fallback: StyleValue): NativeStyleValue => {
     // 相对值依赖本次组合，不能返回缺少最终行高的静态注册 ID。
-    if (relative) { return fallback }
+    if (relative || boxShadow) { return fallback }
     if (!styleSheetFactory) { return fallback }
     const values = ids.map(id => nativeStyleSheet[id]).filter(value => value !== undefined)
     if (values.length === 1) { return values[0] }
@@ -121,6 +137,7 @@ function resolveRules(ids: readonly string[], manifest: NativeStyleManifest | un
     styleValue: asStyleValue(normalIds, style),
     importantValue: asStyleValue(importantIds, importantStyle),
     relativeLineHeight: relative,
+    boxShadow,
   }
 }
 
@@ -132,9 +149,9 @@ function resolveDynamic(value: NativeClassValue, manifest: NativeStyleManifest |
   return resolveRules(ids, manifest, environment)
 }
 
-function rememberStyle(style: NativeStyleValue, importantStyle: NativeStyleValue, relativeLineHeight?: RelativeLineHeight) {
+function rememberStyle(style: NativeStyleValue, importantStyle: NativeStyleValue, relativeLineHeight?: RelativeLineHeight, boxShadow?: DeferredBoxShadow) {
   const important = importantStyle && (typeof importantStyle !== 'object' || Object.keys(importantStyle).length) ? importantStyle : undefined
-  if (important !== undefined || relativeLineHeight) { styleMetadata.set(style, { important, relativeLineHeight }) }
+  if (important !== undefined || relativeLineHeight || boxShadow) { styleMetadata.set(style, { important, relativeLineHeight, boxShadow }) }
   return style
 }
 
@@ -146,25 +163,26 @@ export function createNativeStyleRuntime(initialManifest?: NativeStyleManifest):
     tw(value, requestedEnvironment = {}) {
       const effectiveEnvironment = { ...environment, ...requestedEnvironment }
       const tokens = canonicalTokens(value)
-      const key = `${tokens.join('\u0001')}|${effectiveEnvironment.colorScheme ?? ''}|${effectiveEnvironment.platform ?? ''}|${effectiveEnvironment.fontSize ?? ''}`
+      const key = `${tokens.join('\u0001')}|${effectiveEnvironment.colorScheme ?? ''}|${effectiveEnvironment.platform ?? ''}|${effectiveEnvironment.fontSize ?? ''}|${effectiveEnvironment.color ?? ''}`
       const cached = cache.get(key)
       if (cached) { return cached }
       const resolved = resolveDynamic(value, manifest, effectiveEnvironment)
-      const style = rememberStyle(resolved.styleValue, resolved.importantValue, resolved.relativeLineHeight)
+      const style = rememberStyle(resolved.styleValue, resolved.importantValue, resolved.relativeLineHeight, resolved.boxShadow)
       cache.set(key, style)
       return style
     },
     getStaticStyle(ids, requestedEnvironment = {}) {
       const effectiveEnvironment = { ...environment, ...requestedEnvironment }
       const resolved = resolveRules(ids, manifest, effectiveEnvironment)
-      return rememberStyle(resolved.styleValue, resolved.importantValue, resolved.relativeLineHeight)
+      return rememberStyle(resolved.styleValue, resolved.importantValue, resolved.relativeLineHeight, resolved.boxShadow)
     },
     composeStyle(tailwindStyle, inlineStyle) {
       const metadata = styleMetadata.get(tailwindStyle)
       const important = metadata?.important
       const inline = styleSheetFlattener?.(inlineStyle as NativeStyleValue) ?? inlineStyle
       const relative = relativeLineHeightStyle(metadata?.relativeLineHeight, inline)
-      if (relative) { return [tailwindStyle, inlineStyle, { ...flattenInlineStyle(important), ...relative }] }
+      const boxShadow = inlineBoxShadowStyle(metadata?.boxShadow, inline)
+      if (relative || boxShadow) { return [tailwindStyle, inlineStyle, { ...flattenInlineStyle(important), ...relative, ...boxShadow }] }
       return important !== undefined
         ? [tailwindStyle, inlineStyle, important]
         : [tailwindStyle, inlineStyle]

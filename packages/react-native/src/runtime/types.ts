@@ -6,6 +6,8 @@ export interface NativeStyleEnvironment {
   platform?: NativePlatform | undefined
   /** 未在当前元素指定字号时，调用方可显式传入已知的继承字号。 */
   fontSize?: number | undefined
+  /** 当前元素没有文字颜色时，调用方可显式提供已知的继承颜色。 */
+  color?: string | undefined
 }
 
 export type NativeClassValue = string | false | null | undefined | NativeClassValue[] | Record<string, boolean>

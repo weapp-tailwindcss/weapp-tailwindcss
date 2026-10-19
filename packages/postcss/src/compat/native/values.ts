@@ -1,5 +1,6 @@
 /* eslint-disable style/max-statements-per-line */
 
+import { normalizeStandaloneColorFunction } from '../color-mix/parse'
 import { resolveNativeVariables } from './variables'
 
 export function parseNumber(value: string, variables: Record<string, string>): number | string | undefined {
@@ -24,7 +25,7 @@ export function resolveVariables(value: string, variables: Record<string, string
 }
 
 export function isColor(value: string) {
-  return /^(?:#[\da-f]{3,8}|(?:rgb|rgba|hsl|hsla|oklch|oklab)\([^)]*\)|[a-z]+)$/i.test(value)
+  return /^(?:#[\da-f]{3,8}|(?:rgba?|hsla?|oklch|oklab|hwb|lch|lab|color(?:-mix)?)\(.+\)|[a-z]+)$/i.test(value)
 }
 
 function oklchToHex(value: string) {
@@ -49,5 +50,8 @@ function oklchToHex(value: string) {
 }
 
 export function normalizeColor(value: string) {
-  return /^oklch\(/i.test(value) ? oklchToHex(value) : value
+  const normalized = normalizeStandaloneColorFunction(value)
+  if (normalized === undefined) { return undefined }
+  if (/^oklch\(/i.test(value)) { return oklchToHex(value) ?? normalized }
+  return value.includes('(') ? normalized : value
 }

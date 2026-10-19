@@ -8,7 +8,7 @@ describe('原生完整 boxShadow 编码', () => {
     `)
     expect(result.rules.shadow?.[0]?.style).toEqual({
       boxShadow: [
-        { offsetX: 0, offsetY: 10, blurRadius: 15, spreadDistance: -3, color: 'rgb(0 0 0 / 0.1)' },
+        { offsetX: 0, offsetY: 10, blurRadius: 15, spreadDistance: -3, color: 'rgba(0, 0, 0, 0.1)' },
         { offsetX: 2, offsetY: -4, blurRadius: 6, spreadDistance: 1, color: 'rgba(255, 0, 0, 0.25)', inset: true },
       ],
     })
@@ -28,15 +28,22 @@ describe('原生完整 boxShadow 编码', () => {
     `)
     expect(result.rules['shadow-lg']?.[0]?.style).toEqual({
       boxShadow: [
-        { offsetX: 0, offsetY: 0, blurRadius: 0, spreadDistance: 0, color: '#0000' },
-        { offsetX: 0, offsetY: 0, blurRadius: 0, spreadDistance: 0, color: '#0000' },
-        { offsetX: 0, offsetY: 10, blurRadius: 15, spreadDistance: -3, color: 'rgb(0 0 0 / 0.1)' },
-        { offsetX: 0, offsetY: 4, blurRadius: 6, spreadDistance: -4, color: 'rgb(0 0 0 / 0.1)' },
+        { offsetX: 0, offsetY: 10, blurRadius: 15, spreadDistance: -3, color: 'rgba(0, 0, 0, 0.1)' },
+        { offsetX: 0, offsetY: 4, blurRadius: 6, spreadDistance: -4, color: 'rgba(0, 0, 0, 0.1)' },
       ],
     })
     expect(result.variables).not.toHaveProperty('--tw-shadow')
     expect(result.variables['--tw-ring-shadow']).toBe('0 0 #0000')
     expect(result.warnings).toEqual([])
+  })
+
+  it('仅移除完全透明层，保留可见层的合成顺序与非零 alpha', () => {
+    const result = compileNativeCss('.shadow { box-shadow: 0 1px #1230, 1px 0 #12345600, inset 3px 0 transparent, 0 1px rgb(1 2 3 / 0), 2px 0 #1231, 0 4px red; } .clear { box-shadow: 0 1px #0000; }')
+    expect(result.rules.shadow?.[0]?.style).toEqual({ boxShadow: [
+      { offsetX: 2, offsetY: 0, blurRadius: 0, spreadDistance: 0, color: '#1231' },
+      { offsetX: 0, offsetY: 4, blurRadius: 0, spreadDistance: 0, color: 'red' },
+    ] })
+    expect(result.rules.clear?.[0]?.style).toEqual({ boxShadow: [] })
   })
 
   it('支持 none、rem、颜色前置、规则内后声明变量，并拒绝无效或不支持的阴影', () => {

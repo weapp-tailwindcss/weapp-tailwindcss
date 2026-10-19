@@ -43,12 +43,32 @@ describe('原生 Tailwind 独立 CSS 入口', () => {
     const result = await generateNativeStylesheetEvidence(options)
     const layers = result.manifest.rules['shadow-lg']?.[0]?.style.boxShadow as Record<string, unknown>[]
     expect(layers.slice(-2)).toEqual([
-      { offsetX: 0, offsetY: 10, blurRadius: 15, spreadDistance: -3, color: 'rgb(0 0 0 / 0.1)' },
-      { offsetX: 0, offsetY: 4, blurRadius: 6, spreadDistance: -4, color: 'rgb(0 0 0 / 0.1)' },
+      { offsetX: 0, offsetY: 10, blurRadius: 15, spreadDistance: -3, color: 'rgba(0, 0, 0, 0.1)' },
+      { offsetX: 0, offsetY: 4, blurRadius: 6, spreadDistance: -4, color: 'rgba(0, 0, 0, 0.1)' },
     ])
     const disabled = await generateNativeStylesheetEvidence({ ...options, boxShadow: false })
-    expect(disabled.manifest.rules['shadow-lg']).toBeUndefined()
+    expect(disabled.manifest.rules['shadow-lg']?.[0]?.style).not.toHaveProperty('boxShadow')
     expect(disabled.manifest.warnings).toContainEqual(expect.objectContaining({ className: 'shadow-lg', property: 'boxShadow', message: expect.stringContaining('宿主') }))
+  })
+
+  it('真实 Tailwind 阴影颜色、透明度、ring 与 inset modifier 使用同一变量级联', async () => {
+    const projectRoot = await fixture()
+    const result = await generateNativeStylesheetEvidence({
+      projectRoot,
+      css: `${tailwindImport('index.css')} @theme { --color-brand: #123456; }`,
+      candidates: ['shadow-lg', 'shadow-brand', 'shadow-brand/50', 'ring-2', 'ring-brand', 'inset-shadow-sm', 'inset-shadow-brand'],
+      sourceGlobs: [],
+    })
+    const runtime = createNativeStyleRuntime(result.manifest)
+    const layers = (classes: string) => (runtime.tw(classes) as { boxShadow: Record<string, unknown>[] }).boxShadow
+    expect(layers('shadow-lg shadow-brand/50').map(item => item.color)).toEqual(['rgba(18, 52, 86, 0.5)', 'rgba(18, 52, 86, 0.5)'])
+    expect(layers('shadow-lg shadow-brand ring-2 ring-brand inset-shadow-sm inset-shadow-brand')).toEqual([
+      { offsetX: 0, offsetY: 2, blurRadius: 4, spreadDistance: 0, color: '#123456', inset: true },
+      { offsetX: 0, offsetY: 0, blurRadius: 0, spreadDistance: 2, color: '#123456' },
+      { offsetX: 0, offsetY: 10, blurRadius: 15, spreadDistance: -3, color: '#123456' },
+      { offsetX: 0, offsetY: 4, blurRadius: 6, spreadDistance: -4, color: '#123456' },
+    ])
+    expect(result.manifest.warnings).toEqual([])
   })
 
   it('普通 reference/apply 与 prefix 入口独立生成，前缀不能泄漏', async () => {

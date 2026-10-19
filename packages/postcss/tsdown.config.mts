@@ -32,7 +32,7 @@ export const postcssBundledDependencies = [
 ]
 
 const sharedOptions = {
-  entry: ['src/index.ts', 'src/syntax.ts', 'src/transform.ts', 'src/plugin.ts', 'src/types.ts', 'src/html-transform.ts', 'src/css-macro/postcss.ts', 'src/native.ts', 'src/experimental/lightningcss/index.ts'],
+  entry: ['src/index.ts', 'src/syntax.ts', 'src/transform.ts', 'src/plugin.ts', 'src/types.ts', 'src/html-transform.ts', 'src/css-macro/postcss.ts', 'src/native.ts', 'src/native-runtime.ts', 'src/experimental/lightningcss/index.ts'],
   shims: true,
   dts: false,
   outputOptions: {

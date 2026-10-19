@@ -47,6 +47,8 @@ Metro 会扫描源码、生成精确候选集合和 manifest，并把 Babel JSX 
 
 阴影使用现代 React Native `boxShadow` 数组，保留所有层的模糊、spread、颜色与 inset。宿主需要启用新架构并满足平台要求：Android 外阴影要求 Android 9+，内阴影要求 Android 10+。不支持的宿主可向 `compileNativeStylesheet()` 或 `generateNativeStylesheet()` 传入 `boxShadow: false`；相关声明会产生告警，不会静默降级为丢失层或 spread 的旧阴影属性。
 
+阴影变量和颜色 modifier 在选中 class 与 `!important` 声明完成级联后计算，全透明占位层会被省略。`currentColor` 和省略颜色的阴影使用最终 class 或内联文字颜色；需要继承颜色时，可通过运行时环境的 `{ color }` 提供已知值。继承颜色未知时保留未解析状态，不猜测黑色。颜色函数会规范化为 React Native 与 React Native Web 都接受的写法。
+
 ## 公开入口
 
 包提供 `compiler`、`tailwind`、`babel`、`metro`、`runtime` 与中性类型入口 `env`。非 Expo 或定制 Metro 场景可以显式组合这些入口。

@@ -67,7 +67,7 @@ export function trimNodes(nodes: Node[]) {
 function getParsedColorData(colorSource: string) {
   try {
     const parsed = parseComponentValue(tokenize({ css: colorSource }))
-    return parseColor(parsed)
+    return parsed ? parseColor(parsed) : false
   }
   catch {
     return false

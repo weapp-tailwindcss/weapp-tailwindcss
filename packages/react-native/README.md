@@ -47,6 +47,8 @@ Unitless, percentage, and `em` line heights are resolved against the final font 
 
 Shadows use the modern React Native `boxShadow` array, preserving all layers, blur, spread, color, and inset. The host must support this property: use the New Architecture and check its OS requirements (Android outset shadows require Android 9+, inset shadows Android 10+). Pass `boxShadow: false` to `compileNativeStylesheet()` or `generateNativeStylesheet()` for an unsupported host; declarations then produce warnings rather than a partial legacy shadow approximation.
 
+Shadow variables and color modifiers resolve after all selected class declarations and `!important` precedence. Fully transparent placeholder layers are omitted. `currentColor` and omitted shadow colors use the final class or inline text color; provide a known inherited color with `{ color }` in the runtime environment when needed. Unknown inherited colors remain unresolved until that context is provided. Color functions are normalized for both React Native and React Native Web.
+
 ## Public entry points
 
 The package exposes `compiler`, `tailwind`, `babel`, `metro`, `runtime`, and the platform-neutral `env` type entry. Custom Metro setups can compose these entry points directly.

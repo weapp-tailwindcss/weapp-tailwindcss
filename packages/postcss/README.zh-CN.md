@@ -4,6 +4,8 @@
 
 独立入口 `@weapp-tailwindcss/postcss/native` 提供 `compileNativeCss(css, options)`，将 CSS 转成原生样式规则、变量和告警。React Native manifest ID、Tailwind 生成与运行时集成仍由 `@weapp-tailwindcss/react-native` 负责；导入其 `/runtime` 不会加载 CSS 编译器。
 
+`@weapp-tailwindcss/postcss/native-runtime` 提供纯 JavaScript 的 `resolveNativeBoxShadow()` 值解释入口，按各条声明所属来源的默认值解析 class 变量，不加载 PostCSS 编译器、Node API 或 Tailwind 生成器。
+
 LightningCSS 实验转换放在 `@weapp-tailwindcss/postcss/experimental/lightningcss`，不由稳定根入口导出。实验包的原入口负责加载引擎，PostCSS 子入口只引用 LightningCSS 类型；可选 peer 仅供实验类型的消费方使用。
 
 > [English](./README.md) | 简体中文
