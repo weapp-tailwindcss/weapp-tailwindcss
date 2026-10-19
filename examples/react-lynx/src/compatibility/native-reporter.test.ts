@@ -214,7 +214,7 @@ it('probe 布局未就绪时持久化失败原因并拒绝发布报告', async (
 it('等待最后一帧的真实写入回执后才发布报告', async () => {
   const { report, error } = await collect({ receipt: 'late' })
   expect(error).toBeUndefined()
-  expect(report.evidence?.artifacts).toHaveLength(36)
+  expect(report.evidence?.artifacts).toHaveLength(38)
 })
 
 it.each(['wrong-run', 'missing', 'failed'] as const)('%s 回执禁止发布报告', async (receipt) => {
@@ -238,7 +238,7 @@ it('Canvas skew 不从 View 矩阵得出支持结论，而是绑定两张父级�
   expect(report.results.find(item => item.id === 'transform-skew')).toMatchObject({ status: 'not-tested' })
 })
 
-it('dark 报告包含四帧与恢复回执，恢复失败不得提交任何报告', async () => {
+it('dark 报告包含六帧与恢复回执，恢复失败不得提交任何报告', async () => {
   const { report } = await collect()
   expect(report.results.find(item => item.id === 'variant-dark')).toMatchObject({ status: 'not-tested', colorScheme: { restored: { scheme: 'light', runId: report.evidence!.runId } } })
   expect(report.evidence!.artifacts.filter(item => item.name.startsWith('variant-dark')).map(item => item.name)).toEqual([
@@ -246,6 +246,8 @@ it('dark 报告包含四帧与恢复回执，恢复失败不得提交任何报�
     'variant-dark-light-control.png',
     'variant-dark-dark-probe.png',
     'variant-dark-dark-control.png',
+    'variant-dark-restored-probe.png',
+    'variant-dark-restored-control.png',
   ])
   const failed = await collect({ restoreFailed: true })
   expect(failed.error).toBeInstanceOf(AggregateError)

@@ -85,17 +85,26 @@ it('接收带完整且可见像素变化的原生报告', async () => {
   await expect(readPixelReport(reportPath, 'android')).resolves.toEqual(report)
 })
 
-it.each(['missing-frame', 'foreign-receipt', 'wrong-restore', 'false-supported'])('dark 的 %s 不能进入最终验收', async (mode) => {
+it.each(['missing-frame', 'missing-restored-probe', 'missing-restored-control', 'foreign-receipt', 'wrong-restore', 'false-supported', 'stuck-dark', 'old-checkpoint'])('dark 的 %s 不能进入最终验收', async (mode) => {
   const { crops, report, reportPath } = await fixture()
   const result = report.results.find(item => item.id === 'variant-dark')!
   if (mode === 'missing-frame') {
     await fs.rm(path.join(crops, 'variant-dark-dark-control.png'))
+  }
+  else if (mode === 'missing-restored-probe' || mode === 'missing-restored-control') {
+    await fs.rm(path.join(crops, `variant-dark-${mode.slice('missing-'.length)}.png`))
   }
   else if (mode === 'foreign-receipt') {
     result.colorScheme!.dark.runId = 'another-run'
   }
   else if (mode === 'wrong-restore') {
     result.colorScheme!.restored.scheme = 'dark'
+  }
+  else if (mode === 'stuck-dark') {
+    await fs.copyFile(path.join(crops, 'variant-dark-dark-probe.png'), path.join(crops, 'variant-dark-restored-probe.png'))
+  }
+  else if (mode === 'old-checkpoint') {
+    result.checkpoints[0]!.name = 'pixel:color-scheme-v1'
   }
   else {
     await fs.copyFile(path.join(crops, 'variant-dark-light-probe.png'), path.join(crops, 'variant-dark-dark-probe.png'))

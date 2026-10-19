@@ -1,5 +1,6 @@
 import type { NativeCaseResult } from '../../examples/react-lynx/src/compatibility/types'
 import type { PngPixels } from './png'
+import { colorSchemeContract } from '../../examples/react-lynx/src/compatibility/color-scheme-contract'
 
 type Color = readonly number[]
 const ink = [19, 32, 38]
@@ -63,19 +64,19 @@ function glyph(image: PngPixels) {
   return pixels
 }
 
-/** 文字必须在相同位置从深色变白；其余三个画布须保持深色文字及背景。 */
+/** 文字必须在相同位置从深色变白并恢复；control 与恢复画布须保持深色文字及背景。 */
 export function evaluateColorScheme(images: PngPixels[]): NativeCaseResult {
-  const [light, control, dark, darkControl] = images
-  if (images.length !== 4 || !light || images.some(image => image.width < 160 || image.width !== image.height || image.width !== light.width)) {
-    throw new Error('颜色模式缺少四张等尺寸完整画布')
+  const [light, control, dark, darkControl, restored, restoredControl] = images
+  if (images.length !== colorSchemeContract.frames.length || !light || images.some(image => image.width < 160 || image.width !== image.height || image.width !== light.width)) {
+    throw new Error('颜色模式缺少六张等尺寸完整画布')
   }
   const reference = glyph(light)
-  for (const invariant of [control!, darkControl!]) {
+  for (const invariant of [control!, darkControl!, restored!, restoredControl!]) {
     const mask = glyph(invariant)
     const matches = [...reference.keys()].filter(index => near(invariant, index, color(light, index))).length / reference.size
     const reverse = [...mask.keys()].filter(index => near(light, index, color(invariant, index))).length / mask.size
     if (matches < 0.97 || reverse < 0.97 || Math.abs(mask.size / reference.size - 1) > 0.1) {
-      throw new Error('颜色模式浅色及 control 字形没有保持不变')
+      throw new Error('颜色模式浅色、control 或恢复字形没有保持不变')
     }
   }
   let matched = 0
@@ -127,7 +128,7 @@ export function evaluateColorScheme(images: PngPixels[]): NativeCaseResult {
     id: 'variant-dark',
     status: passed ? 'supported' : 'unsupported',
     ...(passed ? {} : { reason: '深色模式未仅将相同字形变为白色并保持背景及 control 不变', failureStage: 'runtime' as const }),
-    checkpoints: [{ name: 'pixel:color-scheme-v1', passed, actual: JSON.stringify({ glyphPixels: reference.size, corePixels: core, whiteMatch: Math.round(ratio * 1000) / 1000, invalidGlyphColors, backgroundMismatch }), expected: 'light 深色字形 → dark 同字形白色；control 与背景不变' }],
+    checkpoints: [{ name: colorSchemeContract.checkpoint, passed, actual: JSON.stringify({ glyphPixels: reference.size, corePixels: core, whiteMatch: Math.round(ratio * 1000) / 1000, invalidGlyphColors, backgroundMismatch }), expected: 'light 深色字形 → dark 同字形白色 → restored 同字形深色；control 与背景不变' }],
   }
 }
 

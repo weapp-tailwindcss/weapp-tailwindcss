@@ -1,5 +1,6 @@
 import type { CaseContract, EvidenceStage } from '../types'
 import { compatibilityCases, officialFeatureManifest } from '@weapp-tailwindcss/test-catalog'
+import { colorSchemeContract } from '../../../examples/react-lynx/src/compatibility/color-scheme-contract'
 import { lynxEvidenceStrategy } from '../../../examples/react-lynx/src/compatibility/evidence'
 import { reviewedLynxContract } from '../../lynx/expectations'
 
@@ -23,7 +24,7 @@ export const pixelValidators = new Map([
   ['background-linear-gradient', ['probe', 'control']],
   ['effect-shadow', ['probe', 'control']],
   ['transform-skew', ['probe', 'control']],
-  ['variant-dark', ['light-probe', 'light-control', 'dark-probe', 'dark-control']],
+  [colorSchemeContract.id, [...colorSchemeContract.frames]],
   ['variant-structural', ['probe', 'control', 'reference']],
   ['type-flow', ['probe', 'control', 'reference']],
   ['syntax-important', ['probe', 'control', 'reference']],

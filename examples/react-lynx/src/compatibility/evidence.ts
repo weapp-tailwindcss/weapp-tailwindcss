@@ -1,4 +1,5 @@
 import type { CompatibilityCase, StaticCaseEvidence } from './types'
+import { colorSchemeContract } from './color-scheme-contract'
 import { importantPriorityContract } from './important-priority-contract'
 import { geometryArtifactNames } from './native-geometry'
 
@@ -41,7 +42,7 @@ export function evidenceSequence(item: CompatibilityCase, built: Pick<StaticCase
     return undefined
   }
   if (strategy === 'color-scheme') {
-    return { checkpoint: 'pixel:color-scheme-v1', frames: ['light-probe', 'light-control', 'dark-probe', 'dark-control'] }
+    return { checkpoint: colorSchemeContract.checkpoint, frames: [...colorSchemeContract.frames] }
   }
   if (item.id === 'variant-structural') {
     return { checkpoint: 'pixel:structural-v1', frames: ['probe', 'control', 'reference'] }
