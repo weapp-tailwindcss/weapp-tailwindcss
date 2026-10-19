@@ -139,7 +139,7 @@ export async function runWeb(context: RunContext, engine: BrowserEngine) {
       }
     }
   }
-  validateCapabilityReport(report, contracts, report.identity, context.runId)
+  validateCapabilityReport(report, contracts, report.identity, context.runId, `web-${engine}`)
   await verifyReportArtifacts(report, context.directory)
   await writeCapabilityReport(path.join(context.directory, 'report.json'), report)
   return report

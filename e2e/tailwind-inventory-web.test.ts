@@ -117,7 +117,7 @@ describe('Web 语义夹具合同', () => {
       results: [{ id: contract.id, status: 'passed', support: 'supported', assertions: [{ name: 'generated', stage: 'generation', actual: true, expected: true }, { name: 'computed', stage: 'runtime', actual: '100px', expected: '100px' }, ...wrong], artifacts: ['pixels.png', 'measurements.json'], warnings: [] }],
       artifacts: [{ path: 'pixels.png', sha256: hash, byteLength: 1, kind: 'screenshot', runId: 'pixel-contract', caseIds: [contract.id] }, { path: 'measurements.json', sha256: hash, byteLength: 1, kind: 'measurements', runId: 'pixel-contract', caseIds: [contract.id] }],
     }
-    expect(() => validateCapabilityReport(report, [contract], identity, report.runId)).toThrow(/pixel/)
+    expect(() => validateCapabilityReport(report, [contract], identity, report.runId, 'web-chromium')).toThrow(/pixel/)
     expect(webProbes.find(item => item.id === 'shadow')?.pixels?.map(item => item.x)).toEqual([1.04, -0.04])
     expect(() => readPixels(render(false), rect, [{ ...samples[0]!, x: 2 }])).toThrow(/超出本轮截图/)
   })
