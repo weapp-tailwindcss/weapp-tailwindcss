@@ -8,6 +8,7 @@ import { validateCapabilityReport, verifyReportArtifacts } from './report'
 const layerStages: Partial<Record<CoverageLayer, EvidenceStage[]>> = {
   static: ['generation', 'encoding'],
   runtime: ['runtime'],
+  hmr: ['hmr'],
   visual: ['visual'],
   negative: ['negative'],
 }

@@ -41,8 +41,9 @@ pnpm e2e:tailwind --list
 
 - 共享包：`tools/tailwindcss-test-catalog`，合并旧 118 个兼容案例及 361 个 parity 候选，保留旧 ID 与独立候选子 ID。
 - 注册表：`inventory/tailwind-4.3.3.json`；functional 值域、任意语法和补全遗漏项另行覆盖。
-- `static`：每批 256 个唯一候选，保存 raw CSS、WXSS、RN manifest、Lynx 解码 CSS、诊断与审计。生成合同比较完整声明、选择器及媒体/容器条件。转换审计不能直接判成运行时支持。
-- `authoring`：18 个指令/配置夹具及 11 个真实扫描语法夹具，分别创建隔离目录；扫描候选只存在于各自源码。
+- `static`：每批 256 个唯一候选，保存 raw CSS、WXSS、RN manifest、Lynx 解码 CSS、诊断与审计。生成合同比较完整声明、选择器及媒体/容器条件，并核对主题变量、动画帧和 property 注册。每个候选另有三端独立转换结果；没有已审查转换 oracle 的项目保持未执行，异常保持失败，不由产物存在推导支持。转换审计不能直接判成运行时支持。
+- `authoring`：18 个指令/配置夹具及 11 个真实扫描语法夹具，分别创建隔离目录；扫描候选只存在于各自源码，完整参考检查声明、条件和依赖。
+- Web 子目录 `hmr`：同一真实 Vite 服务连续新增、替换、删除类名及最终刷新，检查每轮保存标识、计算样式、源码 update 消息、服务身份与页面是否被整刷。
 - `e2e/.artifacts/tailwind/<run-id>/index.json` 和 `index.md`：本轮调度结果。各目标保留 v2 报告、原始证据和覆盖缺口；原生报告归档到本轮 `native` 目录，不引用下次会被覆盖的共享目录。
 
 v2 报告绑定源码、锁文件、工具版本、catalog、夹具及预期 hash。每个案例声明支持状态、验证层级、具体预期值和允许误差；验收重新检查原始文件 hash、字节数、归属和时间。错误样式、缺属性、缺运行时证据、擅改支持预期、缺案例、旧版本、旧截图、目标浏览器不符均拒绝。旧 v1 报告保留历史展示，不能贡献本轮通过覆盖。
@@ -51,6 +52,8 @@ v2 报告绑定源码、锁文件、工具版本、catalog、夹具及预期 has
 
 ## 维护及基线
 
-新增能力先补独立预期和失败回归，再修复负责的生成、转换或运行时模块。RN / Lynx 示例变化分别重新生成 `pnpm e2e:react-native:static:update`、`pnpm e2e:lynx:static:update`；审查差异后使用 `CI=1` 和 `--update=none` 回归。其他示例遵循各自 static 更新入口。生成基线改变源码身份后，全面运行需重新 prepare。
+新增能力先补独立预期和失败回归，再修复负责的生成、转换或运行时模块。Web / 微信语义夹具使用 `pnpm e2e:tailwind:static:update`；RN / Lynx 示例分别使用 `pnpm e2e:react-native:static:update`、`pnpm e2e:lynx:static:update`。审查差异后使用 `CI=1` 和 `--update=none` 回归。其他示例遵循各自 static 更新入口。生成基线改变源码身份后，全面运行需重新 prepare。
+
+根因及验收边界见 [验证记录](../../docs/engineering/lessons/tailwind-capability-evidence.md)。该记录保留未完成范围，实际支持结果以本轮逐例报告为准。
 
 本轮仅覆盖仓库维护的扩展与配置场景，第三方插件的任意实现必须另行登记。

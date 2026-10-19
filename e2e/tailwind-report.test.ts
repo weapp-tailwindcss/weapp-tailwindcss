@@ -71,6 +71,19 @@ describe('Tailwind 四端语义证据合同', () => {
     expect(() => validateCapabilityReport(report, contracts, identity, 'current', 'web-chromium')).toThrow('改变预期支持')
   })
 
+  it('HMR 除实际测量还必须保存本例截图，不能只有成功消息', () => {
+    const expanded = structuredClone(contracts)
+    expanded[0]!.expectation.stage = 'hmr'
+    const report = validReport()
+    report.results[0]!.assertions[0]!.stage = 'hmr'
+    expect(() => validateCapabilityReport(report, expanded, identity, 'current', 'web-chromium')).toThrow('缺少实际截图')
+    report.artifacts.push({ path: 'hmr.png', kind: 'screenshot', byteLength: 10, sha256: hash, runId: 'current', caseIds: ['width'] })
+    report.results[0]!.artifacts.push('hmr.png')
+    expect(validateCapabilityReport(report, expanded, identity, 'current', 'web-chromium')).toBe(report)
+    report.results[0]!.artifacts = ['hmr.png']
+    expect(() => validateCapabilityReport(report, expanded, identity, 'current', 'web-chromium')).toThrow('缺少实际运行时测量')
+  })
+
   it('拒绝放宽报告中的误差掩盖错误尺寸', () => {
     const report = validReport()
     report.results[0]!.assertions[0]!.actual = 2

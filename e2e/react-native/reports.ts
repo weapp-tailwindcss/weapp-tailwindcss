@@ -55,7 +55,7 @@ export function validateReactNativeReport(report: ReactNativeReport, platform: R
       }
     }
     if (rejectedNativeCases.has(result.id)) {
-      if (result.status !== 'unsupported' || result.encoded || !result.reason
+      if (result.status !== 'unsupported' || result.encoded || !result.reason || !result.warnings.some(warning => warning.trim())
         || !result.checkpoints.some(checkpoint => checkpoint.name === 'encoder:expected-rejection' && checkpoint.passed)) {
         fail(`${result.id} does not match the reviewed native rejection`)
       }

@@ -1,11 +1,42 @@
 import { describe, expect, it } from 'vitest'
-import { cssDeclarations, retainsRuleContexts } from './tailwind-capabilities/css'
+import { cssDeclarations, retainsRuleContexts, stylesheetDependenciesRetained } from './tailwind-capabilities/css'
+import { defaultReferenceBuilder } from './tailwind-capabilities/reference'
 
 function retains(actual: string, expected: string, candidate = 'probe') {
   return retainsRuleContexts(cssDeclarations(actual).contextsByClass.get(candidate) ?? [], cssDeclarations(expected).contextsByClass.get(candidate) ?? [])
 }
 
 describe('候选选择器与条件上下文', () => {
+  it('完整官方参考保留依赖，连续批次不会串入上一批候选', async () => {
+    const build = await defaultReferenceBuilder()
+    const first = await build(['w-4', 'animate-spin', 'translate-x-4'])
+    const second = await build(['w-8'])
+    expect(cssDeclarations(first).byClass.has('w-4')).toBe(true)
+    expect(cssDeclarations(second).byClass.has('w-4')).toBe(false)
+    expect(cssDeclarations(second).byClass.has('w-8')).toBe(true)
+    expect(first).toContain('--spacing:')
+    expect(first).toContain('@keyframes spin')
+    expect(first).toContain('@property')
+    expect(stylesheetDependenciesRetained(first, first)).toBe(true)
+    expect(stylesheetDependenciesRetained('.w-4{width:calc(var(--spacing)*4)}', first)).toBe(false)
+  })
+
+  it('后续覆盖和额外条件规则不能靠较早的正确声明通过', () => {
+    expect(retains('.probe{width:32px;width:64px}', '.probe{width:32px}')).toBe(false)
+    expect(retains('.probe{width:32px}@media print{.probe{width:64px}}', '.probe{width:32px}')).toBe(false)
+    expect(retains('.probe{width:32px;width:32px}', '.probe{width:32px}')).toBe(true)
+  })
+
+  it('缺少主题变量、动画帧或 property 注册不能只凭相同 class 声明通过', () => {
+    for (const dependency of [':root,:host{--spacing:.25rem}', '@supports not (color:lab(0% 0 0)){*,::before,::after{--tw-translate-x:0}}', '@keyframes spin{to{transform:rotate(360deg)}}', '@property --probe{syntax:"<number>";inherits:false;initial-value:0}']) {
+      const candidate = '.probe{width:calc(var(--spacing)*4);animation:spin 1s;opacity:var(--probe)}'
+      expect(stylesheetDependenciesRetained(`${dependency}${candidate}`, `${dependency}${candidate}`)).toBe(true)
+      expect(stylesheetDependenciesRetained(candidate, `${dependency}${candidate}`)).toBe(false)
+    }
+    expect(stylesheetDependenciesRetained(':root,:host{--spacing:.25rem;--spacing:1rem}', ':root,:host{--spacing:.25rem}')).toBe(false)
+    expect(stylesheetDependenciesRetained('@media print{:root,:host{--spacing:.25rem}}', ':root,:host{--spacing:.25rem}')).toBe(false)
+  })
+
   it('hover 条件丢失或改为 focus 不能仅靠相同声明通过', () => {
     const expected = '.hover\\:flex:hover{display:flex}'
     expect(retains(expected, expected, 'hover:flex')).toBe(true)

@@ -107,10 +107,10 @@ export function validateCapabilityReport(report: CapabilityReport, contracts: re
       }
     }
     const stages = new Set([contract.expectation.stage, ...contract.requiredAssertions.map(name => contract.assertionStages?.[name] ?? contract.expectation.stage)])
-    if (stages.has('runtime') && !result.artifacts.some(file => artifacts.get(file)?.kind === 'measurements')) {
+    if ((stages.has('runtime') || stages.has('hmr')) && !result.artifacts.some(file => artifacts.get(file)?.kind === 'measurements')) {
       fail(`${result.id} 缺少实际运行时测量`)
     }
-    if (stages.has('visual') && !result.artifacts.some(file => artifacts.get(file)?.kind === 'screenshot')) {
+    if ((stages.has('visual') || stages.has('hmr')) && !result.artifacts.some(file => artifacts.get(file)?.kind === 'screenshot')) {
       fail(`${result.id} 缺少实际截图`)
     }
   }

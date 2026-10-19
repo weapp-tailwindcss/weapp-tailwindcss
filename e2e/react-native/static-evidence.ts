@@ -6,7 +6,7 @@ import { nativeBuildCases, nativeFixtures, rejectedNativeCases } from '../../exa
 import { createNativeStyleRuntime } from '../../packages/react-native/src/runtime'
 import { generateNativeStylesheetEvidence } from '../../packages/react-native/src/tailwind/generate'
 import { compatibilityCases, reactNativeVersions, RN_CATALOG_HASH, RN_FIXTURE_HASH } from './catalog'
-import { generatedRules, matchGeneratedDeclaration, styleContains } from './declarations'
+import { generatedCandidatePresent, generatedRules, matchGeneratedDeclaration, styleContains } from './declarations'
 
 const repoRoot = path.resolve(import.meta.dirname, '../..')
 const exampleRoot = path.resolve(repoRoot, 'examples/react-native-expo')
@@ -27,18 +27,20 @@ export async function collectStaticEvidence() {
     const tokens = (item.id === 'directive-import' ? 'flex' : item.className).split(/\s+/).filter(Boolean)
     const matched = rules.filter(rule => rule.classes.some(token => tokens.includes(token)))
     const declarations = item.declarations.map(expected => ({ expected, actual: matchGeneratedDeclaration(matched, expected) }))
-    const generated = tokens.length > 0 && tokens.every(token => generatedClassSet.includes(token)) && declarations.every(entry => entry.actual)
+    const candidatesGenerated = tokens.length > 0 && tokens.every(token => generatedCandidatePresent(token, generatedClassSet, matched))
+    const generated = candidatesGenerated && declarations.every(entry => entry.actual)
     const warnings = manifest.warnings.filter(entry => entry.className && tokens.includes(entry.className)).map(entry => entry.message)
     const encodedStyle = runtime.tw(tokens, { colorScheme: 'dark', platform: 'ios' }) as Record<string, unknown>
     const completeTokens = tokens.every(token => Boolean(manifest.rules[token]?.length))
     const expectedStyle = nativeFixtures[item.id]?.style
     const encoded = completeTokens && warnings.length === 0 && (!expectedStyle || styleContains(encodedStyle, expectedStyle))
     const rejected = rejectedNativeCases.has(item.id)
-    const status: ReactNativeCaseResult['status'] = !generated ? 'failed' : rejected ? (!encoded ? 'unsupported' : 'failed') : !encoded ? 'failed' : nativeBuildCases.has(item.id) ? 'supported' : 'unverified'
+    const explicitRejection = generated && !encoded && warnings.some(warning => warning.trim().length > 0)
+    const status: ReactNativeCaseResult['status'] = !generated ? 'failed' : rejected ? (explicitRejection ? 'unsupported' : 'failed') : !encoded ? 'failed' : nativeBuildCases.has(item.id) ? 'supported' : 'unverified'
     const reason = !generated
       ? 'Tailwind 未生成全部精确候选及预期声明'
       : rejected
-        ? (encoded ? '原生支持边界发生变化，必须补夹具并审查预期' : '原生编码明确拒绝或未完整保留该语义')
+        ? (encoded ? '原生支持边界发生变化，必须补夹具并审查预期' : explicitRejection ? `原生编码明确拒绝：${warnings.join('；')}` : '原生规则缺失且没有候选诊断，不能当作已验证的平台限制')
         : !encoded
             ? '原生编码丢失声明或与独立样式预期不符'
             : status === 'unverified' ? '等待本轮逐项原生几何与像素证据' : undefined
@@ -52,10 +54,10 @@ export async function collectStaticEvidence() {
       encodedStyle,
       generatedDeclarations: declarations.flatMap(entry => entry.actual ? [entry.actual] : []),
       checkpoints: [
-        { name: 'generation:candidates', passed: tokens.every(token => generatedClassSet.includes(token)) },
+        { name: 'generation:candidates', passed: candidatesGenerated },
         ...declarations.map(({ expected, actual }, index) => ({ name: `generation:declaration:${index}:${expected.property}`, passed: Boolean(actual), actual: actual?.value, expected: expected.value })),
         { name: 'encoder:complete', passed: encoded },
-        ...(rejected ? [{ name: 'encoder:expected-rejection', passed: generated && !encoded }] : []),
+        ...(rejected ? [{ name: 'encoder:expected-rejection', passed: explicitRejection }] : []),
       ],
     }
   })

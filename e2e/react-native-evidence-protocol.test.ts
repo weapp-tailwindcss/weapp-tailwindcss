@@ -143,6 +143,12 @@ describe('React Native fresh semantic evidence', () => {
     expect(() => validateReactNativeReport(value)).toThrow(/generation failed/)
   })
 
+  it('静默丢失原生规则不能伪装为有证据的编码拒绝', () => {
+    const value = report()
+    value.results[1]!.warnings = []
+    expect(() => validateReactNativeReport(value)).toThrow(/reviewed native rejection/)
+  })
+
   it('静态证据显式保持 unverified，默认运行时门禁拒绝它', () => {
     const value = report()
     value.stage = 'static'

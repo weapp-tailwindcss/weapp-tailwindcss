@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import path from 'node:path'
 import process from 'node:process'
 import { fixtureBaseline } from './baseline'
+import { runHmr } from './hmr'
 import { runRegistryWeb } from './registry-web'
 import { assertCapabilitySuccess } from './report'
 import { browserEngines } from './types'
@@ -20,7 +21,7 @@ const runId = randomUUID()
 async function main() {
   await fixtureBaseline(root)
   const context = { root, runId, directory: path.join(root, 'e2e', '.artifacts', 'tailwind', runId, `web-${engine}`), startedAt: new Date().toISOString() }
-  const reports = [await runWeb(context, engine), await runRegistryWeb(context, engine)]
+  const reports = [await runWeb(context, engine), await runRegistryWeb(context, engine), await runHmr(context, engine)]
   for (const report of reports) {
     assertCapabilitySuccess(report)
   }

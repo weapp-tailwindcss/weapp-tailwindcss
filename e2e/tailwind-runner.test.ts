@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { executionTargets, parseOptions, selectWebGroups, stageName } from './tailwind-capabilities/plan'
+import { executionTargets, parseOptions, selectCaseGroups, selectWebGroups, stageName } from './tailwind-capabilities/plan'
 
 describe('统一 Tailwind 调度入口', () => {
   it('按实际 ID 选择 authored 和 registry，支持只选注册能力及两组共同匹配', () => {
@@ -13,6 +13,10 @@ describe('统一 Tailwind 调度入口', () => {
 
   it('无预检报告不能通过目标过滤绕过全面门禁', () => {
     expect(() => parseOptions(['--target', 'web-chromium', '--case', 'width'])).toThrow('prepare --extended')
+  })
+
+  it('只筛选 HMR 时保留真实源码 runner，不误调其它 Web 分组', () => {
+    expect(selectCaseGroups(/^hmr\//, { authored: ['runtime/width'], registry: ['registry/utility/static/flex'], hmr: ['hmr/source-add-replace-delete-refresh'] })).toEqual({ authored: false, registry: false, hmr: true })
   })
 
   it('三浏览器分别登记普通 Web 和 Expo Web，原生两平台分别登记', () => {

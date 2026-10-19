@@ -70,7 +70,7 @@ async function fixture(platform: ReactNativeReport['platform'] = 'web') {
       ...(rejected ? { reason: '独立编码边界' } : {}),
       generated: true,
       encoded: !rejected,
-      warnings: [],
+      warnings: rejected ? ['此单测的独立候选编码拒绝诊断'] : [],
       generatedDeclarations: [],
       encodedStyle: {},
       checkpoints: [

@@ -5,13 +5,16 @@ export type ExecutionTarget = typeof executionTargets[number]
 
 /** 按实际案例 ID 选择 Web 分组，避免把正则源码当成能力名称判断。 */
 export function selectWebGroups(caseFilter: RegExp | undefined, authoredIds: readonly string[], registryIds: readonly string[]) {
+  return selectCaseGroups(caseFilter, { authored: authoredIds, registry: registryIds })
+}
+
+export function selectCaseGroups<T extends string>(caseFilter: RegExp | undefined, groups: Record<T, readonly string[]>): Record<T, boolean> {
   const matches = (ids: readonly string[]) => ids.some(id => !caseFilter || new RegExp(caseFilter.source, caseFilter.flags).test(id))
-  const authored = matches(authoredIds)
-  const registry = matches(registryIds)
-  if (!authored && !registry) {
+  const selected = Object.fromEntries(Object.entries<readonly string[]>(groups).map(([name, ids]) => [name, matches(ids)])) as Record<T, boolean>
+  if (!Object.values(selected).some(Boolean)) {
     throw new Error('Web 过滤条件没有匹配任何案例')
   }
-  return { authored, registry }
+  return selected
 }
 
 export function parseOptions(argv: string[]) {

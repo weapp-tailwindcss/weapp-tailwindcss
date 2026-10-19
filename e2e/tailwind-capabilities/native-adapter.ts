@@ -169,7 +169,7 @@ export async function buildNativeCapabilityReport(context: RunContext, target: N
     }
     else {
       const assertions: SemanticAssertion[] = rejectedNativeCases.has(id)
-        ? [{ name: 'generated', stage: 'generation', actual: original.generated, expected: true }, { name: 'rejected', stage: 'negative', actual: !original.encoded && original.status === 'unsupported', expected: true }]
+        ? [{ name: 'generated', stage: 'generation', actual: original.generated, expected: true }, { name: 'rejected', stage: 'negative', actual: !original.encoded && original.status === 'unsupported' && original.warnings.some(warning => warning.trim().length > 0), expected: true }]
         : nativeBuildCases.has(id)
           ? [{ name: 'generated', stage: 'generation', actual: original.generated, expected: true }, { name: 'encoded', stage: 'encoding', actual: original.encoded && original.warnings.length === 0, expected: true }]
           : runtimeAssertions(original, raw!.platform)

@@ -85,9 +85,92 @@ export function cssDeclarations(css: string) {
 
 /** 声明相同也必须保留选择器和媒体、supports、container 等条件，不能把条件变体变成无条件规则。 */
 export function retainsRuleContexts(actual: readonly RuleContext[], expected: readonly RuleContext[]) {
-  return expected.length > 0 && expected.every(item => actual.some(value => value.selector === item.selector
-    && JSON.stringify(value.atRules) === JSON.stringify(item.atRules)
-    && retainsDeclarations([value.declaration], [item.declaration])))
+  const sequences = (contexts: readonly RuleContext[]) => {
+    const grouped = new Map<string, string[]>()
+    for (const context of contexts) {
+      const key = JSON.stringify([context.selector, context.atRules, context.declaration.property])
+      const values = grouped.get(key) ?? []
+      const value = JSON.stringify([(context.declaration.value ?? '').replace(/\s+/g, ' ').trim(), Boolean(context.declaration.important)])
+      if (values.at(-1) !== value) {
+        values.push(value)
+      }
+      grouped.set(key, values)
+    }
+    return grouped
+  }
+  const observed = sequences(actual)
+  const reference = sequences(expected)
+  return reference.size > 0 && observed.size === reference.size
+    && [...reference].every(([key, values]) => JSON.stringify(observed.get(key)) === JSON.stringify(values))
+}
+
+/** 比较官方完整样式中的全局变量、降级初始化、keyframes 和 property 注册。 */
+export function stylesheetDependenciesRetained(actual: string, expected: string) {
+  const collect = (css: string) => {
+    const dependencies = new Map<string, string[]>()
+    const conditions = (rule: postcss.Rule | postcss.AtRule) => {
+      const result: string[] = []
+      let parent = rule.parent
+      while (parent && parent.type !== 'root') {
+        if (parent.type === 'atrule' && parent.name !== 'layer') {
+          result.unshift(`@${parent.name} ${parent.params.trim()}`)
+        }
+        parent = parent.parent
+      }
+      return JSON.stringify(result)
+    }
+    const append = (key: string, value: string) => {
+      const values = dependencies.get(key) ?? []
+      if (values.at(-1) !== value) {
+        values.push(value)
+      }
+      dependencies.set(key, values)
+    }
+    const root = postcss.parse(css)
+    root.walkRules((rule) => {
+      const selectors: string[] = []
+      let candidateScoped = false
+      let parent: postcss.Container | undefined = rule
+      while (parent && parent.type !== 'root') {
+        if (parent.type === 'rule') {
+          selectors.unshift(parent.selector)
+          selectorParser((nodes: any) => nodes.walkClasses(() => {
+            candidateScoped = true
+          })).processSync(parent.selector)
+        }
+        parent = parent.parent
+      }
+      if (candidateScoped) {
+        return
+      }
+      for (const decl of rule.nodes) {
+        if (decl.type === 'decl' && decl.prop.startsWith('--')) {
+          for (const selector of resolveSelectors(selectors)) {
+            append(`global/${conditions(rule)}/${selector}/${decl.prop}`, JSON.stringify([decl.value.replace(/\s+/g, ' ').trim(), Boolean(decl.important)]))
+          }
+        }
+      }
+    })
+    root.walkAtRules((rule) => {
+      if (!['keyframes', '-webkit-keyframes', 'property'].includes(rule.name)) {
+        return
+      }
+      const declarations: unknown[] = []
+      rule.walkDecls((decl) => {
+        const parents: string[] = []
+        let parent = decl.parent
+        while (parent && parent !== rule && parent.type !== 'root') {
+          parents.unshift(parent.type === 'rule' ? parent.selector : `@${parent.name} ${parent.params}`)
+          parent = parent.parent
+        }
+        declarations.push([parents, decl.prop, decl.value.replace(/\s+/g, ' ').trim(), Boolean(decl.important)])
+      })
+      append(`@${rule.name}/${conditions(rule)}/${rule.params}`, JSON.stringify(declarations))
+    })
+    return dependencies
+  }
+  const actualDependencies = collect(actual)
+  return [...collect(expected)].every(([key, values]) => JSON.stringify(actualDependencies.get(key)) === JSON.stringify(values))
 }
 
 export function retainsDeclarations(actual: readonly Declaration[], expected: readonly Declaration[]) {

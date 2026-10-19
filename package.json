@@ -315,7 +315,7 @@
     "native:artifacts:after-version": "node packages/weapp-tailwindcss/native/release.mjs after-version",
     "e2e:tailwind:static:update": "tsx e2e/tailwind-capabilities/update-static.ts",
     "e2e:tailwind": "tsx e2e/tailwind-capabilities/cli.ts",
-    "e2e:tailwind:contract": "vitest run -c e2e/vitest.e2e.config.ts e2e/tailwind-inventory.test.ts e2e/tailwind-report.test.ts e2e/tailwind-runner.test.ts e2e/tailwind-weapp-pixels.test.ts e2e/tailwind-css.test.ts e2e/tailwind-fixtures.test.ts e2e/tailwind-inventory-web.test.ts e2e/tailwind-inventory-registry-web.test.ts e2e/tailwind-native-adapter.test.ts e2e/tailwind-capabilities-lynx-adapter.test.ts e2e/tailwind-capabilities-coverage.test.ts e2e/tailwind-capabilities-ci.test.ts --update=none",
+    "e2e:tailwind:contract": "vitest run -c e2e/vitest.e2e.config.ts e2e/tailwind-inventory.test.ts e2e/tailwind-report.test.ts e2e/tailwind-runner.test.ts e2e/tailwind-weapp-pixels.test.ts e2e/tailwind-css.test.ts e2e/tailwind-fixtures.test.ts e2e/tailwind-inventory-web.test.ts e2e/tailwind-inventory-registry-web.test.ts e2e/tailwind-native-adapter.test.ts e2e/tailwind-capabilities-lynx-adapter.test.ts e2e/tailwind-capabilities-coverage.test.ts e2e/tailwind-capabilities-ci.test.ts e2e/tailwind-web-layout.test.ts e2e/lynx-source-boundary.test.ts e2e/react-native-declaration-evidence.test.ts e2e/tailwind-static-conversion.test.ts e2e/tailwind-conversion-audit.test.ts e2e/tailwind-hmr.test.ts e2e/tailwind-authoring-generation.test.ts e2e/tailwind-web-variants.test.ts e2e/react-native-evidence-protocol.test.ts --update=none",
     "e2e:tailwind:web:ci": "tsx e2e/tailwind-capabilities/ci-web.ts"
   },
   "publishConfig": {

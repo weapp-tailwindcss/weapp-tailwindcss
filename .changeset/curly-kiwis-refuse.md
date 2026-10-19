@@ -1,0 +1,6 @@
+---
+"@weapp-tailwindcss/react-native": patch
+"@weapp-tailwindcss/postcss": patch
+---
+
+隔离 React Native 的多个 Tailwind 样式入口，避免前缀、主题和配置相互污染；解析原生排版中的主题变量，未解析或循环变量保留明确诊断。按最终字号层叠结果换算相对行高，支持内联字号及静态样式查找；完整保留多层阴影与 spread，避免局部变量污染其它规则。
