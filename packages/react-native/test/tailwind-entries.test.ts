@@ -37,6 +37,21 @@ async function fixture() {
 }
 
 describe('原生 Tailwind 独立 CSS 入口', () => {
+  it('Metro 未传 candidates 时仍编码实际 CSS 中的 apply 和 reference 自定义类', async () => {
+    const projectRoot = await fixture()
+    await writeFile(path.join(projectRoot, 'styles', 'reference.css'), `@reference ${JSON.stringify(require.resolve('tailwindcss/index.css').replaceAll('\\', '/'))}; .referenced { @apply p-[16px]; }`)
+    await writeFile(path.join(projectRoot, 'global.css'), `${tailwindImport('index.css', 'source(none)')} @import './styles/reference.css'; .applied { @apply flex items-center; }`)
+    const result = await generateNativeStylesheetEvidence({ projectRoot, cssEntries: ['global.css'], sourceGlobs: [] })
+    const runtime = createNativeStyleRuntime(result.manifest)
+    expect(result.generatedClassSet).not.toContain('applied')
+    expect(result.generatedClassSet).not.toContain('referenced')
+    expect(runtime.tw('applied')).toEqual({ display: 'flex', alignItems: 'center' })
+    expect(runtime.tw('referenced')).toEqual({ paddingTop: 16, paddingRight: 16, paddingBottom: 16, paddingLeft: 16 })
+    expect(runtime.tw('unemitted')).toEqual({})
+    expect(result.manifest.staticLookup?.applied).toHaveLength(1)
+    expect(result.manifest.staticLookup?.referenced).toHaveLength(1)
+  })
+
   it('真实 Tailwind 双轴 skew 保留全部变量组成的 transform', async () => {
     const projectRoot = await fixture()
     const result = await generateNativeStylesheetEvidence({ projectRoot, css: tailwindImport('index.css'), candidates: ['skew-x-6', 'skew-y-3'], sourceGlobs: [] })

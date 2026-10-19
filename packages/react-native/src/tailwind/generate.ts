@@ -53,14 +53,13 @@ async function generateSourceEvidence(source: Awaited<ReturnType<typeof resolveT
         scanSources: sourcePatterns ?? true,
       })
     }
-    const classSet = new Set(generated.classSet)
     const requestedCandidates = new Set(options.candidates ?? [])
     for (const candidate of generated.rawCandidates ?? []) {
       const base = baseClassName(candidate)
       if (base && generated.classSet.has(base) && /^(?:dark|ios|android|native):/.test(candidate)) { requestedCandidates.add(candidate) }
     }
-    for (const candidate of requestedCandidates) { classSet.add(candidate) }
-    const manifest = compileNativeStylesheet(generated.rawCss, { classSet, boxShadow: options.boxShadow })
+    // 已生成 CSS 的精确 selector 是编码边界；Tailwind 候选集合不包含自定义 @apply 类。
+    const manifest = compileNativeStylesheet(generated.rawCss, { boxShadow: options.boxShadow })
     addNativeVariantRules(manifest, requestedCandidates)
     finalizeNativeManifest(manifest)
     return { rawCss: generated.rawCss, generatedClassSet: [...generated.classSet], manifest }
