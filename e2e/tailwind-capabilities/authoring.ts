@@ -15,7 +15,7 @@ export async function runAuthoring(context: RunContext) {
     ...authoringFixtures,
     ...sourceSyntaxCases.map(item => ({ id: `scan-${item.id}`, css: `@import "tailwindcss" source(none);\n@source "./probe.${item.language}";`, files: { [`probe.${item.language}`]: item.source }, candidates: [], expectedDeclarations: item.candidates.map(candidate => ({ candidate, declarations: [] })), absentCandidates: item.absentCandidates })),
   ].filter(item => !context.caseFilter || context.caseFilter.test(item.id))
-  const contracts = fixtures.map((item): CaseContract => {
+  const contracts: CaseContract[] = fixtures.map((item): CaseContract => {
     const scanning = item.id.startsWith('scan-')
     return { id: item.id, features: [scanning ? 'source-scanning' : 'authoring'], candidate: scanning ? item.expectedDeclarations.map(value => value.candidate).join(' ') : item.candidates.join(' '), fixture: item.css, expectation: { support: 'supported', stage: 'generation' }, requiredAssertions: scanning ? ['case-defined', 'expected', 'excluded', 'context', 'dependencies'] : ['expected', 'excluded'], expectedValues: scanning ? { 'case-defined': true, 'expected': true, 'excluded': true, 'context': true, 'dependencies': true } : { expected: true, excluded: true } }
   })
