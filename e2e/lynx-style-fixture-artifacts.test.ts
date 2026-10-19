@@ -20,8 +20,9 @@ const directories: string[] = []
 
 beforeAll(async () => {
   const fixture = await fs.readFile(path.join(import.meta.dirname, '..', 'examples', 'react-lynx', 'src', 'styles', 'important-fixtures.css'), 'utf8')
+  const overflowFixture = await fs.readFile(path.join(import.meta.dirname, '..', 'examples', 'react-lynx', 'src', 'styles', 'overflow-fixtures.css'), 'utf8')
   // 实际 CSS 入口经 layer import 与 Tailwind 展开会留下完整相同的两份标尺。
-  source = `${String.raw`.\!bg-\[\#737373\]{background-color:#737373!important}.bg-\[\#737373\]{background-color:#737373}`}${fixture}${responsiveRule}${responsiveMarker}${responsiveMarker}${supports}`
+  source = `${String.raw`.\!bg-\[\#737373\]{background-color:#737373!important}.bg-\[\#737373\]{background-color:#737373}`}${fixture}.overflow-hidden{overflow:hidden}${overflowFixture}${responsiveRule}${responsiveMarker}${responsiveMarker}${supports}`
   bundle = (await encodeLynxCss(source, { mode: 'wasm', applyCompatibility: false })).buffer
 })
 
@@ -67,6 +68,10 @@ it('伪 bundle 不得回退到正确 CSS 或 serializer 输入', async () => {
 })
 
 const mutations = [
+  ['overflow-candidate', (css: string) => css.replace('.overflow-hidden{overflow:hidden}', ''), /overflow/],
+  ['overflow-base-hidden', (css: string) => css.replaceAll('overflow: visible', 'overflow: hidden'), /overflow/],
+  ['overflow-min-width', (css: string) => css.replace('min-width: 0', 'min-width: 120px'), /overflow/],
+  ['overflow-child', (css: string) => css.replace('left: 72px', 'left: 20px'), /overflow/],
   ['important', (css: string) => css.replace('!important', ''), /important 优先级/],
   ['probe-competitor', (css: string) => css.replace(/#probe-syntax-important\s*\{[^}]*\}/, ''), /important 优先级/],
   ['control-competitor', (css: string) => css.replace(/#control-syntax-important\s*\{[^}]*\}/, ''), /important 优先级/],

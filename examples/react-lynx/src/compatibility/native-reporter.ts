@@ -10,6 +10,7 @@ import { collectColorScheme } from './native-color-scheme'
 import { createNativeEvidence } from './native-evidence'
 import { requestNativeReceipt as callReporter, nativeEvidenceFailureIn, NativeEvidenceUnavailableError } from './native-failure'
 import { collectResponsive } from './native-responsive'
+import { overflowContract } from './overflow-contract'
 import { waitForProbeLayout } from './runtime-ready'
 import staticEvidenceJson from './static-evidence.json'
 
@@ -284,6 +285,15 @@ async function collectCase(item: CompatibilityCase, reporter: ReporterModule, ev
   }
   if (strategy === 'native-geometry') {
     return evaluateGeometry(item, await evidence.geometry(item.id))
+  }
+  if (strategy === 'overflow') {
+    return {
+      id: item.id,
+      status: 'not-tested',
+      reason: '已采集独立原生矩形与 PNG，等待宿主核对越界主体和裁剪效果',
+      geometry: await evidence.geometry(item.id),
+      checkpoints: [{ name: overflowContract.checkpoint, passed: false }],
+    }
   }
   if (strategy === 'color-scheme') {
     return collectColorScheme(reporter, evidence)

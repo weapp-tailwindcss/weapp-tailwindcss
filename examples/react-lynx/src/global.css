@@ -3,6 +3,7 @@
 @import './styles/flex-fixtures.css' layer(components);
 @import './styles/dark-fixtures.css' layer(components);
 @import './styles/responsive-fixtures.css' layer(components);
+@import './styles/overflow-fixtures.css' layer(components);
 @import './styles/structural-fixtures.css' layer(components);
 @import './styles/flow-fixtures.css' layer(components);
 @import './styles/media-fixtures.css' layer(components);
@@ -259,7 +260,6 @@ page {
     transform: rotate(15deg);
   }
 
-  .probe-fixture-layout-overflow .compat-probe,
   .probe-fixture-type-align-overflow .compat-probe {
     width: 54px;
   }

@@ -11,6 +11,7 @@ import { verifyDarkFixture } from './lynx/dark-fixture-browser'
 import { decodeLynxBundle } from './lynx/decoder'
 import { verifyFlexFixture } from './lynx/flex-fixture-browser'
 import { verifyGridFixtures } from './lynx/grid-fixture-browser'
+import { assertOverflowRules } from './lynx/overflow-static'
 import { assertResponsiveGuard } from './lynx/responsive-static'
 import { verifySkewFixture } from './lynx/skew-fixture-browser'
 import { analyzeStaticEvidence, parseDecodedRules, parseGeneratedRules } from './lynx/static-evidence'
@@ -55,6 +56,12 @@ describe('ReactLynx Rspeedy compatibility evidence', () => {
     const css = await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8')
     expect(() => assertResponsiveGuard(parseGeneratedRules(css), 'generation')).not.toThrow()
     expect(() => assertResponsiveGuard(parseDecodedRules(decodedCss), 'encoding')).not.toThrow()
+  })
+
+  it('overflow 真实构建与实际bundle保留完整双轴越界夹具，visible只在control专属规则', async () => {
+    const css = await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8')
+    expect(() => assertOverflowRules(parseGeneratedRules(css), 'generation')).not.toThrow()
+    expect(() => assertOverflowRules(parseDecodedRules(decodedCss), 'encoding')).not.toThrow()
   })
 
   it('固定 SDK 的编码配置启用运行时递归变量解析', async () => {

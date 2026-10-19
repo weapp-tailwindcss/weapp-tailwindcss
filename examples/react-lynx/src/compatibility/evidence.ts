@@ -2,11 +2,12 @@ import type { CompatibilityCase, StaticCaseEvidence } from './types'
 import { colorSchemeContract } from './color-scheme-contract'
 import { importantPriorityContract } from './important-priority-contract'
 import { geometryArtifactNames } from './native-geometry'
+import { overflowContract } from './overflow-contract'
 import { responsiveArtifactNames, responsiveContract } from './responsive-contract'
 
 /** 这些效果必须由宿主解码 PNG 后核对，截图指纹不同不能证明支持。 */
 export function requiresPixelEffect(id: string) {
-  return id === 'background-linear-gradient' || id === 'effect-shadow' || id === 'transform-skew' || id === 'variant-structural' || id === 'type-flow' || id === importantPriorityContract.id
+  return id === 'background-linear-gradient' || id === 'effect-shadow' || id === 'transform-skew' || id === 'variant-structural' || id === 'type-flow' || id === importantPriorityContract.id || id === overflowContract.id
 }
 
 /** Lynx 的 Canvas 变换不一定进入 View 矩阵；保持共享 catalog，集中选择实际取证路径。 */
@@ -22,6 +23,9 @@ export function lynxEvidenceStrategy(item: CompatibilityCase) {
   }
   if (item.id === responsiveContract.id) {
     return 'responsive'
+  }
+  if (item.id === overflowContract.id) {
+    return 'overflow'
   }
   if (item.id === 'type-flow') {
     return 'pixel-effect'
@@ -42,7 +46,7 @@ export function evidenceSequence(item: CompatibilityCase, built: Pick<StaticCase
     const active = built.candidates.find(candidate => candidate.className.startsWith('active:'))
     return active?.generated && active.bundled ? { checkpoint: 'interaction:pseudo-active', frames: ['before', 'active'] } : undefined
   }
-  if (!built?.generated || !built.bundled || strategy === 'build' || strategy === 'native-geometry' || strategy === 'responsive') {
+  if (!built?.generated || !built.bundled || strategy === 'build' || strategy === 'native-geometry' || strategy === 'responsive' || strategy === 'overflow') {
     return undefined
   }
   if (strategy === 'color-scheme') {
@@ -73,7 +77,7 @@ export function evidenceArtifactNames(item: CompatibilityCase, built: Pick<Stati
   if (built?.generated && built.bundled && item.id === responsiveContract.id) {
     return responsiveContract.phases.flatMap(responsiveArtifactNames)
   }
-  if (built?.generated && built.bundled && lynxEvidenceStrategy(item) === 'native-geometry') {
+  if (built?.generated && built.bundled && (lynxEvidenceStrategy(item) === 'native-geometry' || item.id === overflowContract.id)) {
     return geometryArtifactNames(item.id)
   }
   return evidenceSequence(item, built)?.frames.map(frame => `${item.id}-${frame}.png`) ?? []

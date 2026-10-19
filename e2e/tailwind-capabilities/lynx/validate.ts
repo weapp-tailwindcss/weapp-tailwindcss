@@ -6,6 +6,7 @@ import { compatibilityCases } from '@weapp-tailwindcss/test-catalog'
 import { evaluateGeometry } from '../../../examples/react-lynx/src/compatibility/geometry'
 import { evaluateColorScheme, validateColorSchemeReceipts } from '../../lynx/color-scheme'
 import { evaluateImportantPriority } from '../../lynx/important-priority'
+import { readOverflowEvidence } from '../../lynx/overflow-evidence'
 import { evaluatePixelEffect } from '../../lynx/pixel-effects'
 import { readResponsiveEvidence } from '../../lynx/responsive-evidence'
 import { evaluateStructural } from '../../lynx/structural'
@@ -24,7 +25,13 @@ export async function validateLynxCase(context: RunContext, raw: NativePlatformR
     return { status: 'failed', assertions: [], reason: `本轮 ${result.status} 偏离独立审查的 ${contract.expectation.support} 预期，不能自动降级平台支持状态` }
   }
   let measured: NativeCaseResult | undefined
-  if (contract.id === 'variant-responsive' && contract.expectation.stage === 'runtime') {
+  if (contract.id === 'layout-overflow' && contract.expectation.stage === 'visual') {
+    if (!raw.evidence) {
+      throw new Error('overflow 缺少本轮宿主身份')
+    }
+    measured = await readOverflowEvidence(raw, path.join(context.directory, 'native', 'crops', context.runId), { ...raw.evidence, runId: context.runId })
+  }
+  else if (contract.id === 'variant-responsive' && contract.expectation.stage === 'runtime') {
     if (!raw.evidence) {
       throw new Error('响应式缺少本轮宿主身份')
     }

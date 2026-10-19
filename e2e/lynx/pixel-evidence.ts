@@ -8,6 +8,7 @@ import { evidenceSequence, requiresPixelEffect } from '../../examples/react-lynx
 import staticEvidenceJson from '../../examples/react-lynx/src/compatibility/static-evidence.json'
 import { evaluateColorScheme, validateColorSchemeReceipts } from './color-scheme'
 import { evaluateImportantPriority } from './important-priority'
+import { readOverflowEvidence } from './overflow-evidence'
 import { evaluatePixelEffect } from './pixel-effects'
 import { PNG } from './png'
 import { readResponsiveEvidence } from './responsive-evidence'
@@ -55,6 +56,17 @@ export async function finalizeNativePixelEffects(raw: NativePlatformReport, crop
   const report = structuredClone(raw)
   for (const result of report.results) {
     const built = staticById.get(result.id)
+    if (result.id === 'layout-overflow' && built?.generated && built.bundled) {
+      if (result.status !== 'not-tested' || !report.evidence) {
+        throw new Error('overflow 原始采集报告不能预先声明结论，且必须提供本轮身份')
+      }
+      Object.assign(result, await readOverflowEvidence(report, cropsDirectory, report.evidence))
+      if (result.status === 'supported') {
+        delete result.reason
+        delete result.failureStage
+      }
+      continue
+    }
     if (result.id === 'variant-responsive' && built?.generated && built.bundled) {
       if (result.status !== 'not-tested' || !report.evidence) {
         throw new Error('响应式原始采集报告不能预先声明结论，且必须提供本轮身份')
@@ -106,6 +118,23 @@ export async function validateNativePixelEvidence(report: NativePlatformReport, 
   const errors: Error[] = []
   for (const item of compatibilityCases) {
     const staticResult = staticById.get(item.id)
+    if (item.id === 'layout-overflow' && staticResult?.generated && staticResult.bundled) {
+      try {
+        if (!report.evidence) {
+          throw new Error('overflow 缺少本轮原生身份')
+        }
+        const result = resultById.get(item.id)
+        const measured = await readOverflowEvidence(report, cropsDirectory, report.evidence)
+        if (result?.status !== measured.status || result.reason !== measured.reason || result.failureStage !== measured.failureStage
+          || !isDeepStrictEqual(result.checkpoints, measured.checkpoints)) {
+          throw new Error('overflow 结论与本轮原生几何及裁剪像素不符')
+        }
+      }
+      catch (error) {
+        errors.push(error instanceof Error ? error : new Error(String(error)))
+      }
+      continue
+    }
     if (item.id === 'variant-responsive' && staticResult?.generated && staticResult.bundled) {
       try {
         if (!report.evidence) {

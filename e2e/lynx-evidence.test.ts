@@ -14,6 +14,7 @@ import { compatibilityVersions, getCatalogHash } from './lynx/catalog'
 import { collectNativeEvidence, createEvidenceContext, cropsDirectory, sha256, validateNativeEvidence } from './lynx/evidence'
 import { darkReceipts } from './lynx/fixtures/dark-images'
 import { effectFixtureImage } from './lynx/fixtures/effect-images'
+import { overflowArtifactFixture } from './lynx/fixtures/overflow-artifacts'
 import { responsiveArtifactFixture } from './lynx/fixtures/responsive-artifacts'
 import { finalizeNativePixelEffects } from './lynx/pixel-evidence'
 import { PNG } from './lynx/png'
@@ -142,8 +143,11 @@ async function fixture(platform: Platform = 'android') {
   for (const [name, bytes] of responsiveArtifactFixture(report)) {
     images.set(name, bytes)
   }
+  for (const [name, bytes] of overflowArtifactFixture(report)) {
+    images.set(name, bytes)
+  }
   for (const result of report.results) {
-    if (result.id === 'variant-responsive') {
+    if (result.id === 'variant-responsive' || result.id === 'layout-overflow') {
       continue
     }
     const frames = evidenceSequence(compatibilityCases.find(item => item.id === result.id)!, staticEvidence.results.find(item => item.id === result.id))?.frames ?? []
@@ -243,8 +247,8 @@ it.each(['hash', 'length', 'name-swap', 'missing', 'duplicate', 'wrong-run', 'ol
     receipts[0]!.byteLength += 1
   }
   if (kind === 'name-swap') {
-    const probe = receipts.find(item => item.name === 'layout-overflow-probe.png')!
-    const control = receipts.find(item => item.name === 'layout-overflow-control.png')!
+    const probe = receipts.find(item => item.name === 'layout-visibility-probe.png')!
+    const control = receipts.find(item => item.name === 'layout-visibility-control.png')!
     ;[probe.name, control.name] = [control.name, probe.name]
   }
   if (kind === 'missing') {
@@ -293,8 +297,8 @@ it('复制失败不会使用输出目录中的旧 crops，并阻止同 run 重�
 
 it('unsupported 结论也拒绝未绑定的截图', async () => {
   const { report, reportPath, crops } = await fixture()
-  const frame = report.evidence!.artifacts.find(item => item.name === 'layout-overflow-probe.png')!
-  const result = report.results.find(item => `${item.id}-probe.png` === frame.name)!
+  const frame = report.evidence!.artifacts.find(item => item.name === 'layout-overflow-geometry-probe.png')!
+  const result = report.results.find(item => item.id === 'layout-overflow')!
   result.status = 'unsupported'
   result.reason = 'no visible difference'
   result.checkpoints[0]!.passed = false

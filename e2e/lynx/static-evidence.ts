@@ -9,6 +9,7 @@ import { compatibilityVersions, exampleDir, getCatalogHash, lynxIntermediateDir,
 import { decodeLynxBundle } from './decoder'
 import { matchEncodedDeclaration } from './encoded-declarations'
 import { assertImportantPriorityRules } from './important-static'
+import { assertOverflowRules } from './overflow-static'
 import { assertResponsiveGuard } from './responsive-static'
 import { supportsGuardsMatch } from './supports-guard'
 
@@ -240,6 +241,8 @@ export async function analyzeStaticEvidence(generatedAt = new Date().toISOString
   const bundledRules = parseDecodedRules(decoded.css.text)
   assertImportantPriorityRules(generatedRules, 'generation')
   assertImportantPriorityRules(bundledRules, 'encoding')
+  assertOverflowRules(generatedRules, 'generation')
+  assertOverflowRules(bundledRules, 'encoding')
   assertResponsiveGuard(generatedRules, 'generation')
   assertResponsiveGuard(bundledRules, 'encoding')
   const results = compatibilityCases.map(item => analyzeStaticCase(item, generatedRules, bundledRules, encoderLog, cssDefinesProperties))

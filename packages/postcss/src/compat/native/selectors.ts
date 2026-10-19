@@ -51,6 +51,15 @@ export function walkClasses(selector: string) {
   return [...classes]
 }
 
+/** 按选择器 AST 读取语义 ID，转义等价写法不能绕过夹具归属检查。 */
+export function walkIds(selector: string) {
+  const ids = new Set<string>()
+  selectorParser().astSync(selector).walkIds((node) => {
+    ids.add(node.value)
+  })
+  return [...ids]
+}
+
 /** 选择器只通过 AST 的精确 class 和 nesting 父级建立归属，不能猜测变体名称。 */
 export function nativeSelectorCandidates(rule: Rule, allowed?: Set<string>): Array<{ className: string, supported: boolean }> {
   const result: Array<{ className: string, supported: boolean }> = []

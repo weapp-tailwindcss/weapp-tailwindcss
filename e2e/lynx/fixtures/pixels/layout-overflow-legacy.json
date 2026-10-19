@@ -1,0 +1,18 @@
+{
+  "purpose": "历史无越界夹具的真实CI截图，仅作拒绝假阳性回归，不作当前原生支持证据",
+  "workflowRunId": 39248652614,
+  "headSha": "d78d1f81d392751dc11549da554cc79be02fc1ab",
+  "checkoutSha": "eb7393a4ed25d65e0045a7493a5ba86ead642a04",
+  "nativeRunId": "7a1a1b6e-a713-4c63-8d4b-d1ec798cc719",
+  "bundleSha256": "80b34c305367c64924b1ac68495f9ee4dbc0d0d90cfa314d5f95e05f4a7ed83f",
+  "files": {
+    "layout-overflow-legacy-probe.png": {
+      "sha256": "dfd5dcc9960cfe120e1abd765bf5b572d9cfa232f46d5af732257be55288a23d",
+      "bytes": 8487
+    },
+    "layout-overflow-legacy-control.png": {
+      "sha256": "e765b9407765a629e6323b697b6eed5d9639f6fd7024455aea2aed9d6c02228a",
+      "bytes": 8393
+    }
+  }
+}

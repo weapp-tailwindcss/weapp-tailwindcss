@@ -4,6 +4,7 @@ import { createRequire } from 'node:module'
 import path from 'node:path'
 import { catalogIdentityPayload } from '../../examples/react-lynx/src/compatibility/catalog'
 import { colorSchemeContract } from '../../examples/react-lynx/src/compatibility/color-scheme-contract'
+import { overflowContract } from '../../examples/react-lynx/src/compatibility/overflow-contract'
 import { responsiveContract } from '../../examples/react-lynx/src/compatibility/responsive-contract'
 import { reviewedLynxContract } from './expectations'
 import { readCompatibilityVersions } from './versions'
@@ -15,7 +16,7 @@ export const lynxIntermediateDir = path.join(exampleDir, 'dist', '.lynx', 'main'
 export const compatibilityVersions = readCompatibilityVersions(repoRoot)
 
 export function getCatalogHash() {
-  return createHash('sha256').update(catalogIdentityPayload).update(JSON.stringify(compatibilityVersions)).update(JSON.stringify(reviewedLynxContract)).update(JSON.stringify(colorSchemeContract)).update(JSON.stringify(responsiveContract)).digest('hex')
+  return createHash('sha256').update(catalogIdentityPayload).update(JSON.stringify(compatibilityVersions)).update(JSON.stringify(reviewedLynxContract)).update(JSON.stringify(colorSchemeContract)).update(JSON.stringify(responsiveContract)).update(JSON.stringify(overflowContract)).digest('hex')
 }
 
 export async function readCssDefinesProperties() {

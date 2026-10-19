@@ -97,7 +97,7 @@ export async function validateNativeEvidence(report: NativePlatformReport, artif
   const builtById = new Map((staticEvidence as StaticEvidenceReport).results.map(item => [item.id, item]))
   for (const item of compatibilityCases) {
     const built = builtById.get(item.id)
-    if (built?.generated && built.bundled && lynxEvidenceStrategy(item) === 'native-geometry') {
+    if (built?.generated && built.bundled && (lynxEvidenceStrategy(item) === 'native-geometry' || lynxEvidenceStrategy(item) === 'overflow')) {
       await readNativeHostGeometry(report, directory, expected, item.id)
     }
     if (built?.generated && built.bundled && lynxEvidenceStrategy(item) === 'responsive') {

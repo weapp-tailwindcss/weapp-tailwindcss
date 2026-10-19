@@ -5,6 +5,7 @@ import { FlexProbePair, isFlexFixture } from './FlexProbePair'
 import { FlowProbePair } from './FlowProbePair'
 import { GridProbePair, isGridFixture } from './GridProbePair'
 import { ImportantProbePair } from './ImportantProbePair'
+import { OverflowProbePair } from './OverflowProbePair'
 import { ResponsiveProbePair } from './ResponsiveProbePair'
 import { StructuralProbePair } from './StructuralProbePair'
 
@@ -131,36 +132,38 @@ export function CaseCard({ item, result, staticEvidence }: { item: Compatibility
       </view>
 
       <view className={`probe-shell probe-fixture-${item.id}`}>
-        {item.id === 'variant-responsive'
-          ? <ResponsiveProbePair item={item} />
-          : item.id === 'type-flow'
-            ? <FlowProbePair item={item} />
-            : isGridFixture(item.id)
-              ? <GridProbePair item={item} />
-              : isFlexFixture(item.id)
-                ? <FlexProbePair item={item} />
-                : item.id === 'variant-structural'
-                  ? <StructuralProbePair item={item} />
-                  : item.id === 'syntax-important'
-                    ? <ImportantProbePair />
-                    : item.id === 'variant-dark'
-                      ? <DarkProbePair item={item} />
-                      : (
-                          <view className={pairClass}>
-                            <view id={`probe-container-${item.id}`} flatten={false} className={usesCaptureFrame ? 'probe-slot probe-capture' : 'probe-slot'}>
-                              <view id={`probe-${item.id}`} className={`${probeClassName} ${viewClassName}`}>
-                                {item.id !== 'transform-skew' && <ProbeBody id={item.id} textClassName={textClassName} />}
+        {item.id === 'layout-overflow'
+          ? <OverflowProbePair />
+          : item.id === 'variant-responsive'
+            ? <ResponsiveProbePair item={item} />
+            : item.id === 'type-flow'
+              ? <FlowProbePair item={item} />
+              : isGridFixture(item.id)
+                ? <GridProbePair item={item} />
+                : isFlexFixture(item.id)
+                  ? <FlexProbePair item={item} />
+                  : item.id === 'variant-structural'
+                    ? <StructuralProbePair item={item} />
+                    : item.id === 'syntax-important'
+                      ? <ImportantProbePair />
+                      : item.id === 'variant-dark'
+                        ? <DarkProbePair item={item} />
+                        : (
+                            <view className={pairClass}>
+                              <view id={`probe-container-${item.id}`} flatten={false} className={usesCaptureFrame ? 'probe-slot probe-capture' : 'probe-slot'}>
+                                <view id={`probe-${item.id}`} className={`${probeClassName} ${viewClassName}`}>
+                                  {item.id !== 'transform-skew' && <ProbeBody id={item.id} textClassName={textClassName} />}
+                                </view>
+                                {item.id === 'layout-z-index' && <view className="probe-z-overlay" />}
                               </view>
-                              {item.id === 'layout-z-index' && <view className="probe-z-overlay" />}
-                            </view>
-                            <view id={`control-container-${item.id}`} flatten={false} className={usesCaptureFrame ? 'probe-slot probe-control-slot probe-capture' : 'probe-slot probe-control-slot'}>
-                              <view id={`control-${item.id}`} className={probeClassName}>
-                                {item.id !== 'transform-skew' && <ProbeBody id={`control-${item.id}`} />}
+                              <view id={`control-container-${item.id}`} flatten={false} className={usesCaptureFrame ? 'probe-slot probe-control-slot probe-capture' : 'probe-slot probe-control-slot'}>
+                                <view id={`control-${item.id}`} className={probeClassName}>
+                                  {item.id !== 'transform-skew' && <ProbeBody id={`control-${item.id}`} />}
+                                </view>
+                                {item.id === 'layout-z-index' && <view className="probe-z-overlay" />}
                               </view>
-                              {item.id === 'layout-z-index' && <view className="probe-z-overlay" />}
                             </view>
-                          </view>
-                        )}
+                          )}
       </view>
 
       {result?.ios.reason && (
