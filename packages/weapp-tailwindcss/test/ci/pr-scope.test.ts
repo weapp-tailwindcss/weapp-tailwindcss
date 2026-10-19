@@ -9,25 +9,26 @@ describe('PR 变更范围解析', () => {
     ])
 
     expect(scopes).toMatchObject({
-      core: true,
-      watch: true,
-      benchmark: true,
+      'core': true,
+      'watch': true,
+      'benchmark': true,
       'react-native': true,
     })
   })
 
   it('将文档和 changeset-only 变更排除在代码门禁之外', () => {
     expect(resolveScopes(['README.md', '.changeset/example.md'])).toEqual({
-      core: false,
-      watch: false,
-      benchmark: false,
-      release: false,
-      website: false,
-      templates: false,
+      'core': false,
+      'watch': false,
+      'benchmark': false,
+      'release': false,
+      'website': false,
+      'templates': false,
       'react-native': false,
-      lynx: false,
-      hbuilderx: false,
-      has_changes: true,
+      'lynx': false,
+      'hbuilderx': false,
+      'tailwind-capabilities': false,
+      'has_changes': true,
     })
   })
 
