@@ -25,6 +25,7 @@ public final class MediaGateEvidenceTest {
   private static final class Host implements MediaGateEvidence.Host {
     final List<String> measured = new ArrayList<>(), captured = new ArrayList<>();
     String missingNode, missingImage, version = "4.0.1";
+    double[] invalidRect;
     int versions;
     boolean main = true;
     public boolean isUiThread() { return main; }
@@ -32,6 +33,7 @@ public final class MediaGateEvidenceTest {
     public double[] measure(String id) {
       measured.add(id);
       if (id.equals(missingNode)) return null;
+      if (invalidRect != null) return invalidRect;
       int width = id.startsWith("container-") ? 64 : id.endsWith("-unguarded") || id.endsWith("-min-width") ? 32 : 16;
       int height = id.startsWith("container-") ? 64 : 16;
       return new double[] {2, 3, 2 + width, 3 + height, width, height};
@@ -95,6 +97,24 @@ public final class MediaGateEvidenceTest {
     EvidenceStore js = store(root, 52);
     fails(() -> js.save(run(52), "media-hover-v1.native.json", PNG));
     fails(() -> js.publish(run(52), "{}"));
+    double[][] invalidRects = {
+      {0, 0, 16, 16, Double.NaN, 16}, {0, 0, 16, 16, Double.POSITIVE_INFINITY, 16},
+      {0, 0, 16, 16, 0, 16}, {0, 0, 16, 16, 32, 16}, {0, 0, 16},
+    };
+    for (int index = 0; index < invalidRects.length; index++) {
+      final int number = 60 + index;
+      EvidenceStore broken = store(root, number);
+      Host fault = new Host();
+      fault.invalidRect = invalidRects[index];
+      fails(() -> MediaGateEvidence.capture(broken, run(number), fault));
+      fails(() -> broken.publish(run(number), "{}"));
+    }
+    EvidenceStore sidecarFailure = store(root, 70);
+    File sidecar = new File(new File(new File(root, run(70)), "artifacts"), "media-hover-v1.native.json");
+    Files.writeString(sidecar.toPath(), "do not replace prior evidence");
+    fails(() -> MediaGateEvidence.capture(sidecarFailure, run(70), new Host()));
+    fails(() -> sidecarFailure.publish(run(70), "{}"));
+    check(Files.readString(sidecar.toPath()).equals("do not replace prior evidence"), "Do not overwrite existing native sidecar");
     System.out.println("Android media gate: native SDK, twelve node reads, seven receipts and fail-closed persistence passed");
   }
 }

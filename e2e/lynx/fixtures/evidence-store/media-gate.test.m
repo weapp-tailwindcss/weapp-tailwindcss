@@ -115,6 +115,28 @@ int main(int argc, const char *argv[]) {
     EvidenceStore *forged = store(root, number);
     check([forged saveArtifact:@"media-hover-v1.native.json" runId:run(number) data:png() error:NULL] == nil, @"JS PNG channel cannot create native sidecar");
     cannotPublish(forged, number);
+    number++;
+    for (int missing = 0; missing < 3; missing++) {
+      EvidenceStore *value = store(root, number);
+      MediaGateEvidence *evidence = [[MediaGateEvidence alloc] initWithStore:value];
+      check([evidence captureRunId:run(number) sdkVersion:missing == 0 ? nil : version
+        measure:missing == 1 ? nil : measure capture:missing == 2 ? nil : capture error:NULL] == nil, @"Missing native driver is rejected");
+      cannotPublish(value, number++);
+    }
+    for (int failing = 0; failing < 3; failing++) {
+      EvidenceStore *value = store(root, number);
+      MediaGateEvidence *evidence = [[MediaGateEvidence alloc] initWithStore:value];
+      check([evidence captureRunId:run(number) sdkVersion:^NSString *{
+        if (failing == 0) @throw [NSException exceptionWithName:@"sdk" reason:@"failed" userInfo:nil];
+        return @"4.0.1";
+      } measure:^NSDictionary *(NSString *node) {
+        if (failing == 1) @throw [NSException exceptionWithName:@"measure" reason:@"failed" userInfo:nil];
+        return rect(node);
+      } capture:^NSData *(NSString *node) {
+        (void)node; @throw [NSException exceptionWithName:@"capture" reason:@"failed" userInfo:nil];
+      } error:NULL] == nil, @"Native SDK, geometry or screenshot exceptions fail closed");
+      cannotPublish(value, number++);
+    }
     puts("iOS media gate: native SDK, twelve node reads, seven receipts and failure isolation passed");
   }
   return 0;
