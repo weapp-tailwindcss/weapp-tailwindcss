@@ -40,7 +40,7 @@ describe('Web 全量 utility 独立运行时参考合同', () => {
     const profile = (root: string) => registryWebProfile(inventory.utilities.find(item => item.root === root)!, 0)
     expect(registryWebLimit(profile('mix-blend-plus-darker'), 'chromium', 'linux')?.mode).toBe('rejected-syntax')
     expect(registryWebLimit(profile('mix-blend-plus-darker'), 'webkit', 'linux')).toBeUndefined()
-    expect(registryWebLimit(profile('subpixel-antialiased'), 'firefox', 'linux')?.mode).toBe('unavailable-computed')
+    expect(registryWebLimit(profile('subpixel-antialiased'), 'firefox', 'linux')?.mode).toBe('rejected-syntax')
     expect(registryWebLimit(profile('subpixel-antialiased'), 'firefox', 'darwin')).toBeUndefined()
     expect(registryWebLimit(profile('object-fill'), 'chromium', 'linux')).toBeUndefined()
     const declaration = profile('justify-baseline')
@@ -71,6 +71,18 @@ describe('Web 全量 utility 独立运行时参考合同', () => {
     const fonts = registryWebProfile(inventory.utilities.find(item => item.root === 'antialiased')!, 0)
     const fontLimit = registryWebLimit(fonts, 'firefox', 'linux')!
     expect(registryEmittedNegativeDeclaration('.antialiased { -moz-osx-font-smoothing: grayscale; }', fonts, fontLimit)).toBe(false)
+  })
+
+  it.each(['antialiased', 'subpixel-antialiased'])('Linux Firefox 对 macOS 专属属性的语法拒绝必须与 computed 缺失区分：%s', async (root) => {
+    const inventory = await loadInventory()
+    const profile = registryWebProfile(inventory.utilities.find(item => item.root === root)!, 0)
+    const limit = registryWebLimit(profile, 'firefox', 'linux')!
+    const observation: RegistryObservation = { id: profile.id, styles: { '-moz-osx-font-smoothing': '', '-webkit-font-smoothing': '' }, childStyles: [], pseudoStyles: {}, geometry: [0, 0, 96, 64, 96, 64], unavailableProperties: ['-moz-osx-font-smoothing', '-webkit-font-smoothing'], declarationEvidence: [{ property: limit.property, value: limit.value, supported: false, cssom: '' }] }
+    const assertions = registryLimitAssertions(limit, true, '157.0', observation, observation, observation, true)
+    expect(assertions.filter(item => !assertionPassed(item))).toEqual([])
+    const accepted = { ...observation, declarationEvidence: [{ property: limit.property, value: limit.value, supported: true, cssom: limit.value }] }
+    expect(registryLimitAssertions(limit, true, '157.0', accepted, observation, accepted, true).every(assertionPassed)).toBe(false)
+    expect(registryWebLimit(profile, 'firefox', 'darwin')).toBeUndefined()
   })
 
   it('Firefox 仅滚动条宽度借用同库存原生 BiDi，保持后台模式和其他案例原协议', async () => {

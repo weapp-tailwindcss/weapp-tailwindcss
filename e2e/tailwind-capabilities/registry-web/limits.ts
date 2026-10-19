@@ -43,8 +43,8 @@ export function registryWebLimit(profile: RegistryWebProfile, engine: BrowserEng
     return create('固定 Firefox 尚未实现 CSS Text 的 pretty 换行值。', 'https://drafts.csswg.org/css-text-4/#valdef-text-wrap-style-pretty')
   }
   if (engine === 'firefox' && platform === 'linux' && /^(?:subpixel-)?antialiased$/.test(root)) {
-    // Firefox 接受该前缀语法，但文档明确只有 macOS 应用此属性。
-    return { ...create('Firefox 的 -moz-osx-font-smoothing 仅适用于 macOS；Linux 不暴露其 computed value。', 'https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/font-smooth', 'unavailable-computed'), property: '-moz-osx-font-smoothing', value: root === 'antialiased' ? 'grayscale' : 'auto' }
+    // Linux Firefox 不注册此 macOS 专属属性，CSS.supports 与 CSSOM 均拒绝其声明。
+    return { ...create('Firefox 的 -moz-osx-font-smoothing 仅适用于 macOS；固定 Linux 版本拒绝其语法且不暴露 computed value。', 'https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/font-smooth'), property: '-moz-osx-font-smoothing', value: root === 'antialiased' ? 'grayscale' : 'auto' }
   }
   if (engine === 'webkit' && /^forced-color-adjust-(?:auto|none)$/.test(root)) {
     return create('固定 WebKit 尚未实现 forced-color-adjust 属性。', 'https://drafts.csswg.org/css-color-adjust-1/#forced-color-adjust-prop')
