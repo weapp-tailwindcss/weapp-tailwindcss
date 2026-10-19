@@ -113,6 +113,8 @@ PR #1311 的首轮 CI（head `8275b8888`）暴露生命周期观测边界：Fire
 
 第二轮 CI 的 Linux Firefox 157.0 仅剩字体平滑两条 registry 断言失败：`-moz-osx-font-smoothing` 是 macOS 专属属性，Linux 的 CSS.supports 返回 false，CSSOM 和 computed 均为空，不能按“语法接受但 computed 不可用”建模。已保留原始 batch-004/040 证据，加入两条先红后绿回归并将该已登记限制改为明确语法拒绝；macOS 继续执行正向合同，未来引擎开始接受声明时旧负向合同仍失败。12 项 registry 回归通过；重新生成 static 内容不变。
 
+第二轮 WebKit 的 HMR 删除阶段没有任何 Vite change 日志或 WebSocket 更新，页面仍保留 replaced 标识与 147px。真实 Node 文件监听器最小回归确认：紧接一次已观察保存的最终写入会被 Chokidar 的 50ms change 去重吞掉；macOS 默认 polling 不复现，因此回归明确选择 Node fs.watch。受控夹具使用 Vite 的 awaitWriteFinish 稳定写入边界，未修改普通项目 watcher 或增加浏览器超时。相同真实文件回归先红后绿，5 项 HMR 合同及后台 WebKit 的新增、替换、删除、刷新单例通过；static 再生成内容不变，浏览器和服务均在 finally 清理。
+
 RN Web 像素失败来自探针与对照的渲染容器位置不同。三者改为同父级竖排，保留 160 像素宽度使 self-end 仍有可观察位移；未修改像素阈值。真实 `CI=1 pnpm e2e:react-native:web` 完成 baseline、TSX HMR 和 CSS HMR，118 个已登记案例中 31 个支持、87 个限制，独立像素、编码及产物校验通过（run `4c9df421-8003-4070-a2d9-a44989d81527`）。`pnpm e2e:react-native:static:update` 重生成后仅时间戳变化，相关合同以 `--update=none` 核对。此结果仅证明 Expo Web 的这些案例。
 
 RN iOS 的首轮编译日志已包含 BUILD SUCCEEDED；真正失败是 simctl 对首次安装且未启动的目标返回 ESRCH。现在只接受 exit 3、NSPOSIXErrorDomain 和绑定目标应用的完整 nothing-to-terminate 诊断，其余终止错误继续阻断；同时避免把 deviceYear 等编译符号的 warning 误判为设备不可用。修复经原始日志回归验证，实际 iOS 结果仍待新 head 的 CI。运行时架构合同则用严格纯 JS 值解释闭包及浏览器打包替代旧单文件数量假设，继续拒绝 CSS 编译器、PostCSS root AST、Node、生成器及构建器，公开入口和源码均要求零 external imports。

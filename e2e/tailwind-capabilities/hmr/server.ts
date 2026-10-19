@@ -7,6 +7,7 @@ import { createLogger, createServer } from 'vite'
 import { WeappTailwindcssWeb } from 'weapp-tailwindcss/vite/web'
 import { digest } from '../identity'
 import { hmrCss, hmrSource, hmrStates } from './fixture'
+import { hmrWatchOptions } from './watch'
 
 export async function withHmrServer<T>(root: string, runId: string, logs: string[], run: (server: { url: string, instance: string, source: string }) => Promise<T>) {
   const allocated = await mkdtemp(path.join(tmpdir(), 'tailwind-vite-hmr-'))
@@ -24,7 +25,7 @@ export async function withHmrServer<T>(root: string, runId: string, logs: string
     logger.warn = message => logs.push(`warn:${message}`)
     logger.info = message => logs.push(`info:${message}`)
     // 夹具只有原生 JS 和 CSS，不启动无依赖的预打包扫描，避免关闭时留下异步扫描任务。
-    server = await createServer({ root: directory, configFile: false, customLogger: logger, clearScreen: false, optimizeDeps: { noDiscovery: true, include: [] }, plugins: WeappTailwindcssWeb({ tailwindcssBasedir: directory, cssEntries: [path.join(directory, 'entry.css')], rem2rpx: false }) ?? [], server: { host: '127.0.0.1', port: 0, open: false, fs: { allow: [directory, root] } } })
+    server = await createServer({ root: directory, configFile: false, customLogger: logger, clearScreen: false, optimizeDeps: { noDiscovery: true, include: [] }, plugins: WeappTailwindcssWeb({ tailwindcssBasedir: directory, cssEntries: [path.join(directory, 'entry.css')], rem2rpx: false }) ?? [], server: { host: '127.0.0.1', port: 0, open: false, fs: { allow: [directory, root] }, watch: hmrWatchOptions } })
     await server.listen()
     const address = server.httpServer?.address()
     if (!address || typeof address === 'string' || path.resolve(server.config.root) !== path.resolve(directory)) {
