@@ -10,6 +10,33 @@ module LynxBuildMetadata
   SETTING = 'GCC_PREPROCESSOR_DEFINITIONS'
   MACRO = 'Lynx_POD_VERSION'
 
+  # PodTarget 是解析模型；生成的 PBX 目标只从安装结果的正式映射读取。
+  def self.resolve!(installer)
+    pods = installer.pod_targets.select { |target| target.pod_name == 'Lynx' }
+    raise '缺少受管 Lynx Pod' if pods.empty?
+    raise 'Lynx Pod 目标不唯一' unless pods.length == 1
+    pod = pods.first
+    installation = installer.target_installation_results
+    results = installation && installation.pod_target_installation_results
+    result_type = Pod::Installer::Xcode::PodsProjectGenerator::TargetInstallationResult
+    result = results[pod.name] if results.is_a?(Hash)
+    unless result.is_a?(result_type) && result.target.equal?(pod) &&
+           results.values.count { |item| item.is_a?(result_type) && item.target.equal?(pod) } == 1
+      raise 'Lynx 安装结果缺失、重复或未绑定当前 Pod'
+    end
+    target = result.native_target
+    project = installer.pods_project
+    unless target.is_a?(Xcodeproj::Project::Object::PBXNativeTarget) && target.name == 'Lynx' &&
+           project.is_a?(Xcodeproj::Project) && target.project.equal?(project) &&
+           project.targets.select { |item| item.name == 'Lynx' } == [target]
+      raise 'Lynx 原生目标必须唯一且属于当前 Pods 工程'
+    end
+    unless results.values.count { |item| item.is_a?(result_type) && item.native_target.equal?(target) } == 1
+      raise 'Lynx 安装结果将原生目标绑定到多个 Pod'
+    end
+    [pod, target]
+  end
+
   def self.apply!(root, specification, target)
     raise '版本元数据缺少受管 Lynx Pod' unless specification && specification.name == 'Lynx'
     version = specification.version.to_s

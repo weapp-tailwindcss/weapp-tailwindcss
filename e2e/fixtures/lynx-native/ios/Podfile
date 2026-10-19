@@ -14,10 +14,9 @@ target 'LynxCompatibilityHost' do
 end
 
 post_install do |installer|
-  lynx = installer.pod_targets.find { |target| target.pod_name == 'Lynx' }
-  raise '缺少受管 Lynx Pod' unless lynx
+  lynx, native_target = LynxBuildMetadata.resolve!(installer)
   LynxSourcePatch.apply!(installer.sandbox.pod_dir('Lynx'), lynx.root_spec.version)
-  LynxBuildMetadata.apply!(installer.sandbox.pod_dir('Lynx'), lynx.root_spec, lynx.native_target)
+  LynxBuildMetadata.apply!(installer.sandbox.pod_dir('Lynx'), lynx.root_spec, native_target)
   installer.pods_project.targets.each do |target|
     target.build_configurations.each do |config|
       config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
