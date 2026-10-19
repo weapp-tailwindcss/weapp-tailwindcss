@@ -1,0 +1,59 @@
+import type { ExecutionStage } from './tailwind-capabilities/execution-record'
+import type { ExecutionTarget } from './tailwind-capabilities/plan'
+import { mkdtemp, readFile, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
+import { expect, it, vi } from 'vitest'
+import { EnvironmentBlockedError, environmentFailure } from './tailwind-capabilities/environment-block'
+import { runPnpmStage } from './tailwind-capabilities/external'
+import { scheduleTargets } from './tailwind-capabilities/scheduler'
+
+function fixture() {
+  const stages: ExecutionStage[] = ['react-native-ios', 'lynx-android', 'mini-builds'].map(target => ({ target, status: 'not-run', attempted: false }))
+  const dependencies = { check: vi.fn(async (_target: ExecutionTarget) => {}), execute: vi.fn(async (_target: ExecutionTarget) => {}), classify: vi.fn(async (_target: ExecutionTarget) => 'failed'), persist: vi.fn(async () => {}) }
+  return { stages, dependencies }
+}
+
+it('子进程工具环境错误立即阻断，后续 check 和 execute 都不调用', async () => {
+  const { stages, dependencies } = fixture()
+  dependencies.execute.mockRejectedValueOnce(new EnvironmentBlockedError('Simulator app is missing'))
+  await expect(scheduleTargets(stages, dependencies)).rejects.toThrow(EnvironmentBlockedError)
+  expect(dependencies.execute.mock.calls).toEqual([['react-native-ios']])
+  expect(dependencies.check.mock.calls).toEqual([['react-native-ios']])
+  expect(dependencies.classify).not.toHaveBeenCalled()
+  expect(stages).toMatchObject([{ attempted: true, status: 'blocked' }, { attempted: false, status: 'blocked' }, { attempted: false, status: 'blocked' }])
+  expect(dependencies.persist).toHaveBeenCalledTimes(2)
+})
+
+it('预检失败时零目标执行，全部未尝试且阻断', async () => {
+  const { stages, dependencies } = fixture()
+  dependencies.check.mockRejectedValueOnce(new Error('bound device went offline'))
+  await expect(scheduleTargets(stages, dependencies)).rejects.toThrow('offline')
+  expect(dependencies.execute).not.toHaveBeenCalled()
+  expect(stages.every(stage => stage.status === 'blocked' && !stage.attempted)).toBe(true)
+})
+
+it('普通语义断言失败保留失败并继续诊断其它目标', async () => {
+  const { stages, dependencies } = fixture()
+  dependencies.execute.mockRejectedValueOnce(new Error('padding-right is missing'))
+  await scheduleTargets(stages, dependencies)
+  expect(stages.map(stage => stage.status)).toEqual(['failed', 'passed', 'passed'])
+  expect(dependencies.execute).toHaveBeenCalledTimes(3)
+})
+
+it('真实子进程的明确环境错误保留日志并传播结构化阻断', async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'tailwind-environment-'))
+  try {
+    await expect(runPnpmStage({ root: path.resolve(import.meta.dirname, '..'), directory, runId: 'test', env: {} }, ['exec', 'node', '-e', 'console.error("Can\'t determine id of Simulator app; the Simulator is most likely not installed on this machine."); process.exitCode=1'], 'ios')).rejects.toThrow(EnvironmentBlockedError)
+    expect(await readFile(path.join(directory, 'ios.log'), 'utf8')).toContain('Can\'t determine id of Simulator app')
+  }
+  finally {
+    await rm(directory, { recursive: true, force: true })
+  }
+})
+
+it('缺截图和错误样式不会被正则升级成环境问题', () => {
+  for (const message of ['padding is incorrect', 'iOS screenshot is missing', 'Android geometry assertion failed', 'case registry incomplete']) {
+    expect(environmentFailure(message)).toBeUndefined()
+  }
+})

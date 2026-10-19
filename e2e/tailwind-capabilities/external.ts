@@ -5,6 +5,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { execa } from 'execa'
 import { createPnpmCommand } from '../../scripts/pnpm-command.mjs'
+import { EnvironmentBlockedError, environmentFailure } from './environment-block'
 import { assertCapabilitySuccess } from './report'
 
 export async function runPnpmStage(context: RunContext, args: string[], name: string, env: NodeJS.ProcessEnv = {}) {
@@ -20,11 +21,19 @@ export async function runPnpmStage(context: RunContext, args: string[], name: st
     })
     const result = await child
     if (result.exitCode !== 0) {
+      const reason = environmentFailure(output)
+      if (reason) {
+        throw new EnvironmentBlockedError(`${name} 环境故障：${reason}；${log}`)
+      }
       throw new Error(`${name} 执行失败 (${result.exitCode})；${log}`)
     }
   }
   catch (error) {
     output += `\n${String(error)}\n`
+    const reason = environmentFailure(String(error))
+    if (reason && !(error instanceof EnvironmentBlockedError)) {
+      throw new EnvironmentBlockedError(`${name} 环境故障：${reason}；${log}`, { cause: error })
+    }
     throw error
   }
   finally {
@@ -49,7 +58,12 @@ export async function runExternalTarget(target: ExecutionTarget, context: RunCon
     try {
       await runPnpmStage(context, [`e2e:react-native:${platform}`], target, engine ? { RN_WEB_BROWSER: engine } : {})
     }
-    catch (error) { executionError = error }
+    catch (error) {
+      if (error instanceof EnvironmentBlockedError) {
+        throw error
+      }
+      executionError = error
+    }
     try {
       const observed = JSON.parse(await readFile(path.join(destination, 'report.json'), 'utf8'))
       if (observed.runId !== context.runId) {
@@ -71,7 +85,12 @@ export async function runExternalTarget(target: ExecutionTarget, context: RunCon
     try {
       await runPnpmStage(context, ['exec', 'tsx', 'e2e/lynx/run-native.ts', platform, '--output', archived], target)
     }
-    catch (error) { executionError = error }
+    catch (error) {
+      if (error instanceof EnvironmentBlockedError) {
+        throw error
+      }
+      executionError = error
+    }
     try {
       const binding = JSON.parse(await readFile(path.join(archived, 'run-context.json'), 'utf8'))
       if (binding.runId !== context.runId) {

@@ -12,6 +12,7 @@ import { classifyTargetFailure, recordPreflightRejection, writeExecutionRecord }
 import { runExternalTarget, runPnpmStage } from './external'
 import { parseOptions, stageName } from './plan'
 import { assertCapabilitySuccess } from './report'
+import { scheduleTargets } from './scheduler'
 import { browserEngines } from './types'
 
 async function execute(target: ExecutionTarget, context: RunContext) {
@@ -59,42 +60,31 @@ async function main() {
     await mkdir(context.directory, { recursive: true })
     await gate.check('weapp web React Native android ios Lynx android ios')
     await runPnpmStage(context, ['turbo', 'run', 'build', '--filter=weapp-tailwindcss...', '--filter=@weapp-tailwindcss/react-native...', '--filter=@weapp-tailwindcss/lynx...'], 'build')
-    for (const stage of stages) {
-      // 环境检查必须在捕获测试失败之前执行，预检失败不得继续调度其它目标。
-      await gate.check(stageName(stage.target as ExecutionTarget))
-      process.stdout.write(`[tailwind] ${stage.target}\n`)
-      stage.attempted = true
-      await writeExecutionRecord(context.directory, metadata, stages)
-      try {
-        await execute(stage.target as ExecutionTarget, context)
-        stage.status = 'passed'
-      }
-      catch (error) {
-        stage.status = 'failed'
-        try {
-          const base = path.join(context.directory, stage.target)
-          const files = stage.target.startsWith('web-') ? [path.join(base, 'report.json'), path.join(base, 'registry', 'report.json'), path.join(base, 'hmr', 'report.json'), path.join(base, 'authoring', 'report.json'), path.join(base, 'context', 'report.json'), path.join(base, 'framework-source', 'report.json')] : [path.join(base, 'report.json')]
-          const loaded = await Promise.allSettled(files.map(async file => JSON.parse(await readFile(file, 'utf8')) as CapabilityReport))
-          const reports = loaded.flatMap(item => item.status === 'fulfilled' ? [item.value] : [])
-          if (!reports.length) {
-            throw new Error('目标未产生能力报告')
-          }
-          const results = reports.flatMap(report => report.results)
-          stage.status = classifyTargetFailure(results)
+    await scheduleTargets(stages, {
+      check: target => gate.check(stageName(target)),
+      execute: async (target) => {
+        process.stdout.write(`[tailwind] ${target}\n`)
+        return execute(target, context)
+      },
+      persist: () => writeExecutionRecord(context.directory, metadata, stages),
+      classify: async (target) => {
+        const base = path.join(context.directory, target)
+        const files = target.startsWith('web-') ? [path.join(base, 'report.json'), path.join(base, 'registry', 'report.json'), path.join(base, 'hmr', 'report.json'), path.join(base, 'authoring', 'report.json'), path.join(base, 'context', 'report.json'), path.join(base, 'framework-source', 'report.json')] : [path.join(base, 'report.json')]
+        const loaded = await Promise.allSettled(files.map(async file => JSON.parse(await readFile(file, 'utf8')) as CapabilityReport))
+        const reports = loaded.flatMap(item => item.status === 'fulfilled' ? [item.value] : [])
+        if (!reports.length) {
+          throw new Error('目标未产生能力报告')
         }
-        catch {}
-        stage.reason = String(error)
-        process.stderr.write(`[tailwind] ${stage.target}: ${stage.reason}\n`)
-      }
-      await writeExecutionRecord(context.directory, metadata, stages)
-    }
+        const results = reports.flatMap(report => report.results)
+        return classifyTargetFailure(results)
+      },
+    })
     if (stages.some(item => item.status !== 'passed')) {
       throw new Error(`本轮含失败或未执行目标；报告 ${context.directory}`)
     }
   }
   catch (error) {
-    const pending = stages.find(item => !item.attempted)
-    if (pending) {
+    for (const pending of stages.filter(item => !item.attempted)) {
       pending.status = 'blocked'
       pending.reason = String(error)
     }

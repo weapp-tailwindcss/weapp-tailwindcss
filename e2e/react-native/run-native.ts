@@ -1,6 +1,7 @@
 /* eslint-disable antfu/no-top-level-await, perfectionist/sort-imports, style/max-statements-per-line */
 
 import { captureNativeEncoding } from './encoding-evidence'
+import { environmentFailure, EnvironmentBlockedError } from '../tailwind-capabilities/environment-block'
 import type { Server } from 'node:http'
 import type { NativeVisualProbe } from '../../examples/react-native-expo/src/visual-probes'
 import { createHash, randomUUID } from 'node:crypto'
@@ -19,7 +20,6 @@ import { createAndroidEnvironment } from './android-environment'
 import { androidPairCoordinates, androidScreenProbes, findAndroidAnrWaitTap } from './android-window'
 import { getHttpText } from './native-http'
 import { captureMetroEvidence } from './metro-evidence'
-import { createIosLaunchReconciler } from './ios-launch'
 import { createExpoNativeEnvironment } from './native-environment'
 import { reactNativeAndroidToolchain } from './native-toolchain'
 import { awaitNativeExitCompletion, canAcceptNativeReport, evaluateNativeWait } from './native-wait'
@@ -139,7 +139,12 @@ async function waitForReportOrExit(marker: string, run: NativeProcess, metro: Na
     const envelope = reports.find(item => item.hmrMarker === marker && (!cssHmrColor || item.cssHmrColor === cssHmrColor))
     let launchReconciled = false
     if (typeof run.exitCode === 'number' && run.exitCode !== 0) {
-      if (!reconcileLaunch) { throw new TypeError(`expo run:${platform} exited with code ${run.exitCode}; see ${path.resolve(artifacts, 'expo-run.log')}`) }
+      if (!reconcileLaunch) {
+        const detail = await fs.readFile(path.resolve(artifacts, 'expo-run.log'), 'utf8')
+        const reason = environmentFailure(detail)
+        if (reason) { throw new EnvironmentBlockedError(`${platform} 环境故障：${reason}`) }
+        throw new TypeError(`native run:${platform} exited with code ${run.exitCode}; see ${path.resolve(artifacts, 'expo-run.log')}`)
+      }
       // 等待 Expo 输出流结束后核对首个错误；HMR 使用同一已核对的启动结果。
       await awaitNativeExitCompletion(run, startupTimeout - (Date.now() - started))
       await reconcileLaunch()
@@ -400,19 +405,12 @@ async function main() {
     const metroHost = platform === 'ios' && runtimeHost !== '127.0.0.1' ? '--lan' : '--localhost'
     const activeMetro = metro = startExpo(['--filter', '@weapp-tailwindcss/example-react-native-expo', 'exec', 'expo', 'start', metroHost, '--port', '8081', '--clear'], env, metroLogFile)
     await waitForMetro(activeMetro)
-    const runArgs = ['--filter', '@weapp-tailwindcss/example-react-native-expo', 'exec', 'expo', 'run', platform === 'android' ? 'android' : 'ios', '--no-bundler']
-    runArgs.push('--device', expoDevice)
+    const runArgs = platform === 'ios'
+      ? ['exec', 'tsx', 'e2e/react-native/ios-build-cli.ts', device, `com.weapptailwindcss.rncompat://expo-development-client/?url=${encodeURIComponent(`http://${runtimeHost}:8081`)}`, artifacts]
+      : ['--filter', '@weapp-tailwindcss/example-react-native-expo', 'exec', 'expo', 'run', 'android', '--no-bundler', '--device', expoDevice]
     if (platform === 'android' && process.env['RN_ANDROID_BINARY']) {
       runArgs.push('--binary', path.resolve(repoRoot, process.env['RN_ANDROID_BINARY']))
     }
-    const reconcileLaunch = platform === 'ios'
-      ? createIosLaunchReconciler({
-          device,
-          url: `com.weapptailwindcss.rncompat://expo-development-client/?url=${encodeURIComponent(`http://${runtimeHost}:8081`)}`,
-          artifacts,
-          deadline: Date.now() + 1_800_000,
-        })
-      : undefined
     run = startExpo(runArgs, env, logFile)
     // 首次原生构建包含 CocoaPods/Gradle 依赖准备，不能使用 HMR 的短超时。
     const baseline = await waitForReportOrExit('rn-hmr-baseline', run, activeMetro, {
@@ -420,7 +418,6 @@ async function main() {
       recover: () => relaunchRuntime(device, runtimeHost),
       reportTimeout: 300_000,
       startupTimeout: 1_800_000,
-      reconcileLaunch,
       requireLaunchCompletion: true,
     })
     const baselineReport = withNativeEnvironment(baseline.report, nativeEnvironment)
@@ -436,7 +433,7 @@ async function main() {
     markerChanged = true
     semanticReporter.setRevision('rn-hmr-updated-10b981')
     await fs.writeFile(markerFile, updated, 'utf8')
-    const hmr = await waitForReportOrExit('rn-hmr-updated', run, activeMetro, { cssHmrColor: '#10b981', reportTimeout: 120_000, reconcileLaunch })
+    const hmr = await waitForReportOrExit('rn-hmr-updated', run, activeMetro, { cssHmrColor: '#10b981', reportTimeout: 120_000 })
     const hmrReport = withNativeEnvironment(hmr.report, nativeEnvironment)
     await fs.writeFile(path.join(artifacts, 'report.json'), `${JSON.stringify(hmrReport, null, 2)}\n`, 'utf8')
     semanticReporter.assertReceipts(hmrReport)
@@ -450,7 +447,7 @@ async function main() {
     cssChanged = true
     semanticReporter.setRevision('rn-hmr-updated-f59e0b')
     await fs.writeFile(cssFile, updatedCss, 'utf8')
-    const cssHmr = await waitForReportOrExit('rn-hmr-updated', run, activeMetro, { cssHmrColor: '#f59e0b', reportTimeout: 120_000, reconcileLaunch })
+    const cssHmr = await waitForReportOrExit('rn-hmr-updated', run, activeMetro, { cssHmrColor: '#f59e0b', reportTimeout: 120_000 })
     const cssHmrReport = withNativeEnvironment(cssHmr.report, nativeEnvironment)
     await fs.writeFile(path.join(artifacts, 'report.json'), `${JSON.stringify(cssHmrReport, null, 2)}\n`, 'utf8')
     semanticReporter.assertReceipts(cssHmrReport)

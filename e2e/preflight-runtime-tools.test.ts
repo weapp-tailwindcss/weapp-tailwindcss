@@ -44,11 +44,17 @@ beforeEach(async () => {
   vi.mocked(reactNativeAndroidToolchain).mockResolvedValue({ javaHome: path.join(dir, 'rn-java'), sdk })
   run.mockImplementation(async (file, args) => ({
     command: file,
-    output: args[0] === '-version'
-      ? 'openjdk version "21.0.10"'
-      : file === 'selected-gradle'
-        ? 'Gradle 8.10.2\nLauncher JVM: 21.0.10\nDaemon JVM: /selected/jdk'
-        : file === 'xcodegen' ? 'Version: 2.45.3' : '1.17.0',
+    output: file === 'xcodebuild'
+      ? 'Xcode 26.0\nBuild version 17A324'
+      : file === 'xcrun'
+        ? path.join(dir, 'Xcode', 'simctl')
+        : file === 'plutil'
+          ? 'plutil: -extract keypath fmt'
+          : args[0] === '-version'
+            ? 'openjdk version "21.0.10"'
+            : file === 'selected-gradle'
+              ? 'Gradle 8.10.2\nLauncher JVM: 21.0.10\nDaemon JVM: /selected/jdk'
+              : file === 'xcodegen' ? 'Version: 2.45.3' : '1.17.0',
   }))
 })
 
@@ -130,8 +136,22 @@ describe('原生工具链实际消费边界', () => {
 
   it('两条 CocoaPods 路径与 xcodegen 分别检查并绑定', async () => {
     const result = await runtimeIos(context)
-    expect(run.mock.calls.map(([file]) => file)).toEqual(['xcodegen', 'pod', 'selected-pod'])
+    expect(run.mock.calls.map(([file]) => file)).toEqual(['xcodegen', 'pod', 'selected-pod', 'xcodebuild', 'xcrun', 'plutil'])
     expect(result.binding?.lynxPod).toContain('selected-pod')
+    expect(result.binding?.simctl).toContain('simctl')
+    expect(run).toHaveBeenCalledWith('xcrun', ['--find', 'simctl'], dir)
+    expect(run.mock.calls.some(([file]) => /Simulator\.app|open/.test(file))).toBe(false)
+  })
+
+  it.each(['xcodebuild', 'xcrun', 'plutil'])('iOS 构建实际使用的 %s 缺失即阻断', async (missing) => {
+    const implementation = run.getMockImplementation()!
+    run.mockImplementation(async (file, ...args) => {
+      if (file === missing) {
+        throw new Error(`${missing} ENOENT`)
+      }
+      return implementation(file, ...args)
+    })
+    await expect(runtimeIos(context)).rejects.toThrow(`${missing} ENOENT`)
   })
 })
 
