@@ -8,6 +8,7 @@ import { evidenceSequence, requiresPixelEffect } from '../examples/react-lynx/sr
 import staticEvidence from '../examples/react-lynx/src/compatibility/static-evidence.json'
 import { darkReceipts } from './lynx/fixtures/dark-images'
 import { effectFixtureImage } from './lynx/fixtures/effect-images'
+import { responsiveArtifactFixture } from './lynx/fixtures/responsive-artifacts'
 import { structuralImage } from './lynx/fixtures/structural-images'
 import { textFlowImage } from './lynx/fixtures/text-flow-images'
 import { finalizeNativePixelEffects, validateNativePixelEvidence } from './lynx/pixel-evidence'
@@ -55,7 +56,13 @@ async function fixture() {
   await fs.mkdir(crops)
   const report = structuredClone(androidReport) as NativePlatformReport
   report.evidence = { version: 1, runId: '00000000-0000-4000-8000-000000000001', bundleSha256: 'a'.repeat(64), artifacts: [] }
+  for (const [name, bytes] of responsiveArtifactFixture(report)) {
+    await fs.writeFile(path.join(crops, name), bytes)
+  }
   for (const result of report.results) {
+    if (result.id === 'variant-responsive') {
+      continue
+    }
     // 此文件只验证像素协议；已改为几何取证的 supports 不再提供伪像素 checkpoint。
     if (result.id === 'variant-supports') {
       result.status = 'unsupported'
@@ -67,7 +74,7 @@ async function fixture() {
     for (const [index, slot] of slots.entries()) {
       await fs.writeFile(path.join(crops, `${result.id}-${slot}.png`), await effectFixtureImage(result.id, slot) ?? screenshot(8, 4, [index * 80, 165, 233, 255]))
     }
-    if (requiresPixelEffect(result.id) || result.id === 'variant-dark') {
+    if (requiresPixelEffect(result.id) || result.id === 'variant-dark' || result.id === 'variant-responsive') {
       result.status = 'not-tested'
     }
     if (result.id === 'variant-dark') {
@@ -244,7 +251,7 @@ it('宿主只判定待验收效果，保留原始采集报告且无效图不能�
   const { crops, report } = await fixture()
   await expect(finalizeNativePixelEffects(report, crops)).rejects.toThrow('原始采集报告不能预先声明')
   for (const result of report.results) {
-    if (requiresPixelEffect(result.id) || result.id === 'variant-dark') {
+    if (requiresPixelEffect(result.id) || result.id === 'variant-dark' || result.id === 'variant-responsive') {
       result.status = 'not-tested'
       result.reason = '等待宿主'
     }

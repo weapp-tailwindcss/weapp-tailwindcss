@@ -15,7 +15,7 @@ async function main() {
   try {
     if (platform === 'android') {
       const source = path.join(hosts, 'android', 'app', 'src', 'main', 'java', 'com', 'weapptailwindcss', 'lynxcompat')
-      for (const name of ['EvidenceStore', 'GeometryBounds', 'ColorSchemeSession', 'GeometryEvidence', 'SdkArtifactIdentity', 'MediaGateEvidence']) {
+      for (const name of ['EvidenceStore', 'GeometryBounds', 'ColorSchemeSession', 'ResponsiveSession', 'GeometryEvidence', 'SdkArtifactIdentity', 'MediaGateEvidence']) {
         await execa('javac', ['-cp', directory, '-d', directory, path.join(source, `${name}.java`), path.join(fixtures, `${name}Test.java`)], { stdio: 'inherit' })
         await execa('java', ['-cp', directory, `com.weapptailwindcss.lynxcompat.${name}Test`, directory], { stdio: 'inherit' })
       }
@@ -23,7 +23,7 @@ async function main() {
     else {
       const source = path.join(hosts, 'ios', 'App')
       const { stdout: sdk } = await execa('xcrun', ['--sdk', 'macosx', '--show-sdk-path'])
-      for (const [sources, test] of [[['EvidenceStore'], 'evidence-store'], [['ColorSchemeSession'], 'color-scheme'], [['EvidenceStore', 'GeometryEvidence'], 'geometry-evidence'], [['EvidenceStore', 'MediaGateEvidence'], 'media-gate']] as const) {
+      for (const [sources, test] of [[['EvidenceStore'], 'evidence-store'], [['ColorSchemeSession'], 'color-scheme'], [['ResponsiveSession'], 'responsive'], [['EvidenceStore', 'GeometryEvidence'], 'geometry-evidence'], [['EvidenceStore', 'MediaGateEvidence'], 'media-gate']] as const) {
         const executable = path.join(directory, `${test}-test`)
         await execa('xcrun', ['--sdk', 'macosx', 'clang', '-fobjc-arc', '-Wall', '-Wextra', '-Werror', '-isysroot', sdk.trim(), '-framework', 'Foundation', '-I', source, ...sources.map(name => path.join(source, `${name}.m`)), path.join(fixtures, `${test}.test.m`), '-o', executable], { stdio: 'inherit' })
         await execa(executable, [directory], { stdio: 'inherit' })

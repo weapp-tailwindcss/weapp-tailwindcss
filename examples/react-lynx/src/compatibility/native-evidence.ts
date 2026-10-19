@@ -1,14 +1,17 @@
 import type { NativeBridgeResult } from './native-failure'
 import type { NativeGeometryCapture } from './native-geometry'
+import type { ResponsiveCapture, ResponsivePhase } from './responsive-contract'
 import type { NativeArtifactReceipt, NativeEvidenceContext, NativeMediaGateCapture, NativePlatformReport } from './types'
 import { mediaGateArtifactNames, validateMediaGateEvidence } from './media-gate-contract'
 import { NativeEvidenceUnavailableError, requestNativeReceipt as request } from './native-failure'
 import { geometryArtifactNames, validNativeGeometry } from './native-geometry'
+import { responsiveArtifactNames, validResponsiveFrame } from './responsive-contract'
 
 export interface EvidenceModule {
   getEvidenceContext?: (callback: (value: NativeBridgeResult<NativeEvidenceContext | null>) => void) => void
   submitArtifact?: (runId: string, name: string, data: string, callback: (value: NativeBridgeResult<NativeArtifactReceipt | null>) => void) => void
   captureGeometry?: (runId: string, id: string, callback: (value: NativeBridgeResult<NativeGeometryCapture | null>) => void) => void
+  captureResponsive?: (runId: string, requestId: string, phase: ResponsivePhase, callback: (value: NativeBridgeResult<ResponsiveCapture | null>) => void) => void
   captureMediaGate?: (runId: string, callback: (value: NativeBridgeResult<NativeMediaGateCapture | null>) => void) => void
   submit?: (runId: string, report: string, callback: (value: NativeBridgeResult<boolean>) => void) => void
   fail?: (runId: string, message: string, callback: (value: boolean) => void) => void
@@ -36,6 +39,34 @@ export async function createNativeEvidence(reporter: EvidenceModule) {
   }
   return {
     runId: context.runId,
+    async responsive(phase: ResponsivePhase, requestId: string) {
+      pending++
+      try {
+        // 恢复调用必须穿过已失败的采集状态，先恢复根布局，再拒绝发布。
+        if (submitted || (failed && phase !== 'restored')) {
+          throw new Error('evidence 已失败或结束')
+        }
+        if (!reporter.captureResponsive) {
+          throw new NativeEvidenceUnavailableError('geometry-unavailable', '原生 host 缺少根 viewport 取证协议')
+        }
+        const capture = await request<ResponsiveCapture | null>(callback => reporter.captureResponsive!(context.runId, requestId, phase, callback), 5000)
+        const names = responsiveArtifactNames(phase)
+        if (!capture || !validResponsiveFrame(capture.frame, context.runId, phase, requestId) || capture.artifacts?.length !== names.length) {
+          throw new Error('响应式宿主回执或落盘清单无效')
+        }
+        for (const name of names) {
+          register(capture.artifacts.find(item => item.name === name), name)
+        }
+        return capture.frame
+      }
+      catch (error) {
+        failed = true
+        throw error
+      }
+      finally {
+        pending--
+      }
+    },
     async mediaGate() {
       pending++
       try {

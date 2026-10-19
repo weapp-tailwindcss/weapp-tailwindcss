@@ -33,6 +33,30 @@ public final class CompatibilityReporterModule extends LynxModule {
   }
 
   @LynxMethod
+  public void captureResponsive(String runId, String requestId, String phase, Callback callback) {
+    mainHandler.post(() -> {
+      if (!requireView(callback)) return;
+      if (binding.responsive == null) { callback.invoke((Object) null); return; }
+      binding.responsive.capture(runId, requestId, phase, receipt -> {
+        if (receipt == null) { callback.invoke((Object) null); return; }
+        try {
+          ResponsiveEvidence.Capture capture = ResponsiveEvidence.capture(binding.store, receipt, new GeometryEvidence.Host() {
+            public double[] measure(String id) { return measureNow(id); }
+            public byte[] capture(String id) { return captureBytes(id); }
+          });
+          JavaOnlyMap result = new JavaOnlyMap();
+          result.putMap("frame", EvidenceBridge.jsonMap(capture.frame));
+          result.putArray("artifacts", EvidenceBridge.artifacts(capture.artifacts));
+          callback.invoke(result);
+        } catch (Exception error) {
+          failEvidence(error);
+          callback.invoke((Object) null);
+        }
+      });
+    });
+  }
+
+  @LynxMethod
   public void setColorScheme(String runId, String requestId, String scheme, Callback callback) {
     mainHandler.post(() -> {
       if (!requireView(callback)) return;

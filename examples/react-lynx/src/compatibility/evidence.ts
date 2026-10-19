@@ -2,6 +2,7 @@ import type { CompatibilityCase, StaticCaseEvidence } from './types'
 import { colorSchemeContract } from './color-scheme-contract'
 import { importantPriorityContract } from './important-priority-contract'
 import { geometryArtifactNames } from './native-geometry'
+import { responsiveArtifactNames, responsiveContract } from './responsive-contract'
 
 /** 这些效果必须由宿主解码 PNG 后核对，截图指纹不同不能证明支持。 */
 export function requiresPixelEffect(id: string) {
@@ -18,6 +19,9 @@ export function lynxEvidenceStrategy(item: CompatibilityCase) {
   }
   if (item.id === 'variant-dark') {
     return 'color-scheme'
+  }
+  if (item.id === responsiveContract.id) {
+    return 'responsive'
   }
   if (item.id === 'type-flow') {
     return 'pixel-effect'
@@ -38,7 +42,7 @@ export function evidenceSequence(item: CompatibilityCase, built: Pick<StaticCase
     const active = built.candidates.find(candidate => candidate.className.startsWith('active:'))
     return active?.generated && active.bundled ? { checkpoint: 'interaction:pseudo-active', frames: ['before', 'active'] } : undefined
   }
-  if (!built?.generated || !built.bundled || strategy === 'build' || strategy === 'native-geometry') {
+  if (!built?.generated || !built.bundled || strategy === 'build' || strategy === 'native-geometry' || strategy === 'responsive') {
     return undefined
   }
   if (strategy === 'color-scheme') {
@@ -66,6 +70,9 @@ export function evidenceSequence(item: CompatibilityCase, built: Pick<StaticCase
 
 /** 原生几何侧车和 PNG 与普通像素序列共用精确清单，拒绝遗漏或额外文件。 */
 export function evidenceArtifactNames(item: CompatibilityCase, built: Pick<StaticCaseEvidence, 'generated' | 'bundled' | 'candidates'> | undefined) {
+  if (built?.generated && built.bundled && item.id === responsiveContract.id) {
+    return responsiveContract.phases.flatMap(responsiveArtifactNames)
+  }
   if (built?.generated && built.bundled && lynxEvidenceStrategy(item) === 'native-geometry') {
     return geometryArtifactNames(item.id)
   }

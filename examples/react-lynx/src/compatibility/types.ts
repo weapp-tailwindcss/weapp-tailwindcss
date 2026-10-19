@@ -1,4 +1,5 @@
 import type { ExpectedDeclaration } from '@weapp-tailwindcss/test-catalog'
+import type { ResponsiveFrame, ResponsivePhase } from './responsive-contract'
 
 export { featureFamilies } from '@weapp-tailwindcss/test-catalog'
 export type { CompatibilityCase, EvidenceLevel, ExpectedDeclaration, FeatureFamily, ProbeType } from '@weapp-tailwindcss/test-catalog'
@@ -90,6 +91,7 @@ export interface NativeCaseResult extends PlatformResult {
   checkpoints: RuntimeCheckpoint[]
   geometry?: NativeGeometryEvidence
   colorScheme?: Record<'light' | 'dark' | 'restored', NativeColorSchemeReceipt>
+  responsive?: Record<ResponsivePhase, ResponsiveFrame>
   /** 混合交互必须逐候选取证；旧报告缺失此字段时仅可历史展示。 */
   candidates?: NativeCandidateResult[]
 }

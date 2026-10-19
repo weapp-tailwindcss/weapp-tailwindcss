@@ -7,6 +7,7 @@
 - (NSDictionary *)saveArtifact:(NSString *)name runId:(NSString *)runId data:(NSData *)data error:(NSError **)error;
 - (NSDictionary *)saveGeometry:(NSString *)identifier runId:(NSString *)runId geometry:(NSDictionary *)geometry error:(NSError **)error;
 - (NSDictionary *)saveMediaGate:(NSDictionary *)mediaGate runId:(NSString *)runId error:(NSError **)error;
+- (NSDictionary *)saveResponsive:(NSString *)phase runId:(NSString *)runId frame:(NSDictionary *)frame error:(NSError **)error;
 - (BOOL)checkRun:(NSString *)runId error:(NSError **)error;
 - (BOOL)reject:(NSString *)message error:(NSError **)error;
 - (BOOL)publishReport:(NSDictionary *)report runId:(NSString *)runId error:(NSError **)error;

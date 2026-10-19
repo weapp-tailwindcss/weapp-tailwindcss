@@ -3,6 +3,8 @@
 #import "GeometryEvidence.h"
 #import "MediaGateEvidence.h"
 #import "ColorSchemeSession.h"
+#import "ResponsiveSession.h"
+#import "ResponsiveEvidence.h"
 #import "ReporterBinding.h"
 #import <Lynx/LynxEvent.h>
 #import <Lynx/LynxEventEmitter.h>
@@ -40,6 +42,7 @@
     @"captureMediaGate" : NSStringFromSelector(@selector(captureMediaGate:callback:)),
     @"setColorScheme" : NSStringFromSelector(@selector(setColorScheme:requestId:scheme:callback:)),
     @"captureColorScheme" : NSStringFromSelector(@selector(captureColorScheme:requestId:identifier:callback:)),
+    @"captureResponsive" : NSStringFromSelector(@selector(captureResponsive:requestId:phase:callback:)),
     @"pointerEventsNone" : NSStringFromSelector(@selector(pointerEventsNone:callback:)),
     @"setPseudoActive" : NSStringFromSelector(@selector(setPseudoActive:active:callback:))
   };
@@ -134,6 +137,27 @@
     } error:&error];
     if (result == nil) NSLog(@"Lynx native media evidence failed: %@", error);
     callback(result ?: [NSNull null]);
+  });
+}
+
+- (void)captureResponsive:(NSString *)runId requestId:(NSString *)requestId phase:(NSString *)phase callback:(LynxCallbackBlock)callback {
+  dispatch_async(dispatch_get_main_queue(), ^{
+    if (![self requireView:callback]) return;
+    if (_binding.responsive == nil) { callback([NSNull null]); return; }
+    [_binding.responsive captureRunId:runId requestId:requestId phase:phase callback:^(NSDictionary *receipt) {
+      if (receipt == nil) { callback([NSNull null]); return; }
+      ResponsiveEvidence *evidence = [[ResponsiveEvidence alloc] initWithStore:_binding.store];
+      NSError *error = nil;
+      NSDictionary *result = [evidence captureReceipt:receipt measure:^NSDictionary *(NSString *node) {
+        LynxUI *ui = [_binding.view uiWithIdSelector:node];
+        if (ui == nil || ui.view == nil) return nil;
+        CGRect rect = [ui getBoundingClientRectToScreen];
+        return @{@"left": @(CGRectGetMinX(rect)), @"top": @(CGRectGetMinY(rect)), @"right": @(CGRectGetMaxX(rect)),
+          @"bottom": @(CGRectGetMaxY(rect)), @"width": @(CGRectGetWidth(rect)), @"height": @(CGRectGetHeight(rect))};
+      } capture:^NSData *(NSString *node) { return [self captureDataNow:node afterScreenUpdates:YES]; } error:&error];
+      if (result == nil) NSLog(@"Lynx responsive capture failed: %@", error);
+      callback(result ?: [NSNull null]);
+    }];
   });
 }
 

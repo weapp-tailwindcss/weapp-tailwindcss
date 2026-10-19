@@ -13,6 +13,7 @@ import { compatibilityVersions, getCatalogHash } from './lynx/catalog'
 import { collectNativeEvidence, createEvidenceContext, cropsDirectory, sha256, validateNativeEvidence } from './lynx/evidence'
 import { darkReceipts } from './lynx/fixtures/dark-images'
 import { effectFixtureImage } from './lynx/fixtures/effect-images'
+import { responsiveArtifactFixture } from './lynx/fixtures/responsive-artifacts'
 import { finalizeNativePixelEffects } from './lynx/pixel-evidence'
 import { PNG } from './lynx/png'
 import { readNativeReport } from './lynx/reports'
@@ -135,7 +136,13 @@ async function fixture() {
   const context = createEvidenceContext(bundle)
   report.evidence = { ...context, artifacts: [] }
   const images = new Map<string, Buffer>()
+  for (const [name, bytes] of responsiveArtifactFixture(report)) {
+    images.set(name, bytes)
+  }
   for (const result of report.results) {
+    if (result.id === 'variant-responsive') {
+      continue
+    }
     const frames = evidenceSequence(compatibilityCases.find(item => item.id === result.id)!, staticEvidence.results.find(item => item.id === result.id))?.frames ?? []
     for (const [index, frame] of frames.entries()) {
       const name = `${result.id}-${frame}.png`

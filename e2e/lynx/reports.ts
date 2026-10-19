@@ -11,6 +11,7 @@ import { compatibilityVersions, getCatalogHash } from './catalog'
 import { readEvidenceContext, validateNativeEvidence } from './evidence'
 import { assertReviewedLynxOutcome } from './expectations'
 import { validateNativePixelEvidence } from './pixel-evidence'
+import { validateResponsiveFrames } from './responsive'
 import { assertCurrentStaticEvidence } from './static-report'
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -82,11 +83,15 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
     else {
       const checkpointPrefix = strategy === 'build'
         ? 'build:'
-        : strategy === 'native-geometry' || strategy === 'pixel-geometry'
-          ? 'geometry:'
-          : strategy === 'interaction'
-            ? 'interaction:'
-            : 'pixel:'
+        : strategy === 'responsive' && (!options.historical || result.responsive)
+          ? 'viewport:'
+          : strategy === 'responsive'
+            ? 'geometry:'
+            : strategy === 'native-geometry' || strategy === 'pixel-geometry'
+              ? 'geometry:'
+              : strategy === 'interaction'
+                ? 'interaction:'
+                : 'pixel:'
       assert(
         result.checkpoints.some(checkpoint => checkpoint.name.startsWith(checkpointPrefix)) || result.candidates?.some(candidate => candidate.mediaGate),
         `${platform}:${result.id} is missing a ${checkpointPrefix} checkpoint`,
@@ -94,6 +99,10 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
     }
     if ((options.requireCandidateEvidence || !options.historical) && !pending) {
       validateCandidateEvidence(item, staticResult, result, { mediaGate: report.mediaGate, context: report.evidence })
+    }
+    if (!options.historical && staticResult.generated && staticResult.bundled && strategy === 'responsive') {
+      assert(report.evidence?.runId, `${platform}:variant-responsive 缺少本轮原生 evidence 身份`)
+      validateResponsiveFrames(result.responsive, report.evidence.runId)
     }
     if (options.requireGeometryEvidence && staticResult.generated && staticResult.bundled && strategy === 'native-geometry') {
       const measured = evaluateGeometry(item, result.geometry)

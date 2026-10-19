@@ -9,6 +9,7 @@ import { evaluateGeometry } from './geometry'
 import { collectColorScheme } from './native-color-scheme'
 import { createNativeEvidence } from './native-evidence'
 import { requestNativeReceipt as callReporter, nativeEvidenceFailureIn, NativeEvidenceUnavailableError } from './native-failure'
+import { collectResponsive } from './native-responsive'
 import { waitForProbeLayout } from './runtime-ready'
 import staticEvidenceJson from './static-evidence.json'
 
@@ -286,6 +287,9 @@ async function collectCase(item: CompatibilityCase, reporter: ReporterModule, ev
   }
   if (strategy === 'color-scheme') {
     return collectColorScheme(reporter, evidence)
+  }
+  if (strategy === 'responsive') {
+    return collectResponsive(evidence)
   }
   if (strategy === 'interaction') {
     return collectInteraction(item, reporter, evidence, mediaGate)

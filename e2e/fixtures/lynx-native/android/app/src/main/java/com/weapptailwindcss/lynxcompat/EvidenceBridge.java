@@ -32,14 +32,14 @@ final class EvidenceBridge {
     return result;
   }
 
-  private static JavaOnlyMap jsonMap(JSONObject value) throws Exception {
+  static JavaOnlyMap jsonMap(JSONObject value) throws Exception {
     JavaOnlyMap result = new JavaOnlyMap();
     Iterator<String> keys = value.keys();
     while (keys.hasNext()) {
       String key = keys.next();
       Object item = value.get(key);
       if (item instanceof JSONObject) result.putMap(key, jsonMap((JSONObject) item));
-      else if (item instanceof Number) result.putInt(key, ((Number) item).intValue());
+      else if (item instanceof Number) result.putDouble(key, ((Number) item).doubleValue());
       else if (item instanceof String) result.putString(key, (String) item);
       else throw new IllegalArgumentException("Unsupported native SDK identity field");
     }

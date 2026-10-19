@@ -1,11 +1,13 @@
 import type { NativeCaseResult, NativePlatformReport } from '../../../examples/react-lynx/src/compatibility/types'
 import type { RunContext } from '../context'
 import type { CapabilityResult, CaseContract } from '../types'
+import path from 'node:path'
 import { compatibilityCases } from '@weapp-tailwindcss/test-catalog'
 import { evaluateGeometry } from '../../../examples/react-lynx/src/compatibility/geometry'
 import { evaluateColorScheme, validateColorSchemeReceipts } from '../../lynx/color-scheme'
 import { evaluateImportantPriority } from '../../lynx/important-priority'
 import { evaluatePixelEffect } from '../../lynx/pixel-effects'
+import { readResponsiveEvidence } from '../../lynx/responsive-evidence'
 import { evaluateStructural } from '../../lynx/structural'
 import { evaluateTextFlow } from '../../lynx/text-flow'
 import { geometryValidators, pixelValidators } from './contracts'
@@ -22,7 +24,13 @@ export async function validateLynxCase(context: RunContext, raw: NativePlatformR
     return { status: 'failed', assertions: [], reason: `本轮 ${result.status} 偏离独立审查的 ${contract.expectation.support} 预期，不能自动降级平台支持状态` }
   }
   let measured: NativeCaseResult | undefined
-  if (geometryValidators.has(contract.id) && contract.expectation.stage === 'runtime') {
+  if (contract.id === 'variant-responsive' && contract.expectation.stage === 'runtime') {
+    if (!raw.evidence) {
+      throw new Error('响应式缺少本轮宿主身份')
+    }
+    measured = (await readResponsiveEvidence(raw, path.join(context.directory, 'native', 'crops', context.runId), { ...raw.evidence, runId: context.runId })).measured
+  }
+  else if (geometryValidators.has(contract.id) && contract.expectation.stage === 'runtime') {
     measured = evaluateGeometry(compatibilityCases.find(item => item.id === contract.id)!, await readLynxGeometry(context, raw, contract.id))
   }
   else if (pixelValidators.has(contract.id) && contract.expectation.stage === 'visual') {

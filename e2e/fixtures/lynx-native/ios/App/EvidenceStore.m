@@ -123,6 +123,20 @@
   }
 }
 
+// 响应式侧车由原生状态机写入；一般 JS 通道不能写 JSON。
+- (NSDictionary *)saveResponsive:(NSString *)phase runId:(NSString *)runId frame:(NSDictionary *)frame error:(NSError **)error {
+  @synchronized(self) {
+    if (![self checkRun:runId error:error]) return nil;
+    if (![@[@"narrow", @"wide", @"narrowed", @"restored"] containsObject:phase]
+        || ![frame[@"runId"] isEqual:self.context[@"runId"]] || ![frame[@"phase"] isEqual:phase]
+        || ![NSJSONSerialization isValidJSONObject:frame]) { [self reject:@"Invalid responsive sidecar identity" error:error]; return nil; }
+    NSDictionary *sidecar = @{@"version": @1, @"source": @"lynx-native-responsive-v1", @"platform": @"ios", @"bundleSha256": self.context[@"bundleSha256"], @"frame": frame};
+    NSData *data = [NSJSONSerialization dataWithJSONObject:sidecar options:0 error:error];
+    if (data == nil) { [self reject:@"Cannot encode responsive sidecar" error:error]; return nil; }
+    return [self persistArtifact:[NSString stringWithFormat:@"variant-responsive-%@.native.json", phase] runId:runId data:data error:error];
+  }
+}
+
 - (NSDictionary *)persistArtifact:(NSString *)name runId:(NSString *)runId data:(NSData *)data error:(NSError **)error {
   NSURL *output = [[self.directory URLByAppendingPathComponent:@"artifacts"] URLByAppendingPathComponent:name];
   if (![self writeData:data to:output error:error]) return nil;

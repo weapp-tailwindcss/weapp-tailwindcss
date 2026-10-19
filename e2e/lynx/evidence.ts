@@ -11,6 +11,7 @@ import { validateAndroidSdkEvidence } from './android-sdk'
 import { readNativeHostGeometry } from './geometry-evidence'
 import { validateMediaGateArtifacts } from './media-gate'
 import { validateMediaGuardArtifacts } from './media-guard-artifacts'
+import { readResponsiveEvidence } from './responsive-evidence'
 import { validateStyleFixtureArtifacts } from './style-fixture-artifacts'
 
 export function sha256(data: Uint8Array) {
@@ -98,6 +99,9 @@ export async function validateNativeEvidence(report: NativePlatformReport, artif
     const built = builtById.get(item.id)
     if (built?.generated && built.bundled && lynxEvidenceStrategy(item) === 'native-geometry') {
       await readNativeHostGeometry(report, directory, expected, item.id)
+    }
+    if (built?.generated && built.bundled && lynxEvidenceStrategy(item) === 'responsive') {
+      await readResponsiveEvidence(report, directory, expected)
     }
   }
   if (report.mediaGate) {

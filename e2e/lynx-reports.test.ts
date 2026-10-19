@@ -7,6 +7,7 @@ import { MEDIA_GATE_LIMITATION_ID, MEDIA_GATE_PROBE_IDS } from '../examples/reac
 import staticEvidenceJson from '../examples/react-lynx/src/compatibility/static-evidence.json'
 import { compatibilityVersions, getCatalogHash } from './lynx/catalog'
 import { assertReviewedLynxOutcome, reviewedLynxSupport } from './lynx/expectations'
+import { responsiveFixture } from './lynx/fixtures/responsive-images'
 import { assertNativeConclusionsMatch } from './lynx/report-comparison'
 import { nativeReportConclusion, validateNativeReport } from './lynx/reports'
 
@@ -51,13 +52,15 @@ function validResult(item: typeof compatibilityCases[number]): NativeCaseResult 
   const strategy = lynxEvidenceStrategy(item)
   const checkpoint = strategy === 'build'
     ? 'build:bundled'
-    : strategy === 'native-geometry' || strategy === 'pixel-geometry'
-      ? 'geometry:probe-vs-control'
-      : strategy === 'interaction'
-        ? 'interaction:progress'
-        : 'pixel:probe-vs-control'
+    : strategy === 'responsive'
+      ? 'viewport:responsive-v1'
+      : strategy === 'native-geometry' || strategy === 'pixel-geometry'
+        ? 'geometry:probe-vs-control'
+        : strategy === 'interaction'
+          ? 'interaction:progress'
+          : 'pixel:probe-vs-control'
   const status = reviewedLynxSupport[item.id]![0]
-  return { id: item.id, status, ...(status === 'unsupported' ? { reason: '已审查的 iOS 平台限制' } : {}), checkpoints: [{ name: checkpoint, passed: true }] }
+  return { id: item.id, status, ...(status === 'unsupported' ? { reason: '已审查的 iOS 平台限制' } : {}), checkpoints: [{ name: checkpoint, passed: true }], ...(strategy === 'responsive' ? { responsive: responsiveFixture(mediaGate().runId, 3, 402).frames } : {}) }
 }
 
 function report(overrides: Partial<NativePlatformReport> = {}): NativePlatformReport {
@@ -68,6 +71,7 @@ function report(overrides: Partial<NativePlatformReport> = {}): NativePlatformRe
     verifiedAt: '2026-08-17T00:00:00.000Z',
     versions: compatibilityVersions,
     mediaGate: mediaGate(),
+    evidence: { version: 1, runId: mediaGate().runId, bundleSha256: mediaGate().bundleSha256, artifacts: [] },
     environment: {
       deviceName: 'iPhone 17 Pro',
       deviceModel: 'iPhone18,1',

@@ -2,6 +2,7 @@ import type { CaseContract, EvidenceStage } from '../types'
 import { compatibilityCases, officialFeatureManifest } from '@weapp-tailwindcss/test-catalog'
 import { colorSchemeContract } from '../../../examples/react-lynx/src/compatibility/color-scheme-contract'
 import { lynxEvidenceStrategy } from '../../../examples/react-lynx/src/compatibility/evidence'
+import { responsiveContract } from '../../../examples/react-lynx/src/compatibility/responsive-contract'
 import { reviewedLynxContract } from '../../lynx/expectations'
 
 export type LynxTarget = 'lynx-ios' | 'lynx-android'
@@ -38,7 +39,7 @@ export function lynxCaseContracts(target: LynxTarget, filter?: RegExp): CaseCont
       ? 'generation'
       : reviewedLynxContract.encodingRejections.includes(item.id)
         ? 'encoding'
-        : strategy === 'native-geometry' || strategy === 'interaction' ? 'runtime' : 'visual'
+        : strategy === 'native-geometry' || strategy === 'interaction' || strategy === 'responsive' ? 'runtime' : 'visual'
     return {
       id: item.id,
       features: lynxAtomicFeatures(item.id),
@@ -66,7 +67,7 @@ export function lynxCaseContracts(target: LynxTarget, filter?: RegExp): CaseCont
 function lynxAtomicFeatures(id: string) {
   const item = compatibilityCases.find(item => item.id === id)!
   const features = officialFeatureManifest.filter(feature => feature.caseId === id).map(feature => feature.id)
-  return (geometryValidators.has(id) || pixelValidators.has(id)) && (item.className.match(/\S+/g) ?? []).length === 1 && features.length === 1 ? features : [`authoring/${id}`]
+  return (geometryValidators.has(id) || pixelValidators.has(id) || id === responsiveContract.id) && (item.className.match(/\S+/g) ?? []).length === 1 && features.length === 1 ? features : [`authoring/${id}`]
 }
 
 export const lynxAdapterFixture = {
@@ -74,5 +75,6 @@ export const lynxAdapterFixture = {
   reviewed: reviewedLynxContract,
   geometryValidators: [...geometryValidators],
   pixelValidators: [...pixelValidators],
+  responsive: responsiveContract,
   cases: compatibilityCases,
 }

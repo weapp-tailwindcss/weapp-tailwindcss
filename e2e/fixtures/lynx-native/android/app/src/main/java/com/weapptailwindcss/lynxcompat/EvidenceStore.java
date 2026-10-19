@@ -71,6 +71,12 @@ public final class EvidenceStore {
     return saveArtifact(requestedRunId, "media-hover-v1.native.json", data, "media-hover-v1\\.native\\.json");
   }
 
+  /** 响应式侧车由原生状态机写入，JS artifact 通道仍仅接受 PNG。 */
+  synchronized Receipt saveResponsive(String requestedRunId, String phase, byte[] data) throws IOException {
+    return saveArtifact(requestedRunId, "variant-responsive-" + phase + ".native.json", data,
+      "variant-responsive-(narrow|wide|narrowed|restored)\\.native\\.json");
+  }
+
   private Receipt saveArtifact(String requestedRunId, String name, byte[] data, String pattern) throws IOException {
     try {
       checkRun(requestedRunId);
