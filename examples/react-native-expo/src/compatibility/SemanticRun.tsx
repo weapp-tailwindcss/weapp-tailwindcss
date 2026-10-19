@@ -176,7 +176,7 @@ export function SemanticRun({ evidence, revision, onComplete }: { evidence: Runt
     const targetRef = side === 'probe' ? target : side === 'reference' ? referenceTarget : controlTarget
     const style = [base, fixture.base, side === 'control' ? undefined : side === 'reference' ? expectedStyle : actualStyle] as StyleProp<ViewStyle & TextStyle>
     return (
-      <View ref={frameRef} testID={`tw-rn-case-${side}`} accessibilityLabel={`${active.id}:${active.phase}`} collapsable={false} style={{ width: 160, height: 128, padding: 16, position: 'relative', backgroundColor: '#e2e8f0' }}>
+      <View ref={frameRef} testID={`tw-rn-case-${side}`} accessibilityLabel={`${active.id}:${active.phase}`} collapsable={false} style={{ width: 112, height: 128, padding: 16, position: 'relative', backgroundColor: '#e2e8f0' }}>
         {fixture.component === 'text'
           ? <Text ref={(node) => { targetRef.current = node }} style={style}>Tailwind 23</Text>
           : <View ref={(node) => { targetRef.current = node }} style={style}>{children}</View>}
@@ -196,8 +196,8 @@ export function SemanticRun({ evidence, revision, onComplete }: { evidence: Runt
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {render('probe')}
         {render('reference')}
+        {render('control')}
       </View>
-      {render('control')}
     </View>
   )
 }
