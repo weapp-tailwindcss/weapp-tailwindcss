@@ -2,6 +2,7 @@ import type { TailwindV4CssSource, TailwindV4ResolvedSource, TailwindV4SourceOpt
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
+import { prepareGenerationModuleRequests } from './module-requests.ts'
 
 function resolveBase(value: string | undefined, fallback: string) {
   return value === undefined
@@ -68,7 +69,9 @@ async function resolveCssEntries(entries: string[], projectRoot: string, base: s
 
   for (const entry of resolvedEntries) {
     if (await pathExists(entry.absolute)) {
-      cssParts.push(await fs.readFile(entry.absolute, 'utf8'))
+      // 合并入口前固定模块身份，不能把后续 CSS 的相对配置误归到首入口。
+      const css = await fs.readFile(entry.absolute, 'utf8')
+      cssParts.push(prepareGenerationModuleRequests(css, path.dirname(entry.absolute)).css)
       continue
     }
 
@@ -109,7 +112,10 @@ function resolveCssSources(sources: TailwindV4CssSource[], projectRoot: string, 
 
   return {
     base: resolvedBase,
-    css: resolvedSources.map(source => source.css).join('\n'),
+    css: resolvedSources.map((source) => {
+      const sourceBase = source.base ?? (source.file ? path.dirname(source.file) : base ?? projectRoot)
+      return prepareGenerationModuleRequests(source.css, sourceBase).css
+    }).join('\n'),
     dependencies,
   }
 }
