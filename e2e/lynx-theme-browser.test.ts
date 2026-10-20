@@ -34,6 +34,61 @@ if (requested !== 'all' && !(requested in engines)) {
 }
 const selected = Object.entries(engines).filter(([name]) => requested === 'all' || requested === name)
 
+it.each(selected)('%s：initial、普通变量消费及 CSSOM 切换保留作者语义', async (_name, engine) => {
+  const browser = await engine.launch({ headless: true })
+  try {
+    const page = await browser.newPage()
+    const transforms = [
+      ['原始', (css: string) => css],
+      ['Web', (css: string) => transformWebCssCompat(css, true)],
+      ['Lynx', transformLynxCssCompat],
+      ['组合', (css: string) => transformLynxCssCompat(transformWebCssCompat(css, true))],
+    ] as const
+    for (const property of ['--tw-gradient-position', '--tw-gradient-stops', '--tw-gradient-via-stops', '--tw-leading', '--tw-font-weight', '--tw-tracking']) {
+      const css = `:root { ${property}: 12px; } *, ::before, ::after { ${property}: initial; } .probe { line-height: var(${property}, 24px); }`
+      for (const [pipeline, transform] of transforms) {
+        await page.setContent(`<style>${transform(css)} #control { line-height: 24px; }</style><div class="probe">test</div><div id="control">test</div>`)
+        const actual = await page.locator('.probe').evaluate(element => getComputedStyle(element).lineHeight)
+        expect(actual, `${property}/${pipeline}`).toBe('24px')
+        expect(actual).toBe(await page.locator('#control').evaluate(element => getComputedStyle(element).lineHeight))
+      }
+    }
+    for (const value of ['in oklab', 'to bottom right in oklab', 'from 20deg in oklab']) {
+      const css = `.probe { --tw-gradient-position: ${value}; font-family: var(--tw-gradient-position); }`
+      for (const [pipeline, transform] of transforms) {
+        await page.setContent(`<style>${transform(css)} #control { font-family: ${value}; }</style><div class="probe">test</div><div id="control">test</div>`)
+        expect(await page.locator('.probe').evaluate(element => getComputedStyle(element).fontFamily), `${value}/${pipeline}`)
+          .toBe(await page.locator('#control').evaluate(element => getComputedStyle(element).fontFamily))
+      }
+    }
+    for (const [kind, fallback, next] of [['linear', 'to bottom', 'to right'], ['radial', 'at center', 'at left'], ['conic', 'from 0deg', 'from 45deg']]) {
+      const css = `.probe { --tw-gradient-position: in oklab; background-image: ${kind}-gradient(var(--tw-gradient-position), red, blue); }`
+      for (const [pipeline, transform] of [transforms[1], transforms[3]]) {
+        await page.setContent(`<style>${transform(css)} #control { background-image: ${kind}-gradient(${fallback}, red, blue); }</style><div class="probe"></div><div id="control"></div>`)
+        for (const phase of ['before', 'changed', 'restored']) {
+          await page.locator('.probe').evaluate((element, values) => {
+            const style = (element as HTMLElement).style
+            if (values.phase === 'changed') {
+              style.setProperty('--tw-gradient-position', values.next!)
+            }
+            else {
+              style.removeProperty('--tw-gradient-position')
+            }
+          }, { phase, next })
+          await page.locator('#control').evaluate((element, value) => {
+            (element as HTMLElement).style.backgroundImage = value
+          }, `${kind}-gradient(${phase === 'changed' ? next : fallback}, red, blue)`)
+          expect(await page.locator('.probe').evaluate(element => getComputedStyle(element).backgroundImage), `${kind}/${pipeline}/${phase}`)
+            .toBe(await page.locator('#control').evaluate(element => getComputedStyle(element).backgroundImage))
+        }
+      }
+    }
+  }
+  finally {
+    await browser.close()
+  }
+}, 60_000)
+
 it.each(selected)('%s：无效描述符、公开 tw 前缀和保留层的独立语义回归', async (_name, engine) => {
   const browser = await engine.launch({ headless: true })
   try {

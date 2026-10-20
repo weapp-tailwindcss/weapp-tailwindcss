@@ -5,6 +5,7 @@ baseline: 7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5
 regressions:
   - packages/postcss/test/lynx-theme-safety.test.ts
   - packages/postcss/test/property-registration.test.ts
+  - packages/postcss/test/web-author-values.test.ts
   - packages/postcss/test/cssVars.test.ts
   - packages/postcss-calc/test/declaration-filter.test.ts
   - packages/css-compat/test/legacy-registrations.test.ts
@@ -259,6 +260,18 @@ head `a10ef71036e9ea923da4bc79b046861c34fde81d` 的 Benchmark run `39479576075`�
 逐图字节比较旧已审查 `70661ce91` 基线：1,188 张完全相同，16 张变化均为中英文 important 与 Lynx 文档说明变长。主代理实际查看全部 16 个变化区域，另抽查三引擎首页、移动首页/UI、Firefox UI 与 showcase 图片，共登记 23 份 PNG 审查证据；所看区域未见错位或图片缺失，不声称人工阅读了全部长页的每个像素。此前审查和相同字节的页面来源继续保留。
 
 先以 `pnpm --filter @weapp-tailwindcss/website e2e:visual verify` 核对旧安装来源，再按本任务归属归档旧黄金目录和两份登记至 `.tmp/website-visual-70661ce91-installed-archive/`。新候选经 `e2e:visual review --directory <候选> --reviewer <审查者> --notes <中文结论> --evidence <实际查看PNG>`、`e2e:visual install --directory <候选>` 及再次 `e2e:visual verify` 通过，更新 `darwin.json` 与 `darwin.review.json`。来源验证不等于禁止更新的实渲染比较；后续全面入口仍须运行 `e2e:local`，本记录不替代原生或旧 WebView 验收。
+
+### 作者 reset 与渐变消费图的反例修复
+
+`61d8cb1f2f745a0990cc5e63644d9fba10dc7758` 的作者变量边界仍有反例：按六个公开 `--tw-*` 名删除显式 `initial`，使原本应阻断继承并使用 24px fallback 的元素继承到 12px；按 `--tw-gradient-position` 名改写 token，也会改变普通 `font-family` 消费。完整注册签名同样不是作者来源证明，不能据此删除作者 reset。
+
+先持久化 Web、Lynx、组合管线回归，首次为 37 项失败、16 项通过；三浏览器真实反例各失败一项。删除 initial 名单与清理调用，渐变兼容改为基于真实 CSS token 的反向消费图：逐次保留引用身份，沿透明 alias 携带 linear/radial/conic 上下文，未知消费、typed 注册、注册描述符、未展开 import、悬空和循环均否决。审查进一步发现不含 `var()` 的 `style(--name: value)` 会直接读取变量，先补三项失败，再把容器、布尔、转义和 CSS `if()` 查询纳入保护。
+
+单类完整消费链分别使用合法默认方向，并验证 CSSOM 的新增、替换与移除仍作用于原变量。多类梯度共用纯 `in oklab` 时无法由局部声明确定最终级联，保留原 token；不以镜像变量或局部规则猜测来隐藏问题。真实生产 encoder 能接受探针不等于旧引擎实际渲染正确，此范围仍待原生实测。
+
+基于本地 `0595204d2332bea3b7fbdee73f4c163b9d1e2dc9` 加上述未提交修复，PostCSS 全包为 148 文件、1,669 项通过、3 项既有跳过；四份集中合同 150 项通过；重建 PostCSS 后，核心 generator 9 项通过。旧 CI 五项断言要求删除注册，已改为明确验证注册与 initial 保留，未放宽样式支持预期。`CI=1 pnpm e2e:lynx --update=none` 为示例 205 项、E2E 39 文件 779 项全部通过，正式开发/生产双入口、encoder/decoder 与既有 static 无差异，未重写 static。`CI=1 pnpm e2e:lynx:theme` 为三引擎 15 项通过。包构建、类型、定向 ESLint 和 diff 检查通过。
+
+红绿原始日志位于 `.tmp/author-values-{persistent-red,query-red,browser-persistent-red,postcss-full,generator-green,lynx-green,browser-final}.log`。本批没有证明跨独立 stylesheet、运行时未知消费或旧引擎混合渐变效果，全面验收仍为 partial；性能门禁与 Taro Vite Harmony 空白的首次失败单独保留，不能由本批通过覆盖。
 
 ## 规则评估
 

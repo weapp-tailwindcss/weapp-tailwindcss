@@ -6,9 +6,10 @@ import { internalCssSelectorReplacer } from '../shared'
 import { getCssCalcVariableReferences, isCssPropertyRegistration } from '../utils/css-custom-property'
 import { normalizeModernColorValue } from './color-mix'
 import { removeUnsupportedCascadeLayers } from './mini-program-css/at-rules'
-import { normalizeTailwindcssV4GradientPosition, normalizeTailwindcssV4InfinityCalcValue } from './tailwindcss-v4'
+import { normalizeTailwindcssV4InfinityCalcValue } from './tailwindcss-v4'
 import { collectCustomPropertyValues, resolveCustomPropertyVarValue, usesResolvableTailwindColorVariable } from './web-css-custom-properties'
-import { collectRegisteredCustomPropertyFallbacks, insertRegisteredCustomPropertyFallbackRule, removeInitialFallbackDeclarations } from './web-css-registrations'
+import { normalizeWebGradientPositions } from './web-css-gradients'
+import { collectRegisteredCustomPropertyFallbacks, insertRegisteredCustomPropertyFallbackRule } from './web-css-registrations'
 
 export interface NormalizedWebCssCompatOptions {
   preset: 'off' | 'legacy-web'
@@ -159,42 +160,6 @@ function removeModernColorSupports(root: postcss.Root) {
   })
 }
 
-function normalizeTailwindcssV4GradientPositionDeclarations(root: postcss.Root) {
-  root.walkDecls('--tw-gradient-position', (decl) => {
-    if (isCssPropertyRegistration(decl)) {
-      return
-    }
-    const normalized = normalizeTailwindcssV4GradientPosition(decl.value)
-    if (normalized) {
-      decl.value = normalized
-      return
-    }
-
-    if (normalized === decl.value.trim()) {
-      return
-    }
-
-    const parent = decl.parent
-    if (parent?.type !== 'rule') {
-      decl.value = 'to bottom'
-      return
-    }
-
-    const backgroundImageDecl = parent.nodes.find((node): node is postcss.Declaration => {
-      return node.type === 'decl' && node.prop === 'background-image'
-    })
-    if (/^radial-gradient\(/i.test(backgroundImageDecl?.value ?? '')) {
-      decl.value = 'at center'
-      return
-    }
-    if (/^conic-gradient\(/i.test(backgroundImageDecl?.value ?? '')) {
-      decl.value = 'from 0deg'
-      return
-    }
-    decl.value = 'to bottom'
-  })
-}
-
 function normalizeTailwindcssV4InfinityCalcDeclarations(root: postcss.Root) {
   root.walkDecls((decl) => {
     if (isCssPropertyRegistration(decl)) {
@@ -269,7 +234,6 @@ export function transformWebCssCompat(
     }
     if (normalized.features.property) {
       insertRegisteredCustomPropertyFallbackRule(root, registeredProperties, !normalized.features.layer)
-      removeInitialFallbackDeclarations(root, registeredProperties)
     }
     if (normalized.features.supports) {
       removeModernColorSupports(root)
@@ -277,7 +241,7 @@ export function transformWebCssCompat(
     if (normalized.features.nesting) {
       transformCssNesting(root)
     }
-    normalizeTailwindcssV4GradientPositionDeclarations(root)
+    normalizeWebGradientPositions(root, registeredProperties)
     normalizeTailwindcssV4InfinityCalcDeclarations(root)
     normalizeModernColorDeclarations(root, normalized.features)
     if (normalized.preset === 'legacy-web') {

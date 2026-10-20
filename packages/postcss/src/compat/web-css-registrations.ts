@@ -2,7 +2,7 @@ import type { Node as ValueNode } from 'postcss-value-parser'
 import postcss from 'postcss'
 import valueParser from 'postcss-value-parser'
 import { tailwindPropertyRegistrations } from '../cssVarsV4'
-import { decodeCssIdentifier, getCssAtRulePrelude, getCssCustomPropertyName, isCssPropertyRegistration } from '../utils/css-custom-property'
+import { decodeCssIdentifier, getCssAtRulePrelude, getCssCustomPropertyName } from '../utils/css-custom-property'
 import { normalizeModernColorValue } from './color-mix'
 
 const signatures = new Map(tailwindPropertyRegistrations.map(item => [item.prop, item]))
@@ -146,28 +146,4 @@ export function insertRegisteredCustomPropertyFallbackRule(
   else {
     root.append(fallback)
   }
-}
-
-const unregisteredInitialFallbacks = new Set([
-  '--tw-gradient-position',
-  '--tw-gradient-stops',
-  '--tw-gradient-via-stops',
-  '--tw-leading',
-  '--tw-font-weight',
-  '--tw-tracking',
-])
-
-export function removeInitialFallbackDeclarations(root: postcss.Root, registered: ReturnType<typeof collectRegisteredCustomPropertyFallbacks>) {
-  root.walkDecls((decl) => {
-    if (isCssPropertyRegistration(decl) || decl.parent?.type !== 'rule' || !isDefaultsRule(decl.parent)
-      || decl.value.trim() !== 'initial') {
-      return
-    }
-    const name = getCssCustomPropertyName(decl.prop)
-    if (name && (registered.has(name)
-      ? registered.get(name)?.initialValue === undefined && registered.get(name) !== undefined
-      : unregisteredInitialFallbacks.has(name))) {
-      decl.remove()
-    }
-  })
 }
