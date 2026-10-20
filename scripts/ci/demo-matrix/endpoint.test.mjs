@@ -1,13 +1,13 @@
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
-import { createServer } from 'node:http'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { pathToFileURL } from 'node:url'
-import { expect, it } from 'vitest'
+import { expect, it, vi } from 'vitest'
 import { cases } from './catalog.mjs'
 import { announcedViteUrl, developmentUrl } from './endpoint.mjs'
+import { reserveFallbackPortPair } from './port-pair.fixture.mjs'
 import { startProcess } from './process.mjs'
 
 const item = cases.find(item => item.id === 'style-injector-taro-vite-react:h5')
@@ -15,7 +15,7 @@ const item = cases.find(item => item.id === 'style-injector-taro-vite-react:h5')
 async function closeFixture(root, session, occupant) {
   const results = await Promise.allSettled([
     session?.stop(),
-    new Promise((resolve, reject) => occupant.close(error => error ? reject(error) : resolve())),
+    occupant?.close(),
   ])
   results.push(...await Promise.allSettled([rm(root, { recursive: true, force: true })]))
   const errors = results.filter(result => result.status === 'rejected').map(result => result.reason)
@@ -54,15 +54,11 @@ it('bounds missing announcements and rejects an exited session without using the
 
 it('follows the actual Taro Vite endpoint when another server occupies the requested port', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'demo-matrix-port-'))
-  const occupant = createServer((_req, res) => res.end('wrong-server'))
+  let occupant
   let session
   try {
-    await new Promise((resolve, reject) => {
-      occupant.once('error', reject)
-      // 占用器与目标统一绑定确切 loopback，避免 wildcard 与其他接口共享端口身份。
-      occupant.listen(0, '127.0.0.1', resolve)
-    })
-    const port = occupant.address().port
+    occupant = await reserveFallbackPortPair()
+    const port = occupant.port
     const require = createRequire(import.meta.url)
     const vite = pathToFileURL(path.join(path.dirname(require.resolve('vite4/package.json')), 'dist/node/index.js')).href
     const fixture = path.join(root, 'server.mjs')
@@ -88,3 +84,32 @@ it('follows the actual Taro Vite endpoint when another server occupies the reque
     await closeFixture(root, session, occupant)
   }
 }, 25_000)
+
+it.each(['EADDRINUSE', 'EACCES'])('相邻端口 %s 时先清理占用器再有限重选夹具', async (code) => {
+  const first = { port: 51000, close: vi.fn() }
+  const second = { port: 52000, close: vi.fn() }
+  const successor = { port: 52001, close: vi.fn() }
+  const reserve = vi.fn()
+    .mockResolvedValueOnce(first)
+    .mockRejectedValueOnce(Object.assign(new Error(code), { code }))
+    .mockImplementationOnce(() => {
+      expect(first.close).toHaveBeenCalledOnce()
+      return second
+    })
+    .mockResolvedValueOnce(successor)
+  expect(await reserveFallbackPortPair({ reserve, attempts: 2 })).toBe(second)
+  expect(reserve.mock.calls).toEqual([[0], [51001], [0], [52001]])
+  expect(successor.close).toHaveBeenCalledOnce()
+  expect(second.close).not.toHaveBeenCalled()
+})
+
+it('未知配置错误立即失败，端口耗尽也不能放行', async () => {
+  const occupant = { port: 51000, close: vi.fn() }
+  const failed = code => Object.assign(new Error(code), { code })
+  const reserve = vi.fn().mockResolvedValueOnce(occupant).mockRejectedValueOnce(failed('EIO'))
+  await expect(reserveFallbackPortPair({ reserve })).rejects.toThrow('EIO')
+  expect(reserve).toHaveBeenCalledTimes(2)
+  expect(occupant.close).toHaveBeenCalledOnce()
+  const exhausted = vi.fn().mockResolvedValueOnce(occupant).mockRejectedValueOnce(failed('EACCES'))
+  await expect(reserveFallbackPortPair({ reserve: exhausted, attempts: 1 })).rejects.toThrow('1 次夹具配置')
+})
