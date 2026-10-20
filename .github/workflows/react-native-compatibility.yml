@@ -41,9 +41,15 @@ jobs:
   web:
     needs: scope
     if: needs.scope.outputs.core == 'true'
-    name: Expo Web compatibility
+    name: Expo Web compatibility (${{ matrix.browser }})
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    env:
+      RN_WEB_BROWSER: ${{ matrix.browser }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -58,25 +64,25 @@ jobs:
       - run: pnpm turbo run build --filter=@weapp-tailwindcss/react-native...
       - run: pnpm --filter @weapp-tailwindcss/react-native typecheck
       - run: pnpm --filter @weapp-tailwindcss/react-native test --update=none
-      - name: Install Playwright Chromium
+      - name: Install Playwright browser
         run: |
           for attempt in 1 2 3 4; do
-            if pnpm exec playwright install chromium chromium-headless-shell; then
+            if pnpm exec playwright install --with-deps ${{ matrix.browser }}; then
               exit 0
             fi
-            echo "Playwright Chromium install failed, retrying (${attempt}/4)"
+            echo "Playwright ${{ matrix.browser }} install failed, retrying (${attempt}/4)"
             sleep $((attempt * 10))
           done
-          pnpm exec playwright install chromium chromium-headless-shell
+          pnpm exec playwright install --with-deps ${{ matrix.browser }}
       - run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-ci.test.ts --update=none
       - run: pnpm e2e:react-native-compatibility
       - run: pnpm e2e:react-native:web
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: react-native-web-${{ github.run_id }}
-          path: e2e/.artifacts/react-native-*/**
-          if-no-files-found: ignore
+          name: react-native-web-${{ matrix.browser }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: e2e/.artifacts/react-native-web-${{ matrix.browser }}/**
+          if-no-files-found: error
           include-hidden-files: true
           retention-days: 14
 

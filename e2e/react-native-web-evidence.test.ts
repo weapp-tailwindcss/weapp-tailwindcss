@@ -2,7 +2,7 @@ import fs from 'node:fs/promises'
 import { Server } from 'node:http'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { runWebRuntime } from './react-native/web-runtime'
 
 const mock = vi.hoisted(() => {
@@ -24,15 +24,19 @@ const mock = vi.hoisted(() => {
     evaluate: vi.fn().mockResolvedValue(state),
   }
   const browser = { newPage: vi.fn().mockResolvedValue(page), close: vi.fn().mockResolvedValue(undefined) }
-  return { page, browser, background, color, card, screenshot, launch: vi.fn().mockResolvedValue(browser) }
+  return { page, browser, background, color, card, screenshot, launch: vi.fn().mockResolvedValue(browser), firefox: vi.fn().mockResolvedValue(browser), webkit: vi.fn().mockResolvedValue(browser) }
 })
 
-vi.mock('playwright', () => ({ chromium: { launch: mock.launch } }))
+vi.mock('playwright', () => ({ chromium: { launch: mock.launch }, firefox: { launch: mock.firefox }, webkit: { launch: mock.webkit } }))
 
 const roots: string[] = []
+beforeEach(() => {
+  vi.stubEnv('RN_WEB_BROWSER', 'chromium')
+})
 afterEach(async () => {
   await Promise.all(roots.splice(0).map(root => fs.rm(root, { recursive: true, force: true })))
   vi.clearAllMocks()
+  vi.unstubAllEnvs()
 })
 
 async function run() {
@@ -41,6 +45,14 @@ async function run() {
   await fs.writeFile(path.join(root, 'bundle.js'), '"bg-blue-500" "#2b7fff" "text-white"')
   return runWebRuntime(root, path.join(root, 'runtime.png'))
 }
+
+it.each(['firefox', 'webkit'] as const)('静态导出烟测沿用 %s 选择，不要求额外安装 Chromium', async (engine) => {
+  vi.stubEnv('RN_WEB_BROWSER', engine)
+  await expect(run()).resolves.toMatchObject({ background: 'rgb(43, 127, 255)' })
+  expect(mock[engine]).toHaveBeenCalledWith({ headless: true })
+  expect(mock.launch).not.toHaveBeenCalled()
+  expect(mock.browser.close).toHaveBeenCalledOnce()
+})
 
 it('有 manifest 字符串和尺寸也不能把缺失的样式伪装成蓝底白字', async () => {
   const timeout = new Error('computedStyle timeout')

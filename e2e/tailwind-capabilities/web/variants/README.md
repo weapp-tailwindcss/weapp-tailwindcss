@@ -1,6 +1,6 @@
 # Web variant 受控夹具
 
-这里维护独立声明的 DOM、状态动作和 computed style 预期。66 个受控场景与原有夹具合计覆盖 73 个 Tailwind 4.3.3 variant root；其余 15 个 root 在覆盖矩阵中保留 `not-run`，限制逐项记录在 `gaps.ts`。`fixture-defined` 只表示夹具存在，实际通过以本轮浏览器报告为准。
+这里维护独立声明的 DOM、状态动作和 computed style 预期。受控场景与原有夹具合计覆盖 82 个 Tailwind 4.3.3 variant root；其余 6 个 root 在覆盖矩阵中保留 `not-run`，限制逐项记录在 `gaps.ts`，具体补齐方案见 `../../web-context/remaining-variants.ts`。`fixture-defined` 只表示夹具存在，实际通过以本轮浏览器报告为准。
 
 | 文件 | 场景 | 实际动作 |
 | --- | --- | --- |

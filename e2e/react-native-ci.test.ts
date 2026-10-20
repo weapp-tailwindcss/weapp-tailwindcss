@@ -20,6 +20,33 @@ afterEach(() => {
 const ownedChild = { pid: 12345 } as Parameters<typeof stopOwnedProcess>[0]
 const processError = (code: string) => Object.assign(new Error(code), { code })
 
+it('Expo Web 三个引擎分别执行语义验收并保存独立证据', async () => {
+  const workflow = YAML.parse(await readFile(workflowPath, 'utf8'))
+  const web = workflow.jobs.web
+  const matrixBrowser = `${'$'}{{ matrix.browser }}`
+  expect(web.strategy['fail-fast']).toBe(false)
+  expect(web.strategy.matrix.browser).toEqual(['chromium', 'firefox', 'webkit'])
+  expect(web.env.RN_WEB_BROWSER).toBe(matrixBrowser)
+  expect(web.name).toContain(matrixBrowser)
+  const install = web.steps.find((step: { name?: string }) => step.name === 'Install Playwright browser')
+  expect(install.run).toContain(`playwright install --with-deps ${matrixBrowser}`)
+  const run = web.steps.find((step: { run?: string }) => step.run === 'pnpm e2e:react-native:web')
+  expect(run).toBeDefined()
+  const artifact = web.steps.find((step: { uses?: string }) => step.uses?.startsWith('actions/upload-artifact@'))
+  expect(artifact.with.name).toContain(matrixBrowser)
+  expect(artifact.with.path).toBe(`e2e/.artifacts/react-native-web-${matrixBrowser}/**`)
+  expect(artifact.with['if-no-files-found']).toBe('error')
+  expect(artifact.if).toBe('always()')
+  expect(web.steps.every((step: Record<string, unknown>) => !step['continue-on-error'])).toBe(true)
+  const exports = await readFile(new URL('./react-native-compatibility.test.ts', import.meta.url), 'utf8')
+  expect(exports).toContain('reactNativeWebBrowser(process.env.RN_WEB_BROWSER)')
+  expect(exports).toMatch(/`react-native-web-\$\{selectedBrowser\.name\}`/)
+  expect(exports).toContain('\'static-export-debug\'')
+  expect(workflow.jobs.android.needs).toEqual(['scope', 'web'])
+  expect(workflow.jobs.android.if).toContain('always() && !cancelled()')
+  expect(workflow.jobs.ios.needs).toBe('scope')
+})
+
 it.skipIf(process.platform === 'win32')('终止后进程组已无可发送信号的成员时结束清理', async () => {
   const kill = vi.spyOn(process, 'kill')
     .mockReturnValueOnce(true)

@@ -21,6 +21,7 @@ export async function buildLynxCapabilityReport(context: RunContext, target: Lyn
   const contracts = lynxCaseContracts(target, context.caseFilter)
   const report = await newReport(context, target, contracts, lynxAdapterFixture, {
     adapter: 'lynx-native-v2',
+    scopeGaps: contracts.filter(item => item.fixture === 'missing-lynx-registry-runtime-fixture').length,
     ...(raw ? { platform: raw.platform, deviceName: raw.environment?.deviceName ?? 'unresolved', osVersion: raw.environment?.osVersion ?? 'unresolved', runtimeIdentifier: raw.environment?.runtimeIdentifier ?? 'unresolved' } : {}),
   })
   if (raw) {
@@ -42,7 +43,7 @@ export async function buildLynxCapabilityReport(context: RunContext, target: Lyn
     }
   }
   for (const contract of contracts) {
-    if (contract.fixture === 'missing-lynx-atomic-runtime-fixture') {
+    if (contract.fixture === 'missing-lynx-atomic-runtime-fixture' || contract.fixture === 'missing-lynx-registry-runtime-fixture') {
       report.results.push({ id: contract.id, support: contract.expectation.support, status: 'not-run', assertions: [], artifacts: [], warnings: [], reason: '尚无此原子能力的独立 Lynx 运行时夹具；混合案例的整体支持或拒绝不能传播为该能力结论。' })
       continue
     }

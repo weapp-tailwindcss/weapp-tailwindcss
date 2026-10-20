@@ -1,7 +1,9 @@
+import type { Browser } from 'playwright'
 import fs from 'node:fs'
 import { createServer } from 'node:http'
 import path from 'node:path'
-import { chromium } from 'playwright'
+import process from 'node:process'
+import { reactNativeWebBrowser } from './web-browser'
 
 function serve(directory: string) {
   const root = path.resolve(directory)
@@ -35,10 +37,11 @@ function serve(directory: string) {
 }
 
 export async function runWebRuntime(outputDirectory: string, screenshotFile: string) {
+  const selectedBrowser = reactNativeWebBrowser(process.env.RN_WEB_BROWSER)
   const server = await serve(outputDirectory)
-  let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined
+  let browser: Browser | undefined
   try {
-    browser = await chromium.launch({ headless: true })
+    browser = await selectedBrowser.type.launch({ headless: true })
     const page = await browser.newPage({ viewport: { width: 402, height: 874 }, deviceScaleFactor: 1, colorScheme: 'light' })
     const browserDiagnostics: string[] = []
     page.on('console', message => browserDiagnostics.push(`console:${message.type()}:${message.text()}`))

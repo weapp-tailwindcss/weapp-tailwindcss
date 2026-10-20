@@ -17,6 +17,8 @@
 
 RN 的已审查限制位于 `examples/react-native-expo/src/compatibility/protocol.ts`；Lynx 位于 `e2e/lynx/expectations.ts`。这些是预先声明的合同，不能根据新失败自动扩大。尚无可靠语义夹具的注册能力必须继续列为未执行。Lynx 宿主尚不能独立触发 hover；active 不能代证 hover，group 也不能代证 peer。
 
+Lynx adapter 逐项登记全部 1,293 个 utility/variant 注册条目。当前只有 `aspect` 和 `size` 通过已审查的单候选几何夹具关联注册 ID，其余 1,291 项各有 `inventory/<注册 ID>`、原始语法样本和 `not-run` 结果。旧 118 案例和原子能力 ID 继续保留；混合案例通过不会填平这些缺口。Expo Web CI 使用 Chromium、Firefox、WebKit 独立矩阵，静态导出烟测和语义 runner 均消费同一个 `RN_WEB_BROWSER`，分别归档证据。
+
 Web 注册 utility 的逐引擎语法限制、Linux 字体边界及 Firefox 滚动条取证入口见 [固定引擎限制](registry-web/limits.md)。这些案例保留原 ID；负向通过需要独立语法 / CSSOM / 无类对照证据，不能计作正向渲染支持。
 
 ## 入口
