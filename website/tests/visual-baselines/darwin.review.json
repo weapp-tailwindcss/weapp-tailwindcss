@@ -1,100 +1,170 @@
 {
   "version": 1,
-  "manifestSha256": "b2de899f94b37b27398bcc00b41addbe10dae5a93d57b3699e66d894492e63bc",
+  "manifestSha256": "0c266060e9ff385657a6df3de23fbb1b40ec9bddc2a8e1638168e8920afc0f78",
   "reviewer": "Codex 当前任务主代理",
-  "notes": "已实际审查 Chromium、Firefox、WebKit 的首页、UI、LLM、Lynx 长文与 showcase 代表 PNG 切片，以及 Chromium 移动首页和长页图片；未见此前低对比面板或 lazy 图片空缺。合同校验完整 1204 张首次成功截图与 602 个既有跳过，未逐字人工审查全部页面。此为 70661ce91 历史视觉基线，不代表注册属性语义、旧 WebView 或原生验收通过；新发现的注册边界反例独立修复。",
-  "reviewedAt": "2026-10-20T21:00:20.765Z",
+  "notes": "本轮来源61d8cb1f2，1204张首次成功、602项原有移动Firefox/WebKit显式跳过，零失败与重试。与70661ce91已审查黄金逐图字节比对：1188张完全一致，16张仅为中英文important与Lynx说明变长。逐张查看16个变化区域，并抽查三引擎首页、移动首页/UI、Firefox UI与showcase图片；所看区域未见错位、对比异常或图片缺失。其余未变化页面沿用已登记历史审查，不声称人工逐像素阅读本轮全部长页；本审查不代替后续update=none实渲染比较，不证明原生或旧WebView支持。",
+  "reviewedAt": "2026-10-20T22:13:29.054Z",
   "evidence": [
     {
       "file": "review-1.png",
-      "bytes": 1195131,
-      "sha256": "b52a456edf231aded27185553c3675871e7c37dc94c41603548207ed64e6c7b6",
-      "width": 1326,
-      "height": 1756
+      "bytes": 168436,
+      "sha256": "2fd8e828fb4113fef7d253ac0baf714017de6ead6af733ffad8a025a19f86658",
+      "width": 1280,
+      "height": 1100
     },
     {
       "file": "review-2.png",
-      "bytes": 184928,
-      "sha256": "065485804f455f66ead52b51ec9e7b652e58a6e9e61d21233fe1e35d8bb43ebd",
-      "width": 1326,
-      "height": 444
+      "bytes": 164143,
+      "sha256": "ede3697c29a11c89a6ed77f3322c0b2dcbb5756f83e08c10d26ae20bb25c962c",
+      "width": 1280,
+      "height": 1100
     },
     {
       "file": "review-3.png",
-      "bytes": 222639,
-      "sha256": "90acbfc65ad7982c4557e8aa943ba4a8e9e7d4e36ba5607c01236db72bd192fc",
-      "width": 1326,
-      "height": 444
+      "bytes": 159200,
+      "sha256": "454ddf1a69e4a343b0c660be2d245a10a8bb5f60012cfad75f9a9b909e4b98d9",
+      "width": 1280,
+      "height": 1100
     },
     {
       "file": "review-4.png",
-      "bytes": 522567,
-      "sha256": "0570c03848724d38adfa0c431ecdfbad58c4bfeb1c7c5bc8bcf4b89e1229f51e",
-      "width": 1326,
-      "height": 444
+      "bytes": 196504,
+      "sha256": "fabff72d0061a36ddaf4263a7f49d17f9630e99634180befadc644ed89d8ff6c",
+      "width": 1280,
+      "height": 1100
     },
     {
       "file": "review-5.png",
-      "bytes": 687862,
-      "sha256": "7eeddac10062e8dc6023a3473f5156ca0d3f6dee826276e13fd92d7fa4e9b94c",
-      "width": 1326,
-      "height": 1287
+      "bytes": 253157,
+      "sha256": "36e29ae9ddd46e53d528ff794aa5293333928e8d701d0f3ceb6b599216cb44eb",
+      "width": 1280,
+      "height": 1100
     },
     {
       "file": "review-6.png",
-      "bytes": 2261612,
-      "sha256": "8dfba37b5581a3fe8f2a8f3242b1a5faf689e65db784a49b687ac8172d3aab8d",
-      "width": 1326,
-      "height": 1287
+      "bytes": 182609,
+      "sha256": "5c22b591b8fd2cae9a81d64f13d4d5f3717d65fc22183bfe1f4d88dd72a9cc76",
+      "width": 1280,
+      "height": 1100
     },
     {
       "file": "review-7.png",
-      "bytes": 545571,
-      "sha256": "81a60b87c74d106d0baba22bd553c6df138e9f4dbe768f224d24f5965769a449",
-      "width": 1326,
-      "height": 444
+      "bytes": 206950,
+      "sha256": "fce4fb06dc3d342d11932f73756d570067fc2f7f862dda2494cfcd56ef08a8c0",
+      "width": 1280,
+      "height": 1100
     },
     {
       "file": "review-8.png",
-      "bytes": 176167,
-      "sha256": "dfe7dc8247640b91835316141d75f2b7545fbc7374a950bcd1dae4910fcd69e7",
-      "width": 1326,
-      "height": 444
+      "bytes": 193219,
+      "sha256": "4194d8f242b91c64463e471ae6bce5ac67707c4566237df9e673a0f25be530e5",
+      "width": 1280,
+      "height": 1100
     },
     {
       "file": "review-9.png",
-      "bytes": 274820,
-      "sha256": "9606fbae5c9aedf3e6169504d3d5d94eca9f4516db52714307287451f3de70d7",
-      "width": 1326,
-      "height": 444
+      "bytes": 194811,
+      "sha256": "5df1fdedcd25621c77c30770ae7751fadc1caa0bd5986d76905df491a0354f35",
+      "width": 1280,
+      "height": 1100
     },
     {
       "file": "review-10.png",
-      "bytes": 522714,
-      "sha256": "27b4c4d4c4c098eb3adac9fdf6f175ad0ccd314d33063ce44b6c0ff77480fd31",
-      "width": 1326,
-      "height": 444
+      "bytes": 232376,
+      "sha256": "f9f59d0b169da9ddfca783b266dfa1608b786450d271b7a5449c30be38ccca98",
+      "width": 1280,
+      "height": 1100
     },
     {
       "file": "review-11.png",
-      "bytes": 179867,
-      "sha256": "46865f52e3dadaeab4a371da3fdfe277d6fa65e4dcac1da2b74c6c6a4d20e976",
-      "width": 1326,
-      "height": 444
+      "bytes": 277148,
+      "sha256": "113db16bf88a7454835dedb01dba954dee336bb9842cffd060df56eca02c5278",
+      "width": 1280,
+      "height": 1100
     },
     {
       "file": "review-12.png",
-      "bytes": 201518,
-      "sha256": "5e8a8c6fb2ff005e017beb32e1e8923d259b7fa586f310687d7cd08fb1e2a5ad",
-      "width": 1326,
-      "height": 444
+      "bytes": 251354,
+      "sha256": "50187f466aede22bbe7018ed5f8e62cbe54215b9a2192cf1106b0c349935e9ff",
+      "width": 1280,
+      "height": 1100
     },
     {
       "file": "review-13.png",
-      "bytes": 254841,
-      "sha256": "fbb45146ba6dcad75df0a2862c30b5a8b5b7fe270792b4ea31894933e1e66048",
-      "width": 1326,
-      "height": 444
+      "bytes": 100284,
+      "sha256": "ee424cab28ccd054b5b9a88a781fd51bfa718614193e5614a29822ed3f0da85c",
+      "width": 390,
+      "height": 1100
+    },
+    {
+      "file": "review-14.png",
+      "bytes": 127017,
+      "sha256": "6adcd39130e4a9369320e3fe3f7b05f03c9761be674d304b2c9068a38318971e",
+      "width": 390,
+      "height": 1100
+    },
+    {
+      "file": "review-15.png",
+      "bytes": 148040,
+      "sha256": "b8915083825fd4df40ce6db6864f8fc4fff8ce2c27f9ec3ef49f1e4b6f6d0ad0",
+      "width": 390,
+      "height": 1100
+    },
+    {
+      "file": "review-16.png",
+      "bytes": 160185,
+      "sha256": "bc273f140185c68c87ed4ac0a3f70736cee70f6d8b8bc52aa33a0815db60ed37",
+      "width": 390,
+      "height": 1100
+    },
+    {
+      "file": "review-17.png",
+      "bytes": 1904486,
+      "sha256": "d5ddcb41babe05a0f7eff85290510410f3e3f42f9495942a0e83c8a2cc20c78c",
+      "width": 1280,
+      "height": 1400
+    },
+    {
+      "file": "review-18.png",
+      "bytes": 1822899,
+      "sha256": "47978a2e6bf564691e222ab745232ec3744ccfb907269d2e0f23fafb84504c53",
+      "width": 1280,
+      "height": 1400
+    },
+    {
+      "file": "review-19.png",
+      "bytes": 1485388,
+      "sha256": "980b10af23dd5f52475ac8a5a76b12e18d4d2cf9d4833de09b8268cf1ef5d373",
+      "width": 1280,
+      "height": 1100
+    },
+    {
+      "file": "review-20.png",
+      "bytes": 568512,
+      "sha256": "2f5d5d140677b0b95cbbd4ac9b1fddc33acf018a9ff079eae1b30a1d35c43709",
+      "width": 390,
+      "height": 1100
+    },
+    {
+      "file": "review-21.png",
+      "bytes": 89058,
+      "sha256": "abeeb47b5538c09d16ded3f98334cdba7a8066415e49c6085c17914ee0d5b2e9",
+      "width": 397,
+      "height": 1100
+    },
+    {
+      "file": "review-22.png",
+      "bytes": 132703,
+      "sha256": "3b900bec6ea07ac0c613160b10581226cf97c886f5c42eef1eb2cfc54fb526c9",
+      "width": 1280,
+      "height": 1100
+    },
+    {
+      "file": "review-23.png",
+      "bytes": 276603,
+      "sha256": "ab0e85241385b49bebac03d389667e15b2114043342f469875e158844acd3147",
+      "width": 1280,
+      "height": 1100
     }
   ]
 }

@@ -252,6 +252,14 @@ head `a10ef71036e9ea923da4bc79b046861c34fde81d` 的 Benchmark run `39479576075`�
 
 当前结果仍为 **partial**。本轮全面验收前须重新执行扩展预检、真实当前会话 computer use 和 verify。双端主题覆盖已有上述提交的运行证据；新 head 原生执行仍待通过。RN 的实际 served bundle/HMR 链、Image/ScrollView、RN/Lynx 注册夹具、独立转换 oracle 与尚缺的六类 Web variant，不能由上述单测或静态合同写成全面有效。跨独立 stylesheet 与运行时 inline 的不可见覆盖不在当前 AST 静态安全保证内。原生报告与 served bundle 的既有缺口继续单独登记。
 
+### 61d8cb1f2 网站完整候选的审查与安装
+
+从干净提交 `61d8cb1f2f745a0990cc5e63644d9fba10dc7758` 正式生产构建后，以受管 `e2e:visual capture` 采集三引擎桌面及 Chromium 移动端：1,204 项首次通过、602 项既有移动 Firefox/WebKit 显式跳过，零失败、零重试。源码、锁文件、实际构建、截图合同和工具版本均绑定在清单；候选及原生报告位于 `.tmp/website-visual-61d8cb1f2/`。
+
+逐图字节比较旧已审查 `70661ce91` 基线：1,188 张完全相同，16 张变化均为中英文 important 与 Lynx 文档说明变长。主代理实际查看全部 16 个变化区域，另抽查三引擎首页、移动首页/UI、Firefox UI 与 showcase 图片，共登记 23 份 PNG 审查证据；所看区域未见错位或图片缺失，不声称人工阅读了全部长页的每个像素。此前审查和相同字节的页面来源继续保留。
+
+先以 `pnpm --filter @weapp-tailwindcss/website e2e:visual verify` 核对旧安装来源，再按本任务归属归档旧黄金目录和两份登记至 `.tmp/website-visual-70661ce91-installed-archive/`。新候选经 `e2e:visual review --directory <候选> --reviewer <审查者> --notes <中文结论> --evidence <实际查看PNG>`、`e2e:visual install --directory <候选>` 及再次 `e2e:visual verify` 通过，更新 `darwin.json` 与 `darwin.review.json`。来源验证不等于禁止更新的实渲染比较；后续全面入口仍须运行 `e2e:local`，本记录不替代原生或旧 WebView 验收。
+
 ## 规则评估
 
 decoder 固定资源有独立安全边界，迁入发布包后沿用其局部 AGENTS 并登记索引；仓库其他硬规则和验收门槛没有放宽。旧复盘保留历史 SHA 与结果，只修复资源移动后的断链，不把旧证据改为本轮通过。

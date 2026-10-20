@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "capturedAt": "2026-10-20T20:56:57.643Z",
+  "capturedAt": "2026-10-20T22:06:30.970Z",
   "source": {
-    "head": "70661ce91db2791377d42fda8f124535337a439e",
+    "head": "61d8cb1f2f745a0990cc5e63644d9fba10dc7758",
     "lock": "ede850c6c0c5c6ecb0ef0e105f20a11a93792a8714949ce030324f13f8977c03",
     "contract": "40e59b53885ab105617d64f2d337858be198d098da294a4a654d66792b26d2b3",
     "node": "v24.18.0",
-    "build": "a6baa3998a7c87f932f5b97c2ab83d65aafb7c9f6cd284e44a0adc83c591ba5a"
+    "build": "fa77d31c19ef1082603243515eac12e06ab2081e371f937d879122dd0fd99e14"
   },
   "environment": {
     "platform": "darwin",
@@ -23,8 +23,8 @@
       "vips": "8.18.7"
     }
   },
-  "reportSha256": "e2a9e22f71a5d5d68aa74ba9d71c5e97cb24c7f92173d1ea85106cce0074a4f0",
-  "snapshotRoot": "/Users/icebreaker/.codex/worktrees/tailwind-capability-e2e/weapp-tailwindcss/.tmp/website-visual-70661ce91/snapshots",
+  "reportSha256": "f5d929aaeb1d415bc24d4a729de60860017ce704f724a7de0a6c6e5ee2d0330d",
+  "snapshotRoot": "/Users/icebreaker/.codex/worktrees/tailwind-capability-e2e/weapp-tailwindcss/.tmp/website-visual-61d8cb1f2/snapshots",
   "skipped": [
     "firefox:mobile / screenshot",
     "firefox:mobile /blog screenshot",
@@ -2077,10 +2077,10 @@
       "title": "desktop /docs/api/options/important screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-docs-api-options-important-screenshot-1-chromium-darwin.png",
-      "bytes": 1965543,
-      "sha256": "62a90dc70ee593aade9e063ab5245d509234dec13992b8e7755b4c949738b38b",
+      "bytes": 1977680,
+      "sha256": "d367f3f4bc567c861703a85add1dfa325f0dfe1deb7e51cd39f8fb8f52a5d0af",
       "width": 1280,
-      "height": 13641
+      "height": 13670
     },
     {
       "project": "firefox",
@@ -2089,10 +2089,10 @@
       "title": "desktop /docs/api/options/important screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-docs-api-options-important-screenshot-1-firefox-darwin.png",
-      "bytes": 2292630,
-      "sha256": "cb1b3bd2c1da6362fe43fc08e8dac1a7f461a4feef644faceaa58d1adfc53a2b",
+      "bytes": 2306510,
+      "sha256": "c473395664a4fa214e8e7c9c0eb4bcc286fe9b14a3fe878dd1c93642bcf72a2a",
       "width": 1280,
-      "height": 13682
+      "height": 13711
     },
     {
       "project": "webkit",
@@ -2101,10 +2101,10 @@
       "title": "desktop /docs/api/options/important screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-docs-api-options-important-screenshot-1-webkit-darwin.png",
-      "bytes": 2362078,
-      "sha256": "8337d58a5aa87d3e4ed12448562e620d0e7168561c4b443cb43aefdb825c0c3d",
+      "bytes": 2374062,
+      "sha256": "f5d31de430810176c709378de6c96158719df4cba62f32938b9d5a047a73502e",
       "width": 1280,
-      "height": 13679
+      "height": 13708
     },
     {
       "project": "chromium",
@@ -4165,10 +4165,10 @@
       "title": "desktop /docs/quick-start/frameworks/lynx screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-docs-quick-start-frameworks-lynx-screenshot-1-chromium-darwin.png",
-      "bytes": 967542,
-      "sha256": "3fd5410b3626747e61aa578a29ebb6dfe461d69f0a964bae0c65025c03d07e7a",
+      "bytes": 986013,
+      "sha256": "595569d27fbe0684e03d918de82f77346b08d6bab30ae4f3fb23ddc66314fc59",
       "width": 1280,
-      "height": 5041
+      "height": 5099
     },
     {
       "project": "firefox",
@@ -4177,10 +4177,10 @@
       "title": "desktop /docs/quick-start/frameworks/lynx screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-docs-quick-start-frameworks-lynx-screenshot-1-firefox-darwin.png",
-      "bytes": 1109233,
-      "sha256": "473563ee69509498b99b7cd22b4142062f1a904d52e57cfc50a6b56343748ea4",
+      "bytes": 1127717,
+      "sha256": "3580ea755fe134a76d695cf359643770b6d10b4ecab7149b4c9a0deaef33ea32",
       "width": 1280,
-      "height": 5052
+      "height": 5111
     },
     {
       "project": "webkit",
@@ -4189,10 +4189,10 @@
       "title": "desktop /docs/quick-start/frameworks/lynx screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-docs-quick-start-frameworks-lynx-screenshot-1-webkit-darwin.png",
-      "bytes": 1109351,
-      "sha256": "9d55be057afbcc0f4c64eda913fd0c93a4fb5cd61b72b94981e45cb96bd432dd",
+      "bytes": 1128347,
+      "sha256": "7e1af1a657b2c923b4bbeeaaa741c83f4dbbbc55b4cc59fdca0ba20ab9318d93",
       "width": 1280,
-      "height": 5051
+      "height": 5110
     },
     {
       "project": "chromium",
@@ -7621,10 +7621,10 @@
       "title": "desktop /zh-cn/docs/api/options/important screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-zh-cn-docs-api-options-important-screenshot-1-chromium-darwin.png",
-      "bytes": 1766494,
-      "sha256": "7fe1437e015260b1b7014effc272a7421496be2252f74df17f166c74a7e8b2a1",
+      "bytes": 1784473,
+      "sha256": "12623905bdcc85a77d5605d9d4cfde10b890f6d75879d480be91fa10a3029745",
       "width": 1280,
-      "height": 11479
+      "height": 11508
     },
     {
       "project": "firefox",
@@ -7633,10 +7633,10 @@
       "title": "desktop /zh-cn/docs/api/options/important screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-zh-cn-docs-api-options-important-screenshot-1-firefox-darwin.png",
-      "bytes": 2024028,
-      "sha256": "24c5516c6feff727f9161cf7e6c1a5d8a14994ad892674a53efca58a34af4a93",
+      "bytes": 2043497,
+      "sha256": "7eb4f3f9a52d405ace5031d6114d5d1b3e8865c3a6046e76556393935b382669",
       "width": 1280,
-      "height": 11552
+      "height": 11581
     },
     {
       "project": "webkit",
@@ -7645,10 +7645,10 @@
       "title": "desktop /zh-cn/docs/api/options/important screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-zh-cn-docs-api-options-important-screenshot-1-webkit-darwin.png",
-      "bytes": 2148580,
-      "sha256": "9e422620a1b5a6ce9f15e4b27419eaf00f1412943d021422ffdd1b08c698c22c",
+      "bytes": 2166863,
+      "sha256": "581e10df068a8f48b54de53efc40d1b2cdae7a7a1358176fc9dc83e62bcdafbf",
       "width": 1280,
-      "height": 11492
+      "height": 11521
     },
     {
       "project": "chromium",
@@ -9709,10 +9709,10 @@
       "title": "desktop /zh-cn/docs/quick-start/frameworks/lynx screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-zh-cn-docs-quick-start-frameworks-lynx-screenshot-1-chromium-darwin.png",
-      "bytes": 983956,
-      "sha256": "3e3192c11a76d0e3e681ddb33dcc3d22d88988b3cf4bbdffd92f7e6d3e3f7722",
+      "bytes": 1001628,
+      "sha256": "5afdeedbddd8874f8923ac9ea83f7111799b2ca6503b14b1917838b4dd3831c8",
       "width": 1280,
-      "height": 4549
+      "height": 4607
     },
     {
       "project": "firefox",
@@ -9721,10 +9721,10 @@
       "title": "desktop /zh-cn/docs/quick-start/frameworks/lynx screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-zh-cn-docs-quick-start-frameworks-lynx-screenshot-1-firefox-darwin.png",
-      "bytes": 1091893,
-      "sha256": "03cd36a0ba88d6366f929492885085582eb1fa4af601435f8fb62c81025c1bd1",
+      "bytes": 1110124,
+      "sha256": "077ec411257e2ec5741d8ff23ff7254f594b279a743af8266372f7ee0c9dce7f",
       "width": 1280,
-      "height": 4560
+      "height": 4618
     },
     {
       "project": "webkit",
@@ -9733,10 +9733,10 @@
       "title": "desktop /zh-cn/docs/quick-start/frameworks/lynx screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-zh-cn-docs-quick-start-frameworks-lynx-screenshot-1-webkit-darwin.png",
-      "bytes": 1125906,
-      "sha256": "844aa56d582ea8d67204e48afeb4464050781abeeb1f0ec4405b6251fe60fbc2",
+      "bytes": 1146900,
+      "sha256": "f539813a5525b48a821e318f06febc68153c769ef9a374d38e4018dfb6b6b838",
       "width": 1280,
-      "height": 4530
+      "height": 4588
     },
     {
       "project": "chromium",
@@ -11953,10 +11953,10 @@
       "title": "mobile /docs/api/options/important screenshot",
       "skipped": false,
       "file": "mobile-viewport-mobile-docs-api-options-important-screenshot-1-chromium-darwin.png",
-      "bytes": 1910080,
-      "sha256": "2b6a17b0ec0e40958f8d035dd5f428fdc64ce414b3fe59ff83b705a4b943118b",
+      "bytes": 1924348,
+      "sha256": "e2b699d8599f32674ccaa9ac1de3e23bcdddcc000d4056797ca392283ba89eb6",
       "width": 390,
-      "height": 20511
+      "height": 20598
     },
     {
       "project": "chromium",
@@ -12649,10 +12649,10 @@
       "title": "mobile /docs/quick-start/frameworks/lynx screenshot",
       "skipped": false,
       "file": "mobile-viewport-mobile-docs-quick-start-frameworks-lynx-screenshot-1-chromium-darwin.png",
-      "bytes": 871142,
-      "sha256": "c3f085e8f1448167e68e3ae44da4a8296f276ce468d256aebd35a4bf0eb16bb5",
+      "bytes": 890360,
+      "sha256": "c682b27eeff9f82b2dd2fbf36d2f016bd14f79a445d5f48281b95c68b8bd5765",
       "width": 390,
-      "height": 7417
+      "height": 7534
     },
     {
       "project": "chromium",
@@ -13801,10 +13801,10 @@
       "title": "mobile /zh-cn/docs/api/options/important screenshot",
       "skipped": false,
       "file": "mobile-viewport-mobile-zh-cn-docs-api-options-important-screenshot-1-chromium-darwin.png",
-      "bytes": 1620571,
-      "sha256": "846f5f7fb9eb3cf09efeec34cceec749428ae1f84c61b98cdb612399e1898886",
+      "bytes": 1637357,
+      "sha256": "40262cab9e0bfdf1705403188ebbdb8e81abdf29d49278a4d90372c2cc4dcb0a",
       "width": 390,
-      "height": 16494
+      "height": 16552
     },
     {
       "project": "chromium",
@@ -14497,10 +14497,10 @@
       "title": "mobile /zh-cn/docs/quick-start/frameworks/lynx screenshot",
       "skipped": false,
       "file": "mobile-viewport-mobile-zh-cn-docs-quick-start-frameworks-lynx-screenshot-1-chromium-darwin.png",
-      "bytes": 816793,
-      "sha256": "3418ccdf2c74527b6d3ddd632450b6f624e7e4bf22bff25ac000a7ca0ee8c00e",
+      "bytes": 835147,
+      "sha256": "2c44fb748214a268affe628ab891eaebb06284e6b1ad2087d489fe35bcefa112",
       "width": 390,
-      "height": 6374
+      "height": 6461
     },
     {
       "project": "chromium",
