@@ -52,6 +52,47 @@ describe('Lynx 文档与已提交基线的事实合同', () => {
     expect(findings.some(item => item.includes('必装依赖'))).toBe(true)
   })
 
+  it.each(['dependency', 'required-peer'])('递归拒绝深层 %s 的更高 Node 门槛，排除可选边与循环', (edge) => {
+    const adapterPath = path.join(repoRoot, 'packages/lynx/package.json')
+    const corePath = path.join(repoRoot, 'packages/weapp-tailwindcss/package.json')
+    const virtualPath = name => path.join(repoRoot, 'virtual-lynx-contract', name, 'package.json')
+    const manifests = new Map([
+      [virtualPath('middle'), { name: 'middle', dependencies: { leaf: '1', optional: '1' }, optionalDependencies: { optional: '1' }, peerDependencies: { 'optional-peer': '1' }, peerDependenciesMeta: { 'optional-peer': { optional: true } } }],
+      [virtualPath('leaf'), { name: 'leaf', dependencies: { middle: '1', ...edge === 'dependency' ? { constrained: '1' } : {} }, peerDependencies: edge === 'required-peer' ? { constrained: '1' } : {} }],
+      [virtualPath('constrained'), { name: 'constrained', engines: { node: '>=999.0.0' } }],
+      [virtualPath('@lynx-js/rspeedy'), { name: '@lynx-js/rspeedy' }],
+      [virtualPath('tailwindcss'), { name: 'tailwindcss' }],
+    ])
+    const resolved = []
+    const findings = collectLynxContractFindings({
+      readFile: (file) => {
+        if (manifests.has(file)) {
+          return JSON.stringify(manifests.get(file))
+        }
+        const source = fs.readFileSync(file, 'utf8')
+        if (file === adapterPath || file === corePath) {
+          const manifest = JSON.parse(source)
+          manifest.dependencies = file === adapterPath ? { 'weapp-tailwindcss': 'workspace:*' } : { middle: '1' }
+          if (file === corePath) {
+            manifest.peerDependencies = {}
+          }
+          return JSON.stringify(manifest)
+        }
+        return source
+      },
+      resolveManifest: (name) => {
+        resolved.push(name)
+        return name === 'weapp-tailwindcss' ? corePath : virtualPath(name)
+      },
+    })
+    expect(findings).toHaveLength(1)
+    expect(findings[0]).toContain('必装依赖 constrained 的 >=999.0.0')
+    expect(resolved).not.toContain('optional')
+    expect(resolved).not.toContain('optional-peer')
+    expect(resolved.filter(name => name === 'middle')).toHaveLength(2)
+    expect(resolved).not.toContain('@lynx-js/react-rsbuild-plugin')
+  })
+
   it('即使保留正确边界文字，也拒绝无条件保证应用变量不被静态化', () => {
     const findings = collectLynxContractFindings({ readFile: (file) => {
       const source = fs.readFileSync(file, 'utf8')

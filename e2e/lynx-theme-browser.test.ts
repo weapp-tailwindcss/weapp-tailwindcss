@@ -33,6 +33,38 @@ if (requested !== 'all' && !(requested in engines)) {
 }
 const selected = Object.entries(engines).filter(([name]) => requested === 'all' || requested === name)
 
+it.each(selected)('%s：作者注册属性的初值、不继承与局部切换保持独立浏览器语义', async (_name, engine) => {
+  const browser = await engine.launch({ headless: true })
+  try {
+    const page = await browser.newPage()
+    const fixtures = [
+      ['wildcard', 'syntax: "*"; inherits: false;'],
+      ['typed', 'syntax: "<color>"; inherits: false; initial-value: #00f;'],
+    ] as const
+    for (const [id, descriptors] of fixtures) {
+      const property = `--color-registered-${id}`
+      const css = `@property ${property} { ${descriptors} } :root { ${property}: #f00; } .probe { background-color: var(${property}, #00f); } .theme-dark .probe { ${property}: #0f0; }`
+      for (const [pipeline, transform] of [
+        ['原始', (value: string) => value],
+        ['Web', (value: string) => transformWebCssCompat(value, true)],
+        ['Lynx', transformLynxCssCompat],
+        ['Web → Lynx', (value: string) => transformLynxCssCompat(transformWebCssCompat(value, true))],
+      ] as const) {
+        await page.setContent(`<style>${transform(css)}</style><button onclick="document.body.classList.toggle('theme-dark')">切换</button><div class="probe"></div>`)
+        for (const [index, color] of ['rgb(0, 0, 255)', 'rgb(0, 255, 0)', 'rgb(0, 0, 255)'].entries()) {
+          if (index) {
+            await page.getByRole('button', { name: '切换' }).click()
+          }
+          expect(await page.locator('.probe').evaluate(element => getComputedStyle(element).backgroundColor), `${id}/${pipeline}/${index}`).toBe(color)
+        }
+      }
+    }
+  }
+  finally {
+    await browser.close()
+  }
+}, 60_000)
+
 it.each(selected)('%s：原始与 decoder 的颜色 token 写法具有独立浏览器等价证据', async (_name, engine) => {
   const browser = await engine.launch({ headless: true })
   try {

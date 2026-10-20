@@ -46,6 +46,8 @@ export default defineConfig({
 
 `pluginLynxTailwindcss` 固定使用 `platform: 'lynx'`、`generator.target: 'web'` 与 Lynx 原生兼容输出。稳定的 Tailwind theme token 可能在构建期静态化，确保 `bg-sky-500`、`p-6`、`text-lg` 等标准 utility 能进入 Lynx 原生样式表；同一 CSS 中可见的应用变量覆盖会保留 `var()` 依赖。跨文件 stylesheet 或 inline style 的覆盖关系不在该静态分析保证范围内。
 
+作者自定义 `@property`（非 `--tw-*`）保留注册与 `var()`，不会用全局默认值替代语法、初值或继承语义。目标端仍须支持注册属性；保留输入与浏览器对照不代表 Lynx 原生已支持该语义。
+
 递归变量路径要求 Lynx runtime 3.6 以上，以及 ReactLynx 插件 0.12.4 以上公开的模板 API；更旧的构建器需要升级。源码支持边界不等于设备验收，当前原生测试仍使用固定 4.0.1 矩阵。
 
 插件在模板编码前，通过 ReactLynx 构建器公开的 hook 将未配置的 `enableCSSInlineVariables` 默认设为 `true`，使嵌套 utility 变量进入原生递归解析路径；保留显式页面配置与动态 CSS 依赖。需要同时注册 `pluginReactLynx()`，缺少模板 API 时明确构建失败。此设置不改变目标 SDK，也不代表所有 CSS 属性已通过原生验收。

@@ -27,6 +27,22 @@ describe('Lynx 主题变量的 CSS 身份与完整依赖图', () => {
       expect(transform(css)).toContain('color: var(--color-brand)')
     })
 
+    it.each([
+      ['--color-brand', 'syntax: "*"; inherits: false;', '#00f'],
+      ['--color-brand', 'syntax: "<color>"; inherits: false; initial-value: #00f;', '#00f'],
+      ['--spacing', 'syntax: "*"; inherits: false;', '7px'],
+    ])('保留作者注册 %s 的求值语义，不用全局初值模拟注册', (property, descriptors, fallback) => {
+      const value = property === '--spacing' ? '4px' : '#f00'
+      const use = property === '--spacing' ? 'width' : 'color'
+      const registration = `@property ${property} { ${descriptors} }`
+      const css = `${registration} :root { ${property}: ${value}; } .probe { ${use}: var(${property}, ${fallback}); }`
+      const result = transform(css)
+      expect(result).toContain(registration)
+      expect(result).toContain(`${use}: var(${property}, ${fallback})`)
+      expect(result).not.toContain('*, ::before, ::after, ::backdrop')
+      expect(transform(result)).toBe(result)
+    })
+
     it('长别名链只求值一次，并保持第二轮处理幂等', () => {
       const declarations = ['--color-token-0: #f00;']
       for (let index = 1; index <= 64; index++) {

@@ -241,7 +241,9 @@ The uni-app x native App target continues to handle uvue/App constraints via the
 
 `generator.webCompat` for Web/H5 and Tailwind CSS v4 compatibility downgrade under the classic uni-app App WebView target. Automatic inference of `generator.target: "web"` is enabled by default, and the `app` / `app-plus` build of uni-app will also be automatically enabled; if `generator.target` is explicitly configured, the `webCompat` passed in by the user shall prevail.
 
-Passing in `true` is equivalent to `{ preset: "legacy-web" }`. This preset is intended for Web Compact output and is compatible with the baselines `Chrome/91.0.4472.114` and `AppleWebKit/537.36`. It removes or downgrades `@theme`, When you need to keep the official web output of Tailwind CSS, pass in `@layer` or `@property`.
+Passing `true` is equivalent to `{ preset: "legacy-web" }`. The preset lowers Tailwind CSS v4 features for the `Chrome/91.0.4472.114` and `AppleWebKit/537.36` compatibility baselines: `@theme`, `@layer`, Tailwind internal `@property` defaults, nesting, modern colors, and their `@supports` wrappers. It also adds `-webkit-background-clip: text` while retaining runtime spacing variables. Use `false` or `{ preset: "off" }` to keep the official Web output.
+
+The `property` feature only lowers default values from Tailwind internal `--tw-*` registrations. Author-defined `@property` registrations and variable dependencies remain intact to preserve syntax, initial-value, and inheritance semantics. The target must still support registered properties; the compatibility preset does not establish support in old WebViews or native engines.
 
 ```ts
 WeappTailwindcss({

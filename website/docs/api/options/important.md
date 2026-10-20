@@ -199,6 +199,8 @@ uni-app x 原生 App 目标继续通过 `uniAppX` 配置处理 uvue/App 约束�
 
 传入 `true` 等价于 `{ preset: "legacy-web" }`，该预设面向 Web Compact 输出，兼容基线为 `Chrome/91.0.4472.114` 与 `AppleWebKit/537.36`。它会移除或降级 `@theme`、`@layer`、`@property`、嵌套规则、`oklch()`、现代颜色函数与相关 `@supports` 包裹，并补充 `-webkit-background-clip: text`，同时保留 Tailwind CSS v4 的运行时间距变量语义。需要保持 Tailwind CSS 官方 Web 输出时，可传入 `false` 或 `{ preset: "off" }`。
 
+其中 `property` 仅降级 Tailwind 内部 `--tw-*` 注册的默认值；作者自定义 `@property` 保留注册和变量依赖，避免改变语法、初值与继承语义。作者注册属性仍要求目标端具备相应支持，不能由兼容预设推定旧 WebView 或原生支持。
+
 ```ts
 WeappTailwindcss({
   generator: {

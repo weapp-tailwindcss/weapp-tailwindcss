@@ -45,6 +45,8 @@ Import Tailwind CSS 4 from the application CSS entry and point `@source` at the 
 
 `pluginLynxTailwindcss` fixes `platform` to `'lynx'`, sets `generator.target` to `'web'`, and enables Lynx-compatible output. Stable Tailwind theme tokens may be resolved at build time, while an application variable override visible in the same CSS keeps its `var()` dependency. Overrides from another stylesheet or an inline style are outside this static analysis guarantee.
 
+Author-defined `@property` registrations outside `--tw-*` retain their registration and `var()` dependency; global defaults cannot replace syntax, initial-value, or inheritance semantics. The target must still support registered properties. Preserving the input and verifying it in browsers do not establish Lynx native support.
+
 Recursive variables require Lynx runtime 3.6 or later and the exposed template API from ReactLynx plugin 0.12.4 or later. Older builders must be upgraded; native behavior is currently tested on the pinned 4.0.1 matrix.
 
 Before template encoding, the plugin defaults `enableCSSInlineVariables` to `true` through the ReactLynx builder’s exposed template hooks. This selects native recursive variable resolution for nested Tailwind utility variables while preserving explicit page configuration and dynamic CSS dependencies. Register `pluginReactLynx()` alongside this plugin; a missing template API is a build error. This does not change the target SDK or guarantee native support for each CSS property.

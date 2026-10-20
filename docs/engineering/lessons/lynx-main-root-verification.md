@@ -212,6 +212,18 @@ head `a10ef71036e9ea923da4bc79b046861c34fde81d` 的 Benchmark run `39479576075`�
 
 原始本地报告、样本与 CPU 汇总保存在 `.tmp/benchmark-a10-local-result/`，guard 日志为 `.tmp/benchmark-a10-local2.log`。宿主有其他 IDE/虚拟机及系统负载，但未终止无关进程，也不据此自动归因为环境噪声。当前性能根因保持 **unknown**，失败门禁仍需后续定位；网站截图采集与性能测量分开执行。
 
+### 作者注册属性的序列化边界与必需 peer
+
+再次核对 #1307 验收时发现有效反例：`@property --color-brand { syntax: "*"; inherits: false; } :root { --color-brand: #f00; } .probe { color: var(--color-brand, #00f); }`。Web 兼容步骤先删除注册，没有初值可生成全局 fallback，随后将根声明误当稳定普通变量；Web → Lynx 最终只剩红色常量。原始 CSS 中非根元素应使用蓝色 fallback。即使只给分析器传递注册名称，序列化后仍会丢失不继承及语法校验，不能根本修复。
+
+修复仅对 Tailwind 内部 `--tw-*` 的注册默认值做既有降级，作者注册保持在 CSS 中，后续安全分析继续保留其 `var()` 依赖。没有以全局 reset 模拟任意注册。针对无初值 `syntax:"*"`、类型初值和长度 token，Web、Lynx、组合三入口先得到 6 项失败，再通过回归；三浏览器实际颜色也先得到 3 项失败，修复后在原始、Web、Lynx、组合输出上分别验证蓝 → 绿 → 蓝。此处 Lynx 输出由浏览器消费，仅证明转换保守性，**不证明 Lynx 原生支持作者注册属性**。六份双语说明、Web 兼容选项和中文 intent 同步收紧该边界。
+
+本批基于 `02ea6af31987ecd9ec2775f10f74c60eec94d812` 加上述未提交修复：PostCSS 为 146 文件、1,555 项通过、3 项既有跳过；三浏览器定向 9 项通过。`CI=1 pnpm e2e:lynx --update=none` 的示例 205 项与 E2E 39 文件、776 项全部通过，实际 Rspeedy 产物及既有 static 没有差异，因此没有重写 static。红、绿与正式日志分别保存在 `.tmp/property-registration-*.log`。发现反例时通过本任务 capture 的 SIGINT 收尾，在第 126/1,806 声明处停止候选 `02ea6af31`；保留失败回执与拒绝记录，未生成 manifest、未安装黄金图，未遗留本轮浏览器/Worker。
+
+#1309 的依赖合同还遗漏非 optional 的 `peerDependencies`。新增深层 dependency、必需 peer、同名 optional 排除与循环图回归，必需 peer 红例先证明旧检查器漏报，再把已解析的必需 peer 纳入递归；当前真实安装图合同仍通过，没有据此提高 Node 门槛。文档检查共 16 项通过，原始结果为 `.tmp/lynx-engines-peers-{red,green}.log`。这修正未来依赖变化的门禁，不代表原安装图已存在更高 Node 要求。
+
+#1308 补齐真实生产双入口：各入口使用不同 CSS 来源，独立观察器在公开 `beforeEmit` hook 归档实际编码 CSS，再分别核对报告的输入摘要、最终 bundle 摘要、独立 decoder CSS 摘要与业务拒绝来源。两个摘要及控制规则必须不同，另一入口的业务诊断不得串入；生产压缩合并后的模糊 selector 仍保留 unknown。首次夹具错误地复制仅开发模式存在的 `.lynx` 调试文件而失败，已改为实际 hook 证据，不以缺文件后静默回退。最终生产双入口及开发默认/严格三项全部通过，日志在 `.tmp/lynx-diagnostics-production2.log`，逐入口原始输入和 bundle 在 `e2e/.artifacts/lynx-diagnostics/production/default/`。此项没有新增 static 场景或更新既有快照，也不证明原生运行支持。
+
 ## 适用边界
 
 来源修复后的 `CI=1 pnpm e2e:lynx --update=none` 为示例 205 项、E2E 39 文件 775 项全部通过；`style.css` 来源与 static 基线在禁止更新模式下通过。核心类型、架构、源码行数和文档 14 项合同也通过。

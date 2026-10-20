@@ -3,7 +3,7 @@ import postcss from 'postcss'
 import postcssPresetEnv from 'postcss-preset-env'
 import selectorParser from 'postcss-selector-parser'
 import { internalCssSelectorReplacer } from '../shared'
-import { getCssCalcVariableReferences } from '../utils/css-custom-property'
+import { getCssCalcVariableReferences, getCssCustomPropertyName } from '../utils/css-custom-property'
 import { normalizeModernColorValue } from './color-mix'
 import { removeUnsupportedCascadeLayers } from './mini-program-css/at-rules'
 import { normalizeTailwindcssV4GradientPosition, normalizeTailwindcssV4InfinityCalcValue } from './tailwindcss-v4'
@@ -70,14 +70,17 @@ interface RegisteredCustomProperty {
 function collectRegisteredCustomPropertyFallbacks(root: postcss.Root) {
   const registeredProperties = new Map<string, RegisteredCustomProperty>()
   root.walkAtRules('property', (atRule) => {
-    const propertyName = atRule.params.trim().split(/\s+/, 1)[0]
-    if (propertyName?.startsWith('--')) {
-      const existing = registeredProperties.get(propertyName) ?? {}
-      atRule.walkDecls('initial-value', (decl) => {
-        existing.initialValue = decl.value.trim()
-      })
-      registeredProperties.set(propertyName, existing)
+    const propertyName = getCssCustomPropertyName(atRule.params)
+    // 仅降级 Tailwind 内部默认值；作者注册的语法、初值与继承不能由全局声明模拟。
+    // 保留注册还让后续 Web/Lynx 分析继续识别逐元素求值边界。
+    if (!propertyName?.startsWith('--tw-')) {
+      return
     }
+    const existing = registeredProperties.get(propertyName) ?? {}
+    atRule.walkDecls('initial-value', (decl) => {
+      existing.initialValue = decl.value.trim()
+    })
+    registeredProperties.set(propertyName, existing)
     atRule.remove()
   })
   return registeredProperties

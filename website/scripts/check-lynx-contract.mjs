@@ -55,12 +55,13 @@ function checkPackageFacts(findings, adapter, core, example, readJson, resolveMa
     if (required && (!semver.validRange(required) || !semver.subset(node, required))) {
       addFinding(findings, paths.adapter, `Node ${node} 超出必装依赖 ${manifest.name} 的 ${required}`)
     }
-    for (const name of Object.keys(manifest.dependencies ?? {})) {
-      if (Object.hasOwn(manifest.optionalDependencies ?? {}, name)) {
-        continue
-      }
+    const mandatory = new Map([
+      ...Object.entries(manifest.dependencies ?? {}).filter(([name]) => !Object.hasOwn(manifest.optionalDependencies ?? {}, name)),
+      ...Object.entries(manifest.peerDependencies ?? {}).filter(([name]) => manifest.peerDependenciesMeta?.[name]?.optional !== true),
+    ])
+    for (const [name, specifier] of mandatory) {
       try {
-        const dependencyFile = resolveManifest(name, file, manifest.dependencies[name])
+        const dependencyFile = resolveManifest(name, file, specifier)
         if (!dependencyFile) {
           throw new Error('找不到 metadata')
         }
@@ -189,6 +190,8 @@ export function collectLynxContractFindings({
     requireText(findings, file, source, 'var()')
     requireText(findings, file, source, 'inline style')
     requireText(findings, file, source, 'stylesheet')
+    requireText(findings, file, source, '@property')
+    requireText(findings, file, source, '--tw-*')
     if (/应用自定义变量不会被静态化|application (?:custom )?variables (?:are never|will not be) (?:inlined|statically resolved)/i.test(source)) {
       addFinding(findings, file, '存在无条件的应用变量静态化承诺')
     }
