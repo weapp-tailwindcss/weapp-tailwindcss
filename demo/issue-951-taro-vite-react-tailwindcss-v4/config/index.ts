@@ -7,13 +7,14 @@ import { resolveTaroPlatform } from 'weapp-tailwindcss/framework'
 import path from 'node:path'
 
 const taroPlatform = resolveTaroPlatform()
+const generatorTarget = taroPlatform.isWeb || process.env.TARO_ENV === 'harmony' || process.env.TARO_ENV === 'harmony-hybrid'
+  ? 'web'
+  : 'weapp'
 const projectRoot = path.resolve(__dirname, '..')
 const officialPostcssParity = process.env.WEAPP_TW_OFFICIAL_POSTCSS_PARITY === '1'
 const generator = officialPostcssParity ? false : {
-  target: taroPlatform.isWeb || process.env.TARO_ENV === 'harmony' || process.env.TARO_ENV === 'harmony-hybrid'
-    ? 'web'
-    : 'weapp',
-  webCompat: taroPlatform.isWeb ? true : undefined,
+  target: generatorTarget,
+  webCompat: generatorTarget === 'web' ? true : undefined,
   styleOptions: {
     px2rpx: true,
   },

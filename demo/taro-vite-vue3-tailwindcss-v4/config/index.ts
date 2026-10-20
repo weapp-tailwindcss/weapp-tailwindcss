@@ -7,14 +7,15 @@ import { WeappTailwindcss } from 'weapp-tailwindcss/vite'
 import { resolveTaroPlatform } from 'weapp-tailwindcss/framework'
 
 const taroPlatform = resolveTaroPlatform()
-const webCompat = taroPlatform.isWeb
+const generatorTarget = taroPlatform.isWeb || process.env.TARO_ENV === 'harmony' || process.env.TARO_ENV === 'harmony-hybrid'
+  ? 'web'
+  : 'weapp'
+const webCompat = generatorTarget === 'web'
   ? process.env.WEAPP_TW_WEB_COMPAT !== '0'
   : undefined
 const officialPostcssParity = process.env.WEAPP_TW_OFFICIAL_POSTCSS_PARITY === '1'
 const generator = officialPostcssParity ? false : {
-  target: taroPlatform.isWeb || process.env.TARO_ENV === 'harmony' || process.env.TARO_ENV === 'harmony-hybrid'
-    ? 'web'
-    : 'weapp',
+  target: generatorTarget,
   webCompat,
   styleOptions: {
     px2rpx: true,

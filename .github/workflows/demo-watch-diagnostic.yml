@@ -47,7 +47,9 @@ jobs:
         with:
           node-version: ${{ matrix.node || 24 }}
       - run: pnpm build:ci
-      - run: pnpm exec playwright install chromium
+      - name: Prepare verified Chromium
+        timeout-minutes: 5
+        uses: ./.github/actions/setup-chromium
       - if: inputs.mpx
         run: node scripts/ci/demo-matrix/fixtures/mpx-fatal-watch.cjs recoverable
       - run: pnpm test:demo:matrix

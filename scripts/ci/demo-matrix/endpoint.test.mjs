@@ -4,10 +4,10 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { pathToFileURL } from 'node:url'
-import { expect, it, vi } from 'vitest'
+import { expect, it } from 'vitest'
 import { cases } from './catalog.mjs'
 import { announcedViteUrl, developmentUrl } from './endpoint.mjs'
-import { reserveFallbackPortPair } from './port-pair.fixture.mjs'
+import { reserveOccupiedPort } from './port.fixture.mjs'
 import { startProcess } from './process.mjs'
 
 const item = cases.find(item => item.id === 'style-injector-taro-vite-react:h5')
@@ -52,22 +52,32 @@ it('bounds missing announcements and rejects an exited session without using the
   expect(await developmentUrl({ family: 'vite', target: 'web' }, 49227)).toBe('http://127.0.0.1:49227/')
 })
 
-it('follows the actual Taro Vite endpoint when another server occupies the requested port', async () => {
+it.each(['EADDRINUSE', 'EACCES'])('后继端口 %s 不影响实际分配端口的服务公告和正文身份', async (code) => {
   const root = await mkdtemp(path.join(tmpdir(), 'demo-matrix-port-'))
   let occupant
   let session
   try {
-    occupant = await reserveFallbackPortPair()
+    occupant = await reserveOccupiedPort()
     const port = occupant.port
     const require = createRequire(import.meta.url)
     const vite = pathToFileURL(path.join(path.dirname(require.resolve('vite4/package.json')), 'dist/node/index.js')).href
     const fixture = path.join(root, 'server.mjs')
     await writeFile(path.join(root, 'index.html'), 'owned-development-server')
     await writeFile(fixture, `
+      import { Server } from 'node:net'
       import { createServer } from ${JSON.stringify(vite)}
+      const listen = Server.prototype.listen
+      Server.prototype.listen = function(...args) {
+        const port = typeof args[0] === 'object' ? args[0]?.port : args[0]
+        if (port === ${port + 1}) {
+          queueMicrotask(() => this.emit('error', Object.assign(new Error('fixture successor denied'), {code: ${JSON.stringify(code)}})))
+          return this
+        }
+        return Reflect.apply(listen, this, args)
+      }
       const server = await createServer({
         root: ${JSON.stringify(root)}, configFile: false,
-        server: { host: '127.0.0.1', port: ${port}, strictPort: false },
+        server: { host: '127.0.0.1', port: 0, strictPort: false },
       })
       await server.listen()
       server.printUrls()
@@ -85,31 +95,15 @@ it('follows the actual Taro Vite endpoint when another server occupies the reque
   }
 }, 25_000)
 
-it.each(['EADDRINUSE', 'EACCES'])('相邻端口 %s 时先清理占用器再有限重选夹具', async (code) => {
-  const first = { port: 51000, close: vi.fn() }
-  const second = { port: 52000, close: vi.fn() }
-  const successor = { port: 52001, close: vi.fn() }
-  const reserve = vi.fn()
-    .mockResolvedValueOnce(first)
-    .mockRejectedValueOnce(Object.assign(new Error(code), { code }))
-    .mockImplementationOnce(() => {
-      expect(first.close).toHaveBeenCalledOnce()
-      return second
-    })
-    .mockResolvedValueOnce(successor)
-  expect(await reserveFallbackPortPair({ reserve, attempts: 2 })).toBe(second)
-  expect(reserve.mock.calls).toEqual([[0], [51001], [0], [52001]])
-  expect(successor.close).toHaveBeenCalledOnce()
-  expect(second.close).not.toHaveBeenCalled()
+it('端口回退日志仍只消费完整 Local 公告，不从请求端口推算', () => {
+  const log = 'Port 49227 is in use, trying another one...\nNetwork: http://192.168.1.2:49228/\nLocal: http://127.0.0.1:49230/\n'
+  expect(announcedViteUrl(log, item.route)).toBe(`http://127.0.0.1:49230${item.route}`)
 })
 
-it('未知配置错误立即失败，端口耗尽也不能放行', async () => {
-  const occupant = { port: 51000, close: vi.fn() }
-  const failed = code => Object.assign(new Error(code), { code })
-  const reserve = vi.fn().mockResolvedValueOnce(occupant).mockRejectedValueOnce(failed('EIO'))
-  await expect(reserveFallbackPortPair({ reserve })).rejects.toThrow('EIO')
-  expect(reserve).toHaveBeenCalledTimes(2)
-  expect(occupant.close).toHaveBeenCalledOnce()
-  const exhausted = vi.fn().mockResolvedValueOnce(occupant).mockRejectedValueOnce(failed('EACCES'))
-  await expect(reserveFallbackPortPair({ reserve: exhausted, attempts: 1 })).rejects.toThrow('1 次夹具配置')
+it('无 Local 公告的 EACCES 退出仍失败，不把原请求端口当作服务', async () => {
+  const error = new Error('listen EACCES 127.0.0.1:49228')
+  await expect(developmentUrl(item, 49227, {
+    log: () => 'Port 49227 is in use, trying another one...\n',
+    ensureRunning() { throw error },
+  }, 10)).rejects.toBe(error)
 })

@@ -91,6 +91,18 @@ test('preserves native anonymous names and a single whole-image pixel budget', a
         await writeFile(screenshotBaseline, native)
         page.screenshot = async () => { throw new Error('尺寸未超限不得分片') }
         await expectFullPageScreenshot(page)
+      })
+      test('native lazy images reject missing baselines without writing them', async ({ page }) => {
+        if (process.env.CAPTURE_MODE !== 'verify')
+          return
+        await page.route('http://capture.fixture/green.svg', route => route.fulfill({
+          contentType: 'image/svg+xml',
+          body: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="20"><rect width="32" height="20" fill="lime"/></svg>',
+        }))
+        await page.setContent('<style>body{margin:0}div{height:6000px}img{width:32px;height:20px}</style><div></div><img loading="lazy" src="http://capture.fixture/green.svg">')
+        await expect(expectFullPageScreenshot(page)).rejects.toThrow('snapshot')
+        expect(await page.locator('img').evaluate(image => image.naturalWidth)).toBe(32)
+        expect(await page.evaluate(() => scrollY)).toBe(0)
       })`)
     await run('baseline', 'chromium')
     const folder = path.join(snapshots, 'consumer.spec.ts-snapshots')
@@ -98,6 +110,7 @@ test('preserves native anonymous names and a single whole-image pixel budget', a
     expect(names).toEqual([1, 2, 3].map(index => `anonymous-full-page-${index}-compatibility-${process.platform}.png`))
     const before = await Promise.all(names.map(name => readFile(path.join(folder, name))))
     await run('verify', browserName)
+    expect((await readdir(folder)).filter(name => name.startsWith('native-lazy-images-'))).toEqual([])
     expect((await readdir(folder)).filter(name => name.startsWith('anonymous-full-page-')).sort()).toEqual(names)
     const after = await Promise.all(names.map(name => readFile(path.join(folder, name))))
     expect(after.every((buffer, index) => buffer.equals(before[index]))).toBe(true)

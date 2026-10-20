@@ -20,6 +20,13 @@ regressions:
   - packages/postcss/test/webpack-generated-css-cleanup.test.ts
   - packages/weapp-tailwindcss/test/bundlers/webpack-web-cascade.integration.test.ts
   - website/tests/theme-panel-colors.spec.ts
+  - website/tests/full-page-images.spec.ts
+  - website/tests/full-page-snapshot.spec.ts
+  - scripts/ci/demo-matrix/endpoint.test.mjs
+  - scripts/ci/demo-matrix/taro-production.test.mjs
+  - scripts/ci/demo-matrix/taro-production-gate.test.mjs
+  - scripts/ci/demo-matrix/production-path.test.mjs
+  - e2e/hosted-workflow-contract.test.ts
 verification:
   - claim: CSS 兼容与 Lynx 诊断的定向根因回归通过
     kind: unit
@@ -57,6 +64,12 @@ verification:
     sha: 7945477ff51015b6369a6fad69103bb6a0978883
     environment: GitHub hosted Android API 30 x86_64 与 iPhone 16 Pro iOS 18.5 arm64，实际 checkout 为 merge 23af851c7897cfcca540313b78aefcf88c61dad1；不是后续源码的运行证据
     command: pnpm exec tsx e2e/lynx/verify-baseline-archive.ts e2e/.artifacts/lynx-baselines/baseline-7gDywG
+  - claim: 生产样式语义、报告拒绝与路径边界合同通过，Vite Harmony 运行失败单独保留
+    kind: integration
+    status: passed
+    sha: d953733aeb9de0dbe3c205f048ecbe5a444f0ac6
+    environment: macOS arm64、Node 24.18.0、pnpm 12.14.0，包含本轮未提交采集器和示例配置修复；普通浏览器不能代替 Harmony 设备
+    command: CI=1 pnpm test:demo:matrix
 ---
 
 # 最新 main 的 Lynx 三项 Issue 根因复验
@@ -138,6 +151,44 @@ head `7945477ff51015b6369a6fad69103bb6a0978883` 的 Lynx run `39445561718` 实�
 为补齐第 24 阶段缺图，引入独立的采集、审查、安装和验证入口。候选从干净已提交工作树和实际生产构建生成，记录三引擎版本；每项通过 Playwright 原生 expected 附件绑定实际 PNG，不复制匿名命名算法。桌面三引擎与移动 Chromium 的 1,204 张截图必须首次成功，移动 Firefox/WebKit 的 602 项仍为原有显式跳过。报告、PNG 集合和字节、环境、截图合同及审查证据共同校验；候选失败不生成可安装清单，未知目录和链接均拒绝写入。
 
 管线回归 29 项通过，包含真实三浏览器、Firefox 超高页面分片、missing 采集和 none 严格比较；改变真实颜色后三引擎比较失败且黄金字节未变。采集入口必须先生产构建，再核对源码身份并登记产物，不能把旧 build 并列记为新 HEAD 来源；构建失败、源码变化和不干净工作树有独立拒绝回归。安装先检查登记冲突，目标原子重命名成功后才发布登记，重命名失败不留可用黄金图或登记。三浏览器真实管线接入独立 CI job 和本地 `e2e:local`，普通单测不依赖 Firefox/WebKit；类型、ESLint 与规则检查通过。这些合成图只验证管线；网站完整候选仍须独立采集、实际视觉审查、安装和禁止更新复验。黄金来源的历史 HEAD 不要求等于未来 HEAD，否则会失去回归意义；渲染环境或截图合同变化则明确阻断，不能静默复用。
+
+### 开发服务端口的实际绑定边界
+
+后续 Windows Node 24 在 head `d953733aeb9de0dbe3c205f048ecbe5a444f0ac6` 的 demo-matrix 合同仍失败：run `39463154054`、job `118767484824` 中，预订器持有 `52075`，曾预订后释放的 `52076` 随后被 Vite 绑定时返回 `EACCES`。三处地址均为 `127.0.0.1`，没有 IPv4/IPv6 差异证据；日志也不能确定 Windows 拒绝绑定的具体宿主原因。原端口对方案不能消除释放到重新绑定之间的竞态，撤回其可靠性判断，不通过重跑碰运气放行。
+
+先用受控监听器确定性拿走已释放后继端口，证明预订交接仍会失败；再以真实 Vite 回归记录旧绑定策略在后继 `EACCES` 时失败。修复让真实服务在 `bind` 时使用端口 `0`，仅持有错误服务器自己的端口；独立注入后继 `EADDRINUSE`/`EACCES`，验证消费完整 Local 公告、保留 hash route、排除错误服务器并核对实际正文。端口回退公告另用日志夹具验证，无 Local 的退出仍原样失败。测试不宣称重新验证 Vite 上游自增端口算法，不改变生产 endpoint、错误门禁、超时或重试预算。
+
+本地 `CI=1 pnpm test:demo:matrix` 为 43 文件、302 项全部通过，受影响 ESLint 与 diff check 通过。红例、正式结果和原始 CI 日志分别保存于 `.tmp/endpoint-fix-red.log`、`.tmp/endpoint-fix-formal.log`、`.tmp/ci-1314-d953-endpoint.log`；此结果不能替代新 head 的 Windows CI。
+
+### 整页截图的图片就绪与拒绝记录
+
+head `d953733aeb9de0dbe3c205f048ecbe5a444f0ac6` 的首批完整候选执行为 1,204 项首次通过、602 项既有移动 Firefox/WebKit 跳过，但审查拒绝安装。Firefox 的 `/docs/showcase` 首次导航有 49 图，其中 39 图尚未加载；逐图真实滚动后全部可以解码。原采集器没有触发屏外 lazy 请求，整页图片可能只是 alt 或占位，不能由采集状态 passed 推定页面已经完整。
+
+先固化屏外图片 `naturalWidth` 为零的失败回归，再让原生截图与 Firefox 分片共用图片准备：固定真实节点身份，真实滚动，等待 load/error 后 decode，并核对像素；坏图明确失败。采集沿用共享截止时间，独立短预算仅供取消监听与恢复滚动，迟到结果不得再次滚动或请求下一图。结束核对 window 与嵌套横纵滚动位置，不覆盖 iframe/shadow 内容。缺基线负例置于临时子配置，固定 `updateSnapshots: none` 并核对没有生成黄金图。
+
+本轮未提交修复下，`CI=1 pnpm --filter @weapp-tailwindcss/website e2e tests/full-page-capture.spec.ts tests/full-page-snapshot.spec.ts tests/full-page-images.spec.ts --update-snapshots=none` 为三浏览器 42 项通过；typecheck 与受影响 ESLint 通过。真实生产 Worker 的 Firefox 定向复验为 49/49 图加载、有有效像素、无请求失败且原滚动恢复，Worker 和浏览器受管收尾。原候选及拒绝原因保留于 `.tmp/website-visual-d953733ae/review-rejected.json`；新截图合同已变化，必须重新从干净提交完整采集，不能安装旧候选。
+
+### Taro 生产样式与 Harmony 平台适配边界
+
+head `d953733aeb9de0dbe3c205f048ecbe5a444f0ac6` 的 React/Vue Webpack 矩阵在三个宿主出现同类 H5/Harmony static 差异。Web 在框架优化前完成生成后，压缩产物不再被原始 registry 补回重复的 hex/rgb、数字前导零及原始 `4px`。React issue-998 的 `@theme --spacing:4px` 仍经框架 pxtransform 变为 H5 `0.1rem`、Harmony `0.2rem`；不能仅因快照少了原始表示就恢复后置覆盖。真实 H5 首页的绝对尺寸/颜色及 issue-998 路由的 375/750/1200 宽度、根字号和 padding 曾分别通过三浏览器定向生产探针；这些定向日志不代表整个页面的样式覆盖。
+
+进一步消费真实 Harmony Webpack 生产页，先复现 `mt-2` 预期 10px、实际 0 的失败。`@tarojs/components@4.2.1/global.css` 由框架入口注入未分层 `*{margin:0;padding:0}`；五个示例选择 generator Web 输出，却只在 `isWeb`（H5）时启用 `webCompat`，utilities layer 因而被覆盖。修复用实际 generator target 同步选择兼容转换，保留四个示例的 `WEAPP_TW_WEB_COMPAT=0` 显式开关、原有 designWidth 和公共平台身份。没有旧产物实渲染对照，不把此问题归类为本 PR 新增或已证明的既有缺陷。
+
+新增生产门禁直接服务本轮归档的 HTML/CSS/JS，复制前清理同任务旧 production，防止残留 chunk 伪装新构建。五个 H5 与两个 Webpack Harmony 首页检查六个探针的可见性/面积、独立根字号、`.25rem` 绝对尺寸和颜色字符串的 canvas 栅格结果，保存真实页面截图；canvas 不是节点实际截图像素。相关脚本/样式加载错误阻断；finally 只关闭自己的后台浏览器与服务。报告门禁再次拒绝缺证、错间距、部分高度丢失、隐藏探针、错误颜色及篡改参考。POSIX/Windows 归属、异盘、兄弟目录、编码路径与 realpath 链接边界分别核对。此入口只覆盖首页，不宣称覆盖 issue-998 路由或 Harmony 设备。
+
+限定更新七份 static：两个 Webpack H5、两个 Webpack Harmony、三个 Vite Harmony；H5 去除重复颜色表示，Harmony 随显式兼容转换变为 rgb/rgba 并展开 layer。三个 Vite H5 的 static 未变。更新命令为 `pnpm e2e:demo:matrix <对应项目:目标> --build-only --update`，审查后以 `CI=1` 不带更新参数重跑。首次实效失败在 `.tmp/taro-harmony-production-red.log`，报告缺证的红例在 `.tmp/taro-production-gate-red.log`，完整定向结果在 `.tmp/taro-production-strict/`；本批基于 d953 加未提交修复，不能冒充该提交的原始结果。
+
+十个目标的首轮严格复验为 9 通过、issue-951 H5 一项采集失败：节点可见早于 Stencil 初始化，未声明高度的探针仍返回合法 `auto`。采集器改为等待真实 custom element 定义、首次渲染与样式帧；只对三个高度 utility 要求数值，并同时核对实际 box height，其余探针仍要求正面积和可见。补组件延迟注册夹具后，issue-951 的生产、initial/replace/add/restore/refresh 全通过；其余六份生产归档也用最终几何门禁重验通过。五个 H5 均完成完整 HMR，五个 Harmony 完成禁止更新的构建/static，其中仅两个 Webpack Harmony 有本轮浏览器实效成功证据。矩阵合同最终为 46 文件、313 项通过，工作流合同 7 项通过；ESLint、diff 和 agents 通过。
+
+额外浏览器诊断发现三个 Vite Harmony 生产页空白，登记为**已复现运行失败**，不改判 unsupported。`@tarojs/plugin-platform-harmony-hybrid@4.2.1` 的 setup 只注册 `modifyWebpackConfig`，遗漏 Vite 的组件包装/注册、Harmony API/router alias 和 rem HTML 策略；React 主示例的实际 bundle 把 Stencil View class 作为 React 函数组件调用，报 `Class constructor cannot be invoked without 'new'`。Vue 缺少 `initVue3Components`，但其空页唯一根因尚未形成完整执行对照。三个目标保留原定 `webview-build` 的构建/样式产物验收；新增浏览器合同不把它们计为运行通过。完整适配需单独实现平台 Vite 生命周期，不能只加组件 alias 掩盖其余缺口。持久诊断入口为 `CI=1 pnpm e2e:demo:matrix <Vite项目:harmony-hybrid> --build-only --production-browser`；实际页面、失败截图和资源记录在 `.tmp/taro-harmony-compat-update/`。
+
+上述持久入口已对 `taro-vite-react-tailwindcss-v4:harmony-hybrid` 再次确定性返回失败，完整构建、加载图和失败截图在 `.tmp/taro-vite-harmony-forced/`。它是新的复现配置，不是对同配置基础设施失败的碰运气重跑；没有安装不完整的上游 alias 补丁，也没有降低既有覆盖范围或改动设备运行结论。
+
+### d953 提交的双端复验
+
+Lynx run `39463154292` 的 Android job `118768978411` 与 iOS job `118768978328` 均成功，head 准确为 `d953733aeb9de0dbe3c205f048ecbe5a444f0ac6`。完整下载并核验 Android artifact `12283799089`（SHA-256 `fb96dc0d80eff6c3d55decbb32de5499f992c6345dc16fe3ca8809eec82c40ac`）与 iOS artifact `12286087716`（`3288b020adf985f27a044e7154d44c0bc4d69968e87425a62aaf8d56feba58ea`），分别以正式 `readNativeReport` 从实际 bundle、PNG、宿主侧车和几何离线重算通过。
+
+Android runId `9b6ce1aa-3c37-47b4-a466-1a372addb7f0` 为 118 案例（54 支持、64 预声明限制），iOS runId `f81826af-85b7-4b1c-82ce-e6cbfb044375` 为 118 案例（53 支持、65 预声明限制），两端各 9 主题帧。原始 ZIP 和重算日志在 `.tmp/ci-1314-d953/`。这仅是该提交的原生证据，不替代后续 head；Expo iOS job `118768064986` 因 hosted runner 容量取消，runner_id 为 0、steps 为空，属于未执行，无复测授权，未重跑。
 
 ## 适用边界
 

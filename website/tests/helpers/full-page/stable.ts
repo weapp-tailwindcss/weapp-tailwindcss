@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test'
 import type { CaptureBudget } from './capture'
 import { PNG } from 'pngjs'
 import { captureFullPageSample, createCaptureBudget } from './capture'
+import { prepareFullPageImages } from './images'
 
 /** 至少两次连续完整 RGBA 样本逐像素相等后才编码，不消费快照序号或写基线。 */
 export async function captureStableFullPage(page: Page, options: {
@@ -10,6 +11,7 @@ export async function captureStableFullPage(page: Page, options: {
   budget?: CaptureBudget
 } = {}) {
   const budget = options.budget ?? createCaptureBudget(options.timeout ?? 60_000)
+  await prepareFullPageImages(page, budget)
   let previous: PNG | undefined
   const intervals = [0, 100, 250, 500]
   for (;;) {

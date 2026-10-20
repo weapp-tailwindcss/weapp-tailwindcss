@@ -8,14 +8,15 @@ import { resolveTaroPlatform } from 'weapp-tailwindcss/framework'
 import parity from '../../official-postcss-parity-plugin.cjs'
 
 const taroPlatform = resolveTaroPlatform()
-const webCompat = taroPlatform.isWeb
+const generatorTarget = taroPlatform.isWeb || process.env.TARO_ENV === 'harmony' || process.env.TARO_ENV === 'harmony-hybrid'
+  ? 'web'
+  : 'weapp'
+const webCompat = generatorTarget === 'web'
   ? process.env.WEAPP_TW_WEB_COMPAT !== '0'
   : undefined
 const officialPostcssParity = process.env.WEAPP_TW_OFFICIAL_POSTCSS_PARITY === '1'
 const generator = officialPostcssParity ? false : {
-  target: taroPlatform.isWeb || process.env.TARO_ENV === 'harmony' || process.env.TARO_ENV === 'harmony-hybrid'
-    ? 'web'
-    : 'weapp',
+  target: generatorTarget,
   webCompat,
 }
 const projectRoot = resolve(__dirname, '..')

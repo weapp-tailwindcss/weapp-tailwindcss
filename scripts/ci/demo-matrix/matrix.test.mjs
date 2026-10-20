@@ -13,6 +13,8 @@ import { verifyReports } from './gate.mjs'
 import { inspectNativeContents } from './native.mjs'
 import { cssClasses, inspectStyles } from './output.mjs'
 import { insertProbe } from './probe.mjs'
+import { hasTaroProductionContract } from './taro-production-contract.mjs'
+import { productionEvidence } from './taro-production.fixture.mjs'
 
 describe('portable demo matrix', () => {
   it('keeps the UTS Linux binary installable without changing other platform constraints', () => {
@@ -87,7 +89,7 @@ describe('portable demo matrix', () => {
           expected: job.cases,
           results: job.cases.map((id) => {
             const item = cases.find(item => item.id === id)
-            return { id, coverage: coverage(item), status: 'passed', rounds: Object.fromEntries(requiredPhases(item).map(phase => [phase, {}])) }
+            return { id, coverage: coverage(item), status: 'passed', rounds: Object.fromEntries(requiredPhases(item).map(phase => [phase, {}])), ...(hasTaroProductionContract(item) ? { productionBrowser: productionEvidence(item.target) } : {}) }
           }),
         }
         const directory = path.join(root, String(index))
