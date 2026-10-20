@@ -11,8 +11,13 @@ function isThemeRoot(selector: string, stage: 'generation' | 'encoding') {
 }
 
 function valueIdentity(value: string | undefined) {
+  // 百分号可直接分隔两个 token；仍须完整核对三个分量，不能删除全部空白后猜测。
+  const color = /^oklch\(\s*([+-]?(?:\d*\.)?\d+)(%\s*|\s+)([+-]?(?:\d*\.)?\d+)\s+([+-]?(?:\d*\.)?\d+)\s*\)$/i.exec(value?.trim() ?? '')
+  if (color && Number(color[1]) / (color[2]!.includes('%') ? 100 : 1) === 0.63 && Number(color[3]) === 0.2 && Number(color[4]) === 40) {
+    return '#e65000'
+  }
   const normalized = value?.toLowerCase().replace(/\s+/g, '')
-  return ({ '#ff0000': '#f00', 'rgb(255,0,0)': '#f00', '#0000ff': '#00f', 'rgb(0,0,255)': '#00f', 'rgb(230,80,0)': '#e65000', 'oklch(63%.240)': '#e65000' } as Record<string, string>)[normalized ?? ''] ?? normalized
+  return ({ '#ff0000': '#f00', 'rgb(255,0,0)': '#f00', '#0000ff': '#00f', 'rgb(0,0,255)': '#00f', 'rgb(230,80,0)': '#e65000' } as Record<string, string>)[normalized ?? ''] ?? normalized
 }
 
 /** 变量引用、根定义、主题覆盖与独立字面值对照都必须存在于当前产物。 */

@@ -17,6 +17,7 @@ import { verifySkewFixture } from './lynx/skew-fixture-browser'
 import { analyzeStaticEvidence, parseDecodedRules, parseGeneratedRules } from './lynx/static-evidence'
 import { verifyStructuralFixture } from './lynx/structural-fixture-browser'
 import { verifyTextFlowFixture } from './lynx/text-flow-fixture-browser'
+import { assertThemeOverrideRules } from './lynx/theme-overrides-static'
 
 const bundlePath = path.join(exampleDir, 'dist', 'main.lynx.bundle')
 let encoderLog = ''
@@ -62,6 +63,12 @@ describe('ReactLynx Rspeedy compatibility evidence', () => {
     const css = await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8')
     expect(() => assertOverflowRules(parseGeneratedRules(css), 'generation')).not.toThrow()
     expect(() => assertOverflowRules(parseDecodedRules(decodedCss), 'encoding')).not.toThrow()
+  })
+
+  it('主题覆盖的真实生成与实际 bundle 同时保留三分支的根定义和切换引用', async () => {
+    const css = await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8')
+    expect(() => assertThemeOverrideRules(parseGeneratedRules(css), 'generation')).not.toThrow()
+    expect(() => assertThemeOverrideRules(parseDecodedRules(decodedCss), 'encoding')).not.toThrow()
   })
 
   it('固定 SDK 的编码配置启用运行时递归变量解析', async () => {

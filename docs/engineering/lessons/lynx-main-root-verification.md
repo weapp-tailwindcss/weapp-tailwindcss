@@ -39,9 +39,15 @@ verification:
   - claim: 本轮全面验收与原生主题切换仍待完整预检和实际执行
     kind: native
     status: pending
-    sha: 7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5
-    environment: 当前独立工作树，必须重新 prepare --extended、当前会话 computer use 和 verify
-    reason: 首轮预检通过并启动全面入口，但第 2/57 阶段暴露依赖边界回归，后续 55 阶段未执行；补充修复后必须重新预检，旧 Android/iOS 报告不计为本轮证据
+    sha: ef98ee3cca3b31685b6983ca01b58899f86ce1b7
+    environment: 当前独立工作树，本轮扩展预检、当前会话原生 Chrome computer use 和 verify 已通过
+    reason: 第 24/57 阶段因网站缺少已审查的截图基线停止，后续 33 阶段未执行；新修改后必须重新预检，旧 Android/iOS 报告不计为本轮证据
+  - claim: 第二轮全面验收的前 23 个阶段通过
+    kind: integration
+    status: passed
+    sha: ef98ee3cca3b31685b6983ca01b58899f86ce1b7
+    environment: macOS arm64、Node 24.18.0、pnpm 12.14.0，预检 874e8a80-2208-47a4-9c63-fa91500ed390
+    command: pnpm e2e:demo:workflow:local --quality --extended --baseline-ref 7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5 --preflight-report e2e/.artifacts/preflight/874e8a80-2208-47a4-9c63-fa91500ed390/report.json
 ---
 
 # 最新 main 的 Lynx 三项 Issue 根因复验
@@ -79,6 +85,16 @@ verification:
 把 Tailwind 分支改为真正生成的 `bg-brand` 后，再次暴露实际产物缺陷：encoder 将 `:root, :host` 整组丢弃，而主题覆盖类和变量引用仍保留。真实 WASM 编码及独立解码的回归先失败，再由 PostCSS 的 Lynx AST 转换修复；仅对纯变量声明的双分支根组保留已有 `:root`，不把业务 `:host` 移植成根规则，不改变 Web 输出。生产夹具删除手写重复的 `--color-brand` 根定义，避免掩盖 `@theme` 生成链。生成层允许原始纯根组，实际 bundle 必须保留独立根定义；缺初始 token、局部镜像或错误颜色都有拒绝回归。限定 `pnpm e2e:lynx:static:update` 重生成并审查后，原 118 项结论仍不变。
 
 第二批修复的严格回归：PostCSS 主题兼容 41 项、原生主题 static oracle 8 项、真实编码及样式产物门禁 64 项、原架构合同 10 项均通过。重建 PostCSS、核心及 Lynx 后，最终 `CI=1 pnpm e2e:lynx --update=none` 为示例 205 项和 E2E 39 文件 762 项通过；新 fixture 尚未取得原生设备成功证据。受影响源码 ESLint、`git diff --check`、`pnpm agents:check`（66 规则、346 文档、995 命令，0 错误）和 `pnpm release status` 通过。
+
+第二轮预检 `874e8a80-2208-47a4-9c63-fa91500ed390` 的脚本、当前会话原生 Chrome computer use 和 verify 均通过，报告已被全面入口消费并随失败收尾，不能复用。基于 `ef98ee3cca3b31685b6983ca01b58899f86ce1b7` 的全面验收通过前 23/57 阶段：根构建 71/71（无缓存），全量单测 957 文件通过、5 文件跳过，10,123 项通过、1 项预期失败、44 项跳过；lint、类型、架构、双语文档、agents、release、tsd、扩展类型、stylelint、本机 native ABI、打包消费、CSS 属性与三浏览器对照、网站脚本、SEO、Worker 本地与 Wrangler dry-run 通过。仅验证 macOS arm64 的 native binding，未部署网站。
+
+第 24 阶段网站三浏览器首个截图失败：`desktop-viewport-desktop-screenshot-1-chromium-darwin.png` 不存在。194 项通过、1 项失败、2,388 项未执行，随后 33 个工作流阶段未调度。仓库原本忽略全部网站 index 截图，新的独立工作树中没有黄金图；主 checkout 的 192 张本地 Chromium 图也没有完整的三浏览器范围和来源登记，不能直接冒充本轮基线。失败与内存报告归档于 `e2e/.artifacts/demo-e2e-memory/history/874e8a80-2208-47a4-9c63-fa91500ed390/`。缺失截图须单独采集候选、审查后再以禁止更新模式验证，不更改平台后缀或 5 像素门槛。
+
+同一 head 的 PR #1314 Android run `39438903272`、job `118683514470` 完成了设备采集，但在 `report-validation` 被新增主题 oracle 拒绝，尚未进入旧报告比较。真实 CSS 同时包含 `oklch(63% 0.2 40)` 和 `rgb(230, 80, 0)`；旧 oracle 只接受 `.2` 写法，本机测试的解析器又会先缩短数字，因而掩盖了差异。新增回归直接保留原始 `RuleEvidence`，先复现 4 项失败，包括无完整三个分量的字符串被错误接受。修正为核对三个独立数字；百分号本身可分隔 token，同时覆盖真实 decoder 的相邻百分比/数字形式。错误颜色、透明度和不完整语法继续拒绝。实际生成 CSS 与 bundle 的门禁前移到设备编译之前，保留报告验证时的再次核验。
+
+该修复的独立三浏览器颜色 token 对照、真实 Rspeedy 构建与主题 oracle 共 52 项通过；最终 `CI=1 pnpm e2e:lynx --update=none` 为示例 205 项与 E2E 39 文件 775 项通过。定向样式产物及像素负向回归另有 92 项通过。受影响 ESLint、agents（66 规则、346 文档、997 命令，0 错误）和 diff check 通过。仅调整测试证据核对与编排，不改变应用夹具、颜色目标、像素阈值或 static 能力结论，因此本批不重写样式基线，也不新增公开包发布 intent。新 head 的原生执行和全面验收仍须重新运行。
+
+网站截图先写入独立候选目录，没有导入黄金图。缩略审查并核对原图发现 `/ui`、`/llms` 深色模式的面板浅灰、文本近白，明显缺少对比；已停止候选采集并有界回收本轮浏览器和 Worker，不能把该缺陷固化为正常基线。它与“缺图”的环境准备问题分开追踪，修复并补充计算样式回归后才可重新采集和审查。
 
 ## 适用边界
 

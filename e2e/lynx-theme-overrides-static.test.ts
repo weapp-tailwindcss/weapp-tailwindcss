@@ -31,3 +31,19 @@ it.each(['generation', 'encoding'] as const)('%s 缺少初始 Tailwind token 时
   const generated = (await rules(':root')).map(rule => rule.selector === ':root' ? { ...rule, declarations: rule.declarations.filter(item => item.property !== '--color-brand') } : rule)
   expect(() => assertThemeOverrideRules(generated, stage)).toThrow(/:root\/--color-brand/)
 })
+
+it.each(['oklch(63% 0.2 40)', 'oklch(63% .2 40)', 'oklch(63%0.2 40)', 'oklch(63%.2 40)', 'oklch(0.63 0.2 40)', 'oklch(.63 .2 40)'])('按语义核对真实产物的颜色数字写法：%s', async (value) => {
+  // 直接保留 CI 的原始声明，避免测试解析器预先缩短数字掩盖差异。
+  const generated = (await rules(':root')).map(rule => rule.selector === ':root'
+    ? { ...rule, declarations: rule.declarations.map(item => item.property === '--brand-color' ? { ...item, value } : item) }
+    : rule)
+  generated.push({ selector: ':root', declarations: [{ property: '--brand-color', value: 'rgb(230, 80, 0)', important: false }] })
+  expect(() => assertThemeOverrideRules(generated, 'generation')).not.toThrow()
+})
+
+it.each(['oklch(64% .2 40)', 'oklch(63% .21 40)', 'oklch(63% .2 41)', 'oklch(63% .2 40 / .5)', 'oklch(63%0.240)'])('颜色或语法改变仍须拒绝：%s', async (value) => {
+  const generated = (await rules(':root')).map(rule => rule.selector === ':root'
+    ? { ...rule, declarations: rule.declarations.map(item => item.property === '--brand-color' ? { ...item, value } : item) }
+    : rule)
+  expect(() => assertThemeOverrideRules(generated, 'generation')).toThrow(/:root\/--brand-color/)
+})

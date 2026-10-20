@@ -33,6 +33,28 @@ if (requested !== 'all' && !(requested in engines)) {
 }
 const selected = Object.entries(engines).filter(([name]) => requested === 'all' || requested === name)
 
+it.each(selected)('%s：原始与 decoder 的颜色 token 写法具有独立浏览器等价证据', async (_name, engine) => {
+  const browser = await engine.launch({ headless: true })
+  try {
+    const page = await browser.newPage()
+    const result = await page.evaluate(() => {
+      const values = ['oklch(63% 0.2 40)', 'oklch(63% .2 40)', 'oklch(63%0.2 40)', 'oklch(63%.2 40)', 'oklch(.63 .2 40)']
+      const colors = values.map((value) => {
+        const element = document.createElement('div')
+        element.style.backgroundColor = value
+        document.body.append(element)
+        return { supported: CSS.supports('background-color', value), color: getComputedStyle(element).backgroundColor }
+      })
+      return { colors, incompleteAccepted: CSS.supports('background-color', 'oklch(63%0.240)') }
+    })
+    expect(result.colors.every(item => item.supported && item.color === result.colors[0]!.color)).toBe(true)
+    expect(result.incompleteAccepted).toBe(false)
+  }
+  finally {
+    await browser.close()
+  }
+}, 30_000)
+
 it.each(selected)('%s：真实主题切换、恢复与循环 fallback 符合独立参考', async (_name, engine) => {
   const browser = await engine.launch({ headless: true })
   try {
