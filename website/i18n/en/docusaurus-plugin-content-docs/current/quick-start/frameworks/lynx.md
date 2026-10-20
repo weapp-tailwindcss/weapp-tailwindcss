@@ -28,7 +28,7 @@ This integration requires Node.js `^22.18.0 || >=24.11.0`, covering the adapter 
 
 Stable Tailwind theme tokens may become literals. Web color compatibility may also resolve application variables when lowering modern color expressions. Local, conditional, or priority overrides visible in the current CSS input prevent the affected variables from being treated as static. Overrides from separately compiled stylesheets or inline styles are outside this analysis and cannot change generated literals. Renaming a variable does not guarantee dynamic override behavior.
 
-Author-defined `@property` registrations outside `--tw-*` retain their registration and `var()` dependency; global defaults cannot replace syntax, initial-value, or inheritance semantics. The target must still support registered properties. Preserving the input and verifying it in browsers do not establish Lynx native support.
+All `@property` registrations, descriptors, and variable dependencies are preserved. The public theme prefix can also produce `--tw-*` names, so the prefix cannot establish ownership. Default compatibility matches explicitly recorded full signatures; conflicting or conditional registrations receive no global defaults. Global defaults do not emulate arbitrary registration semantics. The target must still support registered properties. Preserving the input and verifying it in browsers do not establish Lynx native support.
 
 ## Install
 

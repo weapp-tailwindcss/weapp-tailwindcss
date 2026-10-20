@@ -1,7 +1,7 @@
 import postcssCalc from '@weapp-tailwindcss/postcss-calc'
 import postcss from 'postcss'
 import valueParser from 'postcss-value-parser'
-import { getCssCalcVariableReferences, getCssCustomPropertyName } from '../utils/css-custom-property'
+import { getCssCalcVariableReferences, getCssCustomPropertyName, isCssPropertyRegistration } from '../utils/css-custom-property'
 import { collectCustomPropertyValues, resolveCustomPropertyVarValue } from './web-css-custom-properties'
 
 const tailwindThemePropertyPatterns = [
@@ -53,7 +53,7 @@ function removeConsumedThemeProperties(root: postcss.Root, properties: ReadonlyM
     }
   })
   root.walkRules((rule) => {
-    if (!isThemeScopeSelector(rule.selector)) {
+    if (isCssPropertyRegistration(rule) || !isThemeScopeSelector(rule.selector)) {
       return
     }
     rule.walkDecls((decl) => {
@@ -70,6 +70,9 @@ function removeConsumedThemeProperties(root: postcss.Root, properties: ReadonlyM
 
 function normalizeTailwindDefaultSelectors(root: postcss.Root) {
   root.walkRules((rule) => {
+    if (isCssPropertyRegistration(rule)) {
+      return
+    }
     const selectors = rule.selectors
     const canonical = new Set(selectors.map(selector => selector.replace(/^::?(before|after)$/, '::$1')))
     if (selectors.length !== 4 || canonical.size !== 4
@@ -87,6 +90,9 @@ function normalizeTailwindDefaultSelectors(root: postcss.Root) {
 
 function normalizeThemeRootSelectors(root: postcss.Root) {
   root.walkRules((rule) => {
+    if (isCssPropertyRegistration(rule)) {
+      return
+    }
     const selectors = rule.selectors.map(selector => selector.trim())
     if (selectors.length !== 2 || !selectors.includes(':root') || !selectors.includes(':host')) {
       return
@@ -102,6 +108,9 @@ function normalizeThemeRootSelectors(root: postcss.Root) {
 
 function normalizeOpacityPercentages(root: postcss.Root) {
   root.walkDecls(/^opacity$/i, (decl) => {
+    if (isCssPropertyRegistration(decl)) {
+      return
+    }
     // PostCSS 将值内注释保存在 raws；仅在原值未被前序转换修改时读取。
     const raw = decl.raws.value
     const parsed = valueParser(raw?.value === decl.value ? raw.raw : decl.value)
@@ -127,10 +136,12 @@ export function transformLynxCssCompat(css: string) {
     const properties = collectTailwindThemeProperties(root)
     if (properties.size > 0) {
       root.walkDecls((decl) => {
-        decl.value = resolveCustomPropertyVarValue(decl.value, properties)
+        if (!isCssPropertyRegistration(decl)) {
+          decl.value = resolveCustomPropertyVarValue(decl.value, properties)
+        }
       })
       removeConsumedThemeProperties(root, properties)
-      postcss([postcssCalc()]).process(root, { from: undefined }).sync()
+      postcss([postcssCalc({ filterDeclaration: decl => !isCssPropertyRegistration(decl) })]).process(root, { from: undefined }).sync()
     }
     // 先完成变量依赖与覆盖分析，再缩减 encoder 无法承载的根选择器分支。
     normalizeThemeRootSelectors(root)

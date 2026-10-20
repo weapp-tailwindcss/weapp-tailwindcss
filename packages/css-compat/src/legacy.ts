@@ -1,5 +1,6 @@
 import type { AtRule, ChildNode, Comment, Container, Root } from 'postcss'
 import postcss from 'postcss'
+import { atRuleName } from './layers/names'
 
 interface LayerPath {
   key: string
@@ -145,6 +146,14 @@ export function consumeCascadeLayers(root: Root) {
   }
 
   root.walkAtRules('layer', (atRule) => {
+    let parent: AtRule['parent'] | Root['parent'] = atRule.parent
+    while (parent && parent !== root) {
+      // 注册描述符是原子边界；展开其中非法 layer 会把无效注册改成有效注册。
+      if (parent.type === 'atrule' && atRuleName(parent) === 'property') {
+        return
+      }
+      parent = parent.parent
+    }
     layerAtRules.push(atRule)
     const parentLayer = findParentLayerPath(atRule, paths)
     const names = splitLayerNames(atRule.params)

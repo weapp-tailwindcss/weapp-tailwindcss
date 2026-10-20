@@ -427,7 +427,7 @@ describe('Tailwind CSS v4 web compat computed parity', () => {
 
     expect(standardCss).toContain('@layer')
     expect(compatCss).not.toContain('@layer')
-    expect(compatCss).not.toContain('@property')
+    expect(compatCss).toContain('@property')
     expect(compatCss).toContain('rgba(')
     expect(compatCss).not.toContain('oklch(')
     expect(compatCss).not.toContain('var(--color-')

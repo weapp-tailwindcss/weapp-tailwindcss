@@ -243,7 +243,7 @@ The uni-app x native App target continues to handle uvue/App constraints via the
 
 Passing `true` is equivalent to `{ preset: "legacy-web" }`. The preset lowers Tailwind CSS v4 features for the `Chrome/91.0.4472.114` and `AppleWebKit/537.36` compatibility baselines: `@theme`, `@layer`, Tailwind internal `@property` defaults, nesting, modern colors, and their `@supports` wrappers. It also adds `-webkit-background-clip: text` while retaining runtime spacing variables. Use `false` or `{ preset: "off" }` to keep the official Web output.
 
-The `property` feature only lowers default values from Tailwind internal `--tw-*` registrations. Author-defined `@property` registrations and variable dependencies remain intact to preserve syntax, initial-value, and inheritance semantics. The target must still support registered properties; the compatibility preset does not establish support in old WebViews or native engines.
+The `property` feature only adds compatibility defaults for explicitly recorded full registration signatures. The `--tw-*` prefix does not establish ownership. All registrations, descriptors, and variable dependencies remain intact; conditional or conflicting registrations receive no global defaults. When layers are retained, defaults use the lowest priority layer to preserve the author cascade. The target must still support registered properties; the compatibility preset does not establish support in old WebViews or native engines.
 
 ```ts
 WeappTailwindcss({

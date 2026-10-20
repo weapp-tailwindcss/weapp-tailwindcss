@@ -1,5 +1,6 @@
 import process from 'node:process'
 import { chromium, firefox, webkit } from 'playwright'
+import postcss from 'postcss'
 import { expect, it } from 'vitest'
 import { transformLynxCssCompat, transformWebCssCompat } from '../packages/postcss/src/index'
 
@@ -32,6 +33,67 @@ if (requested !== 'all' && !(requested in engines)) {
   throw new Error(`未知 Lynx 主题浏览器：${requested}`)
 }
 const selected = Object.entries(engines).filter(([name]) => requested === 'all' || requested === name)
+
+it.each(selected)('%s：无效描述符、公开 tw 前缀和保留层的独立语义回归', async (_name, engine) => {
+  const browser = await engine.launch({ headless: true })
+  try {
+    const page = await browser.newPage()
+    const fixtures = [
+      {
+        id: 'invalid-initial',
+        css: '@property --color-brand { syntax: "<color>"; inherits: false; initial-value: var(--color-base); } :root { --color-base: #00f; --color-brand: #f00; } .probe { color: var(--color-brand, #0f0); }',
+        color: 'rgb(255, 0, 0)',
+      },
+      {
+        id: 'public-prefix',
+        css: '@property --tw-color-brand { syntax: "*"; inherits: false; } :root { --tw-color-brand: #f00; } .probe { color: var(--tw-color-brand, #00f); }',
+        color: 'rgb(0, 0, 255)',
+      },
+      {
+        id: 'invalid-layer-descriptors',
+        css: '@property --color-brand { @layer x { syntax: "<color>"; inherits: false; initial-value: #00f; } } :root { --color-brand: #f00; } .probe { color: var(--color-brand); }',
+        color: 'rgb(255, 0, 0)',
+      },
+      {
+        id: 'author-same-name',
+        css: '@property --tw-border-style { syntax: "*"; inherits: true; initial-value: solid; } :root { --tw-border-style: #f00; } .probe { color: var(--tw-border-style, #00f); }',
+        color: 'rgb(255, 0, 0)',
+      },
+    ]
+    for (const fixture of fixtures) {
+      for (const [pipeline, transform] of [
+        ['原始', (css: string) => css],
+        ['Web', (css: string) => transformWebCssCompat(css, true)],
+        ['Lynx', transformLynxCssCompat],
+        ['组合', (css: string) => transformLynxCssCompat(transformWebCssCompat(css, true))],
+      ] as const) {
+        await page.setContent(`<style>${transform(fixture.css)}</style><div class="probe"></div>`)
+        expect(await page.locator('.probe').evaluate(element => getComputedStyle(element).color), `${fixture.id}/${pipeline}`).toBe(fixture.color)
+      }
+    }
+    const layered = '@property --tw-translate-x { syntax: "*"; inherits: false; initial-value: 0; } @layer app { .probe { --tw-translate-x: 10px; width: var(--tw-translate-x); } }'
+    const converted = transformWebCssCompat(layered, { features: { layer: false } })
+    const withoutRegistrations = postcss.parse(converted)
+    // 模拟目标忽略注册，证明默认兼容并非借助现代浏览器注册语义才成立。
+    withoutRegistrations.walkAtRules('property', rule => rule.remove())
+    for (const css of [layered, converted, withoutRegistrations.toString()]) {
+      await page.setContent(`<style>${css}</style><div class="probe"></div>`)
+      expect(await page.locator('.probe').evaluate(element => getComputedStyle(element).width)).toBe('10px')
+    }
+    for (const options of [true, { features: { layer: false } }] as const) {
+      const importedRule = '.probe{--tw-translate-x:10px;width:10px}'
+      const importedCss = options === true ? importedRule : `@layer app{${importedRule}}`
+      const imported = `@layer app; @import url("data:text/css,${encodeURIComponent(importedCss)}"); @property --tw-translate-x { syntax: "*"; inherits: false; initial-value: 0; }`
+      const css = transformWebCssCompat(imported, options)
+      await page.setContent(`<style>${css}</style><div class="probe"></div>`)
+      expect(await page.locator('.probe').evaluate(element => getComputedStyle(element).width), '默认块不能使 import 失效').toBe('10px')
+      expect(await page.locator('.probe').evaluate(element => getComputedStyle(element).getPropertyValue('--tw-translate-x')), '默认层不能压过 import 的作者层').toBe('10px')
+    }
+  }
+  finally {
+    await browser.close()
+  }
+}, 60_000)
 
 it.each(selected)('%s：作者注册属性的初值、不继承与局部切换保持独立浏览器语义', async (_name, engine) => {
   const browser = await engine.launch({ headless: true })

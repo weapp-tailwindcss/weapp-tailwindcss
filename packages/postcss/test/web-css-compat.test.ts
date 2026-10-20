@@ -40,7 +40,7 @@ describe('web css compatibility transform', () => {
 
     expect(result).not.toContain('@theme')
     expect(result).not.toContain('@layer')
-    expect(result).not.toContain('@property')
+    expect(result).toContain('@property')
     expect(result).not.toContain('@supports')
     expect(result).toContain(':root')
     expect(result).toContain('--color-blue-500: rgb(')
@@ -231,7 +231,7 @@ describe('web css compatibility transform', () => {
     ].join('\n')
     const result = transformWebCssCompat(css, true)
 
-    expect(result).not.toContain('@property')
+    expect(result).toContain('@property')
     expect(result).not.toContain('--tw-gradient-position: initial')
     expect(result).not.toContain('--tw-gradient-stops: initial')
     expect(result).not.toContain('--tw-gradient-via-stops: initial')
@@ -394,7 +394,7 @@ describe('web css compatibility transform', () => {
     ].join('\n')
     const result = transformWebCssCompat(css, true)
 
-    expect(result).not.toContain('@property')
+    expect(result).toContain('@property')
     expect(result).toContain('*, ::before, ::after, ::backdrop')
     expect(result).toContain('--tw-border-style: solid')
     expect(result).toContain('--tw-shadow: 0 0 #0000')
@@ -495,7 +495,7 @@ describe('web css compatibility transform', () => {
     })
 
     expect(result).toContain('@theme')
-    expect(result).not.toContain('@property')
+    expect(result).toContain('@property')
   })
 
   it('supports individual feature switches', () => {

@@ -11,6 +11,14 @@ export function decodedIdentifier(value: string) {
 }
 
 export function atRuleName(node: AtRule) {
+  if (node.name.includes('\\') || (node.raws.afterName === '' && node.params.startsWith('\\'))) {
+    // 十六进制转义的终止空白可能被 PostCSS 分到 params，按完整前导 token 解码。
+    const source = `@${node.name}${node.raws.afterName ?? ' '}${node.params}`
+    const token = tokenize({ css: source })[0]
+    if (token?.[0] === TokenType.AtKeyword) {
+      return token[4].value.toLowerCase()
+    }
+  }
   return decodedIdentifier(node.name).toLowerCase()
 }
 

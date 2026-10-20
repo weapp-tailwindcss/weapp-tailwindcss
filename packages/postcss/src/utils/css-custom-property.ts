@@ -1,4 +1,4 @@
-import type { AtRule } from 'postcss'
+import type { AtRule, Node } from 'postcss'
 import { tokenize, TokenType } from '@csstools/css-tokenizer'
 import valueParser from 'postcss-value-parser'
 
@@ -23,6 +23,18 @@ export function getCssAtRulePrelude(rule: AtRule) {
   return token?.[0] === TokenType.AtKeyword
     ? { name: token[4].value, params: source.slice(token[3] + 1).trimStart() }
     : { name: rule.name, params: rule.params }
+}
+
+/** 注册描述符不参与普通声明变换；沿祖先链保护无效或嵌套的注册子树。 */
+export function isCssPropertyRegistration(node: Node) {
+  let current: Node | undefined = node
+  while (current) {
+    if (current.type === 'atrule' && getCssAtRulePrelude(current as AtRule).name.toLowerCase() === 'property') {
+      return true
+    }
+    current = current.parent
+  }
+  return false
 }
 
 /** 按 CSS token 解码名称，保留自定义属性的大小写及转义终止空白语义。 */

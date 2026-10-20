@@ -4,6 +4,10 @@ issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/issues/1307
 baseline: 7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5
 regressions:
   - packages/postcss/test/lynx-theme-safety.test.ts
+  - packages/postcss/test/property-registration.test.ts
+  - packages/postcss/test/cssVars.test.ts
+  - packages/postcss-calc/test/declaration-filter.test.ts
+  - packages/css-compat/test/legacy-registrations.test.ts
   - packages/postcss/test/css-rule-evidence.test.ts
   - packages/lynx/test/diagnostics-evidence.test.ts
   - packages/lynx/test/diagnostics-safety.test.ts
@@ -229,6 +233,18 @@ head `a10ef71036e9ea923da4bc79b046861c34fde81d` 的 Benchmark run `39479576075`�
 在干净的 `70661ce91db2791377d42fda8f124535337a439e` 上重新生产构建并完成整站采集：1,204 项首次通过，602 项按既有移动 Firefox/WebKit 规则跳过，0 unexpected、0 flaky。环境为 macOS arm64、Node 24.18.0、Playwright 1.64.1，Chromium 156.0.8078.4、Firefox 157.0、WebKit 27.2，sharp 0.35.5 / libvips 8.18.7。锁文件、截图合同、实际 build 与 PNG 摘要绑定在 `website/tests/visual-baselines/darwin.json`，13 份实际查看的代表性页面/切片登记在相邻审查记录；检查覆盖首页、UI、LLM、Lynx 长文、showcase、移动长页和真实图片，不宣称逐字审查全部页面。
 
 候选 `.tmp/website-visual-70661ce91/` 已通过正式 `e2e:visual install` 与 `e2e:visual verify`。这仅登记历史源码的视觉基线，后续 HEAD 必须由 `e2e:local` 真正禁止更新比较；不代表作者注册属性、旧 WebView 或原生能力通过。后续发现的非网站注册属性反例单独补红回归与修复，不撤销已完成且来源完整的历史基线。
+
+### 注册描述符与默认值合同的再次纠正
+
+`70661ce91db2791377d42fda8f124535337a439e` 仍不能称为 #1307 的根本修复。三浏览器真实反例证明：普通变量求值把 `initial-value: var(--color-base)` 改成具体颜色后，会把原本无效的注册变有效，红色继承变成蓝色初值；`prefix(tw)` 的公开主题也可使用 `--tw-color-brand`，前缀不能证明 Tailwind 内部归属。更早“非 `--tw-*` 作者注册已保护”的结论只覆盖那一批测试，不能延伸到全部作者注册。
+
+本轮保留全部注册和描述符，Web/Lynx 写入检查完整注册祖先链，引用收集继续保留描述符所需的根变量。calc 的通用声明过滤回调由兼容调用方明确排除注册上下文。默认值兼容按名字与完整签名匹配，不是来源证明：直接描述符、真实初值是否缺省、继承、重复、未知与 important 均单独检查；同名条件或冲突注册否决默认合成。原有 127 项默认映射的形状与人工 legacy 值不变，注册签名则由实际 Tailwind 4.3.3 编译全部 1,205 个 witness 的 127 项注册双向验证，不再依赖未绑定 submodule 或只比较名字的正则。
+
+额外失败回归证明：legacy layer 会把非法嵌套在注册内的描述符提升成有效注册，修复由 layer 内核保护注册原子边界；十六进制转义按完整前导 token 识别。合成默认块原来插到 import 前，三浏览器均拒绝该导入；现在 block 位于前导指令后，保留层时先登记独立最低默认层，并检查名字冲突与重复处理幂等。浏览器同时验证忽略注册后的默认块，避免只凭现代浏览器的原生注册支持掩盖缺失 fallback。未展开 import 内部的 layer 不能视为同一合并作用域的完整降级，仍由调用方先展开。
+
+基于 `4186fffc5` 加本轮未提交修复，先得到注册合同 35 项失败、三浏览器各 1 项失败；layer 核心 4 项红例中一项是 PostCSS 本身拒绝前导转义的夹具解析，已纠正为可解析的等价转义，另外 3 项证明实际转换错误。最终 PostCSS 147 文件、1,611 项通过、3 项既有跳过；CSS layer 内核 135 项通过；calc 217 项通过、3 项既有跳过；核心 Web 两文件 6 项与双语文档合同 16 项通过。三浏览器定向共 12 项通过，包括无效初值、公开前缀、非法 layer 描述符、状态恢复、import 与保留层。包构建、calc 类型和 layer 类型通过；初次 layer 类型错误已按 PostCSS 的 Root/Document 父节点联合类型修正。
+
+仅限定更新 `packages/postcss/test/__snapshots__/web-css-compat.test.ts.snap`：保留注册，未知签名不再臆造默认值；审查后完整包以 `CI=1`、`--update=none` 重验。最终重建依赖后 `CI=1 pnpm e2e:lynx --update=none` 为示例 205 项、E2E 39 文件 778 项全部通过，包含正式开发/生产双入口、真实 encoder/decoder 和既有 static 比较；既有 static 没有差异，未重写原生基线。ESLint、`git diff --check`、agents（67 规则、346 文档、1,003 命令，0 错误）和发布 intent 计划通过。原始红绿日志位于 `.tmp/property-{descriptor,layer,import,registration}-*`。这些结果证明转换和测试 oracle 的边界，不证明旧 WebView 或 Lynx 原生注册语义；全面验收仍须在提交后重新预检。未新增 AGENTS 规则，优先用可执行回归固定现有边界。
 
 ## 适用边界
 

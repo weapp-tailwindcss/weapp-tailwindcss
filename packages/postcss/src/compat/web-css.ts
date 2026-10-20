@@ -3,11 +3,12 @@ import postcss from 'postcss'
 import postcssPresetEnv from 'postcss-preset-env'
 import selectorParser from 'postcss-selector-parser'
 import { internalCssSelectorReplacer } from '../shared'
-import { getCssCalcVariableReferences, getCssCustomPropertyName } from '../utils/css-custom-property'
+import { getCssCalcVariableReferences, isCssPropertyRegistration } from '../utils/css-custom-property'
 import { normalizeModernColorValue } from './color-mix'
 import { removeUnsupportedCascadeLayers } from './mini-program-css/at-rules'
 import { normalizeTailwindcssV4GradientPosition, normalizeTailwindcssV4InfinityCalcValue } from './tailwindcss-v4'
 import { collectCustomPropertyValues, resolveCustomPropertyVarValue, usesResolvableTailwindColorVariable } from './web-css-custom-properties'
+import { collectRegisteredCustomPropertyFallbacks, insertRegisteredCustomPropertyFallbackRule, removeInitialFallbackDeclarations } from './web-css-registrations'
 
 export interface NormalizedWebCssCompatOptions {
   preset: 'off' | 'legacy-web'
@@ -63,80 +64,11 @@ function isWebCssCompatEnabled(options: NormalizedWebCssCompatOptions) {
   return Object.values(options.features).some(Boolean)
 }
 
-interface RegisteredCustomProperty {
-  initialValue?: string | undefined
-}
-
-function collectRegisteredCustomPropertyFallbacks(root: postcss.Root) {
-  const registeredProperties = new Map<string, RegisteredCustomProperty>()
-  root.walkAtRules('property', (atRule) => {
-    const propertyName = getCssCustomPropertyName(atRule.params)
-    // 仅降级 Tailwind 内部默认值；作者注册的语法、初值与继承不能由全局声明模拟。
-    // 保留注册还让后续 Web/Lynx 分析继续识别逐元素求值边界。
-    if (!propertyName?.startsWith('--tw-')) {
-      return
-    }
-    const existing = registeredProperties.get(propertyName) ?? {}
-    atRule.walkDecls('initial-value', (decl) => {
-      existing.initialValue = decl.value.trim()
-    })
-    registeredProperties.set(propertyName, existing)
-    atRule.remove()
-  })
-  return registeredProperties
-}
-
-const tailwindUnregisteredInitialFallbackCustomProperties = new Set([
-  '--tw-gradient-position',
-  '--tw-gradient-stops',
-  '--tw-gradient-via-stops',
-  '--tw-leading',
-  '--tw-font-weight',
-  '--tw-tracking',
-])
-
-function insertRegisteredCustomPropertyFallbackRule(
-  root: postcss.Root,
-  registeredProperties: ReadonlyMap<string, RegisteredCustomProperty>,
-) {
-  const declarations: postcss.Declaration[] = []
-  for (const [prop, registration] of registeredProperties) {
-    if (!registration.initialValue || registration.initialValue === 'initial') {
-      continue
-    }
-    declarations.push(postcss.decl({
-      prop,
-      value: registration.initialValue,
-    }))
-  }
-
-  if (declarations.length === 0) {
-    return
-  }
-
-  root.prepend(postcss.rule({
-    selector: '*, ::before, ::after, ::backdrop',
-    nodes: declarations,
-  }))
-}
-
-function removeInitialFallbackDeclarations(
-  root: postcss.Root,
-  registeredProperties: ReadonlyMap<string, RegisteredCustomProperty>,
-) {
-  root.walkDecls((decl) => {
-    if (
-      ((registeredProperties.has(decl.prop) && !registeredProperties.get(decl.prop)?.initialValue)
-        || tailwindUnregisteredInitialFallbackCustomProperties.has(decl.prop))
-      && decl.value.trim() === 'initial'
-    ) {
-      decl.remove()
-    }
-  })
-}
-
 function unwrapThemeAtRules(root: postcss.Root) {
   root.walkAtRules('theme', (atRule) => {
+    if (isCssPropertyRegistration(atRule)) {
+      return
+    }
     if (atRule.nodes && atRule.nodes.length > 0) {
       const rootNodes: postcss.ChildNode[] = []
       const hoistedNodes: postcss.ChildNode[] = []
@@ -188,6 +120,9 @@ function normalizeModernColorDeclarations(root: postcss.Root, features: Required
     }
   }
   root.walkDecls((decl) => {
+    if (isCssPropertyRegistration(decl)) {
+      return
+    }
     const value = resolveCustomPropertyVarValue(decl.value, customPropertyValues)
     const normalized = normalizeModernColorValue(value, customPropertyValues)
     if (!normalized.changed) {
@@ -205,6 +140,13 @@ function normalizeModernColorDeclarations(root: postcss.Root, features: Required
 
 function removeModernColorSupports(root: postcss.Root) {
   root.walkAtRules('supports', (atRule) => {
+    let containsRegistration = isCssPropertyRegistration(atRule)
+    atRule.walkAtRules((child) => {
+      containsRegistration ||= isCssPropertyRegistration(child)
+    })
+    if (containsRegistration) {
+      return
+    }
     if (!/color-mix|oklch|oklab|lab|lch|display-p3/i.test(atRule.params)) {
       return
     }
@@ -219,6 +161,9 @@ function removeModernColorSupports(root: postcss.Root) {
 
 function normalizeTailwindcssV4GradientPositionDeclarations(root: postcss.Root) {
   root.walkDecls('--tw-gradient-position', (decl) => {
+    if (isCssPropertyRegistration(decl)) {
+      return
+    }
     const normalized = normalizeTailwindcssV4GradientPosition(decl.value)
     if (normalized) {
       decl.value = normalized
@@ -252,6 +197,9 @@ function normalizeTailwindcssV4GradientPositionDeclarations(root: postcss.Root) 
 
 function normalizeTailwindcssV4InfinityCalcDeclarations(root: postcss.Root) {
   root.walkDecls((decl) => {
+    if (isCssPropertyRegistration(decl)) {
+      return
+    }
     const normalized = normalizeTailwindcssV4InfinityCalcValue(decl.value)
     if (normalized !== decl.value) {
       decl.value = normalized
@@ -261,7 +209,7 @@ function normalizeTailwindcssV4InfinityCalcDeclarations(root: postcss.Root) {
 
 function removeEmptyAtRules(root: postcss.Root) {
   root.walkAtRules((atRule) => {
-    if (atRule.nodes && atRule.nodes.length === 0) {
+    if (!isCssPropertyRegistration(atRule) && atRule.nodes && atRule.nodes.length === 0) {
       atRule.remove()
     }
   })
@@ -269,6 +217,9 @@ function removeEmptyAtRules(root: postcss.Root) {
 
 function insertWebkitBackgroundClipText(root: postcss.Root) {
   root.walkDecls('background-clip', (decl) => {
+    if (isCssPropertyRegistration(decl)) {
+      return
+    }
     if (decl.value.trim().toLowerCase() !== 'text') {
       return
     }
@@ -312,12 +263,12 @@ export function transformWebCssCompat(
 
   try {
     const root = postcss.parse(css)
+    const registeredProperties = collectRegisteredCustomPropertyFallbacks(root)
     if (normalized.features.theme) {
       unwrapThemeAtRules(root)
     }
     if (normalized.features.property) {
-      const registeredProperties = collectRegisteredCustomPropertyFallbacks(root)
-      insertRegisteredCustomPropertyFallbackRule(root, registeredProperties)
+      insertRegisteredCustomPropertyFallbackRule(root, registeredProperties, !normalized.features.layer)
       removeInitialFallbackDeclarations(root, registeredProperties)
     }
     if (normalized.features.supports) {

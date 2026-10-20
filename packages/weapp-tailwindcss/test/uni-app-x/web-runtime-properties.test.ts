@@ -76,7 +76,7 @@ describe('issue 1210: uni-app x Web runtime properties', () => {
     const result = await transform(plugin, source, path.resolve('theme.css'))
     expect(result.code).not.toMatch(/view,\s*text/)
     expect(result.code).toContain('var(--tw-gradient-via-stops,')
-    expect(result.code.includes('@property')).toBe(!webCompat)
+    expect(result.code).toContain('@property')
     expect(JSON.parse(result.map).sourcesContent).toHaveLength(1)
     expect(await transform(plugin, result.code, path.resolve('theme.css'))).toBeUndefined()
   })
