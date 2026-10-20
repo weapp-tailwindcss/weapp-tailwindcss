@@ -1,0 +1,100 @@
+{
+  "version": 1,
+  "manifestSha256": "b2de899f94b37b27398bcc00b41addbe10dae5a93d57b3699e66d894492e63bc",
+  "reviewer": "Codex 当前任务主代理",
+  "notes": "已实际审查 Chromium、Firefox、WebKit 的首页、UI、LLM、Lynx 长文与 showcase 代表 PNG 切片，以及 Chromium 移动首页和长页图片；未见此前低对比面板或 lazy 图片空缺。合同校验完整 1204 张首次成功截图与 602 个既有跳过，未逐字人工审查全部页面。此为 70661ce91 历史视觉基线，不代表注册属性语义、旧 WebView 或原生验收通过；新发现的注册边界反例独立修复。",
+  "reviewedAt": "2026-10-20T21:00:20.765Z",
+  "evidence": [
+    {
+      "file": "review-1.png",
+      "bytes": 1195131,
+      "sha256": "b52a456edf231aded27185553c3675871e7c37dc94c41603548207ed64e6c7b6",
+      "width": 1326,
+      "height": 1756
+    },
+    {
+      "file": "review-2.png",
+      "bytes": 184928,
+      "sha256": "065485804f455f66ead52b51ec9e7b652e58a6e9e61d21233fe1e35d8bb43ebd",
+      "width": 1326,
+      "height": 444
+    },
+    {
+      "file": "review-3.png",
+      "bytes": 222639,
+      "sha256": "90acbfc65ad7982c4557e8aa943ba4a8e9e7d4e36ba5607c01236db72bd192fc",
+      "width": 1326,
+      "height": 444
+    },
+    {
+      "file": "review-4.png",
+      "bytes": 522567,
+      "sha256": "0570c03848724d38adfa0c431ecdfbad58c4bfeb1c7c5bc8bcf4b89e1229f51e",
+      "width": 1326,
+      "height": 444
+    },
+    {
+      "file": "review-5.png",
+      "bytes": 687862,
+      "sha256": "7eeddac10062e8dc6023a3473f5156ca0d3f6dee826276e13fd92d7fa4e9b94c",
+      "width": 1326,
+      "height": 1287
+    },
+    {
+      "file": "review-6.png",
+      "bytes": 2261612,
+      "sha256": "8dfba37b5581a3fe8f2a8f3242b1a5faf689e65db784a49b687ac8172d3aab8d",
+      "width": 1326,
+      "height": 1287
+    },
+    {
+      "file": "review-7.png",
+      "bytes": 545571,
+      "sha256": "81a60b87c74d106d0baba22bd553c6df138e9f4dbe768f224d24f5965769a449",
+      "width": 1326,
+      "height": 444
+    },
+    {
+      "file": "review-8.png",
+      "bytes": 176167,
+      "sha256": "dfe7dc8247640b91835316141d75f2b7545fbc7374a950bcd1dae4910fcd69e7",
+      "width": 1326,
+      "height": 444
+    },
+    {
+      "file": "review-9.png",
+      "bytes": 274820,
+      "sha256": "9606fbae5c9aedf3e6169504d3d5d94eca9f4516db52714307287451f3de70d7",
+      "width": 1326,
+      "height": 444
+    },
+    {
+      "file": "review-10.png",
+      "bytes": 522714,
+      "sha256": "27b4c4d4c4c098eb3adac9fdf6f175ad0ccd314d33063ce44b6c0ff77480fd31",
+      "width": 1326,
+      "height": 444
+    },
+    {
+      "file": "review-11.png",
+      "bytes": 179867,
+      "sha256": "46865f52e3dadaeab4a371da3fdfe277d6fa65e4dcac1da2b74c6c6a4d20e976",
+      "width": 1326,
+      "height": 444
+    },
+    {
+      "file": "review-12.png",
+      "bytes": 201518,
+      "sha256": "5e8a8c6fb2ff005e017beb32e1e8923d259b7fa586f310687d7cd08fb1e2a5ad",
+      "width": 1326,
+      "height": 444
+    },
+    {
+      "file": "review-13.png",
+      "bytes": 254841,
+      "sha256": "fbb45146ba6dcad75df0a2862c30b5a8b5b7fe270792b4ea31894933e1e66048",
+      "width": 1326,
+      "height": 444
+    }
+  ]
+}

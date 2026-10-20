@@ -224,6 +224,12 @@ head `a10ef71036e9ea923da4bc79b046861c34fde81d` 的 Benchmark run `39479576075`�
 
 #1308 补齐真实生产双入口：各入口使用不同 CSS 来源，独立观察器在公开 `beforeEmit` hook 归档实际编码 CSS，再分别核对报告的输入摘要、最终 bundle 摘要、独立 decoder CSS 摘要与业务拒绝来源。两个摘要及控制规则必须不同，另一入口的业务诊断不得串入；生产压缩合并后的模糊 selector 仍保留 unknown。首次夹具错误地复制仅开发模式存在的 `.lynx` 调试文件而失败，已改为实际 hook 证据，不以缺文件后静默回退。最终生产双入口及开发默认/严格三项全部通过，日志在 `.tmp/lynx-diagnostics-production2.log`，逐入口原始输入和 bundle 在 `e2e/.artifacts/lynx-diagnostics/production/default/`。此项没有新增 static 场景或更新既有快照，也不证明原生运行支持。
 
+### 70661ce91 网站黄金图的独立采集
+
+在干净的 `70661ce91db2791377d42fda8f124535337a439e` 上重新生产构建并完成整站采集：1,204 项首次通过，602 项按既有移动 Firefox/WebKit 规则跳过，0 unexpected、0 flaky。环境为 macOS arm64、Node 24.18.0、Playwright 1.64.1，Chromium 156.0.8078.4、Firefox 157.0、WebKit 27.2，sharp 0.35.5 / libvips 8.18.7。锁文件、截图合同、实际 build 与 PNG 摘要绑定在 `website/tests/visual-baselines/darwin.json`，13 份实际查看的代表性页面/切片登记在相邻审查记录；检查覆盖首页、UI、LLM、Lynx 长文、showcase、移动长页和真实图片，不宣称逐字审查全部页面。
+
+候选 `.tmp/website-visual-70661ce91/` 已通过正式 `e2e:visual install` 与 `e2e:visual verify`。这仅登记历史源码的视觉基线，后续 HEAD 必须由 `e2e:local` 真正禁止更新比较；不代表作者注册属性、旧 WebView 或原生能力通过。后续发现的非网站注册属性反例单独补红回归与修复，不撤销已完成且来源完整的历史基线。
+
 ## 适用边界
 
 来源修复后的 `CI=1 pnpm e2e:lynx --update=none` 为示例 205 项、E2E 39 文件 775 项全部通过；`style.css` 来源与 static 基线在禁止更新模式下通过。核心类型、架构、源码行数和文档 14 项合同也通过。
