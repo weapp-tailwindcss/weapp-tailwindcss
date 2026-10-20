@@ -52,6 +52,18 @@ regressions:
   - e2e/react-native-web-evidence.test.ts
   - e2e/tailwind-lynx-registry-coverage.test.ts
 verification:
+  - claim: 原生截图失败诊断、取消与三阶段证据共 119 项定向回归通过，未证明 iOS 首轮超时根因已修复
+    kind: unit
+    status: passed
+    sha: e132513bc78ae444d218dee8d944c5d0f88241e2
+    environment: macOS，Node 24.18.0 / pnpm 12.14.0；该提交基础上的未提交采集诊断改动
+    command: CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-artifact-evidence.test.ts e2e/react-native-native-wait.test.ts e2e/react-native-reporter-session.test.ts e2e/react-native-phase-evidence.test.ts e2e/react-native-phase-capture.test.ts e2e/react-native-ios-runtime.test.ts --update=none
+  - claim: Expo iOS baseline 的 layout-overflow 未取得预算内两帧回执，末帧通过不能替代完整验收
+    kind: native
+    status: failed
+    sha: e132513bc78ae444d218dee8d944c5d0f88241e2
+    environment: GitHub macOS 15 / iOS 18.5；run 39388368577 attempt 1
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/39388368577/job/118513855692
   - claim: Lynx 全注册项追踪及已有能力证据协议共 1471 项合同通过，Expo Web 引擎选择和失败诊断另有定向回归
     kind: unit
     status: passed
@@ -271,6 +283,14 @@ Lynx 原 adapter 只枚举旧能力表，不能暴露完整注册表的缺口。
 本地预检先恢复已有 Android Launcher，并在任务环境指定已安装的 Gradle 与 SDK，不提交本机路径。新 prepare `7c5c0458-58d2-48ff-9f29-780def2881f4` 的全部脚本探针通过；原生 Chrome 正被用户操作，故使用当前会话后台 IAB 完成真实读取、截图、输入、点击和完成状态确认。实际调用 ID 与完整原始输出保存在该轮目录，临时标签页已关闭。verify 重新检查时，Harmony `127.0.0.1:5557` 的 `uitest dumpLayout` 在 15 秒超时，系统查询和 shell 仍响应；没有查明超时根因，不重启或重置设备，不放宽阈值。通过 block 入口关闭本轮预检服务时，该入口同时把 computer-use 状态标为阻断，已经完成的真实工具证据仍保留。仅调用记录函数生成 `e2e/.artifacts/tailwind/93d90ebd-45f3-458c-bd29-3257b477af06/` 的阻断索引，15 目标全部 `attempted=false`，没有调用全面入口。
 
 验收仍为 `partial`：RN 原生尚缺 1,260 个注册能力夹具及 Image/ScrollView 语义族；RN 三阶段目前归档 Metro 输入，完整实际交付 bundle/HMR 链尚未采集；Web 六类 variant 和三端转换 oracle 缺口仍需补齐。恢复 Harmony 布局服务后，须在稳定源码上重新 prepare、当前会话 computer use、verify，不能复用本轮失败报告。规则评估：本轮修正调度和追踪并增加可执行回归，不新增或放宽 AGENTS 规则。
+
+## iOS 首轮截图超时诊断（2026-10-20）
+
+后续 PR [#1313](https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1313) head `e132513bc78ae444d218dee8d944c5d0f88241e2` 的 RN run `39388368577` 中，Expo Web Chromium、Firefox、WebKit 和 Android 作业均通过；iOS 在 baseline 的 `layout-overflow/default` 触发原有 10 秒宿主采集截止。已下载 artifact `12250050932` 并逐字节核对 API SHA-256 `7c4ed504925f6674ebde0601b9924a5314b3cfa988ecbd0423b55fa5ed796c25`。其 `layout-aspect` 有完整回执，overflow 只有 pair 和末帧 PNG；离线运行生产 `assessNativePair` 后，overflow 几何、像素和 control 全部通过，像素误差为零、control 差异为 5,760 像素。末帧成功不能证明已获得两帧，也不能把超时直接归因为环境噪声或样式问题。
+
+原采集循环覆盖同一 PNG，不保存帧序号、采集阶段、逐帧检查和连续通过次数，外层超时又会遮蔽内层进展。现在失败时保留带运行身份的 `.capture.json`：逐帧记录截图、读取、解码和判定的单调时间、PNG 字节摘要及检查点；取消通知内同步落盘，即使下一次截图仍挂起，也能留下在途阶段。迟到结果不能覆盖取消快照，监听器在结束时清理，保存失败同时暴露原错误与落盘错误。诊断不参与支持判定，10 秒、两帧及像素阈值保持不变，没有盲目重跑该 iOS 作业。
+
+四条缺诊断回归先失败，随后六文件 119 项以 `CI=1`、`--update=none` 通过，包括迟到帧、第二帧挂起、像素失败、诊断写入失败和取消后禁止回执。实际 iOS 超时根因尚待带诊断的新 head 验证；本轮未改示例、样式、语义预期或 static 基线。另一个 portable demo 作业 `118514482081` 的 H5、QQ、京东、Harmony hybrid 已全部通过，只在证据上传 `FinalizeArtifact` 出现 `ETIMEDOUT`，没有成功归档；保留首轮失败，不制造产品补丁或绕过证据上传。规则评估：补可执行诊断回归，不新增 AGENTS 规则。
 
 ## 规则评估
 

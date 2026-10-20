@@ -6,6 +6,7 @@ import path from 'node:path'
 import { PNG } from 'pngjs'
 import { expectedFixtureStyle, nativeFixtures } from '../../examples/react-native-expo/src/compatibility/protocol'
 import { NATIVE_CAPTURE_TIMEOUT } from './capture-budget'
+import { createPairCaptureDiagnostics } from './pair-capture-diagnostics'
 
 function sameTargetGeometry(target: NativePairEvidence['target'], frame: NativePairEvidence['probe'], otherTarget: NativePairEvidence['target'], otherFrame: NativePairEvidence['probe']) {
   return Math.abs(target.width - otherTarget.width) <= 0.75
@@ -119,39 +120,62 @@ export async function captureNativePair(pair: NativePairEvidence, options: {
     throw new Error('React Native pair has a stale run or invalid artifact identity')
   }
   const name = `case-${pair.revision}-${pair.id}-${pair.phase}.png`
-  await fs.writeFile(path.join(options.artifacts, `${name}.pair.json`), `${JSON.stringify(pair, null, 2)}\n`)
-  let checkpoints: ReturnType<typeof assessNativePair> = []
-  let contents: Buffer | undefined
-  let consecutive = 0
-  const deadline = Date.now() + NATIVE_CAPTURE_TIMEOUT
-  while (Date.now() < deadline) {
+  const diagnostics = createPairCaptureDiagnostics(pair, path.join(options.artifacts, `${name}.capture.json`), options.cancelSignal)
+  try {
     options.cancelSignal?.throwIfAborted()
-    const file = await options.capture(name)
-    options.cancelSignal?.throwIfAborted()
-    contents = await fs.readFile(file)
-    checkpoints = assessNativePair(PNG.sync.read(contents), pair)
-    consecutive = checkpoints.every(checkpoint => checkpoint.passed) ? consecutive + 1 : 0
-    if (consecutive >= 2 && Date.now() < deadline) {
-      break
+    await fs.writeFile(path.join(options.artifacts, `${name}.pair.json`), `${JSON.stringify(pair, null, 2)}\n`)
+    let checkpoints: ReturnType<typeof assessNativePair> = []
+    let contents: Buffer | undefined
+    let consecutive = 0
+    const deadline = Date.now() + NATIVE_CAPTURE_TIMEOUT
+    while (Date.now() < deadline) {
+      options.cancelSignal?.throwIfAborted()
+      const frame = diagnostics.beginFrame()
+      const file = await options.capture(name)
+      options.cancelSignal?.throwIfAborted()
+      frame.capturedAtMs = diagnostics.elapsed()
+      diagnostics.stage('read-screenshot')
+      contents = await fs.readFile(file)
+      options.cancelSignal?.throwIfAborted()
+      frame.readAtMs = diagnostics.elapsed()
+      frame.byteLength = contents.length
+      frame.sha256 = createHash('sha256').update(contents).digest('hex')
+      diagnostics.stage('decode-screenshot')
+      const png = PNG.sync.read(contents)
+      frame.decodedAtMs = diagnostics.elapsed()
+      diagnostics.stage('assess-screenshot')
+      checkpoints = assessNativePair(png, pair)
+      diagnostics.assessed(frame, checkpoints)
+      consecutive = checkpoints.every(checkpoint => checkpoint.passed) ? consecutive + 1 : 0
+      if (consecutive >= 2 && Date.now() < deadline) {
+        break
+      }
+      if (Date.now() >= deadline) {
+        break
+      }
+      diagnostics.stage('wait-for-next-frame')
+      await new Promise(resolve => setTimeout(resolve, 100))
     }
-    await new Promise(resolve => setTimeout(resolve, 100))
+    if (!contents) {
+      throw new Error('React Native pair screenshot is missing')
+    }
+    if (consecutive < 2 || Date.now() >= deadline) {
+      throw new Error('Native pair requires two consecutive passing frames within its capture deadline')
+    }
+    options.cancelSignal?.throwIfAborted()
+    const receipt: NativeCaseReceipt = {
+      runId: options.runId,
+      id: pair.id,
+      phase: pair.phase,
+      checkpoints,
+      artifact: { name, sha256: createHash('sha256').update(contents).digest('hex'), byteLength: contents.length },
+    }
+    diagnostics.stage('write-receipt')
+    await fs.writeFile(path.join(options.artifacts, `${name}.json`), `${JSON.stringify({ pair, receipt }, null, 2)}\n`, { signal: options.cancelSignal })
+    return receipt
   }
-  if (!contents) {
-    throw new Error('React Native pair screenshot is missing')
-  }
-  if (consecutive < 2 || Date.now() >= deadline) {
-    throw new Error('Native pair requires two consecutive passing frames within its capture deadline')
-  }
-  options.cancelSignal?.throwIfAborted()
-  const receipt: NativeCaseReceipt = {
-    runId: options.runId,
-    id: pair.id,
-    phase: pair.phase,
-    checkpoints,
-    artifact: { name, sha256: createHash('sha256').update(contents).digest('hex'), byteLength: contents.length },
-  }
-  await fs.writeFile(path.join(options.artifacts, `${name}.json`), `${JSON.stringify({ pair, receipt }, null, 2)}\n`, { signal: options.cancelSignal })
-  return receipt
+  catch (error) { throw diagnostics.fail(error) }
+  finally { diagnostics.dispose() }
 }
 
 /** 门禁重新读取宿主保存的截图与坐标，不相信报告中的布尔检查点。 */
