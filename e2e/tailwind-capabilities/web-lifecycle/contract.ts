@@ -3,6 +3,7 @@ import type { LifecycleProbe } from './fixtures'
 import type { LifecycleObservation, LifecycleValues } from './types'
 import { lifecycleRawValues } from './evidence'
 import { lifecycleFixtureUrl, lifecycleWebFixtureCss, renderLifecycleProbe } from './fixtures'
+import { startingOpacityTolerance } from './starting-timeline'
 
 const channels = ['red', 'green', 'blue', 'alpha'] as const
 const active = [18, 52, 86, 255] as const
@@ -19,7 +20,7 @@ export function lifecycleWebContract(probe: LifecycleProbe, runId: string): Case
     Object.assign(expected, { 'natural/first': true, 'natural/reinserted': true, 'native/transition-events': true, 'native/control-no-transition': true, 'native/paused-existing-transition': true, 'natural/control-opacity': true })
     for (const [stage, opacity, color] of [['start', 0, white], ['middle', 0.5, [137, 154, 171, 255]], ['end', 1, active]] as const) {
       Object.assign(expected, { [`${stage}/probe-opacity`]: opacity, [`${stage}/control-opacity`]: 1 }, pixelValues(stage, 'probe', color), pixelValues(stage, 'control', active))
-      tolerances[`${stage}/probe-opacity`] = 0.005
+      tolerances[`${stage}/probe-opacity`] = startingOpacityTolerance
       tolerances[`${stage}/control-opacity`] = 0.001
     }
   }
@@ -58,4 +59,4 @@ export function lifecycleAssertions(contract: CaseContract, observation: Lifecyc
   return contract.requiredAssertions.map(name => ({ name, stage: contract.assertionStages?.[name] ?? 'runtime', actual: values[name] ?? null, expected: contract.expectedValues[name]!, ...(contract.tolerances?.[name] === undefined ? {} : { tolerance: contract.tolerances[name] }) }))
 }
 
-export { naturalStartingTimeline } from './evidence'
+export { naturalStartingTimeline } from './starting-timeline'

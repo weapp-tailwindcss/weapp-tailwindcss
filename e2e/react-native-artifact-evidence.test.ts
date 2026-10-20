@@ -59,6 +59,99 @@ describe('原生宿主截图证据', () => {
       await expect(captureNativePair(pair, { runId: pair.runId, artifacts: directory, capture })).rejects.toThrow(/two consecutive/)
       expect(capture).toHaveBeenCalledTimes(lateFrame)
       await expect(fs.stat(path.join(directory, 'case-baseline-background-color-default.png.json'))).rejects.toMatchObject({ code: 'ENOENT' })
+      const diagnostic = JSON.parse(await fs.readFile(path.join(directory, 'case-baseline-background-color-default.png.capture.json'), 'utf8'))
+      expect(diagnostic).toMatchObject({
+        schemaVersion: 1,
+        runId: pair.runId,
+        revision: pair.revision,
+        id: pair.id,
+        phase: pair.phase,
+        timeoutMs: 10_000,
+        status: 'failed',
+        stage: 'assess-screenshot',
+      })
+      expect(diagnostic.frames).toHaveLength(lateFrame)
+      expect(diagnostic.frames.at(-1).checkpoints.every((item: { passed: boolean }) => item.passed)).toBe(true)
+    }
+    finally {
+      now.mockRestore()
+      await fs.rm(directory, { recursive: true, force: true })
+    }
+  })
+
+  it('第二帧挂起时取消仍同步保留首帧检查与在途阶段，迟到返回不能写回执', async () => {
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'rn-pending-frame-'))
+    const pair = input()
+    const controller = new AbortController()
+    const filename = 'case-baseline-background-color-default.png'
+    const file = path.join(directory, filename)
+    await fs.writeFile(file, pixels())
+    let release!: () => void
+    let entered!: () => void
+    const pending = new Promise<void>((resolve) => {
+      entered = resolve
+    })
+    let frames = 0
+    const capturing = captureNativePair(pair, {
+      runId: pair.runId,
+      artifacts: directory,
+      cancelSignal: controller.signal,
+      capture: async () => {
+        if (++frames === 2) {
+          entered()
+          await new Promise<void>((resolve) => {
+            release = resolve
+          })
+        }
+        return file
+      },
+    })
+    const outcome = capturing.catch(error => error as Error)
+    try {
+      await pending
+      controller.abort(new Error('host capture exceeded 10000ms'))
+      // 外层预算可能先返回，诊断必须在取消通知内落盘，不能依赖挂起截图完成。
+      const diagnostic = JSON.parse(await fs.readFile(`${file}.capture.json`, 'utf8'))
+      expect(diagnostic).toMatchObject({ status: 'failed', stage: 'capture-screenshot', consecutive: 1, error: 'Error: host capture exceeded 10000ms' })
+      expect(diagnostic.frames).toHaveLength(2)
+      expect(diagnostic.frames[0]).toMatchObject({ index: 1, consecutive: 1, byteLength: pixels().length })
+      expect(diagnostic.frames[0].checkpoints.every((item: { passed: boolean }) => item.passed)).toBe(true)
+      expect(diagnostic.frames[1]).toMatchObject({ index: 2 })
+      expect(diagnostic.frames[1].capturedAtMs).toBeUndefined()
+      release()
+      expect(await outcome).toMatchObject({ message: 'host capture exceeded 10000ms' })
+      await expect(fs.stat(`${file}.json`)).rejects.toMatchObject({ code: 'ENOENT' })
+      expect(JSON.parse(await fs.readFile(`${file}.capture.json`, 'utf8'))).toEqual(diagnostic)
+    }
+    finally {
+      release?.()
+      await outcome
+      await fs.rm(directory, { recursive: true, force: true })
+    }
+  })
+
+  it('像素不通过的失败保留检查点，不能由末帧可见自动判为采集环境问题', async () => {
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'rn-rejected-frame-'))
+    const now = vi.spyOn(Date, 'now').mockReturnValue(0)
+    try {
+      const pair = input()
+      const image = PNG.sync.read(pixels())
+      for (let y = 10; y < 30; y++) {
+        for (let x = 10; x < 30; x++) {
+          image.data.set([255, 0, 0, 255], (y * image.width + x) * 4)
+        }
+      }
+      const file = path.join(directory, 'case-baseline-background-color-default.png')
+      await fs.writeFile(file, PNG.sync.write(image))
+      await expect(captureNativePair(pair, { runId: pair.runId, artifacts: directory, capture: async () => {
+        now.mockReturnValue(10_001)
+        return file
+      } })).rejects.toThrow(/two consecutive/)
+      const diagnostic = JSON.parse(await fs.readFile(`${file}.capture.json`, 'utf8'))
+      expect(diagnostic).toMatchObject({ status: 'failed', stage: 'assess-screenshot', consecutive: 0 })
+      expect(diagnostic.frames[0].checkpoints).toContainEqual(expect.objectContaining({ name: 'runtime:default:pixel', passed: false }))
+      expect(diagnostic.frames[0].sha256).toMatch(/^[a-f\d]{64}$/)
+      await expect(fs.stat(`${file}.json`)).rejects.toMatchObject({ code: 'ENOENT' })
     }
     finally {
       now.mockRestore()
@@ -70,11 +163,14 @@ describe('原生宿主截图证据', () => {
     const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'rn-artifact-'))
     try {
       const pair = input()
-      const receipt = await captureNativePair(pair, { runId: pair.runId, artifacts: directory, capture: async (name) => {
+      const controller = new AbortController()
+      const receipt = await captureNativePair(pair, { runId: pair.runId, artifacts: directory, cancelSignal: controller.signal, capture: async (name) => {
         const file = path.join(directory, name)
         await fs.writeFile(file, pixels())
         return file
       } })
+      controller.abort(new Error('采集完成后的取消不能生成失败诊断'))
+      await expect(fs.stat(path.join(directory, `${receipt.artifact.name}.capture.json`))).rejects.toMatchObject({ code: 'ENOENT' })
       const report = { runId: pair.runId, revision: pair.revision, receipts: [receipt] } as unknown as ReactNativeReport
       await expect(validateNativeArtifacts(report, directory)).resolves.toBeUndefined()
       const file = path.join(directory, receipt.artifact.name)
@@ -86,6 +182,25 @@ describe('原生宿主截图证据', () => {
       await expect(validateNativeArtifacts(report, directory)).rejects.toThrow(/modified/)
       await fs.rm(file)
       await expect(validateNativeArtifacts(report, directory)).rejects.toThrow()
+    }
+    finally {
+      await fs.rm(directory, { recursive: true, force: true })
+    }
+  })
+
+  it('失败诊断落盘错误与原始采集错误同时暴露', async () => {
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'rn-diagnostic-write-'))
+    try {
+      const pair = input()
+      const filename = 'case-baseline-background-color-default.png'
+      await fs.mkdir(path.join(directory, `${filename}.capture.json`))
+      const original = new Error('screenshot command failed')
+      const failure = await captureNativePair(pair, { runId: pair.runId, artifacts: directory, capture: async () => {
+        throw original
+      } }).catch(error => error as AggregateError)
+      expect(failure).toBeInstanceOf(AggregateError)
+      expect((failure as AggregateError).errors).toEqual([original, expect.objectContaining({ code: expect.any(String) })])
+      await expect(fs.stat(path.join(directory, `${filename}.json`))).rejects.toMatchObject({ code: 'ENOENT' })
     }
     finally {
       await fs.rm(directory, { recursive: true, force: true })

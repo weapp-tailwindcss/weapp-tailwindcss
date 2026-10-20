@@ -29,7 +29,7 @@ async function animationSnapshot(page: Page) {
   return page.evaluate(() => {
     const animation = Reflect.get(globalThis, '__tailwindLifecycleAnimation') as CSSTransition
     const target = (animation.effect as KeyframeEffect).target
-    return { native: animation instanceof CSSTransition, registered: document.querySelector('#probe')!.getAnimations().includes(animation), target: target instanceof Element ? target.id : '', property: animation.transitionProperty, playState: animation.playState, currentTime: Number(animation.currentTime), duration: Number(animation.effect!.getTiming().duration), playbackRate: animation.playbackRate, probeOpacity: Number(getComputedStyle(document.querySelector('#probe')!).opacity), controlOpacity: Number(getComputedStyle(document.querySelector('#control')!).opacity) }
+    return { identity: Reflect.get(globalThis, '__tailwindLifecycleAnimationIdentity') as number, native: animation instanceof CSSTransition, registered: document.querySelector('#probe')!.getAnimations().includes(animation), target: target instanceof Element ? target.id : '', property: animation.transitionProperty, playState: animation.playState, currentTime: Number(animation.currentTime), duration: Number(animation.effect!.getTiming().duration), playbackRate: animation.playbackRate, probeOpacity: Number(getComputedStyle(document.querySelector('#probe')!).opacity), controlOpacity: Number(getComputedStyle(document.querySelector('#control')!).opacity) }
   })
 }
 
@@ -37,6 +37,8 @@ async function animationSnapshot(page: Page) {
 export async function observeStarting(page: Page, runId: string, capture: CaptureLifecycleScreenshot): Promise<LifecycleObservation> {
   await page.evaluate((runId) => {
     const state: StartingJournal = { runId, cycle: 0, phase: 'idle', frames: [], events: [], raf: 0 }
+    const transitionsByCycle = new Map<number, { animation: CSSTransition, identity: number }>()
+    let nextIdentity = 0
     Reflect.set(globalThis, '__tailwindLifecycle', state)
     for (const type of ['transitionrun', 'transitionstart', 'transitionend', 'transitioncancel']) {
       document.addEventListener(type, (raw) => {
@@ -49,7 +51,45 @@ export async function observeStarting(page: Page, runId: string, capture: Captur
         const probe = document.querySelector('#probe')
         const control = document.querySelector('#control')
         if (state.phase === 'natural' && probe && control) {
-          state.frames.push({ cycle: state.cycle, time: performance.now(), probe: Number(getComputedStyle(probe).opacity), control: Number(getComputedStyle(control).opacity), phase: 'rendered' })
+          const probeOpacity = Number(getComputedStyle(probe).opacity)
+          const transitions = probe.getAnimations().filter(animation => animation instanceof CSSTransition && animation.transitionProperty === 'opacity') as CSSTransition[]
+          if (!transitionsByCycle.has(state.cycle) && transitions.length === 1) {
+            transitionsByCycle.set(state.cycle, { animation: transitions[0]!, identity: ++nextIdentity })
+            Reflect.set(globalThis, '__tailwindLifecycleAnimation', transitions[0]!)
+            Reflect.set(globalThis, '__tailwindLifecycleAnimationIdentity', nextIdentity)
+          }
+          const held = transitionsByCycle.get(state.cycle)
+          const frame: StartingFrame = { cycle: state.cycle, time: performance.now(), probe: probeOpacity, control: Number(getComputedStyle(control).opacity), phase: 'rendered' }
+          if (held) {
+            const animation = held.animation
+            const effect = animation.effect as KeyframeEffect
+            const timing = effect.getTiming()
+            frame.animation = {
+              identity: held.identity,
+              native: animation instanceof CSSTransition,
+              registered: transitions.includes(animation),
+              matches: transitions.length,
+              target: effect.target instanceof Element ? effect.target.id : '',
+              targetMatches: effect.target === probe,
+              documentTimeline: animation.timeline === document.timeline,
+              property: animation.transitionProperty,
+              playState: animation.playState,
+              pending: animation.pending,
+              currentTime: typeof animation.currentTime === 'number' ? animation.currentTime : null,
+              startTime: typeof animation.startTime === 'number' ? animation.startTime : null,
+              timelineTime: typeof document.timeline.currentTime === 'number' ? document.timeline.currentTime : null,
+              duration: timing.duration,
+              delay: timing.delay,
+              endDelay: timing.endDelay,
+              iterations: timing.iterations,
+              iterationStart: timing.iterationStart,
+              direction: timing.direction,
+              easing: timing.easing,
+              playbackRate: animation.playbackRate,
+              keyframes: effect.getKeyframes().map(frame => ({ computedOffset: frame.computedOffset, opacity: String(frame.opacity), easing: frame.easing })),
+            }
+          }
+          state.frames.push(frame)
         }
         state.raf = requestAnimationFrame(() => sampler.tick())
       },
@@ -70,10 +110,10 @@ export async function observeStarting(page: Page, runId: string, capture: Captur
   const paused = await page.evaluate(async () => {
     const state = Reflect.get(globalThis, '__tailwindLifecycle') as StartingJournal
     const transitions = document.querySelector('#probe')!.getAnimations().filter(animation => animation instanceof CSSTransition && animation.transitionProperty === 'opacity') as CSSTransition[]
-    if (transitions.length !== 1) {
+    const animation = Reflect.get(globalThis, '__tailwindLifecycleAnimation') as CSSTransition
+    if (transitions.length !== 1 || transitions[0] !== animation) {
       throw new Error('没有唯一的原生 opacity CSSTransition，禁止创建替代动画')
     }
-    const animation = transitions[0]!
     state.phase = 'evidence'
     animation.pause()
     await animation.ready
@@ -82,8 +122,7 @@ export async function observeStarting(page: Page, runId: string, capture: Captur
     if (!Number.isFinite(duration) || duration <= 0 || currentTime <= 0 || currentTime >= duration) {
       throw new Error('真实 transition 缺少可恢复的自然时间点')
     }
-    Reflect.set(globalThis, '__tailwindLifecycleAnimation', animation)
-    return { duration, currentTime, cycle: state.cycle, phase: state.phase }
+    return { identity: Reflect.get(globalThis, '__tailwindLifecycleAnimationIdentity') as number, duration, currentTime, cycle: state.cycle, phase: state.phase }
   })
   const values: LifecycleObservation['values'] = {}
   const pixels: LifecycleObservation['pixels'] = {}

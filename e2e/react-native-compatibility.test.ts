@@ -6,12 +6,14 @@ import { describe, expect, it } from 'vitest'
 import { compatibilityCases, RN_CATALOG_HASH } from './react-native/catalog'
 import { nativeReportConclusion, readHistoricalReactNativeReport, reportFromStaticEvidence, validateReactNativeReport } from './react-native/reports'
 import { collectStaticEvidence } from './react-native/static-evidence'
+import { reactNativeWebBrowser } from './react-native/web-browser'
 import { runWebRuntime } from './react-native/web-runtime'
 
 const repoRoot = path.resolve(import.meta.dirname, '..')
 const examplePackage = '@weapp-tailwindcss/example-react-native-expo'
 const reactNativePackage = '@weapp-tailwindcss/react-native'
 const corePackage = 'weapp-tailwindcss'
+const selectedBrowser = reactNativeWebBrowser(process.env.RN_WEB_BROWSER)
 
 async function findBundle(root: string, platform: string) {
   const metadata = JSON.parse(await fs.readFile(path.join(root, 'metadata.json'), 'utf8')) as { fileMetadata: Record<string, { bundle?: string }> }
@@ -108,7 +110,7 @@ describe('React Native Expo static exports', () => {
           `${String(childOutput.stdout ?? '')}\n${String(childOutput.stderr ?? '')}\n${error instanceof Error ? error.stack ?? error.message : String(error)}`,
           'utf8',
         )
-        await fs.cp(outputRoot, path.join(repoRoot, 'e2e/.artifacts/react-native-web/static-export-debug'), { recursive: true, force: true })
+        await fs.cp(outputRoot, path.join(repoRoot, 'e2e', '.artifacts', `react-native-web-${selectedBrowser.name}`, 'static-export-debug'), { recursive: true, force: true })
       }
       throw error
     }

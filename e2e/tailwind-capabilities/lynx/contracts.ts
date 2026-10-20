@@ -5,8 +5,16 @@ import { lynxEvidenceStrategy } from '../../../examples/react-lynx/src/compatibi
 import { overflowContract } from '../../../examples/react-lynx/src/compatibility/overflow-contract'
 import { responsiveContract } from '../../../examples/react-lynx/src/compatibility/responsive-contract'
 import { reviewedLynxContract } from '../../lynx/expectations'
+import registryInventory from '../inventory/tailwind-4.3.3.json' with { type: 'json' }
 
 export type LynxTarget = 'lynx-ios' | 'lynx-android'
+type LynxRegistry = Record<'utilities' | 'variants', readonly { id: string, witness: string }[]>
+
+// 仅登记已具有单候选、独立几何判定的映射；保留旧 ID，不推导同族其它语法已执行。
+const registryFeatures: Record<string, string[]> = {
+  'layout-aspect': ['utility/functional/aspect'],
+  'sizing-size': ['utility/functional/size'],
+}
 
 // 这里只收录有完整固定预期的判定器；仅发生尺寸或像素变化的分支不构成语义验收。
 export const geometryValidators = new Set([
@@ -32,7 +40,7 @@ export const pixelValidators = new Map([
   ['syntax-important', ['probe', 'control', 'reference']],
 ])
 
-export function lynxCaseContracts(target: LynxTarget, filter?: RegExp): CaseContract[] {
+export function lynxCaseContracts(target: LynxTarget, filter?: RegExp, inventory: LynxRegistry = registryInventory): CaseContract[] {
   const contracts = compatibilityCases.map<CaseContract>((item) => {
     const support = reviewedLynxContract.support[item.id]![target === 'lynx-ios' ? 0 : 1]
     const strategy = lynxEvidenceStrategy(item)
@@ -61,6 +69,11 @@ export function lynxCaseContracts(target: LynxTarget, filter?: RegExp): CaseCont
       contracts.push({ id: `capability/${feature.id}`, features: [feature.id], candidate: '', fixture: 'missing-lynx-atomic-runtime-fixture', expectation: { support: 'supported', stage: 'runtime' }, requiredAssertions: ['runtime'], expectedValues: { runtime: true } })
     }
   }
+  for (const feature of [...inventory.utilities, ...inventory.variants]) {
+    if (!covered.has(feature.id)) {
+      contracts.push({ id: `inventory/${feature.id}`, features: [feature.id], candidate: feature.witness, fixture: 'missing-lynx-registry-runtime-fixture', expectation: { support: 'supported', stage: 'runtime' }, requiredAssertions: ['runtime'], expectedValues: { runtime: true } })
+    }
+  }
   return contracts.filter(item => !filter || new RegExp(filter.source, filter.flags).test(item.id))
 }
 
@@ -68,11 +81,12 @@ export function lynxCaseContracts(target: LynxTarget, filter?: RegExp): CaseCont
 function lynxAtomicFeatures(id: string) {
   const item = compatibilityCases.find(item => item.id === id)!
   const features = officialFeatureManifest.filter(feature => feature.caseId === id).map(feature => feature.id)
-  return (geometryValidators.has(id) || pixelValidators.has(id) || id === responsiveContract.id || id === overflowContract.id) && (item.className.match(/\S+/g) ?? []).length === 1 && features.length === 1 ? features : [`authoring/${id}`]
+  return (geometryValidators.has(id) || pixelValidators.has(id) || id === responsiveContract.id || id === overflowContract.id) && (item.className.match(/\S+/g) ?? []).length === 1 && features.length === 1 ? [...features, ...(registryFeatures[id] ?? [])] : [`authoring/${id}`]
 }
 
 export const lynxAdapterFixture = {
-  version: 2,
+  version: 3,
+  registryFeatures,
   reviewed: reviewedLynxContract,
   geometryValidators: [...geometryValidators],
   pixelValidators: [...pixelValidators],

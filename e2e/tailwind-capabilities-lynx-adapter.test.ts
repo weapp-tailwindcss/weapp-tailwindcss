@@ -223,8 +223,8 @@ it('没有raw且没有过滤条件时保留全部案例，而不是生成空的�
   const { context } = await fixture()
   const { report, contracts } = await buildLynxCapabilityReport({ ...context, caseFilter: undefined }, 'lynx-ios', undefined)
   expect(report.results).toHaveLength(lynxCaseContracts('lynx-ios').length)
-  expect(report.results.filter(item => !item.id.startsWith('capability/')).every(item => item.status === 'blocked')).toBe(true)
-  expect(report.results.filter(item => item.id.startsWith('capability/')).every(item => item.status === 'not-run')).toBe(true)
+  expect(report.results.filter(item => !/^(?:capability|inventory)\//.test(item.id)).every(item => item.status === 'blocked')).toBe(true)
+  expect(report.results.filter(item => /^(?:capability|inventory)\//.test(item.id)).every(item => item.status === 'not-run')).toBe(true)
   expect(() => validateCapabilityReport(report, contracts, report.identity, context.runId, 'lynx-ios')).not.toThrow()
 })
 

@@ -20,21 +20,44 @@ function goldStarting() {
   const result = observation('lifecycle-starting')
   result.frames = [
     { cycle: 1, time: 0, probe: 0, control: 1 },
-    { cycle: 1, time: 16, probe: 0, control: 1 },
-    { cycle: 1, time: 100, probe: 0.1, control: 1 },
+    { cycle: 1, time: 16, probe: 16 / 1200, control: 1 },
+    { cycle: 1, time: 120, probe: 0.1, control: 1 },
     { cycle: 1, time: 600, probe: 0.5, control: 1 },
     { cycle: 1, time: 1200, probe: 1, control: 1 },
     { cycle: 2, time: 2000, probe: 0, control: 1 },
-    { cycle: 2, time: 2100, probe: 0.1, control: 1 },
-    { cycle: 2, time: 2200, probe: 0.2, control: 1 },
-  ]
+    { cycle: 2, time: 2120, probe: 0.1, control: 1 },
+    { cycle: 2, time: 2240, probe: 0.2, control: 1 },
+  ].map(frame => ({ ...frame, animation: {
+    identity: frame.cycle,
+    native: true,
+    target: 'probe',
+    targetMatches: true,
+    documentTimeline: true,
+    property: 'opacity',
+    registered: frame.probe < 1,
+    matches: frame.probe < 1 ? 1 : 0,
+    currentTime: frame.probe * 1200,
+    startTime: frame.cycle === 1 ? 0 : 2000,
+    timelineTime: frame.time,
+    playState: frame.probe === 1 ? 'finished' : 'running',
+    pending: false,
+    duration: 1200,
+    playbackRate: 1,
+    delay: 0,
+    endDelay: 0,
+    iterations: 1,
+    iterationStart: 0,
+    direction: 'normal',
+    easing: 'linear',
+    keyframes: [{ computedOffset: 0, opacity: '0', easing: 'linear' }, { computedOffset: 1, opacity: '1', easing: 'linear' }],
+  } }))
   result.events = [1, 2].flatMap(cycle => ['transitionrun', 'transitionstart', 'transitionend'].map((type, index): LifecycleEvent => ({ type, target: 'probe', trusted: true, time: cycle * 2000 + index * 100, cycle, phase: index === 2 && cycle === 2 ? 'restoration' : 'natural', property: 'opacity', pseudoElement: '', elapsedTime: index === 2 ? 1.2 : 0 })))
   const snapshots = ['start', 'middle', 'end'].map((stage, index) => {
-    const state = { native: true, registered: true, target: 'probe', property: 'opacity', duration: 1200, playbackRate: 1, playState: index === 2 ? 'finished' : 'paused', currentTime: index * 600, probeOpacity: index * 0.5, controlOpacity: 1 }
+    const state = { identity: 2, native: true, registered: true, target: 'probe', property: 'opacity', duration: 1200, playbackRate: 1, playState: index === 2 ? 'finished' : 'paused', currentTime: index * 600, probeOpacity: index * 0.5, controlOpacity: 1 }
     result.pixels[stage] = [pixel('probe', [colors.white, colors.middle, colors.active][index]!), pixel('control', colors.active)]
     return { stage, before: { ...state }, after: { ...state } }
   })
-  result.restoration = { restoredFrom: { duration: 1200, currentTime: 240 }, snapshots, finalSnapshot: snapshots[2]!.after, finalOpacity: 1 }
+  result.restoration = { restoredFrom: { identity: 2, duration: 1200, currentTime: 240 }, snapshots, finalSnapshot: snapshots[2]!.after, finalOpacity: 1 }
   return result
 }
 
@@ -119,7 +142,7 @@ it('静止、逆行、缺少重插及只有终点的时间线均不通过', () =
   expect(assertions(result).find(assertion => assertion.name === 'natural/reinserted')?.actual).toBe(false)
 })
 
-it.each(['wrong-color', 'control-color', 'event-phase', 'event-order', 'untrusted', 'animation-replaced', 'animation-fast-forwarded', 'restore-missing'] as const)('starting 反例必须失败：%s', (mutation) => {
+it.each(['wrong-color', 'control-color', 'event-phase', 'event-order', 'untrusted', 'animation-replaced', 'animation-fast-forwarded', 'paused-other-animation', 'restore-missing'] as const)('starting 反例必须失败：%s', (mutation) => {
   const result = goldStarting()
   if (mutation === 'wrong-color') {
     result.pixels.middle![0]!.rgba = [18, 52, 86, 255]
@@ -142,6 +165,9 @@ it.each(['wrong-color', 'control-color', 'event-phase', 'event-order', 'untruste
   }
   if (mutation === 'animation-fast-forwarded') {
     restoration.snapshots[1]!.after.currentTime = 1200
+  }
+  if (mutation === 'paused-other-animation') {
+    restoration.snapshots[1]!.after.identity = 1
   }
   if (mutation === 'restore-missing') {
     restoration.finalSnapshot.playState = 'paused'
