@@ -27,6 +27,32 @@ export interface StartingFrame {
   probe: number
   control: number
   phase?: 'insertion' | 'rendered'
+  animation?: StartingAnimation
+}
+
+export interface StartingAnimation {
+  identity: number
+  native: boolean
+  registered: boolean
+  matches: number
+  target: string
+  targetMatches: boolean
+  documentTimeline: boolean
+  property: string
+  playState: string
+  pending: boolean
+  currentTime: number | null
+  startTime: number | null
+  timelineTime: number | null
+  duration: number | string
+  delay: number
+  endDelay: number
+  iterations: number
+  iterationStart: number
+  direction: string
+  easing: string
+  playbackRate: number
+  keyframes: Array<{ computedOffset: number, opacity: string, easing: string }>
 }
 
 export interface LifecycleObservation {

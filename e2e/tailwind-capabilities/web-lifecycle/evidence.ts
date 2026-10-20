@@ -1,26 +1,10 @@
-import type { LifecycleEvent, LifecycleObservation, LifecycleValues, StartingFrame } from './types'
+import type { LifecycleEvent, LifecycleObservation, LifecycleValues } from './types'
+import { naturalStartingTimeline } from './starting-timeline'
 
 const channels = ['red', 'green', 'blue', 'alpha'] as const
 
 function object(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {}
-}
-
-/** 自然帧允许重复进度，但必须有多次严格递增并覆盖中段。 */
-export function naturalStartingTimeline(frames: readonly StartingFrame[], cycle: number, completed: boolean) {
-  const raw = frames.filter(frame => frame.cycle === cycle)
-  // 同步插入时 Firefox 尚未提交 starting 样式；原始值保留，但不能当作已渲染帧。
-  if (raw.some((frame, index) => frame.phase === 'insertion' && (index !== 0 || !Number.isFinite(frame.time) || frame.control !== 1))) {
-    return false
-  }
-  const selected = raw.filter(frame => frame.phase !== 'insertion')
-  return selected.length >= 3
-    && selected.every((frame, index) => Number.isFinite(frame.time) && Number.isFinite(frame.probe) && frame.control === 1 && frame.probe >= 0 && frame.probe <= 1 && (!index || (frame.time >= selected[index - 1]!.time && frame.probe >= selected[index - 1]!.probe)))
-    && selected.at(-1)!.time > selected[0]!.time
-    && selected[0]!.probe <= 0.02
-    && selected.some(frame => frame.probe > 0.05 && frame.probe < 0.95)
-    && selected.filter((frame, index) => index > 0 && frame.probe > selected[index - 1]!.probe).length >= 2
-    && (!completed || selected.at(-1)!.probe === 1)
 }
 
 function nativeTransition(events: readonly LifecycleEvent[], cycle: number) {
@@ -65,14 +49,14 @@ export function lifecycleRawValues(observation: LifecycleObservation): Lifecycle
       'natural/control-opacity': Boolean(observation.frames?.length) && observation.frames!.every(frame => frame.control === 1),
       'native/transition-events': [1, 2].every(cycle => nativeTransition(observation.events, cycle)),
       'native/control-no-transition': !observation.events.some(event => event.target === 'control'),
-      'native/paused-existing-transition': snapshots.length === 3 && paused.duration === 1200 && typeof paused.currentTime === 'number' && paused.currentTime > 0 && paused.currentTime < 1200 && ['start', 'middle', 'end'].every((stage, index) => {
+      'native/paused-existing-transition': snapshots.length === 3 && typeof paused.identity === 'number' && observation.frames?.some(frame => frame.cycle === 2 && frame.animation?.identity === paused.identity) === true && paused.duration === 1200 && typeof paused.currentTime === 'number' && paused.currentTime > 0 && paused.currentTime < 1200 && ['start', 'middle', 'end'].every((stage, index) => {
         const snapshot = snapshots[index]!
         return snapshot.stage === stage && [snapshot.before, snapshot.after].every((entry) => {
           const state = object(entry)
-          return state.native === true && state.target === 'probe' && state.property === 'opacity' && state.duration === 1200 && state.playbackRate === 1 && state.playState === (stage === 'end' ? 'finished' : 'paused') && (stage === 'end' || state.registered === true) && state.currentTime === (stage === 'start' ? 0 : stage === 'middle' ? 600 : 1200)
+          return state.identity === paused.identity && state.native === true && state.target === 'probe' && state.property === 'opacity' && state.duration === 1200 && state.playbackRate === 1 && state.playState === (stage === 'end' ? 'finished' : 'paused') && (stage === 'end' || state.registered === true) && state.currentTime === (stage === 'start' ? 0 : stage === 'middle' ? 600 : 1200)
         })
       }),
-      'restored': final.native === true && final.playState === 'finished' && final.probeOpacity === 1 && final.controlOpacity === 1 && restoration.finalOpacity === 1,
+      'restored': final.identity === paused.identity && final.native === true && final.playState === 'finished' && final.probeOpacity === 1 && final.controlOpacity === 1 && restoration.finalOpacity === 1,
     })
     for (const stage of ['start', 'middle', 'end']) {
       const after = object(snapshots.find(snapshot => snapshot.stage === stage)?.after)

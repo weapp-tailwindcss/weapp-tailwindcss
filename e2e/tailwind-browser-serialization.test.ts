@@ -130,10 +130,36 @@ describe('CLI 编译后的浏览器闭包传输边界', () => {
     })).rejects.toThrow('stop-after-initialize')
     const frames: Array<() => void> = []
     const listeners = new Map<string, (event: unknown) => void>()
+    class NativeElement {
+      id = 'probe'
+      opacity = '0.25'
+      getAnimations() { return registered ? [animation] : [] }
+    }
+    const probe = new NativeElement()
+    const timeline = { currentTime: 300 }
+    class NativeTransition {
+      transitionProperty = 'opacity'
+      currentTime = 300
+      startTime = 0
+      timeline = timeline
+      playbackRate = 1
+      playState = 'running'
+      pending = false
+      effect = {
+        target: probe,
+        getTiming: () => ({ duration: 1200, delay: 0, endDelay: 0, iterations: 1, iterationStart: 0, direction: 'normal', easing: 'linear' }),
+        getKeyframes: () => [{ computedOffset: 0, opacity: '0', easing: 'linear' }, { computedOffset: 1, opacity: '1', easing: 'linear' }],
+      }
+    }
+    const animation = new NativeTransition()
+    let registered = true
     const realm = {
+      CSSTransition: NativeTransition,
+      Element: NativeElement,
       document: {
+        timeline,
         addEventListener: (type: string, callback: (event: unknown) => void) => listeners.set(type, callback),
-        querySelector: (selector: string) => ({ opacity: selector === '#probe' ? '0.25' : '1' }),
+        querySelector: (selector: string) => selector === '#probe' ? probe : { opacity: '1' },
       },
       requestAnimationFrame: (callback: () => void) => frames.push(callback),
       performance: { now: () => 100 },
@@ -145,7 +171,37 @@ describe('CLI 编译后的浏览器闭包传输边界', () => {
     journal.cycle = 2
     frames.shift()!()
     expect(frames).toHaveLength(1)
-    expect(journal.frames).toEqual([{ cycle: 2, time: 100, probe: 0.25, control: 1, phase: 'rendered' }])
+    expect(journal.frames).toEqual([{ cycle: 2, time: 100, probe: 0.25, control: 1, phase: 'rendered', animation: {
+      identity: 1,
+      native: true,
+      registered: true,
+      matches: 1,
+      target: 'probe',
+      targetMatches: true,
+      documentTimeline: true,
+      property: 'opacity',
+      playState: 'running',
+      pending: false,
+      currentTime: 300,
+      startTime: 0,
+      timelineTime: 300,
+      duration: 1200,
+      playbackRate: 1,
+      delay: 0,
+      endDelay: 0,
+      iterations: 1,
+      iterationStart: 0,
+      direction: 'normal',
+      easing: 'linear',
+      keyframes: [{ computedOffset: 0, opacity: '0', easing: 'linear' }, { computedOffset: 1, opacity: '1', easing: 'linear' }],
+    } }])
+    registered = false
+    animation.currentTime = 1200
+    animation.playState = 'finished'
+    timeline.currentTime = 1200
+    probe.opacity = '1'
+    frames.shift()!()
+    expect(journal.frames[1]).toMatchObject({ probe: 1, animation: { identity: 1, native: true, registered: false, matches: 0, playState: 'finished', currentTime: 1200 } })
     listeners.get('transitionstart')!({ isTrusted: true, target: { id: 'probe' }, propertyName: 'opacity', elapsedTime: 0, pseudoElement: '' })
     expect(journal.events).toEqual([{ type: 'transitionstart', trusted: true, target: 'probe', time: 100, cycle: 2, phase: 'natural', property: 'opacity', elapsedTime: 0, pseudoElement: '' }])
     expect(journal.runId).toBe('serialized-starting')
