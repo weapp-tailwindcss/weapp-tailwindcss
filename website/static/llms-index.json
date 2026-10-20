@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "generatedAt": "2026-09-28T11:53:23.457Z",
+  "generatedAt": "2026-10-20T01:32:36.788Z",
   "locale": "zh-CN",
   "contentTier": "primary",
   "siteUrl": "https://tw.weapp.dev/zh-cn",
@@ -2738,6 +2738,7 @@
         "配置 Tailwind CSS 入口",
         "任意值与动态类名",
         "构建警告",
+        "构建诊断",
         "验证与示例"
       ],
       "source": "docs/quick-start/frameworks/lynx.md"

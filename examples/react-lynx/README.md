@@ -27,9 +27,9 @@
 - `runtime.ios` / `runtime.android`：固定 4.0.1 host 的 reporter、`boundingClientRect`、交互/像素 checkpoint 与截图。
 - `@lynx-js/css-defines` 只提供属性与版本提示，不能替代原生运行结果。
 
-每个候选分别记录生成和编码状态，`.flex-col` 不能证明 `.flex` 存在。`@source` 等构建指令按生成结果判断，派生 utility 被 encoder 删除会保留为独立的编码失败，不再反推指令失败。`active` / `hover` 与 `group` / `peer` 各自需要输入及 checkpoint；当前 host 只实现了 active 注入，hover 尚未独立验证，因此混合状态 case 会保持 `not-tested`，本轮原生完整性门禁会阻断。
+每个候选分别记录生成和编码状态，`.flex-col` 不能证明 `.flex` 存在。`@source` 等构建指令按生成结果判断，派生 utility 被 encoder 删除会保留为独立的编码失败，不再反推指令失败。`active` / `hover` 与 `group` / `peer` 分别判定：当前 active 注入已验证；hover 的必要媒体条件由完整原生负向证据拒绝，后续 hover 输入和伪状态仍为 `not-tested`；group/peer 在 encoder 阶段拒绝，不能借 active 的成功传播支持结论。
 
-页面显示已提交 JSON 中的历史结果。2026-10-06 的历史报告保留原始版本和结论；catalog 或实际依赖变化后，它们不能作为本轮验收。启动原生 runner 或更新基线之前，必须重新生成当前静态证据，再取得同一目录身份的两端真实报告。纯协议回归显式使用合成输入或历史模式，不会生成新的兼容性结论。
+页面显示已提交 JSON 中的历史结果。当前基线来自 2026-10-19 正式 run `39272094832` 的完整双端报告，Android 54 支持/64 限制、iOS 53 支持/65 限制；原始证据经归档重放后更新。catalog 或实际依赖变化后，这些报告不能作为新一轮验收。启动原生 runner 或更新基线之前，必须重新生成当前静态证据，再取得同一目录身份的两端真实报告。纯协议回归显式使用合成输入或历史模式，不会生成新的兼容性结论。
 
 ## 命令
 

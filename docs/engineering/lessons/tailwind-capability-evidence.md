@@ -238,6 +238,12 @@ PR head `1154af2b0a9ce4092bd6e36f1e654f309e01a560` 的 Lynx 正式 run [`3927209
 
 刷新报告后的首次定向合同暴露两套协议单测依赖历史 JSON 的阶段、checkpoint 与 mediaGate。证据协议和像素协议现从 catalog 构造独立的合成静态输入与报告，固定进入取证分支，按各套 PNG、状态和几何重新计算结果；不继承任何设备身份或已提交支持结论。旧 catalog 反例显式设置过期身份。生产 static、报告、SDK、原始工件及支持表门禁均未改动。两套 75 项以 `CI=1`、`--update=none` 全部通过，缺图、错回执、旧 run、状态恢复与伪造几何仍拒绝。 示例的历史版本字段断言同时补齐 encoder、serializer、decoder 与 bundleConfig，保留完整身份约束。最终 `CI=1 pnpm e2e:tailwind:contract` 为 88 文件/1,467 项通过，`CI=1 pnpm e2e:lynx` 为示例 201 项及静态入口 729 项通过，后者重新构建真实 Rspeedy bundle 并核对实际 decoder 与 static。`pnpm agents:check` 和 `git diff --check` 通过；ESLint 通过的两份测试文件以外，新 fixture 被现有忽略配置排除，不计 lint 通过。未启动本地全面调度，预检阻塞边界不变。
 
+## 原生基线与文档事实同步（2026-10-20）
+
+head `d0d894244658d5af85fe7eefb7c76f931eb0973c` 的 SEO run `39353399349` 在构建前被 Lynx 文档合同拒绝：脚本和六份中英文文档冻结了 10 月 6 日的时间、catalog、css-defines 和设备事实，与正常更新后的双端基线不一致。先新增七项回归复现失败，再让文档检查从已提交 `baseline.json` 读取事实；workflow 的默认 runner 检查继续独立执行。JSON 和文档共用可注入的读取边界，基线缺少版本、设备或 API 时仍拒绝，不通过删除字段缩小检查范围。
+
+两个 package README、四份中英文站点页面与示例 README 同步当前基线；说明同配置的不同运行仍需各自的原始证据，保留历史录屏环境及测试中的旧版本负例。新增八项合同覆盖当前事实、五类文档缺失、正常刷新和无效基线，连同既有配置文档回归共 12 项以 `CI=1`、`--update=none` 通过；命令为 `pnpm exec vitest run --config vitest.config.ts scripts/check-lynx-contract.test.mjs scripts/check-config-docs.test.mjs --update=none`（工作目录 `website`）。`pnpm --filter @weapp-tailwindcss/website check:config-docs`、`CI=1 pnpm --filter @weapp-tailwindcss/website build`、两份脚本 ESLint 和 `pnpm agents:check` 通过；完整文档构建重生成四份 `website/static/**/llms-index*.json`。本轮只调整文档事实检查和说明，没有更新样式或设备支持基线。新 head 的远端结果需另行验收。
+
 ## 规则评估
 
 诊断 run `39240820531` 的 Android 已完成 118 项实际原生采集，独立审查发现 responsive、dark、supports 和 important 四项报告与既有支持合同不同；这些变化尚未自动放宽。iOS 在 CocoaPods 安装阶段被固定原始 checksum 阻断，没有设备证据。CDN 与原夹具的完整 JSON 相等，仅文本空白/转义变化；生产校验改为完整 `Specification#to_hash` 的规范语义 SHA-256，保留所有属性、数组顺序和值类型，并继续独立核来源、版本及 getter 源码。新旧完整原始 Podspec 均固定字节身份，真实 CocoaPods/PBX 回归覆盖格式等价与实质变更拒绝。

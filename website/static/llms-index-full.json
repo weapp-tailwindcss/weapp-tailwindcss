@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "generatedAt": "2026-10-01T17:58:02.350Z",
+  "generatedAt": "2026-10-20T01:32:36.788Z",
   "locale": "zh-CN",
   "contentTier": "full",
   "siteUrl": "https://tw.weapp.dev/zh-cn",
@@ -3405,9 +3405,10 @@
         "`rspack` {#rspack}",
         "`rspack.cssImportRewriteLoader` {#rspack-cssimportrewriteloader}",
         "`rspack.removeLightningCssLoader` {#rspack-removelightningcssloader}",
+        "`diagnostics` {#diagnostics}",
         "CSS 与候选",
         "三层验证证据",
-        "验证"
+        "设备与验证证据"
       ],
       "source": "docs/config/react-lynx.md"
     },
@@ -5091,6 +5092,7 @@
         "配置 Tailwind CSS 入口",
         "任意值与动态类名",
         "构建警告",
+        "构建诊断",
         "验证与示例"
       ],
       "source": "docs/quick-start/frameworks/lynx.md"

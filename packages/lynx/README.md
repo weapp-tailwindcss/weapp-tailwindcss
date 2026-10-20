@@ -14,7 +14,7 @@ pnpm add @weapp-tailwindcss/lynx tailwindcss
 
 The current adapter version is `0.4.4`. The adapter requires Node.js `>=22.12.0`, with peer ranges of Rspeedy `>=0.16.0` and Tailwind CSS `>=4.0.0`. Its `weapp-tailwindcss` dependency is currently `5.6.3`, whose dependency chain requires Node.js `^22.18.0 || >=24.11.0`; consumers using the core package should follow the higher requirement.
 
-The repository fixture pins `@lynx-js/rspeedy` `0.17.2`, `@lynx-js/react-rsbuild-plugin` `0.20.2`, `@lynx-js/react` `0.126.1`, Tailwind CSS `4.3.3`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.16`. These versions describe the checked-in regression matrix and do not replace compatibility validation in a consuming project.
+The repository fixture pins `@lynx-js/rspeedy` `0.17.2`, `@lynx-js/react-rsbuild-plugin` `0.20.2`, `@lynx-js/react` `0.126.1`, Tailwind CSS `4.3.3`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.18`. These versions describe the checked-in regression matrix and do not replace compatibility validation in a consuming project.
 
 ## Configure
 
@@ -92,7 +92,7 @@ pnpm --filter @weapp-tailwindcss/lynx test
 pnpm e2e:lynx
 ```
 
-`examples/react-lynx` is a multi-page compatibility lab pinned to Tailwind CSS `4.3.3`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.16`. Representative cases cover every official utility family, variant kind, directive, and arbitrary syntax branch.
+`examples/react-lynx` is a multi-page compatibility lab pinned to Tailwind CSS `4.3.3`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.18`. Representative cases cover every official utility family, variant kind, directive, and arbitrary syntax branch.
 
 The static gate parses the real `main.css` with PostCSS, then combines `tasm.json.css.cssMap` with encoder removal logs to record `generated` and `bundled` separately. Native support comes only from committed iOS and Android reports; css-defines is only a version hint.
 
@@ -103,8 +103,8 @@ pnpm e2e:lynx:native
 pnpm e2e:lynx:update
 ```
 
-CI uses Android API 30 with a Pixel 2 x86_64 runner and iOS 18.5 with an iPhone 16 Pro simulator. These runner devices are gate defaults and are distinct from the committed native report devices.
+CI uses Android API 30 with a Pixel 2 x86_64 runner and iOS 18.5 with an iPhone 16 Pro simulator. Each CI run and committed report carries its own run identity and original artifacts.
 
-The committed native baseline records `verifiedAt: 2026-10-06T01:38:07.800Z` and `catalogHash: a8c3b45f993d9aa28782f308fc959a09e160d67a9097d11b1bc6a8a38b93c886`. Its Android report is from `sdk_gphone_arm64` (Android 11/API 30, arm64-v8a), and its iOS report is from iPhone 17 Pro (iOS 26.5, arm64). A baseline update requires complete reports from both platforms for the same catalog and Engine version.
+The committed native baseline records `verifiedAt: 2026-10-19T15:13:36.717Z` and `catalogHash: 2e3a1a60517c13de507d22ef8b4d209ffcdb86b2dfbf5bf7100df35c40dc3fec`. Its Android report is from `sdk_phone_x86_64` (Android 11/API 30, x86_64), and its iOS report is from `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64). A baseline update requires complete reports from both platforms for the same catalog and Engine version.
 
 `--capture-only` is an explicitly targeted bundle capture mode that writes screenshots/video for inspection. It does not create or update native support reports and cannot replace CI or committed-baseline evidence.
