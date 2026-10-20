@@ -202,6 +202,16 @@ Lynx run `39463154292` 的 Android job `118768978411` 与 iOS job `118768978328`
 
 Android runId `9b6ce1aa-3c37-47b4-a466-1a372addb7f0` 为 118 案例（54 支持、64 预声明限制），iOS runId `f81826af-85b7-4b1c-82ce-e6cbfb044375` 为 118 案例（53 支持、65 预声明限制），两端各 9 主题帧。原始 ZIP 和重算日志在 `.tmp/ci-1314-d953/`。这仅是该提交的原生证据，不替代后续 head；Expo iOS job `118768064986` 因 hosted runner 容量取消，runner_id 为 0、steps 为空，属于未执行，无复测授权，未重跑。
 
+### a10 性能门禁与有界诊断
+
+head `a10ef71036e9ea923da4bc79b046861c34fde81d` 的 Benchmark run `39479576075`、Webpack React job `118825119029` 实际 checkout 为 merge `c0140e15ba90e422b51648a12df8c46786c9d0a9`，基线准确为 `7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5`。`mp-weixin` 构建中位数由 16,125.86ms 增至 17,097.05ms（+6.02%、+971.19ms）；满足原有统计条件，门禁失败保留，未调度重跑。原始三次样本分别为 `[15979.89,16125.86,16548.82]` 与 `[16652.45,17097.05,17670.43]`。插件、CSS 任务与等待阶段也有增量，但包含并行耗时，不能相加归因。
+
+在独立、干净的 a10 工作树完成一次相同目标的本地双侧定向对照：`pnpm perf:guard -- --baseline-ref 7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5 --build-runs 3 --hmr-runs 3 --only demo-taro-webpack-react-tailwindcss-v4__mp-weixin --timeout 180000 --poll-interval 30 --work-root <独立临时目录> --result-dir <本轮结果目录>`。实际 Node 24.18.0、pnpm 12.14.0、macOS arm64；两侧 frozen install 与 36 包构建完成后再测量。构建样本 `[9981.22,8746.96,8706.60]` 对 `[11125.30,9002.82,9478.06]`，中位数增加 8.36%；插件中位数增加 1.82%，HMR P95 增加 5.91%。本地退出 0 仅表示未同时达到 5%、严格多数及 p≤0.05 的现有联合条件，不能推翻 CI 失败或写成没有变慢。首次准备把临时目录放在源码内部，被复制自目录检查拒绝，尚未采样；修正为独立临时目录后才得到以上结果。没有扩大采样或修改阈值。
+
+随后两侧各执行一次带 `--cpu-prof` 的真实 Taro 构建，主 isolate 与 worker 共各 21 份 profile，均保留；此命令不同于 guard，不作为追加性能通过样本。主 profile 时长分别 10,695.67ms 与 10,454.79ms，两侧主要样本均为模块读取、文件系统、CJS 编译、GC、扫描与 PostCSS。新递归清理函数没有 self 样本，既不能证明其未执行，也不能证明其解释远端增量。源码及实际 dist 的只读加载图核对还排除了 mini 意外加载 decoder/WASM 的假设：三个 Webpack loader 闭包逐文件相同，Webpack 闭包 21 文件只增加 3,292 字节，外部依赖不变；新 selector parser 由基线 transform 已经加载，未出现第二版本。没有热点证据支持针对这些路径提交性能补丁。
+
+原始本地报告、样本与 CPU 汇总保存在 `.tmp/benchmark-a10-local-result/`，guard 日志为 `.tmp/benchmark-a10-local2.log`。宿主有其他 IDE/虚拟机及系统负载，但未终止无关进程，也不据此自动归因为环境噪声。当前性能根因保持 **unknown**，失败门禁仍需后续定位；网站截图采集与性能测量分开执行。
+
 ## 适用边界
 
 来源修复后的 `CI=1 pnpm e2e:lynx --update=none` 为示例 205 项、E2E 39 文件 775 项全部通过；`style.css` 来源与 static 基线在禁止更新模式下通过。核心类型、架构、源码行数和文档 14 项合同也通过。
