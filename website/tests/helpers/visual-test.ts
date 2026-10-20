@@ -1,10 +1,11 @@
 import { test as base } from '@playwright/test'
+import { useFrozenGifImages } from './frozen-gif'
 
 /** Firefox 的访问历史跨 context 共享，黄金截图需要独立浏览器。 */
 export const visualTest = base.extend({
-  context: async ({ context, browserName, playwright, video }, use) => {
+  context: async ({ context, browserName, playwright, video }, use, info) => {
     if (browserName !== 'firefox') {
-      await use(context)
+      await useFrozenGifImages(context, use, info)
       return
     }
     if ((typeof video === 'string' ? video : video.mode) !== 'off') {
@@ -16,7 +17,7 @@ export const visualTest = base.extend({
     try {
       const isolated = await browser.newContext()
       try {
-        await use(isolated)
+        await useFrozenGifImages(isolated, use, info)
       }
       finally {
         await isolated.close()

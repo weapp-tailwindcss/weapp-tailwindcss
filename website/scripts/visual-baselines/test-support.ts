@@ -9,7 +9,7 @@ import { baselineContract } from './identity'
 import { candidateImages } from './install'
 import { expectedVisualCases } from './report'
 
-export const environment = { platform: 'linux' as const, arch: 'x64' as const, release: 'fixture-release', playwright: '1.64.1', browsers: { chromium: 'fixture-chromium', firefox: 'fixture-firefox', webkit: 'fixture-webkit' } }
+export const environment = { platform: 'linux' as const, arch: 'x64' as const, release: 'fixture-release', playwright: '1.64.1', browsers: { chromium: 'fixture-chromium', firefox: 'fixture-firefox', webkit: 'fixture-webkit' }, imageDecoder: { sharp: 'fixture-sharp', vips: 'fixture-vips' } }
 
 export async function baselineFixture() {
   const root = await mkdtemp(path.join(tmpdir(), 'visual-baseline-中文-'))
@@ -17,6 +17,8 @@ export async function baselineFixture() {
   const directory = path.join(root, 'candidate')
   await mkdir(path.join(websiteRoot, 'tests', 'helpers'), { recursive: true })
   await mkdir(path.join(websiteRoot, 'scripts', 'local-worker'), { recursive: true })
+  await mkdir(path.join(root, 'scripts', 'e2e-preflight'), { recursive: true })
+  await writeFile(path.join(root, 'scripts', 'e2e-preflight', 'cleanup.ts'), 'fixture-lifecycle')
   await mkdir(candidateImages(directory), { recursive: true })
   for (const file of ['playwright.config.mts', 'scripts/local-worker/playwright.config.mts', 'tests/index.spec.ts', 'tests/helpers/screenshot.ts']) {
     await writeFile(path.join(websiteRoot, file), 'fixture-contract')

@@ -5,16 +5,19 @@ import path from 'node:path'
 import process from 'node:process'
 import { pathToFileURL } from 'node:url'
 import { chromium, firefox, webkit } from 'playwright'
+import sharp from 'sharp'
 import { digest, filesDigest, regularBytes, treeFiles } from './files'
 
 export async function baselineContract(websiteRoot: string) {
-  return filesDigest(websiteRoot, [
+  const website = await filesDigest(websiteRoot, [
     'routes.json',
     'playwright.config.mts',
     'scripts/local-worker/playwright.config.mts',
     'tests/index.spec.ts',
     ...await treeFiles(path.join(websiteRoot, 'tests', 'helpers')).then(files => files.map(file => `tests/helpers/${file}`)),
   ])
+  const lifecycle = digest(await regularBytes(path.resolve(websiteRoot, '..', 'scripts', 'e2e-preflight', 'cleanup.ts')))
+  return digest(JSON.stringify({ website, lifecycle }))
 }
 
 export async function renderEnvironment(websiteRoot: string) {
@@ -29,7 +32,7 @@ export async function renderEnvironment(websiteRoot: string) {
       await browser.close()
     }
   }
-  return { platform: os.platform(), arch: os.arch(), release: os.release(), playwright: require('@playwright/test/package.json').version as string, browsers: versions }
+  return { platform: os.platform(), arch: os.arch(), release: os.release(), playwright: require('@playwright/test/package.json').version as string, browsers: versions, imageDecoder: { sharp: sharp.versions.sharp, vips: sharp.versions.vips } }
 }
 
 /** 来源只作为黄金图历史证据；未来源码变化仍应运行像素回归，不能强制重录黄金图。 */

@@ -64,6 +64,14 @@ it('清单必须同时通过真实报告、完整 PNG 集合和当前渲染合�
   await expect(verify()).rejects.toThrow('集合')
   await writeFile(file, png)
   await expect(readBaselineManifest(directory, candidateImages(directory), websiteRoot, { ...environment, release: 'old' })).rejects.toThrow('环境')
+  for (const decoder of ['sharp', 'vips'] as const) {
+    await expect(readBaselineManifest(directory, candidateImages(directory), websiteRoot, { ...environment, imageDecoder: { ...environment.imageDecoder, [decoder]: 'old' } })).rejects.toThrow('环境')
+  }
+  const lifecycle = path.resolve(websiteRoot, '..', 'scripts', 'e2e-preflight', 'cleanup.ts')
+  await writeFile(lifecycle, 'changed-lifecycle')
+  await expect(verify()).rejects.toThrow('合同')
+  await writeFile(lifecycle, 'fixture-lifecycle')
+  await verify()
   await writeFile(path.join(websiteRoot, 'tests', 'helpers', 'screenshot.ts'), 'changed-contract')
   await expect(verify()).rejects.toThrow('合同')
 })

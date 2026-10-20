@@ -6036,6 +6036,9 @@ importers:
       sass-loader:
         specifier: ^17.0.1
         version: 17.0.1(@rspack/core@1.7.11(@swc/helpers@0.5.23))(sass-embedded@1.105.1)(sass@1.105.1)(webpack@5.105.4)
+      sharp:
+        specifier: 0.35.5
+        version: 0.35.5(@types/node@26.6.5)
       tailwindcss:
         specifier: catalog:tailwindcss4
         version: 4.3.3

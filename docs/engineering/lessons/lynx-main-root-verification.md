@@ -168,6 +168,18 @@ head `d953733aeb9de0dbe3c205f048ecbe5a444f0ac6` 的首批完整候选执行为 1
 
 本轮未提交修复下，`CI=1 pnpm --filter @weapp-tailwindcss/website e2e tests/full-page-capture.spec.ts tests/full-page-snapshot.spec.ts tests/full-page-images.spec.ts --update-snapshots=none` 为三浏览器 42 项通过；typecheck 与受影响 ESLint 通过。真实生产 Worker 的 Firefox 定向复验为 49/49 图加载、有有效像素、无请求失败且原滚动恢复，Worker 和浏览器受管收尾。原候选及拒绝原因保留于 `.tmp/website-visual-d953733ae/review-rejected.json`；新截图合同已变化，必须重新从干净提交完整采集，不能安装旧候选。
 
+### 循环 GIF 的首帧截图合同
+
+新候选 `a10ef71036e9ea923da4bc79b046861c34fde81d` 审查发现首页微小差异来自 `gstar-tag-twinkle.gif`：40×40、107 帧、5,010ms、无限循环。Playwright 的 CSS 动画禁用不能冻结此媒体时钟。两帧独立 HTTP 夹具先复现红色首帧在 400ms 后变成蓝色；不能用单次采集成功或增加像素容忍掩盖相位差异。
+
+在第 498 项受管取消本轮采集，保留 `.tmp/website-visual-a10ef71/review-rejected.json`、失败回执和首页对照。capture/Playwright 进程已结束，没有生成 manifest 或安装黄金图。仅完成 Chromium desktop 前 120 页及另 13 页的缩略粗筛；粗筛没有证明小字、逐像素或交互。
+
+私有视觉 context 对显式 `.gif` 地址的真实成功响应使用显式 sharp 版本提取第 0 帧，响应仍须由 MIME 或字节签名确认为 GIF；保留独立颜色、尺寸和资源身份，报告绑定原字节与首帧 PNG 摘要，环境登记 sharp/libvips。其他图片保持原始请求，并检查最终成功字节；没有经过规范化的 GIF 明确阻断，不能漏检为通过。HTTP 失败仍可观察，解码错误原样失败。HTTP 缓存随 Playwright 路由禁用，功能回归继续使用原夹具；此合同不验证动画时序或 data/blob 图片。Firefox 独立 browser 生命周期继续保留。新合同变化后必须从干净提交重新完整采集、审查并禁止更新比较。
+
+三浏览器真实回归还纠正了重定向假设：Playwright 不会再次路由最终重定向请求，WebKit 不接受 `route.fulfill` 的 302；不能自动跟随后把跨源 200 伪装回原地址。静态图片重定向走真实网络且保持请求链；GIF 地址返回重定向、无扩展名 GIF 或重定向最终 GIF 都明确拒绝视觉候选。异步字节检查必须等待并保留错误；执行、响应释放、路由收尾、附件与解码同时失败时也不得覆盖原始错误。外部共享收尾实现纳入截图合同 hash。
+
+本轮未提交修复下，三浏览器 `visual-images.spec.ts` 与 `visual-context.spec.ts` 共 24 项通过（零重试、后台运行）；基线与入口合同 3 文件、28 项通过，真实三浏览器 missing 采集、审查安装、none 比较及错像素拒绝管线 1 项通过。typecheck、受影响 ESLint 与仅新增 sharp importer 的 frozen/offline 安装通过。这些结果验证夹具与管线，尚没有可安装的网站完整候选。
+
 ### Taro 生产样式与 Harmony 平台适配边界
 
 head `d953733aeb9de0dbe3c205f048ecbe5a444f0ac6` 的 React/Vue Webpack 矩阵在三个宿主出现同类 H5/Harmony static 差异。Web 在框架优化前完成生成后，压缩产物不再被原始 registry 补回重复的 hex/rgb、数字前导零及原始 `4px`。React issue-998 的 `@theme --spacing:4px` 仍经框架 pxtransform 变为 H5 `0.1rem`、Harmony `0.2rem`；不能仅因快照少了原始表示就恢复后置覆盖。真实 H5 首页的绝对尺寸/颜色及 issue-998 路由的 375/750/1200 宽度、根字号和 padding 曾分别通过三浏览器定向生产探针；这些定向日志不代表整个页面的样式覆盖。
