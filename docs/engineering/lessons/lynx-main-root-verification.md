@@ -51,6 +51,12 @@ verification:
     sha: ef98ee3cca3b31685b6983ca01b58899f86ce1b7
     environment: macOS arm64、Node 24.18.0、pnpm 12.14.0，预检 874e8a80-2208-47a4-9c63-fa91500ed390
     command: pnpm e2e:demo:workflow:local --quality --extended --baseline-ref 7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5 --preflight-report e2e/.artifacts/preflight/874e8a80-2208-47a4-9c63-fa91500ed390/report.json
+  - claim: 新增主题覆盖取得同提交双端原生证据并完成完整归档重放
+    kind: native
+    status: passed
+    sha: 7945477ff51015b6369a6fad69103bb6a0978883
+    environment: GitHub hosted Android API 30 x86_64 与 iPhone 16 Pro iOS 18.5 arm64，实际 checkout 为 merge 23af851c7897cfcca540313b78aefcf88c61dad1；不是后续源码的运行证据
+    command: pnpm exec tsx e2e/lynx/verify-baseline-archive.ts e2e/.artifacts/lynx-baselines/baseline-7gDywG
 ---
 
 # 最新 main 的 Lynx 三项 Issue 根因复验
@@ -109,9 +115,19 @@ verification:
 
 本批 `CI=1 pnpm --filter weapp-tailwindcss exec vitest run test/bundlers/webpack-web-cascade.integration.test.ts --update=none` 两项真实生产/watch 回归通过；既有 Webpack 子集 183 项通过，PostCSS 完整套件 146 文件、1,545 项通过、3 项跳过。双语网站 `CI=1 pnpm --filter @weapp-tailwindcss/website build` 和 typecheck 通过；受管本地 Worker 上 `theme-panel-colors.spec.ts` 的三浏览器共 6 项真实主题切换通过，像素通道差为零。此处的跳过项不算通过，截图候选尚未作为黄金基线接纳，57 阶段全面验收尚未重跑。网站产物已重新生成，其他 demo fixture 与 static 结论没有修改。
 
+### 双端原生基线审查
+
+head `7945477ff51015b6369a6fad69103bb6a0978883` 的 Lynx run `39445561718` 实际 checkout 为 merge `23af851c7897cfcca540313b78aefcf88c61dad1`。Android job `118706750255` 与 iOS job `118706750273` 均通过运行时采集和正式证据校验，最后因历史报告缺少新增 `themeOverrides` 字段而在结论比较失败。118 个原有案例的状态、原因、失败阶段、checkpoint 与候选结论没有变化：Android 54 支持、64 预声明限制；iOS 53 支持、65 预声明限制。没有修改支持预期或删除比较门禁。
+
+完整下载并核对原始 ZIP：Android artifact `12277146582` SHA-256 为 `e60d4a27c583ee420b681cb5b3ee325632698a1fea5b7f9e7af7ea7ac2dea238`；iOS artifact `12276299248` 为 `f58ca64abdcac5ac9f9c74e23ed130af94f4616f0d943320b5853256d1aa1716`。两端分别执行正式 `readNativeReport`，从实际 bundle、宿主侧车、原始 PNG 与几何重算验证；人工审查三分支的切换前、后和恢复画面及 16/24/32px 标尺。主题证据各有 9 帧、27 份工件。
+
+使用正式 `pnpm e2e:lynx:update` 同时更新双端历史报告和示例基线；原始运行目录（含 Android APK/AAR）先归档，再从副本重验。`baseline-7gDywG/archive-index.json` 登记 396 个原始文件，整体重放通过，runId 分别为 Android `f9032cb8-60b6-4f35-b7fb-11f7bba12ebf`、iOS `1e0d15ac-4ab2-451d-ac0b-2d646ac93ae8`。同步六份双语文档的基线时间与 run；归档和旧 CI 不替代后续 head 的实际执行。
+
+刷新基线后的严格回归还发现 Web 阶段调整造成正式 Rspeedy 诊断缺少 `style.css` 来源；该断言继续阻断，不能用成功解码或历史原生运行掩盖。网站候选采集在同步文档前主动取消，已确认关闭其独占 Worker 进程组；不完整候选只保留失败记录，不安装为黄金图。
+
 ## 适用边界
 
-当前结果仍为 **partial**。本轮全面验收前须重新执行扩展预检、真实当前会话 computer use 和 verify。原生主题切换、RN 的实际 served bundle/HMR 链、Image/ScrollView、RN/Lynx 注册夹具、独立转换 oracle 与尚缺的六类 Web variant，不能由上述单测或静态合同写成全面有效。跨独立 stylesheet 与运行时 inline 的不可见覆盖不在当前 AST 静态安全保证内。原生报告与 served bundle 的既有缺口继续单独登记。
+当前结果仍为 **partial**。本轮全面验收前须重新执行扩展预检、真实当前会话 computer use 和 verify。双端主题覆盖已有上述提交的运行证据；后续 Web 阶段修改的来源回归与新 head 原生执行仍待通过。RN 的实际 served bundle/HMR 链、Image/ScrollView、RN/Lynx 注册夹具、独立转换 oracle 与尚缺的六类 Web variant，不能由上述单测或静态合同写成全面有效。跨独立 stylesheet 与运行时 inline 的不可见覆盖不在当前 AST 静态安全保证内。原生报告与 served bundle 的既有缺口继续单独登记。
 
 ## 规则评估
 
