@@ -184,7 +184,7 @@ export { collectCustomPropertyValues, mergeCustomPropertyValues } from './utils/
 export { createDeferredCssSourceMarker, readDeferredCssSourceMarkers, stripDeferredCssSourceMarkers } from './utils/deferred-css-source'
 export { replaceViteGeneratedCssModule } from './utils/generated-css-marker'
 
-export { type BundlerGeneratedCssMarkerBlock, createBundlerGeneratedCssEndMarker, createBundlerGeneratedCssMarker, hasBundlerGeneratedCssMarker, parseBundlerGeneratedCssMarkerBlocks, stripBundlerGeneratedCssMarkers } from './utils/generated-css-marker'
+export { type BundlerGeneratedCssMarkerBlock, bundlerGeneratedCssMarkerRanges, createBundlerGeneratedCssEndMarker, createBundlerGeneratedCssMarker, hasBundlerGeneratedCssMarker, parseBundlerGeneratedCssMarkerBlocks, stripBundlerGeneratedCssMarkers } from './utils/generated-css-marker'
 export {
   containsCssAfterMinify,
   createCssRuleMatcher,

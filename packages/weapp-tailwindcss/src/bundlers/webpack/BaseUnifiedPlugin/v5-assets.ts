@@ -1,7 +1,6 @@
 import type { SetupWebpackV5ProcessAssetsHookOptions, WebpackSourceLike } from './v5-assets/helpers'
 import type { WebpackCssHandlerOptions } from './v5-assets/pipeline-helpers'
 import path from 'node:path'
-import process from 'node:process'
 import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { LRUCache } from 'lru-cache'
 import { beginCompilerShadowRun, createCompilationDependencyChanges, createRuntimeCompilationAffectingSignature, createRuntimeCompilationBuildState, finalizeCompilerShadowRun, getCompilationScopeDependencyRevision, recordCompilationDependencyChanges, resetRuntimeCompilationBuildState, updateRuntimeCompilationBuildState } from '@/compiler'
@@ -20,7 +19,7 @@ import { createAssetHashByChunkMap, createWebpackCssAssetResourceMap, createWebp
 import { createWebpackCssSourceResolvers } from './v5-assets/css-source-resolvers'
 import { finalizeWebpackProcessAssets } from './v5-assets/finalize-assets'
 import { processWebpackGeneratedCssAsset } from './v5-assets/generated-css-task'
-import { buildWebpackBundleSnapshot, createWebpackAssetUpdater, releaseWebpackBundleSnapshotSources } from './v5-assets/helpers'
+import { buildWebpackBundleSnapshot, createWebpackAssetUpdater, releaseWebpackBundleSnapshotSources, resolveWebpackOutputDirectory } from './v5-assets/helpers'
 import { enqueueWebpackHtmlAndJsTasks } from './v5-assets/html-js-tasks'
 import { applyWebpackLinkedJsResults, createWebpackJsAssetModuleGraph } from './v5-assets/js-module-graph'
 import {
@@ -37,6 +36,7 @@ import {
   resolveWebpackCssAssetModuleResource,
   stringifyWebpackSourceLike,
 } from './v5-assets/pipeline-helpers'
+import { preserveProcessedWebpackCssSource } from './v5-assets/processed-css-source'
 import { processWebpackProcessedCssAsset } from './v5-assets/processed-css-task'
 import { createWebpackSourceCandidateScanCache } from './v5-assets/source-candidate-cache'
 import { refreshWebpackSourceCandidates } from './v5-assets/source-candidate-refresh'
@@ -66,6 +66,7 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
   } = options
   const { Compilation, sources } = compiler.webpack
   const { ConcatSource } = sources
+  const preserveProcessedWebCssAsset = (source: any) => preserveProcessedWebpackCssSource(source, sources)
   const generatorOptions = normalizeWeappTailwindcssGeneratorOptions(compilerOptions.generator, {
     appType: compilerOptions.appType,
     platform: compilerOptions.cssOptions?.platform ?? compilerOptions.platform,
@@ -131,10 +132,7 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
           debug,
         })
 
-        const compilerOutputPath = compilation.compiler?.outputPath ?? compiler.outputPath
-        const outputDir = compilerOutputPath
-          ? path.resolve(compilerOutputPath)
-          : (compilation.outputOptions?.path ?? process.cwd())
+        const outputDir = resolveWebpackOutputDirectory(compilation, compiler)
         const { jsAssets, moduleGraphOptions } = createWebpackJsAssetModuleGraph({
           compilation,
           compilerOptions,
@@ -432,7 +430,7 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
           updateAssetIfChanged,
           watchMode,
         })
-        const cssTaskContext = { ConcatSource, affectedCompilationScopes, assetHashByChunk, compilation, compilationChanges, compilerOptions, configuredCssEntryFiles, configuredMainCssEntryFiles, createRuntimeSetHash, cssSourceTraceSignature, cssSources, cssTaskFactories, debug, enqueueTask, finalizeCssAssetSource, finalizeTracedCss, generatedCssSources, generatorRuntimeSet, getCompilationDependencyRevision, getCssHandlerOptions, getCssUserHandlerOptions, getGeneratorRuntimeSet, hasConfiguredTailwindV4SourceRoots, isKnownWebpackProcessedCssAsset, isSameWebpackSourceScope, isWebGeneratorTarget, isWebpackProcessedCssAsset, processedCssAssetSkipDecisionCache, rememberProcessCacheKey, resolveWebpackCssSourceFile, runtimeAffectingSourceHash, runtimeState, transformRuntimeSet, updateAssetIfChanged, watchMode, webpackSourceCandidateSet, webpackSourceCandidateValueSignature, webpackSourceCandidates }
+        const cssTaskContext = { ConcatSource, affectedCompilationScopes, assetHashByChunk, compilation, compilationChanges, compilerOptions, configuredCssEntryFiles, configuredMainCssEntryFiles, createRuntimeSetHash, cssSourceTraceSignature, cssSources, cssTaskFactories, debug, enqueueTask, finalizeCssAssetSource, finalizeTracedCss, generatedCssSources, generatorRuntimeSet, getCompilationDependencyRevision, getCssHandlerOptions, getCssUserHandlerOptions, getGeneratorRuntimeSet, hasConfiguredTailwindV4SourceRoots, isKnownWebpackProcessedCssAsset, isSameWebpackSourceScope, isWebGeneratorTarget, isWebpackProcessedCssAsset, preserveProcessedWebCssAsset, processedCssAssetSkipDecisionCache, rememberProcessCacheKey, resolveWebpackCssSourceFile, runtimeAffectingSourceHash, runtimeState, transformRuntimeSet, updateAssetIfChanged, watchMode, webpackSourceCandidateSet, webpackSourceCandidateValueSignature, webpackSourceCandidates }
         for (const element of groupedEntries.css) {
           if (await processWebpackProcessedCssAsset(element, cssTaskContext)) {
             continue

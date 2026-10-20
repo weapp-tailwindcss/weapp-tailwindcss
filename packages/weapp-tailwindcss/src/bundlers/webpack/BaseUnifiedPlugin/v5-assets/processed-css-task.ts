@@ -147,6 +147,15 @@ export async function processWebpackProcessedCssAsset(element: [string, Pick<sou
     processedCssAssetSkipDecisionCache.set(processedCssDecisionCacheKey, shouldSkipProcessedCssAsset === true)
   }
   if (shouldSkipProcessedCssAsset) {
+    if (isWebGeneratorTarget && !shouldFinalizeProcessedWebCssAsset) {
+      await enqueueTask(async () => {
+        const next = context['preserveProcessedWebCssAsset'](originalSource)
+        if (next !== originalSource) {
+          updateAssetIfChanged(file, next, { compare: false })
+        }
+      }, cssTaskFactories, 'tasks.css')
+      return true
+    }
     const hashKey = `${file}:asset`
     const sourceHash = processedAssetSourceHash
     rememberProcessCacheKey(file, hashKey)

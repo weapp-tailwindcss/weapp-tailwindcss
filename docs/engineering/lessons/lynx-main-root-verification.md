@@ -125,9 +125,19 @@ head `7945477ff51015b6369a6fad69103bb6a0978883` 的 Lynx run `39445561718` 实�
 
 刷新基线后的严格回归还发现 Web 阶段调整造成正式 Rspeedy 诊断缺少 `style.css` 来源；该断言继续阻断，不能用成功解码或历史原生运行掩盖。网站候选采集在同步文档前主动取消，已确认关闭其独占 Worker 进程组；不完整候选只保留失败记录，不安装为黄金图。
 
+### 框架 CSS 来源映射与本轮缓存
+
+后续严格回归证实，保留框架 CSS 的文本还不够：把它包装成新的 `ConcatSource(string)` 会删除已有 map。Web 在 100 阶段处理后，Lynx encoder 在 2500 阶段消费资产；不能通过恢复旧的 1000 阶段借用 500 阶段产生的旧 map 掩盖来源缺失。修复使用原始字符串坐标登记元数据区间，由 Webpack `ReplaceSource` 精确删除，正文及其来源仍由框架 loader 拥有。
+
+独立回归进一步复现两个分支：已处理资产会丢 map；生成注册表消费在相同 CSS、不同来源的再次编译中会复用上一轮 map。两条框架产物保留路径现在每轮消费当前 `originalSource`，不缓存其 Source 对象。LF/CRLF、多模块和 Windows 风格来源身份均检查删除后的业务 token；真实 Docusaurus loader 与双压缩器夹具还对比插件前后的 `.site-panel` 来源位置，不能仅靠 map 文件存在放行。该修复保留上游已有映射，不声明已修正生成 loader 本身的原始行号精度。
+
+限定重生成诊断 static 快照，审查到的两处差异仅为真实 `:root` 回到原始位置、位于 `.theme-dark` 之前；业务诊断结论未变。新 Webpack 回归 191 项通过，同文本换来源的两个失败已先记录后修复。CI 另有两处夹具边界：Windows 随机端口的相邻端口可能禁绑，先有限预订可绑定端口对再验证真实 Vite fallback；Iconify 稳定后回滚污染单测独立调用真实语义接受器，不由 100ms 文件 I/O 调度决定是否到达目标分支。14 项端口回归和 150 项 Iconify/等待回归通过，生产超时、检查顺序与像素门槛未改。
+
 ## 适用边界
 
-当前结果仍为 **partial**。本轮全面验收前须重新执行扩展预检、真实当前会话 computer use 和 verify。双端主题覆盖已有上述提交的运行证据；后续 Web 阶段修改的来源回归与新 head 原生执行仍待通过。RN 的实际 served bundle/HMR 链、Image/ScrollView、RN/Lynx 注册夹具、独立转换 oracle 与尚缺的六类 Web variant，不能由上述单测或静态合同写成全面有效。跨独立 stylesheet 与运行时 inline 的不可见覆盖不在当前 AST 静态安全保证内。原生报告与 served bundle 的既有缺口继续单独登记。
+来源修复后的 `CI=1 pnpm e2e:lynx --update=none` 为示例 205 项、E2E 39 文件 775 项全部通过；`style.css` 来源与 static 基线在禁止更新模式下通过。核心类型、架构、源码行数和文档 14 项合同也通过。
+
+当前结果仍为 **partial**。本轮全面验收前须重新执行扩展预检、真实当前会话 computer use 和 verify。双端主题覆盖已有上述提交的运行证据；新 head 原生执行仍待通过。RN 的实际 served bundle/HMR 链、Image/ScrollView、RN/Lynx 注册夹具、独立转换 oracle 与尚缺的六类 Web variant，不能由上述单测或静态合同写成全面有效。跨独立 stylesheet 与运行时 inline 的不可见覆盖不在当前 AST 静态安全保证内。原生报告与 served bundle 的既有缺口继续单独登记。
 
 ## 规则评估
 

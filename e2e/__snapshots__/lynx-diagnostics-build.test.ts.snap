@@ -81,12 +81,12 @@ textarea { }
 .px-\\[7\\.5px\\] { }
 .pr-\\[7\\.5px\\] { padding-right: 7.5px; }
 .pl-\\[7\\.5px\\] { padding-left: 7.5px; }
+:root { --brand-color: rgb(230,80,0); --color-brand: #f00; }
 .theme-dark { --brand-color: #00f; --color-brand: #00f; }
 .theme-probe { background-color: {{--color-brand}}; }
 .app-probe { color: {{--brand-color}}; }
 .mixed { --tw-business: 1; width: 10px; }
 .multi, .other { }
-:root { --brand-color: rgb(230,80,0); --color-brand: #f00; }
 @supports (not (-webkit-appearance: -apple-pay-button)) or (contain-intrinsic-size: 1px) { ::placeholder { } }
 @media (hover: hover) { }",
 }
@@ -173,12 +173,12 @@ textarea { }
 .px-\\[7\\.5px\\] { }
 .pr-\\[7\\.5px\\] { padding-right: 7.5px; }
 .pl-\\[7\\.5px\\] { padding-left: 7.5px; }
+:root { --brand-color: rgb(230,80,0); --color-brand: #f00; }
 .theme-dark { --brand-color: #00f; --color-brand: #00f; }
 .theme-probe { background-color: {{--color-brand}}; }
 .app-probe { color: {{--brand-color}}; }
 .mixed { --tw-business: 1; width: 10px; }
 .multi, .other { }
-:root { --brand-color: rgb(230,80,0); --color-brand: #f00; }
 @supports (not (-webkit-appearance: -apple-pay-button)) or (contain-intrinsic-size: 1px) { ::placeholder { } }
 @media (hover: hover) { }",
 }

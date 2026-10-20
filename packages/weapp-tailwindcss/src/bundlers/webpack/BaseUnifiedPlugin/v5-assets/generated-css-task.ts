@@ -13,6 +13,7 @@ import { createScopedGeneratorRuntime } from '../../../vite/generate-bundle/scop
 import { isWebpackCssLoaderRuntimeSource } from '../../shared/css-loader-runtime'
 import { createRuntimeAwareCssHash } from '../shared'
 import { finalizeWebpackGeneratedCssResult } from './generated-css-result'
+import { preserveLoaderProcessedWebCssAsset } from './loader-css-source'
 
 import {
   collectWebpackBareSelectorUserCss,
@@ -74,6 +75,10 @@ export async function processWebpackGeneratedCssAsset(element: any, context: Web
     `${createRuntimeSetHash(getGeneratorRuntimeSet())}:${runtimeAffectingSourceHash}:${webpackSourceCandidates?.signatureHash ?? 'source-candidates:0'}:${webpackSourceCandidateValueSignature}:${cssSourceTraceSignature}:${cssSourceHash}:compiler-dependencies:${compilationDependencyRevision}`,
   )
   await enqueueTask(async () => {
+    await runtimeState.readyPromise
+    if (await preserveLoaderProcessedWebCssAsset(file, originalSource, context)) {
+      return
+    }
     await processCachedTask({
       cache: compilerOptions.cache,
       cacheKey,
@@ -142,18 +147,6 @@ export async function processWebpackGeneratedCssAsset(element: any, context: Web
           }
           for (const dependency of loaderGeneratedCss.dependencies) {
             compilation.fileDependencies?.add?.(dependency)
-          }
-          if (isWebGeneratorTarget && (
-            hasBundlerGeneratedCssMarker(currentRawSource)
-            || hasTailwindGeneratedCss(currentRawSource)
-            || hasTailwindGeneratedCssMarkers(currentRawSource)
-          )) {
-            // Web 的生成发生在框架 CSS loader 之前，当前资产已包含其转换结果。
-            // 注册表只证明生成归属，不能用原始 CSS 覆盖处理后的选择器和声明。
-            const css = finalizeCssAssetSource(currentRawSource, { generatedCss: true })
-            return {
-              result: new ConcatSource(finalizeTracedCss(css, cssHandlerOptions)),
-            }
           }
           const currentRawSourceWithoutBundlerMarkers = stripBundlerGeneratedCssMarkers(currentRawSource)
           const currentAssetHasProcessedUrl = hasProcessedCssAssetUrl(currentRawSourceWithoutBundlerMarkers)

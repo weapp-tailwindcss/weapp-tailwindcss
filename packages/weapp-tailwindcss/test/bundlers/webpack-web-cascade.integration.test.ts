@@ -3,6 +3,7 @@ import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { originalPositionFor, TraceMap } from '@jridgewell/trace-mapping'
 import { chromium } from 'playwright'
 import { expect, it } from 'vitest'
 import webpack from 'webpack'
@@ -17,7 +18,7 @@ const { createStyleLoadersFactory } = bundlerRequire('./lib/loaders/styleLoader.
 const { getCSSExtractPlugin } = bundlerRequire('./lib/currentBundler.js')
 const { WeappTailwindcss } = require('weapp-tailwindcss/webpack')
 
-async function createWebFixture() {
+async function createWebFixture(options: { sourceMap?: boolean } = {}) {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), 'weapp-tw-webpack-web-cascade-')))
   await mkdir(path.join(root, 'node_modules'))
   await symlink(path.dirname(require.resolve('tailwindcss/package.json')), path.join(root, 'node_modules', 'tailwindcss'), process.platform === 'win32' ? 'junction' : 'dir')
@@ -42,8 +43,10 @@ async function createWebFixture() {
   const getStyleLoaders = await createStyleLoadersFactory({ currentBundler: { name: 'webpack' } })
   const MiniCssExtractPlugin = await getCSSExtractPlugin({ currentBundler: { name: 'webpack' } })
   let optimizedCss: string | undefined
+  let frameworkCss: { css: string, map: unknown } | undefined
   const compiler = webpack({
     mode: 'production',
+    devtool: options.sourceMap ? 'source-map' : false,
     context: root,
     entry: './entry.js',
     output: { path: path.join(root, 'dist'), filename: 'entry.js' },
@@ -58,6 +61,15 @@ async function createWebFixture() {
       {
         apply(compiler) {
           compiler.hooks.thisCompilation.tap('capture-optimized-css', (compilation) => {
+            compilation.hooks.processAssets.tap({
+              name: 'capture-framework-css-source',
+              stage: webpack.Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE - 1,
+            }, () => {
+              const source = compilation.getAsset('theme.css')?.source
+              if (source) {
+                frameworkCss = { css: source.source().toString(), map: source.map() }
+              }
+            })
             // 模板产物比 CSS 压缩更晚发出，候选仍由显式来源和扫描层获取。
             compilation.hooks.processAssets.tap({
               name: 'emit-late-template',
@@ -74,7 +86,7 @@ async function createWebFixture() {
       },
     ],
   })
-  return { root, compiler, cssEntry, template, optimizedCss: () => optimizedCss }
+  return { root, compiler, cssEntry, template, optimizedCss: () => optimizedCss, frameworkCss: () => frameworkCss }
 }
 
 it('在生产压缩之前完成 Web CSS 生成，不在压缩后重新插入基础 utility', async () => {
@@ -126,6 +138,39 @@ it('在生产压缩之前完成 Web CSS 生成，不在压缩后重新插入基�
     finally {
       await browser.close()
     }
+  }
+  finally {
+    await new Promise<void>((resolve, reject) => compiler.close(error => error ? reject(error) : resolve()))
+    await rm(root, { recursive: true, force: true })
+  }
+}, 60_000)
+
+it('在生产处理和压缩之后仍能追溯框架 CSS loader 的 source map', async () => {
+  const fixture = await createWebFixture({ sourceMap: true })
+  const { root, compiler } = fixture
+  try {
+    const stats = await new Promise<webpack.Stats | undefined>((resolve, reject) => {
+      compiler.run((error, stats) => error ? reject(error) : resolve(stats))
+    })
+    expect(stats?.hasErrors(), stats?.toString({ all: false, errors: true })).toBe(false)
+    const css = await readFile(path.join(root, 'dist', 'theme.css'), 'utf8')
+    expect(css).toContain('sourceMappingURL=theme.css.map')
+    const map = JSON.parse(await readFile(path.join(root, 'dist', 'theme.css.map'), 'utf8'))
+    expect(map.mappings.length).toBeGreaterThan(0)
+    expect(map.sources.some((source: string) => source.endsWith('theme.css'))).toBe(true)
+    expect(map.sourcesContent.some((source: string) => source.includes('.site-panel'))).toBe(true)
+    const positionOf = (text: string, token: string) => {
+      const offset = text.indexOf(token)
+      expect(offset).toBeGreaterThanOrEqual(0)
+      const lines = text.slice(0, offset).split('\n')
+      return { line: lines.length, column: lines.at(-1)!.length }
+    }
+    const framework = fixture.frameworkCss()!
+    const expected = originalPositionFor(new TraceMap(framework.map as ConstructorParameters<typeof TraceMap>[0]), positionOf(framework.css, '.site-panel'))
+    const actual = originalPositionFor(new TraceMap(map), positionOf(css, '.site-panel'))
+    expect(expected.source).toMatch(/theme\.css$/)
+    expect(actual.source).toMatch(/theme\.css$/)
+    expect({ line: actual.line, column: actual.column }).toEqual({ line: expected.line, column: expected.column })
   }
   finally {
     await new Promise<void>((resolve, reject) => compiler.close(error => error ? reject(error) : resolve()))
