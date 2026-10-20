@@ -242,7 +242,7 @@ PR head `1154af2b0a9ce4092bd6e36f1e654f309e01a560` 的 Lynx 正式 run [`3927209
 
 head `d0d894244658d5af85fe7eefb7c76f931eb0973c` 的 SEO run `39353399349` 在构建前被 Lynx 文档合同拒绝：脚本和六份中英文文档冻结了 10 月 6 日的时间、catalog、css-defines 和设备事实，与正常更新后的双端基线不一致。先新增七项回归复现失败，再让文档检查从已提交 `baseline.json` 读取事实；workflow 的默认 runner 检查继续独立执行。JSON 和文档共用可注入的读取边界，基线缺少版本、设备或 API 时仍拒绝，不通过删除字段缩小检查范围。
 
-两个 package README、四份中英文站点页面与示例 README 同步当前基线；说明同配置的不同运行仍需各自的原始证据，保留历史录屏环境及测试中的旧版本负例。新增八项合同覆盖当前事实、五类文档缺失、正常刷新和无效基线，连同既有配置文档回归共 12 项以 `CI=1`、`--update=none` 通过；命令为 `pnpm exec vitest run --config vitest.config.ts scripts/check-lynx-contract.test.mjs scripts/check-config-docs.test.mjs --update=none`（工作目录 `website`）。`pnpm --filter @weapp-tailwindcss/website check:config-docs`、`CI=1 pnpm --filter @weapp-tailwindcss/website build`、两份脚本 ESLint 和 `pnpm agents:check` 通过；完整文档构建重生成四份 `website/static/**/llms-index*.json`。本轮只调整文档事实检查和说明，没有更新样式或设备支持基线。新 head 的远端结果需另行验收。
+两个 package README、四份中英文站点页面与示例 README 同步当前基线；说明同配置的不同运行仍需各自的原始证据，保留历史录屏环境及测试中的旧版本负例。新增八项合同覆盖当前事实、五类文档缺失、正常刷新和无效基线，连同既有配置文档回归共 12 项以 `CI=1`、`--update=none` 通过；从根目录执行 `pnpm --filter @weapp-tailwindcss/website exec vitest run --config vitest.config.ts scripts/check-lynx-contract.test.mjs scripts/check-config-docs.test.mjs --update=none`。`pnpm --filter @weapp-tailwindcss/website check:config-docs`、`CI=1 pnpm --filter @weapp-tailwindcss/website build`、两份脚本 ESLint 和 `pnpm agents:check` 通过；完整文档构建重生成四份 `website/static/**/llms-index*.json`。首次新增记录使用了仅在 `website` 目录有效的相对测试路径，远端 agents 合同将其按根目录解析而拒绝；现用显式 workspace filter 固定工作目录，并在文档最终修改后重跑命令与 agents 检查。本轮只调整文档事实检查和说明，没有更新样式或设备支持基线。新 head 的远端结果需另行验收。
 
 ## 规则评估
 
