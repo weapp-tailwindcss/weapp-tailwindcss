@@ -15,6 +15,7 @@ import { effectFixtureImage } from './lynx/fixtures/effect-images'
 import { overflowArtifactFixture } from './lynx/fixtures/overflow-artifacts'
 import { protocolReport } from './lynx/fixtures/protocol-report'
 import { responsiveArtifactFixture } from './lynx/fixtures/responsive-artifacts'
+import { themeOverrideArtifacts } from './lynx/fixtures/theme-overrides'
 import { finalizeNativePixelEffects } from './lynx/pixel-evidence'
 import { PNG } from './lynx/png'
 import { readNativeReport } from './lynx/reports'
@@ -92,7 +93,8 @@ async function fixture(platform: Platform = 'android') {
   const bundle = Buffer.from('the actual staged bundle')
   const context = createEvidenceContext(bundle)
   report.evidence = { ...context, artifacts: [] }
-  const images = new Map<string, Buffer>()
+  report.environment.viewport.pixelRatio = 2
+  const images = new Map<string, Buffer>(themeOverrideArtifacts(report))
   for (const [name, bytes] of responsiveArtifactFixture(report)) {
     images.set(name, bytes)
   }

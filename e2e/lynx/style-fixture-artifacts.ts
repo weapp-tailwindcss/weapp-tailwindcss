@@ -6,6 +6,7 @@ import { assertOverflowRules } from './overflow-static'
 import { assertResponsiveGuard } from './responsive-static'
 import { parseDecodedRules, parseGeneratedRules } from './static-evidence'
 import { assertSupportsGuards } from './supports-guard'
+import { assertThemeOverrideRules } from './theme-overrides-static'
 
 /** 每次报告验收均重读本轮样式与真实 bundle，不能由报告开关或 serializer 输入跳过竞争及条件证据。 */
 export async function validateStyleFixtureArtifacts(directory: string) {
@@ -22,4 +23,6 @@ export async function validateStyleFixtureArtifacts(directory: string) {
   assertResponsiveGuard(generated, 'generation')
   assertResponsiveGuard(bundled, 'encoding')
   assertSupportsGuards(generated, bundled)
+  assertThemeOverrideRules(generated, 'generation')
+  assertThemeOverrideRules(bundled, 'encoding')
 }

@@ -10,6 +10,7 @@ import { collectColorScheme } from './native-color-scheme'
 import { createNativeEvidence } from './native-evidence'
 import { requestNativeReceipt as callReporter, nativeEvidenceFailureIn, NativeEvidenceUnavailableError } from './native-failure'
 import { collectResponsive } from './native-responsive'
+import { collectThemeOverrides } from './native-theme-overrides'
 import { overflowContract } from './overflow-contract'
 import { waitForProbeLayout } from './runtime-ready'
 import staticEvidenceJson from './static-evidence.json'
@@ -324,6 +325,7 @@ export async function submitNativeCompatibilityReport() {
       throw new Error('原生 probe 布局在等待期限内未就绪')
     }
     const mediaGate = await evidence.mediaGate()
+    const themeOverrides = await collectThemeOverrides(evidence, id => measure(id, reporter))
     const results: NativeCaseResult[] = []
     for (const item of compatibilityCases) {
       results.push(await collectCase(item, reporter, evidence, mediaGate))
@@ -337,6 +339,7 @@ export async function submitNativeCompatibilityReport() {
       environment: runtimeEnvironment(platform),
       results,
       mediaGate,
+      themeOverrides,
     }
     await evidence.submit(report)
   }

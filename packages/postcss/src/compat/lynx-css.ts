@@ -85,6 +85,21 @@ function normalizeTailwindDefaultSelectors(root: postcss.Root) {
   })
 }
 
+function normalizeThemeRootSelectors(root: postcss.Root) {
+  root.walkRules((rule) => {
+    const selectors = rule.selectors.map(selector => selector.trim())
+    if (selectors.length !== 2 || !selectors.includes(':root') || !selectors.includes(':host')) {
+      return
+    }
+    const declarations = rule.nodes.filter(node => node.type !== 'comment')
+    if (declarations.length === 0 || !declarations.every(node => node.type === 'decl' && getCssCustomPropertyName(node.prop))) {
+      return
+    }
+    // Lynx 不支持 :host，组合选择器会被 encoder 整组删除；保留已有的根变量分支。
+    rule.selector = ':root'
+  })
+}
+
 function normalizeOpacityPercentages(root: postcss.Root) {
   root.walkDecls(/^opacity$/i, (decl) => {
     // PostCSS 将值内注释保存在 raws；仅在原值未被前序转换修改时读取。
@@ -117,6 +132,8 @@ export function transformLynxCssCompat(css: string) {
       removeConsumedThemeProperties(root, properties)
       postcss([postcssCalc()]).process(root, { from: undefined }).sync()
     }
+    // 先完成变量依赖与覆盖分析，再缩减 encoder 无法承载的根选择器分支。
+    normalizeThemeRootSelectors(root)
     normalizeOpacityPercentages(root)
     return root.toString()
   }

@@ -166,6 +166,23 @@ pluginLynxTailwindcss({
 
 来源文件/行列只在当前构建图 source map 可证明时提供；合成 cssId 和生成坐标单独保存。跨入口同名分支、重复声明、未知值规范化、无法完整解码的 CSS section，以及无法唯一关联的 scoped CSS 来源均不猜测。诊断不扫描 `dist`，也不把进入 bundle 视为 Lynx 原生支持。
 
+
+例如业务候选 `px-[7.5px]` 的 `padding-inline` 在本轮 bundle 确证缺失时，报告包含：
+
+```js
+{
+  status: 'encoder-rejected',
+  category: 'business',
+  utility: 'px-[7.5px]',
+  property: 'padding-inline',
+  value: '7.5px',
+  reason: '唯一输入与本轮实际 bundle 比较确认该规则或声明缺失；这不推断 encoder 内部拒绝根因。',
+  suggestion: '可按业务方向选择 padding-left / padding-right；这不是完整逻辑属性等价替换，RTL 与动态方向须分别验证。',
+}
+```
+
+`versions.encoder` 优先记录与宿主暴露模板类身份一致的 `@lynx-js/tasm` 依赖版本；`versionEvidence.encoder` 明确这并非独立验证实际 encode hook 或执行二进制，定制编码器或 Web 路径仍须另行确认。无法绑定时记录 `unknown` 或标明 compilerOptions 显式声明来源。`versions.engine` 缺少宿主证据时为 `unknown`，`targetSdk` 不能替代运行时版本。`unknown` 项只建议补证，不虚构等价样式。
+
 ## CSS 与候选
 
 Lynx 推荐只引入 theme 和 utilities，避免浏览器 preflight 中的 `:root`、`:host`、`:where(...)` 等规则触发无关 warning。任意值必须是完整静态候选：

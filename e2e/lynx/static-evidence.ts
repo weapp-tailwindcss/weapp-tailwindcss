@@ -12,6 +12,7 @@ import { assertImportantPriorityRules } from './important-static'
 import { assertOverflowRules } from './overflow-static'
 import { assertResponsiveGuard } from './responsive-static'
 import { supportsGuardsMatch } from './supports-guard'
+import { assertThemeOverrideRules } from './theme-overrides-static'
 
 interface EncodedDeclaration {
   name: string
@@ -245,6 +246,8 @@ export async function analyzeStaticEvidence(generatedAt = new Date().toISOString
   assertOverflowRules(bundledRules, 'encoding')
   assertResponsiveGuard(generatedRules, 'generation')
   assertResponsiveGuard(bundledRules, 'encoding')
+  assertThemeOverrideRules(generatedRules, 'generation')
+  assertThemeOverrideRules(bundledRules, 'encoding')
   const results = compatibilityCases.map(item => analyzeStaticCase(item, generatedRules, bundledRules, encoderLog, cssDefinesProperties))
   return {
     schemaVersion: 1,

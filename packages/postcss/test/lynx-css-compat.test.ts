@@ -121,6 +121,26 @@ describe('Lynx CSS compatibility transform', () => {
     expect(result).toContain('border-style: var(--tw-border-style)')
   })
 
+  it.each([':root, :host', ':host, :root'])('保留 %s 中动态主题变量的原生根分支', (selectors) => {
+    const css = `${selectors} { /* theme */ --color-brand: #f00; --app-brand: #f00; } .dark { --color-brand: #00f; } .bg-brand { background-color: var(--color-brand); }`
+    const result = transformLynxCssCompat(css)
+    expect(result).toContain(':root { /* theme */ --color-brand: #f00; --app-brand: #f00; }')
+    expect(result).toContain('background-color: var(--color-brand)')
+    expect(transformLynxCssCompat(result)).toBe(result)
+    expect(transformWebCssCompat(css, true)).toContain(selectors)
+  })
+
+  it.each([
+    ':host { --app-brand: #f00; }',
+    ':root, .host { --app-brand: #f00; }',
+    ':root, :host, .scope { --app-brand: #f00; }',
+    ':root, :host(.dark) { --app-brand: #f00; }',
+    ':root, :host { color: red; --app-brand: #f00; }',
+    ':root, :host { .nested { --app-brand: #f00; } }',
+  ])('不改写纯变量根组以外的业务选择器：%s', (css) => {
+    expect(transformLynxCssCompat(css)).toBe(css)
+  })
+
   it('normalizes default variable groups with reordered legacy pseudo-elements inside supports', () => {
     const result = transformLynxCssCompat('@supports (display: grid) { ::backdrop, :after, *, :before { --tw-shadow: 0 0 #0000; } }')
 

@@ -1,5 +1,6 @@
 import type { ExpectedDeclaration } from '@weapp-tailwindcss/test-catalog'
 import type { ResponsiveFrame, ResponsivePhase } from './responsive-contract'
+import type { ThemeOverrideEvidence } from './theme-overrides-contract'
 
 export { featureFamilies } from '@weapp-tailwindcss/test-catalog'
 export type { CompatibilityCase, EvidenceLevel, ExpectedDeclaration, FeatureFamily, ProbeType } from '@weapp-tailwindcss/test-catalog'
@@ -180,6 +181,7 @@ export interface NativePlatformReport {
   environment: NativeRuntimeEnvironment
   results: NativeCaseResult[]
   mediaGate?: NativeMediaGateEvidence
+  themeOverrides?: ThemeOverrideEvidence
   // 历史结论仍可展示；实时验收及基线更新必须携带完整的新证据协议。
   evidence?: NativeEvidenceContext & { artifacts: NativeArtifactReceipt[] }
 }

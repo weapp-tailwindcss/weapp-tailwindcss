@@ -6,6 +6,7 @@ import process from 'node:process'
 import { execa } from 'execa'
 import { afterEach, expect, it, vi } from 'vitest'
 import { mediaGateArtifactNames } from '../examples/react-lynx/src/compatibility/media-gate-contract'
+import { themeOverrideArtifactNames } from '../examples/react-lynx/src/compatibility/theme-overrides-contract'
 import { withNativeFailureEvidence } from './lynx/failure-evidence'
 import { androidFailureReaders, iosFailureReaders } from './lynx/failure-evidence-readers'
 
@@ -34,9 +35,9 @@ async function fixture() {
   return { root, artifactDir, nativeDir, read, output }
 }
 
-it('真实失败子进程之后仍导出当前 run 的六张 PNG、原生侧车和原始失败消息，继续拒绝报告', async () => {
+it('真实失败子进程之后仍导出当前 run 的媒体与主题 PNG、原生侧车和原始失败消息，继续拒绝报告', async () => {
   const current = await fixture()
-  const files = mediaGateArtifactNames().map((name, index) => [name, Buffer.from([0, 255, 128, index, 13, 10]).toString('base64')])
+  const files = [...mediaGateArtifactNames(), ...themeOverrideArtifactNames()].map((name, index) => [name, Buffer.from([0, 255, 128, index, 13, 10]).toString('base64')])
   const payload = JSON.stringify(files)
   const script = 'const fs = require("node:fs"); const path = require("node:path"); const [root,payload,message] = process.argv.slice(1); fs.mkdirSync(path.join(root,"artifacts"),{recursive:true}); for(const [name,data] of JSON.parse(payload)) fs.writeFileSync(path.join(root,"artifacts",name),Buffer.from(data,"base64")); fs.writeFileSync(path.join(root,"failure.json"),JSON.stringify({message})); console.error(message); process.exitCode=7'
   let failure: unknown
@@ -55,11 +56,11 @@ it('真实失败子进程之后仍导出当前 run 的六张 PNG、原生侧车�
     expect(await fs.readFile(path.join(current.output, 'artifacts', name!))).toEqual(Buffer.from(encoded!, 'base64'))
   }
   expect(JSON.parse(await fs.readFile(path.join(current.output, 'failure.json'), 'utf8'))).toEqual({ message: originalMessage })
-  expect(current.read.artifact.mock.calls.map(([name]) => name).sort()).toEqual(mediaGateArtifactNames().sort())
+  expect(current.read.artifact.mock.calls.map(([name]) => name).sort()).toEqual([...mediaGateArtifactNames(), ...themeOverrideArtifactNames()].sort())
   expect(await fs.readdir(current.artifactDir)).toEqual(['native-failure'])
   const collection = JSON.parse(await fs.readFile(path.join(current.output, 'collection.json'), 'utf8'))
   expect(collection).toMatchObject({ source: 'lynx-native-failure-diagnostics', acceptance: 'diagnostic-only', context })
-  expect(collection.files).toHaveLength(8)
+  expect(collection.files).toHaveLength(35)
   expect(collection.files.every((file: { status: string }) => file.status === 'copied')).toBe(true)
 })
 

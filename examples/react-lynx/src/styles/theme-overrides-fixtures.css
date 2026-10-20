@@ -1,0 +1,66 @@
+:root {
+  --application-brand: #f00;
+  --brand-color: oklch(63% 0.2 40);
+}
+
+.theme-dark {
+  --color-brand: #00f;
+  --application-brand: #00f;
+  --brand-color: #00f;
+}
+
+.theme-variable-application-hex {
+  background-color: var(--application-brand);
+}
+.theme-variable-application-oklch {
+  background-color: var(--brand-color);
+}
+.theme-reference-tailwind-hex {
+  background-color: #f00;
+}
+.theme-reference-application-hex {
+  background-color: #f00;
+}
+.theme-reference-application-oklch {
+  background-color: #e65000;
+}
+.theme-reference-blue {
+  background-color: #00f;
+}
+
+.theme-evidence-fixtures {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.theme-evidence-pair {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+}
+.theme-evidence-canvas {
+  box-sizing: border-box;
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  padding: 8px;
+  background-color: #fff;
+}
+.theme-evidence-panel {
+  box-sizing: border-box;
+  width: 64px;
+  height: 64px;
+}
+.theme-evidence-marker {
+  height: 8px;
+  background-color: #fff;
+}
+.theme-evidence-before .theme-evidence-marker {
+  width: 16px;
+}
+.theme-evidence-after .theme-evidence-marker {
+  width: 24px;
+}
+.theme-evidence-restored .theme-evidence-marker {
+  width: 32px;
+}

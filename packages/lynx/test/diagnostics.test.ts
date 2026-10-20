@@ -37,8 +37,26 @@ describe('Lynx CSS diagnostics', () => {
       category: 'business',
       property: 'padding-inline',
       selector: '.px-\\[7.5px\\]',
+      reason: expect.stringContaining('实际 bundle'),
+      suggestion: expect.stringContaining('RTL'),
     })
     expect(hasStrictLynxDiagnosticFailure(report, { strict: true })).toBe(true)
+  })
+
+  it('未知证据不提供未经验证的替代实现，并明确缺失的运行版本', () => {
+    const report = createLynxDiagnosticsReport('future-format', { cssMap: {} }, { strict: true })
+    expect(report.versions).toMatchObject({ encoder: 'unknown', engine: 'unknown' })
+    expect(report.versionEvidence.engine).toContain('宿主')
+    expect(report.diagnostics.every(item => typeof item.reason === 'string' && typeof item.suggestion === 'string')).toBe(true)
+    expect(report.diagnostics.find(item => item.status === 'unknown')?.suggestion).toContain('证据')
+    expect(hasStrictLynxDiagnosticFailure(report, { strict: true })).toBe(false)
+  })
+
+  it('任意属性 class 中的转义冒号不能被误判为状态选择器', () => {
+    const input = { cssMap: { main: [{ type: 'StyleRule', selectorText: { value: String.raw`.\[mask-type\:luminance\]` }, style: [{ name: 'mask-type', value: 'luminance' }] }] } }
+    const report = createLynxDiagnosticsReport([], input, { strict: true })
+    expect(report.diagnostics[0]).toMatchObject({ status: 'encoder-rejected', property: 'mask-type' })
+    expect(report.diagnostics[0]!.suggestion).not.toContain('状态切换')
   })
 
   it('把 preflight/default 规则和未知 encoder 格式保留为非业务诊断', () => {

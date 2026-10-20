@@ -1,4 +1,4 @@
-import { cssSelectorDiagnosticMatches } from '@weapp-tailwindcss/postcss/syntax'
+import { cssSelectorDiagnosticMatches } from 'weapp-tailwindcss/core'
 
 export interface CssLocation { line?: number | undefined, column?: number | undefined }
 export interface CssDeclaration {

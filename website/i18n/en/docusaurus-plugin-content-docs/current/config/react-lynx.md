@@ -166,6 +166,24 @@ Reports distinguish raw `encoder-log` records from silent removals found by `bun
 
 Original files and positions are provided only when the current build graph source map proves them; synthetic cssId and generated coordinates remain separate. Duplicate branches across entries, repeated declarations, unknown value normalization, incomplete CSS-section decoding, and ambiguous scoped CSS origins remain unproven. Diagnostics do not scan `dist` or equate bundle inclusion with native support.
 
+For example, if the emitted bundle proves that `padding-inline` from `px-[7.5px]` is missing, a business diagnostic contains the following fields (reason and suggestion are translated here; runtime messages currently use Chinese):
+
+```js
+{
+  status: 'encoder-rejected',
+  category: 'business',
+  utility: 'px-[7.5px]',
+  property: 'padding-inline',
+  value: '7.5px',
+  reason: 'Comparison of unique input with the emitted bundle proves the missing rule or declaration; it does not infer the internal encoder cause.',
+  suggestion: 'Choose padding-left / padding-right according to application direction; validate RTL and dynamic direction separately.',
+}
+```
+
+The reason proves a missing declaration without guessing the encoder's internal cause. The suggestion proposes physical padding only after checking application direction; RTL and dynamic direction require separate validation.
+
+`versions.encoder` prefers the `@lynx-js/tasm` dependency associated with the exact template class exposed by the builder. `versionEvidence.encoder` states that this does not independently identify the executed encode hook or binary; custom encoders and Web paths need additional evidence. Missing identity yields `unknown`, or an explicitly labeled compilerOptions declaration. `versions.engine` remains `unknown` without host evidence; `targetSdk` is not a runtime version. Unknown diagnostics request evidence instead of inventing equivalent styles.
+
 ## CSS and candidates
 
 Lynx should normally import theme and utilities only, avoiding unrelated warnings from browser preflight rules such as `:root`, `:host`, and `:where(...)`. Arbitrary values must be complete static candidates:

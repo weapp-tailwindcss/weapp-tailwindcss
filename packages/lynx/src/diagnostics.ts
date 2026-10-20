@@ -1,9 +1,11 @@
 import type { CssMapInput, CssRuleRef } from './diagnostics/input'
 import type { CssSnapshot } from './diagnostics/origins'
-import { collectCssRuleEvidence, cssSelectorDiagnosticMatches } from '@weapp-tailwindcss/postcss/syntax'
+import { collectCssRuleEvidence, cssSelectorDiagnosticMatches } from 'weapp-tailwindcss/core'
 import { createEncodingInspector } from './diagnostics/evidence'
+import { diagnosticGuidance } from './diagnostics/guidance'
 import { flattenRules, isRecord, matchInput, parseRawDiagnostics } from './diagnostics/input'
 import { mapCssOrigin } from './diagnostics/origins'
+import { diagnosticVersions } from './diagnostics/versions'
 
 export type LynxDiagnosticCategory = 'preflight' | 'tailwind-default' | 'business' | 'unknown'
 
@@ -46,9 +48,10 @@ export interface LynxDiagnosticsReport {
   }
   evidence?: LynxEncodingEvidence | undefined
   diagnostics: LynxCssDiagnostic[]
-  versions?: {
-    encoder?: string | undefined
-    engine?: string | undefined
+  versionEvidence: { encoder: string, engine: string }
+  versions: {
+    encoder: string
+    engine: string
     targetSdk?: string | undefined
   } | undefined
 }
@@ -107,6 +110,7 @@ export function createLynxDiagnosticsReport(
   compilerOptions?: Record<string, string | boolean> | undefined,
   evidence?: LynxEncodingEvidence | undefined,
   origins?: CssSnapshot | undefined,
+  encoder?: { version?: string | undefined, source: string } | undefined,
 ): LynxDiagnosticsReport {
   const input = isRecord(css) ? css as CssMapInput : {}
   const rules = Object.entries(input.cssMap ?? {}).flatMap(([module, moduleRules]) => flattenRules(moduleRules, module))
@@ -159,6 +163,7 @@ export function createLynxDiagnosticsReport(
       source: { module: match?.ref.module ?? raw.module, file: origin?.file, line: origin?.line, column: origin?.column, generated: { line: raw.line, column: raw.column } },
       reason: status === 'unknown' ? evidence?.error ?? '来源歧义、未知日志或编码证据不足；不推断删除。' : undefined,
     }
+    Object.assign(diagnostic, diagnosticGuidance(diagnostic))
     const ignored = ignoredBy(diagnostic, options.ignore)
     if (ignored) {
       diagnostic.ignored = ignored
@@ -172,6 +177,7 @@ export function createLynxDiagnosticsReport(
       category: 'unknown',
       message: '本轮模板缺少可验证的完整编码后证据。',
       reason: inspector.error,
+      suggestion: '先补齐本轮实际 bundle 的解码证据，再判断兼容性；当前不提供未经验证的样式替代。',
     })
   }
   // 某些 encoder 会静默丢弃属性；逐项保留删除证明及无法确证的业务声明。
@@ -200,6 +206,7 @@ export function createLynxDiagnosticsReport(
         value: declaration.value,
         source: { module: ref.module, file: origin?.file, line: origin?.line, column: origin?.column, generated: location },
       }
+      Object.assign(diagnostic, diagnosticGuidance(diagnostic))
       const ignored = ignoredBy(diagnostic, options.ignore)
       if (ignored) {
         diagnostic.ignored = ignored
@@ -217,13 +224,7 @@ export function createLynxDiagnosticsReport(
     },
     diagnostics,
     ...(evidence ? { evidence: identity } : {}),
-    ...(compilerOptions
-      ? { versions: {
-          encoder: typeof compilerOptions.encoderVersion === 'string' ? compilerOptions.encoderVersion : undefined,
-          engine: typeof compilerOptions.engineVersion === 'string' ? compilerOptions.engineVersion : undefined,
-          targetSdk: typeof compilerOptions.targetSdkVersion === 'string' ? compilerOptions.targetSdkVersion : undefined,
-        } }
-      : {}),
+    ...diagnosticVersions(compilerOptions, encoder),
   }
 }
 

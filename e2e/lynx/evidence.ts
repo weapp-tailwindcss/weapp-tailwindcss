@@ -7,12 +7,14 @@ import { compatibilityCases } from '../../examples/react-lynx/src/compatibility/
 import { evidenceArtifactNames, lynxEvidenceStrategy } from '../../examples/react-lynx/src/compatibility/evidence'
 import { mediaGateArtifactNames, validateMediaGateEvidence } from '../../examples/react-lynx/src/compatibility/media-gate-contract'
 import staticEvidence from '../../examples/react-lynx/src/compatibility/static-evidence.json'
+import { themeOverrideArtifactNames, validateThemeOverrideEvidence } from '../../examples/react-lynx/src/compatibility/theme-overrides-contract'
 import { validateAndroidSdkEvidence } from './android-sdk'
 import { readNativeHostGeometry } from './geometry-evidence'
 import { validateMediaGateArtifacts } from './media-gate'
 import { validateMediaGuardArtifacts } from './media-guard-artifacts'
 import { readResponsiveEvidence } from './responsive-evidence'
 import { validateStyleFixtureArtifacts } from './style-fixture-artifacts'
+import { validateThemeOverrideArtifacts } from './theme-overrides'
 
 export function sha256(data: Uint8Array) {
   return createHash('sha256').update(data).digest('hex')
@@ -40,6 +42,8 @@ export function validateEvidenceManifest(report: NativePlatformReport, expected:
   }
   const builtById = new Map((staticEvidence as StaticEvidenceReport).results.map(item => [item.id, item]))
   const names = compatibilityCases.flatMap(item => evidenceArtifactNames(item, builtById.get(item.id)))
+  validateThemeOverrideEvidence(report.themeOverrides)
+  names.push(...themeOverrideArtifactNames())
   if (report.mediaGate) {
     validateMediaGateEvidence(report.mediaGate, expected)
     names.push(...mediaGateArtifactNames())
@@ -94,6 +98,7 @@ export async function validateNativeEvidence(report: NativePlatformReport, artif
     validateBytes(receipt, await fs.readFile(path.join(directory, receipt.name)))
   }
   await validateStyleFixtureArtifacts(artifactDir)
+  await validateThemeOverrideArtifacts(report, directory, expected)
   const builtById = new Map((staticEvidence as StaticEvidenceReport).results.map(item => [item.id, item]))
   for (const item of compatibilityCases) {
     const built = builtById.get(item.id)

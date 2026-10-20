@@ -1,6 +1,6 @@
 import type { LynxDiagnosticStatus, LynxEncodingEvidence } from '../diagnostics'
 import type { CssDeclaration, CssRuleRef } from './input'
-import { collectCssRuleEvidence } from '@weapp-tailwindcss/postcss/syntax'
+import { collectCssRuleEvidence } from 'weapp-tailwindcss/core'
 
 type Branch = ReturnType<typeof collectCssRuleEvidence>[number]
 const guardKey = (conditions: string[]) => JSON.stringify(conditions.map(condition => condition.trim()))

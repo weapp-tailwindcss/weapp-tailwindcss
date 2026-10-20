@@ -8,6 +8,7 @@ import { evidenceArtifactNames } from '../examples/react-lynx/src/compatibility/
 import { mediaGateArtifactNames, validateMediaGateEvidence } from '../examples/react-lynx/src/compatibility/media-gate-contract'
 import staticEvidence from '../examples/react-lynx/src/compatibility/static-evidence.json'
 import { validateEvidenceManifest } from './lynx/evidence'
+import { themeOverrideArtifacts } from './lynx/fixtures/theme-overrides'
 import { validateMediaGateArtifacts } from './lynx/media-gate'
 import { PNG } from './lynx/png'
 
@@ -58,8 +59,10 @@ describe('固定 SDK 的媒体必要条件负向合同', () => {
 
   it('媒体证据的七份原生回执不能被可见旧图或其它案例的清单替代', async () => {
     const { report } = await fixture()
+    report.environment.viewport.pixelRatio = 2
+    const themeNames = [...themeOverrideArtifacts(report).keys()]
     const names = compatibilityCases.flatMap(item => evidenceArtifactNames(item, staticEvidence.results.find(result => result.id === item.id)))
-    report.evidence!.artifacts = [...names, ...mediaGateArtifactNames()].map(name => ({ name, runId: context.runId, sha256: 'b'.repeat(64), byteLength: 1 }))
+    report.evidence!.artifacts = [...names, ...themeNames, ...mediaGateArtifactNames()].map(name => ({ name, runId: context.runId, sha256: 'b'.repeat(64), byteLength: 1 }))
     expect(() => validateEvidenceManifest(report, context)).not.toThrow()
     report.evidence!.artifacts = report.evidence!.artifacts.filter(item => item.name !== 'media-hover-v1.native.json')
     expect(() => validateEvidenceManifest(report, context)).toThrow(/清单缺帧/)

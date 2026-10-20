@@ -8,6 +8,11 @@ import { PNG } from './png'
 
 /** 离线验收与能力适配器重读同一份原生侧车及实际 PNG，不信任报告自证。 */
 export async function readNativeHostGeometry(raw: NativePlatformReport, directory: string, expected: NativeEvidenceContext, id: string): Promise<NativeGeometryEvidence> {
+  return readHostGeometry(raw, directory, expected, id, raw.results.find(item => item.id === id)?.geometry)
+}
+
+/** 非 catalog 夹具显式提供报告测量；其余身份、哈希与宿主 sidecar 检查保持相同。 */
+export async function readHostGeometry(raw: NativePlatformReport, directory: string, expected: NativeEvidenceContext, id: string, reportedGeometry: NativeGeometryEvidence | undefined): Promise<NativeGeometryEvidence> {
   const names = geometryArtifactNames(id)
   async function read(name: string) {
     const entries = raw.evidence?.artifacts.filter(item => item.name === name) ?? []
@@ -24,7 +29,7 @@ export async function readNativeHostGeometry(raw: NativePlatformReport, director
   if (value.version !== 1 || value.source !== 'lynx-native-host-geometry-v1' || value.id !== id || value.runId !== expected.runId
     || raw.evidence?.runId !== expected.runId || value.bundleSha256 !== expected.bundleSha256 || value.bundleSha256 !== raw.evidence.bundleSha256
     || value.platform !== raw.platform || !validNativeGeometry(value.geometry)
-    || !isDeepStrictEqual(value.geometry, raw.results.find(item => item.id === id)?.geometry)) {
+    || !isDeepStrictEqual(value.geometry, reportedGeometry)) {
     throw new Error(`几何宿主侧车身份或独立测量与报告不一致：${id}`)
   }
   const scale = raw.environment.viewport.pixelRatio

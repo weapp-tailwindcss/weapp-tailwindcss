@@ -7,6 +7,7 @@ import { lynxEvidenceStrategy } from '../../examples/react-lynx/src/compatibilit
 import { evaluateGeometry } from '../../examples/react-lynx/src/compatibility/geometry'
 import { validateMediaGateEvidence } from '../../examples/react-lynx/src/compatibility/media-gate-contract'
 import staticEvidenceJson from '../../examples/react-lynx/src/compatibility/static-evidence.json'
+import { validateThemeOverrideEvidence } from '../../examples/react-lynx/src/compatibility/theme-overrides-contract'
 import { compatibilityVersions, getCatalogHash } from './catalog'
 import { readEvidenceContext, validateNativeEvidence } from './evidence'
 import { assertReviewedLynxOutcome } from './expectations'
@@ -58,6 +59,9 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
   const staticById = new Map((staticEvidenceJson as StaticEvidenceReport).results.map(item => [item.id, item]))
   if (!options.historical && report.mediaGate) {
     validateMediaGateEvidence(report.mediaGate, report.evidence)
+  }
+  if (!options.historical) {
+    validateThemeOverrideEvidence(report.themeOverrides)
   }
   for (const result of report.results) {
     const item = caseById.get(result.id)
@@ -141,6 +145,7 @@ export function nativeReportConclusion(report: NativePlatformReport) {
     catalogHash: report.catalogHash,
     // 原生 JSON 序列化不承诺属性顺序，结论比较固定键顺序并保留所有版本值。
     versions: Object.fromEntries(Object.entries(report.versions).sort(([a], [b]) => a.localeCompare(b))),
+    ...(report.themeOverrides ? { themeOverrides: { contract: report.themeOverrides.contract, frames: report.themeOverrides.frames.map(({ id, phase, branch }) => ({ id, phase, branch })) } } : {}),
     ...(report.mediaGate ? { mediaGate: { limitationId: report.mediaGate.limitationId, sdkVersion: report.mediaGate.sdkVersion } } : {}),
     results: report.results.map(result => ({
       id: result.id,

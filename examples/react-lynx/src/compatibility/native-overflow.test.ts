@@ -5,6 +5,9 @@ import { geometryArtifactNames } from './native-geometry'
 import { submitNativeCompatibilityReport } from './native-reporter'
 import { mediaCapture } from './test-utils/native-media'
 
+// 主题控制器的状态与失败恢复由 native-theme-overrides.test.ts 独立验证；此处隔离原有 reporter 维度。
+vi.mock('./native-theme-overrides', () => ({ collectThemeOverrides: vi.fn(async () => ({ contract: 'lynx-theme-overrides-v1', frames: [] })) }))
+
 vi.mock('./catalog', async (importOriginal) => {
   const original = await importOriginal<typeof import('./catalog')>()
   return { ...original, compatibilityCases: original.compatibilityCases.filter(item => item.id === 'layout-overflow') }

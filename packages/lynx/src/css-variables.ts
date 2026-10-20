@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto'
 import { createLynxDiagnosticsReport, formatLynxDiagnosticsSummary, hasStrictLynxDiagnosticFailure } from './diagnostics'
 import { isRecord } from './diagnostics/input'
 import { captureCssSnapshot, cssInputIdentity, snapshotMatches } from './diagnostics/origins'
+import { installedEncoderVersion } from './diagnostics/versions'
 
 interface EncodeArguments {
   encodeData: { sourceContent: { config: Record<string, unknown> }, css?: unknown }
@@ -42,6 +43,7 @@ export class LynxCssVariablesPlugin {
   constructor(
     private readonly templatePlugin: LynxTemplatePluginApi,
     private readonly diagnostics: LynxDiagnosticsOptions = {},
+    private readonly root?: string,
   ) {}
 
   apply(compiler: Compiler) {
@@ -130,6 +132,7 @@ export class LynxCssVariablesPlugin {
       args.finalEncodeOptions.compilerOptions,
       evidence,
       origins,
+      await installedEncoderVersion(this.root, this.templatePlugin),
     )
     this.diagnostics.onReport?.(report)
     if (report.diagnostics.length > 0) {

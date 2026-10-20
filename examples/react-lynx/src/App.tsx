@@ -21,6 +21,7 @@ import { featureFamilies } from './compatibility/types'
 import { CaseCard } from './components/CaseCard'
 import { MediaGateProbes } from './components/MediaGateProbes'
 import { Summary } from './components/Summary'
+import { ThemeOverrideProbes } from './components/ThemeOverrideProbes'
 
 const baseline = baselineJson as CompatibilityBaseline
 const staticEvidence = staticEvidenceJson as StaticEvidenceReport
@@ -88,6 +89,7 @@ export function App() {
   return (
     <view className="min-h-screen bg-[#f4f7f8] text-[#172126]">
       <MediaGateProbes />
+      <ThemeOverrideProbes />
       <view className="border-b border-[#d8e0e3] bg-white px-5 pb-4 pt-6">
         <text className="text-[24px] font-bold text-[#0b1519]">Tailwind CSS 4 / Lynx</text>
         <text className="mt-1 text-[13px] text-[#526168]">

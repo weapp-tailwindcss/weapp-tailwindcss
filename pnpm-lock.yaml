@@ -5014,9 +5014,6 @@ importers:
       '@lynx-js/react-rsbuild-plugin':
         specifier: '>=0.12.4'
         version: 0.20.2(@lynx-js/react@0.126.1(@lynx-js/types@4.2.1)(@types/react@19.2.18))(@lynx-js/rspeedy@0.18.1(@rspack/core@2.2.8(@swc/helpers@0.5.23))(clean-css@5.3.3)(core-js@3.50.0)(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(tslib@2.8.1)(typescript@6.0.3)(webpack@5.105.4))(@rsbuild/core@2.2.9(core-js@3.50.0))(clean-css@5.3.3)(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(tslib@2.8.1)(webpack@5.105.4)
-      '@weapp-tailwindcss/postcss':
-        specifier: workspace:*
-        version: link:../postcss
       weapp-tailwindcss:
         specifier: workspace:*
         version: link:../weapp-tailwindcss

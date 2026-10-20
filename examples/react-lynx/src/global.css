@@ -7,6 +7,7 @@
 @import './styles/structural-fixtures.css' layer(components);
 @import './styles/flow-fixtures.css' layer(components);
 @import './styles/media-fixtures.css' layer(components);
+@import './styles/theme-overrides-fixtures.css' layer(components);
 @import './styles/important-fixtures.css' layer(utilities);
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities) source(none);
@@ -19,6 +20,7 @@
 
 @theme {
   --color-lynx-brand: #0ea5e9;
+  --color-brand: #f00;
 }
 
 @utility content-auto {

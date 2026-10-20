@@ -96,6 +96,12 @@ describe('正式 Rspeedy hook 的业务诊断', () => {
     expect(Boolean(failure)).toBe(strict)
     const report = reports.find(item => item.evidence?.outputName === 'main.lynx.bundle')!
     expect(report).toBeTruthy()
+    const builderRequire = createRequire(exampleRequire.resolve('@lynx-js/react-rsbuild-plugin/package.json'))
+    const templateRequire = createRequire(builderRequire.resolve('@lynx-js/template-webpack-plugin/package.json'))
+    const encoder = JSON.parse(readFileSync(templateRequire.resolve('@lynx-js/tasm/package.json'), 'utf8'))
+    expect(report.versions).toMatchObject({ encoder: encoder.version, engine: 'unknown', targetSdk: '3.9' })
+    expect(report.versionEvidence.encoder).toContain('@lynx-js/tasm')
+    expect(report.versionEvidence.engine).toContain('宿主')
     expect(report.evidence).toMatchObject({
       bundleSha256: createHash('sha256').update(bundle).digest('hex'),
       decoderIdentity: decoder.lynxDecoderIdentity(),
@@ -112,6 +118,8 @@ describe('正式 Rspeedy hook 的业务诊断', () => {
     expect(report.diagnostics.some(item => item.source?.file?.endsWith('style.css'))).toBe(true)
     expect(report.diagnostics.every(item => item.origin === 'bundle-comparison' || item.raw !== undefined)).toBe(true)
     expect(report.diagnostics.filter(item => item.property === 'mask-type').every(item => item.origin === 'bundle-comparison')).toBe(true)
+    expect(report.diagnostics.filter(item => item.status === 'encoder-rejected').every(item => item.reason?.includes('实际 bundle') && item.suggestion)).toBe(true)
+    expect(report.diagnostics.find(item => item.property === 'padding-inline')?.suggestion).toContain('RTL')
     expect(decoded.css.text).toMatch(/padding-top:\s*13px/)
     expect(decoded.css.text).toMatch(/padding-right:\s*13px/)
     expect(decoded.css.text).toMatch(/padding-bottom:\s*13px/)

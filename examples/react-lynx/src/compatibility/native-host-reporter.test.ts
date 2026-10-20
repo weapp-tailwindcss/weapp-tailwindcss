@@ -3,7 +3,11 @@ import type { NativeMediaGateCapture, NativePlatformReport } from './types'
 import { afterEach, expect, it, vi } from 'vitest'
 import { geometryArtifactNames } from './native-geometry'
 import { submitNativeCompatibilityReport } from './native-reporter'
+import { collectThemeOverrides } from './native-theme-overrides'
 import { mediaCapture } from './test-utils/native-media'
+
+// 主题控制器的状态与失败恢复由 native-theme-overrides.test.ts 独立验证；此处隔离原有 reporter 维度。
+vi.mock('./native-theme-overrides', () => ({ collectThemeOverrides: vi.fn(async () => ({ contract: 'lynx-theme-overrides-v1', frames: [] })) }))
 
 vi.mock('./catalog', async (importOriginal) => {
   const original = await importOriginal<typeof import('./catalog')>()
@@ -126,4 +130,12 @@ it('Lynx stack 不含 message 时仍落盘原始拒绝条件和调用栈', async
   expect(fail.mock.calls[0]![1]).toContain('media geometry contract failed: hover-none')
   expect(fail.mock.calls[0]![1]).toContain('at nativeMediaGate')
   expect(fail.mock.calls[0]![1]).not.toContain('"category":"environment"')
+})
+
+it('主题门禁失败不能发布旧能力报告，并保留原始失败', async () => {
+  vi.mocked(collectThemeOverrides).mockRejectedValueOnce(new Error('theme evidence missing'))
+  const { report, error, fail } = await collect()
+  expect(report).toBeUndefined()
+  expect((error as Error).message).toBe('theme evidence missing')
+  expect(fail.mock.calls[0]![1]).toContain('theme evidence missing')
 })

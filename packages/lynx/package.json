@@ -61,7 +61,6 @@
   },
   "dependencies": {
     "@jridgewell/trace-mapping": "^0.3.31",
-    "@weapp-tailwindcss/postcss": "workspace:*",
     "weapp-tailwindcss": "workspace:*"
   },
   "devDependencies": {
