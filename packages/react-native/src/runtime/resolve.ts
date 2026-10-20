@@ -70,12 +70,20 @@ export function resolveRules(ids: readonly string[], manifest: NativeStyleManife
     if (rule.lineHeightMultiplier !== undefined) {
       relative = { multiplier: rule.lineHeightMultiplier, important: isImportant }
       delete style.lineHeight
+      if (isImportant) {
+        // 延迟声明已经赢得级联；缺少上下文时也不能重放被覆盖的值。
+        delete importantStyle.lineHeight
+      }
     }
     else if ('lineHeight' in rule.style) {
       relative = undefined
     }
     if (rule.boxShadowExpression) {
       boxShadow = { expression: rule.boxShadowExpression, bindings: customProperties, important: isImportant }
+      delete style.boxShadow
+      if (isImportant) {
+        delete importantStyle.boxShadow
+      }
     }
     else if ('boxShadow' in rule.style) {
       boxShadow = undefined
@@ -107,7 +115,6 @@ export function resolveRules(ids: readonly string[], manifest: NativeStyleManife
     boxShadow.color = typeof style.color === 'string' ? style.color : environment.color
     boxShadow.importantColor = typeof importantStyle.color === 'string' ? importantStyle.color : undefined
     const computed = deferredBoxShadowStyle(boxShadow)
-    delete style.boxShadow
     if (computed) {
       Object.assign(style, computed)
       if (boxShadow.important) {
