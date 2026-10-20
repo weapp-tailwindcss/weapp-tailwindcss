@@ -51,6 +51,7 @@
     "test:worker": "tsx scripts/verify-worker-local.ts",
     "e2e": "playwright test",
     "e2e:local": "tsx scripts/browser-local.ts",
+    "e2e:visual": "tsx scripts/visual-baselines.ts",
     "e2e:u": "playwright test -u",
     "exportRoutes": "tsx scripts/exportRoutes.ts",
     "check:showcase": "tsx scripts/check-showcase.mts"

@@ -68,3 +68,4 @@
 - [tools/tailwindcss-test-catalog/AGENTS.md](../../tools/tailwindcss-test-catalog/AGENTS.md)
 - [tools/weapp-tailwindcss-scripts/AGENTS.md](../../tools/weapp-tailwindcss-scripts/AGENTS.md)
 - [website/AGENTS.md](../../website/AGENTS.md)
+- [website/scripts/visual-baselines/AGENTS.md](../../website/scripts/visual-baselines/AGENTS.md)

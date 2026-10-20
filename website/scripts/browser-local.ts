@@ -8,6 +8,7 @@ import { verifyWorkerRoutes } from './local-worker/assertions'
 import { discoverBrowserBudget } from './local-worker/browser-budget'
 import { runLocalCommand } from './local-worker/command'
 import { withLocalWorker } from './local-worker/server'
+import { verifyInstalledBaselines } from './visual-baselines/install'
 
 export function localBrowserCommand(context: LocalWorkerContext) {
   const require = createRequire(pathToFileURL(path.join(context.websiteRoot, 'package.json')))
@@ -23,6 +24,7 @@ export function localBrowserCommand(context: LocalWorkerContext) {
 
 export async function verifyBrowserLocal(options: Partial<LocalWorkerOptions> = {}) {
   const websiteRoot = options.websiteRoot ?? fileURLToPath(new URL('..', import.meta.url))
+  await verifyInstalledBaselines(websiteRoot)
   await withLocalWorker(async (context) => {
     await verifyWorkerRoutes(context)
     const command = localBrowserCommand(context)
