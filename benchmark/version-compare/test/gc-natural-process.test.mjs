@@ -61,14 +61,41 @@ afterEach(async () => {
   }
 })
 
-async function recordsFor(session) {
+async function recordsFor(session, { requireComplete = false } = {}) {
   const file = path.join(session.identity.sessionDirectory, `gc-${session.child.pid}.ndjson`)
   const text = await fs.readFile(file, 'utf8')
-  expect(text.endsWith('\n')).toBe(true)
-  return { file, text, records: text.trimEnd().split('\n').map(line => JSON.parse(line)) }
+  if (requireComplete) {
+    expect(text.endsWith('\n')).toBe(true)
+  }
+  // 活进程和信号退出仅保证同步写入的完整前缀；正常退出仍核对全部尾行。
+  const completePrefix = text.slice(0, text.lastIndexOf('\n') + 1)
+  expect(completePrefix.length).toBeGreaterThan(0)
+  return { file, text, records: completePrefix.trimEnd().split('\n').map(line => JSON.parse(line)) }
 }
 
 describe('真实 Node 子进程的天然 GC 证据', () => {
+  it('活进程读取完整前缀，正常退出的快照仍拒绝半条尾行和无效完整行', async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'benchmark-gc-snapshot-'))
+    try {
+      const session = { identity: { sessionDirectory: root }, child: { pid: 123 } }
+      const file = path.join(root, 'gc-123.ndjson')
+      const startup = { type: 'process-start' }
+      const accounting = { type: 'accounting', costs: { dataWrites: 1 } }
+      const prefix = `${JSON.stringify(startup)}\n`
+      const tail = JSON.stringify(accounting)
+      await fs.writeFile(file, prefix + tail.slice(0, 17))
+      expect((await recordsFor(session)).records).toEqual([startup])
+      await expect(recordsFor(session, { requireComplete: true })).rejects.toThrow()
+      await fs.appendFile(file, `${tail.slice(17)}\n`)
+      expect((await recordsFor(session, { requireComplete: true })).records).toEqual([startup, accounting])
+      await fs.appendFile(file, '{invalid}\n')
+      await expect(recordsFor(session)).rejects.toThrow()
+    }
+    finally {
+      await fs.rm(root, { recursive: true, force: true })
+    }
+  })
+
   it('不暴露 force GC，自然 major 回调立即落盘并绑定实际进程、时钟、角色与 preload', async () => {
     const session = await launch()
     expect(await session.ready).toMatchObject({ ready: true, pid: session.child.pid, forcedGcAvailable: false, signals: [0, 0] })
@@ -86,7 +113,7 @@ describe('真实 Node 子进程的天然 GC 证据', () => {
     session.child.stdin.end('done')
     expect((await session.exit)[0]).toBe(0)
     // 活进程可在 batch 与 accounting 两次同步写之间被读取；退出后才核对完整记账。
-    const final = await recordsFor(session)
+    const final = await recordsFor(session, { requireComplete: true })
     const finalBatches = final.records.filter(record => record.type === 'gc-batch')
     expect(final.text.startsWith(text)).toBe(true)
     expect(finalBatches.length).toBeGreaterThanOrEqual(batches.length)
