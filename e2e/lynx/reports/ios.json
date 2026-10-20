@@ -1,413 +1,963 @@
 {
   "schemaVersion": 1,
   "evidence": {
-    "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+    "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
     "artifacts": [
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
-        "name": "layout-overflow-probe.png",
-        "byteLength": 8391,
-        "sha256": "65c930ffa9dfee221b39107c2fdbc8a00177876ae2b93a8ffb00e0e783a2cc39"
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "media-hover-v1-base.png",
+        "byteLength": 1419,
+        "sha256": "26fc28855b9ea1a4193ec3aa1c0d6dce2b496ae4fbc65804f12361f850db8197"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
-        "name": "layout-overflow-control.png",
-        "byteLength": 8391,
-        "sha256": "65c930ffa9dfee221b39107c2fdbc8a00177876ae2b93a8ffb00e0e783a2cc39"
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "media-hover-v1-control.png",
+        "byteLength": 1419,
+        "sha256": "26fc28855b9ea1a4193ec3aa1c0d6dce2b496ae4fbc65804f12361f850db8197"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "media-hover-v1-unguarded.png",
+        "byteLength": 1453,
+        "sha256": "4acd28d1a22de00297c638b8ed411f1a41eff01e902943c547cea97ec42bcae6"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "media-hover-v1-min-width.png",
+        "byteLength": 1453,
+        "sha256": "4acd28d1a22de00297c638b8ed411f1a41eff01e902943c547cea97ec42bcae6"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "media-hover-v1-hover-hover.png",
+        "byteLength": 1419,
+        "sha256": "26fc28855b9ea1a4193ec3aa1c0d6dce2b496ae4fbc65804f12361f850db8197"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "media-hover-v1-hover-none.png",
+        "byteLength": 1419,
+        "sha256": "26fc28855b9ea1a4193ec3aa1c0d6dce2b496ae4fbc65804f12361f850db8197"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "media-hover-v1.native.json",
+        "byteLength": 1465,
+        "sha256": "7052cf0aadbac3507a756b6018166ff4452244799e5307bfca8d57261d0d9d9a"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "layout-aspect-geometry-probe.png",
+        "byteLength": 5912,
+        "sha256": "c9649e0f31ab72b915ea236078b44527c4ce1a6a2c3adf7cb2c783966d889af8"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "layout-aspect-geometry-control.png",
+        "byteLength": 5147,
+        "sha256": "9948ae6471d97fbeae1ffcdf88164b30921d1178a4b4b9100bed71da06078cc0"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "layout-aspect-geometry.json",
+        "byteLength": 1038,
+        "sha256": "da3fe243f3f14fb370cb4dbc54cb3cd12abe3146bf538c659a902da92eeabab1"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "layout-box-sizing-geometry-probe.png",
+        "byteLength": 7054,
+        "sha256": "a4fcf35ec6ec96b8fcaff3e52a97a2135af6befb64f046db0f74ee6d6541b7eb"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "layout-box-sizing-geometry-control.png",
+        "byteLength": 7325,
+        "sha256": "b0bbdf585325683659863ee88f3f336ec73acb4a56b4cefe6237505132a2bff8"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "layout-box-sizing-geometry.json",
+        "byteLength": 988,
+        "sha256": "860ba5783e355c219b20b44aaeb60a22e65c4f5f174af2dbbd3f8e55aefb4a60"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "layout-display-geometry-probe.png",
+        "byteLength": 5768,
+        "sha256": "bd47e60bd48b3ee6446a885d880a2528e7832b8f09b895cc85de3f53aab52365"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "layout-display-geometry-control.png",
+        "byteLength": 6005,
+        "sha256": "0614e28d3eff8c3867861b2c90ef5fd7a5824f284d552606eb81b741782c6539"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "layout-display-geometry.json",
+        "byteLength": 936,
+        "sha256": "78a2ed7299e1d929f2ad34862bfa46b7ab0b18fe340834b5f0ba147a4f2e68df"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "layout-overflow-geometry-probe.png",
+        "byteLength": 6881,
+        "sha256": "54d71447eb57916d65d34040f594a717dc14ea521b86103db587741515323443"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "layout-overflow-geometry-control.png",
+        "byteLength": 7633,
+        "sha256": "19610a3e4a7170ba7e5514c2a2e738517a78f2efe674a8dc40561d4b930a1639"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "layout-overflow-geometry.json",
+        "byteLength": 932,
+        "sha256": "57f403f3879e49b4996cc33217e391e329b455087fe7c8b8048efea5c0b79eae"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "layout-position-geometry-probe.png",
+        "byteLength": 6503,
+        "sha256": "24f0d4d85237b3a064f3c20acb952e87aa7dec295729869182bd727f235b7767"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "layout-position-geometry-control.png",
+        "byteLength": 5845,
+        "sha256": "b193708aecfc4c160fdd8055715ad5fc103d7a5c9cb2eca98f0195cc4a760364"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "layout-position-geometry.json",
+        "byteLength": 1065,
+        "sha256": "48dfbdcbd96f96a67c6cf401970b9a6564e456ecd181d32e6421c7a0dd890c4d"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "layout-visibility-probe.png",
         "byteLength": 6045,
         "sha256": "7dcf1111fe5939e9a0542bb754a146a237a94a39c3ad87ab4c9fe4c84d14b721"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "layout-visibility-control.png",
-        "byteLength": 8065,
-        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+        "byteLength": 8064,
+        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "layout-z-index-probe.png",
         "byteLength": 6045,
         "sha256": "7dcf1111fe5939e9a0542bb754a146a237a94a39c3ad87ab4c9fe4c84d14b721"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "layout-z-index-control.png",
-        "byteLength": 8215,
-        "sha256": "9dee1d118de723888f6e7700b5376b495e9b837e8f4c6d69f442a646c599ff51"
+        "byteLength": 8217,
+        "sha256": "104d0eb77322317a64cce303d647fbc7348dc8bc2c8dc3ab04b4904f9b8c3b7a"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "flex-direction-geometry-probe.png",
+        "byteLength": 5768,
+        "sha256": "bd47e60bd48b3ee6446a885d880a2528e7832b8f09b895cc85de3f53aab52365"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "flex-direction-geometry-control.png",
+        "byteLength": 5845,
+        "sha256": "b193708aecfc4c160fdd8055715ad5fc103d7a5c9cb2eca98f0195cc4a760364"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "flex-direction-geometry.json",
+        "byteLength": 1108,
+        "sha256": "1ab963fcf4dd619bdbcec9f50f74c6641c30c2df883526b36b1b6364bd60b686"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "flex-alignment-geometry-probe.png",
+        "byteLength": 6483,
+        "sha256": "1ba424c9f60fce758da7eabe2b7efd112a3f38a7990517b87b6c34063ba463c3"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "flex-alignment-geometry-control.png",
+        "byteLength": 5845,
+        "sha256": "b193708aecfc4c160fdd8055715ad5fc103d7a5c9cb2eca98f0195cc4a760364"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "flex-alignment-geometry.json",
+        "byteLength": 1078,
+        "sha256": "5a7715dcab199305411dc49d1da2fe8b6ffe9204885dfa832b24694f323aec4f"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "flex-grow-geometry-probe.png",
+        "byteLength": 5956,
+        "sha256": "a6c5ec17f4313834b3dd119cc9ef8b4ee117e8c7771c840b5158b271e8a5b94e"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "flex-grow-geometry-control.png",
+        "byteLength": 5789,
+        "sha256": "75f31eee7870fae1701ac7e0fa2689e19f7a21f24165804bc2b4fda0c5c75e2c"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "flex-grow-geometry.json",
+        "byteLength": 740,
+        "sha256": "cda22afdaaf109f593ec5a63e51fbf3c2f83c0fe66f1dd3995fb45b5ea8b7190"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "grid-template-geometry-probe.png",
+        "byteLength": 6166,
+        "sha256": "fe36299dd4978ba01c6c8113d5d0c61616cf5a47c8373ebe32523488814eca29"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "grid-template-geometry-control.png",
+        "byteLength": 5845,
+        "sha256": "b193708aecfc4c160fdd8055715ad5fc103d7a5c9cb2eca98f0195cc4a760364"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "grid-template-geometry.json",
+        "byteLength": 1077,
+        "sha256": "4fecf9d2489f4264ea712aa5f9523efffd73831acf6a7610d26aa84ac2ccc6b2"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "spacing-margin-geometry-probe.png",
+        "byteLength": 5992,
+        "sha256": "3103351e4bc28b33758ee920a75ecd939d0937258e7265cc3b2d40cc8f8587e6"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "spacing-margin-geometry-control.png",
+        "byteLength": 5845,
+        "sha256": "b193708aecfc4c160fdd8055715ad5fc103d7a5c9cb2eca98f0195cc4a760364"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "spacing-margin-geometry.json",
+        "byteLength": 1046,
+        "sha256": "27d029274ddcdfe59b40cd7198e831ee8892808bd964c221396dd783c77262f1"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "spacing-padding-geometry-probe.png",
+        "byteLength": 5911,
+        "sha256": "7f47d6b0506cd705c35324c61ed47f3d19763c6d04f17e756131ae61ea1d2b19"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "spacing-padding-geometry-control.png",
+        "byteLength": 5845,
+        "sha256": "b193708aecfc4c160fdd8055715ad5fc103d7a5c9cb2eca98f0195cc4a760364"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "spacing-padding-geometry.json",
+        "byteLength": 1017,
+        "sha256": "faf2974a147dffb8b021b2c367b3fbf045214db62e6b642260c30769e3012e8d"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "sizing-fixed-geometry-probe.png",
+        "byteLength": 6041,
+        "sha256": "daf00e31290de357afa5811dc51cd166686877e9afa9504e194c916eaa99d9b7"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "sizing-fixed-geometry-control.png",
+        "byteLength": 5845,
+        "sha256": "b193708aecfc4c160fdd8055715ad5fc103d7a5c9cb2eca98f0195cc4a760364"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "sizing-fixed-geometry.json",
+        "byteLength": 957,
+        "sha256": "95b8ea8bced2e92ae5fbc55ef15ad9783c4fd4ca9935c3f1a9fd260f5ad1ad18"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "sizing-min-max-geometry-probe.png",
+        "byteLength": 17130,
+        "sha256": "d9269c66b9beb5b0a56024d0ac5b6ba94596812b49fdce180d6f8b180ae1270a"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "sizing-min-max-geometry-control.png",
+        "byteLength": 17346,
+        "sha256": "c07a5df4f426ea5814f16df145fbad7d2e7e039c2a2261841e723d247bb03aa3"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "sizing-min-max-geometry.json",
+        "byteLength": 1043,
+        "sha256": "5267b2799c9596f0ce10d33c2d56559c4c42de462402dc56bf2b1de300e6e875"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "type-size-geometry-probe.png",
+        "byteLength": 7070,
+        "sha256": "b4fa17c3a355c5e74602342423d3ea5c0a141d5595324289b04f05540f702654"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "type-size-geometry-control.png",
+        "byteLength": 5754,
+        "sha256": "d09a798c25a6a56b38ac7d0298976ef93843517bbd5df917dd2ac25ac19b4be1"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "type-size-geometry.json",
+        "byteLength": 1099,
+        "sha256": "e64629e1204d8cd5c357be187142d90e4a1b471c4ea32cc333a0883b10df9c3b"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "type-weight-style-probe.png",
-        "byteLength": 8392,
-        "sha256": "8f8d60df4a363bceed4faa86b1efbd678b316c45cf864f2f57a08d2a51c67327"
+        "byteLength": 8384,
+        "sha256": "8fca8d8d7380f1c33286d0bbd0cf0faa8330754a352144a9a2b2f2e692ede94a"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "type-weight-style-control.png",
-        "byteLength": 8065,
-        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+        "byteLength": 8064,
+        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "type-tracking-geometry-probe.png",
+        "byteLength": 5794,
+        "sha256": "28811dab58c0bc0d34cefd5d9392daf63d522ab22b07896c114bb44686948ef8"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "type-tracking-geometry-control.png",
+        "byteLength": 5754,
+        "sha256": "d09a798c25a6a56b38ac7d0298976ef93843517bbd5df917dd2ac25ac19b4be1"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "type-tracking-geometry.json",
+        "byteLength": 1119,
+        "sha256": "41ac53e039066ce53f8895b5024f0ba7829c082d33db86eed78bf1319c0aec03"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "type-align-overflow-probe.png",
-        "byteLength": 8391,
-        "sha256": "65c930ffa9dfee221b39107c2fdbc8a00177876ae2b93a8ffb00e0e783a2cc39"
+        "byteLength": 8393,
+        "sha256": "e765b9407765a629e6323b697b6eed5d9639f6fd7024455aea2aed9d6c02228a"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "type-align-overflow-control.png",
-        "byteLength": 8391,
-        "sha256": "65c930ffa9dfee221b39107c2fdbc8a00177876ae2b93a8ffb00e0e783a2cc39"
+        "byteLength": 8393,
+        "sha256": "e765b9407765a629e6323b697b6eed5d9639f6fd7024455aea2aed9d6c02228a"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "background-color-probe.png",
-        "byteLength": 8125,
-        "sha256": "5d884efe40b335e0275f2b1230213be41d63116daf263e441f88cfce067ee389"
+        "byteLength": 8136,
+        "sha256": "54ff2af365a7a1b34782b281f23db4ad05884e5910867b2afdc35a9f1f660140"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "background-color-control.png",
-        "byteLength": 8065,
-        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+        "byteLength": 8064,
+        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "background-gradient-probe.png",
-        "byteLength": 139843,
-        "sha256": "f6848b632f7d038d4193c0429120885e9fa05ffb05b7f1d00716259d509f4ace"
+        "byteLength": 138814,
+        "sha256": "5827fc29f8768824ff536f9bf21d90e473639201e4620610ce088b601eb75eea"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "background-gradient-control.png",
-        "byteLength": 6393,
-        "sha256": "7a127c5ddf71efefa4928aeaa8369f713b31ab80ede344bbac5ad7c6633a3f6d"
+        "byteLength": 6403,
+        "sha256": "c30a286d174887db46a2ffec37223131556cd71726dbe376784222ae937680b5"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "background-size-probe.png",
-        "byteLength": 137740,
-        "sha256": "67e926f8fce3f5649216dffab3b7a2824e754a5dd4b17a460aac6795b19fdf64"
+        "byteLength": 137745,
+        "sha256": "3f702391383d44aea031878f7c4607cb0da9bb599126bbcba028604c09ec6a5a"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "background-size-control.png",
-        "byteLength": 95937,
-        "sha256": "c83f6234b0494a80200fbc083cea644bb64d3e5e81dec5f82e067498124b8c0a"
+        "byteLength": 95870,
+        "sha256": "0e3cc91d88f090b61a1e6f887673d5f7208d3e7d4b9100a6ed1c97b5eeb791ac"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "border-width-color-probe.png",
-        "byteLength": 8101,
-        "sha256": "4065f6ef0e8508ce99f3c056ac6e140f21bc10b74743c70229cf44430121873f"
+        "byteLength": 8104,
+        "sha256": "e40526ce5303fbc6fcb3bb16fb0a0f94a9ea95d0caec76444c31e812e78014d3"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "border-width-color-control.png",
-        "byteLength": 8065,
-        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+        "byteLength": 8064,
+        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "border-radius-probe.png",
-        "byteLength": 10695,
-        "sha256": "e4879eee48d30cbd0b959fd664ec5cee159c7d296afe0e67900e3e980acfe377"
+        "byteLength": 10697,
+        "sha256": "8a090627c8cc59f1b9646d2cab406aca45d345c19351fea2564b5a52d3566315"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "border-radius-control.png",
-        "byteLength": 8065,
-        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+        "byteLength": 8064,
+        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "effect-opacity-probe.png",
-        "byteLength": 7924,
-        "sha256": "812afc887d808b82aaf0f1f7493260e65b1a89c9e44e16750aba8b284a065275"
+        "byteLength": 7923,
+        "sha256": "dc3d4ed702f69137429d52fb270a2f6ff08ae148c06b2ff0eaa43208db86adc6"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "effect-opacity-control.png",
-        "byteLength": 8065,
-        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+        "byteLength": 8064,
+        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "effect-shadow-probe.png",
-        "byteLength": 33738,
-        "sha256": "f9abf1ba2893543f4739ce666f9738b4bd4b6fe52e61ab88d83d32c77deac050"
+        "byteLength": 33745,
+        "sha256": "fac5d46094d1402092fd33b6438b2f874dd502c605938faff4b7bc91f783857b"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "effect-shadow-control.png",
-        "byteLength": 15393,
-        "sha256": "80b6d147ff8df5372a310d597a5bb0793576054e9bfe4a7915ba68137859db21"
+        "byteLength": 15395,
+        "sha256": "4f0ec23329a99f705f5fdf321d20e87753e3a3a81541a2dedea0553d0485addc"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "filter-blur-probe.png",
-        "byteLength": 31498,
-        "sha256": "ab335592f3834fc263ffafd845dbcca518a9388459d2b9df3adb7ff6beae7918"
+        "byteLength": 31488,
+        "sha256": "c7a6160c5efb6151318e2a0fd2cf73628c176ae2ccbe284722d05ee5bc9d01d9"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "filter-blur-control.png",
-        "byteLength": 8065,
-        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+        "byteLength": 8064,
+        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "accessibility-sr-geometry-probe.png",
+        "byteLength": 3965,
+        "sha256": "01ad6f1ca73856a6a3a88877148c7fa3625c3c81e4cf6e2ede9634f38af750dc"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "accessibility-sr-geometry-control.png",
+        "byteLength": 5845,
+        "sha256": "b193708aecfc4c160fdd8055715ad5fc103d7a5c9cb2eca98f0195cc4a760364"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "accessibility-sr-geometry.json",
+        "byteLength": 1030,
+        "sha256": "446b7836a652085f6854969d259f4a46507a71b1c0feac24f85469466bb025cf"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "transform-origin-geometry-probe.png",
+        "byteLength": 9099,
+        "sha256": "88a7909ac2689871b91307a919ddf0945593cb4482021985e29d586ac0cb33fb"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "transform-origin-geometry-control.png",
+        "byteLength": 9205,
+        "sha256": "a96fb7e9976a2b31ead95ab5de9167a9bd158e35f375413ceaaa9ab5f763dcb0"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "transform-origin-geometry.json",
+        "byteLength": 1226,
+        "sha256": "520aa9847f46a29134bb07a5760f7063c227143853cb381cf6c2b205a4d5140e"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "transition-basic-before.png",
-        "byteLength": 8065,
-        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+        "byteLength": 8064,
+        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "transition-basic-during.png",
-        "byteLength": 8065,
-        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+        "byteLength": 8064,
+        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "transition-basic-after.png",
-        "byteLength": 8065,
-        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+        "byteLength": 8064,
+        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "animation-spin-before.png",
-        "byteLength": 13205,
-        "sha256": "eca39aba663aa131ffb3b7d99be0c7e8a87a37227d39c688cc330da9c0739da7"
+        "byteLength": 12218,
+        "sha256": "9406118a8a400a3e444c1a70a560eec6e53bbf769fd1e3f830e7437b6f07bd5d"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "animation-spin-after.png",
-        "byteLength": 12716,
-        "sha256": "f6aa474ddacc3b1552185f6654d727dab98e41e931b55016dacce29ac2632f0a"
+        "byteLength": 11429,
+        "sha256": "5d44e837c7a3244418e3646145f7fe085b155b7deec2cba968a6e749a16cbedc"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "variant-responsive-narrow-probe.png",
+        "byteLength": 5012,
+        "sha256": "8edd141d468ab9388eed902318a15d5105921313ad04dbb7245869a26a5d9350"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "variant-responsive-narrow-control.png",
+        "byteLength": 5210,
+        "sha256": "aacbbccc9fa2032e7460acff9fc6ce1d0adcc63a3716db854827b8a5ad41b322"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "variant-responsive-narrow.native.json",
+        "byteLength": 1003,
+        "sha256": "22530c96a8f20b0cd9a039200135b8b2be9c196b22d796234020d4a1127d4365"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "variant-responsive-wide-probe.png",
+        "byteLength": 5012,
+        "sha256": "8edd141d468ab9388eed902318a15d5105921313ad04dbb7245869a26a5d9350"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "variant-responsive-wide-control.png",
+        "byteLength": 5210,
+        "sha256": "aacbbccc9fa2032e7460acff9fc6ce1d0adcc63a3716db854827b8a5ad41b322"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "variant-responsive-wide.native.json",
+        "byteLength": 1001,
+        "sha256": "0c1a1e55a78c496921bfec77440ada25f828509d1626bc808b13f12e4ecbe03f"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "variant-responsive-narrowed-probe.png",
+        "byteLength": 5012,
+        "sha256": "8edd141d468ab9388eed902318a15d5105921313ad04dbb7245869a26a5d9350"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "variant-responsive-narrowed-control.png",
+        "byteLength": 5210,
+        "sha256": "aacbbccc9fa2032e7460acff9fc6ce1d0adcc63a3716db854827b8a5ad41b322"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "variant-responsive-narrowed.native.json",
+        "byteLength": 1005,
+        "sha256": "80dbfc3cc2afa92b26049947171570ad6c28a37bd30b78d6ad8381d2cdaf0fcd"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "variant-responsive-restored-probe.png",
+        "byteLength": 5012,
+        "sha256": "8edd141d468ab9388eed902318a15d5105921313ad04dbb7245869a26a5d9350"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "variant-responsive-restored-control.png",
+        "byteLength": 5210,
+        "sha256": "aacbbccc9fa2032e7460acff9fc6ce1d0adcc63a3716db854827b8a5ad41b322"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "variant-responsive-restored.native.json",
+        "byteLength": 875,
+        "sha256": "c3821b1b6c8ff652eb972a16e6d3ca358a6497baf14454f2b0a766ddff937ce2"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "variant-dark-light-probe.png",
-        "byteLength": 11114,
-        "sha256": "dcd71acd80ca185a94e48c44540e93fadc541d60e56dd65af880a004c372673f"
+        "byteLength": 11229,
+        "sha256": "2d5478805b2fb5a5104aeb15b43134c0842ace784c16df7479eb72f051042098"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "variant-dark-light-control.png",
-        "byteLength": 11114,
-        "sha256": "dcd71acd80ca185a94e48c44540e93fadc541d60e56dd65af880a004c372673f"
+        "byteLength": 11229,
+        "sha256": "2d5478805b2fb5a5104aeb15b43134c0842ace784c16df7479eb72f051042098"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "variant-dark-dark-probe.png",
-        "byteLength": 11114,
-        "sha256": "dcd71acd80ca185a94e48c44540e93fadc541d60e56dd65af880a004c372673f"
+        "byteLength": 11033,
+        "sha256": "54a45d526166693aa05b325a06e6cea035efd8a12f7926eece82706661ed864c"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "variant-dark-dark-control.png",
-        "byteLength": 11114,
-        "sha256": "dcd71acd80ca185a94e48c44540e93fadc541d60e56dd65af880a004c372673f"
+        "byteLength": 11229,
+        "sha256": "2d5478805b2fb5a5104aeb15b43134c0842ace784c16df7479eb72f051042098"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "variant-dark-restored-probe.png",
+        "byteLength": 11229,
+        "sha256": "2d5478805b2fb5a5104aeb15b43134c0842ace784c16df7479eb72f051042098"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "variant-dark-restored-control.png",
+        "byteLength": 11229,
+        "sha256": "2d5478805b2fb5a5104aeb15b43134c0842ace784c16df7479eb72f051042098"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "variant-state-before.png",
-        "byteLength": 8065,
-        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+        "byteLength": 8064,
+        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "variant-state-active.png",
-        "byteLength": 8070,
-        "sha256": "66fc1f159d311ad74fb1e9fafd5cddeb18b0405ea51eaae84136930a7ab24270"
+        "byteLength": 8090,
+        "sha256": "89b787d0e11004826522f51483f7be997ec27bd916fb5402b048f250c487df96"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "variant-structural-probe.png",
-        "byteLength": 17850,
-        "sha256": "cc1c2ace4b4467023beca71a649b044b56ae93bfdfdeea80a45b7ab11d1bf6f1"
+        "byteLength": 17798,
+        "sha256": "cb44fc9a2401814ec879866b3aa302e26a216a5d0edacc497203961187a1f046"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "variant-structural-control.png",
-        "byteLength": 17850,
-        "sha256": "cc1c2ace4b4467023beca71a649b044b56ae93bfdfdeea80a45b7ab11d1bf6f1"
+        "byteLength": 17798,
+        "sha256": "cb44fc9a2401814ec879866b3aa302e26a216a5d0edacc497203961187a1f046"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "variant-structural-reference.png",
-        "byteLength": 17512,
-        "sha256": "7840aba8602ae433a7e9d8a5274fc9ef528acc16a7a15b7ed7bcb9d9cbc9042d"
+        "byteLength": 17493,
+        "sha256": "eaaa98ce917ee8817b217bf185fcd79a68c5fbfe550028442935c398da1280e9"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "variant-supports-geometry-probe.png",
+        "byteLength": 6312,
+        "sha256": "ceb9593a6db884db0b582808c9e2543ac2b815ef463975896a16e938f7c7d8ec"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "variant-supports-geometry-control.png",
+        "byteLength": 5958,
+        "sha256": "db6e8b18a81b5fc706d701de6dface372e10f6944f47c476a4c8cb51207f1ced"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "variant-supports-geometry.json",
+        "byteLength": 922,
+        "sha256": "7a932b7e686720ba3ccdac42f5223f56f3d9ee5ffdab660169b44d5bf5692578"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "variant-arbitrary-probe.png",
-        "byteLength": 7982,
-        "sha256": "5b69b352c53e9c5b397d9f7c9f8687146fb0fd2a4046a0f8b53dc0ee0d8a28f4"
+        "byteLength": 7981,
+        "sha256": "e8a385f4449d243d7d746e4ae10ac27084276e258375390025cdecca9ccc6df0"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "variant-arbitrary-control.png",
-        "byteLength": 8065,
-        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+        "byteLength": 8064,
+        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "syntax-important-probe.png",
+        "byteLength": 6489,
+        "sha256": "d1373ce110727a5ec22645853a62ce8fb1ded91aed1eabf063ae6182c859f1d6"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "syntax-important-control.png",
+        "byteLength": 6492,
+        "sha256": "8c5c4355de7ff7ad5456cd75b96af7dd924afadcabd4645ca5266cb85ba2a4ff"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "syntax-important-reference.png",
+        "byteLength": 6489,
+        "sha256": "d1373ce110727a5ec22645853a62ce8fb1ded91aed1eabf063ae6182c859f1d6"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "syntax-css-variable-geometry-probe.png",
+        "byteLength": 17130,
+        "sha256": "d9269c66b9beb5b0a56024d0ac5b6ba94596812b49fdce180d6f8b180ae1270a"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "syntax-css-variable-geometry-control.png",
+        "byteLength": 17346,
+        "sha256": "c07a5df4f426ea5814f16df145fbad7d2e7e039c2a2261841e723d247bb03aa3"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "syntax-css-variable-geometry.json",
+        "byteLength": 996,
+        "sha256": "a95c8479abc7fdae44b65e5c66caf95beb5a8aba46b5e28d85f924e8eff130f2"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "syntax-type-hint-probe.png",
-        "byteLength": 8111,
-        "sha256": "6569497bb0b98af3275fe51f537e219a0e69c3e95f2427b3d49758fd3a892935"
+        "byteLength": 8114,
+        "sha256": "bdd5e7c5e5c265769b1186fc735cbb0b6a7d7b1ce6466b913f72b24c5201aa71"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "syntax-type-hint-control.png",
-        "byteLength": 8065,
-        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+        "byteLength": 8064,
+        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
-        "name": "type-flow-probe.png",
-        "byteLength": 11223,
-        "sha256": "09183d781180c8d60373da3e780d69b5b46f3d3b735ff504a6e3c0f3f2c8b29d"
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "flex-wrap-order-geometry-probe.png",
+        "byteLength": 6375,
+        "sha256": "052dd5f522770a8a2764a69fa8d9a90fa7f6eb635e08aa0805c863a4123b6257"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
-        "name": "type-flow-control.png",
-        "byteLength": 11300,
-        "sha256": "a6c6d812ccf47b7316d08eced4e9e9982d02c8ae25589bf4ac2d26cee6f25893"
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "flex-wrap-order-geometry-control.png",
+        "byteLength": 6244,
+        "sha256": "77235a0c8adf36eb7757df62606d04b0a87f00e0c742eec4cbb1c15d2f7234d1"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
-        "name": "type-flow-reference.png",
-        "byteLength": 14244,
-        "sha256": "2dc89780d81936c9b4c14ec6847a6742046a57c25cb8ef0804c304fb612370f4"
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "flex-wrap-order-geometry.json",
+        "byteLength": 919,
+        "sha256": "574a85b5dc351f87bfe5d294c6b4314c32dc1ef80373563956fb35aec0cb4a1c"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "flex-shorthand-shrink-geometry-probe.png",
+        "byteLength": 6010,
+        "sha256": "1d5fe05793ef1cbe7cfa110493d92ef5df31cad47ff96858ca932907e3c52383"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "flex-shorthand-shrink-geometry-control.png",
+        "byteLength": 6025,
+        "sha256": "7cd8b02f4b98d37a9902a689c91db82543b13dc0be4461899cbcebb6d4f8fec4"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "flex-shorthand-shrink-geometry.json",
+        "byteLength": 926,
+        "sha256": "2a1b4660462b7bf6eb3b0e3ae1fdb6a9227577dd0ea01918c8cd39de3bfb8c89"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "grid-placement-geometry-probe.png",
+        "byteLength": 6212,
+        "sha256": "b1f98be8b65dacce9ec383bf50f5477e7aa7043d31a02c2e76b12286a4f6c539"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "grid-placement-geometry-control.png",
+        "byteLength": 6226,
+        "sha256": "71f2053ecb5dffc45ad9ac9c2fcf5d5e69301b936eb01c12d572c19aef2d33ef"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "grid-placement-geometry.json",
+        "byteLength": 758,
+        "sha256": "866060cca300d4598110ee081c8a4dba1fd9bc65fa7a1cbcd8fa9f4251de6718"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "grid-align-content-self-geometry-probe.png",
+        "byteLength": 7198,
+        "sha256": "43fd09237d6dd9143363dabd20e62a5e66f561ab538f63b4aedded17b044910b"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "grid-align-content-self-geometry-control.png",
+        "byteLength": 5845,
+        "sha256": "b193708aecfc4c160fdd8055715ad5fc103d7a5c9cb2eca98f0195cc4a760364"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "grid-align-content-self-geometry.json",
+        "byteLength": 1093,
+        "sha256": "ce413a72f7d5e520d3f2aab9d4ac04bd5b04aa9a12f06716f7e06dad930d4298"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "sizing-size-geometry-probe.png",
+        "byteLength": 6090,
+        "sha256": "b1f29df1e86616e7905c8411c09a99fec955802bc5c1146458fd0f3f2ec664e1"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "sizing-size-geometry-control.png",
+        "byteLength": 5845,
+        "sha256": "b193708aecfc4c160fdd8055715ad5fc103d7a5c9cb2eca98f0195cc4a760364"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "name": "sizing-size-geometry.json",
+        "byteLength": 962,
+        "sha256": "8fa357fcea2935de4a63c01196c60e53b74d1f57d20db1f5e85d60ff7491e450"
+      },
+      {
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "type-content-probe.png",
-        "byteLength": 8065,
-        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+        "byteLength": 8064,
+        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "type-content-control.png",
-        "byteLength": 8065,
-        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+        "byteLength": 8064,
+        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "background-linear-gradient-probe.png",
-        "byteLength": 134108,
-        "sha256": "6f43591ee5166d9c978d2baf7151c87df9461f67119b9b7a6f22dd90982ee559"
+        "byteLength": 134124,
+        "sha256": "30ad1c818599904b7378a7b6317cb1ce551d73dcd93d340591a874bd2908cd96"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "background-linear-gradient-control.png",
-        "byteLength": 137740,
-        "sha256": "67e926f8fce3f5649216dffab3b7a2824e754a5dd4b17a460aac6795b19fdf64"
+        "byteLength": 137745,
+        "sha256": "3f702391383d44aea031878f7c4607cb0da9bb599126bbcba028604c09ec6a5a"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "effect-ring-probe.png",
-        "byteLength": 12323,
-        "sha256": "d5eb9fe72bc5b95d7303018641f7f87cfb5c85049c51452ad3b70475206dfb42"
+        "byteLength": 12327,
+        "sha256": "ea52e9b03672e76b08765092c89166fbf3bdb5e8504f4a29639df781bd05a206"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "effect-ring-control.png",
-        "byteLength": 8065,
-        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+        "byteLength": 8064,
+        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "effect-inset-text-shadow-probe.png",
-        "byteLength": 17783,
-        "sha256": "1528102084b4e1fb9cf30149f50099ed2d3263374b1a354002d387fc51d7da6e"
+        "byteLength": 17787,
+        "sha256": "40a702b8fc11946a82bfdabc7f07f778fde5c615f79202a056c5ed99e2ec6d32"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "effect-inset-text-shadow-control.png",
-        "byteLength": 8065,
-        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+        "byteLength": 8064,
+        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "filter-color-adjustments-probe.png",
-        "byteLength": 8065,
-        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+        "byteLength": 8064,
+        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "filter-color-adjustments-control.png",
-        "byteLength": 8065,
-        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+        "byteLength": 8064,
+        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "filter-color-rotation-probe.png",
-        "byteLength": 8065,
-        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+        "byteLength": 8064,
+        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "filter-color-rotation-control.png",
-        "byteLength": 8065,
-        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+        "byteLength": 8064,
+        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "filter-drop-shadow-probe.png",
-        "byteLength": 8065,
-        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+        "byteLength": 8064,
+        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "filter-drop-shadow-control.png",
-        "byteLength": 8065,
-        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
+        "byteLength": 8064,
+        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "transform-skew-probe.png",
         "byteLength": 7774,
         "sha256": "0835a235e9b1c2ce94faa89241c8118e97af335ba3640ceacc2cb92659c6566b"
       },
       {
-        "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
+        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
         "name": "transform-skew-control.png",
         "byteLength": 6540,
         "sha256": "03eebb8e8b6bc1ec78070e43723f7a2458fe256e1b270e59007e5833aa00c402"
       }
     ],
-    "bundleSha256": "1bc4f2294871be821c5673ace6c40d22b8312981f0fa9627b579134ebd303072",
+    "bundleSha256": "b0106c10d81286219b72222a9e466ec5b9971e4f2918f28681a201b3d039331c",
     "version": 1
   },
   "platform": "ios",
   "versions": {
+    "tasmEncoder": "0.0.49",
+    "cssDefines": "0.0.18",
+    "tasmDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
     "engineVersion": "3.9",
+    "lynxEngine": "4.0.1",
+    "bundleConfig": "83ff6486fd81b51443ebc52109b8314e07f33507e0fb3354553d704b27324f5b",
     "tailwindcss": "4.3.3",
-    "cssDefines": "0.0.16",
-    "lynxEngine": "4.0.1"
+    "cssSerializer": "0.1.9"
   },
-  "catalogHash": "a8c3b45f993d9aa28782f308fc959a09e160d67a9097d11b1bc6a8a38b93c886",
+  "catalogHash": "2e3a1a60517c13de507d22ef8b4d209ffcdb86b2dfbf5bf7100df35c40dc3fec",
   "environment": {
     "osName": "iOS",
-    "osBuild": "23F77",
-    "deviceName": "iPhone 17 Pro iOS 26.5",
-    "osVersion": "26.5",
+    "osBuild": "22F77",
+    "deviceName": "LynxCompatibility",
+    "osVersion": "18.5",
     "abi": "arm64",
-    "runtimeIdentifier": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
+    "runtimeIdentifier": "com.apple.CoreSimulator.SimRuntime.iOS-18-5",
     "viewport": {
       "width": 402,
       "height": 874,
       "pixelRatio": 3
     },
-    "deviceModel": "iPhone18,1"
+    "deviceModel": "iPhone17,1"
   },
-  "verifiedAt": "2026-10-06T01:37:07.516Z",
+  "verifiedAt": "2026-10-19T15:13:36.717Z",
   "results": [
     {
       "status": "supported",
@@ -424,50 +974,50 @@
         "probe": {
           "left": 21,
           "right": 85,
-          "top": 743.3333333333334,
+          "top": 1112.9999999999998,
           "height": 48,
           "width": 64,
-          "bottom": 791.3333333333334
+          "bottom": 1160.9999999999998
         },
         "control": {
           "left": 207.66666666666663,
           "right": 271.66666666666663,
-          "top": 743.3333333333334,
+          "top": 1112.9999999999998,
           "height": 16,
           "width": 64,
-          "bottom": 759.3333333333334
+          "bottom": 1128.9999999999998
         },
         "controlChild": {
           "left": 207.66666666666663,
           "right": 219.66666666666663,
-          "top": 747.3333333333334,
+          "top": 1116.9999999999998,
           "height": 12,
           "width": 12,
-          "bottom": 759.3333333333334
+          "bottom": 1128.9999999999998
         },
         "probeChild": {
           "left": 21,
           "right": 33,
-          "top": 747.3333333333334,
+          "top": 1116.9999999999998,
           "height": 12,
           "width": 12,
-          "bottom": 759.3333333333334
+          "bottom": 1128.9999999999998
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 737.3333333333334,
+          "top": 1106.9999999999998,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 829.3333333333334
+          "bottom": 1198.9999999999998
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 737.3333333333334,
+          "top": 1106.9999999999998,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 829.3333333333334
+          "bottom": 1198.9999999999998
         }
       }
     },
@@ -484,7 +1034,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：columns"
+      "reason": "columns-2: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "supported",
@@ -501,50 +1051,50 @@
         "probe": {
           "left": 21,
           "right": 117,
-          "top": 1403,
+          "top": 1772.6666666666665,
           "height": 64,
           "width": 96,
-          "bottom": 1467
+          "bottom": 1836.6666666666665
         },
         "control": {
           "left": 207.66666666666663,
           "right": 323.66666666666663,
-          "top": 1403,
+          "top": 1772.6666666666665,
           "height": 84,
           "width": 116,
-          "bottom": 1487
+          "bottom": 1856.6666666666665
         },
         "controlChild": {
           "left": 217.66666666666663,
           "right": 229.66666666666663,
-          "top": 1431.3333333333335,
+          "top": 1801,
           "height": 12,
           "width": 12,
-          "bottom": 1443.3333333333335
+          "bottom": 1813
         },
         "probeChild": {
           "left": 31,
           "right": 43,
-          "top": 1431.3333333333335,
+          "top": 1801,
           "height": 12,
           "width": 12,
-          "bottom": 1443.3333333333335
+          "bottom": 1813
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 1397,
+          "top": 1766.6666666666665,
           "height": 96,
           "width": 178.66666666666666,
-          "bottom": 1493
+          "bottom": 1862.6666666666665
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 1397,
+          "top": 1766.6666666666665,
           "height": 96,
           "width": 178.33333333333337,
-          "bottom": 1493
+          "bottom": 1862.6666666666665
         }
       }
     },
@@ -555,7 +1105,7 @@
         {
           "actual": "6,6,166.66666666666666,40; child=31.66666666666667,12,12,12",
           "passed": true,
-          "expected": "control=6,6,166.33333333333337,62.33333333333326; child=8,26.333333333333485,12,12",
+          "expected": "control=6,6,166.33333333333337,62; child=8,26,12,12",
           "name": "geometry:probe-vs-control"
         }
       ],
@@ -563,50 +1113,50 @@
         "probe": {
           "left": 21,
           "right": 187.66666666666666,
-          "top": 1706.3333333333333,
+          "top": 2076,
           "height": 40,
           "width": 166.66666666666666,
-          "bottom": 1746.3333333333333
+          "bottom": 2116
         },
         "control": {
           "left": 207.66666666666663,
           "right": 374,
-          "top": 1706.3333333333333,
-          "height": 62.33333333333326,
+          "top": 2076,
+          "height": 62,
           "width": 166.33333333333337,
-          "bottom": 1768.6666666666665
+          "bottom": 2138
         },
         "controlChild": {
           "left": 215.66666666666663,
           "right": 227.66666666666663,
-          "top": 1732.6666666666667,
+          "top": 2102,
           "height": 12,
           "width": 12,
-          "bottom": 1744.6666666666667
+          "bottom": 2114
         },
         "probeChild": {
           "left": 52.66666666666667,
           "right": 64.66666666666667,
-          "top": 1718.3333333333333,
+          "top": 2088,
           "height": 12,
           "width": 12,
-          "bottom": 1730.3333333333333
+          "bottom": 2100
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 1700.3333333333333,
+          "top": 2070,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 1792.3333333333333
+          "bottom": 2162
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 1700.3333333333333,
+          "top": 2070,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 1792.3333333333333
+          "bottom": 2162
         }
       }
     },
@@ -623,7 +1173,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：float"
+      "reason": "float-left: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -638,7 +1188,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：isolation"
+      "reason": "isolate: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -653,21 +1203,69 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：object-fit"
+      "reason": "object-cover: TASM 未保留该候选的完整 selector 或声明"
     },
     {
-      "status": "unsupported",
+      "status": "supported",
       "id": "layout-overflow",
-      "failureStage": "runtime",
-      "reason": "probe/control 元素截图没有可观察的像素差异",
       "checkpoints": [
         {
-          "actual": "11188:ffc2f305",
-          "passed": false,
-          "expected": "different from 11188:ffc2f305",
-          "name": "pixel:probe-vs-control"
+          "name": "pixel:overflow-clip-v1",
+          "passed": true,
+          "actual": "{\"probe\":{\"outside\":11340,\"hidden\":11340,\"visible\":0,\"clipped\":true},\"control\":{\"outside\":11340,\"hidden\":0,\"visible\":11340,\"clipped\":false}}",
+          "expected": "相同真实越界几何；control 完整显示，hidden probe 仅显示父/子 24×24px 交集，外侧为画布"
         }
-      ]
+      ],
+      "geometry": {
+        "probe": {
+          "bottom": 3998.3333333333335,
+          "height": 64,
+          "top": 3934.3333333333335,
+          "width": 96,
+          "left": 27,
+          "right": 123
+        },
+        "control": {
+          "bottom": 4166.333333333333,
+          "height": 64,
+          "top": 4102.333333333333,
+          "width": 96,
+          "left": 27,
+          "right": 123
+        },
+        "controlChild": {
+          "bottom": 4182.333333333333,
+          "height": 40,
+          "top": 4142.333333333333,
+          "width": 48,
+          "left": 99,
+          "right": 147
+        },
+        "probeChild": {
+          "bottom": 4014.3333333333335,
+          "height": 40,
+          "top": 3974.3333333333335,
+          "width": 48,
+          "left": 99,
+          "right": 147
+        },
+        "probeContainer": {
+          "bottom": 4082.3333333333335,
+          "height": 160,
+          "top": 3922.3333333333335,
+          "width": 160,
+          "left": 15,
+          "right": 175
+        },
+        "controlContainer": {
+          "bottom": 4250.333333333334,
+          "height": 160.00000000000045,
+          "top": 4090.3333333333335,
+          "width": 160,
+          "left": 15,
+          "right": 175
+        }
+      }
     },
     {
       "status": "supported",
@@ -684,50 +1282,50 @@
         "probe": {
           "left": 22,
           "right": 94,
-          "top": 4137.666666666667,
+          "top": 4507.333333333334,
           "height": 62.33333333333303,
           "width": 72,
-          "bottom": 4200
+          "bottom": 4569.666666666667
         },
         "control": {
           "left": 207.66666666666663,
           "right": 374,
-          "top": 4134.666666666667,
+          "top": 4504.333333333334,
           "height": 62.33333333333303,
           "width": 166.33333333333337,
-          "bottom": 4197
+          "bottom": 4566.666666666667
         },
         "controlChild": {
           "left": 215.66666666666663,
           "right": 227.66666666666663,
-          "top": 4161,
+          "top": 4530.666666666667,
           "height": 12,
           "width": 12,
-          "bottom": 4173
+          "bottom": 4542.666666666667
         },
         "probeChild": {
           "left": 30,
           "right": 42,
-          "top": 4164,
+          "top": 4533.666666666667,
           "height": 12,
           "width": 12,
-          "bottom": 4176
+          "bottom": 4545.666666666667
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 4128.666666666667,
+          "top": 4498.333333333334,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 4220.666666666667
+          "bottom": 4590.333333333334
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 4128.666666666667,
+          "top": 4498.333333333334,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 4220.666666666667
+          "bottom": 4590.333333333334
         }
       }
     },
@@ -738,7 +1336,7 @@
         {
           "actual": "8060:306eaf41",
           "passed": true,
-          "expected": "different from 10756:33306848",
+          "expected": "different from 10752:f79ae09e",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -750,7 +1348,7 @@
         {
           "actual": "8060:306eaf41",
           "passed": true,
-          "expected": "different from 10956:abfa2639",
+          "expected": "different from 10956:12465956",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -770,50 +1368,50 @@
         "probe": {
           "left": 21,
           "right": 187.66666666666666,
-          "top": 5504.666666666666,
+          "top": 5874.333333333333,
           "height": 40,
           "width": 166.66666666666666,
-          "bottom": 5544.666666666666
+          "bottom": 5914.333333333333
         },
         "control": {
           "left": 207.66666666666663,
           "right": 374,
-          "top": 5504.666666666666,
+          "top": 5874.333333333333,
           "height": 62.33333333333303,
           "width": 166.33333333333337,
-          "bottom": 5566.999999999999
+          "bottom": 5936.666666666666
         },
         "controlChild": {
           "left": 215.66666666666663,
           "right": 227.66666666666663,
-          "top": 5531,
+          "top": 5900.666666666667,
           "height": 12,
           "width": 12,
-          "bottom": 5543
+          "bottom": 5912.666666666667
         },
         "probeChild": {
           "left": 52.66666666666667,
           "right": 64.66666666666667,
-          "top": 5516.666666666666,
+          "top": 5886.333333333333,
           "height": 12,
           "width": 12,
-          "bottom": 5528.666666666666
+          "bottom": 5898.333333333333
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 5498.666666666666,
+          "top": 5868.333333333333,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 5590.666666666666
+          "bottom": 5960.333333333333
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 5498.666666666666,
+          "top": 5868.333333333333,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 5590.666666666666
+          "bottom": 5960.333333333333
         }
       }
     },
@@ -832,50 +1430,50 @@
         "probe": {
           "left": 21,
           "right": 187.66666666666666,
-          "top": 5804,
+          "top": 6173.666666666666,
           "height": 62.33333333333303,
           "width": 166.66666666666666,
-          "bottom": 5866.333333333333
+          "bottom": 6235.999999999999
         },
         "control": {
           "left": 207.66666666666663,
           "right": 374,
-          "top": 5804,
+          "top": 6173.666666666666,
           "height": 62.33333333333303,
           "width": 166.33333333333337,
-          "bottom": 5866.333333333333
+          "bottom": 6235.999999999999
         },
         "controlChild": {
           "left": 215.66666666666663,
           "right": 227.66666666666663,
-          "top": 5830.333333333334,
+          "top": 6200,
           "height": 12,
           "width": 12,
-          "bottom": 5842.333333333334
+          "bottom": 6212
         },
         "probeChild": {
           "left": 98.33333333333333,
           "right": 110.33333333333333,
-          "top": 5830.333333333334,
+          "top": 6200,
           "height": 12,
           "width": 12,
-          "bottom": 5842.333333333334
+          "bottom": 6212
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 5798,
+          "top": 6167.666666666666,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 5890
+          "bottom": 6259.666666666666
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 5798,
+          "top": 6167.666666666666,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 5890
+          "bottom": 6259.666666666666
         }
       }
     },
@@ -894,50 +1492,50 @@
         "probe": {
           "left": 21,
           "right": 112,
-          "top": 6103.333333333333,
+          "top": 6473,
           "height": 24,
           "width": 91,
-          "bottom": 6127.333333333333
+          "bottom": 6497
         },
         "control": {
           "left": 21,
           "right": 45,
-          "top": 6251.333333333333,
+          "top": 6621,
           "height": 24,
           "width": 24,
-          "bottom": 6275.333333333333
+          "bottom": 6645
         },
         "controlChild": {
           "left": 21,
           "right": 29,
-          "top": 6251.333333333333,
+          "top": 6621,
           "height": 8,
           "width": 8,
-          "bottom": 6259.333333333333
+          "bottom": 6629
         },
         "probeChild": {
           "left": 21,
           "right": 29,
-          "top": 6103.333333333333,
+          "top": 6473,
           "height": 8,
           "width": 8,
-          "bottom": 6111.333333333333
+          "bottom": 6481
         },
         "probeContainer": {
           "left": 15,
           "right": 175,
-          "top": 6097.333333333333,
+          "top": 6467,
           "height": 140,
           "width": 160,
-          "bottom": 6237.333333333333
+          "bottom": 6607
         },
         "controlContainer": {
           "left": 15,
           "right": 175,
-          "top": 6245.333333333333,
+          "top": 6615,
           "height": 140,
           "width": 160,
-          "bottom": 6385.333333333333
+          "bottom": 6755
         }
       }
     },
@@ -956,50 +1554,50 @@
         "probe": {
           "left": 21,
           "right": 187.66666666666666,
-          "top": 6598.666666666666,
+          "top": 6980.333333333333,
           "height": 55,
           "width": 166.66666666666666,
-          "bottom": 6653.666666666666
+          "bottom": 7035.333333333333
         },
         "control": {
           "left": 207.66666666666663,
           "right": 374,
-          "top": 6598.666666666666,
+          "top": 6980.333333333333,
           "height": 62.33333333333303,
           "width": 166.33333333333337,
-          "bottom": 6660.999999999999
+          "bottom": 7042.666666666666
         },
         "controlChild": {
           "left": 215.66666666666663,
           "right": 227.66666666666663,
-          "top": 6625,
+          "top": 7006.666666666667,
           "height": 12,
           "width": 12,
-          "bottom": 6637
+          "bottom": 7018.666666666667
         },
         "probeChild": {
           "left": 116,
           "right": 128,
-          "top": 6610.666666666666,
+          "top": 6992.333333333333,
           "height": 12,
           "width": 12,
-          "bottom": 6622.666666666666
+          "bottom": 7004.333333333333
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 6592.666666666666,
+          "top": 6974.333333333333,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 6684.666666666666
+          "bottom": 7066.333333333333
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 6592.666666666666,
+          "top": 6974.333333333333,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 6684.666666666666
+          "bottom": 7066.333333333333
         }
       }
     },
@@ -1018,50 +1616,50 @@
         "probe": {
           "left": 32,
           "right": 187.66666666666666,
-          "top": 6891,
+          "top": 7272.666666666666,
           "height": 62.33333333333303,
           "width": 155.66666666666666,
-          "bottom": 6953.333333333333
+          "bottom": 7334.999999999999
         },
         "control": {
           "left": 207.66666666666663,
           "right": 374,
-          "top": 6898,
+          "top": 7279.666666666666,
           "height": 62.33333333333303,
           "width": 166.33333333333337,
-          "bottom": 6960.333333333333
+          "bottom": 7341.999999999999
         },
         "controlChild": {
           "left": 215.66666666666663,
           "right": 227.66666666666663,
-          "top": 6924.333333333334,
+          "top": 7306,
           "height": 12,
           "width": 12,
-          "bottom": 6936.333333333334
+          "bottom": 7318
         },
         "probeChild": {
           "left": 40,
           "right": 52,
-          "top": 6917.333333333334,
+          "top": 7299,
           "height": 12,
           "width": 12,
-          "bottom": 6929.333333333334
+          "bottom": 7311
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 6892,
+          "top": 7273.666666666666,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 6984
+          "bottom": 7365.666666666666
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 6892,
+          "top": 7273.666666666666,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 6984
+          "bottom": 7365.666666666666
         }
       }
     },
@@ -1080,50 +1678,50 @@
         "probe": {
           "left": 21,
           "right": 187.66666666666666,
-          "top": 7197.333333333333,
+          "top": 7591,
           "height": 72.33333333333303,
           "width": 166.66666666666666,
-          "bottom": 7269.666666666666
+          "bottom": 7663.333333333333
         },
         "control": {
           "left": 207.66666666666663,
           "right": 374,
-          "top": 7197.333333333333,
+          "top": 7591,
           "height": 62.33333333333303,
           "width": 166.33333333333337,
-          "bottom": 7259.666666666666
+          "bottom": 7653.333333333333
         },
         "controlChild": {
           "left": 215.66666666666663,
           "right": 227.66666666666663,
-          "top": 7223.666666666667,
+          "top": 7617.333333333334,
           "height": 12,
           "width": 12,
-          "bottom": 7235.666666666667
+          "bottom": 7629.333333333334
         },
         "probeChild": {
           "left": 28,
           "right": 40,
-          "top": 7228.666666666667,
+          "top": 7622.333333333334,
           "height": 12,
           "width": 12,
-          "bottom": 7240.666666666667
+          "bottom": 7634.333333333334
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 7191.333333333333,
+          "top": 7585,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 7283.333333333333
+          "bottom": 7677
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 7191.333333333333,
+          "top": 7585,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 7283.333333333333
+          "bottom": 7677
         }
       }
     },
@@ -1140,7 +1738,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：padding-inline"
+      "reason": "px-[7.5px]: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "supported",
@@ -1149,7 +1747,7 @@
         {
           "actual": "6,6,123,40; child=8,26.33333333333394,12,12",
           "passed": true,
-          "expected": "control=6,6,166.33333333333337,62.33333333333303; child=8,26.33333333333394,12,12",
+          "expected": "control=6,6,166.33333333333337,62.33333333333394; child=8,26.33333333333394,12,12",
           "name": "geometry:probe-vs-control"
         }
       ],
@@ -1157,50 +1755,50 @@
         "probe": {
           "left": 21,
           "right": 144,
-          "top": 7877.333333333333,
+          "top": 8271,
           "height": 40,
           "width": 123,
-          "bottom": 7917.333333333333
+          "bottom": 8311
         },
         "control": {
           "left": 207.66666666666663,
           "right": 374,
-          "top": 7877.333333333333,
-          "height": 62.33333333333303,
+          "top": 8271,
+          "height": 62.33333333333394,
           "width": 166.33333333333337,
-          "bottom": 7939.666666666666
+          "bottom": 8333.333333333334
         },
         "controlChild": {
           "left": 215.66666666666663,
           "right": 227.66666666666663,
-          "top": 7903.666666666667,
+          "top": 8297.333333333334,
           "height": 12,
           "width": 12,
-          "bottom": 7915.666666666667
+          "bottom": 8309.333333333334
         },
         "probeChild": {
           "left": 29,
           "right": 41,
-          "top": 7903.666666666667,
+          "top": 8297.333333333334,
           "height": 12,
           "width": 12,
-          "bottom": 7915.666666666667
+          "bottom": 8309.333333333334
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 7871.333333333333,
+          "top": 8265,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 7963.333333333333
+          "bottom": 8357
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 7871.333333333333,
+          "top": 8265,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 7963.333333333333
+          "bottom": 8357
         }
       }
     },
@@ -1213,57 +1811,57 @@
         "probe": {
           "left": 21,
           "right": 61,
-          "top": 8176.666666666666,
+          "top": 8570.333333333334,
           "height": 240,
           "width": 40,
-          "bottom": 8416.666666666666
+          "bottom": 8810.333333333334
         },
         "control": {
           "left": 207.66666666666663,
           "right": 247.66666666666663,
-          "top": 8176.666666666666,
+          "top": 8570.333333333334,
           "height": 300,
           "width": 40,
-          "bottom": 8476.666666666666
+          "bottom": 8870.333333333334
         },
         "controlChild": {
           "left": 207.66666666666663,
           "right": 219.66666666666663,
-          "top": 8195,
+          "top": 8588.666666666666,
           "height": 12,
           "width": 12,
-          "bottom": 8207
+          "bottom": 8600.666666666666
         },
         "probeChild": {
           "left": 21,
           "right": 33,
-          "top": 8195,
+          "top": 8588.666666666666,
           "height": 12,
           "width": 12,
-          "bottom": 8207
+          "bottom": 8600.666666666666
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 8170.666666666666,
+          "top": 8564.333333333334,
           "height": 320,
           "width": 178.66666666666666,
-          "bottom": 8490.666666666666
+          "bottom": 8884.333333333334
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 8170.666666666666,
+          "top": 8564.333333333334,
           "height": 320,
           "width": 178.33333333333337,
-          "bottom": 8490.666666666666
+          "bottom": 8884.333333333334
         }
       },
       "checkpoints": [
         {
-          "actual": "6,6,40,240; child=0,18.33333333333394,12,12",
+          "actual": "6,6,40,240; child=0,18.33333333333212,12,12",
           "passed": false,
-          "expected": "control=6,6,40,300; child=0,18.33333333333394,12,12",
+          "expected": "control=6,6,40,300; child=0,18.33333333333212,12,12",
           "name": "geometry:probe-vs-control"
         }
       ]
@@ -1281,7 +1879,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：table-layout, border-collapse"
+      "reason": "table: TASM 未保留该候选的完整 selector 或声明; table-fixed: TASM 未保留该候选的完整 selector 或声明; border-collapse: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "supported",
@@ -1298,50 +1896,50 @@
         "probe": {
           "left": 21,
           "right": 187.66666666666666,
-          "top": 9300.333333333334,
+          "top": 9740.666666666668,
           "height": 45,
           "width": 166.66666666666666,
-          "bottom": 9345.333333333334
+          "bottom": 9785.666666666668
         },
         "control": {
           "left": 207.66666666666663,
           "right": 374,
-          "top": 9300.333333333334,
+          "top": 9740.666666666668,
           "height": 40,
           "width": 166.33333333333337,
-          "bottom": 9340.333333333334
+          "bottom": 9780.666666666668
         },
         "controlChild": {
           "left": 239.33333333333331,
           "right": 251.33333333333331,
-          "top": 9312.333333333334,
+          "top": 9752.666666666668,
           "height": 12,
           "width": 12,
-          "bottom": 9324.333333333334
+          "bottom": 9764.666666666668
         },
         "probeChild": {
           "left": 71.66666666666666,
           "right": 83.66666666666666,
-          "top": 9312.333333333334,
+          "top": 9752.666666666668,
           "height": 12,
           "width": 12,
-          "bottom": 9324.333333333334
+          "bottom": 9764.666666666668
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 9294.333333333334,
+          "top": 9734.666666666668,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 9386.333333333334
+          "bottom": 9826.666666666668
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 9294.333333333334,
+          "top": 9734.666666666668,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 9386.333333333334
+          "bottom": 9826.666666666668
         }
       }
     },
@@ -1350,9 +1948,9 @@
       "status": "supported",
       "checkpoints": [
         {
-          "actual": "11192:aad0ad4f",
+          "actual": "11180:ba63e008",
           "passed": true,
-          "expected": "different from 10756:33306848",
+          "expected": "different from 10752:f79ae09e",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -1372,50 +1970,50 @@
         "probe": {
           "left": 21,
           "right": 187.66666666666666,
-          "top": 10135,
+          "top": 10575.333333333334,
           "height": 40,
           "width": 166.66666666666666,
-          "bottom": 10175
+          "bottom": 10615.333333333334
         },
         "control": {
           "left": 207.66666666666663,
           "right": 374,
-          "top": 10135,
+          "top": 10575.333333333334,
           "height": 40,
           "width": 166.33333333333337,
-          "bottom": 10175
+          "bottom": 10615.333333333334
         },
         "controlChild": {
           "left": 239.33333333333331,
           "right": 251.33333333333331,
-          "top": 10147,
+          "top": 10587.333333333334,
           "height": 12,
           "width": 12,
-          "bottom": 10159
+          "bottom": 10599.333333333334
         },
         "probeChild": {
           "left": 56.666666666666664,
           "right": 68.66666666666666,
-          "top": 10147,
+          "top": 10587.333333333334,
           "height": 12,
           "width": 11.999999999999993,
-          "bottom": 10159
+          "bottom": 10599.333333333334
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 10129,
+          "top": 10569.333333333334,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 10221
+          "bottom": 10661.333333333334
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 10129,
+          "top": 10569.333333333334,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 10221
+          "bottom": 10661.333333333334
         }
       }
     },
@@ -1426,9 +2024,9 @@
       "reason": "probe/control 元素截图没有可观察的像素差异",
       "checkpoints": [
         {
-          "actual": "11188:ffc2f305",
+          "actual": "11192:1370e59c",
           "passed": false,
-          "expected": "different from 11188:ffc2f305",
+          "expected": "different from 11192:1370e59c",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -1446,16 +2044,16 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：text-decoration-line"
+      "reason": "underline: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "id": "background-color",
       "status": "supported",
       "checkpoints": [
         {
-          "actual": "10836:e7917076",
+          "actual": "10848:836d459d",
           "passed": true,
-          "expected": "different from 10756:33306848",
+          "expected": "different from 10752:f79ae09e",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -1465,9 +2063,9 @@
       "status": "supported",
       "checkpoints": [
         {
-          "actual": "186460:bcdbbeee",
+          "actual": "185088:6e43b9ee",
           "passed": true,
-          "expected": "different from 8524:e9c7a93",
+          "expected": "different from 8540:aa77475e",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -1477,9 +2075,9 @@
       "status": "supported",
       "checkpoints": [
         {
-          "actual": "183656:ffe798d6",
+          "actual": "183660:6f1f960f",
           "passed": true,
-          "expected": "different from 127916:8103cdcf",
+          "expected": "different from 127828:48ec0196",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -1489,9 +2087,9 @@
       "status": "supported",
       "checkpoints": [
         {
-          "actual": "10804:caeae8dd",
+          "actual": "10808:932fdfa9",
           "passed": true,
-          "expected": "different from 10756:33306848",
+          "expected": "different from 10752:f79ae09e",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -1501,9 +2099,9 @@
       "status": "supported",
       "checkpoints": [
         {
-          "actual": "14260:7663fef3",
+          "actual": "14264:346ada85",
           "passed": true,
-          "expected": "different from 10756:33306848",
+          "expected": "different from 10752:f79ae09e",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -1513,9 +2111,9 @@
       "status": "supported",
       "checkpoints": [
         {
-          "actual": "10568:1eecb4bd",
+          "actual": "10564:43af078b",
           "passed": true,
-          "expected": "different from 10756:33306848",
+          "expected": "different from 10752:f79ae09e",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -1549,16 +2147,16 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：mix-blend-mode"
+      "reason": "mix-blend-multiply: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "id": "filter-blur",
       "status": "supported",
       "checkpoints": [
         {
-          "actual": "42000:5848ec61",
+          "actual": "41984:9f0e767",
           "passed": true,
-          "expected": "different from 10756:33306848",
+          "expected": "different from 10752:f79ae09e",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -1576,7 +2174,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：backdrop-filter"
+      "reason": "backdrop-blur-[2px]: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -1591,7 +2189,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：fill, stroke-width, stroke"
+      "reason": "fill-[#0284c7]: TASM 未保留该候选的完整 selector 或声明; stroke-2: TASM 未保留该候选的完整 selector 或声明; stroke-[#0f172a]: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "supported",
@@ -1600,7 +2198,7 @@
         {
           "actual": "-1,-1,1,1; child=0,47,12,12",
           "passed": true,
-          "expected": "control=6,6,166.33333333333337,62.33333333333212; child=8,26.33333333333212,12,12",
+          "expected": "control=6,6,166.33333333333337,62.33333333333212; child=8,26.33333333333576,12,12",
           "name": "geometry:probe-vs-control"
         }
       ],
@@ -1608,50 +2206,50 @@
         "probe": {
           "left": 14,
           "right": 15,
-          "top": 17911.333333333336,
+          "top": 18389.666666666664,
           "height": 1,
           "width": 1,
-          "bottom": 17912.333333333336
+          "bottom": 18390.666666666664
         },
         "control": {
           "left": 207.66666666666663,
           "right": 374,
-          "top": 17918.333333333336,
+          "top": 18396.666666666664,
           "height": 62.33333333333212,
           "width": 166.33333333333337,
-          "bottom": 17980.666666666668
+          "bottom": 18458.999999999996
         },
         "controlChild": {
           "left": 215.66666666666663,
           "right": 227.66666666666663,
-          "top": 17944.666666666668,
+          "top": 18423,
           "height": 12,
           "width": 12,
-          "bottom": 17956.666666666668
+          "bottom": 18435
         },
         "probeChild": {
           "left": 14,
           "right": 26,
-          "top": 17958.333333333336,
+          "top": 18436.666666666664,
           "height": 12,
           "width": 12,
-          "bottom": 17970.333333333336
+          "bottom": 18448.666666666664
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 17912.333333333336,
+          "top": 18390.666666666664,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 18004.333333333336
+          "bottom": 18482.666666666664
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 17912.333333333336,
+          "top": 18390.666666666664,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 18004.333333333336
+          "bottom": 18482.666666666664
         }
       }
     },
@@ -1668,7 +2266,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：translate"
+      "reason": "translate-x-[12px]: TASM 未保留该候选的完整 selector 或声明; translate-y-[4px]: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -1683,7 +2281,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：rotate"
+      "reason": "rotate-[12deg]: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -1698,7 +2296,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：scale"
+      "reason": "scale-110: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "supported",
@@ -1707,7 +2305,7 @@
         {
           "actual": "-10.133053811390461,6,177.12069152623516,103.34588402243753; child=13.939063692773047,27.50659911976618,14.696938456699066,14.696938456698263",
           "passed": true,
-          "expected": "control=0.7673085412639296,-14.463138837032602,176.79871625080548,103.2596110074046; child=13.939063692773061,27.50659911976254,14.696938456699058,14.696938456698263",
+          "expected": "control=0.7673085412639296,-14.46313883703624,176.79871625080548,103.2596110074046; child=13.939063692773061,27.50659911976618,14.696938456699058,14.696938456698263",
           "name": "geometry:probe-vs-control"
         }
       ],
@@ -1715,50 +2313,50 @@
         "probe": {
           "left": 4.86694618860954,
           "right": 181.9876377148447,
-          "top": 19411.333333333332,
+          "top": 19838.333333333336,
           "height": 103.34588402243753,
           "width": 177.12069152623516,
-          "bottom": 19514.67921735577
+          "bottom": 19941.679217355773
         },
         "control": {
           "left": 202.43397520793056,
           "right": 379.23269145873604,
-          "top": 19390.8701944963,
+          "top": 19817.8701944963,
           "height": 103.2596110074046,
           "width": 176.79871625080548,
-          "bottom": 19494.129805503704
+          "bottom": 19921.129805503704
         },
         "controlChild": {
           "left": 216.37303890070362,
           "right": 231.06997735740268,
-          "top": 19418.376793616062,
+          "top": 19845.376793616066,
           "height": 14.696938456698263,
           "width": 14.696938456699058,
-          "bottom": 19433.07373207276
+          "bottom": 19860.073732072764
         },
         "probeChild": {
           "left": 18.806009881382586,
           "right": 33.50294833808165,
-          "top": 19438.8399324531,
+          "top": 19865.839932453102,
           "height": 14.696938456698263,
           "width": 14.696938456699066,
-          "bottom": 19453.536870909797
+          "bottom": 19880.5368709098
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 19405.333333333332,
+          "top": 19832.333333333336,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 19497.333333333332
+          "bottom": 19924.333333333336
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 19405.333333333332,
+          "top": 19832.333333333336,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 19497.333333333332
+          "bottom": 19924.333333333336
         }
       }
     },
@@ -1771,7 +2369,7 @@
         {
           "name": "interaction:transition-progress",
           "passed": false,
-          "actual": "10756:33306848 -> 10756:33306848 -> 10756:33306848"
+          "actual": "10752:f79ae09e -> 10752:f79ae09e -> 10752:f79ae09e"
         }
       ]
     },
@@ -1782,7 +2380,7 @@
         {
           "name": "interaction:animation-progress",
           "passed": true,
-          "actual": "17608:c59bdfad -> 16956:1ffd8b5d"
+          "actual": "16292:50debb26 -> 15240:bc8df7ef"
         }
       ]
     },
@@ -1811,7 +2409,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：user-select"
+      "reason": "select-none: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -1826,111 +2424,355 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：scroll-behavior, scroll-snap-type"
+      "reason": "scroll-smooth: TASM 未保留该候选的完整 selector 或声明; snap-y: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
       "id": "variant-responsive",
-      "failureStage": "runtime",
-      "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言",
-      "geometry": {
-        "probe": {
-          "left": 21,
-          "right": 187.66666666666666,
-          "top": 22606.333333333332,
-          "height": 62.33333333333212,
-          "width": 166.66666666666666,
-          "bottom": 22668.666666666664
-        },
-        "control": {
-          "left": 207.66666666666663,
-          "right": 374,
-          "top": 22606.333333333332,
-          "height": 62.33333333333212,
-          "width": 166.33333333333337,
-          "bottom": 22668.666666666664
-        },
-        "controlChild": {
-          "left": 215.66666666666663,
-          "right": 227.66666666666663,
-          "top": 22632.666666666668,
-          "height": 12,
-          "width": 12,
-          "bottom": 22644.666666666668
-        },
-        "probeChild": {
-          "left": 29,
-          "right": 41,
-          "top": 22632.666666666668,
-          "height": 12,
-          "width": 12,
-          "bottom": 22644.666666666668
-        },
-        "probeContainer": {
-          "left": 15,
-          "right": 193.66666666666666,
-          "top": 22600.333333333332,
-          "height": 92,
-          "width": 178.66666666666666,
-          "bottom": 22692.333333333332
-        },
-        "controlContainer": {
-          "left": 201.66666666666663,
-          "right": 380,
-          "top": 22600.333333333332,
-          "height": 92,
-          "width": 178.33333333333337,
-          "bottom": 22692.333333333332
-        }
-      },
       "checkpoints": [
         {
-          "actual": "6,6,166.66666666666666,62.33333333333212; child=8,26.33333333333576,12,12",
+          "name": "viewport:responsive-v1",
           "passed": false,
-          "expected": "control=6,6,166.33333333333337,62.33333333333212; child=8,26.33333333333576,12,12",
-          "name": "geometry:probe-vs-control"
-        }
-      ]
-    },
-    {
-      "status": "unsupported",
-      "id": "variant-dark",
-      "checkpoints": [
-        {
-          "name": "pixel:color-scheme-v1",
-          "passed": false,
-          "actual": "{\"glyphPixels\":3740,\"corePixels\":3023,\"whiteMatch\":0,\"invalidGlyphColors\":3740,\"backgroundMismatch\":0}",
-          "expected": "light 深色字形 → dark 同字形白色；control 与背景不变"
+          "actual": "{\"narrow\":200,\"wide\":200,\"narrowed\":200,\"restored\":200}",
+          "expected": "根 viewport 窄→宽→窄→原始尺寸；probe 按 width < 48rem 切换 200/80px，control 保持 80px"
         }
       ],
-      "reason": "深色模式未仅将相同字形变为白色并保持背景及 control 不变",
-      "colorScheme": {
-        "light": {
-          "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
-          "requestId": "color-scheme-1",
-          "scheme": "light"
+      "reason": "真实根 viewport 跨断点及恢复后未呈现 max-md 对应的宽度",
+      "responsive": {
+        "wide": {
+          "requested": {
+            "width": 840,
+            "height": 874
+          },
+          "phase": "wide",
+          "geometry": {
+            "probe": {
+              "left": 31,
+              "right": 231,
+              "top": 22610.333333333332,
+              "height": 40,
+              "width": 200,
+              "bottom": 22650.333333333332
+            },
+            "control": {
+              "left": 31,
+              "right": 111,
+              "top": 22698.333333333332,
+              "height": 40,
+              "width": 80,
+              "bottom": 22738.333333333332
+            },
+            "probeContainer": {
+              "left": 15,
+              "right": 255,
+              "top": 22594.333333333332,
+              "height": 80,
+              "width": 240,
+              "bottom": 22674.333333333332
+            },
+            "controlContainer": {
+              "left": 15,
+              "right": 255,
+              "top": 22682.333333333332,
+              "height": 80,
+              "width": 240,
+              "bottom": 22762.333333333332
+            }
+          },
+          "original": {
+            "width": 402,
+            "height": 874
+          },
+          "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+          "requestId": "responsive-2",
+          "viewport": {
+            "measuredWidth": 840,
+            "pixelRatio": 3,
+            "width": 840,
+            "height": 874,
+            "measuredHeight": 874
+          },
+          "threshold": {
+            "left": 15,
+            "right": 687,
+            "top": 22594.333333333332,
+            "height": 1,
+            "width": 672,
+            "bottom": 22595.333333333332
+          }
         },
-        "dark": {
-          "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
-          "requestId": "color-scheme-2",
-          "scheme": "dark"
+        "narrow": {
+          "requested": {
+            "width": 336,
+            "height": 874
+          },
+          "phase": "narrow",
+          "geometry": {
+            "probe": {
+              "left": 31,
+              "right": 231,
+              "top": 23393.666666666664,
+              "height": 40,
+              "width": 200,
+              "bottom": 23433.666666666664
+            },
+            "control": {
+              "left": 31,
+              "right": 111,
+              "top": 23481.666666666664,
+              "height": 40,
+              "width": 80,
+              "bottom": 23521.666666666664
+            },
+            "probeContainer": {
+              "left": 15,
+              "right": 255,
+              "top": 23377.666666666664,
+              "height": 80,
+              "width": 240,
+              "bottom": 23457.666666666664
+            },
+            "controlContainer": {
+              "left": 15,
+              "right": 255,
+              "top": 23465.666666666664,
+              "height": 80,
+              "width": 240,
+              "bottom": 23545.666666666664
+            }
+          },
+          "original": {
+            "width": 402,
+            "height": 874
+          },
+          "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+          "requestId": "responsive-1",
+          "viewport": {
+            "measuredWidth": 336,
+            "pixelRatio": 3,
+            "width": 336,
+            "height": 874,
+            "measuredHeight": 874
+          },
+          "threshold": {
+            "left": 15,
+            "right": 687,
+            "top": 23377.666666666664,
+            "height": 1,
+            "width": 672,
+            "bottom": 23378.666666666664
+          }
         },
         "restored": {
-          "runId": "efe54df6-f912-41ea-9cfd-74d6303bd9ab",
-          "requestId": "color-scheme-3",
-          "scheme": "light"
+          "requested": {
+            "width": 402,
+            "height": 874
+          },
+          "phase": "restored",
+          "geometry": {
+            "probe": {
+              "left": 31,
+              "right": 231,
+              "top": 23060,
+              "height": 40,
+              "width": 200,
+              "bottom": 23100
+            },
+            "control": {
+              "left": 31,
+              "right": 111,
+              "top": 23148,
+              "height": 40,
+              "width": 80,
+              "bottom": 23188
+            },
+            "probeContainer": {
+              "left": 15,
+              "right": 255,
+              "top": 23044,
+              "height": 80,
+              "width": 240,
+              "bottom": 23124
+            },
+            "controlContainer": {
+              "left": 15,
+              "right": 255,
+              "top": 23132,
+              "height": 80,
+              "width": 240,
+              "bottom": 23212
+            }
+          },
+          "original": {
+            "width": 402,
+            "height": 874
+          },
+          "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+          "requestId": "responsive-4",
+          "viewport": {
+            "measuredWidth": 402,
+            "pixelRatio": 3,
+            "width": 402,
+            "height": 874,
+            "measuredHeight": 874
+          },
+          "threshold": {
+            "left": 15,
+            "right": 687,
+            "top": 23044,
+            "height": 1,
+            "width": 672,
+            "bottom": 23045
+          }
+        },
+        "narrowed": {
+          "requested": {
+            "width": 336,
+            "height": 874
+          },
+          "phase": "narrowed",
+          "geometry": {
+            "probe": {
+              "left": 31,
+              "right": 231,
+              "top": 23393.666666666664,
+              "height": 40,
+              "width": 200,
+              "bottom": 23433.666666666664
+            },
+            "control": {
+              "left": 31,
+              "right": 111,
+              "top": 23481.666666666664,
+              "height": 40,
+              "width": 80,
+              "bottom": 23521.666666666664
+            },
+            "probeContainer": {
+              "left": 15,
+              "right": 255,
+              "top": 23377.666666666664,
+              "height": 80,
+              "width": 240,
+              "bottom": 23457.666666666664
+            },
+            "controlContainer": {
+              "left": 15,
+              "right": 255,
+              "top": 23465.666666666664,
+              "height": 80,
+              "width": 240,
+              "bottom": 23545.666666666664
+            }
+          },
+          "original": {
+            "width": 402,
+            "height": 874
+          },
+          "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+          "requestId": "responsive-3",
+          "viewport": {
+            "measuredWidth": 336,
+            "pixelRatio": 3,
+            "width": 336,
+            "height": 874,
+            "measuredHeight": 874
+          },
+          "threshold": {
+            "left": 15,
+            "right": 687,
+            "top": 23377.666666666664,
+            "height": 1,
+            "width": 672,
+            "bottom": 23378.666666666664
+          }
         }
       },
       "failureStage": "runtime"
     },
     {
-      "id": "variant-state",
       "status": "supported",
+      "id": "variant-dark",
+      "checkpoints": [
+        {
+          "name": "pixel:color-scheme-v2",
+          "passed": true,
+          "actual": "{\"glyphPixels\":3741,\"corePixels\":3023,\"whiteMatch\":1,\"invalidGlyphColors\":0,\"backgroundMismatch\":0}",
+          "expected": "light 深色字形 → dark 同字形白色 → restored 同字形深色；control 与背景不变"
+        }
+      ],
+      "colorScheme": {
+        "light": {
+          "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+          "requestId": "color-scheme-1",
+          "scheme": "light"
+        },
+        "dark": {
+          "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+          "requestId": "color-scheme-2",
+          "scheme": "dark"
+        },
+        "restored": {
+          "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+          "requestId": "color-scheme-3",
+          "scheme": "light"
+        }
+      }
+    },
+    {
+      "status": "unsupported",
+      "id": "variant-state",
+      "candidates": [
+        {
+          "className": "active:bg-[#dc2626]",
+          "status": "supported",
+          "checkpoints": [
+            {
+              "name": "interaction:pseudo-active",
+              "passed": true,
+              "actual": "10752:f79ae09e -> 10788:eda75301"
+            }
+          ]
+        },
+        {
+          "status": "unsupported",
+          "mediaGate": {
+            "evidenceId": "media-hover-v1",
+            "condition": "(hover:hover)",
+            "limitationId": "lynx4.0.1-media-hover-unknown-v1",
+            "downstream": {
+              "hoverInput": "not-tested",
+              "pseudoState": "not-tested"
+            },
+            "gate": "media",
+            "stage": "runtime",
+            "sourceSha256": "46d718942757e574136fdb02ce32c0acddbc2de0c80b421c5b7023d64ee13f73"
+          },
+          "className": "hover:bg-[#ef4444]",
+          "reason": "Lynx 4.0.1 未暴露 hover 媒体能力，必要条件 (hover:hover) 不匹配；hover 输入和伪状态仍未测试",
+          "checkpoints": [
+            {
+              "name": "media:necessary-guard-v1",
+              "passed": true
+            }
+          ]
+        }
+      ],
+      "reason": "hover:bg-[#ef4444]: Lynx 4.0.1 未暴露 hover 媒体能力，必要条件 (hover:hover) 不匹配；hover 输入和伪状态仍未测试",
       "checkpoints": [
         {
           "name": "interaction:pseudo-active",
           "passed": true,
-          "actual": "10756:33306848 -> 10760:972d9a63"
+          "actual": "10752:f79ae09e -> 10788:eda75301"
+        },
+        {
+          "name": "media:necessary-guard-v1",
+          "passed": true
+        },
+        {
+          "name": "candidate:conclusions-complete",
+          "passed": true,
+          "actual": "active:bg-[#dc2626]=supported; hover:bg-[#ef4444]=unsupported"
         }
       ]
     },
@@ -1943,7 +2785,7 @@
         {
           "name": "pixel:structural-v1",
           "passed": false,
-          "actual": "{\"outside\":true,\"rows\":[{\"massRatio\":1.273459310277935,\"forward\":0.028851107676455434,\"reverse\":0.06867989646246764,\"valid\":true},{\"massRatio\":1,\"forward\":1,\"reverse\":1,\"valid\":true},{\"massRatio\":1.9967356750631737,\"forward\":0.05100463678516229,\"reverse\":0.06607929515418502,\"valid\":true}]}",
+          "actual": "{\"outside\":true,\"rows\":[{\"massRatio\":1.2734712579594825,\"forward\":0.028851107676455434,\"reverse\":0.06834656541249569,\"valid\":true},{\"massRatio\":1,\"forward\":1,\"reverse\":1,\"valid\":true},{\"massRatio\":1.9967595650567445,\"forward\":0.05100463678516229,\"reverse\":0.06557801969932607,\"valid\":true}]}",
           "expected": "三个兄弟依次为粗体/0.5、普通/1、普通/0.5，与显式效果及普通文字对照一致"
         }
       ]
@@ -1951,6 +2793,39 @@
     {
       "status": "unsupported",
       "id": "variant-group-peer",
+      "candidates": [
+        {
+          "status": "unsupported",
+          "checkpoints": [
+            {
+              "name": "generated",
+              "passed": true
+            },
+            {
+              "name": "bundled",
+              "passed": false
+            }
+          ],
+          "className": "group-hover:block",
+          "reason": "encoder 删除 selector：.group-hover\\:block:is(:where(.group):hover *), .group-hover\\:block:is(:where(.group):hover *)"
+        },
+        {
+          "status": "unsupported",
+          "checkpoints": [
+            {
+              "name": "generated",
+              "passed": true
+            },
+            {
+              "name": "bundled",
+              "passed": false
+            }
+          ],
+          "className": "peer-checked:opacity-100",
+          "reason": "encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*), .peer-checked\\:opacity-100:is(:where(.peer):checked~*)"
+        }
+      ],
+      "reason": "group-hover:block: encoder 删除 selector：.group-hover\\:block:is(:where(.group):hover *), .group-hover\\:block:is(:where(.group):hover *); peer-checked:opacity-100: encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*), .peer-checked\\:opacity-100:is(:where(.peer):checked~*)",
       "checkpoints": [
         {
           "name": "generated",
@@ -1959,9 +2834,21 @@
         {
           "name": "bundled",
           "passed": false
+        },
+        {
+          "name": "generated",
+          "passed": true
+        },
+        {
+          "name": "bundled",
+          "passed": false
+        },
+        {
+          "name": "interaction:candidates-complete",
+          "passed": true,
+          "actual": "group-hover:block=unsupported; peer-checked:opacity-100=unsupported"
         }
-      ],
-      "reason": "encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*), .peer-checked\\:opacity-100:is(:where(.peer):checked~*)"
+      ]
     },
     {
       "status": "unsupported",
@@ -1976,71 +2863,69 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：text-decoration-line"
+      "reason": "aria-[sort=ascending]:underline: TASM 未保留该候选的完整 selector 或声明"
     },
     {
-      "status": "unsupported",
+      "status": "supported",
       "id": "variant-supports",
-      "failureStage": "runtime",
-      "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言",
+      "checkpoints": [
+        {
+          "actual": "6,6,100,44; child=44,0,20,12",
+          "passed": true,
+          "expected": "control=6,6,100,44; child=0,16,20,12",
+          "name": "geometry:probe-vs-control"
+        }
+      ],
       "geometry": {
         "probe": {
           "left": 21,
           "right": 121,
-          "top": 25989.333333333332,
+          "top": 26667.333333333332,
           "height": 44,
           "width": 100,
-          "bottom": 26033.333333333332
+          "bottom": 26711.333333333332
         },
         "control": {
           "left": 21,
           "right": 121,
-          "top": 26137.333333333332,
+          "top": 26815.333333333332,
           "height": 44,
           "width": 100,
-          "bottom": 26181.333333333332
+          "bottom": 26859.333333333332
         },
         "controlChild": {
           "left": 21,
           "right": 41,
-          "top": 26153.333333333332,
+          "top": 26831.333333333332,
           "height": 12,
           "width": 20,
-          "bottom": 26165.333333333332
+          "bottom": 26843.333333333332
         },
         "probeChild": {
-          "left": 21,
-          "right": 41,
-          "top": 26005.333333333332,
+          "left": 65,
+          "right": 85,
+          "top": 26667.333333333332,
           "height": 12,
           "width": 20,
-          "bottom": 26017.333333333332
+          "bottom": 26679.333333333332
         },
         "probeContainer": {
           "left": 15,
           "right": 175,
-          "top": 25983.333333333332,
+          "top": 26661.333333333332,
           "height": 140,
           "width": 160,
-          "bottom": 26123.333333333332
+          "bottom": 26801.333333333332
         },
         "controlContainer": {
           "left": 15,
           "right": 175,
-          "top": 26131.333333333332,
+          "top": 26809.333333333332,
           "height": 140,
           "width": 160,
-          "bottom": 26271.333333333332
+          "bottom": 26949.333333333332
         }
-      },
-      "checkpoints": [
-        {
-          "actual": "6,6,100,44; child=0,16,20,12",
-          "passed": false,
-          "expected": "control=6,6,100,44; child=0,16,20,12",
-          "name": "geometry:probe-vs-control"
-        }
-      ]
+      }
     },
     {
       "status": "unsupported",
@@ -2055,16 +2940,16 @@
           "passed": false
         }
       ],
-      "reason": "TASM 未保留完整 selector 或声明"
+      "reason": "before:content-['lynx']: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "id": "variant-arbitrary",
       "status": "supported",
       "checkpoints": [
         {
-          "actual": "10644:c2868462",
+          "actual": "10644:31a74d3",
           "passed": true,
-          "expected": "different from 10756:33306848",
+          "expected": "different from 10752:f79ae09e",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -2082,22 +2967,19 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：translate"
+      "reason": "-translate-x-[5px]: TASM 未保留该候选的完整 selector 或声明"
     },
     {
-      "status": "unsupported",
+      "status": "supported",
       "id": "syntax-important",
       "checkpoints": [
         {
-          "name": "generated",
-          "passed": true
-        },
-        {
-          "name": "bundled",
-          "passed": false
+          "name": "pixel:important-priority-v1",
+          "passed": true,
+          "actual": "{\"probe\":\"#737373\",\"control\":\"#dc2626\",\"reference\":\"#737373\"}",
+          "expected": "important probe 为灰，普通 utility 在相同 ID 竞争下为红，独立参考为灰"
         }
-      ],
-      "reason": "TASM 未保留完整 selector 或声明"
+      ]
     },
     {
       "status": "unsupported",
@@ -2112,7 +2994,7 @@
           "passed": false
         }
       ],
-      "reason": "TASM 未保留完整 selector 或声明"
+      "reason": "text-black/[.35]: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -2127,7 +3009,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：mask-type"
+      "reason": "[mask-type:luminance]: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "supported",
@@ -2144,50 +3026,50 @@
         "probe": {
           "left": 21,
           "right": 61,
-          "top": 29842.333333333332,
+          "top": 30696.666666666664,
           "height": 240,
           "width": 40,
-          "bottom": 30082.333333333332
+          "bottom": 30936.666666666664
         },
         "control": {
           "left": 207.66666666666663,
           "right": 247.66666666666663,
-          "top": 29842.333333333332,
+          "top": 30696.666666666664,
           "height": 300,
           "width": 40,
-          "bottom": 30142.333333333332
+          "bottom": 30996.666666666664
         },
         "controlChild": {
           "left": 207.66666666666663,
           "right": 219.66666666666663,
-          "top": 29860.666666666668,
+          "top": 30715,
           "height": 12,
           "width": 12,
-          "bottom": 29872.666666666668
+          "bottom": 30727
         },
         "probeChild": {
           "left": 21,
           "right": 33,
-          "top": 29860.666666666668,
+          "top": 30715,
           "height": 12,
           "width": 12,
-          "bottom": 29872.666666666668
+          "bottom": 30727
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 29836.333333333332,
+          "top": 30690.666666666664,
           "height": 320,
           "width": 178.66666666666666,
-          "bottom": 30156.333333333332
+          "bottom": 31010.666666666664
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 29836.333333333332,
+          "top": 30690.666666666664,
           "height": 320,
           "width": 178.33333333333337,
-          "bottom": 30156.333333333332
+          "bottom": 31010.666666666664
         }
       }
     },
@@ -2196,9 +3078,9 @@
       "status": "supported",
       "checkpoints": [
         {
-          "actual": "10816:8517fa30",
+          "actual": "10820:86f8bc21",
           "passed": true,
-          "expected": "different from 10756:33306848",
+          "expected": "different from 10752:f79ae09e",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -2210,10 +3092,6 @@
         {
           "name": "build:generated",
           "passed": true
-        },
-        {
-          "name": "build:bundled",
-          "passed": true
         }
       ]
     },
@@ -2224,57 +3102,38 @@
         {
           "name": "build:generated",
           "passed": true
-        },
+        }
+      ]
+    },
+    {
+      "id": "directive-source",
+      "status": "supported",
+      "checkpoints": [
         {
-          "name": "build:bundled",
+          "name": "build:generated",
           "passed": true
         }
       ]
     },
     {
-      "status": "unsupported",
-      "id": "directive-source",
-      "checkpoints": [
-        {
-          "name": "generated",
-          "passed": true
-        },
-        {
-          "name": "bundled",
-          "passed": false
-        }
-      ],
-      "reason": "encoder 删除属性：text-decoration-line"
-    },
-    {
-      "status": "unsupported",
       "id": "directive-utility",
+      "status": "supported",
       "checkpoints": [
         {
-          "name": "generated",
+          "name": "build:generated",
           "passed": true
-        },
-        {
-          "name": "bundled",
-          "passed": false
         }
-      ],
-      "reason": "encoder 删除属性：content-visibility"
+      ]
     },
     {
-      "status": "unsupported",
       "id": "directive-variant",
+      "status": "supported",
       "checkpoints": [
         {
-          "name": "generated",
+          "name": "build:generated",
           "passed": true
-        },
-        {
-          "name": "bundled",
-          "passed": false
         }
-      ],
-      "reason": "encoder 删除 selector：.theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *)"
+      ]
     },
     {
       "id": "directive-apply",
@@ -2282,10 +3141,6 @@
       "checkpoints": [
         {
           "name": "build:generated",
-          "passed": true
-        },
-        {
-          "name": "build:bundled",
           "passed": true
         }
       ]
@@ -2297,42 +3152,28 @@
         {
           "name": "build:generated",
           "passed": true
-        },
+        }
+      ]
+    },
+    {
+      "id": "directive-config-plugin",
+      "status": "supported",
+      "checkpoints": [
         {
-          "name": "build:bundled",
+          "name": "build:generated",
           "passed": true
         }
       ]
     },
     {
-      "status": "unsupported",
-      "id": "directive-config-plugin",
-      "checkpoints": [
-        {
-          "name": "generated",
-          "passed": true
-        },
-        {
-          "name": "bundled",
-          "passed": false
-        }
-      ],
-      "reason": "TASM 未保留完整 selector 或声明"
-    },
-    {
-      "status": "unsupported",
       "id": "directive-prefix-important",
+      "status": "supported",
       "checkpoints": [
         {
-          "name": "generated",
+          "name": "build:generated",
           "passed": true
-        },
-        {
-          "name": "bundled",
-          "passed": false
         }
-      ],
-      "reason": "TASM 未保留完整 selector 或声明"
+      ]
     },
     {
       "status": "unsupported",
@@ -2347,7 +3188,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：break-before, break-after, break-inside"
+      "reason": "break-before-page: TASM 未保留该候选的完整 selector 或声明; break-after-page: TASM 未保留该候选的完整 selector 或声明; break-inside-avoid: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -2362,7 +3203,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：box-decoration-break, clear"
+      "reason": "box-decoration-clone: TASM 未保留该候选的完整 selector 或声明; clear-both: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -2377,7 +3218,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：object-position"
+      "reason": "object-[35%_65%]: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -2392,7 +3233,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：overscroll-behavior"
+      "reason": "overscroll-contain: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "supported",
@@ -2409,50 +3250,50 @@
         "probe": {
           "left": 45,
           "right": 109,
-          "top": 35967.333333333336,
+          "top": 36931.333333333336,
           "height": 52,
           "width": 64,
-          "bottom": 36019.333333333336
+          "bottom": 36983.333333333336
         },
         "control": {
           "left": 21,
           "right": 85,
-          "top": 36115.333333333336,
+          "top": 37079.333333333336,
           "height": 24,
           "width": 64,
-          "bottom": 36139.333333333336
+          "bottom": 37103.333333333336
         },
         "controlChild": {
           "left": 65,
           "right": 105,
-          "top": 36115.333333333336,
+          "top": 37079.333333333336,
           "height": 24,
           "width": 40,
-          "bottom": 36139.333333333336
+          "bottom": 37103.333333333336
         },
         "probeChild": {
           "left": 45,
           "right": 85,
-          "top": 35995.333333333336,
+          "top": 36959.333333333336,
           "height": 24,
           "width": 40,
-          "bottom": 36019.333333333336
+          "bottom": 36983.333333333336
         },
         "probeContainer": {
           "left": 15,
           "right": 175,
-          "top": 35961.333333333336,
+          "top": 36925.333333333336,
           "height": 140,
           "width": 160,
-          "bottom": 36101.333333333336
+          "bottom": 37065.333333333336
         },
         "controlContainer": {
           "left": 15,
           "right": 175,
-          "top": 36109.333333333336,
+          "top": 37073.333333333336,
           "height": 140,
           "width": 160,
-          "bottom": 36249.333333333336
+          "bottom": 37213.333333333336
         }
       }
     },
@@ -2471,50 +3312,50 @@
         "probe": {
           "left": 21,
           "right": 129,
-          "top": 36462.66666666667,
+          "top": 37426.66666666667,
           "height": 24,
           "width": 108,
-          "bottom": 36486.66666666667
+          "bottom": 37450.66666666667
         },
         "control": {
           "left": 21,
           "right": 45,
-          "top": 36610.66666666667,
+          "top": 37574.66666666667,
           "height": 24,
           "width": 24,
-          "bottom": 36634.66666666667
+          "bottom": 37598.66666666667
         },
         "controlChild": {
           "left": 21,
           "right": 33,
-          "top": 36610.66666666667,
+          "top": 37574.66666666667,
           "height": 24,
           "width": 12,
-          "bottom": 36634.66666666667
+          "bottom": 37598.66666666667
         },
         "probeChild": {
           "left": 21,
           "right": 101,
-          "top": 36462.66666666667,
+          "top": 37426.66666666667,
           "height": 24,
           "width": 80,
-          "bottom": 36486.66666666667
+          "bottom": 37450.66666666667
         },
         "probeContainer": {
           "left": 15,
           "right": 175,
-          "top": 36456.66666666667,
+          "top": 37420.66666666667,
           "height": 140,
           "width": 160,
-          "bottom": 36596.66666666667
+          "bottom": 37560.66666666667
         },
         "controlContainer": {
           "left": 15,
           "right": 175,
-          "top": 36604.66666666667,
+          "top": 37568.66666666667,
           "height": 140,
           "width": 160,
-          "bottom": 36744.66666666667
+          "bottom": 37708.66666666667
         }
       }
     },
@@ -2533,116 +3374,67 @@
         "probe": {
           "left": 21,
           "right": 105,
-          "top": 36958,
+          "top": 37922,
           "height": 52,
           "width": 84,
-          "bottom": 37010
+          "bottom": 37974
         },
         "control": {
           "left": 65,
           "right": 105,
-          "top": 37134,
+          "top": 38098,
           "height": 24,
           "width": 40,
-          "bottom": 37158
+          "bottom": 38122
         },
         "controlChild": {
           "left": 65,
           "right": 73,
-          "top": 37134,
+          "top": 38098,
           "height": 8,
           "width": 8,
-          "bottom": 37142
+          "bottom": 38106
         },
         "probeChild": {
           "left": 21,
           "right": 29,
-          "top": 36958,
+          "top": 37922,
           "height": 8,
           "width": 8,
-          "bottom": 36966
+          "bottom": 37930
         },
         "probeContainer": {
           "left": 15,
           "right": 175,
-          "top": 36952,
+          "top": 37916,
           "height": 140,
           "width": 160,
-          "bottom": 37092
+          "bottom": 38056
         },
         "controlContainer": {
           "left": 15,
           "right": 175,
-          "top": 37100,
+          "top": 38064,
           "height": 140,
           "width": 160,
-          "bottom": 37240
+          "bottom": 38204
         }
       }
     },
     {
       "status": "unsupported",
       "id": "grid-auto",
-      "failureStage": "runtime",
-      "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言",
-      "geometry": {
-        "probe": {
-          "left": 21,
-          "right": 161,
-          "top": 37477.333333333336,
-          "height": 32,
-          "width": 140,
-          "bottom": 37509.333333333336
-        },
-        "control": {
-          "left": 21,
-          "right": 161,
-          "top": 37625.333333333336,
-          "height": 68,
-          "width": 140,
-          "bottom": 37693.333333333336
-        },
-        "controlChild": {
-          "left": 21,
-          "right": 61,
-          "top": 37661.333333333336,
-          "height": 24,
-          "width": 40,
-          "bottom": 37685.333333333336
-        },
-        "probeChild": {
-          "left": 93,
-          "right": 133,
-          "top": 37477.333333333336,
-          "height": 24,
-          "width": 40,
-          "bottom": 37501.333333333336
-        },
-        "probeContainer": {
-          "left": 15,
-          "right": 175,
-          "top": 37471.333333333336,
-          "height": 140,
-          "width": 160,
-          "bottom": 37611.333333333336
-        },
-        "controlContainer": {
-          "left": 15,
-          "right": 175,
-          "top": 37619.333333333336,
-          "height": 140,
-          "width": 160,
-          "bottom": 37759.333333333336
-        }
-      },
       "checkpoints": [
         {
-          "actual": "6,6,140,32; child=72,0,40,24",
-          "passed": false,
-          "expected": "control=6,6,140,68; child=0,36,40,24",
-          "name": "geometry:probe-vs-control"
+          "name": "generated",
+          "passed": true
+        },
+        {
+          "name": "bundled",
+          "passed": false
         }
-      ]
+      ],
+      "reason": "auto-rows-min: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -2657,71 +3449,22 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：place-content, place-items, place-self"
+      "reason": "place-content-center: TASM 未保留该候选的完整 selector 或声明; place-items-center: TASM 未保留该候选的完整 selector 或声明; place-self-center: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
       "id": "grid-justify-self",
-      "failureStage": "runtime",
-      "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言",
-      "geometry": {
-        "probe": {
-          "left": 21,
-          "right": 121,
-          "top": 38345,
-          "height": 44,
-          "width": 100,
-          "bottom": 38389
-        },
-        "control": {
-          "left": 21,
-          "right": 121,
-          "top": 38493,
-          "height": 44,
-          "width": 100,
-          "bottom": 38537
-        },
-        "controlChild": {
-          "left": 21,
-          "right": 41,
-          "top": 38493,
-          "height": 12,
-          "width": 20,
-          "bottom": 38505
-        },
-        "probeChild": {
-          "left": 61,
-          "right": 81,
-          "top": 38345,
-          "height": 12,
-          "width": 20,
-          "bottom": 38357
-        },
-        "probeContainer": {
-          "left": 15,
-          "right": 175,
-          "top": 38339,
-          "height": 140,
-          "width": 160,
-          "bottom": 38479
-        },
-        "controlContainer": {
-          "left": 15,
-          "right": 175,
-          "top": 38487,
-          "height": 140,
-          "width": 160,
-          "bottom": 38627
-        }
-      },
       "checkpoints": [
         {
-          "actual": "6,6,100,44; child=40,0,20,12",
-          "passed": false,
-          "expected": "control=6,6,100,44; child=0,0,20,12",
-          "name": "geometry:probe-vs-control"
+          "name": "generated",
+          "passed": true
+        },
+        {
+          "name": "bundled",
+          "passed": false
         }
-      ]
+      ],
+      "reason": "justify-self-end: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "supported",
@@ -2738,50 +3481,50 @@
         "probe": {
           "left": 115.66666666666669,
           "right": 187.66666666666669,
-          "top": 38840.333333333336,
+          "top": 39940.66666666667,
           "height": 62.33333333333576,
           "width": 72,
-          "bottom": 38902.66666666667
+          "bottom": 40003.00000000001
         },
         "control": {
           "left": 207.66666666666663,
           "right": 374,
-          "top": 38840.333333333336,
+          "top": 39940.66666666667,
           "height": 62.33333333333576,
           "width": 166.33333333333337,
-          "bottom": 38902.66666666667
+          "bottom": 40003.00000000001
         },
         "controlChild": {
           "left": 215.66666666666663,
           "right": 227.66666666666663,
-          "top": 38866.666666666664,
+          "top": 39967,
           "height": 12,
           "width": 12,
-          "bottom": 38878.666666666664
+          "bottom": 39979
         },
         "probeChild": {
           "left": 123.66666666666669,
           "right": 135.66666666666669,
-          "top": 38866.666666666664,
+          "top": 39967,
           "height": 12,
           "width": 12,
-          "bottom": 38878.666666666664
+          "bottom": 39979
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 38834.333333333336,
+          "top": 39934.66666666667,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 38926.333333333336
+          "bottom": 40026.66666666667
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 38834.333333333336,
+          "top": 39934.66666666667,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 38926.333333333336
+          "bottom": 40026.66666666667
         }
       }
     },
@@ -2798,7 +3541,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：margin-block-start"
+      "reason": "space-x-2: encoder 删除 selector：:where(.space-x-2>:not(:last-child)), :where(.space-x-2>:not(:last-child)); space-y-2: encoder 删除 selector：:where(.space-y-2>:not(:last-child)), :where(.space-y-2>:not(:last-child))"
     },
     {
       "status": "supported",
@@ -2815,50 +3558,50 @@
         "probe": {
           "left": 21,
           "right": 65,
-          "top": 39544.333333333336,
+          "top": 40672,
           "height": 44,
           "width": 44,
-          "bottom": 39588.333333333336
+          "bottom": 40716
         },
         "control": {
           "left": 207.66666666666663,
           "right": 374,
-          "top": 39544.333333333336,
+          "top": 40672,
           "height": 62.33333333333576,
           "width": 166.33333333333337,
-          "bottom": 39606.66666666667
+          "bottom": 40734.333333333336
         },
         "controlChild": {
           "left": 215.66666666666663,
           "right": 227.66666666666663,
-          "top": 39570.666666666664,
+          "top": 40698.33333333333,
           "height": 12,
           "width": 12,
-          "bottom": 39582.666666666664
+          "bottom": 40710.33333333333
         },
         "probeChild": {
           "left": 29,
           "right": 41,
-          "top": 39570.666666666664,
+          "top": 40698.33333333333,
           "height": 12,
           "width": 12,
-          "bottom": 39582.666666666664
+          "bottom": 40710.33333333333
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 39538.333333333336,
+          "top": 40666,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 39630.333333333336
+          "bottom": 40758
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 39538.333333333336,
+          "top": 40666,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 39630.333333333336
+          "bottom": 40758
         }
       }
     },
@@ -2875,7 +3618,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：-webkit-font-smoothing, font-stretch"
+      "reason": "antialiased: TASM 未保留该候选的完整 selector 或声明; font-stretch-expanded: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -2890,7 +3633,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：font-variant-numeric"
+      "reason": "tabular-nums: TASM 未保留该候选的完整 selector 或声明; slashed-zero: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -2905,7 +3648,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：-webkit-line-clamp"
+      "reason": "line-clamp-2: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -2920,7 +3663,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：list-style-position, list-style-type, list-style-image"
+      "reason": "list-inside: TASM 未保留该候选的完整 selector 或声明; list-disc: TASM 未保留该候选的完整 selector 或声明; list-image-none: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -2935,7 +3678,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：text-decoration-style, text-underline-offset"
+      "reason": "decoration-dashed: TASM 未保留该候选的完整 selector 或声明; underline-offset-4: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -2950,21 +3693,22 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：text-transform, text-wrap"
+      "reason": "uppercase: TASM 未保留该候选的完整 selector 或声明; text-balance: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
       "id": "type-flow",
       "checkpoints": [
         {
-          "name": "pixel:text-flow-v1",
-          "passed": false,
-          "actual": "{\"aligned\":true,\"whitespace\":false,\"movement\":23,\"lines\":[{\"top\":77,\"bottom\":91.33333333333333,\"glyphs\":[{\"left\":12.666666666666666,\"right\":24.666666666666668},{\"left\":35,\"right\":47}]}]}",
-          "expected": "行内标记由 top 移至 middle；文字与独立 2/4/2 字分行及双空格对照一致"
+          "name": "generated",
+          "passed": true
+        },
+        {
+          "name": "bundled",
+          "passed": false
         }
       ],
-      "reason": "行内中部对齐、双空格保留、显式换行与软换行未同时满足",
-      "failureStage": "runtime"
+      "reason": "whitespace-pre-wrap: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -2979,7 +3723,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：overflow-wrap"
+      "reason": "wrap-break-word: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -2988,9 +3732,9 @@
       "reason": "probe/control 元素截图没有可观察的像素差异",
       "checkpoints": [
         {
-          "actual": "10756:33306848",
+          "actual": "10752:f79ae09e",
           "passed": false,
-          "expected": "different from 10756:33306848",
+          "expected": "different from 10752:f79ae09e",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -3008,7 +3752,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：background-attachment"
+      "reason": "bg-fixed: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "supported",
@@ -3039,7 +3783,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除 selector：:where(.divide-y-2>:not(:last-child)), :where(.divide-y-2>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child))"
+      "reason": "divide-y-2: encoder 删除 selector：:where(.divide-y-2>:not(:last-child)), :where(.divide-y-2>:not(:last-child)); divide-[#64748b]: encoder 删除 selector：:where(.divide-\\[\\#64748b\\]>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child)); divide-dashed: encoder 删除 selector：:where(.divide-dashed>:not(:last-child)), :where(.divide-dashed>:not(:last-child))"
     },
     {
       "status": "unsupported",
@@ -3054,16 +3798,16 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：outline-offset"
+      "reason": "outline-offset-2: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "id": "effect-ring",
       "status": "supported",
       "checkpoints": [
         {
-          "actual": "16432:2f1bd250",
+          "actual": "16436:575bb51d",
           "passed": true,
-          "expected": "different from 10756:33306848",
+          "expected": "different from 10752:f79ae09e",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -3073,9 +3817,9 @@
       "status": "supported",
       "checkpoints": [
         {
-          "actual": "23712:f3651f62",
+          "actual": "23716:71010e9c",
           "passed": true,
-          "expected": "different from 10756:33306848",
+          "expected": "different from 10752:f79ae09e",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -3093,7 +3837,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：background-blend-mode"
+      "reason": "bg-blend-multiply: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -3108,7 +3852,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：mask-mode"
+      "reason": "mask-alpha: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -3123,7 +3867,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：mask-type"
+      "reason": "[mask-type:luminance]: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -3132,9 +3876,9 @@
       "reason": "probe/control 元素截图没有可观察的像素差异",
       "checkpoints": [
         {
-          "actual": "10756:33306848",
+          "actual": "10752:f79ae09e",
           "passed": false,
-          "expected": "different from 10756:33306848",
+          "expected": "different from 10752:f79ae09e",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -3146,9 +3890,9 @@
       "reason": "probe/control 元素截图没有可观察的像素差异",
       "checkpoints": [
         {
-          "actual": "10756:33306848",
+          "actual": "10752:f79ae09e",
           "passed": false,
-          "expected": "different from 10756:33306848",
+          "expected": "different from 10752:f79ae09e",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -3160,9 +3904,9 @@
       "reason": "probe/control 元素截图没有可观察的像素差异",
       "checkpoints": [
         {
-          "actual": "10756:33306848",
+          "actual": "10752:f79ae09e",
           "passed": false,
-          "expected": "different from 10756:33306848",
+          "expected": "different from 10752:f79ae09e",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -3180,7 +3924,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：backdrop-filter"
+      "reason": "backdrop-brightness-110: TASM 未保留该候选的完整 selector 或声明; backdrop-contrast-125: TASM 未保留该候选的完整 selector 或声明; backdrop-grayscale: TASM 未保留该候选的完整 selector 或声明; backdrop-hue-rotate-30: TASM 未保留该候选的完整 selector 或声明; backdrop-invert: TASM 未保留该候选的完整 selector 或声明; backdrop-opacity-50: TASM 未保留该候选的完整 selector 或声明; backdrop-saturate-150: TASM 未保留该候选的完整 selector 或声明; backdrop-sepia: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -3195,7 +3939,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：border-spacing, caption-side"
+      "reason": "border-spacing-2: TASM 未保留该候选的完整 selector 或声明; caption-bottom: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "supported",
@@ -3226,7 +3970,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：perspective-origin"
+      "reason": "perspective-origin-top: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -3241,7 +3985,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：transform-style, backface-visibility"
+      "reason": "transform-3d: TASM 未保留该候选的完整 selector 或声明; backface-hidden: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -3256,7 +4000,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：transition-behavior"
+      "reason": "transition-discrete: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -3271,7 +4015,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：accent-color"
+      "reason": "accent-[#2563eb]: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -3286,7 +4030,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：appearance, field-sizing, resize"
+      "reason": "appearance-none: TASM 未保留该候选的完整 selector 或声明; field-sizing-content: TASM 未保留该候选的完整 selector 或声明; resize-x: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -3301,7 +4045,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：color-scheme"
+      "reason": "scheme-dark: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -3316,7 +4060,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：scroll-margin, scroll-padding"
+      "reason": "scroll-m-4: TASM 未保留该候选的完整 selector 或声明; scroll-p-4: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -3331,7 +4075,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：scroll-snap-align, scroll-snap-stop, touch-action"
+      "reason": "snap-center: TASM 未保留该候选的完整 selector 或声明; snap-always: TASM 未保留该候选的完整 selector 或声明; touch-pan-x: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -3346,7 +4090,7 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：will-change"
+      "reason": "will-change-transform: TASM 未保留该候选的完整 selector 或声明"
     },
     {
       "status": "unsupported",
@@ -3361,7 +4105,129 @@
           "passed": false
         }
       ],
-      "reason": "encoder 删除属性：forced-color-adjust"
+      "reason": "forced-color-adjust-none: TASM 未保留该候选的完整 selector 或声明"
     }
-  ]
+  ],
+  "mediaGate": {
+    "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+    "limitationId": "lynx4.0.1-media-hover-unknown-v1",
+    "bundleSha256": "b0106c10d81286219b72222a9e466ec5b9971e4f2918f28681a201b3d039331c",
+    "sdkVersion": "4.0.1",
+    "probes": [
+      {
+        "id": "base",
+        "probe": {
+          "left": 0,
+          "right": 16,
+          "top": 0,
+          "height": 16,
+          "width": 16,
+          "bottom": 16
+        },
+        "container": {
+          "left": 0,
+          "right": 64,
+          "top": 0,
+          "height": 64,
+          "width": 64,
+          "bottom": 64
+        }
+      },
+      {
+        "id": "control",
+        "probe": {
+          "left": 0,
+          "right": 16,
+          "top": 64,
+          "height": 16,
+          "width": 16,
+          "bottom": 80
+        },
+        "container": {
+          "left": 0,
+          "right": 64,
+          "top": 64,
+          "height": 64,
+          "width": 64,
+          "bottom": 128
+        }
+      },
+      {
+        "id": "unguarded",
+        "probe": {
+          "left": 0,
+          "right": 32,
+          "top": 128,
+          "height": 16,
+          "width": 32,
+          "bottom": 144
+        },
+        "container": {
+          "left": 0,
+          "right": 64,
+          "top": 128,
+          "height": 64,
+          "width": 64,
+          "bottom": 192
+        }
+      },
+      {
+        "id": "min-width",
+        "probe": {
+          "left": 0,
+          "right": 32,
+          "top": 192,
+          "height": 16,
+          "width": 32,
+          "bottom": 208
+        },
+        "container": {
+          "left": 0,
+          "right": 64,
+          "top": 192,
+          "height": 64,
+          "width": 64,
+          "bottom": 256
+        }
+      },
+      {
+        "id": "hover-hover",
+        "probe": {
+          "left": 0,
+          "right": 16,
+          "top": 256,
+          "height": 16,
+          "width": 16,
+          "bottom": 272
+        },
+        "container": {
+          "left": 0,
+          "right": 64,
+          "top": 256,
+          "height": 64,
+          "width": 64,
+          "bottom": 320
+        }
+      },
+      {
+        "id": "hover-none",
+        "probe": {
+          "left": 0,
+          "right": 16,
+          "top": 320,
+          "height": 16,
+          "width": 16,
+          "bottom": 336
+        },
+        "container": {
+          "left": 0,
+          "right": 64,
+          "top": 320,
+          "height": 64,
+          "width": 64,
+          "bottom": 384
+        }
+      }
+    ]
+  }
 }

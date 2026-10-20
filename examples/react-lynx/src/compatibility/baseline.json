@@ -1,40 +1,44 @@
 {
   "schemaVersion": 1,
-  "catalogHash": "a8c3b45f993d9aa28782f308fc959a09e160d67a9097d11b1bc6a8a38b93c886",
-  "verifiedAt": "2026-10-06T01:38:07.800Z",
+  "catalogHash": "2e3a1a60517c13de507d22ef8b4d209ffcdb86b2dfbf5bf7100df35c40dc3fec",
+  "verifiedAt": "2026-10-19T15:13:36.717Z",
   "versions": {
     "tailwindcss": "4.3.3",
     "lynxEngine": "4.0.1",
     "engineVersion": "3.9",
-    "cssDefines": "0.0.16"
+    "cssDefines": "0.0.18",
+    "tasmEncoder": "0.0.49",
+    "cssSerializer": "0.1.9",
+    "tasmDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+    "bundleConfig": "83ff6486fd81b51443ebc52109b8314e07f33507e0fb3354553d704b27324f5b"
   },
   "environments": {
     "ios": {
       "osName": "iOS",
-      "osBuild": "23F77",
-      "deviceName": "iPhone 17 Pro iOS 26.5",
-      "osVersion": "26.5",
+      "osBuild": "22F77",
+      "deviceName": "LynxCompatibility",
+      "osVersion": "18.5",
       "abi": "arm64",
-      "runtimeIdentifier": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
+      "runtimeIdentifier": "com.apple.CoreSimulator.SimRuntime.iOS-18-5",
       "viewport": {
         "width": 402,
         "height": 874,
         "pixelRatio": 3
       },
-      "deviceModel": "iPhone18,1"
+      "deviceModel": "iPhone17,1"
     },
     "android": {
-      "deviceName": "sdk_gphone_arm64",
-      "deviceModel": "sdk_gphone_arm64",
+      "deviceName": "sdk_phone_x86_64",
+      "deviceModel": "Android SDK built for x86_64",
       "osName": "Android",
       "osVersion": "11",
-      "osBuild": "RSR1.240422.006",
+      "osBuild": "RSR1.210722.013.A2",
       "runtimeIdentifier": "android-30",
-      "abi": "arm64-v8a",
+      "abi": "x86_64",
       "viewport": {
         "width": 1080,
-        "height": 2340,
-        "pixelRatio": 2.75
+        "height": 1920,
+        "pixelRatio": 2.625
       },
       "apiLevel": 30
     }
@@ -58,11 +62,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：columns"
+        "reason": "columns-2: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：columns"
+        "reason": "columns-2: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -94,11 +98,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：float"
+        "reason": "float-left: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：float"
+        "reason": "float-left: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -108,11 +112,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：isolation"
+        "reason": "isolate: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：isolation"
+        "reason": "isolate: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -122,25 +126,22 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：object-fit"
+        "reason": "object-cover: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：object-fit"
+        "reason": "object-cover: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
       "id": "layout-overflow",
       "generated": true,
       "bundled": true,
-      "failureStage": "runtime",
       "ios": {
-        "status": "unsupported",
-        "reason": "probe/control 元素截图没有可观察的像素差异"
+        "status": "supported"
       },
       "android": {
-        "status": "unsupported",
-        "reason": "probe/control 元素截图没有可观察的像素差异"
+        "status": "supported"
       }
     },
     {
@@ -249,11 +250,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：padding-inline"
+        "reason": "px-[7.5px]: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：padding-inline"
+        "reason": "px-[7.5px]: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -287,11 +288,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：table-layout, border-collapse"
+        "reason": "table: TASM 未保留该候选的完整 selector 或声明; table-fixed: TASM 未保留该候选的完整 selector 或声明; border-collapse: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：table-layout, border-collapse"
+        "reason": "table: TASM 未保留该候选的完整 selector 或声明; table-fixed: TASM 未保留该候选的完整 selector 或声明; border-collapse: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -348,11 +349,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：text-decoration-line"
+        "reason": "underline: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：text-decoration-line"
+        "reason": "underline: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -439,11 +440,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：mix-blend-mode"
+        "reason": "mix-blend-multiply: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：mix-blend-mode"
+        "reason": "mix-blend-multiply: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -464,11 +465,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：backdrop-filter"
+        "reason": "backdrop-blur-[2px]: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：backdrop-filter"
+        "reason": "backdrop-blur-[2px]: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -478,11 +479,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：fill, stroke-width, stroke"
+        "reason": "fill-[#0284c7]: TASM 未保留该候选的完整 selector 或声明; stroke-2: TASM 未保留该候选的完整 selector 或声明; stroke-[#0f172a]: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：fill, stroke-width, stroke"
+        "reason": "fill-[#0284c7]: TASM 未保留该候选的完整 selector 或声明; stroke-2: TASM 未保留该候选的完整 selector 或声明; stroke-[#0f172a]: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -503,11 +504,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：translate"
+        "reason": "translate-x-[12px]: TASM 未保留该候选的完整 selector 或声明; translate-y-[4px]: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：translate"
+        "reason": "translate-x-[12px]: TASM 未保留该候选的完整 selector 或声明; translate-y-[4px]: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -517,11 +518,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：rotate"
+        "reason": "rotate-[12deg]: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：rotate"
+        "reason": "rotate-[12deg]: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -531,11 +532,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：scale"
+        "reason": "scale-110: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：scale"
+        "reason": "scale-110: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -592,11 +593,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：user-select"
+        "reason": "select-none: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：user-select"
+        "reason": "select-none: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -606,11 +607,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：scroll-behavior, scroll-snap-type"
+        "reason": "scroll-smooth: TASM 未保留该候选的完整 selector 或声明; snap-y: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：scroll-behavior, scroll-snap-type"
+        "reason": "scroll-smooth: TASM 未保留该候选的完整 selector 或声明; snap-y: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -620,36 +621,36 @@
       "failureStage": "runtime",
       "ios": {
         "status": "unsupported",
-        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
+        "reason": "真实根 viewport 跨断点及恢复后未呈现 max-md 对应的宽度"
       },
       "android": {
         "status": "unsupported",
-        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
+        "reason": "真实根 viewport 跨断点及恢复后未呈现 max-md 对应的宽度"
       }
     },
     {
       "id": "variant-dark",
       "generated": true,
       "bundled": true,
-      "failureStage": "runtime",
       "ios": {
-        "status": "unsupported",
-        "reason": "深色模式未仅将相同字形变为白色并保持背景及 control 不变"
+        "status": "supported"
       },
       "android": {
-        "status": "unsupported",
-        "reason": "深色模式未仅将相同字形变为白色并保持背景及 control 不变"
+        "status": "supported"
       }
     },
     {
       "id": "variant-state",
       "generated": true,
       "bundled": true,
+      "failureStage": "runtime",
       "ios": {
-        "status": "supported"
+        "status": "unsupported",
+        "reason": "hover:bg-[#ef4444]: Lynx 4.0.1 未暴露 hover 媒体能力，必要条件 (hover:hover) 不匹配；hover 输入和伪状态仍未测试"
       },
       "android": {
-        "status": "supported"
+        "status": "unsupported",
+        "reason": "hover:bg-[#ef4444]: Lynx 4.0.1 未暴露 hover 媒体能力，必要条件 (hover:hover) 不匹配；hover 输入和伪状态仍未测试"
       }
     },
     {
@@ -673,11 +674,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*), .peer-checked\\:opacity-100:is(:where(.peer):checked~*)"
+        "reason": "group-hover:block: encoder 删除 selector：.group-hover\\:block:is(:where(.group):hover *), .group-hover\\:block:is(:where(.group):hover *); peer-checked:opacity-100: encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*), .peer-checked\\:opacity-100:is(:where(.peer):checked~*)"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*), .peer-checked\\:opacity-100:is(:where(.peer):checked~*)"
+        "reason": "group-hover:block: encoder 删除 selector：.group-hover\\:block:is(:where(.group):hover *), .group-hover\\:block:is(:where(.group):hover *); peer-checked:opacity-100: encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*), .peer-checked\\:opacity-100:is(:where(.peer):checked~*)"
       }
     },
     {
@@ -687,25 +688,22 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：text-decoration-line"
+        "reason": "aria-[sort=ascending]:underline: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：text-decoration-line"
+        "reason": "aria-[sort=ascending]:underline: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
       "id": "variant-supports",
       "generated": true,
       "bundled": true,
-      "failureStage": "runtime",
       "ios": {
-        "status": "unsupported",
-        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
+        "status": "supported"
       },
       "android": {
-        "status": "unsupported",
-        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
+        "status": "supported"
       }
     },
     {
@@ -715,11 +713,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "TASM 未保留完整 selector 或声明"
+        "reason": "before:content-['lynx']: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "TASM 未保留完整 selector 或声明"
+        "reason": "before:content-['lynx']: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -740,25 +738,22 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：translate"
+        "reason": "-translate-x-[5px]: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：translate"
+        "reason": "-translate-x-[5px]: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
       "id": "syntax-important",
       "generated": true,
-      "bundled": false,
-      "failureStage": "encoder",
+      "bundled": true,
       "ios": {
-        "status": "unsupported",
-        "reason": "TASM 未保留完整 selector 或声明"
+        "status": "supported"
       },
       "android": {
-        "status": "unsupported",
-        "reason": "TASM 未保留完整 selector 或声明"
+        "status": "supported"
       }
     },
     {
@@ -768,11 +763,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "TASM 未保留完整 selector 或声明"
+        "reason": "text-black/[.35]: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "TASM 未保留完整 selector 或声明"
+        "reason": "text-black/[.35]: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -782,11 +777,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：mask-type"
+        "reason": "[mask-type:luminance]: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：mask-type"
+        "reason": "[mask-type:luminance]: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -839,12 +834,10 @@
       "bundled": false,
       "failureStage": "encoder",
       "ios": {
-        "status": "unsupported",
-        "reason": "encoder 删除属性：text-decoration-line"
+        "status": "supported"
       },
       "android": {
-        "status": "unsupported",
-        "reason": "encoder 删除属性：text-decoration-line"
+        "status": "supported"
       }
     },
     {
@@ -853,12 +846,10 @@
       "bundled": false,
       "failureStage": "encoder",
       "ios": {
-        "status": "unsupported",
-        "reason": "encoder 删除属性：content-visibility"
+        "status": "supported"
       },
       "android": {
-        "status": "unsupported",
-        "reason": "encoder 删除属性：content-visibility"
+        "status": "supported"
       }
     },
     {
@@ -867,12 +858,10 @@
       "bundled": false,
       "failureStage": "encoder",
       "ios": {
-        "status": "unsupported",
-        "reason": "encoder 删除 selector：.theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *)"
+        "status": "supported"
       },
       "android": {
-        "status": "unsupported",
-        "reason": "encoder 删除 selector：.theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *)"
+        "status": "supported"
       }
     },
     {
@@ -900,29 +889,23 @@
     {
       "id": "directive-config-plugin",
       "generated": true,
-      "bundled": false,
-      "failureStage": "encoder",
+      "bundled": true,
       "ios": {
-        "status": "unsupported",
-        "reason": "TASM 未保留完整 selector 或声明"
+        "status": "supported"
       },
       "android": {
-        "status": "unsupported",
-        "reason": "TASM 未保留完整 selector 或声明"
+        "status": "supported"
       }
     },
     {
       "id": "directive-prefix-important",
       "generated": true,
-      "bundled": false,
-      "failureStage": "encoder",
+      "bundled": true,
       "ios": {
-        "status": "unsupported",
-        "reason": "TASM 未保留完整 selector 或声明"
+        "status": "supported"
       },
       "android": {
-        "status": "unsupported",
-        "reason": "TASM 未保留完整 selector 或声明"
+        "status": "supported"
       }
     },
     {
@@ -932,11 +915,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：break-before, break-after, break-inside"
+        "reason": "break-before-page: TASM 未保留该候选的完整 selector 或声明; break-after-page: TASM 未保留该候选的完整 selector 或声明; break-inside-avoid: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：break-before, break-after, break-inside"
+        "reason": "break-before-page: TASM 未保留该候选的完整 selector 或声明; break-after-page: TASM 未保留该候选的完整 selector 或声明; break-inside-avoid: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -946,11 +929,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：box-decoration-break, clear"
+        "reason": "box-decoration-clone: TASM 未保留该候选的完整 selector 或声明; clear-both: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：box-decoration-break, clear"
+        "reason": "box-decoration-clone: TASM 未保留该候选的完整 selector 或声明; clear-both: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -960,11 +943,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：object-position"
+        "reason": "object-[35%_65%]: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：object-position"
+        "reason": "object-[35%_65%]: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -974,11 +957,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：overscroll-behavior"
+        "reason": "overscroll-contain: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：overscroll-behavior"
+        "reason": "overscroll-contain: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1017,15 +1000,15 @@
     {
       "id": "grid-auto",
       "generated": true,
-      "bundled": true,
-      "failureStage": "runtime",
+      "bundled": false,
+      "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
+        "reason": "auto-rows-min: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
+        "reason": "auto-rows-min: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1035,25 +1018,25 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：place-content, place-items, place-self"
+        "reason": "place-content-center: TASM 未保留该候选的完整 selector 或声明; place-items-center: TASM 未保留该候选的完整 selector 或声明; place-self-center: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：place-content, place-items, place-self"
+        "reason": "place-content-center: TASM 未保留该候选的完整 selector 或声明; place-items-center: TASM 未保留该候选的完整 selector 或声明; place-self-center: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
       "id": "grid-justify-self",
       "generated": true,
-      "bundled": true,
-      "failureStage": "runtime",
+      "bundled": false,
+      "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
+        "reason": "justify-self-end: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "Tailwind probe 与 control 的几何结果没有满足 case 断言"
+        "reason": "justify-self-end: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1074,11 +1057,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：margin-block-start"
+        "reason": "space-x-2: encoder 删除 selector：:where(.space-x-2>:not(:last-child)), :where(.space-x-2>:not(:last-child)); space-y-2: encoder 删除 selector：:where(.space-y-2>:not(:last-child)), :where(.space-y-2>:not(:last-child))"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：margin-block-start"
+        "reason": "space-x-2: encoder 删除 selector：:where(.space-x-2>:not(:last-child)), :where(.space-x-2>:not(:last-child)); space-y-2: encoder 删除 selector：:where(.space-y-2>:not(:last-child)), :where(.space-y-2>:not(:last-child))"
       }
     },
     {
@@ -1099,11 +1082,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：-webkit-font-smoothing, font-stretch"
+        "reason": "antialiased: TASM 未保留该候选的完整 selector 或声明; font-stretch-expanded: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：-webkit-font-smoothing, font-stretch"
+        "reason": "antialiased: TASM 未保留该候选的完整 selector 或声明; font-stretch-expanded: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1113,11 +1096,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：font-variant-numeric"
+        "reason": "tabular-nums: TASM 未保留该候选的完整 selector 或声明; slashed-zero: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：font-variant-numeric"
+        "reason": "tabular-nums: TASM 未保留该候选的完整 selector 或声明; slashed-zero: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1127,11 +1110,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：-webkit-line-clamp"
+        "reason": "line-clamp-2: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：-webkit-line-clamp"
+        "reason": "line-clamp-2: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1141,11 +1124,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：list-style-position, list-style-type, list-style-image"
+        "reason": "list-inside: TASM 未保留该候选的完整 selector 或声明; list-disc: TASM 未保留该候选的完整 selector 或声明; list-image-none: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：list-style-position, list-style-type, list-style-image"
+        "reason": "list-inside: TASM 未保留该候选的完整 selector 或声明; list-disc: TASM 未保留该候选的完整 selector 或声明; list-image-none: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1155,11 +1138,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：text-decoration-style, text-underline-offset"
+        "reason": "decoration-dashed: TASM 未保留该候选的完整 selector 或声明; underline-offset-4: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：text-decoration-style, text-underline-offset"
+        "reason": "decoration-dashed: TASM 未保留该候选的完整 selector 或声明; underline-offset-4: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1169,25 +1152,25 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：text-transform, text-wrap"
+        "reason": "uppercase: TASM 未保留该候选的完整 selector 或声明; text-balance: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：text-transform, text-wrap"
+        "reason": "uppercase: TASM 未保留该候选的完整 selector 或声明; text-balance: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
       "id": "type-flow",
       "generated": true,
-      "bundled": true,
-      "failureStage": "runtime",
+      "bundled": false,
+      "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "行内中部对齐、双空格保留、显式换行与软换行未同时满足"
+        "reason": "whitespace-pre-wrap: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "行内中部对齐、双空格保留、显式换行与软换行未同时满足"
+        "reason": "whitespace-pre-wrap: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1197,11 +1180,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：overflow-wrap"
+        "reason": "wrap-break-word: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：overflow-wrap"
+        "reason": "wrap-break-word: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1225,11 +1208,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：background-attachment"
+        "reason": "bg-fixed: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：background-attachment"
+        "reason": "bg-fixed: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1250,11 +1233,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除 selector：:where(.divide-y-2>:not(:last-child)), :where(.divide-y-2>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child))"
+        "reason": "divide-y-2: encoder 删除 selector：:where(.divide-y-2>:not(:last-child)), :where(.divide-y-2>:not(:last-child)); divide-[#64748b]: encoder 删除 selector：:where(.divide-\\[\\#64748b\\]>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child)); divide-dashed: encoder 删除 selector：:where(.divide-dashed>:not(:last-child)), :where(.divide-dashed>:not(:last-child))"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除 selector：:where(.divide-y-2>:not(:last-child)), :where(.divide-y-2>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child))"
+        "reason": "divide-y-2: encoder 删除 selector：:where(.divide-y-2>:not(:last-child)), :where(.divide-y-2>:not(:last-child)); divide-[#64748b]: encoder 删除 selector：:where(.divide-\\[\\#64748b\\]>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child)); divide-dashed: encoder 删除 selector：:where(.divide-dashed>:not(:last-child)), :where(.divide-dashed>:not(:last-child))"
       }
     },
     {
@@ -1264,11 +1247,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：outline-offset"
+        "reason": "outline-offset-2: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：outline-offset"
+        "reason": "outline-offset-2: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1300,11 +1283,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：background-blend-mode"
+        "reason": "bg-blend-multiply: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：background-blend-mode"
+        "reason": "bg-blend-multiply: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1314,11 +1297,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：mask-mode"
+        "reason": "mask-alpha: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：mask-mode"
+        "reason": "mask-alpha: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1328,11 +1311,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：mask-type"
+        "reason": "[mask-type:luminance]: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：mask-type"
+        "reason": "[mask-type:luminance]: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1384,11 +1367,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：backdrop-filter"
+        "reason": "backdrop-brightness-110: TASM 未保留该候选的完整 selector 或声明; backdrop-contrast-125: TASM 未保留该候选的完整 selector 或声明; backdrop-grayscale: TASM 未保留该候选的完整 selector 或声明; backdrop-hue-rotate-30: TASM 未保留该候选的完整 selector 或声明; backdrop-invert: TASM 未保留该候选的完整 selector 或声明; backdrop-opacity-50: TASM 未保留该候选的完整 selector 或声明; backdrop-saturate-150: TASM 未保留该候选的完整 selector 或声明; backdrop-sepia: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：backdrop-filter"
+        "reason": "backdrop-brightness-110: TASM 未保留该候选的完整 selector 或声明; backdrop-contrast-125: TASM 未保留该候选的完整 selector 或声明; backdrop-grayscale: TASM 未保留该候选的完整 selector 或声明; backdrop-hue-rotate-30: TASM 未保留该候选的完整 selector 或声明; backdrop-invert: TASM 未保留该候选的完整 selector 或声明; backdrop-opacity-50: TASM 未保留该候选的完整 selector 或声明; backdrop-saturate-150: TASM 未保留该候选的完整 selector 或声明; backdrop-sepia: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1398,11 +1381,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：border-spacing, caption-side"
+        "reason": "border-spacing-2: TASM 未保留该候选的完整 selector 或声明; caption-bottom: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：border-spacing, caption-side"
+        "reason": "border-spacing-2: TASM 未保留该候选的完整 selector 或声明; caption-bottom: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1423,11 +1406,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：perspective-origin"
+        "reason": "perspective-origin-top: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：perspective-origin"
+        "reason": "perspective-origin-top: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1437,11 +1420,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：transform-style, backface-visibility"
+        "reason": "transform-3d: TASM 未保留该候选的完整 selector 或声明; backface-hidden: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：transform-style, backface-visibility"
+        "reason": "transform-3d: TASM 未保留该候选的完整 selector 或声明; backface-hidden: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1451,11 +1434,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：transition-behavior"
+        "reason": "transition-discrete: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：transition-behavior"
+        "reason": "transition-discrete: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1465,11 +1448,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：accent-color"
+        "reason": "accent-[#2563eb]: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：accent-color"
+        "reason": "accent-[#2563eb]: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1479,11 +1462,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：appearance, field-sizing, resize"
+        "reason": "appearance-none: TASM 未保留该候选的完整 selector 或声明; field-sizing-content: TASM 未保留该候选的完整 selector 或声明; resize-x: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：appearance, field-sizing, resize"
+        "reason": "appearance-none: TASM 未保留该候选的完整 selector 或声明; field-sizing-content: TASM 未保留该候选的完整 selector 或声明; resize-x: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1493,11 +1476,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：color-scheme"
+        "reason": "scheme-dark: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：color-scheme"
+        "reason": "scheme-dark: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1507,11 +1490,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：scroll-margin, scroll-padding"
+        "reason": "scroll-m-4: TASM 未保留该候选的完整 selector 或声明; scroll-p-4: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：scroll-margin, scroll-padding"
+        "reason": "scroll-m-4: TASM 未保留该候选的完整 selector 或声明; scroll-p-4: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1521,11 +1504,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：scroll-snap-align, scroll-snap-stop, touch-action"
+        "reason": "snap-center: TASM 未保留该候选的完整 selector 或声明; snap-always: TASM 未保留该候选的完整 selector 或声明; touch-pan-x: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：scroll-snap-align, scroll-snap-stop, touch-action"
+        "reason": "snap-center: TASM 未保留该候选的完整 selector 或声明; snap-always: TASM 未保留该候选的完整 selector 或声明; touch-pan-x: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1535,11 +1518,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：will-change"
+        "reason": "will-change-transform: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：will-change"
+        "reason": "will-change-transform: TASM 未保留该候选的完整 selector 或声明"
       }
     },
     {
@@ -1549,11 +1532,11 @@
       "failureStage": "encoder",
       "ios": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：forced-color-adjust"
+        "reason": "forced-color-adjust-none: TASM 未保留该候选的完整 selector 或声明"
       },
       "android": {
         "status": "unsupported",
-        "reason": "encoder 删除属性：forced-color-adjust"
+        "reason": "forced-color-adjust-none: TASM 未保留该候选的完整 selector 或声明"
       }
     }
   ]

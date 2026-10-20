@@ -35,7 +35,7 @@ describe('Lynx Tailwind CSS 4 compatibility catalog', () => {
   it('preserves the stored identity and display format of historical native evidence', () => {
     const baseline = baselineJson as CompatibilityBaseline
     expect(baseline.schemaVersion).toBe(1)
-    expect(Object.keys(baseline.versions).sort()).toEqual(['cssDefines', 'engineVersion', 'lynxEngine', 'tailwindcss'])
+    expect(Object.keys(baseline.versions).sort()).toEqual(['bundleConfig', 'cssDefines', 'cssSerializer', 'engineVersion', 'lynxEngine', 'tailwindcss', 'tasmDecoder', 'tasmEncoder'])
     for (const version of Object.values(baseline.versions)) {
       expect(version).toEqual(expect.any(String))
       expect(version.trim()).not.toBe('')

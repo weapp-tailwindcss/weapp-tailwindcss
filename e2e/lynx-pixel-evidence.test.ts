@@ -1,4 +1,3 @@
-import type { NativePlatformReport } from '../examples/react-lynx/src/compatibility/types'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
@@ -9,23 +8,18 @@ import staticEvidence from '../examples/react-lynx/src/compatibility/static-evid
 import { darkReceipts } from './lynx/fixtures/dark-images'
 import { effectFixtureImage } from './lynx/fixtures/effect-images'
 import { overflowArtifactFixture } from './lynx/fixtures/overflow-artifacts'
+import { protocolReport } from './lynx/fixtures/protocol-report'
 import { responsiveArtifactFixture } from './lynx/fixtures/responsive-artifacts'
 import { structuralImage } from './lynx/fixtures/structural-images'
 import { textFlowImage } from './lynx/fixtures/text-flow-images'
 import { finalizeNativePixelEffects, validateNativePixelEvidence } from './lynx/pixel-evidence'
 import { PNG } from './lynx/png'
 import { validateNativeReport } from './lynx/reports'
-import androidReport from './lynx/reports/android.json'
 
-vi.mock('../examples/react-lynx/src/compatibility/static-evidence.json', async (importOriginal) => {
-  const original = await importOriginal<typeof import('../examples/react-lynx/src/compatibility/static-evidence.json')>()
-  const { default: report } = await import('./lynx/reports/android.json')
-  // 像素算法使用历史协议夹具声明的取证阶段；实际字节由 decoder/media-guard 回归及生产验收独立核对。
-  // 历史报告的 bundled checkpoint 缺失时，代表当时已经进入运行时取证。
-  return { default: { ...original.default, results: original.default.results.map((result) => {
-    const checkpoints = report.results.find(item => item.id === result.id)!.checkpoints
-    return { ...result, generated: checkpoints.find(item => item.name === 'generated')?.passed ?? true, bundled: result.id === 'syntax-important' || (checkpoints.find(item => item.name === 'bundled')?.passed ?? true) }
-  }) } }
+// 像素协议固定进入取证阶段，不因真实 encoder 限制或设备基线刷新而跳过反例。
+vi.mock('../examples/react-lynx/src/compatibility/static-evidence.json', async () => {
+  const { protocolStaticEvidence } = await import('./lynx/fixtures/protocol-report')
+  return { default: protocolStaticEvidence() }
 })
 
 const directories: string[] = []
@@ -55,7 +49,7 @@ async function fixture() {
   directories.push(directory)
   const crops = path.join(directory, 'crops')
   await fs.mkdir(crops)
-  const report = structuredClone(androidReport) as NativePlatformReport
+  const report = protocolReport()
   report.evidence = { version: 1, runId: '00000000-0000-4000-8000-000000000001', bundleSha256: 'a'.repeat(64), artifacts: [] }
   for (const [name, bytes] of [...responsiveArtifactFixture(report), ...overflowArtifactFixture(report)]) {
     await fs.writeFile(path.join(crops, name), bytes)

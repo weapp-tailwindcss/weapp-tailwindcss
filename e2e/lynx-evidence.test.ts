@@ -1,25 +1,23 @@
-import type { NativePlatformReport, Platform, StaticEvidenceReport } from '../examples/react-lynx/src/compatibility/types'
+import type { Platform } from '../examples/react-lynx/src/compatibility/types'
 import { Buffer } from 'node:buffer'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, expect, it, vi } from 'vitest'
-import { candidateCheckpoint, combineCandidateEvidence, requiresCandidateEvidence } from '../examples/react-lynx/src/compatibility/candidate-evidence'
 import { compatibilityCases } from '../examples/react-lynx/src/compatibility/catalog'
-import { evidenceArtifactNames, evidenceSequence, requiresPixelEffect } from '../examples/react-lynx/src/compatibility/evidence'
+import { evidenceArtifactNames, evidenceSequence, lynxEvidenceStrategy, requiresPixelEffect } from '../examples/react-lynx/src/compatibility/evidence'
 import { evaluateGeometry } from '../examples/react-lynx/src/compatibility/geometry'
 import staticEvidence from '../examples/react-lynx/src/compatibility/static-evidence.json'
 import { archiveNativeBaseline, validateNativeBaselineArchive } from './lynx/baseline-archive'
-import { compatibilityVersions, getCatalogHash } from './lynx/catalog'
 import { collectNativeEvidence, createEvidenceContext, cropsDirectory, sha256, validateNativeEvidence } from './lynx/evidence'
 import { darkReceipts } from './lynx/fixtures/dark-images'
 import { effectFixtureImage } from './lynx/fixtures/effect-images'
 import { overflowArtifactFixture } from './lynx/fixtures/overflow-artifacts'
+import { protocolReport } from './lynx/fixtures/protocol-report'
 import { responsiveArtifactFixture } from './lynx/fixtures/responsive-artifacts'
 import { finalizeNativePixelEffects } from './lynx/pixel-evidence'
 import { PNG } from './lynx/png'
 import { readNativeReport } from './lynx/reports'
-import androidReport from './lynx/reports/android.json'
 import { validateStyleFixtureArtifacts } from './lynx/style-fixture-artifacts'
 
 // 本文件隔离验证存储/几何协议，支持预期漂移由 lynx-reports.test.ts 的真实门禁单独回归。
@@ -33,37 +31,10 @@ vi.mock('./lynx/expectations', async importOriginal => ({
   assertReviewedLynxOutcome: () => {},
 }))
 
-// 该套仅验证证据协议：显式构造本轮合成静态输入，不改写或冒充已提交的历史报告。
-vi.mock('../examples/react-lynx/src/compatibility/static-evidence.json', async (importOriginal) => {
-  const original = await importOriginal<{ default: StaticEvidenceReport }>()
-  const { compatibilityVersions, getCatalogHash } = await import('./lynx/catalog')
-  const { compatibilityCases } = await import('../examples/react-lynx/src/compatibility/catalog')
-  const { default: protocolReport } = await import('./lynx/reports/android.json')
-  return {
-    default: {
-      ...original.default,
-      catalogHash: getCatalogHash(),
-      versions: compatibilityVersions,
-      // 历史协议夹具决定本测试覆盖的取证分支，不让本轮 encoder 的变化跳过几何或像素反例。
-      // 真实静态字节与阶段合同由 decoder、static-evidence 和 reports 测试独立核验。
-      results: original.default.results.map((result) => {
-        const checkpoints = protocolReport.results.find(item => item.id === result.id)!.checkpoints
-        const generated = checkpoints.find(item => item.name === 'generated')?.passed ?? true
-        const bundled = result.id === 'syntax-important' || (checkpoints.find(item => item.name === 'bundled')?.passed ?? true)
-        return {
-          ...result,
-          generated,
-          bundled,
-          candidates: compatibilityCases.find(item => item.id === result.id)!.className.split(/\s+/).filter(Boolean).map(className => ({
-            className,
-            generated,
-            bundled,
-            reason: result.reason,
-          })),
-        }
-      }),
-    },
-  }
+// 合成静态输入与设备基线无关；真实 encoder 阶段由 static-evidence 和 reports 回归验证。
+vi.mock('../examples/react-lynx/src/compatibility/static-evidence.json', async () => {
+  const { protocolStaticEvidence } = await import('./lynx/fixtures/protocol-report')
+  return { default: protocolStaticEvidence() }
 })
 
 const directories: string[] = []
@@ -80,25 +51,7 @@ it('统一入口可以传递同轮 UUID，非法身份在原生运行之前拒�
 async function fixture(platform: Platform = 'android') {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'lynx bound evidence '))
   directories.push(directory)
-  const report = structuredClone(androidReport) as NativePlatformReport
-  report.platform = platform
-  report.environment.osName = platform === 'ios' ? 'iOS' : 'Android'
-  report.catalogHash = getCatalogHash()
-  report.versions = compatibilityVersions
-  for (const item of compatibilityCases) {
-    const result = report.results.find(result => result.id === item.id)!
-    const built = staticEvidence.results.find(result => result.id === item.id)!
-    if (requiresCandidateEvidence(item.id)) {
-      Object.assign(result, combineCandidateEvidence(item, built, item.className.split(/\s+/).map(className => ({
-        className,
-        status: 'supported',
-        checkpoints: [{ name: candidateCheckpoint(className), passed: true }],
-      }))))
-    }
-    if (item.evidence === 'build' && built.generated) {
-      Object.assign(result, { status: 'supported', reason: undefined, checkpoints: [{ name: 'build:generated', passed: true }] })
-    }
-  }
+  const report = protocolReport(platform)
   // 此 fixture 验证取证协议：几何节点使用同布局、不同屏幕原点，结论应为不支持。
   const rect = (left: number, top: number, width: number, height: number) => ({ left, top, width, height, right: left + width, bottom: top + height })
   const layoutControls: Record<string, number[]> = {
@@ -111,8 +64,8 @@ async function fixture(platform: Platform = 'android') {
     'flex-shorthand-shrink': [6, 6, 24, 24, 0, 0, 12, 24],
   }
   for (const result of report.results) {
-    if (!requiresPixelEffect(result.id) && (result.id === 'variant-supports' || result.checkpoints.some(checkpoint => checkpoint.name.startsWith('geometry:')))) {
-      const item = compatibilityCases.find(item => item.id === result.id)!
+    const item = compatibilityCases.find(item => item.id === result.id)!
+    if (!requiresPixelEffect(result.id) && (result.id === 'variant-supports' || ['native-geometry', 'pixel-geometry'].includes(lynxEvidenceStrategy(item)))) {
       const layout = layoutControls[item.id]
       if (layout) {
         const [x, y, width, height, childX, childY, childWidth, childHeight] = layout as [number, number, number, number, number, number, number, number]
@@ -342,7 +295,8 @@ it('拒绝新报告配合上轮残留的有效截图，历史报告不能刷新�
   directories.push(directory)
   const crops = path.join(directory, 'crops')
   await fs.mkdir(crops)
-  const report = structuredClone(androidReport) as NativePlatformReport
+  const report = protocolReport()
+  report.catalogHash = 'historical-catalog'
   for (const result of report.results) {
     const frames = (requiresPixelEffect(result.id) || result.checkpoints.some(checkpoint => checkpoint.name === 'pixel:probe-vs-control'))
       ? ['probe', 'control']

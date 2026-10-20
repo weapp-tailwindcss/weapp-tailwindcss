@@ -228,6 +228,16 @@ RN 正式 run [`39248652500`](https://github.com/weapp-tailwindcss/weapp-tailwin
 
 三份 ZIP 均逐文件与解压件比对，独立 SHA-256 与 API digest 一致：Web artifact `12184378336`（404 文件）、Android `12185382253`（413 文件，ZIP SHA-256 `978ab4d1cbb432652e3df4c8714b01a8dddeb080d32f478c85c697252233576a`）、iOS `12185369293`（410 文件）。最终 workflow/job 元数据、日志、三端 `independent-audit.json`、`archive-verification.json` 和汇总保留在独立审查树 `e2e/.artifacts/ci-audit/39248652500/`。fixture 身份为 `2559da5cb52b9cc408e59406d03b6c85bfa8d270a0dfb55699681b59b1a98f7d`，catalog 为 `ccd8a53672fd5b3fb2a8c3529b15e2715617be350cb62df98e8f3d2c0048aa9a`。此结论只覆盖该提交和 Chromium；`servedBundle=not-captured` 的边界仍保留，新 head 需要重新验收。Taro RSS 首轮失败及唯一确认复测另见[独立记录](tailwind-taro-build-rss-confirmation.md)，第二组未复现不代表生产根因已修复。
 
+## 双端基线刷新与协议夹具隔离（2026-10-20）
+
+PR head `1154af2b0a9ce4092bd6e36f1e654f309e01a560` 的 Lynx 正式 run [`39272094832`](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/39272094832) 已完成双端 118 案例和各 154 份回执。Android job `118127143262`、iOS job `118127143393` 均只在旧提交报告比较处失败，原始完整证据验收通过。Android artifact `12195224817`、iOS artifact `12196134909` 使用同一 catalog `2e3a1a60517c13de507d22ef8b4d209ffcdb86b2dfbf5bf7100df35c40dc3fec`、Tailwind 4.3.3 与 Lynx 4.0.1，未重用此前超时轮的 iOS 证据。
+
+使用上述完整双端运行目录执行 `LYNX_IOS_REPORT=<本轮 iOS report.json> LYNX_ANDROID_REPORT=<本轮 Android report.json> pnpm e2e:lynx:update`，更新器正常复制原始证据并重放后，刷新 `e2e/lynx/reports/{ios,android}.json` 和示例 `baseline.json`。受控归档 `e2e/.artifacts/lynx-baselines/baseline-YMTusk` 的独立命令 `pnpm exec tsx e2e/lynx/verify-baseline-archive.ts e2e/.artifacts/lynx-baselines/baseline-YMTusk` 验真通过，共 341 文件。Android run ID `61cd5a18-a820-4b40-8e17-9d8eddf410c8`，bundle SHA-256 `5a07c02f9bb46d428a22535df239536b341d04d9b5d978fec04dae81184e34ef`；iOS run ID `268afe0a-2c5e-4408-ac45-04637baef7f5`，bundle SHA-256 `b0106c10d81286219b72222a9e466ec5b9971e4f2918f28681a201b3d039331c`。归档不进入 Git，tracked JSON 仍不能代替后续运行的原始工件。
+
+双端结果分别为 Android 54 支持/64 限制、iOS 53 支持/65 限制。overflow、dark、supports、important 和五类构建指令反映此前已审查的契约修复；指令的 build 通过仅表示生成语义。混合 `variant-state` 不再沿用 active 的单项成功：active 仍支持，hover 的必要媒体条件被原生负向证据拒绝，hover 输入和伪状态仍未测试。grid-auto、justify-self 和 type-flow 的限制保留为已审查的实际 encoder 阶段，没有把运行失败自动降级。
+
+刷新报告后的首次定向合同暴露两套协议单测依赖历史 JSON 的阶段、checkpoint 与 mediaGate。证据协议和像素协议现从 catalog 构造独立的合成静态输入与报告，固定进入取证分支，按各套 PNG、状态和几何重新计算结果；不继承任何设备身份或已提交支持结论。旧 catalog 反例显式设置过期身份。生产 static、报告、SDK、原始工件及支持表门禁均未改动。两套 75 项以 `CI=1`、`--update=none` 全部通过，缺图、错回执、旧 run、状态恢复与伪造几何仍拒绝。 示例的历史版本字段断言同时补齐 encoder、serializer、decoder 与 bundleConfig，保留完整身份约束。最终 `CI=1 pnpm e2e:tailwind:contract` 为 88 文件/1,467 项通过，`CI=1 pnpm e2e:lynx` 为示例 201 项及静态入口 729 项通过，后者重新构建真实 Rspeedy bundle 并核对实际 decoder 与 static。`pnpm agents:check` 和 `git diff --check` 通过；ESLint 通过的两份测试文件以外，新 fixture 被现有忽略配置排除，不计 lint 通过。未启动本地全面调度，预检阻塞边界不变。
+
 ## 规则评估
 
 诊断 run `39240820531` 的 Android 已完成 118 项实际原生采集，独立审查发现 responsive、dark、supports 和 important 四项报告与既有支持合同不同；这些变化尚未自动放宽。iOS 在 CocoaPods 安装阶段被固定原始 checksum 阻断，没有设备证据。CDN 与原夹具的完整 JSON 相等，仅文本空白/转义变化；生产校验改为完整 `Specification#to_hash` 的规范语义 SHA-256，保留所有属性、数组顺序和值类型，并继续独立核来源、版本及 getter 源码。新旧完整原始 Podspec 均固定字节身份，真实 CocoaPods/PBX 回归覆盖格式等价与实质变更拒绝。
