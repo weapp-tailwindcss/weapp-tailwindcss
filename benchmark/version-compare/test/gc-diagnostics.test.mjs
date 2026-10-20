@@ -77,6 +77,24 @@ describe('私有 GC 诊断控制器', () => {
     expect(corrupted).toMatchObject({ missingPreloadEvidence: false, processEvidence: [{ pid: 123, ready: true, completeFinalLine: true, recordIntegrityUnavailable: true, lastWriteAccounted: false, readError: expect.any(String) }] })
   })
 
+  it('完整 batch 尾行仍须对应 accounting 才能证明末次写入已记账', async () => {
+    const { root, cwd, entry } = await fixture()
+    const diagnostics = await createGcDiagnostics({ cwd, versionMeta: versionFor(root), projectMeta: mpxProject, directory: path.join(root, 'diag'), kind: 'hmr', run: 1 })
+    const identity = JSON.parse(diagnostics.env.WEAPP_TW_BENCH_GC_SESSION)
+    const file = path.join(identity.sessionDirectory, 'gc-123.ndjson')
+    const startup = { type: 'process-start', pid: 123, identity, actualEntry: await fs.realpath(entry), preloadSha256: identity.expectedPreloadSha256, pathHelperSha256: identity.expectedPathHelperSha256 }
+    const records = [startup, { type: 'gc-batch' }, { type: 'accounting', costs: { dataWrites: 2 } }, { type: 'gc-batch' }]
+    await fs.writeFile(file, `${records.map(record => JSON.stringify(record)).join('\n')}\n`)
+    await diagnostics.finish()
+    const manifestPath = path.join(identity.sessionDirectory, 'controller.json')
+    const unaccounted = JSON.parse(await fs.readFile(manifestPath, 'utf8'))
+    expect(unaccounted).toMatchObject({ missingPreloadEvidence: false, processEvidence: [{ ready: true, completeFinalLine: true, recordIntegrityUnavailable: false, lastWriteAccounted: false }] })
+    await fs.appendFile(file, `${JSON.stringify({ type: 'accounting', costs: { dataWrites: 3 } })}\n`)
+    await diagnostics.finish()
+    const accounted = JSON.parse(await fs.readFile(manifestPath, 'utf8'))
+    expect(accounted).toMatchObject({ missingPreloadEvidence: false, processEvidence: [{ ready: true, completeFinalLine: true, recordIntegrityUnavailable: false, lastWriteAccounted: true }] })
+  })
+
   it('诊断目录不可写时报告缺证并保持业务路径可执行', async () => {
     const { root, cwd } = await fixture()
     const directory = path.join(root, 'file-not-directory')

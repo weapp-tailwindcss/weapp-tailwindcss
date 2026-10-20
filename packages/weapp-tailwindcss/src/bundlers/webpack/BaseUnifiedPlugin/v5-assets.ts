@@ -8,7 +8,6 @@ import { pluginName } from '@/constants'
 import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
 import { ensureRuntimeClassSet } from '@/tailwindcss/runtime'
 import { getRuntimeClassSetSignature } from '@/tailwindcss/runtime/cache'
-import { warnFinalRpxThemeRisk } from '@/tailwindcss/v4/rpx-theme-warning'
 import { getGroupedEntries } from '@/utils'
 import { resolveTaskConcurrency } from '../../../utils/run-tasks'
 import { annotateCssSourceTrace, createCssSourceTraceCacheSignature, isCssSourceTraceEnabled } from '../../shared/css-source-trace'
@@ -17,6 +16,7 @@ import { collectStrictEscapedRuntimeCandidates, createEscapeFragments } from '..
 import { createCandidateSignature } from '../../shared/runtime-signatures'
 import { createAssetHashByChunkMap, createWebpackCssAssetResourceMap, createWebpackDirectCssAssetResourceMap } from './shared'
 import { createWebpackCssSourceResolvers } from './v5-assets/css-source-resolvers'
+import { finalizeProcessedWebpackCssAssets, setupWebpackMiniCssAssetFinalizer } from './v5-assets/final-css-assets'
 import { finalizeWebpackProcessAssets } from './v5-assets/finalize-assets'
 import { processWebpackGeneratedCssAsset } from './v5-assets/generated-css-task'
 import { buildWebpackBundleSnapshot, createWebpackAssetUpdater, releaseWebpackBundleSnapshotSources, resolveWebpackOutputDirectory } from './v5-assets/helpers'
@@ -29,7 +29,6 @@ import {
   collectWebpackJsRuntimeTokenSignature,
   createWebpackCssSourceTraceTokenSources,
   finalizeTracedWebpackCssAsset,
-  finalizeWebpackCssAssetOutputSource,
   finalizeWebpackCssAssetSource,
   getRuntimeClassSetSync,
   isRuntimeTransformCandidate,
@@ -449,18 +448,13 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
           debug,
           entries,
           finalizeCssAssets: isWebGeneratorTarget
-            ? () => {
-                // loader 阶段的本地导入尚未展开；在框架合并后、压缩与 Lynx 编码前补齐完整消费图兼容。
-                for (const [file] of groupedEntries.css) {
-                  const source = compilation.getAsset(file)?.source
-                  if (source) {
-                    const finalized = preserveProcessedWebpackCssSource(source, sources, generatorOptions.webCompat)
-                    if (finalized !== source) {
-                      updateAssetIfChanged(file, finalized, { compare: false })
-                    }
-                  }
-                }
-              }
+            ? () => finalizeProcessedWebpackCssAssets({
+                compilation,
+                cssFiles: groupedEntries.css.map(([file]) => file),
+                sources,
+                webCompat: generatorOptions.webCompat,
+                updateAssetIfChanged,
+              })
             : undefined,
           groupedEntries,
           hmrTimingStartedAt,
@@ -479,36 +473,7 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
       },
     )
     if (!isWebGeneratorTarget) {
-      compilation.hooks.processAssets.tapPromise(
-        {
-          name: `${pluginName}:finalize-css-assets`,
-          stage: Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE_HASH,
-        },
-        async (assets) => {
-          const entries = Object.entries(assets)
-          if (entries.length === 0) {
-            return
-          }
-          const groupedEntries = getGroupedEntries(entries, compilerOptions)
-          if (groupedEntries.css.length === 0) {
-            return
-          }
-          const { updateAssetIfChanged } = createWebpackAssetUpdater({
-            compilation,
-            ConcatSource,
-            onUpdate: compilerOptions.onUpdate,
-            debug,
-          })
-          for (const [file, asset] of groupedEntries.css) {
-            const currentAsset = compilation.getAsset(file)
-            const rawSource = currentAsset?.source.source() ?? asset.source()
-            const source = rawSource.toString()
-            const finalized = finalizeWebpackCssAssetOutputSource(source, compilerOptions, isWebGeneratorTarget)
-            updateAssetIfChanged(file, finalized)
-            warnFinalRpxThemeRisk(runtimeState, [finalized], compilerOptions)
-          }
-        },
-      )
+      setupWebpackMiniCssAssetFinalizer({ compilation, compiler, compilerOptions, debug, runtimeState })
     }
   })
 }
