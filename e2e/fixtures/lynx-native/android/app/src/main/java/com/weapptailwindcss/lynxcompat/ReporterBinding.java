@@ -9,6 +9,7 @@ final class ReporterBinding {
   private WeakReference<LynxView> view = new WeakReference<>(null);
   private volatile boolean closed;
   ColorSchemeSession colorScheme;
+  ResponsiveSession responsive;
 
   ReporterBinding(EvidenceStore store) { this.store = store; }
 
@@ -17,6 +18,8 @@ final class ReporterBinding {
     view = new WeakReference<>(target);
     ColorSchemeHost host = new ColorSchemeHost(target);
     colorScheme = new ColorSchemeSession(store.runId, host, host);
+    ResponsiveHost viewportHost = new ResponsiveHost(target);
+    responsive = new ResponsiveSession(store.runId, viewportHost, viewportHost);
   }
 
   LynxView view() { return closed ? null : view.get(); }
@@ -24,6 +27,7 @@ final class ReporterBinding {
   void invalidate() {
     closed = true;
     if (colorScheme != null) colorScheme.invalidate();
+    if (responsive != null) responsive.invalidate();
     view.clear();
   }
 }

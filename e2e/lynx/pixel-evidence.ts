@@ -2,12 +2,16 @@ import type { NativePlatformReport, StaticEvidenceReport } from '../../examples/
 import type { PngPixels } from './png'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { isDeepStrictEqual } from 'node:util'
 import { compatibilityCases } from '../../examples/react-lynx/src/compatibility/catalog'
 import { evidenceSequence, requiresPixelEffect } from '../../examples/react-lynx/src/compatibility/evidence'
 import staticEvidenceJson from '../../examples/react-lynx/src/compatibility/static-evidence.json'
 import { evaluateColorScheme, validateColorSchemeReceipts } from './color-scheme'
+import { evaluateImportantPriority } from './important-priority'
+import { readOverflowEvidence } from './overflow-evidence'
 import { evaluatePixelEffect } from './pixel-effects'
 import { PNG } from './png'
+import { readResponsiveEvidence } from './responsive-evidence'
 import { evaluateStructural } from './structural'
 import { evaluateTextFlow } from './text-flow'
 
@@ -15,6 +19,7 @@ const sequenceEvaluators: Record<string, (images: PngPixels[]) => ReturnType<typ
   'variant-dark': evaluateColorScheme,
   'variant-structural': evaluateStructural,
   'type-flow': evaluateTextFlow,
+  'syntax-important': evaluateImportantPriority,
 }
 
 const staticById = new Map((staticEvidenceJson as StaticEvidenceReport).results.map(item => [item.id, item]))
@@ -51,6 +56,28 @@ export async function finalizeNativePixelEffects(raw: NativePlatformReport, crop
   const report = structuredClone(raw)
   for (const result of report.results) {
     const built = staticById.get(result.id)
+    if (result.id === 'layout-overflow' && built?.generated && built.bundled) {
+      if (result.status !== 'not-tested' || !report.evidence) {
+        throw new Error('overflow 原始采集报告不能预先声明结论，且必须提供本轮身份')
+      }
+      Object.assign(result, await readOverflowEvidence(report, cropsDirectory, report.evidence))
+      if (result.status === 'supported') {
+        delete result.reason
+        delete result.failureStage
+      }
+      continue
+    }
+    if (result.id === 'variant-responsive' && built?.generated && built.bundled) {
+      if (result.status !== 'not-tested' || !report.evidence) {
+        throw new Error('响应式原始采集报告不能预先声明结论，且必须提供本轮身份')
+      }
+      Object.assign(result, (await readResponsiveEvidence(report, cropsDirectory, report.evidence)).measured)
+      if (result.status === 'supported') {
+        delete result.reason
+        delete result.failureStage
+      }
+      continue
+    }
     if ((!requiresPixelEffect(result.id) && result.id !== 'variant-dark') || !built?.generated || !built.bundled) {
       continue
     }
@@ -91,6 +118,40 @@ export async function validateNativePixelEvidence(report: NativePlatformReport, 
   const errors: Error[] = []
   for (const item of compatibilityCases) {
     const staticResult = staticById.get(item.id)
+    if (item.id === 'layout-overflow' && staticResult?.generated && staticResult.bundled) {
+      try {
+        if (!report.evidence) {
+          throw new Error('overflow 缺少本轮原生身份')
+        }
+        const result = resultById.get(item.id)
+        const measured = await readOverflowEvidence(report, cropsDirectory, report.evidence)
+        if (result?.status !== measured.status || result.reason !== measured.reason || result.failureStage !== measured.failureStage
+          || !isDeepStrictEqual(result.checkpoints, measured.checkpoints)) {
+          throw new Error('overflow 结论与本轮原生几何及裁剪像素不符')
+        }
+      }
+      catch (error) {
+        errors.push(error instanceof Error ? error : new Error(String(error)))
+      }
+      continue
+    }
+    if (item.id === 'variant-responsive' && staticResult?.generated && staticResult.bundled) {
+      try {
+        if (!report.evidence) {
+          throw new Error('响应式缺少本轮身份')
+        }
+        const result = resultById.get(item.id)
+        const { measured } = await readResponsiveEvidence(report, cropsDirectory, report.evidence)
+        if (result?.status !== measured.status || result.reason !== measured.reason || result.failureStage !== measured.failureStage
+          || !isDeepStrictEqual(result.checkpoints, measured.checkpoints)) {
+          throw new Error('响应式结论与本轮真实 viewport 及原始 PNG 不符')
+        }
+      }
+      catch (error) {
+        errors.push(error instanceof Error ? error : new Error(String(error)))
+      }
+      continue
+    }
     const sequence = evidenceSequence(item, staticResult)
     if (!sequence) {
       continue

@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "generatedAt": "2026-10-12T10:37:03.542Z",
+  "generatedAt": "2026-10-20T01:32:36.788Z",
   "locale": "en-US",
   "contentTier": "primary",
   "siteUrl": "https://tw.weapp.dev",
@@ -2715,6 +2715,7 @@
         "Configure the Tailwind CSS entry",
         "Arbitrary values and dynamic class names",
         "Build warnings",
+        "Build diagnostics",
         "Validation and example"
       ],
       "source": "i18n/en/docs/quick-start/frameworks/lynx.md"

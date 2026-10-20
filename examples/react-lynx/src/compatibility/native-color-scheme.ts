@@ -1,42 +1,32 @@
 import type { NativeEvidenceWriter } from './native-evidence'
+import type { NativeBridgeResult } from './native-failure'
 import type { NativeCaseResult, NativeColorSchemeReceipt } from './types'
+import { colorSchemeContract } from './color-scheme-contract'
+import { NativeEvidenceUnavailableError, requestNativeReceipt } from './native-failure'
 
 export interface ColorSchemeModule {
-  setColorScheme?: (runId: string, requestId: string, scheme: 'light' | 'dark', callback: (value: NativeColorSchemeReceipt | null) => void) => void
-  captureColorScheme?: (runId: string, requestId: string, id: string, callback: (value: string | null) => void) => void
+  setColorScheme?: (runId: string, requestId: string, scheme: 'light' | 'dark', callback: (value: NativeBridgeResult<NativeColorSchemeReceipt | null>) => void) => void
+  captureColorScheme?: (runId: string, requestId: string, id: string, callback: (value: NativeBridgeResult<string | null>) => void) => void
 }
 
 const collecting = new WeakSet<ColorSchemeModule>()
 let sequence = 0
 
-function request<T>(invoke: (callback: (value: T | null) => void) => void): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('原生颜色模式取证超时')), 2000)
-    try {
-      invoke((value) => {
-        clearTimeout(timer)
-        if (value === null) {
-          reject(new Error('原生颜色模式取证缺证'))
-        }
-        else {
-          resolve(value)
-        }
-      })
-    }
-    catch (error) {
-      clearTimeout(timer)
-      reject(error)
-    }
-  })
+async function request<T>(invoke: (callback: (value: NativeBridgeResult<T | null>) => void) => void): Promise<T> {
+  const value = await requestNativeReceipt(invoke)
+  if (value === null) {
+    throw new Error('原生颜色模式取证缺证')
+  }
+  return value
 }
 
-/** 锁住整个四帧采集及恢复；原生回执必须确认同一 run、请求和引擎刷新。 */
+/** 锁住整个六帧采集及恢复；原生回执必须确认同一 run、请求和引擎刷新。 */
 export async function collectColorScheme(reporter: ColorSchemeModule, evidence: NativeEvidenceWriter): Promise<NativeCaseResult> {
   if (collecting.has(reporter)) {
     throw new Error('原生颜色模式采集已在进行')
   }
   if (!reporter.setColorScheme || !reporter.captureColorScheme) {
-    throw new Error('原生 host 缺少颜色模式取证协议')
+    throw new NativeEvidenceUnavailableError('bridge-unavailable', '原生 host 缺少颜色模式取证协议')
   }
   collecting.add(reporter)
   const receipts = {} as NonNullable<NativeCaseResult['colorScheme']>
@@ -49,13 +39,16 @@ export async function collectColorScheme(reporter: ColorSchemeModule, evidence: 
     }
     return receipt
   }
+  const capture = async (phase: 'light' | 'dark' | 'restored', receipt: NativeColorSchemeReceipt) => {
+    for (const frame of ['probe', 'control']) {
+      const data = await request<string>(callback => reporter.captureColorScheme!(evidence.runId, receipt.requestId, `${frame}-container-variant-dark`, callback))
+      await evidence.save(`variant-dark-${phase}-${frame}.png`, data)
+    }
+  }
   try {
     for (const scheme of ['light', 'dark'] as const) {
       const receipt = receipts[scheme] = await switchScheme(scheme)
-      for (const frame of ['probe', 'control']) {
-        const data = await request<string>(callback => reporter.captureColorScheme!(evidence.runId, receipt.requestId, `${frame}-container-variant-dark`, callback))
-        await evidence.save(`variant-dark-${scheme}-${frame}.png`, data)
-      }
+      await capture(scheme, receipt)
     }
   }
   catch (error) {
@@ -64,6 +57,9 @@ export async function collectColorScheme(reporter: ColorSchemeModule, evidence: 
   finally {
     try {
       receipts.restored = await switchScheme('light')
+      if (errors.length === 0) {
+        await capture('restored', receipts.restored)
+      }
     }
     catch (error) {
       errors.push(new Error('原生颜色模式恢复失败', { cause: error }))
@@ -76,8 +72,8 @@ export async function collectColorScheme(reporter: ColorSchemeModule, evidence: 
   return {
     id: 'variant-dark',
     status: 'not-tested',
-    reason: '已采集颜色模式四帧及恢复回执，等待宿主验证预期效果',
-    checkpoints: [{ name: 'pixel:color-scheme-v1', passed: false }],
+    reason: '已采集颜色模式六帧及恢复回执，等待宿主验证预期效果',
+    checkpoints: [{ name: colorSchemeContract.checkpoint, passed: false }],
     colorScheme: receipts,
   }
 }

@@ -1,0 +1,49 @@
+.probe-overflow-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.probe-overflow-canvas {
+  position: relative;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  width: 160px;
+  height: 160px;
+  padding: 0;
+  overflow: visible;
+  background-color: #f7fafb;
+}
+
+/* 不复用 compat-probe，避免通用 min-width、文字和内边距消除越界条件。 */
+.probe-overflow-panel {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  box-sizing: border-box;
+  width: 96px;
+  min-width: 0;
+  height: 64px;
+  min-height: 0;
+  padding: 0;
+  background-color: #0ea5e9;
+}
+
+/* visible 只由 control 消费，不与 probe 的 utility 竞争级联顺序。 */
+.probe-overflow-control {
+  overflow: visible;
+}
+
+.probe-overflow-child {
+  position: absolute;
+  top: 40px;
+  left: 72px;
+  box-sizing: border-box;
+  width: 48px;
+  min-width: 0;
+  height: 40px;
+  min-height: 0;
+  padding: 0;
+  background-color: #facc15;
+}

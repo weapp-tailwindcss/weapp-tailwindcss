@@ -28,9 +28,7 @@ export async function verifyDarkFixture(css: string) {
           await page.emulateMedia({ colorScheme: scheme })
           for (const prefix of ['probe', 'control']) {
             const image = await diagnostics.capture(prefix, `#${prefix}-container-variant-dark`, phase)
-            if (phase !== 'restored') {
-              images.push(image)
-            }
+            images.push(image)
           }
           expect(await color('probe')).toBe(scheme === 'dark' ? 'rgb(255, 255, 255)' : 'rgb(19, 32, 38)')
           expect(await color('control')).toBe('rgb(19, 32, 38)')

@@ -14,7 +14,7 @@ pnpm add @weapp-tailwindcss/lynx tailwindcss
 
 当前适配器版本为 `0.4.4`，适配器自身要求 Node.js `>=22.12.0`，peer 依赖为 Rspeedy `>=0.16.0` 与 Tailwind CSS `>=4.0.0`。适配器依赖的 `weapp-tailwindcss` 当前为 `5.6.3`，其依赖链要求 Node.js `^22.18.0 || >=24.11.0`；使用核心依赖时应按较高要求准备 Node.js。
 
-仓库示例固定 `@lynx-js/rspeedy` `0.17.2`、`@lynx-js/react-rsbuild-plugin` `0.20.2`、`@lynx-js/react` `0.126.1`、Tailwind CSS `4.3.3`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 和 `@lynx-js/css-defines` `0.0.16`。这些是本仓库回归矩阵的版本，不会替代消费项目自己的兼容性验证。
+仓库示例固定 `@lynx-js/rspeedy` `0.17.2`、`@lynx-js/react-rsbuild-plugin` `0.20.2`、`@lynx-js/react` `0.126.1`、Tailwind CSS `4.3.3`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 和 `@lynx-js/css-defines` `0.0.18`。这些是本仓库回归矩阵的版本，不会替代消费项目自己的兼容性验证。
 
 ## 配置
 
@@ -132,11 +132,11 @@ pnpm --filter @weapp-tailwindcss/lynx test
 pnpm e2e:lynx
 ```
 
-仓库中的 `examples/react-lynx` 是多页面兼容性实验室，固定 Tailwind CSS `4.3.3`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 和 `@lynx-js/css-defines` `0.0.16`。它以代表值覆盖官方 utility 功能族、variant、指令和任意语法分支。
+仓库中的 `examples/react-lynx` 是多页面兼容性实验室，固定 Tailwind CSS `4.3.3`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 和 `@lynx-js/css-defines` `0.0.18`。它以代表值覆盖官方 utility 功能族、variant、指令和任意语法分支。
 
-静态 gate 使用 PostCSS 解析真实 `main.css`，并结合 `tasm.json.css.cssMap` 与 encoder removal 日志分别记录 `generated` 和 `bundled`。CI 默认使用 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro；这些 runner 设备用于门禁，不等同于已提交原生报告设备。
+静态 gate 使用 PostCSS 解析真实 `main.css`，并结合 `tasm.json.css.cssMap` 与 encoder removal 日志分别记录 `generated` 和 `bundled`。CI 默认使用 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro。每轮 CI 与已提交报告分别绑定自己的运行身份和原始工件。
 
-当前已提交的原生报告基线记录 `verifiedAt: 2026-10-06T01:38:07.800Z`、`catalogHash: a8c3b45f993d9aa28782f308fc959a09e160d67a9097d11b1bc6a8a38b93c886`，Android 为 `sdk_gphone_arm64`（Android 11/API 30，arm64-v8a），iOS 为 iPhone 17 Pro（iOS 26.5，arm64）。只有与相同 catalog 和版本匹配的完整双端报告才能更新基线。
+当前已提交的原生报告基线记录 `verifiedAt: 2026-10-19T15:13:36.717Z`、`catalogHash: 2e3a1a60517c13de507d22ef8b4d209ffcdb86b2dfbf5bf7100df35c40dc3fec`，Android 为 `sdk_phone_x86_64`（Android 11/API 30，x86_64），iOS 为 `LynxCompatibility`（iPhone 16 Pro，iOS 18.5，arm64）。只有与相同 catalog 和版本匹配的完整双端报告才能更新基线。
 
 `--capture-only` 是显式指定 bundle 和目标设备后的采集模式，只保存截图/视频用于观察，不生成或更新原生支持报告，也不能替代 CI runner 或已提交基线设备的验收。
 

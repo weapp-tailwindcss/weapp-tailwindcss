@@ -1,30 +1,57 @@
-import type { NativePlatformReport } from '../examples/react-lynx/src/compatibility/types'
+import type { Platform } from '../examples/react-lynx/src/compatibility/types'
 import { Buffer } from 'node:buffer'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, expect, it } from 'vitest'
+import { afterEach, expect, it, vi } from 'vitest'
 import { compatibilityCases } from '../examples/react-lynx/src/compatibility/catalog'
-import { evidenceSequence, requiresPixelEffect } from '../examples/react-lynx/src/compatibility/evidence'
+import { evidenceArtifactNames, evidenceSequence, lynxEvidenceStrategy, requiresPixelEffect } from '../examples/react-lynx/src/compatibility/evidence'
 import { evaluateGeometry } from '../examples/react-lynx/src/compatibility/geometry'
 import staticEvidence from '../examples/react-lynx/src/compatibility/static-evidence.json'
+import { archiveNativeBaseline, validateNativeBaselineArchive } from './lynx/baseline-archive'
 import { collectNativeEvidence, createEvidenceContext, cropsDirectory, sha256, validateNativeEvidence } from './lynx/evidence'
 import { darkReceipts } from './lynx/fixtures/dark-images'
 import { effectFixtureImage } from './lynx/fixtures/effect-images'
+import { overflowArtifactFixture } from './lynx/fixtures/overflow-artifacts'
+import { protocolReport } from './lynx/fixtures/protocol-report'
+import { responsiveArtifactFixture } from './lynx/fixtures/responsive-artifacts'
 import { finalizeNativePixelEffects } from './lynx/pixel-evidence'
 import { PNG } from './lynx/png'
 import { readNativeReport } from './lynx/reports'
-import androidReport from './lynx/reports/android.json'
+import { validateStyleFixtureArtifacts } from './lynx/style-fixture-artifacts'
+
+// 本文件隔离验证存储/几何协议，支持预期漂移由 lynx-reports.test.ts 的真实门禁单独回归。
+// 官方 AAR/APK 身份由 lynx-android-sdk.test.ts 独立验证，不以此处合成几何夹具冒充。
+vi.mock('../examples/react-lynx/src/compatibility/android-sdk-contract', () => ({ validatePlatformSdk: () => {} }))
+vi.mock('./lynx/android-sdk', () => ({ validateAndroidSdkEvidence: async () => {} }))
+// 此套使用 dummy bundle 隔离存储/几何协议；真实样式门禁由 lynx-style-fixture-artifacts.test.ts 验证。
+vi.mock('./lynx/style-fixture-artifacts', () => ({ validateStyleFixtureArtifacts: vi.fn(async () => {}) }))
+vi.mock('./lynx/expectations', async importOriginal => ({
+  ...await importOriginal<typeof import('./lynx/expectations')>(),
+  assertReviewedLynxOutcome: () => {},
+}))
+
+// 合成静态输入与设备基线无关；真实 encoder 阶段由 static-evidence 和 reports 回归验证。
+vi.mock('../examples/react-lynx/src/compatibility/static-evidence.json', async () => {
+  const { protocolStaticEvidence } = await import('./lynx/fixtures/protocol-report')
+  return { default: protocolStaticEvidence() }
+})
 
 const directories: string[] = []
 afterEach(async () => {
   await Promise.all(directories.splice(0).map(directory => fs.rm(directory, { recursive: true, force: true })))
 })
 
-async function fixture() {
+it('统一入口可以传递同轮 UUID，非法身份在原生运行之前拒绝', () => {
+  const runId = '00000000-0000-4000-8000-000000000001'
+  expect(createEvidenceContext(Buffer.from('bundle'), runId)).toMatchObject({ version: 1, runId })
+  expect(() => createEvidenceContext(Buffer.from('bundle'), '../old-run')).toThrow(/evidence 身份/)
+})
+
+async function fixture(platform: Platform = 'android') {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'lynx bound evidence '))
   directories.push(directory)
-  const report = structuredClone(androidReport) as NativePlatformReport
+  const report = protocolReport(platform)
   // 此 fixture 验证取证协议：几何节点使用同布局、不同屏幕原点，结论应为不支持。
   const rect = (left: number, top: number, width: number, height: number) => ({ left, top, width, height, right: left + width, bottom: top + height })
   const layoutControls: Record<string, number[]> = {
@@ -37,8 +64,8 @@ async function fixture() {
     'flex-shorthand-shrink': [6, 6, 24, 24, 0, 0, 12, 24],
   }
   for (const result of report.results) {
-    if (!requiresPixelEffect(result.id) && (result.id === 'variant-supports' || result.checkpoints.some(checkpoint => checkpoint.name.startsWith('geometry:')))) {
-      const item = compatibilityCases.find(item => item.id === result.id)!
+    const item = compatibilityCases.find(item => item.id === result.id)!
+    if (!requiresPixelEffect(result.id) && (result.id === 'variant-supports' || ['native-geometry', 'pixel-geometry'].includes(lynxEvidenceStrategy(item)))) {
       const layout = layoutControls[item.id]
       if (layout) {
         const [x, y, width, height, childX, childY, childWidth, childHeight] = layout as [number, number, number, number, number, number, number, number]
@@ -66,7 +93,16 @@ async function fixture() {
   const context = createEvidenceContext(bundle)
   report.evidence = { ...context, artifacts: [] }
   const images = new Map<string, Buffer>()
+  for (const [name, bytes] of responsiveArtifactFixture(report)) {
+    images.set(name, bytes)
+  }
+  for (const [name, bytes] of overflowArtifactFixture(report)) {
+    images.set(name, bytes)
+  }
   for (const result of report.results) {
+    if (result.id === 'variant-responsive' || result.id === 'layout-overflow') {
+      continue
+    }
     const frames = evidenceSequence(compatibilityCases.find(item => item.id === result.id)!, staticEvidence.results.find(item => item.id === result.id))?.frames ?? []
     for (const [index, frame] of frames.entries()) {
       const name = `${result.id}-${frame}.png`
@@ -75,6 +111,21 @@ async function fixture() {
         png.data.set([index * 80, 165, 233, 255], offset)
       }
       const data = await effectFixtureImage(result.id, frame) ?? PNG.sync.write(png)
+      images.set(name, data)
+      report.evidence.artifacts.push({ runId: context.runId, name, sha256: sha256(data), byteLength: data.byteLength })
+    }
+    for (const name of evidenceArtifactNames(compatibilityCases.find(item => item.id === result.id)!, staticEvidence.results.find(item => item.id === result.id)).filter(name => !images.has(name))) {
+      // 仅供协议反例的合成宿主文件，不能作为真实设备支持证据。
+      let data: Buffer
+      if (name.endsWith('.json')) {
+        data = Buffer.from(JSON.stringify({ version: 1, source: 'lynx-native-host-geometry-v1', platform: report.platform, id: result.id, runId: context.runId, bundleSha256: context.bundleSha256, geometry: result.geometry }))
+      }
+      else {
+        const rect = name.endsWith('-probe.png') ? result.geometry!.probeContainer : result.geometry!.controlContainer
+        const png = new PNG({ width: Math.round(rect.width * report.environment.viewport.pixelRatio), height: Math.round(rect.height * report.environment.viewport.pixelRatio) })
+        png.data.fill(255)
+        data = PNG.sync.write(png)
+      }
       images.set(name, data)
       report.evidence.artifacts.push({ runId: context.runId, name, sha256: sha256(data), byteLength: data.byteLength })
     }
@@ -95,9 +146,35 @@ async function fixture() {
   return { directory, reportPath, report: final, context, crops: cropsDirectory(directory, context), images }
 }
 
-it('完整入口接受本轮落盘回执、实际 bundle 和可见像素证据', async () => {
-  const { reportPath, report } = await fixture()
+it('完整协议入口接受同轮落盘回执、绑定的 bundle 字节和合成像素夹具', async () => {
+  const { reportPath, report, directory } = await fixture()
   await expect(readNativeReport(reportPath, 'android')).resolves.toEqual(report)
+  expect(validateStyleFixtureArtifacts).toHaveBeenCalledWith(directory)
+})
+
+it('双端归档搬迁后仍重读本轮 run context、bundle、全部 PNG 和宿主侧车，历史 JSON 不能补证', async () => {
+  const ios = await fixture('ios')
+  const android = await fixture()
+  const archiveRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'lynx archived evidence '))
+  directories.push(archiveRoot)
+  const expected = { ios: await readNativeReport(ios.reportPath, 'ios'), android: await readNativeReport(android.reportPath, 'android') }
+  const archive = await archiveNativeBaseline({ ios: { file: ios.reportPath, report: expected.ios }, android: { file: android.reportPath, report: expected.android } }, archiveRoot)
+  await fs.rm(ios.directory, { recursive: true })
+  await fs.rm(android.directory, { recursive: true })
+  const moved = path.join(archiveRoot, 'relocated')
+  await fs.rename(archive.directory, moved)
+  const result = await validateNativeBaselineArchive(moved)
+  expect(result.reports).toEqual(expected)
+  const historical = path.join(archiveRoot, 'ios.json')
+  await fs.writeFile(historical, JSON.stringify(ios.report))
+  await expect(readNativeReport(historical, 'ios')).rejects.toThrow('本轮 Lynx evidence 身份和 bundle')
+})
+
+it('报告没有 mediaGate 时也传播样式夹具门禁失败', async () => {
+  const { reportPath, report } = await fixture()
+  expect(report.mediaGate).toBeUndefined()
+  vi.mocked(validateStyleFixtureArtifacts).mockRejectedValueOnce(new Error('style fixture rejected'))
+  await expect(readNativeReport(reportPath, 'android')).rejects.toThrow('style fixture rejected')
 })
 
 it('整份旧报告和旧截图同时残留也不能冒充新 run', async () => {
@@ -123,7 +200,9 @@ it.each(['hash', 'length', 'name-swap', 'missing', 'duplicate', 'wrong-run', 'ol
     receipts[0]!.byteLength += 1
   }
   if (kind === 'name-swap') {
-    [receipts[0]!.name, receipts[1]!.name] = [receipts[1]!.name, receipts[0]!.name]
+    const probe = receipts.find(item => item.name === 'layout-visibility-probe.png')!
+    const control = receipts.find(item => item.name === 'layout-visibility-control.png')!
+    ;[probe.name, control.name] = [control.name, probe.name]
   }
   if (kind === 'missing') {
     receipts.pop()
@@ -171,8 +250,8 @@ it('复制失败不会使用输出目录中的旧 crops，并阻止同 run 重�
 
 it('unsupported 结论也拒绝未绑定的截图', async () => {
   const { report, reportPath, crops } = await fixture()
-  const frame = report.evidence!.artifacts[0]!
-  const result = report.results.find(item => `${item.id}-probe.png` === frame.name)!
+  const frame = report.evidence!.artifacts.find(item => item.name === 'layout-overflow-geometry-probe.png')!
+  const result = report.results.find(item => item.id === 'layout-overflow')!
   result.status = 'unsupported'
   result.reason = 'no visible difference'
   result.checkpoints[0]!.passed = false
@@ -181,12 +260,43 @@ it('unsupported 结论也拒绝未绑定的截图', async () => {
   await expect(readNativeReport(reportPath, 'android')).rejects.toThrow(/字节与本轮回执不符/)
 })
 
+it.each(['source', 'id', 'platform', 'bundle', 'report-mismatch', 'invalid-corners'] as const)('离线验收拒绝hash有效但 %s 不符的几何侧车', async (mode) => {
+  const { report, directory, context, crops } = await fixture()
+  const receipt = report.evidence!.artifacts.find(item => item.name === 'layout-aspect-geometry.json')!
+  const file = path.join(crops, receipt.name)
+  const value = JSON.parse(await fs.readFile(file, 'utf8'))
+  if (mode === 'source') {
+    value.source = 'report-json'
+  }
+  if (mode === 'id') {
+    value.id = 'another-case'
+  }
+  if (mode === 'platform') {
+    value.platform = 'ios'
+  }
+  if (mode === 'bundle') {
+    value.bundleSha256 = 'f'.repeat(64)
+  }
+  if (mode === 'report-mismatch') {
+    value.geometry.probe.left += 1
+  }
+  if (mode === 'invalid-corners') {
+    value.geometry.probe.right += 1
+    report.results.find(item => item.id === value.id)!.geometry = value.geometry
+  }
+  const bytes = Buffer.from(JSON.stringify(value))
+  await fs.writeFile(file, bytes)
+  Object.assign(receipt, { sha256: sha256(bytes), byteLength: bytes.byteLength })
+  await expect(validateNativeEvidence(report, directory, context)).rejects.toThrow(/几何宿主侧车/)
+})
+
 it('拒绝新报告配合上轮残留的有效截图，历史报告不能刷新基线', async () => {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'lynx stale evidence '))
   directories.push(directory)
   const crops = path.join(directory, 'crops')
   await fs.mkdir(crops)
-  const report = structuredClone(androidReport) as NativePlatformReport
+  const report = protocolReport()
+  report.catalogHash = 'historical-catalog'
   for (const result of report.results) {
     const frames = (requiresPixelEffect(result.id) || result.checkpoints.some(checkpoint => checkpoint.name === 'pixel:probe-vs-control'))
       ? ['probe', 'control']
@@ -205,7 +315,7 @@ it('拒绝新报告配合上轮残留的有效截图，历史报告不能刷新�
   }
   const reportPath = path.join(directory, 'report.json')
   await fs.writeFile(reportPath, JSON.stringify(report))
-  await expect(readNativeReport(reportPath, 'android')).rejects.toThrow(/本轮|证据|evidence/)
+  await expect(readNativeReport(reportPath, 'android')).rejects.toThrow(/catalog hash is stale/)
 })
 
 it('基线更新拒绝只有支持结论而缺少原始几何证据的报告', async () => {

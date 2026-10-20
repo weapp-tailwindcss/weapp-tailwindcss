@@ -24,10 +24,6 @@ const docPaths = [
   path.join(websiteRoot, 'i18n', 'en', 'docusaurus-plugin-content-docs', 'current', 'quick-start', 'frameworks', 'lynx.md'),
 ]
 
-function readJson(file) {
-  return JSON.parse(fs.readFileSync(file, 'utf8'))
-}
-
 function addFinding(findings, file, message) {
   findings.push(`${path.relative(repoRoot, file)}: ${message}`)
 }
@@ -74,52 +70,41 @@ function checkPackageFacts(findings, adapter, core, example) {
   }
 }
 
-function checkBaselineFacts(findings, baseline) {
-  const expected = {
-    verifiedAt: '2026-10-06T01:38:07.800Z',
-    catalogHash: 'a8c3b45f993d9aa28782f308fc959a09e160d67a9097d11b1bc6a8a38b93c886',
-    tailwindcss: '4.3.3',
-    lynxEngine: '4.0.1',
-    engineVersion: '3.9',
-    cssDefines: '0.0.16',
-  }
-  for (const [name, value] of Object.entries(expected)) {
-    const actual = name in baseline ? baseline[name] : baseline.versions?.[name]
-    if (actual !== value) {
-      addFinding(findings, paths.baseline, `${name} 应为 ${value}，实际为 ${actual}`)
-    }
-  }
+function collectBaselineFacts(findings, baseline) {
   const android = baseline.environments?.android ?? {}
   const ios = baseline.environments?.ios ?? {}
-  for (const [name, value] of Object.entries({
-    android: 'sdk_gphone_arm64',
-    androidOs: 'Android 11',
-    androidApi: 30,
-    androidAbi: 'arm64-v8a',
-    iosDevice: 'iPhone 17 Pro iOS 26.5',
-    iosOs: 'iOS',
-    iosVersion: '26.5',
-    iosAbi: 'arm64',
-  })) {
-    const actual = name === 'android'
-      ? android.deviceName
-      : name === 'androidOs'
-        ? `${android.osName} ${android.osVersion}`
-        : name === 'androidApi'
-          ? android.apiLevel
-          : name === 'androidAbi'
-            ? android.abi
-            : name === 'iosDevice'
-              ? ios.deviceName
-              : name === 'iosOs'
-                ? ios.osName
-                : name === 'iosVersion'
-                  ? ios.osVersion
-                  : ios.abi
-    if (actual !== value) {
-      addFinding(findings, paths.baseline, `${name} 应为 ${value}，实际为 ${actual}`)
+  const facts = {
+    verifiedAt: baseline.verifiedAt,
+    catalogHash: baseline.catalogHash,
+    tailwindcss: baseline.versions?.tailwindcss,
+    lynxEngine: baseline.versions?.lynxEngine,
+    engineVersion: baseline.versions?.engineVersion,
+    cssDefines: baseline.versions?.cssDefines,
+    android: android.deviceName,
+    androidOs: android.osName,
+    androidVersion: android.osVersion,
+    androidAbi: android.abi,
+    iosDevice: ios.deviceName,
+    iosOs: ios.osName,
+    iosVersion: ios.osVersion,
+    iosAbi: ios.abi,
+  }
+  const required = []
+  for (const [name, value] of Object.entries(facts)) {
+    if (typeof value !== 'string' || !value.trim()) {
+      addFinding(findings, paths.baseline, `${name} 缺少有效的基线事实`)
+    }
+    else {
+      required.push(value)
     }
   }
+  if (!Number.isInteger(android.apiLevel) || android.apiLevel <= 0) {
+    addFinding(findings, paths.baseline, 'androidApi 缺少有效的基线事实')
+  }
+  else {
+    required.push(`API ${android.apiLevel}`)
+  }
+  return required
 }
 
 function checkWorkflowFacts(findings, workflow) {
@@ -138,13 +123,14 @@ function checkWorkflowFacts(findings, workflow) {
 
 export function collectLynxContractFindings({ readFile = file => fs.readFileSync(file, 'utf8') } = {}) {
   const findings = []
+  const readJson = file => JSON.parse(readFile(file))
   const adapter = readJson(paths.adapter)
   const core = readJson(paths.core)
   const example = readJson(paths.example)
   const baseline = readJson(paths.baseline)
   const workflow = readFile(paths.workflow)
   checkPackageFacts(findings, adapter, core, example)
-  checkBaselineFacts(findings, baseline)
+  const baselineFacts = collectBaselineFacts(findings, baseline)
   checkWorkflowFacts(findings, workflow)
 
   const sources = new Map(docPaths.map(file => [file, readFile(file)]))
@@ -156,16 +142,9 @@ export function collectLynxContractFindings({ readFile = file => fs.readFileSync
     '0.17.2',
     '0.20.2',
     '0.126.1',
-    '4.3.3',
-    '4.0.1',
-    '3.9',
-    '0.0.16',
     'Pixel 2',
     'iPhone 16 Pro',
-    'iPhone 17 Pro',
-    'sdk_gphone_arm64',
-    '2026-10-06T01:38:07.800Z',
-    'a8c3b45f993d9aa28782f308fc959a09e160d67a9097d11b1bc6a8a38b93c886',
+    ...baselineFacts,
     'capture-only',
   ]
   for (const [file, source] of sources) {

@@ -21,11 +21,13 @@
 }
 
 - (BOOL)reject:(NSString *)message error:(NSError **)error {
-  self.failed = YES;
-  if (error != NULL) {
-    *error = [NSError errorWithDomain:@"LynxEvidence" code:1 userInfo:@{NSLocalizedDescriptionKey: message}];
+  @synchronized(self) {
+    self.failed = YES;
+    if (error != NULL) {
+      *error = [NSError errorWithDomain:@"LynxEvidence" code:1 userInfo:@{NSLocalizedDescriptionKey: message}];
+    }
+    return NO;
   }
-  return NO;
 }
 
 - (instancetype)initWithRoot:(NSURL *)root runId:(NSString *)runId bundle:(NSData *)bundle
@@ -55,10 +57,12 @@
 }
 
 - (BOOL)checkRun:(NSString *)runId error:(NSError **)error {
-  if (self.failed || self.published || ![self.context[@"runId"] isEqualToString:runId]) {
-    return [self reject:@"Evidence run is failed, published, or mismatched" error:error];
+  @synchronized(self) {
+    if (self.failed || self.published || ![self.context[@"runId"] isEqualToString:runId]) {
+      return [self reject:@"Evidence run is failed, published, or mismatched" error:error];
+    }
+    return YES;
   }
-  return YES;
 }
 
 - (BOOL)writeData:(NSData *)data to:(NSURL *)output error:(NSError **)error {
@@ -79,12 +83,66 @@
       [self reject:@"Invalid artifact payload" error:error];
       return nil;
     }
-    NSURL *output = [[self.directory URLByAppendingPathComponent:@"artifacts"] URLByAppendingPathComponent:name];
-    if (![self writeData:data to:output error:error]) return nil;
-    NSDictionary *receipt = @{@"runId": runId, @"name": name, @"sha256": [EvidenceStore sha256:data], @"byteLength": @(data.length)};
-    [self.receipts addObject:receipt];
-    return receipt;
+    return [self persistArtifact:name runId:runId data:data error:error];
   }
+}
+
+- (NSDictionary *)saveGeometry:(NSString *)identifier runId:(NSString *)runId geometry:(NSDictionary *)geometry error:(NSError **)error {
+  @synchronized(self) {
+    if (![self checkRun:runId error:error]) return nil;
+    NSPredicate *valid = [NSPredicate predicateWithFormat:@"SELF MATCHES %@", @"[a-z0-9]+(-[a-z0-9]+)*"];
+    if (![identifier isKindOfClass:NSString.class] || ![valid evaluateWithObject:identifier]
+        || ![geometry isKindOfClass:NSDictionary.class] || ![NSJSONSerialization isValidJSONObject:geometry]) {
+      [self reject:@"Invalid native geometry payload" error:error];
+      return nil;
+    }
+    // 本机身份只能由 store 注入；JS 的 PNG 通道不能创建几何侧车。
+    NSDictionary *sidecar = @{@"version": @1, @"source": @"lynx-native-host-geometry-v1", @"id": identifier,
+      @"runId": self.context[@"runId"], @"bundleSha256": self.context[@"bundleSha256"], @"platform": @"ios", @"geometry": geometry};
+    NSData *data = [NSJSONSerialization dataWithJSONObject:sidecar options:0 error:error];
+    if (data == nil) { [self reject:@"Cannot encode native geometry" error:error]; return nil; }
+    NSString *name = [identifier stringByAppendingString:@"-geometry.json"];
+    return [self persistArtifact:name runId:runId data:data error:error];
+  }
+}
+
+// 只有原生采集器能写固定侧车；JS 的一般写入桥仍仅允许 PNG。
+- (NSDictionary *)saveMediaGate:(NSDictionary *)mediaGate runId:(NSString *)runId error:(NSError **)error {
+  @synchronized(self) {
+    if (![self checkRun:runId error:error]) return nil;
+    if (![mediaGate isKindOfClass:NSDictionary.class] || ![NSJSONSerialization isValidJSONObject:mediaGate]
+        || ![mediaGate[@"runId"] isEqual:self.context[@"runId"]]
+        || ![mediaGate[@"bundleSha256"] isEqual:self.context[@"bundleSha256"]]) {
+      [self reject:@"Invalid native media payload or identity" error:error];
+      return nil;
+    }
+    NSDictionary *sidecar = @{@"version": @1, @"source": @"lynx-native-media-gate-v1", @"context": self.context, @"mediaGate": mediaGate};
+    NSData *data = [NSJSONSerialization dataWithJSONObject:sidecar options:0 error:error];
+    if (data == nil) { [self reject:@"Cannot encode native media sidecar" error:error]; return nil; }
+    return [self persistArtifact:@"media-hover-v1.native.json" runId:runId data:data error:error];
+  }
+}
+
+// 响应式侧车由原生状态机写入；一般 JS 通道不能写 JSON。
+- (NSDictionary *)saveResponsive:(NSString *)phase runId:(NSString *)runId frame:(NSDictionary *)frame error:(NSError **)error {
+  @synchronized(self) {
+    if (![self checkRun:runId error:error]) return nil;
+    if (![@[@"narrow", @"wide", @"narrowed", @"restored"] containsObject:phase]
+        || ![frame[@"runId"] isEqual:self.context[@"runId"]] || ![frame[@"phase"] isEqual:phase]
+        || ![NSJSONSerialization isValidJSONObject:frame]) { [self reject:@"Invalid responsive sidecar identity" error:error]; return nil; }
+    NSDictionary *sidecar = @{@"version": @1, @"source": @"lynx-native-responsive-v1", @"platform": @"ios", @"bundleSha256": self.context[@"bundleSha256"], @"frame": frame};
+    NSData *data = [NSJSONSerialization dataWithJSONObject:sidecar options:0 error:error];
+    if (data == nil) { [self reject:@"Cannot encode responsive sidecar" error:error]; return nil; }
+    return [self persistArtifact:[NSString stringWithFormat:@"variant-responsive-%@.native.json", phase] runId:runId data:data error:error];
+  }
+}
+
+- (NSDictionary *)persistArtifact:(NSString *)name runId:(NSString *)runId data:(NSData *)data error:(NSError **)error {
+  NSURL *output = [[self.directory URLByAppendingPathComponent:@"artifacts"] URLByAppendingPathComponent:name];
+  if (![self writeData:data to:output error:error]) return nil;
+  NSDictionary *receipt = @{@"runId": runId, @"name": name, @"sha256": [EvidenceStore sha256:data], @"byteLength": @(data.length)};
+  [self.receipts addObject:receipt];
+  return receipt;
 }
 
 - (BOOL)publishReport:(NSDictionary *)report runId:(NSString *)runId error:(NSError **)error {

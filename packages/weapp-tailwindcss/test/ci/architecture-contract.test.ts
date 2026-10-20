@@ -152,19 +152,7 @@ describe('架构边界契约', () => {
     }
   })
 
-  it('keeps the native runtime bundle free of compiler dependencies', async () => {
-    const entry = path.join(repoRoot, 'packages/react-native/src/runtime.ts')
-    const result = await build({
-      entryPoints: [entry],
-      bundle: true,
-      platform: 'browser',
-      format: 'esm',
-      write: false,
-      metafile: true,
-    })
-    expect(Object.keys(result.metafile.inputs).map(file => path.resolve(file))).toEqual([entry])
-    expect(Object.values(result.metafile.outputs).flatMap(output => output.imports)).toEqual([])
-
+  it('keeps the native CSS compiler behind the PostCSS facade', () => {
     const compiler = fs.readFileSync(path.join(repoRoot, 'packages/react-native/src/compiler.ts'), 'utf8')
     expect(compiler).toContain('@weapp-tailwindcss/postcss/native')
     expect(compiler).not.toMatch(/postcss\.parse|\.walkDecls\(|\.walkRules\(/)

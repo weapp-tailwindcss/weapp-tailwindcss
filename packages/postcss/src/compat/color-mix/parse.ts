@@ -67,7 +67,7 @@ export function trimNodes(nodes: Node[]) {
 function getParsedColorData(colorSource: string) {
   try {
     const parsed = parseComponentValue(tokenize({ css: colorSource }))
-    return parseColor(parsed)
+    return parsed ? parseColor(parsed) : false
   }
   catch {
     return false
@@ -166,7 +166,22 @@ export function normalizeColorFunctionWithDynamicAlpha(
   return serializeRGB(resolvedColor).toString()
 }
 
-export function normalizeStandaloneColorFunction(colorSource: string) {
+export function normalizeStandaloneColorFunction(colorSource: string, options: { preserveAlpha?: boolean } = {}) {
   const resolvedColor = getParsedColorData(colorSource)
-  return resolvedColor ? serializeRGB(resolvedColor).toString() : undefined
+  if (!resolvedColor) {
+    return undefined
+  }
+  if (!options.preserveAlpha || typeof resolvedColor.alpha !== 'number' || resolvedColor.alpha >= 1) {
+    return serializeRGB(resolvedColor).toString()
+  }
+  const opaque = valueParser(serializeRGB({ ...resolvedColor, alpha: 1 }).toString())
+  const node = opaque.nodes[0]
+  if (node?.type !== 'function') {
+    return undefined
+  }
+  node.value = 'rgba'
+  const alpha = Math.max(0, resolvedColor.alpha)
+  const alphaSource = String(alpha).replace(/^(\d)(?:\.(\d+))?e-(\d+)$/, (_, integer: string, decimals: string | undefined, exponent: string) => `0.${'0'.repeat(Number(exponent) - 1)}${integer}${decimals ?? ''}`)
+  node.nodes.push(...valueParser(`, ${alphaSource}`).nodes)
+  return opaque.toString()
 }

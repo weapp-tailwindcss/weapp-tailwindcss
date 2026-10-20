@@ -11,6 +11,20 @@ async function androidJob() {
   return workflow.jobs.android
 }
 
+it('显式 Lynx 回归入口的每条测试路径必须存在，防止 Vitest 静默过滤失效路径', async () => {
+  const workflow = YAML.parse(await readFile(new URL('../.github/workflows/lynx-native.yml', import.meta.url), 'utf8'))
+  const { scripts } = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))
+  const commands: string[] = [scripts['e2e:lynx'], scripts['e2e:tailwind:contract']]
+  for (const platform of ['android', 'ios']) {
+    commands.push(...workflow.jobs[platform].steps.map((step: { run?: string }) => step.run ?? ''))
+  }
+  const references = [...new Set(commands.flatMap(command => command.match(/\be2e\/[a-z0-9-]+\.test\.ts\b/g) ?? []))]
+  expect(references.length).toBeGreaterThan(0)
+  for (const reference of references) {
+    await expect(readFile(path.resolve(import.meta.dirname, '..', reference), 'utf8'), reference).resolves.toBeTruthy()
+  }
+})
+
 it('Lynx Android 在启动前授予当前 runner KVM 权限，并在工具安装后检查加速', async () => {
   const { steps } = await androidJob()
   const index = steps.findIndex((step: { uses?: string }) => step.uses?.startsWith('reactivecircus/android-emulator-runner@'))

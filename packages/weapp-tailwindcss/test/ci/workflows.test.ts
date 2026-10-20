@@ -136,7 +136,7 @@ describe('ci workflows', () => {
       expect.objectContaining({ runner_label: 'windows' }),
     ]))
     expect(platformDevJob.steps.some((step: Record<string, unknown>) => String(step.run ?? '').includes('e2e:dev:smoke'))).toBe(true)
-    expect(workflow.jobs['pr-gate'].needs).toEqual(['scope', 'quality', 'core-smoke', 'platform-watch', 'platform-dev', 'windows-utilities', 'portable-demos', 'css-compat', 'env'])
+    expect(workflow.jobs['pr-gate'].needs).toEqual(['scope', 'quality', 'core-smoke', 'platform-watch', 'platform-dev', 'windows-utilities', 'portable-demos', 'css-compat', 'tailwind-capabilities', 'env'])
     expect(source).toContain('test "$result" = success')
     expect(source).toContain('pr-gate-package-build-${{ github.run_id }}')
   })

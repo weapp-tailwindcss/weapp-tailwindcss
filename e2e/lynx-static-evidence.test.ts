@@ -1,7 +1,162 @@
+import type { StaticEvidenceReport } from '../examples/react-lynx/src/compatibility/types'
 import { describe, expect, it } from 'vitest'
-import { declarationMatches } from './lynx/static-evidence'
+import { compatibilityCases } from '../examples/react-lynx/src/compatibility/catalog'
+import { encodeLynxCss } from './lynx/batch-encode'
+import { compatibilityVersions, getCatalogHash } from './lynx/catalog'
+import { analyzeStaticCase, declarationMatches, parseDecodedRules, parseGeneratedRules, selectorHasCandidate } from './lynx/static-evidence'
+import { assertCurrentStaticEvidence } from './lynx/static-report'
+import { assertSupportsGuards } from './lynx/supports-guard'
+
+const supportsSource = String.raw`@supports(display:grid){.supports-\[display\:grid\]\:grid{display:grid}}@supports(display:weapp-invalid){.supports-\[display\:weapp-invalid\]\:grid{display:grid}}`
 
 describe('Lynx static declaration evidence', () => {
+  it('类名必须完整命中，不能从 flex-col 或 escaped variant 前缀借用声明', () => {
+    expect(selectorHasCandidate('.flex-col', 'flex')).toBe(false)
+    expect(selectorHasCandidate('.flex\\:something', 'flex')).toBe(false)
+    expect(selectorHasCandidate('.flex:hover > .child', 'flex')).toBe(true)
+    expect(selectorHasCandidate('.hover\\:block:hover', 'hover:block')).toBe(true)
+  })
+
+  it('active 与 hover 的编码结果独立，另一候选的 selector 拒绝不会污染 active', () => {
+    const item = compatibilityCases.find(item => item.id === 'variant-state')!
+    const active = { selector: '.active\\:bg-\\[\\#dc2626\\]:active', declarations: [{ property: 'background-color', value: '#dc2626' }] }
+    const hover = { selector: '.hover\\:bg-\\[\\#ef4444\\]:hover', declarations: [{ property: 'background-color', value: '#ef4444' }] }
+    const report = analyzeStaticCase(item, [active, hover], [active, hover], `Unsupported selector "${hover.selector}"`)
+    expect(report.generated).toBe(true)
+    expect(report.bundled).toBe(false)
+    expect(report.candidates).toMatchObject([
+      { className: 'active:bg-[#dc2626]', generated: true, bundled: true },
+      { className: 'hover:bg-[#ef4444]', generated: true, bundled: false, failureStage: 'encoder' },
+    ])
+  })
+
+  it('group 与 peer 分别保存声明与编码结论', () => {
+    const item = compatibilityCases.find(item => item.id === 'variant-group-peer')!
+    const group = { selector: '.group-hover\\:block:hover', declarations: [{ property: 'display', value: 'block' }] }
+    const peer = { selector: '.peer-checked\\:opacity-100', declarations: [{ property: 'opacity', value: '1' }] }
+    const report = analyzeStaticCase(item, [group, peer], [group])
+    expect(report.candidates).toMatchObject([{ bundled: true }, { bundled: false, failureStage: 'encoder' }])
+  })
+
+  it('@source 编译成功与 utility 的 encoder 拒绝保持分层', () => {
+    const item = compatibilityCases.find(item => item.id === 'directive-source')!
+    const underline = { selector: '.underline', declarations: [{ property: 'text-decoration-line', value: 'underline' }] }
+    const focus = { selector: '.focus\\:bg-red-600:focus', declarations: [{ property: 'background-color', value: '#dc2626' }] }
+    expect(analyzeStaticCase(item, [underline, focus], [focus], 'Unsupported property "text-decoration-line"')).toMatchObject({ generated: true, bundled: false, failureStage: 'encoder' })
+  })
+
+  it('一个 shorthand 的实际四边证据全部保留，不能按声明数量误判编码失败', () => {
+    const item = { ...compatibilityCases[0]!, className: 'probe', declarations: [{ property: 'padding', value: '13px' }] }
+    const generated = [{ selector: '.probe', declarations: item.declarations }]
+    const declarations = ['top', 'right', 'bottom', 'left'].map(side => ({ property: `padding-${side}`, value: '13px' }))
+    expect(analyzeStaticCase(item, generated, [{ selector: '.probe', declarations }])).toMatchObject({ generated: true, bundled: true, bundledDeclarations: declarations })
+    expect(analyzeStaticCase(item, generated, [{ selector: '.probe', declarations: declarations.slice(1) }]).bundled).toBe(false)
+  })
+
+  it('同一个 shorthand 不能从不同候选的 selector 借用缺失边', () => {
+    const item = { ...compatibilityCases[0]!, className: 'probe other', declarations: [{ property: 'padding', value: '13px' }] }
+    const generated = ['.probe', '.other'].map(selector => ({ selector, declarations: item.declarations }))
+    const declarations = ['top', 'right', 'bottom', 'left'].map(side => ({ property: `padding-${side}`, value: '13px' }))
+    const bundled = [{ selector: '.probe', declarations: declarations.slice(0, 2) }, { selector: '.other', declarations: declarations.slice(2) }]
+    expect(analyzeStaticCase(item, generated, bundled)).toMatchObject({ generated: true, bundled: false })
+  })
+
+  it('实际 bundle 缺 important 时不能通过编码判定，原始实际标志不可从生成声明补回', async () => {
+    const item = compatibilityCases.find(item => item.id === 'syntax-important')!
+    const source = String.raw`.\!bg-\[\#737373\]{background-color:#737373!important}`
+    const generated = parseGeneratedRules(source)
+    const encode = async (css: string) => parseDecodedRules((await encodeLynxCss(css, { mode: 'wasm', applyCompatibility: false })).css)
+    const intact = await encode(source)
+    expect(intact[0]!.declarations).toEqual([{ property: 'background-color', value: '#737373', important: true }])
+    expect(analyzeStaticCase(item, generated, intact)).toMatchObject({ generated: true, bundled: true })
+    const dropped = await encode(source.replace('!important', ''))
+    expect(dropped[0]!.declarations).toEqual([{ property: 'background-color', value: '#737373' }])
+    expect(analyzeStaticCase(item, generated, dropped)).toMatchObject({
+      generated: true,
+      bundled: false,
+      failureStage: 'encoder',
+      bundledDeclarations: [],
+      candidates: [{ className: item.className, generated: true, bundled: false, failureStage: 'encoder' }],
+    })
+    expect(analyzeStaticCase(item, dropped, intact)).toMatchObject({ generated: false, bundled: false, failureStage: 'generation' })
+  })
+
+  it('supports 真/假条件均从真实 WASM 解码 CSS 提取准确 guard', async () => {
+    const encoded = await encodeLynxCss(supportsSource, { mode: 'wasm', applyCompatibility: false })
+    const decoded = parseDecodedRules(encoded.css)
+    for (const value of ['grid', 'weapp-invalid']) {
+      const candidate = `supports-[display:${value}]:grid`
+      expect(decoded.find(rule => selectorHasCandidate(rule.selector, candidate))).toMatchObject({
+        supportsConditions: [`(display:${value})`],
+        declarations: [{ property: 'display', value: 'grid' }],
+      })
+    }
+    const generated = parseGeneratedRules(supportsSource)
+    const item = compatibilityCases.find(item => item.id === 'variant-supports')!
+    expect(analyzeStaticCase(item, generated, decoded)).toMatchObject({ generated: true, bundled: true })
+    expect(() => assertSupportsGuards(generated, decoded)).not.toThrow()
+  })
+
+  it('supports 的真实 bundle 展平 guard 后不能因 selector 和声明相同而通过', async () => {
+    const item = compatibilityCases.find(item => item.id === 'variant-supports')!
+    const unguarded = String.raw`.supports-\[display\:grid\]\:grid{display:grid}.supports-\[display\:weapp-invalid\]\:grid{display:grid}`
+    const encoded = await encodeLynxCss(unguarded, { mode: 'wasm', applyCompatibility: false })
+    expect(analyzeStaticCase(item, parseGeneratedRules(supportsSource), parseDecodedRules(encoded.css))).toMatchObject({ generated: true, bundled: false, failureStage: 'encoder' })
+  })
+
+  it.each([
+    ['valid-condition', supportsSource.replace('(display:grid)', '(display:flex)')],
+    ['control-condition', supportsSource.replace('(display:weapp-invalid)', '(display:grid)')],
+    ['control-lost', supportsSource.slice(0, supportsSource.indexOf('@supports(display:weapp-invalid)'))],
+    ['negated-condition', supportsSource.replace('@supports(display:grid)', '@supports not (display:grid)')],
+    ['nested-condition', `@supports(display:grid){${supportsSource}}`],
+    ['additional-media', `@media(min-width:1px){${supportsSource}}`],
+    ['unconditional-valid', `${supportsSource}${String.raw`.supports-\[display\:grid\]\:grid{display:grid}`}`],
+    ['unconditional-control', `${supportsSource}${String.raw`.supports-\[display\:weapp-invalid\]\:grid{display:grid}`}`],
+    ['hex-alternate', `${supportsSource}${String.raw`.\73 upports-\[display\:grid\]\:grid{display:grid}`}`],
+    ['wrong-guard-alternate', `${supportsSource}${String.raw`@supports(display:flex){.supports-\[display\:grid\]\:grid{display:grid}}`}`],
+    ['control-declaration', supportsSource.replace('weapp-invalid\\]\\:grid{display:grid}', 'weapp-invalid\\]\\:grid{display:flex}')],
+    ['disabled-cssrule', supportsSource],
+  ])('supports 的 %s 真实 WASM 负控不能由正确 serializer 输入或另一候选补回', async (mode, mutated) => {
+    const item = compatibilityCases.find(item => item.id === 'variant-supports')!
+    const generated = parseGeneratedRules(supportsSource)
+    const encoded = await encodeLynxCss(mutated, { mode: 'wasm', applyCompatibility: false, enableCSSRule: mode !== 'disabled-cssrule' })
+    const decoded = parseDecodedRules(encoded.css)
+    // serializer 输入即使仍存在规则，也不能代替实际二进制的条件树。
+    if (mode === 'disabled-cssrule') {
+      expect(JSON.stringify(encoded.rules)).toContain('SupportsRule')
+    }
+    expect(analyzeStaticCase(item, generated, decoded)).toMatchObject({ generated: true, bundled: false, failureStage: 'encoder' })
+    expect(analyzeStaticCase(item, decoded, generated)).toMatchObject({ generated: false, bundled: false, failureStage: 'generation' })
+    expect(() => assertSupportsGuards(generated, decoded)).toThrow(/@supports guard/)
+    expect(() => assertSupportsGuards(decoded, generated)).toThrow(/@supports guard/)
+  })
+
+  it.each(['top', 'right', 'bottom', 'left'])('shorthand 实际编码的 %s 边缺 important 时拒绝完整保留', async (missing) => {
+    const item = { ...compatibilityCases[0]!, className: 'probe', declarations: [{ property: 'padding', value: '13px', important: true }] }
+    const source = '.probe{padding:13px!important}'
+    const generated = parseGeneratedRules(source)
+    const encode = async (css: string) => parseDecodedRules((await encodeLynxCss(css, { mode: 'wasm', applyCompatibility: false })).css)
+    const intact = await encode(source)
+    expect(intact[0]!.declarations).toHaveLength(4)
+    expect(intact[0]!.declarations.every(declaration => declaration.important === true)).toBe(true)
+    const intactReport = analyzeStaticCase(item, generated, intact)
+    expect(intactReport).toMatchObject({ generated: true, bundled: true })
+    expect(intactReport.bundledDeclarations).toHaveLength(4)
+    expect(intactReport.bundledDeclarations).toEqual(expect.arrayContaining(intact[0]!.declarations))
+    const sides = ['top', 'right', 'bottom', 'left'].map(side => `padding-${side}:13px${side === missing ? '' : '!important'}`)
+    const dropped = await encode(`.probe{${sides.join(';')}}`)
+    expect(dropped[0]!.declarations.find(declaration => declaration.property === `padding-${missing}`)).toEqual({ property: `padding-${missing}`, value: '13px' })
+    expect(analyzeStaticCase(item, generated, dropped)).toMatchObject({ generated: true, bundled: false, failureStage: 'encoder', bundledDeclarations: [] })
+    // generation 仍要求原始 shorthand，不能因编码层允许四边表示而放宽生成合同。
+    expect(analyzeStaticCase(item, intact, intact)).toMatchObject({ generated: false, bundled: false, failureStage: 'generation' })
+  })
+
+  it('空 CSS 不会因 @import 无候选而被 vacuous every 判为成功', () => {
+    const item = compatibilityCases.find(item => item.id === 'directive-import')!
+    expect(analyzeStaticCase(item, [], []).generated).toBe(false)
+  })
+
   it.each([
     ['0.5', '50%', true],
     ['1', '100%', true],
@@ -44,5 +199,51 @@ describe('Lynx static declaration evidence', () => {
       { property: 'box-shadow' },
       true,
     )).toBe(true)
+  })
+})
+
+describe('Lynx 历史与本轮静态证据边界', () => {
+  function currentProtocolFixture(): StaticEvidenceReport {
+    // 此处只构造协议回归数据，不冒充真实构建或原生验收产物。
+    return {
+      schemaVersion: 1,
+      generatedAt: '2026-01-01T00:00:00.000Z',
+      catalogHash: getCatalogHash(),
+      versions: { ...compatibilityVersions },
+      results: compatibilityCases.map(item => ({
+        id: item.id,
+        generated: true,
+        bundled: true,
+        generatedDeclarations: [],
+        bundledDeclarations: [],
+        cssDefinesKnown: [],
+        candidates: item.className.trim().split(/\s+/).filter(Boolean).map(className => ({ className, generated: true, bundled: true })),
+      })),
+    }
+  }
+
+  it('本轮完整协议可通过，结果不依赖已提交基线是否已更新', () => {
+    expect(() => assertCurrentStaticEvidence(currentProtocolFixture())).not.toThrow()
+  })
+
+  it.each(['catalog', 'cssDefines'] as const)('固定旧 %s 身份不能启动本轮验收', (field) => {
+    const report = currentProtocolFixture()
+    // 固定于共享目录迁移前的真实身份；正常更新静态基线不能把反例变成本轮报告。
+    if (field === 'catalog') {
+      report.catalogHash = 'a8c3b45f993d9aa28782f308fc959a09e160d67a9097d11b1bc6a8a38b93c886'
+    }
+    else {
+      report.versions.cssDefines = '0.0.16'
+    }
+    expect(() => assertCurrentStaticEvidence(report)).toThrow(/历史 catalog 或依赖版本/)
+  })
+
+  it('重复 case 和混合交互缺少独立候选不能通过本轮门禁', () => {
+    const duplicate = currentProtocolFixture()
+    duplicate.results[1] = duplicate.results[0]!
+    expect(() => assertCurrentStaticEvidence(duplicate)).toThrow(/完整且唯一/)
+    const missing = currentProtocolFixture()
+    missing.results.find(item => item.id === 'variant-state')!.candidates!.pop()
+    expect(() => assertCurrentStaticEvidence(missing)).toThrow(/逐候选静态证据/)
   })
 })

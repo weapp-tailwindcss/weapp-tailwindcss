@@ -1,5 +1,6 @@
 import type { CompatibilityBaseline, StaticEvidenceReport } from './types'
 import { describe, expect, it } from 'vitest'
+import { assertCurrentStaticEvidence } from '../../../../e2e/lynx/static-report'
 import baselineJson from './baseline.json'
 import { compatibilityCases } from './catalog'
 import { officialFeatureManifest } from './manifest'
@@ -27,16 +28,43 @@ describe('Lynx Tailwind CSS 4 compatibility catalog', () => {
     }
   })
 
-  it('only accepts complete evidence after a report has been verified', () => {
+  it('requires current complete static evidence independently of historical native results', () => {
+    expect(() => assertCurrentStaticEvidence(staticEvidenceJson as StaticEvidenceReport)).not.toThrow()
+  })
+
+  it('preserves the stored identity and display format of historical native evidence', () => {
     const baseline = baselineJson as CompatibilityBaseline
-    const staticEvidence = staticEvidenceJson as StaticEvidenceReport
-    const ids = compatibilityCases.map(item => item.id).sort()
-    if (baseline.verifiedAt) {
-      expect(baseline.results.map(item => item.id).sort()).toEqual(ids)
+    expect(baseline.schemaVersion).toBe(1)
+    expect(Object.keys(baseline.versions).sort()).toEqual(['bundleConfig', 'cssDefines', 'cssSerializer', 'engineVersion', 'lynxEngine', 'tailwindcss', 'tasmDecoder', 'tasmEncoder'])
+    for (const version of Object.values(baseline.versions)) {
+      expect(version).toEqual(expect.any(String))
+      expect(version.trim()).not.toBe('')
     }
-    if (staticEvidence.catalogHash !== 'pending-static-e2e') {
-      expect(staticEvidence.results.map(item => item.id).sort()).toEqual(ids)
-      expect(staticEvidence.catalogHash).toBe(baseline.catalogHash === 'pending-native-e2e' ? staticEvidence.catalogHash : baseline.catalogHash)
+    if (baseline.verifiedAt) {
+      expect(new Date(baseline.verifiedAt).toISOString()).toBe(baseline.verifiedAt)
+      expect(baseline.catalogHash).toMatch(/^[a-f0-9]{64}$/)
+      expect(baseline.results.length).toBeGreaterThan(0)
+    }
+    else {
+      expect(baseline.verifiedAt).toBeNull()
+      expect(baseline.catalogHash).toBe('pending-native-e2e')
+    }
+    const ids = baseline.results.map(item => item.id)
+    expect(new Set(ids).size).toBe(ids.length)
+    for (const item of baseline.results) {
+      expect(item.id).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+      expect(item.generated).toEqual(expect.any(Boolean))
+      expect(item.bundled).toEqual(expect.any(Boolean))
+      if (item.failureStage) {
+        expect(['generation', 'encoder', 'runtime', 'version-limit']).toContain(item.failureStage)
+      }
+      for (const platform of ['ios', 'android'] as const) {
+        expect(['supported', 'unsupported', 'not-tested']).toContain(item[platform].status)
+        if (item[platform].status === 'unsupported') {
+          expect(item[platform].reason?.trim()).toEqual(expect.any(String))
+          expect(item[platform].reason?.trim()).not.toBe('')
+        }
+      }
     }
   })
 })

@@ -62,6 +62,11 @@
       "types": "./dist/plugin.d.ts",
       "import": "./dist/plugin.js",
       "require": "./dist/plugin.cjs"
+    },
+    "./native-runtime": {
+      "types": "./dist/native-runtime.d.ts",
+      "import": "./dist/native-runtime.js",
+      "require": "./dist/native-runtime.cjs"
     }
   },
   "main": "./dist/index.cjs",
@@ -87,6 +92,9 @@
       ],
       "experimental/lightningcss": [
         "./dist/experimental/lightningcss/index.d.ts"
+      ],
+      "native-runtime": [
+        "./dist/native-runtime.d.ts"
       ]
     }
   },

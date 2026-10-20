@@ -30,7 +30,7 @@ describe('Expo Metro integration', () => {
     expect(config.watchFolders).toContain(path.dirname(resolved.filePath))
     expect(config.transformerPath).toContain('metro-transformer')
     expect(getVirtualModuleCode(resolved.filePath)).toContain('"display":"flex"')
-    expect(getVirtualModuleCode(resolved.filePath)).toContain('setStyleSheetFactory(StyleSheet.create)')
+    expect(getVirtualModuleCode(resolved.filePath)).toContain('setStyleSheetFactory(StyleSheet.create, StyleSheet.flatten)')
     const id = (config.transformer as Record<string, unknown>).weappTailwindcssMetroId as string
     const manifestPath = (config.transformer as Record<string, unknown>).weappTailwindcssManifestPath as string
     expect(manifestPath).toContain('.manifest.json')

@@ -1,13 +1,18 @@
 import type { NativePlatformReport, Platform, StaticEvidenceReport } from '../../examples/react-lynx/src/compatibility/types'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { requiresCandidateEvidence, validateCandidateEvidence } from '../../examples/react-lynx/src/compatibility/candidate-evidence'
 import { compatibilityCases } from '../../examples/react-lynx/src/compatibility/catalog'
 import { lynxEvidenceStrategy } from '../../examples/react-lynx/src/compatibility/evidence'
 import { evaluateGeometry } from '../../examples/react-lynx/src/compatibility/geometry'
+import { validateMediaGateEvidence } from '../../examples/react-lynx/src/compatibility/media-gate-contract'
 import staticEvidenceJson from '../../examples/react-lynx/src/compatibility/static-evidence.json'
 import { compatibilityVersions, getCatalogHash } from './catalog'
 import { readEvidenceContext, validateNativeEvidence } from './evidence'
+import { assertReviewedLynxOutcome } from './expectations'
 import { validateNativePixelEvidence } from './pixel-evidence'
+import { validateResponsiveFrames } from './responsive'
+import { assertCurrentStaticEvidence } from './static-report'
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {
@@ -15,15 +20,15 @@ function assert(condition: unknown, message: string): asserts condition {
   }
 }
 
-export function validateNativeReport(report: NativePlatformReport, platform: Platform, options: { requireGeometryEvidence?: boolean } = {}) {
+export function validateNativeReport(report: NativePlatformReport, platform: Platform, options: { historical?: boolean, requireGeometryEvidence?: boolean, requireCandidateEvidence?: boolean, allowPendingCandidates?: boolean } = {}) {
   assert(report.schemaVersion === 1, `${platform} report schemaVersion must be 1`)
   assert(report.platform === platform, `expected ${platform} report, received ${report.platform}`)
-  assert(report.catalogHash === getCatalogHash(), `${platform} report catalog hash is stale`)
+  assert(options.historical || report.catalogHash === getCatalogHash(), `${platform} report catalog hash is stale; historical reports cannot verify the current run`)
   const versions = report.versions
   assert(
-    versions && typeof versions === 'object' && !Array.isArray(versions)
-    && Object.keys(versions).length === Object.keys(compatibilityVersions).length
-    && Object.entries(compatibilityVersions).every(([key, value]) => Object.hasOwn(versions, key) && versions[key as keyof typeof versions] === value),
+    options.historical || (versions && typeof versions === 'object' && !Array.isArray(versions)
+      && Object.keys(versions).length === Object.keys(compatibilityVersions).length
+      && Object.entries(compatibilityVersions).every(([key, value]) => Object.hasOwn(versions, key) && versions[key as keyof typeof versions] === value)),
     `${platform} report versions do not match the pinned matrix`,
   )
   assert(!Number.isNaN(Date.parse(report.verifiedAt)), `${platform} report verifiedAt is invalid`)
@@ -51,15 +56,26 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
   assert(JSON.stringify(actualIds) === JSON.stringify(expectedIds), `${platform} report must contain every catalog case exactly once`)
   const caseById = new Map(compatibilityCases.map(item => [item.id, item]))
   const staticById = new Map((staticEvidenceJson as StaticEvidenceReport).results.map(item => [item.id, item]))
+  if (!options.historical && report.mediaGate) {
+    validateMediaGateEvidence(report.mediaGate, report.evidence)
+  }
   for (const result of report.results) {
     const item = caseById.get(result.id)
     const staticResult = staticById.get(result.id)
     assert(item && staticResult, `${platform}:${result.id} is missing catalog or static evidence`)
     const strategy = lynxEvidenceStrategy(item)
-    assert(result.status === 'supported' || result.status === 'unsupported', `${platform}:${result.id} has no final runtime status`)
+    const pending = options.allowPendingCandidates && result.status === 'not-tested' && requiresCandidateEvidence(item.id)
+    assert(result.status === 'supported' || result.status === 'unsupported' || pending, `${platform}:${result.id} has no final runtime status`)
+    if (!options.historical && !pending) {
+      assertReviewedLynxOutcome(result, platform, staticResult)
+    }
     assert(result.checkpoints.length > 0, `${platform}:${result.id} has no runtime checkpoint`)
     assert(result.checkpoints.every(checkpoint => typeof checkpoint.passed === 'boolean'), `${platform}:${result.id} has an invalid checkpoint`)
-    if (!staticResult.generated || !staticResult.bundled) {
+    if (pending) {
+      assert(staticResult.generated, `${platform}:${result.id} 的 generation 回归不能作为待测候选`)
+      validateCandidateEvidence(item, staticResult, result, { allowPending: true, mediaGate: report.mediaGate, context: report.evidence })
+    }
+    else if (!staticResult.generated || (!staticResult.bundled && (item.evidence !== 'build' || options.historical))) {
       assert(result.status === 'unsupported', `${platform}:${result.id} cannot be supported after a static generation or encoder failure`)
       assert(result.checkpoints.some(checkpoint => checkpoint.name === 'generated'), `${platform}:${result.id} is missing its generated checkpoint`)
       assert(result.checkpoints.some(checkpoint => checkpoint.name === 'bundled'), `${platform}:${result.id} is missing its bundled checkpoint`)
@@ -67,15 +83,26 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
     else {
       const checkpointPrefix = strategy === 'build'
         ? 'build:'
-        : strategy === 'native-geometry' || strategy === 'pixel-geometry'
-          ? 'geometry:'
-          : strategy === 'interaction'
-            ? 'interaction:'
-            : 'pixel:'
+        : strategy === 'responsive' && (!options.historical || result.responsive)
+          ? 'viewport:'
+          : strategy === 'responsive'
+            ? 'geometry:'
+            : strategy === 'native-geometry' || strategy === 'pixel-geometry'
+              ? 'geometry:'
+              : strategy === 'interaction'
+                ? 'interaction:'
+                : 'pixel:'
       assert(
-        result.checkpoints.some(checkpoint => checkpoint.name.startsWith(checkpointPrefix)),
+        result.checkpoints.some(checkpoint => checkpoint.name.startsWith(checkpointPrefix)) || result.candidates?.some(candidate => candidate.mediaGate),
         `${platform}:${result.id} is missing a ${checkpointPrefix} checkpoint`,
       )
+    }
+    if ((options.requireCandidateEvidence || !options.historical) && !pending) {
+      validateCandidateEvidence(item, staticResult, result, { mediaGate: report.mediaGate, context: report.evidence })
+    }
+    if (!options.historical && staticResult.generated && staticResult.bundled && strategy === 'responsive') {
+      assert(report.evidence?.runId, `${platform}:variant-responsive 缺少本轮原生 evidence 身份`)
+      validateResponsiveFrames(result.responsive, report.evidence.runId)
     }
     if (options.requireGeometryEvidence && staticResult.generated && staticResult.bundled && strategy === 'native-geometry') {
       const measured = evaluateGeometry(item, result.geometry)
@@ -97,8 +124,9 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
 }
 
 export async function readNativeReport(reportPath: string, platform: Platform) {
+  assertCurrentStaticEvidence(staticEvidenceJson as StaticEvidenceReport)
   const report = JSON.parse(await fs.readFile(reportPath, 'utf8')) as NativePlatformReport
-  validateNativeReport(report, platform, { requireGeometryEvidence: true })
+  validateNativeReport(report, platform, { requireGeometryEvidence: true, requireCandidateEvidence: true })
   const artifactDir = path.dirname(reportPath)
   const context = await readEvidenceContext(artifactDir)
   const crops = await validateNativeEvidence(report, artifactDir, context)
@@ -113,6 +141,7 @@ export function nativeReportConclusion(report: NativePlatformReport) {
     catalogHash: report.catalogHash,
     // 原生 JSON 序列化不承诺属性顺序，结论比较固定键顺序并保留所有版本值。
     versions: Object.fromEntries(Object.entries(report.versions).sort(([a], [b]) => a.localeCompare(b))),
+    ...(report.mediaGate ? { mediaGate: { limitationId: report.mediaGate.limitationId, sdkVersion: report.mediaGate.sdkVersion } } : {}),
     results: report.results.map(result => ({
       id: result.id,
       status: result.status,
@@ -122,6 +151,24 @@ export function nativeReportConclusion(report: NativePlatformReport) {
         name: checkpoint.name,
         passed: checkpoint.passed,
       })),
+      ...(result.candidates
+        ? { candidates: result.candidates.map(candidate => ({
+            className: candidate.className,
+            status: candidate.status,
+            ...(candidate.mediaGate
+              ? { mediaGate: {
+                  limitationId: candidate.mediaGate.limitationId,
+                  stage: candidate.mediaGate.stage,
+                  gate: candidate.mediaGate.gate,
+                  condition: candidate.mediaGate.condition,
+                  sourceSha256: candidate.mediaGate.sourceSha256,
+                  evidenceId: candidate.mediaGate.evidenceId,
+                  downstream: { hoverInput: candidate.mediaGate.downstream.hoverInput, pseudoState: candidate.mediaGate.downstream.pseudoState },
+                } }
+              : {}),
+            checkpoints: candidate.checkpoints.map(checkpoint => ({ name: checkpoint.name, passed: checkpoint.passed })),
+          })) }
+        : {}),
     })),
   }
 }

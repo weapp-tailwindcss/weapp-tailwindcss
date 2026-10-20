@@ -3,6 +3,18 @@ import { defineConfig } from 'vitest/config'
 
 const workspaceAliases = [
   {
+    find: /^@weapp-tailwindcss\/engine$/,
+    replacement: path.resolve(__dirname, '../packages/engine/src/index.ts'),
+  },
+  {
+    find: /^@weapp-tailwindcss\/source-scan$/,
+    replacement: path.resolve(__dirname, '../packages/source-scan/src/index.ts'),
+  },
+  {
+    find: /^@weapp-tailwindcss\/env$/,
+    replacement: path.resolve(__dirname, '../packages/env/src/index.ts'),
+  },
+  {
     find: /^@weapp-tailwindcss\/shared$/,
     replacement: path.resolve(__dirname, '../packages/shared/src/index.ts'),
   },
@@ -25,6 +37,38 @@ const workspaceAliases = [
   {
     find: /^@weapp-tailwindcss\/postcss$/,
     replacement: path.resolve(__dirname, '../packages/postcss/src/index.ts'),
+  },
+  {
+    find: /^@weapp-tailwindcss\/postcss-calc$/,
+    replacement: path.resolve(__dirname, '../packages/postcss-calc/src/index.ts'),
+  },
+  {
+    find: /^@weapp-tailwindcss\/escape$/,
+    replacement: path.resolve(__dirname, '../packages/escape/src/index.ts'),
+  },
+  {
+    find: /^@weapp-tailwindcss\/css-compat\/legacy$/,
+    replacement: path.resolve(__dirname, '../packages/css-compat/src/legacy.ts'),
+  },
+  {
+    find: /^@weapp-tailwindcss\/postcss\/native$/,
+    replacement: path.resolve(__dirname, '../packages/postcss/src/native.ts'),
+  },
+  {
+    find: /^@weapp-tailwindcss\/postcss\/native-runtime$/,
+    replacement: path.resolve(__dirname, '../packages/postcss/src/native-runtime.ts'),
+  },
+  {
+    find: /^@weapp-tailwindcss\/postcss\/transform$/,
+    replacement: path.resolve(__dirname, '../packages/postcss/src/transform.ts'),
+  },
+  {
+    find: /^@weapp-tailwindcss\/postcss\/syntax$/,
+    replacement: path.resolve(__dirname, '../packages/postcss/src/syntax.ts'),
+  },
+  {
+    find: /^@weapp-tailwindcss\/postcss\/plugin$/,
+    replacement: path.resolve(__dirname, '../packages/postcss/src/plugin.ts'),
   },
   {
     find: /^@weapp-tailwindcss\/postcss\/types$/,

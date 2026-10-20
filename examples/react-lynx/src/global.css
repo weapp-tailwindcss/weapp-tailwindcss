@@ -2,11 +2,18 @@
 @import './styles/grid-fixtures.css' layer(components);
 @import './styles/flex-fixtures.css' layer(components);
 @import './styles/dark-fixtures.css' layer(components);
+@import './styles/responsive-fixtures.css' layer(components);
+@import './styles/overflow-fixtures.css' layer(components);
 @import './styles/structural-fixtures.css' layer(components);
 @import './styles/flow-fixtures.css' layer(components);
+@import './styles/media-fixtures.css' layer(components);
+@import './styles/important-fixtures.css' layer(utilities);
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities) source(none);
 @source './**/*.{ts,tsx}';
+@source not './**/*.test.{ts,tsx}';
+@source not './**/*.d.ts';
+@source '../../../tools/tailwindcss-test-catalog/compatibility-candidates.txt';
 @source inline('underline {hover:,focus:,}bg-red-{500,600}');
 @source not './compatibility/excluded.ts';
 
@@ -253,7 +260,6 @@ page {
     transform: rotate(15deg);
   }
 
-  .probe-fixture-layout-overflow .compat-probe,
   .probe-fixture-type-align-overflow .compat-probe {
     width: 54px;
   }

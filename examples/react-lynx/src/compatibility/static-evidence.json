@@ -1,12 +1,16 @@
 {
   "schemaVersion": 1,
-  "catalogHash": "a8c3b45f993d9aa28782f308fc959a09e160d67a9097d11b1bc6a8a38b93c886",
-  "generatedAt": "2026-10-06T00:16:17.793Z",
+  "catalogHash": "2e3a1a60517c13de507d22ef8b4d209ffcdb86b2dfbf5bf7100df35c40dc3fec",
+  "generatedAt": "2026-10-19T13:48:22.605Z",
   "versions": {
     "tailwindcss": "4.3.3",
     "lynxEngine": "4.0.1",
     "engineVersion": "3.9",
-    "cssDefines": "0.0.16"
+    "cssDefines": "0.0.18",
+    "tasmEncoder": "0.0.49",
+    "cssSerializer": "0.1.9",
+    "tasmDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+    "bundleConfig": "83ff6486fd81b51443ebc52109b8314e07f33507e0fb3354553d704b27324f5b"
   },
   "results": [
     {
@@ -22,11 +26,18 @@
       "bundledDeclarations": [
         {
           "property": "aspect-ratio",
-          "value": "4/3"
+          "value": "1.333333"
         }
       ],
       "cssDefinesKnown": [
         "aspect-ratio"
+      ],
+      "candidates": [
+        {
+          "className": "aspect-[4/3]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -34,20 +45,24 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：columns",
+      "reason": "columns-2: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "columns",
           "value": "2"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "columns",
-          "value": "2"
+          "className": "columns-2",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "layout-box-sizing",
@@ -67,6 +82,13 @@
       ],
       "cssDefinesKnown": [
         "box-sizing"
+      ],
+      "candidates": [
+        {
+          "className": "box-border",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -87,6 +109,13 @@
       ],
       "cssDefinesKnown": [
         "display"
+      ],
+      "candidates": [
+        {
+          "className": "block",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -94,60 +123,72 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：float",
+      "reason": "float-left: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "float",
           "value": "left"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "float",
-          "value": "left"
+          "className": "float-left",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "layout-isolation",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：isolation",
+      "reason": "isolate: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "isolation",
           "value": "isolate"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "isolation",
-          "value": "isolate"
+          "className": "isolate",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "layout-object-fit",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：object-fit",
+      "reason": "object-cover: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "object-fit",
           "value": "cover"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "object-fit",
-          "value": "cover"
+          "className": "object-cover",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "layout-overflow",
@@ -167,6 +208,13 @@
       ],
       "cssDefinesKnown": [
         "overflow"
+      ],
+      "candidates": [
+        {
+          "className": "overflow-hidden",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -205,6 +253,23 @@
         "position",
         "left",
         "top"
+      ],
+      "candidates": [
+        {
+          "className": "absolute",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "left-[7px]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "top-[9px]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -225,6 +290,13 @@
       ],
       "cssDefinesKnown": [
         "visibility"
+      ],
+      "candidates": [
+        {
+          "className": "invisible",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -245,6 +317,13 @@
       ],
       "cssDefinesKnown": [
         "z-index"
+      ],
+      "candidates": [
+        {
+          "className": "z-10",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -274,6 +353,18 @@
       "cssDefinesKnown": [
         "display",
         "flex-direction"
+      ],
+      "candidates": [
+        {
+          "className": "flex",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "flex-row",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -303,6 +394,18 @@
       "cssDefinesKnown": [
         "align-items",
         "justify-content"
+      ],
+      "candidates": [
+        {
+          "className": "items-center",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "justify-between",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -332,6 +435,18 @@
       "cssDefinesKnown": [
         "flex-grow",
         "flex-basis"
+      ],
+      "candidates": [
+        {
+          "className": "grow",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "basis-1/2",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -362,7 +477,11 @@
           "value": "80px 1fr"
         },
         {
-          "property": "gap",
+          "property": "row-gap",
+          "value": "0.5rem"
+        },
+        {
+          "property": "column-gap",
           "value": "0.5rem"
         }
       ],
@@ -370,6 +489,23 @@
         "display",
         "grid-template-columns",
         "gap"
+      ],
+      "candidates": [
+        {
+          "className": "grid",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "grid-cols-[80px_1fr]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "gap-2",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -399,6 +535,18 @@
       "cssDefinesKnown": [
         "margin-top",
         "margin-left"
+      ],
+      "candidates": [
+        {
+          "className": "-mt-2",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "ml-[11px]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -421,7 +569,19 @@
       ],
       "bundledDeclarations": [
         {
-          "property": "padding",
+          "property": "padding-top",
+          "value": "13px"
+        },
+        {
+          "property": "padding-right",
+          "value": "13px"
+        },
+        {
+          "property": "padding-bottom",
+          "value": "13px"
+        },
+        {
+          "property": "padding-left",
           "value": "13px"
         },
         {
@@ -437,6 +597,23 @@
         "padding",
         "padding-left",
         "padding-right"
+      ],
+      "candidates": [
+        {
+          "className": "p-[13px]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "pl-[7px]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "pr-[7px]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -444,20 +621,24 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：padding-inline",
+      "reason": "px-[7.5px]: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "padding-inline",
           "value": "7.5px"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "padding-inline",
-          "value": "7.5px"
+          "className": "px-[7.5px]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "sizing-fixed",
@@ -486,6 +667,18 @@
       "cssDefinesKnown": [
         "height",
         "width"
+      ],
+      "candidates": [
+        {
+          "className": "h-[45rpx]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "w-[123px]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -515,6 +708,18 @@
       "cssDefinesKnown": [
         "min-width",
         "max-height"
+      ],
+      "candidates": [
+        {
+          "className": "min-w-[calc(100%-2rem)]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "max-h-[240px]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -522,7 +727,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：table-layout, border-collapse",
+      "reason": "table: TASM 未保留该候选的完整 selector 或声明; table-fixed: TASM 未保留该候选的完整 selector 或声明; border-collapse: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "display",
@@ -537,22 +742,32 @@
           "value": "collapse"
         }
       ],
-      "bundledDeclarations": [
-        {
-          "property": "display",
-          "value": "table"
-        },
-        {
-          "property": "table-layout",
-          "value": "fixed"
-        },
-        {
-          "property": "border-collapse",
-          "value": "collapse"
-        }
-      ],
+      "bundledDeclarations": [],
       "cssDefinesKnown": [
         "display"
+      ],
+      "candidates": [
+        {
+          "className": "table",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        },
+        {
+          "className": "table-fixed",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        },
+        {
+          "className": "border-collapse",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        }
       ]
     },
     {
@@ -582,6 +797,18 @@
       "cssDefinesKnown": [
         "font-size",
         "line-height"
+      ],
+      "candidates": [
+        {
+          "className": "text-[length:23px]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "leading-[1.25]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -611,6 +838,18 @@
       "cssDefinesKnown": [
         "font-weight",
         "font-style"
+      ],
+      "candidates": [
+        {
+          "className": "font-bold",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "italic",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -631,6 +870,13 @@
       ],
       "cssDefinesKnown": [
         "letter-spacing"
+      ],
+      "candidates": [
+        {
+          "className": "tracking-[0.12em]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -660,6 +906,18 @@
       "cssDefinesKnown": [
         "text-align",
         "text-overflow"
+      ],
+      "candidates": [
+        {
+          "className": "truncate",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "text-center",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -667,7 +925,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：text-decoration-line",
+      "reason": "underline: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "text-decoration-line",
@@ -680,16 +938,26 @@
       ],
       "bundledDeclarations": [
         {
-          "property": "text-decoration-line",
-          "value": "underline"
-        },
-        {
           "property": "text-decoration-thickness",
           "value": "2px"
         }
       ],
       "cssDefinesKnown": [
         "text-decoration-thickness"
+      ],
+      "candidates": [
+        {
+          "className": "underline",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        },
+        {
+          "className": "decoration-2",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -710,6 +978,13 @@
       ],
       "cssDefinesKnown": [
         "background-color"
+      ],
+      "candidates": [
+        {
+          "className": "bg-[#123456]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -725,11 +1000,18 @@
       "bundledDeclarations": [
         {
           "property": "background-image",
-          "value": "radial-gradient(circle at 20% 20%,#fff,#000)"
+          "value": "radial-gradient(circle farthest-corner at 20% 20% ,#ffffff ,#000000)"
         }
       ],
       "cssDefinesKnown": [
         "background-image"
+      ],
+      "candidates": [
+        {
+          "className": "bg-[radial-gradient(circle_at_20%_20%,#fff,#000)]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -757,17 +1039,34 @@
         },
         {
           "property": "background-position",
-          "value": "center"
+          "value": "center center"
         },
         {
           "property": "background-repeat",
-          "value": "no-repeat"
+          "value": "no-repeat no-repeat"
         }
       ],
       "cssDefinesKnown": [
         "background-size",
         "background-position",
         "background-repeat"
+      ],
+      "candidates": [
+        {
+          "className": "bg-cover",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "bg-center",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "bg-no-repeat",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -786,17 +1085,58 @@
       ],
       "bundledDeclarations": [
         {
-          "property": "border-style",
+          "property": "border-top-style",
           "value": "solid"
         },
         {
-          "property": "border-color",
+          "property": "border-right-style",
+          "value": "solid"
+        },
+        {
+          "property": "border-bottom-style",
+          "value": "solid"
+        },
+        {
+          "property": "border-left-style",
+          "value": "solid"
+        },
+        {
+          "property": "border-top-color",
+          "value": "#16a34a"
+        },
+        {
+          "property": "border-right-color",
+          "value": "#16a34a"
+        },
+        {
+          "property": "border-bottom-color",
+          "value": "#16a34a"
+        },
+        {
+          "property": "border-left-color",
           "value": "#16a34a"
         }
       ],
       "cssDefinesKnown": [
         "border-style",
         "border-color"
+      ],
+      "candidates": [
+        {
+          "className": "border-2",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "border-solid",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "border-[#16a34a]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -811,12 +1151,31 @@
       ],
       "bundledDeclarations": [
         {
-          "property": "border-radius",
+          "property": "border-top-left-radius",
+          "value": "18px"
+        },
+        {
+          "property": "border-top-right-radius",
+          "value": "18px"
+        },
+        {
+          "property": "border-bottom-right-radius",
+          "value": "18px"
+        },
+        {
+          "property": "border-bottom-left-radius",
           "value": "18px"
         }
       ],
       "cssDefinesKnown": [
         "border-radius"
+      ],
+      "candidates": [
+        {
+          "className": "rounded-[18px]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -837,6 +1196,13 @@
       ],
       "cssDefinesKnown": [
         "opacity"
+      ],
+      "candidates": [
+        {
+          "className": "opacity-50",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -852,11 +1218,18 @@
       "bundledDeclarations": [
         {
           "property": "box-shadow",
-          "value": "{{--tw-inset-shadow}} , {{--tw-inset-ring-shadow}} , {{--tw-ring-offset-shadow}} , {{--tw-ring-shadow}} , {{--tw-shadow}}"
+          "value": "var(--tw-inset-shadow) , var(--tw-inset-ring-shadow) , var(--tw-ring-offset-shadow) , var(--tw-ring-shadow) , var(--tw-shadow)"
         }
       ],
       "cssDefinesKnown": [
         "box-shadow"
+      ],
+      "candidates": [
+        {
+          "className": "shadow-lg",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -864,20 +1237,24 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：mix-blend-mode",
+      "reason": "mix-blend-multiply: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "mix-blend-mode",
           "value": "multiply"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "mix-blend-mode",
-          "value": "multiply"
+          "className": "mix-blend-multiply",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "filter-blur",
@@ -900,11 +1277,18 @@
         },
         {
           "property": "filter",
-          "value": "{{--tw-blur}}  {{--tw-brightness}}  {{--tw-contrast}}  {{--tw-grayscale}}  {{--tw-hue-rotate}}  {{--tw-invert}}  {{--tw-saturate}}  {{--tw-sepia}}  {{--tw-drop-shadow}}"
+          "value": "var(--tw-blur)  var(--tw-brightness)  var(--tw-contrast)  var(--tw-grayscale)  var(--tw-hue-rotate)  var(--tw-invert)  var(--tw-saturate)  var(--tw-sepia)  var(--tw-drop-shadow)"
         }
       ],
       "cssDefinesKnown": [
         "filter"
+      ],
+      "candidates": [
+        {
+          "className": "blur-[2px]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -912,27 +1296,31 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：backdrop-filter",
+      "reason": "backdrop-blur-[2px]: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "backdrop-filter",
           "value": "var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,)"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "backdrop-filter",
-          "value": "{{--tw-backdrop-blur}}  {{--tw-backdrop-brightness}}  {{--tw-backdrop-contrast}}  {{--tw-backdrop-grayscale}}  {{--tw-backdrop-hue-rotate}}  {{--tw-backdrop-invert}}  {{--tw-backdrop-opacity}}  {{--tw-backdrop-saturate}}  {{--tw-backdrop-sepia}}"
+          "className": "backdrop-blur-[2px]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "svg-fill-stroke",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：fill, stroke-width, stroke",
+      "reason": "fill-[#0284c7]: TASM 未保留该候选的完整 selector 或声明; stroke-2: TASM 未保留该候选的完整 selector 或声明; stroke-[#0f172a]: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "fill",
@@ -947,21 +1335,31 @@
           "value": "#0f172a"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "fill",
-          "value": "#0284c7"
+          "className": "fill-[#0284c7]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         },
         {
-          "property": "stroke-width",
-          "value": "2"
+          "className": "stroke-2",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         },
         {
-          "property": "stroke",
-          "value": "#0f172a"
+          "className": "stroke-[#0f172a]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "accessibility-sr",
@@ -999,6 +1397,13 @@
         "position",
         "width",
         "height"
+      ],
+      "candidates": [
+        {
+          "className": "sr-only",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1006,7 +1411,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：translate",
+      "reason": "translate-x-[12px]: TASM 未保留该候选的完整 selector 或声明; translate-y-[4px]: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "--tw-translate-x",
@@ -1029,40 +1434,56 @@
         {
           "property": "--tw-translate-y",
           "value": "4px"
-        },
-        {
-          "property": "translate",
-          "value": "{{--tw-translate-x}}  {{--tw-translate-y}}"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "translate-x-[12px]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        },
+        {
+          "className": "translate-y-[4px]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        }
+      ]
     },
     {
       "id": "transform-rotate",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：rotate",
+      "reason": "rotate-[12deg]: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "rotate",
           "value": "12deg"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "rotate",
-          "value": "12deg"
+          "className": "rotate-[12deg]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "transform-scale",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：scale",
+      "reason": "scale-110: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "--tw-scale-x",
@@ -1085,13 +1506,18 @@
         {
           "property": "--tw-scale-y",
           "value": "110%"
-        },
-        {
-          "property": "scale",
-          "value": "{{--tw-scale-x}}  {{--tw-scale-y}}"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "scale-110",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        }
+      ]
     },
     {
       "id": "transform-origin",
@@ -1106,11 +1532,18 @@
       "bundledDeclarations": [
         {
           "property": "transform-origin",
-          "value": "0 0"
+          "value": "[0,2,0,2]"
         }
       ],
       "cssDefinesKnown": [
         "transform-origin"
+      ],
+      "candidates": [
+        {
+          "className": "origin-top-left",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1134,12 +1567,29 @@
         },
         {
           "property": "transition-duration",
-          "value": "300ms"
+          "value": "300"
         }
       ],
       "cssDefinesKnown": [
         "transition-property",
         "transition-duration"
+      ],
+      "candidates": [
+        {
+          "className": "transition-opacity",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "duration-300",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "ease-in-out",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1154,12 +1604,47 @@
       ],
       "bundledDeclarations": [
         {
-          "property": "animation",
-          "value": "spin 1s linear infinite"
+          "property": "animation-name",
+          "value": "spin"
+        },
+        {
+          "property": "animation-duration",
+          "value": "1000"
+        },
+        {
+          "property": "animation-timing-function",
+          "value": "[linear]"
+        },
+        {
+          "property": "animation-iteration-count",
+          "value": "1000000000"
+        },
+        {
+          "property": "animation-delay",
+          "value": "0"
+        },
+        {
+          "property": "animation-direction",
+          "value": "normal"
+        },
+        {
+          "property": "animation-fill-mode",
+          "value": "none"
+        },
+        {
+          "property": "animation-play-state",
+          "value": "running"
         }
       ],
       "cssDefinesKnown": [
         "animation"
+      ],
+      "candidates": [
+        {
+          "className": "animate-spin",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1180,6 +1665,13 @@
       ],
       "cssDefinesKnown": [
         "pointer-events"
+      ],
+      "candidates": [
+        {
+          "className": "pointer-events-none",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1187,27 +1679,31 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：user-select",
+      "reason": "select-none: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "user-select",
           "value": "none"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "user-select",
-          "value": "none"
+          "className": "select-none",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "interaction-scroll",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：scroll-behavior, scroll-snap-type",
+      "reason": "scroll-smooth: TASM 未保留该候选的完整 selector 或声明; snap-y: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "scroll-behavior",
@@ -1218,17 +1714,29 @@
           "value": "y var(--tw-scroll-snap-strictness)"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "scroll-behavior",
-          "value": "smooth"
+          "className": "scroll-smooth",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         },
         {
-          "property": "scroll-snap-type",
-          "value": "y {{--tw-scroll-snap-strictness}}"
+          "className": "snap-y",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        },
+        {
+          "className": "snap-mandatory",
+          "generated": true,
+          "bundled": true
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "variant-responsive",
@@ -1248,6 +1756,13 @@
       ],
       "cssDefinesKnown": [
         "width"
+      ],
+      "candidates": [
+        {
+          "className": "max-md:w-[200px]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1268,6 +1783,13 @@
       ],
       "cssDefinesKnown": [
         "color"
+      ],
+      "candidates": [
+        {
+          "className": "dark:text-[#ffffff]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1283,11 +1805,45 @@
       "bundledDeclarations": [
         {
           "property": "background-color",
-          "value": "#ef4444"
+          "value": "#dc2626"
         }
       ],
       "cssDefinesKnown": [
         "background-color"
+      ],
+      "candidates": [
+        {
+          "className": "active:bg-[#dc2626]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "hover:bg-[#ef4444]",
+          "generated": true,
+          "bundled": true,
+          "mediaGuard": {
+            "className": "hover:bg-[#ef4444]",
+            "limitationId": "lynx4.0.1-media-hover-unknown-v1",
+            "sourceSha256": "46d718942757e574136fdb02ce32c0acddbc2de0c80b421c5b7023d64ee13f73",
+            "condition": "(hover:hover)",
+            "generatedRules": [
+              {
+                "selector": ".hover\\:bg-\\[\\#ef4444\\]:hover",
+                "mediaConditions": [
+                  "(hover:hover)"
+                ]
+              }
+            ],
+            "bundledRules": [
+              {
+                "selector": ".hover\\:bg-\\[\\#ef4444\\]:hover",
+                "mediaConditions": [
+                  "(hover:hover)"
+                ]
+              }
+            ]
+          }
+        }
       ]
     },
     {
@@ -1317,6 +1873,18 @@
       "cssDefinesKnown": [
         "font-weight",
         "opacity"
+      ],
+      "candidates": [
+        {
+          "className": "first:font-bold",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "odd:opacity-50",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1324,7 +1892,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*), .peer-checked\\:opacity-100:is(:where(.peer):checked~*)",
+      "reason": "group-hover:block: encoder 删除 selector：.group-hover\\:block:is(:where(.group):hover *), .group-hover\\:block:is(:where(.group):hover *); peer-checked:opacity-100: encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*), .peer-checked\\:opacity-100:is(:where(.peer):checked~*)",
       "generatedDeclarations": [
         {
           "property": "display",
@@ -1335,19 +1903,26 @@
           "value": "1"
         }
       ],
-      "bundledDeclarations": [
-        {
-          "property": "display",
-          "value": "block"
-        },
-        {
-          "property": "opacity",
-          "value": "1"
-        }
-      ],
+      "bundledDeclarations": [],
       "cssDefinesKnown": [
         "display",
         "opacity"
+      ],
+      "candidates": [
+        {
+          "className": "group-hover:block",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除 selector：.group-hover\\:block:is(:where(.group):hover *), .group-hover\\:block:is(:where(.group):hover *)"
+        },
+        {
+          "className": "peer-checked:opacity-100",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除 selector：.peer-checked\\:opacity-100:is(:where(.peer):checked~*), .peer-checked\\:opacity-100:is(:where(.peer):checked~*)"
+        }
       ]
     },
     {
@@ -1355,7 +1930,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：text-decoration-line",
+      "reason": "aria-[sort=ascending]:underline: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "opacity",
@@ -1370,14 +1945,24 @@
         {
           "property": "opacity",
           "value": "1"
-        },
-        {
-          "property": "text-decoration-line",
-          "value": "underline"
         }
       ],
       "cssDefinesKnown": [
         "opacity"
+      ],
+      "candidates": [
+        {
+          "className": "data-[state=open]:opacity-100",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "aria-[sort=ascending]:underline",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        }
       ]
     },
     {
@@ -1398,6 +1983,13 @@
       ],
       "cssDefinesKnown": [
         "display"
+      ],
+      "candidates": [
+        {
+          "className": "supports-[display:grid]:grid",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1405,7 +1997,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "TASM 未保留完整 selector 或声明",
+      "reason": "before:content-['lynx']: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "--tw-content",
@@ -1413,7 +2005,16 @@
         }
       ],
       "bundledDeclarations": [],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "before:content-['lynx']",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        }
+      ]
     },
     {
       "id": "variant-arbitrary",
@@ -1433,6 +2034,13 @@
       ],
       "cssDefinesKnown": [
         "font-weight"
+      ],
+      "candidates": [
+        {
+          "className": "[&_.target]:font-bold",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1440,7 +2048,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：translate",
+      "reason": "-translate-x-[5px]: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "--tw-translate-x",
@@ -1455,20 +2063,23 @@
         {
           "property": "--tw-translate-x",
           "value": "-5px"
-        },
-        {
-          "property": "translate",
-          "value": "{{--tw-translate-x}}  {{--tw-translate-y}}"
         }
       ],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": [
+        {
+          "className": "-translate-x-[5px]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        }
+      ]
     },
     {
       "id": "syntax-important",
       "generated": true,
-      "bundled": false,
-      "failureStage": "encoder",
-      "reason": "TASM 未保留完整 selector 或声明",
+      "bundled": true,
       "generatedDeclarations": [
         {
           "property": "background-color",
@@ -1476,9 +2087,22 @@
           "important": true
         }
       ],
-      "bundledDeclarations": [],
+      "bundledDeclarations": [
+        {
+          "property": "background-color",
+          "value": "#737373",
+          "important": true
+        }
+      ],
       "cssDefinesKnown": [
         "background-color"
+      ],
+      "candidates": [
+        {
+          "className": "!bg-[#737373]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1486,7 +2110,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "TASM 未保留完整 selector 或声明",
+      "reason": "text-black/[.35]: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "color",
@@ -1496,6 +2120,15 @@
       "bundledDeclarations": [],
       "cssDefinesKnown": [
         "color"
+      ],
+      "candidates": [
+        {
+          "className": "text-black/[.35]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        }
       ]
     },
     {
@@ -1503,20 +2136,24 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：mask-type",
+      "reason": "[mask-type:luminance]: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "mask-type",
           "value": "luminance"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "mask-type",
-          "value": "luminance"
+          "className": "[mask-type:luminance]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "syntax-css-variable",
@@ -1539,11 +2176,23 @@
         },
         {
           "property": "max-height",
-          "value": "{{--panel-height}}"
+          "value": "var(--panel-height)"
         }
       ],
       "cssDefinesKnown": [
         "max-height"
+      ],
+      "candidates": [
+        {
+          "className": "[--panel-height:240px]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "max-h-[var(--panel-height)]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1564,6 +2213,13 @@
       ],
       "cssDefinesKnown": [
         "color"
+      ],
+      "candidates": [
+        {
+          "className": "text-[color:#c31d6b]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1572,7 +2228,8 @@
       "bundled": true,
       "generatedDeclarations": [],
       "bundledDeclarations": [],
-      "cssDefinesKnown": []
+      "cssDefinesKnown": [],
+      "candidates": []
     },
     {
       "id": "directive-theme",
@@ -1592,6 +2249,13 @@
       ],
       "cssDefinesKnown": [
         "background-color"
+      ],
+      "candidates": [
+        {
+          "className": "bg-lynx-brand",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1599,7 +2263,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：text-decoration-line",
+      "reason": "underline: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "text-decoration-line",
@@ -1612,16 +2276,26 @@
       ],
       "bundledDeclarations": [
         {
-          "property": "text-decoration-line",
-          "value": "underline"
-        },
-        {
           "property": "background-color",
-          "value": "rgb(228,0,22)"
+          "value": "#e40016"
         }
       ],
       "cssDefinesKnown": [
         "background-color"
+      ],
+      "candidates": [
+        {
+          "className": "underline",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        },
+        {
+          "className": "focus:bg-red-600",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1629,27 +2303,31 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：content-visibility",
+      "reason": "content-auto: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "content-visibility",
           "value": "auto"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "content-visibility",
-          "value": "auto"
+          "className": "content-auto",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "directive-variant",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除 selector：.theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *)",
+      "reason": "theme-midnight:bg-black: encoder 删除 selector：.theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *); lynx-at-variant: encoder 删除 selector：.lynx-at-variant:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *)",
       "generatedDeclarations": [
         {
           "property": "background-color",
@@ -1660,19 +2338,26 @@
           "value": "#fff"
         }
       ],
-      "bundledDeclarations": [
-        {
-          "property": "background-color",
-          "value": "#000"
-        },
-        {
-          "property": "color",
-          "value": "#fff"
-        }
-      ],
+      "bundledDeclarations": [],
       "cssDefinesKnown": [
         "background-color",
         "color"
+      ],
+      "candidates": [
+        {
+          "className": "theme-midnight:bg-black",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除 selector：.theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *), .theme-midnight\\:bg-black:where(.theme-midnight,.theme-midnight *)"
+        },
+        {
+          "className": "lynx-at-variant",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除 selector：.lynx-at-variant:where(.theme-midnight,.theme-midnight *), .lynx-at-variant:where(.theme-midnight,.theme-midnight *)"
+        }
       ]
     },
     {
@@ -1693,6 +2378,13 @@
       ],
       "cssDefinesKnown": [
         "display"
+      ],
+      "candidates": [
+        {
+          "className": "lynx-applied",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1707,20 +2399,37 @@
       ],
       "bundledDeclarations": [
         {
-          "property": "padding",
+          "property": "padding-top",
+          "value": "16px"
+        },
+        {
+          "property": "padding-right",
+          "value": "16px"
+        },
+        {
+          "property": "padding-bottom",
+          "value": "16px"
+        },
+        {
+          "property": "padding-left",
           "value": "16px"
         }
       ],
       "cssDefinesKnown": [
         "padding"
+      ],
+      "candidates": [
+        {
+          "className": "lynx-reference",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
       "id": "directive-config-plugin",
       "generated": true,
-      "bundled": false,
-      "failureStage": "encoder",
-      "reason": "TASM 未保留完整 selector 或声明",
+      "bundled": true,
       "generatedDeclarations": [
         {
           "property": "padding",
@@ -1733,18 +2442,54 @@
           "important": true
         }
       ],
-      "bundledDeclarations": [],
+      "bundledDeclarations": [
+        {
+          "property": "padding-top",
+          "value": "19px",
+          "important": true
+        },
+        {
+          "property": "padding-right",
+          "value": "19px",
+          "important": true
+        },
+        {
+          "property": "padding-bottom",
+          "value": "19px",
+          "important": true
+        },
+        {
+          "property": "padding-left",
+          "value": "19px",
+          "important": true
+        },
+        {
+          "property": "opacity",
+          "value": "0.73",
+          "important": true
+        }
+      ],
       "cssDefinesKnown": [
         "padding",
         "opacity"
+      ],
+      "candidates": [
+        {
+          "className": "p-legacy",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "lynx-plugin-utility",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
       "id": "directive-prefix-important",
       "generated": true,
-      "bundled": false,
-      "failureStage": "encoder",
-      "reason": "TASM 未保留完整 selector 或声明",
+      "bundled": true,
       "generatedDeclarations": [
         {
           "property": "display",
@@ -1760,11 +2505,43 @@
         {
           "property": "display",
           "value": "flex"
+        },
+        {
+          "property": "padding-top",
+          "value": "19px",
+          "important": true
+        },
+        {
+          "property": "padding-right",
+          "value": "19px",
+          "important": true
+        },
+        {
+          "property": "padding-bottom",
+          "value": "19px",
+          "important": true
+        },
+        {
+          "property": "padding-left",
+          "value": "19px",
+          "important": true
         }
       ],
       "cssDefinesKnown": [
         "display",
         "padding"
+      ],
+      "candidates": [
+        {
+          "className": "tw:flex",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "p-legacy",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1772,7 +2549,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：break-before, break-after, break-inside",
+      "reason": "break-before-page: TASM 未保留该候选的完整 selector 或声明; break-after-page: TASM 未保留该候选的完整 selector 或声明; break-inside-avoid: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "break-before",
@@ -1787,28 +2564,38 @@
           "value": "avoid"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "break-before",
-          "value": "page"
+          "className": "break-before-page",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         },
         {
-          "property": "break-after",
-          "value": "page"
+          "className": "break-after-page",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         },
         {
-          "property": "break-inside",
-          "value": "avoid"
+          "className": "break-inside-avoid",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "layout-decoration-clear",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：box-decoration-break, clear",
+      "reason": "box-decoration-clone: TASM 未保留该候选的完整 selector 或声明; clear-both: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "box-decoration-break",
@@ -1819,57 +2606,72 @@
           "value": "both"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "box-decoration-break",
-          "value": "clone"
+          "className": "box-decoration-clone",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         },
         {
-          "property": "clear",
-          "value": "both"
+          "className": "clear-both",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "layout-object-position",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：object-position",
+      "reason": "object-[35%_65%]: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "object-position",
           "value": "35% 65%"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "object-position",
-          "value": "35% 65%"
+          "className": "object-[35%_65%]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "layout-overscroll",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：overscroll-behavior",
+      "reason": "overscroll-contain: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "overscroll-behavior",
           "value": "contain"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "overscroll-behavior",
-          "value": "contain"
+          "className": "overscroll-contain",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "flex-wrap-order",
@@ -1898,6 +2700,18 @@
       "cssDefinesKnown": [
         "flex-wrap",
         "order"
+      ],
+      "candidates": [
+        {
+          "className": "flex-wrap",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "order-2",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1916,8 +2730,16 @@
       ],
       "bundledDeclarations": [
         {
-          "property": "flex",
+          "property": "flex-grow",
           "value": "1"
+        },
+        {
+          "property": "flex-shrink",
+          "value": "1"
+        },
+        {
+          "property": "flex-basis",
+          "value": "0"
         },
         {
           "property": "flex-shrink",
@@ -1927,6 +2749,18 @@
       "cssDefinesKnown": [
         "flex",
         "flex-shrink"
+      ],
+      "candidates": [
+        {
+          "className": "flex-1",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "shrink-0",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -1945,23 +2779,47 @@
       ],
       "bundledDeclarations": [
         {
-          "property": "grid-column",
-          "value": "span 2/span 2"
+          "property": "grid-column-span",
+          "value": "2"
         },
         {
-          "property": "grid-row",
-          "value": "span 2/span 2"
+          "property": "grid-row-span",
+          "value": "2"
         }
       ],
       "cssDefinesKnown": [
         "grid-column",
         "grid-row"
+      ],
+      "candidates": [
+        {
+          "className": "col-span-2",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "col-start-1",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "row-span-2",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "row-start-1",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
       "id": "grid-auto",
       "generated": true,
-      "bundled": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "auto-rows-min: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "grid-auto-flow",
@@ -1984,16 +2842,31 @@
         {
           "property": "grid-auto-columns",
           "value": "minmax(0,1fr)"
-        },
-        {
-          "property": "grid-auto-rows",
-          "value": "min-content"
         }
       ],
       "cssDefinesKnown": [
         "grid-auto-flow",
         "grid-auto-columns",
         "grid-auto-rows"
+      ],
+      "candidates": [
+        {
+          "className": "grid-flow-col",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "auto-cols-fr",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "auto-rows-min",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        }
       ]
     },
     {
@@ -2001,7 +2874,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：place-content, place-items, place-self",
+      "reason": "place-content-center: TASM 未保留该候选的完整 selector 或声明; place-items-center: TASM 未保留该候选的完整 selector 或声明; place-self-center: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "place-content",
@@ -2016,26 +2889,38 @@
           "value": "center"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "place-content",
-          "value": "center"
+          "className": "place-content-center",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         },
         {
-          "property": "place-items",
-          "value": "center"
+          "className": "place-items-center",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         },
         {
-          "property": "place-self",
-          "value": "center"
+          "className": "place-self-center",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "grid-justify-self",
       "generated": true,
-      "bundled": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "justify-self-end: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "justify-items",
@@ -2050,15 +2935,25 @@
         {
           "property": "justify-items",
           "value": "center"
-        },
-        {
-          "property": "justify-self",
-          "value": "flex-end"
         }
       ],
       "cssDefinesKnown": [
         "justify-items",
         "justify-self"
+      ],
+      "candidates": [
+        {
+          "className": "justify-items-center",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "justify-self-end",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        }
       ]
     },
     {
@@ -2088,6 +2983,18 @@
       "cssDefinesKnown": [
         "align-content",
         "align-self"
+      ],
+      "candidates": [
+        {
+          "className": "content-center",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "self-end",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2095,7 +3002,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：margin-block-start",
+      "reason": "space-x-2: encoder 删除 selector：:where(.space-x-2>:not(:last-child)), :where(.space-x-2>:not(:last-child)); space-y-2: encoder 删除 selector：:where(.space-y-2>:not(:last-child)), :where(.space-y-2>:not(:last-child))",
       "generatedDeclarations": [
         {
           "property": "margin-inline-start",
@@ -2106,18 +3013,25 @@
           "value": "calc(0.5rem*var(--tw-space-y-reverse))"
         }
       ],
-      "bundledDeclarations": [
-        {
-          "property": "margin-inline-start",
-          "value": "calc(0.5rem* {{--tw-space-x-reverse}})"
-        },
-        {
-          "property": "margin-block-start",
-          "value": "calc(0.5rem* {{--tw-space-y-reverse}})"
-        }
-      ],
+      "bundledDeclarations": [],
       "cssDefinesKnown": [
         "margin-inline-start"
+      ],
+      "candidates": [
+        {
+          "className": "space-x-2",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除 selector：:where(.space-x-2>:not(:last-child)), :where(.space-x-2>:not(:last-child))"
+        },
+        {
+          "className": "space-y-2",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除 selector：:where(.space-y-2>:not(:last-child)), :where(.space-y-2>:not(:last-child))"
+        }
       ]
     },
     {
@@ -2147,6 +3061,13 @@
       "cssDefinesKnown": [
         "width",
         "height"
+      ],
+      "candidates": [
+        {
+          "className": "size-[44px]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2154,7 +3075,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：-webkit-font-smoothing, font-stretch",
+      "reason": "antialiased: TASM 未保留该候选的完整 selector 或声明; font-stretch-expanded: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "font-family",
@@ -2173,18 +3094,31 @@
         {
           "property": "font-family",
           "value": "-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",\"Noto Sans\",Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Segoe UI Symbol\",\"Noto Color Emoji\""
-        },
-        {
-          "property": "-webkit-font-smoothing",
-          "value": "antialiased"
-        },
-        {
-          "property": "font-stretch",
-          "value": "expanded"
         }
       ],
       "cssDefinesKnown": [
         "font-family"
+      ],
+      "candidates": [
+        {
+          "className": "font-sans",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "antialiased",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        },
+        {
+          "className": "font-stretch-expanded",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        }
       ]
     },
     {
@@ -2192,47 +3126,62 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：font-variant-numeric",
+      "reason": "tabular-nums: TASM 未保留该候选的完整 selector 或声明; slashed-zero: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "font-variant-numeric",
           "value": "var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,) var(--tw-numeric-fraction,)"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "font-variant-numeric",
-          "value": "{{--tw-ordinal}}  {{--tw-slashed-zero}}  {{--tw-numeric-figure}}  {{--tw-numeric-spacing}}  {{--tw-numeric-fraction}}"
+          "className": "tabular-nums",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        },
+        {
+          "className": "slashed-zero",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "type-line-clamp",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：-webkit-line-clamp",
+      "reason": "line-clamp-2: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "-webkit-line-clamp",
           "value": "2"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "-webkit-line-clamp",
-          "value": "2"
+          "className": "line-clamp-2",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "type-list",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：list-style-position, list-style-type, list-style-image",
+      "reason": "list-inside: TASM 未保留该候选的完整 selector 或声明; list-disc: TASM 未保留该候选的完整 selector 或声明; list-image-none: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "list-style-position",
@@ -2247,28 +3196,38 @@
           "value": "none"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "list-style-position",
-          "value": "inside"
+          "className": "list-inside",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         },
         {
-          "property": "list-style-type",
-          "value": "disc"
+          "className": "list-disc",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         },
         {
-          "property": "list-style-image",
-          "value": "none"
+          "className": "list-image-none",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "type-decoration-full",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：text-decoration-style, text-underline-offset",
+      "reason": "decoration-dashed: TASM 未保留该候选的完整 selector 或声明; underline-offset-4: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "text-decoration-color",
@@ -2286,19 +3245,32 @@
       "bundledDeclarations": [
         {
           "property": "text-decoration-color",
-          "value": "#e11d48"
-        },
-        {
-          "property": "text-decoration-style",
-          "value": "dashed"
-        },
-        {
-          "property": "text-underline-offset",
-          "value": "4px"
+          "value": "4292943176"
         }
       ],
       "cssDefinesKnown": [
         "text-decoration-color"
+      ],
+      "candidates": [
+        {
+          "className": "decoration-[#e11d48]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "decoration-dashed",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        },
+        {
+          "className": "underline-offset-4",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        }
       ]
     },
     {
@@ -2306,7 +3278,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：text-transform, text-wrap",
+      "reason": "uppercase: TASM 未保留该候选的完整 selector 或声明; text-balance: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "text-transform",
@@ -2322,14 +3294,6 @@
         }
       ],
       "bundledDeclarations": [
-        {
-          "property": "text-transform",
-          "value": "uppercase"
-        },
-        {
-          "property": "text-wrap",
-          "value": "balance"
-        },
         {
           "property": "text-indent",
           "value": "1rem"
@@ -2337,12 +3301,35 @@
       ],
       "cssDefinesKnown": [
         "text-indent"
+      ],
+      "candidates": [
+        {
+          "className": "uppercase",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        },
+        {
+          "className": "text-balance",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        },
+        {
+          "className": "indent-4",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
       "id": "type-flow",
       "generated": true,
-      "bundled": true,
+      "bundled": false,
+      "failureStage": "encoder",
+      "reason": "whitespace-pre-wrap: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "vertical-align",
@@ -2357,15 +3344,25 @@
         {
           "property": "vertical-align",
           "value": "middle"
-        },
-        {
-          "property": "white-space",
-          "value": "pre-wrap"
         }
       ],
       "cssDefinesKnown": [
         "vertical-align",
         "white-space"
+      ],
+      "candidates": [
+        {
+          "className": "align-middle",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "whitespace-pre-wrap",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        }
       ]
     },
     {
@@ -2373,7 +3370,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：overflow-wrap",
+      "reason": "wrap-break-word: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "word-break",
@@ -2392,10 +3389,6 @@
         {
           "property": "word-break",
           "value": "break-all"
-        },
-        {
-          "property": "overflow-wrap",
-          "value": "break-word"
         },
         {
           "property": "hyphens",
@@ -2405,6 +3398,25 @@
       "cssDefinesKnown": [
         "word-break",
         "hyphens"
+      ],
+      "candidates": [
+        {
+          "className": "break-all",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "wrap-break-word",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        },
+        {
+          "className": "hyphens-auto",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2420,11 +3432,18 @@
       "bundledDeclarations": [
         {
           "property": "content",
-          "value": "{{--tw-content}}"
+          "value": "var(--tw-content)"
         }
       ],
       "cssDefinesKnown": [
         "content"
+      ],
+      "candidates": [
+        {
+          "className": "content-['lynx']",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2432,7 +3451,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：background-attachment",
+      "reason": "bg-fixed: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "background-attachment",
@@ -2449,12 +3468,8 @@
       ],
       "bundledDeclarations": [
         {
-          "property": "background-attachment",
-          "value": "fixed"
-        },
-        {
           "property": "background-clip",
-          "value": "padding-box"
+          "value": "[0]"
         },
         {
           "property": "background-origin",
@@ -2464,6 +3479,25 @@
       "cssDefinesKnown": [
         "background-clip",
         "background-origin"
+      ],
+      "candidates": [
+        {
+          "className": "bg-fixed",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        },
+        {
+          "className": "bg-clip-padding",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "bg-origin-border",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2487,7 +3521,7 @@
       "bundledDeclarations": [
         {
           "property": "background-image",
-          "value": "linear-gradient( {{--tw-gradient-stops}})"
+          "value": "linear-gradient( var(--tw-gradient-stops))"
         },
         {
           "property": "--tw-gradient-from",
@@ -2500,6 +3534,28 @@
       ],
       "cssDefinesKnown": [
         "background-image"
+      ],
+      "candidates": [
+        {
+          "className": "bg-linear-to-r",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "from-[#0284c7]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "via-[#22c55e]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "to-[#facc15]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2507,7 +3563,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除 selector：:where(.divide-y-2>:not(:last-child)), :where(.divide-y-2>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-dashed>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child))",
+      "reason": "divide-y-2: encoder 删除 selector：:where(.divide-y-2>:not(:last-child)), :where(.divide-y-2>:not(:last-child)); divide-[#64748b]: encoder 删除 selector：:where(.divide-\\[\\#64748b\\]>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child)); divide-dashed: encoder 删除 selector：:where(.divide-dashed>:not(:last-child)), :where(.divide-dashed>:not(:last-child))",
       "generatedDeclarations": [
         {
           "property": "border-bottom-width",
@@ -2522,24 +3578,34 @@
           "value": "dashed"
         }
       ],
-      "bundledDeclarations": [
-        {
-          "property": "border-bottom-width",
-          "value": "calc(2px*(1 -  {{--tw-divide-y-reverse}}))"
-        },
-        {
-          "property": "border-color",
-          "value": "#64748b"
-        },
-        {
-          "property": "border-style",
-          "value": "dashed"
-        }
-      ],
+      "bundledDeclarations": [],
       "cssDefinesKnown": [
         "border-bottom-width",
         "border-color",
         "border-style"
+      ],
+      "candidates": [
+        {
+          "className": "divide-y-2",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除 selector：:where(.divide-y-2>:not(:last-child)), :where(.divide-y-2>:not(:last-child))"
+        },
+        {
+          "className": "divide-[#64748b]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除 selector：:where(.divide-\\[\\#64748b\\]>:not(:last-child)), :where(.divide-\\[\\#64748b\\]>:not(:last-child))"
+        },
+        {
+          "className": "divide-dashed",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "encoder 删除 selector：:where(.divide-dashed>:not(:last-child)), :where(.divide-dashed>:not(:last-child))"
+        }
       ]
     },
     {
@@ -2547,7 +3613,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：outline-offset",
+      "reason": "outline-offset-2: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "outline-width",
@@ -2577,17 +3643,37 @@
         },
         {
           "property": "outline-style",
-          "value": "{{--tw-outline-style}}"
-        },
-        {
-          "property": "outline-offset",
-          "value": "2px"
+          "value": "var(--tw-outline-style)"
         }
       ],
       "cssDefinesKnown": [
         "outline-width",
         "outline-color",
         "outline-style"
+      ],
+      "candidates": [
+        {
+          "className": "outline-2",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "outline-[#2563eb]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "outline-dashed",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "outline-offset-2",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        }
       ]
     },
     {
@@ -2603,11 +3689,33 @@
       "bundledDeclarations": [
         {
           "property": "box-shadow",
-          "value": "{{--tw-inset-shadow}} , {{--tw-inset-ring-shadow}} , {{--tw-ring-offset-shadow}} , {{--tw-ring-shadow}} , {{--tw-shadow}}"
+          "value": "var(--tw-inset-shadow) , var(--tw-inset-ring-shadow) , var(--tw-ring-offset-shadow) , var(--tw-ring-shadow) , var(--tw-shadow)"
         }
       ],
       "cssDefinesKnown": [
         "box-shadow"
+      ],
+      "candidates": [
+        {
+          "className": "ring-2",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "ring-[#2563eb]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "inset-ring-1",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "inset-ring-[#16a34a]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2627,16 +3735,28 @@
       "bundledDeclarations": [
         {
           "property": "box-shadow",
-          "value": "{{--tw-inset-shadow}} , {{--tw-inset-ring-shadow}} , {{--tw-ring-offset-shadow}} , {{--tw-ring-shadow}} , {{--tw-shadow}}"
+          "value": "var(--tw-inset-shadow) , var(--tw-inset-ring-shadow) , var(--tw-ring-offset-shadow) , var(--tw-ring-shadow) , var(--tw-shadow)"
         },
         {
           "property": "text-shadow",
-          "value": "0px 1px 0px {{--tw-text-shadow-color}} ,0px 1px 1px {{--tw-text-shadow-color}} ,0px 2px 2px {{--tw-text-shadow-color}}"
+          "value": "0px 1px 0px var(--tw-text-shadow-color) ,0px 1px 1px var(--tw-text-shadow-color) ,0px 2px 2px var(--tw-text-shadow-color)"
         }
       ],
       "cssDefinesKnown": [
         "box-shadow",
         "text-shadow"
+      ],
+      "candidates": [
+        {
+          "className": "inset-shadow-sm",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "text-shadow-sm",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2644,27 +3764,31 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：background-blend-mode",
+      "reason": "bg-blend-multiply: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "background-blend-mode",
           "value": "multiply"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "background-blend-mode",
-          "value": "multiply"
+          "className": "bg-blend-multiply",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "effect-mask-box",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：mask-mode",
+      "reason": "mask-alpha: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "mask-clip",
@@ -2694,27 +3818,23 @@
       "bundledDeclarations": [
         {
           "property": "mask-clip",
-          "value": "padding-box"
+          "value": "[0]"
         },
         {
           "property": "mask-origin",
-          "value": "border-box"
-        },
-        {
-          "property": "mask-mode",
-          "value": "alpha"
+          "value": "[1]"
         },
         {
           "property": "mask-repeat",
-          "value": "no-repeat"
+          "value": "[[1,1]]"
         },
         {
           "property": "mask-size",
-          "value": "cover"
+          "value": "[[2,-33,2,-33]]"
         },
         {
           "property": "mask-position",
-          "value": "center"
+          "value": "[[36,-36,36,-36]]"
         }
       ],
       "cssDefinesKnown": [
@@ -2723,6 +3843,40 @@
         "mask-repeat",
         "mask-size",
         "mask-position"
+      ],
+      "candidates": [
+        {
+          "className": "mask-clip-padding",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "mask-origin-border",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "mask-alpha",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        },
+        {
+          "className": "mask-no-repeat",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "mask-cover",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "mask-center",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2730,7 +3884,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：mask-type",
+      "reason": "[mask-type:luminance]: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "mask-image",
@@ -2748,20 +3902,35 @@
       "bundledDeclarations": [
         {
           "property": "mask-image",
-          "value": "linear-gradient(black,transparent)"
+          "value": "[2,[180,[4278190080,0],[],2]]"
         },
         {
           "property": "mask-composite",
-          "value": "add"
-        },
-        {
-          "property": "mask-type",
-          "value": "luminance"
+          "value": "[0]"
         }
       ],
       "cssDefinesKnown": [
         "mask-image",
         "mask-composite"
+      ],
+      "candidates": [
+        {
+          "className": "mask-[linear-gradient(black,transparent)]",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "mask-add",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "[mask-type:luminance]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        }
       ]
     },
     {
@@ -2777,11 +3946,28 @@
       "bundledDeclarations": [
         {
           "property": "filter",
-          "value": "{{--tw-blur}}  {{--tw-brightness}}  {{--tw-contrast}}  {{--tw-grayscale}}  {{--tw-hue-rotate}}  {{--tw-invert}}  {{--tw-saturate}}  {{--tw-sepia}}  {{--tw-drop-shadow}}"
+          "value": "var(--tw-blur)  var(--tw-brightness)  var(--tw-contrast)  var(--tw-grayscale)  var(--tw-hue-rotate)  var(--tw-invert)  var(--tw-saturate)  var(--tw-sepia)  var(--tw-drop-shadow)"
         }
       ],
       "cssDefinesKnown": [
         "filter"
+      ],
+      "candidates": [
+        {
+          "className": "brightness-110",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "contrast-125",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "grayscale",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2797,11 +3983,33 @@
       "bundledDeclarations": [
         {
           "property": "filter",
-          "value": "{{--tw-blur}}  {{--tw-brightness}}  {{--tw-contrast}}  {{--tw-grayscale}}  {{--tw-hue-rotate}}  {{--tw-invert}}  {{--tw-saturate}}  {{--tw-sepia}}  {{--tw-drop-shadow}}"
+          "value": "var(--tw-blur)  var(--tw-brightness)  var(--tw-contrast)  var(--tw-grayscale)  var(--tw-hue-rotate)  var(--tw-invert)  var(--tw-saturate)  var(--tw-sepia)  var(--tw-drop-shadow)"
         }
       ],
       "cssDefinesKnown": [
         "filter"
+      ],
+      "candidates": [
+        {
+          "className": "hue-rotate-30",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "invert",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "saturate-150",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "sepia",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2817,11 +4025,18 @@
       "bundledDeclarations": [
         {
           "property": "filter",
-          "value": "{{--tw-blur}}  {{--tw-brightness}}  {{--tw-contrast}}  {{--tw-grayscale}}  {{--tw-hue-rotate}}  {{--tw-invert}}  {{--tw-saturate}}  {{--tw-sepia}}  {{--tw-drop-shadow}}"
+          "value": "var(--tw-blur)  var(--tw-brightness)  var(--tw-contrast)  var(--tw-grayscale)  var(--tw-hue-rotate)  var(--tw-invert)  var(--tw-saturate)  var(--tw-sepia)  var(--tw-drop-shadow)"
         }
       ],
       "cssDefinesKnown": [
         "filter"
+      ],
+      "candidates": [
+        {
+          "className": "drop-shadow-md",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2829,27 +4044,80 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：backdrop-filter",
+      "reason": "backdrop-brightness-110: TASM 未保留该候选的完整 selector 或声明; backdrop-contrast-125: TASM 未保留该候选的完整 selector 或声明; backdrop-grayscale: TASM 未保留该候选的完整 selector 或声明; backdrop-hue-rotate-30: TASM 未保留该候选的完整 selector 或声明; backdrop-invert: TASM 未保留该候选的完整 selector 或声明; backdrop-opacity-50: TASM 未保留该候选的完整 selector 或声明; backdrop-saturate-150: TASM 未保留该候选的完整 selector 或声明; backdrop-sepia: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "backdrop-filter",
           "value": "var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,)"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "backdrop-filter",
-          "value": "{{--tw-backdrop-blur}}  {{--tw-backdrop-brightness}}  {{--tw-backdrop-contrast}}  {{--tw-backdrop-grayscale}}  {{--tw-backdrop-hue-rotate}}  {{--tw-backdrop-invert}}  {{--tw-backdrop-opacity}}  {{--tw-backdrop-saturate}}  {{--tw-backdrop-sepia}}"
+          "className": "backdrop-brightness-110",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        },
+        {
+          "className": "backdrop-contrast-125",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        },
+        {
+          "className": "backdrop-grayscale",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        },
+        {
+          "className": "backdrop-hue-rotate-30",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        },
+        {
+          "className": "backdrop-invert",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        },
+        {
+          "className": "backdrop-opacity-50",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        },
+        {
+          "className": "backdrop-saturate-150",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        },
+        {
+          "className": "backdrop-sepia",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "table-spacing-caption",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：border-spacing, caption-side",
+      "reason": "border-spacing-2: TASM 未保留该候选的完整 selector 或声明; caption-bottom: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "border-spacing",
@@ -2860,17 +4128,29 @@
           "value": "bottom"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "border-spacing",
-          "value": "{{--tw-border-spacing-x}}  {{--tw-border-spacing-y}}"
+          "className": "border-separate",
+          "generated": true,
+          "bundled": true
         },
         {
-          "property": "caption-side",
-          "value": "bottom"
+          "className": "border-spacing-2",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        },
+        {
+          "className": "caption-bottom",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "transform-skew",
@@ -2885,11 +4165,23 @@
       "bundledDeclarations": [
         {
           "property": "transform",
-          "value": "{{--tw-rotate-x}}  {{--tw-rotate-y}}  {{--tw-rotate-z}}  {{--tw-skew-x}}  {{--tw-skew-y}}"
+          "value": "var(--tw-rotate-x)  var(--tw-rotate-y)  var(--tw-rotate-z)  var(--tw-skew-x)  var(--tw-skew-y)"
         }
       ],
       "cssDefinesKnown": [
         "transform"
+      ],
+      "candidates": [
+        {
+          "className": "skew-x-6",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "skew-y-3",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -2897,7 +4189,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：perspective-origin",
+      "reason": "perspective-origin-top: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "perspective",
@@ -2912,14 +4204,24 @@
         {
           "property": "perspective",
           "value": "300px"
-        },
-        {
-          "property": "perspective-origin",
-          "value": "top"
         }
       ],
       "cssDefinesKnown": [
         "perspective"
+      ],
+      "candidates": [
+        {
+          "className": "perspective-near",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "perspective-origin-top",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        }
       ]
     },
     {
@@ -2927,7 +4229,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：transform-style, backface-visibility",
+      "reason": "transform-3d: TASM 未保留该候选的完整 selector 或声明; backface-hidden: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "transform-style",
@@ -2938,24 +4240,31 @@
           "value": "hidden"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "transform-style",
-          "value": "preserve-3d"
+          "className": "transform-3d",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         },
         {
-          "property": "backface-visibility",
-          "value": "hidden"
+          "className": "backface-hidden",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "transition-complete",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：transition-behavior",
+      "reason": "transition-discrete: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "transition-property",
@@ -2973,20 +4282,35 @@
       "bundledDeclarations": [
         {
           "property": "transition-property",
-          "value": "transform,translate,scale,rotate"
+          "value": "[transform, none, none, none]"
         },
         {
           "property": "transition-delay",
-          "value": "150ms"
-        },
-        {
-          "property": "transition-behavior",
-          "value": "allow-discrete"
+          "value": "150"
         }
       ],
       "cssDefinesKnown": [
         "transition-property",
         "transition-delay"
+      ],
+      "candidates": [
+        {
+          "className": "transition-transform",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "delay-150",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "transition-discrete",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        }
       ]
     },
     {
@@ -2994,7 +4318,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：accent-color",
+      "reason": "accent-[#2563eb]: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "accent-color",
@@ -3006,10 +4330,6 @@
         }
       ],
       "bundledDeclarations": [
-        {
-          "property": "accent-color",
-          "value": "#2563eb"
-        },
         {
           "property": "caret-color",
           "value": "#e11d48"
@@ -3017,6 +4337,20 @@
       ],
       "cssDefinesKnown": [
         "caret-color"
+      ],
+      "candidates": [
+        {
+          "className": "accent-[#2563eb]",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        },
+        {
+          "className": "caret-[#e11d48]",
+          "generated": true,
+          "bundled": true
+        }
       ]
     },
     {
@@ -3024,7 +4358,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：appearance, field-sizing, resize",
+      "reason": "appearance-none: TASM 未保留该候选的完整 selector 或声明; field-sizing-content: TASM 未保留该候选的完整 selector 或声明; resize-x: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "appearance",
@@ -3039,28 +4373,38 @@
           "value": "horizontal"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "appearance",
-          "value": "none"
+          "className": "appearance-none",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         },
         {
-          "property": "field-sizing",
-          "value": "content"
+          "className": "field-sizing-content",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         },
         {
-          "property": "resize",
-          "value": "horizontal"
+          "className": "resize-x",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "interaction-cursor-scheme",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：color-scheme",
+      "reason": "scheme-dark: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "cursor",
@@ -3074,15 +4418,25 @@
       "bundledDeclarations": [
         {
           "property": "cursor",
-          "value": "pointer"
-        },
-        {
-          "property": "color-scheme",
-          "value": "dark"
+          "value": "[1,\"pointer\"]"
         }
       ],
       "cssDefinesKnown": [
         "cursor"
+      ],
+      "candidates": [
+        {
+          "className": "cursor-pointer",
+          "generated": true,
+          "bundled": true
+        },
+        {
+          "className": "scheme-dark",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
+        }
       ]
     },
     {
@@ -3090,7 +4444,7 @@
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：scroll-margin, scroll-padding",
+      "reason": "scroll-m-4: TASM 未保留该候选的完整 selector 或声明; scroll-p-4: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "scroll-margin",
@@ -3101,24 +4455,31 @@
           "value": "1rem"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "scroll-margin",
-          "value": "1rem"
+          "className": "scroll-m-4",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         },
         {
-          "property": "scroll-padding",
-          "value": "1rem"
+          "className": "scroll-p-4",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "interaction-snap-touch",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：scroll-snap-align, scroll-snap-stop, touch-action",
+      "reason": "snap-center: TASM 未保留该候选的完整 selector 或声明; snap-always: TASM 未保留该候选的完整 selector 或声明; touch-pan-x: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "scroll-snap-align",
@@ -3133,61 +4494,79 @@
           "value": "var(--tw-pan-x,) var(--tw-pan-y,) var(--tw-pinch-zoom,)"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "scroll-snap-align",
-          "value": "center"
+          "className": "snap-center",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         },
         {
-          "property": "scroll-snap-stop",
-          "value": "always"
+          "className": "snap-always",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         },
         {
-          "property": "touch-action",
-          "value": "{{--tw-pan-x}}  {{--tw-pan-y}}  {{--tw-pinch-zoom}}"
+          "className": "touch-pan-x",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "interaction-will-change",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：will-change",
+      "reason": "will-change-transform: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "will-change",
           "value": "transform"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "will-change",
-          "value": "transform"
+          "className": "will-change-transform",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     },
     {
       "id": "accessibility-forced-colors",
       "generated": true,
       "bundled": false,
       "failureStage": "encoder",
-      "reason": "encoder 删除属性：forced-color-adjust",
+      "reason": "forced-color-adjust-none: TASM 未保留该候选的完整 selector 或声明",
       "generatedDeclarations": [
         {
           "property": "forced-color-adjust",
           "value": "none"
         }
       ],
-      "bundledDeclarations": [
+      "bundledDeclarations": [],
+      "cssDefinesKnown": [],
+      "candidates": [
         {
-          "property": "forced-color-adjust",
-          "value": "none"
+          "className": "forced-color-adjust-none",
+          "generated": true,
+          "bundled": false,
+          "failureStage": "encoder",
+          "reason": "TASM 未保留该候选的完整 selector 或声明"
         }
-      ],
-      "cssDefinesKnown": []
+      ]
     }
   ]
 }

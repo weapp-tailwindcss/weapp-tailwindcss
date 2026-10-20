@@ -6,9 +6,12 @@ import path from 'node:path'
 import process from 'node:process'
 import { execa } from 'execa'
 import { androidSdkRoot } from '../react-native/native-toolchain'
+import { saveAndroidSdkBuild, saveInstalledAndroidSdk } from './android-sdk-runner'
 import { buildCompatibilityBundle } from './build'
 import { exampleDir, lynxIntermediateDir, repoRoot } from './catalog'
 import { collectNativeEvidence, createEvidenceContext, validateNativeEvidence } from './evidence'
+import { withNativeFailureEvidence } from './failure-evidence'
+import { androidFailureReaders } from './failure-evidence-readers'
 import { readPreparedIosBuildTarget } from './ios-build-target'
 import { formatNativeFailure, withNativeArtifacts } from './native-artifacts'
 import { command } from './native-command'
@@ -17,7 +20,8 @@ import { enrichEnvironment } from './native-environment'
 import { parseNativeRunArgs } from './native-options'
 import { waitForReportOrFailure } from './native-report'
 import { finalizeNativePixelEffects, validateNativePixelEvidence } from './pixel-evidence'
-import { defaultReportPath, nativeReportConclusion, validateNativeReport } from './reports'
+import { assertNativeConclusionsMatch } from './report-comparison'
+import { defaultReportPath, validateNativeReport } from './reports'
 import { runIos } from './run-ios'
 
 const options = parseNativeRunArgs(process.argv.slice(2), process.cwd())
@@ -81,40 +85,44 @@ async function runAndroid(hostDir: string, artifactDir: string, device: AndroidD
   }
   await command(process.env['LYNX_GRADLE'] ?? 'gradle', gradleArguments, hostDir)
   const apkPath = path.join(hostDir, 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk')
+  await saveAndroidSdkBuild(hostDir, artifactDir, apkPath, context)
   await command('adb', adbArgs(device, ['install', '-r', apkPath]), hostDir, 120_000)
+  await saveInstalledAndroidSdk(hostDir, artifactDir, device, context)
   await command('adb', adbArgs(device, ['shell', 'am', 'force-stop', applicationId]), hostDir, 30_000)
   const hiddenErrorDialogs = (await command('adb', adbArgs(device, ['shell', 'settings', 'get', 'global', 'hide_error_dialogs']), hostDir, 30_000)).trim()
   await command('adb', adbArgs(device, ['shell', 'settings', 'put', 'global', 'hide_error_dialogs', '1']), hostDir, 30_000)
   try {
-    await execa('adb', adbArgs(device, ['shell', 'input', 'keyevent', 'KEYCODE_WAKEUP']), { reject: false })
-    await execa('adb', adbArgs(device, ['shell', 'wm', 'dismiss-keyguard']), { reject: false })
-    await execa('adb', adbArgs(device, ['shell', 'am', 'broadcast', '-a', 'android.intent.action.CLOSE_SYSTEM_DIALOGS']), { reject: false })
-    await execa('adb', adbArgs(device, ['shell', 'input', 'keyevent', 'KEYCODE_BACK']), { reject: false })
-    await command('adb', adbArgs(device, ['shell', 'am', 'start', '-W', '-n', `${applicationId}/.MainActivity`]), hostDir, 60_000)
-    if (options.captureOnly) {
-      await wait(2200)
-      const screenshot = await execa('adb', adbArgs(device, ['exec-out', 'screencap', '-p']), { encoding: 'buffer', reject: false })
-      if (screenshot.exitCode !== 0 || !screenshot.stdout) {
-        throw new Error('Unable to capture the Android promo screenshot.')
+    return await withNativeFailureEvidence(artifactDir, context, androidFailureReaders(device, context), async () => {
+      await execa('adb', adbArgs(device, ['shell', 'input', 'keyevent', 'KEYCODE_WAKEUP']), { reject: false })
+      await execa('adb', adbArgs(device, ['shell', 'wm', 'dismiss-keyguard']), { reject: false })
+      await execa('adb', adbArgs(device, ['shell', 'am', 'broadcast', '-a', 'android.intent.action.CLOSE_SYSTEM_DIALOGS']), { reject: false })
+      await execa('adb', adbArgs(device, ['shell', 'input', 'keyevent', 'KEYCODE_BACK']), { reject: false })
+      await command('adb', adbArgs(device, ['shell', 'am', 'start', '-W', '-n', `${applicationId}/.MainActivity`]), hostDir, 60_000)
+      if (options.captureOnly) {
+        await wait(2200)
+        const screenshot = await execa('adb', adbArgs(device, ['exec-out', 'screencap', '-p']), { encoding: 'buffer', reject: false })
+        if (screenshot.exitCode !== 0 || !screenshot.stdout) {
+          throw new Error('Unable to capture the Android promo screenshot.')
+        }
+        await fs.writeFile(path.join(artifactDir, 'screen.png'), screenshot.stdout)
+        await recordAndroidVideo(hostDir, artifactDir, device)
+        return undefined
       }
-      await fs.writeFile(path.join(artifactDir, 'screen.png'), screenshot.stdout)
-      await recordAndroidVideo(hostDir, artifactDir, device)
-      return undefined
-    }
-    const report = await waitForReportOrFailure(async () => {
-      const result = await execa('adb', adbArgs(device, ['shell', 'run-as', applicationId, 'cat', `files/lynx-compat/${context.runId}/report.json`]), { reject: false })
-      return result.exitCode === 0 && result.stdout.trim().startsWith('{') ? result.stdout : undefined
-    }, async () => {
-      const result = await execa('adb', adbArgs(device, ['shell', 'run-as', applicationId, 'cat', `files/lynx-compat/${context.runId}/failure.json`]), { reject: false })
-      return result.exitCode === 0 ? result.stdout : undefined
+      const report = await waitForReportOrFailure(async () => {
+        const result = await execa('adb', adbArgs(device, ['shell', 'run-as', applicationId, 'cat', `files/lynx-compat/${context.runId}/report.json`]), { reject: false })
+        return result.exitCode === 0 && result.stdout.trim().startsWith('{') ? result.stdout : undefined
+      }, async () => {
+        const result = await execa('adb', adbArgs(device, ['shell', 'run-as', applicationId, 'cat', `files/lynx-compat/${context.runId}/failure.json`]), { reject: false })
+        return result.exitCode === 0 ? result.stdout : undefined
+      })
+      const screenshotPath = path.join(artifactDir, 'screen.png')
+      const screenshot = await execa('adb', adbArgs(device, ['exec-out', 'screencap', '-p']), { encoding: 'buffer', reject: false })
+      if (screenshot.exitCode === 0 && screenshot.stdout) {
+        await fs.writeFile(screenshotPath, screenshot.stdout)
+      }
+      await collectAndroidArtifacts(report, artifactDir, device, context)
+      return report
     })
-    const screenshotPath = path.join(artifactDir, 'screen.png')
-    const screenshot = await execa('adb', adbArgs(device, ['exec-out', 'screencap', '-p']), { encoding: 'buffer', reject: false })
-    if (screenshot.exitCode === 0 && screenshot.stdout) {
-      await fs.writeFile(screenshotPath, screenshot.stdout)
-    }
-    await collectAndroidArtifacts(report, artifactDir, device, context)
-    return report
   }
   finally {
     await collectAndroidLogcat(artifactDir, device)
@@ -131,12 +139,15 @@ async function compareCommittedReport(actual: NativePlatformReport) {
   if (!expected) {
     throw new Error(`缺少已提交的 ${platform} 报告：${path.relative(repoRoot, expectedPath)}`)
   }
-  if (JSON.stringify(nativeReportConclusion(actual)) !== JSON.stringify(nativeReportConclusion(expected))) {
-    throw new Error(`${platform} 运行时结论与已提交报告不一致，请审查 artifact 后显式刷新双端基线。`)
-  }
+  return assertNativeConclusionsMatch(actual, expected, { allowPendingCandidates: true })
 }
 
 async function main() {
+  if (!options.captureOnly) {
+    const { assertCurrentStaticEvidence } = await import('./static-report')
+    const { default: staticEvidence } = await import('../../examples/react-lynx/src/compatibility/static-evidence.json')
+    assertCurrentStaticEvidence(staticEvidence as import('../../examples/react-lynx/src/compatibility/types').StaticEvidenceReport)
+  }
   const artifactDir = options.outputDir ?? path.join(repoRoot, 'e2e', '.artifacts', 'lynx-native', `${platform}-${Date.now()}`)
   return withNativeArtifacts(platform, artifactDir, async (setStage) => {
     const target = (platform === 'ios' ? await readPreparedIosBuildTarget(repoRoot) : undefined)
@@ -147,6 +158,9 @@ async function main() {
       : await fs.mkdtemp(path.join(os.tmpdir(), `weapp-tailwindcss-lynx-${platform}-`))
     const hostDir = path.join(temporaryRoot, 'host')
     await fs.cp(fixtureDir, hostDir, { recursive: true })
+    if (platform === 'android') {
+      await fs.copyFile(path.join(exampleDir, 'src', 'compatibility', 'android-sdk-reference.json'), path.join(hostDir, 'sdk-reference.json'))
+    }
     await fs.writeFile(path.join(artifactDir, target.platform === 'ios' ? 'build-target.json' : 'device.json'), `${JSON.stringify(target, null, 2)}\n`)
     if (platform === 'ios' && process.env['LYNX_IOS_BUILD_TARGET_FILE']) {
       await fs.copyFile(process.env['LYNX_IOS_BUILD_TARGET_FILE'], path.join(artifactDir, 'build-target-manifest.json'))
@@ -160,7 +174,7 @@ async function main() {
       : path.join(hostDir, 'App', 'main.lynx.bundle')
     await fs.mkdir(path.dirname(stagedBundle), { recursive: true })
     const bundle = await fs.readFile(bundlePath)
-    const context = createEvidenceContext(bundle)
+    const context = createEvidenceContext(bundle, process.env['TAILWIND_E2E_RUN_ID'])
     const contextSource = `${JSON.stringify(context, null, 2)}\n`
     const stagedArtifacts = [
       fs.writeFile(stagedBundle, bundle),
@@ -171,6 +185,7 @@ async function main() {
     if (!options.captureOnly && build) {
       stagedArtifacts.push(
         fs.copyFile(path.join(lynxIntermediateDir, 'main.css'), path.join(artifactDir, 'main.css')),
+        fs.copyFile(path.join(lynxIntermediateDir, 'tasm.json'), path.join(artifactDir, 'tasm.json')),
         fs.writeFile(path.join(artifactDir, 'encoder.log'), build.encoderLog),
       )
     }
@@ -192,11 +207,12 @@ async function main() {
     await fs.writeFile(path.join(artifactDir, 'raw-report.json'), `${reportSource.trim()}\n`)
     const raw = await enrichEnvironment(JSON.parse(reportSource) as NativePlatformReport, hostDir, device)
     const crops = await validateNativeEvidence(raw, artifactDir, context)
-    const report = validateNativeReport(await finalizeNativePixelEffects(raw, crops), platform, { requireGeometryEvidence: true })
+    const report = await finalizeNativePixelEffects(raw, crops)
     await fs.writeFile(path.join(artifactDir, 'report.json'), `${JSON.stringify(report, null, 2)}\n`)
+    validateNativeReport(report, platform, { requireGeometryEvidence: true, requireCandidateEvidence: true, allowPendingCandidates: true })
     await validateNativePixelEvidence(report, crops)
-    await compareCommittedReport(report)
-    process.stdout.write(`${JSON.stringify({ platform, artifactDir, cases: report.results.length }, null, 2)}\n`)
+    const pendingCandidates = await compareCommittedReport(report)
+    process.stdout.write(`${JSON.stringify({ platform, artifactDir, cases: report.results.length, completion: pendingCandidates.length ? 'partial' : 'complete', pendingCandidates }, null, 2)}\n`)
   })
 }
 

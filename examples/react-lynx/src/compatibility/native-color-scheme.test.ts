@@ -21,7 +21,7 @@ function fixture() {
   return { reporter, evidence, calls }
 }
 
-it('切换前不拍图，四帧都完成落盘后恢复浅色，并保留三份回执', async () => {
+it('切换前不拍图，恢复后两帧也落盘，六帧绑定各自请求并保留三份回执', async () => {
   const { reporter, evidence, calls } = fixture()
   let acknowledge!: (value: NativeColorSchemeReceipt) => void
   let receipt!: NativeColorSchemeReceipt
@@ -35,7 +35,7 @@ it('切换前不拍图，四帧都完成落盘后恢复浅色，并保留三份�
   expect(reporter.captureColorScheme).not.toHaveBeenCalled()
   acknowledge(receipt)
   const result = await pending
-  expect(calls).toEqual(['light', 'variant-dark-light-probe.png', 'variant-dark-light-control.png', 'dark', 'variant-dark-dark-probe.png', 'variant-dark-dark-control.png', 'light'])
+  expect(calls).toEqual(['light', 'variant-dark-light-probe.png', 'variant-dark-light-control.png', 'dark', 'variant-dark-dark-probe.png', 'variant-dark-dark-control.png', 'light', 'variant-dark-restored-probe.png', 'variant-dark-restored-control.png'])
   expect(result.status).toBe('not-tested')
   expect(result.colorScheme).toMatchObject({ light: { scheme: 'light' }, dark: { scheme: 'dark' }, restored: { scheme: 'light' } })
   expect(reporter.captureColorScheme.mock.calls.map(([run, request]) => [run, request])).toEqual([
@@ -43,7 +43,45 @@ it('切换前不拍图，四帧都完成落盘后恢复浅色，并保留三份�
     ['run', result.colorScheme!.light.requestId],
     ['run', result.colorScheme!.dark.requestId],
     ['run', result.colorScheme!.dark.requestId],
+    ['run', result.colorScheme!.restored.requestId],
+    ['run', result.colorScheme!.restored.requestId],
   ])
+})
+
+it.each(['probe', 'control'])('恢复 %s 帧缺证时拒绝成功报告', async (frame) => {
+  const { reporter, evidence } = fixture()
+  reporter.captureColorScheme.mockImplementation((run, requestId, id, callback) => {
+    const restored = reporter.setColorScheme.mock.calls.length === 3
+    callback(restored && id === `${frame}-container-variant-dark` ? null : `image:${run}:${requestId}:${id}`)
+  })
+  await expect(collectColorScheme(reporter, evidence)).rejects.toThrow('采集或恢复失败')
+})
+
+it('恢复最后一帧写入完成前仍持有采集锁', async () => {
+  const { reporter, evidence } = fixture()
+  let release!: () => void
+  vi.mocked(evidence.save).mockImplementation(async (name) => {
+    if (name === 'variant-dark-restored-control.png') {
+      await new Promise<void>((resolve) => {
+        release = resolve
+      })
+    }
+  })
+  const pending = collectColorScheme(reporter, evidence)
+  await vi.waitFor(() => expect(release).toBeTypeOf('function'))
+  await expect(collectColorScheme(reporter, evidence)).rejects.toThrow('已在进行')
+  release()
+  await expect(pending).resolves.toMatchObject({ status: 'not-tested' })
+})
+
+it('恢复截图写入失败不能只凭恢复回执发布报告', async () => {
+  const { reporter, evidence } = fixture()
+  vi.mocked(evidence.save).mockImplementation(async (name) => {
+    if (name === 'variant-dark-restored-control.png') {
+      throw new Error('disk full during restore')
+    }
+  })
+  await expect(collectColorScheme(reporter, evidence)).rejects.toThrow('采集或恢复失败')
 })
 
 it.each(['runId', 'requestId', 'scheme'] as const)('拒绝 %s 不符的回执，仍恢复浅色', async (field) => {

@@ -31,6 +31,18 @@ function probeNodes(id: string) {
 }
 
 describe('Lynx compatibility text fixtures', () => {
+  it('important 与同色普通 utility 在相同强普通竞争规则下比较，并有独立实色参考', () => {
+    const { item, probe, control } = probeNodes('syntax-important')
+    expect(String(probe.props.className).split(/\s+/)).toContain(item.className)
+    expect(String(control.props.className).split(/\s+/)).toContain('bg-[#737373]')
+    const nodes = elements(CaseCard({ item }))
+    expect(nodes.find(node => node.props.id === 'reference-syntax-important')).toBeDefined()
+    for (const node of [probe, control]) {
+      expect(elements(node)).toHaveLength(1)
+      expect(node.props.flatten).toBe(false)
+    }
+  })
+
   it('文字流由真实行内标记和包含空白、硬换行及软换行的 text 分别消费', () => {
     const { probe, control } = probeNodes('type-flow')
     for (const [node, tested] of [[probe, true], [control, false]] as const) {

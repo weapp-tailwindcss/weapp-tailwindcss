@@ -1,51 +1,18 @@
-import { createRequire } from 'node:module'
-import { pathToFileURL } from 'node:url'
+import type { ReviewedConversionOracle } from './tailwind-capabilities/conversion-audit'
 import { describe, expect, it } from 'vitest'
 import { createWeappTailwindcssGenerator, resolveTailwindV4Source } from 'weapp-tailwindcss/generator'
 import { transformLynxCssCompat } from '../packages/postcss/src/compat/lynx-css'
 import { transformWebCssCompat } from '../packages/postcss/src/compat/web-css'
-import { compatibilityVersions, exampleDir } from './lynx/catalog'
-
-interface TasmCodec {
-  getEncodeMode: (mode?: 'wasm') => (options: unknown) => Promise<{ buffer: Uint8Array, css_diagnostics?: string }>
-  decode_wasm: (buffer: Uint8Array) => Promise<{ css: { text?: string } }>
-}
-
-interface EncodedRule {
-  selectorText?: { value: string }
-  style?: Array<{ name: string, defaultValueMap?: Record<string, string> }>
-}
+import { encodeLynxCss } from './lynx/batch-encode'
+import { exampleDir } from './lynx/catalog'
+import { conversionCaseResult } from './tailwind-capabilities/conversion-audit'
+import { lynxLiteralOracles, reviewedLynxOracles } from './tailwind-capabilities/conversion-oracles/lynx'
+import { cssDeclarations } from './tailwind-capabilities/css'
+import { lynxLiteralObservation } from './tailwind-capabilities/lynx/decoder-literal'
+import { lynxRejectedDisplayValues } from './tailwind-capabilities/lynx/display-contract'
 
 async function encodeCss(css: string, mode?: 'wasm') {
-  const exampleRequire = createRequire(new URL('../examples/react-lynx/package.json', import.meta.url))
-  const reactRequire = createRequire(exampleRequire.resolve('@lynx-js/react-rsbuild-plugin/package.json'))
-  const templateRequire = createRequire(reactRequire.resolve('@lynx-js/template-webpack-plugin/package.json'))
-  // 使用生产 encoder 和独立 WASM decoder，避免不同版本的原生库在同一进程发生 ABI 冲突。
-  const encoder = templateRequire('@lynx-js/tasm') as TasmCodec
-  const decoder = createRequire(import.meta.url)('@lynx-js/tasm') as TasmCodec
-  const { cssChunksToMap } = await import(pathToFileURL(templateRequire.resolve('@lynx-js/css-serializer')).href)
-  const { cssMap, cssSource } = cssChunksToMap([css], [], true)
-  const encoded = await encoder.getEncodeMode(mode)({
-    compilerOptions: {
-      enableFiberArch: true,
-      useLepusNG: true,
-      enableReuseContext: true,
-      bundleModuleMode: 'ReturnByFunction',
-      enableCSSSelector: true,
-      targetSdkVersion: compatibilityVersions.engineVersion,
-    },
-    sourceContent: { dsl: 'react_nodiff', appType: 'card', config: { lepusStrict: true } },
-    css: { cssMap, cssSource },
-    lepusCode: { root: '', lepusChunk: {}, filename: 'main.js' },
-    manifest: {},
-    customSections: {},
-  })
-  const decoded = await decoder.decode_wasm(encoded.buffer)
-  return {
-    css: decoded.css.text ?? '',
-    rules: Object.values(cssMap).flat() as EncodedRule[],
-    diagnostics: JSON.parse(encoded.css_diagnostics ?? '[]') as Array<{ type: string, name: string }>,
-  }
+  return encodeLynxCss(css, { mode, applyCompatibility: false })
 }
 
 async function generateCss(candidates: string) {
@@ -63,6 +30,73 @@ async function generateCss(candidates: string) {
 }
 
 describe('Lynx native CSS defaults', () => {
+  it('真实生产 encoder 与 WASM decoder 逐项核对冻结的正向字面合同', async () => {
+    const candidates = lynxLiteralOracles.map(item => item.candidate)
+    const css = await generateCss(candidates.join(' '))
+    const oracles = reviewedLynxOracles(candidates, css)
+    expect(oracles).toHaveLength(candidates.length)
+    const encoded = await encodeCss(css, 'wasm')
+    expect(encoded.encodedByteLength).toBeGreaterThan(0)
+    const results = oracles.map(oracle => conversionCaseResult({ id: oracle.candidate, candidate: oracle.candidate, features: [] }, 'lynx', lynxLiteralObservation(oracle.candidate, encoded), [], oracle))
+    expect(results.filter(result => result.status !== 'passed')).toEqual([])
+    expect(results.filter(result => result.status === 'passed')).toHaveLength(41)
+  })
+
+  it('官方不支持的 inline-flex 虽无诊断仍不能证明 Web 语义保留', async () => {
+    // https://lynxjs.org/api/css/properties/display.html 明确排除 inline-flex，禁止映射为 flex 冒充兼容。
+    const css = '.inline-flex{display:inline-flex}'
+    const preservationOracle: ReviewedConversionOracle = {
+      id: 'counterexample/web-display-preservation/inline-flex',
+      target: 'lynx',
+      candidate: 'inline-flex',
+      support: 'supported',
+      expected: { statements: [{ selector: '.inline-flex', conditions: [], property: 'display', value: 'inline-flex', important: false }], diagnostics: [] },
+    }
+    const encoded = await encodeCss(css, 'wasm')
+    expect(encoded.diagnostics).toEqual([])
+    expect(lynxLiteralObservation('inline-flex', encoded)).toMatchObject({ snapshot: { statements: [], diagnostics: [] } })
+    expect(conversionCaseResult({ id: 'inline-flex', candidate: 'inline-flex', features: [] }, 'lynx', lynxLiteralObservation('inline-flex', encoded), [], preservationOracle)).toMatchObject({ status: 'failed', support: 'supported' })
+    expect(reviewedLynxOracles(['inline-flex'], css)[0]?.support).toBe('unsupported')
+  })
+
+  it.each(lynxRejectedDisplayValues)('真实 WASM 对官方限制 %s 完成拒绝，错写 flex 则不满足负向合同', async (value) => {
+    const css = `.${value}{display:${value}}`
+    const fixed = reviewedLynxOracles([value], css)[0]!
+    const encoded = await encodeCss(css, 'wasm')
+    const item = { id: value, candidate: value, features: [] }
+    expect(conversionCaseResult(item, 'lynx', lynxLiteralObservation(value, encoded), [], fixed)).toMatchObject({ status: 'passed', support: 'unsupported' })
+    expect(conversionCaseResult(item, 'lynx', lynxLiteralObservation(value, { ...encoded, css: `.${value}{display:flex}` }), [], fixed).status).toBe('failed')
+  })
+
+  it('真实 decoder 产物篡改或 serializer 输入保留均不能掩盖输出丢失', async () => {
+    const css = '.size-full{width:100%;height:100%}.other:is(.probe){width:32px}'
+    const oracle = reviewedLynxOracles(['size-full'], css)[0]!
+    const encoded = await encodeCss(css, 'wasm')
+    expect(encoded.diagnostics.length).toBeGreaterThan(0)
+    const item = { id: 'size-full', candidate: 'size-full', features: [] }
+    const check = (output: typeof encoded) => conversionCaseResult(item, 'lynx', lynxLiteralObservation('size-full', output), [], oracle).status
+    expect(check(encoded)).toBe('passed')
+    expect(check({ ...encoded, css: encoded.css.replace('width: 100%;', '') })).toBe('failed')
+    expect(check({ ...encoded, css: encoded.css.replace('width: 100%;', 'width: 90%;') })).toBe('failed')
+    expect(check({ ...encoded, css: `${encoded.css}.size-full { width: 90%; }` })).toBe('failed')
+    expect(check({ ...encoded, css: `${encoded.css}@media screen {.size-full { width: 90%; }}` })).toBe('not-run')
+    expect(check({ ...encoded, css: '' })).toBe('failed')
+  })
+
+  it('真实 decoder 的变量展示文本不能作为标准 CSS 或 serializer 输入的语义替身', async () => {
+    const input = '.probe{width:32px;color:var(--probe-color,red)}'
+    const encoded = await encodeCss(input, 'wasm')
+    expect(encoded.sourceCss).toBe(input)
+    expect(encoded.sourceCss).not.toContain('{{')
+    expect(encoded.encodedByteLength).toBeGreaterThan(0)
+    expect(encoded.css).toContain('color: {{--probe-color}}')
+    expect(encoded.css).not.toContain('var(--probe-color,red)')
+    expect(() => cssDeclarations(encoded.css)).toThrow()
+    expect(encoded.rules.find(rule => rule.selectorText?.value === '.probe')?.style).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'color', defaultValueMap: { '--probe-color': 'red' } }),
+    ]))
+  })
+
   it('将 Tailwind v4 百分比透明度编码为 Lynx 原生数值', async () => {
     const css = await generateCss('opacity-50')
     expect(css).toContain('opacity: 0.5')
@@ -102,11 +136,14 @@ describe('Lynx native CSS defaults', () => {
     ]))
   })
 
-  it.each([undefined, 'wasm'] as const)('通过 %s 编码保留不支持属性的原始诊断', async (mode) => {
+  it.each([undefined, 'wasm'] as const)('通过 %s 编码固定 columns 的静默丢弃，输入与空诊断均不能冒充保留', async (mode) => {
     const encoded = await encodeCss(await generateCss('columns-2'), mode)
-    expect(encoded.diagnostics).toEqual(expect.arrayContaining([
-      expect.objectContaining({ type: 'property', name: 'columns' }),
+    expect(encoded.sourceCss).toContain('columns: 2')
+    expect(encoded.rules.find(rule => rule.selectorText?.value === '.columns-2')?.style).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'columns', value: '2' }),
     ]))
+    expect(encoded.encodedByteLength).toBeGreaterThan(0)
+    expect(encoded.diagnostics).toEqual([])
     expect(encoded.css).not.toContain('columns:')
   })
 

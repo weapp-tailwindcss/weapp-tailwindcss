@@ -1,66 +1,116 @@
 import type { ReactNativeCaseResult, ReactNativePlatform, ReactNativeReport } from './catalog'
-import { compatibilityCases, RN_CATALOG_HASH, RN_VERSIONS } from './catalog'
-
-const requiredCheckpoint = new Map(compatibilityCases.map(item => [item.id, item.evidence === 'build' ? 'build:bundled' : `${item.probe}:probe`]))
+import { nativeBuildCases, nativeBuildFixtures, nativeFixtures, rejectedNativeCases, styleContains } from '../../examples/react-native-expo/src/compatibility/protocol'
+import { compatibilityCases, reactNativeVersions, RN_CATALOG_HASH, RN_FIXTURE_HASH } from './catalog'
 
 function fail(message: string): never {
   throw new Error(`React Native compatibility report: ${message}`)
 }
 
-export function validateReactNativeReport(report: ReactNativeReport, platform: ReactNativePlatform = report.platform) {
-  if (report.schemaVersion !== 1) {
-    fail('schemaVersion must be 1')
+export function validateReactNativeReport(report: ReactNativeReport, platform: ReactNativePlatform = report.platform, context: { stage?: 'static' | 'runtime', runId?: string, revision?: string, versions?: Record<string, string> } = {}) {
+  if (report.schemaVersion !== 2) {
+    fail('historical schemaVersion is not fresh runtime evidence; regenerate static evidence and rerun')
+  }
+  const stage = context.stage ?? 'runtime'
+  if (report.stage !== stage) {
+    fail(`stage must be ${stage}`)
   }
   if (report.platform !== platform) {
     fail(`platform must be ${platform}`)
   }
-  if (report.catalogHash !== RN_CATALOG_HASH) {
-    fail('stale catalog hash')
+  if (report.catalogHash !== RN_CATALOG_HASH || report.fixtureHash !== RN_FIXTURE_HASH) {
+    fail('stale catalog or fixture hash')
   }
-  if (!report.verifiedAt || report.verifiedAt === 'unknown') {
+  if (context.revision && report.revision !== context.revision) {
+    fail('stale runtime revision')
+  }
+  if (!report.runId || (context.runId && report.runId !== context.runId)) {
+    fail('stale or missing runId')
+  }
+  if (!Number.isFinite(Date.parse(report.verifiedAt))) {
     fail('verifiedAt is required')
   }
-  if (!report.environment.deviceName || report.environment.deviceName === 'unknown') {
-    fail('environment.deviceName is required')
+  const versions = context.versions ?? reactNativeVersions()
+  if (Object.entries(versions).some(([name, value]) => report.versions[name] !== value)) {
+    fail('actual dependency versions changed')
   }
-  if (!report.environment.osVersion || report.environment.osVersion === 'unknown') {
-    fail('environment.osVersion is required')
+  if (!report.environment.deviceName || !report.environment.osVersion) {
+    fail('actual runtime environment is required')
   }
   if (report.results.length !== compatibilityCases.length) {
     fail('report must contain every catalog case exactly once')
   }
   const ids = new Set<string>()
   for (const result of report.results) {
-    if (ids.has(result.id)) {
-      fail(`duplicate case ${result.id}`)
+    const item = compatibilityCases.find(item => item.id === result.id)
+    if (!item || ids.has(result.id)) {
+      fail(`unknown or duplicate case ${result.id}`)
     }
     ids.add(result.id)
-    const expectedCheckpoint = requiredCheckpoint.get(result.id)
-    if (!expectedCheckpoint) {
-      fail(`unknown case ${result.id}`)
+    if (!result.generated || !result.checkpoints.some(checkpoint => checkpoint.name === 'generation:candidates' && checkpoint.passed)) {
+      fail(`${result.id} generation failed`)
     }
-    if (result.status !== 'supported' && result.status !== 'unsupported') {
-      fail(`${result.id} has invalid status ${String(result.status)}`)
+    for (const [index, declaration] of item.declarations.entries()) {
+      if (!result.checkpoints.some(checkpoint => checkpoint.name === `generation:declaration:${index}:${declaration.property}` && checkpoint.passed)) {
+        fail(`${result.id} is missing declaration ${declaration.property}`)
+      }
     }
-    if (!result.checkpoints.length) {
-      fail(`${result.id} has no checkpoint`)
+    if (rejectedNativeCases.has(result.id)) {
+      if (result.status !== 'unsupported' || result.encoded || !result.reason || !result.warnings.some(warning => warning.trim())
+        || !result.checkpoints.some(checkpoint => checkpoint.name === 'encoder:expected-rejection' && checkpoint.passed)) {
+        fail(`${result.id} does not match the reviewed native rejection`)
+      }
+      continue
     }
-    if (result.status === 'unsupported' && !result.reason) {
-      fail(`${result.id} unsupported result needs a reason`)
+    if (!nativeFixtures[result.id] && !nativeBuildCases.has(result.id)) {
+      fail(`${result.id} has no reviewed semantic fixture`)
     }
-    if (result.status === 'unsupported' && !result.warnings?.length) {
-      fail(`${result.id} unsupported result needs a warning`)
+    if (!result.encoded || result.warnings.length || !result.checkpoints.some(checkpoint => checkpoint.name === 'encoder:complete' && checkpoint.passed)) {
+      fail(`${result.id} has partial or missing native encoding`)
     }
-    if (result.status === 'supported' && result.checkpoints.some(checkpoint => !checkpoint.passed)) {
-      fail(`${result.id} supported result contains a failed checkpoint`)
+    if (stage === 'static' && result.status === 'unverified' && !nativeBuildCases.has(result.id)) {
+      continue
     }
-    const hasExpected = result.checkpoints.some(checkpoint => checkpoint.name.startsWith(expectedCheckpoint))
-    const hasStaticEvidence = result.checkpoints.some(checkpoint => checkpoint.name.startsWith('build:'))
-    if (!hasExpected && !hasStaticEvidence) {
-      fail(`${result.id} is missing ${expectedCheckpoint} checkpoint`)
+    if (result.status !== 'supported' || result.checkpoints.some(checkpoint => !checkpoint.passed)) {
+      fail(`${result.id} changed from expected support to ${result.status}`)
+    }
+    if (nativeBuildCases.has(result.id)) {
+      if (!styleContains(result.encodedStyle, nativeBuildFixtures[result.id]!.style)) {
+        fail(`${result.id} encoding does not match the independent native style oracle`)
+      }
+      continue
+    }
+    const phases = nativeFixtures[result.id]!.phases ?? ['default']
+    for (const phase of phases) {
+      for (const kind of ['geometry', 'pixel', 'control', 'style']) {
+        if (!result.checkpoints.some(checkpoint => checkpoint.name === `runtime:${phase}:${kind}` && checkpoint.passed)) {
+          fail(`${result.id} is missing runtime ${phase} ${kind}`)
+        }
+      }
+      const receipts = report.receipts.filter(receipt => receipt.id === result.id && receipt.phase === phase)
+      const receipt = receipts[0]
+      if (receipts.length !== 1 || !receipt || receipt.runId !== report.runId || !/^[a-f0-9]{64}$/.test(receipt.artifact.sha256)
+        || receipt.artifact.name !== `case-${report.revision}-${result.id}-${phase}.png`
+        || receipt.artifact.byteLength < 100 || receipt.checkpoints.length !== 3
+        || ['geometry', 'pixel', 'control'].some(kind => !receipt.checkpoints.some(checkpoint => checkpoint.name === `runtime:${phase}:${kind}` && checkpoint.passed === true))) {
+        fail(`${result.id} is missing fresh native artifact receipt for ${phase}`)
+      }
+    }
+  }
+  if (stage === 'runtime') {
+    const covered = report.results.filter(result => nativeFixtures[result.id]).reduce((sum, result) => sum + (nativeFixtures[result.id]!.phases?.length ?? 1), 0)
+    if (report.receipts.length !== covered) {
+      fail('report contains missing or extraneous native screenshot receipts')
     }
   }
   return report
+}
+
+/** 旧报告仅供历史展示，不能调用 fresh gate。 */
+export function readHistoricalReactNativeReport(report: { schemaVersion: number, platform: string, verifiedAt: string, results: Array<{ id: string, status: string }> }) {
+  if (report.schemaVersion !== 1 || !report.verifiedAt || !report.results.length) {
+    fail('invalid historical report')
+  }
+  return { historical: true as const, report }
 }
 
 export function nativeReportConclusion(report: ReactNativeReport) {
@@ -68,14 +118,18 @@ export function nativeReportConclusion(report: ReactNativeReport) {
 }
 
 export function reportFromStaticEvidence(platform: ReactNativePlatform, results: ReactNativeCaseResult[], environment: ReactNativeReport['environment']): ReactNativeReport {
-  const report: ReactNativeReport = {
-    schemaVersion: 1,
+  return {
+    schemaVersion: 2,
+    stage: 'static',
+    revision: 'static',
     platform,
     catalogHash: RN_CATALOG_HASH,
+    fixtureHash: RN_FIXTURE_HASH,
+    runId: 'static-generation',
     verifiedAt: new Date().toISOString(),
-    versions: { ...RN_VERSIONS },
+    versions: reactNativeVersions(),
     environment,
     results,
+    receipts: [],
   }
-  return validateReactNativeReport(report, platform)
 }

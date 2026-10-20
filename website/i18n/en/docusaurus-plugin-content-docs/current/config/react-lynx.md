@@ -22,7 +22,7 @@ This page explains every Lynx-specific option in `pluginLynxTailwindcss()`. Star
 - Core `weapp-tailwindcss` `5.6.3`; dependency-chain Node.js `^22.18.0 || >=24.11.0`
 - `@lynx-js/rspeedy` `>=0.16.0`
 - Tailwind CSS `4.x`
-- The repository fixture pins Rspeedy `0.17.2`, ReactLynx plugin `0.20.2`, ReactLynx runtime `0.126.1`, Tailwind CSS `4.3.3`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `css-defines` `0.0.16`
+- The repository fixture pins Rspeedy `0.17.2`, ReactLynx plugin `0.20.2`, ReactLynx runtime `0.126.1`, Tailwind CSS `4.3.3`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `css-defines` `0.0.18`
 - ReactLynx + Rspeedy native builds only; Rspeedy Web, non-React Lynx, and React Native are out of scope
 
 ## Minimal configuration
@@ -188,7 +188,7 @@ Do not construct `w-[${width}px]`; Tailwind cannot know the final token at build
 
 ## Devices and evidence
 
-CI defaults to Android API 30 on a Pixel 2 x86_64 runner and iOS 18.5 on an iPhone 16 Pro simulator. The committed native reports come from Android `sdk_gphone_arm64` (Android 11/API 30, arm64-v8a) and iPhone 17 Pro (iOS 26.5, arm64), with baseline `verifiedAt` `2026-10-06T01:38:07.800Z` and `catalogHash` `a8c3b45f993d9aa28782f308fc959a09e160d67a9097d11b1bc6a8a38b93c886`. These device roles are distinct and their evidence must not be interchanged.
+CI defaults to Android API 30 on a Pixel 2 x86_64 runner and iOS 18.5 on an iPhone 16 Pro simulator. The committed native reports come from Android `sdk_phone_x86_64` (Android 11/API 30, x86_64) and `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64), with baseline `verifiedAt` `2026-10-19T15:13:36.717Z` and `catalogHash` `2e3a1a60517c13de507d22ef8b4d209ffcdb86b2dfbf5bf7100df35c40dc3fec`. The current baseline comes from official run `39272094832`; later CI runs on the same device configuration still require independent evidence.
 
 `--capture-only` captures screenshots/video only after an explicit bundle and target device are supplied. It does not write a native support report or update the committed baseline.
 

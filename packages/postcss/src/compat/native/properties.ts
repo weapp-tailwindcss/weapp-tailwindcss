@@ -1,4 +1,10 @@
-/* eslint-disable style/max-statements-per-line, regexp/no-super-linear-backtracking */
+/* eslint-disable style/max-statements-per-line */
+
+import valueParser from 'postcss-value-parser'
+import { parseNativeBoxShadow } from './shadow'
+import { parseNativeTransform } from './transform'
+import { isColor, normalizeColor, parseNumber, resolveVariables } from './values'
+import { resolveNativeVariables } from './variables'
 
 const COLOR_PROPERTIES = new Set(['color', 'backgroundColor', 'borderColor', 'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor', 'shadowColor', 'textDecorationColor'])
 const NUMERIC_PROPERTIES = new Set([
@@ -68,10 +74,21 @@ const STRING_PROPERTIES = new Set([
   'textTransform',
   'writingDirection',
 ])
-const SHORTHANDS: Record<string, string[]> = {
+/** RN 0.81 布局 API 的封闭枚举；CSS 独有关键字必须诊断，不能静默透传。 */
+const LAYOUT_KEYWORDS: Readonly<Record<string, readonly string[]>> = {
+  display: ['flex', 'none', 'contents'],
+  position: ['relative', 'absolute', 'static'],
+  flexDirection: ['row', 'column', 'row-reverse', 'column-reverse'],
+  flexWrap: ['wrap', 'nowrap', 'wrap-reverse'],
+  alignItems: ['flex-start', 'flex-end', 'center', 'stretch', 'baseline'],
+  alignSelf: ['auto', 'flex-start', 'flex-end', 'center', 'stretch', 'baseline'],
+  alignContent: ['flex-start', 'flex-end', 'center', 'stretch', 'space-between', 'space-around', 'space-evenly'],
+  justifyContent: ['flex-start', 'flex-end', 'center', 'space-between', 'space-around', 'space-evenly'],
+}
+const SHORTHANDS = {
   margin: ['marginTop', 'marginRight', 'marginBottom', 'marginLeft'],
   padding: ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft'],
-}
+} as const
 const UNSUPPORTED_PROPERTIES = new Set([
   'filter',
   'backdropFilter',
@@ -108,104 +125,31 @@ export function propertyName(property: string) {
 }
 
 function splitValue(value: string) {
-  return value.trim().split(/\s+/).filter(Boolean)
+  const parts: string[] = []
+  let current = ''
+  for (const node of valueParser(value).nodes) {
+    if (node.type === 'space' || node.type === 'comment') {
+      if (current) { parts.push(current); current = '' }
+    }
+    else {
+      current += valueParser.stringify(node)
+    }
+  }
+  if (current) { parts.push(current) }
+  return parts
 }
 
-function parseNumber(value: string, variables: Record<string, string>) {
-  const resolved = resolveVariables(value, variables)
-  const fraction = resolved.match(/^(-?(?:\d+\.\d+|\d+|\.\d+))\s*\/\s*(-?(?:\d+\.\d+|\d+|\.\d+))$/)
-  if (fraction && Number(fraction[2]) !== 0) { return Number(fraction[1]) / Number(fraction[2]) }
-  const calculated = resolved.match(/^calc\(\s*(-?(?:\d+\.\d+|\d+|\.\d+))(px|rem|em|%)?\s*\*\s*(-?(?:\d+\.\d+|\d+|\.\d+))\s*\)$/)
-  if (calculated) {
-    const base = parseNumber(`${calculated[1]}${calculated[2] ?? ''}`, variables)
-    return typeof base === 'number' ? base * Number(calculated[3]) : undefined
-  }
-  const match = resolved.match(/^(-?(?:\d+\.\d+|\d+|\.\d+))(px|rem|em|%)?$/)
+export function relativeLineHeight(value: string, variables: Record<string, string>) {
+  const resolved = resolveNativeVariables(value, variables)?.trim()
+  const match = resolved?.match(/^(\d+(?:\.\d+)?|\.\d+)(em|%)?$/)
   if (!match) { return undefined }
   const number = Number(match[1])
-  if (match[2] === '%') { return `${number}%` }
-  if (match[2] === 'rem' || match[2] === 'em') { return number * 16 }
-  return number
-}
-
-function resolveVariables(value: string, variables: Record<string, string>) {
-  return value.replace(/var\((--[\w-]+)(?:,\s*([^)]*))?\)/g, (_, key: string, fallback: string | undefined) => variables[key] ?? fallback ?? `var(${key})`)
-}
-
-function isColor(value: string) {
-  return /^(?:#[\da-f]{3,8}|(?:rgb|rgba|hsl|hsla|oklch|oklab)\([^)]*\)|[a-z]+)$/i.test(value)
-}
-
-function oklchToHex(value: string) {
-  const match = value.match(/^oklch\(\s*([\d.]+)%?\s+([\d.]+)\s+([\d.]+)(?:\s+\/\s*([\d.]+))?\s*\)$/i)
-  if (!match) { return undefined }
-  const lightness = Number(match[1]) > 1 ? Number(match[1]) / 100 : Number(match[1])
-  const chroma = Number(match[2])
-  const hue = Number(match[3]) * Math.PI / 180
-  const alpha = match[4] === undefined ? 1 : Number(match[4])
-  const a = chroma * Math.cos(hue)
-  const b = chroma * Math.sin(hue)
-  const l = lightness + 0.3963377774 * a + 0.2158037573 * b
-  const m = lightness - 0.1055613458 * a - 0.0638541728 * b
-  const s = lightness - 0.0894841775 * a - 1.291485548 * b
-  const linear = (channel: number) => channel ** 3
-  const red = 4.0767416621 * linear(l) - 3.3077115913 * linear(m) + 0.2309699292 * linear(s)
-  const green = -1.2684380046 * linear(l) + 2.6097574011 * linear(m) - 0.3413193965 * linear(s)
-  const blue = -0.0041960863 * linear(l) - 0.7034186147 * linear(m) + 1.7076147010 * linear(s)
-  const toByte = (channel: number) => Math.round(Math.max(0, Math.min(1, channel <= 0.0031308 ? 12.92 * channel : 1.055 * channel ** (1 / 2.4) - 0.055)) * 255)
-  const hex = [red, green, blue].map(channel => toByte(channel).toString(16).padStart(2, '0')).join('')
-  return alpha < 1 ? `#${hex}${Math.round(alpha * 255).toString(16).padStart(2, '0')}` : `#${hex}`
-}
-
-function normalizeColor(value: string) {
-  return /^oklch\(/i.test(value) ? oklchToHex(value) : value
-}
-
-function parseTransform(value: string, variables: Record<string, string>) {
-  const transform: Array<Record<string, unknown>> = []
-  for (const match of value.matchAll(/(translateX|translateY|translate|scaleX|scaleY|scale|rotate|skewX|skewY)\(([^)]*)\)/g)) {
-    const name = match[1]
-    const values = splitValue(resolveVariables(match[2] ?? '', variables).replace(',', ' '))
-    if (!name || !values.length) { continue }
-    if (name.startsWith('scale')) {
-      const number = Number(values[0] ?? '')
-      if (Number.isFinite(number)) { transform.push({ [name]: number }) }
-      continue
-    }
-    if (name === 'translate') {
-      const x = parseNumber(values[0] ?? '', variables)
-      const y = parseNumber(values[1] ?? '0', variables)
-      if (x !== undefined && y !== undefined) { transform.push({ translateX: x }, { translateY: y }) }
-      continue
-    }
-    const property = name.replace(/^translate$/, 'translateX')
-    const parsed = name.startsWith('rotate') || name.startsWith('skew')
-      ? values[0]
-      : parseNumber(values[0] ?? '', variables)
-    if (parsed !== undefined) { transform.push({ [property]: parsed }) }
-  }
-  return transform.length ? transform : undefined
-}
-
-function parseShadow(value: string, variables: Record<string, string>) {
-  const resolved = resolveVariables(value, variables)
-  const color = resolved.match(/(?:rgba?|hsla?)\([^)]*\)|#[\da-f]{3,8}/i)?.[0]
-  const parts = splitValue(color ? resolved.replace(color, '') : resolved)
-  const lengths = parts.filter(part => parseNumber(part, variables) !== undefined).slice(0, 3)
-  if (lengths.length < 2) { return undefined }
-  const [x = '0', y = '0', blur = '0'] = lengths
-  const shadowColor = normalizeColor(color ?? parts.find(part => isColor(part)) ?? '#000000') ?? '#000000'
-  const opacity = /rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)/i.exec(shadowColor)?.[1]
-  return {
-    shadowOffset: { width: parseNumber(x, variables), height: parseNumber(y, variables) },
-    shadowRadius: parseNumber(blur, variables),
-    shadowColor,
-    ...(opacity ? { shadowOpacity: Number(opacity) } : {}),
-  }
+  return match[2] === '%' ? number / 100 : number
 }
 
 function parseValue(property: string, value: string, variables: Record<string, string>) {
-  const trimmed = value.trim()
+  const trimmed = resolveNativeVariables(value.trim(), variables)
+  if (trimmed === undefined) { return undefined }
   if (UNSUPPORTED_PROPERTIES.has(property)) { return undefined }
   if (trimmed.includes('linear-gradient(') || trimmed.includes('url(')) { return undefined }
   if (COLOR_PROPERTIES.has(property)) {
@@ -219,17 +163,17 @@ function parseValue(property: string, value: string, variables: Record<string, s
     }
     return number
   }
-  if (property === 'transform') { return parseTransform(trimmed, variables) }
-  if (property === 'boxShadow') { return parseShadow(trimmed, variables) }
-  if (property === 'display' && !['flex', 'none'].includes(trimmed)) { return undefined }
+  if (property === 'transform') { return parseNativeTransform(trimmed) }
+  if (property === 'boxShadow') { return parseNativeBoxShadow(trimmed) }
+  if (LAYOUT_KEYWORDS[property] && !LAYOUT_KEYWORDS[property]!.includes(trimmed)) { return undefined }
   return STRING_PROPERTIES.has(property) ? trimmed : undefined
 }
 
 export function expandDeclaration(property: string, value: string, variables: Record<string, string>) {
   if (property === 'margin' || property === 'padding') {
     const parts = splitValue(value).map(item => parseNumber(item, variables))
-    if (parts.includes(undefined)) { return undefined }
-    const values = parts as number[]
+    if (!parts.length || parts.length > 4 || parts.includes(undefined)) { return undefined }
+    const values = parts as Array<string | number>
     const [top, right = top, bottom = top, left = right] = values
     return Object.fromEntries(SHORTHANDS[property].map((key, index) => [key, [top, right, bottom, left][index]]))
   }
@@ -240,10 +184,6 @@ export function expandDeclaration(property: string, value: string, variables: Re
       ...(width ? { borderWidth: parseNumber(width, variables) } : {}),
       ...(color ? { borderColor: color } : {}),
     }
-  }
-  if (property === 'boxShadow') {
-    const shadow = parseShadow(value, variables)
-    return shadow
   }
   const parsed = parseValue(property, value, variables)
   return parsed === undefined ? undefined : { [property]: parsed }

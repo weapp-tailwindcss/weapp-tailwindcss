@@ -1,6 +1,8 @@
-import type { NativeArtifactReceipt, NativeColorSchemeReceipt, NativePlatformReport } from './types'
+import type { NativeArtifactReceipt, NativeColorSchemeReceipt, NativeMediaGateCapture, NativePlatformReport, StaticEvidenceReport } from './types'
 import { afterEach, expect, it, vi } from 'vitest'
 import { submitNativeCompatibilityReport } from './native-reporter'
+import staticEvidence from './static-evidence.json'
+import { mediaCapture } from './test-utils/native-media'
 
 vi.mock('./catalog', async (importOriginal) => {
   const original = await importOriginal<typeof import('./catalog')>()
@@ -19,13 +21,53 @@ vi.mock('./catalog', async (importOriginal) => {
       'variant-dark',
       'variant-structural',
       'type-flow',
+      'directive-source',
     ].includes(item.id)),
+  }
+})
+
+vi.mock('./static-evidence.json', async (importOriginal) => {
+  const original = await importOriginal<{ default: StaticEvidenceReport }>()
+  const { compatibilityCases } = await import('@weapp-tailwindcss/test-catalog')
+  return {
+    default: {
+      ...original.default,
+      results: original.default.results.map(result => ({
+        ...result,
+        // 独立验证采集生命周期的正向路径，不以本轮 encoder 是否保留规则决定单测覆盖。
+        generated: true,
+        bundled: true,
+        candidates: compatibilityCases.find(item => item.id === result.id)!.className.split(/\s+/).filter(Boolean).map(className => ({
+          className,
+          generated: true,
+          bundled: true,
+        })),
+      })),
+    },
   }
 })
 
 afterEach(() => {
   vi.useRealTimers()
   vi.unstubAllGlobals()
+})
+
+it('hover 编码失败不会阻止 active 自己采集并保存原生帧', async () => {
+  const built = (staticEvidence as StaticEvidenceReport).results.find(item => item.id === 'variant-state')!
+  const original = structuredClone(built)
+  try {
+    built.bundled = false
+    built.candidates!.find(candidate => candidate.className.startsWith('hover:'))!.bundled = false
+    const { report } = await collect()
+    expect(report!.results.find(item => item.id === 'variant-state')).toMatchObject({
+      status: 'unsupported',
+      candidates: [{ status: 'supported' }, { status: 'unsupported' }],
+    })
+    expect(report!.evidence!.artifacts.some(item => item.name === 'variant-state-active.png')).toBe(true)
+  }
+  finally {
+    Object.assign(built, original)
+  }
 })
 
 async function collect(options: { missingFrame?: boolean, missingLayout?: boolean, restoreFailed?: boolean, receipt?: 'late' | 'wrong-run' | 'missing' | 'failed' } = {}) {
@@ -50,6 +92,7 @@ async function collect(options: { missingFrame?: boolean, missingLayout?: boolea
   vi.stubGlobal('NativeModules', {
     CompatibilityReporter: {
       getEvidenceContext: (callback: (value: object) => void) => callback({ version: 1, runId, bundleSha256: 'a'.repeat(64) }),
+      captureMediaGate: (_run: string, callback: (value: NativeMediaGateCapture) => void) => callback(mediaCapture()),
       setColorScheme: (run: string, requestId: string, scheme: 'light' | 'dark', callback: (value: NativeColorSchemeReceipt | null) => void) => {
         callback(++schemeRequests === 3 && options.restoreFailed ? null : { runId: run, requestId, scheme })
       },
@@ -129,7 +172,27 @@ it('动画及 transition 全部采集稳定画布，状态变化仍作用于被�
   expect(captures.filter(id => id === 'probe-container-transition-basic')).toHaveLength(3)
   expect(captures.filter(id => id === 'probe-container-variant-state')).toHaveLength(2)
   expect(mutations).toEqual(['#probe-transition-basic', 'probe-variant-state:true', 'probe-variant-state:false'])
-  expect(report.results.filter(result => !['background-linear-gradient', 'effect-shadow', 'transform-skew', 'variant-dark', 'variant-structural', 'type-flow'].includes(result.id)).every(result => result.status === 'supported')).toBe(true)
+  expect(report.results.filter(result => !['background-linear-gradient', 'effect-shadow', 'transform-skew', 'variant-dark', 'variant-structural', 'type-flow', 'variant-state'].includes(result.id)).every(result => result.status === 'supported')).toBe(true)
+})
+
+it('active 成功不能推导 hover 成功，未注入的候选保留待测并阻断本轮验收', async () => {
+  const { report } = await collect()
+  expect(report.results.find(result => result.id === 'variant-state')).toMatchObject({
+    status: 'not-tested',
+    candidates: [
+      { className: 'active:bg-[#dc2626]', status: 'supported' },
+      { className: 'hover:bg-[#ef4444]', status: 'not-tested' },
+    ],
+  })
+})
+
+it('@source 已生成时保留编译成功，不把 underline 的 encoder 拒绝称作指令生成失败', async () => {
+  const { report } = await collect()
+  expect(report.results.find(result => result.id === 'directive-source')).toEqual({
+    id: 'directive-source',
+    status: 'supported',
+    checkpoints: [{ name: 'build:generated', passed: true }],
+  })
 })
 
 it('合成画布缺失时拒绝发布报告，不退回元素自身截图', async () => {
@@ -151,7 +214,7 @@ it('probe 布局未就绪时持久化失败原因并拒绝发布报告', async (
 it('等待最后一帧的真实写入回执后才发布报告', async () => {
   const { report, error } = await collect({ receipt: 'late' })
   expect(error).toBeUndefined()
-  expect(report.evidence?.artifacts).toHaveLength(29)
+  expect(report.evidence?.artifacts).toHaveLength(38)
 })
 
 it.each(['wrong-run', 'missing', 'failed'] as const)('%s 回执禁止发布报告', async (receipt) => {
@@ -175,7 +238,7 @@ it('Canvas skew 不从 View 矩阵得出支持结论，而是绑定两张父级�
   expect(report.results.find(item => item.id === 'transform-skew')).toMatchObject({ status: 'not-tested' })
 })
 
-it('dark 报告包含四帧与恢复回执，恢复失败不得提交任何报告', async () => {
+it('dark 报告包含六帧与恢复回执，恢复失败不得提交任何报告', async () => {
   const { report } = await collect()
   expect(report.results.find(item => item.id === 'variant-dark')).toMatchObject({ status: 'not-tested', colorScheme: { restored: { scheme: 'light', runId: report.evidence!.runId } } })
   expect(report.evidence!.artifacts.filter(item => item.name.startsWith('variant-dark')).map(item => item.name)).toEqual([
@@ -183,6 +246,8 @@ it('dark 报告包含四帧与恢复回执，恢复失败不得提交任何报�
     'variant-dark-light-control.png',
     'variant-dark-dark-probe.png',
     'variant-dark-dark-control.png',
+    'variant-dark-restored-probe.png',
+    'variant-dark-restored-control.png',
   ])
   const failed = await collect({ restoreFailed: true })
   expect(failed.error).toBeInstanceOf(AggregateError)

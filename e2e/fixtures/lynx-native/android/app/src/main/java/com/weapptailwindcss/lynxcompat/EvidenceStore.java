@@ -54,9 +54,33 @@ public final class EvidenceStore {
   }
 
   public synchronized Receipt save(String requestedRunId, String name, byte[] data) throws IOException {
+    return saveArtifact(requestedRunId, name, data, "[a-z0-9-]+\\.png");
+  }
+
+  /** 仅供原生几何采集器写入侧车，JS artifact 入口仍只接受 PNG。 */
+  synchronized Receipt saveGeometry(String requestedRunId, String id, byte[] data) throws IOException {
+    if (id == null || !id.matches("[a-z0-9]+(?:-[a-z0-9]+)*")) {
+      failed = true;
+      throw new IOException("Invalid geometry case ID");
+    }
+    return saveArtifact(requestedRunId, id + "-geometry.json", data, "[a-z0-9-]+-geometry\\.json");
+  }
+
+  /** 保留固定侧车名；此通道不暴露给 JS 的 PNG 写入方法。 */
+  synchronized Receipt saveMediaGate(String requestedRunId, byte[] data) throws IOException {
+    return saveArtifact(requestedRunId, "media-hover-v1.native.json", data, "media-hover-v1\\.native\\.json");
+  }
+
+  /** 响应式侧车由原生状态机写入，JS artifact 通道仍仅接受 PNG。 */
+  synchronized Receipt saveResponsive(String requestedRunId, String phase, byte[] data) throws IOException {
+    return saveArtifact(requestedRunId, "variant-responsive-" + phase + ".native.json", data,
+      "variant-responsive-(narrow|wide|narrowed|restored)\\.native\\.json");
+  }
+
+  private Receipt saveArtifact(String requestedRunId, String name, byte[] data, String pattern) throws IOException {
     try {
       checkRun(requestedRunId);
-      if (name == null || !name.matches("[a-z0-9-]+\\.png") || data == null || data.length == 0) {
+      if (name == null || !name.matches(pattern) || data == null || data.length == 0) {
         throw new IOException("Invalid artifact payload");
       }
       for (Receipt receipt : receipts) {
@@ -132,7 +156,7 @@ public final class EvidenceStore {
 
   private static final String HEX = "0123456789abcdef";
 
-  private void checkRun(String requestedRunId) throws IOException {
+  synchronized void checkRun(String requestedRunId) throws IOException {
     if (failed || published || !runId.equals(requestedRunId)) {
       throw new IOException("Evidence run is failed, published, or mismatched");
     }

@@ -1,0 +1,2 @@
+# 保留上游许可原文字节和 SHA-256，不做空白规范化。
+licenses/* -whitespace

@@ -101,6 +101,9 @@ export default config
     globalIgnores([
       // 本地验收报告和参考源码不属于仓库维护的代码，避免扫描大型生成文件。
       'e2e/reports/local-full-run/**',
+      // 固定上游注册表和样式基线由合同测试校验字节，不交给格式化器改写。
+      'e2e/tailwind-capabilities/inventory/tailwind-*.json',
+      'e2e/tailwind-capabilities/baselines/**',
       'submodules/tailwindcss-mangle/**',
       // Cargo 生成物使用编译器自己的格式，不属于维护中的脚本与配置。
       'packages/*/native/target/**',

@@ -1,5 +1,31 @@
 @import 'tailwindcss';
-@source './src/**/*.{ts,tsx,json}';
+@import './styles/reference.css';
+@plugin './tailwind-plugin.mjs';
+@source './src/**/*.{ts,tsx}';
+@source '../../tools/tailwindcss-test-catalog/compatibility-candidates.txt';
+@source inline('underline {hover:,focus:,}bg-red-{500,600} p-legacy lynx-plugin-utility');
+@source not './src/compatibility/excluded.ts';
+
+@theme {
+  --color-lynx-brand: #0ea5e9;
+  --spacing-legacy: 19px;
+}
+
+@utility content-auto {
+  content-visibility: auto;
+}
+
+@custom-variant theme-midnight (&:where(.theme-midnight, .theme-midnight *));
+
+.lynx-at-variant {
+  @variant theme-midnight {
+    color: #fff;
+  }
+}
+
+.lynx-applied {
+  @apply flex items-center;
+}
 
 @utility rn-css-hmr-probe {
   background-color: #10b981;

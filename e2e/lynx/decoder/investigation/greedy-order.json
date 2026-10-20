@@ -1,0 +1,117 @@
+{
+  "kind": "本机 decoder 根因调查，非跨端验收报告",
+  "source": {
+    "package": "@lynx-js/tasm",
+    "version": "0.0.53",
+    "gitHead": "3526f07a8cb25cfb2841736c76b54deadc7e6e46",
+    "archiveSha256": "8c570a0a56a2cb5926e58b09cbe8774398fb956bd275f65cb6a107e17cdd9c23",
+    "patchSha256": "1282e4927efef30ce3a73a5dca4a499daafa5aef0fbef17026593ffb36376f62"
+  },
+  "comparisonBundle": {
+    "bytes": 728,
+    "sha256": "039d2aad9ecd77775d1a9e763d69638d71138fe835463ea0f808ec0cf83b64ba"
+  },
+  "decoderRuns": [
+    {
+      "decoder": "registry53-min",
+      "exit": 1,
+      "timeout": false,
+      "seconds": 0.845,
+      "totalLogBytes": 2326734,
+      "savedLogBytes": 1048576
+    },
+    {
+      "decoder": "original53-min",
+      "exit": 1,
+      "timeout": false,
+      "seconds": 0.516,
+      "totalLogBytes": 5844170,
+      "savedLogBytes": 1048576
+    },
+    {
+      "decoder": "patched53-min",
+      "exit": 0,
+      "timeout": false,
+      "seconds": 0.408,
+      "totalLogBytes": 1145,
+      "savedLogBytes": 1145
+    }
+  ],
+  "fullExample": {
+    "encoderVersion": "0.0.49",
+    "mode": "development",
+    "bundleBytes": 1623624,
+    "bundleSha256": "4c0e8dc7ac8b6ff0a29626da0dbfb0cab6d44bc0ccba1251ab32adccc4f5bcb7",
+    "decodedCssChars": 40939,
+    "decodedCssSha256": "ee016423c672d8d3c70705dc7504cdbb4bf3329a4887440a36d8206addd918f3",
+    "assertions": [
+      "base-properties",
+      "unguarded-rule",
+      "min-width-guard",
+      "hover-hover-guard",
+      "hover-none-guard"
+    ]
+  },
+  "controls": [
+    {
+      "id": "valid",
+      "enableCSSRule": true,
+      "expectedAccepted": true,
+      "accepted": true,
+      "bundleBytes": 728,
+      "bundleSha256": "21565c0973319cd0b5c3f7ec7d34eed83da73be9371f78935ba128ab6e947086",
+      "cssSha256": "06639649567e035c9b84590fdeea861a894834b26d8f3499afe23be97719e11f",
+      "decodedCss": ".a { height: 16px; width: 16px; }\n@media (min-width: 1px) { .a { width: 32px; } }"
+    },
+    {
+      "id": "wrong-media-value",
+      "enableCSSRule": true,
+      "expectedAccepted": false,
+      "accepted": false,
+      "bundleBytes": 728,
+      "bundleSha256": "67fdbbafbf90aaf3b74bfe5da00c15e63928f1986e40e701a27f4616ebd4117b",
+      "cssSha256": "85ab23c6dd8a9da0a219c1051d0e4be5c63cae1f293c2bc8f4cc34b297386783",
+      "decodedCss": ".a { height: 16px; width: 16px; }\n@media (min-width: 1px) { .a { width: 24px; } }"
+    },
+    {
+      "id": "missing-property",
+      "enableCSSRule": true,
+      "expectedAccepted": false,
+      "accepted": false,
+      "bundleBytes": 706,
+      "bundleSha256": "0f71771f254f3a443c0ec43b14664f6686914c9149c0082f69aa07a2fdf025ec",
+      "cssSha256": "3837c2c30b2e78ed7feb4c63349ed5881871fdd008093ebf08e7f71b08935ae9",
+      "decodedCss": ".a { width: 16px; }\n@media (min-width: 1px) { .a { width: 32px; } }"
+    },
+    {
+      "id": "missing-media",
+      "enableCSSRule": true,
+      "expectedAccepted": false,
+      "accepted": false,
+      "bundleBytes": 555,
+      "bundleSha256": "70ad429261a515a0e5673ca9c802e7047fee2e1a03905191777b23809a0fd35d",
+      "cssSha256": "ad972e37762fe5ba7372f1c4f47fa2508b4069853afe6346551becae8125446c",
+      "decodedCss": ".a { height: 16px; width: 16px; }"
+    },
+    {
+      "id": "unguarded",
+      "enableCSSRule": true,
+      "expectedAccepted": false,
+      "accepted": false,
+      "bundleBytes": 623,
+      "bundleSha256": "867c8e9795baef52c1b97a4c24e11ea2410b9559098b1b779937a32378e9eaf0",
+      "cssSha256": "d0c45b4d6fee3637086fe797a41a13575779b5d44c8501054d2ca1f4f622a03d",
+      "decodedCss": ".a { height: 16px; width: 16px; }\n.a { width: 32px; }"
+    },
+    {
+      "id": "flag-disabled",
+      "enableCSSRule": false,
+      "expectedAccepted": false,
+      "accepted": false,
+      "bundleBytes": 551,
+      "bundleSha256": "e369974af32b9caabfa1f01c60f2feb2bece8ff72065fe103ba0c838e4719f53",
+      "cssSha256": "ad972e37762fe5ba7372f1c4f47fa2508b4069853afe6346551becae8125446c",
+      "decodedCss": ".a { height: 16px; width: 16px; }"
+    }
+  ]
+}

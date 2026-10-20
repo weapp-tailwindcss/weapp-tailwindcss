@@ -1916,7 +1916,7 @@ exports[`all > common important handle 1`] = `
   }
   #app .place-content-baseline {
     align-content: baseline;
-    justify-content: baseline;
+    justify-content: start;
     place-content: baseline;
   }
   #app .place-content-between {

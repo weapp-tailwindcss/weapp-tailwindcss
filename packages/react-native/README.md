@@ -43,6 +43,16 @@ On Android and iOS, the Metro integration resolves `react` and `react-native` fr
 
 `tw()` and `getStaticStyle()` return React Native `StyleProp` values, which can be passed directly to View, Text, and Image styles. They may contain registered StyleSheet IDs or arrays; use `StyleSheet.flatten()` when you need to inspect individual properties. `composeStyle()` preserves the inline style type, including `false`, `null`, and nested arrays.
 
+Each runtime owns its registration table, cache, and style metadata. Replacing the shared StyleSheet factory refreshes each runtime on its next lookup. Nested inline arrays are expanded iteratively; the host flattener resolves their registered ID leaves. Cyclic arrays produce an explicit error.
+
+Variable-based transforms resolve after all selected custom properties have cascaded, so combinations such as `skew-x-6 skew-y-3` retain both axes. Unsupported selector structures and transform functions produce diagnostics instead of partial styles.
+
+Unitless, percentage, and `em` line heights are resolved against the final font size after class and inline style precedence. The compiler retains their multiplier outside the static StyleSheet values. When font size comes from a parent, pass its known value through `tw(value, { fontSize })` or `getStaticStyle(ids, { fontSize })`; an unknown inherited size is not replaced with an assumed default. Custom runtime integrations can pass `StyleSheet.flatten` as the second argument to `setStyleSheetFactory` so registered inline styles participate in this calculation; Metro does this automatically.
+
+Shadows use the modern React Native `boxShadow` array, preserving all layers, blur, spread, color, and inset. The host must support this property: use the New Architecture and check its OS requirements (Android outset shadows require Android 9+, inset shadows Android 10+). Pass `boxShadow: false` to `compileNativeStylesheet()` or `generateNativeStylesheet()` for an unsupported host; declarations then produce warnings rather than a partial legacy shadow approximation.
+
+Shadow variables and color modifiers resolve after all selected class declarations and `!important` precedence. Fully transparent placeholder layers are omitted. `currentColor` and omitted shadow colors use the final class or inline text color; provide a known inherited color with `{ color }` in the runtime environment when needed. Unknown inherited colors remain unresolved until that context is provided. Color functions are normalized for both React Native and React Native Web.
+
 ## Public entry points
 
 The package exposes `compiler`, `tailwind`, `babel`, `metro`, `runtime`, and the platform-neutral `env` type entry. Custom Metro setups can compose these entry points directly.

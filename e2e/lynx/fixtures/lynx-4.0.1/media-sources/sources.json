@@ -1,0 +1,22 @@
+{
+  "core/renderer/css/ng/media_query/media_query_evaluator.cc": {
+    "sha256": "93f6d3b24467911dc55efe4277e4d93d7a1e27a9858324c515640ba7f805e15f",
+    "file": "media_query_evaluator.cc",
+    "url": "https://raw.githubusercontent.com/lynx-family/lynx/4.0.1/core/renderer/css/ng/media_query/media_query_evaluator.cc"
+  },
+  "core/renderer/css/ng/media_query/media_values.h": {
+    "sha256": "440d278856e52860f862212c4121e039c3523b358209b70253a28a907d641a68",
+    "file": "media_values.h",
+    "url": "https://raw.githubusercontent.com/lynx-family/lynx/4.0.1/core/renderer/css/ng/media_query/media_values.h"
+  },
+  "core/renderer/css/ng/style/rule_set.cc": {
+    "sha256": "e49179d86accd65b9e10eb121d6a8933e40b757f6b915583384eaba3a9866162",
+    "file": "rule_set.cc",
+    "url": "https://raw.githubusercontent.com/lynx-family/lynx/4.0.1/core/renderer/css/ng/style/rule_set.cc"
+  },
+  "core/renderer/dom/style_resolver.cc": {
+    "sha256": "c0a4721a6c75931623cdb2ec20ff09c829c3d030b3b1cf7c2979c0fa6564a3a6",
+    "file": "style_resolver.cc",
+    "url": "https://raw.githubusercontent.com/lynx-family/lynx/4.0.1/core/renderer/dom/style_resolver.cc"
+  }
+}

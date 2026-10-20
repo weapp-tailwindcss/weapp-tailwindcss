@@ -1,0 +1,35 @@
+.probe-responsive-pair {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.probe-responsive-threshold {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 48rem;
+  height: 1px;
+  opacity: 0;
+}
+
+.probe-responsive-canvas {
+  position: relative;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  width: 240px;
+  height: 80px;
+  overflow: hidden;
+  background-color: #f7fafb;
+}
+
+.probe-responsive-panel {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  box-sizing: border-box;
+  width: 80px;
+  height: 40px;
+  background-color: #0ea5e9;
+}

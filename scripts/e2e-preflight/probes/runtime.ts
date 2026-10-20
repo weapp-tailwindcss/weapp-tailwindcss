@@ -103,5 +103,11 @@ export async function runtimeIos(ctx: ProbeContext): Promise<ProbeOutput> {
       throw new Error(`${name} 未返回有效版本：${result.output}`)
     }
   }
-  return { detail: 'RN CocoaPods 与 Lynx CocoaPods/xcodegen 均可执行；尚未安装 Pods 或执行原生编译。', binding: { xcodegen: JSON.stringify(xcodegen), pod: JSON.stringify(pod), lynxPod: JSON.stringify(lynxPod) } }
+  const xcodebuild = await runtimeCommand('xcodebuild', ['-version'], ctx.root)
+  const simctl = await runtimeCommand('xcrun', ['--find', 'simctl'], ctx.root)
+  const plutil = await runtimeCommand('plutil', ['-help'], ctx.root)
+  if (!/^Xcode \d+/m.test(xcodebuild.output) || !path.isAbsolute(simctl.output.trim()) || !plutil.output.includes('-extract')) {
+    throw new Error('RN iOS 原生构建需要实际 Xcode、simctl 与支持 extract 的 plutil。')
+  }
+  return { detail: 'RN 明确使用 Expo prebuild → CocoaPods → xcodebuild → simctl；原生命令可执行，尚未安装 Pods 或编译。', binding: { xcodegen: JSON.stringify(xcodegen), pod: JSON.stringify(pod), lynxPod: JSON.stringify(lynxPod), xcodebuild: JSON.stringify(xcodebuild), simctl: JSON.stringify(simctl), plutil: JSON.stringify(plutil) } }
 }

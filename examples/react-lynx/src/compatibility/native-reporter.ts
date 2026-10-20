@@ -1,11 +1,16 @@
 import type { ColorSchemeModule } from './native-color-scheme'
 import type { EvidenceModule, NativeEvidenceWriter } from './native-evidence'
-import type { CompatibilityCase, NativeCaseResult, NativePlatformReport, NativeRect, NativeRuntimeEnvironment, Platform, StaticEvidenceReport } from './types'
+import type { NativeBridgeResult } from './native-failure'
+import type { CompatibilityCase, NativeCaseResult, NativeMediaGateEvidence, NativePlatformReport, NativeRect, NativeRuntimeEnvironment, Platform, StaticEvidenceReport } from './types'
+import { combineCandidateEvidence } from './candidate-evidence'
 import { compatibilityCases } from './catalog'
 import { evidenceSequence, lynxEvidenceStrategy, requiresPixelEffect } from './evidence'
-import { collectGeometry } from './geometry'
+import { evaluateGeometry } from './geometry'
 import { collectColorScheme } from './native-color-scheme'
 import { createNativeEvidence } from './native-evidence'
+import { requestNativeReceipt as callReporter, nativeEvidenceFailureIn, NativeEvidenceUnavailableError } from './native-failure'
+import { collectResponsive } from './native-responsive'
+import { overflowContract } from './overflow-contract'
 import { waitForProbeLayout } from './runtime-ready'
 import staticEvidenceJson from './static-evidence.json'
 
@@ -14,10 +19,10 @@ interface ScreenshotResult {
 }
 
 interface ReporterModule extends EvidenceModule, ColorSchemeModule {
-  measure?: (id: string, callback: (value: NativeRect | null) => void) => void
-  capture?: (id: string, callback: (value: string | null) => void) => void
-  pointerEventsNone?: (id: string, callback: (value: boolean | number | null) => void) => void
-  setPseudoActive?: (id: string, active: boolean, callback: (value: boolean | number) => void) => void
+  measure?: (id: string, callback: (value: NativeBridgeResult<NativeRect | null>) => void) => void
+  capture?: (id: string, callback: (value: NativeBridgeResult<string | null>) => void) => void
+  pointerEventsNone?: (id: string, callback: (value: NativeBridgeResult<boolean | number | null>) => void) => void
+  setPseudoActive?: (id: string, active: boolean, callback: (value: NativeBridgeResult<boolean | number>) => void) => void
 }
 
 const staticEvidence = staticEvidenceJson as StaticEvidenceReport
@@ -74,20 +79,6 @@ function invoke<T>(id: string, method: string, params: Record<string, unknown>, 
       fail: () => finish(undefined),
     })
     query.exec()
-  })
-}
-
-function callReporter<T>(invokeReporter: (callback: (value: T) => void) => void, timeout = 2000) {
-  return new Promise<T | undefined>((resolve) => {
-    let settled = false
-    const finish = (value: T | undefined) => {
-      if (!settled) {
-        settled = true
-        resolve(value)
-      }
-    }
-    setTimeout(finish, timeout, undefined)
-    invokeReporter(value => finish(value))
   })
 }
 
@@ -166,7 +157,7 @@ async function collectPixel(item: CompatibilityCase, reporter: ReporterModule, e
   }
 }
 
-async function collectInteraction(item: CompatibilityCase, reporter: ReporterModule, evidence: NativeEvidenceWriter): Promise<NativeCaseResult> {
+async function collectInteraction(item: CompatibilityCase, reporter: ReporterModule, evidence: NativeEvidenceWriter, mediaGate: NativeMediaGateEvidence): Promise<NativeCaseResult> {
   if (item.id === 'interaction-pointer') {
     const [styled, control] = reporter.pointerEventsNone
       ? await Promise.all([
@@ -202,13 +193,12 @@ async function collectInteraction(item: CompatibilityCase, reporter: ReporterMod
     const activatedValue = nativeBoolean(activated)
     const measured = activatedValue !== undefined && captured
     const passed = activatedValue === true && captured && fingerprint(before!.data) !== fingerprint(active!.data)
-    return {
-      id: item.id,
+    return combineCandidateEvidence(item, staticById.get(item.id), [{
+      className: item.className.split(/\s+/).find(candidate => candidate.startsWith('active:'))!,
       status: passed ? 'supported' : measured ? 'unsupported' : 'not-tested',
       reason: passed ? undefined : measured ? '原生 active 伪状态前后没有产生预期像素变化' : '测试 host 未返回完整的伪状态注入或截图结果',
-      failureStage: passed || !measured ? undefined : 'runtime',
       checkpoints: [{ name: 'interaction:pseudo-active', passed, actual: before?.data && active?.data ? `${fingerprint(before.data)} -> ${fingerprint(active.data)}` : 'missing' }],
-    }
+    }], mediaGate)
   }
   if (item.id === 'animation-spin') {
     const before = await capture(`probe-container-${item.id}`, reporter)
@@ -258,8 +248,19 @@ async function collectInteraction(item: CompatibilityCase, reporter: ReporterMod
   }
 }
 
-async function collectCase(item: CompatibilityCase, reporter: ReporterModule, evidence: NativeEvidenceWriter): Promise<NativeCaseResult> {
+async function collectCase(item: CompatibilityCase, reporter: ReporterModule, evidence: NativeEvidenceWriter, mediaGate: NativeMediaGateEvidence): Promise<NativeCaseResult> {
   const staticResult = staticById.get(item.id)
+  if (item.evidence === 'build' && staticResult?.generated) {
+    return { id: item.id, status: 'supported', checkpoints: [{ name: 'build:generated', passed: true }] }
+  }
+  if (item.id === 'variant-group-peer') {
+    return combineCandidateEvidence(item, staticResult, [], mediaGate)
+  }
+  if (item.id === 'variant-state') {
+    return evidenceSequence(item, staticResult) && staticResult?.candidates
+      ? collectInteraction(item, reporter, evidence, mediaGate)
+      : combineCandidateEvidence(item, staticResult, [], mediaGate)
+  }
   if (!staticResult?.generated || !staticResult.bundled) {
     return {
       id: item.id,
@@ -283,13 +284,25 @@ async function collectCase(item: CompatibilityCase, reporter: ReporterModule, ev
     }
   }
   if (strategy === 'native-geometry') {
-    return collectGeometry(item, id => measure(id, reporter))
+    return evaluateGeometry(item, await evidence.geometry(item.id))
+  }
+  if (strategy === 'overflow') {
+    return {
+      id: item.id,
+      status: 'not-tested',
+      reason: '已采集独立原生矩形与 PNG，等待宿主核对越界主体和裁剪效果',
+      geometry: await evidence.geometry(item.id),
+      checkpoints: [{ name: overflowContract.checkpoint, passed: false }],
+    }
   }
   if (strategy === 'color-scheme') {
     return collectColorScheme(reporter, evidence)
   }
+  if (strategy === 'responsive') {
+    return collectResponsive(evidence)
+  }
   if (strategy === 'interaction') {
-    return collectInteraction(item, reporter, evidence)
+    return collectInteraction(item, reporter, evidence, mediaGate)
   }
   return collectPixel(item, reporter, evidence)
 }
@@ -297,8 +310,11 @@ async function collectCase(item: CompatibilityCase, reporter: ReporterModule, ev
 export async function submitNativeCompatibilityReport() {
   const reporter = NativeModules.CompatibilityReporter as ReporterModule | undefined
   const platform = currentPlatform()
-  if (!reporter?.submit || !platform || staticEvidence.catalogHash === 'pending-static-e2e') {
+  if (!platform || staticEvidence.catalogHash === 'pending-static-e2e') {
     return
+  }
+  if (!reporter?.submit) {
+    throw new NativeEvidenceUnavailableError('bridge-unavailable', '原生 host 缺少 evidence 协议')
   }
   let runId: string | undefined
   try {
@@ -307,9 +323,10 @@ export async function submitNativeCompatibilityReport() {
     if (!await waitForProbeLayout(id => measure(id, reporter))) {
       throw new Error('原生 probe 布局在等待期限内未就绪')
     }
+    const mediaGate = await evidence.mediaGate()
     const results: NativeCaseResult[] = []
     for (const item of compatibilityCases) {
-      results.push(await collectCase(item, reporter, evidence))
+      results.push(await collectCase(item, reporter, evidence, mediaGate))
     }
     const report: NativePlatformReport = {
       schemaVersion: 1,
@@ -319,11 +336,14 @@ export async function submitNativeCompatibilityReport() {
       versions: staticEvidence.versions,
       environment: runtimeEnvironment(platform),
       results,
+      mediaGate,
     }
     await evidence.submit(report)
   }
   catch (error) {
-    const message = error instanceof Error ? error.stack ?? error.message : String(error)
+    const failure = nativeEvidenceFailureIn(error)
+    const detail = error instanceof Error ? `${error.name}: ${error.message}${error.stack ? `\n${error.stack}` : ''}` : String(error)
+    const message = failure ? JSON.stringify(failure) : detail
     if (runId && reporter.fail) {
       await callReporter<boolean>(callback => reporter.fail!(runId!, message, callback), 3000).catch(() => undefined)
     }

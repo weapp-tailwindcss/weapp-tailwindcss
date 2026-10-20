@@ -1,53 +1,140 @@
+require 'logger'
+require 'cocoapods'
 require 'tmpdir'
 require 'fileutils'
+require 'zlib'
+require 'digest'
 require_relative '../fixtures/lynx-native/ios/lynx-source-patch'
 
-hook = nil
-runner = Object.new
-[:source, :platform, :use_frameworks!, :pod].each { |name| runner.define_singleton_method(name) { |*| } }
-runner.define_singleton_method(:target) { |_, &block| block.call }
-runner.define_singleton_method(:post_install) { |&block| hook = block }
-file = File.expand_path(File.join('..', 'fixtures', 'lynx-native', 'ios', 'Podfile'), __dir__)
-runner.instance_eval(File.read(file), file)
-raise 'Podfile 缺少 post_install' unless hook
+PODFILE = File.expand_path(File.join('..', 'fixtures', 'lynx-native', 'ios', 'Podfile'), __dir__)
+FIXTURES = File.join(__dir__, 'fixtures', 'lynx-4.0.1')
+GENERATOR = Pod::Installer::Xcode::PodsProjectGenerator
+DEFINITION = 'Lynx_POD_VERSION=@\"9999_4.0.1\"'
 
-configuration = Struct.new(:build_settings)
-source_file_type = Struct.new(:settings)
-source_phase_type = Struct.new(:files)
-target = Struct.new(:name, :build_configurations, :source_build_phase)
-project = Struct.new(:targets)
-installer = Struct.new(:pods_project, :pod_targets, :sandbox)
-specification = Struct.new(:version)
-dependency = Struct.new(:pod_name, :root_spec)
+def assert(condition, message)
+  raise message unless condition
+end
 
-Dir.mktmpdir('lynx-podfile-') do |root|
-  source_file = File.join(root, LynxSourcePatch::SOURCE)
-  FileUtils.mkdir_p(File.dirname(source_file))
-  FileUtils.cp(File.join(__dir__, 'fixtures', 'lynx-4.0.1', 'parallel_parse_task_scheduler.cc'), source_file)
-  sandbox = Object.new
-  sandbox.define_singleton_method(:pod_dir) do |name|
-    raise '错误的 Pod 路径' unless name == 'Lynx'
-    root
-  end
-  configs = [nil, '9.0', '10.0', '15.0', '18.0'].map do |version|
-    configuration.new(version ? { 'IPHONEOS_DEPLOYMENT_TARGET' => version } : {})
-  end
-  original = configs.map { |config| config.build_settings.dup }
-  context = installer.new(project.new([target.new('Lynx', configs, source_phase_type.new([source_file_type.new(nil)]))]), [dependency.new('Lynx', specification.new('4.0.1'))], sandbox)
-  2.times { hook.call(context) }
-  raise 'Podfile 未应用上游修复' unless Digest::SHA256.file(source_file).hexdigest == LynxSourcePatch::PATCHED_SHA
-  configs.each_with_index do |config, index|
-    expected = original[index].merge(
-      'CODE_SIGNING_ALLOWED' => 'NO',
-      'IPHONEOS_DEPLOYMENT_TARGET' => '15.0',
-    )
-    raise '签名或受管部署版本被意外改变' unless config.build_settings == expected
-  end
-  begin
-    hook.call(installer.new(nil, [], nil))
-    raise '缺少 Lynx 时应拒绝'
-  rescue RuntimeError => error
-    raise unless error.message == '缺少受管 Lynx Pod'
+def pod_target(sandbox, podfile, spec)
+  Pod::PodTarget.new(sandbox, Pod::BuildType.static_framework,
+                    { 'Debug' => :debug, 'Release' => :release }, ['arm64'],
+                    Pod::Platform.new(:ios, '15.0'), [spec.subspec_by_name('Lynx/Framework')],
+                    [podfile.target_definitions.fetch('LynxCompatibilityHost')])
+end
+
+def fixture(podspec: 'Lynx.podspec.json.gz', sha256: '3a7cbc6a32e99f1b23e732f52d720a87e5665f3b5fa8b8a5768d21438b4762df')
+  Dir.mktmpdir('lynx-podfile-') do |root|
+    podfile = Pod::Podfile.from_file(Pathname.new(PODFILE))
+    sandbox = Pod::Sandbox.new(File.join(root, 'Pods'))
+    source_root = sandbox.pod_dir('Lynx')
+    scheduler = File.join(source_root, LynxSourcePatch::SOURCE)
+    version = File.join(source_root, 'platform', 'darwin', 'common', 'lynx', 'base', 'LynxVersion.m')
+    [[scheduler, 'parallel_parse_task_scheduler.cc'], [version, 'LynxVersion.m']].each do |destination, name|
+      FileUtils.mkdir_p(File.dirname(destination))
+      FileUtils.cp(File.join(FIXTURES, name), destination)
+    end
+    json = Zlib::GzipReader.open(File.join(FIXTURES, podspec), &:read)
+    assert(Digest::SHA256.hexdigest(json) == sha256, '官方 Podspec 原始字节不符')
+    spec_file = File.join(root, 'Lynx.podspec.json')
+    File.binwrite(spec_file, json)
+    spec = Pod::Specification.from_file(Pathname.new(spec_file))
+    assert(spec.checksum == Digest::SHA1.hexdigest(json), '真实 Podspec checksum 不符')
+    pod = pod_target(sandbox, podfile, spec)
+    assert(!pod.respond_to?(:native_target), '回归不得为 PodTarget 虚构 native_target API')
+    project = Pod::Project.new(File.join(root, 'Pods.xcodeproj'))
+    native = project.new_target(:framework, 'Lynx', :ios, '15.0')
+    reference = project.new_file(version)
+    native.source_build_phase.add_file_reference(reference)
+    native.build_configurations.each_with_index { |config, i| config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = ['9.0', '10.0'][i] }
+    other = project.new_target(:framework, 'LynxBase', :ios, '10.0')
+    other.build_configurations.each { |config| config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = ['$(inherited)', 'KEEP=1'] }
+    result = GENERATOR::TargetInstallationResult.new(pod, native)
+    results = { pod.name => result }
+    installer = Pod::Installer.new(sandbox, podfile)
+    installer.instance_variable_set(:@pod_targets, [pod])
+    installer.instance_variable_set(:@pods_project, project)
+    installer.instance_variable_set(:@target_installation_results, GENERATOR::InstallationResults.new(results, {}))
+    yield({ root: root, podfile: podfile, sandbox: sandbox, spec: spec, pod: pod,
+            project: project, native: native, other: other, result: result,
+            results: results, installer: installer, scheduler: scheduler, version: version })
   end
 end
-puts 'Podfile 回归通过：应用精确补丁、幂等、保留依赖部署边界、拒绝缺失 Pod'
+
+fixture do |state|
+  original = File.binread(state[:version])
+  2.times { state[:podfile].post_install!(state[:installer]) }
+  assert(Digest::SHA256.file(state[:scheduler]).hexdigest == LynxSourcePatch::PATCHED_SHA, 'Podfile 未应用精确上游补丁')
+  assert(File.binread(state[:version]) == original, 'Podfile 不得改写官方版本 getter')
+  state[:native].build_configurations.each do |config|
+    assert(config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] == ['$(inherited)', DEFINITION], '版本宏没有精确绑定实际原生目标或不幂等')
+  end
+  state[:project].targets.each do |target|
+    target.build_configurations.each do |config|
+      assert(config.build_settings['CODE_SIGNING_ALLOWED'] == 'NO' && config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] == '15.0', '签名或部署版本边界错误')
+    end
+  end
+  assert(state[:other].build_configurations.all? { |config| config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] == ['$(inherited)', 'KEEP=1'] }, '版本宏污染其他 Pod')
+  state[:project].save
+  reloaded = Xcodeproj::Project.open(state[:project].path)
+  assert(reloaded.targets.find { |target| target.name == 'Lynx' }.build_configurations.all? { |config| config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] == ['$(inherited)', DEFINITION] }, '版本宏未进入保存的真实 PBX 工程')
+end
+
+# CDN 的完整 JSON 内容不变而转义/空白不同，不能依原始文件 SHA1 判定源码被替换。
+fixture(podspec: 'Lynx.cdn-2026-10-19.podspec.json.gz', sha256: '8599a4df7ac29438f6e00aca8f031fc771f0f2bc13a53618dfed33d434807412') do |state|
+  assert(state[:spec].checksum == '1a461f83f48104309f7e2031dabf3af84b181807', 'CDN 新文本的原始 checksum 不符')
+  state[:podfile].post_install!(state[:installer])
+  assert(state[:native].build_configurations.all? { |config| config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] == ['$(inherited)', DEFINITION] }, '格式变化后未生成精确版本宏')
+end
+
+def rejects(message)
+  fixture do |state|
+    yield state
+    snapshot = Marshal.load(Marshal.dump(state[:project].targets.flat_map { |target| target.build_configurations.map(&:build_settings) }))
+    begin
+      state[:podfile].post_install!(state[:installer])
+    rescue RuntimeError => error
+      raise unless error.message.include?(message)
+      current = state[:project].targets.flat_map { |target| target.build_configurations.map(&:build_settings) }
+      assert(current == snapshot, '拒绝目标边界时修改了部分 PBX 构建设置')
+      return
+    end
+    raise "意外接受：#{message}"
+  end
+end
+
+rejects('缺少受管 Lynx Pod') { |s| s[:installer].instance_variable_set(:@pod_targets, []) }
+rejects('Lynx Pod 目标不唯一') { |s| s[:installer].instance_variable_set(:@pod_targets, [s[:pod], pod_target(s[:sandbox], s[:podfile], s[:spec])]) }
+rejects('安装结果') { |s| s[:installer].instance_variable_set(:@target_installation_results, nil) }
+rejects('安装结果') { |s| s[:results].clear }
+rejects('安装结果') { |s| s[:results]['other-key'] = s[:results].delete(s[:pod].name) }
+rejects('安装结果') { |s| s[:results][s[:pod].name] = GENERATOR::TargetInstallationResult.new(pod_target(s[:sandbox], s[:podfile], s[:spec]), s[:native]) }
+rejects('安装结果') { |s| s[:results]['alias'] = s[:result] }
+rejects('原生目标') { |s| s[:results][s[:pod].name] = GENERATOR::TargetInstallationResult.new(s[:pod], nil) }
+rejects('原生目标') { |s| s[:results][s[:pod].name] = GENERATOR::TargetInstallationResult.new(s[:pod], s[:other]) }
+rejects('原生目标') do |s|
+  foreign = Pod::Project.new(File.join(s[:root], 'Foreign.xcodeproj')).new_target(:framework, 'Lynx', :ios, '15.0')
+  s[:results][s[:pod].name] = GENERATOR::TargetInstallationResult.new(s[:pod], foreign)
+end
+rejects('原生目标') { |s| s[:project].new_target(:framework, 'Lynx', :ios, '15.0') }
+rejects('原生目标') do |s|
+  aggregate = s[:project].new_aggregate_target('Lynx', [], :ios, '15.0')
+  s[:results][s[:pod].name] = GENERATOR::TargetInstallationResult.new(s[:pod], aggregate)
+end
+rejects('安装结果') { |s| s[:results]['foreign'] = GENERATOR::TargetInstallationResult.new(pod_target(s[:sandbox], s[:podfile], s[:spec]), s[:native]) }
+
+# 实际 CocoaPods 完整对象的非身份字段变化也必须在写入 PBX 设置前拒绝。
+[
+  ->(hash) { hash['license'] = { 'type' => 'MIT' } },
+  ->(hash) { hash['subspecs'].reverse! },
+  ->(hash) { hash['new_build_flag'] = true },
+].each do |change|
+  rejects('Podspec 语义校验失败') do |state|
+    hash = state[:spec].to_hash
+    change.call(hash)
+    changed = Pod::Specification.from_hash(hash)
+    state[:pod].instance_variable_set(:@root_spec, changed)
+    assert(state[:pod].root_spec.equal?(changed), '负控未绑定实际 Podspec 对象')
+  end
+end
+
+puts "Podfile 真实对象回归通过（CocoaPods #{Pod::VERSION}）：官方完整 spec 语义与源码、格式等价、语义篡改拒绝、安装结果唯一映射、PBX 工程持久化、缺失/重复/错绑拒绝"

@@ -2,7 +2,7 @@
 
 import type { CompileNativeStylesheetOptions, NativeStyleManifest, NativeStyleRule } from './types'
 import { createHash } from 'node:crypto'
-import { compileNativeCss, splitClassName, variantForClass } from '@weapp-tailwindcss/postcss/native'
+import { compileNativeCss, splitClassName, unsupportedVariant, variantForClass } from '@weapp-tailwindcss/postcss/native'
 
 export { baseClassName } from '@weapp-tailwindcss/postcss/native'
 
@@ -12,10 +12,19 @@ export function addNativeVariantRules(manifest: NativeStyleManifest, candidates:
     if (parts.length < 2) { continue }
     const base = parts.at(-1)
     if (!base || manifest.rules[candidate] || !manifest.rules[base]) { continue }
+    const unsupported = unsupportedVariant(candidate)
+    if (unsupported) {
+      const warning = { className: candidate, property: 'variant', message: `不支持将 ${unsupported}: 变体编译为 React Native 条件样式` }
+      if (!manifest.warnings.some(item => item.className === candidate && item.property === warning.property && item.message === warning.message)) {
+        manifest.warnings.push(warning)
+      }
+      continue
+    }
     const variant = variantForClass(candidate)
     if (!variant.colorScheme && !variant.platform) { continue }
     manifest.rules[candidate] = manifest.rules[base].map(rule => ({
       ...rule,
+      id: undefined,
       ...variant,
       style: { ...rule.style },
     }))

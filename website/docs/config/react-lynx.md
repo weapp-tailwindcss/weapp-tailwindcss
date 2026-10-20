@@ -22,7 +22,7 @@ keywords:
 - 核心 `weapp-tailwindcss` `5.6.3`；依赖链 Node.js `^22.18.0 || >=24.11.0`
 - `@lynx-js/rspeedy` `>=0.16.0`
 - Tailwind CSS `4.x`
-- 仓库示例固定 Rspeedy `0.17.2`、ReactLynx 插件 `0.20.2`、ReactLynx runtime `0.126.1`、Tailwind CSS `4.3.3`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 与 `css-defines` `0.0.16`
+- 仓库示例固定 Rspeedy `0.17.2`、ReactLynx 插件 `0.20.2`、ReactLynx runtime `0.126.1`、Tailwind CSS `4.3.3`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 与 `css-defines` `0.0.18`
 - 仅支持 ReactLynx + Rspeedy 原生构建，不覆盖 Rspeedy Web、非 React Lynx 或 React Native
 
 ## 最小配置
@@ -188,7 +188,7 @@ Lynx 推荐只引入 theme 和 utilities，避免浏览器 preflight 中的 `:ro
 
 ## 设备与验证证据
 
-CI runner 默认使用 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro。已提交的原生报告来自 Android `sdk_gphone_arm64`（Android 11/API 30，arm64-v8a）和 iPhone 17 Pro（iOS 26.5，arm64），基线 `verifiedAt` 为 `2026-10-06T01:38:07.800Z`，`catalogHash` 为 `a8c3b45f993d9aa28782f308fc959a09e160d67a9097d11b1bc6a8a38b93c886`。两组设备职责不同，不能互换证据。
+CI runner 默认使用 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro。已提交的原生报告来自 Android `sdk_phone_x86_64`（Android 11/API 30，x86_64）和 `LynxCompatibility`（iPhone 16 Pro，iOS 18.5，arm64），基线 `verifiedAt` 为 `2026-10-19T15:13:36.717Z`，`catalogHash` 为 `2e3a1a60517c13de507d22ef8b4d209ffcdb86b2dfbf5bf7100df35c40dc3fec`。当前基线来自正式 run `39272094832`；相同设备配置的后续 CI 仍需独立运行证据。
 
 `--capture-only` 仅在显式指定 bundle 和目标设备时采集截图/视频，不写入 native support report，也不能更新已提交基线。
 

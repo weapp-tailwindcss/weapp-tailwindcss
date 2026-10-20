@@ -1,19 +1,26 @@
-import type { NativePlatformReport } from '../examples/react-lynx/src/compatibility/types'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, expect, it } from 'vitest'
+import { afterEach, expect, it, vi } from 'vitest'
 import { compatibilityCases } from '../examples/react-lynx/src/compatibility/catalog'
 import { evidenceSequence, requiresPixelEffect } from '../examples/react-lynx/src/compatibility/evidence'
 import staticEvidence from '../examples/react-lynx/src/compatibility/static-evidence.json'
 import { darkReceipts } from './lynx/fixtures/dark-images'
 import { effectFixtureImage } from './lynx/fixtures/effect-images'
+import { overflowArtifactFixture } from './lynx/fixtures/overflow-artifacts'
+import { protocolReport } from './lynx/fixtures/protocol-report'
+import { responsiveArtifactFixture } from './lynx/fixtures/responsive-artifacts'
 import { structuralImage } from './lynx/fixtures/structural-images'
 import { textFlowImage } from './lynx/fixtures/text-flow-images'
 import { finalizeNativePixelEffects, validateNativePixelEvidence } from './lynx/pixel-evidence'
 import { PNG } from './lynx/png'
 import { validateNativeReport } from './lynx/reports'
-import androidReport from './lynx/reports/android.json'
+
+// 像素协议固定进入取证阶段，不因真实 encoder 限制或设备基线刷新而跳过反例。
+vi.mock('../examples/react-lynx/src/compatibility/static-evidence.json', async () => {
+  const { protocolStaticEvidence } = await import('./lynx/fixtures/protocol-report')
+  return { default: protocolStaticEvidence() }
+})
 
 const directories: string[] = []
 const target = 'type-weight-style'
@@ -32,7 +39,7 @@ function screenshot(width = 8, height = 4, color = [14, 165, 233, 255], deflateL
 
 // 像素算法独立回归；完整实时门禁及更新器入口由 lynx-evidence.test.ts 覆盖。
 async function readPixelReport(reportPath: string, platform: 'android') {
-  const report = validateNativeReport(JSON.parse(await fs.readFile(reportPath, 'utf8')), platform)
+  const report = validateNativeReport(JSON.parse(await fs.readFile(reportPath, 'utf8')), platform, { historical: true })
   await validateNativePixelEvidence(report, path.join(path.dirname(reportPath), 'crops'))
   return report
 }
@@ -42,9 +49,15 @@ async function fixture() {
   directories.push(directory)
   const crops = path.join(directory, 'crops')
   await fs.mkdir(crops)
-  const report = structuredClone(androidReport) as NativePlatformReport
+  const report = protocolReport()
   report.evidence = { version: 1, runId: '00000000-0000-4000-8000-000000000001', bundleSha256: 'a'.repeat(64), artifacts: [] }
+  for (const [name, bytes] of [...responsiveArtifactFixture(report), ...overflowArtifactFixture(report)]) {
+    await fs.writeFile(path.join(crops, name), bytes)
+  }
   for (const result of report.results) {
+    if (result.id === 'variant-responsive' || result.id === 'layout-overflow') {
+      continue
+    }
     // 此文件只验证像素协议；已改为几何取证的 supports 不再提供伪像素 checkpoint。
     if (result.id === 'variant-supports') {
       result.status = 'unsupported'
@@ -56,7 +69,7 @@ async function fixture() {
     for (const [index, slot] of slots.entries()) {
       await fs.writeFile(path.join(crops, `${result.id}-${slot}.png`), await effectFixtureImage(result.id, slot) ?? screenshot(8, 4, [index * 80, 165, 233, 255]))
     }
-    if (requiresPixelEffect(result.id) || result.id === 'variant-dark') {
+    if (requiresPixelEffect(result.id) || result.id === 'variant-dark' || result.id === 'variant-responsive') {
       result.status = 'not-tested'
     }
     if (result.id === 'variant-dark') {
@@ -74,17 +87,26 @@ it('接收带完整且可见像素变化的原生报告', async () => {
   await expect(readPixelReport(reportPath, 'android')).resolves.toEqual(report)
 })
 
-it.each(['missing-frame', 'foreign-receipt', 'wrong-restore', 'false-supported'])('dark 的 %s 不能进入最终验收', async (mode) => {
+it.each(['missing-frame', 'missing-restored-probe', 'missing-restored-control', 'foreign-receipt', 'wrong-restore', 'false-supported', 'stuck-dark', 'old-checkpoint'])('dark 的 %s 不能进入最终验收', async (mode) => {
   const { crops, report, reportPath } = await fixture()
   const result = report.results.find(item => item.id === 'variant-dark')!
   if (mode === 'missing-frame') {
     await fs.rm(path.join(crops, 'variant-dark-dark-control.png'))
+  }
+  else if (mode === 'missing-restored-probe' || mode === 'missing-restored-control') {
+    await fs.rm(path.join(crops, `variant-dark-${mode.slice('missing-'.length)}.png`))
   }
   else if (mode === 'foreign-receipt') {
     result.colorScheme!.dark.runId = 'another-run'
   }
   else if (mode === 'wrong-restore') {
     result.colorScheme!.restored.scheme = 'dark'
+  }
+  else if (mode === 'stuck-dark') {
+    await fs.copyFile(path.join(crops, 'variant-dark-dark-probe.png'), path.join(crops, 'variant-dark-restored-probe.png'))
+  }
+  else if (mode === 'old-checkpoint') {
+    result.checkpoints[0]!.name = 'pixel:color-scheme-v1'
   }
   else {
     await fs.copyFile(path.join(crops, 'variant-dark-light-probe.png'), path.join(crops, 'variant-dark-dark-probe.png'))
@@ -224,7 +246,7 @@ it('宿主只判定待验收效果，保留原始采集报告且无效图不能�
   const { crops, report } = await fixture()
   await expect(finalizeNativePixelEffects(report, crops)).rejects.toThrow('原始采集报告不能预先声明')
   for (const result of report.results) {
-    if (requiresPixelEffect(result.id) || result.id === 'variant-dark') {
+    if (requiresPixelEffect(result.id) || result.id === 'variant-dark' || result.id === 'variant-responsive') {
       result.status = 'not-tested'
       result.reason = '等待宿主'
     }
@@ -233,7 +255,9 @@ it('宿主只判定待验收效果，保留原始采集报告且无效图不能�
   const final = await finalizeNativePixelEffects(report, crops)
   expect(JSON.stringify(report)).toBe(original)
   expect(Object.fromEntries(final.results.filter(result => requiresPixelEffect(result.id)).map(result => [result.id, result.status]))).toEqual({
+    'layout-overflow': 'unsupported',
     'background-linear-gradient': 'unsupported',
+    'syntax-important': 'unsupported',
     'effect-shadow': 'unsupported',
     'transform-skew': 'supported',
     'variant-structural': 'supported',

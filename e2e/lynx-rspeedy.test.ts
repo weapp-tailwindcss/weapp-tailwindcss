@@ -6,12 +6,15 @@ import postcss from 'postcss'
 import { beforeAll, describe, expect, it } from 'vitest'
 import staticEvidenceJson from '../examples/react-lynx/src/compatibility/static-evidence.json'
 import { buildCompatibilityBundle } from './lynx/build'
-import { compatibilityDir, exampleDir, getCatalogHash, lynxIntermediateDir, repoRoot } from './lynx/catalog'
+import { compatibilityDir, exampleDir, getCatalogHash, lynxIntermediateDir } from './lynx/catalog'
 import { verifyDarkFixture } from './lynx/dark-fixture-browser'
+import { decodeLynxBundle } from './lynx/decoder'
 import { verifyFlexFixture } from './lynx/flex-fixture-browser'
 import { verifyGridFixtures } from './lynx/grid-fixture-browser'
+import { assertOverflowRules } from './lynx/overflow-static'
+import { assertResponsiveGuard } from './lynx/responsive-static'
 import { verifySkewFixture } from './lynx/skew-fixture-browser'
-import { analyzeStaticEvidence } from './lynx/static-evidence'
+import { analyzeStaticEvidence, parseDecodedRules, parseGeneratedRules } from './lynx/static-evidence'
 import { verifyStructuralFixture } from './lynx/structural-fixture-browser'
 import { verifyTextFlowFixture } from './lynx/text-flow-fixture-browser'
 
@@ -25,10 +28,8 @@ describe('ReactLynx Rspeedy compatibility evidence', () => {
   beforeAll(async () => {
     const build = await buildCompatibilityBundle()
     encoderLog = build.encoderLog
-    const require = createRequire(path.join(repoRoot, 'e2e', 'package.json'))
-    const tasm = require('@lynx-js/tasm') as { decode_napi: (source: Uint8Array) => unknown, decode_wasm: (source: Uint8Array) => Promise<unknown>, supportNapi: () => boolean }
     const source = new Uint8Array(await fs.readFile(bundlePath))
-    const decoded = tasm.supportNapi() ? tasm.decode_napi(source) : await tasm.decode_wasm(source)
+    const decoded = await decodeLynxBundle(source)
     decodedBundle = decoded as typeof decodedBundle
     // decoder 以双花括号打印变量；仅恢复诊断文本语法，不改写被测字面量或实际 bundle。
     decodedCss = (decoded as { css: { text: string } }).css.text.replace(/\{\{(--[a-z0-9-]+)\}\}/gi, 'var($1)')
@@ -51,12 +52,25 @@ describe('ReactLynx Rspeedy compatibility evidence', () => {
     expect(decodedCss).not.toBe('')
   })
 
+  it('响应式真实构建与实际解码保留唯一媒体 utility 和完整一致的标尺副本', async () => {
+    const css = await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8')
+    expect(() => assertResponsiveGuard(parseGeneratedRules(css), 'generation')).not.toThrow()
+    expect(() => assertResponsiveGuard(parseDecodedRules(decodedCss), 'encoding')).not.toThrow()
+  })
+
+  it('overflow 真实构建与实际bundle保留完整双轴越界夹具，visible只在control专属规则', async () => {
+    const css = await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8')
+    expect(() => assertOverflowRules(parseGeneratedRules(css), 'generation')).not.toThrow()
+    expect(() => assertOverflowRules(parseDecodedRules(decodedCss), 'encoding')).not.toThrow()
+  })
+
   it('固定 SDK 的编码配置启用运行时递归变量解析', async () => {
     const tasm = JSON.parse(await fs.readFile(path.join(lynxIntermediateDir, 'tasm.json'), 'utf8'))
     expect(tasm.compilerOptions.targetSdkVersion).toBe('3.9')
     expect(tasm.sourceContent.config.enableCSSInlineVariables).toBe(true)
     expect(decodedBundle?.['engine-version']).toBe('3.9')
     expect(JSON.parse(decodedBundle!['page-config']).enableCSSInlineVariables).toBe(true)
+    expect(JSON.parse(decodedBundle!['page-config']).enableCSSRule).toBe(true)
     // 保留动态变量依赖，不能跨选择器预先替换成固定值。
     expect(decodedCss).toContain('var(--tw-gradient-stops)')
     expect(decodedCss).toContain('var(--tw-shadow)')

@@ -1,5 +1,6 @@
 import { Buffer } from 'node:buffer'
 import process from 'node:process'
+import { windowsObserverInputScript } from '../../../../../scripts/demo-e2e-workflow/process-observer/input-script'
 import { windowsObserverShutdownScript } from '../../../../../scripts/demo-e2e-workflow/process-observer/shutdown-script'
 
 // 单次 fixture 与持久会话复用同一采集函数，保留 Watch 自身的进程范围。
@@ -64,7 +65,8 @@ $ErrorActionPreference = 'Stop'
 ${windowsWatchMemoryFunction}
 while ($null -ne ($line = [Console]::In.ReadLine())) {
   try {
-  $request = ConvertFrom-Json -InputObject $line
+  ${windowsObserverInputScript}
+  $request = Microsoft.PowerShell.Utility\\ConvertFrom-Json -InputObject $line
   if ($request.kind -ne 'memory') { throw 'Watch memory source accepts memory requests only' }
   [Console]::Out.WriteLine('{"event":"request-received","kind":"memory","id":' + [string][int]$request.id + '}')
   [Console]::Out.Flush()
@@ -75,7 +77,7 @@ while ($null -ne ($line = [Console]::In.ReadLine())) {
   } catch {
   $response = @{ id = [int]$request.id; error = $_.Exception.Message }
   }
-  $json = ConvertTo-Json -InputObject $response -Depth 5 -Compress
+  $json = Microsoft.PowerShell.Utility\\ConvertTo-Json -InputObject $response -Depth 5 -Compress
   if ($null -eq $response.error) {
   [Console]::Out.WriteLine('{"event":"response-ready","kind":"memory","id":' + [string][int]$request.id + '}')
   [Console]::Out.Flush()

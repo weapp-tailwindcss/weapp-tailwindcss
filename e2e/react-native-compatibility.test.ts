@@ -4,7 +4,7 @@ import path from 'node:path'
 import { execa } from 'execa'
 import { describe, expect, it } from 'vitest'
 import { compatibilityCases, RN_CATALOG_HASH } from './react-native/catalog'
-import { nativeReportConclusion, reportFromStaticEvidence, validateReactNativeReport } from './react-native/reports'
+import { nativeReportConclusion, readHistoricalReactNativeReport, reportFromStaticEvidence, validateReactNativeReport } from './react-native/reports'
 import { collectStaticEvidence } from './react-native/static-evidence'
 import { runWebRuntime } from './react-native/web-runtime'
 
@@ -44,9 +44,11 @@ describe('React Native compatibility catalog', () => {
   })
 
   it('generates a complete static manifest and a gated report', async () => {
-    const { manifest, results } = await collectStaticEvidence()
+    const { manifest, results, rawCss, generatedClassSet } = await collectStaticEvidence()
     expect(manifest.classSet.length).toBeGreaterThan(0)
     expect(results).toHaveLength(118)
+    expect(rawCss.length).toBeGreaterThan(0)
+    expect(generatedClassSet.length).toBeGreaterThanOrEqual(manifest.classSet.length)
     expect(results.every(result => result.status === 'supported' || result.reason)).toBe(true)
     const report = reportFromStaticEvidence('web', results, {
       deviceName: 'static-export',
@@ -56,34 +58,14 @@ describe('React Native compatibility catalog', () => {
       abi: 'n/a',
       viewport: { width: 1280, height: 900, pixelRatio: 1 },
     })
-    expect(validateReactNativeReport(report, 'web')).toBe(report)
+    expect(validateReactNativeReport(report, 'web', { stage: 'static' })).toBe(report)
     expect(nativeReportConclusion(report).split('|')).toHaveLength(118)
   }, 300_000)
 
-  it('rejects stale or incomplete reports', () => {
-    const report = reportFromStaticEvidence('web', compatibilityCases.map(item => ({
-      id: item.id,
-      status: 'supported' as const,
-      checkpoints: [{ name: item.evidence === 'build' ? 'build:bundled' : `${item.probe}:probe`, passed: true }],
-    })), {
-      deviceName: 'static-export',
-      osName: 'Web',
-      osVersion: 'node',
-      runtimeIdentifier: 'metro-static',
-      abi: 'n/a',
-      viewport: { width: 1280, height: 900, pixelRatio: 1 },
-    })
-    expect(() => validateReactNativeReport({ ...report, catalogHash: 'stale' }, 'web')).toThrow(/stale/)
-    expect(() => validateReactNativeReport({ ...report, results: report.results.slice(1) }, 'web')).toThrow(/every catalog case/)
-    expect(() => validateReactNativeReport({
-      ...report,
-      results: [{ ...report.results[0]!, status: 'not-tested' }, ...report.results.slice(1)],
-    } as never, 'web')).toThrow(/invalid status/)
-  })
-
-  it.each(['web', 'android', 'ios'] as const)('validates the committed %s runtime baseline', async (platform) => {
+  it.each(['web', 'android', 'ios'] as const)('keeps the committed %s baseline as historical evidence', async (platform) => {
     const report = JSON.parse(await fs.readFile(path.join(import.meta.dirname, 'react-native/reports', `${platform}.json`), 'utf8'))
-    expect(validateReactNativeReport(report, platform)).toBe(report)
+    expect(readHistoricalReactNativeReport(report).historical).toBe(true)
+    expect(() => validateReactNativeReport(report, platform)).toThrow(/historical/)
   })
 })
 

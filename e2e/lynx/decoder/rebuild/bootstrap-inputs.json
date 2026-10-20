@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "archives": [
+    {
+      "file": "pyyaml-6.0.3.tar.gz",
+      "url": "https://files.pythonhosted.org/packages/05/8e/961c0007c59b8dd7729d542c61a4d537767a59645b82a0b521206e1e25c2/pyyaml-6.0.3.tar.gz",
+      "sha256": "d76623373421df22fb4cf8817020cbb7ef15c725b9d5e45f17e189bfc384190f",
+      "destination": [
+        "pyyaml"
+      ],
+      "strip": 1
+    }
+  ],
+  "toolchain": {
+    "emscriptenCommit": "0f3d2e62bccf8e14497ff19e05a1202c51eb0c65",
+    "llvmCommit": "c7706d9472fe880ba1d3418919ad4185710c9559",
+    "emccScriptSha256": "8aceac1889631c2902b2265c7991a18d187e3deec157e8194e489e0988a564d1",
+    "clang": {
+      "darwin-arm64": {
+        "byteLength": 114441120,
+        "sha256": "0e966e8d4d52dd12e809f062667c50839173eab6a13ed4c10354604fd0bc0967"
+      }
+    }
+  }
+}

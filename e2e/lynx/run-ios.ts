@@ -7,6 +7,8 @@ import path from 'node:path'
 import process from 'node:process'
 import { execa } from 'execa'
 import { collectNativeEvidence } from './evidence'
+import { withNativeFailureEvidence } from './failure-evidence'
+import { iosFailureReaders } from './failure-evidence-readers'
 import { withBuiltIosDevice } from './ios-build-target'
 import { resolveIosAppContainer } from './ios-container'
 import { command } from './native-command'
@@ -73,22 +75,24 @@ export async function runIos(hostDir: string, artifactDir: string, target: IosBu
       process.stderr.write('iOS 应用容器查询超时；已保留原始错误，等待指定模拟器就绪后仅再查询一次。\n')
     }, target.state === 'Shutdown')
     const reportPath = path.join(container, 'Library', 'Application Support', 'lynx-compat', context.runId, 'report.json')
-    await command('xcrun', ['simctl', 'launch', '--terminate-running-process', deviceId, applicationId], hostDir, 60_000, { file: path.join(artifactDir, 'launch-command.json') })
-    if (options.captureOnly) {
-      await new Promise(resolve => setTimeout(resolve, 2200))
+    return withNativeFailureEvidence(artifactDir, context, iosFailureReaders(container, context), async () => {
+      await command('xcrun', ['simctl', 'launch', '--terminate-running-process', deviceId, applicationId], hostDir, 60_000, { file: path.join(artifactDir, 'launch-command.json') })
+      if (options.captureOnly) {
+        await new Promise(resolve => setTimeout(resolve, 2200))
+        await command('xcrun', ['simctl', 'io', deviceId, 'screenshot', path.join(artifactDir, 'screen.png')], hostDir, 60_000)
+        await recordIosVideo(deviceId, artifactDir, options.captureDurationSeconds)
+        return undefined
+      }
+      const source = await waitForReportOrFailure(
+        async () => fs.readFile(reportPath, 'utf8').catch(() => undefined),
+        async () => fs.readFile(path.join(container, 'Library', 'Application Support', 'lynx-compat', context.runId, 'failure.json'), 'utf8').catch(() => undefined),
+      )
       await command('xcrun', ['simctl', 'io', deviceId, 'screenshot', path.join(artifactDir, 'screen.png')], hostDir, 60_000)
-      await recordIosVideo(deviceId, artifactDir, options.captureDurationSeconds)
-      return undefined
-    }
-    const source = await waitForReportOrFailure(
-      async () => fs.readFile(reportPath, 'utf8').catch(() => undefined),
-      async () => fs.readFile(path.join(container, 'Library', 'Application Support', 'lynx-compat', context.runId, 'failure.json'), 'utf8').catch(() => undefined),
-    )
-    await command('xcrun', ['simctl', 'io', deviceId, 'screenshot', path.join(artifactDir, 'screen.png')], hostDir, 60_000)
-    await fs.writeFile(path.join(artifactDir, 'raw-report.json'), source)
-    const report = JSON.parse(source) as NativePlatformReport
-    const directory = path.join(container, 'Library', 'Application Support', 'lynx-compat', context.runId, 'artifacts')
-    await collectNativeEvidence(report, artifactDir, context, name => fs.readFile(path.join(directory, name)))
-    return source
+      await fs.writeFile(path.join(artifactDir, 'raw-report.json'), source)
+      const report = JSON.parse(source) as NativePlatformReport
+      const directory = path.join(container, 'Library', 'Application Support', 'lynx-compat', context.runId, 'artifacts')
+      await collectNativeEvidence(report, artifactDir, context, name => fs.readFile(path.join(directory, name)))
+      return source
+    })
   }, process.env, () => setStage('device-readiness'))
 }

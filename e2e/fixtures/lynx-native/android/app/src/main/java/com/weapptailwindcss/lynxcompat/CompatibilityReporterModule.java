@@ -15,6 +15,7 @@ import com.lynx.react.bridge.JavaOnlyMap;
 import com.lynx.jsbridge.LynxMethod;
 import com.lynx.jsbridge.LynxModule;
 import com.lynx.tasm.LynxView;
+import com.lynx.tasm.LynxEnv;
 import com.lynx.tasm.behavior.event.EventTarget;
 import com.lynx.tasm.behavior.ui.LynxBaseUI;
 import com.lynx.tasm.behavior.ui.LynxUI;
@@ -32,8 +33,33 @@ public final class CompatibilityReporterModule extends LynxModule {
   }
 
   @LynxMethod
+  public void captureResponsive(String runId, String requestId, String phase, Callback callback) {
+    mainHandler.post(() -> {
+      if (!requireView(callback)) return;
+      if (binding.responsive == null) { callback.invoke((Object) null); return; }
+      binding.responsive.capture(runId, requestId, phase, receipt -> {
+        if (receipt == null) { callback.invoke((Object) null); return; }
+        try {
+          ResponsiveEvidence.Capture capture = ResponsiveEvidence.capture(binding.store, receipt, new GeometryEvidence.Host() {
+            public double[] measure(String id) { return measureNow(id); }
+            public byte[] capture(String id) { return captureBytes(id); }
+          });
+          JavaOnlyMap result = new JavaOnlyMap();
+          result.putMap("frame", EvidenceBridge.jsonMap(capture.frame));
+          result.putArray("artifacts", EvidenceBridge.artifacts(capture.artifacts));
+          callback.invoke(result);
+        } catch (Exception error) {
+          failEvidence(error);
+          callback.invoke((Object) null);
+        }
+      });
+    });
+  }
+
+  @LynxMethod
   public void setColorScheme(String runId, String requestId, String scheme, Callback callback) {
     mainHandler.post(() -> {
+      if (!requireView(callback)) return;
       if (binding.colorScheme == null) {
         callback.invoke((Object) null);
         return;
@@ -56,6 +82,7 @@ public final class CompatibilityReporterModule extends LynxModule {
   @LynxMethod
   public void captureColorScheme(String runId, String requestId, String identifier, Callback callback) {
     mainHandler.post(() -> {
+      if (!requireView(callback)) return;
       if (binding.colorScheme == null || !binding.colorScheme.isCurrent(runId, requestId)) {
         callback.invoke((Object) null);
         return;
@@ -67,10 +94,7 @@ public final class CompatibilityReporterModule extends LynxModule {
   @LynxMethod
   public void getEvidenceContext(Callback callback) {
     mainHandler.post(() -> {
-      if (binding.view() == null) {
-        callback.invoke((Object) null);
-        return;
-      }
+      if (!requireView(callback)) return;
       JavaOnlyMap context = new JavaOnlyMap();
       context.putInt("version", 1);
       context.putString("runId", binding.store.runId);
@@ -82,8 +106,8 @@ public final class CompatibilityReporterModule extends LynxModule {
   @LynxMethod
   public void submit(String runId, String report, Callback callback) {
     mainHandler.post(() -> {
+      if (!requireView(callback)) return;
       try {
-        if (binding.view() == null) throw new IllegalStateException("View binding expired");
         JSONObject value = new JSONObject(report);
         JSONObject evidence = new JSONObject();
         evidence.put("version", 1);
@@ -125,16 +149,11 @@ public final class CompatibilityReporterModule extends LynxModule {
   @LynxMethod
   public void submitArtifact(String runId, String name, String data, Callback callback) {
     mainHandler.post(() -> {
+      if (!requireView(callback)) return;
       try {
-        if (binding.view() == null) throw new IllegalStateException("View binding expired");
         String payload = data.startsWith("data:image/png;base64,") ? data.substring(22) : data;
         EvidenceStore.Receipt receipt = binding.store.save(runId, name, Base64.decode(payload, Base64.DEFAULT));
-        JavaOnlyMap result = new JavaOnlyMap();
-        result.putString("runId", receipt.runId);
-        result.putString("name", receipt.name);
-        result.putString("sha256", receipt.sha256);
-        result.putInt("byteLength", receipt.byteLength);
-        callback.invoke(result);
+        callback.invoke(EvidenceBridge.receipt(receipt));
       } catch (Exception error) {
         failEvidence(error);
         callback.invoke((Object) null);
@@ -149,31 +168,86 @@ public final class CompatibilityReporterModule extends LynxModule {
     Log.e("LynxEvidence", "Evidence run failed", error);
   }
 
+  /** 视图失效与真实节点缺失分开回传；JS 尚未取得 runId 时仍由宿主保存失败。 */
+  private boolean requireView(Callback callback) {
+    if (binding.view() != null) return true;
+    JavaOnlyMap failure = new JavaOnlyMap();
+    failure.putInt("version", 1);
+    failure.putString("source", "lynx-native-evidence");
+    failure.putString("category", "environment");
+    failure.putString("code", "view-expired");
+    failure.putString("message", "View binding expired");
+    try {
+      binding.store.publishFailure(binding.store.runId,
+          "{\"version\":1,\"source\":\"lynx-native-evidence\",\"category\":\"environment\",\"code\":\"view-expired\",\"message\":\"View binding expired\"}");
+    } catch (Exception error) {
+      Log.e("LynxEvidence", "Expired view failure could not be persisted", error);
+    }
+    JavaOnlyMap result = new JavaOnlyMap();
+    result.putMap("error", failure);
+    callback.invoke(result);
+    return false;
+  }
+
+  @LynxMethod
+  public void captureMediaGate(String runId, Callback callback) {
+    mainHandler.post(() -> {
+      if (!requireView(callback)) return;
+      try {
+        MediaGateEvidence.Capture capture = MediaGateEvidence.capture(binding.store, runId, new MediaGateEvidence.Host() {
+          public boolean isUiThread() { return Looper.myLooper() == Looper.getMainLooper(); }
+          public String sdkVersion() { return LynxEnv.inst().getLynxVersion(); }
+          public String sdkArtifact() throws Exception { return AndroidSdkIdentity.capture(binding.view().getContext(), binding.store); }
+          public double[] measure(String id) { return measureNow(id); }
+          public byte[] capture(String id) { return captureBytes(id); }
+        });
+        callback.invoke(EvidenceBridge.mediaGate(binding.store, capture));
+      } catch (Exception error) {
+        failEvidence(error);
+        callback.invoke((Object) null);
+      }
+    });
+  }
+
+  @LynxMethod
+  public void captureGeometry(String runId, String identifier, Callback callback) {
+    mainHandler.post(() -> {
+      if (!requireView(callback)) return;
+      try {
+        GeometryEvidence.Capture capture = GeometryEvidence.capture(binding.store, runId, identifier, new GeometryEvidence.Host() {
+          public double[] measure(String id) { return measureNow(id); }
+          public byte[] capture(String id) { return captureBytes(id); }
+        });
+        JavaOnlyMap geometry = new JavaOnlyMap();
+        for (java.util.Map.Entry<String, double[]> entry : capture.geometry.entrySet()) {
+          geometry.putMap(entry.getKey(), EvidenceBridge.rect(entry.getValue()));
+        }
+        JavaOnlyMap result = new JavaOnlyMap();
+        result.putMap("geometry", geometry);
+        result.putArray("artifacts", EvidenceBridge.artifacts(capture.artifacts));
+        callback.invoke(result);
+      } catch (Exception error) {
+        failEvidence(error);
+        callback.invoke((Object) null);
+      }
+    });
+  }
+
   @LynxMethod
   public void measure(String identifier, Callback callback) {
     mainHandler.post(() -> {
-      LynxBaseUI ui = findUI(identifier);
-      if (ui == null) {
-        callback.invoke((Object) null);
-        return;
-      }
-      LynxBaseUI.TransOffset corners = ui.getTransformValue(0, 0, 0, 0);
-      double[] rect = GeometryBounds.fromCorners(new float[][] {
-        corners.left_top, corners.right_top, corners.right_bottom, corners.left_bottom,
-      }, ui.getLynxContext().getScreenMetrics().density);
-      if (rect == null) {
-        callback.invoke((Object) null);
-        return;
-      }
-      JavaOnlyMap result = new JavaOnlyMap();
-      result.putDouble("left", rect[0]);
-      result.putDouble("top", rect[1]);
-      result.putDouble("right", rect[2]);
-      result.putDouble("bottom", rect[3]);
-      result.putDouble("width", rect[4]);
-      result.putDouble("height", rect[5]);
-      callback.invoke(result);
+      if (!requireView(callback)) return;
+      callback.invoke(EvidenceBridge.rect(measureNow(identifier)));
     });
+  }
+
+  private double[] measureNow(String identifier) {
+    LynxBaseUI ui = findUI(identifier);
+    if (ui == null) return null;
+    LynxBaseUI.TransOffset corners = ui.getTransformValue(0, 0, 0, 0);
+    return GeometryBounds.fromCorners(new float[][] {
+      corners.left_top, corners.right_top, corners.right_bottom, corners.left_bottom,
+    }, ui.getLynxContext().getScreenMetrics().density);
   }
 
   @LynxMethod
@@ -182,23 +256,28 @@ public final class CompatibilityReporterModule extends LynxModule {
   }
 
   private void captureNow(String identifier, Callback callback) {
+    if (!requireView(callback)) return;
+    byte[] data = captureBytes(identifier);
+    callback.invoke(data == null ? null : Base64.encodeToString(data, Base64.NO_WRAP));
+  }
+
+  private byte[] captureBytes(String identifier) {
     LynxBaseUI ui = findUI(identifier);
     if (!(ui instanceof LynxUI<?>)) {
-      callback.invoke((Object) null);
-      return;
+      return null;
     }
     View view = ((LynxUI<?>) ui).getView();
     if (view == null || view.getWidth() <= 0 || view.getHeight() <= 0) {
-      callback.invoke((Object) null);
-      return;
+      return null;
     }
     // JS 传入固定大小且非 flatten 的父容器，由 Android 合成子节点的可见性、透明度与变换。
-    callback.invoke(captureView(view));
+    return captureView(view);
   }
 
   @LynxMethod
   public void pointerEventsNone(String identifier, Callback callback) {
     mainHandler.post(() -> {
+      if (!requireView(callback)) return;
       LynxBaseUI ui = findUI(identifier);
       callback.invoke(ui == null ? null : ui.pointerEvents() == EventTarget.PointerEventsValue.None);
     });
@@ -207,6 +286,7 @@ public final class CompatibilityReporterModule extends LynxModule {
   @LynxMethod
   public void setPseudoActive(String identifier, boolean active, Callback callback) {
     mainHandler.post(() -> {
+      if (!requireView(callback)) return;
       LynxView lynxView = binding.view();
       LynxBaseUI ui = findUI(identifier);
       if (lynxView == null || ui == null) {
@@ -226,18 +306,16 @@ public final class CompatibilityReporterModule extends LynxModule {
     return lynxView == null ? null : lynxView.findUIByIdSelector(identifier);
   }
 
-  private static String captureView(View view) {
+  private static byte[] captureView(View view) {
     Bitmap bitmap = Bitmap.createBitmap(view.getWidth(), view.getHeight(), Bitmap.Config.ARGB_8888);
     view.draw(new Canvas(bitmap));
-    String data = encodeBitmap(bitmap);
-    bitmap.recycle();
-    return data;
-  }
-
-  private static String encodeBitmap(Bitmap bitmap) {
-    ByteArrayOutputStream output = new ByteArrayOutputStream();
-    bitmap.compress(Bitmap.CompressFormat.PNG, 100, output);
-    return Base64.encodeToString(output.toByteArray(), Base64.NO_WRAP);
+    try {
+      ByteArrayOutputStream output = new ByteArrayOutputStream();
+      if (!bitmap.compress(Bitmap.CompressFormat.PNG, 100, output)) return null;
+      return output.toByteArray();
+    } finally {
+      bitmap.recycle();
+    }
   }
 
 }

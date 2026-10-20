@@ -1,48 +1,11 @@
-export const featureFamilies = [
-  'layout',
-  'flex-grid',
-  'spacing',
-  'sizing',
-  'typography',
-  'background',
-  'border',
-  'effect',
-  'filter',
-  'table',
-  'transform',
-  'transition-animation',
-  'interactivity',
-  'svg',
-  'accessibility',
-  'variants',
-  'directives',
-] as const
+import type { ExpectedDeclaration } from '@weapp-tailwindcss/test-catalog'
+import type { ResponsiveFrame, ResponsivePhase } from './responsive-contract'
 
-export type FeatureFamily = typeof featureFamilies[number]
-export type EvidenceLevel = 'build' | 'runtime'
-export type ProbeType = 'css' | 'geometry' | 'interaction' | 'pixel' | 'directive'
+export { featureFamilies } from '@weapp-tailwindcss/test-catalog'
+export type { CompatibilityCase, EvidenceLevel, ExpectedDeclaration, FeatureFamily, ProbeType } from '@weapp-tailwindcss/test-catalog'
 export type RuntimeStatus = 'supported' | 'unsupported' | 'not-tested'
 export type Platform = 'ios' | 'android'
 export type FailureStage = 'generation' | 'encoder' | 'runtime' | 'version-limit'
-
-export interface ExpectedDeclaration {
-  property: string
-  value?: string
-  important?: boolean
-}
-
-export interface CompatibilityCase {
-  id: string
-  family: FeatureFamily
-  page: 'layout' | 'visual' | 'motion' | 'variants' | 'syntax'
-  title: string
-  className: string
-  evidence: EvidenceLevel
-  probe: ProbeType
-  declarations: ExpectedDeclaration[]
-  alternative?: string
-  note?: string
-}
 
 export interface PlatformResult {
   status: RuntimeStatus
@@ -67,6 +30,26 @@ export interface StaticCaseEvidence {
   generatedDeclarations: ExpectedDeclaration[]
   bundledDeclarations: ExpectedDeclaration[]
   cssDefinesKnown: string[]
+  /** 候选独立记录生成与编码结果，避免同组中一项失败掩盖其它项。 */
+  candidates?: StaticCandidateEvidence[]
+}
+
+export interface StaticCandidateEvidence {
+  className: string
+  generated: boolean
+  bundled: boolean
+  failureStage?: Extract<FailureStage, 'generation' | 'encoder'>
+  reason?: string
+  mediaGuard?: StaticMediaGuardEvidence
+}
+
+export interface StaticMediaGuardEvidence {
+  className: string
+  limitationId: 'lynx4.0.1-media-hover-unknown-v1'
+  sourceSha256: string
+  condition: '(hover:hover)'
+  generatedRules: { selector: string, mediaConditions: string[] }[]
+  bundledRules: { selector: string, mediaConditions: string[] }[]
 }
 
 export interface StaticEvidenceReport {
@@ -108,6 +91,62 @@ export interface NativeCaseResult extends PlatformResult {
   checkpoints: RuntimeCheckpoint[]
   geometry?: NativeGeometryEvidence
   colorScheme?: Record<'light' | 'dark' | 'restored', NativeColorSchemeReceipt>
+  responsive?: Record<ResponsivePhase, ResponsiveFrame>
+  /** 混合交互必须逐候选取证；旧报告缺失此字段时仅可历史展示。 */
+  candidates?: NativeCandidateResult[]
+}
+
+interface NativeCandidateBase extends PlatformResult {
+  className: string
+  checkpoints: RuntimeCheckpoint[]
+}
+
+export type NativeCandidateResult = (NativeCandidateBase & { mediaGate?: never }) | (NativeCandidateBase & {
+  status: 'unsupported'
+  mediaGate: {
+    limitationId: 'lynx4.0.1-media-hover-unknown-v1'
+    stage: 'runtime'
+    gate: 'media'
+    condition: '(hover:hover)'
+    sourceSha256: string
+    evidenceId: 'media-hover-v1'
+    downstream: { hoverInput: 'not-tested', pseudoState: 'not-tested' }
+  }
+})
+
+export type NativeMediaGateProbeId = 'base' | 'control' | 'unguarded' | 'min-width' | 'hover-hover' | 'hover-none'
+
+export interface ResolvedAndroidSdk {
+  version: 1
+  source: 'lynx-gradle-resolved-sdk-v1'
+  runId: string
+  bundleSha256: string
+  component: string
+  artifactVersion: string
+  aarSha256: string
+  libraries: Record<string, string>
+}
+
+export interface NativeAndroidSdkArtifact {
+  resolved: ResolvedAndroidSdk
+  apkSha256: string
+  abi: string
+  librarySha256: string
+}
+
+export interface NativeMediaGateEvidence {
+  limitationId: 'lynx4.0.1-media-hover-unknown-v1'
+  runId: string
+  bundleSha256: string
+  /** 原生 SDK getter 的原始 reported 值，不能替换为 Maven release 版本。 */
+  sdkVersion: string
+  sdkArtifact?: NativeAndroidSdkArtifact
+  probes: { id: NativeMediaGateProbeId, probe: NativeRect, container: NativeRect }[]
+}
+
+export interface NativeMediaGateCapture {
+  mediaGate: NativeMediaGateEvidence
+  artifacts: NativeArtifactReceipt[]
 }
 
 export interface NativeColorSchemeReceipt {
@@ -140,6 +179,7 @@ export interface NativePlatformReport {
   versions: CompatibilityBaseline['versions']
   environment: NativeRuntimeEnvironment
   results: NativeCaseResult[]
+  mediaGate?: NativeMediaGateEvidence
   // 历史结论仍可展示；实时验收及基线更新必须携带完整的新证据协议。
   evidence?: NativeEvidenceContext & { artifacts: NativeArtifactReceipt[] }
 }
@@ -166,6 +206,10 @@ export interface CompatibilityBaseline {
     lynxEngine: string
     engineVersion: string
     cssDefines: string
+    tasmEncoder: string
+    cssSerializer: string
+    tasmDecoder: string
+    bundleConfig: string
   }
   environments?: Record<Platform, NativeRuntimeEnvironment>
   results: CaseBaseline[]

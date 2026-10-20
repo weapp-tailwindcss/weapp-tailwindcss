@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "version": "0.0.53",
+  "sourceCommit": "3526f07a8cb25cfb2841736c76b54deadc7e6e46",
+  "buildrootCommit": "0d76bc8f966dbc64c69e310346ae5a4bd492570d",
+  "primjsCommit": "76a456ec5ead13e0dce78f519eefc6a2720088f2",
+  "toolsSharedCommit": "bdea62f7b500026aab237b271abc7eff279a5c2d",
+  "emsdkCommit": "15915cad554b707837024dc2758b6a1c5b94b036",
+  "emscriptenVersion": "4.0.22",
+  "compilerCommit": "bebaf7e50e31865b0724f17eaa52e161e2dfef5a",
+  "typescriptVersion": "5.9.3",
+  "inputs": {
+    "file": "rebuild/inputs.json",
+    "sha256": "5b51e443783b9fdbf76ff2909e956a5a37f33c8e628c4bd91b229341e002d91d"
+  },
+  "patches": [
+    {
+      "file": "patches/0001-decode-page-config-before-css.patch",
+      "sha256": "1282e4927efef30ce3a73a5dca4a499daafa5aef0fbef17026593ffb36376f62"
+    },
+    {
+      "file": "patches/0002-serialize-css-identifiers.patch",
+      "sha256": "f14ab36c1aa7e26b1021ff4b31af3030a82cd4fe21952c7af5f6dba5834c0b76"
+    }
+  ],
+  "compressed": {
+    "file": "vendor/lepus.cjs.gz",
+    "byteLength": 2235071,
+    "sha256": "69e7b4cedc110e5ccdce3be24341cfb32ff67c171449b9fcc4c74515383d4b1a"
+  },
+  "decompressed": {
+    "byteLength": 13254390,
+    "sha256": "013cedf5d7fe0db0103b74d2936fba072e0f5a89c0a715af77f30b1d0627878b"
+  },
+  "license": {
+    "upstream": "Apache-2.0",
+    "files": [
+      {
+        "source": "source/LICENSE",
+        "file": "vendor/licenses/source-LICENSE.txt",
+        "byteLength": 11359,
+        "sha256": "8c6db340475136df3c1201d458fa5755698eace76e510471ecc9d857d6083dac"
+      },
+      {
+        "source": "source/NOTICE",
+        "file": "vendor/licenses/source-NOTICE.txt",
+        "byteLength": 104,
+        "sha256": "6bb60674cefa3ec8c621bc9ea89ca26892b411dd3e05ab463e4aa62f009527ef"
+      },
+      {
+        "source": "source/third_party/quickjs/src/LICENSE",
+        "file": "vendor/licenses/source-third_party-quickjs-src-LICENSE.txt",
+        "byteLength": 11358,
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      },
+      {
+        "source": "source/third_party/quickjs/LICENSE",
+        "file": "vendor/licenses/source-third_party-quickjs-LICENSE.txt",
+        "byteLength": 1130,
+        "sha256": "598fd7fc928e4350abce36e337ba5a1346923c5c692f5be92c3d8e29ddd7c18d"
+      },
+      {
+        "source": "source/third_party/jsoncpp/LICENSE",
+        "file": "vendor/licenses/source-third_party-jsoncpp-LICENSE.txt",
+        "byteLength": 2654,
+        "sha256": "e23d552f4ccc2076b7ec627b24aa3eadba58d1a5e025d4b83ac5c9cae43063a7"
+      },
+      {
+        "source": "source/third_party/double-conversion/LICENSE",
+        "file": "vendor/licenses/source-third_party-double-conversion-LICENSE.txt",
+        "byteLength": 1527,
+        "sha256": "4af93c12062c58058378de2397dc1c92bbff9ddfb1d583a01c84127557ce97ca"
+      },
+      {
+        "source": "source/third_party/rapidjson/license.txt",
+        "file": "vendor/licenses/source-third_party-rapidjson-license.txt.txt",
+        "byteLength": 5152,
+        "sha256": "a140e5d46fe734a1c78f1a3c3ef207871dd75648be71fdda8e309b23ab8b1f32"
+      },
+      {
+        "source": "source/third_party/modp_b64/LICENSE",
+        "file": "vendor/licenses/source-third_party-modp_b64-LICENSE.txt",
+        "byteLength": 1721,
+        "sha256": "d47e8390fb0d7ad4a18f26aedd6283c7ab6b5b4fabab536ccb4db7f9f6d90c08"
+      },
+      {
+        "source": "source/third_party/aes/LICENSE",
+        "file": "vendor/licenses/source-third_party-aes-LICENSE.txt",
+        "byteLength": 1065,
+        "sha256": "b803686e512df1b03e51062080b0f1f5e699a99059c54a2da1f779c3b14feec5"
+      },
+      {
+        "source": "emsdk/upstream/emscripten/LICENSE",
+        "file": "vendor/licenses/emsdk-upstream-emscripten-LICENSE.txt",
+        "byteLength": 5093,
+        "sha256": "620a78084fc7ca97c0b5dea9abf891f3ffcadfdbf305276f099c9c4e12fc1d86"
+      },
+      {
+        "source": "emsdk/upstream/emscripten/system/lib/libc/musl/COPYRIGHT",
+        "file": "vendor/licenses/emsdk-upstream-emscripten-system-lib-libc-musl-COPYRIGHT.txt",
+        "byteLength": 6204,
+        "sha256": "f9bc4423732350eb0b3f7ed7e91d530298476f8fec0c6c427a1c04ade22655af"
+      },
+      {
+        "source": "emsdk/upstream/emscripten/system/lib/libcxx/LICENSE.TXT",
+        "file": "vendor/licenses/emsdk-upstream-emscripten-system-lib-libcxx-LICENSE.TXT.txt",
+        "byteLength": 16703,
+        "sha256": "539dd7aed86e8a4f12cbdd0e6c50c189c7d74847e4fecc64ce2c6ee3a01da38b"
+      },
+      {
+        "source": "emsdk/upstream/emscripten/system/lib/libcxxabi/LICENSE.TXT",
+        "file": "vendor/licenses/emsdk-upstream-emscripten-system-lib-libcxxabi-LICENSE.TXT.txt",
+        "byteLength": 16706,
+        "sha256": "e2b35be49f7284a45b7baca8fc7b3ab7440e7902392b2528a457816b5bb2a15c"
+      },
+      {
+        "source": "emsdk/upstream/emscripten/system/lib/compiler-rt/LICENSE.TXT",
+        "file": "vendor/licenses/emsdk-upstream-emscripten-system-lib-compiler-rt-LICENSE.TXT.txt",
+        "byteLength": 16708,
+        "sha256": "1a8f1058753f1ba890de984e48f0242a3a5c29a6a8f2ed9fd813f36985387e8d"
+      },
+      {
+        "source": "emsdk/upstream/emscripten/system/lib/libunwind/LICENSE.TXT",
+        "file": "vendor/licenses/emsdk-upstream-emscripten-system-lib-libunwind-LICENSE.TXT.txt",
+        "byteLength": 16706,
+        "sha256": "b5efebcaca80879234098e52d1725e6d9eb8fb96a19fce625d39184b705f7b6d"
+      }
+    ]
+  }
+}
