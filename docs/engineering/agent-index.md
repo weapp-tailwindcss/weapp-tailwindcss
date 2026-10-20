@@ -10,6 +10,7 @@
 - [demo/AGENTS.md](../../demo/AGENTS.md)
 - [e2e/AGENTS.md](../../e2e/AGENTS.md)
 - [e2e/lynx/decoder/AGENTS.md](../../e2e/lynx/decoder/AGENTS.md)
+- [packages/lynx/src/decoder-data/AGENTS.md](../../packages/lynx/src/decoder-data/AGENTS.md)
 - [e2e/tailwind-capabilities/AGENTS.md](../../e2e/tailwind-capabilities/AGENTS.md)
 - [e2e/tailwind-capabilities/build-matrix/AGENTS.md](../../e2e/tailwind-capabilities/build-matrix/AGENTS.md)
 - [examples/AGENTS.md](../../examples/AGENTS.md)

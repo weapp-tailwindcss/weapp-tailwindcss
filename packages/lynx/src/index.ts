@@ -36,7 +36,7 @@ interface RsbuildPluginApi {
 }
 
 function normalizeOptions(options: LynxTailwindcssOptions): UserDefinedOptions {
-  const { rspack: _rspack, generator, ...rest } = options
+  const { rspack: _rspack, diagnostics: _diagnostics, generator, ...rest } = options
   const generatorOptions = generator === false ? {} : generator
   return {
     ...rest,
@@ -116,4 +116,5 @@ export type {
   LynxDiagnosticsOptions,
   LynxDiagnosticsReport,
   LynxDiagnosticStatus,
+  LynxEncodingEvidence,
 } from './diagnostics'

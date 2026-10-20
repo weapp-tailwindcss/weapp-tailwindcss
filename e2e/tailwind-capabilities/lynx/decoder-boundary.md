@@ -2,7 +2,7 @@
 
 静态生成使用 `generated.rawCss`，经过 `encodeLynxCss` 的 Web/Lynx 兼容处理、生产 serializer、生产 encoder，再交给独立 WASM decoder。这里没有使用小程序 WXSS。serializer 的 `cssMap` 是 encoder 输入，不能用它代替编码后的输出。
 
-当前固定的 encoder 0.0.49、serializer 0.1.9，以及由 0.0.53 准确源码构建的便携 decoder 中，CSS 结构只有 `{ text }`，没有可以直接消费的规则 AST。便携 decoder 已修复配置读取顺序和 class/id 文本转义，来源与 hash 见 `e2e/lynx/decoder/manifest.json`；它不会补全 CSS 语义。
+当前固定的 encoder 0.0.49、serializer 0.1.9，以及由 0.0.53 准确源码构建的便携 decoder 中，CSS 结构只有 `{ text }`，没有可以直接消费的规则 AST。便携 decoder 已修复配置读取顺序和 class/id 文本转义，来源与 hash 见 `packages/lynx/src/decoder-data/manifest.json`；它不会补全 CSS 语义。
 
 例如合法输入：
 

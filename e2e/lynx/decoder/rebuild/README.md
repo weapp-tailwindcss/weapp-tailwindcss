@@ -1,6 +1,6 @@
 # Lynx 便携 decoder 的维护者重建
 
-普通 CI 校验并加载已提交的 `vendor/lepus.cjs.gz`。本入口只在维护者更新补丁或审计产物时使用，不是运行时 fallback，不需要设备、IDE 或浏览器。
+普通 CI 校验并加载已提交的 `packages/lynx/src/decoder-data/vendor/lepus.cjs.gz`。本入口只在维护者更新补丁或审计产物时使用，不是运行时 fallback，不需要设备、IDE 或浏览器。
 
 准备仓库规定的 Node/pnpm、Git、Ninja、Python 3.10 以上，以及 `inputs.json` 固定 commit 的 emsdk。SDK 必须在独立目录中解压并核归档 SHA-256，再执行 `python emsdk.py install 4.0.22` 和 `python emsdk.py activate 4.0.22 --embedded`；不要修改全局 profile。可将 `--sdk-python` 指向 SDK 内的 Python。首次安装需要下载官方工具链；本轮 macOS arm64 编译器原始归档的 URL、长度与 SHA-256 见 `inputs.json.compilerArchive`。
 
@@ -20,7 +20,7 @@ PrimJS 的合法头文件软链接会在校验边界后物化为普通文件，�
 
 可用 `--archive-cache <只读缓存目录>` 复用已下载归档，仍逐份检查 SHA-256；`--jobs <1..64>` 限制并发。审查源码、补丁、证据后，显式加 `--publish` 才重新生成 vendor、许可与 manifest，再运行 decoder/media 回归。普通回归禁止传 `--publish`。
 
-本轮两次干净归档重建的 raw/gzip 与首轮一致，见 `../vendor/reproducibility.json`。范围为 macOS arm64 的准确工具链；其他宿主的重建状态需另行记录，不能据此声称跨宿主的字节可重复。
+本轮两次干净归档重建的 raw/gzip 与首轮一致，见 `packages/lynx/src/decoder-data/vendor/reproducibility.json`。范围为 macOS arm64 的准确工具链；其他宿主的重建状态需另行记录，不能据此声称跨宿主的字节可重复。
 
 ```sh
 CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-decoder-rebuild.test.ts e2e/lynx-decoder.test.ts e2e/lynx-media-guard.test.ts --update=none

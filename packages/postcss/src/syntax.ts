@@ -4,3 +4,4 @@ export { type CssScanDefinition, type CssScanPolicy, resolveCssScanSources } fro
 export * from './syntax/index'
 export { hasCssLocationDependencies } from './syntax/location-dependencies'
 export { rewriteCssImportSpecifiers } from './syntax/rewrite-imports'
+export { collectCssRuleEvidence, cssSelectorDiagnosticMatches } from './syntax/rule-evidence'

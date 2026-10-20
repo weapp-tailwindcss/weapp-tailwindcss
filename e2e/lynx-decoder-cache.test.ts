@@ -5,12 +5,13 @@ import os from 'node:os'
 import path from 'node:path'
 import { gzipSync } from 'node:zlib'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import identifierFixture from '../packages/lynx/src/decoder-data/fixtures/selector-identifiers.json'
 import { decodeLynxBundle, loadVerifiedDecoderFactory, lynxDecoderIdentity } from './lynx/decoder'
-import identifierFixture from './lynx/decoder/fixtures/selector-identifiers.json'
+import { decoderDataDirectory } from './lynx/decoder/paths'
 
 const directories: string[] = []
 const globalKeys: string[] = []
-const sourceDirectory = path.join(import.meta.dirname, 'lynx', 'decoder')
+const sourceDirectory = decoderDataDirectory
 const globals = globalThis as Record<string, unknown>
 const sha256 = (bytes: Uint8Array | string) => createHash('sha256').update(bytes).digest('hex')
 

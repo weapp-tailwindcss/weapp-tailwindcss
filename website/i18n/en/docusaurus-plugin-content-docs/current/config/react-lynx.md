@@ -16,9 +16,13 @@ keywords:
 
 This page explains every Lynx-specific option in `pluginLynxTailwindcss()`. Start with the [ReactLynx / Rspeedy guide](../quick-start/frameworks/lynx) for initial setup.
 
+This integration requires Node.js `^22.18.0 || >=24.11.0`, covering the adapter and its mandatory core dependency chain. Using the ReactLynx integration requires an installed and registered `@lynx-js/react-rsbuild-plugin` `>=0.12.4`; its optional peer installation flag only avoids installing another builder copy. Recursive CSS variables require Lynx runtime `>=3.6`, separately from the tested Engine version and bundle encoding target.
+
+Stable Tailwind theme tokens may become literals. Web color compatibility may also resolve application variables when lowering modern color expressions. Local, conditional, or priority overrides visible in the current CSS input prevent the affected variables from being treated as static. Overrides from separately compiled stylesheets or inline styles are outside this analysis and cannot change generated literals. Renaming a variable does not guarantee dynamic override behavior.
+
 ## Support baseline
 
-- `@weapp-tailwindcss/lynx` `0.4.4`; adapter Node.js `>=22.12.0`
+- `@weapp-tailwindcss/lynx` `0.4.4`; adapter Node.js `^22.18.0 || >=24.11.0`
 - Core `weapp-tailwindcss` `5.6.3`; dependency-chain Node.js `^22.18.0 || >=24.11.0`
 - `@lynx-js/rspeedy` `>=0.16.0`
 - Tailwind CSS `4.x`
@@ -144,13 +148,13 @@ rspack: { removeLightningCssLoader: true }
 
 **When to use** The default is suitable for observing compatibility in local builds and CI. Set `strict` only when a confirmed business rule removed by the encoder should become a build gate. `preflight`, Tailwind default rules, and `unknown` diagnostics remain reports and never fail strict mode.
 
-**Usage** `ignore` can match a selector, property, or reason. `onReport` receives versions, counts, categories, rejection reasons, and replacement suggestions:
+**Usage** `ignore` selects a selector/property; `reason` is an audit note, not a log filter. `onReport` receives versions, counts, categories, rejection reasons, and replacement suggestions:
 
 ```ts
 pluginLynxTailwindcss({
   diagnostics: {
     strict: true,
-    ignore: [{ property: 'padding-inline' }],
+    ignore: [{ property: 'padding-inline', reason: 'The application accepts this platform limitation' }],
     onReport(report) {
       console.log(report)
     },
@@ -158,7 +162,9 @@ pluginLynxTailwindcss({
 })
 ```
 
-Diagnostics use CSS and encoder data registered through the Rspack/Rspeedy lifecycle. They do not scan `dist` or equate bundle inclusion with native support. Unknown log formats remain `unknown` and never fail strict mode.
+Reports distinguish raw `encoder-log` records from silent removals found by `bundle-comparison`, with `bundled`, `encoder-rejected`, or `unknown` status. Matching requires unique selector branches, conditions, and declarations. Evidence comes from the emitted build-graph asset in `afterEmit` and binds the bundle, pinned decoder, and input CSS hashes. An ignore must select a selector/property; `reason` is an audit note. Ignored records and removal counts remain in the report.
+
+Original files and positions are provided only when the current build graph source map proves them; synthetic cssId and generated coordinates remain separate. Duplicate branches across entries, repeated declarations, unknown value normalization, incomplete CSS-section decoding, and ambiguous scoped CSS origins remain unproven. Diagnostics do not scan `dist` or equate bundle inclusion with native support.
 
 ## CSS and candidates
 

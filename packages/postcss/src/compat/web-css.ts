@@ -3,12 +3,11 @@ import postcss from 'postcss'
 import postcssPresetEnv from 'postcss-preset-env'
 import selectorParser from 'postcss-selector-parser'
 import { internalCssSelectorReplacer } from '../shared'
+import { getCssCalcVariableReferences } from '../utils/css-custom-property'
 import { normalizeModernColorValue } from './color-mix'
 import { removeUnsupportedCascadeLayers } from './mini-program-css/at-rules'
 import { normalizeTailwindcssV4GradientPosition, normalizeTailwindcssV4InfinityCalcValue } from './tailwindcss-v4'
 import { collectCustomPropertyValues, resolveCustomPropertyVarValue, usesResolvableTailwindColorVariable } from './web-css-custom-properties'
-
-const customPropertyReferencePattern = /var\(\s*(--(?:\\.|[-\w])+)/gi
 
 export interface NormalizedWebCssCompatOptions {
   preset: 'off' | 'legacy-web'
@@ -169,11 +168,8 @@ function normalizeModernColorDeclarations(root: postcss.Root, features: Required
   }
   const referencedProperties = new Set<string>()
   root.walkDecls((decl) => {
-    if (!decl.value.includes('var(')) {
-      return
-    }
-    for (const match of decl.value.matchAll(customPropertyReferencePattern)) {
-      referencedProperties.add(match[1])
+    for (const property of getCssCalcVariableReferences(decl.value).values()) {
+      referencedProperties.add(property)
     }
   })
   let customPropertyValues: Map<string, string> = new Map()

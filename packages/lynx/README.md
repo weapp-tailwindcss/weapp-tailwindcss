@@ -4,6 +4,10 @@
 
 Tailwind CSS 4 integration for ReactLynx and Rspeedy. It invokes `weapp-tailwindcss` through Rspeedy's Rspack lifecycle to produce standard CSS for Lynx, preserves native ReactLynx `className`, and introduces no runtime stylesheet or JSX transform.
 
+This integration requires Node.js `^22.18.0 || >=24.11.0`, covering the adapter and its mandatory core dependency chain. Using the ReactLynx integration requires an installed and registered `@lynx-js/react-rsbuild-plugin` `>=0.12.4`; its optional peer installation flag only avoids installing another builder copy. Recursive CSS variables require Lynx runtime `>=3.6`, separately from the tested Engine version and bundle encoding target.
+
+Stable Tailwind theme tokens may become literals. Web color compatibility may also resolve application variables when lowering modern color expressions. Local, conditional, or priority overrides visible in the current CSS input prevent the affected variables from being treated as static. Overrides from separately compiled stylesheets or inline styles are outside this analysis and cannot change generated literals. Renaming a variable does not guarantee dynamic override behavior.
+
 ## Install
 
 ```bash
@@ -12,7 +16,7 @@ pnpm add @weapp-tailwindcss/lynx tailwindcss
 
 ## Versions and runtime requirements
 
-The current adapter version is `0.4.4`. The adapter requires Node.js `>=22.12.0`, with peer ranges of Rspeedy `>=0.16.0` and Tailwind CSS `>=4.0.0`. Its `weapp-tailwindcss` dependency is currently `5.6.3`, whose dependency chain requires Node.js `^22.18.0 || >=24.11.0`; consumers using the core package should follow the higher requirement.
+The current adapter version is `0.4.4`. The adapter requires Node.js `^22.18.0 || >=24.11.0`, with peer ranges of Rspeedy `>=0.16.0` and Tailwind CSS `>=4.0.0`. Its `weapp-tailwindcss` dependency is currently `5.6.3`, whose dependency chain requires Node.js `^22.18.0 || >=24.11.0`.
 
 The repository fixture pins `@lynx-js/rspeedy` `0.17.2`, `@lynx-js/react-rsbuild-plugin` `0.20.2`, `@lynx-js/react` `0.126.1`, Tailwind CSS `4.3.3`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.18`. These versions describe the checked-in regression matrix and do not replace compatibility validation in a consuming project.
 
@@ -55,7 +59,7 @@ Enable structured Lynx encoder diagnostics when a build needs an auditable compa
 pluginLynxTailwindcss({
   diagnostics: {
     strict: true,
-    ignore: [{ property: 'padding-inline' }],
+    ignore: [{ property: 'padding-inline', reason: '业务明确接受该平台限制' }],
     onReport(report) {
       console.log(report)
     },
@@ -63,7 +67,9 @@ pluginLynxTailwindcss({
 })
 ```
 
-Reports include the category, selector, utility, property/value, source location, rejection reason, and replacement suggestion. Unmatched or unparseable log records remain `unknown`. Diagnostics consume CSS and encoder data from the build lifecycle; they do not scan `dist` or equate bundle inclusion with native support.
+Reports distinguish raw `encoder-log` records from silent removals found by `bundle-comparison`, with `bundled`, `encoder-rejected`, or `unknown` status. Matching requires unique selector branches, conditions, and declarations. Evidence comes from the emitted build-graph asset in `afterEmit` and binds the bundle, pinned decoder, and input CSS hashes. An ignore must select a selector/property; `reason` is an audit note. Ignored records and removal counts remain in the report.
+
+Original files and positions are provided only when the current build graph source map proves them; synthetic cssId and generated coordinates remain separate. Duplicate branches across entries, repeated declarations, unknown value normalization, incomplete CSS-section decoding, and ambiguous scoped CSS origins remain unproven. Diagnostics do not scan `dist` or equate bundle inclusion with native support.
 
 The current integration supports ReactLynx + Rspeedy and Tailwind CSS 4. It does not cover Rspeedy Web output, non-React Lynx frameworks, or React Native-style runtime style mapping.
 

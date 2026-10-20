@@ -18,13 +18,17 @@ keywords:
 
 配置项、固定字段和 encoder 边界见 [ReactLynx / Rspeedy 配置参考](../../config/react-lynx)。
 
+本集成要求 Node.js `^22.18.0 || >=24.11.0`，覆盖适配器及其必装核心依赖链。启用 ReactLynx 集成时，必须安装并注册 `@lynx-js/react-rsbuild-plugin` `>=0.12.4`；该 peer 的 optional 安装标记只避免自动引入另一份构建器。递归 CSS 变量要求 Lynx runtime `>=3.6`，这与当前原生基线的 Engine 版本和 bundle 编码 target 是不同的要求。
+
+稳定的 Tailwind theme token 可以替换为字面值；Web 颜色兼容阶段也可能在降级现代颜色表达式时解析应用变量。当前 CSS 输入中可见的局部、条件或优先级覆盖会阻止相关变量静态化。跨文件 stylesheet 或 inline style 的覆盖不在分析范围内，不能改变已生成的字面值；变量改名也不能保证动态覆盖语义。
+
 ## 安装
 
 ```bash npm2yarn
 npm install -D @weapp-tailwindcss/lynx tailwindcss
 ```
 
-适配器 `@weapp-tailwindcss/lynx` 当前版本为 `0.4.4`，自身要求 Node.js `>=22.12.0`；核心 `weapp-tailwindcss` 当前为 `5.6.3`，依赖链要求 Node.js `^22.18.0 || >=24.11.0`。适配器 peer 依赖为 Rspeedy `>=0.16.0` 与 Tailwind CSS `>=4.0.0`，仅支持 ReactLynx + Rspeedy 构建目标。
+适配器 `@weapp-tailwindcss/lynx` 当前版本为 `0.4.4`，自身要求 Node.js `^22.18.0 || >=24.11.0`；核心 `weapp-tailwindcss` 当前为 `5.6.3`，依赖链要求 Node.js `^22.18.0 || >=24.11.0`。适配器 peer 依赖为 Rspeedy `>=0.16.0` 与 Tailwind CSS `>=4.0.0`，仅支持 ReactLynx + Rspeedy 构建目标。
 
 仓库示例与回归矩阵固定 Rspeedy `0.17.2`、ReactLynx 插件 `0.20.2`、ReactLynx runtime `0.126.1`、Tailwind CSS `4.3.3`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 与 `@lynx-js/css-defines` `0.0.18`。
 

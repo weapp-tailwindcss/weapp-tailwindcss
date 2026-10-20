@@ -16,9 +16,13 @@ keywords:
 
 本页逐项说明 `pluginLynxTailwindcss()` 的 Lynx 专属配置。首次接入请先看 [ReactLynx / Rspeedy 指南](../quick-start/frameworks/lynx)。
 
+本集成要求 Node.js `^22.18.0 || >=24.11.0`，覆盖适配器及其必装核心依赖链。启用 ReactLynx 集成时，必须安装并注册 `@lynx-js/react-rsbuild-plugin` `>=0.12.4`；该 peer 的 optional 安装标记只避免自动引入另一份构建器。递归 CSS 变量要求 Lynx runtime `>=3.6`，这与当前原生基线的 Engine 版本和 bundle 编码 target 是不同的要求。
+
+稳定的 Tailwind theme token 可以替换为字面值；Web 颜色兼容阶段也可能在降级现代颜色表达式时解析应用变量。当前 CSS 输入中可见的局部、条件或优先级覆盖会阻止相关变量静态化。跨文件 stylesheet 或 inline style 的覆盖不在分析范围内，不能改变已生成的字面值；变量改名也不能保证动态覆盖语义。
+
 ## 支持基线
 
-- `@weapp-tailwindcss/lynx` `0.4.4`；适配器 Node.js `>=22.12.0`
+- `@weapp-tailwindcss/lynx` `0.4.4`；适配器 Node.js `^22.18.0 || >=24.11.0`
 - 核心 `weapp-tailwindcss` `5.6.3`；依赖链 Node.js `^22.18.0 || >=24.11.0`
 - `@lynx-js/rspeedy` `>=0.16.0`
 - Tailwind CSS `4.x`
@@ -144,13 +148,13 @@ rspack: { removeLightningCssLoader: true }
 
 **使用场景** 默认模式适合在 CI 或本地持续观察兼容性；只有希望把已确认删除的业务规则当作门禁时才启用 `strict`。`preflight`、Tailwind 默认规则和无法可靠关联的 `unknown` 诊断始终只报告，不会因 strict 自动失败。
 
-**用法** `ignore` 可按 selector、property 或 reason 忽略业务诊断；`onReport` 接收包含版本、计数、分类、拒绝原因和替代建议的报告：
+**用法** `ignore` 按 selector/property 限定范围，reason 仅作审计说明；`onReport` 接收包含版本、计数、分类、拒绝原因和替代建议的报告：
 
 ```ts
 pluginLynxTailwindcss({
   diagnostics: {
     strict: true,
-    ignore: [{ property: 'padding-inline' }],
+    ignore: [{ property: 'padding-inline', reason: '业务明确接受该平台限制' }],
     onReport(report) {
       console.log(report)
     },
@@ -158,7 +162,9 @@ pluginLynxTailwindcss({
 })
 ```
 
-诊断只使用 Rspack/Rspeedy 生命周期中登记的 CSS 与 encoder 数据，不扫描 `dist`，也不把规则进入 bundle 等同于 Lynx 原生支持。未知日志格式保留为 `unknown`，即使 strict 也不会失败。
+报告把 `encoder-log` 原始日志与 `bundle-comparison` 发现的静默删除分开记录，状态为 `bundled`、`encoder-rejected` 或 `unknown`。输入通过唯一选择器分支、条件和声明关联；编码证据来自 `afterEmit` 的构建图 asset，并绑定 bundle、固定 decoder 与输入 CSS 的 hash。忽略项必须限定 selector/property，`reason` 仅作审计说明；记录和删除计数始终保留。
+
+来源文件/行列只在当前构建图 source map 可证明时提供；合成 cssId 和生成坐标单独保存。跨入口同名分支、重复声明、未知值规范化、无法完整解码的 CSS section，以及无法唯一关联的 scoped CSS 来源均不猜测。诊断不扫描 `dist`，也不把进入 bundle 视为 Lynx 原生支持。
 
 ## CSS 与候选
 

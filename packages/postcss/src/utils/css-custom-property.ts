@@ -37,6 +37,13 @@ export function getCssCustomPropertyName(source: string) {
   return name?.startsWith('--') && name.length > 2 ? name : undefined
 }
 
+/** 以 CSS token 身份识别函数，包括十六进制转义的终止空白。 */
+export function hasCssFunction(value: string, name: string) {
+  return value.includes('(') && tokenize({ css: value }).some(token =>
+    token[0] === TokenType.Function && token[4].value.toLowerCase() === name,
+  )
+}
+
 export function isCssVarFunction(name: string) {
   return (name.includes('\\') ? decodeCssIdentifier(name) : name)?.toLowerCase() === 'var'
 }

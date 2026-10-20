@@ -1,6 +1,8 @@
 import postcssCalc from '@weapp-tailwindcss/postcss-calc'
 import postcss from 'postcss'
 import valueParser from 'postcss-value-parser'
+import { getCssCalcVariableReferences, getCssCustomPropertyName } from '../utils/css-custom-property'
+import { collectCustomPropertyValues, resolveCustomPropertyVarValue } from './web-css-custom-properties'
 
 const tailwindThemePropertyPatterns = [
   /^--aspect-/,
@@ -30,8 +32,6 @@ function isTailwindThemeProperty(property: string) {
   return tailwindThemePropertyPatterns.some(pattern => pattern.test(property))
 }
 
-const cssWideKeywords = new Set(['initial', 'inherit', 'unset', 'revert', 'revert-layer'])
-
 function isThemeScopeSelector(selector: string) {
   return postcss.list.comma(selector).every((part) => {
     const normalized = part.trim()
@@ -40,79 +40,25 @@ function isThemeScopeSelector(selector: string) {
 }
 
 function collectTailwindThemeProperties(root: postcss.Root) {
-  const values = new Map<string, string>()
-  const dynamic = new Set<string>()
-  root.walkDecls((decl) => {
-    if (!isTailwindThemeProperty(decl.prop)) {
-      return
-    }
-    const rule = decl.parent
-    const value = decl.value.trim()
-    // 只静态化顶层纯 theme 声明；局部、条件和优先级覆写交给原生变量语义。
-    if (rule?.type !== 'rule' || rule.parent !== root || !isThemeScopeSelector(rule.selector)
-      || decl.important || cssWideKeywords.has(value.toLowerCase())
-      || (values.has(decl.prop) && values.get(decl.prop) !== value)) {
-      dynamic.add(decl.prop)
-    }
-    else {
-      values.set(decl.prop, value)
-    }
-  })
-  for (const property of dynamic) {
-    values.delete(property)
-  }
-  // 无法完全解析的别名可能依赖动态变量或循环引用，不能删除其定义。
-  const stableValues = new Map<string, string>()
-  for (const [property, value] of values) {
-    const resolved = resolveThemeValue(value, values, new Set([property]))
-    if (!resolved.includes('var(')) {
-      stableValues.set(property, resolved)
-    }
-  }
-  return stableValues
-}
-
-function resolveThemeValue(
-  value: string,
-  properties: ReadonlyMap<string, string>,
-  resolving: ReadonlySet<string> = new Set(),
-): string {
-  if (!value.includes('var(')) {
-    return value
-  }
-
-  const parsed = valueParser(value)
-  parsed.walk((node) => {
-    if (node.type !== 'function' || node.value.toLowerCase() !== 'var') {
-      return
-    }
-    const propertyNode = node.nodes.find(child => child.type === 'word' && child.value.startsWith('--'))
-    const property = propertyNode?.value
-    if (!property || resolving.has(property)) {
-      return
-    }
-    const propertyValue = properties.get(property)
-    if (!propertyValue) {
-      return
-    }
-    const nextResolving = new Set(resolving)
-    nextResolving.add(property)
-    const resolved = resolveThemeValue(propertyValue, properties, nextResolving)
-    const mutableNode = node as any
-    mutableNode.type = 'word'
-    mutableNode.value = resolved
-    delete mutableNode.nodes
-  })
-  return parsed.toString()
+  // Web 与 Lynx 使用同一套 CSS 身份、可见覆盖和完整依赖图分析。
+  const { values } = collectCustomPropertyValues(root)
+  return new Map([...values].filter(([property]) => isTailwindThemeProperty(property)))
 }
 
 function removeConsumedThemeProperties(root: postcss.Root, properties: ReadonlyMap<string, string>) {
+  const referenced = new Set<string>()
+  root.walkDecls((decl) => {
+    for (const property of getCssCalcVariableReferences(decl.value).values()) {
+      referenced.add(property)
+    }
+  })
   root.walkRules((rule) => {
     if (!isThemeScopeSelector(rule.selector)) {
       return
     }
     rule.walkDecls((decl) => {
-      if (properties.has(decl.prop)) {
+      const property = getCssCustomPropertyName(decl.prop) ?? decl.prop
+      if (properties.has(property) && !referenced.has(property)) {
         decl.remove()
       }
     })
@@ -166,7 +112,7 @@ export function transformLynxCssCompat(css: string) {
     const properties = collectTailwindThemeProperties(root)
     if (properties.size > 0) {
       root.walkDecls((decl) => {
-        decl.value = resolveThemeValue(decl.value, properties)
+        decl.value = resolveCustomPropertyVarValue(decl.value, properties)
       })
       removeConsumedThemeProperties(root, properties)
       postcss([postcssCalc()]).process(root, { from: undefined }).sync()

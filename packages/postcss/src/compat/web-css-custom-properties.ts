@@ -1,6 +1,7 @@
 import type { Node } from 'postcss-value-parser'
 import postcss from 'postcss'
 import valueParser from 'postcss-value-parser'
+import { decodeCssIdentifier, getCssAtRulePrelude, getCssCalcVariableReferences, getCssCustomPropertyName, hasCssFunction, isCssVarFunction } from '../utils/css-custom-property'
 
 const cssWideKeywords = new Set(['initial', 'inherit', 'unset', 'revert', 'revert-layer'])
 
@@ -8,8 +9,6 @@ export interface CustomPropertyValues {
   values: Map<string, string>
   dependencies: Set<string>
 }
-
-const customPropertyReferencePattern = /var\(\s*(--(?:\\.|[-\w])+)/gi
 
 function isRootScopeSelector(selector: string) {
   return postcss.list.comma(selector).every((part) => {
@@ -50,38 +49,52 @@ export function collectCustomPropertyValues(
   const dynamic = new Set<string>()
   const dependencies = new Set<string>()
 
-  root.walkDecls((decl) => {
-    if (!decl.prop.startsWith('--') || decl.prop.startsWith('--tw-')) {
+  root.walkAtRules((rule) => {
+    const prelude = getCssAtRulePrelude(rule)
+    if (prelude.name.toLowerCase() !== 'property') {
       return
     }
-    if (referencedProperties && !referencedProperties.has(decl.prop)) {
+    const property = getCssCustomPropertyName(prelude.params)
+    if (property) {
+      dynamic.add(property)
+    }
+  })
+
+  root.walkDecls((decl) => {
+    const property = getCssCustomPropertyName(decl.prop)
+    if (!property || property.startsWith('--tw-')) {
+      return
+    }
+    if (referencedProperties && !referencedProperties.has(property)) {
       return
     }
 
     const rule = decl.parent?.type === 'rule' ? decl.parent : undefined
     const value = decl.value.trim()
-    if (referencedProperties?.has(decl.prop)) {
-      for (const match of value.matchAll(customPropertyReferencePattern)) {
-        dependencies.add(match[1])
+    const elementDependent = hasCssFunction(value, 'attr')
+    if (referencedProperties?.has(property)) {
+      for (const dependency of getCssCalcVariableReferences(value).values()) {
+        dependencies.add(dependency)
       }
     }
     const isStableDeclaration = !!rule
       && isUnconditionalLayerScope(rule, root)
       && isRootScopeSelector(rule.selector)
       && !decl.important
-      && !cssWideKeywords.has(value.toLowerCase())
+      && !elementDependent
+      && !cssWideKeywords.has((decodeCssIdentifier(value) ?? value).toLowerCase())
 
     if (!isStableDeclaration) {
-      dynamic.add(decl.prop)
+      dynamic.add(property)
       return
     }
 
-    const previous = candidates.get(decl.prop)
-    if (previous && previous !== value) {
-      dynamic.add(decl.prop)
+    const previous = candidates.get(property)
+    if (candidates.has(property) && previous !== value) {
+      dynamic.add(property)
       return
     }
-    candidates.set(decl.prop, value)
+    candidates.set(property, value)
   })
 
   for (const property of dynamic) {
@@ -90,8 +103,9 @@ export function collectCustomPropertyValues(
 
   // 别名只有在其完整依赖链也静态可解析时才可参与 use-site 替换。
   const values = new Map<string, string>()
+  const memo = new Map<string, string | undefined>()
   for (const property of candidates.keys()) {
-    const value = resolveStaticCustomPropertyValue(property, candidates)
+    const value = resolveStaticCustomPropertyValue(property, candidates, new Set(), memo)
     if (value !== undefined) {
       values.set(property, value)
     }
@@ -101,10 +115,11 @@ export function collectCustomPropertyValues(
 }
 
 function getCustomPropertyReference(node: Node) {
-  if (node.type !== 'function' || node.value.toLowerCase() !== 'var') {
+  if (node.type !== 'function' || !isCssVarFunction(node.value)) {
     return undefined
   }
-  return node.nodes.find(child => child.type === 'word' && child.value.startsWith('--'))?.value
+  const comma = node.nodes.findIndex(child => child.type === 'div' && child.value === ',')
+  return getCssCustomPropertyName(valueParser.stringify(comma < 0 ? node.nodes : node.nodes.slice(0, comma)))
 }
 
 function replaceValueParserNode(node: Node, value: string) {
@@ -118,7 +133,11 @@ function resolveStaticCustomPropertyValue(
   property: string,
   customPropertyValues: ReadonlyMap<string, string>,
   resolving: ReadonlySet<string> = new Set(),
+  memo = new Map<string, string | undefined>(),
 ): string | undefined {
+  if (memo.has(property)) {
+    return memo.get(property)
+  }
   const value = customPropertyValues.get(property)
   if (value === undefined || resolving.has(property)) {
     return undefined
@@ -126,12 +145,20 @@ function resolveStaticCustomPropertyValue(
 
   // Tailwind 主题变量绝大多数是直接颜色或长度值。它们不包含变量引用，
   // 无需为每个声明构造 value-parser AST；只有别名链才需要递归解析。
-  if (!value.includes('var(')) {
+  if (!value.includes('(')) {
+    memo.set(property, value)
     return value
   }
 
   const nextResolving = new Set(resolving)
   nextResolving.add(property)
+  // 保守检查 fallback 依赖，避免删除尚未证明稳定的引用后改变变量有效性。
+  for (const dependency of getCssCalcVariableReferences(value).values()) {
+    if (resolveStaticCustomPropertyValue(dependency, customPropertyValues, nextResolving, memo) === undefined) {
+      memo.set(property, undefined)
+      return undefined
+    }
+  }
   const parsed = valueParser(value)
   let unresolved = false
   parsed.walk((node) => {
@@ -139,21 +166,23 @@ function resolveStaticCustomPropertyValue(
     if (!referencedProperty) {
       return
     }
-    const referencedValue = resolveStaticCustomPropertyValue(referencedProperty, customPropertyValues, nextResolving)
+    const referencedValue = memo.get(referencedProperty)
     if (referencedValue === undefined) {
       unresolved = true
       return
     }
     replaceValueParserNode(node, referencedValue)
   })
-  return unresolved ? undefined : parsed.toString()
+  const resolved = unresolved ? undefined : parsed.toString()
+  memo.set(property, resolved)
+  return resolved
 }
 
 export function resolveCustomPropertyVarValue(
   value: string,
   customPropertyValues: ReadonlyMap<string, string>,
 ) {
-  if (!value.includes('var(')) {
+  if (!value.includes('(')) {
     return value
   }
 
@@ -168,6 +197,10 @@ export function resolveCustomPropertyVarValue(
     if (customPropertyValue === undefined) {
       return
     }
+    // 不得在循环/动态声明内部删除仍影响 CSS 有效性的 fallback 依赖。
+    if ([...getCssCalcVariableReferences(valueParser.stringify(node)).values()].some(reference => !customPropertyValues.has(reference))) {
+      return
+    }
     replaceValueParserNode(node, customPropertyValue)
     changed = true
   })
@@ -178,14 +211,14 @@ export function usesResolvableTailwindColorVariable(
   value: string,
   customPropertyValues: ReadonlyMap<string, string>,
 ) {
-  if (!value.includes('var(')) {
+  if (!value.includes('(')) {
     return false
   }
 
   const parsed = valueParser(value)
   let usesColorVariable = false
   parsed.walk((node) => {
-    if (node.type !== 'function' || node.value.toLowerCase() !== 'var') {
+    if (node.type !== 'function' || !isCssVarFunction(node.value)) {
       return
     }
     const property = getCustomPropertyReference(node)
