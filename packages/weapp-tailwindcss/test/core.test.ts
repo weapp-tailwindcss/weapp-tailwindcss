@@ -1,9 +1,26 @@
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { scss as scssParser } from '@weapp-tailwindcss/postcss'
 import { createContext } from '@/core'
 
+const fixtureRoot = fileURLToPath(new URL('./fixtures/core-api/', import.meta.url))
+
+function createFixtureContext() {
+  return createContext({
+    tailwindcssBasedir: fixtureRoot,
+    tailwindcss: {
+      v4: {
+        base: fixtureRoot,
+        cssEntries: [path.join(fixtureRoot, 'input.css')],
+      },
+    },
+  })
+}
+
 describe('core', () => {
   it('common usage case 0', async () => {
-    const ctx = createContext()
+    const ctx = createFixtureContext()
+    expect(await ctx.getRuntimeSet()).toEqual(new Set(['mt-[8px]', 'mb-[1.5rem]']))
     const wxml = await ctx.transformWxml('<view class="mt-[8px]" wx:if="{{ xxx.length > 0 }}">')
     expect(wxml).toBe('<view class="mt-_b8px_B" wx:if="{{ xxx.length > 0 }}">')
     const { css: wxss, map: cssMap } = await ctx.transformWxss(`.after\\:ml-0\\.5::after {
@@ -28,7 +45,7 @@ view,text,::after,::before {
   }, 120_000)
 
   it('common usage case 1', async () => {
-    const ctx = createContext()
+    const ctx = createFixtureContext()
     const wxml = await ctx.transformWxml('<view class="mt-[8px]" wx:if="{{ xxx.length > 0 }}">')
     expect(wxml).toBe('<view class="mt-_b8px_B" wx:if="{{ xxx.length > 0 }}">')
     const { css, map: cssMap } = await ctx.transformWxss(`.after\\:ml-0\\.5::after {
@@ -51,7 +68,7 @@ view,text,::after,::before {
   }, 120_000)
 
   it('scss usage case 1', async () => {
-    const ctx = createContext()
+    const ctx = createFixtureContext()
     const wxml = await ctx.transformWxml('<view class="mt-[8px]" wx:if="{{ xxx.length > 0 }}">')
     expect(wxml).toBe('<view class="mt-_b8px_B" wx:if="{{ xxx.length > 0 }}">')
     const { css: wxss } = await ctx.transformWxss(`// xx`, {
@@ -73,7 +90,7 @@ view,text,::after,::before {
 
 describe('core transform functions', () => {
   it('should transform WXML with runtimeSet', async () => {
-    const ctx = createContext()
+    const ctx = createFixtureContext()
     const rawWxml = '<view class="mt-[8px]" wx:if="{{ xxx.length > 0 }}">'
     const runtimeSet = new Set(['mt-[8px]'])
     const options = { runtimeSet }
@@ -82,7 +99,7 @@ describe('core transform functions', () => {
   })
 
   it('should transform JS with runtimeSet', async () => {
-    const ctx = createContext()
+    const ctx = createFixtureContext()
     const rawJs = `const className = 'mb-[1.5rem]'`
     const runtimeSet = new Set(['mb-[1.5rem]'])
     const options = { runtimeSet }
@@ -91,7 +108,7 @@ describe('core transform functions', () => {
   })
 
   it('keeps API path string unchanged even when runtimeSet contains the same value', async () => {
-    const ctx = createContext()
+    const ctx = createFixtureContext()
     const rawJs = `call_api("order/get_order_amount", {}, "POST")`
     const runtimeSet = new Set(['order/get_order_amount'])
 
@@ -101,7 +118,7 @@ describe('core transform functions', () => {
   })
 
   it('transforms real classes while keeping polluted API, route and asset paths unchanged', async () => {
-    const ctx = createContext()
+    const ctx = createFixtureContext()
     const rawJs = [
       `const className = "text-[12px] w-1/2"`,
       `call_api("order/get_order_amount", {}, "POST")`,
@@ -125,7 +142,7 @@ describe('core transform functions', () => {
   })
 
   it('should handle empty runtimeSet', async () => {
-    const ctx = createContext()
+    const ctx = createFixtureContext()
     const rawWxml = '<view class="mt-[8px]" wx:if="{{ xxx.length > 0 }}">'
     const runtimeSet = new Set<string>()
 
@@ -138,7 +155,7 @@ describe('core transform functions', () => {
 
 describe('core hot update class escaping', () => {
   it('keeps newly added arbitrary class in js unchanged when runtimeSet is stale', async () => {
-    const ctx = createContext()
+    const ctx = createFixtureContext()
 
     await ctx.transformJs(`const initial = ['text-[12px]']`, {
       runtimeSet: new Set(['text-[12px]']),
@@ -149,7 +166,7 @@ describe('core hot update class escaping', () => {
   })
 
   it('keeps newly added dotted utility class in js unchanged when runtimeSet is stale', async () => {
-    const ctx = createContext()
+    const ctx = createFixtureContext()
 
     await ctx.transformJs(`const initial = ['space-y-2']`, {
       runtimeSet: new Set(['space-y-2']),
@@ -160,7 +177,7 @@ describe('core hot update class escaping', () => {
   })
 
   it('keeps newly added arbitrary class in wxml expression unchanged when runtimeSet is stale', async () => {
-    const ctx = createContext()
+    const ctx = createFixtureContext()
 
     const transformed = await ctx.transformWxml(
       `<view class="{{ isLarge ? 'text-[23.43px]' : 'text-[12px]' }}"></view>`,
@@ -174,7 +191,7 @@ describe('core hot update class escaping', () => {
   })
 
   it('keeps newly added dotted utility class in wxml expression unchanged when runtimeSet is stale', async () => {
-    const ctx = createContext()
+    const ctx = createFixtureContext()
 
     const transformed = await ctx.transformWxml(
       `<view class="{{ isLarge ? 'space-y-2.5' : 'space-y-2' }}"></view>`,
@@ -188,7 +205,7 @@ describe('core hot update class escaping', () => {
   })
 
   it('transforms arbitrary class in vue-like template class attribute', async () => {
-    const ctx = createContext()
+    const ctx = createFixtureContext()
     const transformed = await ctx.transformWxml('<view class="text-[23.43px]"></view>', {
       runtimeSet: new Set(['text-[12px]']),
     })

@@ -8,7 +8,7 @@ import {
 export * from './pipeline-helpers'
 
 export async function finalizeWebpackProcessAssets(context: any) {
-  const { activeProcessCacheKeys, activeProcessHashKeys, activeWebpackCssSourceFiles, compilerOptions, cssAssetResources, cssHandlerOptionsCache, cssTaskFactories, cssUserHandlerOptionsCache, debug, entries, groupedEntries, hmrTimingStartedAt, htmlTaskFactories, jsTaskFactories, pruneWebpackCssSources, recordTimingDetail, registeredWebpackCssSourceFiles, taskConcurrency, tasks, timingDetails, watchMode, webpackSourceCandidateScanCache } = context
+  const { activeProcessCacheKeys, activeProcessHashKeys, activeWebpackCssSourceFiles, compilerOptions, cssAssetResources, cssHandlerOptionsCache, cssTaskFactories, cssUserHandlerOptionsCache, debug, entries, finalizeCssAssets, groupedEntries, hmrTimingStartedAt, htmlTaskFactories, jsTaskFactories, pruneWebpackCssSources, recordTimingDetail, registeredWebpackCssSourceFiles, taskConcurrency, tasks, timingDetails, watchMode, webpackSourceCandidateScanCache } = context
   if (!watchMode) {
     pushConcurrentTaskFactories(tasks, htmlTaskFactories, taskConcurrency)
     await Promise.all(tasks)
@@ -22,6 +22,11 @@ export async function finalizeWebpackProcessAssets(context: any) {
   const taskWaitStartedAt = performance.now()
   await Promise.all(tasks)
   recordTimingDetail('tasks.wait', taskWaitStartedAt)
+  if (finalizeCssAssets) {
+    const finalizeStartedAt = performance.now()
+    await finalizeCssAssets()
+    recordTimingDetail('css.assets.finalize', finalizeStartedAt)
+  }
   const pruneStartedAt = performance.now()
   compilerOptions.cache.prune?.({
     cacheKeys: activeProcessCacheKeys,

@@ -572,6 +572,7 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
         css: [
           '.bg-gradient-to-br {',
           '  --tw-gradient-position: to bottom right in oklab;',
+          '  --tw-gradient-stops: var(--tw-gradient-position), #fff, #000;',
           '  background-image: linear-gradient(var(--tw-gradient-stops));',
           '}',
         ].join('\n'),
@@ -605,6 +606,8 @@ describe('bundlers/vite WeappTailwindcss hook coverage', () => {
       )
 
       expect(result?.code).toContain('--tw-gradient-position: to bottom right')
+      expect(result?.code).toContain('--tw-gradient-stops: var(--tw-gradient-position), #fff, #000')
+      expect(result?.code).toContain('background-image: linear-gradient(var(--tw-gradient-stops))')
       expect(result?.code).not.toContain('to bottom right in oklab')
       expect(mocks.generateTailwindV4Css).toHaveBeenCalledWith(expect.objectContaining({
         outputFile: 'src/main.css',

@@ -5213,7 +5213,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
           '.text-\\[45rpx\\]{font-size:45rpx}',
           '.space-y-2>:not([hidden])~:not([hidden]){margin-top:.5rem}',
           '.bg-radial{background-image:radial-gradient(circle,#fff,#000)}',
-          '.bg-gradient-to-br{--tw-gradient-position:to bottom right in oklab;background-image:linear-gradient(var(--tw-gradient-stops))}',
+          '.bg-gradient-to-br{--tw-gradient-position:to bottom right in oklab;--tw-gradient-stops:var(--tw-gradient-position),#fff,#000;background-image:linear-gradient(var(--tw-gradient-stops))}',
           '.p-5{padding:calc(var(--spacing)*5)}',
           '.bg-clip-text{background-clip:text}',
         ].join('\n')
@@ -5226,7 +5226,7 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
           '.text-_b45rpx_B{font-size:45rpx}',
           '.space-y-2>view+view{margin-top:.5rem}',
           '.bg-radial{background-image:radial-gradient(circle,#fff,#000)}',
-          '.bg-gradient-to-br{--tw-gradient-position:to bottom right;background-image:linear-gradient(var(--tw-gradient-stops))}',
+          '.bg-gradient-to-br{--tw-gradient-position:to bottom right;--tw-gradient-stops:var(--tw-gradient-position),#fff,#000;background-image:linear-gradient(var(--tw-gradient-stops))}',
         ].join('\n')
 
         return {
@@ -5402,6 +5402,8 @@ describe('bundlers/vite WeappTailwindcss bundle', () => {
       expect(appCss).toContain('.space-y-2')
       expect(appCss).toContain('radial-gradient')
       expect(appCss).toContain('--tw-gradient-position:to bottom right')
+      expect(appCss).toContain('--tw-gradient-stops:var(--tw-gradient-position),#fff,#000')
+      expect(appCss).toContain('background-image:linear-gradient(var(--tw-gradient-stops))')
       expect(appCss).not.toContain('to bottom right in oklab')
       expect(appCss).toContain(':root{--spacing:.25rem}')
       expect(appCss).toContain('.p-5{padding:calc(var(--spacing)*5)}')

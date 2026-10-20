@@ -448,6 +448,20 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
           cssUserHandlerOptionsCache,
           debug,
           entries,
+          finalizeCssAssets: isWebGeneratorTarget
+            ? () => {
+                // loader 阶段的本地导入尚未展开；在框架合并后、压缩与 Lynx 编码前补齐完整消费图兼容。
+                for (const [file] of groupedEntries.css) {
+                  const source = compilation.getAsset(file)?.source
+                  if (source) {
+                    const finalized = preserveProcessedWebpackCssSource(source, sources, generatorOptions.webCompat)
+                    if (finalized !== source) {
+                      updateAssetIfChanged(file, finalized, { compare: false })
+                    }
+                  }
+                }
+              }
+            : undefined,
           groupedEntries,
           hmrTimingStartedAt,
           htmlTaskFactories,

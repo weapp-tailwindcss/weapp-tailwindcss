@@ -53,6 +53,29 @@ describe('ReactLynx Rspeedy compatibility evidence', () => {
     expect(decodedCss).not.toBe('')
   })
 
+  it('本地导入合并后的完整渐变链在实际编码前降级且保留动态变量与作者重置', async () => {
+    const generated = await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8')
+    for (const css of [generated, decodedCss]) {
+      const positions: string[] = []
+      const dependencies: string[] = []
+      postcss.parse(css).walkRules((rule) => {
+        if (rule.selectors.includes('.bg-linear-to-r')) {
+          rule.walkDecls('--tw-gradient-position', (decl) => {
+            positions.push(decl.value)
+          })
+          rule.walkDecls('background-image', (decl) => {
+            dependencies.push(decl.value)
+          })
+        }
+      })
+      expect(positions.length).toBeGreaterThan(0)
+      expect(positions.every(value => value === 'to right')).toBe(true)
+      expect(dependencies).toEqual([expect.stringMatching(/^linear-gradient\(\s*var\(--tw-gradient-stops\)\s*\)$/)])
+      expect(css).toMatch(/--tw-gradient-position:\s*initial\s*;/)
+      expect(css).toContain('var(--tw-gradient-position)')
+    }
+  })
+
   it('响应式真实构建与实际解码保留唯一媒体 utility 和完整一致的标尺副本', async () => {
     const css = await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8')
     expect(() => assertResponsiveGuard(parseGeneratedRules(css), 'generation')).not.toThrow()
