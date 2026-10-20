@@ -273,6 +273,24 @@ head `a10ef71036e9ea923da4bc79b046861c34fde81d` 的 Benchmark run `39479576075`�
 
 红绿原始日志位于 `.tmp/author-values-{persistent-red,query-red,browser-persistent-red,postcss-full,generator-green,lynx-green,browser-final}.log`。本批没有证明跨独立 stylesheet、运行时未知消费或旧引擎混合渐变效果，全面验收仍为 partial；性能门禁与 Taro Vite Harmony 空白的首次失败单独保留，不能由本批通过覆盖。
 
+### Taro Vite Harmony 的生产空白根因
+
+全面验收的定向补证暴露三个 Vite Harmony hybrid 项目在浏览器中没有有效页面，不能把构建成功计为运行成功。Taro 4.2.1 平台只注册 Webpack 适配，Vite 缺少平台 alias、组件初始化与应用 API 转换；框架 hooks 只匹配 H5 API；runner 没有等待异步配置钩子，SPA/MPA 又沿用普通 H5 rem 策略。这些是不同生命周期缺口，不能靠补一条样式或放宽尺寸期望解决。
+
+四份固定版本依赖补丁从平台 getter、compiler context、框架 API load 和 HTML transform 边界接通 Vite；路由 API 排除与 Webpack 保持一致，Babel 通过 packageExtensions 明确依赖。现有不完整 loaderMeta、Windows CSS 模块字面量、盘符与相对路径归属均有失败回归。真实发行包源码同时验证开发 optimizer、生产 load 的 H5/hybrid 绑定，SPA/MPA 的实际 transformIndexHtml 验证平台 rem；普通 H5 的短边、min/max 与 resize 策略不变。
+
+首次生命周期与 rem 回归 13 项失败，平台与 hooks 回归 6 项失败；后续元数据与 Windows 字面量又得到 3 项失败。修复后新增四文件 35 项通过，完整 `CI=1 pnpm test:demo:matrix` 为 50 文件、356 项通过。五项目十组合的报告门禁继续拒绝缺生产证据、错误颜色、缺属性和错误尺寸；Vite Harmony 三项缺证红例修复后进入默认门禁。
+
+三个 Vite Harmony 生产产物的真实后台 Chromium 计算样式、几何和独立像素参考全部通过；两个 Webpack Harmony 与三个 Vite H5 生产对照也通过。H5 此处使用 `--build-only`，没有执行开发与 HMR，不能计为完整矩阵通过。锁文件只保留四份补丁、显式 Babel 边与对应 peer 身份，撤销安装器重解造成的无关 PostCSS、Node 类型及 optional 漂移，`pnpm install --frozen-lockfile` 成功。补丁只作用于仓库冻结安装；来源、移除条件与回归入口见 demo-matrix 手册，不随产品 npm 包发布，也不证明 Harmony 设备运行。
+
+仅对三个 Vite Harmony 目标执行 `CI=1 pnpm e2e:demo:matrix <三个目标> --build-only --update` 重新生成 static，审查确认零差异，再以同样目标去掉 `--update` 复跑全部通过；正常流程不更新基线。原始日志为 `.tmp/taro-harmony-{static-update,static-none,production-controls,matrix-tests}.log`，完整 CSS、JS、生产截图和计算样式在 `e2e/.artifacts/demo-matrix/`。ESLint、diff、agents（67 规则、346 文档、1,005 命令，零错误）与 release status 通过。
+
+### 当前性能证据的范围
+
+基于干净 `26e003fe2361f60e852f1f9908d1b718b5fd2f4a` 与起始 main 的两侧新安装、新构建，仅选择 Taro Vite React 微信目标，执行带内存 preload 的阶段诊断。HMR 插件样本 `[792,742,712]` 对 `[734,768,704]`，中位数 742→734ms；构建插件中位数 2,474→2,589ms。它使用 macOS arm64/Node 24.18.0，既不同于原 CI 的 Ubuntu/Node 22，也不同于原 `61d8cb1f2` 源码。诊断改变了采集环境，不能代替正式性能门禁，不能覆盖原 CI 的 +16.64% 失败。
+
+四个阶段钩子均实际执行，主 app CSS 生成约 520–556ms；目前子阶段只归属其中约 60ms，无法指认原来的 333ms 增量。mutation 与 rollback 日志混合且缺轮次身份，另有 task 文件标签遗漏；现有证据尚未证明选错样本。根因仍为 unknown，不修改阈值或以一次本地通过认定问题消除。报告、来源身份和逐进程 NDJSON 保存在 `.tmp/benchmark-26e003f-phase/`。
+
 ## 规则评估
 
 decoder 固定资源有独立安全边界，迁入发布包后沿用其局部 AGENTS 并登记索引；仓库其他硬规则和验收门槛没有放宽。旧复盘保留历史 SHA 与结果，只修复资源移动后的断链，不把旧证据改为本轮通过。

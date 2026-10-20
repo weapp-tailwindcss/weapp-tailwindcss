@@ -786,11 +786,17 @@ overrides:
   '@docusaurus/theme-classic>postcss': 8.5.30
   weapp-vite>weapp-tailwindcss: workspace:*
 
+packageExtensionsChecksum: sha256-AnfQroO3B91A4adanECz855ETxZRheZ1BPvbp/gL2ng=
+
 pnpmfileChecksum: sha256-VIhHxkE3DlYGW4jpmh5YBZoirXpyRMuq7rJOkofCfW8=
 
 patchedDependencies:
   '@lynx-js/tasm@0.0.49': e2e1266af5632f896856ce8dcb33b316bde11f5cd7fec46dd28dab7b80d7b545
   '@mpxjs/vue-cli-plugin-mpx@2.2.30': a26ae7412b1d225b09da9131a7271eb03aa6e17e9b0b3e83c7177bf1d4119eeb
+  '@tarojs/plugin-framework-react@4.2.1': 69d9c3dae39e9245db2c969fc598f56fed102e04a4d0dce1a34a1d3f172e6815
+  '@tarojs/plugin-framework-vue3@4.2.1': ad0d2582e576364129eef758b3aa8ff228baf189f721007ef88ec8a35476b0bf
+  '@tarojs/plugin-platform-harmony-hybrid@4.2.1': 71f7f5f37957b8c47423905d01a770699136d125edafaa5f40395de8255165e7
+  '@tarojs/vite-runner@4.2.1': c5e586a2020326c21d669dadbf56da9767e40343d5f991eee1a8f4331647f09c
   nitropack@2.13.4: d0cbcb54a52558c28137353e5237e87891cab448f0ef1a833a8e76210a582ded
   rollup@3.30.0: 7f5990f539a54a54986d73199e3991f28c613c939aba2bc603a6d76a36ee6b0c
   rollup@4.63.0: 65cee3412343a019ac5e5de65c7a8d7c2b4597651bfab76220c799c6024592dd
@@ -1788,7 +1794,7 @@ importers:
         version: 4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2)
       '@tarojs/plugin-framework-react':
         specifier: catalog:taro4
-        version: 4.2.1(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.18.0)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)
+        version: 4.2.1(patch_hash=69d9c3dae39e9245db2c969fc598f56fed102e04a4d0dce1a34a1d3f172e6815)(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.18.0)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)
       '@tarojs/plugin-html':
         specifier: catalog:taro4
         version: 4.2.1(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)
@@ -1800,7 +1806,7 @@ importers:
         version: 4.2.1(6e3b39a8cd325fccfcf9f0daf0320405)
       '@tarojs/plugin-platform-harmony-hybrid':
         specifier: catalog:taro4
-        version: 4.2.1(4213135e8a188abb5a2b49d2787cb13e)
+        version: 4.2.1(patch_hash=71f7f5f37957b8c47423905d01a770699136d125edafaa5f40395de8255165e7)(70c938276382fc0980f006acc2ff9dbb)
       '@tarojs/plugin-platform-jd':
         specifier: catalog:taro4
         version: 4.2.1(@tarojs/service@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/shared@4.2.1)
@@ -1927,7 +1933,7 @@ importers:
         version: 4.2.1(9576b08b99efb401de1810346cd79a68)
       '@tarojs/vite-runner':
         specifier: catalog:taro4
-        version: 4.2.1(@swc/helpers@0.5.23)(@tarojs/runtime@4.2.1)(@types/babel__core@7.20.5)(jiti@2.7.0)(postcss@8.5.30)(rollup@3.30.0(patch_hash=7f5990f539a54a54986d73199e3991f28c613c939aba2bc603a6d76a36ee6b0c))(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.15)(typescript@6.0.3)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))
+        version: 4.2.1(patch_hash=c5e586a2020326c21d669dadbf56da9767e40343d5f991eee1a8f4331647f09c)(@swc/helpers@0.5.23)(@tarojs/runtime@4.2.1)(@types/babel__core@7.20.5)(jiti@2.7.0)(postcss@8.5.30)(rollup@3.30.0(patch_hash=7f5990f539a54a54986d73199e3991f28c613c939aba2bc603a6d76a36ee6b0c))(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.15)(typescript@6.0.3)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))
       '@types/react':
         specifier: catalog:react18
         version: 19.2.18
@@ -2320,7 +2326,7 @@ importers:
         version: 4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2)
       '@tarojs/plugin-framework-react':
         specifier: catalog:taro4
-        version: 4.2.1(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.14.2)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)
+        version: 4.2.1(patch_hash=69d9c3dae39e9245db2c969fc598f56fed102e04a4d0dce1a34a1d3f172e6815)(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.14.2)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)
       '@tarojs/plugin-platform-h5':
         specifier: catalog:taro4
         version: 4.2.1(6e3b39a8cd325fccfcf9f0daf0320405)
@@ -2375,7 +2381,7 @@ importers:
         version: 4.2.1(@swc/helpers@0.5.23)(@types/node@26.6.5)(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)
       '@tarojs/vite-runner':
         specifier: catalog:taro4
-        version: 4.2.1(@swc/helpers@0.5.23)(@tarojs/runtime@4.2.1)(@types/babel__core@7.20.5)(jiti@2.7.0)(postcss@8.5.30)(rollup@3.30.0(patch_hash=7f5990f539a54a54986d73199e3991f28c613c939aba2bc603a6d76a36ee6b0c))(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.15)(typescript@6.0.3)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))
+        version: 4.2.1(patch_hash=c5e586a2020326c21d669dadbf56da9767e40343d5f991eee1a8f4331647f09c)(@swc/helpers@0.5.23)(@tarojs/runtime@4.2.1)(@types/babel__core@7.20.5)(jiti@2.7.0)(postcss@8.5.30)(rollup@3.30.0(patch_hash=7f5990f539a54a54986d73199e3991f28c613c939aba2bc603a6d76a36ee6b0c))(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.15)(typescript@6.0.3)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))
       '@types/node':
         specifier: catalog:typesNode2410
         version: 26.6.5
@@ -2417,7 +2423,7 @@ importers:
         version: 4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2)
       '@tarojs/plugin-framework-react':
         specifier: catalog:taro4
-        version: 4.2.1(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.18.0)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)
+        version: 4.2.1(patch_hash=69d9c3dae39e9245db2c969fc598f56fed102e04a4d0dce1a34a1d3f172e6815)(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.18.0)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)
       '@tarojs/plugin-platform-h5':
         specifier: catalog:taro4
         version: 4.2.1(b2469a2061936f9e380c8493249e0196)
@@ -2605,7 +2611,7 @@ importers:
         version: 4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2)
       '@tarojs/plugin-framework-react':
         specifier: catalog:taro4
-        version: 4.2.1(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.18.0)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)
+        version: 4.2.1(patch_hash=69d9c3dae39e9245db2c969fc598f56fed102e04a4d0dce1a34a1d3f172e6815)(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.18.0)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)
       '@tarojs/plugin-html':
         specifier: catalog:taro4
         version: 4.2.1(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)
@@ -2853,7 +2859,7 @@ importers:
         version: 4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2)
       '@tarojs/plugin-framework-react':
         specifier: catalog:taro4
-        version: 4.2.1(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.18.0)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)
+        version: 4.2.1(patch_hash=69d9c3dae39e9245db2c969fc598f56fed102e04a4d0dce1a34a1d3f172e6815)(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.18.0)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)
       '@tarojs/plugin-html':
         specifier: catalog:taro4
         version: 4.2.1(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)
@@ -2865,7 +2871,7 @@ importers:
         version: 4.2.1(6e3b39a8cd325fccfcf9f0daf0320405)
       '@tarojs/plugin-platform-harmony-hybrid':
         specifier: catalog:taro4
-        version: 4.2.1(4213135e8a188abb5a2b49d2787cb13e)
+        version: 4.2.1(patch_hash=71f7f5f37957b8c47423905d01a770699136d125edafaa5f40395de8255165e7)(70c938276382fc0980f006acc2ff9dbb)
       '@tarojs/plugin-platform-jd':
         specifier: catalog:taro4
         version: 4.2.1(@tarojs/service@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/shared@4.2.1)
@@ -2992,7 +2998,7 @@ importers:
         version: 4.2.1(9576b08b99efb401de1810346cd79a68)
       '@tarojs/vite-runner':
         specifier: catalog:taro4
-        version: 4.2.1(@swc/helpers@0.5.23)(@tarojs/runtime@4.2.1)(@types/babel__core@7.20.5)(jiti@2.7.0)(postcss@8.5.30)(rollup@3.30.0(patch_hash=7f5990f539a54a54986d73199e3991f28c613c939aba2bc603a6d76a36ee6b0c))(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.15)(typescript@6.0.3)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))
+        version: 4.2.1(patch_hash=c5e586a2020326c21d669dadbf56da9767e40343d5f991eee1a8f4331647f09c)(@swc/helpers@0.5.23)(@tarojs/runtime@4.2.1)(@types/babel__core@7.20.5)(jiti@2.7.0)(postcss@8.5.30)(rollup@3.30.0(patch_hash=7f5990f539a54a54986d73199e3991f28c613c939aba2bc603a6d76a36ee6b0c))(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.15)(typescript@6.0.3)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))
       '@types/react':
         specifier: catalog:react18
         version: 19.2.18
@@ -3088,7 +3094,7 @@ importers:
         version: 4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2)
       '@tarojs/plugin-framework-vue3':
         specifier: catalog:taro4
-        version: 4.2.1(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runner-utils@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-vue-jsx@3.1.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue@3.5.43(typescript@6.0.3)))(@vitejs/plugin-vue@4.6.2(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue@3.5.43(typescript@6.0.3)))(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue-loader@17.4.2(@vue/compiler-sfc@3.5.43)(vue@3.5.43(typescript@6.0.3))(webpack@5.105.4))(vue@3.5.43(typescript@6.0.3))(webpack@5.105.4)
+        version: 4.2.1(patch_hash=ad0d2582e576364129eef758b3aa8ff228baf189f721007ef88ec8a35476b0bf)(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runner-utils@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-vue-jsx@3.1.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue@3.5.43(typescript@6.0.3)))(@vitejs/plugin-vue@4.6.2(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue@3.5.43(typescript@6.0.3)))(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue-loader@17.4.2(@vue/compiler-sfc@3.5.43)(vue@3.5.43(typescript@6.0.3))(webpack@5.105.4))(vue@3.5.43(typescript@6.0.3))(webpack@5.105.4)
       '@tarojs/plugin-html':
         specifier: catalog:taro4
         version: 4.2.1(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)
@@ -3100,7 +3106,7 @@ importers:
         version: 4.2.1(6e3b39a8cd325fccfcf9f0daf0320405)
       '@tarojs/plugin-platform-harmony-hybrid':
         specifier: catalog:taro4
-        version: 4.2.1(4213135e8a188abb5a2b49d2787cb13e)
+        version: 4.2.1(patch_hash=71f7f5f37957b8c47423905d01a770699136d125edafaa5f40395de8255165e7)(70c938276382fc0980f006acc2ff9dbb)
       '@tarojs/plugin-platform-jd':
         specifier: catalog:taro4
         version: 4.2.1(@tarojs/service@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/shared@4.2.1)
@@ -3227,7 +3233,7 @@ importers:
         version: 4.2.1(9576b08b99efb401de1810346cd79a68)
       '@tarojs/vite-runner':
         specifier: catalog:taro4
-        version: 4.2.1(@swc/helpers@0.5.23)(@tarojs/runtime@4.2.1)(@types/babel__core@7.20.5)(jiti@2.7.0)(postcss@8.5.30)(rollup@3.30.0(patch_hash=7f5990f539a54a54986d73199e3991f28c613c939aba2bc603a6d76a36ee6b0c))(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.15)(typescript@6.0.3)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))
+        version: 4.2.1(patch_hash=c5e586a2020326c21d669dadbf56da9767e40343d5f991eee1a8f4331647f09c)(@swc/helpers@0.5.23)(@tarojs/runtime@4.2.1)(@types/babel__core@7.20.5)(jiti@2.7.0)(postcss@8.5.30)(rollup@3.30.0(patch_hash=7f5990f539a54a54986d73199e3991f28c613c939aba2bc603a6d76a36ee6b0c))(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.15)(typescript@6.0.3)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))
       '@types/react':
         specifier: catalog:react18
         version: 19.2.18
@@ -3326,7 +3332,7 @@ importers:
         version: 4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2)
       '@tarojs/plugin-framework-react':
         specifier: catalog:taro4
-        version: 4.2.1(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.18.0)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)
+        version: 4.2.1(patch_hash=69d9c3dae39e9245db2c969fc598f56fed102e04a4d0dce1a34a1d3f172e6815)(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.18.0)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)
       '@tarojs/plugin-html':
         specifier: catalog:taro4
         version: 4.2.1(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)
@@ -3338,7 +3344,7 @@ importers:
         version: 4.2.1(b2469a2061936f9e380c8493249e0196)
       '@tarojs/plugin-platform-harmony-hybrid':
         specifier: catalog:taro4
-        version: 4.2.1(7b126a53cc6d11135bd32930bf51b00b)
+        version: 4.2.1(patch_hash=71f7f5f37957b8c47423905d01a770699136d125edafaa5f40395de8255165e7)(0589fca44d3e21a50fdd62328031beb3)
       '@tarojs/plugin-platform-jd':
         specifier: catalog:taro4
         version: 4.2.1(@tarojs/service@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/shared@4.2.1)
@@ -3540,7 +3546,7 @@ importers:
         version: 4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2)
       '@tarojs/plugin-framework-vue3':
         specifier: catalog:taro4
-        version: 4.2.1(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runner-utils@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-vue-jsx@3.1.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue@3.5.43(typescript@6.0.3)))(@vitejs/plugin-vue@4.6.2(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue@3.5.43(typescript@6.0.3)))(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue-loader@17.4.2(@vue/compiler-sfc@3.5.43)(vue@3.5.43(typescript@6.0.3))(webpack@5.105.4))(vue@3.5.43(typescript@6.0.3))(webpack@5.105.4)
+        version: 4.2.1(patch_hash=ad0d2582e576364129eef758b3aa8ff228baf189f721007ef88ec8a35476b0bf)(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runner-utils@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-vue-jsx@3.1.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue@3.5.43(typescript@6.0.3)))(@vitejs/plugin-vue@4.6.2(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue@3.5.43(typescript@6.0.3)))(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue-loader@17.4.2(@vue/compiler-sfc@3.5.43)(vue@3.5.43(typescript@6.0.3))(webpack@5.105.4))(vue@3.5.43(typescript@6.0.3))(webpack@5.105.4)
       '@tarojs/plugin-html':
         specifier: catalog:taro4
         version: 4.2.1(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)
@@ -3552,7 +3558,7 @@ importers:
         version: 4.2.1(b2469a2061936f9e380c8493249e0196)
       '@tarojs/plugin-platform-harmony-hybrid':
         specifier: catalog:taro4
-        version: 4.2.1(7b126a53cc6d11135bd32930bf51b00b)
+        version: 4.2.1(patch_hash=71f7f5f37957b8c47423905d01a770699136d125edafaa5f40395de8255165e7)(0589fca44d3e21a50fdd62328031beb3)
       '@tarojs/plugin-platform-jd':
         specifier: catalog:taro4
         version: 4.2.1(@tarojs/service@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/shared@4.2.1)
@@ -5572,7 +5578,7 @@ importers:
         version: 4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2)
       '@tarojs/plugin-framework-react':
         specifier: catalog:taro4
-        version: 4.2.1(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.14.2)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@5.4.21(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@5.4.21(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)
+        version: 4.2.1(patch_hash=69d9c3dae39e9245db2c969fc598f56fed102e04a4d0dce1a34a1d3f172e6815)(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.14.2)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@5.4.21(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@5.4.21(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)
       '@tarojs/plugin-platform-h5':
         specifier: catalog:taro4
         version: 4.2.1(6e3b39a8cd325fccfcf9f0daf0320405)
@@ -5609,7 +5615,7 @@ importers:
         version: 4.2.1(@swc/helpers@0.5.23)(@types/node@26.6.5)(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)
       '@tarojs/vite-runner':
         specifier: catalog:taro4
-        version: 4.2.1(@swc/helpers@0.5.23)(@tarojs/runtime@4.2.1)(@types/babel__core@7.20.5)(jiti@2.7.0)(postcss@8.5.30)(rollup@3.30.0(patch_hash=7f5990f539a54a54986d73199e3991f28c613c939aba2bc603a6d76a36ee6b0c))(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.15)(typescript@6.0.3)(vite@5.4.21(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))
+        version: 4.2.1(patch_hash=c5e586a2020326c21d669dadbf56da9767e40343d5f991eee1a8f4331647f09c)(@swc/helpers@0.5.23)(@tarojs/runtime@4.2.1)(@types/babel__core@7.20.5)(jiti@2.7.0)(postcss@8.5.30)(rollup@3.30.0(patch_hash=7f5990f539a54a54986d73199e3991f28c613c939aba2bc603a6d76a36ee6b0c))(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.15)(typescript@6.0.3)(vite@5.4.21(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))
       '@types/node':
         specifier: catalog:typesNode2410
         version: 26.6.5
@@ -5657,7 +5663,7 @@ importers:
         version: 4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2)
       '@tarojs/plugin-framework-react':
         specifier: catalog:taro4
-        version: 4.2.1(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.18.0)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)
+        version: 4.2.1(patch_hash=69d9c3dae39e9245db2c969fc598f56fed102e04a4d0dce1a34a1d3f172e6815)(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.18.0)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)
       '@tarojs/plugin-platform-h5':
         specifier: catalog:taro4
         version: 4.2.1(b2469a2061936f9e380c8493249e0196)
@@ -50359,7 +50365,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@tarojs/plugin-framework-react@4.2.1(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.18.0)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)':
+  '@tarojs/plugin-framework-react@4.2.1(patch_hash=69d9c3dae39e9245db2c969fc598f56fed102e04a4d0dce1a34a1d3f172e6815)(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.18.0)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)':
     dependencies:
       '@tarojs/helper': 4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2)
       '@tarojs/runtime': 4.2.1
@@ -50375,7 +50381,7 @@ snapshots:
       vite: 4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)
       webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.21.5)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
-  '@tarojs/plugin-framework-react@4.2.1(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.14.2)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)':
+  '@tarojs/plugin-framework-react@4.2.1(patch_hash=69d9c3dae39e9245db2c969fc598f56fed102e04a4d0dce1a34a1d3f172e6815)(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.14.2)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)':
     dependencies:
       '@tarojs/helper': 4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2)
       '@tarojs/runtime': 4.2.1
@@ -50391,7 +50397,7 @@ snapshots:
       vite: 4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)
       webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
-  '@tarojs/plugin-framework-react@4.2.1(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.14.2)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@5.4.21(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@5.4.21(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)':
+  '@tarojs/plugin-framework-react@4.2.1(patch_hash=69d9c3dae39e9245db2c969fc598f56fed102e04a4d0dce1a34a1d3f172e6815)(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.14.2)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@5.4.21(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@5.4.21(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)':
     dependencies:
       '@tarojs/helper': 4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2)
       '@tarojs/runtime': 4.2.1
@@ -50407,7 +50413,7 @@ snapshots:
       vite: 5.4.21(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)
       webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
-  '@tarojs/plugin-framework-react@4.2.1(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.18.0)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)':
+  '@tarojs/plugin-framework-react@4.2.1(patch_hash=69d9c3dae39e9245db2c969fc598f56fed102e04a4d0dce1a34a1d3f172e6815)(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.18.0)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)':
     dependencies:
       '@tarojs/helper': 4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2)
       '@tarojs/runtime': 4.2.1
@@ -50423,7 +50429,7 @@ snapshots:
       vite: 4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)
       webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
-  '@tarojs/plugin-framework-react@4.2.1(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.18.0)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)':
+  '@tarojs/plugin-framework-react@4.2.1(patch_hash=69d9c3dae39e9245db2c969fc598f56fed102e04a4d0dce1a34a1d3f172e6815)(@pmmmwh/react-refresh-webpack-plugin@0.6.3(@types/webpack@5.28.5(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3))(react-refresh@0.18.0)(type-fest@5.10.0)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-react@4.7.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)))(react@18.3.1)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(webpack@5.105.4)':
     dependencies:
       '@tarojs/helper': 4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2)
       '@tarojs/runtime': 4.2.1
@@ -50439,7 +50445,7 @@ snapshots:
       vite: 4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)
       webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3)
 
-  '@tarojs/plugin-framework-vue3@4.2.1(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runner-utils@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-vue-jsx@3.1.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue@3.5.43(typescript@6.0.3)))(@vitejs/plugin-vue@4.6.2(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue@3.5.43(typescript@6.0.3)))(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue-loader@17.4.2(@vue/compiler-sfc@3.5.43)(vue@3.5.43(typescript@6.0.3))(webpack@5.105.4))(vue@3.5.43(typescript@6.0.3))(webpack@5.105.4)':
+  '@tarojs/plugin-framework-vue3@4.2.1(patch_hash=ad0d2582e576364129eef758b3aa8ff228baf189f721007ef88ec8a35476b0bf)(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runner-utils@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-vue-jsx@3.1.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue@3.5.43(typescript@6.0.3)))(@vitejs/plugin-vue@4.6.2(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue@3.5.43(typescript@6.0.3)))(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue-loader@17.4.2(@vue/compiler-sfc@3.5.43)(vue@3.5.43(typescript@6.0.3))(webpack@5.105.4))(vue@3.5.43(typescript@6.0.3))(webpack@5.105.4)':
     dependencies:
       '@tarojs/helper': 4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2)
       '@tarojs/runner-utils': 4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2)
@@ -50455,8 +50461,8 @@ snapshots:
       '@vitejs/plugin-vue-jsx': 3.1.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue@3.5.43(typescript@6.0.3))
       vite: 4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2)
 
-  '@tarojs/plugin-framework-vue3@4.2.1(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runner-utils@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-vue-jsx@3.1.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue@3.5.43(typescript@6.0.3)))(@vitejs/plugin-vue@4.6.2(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue@3.5.43(typescript@6.0.3)))(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue-loader@17.4.2(@vue/compiler-sfc@3.5.43)(vue@3.5.43(typescript@6.0.3))(webpack@5.105.4))(vue@3.5.43(typescript@6.0.3))(webpack@5.105.4)':
-    dependencies:
+  ? '@tarojs/plugin-framework-vue3@4.2.1(patch_hash=ad0d2582e576364129eef758b3aa8ff228baf189f721007ef88ec8a35476b0bf)(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runner-utils@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@vitejs/plugin-vue-jsx@3.1.0(supports-color@10.2.2)(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue@3.5.43(typescript@6.0.3)))(@vitejs/plugin-vue@4.6.2(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue@3.5.43(typescript@6.0.3)))(vite@4.5.14(@types/node@26.6.5)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))(vue-loader@17.4.2(@vue/compiler-sfc@3.5.43)(vue@3.5.43(typescript@6.0.3))(webpack@5.105.4))(vue@3.5.43(typescript@6.0.3))(webpack@5.105.4)'
+  : dependencies:
       '@tarojs/helper': 4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2)
       '@tarojs/runner-utils': 4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2)
       '@tarojs/runtime': 4.2.1
@@ -50540,45 +50546,9 @@ snapshots:
       - webpack-chain
       - webpack-dev-server
 
-  '@tarojs/plugin-platform-harmony-hybrid@4.2.1(4213135e8a188abb5a2b49d2787cb13e)':
+  '@tarojs/plugin-platform-harmony-hybrid@4.2.1(patch_hash=71f7f5f37957b8c47423905d01a770699136d125edafaa5f40395de8255165e7)(0589fca44d3e21a50fdd62328031beb3)':
     dependencies:
-      '@tarojs/api': 4.2.1(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)
-      '@tarojs/components': 4.2.1(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@types/react@19.2.18)(html-webpack-plugin@5.6.8(@rspack/core@2.2.8(@swc/helpers@0.5.23))(webpack@5.105.4))(postcss@8.5.30)(rollup@3.30.0(patch_hash=7f5990f539a54a54986d73199e3991f28c613c939aba2bc603a6d76a36ee6b0c))(vue@3.5.43(typescript@6.0.3))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2)(webpack@5.105.4)
-      '@tarojs/components-react': 4.2.1(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@types/react@19.2.18)(html-webpack-plugin@5.6.8(@rspack/core@2.2.8(@swc/helpers@0.5.23))(webpack@5.105.4))(postcss@8.5.30)(react@18.3.1)(rollup@3.30.0(patch_hash=7f5990f539a54a54986d73199e3991f28c613c939aba2bc603a6d76a36ee6b0c))(solid-js@1.9.10)(vue@3.5.43(typescript@6.0.3))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2)(webpack@5.105.4)
-      '@tarojs/helper': 4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2)
-      '@tarojs/plugin-platform-h5': 4.2.1(6e3b39a8cd325fccfcf9f0daf0320405)
-      '@tarojs/router': 4.2.1(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@tarojs/taro@4.2.1(@tarojs/components@4.2.1(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@types/react@19.2.18)(html-webpack-plugin@5.6.8(@rspack/core@2.2.8(@swc/helpers@0.5.23))(webpack@5.105.4))(postcss@8.5.30)(rollup@3.30.0(patch_hash=7f5990f539a54a54986d73199e3991f28c613c939aba2bc603a6d76a36ee6b0c))(vue@3.5.43(typescript@6.0.3))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/shared@4.2.1)(@types/react@19.2.18)(html-webpack-plugin@5.6.8(@rspack/core@2.2.8(@swc/helpers@0.5.23))(webpack@5.105.4))(postcss@8.5.30)(rollup@3.30.0(patch_hash=7f5990f539a54a54986d73199e3991f28c613c939aba2bc603a6d76a36ee6b0c))(vue@3.5.43(typescript@6.0.3))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2)(webpack@5.105.4))
-      '@tarojs/runtime': 4.2.1
-      '@tarojs/service': 4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2)
-      '@tarojs/shared': 4.2.1
-      '@tarojs/taro-h5': 4.2.1(415595b6e3ebcaa3d0509a066e44ef3f)
-      axios: 1.17.0(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)
-      babel-plugin-transform-taroapi: 4.2.1(@babel/core@7.29.7(supports-color@10.2.2))
-      base64-js: 1.5.1
-      change-case: 4.1.2
-      jsonp-retry: 1.0.3
-      lodash-es: 4.17.21
-      query-string: 9.3.1
-      react: 18.3.1
-      whatwg-fetch: 3.6.20
-    transitivePeerDependencies:
-      - '@babel/core'
-      - '@swc/helpers'
-      - '@tarojs/taro'
-      - '@types/react'
-      - debug
-      - html-webpack-plugin
-      - postcss
-      - rollup
-      - solid-js
-      - supports-color
-      - vue
-      - webpack
-      - webpack-chain
-      - webpack-dev-server
-
-  '@tarojs/plugin-platform-harmony-hybrid@4.2.1(7b126a53cc6d11135bd32930bf51b00b)':
-    dependencies:
+      '@babel/core': 7.29.7(supports-color@10.2.2)
       '@tarojs/api': 4.2.1(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)
       '@tarojs/components': 4.2.1(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@types/react@19.2.18)(html-webpack-plugin@5.6.8(@rspack/core@1.7.11(@swc/helpers@0.5.23))(webpack@5.105.4))(postcss@8.5.30)(rollup@3.30.0(patch_hash=7f5990f539a54a54986d73199e3991f28c613c939aba2bc603a6d76a36ee6b0c))(vue@3.5.43(typescript@6.0.3))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2)(webpack@5.105.4)
       '@tarojs/components-react': 4.2.1(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@types/react@19.2.18)(html-webpack-plugin@5.6.8(@rspack/core@1.7.11(@swc/helpers@0.5.23))(webpack@5.105.4))(postcss@8.5.30)(react@18.3.1)(rollup@3.30.0(patch_hash=7f5990f539a54a54986d73199e3991f28c613c939aba2bc603a6d76a36ee6b0c))(solid-js@1.9.10)(vue@3.5.43(typescript@6.0.3))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2)(webpack@5.105.4)
@@ -50599,7 +50569,43 @@ snapshots:
       react: 18.3.1
       whatwg-fetch: 3.6.20
     transitivePeerDependencies:
-      - '@babel/core'
+      - '@swc/helpers'
+      - '@tarojs/taro'
+      - '@types/react'
+      - debug
+      - html-webpack-plugin
+      - postcss
+      - rollup
+      - solid-js
+      - supports-color
+      - vue
+      - webpack
+      - webpack-chain
+      - webpack-dev-server
+
+  '@tarojs/plugin-platform-harmony-hybrid@4.2.1(patch_hash=71f7f5f37957b8c47423905d01a770699136d125edafaa5f40395de8255165e7)(70c938276382fc0980f006acc2ff9dbb)':
+    dependencies:
+      '@babel/core': 7.29.7(supports-color@10.2.2)
+      '@tarojs/api': 4.2.1(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)
+      '@tarojs/components': 4.2.1(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@types/react@19.2.18)(html-webpack-plugin@5.6.8(@rspack/core@2.2.8(@swc/helpers@0.5.23))(webpack@5.105.4))(postcss@8.5.30)(rollup@3.30.0(patch_hash=7f5990f539a54a54986d73199e3991f28c613c939aba2bc603a6d76a36ee6b0c))(vue@3.5.43(typescript@6.0.3))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2)(webpack@5.105.4)
+      '@tarojs/components-react': 4.2.1(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@types/react@19.2.18)(html-webpack-plugin@5.6.8(@rspack/core@2.2.8(@swc/helpers@0.5.23))(webpack@5.105.4))(postcss@8.5.30)(react@18.3.1)(rollup@3.30.0(patch_hash=7f5990f539a54a54986d73199e3991f28c613c939aba2bc603a6d76a36ee6b0c))(solid-js@1.9.10)(vue@3.5.43(typescript@6.0.3))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2)(webpack@5.105.4)
+      '@tarojs/helper': 4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2)
+      '@tarojs/plugin-platform-h5': 4.2.1(6e3b39a8cd325fccfcf9f0daf0320405)
+      '@tarojs/router': 4.2.1(@tarojs/runtime@4.2.1)(@tarojs/shared@4.2.1)(@tarojs/taro@4.2.1(@tarojs/components@4.2.1(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@types/react@19.2.18)(html-webpack-plugin@5.6.8(@rspack/core@2.2.8(@swc/helpers@0.5.23))(webpack@5.105.4))(postcss@8.5.30)(rollup@3.30.0(patch_hash=7f5990f539a54a54986d73199e3991f28c613c939aba2bc603a6d76a36ee6b0c))(vue@3.5.43(typescript@6.0.3))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2)(webpack@5.105.4))(@tarojs/helper@4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2))(@tarojs/shared@4.2.1)(@types/react@19.2.18)(html-webpack-plugin@5.6.8(@rspack/core@2.2.8(@swc/helpers@0.5.23))(webpack@5.105.4))(postcss@8.5.30)(rollup@3.30.0(patch_hash=7f5990f539a54a54986d73199e3991f28c613c939aba2bc603a6d76a36ee6b0c))(vue@3.5.43(typescript@6.0.3))(webpack-chain@6.5.1)(webpack-dev-server@4.15.2)(webpack@5.105.4))
+      '@tarojs/runtime': 4.2.1
+      '@tarojs/service': 4.2.1(@swc/helpers@0.5.23)(supports-color@10.2.2)
+      '@tarojs/shared': 4.2.1
+      '@tarojs/taro-h5': 4.2.1(415595b6e3ebcaa3d0509a066e44ef3f)
+      axios: 1.17.0(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)
+      babel-plugin-transform-taroapi: 4.2.1(@babel/core@7.29.7(supports-color@10.2.2))
+      base64-js: 1.5.1
+      change-case: 4.1.2
+      jsonp-retry: 1.0.3
+      lodash-es: 4.17.21
+      query-string: 9.3.1
+      react: 18.3.1
+      whatwg-fetch: 3.6.20
+    transitivePeerDependencies:
       - '@swc/helpers'
       - '@tarojs/taro'
       - '@types/react'
@@ -51292,7 +51298,7 @@ snapshots:
       webpack-chain: 6.5.1
       webpack-dev-server: 4.15.2(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(webpack-cli@7.2.3)(webpack@5.105.4)
 
-  '@tarojs/vite-runner@4.2.1(@swc/helpers@0.5.23)(@tarojs/runtime@4.2.1)(@types/babel__core@7.20.5)(jiti@2.7.0)(postcss@8.5.30)(rollup@3.30.0(patch_hash=7f5990f539a54a54986d73199e3991f28c613c939aba2bc603a6d76a36ee6b0c))(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.15)(typescript@6.0.3)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))':
+  '@tarojs/vite-runner@4.2.1(patch_hash=c5e586a2020326c21d669dadbf56da9767e40343d5f991eee1a8f4331647f09c)(@swc/helpers@0.5.23)(@tarojs/runtime@4.2.1)(@types/babel__core@7.20.5)(jiti@2.7.0)(postcss@8.5.30)(rollup@3.30.0(patch_hash=7f5990f539a54a54986d73199e3991f28c613c939aba2bc603a6d76a36ee6b0c))(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.15)(typescript@6.0.3)(vite@4.5.14(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))':
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@babel/core': 7.29.7(supports-color@10.2.2)
@@ -51340,7 +51346,7 @@ snapshots:
       - tsx
       - typescript
 
-  '@tarojs/vite-runner@4.2.1(@swc/helpers@0.5.23)(@tarojs/runtime@4.2.1)(@types/babel__core@7.20.5)(jiti@2.7.0)(postcss@8.5.30)(rollup@3.30.0(patch_hash=7f5990f539a54a54986d73199e3991f28c613c939aba2bc603a6d76a36ee6b0c))(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.15)(typescript@6.0.3)(vite@5.4.21(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))':
+  '@tarojs/vite-runner@4.2.1(patch_hash=c5e586a2020326c21d669dadbf56da9767e40343d5f991eee1a8f4331647f09c)(@swc/helpers@0.5.23)(@tarojs/runtime@4.2.1)(@types/babel__core@7.20.5)(jiti@2.7.0)(postcss@8.5.30)(rollup@3.30.0(patch_hash=7f5990f539a54a54986d73199e3991f28c613c939aba2bc603a6d76a36ee6b0c))(supports-color@10.2.2)(terser@5.51.2)(tsx@4.23.15)(typescript@6.0.3)(vite@5.4.21(@types/node@26.6.5)(less@4.6.6)(lightningcss@1.33.0)(sass-embedded@1.105.1)(sass@1.105.1)(stylus@0.63.0(supports-color@10.2.2))(terser@5.51.2))':
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@babel/core': 7.29.7(supports-color@10.2.2)

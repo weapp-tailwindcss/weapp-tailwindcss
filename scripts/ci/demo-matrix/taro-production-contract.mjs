@@ -7,22 +7,21 @@ const projects = new Set([
   'taro-vite-vue3-tailwindcss-v4',
   'issue-951-taro-vite-react-tailwindcss-v4',
 ])
-const harmonyBrowserProjects = new Set(['taro-webpack-react-tailwindcss-v4', 'taro-webpack-vue3-tailwindcss-v4'])
 
 /** 这些夹具的独立主题合同是 .25rem、slate-500 和 emerald-50/80。 */
 export function hasTaroProductionFixture(item) {
   return projects.has(item.name) && ['h5', 'harmony-hybrid'].includes(item.target)
 }
 
-/** 默认门禁覆盖 H5 与已接通平台适配的 Webpack Harmony；Vite Harmony 仍需显式诊断。 */
+/** 默认门禁覆盖全部已登记的 H5 与 Harmony WebView 生产夹具。 */
 export function hasTaroProductionContract(item) {
-  return hasTaroProductionFixture(item) && (item.target === 'h5' || harmonyBrowserProjects.has(item.name))
+  return hasTaroProductionFixture(item)
 }
 
 /** 复核浏览器实测语义，拒绝缺证及可见节点上的错误样式。 */
 export function assertTaroProductionEvidence(item, evidence) {
   assert.ok(evidence && Number.isFinite(evidence.rootFontSize) && evidence.rootFontSize > 0, `${item.id}: missing production browser evidence`)
-  // 1200×900 的 H5 rem 脚本上限为 40；Webpack Harmony 固定 20。
+  // 1200×900 的 H5 rem 脚本上限为 40；Harmony 固定 20。
   const expectedRoot = item.target === 'h5' ? 40 : 20
   assert.equal(evidence.rootFontSize, expectedRoot, `${item.id}: production root font size`)
   for (const key of ['height', 'medium', 'large', 'margin', 'color', 'opacity']) {
