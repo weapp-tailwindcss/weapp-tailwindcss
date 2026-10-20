@@ -85,7 +85,10 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
     compilation.hooks.processAssets.tapPromise(
       {
         name: pluginName,
-        stage: Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE,
+        // Web 保留构建图的样式身份，在压缩器合并规则、改写声明之前完成生成。
+        stage: isWebGeneratorTarget
+          ? Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE
+          : Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE,
       },
       async (assets) => {
         const entries = Object.entries(assets)

@@ -17,6 +17,9 @@ regressions:
   - examples/react-lynx/src/compatibility/native-theme-overrides.test.ts
   - packages/weapp-tailwindcss/test/ci/architecture-contract.test.ts
   - website/scripts/check-lynx-contract.test.mjs
+  - packages/postcss/test/webpack-generated-css-cleanup.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/webpack-web-cascade.integration.test.ts
+  - website/tests/theme-panel-colors.spec.ts
 verification:
   - claim: CSS 兼容与 Lynx 诊断的定向根因回归通过
     kind: unit
@@ -95,6 +98,16 @@ verification:
 该修复的独立三浏览器颜色 token 对照、真实 Rspeedy 构建与主题 oracle 共 52 项通过；最终 `CI=1 pnpm e2e:lynx --update=none` 为示例 205 项与 E2E 39 文件 775 项通过。定向样式产物及像素负向回归另有 92 项通过。受影响 ESLint、agents（66 规则、346 文档、997 命令，0 错误）和 diff check 通过。仅调整测试证据核对与编排，不改变应用夹具、颜色目标、像素阈值或 static 能力结论，因此本批不重写样式基线，也不新增公开包发布 intent。新 head 的原生执行和全面验收仍须重新运行。
 
 网站截图先写入独立候选目录，没有导入黄金图。缩略审查并核对原图发现 `/ui`、`/llms` 深色模式的面板浅灰、文本近白，明显缺少对比；已停止候选采集并有界回收本轮浏览器和 Worker，不能把该缺陷固化为正常基线。它与“缺图”的环境准备问题分开追踪，修复并补充计算样式回归后才可重新采集和审查。
+
+### 网站生产级联回归
+
+网站真实主题按钮回归先在三浏览器失败。Webpack 适配器原来在 `SUMMARIZE`（1000）阶段把 loader 注册的原始 CSS 重新插入已经过框架 PostCSS 和生产压缩的资产；清理器对混合 `@supports` 采用整组判定，导致部分基础 utility 残留在 dark 规则之后。清理改为按叶子处理并保留业务规则、嵌套业务层；Web 生成改在 `OPTIMIZE`（100），成功消费 loader 生成结果时直接保留当前框架资产，不用原始 registry 内容覆盖已处理选择器、声明和 URL。已处理资产也不再从原始 registry 补回规则。
+
+真实 Webpack + Docusaurus loader、cssnano、clean-css 的生产夹具进一步复现：即使插件不再后置写入，clean-css 的 `mergeMedia` 仍会跨越 dark 渐变声明合并 `@supports`，使 `from-sky-200/85` 重新胜出。网站明确配置相同双压缩器，仅关闭该条件块移动优化；保留 JS 压缩和其余 CSS 压缩。压缩器身份缺失或重复立即失败，避免升级后静默失去保护。
+
+验证使用独立颜色参考，检查面板背景、渐变变量和 SVG fill 的 light → dark → light；生产优化器输出必须与最终资产逐字相同，业务 `.site-panel` 和真实 HTML 来源的高度类必须保留。真实 watch 还检查来源替换、glob 下新建/删除文件、主题值修改与恢复，分别核对移除旧类、生成新类和浏览器实际颜色/尺寸。文件系统的额外目录通知不作为本轮编辑的构建证据；临时目录按实际路径身份比较。后台浏览器、watcher 和 compiler 均独立收尾。
+
+本批 `CI=1 pnpm --filter weapp-tailwindcss exec vitest run test/bundlers/webpack-web-cascade.integration.test.ts --update=none` 两项真实生产/watch 回归通过；既有 Webpack 子集 183 项通过，PostCSS 完整套件 146 文件、1,545 项通过、3 项跳过。双语网站 `CI=1 pnpm --filter @weapp-tailwindcss/website build` 和 typecheck 通过；受管本地 Worker 上 `theme-panel-colors.spec.ts` 的三浏览器共 6 项真实主题切换通过，像素通道差为零。此处的跳过项不算通过，截图候选尚未作为黄金基线接纳，57 阶段全面验收尚未重跑。网站产物已重新生成，其他 demo fixture 与 static 结论没有修改。
 
 ## 适用边界
 

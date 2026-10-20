@@ -4,7 +4,7 @@ import { filterExistingCssRules } from '@weapp-tailwindcss/postcss/transform'
 import { hasTailwindApplyDirective, hasTailwindRootDirectives } from '../../../../generation/directives'
 import { hasTailwindGeneratedCss, hasTailwindGeneratedCssMarkers, hasTailwindSourceDirectives } from '../../../../generation/index'
 import { processCachedTask } from '../../../shared/cache'
-import { hasBundlerGeneratedCssMarker, stripBundlerGeneratedCssMarkers } from '../../../shared/generated-css-marker'
+import { hasBundlerGeneratedCssMarker } from '../../../shared/generated-css-marker'
 import { isWebpackCssLoaderRuntimeSource } from '../../shared/css-loader-runtime'
 import { createRuntimeAwareCssHash } from '../shared'
 import {
@@ -174,18 +174,8 @@ export async function processWebpackProcessedCssAsset(element: [string, Pick<sou
         },
         transform: async () => {
           const source = readCurrentProcessedRawSource()
-          const missingProcessedLoaderGeneratedCss = isWebGeneratorTarget && processedLoaderGeneratedCss
-            ? filterExistingCssRules(
-                source,
-                stripBundlerGeneratedCssMarkers(processedLoaderGeneratedCss.css),
-              )
-            : ''
-          const sourceWithLoaderGeneratedCss = missingProcessedLoaderGeneratedCss.trim().length === 0
-            ? source
-            : createWebpackGeneratorUserCssSourceAppend(
-              { css: source, processed: true },
-              { css: missingProcessedLoaderGeneratedCss, processed: true },
-            )!.css
+          // 已处理的 Web 资产由框架 CSS loader 拥有，不能补回其转换前的注册表内容。
+          const sourceWithLoaderGeneratedCss = source
           const processedBareSelectorSourceCss = processedSourceCss
             ?? (hasTailwindGeneratedAssetCss ? removeWebpackTailwindGeneratedAssetCss(sourceWithLoaderGeneratedCss) : undefined)
           const shouldTransformGeneratedAssetCss = hasTailwindGeneratedAssetCss

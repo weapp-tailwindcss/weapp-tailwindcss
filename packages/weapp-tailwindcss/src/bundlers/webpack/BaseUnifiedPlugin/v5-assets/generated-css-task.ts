@@ -143,6 +143,18 @@ export async function processWebpackGeneratedCssAsset(element: any, context: Web
           for (const dependency of loaderGeneratedCss.dependencies) {
             compilation.fileDependencies?.add?.(dependency)
           }
+          if (isWebGeneratorTarget && (
+            hasBundlerGeneratedCssMarker(currentRawSource)
+            || hasTailwindGeneratedCss(currentRawSource)
+            || hasTailwindGeneratedCssMarkers(currentRawSource)
+          )) {
+            // Web 的生成发生在框架 CSS loader 之前，当前资产已包含其转换结果。
+            // 注册表只证明生成归属，不能用原始 CSS 覆盖处理后的选择器和声明。
+            const css = finalizeCssAssetSource(currentRawSource, { generatedCss: true })
+            return {
+              result: new ConcatSource(finalizeTracedCss(css, cssHandlerOptions)),
+            }
+          }
           const currentRawSourceWithoutBundlerMarkers = stripBundlerGeneratedCssMarkers(currentRawSource)
           const currentAssetHasProcessedUrl = hasProcessedCssAssetUrl(currentRawSourceWithoutBundlerMarkers)
             && currentRawSourceWithoutBundlerMarkers !== loaderGeneratedCss.css

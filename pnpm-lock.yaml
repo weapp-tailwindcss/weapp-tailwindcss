@@ -5931,6 +5931,9 @@ importers:
       '@babel/traverse':
         specifier: ~7.29.8
         version: 7.29.8(supports-color@10.2.2)
+      '@docusaurus/cssnano-preset':
+        specifier: 3.10.2
+        version: 3.10.2
       '@docusaurus/module-type-aliases':
         specifier: 3.10.2
         version: 3.10.2(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@10.2.2)(uglify-js@3.19.3)(webpack-cli@7.2.3)
@@ -5997,6 +6000,9 @@ importers:
       cross-env:
         specifier: catalog:crossEnv
         version: 10.1.0
+      css-minimizer-webpack-plugin:
+        specifier: 5.0.1
+        version: 5.0.1(clean-css@5.3.3)(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(webpack@5.105.4)
       docusaurus-plugin-llms:
         specifier: ^0.6.1
         version: 0.6.1(@docusaurus/core@3.10.2(@mdx-js/react@3.1.1(@types/react@19.2.18)(react@19.2.8))(@rspack/core@1.7.11(@swc/helpers@0.5.23))(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.30))(csso@5.0.5)(debug@4.4.3(supports-color@10.2.2))(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@10.2.2)(typescript@6.0.3)(uglify-js@3.19.3)(webpack-cli@7.2.3))
@@ -57186,6 +57192,21 @@ snapshots:
       clean-css: 5.3.3
       csso: 5.0.5
       esbuild: 0.28.2
+
+  css-minimizer-webpack-plugin@5.0.1(clean-css@5.3.3)(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(webpack@5.105.4):
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.31
+      cssnano: 6.1.2(postcss@8.5.30)
+      jest-worker: 29.7.0
+      postcss: 8.5.30
+      schema-utils: 4.3.3
+      serialize-javascript: 6.0.2
+      webpack: 5.105.4(patch_hash=62575961fe06ebda9d614707f0556a45ea20d5177838826a10ca25ba5d35c519)(@swc/core@1.16.18(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@6.1.2(postcss@8.5.30))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.30)(uglify-js@3.19.3)(webpack-cli@7.2.3)
+    optionalDependencies:
+      clean-css: 5.3.3
+      csso: 5.0.5
+      esbuild: 0.28.2
+      lightningcss: 1.33.0
 
   css-minimizer-webpack-plugin@5.0.1(clean-css@5.3.3)(csso@5.0.5)(esbuild@0.28.2)(lightningcss@1.33.0)(webpack@5.110.2):
     dependencies:

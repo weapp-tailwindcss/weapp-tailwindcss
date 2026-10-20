@@ -79,6 +79,7 @@
   "devDependencies": {
     "@babel/parser": "~7.29.8",
     "@babel/traverse": "~7.29.8",
+    "@docusaurus/cssnano-preset": "3.10.2",
     "@docusaurus/module-type-aliases": "3.10.2",
     "@docusaurus/remark-plugin-npm2yarn": "3.10.2",
     "@docusaurus/theme-mermaid": "3.10.2",
@@ -101,6 +102,7 @@
     "autoprefixer": "catalog:autoprefixer10",
     "baseline-browser-mapping": "catalog:baselineBrowserMapping",
     "cross-env": "catalog:crossEnv",
+    "css-minimizer-webpack-plugin": "5.0.1",
     "docusaurus-plugin-llms": "^0.6.1",
     "docusaurus-plugin-sass": "^0.2.7",
     "docusaurus-plugin-typedoc": "1.4.3",

@@ -56,12 +56,7 @@ export function removeWebpackTailwindGeneratedAssetCss(source: string) {
         return
       }
       if (shouldRemoveLayer) {
-        for (const child of [...rule.nodes ?? []]) {
-          if (isWebpackTailwindGeneratedLayerNode(child, names)) {
-            child.remove()
-            changed = true
-          }
-        }
+        changed = removeGeneratedLayerChildren(rule, names) || changed
         if (rule.nodes?.length === 0) {
           rule.remove()
           changed = true
@@ -100,6 +95,30 @@ export function removeWebpackTailwindGeneratedAssetCss(source: string) {
   }
 }
 
+function removeGeneratedLayerChildren(container: postcss.AtRule, layerNames: string[]): boolean {
+  let changed = false
+  for (const child of [...container.nodes ?? []]) {
+    if (child.type === 'atrule' && child.name === 'layer') {
+      continue
+    }
+    if (isWebpackTailwindGeneratedLayerNode(child, layerNames)) {
+      child.remove()
+      changed = true
+      continue
+    }
+    // 条件容器混有业务规则时，逐个清理生成叶子，不能把整组保留成后置覆盖。
+    // 嵌套 layer 有独立归属，由外层 walkAtRules 按自己的名称处理。
+    if (child.type === 'atrule' && child.nodes) {
+      changed = removeGeneratedLayerChildren(child, layerNames) || changed
+      if (child.nodes.length === 0) {
+        child.remove()
+        changed = true
+      }
+    }
+  }
+  return changed
+}
+
 function isWebpackTailwindGeneratedPrefixNode(node: postcss.ChildNode): boolean {
   if (node.type === 'rule') {
     return isWebpackTailwindGeneratedRule(node, ['theme', 'base', 'utilities'], true)
@@ -136,6 +155,9 @@ function isWebpackTailwindGeneratedLayerNode(node: postcss.ChildNode, layerNames
     return isWebpackTailwindGeneratedRule(node, layerNames, false)
   }
   if (node.type !== 'atrule') {
+    return false
+  }
+  if (node.name === 'layer') {
     return false
   }
   if (node.name === 'property' && node.params.trim().startsWith('--tw-')) {
