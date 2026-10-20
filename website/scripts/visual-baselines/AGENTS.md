@@ -23,7 +23,8 @@
 
 ## 推荐验证命令
 
-- `pnpm --filter @weapp-tailwindcss/website exec vitest run scripts/visual-baselines/manifest.test.ts scripts/visual-baselines/real.test.ts scripts/browser-local.test.ts --update=none`
+- `pnpm --filter @weapp-tailwindcss/website exec vitest run scripts/visual-baselines scripts/browser-local.test.ts --update=none`
+- `pnpm --filter @weapp-tailwindcss/website e2e:visual:test`
 - `pnpm --filter @weapp-tailwindcss/website typecheck`
 
 ## 提交前检查

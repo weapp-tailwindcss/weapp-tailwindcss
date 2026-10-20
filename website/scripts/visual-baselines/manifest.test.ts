@@ -130,6 +130,7 @@ it('安装的最终原子替换失败时清理暂存目录，不能留下可用�
   await expect(installCandidates(directory, websiteRoot)).rejects.toThrow('fixture-rename-failed')
   expect(await readdir(path.join(websiteRoot, 'tests'))).not.toContain('index.spec.ts-snapshots')
   expect((await readdir(path.join(websiteRoot, 'tests'))).some(name => name.startsWith('.visual-baseline-install-'))).toBe(false)
+  await expect(readFile(path.join(websiteRoot, 'tests', 'visual-baselines', `${environment.platform}.json`))).rejects.toHaveProperty('code', 'ENOENT')
   await expect(verifyInstalledBaselines(websiteRoot)).rejects.toThrow()
 })
 

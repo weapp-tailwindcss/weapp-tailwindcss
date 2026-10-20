@@ -8,18 +8,29 @@ import { discoverBrowserBudget } from '../local-worker/browser-budget'
 import { runLocalCommand } from '../local-worker/command'
 import { withLocalWorker } from '../local-worker/server'
 import { digest, exactNames, pngRecord, regularBytes, treeFiles } from './files'
-import { captureIdentity, renderEnvironment } from './identity'
+import { captureIdentity, captureSource, renderEnvironment } from './identity'
 import { candidateImages } from './install'
 import { visualCases } from './manifest'
 import { snapshotBindings } from './report'
 
+/** 先构建再绑定产物，不能把已有旧 build 树误记为当前源码的渲染来源。 */
+export async function buildCandidateSource(websiteRoot: string, source?: Awaited<ReturnType<typeof captureSource>>) {
+  const before = source ?? await captureSource(websiteRoot)
+  await runLocalCommand({ command: 'pnpm', args: ['run', 'build'], cwd: websiteRoot, env: { CI: '1' }, stdio: 'inherit' }, new AbortController().signal)
+  if (JSON.stringify(await captureSource(websiteRoot)) !== JSON.stringify(before)) {
+    throw new Error('构建期间源码、锁文件或截图合同发生变化，禁止采集')
+  }
+  return captureIdentity(websiteRoot)
+}
+
 export async function captureCandidates(directory: string, websiteRoot: string) {
-  const source = await captureIdentity(websiteRoot)
+  const sourceBefore = await captureSource(websiteRoot)
   const environment = await renderEnvironment(websiteRoot)
   await mkdir(directory)
   const startedAt = new Date().toISOString()
-  await writeFile(path.join(directory, 'capture-started.json'), `${JSON.stringify({ source, environment, startedAt }, null, 2)}\n`)
+  await writeFile(path.join(directory, 'capture-started.json'), `${JSON.stringify({ source: sourceBefore, environment, startedAt }, null, 2)}\n`)
   try {
+    const source = await buildCandidateSource(websiteRoot, sourceBefore)
     const require = createRequire(pathToFileURL(path.join(websiteRoot, 'package.json')))
     const config = path.join(directory, 'playwright.config.mts')
     await writeFile(config, [

@@ -33,7 +33,7 @@ export async function renderEnvironment(websiteRoot: string) {
 }
 
 /** 来源只作为黄金图历史证据；未来源码变化仍应运行像素回归，不能强制重录黄金图。 */
-export async function captureIdentity(websiteRoot: string) {
+export async function captureSource(websiteRoot: string) {
   const repository = path.dirname(websiteRoot)
   const git = (...args: string[]) => execFileSync('git', args, { cwd: repository, encoding: 'utf8' }).trim()
   if (git('status', '--porcelain', '--untracked-files=normal')) {
@@ -42,8 +42,14 @@ export async function captureIdentity(websiteRoot: string) {
   return {
     head: git('rev-parse', 'HEAD'),
     lock: digest(await regularBytes(path.join(repository, 'pnpm-lock.yaml'))),
-    build: await filesDigest(path.join(websiteRoot, 'build'), await treeFiles(path.join(websiteRoot, 'build'))),
     contract: await baselineContract(websiteRoot),
     node: process.version,
+  }
+}
+
+export async function captureIdentity(websiteRoot: string) {
+  return {
+    ...await captureSource(websiteRoot),
+    build: await filesDigest(path.join(websiteRoot, 'build'), await treeFiles(path.join(websiteRoot, 'build'))),
   }
 }

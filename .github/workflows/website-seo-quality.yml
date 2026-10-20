@@ -31,6 +31,26 @@ jobs:
     with:
       full_verification: ${{ inputs.full_verification || false }}
 
+  visual-baseline-pipeline:
+    name: Website visual baseline pipeline
+    needs: detect-website-changes
+    if: needs.detect-website-changes.outputs.website == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          node-version: 24
+      - name: Install three browser engines
+        run: pnpm exec playwright install --with-deps chromium chromium-headless-shell firefox webkit
+      - name: Verify visual baseline contracts
+        run: pnpm --filter @weapp-tailwindcss/website exec vitest run scripts/visual-baselines scripts/browser-local.test.ts --update=none
+      - name: Verify real three browser pipeline
+        run: pnpm --filter @weapp-tailwindcss/website e2e:visual:test
+
   seo-quality:
     name: ${{ inputs.full_verification && 'Version PR SEO verification' || github.event_name == 'pull_request' && needs.detect-website-changes.outputs.metadata_only == 'true' && 'Await manual version verification' || github.event_name == 'workflow_dispatch' && github.ref_name == 'release/pnpm-version' && 'Version PR SEO verification' || 'SEO Quality Gate' }}
     needs: detect-website-changes

@@ -38,17 +38,23 @@ async function exists(file: string) {
   }
 }
 
-async function registeredReceipt(websiteRoot: string, provenance: string, platform: string, create = false) {
+async function registeredReceipt(websiteRoot: string, provenance: string, platform: string, mode: 'verify' | 'check' | 'publish' = 'verify') {
   await regularDirectory(path.join(websiteRoot, 'tests'))
   const registry = path.join(websiteRoot, 'tests', 'visual-baselines')
-  if (create) {
+  if (mode === 'check' && !await exists(registry)) {
+    return
+  }
+  if (mode === 'publish') {
     await mkdir(registry, { recursive: true })
   }
   await regularDirectory(registry)
   for (const [source, suffix] of [['manifest.json', '.json'], ['review.json', '.review.json']]) {
     const bytes = await regularBytes(path.join(provenance, source!))
     const target = path.join(registry, `${platform}${suffix}`)
-    if (create && !await exists(target)) {
+    if (mode === 'check' && !await exists(target)) {
+      continue
+    }
+    if (mode === 'publish' && !await exists(target)) {
       await writeFile(target, bytes, { flag: 'wx' })
     }
     if (digest(await regularBytes(target)) !== digest(bytes)) {
@@ -76,7 +82,7 @@ export async function installCandidates(directory: string, websiteRoot: string) 
     if (previous.sha256 !== sha256) {
       throw new Error('目标黄金目录已有其他基线，禁止覆盖；请先按归属归档旧目录')
     }
-    await registeredReceipt(websiteRoot, directory, environment.platform, true)
+    await registeredReceipt(websiteRoot, directory, environment.platform, 'publish')
     return
   }
   const staging = await mkdtemp(path.join(path.dirname(target), '.visual-baseline-install-'))
@@ -87,8 +93,9 @@ export async function installCandidates(directory: string, websiteRoot: string) 
       await cp(path.join(directory, name), path.join(staging, 'provenance', name), { recursive: true, dereference: false })
     }
     await installedReceipt(staging, websiteRoot, environment)
-    await registeredReceipt(websiteRoot, directory, environment.platform, true)
+    await registeredReceipt(websiteRoot, directory, environment.platform, 'check')
     await rename(staging, target)
+    await registeredReceipt(websiteRoot, directory, environment.platform, 'publish')
   }
   finally {
     await rm(staging, { recursive: true, force: true })

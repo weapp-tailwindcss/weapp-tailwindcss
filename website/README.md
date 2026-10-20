@@ -26,11 +26,10 @@ PLAYWRIGHT_BASE_URL=http://192.168.10.4:4000 pnpm --filter @weapp-tailwindcss/we
 
 ### 本地黄金图的采集与审查
 
-`e2e:local` 在启动受管本地 Worker 前验证黄金图及来源登记，再以三浏览器、零重试、`--update-snapshots=none` 比较。首次使用或渲染环境变化时，先生成并审查候选；不能把失败截图直接登记为预期。PNG 体积较大，不加入 Git；来源清单和审查记录登记在 `tests/visual-baselines/<platform>*.json`，完整候选目录及归档须另行保留。
+`e2e:local` 先以 `e2e:visual:test` 验证真实三浏览器基线管线，在启动受管本地 Worker 前验证黄金图及来源登记，再以三浏览器、零重试、`--update-snapshots=none` 比较。三浏览器管线在 Website SEO Quality 的独立 job 中执行，普通 unit 不依赖 Firefox/WebKit。首次使用或渲染环境变化时，先生成并审查候选；不能把失败截图直接登记为预期。PNG 体积较大，不加入 Git；来源清单和审查记录登记在 `tests/visual-baselines/<platform>*.json`，完整候选目录及归档须另行保留。
 
 ```bash
-# 仓库根目录执行；先提交本任务源码，构建期间不同时修改或重建依赖
-pnpm --filter @weapp-tailwindcss/website build
+# 仓库根目录执行；先提交本任务源码，采集入口自动生产构建，期间不同时修改或重建依赖
 pnpm --filter @weapp-tailwindcss/website e2e:visual capture --directory ../.tmp/website-visual-candidate
 
 # 查看实际 PNG，审查三引擎、移动布局和代表性长页，保存接触表或原图证据
