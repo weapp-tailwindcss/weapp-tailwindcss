@@ -6,6 +6,7 @@ import { PNG } from 'pngjs'
 import { expectedFixtureStyle, nativeBuildFixtures, nativeFixtures, rejectedNativeCases } from '../../examples/react-native-expo/src/compatibility/protocol'
 import { compatibilityCases, reactNativeVersions, RN_CATALOG_HASH, RN_FIXTURE_HASH } from './catalog'
 import { syntheticFrameCapture } from './frame-fixture'
+import { syntheticImagePair } from './image-fixture'
 import { runtimeIdentity } from './installation-evidence'
 import { syntheticRuntimeInstallation } from './installation-fixture'
 import { assessNativePair } from './pair-evidence'
@@ -57,7 +58,7 @@ export async function writeRuntimeFixture(artifacts: string, platform: ReactNati
       ],
     }
     for (const phase of nativeFixtures[item.id]?.phases ?? (nativeFixtures[item.id] ? ['default'] : [])) {
-      const pair: NativePairEvidence = {
+      let pair: NativePairEvidence = {
         runtimeInstallation: runtimeIdentity(raw.runtimeInstallation!),
         runId: raw.runId,
         platform,
@@ -91,8 +92,14 @@ export async function writeRuntimeFixture(artifacts: string, platform: ReactNati
           }
         }
       }
-      const png = PNG.sync.write(image)
-      const checkpoints = assessNativePair(image, pair)
+      let phaseImage = image
+      if (item.id === 'sizing-size' && phase === 'image') {
+        const synthetic = syntheticImagePair(pair)
+        pair = synthetic.pair
+        phaseImage = synthetic.image
+      }
+      const png = PNG.sync.write(phaseImage)
+      const checkpoints = assessNativePair(phaseImage, pair)
       const name = `case-${raw.revision}-${item.id}-${phase}.png`
       const artifact = { name, sha256: createHash('sha256').update(png).digest('hex'), byteLength: png.length }
       const receipt = { runtimeInstallation: pair.runtimeInstallation, id: item.id, phase, runId: raw.runId, checkpoints, artifact, capture: syntheticFrameCapture(artifact, checkpoints) }

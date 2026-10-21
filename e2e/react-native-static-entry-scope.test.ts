@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { isDeepStrictEqual } from 'node:util'
 import { beforeAll, expect, it } from 'vitest'
@@ -7,13 +8,27 @@ import { createNativeStyleRuntime } from '../packages/react-native/src/runtime'
 import { flattenInlineStyle } from '../packages/react-native/src/runtime/line-height'
 import { generateNativeStylesheetEvidence } from '../packages/react-native/src/tailwind/generate'
 import { validateAuthoringEvidence } from './react-native/authoring-evidence'
-import { RN_FIXTURE_HASH } from './react-native/catalog'
+import { compatibilityCases, RN_CATALOG_HASH, RN_FIXTURE_HASH } from './react-native/catalog'
 import { collectStaticEvidence } from './react-native/static-evidence'
 import { validateStaticGenerationInput } from './react-native/static-input-evidence'
 
 let evidence: Awaited<ReturnType<typeof collectStaticEvidence>>
 beforeAll(async () => {
   evidence = await collectStaticEvidence()
+})
+
+it('已提交 static 基线与当前生成逐字一致，禁止正常回归自动更新', async () => {
+  const saved = JSON.parse(await readFile(path.resolve(import.meta.dirname, '../examples/react-native-expo/src/compatibility/static-evidence.json'), 'utf8'))
+  expect(saved.schemaVersion).toBe(2)
+  expect(saved.catalogHash).toBe(RN_CATALOG_HASH)
+  expect(saved.fixtureHash).toBe(RN_FIXTURE_HASH)
+  expect(saved.cases).toEqual(compatibilityCases)
+  expect(saved.manifest).toEqual(evidence.manifest)
+  expect(saved.rawCss).toBe(evidence.rawCss)
+  expect(saved.generatedClassSet).toEqual(evidence.generatedClassSet)
+  expect(saved.generation).toEqual(evidence.generation)
+  // JSON 持久化会移除 undefined 字段，比较同样的序列化边界。
+  expect(saved.report.results).toEqual(JSON.parse(JSON.stringify(evidence.results)))
 })
 
 it.each(['inline-important', 'inline-normal', 'class-important', 'class-normal'])('归档的真实 Tailwind manifest 在 %s 阶段保持独立竞争语义', (phase) => {

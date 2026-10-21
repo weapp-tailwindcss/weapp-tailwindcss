@@ -1,16 +1,20 @@
 import type { ReactNativePlatform } from './protocol'
 
-export interface NativeFixture {
-  component: 'view' | 'text'
+export interface NativeFixtureTarget {
+  component: 'view' | 'text' | 'image'
   style: Record<string, unknown>
   base?: Record<string, unknown>
   children?: boolean
-  phases?: readonly string[]
   priorityCompetition?: {
     normalClassName: string
     className: string
     inlineStyle: Record<string, unknown>
   }
+}
+
+export interface NativeFixture extends NativeFixtureTarget {
+  phases?: readonly string[]
+  variants?: Record<string, NativeFixtureTarget>
 }
 
 /** 夹具是独立审查的预期，不从本轮 manifest 或历史报告推导支持结论。 */
@@ -46,7 +50,12 @@ export const nativeFixtures: Record<string, NativeFixture> = {
   'syntax-type-hint': { component: 'text', style: { color: '#c31d6b' } },
   'flex-shorthand-shrink': { component: 'view', children: true, style: { flex: 1, flexShrink: 0 } },
   'grid-align-content-self': { component: 'view', children: true, style: { alignContent: 'center', alignSelf: 'flex-end' } },
-  'sizing-size': { component: 'view', style: { width: 44, height: 44 } },
+  'sizing-size': { component: 'view', style: { width: 44, height: 44 }, phases: ['default', 'image'], variants: { image: { component: 'image', style: { width: 44, height: 44 } } } },
+}
+
+export function fixtureForPhase(id: string, phase: string): NativeFixtureTarget | undefined {
+  const fixture = nativeFixtures[id]
+  return fixture?.variants?.[phase] ?? fixture
 }
 
 /** 构建指令的原生编码 oracle 独立于本轮生成器和 manifest。 */
@@ -59,7 +68,7 @@ export const nativeBuildFixtures: Record<string, { candidates: string[], style: 
 }
 
 export function expectedFixtureStyle(id: string, phase = 'default', platform: ReactNativePlatform = 'ios') {
-  const fixture = nativeFixtures[id]
+  const fixture = fixtureForPhase(id, phase)
   if (!fixture) {
     return undefined
   }

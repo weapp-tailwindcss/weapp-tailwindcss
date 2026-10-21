@@ -7,18 +7,24 @@ import { act, createElement } from 'react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { SemanticRun } from '../src/compatibility/SemanticRun'
 
+const imageLoads = vi.hoisted(() => [] as Array<{ onLoad: (event: unknown) => void, onError: (event: unknown) => void }>)
 const { createRoot } = createRequire(import.meta.url)('react-dom/client') as {
   createRoot: (node: Element) => { render: (node: ReactNode) => void, unmount: () => void }
 }
 
 vi.mock('react-native', async () => {
-  const { createElement, forwardRef, useImperativeHandle } = await import('react')
+  const { createElement, forwardRef, useEffect, useImperativeHandle } = await import('react')
   const flatten = (style: unknown): Record<string, unknown> => Object.assign({}, ...[style].flat(Infinity).filter(Boolean))
   const View = forwardRef(({ style, testID, children }: { style?: unknown, testID?: string, children?: ReactNode }, ref) => {
     useImperativeHandle(ref, () => ({ measureInWindow: (callback: (...rect: number[]) => void) => callback(0, 0, 80, 40) }))
     return createElement('div', { 'style': flatten(style), 'data-testid': testID }, children)
   })
-  return { View, Text: View, StyleSheet: { flatten }, Platform: { OS: 'web', Version: 'test' }, Dimensions: { get: () => ({ width: 402, height: 874 }) }, PixelRatio: { get: () => 1 } }
+  const Image = forwardRef(({ onLoad, onError }: { onLoad: (event: unknown) => void, onError: (event: unknown) => void }, ref) => {
+    useImperativeHandle(ref, () => ({ measureInWindow: (callback: (...rect: number[]) => void) => callback(0, 0, 44, 44) }))
+    useEffect(() => { imageLoads.push({ onLoad, onError }) }, [onLoad, onError])
+    return createElement('img')
+  })
+  return { View, Text: View, Image, StyleSheet: { flatten }, Platform: { OS: 'web', Version: 'test' }, Dimensions: { get: () => ({ width: 402, height: 874 }) }, PixelRatio: { get: () => 1 } }
 })
 
 const oldPublication = { revision: 'old-installation', manifestSha256: 'a'.repeat(64) }
@@ -38,6 +44,7 @@ function install(publication: typeof oldPublication, color: string) {
 }
 
 beforeEach(() => {
+  imageLoads.length = 0
   vi.useFakeTimers()
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
   vi.stubEnv('EXPO_PUBLIC_RN_REPORT_URL', 'http://owned-host')
@@ -46,6 +53,33 @@ beforeEach(() => {
   document.body.append(container)
   root = createRoot(container)
   install(oldPublication, '#ff0000')
+})
+
+it('Image 三侧真实加载前不采集；就绪后提交独立 phase，不以 View 尺寸兜底', async () => {
+  const complete = vi.fn()
+  const pairs: NativePairEvidence[] = []
+  setManifest({ version: 1, classSet: ['phase-size'], variables: {}, warnings: [], rules: { 'phase-size': [{ style: { width: 44, height: 44 } }] } }, nextPublication)
+  vi.stubGlobal('fetch', vi.fn(async (url: string, options?: RequestInit) => {
+    if (url.endsWith('/context')) return { ok: true, json: async () => context }
+    const pair = JSON.parse(String(options?.body)) as NativePairEvidence
+    pairs.push(pair)
+    return { ok: true, json: async () => ({ ...pair, checkpoints: [], artifact: { name: 'owned.png', sha256: 'c'.repeat(64), byteLength: 1 } }) }
+  }))
+  const imageEvidence = { ...evidence, cases: [{ id: 'sizing-size', className: 'phase-size' }], report: { ...evidence.report, results: [{ ...evidence.report.results[0]!, id: 'sizing-size' }] } }
+  await act(async () => root.render(createElement(SemanticRun, { evidence: imageEvidence, revision: 'next-phase', onComplete: complete })))
+  await act(async () => vi.advanceTimersByTimeAsync(350))
+  expect(pairs.map(pair => pair.phase)).toEqual(['default'])
+  expect(imageLoads).toHaveLength(3)
+  await act(async () => vi.advanceTimersByTimeAsync(350))
+  expect(pairs).toHaveLength(1)
+  expect(complete).not.toHaveBeenCalled()
+  for (const callback of imageLoads) callback.onLoad({ nativeEvent: { target: { naturalWidth: 16, naturalHeight: 8, currentSrc: 'observed-decoded-uri' } } })
+  await act(async () => vi.advanceTimersByTimeAsync(350))
+  expect(pairs.map(pair => pair.phase)).toEqual(['default', 'image'])
+  expect(pairs[1]!.image?.loads).toHaveLength(3)
+  expect(pairs[1]!.image?.loads.every(load => load.uri === 'observed-decoded-uri' && load.revision === 'next-phase')).toBe(true)
+  expect(imageLoads).toHaveLength(3)
+  expect(complete).toHaveBeenCalledOnce()
 })
 
 afterEach(async () => {

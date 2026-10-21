@@ -1,6 +1,7 @@
 import type { PNG } from 'pngjs'
 import type { NativePairEvidence } from '../../examples/react-native-expo/src/compatibility/protocol'
-import { expectedFixtureStyle, nativeFixtures } from '../../examples/react-native-expo/src/compatibility/protocol'
+import { expectedFixtureStyle, fixtureForPhase, nativeFixtures } from '../../examples/react-native-expo/src/compatibility/protocol'
+import { assessNativeImage } from './image-assessment'
 
 function sameTargetGeometry(target: NativePairEvidence['target'], frame: NativePairEvidence['probe'], otherTarget: NativePairEvidence['target'], otherFrame: NativePairEvidence['probe']) {
   return Math.abs(target.width - otherTarget.width) <= 0.75
@@ -37,9 +38,9 @@ function solidTargetColor(image: PNG, rect: NativePairEvidence['target'], ratio:
 
 /** 对同屏节点采样；参考节点必须能与无效果对照区分，宿主同时忽略属性不能通过。 */
 export function assessNativePair(image: PNG, pair: NativePairEvidence) {
-  const fixture = nativeFixtures[pair.id]
+  const fixture = fixtureForPhase(pair.id, pair.phase)
   const expected = expectedFixtureStyle(pair.id, pair.phase, pair.platform)
-  if (!fixture || !['android', 'ios', 'web'].includes(pair.platform) || !(fixture.phases ?? ['default']).includes(pair.phase) || !expected) {
+  if (!fixture || !['android', 'ios', 'web'].includes(pair.platform) || !(nativeFixtures[pair.id]?.phases ?? ['default']).includes(pair.phase) || !expected) {
     throw new Error('React Native pair has an unknown fixture, phase or platform')
   }
   if (!pair.control || !pair.controlTarget) {
@@ -97,9 +98,10 @@ export function assessNativePair(image: PNG, pair: NativePairEvidence) {
         control: solidTargetColor(image, pair.controlTarget, ratio, fixture.base?.['backgroundColor']),
       }
     : undefined
+  const imageEvidence = fixture.component === 'image' ? assessNativeImage(image, pair) : undefined
   return [
-    { name: `runtime:${pair.phase}:geometry`, passed: geometry, actual: JSON.stringify(pair.target), expected: JSON.stringify(pair.referenceTarget) },
-    { name: `runtime:${pair.phase}:pixel`, passed: active >= 16 && mismatchRatio <= 0.05 && meanDifference <= 4 && (!priorityColors || (priorityColors.probe && priorityColors.reference)), actual: JSON.stringify({ active, mismatchRatio, meanDifference, ...(priorityColors ? { priorityColors } : {}) }), expected: '同屏显式参考节点的几何与前景像素一致；优先级夹具同时满足独立颜色预期' },
-    { name: `runtime:${pair.phase}:control`, passed: observable === expectsEffect && (!priorityColors || priorityColors.control), actual: JSON.stringify({ controlGeometry, controlPixels, observable, ...(priorityColors ? { priorityColor: priorityColors.control } : {}) }), expected: expectsEffect ? '显式参考样式相对无效果 control 存在可测的几何或像素差异' : '条件未命中时与无效果 control 一致' },
+    { name: `runtime:${pair.phase}:geometry`, passed: geometry && (!imageEvidence || imageEvidence.geometry.every(Boolean)), actual: JSON.stringify(imageEvidence ? { target: pair.target, imageGeometry: imageEvidence.geometry } : pair.target), expected: JSON.stringify(pair.referenceTarget) },
+    { name: `runtime:${pair.phase}:pixel`, passed: active >= 16 && mismatchRatio <= 0.05 && meanDifference <= 4 && (!priorityColors || (priorityColors.probe && priorityColors.reference)) && (!imageEvidence || (imageEvidence.pixels[0] && imageEvidence.pixels[1])), actual: JSON.stringify({ active, mismatchRatio, meanDifference, ...(priorityColors ? { priorityColors } : {}), ...(imageEvidence ? { imagePixels: imageEvidence.pixels } : {}) }), expected: '同屏显式参考节点的几何与前景像素一致；组件夹具同时满足独立颜色预期' },
+    { name: `runtime:${pair.phase}:control`, passed: observable === expectsEffect && (!priorityColors || priorityColors.control) && (!imageEvidence || (imageEvidence.geometry[2] && imageEvidence.pixels[2])), actual: JSON.stringify({ controlGeometry, controlPixels, observable, ...(priorityColors ? { priorityColor: priorityColors.control } : {}) }), expected: expectsEffect ? '显式参考样式相对无效果 control 存在可测的几何或像素差异' : '条件未命中时与无效果 control 一致' },
   ]
 }

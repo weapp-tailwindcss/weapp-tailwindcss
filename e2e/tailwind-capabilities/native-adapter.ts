@@ -5,6 +5,7 @@ import type { ArtifactReceipt, CapabilityResult, CaseContract, SemanticAssertion
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { compatibilityCases } from '@weapp-tailwindcss/test-catalog'
+import { nativeImageFixture } from '../../examples/react-native-expo/src/compatibility/image-fixture'
 import { expectedFixtureStyle, nativeBuildCases, nativeBuildFixtures, nativeFixtures, rejectedNativeCases, styleContains } from '../../examples/react-native-expo/src/compatibility/protocol'
 import { validateNativeArtifacts } from '../react-native/pair-evidence'
 import { validateNativeRuntimePhases } from '../react-native/phase-evidence'
@@ -101,7 +102,7 @@ export async function buildNativeCapabilityReport(context: RunContext, target: N
   const all = nativeContracts(inventory)
   const contracts = all.contracts.filter(item => !context.caseFilter || context.caseFilter.test(item.id))
   const coverage = all.coverage
-  const report = await newReport(context, target, contracts, { nativeFixtures, build: nativeBuildFixtures, rejected: [...rejectedNativeCases], fixtureFeatures, coverage }, { provider: 'react-native', platform: raw?.platform ?? target, nativeRevision: raw?.revision ?? 'missing', scopeGaps: coverage.filter(item => item.status === 'not-run').length })
+  const report = await newReport(context, target, contracts, { nativeFixtures, image: nativeImageFixture, build: nativeBuildFixtures, rejected: [...rejectedNativeCases], fixtureFeatures, coverage }, { provider: 'react-native', platform: raw?.platform ?? target, nativeRevision: raw?.revision ?? 'missing', scopeGaps: coverage.filter(item => item.status === 'not-run').length })
   if (raw) {
     report.identity.versions = { ...report.identity.versions, ...raw.versions }
     report.environment.nativeEnvironment = JSON.stringify(raw.environment)

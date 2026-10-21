@@ -1,7 +1,8 @@
+import type { NativeImageEvidence } from './image-fixture'
 import { nativeBuildFixtures } from './fixtures'
 
 export type { NativeFixture } from './fixtures'
-export { expectedFixtureStyle, fixtureClassValue, fixtureInlineStyle, nativeBuildFixtures, nativeFixtures, styleContains } from './fixtures'
+export { expectedFixtureStyle, fixtureClassValue, fixtureForPhase, fixtureInlineStyle, nativeBuildFixtures, nativeFixtures, styleContains } from './fixtures'
 
 export type ReactNativePlatform = 'android' | 'ios' | 'web'
 export type NativeCaseStatus = 'supported' | 'unsupported' | 'unverified' | 'failed'
@@ -53,6 +54,7 @@ export interface NativeSemanticContext {
 }
 
 export interface NativePairEvidence {
+  image?: NativeImageEvidence
   runtimeInstallation: NativeRuntimeIdentity
   runId: string
   platform: ReactNativePlatform
