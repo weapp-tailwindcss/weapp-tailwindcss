@@ -3,7 +3,7 @@ import type { RunContext } from './context'
 import type { BrowserEngine, CapabilityResult, SemanticAssertion } from './types'
 import { writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { chromium, firefox, webkit } from 'playwright'
+import { launchCapabilityBrowser } from './browser/launch'
 import { newReport, persistReport } from './context'
 import { withGeneratorFixture } from './fixture'
 import { loadInventory } from './inventory'
@@ -35,7 +35,7 @@ export async function runWeb(context: RunContext, engine: BrowserEngine, borrowe
   let page: Page | undefined
   const errors: string[] = []
   try {
-    browser = borrowedBrowser ?? await { chromium, firefox, webkit }[engine].launch({ headless: true })
+    browser = borrowedBrowser ?? await launchCapabilityBrowser(engine)
     report.environment.browserVersion = browser.version()
     const browserContext = await browser.newContext({ viewport: { width: 640, height: 480 }, colorScheme: 'light', reducedMotion: 'reduce' })
     if (borrowedBrowser) {

@@ -8,7 +8,7 @@ import { runAuthoringWeb } from './tailwind-capabilities/authoring-web'
 
 const mocks = vi.hoisted(() => ({ launch: vi.fn(), persist: vi.fn() }))
 // 此测试只验证启动失败和清理协议，绝不启动真实浏览器。
-vi.mock('playwright', () => ({ chromium: { launch: mocks.launch }, firefox: { launch: mocks.launch }, webkit: { launch: mocks.launch } }))
+vi.mock('playwright', () => ({ chromium: { launch: mocks.launch, executablePath: () => '/unit/full-chromium' }, firefox: { launch: mocks.launch }, webkit: { launch: mocks.launch } }))
 vi.mock('./tailwind-capabilities/context', () => ({
   newReport: async (context: RunContext, target: string, contracts: CaseContract[], _fixture: unknown, environment: Record<string, string | number | boolean>) => {
     if (!contracts.length) {
@@ -42,7 +42,7 @@ describe('authoring 浏览器执行边界', () => {
     expect(report.results.filter(result => result.status === 'blocked')).toHaveLength(29)
     expect(report.results.filter(result => result.status === 'not-run')).toHaveLength(0)
     expect(report.results.some(result => result.status === 'passed')).toBe(false)
-    expect(mocks.launch).toHaveBeenCalledExactlyOnceWith({ headless: true })
+    expect(mocks.launch).toHaveBeenCalledExactlyOnceWith({ headless: true, executablePath: '/unit/full-chromium' })
     expect(mocks.persist).toHaveBeenCalled()
   })
 
@@ -50,7 +50,7 @@ describe('authoring 浏览器执行边界', () => {
     const report = await run(/^authoring\/scan-/)
     expect(report.results).toHaveLength(11)
     expect(report.results.every(result => result.status === 'blocked')).toBe(true)
-    expect(mocks.launch).toHaveBeenCalledExactlyOnceWith({ headless: true })
+    expect(mocks.launch).toHaveBeenCalledExactlyOnceWith({ headless: true, executablePath: '/unit/full-chromium' })
   })
 
   it('空过滤报错，清理失败保留错误与本任务资源身份', async () => {

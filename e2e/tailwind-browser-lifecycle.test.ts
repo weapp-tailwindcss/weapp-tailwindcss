@@ -137,3 +137,10 @@ it.each(['chromium', 'firefox', 'webkit'] as const)('%s 历史单独过滤只创
   expect(mocks.close).not.toHaveBeenCalled()
   expect(mocks.web).not.toHaveBeenCalled()
 })
+
+it('仅筛选框架时仍使用完整Chromium，不能因未选择autofill切换shell', async () => {
+  await runWebSuite({ ...context, caseFilter: /^framework\/react\// }, 'chromium')
+  expect(mocks.launch).toHaveBeenCalledExactlyOnceWith({ headless: true, executablePath: '/unit/full-chromium' })
+  expect(mocks.autofill).not.toHaveBeenCalled()
+  expect(mocks.framework).toHaveBeenCalledOnce()
+})

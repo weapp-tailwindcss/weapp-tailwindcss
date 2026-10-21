@@ -3,7 +3,7 @@ import type { RunContext } from './context'
 import type { BrowserEngine, SemanticAssertion } from './types'
 import { writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { chromium, firefox, webkit } from 'playwright'
+import { launchCapabilityBrowser } from './browser/launch'
 import { newReport, persistReport } from './context'
 import { observeHmrBrowserErrors } from './hmr/browser-observer'
 import { hmrAssertions, hmrContract } from './hmr/contract'
@@ -39,7 +39,7 @@ export async function runHmr(context: RunContext, engine: BrowserEngine, borrowe
     await withHmrServer(context.root, context.runId, logs, async (server) => {
       report.environment.url = server.url
       report.environment.instance = server.instance
-      browser = borrowedBrowser ?? await { chromium, firefox, webkit }[engine].launch({ headless: true })
+      browser = borrowedBrowser ?? await launchCapabilityBrowser(engine)
       report.environment.browserVersion = browser.version()
       const browserContext = await browser.newContext({ viewport: { width: 640, height: 480 } })
       if (borrowedBrowser) {

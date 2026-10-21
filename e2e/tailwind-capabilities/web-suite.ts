@@ -2,6 +2,7 @@ import type { RunContext } from './context'
 import type { BrowserEngine, CapabilityReport } from './types'
 import { chromium, firefox, webkit } from 'playwright'
 import { authoringWebProfiles, runAuthoringWeb } from './authoring-web'
+import { launchCapabilityBrowser } from './browser/launch'
 import { frameworkSourceProfiles, runFrameworkSource } from './framework-source'
 import { runHmr } from './hmr'
 import { hmrContract } from './hmr/contract'
@@ -37,8 +38,7 @@ export async function runWebSuite(context: RunContext, engine: BrowserEngine) {
     lifecycle: lifecycleWebProbes.map(probe => `runtime/${probe.id}`),
   })
   const browserType = { chromium, firefox, webkit }[engine]
-  // 默认 shell 不含 Autofill 域；沿用 extended 预检已验证的完整 Chromium 二进制。
-  const browser = Object.entries(groups).some(([group, selected]) => group !== 'history' && selected) ? await browserType.launch({ headless: true, ...(groups.autofill ? { executablePath: chromium.executablePath() } : {}) }) : undefined
+  const browser = Object.entries(groups).some(([group, selected]) => group !== 'history' && selected) ? await launchCapabilityBrowser(engine) : undefined
   const reports: CapabilityReport[] = []
   const errors: Error[] = []
   const runners: Array<{ group: keyof typeof groups, run: () => Promise<CapabilityReport> }> = [

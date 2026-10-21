@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { saveFrameworkSourceAndSettle } from './tailwind-capabilities/framework-source/browser'
 import { frameworkSourceContract, sourceCssAssertions, sourceRuntimeAssertions } from './tailwind-capabilities/framework-source/contract'
 import { frameworkSource, frameworkSourceCss, frameworkSourceProfiles, sourceCandidate, sourceFrameworks, sourceRevisions } from './tailwind-capabilities/framework-source/fixtures'
+import { frameworkSourceResources } from './tailwind-capabilities/framework-source/resources'
 import { assertionPassed } from './tailwind-capabilities/report'
 
 const profile = frameworkSourceProfiles.find(profile => profile.id === 'framework/react/conditional')!
@@ -38,6 +39,18 @@ describe('真实框架源码与语义合同', () => {
       expect(source).toContain('createVariants({ escape: false, unescape: false })')
       expect(source).toContain(framework === 'react' ? 'useState(true)' : 'const active = ref(true)')
       expect(source).toContain(framework === 'react' ? 'onClick={() => setActive(value => !value)}' : '@click="active = !active"')
+    }
+  })
+
+  it('服务与报告共用完整HTML/入口/图标清单，候选仍只从独占Probe源码扫描', () => {
+    for (const framework of sourceFrameworks) {
+      const resources = frameworkSourceResources(framework, 'run')
+      expect(resources['index.html']).toContain('__FRAMEWORK_INSTANCE__')
+      expect(resources['index.html']).toContain('<link rel="icon" href="/favicon.svg" type="image/svg+xml">')
+      expect(resources['favicon.svg']).toContain('<svg')
+      expect(resources['entry.js']).toContain(`./Probe.${framework === 'react' ? 'tsx' : 'vue'}`)
+      expect(resources['entry.css']).toBe(frameworkSourceCss(framework))
+      expect(resources['entry.css']).not.toContain('@source "./favicon.svg"')
     }
   })
 

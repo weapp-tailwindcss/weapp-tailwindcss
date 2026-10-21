@@ -34,6 +34,11 @@ describe('真实框架服务编译与资源协议', () => {
         expect((await stat(runtime.source)).isFile()).toBe(true)
         const document = await within('首页请求', fetch(runtime.url, { signal: AbortSignal.timeout(8000) }).then(response => response.text()))
         expect(document).toContain(runtime.instance)
+        expect(document).toContain('<link rel="icon" href="/favicon.svg" type="image/svg+xml">')
+        const icon = await fetch(new URL('favicon.svg', runtime.url), { signal: AbortSignal.timeout(8000) })
+        expect(icon.status).toBe(200)
+        expect(icon.headers.get('content-type')).toContain('image/svg+xml')
+        expect(await icon.text()).toContain('<svg')
         const url = framework === 'react' ? '/Probe.tsx' : '/Probe.vue'
         const initial = await within('首次源码转换', runtime.server.transformRequest(url))
         expect(initial?.code).toContain('framework-root')

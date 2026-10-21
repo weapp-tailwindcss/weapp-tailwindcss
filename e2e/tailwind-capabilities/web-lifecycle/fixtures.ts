@@ -1,4 +1,5 @@
 import type { LifecycleId } from './types'
+import { fixtureInlineIconLink } from '../browser/resources'
 
 export const lifecycleWebProbes = [
   { id: 'lifecycle-starting', candidate: 'starting:opacity-0', features: ['variant/static/starting'] },
@@ -34,5 +35,5 @@ export function renderLifecycleProbe(probe: LifecycleProbe, css: string, runId: 
   const html = probe.id === 'lifecycle-starting'
     ? `<div id="host"></div><template id="starting-template"><div id="probe" data-starting class="${escape(probe.candidate)}"></div><div id="control" data-starting></div></template>`
     : `<div id="host">${details('probe', probe.candidate)}${details('control')}</div>`
-  return `<!doctype html><html><head><meta charset="UTF-8"><style>${css}</style></head><body data-lifecycle-fixture="${probe.id}" data-run-id="${escape(runId)}">${html}</body></html>`
+  return `<!doctype html><html><head><meta charset="UTF-8">${fixtureInlineIconLink}<style>${css}</style></head><body data-lifecycle-fixture="${probe.id}" data-run-id="${escape(runId)}">${html}</body></html>`
 }

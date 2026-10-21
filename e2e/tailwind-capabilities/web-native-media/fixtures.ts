@@ -1,3 +1,5 @@
+import { fixtureInlineIconLink } from '../browser/resources'
+
 export const nativeMediaProbe = {
   id: 'native-media-contrast-less',
   candidate: 'contrast-less:bg-[#123456]',
@@ -22,5 +24,5 @@ export function mediaValue(state: typeof nativeMediaStates[number]) {
 
 export function renderNativeMedia(css: string, runId: string) {
   const escaped = runId.replaceAll('&', '&amp;').replaceAll('"', '&quot;')
-  return `<!doctype html><html><head><meta charset="UTF-8"><style>${css}</style><style>${nativeMediaReference}</style></head><body data-fixture="${nativeMediaProbe.id}" data-run-id="${escaped}"><div id="probe" class="${nativeMediaProbe.candidate}"></div><div id="control"></div><div id="reference"></div><div id="identity" style="position:absolute;left:24px;top:160px;display:flex;width:32px;height:4px">${Array.from({ length: 8 }).fill('<i style="display:block;width:4px;height:4px"></i>').join('')}</div></body></html>`
+  return `<!doctype html><html><head><meta charset="UTF-8">${fixtureInlineIconLink}<style>${css}</style><style>${nativeMediaReference}</style></head><body data-fixture="${nativeMediaProbe.id}" data-run-id="${escaped}"><div id="probe" class="${nativeMediaProbe.candidate}"></div><div id="control"></div><div id="reference"></div><div id="identity" style="position:absolute;left:24px;top:160px;display:flex;width:32px;height:4px">${Array.from({ length: 8 }).fill('<i style="display:block;width:4px;height:4px"></i>').join('')}</div></body></html>`
 }

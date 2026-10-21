@@ -3,6 +3,7 @@ import path from 'node:path'
 import { authoringFixtures, sourceSyntaxCases } from '@weapp-tailwindcss/test-catalog'
 import { withGeneratorFixture } from './fixture'
 import { frameworkSource, frameworkSourceCss, sourceFrameworks, sourceRevisions } from './framework-source/fixtures'
+import { frameworkSourceResources } from './framework-source/resources'
 import { hmrCss, hmrIcon, hmrPage, hmrSource, hmrStates } from './hmr/fixture'
 import { digest } from './identity'
 import { registryStaticFixture } from './registry-web/static'
@@ -25,7 +26,7 @@ export async function fixtureOutputs(root: string) {
   const registry = await registryStaticFixture(root)
   const nativeMedia = await withGeneratorFixture(root, nativeMediaCss, {}, generator => generator.generate({ target: 'web', candidates: [nativeMediaProbe.candidate], scanSources: false }))
   const autofill = await withGeneratorFixture(root, autofillCss, {}, generator => generator.generate({ target: 'web', candidates: [autofillProbe.candidate], scanSources: false }))
-  const frameworkFixtures = sourceFrameworks.flatMap(framework => sourceRevisions.map(revision => ({ framework, revision, css: frameworkSourceCss(framework), files: { [`Probe.${framework === 'react' ? 'tsx' : 'vue'}`]: frameworkSource(framework, revision, 'static-baseline') } })))
+  const frameworkFixtures = sourceFrameworks.flatMap(framework => sourceRevisions.map(revision => ({ framework, revision, css: frameworkSourceCss(framework), files: { ...frameworkSourceResources(framework, 'static-baseline'), [`Probe.${framework === 'react' ? 'tsx' : 'vue'}`]: frameworkSource(framework, revision, 'static-baseline') } })))
   const frameworkFiles = Object.fromEntries<string>(await Promise.all(frameworkFixtures.map(async (fixture) => {
     const output = await withGeneratorFixture(root, fixture.css, fixture.files, generator => generator.generate({ target: 'web', candidates: [], scanSources: true }))
     return [`framework-${fixture.framework}-${fixture.revision}.css`, output.css] as const

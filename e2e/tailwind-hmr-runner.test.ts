@@ -8,7 +8,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { runHmr } from './tailwind-capabilities/hmr'
 
 const state = vi.hoisted(() => ({ failure: '', page: undefined as EventEmitter | undefined, launch: vi.fn() }))
-vi.mock('playwright', () => ({ chromium: { launch: state.launch }, firefox: { launch: state.launch }, webkit: { launch: state.launch } }))
+vi.mock('playwright', () => ({ chromium: { launch: state.launch, executablePath: () => '/unit/full-chromium' }, firefox: { launch: state.launch }, webkit: { launch: state.launch } }))
 vi.mock('./tailwind-capabilities/context', () => ({
   newReport: async (context: { directory: string }, _target: unknown, _contracts: unknown, _fixture: unknown, environment: unknown) => {
     await mkdir(context.directory, { recursive: true })
