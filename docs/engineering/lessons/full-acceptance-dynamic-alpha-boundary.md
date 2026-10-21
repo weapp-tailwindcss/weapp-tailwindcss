@@ -58,6 +58,24 @@ verification:
     sha: a7b1118e95f9a36763d3b9878c663368dcc19d96
     environment: macOS arm64，随后未提交的测试及清单维护；只计生成/转换产物，不计微信运行或 v2 负向通过
     command: CI=1 pnpm exec vitest run --config e2e/vitest.e2e.config.ts e2e/tailwind-mini-program-alpha-limit.test.ts e2e/tailwind-inventory.test.ts e2e/tailwind-fixtures.test.ts e2e/tailwind-conversion-audit.test.ts --update=none
+  - claim: 限制登记后的新预检通过，全面流程仅因遗漏更新 Lynx 静态身份而停止
+    kind: integration
+    status: failed
+    sha: 7ce521de8a8586effb0ecda37cb68c59c96f428d
+    environment: macOS arm64，Node 24.18.0、pnpm 12.14.0；预检 e549aabb-d9bf-4240-9c96-62231a2e576f，后台 IAB 真实交互
+    command: pnpm e2e:demo:workflow:local --quality --extended --baseline-ref 7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5 --preflight-report e2e/.artifacts/preflight/e549aabb-d9bf-4240-9c96-62231a2e576f/report.json
+  - claim: 正式重新生成共享身份后，Lynx 示例、真实编码及静态回归全部通过
+    kind: integration
+    status: passed
+    sha: 7ce521de8a8586effb0ecda37cb68c59c96f428d
+    environment: macOS arm64，包含随后未提交的两份静态证据更新；未修改历史原生报告
+    command: CI=1 pnpm e2e:lynx --update=none
+  - claim: 静态身份同步后 Expo Web 三引擎首次渲染及 TSX、CSS HMR 分别通过
+    kind: integration
+    status: passed
+    sha: 7ce521de8a8586effb0ecda37cb68c59c96f428d
+    environment: macOS arm64，包含随后未提交的两份静态证据更新；后台 Chromium、Firefox、WebKit 串行执行并清理
+    command: CI=1 RN_WEB_BROWSER=<chromium|firefox|webkit> pnpm e2e:react-native:web
 ---
 
 # 全面验收的动态透明度边界
@@ -111,6 +129,18 @@ main 和此前 b40 的旧 resolver 会直接覆盖原色 alpha，缺少运行时
 原 artifact `12320983110` 的完整 ZIP 已核对 SHA-256 `8f5b5e20e9c389e57c6bfb05098c9f41d898a7d226569b1a11ae85ca73b55c09`，14 文件保留在 `.tmp/ci-a7-ios-12320983110.zip`。`*.capture.json` 记录失败阶段 `capture-screenshot`、10,005.709ms 及两帧时序，第二帧只有开始记录。没有修改预算或重跑；此前其他 SHA 的有限重试授权不适用于此 head。
 
 主代理随后用生产 `assessNativePair` 离线重读首帧 PNG 和 pair 坐标，并核对诊断中的字节数、完整 SHA 及三项检查点：几何、像素、control 均通过。结果在 `.tmp/ci-a7-ios-offline/offline-summary.json`；没有制造缺失的双帧 receipt。现有日志没有证明冷启动或截图服务根因，不加入预算外预热来掩盖这次耗时。
+
+### 共享清单变更后的静态身份同步
+
+`7ce521de8a8586effb0ecda37cb68c59c96f428d` 新建扩展预检 `e549aabb-d9bf-4240-9c96-62231a2e576f`，全部脚本探针、当前会话后台 IAB 的输入/点击/完成截图及 verify 均通过。此前原生 Chrome 被用户接管的一轮已单独 block，没有复用；本轮 IAB 临时页在取证后关闭并核对标签列表为空。全面入口消费本轮 lease 后，root build 71/71 通过；全量单测 973 文件、10,435 项通过，1 文件、1 项失败，另有 5 文件、44 项既有跳过与 1 项预期失败。前轮九项失败已不再出现；新失败是共享清单变更后遗漏同步的 Lynx 静态身份。流程停止，第 3–57 阶段及独立 Tailwind 15 目标没有调度，报告已 finished、服务已退出。
+
+同 head CI 的实际 checkout 为 merge `7bd457bd05a3bc27494eb9cb276e1a218b13a844`。Lynx 双端在运行前的合同检查拒绝旧静态身份；Expo Web 三引擎在 `reports.ts` 拒绝 `stale catalog or fixture hash`。这些失败不属于浏览器像素或原生运行成功，也不通过修改 hash 门禁或历史原生报告消除。当前消费者显式绑定全局共享清单，本次没有临时删除不相关字段来换取通过。
+
+串行正式执行 `pnpm e2e:lynx:static:update` 与 `pnpm e2e:react-native:static:update` 后，逐 JSON 叶子及独立审查确认仅更新两份 static 的清单 hash 与生成时间；118 案例、支持预期、声明、raw CSS、manifest、生成类集合、生成输入、版本和 RN fixture hash 均未改变。历史双端报告与基线保持原身份。之后 `CI=1 pnpm e2e:lynx --update=none` 的示例 205 项、E2E 39 文件 785 项全部通过，包括真实开发/生产 encoder、bundle、decoder 以及既有 static 比较。
+
+随后分别执行 `CI=1 RN_WEB_BROWSER=<chromium|firefox|webkit> pnpm e2e:react-native:web`，三个引擎均以退出码 0 完成。各自首次渲染、TSX HMR、CSS HMR 逐项验证 118 案例（31 项既定支持、87 项预声明拒绝）、40 份回执，并通过阶段产物校验；前后截图 hash 均不同。三个 run ID 分别为 Chromium `283e516a-4ef2-4513-9da5-fcb199a12027`、Firefox `b6fe35a3-a733-46d9-9a2e-18e49df5a536`、WebKit `90a2d3d5-ceea-4dd0-a86e-ca58e5d59a13`。这些是 Expo Web 现有夹具的运行结果，不能计作新 head 原生或全部共享注册能力通过；served bundle 等既有缺口不因身份修正而消失。
+
+完整日志保留在 `.tmp/full-acceptance-7ce.log`、`.tmp/static-7ce-{lynx,rn}-update.log`、`.tmp/static-7ce-lynx-verify.log` 与 `.tmp/static-7ce-rn-{chromium,firefox,webkit}.log`；三引擎本轮报告、PNG 和阶段索引在 `e2e/.artifacts/react-native-web-<browser>/`。此次静态重生成不代表 RN/Lynx 新 head 原生通过；再次全面执行仍需重新提交并完成新一轮扩展预检。
 
 ## 适用边界
 
