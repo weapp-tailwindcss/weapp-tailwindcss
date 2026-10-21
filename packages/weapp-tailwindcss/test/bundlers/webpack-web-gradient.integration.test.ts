@@ -111,13 +111,13 @@ it('真实导入与 watch 在编码前按本轮完整消费图降级，并保留
   try {
     const initial = await next()
     expect(initial).toContain('--tw-gradient-position: to right;')
-    expect(initial).not.toContain('in oklab')
+    expect(initial).not.toContain('--tw-gradient-position: to right in oklab;')
     const unknown = await next(`${original}\n.author { font-family: var(--tw-gradient-position); }`)
     expect(unknown).toContain('--tw-gradient-position: to right in oklab;')
     expect(unknown).toContain('font-family: var(--tw-gradient-position)')
     const restored = await next(original)
     expect(restored).toContain('--tw-gradient-position: to right;')
-    expect(restored).not.toContain('in oklab')
+    expect(restored).not.toContain('--tw-gradient-position: to right in oklab;')
     expect(restored).not.toContain('font-family: var(--tw-gradient-position)')
   }
   finally {

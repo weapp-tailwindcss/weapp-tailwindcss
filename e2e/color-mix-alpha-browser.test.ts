@@ -68,3 +68,58 @@ it.each(selected)('%s：颜色、权重和 currentColor 切换保留独立 RGBA 
     await browser.close()
   }
 }, 60_000)
+
+it.each(selected)('%s：任意运行时权重不能直接改写为 rgba alpha', async (_name, engine) => {
+  const browser = await engine.launch({ headless: true })
+  try {
+    const page = await browser.newPage()
+    // 0.4 可精确表示为 102/255，避免原色量化差异混入权重语义断言。
+    for (const originalAlpha of [1, 0.4]) {
+      await page.setContent(`<style>
+        .original{background-color:color-mix(in srgb, rgba(255,0,0,${originalAlpha}) var(--weight), transparent)}
+        .unsafe{background-color:rgba(255,0,0,var(--weight))}
+      </style><div class="original"></div><div class="unsafe"></div>`)
+      for (const [weight, expectedAlpha] of [
+        ['20%', 0.2 * originalAlpha],
+        ['50%', 0.5 * originalAlpha],
+        ['100%', originalAlpha],
+        ['20%', 0.2 * originalAlpha],
+        ['0%', 0],
+        ['-10%', 0],
+        ['110%', 0],
+        ['0.5', 0],
+        ['invalid', 0],
+        ['', 0],
+      ] as const) {
+        const result = await page.evaluate(({ weight, expectedAlpha }) => {
+          if (weight) {
+            document.documentElement.style.setProperty('--weight', weight)
+          }
+          else {
+            document.documentElement.style.removeProperty('--weight')
+          }
+          const alpha = (selector: string) => {
+            const value = getComputedStyle(document.querySelector(selector)!).backgroundColor
+            if (!value.startsWith('rgba(') && !value.includes('/')) {
+              return 1
+            }
+            const token = value.slice(0, -1).split(/[,/]/).at(-1)!.trim()
+            return Number.parseFloat(token) / (token.endsWith('%') ? 100 : 1)
+          }
+          return {
+            actual: alpha('.original'),
+            unsafe: alpha('.unsafe'),
+            expected: expectedAlpha,
+          }
+        }, { weight, expectedAlpha })
+        expect(result.actual, `原色alpha=${originalAlpha}，权重=${weight || '未定义'}`).toBeCloseTo(result.expected, 6)
+        if (weight === '0.5' || weight === '110%' || (originalAlpha < 1 && weight === '50%')) {
+          expect(result.unsafe, '简单 rgba 改写会改变原色 alpha、无效数值或越界语义').not.toEqual(result.expected)
+        }
+      }
+    }
+  }
+  finally {
+    await browser.close()
+  }
+}, 60_000)

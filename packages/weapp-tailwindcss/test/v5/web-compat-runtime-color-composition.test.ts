@@ -9,6 +9,7 @@ import { PNG } from 'pngjs'
 import postcss from 'postcss'
 import { afterEach, describe, expect, it } from 'vitest'
 import weappTailwindcss from '@/postcss'
+import { classSelector, dynamicAlphaMix, expectColorDeclarations, runtimeColors } from './fixtures/web-color-declarations'
 import { compositionCases } from './fixtures/web-compat-runtime-color-composition'
 
 const require = createRequire(import.meta.url)
@@ -114,10 +115,31 @@ describe('Tailwind CSS v4 web compat runtime color composition', () => {
       generateCss(fixture.cssEntry, fixture.css, true),
     ])
 
-    expect(compatCss).not.toContain('oklch(')
+    const compatRoot = postcss.parse(compatCss)
+    expect(compositionCases).toHaveLength(18)
     for (const item of compositionCases) {
       expect(compatCss, `${item.variable} should remain a runtime reference`).toContain(`var(${item.variable}`)
+      for (const [index, candidate] of item.colorClasses.entries()) {
+        const color = runtimeColors[index]!
+        const expected = [color.fallback]
+        if (['shadow', 'inset-shadow', 'drop-shadow', 'text-shadow'].includes(item.id)) {
+          expected.push(dynamicAlphaMix(color.dynamic, `--tw-${item.id}-alpha`))
+        }
+        expectColorDeclarations(compatRoot, classSelector(candidate), item.variable, expected)
+      }
     }
+    for (const [selector, property, index, alpha, condition] of [
+      [`${classSelector('hover:shadow-red-500')}:hover`, '--tw-shadow-color', 0, '--tw-shadow-alpha', /@media\(hover:\s*hover\)/],
+      [classSelector('dark:drop-shadow-teal-600/20'), '--tw-drop-shadow-color', 1, '--tw-drop-shadow-alpha', /@media\(prefers-color-scheme:\s*dark\)/],
+      [`${classSelector('before:text-shadow-red-500')}::before`, '--tw-text-shadow-color', 0, '--tw-text-shadow-alpha', undefined],
+      ['.apply-shadow', '--tw-shadow-color', 0, '--tw-shadow-alpha', undefined],
+    ] as const) {
+      const color = runtimeColors[index]!
+      expectColorDeclarations(compatRoot, selector, property, [color.fallback, dynamicAlphaMix(color.dynamic, alpha)], condition)
+    }
+    expectColorDeclarations(compatRoot, `${classSelector('focus:ring-teal-600/20')}:focus`, '--tw-ring-color', [runtimeColors[1]!.fallback])
+    expectColorDeclarations(compatRoot, classSelector('sm:from-teal-600/20'), '--tw-gradient-from', [runtimeColors[1]!.fallback], /@media\((?:width\s*>=\s*40rem|min-width:\s*40rem)\)/)
+    expectColorDeclarations(compatRoot, '::placeholder', 'color', ['currentcolor', 'color-mix(in oklab, currentcolor 50%, transparent)'])
 
     const browser = await chromium.launch({ headless: true })
     try {

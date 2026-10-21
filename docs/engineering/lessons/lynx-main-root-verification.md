@@ -81,6 +81,8 @@ verification:
 
 导入合并后的原生渐变退化、转换夹具隔离及当前性能失败，接续记录于 [Webpack 渐变兼容复盘](lynx-webpack-gradient-finalization.md)。
 
+最新全面流程的单测失败、颜色 oracle 维护与用户确认后的动态 alpha 平台限制，见 [全面验收的动态透明度边界](full-acceptance-dynamic-alpha-boundary.md)。
+
 ## 症状
 
 在 main `7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5` 上重新检查 #1307、#1308、#1309。普通局部主题覆盖已有保护，但不能据此称为根本修复：转义变量身份、空首声明、元素相关函数和注册属性仍可能越过静态化边界；旧诊断从输入与 warning 推导删除，不能证明实际 bundle；Node 声明没有覆盖必装核心依赖链。

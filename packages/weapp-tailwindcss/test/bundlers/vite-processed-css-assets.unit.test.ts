@@ -1,4 +1,5 @@
 import type { OutputAsset, OutputBundle } from 'rollup'
+import { Buffer } from 'node:buffer'
 import { describe, expect, it, vi } from 'vitest'
 import {
   createBundlerGeneratedCssMarker,
@@ -703,7 +704,7 @@ describe('vite processed css assets', () => {
     expect(bundle['pages/index.css']).toBeDefined()
   })
 
-  it('does not append comment-only vite processed leftovers into root css', () => {
+  it.each([false, true])('仅注释不注入，重复规则迁移真实来源且保持幂等：hasRule=%s', (hasRule) => {
     const bundle: OutputBundle = {
       'app.css': asset('app.css', '.template-corpus-card{display:block}'),
     }
@@ -712,14 +713,14 @@ describe('vite processed css assets', () => {
         css: [
           '/*! tailwindcss v4.3.2 | MIT License | https://tailwindcss.com */',
           '/*tokens: template-corpus-card <= src/pages/index/index.vue */',
-          '.template-corpus-card{display:block}',
+          ...(hasRule ? ['.template-corpus-card{display:block}'] : []),
         ].join('\n'),
         injectIntoMain: true,
         outputFile: 'app.css',
       }],
     ])
 
-    const injected = injectViteProcessedCssIntoMainCssAssets(bundle, {
+    const context = {
       opts: {
         ...opts(),
         appType: 'uni-app-vite',
@@ -728,10 +729,21 @@ describe('vite processed css assets', () => {
       },
       getViteProcessedCssAssetResults: () => records.entries(),
       debug: vi.fn(),
-    })
+    }
+    const injected = injectViteProcessedCssIntoMainCssAssets(bundle, context)
 
-    expect(injected).toBe(0)
-    expect(String((bundle['app.css'] as OutputAsset).source)).toBe('.template-corpus-card{display:block}')
+    const output = String((bundle['app.css'] as OutputAsset).source)
+    expect(injected).toBe(hasRule ? 1 : 0)
+    expect(output.match(/\.template-corpus-card\s*\{/g)).toHaveLength(1)
+    expect(output).not.toContain('/*! tailwindcss')
+    if (hasRule) {
+      expect(output).toContain('/*tokens: template-corpus-card <= src/pages/index/index.vue */')
+    }
+    else {
+      expect(output).toBe('.template-corpus-card{display:block}')
+    }
+    expect(injectViteProcessedCssIntoMainCssAssets(bundle, context)).toBe(0)
+    expect(String((bundle['app.css'] as OutputAsset).source)).toBe(output)
   })
 
   it('does not treat non-root uni-app vite page css as app webview main css', () => {

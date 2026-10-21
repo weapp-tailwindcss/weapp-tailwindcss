@@ -225,7 +225,7 @@ describe('v5 Tailwind CSS v4 upgrade generator coverage', () => {
         --color-white: #fff;
         --color-bermuda: #78dcca;
       }
-      @source inline("text-white/10 text-blue-600 bg-sky-500/75 bg-sky-500/[.33] bg-sky-500/(--my-alpha-value) border-pink-400 divide-orange-300 outline-red-500 decoration-purple-500 accent-green-600 caret-rose-500 fill-bermuda stroke-cyan-400 shadow-blue-500/50 inset-shadow-indigo-500 ring-fuchsia-500 placeholder-zinc-500 dark:bg-gray-800 text-[color:var(--brand-color)] bg-[color:var(--surface-color)]");
+      @source inline("text-white/10 text-blue-600 bg-sky-500/75 bg-sky-500/[.33] border-pink-400 divide-orange-300 outline-red-500 decoration-purple-500 accent-green-600 caret-rose-500 fill-bermuda stroke-cyan-400 shadow-blue-500/50 inset-shadow-indigo-500 ring-fuchsia-500 placeholder-zinc-500 dark:bg-gray-800 text-[color:var(--brand-color)] bg-[color:var(--surface-color)]");
       .color-api {
         color: var(--color-blue-600);
         background-color: --alpha(var(--color-sky-500) / 50%);
@@ -256,7 +256,6 @@ describe('v5 Tailwind CSS v4 upgrade generator coverage', () => {
     expect(webResult.css).toBe(officialResult.css)
     expect(webResult.css).toContain('background-color: color-mix(in oklab, var(--color-sky-500) 75%, transparent)')
     expect(webResult.css).toContain('background-color: color-mix(in oklab, var(--color-sky-500) 33%, transparent)')
-    expect(webResult.css).toContain('background-color: color-mix(in oklab, var(--color-sky-500) var(--my-alpha-value), transparent)')
     expect(webResult.css).toContain('color: color-mix(in oklab, var(--color-sky-500) 50%, transparent)')
     expect(webResult.css).toContain('--color-bermuda: #78dcca')
     expect(webResult.css).not.toContain('@source')
@@ -270,7 +269,6 @@ describe('v5 Tailwind CSS v4 upgrade generator coverage', () => {
     expect(weappResult.css).toContain('color: var(--color-blue-600)')
     expect(weappResult.css).toContain('background-color: rgba(0, 165, 234, 0.75)')
     expect(weappResult.css).toContain('background-color: rgba(0, 165, 234, 0.33)')
-    expect(weappResult.css).toContain('background-color: rgba(0, 165, 234, var(--my-alpha-value))')
     expect(weappResult.css).not.toContain('color-mix')
     expect(weappResult.css).not.toContain('oklab')
     expect(weappResult.css).toContain('border-color: var(--color-pink-400)')

@@ -4,6 +4,7 @@ import path from 'node:path'
 import { expect, it, vi } from 'vitest'
 import { generateCssByGenerator } from '@/generation'
 import { finalizeDeferredGeneratorCss } from '@/generation/pipeline/deferred-output'
+import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
 
 const utility = 'group-[:nth-of-type(3)_&]:block'
 const rawClass = '.group-\\[\\:nth-of-type\\(3\\)_\\&\\]\\:block'
@@ -40,6 +41,7 @@ it.each([
     filterGeneratedApplyOnlyCss: (css: string) => css,
     generated: { target: 'weapp', rawCss: full!.metadata!.rawCss, incrementalRawCss: full!.metadata!.rawCss, classSet: full!.classSet, dependencies: [] },
     generatorRawSource: '@import "tailwindcss" source(none);',
+    generatorOptions: normalizeWeappTailwindcssGeneratorOptions({ target: 'weapp' }),
     generatorStyleOptions: options,
     runtimeWithCurrentCss: new Set(['flex', utility]),
     majorVersion: 4,
