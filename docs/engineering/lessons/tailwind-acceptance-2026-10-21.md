@@ -110,3 +110,19 @@ RN iOS 最终定位为旧 runner 的 derivedData 进入 CocoaPods 源码扫描�
 统一入口使用 `--target react-native-ios`、`RN_IOS_HOST=127.0.0.1` 和本轮报告，运行 ID 为 `358b637f-05f6-498d-9690-77361b1c7240`，日志 `.tmp/tailwind-ios-fb95537.log`。CocoaPods 与 Xcode 构建成功，但安装前的路径合同误拒 Xcode 返回的目录别名；没有运行时报告，最终能力报告为一百一十八阻塞、一千二百六十未执行，不能计为本轮 iOS 渲染成功。其他十四目标未选择、未执行。本次无 report 的启动日志与 build settings 已按本次 invocation 自动归档到该运行 `react-native-ios/native/`，不再需要从共享目录手工抢救。
 
 路径根因与后续双向物理身份回归见[隔离边界复盘](tailwind-runtime-evidence-isolation.md)。原索引、原始 Xcode 设置和失败结论保留；新源码须再次 fresh 预检后运行。本次 prepare 与验收进程均正常结束，scratch 回执为 removed，未把历史路径当作现存 bundle。
+
+## 824cdba 的 iOS 定向运行
+
+固定 `824cdba6e74d48f2047b2f91bbb6e250acb64917`，扩展预检 `4e197963-ecf2-4854-9007-b709ab9e13ca` 的全部脚本、后台 IAB 真实输入/点击/截图及 verify 通过。平台调用原始结果在放行前保存；自有 IAB 标签 8 已关闭，用户接管的 Chrome 页面保持原状。
+
+统一入口只选择 `react-native-ios`，运行 `5478f81d-db50-46e4-bb51-53a7aeca5ab1`、invocation `9169e88f-4732-4518-8197-12a66aa92eb0`。CocoaPods、Xcode、安装和启动通过，安装 app 路径、二进制摘要及 simctl PID 均归档。baseline、TSX HMR、CSS HMR 各自完成一百一十八例、四十份截图回执；三十一项预声明支持仍分为二十六运行时、五编码，另八十七项是预声明拒绝。三阶段共一百二十份语义 PNG 回执及三份总览 PNG，在该版本原生产 validator 离线重放通过，日志 `.tmp/ios-824-archive-verify.log`。
+
+最终能力报告仍为一百一十八 passed、一千二百六十 not-run，统一入口以 exit 1 正确拒绝全面通过；其他十四目标未选择。日志 `.tmp/tailwind-ios-physical-both.log`，原始报告、阶段索引、构建设置及 HMR 记录均在该运行 `react-native-ios/native/`。预检服务已 finished，scratch 已 removed。servedBundle 仍是 not-captured，后续安装协议升级不能把该历史产物补写成新协议成功。
+
+同一 head 的 hosted CI iOS run `39620497421`、job `119293511133` 在 baseline 首例第二帧采集超时。第一帧约五千八百六十五毫秒，几何、像素和 control 全通过；第二帧在约六千三百二十二毫秒开始，到总预算一万零十一毫秒仍在途。没有逐条 simctl 退出回执或 CPU 时间线，不能认定第二条命令卡死，也不能由本地成功消除 CI 失败。精确 merge checkout `9851c046` 的 parents 已核对为 main `7d80eb1b` 和本 head；未重跑。
+
+## 实际安装证据协议升级
+
+新增设备侧同步读取实际 runtime 的 publication 与 manifest 快照，快照前后必须稳定；JS realm 身份跨模块 HMR 保持，整包刷新会变更。每个 case、截图回执、最终报告及三阶段索引相互对账，索引升级 v2 并更新 fixture hash。宿主分别核对 manifest 原始字节摘要、实际 publication 和设备 JSON 内容，允许合法新发布保持相同内容摘要。该证据不冒称设备接收过完整 bundle 字节。
+
+缺安装快照、错 realm、错 publication、错 manifest 的四个持久反例先红；补充拒绝数组摘要、零随机值身份、失败报告二次拒绝仍发送原始错误的边界。定向七文件一百三十五项、示例七文件二十三项及示例类型检查通过；较宽 RN compatibility 十九文件二百四十八项通过。static 通过 `pnpm e2e:react-native:static:update` 定向生成并审查，仅两处 fixture hash 和验证时间变化；之后 compatibility 和定向回归均以 `CI=1`、`--update=none` 验证。新协议的真实端侧运行另行记录，不能由这些合同通过替代。

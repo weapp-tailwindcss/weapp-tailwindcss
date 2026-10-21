@@ -1,6 +1,7 @@
 import type { NativePairEvidence } from '../examples/react-native-expo/src/compatibility/protocol'
 import { PNG } from 'pngjs'
 import { describe, expect, it } from 'vitest'
+import { syntheticRuntimeInstallation } from './react-native/installation-fixture'
 import { assessNativePair } from './react-native/pair-evidence'
 
 function fixture() {
@@ -16,6 +17,7 @@ function fixture() {
     }
   }
   const pair: NativePairEvidence = {
+    runtimeInstallation: syntheticRuntimeInstallation(),
     runId: 'control-run',
     revision: 'revision',
     platform: 'web',

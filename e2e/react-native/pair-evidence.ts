@@ -6,6 +6,7 @@ import path from 'node:path'
 import { PNG } from 'pngjs'
 import { expectedFixtureStyle, nativeFixtures } from '../../examples/react-native-expo/src/compatibility/protocol'
 import { NATIVE_CAPTURE_TIMEOUT } from './capture-budget'
+import { assertRuntimeIdentity, runtimeIdentity, validateRuntimeIdentity, validateRuntimeInstallation } from './installation-evidence'
 import { createPairCaptureDiagnostics } from './pair-capture-diagnostics'
 
 function sameTargetGeometry(target: NativePairEvidence['target'], frame: NativePairEvidence['probe'], otherTarget: NativePairEvidence['target'], otherFrame: NativePairEvidence['probe']) {
@@ -116,6 +117,7 @@ export async function captureNativePair(pair: NativePairEvidence, options: {
   cancelSignal?: AbortSignal
   capture: (filename: string) => Promise<string>
 }): Promise<NativeCaseReceipt> {
+  validateRuntimeIdentity(pair.runtimeInstallation)
   if (pair.runId !== options.runId || !/^[\w.-]+$/.test(pair.id) || !/^[\w.-]+$/.test(pair.phase) || !/^[\w.-]+$/.test(pair.revision)) {
     throw new Error('React Native pair has a stale run or invalid artifact identity')
   }
@@ -164,6 +166,7 @@ export async function captureNativePair(pair: NativePairEvidence, options: {
     }
     options.cancelSignal?.throwIfAborted()
     const receipt: NativeCaseReceipt = {
+      runtimeInstallation: runtimeIdentity(pair.runtimeInstallation),
       runId: options.runId,
       id: pair.id,
       phase: pair.phase,
@@ -180,7 +183,9 @@ export async function captureNativePair(pair: NativePairEvidence, options: {
 
 /** 门禁重新读取宿主保存的截图与坐标，不相信报告中的布尔检查点。 */
 export async function validateNativeArtifacts(report: import('./catalog').ReactNativeReport, directory: string) {
+  validateRuntimeInstallation(report.runtimeInstallation)
   for (const receipt of report.receipts) {
+    assertRuntimeIdentity(receipt.runtimeInstallation, report.runtimeInstallation)
     const expectedName = `case-${report.revision}-${receipt.id}-${receipt.phase}.png`
     if (receipt.artifact.name !== expectedName || !/^[\w.-]+$/.test(expectedName)) {
       throw new Error('Invalid native screenshot artifact identity')
@@ -188,6 +193,7 @@ export async function validateNativeArtifacts(report: import('./catalog').ReactN
     const file = path.join(directory, expectedName)
     const contents = await fs.readFile(file)
     const saved = JSON.parse(await fs.readFile(`${file}.json`, 'utf8')) as { pair: NativePairEvidence, receipt: NativeCaseReceipt }
+    assertRuntimeIdentity(saved.pair.runtimeInstallation, report.runtimeInstallation)
     if (contents.length !== receipt.artifact.byteLength || createHash('sha256').update(contents).digest('hex') !== receipt.artifact.sha256
       || JSON.stringify(saved.receipt) !== JSON.stringify(receipt)
       || saved.pair.runId !== report.runId || saved.pair.revision !== report.revision

@@ -1,6 +1,7 @@
 import type { ReactNativeCaseResult, ReactNativePlatform, ReactNativeReport } from './catalog'
 import { nativeBuildCases, nativeBuildFixtures, nativeFixtures, rejectedNativeCases, styleContains } from '../../examples/react-native-expo/src/compatibility/protocol'
 import { compatibilityCases, reactNativeVersions, RN_CATALOG_HASH, RN_FIXTURE_HASH } from './catalog'
+import { assertRuntimeIdentity, validateRuntimeInstallation } from './installation-evidence'
 
 function fail(message: string): never {
   throw new Error(`React Native compatibility report: ${message}`)
@@ -13,6 +14,12 @@ export function validateReactNativeReport(report: ReactNativeReport, platform: R
   const stage = context.stage ?? 'runtime'
   if (report.stage !== stage) {
     fail(`stage must be ${stage}`)
+  }
+  if (stage === 'runtime') {
+    validateRuntimeInstallation(report.runtimeInstallation)
+    for (const receipt of report.receipts) {
+      assertRuntimeIdentity(receipt.runtimeInstallation, report.runtimeInstallation)
+    }
   }
   if (report.platform !== platform) {
     fail(`platform must be ${platform}`)

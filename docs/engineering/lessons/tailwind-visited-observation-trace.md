@@ -62,3 +62,9 @@ verification:
 ## 规则评估
 
 不新增 AGENTS。现有禁止失败改判不支持、原始证据重读、固定预算及任务资源收尾规则已覆盖边界，以可执行回归落实。
+
+## 无 Tailwind 的 Self 控制诊断
+
+独立手写 CSS 实验新增空链接 Self，分别以立即返回和目标真实 HTTP 文档 complete、两次 rAF 与截图后返回两条路径运行。两分支各自独立 profile，Chromium 156 和 WebKit 27.2 均后台运行，返回后观察预算仍是两秒。Chromium 的历史返回与同 profile 重开均首帧通过；WebKit 的 Self 始终显示访问色 `[18,52,86,255]`，但真实目标 probe/reference 始终为未访问色 `[1,2,3,255]`，control 正确保持未访问。
+
+证据保存在 `.tmp/visited-self-control/report.json` 及逐帧 PNG，脚本为 `.tmp/visited-self-control.mjs`。所有自有 profile、context 和 HTTP 服务已关闭清理。此实验可排除通用 visited CSS 绘制失败及全面截图掩蔽，不能确定真实目标在历史登记、查询或失效链的具体根因。正向失败继续保留，不以 Self 代替真实导航，不放宽支持预期或时间预算。

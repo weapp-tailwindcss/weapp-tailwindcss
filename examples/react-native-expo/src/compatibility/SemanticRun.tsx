@@ -6,7 +6,8 @@ import { composeStyle, tw } from '@weapp-tailwindcss/react-native/runtime'
 import { useEffect, useRef, useState } from 'react'
 import { Dimensions, PixelRatio, Platform, StyleSheet, Text, View } from 'react-native'
 import { expectedFixtureStyle, fixtureClassValue, fixtureInlineStyle, nativeFixtures, styleContains } from './protocol'
-import { nativeReportHeaders } from './report-client'
+import { deliverSemanticFailure, nativeReportHeaders } from './report-client'
+import { assertCurrentRuntimeInstallation, captureRuntimeInstallation, runtimeInstallationIdentity } from './runtime-installation'
 
 interface RuntimeInput {
   schemaVersion?: number
@@ -29,6 +30,7 @@ function measure(node: View | Text | null): Promise<NativeRect> {
 }
 
 export function SemanticRun({ evidence, revision, onComplete }: { evidence: RuntimeInput, revision: string, onComplete: (report: ReactNativeReport) => void | Promise<void> }) {
+  const [installation] = useState(() => process.env.EXPO_PUBLIC_RN_REPORT_URL ? captureRuntimeInstallation() : undefined)
   const tests = evidence.cases.flatMap(item => nativeFixtures[item.id]
     ? (nativeFixtures[item.id]!.phases ?? ['default']).map(phase => ({ ...item, phase }))
     : [])
@@ -60,6 +62,10 @@ export function SemanticRun({ evidence, revision, onComplete }: { evidence: Runt
       return
     }
     void (async () => {
+      if (!installation) {
+        throw new Error('React Native 缺少本阶段实际安装快照')
+      }
+      assertCurrentRuntimeInstallation(installation)
       if (evidence.schemaVersion !== 2) {
         throw new Error('Historical static evidence is not runnable: regenerate the RN static fixture first')
       }
@@ -88,7 +94,9 @@ export function SemanticRun({ evidence, revision, onComplete }: { evidence: Runt
         measure(controlTarget.current),
       ])
       const viewport = Dimensions.get('window')
+      assertCurrentRuntimeInstallation(installation)
       const pair: NativePairEvidence = {
+        runtimeInstallation: runtimeInstallationIdentity(installation),
         runId: context.runId,
         platform,
         revision,
@@ -107,6 +115,10 @@ export function SemanticRun({ evidence, revision, onComplete }: { evidence: Runt
         throw new Error(`Native pair receipt HTTP ${response.status}: ${await response.text()}`)
       }
       const receipt = await response.json() as NativeCaseReceipt
+      assertCurrentRuntimeInstallation(installation)
+      if (JSON.stringify(receipt.runtimeInstallation) !== JSON.stringify(pair.runtimeInstallation)) {
+        throw new Error('React Native 宿主回执与本阶段实际安装身份不符')
+      }
       if (canceled) {
         return
       }
@@ -131,13 +143,17 @@ export function SemanticRun({ evidence, revision, onComplete }: { evidence: Runt
         const passed = result.generated && result.encoded && !result.warnings.length && runtime.every(checkpoint => checkpoint.passed)
         return { ...result, status: passed ? 'supported' as const : 'failed' as const, reason: passed ? undefined : '本轮原生语义或参考节点像素不匹配', checkpoints: [...result.checkpoints, ...runtime] }
       })
-      await onComplete({ ...staticReport, runId: context.runId, revision, stage: 'runtime', platform: Platform.OS as ReactNativeReport['platform'], verifiedAt: new Date().toISOString(), results, receipts: receipts.current, environment: { deviceName: `${Platform.OS}-runtime`, osName: Platform.OS, osVersion: String(Platform.Version), runtimeIdentifier: `expo-${Platform.OS}`, abi: Platform.OS === 'web' ? 'n/a' : 'simulator', viewport: pair.viewport } })
+      await onComplete({ ...staticReport, runtimeInstallation: installation, runId: context.runId, revision, stage: 'runtime', platform: Platform.OS as ReactNativeReport['platform'], verifiedAt: new Date().toISOString(), results, receipts: receipts.current, environment: { deviceName: `${Platform.OS}-runtime`, osName: Platform.OS, osVersion: String(Platform.Version), runtimeIdentifier: `expo-${Platform.OS}`, abi: Platform.OS === 'web' ? 'n/a' : 'simulator', viewport: pair.viewport } })
     })().catch(async (error) => {
       if (!canceled) {
-        if (evidence.schemaVersion === 2 && runId.current) {
+        const delivery = await deliverSemanticFailure({ reportUrl, runId: runId.current, revision, error, complete: async () => {
+          if (evidence.schemaVersion !== 2 || !runId.current) {
+            return
+          }
           const staticReport = evidence.report as ReactNativeReport
           await onComplete({
             ...staticReport,
+            runtimeInstallation: installation,
             runId: runId.current,
             revision,
             stage: 'runtime',
@@ -148,8 +164,12 @@ export function SemanticRun({ evidence, revision, onComplete }: { evidence: Runt
               ? { ...result, status: 'failed', reason: String(error), checkpoints: [...result.checkpoints, { name: `runtime:${active.phase}:failure`, passed: false, actual: String(error) }] }
               : result),
           })
+        } })
+        if (!delivery.delivered) {
+          // 错误回执失败需要保留在设备日志，不能再次产生未处理的拒绝。
+          // eslint-disable-next-line no-console
+          console.error('React Native 原始错误未获宿主成功回执', String(error), delivery.error)
         }
-        await fetch(`${reportUrl}/error`, { method: 'POST', headers: nativeReportHeaders(), body: JSON.stringify({ runId: runId.current, revision, message: String(error) }) }).catch(() => undefined)
       }
     })
     return () => {

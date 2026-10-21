@@ -5,6 +5,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { RN_FIXTURE_HASH } from './catalog'
 import { RN_ENTRY_SCOPE_VERSION } from './generation-input'
+import { syntheticRuntimeInstallation } from './installation-fixture'
 import { collectStaticEvidence } from './static-evidence'
 
 let generatedFixture: ReturnType<typeof collectStaticEvidence> | undefined
@@ -18,6 +19,7 @@ export async function writeEncodingFixture(directory: string, report: ReactNativ
   const runtimeInput = evidence.generation.runtimeInput.config.source
   const digest = (value: string) => createHash('sha256').update(value).digest('hex')
   const ready = JSON.stringify({ manifestSha256: digest(source), ...options.publication ?? { revision: 'metro-publication', virtualPath: 'virtual.js' } })
+  report.runtimeInstallation ??= syntheticRuntimeInstallation(source, JSON.parse(ready).revision)
   const output = path.join(directory, 'encoding')
   await mkdir(output, { recursive: true })
   await writeFile(path.join(output, 'manifest.json'), source)

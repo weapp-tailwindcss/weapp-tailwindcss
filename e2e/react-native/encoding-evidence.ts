@@ -9,6 +9,7 @@ import { createNativeStyleRuntime } from '../../packages/react-native/src/runtim
 import { RN_FIXTURE_HASH } from './catalog'
 import { RN_ENTRY_SCOPE_VERSION } from './generation-input'
 import { validateImportantRuntimeManifest } from './important-runtime'
+import { validateInstalledManifest } from './installation-evidence'
 import { captureMetroEvidence } from './metro-evidence'
 import { nativeEncodingArtifactNames } from './phase-contract'
 import { validateStaticGenerationInput } from './static-input-evidence'
@@ -70,5 +71,6 @@ export async function validateNativeEncodingArtifacts(report: ReactNativeReport,
       throw new Error(`${id} 的本轮 manifest 编码与独立原生 oracle 或报告不一致`)
     }
   }
+  validateInstalledManifest(report.runtimeInstallation, manifestSource, publication)
   return nativeEncodingArtifactNames.map(name => path.join(output, name))
 }

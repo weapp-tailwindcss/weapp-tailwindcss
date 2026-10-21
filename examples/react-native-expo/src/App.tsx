@@ -6,6 +6,7 @@ import { tw } from '@weapp-tailwindcss/react-native/runtime'
 import { useRef } from 'react'
 import { ScrollView, StyleSheet, Text, useColorScheme, View } from 'react-native'
 import { nativeReportHeaders } from './compatibility/report-client'
+import { assertCurrentRuntimeInstallation } from './compatibility/runtime-installation'
 import { SemanticRun } from './compatibility/SemanticRun'
 import evidence from './compatibility/static-evidence.json'
 import { HMR_MARKER, HMR_MARKER_CLASS } from './hmr-marker'
@@ -26,6 +27,10 @@ export default function App() {
     if (!reportUrl || completedReport.revision !== `${HMR_MARKER}-${cssHmrColor.replace('#', '')}` || sentRevision.current === revision) {
       return
     }
+    if (!completedReport.runtimeInstallation) {
+      throw new Error('React Native 最终报告缺少实际安装证据')
+    }
+    assertCurrentRuntimeInstallation(completedReport.runtimeInstallation)
     sentRevision.current = revision
     const payload = { hmrMarker: HMR_MARKER, cssHmrColor, report: completedReport }
     for (let attempt = 0; attempt < 5; attempt++) {
@@ -36,6 +41,7 @@ export default function App() {
           measureVisualProbe(cssRef.current, 'css-hmr', cssHmrStyle.backgroundColor),
         ])
         const body = JSON.stringify({ ...payload, visualProbes })
+        assertCurrentRuntimeInstallation(completedReport.runtimeInstallation)
         const response = await fetch(`${reportUrl}/report`, {
           method: 'POST',
           headers: nativeReportHeaders(),

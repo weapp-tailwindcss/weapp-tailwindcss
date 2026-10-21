@@ -1,8 +1,9 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import type { NativeCaseReceipt, NativePairEvidence, ReactNativePlatform, ReactNativeReport } from '../../examples/react-native-expo/src/compatibility/protocol'
+import type { NativeCaseReceipt, NativePairEvidence, NativeRuntimeIdentity, ReactNativePlatform, ReactNativeReport } from '../../examples/react-native-expo/src/compatibility/protocol'
 import { Buffer } from 'node:buffer'
 import { nativeFixtures } from '../../examples/react-native-expo/src/compatibility/protocol'
 import { createNativeCaptureBudget } from './capture-budget'
+import { assertRuntimeIdentity, runtimeIdentity, validateRuntimeIdentity, validateRuntimeInstallation } from './installation-evidence'
 
 interface SemanticContext { runId: string, fixtureHash: string, catalogHash: string, versions: Record<string, string> }
 interface ReportEnvelope { hmrMarker: string, cssHmrColor: string, report: ReactNativeReport }
@@ -24,6 +25,8 @@ export function createSemanticReporter<Envelope extends ReportEnvelope = ReportE
   const revisions = new Set([options.revision])
   let revision = options.revision
   let pending = false
+  let runtimeInstanceId: string | undefined
+  let phaseInstallation: NativeRuntimeIdentity | undefined
   const registeredCases = Object.values(nativeFixtures).reduce((count, fixture) => count + (fixture.phases?.length ?? 1), 0)
   let captureBudget = createNativeCaptureBudget(registeredCases)
   let previousCaptureElapsed = 0
@@ -39,6 +42,17 @@ export function createSemanticReporter<Envelope extends ReportEnvelope = ReportE
     if (report.runId !== context.runId || report.platform !== options.platform || report.revision !== revision) {
       throw new ProtocolRejection(409, 'Stale React Native report identity')
     }
+    try {
+      validateRuntimeInstallation(report.runtimeInstallation)
+      if (!phaseInstallation) {
+        throw new Error('缺少本阶段截图的实际安装身份')
+      }
+      assertRuntimeIdentity(report.runtimeInstallation, phaseInstallation)
+      for (const receipt of report.receipts) {
+        assertRuntimeIdentity(receipt.runtimeInstallation, phaseInstallation)
+      }
+    }
+    catch (error) { throw new ProtocolRejection(409, String(error)) }
     for (const receipt of report.receipts) {
       const captured = receipts.get(`${report.revision}:${receipt.id}:${receipt.phase}`)
       if (!captured || JSON.stringify(captured) !== JSON.stringify(receipt)) {
@@ -92,9 +106,22 @@ export function createSemanticReporter<Envelope extends ReportEnvelope = ReportE
     if (pending || receipts.has(key)) {
       throw new ProtocolRejection(409, 'Duplicate or concurrent native semantic capture')
     }
+    try {
+      validateRuntimeIdentity(pair.runtimeInstallation)
+      if (runtimeInstanceId && pair.runtimeInstallation.runtimeInstanceId !== runtimeInstanceId) {
+        throw new Error('React Native HMR 运行实例改变，不能由整包刷新代替')
+      }
+      if (phaseInstallation) {
+        assertRuntimeIdentity(pair.runtimeInstallation, phaseInstallation)
+      }
+    }
+    catch (error) { throw new ProtocolRejection(409, String(error)) }
+    runtimeInstanceId ??= pair.runtimeInstallation.runtimeInstanceId
+    phaseInstallation ??= runtimeIdentity(pair.runtimeInstallation)
     pending = true
     try {
       const receipt = await captureBudget.capture(cancelSignal => capture(pair, cancelSignal))
+      assertRuntimeIdentity(receipt.runtimeInstallation, pair.runtimeInstallation)
       if (receipt.runId !== pair.runId || receipt.id !== pair.id || receipt.phase !== pair.phase) {
         throw new Error('Native host returned a mismatched receipt')
       }
@@ -136,6 +163,7 @@ export function createSemanticReporter<Envelope extends ReportEnvelope = ReportE
         throw new Error('Cannot replace a pending or previously used native revision')
       }
       revision = next
+      phaseInstallation = undefined
       revisions.add(next)
       previousCaptureElapsed += captureBudget.elapsed()
       captureBudget = createNativeCaptureBudget(registeredCases)

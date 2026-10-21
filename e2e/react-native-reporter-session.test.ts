@@ -2,6 +2,7 @@ import type { NativeCaseReceipt, NativePairEvidence, ReactNativeReport } from '.
 import { createServer } from 'node:http'
 import { describe, expect, it, vi } from 'vitest'
 import { nativeFixtures } from '../examples/react-native-expo/src/compatibility/protocol'
+import { syntheticRuntimeInstallation } from './react-native/installation-fixture'
 import { evaluateNativeWait } from './react-native/native-wait'
 import { createSemanticReporter } from './react-native/semantic-reporter'
 import { allocateExpoWebPort } from './react-native/web-session'
@@ -12,6 +13,7 @@ const headers = { 'x-rn-e2e-client': 'owned-client', 'content-type': 'applicatio
 function pair(overrides: Partial<NativePairEvidence> = {}): NativePairEvidence {
   const rect = { x: 0, y: 0, width: 40, height: 40 }
   return {
+    runtimeInstallation: syntheticRuntimeInstallation(),
     runId: 'run',
     revision,
     platform: 'web',
@@ -29,7 +31,7 @@ function pair(overrides: Partial<NativePairEvidence> = {}): NativePairEvidence {
 }
 
 function receipt(input: NativePairEvidence): NativeCaseReceipt {
-  return { runId: input.runId, id: input.id, phase: input.phase, checkpoints: [], artifact: { name: 'owned.png', sha256: 'a'.repeat(64), byteLength: 1 } }
+  return { runtimeInstallation: input.runtimeInstallation, runId: input.runId, id: input.id, phase: input.phase, checkpoints: [], artifact: { name: 'owned.png', sha256: 'a'.repeat(64), byteLength: 1 } }
 }
 
 async function withReporter(action: (session: {
@@ -62,6 +64,29 @@ async function withReporter(action: (session: {
 }
 
 describe('React Native 采集客户端与 revision 隔离', () => {
+  it('同阶段 case 与报告不能替换实际安装；跨 HMR 保持同一运行实例', async () => {
+    await withReporter(async ({ post, reporter, capture }) => {
+      expect((await post('/case', pair())).status).toBe(200)
+      const other = syntheticRuntimeInstallation(undefined, 'another-publication')
+      expect((await post('/case', pair({ id: 'border-radius', runtimeInstallation: other }))).status).toBe(409)
+      expect((await post('/report', { hmrMarker: 'rn-hmr-baseline', cssHmrColor: '#10b981', report: { runId: 'run', revision, platform: 'web', receipts: [receipt(pair())], runtimeInstallation: other } })).status).toBe(409)
+      reporter.setRevision('rn-hmr-updated-10b981')
+      const next = pair({ revision: 'rn-hmr-updated-10b981', runtimeInstallation: { ...other, runtimeInstanceId: 'different-realm-after-full-reload' } })
+      expect((await post('/case', next)).status).toBe(409)
+      next.runtimeInstallation = other
+      expect((await post('/case', next)).status).toBe(200)
+      expect(capture).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  it('宿主采集回执的安装身份被替换时立即阻断', async () => {
+    await withReporter(async ({ post, reporter, capture }) => {
+      capture.mockImplementationOnce(async input => ({ ...receipt(input), runtimeInstallation: { ...input.runtimeInstallation, runtimeInstanceId: 'other-host-receipt-runtime-instance' } }))
+      expect((await post('/case', pair())).status).toBe(500)
+      expect(() => reporter.assertReady()).toThrow('semantic evidence failed')
+    })
+  })
+
   it('只有当前认证的唯一 case 获得实际采集预算；旧回执和下一轮不能重用抵扣', async () => {
     let now = 0
     const clock = vi.spyOn(performance, 'now').mockImplementation(() => now)
@@ -122,7 +147,7 @@ describe('React Native 采集客户端与 revision 隔离', () => {
       expect((await post('/case', pair())).status).toBe(200)
       expect((await post('/case', pair())).status).toBe(409)
       expect(capture).toHaveBeenCalledOnce()
-      reporter.assertReceipts({ runId: 'run', revision, platform: 'web', receipts: [receipt(pair())] } as ReactNativeReport)
+      reporter.assertReceipts({ runtimeInstallation: syntheticRuntimeInstallation(), runId: 'run', revision, platform: 'web', receipts: [receipt(pair())] } as ReactNativeReport)
       expect(() => reporter.assertReady()).not.toThrow()
     })
   })
@@ -159,7 +184,7 @@ describe('React Native 采集客户端与 revision 隔离', () => {
 
   it('最终报告只接收已核对回执；重复投递幂等，冲突与旧 revision 不能覆盖文件', async () => {
     await withReporter(async ({ post, reporter, complete }) => {
-      const report = { runId: 'run', revision, platform: 'web', receipts: [receipt(pair())] } as ReactNativeReport
+      const report = { runtimeInstallation: syntheticRuntimeInstallation(), runId: 'run', revision, platform: 'web', receipts: [receipt(pair())] } as ReactNativeReport
       const envelope = { hmrMarker: 'rn-hmr-baseline', cssHmrColor: '#10b981', report }
       expect((await post('/', envelope)).status).toBe(404)
       expect((await post('/report', envelope)).status).toBe(409)

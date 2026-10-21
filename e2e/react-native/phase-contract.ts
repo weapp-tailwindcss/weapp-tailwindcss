@@ -1,4 +1,4 @@
-export const RN_PHASE_EVIDENCE_VERSION = 1
+export const RN_PHASE_EVIDENCE_VERSION = 2
 
 export const nativeRuntimePhases = [
   { id: 'baseline', revision: 'rn-hmr-baseline-10b981', marker: 'rn-hmr-baseline', markerClass: 'bg-emerald-500', cssColor: '#10b981' },

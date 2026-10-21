@@ -33,7 +33,18 @@ export interface ReactNativeCaseResult {
 
 export interface NativeRect { x: number, y: number, width: number, height: number }
 
+export interface NativeRuntimeIdentity {
+  version: 1
+  runtimeInstanceId: string
+  publication: { revision: string, manifestSha256: string }
+}
+
+export interface NativeRuntimeInstallation extends NativeRuntimeIdentity {
+  manifestJson: string
+}
+
 export interface NativePairEvidence {
+  runtimeInstallation: NativeRuntimeIdentity
   runId: string
   platform: ReactNativePlatform
   revision: string
@@ -49,6 +60,7 @@ export interface NativePairEvidence {
 }
 
 export interface NativeCaseReceipt {
+  runtimeInstallation: NativeRuntimeIdentity
   runId: string
   id: string
   phase: string
@@ -77,6 +89,7 @@ export interface ReactNativeReport {
   }
   results: ReactNativeCaseResult[]
   receipts: NativeCaseReceipt[]
+  runtimeInstallation?: NativeRuntimeInstallation
 }
 
 /** 已确认的编码边界；新增能力必须显式调整预期并补真实夹具。 */

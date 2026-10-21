@@ -2,6 +2,7 @@ import type { NativePairEvidence } from '../examples/react-native-expo/src/compa
 import type { ReactNativeReport } from './react-native/catalog'
 import { PNG } from 'pngjs'
 import { describe, expect, it, vi } from 'vitest'
+import { syntheticRuntimeInstallation } from './react-native/installation-fixture'
 import { assessNativePair } from './react-native/pair-evidence'
 import { readHistoricalReactNativeReport, validateReactNativeReport } from './react-native/reports'
 
@@ -17,6 +18,7 @@ vi.mock('./react-native/catalog', () => ({
 
 function report(): ReactNativeReport {
   return {
+    runtimeInstallation: syntheticRuntimeInstallation(),
     schemaVersion: 2,
     stage: 'runtime',
     revision: 'baseline',
@@ -64,6 +66,7 @@ function report(): ReactNativeReport {
       },
     ],
     receipts: [{
+      runtimeInstallation: syntheticRuntimeInstallation(),
       runId: 'current-run',
       id: 'background-color',
       phase: 'default',
@@ -174,6 +177,7 @@ function pairFixture() {
     }
   }
   const pair: NativePairEvidence = {
+    runtimeInstallation: syntheticRuntimeInstallation(),
     runId: 'run',
     platform: 'web',
     revision: 'baseline',
