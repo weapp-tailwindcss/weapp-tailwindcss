@@ -77,3 +77,28 @@ RN/Expo 原始31支持、87预声明拒绝，不能写成118项正向运行时�
 ## 规则评估
 
 不新增 AGENTS。使用现有逐端证据、禁止旧报告放行、资源收尾及基线审查规则，新增回归约束报告归属，不降低阈值或支持预期。
+
+## bb55 第二轮记录
+
+运行 `f197e131-2dee-4e80-9193-3c2bf41f7b78` 固定源码 `bb55fbaffaabc5480ae6babba6f968d0afd2ea60`。本轮先通过 extended 脚本探针、IAB 真实输入/点击和 verify；原生 Chrome 被用户接管后保留其页面，后台 IAB 自有标签 6 已关闭。原 CU 回执先记录的是本地定位符，随后从当前对话 rollout 补全真实平台调用 ID 及原始结果，单独保存在 `computer-use-platform-provenance.json`；不重写原回执或把事后补证当作重新放行。
+
+| 目标 | P | F | B | N | 范围 |
+| --- | ---: | ---: | ---: | ---: | --- |
+| static | 47,483 | 0 | 0 | 118,473 | 生成/转换执行，缺独立 oracle 仍未执行 |
+| authoring | 29 | 0 | 0 | 0 | 指令与配置 |
+| Web Chromium | 1,391 | 0 | 0 | 0 | 九份报告，含新增作者/上下文及 Chromium 媒体夹具 |
+| Web Firefox | 1,390 | 0 | 0 | 0 | 八份报告；未执行的其它媒体能力不包含在此计数 |
+| Web WebKit | 1,389 | 1 | 0 | 0 | 唯一失败仍为 visited |
+| Expo 三浏览器，各自 | 118 | 0 | 0 | 1,260 | 各引擎独立完成旧夹具，注册能力仍缺 |
+| 微信 | 18 | 0 | 0 | 1,282 | 旧运行时夹具，不代表注册能力全覆盖 |
+| RN Android | 118 | 0 | 0 | 1,260 | 26运行时、5编码、87负向；served bundle 未捕获 |
+| RN iOS | 0 | 0 | 118 | 1,260 | CocoaPods 启动前失败，无本轮运行时报告 |
+| Lynx Android、iOS，各自 | 17 | 0 | 101 | 1,496 | 原始采集 complete 不等于语义完整 |
+| mini-builds | — | — | — | — | 收集64场景，启动后人工中止，未产出最终能力报告 |
+| framework-regressions | — | — | — | — | 未启动 |
+
+RN iOS 最终定位为旧 runner 的 derivedData 进入 CocoaPods 源码扫描树。人工查到原始日志后立即阻断本轮 lease，向本任务 mini-builds Vitest 发送一次 SIGINT，等待其收尾；预检服务退出，未继续 framework。索引中的 mini-builds blocked 与原有输出保留，不把部分构建归档算作六十四场景通过。门禁关闭期间下一次请求报 ECONNREFUSED，仍非成功。全过程未重置微信或设备。
+
+后续已修复原生输出隔离、启动前诊断归档和历史失败重放，并补定向回归；详见[隔离边界复盘](tailwind-runtime-evidence-isolation.md)。旧 RN iOS 结果保持阻塞，旧 WebKit 结果保持失败。此次只调整 runner/证据，没有修改 demo 或样式，无需生成新的 static 基线。新源码还未完成新一轮全面验收。
+
+同一 head 的 Windows repeated-watch 任务失败在前置 demo matrix 的 Rollup 叶子订阅等待，实际 Gulp repeated-watch 未执行；修复及确定性红例见[订阅复盘](rollup-invalidation-subscription.md)。整合后本地 demo matrix 为五十二文件、三百九十九项通过，Windows hosted 尚须新 head 证据。性能新增原始采样记录，不调整计时范围或预算；旧 head 的 P95 超限失败继续保留，不能由后续成功认定根因消除。
