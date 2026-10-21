@@ -1,4 +1,5 @@
 export function watchRunScope(watcher) {
+  const started = Promise.withResolvers()
   let active
   let closing
   const results = new WeakMap()
@@ -6,6 +7,7 @@ export function watchRunScope(watcher) {
   watcher.on('event', (event) => {
     if (event.code === 'START') {
       active = Promise.withResolvers()
+      started.resolve()
     }
     else if (event.code === 'END') {
       active?.resolve()
@@ -27,6 +29,8 @@ export function watchRunScope(watcher) {
   // Rollup 会等待 close 监听器，再移除 event 监听器，因此仍能收到 END。
   watcher.on('close', () => active?.promise)
   return () => closing ??= (async () => {
+    // watch() 异步初始化完成前 close 仍可能为空实现；首个 START 才证明真实句柄已接管。
+    await started.promise
     try {
       await watcher.close()
     }

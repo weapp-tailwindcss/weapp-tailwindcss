@@ -18,11 +18,10 @@ it.each(cases)('夹具清理等待自己拥有的输出与 bundle 关闭 ($forma
   const output = path.join(directory, 'bundle.mjs')
   const entered = Promise.withResolvers()
   const release = Promise.withResolvers()
-  const hookFinished = Promise.withResolvers()
-  const outputFinished = Promise.withResolvers()
   const closeEntered = Promise.withResolvers()
   const cleanup = vi.fn(async () => {})
   let watcher
+  let close
   let pending
   try {
     await replaceSourceFile(entry, 'export const value = 7')
@@ -34,14 +33,10 @@ it.each(cases)('夹具清理等待自己拥有的输出与 bundle 关闭 ($forma
         async [hook]() {
           entered.resolve()
           await release.promise
-          hookFinished.resolve()
-        },
-        writeBundle() {
-          outputFinished.resolve()
         },
       }],
     })
-    const close = watchRunScope(watcher)
+    close = watchRunScope(watcher)
     watcher.on('close', () => {
       closeEntered.resolve()
     })
@@ -58,11 +53,9 @@ it.each(cases)('夹具清理等待自己拥有的输出与 bundle 关闭 ($forma
   }
   finally {
     release.resolve()
-    await hookFinished.promise
-    await outputFinished.promise
-    await pending
-    await watcher?.close()
-    await rm(directory, { recursive: true, force: true })
+    await withWatchCleanup(async () => {
+      await pending
+    }, () => close?.(), () => rm(directory, { recursive: true, force: true }))
   }
 }, 10_000)
 
@@ -116,5 +109,53 @@ it.each(['cjs', 'esm'])('bundle 关闭失败仍排空本轮，重复关闭保留
         }
       })
     }, () => rm(directory, { recursive: true, force: true }))
+  }
+}, 10_000)
+
+it.each(['cjs', 'esm'])('首个 START 前退出仍等待异步初始化与在途 hook ($0)', async (format) => {
+  const require = rollupTestRequire('uni-app-vite-tailwindcss-v4')
+  const rollup = format === 'cjs' ? require('rollup') : await import(pathToFileURL(path.join(path.dirname(require.resolve('rollup')), 'es/rollup.js')).href)
+  const directory = await realpath(await mkdtemp(path.join(tmpdir(), 'rollup-early-close-')))
+  const entry = path.join(directory, 'entry.js')
+  const entered = Promise.withResolvers()
+  const release = Promise.withResolvers()
+  const ended = Promise.withResolvers()
+  const cleanup = vi.fn(async () => {})
+  let watcher
+  let pending
+  try {
+    await replaceSourceFile(entry, 'export const value = 7')
+    watcher = rollup.watch({
+      input: entry,
+      output: { file: path.join(directory, 'bundle.mjs'), format: 'es' },
+      plugins: [{
+        name: 'early-close-barrier',
+        async buildStart() {
+          entered.resolve()
+          await release.promise
+        },
+      }],
+    })
+    const close = watchRunScope(watcher)
+    watcher.on('event', (event) => {
+      if (event.code === 'END') {
+        ended.resolve()
+      }
+    })
+    // watch() 此时尚未异步完成初始化，emitter.close 仍可能是空实现。
+    pending = withWatchCleanup(async () => {}, close, cleanup)
+    await entered.promise
+    expect(await Promise.race([pending.then(() => 'disposed'), nextTurn().then(() => 'waiting')])).toBe('waiting')
+    expect(cleanup).not.toHaveBeenCalled()
+    release.resolve()
+    await pending
+    expect(cleanup).toHaveBeenCalledOnce()
+  }
+  finally {
+    release.resolve()
+    await withWatchCleanup(async () => {
+      await ended.promise
+      await pending
+    }, () => watcher?.close(), () => rm(directory, { recursive: true, force: true }))
   }
 }, 10_000)
