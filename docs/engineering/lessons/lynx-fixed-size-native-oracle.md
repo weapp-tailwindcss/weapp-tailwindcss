@@ -14,6 +14,13 @@ verification:
     environment: macOS arm64、Node 24.18.0、pnpm 12.14.0；Android API 30 arm64-v8a、density 2.75 与 iPhone 17 Pro iOS 26.5 arm64、scale 3
     command: CI=1 pnpm e2e:tailwind --preflight-report e2e/.artifacts/preflight/b7f98809-eb17-41b6-8a8a-857b62ea500b/report.json --target lynx-android,lynx-ios
     reason: 原生采集和严格重放通过；统一入口因新旧 catalog hash 不同退出1，未将入口改记成功。已审查原件后通过正式更新器归档并刷新双端基线，全部注册能力仍未完成。
+  - claim: Lynx 文档更新后的网站黄金来源完成审查，三浏览器禁止更新比较通过
+    kind: integration
+    status: passed
+    sha: 399d635bb559cfd6a0d01369727740e1ffc7f822
+    environment: macOS arm64、Node 24.18.0、pnpm 12.14.0、Playwright 1.64.1；源码固定，包含本轮已审查的 darwin 黄金登记改动
+    command: CI=1 PLAYWRIGHT_HTML_OPEN=never pnpm --filter @weapp-tailwindcss/website e2e:local
+    reason: 1992项通过、636项既有条件跳过，零失败零重试；仅验证网站，不覆盖剩余原生或注册能力。
 ---
 
 # Lynx 固定尺寸的原生语义证据
@@ -56,7 +63,13 @@ run `8c29cdaa-b86c-4fc1-a7e8-28b254463458` 的 Android 原生 screen 为392.7273
 
 原日志为 `.tmp/lynx-sizing-native.log`、`.tmp/lynx-sizing-independent-replay.log` 与 `.tmp/lynx-sizing-baseline-update.log`；独立摘要在本轮tailwind目录的 `independent-replay.json`。本轮仅选择两个Lynx目标，其余13目标未调度；能力适配器因子进程基线拒绝记录的失败继续保留。更新后的源码与基线须用新的预检再进入实际验收，不复用已消费的lease。全能力验收仍为partial，RN交付字节链及其他注册/转换/Web/微信缺口继续保留。
 
-更新后三份报告/基线以 `CI=1`、`--update=none` 运行五文件110项定向回归通过；同步六份中英文文档中的真实设备、时间、hash和来源，16项文档合同及双语网站生产构建通过。CI默认设备仍为原配置，没有将本机模拟器事实写入工作流；后续网站视觉比较需按新的文档来源独立审查。
+更新后三份报告/基线以 `CI=1`、`--update=none` 运行五文件110项定向回归通过；同步六份中英文文档中的真实设备、时间、hash和来源，16项文档合同及双语网站生产构建通过。CI默认设备仍为原配置，没有将本机模拟器事实写入工作流。
+
+### 网站黄金来源与禁止更新比较
+
+固定 `399d635bb559cfd6a0d01369727740e1ffc7f822` 的源码和实际双语构建，后台三浏览器正式候选采集1204项通过、602项既有视觉合同跳过，零失败零重试。历史 `bc4f4c546656a7e52f170433d7647cdb82227b23` 的黄金来源先经准确历史合同验真并完整归档；1204张候选中1191张字节相同，13张不同。主代理逐一审看22个变化区域的44份前后裁剪：8张对应中英文Lynx设备、时间、catalogHash和伴随排版变化；另5张的细微栅格差异经原生产comparator及既有 `maxDiffPixels:5` 通过，没有改变像素门槛。
+
+正式 review、install 和 verify 均成功，旧基线归档至 `.tmp/website-baseline-history-bc4/installed-archive/archive-index.json`。之后保持源码、HEAD和构建不变，执行上述 `e2e:local`：来源管线1文件1项通过，实际Chromium/Firefox/WebKit共1992项通过、636项既有条件跳过，46.9分钟，零失败零重试；配置明确 `headless:true`、`updateSnapshots:'none'`。入口成功退出后，本轮浏览器worker、Playwright父进程和本地Worker均已退出。日志为 `.tmp/website-399d635-{comparison,raster,review,install,verify,no-update}.log`；来源审查和安装成功没有替代这次实际比较。
 
 ## 同轮性能诊断的限制
 
