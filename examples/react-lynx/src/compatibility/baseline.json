@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "catalogHash": "97e4233f84730caa481b9d2ececfe854e22e300e0ef75394ef211f543544b076",
-  "verifiedAt": "2026-10-21T06:20:28.946Z",
+  "catalogHash": "ee4e7bd2d4b126dc4920a08e16878fe8cccf364c537ca4b025b821f188c85941",
+  "verifiedAt": "2026-10-21T18:49:50.413Z",
   "versions": {
     "tailwindcss": "4.3.3",
     "lynxEngine": "4.0.1",
@@ -15,30 +15,30 @@
   "environments": {
     "ios": {
       "osName": "iOS",
-      "osBuild": "22F77",
-      "deviceName": "LynxCompatibility",
-      "osVersion": "18.5",
+      "osBuild": "23F77",
+      "deviceName": "iPhone 17 Pro iOS 26.5",
+      "osVersion": "26.5",
       "abi": "arm64",
-      "runtimeIdentifier": "com.apple.CoreSimulator.SimRuntime.iOS-18-5",
+      "runtimeIdentifier": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
       "viewport": {
         "width": 402,
         "height": 874,
         "pixelRatio": 3
       },
-      "deviceModel": "iPhone17,1"
+      "deviceModel": "iPhone18,1"
     },
     "android": {
-      "deviceName": "sdk_phone_x86_64",
-      "deviceModel": "Android SDK built for x86_64",
+      "deviceName": "sdk_gphone_arm64",
+      "deviceModel": "sdk_gphone_arm64",
       "osName": "Android",
       "osVersion": "11",
-      "osBuild": "RSR1.210722.013.A2",
+      "osBuild": "RSR1.240422.006",
       "runtimeIdentifier": "android-30",
-      "abi": "x86_64",
+      "abi": "arm64-v8a",
       "viewport": {
         "width": 1080,
-        "height": 1920,
-        "pixelRatio": 2.625
+        "height": 2340,
+        "pixelRatio": 2.75
       },
       "apiLevel": 30
     }

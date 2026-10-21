@@ -113,6 +113,6 @@ pnpm e2e:lynx:update
 
 CI uses Android API 30 with a Pixel 2 x86_64 runner and iOS 18.5 with an iPhone 16 Pro simulator. Each CI run and committed report carries its own run identity and original artifacts.
 
-The committed native baseline records `verifiedAt: 2026-10-21T06:20:28.946Z` and `catalogHash: 97e4233f84730caa481b9d2ececfe854e22e300e0ef75394ef211f543544b076`. Its Android report is from `sdk_phone_x86_64` (Android 11/API 30, x86_64), and its iOS report is from `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64). A baseline update requires complete reports from both platforms for the same catalog and Engine version.
+The committed native baseline records `verifiedAt: 2026-10-21T18:49:50.413Z` and `catalogHash: ee4e7bd2d4b126dc4920a08e16878fe8cccf364c537ca4b025b821f188c85941`. Its Android report is from `sdk_gphone_arm64` (Android 11/API 30, arm64-v8a), and its iOS report is from `iPhone 17 Pro iOS 26.5` (iPhone 17 Pro, iOS 26.5, arm64). A baseline update requires complete reports from both platforms for the same catalog and Engine version.
 
 `--capture-only` is an explicitly targeted bundle capture mode that writes screenshots/video for inspection. It does not create or update native support reports and cannot replace CI or committed-baseline evidence.

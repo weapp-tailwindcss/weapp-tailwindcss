@@ -6,6 +6,14 @@ regressions:
   - examples/react-lynx/src/compatibility/fixed-size-geometry.test.ts
   - e2e/lynx-fixed-size-evidence.test.ts
   - e2e/lynx-fixed-size-adapter.test.ts
+verification:
+  - claim: 同一源码的 Lynx 双端固定尺寸几何、真实 PNG 与主题恢复证据通过独立重放
+    kind: native
+    status: passed
+    sha: 8db895c54373e20737dcc8254861f73872579aa1
+    environment: macOS arm64、Node 24.18.0、pnpm 12.14.0；Android API 30 arm64-v8a、density 2.75 与 iPhone 17 Pro iOS 26.5 arm64、scale 3
+    command: CI=1 pnpm e2e:tailwind --preflight-report e2e/.artifacts/preflight/b7f98809-eb17-41b6-8a8a-857b62ea500b/report.json --target lynx-android,lynx-ios
+    reason: 原生采集和严格重放通过；统一入口因新旧 catalog hash 不同退出1，未将入口改记成功。已审查原件后通过正式更新器归档并刷新双端基线，全部注册能力仍未完成。
 ---
 
 # Lynx 固定尺寸的原生语义证据
@@ -38,7 +46,17 @@ Lynx4.0.1固定源码 `53f070c8ce50a1661e7f6db248af9c2b04b29d81` 的 `CSSStyleUt
 
 `e2e:lynx` 首轮因旧协议合成夹具缺screen被正确拒绝；补全该夹具后，按失败项及未执行项分批复验，入口全部41文件810项最终通过，未重复已成功的实际构建。Android单位修正后的最终3文件57项通过。
 
-下一步须重新完成 `prepare --extended`、当前会话真实computer use及verify，再用新宿主构建和实际双端PNG验收。未得到新证据前，验收仍为partial。
+### 8db895c 双端实际验收
+
+第一轮扩展预检 `58410efe-ecc1-4b2f-a978-eda460639336` 在 runtime-android 因任务 shell 未继承 Android SDK 变量失败并关闭服务；未调度原生验收。确认本机已有 SDK 路径后显式传入环境变量，重新执行 `prepare --extended`，得到 `b7f98809-eb17-41b6-8a8a-857b62ea500b`。全部脚本、当前会话原生 Chrome 的读取、截图、输入、点击和完成回执以及 verify 通过，之后才启动双端统一入口。原始 JPEG 截图保留，按真实签名转换为 PNG 供门禁读取，没有把 JPEG 字节重命名成 PNG；本任务临时标签已显式关闭。
+
+run `8c29cdaa-b86c-4fc1-a7e8-28b254463458` 的 Android 原生 screen 为392.7273×850.9091、density2.75，主体实测122.9091×23.6364；iOS为402×874、scale3，实测123×24。两端均满足独立123px与45×screenWidth/750断言、80×64参考尺寸及marker/画布像素。主代理实际查看双端probe/control四张PNG；生产 `readNativeReport` 又分别重读181份附件、字节hash、bundle、screen和主题九帧，全部通过。Android为54个supported、64个预声明拒绝；iOS为53/65。此计数是118个历史案例的既有状态，不意味着全部正向案例已具有同等级的独立语义oracle。
+
+双端bundle分别为 `f6d4ffae349aca74085e0aacc0b8f67820f9de3c01018544fc48d7d924fb1b53` 和 `aefb7b436c46e33760f57bd7ba6f1895ffa33970aff34ca5934ebda089815608`。与已提交报告的归一化结论比较，仅catalogHash变化；支持预期、拒绝原因、checkpoint结论和版本均相同。统一入口因此在双端基线比较处各失败一次并退出1，原报告保持失败，不能由离线重放改写为入口成功。审查后用 `LYNX_IOS_REPORT`、`LYNX_ANDROID_REPORT` 指向本轮原件，执行 `CI=1 pnpm e2e:lynx:update`，正式归档至 `e2e/.artifacts/lynx-baselines/baseline-14YOZI/` 并刷新双端报告和compatibility baseline，没有手填原生参数。
+
+原日志为 `.tmp/lynx-sizing-native.log`、`.tmp/lynx-sizing-independent-replay.log` 与 `.tmp/lynx-sizing-baseline-update.log`；独立摘要在本轮tailwind目录的 `independent-replay.json`。本轮仅选择两个Lynx目标，其余13目标未调度；能力适配器因子进程基线拒绝记录的失败继续保留。更新后的源码与基线须用新的预检再进入实际验收，不复用已消费的lease。全能力验收仍为partial，RN交付字节链及其他注册/转换/Web/微信缺口继续保留。
+
+更新后三份报告/基线以 `CI=1`、`--update=none` 运行五文件110项定向回归通过；同步六份中英文文档中的真实设备、时间、hash和来源，16项文档合同及双语网站生产构建通过。CI默认设备仍为原配置，没有将本机模拟器事实写入工作流；后续网站视觉比较需按新的文档来源独立审查。
 
 ## 同轮性能诊断的限制
 
