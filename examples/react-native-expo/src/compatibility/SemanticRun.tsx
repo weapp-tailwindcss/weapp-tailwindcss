@@ -1,35 +1,27 @@
 /* eslint-disable node/prefer-global/process */
 
 import type { ImageStyle, StyleProp, TextStyle, ViewStyle } from 'react-native'
-import type { NativeCaseReceipt, NativePairEvidence, NativeRect, NativeRuntimeInstallation, ReactNativeCaseResult, ReactNativeReport } from './protocol'
+import type { MeasurableNode } from './native-measure'
+import type { NativeCaseReceipt, NativePairEvidence, NativeRuntimeInstallation, NativeSemanticDiagnostic, ReactNativeCaseResult, ReactNativeReport } from './protocol'
+import type { NativeScrollPhase } from './scroll-fixture'
 import { composeStyle, tw } from '@weapp-tailwindcss/react-native/runtime'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Dimensions, Image, PixelRatio, Platform, StyleSheet, Text, View } from 'react-native'
 import { nativeImageFixture } from './image-fixture'
 import { createImageReadiness } from './image-readiness'
+import { measure } from './native-measure'
 import { expectedFixtureStyle, fixtureClassValue, fixtureForPhase, fixtureInlineStyle, nativeFixtures, styleContains } from './protocol'
 import { deliverSemanticFailure, nativeReportHeaders } from './report-client'
 import { acquireRuntimePhase, assertCurrentRuntimeInstallation, assertRuntimePhaseActive, runtimeInstallationIdentity } from './runtime-installation'
 import { projectRuntimeResults } from './runtime-results'
+import { createScrollReadiness } from './scroll-readiness'
+import { ScrollFixture } from './ScrollFixture'
 
 interface RuntimeInput {
   schemaVersion?: number
   fixtureHash?: string
   cases: Array<{ id: string, className: string }>
   report: unknown
-}
-
-function measure(node: View | Text | Image | null): Promise<NativeRect> {
-  if (!node) {
-    return Promise.reject(new Error('Missing semantic fixture node'))
-  }
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('Semantic fixture measurement timed out')), 5_000)
-    node.measureInWindow((x, y, width, height) => {
-      clearTimeout(timer)
-      resolve({ x, y, width, height })
-    })
-  })
 }
 
 interface SemanticRunProps { evidence: RuntimeInput, revision: string, onComplete: (report: ReactNativeReport) => void | Promise<void> }
@@ -70,9 +62,9 @@ function InstalledSemanticRun({ evidence, revision, onComplete, installation }: 
   const probe = useRef<View>(null)
   const reference = useRef<View>(null)
   const control = useRef<View>(null)
-  const target = useRef<View | Text | Image>(null)
-  const referenceTarget = useRef<View | Text | Image>(null)
-  const controlTarget = useRef<View | Text | Image>(null)
+  const target = useRef<MeasurableNode>(null)
+  const referenceTarget = useRef<MeasurableNode>(null)
+  const controlTarget = useRef<MeasurableNode>(null)
   const receipts = useRef<NativeCaseReceipt[]>([])
   const runId = useRef('')
   const checkpoints = useRef(new Map<string, ReactNativeCaseResult['checkpoints']>())
@@ -83,6 +75,8 @@ function InstalledSemanticRun({ evidence, revision, onComplete, installation }: 
   const imageReadiness = useMemo(() => active && fixture?.component === 'image'
     ? createImageReadiness({ revision, id: active.id, phase: active.phase }, platform, side => ({ probe: target, reference: referenceTarget, control: controlTarget })[side].current)
     : undefined, [revision, active?.id, active?.phase, platform])
+  const scrollReadiness = useMemo(() => active && fixture?.component === 'scroll' ? createScrollReadiness({ revision, id: active.id }) : undefined, [revision, active?.id, fixture?.component])
+  useEffect(() => () => scrollReadiness?.dispose(), [scrollReadiness])
   const inlineStyle = active ? fixtureInlineStyle(active.id, active.phase) : undefined
   const actualStyle = active ? StyleSheet.flatten(composeStyle(tw(fixtureClassValue(active.className, active.id, active.phase), { colorScheme: scheme, platform }), inlineStyle)) as Record<string, unknown> : {}
   const expectedStyle = active ? expectedFixtureStyle(active.id, active.phase, platform) ?? {} : {}
@@ -111,6 +105,7 @@ function InstalledSemanticRun({ evidence, revision, onComplete, installation }: 
         throw new Error('Stale RN static evidence or dependency versions')
       }
       await imageReadiness?.wait(controller.signal)
+      await scrollReadiness?.advance(active.phase as NativeScrollPhase, controller.signal)
       // 等待本轮节点提交并稳定绘制；宿主还会核验连续两帧原生像素。
       await new Promise(resolve => setTimeout(resolve, 350))
       if (canceled) {
@@ -128,8 +123,11 @@ function InstalledSemanticRun({ evidence, revision, onComplete, installation }: 
       assertRuntimePhaseActive(controller.signal)
       assertCurrentRuntimeInstallation(installation)
       const image = await imageReadiness?.wait(controller.signal)
+      const scroll = await scrollReadiness?.snapshot(active.phase as NativeScrollPhase)
+      assertRuntimePhaseActive(controller.signal)
       const pair: NativePairEvidence = {
         ...(image ? { image } : {}),
+        ...(scroll ? { scroll } : {}),
         runtimeInstallation: runtimeInstallationIdentity(installation),
         runId: context.runId,
         platform,
@@ -174,13 +172,29 @@ function InstalledSemanticRun({ evidence, revision, onComplete, installation }: 
       await onComplete({ ...staticReport, runtimeInstallation: installation, runId: context.runId, revision, stage: 'runtime', platform: Platform.OS as ReactNativeReport['platform'], verifiedAt: new Date().toISOString(), results, receipts: receipts.current, environment: { deviceName: `${Platform.OS}-runtime`, osName: Platform.OS, osVersion: String(Platform.Version), runtimeIdentifier: `expo-${Platform.OS}`, abi: Platform.OS === 'web' ? 'n/a' : 'simulator', viewport: pair.viewport } })
     })().catch(async (error) => {
       if (!canceled) {
-        const delivery = await deliverSemanticFailure({ reportUrl, runId: runId.current, revision, error, complete: async () => {
+        const diagnostic: NativeSemanticDiagnostic | undefined = scrollReadiness
+          ? {
+              version: 1,
+              evidence: 'diagnostic-only',
+              kind: 'scroll-client-failure',
+              runId: runId.current,
+              revision,
+              platform,
+              runtimeInstallation: runtimeInstallationIdentity(installation),
+              id: active.id,
+              phase: active.phase,
+              message: String(error),
+              observed: scrollReadiness.diagnostic(),
+            }
+          : undefined
+        const delivery = await deliverSemanticFailure({ reportUrl, runId: runId.current, revision, error, diagnostic, complete: async () => {
           if (evidence.schemaVersion !== 2 || !runId.current) {
             return
           }
           const staticReport = evidence.report as ReactNativeReport
           await onComplete({
             ...staticReport,
+            ...(diagnostic ? { failureDiagnostic: diagnostic } : {}),
             runtimeInstallation: installation,
             runId: runId.current,
             revision,
@@ -225,11 +239,13 @@ function InstalledSemanticRun({ evidence, revision, onComplete, installation }: 
     const style = [base, fixture.base, side === 'control' ? undefined : side === 'reference' ? expectedStyle : actualStyle] as StyleProp<ViewStyle & TextStyle>
     return (
       <View ref={frameRef} testID={`tw-rn-case-${side}`} accessibilityLabel={`${active.id}:${active.phase}`} collapsable={false} style={{ width: 160, height: 128, padding: 16, position: 'relative', backgroundColor: '#e2e8f0' }}>
-        {fixture.component === 'image'
-          ? <Image key={`${revision}:${active.id}:${active.phase}:${side}`} ref={(node) => { targetRef.current = node }} source={{ uri: nativeImageFixture.uri }} resizeMode={nativeImageFixture.resizeMode} style={style as StyleProp<ImageStyle>} {...imageReadiness!.callbacks[side]} />
-          : fixture.component === 'text'
-            ? <Text ref={(node) => { targetRef.current = node }} style={style}>Tailwind 23</Text>
-            : <View ref={(node) => { targetRef.current = node }} style={style}>{children}</View>}
+        {fixture.component === 'scroll'
+          ? <ScrollFixture key={`${revision}:${active.id}:scroll:${side}`} side={side} session={scrollReadiness!} style={style} target={targetRef} />
+          : fixture.component === 'image'
+            ? <Image key={`${revision}:${active.id}:${active.phase}:${side}`} ref={(node) => { targetRef.current = node }} source={{ uri: nativeImageFixture.uri }} resizeMode={nativeImageFixture.resizeMode} style={style as StyleProp<ImageStyle>} {...imageReadiness!.callbacks[side]} />
+            : fixture.component === 'text'
+              ? <Text ref={(node) => { targetRef.current = node }} style={style}>Tailwind 23</Text>
+              : <View ref={(node) => { targetRef.current = node }} style={style}>{children}</View>}
         {active.id === 'layout-z-index' && <View style={{ position: 'absolute', top: 24, left: 24, width: 40, height: 40, backgroundColor: '#facc15', zIndex: 1 }} />}
       </View>
     )

@@ -71,7 +71,7 @@ export function androidScreenProbes(windowXml: string, probes: NativeVisualProbe
 /** 用本轮原生树校准成对夹具的系统 inset，禁止凭固定状态栏高度平移。 */
 export function androidPairCoordinates(windowXml: string, pair: NativePairEvidence): NativePairEvidence {
   const nodes = [...windowXml.matchAll(/<node\b[^>]*>/g)].map(match => getNodeAttributes(match[0]))
-  const adjusted = { ...pair }
+  const adjusted = { ...pair, ...(pair.scroll ? { scroll: structuredClone(pair.scroll) } : {}) }
   for (const side of ['probe', 'reference', 'control'] as const) {
     const matches = nodes.filter(node => node.get('resource-id') === `tw-rn-case-${side}` && node.get('package') === 'com.weapptailwindcss.rncompat')
     const bounds = matches[0]?.get('bounds')?.match(/^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$/)
@@ -86,6 +86,11 @@ export function androidPairCoordinates(windowXml: string, pair: NativePairEviden
     }
     const target = side === 'probe' ? 'target' : side === 'reference' ? 'referenceTarget' : 'controlTarget'
     adjusted[target] = { ...pair[target], x: pair[target].x + rect.x - pair[side].x, y: pair[target].y + rect.y - pair[side].y }
+    const stripe = adjusted.scroll?.sides.find(item => item.side === side)?.firstStripe
+    if (stripe) {
+      stripe.x += rect.x - pair[side].x
+      stripe.y += rect.y - pair[side].y
+    }
     adjusted[side] = rect
   }
   return adjusted

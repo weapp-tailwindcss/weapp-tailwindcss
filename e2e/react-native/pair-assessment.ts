@@ -2,6 +2,7 @@ import type { PNG } from 'pngjs'
 import type { NativePairEvidence } from '../../examples/react-native-expo/src/compatibility/protocol'
 import { expectedFixtureStyle, fixtureForPhase, nativeFixtures } from '../../examples/react-native-expo/src/compatibility/protocol'
 import { assessNativeImage } from './image-assessment'
+import { assessNativeScroll } from './scroll-assessment'
 
 function sameTargetGeometry(target: NativePairEvidence['target'], frame: NativePairEvidence['probe'], otherTarget: NativePairEvidence['target'], otherFrame: NativePairEvidence['probe']) {
   return Math.abs(target.width - otherTarget.width) <= 0.75
@@ -98,10 +99,10 @@ export function assessNativePair(image: PNG, pair: NativePairEvidence) {
         control: solidTargetColor(image, pair.controlTarget, ratio, fixture.base?.['backgroundColor']),
       }
     : undefined
-  const imageEvidence = fixture.component === 'image' ? assessNativeImage(image, pair) : undefined
+  const componentEvidence = fixture.component === 'image' ? assessNativeImage(image, pair) : fixture.component === 'scroll' ? assessNativeScroll(image, pair) : undefined
   return [
-    { name: `runtime:${pair.phase}:geometry`, passed: geometry && (!imageEvidence || imageEvidence.geometry.every(Boolean)), actual: JSON.stringify(imageEvidence ? { target: pair.target, imageGeometry: imageEvidence.geometry } : pair.target), expected: JSON.stringify(pair.referenceTarget) },
-    { name: `runtime:${pair.phase}:pixel`, passed: active >= 16 && mismatchRatio <= 0.05 && meanDifference <= 4 && (!priorityColors || (priorityColors.probe && priorityColors.reference)) && (!imageEvidence || (imageEvidence.pixels[0] && imageEvidence.pixels[1])), actual: JSON.stringify({ active, mismatchRatio, meanDifference, ...(priorityColors ? { priorityColors } : {}), ...(imageEvidence ? { imagePixels: imageEvidence.pixels } : {}) }), expected: '同屏显式参考节点的几何与前景像素一致；组件夹具同时满足独立颜色预期' },
-    { name: `runtime:${pair.phase}:control`, passed: observable === expectsEffect && (!priorityColors || priorityColors.control) && (!imageEvidence || (imageEvidence.geometry[2] && imageEvidence.pixels[2])), actual: JSON.stringify({ controlGeometry, controlPixels, observable, ...(priorityColors ? { priorityColor: priorityColors.control } : {}) }), expected: expectsEffect ? '显式参考样式相对无效果 control 存在可测的几何或像素差异' : '条件未命中时与无效果 control 一致' },
+    { name: `runtime:${pair.phase}:geometry`, passed: geometry && (!componentEvidence || componentEvidence.geometry.every(Boolean)), actual: JSON.stringify(componentEvidence ? { target: pair.target, componentGeometry: componentEvidence.geometry } : pair.target), expected: JSON.stringify(pair.referenceTarget) },
+    { name: `runtime:${pair.phase}:pixel`, passed: active >= 16 && mismatchRatio <= 0.05 && meanDifference <= 4 && (!priorityColors || (priorityColors.probe && priorityColors.reference)) && (!componentEvidence || (componentEvidence.pixels[0] && componentEvidence.pixels[1])), actual: JSON.stringify({ active, mismatchRatio, meanDifference, ...(priorityColors ? { priorityColors } : {}), ...(componentEvidence ? { componentPixels: componentEvidence.pixels } : {}) }), expected: '同屏显式参考节点的几何与前景像素一致；组件夹具同时满足独立颜色预期' },
+    { name: `runtime:${pair.phase}:control`, passed: observable === expectsEffect && (!priorityColors || priorityColors.control) && (!componentEvidence || (componentEvidence.geometry[2] && componentEvidence.pixels[2])), actual: JSON.stringify({ controlGeometry, controlPixels, observable, ...(priorityColors ? { priorityColor: priorityColors.control } : {}) }), expected: expectsEffect ? '显式参考样式相对无效果 control 存在可测的几何或像素差异' : '条件未命中时与无效果 control 一致' },
   ]
 }

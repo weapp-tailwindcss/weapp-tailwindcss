@@ -55,6 +55,9 @@ export async function writeNativePhaseFixture(directory: string, finalReport: Re
       for (const load of metadata.pair.image?.loads ?? []) {
         load.revision = phase.revision
       }
+      if (metadata.pair.scroll) {
+        metadata.pair.scroll.revision = phase.revision
+      }
       metadata.pair.runtimeInstallation = runtimeIdentity(report.runtimeInstallation)
       metadata.receipt.runtimeInstallation = runtimeIdentity(report.runtimeInstallation)
       metadata.receipt.artifact.name = name

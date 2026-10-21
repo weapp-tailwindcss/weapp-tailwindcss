@@ -10,6 +10,7 @@ import { syntheticImagePair } from './image-fixture'
 import { runtimeIdentity } from './installation-evidence'
 import { syntheticRuntimeInstallation } from './installation-fixture'
 import { assessNativePair } from './pair-evidence'
+import { syntheticScrollPair } from './scroll-fixture'
 
 /** 构造有真实 PNG 和独立样式 oracle 的纯运行时报告，不伪装设备验收。 */
 export async function writeRuntimeFixture(artifacts: string, platform: ReactNativeReport['platform'], runId: string, observedAt: string, revision = 'rn-hmr-updated-f59e0b') {
@@ -95,6 +96,11 @@ export async function writeRuntimeFixture(artifacts: string, platform: ReactNati
       let phaseImage = image
       if (item.id === 'sizing-size' && phase === 'image') {
         const synthetic = syntheticImagePair(pair)
+        pair = synthetic.pair
+        phaseImage = synthetic.image
+      }
+      if (item.id === 'sizing-size' && phase.startsWith('scroll-')) {
+        const synthetic = syntheticScrollPair(pair)
         pair = synthetic.pair
         phaseImage = synthetic.image
       }

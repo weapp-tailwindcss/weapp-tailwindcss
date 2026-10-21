@@ -9,6 +9,9 @@ function fail(message: string): never {
 }
 
 export function validateReactNativeReport(report: ReactNativeReport, platform: ReactNativePlatform = report.platform, context: { stage?: 'static' | 'runtime', runId?: string, revision?: string, versions?: Record<string, string> } = {}) {
+  if (report.failureDiagnostic) {
+    fail('failure diagnostics cannot satisfy a successful native report')
+  }
   if (report.schemaVersion !== 2) {
     fail('historical schemaVersion is not fresh runtime evidence; regenerate static evidence and rerun')
   }

@@ -1,7 +1,7 @@
 import type { ReactNativePlatform } from './protocol'
 
 export interface NativeFixtureTarget {
-  component: 'view' | 'text' | 'image'
+  component: 'view' | 'text' | 'image' | 'scroll'
   style: Record<string, unknown>
   base?: Record<string, unknown>
   children?: boolean
@@ -50,7 +50,12 @@ export const nativeFixtures: Record<string, NativeFixture> = {
   'syntax-type-hint': { component: 'text', style: { color: '#c31d6b' } },
   'flex-shorthand-shrink': { component: 'view', children: true, style: { flex: 1, flexShrink: 0 } },
   'grid-align-content-self': { component: 'view', children: true, style: { alignContent: 'center', alignSelf: 'flex-end' } },
-  'sizing-size': { component: 'view', style: { width: 44, height: 44 }, phases: ['default', 'image'], variants: { image: { component: 'image', style: { width: 44, height: 44 } } } },
+  'sizing-size': {
+    component: 'view',
+    style: { width: 44, height: 44 },
+    phases: ['default', 'image', 'scroll-initial', 'scroll-offset', 'scroll-restored'],
+    variants: Object.fromEntries(['image', 'scroll-initial', 'scroll-offset', 'scroll-restored'].map(phase => [phase, { component: phase === 'image' ? 'image' : 'scroll', style: { width: 44, height: 44 } }])),
+  },
 }
 
 export function fixtureForPhase(id: string, phase: string): NativeFixtureTarget | undefined {

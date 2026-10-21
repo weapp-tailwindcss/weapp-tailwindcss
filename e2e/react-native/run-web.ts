@@ -18,6 +18,7 @@ import type { ReactNativeReport } from './catalog'
 import { validateReactNativeReport } from './reports'
 import { reactNativeVersions, RN_CATALOG_HASH, RN_FIXTURE_HASH } from './catalog'
 import { captureNativePair, validateNativeArtifacts } from './pair-evidence'
+import { createNativeDiagnosticWriter } from './failure-diagnostics'
 import { createSemanticReporter } from './semantic-reporter'
 import { allocateExpoWebPort } from './web-session'
 import { readRuntimePublication } from './installation-evidence'
@@ -59,6 +60,7 @@ const semanticReporter = createSemanticReporter<ReportEnvelope>({ runId, catalog
   })
 }, {
   clientToken,
+  diagnostic: createNativeDiagnosticWriter(artifacts),
   revision: 'rn-hmr-baseline-10b981',
   platform: 'web',
   publication: signal => readRuntimePublication(exampleRoot, signal),

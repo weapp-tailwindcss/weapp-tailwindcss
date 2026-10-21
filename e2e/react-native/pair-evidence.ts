@@ -9,6 +9,7 @@ import { validateNativeFrameSequence } from './frame-contract'
 import { assertRuntimeIdentity, runtimeIdentity, validateRuntimeIdentity, validateRuntimeInstallation } from './installation-evidence'
 import { assessNativePair } from './pair-assessment'
 import { createPairCaptureDiagnostics } from './pair-capture-diagnostics'
+import { assertScrollTransition } from './scroll-sequence'
 
 export { assessNativePair } from './pair-assessment'
 
@@ -114,6 +115,7 @@ export async function captureNativePair(pair: NativePairEvidence, options: {
 /** 门禁独立重算所有帧；末帧兼容入口不能代替连续两帧的原件。 */
 export async function validateNativeArtifacts(report: import('./catalog').ReactNativeReport, directory: string) {
   validateRuntimeInstallation(report.runtimeInstallation)
+  const scrolls = new Map<string, NativePairEvidence>()
   for (const receipt of report.receipts) {
     assertRuntimeIdentity(receipt.runtimeInstallation, report.runtimeInstallation)
     const expectedName = `case-${report.revision}-${receipt.id}-${receipt.phase}.png`
@@ -151,5 +153,13 @@ export async function validateNativeArtifacts(report: import('./catalog').ReactN
       || JSON.stringify(receipt.capture.frames.at(-1)!.checkpoints) !== JSON.stringify(receipt.checkpoints)) {
       throw new Error(`Native screenshot no longer proves consecutive frame semantics: ${expectedName}`)
     }
+    if (saved.pair.scroll) {
+      const key = `${saved.pair.revision}:${saved.pair.id}`
+      assertScrollTransition(saved.pair, scrolls.get(key))
+      scrolls.set(key, saved.pair)
+    }
+  }
+  if ([...scrolls.values()].some(pair => pair.scroll!.stepIndex !== 2)) {
+    throw new Error('ScrollView 成功原件缺少完整初始、滚动和恢复序列')
   }
 }

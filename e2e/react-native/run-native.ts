@@ -30,6 +30,7 @@ import { validateReactNativeReport } from './reports'
 import { reactNativeVersions, RN_CATALOG_HASH, RN_FIXTURE_HASH } from './catalog'
 import { captureNativePair, validateNativeArtifacts } from './pair-evidence'
 import { closeCaptureReporter, publishAfterCapture } from './capture-cleanup'
+import { createNativeDiagnosticWriter } from './failure-diagnostics'
 import { createSemanticReporter } from './semantic-reporter'
 import { executeIosCommand } from './ios-command'
 import { launchIosRuntime } from './ios-runtime'
@@ -72,6 +73,7 @@ const semanticReporter = createSemanticReporter<ReportEnvelope>({ runId, catalog
   return captureNativePair(pair, { runId, artifacts, cancelSignal, capture: name => capture(name, semanticDevice, cancelSignal) })
 }, {
   clientToken,
+  diagnostic: createNativeDiagnosticWriter(artifacts),
   revision: 'rn-hmr-baseline-10b981',
   platform,
   publication: signal => readRuntimePublication(exampleRoot, signal),

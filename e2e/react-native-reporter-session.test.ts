@@ -1,67 +1,13 @@
-import type { NativeCaseReceipt, NativePairEvidence, ReactNativeReport } from '../examples/react-native-expo/src/compatibility/protocol'
+import type { ReactNativeReport } from '../examples/react-native-expo/src/compatibility/protocol'
 import { createServer } from 'node:http'
 import { describe, expect, it, vi } from 'vitest'
 import { nativeFixtures } from '../examples/react-native-expo/src/compatibility/protocol'
 import { syntheticRuntimeInstallation } from './react-native/installation-fixture'
 import { evaluateNativeWait } from './react-native/native-wait'
-import { createSemanticReporter } from './react-native/semantic-reporter'
+import { headers, pair, receipt, revision, withReporter } from './react-native/reporter-fixture'
+import { syntheticScrollPair } from './react-native/scroll-fixture'
+
 import { allocateExpoWebPort } from './react-native/web-session'
-
-const revision = 'rn-hmr-baseline-10b981'
-const headers = { 'x-rn-e2e-client': 'owned-client', 'content-type': 'application/json' }
-
-function pair(overrides: Partial<NativePairEvidence> = {}): NativePairEvidence {
-  const rect = { x: 0, y: 0, width: 40, height: 40 }
-  return {
-    runtimeInstallation: syntheticRuntimeInstallation(),
-    runId: 'run',
-    revision,
-    platform: 'web',
-    id: 'background-color',
-    phase: 'default',
-    probe: rect,
-    reference: rect,
-    target: rect,
-    referenceTarget: rect,
-    control: rect,
-    controlTarget: rect,
-    viewport: { width: 402, height: 874, pixelRatio: 1 },
-    ...overrides,
-  }
-}
-
-function receipt(input: NativePairEvidence): NativeCaseReceipt {
-  return { runtimeInstallation: input.runtimeInstallation, runId: input.runId, id: input.id, phase: input.phase, checkpoints: [], artifact: { name: 'owned.png', sha256: 'a'.repeat(64), byteLength: 1 }, capture: { version: 1, timeoutMs: 10_000, frames: [] } }
-}
-
-async function withReporter(action: (session: {
-  endpoint: string
-  reporter: ReturnType<typeof createSemanticReporter>
-  capture: ReturnType<typeof vi.fn<(input: NativePairEvidence) => Promise<NativeCaseReceipt>>>
-  complete: ReturnType<typeof vi.fn<() => Promise<void>>>
-  post: (route: string, value: unknown, client?: string) => Promise<Response>
-}) => Promise<void>, publication?: (signal: AbortSignal) => Promise<NativePairEvidence['runtimeInstallation']['publication']>) {
-  const capture = vi.fn(async (input: NativePairEvidence) => receipt(input))
-  const complete = vi.fn(async () => {})
-  const reporter = createSemanticReporter({ runId: 'run', fixtureHash: 'fixture', catalogHash: 'catalog', versions: {} }, capture, { clientToken: 'owned-client', revision, platform: 'web', complete, publication })
-  const server = createServer((request, response) => {
-    if (!reporter.handle(request, response)) {
-      response.writeHead(404).end()
-    }
-  })
-  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
-  try {
-    const address = server.address()
-    if (!address || typeof address === 'string') {
-      throw new Error('Missing test reporter port')
-    }
-    const endpoint = `http://127.0.0.1:${address.port}`
-    await action({ endpoint, reporter, capture, complete, post: (route, value, client = 'owned-client') => fetch(`${endpoint}${route}`, { method: 'POST', headers: { ...headers, 'x-rn-e2e-client': client }, body: JSON.stringify(value) }) })
-  }
-  finally {
-    await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()))
-  }
-}
 
 describe('React Native 采集客户端与 revision 隔离', () => {
   it.each(['resolve', 'reject'] as const)('最终 report 写入也归 owner 管理，迟到 %s 不能越过收尾与归档', async (outcome) => {
@@ -118,6 +64,27 @@ describe('React Native 采集客户端与 revision 隔离', () => {
       entered()
     }))
   })
+  it('ScrollView 缺真实事件不能由mock截图绕过；被拒原件先保存且不授予回执', async () => {
+    await withReporter(async ({ reporter, capture, post, diagnostic }) => {
+      const missing = pair({ id: 'sizing-size', phase: 'scroll-initial' })
+      expect((await post('/case', missing)).status).toBe(500)
+      expect(capture).not.toHaveBeenCalled()
+      expect(diagnostic).toHaveBeenCalledWith(expect.objectContaining({ kind: 'scroll-transition-rejected', observed: missing }), expect.any(AbortSignal))
+      expect(() => reporter.assertReady()).toThrow('semantic evidence failed')
+    })
+  })
+
+  it('失败采集不推进滚动序列；下一步骤仍因缺初始成功原件拒绝', async () => {
+    await withReporter(async ({ post, capture, diagnostic }) => {
+      capture.mockRejectedValueOnce(new Error('owned scroll capture failure'))
+      const initial = syntheticScrollPair(pair({ id: 'sizing-size', phase: 'scroll-initial' })).pair
+      expect((await post('/case', initial)).status).toBe(500)
+      expect((await post('/case', syntheticScrollPair(pair({ id: 'sizing-size', phase: 'scroll-offset' })).pair)).status).toBe(500)
+      expect(capture).toHaveBeenCalledOnce()
+      expect(diagnostic).toHaveBeenCalledOnce()
+    })
+  })
+
   it('当前阶段的真实 publication 读取失败仍立即阻断', async () => {
     await withReporter(async ({ endpoint, reporter }) => {
       expect((await fetch(`${endpoint}/context`, { headers })).status).toBe(500)
@@ -217,7 +184,8 @@ describe('React Native 采集客户端与 revision 隔离', () => {
         expect(reporter.captureElapsed()).toBe(4_000)
         const phases = Object.entries(nativeFixtures).flatMap(([id, fixture]) => (fixture.phases ?? ['default']).map(phase => ({ id, phase })))
         for (const candidate of phases.filter(candidate => candidate.id !== pair().id || candidate.phase !== pair().phase)) {
-          expect((await post('/case', pair(candidate))).status).toBe(200)
+          const input = candidate.phase.startsWith('scroll-') ? syntheticScrollPair(pair(candidate)).pair : pair(candidate)
+          expect((await post('/case', input)).status).toBe(200)
         }
         expect(reporter.captureElapsed()).toBe(phases.length * 4_000)
         expect(evaluateNativeWait({ now: reporter.captureElapsed() + 120_001, runCompletedAt: 1, startedAt: 0, reportTimeout: 120_000, startupTimeout: 1_800_000, recovered: true, recoveryDelay: 180_000, hostCaptureElapsed: reporter.captureElapsed() }).timedOut).toBe(true)

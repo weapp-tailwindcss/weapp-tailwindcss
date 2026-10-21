@@ -1,4 +1,5 @@
 import type { NativeImageEvidence } from './image-fixture'
+import type { NativeScrollEvidence } from './scroll-fixture'
 import { nativeBuildFixtures } from './fixtures'
 
 export type { NativeFixture } from './fixtures'
@@ -55,6 +56,7 @@ export interface NativeSemanticContext {
 
 export interface NativePairEvidence {
   image?: NativeImageEvidence
+  scroll?: NativeScrollEvidence
   runtimeInstallation: NativeRuntimeIdentity
   runId: string
   platform: ReactNativePlatform
@@ -94,7 +96,23 @@ export interface NativeCaseReceipt {
   capture: { version: 1, timeoutMs: number, frames: NativeCaptureFrame[] }
 }
 
+/** 失败原件只用于诊断；不得生成成功回执或补齐缺失阶段。 */
+export interface NativeSemanticDiagnostic {
+  version: 1
+  evidence: 'diagnostic-only'
+  kind: 'scroll-client-failure' | 'scroll-transition-rejected'
+  runId: string
+  revision: string
+  platform: ReactNativePlatform
+  runtimeInstallation: NativeRuntimeIdentity
+  id: string
+  phase: string
+  message: string
+  observed: unknown
+}
+
 export interface ReactNativeReport {
+  failureDiagnostic?: NativeSemanticDiagnostic
   schemaVersion: 2
   stage: 'static' | 'runtime'
   revision: string

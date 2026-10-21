@@ -13,8 +13,14 @@ it('只有 default 完成时仍未验证，保留其断言', () => {
 })
 
 it('全部预声明阶段及唯一回执完整通过后才支持', () => {
+  const phases = ['default', 'image', 'scroll-initial', 'scroll-offset', 'scroll-restored']
+  const observed = phases.flatMap(checkpoints)
+  expect(projectRuntimeResults([result], new Map([[result.id, observed]]), receipts(phases))[0]).toMatchObject({ status: 'supported' })
+})
+
+it('旧 default 和 image 完整记录仍不能替代新增 ScrollView 三阶段', () => {
   const observed = [...checkpoints('default'), ...checkpoints('image')]
-  expect(projectRuntimeResults([result], new Map([[result.id, observed]]), receipts(['default', 'image']))[0]).toMatchObject({ status: 'supported' })
+  expect(projectRuntimeResults([result], new Map([[result.id, observed]]), receipts(['default', 'image']))[0]!.status).toBe('unverified')
 })
 
 it.each(['duplicate-checkpoints', 'duplicate-receipt', 'missing-receipt'] as const)('%s 不能替代缺失阶段', (kind) => {

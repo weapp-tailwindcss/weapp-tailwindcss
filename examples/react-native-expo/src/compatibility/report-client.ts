@@ -1,5 +1,7 @@
 /* eslint-disable node/prefer-global/process */
 
+import type { NativeSemanticDiagnostic } from './protocol'
+
 /** Web capability 由宿主仅注入所属页面，原生 capability 随本轮 Metro 环境传入。 */
 export function nativeReportHeaders() {
   const ownedPage = globalThis as typeof globalThis & { __RN_E2E_CLIENT__?: string }
@@ -11,8 +13,8 @@ export function nativeReportHeaders() {
 }
 
 /** 失败报告的二次拒绝不能阻断原始错误送达；网络失败也必须向调用者明确返回。 */
-export async function deliverSemanticFailure(input: { reportUrl: string, runId: string, revision: string, error: unknown, complete?: () => void | Promise<void> }): Promise<{ delivered: true } | { delivered: false, error: string }> {
-  const body: { runId: string, revision: string, message: string, reportDeliveryError?: string } = { runId: input.runId, revision: input.revision, message: String(input.error) }
+export async function deliverSemanticFailure(input: { reportUrl: string, runId: string, revision: string, error: unknown, diagnostic?: NativeSemanticDiagnostic, complete?: () => void | Promise<void> }): Promise<{ delivered: true } | { delivered: false, error: string }> {
+  const body: { runId: string, revision: string, message: string, reportDeliveryError?: string, diagnostic?: NativeSemanticDiagnostic } = { runId: input.runId, revision: input.revision, message: String(input.error), ...(input.diagnostic ? { diagnostic: input.diagnostic } : {}) }
   try {
     await input.complete?.()
   }
