@@ -166,6 +166,10 @@ export async function verifyReportArtifacts(report: CapabilityReport, root: stri
     const { verifyHistoryReport } = await import('./web-history/replay')
     await verifyHistoryReport(report, root)
   }
+  if (report.target === 'weapp') {
+    const { verifyWeappReport } = await import('./weapp/replay')
+    await verifyWeappReport(report, root)
+  }
 }
 
 export async function writeCapabilityReport(file: string, report: CapabilityReport) {

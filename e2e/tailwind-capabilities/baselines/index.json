@@ -1,9 +1,9 @@
 {
   "schemaVersion": 2,
-  "fixtureHash": "d1820eface0b3565cad009e37d28e1e6eebd22cc2bcaed11b3c9164543e7fdb3",
+  "fixtureHash": "56070c7233f87fbd6fe87218ccdf303799e9f8cf8a2bfb7e10da4ae975e0d816",
   "files": {
     "web.css": "0975c9180d665818550de27dd5270090456f84d4adf477481762bbe174fca7ea",
-    "weapp.wxss": "61f6e7306cae8c8012dd0117461595e65dbbdc8b2313750d244c0cf1d654f586",
+    "weapp.wxss": "e96b95aad9e5b146cdbda5180b63613f0f2c35dc12f616e1e49d7669c7875469",
     "context.css": "1090ee0b2bac833f303a3489a89ad85f18ff0c0964044f6af2c673e5a7e252cb",
     "lifecycle.css": "0878f16c19f970349e1488849508e7ff0edeb567a1a79754594a452eaa4f549f",
     "registry.css": "4e09537d7cb62b05821bae7bcda8613197fae1c139ccf9ec2e92097665afbe0a",

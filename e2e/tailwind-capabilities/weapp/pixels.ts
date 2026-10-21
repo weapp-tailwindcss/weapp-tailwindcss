@@ -1,5 +1,23 @@
 import type { PNG } from 'pngjs'
 import type { CaseContract, SemanticAssertion } from '../types'
+import type { WeappPhase } from './types'
+
+/** 每阶段分别约束绝对颜色；负向也不能只凭两块颜色不同通过。 */
+export function weappPhasePixelAssertions(phase: string, actual: readonly number[], reference: readonly number[], expected: NonNullable<WeappPhase['pixel']>): SemanticAssertion[] {
+  if (actual.length !== 4 || reference.length !== 4) {
+    throw new Error('微信截图缺少 RGBA 采样')
+  }
+  return [
+    ...(['pixel', 'reference-pixel'] as const).flatMap(prefix => expected[prefix === 'pixel' ? 'actual' : 'reference'].map((value, channel) => ({
+      name: `${phase}/${prefix}-${channel}`,
+      stage: 'visual' as const,
+      actual: (prefix === 'pixel' ? actual : reference)[channel]!,
+      expected: value,
+      ...(channel < 3 ? { tolerance: 1 } : {}),
+    }))),
+    { name: `${phase}/pixel-equal`, stage: 'visual', actual: actual.every((value, channel) => value === reference[channel]), expected: expected.equal },
+  ]
+}
 
 /** 屏幕 ICC 到 sRGB 的量化最多允许 RGB 一级误差；独立参考必须逐像素一致，alpha 精确匹配。 */
 export function weappPixelContract(expected: readonly number[]) {
@@ -21,7 +39,7 @@ export function weappPixelAssertions(actual: readonly number[], reference: reado
     throw new Error('微信截图缺少 RGBA 采样')
   }
   return contract.requiredAssertions.map((name) => {
-    const channel = Number(name.at(-1))
+    const channel = Number(name.slice(-1))
     const value = name.startsWith('reference-') ? reference[channel]! : name.startsWith('pixel-match-') ? actual[channel]! - reference[channel]! : actual[channel]!
     const tolerance = contract.tolerances[name]
     return { name, stage: 'visual', actual: value, expected: contract.expectedValues[name]!, ...(tolerance !== undefined ? { tolerance } : {}) }

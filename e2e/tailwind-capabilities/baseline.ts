@@ -6,7 +6,9 @@ import { frameworkSource, frameworkSourceCss, sourceFrameworks, sourceRevisions 
 import { hmrCss, hmrSource, hmrStates } from './hmr/fixture'
 import { digest } from './identity'
 import { registryStaticFixture } from './registry-web/static'
+import { weappFixtureCss } from './weapp/alpha-fixtures'
 import { weappProbes } from './weapp/fixtures'
+import { weappRenderContract } from './weapp/render'
 import { contextWebCandidates, contextWebFixtureCss, contextWebProbes } from './web-context/fixtures'
 import { historyCss, historyProbe, historyReference, historyStates, renderHistory } from './web-history/fixtures'
 import { lifecycleWebCandidates, lifecycleWebFixtureCss, lifecycleWebProbes } from './web-lifecycle/fixtures'
@@ -15,7 +17,7 @@ import { webFixtureCss, webProbes } from './web/probes'
 
 export async function fixtureOutputs(root: string) {
   const web = await withGeneratorFixture(root, webFixtureCss, {}, generator => generator.generate({ target: 'web', candidates: [...new Set(webProbes.flatMap(probe => probe.candidate.match(/\S+/g) ?? []))], scanSources: false }))
-  const weapp = await withGeneratorFixture(root, '@import "tailwindcss" source(none);', {}, generator => generator.generate({ target: 'weapp', candidates: [...new Set(weappProbes.flatMap(probe => [...probe.candidates]))], scanSources: false }))
+  const weapp = await withGeneratorFixture(root, weappFixtureCss, {}, generator => generator.generate({ target: 'weapp', candidates: [...new Set(weappProbes.flatMap(probe => [...probe.candidates]))], scanSources: false }))
   const context = await withGeneratorFixture(root, contextWebFixtureCss, {}, generator => generator.generate({ target: 'web', candidates: contextWebCandidates, scanSources: false }))
   const lifecycle = await withGeneratorFixture(root, lifecycleWebFixtureCss, {}, generator => generator.generate({ target: 'web', candidates: lifecycleWebCandidates, scanSources: false }))
   const history = await withGeneratorFixture(root, historyCss, {}, generator => generator.generate({ target: 'web', candidates: [historyProbe.candidate], scanSources: false }))
@@ -38,7 +40,7 @@ export async function fixtureOutputs(root: string) {
     const output = await withGeneratorFixture(root, fixture.css, fixture.files, generator => generator.generate({ target: 'web', candidates: fixture.candidates, scanSources: true }))
     return [`authoring-${fixture.id}.css`, output.css] as const
   })))
-  return { fixtureHash: digest({ history: { historyCss, historyProbe, historyReference, historyStates, html: renderHistory('GENERATED_CSS', 'RUN_ID') }, nativeMedia: { nativeMediaCss, nativeMediaProbe, nativeMediaReference, nativeMediaStates, html: renderNativeMedia('GENERATED_CSS', 'RUN_ID') }, webFixtureCss, webProbes, weappProbes, contextWebFixtureCss, contextWebProbes, lifecycleWebFixtureCss, lifecycleWebProbes, hmrCss, hmrStates, authoring, frameworkFixtures, registry: registry.identity }), files: { 'web.css': web.css, 'weapp.wxss': weapp.css, 'context.css': context.css, 'lifecycle.css': lifecycle.css, 'registry.css': registry.css, 'native-media.css': nativeMedia.css, 'history.css': history.css, ...hmr, ...authoringFiles, ...frameworkFiles } }
+  return { fixtureHash: digest({ history: { historyCss, historyProbe, historyReference, historyStates, html: renderHistory('GENERATED_CSS', 'RUN_ID') }, nativeMedia: { nativeMediaCss, nativeMediaProbe, nativeMediaReference, nativeMediaStates, html: renderNativeMedia('GENERATED_CSS', 'RUN_ID') }, webFixtureCss, webProbes, weappProbes, weappFixtureCss, weappRenderContract, contextWebFixtureCss, contextWebProbes, lifecycleWebFixtureCss, lifecycleWebProbes, hmrCss, hmrStates, authoring, frameworkFixtures, registry: registry.identity }), files: { 'web.css': web.css, 'weapp.wxss': weapp.css, 'context.css': context.css, 'lifecycle.css': lifecycle.css, 'registry.css': registry.css, 'native-media.css': nativeMedia.css, 'history.css': history.css, ...hmr, ...authoringFiles, ...frameworkFiles } }
 }
 
 export async function fixtureBaseline(root: string, update = false) {

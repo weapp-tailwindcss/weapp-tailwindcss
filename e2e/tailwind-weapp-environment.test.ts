@@ -20,7 +20,7 @@ vi.mock('./tailwind-capabilities/context', () => ({ newReport: vi.fn(async () =>
 vi.mock('./tailwind-capabilities/fixture', () => ({ withGeneratorFixture: vi.fn(async () => ({ css: '.fixture{}' })) }))
 vi.mock('./tailwind-capabilities/report', () => ({
   assertionPassed: vi.fn(),
-  receipt: vi.fn(async () => ({ path: 'generated.wxss' })),
+  receipt: vi.fn(async (_file: string, _root: string, _runId: string, caseIds: string[]) => ({ path: 'generated.wxss', caseIds })),
   validateCapabilityReport: vi.fn(),
   verifyReportArtifacts: vi.fn(),
   writeCapabilityReport: vi.fn(async () => {}),

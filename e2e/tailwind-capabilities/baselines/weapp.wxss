@@ -7,6 +7,7 @@ view,text,::after,::before {
     sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
     monospace;
+    --color-sky-500: rgb(0, 165, 234);
     --default-font-family: var(--font-sans);
     --default-mono-font-family: var(--font-mono);
   }
@@ -64,6 +65,47 @@ view,text,::after,::before {
   .bg-_b_h123456_B {
     background-color: #123456;
   }
+  .bg-alpha-solid_f_p--alpha-weight-alias_P {
+    background-color: rgb(255,0,0);
+      background-color: rgba(255, 0, 0, 0.5)
+  }
+  .bg-alpha-solid_f_p--alpha-weight-fraction_P {
+    background-color: rgb(255,0,0);
+      background-color: rgba(255, 0, 0, 0.125)
+  }
+  .bg-alpha-solid_f_p--alpha-weight-full_P {
+    background-color: rgb(255,0,0);
+      background-color: rgb(255, 0, 0)
+  }
+  .bg-alpha-solid_f_p--alpha-weight-quarter_P {
+    background-color: rgb(255,0,0);
+      background-color: rgba(255, 0, 0, 0.25)
+  }
+  .bg-alpha-solid_f_p--alpha-weight-zero_P {
+    background-color: rgb(255,0,0);
+      background-color: rgba(255, 0, 0, 0)
+  }
+  .bg-alpha-solid_f0 {
+    background-color: rgba(255, 0, 0, 0);
+  }
+  .bg-alpha-solid_f25 {
+    background-color: rgba(255, 0, 0, 0.25);
+  }
+  .bg-alpha-solid_f50 {
+    background-color: rgba(255, 0, 0, 0.5);
+  }
+  .bg-alpha-solid_f100 {
+    background-color: rgb(255,0,0);
+  }
+  .bg-alpha-solid_f_b_d33_B {
+    background-color: rgba(255, 0, 0, 0.33);
+  }
+  .bg-alpha-translucent_f50 {
+    background-color: rgba(255, 0, 0, 0.2);
+  }
+  .bg-sky-500_f_p--my-alpha-value_P {
+    background-color: rgb(0, 165, 234);
+  }
   .p-_b17px_B {
     padding: 17px;
   }
@@ -76,3 +118,11 @@ view,text,::after,::before {
   .opacity-_b_d67_B {
     opacity: .67;
   }
+page,.tw-root,wx-root-portal-content,:host {
+  --alpha-weight-zero: 0%;
+  --alpha-weight-quarter: 25%;
+  --alpha-weight-half: 50%;
+  --alpha-weight-alias: var(--alpha-weight-half);
+  --alpha-weight-full: 100%;
+  --alpha-weight-fraction: 12.5%;
+}

@@ -1,36 +1,44 @@
 import type { CaseContract, SemanticAssertion } from '../types'
 import type { WeappProbe } from './fixtures'
 import { weappFeatureBindings } from './coverage'
-import { weappPixelContract } from './pixels'
+import { weappState, weappStates } from './phases'
+import { weappPhasePixelAssertions } from './pixels'
 
-export const weappPhases = (probe: WeappProbe) => 'dynamic' in probe ? ['before', 'after', 'restored'] : ['default']
+export const weappPhases = (probe: WeappProbe) => weappStates(probe).map(state => state.name)
 
 export function weappExpectedStyles(probe: WeappProbe, phase: string): Record<string, string> {
-  return { [probe.property]: 'dynamic' in probe && phase === 'after' ? '64px' : probe.expected, ...('styles' in probe ? probe.styles : {}) }
+  return { ...weappState(probe, phase).expected }
 }
 
-export function weappRuntimeAssertions(probe: WeappProbe, phase: string, actual: Record<string, string | undefined>, reference: Record<string, string | undefined>): SemanticAssertion[] {
-  return Object.entries(weappExpectedStyles(probe, phase)).flatMap(([property, expected]) => [
-    { name: `${phase}/style/${property}`, stage: 'runtime', actual: actual[property] ?? null, expected },
-    { name: `${phase}/reference/${property}`, stage: 'runtime', actual: reference[property] ?? null, expected },
-  ])
+export function weappRuntimeAssertions(probe: WeappProbe, phase: string, actual: Readonly<Record<string, string | undefined>>, reference: Readonly<Record<string, string | undefined>>, witness: Readonly<Record<string, string | undefined>> = {}): SemanticAssertion[] {
+  const state = weappState(probe, phase)
+  const referenceExpected = state.referenceExpected ?? state.expected
+  const checks: SemanticAssertion[] = [
+    ...Object.entries(state.expected).map(([property, expected]) => ({ name: `${phase}/style/${property}`, stage: 'runtime' as const, actual: actual[property] ?? null, expected })),
+    ...Object.entries(referenceExpected).map(([property, expected]) => ({ name: `${phase}/reference/${property}`, stage: 'runtime' as const, actual: reference[property] ?? null, expected })),
+    ...Object.entries(state.witness?.expected ?? {}).map(([property, expected]) => ({ name: `${phase}/witness/${property}`, stage: 'runtime' as const, actual: witness[property] ?? null, expected })),
+  ]
+  if (probe.limit) {
+    checks.push({ name: `${phase}/semantic-difference`, stage: 'negative', actual: Object.keys(state.expected).some(property => actual[property] !== reference[property]), expected: true })
+  }
+  return checks
 }
 
-/** 动态阶段和多属性必须同时验证目标与独立参考，缺测不能沿用主属性结论。 */
+/** 预期先于运行，动态正向与限制负向分别保留每个阶段的独立语义。 */
 export function weappContract(probe: WeappProbe): CaseContract {
-  const values = weappPhases(probe).flatMap(phase => Object.entries(weappExpectedStyles(probe, phase)).flatMap(([property, expected]) => [
-    { name: `${phase}/style/${property}`, expected },
-    { name: `${phase}/reference/${property}`, expected },
-  ]))
-  const pixel = 'pixel' in probe ? weappPixelContract(probe.pixel) : undefined
+  const checks = weappStates(probe).flatMap(state => [
+    ...weappRuntimeAssertions(probe, state.name, state.expected, state.referenceExpected ?? state.expected, state.witness?.expected),
+    ...(state.pixel ? weappPhasePixelAssertions(state.name, state.pixel.actual, state.pixel.reference, state.pixel) : []),
+  ])
   return {
     id: probe.id,
-    features: weappFeatureBindings[probe.id]!,
+    features: weappFeatureBindings[probe.id] ?? [`authoring/${probe.id}`],
     candidate: probe.candidates.join(' '),
     fixture: JSON.stringify(probe),
-    expectation: { support: 'supported', stage: 'runtime' },
-    requiredAssertions: [...values.map(item => item.name), ...pixel?.requiredAssertions ?? []],
-    expectedValues: { ...Object.fromEntries(values.map(item => [item.name, item.expected])), ...pixel?.expectedValues },
-    ...(pixel ? { assertionStages: pixel.assertionStages, tolerances: pixel.tolerances } : {}),
+    expectation: probe.limit ? { support: 'unsupported', stage: 'negative', reason: probe.limit.reason } : { support: 'supported', stage: 'runtime' },
+    requiredAssertions: checks.map(item => item.name),
+    expectedValues: Object.fromEntries(checks.map(item => [item.name, item.expected as string | number | boolean])),
+    assertionStages: Object.fromEntries(checks.map(item => [item.name, item.stage])),
+    tolerances: Object.fromEntries(checks.filter(item => item.tolerance !== undefined).map(item => [item.name, item.tolerance!])),
   }
 }
