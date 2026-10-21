@@ -37,7 +37,7 @@ vi.mock('./hbuilderx-local/process', async importOriginal => ({
   ...await importOriginal<typeof import('./hbuilderx-local/process')>(),
   assertIosSimulatorToolchain: () => {},
   createLocalHBuilderXRunner: async () => ({
-    resolution: { path: state.cli, host: 'test-host', channel: 'alpha', version: '5.14.2026070101-alpha' },
+    resolution: { path: state.cli, isRunning: true, host: 'test-host', channel: 'alpha', version: '5.14.2026070101-alpha' },
     run: state.run,
     spawn: state.spawn,
     openProject: (options: { cwd: string }) => state.run({ ...options, args: ['project', 'open', '--path', options.cwd] }),
@@ -102,12 +102,12 @@ function miniCase() {
   return { name: 'alias-consumer', platform: 'mp-weixin' as const, projectDir: projectRoot, outputDir: 'dist', requiredFiles: [], cssExtensions: [], cssContains: [], workflow: { staticTemplateClass: true, dynamicClassBinding: false, userAuthoredStyle: false, thirdPartyOrExternalComponentStyle: false, subpackageStyle: false, webHmr: false } }
 }
 
-function expectCombined(error: unknown, primary: unknown, close: unknown) {
+function expectCombined(error: unknown, primary: unknown, close: unknown, environment = false) {
   expect(error).toBeInstanceOf(AggregateError)
   expect(error).toMatchObject({ cause: primary })
   const errors = (error as AggregateError).errors
   expect(errors[0]).toBe(primary)
-  expect(errors[1]).toMatchObject({ cause: close })
+  expect(errors[1]).toMatchObject(environment ? { cause: { name: 'EnvironmentBlockedError', cause: close } } : { cause: close })
   expect(errors[1].message).toContain(state.alias!.projectPath)
 }
 
@@ -142,7 +142,7 @@ it('小程序编译与关闭同时失败时保留首因和真实别名', async (
   state.launchError = new Error('compile failed')
   state.closeError = new Error('close timed out')
   const error = await compileMiniProgramWithHBuilderX(miniCase()).catch(error => error)
-  expectCombined(error, state.launchError, state.closeError)
+  expectCombined(error, state.launchError, state.closeError, true)
   expect(await realpath(state.alias!.projectPath)).toBe(await realpath(projectRoot))
   expect(state.alias!.cleanup).not.toHaveBeenCalled()
   expect(state.run).toHaveBeenCalledWith(expect.objectContaining({ args: ['project', 'close', '--path', state.alias!.projectPath], allowFailure: false }))

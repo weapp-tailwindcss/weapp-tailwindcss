@@ -1,5 +1,5 @@
 import type { CommandExit, SpawnedHBuilderXCommand } from '../../packages/hbuilderx-runner/src'
-import type { AppCase, MiniProgramCase, WebCase } from './cases'
+import type { AppCase, WebCase } from './cases'
 import type { AttachedWebServer } from './web/attached'
 
 import { createHash } from 'node:crypto'
@@ -12,8 +12,6 @@ import { expect } from 'vitest'
 import { runWithCleanup } from '../../scripts/e2e-preflight/cleanup'
 import { createHBuilderXAppProject } from '../../scripts/hbuilderx-app-project'
 import { createNativeSessionRecovery } from '../../scripts/hbuilderx-native-session'
-import { createHBuilderXProjectAlias as createSharedHBuilderXProjectAlias } from '../../scripts/hbuilderx-project-alias.mjs'
-import { withHBuilderXProjectCleanup } from '../../scripts/hbuilderx-project-lifecycle'
 import {
   collectAndroidRuntimeMetadata,
   waitForAndroidRuntimeEvidence,
@@ -36,7 +34,6 @@ import {
   fileExists,
   formatRecentLogs,
   hbuilderxAppTimeoutMs,
-  hbuilderxTimeoutMs,
   pollIntervalMs,
   readUtf8,
   wait,
@@ -44,7 +41,6 @@ import {
 import { findMissingRuntimeLogs, resolveAppRuntimeLogContract } from './render-mode'
 import { createRuntimeStructureProbe } from './runtime-structure'
 import { appendHmrSourceMutation, createHmrOutputSnapshot, haveHmrOutputsChanged } from './source-mutations'
-import { collectMiniProgramStyleFiles, readReachableMiniProgramStyles, resolveMiniProgramRuntimeStyleEntry } from './styles'
 import { runWebHmr } from './web'
 
 const repoRoot = path.resolve(__dirname, '../..')
@@ -286,86 +282,6 @@ async function waitForAppTransformedOutputsRefresh(
   throw new Error(`HBuilderX App 样式源码保存后转换产物未刷新\n${createFailureDetails()}`)
 }
 
-async function assertMiniProgramOutput(
-  item: MiniProgramCase,
-  ensureRunning?: () => void,
-  createFailureDetails?: () => string,
-) {
-  const projectRoot = path.resolve(repoRoot, item.projectDir)
-  let outputRoot = path.resolve(projectRoot, item.outputDir)
-
-  const startedAt = Date.now()
-  while (Date.now() - startedAt < hbuilderxTimeoutMs) {
-    ensureRunning?.()
-    for (const outputDir of item.outputDirCandidates ?? [item.outputDir]) {
-      const candidateRoot = path.resolve(projectRoot, outputDir)
-      const ready = await Promise.all(item.requiredFiles.map(file => fileExists(path.resolve(candidateRoot, file))))
-      if (ready.every(Boolean)) {
-        outputRoot = candidateRoot
-        break
-      }
-    }
-    if ((await Promise.all(item.requiredFiles.map(file => fileExists(path.resolve(outputRoot, file))))).every(Boolean)) {
-      break
-    }
-    await wait(pollIntervalMs)
-  }
-
-  for (const file of item.requiredFiles) {
-    const target = path.resolve(outputRoot, file)
-    expect(
-      await waitForFile(target, hbuilderxTimeoutMs),
-      `${item.name} 缺少产物 ${file}${createFailureDetails ? `\n${createFailureDetails()}` : ''}`,
-    ).toBe(true)
-  }
-
-  const styleFiles = await collectMiniProgramStyleFiles(outputRoot, item.cssExtensions)
-  expect(
-    styleFiles.length,
-    `${item.name} 缺少 ${item.cssExtensions.join('/')} 样式产物`,
-  ).toBeGreaterThan(0)
-  const runtimeStyleEntry = await resolveMiniProgramRuntimeStyleEntry(outputRoot, item.cssExtensions)
-  expect(runtimeStyleEntry, `${item.name} 无法唯一识别小程序运行时根样式入口`).toBeTruthy()
-  // 根入口需要沿导入链验证；分包样式由页面路由加载，不会出现在根入口的导入图中。
-  const runtimeCss = await readReachableMiniProgramStyles(outputRoot, runtimeStyleEntry!, item.cssExtensions)
-  expect(runtimeCss, `${item.name} 根样式入口不可读`).not.toBe('')
-  const css = (await Promise.all(styleFiles.map(readUtf8))).join('\n')
-
-  expectContent(css, item.cssContains, item.name)
-  if (item.outputContains) {
-    for (const [file, entries] of Object.entries(item.outputContains)) {
-      const target = path.resolve(outputRoot, file)
-      expect(await waitForFile(target, hbuilderxTimeoutMs), `${item.name} 缺少产物 ${file}`).toBe(true)
-      expectContent(await readUtf8(target), entries, `${item.name} ${file}`)
-    }
-  }
-  if (item.outputNotContains) {
-    for (const [file, entries] of Object.entries(item.outputNotContains)) {
-      const target = path.resolve(outputRoot, file)
-      expect(await waitForFile(target, hbuilderxTimeoutMs), `${item.name} 缺少产物 ${file}`).toBe(true)
-      const content = await readUtf8(target)
-      for (const entry of entries) {
-        if (typeof entry === 'string') {
-          expect(content, `${item.name} ${file} 不应包含 ${entry}`).not.toContain(entry)
-        }
-        else {
-          expect(content, `${item.name} ${file} 不应匹配 ${entry}`).not.toMatch(entry)
-        }
-      }
-    }
-  }
-  if (item.cssNotContains) {
-    for (const entry of item.cssNotContains) {
-      if (typeof entry === 'string') {
-        expect(css, `${item.name} 不应包含 ${entry}`).not.toContain(entry)
-      }
-      else {
-        expect(css, `${item.name} 不应匹配 ${entry}`).not.toMatch(entry)
-      }
-    }
-  }
-}
-
 async function assertAppOutput(item: AppCase) {
   const projectRoot = path.resolve(repoRoot, item.projectDir)
   const outputRoot = await resolveAppOutputRoot(item)
@@ -477,44 +393,7 @@ async function writeAppMarker(
   await fs.writeFile(file, rewriteAppMarker(await readUtf8(file), anchors, marker), 'utf8')
 }
 
-export async function compileMiniProgramWithHBuilderX(item: MiniProgramCase) {
-  const projectRoot = path.resolve(repoRoot, item.projectDir)
-  const outputDirs = item.outputDirCandidates ?? [item.outputDir]
-
-  await Promise.all(
-    [...new Set(outputDirs)].map(async (outputDir) => {
-      await fs.rm(path.resolve(projectRoot, outputDir), { recursive: true, force: true })
-    }),
-  )
-
-  const hbuilderx = await createLocalHBuilderXRunner(projectRoot, { WEAPP_TW_HMR_TIMING: '1' })
-  const projectAlias = await createSharedHBuilderXProjectAlias(projectRoot)
-  await withHBuilderXProjectCleanup(projectAlias, async () => {
-    await hbuilderx.run({
-      args: ['project', 'open', '--path', projectAlias.projectPath],
-      cwd: projectRoot,
-      timeoutMs: hbuilderxTimeoutMs,
-    })
-    const launch = await hbuilderx.run({
-      args: ['launch', item.platform, '--project', projectAlias.projectName, '--compile', 'true'],
-      cwd: projectRoot,
-      timeoutMs: hbuilderxTimeoutMs,
-    })
-    if (launch.issue.kind !== 'unknown') {
-      throw new Error([
-        `${item.name} HBuilderX 编译失败：${launch.issue.message}`,
-        launch.issue.hint,
-        launch.output,
-      ].filter(Boolean).join('\n'))
-    }
-    await assertMiniProgramOutput(item)
-  }, () => hbuilderx.run({
-    args: ['project', 'close', '--path', projectAlias.projectPath],
-    allowFailure: false,
-    cwd: projectRoot,
-    timeoutMs: hbuilderxTimeoutMs,
-  }))
-}
+export { compileMiniProgramWithHBuilderX } from './mini-compile'
 
 export async function verifyAppHmrWithHBuilderX(item: AppCase) {
   item = bindAppTarget(item)

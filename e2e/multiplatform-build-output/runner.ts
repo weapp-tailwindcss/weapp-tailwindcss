@@ -148,6 +148,13 @@ export async function verifyBuildOutputCase(item: BuildOutputCase) {
     await runBuildCase(item, projectRoot, repoRoot)
   }
 
+  await assertBuildOutputCase(item, projectRoot)
+  return { outputRoot, provider: 'command' as const }
+}
+
+/** 构建与只读断言共享同一合同；IDE入口传入重定位后的明确产物路径。 */
+export async function assertBuildOutputCase(item: BuildOutputCase, projectRoot: string) {
+  const outputRoot = path.resolve(projectRoot, item.outputDir)
   expect(await pathExists(outputRoot), `${item.name} should emit ${item.outputDir}`).toBe(true)
 
   for (const file of item.requiredFiles) {

@@ -8,7 +8,7 @@ import { formatLynxHarnessFailure } from '../lynx/native-failure'
 import { EnvironmentBlockedError, environmentFailure, findEnvironmentBlock } from './environment-block'
 
 export const stageBindingVariable = 'TAILWIND_E2E_STAGE_BINDING'
-type Producer = 'lynx-native' | 'react-native' | 'expo-web' | 'weapp'
+type Producer = 'lynx-native' | 'react-native' | 'expo-web' | 'weapp' | 'mini-builds'
 interface StageBinding {
   version: 1
   runId: string
@@ -28,8 +28,8 @@ function registeredProducer(target: string): Producer | undefined {
   if (/^expo-(?:chromium|firefox|webkit)$/.test(target)) {
     return 'expo-web'
   }
-  if (target === 'weapp') {
-    return 'weapp'
+  if (target === 'weapp' || target === 'mini-builds') {
+    return target
   }
 }
 

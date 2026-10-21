@@ -36,7 +36,8 @@ async function fixture(options: { template?: string, targetStyle?: string, forei
 }
 
 it('接受目标平台样式、模板结构和脚本证据齐全的产物', async () => {
-  await expect(verifyBuildOutputCase(await fixture())).resolves.toBeUndefined()
+  const item = await fixture()
+  await expect(verifyBuildOutputCase(item)).resolves.toEqual({ outputRoot: path.resolve(item.projectDir, item.outputDir), provider: 'command' })
 })
 
 it('拒绝空模板，即使脚本与样式仍有正确标记', async () => {

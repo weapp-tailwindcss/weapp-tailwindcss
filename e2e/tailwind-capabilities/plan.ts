@@ -62,5 +62,8 @@ export function stageName(target: ExecutionTarget) {
   if (target.startsWith('lynx-')) {
     return `Lynx ${target.slice('lynx-'.length)}`
   }
-  return target === 'mini-builds' || target === 'framework-regressions' ? 'weapp web framework matrix' : target
+  if (target === 'mini-builds') {
+    return 'weapp web HBuilderX framework matrix'
+  }
+  return target === 'framework-regressions' ? 'weapp web framework matrix' : target
 }

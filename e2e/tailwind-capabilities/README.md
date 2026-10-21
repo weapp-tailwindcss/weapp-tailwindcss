@@ -54,7 +54,7 @@ pnpm e2e:tailwind --list
 - Web 子目录 `lifecycle`：starting 使用自然 rAF/transition 时间线、真实 CSSTransition 的起中终像素及移除重插；details-content 使用原生 summary 点击/键盘开合、UA 伪元素与无 class 对照像素。独立保存逐引擎结果，功能探针不能自动改判不支持。
 - Web 子目录 `hmr`：同一真实 Vite 服务连续新增、替换、删除类名及最终刷新，检查每轮保存标识、计算样式、源码 update 消息、服务身份与页面是否被整刷。
 - `e2e/.artifacts/tailwind/<run-id>/index.json` 和 `index.md`：本轮调度结果。各目标保留 v2 报告、原始证据和覆盖缺口；原生报告归档到本轮 `native` 目录，不引用下次会被覆盖的共享目录。
-- `mini-builds`：逐个登记的小程序项目复用完整构建、样式、模板及分包断言，立即归档本轮 bundle，写入逐案例 v2 报告。旧矩阵中只有登记信息、执行空命令的条目保留未执行；不能以 package.json 冒充样式产物。此层级不贡献设备运行覆盖。
+- `mini-builds`：逐个登记的小程序项目复用完整构建、样式、模板及分包断言，立即归档本轮 bundle，写入逐案例 v2 报告。现有 59 个 CLI 构建入口与 5 个 HBuilderX IDE 夹具分别记录，uni-app x 微信占位项已绑定唯一 IDE provider。IDE 返回的已验证输出根、实际 host/版本和 open/launch/close 原始结果随本轮 bundle 归档，关闭未确认时保留别名并阻断后续 provider。其余只有登记信息、执行空命令的条目仍保留未执行；不能以 package.json 冒充样式产物。此层级不贡献设备运行覆盖。
 
 v2 报告绑定源码、锁文件、工具版本、catalog、夹具及预期 hash。每个案例声明支持状态、验证层级、具体预期值和允许误差；验收重新检查原始文件 hash、字节数、归属和时间。错误样式、缺属性、缺运行时证据、擅改支持预期、缺案例、旧版本、旧截图、目标浏览器不符均拒绝。报告还读取实际 Vite、平台适配器、生产 encoder/serializer、独立 decoder 与 CSS defines 版本。旧 v1 报告保留历史展示，不能贡献本轮通过覆盖。
 
