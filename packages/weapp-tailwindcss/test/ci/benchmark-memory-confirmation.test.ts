@@ -111,6 +111,27 @@ describe('benchmark HMR 内存反向确认', () => {
   })
 
   it.each([
+    { hmrMode: 'unsupported', missingMemory: false },
+    { hmrMode: 'unsupported', missingMemory: true },
+    { hmrMode: 'fallback-build', missingMemory: false },
+    { hmrMode: 'fallback-build', missingMemory: true },
+  ])('复测行自报 $hmrMode 不得豁免登记 watch 的 RSS，缺内存证据：$missingMemory', async ({ hmrMode, missingMemory }) => {
+    const options = await fixture()
+    const raw = rawResult(1300, missingMemory)
+    raw.rows[1]!.hmrMode = hmrMode
+    const result = await runHmrMemoryConfirmation({
+      ...options,
+      selectedProjects: [{ key: 'framework', hmrMode: 'watch' }],
+      runMatrix: async ({ outputFile }) => fs.writeFile(outputFile, JSON.stringify(raw), 'utf8'),
+    })
+    expect(result.passed).toBe(false)
+    expect(result.memoryConfirmation.error).toContain('benchmark matrix')
+    expect(result.violations.map(item => [item.metric, item.baseline, item.current]))
+      .toEqual(options.performanceGuard.violations.map(item => [item.metric, item.baseline, item.current]))
+    await expect(fs.stat(path.join(options.resultDir, 'memory-confirmation-summary.json'))).rejects.toMatchObject({ code: 'ENOENT' })
+  })
+
+  it.each([
     { name: '空矩阵', raw: { rows: [] } },
     { name: '只有基线', raw: { rows: rawResult().rows.slice(0, 1) } },
     { name: '只有当前版本', raw: { rows: rawResult().rows.slice(1) } },

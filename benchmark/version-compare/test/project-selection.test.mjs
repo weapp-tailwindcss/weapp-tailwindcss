@@ -122,6 +122,15 @@ describe('性能项目与版本的行完整性', () => {
   })
 
   it.each([
+    { name: 'HMR 自报不支持', partial: { hmrMode: 'unsupported' } },
+    { name: 'HMR 自报构建替代', partial: { hmrMode: 'fallback-build' } },
+    { name: '构建自报不支持', partial: { buildMode: 'unsupported' } },
+  ])('$name 必须与项目登记一致，完整样本不能豁免模式冲突', ({ partial }) => {
+    const conflicting = measuredRows.map((row, index) => index === 0 ? { ...row, ...partial } : row)
+    expect(() => assertBenchmarkMatrixRows({ rows: conflicting }, selected, versions, options)).toThrow('benchmark matrix')
+  })
+
+  it.each([
     { name: '无构建样本', partial: { buildMs: [] } },
     { name: '缺一个 HMR 样本', partial: { hmrMs: [20, 21] } },
     { name: '非法耗时', partial: { hmrMs: [20, Number.NaN, 22] } },
@@ -134,7 +143,11 @@ describe('性能项目与版本的行完整性', () => {
 
   it('保留预登记不支持模式和显式执行失败，交给原报告分别判定', () => {
     const unsupported = selected.map(project => ({ ...project, buildMode: 'unsupported', hmrMode: 'unsupported' }))
-    expect(() => assertBenchmarkMatrixRows({ rows }, unsupported, versions, options)).not.toThrow()
+    const unsupportedRows = rows.map(row => ({ ...row, buildMode: 'unsupported', hmrMode: 'unsupported' }))
+    expect(() => assertBenchmarkMatrixRows({ rows: unsupportedRows }, unsupported, versions, options)).not.toThrow()
+    const fallback = selected.map(project => ({ ...project, hmrMode: 'fallback-build' }))
+    const fallbackRows = measuredRows.map(row => ({ ...row, hmrMode: 'fallback-build', hmrMs: [], summary: { build: row.summary.build } }))
+    expect(() => assertBenchmarkMatrixRows({ rows: fallbackRows }, fallback, versions, options)).not.toThrow()
     expect(() => assertBenchmarkMatrixRows({ rows: rows.map(row => ({ ...row, error: '真实构建失败' })) }, selected, versions, options)).not.toThrow()
   })
 })

@@ -54,10 +54,14 @@ export function assertBenchmarkMatrixRows(raw, selectedProjects, versions, optio
     seen.add(identity)
     if (options && !row.error) {
       const project = selectedProjects.find(project => project.key === row.key)
+      const buildMode = project.buildMode ?? 'build'
+      const hmrMode = project.hmrMode ?? 'watch'
+      if ((row.buildMode ?? 'build') !== buildMode || (row.hmrMode ?? 'watch') !== hmrMode) {
+        throw new Error(`benchmark matrix mode conflicts with registered project: ${row.version}/${row.key}`)
+      }
       if (options.buildRuns > 0 && project.buildMode !== 'unsupported') {
         assertMeasurement(row, 'buildMs', 'build', options.buildRuns)
       }
-      const hmrMode = project.hmrMode ?? 'watch'
       if (hmrMode !== 'unsupported' && hmrMode !== 'fallback-build') {
         assertMeasurement(row, 'hmrMs', 'hmr', options.hmrRuns)
       }
