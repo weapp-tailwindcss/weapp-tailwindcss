@@ -79,6 +79,8 @@ verification:
 
 # 最新 main 的 Lynx 三项 Issue 根因复验
 
+2026-10-21 固定 4ea 的十五目标实际结果、失败与未执行范围见 [本轮验收记录](tailwind-acceptance-2026-10-21.md)。后续定向修复不会回写原运行结论。
+
 导入合并后的原生渐变退化、转换夹具隔离及当前性能失败，接续记录于 [Webpack 渐变兼容复盘](lynx-webpack-gradient-finalization.md)。
 
 最新全面流程的单测失败、颜色 oracle 维护与用户确认后的动态 alpha 平台限制，见 [全面验收的动态透明度边界](full-acceptance-dynamic-alpha-boundary.md)。
