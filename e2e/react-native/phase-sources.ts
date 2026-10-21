@@ -1,5 +1,6 @@
 import type { NativeRuntimePhase } from './phase-contract'
 import type { NativePhaseEntry } from './phase-index'
+import { createHash } from 'node:crypto'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { isDeepStrictEqual } from 'node:util'
@@ -38,7 +39,9 @@ export async function captureNativePhaseSources(projectRoot: string, phaseDirect
 /** 只解析归档字节，不执行虚拟 JS，也不重读恢复后的 global.css 或 marker。 */
 export async function validateNativePhaseSources(phaseDirectory: string, entry: NativePhaseEntry, phase: NativeRuntimePhase) {
   const publication = JSON.parse(await readFile(path.join(phaseDirectory, 'encoding', 'manifest.ready'), 'utf8'))
-  const manifest = JSON.parse(await readFile(path.join(phaseDirectory, 'encoding', 'manifest.json'), 'utf8'))
+  const manifestSource = await readFile(path.join(phaseDirectory, 'encoding', 'manifest.json'), 'utf8')
+  const manifest = JSON.parse(manifestSource)
+  const identity = { revision: publication.revision, manifestSha256: publication.manifestSha256 }
   const input = JSON.parse(await readFile(path.join(phaseDirectory, 'encoding', 'static-evidence.json'), 'utf8'))
   const css = await readFile(path.join(phaseDirectory, 'sources', 'global.css'), 'utf8')
   const marker = await readFile(path.join(phaseDirectory, 'sources', 'hmr-marker.ts'), 'utf8')
@@ -50,7 +53,8 @@ export async function validateNativePhaseSources(phaseDirectory: string, entry: 
   if (entry.sourceArchive.cssInput !== input.generation.runtimeInput.options.input
     || !isDeepStrictEqual(entry.sourceArchive.markerInput, ['src', 'hmr-marker.ts'])
     || entry.sourceArchive.virtualInput !== publication.virtualPath || entry.sourceArchive.publicationRevision !== publication.revision
-    || virtual !== virtualModuleCode(manifest) || value !== phase.marker || className !== phase.markerClass || color !== phase.cssColor
+    || identity.manifestSha256 !== createHash('sha256').update(manifestSource).digest('hex')
+    || virtual !== virtualModuleCode(manifest, identity, manifestSource) || value !== phase.marker || className !== phase.markerClass || color !== phase.cssColor
     || !manifest.rules[phase.markerClass]?.length
     || !isDeepStrictEqual(runtime.tw('rn-css-hmr-probe'), { backgroundColor: phase.cssColor })) {
     throw new Error(`React Native 阶段原始源码、虚拟模块或发布身份不符：${phase.id}`)

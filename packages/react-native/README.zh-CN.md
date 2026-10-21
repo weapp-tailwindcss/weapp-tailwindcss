@@ -45,6 +45,10 @@ Metro 会扫描源码、生成精确候选集合和 manifest，并把 Babel JSX 
 
 每个运行时独立保存注册表、缓存与样式元数据。替换共享 StyleSheet 注册器后，各实例在下次查询时刷新注册表。内联嵌套数组使用迭代展开，宿主 flattener 只解析其中已注册的 ID；循环数组会明确报错。
 
+`setManifest(manifest, publication?)` 与 `createNativeStyleRuntime(manifest?, publication?)` 会复制并冻结安装的 manifest，`getManifest()` 返回该不可变快照。宿主注册器收到独立的可变 styles 副本；注册失败时，旧 manifest、发布身份、缓存及样式元数据保持完整。独立运行时不会替换顶层默认实例。
+
+Metro 为实际 manifest JSON 字节发布 `{ revision, manifestSha256 }`，虚拟模块安装同一身份。`getPublication()` 返回不可变身份；手工调用不带身份的 `setManifest(manifest)` 会清除旧身份。Node worker 核对 JSON 摘要，原生运行时仅校验身份格式并保留身份，不重新计算 SHA-256。`getRegisteredSnapshot`、`getRegisteredSnapshotByPath` 与 `getRegisteredSnapshotByProjectRoot` 等待完整发布；同步 `getVirtualModuleCode` 只用于读取诊断快照，等待就绪应使用其异步版本。发布身份不能证明设备实际收到了哪份完整 bundle。
+
 基于变量的 transform 在选中的全部自定义属性完成级联后计算，`skew-x-6 skew-y-3` 等组合会保留两轴。不支持的 selector 结构和 transform 函数会产生诊断，不能静默生成局部样式。
 
 无单位、百分比和 `em` 行高在 class 与内联样式完成级联后，按最终字号计算；倍率保存在规则元数据中，不写入静态 StyleSheet。字号来自父元素时，可通过 `tw(value, { fontSize })` 或 `getStaticStyle(ids, { fontSize })` 显式提供已知继承字号；字号未知时不会猜测平台默认值。自定义运行时接入可把 `StyleSheet.flatten` 作为 `setStyleSheetFactory` 的第二个参数，使已注册的内联样式也参与计算；Metro 会自动接入。

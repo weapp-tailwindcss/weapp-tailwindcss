@@ -42,7 +42,9 @@ export async function validateNativeEncodingArtifacts(report: ReactNativeReport,
     || !snapshot.stablePublication || snapshot.readyBefore !== ready || snapshot.readyAfter !== ready
     || snapshot.files?.['manifest.json']?.sha256 !== hash(manifestSource)
     || snapshot.files?.['manifest.ready']?.sha256 !== hash(ready)
-    || publication.error || !publication.revision || !publication.virtualPath) {
+    || publication.error || typeof publication.revision !== 'string' || !publication.revision.trim()
+    || publication.manifestSha256 !== hash(manifestSource)
+    || typeof publication.virtualPath !== 'string' || !publication.virtualPath) {
     throw new Error('React Native encoding manifest 缺少本轮稳定发布身份或字节不匹配')
   }
   const staticInput = await readFile(path.join(output, 'static-evidence.json'), 'utf8')

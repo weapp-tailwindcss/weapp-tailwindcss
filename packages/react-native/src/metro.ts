@@ -1,7 +1,8 @@
 /* eslint-disable no-console, style/max-statements-per-line */
 
+import type { RegisteredManifest } from './metro/registry'
 import type { NativeStyleManifest } from './types'
-import { createHash, randomUUID } from 'node:crypto'
+import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import { createRequire } from 'node:module'
 import os from 'node:os'
@@ -10,9 +11,13 @@ import process from 'node:process'
 import { fileURLToPath, URL } from 'node:url'
 import { compileNativeStylesheet } from './compiler'
 import { writeManifestFile } from './metro/manifest-store'
-import { compileStableInput, waitForCurrentRefresh } from './metro/refresh'
+import { createManifestSnapshot, writeManifestSnapshot } from './metro/publication'
+import { compileStableInput } from './metro/refresh'
+import { registry } from './metro/registry'
 import { virtualModuleCode } from './metro/virtual-module'
 import { watchInput } from './metro/watch'
+
+export { getRegisteredManifest, getRegisteredManifestByPath, getRegisteredManifestByProjectRoot, getRegisteredSnapshot, getRegisteredSnapshotByPath, getRegisteredSnapshotByProjectRoot, getRegisteredVirtualModule, getVirtualModuleCode, getVirtualModuleCodeAsync } from './metro/registry'
 
 export const VIRTUAL_MANIFEST_MODULE = '@weapp-tailwindcss/react-native/virtual'
 
@@ -45,23 +50,11 @@ export interface WeappReactNativeMetroOptions {
   watchFiles?: string[] | undefined
 }
 
-interface RegisteredManifest {
-  version: number
-  manifest: NativeStyleManifest
-  projectRoot: string
-  virtualPath: string
-  manifestPath: string
-  manifestReadyPath: string
-  ready: Promise<void>
-  refresh: () => Promise<void>
-}
-
 export interface NativeManifestPaths {
   manifestPath: string
   manifestReadyPath: string
 }
 
-const registry = new Map<string, RegisteredManifest>()
 const appRootSingletonModules = new Set(['react'])
 let nextId = 0
 
@@ -109,13 +102,6 @@ function emptyManifest(): NativeStyleManifest {
   return { version: 1, classSet: [], rules: {}, variables: {}, warnings: [] }
 }
 
-function writeVirtualModule(entry: RegisteredManifest) {
-  fs.mkdirSync(path.dirname(entry.virtualPath), { recursive: true })
-  fs.mkdirSync(path.dirname(entry.manifestPath), { recursive: true })
-  writeManifestFile(entry.virtualPath, virtualModuleCode(entry.manifest))
-  writeManifestFile(entry.manifestPath, JSON.stringify(entry.manifest))
-}
-
 /**
  * Metro worker 会把文件路径先相对化再恢复为绝对路径。虚拟模块必须位于
  * 项目根目录内，否则 Windows 跨盘符路径会被错误拼接成 `D:\\C:\\...`。
@@ -126,10 +112,6 @@ function getVirtualModulePath(projectRoot: string, id: string) {
 
 function markManifestPending(entry: RegisteredManifest) {
   fs.rmSync(entry.manifestReadyPath, { force: true })
-}
-
-function markManifestReady(entry: RegisteredManifest) {
-  writeManifestFile(entry.manifestReadyPath, JSON.stringify({ revision: randomUUID(), version: entry.version, virtualPath: entry.virtualPath }))
 }
 
 async function compileOptions(options: WeappReactNativeMetroOptions, projectRoot: string) {
@@ -151,40 +133,47 @@ function register(options: WeappReactNativeMetroOptions) {
   const id = `weapp-tailwindcss-native-${nextId++}`
   const projectRoot = path.resolve(options.projectRoot ?? process.cwd())
   const manifestPaths = getManifestPathsForProjectRoot(projectRoot)
+  const virtualPath = getVirtualModulePath(projectRoot, id)
   const entry: RegisteredManifest = {
-    version: 0,
-    manifest: options.manifest ?? (options.css ? compileNativeStylesheet(options.css, { classSet: options.classSet }) : emptyManifest()),
+    snapshot: createManifestSnapshot(options.manifest ?? (options.css ? compileNativeStylesheet(options.css, { classSet: options.classSet }) : emptyManifest()), virtualPath, 0),
+    get version() { return this.snapshot.version },
+    get manifest() { return this.snapshot.manifest },
     projectRoot,
-    virtualPath: getVirtualModulePath(projectRoot, id),
+    virtualPath,
     manifestPath: manifestPaths.manifestPath,
     manifestReadyPath: manifestPaths.manifestReadyPath,
     ready: Promise.resolve(),
     refresh: async () => {},
   }
+  // resolver 只需独占的占位文件；正式刷新前不能触碰同项目已有的发布。
+  fs.mkdirSync(path.dirname(virtualPath), { recursive: true })
+  writeManifestFile(virtualPath, virtualModuleCode(entry.snapshot.manifest))
   registry.set(id, entry)
-  markManifestPending(entry)
-  writeVirtualModule(entry)
 
   const inputFiles = [...new Set([...(options.watchFiles ?? []), ...(options.input ? [options.input] : [])]
     .map(file => path.resolve(projectRoot, file)))]
   let generation = 0
   entry.refresh = () => {
     const currentGeneration = ++generation
-    markManifestPending(entry)
     entry.ready = (async () => {
       try {
+        markManifestPending(entry)
         const manifest = await compileStableInput(inputFiles, () => compileOptions(options, projectRoot), () => currentGeneration === generation)
         if (manifest && currentGeneration === generation) {
-          entry.manifest = manifest
-          entry.version++
-          writeVirtualModule(entry)
-          markManifestReady(entry)
+          const snapshot = createManifestSnapshot(manifest, entry.virtualPath, entry.version + 1)
+          writeManifestSnapshot(entry, snapshot)
+          entry.snapshot = snapshot
         }
       }
       catch (error) {
         if (currentGeneration !== generation) { return }
         const message = `生成 React Native manifest 失败：${error instanceof Error ? error.message : String(error)}`
-        writeManifestFile(entry.manifestReadyPath, JSON.stringify({ error: message }))
+        try {
+          writeManifestFile(entry.manifestReadyPath, JSON.stringify({ error: message }))
+        }
+        catch (publicationError) {
+          throw new AggregateError([error, publicationError], message, { cause: error })
+        }
         throw new Error(message, { cause: error })
       }
     })()
@@ -209,54 +198,6 @@ function register(options: WeappReactNativeMetroOptions) {
   })
   void watchers
   return { id, entry }
-}
-
-export function getRegisteredVirtualModule(filename: string) {
-  for (const entry of registry.values()) {
-    if (entry.virtualPath === filename) { return entry }
-  }
-  return undefined
-}
-
-export async function getRegisteredManifest(id: string) {
-  const registered = registry.get(id)
-  if (!registered) { return undefined }
-  await waitForCurrentRefresh(registered)
-  return registered.manifest
-}
-
-/** 等待并读取由 Metro 配置注册的 manifest 文件，兼容未透传自定义 Metro id 的 transformer。 */
-export async function getRegisteredManifestByPath(filename: string) {
-  for (const entry of registry.values()) {
-    if (entry.manifestPath === filename) {
-      await waitForCurrentRefresh(entry)
-      return entry.manifest
-    }
-  }
-  return undefined
-}
-
-/** 按 Metro 传入的项目根目录读取当前注册项，兼容 transformer 未透传自定义字段的实现。 */
-export async function getRegisteredManifestByProjectRoot(projectRoot: string) {
-  const resolvedRoot = path.resolve(projectRoot)
-  const entries = [...registry.values()].filter(entry => entry.projectRoot === resolvedRoot)
-  const entry = entries.at(-1)
-  if (!entry) { return undefined }
-  await waitForCurrentRefresh(entry)
-  return entry.manifest
-}
-
-export function getVirtualModuleCode(filename: string) {
-  const registered = getRegisteredVirtualModule(filename)
-  if (!registered) { return undefined }
-  return virtualModuleCode(registered.manifest)
-}
-
-export async function getVirtualModuleCodeAsync(filename: string) {
-  const registered = getRegisteredVirtualModule(filename)
-  if (!registered) { return undefined }
-  await waitForCurrentRefresh(registered)
-  return getVirtualModuleCode(filename)
 }
 
 export function withWeappTailwindcss<T extends MetroConfigLike>(config: T, options?: WeappReactNativeMetroOptions): T & MetroConfigLike

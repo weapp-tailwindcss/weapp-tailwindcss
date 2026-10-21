@@ -3,6 +3,7 @@ import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, expect, it } from 'vitest'
+import { virtualModuleCode } from '../packages/react-native/src/metro/virtual-module'
 import { nativeRuntimePhases } from './react-native/phase-contract'
 import { validateNativeRuntimePhases } from './react-native/phase-evidence'
 import { writeNativePhaseFixture } from './react-native/phase-fixture'
@@ -112,4 +113,19 @@ it('阶段来源不能冒称已保存设备实际加载的完整 bundle', async 
   index.phases[0].sourceArchive.servedBundle = 'captured'
   await writeFile(path.join(directory, phaseIndexName), JSON.stringify(index))
   await expect(validateNativeRuntimePhases(report, directory)).rejects.toThrow('原始产物')
+})
+
+it.each(['missing', 'other-publication', 'other-digest'] as const)('虚拟模块 %s 身份时，完整 manifest 和重算归档摘要也不能通过', async (kind) => {
+  const { directory, report } = await fixture()
+  const phase = nativeRuntimePhases[0]
+  const root = nativePhaseDirectory(directory, phase)
+  const source = await readFile(path.join(root, 'encoding', 'manifest.json'), 'utf8')
+  const manifest = JSON.parse(source)
+  const publication = JSON.parse(await readFile(path.join(root, 'encoding', 'manifest.ready'), 'utf8'))
+  const identity = kind === 'missing'
+    ? undefined
+    : { revision: kind === 'other-publication' ? 'other-publication' : publication.revision, manifestSha256: kind === 'other-digest' ? 'a'.repeat(64) : publication.manifestSha256 }
+  await writeFile(path.join(root, 'sources', 'virtual.js'), virtualModuleCode(manifest, identity, source))
+  await resnapshot(directory, phase)
+  await expect(validateNativeRuntimePhases(report, directory)).rejects.toThrow('阶段原始源码')
 })

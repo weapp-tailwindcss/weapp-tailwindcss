@@ -1,11 +1,14 @@
-import type { NativeStyleManifest } from '../types'
-import { randomUUID } from 'node:crypto'
+import type { NativeManifestPublication, NativeStyleManifest } from '../types'
+import { createHash, randomUUID } from 'node:crypto'
 import fs from 'node:fs'
 import { setTimeout } from 'node:timers/promises'
+import { copyPublication, freezeSnapshot, parseManifestSnapshot } from '../manifest'
 
-interface PublishedSnapshot {
+export interface PublishedSnapshot {
   manifest: NativeStyleManifest
   virtualPath?: string
+  publication?: NativeManifestPublication
+  manifestJson?: string
 }
 
 /** 同目录替换，避免 Metro 或 worker 读到截断后的虚拟模块与 JSON。 */
@@ -24,7 +27,8 @@ export function writeManifestFile(filename: string, content: string) {
 export async function readPublishedSnapshot(filename: string, readyPath: string | undefined): Promise<PublishedSnapshot | undefined> {
   if (!readyPath) {
     try {
-      return { manifest: JSON.parse(await fs.promises.readFile(filename, 'utf8')) as NativeStyleManifest }
+      const manifestJson = await fs.promises.readFile(filename, 'utf8')
+      return freezeSnapshot({ manifest: parseManifestSnapshot(manifestJson), manifestJson })
     }
     catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
@@ -37,24 +41,24 @@ export async function readPublishedSnapshot(filename: string, readyPath: string 
   while (Date.now() < deadline) {
     try {
       const before = await fs.promises.readFile(readyPath, 'utf8')
+      const ready = JSON.parse(before) as { error?: string, virtualPath?: string, revision?: string, manifestSha256?: string }
+      if (ready?.error) {
+        if (before !== await fs.promises.readFile(readyPath, 'utf8')) {
+          continue
+        }
+        throw new Error(ready.error)
+      }
+      if (!ready || typeof ready.virtualPath !== 'string' || !ready.virtualPath || !ready.revision || !ready.manifestSha256) {
+        throw new Error('React Native manifest 缺少发布身份')
+      }
+      const publication = copyPublication({ revision: ready.revision, manifestSha256: ready.manifestSha256 })!
       const content = await fs.promises.readFile(filename, 'utf8')
       const after = await fs.promises.readFile(readyPath, 'utf8')
       if (before === after) {
-        let virtualPath: string | undefined
-        if (before.startsWith('{')) {
-          const publication = JSON.parse(before) as { error?: string, virtualPath?: string, revision?: string }
-          if (publication.error) {
-            throw new Error(publication.error)
-          }
-          if (!publication.revision || !publication.virtualPath) {
-            throw new Error('React Native manifest 缺少发布身份')
-          }
-          virtualPath = publication.virtualPath
+        if (createHash('sha256').update(content, 'utf8').digest('hex') !== publication.manifestSha256) {
+          throw new Error('React Native manifest 字节摘要不匹配')
         }
-        else if (!/^\d+\s*$/.test(before)) {
-          throw new Error('React Native manifest 发布标识无效')
-        }
-        return { manifest: JSON.parse(content) as NativeStyleManifest, ...(virtualPath ? { virtualPath } : {}) }
+        return freezeSnapshot({ manifest: parseManifestSnapshot(content), manifestJson: content, virtualPath: ready.virtualPath, publication })
       }
     }
     catch (error) {

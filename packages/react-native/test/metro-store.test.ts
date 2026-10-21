@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -17,8 +18,9 @@ it('worker 读取跨越发布轮次时必须重新读取一致版本', async () 
   const ready = path.join(root, 'manifest.ready')
   const before = compileNativeStylesheet('.probe { opacity: 0.5 }')
   const after = compileNativeStylesheet('.probe { opacity: 1 }')
+  const publication = (revision: string, manifest: typeof before) => JSON.stringify({ revision, virtualPath: path.join(root, 'virtual.js'), manifestSha256: createHash('sha256').update(JSON.stringify(manifest)).digest('hex') })
   fs.writeFileSync(file, JSON.stringify(before))
-  fs.writeFileSync(ready, '1\n')
+  fs.writeFileSync(ready, publication('first', before))
   const read = fs.promises.readFile.bind(fs.promises)
   let changed = false
   vi.spyOn(fs.promises, 'readFile').mockImplementation((async (...args: Parameters<typeof read>) => {
@@ -26,7 +28,7 @@ it('worker 读取跨越发布轮次时必须重新读取一致版本', async () 
     if (args[0] === file && !changed) {
       changed = true
       writeManifestFile(file, JSON.stringify(after))
-      writeManifestFile(ready, '2\n')
+      writeManifestFile(ready, publication('second', after))
     }
     return content
   }) as typeof read)

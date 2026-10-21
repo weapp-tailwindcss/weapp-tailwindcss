@@ -44,11 +44,12 @@ export async function writeNativePhaseFixture(directory: string, finalReport: Re
       generated.set(phase.id, phaseSource(phase))
     }
     const { css, marker, manifest } = await generated.get(phase.id)!
-    await writeEncodingFixture(root, report, { manifest, publication: { revision: `synthetic-publication-${phase.id}`, virtualPath: path.join(root, 'source-virtual-input.js') } })
+    const { source, ready } = await writeEncodingFixture(root, report, { manifest, publication: { revision: `synthetic-publication-${phase.id}`, virtualPath: path.join(root, 'source-virtual-input.js') } })
+    const { revision, manifestSha256 } = JSON.parse(ready)
     await writeFile(path.join(root, 'report.json'), JSON.stringify(report))
     await writeFile(path.join(root, 'sources', 'global.css'), css)
     await writeFile(path.join(root, 'sources', 'hmr-marker.ts'), marker)
-    await writeFile(path.join(root, 'sources', 'virtual.js'), virtualModuleCode(manifest))
+    await writeFile(path.join(root, 'sources', 'virtual.js'), virtualModuleCode(manifest, { revision, manifestSha256 }, source))
     index.phases.push(await snapshotNativePhase(directory, phase))
   }
   await writeFile(path.join(directory, phaseIndexName), JSON.stringify(index))

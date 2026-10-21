@@ -17,7 +17,7 @@ export async function writeEncodingFixture(directory: string, report: ReactNativ
   const staticInput = JSON.stringify({ schemaVersion: 2, fixtureHash: RN_FIXTURE_HASH, rawCss: evidence.rawCss, manifest: evidence.manifest, generation: evidence.generation })
   const runtimeInput = evidence.generation.runtimeInput.config.source
   const digest = (value: string) => createHash('sha256').update(value).digest('hex')
-  const ready = JSON.stringify(options.publication ?? { revision: 'metro-publication', virtualPath: 'virtual.js' })
+  const ready = JSON.stringify({ manifestSha256: digest(source), ...options.publication ?? { revision: 'metro-publication', virtualPath: 'virtual.js' } })
   const output = path.join(directory, 'encoding')
   await mkdir(output, { recursive: true })
   await writeFile(path.join(output, 'manifest.json'), source)

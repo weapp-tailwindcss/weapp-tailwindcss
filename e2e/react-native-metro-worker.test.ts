@@ -1,4 +1,5 @@
 import type { MetroConfigLike } from '../packages/react-native/src/metro'
+import { createHash } from 'node:crypto'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
@@ -32,6 +33,10 @@ it.each([false, true])('真实独立 worker 从当前发布重新生成虚拟模
     expect(child.stdout).toContain('setManifest(')
     expect(child.stdout).toContain('"backgroundColor":"#f59e0b"')
     expect(child.stdout).not.toContain('stale-empty-virtual-module')
+    const publication = JSON.parse(await fs.readFile(entry.manifestReadyPath, 'utf8'))
+    const source = await fs.readFile(entry.manifestPath, 'utf8')
+    expect(publication.manifestSha256).toBe(createHash('sha256').update(source).digest('hex'))
+    expect(child.stdout).toContain(`setManifest(${source}, ${JSON.stringify({ revision: publication.revision, manifestSha256: publication.manifestSha256 })})`)
   }
   finally {
     await fs.rm(root, { recursive: true, force: true })

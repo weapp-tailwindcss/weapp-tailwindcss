@@ -1,5 +1,5 @@
 import type { StyleProp } from 'react-native'
-import type { NativePlatform, NativeStyleManifest } from '../types'
+import type { NativeManifestPublication, NativePlatform, NativeStyleManifest } from '../types'
 
 export interface NativeStyleEnvironment {
   colorScheme?: 'light' | 'dark' | undefined
@@ -17,7 +17,8 @@ export interface NativeStyleRuntime {
   tw: (value: NativeClassValue, environment?: NativeStyleEnvironment) => NativeStyleValue
   getStaticStyle: (ids: readonly string[], environment?: NativeStyleEnvironment) => NativeStyleValue
   composeStyle: <const InlineStyle>(tailwindStyle: NativeStyleValue, inlineStyle: InlineStyle) => [NativeStyleValue, InlineStyle] | [NativeStyleValue, InlineStyle, NativeStyleValue]
-  setManifest: (manifest: NativeStyleManifest) => void
+  setManifest: (manifest: NativeStyleManifest, publication?: NativeManifestPublication) => void
   setEnvironment: (environment: NativeStyleEnvironment) => void
   getManifest: () => NativeStyleManifest | undefined
+  getPublication: () => NativeManifestPublication | undefined
 }
