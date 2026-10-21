@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "catalogHash": "e02267ce217c78899898b6cefd7c46e962b99b442a5052fddcd74cc7500ed3e0",
-  "fixtureHash": "d93df7c3e33bfab38f741245957c3bd6233ab9729b61251363d6ea2385550bf0",
+  "fixtureHash": "a52314acd3bc18a6bbaba1c87d11faf4f6e5ee982436bc847d1aea1cc6131d2e",
   "cases": [
     {
       "id": "layout-aspect",
@@ -2065,9 +2065,9 @@
     "revision": "static",
     "platform": "web",
     "catalogHash": "e02267ce217c78899898b6cefd7c46e962b99b442a5052fddcd74cc7500ed3e0",
-    "fixtureHash": "d93df7c3e33bfab38f741245957c3bd6233ab9729b61251363d6ea2385550bf0",
+    "fixtureHash": "a52314acd3bc18a6bbaba1c87d11faf4f6e5ee982436bc847d1aea1cc6131d2e",
     "runId": "static-generation",
-    "verifiedAt": "2026-10-21T15:45:23.335Z",
+    "verifiedAt": "2026-10-21T16:20:29.602Z",
     "versions": {
       "tailwindcss": "4.3.3",
       "expo": "54.0.37",

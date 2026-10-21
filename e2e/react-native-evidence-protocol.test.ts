@@ -2,6 +2,7 @@ import type { NativePairEvidence } from '../examples/react-native-expo/src/compa
 import type { ReactNativeReport } from './react-native/catalog'
 import { PNG } from 'pngjs'
 import { describe, expect, it, vi } from 'vitest'
+import { syntheticFrameCapture } from './react-native/frame-fixture'
 import { syntheticRuntimeInstallation } from './react-native/installation-fixture'
 import { assessNativePair } from './react-native/pair-evidence'
 import { readHistoricalReactNativeReport, validateReactNativeReport } from './react-native/reports'
@@ -17,7 +18,7 @@ vi.mock('./react-native/catalog', () => ({
 }))
 
 function report(): ReactNativeReport {
-  return {
+  const value = {
     runtimeInstallation: syntheticRuntimeInstallation(),
     schemaVersion: 2,
     stage: 'runtime',
@@ -73,10 +74,19 @@ function report(): ReactNativeReport {
       checkpoints: [{ name: 'runtime:default:geometry', passed: true }, { name: 'runtime:default:pixel', passed: true }, { name: 'runtime:default:control', passed: true }],
       artifact: { name: 'case-baseline-background-color-default.png', sha256: 'a'.repeat(64), byteLength: 1_024 },
     }],
+  } as ReactNativeReport
+  for (const receipt of value.receipts) {
+    receipt.capture = syntheticFrameCapture(receipt.artifact, receipt.checkpoints)
   }
+  return value
 }
 
 describe('React Native fresh semantic evidence', () => {
+  it('旧单帧报告即使有全部语义布尔检查点也不能通过 fresh gate', () => {
+    const value = report()
+    Reflect.deleteProperty(value.receipts[0]!, 'capture')
+    expect(() => validateReactNativeReport(value)).toThrow(/frame|capture/)
+  })
   it('接受逐项语义与原生像素回执，同时保留明确的负向编码结论', () => {
     const value = report()
     expect(validateReactNativeReport(value, 'android', { runId: 'current-run', revision: 'baseline' })).toBe(value)

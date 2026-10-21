@@ -78,6 +78,8 @@ RN/Expo 原始31支持、87预声明拒绝，不能写成118项正向运行时�
 
 不新增 AGENTS。使用现有逐端证据、禁止旧报告放行、资源收尾及基线审查规则，新增回归约束报告归属，不降低阈值或支持预期。
 
+86a 的三浏览器三阶段、精确 hosted RN 结果、截图归档失误及后续双帧 owner 修复见[采集生命周期复盘](tailwind-rn-capture-lifecycle.md)。旧源码结果和新协议合同分开记录，仍保持 partial。
+
 ## bb55 第二轮记录
 
 运行 `f197e131-2dee-4e80-9193-3c2bf41f7b78` 固定源码 `bb55fbaffaabc5480ae6babba6f968d0afd2ea60`。本轮先通过 extended 脚本探针、IAB 真实输入/点击和 verify；原生 Chrome 被用户接管后保留其页面，后台 IAB 自有标签 6 已关闭。原 CU 回执先记录的是本地定位符，随后从当前对话 rollout 补全真实平台调用 ID 及原始结果，单独保存在 `computer-use-platform-provenance.json`；不重写原回执或把事后补证当作重新放行。

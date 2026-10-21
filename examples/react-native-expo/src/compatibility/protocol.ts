@@ -68,13 +68,28 @@ export interface NativePairEvidence {
   viewport: { width: number, height: number, pixelRatio: number }
 }
 
+export interface NativeScreenshotArtifact { name: string, sha256: string, byteLength: number }
+
+export interface NativeCaptureFrame {
+  index: number
+  startedAtMs: number
+  capturedAtMs: number
+  readAtMs: number
+  decodedAtMs?: number
+  assessedAtMs: number
+  assessmentReusedFromFrame?: number
+  artifact: NativeScreenshotArtifact
+  checkpoints: NativeCheckpoint[]
+}
+
 export interface NativeCaseReceipt {
   runtimeInstallation: NativeRuntimeIdentity
   runId: string
   id: string
   phase: string
   checkpoints: NativeCheckpoint[]
-  artifact: { name: string, sha256: string, byteLength: number }
+  artifact: NativeScreenshotArtifact
+  capture: { version: 1, timeoutMs: number, frames: NativeCaptureFrame[] }
 }
 
 export interface ReactNativeReport {

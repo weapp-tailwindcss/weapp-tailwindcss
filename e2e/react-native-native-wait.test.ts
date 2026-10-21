@@ -137,6 +137,76 @@ describe('React Native runtime wait state', () => {
     }
   })
 
+  it.each(['resolve', 'reject'] as const)('预算先失败后仍锁定实际操作；迟到 %s 必须完成收尾才释放', async (outcome) => {
+    vi.useFakeTimers()
+    const budget = createNativeCaptureBudget(2)
+    let release!: () => void
+    const late = new Error('late screenshot cleanup failed')
+    const capturing = budget.capture(async () => {
+      await new Promise<void>((resolve) => {
+        release = resolve
+      })
+      if (outcome === 'reject') {
+        throw late
+      }
+    })
+    const failed = expect(capturing).rejects.toThrow(/host capture.*10000ms/)
+    await vi.advanceTimersByTimeAsync(10_000)
+    await failed
+    expect(budget.pending()).toBe(true)
+    await expect(budget.capture(async () => {})).rejects.toThrow(/already pending/)
+    const drain = budget.drain(100)
+    const drained = outcome === 'reject' ? expect(drain).rejects.toBe(late) : expect(drain).resolves.toBeUndefined()
+    await vi.advanceTimersByTimeAsync(50)
+    expect(budget.pending()).toBe(true)
+    release()
+    await drained
+    expect(budget.pending()).toBe(false)
+    expect(budget.elapsed()).toBe(10_000)
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
+  it('不合作的截图有独立有限收尾预算，超时不能释放锁或抹掉后续失败', async () => {
+    vi.useFakeTimers()
+    const budget = createNativeCaptureBudget(2)
+    let reject!: (error: Error) => void
+    const capturing = budget.capture(() => new Promise<void>((_resolve, fail) => {
+      reject = fail
+    }))
+    const failed = expect(capturing).rejects.toThrow(/host capture.*10000ms/)
+    await vi.advanceTimersByTimeAsync(10_000)
+    await failed
+    const drained = expect(budget.drain(100)).rejects.toThrow(/cleanup.*100ms/)
+    await vi.advanceTimersByTimeAsync(100)
+    await drained
+    expect(budget.pending()).toBe(true)
+    const late = new Error('late native failure')
+    reject(late)
+    await expect(budget.drain(100)).rejects.toBe(late)
+    expect(budget.pending()).toBe(false)
+    expect(budget.elapsed()).toBe(10_000)
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
+  it('操作刚完成时的重入不能覆盖前一次记账，同步异常也释放锁', async () => {
+    const budget = createNativeCaptureBudget(3)
+    let release!: () => void
+    const operation = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const first = budget.capture(() => operation)
+    const reentrant = operation.then(() => expect(budget.capture(async () => {})).rejects.toThrow(/already pending/))
+    release()
+    await Promise.all([first, reentrant])
+    const failure = new Error('synchronous capture failure')
+    await expect(budget.capture(() => {
+      throw failure
+    })).rejects.toBe(failure)
+    expect(budget.pending()).toBe(false)
+    expect(Number.isFinite(budget.elapsed())).toBe(true)
+    await budget.drain()
+  })
+
   it('事件循环迟到的成功回调也不能越过单例 deadline', async () => {
     let now = 0
     const clock = vi.spyOn(performance, 'now').mockImplementation(() => now)

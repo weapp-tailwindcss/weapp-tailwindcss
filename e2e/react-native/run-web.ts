@@ -21,6 +21,8 @@ import { captureNativePair, validateNativeArtifacts } from './pair-evidence'
 import { createSemanticReporter } from './semantic-reporter'
 import { allocateExpoWebPort } from './web-session'
 import { readRuntimePublication } from './installation-evidence'
+import { captureWebScreenshot } from './web-capture'
+import { awaitCaptureCleanup, closeCaptureReporter, publishAfterCapture } from './capture-cleanup'
 
 interface ReportEnvelope { hmrMarker: string, cssHmrColor: string, report: ReactNativeReport }
 
@@ -36,8 +38,9 @@ const cssFile = path.resolve(exampleRoot, 'global.css')
 const reports: ReportEnvelope[] = []
 const updateBaseline = process.env['RN_UPDATE_BASELINE'] === '1'
 const clientToken = randomUUID()
+let restoreAfterCapture = async () => {}
 let semanticPage: import('playwright').Page | undefined
-const semanticReporter = createSemanticReporter<ReportEnvelope>({ runId, catalogHash: RN_CATALOG_HASH, fixtureHash: RN_FIXTURE_HASH, versions: reactNativeVersions() }, (pair) => {
+const semanticReporter = createSemanticReporter<ReportEnvelope>({ runId, catalogHash: RN_CATALOG_HASH, fixtureHash: RN_FIXTURE_HASH, versions: reactNativeVersions() }, (pair, cancelSignal) => {
   const viewport = semanticPage?.viewportSize()
   if (!viewport || pair.viewport.width !== viewport.width || pair.viewport.height !== viewport.height || pair.viewport.pixelRatio !== 1) {
     throw new Error('Semantic measurement does not belong to the owned Web viewport')
@@ -45,22 +48,23 @@ const semanticReporter = createSemanticReporter<ReportEnvelope>({ runId, catalog
   return captureNativePair(pair, {
     runId,
     artifacts,
+    cancelSignal,
     capture: async (name) => {
       if (!semanticPage) {
         throw new Error('Web semantic page is not ready')
       }
       const file = path.join(artifacts, name)
-      await semanticPage.screenshot({ path: file })
-      return file
+      return captureWebScreenshot(semanticPage, file, cancelSignal)
     },
   })
 }, {
   clientToken,
   revision: 'rn-hmr-baseline-10b981',
   platform: 'web',
-  publication: () => readRuntimePublication(exampleRoot),
-  complete: async (envelope) => {
-    await fs.writeFile(path.join(artifacts, 'report.json'), `${JSON.stringify(envelope.report, null, 2)}\n`, 'utf8')
+  publication: signal => readRuntimePublication(exampleRoot, signal),
+  complete: async (envelope, signal) => {
+    await fs.writeFile(path.join(artifacts, 'report.json'), `${JSON.stringify(envelope.report, null, 2)}\n`, { encoding: 'utf8', signal })
+    signal.throwIfAborted()
     reports.push(envelope)
   },
 })
@@ -83,10 +87,7 @@ function startReporter() {
       resolve(typeof address === 'object' && address ? address.port : 0)
     })
   })
-  return { ready, close: () => new Promise<void>((resolve, reject) => {
-    if (!server.listening) { resolve(); return }
-    server.close(error => error ? reject(error) : resolve())
-  }) }
+  return { ready, close: () => closeCaptureReporter(server) }
 }
 
 async function waitForWeb(expo: ReturnType<typeof execa>, origin: string, timeout = 120_000) {
@@ -128,6 +129,11 @@ async function main() {
   let browser: Browser | undefined
   let markerChanged = false
   let cssChanged = false
+  restoreAfterCapture = () => runWithCleanup(async () => {
+    if (markerChanged) { await fs.writeFile(markerFile, originalMarker, 'utf8') }
+  }, async () => {
+    if (cssChanged) { await fs.writeFile(cssFile, originalCss, 'utf8') }
+  })
   await runWithCleanup(async () => {
     const reporterPort = await reporter.ready
     const expoPort = await allocateExpoWebPort()
@@ -234,9 +240,9 @@ async function main() {
       try { await cleanup() }
       catch (error) { errors.push(error) }
     }
-    if (markerChanged) { await attempt(() => fs.writeFile(markerFile, originalMarker, 'utf8')) }
-    if (cssChanged) { await attempt(() => fs.writeFile(cssFile, originalCss, 'utf8')) }
-    await attempt(async () => browser?.close())
+    semanticReporter.stop()
+    await attempt(async () => browser && awaitCaptureCleanup(browser.close(), 'Owned Web browser'))
+    await attempt(() => semanticReporter.drain())
     const ownedExpo = expo
     if (ownedExpo) {
       await attempt(() => stopOwnedProcess(ownedExpo))
@@ -248,4 +254,4 @@ async function main() {
   })
 }
 
-await runStageProducer('expo-web', () => runWithCleanup(main, () => artifactSession.publish()))
+await runStageProducer('expo-web', () => runWithCleanup(main, () => publishAfterCapture(artifactSession, semanticReporter, restoreAfterCapture)))

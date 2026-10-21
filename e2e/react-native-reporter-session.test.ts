@@ -31,7 +31,7 @@ function pair(overrides: Partial<NativePairEvidence> = {}): NativePairEvidence {
 }
 
 function receipt(input: NativePairEvidence): NativeCaseReceipt {
-  return { runtimeInstallation: input.runtimeInstallation, runId: input.runId, id: input.id, phase: input.phase, checkpoints: [], artifact: { name: 'owned.png', sha256: 'a'.repeat(64), byteLength: 1 } }
+  return { runtimeInstallation: input.runtimeInstallation, runId: input.runId, id: input.id, phase: input.phase, checkpoints: [], artifact: { name: 'owned.png', sha256: 'a'.repeat(64), byteLength: 1 }, capture: { version: 1, timeoutMs: 10_000, frames: [] } }
 }
 
 async function withReporter(action: (session: {
@@ -40,7 +40,7 @@ async function withReporter(action: (session: {
   capture: ReturnType<typeof vi.fn<(input: NativePairEvidence) => Promise<NativeCaseReceipt>>>
   complete: ReturnType<typeof vi.fn<() => Promise<void>>>
   post: (route: string, value: unknown, client?: string) => Promise<Response>
-}) => Promise<void>, publication?: () => Promise<NativePairEvidence['runtimeInstallation']['publication']>) {
+}) => Promise<void>, publication?: (signal: AbortSignal) => Promise<NativePairEvidence['runtimeInstallation']['publication']>) {
   const capture = vi.fn(async (input: NativePairEvidence) => receipt(input))
   const complete = vi.fn(async () => {})
   const reporter = createSemanticReporter({ runId: 'run', fixtureHash: 'fixture', catalogHash: 'catalog', versions: {} }, capture, { clientToken: 'owned-client', revision, platform: 'web', complete, publication })
@@ -64,6 +64,60 @@ async function withReporter(action: (session: {
 }
 
 describe('React Native 采集客户端与 revision 隔离', () => {
+  it.each(['resolve', 'reject'] as const)('最终 report 写入也归 owner 管理，迟到 %s 不能越过收尾与归档', async (outcome) => {
+    await withReporter(async ({ reporter, complete, post }) => {
+      await post('/case', pair())
+      let release!: () => void
+      let reject!: (error: Error) => void
+      let entered!: () => void
+      const writing = new Promise<void>((resolve) => {
+        entered = resolve
+      })
+      complete.mockImplementationOnce(() => new Promise<void>((resolve, fail) => {
+        release = resolve
+        reject = fail
+        entered()
+      }))
+      const posting = post('/report', { hmrMarker: 'rn-hmr-baseline', cssHmrColor: '#10b981', report: { runId: 'run', revision, platform: 'web', receipts: [receipt(pair())], runtimeInstallation: syntheticRuntimeInstallation() } })
+      const failure = new Error('late report write failed')
+      try {
+        await writing
+        reporter.stop()
+        expect(reporter.capturePending()).toBe(true)
+      }
+      finally {
+        if (outcome === 'resolve') {
+          release()
+        }
+        else { reject(failure) }
+        await posting
+      }
+      expect((await posting).status).toBe(outcome === 'resolve' ? 409 : 500)
+      if (outcome === 'resolve') {
+        await reporter.drain()
+      }
+      else { await expect(reporter.drain()).rejects.toThrow('late report write failed') }
+      expect(reporter.capturePending()).toBe(false)
+    })
+  })
+  it('收尾取消在途 publication 读取，不再授予 context 或接受新 case', async () => {
+    let entered!: () => void
+    const reading = new Promise<void>((resolve) => {
+      entered = resolve
+    })
+    await withReporter(async ({ endpoint, reporter, post }) => {
+      const context = fetch(`${endpoint}/context`, { headers })
+      await reading
+      reporter.stop()
+      expect((await context).status).toBe(409)
+      expect((await fetch(`${endpoint}/context`, { headers })).status).toBe(409)
+      expect((await post('/case', pair())).status).toBe(409)
+      expect(() => reporter.assertReady()).not.toThrow()
+    }, signal => new Promise((_resolve, reject) => {
+      signal.addEventListener('abort', () => reject(signal.reason), { once: true })
+      entered()
+    }))
+  })
   it('当前阶段的真实 publication 读取失败仍立即阻断', async () => {
     await withReporter(async ({ endpoint, reporter }) => {
       expect((await fetch(`${endpoint}/context`, { headers })).status).toBe(500)

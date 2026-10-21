@@ -1,6 +1,7 @@
 import type { ReactNativeCaseResult, ReactNativePlatform, ReactNativeReport } from './catalog'
 import { nativeBuildCases, nativeBuildFixtures, nativeFixtures, rejectedNativeCases, styleContains } from '../../examples/react-native-expo/src/compatibility/protocol'
 import { compatibilityCases, reactNativeVersions, RN_CATALOG_HASH, RN_FIXTURE_HASH } from './catalog'
+import { validateNativeFrameSequence } from './frame-contract'
 import { assertRuntimeIdentity, validateRuntimeInstallation } from './installation-evidence'
 
 function fail(message: string): never {
@@ -101,6 +102,7 @@ export function validateReactNativeReport(report: ReactNativeReport, platform: R
         || ['geometry', 'pixel', 'control'].some(kind => !receipt.checkpoints.some(checkpoint => checkpoint.name === `runtime:${phase}:${kind}` && checkpoint.passed === true))) {
         fail(`${result.id} is missing fresh native artifact receipt for ${phase}`)
       }
+      validateNativeFrameSequence(receipt)
     }
   }
   if (stage === 'runtime') {

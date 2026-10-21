@@ -5,6 +5,7 @@ import path from 'node:path'
 import { PNG } from 'pngjs'
 import { expectedFixtureStyle, nativeBuildFixtures, nativeFixtures, rejectedNativeCases } from '../../examples/react-native-expo/src/compatibility/protocol'
 import { compatibilityCases, reactNativeVersions, RN_CATALOG_HASH, RN_FIXTURE_HASH } from './catalog'
+import { syntheticFrameCapture } from './frame-fixture'
 import { runtimeIdentity } from './installation-evidence'
 import { syntheticRuntimeInstallation } from './installation-fixture'
 import { assessNativePair } from './pair-evidence'
@@ -93,10 +94,14 @@ export async function writeRuntimeFixture(artifacts: string, platform: ReactNati
       const png = PNG.sync.write(image)
       const checkpoints = assessNativePair(image, pair)
       const name = `case-${raw.revision}-${item.id}-${phase}.png`
-      const receipt = { runtimeInstallation: pair.runtimeInstallation, id: item.id, phase, runId: raw.runId, checkpoints, artifact: { name, sha256: createHash('sha256').update(png).digest('hex'), byteLength: png.length } }
+      const artifact = { name, sha256: createHash('sha256').update(png).digest('hex'), byteLength: png.length }
+      const receipt = { runtimeInstallation: pair.runtimeInstallation, id: item.id, phase, runId: raw.runId, checkpoints, artifact, capture: syntheticFrameCapture(artifact, checkpoints) }
       raw.receipts.push(receipt)
       result.checkpoints.push({ name: `runtime:${phase}:style`, passed: true, actual: JSON.stringify(expectedFixtureStyle(item.id, phase, platform)) }, ...checkpoints)
       await writeFile(path.join(artifacts, name), png)
+      for (const frame of receipt.capture.frames) {
+        await writeFile(path.join(artifacts, frame.artifact.name), png)
+      }
       await writeFile(path.join(artifacts, `${name}.json`), JSON.stringify({ pair, receipt }))
     }
     raw.results.push(result)

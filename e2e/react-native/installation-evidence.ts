@@ -5,9 +5,9 @@ import { getManifestPathsForProjectRoot } from '../../packages/react-native/src/
 import { readPublishedSnapshot } from '../../packages/react-native/src/metro/manifest-store'
 
 /** 从真实发布文件选取阶段 fence；设备内容仍须另行校验，不能由此替代。 */
-export async function readRuntimePublication(projectRoot: string) {
+export async function readRuntimePublication(projectRoot: string, signal?: AbortSignal) {
   const { manifestPath, manifestReadyPath } = getManifestPathsForProjectRoot(projectRoot)
-  const snapshot = await readPublishedSnapshot(manifestPath, manifestReadyPath)
+  const snapshot = await readPublishedSnapshot(manifestPath, manifestReadyPath, signal)
   if (!snapshot?.publication) {
     throw new Error('React Native 宿主缺少稳定发布身份')
   }

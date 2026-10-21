@@ -98,14 +98,16 @@ describe('原生宿主截图证据', () => {
       runId: pair.runId,
       artifacts: directory,
       cancelSignal: controller.signal,
-      capture: async () => {
+      capture: async (name) => {
         if (++frames === 2) {
           entered()
           await new Promise<void>((resolve) => {
             release = resolve
           })
         }
-        return file
+        const frameFile = path.join(directory, name)
+        await fs.copyFile(file, frameFile)
+        return frameFile
       },
     })
     const outcome = capturing.catch(error => error as Error)
@@ -145,9 +147,11 @@ describe('原生宿主截图证据', () => {
       }
       const file = path.join(directory, 'case-baseline-background-color-default.png')
       await fs.writeFile(file, PNG.sync.write(image))
-      await expect(captureNativePair(pair, { runId: pair.runId, artifacts: directory, capture: async () => {
+      await expect(captureNativePair(pair, { runId: pair.runId, artifacts: directory, capture: async (name) => {
         now.mockReturnValue(10_001)
-        return file
+        const frameFile = path.join(directory, name)
+        await fs.copyFile(file, frameFile)
+        return frameFile
       } })).rejects.toThrow(/two consecutive/)
       const diagnostic = JSON.parse(await fs.readFile(`${file}.capture.json`, 'utf8'))
       expect(diagnostic).toMatchObject({ status: 'failed', stage: 'assess-screenshot', consecutive: 0 })
@@ -221,7 +225,7 @@ describe('原生宿主截图证据', () => {
 
   it('宿主只接受本轮已知用例并校验回执归属', async () => {
     const pair = input()
-    const receipt = { runtimeInstallation: pair.runtimeInstallation, runId: pair.runId, id: pair.id, phase: pair.phase, checkpoints: [], artifact: { name: 'test.png', sha256: 'a'.repeat(64), byteLength: 100 } }
+    const receipt = { runtimeInstallation: pair.runtimeInstallation, runId: pair.runId, id: pair.id, phase: pair.phase, checkpoints: [], artifact: { name: 'test.png', sha256: 'a'.repeat(64), byteLength: 100 }, capture: { version: 1 as const, timeoutMs: 10_000, frames: [] } }
     const capture = vi.fn(async () => receipt)
     const reporter = createSemanticReporter({ runId: pair.runId, fixtureHash: 'fixture', catalogHash: 'catalog', versions: {} }, capture, { clientToken: 'client', revision: pair.revision, platform: 'web' })
     const headers = { 'x-rn-e2e-client': 'client' }

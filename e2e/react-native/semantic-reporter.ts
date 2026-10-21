@@ -3,6 +3,7 @@ import type { NativeCaseReceipt, NativePairEvidence, NativeRuntimeIdentity, Reac
 import { Buffer } from 'node:buffer'
 import { nativeFixtures } from '../../examples/react-native-expo/src/compatibility/protocol'
 import { createNativeCaptureBudget } from './capture-budget'
+import { awaitCaptureCleanup } from './capture-cleanup'
 import { assertRuntimeIdentity, runtimeIdentity, validateRuntimeIdentity, validateRuntimeInstallation } from './installation-evidence'
 
 interface SemanticContext { runId: string, fixtureHash: string, catalogHash: string, versions: Record<string, string> }
@@ -11,8 +12,8 @@ interface ReporterOptions<Envelope> {
   clientToken: string
   revision: string
   platform: ReactNativePlatform
-  complete?: (envelope: Envelope) => Promise<void>
-  publication?: () => Promise<NativeRuntimeIdentity['publication']>
+  complete?: (envelope: Envelope, signal: AbortSignal) => Promise<void>
+  publication?: (signal: AbortSignal) => Promise<NativeRuntimeIdentity['publication']>
 }
 
 class ProtocolRejection extends Error {
@@ -26,6 +27,8 @@ export function createSemanticReporter<Envelope extends ReportEnvelope = ReportE
   const revisions = new Set([options.revision])
   let revision = options.revision
   let pending = false
+  let stopped = false
+  const owner = new AbortController()
   let runtimeInstanceId: string | undefined
   let phaseInstallation: NativeRuntimeIdentity | undefined
   let previousPublication: string | undefined
@@ -33,6 +36,8 @@ export function createSemanticReporter<Envelope extends ReportEnvelope = ReportE
   const registeredCases = Object.values(nativeFixtures).reduce((count, fixture) => count + (fixture.phases?.length ?? 1), 0)
   let captureBudget = createNativeCaptureBudget(registeredCases)
   let previousCaptureElapsed = 0
+  let reportCompletion: Promise<void> | undefined
+  let reportFailure: { error: unknown } | undefined
 
   function assertReady() {
     if (errors.length) {
@@ -65,6 +70,9 @@ export function createSemanticReporter<Envelope extends ReportEnvelope = ReportE
   }
 
   async function accept(url: string, body: string, response: ServerResponse) {
+    if (stopped) {
+      throw new ProtocolRejection(409, 'Native evidence owner is closing')
+    }
     const payload = JSON.parse(body)
     if (url === '/report') {
       const envelope = payload as Envelope
@@ -81,12 +89,19 @@ export function createSemanticReporter<Envelope extends ReportEnvelope = ReportE
         response.writeHead(204).end()
         return
       }
-      if (pending) {
+      if (pending || captureBudget.pending()) {
         throw new ProtocolRejection(409, 'Native semantic capture is already pending')
       }
       pending = true
       try {
-        await options.complete?.(envelope)
+        const work = Promise.resolve().then(() => options.complete?.(envelope, owner.signal))
+        reportCompletion = work.then(() => {}, (error) => {
+          reportFailure = { error }
+        })
+        await work
+        if (stopped) {
+          throw new ProtocolRejection(409, 'Native evidence owner is closing')
+        }
         completed.set(revision, identity)
       }
       finally { pending = false }
@@ -106,7 +121,7 @@ export function createSemanticReporter<Envelope extends ReportEnvelope = ReportE
       throw new ProtocolRejection(409, 'Unknown native semantic case or platform')
     }
     const key = `${pair.revision}:${pair.id}:${pair.phase}`
-    if (pending || receipts.has(key)) {
+    if (pending || captureBudget.pending() || receipts.has(key)) {
       throw new ProtocolRejection(409, 'Duplicate or concurrent native semantic capture')
     }
     try {
@@ -148,11 +163,15 @@ export function createSemanticReporter<Envelope extends ReportEnvelope = ReportE
         response.writeHead(401).end('Unknown native evidence client')
         return true
       }
+      if (stopped) {
+        response.writeHead(409).end('Native evidence owner is closing')
+        return true
+      }
       if (url === '/context') {
         const requestedRevision = revision
         void (async () => {
-          const publication = phaseInstallation?.publication ?? await options.publication?.()
-          if (revision !== requestedRevision) {
+          const publication = phaseInstallation?.publication ?? await options.publication?.(owner.signal)
+          if (stopped || revision !== requestedRevision) {
             response.writeHead(409).end('Native context revision changed')
             return
           }
@@ -163,7 +182,7 @@ export function createSemanticReporter<Envelope extends ReportEnvelope = ReportE
           expectedPublication = publication
           response.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify({ ...context, revision, ...(publication ? { publication } : {}) }))
         })().catch((error) => {
-          if (revision !== requestedRevision) {
+          if (stopped || revision !== requestedRevision) {
             response.writeHead(409).end('Native context revision changed')
             return
           }
@@ -185,7 +204,7 @@ export function createSemanticReporter<Envelope extends ReportEnvelope = ReportE
       return true
     },
     setRevision(next: string) {
-      if (pending || revisions.has(next)) {
+      if (stopped || pending || captureBudget.pending() || revisions.has(next)) {
         throw new Error('Cannot replace a pending or previously used native revision')
       }
       revision = next
@@ -197,6 +216,25 @@ export function createSemanticReporter<Envelope extends ReportEnvelope = ReportE
       captureBudget = createNativeCaptureBudget(registeredCases)
     },
     captureElapsed: () => previousCaptureElapsed + captureBudget.elapsed(),
+    capturePending: () => pending || captureBudget.pending(),
+    stop() {
+      stopped = true
+      owner.abort(new Error('Native reporter owner is closing'))
+      captureBudget.stop()
+    },
+    async drain() {
+      const outcomes = await Promise.allSettled([captureBudget.drain(), awaitCaptureCleanup(reportCompletion ?? Promise.resolve(), 'Native report write')])
+      const failures = outcomes.flatMap(outcome => outcome.status === 'rejected' ? [outcome.reason] : [])
+      if (reportFailure) {
+        failures.push(reportFailure.error)
+      }
+      if (failures.length === 1) {
+        throw failures[0]
+      }
+      if (failures.length) {
+        throw new AggregateError(failures, 'Native evidence drain failed')
+      }
+    },
     assertReady,
     assertReceipts,
   }

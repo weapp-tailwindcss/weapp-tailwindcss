@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { compileNativeStylesheet } from '../src/compiler'
-import { readPublishedManifest, writeManifestFile } from '../src/metro/manifest-store'
+import { readPublishedManifest, readPublishedSnapshot, writeManifestFile } from '../src/metro/manifest-store'
 
 let root: string
 beforeEach(() => root = fs.mkdtempSync(path.join(os.tmpdir(), 'rn-store-')))
@@ -42,6 +42,30 @@ it('ready 长期缺失时失败，不能在超时后悄悄使用旧 manifest', a
   const started = Date.now()
   vi.spyOn(Date, 'now').mockReturnValueOnce(started).mockReturnValue(started + 120_001)
   await expect(readPublishedManifest(file, ready)).rejects.toThrow('等待 React Native manifest 超时')
+})
+
+it('所属读取已取消时不返回完整旧文件，ready 轮询取消后也不再排定 timer', async () => {
+  const file = path.join(root, 'manifest.json')
+  const ready = path.join(root, 'manifest.ready')
+  fs.writeFileSync(file, JSON.stringify(compileNativeStylesheet('.probe { opacity: 0.5 }')))
+  const reason = new Error('snapshot owner closed')
+  const already = new AbortController()
+  already.abort(reason)
+  await expect(readPublishedSnapshot(file, undefined, already.signal)).rejects.toBe(reason)
+  const controller = new AbortController()
+  const read = fs.promises.readFile.bind(fs.promises)
+  const started = Date.now()
+  vi.spyOn(Date, 'now').mockReturnValueOnce(started).mockReturnValueOnce(started).mockReturnValue(started + 120_001)
+  vi.spyOn(fs.promises, 'readFile').mockImplementation((async (...args: Parameters<typeof read>) => {
+    try {
+      return await read(...args)
+    }
+    catch (error) {
+      controller.abort(reason)
+      throw error
+    }
+  }) as typeof read)
+  await expect(readPublishedSnapshot(file, ready, controller.signal)).rejects.toMatchObject({ name: 'AbortError', cause: reason })
 })
 
 it('发布失败保留上一份完整文件，且释放本轮临时文件', () => {

@@ -142,6 +142,9 @@ export async function buildNativeCapabilityReport(context: RunContext, target: N
         for (const [name, kind] of [[saved.artifact.name, 'screenshot'], [`${saved.artifact.name}.json`, 'measurements']] as const) {
           record(await receipt(path.join(directory, name), context.directory, context.runId, [caseId(saved.id)], kind))
         }
+        for (const frame of saved.capture.frames) {
+          record(await receipt(path.join(directory, frame.artifact.name), context.directory, context.runId, [caseId(saved.id)], 'screenshot'))
+        }
       }
     }
     if (target.startsWith('expo-') && raw.environment.browser?.name !== target.slice('expo-'.length)) {
@@ -166,6 +169,9 @@ export async function buildNativeCapabilityReport(context: RunContext, target: N
       }
       for (const [name, kind] of [[saved.artifact.name, 'screenshot'], [`${saved.artifact.name}.json`, 'measurements']] as const) {
         record(await receipt(path.join(directory, name), context.directory, context.runId, [id], kind))
+      }
+      for (const frame of saved.capture.frames) {
+        record(await receipt(path.join(directory, frame.artifact.name), context.directory, context.runId, [id], 'screenshot'))
       }
     }
   }

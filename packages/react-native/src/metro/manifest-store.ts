@@ -24,10 +24,11 @@ export function writeManifestFile(filename: string, content: string) {
 }
 
 /** ready 前后版本一致才接受产物；失败和超时不能降级成旧 manifest。 */
-export async function readPublishedSnapshot(filename: string, readyPath: string | undefined): Promise<PublishedSnapshot | undefined> {
+export async function readPublishedSnapshot(filename: string, readyPath: string | undefined, signal?: AbortSignal): Promise<PublishedSnapshot | undefined> {
+  signal?.throwIfAborted()
   if (!readyPath) {
     try {
-      const manifestJson = await fs.promises.readFile(filename, 'utf8')
+      const manifestJson = await fs.promises.readFile(filename, { encoding: 'utf8', signal })
       return freezeSnapshot({ manifest: parseManifestSnapshot(manifestJson), manifestJson })
     }
     catch (error) {
@@ -39,11 +40,12 @@ export async function readPublishedSnapshot(filename: string, readyPath: string 
   }
   const deadline = Date.now() + 120_000
   while (Date.now() < deadline) {
+    signal?.throwIfAborted()
     try {
-      const before = await fs.promises.readFile(readyPath, 'utf8')
+      const before = await fs.promises.readFile(readyPath, { encoding: 'utf8', signal })
       const ready = JSON.parse(before) as { error?: string, virtualPath?: string, revision?: string, manifestSha256?: string }
       if (ready?.error) {
-        if (before !== await fs.promises.readFile(readyPath, 'utf8')) {
+        if (before !== await fs.promises.readFile(readyPath, { encoding: 'utf8', signal })) {
           continue
         }
         throw new Error(ready.error)
@@ -52,8 +54,8 @@ export async function readPublishedSnapshot(filename: string, readyPath: string 
         throw new Error('React Native manifest 缺少发布身份')
       }
       const publication = copyPublication({ revision: ready.revision, manifestSha256: ready.manifestSha256 })!
-      const content = await fs.promises.readFile(filename, 'utf8')
-      const after = await fs.promises.readFile(readyPath, 'utf8')
+      const content = await fs.promises.readFile(filename, { encoding: 'utf8', signal })
+      const after = await fs.promises.readFile(readyPath, { encoding: 'utf8', signal })
       if (before === after) {
         if (createHash('sha256').update(content, 'utf8').digest('hex') !== publication.manifestSha256) {
           throw new Error('React Native manifest 字节摘要不匹配')
@@ -66,7 +68,7 @@ export async function readPublishedSnapshot(filename: string, readyPath: string 
         throw error
       }
     }
-    await setTimeout(25)
+    await setTimeout(25, undefined, { signal })
   }
   throw new Error(`等待 React Native manifest 超时：${filename}`)
 }

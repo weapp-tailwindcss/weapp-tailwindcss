@@ -8,6 +8,7 @@ import { writeEncodingFixture } from './encoding-fixture'
 import { exampleRoot, readRuntimeStyleInput } from './generation-input'
 import { runtimeIdentity } from './installation-evidence'
 import { syntheticRuntimeInstallation } from './installation-fixture'
+import { nativeFrameName } from './pair-evidence'
 import { nativeEncodingArtifactNames, nativePhaseForRevision, nativeRuntimePhases } from './phase-contract'
 import { createNativePhaseIndex, nativePhaseDirectory, phaseIndexName, snapshotNativePhase } from './phase-index'
 
@@ -44,11 +45,17 @@ export async function writeNativePhaseFixture(directory: string, finalReport: Re
       const bytes = await readFile(path.join(directory, original))
       const metadata = JSON.parse(await readFile(path.join(directory, `${original}.json`), 'utf8'))
       saved.artifact.name = name
+      for (const frame of saved.capture.frames) {
+        const frameName = nativeFrameName(name, frame.index)
+        await copyFile(path.join(directory, frame.artifact.name), path.join(directory, frameName))
+        frame.artifact.name = frameName
+      }
       saved.runtimeInstallation = runtimeIdentity(report.runtimeInstallation)
       metadata.pair.revision = phase.revision
       metadata.pair.runtimeInstallation = runtimeIdentity(report.runtimeInstallation)
       metadata.receipt.runtimeInstallation = runtimeIdentity(report.runtimeInstallation)
       metadata.receipt.artifact.name = name
+      metadata.receipt.capture = structuredClone(saved.capture)
       await writeFile(path.join(directory, name), bytes)
       await writeFile(path.join(directory, `${name}.json`), JSON.stringify(metadata))
     }

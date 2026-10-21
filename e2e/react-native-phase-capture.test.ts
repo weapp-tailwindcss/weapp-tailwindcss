@@ -36,7 +36,7 @@ async function fixture() {
     const source = nativePhaseDirectory(original, phase)
     const raw = JSON.parse(await readFile(path.join(source, 'report.json'), 'utf8')) as ReactNativeReport
     for (const saved of raw.receipts) {
-      for (const name of [saved.artifact.name, `${saved.artifact.name}.json`]) {
+      for (const name of [saved.artifact.name, `${saved.artifact.name}.json`, ...saved.capture.frames.map(frame => frame.artifact.name)]) {
         await copyFile(path.join(original, name), path.join(destination, name))
       }
     }

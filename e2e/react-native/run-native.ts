@@ -29,6 +29,7 @@ import { createRuntimeArtifacts, runtimeArtifactIdentity } from './runtime-artif
 import { validateReactNativeReport } from './reports'
 import { reactNativeVersions, RN_CATALOG_HASH, RN_FIXTURE_HASH } from './catalog'
 import { captureNativePair, validateNativeArtifacts } from './pair-evidence'
+import { closeCaptureReporter, publishAfterCapture } from './capture-cleanup'
 import { createSemanticReporter } from './semantic-reporter'
 import { executeIosCommand } from './ios-command'
 import { launchIosRuntime } from './ios-runtime'
@@ -73,9 +74,10 @@ const semanticReporter = createSemanticReporter<ReportEnvelope>({ runId, catalog
   clientToken,
   revision: 'rn-hmr-baseline-10b981',
   platform,
-  publication: () => readRuntimePublication(exampleRoot),
-  complete: async (envelope) => {
-    await fs.writeFile(path.join(artifacts, 'report.json'), `${JSON.stringify(envelope.report, null, 2)}\n`, 'utf8')
+  publication: signal => readRuntimePublication(exampleRoot, signal),
+  complete: async (envelope, signal) => {
+    await fs.writeFile(path.join(artifacts, 'report.json'), `${JSON.stringify(envelope.report, null, 2)}\n`, { encoding: 'utf8', signal })
+    signal.throwIfAborted()
     reports.push(envelope)
   },
 })
@@ -95,10 +97,7 @@ function startReporter(host: string) {
       resolve(typeof address === 'object' && address ? address.port : 0)
     })
   })
-  return { ready, close: () => new Promise<void>((resolve, reject) => {
-    if (!server.listening) { resolve(); return }
-    server.close(error => error ? reject(error) : resolve())
-  }) }
+  return { ready, close: () => closeCaptureReporter(server) }
 }
 
 function startExpo(args: string[], env: NodeJS.ProcessEnv, log: Awaited<ReturnType<typeof fs.open>>) {
@@ -212,7 +211,7 @@ async function capture(name: string, device: string, cancelSignal?: AbortSignal)
   if (platform === 'android') {
     const result = await execa('adb', ['-s', device, 'exec-out', 'screencap', '-p'], { encoding: 'buffer', cancelSignal, forceKillAfterDelay: 1_000 })
     cancelSignal?.throwIfAborted()
-    await fs.writeFile(output, result.stdout)
+    await fs.writeFile(output, result.stdout, { signal: cancelSignal })
   }
   else {
     await execa('xcrun', ['simctl', 'io', device, 'screenshot', output], { cancelSignal, forceKillAfterDelay: 1_000 })
@@ -369,6 +368,8 @@ function withNativeEnvironment(report: ReactNativeReport, environment: Partial<R
   return { ...report, environment: { ...report.environment, ...environment } }
 }
 
+let restoreAfterCapture = async () => {}
+
 async function main() {
   const toolchain = platform === 'android' ? await reactNativeAndroidToolchain() : undefined
   if (updateBaseline) { await fs.mkdir(reportsDir, { recursive: true }) }
@@ -392,6 +393,15 @@ async function main() {
   let completed = false
   let markerChanged = false
   let cssChanged = false
+  restoreAfterCapture = () => runWithCleanup(async () => {
+    await runWithCleanup(async () => {
+      if (markerChanged) { await fs.writeFile(markerFile, originalMarker, 'utf8') }
+    }, async () => {
+      if (cssChanged) { await fs.writeFile(cssFile, originalCss, 'utf8') }
+    })
+  }, async () => {
+    await androidEnvironment?.restore()
+  })
   await runWithCleanup(async () => {
     const port = await reporter.ready
     const reportUrl = `http://${runtimeHost}:${port}`
@@ -495,9 +505,11 @@ async function main() {
       catch (error) { errors.push(error) }
     }
     await attempt(() => stopAndroidDialogGuard?.())
-    if (!completed && metro) { await attempt(() => captureFailureDiagnostics(device, androidEnvironment?.receipt.logcat.since)) }
-    if (markerChanged) { await attempt(() => fs.writeFile(markerFile, originalMarker, 'utf8')) }
-    if (cssChanged) { await attempt(() => fs.writeFile(cssFile, originalCss, 'utf8')) }
+    semanticReporter.stop()
+    await attempt(() => semanticReporter.drain())
+    if (!semanticReporter.capturePending()) {
+      if (!completed && metro) { await attempt(() => captureFailureDiagnostics(device, androidEnvironment?.receipt.logcat.since)) }
+    }
     await attempt(() => stopOwnedProcess(run))
     await attempt(() => run?.catch(() => undefined))
     await attempt(() => stopOwnedProcess(metro))
@@ -505,9 +517,8 @@ async function main() {
     await attempt(() => logFile?.close())
     await attempt(() => metroLogFile?.close())
     await attempt(() => reporter.close())
-    await attempt(() => androidEnvironment?.restore())
     if (errors.length) { throw new AggregateError(errors, 'React Native 运行收尾失败') }
   })
 }
 
-await runStageProducer('react-native', () => runWithCleanup(main, () => artifactSession.publish()))
+await runStageProducer('react-native', () => runWithCleanup(main, () => publishAfterCapture(artifactSession, semanticReporter, restoreAfterCapture)))
