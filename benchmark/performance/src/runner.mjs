@@ -38,6 +38,7 @@ export async function runScenario(testCase, warmups, runs) {
     complexityGroup: testCase.complexityGroup ?? testCase.group,
     size: testCase.size,
     sampleCount: samples.length,
+    samples: samples.map((milliseconds, index) => ({ milliseconds, ...memories[index], outputHash: hashes[index] })),
     coldMs,
     time: summarize(samples),
     memory: {
