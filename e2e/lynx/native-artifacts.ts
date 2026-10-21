@@ -1,6 +1,7 @@
 import type { NativePlatform } from './native-options'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { nativeDiagnosticFields } from './native-error-diagnostics'
 import { formatLynxHarnessFailure } from './native-failure'
 
 export type NativeRunStage = 'device-discovery' | 'host-preparation' | 'bundle-build' | 'bundle-staging' | 'native-build' | 'device-readiness' | 'native-run' | 'report-validation'
@@ -9,6 +10,10 @@ function commandFailure(error: unknown, seen = new Set<object>()) {
   const result: Record<string, unknown> = error instanceof Error
     ? { name: error.name, message: error.message, stack: error.stack }
     : { message: String(error) }
+  const diagnostics = nativeDiagnosticFields(error)
+  if (diagnostics) {
+    result.diagnostics = diagnostics
+  }
   if (error && typeof error === 'object') {
     if (seen.has(error)) {
       return { message: '重复引用的异常' }

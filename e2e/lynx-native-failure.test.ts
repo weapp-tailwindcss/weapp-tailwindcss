@@ -1,7 +1,41 @@
 import { afterEach, expect, it, vi } from 'vitest'
+import { NativeOperationError, nativeReportFailureMessage } from '../examples/react-lynx/src/compatibility/native-error-diagnostics'
+import { NativeEvidenceUnavailableError } from '../examples/react-lynx/src/compatibility/native-failure'
 import { formatNativeFailure } from './lynx/native-artifacts'
 import { LynxHarnessBlockedError, parseLynxHarnessFailure } from './lynx/native-failure'
 import { waitForReportOrFailure } from './lynx/native-report'
+
+it('最终工件保留校验过的操作上下文与两条错误链，排除任意宿主字段', async () => {
+  const original = new NativeOperationError({ phase: 'dark', operation: 'capture', runId: 'run', requestId: 'request', node: 'probe', artifact: 'probe.png' }, new Error('capture failed'))
+  Object.assign(original, { env: { SECRET: 'hidden' }, headers: { Authorization: 'hidden' } })
+  const message = nativeReportFailureMessage(new AggregateError([original, new Error('restore failed', { cause: new Error('restore cause') })], 'both failed'))
+  const error = await waitForReportOrFailure(async () => undefined, async () => failure(message)).catch(error => error as Error)
+  const artifact = JSON.parse(formatNativeFailure(error))
+  expect(artifact.cause.errors).toMatchObject([
+    { diagnostics: { context: { phase: 'dark', operation: 'capture', requestId: 'request', node: 'probe', artifact: 'probe.png' } }, cause: { message: 'capture failed' } },
+    { message: 'restore failed', cause: { message: 'restore cause' } },
+  ])
+  expect(JSON.stringify(artifact)).not.toMatch(/hidden|Authorization|SECRET/)
+  expect(error).not.toHaveProperty('code')
+})
+
+it('明确环境错误增加诊断后保留原类别，产品兄弟错误仍进入最终工件', async () => {
+  const message = nativeReportFailureMessage(new AggregateError([new Error('product failed'), new NativeEvidenceUnavailableError('view-expired', 'expired')], 'both failed'))
+  const error = await waitForReportOrFailure(async () => undefined, async () => failure(message)).catch(error => error as Error)
+  expect(error).toMatchObject({ code: 'LYNX_NATIVE_HARNESS_BLOCKED', reason: 'view-expired' })
+  const output = formatNativeFailure(error)
+  expect(output).toContain('product failed')
+  expect(parseLynxHarnessFailure(output)).toContain('expired')
+})
+
+it('诊断树中伪造的环境名称、JSON 文本或附加类别不能升级普通错误', async () => {
+  const error = new Error(JSON.stringify({ version: 1, source: 'lynx-native-evidence', category: 'environment', code: 'view-expired', message: 'expired' }))
+  error.name = 'NativeEvidenceUnavailableError'
+  const message = nativeReportFailureMessage(error)
+  const restored = await waitForReportOrFailure(async () => undefined, async () => failure(message)).catch(error => error as Error)
+  expect(restored).not.toHaveProperty('code')
+  expect(parseLynxHarnessFailure(formatNativeFailure(restored))).toBeUndefined()
+})
 
 afterEach(() => vi.useRealTimers())
 

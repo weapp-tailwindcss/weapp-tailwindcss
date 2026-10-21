@@ -1,5 +1,7 @@
 import type { NativeEvidenceFailureCode } from '../../examples/react-lynx/src/compatibility/native-failure'
+import { readNativeErrorDiagnostics } from '../../examples/react-lynx/src/compatibility/native-error-diagnostics'
 import { readNativeEvidenceFailure } from '../../examples/react-lynx/src/compatibility/native-failure'
+import { formatNativeErrorDiagnostics, restoreNativeError } from './native-error-diagnostics'
 
 type HarnessFailureReason = NativeEvidenceFailureCode | 'report-timeout'
 const marker = 'LYNX_NATIVE_HARNESS_FAILURE '
@@ -7,8 +9,8 @@ const marker = 'LYNX_NATIVE_HARNESS_FAILURE '
 export class LynxHarnessBlockedError extends Error {
   readonly code = 'LYNX_NATIVE_HARNESS_BLOCKED'
 
-  constructor(readonly reason: HarnessFailureReason, message: string) {
-    super(message)
+  constructor(readonly reason: HarnessFailureReason, message: string, options?: ErrorOptions) {
+    super(message, options)
     this.name = 'LynxHarnessBlockedError'
   }
 }
@@ -25,9 +27,16 @@ export function nativeFailureError(source: string): Error {
     // 旧宿主的纯文本保留为产品失败，不按关键词推断环境状态。
   }
   try {
-    const failure = readNativeEvidenceFailure(JSON.parse(message))
+    const value = JSON.parse(message)
+    const diagnostics = readNativeErrorDiagnostics(value?.diagnostics ?? value)
+    const options = diagnostics ? { cause: restoreNativeError(diagnostics.error) } : undefined
+    const detail = diagnostics ? `\n${formatNativeErrorDiagnostics(diagnostics)}` : ''
+    const failure = readNativeEvidenceFailure(value)
     if (failure) {
-      return new LynxHarnessBlockedError(failure.code, `原生兼容性取证中断：${failure.message}`)
+      return new LynxHarnessBlockedError(failure.code, `原生兼容性取证中断：${failure.message}${detail}`, options)
+    }
+    if (diagnostics) {
+      return new Error(`原生兼容性报告执行失败：${detail}`, options)
     }
   }
   catch {

@@ -45,9 +45,24 @@ export function nativeEvidenceFailureIn(error: unknown, seen = new Set<unknown>(
   }
   seen.add(error)
   if (error instanceof NativeEvidenceUnavailableError) {
-    return error.toFailure()
+    return readNativeEvidenceFailure(error.toFailure())
   }
-  for (const nested of [...(error instanceof AggregateError ? error.errors : []), error.cause]) {
+  const children: unknown[] = []
+  try {
+    if (error instanceof AggregateError && Array.isArray(error.errors)) {
+      children.push(...error.errors.slice(0, 32))
+    }
+  }
+  catch {
+    // 不可读取的分支不能隐藏其他兄弟错误中的明确环境协议。
+  }
+  try {
+    children.push(error.cause)
+  }
+  catch {
+    // 完整诊断树另行登记此分支不可读取，不能据此猜测环境类别。
+  }
+  for (const nested of children) {
     const failure = nativeEvidenceFailureIn(nested, seen)
     if (failure) {
       return failure

@@ -5,3 +5,7 @@ export const colorSchemeContract = {
   checkpoint: 'pixel:color-scheme-v2',
   frames: ['light-probe', 'light-control', 'dark-probe', 'dark-control', 'restored-probe', 'restored-control'],
 } as const
+
+export function colorSchemeArtifactNames(): string[] {
+  return colorSchemeContract.frames.map(frame => `variant-dark-${frame}.png`)
+}

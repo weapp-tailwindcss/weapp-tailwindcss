@@ -7,8 +7,9 @@ import { compatibilityCases } from './catalog'
 import { evidenceSequence, lynxEvidenceStrategy, requiresPixelEffect } from './evidence'
 import { evaluateGeometry } from './geometry'
 import { collectColorScheme } from './native-color-scheme'
+import { nativeReportFailureMessage } from './native-error-diagnostics'
 import { createNativeEvidence } from './native-evidence'
-import { requestNativeReceipt as callReporter, nativeEvidenceFailureIn, NativeEvidenceUnavailableError } from './native-failure'
+import { requestNativeReceipt as callReporter, NativeEvidenceUnavailableError } from './native-failure'
 import { collectResponsive } from './native-responsive'
 import { collectThemeOverrides } from './native-theme-overrides'
 import { overflowContract } from './overflow-contract'
@@ -344,9 +345,7 @@ export async function submitNativeCompatibilityReport() {
     await evidence.submit(report)
   }
   catch (error) {
-    const failure = nativeEvidenceFailureIn(error)
-    const detail = error instanceof Error ? `${error.name}: ${error.message}${error.stack ? `\n${error.stack}` : ''}` : String(error)
-    const message = failure ? JSON.stringify(failure) : detail
+    const message = nativeReportFailureMessage(error)
     if (runId && reporter.fail) {
       await callReporter<boolean>(callback => reporter.fail!(runId!, message, callback), 3000).catch(() => undefined)
     }

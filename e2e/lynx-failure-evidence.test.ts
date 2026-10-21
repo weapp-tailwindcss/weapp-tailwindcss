@@ -10,6 +10,14 @@ import { themeOverrideArtifactNames } from '../examples/react-lynx/src/compatibi
 import { withNativeFailureEvidence } from './lynx/failure-evidence'
 import { androidFailureReaders, iosFailureReaders } from './lynx/failure-evidence-readers'
 
+const colorFrames = [
+  'variant-dark-light-probe.png',
+  'variant-dark-light-control.png',
+  'variant-dark-dark-probe.png',
+  'variant-dark-dark-control.png',
+  'variant-dark-restored-probe.png',
+  'variant-dark-restored-control.png',
+]
 const directories: string[] = []
 const context = { version: 1 as const, runId: '00000000-0000-4000-8000-000000000001', bundleSha256: 'a'.repeat(64) }
 const originalMessage = 'Lynx media gate geometry violates contract: hover-none'
@@ -37,7 +45,7 @@ async function fixture() {
 
 it('真实失败子进程之后仍导出当前 run 的媒体与主题 PNG、原生侧车和原始失败消息，继续拒绝报告', async () => {
   const current = await fixture()
-  const files = [...mediaGateArtifactNames(), ...themeOverrideArtifactNames()].map((name, index) => [name, Buffer.from([0, 255, 128, index, 13, 10]).toString('base64')])
+  const files = [...mediaGateArtifactNames(), ...themeOverrideArtifactNames(), ...colorFrames].map((name, index) => [name, Buffer.from([0, 255, 128, index, 13, 10]).toString('base64')])
   const payload = JSON.stringify(files)
   const script = 'const fs = require("node:fs"); const path = require("node:path"); const [root,payload,message] = process.argv.slice(1); fs.mkdirSync(path.join(root,"artifacts"),{recursive:true}); for(const [name,data] of JSON.parse(payload)) fs.writeFileSync(path.join(root,"artifacts",name),Buffer.from(data,"base64")); fs.writeFileSync(path.join(root,"failure.json"),JSON.stringify({message})); console.error(message); process.exitCode=7'
   let failure: unknown
@@ -56,11 +64,11 @@ it('真实失败子进程之后仍导出当前 run 的媒体与主题 PNG、原�
     expect(await fs.readFile(path.join(current.output, 'artifacts', name!))).toEqual(Buffer.from(encoded!, 'base64'))
   }
   expect(JSON.parse(await fs.readFile(path.join(current.output, 'failure.json'), 'utf8'))).toEqual({ message: originalMessage })
-  expect(current.read.artifact.mock.calls.map(([name]) => name).sort()).toEqual([...mediaGateArtifactNames(), ...themeOverrideArtifactNames()].sort())
+  expect(current.read.artifact.mock.calls.map(([name]) => name).sort()).toEqual([...mediaGateArtifactNames(), ...themeOverrideArtifactNames(), ...colorFrames].sort())
   expect(await fs.readdir(current.artifactDir)).toEqual(['native-failure'])
   const collection = JSON.parse(await fs.readFile(path.join(current.output, 'collection.json'), 'utf8'))
   expect(collection).toMatchObject({ source: 'lynx-native-failure-diagnostics', acceptance: 'diagnostic-only', context })
-  expect(collection.files).toHaveLength(35)
+  expect(collection.files).toHaveLength(41)
   expect(collection.files.every((file: { status: string }) => file.status === 'copied')).toBe(true)
 })
 
@@ -149,7 +157,7 @@ it('Android 只有准确 ENOENT 记为缺失，设备和读取失败继续抛错
 it.each(['ios', 'android'] as const)('%s 真实 reader 导出全部已登记主题诊断，不用次级白名单错误替换启动失败', async (platform) => {
   const current = await fixture()
   const directory = path.join(current.root, 'Library', 'Application Support', 'lynx-compat', context.runId)
-  const names = [...mediaGateArtifactNames(), ...themeOverrideArtifactNames()]
+  const names = [...mediaGateArtifactNames(), ...themeOverrideArtifactNames(), ...colorFrames]
   await fs.mkdir(path.join(directory, 'artifacts'), { recursive: true })
   const bytes = new Map(names.map(name => [name, Buffer.from(`原始诊断\0${name}`)]))
   for (const [name, content] of bytes) {
@@ -176,13 +184,13 @@ it.each(['ios', 'android'] as const)('%s 真实 reader 导出全部已登记主�
     throw failure
   })).rejects.toBe(failure)
   const collection = JSON.parse(await fs.readFile(path.join(current.output, 'collection.json'), 'utf8'))
-  expect(collection.files).toHaveLength(35)
+  expect(collection.files).toHaveLength(41)
   expect(collection.files.every((file: { status: string }) => file.status === 'copied')).toBe(true)
   for (const [name, content] of bytes) {
     expect(await fs.readFile(path.join(current.output, 'artifacts', name))).toEqual(content)
   }
   const calls = execute.mock.calls.length
-  for (const name of ['../failure.json', '..\\failure.json', '/report.json', 'C:\\report.json', '\\\\server\\share\\report.json', 'report.json', `${names[0]}.bak`, 'theme-unknown-before-geometry.json']) {
+  for (const name of ['../failure.json', '..\\failure.json', '/report.json', 'C:\\report.json', '\\\\server\\share\\report.json', 'report.json', `${names[0]}.bak`, 'theme-unknown-before-geometry.json', 'variant-dark-unknown-probe.png', 'variant-dark-light-probe.png.bak']) {
     expect(() => read.artifact(name)).toThrow('白名单')
   }
   expect(execute).toHaveBeenCalledTimes(calls)
@@ -199,7 +207,7 @@ it.each(['ios', 'android'] as const)('%s 启动前没有主题文件时如实登
     throw failure
   })).rejects.toBe(failure)
   const collection = JSON.parse(await fs.readFile(path.join(current.output, 'collection.json'), 'utf8'))
-  expect(collection.files).toHaveLength(35)
+  expect(collection.files).toHaveLength(41)
   expect(collection.files.every((file: { status: string }) => file.status === 'missing')).toBe(true)
   expect(await fs.readdir(path.join(current.output, 'artifacts'))).toEqual([])
 })

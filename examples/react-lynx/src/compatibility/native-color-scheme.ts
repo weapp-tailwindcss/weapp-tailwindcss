@@ -2,6 +2,7 @@ import type { NativeEvidenceWriter } from './native-evidence'
 import type { NativeBridgeResult } from './native-failure'
 import type { NativeCaseResult, NativeColorSchemeReceipt } from './types'
 import { colorSchemeContract } from './color-scheme-contract'
+import { NativeOperationError } from './native-error-diagnostics'
 import { NativeEvidenceUnavailableError, requestNativeReceipt } from './native-failure'
 
 export interface ColorSchemeModule {
@@ -31,18 +32,37 @@ export async function collectColorScheme(reporter: ColorSchemeModule, evidence: 
   collecting.add(reporter)
   const receipts = {} as NonNullable<NativeCaseResult['colorScheme']>
   const errors: unknown[] = []
-  const switchScheme = async (scheme: 'light' | 'dark') => {
+  const switchScheme = async (scheme: 'light' | 'dark', phase: 'light' | 'dark' | 'restored' = scheme) => {
     const requestId = `color-scheme-${++sequence}`
-    const receipt = await request<NativeColorSchemeReceipt>(callback => reporter.setColorScheme!(evidence.runId, requestId, scheme, callback))
-    if (receipt.runId !== evidence.runId || receipt.requestId !== requestId || receipt.scheme !== scheme) {
-      throw new Error('原生颜色模式回执身份不符')
+    try {
+      const receipt = await request<NativeColorSchemeReceipt>(callback => reporter.setColorScheme!(evidence.runId, requestId, scheme, callback))
+      if (receipt.runId !== evidence.runId || receipt.requestId !== requestId || receipt.scheme !== scheme) {
+        throw new Error('原生颜色模式回执身份不符')
+      }
+      return receipt
     }
-    return receipt
+    catch (error) {
+      throw new NativeOperationError({ phase, operation: 'switch', runId: evidence.runId, requestId }, error)
+    }
   }
   const capture = async (phase: 'light' | 'dark' | 'restored', receipt: NativeColorSchemeReceipt) => {
     for (const frame of ['probe', 'control']) {
-      const data = await request<string>(callback => reporter.captureColorScheme!(evidence.runId, receipt.requestId, `${frame}-container-variant-dark`, callback))
-      await evidence.save(`variant-dark-${phase}-${frame}.png`, data)
+      const node = `${frame}-container-variant-dark`
+      const artifact = `variant-dark-${phase}-${frame}.png`
+      const context = { phase, runId: evidence.runId, requestId: receipt.requestId, node, artifact }
+      let data: string
+      try {
+        data = await request<string>(callback => reporter.captureColorScheme!(evidence.runId, receipt.requestId, node, callback))
+      }
+      catch (error) {
+        throw new NativeOperationError({ ...context, operation: 'capture' }, error)
+      }
+      try {
+        await evidence.save(artifact, data)
+      }
+      catch (error) {
+        throw new NativeOperationError({ ...context, operation: 'save' }, error)
+      }
     }
   }
   try {
@@ -56,7 +76,7 @@ export async function collectColorScheme(reporter: ColorSchemeModule, evidence: 
   }
   finally {
     try {
-      receipts.restored = await switchScheme('light')
+      receipts.restored = await switchScheme('light', 'restored')
       if (errors.length === 0) {
         await capture('restored', receipts.restored)
       }

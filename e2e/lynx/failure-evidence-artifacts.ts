@@ -1,3 +1,4 @@
+import { colorSchemeArtifactNames } from '../../examples/react-lynx/src/compatibility/color-scheme-contract'
 import { mediaGateArtifactNames } from '../../examples/react-lynx/src/compatibility/media-gate-contract'
 import { themeOverrideArtifactNames } from '../../examples/react-lynx/src/compatibility/theme-overrides-contract'
 
@@ -5,4 +6,5 @@ import { themeOverrideArtifactNames } from '../../examples/react-lynx/src/compat
 export const nativeFailureArtifactNames: readonly string[] = Object.freeze([
   ...mediaGateArtifactNames(),
   ...themeOverrideArtifactNames(),
+  ...colorSchemeArtifactNames(),
 ])
