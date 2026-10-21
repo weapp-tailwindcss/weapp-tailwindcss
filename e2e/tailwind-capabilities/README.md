@@ -73,3 +73,5 @@ Lynx 宿主的桥接缺失、视图失效及回执超时使用白名单结构化
 根因及验收边界见 [验证记录](../../docs/engineering/lessons/tailwind-capability-evidence.md)。该记录保留未完成范围，实际支持结果以本轮逐例报告为准。
 
 本轮仅覆盖仓库维护的扩展与配置场景，第三方插件的任意实现必须另行登记。
+
+Chromium 另有 `native-media-contrast-less` 原生 CDP 夹具，检查 no-preference、less、more、custom 与恢复；使用独立 CSS 参考、未加 class 的对照和绑定 run/phase 的 PNG 像素。统一门禁复读 sidecar、CSS、PNG 后重算。Chromium 为 83/88 个 root 提供夹具，Firefox/WebKit 仍为 82/88；夹具存在不等于本轮运行通过。

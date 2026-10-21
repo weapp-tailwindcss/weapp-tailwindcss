@@ -56,7 +56,7 @@ describe('受控 variant 的触发与恢复', () => {
     const inventory = await loadInventory()
     const registered = new Set(inventory.variants.map(item => item.id))
     const ds = await loadDefaultDesignSystem()
-    const coverage = webRuntimeCoverage(inventory)
+    const coverage = webRuntimeCoverage(inventory, 'firefox')
     for (const probe of variantWebProbes) {
       expect(ds.candidatesToCss([probe.candidate])[0], probe.id).toBeTruthy()
       for (const feature of probe.features.filter(item => item.startsWith('variant/'))) {

@@ -24,7 +24,7 @@ export async function runWeb(context: RunContext, engine: BrowserEngine, borrowe
     throw new Error('Web 运行时过滤条件没有匹配任何语义夹具')
   }
   const contracts = probes.map(webContract)
-  const coverage = webRuntimeCoverage(await loadInventory())
+  const coverage = webRuntimeCoverage(await loadInventory(), engine)
   const report = await newReport(context, `web-${engine}`, contracts, { probes, css: webFixtureCss, coverage }, { engine, browserVersion: 'not-started', mode: 'independent-computed-style-state-and-pixels', fixtureDefinedFeatures: coverage.filter(item => item.status === 'fixture-defined').length, featuresWithoutRuntimeFixture: coverage.filter(item => item.status === 'not-run').length })
   await writeFile(path.join(context.directory, 'runtime-coverage.json'), `${JSON.stringify(coverage, null, 2)}\n`)
   if (contracts.length) {

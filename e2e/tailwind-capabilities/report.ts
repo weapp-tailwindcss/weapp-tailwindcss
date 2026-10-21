@@ -158,6 +158,10 @@ export async function verifyReportArtifacts(report: CapabilityReport, root: stri
       fail(`产物摘要不匹配：${item.path}`)
     }
   }
+  if (report.results.some(result => result.id === 'runtime/native-media-contrast-less')) {
+    const { verifyNativeMediaReport } = await import('./web-native-media/replay')
+    await verifyNativeMediaReport(report, root)
+  }
 }
 
 export async function writeCapabilityReport(file: string, report: CapabilityReport) {

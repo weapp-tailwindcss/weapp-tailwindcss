@@ -1,7 +1,7 @@
 import { beforeEach, expect, it, vi } from 'vitest'
 import { runWebSuite } from './tailwind-capabilities/web-suite'
 
-const mocks = vi.hoisted(() => ({ launch: vi.fn(), close: vi.fn(), web: vi.fn(), registry: vi.fn(), authoring: vi.fn(), hmr: vi.fn(), context: vi.fn(), framework: vi.fn(), lifecycle: vi.fn() }))
+const mocks = vi.hoisted(() => ({ launch: vi.fn(), close: vi.fn(), web: vi.fn(), registry: vi.fn(), authoring: vi.fn(), hmr: vi.fn(), context: vi.fn(), framework: vi.fn(), lifecycle: vi.fn(), nativeMedia: vi.fn() }))
 vi.mock('playwright', () => ({ chromium: { launch: mocks.launch }, firefox: { launch: mocks.launch }, webkit: { launch: mocks.launch } }))
 vi.mock('./tailwind-capabilities/inventory', () => ({ loadInventory: async () => ({ utilities: [{ id: 'utility/static/flex' }] }) }))
 vi.mock('./tailwind-capabilities/web', () => ({ runWeb: mocks.web, webProbes: [{ id: 'color' }] }))
@@ -11,12 +11,13 @@ vi.mock('./tailwind-capabilities/hmr', () => ({ runHmr: mocks.hmr }))
 vi.mock('./tailwind-capabilities/web-context/run', () => ({ runContextWeb: mocks.context }))
 vi.mock('./tailwind-capabilities/framework-source', () => ({ runFrameworkSource: mocks.framework, frameworkSourceProfiles: [{ id: 'framework/react/conditional' }] }))
 vi.mock('./tailwind-capabilities/web-lifecycle/run', () => ({ runLifecycleWeb: mocks.lifecycle }))
+vi.mock('./tailwind-capabilities/web-native-media/run', () => ({ runNativeMediaWeb: mocks.nativeMedia }))
 const context = { root: 'unit', directory: 'unit', runId: 'unit-browser-lifecycle' }
 
 beforeEach(() => {
   vi.resetAllMocks()
   mocks.launch.mockResolvedValue({ close: mocks.close })
-  for (const runner of [mocks.web, mocks.registry, mocks.authoring, mocks.hmr, mocks.context, mocks.framework, mocks.lifecycle]) {
+  for (const runner of [mocks.web, mocks.registry, mocks.authoring, mocks.hmr, mocks.context, mocks.framework, mocks.lifecycle, mocks.nativeMedia]) {
     // 合成协议数据只用于资源生命周期回归，不作为真实浏览器能力证据。
     runner.mockResolvedValue({ results: [{ status: 'passed' }] })
   }
@@ -33,6 +34,7 @@ it('一个引擎只创建一个后台实例，所有分组借用同一实例并�
   expect(mocks.context).toHaveBeenCalledExactlyOnceWith(context, 'firefox', browser)
   expect(mocks.framework).toHaveBeenCalledExactlyOnceWith(context, 'firefox', browser)
   expect(mocks.lifecycle).toHaveBeenCalledExactlyOnceWith(context, 'firefox', browser)
+  expect(mocks.nativeMedia).not.toHaveBeenCalled()
   expect(mocks.close).toHaveBeenCalledTimes(1)
 })
 
@@ -41,7 +43,7 @@ it('子 runner 抛错后仍收集后续独立分组并关闭本任务实例', as
   await expect(runWebSuite(context, 'chromium')).rejects.toThrow('registry failed')
   expect(mocks.launch).toHaveBeenCalledTimes(1)
   expect(mocks.close).toHaveBeenCalledTimes(1)
-  for (const runner of [mocks.authoring, mocks.hmr, mocks.context, mocks.framework, mocks.lifecycle]) {
+  for (const runner of [mocks.authoring, mocks.hmr, mocks.context, mocks.framework, mocks.lifecycle, mocks.nativeMedia]) {
     expect(runner).toHaveBeenCalledTimes(1)
   }
 })
@@ -83,7 +85,7 @@ it.each([['authoring', /^authoring\//], ['lifecycle', /^runtime\/lifecycle-/]] a
   await runWebSuite({ ...context, caseFilter }, 'chromium')
   const selected = mocks[group]
   expect(selected).toHaveBeenCalledTimes(1)
-  for (const runner of [mocks.web, mocks.registry, mocks.authoring, mocks.hmr, mocks.context, mocks.framework, mocks.lifecycle].filter(runner => runner !== selected)) {
+  for (const runner of [mocks.web, mocks.registry, mocks.authoring, mocks.hmr, mocks.context, mocks.framework, mocks.lifecycle, mocks.nativeMedia].filter(runner => runner !== selected)) {
     expect(runner).not.toHaveBeenCalled()
   }
   expect(mocks.close).toHaveBeenCalledTimes(1)
@@ -94,7 +96,20 @@ it('浏览器启动失败时不能执行分组或创建替代实例', async () =
   await expect(runWebSuite(context, 'webkit')).rejects.toThrow('browser unavailable')
   expect(mocks.launch).toHaveBeenCalledTimes(1)
   expect(mocks.close).not.toHaveBeenCalled()
-  for (const runner of [mocks.web, mocks.registry, mocks.authoring, mocks.hmr, mocks.context, mocks.framework, mocks.lifecycle]) {
+  for (const runner of [mocks.web, mocks.registry, mocks.authoring, mocks.hmr, mocks.context, mocks.framework, mocks.lifecycle, mocks.nativeMedia]) {
     expect(runner).not.toHaveBeenCalled()
   }
+})
+
+it('Chromium 原生媒体单独过滤，其他引擎不得创建浏览器或伪造空成功', async () => {
+  const selected = { ...context, caseFilter: /^runtime\/native-media-/ }
+  await runWebSuite(selected, 'chromium')
+  expect(mocks.nativeMedia).toHaveBeenCalledTimes(1)
+  expect(mocks.close).toHaveBeenCalledTimes(1)
+  vi.clearAllMocks()
+  for (const engine of ['firefox', 'webkit'] as const) {
+    await expect(runWebSuite(selected, engine)).rejects.toThrow(/没有匹配/)
+  }
+  expect(mocks.launch).not.toHaveBeenCalled()
+  expect(mocks.nativeMedia).not.toHaveBeenCalled()
 })

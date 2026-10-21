@@ -1,6 +1,6 @@
 # Web variant 受控夹具
 
-这里维护独立声明的 DOM、状态动作和 computed style 预期。受控场景与原有夹具合计覆盖 82 个 Tailwind 4.3.3 variant root；其余 6 个 root 在覆盖矩阵中保留 `not-run`，限制逐项记录在 `gaps.ts`，具体补齐方案见 `../../web-context/remaining-variants.ts`。`fixture-defined` 只表示夹具存在，实际通过以本轮浏览器报告为准。
+这里维护独立声明的 DOM、状态动作和 computed style 预期。受控场景与原有夹具在 Firefox/WebKit 合计覆盖 82 个 Tailwind 4.3.3 variant root；这两个引擎的其余 6 个 root 在覆盖矩阵中保留 `not-run`，限制逐项记录在 `gaps.ts`，具体补齐方案见 `../../web-context/remaining-variants.ts`。`fixture-defined` 只表示夹具存在，实际通过以本轮浏览器报告为准。
 
 | 文件 | 场景 | 实际动作 |
 | --- | --- | --- |
@@ -17,3 +17,5 @@
 `e2e/tailwind-web-variants.test.ts` 固定剩余 `not-run` 清单，并拒绝不触发、无条件生效、部分条件提前生效、缺失中间观测和未恢复的报告。这些协议单测不启动浏览器。真实验证由统一入口运行，并为每个浏览器生成本轮截图和测量产物。
 
 调整夹具后，在仓库根目录执行 `pnpm e2e:tailwind:static:update`，审查基线，再以 `CI=1` 和 `--update=none` 运行定向回归；本地浏览器调度须消费本轮扩展预检。
+
+Chromium 另有 `native-media-contrast-less` 原生 CDP 夹具，检查 no-preference、less、more、custom 与恢复；使用独立 CSS 参考、未加 class 的对照和绑定 run/phase 的 PNG 像素。统一门禁复读 sidecar、CSS、PNG 后重算。Chromium 为 83/88 个 root 提供夹具，Firefox/WebKit 仍为 82/88；夹具存在不等于本轮运行通过。

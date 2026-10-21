@@ -2,6 +2,7 @@ export interface RemainingVariantPlan {
   root: string
   feature: `variant/static/${string}`
   status: 'not-run'
+  engines?: readonly ('firefox' | 'webkit')[]
   dependency: 'native-media' | 'native-autofill' | 'history-pixels' | 'render-lifecycle' | 'pseudo-element'
   reason: string
   candidate: string
@@ -42,15 +43,16 @@ export const remainingVariantPlans: RemainingVariantPlan[] = [
   },
   {
     root: 'contrast-less',
+    engines: ['firefox', 'webkit'],
     feature: 'variant/static/contrast-less',
     status: 'not-run',
     dependency: 'native-media',
-    reason: 'Playwright 1.64.1 的原生 contrast 选项只有 more/no-preference，不能请求 prefers-contrast:less。',
+    reason: 'Firefox/WebKit 的原生 contrast 选项不能请求 less；Chromium 已单独提供 CDP 夹具，仍需各轮运行证据。',
     candidate: 'contrast-less:bg-[#123456]',
     fixture: '候选和对照使用不依赖系统调色的实色色块。',
     sequence: ['no-preference：底色 #010203', 'less：候选 #123456，对照 #010203', '恢复 no-preference：底色 #010203'],
     evidence: ['(prefers-contrast: less/more/no-preference/custom) 的原生 matchMedia 真值', '候选与对照 computed style、PNG 和像素', '媒体原生协议或任务独占宿主偏好的切换及恢复记录'],
-    implementation: '可先探索 Chromium 原生 Emulation.setEmulatedMedia 的该特征；协议成功返回仍须检查原生 matchMedia 和实际绘制。其他引擎保留独立 not-run，直到取得等价宿主入口。',
+    implementation: 'Chromium 独立夹具使用原生 Emulation.setEmulatedMedia，验证 no-preference/less/more/custom/恢复、独立参考和带本轮标记 PNG。Firefox/WebKit 保留 not-run，直到取得等价原生宿主入口。',
     forbiddenSubstitutes: ['contrast:more', 'forced-colors', 'CSS filter:contrast()', '改写生成 CSS 媒体条件', '覆盖 matchMedia'],
   },
   {

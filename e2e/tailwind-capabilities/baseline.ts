@@ -9,6 +9,7 @@ import { registryStaticFixture } from './registry-web/static'
 import { weappProbes } from './weapp/fixtures'
 import { contextWebCandidates, contextWebFixtureCss, contextWebProbes } from './web-context/fixtures'
 import { lifecycleWebCandidates, lifecycleWebFixtureCss, lifecycleWebProbes } from './web-lifecycle/fixtures'
+import { nativeMediaCss, nativeMediaProbe, nativeMediaReference, nativeMediaStates, renderNativeMedia } from './web-native-media/fixtures'
 import { webFixtureCss, webProbes } from './web/probes'
 
 export async function fixtureOutputs(root: string) {
@@ -17,6 +18,7 @@ export async function fixtureOutputs(root: string) {
   const context = await withGeneratorFixture(root, contextWebFixtureCss, {}, generator => generator.generate({ target: 'web', candidates: contextWebCandidates, scanSources: false }))
   const lifecycle = await withGeneratorFixture(root, lifecycleWebFixtureCss, {}, generator => generator.generate({ target: 'web', candidates: lifecycleWebCandidates, scanSources: false }))
   const registry = await registryStaticFixture(root)
+  const nativeMedia = await withGeneratorFixture(root, nativeMediaCss, {}, generator => generator.generate({ target: 'web', candidates: [nativeMediaProbe.candidate], scanSources: false }))
   const frameworkFixtures = sourceFrameworks.flatMap(framework => sourceRevisions.map(revision => ({ framework, revision, css: frameworkSourceCss(framework), files: { [`Probe.${framework === 'react' ? 'tsx' : 'vue'}`]: frameworkSource(framework, revision, 'static-baseline') } })))
   const frameworkFiles = Object.fromEntries<string>(await Promise.all(frameworkFixtures.map(async (fixture) => {
     const output = await withGeneratorFixture(root, fixture.css, fixture.files, generator => generator.generate({ target: 'web', candidates: [], scanSources: true }))
@@ -34,7 +36,7 @@ export async function fixtureOutputs(root: string) {
     const output = await withGeneratorFixture(root, fixture.css, fixture.files, generator => generator.generate({ target: 'web', candidates: fixture.candidates, scanSources: true }))
     return [`authoring-${fixture.id}.css`, output.css] as const
   })))
-  return { fixtureHash: digest({ webFixtureCss, webProbes, weappProbes, contextWebFixtureCss, contextWebProbes, lifecycleWebFixtureCss, lifecycleWebProbes, hmrCss, hmrStates, authoring, frameworkFixtures, registry: registry.identity }), files: { 'web.css': web.css, 'weapp.wxss': weapp.css, 'context.css': context.css, 'lifecycle.css': lifecycle.css, 'registry.css': registry.css, ...hmr, ...authoringFiles, ...frameworkFiles } }
+  return { fixtureHash: digest({ nativeMedia: { nativeMediaCss, nativeMediaProbe, nativeMediaReference, nativeMediaStates, html: renderNativeMedia('GENERATED_CSS', 'RUN_ID') }, webFixtureCss, webProbes, weappProbes, contextWebFixtureCss, contextWebProbes, lifecycleWebFixtureCss, lifecycleWebProbes, hmrCss, hmrStates, authoring, frameworkFixtures, registry: registry.identity }), files: { 'web.css': web.css, 'weapp.wxss': weapp.css, 'context.css': context.css, 'lifecycle.css': lifecycle.css, 'registry.css': registry.css, 'native-media.css': nativeMedia.css, ...hmr, ...authoringFiles, ...frameworkFiles } }
 }
 
 export async function fixtureBaseline(root: string, update = false) {
