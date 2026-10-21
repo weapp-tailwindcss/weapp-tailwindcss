@@ -47,6 +47,10 @@ export function validateReactNativeReport(report: ReactNativeReport, platform: R
   if (report.results.length !== compatibilityCases.length) {
     fail('report must contain every catalog case exactly once')
   }
+  const failure = report.results.find(result => result.status === 'failed')
+  if (failure) {
+    fail(`${failure.id} changed from expected support to failed: ${failure.reason ?? '缺少原始失败原因'}`)
+  }
   const ids = new Set<string>()
   for (const result of report.results) {
     const item = compatibilityCases.find(item => item.id === result.id)

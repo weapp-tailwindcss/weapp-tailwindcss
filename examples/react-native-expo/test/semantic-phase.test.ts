@@ -6,6 +6,7 @@ import { setManifest } from '@weapp-tailwindcss/react-native/runtime'
 import { act, createElement } from 'react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { SemanticRun } from '../src/compatibility/SemanticRun'
+import { nativeImageFixture } from '../src/compatibility/image-fixture'
 
 const imageLoads = vi.hoisted(() => [] as Array<{ onLoad: (event: unknown) => void, onError: (event: unknown) => void }>)
 const { createRoot } = createRequire(import.meta.url)('react-dom/client') as {
@@ -13,14 +14,18 @@ const { createRoot } = createRequire(import.meta.url)('react-dom/client') as {
 }
 
 vi.mock('react-native', async () => {
-  const { createElement, forwardRef, useEffect, useImperativeHandle } = await import('react')
+  const { createElement, forwardRef, useEffect, useImperativeHandle, useMemo } = await import('react')
   const flatten = (style: unknown): Record<string, unknown> => Object.assign({}, ...[style].flat(Infinity).filter(Boolean))
   const View = forwardRef(({ style, testID, children }: { style?: unknown, testID?: string, children?: ReactNode }, ref) => {
     useImperativeHandle(ref, () => ({ measureInWindow: (callback: (...rect: number[]) => void) => callback(0, 0, 80, 40) }))
     return createElement('div', { 'style': flatten(style), 'data-testid': testID }, children)
   })
   const Image = forwardRef(({ onLoad, onError }: { onLoad: (event: unknown) => void, onError: (event: unknown) => void }, ref) => {
-    useImperativeHandle(ref, () => ({ measureInWindow: (callback: (...rect: number[]) => void) => callback(0, 0, 44, 44) }))
+    const host = useMemo(() => {
+      const image = { tagName: 'IMG', isConnected: true, complete: true, naturalWidth: 16, naturalHeight: 8, currentSrc: nativeImageFixture.uri, src: nativeImageFixture.uri, decode: async () => {} }
+      return { isConnected: true, querySelectorAll: () => [image], measureInWindow: (callback: (...rect: number[]) => void) => callback(0, 0, 44, 44) }
+    }, [])
+    useImperativeHandle(ref, () => host, [host])
     useEffect(() => { imageLoads.push({ onLoad, onError }) }, [onLoad, onError])
     return createElement('img')
   })
@@ -73,13 +78,38 @@ it('Image 三侧真实加载前不采集；就绪后提交独立 phase，不以 
   await act(async () => vi.advanceTimersByTimeAsync(350))
   expect(pairs).toHaveLength(1)
   expect(complete).not.toHaveBeenCalled()
-  for (const callback of imageLoads) callback.onLoad({ nativeEvent: { target: { naturalWidth: 16, naturalHeight: 8, currentSrc: 'observed-decoded-uri' } } })
+  for (const callback of imageLoads) callback.onLoad({ nativeEvent: { type: 'load', isTrusted: true, target: null } })
   await act(async () => vi.advanceTimersByTimeAsync(350))
   expect(pairs.map(pair => pair.phase)).toEqual(['default', 'image'])
   expect(pairs[1]!.image?.loads).toHaveLength(3)
-  expect(pairs[1]!.image?.loads.every(load => load.uri === 'observed-decoded-uri' && load.revision === 'next-phase')).toBe(true)
+  expect(pairs[1]!.image?.loads.every(load => load.uri === nativeImageFixture.uri && load.revision === 'next-phase')).toBe(true)
   expect(imageLoads).toHaveLength(3)
   expect(complete).toHaveBeenCalledOnce()
+})
+
+it('后置 Image 失败保留前序案例和同例 default 的已完成证据，后序案例仍未执行', async () => {
+  const complete = vi.fn()
+  setManifest({ version: 1, classSet: ['phase-color', 'phase-size'], variables: {}, warnings: [], rules: { 'phase-color': [{ style: { backgroundColor: '#123456' } }], 'phase-size': [{ style: { width: 44, height: 44 } }] } }, nextPublication)
+  vi.stubGlobal('fetch', vi.fn(async (url: string, options?: RequestInit) => {
+    if (url.endsWith('/context')) return { ok: true, json: async () => context }
+    if (url.endsWith('/error')) return { ok: true }
+    const pair = JSON.parse(String(options?.body)) as NativePairEvidence
+    return { ok: true, json: async () => ({ ...pair, checkpoints: ['geometry', 'pixel', 'control'].map(kind => ({ name: `runtime:${pair.phase}:${kind}`, passed: true })), artifact: { name: 'owned.png', sha256: 'c'.repeat(64), byteLength: 1 } }) }
+  }))
+  const cases = [{ id: 'background-color', className: 'phase-color' }, { id: 'sizing-size', className: 'phase-size' }, { id: 'border-radius', className: 'phase-radius' }]
+  const input = { ...evidence, cases, report: { ...evidence.report, results: cases.map(item => ({ ...evidence.report.results[0]!, id: item.id, status: 'unverified' })) } }
+  await act(async () => root.render(createElement(SemanticRun, { evidence: input, revision: 'next-phase', onComplete: complete })))
+  await act(async () => vi.advanceTimersByTimeAsync(350))
+  await act(async () => vi.advanceTimersByTimeAsync(350))
+  expect(imageLoads).toHaveLength(3)
+  await act(async () => imageLoads[0]!.onError({ nativeEvent: { error: 'owned-image-decode-failure' } }))
+  expect(complete).toHaveBeenCalledOnce()
+  const report = complete.mock.calls[0]![0]
+  expect(report.receipts).toHaveLength(2)
+  expect(report.results[0]).toMatchObject({ id: 'background-color', status: 'supported' })
+  expect(report.results[1]).toMatchObject({ id: 'sizing-size', status: 'failed', reason: expect.stringContaining('owned-image-decode-failure') })
+  expect(report.results[1].checkpoints).toContainEqual(expect.objectContaining({ name: 'runtime:default:style', passed: true }))
+  expect(report.results[2]).toMatchObject({ id: 'border-radius', status: 'unverified' })
 })
 
 afterEach(async () => {

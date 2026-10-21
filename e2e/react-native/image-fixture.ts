@@ -13,7 +13,7 @@ export function syntheticImagePair(identity: Pick<NativePairEvidence, 'runtimeIn
     referenceTarget: { x: 16, y: 152, width: 44, height: 44 },
     controlTarget: { x: 16, y: 288, width: 80, height: 40 },
     viewport: { width: 160, height: 400, pixelRatio: 1 },
-    image: { version: 1, loads: (['probe', 'reference', 'control'] as const).map(side => ({ side, revision: identity.revision, id: identity.id, phase: identity.phase, event: 'load', origin: identity.platform === 'web' ? 'web-target' : 'native-source', uri: nativeImageFixture.uri, ...nativeImageFixture.intrinsic })) },
+    image: { version: 2, loads: (['probe', 'reference', 'control'] as const).map(side => ({ side, revision: identity.revision, id: identity.id, phase: identity.phase, event: 'load', ...(identity.platform === 'web' ? { origin: 'web-node' as const, decoder: 'decode' as const, complete: true as const, trusted: true as const } : { origin: 'native-source' as const }), uri: nativeImageFixture.uri, ...nativeImageFixture.intrinsic })) },
   }
   const image = new PNG({ width: 160, height: 400 })
   for (let offset = 0; offset < image.data.length; offset += 4) {

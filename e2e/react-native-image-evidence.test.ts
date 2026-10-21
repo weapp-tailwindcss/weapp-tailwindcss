@@ -28,7 +28,7 @@ function fixture() {
     referenceTarget: { x: 16, y: 152, width: 44, height: 44 },
     controlTarget: { x: 16, y: 288, width: 80, height: 40 },
     viewport: { width: 160, height: 400, pixelRatio: 1 },
-    image: { version: 1, loads: ['probe', 'reference', 'control'].map(side => ({ side, revision: 'baseline', id: 'sizing-size', phase: 'image', event: 'load', origin: 'web-target', uri, width: 16, height: 8 })) },
+    image: { version: 2, loads: ['probe', 'reference', 'control'].map(side => ({ side, revision: 'baseline', id: 'sizing-size', phase: 'image', event: 'load', origin: 'web-node', decoder: 'decode', complete: true, trusted: true, uri, width: 16, height: 8 })) },
   } as NativePairEvidence & { image: { version: number, loads: Array<Record<string, unknown>> } }
   const image = new PNG({ width: 160, height: 400 })
   for (let offset = 0; offset < image.data.length; offset += 4) {
@@ -53,7 +53,7 @@ describe('Image 真实组件的独立 oracle', () => {
     expect(passes(fixture())).toBe(true)
   })
 
-  it.each(['missing', 'duplicate', 'phase', 'revision', 'uri', 'size', 'origin', 'loadend'])('拒绝 %s 加载证据', (mutation) => {
+  it.each(['missing', 'duplicate', 'phase', 'revision', 'uri', 'size', 'origin', 'loadend', 'legacy-version', 'decoder', 'complete', 'trusted'])('拒绝 %s 加载证据', (mutation) => {
     const input = fixture()
     const loads = input.pair.image.loads
     if (mutation === 'missing') {
@@ -79,6 +79,18 @@ describe('Image 真实组件的独立 oracle', () => {
     }
     if (mutation === 'loadend') {
       loads[0]!.event = 'loadend'
+    }
+    if (mutation === 'legacy-version') {
+      Reflect.set(input.pair.image, 'version', 1)
+    }
+    if (mutation === 'decoder') {
+      Reflect.deleteProperty(loads[0]!, 'decoder')
+    }
+    if (mutation === 'complete') {
+      Reflect.deleteProperty(loads[0]!, 'complete')
+    }
+    if (mutation === 'trusted') {
+      Reflect.deleteProperty(loads[0]!, 'trusted')
     }
     expect(() => assessNativePair(input.image, input.pair)).toThrow(/Image/)
   })

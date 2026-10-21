@@ -124,6 +124,13 @@ describe('React Native fresh semantic evidence', () => {
     expect(() => validateReactNativeReport(value)).toThrow(/runtime/)
   })
 
+  it('后置显式运行错误优先呈现原始原因，前序未执行状态不能掩盖它', () => {
+    const value = report()
+    value.results[0]!.status = 'unverified'
+    Object.assign(value.results[1]!, { status: 'failed', reason: 'owned-runtime-failure' })
+    expect(() => validateReactNativeReport(value)).toThrow(/filter-blur.*owned-runtime-failure/)
+  })
+
   it.each(['unsupported', 'unverified', 'failed'] as const)('预期支持退化为 %s 不会自动变绿', (status) => {
     const value = report()
     Object.assign(value.results[0]!, { status, reason: 'observed failure', warnings: ['observed warning'] })

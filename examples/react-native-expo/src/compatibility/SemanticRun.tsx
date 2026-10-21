@@ -10,6 +10,7 @@ import { createImageReadiness } from './image-readiness'
 import { expectedFixtureStyle, fixtureClassValue, fixtureForPhase, fixtureInlineStyle, nativeFixtures, styleContains } from './protocol'
 import { deliverSemanticFailure, nativeReportHeaders } from './report-client'
 import { acquireRuntimePhase, assertCurrentRuntimeInstallation, assertRuntimePhaseActive, runtimeInstallationIdentity } from './runtime-installation'
+import { projectRuntimeResults } from './runtime-results'
 
 interface RuntimeInput {
   schemaVersion?: number
@@ -80,7 +81,7 @@ function InstalledSemanticRun({ evidence, revision, onComplete, installation }: 
   const scheme = active?.phase === 'dark' || active?.phase === 'dark-ios' ? 'dark' : 'light'
   const platform = Platform.OS as 'ios' | 'android' | 'web'
   const imageReadiness = useMemo(() => active && fixture?.component === 'image'
-    ? createImageReadiness({ revision, id: active.id, phase: active.phase }, platform)
+    ? createImageReadiness({ revision, id: active.id, phase: active.phase }, platform, side => ({ probe: target, reference: referenceTarget, control: controlTarget })[side].current)
     : undefined, [revision, active?.id, active?.phase, platform])
   const inlineStyle = active ? fixtureInlineStyle(active.id, active.phase) : undefined
   const actualStyle = active ? StyleSheet.flatten(composeStyle(tw(fixtureClassValue(active.className, active.id, active.phase), { colorScheme: scheme, platform }), inlineStyle)) as Record<string, unknown> : {}
@@ -169,14 +170,7 @@ function InstalledSemanticRun({ evidence, revision, onComplete, installation }: 
         setIndex(index + 1)
         return
       }
-      const results = staticReport.results.map((result) => {
-        const runtime = checkpoints.current.get(result.id)
-        if (!runtime) {
-          return result
-        }
-        const passed = result.generated && result.encoded && !result.warnings.length && runtime.every(checkpoint => checkpoint.passed)
-        return { ...result, status: passed ? 'supported' as const : 'failed' as const, reason: passed ? undefined : '本轮原生语义或参考节点像素不匹配', checkpoints: [...result.checkpoints, ...runtime] }
-      })
+      const results = projectRuntimeResults(staticReport.results, checkpoints.current, receipts.current)
       await onComplete({ ...staticReport, runtimeInstallation: installation, runId: context.runId, revision, stage: 'runtime', platform: Platform.OS as ReactNativeReport['platform'], verifiedAt: new Date().toISOString(), results, receipts: receipts.current, environment: { deviceName: `${Platform.OS}-runtime`, osName: Platform.OS, osVersion: String(Platform.Version), runtimeIdentifier: `expo-${Platform.OS}`, abi: Platform.OS === 'web' ? 'n/a' : 'simulator', viewport: pair.viewport } })
     })().catch(async (error) => {
       if (!canceled) {
@@ -194,9 +188,7 @@ function InstalledSemanticRun({ evidence, revision, onComplete, installation }: 
             platform,
             verifiedAt: new Date().toISOString(),
             receipts: receipts.current,
-            results: staticReport.results.map(result => result.id === active.id
-              ? { ...result, status: 'failed', reason: String(error), checkpoints: [...result.checkpoints, { name: `runtime:${active.phase}:failure`, passed: false, actual: String(error) }] }
-              : result),
+            results: projectRuntimeResults(staticReport.results, checkpoints.current, receipts.current, { id: active.id, phase: active.phase, error }),
           })
         } })
         if (!delivery.delivered) {

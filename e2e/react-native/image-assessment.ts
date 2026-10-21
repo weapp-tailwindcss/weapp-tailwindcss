@@ -6,10 +6,11 @@ import { nativeImageFixture as fixture } from '../../examples/react-native-expo/
 export function assessNativeImage(image: PNG, pair: NativePairEvidence) {
   const loads = pair.image?.loads
   const sides = ['probe', 'reference', 'control'] as const
-  if (pair.image?.version !== 1 || !Array.isArray(loads) || loads.length !== 3
+  if (pair.image?.version !== 2 || !Array.isArray(loads) || loads.length !== 3
     || sides.some(side => loads.filter(load => load.side === side).length !== 1)
     || loads.some(load => load.revision !== pair.revision || load.id !== pair.id || load.phase !== pair.phase
-      || load.event !== 'load' || load.origin !== (pair.platform === 'web' ? 'web-target' : 'native-source')
+      || load.event !== 'load' || load.origin !== (pair.platform === 'web' ? 'web-node' : 'native-source')
+      || (pair.platform === 'web' && (load.decoder !== 'decode' || load.complete !== true || load.trusted !== true))
       || load.uri !== fixture.uri || load.width !== fixture.intrinsic.width || load.height !== fixture.intrinsic.height)) {
     throw new Error('Image 缺失当前阶段真实加载事件、解码尺寸或源 URI')
   }
