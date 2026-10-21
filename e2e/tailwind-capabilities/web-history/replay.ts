@@ -5,7 +5,7 @@ import path from 'node:path'
 import { digest } from '../identity'
 import { assertionPassed } from '../report'
 import { historyAssertions } from './contract'
-import { historyProbe, historyScreenshot } from './fixtures'
+import { historyProbe, historyScreenshot, historyStates } from './fixtures'
 
 /** 重读原始 CSS、导航回执、独立 profile 与 PNG，不信任已缓存的 passed。 */
 export async function replayHistory(directory: string, runId: string, engine: BrowserEngine, browserVersion: string) {
@@ -27,10 +27,21 @@ export async function replayHistory(directory: string, runId: string, engine: Br
   }
   const css = await readFile(path.join(directory, 'generated.css'), 'utf8')
   const samples = raw.states.find(state => state.name === 'visited')?.observation?.samples
-  if (!Array.isArray(samples) || samples.length === 0 || samples.length > 21 || samples.some((sample, index) => sample.attempt !== index + 1 || sample.screenshot !== historyScreenshot('visited', index + 1))) {
+  if (raw.states.some(state => state.name === 'visited') && (!Array.isArray(samples) || samples.length === 0 || samples.length > 21 || samples.some((sample, index) => sample.attempt !== index + 1 || sample.screenshot !== historyScreenshot('visited', index + 1)))) {
     throw new Error('历史状态缺少连续的有界原图观察轨迹')
   }
-  const files = ['generated.css', 'measurements.json', historyScreenshot('initial'), ...samples.map((_, index) => historyScreenshot('visited', index + 1)), historyScreenshot('restored')]
+  const images = new Set<string>()
+  for (const state of raw.states) {
+    const expected = historyScreenshot(state.name, state.name === 'visited' ? samples![samples!.length - 1]!.attempt : undefined)
+    if (!historyStates.includes(state.name) || state.screenshot !== expected) {
+      throw new Error('历史状态截图引用不是对应阶段的规范文件名')
+    }
+    images.add(expected)
+  }
+  for (const sample of samples ?? []) {
+    images.add(sample.screenshot)
+  }
+  const files = ['generated.css', 'measurements.json', ...images]
   const screenshots = new Map(await Promise.all(files.filter(file => file.endsWith('.png')).map(async file => [file, await readFile(path.join(directory, file))] as const)))
   return { assertions: historyAssertions(raw, screenshots, digest(css), engine, runId), warnings: raw.warnings, error: raw.error, files }
 }

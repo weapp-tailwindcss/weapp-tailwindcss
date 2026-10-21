@@ -46,6 +46,39 @@ it('生产重放接受首张旧色后同帧probe与reference达成的完整连�
   await expect(verifyReportArtifacts(report, directory)).resolves.toBeUndefined()
 })
 
+it('visited 超时的部分轨迹重放已有像素并保留原错，不读取尚未执行的恢复截图', async () => {
+  const { directory, fixture: { raw, runId } } = await prepared(true)
+  raw.states.pop()
+  raw.profiles.pop()
+  raw.error = '历史 visited 绘制未在 2000ms 内达成'
+  const file = raw.states[1]!.screenshot
+  const png = PNG.sync.read(await readFile(path.join(directory, file)))
+  for (let y = 24; y < 104; y++) {
+    for (let x = 24; x < 184; x++) {
+      const index = (y * png.width + x) * 4
+      if (png.data[index] === 18 && png.data[index + 1] === 52 && png.data[index + 2] === 86) {
+        png.data.set([1, 2, 3, 255], index)
+      }
+    }
+  }
+  await writeFile(path.join(directory, file), PNG.sync.write(png))
+  await rm(path.join(directory, 'history-visited-border-restored.png'))
+  await writeFile(path.join(directory, 'measurements.json'), JSON.stringify(raw))
+  const replay = await replayHistory(directory, runId, 'chromium', 'unit-browser')
+  expect(replay.error).toBe(raw.error)
+  expect(replay.assertions.find(item => item.name === 'initial/probe/pixel/top/red')).toMatchObject({ actual: 1, expected: 1 })
+  expect(replay.assertions.find(item => item.name === 'visited/probe/pixel/top/red')).toMatchObject({ actual: 1, expected: 18 })
+  expect(replay.assertions.find(item => item.name === 'restored/probe/pixel/top/red')?.actual).toBeNull()
+  expect(replay.assertions.every(assertion => JSON.stringify(assertion.actual) === JSON.stringify(assertion.expected))).toBe(false)
+  expect(replay.files).not.toContain('history-visited-border-restored.png')
+})
+
+it('已声明捕获的恢复截图丢失仍是证据损坏，不能作为未执行忽略', async () => {
+  const { directory, fixture: { runId } } = await prepared()
+  await rm(path.join(directory, 'history-visited-border-restored.png'))
+  await expect(replayHistory(directory, runId, 'chromium', 'unit-browser')).rejects.toMatchObject({ code: 'ENOENT' })
+})
+
 it.each(['旧三帧协议', '缺轨迹', '丢首帧', '重复帧', '跳号', '乱序', '预算放宽', '超预算成功', '重置时钟', '浏览器时钟回退', '替换文档', '观察中重新请求夹具', '序号碰撞', '旧profile', '缺中间引用', '跨帧PNG', '中间control污染', '首帧已成功仍继续'] as const)('重算receipt也拒绝%s', async (mutation) => {
   const { directory, fixture: { raw, cssHash, runId, engine }, report, refresh } = await prepared(true)
   const state = raw.states[1]!

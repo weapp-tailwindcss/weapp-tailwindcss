@@ -59,7 +59,15 @@ vi.mock('./tailwind-capabilities/web-history/observe', () => ({
       throw new Error('navigation failed')
     }
   },
-  captureHistory: async (_page: unknown, state: string, _profile: unknown, _raw: unknown, capture: (state: string) => Promise<void>) => {
+  captureHistory: async (_page: unknown, state: string, _profile: unknown, raw: HistorySidecar, capture: (state: string) => Promise<void>) => {
+    if (mocks.failure === 'partial-visited' && state === 'visited') {
+      const fixture = syntheticHistory(raw.runId, 'chromium', '.unit{}')
+      fixture.raw.states.pop()
+      fixture.raw.profiles.pop()
+      Object.assign(raw, fixture.raw)
+      await capture('visited-observation-1')
+      throw new Error('original visited observation budget exceeded')
+    }
     if (mocks.failure === 'late-capture' && state === 'visited') {
       void capture('visited-observation-1').catch(() => {})
       throw new Error('original observation budget exceeded')
@@ -109,6 +117,18 @@ it('损坏PNG写为failed而不是丢失报告', async () => {
   const { report } = await run()
   expect(report.results[0]!.status).toBe('failed')
   expect(report.results[0]!.reason).toContain('原始证据复读失败')
+})
+it('部分观察超时保留已采样断言与原错，不创建恢复profile或虚假ENOENT', async () => {
+  mocks.failure = 'partial-visited'
+  const { report } = await run()
+  const result = report.results[0]!
+  expect(result.status).toBe('failed')
+  expect(result.reason).toContain('Error: original visited observation budget exceeded')
+  expect(result.reason).not.toMatch(/ENOENT|原始证据复读失败/)
+  expect(result.assertions.length).toBeGreaterThan(100)
+  expect(result.assertions.find(item => item.name === 'restored/probe/pixel/top/red')?.actual).toBeNull()
+  expect(mocks.profile.mock.calls).toEqual([['history']])
+  expect(mocks.closed).toHaveBeenCalledOnce()
 })
 it('观察超时后结算仍存活的截图与receipt再冻结报告，不留下迟到写入', async () => {
   mocks.failure = 'late-capture'

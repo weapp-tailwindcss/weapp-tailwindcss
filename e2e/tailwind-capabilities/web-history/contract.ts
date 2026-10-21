@@ -54,7 +54,7 @@ export function historyAssertions(raw: HistorySidecar, screenshots: ReadonlyMap<
     'cleanup/server': raw.cleanup.serverClosed,
     'cleanup/no-errors': raw.cleanup.errors.length === 0,
     'visited/observation/no-errors': raw.observationFailures.length === 0,
-    'server/observation-sequence': [2, 3].includes(fixtureRequests.length) && fixtureRequests[0]!.sequence < initial!.sequence && fixtureRequests.at(-1)!.sequence > visited!.sequence && fixtureRequests.at(-1)!.sequence < restored!.sequence && (fixtureRequests.length === 2 || (fixtureRequests[1]!.sequence > click!.sequence && fixtureRequests[1]!.sequence < back!.sequence)) && allSequences.every(value => Number.isInteger(value) && value! > 0) && new Set(allSequences).size === allSequences.length,
+    'server/observation-sequence': Boolean(initial && visited && restored && click && back && [2, 3].includes(fixtureRequests.length) && fixtureRequests[0]!.sequence < initial.sequence && fixtureRequests.at(-1)!.sequence > visited.sequence && fixtureRequests.at(-1)!.sequence < restored.sequence && (fixtureRequests.length === 2 || (fixtureRequests[1]!.sequence > click.sequence && fixtureRequests[1]!.sequence < back.sequence)) && allSequences.every(value => Number.isInteger(value) && value! > 0) && new Set(allSequences).size === allSequences.length),
   }
   for (const name of historyStates) {
     const matching = raw.states.filter(state => state.name === name)

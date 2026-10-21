@@ -6,6 +6,14 @@ import { historyAssertions } from './tailwind-capabilities/web-history/contract'
 import { historyIdentity, historyToken } from './tailwind-capabilities/web-history/fixtures'
 import { syntheticHistory } from './tailwind-capabilities/web-history/test-fixture'
 
+it.each(['initial', 'visited', 'restored'] as const)('缺少 %s 阶段仍返回全量失败断言，不因部分轨迹解引用丢失诊断', (name) => {
+  const fixture = syntheticHistory()
+  fixture.raw.states = fixture.raw.states.filter(state => state.name !== name)
+  const assertions = historyAssertions(fixture.raw, fixture.screenshots, fixture.cssHash, fixture.engine, fixture.runId)
+  expect(assertions.find(item => item.name === `${name}/fixture/id`)?.actual).toBeNull()
+  expect(assertions.every(assertionPassed)).toBe(false)
+})
+
 function passed(fixture: ReturnType<typeof syntheticHistory>) {
   try {
     return historyAssertions(fixture.raw, fixture.screenshots, fixture.cssHash, fixture.engine, fixture.runId).every(assertionPassed)
