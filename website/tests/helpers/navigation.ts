@@ -75,7 +75,8 @@ async function assertDocumentResponse(page: Page, response: Response | null | un
   }
 }
 
-async function navigate(page: Page, action: () => Promise<Response | null>) {
+/** 动作前安装监听器，统一核对硬导航与客户端导航的文档和资源生命周期。 */
+export async function withWebsiteNavigation(page: Page, action: () => Promise<Response | null>) {
   const pending = new Set<Request>()
   const representations = new Map<Request, {
     response: Response
@@ -277,10 +278,10 @@ async function navigate(page: Page, action: () => Promise<Response | null>) {
 
 /** 等待站点运行时和原有网络稳定条件，只排除已确证的主文档统计上报。 */
 export function navigateWebsite(page: Page, url: string) {
-  return navigate(page, () => page.goto(url, { waitUntil: 'domcontentloaded' }))
+  return withWebsiteNavigation(page, () => page.goto(url, { waitUntil: 'domcontentloaded' }))
 }
 
 /** 刷新时沿用相同的文档、资源与监听器生命周期。 */
 export function reloadWebsite(page: Page) {
-  return navigate(page, () => page.reload({ waitUntil: 'domcontentloaded' }))
+  return withWebsiteNavigation(page, () => page.reload({ waitUntil: 'domcontentloaded' }))
 }
