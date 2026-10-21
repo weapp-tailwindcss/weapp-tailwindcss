@@ -97,7 +97,7 @@ b40 的 Benchmark 五分片、Synthetic 与最终 Performance guard 已成功，
 
 head `41ccc8d2eb22b03464908adc7a0a6b737829b1d8` 的 Windows job `118975013019` 在 `rollup-watch.test.mjs` 删除临时目录时出现 ENOTEMPTY。相同前置矩阵的 job `118975012654` 成功，不能替代失败作业。原 finally 可能覆盖主体异常，因此不能据日志宣称功能断言全部通过。
 
-[Rollup 4.63.0 的 closeWatcher 合同](https://github.com/rollup/rollup/blob/v4.63.0/docs/plugin-development/index.md#closewatcher) 允许当前构建在 watcher 关闭后继续。夹具丢弃 `result.close()`，且把 `watcher.close()` 当成输出屏障，存在删除目录与写入重叠的窗口。纠正位于夹具：持有并返回 bundle 关闭任务，在 close 监听器等待本轮 START→END，再移除资源；关闭异常延后报告，避免截断 END。该关闭入口只用于用例主体退出，不能在构建事件内部等待自身。
+[Rollup 4.63.0 的 closeWatcher 合同](https://github.com/rollup/rollup/blob/v4.63.0/docs/plugin-development/index.md#closewatcher) 允许当前构建在 watcher 关闭后继续。夹具丢弃 `result.close()`，且把 `watcher.close()` 当成输出屏障，存在删除目录与写入重叠的窗口。首轮纠正位于夹具：持有并返回 bundle 关闭任务，在 close 监听器等待本轮 START→END，再移除资源；关闭异常延后报告，避免截断 END。该方案仅在 4.63.0 验证，后续 4.63.5 反例推翻其跨版本成立的判断，最终顺序见下文。关闭入口只用于用例主体退出，不能在构建事件内部等待自身。
 
 CJS/ESM × generateBundle/closeBundle 的四个显式门闩回归在旧行为下全部失败，清理提前完成；修复后全部通过。审查再发现初始化尚未接管时的 close 占位函数；增加 CJS/ESM 两个首个 START 前退出的门闩回归，均先失败再通过。另验证 bundle 关闭失败、重复关闭共享同一 Promise，以及主体、关闭和删除错误全部保留。Rollup 相关 14 文件 160 项、ESLint 和 diff check 通过；不加 sleep、删除重试、超时或 CI 重跑。尚须 Windows 实际结果确认，不能把已复现的窗口直接写成原 ENOTEMPTY 的唯一原因。
 
@@ -111,4 +111,12 @@ b40 全面流程已结束：前 30 阶段通过，其中单测 967 文件、1029
 
 head41 两份 iOS ZIP 均完整验证摘要：Lynx artifact 12313637402，1,551,634 字节，SHA-256 `6925989698689b65372d508138cbe7b201d03d54b016dad756e3e51f55c3c6e5`；RN artifact 12313122510，499,381 字节，SHA-256 `277370598ada78c90c916e3cd4bed0819c4af29150851bf9af62856005b619d0`。证据位于 `.tmp/ci-1314/head41-ios/`，身份标为 diagnostic-only。Lynx 采样停在 CoreSimulator 的 launch bridge/Mach 请求，3 核宿主 loadAverage 约 301、空闲内存约 90MiB；支持启动阻塞判断，具体资源根因未证实，35 项运行材料全部 missing。RN 是 baseline/layout-aspect/default：首帧约 6926ms 捕获，归档检查点为通过；第二帧约 7538ms 开始，10 秒预算耗尽仍无捕获回执，未重算成运行时成功。HTTP 500 是 reporter 返回采集超时的结果，不能另判 Metro 网络故障。
 
-generator 对照原先在 README 断言后才保存 CSS，失败时缺少完整 actual。现在每项目在断言前归档独立目录，绑定源码 SHA、tracked diff、锁文件与旧预期摘要，使用序号文件保存全部规范化 CSS；状态固定为 generated-unverified。snapshot 断言和门禁不变，显式更新前仍保存旧预期摘要。限定 Taro Webpack React 项目的禁止更新复验再次出现相同 web 对照失败，weapp 对照通过；actual 留存在 `e2e/.artifacts/apps-generator-mode/generated/run-spiWEF/`，继续审查，不据数量变化直接更新基线。
+generator 对照原先在 README 断言后才保存 CSS，失败时缺少完整 actual。现在每项目在 README/CSS 快照断言前归档独立目录，仍位于前面的语义与隔离断言之后；归档绑定源码 SHA、tracked diff、锁文件与旧 README 摘要，后者不包含旧 CSS 摘要。使用序号文件保存全部规范化 CSS，状态固定为 generated-unverified。snapshot 断言和门禁不变，显式更新前仍保存旧 README 摘要。限定 Taro Webpack React 项目的禁止更新复验再次出现相同 web 对照失败，weapp 对照通过；actual 留存在 `e2e/.artifacts/apps-generator-mode/generated/run-spiWEF/`，继续审查，不据数量变化直接更新基线。
+
+## Rollup 4.63.5 的关闭顺序纠正
+
+准确 head `0cc9753cb30482cbc33e6e9c0b640c17275b23a9` 的 run `39528749035`，8 个 Windows 作业共出现 30 个超时，全部属于 `issue-uview-plus-cssentries` 的 CJS/ESM × file/directory watch 用例。其余版本组合以及只覆盖 4.63.0 的 scope 9 例通过，生产验收尚未启动；这次不是 ENOTEMPTY。
+
+实际依赖 Rollup 4.63.5 的 `Watcher.close()` 先置 `closed`，当前 `run()` 完成任务后发现已关闭便跳过 `END`。夹具在 close 监听器等 `END`，形成循环等待。没有修改上游生产合同：scope 改为等待首次 `START`，循环等待当前构建自然结束，再在同一同步续体关闭句柄。继续返回 bundle 关闭 Promise、保留异常和重复关闭身份，不加 sleep、超时、删除重试或 CI 重跑。
+
+scope 回归扩展到 demo 实际解析的 4.63.0、4.63.5、3.30.0，覆盖 CJS/ESM × generateBundle/closeBundle、异步接管前退出以及关闭失败。4.63.5 的 CJS/generateBundle 在旧 scope 下确定性超时 10 秒，修正后通过。命令 `CI=1 pnpm exec vitest run -c scripts/ci/demo-matrix/vitest.config.mjs scripts/ci/demo-matrix/rollup --update=none` 在 macOS Node 24.18.0 下为 14 文件、176 项通过；Windows 当前源码结果仍待实际 CI，不能把本地成功替代远端。

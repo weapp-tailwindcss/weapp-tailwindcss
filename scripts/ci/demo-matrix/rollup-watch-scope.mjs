@@ -26,11 +26,13 @@ export function watchRunScope(watcher) {
     }
   })
   // 只从用例主体退出处调用；不能在当前构建事件处理器内部等待自己。
-  // Rollup 会等待 close 监听器，再移除 event 监听器，因此仍能收到 END。
-  watcher.on('close', () => active?.promise)
   return () => closing ??= (async () => {
     // watch() 异步初始化完成前 close 仍可能为空实现；首个 START 才证明真实句柄已接管。
     await started.promise
+    // 4.63.5 关闭后不再发送 END，必须先排空自然构建，再同步关闭真实句柄。
+    for (let current = active; current; current = active) {
+      await current.promise
+    }
     try {
       await watcher.close()
     }

@@ -8,17 +8,18 @@ import { rollupTestRequire } from './rollup-test-runtime.mjs'
 import { watchRunScope, withWatchCleanup } from './rollup-watch-scope.mjs'
 import { replaceSourceFile } from './source-file.mjs'
 
-const cases = ['cjs', 'esm'].flatMap(format => ['generateBundle', 'closeBundle'].map(hook => ({ format, hook })))
+const demos = ['uni-app-vite-tailwindcss-v4', 'issue-uview-plus-cssentries', 'taro-vite-vue3-tailwindcss-v4']
+const cases = demos.flatMap(demo => ['cjs', 'esm'].flatMap(format => ['generateBundle', 'closeBundle'].map(hook => ({ demo, format, hook }))))
 
-it.each(cases)('夹具清理等待自己拥有的输出与 bundle 关闭 ($format, $hook)', async ({ format, hook }) => {
-  const require = rollupTestRequire('uni-app-vite-tailwindcss-v4')
+it.each(cases)('夹具清理等待自己拥有的输出与 bundle 关闭 ($demo, $format, $hook)', async ({ demo, format, hook }) => {
+  const require = rollupTestRequire(demo)
   const rollup = format === 'cjs' ? require('rollup') : await import(pathToFileURL(path.join(path.dirname(require.resolve('rollup')), 'es/rollup.js')).href)
   const directory = await realpath(await mkdtemp(path.join(tmpdir(), 'rollup-owned-output-')))
   const entry = path.join(directory, 'entry.js')
   const output = path.join(directory, 'bundle.mjs')
   const entered = Promise.withResolvers()
   const release = Promise.withResolvers()
-  const closeEntered = Promise.withResolvers()
+  const closeEntered = vi.fn()
   const cleanup = vi.fn(async () => {})
   let watcher
   let close
@@ -37,18 +38,17 @@ it.each(cases)('夹具清理等待自己拥有的输出与 bundle 关闭 ($forma
       }],
     })
     close = watchRunScope(watcher)
-    watcher.on('close', () => {
-      closeEntered.resolve()
-    })
+    watcher.on('close', closeEntered)
     await entered.promise
     pending = withWatchCleanup(async () => 'body complete', close, cleanup)
-    await closeEntered.promise
     // 只推进一轮事件循环；输出/closeBundle 的显式门闩仍关闭。
     expect(await Promise.race([pending.then(() => 'disposed'), nextTurn().then(() => 'waiting')])).toBe('waiting')
     expect(cleanup).not.toHaveBeenCalled()
+    expect(closeEntered).not.toHaveBeenCalled()
     release.resolve()
     expect(await pending).toBe('body complete')
     expect(cleanup).toHaveBeenCalledOnce()
+    expect(closeEntered).toHaveBeenCalledOnce()
     expect(await readFile(output, 'utf8')).toContain('value = 7')
   }
   finally {
@@ -70,8 +70,8 @@ it('主体、关闭与删除的异常全部保留，单个主体异常保持原�
   await expect(withWatchCleanup(fail(original), fail(close), fail(remove))).rejects.toMatchObject({ errors: [original, close, remove] })
 })
 
-it.each(['cjs', 'esm'])('bundle 关闭失败仍排空本轮，重复关闭保留同一失败 ($0)', async (format) => {
-  const require = rollupTestRequire('uni-app-vite-tailwindcss-v4')
+it.each(demos.flatMap(demo => ['cjs', 'esm'].map(format => ({ demo, format }))))('bundle 关闭失败仍排空本轮，重复关闭保留同一失败 ($demo, $format)', async ({ demo, format }) => {
+  const require = rollupTestRequire(demo)
   const rollup = format === 'cjs' ? require('rollup') : await import(pathToFileURL(path.join(path.dirname(require.resolve('rollup')), 'es/rollup.js')).href)
   const directory = await realpath(await mkdtemp(path.join(tmpdir(), 'rollup-close-error-')))
   const entry = path.join(directory, 'entry.js')
@@ -112,8 +112,8 @@ it.each(['cjs', 'esm'])('bundle 关闭失败仍排空本轮，重复关闭保留
   }
 }, 10_000)
 
-it.each(['cjs', 'esm'])('首个 START 前退出仍等待异步初始化与在途 hook ($0)', async (format) => {
-  const require = rollupTestRequire('uni-app-vite-tailwindcss-v4')
+it.each(demos.flatMap(demo => ['cjs', 'esm'].map(format => ({ demo, format }))))('首个 START 前退出仍等待异步初始化与在途 hook ($demo, $format)', async ({ demo, format }) => {
+  const require = rollupTestRequire(demo)
   const rollup = format === 'cjs' ? require('rollup') : await import(pathToFileURL(path.join(path.dirname(require.resolve('rollup')), 'es/rollup.js')).href)
   const directory = await realpath(await mkdtemp(path.join(tmpdir(), 'rollup-early-close-')))
   const entry = path.join(directory, 'entry.js')
