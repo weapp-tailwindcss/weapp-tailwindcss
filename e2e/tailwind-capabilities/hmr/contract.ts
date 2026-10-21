@@ -1,5 +1,5 @@
 import type { CaseContract, SemanticAssertion } from '../types'
-import { hmrCss, hmrStates } from './fixture'
+import { hmrCss, hmrIcon, hmrPage, hmrStates } from './fixture'
 
 export interface HmrObservation {
   marker: string
@@ -24,7 +24,7 @@ export function hmrContract(): CaseContract {
       expectedValues[`${state.id}/full-reload`] = false
     }
   }
-  return { id: 'hmr/source-add-replace-delete-refresh', features: ['source-scanning', 'hmr', 'dynamic-class', 'arbitrary-value'], candidate: 'w-[123px] w-[147px]', fixture: JSON.stringify({ hmrCss, hmrStates }), expectation: { support: 'supported', stage: 'hmr' }, requiredAssertions: Object.keys(expectedValues), expectedValues, tolerances }
+  return { id: 'hmr/source-add-replace-delete-refresh', features: ['source-scanning', 'hmr', 'dynamic-class', 'arbitrary-value'], candidate: 'w-[123px] w-[147px]', fixture: JSON.stringify({ hmrCss, hmrStates, hmrIcon, hmrPage }), expectation: { support: 'supported', stage: 'hmr' }, requiredAssertions: Object.keys(expectedValues), expectedValues, tolerances }
 }
 
 export function hmrAssertions(state: typeof hmrStates[number], actual: HmrObservation, runId: string, session: string, instance: string): SemanticAssertion[] {

@@ -3,7 +3,7 @@ import path from 'node:path'
 import { authoringFixtures, sourceSyntaxCases } from '@weapp-tailwindcss/test-catalog'
 import { withGeneratorFixture } from './fixture'
 import { frameworkSource, frameworkSourceCss, sourceFrameworks, sourceRevisions } from './framework-source/fixtures'
-import { hmrCss, hmrSource, hmrStates } from './hmr/fixture'
+import { hmrCss, hmrIcon, hmrPage, hmrSource, hmrStates } from './hmr/fixture'
 import { digest } from './identity'
 import { registryStaticFixture } from './registry-web/static'
 import { weappFixtureCss } from './weapp/alpha-fixtures'
@@ -42,7 +42,7 @@ export async function fixtureOutputs(root: string) {
     const output = await withGeneratorFixture(root, fixture.css, fixture.files, generator => generator.generate({ target: 'web', candidates: fixture.candidates, scanSources: true }))
     return [`authoring-${fixture.id}.css`, output.css] as const
   })))
-  return { fixtureHash: digest({ autofill: { autofillCss, autofillProbe, html: renderAutofill('GENERATED_CSS', 'RUN_ID') }, history: { historyCss, historyProbe, historyReference, historyStates, html: renderHistory('GENERATED_CSS', 'RUN_ID') }, nativeMedia: { nativeMediaCss, nativeMediaProbe, nativeMediaReference, nativeMediaStates, html: renderNativeMedia('GENERATED_CSS', 'RUN_ID') }, webFixtureCss, webProbes, weappProbes, weappFixtureCss, weappRenderContract, contextWebFixtureCss, contextWebProbes, lifecycleWebFixtureCss, lifecycleWebProbes, hmrCss, hmrStates, authoring, frameworkFixtures, registry: registry.identity }), files: { 'autofill.css': autofill.css, 'web.css': web.css, 'weapp.wxss': weapp.css, 'context.css': context.css, 'lifecycle.css': lifecycle.css, 'registry.css': registry.css, 'native-media.css': nativeMedia.css, 'history.css': history.css, ...hmr, ...authoringFiles, ...frameworkFiles } }
+  return { fixtureHash: digest({ autofill: { autofillCss, autofillProbe, html: renderAutofill('GENERATED_CSS', 'RUN_ID') }, history: { historyCss, historyProbe, historyReference, historyStates, html: renderHistory('GENERATED_CSS', 'RUN_ID') }, nativeMedia: { nativeMediaCss, nativeMediaProbe, nativeMediaReference, nativeMediaStates, html: renderNativeMedia('GENERATED_CSS', 'RUN_ID') }, webFixtureCss, webProbes, weappProbes, weappFixtureCss, weappRenderContract, contextWebFixtureCss, contextWebProbes, lifecycleWebFixtureCss, lifecycleWebProbes, hmrCss, hmrStates, hmrIcon, hmrPage, authoring, frameworkFixtures, registry: registry.identity }), files: { 'autofill.css': autofill.css, 'web.css': web.css, 'weapp.wxss': weapp.css, 'context.css': context.css, 'lifecycle.css': lifecycle.css, 'registry.css': registry.css, 'native-media.css': nativeMedia.css, 'history.css': history.css, ...hmr, ...authoringFiles, ...frameworkFiles } }
 }
 
 export async function fixtureBaseline(root: string, update = false) {

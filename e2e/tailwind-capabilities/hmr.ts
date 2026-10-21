@@ -5,8 +5,9 @@ import { writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { chromium, firefox, webkit } from 'playwright'
 import { newReport, persistReport } from './context'
+import { observeHmrBrowserErrors } from './hmr/browser-observer'
 import { hmrAssertions, hmrContract } from './hmr/contract'
-import { hmrCss, hmrSource, hmrStates } from './hmr/fixture'
+import { hmrCss, hmrIcon, hmrPage, hmrSource, hmrStates } from './hmr/fixture'
 import { withHmrServer } from './hmr/server'
 import { assertionPassed, receipt, validateCapabilityReport, verifyReportArtifacts } from './report'
 
@@ -15,7 +16,7 @@ interface UpdateMessage { type?: string, updates?: Array<{ path?: string, accept
 export async function runHmr(context: RunContext, engine: BrowserEngine, borrowedBrowser?: Browser) {
   const contract = hmrContract()
   const output = { ...context, directory: path.join(context.directory, 'hmr') }
-  const report = await newReport(output, `web-${engine}`, [contract], { hmrCss, hmrStates }, { engine, browserVersion: 'not-started', mode: 'real-vite-source-hmr', headless: true })
+  const report = await newReport(output, `web-${engine}`, [contract], { hmrCss, hmrStates, hmrIcon, hmrPage }, { engine, browserVersion: 'not-started', mode: 'real-vite-source-hmr', headless: true })
   const logs: string[] = []
   const messages: UpdateMessage[] = []
   const errors: string[] = []
@@ -26,6 +27,8 @@ export async function runHmr(context: RunContext, engine: BrowserEngine, borrowe
   let closeContext: (() => Promise<void>) | undefined
   let failure: string | undefined
   let failureCapture: (() => Promise<void>) | undefined
+  let browserEvidence: ReturnType<typeof observeHmrBrowserErrors> | undefined
+  let stage = 'initial-navigation'
   const save = async (name: string, content: string | Uint8Array, kind: 'css' | 'bundle' | 'measurements' | 'screenshot' | 'log') => {
     const file = path.join(output.directory, name)
     await writeFile(file, content)
@@ -50,12 +53,7 @@ export async function runHmr(context: RunContext, engine: BrowserEngine, borrowe
         await save('failure.png', await page.screenshot({ fullPage: true, scale: 'css' }), 'screenshot')
         await save('failure.html', await page.content(), 'log')
       }
-      page.on('pageerror', error => errors.push(error.message))
-      page.on('console', (message) => {
-        if (message.type() === 'error') {
-          errors.push(message.text())
-        }
-      })
+      browserEvidence = observeHmrBrowserErrors(page, () => stage, errors)
       page.on('websocket', socket => socket.on('framereceived', (event) => {
         try {
           messages.push(JSON.parse(String(event.payload)))
@@ -75,6 +73,7 @@ export async function runHmr(context: RunContext, engine: BrowserEngine, borrowe
       const initial = await read()
       await save('initial.source.js', hmrSource(context.runId, hmrStates[0]), 'bundle')
       for (const state of hmrStates) {
+        stage = state.id
         const start = messages.length
         if (state.id !== 'initial') {
           const source = hmrSource(context.runId, state)
@@ -91,6 +90,7 @@ export async function runHmr(context: RunContext, engine: BrowserEngine, borrowe
         measurements.push({ state: state.id, ...actual, messages: current })
         await capture(state.id)
       }
+      stage = 'refresh'
       await page.reload({ waitUntil: 'networkidle' })
       const refreshed = await read()
       assertions.push(
@@ -116,14 +116,23 @@ export async function runHmr(context: RunContext, engine: BrowserEngine, borrowe
     }
   }
   finally {
+    browserEvidence?.dispose()
     try {
-      await (closeContext ? closeContext() : browser?.close())
+      if (closeContext) {
+        await closeContext()
+      }
+      else if (!borrowedBrowser) {
+        await browser?.close()
+      }
     }
     catch (error) {
       failure = `${failure ?? ''}\n浏览器关闭失败：${String(error)}`
     }
   }
-  await save('measurements.json', JSON.stringify({ measurements, messages, errors }, null, 2), 'measurements')
+  if (errors.length || logs.some(message => message.startsWith('error:'))) {
+    failure ??= `浏览器或 Vite 错误：${[...errors, ...logs].join('\n')}`
+  }
+  await save('measurements.json', JSON.stringify({ measurements, messages, errors, browserEvents: browserEvidence?.records ?? [] }, null, 2), 'measurements')
   await save('server.log', [...logs, failure ?? ''].join('\n') || '没有服务错误\n', 'log')
   const passed = !failure && assertions.length === contract.requiredAssertions.length && assertions.every(assertionPassed)
   report.results.push({ id: contract.id, support: 'supported', status: passed ? 'passed' : 'failed', assertions, artifacts, warnings: errors, ...(!passed ? { reason: failure ?? '源码 HMR 的保存标识、样式、消息或同页面约束未通过' } : {}) })

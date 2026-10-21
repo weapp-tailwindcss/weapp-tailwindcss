@@ -1,5 +1,8 @@
 export const hmrCss = '@import "tailwindcss" source(none);\n@source "./probe.js";\n@layer base { #probe { width:80px; height:40px; background:#123456; } }'
 
+export const hmrIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><path fill="#123456" d="M0 0h1v1H0z"/></svg>'
+export const hmrPage = '<!doctype html><html><head><meta name="tailwind-instance" content="__TAILWIND_INSTANCE__"><link rel="icon" href="/favicon.svg" type="image/svg+xml"></head><body><script type="module" src="/probe.js"></script></body></html>'
+
 export const hmrStates = [
   { id: 'initial', candidate: '', width: 80 },
   { id: 'added', candidate: 'w-[123px]', width: 123 },

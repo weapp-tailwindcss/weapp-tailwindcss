@@ -10,6 +10,12 @@ regressions:
   - examples/react-native-expo/test/runtime-results.test.ts
   - e2e/react-native-static-entry-scope.test.ts
 verification:
+  - claim: Image v2 五目标三阶段实际运行及独立生产重放通过，完整注册覆盖仍未完成
+    kind: native
+    status: passed
+    sha: e6dce0558bbf3dc442162e76ccc26e56f7c55832
+    environment: fresh extended 预检 61bbda80-2237-4729-8fcf-5b90a371b474、当前会话原生 Chrome computer use 和 verify 通过；run 2a3a38e0-267a-4ba8-94c1-af2c3241313c；Expo Chromium/Firefox/WebKit、Android/iOS 各三阶段 41 回执、82 帧，共 615 回执、1230 帧；Image 15 回执、30 帧；逐目标独立进程生产 validator 重读全部阶段、PNG、sidecar、编码和源码通过；每端仍有 1260 注册能力 not-run，统一入口 exit1
+    command: pnpm e2e:tailwind --preflight-report e2e/.artifacts/preflight/61bbda80-2237-4729-8fcf-5b90a371b474/report.json --target expo-chromium,expo-firefox,expo-webkit,react-native-android,react-native-ios
   - claim: Chromium 延迟 load、解码期间换源和失败投影先固化红回归，v2 本地回归通过
     kind: unit
     status: passed
@@ -99,11 +105,13 @@ CI=1 pnpm e2e:react-native-compatibility --update=none
 
 static 基线审查仅改变 fixture hash 与生成时间，118 例候选、manifest、raw CSS、补全集合和生成作用域不变。持久比较测试会重新生成并禁止更新地检查这些字段。
 
-v2 本地验证包含示例 11 文件 72 项、Image/协议 41 项、统一适配 23 项及兼容入口 22 文件 303 项；TypeScript 和受根配置管理的生产/e2e 文件 ESLint 通过。曾将示例测试与兼容入口依赖重建并行，导致构建窗口内找不到 source-scan dist；构建完成后按顺序重验示例通过，此编排错误单独保留，不登记为产品修复。新源码的真实五目标复验尚未执行，旧 d654 设备证据不替代它。
+v2 本地验证包含示例 11 文件 72 项、Image/协议 41 项、统一适配 23 项及兼容入口 22 文件 303 项；TypeScript 和受根配置管理的生产/e2e 文件 ESLint 通过。曾将示例测试与兼容入口依赖重建并行，导致构建窗口内找不到 source-scan dist；构建完成后按顺序重验示例通过，此编排错误单独保留，不登记为产品修复。
+
+源码 e6dce0558 的五目标复验已使用新预检执行：每目标 baseline、TSX HMR、CSS HMR 各 41 回执、82 帧。五目标独立进程生产重放均通过，合计 615 回执、1230 帧，其中 Image 15 回执、30 帧。原始 d654 Chromium 失败继续保留。统一入口因每端 1260 注册能力未执行而正确返回 1，prepare 服务 exit0 后关闭，源码与 HMR 探针恢复且工作树干净；本轮预检已消费，不能复用。
 
 ## 适用边界
 
-源码 d6544d24 的四目标实际通过与 Chromium 失败已分别归档，不能转移给同批 v2 观测器修复。新修复仍须 fresh extended 预检、当前会话真实 computer use 和 verify 后重新运行。合成 PNG、jsdom 事件和合同测试不计真实运行成功；总体结论保持 partial，served bundle/HMR 传输链、ScrollView、全注册组件夹具与其余 Web variant 等缺口继续登记。
+源码 d6544d24 的四目标实际通过与 Chromium 失败已分别归档；v2 修复的五目标成功仅绑定 e6dce0558 和 run 2a3a38e0，不能转给后续修改。合成 PNG、jsdom 事件和合同测试不计真实运行成功；总体结论保持 partial，served bundle/HMR 传输链、ScrollView、全注册组件夹具与其余 Web variant 等缺口继续登记。
 
 ## 规则评估
 
