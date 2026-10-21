@@ -1,7 +1,9 @@
 import { createHash } from 'node:crypto'
 import { readdir, readFile, realpath, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
+import { runWithCleanup } from '../../scripts/e2e-preflight/cleanup'
 import { EnvironmentBlockedError } from '../tailwind-capabilities/environment-block'
+import { withIosBuildScratch } from './ios-build-scratch'
 import { iosAppWasNotRunning } from './ios-command'
 import { inspectIosBundleProvider } from './ios-provider'
 import { iosRuntimeArguments, launchIosRuntime } from './ios-runtime'
@@ -59,65 +61,64 @@ export async function buildAndLaunchIos(options: IosBuildOptions, execute: IosBu
   const { project, device, artifacts, bundleId, metroUrl } = options
   iosRuntimeArguments(options)
   const directory = path.join(project, 'ios')
-  const derivedData = path.join(directory, '.tailwind-derived-data')
   const evidence: Record<string, unknown> = { provider: 'expo-prebuild-xcodebuild-simctl', device, bundleId, metroUrl, stage: 'prebuild' }
   const save = () => writeFile(path.join(artifacts, 'ios-build.json'), `${JSON.stringify(evidence, null, 2)}\n`)
-  await save()
-  try {
-    await execute('pnpm', ['exec', 'expo', 'prebuild', '--platform', 'ios', '--no-install'], project, true)
-    evidence.stage = 'bundle-provider'
-    await save()
-    const { contents, ...bundleProvider } = inspectIosBundleProvider(project)
-    await writeFile(path.join(artifacts, 'ios-app-delegate.swift'), contents)
-    evidence.bundleProvider = bundleProvider
-    await execute('pod', ['install', `--project-directory=${directory}`], project, true)
-    const build = await iosBuildProject(directory)
-    Object.assign(evidence, build, { stage: 'build' })
-    await save()
-    const args = ['-workspace', build.workspace, '-scheme', build.scheme, '-configuration', 'Debug', '-sdk', 'iphonesimulator', '-destination', `id=${device}`, '-derivedDataPath', derivedData, 'CODE_SIGNING_ALLOWED=NO']
-    await execute('xcodebuild', [...args, 'build'], project, true)
-    const application = iosBuildApplication(await execute('xcodebuild', [...args, '-showBuildSettings', '-json'], project), derivedData, bundleId)
-    if (!(await stat(application)).isDirectory()) {
-      throw new Error('iOS 本轮构建未生成应用目录')
-    }
-    const plist = path.join(application, 'Info.plist')
-    const actualId = (await execute('plutil', ['-extract', 'CFBundleIdentifier', 'raw', '-o', '-', plist], project)).trim()
-    const executable = (await execute('plutil', ['-extract', 'CFBundleExecutable', 'raw', '-o', '-', plist], project)).trim()
-    if (actualId !== bundleId || !executable || path.basename(executable) !== executable) {
-      throw new Error('iOS 本轮应用的 bundle ID 或可执行文件不符')
-    }
-    Object.assign(evidence, { stage: 'install', application, executable })
-    await save()
-    await execute('xcrun', ['simctl', 'install', device, application], project, true)
-    const container = (await execute('xcrun', ['simctl', 'get_app_container', device, bundleId, 'app'], project)).trim()
-    if (!path.isAbsolute(container)) {
-      throw new Error('iOS 已安装应用没有有效容器')
-    }
-    const [built, installed] = await Promise.all([binaryHashes(application, executable), binaryHashes(await realpath(container), executable)])
-    if (JSON.stringify(built) !== JSON.stringify(installed)) {
-      throw new Error('iOS 模拟器内应用与本轮构建二进制不一致')
-    }
-    Object.assign(evidence, { stage: 'terminate', container, binarySha256: built })
-    await save()
+  return withIosBuildScratch(project, evidence, save, async (derivedData) => {
     try {
-      await execute('xcrun', ['simctl', 'terminate', device, bundleId], project)
-      evidence.termination = { status: 'terminated' }
+      await execute('pnpm', ['exec', 'expo', 'prebuild', '--platform', 'ios', '--no-install'], project, true)
+      evidence.stage = 'bundle-provider'
+      await save()
+      const { contents, ...bundleProvider } = inspectIosBundleProvider(project)
+      await writeFile(path.join(artifacts, 'ios-app-delegate.swift'), contents)
+      evidence.bundleProvider = bundleProvider
+      await execute('pod', ['install', `--project-directory=${directory}`], project, true)
+      const build = await iosBuildProject(directory)
+      Object.assign(evidence, build, { stage: 'build' })
+      await save()
+      const args = ['-workspace', build.workspace, '-scheme', build.scheme, '-configuration', 'Debug', '-sdk', 'iphonesimulator', '-destination', `id=${device}`, '-derivedDataPath', derivedData, 'CODE_SIGNING_ALLOWED=NO']
+      await execute('xcodebuild', [...args, 'build'], project, true)
+      const application = iosBuildApplication(await execute('xcodebuild', [...args, '-showBuildSettings', '-json'], project), derivedData, bundleId)
+      if (!(await stat(application)).isDirectory()) {
+        throw new Error('iOS 本轮构建未生成应用目录')
+      }
+      const plist = path.join(application, 'Info.plist')
+      const actualId = (await execute('plutil', ['-extract', 'CFBundleIdentifier', 'raw', '-o', '-', plist], project)).trim()
+      const executable = (await execute('plutil', ['-extract', 'CFBundleExecutable', 'raw', '-o', '-', plist], project)).trim()
+      if (actualId !== bundleId || !executable || path.basename(executable) !== executable) {
+        throw new Error('iOS 本轮应用的 bundle ID 或可执行文件不符')
+      }
+      Object.assign(evidence, { stage: 'install', application, executable })
+      await save()
+      await execute('xcrun', ['simctl', 'install', device, application], project, true)
+      const container = (await execute('xcrun', ['simctl', 'get_app_container', device, bundleId, 'app'], project)).trim()
+      if (!path.isAbsolute(container)) {
+        throw new Error('iOS 已安装应用没有有效容器')
+      }
+      const [built, installed] = await Promise.all([binaryHashes(application, executable), binaryHashes(await realpath(container), executable)])
+      if (JSON.stringify(built) !== JSON.stringify(installed)) {
+        throw new Error('iOS 模拟器内应用与本轮构建二进制不一致')
+      }
+      Object.assign(evidence, { stage: 'terminate', container, binarySha256: built })
+      await save()
+      try {
+        await execute('xcrun', ['simctl', 'terminate', device, bundleId], project)
+        evidence.termination = { status: 'terminated' }
+      }
+      catch (error) {
+        if (!iosAppWasNotRunning(error, bundleId)) {
+          throw new EnvironmentBlockedError(`iOS target app termination failed: ${String(error)}`, { cause: error })
+        }
+        evidence.termination = { status: 'not-running', exitCode: error.exitCode, stdout: error.stdout, stderr: error.stderr }
+      }
+      evidence.stage = 'launch'
+      await save()
+      evidence.launch = await launchIosRuntime(options, execute)
+      evidence.stage = 'launch-request-completed'
+      await save()
     }
     catch (error) {
-      if (!iosAppWasNotRunning(error, bundleId)) {
-        throw new EnvironmentBlockedError(`iOS target app termination failed: ${String(error)}`, { cause: error })
-      }
-      evidence.termination = { status: 'not-running', exitCode: error.exitCode, stdout: error.stdout, stderr: error.stderr }
+      evidence.failure = String(error)
+      return runWithCleanup(() => Promise.reject(error), save)
     }
-    evidence.stage = 'launch'
-    await save()
-    evidence.launch = await launchIosRuntime(options, execute)
-    evidence.stage = 'launch-request-completed'
-    await save()
-  }
-  catch (error) {
-    evidence.failure = String(error)
-    await save()
-    throw error
-  }
+  })
 }

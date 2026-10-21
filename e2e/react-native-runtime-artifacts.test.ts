@@ -7,7 +7,8 @@ import { createRuntimeArtifacts } from './react-native/runtime-artifacts'
 it('keeps live Metro evidence outside the workspace and publishes the complete session after shutdown', async () => {
   const workspace = await fs.mkdtemp(path.join(os.tmpdir(), 'rn-workspace-'))
   const destination = path.join(workspace, 'e2e', '.artifacts', 'native')
-  const session = await createRuntimeArtifacts(destination)
+  const identity = { version: 1 as const, runId: 'runtime-artifacts', target: 'react-native-ios', producer: 'react-native' as const, invocationId: 'a'.repeat(36) }
+  const session = await createRuntimeArtifacts(destination, identity)
   try {
     expect(path.relative(workspace, session.directory).split(path.sep)[0]).toBe('..')
     await fs.writeFile(path.join(session.directory, 'metro.log'), 'fresh runtime')
@@ -16,7 +17,8 @@ it('keeps live Metro evidence outside the workspace and publishes the complete s
     await fs.mkdir(destination, { recursive: true })
     await fs.writeFile(path.join(destination, 'old.png'), 'old')
     await session.publish()
-    expect(await fs.readdir(destination)).toEqual(['failure.png', 'metro.log'])
+    expect(await fs.readdir(destination)).toEqual(['failure.png', 'metro.log', 'runtime-session.json'])
+    expect(JSON.parse(await fs.readFile(path.join(destination, 'runtime-session.json'), 'utf8'))).toEqual(identity)
     expect(await fs.readFile(path.join(destination, 'metro.log'), 'utf8')).toBe('fresh runtime')
     await expect(fs.access(session.directory)).rejects.toMatchObject({ code: 'ENOENT' })
   }

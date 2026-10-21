@@ -11,7 +11,7 @@ import process from 'node:process'
 import { execa } from 'execa'
 import { runWithCleanup } from '../../scripts/e2e-preflight/cleanup'
 import { stopOwnedProcess } from './process'
-import { createRuntimeArtifacts } from './runtime-artifacts'
+import { createRuntimeArtifacts, runtimeArtifactIdentity } from './runtime-artifacts'
 import type { Browser } from 'playwright'
 import { reactNativeWebBrowser } from './web-browser'
 import type { ReactNativeReport } from './catalog'
@@ -26,14 +26,14 @@ interface ReportEnvelope { hmrMarker: string, cssHmrColor: string, report: React
 const repoRoot = path.resolve(import.meta.dirname, '../..')
 const exampleRoot = path.resolve(repoRoot, 'examples/react-native-expo')
 const selectedBrowser = reactNativeWebBrowser(process.env['RN_WEB_BROWSER'])
-const artifactSession = await createRuntimeArtifacts(path.resolve(repoRoot, `e2e/.artifacts/react-native-web-${selectedBrowser.name}`))
+const runId = process.env['TAILWIND_E2E_RUN_ID'] ?? randomUUID()
+const artifactSession = await createRuntimeArtifacts(path.resolve(repoRoot, `e2e/.artifacts/react-native-web-${selectedBrowser.name}`), runtimeArtifactIdentity('expo-web', `expo-${selectedBrowser.name}`, runId))
 const artifacts = artifactSession.directory
 const reportsDir = path.resolve(repoRoot, 'e2e/react-native/reports/v2')
 const markerFile = path.resolve(exampleRoot, 'src/hmr-marker.ts')
 const cssFile = path.resolve(exampleRoot, 'global.css')
 const reports: ReportEnvelope[] = []
 const updateBaseline = process.env['RN_UPDATE_BASELINE'] === '1'
-const runId = process.env['TAILWIND_E2E_RUN_ID'] ?? randomUUID()
 const clientToken = randomUUID()
 let semanticPage: import('playwright').Page | undefined
 const semanticReporter = createSemanticReporter<ReportEnvelope>({ runId, catalogHash: RN_CATALOG_HASH, fixtureHash: RN_FIXTURE_HASH, versions: reactNativeVersions() }, (pair) => {
@@ -117,8 +117,6 @@ async function fileHash(file: string) {
 }
 
 async function main() {
-  await fs.rm(artifacts, { recursive: true, force: true })
-  await fs.mkdir(artifacts, { recursive: true })
   if (updateBaseline) { await fs.mkdir(reportsDir, { recursive: true }) }
   const originalMarker = await fs.readFile(markerFile, 'utf8')
   const originalCss = await fs.readFile(cssFile, 'utf8')

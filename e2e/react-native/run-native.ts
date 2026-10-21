@@ -25,7 +25,7 @@ import { createExpoNativeEnvironment } from './native-environment'
 import { reactNativeAndroidToolchain } from './native-toolchain'
 import { awaitNativeExitCompletion, canAcceptNativeReport, evaluateNativeWait } from './native-wait'
 import { stopOwnedProcess } from './process'
-import { createRuntimeArtifacts } from './runtime-artifacts'
+import { createRuntimeArtifacts, runtimeArtifactIdentity } from './runtime-artifacts'
 import { validateReactNativeReport } from './reports'
 import { reactNativeVersions, RN_CATALOG_HASH, RN_FIXTURE_HASH } from './catalog'
 import { captureNativePair, validateNativeArtifacts } from './pair-evidence'
@@ -50,7 +50,8 @@ if (platform !== 'android' && platform !== 'ios') { throw new Error('Usage: tsx 
 
 const repoRoot = path.resolve(import.meta.dirname, '../..')
 const exampleRoot = path.resolve(repoRoot, 'examples/react-native-expo')
-const artifactSession = await createRuntimeArtifacts(path.resolve(repoRoot, `e2e/.artifacts/react-native-${platform}`))
+const runId = process.env['TAILWIND_E2E_RUN_ID'] ?? randomUUID()
+const artifactSession = await createRuntimeArtifacts(path.resolve(repoRoot, `e2e/.artifacts/react-native-${platform}`), runtimeArtifactIdentity('react-native', `react-native-${platform}`, runId))
 const artifacts = artifactSession.directory
 const reportsDir = path.resolve(repoRoot, 'e2e/react-native/reports/v2')
 const markerFile = path.resolve(exampleRoot, 'src/hmr-marker.ts')
@@ -58,7 +59,6 @@ const cssFile = path.resolve(exampleRoot, 'global.css')
 const metroLogPath = path.resolve(artifacts, 'metro.log')
 const reports: ReportEnvelope[] = []
 const updateBaseline = process.env['RN_UPDATE_BASELINE'] === '1'
-const runId = process.env['TAILWIND_E2E_RUN_ID'] ?? randomUUID()
 const clientToken = randomUUID()
 let semanticDevice = ''
 const semanticReporter = createSemanticReporter<ReportEnvelope>({ runId, catalogHash: RN_CATALOG_HASH, fixtureHash: RN_FIXTURE_HASH, versions: reactNativeVersions() }, async (pair, cancelSignal) => {
@@ -369,8 +369,6 @@ function withNativeEnvironment(report: ReactNativeReport, environment: Partial<R
 
 async function main() {
   const toolchain = platform === 'android' ? await reactNativeAndroidToolchain() : undefined
-  await fs.rm(artifacts, { recursive: true, force: true })
-  await fs.mkdir(artifacts, { recursive: true })
   if (updateBaseline) { await fs.mkdir(reportsDir, { recursive: true }) }
   const originalMarker = await fs.readFile(markerFile, 'utf8')
   const originalCss = await fs.readFile(cssFile, 'utf8')

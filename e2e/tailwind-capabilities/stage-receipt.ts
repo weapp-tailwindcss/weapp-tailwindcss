@@ -9,13 +9,26 @@ import { EnvironmentBlockedError, environmentFailure, findEnvironmentBlock } fro
 
 export const stageBindingVariable = 'TAILWIND_E2E_STAGE_BINDING'
 type Producer = 'lynx-native' | 'react-native' | 'expo-web' | 'weapp' | 'mini-builds'
-interface StageBinding {
+export interface StageBinding {
   version: 1
   runId: string
   target: string
   invocationId: string
   producer: Producer
   file: string
+}
+
+/** 入口读取同一份生产者绑定，供终态与启动前诊断共同使用。 */
+export function producerStageBinding(producer: Producer): StageBinding | undefined {
+  const source = process.env[stageBindingVariable]
+  if (!source) {
+    return
+  }
+  const binding = parseBinding(source)
+  if (binding.producer !== producer) {
+    throw new EnvironmentBlockedError('阶段生产者与本次调用不符')
+  }
+  return binding
 }
 
 function registeredProducer(target: string): Producer | undefined {
@@ -78,13 +91,9 @@ function ownedEnvironmentFailure(error: unknown): string | undefined {
 
 /** 宿主收尾完成后写终态，缺失或错误身份的回执不能放行。 */
 export async function runStageProducer<T>(producer: Producer, run: () => Promise<T>): Promise<T> {
-  const source = process.env[stageBindingVariable]
-  if (!source) {
+  const binding = producerStageBinding(producer)
+  if (!binding) {
     return run()
-  }
-  const binding = parseBinding(source)
-  if (binding.producer !== producer) {
-    throw new EnvironmentBlockedError('阶段生产者与本次调用不符')
   }
   await mkdir(path.dirname(binding.file), { recursive: true })
   let status: 'completed' | 'failed' | 'blocked' = 'completed'

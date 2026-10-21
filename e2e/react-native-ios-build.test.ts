@@ -1,4 +1,4 @@
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { access, cp, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
@@ -40,7 +40,13 @@ async function fixture() {
   const options = { project, artifacts, bundleId, device, metroUrl: 'http://127.0.0.1:8081' }
   const execute = vi.fn(async (file: string, args: string[], _cwd?: string, _stream?: boolean) => {
     if (file === 'xcodebuild' && args.includes('-showBuildSettings')) {
-      return settings
+      const selected = args[args.indexOf('-derivedDataPath') + 1]!
+      const output = path.join(selected, path.relative(derived, application))
+      return settings.replaceAll(JSON.stringify(path.dirname(application)).slice(1, -1), JSON.stringify(path.dirname(output)).slice(1, -1))
+    }
+    if (file === 'xcodebuild' && args.includes('build')) {
+      const selected = args[args.indexOf('-derivedDataPath') + 1]!
+      await cp(application, path.join(selected, path.relative(derived, application)), { recursive: true })
     }
     if (file === 'plutil') {
       return args[1] === 'CFBundleIdentifier' ? bundleId : 'RNApp'
@@ -160,6 +166,78 @@ it('构建失败不安装，保留原始失败阶段', async () => {
   await expect(buildAndLaunchIos(current.options, current.execute)).rejects.toThrow('compile failed')
   expect(current.execute.mock.calls.some(([file]) => file === 'xcrun')).toBe(false)
   expect(JSON.parse(await readFile(path.join(current.options.artifacts, 'ios-build.json'), 'utf8'))).toMatchObject({ stage: 'build', failure: 'Error: compile failed' })
+})
+
+it('CocoaPods 和证据保存同时失败仍保留主错误并清理构建目录', async () => {
+  const current = await fixture()
+  const original = current.execute.getMockImplementation()!
+  const primary = new Error('original pod install failure')
+  let scratch = ''
+  current.execute.mockImplementation(async (file, args) => {
+    if (file === 'pod') {
+      const receipt = path.join(current.options.artifacts, 'ios-build.json')
+      scratch = JSON.parse(await readFile(receipt, 'utf8')).scratch.directory
+      await rm(receipt)
+      await mkdir(receipt)
+      throw primary
+    }
+    return original(file, args)
+  })
+  const result = await buildAndLaunchIos(current.options, current.execute).catch(error => error)
+  expect(result).toBeInstanceOf(AggregateError)
+  expect(result.errors[0].errors[0]).toBe(primary)
+  await expect(access(scratch)).rejects.toMatchObject({ code: 'ENOENT' })
+  expect(current.execute.mock.calls.some(([file]) => file === 'xcodebuild')).toBe(false)
+})
+
+it('连续构建的二进制 plist 不进入下一轮 CocoaPods 源码扫描且只清理本轮目录', async () => {
+  const current = await fixture()
+  const original = current.execute.getMockImplementation()!
+  const outputs: string[] = []
+  let application = ''
+  async function scan(directory: string): Promise<void> {
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      const file = path.join(directory, entry.name)
+      if (entry.isDirectory()) {
+        await scan(file)
+      }
+      else if (entry.name === 'Info.plist') {
+        new TextDecoder('utf-8', { fatal: true }).decode(await readFile(file))
+      }
+    }
+  }
+  current.execute.mockImplementation(async (file, args) => {
+    if (file === 'pod') {
+      await scan(current.ios)
+    }
+    if (file === 'xcodebuild') {
+      const derived = args[args.indexOf('-derivedDataPath') + 1]!
+      application = path.join(derived, 'Build', 'Products', 'Debug-iphonesimulator', 'RN App.app')
+      if (args.includes('build')) {
+        outputs.push(derived)
+        await mkdir(application, { recursive: true })
+        await writeFile(path.join(application, 'RNApp'), 'binary')
+        await writeFile(path.join(application, 'Info.plist'), new Uint8Array([98, 112, 108, 105, 115, 116, 48, 48, 128, 255]))
+        await rm(current.container, { recursive: true })
+        await cp(application, current.container, { recursive: true })
+        return ''
+      }
+      if (args.includes('-showBuildSettings')) {
+        return JSON.stringify([{ buildSettings: { PRODUCT_BUNDLE_IDENTIFIER: bundleId, WRAPPER_EXTENSION: 'app', TARGET_BUILD_DIR: path.dirname(application), FULL_PRODUCT_NAME: path.basename(application) } }])
+      }
+    }
+    return original(file, args)
+  })
+  await buildAndLaunchIos(current.options, current.execute)
+  await buildAndLaunchIos(current.options, current.execute)
+  expect(new Set(outputs).size).toBe(2)
+  for (const output of outputs) {
+    await expect(access(output)).rejects.toMatchObject({ code: 'ENOENT' })
+  }
+  await expect(access(current.container)).resolves.toBeUndefined()
+  await expect(access(current.derived)).resolves.toBeUndefined()
+  const evidence = JSON.parse(await readFile(path.join(current.options.artifacts, 'ios-build.json'), 'utf8'))
+  expect(evidence.scratch).toMatchObject({ directory: path.dirname(outputs[1]!), status: 'removed' })
 })
 
 it('工程歧义、越界产物和错误应用身份必须拒绝', async () => {
