@@ -3,7 +3,7 @@ import postcss from 'postcss'
 import valueParser from 'postcss-value-parser'
 import { getCssAtRulePrelude, getCssCustomPropertyName } from '../utils/css-custom-property'
 import { COLOR_MIX_NAME, MODERN_COLOR_FUNCTION_NAMES } from './color-mix/constants'
-import { hasUnsupportedModernColorFunction, isDisplayP3ColorFunction, isModernColorSyntaxFunction } from './color-mix/modern'
+import { hasUnsupportedModernColorFunction, hasUnsupportedModernColorNodes, isDisplayP3ColorFunction, isModernColorSyntaxNode, mayHaveModernColorFunction } from './color-mix/modern'
 import { normalizeStandaloneColorFunction } from './color-mix/parse'
 import { tryResolveColorMix } from './color-mix/resolve'
 import { lowerStaticColorMixSupports } from './color-mix/supports'
@@ -100,7 +100,7 @@ export function normalizeModernColorValue(
   value: string,
   customPropertyValues: ReadonlyMap<string, string> = new Map(),
 ): ModernColorValueNormalization {
-  if (!hasUnsupportedModernColorFunction(value)) {
+  if (!mayHaveModernColorFunction(value)) {
     return {
       value,
       changed: false,
@@ -117,14 +117,13 @@ export function normalizeModernColorValue(
     }
 
     const name = node.value.toLowerCase()
-    const source = valueParser.stringify(node)
     let normalized: string | undefined
     if (
       MODERN_COLOR_FUNCTION_NAMES.has(name)
-      || (name === 'color' && isDisplayP3ColorFunction(source))
-      || isModernColorSyntaxFunction(source)
+      || (name === 'color' && isDisplayP3ColorFunction(valueParser.stringify(node)))
+      || isModernColorSyntaxNode(node)
     ) {
-      normalized = normalizeStandaloneColorFunction(source)
+      normalized = normalizeStandaloneColorFunction(valueParser.stringify(node))
     }
     else if (name === COLOR_MIX_NAME) {
       normalized = tryResolveColorMix(node, customPropertyValues)?.value
@@ -146,7 +145,8 @@ export function normalizeModernColorValue(
   return {
     value: nextValue,
     changed,
-    hasUnsupported: hasUnsupportedModernColorFunction(nextValue),
+    // 转换器可能保留动态 alpha 子树，必须按实际输出重新验证。
+    hasUnsupported: changed ? hasUnsupportedModernColorFunction(nextValue) : hasUnsupportedModernColorNodes(parsed),
   }
 }
 

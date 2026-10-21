@@ -7,6 +7,7 @@ regressions:
   - packages/postcss/test/css-source-trace-cache.test.ts
   - packages/postcss/test/root-cache.test.ts
   - packages/postcss/test/custom-property-function-analysis.test.ts
+  - packages/postcss/test/modern-color-function-analysis.test.ts
 ---
 
 # CSS 热更新的缓存与来源边界
@@ -40,6 +41,18 @@ PR #1314 的性能工件把 Taro Vite React 热更新退化定位到 CSS task：
 函数分析改动以同一命令验证为 157 文件、1842 项通过、3 项既有跳过；新增12项覆盖无关函数的零解析、完整主题、大小写和转义引用、嵌套依赖、attr 与 CSS-wide 关键字边界。首次新增回归中两项正确失败，修复后通过。计数减少仍不能代替新的固定性能对照。
 
 源码 `2d73a95eb890375725ca113687eb575f93b09bf5` 对照固定基线 `7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5`，使用 `pnpm perf:guard --baseline-ref <基线> --build-runs 3 --hmr-runs 3 --timeout 180000 --poll-interval 30` 并定向 Mpx、Taro Vite React、weapp-vite 微信三项目，原5%阻断门禁通过，零违规。Taro build plugin 中位 2406→2515ms（+4.53%），构建总耗时中位 +0.048%；HMR plugin 中位 746→741ms、CSS task 中位 606.049→597.697ms。本轮没有重现旧 HMR CSS 增量，但构建期 CSS 仍增加45.565ms、候选准备墙钟仍增加61ms，不能宣布零成本或全部历史根因消除。Mpx 首轮 HMR RSS peak/steady 同步增加，门禁内置反向 current→baseline 核验未复现，作为两项观察保留，不改判为已查明宿主噪声。完整原始样本、反向核验、源码/锁文件身份及官方报告留在 `.tmp/perf-2d73a95/`，198失败留在 `.tmp/perf-198014/`；不以本轮成功覆写旧失败。
+
+### bc4 当前 CI 的反例与后续分析
+
+`bc4f4c546656a7e52f170433d7647cdb82227b23` 的 CI run `39564594524` 对照固定 `7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5` 仍失败：Mpx build plugin 中位 914→976ms（+6.7834%），RSS peak 1087.445→1224.375MiB（+12.5919%）、steady 1015.004→1162.109MiB（+14.4931%）；Taro Vite HMR plugin 稳态 P95 1751→1869ms（+6.7390%）。这否定了用此前本地通过替代当前 CI 的做法；原始失败和 5% 门槛保留，没有重跑该 head。
+
+原工件保留在 `.tmp/ci-bc4-performance/`，Mpx ZIP SHA256 为 `ec6bed37170efe412f3a6b7d8aba84df96aa3d23b5286db152265dd1af232b49`，Taro Vite 为 `b8447ceff7b447e131ba9e75f9c012680d568a84339ef48160ae06f07ea59370`。GC 时序显示 current 后两次采样前没有与 base 同时点的后期 major GC，不能由 RSS 直接断言长驻泄漏，也不能据此抹掉门禁失败。
+
+新的计数红例复现普通声明 15 次 value-parser 分配、嵌套普通函数逐节点重新 stringify/parse。改动只在无转义且明确不含已登记现代颜色函数时跳过解析；函数分类复用已有 FunctionNode。审查又以 `rgb(1 2 3 / var(--alpha, oklch(.6 .2 240)))` 固化一个新反例：转换器会保留动态 alpha 子树，替换后仅检查原 AST 会漏掉现代 fallback。最终仅未修改的输入复用原 AST，转换输出继续按真实字符串重验；没有把替换 word 当作已证明安全的颜色。
+
+包含未提交优化的辅助工作树以 `CI=1 pnpm --filter @weapp-tailwindcss/postcss exec vitest run --maxWorkers=1 --update=none` 验证为 158 文件、1859 项通过、3 项既有跳过；新计数红例、嵌套 alpha 红例及111项定向颜色回归分别保留在 `.tmp/modern-color-function-analysis-red.log`、`.tmp/modern-color-alpha-recheck-red.log`、`.tmp/modern-color-function-analysis-final.log`。该项仍需新的固定性能对照和准确 head CI，不能提前宣布性能失败已经修复。
+
+同一工作树的 PostCSS 构建通过；主包 PostCSS、生成及 Vite 消费定向回归为6文件63项通过。ESLint、`pnpm agents:check`、`git diff --check` 和 `pnpm release status` 通过。后者确认已有中文 intent 覆盖 PostCSS 及依赖消费者，没有发布版本。
 
 ## 适用边界
 
