@@ -142,6 +142,14 @@ main 和此前 b40 的旧 resolver 会直接覆盖原色 alpha，缺少运行时
 
 完整日志保留在 `.tmp/full-acceptance-7ce.log`、`.tmp/static-7ce-{lynx,rn}-update.log`、`.tmp/static-7ce-lynx-verify.log` 与 `.tmp/static-7ce-rn-{chromium,firefox,webkit}.log`；三引擎本轮报告、PNG 和阶段索引在 `e2e/.artifacts/react-native-web-<browser>/`。此次静态重生成不代表 RN/Lynx 新 head 原生通过；再次全面执行仍需重新提交并完成新一轮扩展预检。
 
+### 全量并发下的语义单测逻辑时钟
+
+`e9333df3f876516e77d5408b9e4080d2c1c670f5` 重新取得扩展预检 `5f7604ac-7c79-42c5-a9b7-2c72ac85e03e`，全部脚本探针、后台 IAB 真实交互和 verify 通过。root build 71/71 通过（包含缓存命中）；单测 972 文件、10,434 项通过，2 文件、2 项失败，另有 5 文件、44 项既有跳过和 1 项预期失败。第 3–57 阶段与独立 Tailwind 15 目标未执行；报告已 finished，服务退出。完整日志为 `.tmp/full-acceptance-e933.log`。
+
+两项失败分别为 class 回滚未记录语义错误，以及 Iconify 注入负向检查收到通用产物等待超时。两份语义单测把真实文件 I/O 与 30ms/100ms wall-clock 截止绑定；全量并发时，文件 stat、展开和读取可能先耗尽预算，使语义检查没有进入或完成。生产等待器按绝对截止拒绝，现有证据不证明生产门禁错误。
+
+测试辅助层固定逻辑时钟并让低层轮询执行一次真实 predicate，仍保留真实文件 stat、mtime、路径展开、语义回调、取消和错误 cause；没有 mock 高层等待器或修改生产代码。class 错误断言收紧为必须包含原 alias，Iconify 原错误断言保留。新增真实等待器回归要求已经过期时拒绝，且不得为了补充语义错误执行回调；原超时、取消及稳定性测试继续执行。三文件 81 项定向通过：`CI=1 pnpm --filter weapp-tailwindcss exec vitest run test/watch-hmr-class-evidence.unit.test.ts test/watch-hmr-iconify-evidence.unit.test.ts test/watch-hmr-wait-deadline.unit.test.ts --update=none --coverage.enabled=false`。该结果不能替代修复后完整运行，重新全面执行须取得新的扩展 lease。
+
 ## 适用边界
 
 构建时只能安全解析完整依赖图中已证明为 0–100% 字面量的权重。未知运行时变量、局部/条件/注册覆盖、非法和循环依赖不能猜测。`@property` 的 percentage 类型不保证数值范围。

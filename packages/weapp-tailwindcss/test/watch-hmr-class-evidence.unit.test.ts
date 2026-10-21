@@ -1,15 +1,18 @@
+import type { ClassMutationConfig, CliOptions, UserReportedHotUpdateConfig, WatchCase, WatchSession } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/types'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { replaceWxml } from '../../../tools/weapp-tailwindcss-scripts/src/core/replace-wxml'
-import { assertClassTokensInOutput, assertPreviousClassEvidenceRemoved } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/class/evidence'
 import { assertRoundOutputs } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/class'
 import { assertClassOutputs } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/class/added-class'
+import { assertClassTokensInOutput, assertPreviousClassEvidenceRemoved } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/class/evidence'
 import { assertMainStyleOutputs } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/main-style'
-import { assertUserReportedOutputs } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/user-reported'
-import type { ClassMutationConfig, CliOptions, UserReportedHotUpdateConfig, WatchCase, WatchSession } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/types'
 import { readJoinedOutputFiles, waitForOutputFilesUpdated } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/shared'
+import { assertUserReportedOutputs } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/user-reported'
+import { mockOutputEvidencePoll } from './helpers/watch-evidence-poll'
+
+afterEach(() => vi.restoreAllMocks())
 
 const utility = 'text-[23px]'
 const escaped = replaceWxml(utility)
@@ -169,6 +172,7 @@ describe('watch mutation evidence entrypoints', () => {
   })
 
   it('does not let changed mtimes bypass saved-alias rollback evidence', async () => {
+    const polling = mockOutputEvidencePoll()
     const dir = await mkdtemp(path.join(os.tmpdir(), 'watch-class-rollback-'))
     try {
       const outputWxml = path.join(dir, 'output.wxml')
@@ -194,7 +198,8 @@ describe('watch mutation evidence entrypoints', () => {
             throw error
           }
         },
-      )).rejects.toThrow()
+      )).rejects.toThrow(alias)
+      expect(polling).toHaveBeenCalledOnce()
       expect(lastError).toBeInstanceOf(Error)
       expect((lastError as Error).message).toContain(alias)
     }
@@ -226,7 +231,8 @@ describe('watch mutation evidence entrypoints', () => {
     const restored = outputs(`<view class="${before}">issue-1002 ${utility}</view>`, `.${before}{font-size:12px}`)
     expect(() => assertUserReportedOutputs(watchCase, config, 'rollback', [before], [before], restored, active.evidence)).not.toThrow()
     expect(() => assertUserReportedOutputs(watchCase, config, 'rollback', [before], [before], {
-      ...restored, wxml: `<view class="${before} ${alias}">${utility}</view>`,
+      ...restored,
+      wxml: `<view class="${before} ${alias}">${utility}</view>`,
     }, active.evidence)).toThrow(alias)
     expect(() => assertUserReportedOutputs(watchCase, config, 'hot-update', [utility], [escaped], outputs(`<view>${utility}</view>`, reference))).toThrow(utility)
   })

@@ -4,10 +4,25 @@ import os from 'node:os'
 import path from 'node:path'
 import { setTimeout as delay } from 'node:timers/promises'
 import { describe, expect, it, vi } from 'vitest'
-import { waitForCompileSettled } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/shared'
+import { waitForCompileSettled, waitForOutputFilesUpdatedWithDiagnostics } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/shared'
 import { waitFor } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/text'
 
 describe('Watch 等待的绝对截止和生命周期', () => {
+  it('输出检查已过截止时，不能为了补充语义错误而执行回调', async () => {
+    const accepts = vi.fn(async () => true)
+    const output = path.resolve('expired-output.wxml')
+    await expect(waitForOutputFilesUpdatedWithDiagnostics(
+      { label: '语义截止' } as WatchCase,
+      [output],
+      new Map([[output, 0]]),
+      { timeoutMs: 30, pollMs: 2 } as CliOptions,
+      { ensureRunning() {} } as WatchSession,
+      Date.now() - 100,
+      accepts,
+    )).rejects.toThrow('output files were not updated after source change')
+    expect(accepts).not.toHaveBeenCalled()
+  })
+
   it('异步检查跨过截止后不能接受 true', async () => {
     await expect(waitFor(async () => {
       await delay(30)

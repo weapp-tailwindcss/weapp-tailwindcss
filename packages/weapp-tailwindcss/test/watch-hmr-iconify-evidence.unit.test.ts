@@ -12,6 +12,7 @@ import { assertIconifyConsumer } from '../../../tools/weapp-tailwindcss-scripts/
 import { createIconifyProbeSource } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/iconify/probe'
 import * as shared from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/shared'
 import * as text from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/text'
+import { mockOutputEvidencePoll } from './helpers/watch-evidence-poll'
 
 const roots: string[] = []
 const before = 'before:content-[\'before\']'
@@ -48,6 +49,7 @@ afterEach(async () => {
 })
 
 async function fixture(onWrite?: (source: string, watchCase: WatchCase) => Promise<void>) {
+  const polling = mockOutputEvidencePoll()
   const root = await mkdtemp(path.join(os.tmpdir(), 'iconify-evidence-'))
   roots.push(root)
   const sourceFile = path.join(root, 'page.vue')
@@ -81,6 +83,7 @@ async function fixture(onWrite?: (source: string, watchCase: WatchCase) => Promi
     css,
     sourceOriginal,
     sourceFile,
+    polling,
     run: () => runIconifyHotUpdate(watchCase, { timeoutMs: 100, pollMs: 1 } as CliOptions, {
       ensureRunning() {},
       pluginProcessSamplesSince: () => [],
@@ -95,8 +98,9 @@ async function emit(source: string, watchCase: WatchCase) {
 
 describe('Iconify HMR 的本轮产物证据', () => {
   it('已有 CSS 包含前后文案和图标，但编译器没有消费本轮源码时必须失败', async () => {
-    const { run } = await fixture()
+    const { run, polling } = await fixture()
     await expect(run()).rejects.toThrow(/iconify HMR inject/)
+    expect(polling).toHaveBeenCalledOnce()
   })
 
   it('使用已有模板 mutate 生成两个阶段的真实 class 消费，再撤销探针', async () => {
