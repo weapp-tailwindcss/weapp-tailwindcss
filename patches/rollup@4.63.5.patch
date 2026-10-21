@@ -102,7 +102,8 @@ diff --git a/dist/es/shared/watch.js b/dist/es/shared/watch.js
 -        const isTransformDependency = transformWatcherId !== null;
          const handleChange = (id, event) => {
 -            const changedId = transformWatcherId || id;
-             if (isLinux || isFreeBSD) {
+-            if (isLinux || isFreeBSD) {
++            if ((isLinux || isFreeBSD) && (!watcher.options.usePolling || event !== 'update')) {
                  // unwatching and watching fixes an issue with chokidar where on certain systems,
                  // a file that was unlinked and immediately recreated would create a change event
                  // but then no longer any further events
@@ -211,7 +212,8 @@ diff --git a/dist/shared/watch.js b/dist/shared/watch.js
 -        const isTransformDependency = transformWatcherId !== null;
          const handleChange = (id, event) => {
 -            const changedId = transformWatcherId || id;
-             if (isLinux || isFreeBSD) {
+-            if (isLinux || isFreeBSD) {
++            if ((isLinux || isFreeBSD) && (!watcher.options.usePolling || event !== 'update')) {
                  // unwatching and watching fixes an issue with chokidar where on certain systems,
                  // a file that was unlinked and immediately recreated would create a change event
                  // but then no longer any further events

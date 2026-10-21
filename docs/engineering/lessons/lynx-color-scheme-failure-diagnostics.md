@@ -7,6 +7,20 @@ regressions:
   - examples/react-lynx/src/compatibility/native-error-diagnostics.test.ts
   - e2e/lynx-native-failure.test.ts
   - e2e/lynx-failure-evidence.test.ts
+verification:
+  - claim: 本轮既有118个原生案例完成，深色模式六帧及三个切换回执通过独立生产校验器复核
+    kind: native
+    status: passed
+    sha: 13bbea6d9f99c3c152947c94a09c316ceecc9a8f
+    environment: macOS，Node24.18.0，pnpm12.14.0，iPhone17Pro/iOS26.5/arm64模拟器，Lynx4.0.1
+    command: CI=1 pnpm e2e:tailwind --preflight-report e2e/.artifacts/preflight/07b07c75-2948-4373-bd78-1a44b36304fd/report.json --target lynx-ios
+  - claim: 全面能力门禁拒绝将既有原生案例完成等同于全部能力通过
+    kind: integration
+    status: failed
+    sha: 13bbea6d9f99c3c152947c94a09c316ceecc9a8f
+    environment: 同轮iOS26.5原生运行，能力报告v2
+    command: CI=1 pnpm e2e:tailwind --preflight-report e2e/.artifacts/preflight/07b07c75-2948-4373-bd78-1a44b36304fd/report.json --target lynx-ios
+    reason: 17项通过、101项阻塞、1496项未执行，共1597项未通过；缺注册能力夹具和完整语义oracle
 ---
 
 # Lynx 颜色模式失败的跨桥诊断
@@ -41,9 +55,19 @@ bundle 的 `background.js:4461` 对应聚合抛错点，不能区分 switch、ca
 
 static 使用 `pnpm e2e:lynx:static:update` 定向重建 examples/react-lynx。生成/编码结论无变化，仅验证时间变化；审查后以 `CI=1` 和 `--update=none` 验证。错误树序列化自身未改变样式支持预期。
 
+### 13bbea6 本地原生结果
+
+fresh extended 预检 `07b07c75-2948-4373-bd78-1a44b36304fd` 的全部脚本、当前会话原生 Chrome 真实读图/输入/点击及 verify 通过。统一入口消费该报告，原生 run 为 `88379e69-458f-4959-920c-d3fc1e7f7761`；源码为上表完整 SHA，bundle SHA256 为 `b73b34e947d6e984b4ad36c3ab419fd7790fd3095f5ded93ee493977bfff4420`。
+
+本轮设备是 iPhone17Pro（deviceModel `iPhone18,1`）、iOS26.5/build23F77、arm64，视口402×874、DPR3。独立构建、安装和采集完成118例（53 supported、65预声明 unsupported），无 pending candidate。`variant-dark` 保留 light/dark/restored 的 probe/control 六帧、请求1/2/3和各自runId；像素重算得到 glyphPixels3740、corePixels3023、whiteMatch1、invalidGlyphColors0、backgroundMismatch0。
+
+运行完成后再次调用生产 `readNativeReport(reportPath, 'ios')`，独立校验181份附件的摘要、PNG、几何、候选和像素语义，全部通过。原件位于 `e2e/.artifacts/tailwind/88379e69-458f-4959-920c-d3fc1e7f7761/lynx-ios/native/`，包括report、raw-report、run-context、真实bundle/CSS/tasm、构建与设备命令和截图。预检报告已finished，挑战端口50036已确认为ECONNREFUSED，临时Chrome挑战标签已关闭。
+
+统一能力报告仍为17 passed、101 blocked、1496 not-run，scopeGaps1291。入口exit1，index登记attempted且blocked；这次没有原生采集故障，失败层级是缺完整encoding/runtime/visual语义判定和注册能力夹具。该结果不能改写为全面验收成功，也不能因exit1重跑原生。
+
 ## 适用边界
 
-这次修复的是诊断传输，尚未定位首轮真实颜色模式故障。下一次原生运行必须重新完成 extended prepare、当前会话 computer use 与 verify；不能复用0c五目标预检或工件。新运行即使成功也不代表旧超时或颜色模式故障根因消除。全面验收继续为 partial；RN served bundle、注册能力运行时、Image/ScrollView、转换 oracle 与 Web visited 等既有缺口单独保留。
+这次修复的是诊断传输，尚未定位首轮真实颜色模式故障。iOS26.5本地成功不能覆盖hosted iPhone16Pro/iOS18.5的旧失败，不能证明该根因消除。源码变化后的下一次原生运行必须重新完成 extended prepare、当前会话 computer use 与 verify；不能复用本轮lease。全面验收继续为 partial；RN served bundle、注册能力运行时、Image/ScrollView、转换 oracle 与 Web visited 等既有缺口单独保留。
 
 ## 规则评估
 
