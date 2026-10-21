@@ -51,9 +51,12 @@ export function getCssCustomPropertyName(source: string) {
 
 /** 以 CSS token 身份识别函数，包括十六进制转义的终止空白。 */
 export function hasCssFunction(value: string, name: string) {
-  return value.includes('(') && tokenize({ css: value }).some(token =>
-    token[0] === TokenType.Function && token[4].value.toLowerCase() === name,
-  )
+  // 没有转义且不存在目标拼写时无需 tokenize；潜在命中仍按 token 确认。
+  return value.includes('(')
+    && (value.includes('\\') || value.toLowerCase().includes(`${name.toLowerCase()}(`))
+    && tokenize({ css: value }).some(token =>
+      token[0] === TokenType.Function && token[4].value.toLowerCase() === name,
+    )
 }
 
 export function isCssVarFunction(name: string) {
@@ -63,7 +66,7 @@ export function isCssVarFunction(name: string) {
 /** 同时保留引用处的原始拼写，供底层 calc 匹配；安全判断只使用解码后的身份。 */
 export function getCssCalcVariableReferences(value: string) {
   const references = new Map<string, string>()
-  if (!value.includes('(')) {
+  if (!value.includes('(') || (!value.includes('\\') && !/var\(/i.test(value))) {
     return references
   }
   if (value.includes('\\')) {

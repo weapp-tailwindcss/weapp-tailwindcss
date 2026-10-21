@@ -5,6 +5,15 @@ import { decodeCssIdentifier, getCssAtRulePrelude, getCssCalcVariableReferences,
 
 const cssWideKeywords = new Set(['initial', 'inherit', 'unset', 'revert', 'revert-layer'])
 
+function isCssWideKeyword(value: string) {
+  if (cssWideKeywords.has(value.toLowerCase())) {
+    return true
+  }
+  // 只有转义或注释可能把其它拼写合成为一个 keyword token。
+  return (value.includes('\\') || value.includes('/*'))
+    && cssWideKeywords.has((decodeCssIdentifier(value) ?? '').toLowerCase())
+}
+
 export interface CustomPropertyValues {
   values: Map<string, string>
   dependencies: Set<string>
@@ -85,7 +94,7 @@ export function collectCustomPropertyValues(
       && isRootScopeSelector(rule.selector, rootScopeSelectors)
       && !decl.important
       && !elementDependent
-      && !cssWideKeywords.has((decodeCssIdentifier(value) ?? value).toLowerCase())
+      && !isCssWideKeyword(value)
 
     if (!isStableDeclaration) {
       dynamic.add(property)
@@ -146,9 +155,9 @@ function resolveStaticCustomPropertyValue(
     return undefined
   }
 
-  // Tailwind 主题变量绝大多数是直接颜色或长度值。它们不包含变量引用，
-  // 无需为每个声明构造 value-parser AST；只有别名链才需要递归解析。
-  if (!value.includes('(')) {
+  // 直接颜色、数学函数等没有变量依赖，无需再次构造替换用 AST。
+  const dependencies = getCssCalcVariableReferences(value)
+  if (dependencies.size === 0) {
     memo.set(property, value)
     return value
   }
@@ -156,7 +165,7 @@ function resolveStaticCustomPropertyValue(
   const nextResolving = new Set(resolving)
   nextResolving.add(property)
   // 保守检查 fallback 依赖，避免删除尚未证明稳定的引用后改变变量有效性。
-  for (const dependency of getCssCalcVariableReferences(value).values()) {
+  for (const dependency of dependencies.values()) {
     if (resolveStaticCustomPropertyValue(dependency, customPropertyValues, nextResolving, memo) === undefined) {
       memo.set(property, undefined)
       return undefined

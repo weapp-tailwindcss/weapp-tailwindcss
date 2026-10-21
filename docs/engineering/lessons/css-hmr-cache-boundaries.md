@@ -6,6 +6,7 @@ regressions:
   - packages/postcss/test/handler-cache-preparation.test.ts
   - packages/postcss/test/css-source-trace-cache.test.ts
   - packages/postcss/test/root-cache.test.ts
+  - packages/postcss/test/custom-property-function-analysis.test.ts
 ---
 
 # CSS 热更新的缓存与来源边界
@@ -26,9 +27,17 @@ PR #1314 的性能工件把 Taro Vite React 热更新退化定位到 CSS task：
 
 外部作者插件保持逐轮执行，不为不可缓存的阶段深度计算无用配置指纹。确定性的内置平台阶段在作者阶段完成后单独判断缓存。
 
+### 静态变量的函数分析
+
+198014fb5 的固定三轮对照仍失败：Taro build plugin 中位 2389→2525ms（+5.693%），三个样本均增加，5% 门槛保持不变。CSS task 中位增加 56.756ms，候选准备墙钟增加 77ms。各执行一次的 base/current CPU 采样显示颜色清理和稳定变量分析在 normalize、prune、finalize 多条调用链中消耗时间；它不能证明同一 AST 被重复处理，也未解释候选准备的墙钟增量。
+
+计数回归进一步复现：128 个不含变量的 `oklch()` 主题值触发 256 次 value-parser 调用及逐值 token 检查。函数分析现在先排除不可能含目标函数的无转义拼写；无变量依赖的稳定值保留原文，不再构造替换用 AST。潜在命中、大小写、转义函数及嵌套 fallback 仍完整解析；CSS-wide 关键字的注释和转义身份也继续参与资格否决。没有缓存可变 AST 或扩大静态化资格。
+
 ## 验证
 
 以 269585f809bd424aaa7bb8164a603fb17c296ef4 为基线的工作树中，`pnpm --filter @weapp-tailwindcss/postcss exec vitest run --update=none` 为 156 文件、1830 项通过，3 项既有跳过；PostCSS 构建通过。主包 PostCSS、生成、Vite 消费及增量兼容定向回归为 17 文件、137 项通过。定向回归约束解析次数、配置和来源失效、无效选择器、容量淘汰及作者插件副作用。先失败记录包括相同选择器解析 100 次、缓存命中反复准备、静态颜色的旧 Input 和警告的旧节点来源。
+
+函数分析改动以同一命令验证为 157 文件、1842 项通过、3 项既有跳过；新增12项覆盖无关函数的零解析、完整主题、大小写和转义引用、嵌套依赖、attr 与 CSS-wide 关键字边界。首次新增回归中两项正确失败，修复后通过。计数减少仍不能代替新的固定性能对照。
 
 ## 适用边界
 
