@@ -68,3 +68,14 @@ verification:
 使用既有失败保留、准确提交和独立证据规则，不新增AGENTS、不新增发布intent。
 
 Refs #1307, #1308, #1309
+
+
+## 2026-10-22 当前源码公开facade与CPU对照诊断
+
+在干净 `c0fce85fd52f554cccec41c472fe40fc639c69ea` 上仅执行一次本机诊断build（不是正式性能样本），公开Webpack facade、cssMatcher、SUMMARIZE tap与selector parser按正常模块加载之后插桩。8份CSS资产、原输入/输出hash及10份CPU profile完整保存，无截断，exit0。run `830b87e3-116c-4b70-af88-45766bd205df`，原件与分析在 `.tmp/mpx-trace/`、`.tmp/mpx-trace-analysis.log`。
+
+共5个annotate frame、166规则、159个唯一selector；159miss/7hit，0重复解析selector。完整ASCII单class/list规则132。parser同步累计0.939ms，trace累计3.417ms，且每个outputHash均绑定实际after-plugin资产。主线程profile窗6891.917ms中，annotate inclusive3.583ms/7samples（0.052%），collector inclusive1.583ms/5samples；parser7.x总27.665ms包含加载与其它转换，不能全算给trace。parser6.x来自Mpx style-helper/cssnano。9个worker均为Terser，无trace/parser6/7调用；最忙两个窗口498.792ms/552.835ms有重叠，不能相加。
+
+锁文件hash `765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb`，readerHash `4360413daf59947736c33eb52f65b085bfad7809206293608f04fa84eb42f59f`，主线程profile hash `17bb34f85cd50710a6918fd2876f6e5bcba230c91ee9202404d1aa8efa716464`。该证据不支持把full-selector reader猜作热点并优化。
+
+本机为macOS/Node24.18.0的单current插桩诊断；原失败是Linux/Node22.23.3、base10672.6229ms→current11266.745728ms（+594.1ms/+5.5668%），plugin602→655ms。缺同环境base profile，因此不能解释或撤销原5%门槛失败，也不能将其归为宿主噪声。没有重跑原作业或放宽阈值。
