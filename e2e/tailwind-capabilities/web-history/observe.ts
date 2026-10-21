@@ -1,7 +1,12 @@
+import type { Buffer } from 'node:buffer'
 import type { BrowserContext, Page } from 'playwright'
-import type { HistoryProfile, HistorySidecar, HistoryState } from './types'
+import type { HistoryProfile, HistorySidecar, HistorySnapshot, HistoryState } from './types'
+import { setTimeout as delay } from 'node:timers/promises'
+import { assertionPassed } from '../report'
 import { bounded } from '../web-native-media/deadline'
-import { historyElements, historyIdentity, historyPaths } from './fixtures'
+import { historyContract } from './contract'
+import { historyElements, historyIdentity, historyObservation, historyPaths, historyScreenshot, historyToken } from './fixtures'
+import { historySampleAssertions, historySnapshotValues } from './snapshot'
 
 export async function historyPage(context: BrowserContext, raw: HistorySidecar) {
   const pages = context.pages()
@@ -19,8 +24,9 @@ export async function historyPage(context: BrowserContext, raw: HistorySidecar) 
 }
 
 /** computed 与 matches 的隐私掩蔽只原样归档，颜色判定从 PNG 独立重算。 */
-export async function captureHistory(page: Page, name: HistoryState['name'], profile: HistoryProfile, raw: HistorySidecar, capture: (name: string) => Promise<string>, next: () => number) {
-  const observation = await bounded('历史状态绘制观察', () => page.evaluate(async ({ elements, colors }) => {
+async function captureSnapshot(page: Page, name: HistoryState['name'], profile: HistoryProfile, raw: HistorySidecar, capture: (name: string, timeoutMs: number) => Promise<{ file: string, bytes: Buffer }>, next: () => number, attempt?: number, deadline = performance.now() + 5_000) {
+  const token = historyToken(name, attempt)
+  const observation = await page.evaluate(async ({ elements, colors }) => {
     document.querySelectorAll<HTMLElement>('#identity i').forEach((node, index) => {
       node.style.backgroundColor = `rgb(${colors[index]!.join(',')})`
     })
@@ -35,6 +41,7 @@ export async function captureHistory(page: Page, name: HistoryState['name'], pro
       origin: location.origin,
       topOrigin: window.top!.location.origin,
       frames,
+      timeOrigin: performance.timeOrigin,
       links: Object.fromEntries(elements.map((id) => {
         const node = document.getElementById(id) as HTMLAnchorElement
         const style = getComputedStyle(node)
@@ -42,10 +49,70 @@ export async function captureHistory(page: Page, name: HistoryState['name'], pro
         return [id, { href: node.href, computed: style.borderTopColor, matchesVisited: node.matches(':visited'), borderWidth: style.borderTopWidth, borderStyle: style.borderTopStyle, rect: { left, top, width, height } }]
       })),
     }
-  }, { elements: historyElements, colors: historyIdentity(raw.runId, name, raw.generation!.cssHash, raw.engine) }))
-  const state: HistoryState = { name, profile: profile.name, profileId: profile.id, ...observation, screenshot: '', sequence: next() }
-  raw.states.push(state)
-  state.screenshot = await bounded('历史状态截图', () => capture(name))
+  }, { elements: historyElements, colors: historyIdentity(raw.runId, token, raw.generation!.cssHash, raw.engine, profile.id) })
+  const state: HistorySnapshot = { ...observation, name, profile: profile.name, profileId: profile.id, screenshot: '', sequence: next() }
+  const { file, bytes } = await capture(token, Math.max(1, deadline - performance.now()))
+  state.screenshot = file
+  return { state, bytes }
+}
+
+/** 返回导航不保证 visited 已绘制；只在同页固定预算内观察全部真实 PNG。 */
+export async function captureHistory(page: Page, name: HistoryState['name'], profile: HistoryProfile, raw: HistorySidecar, capture: (name: string, timeoutMs: number) => Promise<{ file: string, bytes: Buffer }>, next: () => number) {
+  if (name !== 'visited') {
+    const { state } = await bounded('历史状态绘制与截图', () => captureSnapshot(page, name, profile, raw, capture, next))
+    raw.states.push(state)
+  }
+  else {
+    const started = performance.now()
+    const trace: NonNullable<HistoryState['observation']> = { ...historyObservation, elapsedMs: 0, samples: [] }
+    const expected = historyContract(raw.runId).expectedValues
+    let final: HistoryState | undefined
+    try {
+      for (let attempt = 1; ; attempt++) {
+        const startedMs = performance.now() - started
+        const remaining = historyObservation.budgetMs - startedMs
+        if (remaining <= 0) {
+          throw new Error(`历史 visited 绘制未在 ${historyObservation.budgetMs}ms 内达成`)
+        }
+        let elapsedMs: number
+        try {
+          const { state, bytes } = await bounded('历史 visited 同页观察', () => captureSnapshot(page, name, profile, raw, capture, next, attempt, started + historyObservation.budgetMs), remaining)
+          const previous = trace.samples.at(-1)
+          const sample = { ...state, attempt, startedMs, elapsedMs: performance.now() - started }
+          trace.samples.push(sample)
+          if (final) {
+            Object.assign(final, state)
+          }
+          else {
+            final = { ...state, observation: trace }
+            raw.states.push(final)
+          }
+          const values = historySnapshotValues(state, bytes, historyToken(name, attempt), raw.generation!.cssHash, raw.engine, raw.runId, raw.origin, profile.id)
+          const sameDocument = !previous || (state.timeOrigin === previous.timeOrigin && state.frames[0]! > previous.frames[1]!)
+          const invariant = sameDocument && historySampleAssertions(values, expected, true).every(assertionPassed)
+          const ready = historySampleAssertions(values, expected).every(assertionPassed)
+          elapsedMs = sample.elapsedMs = performance.now() - started
+          if (elapsedMs > historyObservation.budgetMs) {
+            throw new Error(`历史 visited 绘制超过 ${historyObservation.budgetMs}ms 总预算`)
+          }
+          if (!invariant || ready) {
+            break
+          }
+        }
+        catch (error) {
+          raw.observationFailures.push({ attempt, startedMs, elapsedMs: performance.now() - started, screenshot: historyScreenshot(name, attempt), error: String(error) })
+          throw error
+        }
+        const nextSample = elapsedMs + historyObservation.intervalMs
+        while (performance.now() - started < Math.min(nextSample, historyObservation.budgetMs)) {
+          await delay(Math.max(1, Math.min(nextSample, historyObservation.budgetMs) - (performance.now() - started)))
+        }
+      }
+    }
+    finally {
+      trace.elapsedMs = performance.now() - started
+    }
+  }
   raw.lifecycle.push(`${name}:captured`)
 }
 

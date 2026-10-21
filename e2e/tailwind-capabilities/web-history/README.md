@@ -8,7 +8,9 @@
 
 点击监听器同步保存本轮 sessionStorage 事件回执，保留浏览器默认导航；到达同源目标后立即读取并移除这一独占键。不通过 pushState、history 数据库、forcePseudoState 或替代 class 制造访问状态。
 
-报告绑定 run、engine、实际 BrowserType、浏览器版本、生成 CSS、两份不同 profile 身份、导航与 HTTP 请求次序和三张 PNG。PNG 可见标记还绑定阶段、引擎和 CSS hash。统一报告与 coverage 门禁从磁盘重新读取并重算像素，不接受仅更新 receipt 后保留的旧 passed。
+初始与全新 profile 恢复仍各截图一次。visited 在同页固定两秒总预算内观察，采样间隔至少 100ms，预算包含绘制、截图、receipt 与 PNG 解码；不重新导航、不重启或清除历史。每次原图独立保存，仅同一张 PNG 的 probe 与手写 reference 四边同时达成且 control 保持原色才完成。身份、几何、control 污染或浏览器文档时钟变化立即失败。截图及文件错误保留原异常，不能冒充颜色未达成。
+
+外层报告继续 v2，私有 sidecar 升级 v3，绑定 run、engine、实际 BrowserType、浏览器版本、生成 CSS、两份不同 profile 身份、导航与 HTTP 请求次序和全部 PNG。PNG 可见标记绑定阶段、连续样本序号、profile、引擎和 CSS hash。统一报告与 coverage 门禁从磁盘重读全部样本并重算像素、连续次序、固定预算和首个成功帧停止；旧三帧协议不能直接充当新证据，即使重算 receipt 也不能保留旧 passed。观察超时后先结算存活的截图与 receipt，再清理 profile 和持久化报告，防止迟到写入。
 
 关闭失败会记录原始异常并保留无法确认关闭的自有 profile 目录；不升级为全局浏览器关闭。HTTP 启动失败由服务自身负责取消监听和收尾。所有资源归属只限于本次创建的对象与目录。
 

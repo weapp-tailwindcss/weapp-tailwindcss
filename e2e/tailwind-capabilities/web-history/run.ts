@@ -8,8 +8,9 @@ import { newReport, persistReport } from '../context'
 import { withGeneratorFixture } from '../fixture'
 import { digest } from '../identity'
 import { assertionPassed, receipt, validateCapabilityReport, verifyReportArtifacts } from '../report'
+import { withHistoryCapture } from './capture'
 import { historyContract } from './contract'
-import { historyCss, historyProbe, historyReference, historyStates, renderHistory } from './fixtures'
+import { historyCss, historyObservation, historyProbe, historyReference, historyStates, renderHistory } from './fixtures'
 import { captureHistory, historyPage, visitHistory } from './observe'
 import { withHistoryProfile } from './profile'
 import { replayHistory } from './replay'
@@ -25,8 +26,8 @@ export async function runHistoryWeb(base: RunContext, engine: BrowserEngine, bro
   }
   const context = { ...base, directory: path.join(base.directory, 'history') }
   const contract = historyContract(context.runId)
-  const report = await newReport(context, `web-${engine}`, [contract], { probe: historyProbe, css: historyCss, reference: historyReference, states: historyStates, html: renderHistory('GENERATED_CSS', 'RUN_ID') }, { engine, browserVersion: '', mode: 'native-http-history-and-png', browserOwnership: 'owned-persistent-profiles' })
-  const raw: HistorySidecar = { schemaVersion: 2, id: contract.id, runId: context.runId, engine, browserVersion: '', origin: '', profiles: [], lifecycle: [], states: [], navigation: [], requests: [], cleanup: { closedProfiles: [], removedProfiles: [], serverClosed: false, errors: [] }, warnings: [] }
+  const report = await newReport(context, `web-${engine}`, [contract], { probe: historyProbe, css: historyCss, reference: historyReference, states: historyStates, observation: historyObservation, html: renderHistory('GENERATED_CSS', 'RUN_ID') }, { engine, browserVersion: '', mode: 'native-http-history-and-png', browserOwnership: 'owned-persistent-profiles' })
+  const raw: HistorySidecar = { schemaVersion: 3, id: contract.id, runId: context.runId, engine, browserVersion: '', origin: '', profiles: [], lifecycle: [], states: [], navigation: [], requests: [], cleanup: { closedProfiles: [], removedProfiles: [], serverClosed: false, errors: [] }, warnings: [], observationFailures: [] }
   const artifacts: string[] = []
   let reason: string | undefined
   let sequence = 0
@@ -42,26 +43,28 @@ export async function runHistoryWeb(base: RunContext, engine: BrowserEngine, bro
       server = await historyServer(output.css, context.runId, raw, next)
       await withHistoryProfile(browserType, engine, 'history', raw, async (owned, profile) => {
         const page = await historyPage(owned, raw)
-        const capture = async (state: string) => {
+        const capture = async (state: string, timeoutMs: number) => {
           const name = `${historyProbe.id}-${state}.png`
-          await page.screenshot({ path: path.join(context.directory, name), fullPage: true, scale: 'css' })
+          const bytes = await page.screenshot({ path: path.join(context.directory, name), fullPage: true, scale: 'css', timeout: timeoutMs })
           artifacts.push(name)
           report.artifacts.push(await receipt(path.join(context.directory, name), context.directory, context.runId, [contract.id], 'screenshot'))
-          return name
+          return { file: name, bytes }
         }
-        await captureHistory(page, 'initial', profile, raw, capture, next)
-        await visitHistory(page, profile, raw, next)
-        await captureHistory(page, 'visited', profile, raw, capture, next)
+        await withHistoryCapture(capture, async (capture) => {
+          await captureHistory(page, 'initial', profile, raw, capture, next)
+          await visitHistory(page, profile, raw, next)
+          await captureHistory(page, 'visited', profile, raw, capture, next)
+        })
       })
       await withHistoryProfile(browserType, engine, 'fresh', raw, async (owned, profile) => {
         const page = await historyPage(owned, raw)
-        await captureHistory(page, 'restored', profile, raw, async (state) => {
+        await withHistoryCapture(async (state, timeoutMs) => {
           const name = `${historyProbe.id}-${state}.png`
-          await page.screenshot({ path: path.join(context.directory, name), fullPage: true, scale: 'css' })
+          const bytes = await page.screenshot({ path: path.join(context.directory, name), fullPage: true, scale: 'css', timeout: timeoutMs })
           artifacts.push(name)
           report.artifacts.push(await receipt(path.join(context.directory, name), context.directory, context.runId, [contract.id], 'screenshot'))
-          return name
-        }, next)
+          return { file: name, bytes }
+        }, capture => captureHistory(page, 'restored', profile, raw, capture, next))
       })
     })
   }

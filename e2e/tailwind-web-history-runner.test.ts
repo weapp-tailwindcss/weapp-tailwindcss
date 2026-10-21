@@ -1,6 +1,7 @@
 import type { BrowserType } from 'playwright'
 import type { RunContext } from './tailwind-capabilities/context'
 import type { HistorySidecar } from './tailwind-capabilities/web-history/types'
+import { Buffer } from 'node:buffer'
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -9,7 +10,7 @@ import { historyProbe } from './tailwind-capabilities/web-history/fixtures'
 import { runHistoryWeb } from './tailwind-capabilities/web-history/run'
 import { syntheticHistory } from './tailwind-capabilities/web-history/test-fixture'
 
-const mocks = vi.hoisted(() => ({ persist: vi.fn(), closed: vi.fn(), profile: vi.fn(), failure: '', badPng: false }))
+const mocks = vi.hoisted(() => ({ persist: vi.fn(), closed: vi.fn(), profile: vi.fn(), failure: '', badPng: false, captureStarted: false, releaseCapture: () => {} }))
 vi.mock('./tailwind-capabilities/fixture', () => ({ withGeneratorFixture: async (_root: string, _css: string, _files: unknown, run: (generator: unknown) => Promise<void>) => run({ generate: async () => ({ css: '.unit{}', classSet: new Set(['visited:border-[#123456]']) }) }) }))
 vi.mock('./tailwind-capabilities/context', () => ({
   newReport: async (context: RunContext, target: string, _contracts: unknown, _fixture: unknown, environment: Record<string, string>) => {
@@ -42,8 +43,16 @@ vi.mock('./tailwind-capabilities/web-history/profile', () => ({ withHistoryProfi
 } }))
 vi.mock('./tailwind-capabilities/web-history/observe', () => ({
   historyPage: async () => ({ screenshot: async ({ path: file }: { path: string }) => {
+    if (mocks.failure === 'late-capture' && path.basename(file).endsWith('visited-observation-1.png')) {
+      mocks.captureStarted = true
+      await new Promise<void>((resolve) => {
+        mocks.releaseCapture = resolve
+      })
+    }
     const fixture = syntheticHistory('unit-history', 'chromium', '.unit{}')
-    await writeFile(file, mocks.badPng ? 'invalid png' : fixture.screenshots.get(path.basename(file))!)
+    const bytes = mocks.badPng ? Buffer.from('invalid png') : fixture.screenshots.get(path.basename(file))!
+    await writeFile(file, bytes)
+    return bytes
   } }),
   visitHistory: async () => {
     if (mocks.failure === 'navigation') {
@@ -51,10 +60,14 @@ vi.mock('./tailwind-capabilities/web-history/observe', () => ({
     }
   },
   captureHistory: async (_page: unknown, state: string, _profile: unknown, _raw: unknown, capture: (state: string) => Promise<void>) => {
+    if (mocks.failure === 'late-capture' && state === 'visited') {
+      void capture('visited-observation-1').catch(() => {})
+      throw new Error('original observation budget exceeded')
+    }
     if (mocks.failure === state) {
       throw new Error(`${state} capture failed`)
     }
-    await capture(state)
+    await capture(state === 'visited' ? 'visited-observation-1' : state)
   },
 }))
 const directories: string[] = []
@@ -62,6 +75,8 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.failure = ''
   mocks.badPng = false
+  mocks.captureStarted = false
+  mocks.releaseCapture = () => {}
 })
 afterEach(async () => {
   await Promise.all(directories.splice(0).map(directory => rm(directory, { recursive: true, force: true })))
@@ -94,6 +109,29 @@ it('损坏PNG写为failed而不是丢失报告', async () => {
   const { report } = await run()
   expect(report.results[0]!.status).toBe('failed')
   expect(report.results[0]!.reason).toContain('原始证据复读失败')
+})
+it('观察超时后结算仍存活的截图与receipt再冻结报告，不留下迟到写入', async () => {
+  mocks.failure = 'late-capture'
+  let finished = false
+  const pending = run().then((result) => {
+    finished = true
+    return result
+  })
+  try {
+    await vi.waitFor(() => expect(mocks.captureStarted).toBe(true))
+    await new Promise(resolve => setTimeout(resolve, 30))
+    expect(finished).toBe(false)
+  }
+  finally {
+    mocks.releaseCapture()
+  }
+  const { report } = await pending
+  expect(report.results[0]!.status).toBe('failed')
+  expect(report.results[0]!.reason).toContain('original observation budget exceeded')
+  expect(report.artifacts.filter(item => item.kind === 'screenshot')).toHaveLength(2)
+  const frozen = JSON.stringify(report)
+  await new Promise(resolve => setTimeout(resolve, 10))
+  expect(JSON.stringify(report)).toBe(frozen)
 })
 it('过滤不匹配时不能启动profile或HTTP', async () => {
   await expect(runHistoryWeb({ root: 'unit', directory: 'unit', runId: 'unit', caseFilter: /^other$/ }, 'chromium', { name: () => 'chromium' } as BrowserType)).rejects.toThrow(/没有匹配/)

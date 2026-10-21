@@ -1,7 +1,7 @@
 import type { BrowserEngine } from '../types'
 import type { historyStates } from './fixtures'
 
-export interface HistoryState {
+export interface HistorySnapshot {
   name: typeof historyStates[number]
   profile: 'history' | 'fresh'
   profileId: string
@@ -12,8 +12,19 @@ export interface HistoryState {
   origin: string
   topOrigin: string
   frames: number[]
+  timeOrigin: number
   links: Record<string, { href: string, computed: string, matchesVisited: boolean, borderWidth: string, borderStyle: string, rect: { left: number, top: number, width: number, height: number } }>
   screenshot: string
+}
+
+export interface HistorySample extends HistorySnapshot {
+  attempt: number
+  startedMs: number
+  elapsedMs: number
+}
+
+export interface HistoryState extends HistorySnapshot {
+  observation?: { budgetMs: number, intervalMs: number, elapsedMs: number, samples: HistorySample[] }
 }
 
 export interface HistoryProfile {
@@ -44,7 +55,7 @@ export interface HistoryNavigation {
 }
 
 export interface HistorySidecar {
-  schemaVersion: 2
+  schemaVersion: 3
   id: string
   runId: string
   engine: BrowserEngine
@@ -58,5 +69,6 @@ export interface HistorySidecar {
   requests: { path: string, method: string, status: number, sequence: number }[]
   cleanup: { closedProfiles: string[], removedProfiles: string[], serverClosed: boolean, errors: string[] }
   warnings: string[]
+  observationFailures: { attempt: number, startedMs: number, elapsedMs: number, screenshot: string, error: string }[]
   error?: string
 }

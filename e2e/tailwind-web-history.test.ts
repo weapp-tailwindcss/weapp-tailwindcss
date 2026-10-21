@@ -3,6 +3,7 @@ import { expect, it } from 'vitest'
 import { digest } from './tailwind-capabilities/identity'
 import { assertionPassed } from './tailwind-capabilities/report'
 import { historyAssertions } from './tailwind-capabilities/web-history/contract'
+import { historyIdentity, historyToken } from './tailwind-capabilities/web-history/fixtures'
 import { syntheticHistory } from './tailwind-capabilities/web-history/test-fixture'
 
 function passed(fixture: ReturnType<typeof syntheticHistory>) {
@@ -122,6 +123,13 @@ it.each([['/owned/history', '/owned/fresh'], ['C:\\owned\\history', 'C:\\owned\\
     profile.id = digest({ runId: fixture.runId, engine: fixture.engine, directory: profile.directory })
     fixture.raw.states.filter(state => state.profileId === previous).forEach((state) => {
       state.profileId = profile.id
+      state.observation?.samples.forEach((sample) => {
+        sample.profileId = profile.id
+      })
+      const png = PNG.sync.read(fixture.screenshots.get(state.screenshot)!)
+      historyIdentity(fixture.runId, historyToken(state.name, 1), fixture.cssHash, fixture.engine, profile.id)
+        .forEach((color, i) => png.data.set([...color, 255], (162 * png.width + 24 + i * 4 + 2) * 4))
+      fixture.screenshots.set(state.screenshot, PNG.sync.write(png))
     })
     fixture.raw.navigation.filter(event => event.profileId === previous).forEach((event) => {
       event.profileId = profile.id

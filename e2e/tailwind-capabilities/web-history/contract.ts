@@ -3,13 +3,15 @@ import type { BrowserEngine, CaseContract, SemanticAssertion } from '../types'
 import type { HistorySidecar } from './types'
 import path from 'node:path'
 import { digest } from '../identity'
-import { readPixels, rgbaChannels } from '../web/pixels'
-import { historyCss, historyElements, historyIdentity, historyPaths, historyProbe, historyReference, historyStates } from './fixtures'
+import { assertionPassed } from '../report'
+import { rgbaChannels } from '../web/pixels'
+import { historyCss, historyElements, historyObservation, historyPaths, historyProbe, historyReference, historyScreenshot, historyStates, historyToken } from './fixtures'
+import { historySampleAssertions, historySnapshotValues } from './snapshot'
 
 export function historyContract(runId: string): CaseContract {
-  const expected: CaseContract['expectedValues'] = { 'generated': true, 'states/order': true, 'navigation/real-history': true, 'navigation/sequence': true, 'server/requests': true, 'profiles/independent': true, 'profiles/lifecycle': true, 'cleanup/profiles': true, 'cleanup/server': true, 'cleanup/no-errors': true }
+  const expected: CaseContract['expectedValues'] = { 'generated': true, 'states/order': true, 'navigation/real-history': true, 'navigation/sequence': true, 'server/requests': true, 'server/observation-sequence': true, 'profiles/independent': true, 'profiles/lifecycle': true, 'cleanup/profiles': true, 'cleanup/server': true, 'cleanup/no-errors': true, 'visited/observation/policy': true, 'visited/observation/trace': true, 'visited/observation/evidence': true, 'visited/observation/no-errors': true }
   for (const state of historyStates) {
-    Object.assign(expected, { [`${state}/fixture/id`]: historyProbe.id, [`${state}/fixture/run-id`]: runId, [`${state}/fixture/same-origin`]: true, [`${state}/fixture/url`]: true, [`${state}/profile`]: state === 'restored' ? 'fresh' : 'history', [`${state}/frames`]: true, [`${state}/pixel/identity`]: true })
+    Object.assign(expected, { [`${state}/fixture/id`]: historyProbe.id, [`${state}/fixture/run-id`]: runId, [`${state}/fixture/same-origin`]: true, [`${state}/fixture/url`]: true, [`${state}/profile`]: state === 'restored' ? 'fresh' : 'history', [`${state}/frames`]: true, [`${state}/clock`]: true, [`${state}/pixel/identity`]: true })
     for (const [index, id] of historyElements.entries()) {
       Object.assign(expected, { [`${state}/${id}/href`]: true, [`${state}/${id}/width`]: '8px', [`${state}/${id}/style`]: 'solid', [`${state}/${id}/rect/left`]: 24, [`${state}/${id}/rect/top`]: 24 + index * 40, [`${state}/${id}/rect/width`]: 160, [`${state}/${id}/rect/height`]: 40 })
       const rgba = state === 'visited' && id !== 'control' ? [18, 52, 86, 255] : [1, 2, 3, 255]
@@ -21,15 +23,7 @@ export function historyContract(runId: string): CaseContract {
     }
   }
   const names = Object.keys(expected)
-  return { id: `runtime/${historyProbe.id}`, candidate: historyProbe.candidate, features: [...historyProbe.features], fixture: JSON.stringify({ probe: historyProbe, css: historyCss, reference: historyReference, states: historyStates }), expectation: { support: 'supported', stage: 'runtime' }, requiredAssertions: names, expectedValues: expected, assertionStages: { generated: 'generation', ...Object.fromEntries(names.filter(name => name.includes('/pixel/')).map(name => [name, 'visual' as const])) } }
-}
-
-function validOrigin(origin: string) {
-  try {
-    const url = new URL(origin)
-    return url.protocol === 'http:' && url.hostname === '127.0.0.1' && Number(url.port) > 0 && url.origin === origin
-  }
-  catch { return false }
+  return { id: `runtime/${historyProbe.id}`, candidate: historyProbe.candidate, features: [...historyProbe.features], fixture: JSON.stringify({ probe: historyProbe, css: historyCss, reference: historyReference, states: historyStates, observation: historyObservation }), expectation: { support: 'supported', stage: 'runtime' }, requiredAssertions: names, expectedValues: expected, assertionStages: { generated: 'generation', ...Object.fromEntries(names.filter(name => name.includes('/pixel/')).map(name => [name, 'visual' as const])) } }
 }
 
 /** 隐私掩蔽的 computed 和 matches 只归档；绘制必须与独立颜色合同一致。 */
@@ -45,6 +39,9 @@ export function historyAssertions(raw: HistorySidecar, screenshots: ReadonlyMap<
   const restored = raw.states.find(state => state.name === 'restored')
   const targetRequest = raw.requests.find(request => request.path === paths.target)
   const sequence = [initial?.sequence, targetRequest?.sequence, click?.sequence, back?.sequence, visited?.sequence, restored?.sequence]
+  const fixtureRequests = raw.requests.filter(request => request.path === paths.fixture)
+  const traceSamples = visited?.observation?.samples ?? []
+  const allSequences = [initial?.sequence, ...traceSamples.map(sample => sample.sequence), restored?.sequence, ...raw.navigation.map(event => event.sequence), click?.eventSequence, ...raw.requests.map(request => request.sequence)]
   const values: Record<string, SemanticAssertion['actual'] | undefined> = {
     'generated': raw.generation?.cssHash === cssHash && raw.generation.candidates.includes(historyProbe.candidate),
     'states/order': digest(raw.states.map(state => state.name)) === digest(historyStates),
@@ -56,6 +53,8 @@ export function historyAssertions(raw: HistorySidecar, screenshots: ReadonlyMap<
     'cleanup/profiles': digest(raw.cleanup.closedProfiles) === digest(['history', 'fresh']) && digest(raw.cleanup.removedProfiles) === digest(['history', 'fresh']),
     'cleanup/server': raw.cleanup.serverClosed,
     'cleanup/no-errors': raw.cleanup.errors.length === 0,
+    'visited/observation/no-errors': raw.observationFailures.length === 0,
+    'server/observation-sequence': [2, 3].includes(fixtureRequests.length) && fixtureRequests[0]!.sequence < initial!.sequence && fixtureRequests.at(-1)!.sequence > visited!.sequence && fixtureRequests.at(-1)!.sequence < restored!.sequence && (fixtureRequests.length === 2 || (fixtureRequests[1]!.sequence > click!.sequence && fixtureRequests[1]!.sequence < back!.sequence)) && allSequences.every(value => Number.isInteger(value) && value! > 0) && new Set(allSequences).size === allSequences.length,
   }
   for (const name of historyStates) {
     const matching = raw.states.filter(state => state.name === name)
@@ -64,31 +63,22 @@ export function historyAssertions(raw: HistorySidecar, screenshots: ReadonlyMap<
     }
     const state = matching[0]!
     const profile = raw.profiles.find(profile => profile.name === (name === 'restored' ? 'fresh' : 'history'))
-    Object.assign(values, { [`${name}/fixture/id`]: state.id, [`${name}/fixture/run-id`]: state.runId, [`${name}/fixture/same-origin`]: validOrigin(raw.origin) && state.origin === raw.origin && state.topOrigin === raw.origin, [`${name}/fixture/url`]: state.url === fixtureUrl, [`${name}/profile`]: state.profileId === profile?.id ? state.profile : null, [`${name}/frames`]: state.frames.length === 2 && state.frames.every(Number.isFinite) && state.frames[1]! > state.frames[0]! })
-    const bytes = state.screenshot === `${historyProbe.id}-${name}.png` ? screenshots.get(state.screenshot) : undefined
-    if (bytes) {
-      const colors = historyIdentity(runId, name, cssHash, engine)
-      const pixels = readPixels(bytes, { left: 24, top: 160, width: 32, height: 4 }, colors.map((_, index) => ({ id: `identity-${index}`, x: (index + 0.5) / 8, y: 0.5, expected: [0, 0, 0, 0], tolerance: 0 })))
-      values[`${name}/pixel/identity`] = pixels.every((pixel, index) => digest(pixel.rgba) === digest([...colors[index]!, 255]))
-    }
-    for (const id of historyElements) {
-      const link = state.links[id]
-      values[`${name}/${id}/href`] = link?.href === (id === 'control' ? raw.origin + paths.control : target)
-      values[`${name}/${id}/width`] = link?.borderWidth
-      values[`${name}/${id}/style`] = link?.borderStyle
-      for (const field of ['left', 'top', 'width', 'height'] as const) {
-        values[`${name}/${id}/rect/${field}`] = link?.rect[field]
-      }
-      if (bytes && link && Object.values(link.rect).every(Number.isFinite) && link.rect.width > 0 && link.rect.height > 0) {
-        const samples = [{ id: 'top', x: 0.5, y: 0.1 }, { id: 'right', x: 0.975, y: 0.5 }, { id: 'bottom', x: 0.5, y: 0.9 }, { id: 'left', x: 0.025, y: 0.5 }]
-        const pixels = readPixels(bytes, link.rect, samples.map(sample => ({ ...sample, expected: [0, 0, 0, 0], tolerance: 0 })))
-        for (const pixel of pixels) {
-          for (const [channel, key] of rgbaChannels.entries()) {
-            values[`${name}/${id}/pixel/${pixel.id}/${key}`] = pixel.rgba[channel]
-          }
-        }
-      }
-    }
+    const sample = state.observation?.samples.at(-1)
+    const token = historyToken(name, sample?.attempt)
+    const expectedFile = historyScreenshot(name, sample?.attempt)
+    Object.assign(values, historySnapshotValues(state, state.screenshot === expectedFile ? screenshots.get(state.screenshot) : undefined, token, cssHash, engine, runId, raw.origin, profile?.id))
   }
+  const trace = visited?.observation
+  const samples = trace?.samples
+  values['visited/observation/policy'] = trace?.budgetMs === historyObservation.budgetMs && trace.intervalMs === historyObservation.intervalMs && Number.isFinite(trace.elapsedMs) && trace.elapsedMs >= 0 && trace.elapsedMs <= historyObservation.budgetMs
+  values['visited/observation/trace'] = Array.isArray(samples) && samples.length > 0 && samples.length <= Math.ceil(historyObservation.budgetMs / historyObservation.intervalMs) + 1 && samples.every((sample, index) => sample.name === 'visited' && sample.attempt === index + 1 && sample.screenshot === historyScreenshot('visited', index + 1) && Number.isFinite(sample.startedMs) && Number.isFinite(sample.elapsedMs) && sample.startedMs >= 0 && sample.elapsedMs >= sample.startedMs && sample.elapsedMs <= trace!.elapsedMs && sample.elapsedMs <= historyObservation.budgetMs && sample.sequence > (index ? samples[index - 1]!.sequence : back?.sequence ?? Infinity) && (!index || (sample.startedMs >= samples[index - 1]!.elapsedMs + historyObservation.intervalMs && sample.frames[0]! > samples[index - 1]!.frames[1]! && sample.timeOrigin === samples[0]!.timeOrigin))) && digest({ ...samples.at(-1), attempt: undefined, startedMs: undefined, elapsedMs: undefined }) === digest({ ...visited, observation: undefined })
+  values['visited/observation/evidence'] = Array.isArray(samples) && samples.length > 0 && samples.every((sample, index) => {
+    const token = historyToken('visited', index + 1)
+    const bytes = sample.screenshot === historyScreenshot('visited', index + 1) ? screenshots.get(sample.screenshot) : undefined
+    const sampleValues = historySnapshotValues(sample, bytes, token, cssHash, engine, runId, raw.origin, initial?.profileId)
+    const invariant = historySampleAssertions(sampleValues, contract.expectedValues, true).every(assertionPassed)
+    const ready = historySampleAssertions(sampleValues, contract.expectedValues).every(assertionPassed)
+    return invariant && (index === samples.length - 1 ? ready : !ready)
+  })
   return contract.requiredAssertions.map(name => ({ name, stage: contract.assertionStages?.[name] ?? 'runtime', actual: values[name] ?? null, expected: contract.expectedValues[name]! }))
 }
