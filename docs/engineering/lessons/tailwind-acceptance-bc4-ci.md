@@ -7,6 +7,8 @@ regressions:
   - packages/postcss/test/modern-color-function-analysis.test.ts
   - packages/weapp-tailwindcss/test/uni-app-x/web-runtime-properties.test.ts
   - packages/weapp-tailwindcss/test/bundlers/webpack-processed-css-source.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-css-finalizer.unit.test.ts
+  - scripts/ci/demo-matrix/color-contract.test.mjs
   - e2e/react-native-artifact-evidence.test.ts
   - e2e/react-native-phase-evidence.test.ts
   - e2e/lynx-failure-evidence.test.ts
@@ -85,7 +87,17 @@ React 与 Vue 的 Web static 都仅移除了重复的 `--spacing: 0.25rem` 表�
 
 在整合源码 d8575ffc 的干净工作树先运行四项目 `--build-only`，四项均以准确预期差异失败，原日志保留在 `.tmp/static-d857-before.log`。随后单独限定四项目 `--build-only --update`，只增加两条现代颜色值、移除两条重复 spacing 值，审查后以 `CI=1` 完整不更新复验。四项目各自 production、initial、replace、add、restore、refresh 全部通过，报告在 `.tmp/static-d857-none/report.json`，后台浏览器和开发服务按 runner 的 finally 关闭，源码恢复。没有更新小程序或原生基线，也没有放宽比较器。
 
-Nuxt 的后续 CI 同样停在 static：九个 utility 均在，保留 rgba、`#62748e` 和 `0.25rem`，旧基线还登记了额外十六进制、变量及 `.25rem` 表示。本地在同一整合源码独立复现，责任链和基线审查尚未完成；不据四项目成功自动登记 Nuxt 通过。
+### Nuxt 的最终产物与独立颜色参考
+
+Nuxt 的后续 CI 同样停在 static：九个 utility 均在，保留 rgba、`#62748e` 和 `0.25rem`，旧基线还登记了额外十六进制、变量及 `.25rem` 表示。本地在 d8575ffc 独立复现。Nuxt 显式采用 `legacy-web`，实际 entry 与两份 error CSS 的基础及现代 supports 声明都保留 `.8`，未出现后置不透明变量覆盖。Generic Web 的资产保留分支早于本 PR，旧变量基线来自 #1310；没有逐提交构建证据，不把差异归因于本次 Rsbuild 修复。
+
+先强化 Vite finalizer 持久回归：注册表故意保留旧变量、十六进制和数值表示，框架资产使用最终 rgba、`0.25rem` 及后置作者覆盖，断言严格采用框架正文。24 项通过。再使用 d8575ffc 归档的三份真实生产 CSS，在三个后台浏览器分别与手写 rgba / 十六进制参考比较，覆盖初始、同特异性后置规则、移除后恢复，共 27 次颜色、透明度、尺寸及 display 观察全部相等。这是实际生产 CSS 的浏览器验证，不是 Nuxt 生产应用运行。脚本、报告及 PNG 在本任务 `.tmp/nuxt-production-color-review/`，另有同级 `.mjs`。初次脚本把全部 CSS 误计为三份，实际另有不含 utility 的 pages CSS；在启动浏览器前失败，纠正为扫描四份、验证三份 utility CSS，未当成产品失败。
+
+矩阵原先只记录颜色，新增 Nuxt 独立参考并在每轮实际渲染后断言，错误颜色、背景变为不透明、缺证和替换参考均拒绝。首轮把 Canvas 结果直接与原始 RGBA 字节比较，暴露了采集模型错误：计算样式是正确的 `rgba(236,253,245,.8)`，透明底 Canvas 预乘/反预乘量化得到绿色 252。该失败在 `.tmp/static-2f612-nuxt-none/` 保留；未改产品 CSS，也未增加容差。改为在同一浏览器分别绘制实际颜色和独立 CSS 参考，严格比较四个字节，参考字符串必须与登记值相同，且两份采样都完整。
+
+单独限定 Nuxt `--build-only --update` 后，`CI=1 pnpm e2e:demo:matrix web/nuxt-vite-tailwindcss-v4:web` 完整通过 production、initial、replace、add、restore、refresh，颜色与透明度每轮检查。准确来源为 2f61269d 加本轮 finalizer/颜色证据改动及一份 static；最终报告 `.tmp/static-2f612-nuxt-none-canvas/report.json`。只同步这一份 Web 基线，不更新其他平台或改变支持预期。
+
+`CI=1 pnpm test:demo:matrix` 为 52 文件、397 项通过。随后补充稀疏采样数组拒绝回归，定向颜色合同为 9 项通过；没有把两次计数相加冒充一次全套执行。脚本与测试的定向 ESLint、`git diff --check`、`pnpm agents:check` 均通过。正常矩阵采样是稠密 Canvas 数组；稀疏数组保护不改变其渲染判定。
 
 ### 固定性能对照
 

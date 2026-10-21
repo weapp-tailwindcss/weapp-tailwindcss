@@ -36,7 +36,14 @@ export const demos = [
     demo(`web/${framework}-${bundler}-tailwindcss-v4`, bundler, ['web', 'weapp'], `src/App.${framework === 'react' ? 'tsx' : 'vue'}`, { node22: bundler === 'rsbuild' && framework === 'react' }),
   )),
   demo('web/vue-vite7-tailwindcss-v4', 'vite', ['web'], 'src/App.vue'),
-  demo('web/nuxt-vite-tailwindcss-v4', 'nuxt', ['web'], 'app/pages/index.vue', { node22: true }),
+  demo('web/nuxt-vite-tailwindcss-v4', 'nuxt', ['web'], 'app/pages/index.vue', {
+    node22: true,
+    // 独立参考来自默认 slate-500 与 emerald-50/80，避免仅记录颜色而不判定。
+    renderedColors: {
+      color: { property: 'color', value: '#62748e' },
+      opacity: { property: 'backgroundColor', value: 'rgba(236,253,245,.8)' },
+    },
+  }),
 ]
 
 export function isWeb(item) {
