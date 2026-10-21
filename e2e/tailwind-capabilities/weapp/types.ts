@@ -8,6 +8,7 @@ export interface WeappPhase {
   referenceExpected?: Readonly<Record<string, string>>
   witness?: { inline: string, expected: Readonly<Record<string, string>> }
   pixel?: { actual: Rgba, reference: Rgba, equal: boolean }
+  composite?: import('./compositing').WeappComposite
 }
 
 export interface WeappProbe {
@@ -35,7 +36,7 @@ export interface WeappObservation {
   actual: Record<string, string>
   reference: Record<string, string>
   witness: Record<string, string>
-  rectangles: { probe: WeappRect, reference: WeappRect, marker: WeappRect }
+  rectangles: { probe: WeappRect, reference: WeappRect, marker: WeappRect, foreground?: WeappRect, background?: WeappRect, gray?: WeappRect }
 }
 
 export interface WeappSidecar {

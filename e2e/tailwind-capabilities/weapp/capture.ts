@@ -1,12 +1,14 @@
 import type { Launcher } from '../../../scripts/wechat/automator'
 import type { RunContext } from '../context'
-import type { CapabilityReport } from '../types'
+import type { CapabilityReport, SemanticAssertion } from '../types'
 import type { WeappObservation, WeappProbe, WeappSidecar } from './types'
 import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { captureMiniProgramViewport } from '../../../scripts/demo-visual-e2e-report/mini-program-screenshot'
+import { PNG } from 'pngjs'
+import { captureMiniProgramViewport, cropMiniProgramViewport } from '../../../scripts/demo-visual-e2e-report/mini-program-screenshot'
 import { runWithCleanup } from '../../../scripts/e2e-preflight/cleanup'
 import { receipt } from '../report'
+import { assertWeappCompositeEncoding } from './compositing'
 import { weappStates } from './phases'
 import { weappPhaseInput } from './render'
 import { weappObservationAssertions } from './replay'
@@ -24,7 +26,7 @@ export async function captureWeappProbe(context: RunContext, report: CapabilityR
   const states = weappStates(probe)
   const inputs = states.map(state => weappPhaseInput(state, context.runId, probe.id, cssHash))
   await page.setData({ probe: { id: probe.id, text: !!probe.text, empty: !!probe.empty }, states: inputs, phaseIndex: 0, state: inputs[0] })
-  const assertions = []
+  const assertions: SemanticAssertion[] = []
   const artifacts: string[] = []
   const phases: WeappObservation[] = []
   await runWithCleanup(async () => {
@@ -37,8 +39,8 @@ export async function captureWeappProbe(context: RunContext, report: CapabilityR
         await toggle.tap()
       }
       await page.waitFor(200)
-      const [node, reference, marker, identity, witness] = await Promise.all(['#probe', '#reference', '#evidence-marker', '#identity', '#weight-witness'].map(selector => page.$(selector)))
-      if (!node || !reference || !marker || !identity || (state.witness && !witness)) {
+      const [node, reference, marker, identity, witness, foreground, background, gray] = await Promise.all(['#probe', '#reference', '#evidence-marker', '#identity', '#weight-witness', '#composite-foreground', '#composite-background', '#composite-gray'].map(selector => page.$(selector)))
+      if (!node || !reference || !marker || !identity || (state.witness && !witness) || (state.composite && (!foreground || !background || !gray))) {
         throw new Error(`${probe.id} 未渲染目标、参考、标记或变量见证`)
       }
       const data = await page.data()
@@ -51,7 +53,7 @@ export async function captureWeappProbe(context: RunContext, report: CapabilityR
         actual: await styles(node, state.expected),
         reference: await styles(reference, state.referenceExpected ?? state.expected),
         witness: witness ? await styles(witness, state.witness?.expected ?? {}) : {},
-        rectangles: { probe: await rectangle(node), reference: await rectangle(reference), marker: await rectangle(marker) },
+        rectangles: { probe: await rectangle(node), reference: await rectangle(reference), marker: await rectangle(marker), ...(state.composite ? { foreground: await rectangle(foreground!), background: await rectangle(background!), gray: await rectangle(gray!) } : {}) },
       }
       if (observation.name !== state.name || observation.index !== index) {
         throw new Error('微信实际阶段未按输入动作推进')
@@ -59,13 +61,18 @@ export async function captureWeappProbe(context: RunContext, report: CapabilityR
       const file = path.join(context.directory, `${probe.id}-${state.name}.png`)
       const image = await captureMiniProgramViewport(mini, file, 30_000)
       const metrics = JSON.parse(await readFile(`${file}.viewport.json`, 'utf8'))
+      const original = await readFile(`${file}.full.png`)
+      if (state.composite) {
+        assertWeappCompositeEncoding(original)
+      }
+      const raw = cropMiniProgramViewport(PNG.sync.read(original), metrics)
       phases.push(observation)
       for (const [artifact, kind] of [[file, 'screenshot'], [`${file}.full.png`, 'screenshot'], [`${file}.viewport.json`, 'measurements']] as const) {
         const entry = await receipt(artifact, context.directory, context.runId, [probe.id], kind)
         report.artifacts.push(entry)
         artifacts.push(entry.path)
       }
-      assertions.push(...weappObservationAssertions(probe, observation, image, metrics.windowWidth, context.runId, cssHash))
+      assertions.push(...weappObservationAssertions(probe, observation, image, metrics.windowWidth, context.runId, cssHash, raw))
     }
   }, async () => {
     const file = path.join(context.directory, `${probe.id}.json`)

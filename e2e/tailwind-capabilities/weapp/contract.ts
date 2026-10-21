@@ -1,5 +1,6 @@
 import type { CaseContract, SemanticAssertion } from '../types'
 import type { WeappProbe } from './fixtures'
+import { nominalCompositeSamples, weappCompositeAssertions } from './compositing'
 import { weappFeatureBindings } from './coverage'
 import { weappState, weappStates } from './phases'
 import { weappPhasePixelAssertions } from './pixels'
@@ -29,6 +30,7 @@ export function weappContract(probe: WeappProbe): CaseContract {
   const checks = weappStates(probe).flatMap(state => [
     ...weappRuntimeAssertions(probe, state.name, state.expected, state.referenceExpected ?? state.expected, state.witness?.expected),
     ...(state.pixel ? weappPhasePixelAssertions(state.name, state.pixel.actual, state.pixel.reference, state.pixel) : []),
+    ...(state.composite ? weappCompositeAssertions(state.name, nominalCompositeSamples(state.composite), state.composite) : []),
   ])
   return {
     id: probe.id,

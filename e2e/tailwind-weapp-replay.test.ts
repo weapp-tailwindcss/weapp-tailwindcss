@@ -31,6 +31,14 @@ it('非像素案例也必须保留完整目标、参考和标记几何', async (
   await expect(verifyReportArtifacts(report, directory)).rejects.toThrow()
 })
 
+it.each(['foreground', 'background', 'gray'] as const)('合成证据缺少独立 %s 控制不能重放通过', async (name) => {
+  const { directory, report, sidecar } = await fixture('alpha-half')
+  Reflect.deleteProperty(sidecar.phases[0]!.rectangles, name)
+  await writeFile(path.join(directory, 'alpha-half.json'), JSON.stringify(sidecar))
+  await resignWeappFixture(report, directory)
+  await expect(verifyReportArtifacts(report, directory)).rejects.toThrow()
+})
+
 it('before 和 restored 颜色相同仍不能交换本轮阶段图', async () => {
   const { directory, report } = await fixture()
   for (const suffix of ['', '.full.png', '.viewport.json']) {

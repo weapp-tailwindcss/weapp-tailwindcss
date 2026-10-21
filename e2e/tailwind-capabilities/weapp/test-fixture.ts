@@ -7,6 +7,7 @@ import { PNG } from 'pngjs'
 import { digest } from '../identity'
 import { receipt } from '../report'
 import { weappFixtureCss } from './alpha-fixtures'
+import { compositeGray, nominalCompositeSamples, weappCompositeAssertions } from './compositing'
 import { weappContract, weappRuntimeAssertions } from './contract'
 import { weappMarker } from './marker'
 import { weappStates } from './phases'
@@ -39,7 +40,7 @@ export async function weappReplayFixture(root: string, probe: WeappProbe) {
   const assertions = []
   const metrics = { screenWidth: 200, screenHeight: 240, screenTop: 20, windowWidth: 200, windowHeight: 220, hasNativeTabBar: false }
   for (const [index, state] of weappStates(probe).entries()) {
-    const rectangles = { marker: { left: 8, top: 8, width: 64, height: 32 }, probe: { left: 10, top: 60, width: 80, height: 48 }, reference: { left: 10, top: 130, width: 80, height: 48 } }
+    const rectangles: WeappObservation['rectangles'] = { marker: { left: 8, top: 8, width: 64, height: 32 }, probe: { left: 10, top: 60, width: 80, height: 48 }, reference: { left: 10, top: 130, width: 80, height: 48 }, ...(state.composite ? { foreground: { left: 110, top: 60, width: 20, height: 20 }, background: { left: 140, top: 60, width: 20, height: 20 }, gray: { left: 170, top: 60, width: 20, height: 20 } } : {}) }
     const image = new PNG({ width: 200, height: 220 })
     image.data.fill(255)
     const paint = (left: number, top: number, width: number, height: number, rgba: readonly number[]) => {
@@ -57,6 +58,14 @@ export async function weappReplayFixture(root: string, probe: WeappProbe) {
       paint(10, 60, 80, 48, state.pixel.actual)
       paint(10, 130, 80, 48, state.pixel.reference)
     }
+    if (state.composite) {
+      const samples = nominalCompositeSamples(state.composite)
+      paint(10, 60, 80, 48, samples.actual)
+      paint(10, 130, 80, 48, samples.reference)
+      paint(110, 60, 20, 20, state.composite.foreground)
+      paint(140, 60, 20, 20, state.composite.background)
+      paint(170, 60, 20, 20, compositeGray)
+    }
     const full = new PNG({ width: 200, height: 240 })
     full.data.fill(255)
     PNG.bitblt(image, full, 0, 0, 200, 220, 0, 20)
@@ -68,7 +77,7 @@ export async function weappReplayFixture(root: string, probe: WeappProbe) {
     const reference = { ...(state.referenceExpected ?? state.expected) }
     const witness = { ...state.witness?.expected }
     phases.push({ name: state.name, index, input: weappPhaseInput(state, runId, probe.id, cssHash), identityText: `${runId}|${probe.id}|${state.name}`, actual, reference, witness, rectangles })
-    assertions.push(...weappRuntimeAssertions(probe, state.name, actual, reference, witness), ...(state.pixel ? weappPhasePixelAssertions(state.name, state.pixel.actual, state.pixel.reference, state.pixel) : []))
+    assertions.push(...weappRuntimeAssertions(probe, state.name, actual, reference, witness), ...(state.pixel ? weappPhasePixelAssertions(state.name, state.pixel.actual, state.pixel.reference, state.pixel) : []), ...(state.composite ? weappCompositeAssertions(state.name, nominalCompositeSamples(state.composite), state.composite) : []))
   }
   const sidecar: WeappSidecar = { schemaVersion: 2, runId, caseId: probe.id, cssHash, sourceHash: identity.sourceHash, fixtureHash: identity.fixtureHash, phases }
   await save(`${probe.id}.json`, JSON.stringify(sidecar), 'measurements')

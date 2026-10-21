@@ -49,15 +49,15 @@ it.each([false, true])('采集通过页面动作接口推进阶段，失败时�
           return { tap }
         }
         const phase = sidecar.phases[index]!
-        const name = selector === '#probe' ? 'probe' : selector === '#reference' ? 'reference' : 'marker'
+        const name = selector === '#probe' ? 'probe' : selector === '#reference' ? 'reference' : selector === '#composite-foreground' ? 'foreground' : selector === '#composite-background' ? 'background' : selector === '#composite-gray' ? 'gray' : 'marker'
         return {
           text: async () => phase.identityText,
           style: async (property: string) => {
             events.push(`style/${index}/${selector}/${property}`)
             return (selector === '#probe' ? phase.actual : selector === '#reference' ? phase.reference : phase.witness)[property]
           },
-          offset: async () => ({ left: phase.rectangles[name].left, top: phase.rectangles[name].top }),
-          size: async () => ({ width: phase.rectangles[name].width, height: phase.rectangles[name].height }),
+          offset: async () => ({ left: phase.rectangles[name]!.left, top: phase.rectangles[name]!.top }),
+          size: async () => ({ width: phase.rectangles[name]!.width, height: phase.rectangles[name]!.height }),
         }
       }),
     }

@@ -8,6 +8,7 @@ import { cropMiniProgramViewport } from '../../../scripts/demo-visual-e2e-report
 import { normalizeScreenshotToSrgb } from '../../../scripts/demo-visual-e2e-report/screenshot-color'
 import { digest } from '../identity'
 import { assertionPassed } from '../report'
+import { assertWeappCompositeEncoding, weappCompositeAssertions } from './compositing'
 import { weappContract, weappRuntimeAssertions } from './contract'
 import { weappProbes } from './fixtures'
 import { verifyWeappMarker, weappMarker } from './marker'
@@ -15,13 +16,14 @@ import { weappState, weappStates } from './phases'
 import { sampleWeappPixel, weappPhasePixelAssertions } from './pixels'
 import { weappPhaseInput, weappProjectFiles, weappRuntimeFixture } from './render'
 
-export function weappObservationAssertions(probe: WeappProbe, observation: WeappObservation, image: PngImage, viewportWidth: number, runId: string, cssHash: string) {
+export function weappObservationAssertions(probe: WeappProbe, observation: WeappObservation, image: PngImage, viewportWidth: number, runId: string, cssHash: string, raw?: PngImage) {
   const state = weappState(probe, observation.name)
   if (observation.identityText !== `${runId}|${probe.id}|${state.name}`
     || digest(observation.input) !== digest(weappPhaseInput(state, runId, probe.id, cssHash))) {
     throw new Error('微信实际页面输入与本轮夹具/阶段不匹配')
   }
-  if (!observation.rectangles || digest(Object.keys(observation.rectangles).sort()) !== digest(['marker', 'probe', 'reference'])) {
+  const required = state.composite ? ['background', 'foreground', 'gray', 'marker', 'probe', 'reference'] : ['marker', 'probe', 'reference']
+  if (!observation.rectangles || digest(Object.keys(observation.rectangles).sort()) !== digest(required)) {
     throw new Error('微信缺少完整的目标、参考和标记几何')
   }
   for (const rect of Object.values(observation.rectangles)) {
@@ -33,9 +35,14 @@ export function weappObservationAssertions(probe: WeappProbe, observation: Weapp
     }
   }
   verifyWeappMarker(image, viewportWidth, observation.rectangles.marker, weappMarker(runId, probe.id, state.name, cssHash))
+  if (state.composite && (!raw || raw.width !== image.width || raw.height !== image.height)) {
+    throw new Error('微信合成证据缺少同图原始像素')
+  }
+  const sample = (source: PngImage, key: keyof WeappObservation['rectangles']) => sampleWeappPixel(source, viewportWidth, observation.rectangles[key]!)
   return [
     ...weappRuntimeAssertions(probe, state.name, observation.actual, observation.reference, observation.witness),
     ...(state.pixel ? weappPhasePixelAssertions(state.name, sampleWeappPixel(image, viewportWidth, observation.rectangles.probe), sampleWeappPixel(image, viewportWidth, observation.rectangles.reference), state.pixel) : []),
+    ...(state.composite ? weappCompositeAssertions(state.name, { actual: sample(raw!, 'probe'), reference: sample(raw!, 'reference'), foreground: sample(raw!, 'foreground'), background: sample(raw!, 'background'), normalizedForeground: sample(image, 'foreground'), normalizedBackground: sample(image, 'background'), normalizedGray: sample(image, 'gray') }, state.composite) : []),
   ]
 }
 
@@ -104,14 +111,19 @@ export async function verifyWeappReport(report: CapabilityReport, root: string) 
       }
       const file = `${probe.id}-${state.name}.png`
       const metrics = JSON.parse(await readFile(path.join(root, `${file}.viewport.json`), 'utf8'))
-      const full = PNG.sync.read(await normalizeScreenshotToSrgb(await readFile(path.join(root, `${file}.full.png`))))
+      const original = await readFile(path.join(root, `${file}.full.png`))
+      if (state.composite) {
+        assertWeappCompositeEncoding(original)
+      }
+      const rawImage = cropMiniProgramViewport(PNG.sync.read(original), metrics)
+      const full = PNG.sync.read(await normalizeScreenshotToSrgb(original))
       const image = PNG.sync.read(await readFile(path.join(root, file)))
       const cropped = cropMiniProgramViewport(full, metrics)
       if (image.width !== cropped.width || image.height !== cropped.height || !image.data.equals(cropped.data)) {
         throw new Error('微信裁剪图与原始截图/窗口尺寸不一致')
       }
       files.push(file, `${file}.full.png`, `${file}.viewport.json`)
-      assertions.push(...weappObservationAssertions(probe, observation, image, metrics.windowWidth, report.runId, cssHash))
+      assertions.push(...weappObservationAssertions(probe, observation, image, metrics.windowWidth, report.runId, cssHash, rawImage))
     }
     requireArtifacts(report, result, files)
     if (result.warnings.length || !assertions.every(assertionPassed) || digest(assertions) !== digest(result.assertions)) {
