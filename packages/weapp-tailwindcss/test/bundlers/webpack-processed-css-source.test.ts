@@ -1,12 +1,12 @@
-import { originalPositionFor, TraceMap } from '@jridgewell/trace-mapping'
 import { Buffer } from 'node:buffer'
+import { originalPositionFor, TraceMap } from '@jridgewell/trace-mapping'
 import { stripBundlerGeneratedCssMarkers } from '@weapp-tailwindcss/postcss/transform'
 import { describe, expect, it, vi } from 'vitest'
 import { sources } from 'webpack'
 import { createCache } from '@/cache'
 import { finalizeProcessedWebpackCssAssets } from '../../src/bundlers/webpack/BaseUnifiedPlugin/v5-assets/final-css-assets'
-import { processWebpackGeneratedCssAsset } from '../../src/bundlers/webpack/BaseUnifiedPlugin/v5-assets/generated-css-task'
 import { finalizeWebpackProcessAssets } from '../../src/bundlers/webpack/BaseUnifiedPlugin/v5-assets/finalize-assets'
+import { processWebpackGeneratedCssAsset } from '../../src/bundlers/webpack/BaseUnifiedPlugin/v5-assets/generated-css-task'
 import { annotateProcessedWebpackCssSource, preserveProcessedWebpackCssSource } from '../../src/bundlers/webpack/BaseUnifiedPlugin/v5-assets/processed-css-source'
 import { processWebpackProcessedCssAsset } from '../../src/bundlers/webpack/BaseUnifiedPlugin/v5-assets/processed-css-task'
 
@@ -22,7 +22,10 @@ describe('已处理 Web CSS 的来源映射', () => {
       cssFiles: ['entry.css'],
       sources,
       webCompat: true,
-      updateAssetIfChanged: (_file, source) => { output = source as sources.Source; return true },
+      updateAssetIfChanged: (_file, source) => {
+        output = source as sources.Source
+        return true
+      },
     })
     const text = output.source().toString()
     expect(text.indexOf('--tw-space-y-reverse: 0')).toBeLessThan(text.indexOf(':where(.reverse'))
@@ -41,7 +44,10 @@ describe('已处理 Web CSS 的来源映射', () => {
     const update = vi.fn()
     finalizeProcessedWebpackCssAssets({
       compilation: { getAsset: file => ({ name: file, source: assets.get(file)!, info: {} }) },
-      cssFiles: assets.keys(), sources, webCompat: true, updateAssetIfChanged: update,
+      cssFiles: assets.keys(),
+      sources,
+      webCompat: true,
+      updateAssetIfChanged: update,
     })
     expect(update).not.toHaveBeenCalled()
   })
@@ -191,8 +197,10 @@ describe('已处理 Web CSS 的来源映射', () => {
   it.each([
     ['生成注册表消费', processWebpackGeneratedCssAsset],
     ['已处理资产', processWebpackProcessedCssAsset],
-  ] as const)('%s 在相同 CSS 重新编译后使用本轮框架映射', async (_name, processAsset) => {
-    const css = '/*! weapp-tailwindcss webpack-generated-css:theme.css */\n.business { color: red }'
+  ] as const)('%s 在相同 CSS 重新编译后使用本轮框架映射与 spacing 正文', async (_name, processAsset) => {
+    // 真实生成标识用于区分生成后的 layer 与仍需编译的作者指令。
+    const css = '/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */\n/*! weapp-tailwindcss webpack-generated-css:theme.css */\n@layer theme { :root { --spacing: .25rem; } }\n.business { height: calc(var(--spacing)*8); color: red }'
+    const registeredCss = css.replace('.25rem', '0.25rem')
     const sourceFile = '/styles/theme.css'
     let traceSource = 'first.vue'
     const context = {
@@ -204,8 +212,8 @@ describe('已处理 Web CSS 的来源映射', () => {
       configuredCssEntryFiles: [sourceFile],
       configuredMainCssEntryFiles: [],
       createRuntimeSetHash: () => 'stable',
-      cssSources: new Map([[sourceFile, { css }]]),
-      generatedCssSources: new Map([[sourceFile, { css, classSet: new Set(['business']), dependencies: [] }]]),
+      cssSources: new Map([[sourceFile, { css: registeredCss }]]),
+      generatedCssSources: new Map([[sourceFile, { css: registeredCss, classSet: new Set(['business']), dependencies: [] }]]),
       getCssHandlerOptions: () => ({ isMainChunk: false, sourceOptions: { sourceFile } }),
       getGeneratorRuntimeSet: () => new Set(),
       getCompilationDependencyRevision: () => 0,
@@ -234,10 +242,14 @@ describe('已处理 Web CSS 的来源映射', () => {
       expect(text).not.toContain('weapp-tailwindcss')
       expect(text).toContain(`/*! tokens: business <= ${traceSource} */`)
       expect(text.match(/tokens:/g)).toHaveLength(1)
+      expect(text).toContain('--spacing: .25rem')
+      expect(text.match(/--spacing:/g)).toHaveLength(1)
+      expect(text).not.toContain('0.25rem')
+      expect(text).toContain('height: calc(var(--spacing)*8)')
       const map = new TraceMap(output.map() as ConstructorParameters<typeof TraceMap>[0])
       const prefix = text.slice(0, text.indexOf('red')).split('\n')
       const actual = originalPositionFor(map, { line: prefix.length, column: prefix.at(-1)!.length })
-      expect(actual).toEqual(originalPositionFor(new TraceMap(input.map() as ConstructorParameters<typeof TraceMap>[0]), { line: 2, column: '.business { color: '.length }))
+      expect(actual).toEqual(originalPositionFor(new TraceMap(input.map() as ConstructorParameters<typeof TraceMap>[0]), { line: 4, column: css.split('\n')[3]!.indexOf('red') }))
     }
   })
 })
