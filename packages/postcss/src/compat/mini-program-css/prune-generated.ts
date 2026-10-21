@@ -3,6 +3,7 @@ import type { IStyleHandlerOptions } from '../../types'
 import postcss from 'postcss'
 import { normalizeMiniProgramPrefixedDeclaration, removeUnsupportedMiniProgramPrefixedAtRule, resolveMiniProgramPrefixPolicy } from '../mini-program-prefixes'
 import { removeUnsupportedCascadeLayers } from './at-rules'
+import { unwrapTailwindSourceMedia } from './directives'
 import {
   isBrowserElementPreflightRule,
   isCustomPropertyRule,
@@ -203,6 +204,7 @@ export function pruneMiniProgramGeneratedCssRoot(
     comment.remove()
   })
 
+  unwrapTailwindSourceMedia(root)
   removeUnsupportedCascadeLayers(root)
   removeSpecificityPlaceholders(root)
   removeUnsupportedModernColorDeclarations(root)

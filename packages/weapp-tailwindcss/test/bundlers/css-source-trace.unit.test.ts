@@ -40,8 +40,8 @@ describe('bundlers/shared css source trace', () => {
       tokenSources,
     })
 
-    expect(traced).toContain('/* tokens: rotate-y-90 <= src/pages/issue-909/index.tsx */')
-    expect(traced).toContain('/* tokens: bg-[#123456] <= src/components/palette.tsx */')
+    expect(traced).toContain('/*! tokens: rotate-y-90 <= src/pages/issue-909/index.tsx */')
+    expect(traced).toContain('/*! tokens: bg-[#123456] <= src/components/palette.tsx */')
   })
 
   it('removes traced Tailwind generated container rules only', () => {
@@ -84,9 +84,9 @@ describe('bundlers/shared css source trace', () => {
       tokenSources,
     })
 
-    expect(traced).toContain('}\n  /* tokens: system-dark:text-slate-100 <= src/pages/index.tsx */\n')
+    expect(traced).toContain('}\n  /*! tokens: system-dark:text-slate-100 <= src/pages/index.tsx */\n')
     expect(traced).toContain('.system-dark_ctext-slate-100')
-    expect(traced).not.toContain('} /* tokens:')
+    expect(traced).not.toContain('} /*! tokens:')
   })
 
   it('uses token source details in cache signatures only when enabled', () => {

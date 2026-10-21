@@ -1,5 +1,5 @@
 import type { IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
-import { analyzeCssCalcContext, collectCustomPropertyValues, isCssCalcCustomPropertySelected, mergeCustomPropertyValues } from '@weapp-tailwindcss/postcss/transform'
+import { analyzeCssCalcContext, collectStaticCustomPropertyValues, isCssCalcCustomPropertySelected } from '@weapp-tailwindcss/postcss/transform'
 
 type GenerationStyleOptions = Partial<IStyleHandlerOptions>
 
@@ -31,8 +31,8 @@ export function resolveIncrementalStyleContext(
   generatedCss: string,
   options?: GenerationStyleOptions,
 ): GenerationStyleOptions {
-  const customPropertyCompatibilityValues = collectCustomPropertyValues(sourceCss)
-  mergeCustomPropertyValues(customPropertyCompatibilityValues, generatedCss)
+  // 只以完整生成产物证明稳定性，原始 @theme 的声明尚未具备实际运行时作用域。
+  const customPropertyCompatibilityValues = collectStaticCustomPropertyValues(generatedCss)
   return {
     ...resolveGenerationStyleContext(sourceCss, generatedCss, options),
     customPropertyCompatibilityValues,

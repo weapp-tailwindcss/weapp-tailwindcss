@@ -1,14 +1,85 @@
 import { originalPositionFor, TraceMap } from '@jridgewell/trace-mapping'
+import { Buffer } from 'node:buffer'
 import { stripBundlerGeneratedCssMarkers } from '@weapp-tailwindcss/postcss/transform'
 import { describe, expect, it, vi } from 'vitest'
 import { sources } from 'webpack'
 import { createCache } from '@/cache'
+import { finalizeProcessedWebpackCssAssets } from '../../src/bundlers/webpack/BaseUnifiedPlugin/v5-assets/final-css-assets'
 import { processWebpackGeneratedCssAsset } from '../../src/bundlers/webpack/BaseUnifiedPlugin/v5-assets/generated-css-task'
 import { finalizeWebpackProcessAssets } from '../../src/bundlers/webpack/BaseUnifiedPlugin/v5-assets/finalize-assets'
-import { preserveProcessedWebpackCssSource } from '../../src/bundlers/webpack/BaseUnifiedPlugin/v5-assets/processed-css-source'
+import { annotateProcessedWebpackCssSource, preserveProcessedWebpackCssSource } from '../../src/bundlers/webpack/BaseUnifiedPlugin/v5-assets/processed-css-source'
 import { processWebpackProcessedCssAsset } from '../../src/bundlers/webpack/BaseUnifiedPlugin/v5-assets/processed-css-task'
 
 describe('已处理 Web CSS 的来源映射', () => {
+  it.each([false, true].flatMap(buffer => ['', '\uFEFF', '\uFFFE'].map(bom => ({ buffer, bom }))))('完整资产的注册默认值插入保留中文、emoji 与业务来源映射：%j', ({ buffer, bom }) => {
+    const registration = '@property --tw-space-y-reverse { syntax: "*"; inherits: false; initial-value: 0; }'
+    const css = `${bom}@charset "UTF-8";\r\n@import "shared.css";\r\n/* 中文 😀 */\r\n${registration}\r\n:where(.reverse > :not(:last-child)){--tw-space-y-reverse:1}\r\n.business{width:24px}`
+    const original = new sources.OriginalSource(css, 'C:\\styles\\entry.css')
+    const input = buffer ? new sources.SourceMapSource(Buffer.from(css), 'entry.css', original.map()!) : original
+    let output: sources.Source = input
+    finalizeProcessedWebpackCssAssets({
+      compilation: { getAsset: () => ({ name: 'entry.css', source: input, info: {} }) },
+      cssFiles: ['entry.css'],
+      sources,
+      webCompat: true,
+      updateAssetIfChanged: (_file, source) => { output = source as sources.Source; return true },
+    })
+    const text = output.source().toString()
+    expect(text.indexOf('--tw-space-y-reverse: 0')).toBeLessThan(text.indexOf(':where(.reverse'))
+    expect(text).toContain(css.slice(css.indexOf(registration)))
+    const prefix = text.slice(0, text.indexOf('24px')).split('\n')
+    const actual = originalPositionFor(new TraceMap(output.map() as ConstructorParameters<typeof TraceMap>[0]), { line: prefix.length, column: prefix.at(-1)!.length })
+    expect(actual).toEqual(originalPositionFor(new TraceMap(original.map() as ConstructorParameters<typeof TraceMap>[0]), { line: 6, column: '.business{width:'.length }))
+  })
+
+  it('最终资产集合的冲突注册不能由模块阶段的局部分析绕过', () => {
+    const css = '@property --tw-space-y-reverse{syntax:"*";inherits:false;initial-value:0}.utility{--tw-space-y-reverse:1}'
+    const assets = new Map([
+      ['entry.css', new sources.RawSource(css)],
+      ['lazy.css', new sources.RawSource('@property --tw-space-y-reverse{syntax:"*";inherits:false;initial-value:2}')],
+    ])
+    const update = vi.fn()
+    finalizeProcessedWebpackCssAssets({
+      compilation: { getAsset: file => ({ name: file, source: assets.get(file)!, info: {} }) },
+      cssFiles: assets.keys(), sources, webCompat: true, updateAssetIfChanged: update,
+    })
+    expect(update).not.toHaveBeenCalled()
+  })
+
+  it('Buffer Source 以字符串偏移插入注释，不破坏中文或 emoji', () => {
+    const css = '/* 中文 😀 */.card { width: 24px; }'
+    const source = new sources.RawSource(Buffer.from(css))
+    const tokens = new Map([['card', { token: 'card', sources: ['card.vue'] }]])
+    const result = annotateProcessedWebpackCssSource(source, sources, tokens)
+    expect(result.source().toString()).toBe('/* 中文 😀 *//*! tokens: card <= card.vue */\n.card { width: 24px; }')
+  })
+
+  it.each(['\n', '\r\n'].flatMap(newline => ['', '\uFEFF', '\uFFFE'].map(bom => ({ newline, bom }))))('只编辑来源注释，保留多模块正文、生成 container 及映射且重复执行稳定：%j', ({ newline, bom }) => {
+    const first = `${bom}/* 中文 😀 */${newline}/* tokens: card <= stale.vue */${newline}.card { width: 24px; }`
+    const second = `${newline}.container { width: 100%; }${newline}/*! tokens: stale <= deleted.vue */`
+    const source = new sources.ConcatSource(new sources.OriginalSource(first, 'C:\\styles\\card.css'), new sources.OriginalSource(second, '/styles/layout.css'))
+    const tokenSources = new Map([
+      ['card', { token: 'card', sources: ['views/card.vue'] }],
+      ['container', { token: 'container', sources: [] }],
+    ])
+    const result = annotateProcessedWebpackCssSource(source, sources, tokenSources)
+    const css = result.source().toString()
+    expect(css.startsWith(`${bom}/* 中文 😀 */`)).toBe(true)
+    expect(css).toContain('/*! tokens: card <= views/card.vue */')
+    expect(css).toContain('/*! tokens: container <= <tailwind generated> */')
+    expect(css).toContain('.card { width: 24px; }')
+    expect(css).toContain('.container { width: 100%; }')
+    expect(css).not.toContain('stale.vue')
+    expect(css).not.toContain('deleted.vue')
+    expect(annotateProcessedWebpackCssSource(result, sources, tokenSources)).toBe(result)
+    const map = new TraceMap(result.map() as ConstructorParameters<typeof TraceMap>[0])
+    for (const [token, file, line] of [['24px', 'C:\\styles\\card.css', 3], ['100%', '/styles/layout.css', 2]] as const) {
+      const prefix = css.slice(0, css.indexOf(token)).split('\n')
+      expect(originalPositionFor(map, { line: prefix.length, column: prefix.at(-1)!.length })).toMatchObject({ source: file, line })
+    }
+    expect(annotateProcessedWebpackCssSource(source, sources)).toBe(source)
+  })
+
   it('没有本插件元数据时保留原 Source 身份', () => {
     const source = new sources.OriginalSource('.business { color: red }', 'business.css')
     expect(preserveProcessedWebpackCssSource(source, sources)).toBe(source)
@@ -123,6 +194,7 @@ describe('已处理 Web CSS 的来源映射', () => {
   ] as const)('%s 在相同 CSS 重新编译后使用本轮框架映射', async (_name, processAsset) => {
     const css = '/*! weapp-tailwindcss webpack-generated-css:theme.css */\n.business { color: red }'
     const sourceFile = '/styles/theme.css'
+    let traceSource = 'first.vue'
     const context = {
       ConcatSource: sources.ConcatSource,
       compilerOptions: { cache: createCache() },
@@ -145,7 +217,7 @@ describe('已处理 Web CSS 的来源映射', () => {
       generatorRuntimeSet: new Set(),
       transformRuntimeSet: new Set(),
       runtimeState: { readyPromise: Promise.resolve() },
-      preserveProcessedWebCssAsset: (source: sources.Source) => preserveProcessedWebpackCssSource(source, sources),
+      preserveProcessedWebCssAsset: (source: sources.Source) => annotateProcessedWebpackCssSource(preserveProcessedWebpackCssSource(source, sources), sources, new Map([['business', { token: 'business', sources: [traceSource] }]])),
       rememberProcessCacheKey: vi.fn(),
       debug: vi.fn(),
       enqueueTask: async (task: () => Promise<void>) => task(),
@@ -154,11 +226,18 @@ describe('已处理 Web CSS 的来源映射', () => {
       updateAssetIfChanged: vi.fn(),
     }
     for (const origin of ['first.css', 'second.css']) {
-      await processAsset(['theme.css', new sources.OriginalSource(css, origin)], context)
+      traceSource = `${origin}.vue`
+      const input = new sources.OriginalSource(css, origin)
+      await processAsset(['theme.css', input], context)
       const output = context.updateAssetIfChanged.mock.lastCall![1] as sources.Source
-      expect(output.source().toString()).not.toContain('weapp-tailwindcss')
+      const text = output.source().toString()
+      expect(text).not.toContain('weapp-tailwindcss')
+      expect(text).toContain(`/*! tokens: business <= ${traceSource} */`)
+      expect(text.match(/tokens:/g)).toHaveLength(1)
       const map = new TraceMap(output.map() as ConstructorParameters<typeof TraceMap>[0])
-      expect(originalPositionFor(map, { line: 1, column: 20 })).toMatchObject({ source: origin, line: 2 })
+      const prefix = text.slice(0, text.indexOf('red')).split('\n')
+      const actual = originalPositionFor(map, { line: prefix.length, column: prefix.at(-1)!.length })
+      expect(actual).toEqual(originalPositionFor(new TraceMap(input.map() as ConstructorParameters<typeof TraceMap>[0]), { line: 2, column: '.business { color: '.length }))
     }
   })
 })

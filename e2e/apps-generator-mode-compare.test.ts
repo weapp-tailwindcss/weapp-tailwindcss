@@ -4,14 +4,16 @@ import type { ProjectEntry } from './shared'
 import { Buffer } from 'node:buffer'
 import fs from 'node:fs/promises'
 import process from 'node:process'
+import { readCssSourceTraceComment } from '@weapp-tailwindcss/postcss/transform'
 import { execa } from 'execa'
 import fg from 'fast-glob'
 import path from 'pathe'
 import postcss from 'postcss'
 import { describe, expect, it } from 'vitest'
+import { findLateGeneratorDefaults } from './apps-generator-default-precedence'
 import { saveGeneratorEvidence } from './apps-generator-evidence'
 import { createChineseMarkdownReport, createMarkdownReport } from './apps-generator-report'
-import { mergeScopedGeneratorReport } from './apps-generator-report-scoped'
+import { filterGeneratorProjects, mergeScopedGeneratorReport } from './apps-generator-report-scoped'
 import { DEMO_COVERAGE_MATRIX } from './demoCoverageMatrix'
 import { E2E_PROJECTS } from './projectEntries'
 import { clearProjectBuildState } from './projectTest'
@@ -43,6 +45,7 @@ interface GeneratorBuildResult {
   css: string
   cssFiles: string[]
   cssSnapshots: GeneratorCssSnapshot[]
+  rawCssFiles: Array<{ fileName: string, content: Uint8Array }>
 }
 
 interface GeneratorCssSnapshot {
@@ -80,13 +83,10 @@ const APP_STYLE_COMPARE_PROJECT_NAMES = new Set([
 ])
 
 function filterCompareProjects(projects: CompareProject[]) {
-  const filter = process.env['E2E_PROJECT_FILTER']
-  if (!filter) {
-    return projects
-  }
-
-  const pattern = new RegExp(filter)
-  return projects.filter(project => pattern.test(project.name))
+  return filterGeneratorProjects(projects, {
+    project: process.env['E2E_PROJECT_FILTER'],
+    platform: process.env['E2E_GENERATOR_PLATFORM_FILTER'],
+  })
 }
 
 function isUpdatingSnapshots() {
@@ -116,7 +116,7 @@ const projects: CompareProject[] = filterCompareProjects([
   ...miniProgramProjects.flatMap(createH5CompareProjects),
   ...miniProgramProjects.flatMap(createAppCompareProjects),
 ])
-const projectFilterEnabled = Boolean(process.env['E2E_PROJECT_FILTER'])
+const projectFilterEnabled = Boolean(process.env['E2E_PROJECT_FILTER'] || process.env['E2E_GENERATOR_PLATFORM_FILTER'])
 
 const UNSUPPORTED_LEGACY_SELECTOR_SET = new Set([
   ':after',
@@ -430,11 +430,19 @@ async function buildProject(project: CompareProject) {
   })
 
   const classList = await readBuildClassList(root)
+  const outputRoot = project.cssSnapshotMode === 'directory'
+    ? path.resolve(projectRoot, project.cssPath)
+    : path.dirname(path.resolve(projectRoot, project.cssPath))
+  const rawCssFiles = await Promise.all((await fg(project.cssPattern, { cwd: outputRoot, onlyFiles: true })).sort().map(async fileName => ({
+    fileName,
+    content: await fs.readFile(path.resolve(outputRoot, fileName)),
+  })))
   const snapshots = await collectOutputCssSnapshots(projectRoot, project, classList)
   return {
     css: snapshots.map(snapshot => snapshot.content).join('\n'),
     cssFiles: snapshots.map(snapshot => snapshot.fileName),
     cssSnapshots: snapshots,
+    rawCssFiles,
   }
 }
 
@@ -973,7 +981,7 @@ function removeTaroWebpackV4WebSubpackageNoise(css: string) {
         || rule.selectors.every(selector => selector === '.transform' || selector === '.ease-in-out')
       ) {
         const previous = rule.prev()
-        if (previous?.type === 'comment' && previous.text.trim().startsWith('tokens:')) {
+        if (previous?.type === 'comment' && readCssSourceTraceComment(previous.text) !== undefined) {
           previous.remove()
         }
         rule.remove()
@@ -1133,7 +1141,13 @@ async function expectCssOutputSnapshot(
     expectedPath: snapshotPath,
     report,
     files: snapshots.map(snapshot => ({ fileName: snapshot.fileName, content: createCssArtifactSnapshot(project, snapshot) })),
+    rawFiles: generatorResult.rawCssFiles,
   })
+  if (project.name === 'uni-app-vite-tailwindcss-v4' && (project.platform === 'web-compact' || project.platform.startsWith('app-'))) {
+    for (const file of generatorResult.rawCssFiles) {
+      expect(findLateGeneratorDefaults(Buffer.from(file.content).toString()), `${project.platform}/${file.fileName} 默认值不得覆盖反向或边框 utility`).toEqual([])
+    }
+  }
   await clearSnapshotDirOnUpdate('apps-generator-mode', 'css-output', project.platform, project.name)
   await expectNormalizedReportSnapshot(snapshotPath, report)
   for (const snapshot of snapshots) {
@@ -1186,6 +1200,7 @@ describe('demo generator mode output', () => {
         css,
         cssFiles: ['css/index.css'],
         cssSnapshots: [{ fileName: 'css/index.css', content: css }],
+        rawCssFiles: [{ fileName: 'css/index.css', content: Buffer.from(css) }],
       }
     }
 

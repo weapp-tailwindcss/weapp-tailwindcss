@@ -119,4 +119,4 @@ generator 对照原先在 README 断言后才保存 CSS，失败时缺少完整 
 
 实际依赖 Rollup 4.63.5 的 `Watcher.close()` 先置 `closed`，当前 `run()` 完成任务后发现已关闭便跳过 `END`。夹具在 close 监听器等 `END`，形成循环等待。没有修改上游生产合同：scope 改为等待首次 `START`，循环等待当前构建自然结束，再在同一同步续体关闭句柄。继续返回 bundle 关闭 Promise、保留异常和重复关闭身份，不加 sleep、超时、删除重试或 CI 重跑。
 
-scope 回归扩展到 demo 实际解析的 4.63.0、4.63.5、3.30.0，覆盖 CJS/ESM × generateBundle/closeBundle、异步接管前退出以及关闭失败。4.63.5 的 CJS/generateBundle 在旧 scope 下确定性超时 10 秒，修正后通过。命令 `CI=1 pnpm exec vitest run -c scripts/ci/demo-matrix/vitest.config.mjs scripts/ci/demo-matrix/rollup --update=none` 在 macOS Node 24.18.0 下为 14 文件、176 项通过；Windows 当前源码结果仍待实际 CI，不能把本地成功替代远端。
+scope 回归扩展到 demo 实际解析的 4.63.0、4.63.5、3.30.0，覆盖 CJS/ESM × generateBundle/closeBundle、异步接管前退出以及关闭失败。4.63.5 的 CJS/generateBundle 在旧 scope 下确定性超时 10 秒，修正后通过。命令 `CI=1 pnpm exec vitest run -c scripts/ci/demo-matrix/vitest.config.mts scripts/ci/demo-matrix/rollup --update=none` 在 macOS Node 24.18.0 下为 14 文件、176 项通过；Windows 当前源码结果仍待实际 CI，不能把本地成功替代远端。

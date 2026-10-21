@@ -1,6 +1,7 @@
 import type { Node, Selector } from 'postcss-selector-parser'
 import selectorParser from 'postcss-selector-parser'
 import { postcss } from '../postcss-runtime'
+import { removeCssRuleWithSourceTrace } from '../utils/css-source-trace'
 import { removeEmptyAtRules } from './coverage'
 import { collectCssRuleDeclarationRecords, collectCssRuleDeclarations, getCssRuleStructuralKeyWithSelectorKey, MINI_PROGRAM_PREFLIGHT_SELECTOR_KEY, MINI_PROGRAM_PREFLIGHT_SELECTOR_KEYS, MINI_PROGRAM_THEME_SCOPE_SELECTOR_KEY, MINI_PROGRAM_THEME_SCOPE_SELECTOR_KEYS, normalizeCssDeclarationKey } from './structure'
 
@@ -112,7 +113,7 @@ export function mergeMiniProgramPreflightRuleDeclarations(baseCss: string, css: 
         existingProps.add(prop)
         changedBase = true
       }
-      rule.remove()
+      changedBase = removeCssRuleWithSourceTrace(rule, targetRecord.rule) || changedBase
       changedCss = true
     })
 
@@ -174,7 +175,7 @@ export function mergeMiniProgramThemeScopeRuleDeclarations(baseCss: string, css:
         existingProps.add(decl.prop.trim())
         changedBase = true
       }
-      rule.remove()
+      changedBase = removeCssRuleWithSourceTrace(rule, targetRecord.rule) || changedBase
       changedCss = true
     })
 

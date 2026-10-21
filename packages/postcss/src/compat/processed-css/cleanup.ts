@@ -79,17 +79,16 @@ export function removeCommentOnlyAtRules(css: string) {
   try {
     const root = postcss.parse(css)
     let changed = false
+    const atRules: postcss.AtRule[] = []
     root.walkAtRules((atRule) => {
-      if (!atRule.nodes || atRule.nodes.length === 0) {
-        return
-      }
-      const hasCss = atRule.nodes.some(node => node.type !== 'comment')
-      if (hasCss) {
-        return
-      }
-      atRule.remove()
-      changed = true
+      atRules.push(atRule)
     })
+    for (const atRule of atRules.reverse()) {
+      if (atRule.nodes?.every(node => node.type === 'comment')) {
+        atRule.remove()
+        changed = true
+      }
+    }
     return changed ? root.toString() : css
   }
   catch {

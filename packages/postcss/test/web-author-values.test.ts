@@ -52,6 +52,34 @@ const preserveCases = [
 ] as const
 
 describe('渐变只按完整消费链降级', () => {
+  it.each(['-webkit-linear-gradient', '-webkit-repeating-linear-gradient', '-moz-linear-gradient', '-o-linear-gradient'])('%s 与标准函数的共同消费仍可删除明确位置的插值', (kind) => {
+    const css = `.probe { --tw-gradient-position: -65deg in oklab; --stops: var(--tw-gradient-position), red, blue; background-image: ${kind}(var(--stops)); background-image: linear-gradient(var(--stops)); }`
+    const output = transformWebCssCompat(css, true)
+    expect(output).toContain('--tw-gradient-position: -65deg;')
+    expect(output).not.toContain('in oklab')
+    expect(output).toContain(`${kind}(var(--stops))`)
+    expect(transformWebCssCompat(output, true)).toBe(output)
+  })
+
+  it.each(['-webkit-radial-gradient', '-webkit-repeating-radial-gradient', '-moz-radial-gradient', '-o-radial-gradient'])('%s 保留已有定位，仅删除插值', (kind) => {
+    const css = `.probe { --tw-gradient-position: at 50% 75% in oklab; --stops: var(--tw-gradient-position), red, blue; background-image: ${kind}(var(--stops)); background-image: radial-gradient(var(--stops)); }`
+    const output = transformWebCssCompat(css, true)
+    expect(output).toContain('--tw-gradient-position: at 50% 75%;')
+    expect(output).not.toContain('in oklab')
+  })
+
+  it('前缀函数的位置语法不同，不为共享空位置选择标准函数默认值', () => {
+    const css = `${position}.probe { background-image: -webkit-linear-gradient(var(--tw-gradient-position), red, blue); background-image: linear-gradient(var(--tw-gradient-position), red, blue); }`
+    expect(transformWebCssCompat(css, true)).toContain('--tw-gradient-position: in oklab')
+  })
+
+  it('未知前缀或非渐变消费者继续阻断明确位置改写', () => {
+    const css = '.probe { --tw-gradient-position: -65deg in oklab; background-image: linear-gradient(var(--tw-gradient-position), red, blue); }'
+    for (const extra of ['.other { background-image: -unknown-linear-gradient(var(--tw-gradient-position), red, blue); }', '.other { font-family: var(--tw-gradient-position); }']) {
+      expect(transformWebCssCompat(`${css}${extra}`, true)).toContain('--tw-gradient-position: -65deg in oklab')
+    }
+  })
+
   it.each(preserveCases)('%s 保留作者 token', (_name, extra) => {
     expect(transformWebCssCompat(`${position}${linear}${extra}`, true)).toContain('--tw-gradient-position: in oklab')
   })

@@ -8,6 +8,7 @@ import { DEMO_COVERAGE_MATRIX } from './demoCoverageMatrix'
 import { E2E_PROJECTS } from './projectEntries'
 import { clearProjectBuildState, ensureProjectBuilt } from './projectTest'
 import { projectFilter } from './shared'
+import { joinOutputsWithoutCssSourceTraces } from './snapshot/css-source-trace'
 
 const fixturesRoot = path.resolve(__dirname, '../demo')
 const rawClasses = ['h-[458rpx]', 'w-[218rpx]', 'inset-x-[30%]'] as const
@@ -408,7 +409,7 @@ async function readOutputFiles(entry: ProjectEntry) {
 
 function expectBuiltRegression(entry: ProjectEntry, outputs: Array<{ name: string, content: string }>) {
   const joined = outputs.map(output => output.content).join('\n')
-  const joinedWithoutTokenSourceComments = joined.replace(/\/\*\s*tokens:[\s\S]*?\*\//g, '')
+  const joinedWithoutTokenSourceComments = joinOutputsWithoutCssSourceTraces(outputs)
   const styles = outputs
     .filter(output => /\.(?:wxss|acss|ttss|qss|css)$/i.test(output.name))
     .map(output => output.content)

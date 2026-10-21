@@ -210,6 +210,7 @@ export async function generateCssForWebpackPipeline(
     debug: process.env['WEAPP_TW_LOADER_DEBUG']
       ? (message, ...args) => process.stdout.write(`[weapp-tw-css-import-rewrite-loader] ${message} ${inspect(args)}\n`)
       : () => undefined,
+    deferWebCssPropertyFallback: (compilerOptions.cssOptions?.platform ?? compilerOptions.platform) !== 'lynx',
     deferCssAdaptation: generatorTarget !== 'web',
   })
   if (!generated) {

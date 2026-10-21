@@ -33,20 +33,16 @@ export { insertHoistedRules } from './hoist'
 export { collectPreflightRules } from './preflight'
 
 export function finalizeMiniProgramCssRoot(root: postcss.Root, options: FinalizeMiniProgramCssOptions = {}) {
+  unwrapTailwindSourceMedia(root)
+  const stableColors = removeUnsupportedModernColorDeclarations(root)
   const preservedWebkitProperties = resolveMiniProgramPrefixPolicy('mini-program', options.preserveWebkitProperties).preserveProperties
   const shouldInjectTailwindcssV4Defaults = options.isTailwindcssV4 === true
   const tailwindcssV4DefaultNodes = shouldInjectTailwindcssV4Defaults
     ? createMissingCssVarsV4Nodes(root, collectUsedTailwindcssV4Variables(root))
     : []
   removeUnsupportedCascadeLayers(root)
-  unwrapTailwindSourceMedia(root)
   removeTailwindGenerationDirectives(root)
-  root.walkAtRules('property', (atRule) => {
-    atRule.remove()
-  })
-  root.walkAtRules('supports', (atRule) => {
-    atRule.remove()
-  })
+  removeUnsupportedMiniProgramAtRulesRoot(root)
   removeSpecificityPlaceholders(root)
   removeRootSpecificityPlaceholders(root)
   removeUnsupportedBrowserSelectors(root)
@@ -54,7 +50,6 @@ export function finalizeMiniProgramCssRoot(root: postcss.Root, options: Finalize
   removeEmptyStandardDeclarations(root)
   removeTailwindContainerMaxWidthMediaRules(root)
   removeTailwindContainerWidthRules(root, { generatedOnly: true })
-  removeUnsupportedModernColorDeclarations(root)
   root.walkDecls((decl) => {
     if (shouldInjectTailwindcssV4Defaults) {
       normalizeTailwindcssV4Declaration(decl)
@@ -67,7 +62,7 @@ export function finalizeMiniProgramCssRoot(root: postcss.Root, options: Finalize
   if (shouldInjectTailwindcssV4Defaults) {
     mergeTailwindcssV4GradientDirectionRules(root)
     if (options.tailwindcssV4GradientFallback === true) {
-      appendTailwindcssV4MiniProgramGradientRules(root)
+      appendTailwindcssV4MiniProgramGradientRules(root, stableColors)
     }
   }
 
@@ -141,7 +136,6 @@ export function finalizeMiniProgramCss(css: string, options: FinalizeMiniProgram
   }
   try {
     // 清理与最终转换共用同一棵 AST，避免中间打印后再次完整解析。
-    removeUnsupportedMiniProgramAtRulesRoot(root)
     finalizeMiniProgramCssRoot(root, { ...options, isTailwindcssV4 })
     return root.toString()
   }

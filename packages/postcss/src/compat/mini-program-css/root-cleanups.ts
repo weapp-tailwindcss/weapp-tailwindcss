@@ -1,5 +1,7 @@
 import type postcss from 'postcss'
+import { isTailwindGeneratedContainerTraceComment, removeCssRuleWithSourceTrace } from '../../utils/css-source-trace'
 import { normalizeModernColorValue } from '../color-mix'
+import { collectCustomPropertyValues } from '../web-css-custom-properties'
 import { isDisplayP3MediaRule } from './color-gamut'
 import { isBrowserElementPreflightRule } from './predicates'
 import { isUnsupportedBrowserPreflightSelector, isUnsupportedBrowserSelector, MINI_PROGRAM_THEME_SCOPE_SELECTORS, ROOT_SPECIFICITY_PLACEHOLDER_SUFFIXES, SPECIFICITY_PLACEHOLDER_SUFFIXES } from './selectors'
@@ -128,7 +130,7 @@ export function removeEmptyRules(root: postcss.Root) {
       return
     }
     const parent = rule.parent
-    rule.remove()
+    removeCssRuleWithSourceTrace(rule)
     removeEmptyAtRuleAncestors(parent)
     removed++
   })
@@ -144,14 +146,14 @@ export function removeUnsupportedBrowserSelectors(root: postcss.Root) {
 
     if (isUnsupportedBrowserPreflightSelector(rule.selector)) {
       const parent = rule.parent
-      rule.remove()
+      removeCssRuleWithSourceTrace(rule)
       removeEmptyAtRuleAncestors(parent)
       return
     }
 
     if (isBrowserElementPreflightRule(rule)) {
       const parent = rule.parent
-      rule.remove()
+      removeCssRuleWithSourceTrace(rule)
       removeEmptyAtRuleAncestors(parent)
       return
     }
@@ -164,7 +166,7 @@ export function removeUnsupportedBrowserSelectors(root: postcss.Root) {
 
     if (selectors.length === 0) {
       const parent = rule.parent
-      rule.remove()
+      removeCssRuleWithSourceTrace(rule)
       removeEmptyAtRuleAncestors(parent)
       return
     }
@@ -178,7 +180,7 @@ function removeDeclarationAndEmptyRule(decl: postcss.Declaration) {
   decl.remove()
   if (parent?.type === 'rule' && parent.nodes.length === 0) {
     const ruleParent = parent.parent
-    parent.remove()
+    removeCssRuleWithSourceTrace(parent)
     removeEmptyAtRuleAncestors(ruleParent)
   }
 }
@@ -206,7 +208,6 @@ export function removeDisplayP3Declarations(root: postcss.Root) {
 }
 
 const SIMPLE_MIN_WIDTH_MEDIA_RE = /^\(\s*min-width\s*:[^)]+\)$/i
-const TAILWIND_GENERATED_TOKEN_COMMENT_RE = /^\s*tokens:\s*container\s*<=\s*<tailwind generated>\s*$/i
 
 interface RemoveTailwindContainerRulesOptions {
   generatedOnly?: boolean
@@ -232,7 +233,7 @@ export function removeTailwindContainerMaxWidthMediaRules(root: postcss.Root) {
         return
       }
       const parent = rule.parent
-      rule.remove()
+      removeCssRuleWithSourceTrace(rule)
       removeEmptyAtRuleAncestors(parent)
     })
   })
@@ -259,7 +260,7 @@ function isContainerWidthOnlyRule(rule: postcss.Rule) {
 
 function isTailwindGeneratedContainerRule(rule: postcss.Rule) {
   const previous = rule.prev()
-  return previous?.type === 'comment' && TAILWIND_GENERATED_TOKEN_COMMENT_RE.test(previous.text)
+  return previous?.type === 'comment' && isTailwindGeneratedContainerTraceComment(previous.text)
 }
 
 export function removeTailwindContainerWidthRules(
@@ -277,29 +278,30 @@ export function removeTailwindContainerWidthRules(
     if (isTailwindGeneratedContainerRule(rule)) {
       rule.prev()?.remove()
     }
-    rule.remove()
+    removeCssRuleWithSourceTrace(rule)
     removeEmptyAtRuleAncestors(parent)
   })
 }
 
 export function removeUnsupportedModernColorDeclarations(root: postcss.Root) {
-  const customPropertyValues = new Map<string, string>()
-  root.walkDecls((decl) => {
-    if (decl.prop.startsWith('--')) {
-      customPropertyValues.set(decl.prop, decl.value.trim())
-    }
-  })
+  // 必须在注册、条件及局部规则删除前分析，之后不能按最后声明重新推导。
+  const { values: customPropertyValues } = collectCustomPropertyValues(root, undefined, MINI_PROGRAM_THEME_SCOPE_SELECTORS)
 
   root.walkDecls((decl) => {
     const normalized = normalizeModernColorValue(decl.value, customPropertyValues)
     if (normalized.changed) {
       decl.value = normalized.value
-      if (decl.prop.startsWith('--')) {
-        customPropertyValues.set(decl.prop, decl.value.trim())
-      }
     }
     if (normalized.hasUnsupported) {
       removeDeclarationAndEmptyRule(decl)
     }
   })
+  const stableColors = new Map<string, string>()
+  for (const [property, value] of customPropertyValues) {
+    const normalized = normalizeModernColorValue(value, customPropertyValues)
+    if (!normalized.hasUnsupported) {
+      stableColors.set(property, normalized.value)
+    }
+  }
+  return stableColors
 }

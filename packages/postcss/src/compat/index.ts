@@ -55,6 +55,7 @@ export { createUniAppXHarmonyApplyCssExpander } from './uni-app-x/harmony-apply'
 export { rewriteUniAppXStyleReferences } from './uni-app-x/reference-paths'
 export { type NormalizedWebCssCompatOptions, normalizeWebCssCompatOptions, transformWebCssCompat, transformWebCssSafeSelectors } from './web-css'
 export { collectWebCssGradientEdits, type WebCssGradientEdit } from './web-css-gradient-edits'
+export { collectWebCssPropertyFallbackEdits, finalizeWebCssPropertyFallbacks, type WebCssPropertyFallbackEdit } from './web-css-property-fallbacks'
 export { collectWebpackBareSelectorUserCss } from './webpack-css/bare-selectors'
 export { isOnlyWebpackTailwindGeneratedPreflightCss, parseWebpackCssLayerNames, removeWebpackTailwindGeneratedAssetCss, stripTrailingLineWhitespace } from './webpack-css/generated-cleanup'
 

@@ -5,6 +5,7 @@ import { createStyleHandler } from '../../handler'
 import { applyConfiguredCssCalc } from '../../plugins/applyConfiguredCssCalc'
 import { protectDynamicColorMixAlpha } from '../color-mix'
 import { pruneMiniProgramGeneratedCss } from '../mini-program-css'
+import { normalizeMiniProgramColorMix } from '../mini-program-css/modern-colors'
 import { normalizeTailwindcssWebRpxDeclarations } from '../tailwindcss-rpx'
 
 const defaultStyleHandler = createStyleHandler({
@@ -41,7 +42,7 @@ export async function transformTailwindV4CssToWeapp(
     ...options?.customPropertyValues ?? [],
   ])
   const protectedCss = protectDynamicColorMixAlpha(compatibleCss, { customPropertyValues })
-  const result = await defaultStyleHandler(protectedCss.css, {
+  const result = await defaultStyleHandler(normalizeMiniProgramColorMix(protectedCss.css), {
     cssChildCombinatorReplaceValue: ['view', 'text'],
     cssRemoveActivePseudoClass: true,
     cssRemoveHoverPseudoClass: true,

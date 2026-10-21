@@ -1,26 +1,26 @@
- /* tokens: special-class-visual-probe <= src/pages/index/index.vue | dark <= src/pages/index/index.vue */
+ /*! tokens: special-class-visual-probe <= src/pages/index/index.vue | dark <= src/pages/index/index.vue */
 .special-class-visual-probe.dark [class~='dark:bg-red-300'] {
   background-color: #fca5a5;
   color: #7f1d1d;
 }
- /* tokens: special-class-visual-probe <= src/pages/index/index.vue */
+ /*! tokens: special-class-visual-probe <= src/pages/index/index.vue */
 .special-class-visual-probe [class~='text-[45rpx]'] {
   color: #0f172a;
   font-size: 45px;
   line-height: 1;
 }
- /* tokens: special-class-visual-probe <= src/pages/index/index.vue | dark <= src/pages/index/index.vue | dark:bg-red-300 <= src/pages/index/index.vue */
+ /*! tokens: special-class-visual-probe <= src/pages/index/index.vue | dark <= src/pages/index/index.vue | dark:bg-red-300 <= src/pages/index/index.vue */
 .special-class-visual-probe.dark .dark_cbg-red-300 {
   background-color: #fca5a5;
   color: #7f1d1d;
 }
- /* tokens: special-class-visual-probe <= src/pages/index/index.vue | text-[45rpx] <= src/pages/index/index.vue */
+ /*! tokens: special-class-visual-probe <= src/pages/index/index.vue | text-[45rpx] <= src/pages/index/index.vue */
 .special-class-visual-probe .text-_b45rpx_B {
   color: #0f172a;
   font-size: 45px;
   line-height: 1;
 }
- /* tokens: special-class-visual-probe <= src/pages/index/index.vue | css-variable-visual-probe <= src/pages/index/index.vue */
+ /*! tokens: special-class-visual-probe <= src/pages/index/index.vue | css-variable-visual-probe <= src/pages/index/index.vue */
 .special-class-visual-probe .css-variable-visual-probe {
   --visual-probe-bg: rgb(16, 185, 129);
   --visual-probe-size: 45px;

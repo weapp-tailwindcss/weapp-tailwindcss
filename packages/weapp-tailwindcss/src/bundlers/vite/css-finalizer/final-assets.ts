@@ -2,8 +2,9 @@ import type { OutputBundle } from 'rollup'
 import type { CssFinalizerContext } from './options'
 import { warnFinalRpxThemeRisk } from '@/tailwindcss/v4/rpx-theme-warning'
 import { finalizeMiniProgramCssAssetStructures } from '../generate-bundle/final-css-assets'
-import { finalizeCssCalc, finalizeWebCssCalc } from './css-calc'
+import { finalizeCssCalc } from './css-calc'
 import { inferPlatformFromViteOutDir } from './options'
+import { finalizeWebCssAssets } from './web-assets'
 
 /** 按生成目标统一收尾已组装的 CSS 资产，供空资产和常规分支复用。 */
 export async function finalizeCssAssets(
@@ -13,7 +14,7 @@ export async function finalizeCssAssets(
   files: ReadonlySet<string>,
 ) {
   if (isWebGeneratorTarget) {
-    return finalizeWebCssCalc(bundle, context)
+    return finalizeWebCssAssets(bundle, context)
   }
   finalizeMiniProgramCssAssetStructures(bundle, {
     cssMatcher: context.opts.cssMatcher,

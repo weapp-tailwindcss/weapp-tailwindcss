@@ -1,9 +1,21 @@
 import { postcss } from '@weapp-tailwindcss/postcss'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { resolveGenerationStyleContext } from '@/tailwindcss/v4-engine/generator/style-context'
+import { resolveGenerationStyleContext, resolveIncrementalStyleContext } from '@/tailwindcss/v4-engine/generator/style-context'
 
 describe('generation style context', () => {
   afterEach(() => vi.restoreAllMocks())
+
+  it.each([
+    '.dark{--brand:blue}',
+    '@media (min-width:1px){:root{--brand:blue}}',
+    '@property --brand{syntax:"<color>";inherits:false;initial-value:blue}',
+    ':root{--brand:var(--missing,red)}',
+  ])('增量兼容上下文不能把动态变量当成颜色常量：%s', (dynamic) => {
+    const generated = `:root{--brand:red;--stable:green}${dynamic}`
+    const context = resolveIncrementalStyleContext('@theme{--stable:green}', generated)
+    expect(context.customPropertyCompatibilityValues?.has('--brand')).toBe(false)
+    expect(context.customPropertyCompatibilityValues?.get('--stable')).toBe('green')
+  })
 
   it.each([undefined, {}, { cssCalc: false }, { cssCalc: [] }, { cssCalc: { precision: 2 } }])('does not parse full CSS without variable consumers: %j', (options) => {
     const parse = vi.spyOn(postcss, 'parse')

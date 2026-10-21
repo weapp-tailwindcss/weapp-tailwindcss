@@ -10,7 +10,6 @@
 ::backdrop {
   --tw-content: '';
 }
-/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
 @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
   ::-webkit-backdrop {
     --tw-content: '';
@@ -240,18 +239,23 @@ taro-textarea-core,
 @supports (not (-webkit-appearance: -apple-pay-button)) or (contain-intrinsic-size: 1px) {
   ::-webkit-input-placeholder {
     color: currentcolor;
+    color: color-mix(in oklab, currentcolor 50%, transparent);
   }
   ::-moz-placeholder {
     color: currentcolor;
+    color: color-mix(in oklab, currentcolor 50%, transparent);
   }
   :-ms-input-placeholder {
     color: currentcolor;
+    color: color-mix(in oklab, currentcolor 50%, transparent);
   }
   ::-ms-input-placeholder {
     color: currentcolor;
+    color: color-mix(in oklab, currentcolor 50%, transparent);
   }
   ::placeholder {
     color: currentcolor;
+    color: color-mix(in oklab, currentcolor 50%, transparent);
   }
 }
 taro-textarea-core {
@@ -306,20 +310,33 @@ taro-input-core:where([type='button'], [type='reset'], [type='submit']),
 [hidden]:where(:not([hidden='until-found'])) {
   display: none !important;
 }
- /*tokens: bg-independent-subpackage-marker <= src/sub-independent/pages/index.vue */
+ /*! tokens: bg-independent-subpackage-marker <= src/sub-independent/pages/index.vue */
 .bg-independent-subpackage-marker {
   background-color: #dc2626;
 }
+ /*! tokens: before:content-['independent_subpackage_taro-vite-vue3-tailwindcss-v4'] <= src/sub-independent/pages/index.vue */
 .before\:content-\[\'independent_subpackage_taro-vite-vue3-tailwindcss-v4\'\]::before {
   --tw-content: 'independent subpackage taro-vite-vue3-tailwindcss-v4';
   content: var(--tw-content);
 }
+ /*! tokens: before:content-['现在，让我们开始神奇的_tailwindcss_开发之旅吧！'] <= <tailwind generated> */
 .before\:content-\[\'现在，让我们开始神奇的_tailwindcss_开发之旅吧！\'\]::before {
   --tw-content: '现在，让我们开始神奇的 tailwindcss 开发之旅吧！';
   content: var(--tw-content);
 }
+ /*! tokens: before:content-['现在，让我们继续神奇的_tailwindcss_HMR_回归之旅吧！'] <= <tailwind generated> */
 .before\:content-\[\'现在，让我们继续神奇的_tailwindcss_HMR_回归之旅吧！\'\]::before {
   --tw-content: '现在，让我们继续神奇的 tailwindcss HMR 回归之旅吧！';
   content: var(--tw-content);
 }
+@property --tw-content {
+  syntax: '*';
+  initial-value: '';
+  inherits: false;
+}
 /*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+@property --tw-content {
+  syntax: '*';
+  initial-value: '';
+  inherits: false;
+}

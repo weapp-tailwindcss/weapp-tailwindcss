@@ -1,6 +1,7 @@
 import type { SetupWebpackV5ProcessAssetsHookOptions } from './helpers'
 import type { WebpackCssHandlerOptions } from './pipeline-helpers'
 import path from 'node:path'
+import { collectCssTokenSourcePaths } from '@weapp-tailwindcss/postcss/transform'
 import { normalizeStyleHandlerMajorVersion } from '@/context/style-options'
 import { resolveTailwindcssOptions } from '@/tailwindcss/runtime-options'
 import { hasTailwindApplyDirective, hasTailwindRootDirectives } from '../../../../generation/directives'
@@ -14,27 +15,7 @@ function normalizeWebpackCssSourceRef(file: string) {
 }
 
 function collectWebpackCssTokenSourceRefs(source: string) {
-  const refs = new Set<string>()
-  for (const line of source.split('\n')) {
-    if (!line.includes('/* tokens:') || !line.includes('<=')) {
-      continue
-    }
-    const traceStart = line.indexOf('<=')
-    const traceEnd = line.indexOf('*/', traceStart)
-    const trace = line.slice(traceStart + 2, traceEnd >= 0 ? traceEnd : undefined)
-    for (const segment of trace.split('|')) {
-      const sourceList = segment
-        .replace(/^[^<]*<=\s*/, '')
-        .split(',')
-      for (const ref of sourceList) {
-        const normalizedRef = ref.trim()
-        if (normalizedRef) {
-          refs.add(normalizeWebpackCssSourceRef(normalizedRef))
-        }
-      }
-    }
-  }
-  return refs
+  return new Set([...collectCssTokenSourcePaths(source)].map(normalizeWebpackCssSourceRef))
 }
 
 function readWebpackCompilationAssetSource(

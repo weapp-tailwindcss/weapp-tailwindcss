@@ -1,5 +1,6 @@
 import type { ComparableCssCoverage } from './coverage'
 import postcss from 'postcss'
+import { isCssSourceTraceComment, removeCssRuleWithSourceTrace } from '../../utils/css-source-trace'
 import { removeUnusedMiniProgramContentInit } from '../mini-program-css'
 import { hasNonCommentCss } from '../processed-css/cleanup'
 import { isTailwindRuntimePropertyRule } from '../uni-app-x-author-apply'
@@ -36,7 +37,7 @@ function removeScopedCssCoveredByRootStyleSources(css: string, rootSources: stri
         || isScopedUniAppWebTailwindPreflightRule(rule)
         || isScopedUniversalTailwindPreflightRule(rule)
       ) {
-        rule.remove()
+        removeCssRuleWithSourceTrace(rule)
         changed = true
       }
     })
@@ -99,7 +100,7 @@ export function removeCssCoveredByRootStyleSources(css: string, rootSources: str
           )
         )
       ) {
-        rule.remove()
+        removeCssRuleWithSourceTrace(rule)
         changed = true
       }
     })
@@ -126,11 +127,10 @@ export function removeCssCoveredByRootStyleSources(css: string, rootSources: str
         changed = true
         return
       }
-      if (!comment.text.trim().startsWith('tokens:')) {
+      if (!isCssSourceTraceComment(comment.text)) {
         return
       }
-      const next = comment.next()
-      if (next?.type === 'rule' || next?.type === 'atrule') {
+      if (hasCssSourceTraceHost(comment)) {
         return
       }
       comment.remove()
@@ -148,19 +148,26 @@ export function removeCssCoveredByRootStyleSources(css: string, rootSources: str
 
 function removeDanglingCssSourceTraceCommentsRoot(root: postcss.Root) {
   const css = root.toString()
-  if (!css.includes('/* tokens:')) {
+  if (!css.includes('tokens:')) {
     return css
   }
   let changed = false
   root.each((node) => {
-    if (node.type !== 'comment' || !node.text.trim().startsWith('tokens:')) {
+    if (node.type !== 'comment' || !isCssSourceTraceComment(node.text)) {
       return
     }
-    const next = node.next()
-    if (next?.type !== 'rule' && next?.type !== 'atrule') {
+    if (!hasCssSourceTraceHost(node)) {
       node.remove()
       changed = true
     }
   })
   return changed ? root.toString() : css
+}
+
+function hasCssSourceTraceHost(comment: postcss.Comment) {
+  let next = comment.next()
+  while (next?.type === 'comment' && isCssSourceTraceComment(next.text)) {
+    next = next.next()
+  }
+  return next?.type === 'rule' || next?.type === 'atrule'
 }

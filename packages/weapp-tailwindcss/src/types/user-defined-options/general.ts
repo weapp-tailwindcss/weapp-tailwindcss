@@ -136,6 +136,7 @@ export interface UserDefinedOptionsGeneralPart {
    * @remarks
    * 默认关闭。开启后会在生成的 CSS 规则前插入 `tokens: token <= source-file` 注释，
    * 用于排查某条工具类来自哪个源码文件。可传入 `{ root }` 控制注释里的相对路径基准。
+   * 使用重要注释以保留默认压缩链中的来源信息；压缩器显式删除所有注释的配置仍然生效。
    * 该能力面向调试与 demo 验收，生产构建通常保持关闭以减少产物体积。
    * @default false
    */

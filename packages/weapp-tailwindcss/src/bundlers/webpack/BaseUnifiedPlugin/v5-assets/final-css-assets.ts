@@ -1,6 +1,7 @@
 import type { WebCssCompatUserOptions } from '@weapp-tailwindcss/postcss/transform'
 import type { Compilation, Compiler } from 'webpack'
 import type { SetupWebpackV5ProcessAssetsHookOptions } from './helpers'
+import { collectWebCssPropertyFallbackEdits } from '@weapp-tailwindcss/postcss/transform'
 import { pluginName } from '@/constants'
 import { warnFinalRpxThemeRisk } from '@/tailwindcss/v4/rpx-theme-warning'
 import { getGroupedEntries } from '@/utils'
@@ -18,13 +19,15 @@ interface WebCssFinalizationOptions {
 
 /** 框架合并本地导入后、压缩与 Lynx 编码前，补齐完整消费图兼容。 */
 export function finalizeProcessedWebpackCssAssets(options: WebCssFinalizationOptions) {
-  for (const file of options.cssFiles) {
+  const assets = [...options.cssFiles].flatMap((file) => {
     const source = options.compilation.getAsset(file)?.source
-    if (source) {
-      const finalized = preserveProcessedWebpackCssSource(source, options.sources, options.webCompat)
-      if (finalized !== source) {
-        options.updateAssetIfChanged(file, finalized, { compare: false })
-      }
+    return source ? [{ file, source }] : []
+  })
+  const edits = collectWebCssPropertyFallbackEdits(assets.map(({ source }) => source.source().toString()), options.webCompat)
+  for (const [index, { file, source }] of assets.entries()) {
+    const finalized = preserveProcessedWebpackCssSource(source, options.sources, options.webCompat, edits[index])
+    if (finalized !== source) {
+      options.updateAssetIfChanged(file, finalized, { compare: false })
     }
   }
 }

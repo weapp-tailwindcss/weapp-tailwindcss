@@ -444,6 +444,7 @@ export async function processRememberedCssReplay(options: ProcessRememberedCssRe
     cssTaskFactories.push(() => timeTask('css.replay', async () => {
       const start = performance.now()
       const generated = await generateTailwindV4Css({
+        deferWebCssPropertyFallback: true,
         opts,
         runtimeState,
         runtime: scopedGeneratorRuntime,

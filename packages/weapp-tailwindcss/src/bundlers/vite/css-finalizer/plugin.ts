@@ -24,7 +24,6 @@ import { linkFrameworkRootStyleToRuntimeEntry, restoreFrameworkRootMiniProgramIm
 import { collectViteProcessedCssAssetResults, injectViteProcessedCssIntoMainCssAssets } from '../processed-css-assets'
 import { isHTMLRequest } from '../utils'
 import { resolveSourceRootFromBundleGraph, resolveWeappViteSourceRoot } from '../weapp-vite-config'
-import { finalizeWebCssCalc } from './css-calc'
 import { finalizeCssAssets } from './final-assets'
 import { tryFinalizeGenericWebCss } from './generic-web-fast-path'
 import { collectViteProcessedCssSources, createCssHandlerOptions, finalizeWebCss, inferPlatformFromViteOutDir, registerGeneratorDependencies, shouldGenerateCssByGenerator } from './options'
@@ -137,7 +136,7 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
           rootDir,
           sourceRoot,
         })) {
-          await finalizeWebCssCalc(bundle, context)
+          await finalizeCssAssets(bundle, context, isWebGeneratorTarget, new Set())
           finalizeCompilerShadowRun(runtimeState)
           finishTiming()
           return
@@ -250,6 +249,7 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
             }) ?? {},
           )
           const generated = await generateTailwindV4Css({
+            deferWebCssPropertyFallback: true,
             opts,
             runtimeState,
             runtime: new Set(),
@@ -416,6 +416,7 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
           const generatorTransformRawSource = generatorRawSource
           const generated = shouldGenerateCssByGenerator(opts, runtimeState.tailwindRuntime.majorVersion, file, generatorTransformRawSource, processed)
             ? await generateTailwindV4Css({
+                deferWebCssPropertyFallback: true,
                 opts,
                 runtimeState,
                 runtime: generatorRuntime,

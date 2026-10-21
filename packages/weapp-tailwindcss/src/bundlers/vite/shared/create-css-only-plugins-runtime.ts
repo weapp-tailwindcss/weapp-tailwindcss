@@ -147,6 +147,7 @@ export function createCssOnlyVitePlugins(
         runtimeState,
         runtime,
         compilerMode: 'legacy',
+        deferWebCssPropertyFallback: resolvedConfig?.command === 'build',
         rawSource: normalizeEmptyTailwindCustomVariants(code),
         file,
         outputFile,

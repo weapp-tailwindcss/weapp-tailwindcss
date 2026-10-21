@@ -35,7 +35,7 @@ import {
   resolveWebpackCssAssetModuleResource,
   stringifyWebpackSourceLike,
 } from './v5-assets/pipeline-helpers'
-import { preserveProcessedWebpackCssSource } from './v5-assets/processed-css-source'
+import { annotateProcessedWebpackCssSource, preserveProcessedWebpackCssSource } from './v5-assets/processed-css-source'
 import { processWebpackProcessedCssAsset } from './v5-assets/processed-css-task'
 import { createWebpackSourceCandidateScanCache } from './v5-assets/source-candidate-cache'
 import { refreshWebpackSourceCandidates } from './v5-assets/source-candidate-refresh'
@@ -65,7 +65,7 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
   } = options
   const { Compilation, sources } = compiler.webpack
   const { ConcatSource } = sources
-  const preserveProcessedWebCssAsset = (source: any) => preserveProcessedWebpackCssSource(source, sources)
+  const preserveFrameworkCssSource = (source: any) => preserveProcessedWebpackCssSource(source, sources)
   const generatorOptions = normalizeWeappTailwindcssGeneratorOptions(compilerOptions.generator, {
     appType: compilerOptions.appType,
     platform: compilerOptions.cssOptions?.platform ?? compilerOptions.platform,
@@ -236,6 +236,7 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
           : 'source-candidates:0'
         recordTimingDetail('sourceCandidates', sourceCandidatesStartedAt)
         const cssSourceTraceTokenSources = createWebpackCssSourceTraceTokenSources(compilerOptions, webpackSourceCandidates)
+        const preserveProcessedWebCssAsset = (source: any) => annotateProcessedWebpackCssSource(preserveFrameworkCssSource(source), sources, cssSourceTraceTokenSources)
         const cssSourceTraceSignature = createCssSourceTraceCacheSignature(cssSourceTraceTokenSources, compilerOptions)
         const annotateCss = (css: string) => annotateCssSourceTrace(css, {
           opts: compilerOptions,

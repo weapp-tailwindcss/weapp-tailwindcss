@@ -4,8 +4,8 @@ import type { CssFinalizerContext } from './options'
 import path from 'node:path'
 import process from 'node:process'
 import { disposeCompilerOwner, finalizeCompilerShadowRun } from '@/compiler'
-import { finalizeWebCssCalc } from './css-calc'
 import { tryFinalizeGenericWebCss } from './generic-web-fast-path'
+import { finalizeWebCssAssets } from './web-assets'
 
 /**
  * Generic Web 专用 CSS finalizer。
@@ -67,7 +67,7 @@ export function createViteWebCssFinalizerOutputPlugin(context: CssFinalizerConte
         if (!finalized) {
           context.debug('Generic Web CSS finalizer skipped: no unique processed CSS asset')
         }
-        await finalizeWebCssCalc(bundle, context)
+        await finalizeWebCssAssets(bundle, context)
         finalizeCompilerShadowRun(context.runtimeState)
         context.hmrTimingRecorder?.record('webCssFinalizer.total', performance.now() - startedAt)
       },

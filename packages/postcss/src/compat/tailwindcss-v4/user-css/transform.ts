@@ -3,6 +3,7 @@ import type { GeneratedThemeDeclarationResolver } from './generated-cleanup'
 import { applyConfiguredCssCalc } from '../../../plugins/applyConfiguredCssCalc'
 import { filterExistingCssRules } from '../../../vite-css-rules'
 import { removeUnsupportedMiniProgramAtRules } from '../../mini-program-css'
+import { normalizeMiniProgramColorMix } from '../../mini-program-css/modern-colors'
 import { removeLocalUtilityMarkers } from '../../uni-app-x/local-utility-order'
 import { removeTailwindApplyAtRules } from './at-rules'
 import { removeTailwindSourceDirectives } from './directives'
@@ -31,7 +32,7 @@ export async function transformGeneratorUserCss(
     const cleanedSource = options.generatorTarget === 'weapp'
       ? removeTailwindV4GeneratedUserCssArtifacts(
           unwrapMiniProgramCascadeLayers(
-            removeProcessedMiniProgramUnsupportedCss(compiledSource, {
+            removeProcessedMiniProgramUnsupportedCss(normalizeMiniProgramColorMix(compiledSource), {
               ...options.generatorStyleOptions,
               ...options.cssUserHandlerOptions,
             }),
@@ -61,20 +62,22 @@ export async function transformGeneratorUserCss(
   if (cleanedSource.trim().length === 0) {
     return ''
   }
+  const authorFunctionsSource = removeTailwindApplyAtRules(cleanedSource)
+  const compiledSource = await options.compileAuthorCssFunctions?.(authorFunctionsSource) ?? authorFunctionsSource
+  const compatibleSource = options.generatorTarget === 'weapp' ? normalizeMiniProgramColorMix(compiledSource) : compiledSource
   const sanitizedSource = removeTailwindSourceDirectives(
     stripUnmatchedTailwindSourceMediaCloseFragments(
       stripTailwindSourceMediaFragments(
         options.generatorTarget === 'weapp'
-          ? removeTailwindV4GeneratedUserCssArtifacts(removeUnsupportedMiniProgramAtRules(unwrapMiniProgramCascadeLayers(stripTailwindBanners(cleanedSource))), options.generatedSource)
-          : cleanedSource,
+          ? removeTailwindV4GeneratedUserCssArtifacts(removeUnsupportedMiniProgramAtRules(unwrapMiniProgramCascadeLayers(stripTailwindBanners(compatibleSource))), options.generatedSource)
+          : compatibleSource,
       ),
     ),
     {
       importFallback: options.importFallback,
     },
   )
-  const authorSource = stripUnmatchedTailwindSourceMediaCloseFragments(removeTailwindApplyAtRules(sanitizedSource))
-  const userSource = await options.compileAuthorCssFunctions?.(authorSource) ?? authorSource
+  const userSource = stripUnmatchedTailwindSourceMediaCloseFragments(removeTailwindApplyAtRules(sanitizedSource))
   if (userSource.trim().length === 0) {
     return ''
   }

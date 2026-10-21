@@ -5,14 +5,14 @@ import { decodeCssIdentifier, getCssAtRulePrelude, getCssCustomPropertyName, isC
 import { normalizeTailwindcssV4GradientPosition } from './tailwindcss-v4'
 
 type Gradient = 'linear' | 'radial' | 'conic'
-interface Context { gradient?: Gradient, transparent: boolean, query?: boolean }
+interface Context { gradient?: Gradient, legacyGradient?: boolean, transparent: boolean, query?: boolean }
 interface Reference extends Context { name: string }
-interface Consumer { alias?: string, gradient?: Gradient, background?: boolean }
+interface Consumer { alias?: string, gradient?: Gradient, legacyGradient?: boolean, background?: boolean }
 
 function gradientKind(name: string): Gradient | undefined {
-  return /^(?:repeating-)?linear-gradient$/.test(name)
+  return /^(?:-(?:webkit|moz|o)-)?(?:repeating-)?linear-gradient$/.test(name)
     ? 'linear'
-    : /^(?:repeating-)?radial-gradient$/.test(name)
+    : /^(?:-(?:webkit|moz|o)-)?(?:repeating-)?radial-gradient$/.test(name)
       ? 'radial'
       : /^(?:repeating-)?conic-gradient$/.test(name)
         ? 'conic'
@@ -49,7 +49,7 @@ function references(value: string): Reference[] {
       stack.push(context)
       if (name !== 'var') {
         const gradient = gradientKind(name)
-        context = { gradient, transparent: !!gradient, query: context.query || name === 'style' }
+        context = { gradient, legacyGradient: !!gradient && name.startsWith('-'), transparent: !!gradient, query: context.query || name === 'style' }
       }
     }
     else if ([TokenType.OpenParen, TokenType.OpenSquare, TokenType.OpenCurly].includes(token[0])) {
@@ -91,11 +91,12 @@ function gradientConsumers(root: postcss.Root, registered: ReturnType<typeof col
     const property = (decodeCssIdentifier(decl.prop) ?? '').toLowerCase()
     const background = property === 'background' || property === 'background-image'
     const registration = isCssPropertyRegistration(decl)
-    for (const { name, gradient, transparent } of references(decl.value)) {
-      add(name, registration || !transparent ? {} : alias ? { alias, gradient } : background ? { background, gradient } : {})
+    for (const { name, gradient, legacyGradient, transparent } of references(decl.value)) {
+      add(name, registration || !transparent ? {} : alias ? { alias, gradient, legacyGradient } : background ? { background, gradient, legacyGradient } : {})
     }
   })
   const result = new Set<Gradient>()
+  let legacyGradient = false
   const seen = new Set<string>()
   const active = new Set<string>()
   const stack: { name: string, gradient?: Gradient, exit?: boolean }[] = [{ name: '--tw-gradient-position' }]
@@ -120,6 +121,7 @@ function gradientConsumers(root: postcss.Root, registered: ReturnType<typeof col
     active.add(key)
     stack.push({ ...item, exit: true })
     for (const consumer of next) {
+      legacyGradient ||= !!consumer.legacyGradient
       if (item.gradient && consumer.gradient && item.gradient !== consumer.gradient) {
         return undefined
       }
@@ -135,7 +137,7 @@ function gradientConsumers(root: postcss.Root, registered: ReturnType<typeof col
       }
     }
   }
-  return result.size ? result : undefined
+  return result.size ? { kinds: result, legacyGradient } : undefined
 }
 
 export function normalizeWebGradientPositions(root: postcss.Root, registered: ReturnType<typeof collectRegisteredCustomPropertyFallbacks>) {
@@ -152,18 +154,19 @@ export function normalizeWebGradientPositions(root: postcss.Root, registered: Re
   if (!candidates.length) {
     return
   }
-  const kinds = gradientConsumers(root, registered)
-  if (!kinds) {
+  const consumers = gradientConsumers(root, registered)
+  if (!consumers) {
     return
   }
+  const { kinds, legacyGradient } = consumers
   const defaults: Record<Gradient, string> = { linear: 'to bottom', radial: 'at center', conic: 'from 0deg' }
   for (const { decl, normalized } of candidates) {
     if (normalized) {
       decl.value = normalized
     }
-    else if (kinds.size === 1) {
+    else if (kinds.size === 1 && !legacyGradient) {
       decl.value = defaults[[...kinds][0]!]
     }
-    // 多种梯度共用空位置时不能从声明所在规则推断最终级联；保留原始插值 token。
+    // 多种梯度或前缀语法共用空位置时不能推断默认值；保留原始插值 token。
   }
 }

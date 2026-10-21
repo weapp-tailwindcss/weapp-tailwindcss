@@ -9,6 +9,7 @@ import { removeUnsupportedCascadeLayers } from './mini-program-css/at-rules'
 import { normalizeTailwindcssV4InfinityCalcValue } from './tailwindcss-v4'
 import { collectCustomPropertyValues, resolveCustomPropertyVarValue, usesResolvableTailwindColorVariable } from './web-css-custom-properties'
 import { normalizeWebGradientPositions } from './web-css-gradients'
+import { withPreservedRegistrationScopes } from './web-css-registration-scopes'
 import { collectRegisteredCustomPropertyFallbacks, insertRegisteredCustomPropertyFallbackRule } from './web-css-registrations'
 
 export interface NormalizedWebCssCompatOptions {
@@ -220,6 +221,7 @@ function transformCssNesting(root: postcss.Root) {
 export function transformWebCssCompat(
   css: string,
   options: WebCssCompatUserOptions | undefined,
+  processing: { deferPropertyFallback?: boolean | undefined } = {},
 ) {
   const normalized = normalizeWebCssCompatOptions(options)
   if (!isWebCssCompatEnabled(normalized) && normalized.preset !== 'legacy-web') {
@@ -230,16 +232,16 @@ export function transformWebCssCompat(
     const root = postcss.parse(css)
     const registeredProperties = collectRegisteredCustomPropertyFallbacks(root)
     if (normalized.features.theme) {
-      unwrapThemeAtRules(root)
+      withPreservedRegistrationScopes(root, () => unwrapThemeAtRules(root))
     }
-    if (normalized.features.property) {
+    if (normalized.features.property && !processing.deferPropertyFallback) {
       insertRegisteredCustomPropertyFallbackRule(root, registeredProperties, !normalized.features.layer)
     }
     if (normalized.features.supports) {
       removeModernColorSupports(root)
     }
     if (normalized.features.nesting) {
-      transformCssNesting(root)
+      withPreservedRegistrationScopes(root, () => transformCssNesting(root))
     }
     normalizeWebGradientPositions(root, registeredProperties)
     normalizeTailwindcssV4InfinityCalcDeclarations(root)
@@ -248,7 +250,7 @@ export function transformWebCssCompat(
       insertWebkitBackgroundClipText(root)
     }
     if (normalized.features.layer) {
-      removeUnsupportedCascadeLayers(root)
+      withPreservedRegistrationScopes(root, () => removeUnsupportedCascadeLayers(root))
     }
     removeEmptyAtRules(root)
     return root.toString()

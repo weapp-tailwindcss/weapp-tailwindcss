@@ -10,10 +10,12 @@ export interface CustomPropertyValues {
   dependencies: Set<string>
 }
 
-function isRootScopeSelector(selector: string) {
+const ROOT_SCOPE_SELECTORS = new Set([':root', ':host'])
+
+function isRootScopeSelector(selector: string, rootScopeSelectors: ReadonlySet<string>) {
   return postcss.list.comma(selector).every((part) => {
     const normalized = part.trim()
-    return normalized === ':root' || normalized === ':host'
+    return rootScopeSelectors.has(normalized)
   })
 }
 
@@ -44,6 +46,7 @@ function isUnconditionalLayerScope(rule: postcss.Rule, root: postcss.Root) {
 export function collectCustomPropertyValues(
   root: postcss.Root,
   referencedProperties?: ReadonlySet<string> | undefined,
+  rootScopeSelectors: ReadonlySet<string> = ROOT_SCOPE_SELECTORS,
 ): CustomPropertyValues {
   const candidates = new Map<string, string>()
   const dynamic = new Set<string>()
@@ -79,7 +82,7 @@ export function collectCustomPropertyValues(
     }
     const isStableDeclaration = !!rule
       && isUnconditionalLayerScope(rule, root)
-      && isRootScopeSelector(rule.selector)
+      && isRootScopeSelector(rule.selector, rootScopeSelectors)
       && !decl.important
       && !elementDependent
       && !cssWideKeywords.has((decodeCssIdentifier(value) ?? value).toLowerCase())

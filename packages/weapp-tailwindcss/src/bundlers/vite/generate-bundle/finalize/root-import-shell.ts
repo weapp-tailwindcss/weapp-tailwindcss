@@ -101,7 +101,7 @@ export function finalizeWebviewCssCompat(
     }
     const rawSource = readAssetSource(output)
     const nextCss = transformWebCssSafeSelectors(
-      transformWebCssCompat(rawSource, generatorOptions.webCompat ?? true),
+      transformWebCssCompat(rawSource, generatorOptions.webCompat ?? true, { deferPropertyFallback: generatorOptions.target === 'web' }),
       { escapeMap: options.opts.escapeMap },
     )
     if (nextCss === rawSource) {

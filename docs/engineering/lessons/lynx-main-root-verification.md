@@ -273,6 +273,14 @@ head `a10ef71036e9ea923da4bc79b046861c34fde81d` 的 Benchmark run `39479576075`�
 
 基于本地 `0595204d2332bea3b7fbdee73f4c163b9d1e2dc9` 加上述未提交修复，PostCSS 全包为 148 文件、1,669 项通过、3 项既有跳过；四份集中合同 150 项通过；重建 PostCSS 后，核心 generator 9 项通过。旧 CI 五项断言要求删除注册，已改为明确验证注册与 initial 保留，未放宽样式支持预期。`CI=1 pnpm e2e:lynx --update=none` 为示例 205 项、E2E 39 文件 779 项全部通过，正式开发/生产双入口、encoder/decoder 与既有 static 无差异，未重写 static。`CI=1 pnpm e2e:lynx:theme` 为三引擎 15 项通过。包构建、类型、定向 ESLint 和 diff 检查通过。
 
+## 后续完整资产与来源证据复验
+
+2026-10-21 再次查询远端 main，仍为 `7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5`。本地 `c809b4ad5e2fb0352365671ef507ff9fbd9bd996` 加本任务未提交修复，发现并纠正透明混色、来源生命周期、snapshot 颜色裁剪、注册默认值合成阶段及框架后处理差异，详见[独立复盘](web-alpha-trace-property-phases.md)。不能把这些结果写成 main 已包含后续修复。
+
+重新构建受影响包后，同一 `CI=1 pnpm e2e:lynx --update=none` 入口为示例 205 项、E2E 39 文件 785 项全部通过，包括正式开发默认/严格及生产双入口的实际 encoder/bundle/decoder 证据；原生运行不在此命令内。`CI=1 pnpm e2e:lynx:theme` 的三浏览器 15 项通过；`CI=1 pnpm --filter @weapp-tailwindcss/website exec vitest run scripts/check-lynx-contract.test.mjs --update=none` 的 16 项通过。日志为 `.tmp/lynx-root-final-e2e.log`、`.tmp/lynx-theme-final-browsers.log` 与 `.tmp/lynx-doc-contract-current.log`。
+
+当前源码的 iOS/Android 主题帧以及全面 57 阶段和独立 Tailwind 15 目标仍须新一轮扩展预检。#1307 的同一 CSS 可见覆盖、#1308 的编码诊断与 #1309 的声明合同分别验证，不能由合同或静态产物通过推出所有平台、所有写法均有效，也不据此关闭 Issue。
+
 红绿原始日志位于 `.tmp/author-values-{persistent-red,query-red,browser-persistent-red,postcss-full,generator-green,lynx-green,browser-final}.log`。本批没有证明跨独立 stylesheet、运行时未知消费或旧引擎混合渐变效果，全面验收仍为 partial；性能门禁与 Taro Vite Harmony 空白的首次失败单独保留，不能由本批通过覆盖。
 
 ### Taro Vite Harmony 的生产空白根因

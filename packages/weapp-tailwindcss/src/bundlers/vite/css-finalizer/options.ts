@@ -177,6 +177,7 @@ export function finalizeWebCss(
   const defaultWebCssCompat = (value: string) => transformWebCssCompat(
     value,
     resolveViteWebCssCompatOptions(context),
+    { deferPropertyFallback: true },
   )
   return cssPipelineStrategy?.transformGeneratedCss?.(css, {
     ...context,

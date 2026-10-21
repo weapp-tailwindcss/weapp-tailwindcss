@@ -1,5 +1,6 @@
 import type { ComparableCssCoverage } from './coverage'
 import postcss from 'postcss'
+import { removeCssRuleWithSourceTrace } from '../../utils/css-source-trace'
 import { collectRootScopedComparableCssCoverage, isRuleCoveredByRootCss } from './coverage'
 import { normalizeCssSignatureValue } from './predicates'
 
@@ -26,7 +27,7 @@ export function removeCssRulesCoveredBySources(
       ) {
         return
       }
-      rule.remove()
+      removeCssRuleWithSourceTrace(rule)
       changed = true
     })
     return changed ? root.toString() : css

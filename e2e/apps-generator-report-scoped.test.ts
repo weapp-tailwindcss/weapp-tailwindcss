@@ -1,12 +1,22 @@
 import type { AppsGeneratorCompareReportItem } from './apps-generator-report'
 import { describe, expect, it } from 'vitest'
-import { mergeScopedGeneratorReport } from './apps-generator-report-scoped'
+import { filterGeneratorProjects, mergeScopedGeneratorReport } from './apps-generator-report-scoped'
 
 function item(name: string, platform: string, error: string): AppsGeneratorCompareReportItem {
   return { name, platform, error, fixture: 'demo', allowedPlatforms: [platform], cssFile: 'app.css', cssFiles: ['app.css'], status: 'failed' }
 }
 
 describe('定向 Generator 汇总基线', () => {
+  it('项目与平台使用交集，单独限定平台不混入其他目标', () => {
+    const projects = [item('a', 'web', ''), item('a', 'web-compact', ''), item('b', 'web', ''), item('a', 'weapp', '')]
+    expect(filterGeneratorProjects(projects, { project: '^a$', platform: '^web$' })).toEqual([projects[0]])
+    expect(filterGeneratorProjects(projects, { platform: '^web$' })).toEqual([projects[0], projects[2]])
+    expect(() => filterGeneratorProjects(projects, { project: '^missing$' })).toThrow('未匹配')
+    expect(() => filterGeneratorProjects(projects, { project: '^a$', platform: '^app-ios$' })).toThrow('未匹配')
+    expect(filterGeneratorProjects([], {})).toEqual([])
+    expect(filterGeneratorProjects(projects, {})).toEqual(projects)
+  })
+
   it('按项目与平台替换，保留未运行行及原顺序，不修改输入', () => {
     const baseline = [item('a', 'web', '旧 web'), item('b', 'web', '未运行'), item('a', 'mp-weixin', '旧小程序')]
     const current = [item('a', 'mp-weixin', '新小程序'), item('a', 'web', '新 web')]

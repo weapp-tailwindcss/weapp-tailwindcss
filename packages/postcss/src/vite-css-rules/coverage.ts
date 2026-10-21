@@ -1,4 +1,5 @@
 import { postcss } from '../postcss-runtime'
+import { removeCssRuleWithSourceTrace } from '../utils/css-source-trace'
 import { collectCssRuleDeclarationKeys, collectCssRuleDeclarationRecords, collectCssRuleDeclarations, getCssRuleStructuralKey, isCoveredByBaseVarFallbackDeclaration, isEquivalentVarFallbackDeclaration, normalizeCssDeclarationKey, normalizeCssForContainment, parseVarReferenceValue } from './structure'
 
 export function isCssRuleCoveredByDeclarations(
@@ -61,7 +62,7 @@ export function dedupeCoveredCssRules(css: string) {
         )
         if (targetCovered) {
           removeDuplicateLeadingComment(targetRule, rule)
-          targetRule.remove()
+          removeCssRuleWithSourceTrace(targetRule, rule)
           changed = true
         }
       }
@@ -100,7 +101,7 @@ export function mergeCoveredCssRuleDeclarations(baseCss: string, css: string) {
       }
       const missingDeclarations = incomingDeclarations.filter(decl => !baseKeys.has(normalizeCssDeclarationKey(decl)))
       if (missingDeclarations.length === 0) {
-        rule.remove()
+        changedBase = removeCssRuleWithSourceTrace(rule, records[0]?.rule) || changedBase
         changedCss = true
         return
       }
@@ -151,7 +152,7 @@ export function mergeCoveredCssRuleDeclarations(baseCss: string, css: string) {
         targetRecord.keys.add(normalizeCssDeclarationKey(decl))
         targetRecord.props.add(decl.prop.trim())
       }
-      rule.remove()
+      removeCssRuleWithSourceTrace(rule, targetRecord.rule)
       changedBase = true
       changedCss = true
     })

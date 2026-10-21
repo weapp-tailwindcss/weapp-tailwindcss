@@ -2,22 +2,9 @@ import type { Declaration as PostcssDeclaration, Root, Rule } from 'postcss'
 import { rule as createRule, Declaration } from 'postcss'
 import valueParser from 'postcss-value-parser'
 import { loadNativeCssBinding, nativeCssConfigured } from '../../native/binding'
-import { CLAMP_PX, COLOR_VAR_RE, GRADIENT_BACKGROUND_RE, GRADIENT_DIRECTION_CLASS_RE, GRADIENT_STOPS_VAR_RE, INFINITY_CALC_VALUE_REGEXP, SIMPLE_CLASS_SELECTOR_RE, testIfRootHostForV4 } from './variables'
-
-function collectTailwindcssV4ThemeVariables(root: Root) {
-  const variables = new Map<string, string>()
-  root.walkRules((rule) => {
-    if (!testIfRootHostForV4(rule) && !rule.selector.includes('page') && !rule.selector.includes('.tw-root')) {
-      return
-    }
-    rule.walkDecls((decl) => {
-      if (decl.prop.startsWith('--color-')) {
-        variables.set(decl.prop, decl.value)
-      }
-    })
-  })
-  return variables
-}
+import { MINI_PROGRAM_THEME_SCOPE_SELECTORS } from '../mini-program-css/selectors'
+import { collectCustomPropertyValues } from '../web-css-custom-properties'
+import { CLAMP_PX, COLOR_VAR_RE, GRADIENT_BACKGROUND_RE, GRADIENT_DIRECTION_CLASS_RE, GRADIENT_STOPS_VAR_RE, INFINITY_CALC_VALUE_REGEXP, SIMPLE_CLASS_SELECTOR_RE } from './variables'
 
 function resolveTailwindcssV4GradientColor(value: string, themeVariables: ReadonlyMap<string, string>) {
   const trimmed = value.trim()
@@ -243,8 +230,7 @@ function createTailwindcssV4MiniProgramGradientValue(
 }
 
 // 微信开发者工具对 gradient 内嵌多层 CSS 变量支持不完整，这里为实际生成的 v4 渐变组合补字面量兜底。
-export function appendTailwindcssV4MiniProgramGradientRules(root: Root) {
-  const themeVariables = collectTailwindcssV4ThemeVariables(root)
+export function appendTailwindcssV4MiniProgramGradientRules(root: Root, themeVariables: ReadonlyMap<string, string> = collectCustomPropertyValues(root, undefined, MINI_PROGRAM_THEME_SCOPE_SELECTORS).values) {
   const gradients: GradientBaseRule[] = []
   const fromColors = new Map<string, GradientColorRule>()
   const viaColors = new Map<string, GradientColorRule>()

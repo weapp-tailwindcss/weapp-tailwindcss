@@ -561,7 +561,7 @@ describe('mini-program css cleanup', () => {
     expect(css).toContain('.mixed{color:red}')
     expect(css).toContain('--brand:rgb(')
     expect(css).toContain('.ok{color:rgba(')
-    expect(css).toContain('.bad{color:var(--missing)}')
+    expect(css).not.toContain('.bad{')
   })
 
   it('cleans nested browser-only rules and empty modern color declarations', () => {

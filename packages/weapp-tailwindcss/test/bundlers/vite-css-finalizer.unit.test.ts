@@ -617,7 +617,7 @@ describe('vite css finalizer output plugin', () => {
     }))
     expect(opts.styleHandler).not.toHaveBeenCalled()
     expect(String(output.source)).toContain('@media (hover: hover)')
-    expect(String(output.source)).toContain('@media (prefers-color-scheme: dark) {}')
+    expect(String(output.source)).not.toContain('@media (prefers-color-scheme: dark) {}')
     expect(context.markCssAssetProcessed).toHaveBeenCalledWith(output, 'style.css')
   })
 

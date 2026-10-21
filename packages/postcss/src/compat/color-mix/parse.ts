@@ -75,9 +75,13 @@ function getParsedColorData(colorSource: string) {
 }
 
 export function parseAlphaValue(alphaSource: string) {
-  const parsed = Number.parseFloat(alphaSource)
-  if (Number.isFinite(parsed)) {
-    return alphaSource.trim().endsWith('%') ? parsed / 100 : parsed
+  const source = alphaSource.trim()
+  if (!/^[+-]?(?:\d*\.\d+|\d+)(?:e[+-]?\d+)?%$/i.test(source)) {
+    return undefined
+  }
+  const parsed = Number(source.slice(0, -1))
+  if (Number.isFinite(parsed) && parsed >= 0 && parsed <= 100) {
+    return parsed / 100
   }
   return undefined
 }
@@ -105,8 +109,8 @@ function resolveVarColor(
 
   const resolved = customPropertyValues.get(propertyName)
   if (!resolved) {
-    const fallback = args[1] ? valueParser.stringify(trimNodes(args[1])).trim() : undefined
-    return fallback ? resolveColorData(fallback, customPropertyValues, depth + 1) : undefined
+    // 未知变量可能由局部主题或 CSSOM 提供，fallback 不能证明它永远缺失。
+    return undefined
   }
 
   return resolveColorData(resolved, customPropertyValues, depth + 1)
@@ -143,26 +147,11 @@ export function normalizeColorFunctionName(
   customPropertyValues: ReadonlyMap<string, string>,
 ) {
   const resolvedColor = resolveColorData(colorSource, customPropertyValues)
-  if (!resolvedColor) {
+  if (!resolvedColor || typeof resolvedColor.alpha !== 'number') {
     return undefined
   }
 
-  resolvedColor.alpha = alpha
-  return serializeRGB(resolvedColor).toString()
-}
-
-export function normalizeColorFunctionWithDynamicAlpha(
-  colorSource: string,
-  alphaSource: string,
-  customPropertyValues: ReadonlyMap<string, string>,
-) {
-  const resolvedColor = resolveColorData(colorSource, customPropertyValues)
-  const alphaColor = getParsedColorData(`rgb(0 0 0 / ${alphaSource})`)
-  if (!resolvedColor || !alphaColor || typeof alphaColor.alpha === 'number') {
-    return undefined
-  }
-
-  resolvedColor.alpha = alphaColor.alpha
+  resolvedColor.alpha *= alpha
   return serializeRGB(resolvedColor).toString()
 }
 

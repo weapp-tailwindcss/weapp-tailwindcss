@@ -8,6 +8,23 @@ import { normalizeModernColorValue } from './color-mix'
 const signatures = new Map(tailwindPropertyRegistrations.map(item => [item.prop, item]))
 type Signature = (typeof tailwindPropertyRegistrations)[number]
 
+const lengthUnits = new Set('px cm mm q in pc pt em ex cap ch ic rem rex rcap rch ric lh rlh vw vh vi vb vmin vmax svw svh svi svb svmin svmax lvw lvh lvi lvb lvmin lvmax dvw dvh dvi dvb dvmin dvmax cqw cqh cqi cqb cqmin cqmax'.split(' '))
+
+function isLiteralZeroLength(value: string) {
+  const nodes = valueParser(value).nodes.filter(node => node.type !== 'space' && node.type !== 'comment')
+  if (nodes.length !== 1 || nodes[0]?.type !== 'word') {
+    return false
+  }
+  const match = /^[-+]?((?:\d*\.)?\d+)(?:e[-+]?\d+)?([a-z]*)$/i.exec(nodes[0].value)
+  // 检查原始尾数，不能把下溢的非零数（如 1e-999rem）当成零。
+  return !!match && /^[0.]+$/.test(match[1]!) && (!match[2] || lengthUnits.has(match[2].toLowerCase()))
+}
+
+function matchesInitialValue(value: string, signature: Signature) {
+  return valueIdentity(value) === valueIdentity(signature.initialValue!)
+    || (signature.syntax === '<length>' && isLiteralZeroLength(signature.initialValue!) && isLiteralZeroLength(value))
+}
+
 function valueIdentity(value: string): string {
   function nodesIdentity(nodes: ValueNode[]): unknown[] {
     return nodes.filter(node => node.type !== 'space' && node.type !== 'comment').map(node =>
@@ -37,7 +54,7 @@ function matchesSignature(rule: postcss.AtRule, signature: Signature) {
     && decodeCssIdentifier(descriptors.get('inherits') ?? '')?.toLowerCase() === 'false'
     && (signature.initialValue === undefined
       ? !descriptors.has('initial-value')
-      : descriptors.has('initial-value') && valueIdentity(descriptors.get('initial-value')!) === valueIdentity(signature.initialValue))
+      : descriptors.has('initial-value') && matchesInitialValue(descriptors.get('initial-value')!, signature))
 }
 
 /** 在结构改写前扫描所有同名注册；任何未知签名或条件位置均否决默认值合成。 */
@@ -75,17 +92,7 @@ function firstStyleNode(root: postcss.Root) {
       || (node.name === 'layer' && !node.nodes))))
 }
 
-function hasCompleteFallback(root: postcss.Root, defaults: postcss.Declaration[], preserveLayers: boolean) {
-  const first = firstStyleNode(root)
-  const firstLayer = root.nodes.find(node => node.type === 'atrule' && node.name === 'layer')
-  const lowestLayer = first?.type === 'atrule' && first.name === 'layer'
-    && (firstLayer === first || (firstLayer?.type === 'atrule' && !firstLayer.nodes && firstLayer.params === first.params))
-  const candidate = preserveLayers && lowestLayer
-    ? first.nodes?.find(node => node.type !== 'comment')
-    : first
-  if (candidate?.type !== 'rule' || !isDefaultsRule(candidate)) {
-    return false
-  }
+function hasDefaultDeclarations(candidate: postcss.Rule, defaults: postcss.Declaration[]) {
   const existing = new Map<string, string>()
   for (const node of candidate.nodes) {
     if (node.type === 'comment') {
@@ -94,13 +101,39 @@ function hasCompleteFallback(root: postcss.Root, defaults: postcss.Declaration[]
     if (node.type !== 'decl' || node.important || existing.has(node.prop)) {
       return false
     }
-    existing.set(node.prop, valueIdentity(node.value))
+    existing.set(node.prop, node.value)
   }
   return defaults.every((decl) => {
     const actual = existing.get(decl.prop)
-    return actual === valueIdentity(decl.value)
-      || actual === valueIdentity(normalizeModernColorValue(decl.value, new Map()).value)
+    const signature = signatures.get(decl.prop)
+    return actual !== undefined && ((signature && matchesInitialValue(actual, signature))
+      || valueIdentity(actual) === valueIdentity(normalizeModernColorValue(decl.value, new Map()).value))
   })
+}
+
+function hasCompleteFallback(root: postcss.Root, defaults: postcss.Declaration[], preserveLayers: boolean, prefixes: ReadonlySet<string>) {
+  const first = firstStyleNode(root)
+  const firstLayer = root.nodes.find(node => node.type === 'atrule' && node.name === 'layer')
+  const lowestLayer = first?.type === 'atrule' && first.name === 'layer'
+    && (firstLayer === first || (firstLayer?.type === 'atrule' && !firstLayer.nodes && firstLayer.params === first.params))
+  const candidates = preserveLayers && lowestLayer ? first.nodes ?? [] : root.nodes.slice(first ? root.nodes.indexOf(first) : 0)
+  const remaining = new Set(['universal', ...prefixes])
+  for (const candidate of candidates) {
+    if (candidate.type === 'comment') {
+      continue
+    }
+    if (candidate.type !== 'rule' || !hasDefaultDeclarations(candidate, defaults)) {
+      return false
+    }
+    const key = isDefaultsRule(candidate) ? 'universal' : candidate.selector.trim()
+    if (!remaining.delete(key)) {
+      return false
+    }
+    if (!remaining.size) {
+      return true
+    }
+  }
+  return false
 }
 
 export function insertRegisteredCustomPropertyFallbackRule(
@@ -111,11 +144,21 @@ export function insertRegisteredCustomPropertyFallbackRule(
   const declarations = [...registered.values()].flatMap(signature => signature?.initialValue === undefined
     ? []
     : [postcss.decl({ prop: signature.prop, value: signature.initialValue })])
-  if (!declarations.length || hasCompleteFallback(root, declarations, preserveLayers)) {
+  const prefixes = new Set<string>()
+  root.walkRules((rule) => {
+    for (const selector of rule.selectors) {
+      if (['::-webkit-backdrop', '::-ms-backdrop'].includes(selector)) {
+        prefixes.add(selector)
+      }
+    }
+  })
+  if (!declarations.length || hasCompleteFallback(root, declarations, preserveLayers, prefixes)) {
     return
   }
   const rule = postcss.rule({ selector: '*, ::before, ::after, ::backdrop', nodes: declarations })
-  let fallback: postcss.ChildNode = rule
+  // 复用最终资产的前缀证据，分开规则以免未知伪元素令整组选择器失效。
+  let fallbacks: postcss.ChildNode[] = [...prefixes].map(selector => rule.clone({ selector }))
+  fallbacks.push(rule)
   if (preserveLayers) {
     // 前置 layer 声明可以早于 import；block 必须晚于 import，且默认层须最先登记。
     let name = '__weapp_tw_defaults'
@@ -137,13 +180,15 @@ export function insertRegisteredCustomPropertyFallbackRule(
     else {
       root.append(order)
     }
-    fallback = postcss.atRule({ name: 'layer', params: name, nodes: [rule] })
+    fallbacks = [postcss.atRule({ name: 'layer', params: name, nodes: fallbacks })]
   }
   const anchor = firstStyleNode(root)
   if (anchor) {
-    root.insertBefore(anchor, fallback)
+    for (const fallback of fallbacks) {
+      root.insertBefore(anchor, fallback)
+    }
   }
   else {
-    root.append(fallback)
+    root.append(...fallbacks)
   }
 }

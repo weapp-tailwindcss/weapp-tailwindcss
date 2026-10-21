@@ -410,6 +410,7 @@ export async function processWebpackGeneratedCssAsset(element: any, context: Web
               },
             }
         const generatorOptions = {
+          deferWebCssPropertyFallback: (compilerOptions.cssOptions?.platform ?? compilerOptions.platform) !== 'lynx',
           opts: scopedGeneratorCompilerOptions,
           runtimeState,
           runtime: scopedGeneratorRuntimeSet,

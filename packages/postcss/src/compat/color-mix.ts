@@ -1,12 +1,13 @@
 import type { Node } from 'postcss-value-parser'
 import postcss from 'postcss'
 import valueParser from 'postcss-value-parser'
-import { getCssCustomPropertyName } from '../utils/css-custom-property'
-import { COLOR_MIX_NAME, MODERN_COLOR_FUNCTION_NAMES, PLACEHOLDER_PREFIX } from './color-mix/constants'
+import { getCssAtRulePrelude, getCssCustomPropertyName } from '../utils/css-custom-property'
+import { COLOR_MIX_NAME, MODERN_COLOR_FUNCTION_NAMES } from './color-mix/constants'
 import { hasUnsupportedModernColorFunction, isDisplayP3ColorFunction, isModernColorSyntaxFunction } from './color-mix/modern'
 import { normalizeStandaloneColorFunction } from './color-mix/parse'
 import { tryResolveColorMix } from './color-mix/resolve'
 import { isTailwindcssV4ThemeVariable } from './tailwindcss-v4/variables'
+import { collectCustomPropertyValues } from './web-css-custom-properties'
 
 export interface DynamicColorMixAlphaProtection {
   css: string
@@ -128,7 +129,8 @@ export function normalizeModernColorValue(
     }
 
     if (!normalized) {
-      return
+      // 未证明等价的 mix 保留完整语法，不能只改写其内部颜色。
+      return name === COLOR_MIX_NAME ? false : undefined
     }
 
     const mutableNode = node as unknown as Node & { nodes?: Node[] }
@@ -146,19 +148,6 @@ export function normalizeModernColorValue(
   }
 }
 
-function createPlaceholder(index: number) {
-  return `${PLACEHOLDER_PREFIX}${index}__`
-}
-
-function unwrapProtectedSupports(cssRoot: postcss.Root) {
-  cssRoot.walkAtRules('supports', (atRule) => {
-    if (!atRule.nodes || !atRule.toString().includes(PLACEHOLDER_PREFIX)) {
-      return
-    }
-    atRule.replaceWith(atRule.nodes)
-  })
-}
-
 export function protectDynamicColorMixAlpha(
   css: string,
   options: DynamicColorMixAlphaProtectionOptions = {},
@@ -170,16 +159,26 @@ export function protectDynamicColorMixAlpha(
     }
   }
 
-  const replacements = new Map<string, string>()
   const root = postcss.parse(css)
   const customPropertyValues = new Map(options.customPropertyValues)
   let changed = false
 
   root.walkDecls((decl) => {
-    if (decl.prop.startsWith('--') && !decl.value.includes(COLOR_MIX_NAME)) {
-      customPropertyValues.set(decl.prop, decl.value.trim())
+    const property = getCssCustomPropertyName(decl.prop)
+    if (property) {
+      customPropertyValues.delete(property)
     }
   })
+  root.walkAtRules((rule) => {
+    const prelude = getCssAtRulePrelude(rule)
+    const property = prelude.name.toLowerCase() === 'property' && getCssCustomPropertyName(prelude.params)
+    if (property) {
+      customPropertyValues.delete(property)
+    }
+  })
+  for (const [property, value] of collectCustomPropertyValues(root).values) {
+    customPropertyValues.set(property, value)
+  }
 
   root.walkDecls((decl) => {
     if (!decl.value.includes(COLOR_MIX_NAME)) {
@@ -194,23 +193,15 @@ export function protectDynamicColorMixAlpha(
         return
       }
       const resolved = tryResolveColorMix(node, customPropertyValues)
-      if (resolved) {
-        if (resolved.deferred) {
-          const placeholder = createPlaceholder(replacements.size)
-          replacements.set(placeholder, resolved.value)
-          const mutableNode = node as unknown as Node & { nodes?: Node[] }
-          mutableNode.type = 'word'
-          mutableNode.value = placeholder
-          delete mutableNode.nodes
-          mutated = true
-          return
-        }
-        const mutableNode = node as unknown as Node & { nodes?: Node[] }
-        mutableNode.type = 'word'
-        mutableNode.value = resolved.value
-        delete mutableNode.nodes
-        mutated = true
+      if (!resolved) {
+        // 保留完整表达式，后续依赖收集仍须能看见变量引用。
+        return false
       }
+      const mutableNode = node as unknown as Node & { nodes?: Node[] }
+      mutableNode.type = 'word'
+      mutableNode.value = resolved.value
+      delete mutableNode.nodes
+      mutated = true
     })
 
     if (mutated) {
@@ -219,18 +210,8 @@ export function protectDynamicColorMixAlpha(
     }
   })
 
-  if (replacements.size > 0) {
-    unwrapProtectedSupports(root)
-  }
-
   return {
     css: changed ? root.toString() : css,
-    restore(value) {
-      let restored = value
-      for (const [placeholder, replacement] of replacements) {
-        restored = restored.split(placeholder).join(replacement)
-      }
-      return restored
-    },
+    restore: value => value,
   }
 }

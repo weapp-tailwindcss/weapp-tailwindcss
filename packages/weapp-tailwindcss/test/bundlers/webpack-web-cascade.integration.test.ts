@@ -17,15 +17,18 @@ const { getMinimizers } = bundlerRequire('./lib/minification.js')
 const { createStyleLoadersFactory } = bundlerRequire('./lib/loaders/styleLoader.js')
 const { getCSSExtractPlugin } = bundlerRequire('./lib/currentBundler.js')
 const { WeappTailwindcss } = require('weapp-tailwindcss/webpack')
+const taroRequire = createRequire(fileURLToPath(new URL('../../../../demo/taro-webpack-react-tailwindcss-v4/package.json', import.meta.url)))
+const taroRunnerRequire = createRequire(taroRequire.resolve('@tarojs/webpack5-runner/package.json'))
+const TaroCssMinimizerPlugin = taroRunnerRequire('css-minimizer-webpack-plugin')
 
-async function createWebFixture(options: { sourceMap?: boolean } = {}) {
+async function createWebFixture(options: { sourceMap?: boolean, cssSourceTrace?: boolean, taroMinimizer?: boolean } = {}) {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), 'weapp-tw-webpack-web-cascade-')))
   await mkdir(path.join(root, 'node_modules'))
   await symlink(path.dirname(require.resolve('tailwindcss/package.json')), path.join(root, 'node_modules', 'tailwindcss'), process.platform === 'win32' ? 'junction' : 'dir')
   await mkdir(path.join(root, 'parts'))
   const cssEntry = path.join(root, 'theme.css')
   await writeFile(path.join(root, 'entry.js'), 'import "./theme.css"')
-  const template = '<main class="h-[137px]">late template</main>'
+  const template = '<main class="h-[137px] underline">late template</main>'
   await writeFile(path.join(root, 'template.html'), template)
   await writeFile(cssEntry, [
     '@import "tailwindcss" source(none);',
@@ -43,6 +46,7 @@ async function createWebFixture(options: { sourceMap?: boolean } = {}) {
   const getStyleLoaders = await createStyleLoadersFactory({ currentBundler: { name: 'webpack' } })
   const MiniCssExtractPlugin = await getCSSExtractPlugin({ currentBundler: { name: 'webpack' } })
   let optimizedCss: string | undefined
+  let generatedCss: string | undefined
   let frameworkCss: { css: string, map: unknown } | undefined
   const compiler = webpack({
     mode: 'production',
@@ -51,16 +55,29 @@ async function createWebFixture(options: { sourceMap?: boolean } = {}) {
     entry: './entry.js',
     output: { path: path.join(root, 'dist'), filename: 'entry.js' },
     module: { rules: [{ test: /\.css$/, use: getStyleLoaders(false) }] },
-    optimization: { minimizer: preserveWebsiteCssConditionalOrder(minimizers) },
+    optimization: { minimizer: options.taroMinimizer
+      ? [new TaroCssMinimizerPlugin({
+          minify: TaroCssMinimizerPlugin.cssnanoMinify,
+          minimizerOptions: { preset: ['default', { mergeRules: false, mergeIdents: false, reduceIdents: false, discardUnused: false, minifySelectors: false }] },
+        })]
+      : preserveWebsiteCssConditionalOrder(minimizers) },
     plugins: [
       new MiniCssExtractPlugin({ filename: 'theme.css' }),
       new WeappTailwindcss({
         generator: { target: 'web' },
+        tailwindcssBasedir: root,
+        cssSourceTrace: options.cssSourceTrace ? { root } : false,
         tailwindcss: { v4: { base: root, cssEntries: [cssEntry] } },
       }),
       {
         apply(compiler) {
           compiler.hooks.thisCompilation.tap('capture-optimized-css', (compilation) => {
+            compilation.hooks.processAssets.tap({
+              name: 'capture-generated-css',
+              stage: webpack.Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE + 1,
+            }, () => {
+              generatedCss = compilation.getAsset('theme.css')?.source.source().toString()
+            })
             compilation.hooks.processAssets.tap({
               name: 'capture-framework-css-source',
               stage: webpack.Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE - 1,
@@ -86,7 +103,7 @@ async function createWebFixture(options: { sourceMap?: boolean } = {}) {
       },
     ],
   })
-  return { root, compiler, cssEntry, template, optimizedCss: () => optimizedCss, frameworkCss: () => frameworkCss }
+  return { root, compiler, cssEntry, template, generatedCss: () => generatedCss, optimizedCss: () => optimizedCss, frameworkCss: () => frameworkCss }
 }
 
 it('在生产压缩之前完成 Web CSS 生成，不在压缩后重新插入基础 utility', async () => {
@@ -145,8 +162,8 @@ it('在生产压缩之前完成 Web CSS 生成，不在压缩后重新插入基�
   }
 }, 60_000)
 
-it('在生产处理和压缩之后仍能追溯框架 CSS loader 的 source map', async () => {
-  const fixture = await createWebFixture({ sourceMap: true })
+it('显式开启的来源注释经过 Taro 默认生产压缩器后仍保留，且不覆盖优化后的 CSS', async () => {
+  const fixture = await createWebFixture({ cssSourceTrace: true, taroMinimizer: true })
   const { root, compiler } = fixture
   try {
     const stats = await new Promise<webpack.Stats | undefined>((resolve, reject) => {
@@ -154,6 +171,47 @@ it('在生产处理和压缩之后仍能追溯框架 CSS loader 的 source map',
     })
     expect(stats?.hasErrors(), stats?.toString({ all: false, errors: true })).toBe(false)
     const css = await readFile(path.join(root, 'dist', 'theme.css'), 'utf8')
+    expect(fixture.generatedCss()).toContain('tokens: underline <= template.html')
+    expect(css).toMatch(/\/\*!\s*tokens:\s*underline\s*<=\s*template\.html\s*\*\//)
+    expect(css).toContain('text-decoration-line:underline')
+    expect(css).toContain('.h-\\[137px\\]')
+    expect(css).toBe(fixture.optimizedCss())
+  }
+  finally {
+    await new Promise<void>((resolve, reject) => compiler.close(error => error ? reject(error) : resolve()))
+    await rm(root, { recursive: true, force: true })
+  }
+}, 60_000)
+
+it('压缩器显式删除全部注释时尊重配置，不在压缩后重新注入来源', async () => {
+  const fixture = await createWebFixture({ cssSourceTrace: true })
+  const { root, compiler } = fixture
+  try {
+    const stats = await new Promise<webpack.Stats | undefined>((resolve, reject) => {
+      compiler.run((error, stats) => error ? reject(error) : resolve(stats))
+    })
+    expect(stats?.hasErrors(), stats?.toString({ all: false, errors: true })).toBe(false)
+    expect(fixture.generatedCss()).toContain('tokens: underline <= template.html')
+    const css = await readFile(path.join(root, 'dist', 'theme.css'), 'utf8')
+    expect(css).not.toContain('tokens:')
+    expect(css).toBe(fixture.optimizedCss())
+  }
+  finally {
+    await new Promise<void>((resolve, reject) => compiler.close(error => error ? reject(error) : resolve()))
+    await rm(root, { recursive: true, force: true })
+  }
+}, 60_000)
+
+it('在生产处理和压缩之后仍能追溯框架 CSS loader 的 source map', async () => {
+  const fixture = await createWebFixture({ sourceMap: true, cssSourceTrace: true, taroMinimizer: true })
+  const { root, compiler } = fixture
+  try {
+    const stats = await new Promise<webpack.Stats | undefined>((resolve, reject) => {
+      compiler.run((error, stats) => error ? reject(error) : resolve(stats))
+    })
+    expect(stats?.hasErrors(), stats?.toString({ all: false, errors: true })).toBe(false)
+    const css = await readFile(path.join(root, 'dist', 'theme.css'), 'utf8')
+    expect(css).toContain('tokens: underline <= template.html')
     expect(css).toContain('sourceMappingURL=theme.css.map')
     const map = JSON.parse(await readFile(path.join(root, 'dist', 'theme.css.map'), 'utf8'))
     expect(map.mappings.length).toBeGreaterThan(0)

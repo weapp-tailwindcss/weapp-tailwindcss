@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises'
 import nodePath from 'node:path'
+import { isCssSourceTraceComment } from '@weapp-tailwindcss/postcss/transform'
 import path from 'pathe'
 import postcss from 'postcss'
 import prettier from 'prettier'
@@ -217,8 +218,8 @@ export function normalizeGeneratedCssSourceMarkers(source: string, projectRoot: 
 
 export function normalizeFormattedCssSnapshot(source: string) {
   return source
-    .replace(/\}\s+(\/\*\s*tokens?:)/g, '}\n$1')
-    .replace(/^[ \t]*(\/\*\s*tokens?:)/gm, ' $1')
+    .replace(/\}\s+(\/\*!?\s*tokens?:)/g, '}\n$1')
+    .replace(/^[ \t]*(\/\*!?\s*tokens?:)/gm, ' $1')
     .replace(/\n{2,}(?=(?:view|text|:{1,2}after|:{1,2}before|:host|page|\.tw-root|wx-root-portal-content)[\s,{])/g, '\n')
 }
 
@@ -548,7 +549,7 @@ function sortSubpackageMarkerChunks(container: postcss.Container) {
     const next = nodes[index + 1]
     if (
       node?.type === 'comment'
-      && /^\s*tokens:\s?/.test(node.text)
+      && isCssSourceTraceComment(node.text)
       && next?.type === 'rule'
       && SUBPACKAGE_MARKER_SELECTOR_RE.test(next.selector)
     ) {
@@ -804,39 +805,6 @@ function normalizeTailwindV4ColorOutput(root: postcss.Root) {
   })
 }
 
-function removeUnusedTailwindV4ColorTokens(root: postcss.Root) {
-  const colorDeclarations: postcss.Declaration[] = []
-  const usedColors = new Set<string>()
-
-  root.walkDecls((decl) => {
-    if (decl.prop.startsWith('--color-')) {
-      colorDeclarations.push(decl)
-    }
-    if (decl.prop.startsWith('--')) {
-      return
-    }
-    for (const valuePart of decl.value.split('var(').slice(1)) {
-      const varArgs = valuePart.split(')')[0]?.split(',') ?? []
-      if (varArgs.length > 1) {
-        continue
-      }
-      const colorName = varArgs[0]?.trim()
-      if (colorName?.startsWith('--color-')) {
-        usedColors.add(colorName)
-      }
-    }
-  })
-
-  for (const decl of colorDeclarations) {
-    if (
-      !usedColors.has(decl.prop)
-      && (TAILWIND_V4_DEFAULT_COLOR_ORDER.has(decl.prop) || TAILWIND_V4_APP_COLOR_ORDER.has(decl.prop))
-    ) {
-      decl.remove()
-    }
-  }
-}
-
 function normalizeTailwindV4DefaultTokenUsage(root: postcss.Root) {
   root.walkDecls((decl) => {
     const parentSelector = decl.parent?.type === 'rule' ? decl.parent.selector : ''
@@ -1039,7 +1007,7 @@ function annotateRuleTokenSources(root: postcss.Root, options: CssSnapshotOption
   }
 
   root.walkComments((comment) => {
-    if (/^\s*tokens:\s?/.test(comment.text)) {
+    if (isCssSourceTraceComment(comment.text)) {
       comment.remove()
     }
   })
@@ -1140,7 +1108,6 @@ export function normalizeCssSnapshot(source: string, _options: CssSnapshotOption
     removeTailwindV4RootVariableNoise(root, _options)
     removeTailwindV4DefaultTokenNoise(root)
     normalizeTailwindV4ColorOutput(root)
-    removeUnusedTailwindV4ColorTokens(root)
     normalizeTailwindV4DefaultTokenUsage(root)
     sortUtilityRuleRuns(root)
   }
