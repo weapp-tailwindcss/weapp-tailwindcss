@@ -68,6 +68,24 @@ it('所属读取已取消时不返回完整旧文件，ready 轮询取消后也�
   await expect(readPublishedSnapshot(file, ready, controller.signal)).rejects.toMatchObject({ name: 'AbortError', cause: reason })
 })
 
+it.each([undefined, new Error('owner cancelled'), null, 0, false, ''])('没有 throwIfAborted 方法时仍原样保留取消原因（%s）', async (reason) => {
+  const controller = new AbortController()
+  controller.abort(reason)
+  const expected = controller.signal.reason
+  Object.defineProperty(controller.signal, 'throwIfAborted', { value: undefined })
+  const read = vi.spyOn(fs.promises, 'readFile')
+  await expect(readPublishedSnapshot(path.join(root, 'manifest.json'), undefined, controller.signal)).rejects.toBe(expected)
+  expect(read).not.toHaveBeenCalled()
+})
+
+it('旧信号没有 reason 时以 AbortError 拒绝，不能调用不存在的方法或开始读取', async () => {
+  // 模拟旧宿主仅提供事件与 aborted 的信号；生产代码不能依赖扩展方法。
+  const signal = Object.assign(new EventTarget(), { aborted: true, onabort: null }) as AbortSignal
+  const read = vi.spyOn(fs.promises, 'readFile')
+  await expect(readPublishedSnapshot(path.join(root, 'manifest.json'), undefined, signal)).rejects.toMatchObject({ name: 'AbortError' })
+  expect(read).not.toHaveBeenCalled()
+})
+
 it('发布失败保留上一份完整文件，且释放本轮临时文件', () => {
   const file = path.join(root, 'manifest.json')
   fs.writeFileSync(file, 'previous')

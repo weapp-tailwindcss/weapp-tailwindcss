@@ -4,6 +4,7 @@ import type { NativeStyleValue } from '../../src/runtime/types'
 import { StyleSheet } from 'react-native'
 import babelPlugin from '../../src/babel'
 import { withWeappTailwindcss } from '../../src/metro'
+import { readPublishedSnapshot } from '../../src/metro/manifest-store'
 import { composeStyle, createNativeStyleRuntime, getStaticStyle, setStyleSheetFactory, tw } from '../../src/runtime'
 
 setStyleSheetFactory(StyleSheet.create, StyleSheet.flatten)
@@ -21,8 +22,9 @@ const custom: number = sync.customField
 const extensions: string[] | undefined = sync.resolver?.sourceExts
 const asyncConfig = withWeappTailwindcss(async () => ({ customField: 2 }))
 const asyncCustom: Promise<number> = asyncConfig.then(config => config.customField)
+const cancelledSnapshot = readPublishedSnapshot('manifest.json', undefined, new AbortController().signal)
 
-void [view, text, inherited, image, combined, empty, preserved, plugin, custom, extensions, asyncCustom]
+void [view, text, inherited, image, combined, empty, preserved, plugin, custom, extensions, asyncCustom, cancelledSnapshot]
 
 // 任意数字不是 React Native 注册过的 StyleSheet ID。
 // @ts-expect-error 必须拒绝未经注册的数字样式。

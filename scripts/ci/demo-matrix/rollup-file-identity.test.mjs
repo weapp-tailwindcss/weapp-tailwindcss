@@ -139,6 +139,16 @@ it('真实发布证据拒绝身份未变或发布后指向其他文件，允许�
   expect(() => assertPublishedIdentity(second, first, first)).not.toThrow()
 })
 
+it('不同精确 inode 的 Number 碰撞不能否定真实替换，也不能接受旧文件冒充已发布文件', () => {
+  const previous = { dev: 0n, ino: 9007199254740992n }
+  const staged = { dev: 0n, ino: 9007199254740993n }
+  expect(Number(previous.ino)).toBe(Number(staged.ino))
+  const before = exactIdentity(previous)
+  const replacement = exactIdentity(staged)
+  expect(() => assertPublishedIdentity(before, replacement, replacement)).not.toThrow()
+  expect(() => assertPublishedIdentity(before, replacement, before)).toThrow('发布后的目标')
+})
+
 it.each(['cjs', 'esm'].flatMap(format => [false, true].map(shared => ({ format, shared }))))('Taro Rollup 原生监听持续绑定当前文件身份 ($format, 共享依赖=$shared)', async ({ format, shared }) => {
   const demoRequire = createRequire(path.join(repo, 'demo/taro-vite-react-tailwindcss-v4/package.json'))
   const viteRequire = createRequire(demoRequire.resolve('vite/package.json'))

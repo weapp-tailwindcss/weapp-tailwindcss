@@ -11,6 +11,19 @@ export interface PublishedSnapshot {
   manifestJson?: string
 }
 
+function throwWhenAborted(signal?: AbortSignal) {
+  if (!signal?.aborted) {
+    return
+  }
+  // RN consumer 的全局信号声明没有新方法；存在 reason 时保持原始取消原因。
+  if ('reason' in signal) {
+    throw signal.reason
+  }
+  const error = new Error('React Native manifest 读取已取消')
+  error.name = 'AbortError'
+  throw error
+}
+
 /** 同目录替换，避免 Metro 或 worker 读到截断后的虚拟模块与 JSON。 */
 export function writeManifestFile(filename: string, content: string) {
   const temporary = `${filename}.${randomUUID()}.tmp`
@@ -25,7 +38,7 @@ export function writeManifestFile(filename: string, content: string) {
 
 /** ready 前后版本一致才接受产物；失败和超时不能降级成旧 manifest。 */
 export async function readPublishedSnapshot(filename: string, readyPath: string | undefined, signal?: AbortSignal): Promise<PublishedSnapshot | undefined> {
-  signal?.throwIfAborted()
+  throwWhenAborted(signal)
   if (!readyPath) {
     try {
       const manifestJson = await fs.promises.readFile(filename, { encoding: 'utf8', signal })
@@ -40,7 +53,7 @@ export async function readPublishedSnapshot(filename: string, readyPath: string 
   }
   const deadline = Date.now() + 120_000
   while (Date.now() < deadline) {
-    signal?.throwIfAborted()
+    throwWhenAborted(signal)
     try {
       const before = await fs.promises.readFile(readyPath, { encoding: 'utf8', signal })
       const ready = JSON.parse(before) as { error?: string, virtualPath?: string, revision?: string, manifestSha256?: string }
