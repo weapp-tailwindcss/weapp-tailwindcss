@@ -1,4 +1,4 @@
-import type { NativeManifestPublication, NativeStyleManifest } from './types'
+import type { NativeManifestPublication, NativeStyleManifest } from '../types'
 
 /** 只冻结当前快照拥有的数据，不冻结调用方传入的对象。 */
 export function freezeSnapshot<T>(value: T): T {

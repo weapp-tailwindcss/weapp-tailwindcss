@@ -2,7 +2,7 @@ import type { NativeManifestPublication, NativeStyleManifest } from '../types'
 import { createHash, randomUUID } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
-import { freezeSnapshot, parseManifestSnapshot } from '../manifest'
+import { freezeSnapshot, parseManifestSnapshot } from '../runtime/manifest'
 import { writeManifestFile } from './manifest-store'
 import { virtualModuleCode } from './virtual-module'
 

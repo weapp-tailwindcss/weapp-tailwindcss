@@ -3,6 +3,7 @@ status: partial
 issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1314
 baseline: 9e34203becf535b374817d620ae7d62f99609e50
 regressions:
+  - packages/weapp-tailwindcss/test/ci/native-runtime-boundary.test.ts
   - packages/react-native/test/metro-publication.test.ts
   - packages/react-native/test/runtime-publication.test.ts
   - e2e/react-native-metro-worker.test.ts
@@ -29,6 +30,8 @@ Metro 刷新先修改内存 manifest，再依次写虚拟 JS、JSON 和 ready。
 
 E2E 独立核对 ready 中的摘要与归档 JSON，核对虚拟模块安装的 revision、摘要及原始 JSON。反例同时重算外层归档摘要，避免只靠损坏文件的 hash 不符提前拒绝；语义和路径反例保留合法身份，继续命中原有 oracle。
 
+4ea 的 hosted 单测随后发现纯快照工具放在 `src/manifest.ts`，被原生运行时引入后越过 `src/runtime/**` 的所有权边界。完整迁入 `src/runtime/manifest.ts`，Metro 与运行时共同消费它；不扩大闭包白名单，不改变原子发布或冻结语义。
+
 ## 验证
 
 本片基于上述 baseline 的未提交改动，Node 24.18.0、pnpm 12.14.0、macOS arm64。首先固化 11 项发布与运行时失败回归，全部失败后修复。随后补 bootstrap、发布身份和宿主副本等反例；不存在 manifest 却安装身份、冻结宿主入参、factory 重入三项均真实复现。
@@ -39,6 +42,7 @@ E2E 独立核对 ready 中的摘要与归档 JSON，核对虚拟模块安装的 
 - Node 类型消费曾因推断返回类型经根 barrel 引入 Babel 与原生类型而失败；registry 改为直接依赖中性类型并声明返回边界后通过。首次并行调度两个会重建相同 dist 的验证也造成 transformer 文件暂时缺失，保留失败日志；最终 6 文件由同一 Vitest 串行执行，没有并行改写产物。
 - `CI=1 pnpm e2e:react-native:static:update`：重新生成 Expo static 基线，仅 `report.verifiedAt` 更新，CSS、manifest、候选及语义预期均未变化；随后以上 `--update=none` 回归通过。26 个运行时案例仍需新鲜端侧证据。
 - 定向 ESLint、`pnpm agents:check` 与 `pnpm release status` 通过；新增中文 patch intent，未发布。
+- 4ea 的 CI job `119203280753` 及本地 `CI=1 pnpm --filter weapp-tailwindcss exec vitest run test/ci/native-runtime-boundary.test.ts --update=none` 均先复现一项闭包失败。迁移后同一八项闭包回归全部通过，Node、CSS 编译器和生成器的负向检查保持有效；RN 包二十二文件一百五十八项再次通过。日志保留在 `.tmp/rn-manifest-boundary-*`，源码目录迁移不改变 demo 样式输出或 static 基线。
 
 ## 适用边界
 

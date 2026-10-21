@@ -2,7 +2,7 @@ import type { NativeManifestPublication, NativeStyleManifest } from '../types'
 import { createHash, randomUUID } from 'node:crypto'
 import fs from 'node:fs'
 import { setTimeout } from 'node:timers/promises'
-import { copyPublication, freezeSnapshot, parseManifestSnapshot } from '../manifest'
+import { copyPublication, freezeSnapshot, parseManifestSnapshot } from '../runtime/manifest'
 
 export interface PublishedSnapshot {
   manifest: NativeStyleManifest
