@@ -32,6 +32,7 @@ import { captureNativePair, validateNativeArtifacts } from './pair-evidence'
 import { createSemanticReporter } from './semantic-reporter'
 import { executeIosCommand } from './ios-command'
 import { launchIosRuntime } from './ios-runtime'
+import { readRuntimePublication } from './installation-evidence'
 
 interface ReportEnvelope { hmrMarker: string, cssHmrColor: string, report: ReactNativeReport, visualProbes: NativeVisualProbe[] }
 type NativeProcess = ReturnType<typeof startExpo>
@@ -72,6 +73,7 @@ const semanticReporter = createSemanticReporter<ReportEnvelope>({ runId, catalog
   clientToken,
   revision: 'rn-hmr-baseline-10b981',
   platform,
+  publication: () => readRuntimePublication(exampleRoot),
   complete: async (envelope) => {
     await fs.writeFile(path.join(artifacts, 'report.json'), `${JSON.stringify(envelope.report, null, 2)}\n`, 'utf8')
     reports.push(envelope)

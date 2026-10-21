@@ -43,6 +43,15 @@ export interface NativeRuntimeInstallation extends NativeRuntimeIdentity {
   manifestJson: string
 }
 
+export interface NativeSemanticContext {
+  runId: string
+  revision: string
+  fixtureHash: string
+  catalogHash: string
+  versions: Record<string, string>
+  publication: NativeRuntimeIdentity['publication']
+}
+
 export interface NativePairEvidence {
   runtimeInstallation: NativeRuntimeIdentity
   runId: string

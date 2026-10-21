@@ -20,6 +20,7 @@ import { reactNativeVersions, RN_CATALOG_HASH, RN_FIXTURE_HASH } from './catalog
 import { captureNativePair, validateNativeArtifacts } from './pair-evidence'
 import { createSemanticReporter } from './semantic-reporter'
 import { allocateExpoWebPort } from './web-session'
+import { readRuntimePublication } from './installation-evidence'
 
 interface ReportEnvelope { hmrMarker: string, cssHmrColor: string, report: ReactNativeReport }
 
@@ -57,6 +58,7 @@ const semanticReporter = createSemanticReporter<ReportEnvelope>({ runId, catalog
   clientToken,
   revision: 'rn-hmr-baseline-10b981',
   platform: 'web',
+  publication: () => readRuntimePublication(exampleRoot),
   complete: async (envelope) => {
     await fs.writeFile(path.join(artifacts, 'report.json'), `${JSON.stringify(envelope.report, null, 2)}\n`, 'utf8')
     reports.push(envelope)

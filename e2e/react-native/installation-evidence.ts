@@ -1,6 +1,18 @@
 import type { NativeRuntimeIdentity, NativeRuntimeInstallation } from '../../examples/react-native-expo/src/compatibility/protocol'
 import { createHash } from 'node:crypto'
 import { isDeepStrictEqual } from 'node:util'
+import { getManifestPathsForProjectRoot } from '../../packages/react-native/src/metro'
+import { readPublishedSnapshot } from '../../packages/react-native/src/metro/manifest-store'
+
+/** 从真实发布文件选取阶段 fence；设备内容仍须另行校验，不能由此替代。 */
+export async function readRuntimePublication(projectRoot: string) {
+  const { manifestPath, manifestReadyPath } = getManifestPathsForProjectRoot(projectRoot)
+  const snapshot = await readPublishedSnapshot(manifestPath, manifestReadyPath)
+  if (!snapshot?.publication) {
+    throw new Error('React Native 宿主缺少稳定发布身份')
+  }
+  return snapshot.publication
+}
 
 export function validateRuntimeIdentity(value: unknown): asserts value is NativeRuntimeIdentity {
   const identity = value as NativeRuntimeIdentity | undefined

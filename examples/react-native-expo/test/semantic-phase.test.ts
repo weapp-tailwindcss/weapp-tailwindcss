@@ -1,0 +1,146 @@
+// @vitest-environment jsdom
+import type { ReactNode } from 'react'
+import type { NativePairEvidence } from '../src/compatibility/protocol'
+import { createRequire } from 'node:module'
+import { setManifest } from '@weapp-tailwindcss/react-native/runtime'
+import { act, createElement } from 'react'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { SemanticRun } from '../src/compatibility/SemanticRun'
+
+const { createRoot } = createRequire(import.meta.url)('react-dom/client') as {
+  createRoot: (node: Element) => { render: (node: ReactNode) => void, unmount: () => void }
+}
+
+vi.mock('react-native', async () => {
+  const { createElement, forwardRef, useImperativeHandle } = await import('react')
+  const flatten = (style: unknown): Record<string, unknown> => Object.assign({}, ...[style].flat(Infinity).filter(Boolean))
+  const View = forwardRef(({ style, testID, children }: { style?: unknown, testID?: string, children?: ReactNode }, ref) => {
+    useImperativeHandle(ref, () => ({ measureInWindow: (callback: (...rect: number[]) => void) => callback(0, 0, 80, 40) }))
+    return createElement('div', { 'style': flatten(style), 'data-testid': testID }, children)
+  })
+  return { View, Text: View, StyleSheet: { flatten }, Platform: { OS: 'web', Version: 'test' }, Dimensions: { get: () => ({ width: 402, height: 874 }) }, PixelRatio: { get: () => 1 } }
+})
+
+const oldPublication = { revision: 'old-installation', manifestSha256: 'a'.repeat(64) }
+const nextPublication = { revision: 'next-installation', manifestSha256: 'b'.repeat(64) }
+const context = { runId: 'owned-run', revision: 'next-phase', publication: nextPublication, fixtureHash: 'fixture', catalogHash: 'catalog', versions: {} }
+const evidence = {
+  schemaVersion: 2,
+  fixtureHash: 'fixture',
+  cases: [{ id: 'background-color', className: 'phase-color' }],
+  report: { schemaVersion: 2, catalogHash: 'catalog', versions: {}, results: [{ id: 'background-color', generated: true, encoded: true, warnings: [], checkpoints: [] }] },
+}
+let root: ReturnType<typeof createRoot>
+let container: HTMLDivElement
+
+function install(publication: typeof oldPublication, color: string) {
+  setManifest({ version: 1, classSet: ['phase-color'], variables: {}, warnings: [], rules: { 'phase-color': [{ style: { backgroundColor: color } }] } }, publication)
+}
+
+beforeEach(() => {
+  vi.useFakeTimers()
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
+  vi.stubEnv('EXPO_PUBLIC_RN_REPORT_URL', 'http://owned-host')
+  vi.stubEnv('EXPO_PUBLIC_RN_REPORT_CLIENT', 'owned-client')
+  container = document.createElement('div')
+  document.body.append(container)
+  root = createRoot(container)
+  install(oldPublication, '#ff0000')
+})
+
+afterEach(async () => {
+  await act(async () => root.unmount())
+  container.remove()
+  vi.useRealTimers()
+  vi.unstubAllEnvs()
+  vi.unstubAllGlobals()
+})
+
+it.each(['marker-first', 'publication-first'] as const)('%s 必须先提交匹配实际安装的渲染，再采集节点和样式', async (order) => {
+  const complete = vi.fn()
+  const pairs: NativePairEvidence[] = []
+  vi.stubGlobal('fetch', vi.fn(async (url: string, options?: RequestInit) => {
+    if (url.endsWith('/context')) {
+      return { ok: true, status: 200, json: async () => context }
+    }
+    const pair = JSON.parse(String(options?.body)) as NativePairEvidence
+    pairs.push(pair)
+    return { ok: true, json: async () => ({ ...pair, checkpoints: [], artifact: { name: 'owned.png', sha256: 'c'.repeat(64), byteLength: 1 } }) }
+  }))
+  if (order === 'publication-first') {
+    install(nextPublication, '#123456')
+  }
+  await act(async () => root.render(createElement(SemanticRun, { evidence, revision: 'next-phase', onComplete: complete })))
+  if (order === 'marker-first') {
+    expect(pairs).toHaveLength(0)
+    // 只推进真实 runtime，不靠父组件重新渲染掩盖旧闭包。
+    install(nextPublication, '#123456')
+    await act(async () => vi.advanceTimersByTimeAsync(100))
+  }
+  await act(async () => vi.advanceTimersByTimeAsync(350))
+  expect(pairs).toHaveLength(1)
+  expect(pairs[0]!.runtimeInstallation.publication).toEqual(nextPublication)
+  expect(complete).toHaveBeenCalledOnce()
+  const report = complete.mock.calls[0]![0]
+  expect(report.results[0].checkpoints).toContainEqual(expect.objectContaining({ name: 'runtime:default:style', passed: true }))
+  expect(container.querySelector('[data-testid="tw-rn-case-probe"]')?.firstElementChild?.getAttribute('style')).toContain('rgb(18, 52, 86)')
+})
+
+it('等待安装的旧阶段卸载后，不得产生迟到 case、错误或最终报告', async () => {
+  const complete = vi.fn()
+  let release!: (value: unknown) => void
+  const contextResponse = new Promise(resolve => release = resolve)
+  const fetch = vi.fn().mockReturnValue(contextResponse)
+  vi.stubGlobal('fetch', fetch)
+  await act(async () => root.render(createElement(SemanticRun, { evidence, revision: 'next-phase', onComplete: complete })))
+  await act(async () => root.render(null))
+  install(nextPublication, '#123456')
+  await act(async () => {
+    release({ ok: true, status: 200, json: async () => context })
+    await vi.advanceTimersByTimeAsync(1_000)
+  })
+  expect(fetch).toHaveBeenCalledOnce()
+  expect(complete).not.toHaveBeenCalled()
+  expect(vi.getTimerCount()).toBe(0)
+})
+
+it('旧阶段已提交 case 后卸载，迟到回执也不得提交最终报告或错误', async () => {
+  install(nextPublication, '#123456')
+  const complete = vi.fn()
+  let reject!: (reason: Error) => void
+  const pendingCase = new Promise((_resolve, fail) => reject = fail)
+  const fetch = vi.fn((url: string) => url.endsWith('/context')
+    ? Promise.resolve({ ok: true, status: 200, json: async () => context })
+    : pendingCase)
+  vi.stubGlobal('fetch', fetch)
+  await act(async () => root.render(createElement(SemanticRun, { evidence, revision: 'next-phase', onComplete: complete })))
+  await act(async () => vi.advanceTimersByTimeAsync(350))
+  expect(fetch.mock.calls.filter(([url]) => url.endsWith('/case'))).toHaveLength(1)
+  await act(async () => root.render(null))
+  await act(async () => {
+    reject(new Error('old-case-failed-after-unmount'))
+    await vi.advanceTimersByTimeAsync(1_000)
+  })
+  expect(fetch.mock.calls.filter(([url]) => url.endsWith('/error'))).toHaveLength(0)
+  expect(complete).not.toHaveBeenCalled()
+  expect(vi.getTimerCount()).toBe(0)
+})
+
+it('已读合法 context 后实际安装缺失，将原始门禁错误交付所属 run 而非等待超时', async () => {
+  const complete = vi.fn()
+  const fetch = vi.fn(async (url: string, _options?: RequestInit) => {
+    if (url.endsWith('/context')) {
+      return { ok: true, status: 200, json: async () => {
+        setManifest({ version: 1, classSet: [], variables: {}, warnings: [], rules: {} })
+        return context
+      } }
+    }
+    return { ok: true }
+  })
+  vi.stubGlobal('fetch', fetch)
+  await act(async () => root.render(createElement(SemanticRun, { evidence, revision: 'next-phase', onComplete: complete })))
+  const errors = fetch.mock.calls.filter(([url]) => url.endsWith('/error'))
+  expect(errors).toHaveLength(1)
+  expect(JSON.parse(String(errors[0]![1]?.body))).toEqual(expect.objectContaining({ runId: 'owned-run', revision: 'next-phase', message: expect.stringContaining('缺少稳定发布身份') }))
+  expect(complete).not.toHaveBeenCalled()
+})

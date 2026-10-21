@@ -126,3 +126,25 @@ RN iOS 最终定位为旧 runner 的 derivedData 进入 CocoaPods 源码扫描�
 新增设备侧同步读取实际 runtime 的 publication 与 manifest 快照，快照前后必须稳定；JS realm 身份跨模块 HMR 保持，整包刷新会变更。每个 case、截图回执、最终报告及三阶段索引相互对账，索引升级 v2 并更新 fixture hash。宿主分别核对 manifest 原始字节摘要、实际 publication 和设备 JSON 内容，允许合法新发布保持相同内容摘要。该证据不冒称设备接收过完整 bundle 字节。
 
 缺安装快照、错 realm、错 publication、错 manifest 的四个持久反例先红；补充拒绝数组摘要、零随机值身份、失败报告二次拒绝仍发送原始错误的边界。定向七文件一百三十五项、示例七文件二十三项及示例类型检查通过；较宽 RN compatibility 十九文件二百四十八项通过。static 通过 `pnpm e2e:react-native:static:update` 定向生成并审查，仅两处 fixture hash 和验证时间变化；之后 compatibility 和定向回归均以 `CI=1`、`--update=none` 验证。新协议的真实端侧运行另行记录，不能由这些合同通过替代。
+
+## e1bb76d 的安装生命周期失败与阶段门禁
+
+全新扩展预检 `54cee250-9825-4ef7-9c37-033635ae9bef` 的全部脚本、后台 IAB 输入/点击/截图及 verify 通过；真实平台调用 ID 与原始输出在放行前保存，自有标签 9 已关闭并核对为空。统一运行 `c40d3e75-e0b1-4afa-84e6-cb4a1f1ca6c0` 选择 Expo 三浏览器和 RN iOS。三浏览器均完成 baseline 四十份回执，但 TSX HMR 首例前实际安装断言失败，updated 阶段没有截图 pair。日志 `.tmp/tailwind-installation-e1bb76.log` 保留原始错误；适配报告的 stale runtime revision 是后续总门禁错误，不能掩盖首次安装错误。
+
+发现同类代码失败后人工关闭该有效 lease，reason 明确记录“人工结束本轮有效 lease”，没有把它写成环境探针失败。RN iOS 未调度；最终索引保留三浏览器失败和后续调度阻断。prepare、验收及本任务服务均已结束，不能复用此预检。hosted 同 head 三浏览器及 Android 也在首次 TSX HMR 安装推进时失败；这轮 iOS 则在 baseline 截图预算失败，不能混为同一故障。
+
+根因是阶段 marker 与虚拟 manifest 分别经过 HMR：新 marker 可以先挂载采集组件，随后才安装新 publication。同 key 的 state/ref 会保留旧快照，旧 render 的 `actualStyle` 和节点也可能保留；仅等待安装再替换 ref 仍不足。阶段门禁现在由宿主读取真实发布文件选择新 publication，旧发布返回 425；设备独立读取实际 runtime，匹配后通过 state 才挂载内层节点，再冻结本阶段安装。每例仍核对宿主 fence、实际 manifest、publication 与 realm；采集开始后任何安装变化继续拒绝，同内容的新 UUID 不能按 hash 合并。
+
+回归先重现 marker-first 的旧样式闭包、旧 context 异步失败污染新 revision、以及安装缺失错误使用空 run ID。修复后真实 runtime 与 React DOM 的受控组件测试覆盖两种更新顺序、等待期间卸载、case 在途卸载和合法 context 后的错误交付；旧 context 成功与失败均隔离，当前阶段读取失败仍立即阻断。没有合法 context 时不伪造 run ID，投递失败仍显式保留。
+
+本地命令与结果：
+
+- `pnpm --filter @weapp-tailwindcss/example-react-native-expo test`：八文件三十三项通过。
+- `pnpm --filter @weapp-tailwindcss/example-react-native-expo exec tsc --noEmit`：通过。
+- `CI=1 pnpm exec vitest run --config e2e/vitest.e2e.config.ts e2e/react-native-reporter-session.test.ts e2e/react-native-phase-evidence.test.ts e2e/react-native-installation-evidence.test.ts e2e/react-native-runtime-artifacts.test.ts --update=none`：四文件八十一项通过。
+- `pnpm e2e:react-native:static:update`：定向重新生成，审查仅 `verifiedAt` 变化，没有改支持预期、fixture hash 或样式结论。
+- 审查基线后 `CI=1 pnpm e2e:react-native-compatibility --update=none`：十九文件二百五十项通过，含 Web/Android/iOS Metro export；ESLint（含未忽略的示例测试）、`agents:check` 与 `git diff --check` 通过。
+
+这次阶段门禁的端侧结果须绑定后续新提交记录；单测不能改写 e1bb 的真实失败。servedBundle 仍未捕获，Image/ScrollView、原生注册能力和完整转换 oracle 等缺口继续保持未完成。
+
+同 e1bb 的 hosted iOS run `39625105304`、job `119308516784` 取得首例两帧，几何、像素和 control 均通过，但第二帧解码/判定结束约 10,145.6ms，超过固定 10,000ms 总预算；它仍为失败，不能因 consecutive=2 改为成功。Mpx benchmark run `39625105270`、job `119308606559` 的三次构建峰值 RSS 中位增加约 162.59MB（14.72%），steady 增加约 160.35MB（15.41%），超过既有门槛。旧 824 与 e1bb 间没有 packages 生产代码或 lockfile 差异；本轮 baseline 多一次 major GC、较早回调 heap 相近，只支持 GC 调度差异相关，缺构建结束期 heap，不能证明不存在保留量回归。两项失败均保留，不放宽预算或盲目重跑。

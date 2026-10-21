@@ -12,6 +12,7 @@ interface ReporterOptions<Envelope> {
   revision: string
   platform: ReactNativePlatform
   complete?: (envelope: Envelope) => Promise<void>
+  publication?: () => Promise<NativeRuntimeIdentity['publication']>
 }
 
 class ProtocolRejection extends Error {
@@ -27,6 +28,8 @@ export function createSemanticReporter<Envelope extends ReportEnvelope = ReportE
   let pending = false
   let runtimeInstanceId: string | undefined
   let phaseInstallation: NativeRuntimeIdentity | undefined
+  let previousPublication: string | undefined
+  let expectedPublication: NativeRuntimeIdentity['publication'] | undefined
   const registeredCases = Object.values(nativeFixtures).reduce((count, fixture) => count + (fixture.phases?.length ?? 1), 0)
   let captureBudget = createNativeCaptureBudget(registeredCases)
   let previousCaptureElapsed = 0
@@ -108,6 +111,9 @@ export function createSemanticReporter<Envelope extends ReportEnvelope = ReportE
     }
     try {
       validateRuntimeIdentity(pair.runtimeInstallation)
+      if (options.publication && (!expectedPublication || JSON.stringify(pair.runtimeInstallation.publication) !== JSON.stringify(expectedPublication))) {
+        throw new Error('React Native 实际安装尚未匹配宿主阶段 publication fence')
+      }
       if (runtimeInstanceId && pair.runtimeInstallation.runtimeInstanceId !== runtimeInstanceId) {
         throw new Error('React Native HMR 运行实例改变，不能由整包刷新代替')
       }
@@ -143,7 +149,27 @@ export function createSemanticReporter<Envelope extends ReportEnvelope = ReportE
         return true
       }
       if (url === '/context') {
-        response.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify({ ...context, revision }))
+        const requestedRevision = revision
+        void (async () => {
+          const publication = phaseInstallation?.publication ?? await options.publication?.()
+          if (revision !== requestedRevision) {
+            response.writeHead(409).end('Native context revision changed')
+            return
+          }
+          if (options.publication && (!publication || publication.revision === previousPublication)) {
+            response.writeHead(425).end('Native phase publication is pending')
+            return
+          }
+          expectedPublication = publication
+          response.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify({ ...context, revision, ...(publication ? { publication } : {}) }))
+        })().catch((error) => {
+          if (revision !== requestedRevision) {
+            response.writeHead(409).end('Native context revision changed')
+            return
+          }
+          errors.push(error instanceof Error ? error : new Error(String(error)))
+          response.writeHead(500).end(String(error))
+        })
         return true
       }
       const chunks: Buffer[] = []
@@ -163,6 +189,8 @@ export function createSemanticReporter<Envelope extends ReportEnvelope = ReportE
         throw new Error('Cannot replace a pending or previously used native revision')
       }
       revision = next
+      previousPublication = phaseInstallation?.publication.revision
+      expectedPublication = undefined
       phaseInstallation = undefined
       revisions.add(next)
       previousCaptureElapsed += captureBudget.elapsed()

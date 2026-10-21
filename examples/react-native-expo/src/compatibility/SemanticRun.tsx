@@ -1,13 +1,13 @@
 /* eslint-disable node/prefer-global/process */
 
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native'
-import type { NativeCaseReceipt, NativePairEvidence, NativeRect, ReactNativeCaseResult, ReactNativeReport } from './protocol'
+import type { NativeCaseReceipt, NativePairEvidence, NativeRect, NativeRuntimeInstallation, ReactNativeCaseResult, ReactNativeReport } from './protocol'
 import { composeStyle, tw } from '@weapp-tailwindcss/react-native/runtime'
 import { useEffect, useRef, useState } from 'react'
 import { Dimensions, PixelRatio, Platform, StyleSheet, Text, View } from 'react-native'
 import { expectedFixtureStyle, fixtureClassValue, fixtureInlineStyle, nativeFixtures, styleContains } from './protocol'
 import { deliverSemanticFailure, nativeReportHeaders } from './report-client'
-import { assertCurrentRuntimeInstallation, captureRuntimeInstallation, runtimeInstallationIdentity } from './runtime-installation'
+import { acquireRuntimePhase, assertCurrentRuntimeInstallation, assertRuntimePhaseActive, runtimeInstallationIdentity } from './runtime-installation'
 
 interface RuntimeInput {
   schemaVersion?: number
@@ -29,8 +29,37 @@ function measure(node: View | Text | null): Promise<NativeRect> {
   })
 }
 
-export function SemanticRun({ evidence, revision, onComplete }: { evidence: RuntimeInput, revision: string, onComplete: (report: ReactNativeReport) => void | Promise<void> }) {
-  const [installation] = useState(() => process.env.EXPO_PUBLIC_RN_REPORT_URL ? captureRuntimeInstallation() : undefined)
+interface SemanticRunProps { evidence: RuntimeInput, revision: string, onComplete: (report: ReactNativeReport) => void | Promise<void> }
+
+/** 门禁完成后才挂载节点；不能让 pre-fence render 的样式闭包携带新安装身份。 */
+export function SemanticRun(props: SemanticRunProps) {
+  const [installation, setInstallation] = useState<NativeRuntimeInstallation>()
+  useEffect(() => {
+    const reportUrl = process.env.EXPO_PUBLIC_RN_REPORT_URL
+    if (installation || !reportUrl) {
+      return
+    }
+    const controller = new AbortController()
+    let runId = ''
+    void acquireRuntimePhase(reportUrl, props.revision, controller.signal, undefined, context => runId = context.runId).then((acquired) => {
+      assertRuntimePhaseActive(controller.signal)
+      setInstallation(acquired.installation)
+    }).catch(async (error) => {
+      if (!controller.signal.aborted) {
+        const delivery = await deliverSemanticFailure({ reportUrl, runId, revision: props.revision, error })
+        if (!delivery.delivered) {
+          // 未收到合法 context 时保留原始错误，不伪造宿主 run ID。
+          // eslint-disable-next-line no-console
+          console.error('React Native 阶段安装门禁失败', String(error), delivery.error)
+        }
+      }
+    })
+    return () => controller.abort(new Error('React Native 所属阶段已结束'))
+  }, [installation, props.revision])
+  return installation ? <InstalledSemanticRun {...props} installation={installation} /> : null
+}
+
+function InstalledSemanticRun({ evidence, revision, onComplete, installation }: SemanticRunProps & { installation: NativeRuntimeInstallation }) {
   const tests = evidence.cases.flatMap(item => nativeFixtures[item.id]
     ? (nativeFixtures[item.id]!.phases ?? ['default']).map(phase => ({ ...item, phase }))
     : [])
@@ -57,23 +86,18 @@ export function SemanticRun({ evidence, revision, onComplete }: { evidence: Runt
       return
     }
     let canceled = false
+    const controller = new AbortController()
     const reportUrl = process.env.EXPO_PUBLIC_RN_REPORT_URL
     if (!reportUrl) {
       return
     }
     void (async () => {
-      if (!installation) {
-        throw new Error('React Native 缺少本阶段实际安装快照')
-      }
-      assertCurrentRuntimeInstallation(installation)
       if (evidence.schemaVersion !== 2) {
         throw new Error('Historical static evidence is not runnable: regenerate the RN static fixture first')
       }
-      const contextResponse = await fetch(`${reportUrl}/context`, { headers: nativeReportHeaders() })
-      if (!contextResponse.ok) {
-        throw new Error(`Native context HTTP ${contextResponse.status}`)
-      }
-      const context = await contextResponse.json() as { runId: string, revision: string, fixtureHash: string, catalogHash: string, versions: Record<string, string> }
+      const acquired = await acquireRuntimePhase(reportUrl, revision, controller.signal, installation)
+      assertRuntimePhaseActive(controller.signal)
+      const context = acquired.context
       runId.current = context.runId
       const staticReport = evidence.report as ReactNativeReport
       if (context.revision !== revision || context.fixtureHash !== evidence.fixtureHash || context.catalogHash !== staticReport.catalogHash
@@ -94,6 +118,7 @@ export function SemanticRun({ evidence, revision, onComplete }: { evidence: Runt
         measure(controlTarget.current),
       ])
       const viewport = Dimensions.get('window')
+      assertRuntimePhaseActive(controller.signal)
       assertCurrentRuntimeInstallation(installation)
       const pair: NativePairEvidence = {
         runtimeInstallation: runtimeInstallationIdentity(installation),
@@ -115,6 +140,7 @@ export function SemanticRun({ evidence, revision, onComplete }: { evidence: Runt
         throw new Error(`Native pair receipt HTTP ${response.status}: ${await response.text()}`)
       }
       const receipt = await response.json() as NativeCaseReceipt
+      assertRuntimePhaseActive(controller.signal)
       assertCurrentRuntimeInstallation(installation)
       if (JSON.stringify(receipt.runtimeInstallation) !== JSON.stringify(pair.runtimeInstallation)) {
         throw new Error('React Native 宿主回执与本阶段实际安装身份不符')
@@ -174,6 +200,7 @@ export function SemanticRun({ evidence, revision, onComplete }: { evidence: Runt
     })
     return () => {
       canceled = true
+      controller.abort(new Error('React Native 所属阶段或案例已结束'))
     }
   }, [index])
 

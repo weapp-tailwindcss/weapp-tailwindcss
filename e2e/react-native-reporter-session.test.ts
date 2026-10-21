@@ -40,10 +40,10 @@ async function withReporter(action: (session: {
   capture: ReturnType<typeof vi.fn<(input: NativePairEvidence) => Promise<NativeCaseReceipt>>>
   complete: ReturnType<typeof vi.fn<() => Promise<void>>>
   post: (route: string, value: unknown, client?: string) => Promise<Response>
-}) => Promise<void>) {
+}) => Promise<void>, publication?: () => Promise<NativePairEvidence['runtimeInstallation']['publication']>) {
   const capture = vi.fn(async (input: NativePairEvidence) => receipt(input))
   const complete = vi.fn(async () => {})
-  const reporter = createSemanticReporter({ runId: 'run', fixtureHash: 'fixture', catalogHash: 'catalog', versions: {} }, capture, { clientToken: 'owned-client', revision, platform: 'web', complete })
+  const reporter = createSemanticReporter({ runId: 'run', fixtureHash: 'fixture', catalogHash: 'catalog', versions: {} }, capture, { clientToken: 'owned-client', revision, platform: 'web', complete, publication })
   const server = createServer((request, response) => {
     if (!reporter.handle(request, response)) {
       response.writeHead(404).end()
@@ -64,6 +64,61 @@ async function withReporter(action: (session: {
 }
 
 describe('React Native 采集客户端与 revision 隔离', () => {
+  it('当前阶段的真实 publication 读取失败仍立即阻断', async () => {
+    await withReporter(async ({ endpoint, reporter }) => {
+      expect((await fetch(`${endpoint}/context`, { headers })).status).toBe(500)
+      expect(() => reporter.assertReady()).toThrow('semantic evidence failed')
+    }, async () => { throw new Error('current-publication-read-failed') })
+  })
+
+  it.each(['resolve', 'reject'] as const)('旧 context 延迟 %s 不得污染新阶段的 fence 或错误集合', async (outcome) => {
+    let release!: (value: NativePairEvidence['runtimeInstallation']['publication']) => void
+    let reject!: (error: Error) => void
+    let started!: () => void
+    const entered = new Promise<void>(resolve => started = resolve)
+    const delayed = new Promise<NativePairEvidence['runtimeInstallation']['publication']>((resolve, fail) => {
+      release = resolve
+      reject = fail
+    })
+    const publication = vi.fn().mockImplementationOnce(() => {
+      started()
+      return delayed
+    }).mockResolvedValue(syntheticRuntimeInstallation().publication)
+    await withReporter(async ({ endpoint, reporter, post }) => {
+      const stale = fetch(`${endpoint}/context`, { headers })
+      await entered
+      reporter.setRevision('next-phase')
+      if (outcome === 'resolve') {
+        release({ ...syntheticRuntimeInstallation().publication, revision: 'stale-publication' })
+      }
+      else {
+        reject(new Error('old-phase-read-failed'))
+      }
+      expect((await stale).status).toBe(409)
+      expect(() => reporter.assertReady()).not.toThrow()
+      expect((await fetch(`${endpoint}/context`, { headers })).status).toBe(200)
+      expect((await post('/case', pair({ revision: 'next-phase' }))).status).toBe(200)
+    }, publication)
+  })
+
+  it('新阶段旧 publication 返回未就绪，新的实际安装通过 fence 后才能采集', async () => {
+    let current = syntheticRuntimeInstallation().publication
+    await withReporter(async ({ endpoint, post, reporter, capture }) => {
+      const context = () => fetch(`${endpoint}/context`, { headers })
+      expect((await (await context()).json()).publication).toEqual(current)
+      expect((await post('/case', pair())).status).toBe(200)
+      reporter.setRevision('next-phase')
+      expect((await context()).status).toBe(425)
+      expect((await post('/case', pair({ revision: 'next-phase' }))).status).toBe(409)
+      current = { ...current, revision: 'next-publication-same-content' }
+      expect((await (await context()).json()).publication).toEqual(current)
+      expect((await post('/case', pair({ revision: 'next-phase' }))).status).toBe(409)
+      const installed = { ...syntheticRuntimeInstallation(), publication: current }
+      expect((await post('/case', pair({ revision: 'next-phase', runtimeInstallation: installed }))).status).toBe(200)
+      expect(capture).toHaveBeenCalledTimes(2)
+    }, async () => current)
+  })
+
   it('同阶段 case 与报告不能替换实际安装；跨 HMR 保持同一运行实例', async () => {
     await withReporter(async ({ post, reporter, capture }) => {
       expect((await post('/case', pair())).status).toBe(200)
