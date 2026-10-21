@@ -47,7 +47,9 @@ verification:
 
 本机旧目录含二十三份二进制 plist，其中六份落入上述扫描范围；原日志没有首个文件名，不指定哪份最先触发。确认该目录属于本任务旧 runner、没有活动构建后，记录摘要并精确移出源码树保留；未删除源 plist，也未转换构建产物来掩盖问题。代码使用源码树外的独占 `os.tmpdir()/mkdtemp` 目录，安装并核对二进制后清理。持久 `ios-build.json` 保留原路径、二进制摘要和 `removed/cleanup-failed` 状态；原路径是历史信息，不能冒充仍存在的 bundle。
 
-临时根先通过 `realpath` 取得物理身份再创建目录，使传给 Xcode 的路径与其返回的物理产物路径一致，保留原越界检查。确定性符号链接回归在旧实现误报越界，修复后通过；这证明路径合同缺口，不推断本机 Xcode 已实际触发同一行为。原始 `-showBuildSettings -json` 先保存到 `ios-build-settings.json` 再验证，即使拒绝产物并清理 scratch，仍可离线复核实际返回值。
+临时根先通过 `realpath` 取得物理身份再创建目录。第一次只规范化输入的修复不足：`fb9553723f7e83e3b6744b8a498c98c99e40b991` 的实际 Xcode 构建成功，但把传入的 `/private/var/...` 返回为 `/var/...`，词法比较仍误报越界。原始 `-showBuildSettings -json` 已先保存到 `ios-build-settings.json`，因而清理 scratch 后仍能证明这次实际路径分歧。最终产物检查改为同时解析构建根与已生成应用的物理路径，再执行原相对路径越界保护；不以固定 macOS 前缀替换处理文件系统身份。
+
+确定性回归同时覆盖两种方向的目录别名，以及词法位于根内、实际符号链接指向根外的应用。后两项在仅规范化输入的实现上分别误拒、误收；修复后均通过，根外哨兵继续保留。真实构建返回值与测试证明分别保存，不把单测通过改写为原生运行成功。
 
 清理仅作用于本轮目录，失败时聚合构建、清理及证据写入异常。强杀不能保证 JS 收尾，须按记录的路径和归属恢复。旧版本遗留目录不由新 helper 猜测或批量删除。
 
@@ -62,6 +64,7 @@ verification:
 - 历史部分轨迹四个反例先失败：一个缺恢复图 ENOENT、三个缺阶段解引用。修复后已有像素仍能重算，缺阶段和未达成 visited 仍失败。
 - 十文件共一百七十六项通过，最后的小型类型兼容调整另以两文件四十八项通过。ESLint、`git diff --check` 和 `pnpm agents:check` 通过。e2e 全仓类型检查仍有大量既有诊断，不记为通过。
 - 符号链接路径和 build settings 归档两个反例分别先因误报越界、缺失原始 JSON 失败，随后 iOS 两文件二十八项及 ESLint 通过，均禁止更新基线。记录为 `.tmp/ios-physical-root-red.log`、`.tmp/ios-physical-root-green.log` 和 `.tmp/ios-physical-root-lint.log`。
+- 实际 Xcode 返回别名后的第二组两项红例及三十项通过记录为 `.tmp/ios-xcode-returned-alias-{red,green,lint}.log`；没有放宽产物根或应用身份要求。
 - 从 Expo 项目根执行的实际 `pod install --project-directory=ios` 安装完成，七十五个声明依赖、七十四个 Pods；只证明原 CocoaPods 失败阶段恢复，未证明本轮 iOS 渲染或 HMR。
 
 原始记录分别位于 `.tmp/ios-scratch-red.log`、`.tmp/history-partial-red.log`、`.tmp/runtime-identity-red.log`、`.tmp/tailwind-evidence-final.log`、`.tmp/ios-pod-source-boundary-green.log`。本轮 iOS 原始失败已手工精确保全至对应运行目录的 `react-native-ios/manual-preserved-diagnostics/`，明确标为诊断。

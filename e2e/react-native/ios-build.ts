@@ -30,7 +30,7 @@ export async function iosBuildProject(directory: string) {
 }
 
 /** build settings 必须指向本轮 derived data 中唯一且正确的应用。 */
-export function iosBuildApplication(source: string, derivedData: string, bundleId: string) {
+export async function iosBuildApplication(source: string, derivedData: string, bundleId: string) {
   const settings = JSON.parse(source) as Array<{ buildSettings?: Record<string, string> }>
   const matches = settings.filter(item => item.buildSettings?.PRODUCT_BUNDLE_IDENTIFIER === bundleId && item.buildSettings.WRAPPER_EXTENSION === 'app')
   if (matches.length !== 1) {
@@ -40,8 +40,11 @@ export function iosBuildApplication(source: string, derivedData: string, bundleI
   if (!values.TARGET_BUILD_DIR || !path.isAbsolute(values.TARGET_BUILD_DIR) || !values.FULL_PRODUCT_NAME || path.basename(values.FULL_PRODUCT_NAME) !== values.FULL_PRODUCT_NAME || !values.FULL_PRODUCT_NAME.endsWith('.app')) {
     throw new Error('iOS build settings 包含无效产物路径')
   }
-  const application = path.resolve(values.TARGET_BUILD_DIR, values.FULL_PRODUCT_NAME)
-  const relative = path.relative(derivedData, application)
+  const [root, application] = await Promise.all([
+    realpath(derivedData),
+    realpath(path.resolve(values.TARGET_BUILD_DIR, values.FULL_PRODUCT_NAME)),
+  ])
+  const relative = path.relative(root, application)
   if (!relative || relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
     throw new Error('iOS 应用产物越过本轮 derived data')
   }
@@ -83,7 +86,7 @@ export async function buildAndLaunchIos(options: IosBuildOptions, execute: IosBu
       await writeFile(path.join(artifacts, 'ios-build-settings.json'), settings)
       evidence.buildSettings = 'ios-build-settings.json'
       await save()
-      const application = iosBuildApplication(settings, derivedData, bundleId)
+      const application = await iosBuildApplication(settings, derivedData, bundleId)
       if (!(await stat(application)).isDirectory()) {
         throw new Error('iOS 本轮构建未生成应用目录')
       }

@@ -10,7 +10,7 @@ vi.mock('node:os', async (original) => {
   return { ...actual, tmpdir: vi.fn(actual.tmpdir) }
 })
 
-it('临时根经符号链接进入时仍接受 Xcode 返回的物理产物路径', async () => {
+it.each(['physical', 'alias'])('临时根经符号链接进入时仍接受 Xcode 返回的同一产物路径：%s', async (kind) => {
   const root = await mkdtemp(path.join(tmpdir(), 'ios-scratch-alias-'))
   const project = path.join(root, 'project')
   const physical = path.join(await realpath(root), 'temporary')
@@ -21,10 +21,31 @@ it('临时根经符号链接进入时仍接受 Xcode 返回的物理产物路径
     vi.mocked(tmpdir).mockReturnValueOnce(alias)
     await withIosBuildScratch(project, {}, async () => {}, async (derivedData) => {
       const output = path.join(derivedData, 'Build', 'Products')
-      await mkdir(output, { recursive: true })
-      const settings = JSON.stringify([{ buildSettings: { PRODUCT_BUNDLE_IDENTIFIER: 'test.app', WRAPPER_EXTENSION: 'app', TARGET_BUILD_DIR: await realpath(output), FULL_PRODUCT_NAME: 'Test.app' } }])
-      expect(iosBuildApplication(settings, derivedData, 'test.app')).toBe(path.join(await realpath(output), 'Test.app'))
+      await mkdir(path.join(output, 'Test.app'), { recursive: true })
+      const selected = kind === 'physical' ? await realpath(output) : path.join(alias, path.relative(physical, output))
+      const settings = JSON.stringify([{ buildSettings: { PRODUCT_BUNDLE_IDENTIFIER: 'test.app', WRAPPER_EXTENSION: 'app', TARGET_BUILD_DIR: selected, FULL_PRODUCT_NAME: 'Test.app' } }])
+      expect(await iosBuildApplication(settings, derivedData, 'test.app')).toBe(path.join(await realpath(output), 'Test.app'))
     })
+  }
+  finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
+it('词法路径位于构建根内但符号链接指向根外的产物仍拒绝', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'ios-scratch-escape-'))
+  const project = path.join(root, 'project')
+  const outside = path.join(root, 'outside')
+  try {
+    await Promise.all([mkdir(project), mkdir(path.join(outside, 'Test.app'), { recursive: true })])
+    await withIosBuildScratch(project, {}, async () => {}, async (derivedData) => {
+      await mkdir(derivedData)
+      const linked = path.join(derivedData, 'Build')
+      await symlink(outside, linked, 'junction')
+      const settings = JSON.stringify([{ buildSettings: { PRODUCT_BUNDLE_IDENTIFIER: 'test.app', WRAPPER_EXTENSION: 'app', TARGET_BUILD_DIR: linked, FULL_PRODUCT_NAME: 'Test.app' } }])
+      await expect(async () => iosBuildApplication(settings, derivedData, 'test.app')).rejects.toThrow('越过本轮')
+    })
+    await expect(access(path.join(outside, 'Test.app'))).resolves.toBeUndefined()
   }
   finally {
     await rm(root, { recursive: true, force: true })

@@ -102,3 +102,11 @@ RN iOS 最终定位为旧 runner 的 derivedData 进入 CocoaPods 源码扫描�
 后续已修复原生输出隔离、启动前诊断归档和历史失败重放，并补定向回归；详见[隔离边界复盘](tailwind-runtime-evidence-isolation.md)。旧 RN iOS 结果保持阻塞，旧 WebKit 结果保持失败。此次只调整 runner/证据，没有修改 demo 或样式，无需生成新的 static 基线。新源码还未完成新一轮全面验收。
 
 同一 head 的 Windows repeated-watch 任务失败在前置 demo matrix 的 Rollup 叶子订阅等待，实际 Gulp repeated-watch 未执行；修复及确定性红例见[订阅复盘](rollup-invalidation-subscription.md)。整合后本地 demo matrix 为五十二文件、三百九十九项通过，Windows hosted 尚须新 head 证据。性能新增原始采样记录，不调整计时范围或预算；旧 head 的 P95 超限失败继续保留，不能由后续成功认定根因消除。
+
+## fb95537 的 iOS 定向运行
+
+固定 `fb9553723f7e83e3b6744b8a498c98c99e40b991`，扩展预检 `6ec35c46-fc9b-40e1-9ef2-1b610c5b7a5f` 首先被 Android 缺有效 UI 结构阻断，没有启动验收。原生 Android Studio 截图确认设备仍显示本任务旧 Lynx 夹具，通过 Home 返回桌面，未重置设备。随后全新预检 `5a194fea-b86d-4186-852b-83908b836a91` 的全部探针、后台 IAB 真实输入/点击及 verify 通过；computer use 回执在放行前即绑定当前对话的真实平台调用 ID 和原始结果。IAB 临时标签 7 已关闭并核对为空，用户原有 Chrome 页面未操作。
+
+统一入口使用 `--target react-native-ios`、`RN_IOS_HOST=127.0.0.1` 和本轮报告，运行 ID 为 `358b637f-05f6-498d-9690-77361b1c7240`，日志 `.tmp/tailwind-ios-fb95537.log`。CocoaPods 与 Xcode 构建成功，但安装前的路径合同误拒 Xcode 返回的目录别名；没有运行时报告，最终能力报告为一百一十八阻塞、一千二百六十未执行，不能计为本轮 iOS 渲染成功。其他十四目标未选择、未执行。本次无 report 的启动日志与 build settings 已按本次 invocation 自动归档到该运行 `react-native-ios/native/`，不再需要从共享目录手工抢救。
+
+路径根因与后续双向物理身份回归见[隔离边界复盘](tailwind-runtime-evidence-isolation.md)。原索引、原始 Xcode 设置和失败结论保留；新源码须再次 fresh 预检后运行。本次 prepare 与验收进程均正常结束，scratch 回执为 removed，未把历史路径当作现存 bundle。
