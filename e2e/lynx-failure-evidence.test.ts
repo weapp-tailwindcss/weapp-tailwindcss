@@ -145,3 +145,80 @@ it('Android 只有准确 ENOENT 记为缺失，设备和读取失败继续抛错
   execute.mockResolvedValueOnce({ exitCode: 1, stdout: Buffer.alloc(0), stderr: Buffer.from('device offline') })
   await expect(read.failure()).rejects.toThrow('device offline')
 })
+
+it.each(['ios', 'android'] as const)('%s 真实 reader 导出全部已登记主题诊断，不用次级白名单错误替换启动失败', async (platform) => {
+  const current = await fixture()
+  const directory = path.join(current.root, 'Library', 'Application Support', 'lynx-compat', context.runId)
+  const names = [...mediaGateArtifactNames(), ...themeOverrideArtifactNames()]
+  await fs.mkdir(path.join(directory, 'artifacts'), { recursive: true })
+  const bytes = new Map(names.map(name => [name, Buffer.from(`原始诊断\0${name}`)]))
+  for (const [name, content] of bytes) {
+    await fs.writeFile(path.join(directory, 'artifacts', name), content)
+  }
+  await fs.writeFile(path.join(directory, 'failure.json'), 'native failure')
+  const execute = vi.fn(async (args: string[]) => {
+    const name = args.at(-1)!
+    const prefix = path.posix.join('files', 'lynx-compat', context.runId)
+    const entry = name === path.posix.join(prefix, 'failure.json')
+      ? path.join(directory, 'failure.json')
+      : names.includes(path.posix.basename(name)) && name === path.posix.join(prefix, 'artifacts', path.posix.basename(name))
+        ? path.join(directory, 'artifacts', path.posix.basename(name))
+        : undefined
+    expect(args.slice(0, -1)).toEqual(['-s', 'selected-device', 'shell', '-T', 'run-as', 'com.weapptailwindcss.lynxcompat', 'cat'])
+    expect(entry).toBeDefined()
+    return { exitCode: 0, stdout: await fs.readFile(entry!), stderr: Buffer.alloc(0) }
+  })
+  const read = platform === 'ios'
+    ? iosFailureReaders(current.root, context)
+    : androidFailureReaders({ platform: 'android', id: 'selected-device' }, context, execute)
+  const failure = new Error('simctl launch timed out')
+  await expect(withNativeFailureEvidence(current.artifactDir, context, read, async () => {
+    throw failure
+  })).rejects.toBe(failure)
+  const collection = JSON.parse(await fs.readFile(path.join(current.output, 'collection.json'), 'utf8'))
+  expect(collection.files).toHaveLength(35)
+  expect(collection.files.every((file: { status: string }) => file.status === 'copied')).toBe(true)
+  for (const [name, content] of bytes) {
+    expect(await fs.readFile(path.join(current.output, 'artifacts', name))).toEqual(content)
+  }
+  const calls = execute.mock.calls.length
+  for (const name of ['../failure.json', '..\\failure.json', '/report.json', 'C:\\report.json', '\\\\server\\share\\report.json', 'report.json', `${names[0]}.bak`, 'theme-unknown-before-geometry.json']) {
+    expect(() => read.artifact(name)).toThrow('白名单')
+  }
+  expect(execute).toHaveBeenCalledTimes(calls)
+})
+
+it.each(['ios', 'android'] as const)('%s 启动前没有主题文件时如实登记缺失，保留原始启动异常', async (platform) => {
+  const current = await fixture()
+  const execute = vi.fn(async (args: string[]) => ({ exitCode: 1, stdout: Buffer.alloc(0), stderr: Buffer.from(`cat: ${args.at(-1)}: No such file or directory\n`) }))
+  const read = platform === 'ios'
+    ? iosFailureReaders(current.root, context)
+    : androidFailureReaders({ platform: 'android', id: 'selected-device' }, context, execute)
+  const failure = new Error('launch did not complete')
+  await expect(withNativeFailureEvidence(current.artifactDir, context, read, async () => {
+    throw failure
+  })).rejects.toBe(failure)
+  const collection = JSON.parse(await fs.readFile(path.join(current.output, 'collection.json'), 'utf8'))
+  expect(collection.files).toHaveLength(35)
+  expect(collection.files.every((file: { status: string }) => file.status === 'missing')).toBe(true)
+  expect(await fs.readdir(path.join(current.output, 'artifacts'))).toEqual([])
+})
+
+it('Android 主题文件权限错误继续登记失败，原始启动异常与诊断异常同时保留', async () => {
+  const current = await fixture()
+  const name = themeOverrideArtifactNames()[0]!
+  const execute = vi.fn(async (args: string[]) => ({
+    exitCode: 1,
+    stdout: Buffer.alloc(0),
+    stderr: Buffer.from(`cat: ${args.at(-1)}: ${args.at(-1)?.endsWith(name) ? 'Permission denied' : 'No such file or directory'}\n`),
+  }))
+  const read = androidFailureReaders({ platform: 'android', id: 'selected-device' }, context, execute)
+  const failure = new Error('first launch failure')
+  await expect(withNativeFailureEvidence(current.artifactDir, context, read, async () => {
+    throw failure
+  })).rejects.toMatchObject({ errors: [failure, expect.objectContaining({ errors: [expect.objectContaining({ message: expect.stringContaining('Permission denied') })] })] })
+  const collection = JSON.parse(await fs.readFile(path.join(current.output, 'collection.json'), 'utf8'))
+  expect(collection.files.filter((file: { status: string }) => file.status === 'failed')).toEqual([
+    expect.objectContaining({ name, error: expect.stringContaining('Permission denied') }),
+  ])
+})
