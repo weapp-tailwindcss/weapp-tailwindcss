@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "capturedAt": "2026-10-20T22:06:30.970Z",
+  "capturedAt": "2026-10-21T08:29:35.072Z",
   "source": {
-    "head": "61d8cb1f2f745a0990cc5e63644d9fba10dc7758",
-    "lock": "ede850c6c0c5c6ecb0ef0e105f20a11a93792a8714949ce030324f13f8977c03",
+    "head": "bc4f4c546656a7e52f170433d7647cdb82227b23",
+    "lock": "d69cc6c336910e65ac1d8cae8abecce30f5641d26be67e8a96e6db9defa9c32a",
     "contract": "40e59b53885ab105617d64f2d337858be198d098da294a4a654d66792b26d2b3",
     "node": "v24.18.0",
-    "build": "fa77d31c19ef1082603243515eac12e06ab2081e371f937d879122dd0fd99e14"
+    "build": "132ca8b34ac24d3321d655a455cc52b4ce339eeb43b863e42cd886eb70d90054"
   },
   "environment": {
     "platform": "darwin",
@@ -23,8 +23,8 @@
       "vips": "8.18.7"
     }
   },
-  "reportSha256": "f5d929aaeb1d415bc24d4a729de60860017ce704f724a7de0a6c6e5ee2d0330d",
-  "snapshotRoot": "/Users/icebreaker/.codex/worktrees/tailwind-capability-e2e/weapp-tailwindcss/.tmp/website-visual-61d8cb1f2/snapshots",
+  "reportSha256": "814825700aa356253ea0465f9c64ab09357fdac0001c25c6910c10af1b3e9edd",
+  "snapshotRoot": "/Users/icebreaker/.codex/worktrees/tailwind-capability-e2e/weapp-tailwindcss/.tmp/website-golden-final-bc4f4c5/snapshots",
   "skipped": [
     "firefox:mobile / screenshot",
     "firefox:mobile /blog screenshot",
@@ -2041,10 +2041,10 @@
       "title": "desktop /docs/api/options/general screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-docs-api-options-general-screenshot-1-chromium-darwin.png",
-      "bytes": 452972,
-      "sha256": "8d25d643dc59ccd7cb174d1ab93af8662d004f2562c42bc3a5e639863e9c41ec",
+      "bytes": 464062,
+      "sha256": "00ed5860f916ac154b60fddbf3bbf5ed872a8a091c05a58cff979dd4d39bd12e",
       "width": 1280,
-      "height": 3141
+      "height": 3170
     },
     {
       "project": "firefox",
@@ -2053,10 +2053,10 @@
       "title": "desktop /docs/api/options/general screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-docs-api-options-general-screenshot-1-firefox-darwin.png",
-      "bytes": 526178,
-      "sha256": "f227256ed238ff2392d57c68e641a2fdc9d216c8a2723365af670d9393f4e9ca",
+      "bytes": 540157,
+      "sha256": "c2fb235de30a815e33380f74005d47ce14fbd1b192ed3e9ed9534ce93545766b",
       "width": 1280,
-      "height": 3147
+      "height": 3176
     },
     {
       "project": "webkit",
@@ -2065,10 +2065,10 @@
       "title": "desktop /docs/api/options/general screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-docs-api-options-general-screenshot-1-webkit-darwin.png",
-      "bytes": 553298,
-      "sha256": "645f0e48afdaa464027488afe28ec63fc60d7a8a123557628ff586b16a019e4d",
+      "bytes": 564369,
+      "sha256": "ea30c645d8b520c3315920b0539149fda93abc57d780f0d93516d0b7d3ad31d4",
       "width": 1280,
-      "height": 3146
+      "height": 3175
     },
     {
       "project": "chromium",
@@ -2857,8 +2857,8 @@
       "title": "desktop /docs/community/templates screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-docs-community-templates-screenshot-1-webkit-darwin.png",
-      "bytes": 384628,
-      "sha256": "866c3d9c5f830ae4dfc97ee2245a5ca72d03f40ab1a0aac452c27951c91f5bd8",
+      "bytes": 384687,
+      "sha256": "40ae136cb831277ba759f762f3985a201d69ca1f5c651113e4634e32f34739e4",
       "width": 1280,
       "height": 2218
     },
@@ -4165,8 +4165,8 @@
       "title": "desktop /docs/quick-start/frameworks/lynx screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-docs-quick-start-frameworks-lynx-screenshot-1-chromium-darwin.png",
-      "bytes": 986013,
-      "sha256": "595569d27fbe0684e03d918de82f77346b08d6bab30ae4f3fb23ddc66314fc59",
+      "bytes": 985824,
+      "sha256": "1f11aed889b240ecc6cc71ce910d4db79804111c7f7d6d8f872402877ad98ec4",
       "width": 1280,
       "height": 5099
     },
@@ -4177,8 +4177,8 @@
       "title": "desktop /docs/quick-start/frameworks/lynx screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-docs-quick-start-frameworks-lynx-screenshot-1-firefox-darwin.png",
-      "bytes": 1127717,
-      "sha256": "3580ea755fe134a76d695cf359643770b6d10b4ecab7149b4c9a0deaef33ea32",
+      "bytes": 1127589,
+      "sha256": "0dc8942e19d57643e4e77311bcba3f34cb0496c20d7ec3cecb1509def1e115d9",
       "width": 1280,
       "height": 5111
     },
@@ -4189,8 +4189,8 @@
       "title": "desktop /docs/quick-start/frameworks/lynx screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-docs-quick-start-frameworks-lynx-screenshot-1-webkit-darwin.png",
-      "bytes": 1128347,
-      "sha256": "7e1af1a657b2c923b4bbeeaaa741c83f4dbbbc55b4cc59fdca0ba20ab9318d93",
+      "bytes": 1128824,
+      "sha256": "2f0a277ec1ced1eb9d3046fdf3f839ae2aadb7c9c31424c7c8edaa5204c5320d",
       "width": 1280,
       "height": 5110
     },
@@ -5917,8 +5917,8 @@
       "title": "desktop /ui screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-ui-screenshot-1-webkit-darwin.png",
-      "bytes": 343877,
-      "sha256": "f941e77870dea5d80ac9aaca2d815037922d6222602e75daed02281eab11b4d7",
+      "bytes": 343879,
+      "sha256": "93584180425cf751e3e0b9dbf0ffc23488ddf139ed4dafc6eabed42222359cc4",
       "width": 1280,
       "height": 2217
     },
@@ -6385,8 +6385,8 @@
       "title": "desktop /zh-cn/docs/ai/ai-coding-deployment-guide screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-zh-cn-docs-ai-ai-coding-deployment-guide-screenshot-1-webkit-darwin.png",
-      "bytes": 7396608,
-      "sha256": "5779400c44082b8b6b2e2801fe15bcfe3da5472b74fd3621d83ad614ad1a73d2",
+      "bytes": 7396406,
+      "sha256": "dff229ec6d7d123fe07ce940037b5b0064b42c1b0b82a58d40ff4627fad6230d",
       "width": 1280,
       "height": 34946
     },
@@ -7585,10 +7585,10 @@
       "title": "desktop /zh-cn/docs/api/options/general screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-zh-cn-docs-api-options-general-screenshot-1-chromium-darwin.png",
-      "bytes": 478575,
-      "sha256": "0cd278971dd88d126def6e458d0cf2afe66a8e14e3d2d65b0d9437db23e723e9",
+      "bytes": 491926,
+      "sha256": "78720e3573d68ebc6818d1a45180b42546284bb09ad47902b8c7dd05a24bd219",
       "width": 1280,
-      "height": 3100
+      "height": 3129
     },
     {
       "project": "firefox",
@@ -7597,10 +7597,10 @@
       "title": "desktop /zh-cn/docs/api/options/general screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-zh-cn-docs-api-options-general-screenshot-1-firefox-darwin.png",
-      "bytes": 547095,
-      "sha256": "1683991b30a98de3f648a8774133fd31a716fed44cd3eda0cfffc4d281524482",
+      "bytes": 561763,
+      "sha256": "dfaa0a1ce97840de24d9df2a9c76590940374d9d879f56ecb0693fc6468840d0",
       "width": 1280,
-      "height": 3137
+      "height": 3166
     },
     {
       "project": "webkit",
@@ -7609,10 +7609,10 @@
       "title": "desktop /zh-cn/docs/api/options/general screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-zh-cn-docs-api-options-general-screenshot-1-webkit-darwin.png",
-      "bytes": 586715,
-      "sha256": "55b652167288b0aa3a236a11e3efc78b2589211cf3ffeabd1e886c68539bd915",
+      "bytes": 600269,
+      "sha256": "e6fe4504c234c2d8d95a297ab85f32f853a8d315e0cca274448a2c35305faf74",
       "width": 1280,
-      "height": 3107
+      "height": 3136
     },
     {
       "project": "chromium",
@@ -8401,8 +8401,8 @@
       "title": "desktop /zh-cn/docs/community/templates screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-zh-cn-docs-community-templates-screenshot-1-webkit-darwin.png",
-      "bytes": 388994,
-      "sha256": "c7bee87a9d23554d8af24b44eb729d3d60083512e59a6c02513769f258c026bb",
+      "bytes": 389063,
+      "sha256": "52d6e680fa5c5f55dad755366d366e8fb1c913b0e2c65ef85807ddf2bc4573f1",
       "width": 1280,
       "height": 2107
     },
@@ -9709,8 +9709,8 @@
       "title": "desktop /zh-cn/docs/quick-start/frameworks/lynx screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-zh-cn-docs-quick-start-frameworks-lynx-screenshot-1-chromium-darwin.png",
-      "bytes": 1001628,
-      "sha256": "5afdeedbddd8874f8923ac9ea83f7111799b2ca6503b14b1917838b4dd3831c8",
+      "bytes": 1001447,
+      "sha256": "d2a091568538f318f30d60d06beff1569dcbdaecf0864ff94f5dc4a49cc1edb2",
       "width": 1280,
       "height": 4607
     },
@@ -9721,8 +9721,8 @@
       "title": "desktop /zh-cn/docs/quick-start/frameworks/lynx screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-zh-cn-docs-quick-start-frameworks-lynx-screenshot-1-firefox-darwin.png",
-      "bytes": 1110124,
-      "sha256": "077ec411257e2ec5741d8ff23ff7254f594b279a743af8266372f7ee0c9dce7f",
+      "bytes": 1110115,
+      "sha256": "d257b429a4c07f1c686cf9cfe3d0ba6331fa53c3d16d2d4441492987e81866ea",
       "width": 1280,
       "height": 4618
     },
@@ -9733,8 +9733,8 @@
       "title": "desktop /zh-cn/docs/quick-start/frameworks/lynx screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-zh-cn-docs-quick-start-frameworks-lynx-screenshot-1-webkit-darwin.png",
-      "bytes": 1146900,
-      "sha256": "f539813a5525b48a821e318f06febc68153c769ef9a374d38e4018dfb6b6b838",
+      "bytes": 1146786,
+      "sha256": "95c62a15d6c72d4c986c5ec7bf946161facde08999ef00658595f1a78881eab6",
       "width": 1280,
       "height": 4588
     },
@@ -9913,8 +9913,8 @@
       "title": "desktop /zh-cn/docs/quick-start/frameworks/uni-app-x screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-zh-cn-docs-quick-start-frameworks-uni-app-x-screenshot-1-webkit-darwin.png",
-      "bytes": 1499708,
-      "sha256": "09564c7e62323ce5d6efb8cd1c68a93c089d92745f17eeb4ed9a46365769b084",
+      "bytes": 1499185,
+      "sha256": "617ac1d467533e5fdc7c6ff7a120e5c8ad455ecebdd91ddca5c3064c55e043b6",
       "width": 1280,
       "height": 6827
     },
@@ -11281,8 +11281,8 @@
       "title": "desktop /zh-cn/docs/tailwindcss/v5-official-plugin-parity screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-zh-cn-docs-tailwindcss-v5-official-plugin-parity-screenshot-1-webkit-darwin.png",
-      "bytes": 583191,
-      "sha256": "29f05df74bed4ee6429c2c5e8a80835ec021260ee3e2e40b393ddd3cc2f8fa2c",
+      "bytes": 583131,
+      "sha256": "7f9ab967490a7d73dbc4e8c61e2f34bbbb27d3856ac5df08f59df0754d3d2328",
       "width": 1280,
       "height": 2979
     },
@@ -11317,8 +11317,8 @@
       "title": "desktop /zh-cn/docs/tools/weapp-tw-cli screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-zh-cn-docs-tools-weapp-tw-cli-screenshot-1-webkit-darwin.png",
-      "bytes": 773845,
-      "sha256": "93e62deda1da19e478039e2069d9c156b185732b9dcf17d684297c5b5746bb63",
+      "bytes": 773787,
+      "sha256": "2900f6f1efa6e575fed72f2df9df7519d32a63763e56343629036f6b0ad157b5",
       "width": 1280,
       "height": 4032
     },
@@ -11461,8 +11461,8 @@
       "title": "desktop /zh-cn/ui screenshot",
       "skipped": false,
       "file": "desktop-viewport-desktop-zh-cn-ui-screenshot-1-webkit-darwin.png",
-      "bytes": 372948,
-      "sha256": "e3f85a2454f921ae48a715ae68365f4bcd66b14a4a4c4df3c458f5e95fce76cd",
+      "bytes": 372956,
+      "sha256": "d3c470563b04f92374da0f3176bfee6b4c9e1e9f1d651930238689e8500af72d",
       "width": 1280,
       "height": 2249
     },
@@ -11941,10 +11941,10 @@
       "title": "mobile /docs/api/options/general screenshot",
       "skipped": false,
       "file": "mobile-viewport-mobile-docs-api-options-general-screenshot-1-chromium-darwin.png",
-      "bytes": 349579,
-      "sha256": "ea09633a846b63d53d2419bdd6546c3842ef9b0d890681bce18c288cfc2d28f5",
+      "bytes": 364004,
+      "sha256": "922cf20d5ff3fb6e0fcd0f5f6790c7c348b67d6c35ed2caee1ff2b3d9b3610b3",
       "width": 390,
-      "height": 4582
+      "height": 4669
     },
     {
       "project": "chromium",
@@ -12649,8 +12649,8 @@
       "title": "mobile /docs/quick-start/frameworks/lynx screenshot",
       "skipped": false,
       "file": "mobile-viewport-mobile-docs-quick-start-frameworks-lynx-screenshot-1-chromium-darwin.png",
-      "bytes": 890360,
-      "sha256": "c682b27eeff9f82b2dd2fbf36d2f016bd14f79a445d5f48281b95c68b8bd5765",
+      "bytes": 890261,
+      "sha256": "42a5748328f861adad4f5751e569b07e961754f6d228e0fe8b24e7a1c050bb83",
       "width": 390,
       "height": 7534
     },
@@ -12865,8 +12865,8 @@
       "title": "mobile /docs/showcase screenshot",
       "skipped": false,
       "file": "mobile-viewport-mobile-docs-showcase-screenshot-1-chromium-darwin.png",
-      "bytes": 1801882,
-      "sha256": "225eb41a74ef6c2a2d41249fbb1ffb99c763cd2355ae0dac6a836acc901b87e6",
+      "bytes": 1803657,
+      "sha256": "4e45eb4a9b0bb3409d1b2afc4a27e627327a6f9d713513bd06b24f9540fd695d",
       "width": 390,
       "height": 14877
     },
@@ -13789,10 +13789,10 @@
       "title": "mobile /zh-cn/docs/api/options/general screenshot",
       "skipped": false,
       "file": "mobile-viewport-mobile-zh-cn-docs-api-options-general-screenshot-1-chromium-darwin.png",
-      "bytes": 368685,
-      "sha256": "ec46ef677eed72a6e4ce499eababc52945943ca3f044a88f8446beb5972db89f",
+      "bytes": 382906,
+      "sha256": "ae68aecfbcd0d940da6d19b2cbab6bfab9ff912495f710ca2051df7e35352129",
       "width": 390,
-      "height": 4529
+      "height": 4558
     },
     {
       "project": "chromium",
@@ -14497,8 +14497,8 @@
       "title": "mobile /zh-cn/docs/quick-start/frameworks/lynx screenshot",
       "skipped": false,
       "file": "mobile-viewport-mobile-zh-cn-docs-quick-start-frameworks-lynx-screenshot-1-chromium-darwin.png",
-      "bytes": 835147,
-      "sha256": "2c44fb748214a268affe628ab891eaebb06284e6b1ad2087d489fe35bcefa112",
+      "bytes": 835012,
+      "sha256": "ead2a88d51507402156aebcae68d3604a2ebfc30a254c6c58763e2aab4bb59e0",
       "width": 390,
       "height": 6461
     },
