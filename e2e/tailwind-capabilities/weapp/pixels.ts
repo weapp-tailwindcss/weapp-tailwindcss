@@ -19,7 +19,7 @@ export function weappPhasePixelAssertions(phase: string, actual: readonly number
   ]
 }
 
-/** 屏幕 ICC 到 sRGB 的量化最多允许 RGB 一级误差；独立参考必须逐像素一致，alpha 精确匹配。 */
+/** 屏幕 ICC 到 sRGB 的量化最多允许 RGB 一级误差；主体与独立参考的预声明采样点 RGBA 必须精确一致，alpha 精确匹配。 */
 export function weappPixelContract(expected: readonly number[]) {
   if (expected.length !== 4 || expected.some(value => !Number.isInteger(value) || value < 0 || value > 255)) {
     throw new Error('微信像素预期必须是有效 RGBA')
