@@ -150,6 +150,22 @@ export function matchRootCacheSnapshot(snapshot: RootCacheSnapshot, root: Root) 
   return matched && index === snapshot.nodes.length ? bindings : undefined
 }
 
+/** 重新解析产生的合成来源不属于输入快照，不能在后续调用中伪装成当前来源。 */
+export function hasOnlyCapturedInputs(root: Root, snapshot: RootCacheSnapshot) {
+  const inputs = new Set(snapshot.inputs.map(item => item.input))
+  let captured = true
+  const check = (node: Node): false | undefined => {
+    if (node.source && !inputs.has(node.source.input)) {
+      captured = false
+      return false
+    }
+  }
+  if (check(root) !== false) {
+    root.walk(check)
+  }
+  return captured
+}
+
 export function cloneRootWithCurrentSources(cached: Root, bindings?: ReadonlyMap<Input, Input>) {
   const cloned = cached.clone()
   if (!bindings?.size) {

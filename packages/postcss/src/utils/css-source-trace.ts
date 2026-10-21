@@ -1,5 +1,5 @@
-import selectorParser from 'postcss-selector-parser'
 import { postcss } from '../postcss-runtime'
+import { readSelectorClasses } from './css-selector-classes'
 
 export interface CssTokenSource {
   token: string
@@ -94,16 +94,11 @@ export function collectCssTokenSourcePaths(css: string) {
 
 function collectRuleSourceTokens(rule: postcss.Rule, tokenSources: CssTokenSourceMap) {
   const tokens = new Map<string, CssTokenSource>()
-  try {
-    selectorParser().astSync(rule.selector).walkClasses((node) => {
-      const source = tokenSources.get(node.value) ?? tokenSources.get(node.toString().slice(1))
-      if (source) {
-        tokens.set(source.token, source)
-      }
-    })
-  }
-  catch {
-    // 不完整选择器不产生来源证据，禁止用部分正则匹配猜测归属。
+  for (const node of readSelectorClasses(rule.selector)) {
+    const source = tokenSources.get(node.value) ?? tokenSources.get(node.raw)
+    if (source) {
+      tokens.set(source.token, source)
+    }
   }
   return tokens
 }

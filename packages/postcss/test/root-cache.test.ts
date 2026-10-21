@@ -1,8 +1,22 @@
 import { describe, expect, it } from 'vitest'
 import { postcss } from '@/index'
-import { captureRootCacheSnapshot, cloneRootWithCurrentSources, matchRootCacheSnapshot } from '@/root-cache'
+import { captureRootCacheSnapshot, cloneRootWithCurrentSources, hasOnlyCapturedInputs, matchRootCacheSnapshot } from '@/root-cache'
 
 describe('Root 缓存快照', () => {
+  it('根节点和所有后代均需核对来源身份，不能只比较文件名', () => {
+    const root = postcss.parse('.a{color:red}', { from: 'same.css' })
+    const snapshot = captureRootCacheSnapshot(root)
+    const generated = postcss.parse('/* generated */', { from: 'same.css' })
+    expect(hasOnlyCapturedInputs(root, snapshot)).toBe(true)
+    root.append(generated.nodes)
+    expect(hasOnlyCapturedInputs(root, snapshot)).toBe(false)
+    root.last!.remove()
+    root.source = generated.source
+    expect(hasOnlyCapturedInputs(root, snapshot)).toBe(false)
+    root.source = undefined
+    expect(hasOnlyCapturedInputs(root, snapshot)).toBe(true)
+  })
+
   it('复用多个等价输入时逐一重新绑定来源，且不修改缓存产物', () => {
     const create = () => {
       const root = postcss.parse('.a{color:red}', { from: 'a.css' })
