@@ -25,6 +25,7 @@
       "400px"
     ],
     "bg-emerald-50/80": [
+      "color-mix(inoklab,var(--color-emerald-50,oklch(97.9%.021166.113))80%,transparent)",
       "rgba(236,253,245,.8)"
     ]
   },

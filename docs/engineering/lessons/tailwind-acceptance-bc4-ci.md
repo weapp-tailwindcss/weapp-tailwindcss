@@ -6,6 +6,7 @@ regressions:
   - packages/postcss/test/color-mix-alpha-semantics.test.ts
   - packages/postcss/test/modern-color-function-analysis.test.ts
   - packages/weapp-tailwindcss/test/uni-app-x/web-runtime-properties.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/webpack-processed-css-source.test.ts
   - e2e/react-native-artifact-evidence.test.ts
   - e2e/react-native-phase-evidence.test.ts
   - e2e/lynx-failure-evidence.test.ts
@@ -45,14 +46,26 @@ verification:
     status: pending
     sha: bc4f4c546656a7e52f170433d7647cdb82227b23
     environment: 本地扩展 57 阶段及独立 Tailwind 15 目标
-    reason: 网站正式禁止更新验证仍在执行；性能修复与新增夹具尚待整合、准确 head 验证及两轮独立 extended 预检
+    reason: 网站专项已通过；整合后的性能、其余 CI 失败及两轮独立 extended 预检仍待完成
+  - claim: 四个项目在限定同步 static 后通过生产与完整开发增量流程
+    kind: integration
+    status: passed
+    sha: d8575ffc6325fc93bd0c0bda60902a27ccd5f56c
+    environment: macOS arm64，Node 24.18.0、pnpm 12.14.0；四份本轮更新的 static 尚未提交，后台 Chromium，所有项目六阶段
+    command: CI=1 pnpm e2e:demo:matrix uni-app-x-vdom-tailwindcss-v4:h5 issue-1144-uni-app-x-web:h5 web/react-rsbuild-tailwindcss-v4:web web/vue-rsbuild-tailwindcss-v4:web
+  - claim: bc4 网站正式三浏览器禁止更新回归通过
+    kind: integration
+    status: passed
+    sha: bc4f4c546656a7e52f170433d7647cdb82227b23
+    environment: macOS arm64，Node 24.18.0、pnpm 12.14.0；原 5 像素阈值、零重试，1989 通过、636 既有条件跳过
+    command: CI=1 pnpm --filter @weapp-tailwindcss/website e2e:local
 ---
 
 # bc4 全端验收的 CI 失败与证据边界
 
 ## 症状
 
-本记录固定 PR head `bc4f4c546656a7e52f170433d7647cdb82227b23`。截至本轮审查，发现两项性能分片及其聚合门禁、两项 iOS 原生任务和六项 uni-app x H5 static 失败。控制工作流的 SHA、实际源码 checkout 和 PR head 分开核对，旧提交成功不能覆盖当前失败。
+本记录固定 PR head `bc4f4c546656a7e52f170433d7647cdb82227b23`。最终 284 项检查为 225 成功、30 跳过、28 失败、1 取消，无排队或运行。失败含两项性能分片及其聚合门禁、两项 iOS 原生任务、六项 uni-app x H5、六项 React Rsbuild、三项 Vue Rsbuild、六项 Nuxt static 及两个上游失败汇总。另一个 Taro macOS 检查在已分配宿主的 setup-pnpm 阶段超过 30 分钟后取消，未进入 build、browser 或 matrix。没有重跑旧 head。控制工作流的 SHA、实际源码 checkout 和 PR head 分开核对，旧提交成功不能覆盖当前失败。
 
 ## 根因与纠正
 
@@ -63,6 +76,16 @@ verification:
 实际产物保留基础 `rgba(236,253,245,.8)`，随后在现代 `@supports` 内保留 `color-mix(in oklab,var(--color-emerald-50,oklch(97.9% .021 166.113)) 80%,transparent)`。未知变量的 fallback 不能证明变量在运行时永久缺失，不能把整个表达式固定为 fallback 颜色。a7 的语义修复已正确保留这一分支，两份旧 H5 基线尚未同步。
 
 该差异不支持回退未知变量保护或删除现代声明。限定修正两份 H5 static，并以原门槛禁止更新复验；小程序、原生基线不由此差异推导更新。完整项目运行仍需独立执行。
+
+### Rsbuild Web 保留框架压缩结果
+
+React 与 Vue 的 Web static 都仅移除了重复的 `--spacing: 0.25rem` 表示，保留框架产出的唯一 `.25rem`，九个 utility 均保留。Tailwind 原始主题使用 `0.25rem`，框架压缩后使用 `.25rem`；注册表不是最终框架资产，不能为了匹配旧快照重新补回它。Webpack 两个任务入口的回归分别检查两轮当前来源注释、映射、唯一 spacing 及 `var(--spacing)` 的实际消费。
+
+最初两次夹具回归失败是测试模型错误：只有 webpack 来源注释和作者 `@layer`，缺少真实产物中的 Tailwind banner，导致进入待生成来源分支。补齐真实生成标识后 27 项通过；这两次失败没有作为产品红例或修改生产代码的理由。该单测不能替代 Rsbuild 的真实生命周期，因此另执行完整项目回归。
+
+在整合源码 d8575ffc 的干净工作树先运行四项目 `--build-only`，四项均以准确预期差异失败，原日志保留在 `.tmp/static-d857-before.log`。随后单独限定四项目 `--build-only --update`，只增加两条现代颜色值、移除两条重复 spacing 值，审查后以 `CI=1` 完整不更新复验。四项目各自 production、initial、replace、add、restore、refresh 全部通过，报告在 `.tmp/static-d857-none/report.json`，后台浏览器和开发服务按 runner 的 finally 关闭，源码恢复。没有更新小程序或原生基线，也没有放宽比较器。
+
+Nuxt 的后续 CI 同样停在 static：九个 utility 均在，保留 rgba、`#62748e` 和 `0.25rem`，旧基线还登记了额外十六进制、变量及 `.25rem` 表示。本地在同一整合源码独立复现，责任链和基线审查尚未完成；不据四项目成功自动登记 Nuxt 通过。
 
 ### 固定性能对照
 
@@ -90,6 +113,8 @@ Mpx 工件 `12329244941` 的完整 ZIP SHA256 为 `ec6bed37170efe412f3a6b7d8aba8
 
 `CI=1 pnpm exec vitest run --config e2e/vitest.e2e.config.ts e2e/lynx-failure-evidence.test.ts e2e/react-native-artifact-evidence.test.ts e2e/react-native-phase-evidence.test.ts --maxWorkers=1 --update=none` 为 3 文件、68 项通过，仅验证证据拒绝和重放合同。定向 ESLint 使用 `--no-ignore` 通过；初次未带该参数仅给出文件被忽略警告，未当成有效 lint。
 
+整合到 d8575ffc 后，`CI=1 pnpm build:pkgs` 为 36 项成功、无缓存。完整运行 `test/uni-app-x/web-runtime-properties.test.ts`、`test/bundlers/webpack-processed-css-source.test.ts` 和 `test/bundlers/vite-css-finalizer.unit.test.ts` 为 3 文件、57 项通过，包含之前名称过滤没有执行的四项。`e2e/color-mix-alpha-browser.test.ts` 分别以 `LYNX_THEME_BROWSER=chromium`、`firefox`、`webkit` 执行，各 2 项、合计 6 项通过，保留动态切换/恢复及任意动态权重的不等价反例。所有浏览器 headless，并在 finally 关闭；这些定向语义验证不代替真实 Lynx 或微信宿主。
+
 原始 ZIP 安全解压后，使用原 sidecar 坐标调用生产 `assessNativePair`：首帧几何、像素和 control 全部通过，像素 mismatch 为 0。对 baseline 与 TSX HMR 分别执行生产 report、artifact、encoding、phase-source validator，并重算 phase snapshot，与归档逐项相等。两阶段各 118 例（31 支持、87 预声明拒绝）、40 份回执；重新读取共 80 份 PNG/sidecar，未生成替代运行数据。
 
 CSS HMR 只有 24 份回执，缺完成报告。完整 `validateNativeRuntimePhases` 正确拒绝：`React Native 阶段索引缺少完整协议或本轮身份`。离线结果和摘要保存在 `.tmp/ci-bc4-expo-ios-offline/`。两份完整阶段与通过首帧均不能代替三阶段成功。
@@ -100,7 +125,7 @@ CSS HMR 只有 24 份回执，缺完成报告。完整 `validateNativeRuntimePha
 
 Metro input 中的新 CSS 与稳定 publication 只证明输入，不能证明应用实际收到并应用了同一 bundle。两份完整阶段仍标记 `servedBundle: not-captured`。实际交付/HMR 链、Image/ScrollView、全量原生注册夹具、独立转换 oracle、剩余 Web variant 与微信几何等缺口继续单列未完成，验收保持 partial。
 
-网站采集、来源安装与最终禁止更新验证应分别登记，不把新候选生成等同于正式回归通过。源码稳定后，57 阶段流程与独立 15 目标各自重新执行 extended prepare、当前会话真实 computer use 和 verify，分别领取一次性 lease。旧报告不能复用。
+网站采集、来源安装与最终禁止更新验证分别登记。干净 bc4 的正式 `e2e:local` 已完成：2,625 项中 1,989 通过、636 按既有移动 Firefox/WebKit 条件跳过、零失败；详见[网站来源记录](website-visual-bc4-provenance.md)。此专项不补写旧全面流程的未执行阶段。源码稳定后，57 阶段流程与独立 15 目标各自重新执行 extended prepare、当前会话真实 computer use 和 verify，分别领取一次性 lease。旧报告不能复用。
 
 ## 规则评估
 
