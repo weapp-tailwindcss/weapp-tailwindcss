@@ -20,6 +20,7 @@ import {
   uniAppSubpackageMiniCase,
 } from './case-factories'
 import { issue951MiniCase } from './case-factories/issue-951'
+import { retainedTaroMiniCases } from './case-factories/taro-retained-mini'
 import { createLocalTargetCase, uniqueTargetKey } from './helpers'
 import { MULTIPLATFORM_TARGETS } from './targets'
 
@@ -37,7 +38,7 @@ const uniAppSubpackageMarkers = {
   independent: 'bg-twv4-uni-independent',
 }
 
-export const EXECUTABLE_MULTIPLATFORM_BUILD_OUTPUT_CASES: BuildOutputCase[] = [
+const declaredBuildOutputCases: BuildOutputCase[] = [
   gulpMiniCase({
     project: 'gulp-tailwindcss-v4',
     platform: 'tt',
@@ -240,6 +241,11 @@ export const EXECUTABLE_MULTIPLATFORM_BUILD_OUTPUT_CASES: BuildOutputCase[] = [
   }),
 ]
 
+const declaredCaseKeys = new Set(declaredBuildOutputCases.map(uniqueTargetKey))
+export const EXECUTABLE_MULTIPLATFORM_BUILD_OUTPUT_CASES: BuildOutputCase[] = [
+  ...declaredBuildOutputCases,
+  ...retainedTaroMiniCases().filter(item => !declaredCaseKeys.has(uniqueTargetKey(item))),
+]
 const executableCaseKeys = new Set(EXECUTABLE_MULTIPLATFORM_BUILD_OUTPUT_CASES.map(uniqueTargetKey))
 
 export const MULTIPLATFORM_BUILD_OUTPUT_CASES: BuildOutputCase[] = [
