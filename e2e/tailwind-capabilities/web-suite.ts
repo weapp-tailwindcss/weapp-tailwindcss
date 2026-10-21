@@ -10,6 +10,8 @@ import { selectCaseGroups } from './plan'
 import { runRegistryWeb } from './registry-web'
 import { assertCapabilitySuccess } from './report'
 import { runWeb, webProbes } from './web'
+import { autofillProbe } from './web-autofill/fixtures'
+import { runAutofillWeb } from './web-autofill/run'
 import { contextWebProbes } from './web-context/fixtures'
 import { runContextWeb } from './web-context/run'
 import { historyProbe } from './web-history/fixtures'
@@ -30,11 +32,13 @@ export async function runWebSuite(context: RunContext, engine: BrowserEngine) {
     context: contextWebProbes.map(probe => `runtime/${probe.id}`),
     framework: frameworkSourceProfiles.map(profile => profile.id),
     nativeMedia: engine === 'chromium' ? [`runtime/${nativeMediaProbe.id}`] : [],
+    autofill: engine === 'chromium' ? [`runtime/${autofillProbe.id}`] : [],
     history: [`runtime/${historyProbe.id}`],
     lifecycle: lifecycleWebProbes.map(probe => `runtime/${probe.id}`),
   })
   const browserType = { chromium, firefox, webkit }[engine]
-  const browser = Object.entries(groups).some(([group, selected]) => group !== 'history' && selected) ? await browserType.launch({ headless: true }) : undefined
+  // 默认 shell 不含 Autofill 域；沿用 extended 预检已验证的完整 Chromium 二进制。
+  const browser = Object.entries(groups).some(([group, selected]) => group !== 'history' && selected) ? await browserType.launch({ headless: true, ...(groups.autofill ? { executablePath: chromium.executablePath() } : {}) }) : undefined
   const reports: CapabilityReport[] = []
   const errors: Error[] = []
   const runners: Array<{ group: keyof typeof groups, run: () => Promise<CapabilityReport> }> = [
@@ -45,6 +49,7 @@ export async function runWebSuite(context: RunContext, engine: BrowserEngine) {
     { group: 'context', run: () => runContextWeb(context, engine, browser!) },
     { group: 'framework', run: () => runFrameworkSource(context, engine, browser!) },
     { group: 'nativeMedia', run: () => runNativeMediaWeb(context, engine, browser!) },
+    { group: 'autofill', run: () => runAutofillWeb(context, engine, browser!) },
     { group: 'lifecycle', run: () => runLifecycleWeb(context, engine, browser!) },
     { group: 'history', run: () => runHistoryWeb(context, engine, browserType) },
   ]

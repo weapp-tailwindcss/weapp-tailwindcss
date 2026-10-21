@@ -1,5 +1,6 @@
 import type { TailwindInventory } from '../inventory'
 import type { BrowserEngine } from '../types'
+import { autofillProbe } from '../web-autofill/fixtures'
 import { contextWebProbes } from '../web-context/fixtures'
 import { historyProbe } from '../web-history/fixtures'
 import { lifecycleWebProbes } from '../web-lifecycle/fixtures'
@@ -15,7 +16,7 @@ export interface WebRuntimeCoverage {
 }
 
 export function webRuntimeCoverage(inventory: TailwindInventory, engine: BrowserEngine): WebRuntimeCoverage[] {
-  const probes: readonly { id: string, features: readonly string[] }[] = [...webProbes, ...contextWebProbes, ...lifecycleWebProbes, historyProbe, ...(engine === 'chromium' ? [nativeMediaProbe] : [])]
+  const probes: readonly { id: string, features: readonly string[] }[] = [...webProbes, ...contextWebProbes, ...lifecycleWebProbes, historyProbe, ...(engine === 'chromium' ? [nativeMediaProbe, autofillProbe] : [])]
   return [...inventory.utilities, ...inventory.variants].map((feature) => {
     const caseIds = probes.filter(probe => probe.features.includes(feature.id)).map(probe => `runtime/${probe.id}`)
     return {

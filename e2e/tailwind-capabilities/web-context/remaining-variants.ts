@@ -70,10 +70,11 @@ export const remainingVariantPlans: RemainingVariantPlan[] = [
   },
   {
     root: 'autofill',
+    engines: ['firefox', 'webkit'],
     feature: 'variant/static/autofill',
     status: 'not-run',
     dependency: 'native-autofill',
-    reason: '真实 :autofill 由浏览器填充服务产生；键盘填写、fill 或设置 value 都不能作为自动填充证据。',
+    reason: 'Firefox/WebKit 尚未提供独立原生填充入口；Chromium 已有独立原生协议夹具，实际成功仍需本轮报告。键盘填写、fill 或设置 value 不能作为自动填充证据。',
     candidate: 'autofill:[outline:3px_solid_#123456]',
     fixture: '同源 HTTP 表单，包含 name/address/email 等标准 autocomplete 字段；另设未填充对照。用 outline 避免浏览器内置 autofill 背景覆盖候选颜色。',
     sequence: ['空表单：无候选 outline', '原生自动填充：候选 3px solid #123456，对照无 outline', '用户清空并重新编辑：退出 autofill，候选 outline 恢复'],

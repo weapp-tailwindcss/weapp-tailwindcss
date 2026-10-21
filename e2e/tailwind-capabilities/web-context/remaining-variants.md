@@ -10,7 +10,7 @@
 | `any-pointer-none` | 主指针缺失不等于全部指针缺失 | 全部指针不可用，再恢复任一设备；分别断言主指针和所有设备 | 与上一项共享资源，保持独立结果 |
 | `contrast-less` | 当前 Playwright 只提供 `more/no-preference` | 原生 `prefers-contrast:less`、默认与恢复状态、独立颜色 oracle | 可先探索单引擎原生媒体协议，其余引擎保持缺口 |
 | `inverted-colors` | 无统一模拟入口，宿主反色和截图捕获位置还需校准 | 原生媒体状态、CSS 色值、截图 RGB 校准块 | 先确定捕获是在系统反色前还是反色后 |
-| `autofill` | 普通填表不产生自动填充语义 | 独占临时 profile、虚构地址、浏览器原生填充服务、`:autofill` 和可见 outline | 先实现可控的单引擎原生服务，逐引擎补充 |
+| `autofill`（Firefox/WebKit） | 普通填表不产生自动填充语义 | 虚构地址、浏览器原生填充服务、`:autofill` 和可见 outline | Chromium 独立原生协议夹具已接线，Firefox/WebKit 继续等待等价入口 |
 
 ## 已确认的 API 边界
 
@@ -30,6 +30,6 @@ Chromium 的原生媒体或 Autofill 协议可以作为后续探索入口。协�
 
 这五项计划没有产生跨引擎验收结论。starting 与 details-content 的实现位于 [`web-lifecycle`](../web-lifecycle/run.ts)，已接入生成 CSS、fixture hash、static 基线、覆盖映射和严格报告合同；有夹具不代表三个引擎均已实际通过。
 
-Chromium 另有 `native-media-contrast-less` 原生 CDP 夹具，检查 no-preference、less、more、custom 与恢复；使用独立 CSS 参考、未加 class 的对照和绑定 run/phase 的 PNG 像素。统一门禁复读 sidecar、CSS、PNG 后重算。加上独立历史夹具，Chromium 为 84/88 个 root 提供夹具，Firefox/WebKit 为 83/88；夹具存在不等于本轮运行通过。
+Chromium 另有 `native-media-contrast-less` 原生 CDP 夹具，检查 no-preference、less、more、custom 与恢复；使用独立 CSS 参考、未加 class 的对照和绑定 run/phase 的 PNG 像素。统一门禁复读 sidecar、CSS、PNG 后重算。加上独立历史和原生 Autofill 三阶段夹具，Chromium 为 85/88 个 root 提供夹具，Firefox/WebKit 为 83/88；夹具存在不等于本轮运行通过。
 
 `visited` 的三状态、真实 HTTP 点击/返回、四边像素及全新 profile 恢复合同见 [`web-history`](../web-history/README.md)。computed/matches 仅归档；夹具接线不代表实际引擎通过。

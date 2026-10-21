@@ -9,6 +9,7 @@ import { registryStaticFixture } from './registry-web/static'
 import { weappFixtureCss } from './weapp/alpha-fixtures'
 import { weappProbes } from './weapp/fixtures'
 import { weappRenderContract } from './weapp/render'
+import { autofillCss, autofillProbe, renderAutofill } from './web-autofill/fixtures'
 import { contextWebCandidates, contextWebFixtureCss, contextWebProbes } from './web-context/fixtures'
 import { historyCss, historyProbe, historyReference, historyStates, renderHistory } from './web-history/fixtures'
 import { lifecycleWebCandidates, lifecycleWebFixtureCss, lifecycleWebProbes } from './web-lifecycle/fixtures'
@@ -23,6 +24,7 @@ export async function fixtureOutputs(root: string) {
   const history = await withGeneratorFixture(root, historyCss, {}, generator => generator.generate({ target: 'web', candidates: [historyProbe.candidate], scanSources: false }))
   const registry = await registryStaticFixture(root)
   const nativeMedia = await withGeneratorFixture(root, nativeMediaCss, {}, generator => generator.generate({ target: 'web', candidates: [nativeMediaProbe.candidate], scanSources: false }))
+  const autofill = await withGeneratorFixture(root, autofillCss, {}, generator => generator.generate({ target: 'web', candidates: [autofillProbe.candidate], scanSources: false }))
   const frameworkFixtures = sourceFrameworks.flatMap(framework => sourceRevisions.map(revision => ({ framework, revision, css: frameworkSourceCss(framework), files: { [`Probe.${framework === 'react' ? 'tsx' : 'vue'}`]: frameworkSource(framework, revision, 'static-baseline') } })))
   const frameworkFiles = Object.fromEntries<string>(await Promise.all(frameworkFixtures.map(async (fixture) => {
     const output = await withGeneratorFixture(root, fixture.css, fixture.files, generator => generator.generate({ target: 'web', candidates: [], scanSources: true }))
@@ -40,7 +42,7 @@ export async function fixtureOutputs(root: string) {
     const output = await withGeneratorFixture(root, fixture.css, fixture.files, generator => generator.generate({ target: 'web', candidates: fixture.candidates, scanSources: true }))
     return [`authoring-${fixture.id}.css`, output.css] as const
   })))
-  return { fixtureHash: digest({ history: { historyCss, historyProbe, historyReference, historyStates, html: renderHistory('GENERATED_CSS', 'RUN_ID') }, nativeMedia: { nativeMediaCss, nativeMediaProbe, nativeMediaReference, nativeMediaStates, html: renderNativeMedia('GENERATED_CSS', 'RUN_ID') }, webFixtureCss, webProbes, weappProbes, weappFixtureCss, weappRenderContract, contextWebFixtureCss, contextWebProbes, lifecycleWebFixtureCss, lifecycleWebProbes, hmrCss, hmrStates, authoring, frameworkFixtures, registry: registry.identity }), files: { 'web.css': web.css, 'weapp.wxss': weapp.css, 'context.css': context.css, 'lifecycle.css': lifecycle.css, 'registry.css': registry.css, 'native-media.css': nativeMedia.css, 'history.css': history.css, ...hmr, ...authoringFiles, ...frameworkFiles } }
+  return { fixtureHash: digest({ autofill: { autofillCss, autofillProbe, html: renderAutofill('GENERATED_CSS', 'RUN_ID') }, history: { historyCss, historyProbe, historyReference, historyStates, html: renderHistory('GENERATED_CSS', 'RUN_ID') }, nativeMedia: { nativeMediaCss, nativeMediaProbe, nativeMediaReference, nativeMediaStates, html: renderNativeMedia('GENERATED_CSS', 'RUN_ID') }, webFixtureCss, webProbes, weappProbes, weappFixtureCss, weappRenderContract, contextWebFixtureCss, contextWebProbes, lifecycleWebFixtureCss, lifecycleWebProbes, hmrCss, hmrStates, authoring, frameworkFixtures, registry: registry.identity }), files: { 'autofill.css': autofill.css, 'web.css': web.css, 'weapp.wxss': weapp.css, 'context.css': context.css, 'lifecycle.css': lifecycle.css, 'registry.css': registry.css, 'native-media.css': nativeMedia.css, 'history.css': history.css, ...hmr, ...authoringFiles, ...frameworkFiles } }
 }
 
 export async function fixtureBaseline(root: string, update = false) {

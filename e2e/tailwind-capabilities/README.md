@@ -74,6 +74,6 @@ Lynx 宿主的桥接缺失、视图失效及回执超时使用白名单结构化
 
 本轮仅覆盖仓库维护的扩展与配置场景，第三方插件的任意实现必须另行登记。
 
-Chromium 另有 `native-media-contrast-less` 原生 CDP 夹具，检查 no-preference、less、more、custom 与恢复；使用独立 CSS 参考、未加 class 的对照和绑定 run/phase 的 PNG 像素。统一门禁复读 sidecar、CSS、PNG 后重算。加上独立历史夹具，Chromium 为 84/88 个 root 提供夹具，Firefox/WebKit 为 83/88；夹具存在不等于本轮运行通过。
+Chromium 另有 `native-media-contrast-less` 原生 CDP 夹具，检查 no-preference、less、more、custom 与恢复；使用独立 CSS 参考、未加 class 的对照和绑定 run/phase 的 PNG 像素。统一门禁复读 sidecar、CSS、PNG 后重算。加上独立历史和原生 Autofill 三阶段夹具，Chromium 为 85/88 个 root 提供夹具，Firefox/WebKit 为 83/88；夹具存在不等于本轮运行通过。
 
 Web 子目录 `history` 使用两份任务独占、串行关闭的 persistent profile，验证 `visited:border-[#123456]` 的真实同源导航、四边像素、未访问对照、独立参考和无历史恢复。它不会读取或清除用户历史；统一门禁重读原始 CSS、导航、profile 回执和 PNG。夹具存在不等于本轮真实通过，详见 [历史夹具](web-history/README.md)。

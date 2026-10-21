@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { arbitrarySyntaxCases } from '../tools/tailwindcss-test-catalog/src'
 import { loadDefaultDesignSystem, loadInventory } from './tailwind-capabilities/inventory'
 import { assertionPassed, validateCapabilityReport } from './tailwind-capabilities/report'
+import { autofillProbe } from './tailwind-capabilities/web-autofill/fixtures'
 import { contextWebProbes } from './tailwind-capabilities/web-context/fixtures'
 import { historyProbe } from './tailwind-capabilities/web-history/fixtures'
 import { lifecycleWebProbes } from './tailwind-capabilities/web-lifecycle/fixtures'
@@ -86,7 +87,7 @@ describe('Web 语义夹具合同', () => {
     const coverage = webRuntimeCoverage(inventory, 'chromium')
     expect(coverage.map(item => item.featureId).sort()).toEqual([...featureIds].sort())
     expect(new Set(coverage.map(item => item.featureId)).size).toBe(features.length)
-    const probes: readonly { id: string, features: readonly string[] }[] = [...webProbes, ...contextWebProbes, ...lifecycleWebProbes, historyProbe, nativeMediaProbe]
+    const probes: readonly { id: string, features: readonly string[] }[] = [...webProbes, ...contextWebProbes, ...lifecycleWebProbes, historyProbe, nativeMediaProbe, autofillProbe]
     for (const row of coverage) {
       const caseIds = probes.filter(item => item.features.includes(row.featureId)).map(item => `runtime/${item.id}`)
       expect(row.caseIds).toEqual(caseIds)

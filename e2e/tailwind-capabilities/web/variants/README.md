@@ -18,6 +18,6 @@
 
 调整夹具后，在仓库根目录执行 `pnpm e2e:tailwind:static:update`，审查基线，再以 `CI=1` 和 `--update=none` 运行定向回归；本地浏览器调度须消费本轮扩展预检。
 
-Chromium 另有 `native-media-contrast-less` 原生 CDP 夹具，检查 no-preference、less、more、custom 与恢复；使用独立 CSS 参考、未加 class 的对照和绑定 run/phase 的 PNG 像素。统一门禁复读 sidecar、CSS、PNG 后重算。加上独立历史夹具，Chromium 为 84/88 个 root 提供夹具，Firefox/WebKit 为 83/88；夹具存在不等于本轮运行通过。
+Chromium 另有 `native-media-contrast-less` 原生 CDP 夹具，检查 no-preference、less、more、custom 与恢复；使用独立 CSS 参考、未加 class 的对照和绑定 run/phase 的 PNG 像素。统一门禁复读 sidecar、CSS、PNG 后重算。加上独立历史和原生 Autofill 三阶段夹具，Chromium 为 85/88 个 root 提供夹具，Firefox/WebKit 为 83/88；夹具存在不等于本轮运行通过。
 
 `visited` 使用两份串行、独占的临时 persistent profile：真实同源点击后返回，以 opaque border 的四边像素对照独立手写参考；另一份全新 profile 验证恢复。详见 [`web-history`](../../web-history/README.md)。

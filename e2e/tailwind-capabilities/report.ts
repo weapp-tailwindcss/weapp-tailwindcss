@@ -162,6 +162,10 @@ export async function verifyReportArtifacts(report: CapabilityReport, root: stri
     const { verifyNativeMediaReport } = await import('./web-native-media/replay')
     await verifyNativeMediaReport(report, root)
   }
+  if (report.results.some(result => result.id === 'runtime/autofill-native-outline')) {
+    const { verifyAutofillReport } = await import('./web-autofill/replay')
+    await verifyAutofillReport(report, root)
+  }
   if (report.results.some(result => result.id === 'runtime/history-visited-border')) {
     const { verifyHistoryReport } = await import('./web-history/replay')
     await verifyHistoryReport(report, root)
