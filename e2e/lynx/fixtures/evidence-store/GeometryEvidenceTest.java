@@ -26,8 +26,11 @@ public final class GeometryEvidenceTest {
     final List<String> captured = new ArrayList<>();
     double[] rect = {3, 5, 13, 25, 10, 20};
     boolean missing;
+    double[] screen = {375, 812, 3};
+    boolean changedScreen;
     public double[] measure(String id) { measured.add(id); return rect; }
-    public byte[] capture(String id) { captured.add(id); return missing ? null : PNG; }
+    public byte[] capture(String id) { captured.add(id); if (changedScreen) screen[0]++; return missing ? null : PNG; }
+    public double[] screenMetrics() { return screen; }
   }
 
   public static void main(String[] arguments) throws Exception {
@@ -43,6 +46,7 @@ public final class GeometryEvidenceTest {
     check(json.contains("\"source\":\"lynx-native-host-geometry-v1\"") && json.contains("\"platform\":\"android\""), "Fixed native protocol");
     check(json.contains("\"runId\":\"" + run(1) + "\"") && json.contains(store.bundleSha256), "Native-owned identity");
     check(json.contains("\"probe\":{\"left\":3.0,\"top\":5.0,\"right\":13.0,\"bottom\":25.0,\"width\":10.0,\"height\":20.0}"), "Measured sidecar coordinates");
+    check(json.contains("\"screenMetrics\":{\"version\":1,\"source\":\"lynx-native-screen-v1\",\"width\":375.0,\"height\":812.0,\"pixelRatio\":3.0}"), "Native-owned screen parameters");
     for (EvidenceStore.Receipt receipt : result.artifacts) {
       byte[] bytes = Files.readAllBytes(new File(artifacts, receipt.name).toPath());
       check(receipt.sha256.equals(EvidenceStore.sha256(bytes)) && receipt.byteLength == bytes.length, "Actual committed bytes");
@@ -79,6 +83,20 @@ public final class GeometryEvidenceTest {
     fails(() -> duplicate.publish(run(22), "{}"));
     EvidenceStore js = store(root, 23);
     fails(() -> js.save(run(23), "sizing-fixed-geometry.json", PNG));
+    for (int index = 0; index < 7; index++) {
+      final int number = 30 + index;
+      EvidenceStore invalid = store(root, number);
+      Host broken = new Host();
+      if (index == 0) broken.screen = null;
+      if (index == 1) broken.screen = new double[] {375, 812};
+      if (index == 2) broken.screen[0] = Double.NaN;
+      if (index == 3) broken.screen[1] = Double.POSITIVE_INFINITY;
+      if (index == 4) broken.screen[2] = 0;
+      if (index == 5) broken.screen[2] = -1;
+      if (index == 6) broken.changedScreen = true;
+      fails(() -> GeometryEvidence.capture(invalid, run(number), "sizing-fixed", broken));
+      fails(() -> invalid.publish(run(number), "{}"));
+    }
     System.out.println("Android host geometry: independent reads, disk receipts and fail-closed publication passed");
   }
 }

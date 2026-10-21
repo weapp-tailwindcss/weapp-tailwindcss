@@ -24,13 +24,14 @@ async function collect(missingHost = false, fault?: 'view-expired' | 'measure-ti
   const runId = '00000000-0000-4000-8000-000000000001'
   const rect = (left: number, top: number, width: number, height: number) => ({ left, top, width, height, right: left + width, bottom: top + height })
   const capture: NativeGeometryCapture = {
+    screenMetrics: { version: 1, source: 'lynx-native-screen-v1', width: 375, height: 812, pixelRatio: 3 },
     geometry: {
-      probe: rect(0, 0, 123, 40),
-      control: rect(200, 0, 80, 40),
-      probeContainer: rect(0, 0, 160, 140),
-      controlContainer: rect(200, 0, 160, 140),
-      probeChild: rect(0, 0, 12, 12),
-      controlChild: rect(200, 0, 12, 12),
+      probe: rect(8, 8, 123, 22.5),
+      control: rect(208, 8, 80, 64),
+      probeContainer: rect(0, 0, 160, 96),
+      controlContainer: rect(200, 0, 160, 96),
+      probeChild: rect(12, 12, 4, 4),
+      controlChild: rect(212, 12, 4, 4),
     },
     artifacts: geometryArtifactNames('sizing-fixed').map(name => ({ runId, name, sha256: 'b'.repeat(64), byteLength: 100 })),
   }

@@ -109,7 +109,7 @@ export function validateNativeReport(report: NativePlatformReport, platform: Pla
       validateResponsiveFrames(result.responsive, report.evidence.runId)
     }
     if (options.requireGeometryEvidence && staticResult.generated && staticResult.bundled && strategy === 'native-geometry') {
-      const measured = evaluateGeometry(item, result.geometry)
+      const measured = evaluateGeometry(item, result.geometry, result.screenMetrics)
       assert(measured.status !== 'not-tested', `${platform}:${result.id} geometry 原始测量证据缺失或无效`)
       assert(measured.status === result.status, `${platform}:${result.id} geometry 结论与原始测量不符`)
       const matches = result.checkpoints.length === measured.checkpoints.length && measured.checkpoints.every(expected => result.checkpoints.some(actual => (

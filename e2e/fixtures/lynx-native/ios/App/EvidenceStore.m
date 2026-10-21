@@ -88,6 +88,10 @@
 }
 
 - (NSDictionary *)saveGeometry:(NSString *)identifier runId:(NSString *)runId geometry:(NSDictionary *)geometry error:(NSError **)error {
+  return [self saveGeometry:identifier runId:runId geometry:geometry screenMetrics:nil error:error];
+}
+
+- (NSDictionary *)saveGeometry:(NSString *)identifier runId:(NSString *)runId geometry:(NSDictionary *)geometry screenMetrics:(NSDictionary *)screenMetrics error:(NSError **)error {
   @synchronized(self) {
     if (![self checkRun:runId error:error]) return nil;
     NSPredicate *valid = [NSPredicate predicateWithFormat:@"SELF MATCHES %@", @"[a-z0-9]+(-[a-z0-9]+)*"];
@@ -97,8 +101,9 @@
       return nil;
     }
     // 本机身份只能由 store 注入；JS 的 PNG 通道不能创建几何侧车。
-    NSDictionary *sidecar = @{@"version": @1, @"source": @"lynx-native-host-geometry-v1", @"id": identifier,
-      @"runId": self.context[@"runId"], @"bundleSha256": self.context[@"bundleSha256"], @"platform": @"ios", @"geometry": geometry};
+    NSMutableDictionary *sidecar = [@{@"version": @1, @"source": @"lynx-native-host-geometry-v1", @"id": identifier,
+      @"runId": self.context[@"runId"], @"bundleSha256": self.context[@"bundleSha256"], @"platform": @"ios", @"geometry": geometry} mutableCopy];
+    if (screenMetrics != nil) sidecar[@"screenMetrics"] = screenMetrics;
     NSData *data = [NSJSONSerialization dataWithJSONObject:sidecar options:0 error:error];
     if (data == nil) { [self reject:@"Cannot encode native geometry" error:error]; return nil; }
     NSString *name = [identifier stringByAppendingString:@"-geometry.json"];

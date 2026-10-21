@@ -286,7 +286,8 @@ async function collectCase(item: CompatibilityCase, reporter: ReporterModule, ev
     }
   }
   if (strategy === 'native-geometry') {
-    return evaluateGeometry(item, await evidence.geometry(item.id))
+    const capture = await evidence.geometryCapture(item.id)
+    return evaluateGeometry(item, capture.geometry, capture.screenMetrics)
   }
   if (strategy === 'overflow') {
     return {

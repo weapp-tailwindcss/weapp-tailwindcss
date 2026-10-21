@@ -2,6 +2,7 @@ import type { NativeBridgeResult } from './native-failure'
 import type { NativeGeometryCapture } from './native-geometry'
 import type { ResponsiveCapture, ResponsivePhase } from './responsive-contract'
 import type { NativeArtifactReceipt, NativeEvidenceContext, NativeMediaGateCapture, NativePlatformReport } from './types'
+import { fixedSizeContract, validNativeScreenMetrics } from './fixed-size-contract'
 import { mediaGateArtifactNames, validateMediaGateEvidence } from './media-gate-contract'
 import { NativeEvidenceUnavailableError, requestNativeReceipt as request } from './native-failure'
 import { geometryArtifactNames, validNativeGeometry } from './native-geometry'
@@ -37,7 +38,7 @@ export async function createNativeEvidence(reporter: EvidenceModule) {
     }
     artifacts.push(receipt)
   }
-  return {
+  const writer = {
     runId: context.runId,
     async responsive(phase: ResponsivePhase, requestId: string) {
       pending++
@@ -95,7 +96,7 @@ export async function createNativeEvidence(reporter: EvidenceModule) {
         pending--
       }
     },
-    async geometry(id: string) {
+    async geometryCapture(id: string) {
       pending++
       try {
         if (failed || submitted) {
@@ -109,10 +110,13 @@ export async function createNativeEvidence(reporter: EvidenceModule) {
         if (!capture || !validNativeGeometry(capture.geometry) || !Array.isArray(capture.artifacts) || capture.artifacts.length !== names.length) {
           throw new Error(`原生几何或落盘清单无效：${id}`)
         }
+        if (id === fixedSizeContract.id && !validNativeScreenMetrics(capture.screenMetrics)) {
+          throw new Error('固定尺寸缺少有效的宿主 screen 参数')
+        }
         for (const name of names) {
           register(capture.artifacts.find(item => item.name === name), name)
         }
-        return capture.geometry
+        return capture
       }
       catch (error) {
         failed = true
@@ -152,6 +156,12 @@ export async function createNativeEvidence(reporter: EvidenceModule) {
       if (accepted !== true) {
         throw new Error('原生 host 未确认报告落盘')
       }
+    },
+  }
+  return {
+    ...writer,
+    async geometry(id: string) {
+      return (await writer.geometryCapture(id)).geometry
     },
   }
 }

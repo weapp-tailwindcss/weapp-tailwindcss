@@ -101,7 +101,13 @@
 - (void)captureGeometry:(NSString *)runId identifier:(NSString *)identifier callback:(LynxCallbackBlock)callback {
   dispatch_async(dispatch_get_main_queue(), ^{
     if (![self requireView:callback]) return;
-    GeometryEvidence *evidence = [[GeometryEvidence alloc] initWithStore:_binding.store];
+    NSDictionary *screenMetrics = _binding.screenMetrics;
+    if (screenMetrics == nil) {
+      [_binding.store reject:@"Native screen binding changed or expired" error:NULL];
+      callback([NSNull null]);
+      return;
+    }
+    GeometryEvidence *evidence = [[GeometryEvidence alloc] initWithStore:_binding.store screenMetrics:screenMetrics];
     NSError *error = nil;
     NSDictionary *result = [evidence captureRunId:runId identifier:identifier measure:^NSDictionary *(NSString *node) {
       LynxUI *ui = [_binding.view uiWithIdSelector:node];
@@ -113,6 +119,10 @@
     } capture:^NSData *(NSString *node) {
       return [self captureDataNow:node afterScreenUpdates:YES];
     } error:&error];
+    if (result != nil && ![screenMetrics isEqual:_binding.screenMetrics]) {
+      [_binding.store reject:@"Native screen changed during geometry capture" error:&error];
+      result = nil;
+    }
     if (result == nil) NSLog(@"Lynx native geometry evidence failed: %@", error);
     callback(result ?: [NSNull null]);
   });

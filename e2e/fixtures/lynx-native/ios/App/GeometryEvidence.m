@@ -4,12 +4,29 @@
 
 @implementation GeometryEvidence {
   EvidenceStore *_store;
+  NSDictionary *_screenMetrics;
 }
 
 - (instancetype)initWithStore:(EvidenceStore *)store {
+  return [self initWithStore:store screenMetrics:nil];
+}
+
+- (instancetype)initWithStore:(EvidenceStore *)store screenMetrics:(NSDictionary *)screenMetrics {
   self = [super init];
-  if (self) _store = store;
+  if (self) { _store = store; _screenMetrics = [screenMetrics copy]; }
   return self;
+}
+
+- (BOOL)validScreen {
+  id version = _screenMetrics[@"version"];
+  if (![version isKindOfClass:NSNumber.class] || CFGetTypeID((__bridge CFTypeRef)version) == CFBooleanGetTypeID()
+      || ![version isEqual:@1] || ![_screenMetrics[@"source"] isEqual:@"lynx-native-screen-v1"]) return NO;
+  for (NSString *field in @[@"width", @"height", @"pixelRatio"]) {
+    id value = _screenMetrics[field];
+    if (![value isKindOfClass:NSNumber.class] || CFGetTypeID((__bridge CFTypeRef)value) == CFBooleanGetTypeID()
+        || !isfinite([value doubleValue]) || [value doubleValue] <= 0) return NO;
+  }
+  return YES;
 }
 
 - (BOOL)validRect:(NSDictionary *)rect {
@@ -37,6 +54,10 @@
     return nil;
   }
   @try {
+    if ((_screenMetrics != nil || [identifier isEqual:@"sizing-fixed"]) && ![self validScreen]) {
+      [_store reject:@"Missing or invalid native screen metrics" error:error];
+      return nil;
+    }
     NSArray *keys = @[@"probe", @"control", @"probeContainer", @"controlContainer", @"probeChild", @"controlChild"];
     NSArray *nodes = @[[NSString stringWithFormat:@"probe-%@", identifier], [NSString stringWithFormat:@"control-%@", identifier],
       [NSString stringWithFormat:@"probe-container-%@", identifier], [NSString stringWithFormat:@"control-container-%@", identifier],
@@ -62,10 +83,12 @@
       if (receipt == nil) return nil;
       [artifacts addObject:receipt];
     }
-    NSDictionary *receipt = [_store saveGeometry:identifier runId:runId geometry:geometry error:error];
+    NSDictionary *receipt = [_store saveGeometry:identifier runId:runId geometry:geometry screenMetrics:_screenMetrics error:error];
     if (receipt == nil) return nil;
     [artifacts addObject:receipt];
-    return @{@"geometry": [geometry copy], @"artifacts": [artifacts copy]};
+    NSMutableDictionary *result = [@{@"geometry": [geometry copy], @"artifacts": [artifacts copy]} mutableCopy];
+    if (_screenMetrics != nil) result[@"screenMetrics"] = _screenMetrics;
+    return result;
   }
   @catch (NSException *exception) {
     [_store reject:[NSString stringWithFormat:@"Native geometry capture raised: %@", exception.reason] error:error];

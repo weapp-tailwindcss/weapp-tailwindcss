@@ -12,15 +12,18 @@ public final class GeometryEvidence {
   public interface Host {
     double[] measure(String identifier) throws Exception;
     byte[] capture(String identifier) throws Exception;
+    default double[] screenMetrics() throws Exception { return null; }
   }
 
   public static final class Capture {
     public final Map<String, double[]> geometry;
     public final List<EvidenceStore.Receipt> artifacts;
+    public final double[] screenMetrics;
 
-    Capture(Map<String, double[]> geometry, List<EvidenceStore.Receipt> artifacts) {
+    Capture(Map<String, double[]> geometry, List<EvidenceStore.Receipt> artifacts, double[] screenMetrics) {
       this.geometry = geometry;
       this.artifacts = artifacts;
+      this.screenMetrics = screenMetrics == null ? null : screenMetrics.clone();
     }
   }
 
@@ -35,6 +38,9 @@ public final class GeometryEvidence {
       if (id == null || !id.matches("[a-z0-9]+(?:-[a-z0-9]+)*")) {
         throw new IOException("Invalid geometry case ID");
       }
+      double[] measuredScreen = host.screenMetrics();
+      double[] screen = measuredScreen == null ? null : measuredScreen.clone();
+      if (screen != null || "sizing-fixed".equals(id)) validateScreen(screen);
       String[] identifiers = {
         "probe-" + id, "control-" + id, "probe-container-" + id, "control-container-" + id,
         "probe-child-" + id + "-a", "probe-child-control-" + id + "-a",
@@ -47,18 +53,32 @@ public final class GeometryEvidence {
       }
       byte[] probe = host.capture(identifiers[2]);
       byte[] control = host.capture(identifiers[3]);
+      if (!java.util.Arrays.equals(screen, host.screenMetrics())) throw new IOException("Native screen changed during geometry capture");
       List<EvidenceStore.Receipt> artifacts = new ArrayList<>();
       artifacts.add(store.save(runId, id + "-geometry-probe.png", probe));
       artifacts.add(store.save(runId, id + "-geometry-control.png", control));
       String json = "{\"version\":1,\"source\":\"lynx-native-host-geometry-v1\",\"id\":\"" + id
           + "\",\"platform\":\"android\",\"runId\":\"" + store.runId + "\",\"bundleSha256\":\""
-          + store.bundleSha256 + "\",\"geometry\":" + jsonGeometry(geometry) + "}";
+          + store.bundleSha256 + "\",\"geometry\":" + jsonGeometry(geometry)
+          + (screen == null ? "" : ",\"screenMetrics\":" + jsonScreen(screen)) + "}";
       artifacts.add(store.saveGeometry(runId, id, json.getBytes(StandardCharsets.UTF_8)));
-      return new Capture(geometry, artifacts);
+      return new Capture(geometry, artifacts, screen);
     } catch (Exception error) {
       store.fail();
       throw error;
     }
+  }
+
+  private static void validateScreen(double[] screen) throws IOException {
+    if (screen == null || screen.length != 3) throw new IOException("Missing native screen metrics");
+    for (double value : screen) {
+      if (!Double.isFinite(value) || value <= 0) throw new IOException("Invalid native screen metrics");
+    }
+  }
+
+  private static String jsonScreen(double[] screen) {
+    return "{\"version\":1,\"source\":\"lynx-native-screen-v1\",\"width\":" + screen[0]
+        + ",\"height\":" + screen[1] + ",\"pixelRatio\":" + screen[2] + "}";
   }
 
   private static void validate(double[] rect) throws IOException {

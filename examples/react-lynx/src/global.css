@@ -1,6 +1,7 @@
 @layer theme, base, components, utilities;
 @import './styles/grid-fixtures.css' layer(components);
 @import './styles/flex-fixtures.css' layer(components);
+@import './styles/fixed-size-fixtures.css' layer(components);
 @import './styles/dark-fixtures.css' layer(components);
 @import './styles/responsive-fixtures.css' layer(components);
 @import './styles/overflow-fixtures.css' layer(components);

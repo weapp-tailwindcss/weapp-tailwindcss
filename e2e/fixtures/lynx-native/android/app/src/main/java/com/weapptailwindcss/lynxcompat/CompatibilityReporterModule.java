@@ -217,6 +217,10 @@ public final class CompatibilityReporterModule extends LynxModule {
         GeometryEvidence.Capture capture = GeometryEvidence.capture(binding.store, runId, identifier, new GeometryEvidence.Host() {
           public double[] measure(String id) { return measureNow(id); }
           public byte[] capture(String id) { return captureBytes(id); }
+          public double[] screenMetrics() {
+            android.util.DisplayMetrics metrics = binding.view().getLynxContext().getScreenMetrics();
+            return new double[] { metrics.widthPixels / (double) metrics.density, metrics.heightPixels / (double) metrics.density, metrics.density };
+          }
         });
         JavaOnlyMap geometry = new JavaOnlyMap();
         for (java.util.Map.Entry<String, double[]> entry : capture.geometry.entrySet()) {
@@ -224,6 +228,15 @@ public final class CompatibilityReporterModule extends LynxModule {
         }
         JavaOnlyMap result = new JavaOnlyMap();
         result.putMap("geometry", geometry);
+        if (capture.screenMetrics != null) {
+          JavaOnlyMap metrics = new JavaOnlyMap();
+          metrics.putInt("version", 1);
+          metrics.putString("source", "lynx-native-screen-v1");
+          metrics.putDouble("width", capture.screenMetrics[0]);
+          metrics.putDouble("height", capture.screenMetrics[1]);
+          metrics.putDouble("pixelRatio", capture.screenMetrics[2]);
+          result.putMap("screenMetrics", metrics);
+        }
         result.putArray("artifacts", EvidenceBridge.artifacts(capture.artifacts));
         callback.invoke(result);
       } catch (Exception error) {

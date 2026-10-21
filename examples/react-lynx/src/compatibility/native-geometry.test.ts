@@ -85,8 +85,8 @@ describe('Lynx native geometry evidence', () => {
 it.each([
   ['layout-aspect', 64, 48, 64, 16, 'supported'],
   ['layout-aspect', 72, 48, 72, 16, 'unsupported'],
-  ['sizing-fixed', 123, 40, 80, 40, 'supported'],
-  ['sizing-fixed', 123, 40, 123, 40, 'unsupported'],
+  ['sizing-fixed', 123, 40, 80, 40, 'not-tested'],
+  ['sizing-fixed', 123, 40, 123, 40, 'not-tested'],
   ['sizing-size', 44, 44, 80, 40, 'supported'],
   ['sizing-size', 72, 44, 80, 40, 'unsupported'],
   ['accessibility-sr', 1, 1, 80, 40, 'supported'],

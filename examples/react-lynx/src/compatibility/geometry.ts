@@ -1,4 +1,6 @@
+import type { NativeScreenMetrics } from './fixed-size-contract'
 import type { CompatibilityCase, NativeCaseResult, NativeGeometryEvidence, NativeRect } from './types'
+import { checkFixedSizeGeometry, fixedSizeContract, validNativeScreenMetrics } from './fixed-size-contract'
 import { checkFlexGeometry } from './flex-geometry'
 import { checkGridGeometry } from './grid-geometry'
 
@@ -40,9 +42,6 @@ function geometryPassed(item: CompatibilityCase, geometry: NativeGeometryEvidenc
   if (item.id === 'layout-aspect') {
     return closeTo(probe.width, control.width) && closeTo(probe.height, probe.width * 3 / 4) && Math.abs(probe.height - control.height) > 1
   }
-  if (item.id === 'sizing-fixed') {
-    return closeTo(probe.width, 123) && Math.abs(probe.width - control.width) > 1
-  }
   if (item.id === 'sizing-size') {
     return closeTo(probe.width, 44) && closeTo(probe.height, 44)
   }
@@ -78,7 +77,7 @@ export async function collectGeometry(item: CompatibilityCase, measure: (id: str
 }
 
 /** 实时采集和离线报告校验共用相同的坐标边界与断言。 */
-export function evaluateGeometry(item: CompatibilityCase, evidence?: Partial<NativeGeometryEvidence>): NativeCaseResult {
+export function evaluateGeometry(item: CompatibilityCase, evidence?: Partial<NativeGeometryEvidence>, screenMetrics?: NativeScreenMetrics): NativeCaseResult {
   const { probe, control, probeContainer, controlContainer, probeChild, controlChild } = evidence ?? {}
   if (!validRect(probe) || !validRect(control) || !validRect(probeContainer) || !validRect(controlContainer) || !validRect(probeChild) || !validRect(controlChild)) {
     return { id: item.id, status: 'not-tested', reason: 'boundingClientRect 未返回完整、有限且非空的 probe/control、容器和子节点区域', checkpoints: [{ name: 'geometry:rendered', passed: false }] }
@@ -87,7 +86,10 @@ export function evaluateGeometry(item: CompatibilityCase, evidence?: Partial<Nat
     return { id: item.id, status: 'not-tested', reason: 'probe/control 参考容器尺寸不同，不能形成同条件几何对照', checkpoints: [{ name: 'geometry:reference-frames', passed: false, actual: rectText(probeContainer), expected: rectText(controlContainer) }] }
   }
   const geometry = { probe, control, probeContainer, controlContainer, probeChild, controlChild }
-  const fixture = checkGridGeometry(item.id, geometry) ?? checkFlexGeometry(item.id, geometry)
+  if (item.id === fixedSizeContract.id && !validNativeScreenMetrics(screenMetrics)) {
+    return { id: item.id, status: 'not-tested', reason: '固定尺寸缺少本轮宿主 screen 参数，不能按 JS viewport 推导 rpx', geometry, checkpoints: [{ name: 'geometry:native-screen', passed: false }] }
+  }
+  const fixture = item.id === fixedSizeContract.id ? checkFixedSizeGeometry(geometry, screenMetrics!) : checkGridGeometry(item.id, geometry) ?? checkFlexGeometry(item.id, geometry)
   if (fixture && !fixture.control) {
     return { id: item.id, status: 'not-tested', reason: '固定对照布局不满足夹具条件，不能判定 utility 支持程度', geometry, checkpoints: [{ name: 'geometry:fixture-control', passed: false, actual: `${rectText(relativeRect(control, controlContainer))}; child=${rectText(relativeRect(controlChild, control))}` }] }
   }
@@ -98,6 +100,7 @@ export function evaluateGeometry(item: CompatibilityCase, evidence?: Partial<Nat
     reason: passed ? undefined : 'Tailwind probe 与 control 的几何结果没有满足 case 断言',
     failureStage: passed ? undefined : 'runtime',
     geometry,
+    ...(item.id === fixedSizeContract.id ? { screenMetrics } : {}),
     checkpoints: [{
       name: 'geometry:probe-vs-control',
       passed,

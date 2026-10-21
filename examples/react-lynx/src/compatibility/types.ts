@@ -1,4 +1,5 @@
 import type { ExpectedDeclaration } from '@weapp-tailwindcss/test-catalog'
+import type { NativeScreenMetrics } from './fixed-size-contract'
 import type { ResponsiveFrame, ResponsivePhase } from './responsive-contract'
 import type { ThemeOverrideEvidence } from './theme-overrides-contract'
 
@@ -91,6 +92,7 @@ export interface NativeCaseResult extends PlatformResult {
   failureStage?: Extract<FailureStage, 'runtime' | 'version-limit'>
   checkpoints: RuntimeCheckpoint[]
   geometry?: NativeGeometryEvidence
+  screenMetrics?: NativeScreenMetrics
   colorScheme?: Record<'light' | 'dark' | 'restored', NativeColorSchemeReceipt>
   responsive?: Record<ResponsivePhase, ResponsiveFrame>
   /** 混合交互必须逐候选取证；旧报告缺失此字段时仅可历史展示。 */
