@@ -1,8 +1,8 @@
 {
   "schemaVersion": 2,
-  "fixtureHash": "d07a93ab267dacb03148ea3a544f19902ab95c4abc15f81fb0221eb79b105e87",
+  "fixtureHash": "7295597926aaf07439951238700785e864ced7372231fb5df01d0a5bdbe8636c",
   "files": {
-    "autofill.css": "2db2ee6fca15ba6f63d4a6b80fa0c382e4d9a628720c0963505b634b6f7376eb",
+    "autofill.css": "6276d99e3807b9ade3c240baa6aff549713845b638d8a4f14f0db8737b565aec",
     "web.css": "0975c9180d665818550de27dd5270090456f84d4adf477481762bbe174fca7ea",
     "weapp.wxss": "e96b95aad9e5b146cdbda5180b63613f0f2c35dc12f616e1e49d7669c7875469",
     "context.css": "1090ee0b2bac833f303a3489a89ad85f18ff0c0964044f6af2c673e5a7e252cb",

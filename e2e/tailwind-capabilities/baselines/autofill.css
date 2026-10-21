@@ -177,7 +177,7 @@
     margin: 0 0 16px;
     padding: 0;
     border: 1px solid #999;
-    outline: none;
+    outline: 0 none;
     outline-offset: 0;
     color: #040506;
     caret-color: transparent;

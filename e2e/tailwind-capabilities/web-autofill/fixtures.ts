@@ -14,7 +14,7 @@ export const addressFields = [
 export const autofillIds = [...addressFields.map(field => field.id), 'control'] as const
 export const outlineIds = ['probe', 'reference', 'email', 'control'] as const
 export const autofillAddress = { fields: addressFields.map(field => ({ name: field.type, value: field.value })) }
-export const autofillCss = '@import "tailwindcss" source(none);\n@layer base { body { margin:24px; background:white; } input { display:block; box-sizing:border-box; width:160px; height:40px; margin:0 0 16px; padding:0; border:1px solid #999; outline:none; outline-offset:0; color:#040506; caret-color:transparent; transition:none; } }'
+export const autofillCss = '@import "tailwindcss" source(none);\n@layer base { body { margin:24px; background:white; } input { display:block; box-sizing:border-box; width:160px; height:40px; margin:0 0 16px; padding:0; border:1px solid #999; outline:0 none; outline-offset:0; color:#040506; caret-color:transparent; transition:none; } }'
 export const autofillReference = '#reference:autofill { outline:3px solid #123456; }'
 
 export function autofillUrl(runId: string) {

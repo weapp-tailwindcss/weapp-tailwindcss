@@ -20,6 +20,7 @@ describe('真实 autofill 的证据合同', () => {
     ['事件来自别的 DOM 节点', (f) => { f.observation.events[0]!.filledFields[0]!.fieldId++ }],
     ['未填充对照也被填入', (f) => { f.observation.states[1]!.fields['control']!.value = 'Synthetic' }],
     ['只有颜色没有完整 outline', (f) => { f.observation.states[1]!.fields['probe']!.outline.width = '0px' }],
+    ['无描边像素但初始宽度仍为 medium', (f) => { f.observation.states[0]!.fields['probe']!.outline.width = '3px' }],
     ['恢复没有可信键盘编辑', (f) => { f.observation.states[2]!.journal = f.observation.states[1]!.journal }],
     ['恢复状态仍匹配 autofill', (f) => { f.observation.states[2]!.fields['reference']!.autofill = true }],
     ['原生填充事件迟到', (f) => { f.observation.timeline = ['enable', 'state/initial', 'trigger', 'state/filled', 'native-event/0', 'state/restored', 'disable'] }],
