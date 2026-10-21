@@ -36,6 +36,19 @@ verification:
     sha: 645d4c14fe7e76091e7317e676b20889ea634f3a
     environment: Windows Node 24 原生文件监听与 hosted iOS
     reason: 本地 macOS 合同不能代替 Windows 结果；诊断修复不能消除原始 iOS 启动超时
+  - claim: 夹具退出等待当前构建及 bundle 关闭，并保留主体和清理异常
+    kind: integration
+    status: passed
+    sha: 0cc9753cb30482cbc33e6e9c0b640c17275b23a9
+    environment: macOS arm64，Node 24.18.0；14 文件 160 项通过
+    command: pnpm exec vitest run -c scripts/ci/demo-matrix/vitest.config.mts scripts/ci/demo-matrix/rollup --update=none
+  - claim: 本地全面流程在 static 阶段失败，后续阶段未执行
+    kind: integration
+    status: failed
+    sha: b40b3a1fb9c070c71869bc62b126d15647c63814
+    environment: 本轮扩展预检 c07a8131-7b1e-4e83-9c7a-30d7aef5309a 已验证、消费并收尾；57 阶段流程
+    reason: 第 31 阶段四项失败；32 至 57 阶段及独立 Tailwind 15 目标未执行
+    command: pnpm e2e:demo:workflow:local --quality --extended --baseline-ref 7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5 --preflight-report e2e/.artifacts/preflight/c07a8131-7b1e-4e83-9c7a-30d7aef5309a/report.json
 ---
 
 # 监听身份前提与原生失败诊断合同
@@ -79,3 +92,23 @@ b40 的 Benchmark 五分片、Synthetic 与最终 Performance guard 已成功，
 ## 规则评估
 
 没有新增或放宽 AGENTS 规则。以共享固定合同及实际 adapter 组合回归修正已有边界；不把单测成功提升为设备成功，也不重置微信登录态或模拟器。
+
+## 后续失败与夹具资源边界
+
+head `41ccc8d2eb22b03464908adc7a0a6b737829b1d8` 的 Windows job `118975013019` 在 `rollup-watch.test.mjs` 删除临时目录时出现 ENOTEMPTY。相同前置矩阵的 job `118975012654` 成功，不能替代失败作业。原 finally 可能覆盖主体异常，因此不能据日志宣称功能断言全部通过。
+
+[Rollup 4.63.0 的 closeWatcher 合同](https://github.com/rollup/rollup/blob/v4.63.0/docs/plugin-development/index.md#closewatcher) 允许当前构建在 watcher 关闭后继续。夹具丢弃 `result.close()`，且把 `watcher.close()` 当成输出屏障，存在删除目录与写入重叠的窗口。纠正位于夹具：持有并返回 bundle 关闭任务，在 close 监听器等待本轮 START→END，再移除资源；关闭异常延后报告，避免截断 END。该关闭入口只用于用例主体退出，不能在构建事件内部等待自身。
+
+CJS/ESM × generateBundle/closeBundle 的四个显式门闩回归在旧行为下全部失败，清理提前完成；修复后全部通过。审查再发现初始化尚未接管时的 close 占位函数；增加 CJS/ESM 两个首个 START 前退出的门闩回归，均先失败再通过。另验证 bundle 关闭失败、重复关闭共享同一 Promise，以及主体、关闭和删除错误全部保留。Rollup 相关 14 文件 160 项、ESLint 和 diff check 通过；不加 sleep、删除重试、超时或 CI 重跑。尚须 Windows 实际结果确认，不能把已复现的窗口直接写成原 ENOTEMPTY 的唯一原因。
+
+同一 head 的 Lynx iOS job `118975427634` 仍在 simctl launch 的 60 秒预算失败；RN iOS job `118975308039` 在 10 秒宿主采集预算失败。Lynx 日志不再出现旧主题白名单聚合错误，但启动失败仍未消除；RN 日志未标明具体案例，不能套用旧 head 的案例归因。两个失败均保留，不重跑。
+
+b40 全面流程已结束：前 30 阶段通过，其中单测 967 文件、10297 项通过，另有 5 文件、44 项跳过及 1 预期失败；网站三引擎 1989 通过、636 跳过。第 31 阶段 static 为 344 文件中 326 通过、3 失败、15 跳过，3550 项中 3508 通过、4 失败、38 跳过。Taro Webpack React H5 generator 对照的 snapshot 57 不符；Issue 1166 两目标各达 120 秒总预算；Issue 1241 watch 准备安装达 120 秒命令预算。32–57 阶段未执行，预检 lease 已消费，不能复用。
+
+1241 的报告确认失败在 install，尚未创建 watch 工程；1166 Web 残留目录仅有 manifest，也未进入编译，Weapp 的具体阶段未知。pnpm 已复用若干包、downloaded/added 均为零，不能据此判断框架依赖解析完成或归因为扫描。后续须补齐安装阶段与取消证据、独立审查 CSS 差异并定向复验，保持 partial；上述失败不因后续成功而删除。
+
+一次定向复验中，1166 两目标保持原 120 秒预算、上游 postcss-calc 8.2.4 与 Tailwind 4.3.3，分别约 1136/426ms 通过；1241 不设置依赖复用目录，准备约 2361ms 通过，同进程 20 阶段 watch 与逐阶段干净构建对照在约 70 秒通过。没有修改这两例的源码或预算；只能确认本次通过，不能解释首次安装停滞。命令分别为 `CI=1 E2E_SKIP_OPEN_AUTOMATOR=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/issue-1166-webpack-radius.test.ts --update=none` 和相同入口的 `e2e/issue-1241-watch.test.ts`；日志位于 `.tmp/issue-1166-targeted-5cf.log`、`.tmp/issue-1241-watch-targeted-5cf.log`。未发现原失败两个临时目录对应的残留进程。
+
+head41 两份 iOS ZIP 均完整验证摘要：Lynx artifact 12313637402，1,551,634 字节，SHA-256 `6925989698689b65372d508138cbe7b201d03d54b016dad756e3e51f55c3c6e5`；RN artifact 12313122510，499,381 字节，SHA-256 `277370598ada78c90c916e3cd4bed0819c4af29150851bf9af62856005b619d0`。证据位于 `.tmp/ci-1314/head41-ios/`，身份标为 diagnostic-only。Lynx 采样停在 CoreSimulator 的 launch bridge/Mach 请求，3 核宿主 loadAverage 约 301、空闲内存约 90MiB；支持启动阻塞判断，具体资源根因未证实，35 项运行材料全部 missing。RN 是 baseline/layout-aspect/default：首帧约 6926ms 捕获，归档检查点为通过；第二帧约 7538ms 开始，10 秒预算耗尽仍无捕获回执，未重算成运行时成功。HTTP 500 是 reporter 返回采集超时的结果，不能另判 Metro 网络故障。
+
+generator 对照原先在 README 断言后才保存 CSS，失败时缺少完整 actual。现在每项目在断言前归档独立目录，绑定源码 SHA、tracked diff、锁文件与旧预期摘要，使用序号文件保存全部规范化 CSS；状态固定为 generated-unverified。snapshot 断言和门禁不变，显式更新前仍保存旧预期摘要。限定 Taro Webpack React 项目的禁止更新复验再次出现相同 web 对照失败，weapp 对照通过；actual 留存在 `e2e/.artifacts/apps-generator-mode/generated/run-spiWEF/`，继续审查，不据数量变化直接更新基线。

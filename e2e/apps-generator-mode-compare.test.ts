@@ -9,6 +9,7 @@ import fg from 'fast-glob'
 import path from 'pathe'
 import postcss from 'postcss'
 import { describe, expect, it } from 'vitest'
+import { saveGeneratorEvidence } from './apps-generator-evidence'
 import { createChineseMarkdownReport, createMarkdownReport } from './apps-generator-report'
 import { mergeScopedGeneratorReport } from './apps-generator-report-scoped'
 import { DEMO_COVERAGE_MATRIX } from './demoCoverageMatrix'
@@ -1121,12 +1122,21 @@ async function expectCssOutputSnapshot(
   project: CompareProject,
   generatorResult: GeneratorBuildResult,
 ) {
-  await clearSnapshotDirOnUpdate('apps-generator-mode', 'css-output', project.platform, project.name)
   const snapshotPath = await resolveSnapshotFile(__dirname, 'apps-generator-mode', 'css-output', path.join(project.platform, project.name, 'README.md'))
-  await expectNormalizedReportSnapshot(snapshotPath, createCssOutputSnapshot(project, generatorResult))
-  for (const snapshot of createStableCssSnapshots(generatorResult, project.cssFile, {
+  const report = createCssOutputSnapshot(project, generatorResult)
+  const snapshots = createStableCssSnapshots(generatorResult, project.cssFile, {
     structureIdentity: isWebStyleDirectoryProject(project),
-  })) {
+  })
+  await saveGeneratorEvidence({
+    name: project.name,
+    platform: project.platform,
+    expectedPath: snapshotPath,
+    report,
+    files: snapshots.map(snapshot => ({ fileName: snapshot.fileName, content: createCssArtifactSnapshot(project, snapshot) })),
+  })
+  await clearSnapshotDirOnUpdate('apps-generator-mode', 'css-output', project.platform, project.name)
+  await expectNormalizedReportSnapshot(snapshotPath, report)
+  for (const snapshot of snapshots) {
     const artifactPath = await resolveSnapshotFile(
       __dirname,
       'apps-generator-mode',
