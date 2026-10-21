@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "fixtureHash": "3053582ff5baddc717ecace0055f7d54910a6019d31d024181303e5a9fc8addf",
+  "fixtureHash": "d1820eface0b3565cad009e37d28e1e6eebd22cc2bcaed11b3c9164543e7fdb3",
   "files": {
     "web.css": "0975c9180d665818550de27dd5270090456f84d4adf477481762bbe174fca7ea",
     "weapp.wxss": "61f6e7306cae8c8012dd0117461595e65dbbdc8b2313750d244c0cf1d654f586",
@@ -8,6 +8,7 @@
     "lifecycle.css": "0878f16c19f970349e1488849508e7ff0edeb567a1a79754594a452eaa4f549f",
     "registry.css": "4e09537d7cb62b05821bae7bcda8613197fae1c139ccf9ec2e92097665afbe0a",
     "native-media.css": "0ea270df8b5f2880b6234580f70f5a7b5de86f73809a98c9ba4d8701971d6f2b",
+    "history.css": "c4e2c83dbea62f533fe9c4d0150fcfc0eef2627c384a938bd3751559708a3fd4",
     "hmr-initial.css": "3eb3a5350241d6243632bfff6f5e41ec7951f04a4bd37e6789bcbe3060b58b39",
     "hmr-added.css": "07527d3857d33bfecfb008017207e582179a3ec86d4aa668b7009c2a53eb77ba",
     "hmr-replaced.css": "f1823a2e678b809e0263c7d85b0ce00733dcd3eecde94635fa98ab61085fd7c7",

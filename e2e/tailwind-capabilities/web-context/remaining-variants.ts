@@ -3,7 +3,7 @@ export interface RemainingVariantPlan {
   feature: `variant/static/${string}`
   status: 'not-run'
   engines?: readonly ('firefox' | 'webkit')[]
-  dependency: 'native-media' | 'native-autofill' | 'history-pixels' | 'render-lifecycle' | 'pseudo-element'
+  dependency: 'native-media' | 'native-autofill' | 'render-lifecycle' | 'pseudo-element'
   reason: string
   candidate: string
   fixture: string
@@ -80,18 +80,5 @@ export const remainingVariantPlans: RemainingVariantPlan[] = [
     evidence: [':autofill 原生匹配结果与逐字段值', '原生填充服务或可见选择交互日志', 'outline 的 width/style/color 和 PNG', '可信编辑事件及退出状态'],
     implementation: '先建立任务独占临时 profile 和虚构地址数据；Chromium 可探索其原生 Autofill 协议，但必须证明 :autofill 真正匹配。其他引擎需要各自原生服务入口，禁止借用用户真实凭据。',
     forbiddenSubstitutes: ['locator.fill()', '设置 input.value', 'dispatchEvent 模拟填充', '手动添加 autofill class', '依靠非标准内部伪类代替标准语义结论'],
-  },
-  {
-    root: 'visited',
-    feature: 'variant/static/visited',
-    status: 'not-run',
-    dependency: 'history-pixels',
-    reason: '浏览器隐私保护会掩蔽 :visited 的 computed style 和选择器观测，当前稳定态属性 oracle 不能证明历史样式。',
-    candidate: 'visited:text-[#123456]',
-    fixture: '任务本地同源 HTTP 路由和每轮唯一目标 URL；候选/对照为相同文本的链接，默认 #040506，始终 opaque。',
-    sequence: ['独立无历史 context：候选默认色', '真实点击目标链接并返回同一顶层站点：候选绘制 #123456，对照默认色', '全新无历史 context：恢复默认色'],
-    evidence: ['本轮 URL、顶层站点和 frame origin', '真实导航响应、点击事件及返回日志', '同文本同位置的前后 PNG 和固定字形区域像素差', 'computed style 仅留原始值，不作为激活判据'],
-    implementation: '复用独立 context，绑定本地 HTTP 路由，以同站点点击/返回建立真实分区历史；先校准字形抗锯齿，再以独立颜色 oracle 判定。新 context 只清理任务历史，不能清除用户历史。',
-    forbiddenSubstitutes: ['getComputedStyle 单独判定', 'matches(":visited") 单独判定', '脚本设置历史状态代替真实访问', '从浏览器历史数据库注入', '仅比较整张 PNG 是否不同'],
   },
 ]
