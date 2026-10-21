@@ -63,6 +63,31 @@ describe('小程序颜色权重的预声明限制', () => {
     })
   })
 
+  it('完整静态 root 权重与别名链保留百分比边界和原色 alpha', async () => {
+    const cases = [
+      ['bg-translucent/(--weight-zero)', 'rgba(255, 0, 0, 0)'],
+      ['bg-translucent/(--weight-quarter)', 'rgba(255, 0, 0, 0.1)'],
+      ['bg-translucent/(--weight-alias)', 'rgba(255, 0, 0, 0.2)'],
+      ['bg-translucent/(--weight-full)', 'rgba(255, 0, 0, 0.4)'],
+      ['bg-translucent/(--weight-fraction)', 'rgba(255, 0, 0, 0.05)'],
+    ] as const
+    const css = [
+      '@import "tailwindcss" source(none);',
+      ':root{--weight-zero:0%;--weight-quarter:25%;--weight-half:50%;--weight-alias:var(--weight-half);--weight-full:100%;--weight-fraction:12.5%}',
+      '@theme inline{--color-translucent:rgba(255,0,0,.4)}',
+    ].join('\n')
+    await withGeneratorFixture(root, css, {}, async (generator) => {
+      const weapp = await generator.generate({ target: 'weapp', candidates: cases.map(([candidate]) => candidate), scanSources: false })
+      for (const [candidate, expected] of cases) {
+        expect(weapp.classSet.has(candidate), candidate).toBe(true)
+        expect(backgrounds(weapp.css, escape(candidate)), candidate).toEqual([
+          background(`.${escape(candidate)}`, 'rgba(255,0,0,.4)'),
+          background(`.${escape(candidate)}`, expected),
+        ])
+      }
+    })
+  })
+
   it.each([
     '.probe .child{background-color:red}',
     '@media print{.probe{background-color:red}}',

@@ -66,6 +66,53 @@ describe('color-mix 透明度与未知值的语义边界', () => {
   })
 
   it.each([
+    ['0%', 'rgba(255, 0, 0, 0)'],
+    ['25%', 'rgba(255, 0, 0, 0.1)'],
+    ['50%', 'rgba(255, 0, 0, 0.2)'],
+    ['100%', 'rgba(255, 0, 0, 0.4)'],
+    ['12.5%', 'rgba(255, 0, 0, 0.05)'],
+  ])('完整静态权重别名链 %s 可安全替换并乘以原色 alpha', async (weight, expected) => {
+    const css = `:root{--weight:${weight};--alias:var(--weight)}.probe{color:color-mix(in oklab,rgba(255,0,0,.4) var(--alias),transparent);display:block}`
+    expect(protectDynamicColorMixAlpha(css).css).toContain(`color:${expected}`)
+    for (const output of [finalizeMiniProgramCss(css), pruneMiniProgramGeneratedCss(css), await transformTailwindV4CssToWeapp(css)]) {
+      expect(output).toContain(`color:${expected}`)
+      expect(output).not.toContain('color-mix(')
+    }
+  })
+
+  it.each([
+    '.dark{--weight:75%}',
+    '@media (min-width:1px){:root{--weight:75%}}',
+    '@supports (color:blue){:root{--weight:75%}}',
+    '@property --weight{syntax:"<percentage>";inherits:false;initial-value:75%}',
+    ':root{--weight:75%}',
+    ':root{--weight:50%!important}',
+    ':root{--alias:var(--missing)}',
+    ':root{--alias:var(--cycle);--cycle:var(--alias)}',
+  ])('权重依赖图存在不安全覆盖时不能固化透明度：%s', async (override) => {
+    const mix = 'color-mix(in oklab,rgba(255,0,0,.4) var(--alias),transparent)'
+    const css = `:root{--weight:50%;--alias:var(--weight)}${override}.probe{color:${mix};display:block}`
+    expect(protectDynamicColorMixAlpha(css).css).toContain(`color:${mix}`)
+    for (const output of [finalizeMiniProgramCss(css), pruneMiniProgramGeneratedCss(css), await transformTailwindV4CssToWeapp(css)]) {
+      expect(output).toContain('display:block')
+      expect(output).not.toContain('color:')
+    }
+  })
+
+  it.each(['-1%', '100.1%', '.5', '50px', 'initial', 'var(--missing)', 'var(--missing,50%)'])('非法或未证明稳定的权重 %s 不能变为有效 rgba', (weight) => {
+    const mix = 'color-mix(in oklab,red var(--weight),transparent)'
+    const css = `:root{--weight:${weight}}.probe{color:${mix};display:block}`
+    expect(protectDynamicColorMixAlpha(css).css).toContain(`color:${mix}`)
+    expect(finalizeMiniProgramCss(css)).not.toContain('color:')
+  })
+
+  it('主权重存在也不能删除未知 fallback 的失效依赖', () => {
+    const mix = 'color-mix(in oklab,red var(--weight,var(--missing)),transparent)'
+    const css = `:root{--weight:50%}.probe{color:${mix};display:block}`
+    expect(protectDynamicColorMixAlpha(css).css).toContain(`color:${mix}`)
+  })
+
+  it.each([
     ['局部主题', '.dark{--brand:blue}'],
     ['媒体覆盖', '@media (min-width:1px){:root{--brand:blue}}'],
     ['supports 覆盖', '@supports (color:blue){:root{--brand:blue}}'],

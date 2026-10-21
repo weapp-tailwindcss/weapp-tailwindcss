@@ -1,7 +1,7 @@
 import type { IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
 import type { TailwindV4DesignSystem, TailwindV4Engine, TailwindV4GenerateOptions, TailwindV4GenerateTarget, TailwindV4ResolvedSource, TailwindV4SourcePattern } from '../types'
 import fs from 'node:fs'
-import { collectCustomPropertyValues, mergeCustomPropertyValues } from '@weapp-tailwindcss/postcss/transform'
+import { collectCustomPropertyValues, collectStaticCustomPropertyValues, mergeCustomPropertyValues } from '@weapp-tailwindcss/postcss/transform'
 import { LRUCache } from 'lru-cache'
 import { hasCssMacroTailwindV4Source, withCssMacroStyleOptions } from '@/css-macro/auto'
 import { shouldUseUniAppWebRpxCompatibility } from '@/runtime-branch/generator-target-env'
@@ -27,6 +27,7 @@ interface TailwindV4IncrementalGenerateCacheEntry {
   css: string
   rawCss: string
   customPropertyValues: Map<string, string>
+  compatibilityValues: Map<string, string>
   designSystemPromise: Promise<TailwindV4DesignSystem>
   dependencies: string[]
   sources: TailwindV4SourcePattern[]
@@ -228,6 +229,7 @@ export function seedIncrementalGenerateCache(options: TailwindV4IncrementalCache
     css: options.generated.css,
     rawCss: options.generated.rawCss,
     customPropertyValues,
+    compatibilityValues: options.target === 'weapp' ? collectStaticCustomPropertyValues(options.generated.rawCss) : new Map(),
     designSystemPromise: createIncrementalDesignSystemPromise(options.compatibleSource, cacheKey),
     dependencies: options.generated.dependencies,
     sources: options.generated.sources,

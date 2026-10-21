@@ -41,7 +41,7 @@ export async function transformTailwindV4CssToWeapp(
     ...options?.customPropertyCompatibilityValues ?? [],
     ...options?.customPropertyValues ?? [],
   ])
-  const protectedCss = protectDynamicColorMixAlpha(compatibleCss, { customPropertyValues })
+  const protectedCss = protectDynamicColorMixAlpha(compatibleCss, { customPropertyValues, lowerStaticSupports: true })
   const result = await defaultStyleHandler(normalizeMiniProgramColorMix(protectedCss.css), {
     cssChildCombinatorReplaceValue: ['view', 'text'],
     cssRemoveActivePseudoClass: true,

@@ -6,6 +6,7 @@ import { COLOR_MIX_NAME, MODERN_COLOR_FUNCTION_NAMES } from './color-mix/constan
 import { hasUnsupportedModernColorFunction, isDisplayP3ColorFunction, isModernColorSyntaxFunction } from './color-mix/modern'
 import { normalizeStandaloneColorFunction } from './color-mix/parse'
 import { tryResolveColorMix } from './color-mix/resolve'
+import { lowerStaticColorMixSupports } from './color-mix/supports'
 import { isTailwindcssV4ThemeVariable } from './tailwindcss-v4/variables'
 import { collectCustomPropertyValues } from './web-css-custom-properties'
 
@@ -16,6 +17,7 @@ export interface DynamicColorMixAlphaProtection {
 
 export interface DynamicColorMixAlphaProtectionOptions {
   customPropertyValues?: ReadonlyMap<string, string> | undefined
+  lowerStaticSupports?: boolean | undefined
 }
 
 export interface ModernColorValueNormalization {
@@ -178,6 +180,10 @@ export function protectDynamicColorMixAlpha(
   })
   for (const [property, value] of collectCustomPropertyValues(root).values) {
     customPropertyValues.set(property, value)
+  }
+
+  if (options.lowerStaticSupports) {
+    changed = lowerStaticColorMixSupports(root, customPropertyValues)
   }
 
   root.walkDecls((decl) => {

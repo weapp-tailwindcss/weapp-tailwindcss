@@ -1,9 +1,28 @@
 import { postcss } from '@weapp-tailwindcss/postcss'
+import { collectStaticCustomPropertyValues } from '@weapp-tailwindcss/postcss/transform'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { resolveGenerationStyleContext, resolveIncrementalStyleContext } from '@/tailwindcss/v4-engine/generator/style-context'
+import { hasChangedCustomPropertyCompatibilityContext, resolveGenerationStyleContext, resolveIncrementalStyleContext } from '@/tailwindcss/v4-engine/generator/style-context'
 
 describe('generation style context', () => {
   afterEach(() => vi.restoreAllMocks())
+
+  it.each([
+    '.dark{--weight:25%}',
+    '@media print{:root{--weight:25%}}',
+    '@property --weight{syntax:"<percentage>";inherits:false;initial-value:25%}',
+    ':root{--weight:75%}',
+  ])('兼容上下文的完整依赖资格变化必须失效：%s', (override) => {
+    const css = ':root{--weight:50%;--alias:var(--weight)}'
+    const previous = collectStaticCustomPropertyValues(css)
+    const next = collectStaticCustomPropertyValues(css + override)
+    expect(hasChangedCustomPropertyCompatibilityContext(previous, next)).toBe(true)
+    expect(hasChangedCustomPropertyCompatibilityContext(next, previous)).toBe(true)
+  })
+
+  it('不相关规则和相同 root 声明不改变静态上下文', () => {
+    const css = ':root{--weight:50%;--alias:var(--weight)}'
+    expect(hasChangedCustomPropertyCompatibilityContext(collectStaticCustomPropertyValues(css), collectStaticCustomPropertyValues(`${css}.block{display:block}:root{--weight:50%}`))).toBe(false)
+  })
 
   it.each([
     '.dark{--brand:blue}',
@@ -33,7 +52,9 @@ describe('generation style context', () => {
   it('honors nested calc and preserves explicitly provided values', () => {
     const values = new Map([['--scale', '3rem']])
     const options = resolveGenerationStyleContext(':root { --scale: 1rem }', ':root { --scale: 2rem }', {
-      cssCalc: false, cssOptions: { cssCalc: ['--scale'] }, customPropertyValues: values,
+      cssCalc: false,
+      cssOptions: { cssCalc: ['--scale'] },
+      customPropertyValues: values,
     })
     expect(options?.customPropertyValues?.get('--scale')).toBe('3rem')
     expect(options?.customPropertyValues).toBe(values)

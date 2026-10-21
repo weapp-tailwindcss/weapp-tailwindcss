@@ -1,5 +1,6 @@
 import type { FunctionNode } from 'postcss-value-parser'
 import valueParser from 'postcss-value-parser'
+import { resolveCustomPropertyVarValue } from '../web-css-custom-properties'
 import {
   normalizeColorFunctionName,
   parseAlphaValue,
@@ -37,7 +38,7 @@ export function tryResolveColorMix(
     return undefined
   }
 
-  const alpha = parseAlphaValue(alphaSource)
+  const alpha = parseAlphaValue(resolveCustomPropertyVarValue(alphaSource, customPropertyValues))
   if (alpha === undefined) {
     return undefined
   }

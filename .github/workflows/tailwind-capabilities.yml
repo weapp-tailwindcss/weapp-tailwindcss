@@ -47,11 +47,11 @@ jobs:
       - run: pnpm turbo run build --filter=weapp-tailwindcss...
       - name: Install selected browser
         run: pnpm exec playwright install --with-deps ${{ matrix.engine }}
-      - name: Verify Lynx theme cascade in the selected browser
+      - name: Verify theme and color semantics in the selected browser
         env:
           CI: '1'
           LYNX_THEME_BROWSER: ${{ matrix.engine }}
-        run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-theme-browser.test.ts --update=none
+        run: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/lynx-theme-browser.test.ts e2e/color-mix-alpha-browser.test.ts e2e/color-mix-static-root-browser.test.ts --update=none
       - name: Verify fresh Web semantics
         env:
           CI: '1'
