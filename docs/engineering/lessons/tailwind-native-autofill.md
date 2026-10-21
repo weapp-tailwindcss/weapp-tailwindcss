@@ -20,6 +20,12 @@ verification:
     sha: 1d5668fcfc29b660794cb695463b5df7adddfb2b
     environment: macOS arm64、Node 24.18.0、pnpm 12.14.0，包含本记录同批未提交的显式零宽夹具及负向回归；CI=1、--update=none
     command: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/tailwind-web-autofill-protocol.test.ts e2e/tailwind-web-autofill.test.ts e2e/tailwind-web-autofill-replay.test.ts e2e/tailwind-web-autofill-runner.test.ts e2e/tailwind-browser-lifecycle.test.ts e2e/tailwind-inventory-web.test.ts e2e/tailwind-fixtures.test.ts --update=none
+  - claim: 显式零宽夹具的正式 Chromium 原生三阶段及独立生产重放全部通过
+    kind: integration
+    status: passed
+    sha: dc6bec1046678760f876b3724dfc63648d0d89b1
+    environment: macOS arm64、Node 24.18.0、pnpm 12.14.0、Tailwind CSS 4.3.3、完整 Chromium 156.0.8078.4，headless；新一轮 extended 预检、原生 Chrome computer use 和 verify 通过
+    command: pnpm e2e:tailwind --preflight-report e2e/.artifacts/preflight/81f8310a-51ff-4810-91ed-7771c1ee2994/report.json --target web-chromium --case '^runtime/autofill-native-outline$'
 ---
 
 # Chromium 原生 Autofill 三阶段验收
@@ -40,7 +46,13 @@ verification:
 
 首轮原件在 `e2e/.artifacts/tailwind/911021b2-dbad-40a1-845d-5f0a3cf9cd7d/web-chromium/autofill/`，包括原始 CSS、三张 PNG、measurement、v2 report 与 coverage。extended 预检 `c62c86d6-8f93-4e72-835a-34e63596dad7` 只消费一次，结束后服务已退出；新建的 Chrome 探针标签已明确关闭并核对返回原页面，未操作用户业务内容。
 
-定向七文件五十三项通过，日志 `.tmp/autofill-explicit-zero-checks.log`。通过 `CI=1 pnpm e2e:tailwind:static:update` 正式生成并逐项审查，仅 `autofill.css` 的一条基线声明、该文件摘要与 fixture hash 变化，其余四十八份样式字节不变；随后调用 `fixtureBaseline(process.cwd(), false)` 禁止更新比较。固定零宽版本须重新完成 fresh extended 预检、真实 computer use、verify 与正式运行，不能复用首轮报告。
+定向七文件五十三项通过，日志 `.tmp/autofill-explicit-zero-checks.log`。通过 `CI=1 pnpm e2e:tailwind:static:update` 正式生成并逐项审查，仅 `autofill.css` 的一条基线声明、该文件摘要与 fixture hash 变化，其余四十八份样式字节不变；随后调用 `fixtureBaseline(process.cwd(), false)` 禁止更新比较通过。
+
+固定零宽版本重新完成预检 `81f8310a-51ff-4810-91ed-7771c1ee2994`、当前会话真实原生 Chrome 输入/点击/截图及 verify，平台调用 ID 与原始工具结果在放行前保存。正式 run `35b73ca8-2c62-4082-a630-101c9a86a7a1` 固定源码 `dc6bec1046678760f876b3724dfc63648d0d89b1`：一例、一百三十八断言、五份原始附件全部通过；包括标准伪类、七字段原生事件和 renderer 状态、三阶段可信事件、独立参考、对照、四边像素与本轮身份色条。
+
+另一独立进程通过 `verifyReportArtifacts`、`assertCapabilitySuccess` 和 `replayAutofill` 重读全部 CSS/JSON/PNG，再次通过，不读取 cached passed。日志 `.tmp/autofill-explicit-zero-runtime-replay-esm.log`。首次使用 tsx eval 的重放启动因 CJS/ESM 依赖出口失败，未产生验证结论；随后使用 `.mts` ESM 文件调用原生产入口，保留两份日志。原件及完整身份、版本和附件摘要在本 run 的 `web-chromium/autofill/report.json`。CSS SHA256 为 `6276d99e3807b9ade3c240baa6aff549713845b638d8a4f14f0db8737b565aec`，measurement 为 `9ac4a31fbae0ee588058db8cb7031add6d89c4f45337f6f499bbdec92e1895c4`。
+
+本次只选择 Chromium autofill，其余十四目标未选择、未执行。预检服务已正常结束，自有 Chrome 探针标签已关闭并核对；临时 Browser/context/page 由正式 suite 完成有界关闭，没有保留展示页。首轮十条失败不被改写，第二轮通过只证明显式零宽夹具满足原合同。
 
 ## 适用边界
 
