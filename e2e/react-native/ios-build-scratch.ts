@@ -5,7 +5,7 @@ import { runWithCleanup } from '../../scripts/e2e-preflight/cleanup'
 
 /** 原生构建产物不能进入 CocoaPods 的源码扫描树，也不作为运行时证据归档。 */
 export async function withIosBuildScratch<T>(project: string, evidence: Record<string, unknown>, save: () => Promise<void>, run: (derivedData: string) => Promise<T>, remove = (directory: string) => rm(directory, { recursive: true, force: true })) {
-  const directory = await mkdtemp(path.join(tmpdir(), 'weapp-tailwindcss-ios-build-'))
+  const directory = await mkdtemp(path.join(await realpath(tmpdir()), 'weapp-tailwindcss-ios-build-'))
   const scratch = { directory, derivedData: path.join(directory, 'DerivedData'), status: 'active' }
   evidence['scratch'] = scratch
   return runWithCleanup(async () => {

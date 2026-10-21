@@ -77,7 +77,13 @@ export async function buildAndLaunchIos(options: IosBuildOptions, execute: IosBu
       await save()
       const args = ['-workspace', build.workspace, '-scheme', build.scheme, '-configuration', 'Debug', '-sdk', 'iphonesimulator', '-destination', `id=${device}`, '-derivedDataPath', derivedData, 'CODE_SIGNING_ALLOWED=NO']
       await execute('xcodebuild', [...args, 'build'], project, true)
-      const application = iosBuildApplication(await execute('xcodebuild', [...args, '-showBuildSettings', '-json'], project), derivedData, bundleId)
+      evidence.stage = 'build-settings'
+      await save()
+      const settings = await execute('xcodebuild', [...args, '-showBuildSettings', '-json'], project)
+      await writeFile(path.join(artifacts, 'ios-build-settings.json'), settings)
+      evidence.buildSettings = 'ios-build-settings.json'
+      await save()
+      const application = iosBuildApplication(settings, derivedData, bundleId)
       if (!(await stat(application)).isDirectory()) {
         throw new Error('iOS 本轮构建未生成应用目录')
       }

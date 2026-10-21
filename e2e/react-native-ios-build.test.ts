@@ -168,6 +168,15 @@ it('构建失败不安装，保留原始失败阶段', async () => {
   expect(JSON.parse(await readFile(path.join(current.options.artifacts, 'ios-build.json'), 'utf8'))).toMatchObject({ stage: 'build', failure: 'Error: compile failed' })
 })
 
+it('Xcode 产物越界被拒绝时仍保留原始 build settings 供离线复核', async () => {
+  const current = await fixture()
+  const original = current.execute.getMockImplementation()!
+  current.execute.mockImplementation(async (file, args) => file === 'xcodebuild' && args.includes('-showBuildSettings') ? current.settings : original(file, args))
+  await expect(buildAndLaunchIos(current.options, current.execute)).rejects.toThrow('越过本轮')
+  expect(await readFile(path.join(current.options.artifacts, 'ios-build-settings.json'), 'utf8')).toBe(current.settings)
+  expect(current.execute.mock.calls.some(([file]) => file === 'xcrun')).toBe(false)
+})
+
 it('CocoaPods 和证据保存同时失败仍保留主错误并清理构建目录', async () => {
   const current = await fixture()
   const original = current.execute.getMockImplementation()!

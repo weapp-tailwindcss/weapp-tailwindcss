@@ -47,6 +47,8 @@ verification:
 
 本机旧目录含二十三份二进制 plist，其中六份落入上述扫描范围；原日志没有首个文件名，不指定哪份最先触发。确认该目录属于本任务旧 runner、没有活动构建后，记录摘要并精确移出源码树保留；未删除源 plist，也未转换构建产物来掩盖问题。代码使用源码树外的独占 `os.tmpdir()/mkdtemp` 目录，安装并核对二进制后清理。持久 `ios-build.json` 保留原路径、二进制摘要和 `removed/cleanup-failed` 状态；原路径是历史信息，不能冒充仍存在的 bundle。
 
+临时根先通过 `realpath` 取得物理身份再创建目录，使传给 Xcode 的路径与其返回的物理产物路径一致，保留原越界检查。确定性符号链接回归在旧实现误报越界，修复后通过；这证明路径合同缺口，不推断本机 Xcode 已实际触发同一行为。原始 `-showBuildSettings -json` 先保存到 `ios-build-settings.json` 再验证，即使拒绝产物并清理 scratch，仍可离线复核实际返回值。
+
 清理仅作用于本轮目录，失败时聚合构建、清理及证据写入异常。强杀不能保证 JS 收尾，须按记录的路径和归属恢复。旧版本遗留目录不由新 helper 猜测或批量删除。
 
 另一个归档缺陷是父入口先读 `report.json` 再复制目录。启动前失败没有 report，详细日志只留在会被下一轮覆盖的共享目录，错误又引用已删除的临时路径。现在父进程提前登记 stage binding，子入口初始化独立的 `runtime-session.json`，通过 run、目标、producer 和 invocation 绑定，先归档本次诊断，再单独读取和验证运行时报告。旧调用身份拒收；诊断文件本身不成为运行时通过证据。
@@ -59,6 +61,7 @@ verification:
 - 失败归档回归先证明旧 factory 缺独立身份；生产外部调度整合测试覆盖无 report 的启动失败，以及同 run 的旧 invocation 和既有报告误收。
 - 历史部分轨迹四个反例先失败：一个缺恢复图 ENOENT、三个缺阶段解引用。修复后已有像素仍能重算，缺阶段和未达成 visited 仍失败。
 - 十文件共一百七十六项通过，最后的小型类型兼容调整另以两文件四十八项通过。ESLint、`git diff --check` 和 `pnpm agents:check` 通过。e2e 全仓类型检查仍有大量既有诊断，不记为通过。
+- 符号链接路径和 build settings 归档两个反例分别先因误报越界、缺失原始 JSON 失败，随后 iOS 两文件二十八项及 ESLint 通过，均禁止更新基线。记录为 `.tmp/ios-physical-root-red.log`、`.tmp/ios-physical-root-green.log` 和 `.tmp/ios-physical-root-lint.log`。
 - 从 Expo 项目根执行的实际 `pod install --project-directory=ios` 安装完成，七十五个声明依赖、七十四个 Pods；只证明原 CocoaPods 失败阶段恢复，未证明本轮 iOS 渲染或 HMR。
 
 原始记录分别位于 `.tmp/ios-scratch-red.log`、`.tmp/history-partial-red.log`、`.tmp/runtime-identity-red.log`、`.tmp/tailwind-evidence-final.log`、`.tmp/ios-pod-source-boundary-green.log`。本轮 iOS 原始失败已手工精确保全至对应运行目录的 `react-native-ios/manual-preserved-diagnostics/`，明确标为诊断。

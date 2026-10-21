@@ -1,8 +1,35 @@
-import { access, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { access, mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { expect, it } from 'vitest'
+import { expect, it, vi } from 'vitest'
+import { iosBuildApplication } from './react-native/ios-build'
 import { withIosBuildScratch } from './react-native/ios-build-scratch'
+
+vi.mock('node:os', async (original) => {
+  const actual = await original<typeof import('node:os')>()
+  return { ...actual, tmpdir: vi.fn(actual.tmpdir) }
+})
+
+it('临时根经符号链接进入时仍接受 Xcode 返回的物理产物路径', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'ios-scratch-alias-'))
+  const project = path.join(root, 'project')
+  const physical = path.join(await realpath(root), 'temporary')
+  const alias = path.join(root, 'temporary-alias')
+  try {
+    await Promise.all([mkdir(project), mkdir(physical)])
+    await symlink(physical, alias, 'junction')
+    vi.mocked(tmpdir).mockReturnValueOnce(alias)
+    await withIosBuildScratch(project, {}, async () => {}, async (derivedData) => {
+      const output = path.join(derivedData, 'Build', 'Products')
+      await mkdir(output, { recursive: true })
+      const settings = JSON.stringify([{ buildSettings: { PRODUCT_BUNDLE_IDENTIFIER: 'test.app', WRAPPER_EXTENSION: 'app', TARGET_BUILD_DIR: await realpath(output), FULL_PRODUCT_NAME: 'Test.app' } }])
+      expect(iosBuildApplication(settings, derivedData, 'test.app')).toBe(path.join(await realpath(output), 'Test.app'))
+    })
+  }
+  finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})
 
 it.each(['pod install', 'xcodebuild'])('%s 失败仍清理本轮构建目录并保留工程和原始异常', async (stage) => {
   const project = await mkdtemp(path.join(tmpdir(), 'ios-scratch-project-'))
