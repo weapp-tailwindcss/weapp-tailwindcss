@@ -1,6 +1,7 @@
 import type { ExecutionStage } from './execution-record'
 import type { ExecutionTarget } from './plan'
-import { EnvironmentBlockedError } from './environment-block'
+import { formatWorkflowError } from '../../scripts/e2e-preflight/cleanup'
+import { findEnvironmentBlock } from './environment-block'
 
 interface SchedulerDependencies {
   check: (target: ExecutionTarget) => Promise<void>
@@ -22,8 +23,8 @@ export async function scheduleTargets(stages: ExecutionStage[], dependencies: Sc
         stage.status = 'passed'
       }
       catch (error) {
-        stage.reason = String(error)
-        if (error instanceof EnvironmentBlockedError) {
+        stage.reason = formatWorkflowError(error)
+        if (findEnvironmentBlock(error)) {
           stage.status = 'blocked'
           throw error
         }
@@ -35,7 +36,7 @@ export async function scheduleTargets(stages: ExecutionStage[], dependencies: Sc
   catch (error) {
     for (const pending of stages.filter(stage => !stage.attempted)) {
       pending.status = 'blocked'
-      pending.reason = `环境阻断，未启动：${String(error)}`
+      pending.reason = `环境阻断，未启动：${formatWorkflowError(error)}`
     }
     throw error
   }

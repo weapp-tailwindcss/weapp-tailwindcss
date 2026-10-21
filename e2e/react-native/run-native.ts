@@ -2,6 +2,7 @@
 
 import { captureNativePhase } from './phase-evidence'
 import { EnvironmentBlockedError, environmentFailure } from '../tailwind-capabilities/environment-block'
+import { runStageProducer } from '../tailwind-capabilities/stage-receipt'
 import type { Server } from 'node:http'
 import type { NativeVisualProbe } from '../../examples/react-native-expo/src/visual-probes'
 import { createHash, randomUUID } from 'node:crypto'
@@ -509,4 +510,4 @@ async function main() {
   })
 }
 
-await runWithCleanup(main, () => artifactSession.publish())
+await runStageProducer('react-native', () => runWithCleanup(main, () => artifactSession.publish()))

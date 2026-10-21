@@ -2,6 +2,7 @@ import path from 'node:path'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { command } from './lynx/native-command'
 import { adbArgs, resolveNativeDevice, selectAndroidDevice, selectIosDevice } from './lynx/native-device'
+import { EnvironmentBlockedError } from './tailwind-capabilities/environment-block'
 
 vi.mock('./lynx/native-command', () => ({ command: vi.fn() }))
 
@@ -20,6 +21,13 @@ const iosDevices = JSON.stringify({
 beforeEach(() => vi.resetAllMocks())
 
 describe('Lynx 原生设备身份', () => {
+  it('设备发现的缺失、歧义和命令超时显式阻断，不依赖诊断文字', async () => {
+    run.mockResolvedValueOnce('List of devices attached\n')
+    await expect(resolveNativeDevice('android', path.resolve('host'), {})).rejects.toBeInstanceOf(EnvironmentBlockedError)
+    const failure = new Error('arbitrary discovery failure')
+    run.mockRejectedValueOnce(failure)
+    await expect(resolveNativeDevice('ios', path.resolve('host'), {})).rejects.toMatchObject({ name: 'EnvironmentBlockedError', cause: failure })
+  })
   it('多台 Android 在线时选择显式目标，不猜默认 serial', () => {
     const listing = 'List of devices attached\nfirst device product:a\nselected device product:b\n'
     expect(selectAndroidDevice(listing, { LYNX_ANDROID_DEVICE_ID: 'selected' })).toEqual({ platform: 'android', id: 'selected' })
@@ -98,7 +106,7 @@ describe('Lynx 原生设备身份', () => {
     expect(run).not.toHaveBeenCalled()
     const failure = new Error('discovery timeout')
     run.mockRejectedValueOnce(failure)
-    await expect(resolveNativeDevice('ios', cwd, { LYNX_IOS_DEVICE_ID: 'selected' })).rejects.toBe(failure)
+    await expect(resolveNativeDevice('ios', cwd, { LYNX_IOS_DEVICE_ID: 'selected' })).rejects.toMatchObject({ name: 'EnvironmentBlockedError', cause: failure })
     expect(run).toHaveBeenCalledTimes(1)
     run.mockResolvedValue(iosDevices)
     for (const id of ['missing', 'stopped', 'unavailable']) {

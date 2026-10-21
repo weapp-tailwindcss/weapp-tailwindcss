@@ -1,3 +1,4 @@
+import { WechatEnvironmentError } from '../../scripts/wechat/errors'
 import { parseLynxHarnessFailure } from '../lynx/native-failure'
 
 /** 环境故障与产品断言失败分开传播，禁止捕获后继续调度。 */
@@ -5,6 +6,26 @@ export class EnvironmentBlockedError extends Error {
   constructor(message: string, options?: ErrorOptions) {
     super(message, options)
     this.name = 'EnvironmentBlockedError'
+  }
+}
+
+/** 只沿真实异常对象查找类型；聚合日志和错误名称不拥有调度控制权。 */
+export function findEnvironmentBlock(error: unknown): EnvironmentBlockedError | undefined {
+  const pending = [error]
+  const seen = new Set<unknown>()
+  while (pending.length) {
+    const current = pending.pop()
+    if (!(current instanceof Error) || seen.has(current)) {
+      continue
+    }
+    seen.add(current)
+    if (current instanceof EnvironmentBlockedError) {
+      return current
+    }
+    if (current instanceof WechatEnvironmentError) {
+      return new EnvironmentBlockedError(current.message, { cause: current })
+    }
+    pending.push(current.cause, ...(current instanceof AggregateError ? current.errors : []))
   }
 }
 

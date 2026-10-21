@@ -4,19 +4,22 @@ import { cp, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { execa } from 'execa'
+import { formatWorkflowError, runWithCleanup } from '../../scripts/e2e-preflight/cleanup'
 import { createPnpmCommand } from '../../scripts/pnpm-command.mjs'
-import { EnvironmentBlockedError, environmentFailure } from './environment-block'
+import { EnvironmentBlockedError, findEnvironmentBlock } from './environment-block'
 import { assertCapabilitySuccess } from './report'
+import { createStageBinding, processEnvironmentFailure, readStageReceipt, stageBindingVariable } from './stage-receipt'
 
-async function preserveEnvironmentFailure(error: EnvironmentBlockedError, source: string, context: RunContext): Promise<never> {
-  let archiveError: unknown
-  try {
+async function preserveEnvironmentFailure(error: unknown, source: string, context: RunContext): Promise<never> {
+  return runWithCleanup(() => Promise.reject(error), async () => {
+    let archiveError: unknown
+    try {
     // 故障目录只供诊断，不进入能力报告或通过率；其中可能包含未完成的报告。
-    await cp(source, path.join(context.directory, 'blocked-native-diagnostics'), { recursive: true })
-  }
-  catch (failure) { archiveError = String(failure) }
-  await writeFile(path.join(context.directory, 'environment-block.json'), `${JSON.stringify({ runId: context.runId, status: 'blocked', reason: String(error), archiveError }, null, 2)}\n`)
-  throw error
+      await cp(source, path.join(context.directory, 'blocked-native-diagnostics'), { recursive: true })
+    }
+    catch (failure) { archiveError = String(failure) }
+    await writeFile(path.join(context.directory, 'environment-block.json'), `${JSON.stringify({ runId: context.runId, status: 'blocked', reason: formatWorkflowError(error), archiveError }, null, 2)}\n`)
+  })
 }
 
 export async function runPnpmStage(context: RunContext, args: string[], name: string, env: NodeJS.ProcessEnv = {}) {
@@ -24,32 +27,35 @@ export async function runPnpmStage(context: RunContext, args: string[], name: st
   const invocation = createPnpmCommand(args)
   let output = ''
   const log = path.join(context.directory, `${name}.log`)
-  try {
-    const child = execa(invocation.command, invocation.args, { cwd: context.root, shell: invocation.shell, env: { ...process.env, ...context.env, ...env, TAILWIND_E2E_RUN_ID: context.runId }, reject: false, timeout: 1_800_000, all: true })
-    child.all?.on('data', (data) => {
-      output += data.toString()
-      process.stdout.write(data)
-    })
-    const result = await child
-    if (result.exitCode !== 0) {
-      const reason = environmentFailure(output)
-      if (reason) {
-        throw new EnvironmentBlockedError(`${name} 环境故障：${reason}；${log}`)
+  const binding = createStageBinding(context, name)
+  return runWithCleanup(async () => {
+    try {
+      const child = execa(invocation.command, invocation.args, { cwd: context.root, shell: invocation.shell, env: { ...process.env, ...context.env, ...env, TAILWIND_E2E_RUN_ID: context.runId, [stageBindingVariable]: binding ? JSON.stringify(binding) : '' }, reject: false, timeout: 1_800_000, all: true })
+      child.all?.on('data', (data) => {
+        output += data.toString()
+        process.stdout.write(data)
+      })
+      const result = await child
+      const processFailure = processEnvironmentFailure(result)
+      if (processFailure) {
+        throw new EnvironmentBlockedError(`${name} 环境故障：${processFailure}；${log}`)
       }
-      throw new Error(`${name} 执行失败 (${result.exitCode})；${log}`)
+      const receiptStatus = binding ? await readStageReceipt(binding) : undefined
+      if (result.exitCode !== 0 || receiptStatus === 'failed') {
+        throw new Error(`${name} 执行失败 (${result.exitCode})；${log}`)
+      }
     }
-  }
-  catch (error) {
-    output += `\n${String(error)}\n`
-    const reason = environmentFailure(String(error))
-    if (reason && !(error instanceof EnvironmentBlockedError)) {
-      throw new EnvironmentBlockedError(`${name} 环境故障：${reason}；${log}`, { cause: error })
+    catch (error) {
+      output += `\n${formatWorkflowError(error)}\n`
+      const reason = processEnvironmentFailure(error)
+      if (reason && !(error instanceof EnvironmentBlockedError)) {
+        throw new EnvironmentBlockedError(`${name} 环境故障：${reason}；${log}`, { cause: error })
+      }
+      throw error
     }
-    throw error
-  }
-  finally {
+  }, async () => {
     await writeFile(log, output || '进程无输出\n')
-  }
+  })
 }
 
 export async function runExternalTarget(target: ExecutionTarget, context: RunContext) {
@@ -70,7 +76,7 @@ export async function runExternalTarget(target: ExecutionTarget, context: RunCon
       await runPnpmStage(context, [`e2e:react-native:${platform}`], target, engine ? { RN_WEB_BROWSER: engine } : {})
     }
     catch (error) {
-      if (error instanceof EnvironmentBlockedError) {
+      if (findEnvironmentBlock(error)) {
         return preserveEnvironmentFailure(error, destination, context)
       }
       executionError = error
@@ -97,7 +103,7 @@ export async function runExternalTarget(target: ExecutionTarget, context: RunCon
       await runPnpmStage(context, ['exec', 'tsx', 'e2e/lynx/run-native.ts', platform, '--output', archived], target)
     }
     catch (error) {
-      if (error instanceof EnvironmentBlockedError) {
+      if (findEnvironmentBlock(error)) {
         return preserveEnvironmentFailure(error, archived, context)
       }
       executionError = error

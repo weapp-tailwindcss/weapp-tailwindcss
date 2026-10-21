@@ -37,10 +37,21 @@ afterEach(() => {
 })
 
 describe('微信会话保护', () => {
+  it('SDK 握手错误耗尽本轮截止时间时，保留 cause 并明确阻断', async () => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(0)
+    const primary = new Error('opaque SDK handshake error')
+    connect.mockImplementation(async () => {
+      clock.mockReturnValue(1001)
+      throw primary
+    })
+    await expect(new Launcher().launch({ projectPath: '/owned', port: 45678, timeout: 1000 })).rejects.toMatchObject({ name: 'WechatEnvironmentError', cause: primary })
+    expect(connect).toHaveBeenCalledOnce()
+    expect(wechatRequest).toHaveBeenCalledTimes(2)
+  })
   it('连接握手与断开同时失败时立即保留聚合错误，不重试新连接', async () => {
     const error = new AggregateError([new Error('version failed'), new Error('disconnect failed')], 'connect cleanup failed')
     connect.mockRejectedValueOnce(error).mockResolvedValue(miniProgram().mini)
-    await expect(new Launcher().launch({ projectPath: '/owned', port: 45678, timeout: 1000 })).rejects.toBe(error)
+    await expect(new Launcher().launch({ projectPath: '/owned', port: 45678, timeout: 1000 })).rejects.toMatchObject({ name: 'WechatEnvironmentError', cause: error })
     expect(connect).toHaveBeenCalledOnce()
     expect(wechatRequest).toHaveBeenLastCalledWith('12345', { kind: 'close', project: '/owned' }, expect.any(Number))
   })

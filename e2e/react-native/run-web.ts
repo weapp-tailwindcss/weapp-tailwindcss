@@ -1,6 +1,7 @@
 /* eslint-disable antfu/no-top-level-await, perfectionist/sort-imports, style/max-statements-per-line */
 
 import { captureNativePhase } from './phase-evidence'
+import { runStageProducer } from '../tailwind-capabilities/stage-receipt'
 import type { Server } from 'node:http'
 import { createHash, randomUUID } from 'node:crypto'
 import { createServer } from 'node:http'
@@ -247,9 +248,4 @@ async function main() {
   })
 }
 
-try {
-  await main()
-}
-finally {
-  await artifactSession.publish()
-}
+await runStageProducer('expo-web', () => runWithCleanup(main, () => artifactSession.publish()))
