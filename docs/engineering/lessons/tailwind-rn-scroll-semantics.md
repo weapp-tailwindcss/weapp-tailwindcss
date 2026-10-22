@@ -6,7 +6,9 @@ regressions:
   - e2e/react-native-scroll-evidence.test.ts
   - e2e/react-native-scroll-sequence.test.ts
   - e2e/react-native-scroll-diagnostics.test.ts
+  - e2e/react-native-layout-precision.test.ts
   - examples/react-native-expo/test/scroll-readiness.test.ts
+  - examples/react-native-expo/test/report-layout.test.ts
   - examples/react-native-expo/test/semantic-phase.test.ts
 verification:
   - claim: ScrollView完整协议、离线篡改、三平台Metro导出与static禁止更新比较通过
@@ -15,13 +17,13 @@ verification:
     sha: c0fce85fd52f554cccec41c472fe40fc639c69ea
     environment: macOS arm64、Node24.18.0、pnpm12.14.0；同批未提交实现，已构建依赖包；CI=1执行兼容入口完整Vitest清单，25文件349项通过；示例81项和tsc通过；不是设备证据
     command: pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/react-native-scroll-diagnostics.test.ts e2e/react-native-phase-evidence.test.ts --update=none
-  - claim: 新源码ScrollView五目标真实运行尚待fresh预检
+  - claim: e893源码ScrollView双原生在初始内容高度校验失败
     kind: native
-    status: pending
-    reason: 本批ScrollView实现尚未完成独立extended预检和设备运行，前轮Image证据不能转移到新源码
-    sha: c0fce85fd52f554cccec41c472fe40fc639c69ea
-    environment: 不复用前轮Image预检和设备结果；全面验收partial
-    command: pnpm e2e:preflight prepare --extended
+    status: failed
+    reason: Android和iOS真实onContentSizeChange包含Float32端点差，严格整数比较拒绝；失败未补成成功报告
+    sha: e893060d2be447af35edf5c31b8e032f6cfea09e
+    environment: fresh extended预检fa1cd8f6、本会话原生Chrome交互和verify通过；run1e0a3ec9的Expo三引擎三阶段原件独立重放通过，双原生在scroll-initial失败；全部保持partial
+    command: pnpm e2e:tailwind --preflight-report e2e/.artifacts/preflight/fa1cd8f6-1ac0-4362-9411-731eed8f8074/report.json --target expo-chromium,expo-firefox,expo-webkit,react-native-android,react-native-ios
 ---
 
 # ScrollView 尺寸、程序化滚动与失败原件
@@ -54,7 +56,30 @@ verification:
 - `CI=1 pnpm e2e:react-native:static:update` 重新生成Expo static。审查仅两处fixtureHash与生成时间变化，generatedClassSet、rawCss、manifest及声明结果不变；正常回归禁止更新。
 - 命令及原日志：`.tmp/scroll-oracle-red.log`、`scroll-sequence-red.log`、`scroll-timeout-red.log`、`scroll-install-red.log`、`scroll-android-red.log`、`scroll-compatibility-final.log`、`scroll-example-final.log`、`scroll-types-final.log`。
 
-这些回归和合成PNG只验证协议与判定器，不代表设备已运行。当前提交的五目标真实ScrollView结果需要重新完成extended预检、当前会话原生Chrome交互及verify后记录。前轮Image的真实五目标证据不能转移到本轮源码。全面验收保持partial，served bundle/HMR接收应用链及全注册能力等缺口继续保留。
+### e893 的五目标实际运行与失败
+
+源码 `e893060d2be447af35edf5c31b8e032f6cfea09e` 完成本轮 extended 预检 `fa1cd8f6-1ac0-4362-9411-731eed8f8074`、当前会话原生 Chrome 交互与 verify，统一入口消费该报告，run 为 `1e0a3ec9-a8d7-4f47-886a-f61bb9b2c990`。
+
+- Expo Chromium 156.0.8078.4、Firefox 157.0、WebKit 27.2 的 baseline、TSX HMR、CSS HMR 全部完成。每端每阶段118例（31支持、87预声明拒绝）、44回执、88帧，三端合计396回执、792帧。三个目标分别在独立进程调用生产 `validateReactNativeReport` 和 `validateNativeRuntimePhases`，重读所有PNG、sidecar、事件序列、编码和源码通过。
+- Android和iOS都在 `sizing-size/scroll-initial` 被严格内容高度检查拒绝。各保留此前39对、78帧及本次原始失败诊断，没有最终成功report，不能计为ScrollView运行时通过。宿主cleanup均为settled。
+- 三个Expo目标各有1260注册能力缺少独立运行时夹具；双原生失败。统一入口exit1符合实际范围，不代表全面通过。
+- 更早预检 `277c41a3-ce3d-4f58-acb8-bfa7f0cb325a` 因computer use工具原始输出标识不一致被verify拒绝，已正式block关闭服务，未调度目标；没有修改失败记录放行。
+
+### 原生 Float32 内容高度
+
+双原生的probe实际高度为 `144.00001525878906`，control为 `143.99996948242188`，偏差分别为 `2^-16` 和 `-2^-15` dp。RN 0.81.5 的 `ScrollView._handleContentOnLayout` 直接透传内容View的layout尺寸，Fabric发送浮点布局；Yoga `PixelGrid.cpp` 分别保存float32绝对端点，再相减得到尺寸。因而不能要求这个事件按JavaScript精确整数相等。
+
+先用原件数值固化Android/iOS两个失败回归。当前受控夹具使用固定端点包络 `B = viewport.height + expectedHeight`，表示比较界为 `ulp32(B) + ulp32(expectedHeight) / 2`，同时要求与预声明高度落在同一个物理像素格。不使用待验证的contentSize或Android平移后的坐标扩大预算。完整原数值继续归档。这是当前夹具的表示比较合同，并非一般Yoga前向误差证明；没有取得内部未舍入端点、逐位还原所有数值或求得最小误差界。
+
+报告模式下明确禁用App外层滚动，三侧首条内容加固定阶段offset后的起点必须位于 `[0, viewport.height]`。最终在线采集和离线重算都要求viewport宽高及密度为正有限值，换算后为正安全整数像素且不超过实际PNG。Android截图可以包含额外系统inset；底部超出受控包络时保守拒绝。缺少PNG的事件预检不能充当最终成功证据。新增反例先出现11项失败，覆盖inset跨幂边界改变预算、伪大viewport及非法尺寸，再修正判定。
+
+Web继续精确比较。原0.5dp几何、RGB ±2、双帧、内容位移、裁剪、独立control、挂载及事件身份门禁都保持；超过表示界的下一Float32、包络跨1024、±0.001dp、±一个物理像素及非有限值均有拒绝回归。比较合同进入fixtureHash，旧原件不会被新合同自动放行。static重新生成后仅两处fixtureHash及生成时间变化，rawCss、manifest和声明结果不变。新hash为 `bc36a113e871843b9e21e1b63a7d9df9f7e401955bdeb6d729e9680a75c934dd`。
+
+同head的hosted run `39695314502` 也在此处失败：iOS三侧高度与本地完全相同；Android为144/144/143.99996948242188。两份完整artifact的SHA256分别为 `99e2d36739c517f1a338199bdfd5a150e824433668635ec22a1bd164ad75e4a3`（12391422958）和 `adf8062cb7ec75a8e7570a3541eaa8a65cd9965a88894619e5af25a763df4d61`（12391543016），均与GitHub digest一致并绑定e893。两端cleanup为settled，没有重跑碰运气。
+
+修正后以 `CI=1 pnpm e2e:react-native-compatibility --update=none` 验证26文件386项通过，包含三平台Metro导出及正常static禁止更新比较。Expo示例13文件83项、`tsc --noEmit`、变更代码lint（示例测试显式 `--no-ignore`）通过。日志为 `.tmp/scroll-envelope-{compatibility,example-final,types,lint,example-lint}.log`。这些是本地定向回归，尚不代表修正后的原生运行成功。
+
+修正后的真实设备运行须重新完成extended预检、当前会话原生Chrome交互和verify；旧失败与e893的三引擎成功原件都保留，不转移为新源码成功。全面验收保持partial，served bundle/HMR接收应用链及全注册能力等缺口继续保留。
 
 ## 规则评估
 

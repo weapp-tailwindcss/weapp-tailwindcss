@@ -3,6 +3,7 @@ import { PNG } from 'pngjs'
 import { describe, expect, it } from 'vitest'
 import { syntheticRuntimeInstallation } from './react-native/installation-fixture'
 import { assessNativePair } from './react-native/pair-assessment'
+import { assessNativeScroll, validateScrollEvidence } from './react-native/scroll-assessment'
 
 /** 合成几何和像素只验证判定器；不会登记为真实 ScrollView 证据。 */
 function fixture(phase: 'scroll-initial' | 'scroll-offset' | 'scroll-restored' = 'scroll-initial') {
@@ -58,6 +59,81 @@ function fixture(phase: 'scroll-initial' | 'scroll-offset' | 'scroll-restored' =
 const passes = (input: ReturnType<typeof fixture>) => assessNativePair(input.image, input.pair as NativePairEvidence).every(checkpoint => checkpoint.passed)
 
 describe('ScrollView 真实 viewport、内容和程序化滚动证据', () => {
+  it.each(['android', 'ios'] as const)('%s 保留 Fabric 实际 Float32 内容尺寸，不要求回传配置整数', (platform) => {
+    const input = fixture()
+    const pair = { ...input.pair, platform, viewport: { width: 402, height: 874, pixelRatio: 3 } } as NativePairEvidence
+    // 来自 run 1e0a3ec9 双原生失败原件；不以合成值登记为设备通过。
+    pair.scroll!.sides[0]!.contentSize.height = 144.00001525878906
+    pair.scroll!.sides[2]!.contentSize.height = 143.99996948242188
+    expect(() => validateScrollEvidence(pair)).not.toThrow()
+  })
+
+  it.each([0.001, -0.001, 1 / 3, -1 / 3])('原生内容尺寸偏差 %s 不是 Float32 表示误差', (delta) => {
+    const input = fixture()
+    const pair = { ...input.pair, platform: 'ios', viewport: { width: 402, height: 874, pixelRatio: 3 } } as NativePairEvidence
+    pair.scroll!.sides[0]!.contentSize.height += delta
+    expect(() => validateScrollEvidence(pair)).toThrow(/ScrollView/)
+  })
+
+  it('Web 的精确内容尺寸不能借用原生 Float32 边界', () => {
+    const input = fixture()
+    input.pair.scroll.sides[0]!.contentSize.height = 144.00001525878906
+    expect(() => validateScrollEvidence(input.pair as NativePairEvidence)).toThrow(/ScrollView/)
+  })
+
+  it('Android 屏幕 inset 跨 binary32 幂边界不改变内容尺寸判定', () => {
+    const input = fixture()
+    input.pair.platform = 'android'
+    input.pair.scroll.sides[0]!.contentSize.height = 144 + 2 ** -15
+    input.pair.scroll.sides[0]!.firstStripe.y = 108
+    expect(() => validateScrollEvidence(input.pair as NativePairEvidence)).not.toThrow()
+    input.pair.scroll.sides[0]!.firstStripe.y += 32
+    expect(() => validateScrollEvidence(input.pair as NativePairEvidence)).not.toThrow()
+  })
+
+  it.each(['width', 'height', 'pixelRatio'] as const)('最终截图拒绝伪大 viewport.%s，不能扩大表示界', (field) => {
+    const input = fixture()
+    input.pair.platform = 'ios'
+    input.pair.viewport[field] = 2 ** 24
+    expect(() => assessNativeScroll(input.image, input.pair as NativePairEvidence)).toThrow(/ScrollView.*viewport/)
+  })
+
+  it.each([Number.NaN, Number.POSITIVE_INFINITY, 0, -1])('最终截图拒绝无效 viewport 尺寸 %s', (value) => {
+    const input = fixture()
+    input.pair.viewport.height = value
+    expect(() => assessNativePair(input.image, input.pair as NativePairEvidence)).toThrow(/ScrollView.*viewport/)
+  })
+
+  it('原生条纹起点超出受控 viewport 包络时拒绝', () => {
+    const input = fixture()
+    input.pair.platform = 'android'
+    input.pair.scroll.sides[0]!.firstStripe.y = 401
+    expect(() => validateScrollEvidence(input.pair as NativePairEvidence)).toThrow(/ScrollView/)
+  })
+
+  it('Android viewport 小于含系统 inset 的截图仍可验证', () => {
+    const input = fixture()
+    input.pair.platform = 'android'
+    input.pair.viewport.height = 390
+    expect(passes(input)).toBe(true)
+  })
+
+  it.each([Number.MIN_VALUE, Number.MAX_VALUE])('最终截图拒绝不能换算为正安全物理像素的 viewport 密度 %s', (pixelRatio) => {
+    const input = fixture()
+    input.pair.viewport.pixelRatio = pixelRatio
+    expect(() => assessNativeScroll(input.image, input.pair as NativePairEvidence)).toThrow(/ScrollView.*viewport/)
+  })
+
+  it.each(['scroll-initial', 'scroll-offset'] as const)('%s 起点恢复后仍限制在 viewport 包络', (phase) => {
+    const input = fixture(phase)
+    input.pair.platform = 'ios'
+    const stripe = input.pair.scroll.sides[0]!.firstStripe
+    stripe.y = 400 - (phase === 'scroll-offset' ? 48 : 0)
+    expect(() => validateScrollEvidence(input.pair as NativePairEvidence)).not.toThrow()
+    stripe.y += 1
+    expect(() => validateScrollEvidence(input.pair as NativePairEvidence)).toThrow(/ScrollView.*viewport/)
+  })
+
   it.each(['scroll-initial', 'scroll-offset', 'scroll-restored'] as const)('%s 同时核绝对尺寸、内容位置和条纹像素', (phase) => {
     expect(passes(fixture(phase))).toBe(true)
   })

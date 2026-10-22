@@ -2,6 +2,7 @@ import type { PNG } from 'pngjs'
 import type { NativePairEvidence } from '../../examples/react-native-expo/src/compatibility/protocol'
 import type { NativeScrollCommand, NativeScrollEvent } from '../../examples/react-native-expo/src/compatibility/scroll-fixture'
 import { nativeScrollFixture as fixture } from '../../examples/react-native-expo/src/compatibility/scroll-fixture'
+import { nativeLayoutSizeMatches } from './layout-precision'
 
 const sides = ['probe', 'reference', 'control'] as const
 const close = (a: number, b: number) => Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= 0.5
@@ -23,9 +24,16 @@ export function validateScrollEvidence(pair: NativePairEvidence) {
     throw new Error('ScrollView 缺少当前阶段、独立挂载或三侧事件证据')
   }
   for (const side of scroll.sides) {
-    if (!side.mountId || typeof side.mountId !== 'string' || !size(side.layout) || !size(side.contentSize) || side.contentSize.height !== fixture.contentHeight
+    const contentHeightMatches = pair.platform === 'android' || pair.platform === 'ios'
+      ? nativeLayoutSizeMatches(side.contentSize?.height, fixture.contentHeight, pair.viewport.height, pair.viewport.pixelRatio)
+      : side.contentSize?.height === fixture.contentHeight
+    if (!side.mountId || typeof side.mountId !== 'string' || !size(side.layout) || !size(side.contentSize) || !contentHeightMatches
       || !side.firstStripe || !Object.values(side.firstStripe).every(Number.isFinite) || !Array.isArray(side.history) || side.history.length !== stepIndex) {
       throw new Error('ScrollView 原始布局、内容尺寸或动作历史无效')
+    }
+    const origin = side.firstStripe.y + fixture.offsets[stepIndex]!
+    if ((pair.platform === 'android' || pair.platform === 'ios') && (origin < 0 || origin > pair.viewport.height)) {
+      throw new Error('ScrollView 起点超出受控 viewport 包络')
     }
     for (const [index, action] of side.history.entries()) {
       if (!action || !validAction(action.command, action.event, index + 1)
@@ -53,6 +61,13 @@ export function validateScrollEvidence(pair: NativePairEvidence) {
 
 /** viewport、首条内容位移、绝对条纹颜色及边界裁剪同时核验。 */
 export function assessNativeScroll(image: PNG, pair: NativePairEvidence) {
+  const { width, height, pixelRatio } = pair.viewport
+  const physical = [width * pixelRatio, height * pixelRatio].map(Math.round)
+  if (![width, height, pixelRatio].every(value => Number.isFinite(value) && value > 0)
+    || physical.some(value => !Number.isSafeInteger(value) || value <= 0)
+    || physical[0]! > image.width || physical[1]! > image.height) {
+    throw new Error('ScrollView viewport 与实际 PNG 不符')
+  }
   const scroll = validateScrollEvidence(pair)
   const targets = [pair.target, pair.referenceTarget, pair.controlTarget]
   const frames = [pair.probe, pair.reference, pair.control]

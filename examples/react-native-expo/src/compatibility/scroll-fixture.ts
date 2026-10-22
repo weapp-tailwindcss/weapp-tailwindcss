@@ -7,6 +7,7 @@ export const nativeScrollFixture = {
   control: { width: 80, height: 40 },
   stripeHeight: 48,
   contentHeight: 144,
+  contentHeightComparison: { native: 'float32-viewport-envelope', web: 'exact', physicalPixels: 'equal', outerScroll: 'disabled-in-report-mode' },
   offsets: [0, 48, 0],
   phases: ['scroll-initial', 'scroll-offset', 'scroll-restored'],
   colors: ['#dc2626', '#2563eb', '#16a34a'],

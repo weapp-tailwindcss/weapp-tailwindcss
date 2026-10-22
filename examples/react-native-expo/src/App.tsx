@@ -14,6 +14,7 @@ import { measureVisualProbe } from './visual-probes'
 import '@weapp-tailwindcss/react-native/env'
 
 export default function App() {
+  const reportUrl = process.env.EXPO_PUBLIC_RN_REPORT_URL
   const colorScheme = useColorScheme() ?? 'light'
   const sentRevision = useRef('')
   const cardRef = useRef<View>(null)
@@ -22,7 +23,6 @@ export default function App() {
   const cssHmrStyle = StyleSheet.flatten(tw('rn-css-hmr-probe')) as { backgroundColor?: string }
   const cssHmrColor = cssHmrStyle.backgroundColor ?? 'missing'
   async function completeReport(completedReport: ReactNativeReport) {
-    const reportUrl = process.env.EXPO_PUBLIC_RN_REPORT_URL
     const revision = `${HMR_MARKER}:${cssHmrColor}`
     if (!reportUrl || completedReport.revision !== `${HMR_MARKER}-${cssHmrColor.replace('#', '')}` || sentRevision.current === revision) {
       return
@@ -62,7 +62,7 @@ export default function App() {
   }
 
   return (
-    <ScrollView testID="tw-rn-root" accessibilityLabel="tw-rn-root" className="flex" contentContainerStyle={{ padding: 16 }}>
+    <ScrollView testID="tw-rn-root" accessibilityLabel="tw-rn-root" className="flex" scrollEnabled={!reportUrl} contentContainerStyle={{ padding: 16 }}>
       <Text className="text-2xl font-bold text-slate-900">React Native Tailwind compatibility</Text>
       <View ref={cardRef} testID="tw-rn-card" accessibilityLabel="tw-rn-card" className="w-[180px] h-[48px] rounded-lg bg-blue-500 dark:bg-slate-900 ios:px-4 android:px-2">
         <Text testID="tw-rn-theme" accessibilityLabel="tw-rn-theme" className="text-white">{colorScheme === 'dark' ? 'Dark' : 'Light'}</Text>
