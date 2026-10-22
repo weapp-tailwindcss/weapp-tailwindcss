@@ -2,6 +2,9 @@ import { Buffer } from 'node:buffer'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
+import process from 'node:process'
+import { brotliCompressSync, gzipSync } from 'node:zlib'
+import { execa } from 'execa'
 import { afterEach, describe, expect, it } from 'vitest'
 import { downloadArchive, sha256, unpackArchive, validateArchivePath } from './lynx/decoder/rebuild/archives'
 import { gnString } from './lynx/decoder/rebuild/gn'
@@ -18,13 +21,13 @@ async function temporaryDirectory() {
   return directory
 }
 
-function tarFixture(entries: Array<{ name: string, type: '0' | '2', value: string }>) {
+function tarFixture(entries: Array<{ name: string, type: '0' | '2' | 'x' | 'K', value: string }>) {
   const blocks: Buffer[] = []
   for (const entry of entries) {
     const header = Buffer.alloc(512)
     header.write(entry.name, 0, 100)
     header.write('0000644\0', 100, 8)
-    const size = entry.type === '0' ? Buffer.byteLength(entry.value) : 0
+    const size = entry.type !== '2' ? Buffer.byteLength(entry.value) : 0
     header.write(`${size.toString(8).padStart(11, '0')}\0`, 124, 12)
     header.fill(32, 148, 156)
     header.write(entry.type, 156, 1)
@@ -45,7 +48,66 @@ function tarFixture(entries: Array<{ name: string, type: '0' | '2', value: strin
   return Buffer.concat(blocks)
 }
 
+function paxLink(target: string) {
+  const value = `linkpath=${target}\n`
+  let record = `0 ${value}`
+  while (Buffer.byteLength(record) !== Number.parseInt(record, 10)) {
+    record = `${Buffer.byteLength(record)} ${value}`
+  }
+  return record
+}
+
 describe('Lynx decoder 源码归档边界', () => {
+  it.each(['header', 'PAX', 'GNU'])('Windows tar 宿主归一化不能抹去 %s 链接中的反斜杠', async (format) => {
+    const directory = await temporaryDirectory()
+    const archive = path.join(directory, 'source.tar')
+    const target = String.raw`..\outside`
+    const entries: Parameters<typeof tarFixture>[0] = []
+    if (format === 'PAX') {
+      entries.push({ name: 'PaxHeader', type: 'x', value: paxLink(target) })
+    }
+    else if (format === 'GNU') {
+      entries.push({ name: '././@LongLink', type: 'K', value: `${target}\0` })
+    }
+    entries.push({ name: 'source/include/header.h', type: '2', value: format === 'header' ? target : '../outside' })
+    await fs.writeFile(archive, tarFixture(entries))
+    const script = `
+      import assert from 'node:assert/strict';
+      const { unpackArchive } = await import(${JSON.stringify(new URL('./lynx/decoder/rebuild/archives.ts', import.meta.url).href)});
+      await assert.rejects(unpackArchive(process.argv[1], process.argv[2], 1), /路径/);
+    `
+    await execa(process.execPath, ['--import', 'tsx', '--input-type=module', '-e', script, archive, path.join(directory, 'unpacked')], {
+      env: { TESTING_TAR_FAKE_PLATFORM: 'win32' },
+      timeout: 10_000,
+    })
+  })
+
+  it.each([
+    ['gzip', 'PAX'],
+    ['gzip', 'GNU'],
+    ['brotli', 'PAX'],
+    ['brotli', 'GNU'],
+  ])('分块读取 %s 归档并物化合法 %s 相对链接', async (compression, format) => {
+    const directory = await temporaryDirectory()
+    const archive = path.join(directory, compression === 'gzip' ? 'source.tar.gz' : 'source.tar.br')
+    const contents = Array.from({ length: 3000 }, (_, index) => sha256(Buffer.from(String(index)))).join('\n')
+    const target = '../src/header.h'
+    const bytes = tarFixture([
+      { name: 'source/src/header.h', type: '0', value: contents },
+      { name: format === 'PAX' ? 'PaxHeader' : '././@LongLink', type: format === 'PAX' ? 'x' : 'K', value: format === 'PAX' ? paxLink(target) : `${target}\0` },
+      { name: 'source/include/header.h', type: '2', value: 'overridden.h' },
+    ])
+    const compressed = compression === 'gzip' ? gzipSync(bytes) : brotliCompressSync(bytes)
+    expect(compressed.byteLength).toBeGreaterThan(64 * 1024)
+    await fs.writeFile(archive, compressed)
+    const destination = path.join(directory, 'unpacked')
+    await unpackArchive(archive, destination, 1)
+    const header = path.join(destination, 'include', 'header.h')
+    expect((await fs.lstat(header)).isFile()).toBe(true)
+    expect(await fs.readFile(header, 'utf8')).toBe(contents)
+    expect(await fs.readFile(path.join(destination, 'src', 'header.h'), 'utf8')).toBe(contents)
+  })
+
   it.each(['../escape', 'source/../escape', '/absolute', 'C:/absolute', String.raw`C:\absolute`, String.raw`source\escape`])('拒绝跨平台越界成员 %s', (name) => {
     expect(() => validateArchivePath(name)).toThrow('越界路径')
   })

@@ -5,6 +5,7 @@ import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { PNG } from '../../lynx/png'
+import { filesystemObservedAt } from '../artifact-clock'
 import { digest } from '../identity'
 import { geometryValidators } from './contracts'
 
@@ -28,7 +29,7 @@ function geometry(): NativeGeometryEvidence {
 export async function fixture(id = 'sizing-size', status: NativeCaseResult['status'] = 'supported', hostGeometry = true) {
   const root = await mkdtemp(path.join(os.tmpdir(), 'lynx adapter 中文 '))
   directories.push(root)
-  const context: RunContext = { root, directory: root, runId: '0b12a000-0000-4000-8000-000000000001', startedAt: new Date(Date.now() - 1000).toISOString(), caseFilter: new RegExp(`^${id}$`) }
+  const context: RunContext = { root, directory: root, runId: '0b12a000-0000-4000-8000-000000000001', startedAt: new Date(Date.now() - 1000).toISOString(), artifactStartedAt: filesystemObservedAt(root), caseFilter: new RegExp(`^${id}$`) }
   const native = path.join(root, 'native')
   await mkdir(native)
   const bundle = Buffer.from('synthetic native bundle')

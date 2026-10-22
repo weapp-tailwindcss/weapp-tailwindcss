@@ -51,7 +51,7 @@ it('从完整尺寸重算语义，保存原始报告和bundle回执并写JSON/Ma
   const { context, raw } = await fixture()
   const { report, contracts } = await buildLynxCapabilityReport(context, 'lynx-ios', raw)
   expect(report.results[0]).toMatchObject({ status: 'passed', support: 'supported', assertions: [{ actual: 'supported', expected: 'supported', stage: 'runtime' }] })
-  expect(report.observedAt).toBe(context.startedAt)
+  expect(report.observedAt).toBe(context.artifactStartedAt)
   expect(report.artifacts.some(item => item.kind === 'bundle')).toBe(true)
   expect(() => validateCapabilityReport(report, contracts, report.identity, context.runId, 'lynx-ios')).not.toThrow()
   await expect(verifyReportArtifacts(report, context.directory)).resolves.toBeUndefined()

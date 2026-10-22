@@ -38,6 +38,7 @@ import {
   waitForOutputsReady,
 } from './mutations'
 import { resolvePreferredRound } from './mutations/shared'
+import { collectSubPackageCssOutputs } from './mutations/subpackage'
 import { createOutputIntegrityMonitor } from './output-integrity'
 import { createWatchSession, runPnpmCommand, sleep } from './session'
 import { summarizeMutationMetricsByKind } from './summary'
@@ -745,10 +746,7 @@ export async function runMainStyleOnlyCase(watchCase: WatchCase, options: CliOpt
       const subWatchCase = createSubPackageWatchCase(watchCase, mutation)
       const mainStyleMutation = mutation.mainStyleMutation ?? mutation.templateMutation
       const subSourcePath = mainStyleMutation.sourceFile
-      const subPackageMainStyleOutputs = [...new Set([
-        ...mutation.outputStyleCandidates,
-        ...mutation.globalStyleCandidates,
-      ])]
+      const subPackageMainStyleOutputs = collectSubPackageCssOutputs(mutation)
       const subSourceOriginal = sourceOriginals.get(subSourcePath)
         ?? await fs.readFile(subSourcePath, 'utf8')
       sourceOriginals.set(subSourcePath, subSourceOriginal)

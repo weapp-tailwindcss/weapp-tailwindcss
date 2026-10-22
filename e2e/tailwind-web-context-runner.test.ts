@@ -6,6 +6,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { filesystemObservedAt } from './tailwind-capabilities/artifact-clock'
 import { contextWebCandidates } from './tailwind-capabilities/web-context/fixtures'
 import { runContextWeb } from './tailwind-capabilities/web-context/run'
 
@@ -19,7 +20,7 @@ vi.mock('./tailwind-capabilities/context', () => ({
     await mkdir(context.directory, { recursive: true })
     const hash = 'a'.repeat(64)
     const identity = { sourceHash: hash, lockfileHash: hash, catalogHash: hash, fixtureHash: hash, expectationsHash: hash, versions: { tailwindcss: '4.3.3' } }
-    return { schemaVersion: 2, runId: context.runId, target, observedAt: new Date().toISOString(), identity, environment, results: [], artifacts: [] }
+    return { schemaVersion: 2, runId: context.runId, target, observedAt: filesystemObservedAt(context.directory), identity, environment, results: [], artifacts: [] }
   },
   persistReport: mocks.persist,
 }))
