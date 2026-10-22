@@ -13,4 +13,7 @@ const observed = process.env.RN_METRO_HTTP_ARCHIVE
   ? require('../../e2e/react-native/http-archive.cjs').withMetroHttpArchive(config)
   : config
 
-module.exports = withWeappTailwindcss(observed, tailwindInput)
+const generated = withWeappTailwindcss(observed, tailwindInput)
+module.exports = process.env.RN_METRO_HMR_ARCHIVE
+  ? require('../../e2e/react-native/hmr-observation/config.cjs').withMetroHmrObservation(generated)
+  : generated

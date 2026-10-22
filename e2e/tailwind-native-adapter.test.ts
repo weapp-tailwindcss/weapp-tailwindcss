@@ -1,13 +1,15 @@
 import type { ReactNativeReport } from '../examples/react-native-expo/src/compatibility/protocol'
 import type { RunContext } from './tailwind-capabilities/context'
 import type { CapabilityReport } from './tailwind-capabilities/types'
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { createHash } from 'node:crypto'
+import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { nativeBuildCases, nativeBuildFixtures, nativeFixtures, rejectedNativeCases } from '../examples/react-native-expo/src/compatibility/protocol'
 import { nativeEncodingArtifactNames, nativeRuntimePhases } from './react-native/phase-contract'
 import { updateNativePhaseFixtureReport, writeNativePhaseFixture } from './react-native/phase-fixture'
+import { snapshotNativePhase } from './react-native/phase-index'
 import { writeRuntimeFixture } from './react-native/runtime-fixture'
 import { buildNativeCapabilityReport } from './tailwind-capabilities/native-adapter'
 
@@ -70,6 +72,58 @@ describe('原生统一能力报告', () => {
     const { context, raw, artifacts } = await fixture()
     await rm(path.join(artifacts, 'phases', id, 'encoding', 'manifest.json'))
     const { report } = await buildNativeCapabilityReport(context, 'expo-chromium', raw)
+    expect(report.results.filter(item => item.status === 'passed')).toEqual([])
+  })
+
+  it.each(['android', 'ios'] as const)('%s 将原 HMR 观察原件全部登记并关联案例', async (platform) => {
+    const { context, raw, artifacts } = await fixture(platform)
+    const { report } = await buildNativeCapabilityReport(context, `react-native-${platform}`, raw)
+    const names = await readdir(path.join(artifacts, 'hmr-client'))
+    expect(names.length).toBeGreaterThan(8)
+    for (const name of names) {
+      const file = path.join('native', 'hmr-client', name)
+      expect(report.artifacts.some(item => item.path === file && item.kind === 'bundle')).toBe(true)
+      for (const item of report.results.filter(item => item.id.startsWith('compatibility/'))) {
+        expect(item.artifacts).toContain(file)
+      }
+    }
+  })
+
+  it.each(['missing-directory', 'observer-bytes', 'observer-rehashed', 'resolver-identity', 'installation', 'web-bypass'])('原生 HMR %s 即使重算阶段摘要也不能通过', async (kind) => {
+    const { context, raw, artifacts } = await fixture('ios')
+    const root = path.join(artifacts, 'hmr-client')
+    if (kind === 'missing-directory') {
+      await rm(root, { recursive: true })
+    }
+    else if (kind === 'observer-bytes' || kind === 'observer-rehashed') {
+      await writeFile(path.join(root, 'observer-recorder.cjs'), 'unarchived-observer')
+      if (kind === 'observer-rehashed') {
+        const file = path.join(root, 'ios-resolver.json')
+        const record = JSON.parse(await readFile(file, 'utf8'))
+        const bytes = await readFile(path.join(root, 'observer-recorder.cjs'))
+        record.observers[1] = { name: 'observer-recorder.cjs', sha256: createHash('sha256').update(bytes).digest('hex'), byteLength: bytes.length }
+        await writeFile(file, JSON.stringify(record))
+      }
+    }
+    else if (kind === 'resolver-identity') {
+      const file = path.join(root, 'ios-resolver.json')
+      const record = JSON.parse(await readFile(file, 'utf8'))
+      record.identity.invocationId = 'previous-invocation'
+      await writeFile(file, JSON.stringify(record))
+    }
+    else {
+      const file = path.join(root, 'tsx-hmr.json')
+      const record = JSON.parse(await readFile(file, 'utf8'))
+      record.installation.manifestJson = '{"rules":{"forged":[]}}'
+      const source = kind === 'web-bypass' ? { schemaVersion: 1, evidence: 'not-applicable', platform: 'web' } : record
+      await writeFile(file, JSON.stringify(source))
+      await writeFile(path.join(artifacts, 'phases', 'tsx-hmr', 'hmr-observation.json'), JSON.stringify(source))
+      const indexFile = path.join(artifacts, 'phase-index.json')
+      const index = JSON.parse(await readFile(indexFile, 'utf8'))
+      index.phases[1] = await snapshotNativePhase(artifacts, nativeRuntimePhases[1]!)
+      await writeFile(indexFile, JSON.stringify(index))
+    }
+    const { report } = await buildNativeCapabilityReport(context, 'react-native-ios', raw)
     expect(report.results.filter(item => item.status === 'passed')).toEqual([])
   })
 

@@ -1,0 +1,170 @@
+{
+  "schemaVersion": 1,
+  "boundary": "standalone-development-export-only",
+  "deviceReceived": "not-captured",
+  "identity": {
+    "runId": "build-only-6f227834-833c-437f-b318-026ace9e8bc0",
+    "invocationId": "ceb04745-5c4a-41dd-b21c-9c9ebeaf5c09"
+  },
+  "exitCode": 0,
+  "directory": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-rn-hmr-export-9s3G97",
+  "resolver": {
+    "schemaVersion": 1,
+    "evidence": "resolver-result",
+    "identity": {
+      "runId": "build-only-6f227834-833c-437f-b318-026ace9e8bc0",
+      "invocationId": "ceb04745-5c4a-41dd-b21c-9c9ebeaf5c09"
+    },
+    "request": "metro-runtime/src/modules/HMRClient",
+    "platform": "ios",
+    "originModulePath": "/Users/icebreaker/.codex/worktrees/tailwind-capability-e2e/weapp-tailwindcss/node_modules/.pnpm/react-native@0.81.5_@babel+core@8.0.7_@react-native-community+cli@12.3.7_encoding@0.1.1_88466c2c17b78494f88e74f19ce4bdc5/node_modules/react-native/Libraries/Utilities/HMRClient.js",
+    "resolvedPath": "/Users/icebreaker/.codex/worktrees/tailwind-capability-e2e/weapp-tailwindcss/node_modules/.pnpm/metro-runtime@0.83.7/node_modules/metro-runtime/src/modules/HMRClient.js",
+    "utilitiesPath": "/Users/icebreaker/.codex/worktrees/tailwind-capability-e2e/weapp-tailwindcss/node_modules/.pnpm/react-native@0.81.5_@babel+core@8.0.7_@react-native-community+cli@12.3.7_encoding@0.1.1_88466c2c17b78494f88e74f19ce4bdc5/node_modules/react-native/Libraries/Utilities/HMRClient.js",
+    "wrapperPath": "/Users/icebreaker/.codex/worktrees/tailwind-capability-e2e/weapp-tailwindcss/examples/react-native-expo/src/compatibility/hmr-observer-wrapper.cjs",
+    "projectRoot": "/Users/icebreaker/.codex/worktrees/tailwind-capability-e2e/weapp-tailwindcss/examples/react-native-expo",
+    "serverRoot": "/Users/icebreaker/.codex/worktrees/tailwind-capability-e2e/weapp-tailwindcss",
+    "pathFlavor": "posix",
+    "observers": [
+      {
+        "name": "observer-wrapper.cjs",
+        "sha256": "a3ebf796cabac5afd4297d97aefff619340dec19cbe4c0113ab40c3ae16058b9",
+        "byteLength": 369
+      },
+      {
+        "name": "observer-recorder.cjs",
+        "sha256": "05d5a78642f5252b05f415c99290568da4943b164395c138b7338be8c6a62211",
+        "byteLength": 4609
+      },
+      {
+        "name": "observer-resolver.cjs",
+        "sha256": "4122b5d32e2f16d52ec1424c11ea686d08e6e46032f77b67cccea40bc1d3990d",
+        "byteLength": 5540
+      },
+      {
+        "name": "observer-metro-config.js",
+        "sha256": "410171affe35fc592d5f7cdee1c3dba532cef275a0a9bfb87af57ab8058fad80",
+        "byteLength": 939
+      }
+    ],
+    "clientSourceSha256": "301042c4262b95b15e83f9fbcd897550aa57a1e916c754648327f651a8c223cf",
+    "clientPackage": {
+      "name": "metro-runtime",
+      "version": "0.83.7",
+      "packageJsonSha256": "51d444407d3a1dd6361f11f65390f6f4859a2c71a47aeed423df1da4c3160340"
+    },
+    "wrapperSha256": "a3ebf796cabac5afd4297d97aefff619340dec19cbe4c0113ab40c3ae16058b9"
+  },
+  "bundleSha256": "491c3f4ae96b803239f6fa3c662f2b8da7234ef5b131e9d6ac709a037f0f9a32",
+  "wrapperIdentityInBundle": true,
+  "observerInGraph": true,
+  "sourceCommit": "2f42d5c49dedf322b80dfeb5c27d98b146d09d9b",
+  "sourceDirty": true,
+  "lockfileSha256": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+  "scope": "standalone-development-export-only; no-device-runtime",
+  "command": [
+    "pnpm",
+    "--filter",
+    "@weapp-tailwindcss/example-react-native-expo",
+    "exec",
+    "expo",
+    "export:embed",
+    "--platform",
+    "ios",
+    "--entry-file",
+    "<absolute example src/index.ts>",
+    "--dev",
+    "true",
+    "--bundle-output",
+    "<task-system-temp>/ios.bundle",
+    "--sourcemap-output",
+    "<task-system-temp>/ios.map",
+    "--max-workers",
+    "1"
+  ],
+  "artifacts": [
+    {
+      "path": "build-only-record.json",
+      "sha256": "0efc4285d633c6593056dd4d4ad15387e304e8ad9e037f3bcc48bfddf4d643a5",
+      "byteLength": 3115
+    },
+    {
+      "path": "hmr-client/identity.json",
+      "sha256": "6ec8cc345cc63226cb57b91492ea82090c1ce5810bbdb06a2cdd1718d09d742a",
+      "byteLength": 817
+    },
+    {
+      "path": "hmr-client/ios-client-package.json",
+      "sha256": "51d444407d3a1dd6361f11f65390f6f4859a2c71a47aeed423df1da4c3160340",
+      "byteLength": 1214
+    },
+    {
+      "path": "hmr-client/ios-client-source.js",
+      "sha256": "301042c4262b95b15e83f9fbcd897550aa57a1e916c754648327f651a8c223cf",
+      "byteLength": 4428
+    },
+    {
+      "path": "hmr-client/ios-resolver.json",
+      "sha256": "b9efc055836f12b1ca78d8a4953725735cc2029e70b33e72cd8a4fb5ed852dd2",
+      "byteLength": 2492
+    },
+    {
+      "path": "hmr-client/observer-metro-config.js",
+      "sha256": "410171affe35fc592d5f7cdee1c3dba532cef275a0a9bfb87af57ab8058fad80",
+      "byteLength": 939
+    },
+    {
+      "path": "hmr-client/observer-recorder.cjs",
+      "sha256": "05d5a78642f5252b05f415c99290568da4943b164395c138b7338be8c6a62211",
+      "byteLength": 4609
+    },
+    {
+      "path": "hmr-client/observer-resolver.cjs",
+      "sha256": "4122b5d32e2f16d52ec1424c11ea686d08e6e46032f77b67cccea40bc1d3990d",
+      "byteLength": 5540
+    },
+    {
+      "path": "hmr-client/observer-wrapper.cjs",
+      "sha256": "a3ebf796cabac5afd4297d97aefff619340dec19cbe4c0113ab40c3ae16058b9",
+      "byteLength": 369
+    },
+    {
+      "path": "ios.bundle",
+      "sha256": "491c3f4ae96b803239f6fa3c662f2b8da7234ef5b131e9d6ac709a037f0f9a32",
+      "byteLength": 5664422
+    },
+    {
+      "path": "ios.map",
+      "sha256": "250a86d779e456eaa2d23368397a320c88d2316f031b45205a802b89a90041aa",
+      "byteLength": 10488931
+    },
+    {
+      "path": "metro-export-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "byteLength": 0
+    },
+    {
+      "path": "metro-export.log",
+      "sha256": "843ed92c649e6a3b1faffcd4da0cf94b7462f874924893ff1f4ab84598b929d2",
+      "byteLength": 599
+    }
+  ],
+  "notCaptured": [
+    "device-received-initial-bundle",
+    "device-received-HMR",
+    "evaluator",
+    "module-phase-causality",
+    "servedBundle"
+  ],
+  "setupFailures": [
+    {
+      "kind": "execa-stderr-option",
+      "productStarted": false,
+      "log": ".tmp/rn-hmr-dev-export-setup-error.log"
+    },
+    {
+      "kind": "entry-file-relative-to-serverRoot",
+      "productBundleGenerated": false,
+      "log": ".tmp/rn-hmr-dev-export-entry-error.log"
+    }
+  ]
+}

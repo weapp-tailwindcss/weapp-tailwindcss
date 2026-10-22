@@ -15,6 +15,7 @@ export const phaseArtifactDefinitions = [
   { name: 'source:css', segments: ['sources', 'global.css'] },
   { name: 'source:marker', segments: ['sources', 'hmr-marker.ts'] },
   { name: 'source:virtual', segments: ['sources', 'virtual.js'] },
+  { name: 'source:hmr-observation', segments: ['hmr-observation.json'] },
 ]
 
 export interface NativePhaseEntry {

@@ -59,3 +59,41 @@ it.each([false, true])('Metro 直接消费单入口选项，保留共享监听�
     path.resolve(projectRoot, '../../tools/tailwindcss-test-catalog'),
   ])
 })
+
+it('HMR观察接在Tailwind最终resolver外层，保留HTTP观察与生成顺序', () => {
+  const order: string[] = []
+  const config = { watchFolders: [] }
+  const generated = { resolver: { generated: true } }
+  const final = { resolver: { observed: true } }
+  const module = { exports: undefined }
+  runInNewContext(readFileSync(path.join(projectRoot, 'metro.config.js'), 'utf8'), {
+    __dirname: projectRoot,
+    module,
+    require: (id: string) => {
+      if (id === 'node:path') { return path }
+      if (id === 'node:process') { return { env: { RN_METRO_HTTP_ARCHIVE: 'http', RN_METRO_HMR_ARCHIVE: 'hmr' } } }
+      if (id === 'expo/metro-config') { return { getDefaultConfig: () => config } }
+      if (id === './tailwind-input.cjs') { return {} }
+      if (id === '../../e2e/react-native/http-archive.cjs') {
+        return { withMetroHttpArchive: (value: unknown) => {
+          expect(value).toBe(config)
+          order.push('http')
+          return value
+        } }
+      }
+      if (id === '@weapp-tailwindcss/react-native/metro') {
+        return { withWeappTailwindcss: () => { order.push('generate'); return generated } }
+      }
+      if (id === '../../e2e/react-native/hmr-observation/config.cjs') {
+        return { withMetroHmrObservation: (value: unknown) => {
+          expect(value).toBe(generated)
+          order.push('hmr')
+          return final
+        } }
+      }
+      throw new Error(`未登记依赖：${id}`)
+    },
+  })
+  expect(order).toEqual(['http', 'generate', 'hmr'])
+  expect(module.exports).toBe(final)
+})

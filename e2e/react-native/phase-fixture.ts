@@ -6,6 +6,7 @@ import { virtualModuleCode } from '../../packages/react-native/src/metro/virtual
 import { generateNativeStylesheetEvidence } from '../../packages/react-native/src/tailwind/generate'
 import { writeEncodingFixture } from './encoding-fixture'
 import { exampleRoot, readRuntimeStyleInput } from './generation-input'
+import { writeHmrPhaseFixture } from './hmr-observation/fixture'
 import { runtimeIdentity } from './installation-evidence'
 import { syntheticRuntimeInstallation } from './installation-fixture'
 import { nativeFrameName } from './pair-evidence'
@@ -69,6 +70,7 @@ export async function writeNativePhaseFixture(directory: string, finalReport: Re
     await writeFile(path.join(root, 'sources', 'global.css'), css)
     await writeFile(path.join(root, 'sources', 'hmr-marker.ts'), marker)
     await writeFile(path.join(root, 'sources', 'virtual.js'), virtualModuleCode(manifest, { revision, manifestSha256 }, source))
+    await writeHmrPhaseFixture(directory, report, root)
     index.phases.push(await snapshotNativePhase(directory, phase))
     if (phase === nativeRuntimePhases.at(-1)) {
       Object.assign(finalReport, report)

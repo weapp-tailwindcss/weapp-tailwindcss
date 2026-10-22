@@ -134,6 +134,9 @@ export async function buildNativeCapabilityReport(context: RunContext, target: N
     for (const file of archived.compatibilityFiles) {
       record(await receipt(file, context.directory, context.runId, [...nativeBuildCases].map(caseId), 'bundle'))
     }
+    for (const file of archived.observationFiles) {
+      record(await receipt(file, context.directory, context.runId, compatibilityCases.map(item => caseId(item.id)), 'bundle'))
+    }
     for (const phase of archived.phases) {
       record(await receipt(phase.reportFile, context.directory, context.runId, compatibilityCases.map(item => caseId(item.id)), 'bundle'))
       for (const file of [...phase.encodingFiles, ...phase.sourceFiles]) {

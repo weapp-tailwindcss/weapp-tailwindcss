@@ -5,6 +5,7 @@ import type { ReactNativeReport } from './compatibility/protocol'
 import { tw } from '@weapp-tailwindcss/react-native/runtime'
 import { useRef } from 'react'
 import { ScrollView, StyleSheet, Text, useColorScheme, View } from 'react-native'
+import { readHmrObservation } from './compatibility/hmr-observation.cjs'
 import { nativeReportHeaders } from './compatibility/report-client'
 import { assertCurrentRuntimeInstallation } from './compatibility/runtime-installation'
 import { SemanticRun } from './compatibility/SemanticRun'
@@ -32,7 +33,9 @@ export default function App() {
     }
     assertCurrentRuntimeInstallation(completedReport.runtimeInstallation)
     sentRevision.current = revision
-    const payload = { hmrMarker: HMR_MARKER, cssHmrColor, report: completedReport }
+    const hmrObservation = process.env.EXPO_PUBLIC_RN_HMR_INVOCATION_ID ? readHmrObservation() : undefined
+    assertCurrentRuntimeInstallation(completedReport.runtimeInstallation)
+    const payload = { hmrMarker: HMR_MARKER, cssHmrColor, report: completedReport, ...(hmrObservation ? { hmrObservation } : {}) }
     for (let attempt = 0; attempt < 5; attempt++) {
       try {
         const visualProbes = await Promise.all([

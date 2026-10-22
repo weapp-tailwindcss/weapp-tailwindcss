@@ -36,8 +36,10 @@ import { executeIosCommand } from './ios-command'
 import { launchIosRuntime } from './ios-runtime'
 import { readRuntimePublication } from './installation-evidence'
 import { prepareMetroHttpObservation } from './http-observation'
+import type { HmrObservationSnapshot } from '../../examples/react-native-expo/src/compatibility/hmr-observation.cjs'
+import { archiveHmrSnapshot, prepareMetroHmrObservation, validateNativeHmrObservations } from './hmr-observation/evidence'
 
-interface ReportEnvelope { hmrMarker: string, cssHmrColor: string, report: ReactNativeReport, visualProbes: NativeVisualProbe[] }
+interface ReportEnvelope { hmrMarker: string, cssHmrColor: string, report: ReactNativeReport, visualProbes: NativeVisualProbe[], hmrObservation: HmrObservationSnapshot }
 type NativeProcess = ReturnType<typeof startExpo>
 
 interface ReportWaitOptions {
@@ -79,6 +81,8 @@ const semanticReporter = createSemanticReporter<ReportEnvelope>({ runId, catalog
   platform,
   publication: signal => readRuntimePublication(exampleRoot, signal),
   complete: async (envelope, signal) => {
+    await archiveHmrSnapshot(artifacts, envelope.report, envelope.hmrObservation)
+    signal.throwIfAborted()
     await fs.writeFile(path.join(artifacts, 'report.json'), `${JSON.stringify(envelope.report, null, 2)}\n`, { encoding: 'utf8', signal })
     signal.throwIfAborted()
     reports.push(envelope)
@@ -430,7 +434,9 @@ async function main() {
     // iOS Simulator 与宿主机共享网络栈时使用 localhost，避免 CI 虚拟网卡地址导致 Metro 连接失败。
     const metroHost = platform === 'ios' && runtimeHost !== '127.0.0.1' ? '--lan' : '--localhost'
     httpObservation = await prepareMetroHttpObservation(repoRoot, artifacts, reactNativeVersions())
-    const activeMetro = metro = startExpo(['--filter', '@weapp-tailwindcss/example-react-native-expo', 'exec', 'expo', 'start', metroHost, '--port', '8081', '--clear'], { ...env, ...httpObservation.environment }, metroLogFile)
+    const session = JSON.parse(await fs.readFile(path.join(artifacts, 'runtime-session.json'), 'utf8'))
+    const hmrEnvironment = await prepareMetroHmrObservation(repoRoot, artifacts, { runId: session.runId, invocationId: session.invocationId })
+    const activeMetro = metro = startExpo(['--filter', '@weapp-tailwindcss/example-react-native-expo', 'exec', 'expo', 'start', metroHost, '--port', '8081', '--clear'], { ...env, ...httpObservation.environment, ...hmrEnvironment }, metroLogFile)
     await waitForMetro(activeMetro)
     const runArgs = platform === 'ios'
       ? ['exec', 'tsx', 'e2e/react-native/ios-build-cli.ts', device, `http://${runtimeHost}:8081`, artifacts]
@@ -481,6 +487,7 @@ async function main() {
     validateReactNativeReport(cssHmrReport, platform, { runId, revision: 'rn-hmr-updated-f59e0b' })
     await validateNativeArtifacts(cssHmrReport, artifacts)
     await captureNativePhase(exampleRoot, artifacts, cssHmrReport)
+    await validateNativeHmrObservations(artifacts, platform)
     if (platform === 'android') { await assertAndroidMarker(device, 'rn-hmr-updated') }
     const afterScreenshot = await captureVerified('runtime-after.png', device, cssHmr)
     const beforeHash = await fileHash(beforeScreenshot)
