@@ -283,7 +283,7 @@ export function removeTailwindContainerWidthRules(
   })
 }
 
-export function removeUnsupportedModernColorDeclarations(root: postcss.Root) {
+export function removeUnsupportedModernColorDeclarations(root: postcss.Root, collectStableColors = true) {
   // 必须在注册、条件及局部规则删除前分析，之后不能按最后声明重新推导。
   const { values: customPropertyValues } = collectCustomPropertyValues(root, undefined, MINI_PROGRAM_THEME_SCOPE_SELECTORS)
 
@@ -297,6 +297,9 @@ export function removeUnsupportedModernColorDeclarations(root: postcss.Root) {
     }
   })
   const stableColors = new Map<string, string>()
+  if (!collectStableColors) {
+    return stableColors
+  }
   for (const [property, value] of customPropertyValues) {
     const normalized = normalizeModernColorValue(value, customPropertyValues)
     if (!normalized.hasUnsupported) {

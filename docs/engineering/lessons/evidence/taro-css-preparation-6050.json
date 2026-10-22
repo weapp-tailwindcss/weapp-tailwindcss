@@ -1,0 +1,268 @@
+{
+  "schema": "taro-css-preparation-diagnostic/v1",
+  "formalAcceptance": false,
+  "rawArtifactsIncluded": false,
+  "summaryIsReplayEvidence": false,
+  "operatingSystem": "macOS arm64",
+  "node": "22.23.3",
+  "pnpm": "12.14.0",
+  "sourceSha": "6050e9a787d3ae0a3450cc91af5695ac3c32b64e",
+  "baseSha": "7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5",
+  "setup": {
+    "status": "failed",
+    "startedAt": "2026-10-22T05:04:39.147Z",
+    "finishedAt": "2026-10-22T05:05:19.222Z",
+    "error": "Error: ENOENT: no such file or directory, open '/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-6050-mini-perf-Mkdwsf/matrix-raw.json'\n    at async open (node:internal/fs/promises:640:25)\n    at async Object.readFile (node:internal/fs/promises:1290:14)\n    at async file:///Users/icebreaker/.codex/worktrees/tailwind-capability-e2e/weapp-tailwindcss/.tmp/run-6050-mini-perf.mjs:70:28",
+    "measurementStarted": false,
+    "retryReason": "macOS /var 与 /private/var 入口身份不同；原 main 未运行，保留失败记录后以 realpath 恢复已准备目录"
+  },
+  "measurement": {
+    "status": "passed",
+    "startedAt": "2026-10-22T05:08:55.385Z",
+    "finishedAt": "2026-10-22T05:11:10.248Z",
+    "digest": "83cdc5c85bbb18c376287ea0b3bcdaf3b56f94862b0eaa3bbffc9885f223bad1",
+    "changes": [
+      {
+        "file": "packages/postcss/src/compat/mini-program-css/finalize.ts",
+        "sha256": "e159105c4ae70547d23799de7adc28ee7b5ddf379167df483376cb52ff1f1009",
+        "finalSha256": "e159105c4ae70547d23799de7adc28ee7b5ddf379167df483376cb52ff1f1009"
+      },
+      {
+        "file": "packages/postcss/src/compat/mini-program-css/modern-colors.ts",
+        "sha256": "48b3e2531f55c7ed2a90c1bb5c5e2c1f7cdda078ce35e4d01aaef7bb6a60cb59",
+        "finalSha256": "48b3e2531f55c7ed2a90c1bb5c5e2c1f7cdda078ce35e4d01aaef7bb6a60cb59"
+      },
+      {
+        "file": "packages/postcss/src/compat/mini-program-css/prune-generated.ts",
+        "sha256": "40718001c9745fffc2999335dfda214ad8368aed2f0dd4b5dacd08cacdd3ac14",
+        "finalSha256": "40718001c9745fffc2999335dfda214ad8368aed2f0dd4b5dacd08cacdd3ac14"
+      },
+      {
+        "file": "packages/postcss/src/compat/mini-program-css/root-cleanups.ts",
+        "sha256": "21d742d023ffbf2245804384a70f83fb0006d16d618dc91953314ffc0616a2e0",
+        "finalSha256": "21d742d023ffbf2245804384a70f83fb0006d16d618dc91953314ffc0616a2e0"
+      },
+      {
+        "file": "packages/postcss/src/compat/tailwindcss-v4/user-css/source-fragments.ts",
+        "sha256": "3e6c596972db8a1e8c4f19935f72739b6d9b4f973e2c98fbde1beab50c85c28f",
+        "finalSha256": "f4fccb46ad0a6f9dd19ea9ae9f2e505e88b5442096e8135f861f19fa224c7455"
+      },
+      {
+        "file": "packages/postcss/src/compat/tailwindcss-v4/user-css/transform.ts",
+        "sha256": "bc2df262dffe74eb9a0b6787555eac88d7ef27a5644371ba6a4890da499ca180",
+        "finalSha256": "bc2df262dffe74eb9a0b6787555eac88d7ef27a5644371ba6a4890da499ca180"
+      },
+      {
+        "file": "packages/postcss/test/processed-mini-css-lifecycle.test.ts",
+        "sha256": "17f5ccb96b4ac17bd31321cbe9f9e7722fd0898b543efb8900c663af25bb0636",
+        "finalSha256": "bc93e9f25458671090fb7f662bf400a817dfcf97b4662d1614dae094e9239262"
+      }
+    ],
+    "sourceRestoration": [
+      {
+        "before": "bdc2c9543e6395fdd1b955d7e925efef061bbcfbd119974218073c5e3d569b0d",
+        "after": "bdc2c9543e6395fdd1b955d7e925efef061bbcfbd119974218073c5e3d569b0d",
+        "restored": true
+      },
+      {
+        "before": "bdc2c9543e6395fdd1b955d7e925efef061bbcfbd119974218073c5e3d569b0d",
+        "after": "bdc2c9543e6395fdd1b955d7e925efef061bbcfbd119974218073c5e3d569b0d",
+        "restored": true
+      }
+    ],
+    "ownedProcessesExited": true,
+    "inspectorEnabled": false,
+    "finalPatchIdentical": false,
+    "limitation": "采样之后修正公开清理入口不额外处理颜色/source 的兼容边界，并增加直接调用和嵌套 layer 回归；本次对照不覆盖这些最终差异。最终完整性能门禁待新 head Ubuntu CI。"
+  },
+  "summary": {
+    "generatedAt": "2026-10-22T05:11:06.324Z",
+    "options": {
+      "buildRuns": 3,
+      "hmrRuns": 3,
+      "timeoutMs": 180000,
+      "pollIntervalMs": 30
+    },
+    "baseline": "base:7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5",
+    "current": "current:6050+83cdc5c85bbb",
+    "compares": [
+      {
+        "key": "demo-taro-vite-react-tailwindcss-v4__mp-weixin",
+        "project": "demo/taro-vite-react-tailwindcss-v4",
+        "target": "mp-weixin",
+        "baselineBuild": 14095.878000000004,
+        "currentBuild": 14479.222708999994,
+        "buildDeltaPct": 2.7195518363594653,
+        "baselineHmr": 1895.961000000003,
+        "currentHmr": 1820.0545839999977,
+        "hmrDeltaPct": -4.003585305816161,
+        "baselineHmrMedian": 1849.4197910000003,
+        "currentHmrMedian": 1715.6649999999936,
+        "hmrMedianDeltaPct": -7.232256930033396,
+        "baselineBuildPlugin": 2883,
+        "currentBuildPlugin": 2989,
+        "buildPluginDeltaPct": 3.6767256330211584,
+        "baselineHmrPlugin": 1043,
+        "currentHmrPlugin": 975,
+        "hmrPluginStatistic": "p95",
+        "hmrPluginDeltaPct": -6.519654841802493,
+        "baselineHmrPluginGuard": 1043,
+        "currentHmrPluginGuard": 876,
+        "hmrPluginGuardDeltaPct": -16.01150527325024,
+        "baselineHmrPluginMedian": 951,
+        "currentHmrPluginMedian": 876,
+        "hmrPluginMedianDeltaPct": -7.886435331230284,
+        "baselineBuildPeakRssMb": 1739.109375,
+        "currentBuildPeakRssMb": 1726.65625,
+        "buildPeakRssDeltaPct": -0.7160633585797328,
+        "baselineBuildSteadyRssMb": 1671.734375,
+        "currentBuildSteadyRssMb": 1669.25,
+        "buildSteadyRssDeltaPct": -0.14861063080072154,
+        "baselineHmrPeakRssMb": 2996.25,
+        "currentHmrPeakRssMb": 2959.9375,
+        "hmrPeakRssDeltaPct": -1.2119315811430955,
+        "baselineHmrSteadyRssMb": 2942.6171875,
+        "currentHmrSteadyRssMb": 2902.53125,
+        "hmrSteadyRssDeltaPct": -1.3622545831065564,
+        "baselineHmrSampleCount": 3,
+        "currentHmrSampleCount": 3,
+        "baselineHmrPluginSampleCount": 3,
+        "currentHmrPluginSampleCount": 3,
+        "baselineBuildSamples": [
+          14483.087583999999,
+          13578.357,
+          14095.878000000004
+        ],
+        "currentBuildSamples": [
+          15538.646291999998,
+          14106.465375,
+          14479.222708999994
+        ],
+        "baselineBuildPluginSamples": [
+          2883,
+          2824,
+          2980
+        ],
+        "currentBuildPluginSamples": [
+          3107,
+          2846,
+          2989
+        ],
+        "baselineHmrSamples": [
+          1756.0224159999998,
+          1895.961000000003,
+          1849.4197910000003
+        ],
+        "currentHmrSamples": [
+          1820.0545839999977,
+          1660.7903749999969,
+          1715.6649999999936
+        ],
+        "baselineHmrPluginSamples": [
+          893,
+          951,
+          1043
+        ],
+        "currentHmrPluginSamples": [
+          975,
+          876,
+          843
+        ],
+        "baselineHmrPluginSteadySamples": [
+          951,
+          1043
+        ],
+        "currentHmrPluginSteadySamples": [
+          876,
+          843
+        ],
+        "baselineBuildPeakRssSamples": [
+          1823.984375,
+          1716.609375,
+          1739.109375
+        ],
+        "currentBuildPeakRssSamples": [
+          1787.53125,
+          1715.03125,
+          1726.65625
+        ],
+        "baselineBuildSteadyRssSamples": [
+          1709.71875,
+          1671.734375,
+          1639.2578125
+        ],
+        "currentBuildSteadyRssSamples": [
+          1734.6875,
+          1669.25,
+          1668.5546875
+        ],
+        "baselineBuildMode": "build",
+        "currentBuildMode": "build",
+        "baselineHmrMode": "watch",
+        "currentHmrMode": "watch",
+        "hmrEndToEndGuard": true
+      }
+    ],
+    "errors": [],
+    "baselineErrors": [],
+    "currentErrors": [],
+    "currentOnlyErrors": [],
+    "sharedErrors": [],
+    "baselineOnlyErrors": [],
+    "averages": {
+      "buildDeltaPct": 2.7195518363594653,
+      "hmrDeltaPct": -4.003585305816161,
+      "buildCompareCount": 1,
+      "watchHmrCompareCount": 1,
+      "buildPluginDeltaPct": 3.6767256330211584,
+      "hmrPluginDeltaPct": -6.519654841802493,
+      "buildPluginCompareCount": 1,
+      "watchHmrPluginCompareCount": 1
+    },
+    "performanceGuard": {
+      "passed": true,
+      "thresholds": {
+        "minimumMemoryRegressionMb": 64,
+        "minimumTailRegressionSamples": 2,
+        "minimumTimingRegressionMs": 10,
+        "maximumMedianRegressionPValue": 0.05,
+        "regressionPercent": 5
+      },
+      "violations": []
+    }
+  },
+  "artifacts": [
+    {
+      "file": "identity.json",
+      "sha256": "1e5b051d4909dd69e8250c775f28eaf9e528ef4ce344633ecfe2a6ed5195a15c",
+      "bytes": 3284
+    },
+    {
+      "file": "measurement-identity.json",
+      "sha256": "c492e716a9bb4f8b28310b926d599abc4c1cde6defeaa1d3170c09a714369d97",
+      "bytes": 3230
+    },
+    {
+      "file": "measurement-versions.json",
+      "sha256": "4896d0231838eeaffdbc973cc3870fa676d3f53265ae63979f6b9c6a57791567",
+      "bytes": 303
+    },
+    {
+      "file": "matrix-raw.json",
+      "sha256": "ccd480e5b748956ceb17b6962f5c6797bfd668a415ad88f8fa3986da968f9cfe",
+      "bytes": 1252046
+    },
+    {
+      "file": "summary.json",
+      "sha256": "08bf317ed35745e3f49bb52729880f6cb28bcb77403a6e553d24a65360484ab2",
+      "bytes": 4371
+    }
+  ],
+  "commands": [
+    "node .tmp/resume-6050-mini-perf.mjs",
+    "CI=1 pnpm --filter @weapp-tailwindcss/postcss exec vitest run --update=none",
+    "pnpm --filter @weapp-tailwindcss/postcss build",
+    "CI=1 E2E_SKIP_OPEN_AUTOMATOR=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/taro-vite-react-tailwindcss-v4.test.ts --update=all",
+    "CI=1 E2E_SKIP_OPEN_AUTOMATOR=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/taro-vite-react-tailwindcss-v4.test.ts --update=none"
+  ]
+}

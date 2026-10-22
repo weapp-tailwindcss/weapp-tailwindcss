@@ -9,7 +9,7 @@ import { removeTailwindApplyAtRules } from './at-rules'
 import { removeTailwindSourceDirectives } from './directives'
 import { removeTailwindV4GeneratedUserCssArtifacts } from './generated-cleanup'
 import { stripTailwindBanners } from './markers'
-import { collectBareSelectorUserCss, isCommentOnlyCss, removeProcessedMiniProgramUnsupportedCss, removeTailwindV4GeneratorAtRules, stripTailwindSourceMediaFragments, stripUnmatchedTailwindSourceMediaCloseFragments, unwrapMiniProgramCascadeLayers } from './source-fragments'
+import { collectBareSelectorUserCss, isCommentOnlyCss, prepareProcessedMiniProgramUserCss, removeTailwindV4GeneratorAtRules, stripTailwindSourceMediaFragments, stripUnmatchedTailwindSourceMediaCloseFragments, unwrapMiniProgramCascadeLayers } from './source-fragments'
 
 export async function transformGeneratorUserCss(
   source: string,
@@ -31,12 +31,10 @@ export async function transformGeneratorUserCss(
     const compiledSource = await options.compileAuthorCssFunctions?.(source) ?? source
     const cleanedSource = options.generatorTarget === 'weapp'
       ? removeTailwindV4GeneratedUserCssArtifacts(
-          unwrapMiniProgramCascadeLayers(
-            removeProcessedMiniProgramUnsupportedCss(normalizeMiniProgramColorMix(compiledSource), {
-              ...options.generatorStyleOptions,
-              ...options.cssUserHandlerOptions,
-            }),
-          ),
+          prepareProcessedMiniProgramUserCss(compiledSource, {
+            ...options.generatorStyleOptions,
+            ...options.cssUserHandlerOptions,
+          }),
           options.generatedSource,
         )
       : compiledSource

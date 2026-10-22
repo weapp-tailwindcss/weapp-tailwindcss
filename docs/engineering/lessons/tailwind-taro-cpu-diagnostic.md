@@ -4,6 +4,7 @@ issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1314
 baseline: 7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5
 regressions:
   - packages/weapp-tailwindcss/test/ci/benchmark-report.test.ts
+  - packages/postcss/test/processed-mini-css-lifecycle.test.ts
 verification:
   - claim: Ubuntu准确078e的Taro插件稳态P95门禁失败仍未消除
     kind: ci
@@ -23,6 +24,24 @@ verification:
     sha: 078e6e020db23143cd01826450a5a2b969bda610
     environment: Ubuntu24.04准确提交及原3build/3HMR配置
     reason: 本地带采样的单对对照没有复现两次稳态均违规；不能用macOS成功、GC相关性或未采到函数证明CI根因消除
+  - claim: 准确6050的Taro性能分片再次失败
+    kind: ci
+    status: failed
+    sha: 6050e9a787d3ae0a3450cc91af5695ac3c32b64e
+    environment: Ubuntu24.04、Node22.23.3、pnpm12.14.0，准确merge 2cb3340eaceaa02cf468261ca2026e5fd7ea1c8d
+    url: https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/39717316366/job/119625259290
+  - claim: 单AST准备与公开入口兼容边界的PostCSS回归通过
+    kind: unit
+    status: passed
+    sha: 6050e9a787d3ae0a3450cc91af5695ac3c32b64e
+    environment: macOS arm64、Node24.18.0、pnpm12.14.0；包含本轮未提交修复，不是原始6050
+    command: CI=1 pnpm --filter @weapp-tailwindcss/postcss exec vitest run --update=none
+  - claim: 公开入口最终修正之前的一次有界本地性能对照未触发原门禁
+    kind: integration
+    status: passed
+    sha: 6050e9a787d3ae0a3450cc91af5695ac3c32b64e
+    environment: macOS arm64、Node22.23.3、pnpm12.14.0；6050加未提交准备链修复，采样后公开入口与测试仍有变更，非最终补丁或Ubuntu验收
+    command: node .tmp/resume-6050-mini-perf.mjs
 ---
 
 # Taro Vite 精确版本 CPU 诊断
@@ -59,14 +78,26 @@ verification:
 
 第二/三轮`normalizeMiniProgramColorMix`的inclusive约11.792/11.375ms，`collectCustomPropertyValues`约12.790/12.793ms；`removeUnsupportedModernColorDeclarations`为21.290/19.042ms，base相应30.459/26.499ms。`finalizeMiniProgramCssRoot`为71.124/67.416ms，base为77.209/71.999ms。这些类别互相重叠，不能相加。没有采到`collectStaticCustomPropertyValues`不证明它没有执行。当前数据不支持把该次271ms全部归给新增静态变量分析或颜色清理。
 
-源码审查找到稳定颜色Map在部分调用点无人消费的重复计算，但本轮清理采样本身未升高，尚无足够证据认定它是原门禁根因；本片不据此修改产品。后续优化必须先固化保持注册/条件/局部覆盖资格的失败回归，不能删除Root来源准入或按大小跳过语义。
+源码审查找到稳定颜色Map在部分调用点无人消费的重复计算，但 078e 清理采样本身未升高，尚无足够证据认定它是原门禁根因；当轮诊断不据此修改产品。后续优化必须先固化保持注册/条件/局部覆盖资格的失败回归，不能删除Root来源准入或按大小跳过语义。
 
 ## 适用边界
 
 这是一次有界macOS诊断，不是无采样性能验收，也不是新的全面运行。源码归档、工具、driver和profile完整性可核对；采样器、机器、GC和native/I/O成本仍影响结果。只保留诊断相关性，继续登记原CI失败及pending根因，不追加重复样本直到通过。
 
-新head `f7890bb0ff4e3a1b640166dbe48f53dc411cc0cd` 的普通hosted检查尚在进行，不能继承078e的任何成功。微信环境阻断及原生能力缺口也不因该性能诊断而消失。
+历史诊断结束时，`f7890bb0ff4e3a1b640166dbe48f53dc411cc0cd` 的普通 hosted 检查尚在进行，不能继承 078e 的成功；后续 6050 结果见下文。微信环境阻断及原生能力缺口也不因该性能诊断而消失。
 
 ## 规则评估
 
-不新增AGENTS，不修改产品、计时门槛、性能统计或static基线。沿用准确输入、有限诊断、原件与资源收尾规则。
+078e 诊断不修改产品；后续 6050 准备链优化修改 PostCSS 并补回归。不新增 AGENTS，不修改计时门槛或性能统计；限定重建 static 后无基线差异。沿用准确输入、有限诊断、原件与资源收尾规则。
+
+## 后续：6050 的 CSS 准备阶段
+
+准确 head `6050e9a787d3ae0a3450cc91af5695ac3c32b64e` 的 [Taro 作业](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/39717316366/job/119625259290) 再次失败：插件稳态 P95 为 1767→2011ms，端到端为 4156.542→4528.731ms，两项均为 2/2 超过原门槛。其源码树在相关产品模块与 078e 相同，不能归因于新增 RN 观察器。当前 head 的全部检查已结束，251 成功、30 跳过、3 失败；另外两项分别为 Lynx iOS 启动超时及承接 Taro 失败的性能汇总。
+
+代码中的确定性重复工作是：已处理小程序 CSS 先做颜色规范化，再删除平台 at-rule、清理交互选择器、消费 layer，分别重新解析字符串。修正将这四步交由同一棵 AST 按原顺序处理，保留中间字符串守卫；这是单次解析，不是单次序列化。注册、条件和局部变量仍在删除前参与完整资格分析，异常时从原始字符串重演原回退链，不使用半变换树。未消费颜色上下文的清理调用不再第二次遍历全部稳定变量并规范化；渐变降级仍保留该结果。
+
+新增 `processed-mini-css-lifecycle.test.ts` 先保留失败回归，再验证独立旧 wrappers 的输出、八种互动配置、CRLF、嵌套层、source 包装、转义、追踪及不完整输入，并限制完整准备阶段只解析一次。审查另发现公开清理入口原本不规范化颜色或展开 source；新增两个直接调用反例先红，再将完整准备与公开平台清理的范围分开。最终 PostCSS 包 159 文件、1875 项通过，3 项既有跳过；Taro Vite React v4 static 限定项目重新生成后无 Git 差异，随后以 `CI=1 --update=none` 重跑 6 项通过。性能阈值、采样数、预期支持和证据门禁均未调整。
+
+本地仍按原 3build、3HMR 和 5%＋10ms／两次稳态／64MB 门禁做一次对照。临时驱动再次遇到 `/var` 与 `/private/var` 的入口 guard 身份差异，未启动采样即因缺 raw 失败；保留该设置失败，复用已安装构建目录，以真实路径开始唯一一次实际对照。base 插件 HMR 为 893/951/1043ms，修复中间态为 975/876/843ms，稳态 P95 为 1043→876ms，端到端 P95 为 1895.961→1820.055ms，原门禁无违规。marker 字节已恢复，所属进程已退出。采样后才修正上述公开入口并补测试，因此不把它写成最终补丁的完整性能验收；原件身份、两份记录、样本和修复前后文件 hash 见[本轮证据摘要](evidence/taro-css-preparation-6050.json)。在新 head 的实际门禁通过前，不宣称 Ubuntu 性能根因消除。
+
+Lynx iOS 的工件 `12400462593` 摘要为 `00020b5e01be51d2659507b5971edfbd13c6fb4134d42ec0f49e702937081703`，准确 checkout 为 `2cb3340eaceaa02cf468261ca2026e5fd7ea1c8d`。539 项回归、构建和 bootstatus 成功，指定 UDID 的 `simctl launch` 在原 60 秒预算内超时。宿主采样 load average 为 293.90、约 210MiB 可用内存，采样工具自身也超时，尚无原生报告或截图；这支持宿主拥塞假设，不能证明具体 CoreSimulator 内部根因。保留首次原件，不放宽预算或把缺证改为成功。本地全面预检的微信保护租约及 Android UI 阻塞也未恢复。

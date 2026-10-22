@@ -34,7 +34,7 @@ export { collectPreflightRules } from './preflight'
 
 export function finalizeMiniProgramCssRoot(root: postcss.Root, options: FinalizeMiniProgramCssOptions = {}) {
   unwrapTailwindSourceMedia(root)
-  const stableColors = removeUnsupportedModernColorDeclarations(root)
+  const stableColors = removeUnsupportedModernColorDeclarations(root, options.isTailwindcssV4 === true && options.tailwindcssV4GradientFallback === true)
   const preservedWebkitProperties = resolveMiniProgramPrefixPolicy('mini-program', options.preserveWebkitProperties).preserveProperties
   const shouldInjectTailwindcssV4Defaults = options.isTailwindcssV4 === true
   const tailwindcssV4DefaultNodes = shouldInjectTailwindcssV4Defaults
