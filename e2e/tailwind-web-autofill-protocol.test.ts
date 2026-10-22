@@ -1,12 +1,14 @@
 import type { Page } from 'playwright'
 import type { AutofillEvent, AutofillObservation } from './tailwind-capabilities/web-autofill/types'
+import { runInNewContext } from 'node:vm'
 import { afterEach, expect, it, vi } from 'vitest'
+import { waitForFrameProgress } from './tailwind-capabilities/browser/frames'
 import { observeAutofill } from './tailwind-capabilities/web-autofill/native'
 import { syntheticAutofill } from './tailwind-capabilities/web-autofill/test-fixture'
 
 afterEach(() => vi.useRealTimers())
 
-function setup(mode: 'normal' | 'enable-failed' | 'trigger-failed' | 'event-timeout' | 'raf-timeout' | 'cleanup-failed') {
+function setup(mode: 'normal' | 'enable-failed' | 'trigger-failed' | 'event-timeout' | 'raf-timeout' | 'cleanup-failed' | 'navigation') {
   const fixture = syntheticAutofill()
   const observation: AutofillObservation = { timeline: [], commands: [], events: [], states: [], cleanup: { errors: [], detached: false } }
   let listener: ((event: AutofillEvent) => void) | undefined
@@ -47,7 +49,23 @@ function setup(mode: 'normal' | 'enable-failed' | 'trigger-failed' | 'event-time
     }),
   }
   const locator = { click: vi.fn().mockResolvedValue(undefined), press: vi.fn().mockResolvedValue(undefined), pressSequentially: vi.fn().mockResolvedValue(undefined) }
-  const page = { context: () => ({ newCDPSession: async () => session }), locator: () => locator, waitForFunction: vi.fn().mockResolvedValue(undefined), evaluate: mode === 'raf-timeout' ? vi.fn(() => new Promise(() => {})) : vi.fn(async () => structuredClone(fixture.observation.states[state++]!)) } as unknown as Page
+  const page = {
+    context: () => ({ newCDPSession: async () => session }),
+    locator: () => locator,
+    waitForFunction: vi.fn().mockResolvedValue(undefined),
+    evaluate: vi.fn(async (callback, input) => {
+      if (callback === waitForFrameProgress) {
+        return mode === 'raf-timeout' ? new Promise(() => {}) : fixture.observation.states[state]!.frames
+      }
+      if (Array.isArray(input)) {
+        return 100
+      }
+      if (mode === 'navigation') {
+        return runInNewContext(`(${String(callback)})(input)`, { input, performance: { timeOrigin: 200 } })
+      }
+      return structuredClone(fixture.observation.states[state++]!)
+    }),
+  } as unknown as Page
   const run = () => observeAutofill(page, observation, async name => `autofill-native-outline-${name}.png`, fixture.runId, fixture.cssHash)
   return { run, session, observation }
 }
@@ -77,5 +95,11 @@ it.each(['event-timeout', 'raf-timeout'] as const)('%s 在有限预算后进入�
   await vi.advanceTimersByTimeAsync(5_001)
   await rejected
   expect(session.off).toHaveBeenCalledOnce()
+  expect(session.detach).toHaveBeenCalledOnce()
+})
+
+it('帧与样式阶段之间的同 URL reload 不能拼接为有效证据，仍收尾协议', async () => {
+  const { run, session } = setup('navigation')
+  await expect(run()).rejects.toThrow('文档已变化')
   expect(session.detach).toHaveBeenCalledOnce()
 })

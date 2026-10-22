@@ -1,12 +1,14 @@
 import type { Buffer } from 'node:buffer'
 import type { Page } from 'playwright'
+import { runInNewContext } from 'node:vm'
 import { PNG } from 'pngjs'
 import { expect, it, vi } from 'vitest'
+import { waitForFrameProgress } from './tailwind-capabilities/browser/frames'
 import { historyIdentity, historyProbe } from './tailwind-capabilities/web-history/fixtures'
 import { captureHistory } from './tailwind-capabilities/web-history/observe'
 import { syntheticHistory } from './tailwind-capabilities/web-history/test-fixture'
 
-function observation(mode: 'delayed' | 'never' | 'reference-only' | 'control' | 'error') {
+function observation(mode: 'delayed' | 'never' | 'reference-only' | 'control' | 'error' | 'navigation') {
   const fixture = syntheticHistory()
   const state = fixture.raw.states[1]!
   fixture.raw.states = []
@@ -14,9 +16,18 @@ function observation(mode: 'delayed' | 'never' | 'reference-only' | 'control' | 
   let colors: number[][] = []
   let calls = 0
   const page = { evaluate: vi.fn(async (_fn, input) => {
-    colors = input.colors
+    if (Array.isArray(input)) {
+      colors = input
+      return state.timeOrigin
+    }
+    if (_fn === waitForFrameProgress) {
+      return [calls * 2 + 1, calls * 2 + 2]
+    }
+    if (mode === 'navigation') {
+      return runInNewContext(`(${String(_fn)})(input)`, { input, performance: { timeOrigin: state.timeOrigin + 1 } })
+    }
     const { id, runId, url, origin, topOrigin, links, timeOrigin } = state
-    return { id, runId, url, origin, topOrigin, links, timeOrigin, frames: [calls * 2 + 1, calls * 2 + 2] }
+    return { id, runId, url, origin, topOrigin, links, timeOrigin, frames: input.frames }
   }) } as unknown as Page
   const screenshots = new Map<string, Buffer>()
   const capture = vi.fn(async (token: string) => {
@@ -57,7 +68,7 @@ it('首张仍为旧色时在同页有界观察，保留每次独立PNG和身份'
   expect(state.observation?.budgetMs).toBe(2_000)
   expect(state.screenshot).toBe(`${historyProbe.id}-visited-observation-2.png`)
   expect([...f.screenshots.keys()]).toEqual([1, 2].map(i => `${historyProbe.id}-visited-observation-${i}.png`))
-  expect(f.page.evaluate).toHaveBeenCalledTimes(2)
+  expect(vi.mocked(f.page.evaluate).mock.calls.filter(([callback]) => callback === waitForFrameProgress)).toHaveLength(2)
   expect(historyIdentity(f.fixture.runId, 'visited-observation-1', f.fixture.cssHash, f.fixture.engine, f.fixture.raw.profiles[0]!.id))
     .not
     .toEqual(historyIdentity(f.fixture.runId, 'visited-observation-2', f.fixture.cssHash, f.fixture.engine, f.fixture.raw.profiles[0]!.id))
@@ -84,4 +95,11 @@ it('截图异常原样失败，不能冒充等待期望状态超时', async () =
   await expect(f.run()).rejects.toThrow('original screenshot error')
   expect(f.capture).toHaveBeenCalledTimes(1)
   expect(f.fixture.raw.observationFailures).toEqual([expect.objectContaining({ attempt: 1, screenshot: `${historyProbe.id}-visited-observation-1.png`, error: 'Error: original screenshot error' })])
+})
+
+it('帧与样式阶段之间的文档变化立即失败，禁止截图拼接', async () => {
+  const f = observation('navigation')
+  await expect(f.run()).rejects.toThrow('文档已变化')
+  expect(f.capture).not.toHaveBeenCalled()
+  expect(f.fixture.raw.observationFailures).toEqual([expect.objectContaining({ attempt: 1, error: 'Error: 历史采样的文档已变化' })])
 })

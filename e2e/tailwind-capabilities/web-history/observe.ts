@@ -2,6 +2,7 @@ import type { Buffer } from 'node:buffer'
 import type { BrowserContext, Page } from 'playwright'
 import type { HistoryProfile, HistorySidecar, HistorySnapshot, HistoryState } from './types'
 import { setTimeout as delay } from 'node:timers/promises'
+import { waitForFrameProgress } from '../browser/frames'
 import { assertionPassed } from '../report'
 import { bounded } from '../web-native-media/deadline'
 import { historyContract } from './contract'
@@ -26,13 +27,16 @@ export async function historyPage(context: BrowserContext, raw: HistorySidecar) 
 /** computed 与 matches 的隐私掩蔽只原样归档，颜色判定从 PNG 独立重算。 */
 async function captureSnapshot(page: Page, name: HistoryState['name'], profile: HistoryProfile, raw: HistorySidecar, capture: (name: string, timeoutMs: number) => Promise<{ file: string, bytes: Buffer }>, next: () => number, attempt?: number, deadline = performance.now() + 5_000) {
   const token = historyToken(name, attempt)
-  const observation = await page.evaluate(async ({ elements, colors }) => {
+  const timeOrigin = await page.evaluate((colors) => {
     document.querySelectorAll<HTMLElement>('#identity i').forEach((node, index) => {
       node.style.backgroundColor = `rgb(${colors[index]!.join(',')})`
     })
-    const frames: number[] = []
-    for (let i = 0; i < 2; i++) {
-      frames.push(await new Promise<number>(resolve => requestAnimationFrame(resolve)))
+    return performance.timeOrigin
+  }, historyIdentity(raw.runId, token, raw.generation!.cssHash, raw.engine, profile.id))
+  const frames = await page.evaluate(waitForFrameProgress, { timeOrigin, timeoutMs: Math.max(1, deadline - performance.now()) })
+  const observation = await page.evaluate(({ elements, frames, timeOrigin }) => {
+    if (performance.timeOrigin !== timeOrigin) {
+      throw new Error('历史采样的文档已变化')
     }
     return {
       id: document.body.dataset['fixture'] ?? '',
@@ -49,7 +53,7 @@ async function captureSnapshot(page: Page, name: HistoryState['name'], profile: 
         return [id, { href: node.href, computed: style.borderTopColor, matchesVisited: node.matches(':visited'), borderWidth: style.borderTopWidth, borderStyle: style.borderTopStyle, rect: { left, top, width, height } }]
       })),
     }
-  }, { elements: historyElements, colors: historyIdentity(raw.runId, token, raw.generation!.cssHash, raw.engine, profile.id) })
+  }, { elements: historyElements, frames, timeOrigin })
   const state: HistorySnapshot = { ...observation, name, profile: profile.name, profileId: profile.id, screenshot: '', sequence: next() }
   const { file, bytes } = await capture(token, Math.max(1, deadline - performance.now()))
   state.screenshot = file
