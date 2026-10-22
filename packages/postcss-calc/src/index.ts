@@ -1,4 +1,4 @@
-import type { PluginCreator } from 'postcss';
+import type { Declaration, PluginCreator } from 'postcss';
 import transform from './lib/transform.ts';
 
 export interface PostCssCalcOptions {
@@ -9,6 +9,7 @@ export interface PostCssCalcOptions {
   selectors?: boolean;
   customPropertyValues?: ReadonlyMap<string, string>;
   includeCustomProperties?: (string | RegExp)[];
+  filterDeclaration?: (declaration: Declaration) => boolean;
 }
 
 interface NormalizedPostCssCalcOptions {
@@ -19,6 +20,7 @@ interface NormalizedPostCssCalcOptions {
   selectors: boolean;
   customPropertyValues?: ReadonlyMap<string, string>;
   includeCustomProperties?: (string | RegExp)[];
+  filterDeclaration?: (declaration: Declaration) => boolean;
 }
 
 export type PostCssCalcPluginCreator = PluginCreator<PostCssCalcOptions> & {
@@ -42,7 +44,7 @@ const pluginCreator = ((opts = {}) => {
     OnceExit(css, { result }) {
       css.walk((node) => {
         const { type } = node;
-        if (type === 'decl') {
+        if (type === 'decl' && options.filterDeclaration?.(node) !== false) {
           transform(node, 'value', options, result);
         }
 

@@ -475,11 +475,11 @@ page,.tw-root,wx-root-portal-content,:host {
   }
   ::-webkit-input-placeholder {
     opacity: 1;
-    color: currentColor;
+    color: color-mix(in oklab, currentColor 50%, transparent);
   }
   ::placeholder {
     opacity: 1;
-    color: currentColor;
+    color: color-mix(in oklab, currentColor 50%, transparent);
   }
   textarea {
     resize: vertical;

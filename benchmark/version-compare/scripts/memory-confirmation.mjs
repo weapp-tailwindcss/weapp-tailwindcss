@@ -7,6 +7,7 @@ import {
   evaluatePerformanceGuard,
   markHmrMemoryConfirmationUnavailable,
 } from './ci-report.mjs'
+import { assertBenchmarkMatrixRows } from './project-selection.mjs'
 
 export async function runHmrMemoryConfirmation({
   resultDir,
@@ -14,6 +15,8 @@ export async function runHmrMemoryConfirmation({
   baselineVersion,
   performanceGuard,
   regressionPercent,
+  hmrRuns,
+  selectedProjects,
   runMatrix,
 }) {
   const versionsFile = path.join(resultDir, 'memory-confirmation-versions.json')
@@ -26,6 +29,12 @@ export async function runHmrMemoryConfirmation({
   process.stdout.write('[benchmark] confirming HMR memory regression with reversed current->baseline order\n')
   await runMatrix({ versionsFile, outputFile, matrixBuildRuns: 0 })
   const raw = JSON.parse(await fs.readFile(outputFile, 'utf8'))
+  try {
+    assertBenchmarkMatrixRows(raw, selectedProjects, [currentVersion, baselineVersion], { buildRuns: 0, hmrRuns })
+  }
+  catch (error) {
+    return markHmrMemoryConfirmationUnavailable(performanceGuard, error instanceof Error ? error.message : String(error))
+  }
   const summary = buildSummary(raw, baselineVersion.version, currentVersion.version)
   const confirmationGuard = evaluatePerformanceGuard(summary, { regressionPercent })
   await fs.writeFile(summaryFile, `${JSON.stringify(summary, null, 2)}\n`, 'utf8')

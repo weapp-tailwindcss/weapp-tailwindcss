@@ -1,8 +1,12 @@
 import type { NativeArtifactReceipt, NativeColorSchemeReceipt, NativeMediaGateCapture, NativePlatformReport, StaticEvidenceReport } from './types'
 import { afterEach, expect, it, vi } from 'vitest'
+import { nativeFailureError } from '../../../../e2e/lynx/native-failure'
 import { submitNativeCompatibilityReport } from './native-reporter'
 import staticEvidence from './static-evidence.json'
 import { mediaCapture } from './test-utils/native-media'
+
+// 主题控制器的状态与失败恢复由 native-theme-overrides.test.ts 独立验证；此处隔离原有 reporter 维度。
+vi.mock('./native-theme-overrides', () => ({ collectThemeOverrides: vi.fn(async () => ({ contract: 'lynx-theme-overrides-v1', frames: [] })) }))
 
 vi.mock('./catalog', async (importOriginal) => {
   const original = await importOriginal<typeof import('./catalog')>()
@@ -70,7 +74,34 @@ it('hover 编码失败不会阻止 active 自己采集并保存原生帧', async
   }
 })
 
-async function collect(options: { missingFrame?: boolean, missingLayout?: boolean, restoreFailed?: boolean, receipt?: 'late' | 'wrong-run' | 'missing' | 'failed' } = {}) {
+it('颜色模式采集与恢复错误经过原生 failure 文件仍保留两条因果链和操作身份', async () => {
+  const { failures, error, report } = await collect({ missingColorFrame: true, restoreFailed: true })
+  expect(report).toBeUndefined()
+  expect(error).toBeInstanceOf(AggregateError)
+  expect(failures).toHaveLength(1)
+  const restored = nativeFailureError(JSON.stringify({ message: failures[0] }))
+  expect(restored.cause).toMatchObject({
+    name: 'AggregateError',
+    errors: [
+      expect.objectContaining({
+        message: expect.stringContaining('capture'),
+        cause: expect.objectContaining({ message: '原生颜色模式取证缺证' }),
+      }),
+      expect.objectContaining({
+        message: '原生颜色模式恢复失败',
+        cause: expect.objectContaining({
+          message: expect.stringContaining('switch'),
+          cause: expect.objectContaining({ message: '原生颜色模式取证缺证' }),
+        }),
+      }),
+    ],
+  })
+  expect(restored.message).toContain('probe-container-variant-dark')
+  expect(restored.message).toContain('restored')
+  expect(restored).not.toHaveProperty('code')
+})
+
+async function collect(options: { missingFrame?: boolean, missingColorFrame?: boolean, missingLayout?: boolean, restoreFailed?: boolean, receipt?: 'late' | 'wrong-run' | 'missing' | 'failed' } = {}) {
   vi.useFakeTimers()
   const runId = '00000000-0000-4000-8000-000000000001'
   const captures: string[] = []
@@ -94,11 +125,11 @@ async function collect(options: { missingFrame?: boolean, missingLayout?: boolea
       getEvidenceContext: (callback: (value: object) => void) => callback({ version: 1, runId, bundleSha256: 'a'.repeat(64) }),
       captureMediaGate: (_run: string, callback: (value: NativeMediaGateCapture) => void) => callback(mediaCapture()),
       setColorScheme: (run: string, requestId: string, scheme: 'light' | 'dark', callback: (value: NativeColorSchemeReceipt | null) => void) => {
-        callback(++schemeRequests === 3 && options.restoreFailed ? null : { runId: run, requestId, scheme })
+        callback(++schemeRequests === (options.missingColorFrame ? 2 : 3) && options.restoreFailed ? null : { runId: run, requestId, scheme })
       },
       captureColorScheme: (_run: string, _requestId: string, id: string, callback: (image: string | null) => void) => {
         captures.push(id)
-        callback(options.missingFrame ? null : `native-color-scheme:${id}`)
+        callback(options.missingFrame || options.missingColorFrame ? null : `native-color-scheme:${id}`)
       },
       measure: (id: string, callback: (rect: object | undefined) => void) => {
         measurements.push(id)

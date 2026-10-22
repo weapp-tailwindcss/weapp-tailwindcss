@@ -1,5 +1,5 @@
 /*! weapp-tailwindcss vite-generated-css:%3Cproject-root%3E%2Fsrc%2Fcomponents%2FHelloWorld.vue */
- /*tokens: hello-world-shell <= src/components/HelloWorld.vue */
+ /*! tokens: hello-world-shell <= src/components/HelloWorld.vue */
 .hello-world-shell[data-v-04bcf89b] {
   display: flex;
   align-items: center;
@@ -10,29 +10,29 @@
   padding-block: calc(var(--spacing, 0.25rem) * 3);
   color: var(--color-slate-700, rgb(49, 65, 88));
 } /*! weapp-tailwindcss vite-generated-css-end:%3Cproject-root%3E%2Fsrc%2Fcomponents%2FHelloWorld.vue */
- /*tokens: special-class-visual-probe <= src/pages/index/index.vue | dark <= src/pages/index/index.vue */
+ /*! tokens: special-class-visual-probe <= src/pages/index/index.vue | dark <= src/pages/index/index.vue */
 .special-class-visual-probe.dark [class~='dark:bg-red-300'] {
   background-color: #fca5a5;
   color: #7f1d1d;
 }
- /*tokens: special-class-visual-probe <= src/pages/index/index.vue */
+ /*! tokens: special-class-visual-probe <= src/pages/index/index.vue */
 .special-class-visual-probe [class~='text-[45rpx]'] {
   color: #0f172a;
   font-size: 45px;
   line-height: 1;
 }
- /*tokens: special-class-visual-probe <= src/pages/index/index.vue | dark <= src/pages/index/index.vue | dark:bg-red-300 <= src/pages/index/index.vue */
+ /*! tokens: special-class-visual-probe <= src/pages/index/index.vue | dark <= src/pages/index/index.vue | dark:bg-red-300 <= src/pages/index/index.vue */
 .special-class-visual-probe.dark .dark_cbg-red-300 {
   background-color: #fca5a5;
   color: #7f1d1d;
 }
- /*tokens: special-class-visual-probe <= src/pages/index/index.vue | text-[45rpx] <= src/pages/index/index.vue */
+ /*! tokens: special-class-visual-probe <= src/pages/index/index.vue | text-[45rpx] <= src/pages/index/index.vue */
 .special-class-visual-probe .text-_b45rpx_B {
   color: #0f172a;
   font-size: 45px;
   line-height: 1;
 }
- /*tokens: special-class-visual-probe <= src/pages/index/index.vue | css-variable-visual-probe <= src/pages/index/index.vue */
+ /*! tokens: special-class-visual-probe <= src/pages/index/index.vue | css-variable-visual-probe <= src/pages/index/index.vue */
 .special-class-visual-probe .css-variable-visual-probe {
   --visual-probe-bg: rgb(16, 185, 129);
   --visual-probe-size: 45px;

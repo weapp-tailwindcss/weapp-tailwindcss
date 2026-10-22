@@ -25,7 +25,7 @@ describe('hosted E2E workflow contract', () => {
 
   it('bounds browser setup before both portable catalog and demo execution', () => {
     const portable = workflow('demo-matrix')
-    for (const job of [portable.jobs.catalog, portable.jobs.demos]) {
+    for (const job of [portable.jobs.catalog, portable.jobs.demos, workflow('demo-watch-diagnostic').jobs.watch]) {
       const steps = job.steps as Step[]
       const browser = steps.findIndex(step => step.uses === './.github/actions/setup-chromium')
       const tests = steps.findIndex(step => step.run === 'pnpm test:demo:matrix' || step.run === 'pnpm e2e:demo:matrix')

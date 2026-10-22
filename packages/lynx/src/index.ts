@@ -22,7 +22,7 @@ export interface LynxTailwindcssOptions extends Omit<UserDefinedOptions, 'platfo
 }
 
 interface RspackPluginChain {
-  use: <T>(plugin: new (options: T) => unknown, options: [T]) => unknown
+  use: <T extends unknown[]>(plugin: new (...options: T) => unknown, options: T) => unknown
 }
 
 interface BundlerChain {
@@ -30,13 +30,14 @@ interface BundlerChain {
 }
 
 interface RsbuildPluginApi {
+  context?: { rootPath?: string | undefined } | undefined
   useExposed: (key: symbol) => { LynxTemplatePlugin?: LynxTemplatePluginApi } | undefined
   modifyBundlerChain: (handler: (chain: BundlerChain) => BundlerChain) => void
   modifyRspackConfig: (handler: (config: RspackConfigLike) => RspackConfigLike) => void
 }
 
 function normalizeOptions(options: LynxTailwindcssOptions): UserDefinedOptions {
-  const { rspack: _rspack, generator, ...rest } = options
+  const { rspack: _rspack, diagnostics: _diagnostics, generator, ...rest } = options
   const generatorOptions = generator === false ? {} : generator
   return {
     ...rest,
@@ -100,7 +101,7 @@ export function pluginLynxTailwindcss(options: LynxTailwindcssOptions = {}): Rsb
           throw new Error('Lynx 模板编码 hook 不可用；请注册或升级 ReactLynx 构建插件（至少 0.12.4），确认其提供 LynxTemplatePlugin API。')
         }
         chain.plugin(PLUGIN_NAME).use(WeappTailwindcss, [normalizedOptions])
-        chain.plugin(`${PLUGIN_NAME}:css-variables`).use(LynxCssVariablesPlugin, [templatePlugin, options.diagnostics ?? {}])
+        chain.plugin(`${PLUGIN_NAME}:css-variables`).use(LynxCssVariablesPlugin, [templatePlugin, options.diagnostics ?? {}, rsbuildApi.context?.rootPath])
         return chain
       })
       rsbuildApi.modifyRspackConfig(config => patchRspackConfig(config, normalizeRspackOptions(options.rspack)))
@@ -116,4 +117,5 @@ export type {
   LynxDiagnosticsOptions,
   LynxDiagnosticsReport,
   LynxDiagnosticStatus,
+  LynxEncodingEvidence,
 } from './diagnostics'

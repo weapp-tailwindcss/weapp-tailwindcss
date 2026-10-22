@@ -8,4 +8,4 @@
 
 在 macOS arm64、Node 24.18.0、固定 Emscripten 4.0.22 下，另两次从已校验源码归档开始，在不同临时路径重新生成错误码并完整编译 429 个目标，原始 JS 和 gzip 均与首轮逐字节一致。记录见 `reproducibility.json`；此结果只证明该工具链与平台范围内的路径独立重建，不代表已在所有构建宿主复现。构建工具只在维护者更新产物时运行，不作为普通 CI 的动态兜底。
 
-生成 gzip 和许可清单使用 `pnpm exec tsx e2e/lynx/decoder/rebuild/package.ts --source <解压源码目录> --emsdk <准确 SDK 目录> --input <实际 lepus.js>`。完整源码准备及重建入口见 `../rebuild/README.md`；禁止手改 gzip/WASM。
+生成 gzip 和许可清单使用 `pnpm exec tsx e2e/lynx/decoder/rebuild/package.ts --source <解压源码目录> --emsdk <准确 SDK 目录> --input <实际 lepus.js>`。完整源码准备及重建入口见 仓库 `e2e/lynx/decoder/rebuild/README.md`；禁止手改 gzip/WASM。

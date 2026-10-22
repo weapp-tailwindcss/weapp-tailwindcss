@@ -21,6 +21,10 @@ static NSData *png(void) {
   return [[NSData alloc] initWithBase64EncodedString:@"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a4xkAAAAASUVORK5CYII=" options:0];
 }
 
+static NSDictionary *screen(void) {
+  return @{@"version": @1, @"source": @"lynx-native-screen-v1", @"width": @375, @"height": @812, @"pixelRatio": @3};
+}
+
 static EvidenceStore *store(NSURL *root, int number) {
   NSError *error = nil;
   NSData *bundle = [@"actual geometry bundle" dataUsingEncoding:NSUTF8StringEncoding];
@@ -189,6 +193,37 @@ int main(int argc, const char *argv[]) {
     EvidenceStore *forged = store(root, number);
     check([forged saveArtifact:@"case-geometry.json" runId:run(number) data:png() error:&error] == nil, @"JS artifact route cannot write geometry JSON");
     cannotPublish(forged, root, number++);
+
+    EvidenceStore *fixed = store(root, number);
+    GeometryEvidence *fixedEvidence = [[GeometryEvidence alloc] initWithStore:fixed screenMetrics:screen()];
+    NSDictionary *fixedResult = [fixedEvidence captureRunId:run(number) identifier:@"sizing-fixed" measure:measure capture:capture error:&error];
+    check([fixedResult[@"screenMetrics"] isEqual:screen()], @"Sizing result binds native screen parameters");
+    NSDictionary *fixedSidecar = [NSJSONSerialization JSONObjectWithData:[NSData dataWithContentsOfURL:artifact(root, number, @"sizing-fixed-geometry.json")] options:0 error:&error];
+    check([fixedSidecar[@"screenMetrics"] isEqual:screen()], @"Sizing sidecar preserves the same native screen parameters");
+    check([fixed publishReport:@{@"results": @[fixedResult]} runId:run(number) error:&error], @"Complete native screen evidence may publish");
+    number++;
+    NSMutableArray *invalidScreens = [NSMutableArray arrayWithObjects:NSNull.null, @{}, nil];
+    for (NSString *field in @[@"width", @"height", @"pixelRatio"]) {
+      for (id bad in @[@"375", @YES, @(NAN), @(INFINITY), @0, @-1, NSNull.null]) {
+        NSMutableDictionary *value = [screen() mutableCopy]; value[field] = bad; [invalidScreens addObject:value];
+      }
+    }
+    for (id source in @[@"js-SystemInfo", NSNull.null]) {
+      NSMutableDictionary *value = [screen() mutableCopy]; value[@"source"] = source; [invalidScreens addObject:value];
+    }
+    for (id version in @[@2, @"1", NSNull.null, @YES]) {
+      NSMutableDictionary *value = [screen() mutableCopy]; value[@"version"] = version; [invalidScreens addObject:value];
+    }
+    for (id invalidScreen in invalidScreens) {
+      EvidenceStore *value = store(root, number);
+      GeometryEvidence *subject = [[GeometryEvidence alloc] initWithStore:value screenMetrics:invalidScreen == NSNull.null ? nil : invalidScreen];
+      __block int reads = 0;
+      check([subject captureRunId:run(number) identifier:@"sizing-fixed" measure:^NSDictionary *(NSString *node) {
+        (void)node; reads++; return rect();
+      } capture:capture error:&error] == nil, @"Invalid native screen must fail before reading geometry");
+      check(reads == 0, @"Invalid screen does not read the native view");
+      cannotPublish(value, root, number++);
+    }
     puts("GeometryEvidence: native nodes, receipts, sidecar identity, actual writes and failure isolation passed");
   }
   return 0;

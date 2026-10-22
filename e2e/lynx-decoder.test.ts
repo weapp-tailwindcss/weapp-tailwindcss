@@ -4,9 +4,10 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
+import identifierFixture from '../packages/lynx/src/decoder-data/fixtures/selector-identifiers.json'
 import { encodeLynxCss } from './lynx/batch-encode'
 import { decodeLynxBundle, loadVerifiedDecoderFactory } from './lynx/decoder'
-import identifierFixture from './lynx/decoder/fixtures/selector-identifiers.json'
+import { decoderDataDirectory } from './lynx/decoder/paths'
 import { parseDecodedRules, selectorHasCandidate } from './lynx/static-evidence'
 
 const directories: string[] = []
@@ -78,7 +79,7 @@ describe('实际 Lynx bundle 的便携解码 oracle', () => {
   it.each(['gzip', 'patch'] as const)('拒绝篡改 %s，不加载任何替代 decoder', async (mode) => {
     const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'lynx decoder evidence '))
     directories.push(directory)
-    const source = path.join(import.meta.dirname, 'lynx', 'decoder')
+    const source = decoderDataDirectory
     const manifest = JSON.parse(await fs.readFile(path.join(source, 'manifest.json'), 'utf8'))
     const files: string[] = ['manifest.json', manifest.inputs.file, manifest.compressed.file, ...manifest.patches.map((patch: { file: string }) => patch.file)]
     for (const file of files) {

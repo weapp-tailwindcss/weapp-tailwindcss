@@ -17,6 +17,8 @@
 
 RN 的已审查限制位于 `examples/react-native-expo/src/compatibility/protocol.ts`；Lynx 位于 `e2e/lynx/expectations.ts`。这些是预先声明的合同，不能根据新失败自动扩大。尚无可靠语义夹具的注册能力必须继续列为未执行。Lynx 宿主尚不能独立触发 hover；active 不能代证 hover，group 也不能代证 peer。
 
+经用户确认，小程序的未知运行时颜色权重（如 `bg-sky-500/(--my-alpha-value)`）登记为限制，数据位于共享 catalog 的 `platform-limits.ts`。`e2e/tailwind-mini-program-alpha-limit.test.ts` 独立检查原候选、Web 完整动态表达式和小程序不透明 fallback；这个 fallback 是语义无法保持的负向产物证据，不能计为支持或转换器已明确拒绝。三引擎独立参考见 `e2e/color-mix-alpha-browser.test.ts`：直接替换为 rgba 会改变原色 alpha、数值类型、越界和变量失效语义。字面静态百分比以及完整静态 root 变量/别名链均有 0–100%、小数和原色 alpha 相乘正向回归；`e2e/color-mix-static-root-browser.test.ts` 对生成结果逐字节比较独立 RGBA 的 Canvas 样本，并检查原始 mix 的计算透明度。它不声称原始 Oklab 值再次写入 Canvas 后逐字节相同。本项仍没有微信运行时证据，也没有候选级拒绝诊断，统一转换报告继续保留 oracle 缺口，不因这一限制登记自动产生负向通过。
+
 Lynx adapter 逐项登记全部 1,293 个 utility/variant 注册条目。当前只有 `aspect` 和 `size` 通过已审查的单候选几何夹具关联注册 ID，其余 1,291 项各有 `inventory/<注册 ID>`、原始语法样本和 `not-run` 结果。旧 118 案例和原子能力 ID 继续保留；混合案例通过不会填平这些缺口。Expo Web CI 使用 Chromium、Firefox、WebKit 独立矩阵，静态导出烟测和语义 runner 均消费同一个 `RN_WEB_BROWSER`，分别归档证据。
 
 Web 注册 utility 的逐引擎语法限制、Linux 字体边界及 Firefox 滚动条取证入口见 [固定引擎限制](registry-web/limits.md)。这些案例保留原 ID；负向通过需要独立语法 / CSSOM / 无类对照证据，不能计作正向渲染支持。
@@ -48,11 +50,11 @@ pnpm e2e:tailwind --list
 - `static`：每批 256 个唯一候选，保存 raw CSS、WXSS、RN manifest、Lynx 解码 CSS、诊断与审计。生成合同比较完整声明、选择器及媒体/容器条件，并核对主题变量、动画帧和 property 注册。每个候选另有三端独立转换结果；没有已审查转换 oracle 的项目保持未执行，异常保持失败，不由产物存在推导支持。已审查的 `weapp-keyword-compatibility-v2` 覆盖默认补全中的 848 项，其余 22,438 项仍有转换 oracle 缺口。RN 的 `react-native-literal-mapping-v1` 覆盖 1,599 项（1,511 正向、88 预先声明的拒绝），其余 21,687 项保留缺口；另行覆盖的语法样本单独计数。转换审计不能直接判成运行时支持。
 - `authoring`：18 个指令/配置夹具及 11 个真实扫描语法夹具，分别创建隔离目录；扫描候选只存在于各自源码，完整参考检查声明、条件和依赖。29 例另有隔离的浏览器语义参考；扫描后的 DOM 消费不等同于执行 JSX/Vue 条件分支。
 - Web 子目录 `framework-source`：18 个真实 React JSX / Vue SFC 案例，执行条件、数组、对象、模板、映射、merge、cva、variants 和动态插值负例；四版源码分别刷新并验证 A→B→A 分支、精确类名、独立宽度、节点和页面身份。候选只由唯一源码扫描，不能由 inline source 补齐。
-- Web 子目录 `context`：7 类上下文变体、27 个状态，原生触摸/鼠标、禁用脚本、表单编辑/提交/失焦及恢复；与普通状态夹具及生命周期夹具合计为 82/88 个 variant 提供夹具。其余 6 类保留在 [缺口清单](web-context/remaining-variants.md)，有夹具不等于各引擎实际通过。
+- Web 子目录 `context`：7 类上下文变体、27 个状态，原生触摸/鼠标、禁用脚本、表单编辑/提交/失焦及恢复；与普通状态、生命周期及独立历史夹具合计为 Firefox/WebKit 的 83/88 个 variant 提供夹具。其余 5 类保留在 [缺口清单](web-context/remaining-variants.md)，有夹具不等于各引擎实际通过。
 - Web 子目录 `lifecycle`：starting 使用自然 rAF/transition 时间线、真实 CSSTransition 的起中终像素及移除重插；details-content 使用原生 summary 点击/键盘开合、UA 伪元素与无 class 对照像素。独立保存逐引擎结果，功能探针不能自动改判不支持。
 - Web 子目录 `hmr`：同一真实 Vite 服务连续新增、替换、删除类名及最终刷新，检查每轮保存标识、计算样式、源码 update 消息、服务身份与页面是否被整刷。
 - `e2e/.artifacts/tailwind/<run-id>/index.json` 和 `index.md`：本轮调度结果。各目标保留 v2 报告、原始证据和覆盖缺口；原生报告归档到本轮 `native` 目录，不引用下次会被覆盖的共享目录。
-- `mini-builds`：逐个登记的小程序项目复用完整构建、样式、模板及分包断言，立即归档本轮 bundle，写入逐案例 v2 报告。旧矩阵中只有登记信息、执行空命令的条目保留未执行；不能以 package.json 冒充样式产物。此层级不贡献设备运行覆盖。
+- `mini-builds`：逐个登记的小程序项目复用完整构建、样式、模板及分包断言，立即归档本轮 bundle，写入逐案例 v2 报告。现有 59 个 CLI 构建入口与 5 个 HBuilderX IDE 夹具分别记录，uni-app x 微信占位项已绑定唯一 IDE provider。IDE 返回的已验证输出根、实际 host/版本和 open/launch/close 原始结果随本轮 bundle 归档，关闭未确认时保留别名并阻断后续 provider。其余只有登记信息、执行空命令的条目仍保留未执行；不能以 package.json 冒充样式产物。此层级不贡献设备运行覆盖。
 
 v2 报告绑定源码、锁文件、工具版本、catalog、夹具及预期 hash。每个案例声明支持状态、验证层级、具体预期值和允许误差；验收重新检查原始文件 hash、字节数、归属和时间。错误样式、缺属性、缺运行时证据、擅改支持预期、缺案例、旧版本、旧截图、目标浏览器不符均拒绝。报告还读取实际 Vite、平台适配器、生产 encoder/serializer、独立 decoder 与 CSS defines 版本。旧 v1 报告保留历史展示，不能贡献本轮通过覆盖。
 
@@ -71,3 +73,7 @@ Lynx 宿主的桥接缺失、视图失效及回执超时使用白名单结构化
 根因及验收边界见 [验证记录](../../docs/engineering/lessons/tailwind-capability-evidence.md)。该记录保留未完成范围，实际支持结果以本轮逐例报告为准。
 
 本轮仅覆盖仓库维护的扩展与配置场景，第三方插件的任意实现必须另行登记。
+
+Chromium 另有 `native-media-contrast-less` 原生 CDP 夹具，检查 no-preference、less、more、custom 与恢复；使用独立 CSS 参考、未加 class 的对照和绑定 run/phase 的 PNG 像素。统一门禁复读 sidecar、CSS、PNG 后重算。加上独立历史和原生 Autofill 三阶段夹具，Chromium 为 85/88 个 root 提供夹具，Firefox/WebKit 为 83/88；夹具存在不等于本轮运行通过。
+
+Web 子目录 `history` 使用两份任务独占、串行关闭的 persistent profile，验证 `visited:border-[#123456]` 的真实同源导航、四边像素、未访问对照、独立参考和无历史恢复。它不会读取或清除用户历史；统一门禁重读原始 CSS、导航、profile 回执和 PNG。夹具存在不等于本轮真实通过，详见 [历史夹具](web-history/README.md)。

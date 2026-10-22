@@ -28,6 +28,7 @@ describe('defensive coverage edge cases', () => {
     const sparseAtRule = {
       name: 'media',
       params: '(color-gamut: p3)',
+      raws: {},
       parent: undefined,
       remove() {
         this.removed = true

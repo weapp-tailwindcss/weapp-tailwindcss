@@ -1,0 +1,102 @@
+diff --git a/dist/h5/config.js b/dist/h5/config.js
+index ad700e12493f6a3af576d5f8936fdb5ad8716652..493f78bb5d4d5fbe9a11be1f4c2e63cc12c609f8 100644
+--- a/dist/h5/config.js
++++ b/dist/h5/config.js
+@@ -246,7 +246,7 @@ function default_1(viteCompilerContext) {
+                     return html;
+                 const { configPath } = app;
+                 const scriptSource = configPath.replace(sourceDir, '');
+-                const htmlScript = (0, html_1.getHtmlScript)(scriptSource, pxtransformOption);
++                const htmlScript = (0, html_1.getHtmlScript)(scriptSource, pxtransformOption, taroConfig.buildAdapter);
+                 return html.replace(/<script><%= htmlWebpackPlugin.options.script %><\/script>/, htmlScript);
+             },
+         },
+diff --git a/dist/h5/mpa.js b/dist/h5/mpa.js
+index 819265b62fcfb424de870a3249107471e030a113..86de02a85a70fb1873016b834d592cce89f8a661 100644
+--- a/dist/h5/mpa.js
++++ b/dist/h5/mpa.js
+@@ -156,7 +156,7 @@ function default_1(viteCompilerContext) {
+                     const queryString = (0, utils_1.generateQueryString)(params);
+                     srciptSource = page.configPath.replace(sourceDir, '') + `?${queryString}`;
+                 }
+-                const htmlScript = (0, html_1.getHtmlScript)(srciptSource, pxtransformOption);
++                const htmlScript = (0, html_1.getHtmlScript)(srciptSource, pxtransformOption, taroConfig.buildAdapter);
+                 return html.replace(/<script><%= htmlWebpackPlugin.options.script %><\/script>/, htmlScript);
+             }
+         },
+diff --git a/dist/index.h5.js b/dist/index.h5.js
+index 32eabe74231c5248e6e66e03e5ceb20b56ac13f4..8452a5edfb5fe6a82e7825c44cdda10ee30f2151 100644
+--- a/dist/index.h5.js
++++ b/dist/index.h5.js
+@@ -49,7 +49,7 @@ function default_1(appPath, rawTaroConfig) {
+             configFile: false,
+             plugins
+         };
+-        (_e = taroConfig.modifyViteConfig) === null || _e === void 0 ? void 0 : _e.call(taroConfig, commonConfig, {
++        yield (_e = taroConfig.modifyViteConfig) === null || _e === void 0 ? void 0 : _e.call(taroConfig, commonConfig, {
+             componentConfig: component_1.componentConfig
+         }, viteCompilerContext);
+         if (isProd) {
+diff --git a/dist/index.harmony.js b/dist/index.harmony.js
+index 1221b1345031bf9288f58ef2eb0287ca966219a0..f50e3fcbf5b6f5d983851a488157e91fcc79a8e9 100644
+--- a/dist/index.harmony.js
++++ b/dist/index.harmony.js
+@@ -39,7 +39,7 @@ function default_1(appPath, rawTaroConfig) {
+         const commonConfig = {
+             plugins,
+         };
+-        (_e = taroConfig.modifyViteConfig) === null || _e === void 0 ? void 0 : _e.call(taroConfig, commonConfig, {
++        yield (_e = taroConfig.modifyViteConfig) === null || _e === void 0 ? void 0 : _e.call(taroConfig, commonConfig, {
+             componentConfig: component_1.componentConfig
+         }, viteCompilerContext);
+         yield (0, vite_1.build)(commonConfig);
+diff --git a/dist/index.mini.js b/dist/index.mini.js
+index f6117d213c5987f8292905bf3984cb465b9170cd..d1eb69880e3864da704d30e0ae6bba7f86c6df74 100644
+--- a/dist/index.mini.js
++++ b/dist/index.mini.js
+@@ -43,7 +43,7 @@ function default_1(appPath, rawTaroConfig) {
+         if ((0, shared_1.isFunction)(modifyComponentConfig)) {
+             modifyComponentConfig(component_1.componentConfig, taroConfig);
+         }
+-        (_e = taroConfig.modifyViteConfig) === null || _e === void 0 ? void 0 : _e.call(taroConfig, commonConfig, {
++        yield (_e = taroConfig.modifyViteConfig) === null || _e === void 0 ? void 0 : _e.call(taroConfig, commonConfig, {
+             componentConfig: component_1.componentConfig
+         }, viteCompilerContext);
+         yield (0, vite_1.build)(commonConfig);
+diff --git a/dist/utils/html.d.ts b/dist/utils/html.d.ts
+index 8c5bb34345baece4d9f4de489cbdb21087b5cc60..375688eac0020c35544ed6bc33521ac0773e2c0f 100644
+--- a/dist/utils/html.d.ts
++++ b/dist/utils/html.d.ts
+@@ -1 +1 @@
+-export declare function getHtmlScript(entryScript: string, pxtransformOption: any): string;
++export declare function getHtmlScript(entryScript: string, pxtransformOption: any, platform?: 'h5' | 'harmony-hybrid'): string;
+diff --git a/dist/utils/html.js b/dist/utils/html.js
+index baa1291df9cde4e53abf7714c80b0d6e45d74489..b0bfc61997cac7c6adaa6928b0ca9136e7d94d71 100644
+--- a/dist/utils/html.js
++++ b/dist/utils/html.js
+@@ -2,17 +2,23 @@
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.getHtmlScript = void 0;
+ const helper_1 = require("@tarojs/helper");
+-function getHtmlScript(entryScript, pxtransformOption) {
++function getHtmlScript(entryScript, pxtransformOption, platform = 'h5') {
+     var _a, _b, _c;
+     let htmlScript = '';
+     const options = (pxtransformOption === null || pxtransformOption === void 0 ? void 0 : pxtransformOption.config) || {};
+     const max = (_a = options === null || options === void 0 ? void 0 : options.maxRootSize) !== null && _a !== void 0 ? _a : 40;
+     const min = (_b = options === null || options === void 0 ? void 0 : options.minRootSize) !== null && _b !== void 0 ? _b : 20;
+-    const baseFontSize = (options === null || options === void 0 ? void 0 : options.baseFontSize) || (min > 1 ? min : 20);
++    const baseFontSize = (options === null || options === void 0 ? void 0 : options.baseFontSize) || (platform === 'harmony-hybrid' ? 20 : min > 1 ? min : 20);
+     const designWidth = ((input) => typeof options.designWidth === 'function' ? options.designWidth(input) : options.designWidth)(baseFontSize);
+     const rootValue = (baseFontSize / options.deviceRatio[designWidth]) * 2;
+     if (((_c = options === null || options === void 0 ? void 0 : options.targetUnit) !== null && _c !== void 0 ? _c : 'rem') === 'rem') {
++        // Harmony 使用平台自己的缩放策略，SPA 与 MPA 均只生成一个脚本。
++        if (platform === 'harmony-hybrid') {
++            htmlScript = `<script>!function(n){function f(){var e=n.document.documentElement,w=Math.floor(e.getBoundingClientRect().width),x=w<600?${rootValue}*w/${designWidth}:${rootValue}/2;e.style.fontSize=x+"px"}n.addEventListener("resize",f);f()}(window);</script>\n`;
++        }
++        else {
+         htmlScript = `<script>!function(n){function f(){var e=n.document.documentElement,r=e.getBoundingClientRect(),width=r.width,height=r.height,arr=[width,height].filter(function(value){return Boolean(value)}),w=Math.min.apply(Math,arr),x=${rootValue}*w/${designWidth};e.style.fontSize=x>=${max}?"${max}px":x<=${min}?"${min}px":x+"px"}; n.addEventListener("resize",(function(){f();setTimeout(f,500)})),f()}(window);</script>\n`;
++        }
+     }
+     htmlScript += `  <script type="module" src="${(0, helper_1.normalizePath)(entryScript)}"></script>`;
+     return htmlScript;

@@ -61,11 +61,12 @@ export function createCompiler(options: CreateCompilerOptions = {}): Compiler {
       throw new Error(`Compiler root 已被移除：${entry.id}`)
     }
     const invalidation = entry.invalidation
-    const { source, sourceFingerprint, sourceInputFingerprint } = await resolveCompilerSource(entry, request, invalidation)
+    const engineInvalidation = entry.engineInvalidation
+    const { source, sourceFingerprint, sourceInputFingerprint } = await resolveCompilerSource(entry, request, engineInvalidation)
     const sourceReused = entry.sourceFingerprint === sourceFingerprint
     const engineReused = sourceReused
       && entry.generator !== undefined
-      && entry.appliedInvalidation === invalidation
+      && entry.appliedEngineInvalidation === engineInvalidation
     const generator = engineReused ? entry.generator! : createWeappTailwindcssGenerator(source)
     const target = request.target ?? 'weapp'
     const {
@@ -88,6 +89,7 @@ export function createCompiler(options: CreateCompilerOptions = {}): Compiler {
     )
     const reusableGeneration = request.scanMode !== 'compiled'
       && engineReused
+      && entry.appliedInvalidation === invalidation
       && entry.generationCache
       && isSameCompilerGenerationCacheKey(entry.generationCache.key, generationCacheKey)
       ? entry.generationCache.result
@@ -149,6 +151,7 @@ export function createCompiler(options: CreateCompilerOptions = {}): Compiler {
       entry.sourceFingerprint = sourceFingerprint
       entry.sourceInputFingerprint = sourceInputFingerprint
       entry.appliedInvalidation = invalidation
+      entry.appliedEngineInvalidation = engineInvalidation
       entry.latestSnapshot = snapshot
       rootStore.attachDependencies(entry, dependencies)
       rootStore.attachSources(entry, snapshot.sources)

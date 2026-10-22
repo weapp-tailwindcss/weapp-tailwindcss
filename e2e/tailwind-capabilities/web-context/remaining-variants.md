@@ -1,6 +1,6 @@
-# 剩余 6 类变体的语义验收计划
+# 剩余 5 类变体的语义验收计划
 
-本文件记录 gold 夹具与独立 browser context 夹具合并后，仍缺少运行时语义证据的 6 个 Tailwind CSS 4.3.3 variant roots。机器可读的逐项计划在 [`remaining-variants.ts`](./remaining-variants.ts)。这些条目全部是 `not-run`，不是已验证能力，也不是 `unsupported` 声明。starting 与 details-content 已迁入独立 lifecycle runner；此处保留需要额外原生环境或隐私证据的缺口。
+本文件记录 gold 夹具与独立 browser context 夹具合并后，仍缺少运行时语义证据的 5 个 Tailwind CSS 4.3.3 variant roots。机器可读的逐项计划在 [`remaining-variants.ts`](./remaining-variants.ts)。这些条目在各自登记的引擎仍是 `not-run`，不是已验证能力，也不是 `unsupported` 声明。starting 与 details-content 已迁入独立 lifecycle runner，visited 已迁入独占历史 runner；此处保留需要额外原生环境或隐私证据的缺口。
 
 判断范围是特定变体在特定引擎的真实行为。生成出选择器或媒体条件只证明生成阶段；模拟接口返回成功只证明调用完成；功能探针返回 true 也不能代替像素和生命周期证据。新增夹具时仍须预先声明独立预期，实际失败不得自动改写支持等级。
 
@@ -10,8 +10,7 @@
 | `any-pointer-none` | 主指针缺失不等于全部指针缺失 | 全部指针不可用，再恢复任一设备；分别断言主指针和所有设备 | 与上一项共享资源，保持独立结果 |
 | `contrast-less` | 当前 Playwright 只提供 `more/no-preference` | 原生 `prefers-contrast:less`、默认与恢复状态、独立颜色 oracle | 可先探索单引擎原生媒体协议，其余引擎保持缺口 |
 | `inverted-colors` | 无统一模拟入口，宿主反色和截图捕获位置还需校准 | 原生媒体状态、CSS 色值、截图 RGB 校准块 | 先确定捕获是在系统反色前还是反色后 |
-| `autofill` | 普通填表不产生自动填充语义 | 独占临时 profile、虚构地址、浏览器原生填充服务、`:autofill` 和可见 outline | 先实现可控的单引擎原生服务，逐引擎补充 |
-| `visited` | 隐私保护使 computed style 和选择器查询不能证明历史颜色 | 独立历史、同站点真实导航、唯一 URL、固定字形区域像素 | 先建立真实历史与独立像素 oracle |
+| `autofill`（Firefox/WebKit） | 普通填表不产生自动填充语义 | 虚构地址、浏览器原生填充服务、`:autofill` 和可见 outline | Chromium 独立原生协议夹具已接线，Firefox/WebKit 继续等待等价入口 |
 
 ## 已确认的 API 边界
 
@@ -27,6 +26,10 @@ Chromium 的原生媒体或 Autofill 协议可以作为后续探索入口。协�
 
 ## 证据与资源
 
-后续 runner 继续借用统一入口提供的后台 Browser，只创建并关闭自有 context/page；所有截图、事件、环境状态、URL 和恢复记录绑定同一个 run ID。媒体/设备切换需要任务独占且可恢复的资源。浏览历史和 autofill 数据限于临时测试上下文，不复用或清除用户历史，也不使用用户真实凭据。
+普通 runner 借用统一入口提供的后台 Browser，只创建并关闭自有 context/page；visited 为建立与隔离历史，串行使用两份独占临时 persistent profile，并独立记录目录身份、关闭和删除结果；所有截图、事件、环境状态、URL 和恢复记录绑定同一个 run ID。媒体/设备切换需要任务独占且可恢复的资源。浏览历史和 autofill 数据限于临时测试上下文，不复用或清除用户历史，也不使用用户真实凭据。
 
-这六项计划没有产生跨引擎验收结论。starting 与 details-content 的实现位于 [`web-lifecycle`](../web-lifecycle/run.ts)，已接入生成 CSS、fixture hash、static 基线、覆盖映射和严格报告合同；有夹具不代表三个引擎均已实际通过。
+这五项计划没有产生跨引擎验收结论。starting 与 details-content 的实现位于 [`web-lifecycle`](../web-lifecycle/run.ts)，已接入生成 CSS、fixture hash、static 基线、覆盖映射和严格报告合同；有夹具不代表三个引擎均已实际通过。
+
+Chromium 另有 `native-media-contrast-less` 原生 CDP 夹具，检查 no-preference、less、more、custom 与恢复；使用独立 CSS 参考、未加 class 的对照和绑定 run/phase 的 PNG 像素。统一门禁复读 sidecar、CSS、PNG 后重算。加上独立历史和原生 Autofill 三阶段夹具，Chromium 为 85/88 个 root 提供夹具，Firefox/WebKit 为 83/88；夹具存在不等于本轮运行通过。
+
+`visited` 的三状态、真实 HTTP 点击/返回、四边像素及全新 profile 恢复合同见 [`web-history`](../web-history/README.md)。computed/matches 仅归档；夹具接线不代表实际引擎通过。

@@ -6,7 +6,7 @@ import process from 'node:process'
 import { createLogger, createServer } from 'vite'
 import { WeappTailwindcssWeb } from 'weapp-tailwindcss/vite/web'
 import { digest } from '../identity'
-import { hmrCss, hmrSource, hmrStates } from './fixture'
+import { hmrCss, hmrIcon, hmrPage, hmrSource, hmrStates } from './fixture'
 import { hmrWatchOptions } from './watch'
 
 export async function withHmrServer<T>(root: string, runId: string, logs: string[], run: (server: { url: string, instance: string, source: string }) => Promise<T>) {
@@ -17,7 +17,7 @@ export async function withHmrServer<T>(root: string, runId: string, logs: string
     const instance = digest({ root: directory, runId })
     await symlink(path.join(root, 'node_modules'), path.join(directory, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir')
     const source = path.join(directory, 'probe.js')
-    for (const [name, content] of Object.entries({ 'package.json': '{"type":"module"}', 'entry.css': hmrCss, 'probe.js': hmrSource(runId, hmrStates[0]), 'index.html': `<!doctype html><html><head><meta name="tailwind-instance" content="${instance}"></head><body><script type="module" src="/probe.js"></script></body></html>` })) {
+    for (const [name, content] of Object.entries({ 'package.json': '{"type":"module"}', 'entry.css': hmrCss, 'probe.js': hmrSource(runId, hmrStates[0]), 'favicon.svg': hmrIcon, 'index.html': hmrPage.replace('__TAILWIND_INSTANCE__', instance) })) {
       await writeFile(path.join(directory, name), content)
     }
     const logger = createLogger('silent')

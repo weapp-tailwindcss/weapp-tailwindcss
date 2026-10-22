@@ -1,14 +1,21 @@
-import type { Compiler, sources as WebpackSources } from 'webpack'
+import type { Compilation, Compiler, sources as WebpackSources } from 'webpack'
 import type { RuntimeClassSetManager } from '../../../shared/runtime-class-set'
 import type { WebpackGeneratedCssRegistration } from '../../loaders/runtime-registry'
 import type { WebpackAssetCompilationLike, WebpackSourceLike } from './asset-emission-plan'
 import type { createCompilationDependencyChanges, RuntimeCompilationBuildState, RuntimeCompilationSnapshot, RuntimeSnapshotEntry } from '@/compiler'
 import type { AppType, InternalUserDefinedOptions } from '@/types'
+import path from 'node:path'
+import process from 'node:process'
 import { AssetEmissionPlan, buildRuntimeCompilationSnapshot, createRuntimeAffectingSourceSignature } from '@/compiler'
 import { classifyRuntimeEntry } from '../../../shared/runtime-entry-type'
 import { applyWebpackAssetEmissionPlan } from './asset-emission-plan'
 
 export type { WebpackAssetCompilationLike, WebpackSourceLike } from './asset-emission-plan'
+
+export function resolveWebpackOutputDirectory(compilation: Pick<Compilation, 'compiler' | 'outputOptions'>, compiler: Pick<Compiler, 'outputPath'>) {
+  const outputPath = compilation.compiler?.outputPath ?? compiler.outputPath
+  return outputPath ? path.resolve(outputPath) : (compilation.outputOptions?.path ?? process.cwd())
+}
 
 export interface SetupWebpackV5ProcessAssetsHookOptions {
   getCompilationChangeRecord?: () => { changes: ReturnType<typeof createCompilationDependencyChanges>, affectedScopes: Set<string> } | undefined

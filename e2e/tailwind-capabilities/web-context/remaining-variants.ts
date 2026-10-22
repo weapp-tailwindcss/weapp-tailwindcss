@@ -2,7 +2,8 @@ export interface RemainingVariantPlan {
   root: string
   feature: `variant/static/${string}`
   status: 'not-run'
-  dependency: 'native-media' | 'native-autofill' | 'history-pixels' | 'render-lifecycle' | 'pseudo-element'
+  engines?: readonly ('firefox' | 'webkit')[]
+  dependency: 'native-media' | 'native-autofill' | 'render-lifecycle' | 'pseudo-element'
   reason: string
   candidate: string
   fixture: string
@@ -42,15 +43,16 @@ export const remainingVariantPlans: RemainingVariantPlan[] = [
   },
   {
     root: 'contrast-less',
+    engines: ['firefox', 'webkit'],
     feature: 'variant/static/contrast-less',
     status: 'not-run',
     dependency: 'native-media',
-    reason: 'Playwright 1.64.1 的原生 contrast 选项只有 more/no-preference，不能请求 prefers-contrast:less。',
+    reason: 'Firefox/WebKit 的原生 contrast 选项不能请求 less；Chromium 已单独提供 CDP 夹具，仍需各轮运行证据。',
     candidate: 'contrast-less:bg-[#123456]',
     fixture: '候选和对照使用不依赖系统调色的实色色块。',
     sequence: ['no-preference：底色 #010203', 'less：候选 #123456，对照 #010203', '恢复 no-preference：底色 #010203'],
     evidence: ['(prefers-contrast: less/more/no-preference/custom) 的原生 matchMedia 真值', '候选与对照 computed style、PNG 和像素', '媒体原生协议或任务独占宿主偏好的切换及恢复记录'],
-    implementation: '可先探索 Chromium 原生 Emulation.setEmulatedMedia 的该特征；协议成功返回仍须检查原生 matchMedia 和实际绘制。其他引擎保留独立 not-run，直到取得等价宿主入口。',
+    implementation: 'Chromium 独立夹具使用原生 Emulation.setEmulatedMedia，验证 no-preference/less/more/custom/恢复、独立参考和带本轮标记 PNG。Firefox/WebKit 保留 not-run，直到取得等价原生宿主入口。',
     forbiddenSubstitutes: ['contrast:more', 'forced-colors', 'CSS filter:contrast()', '改写生成 CSS 媒体条件', '覆盖 matchMedia'],
   },
   {
@@ -68,28 +70,16 @@ export const remainingVariantPlans: RemainingVariantPlan[] = [
   },
   {
     root: 'autofill',
+    engines: ['firefox', 'webkit'],
     feature: 'variant/static/autofill',
     status: 'not-run',
     dependency: 'native-autofill',
-    reason: '真实 :autofill 由浏览器填充服务产生；键盘填写、fill 或设置 value 都不能作为自动填充证据。',
+    reason: 'Firefox/WebKit 尚未提供独立原生填充入口；Chromium 已有独立原生协议夹具，实际成功仍需本轮报告。键盘填写、fill 或设置 value 不能作为自动填充证据。',
     candidate: 'autofill:[outline:3px_solid_#123456]',
     fixture: '同源 HTTP 表单，包含 name/address/email 等标准 autocomplete 字段；另设未填充对照。用 outline 避免浏览器内置 autofill 背景覆盖候选颜色。',
     sequence: ['空表单：无候选 outline', '原生自动填充：候选 3px solid #123456，对照无 outline', '用户清空并重新编辑：退出 autofill，候选 outline 恢复'],
     evidence: [':autofill 原生匹配结果与逐字段值', '原生填充服务或可见选择交互日志', 'outline 的 width/style/color 和 PNG', '可信编辑事件及退出状态'],
     implementation: '先建立任务独占临时 profile 和虚构地址数据；Chromium 可探索其原生 Autofill 协议，但必须证明 :autofill 真正匹配。其他引擎需要各自原生服务入口，禁止借用用户真实凭据。',
     forbiddenSubstitutes: ['locator.fill()', '设置 input.value', 'dispatchEvent 模拟填充', '手动添加 autofill class', '依靠非标准内部伪类代替标准语义结论'],
-  },
-  {
-    root: 'visited',
-    feature: 'variant/static/visited',
-    status: 'not-run',
-    dependency: 'history-pixels',
-    reason: '浏览器隐私保护会掩蔽 :visited 的 computed style 和选择器观测，当前稳定态属性 oracle 不能证明历史样式。',
-    candidate: 'visited:text-[#123456]',
-    fixture: '任务本地同源 HTTP 路由和每轮唯一目标 URL；候选/对照为相同文本的链接，默认 #040506，始终 opaque。',
-    sequence: ['独立无历史 context：候选默认色', '真实点击目标链接并返回同一顶层站点：候选绘制 #123456，对照默认色', '全新无历史 context：恢复默认色'],
-    evidence: ['本轮 URL、顶层站点和 frame origin', '真实导航响应、点击事件及返回日志', '同文本同位置的前后 PNG 和固定字形区域像素差', 'computed style 仅留原始值，不作为激活判据'],
-    implementation: '复用独立 context，绑定本地 HTTP 路由，以同站点点击/返回建立真实分区历史；先校准字形抗锯齿，再以独立颜色 oracle 判定。新 context 只清理任务历史，不能清除用户历史。',
-    forbiddenSubstitutes: ['getComputedStyle 单独判定', 'matches(":visited") 单独判定', '脚本设置历史状态代替真实访问', '从浏览器历史数据库注入', '仅比较整张 PNG 是否不同'],
   },
 ]

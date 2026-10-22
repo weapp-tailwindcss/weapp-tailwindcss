@@ -8,7 +8,7 @@ text,
   padding: 0;
   --tw-content: '';
 }
- /* tokens: tw-root <= src/custom-tab-bar/index.mpx */
+ /*! tokens: tw-root <= src/custom-tab-bar/index.mpx */
 :host,
 page,
 .tw-root,
@@ -20,12 +20,12 @@ wx-root-portal-content {
   --default-font-family: var(--font-sans);
   --default-mono-font-family: var(--font-mono);
 }
- /* tokens: before:content-['independent_subpackage_mpx-tailwindcss-v4'] <= src/sub-independent/pages/index.mpx */
+ /*! tokens: before:content-['independent_subpackage_mpx-tailwindcss-v4'] <= src/sub-independent/pages/index.mpx */
 .before_ccontent-_b_aindependent_subpackage_mpx-tailwindcss-v4_a_B::before {
   --tw-content: 'independent subpackage mpx-tailwindcss-v4';
   content: var(--tw-content);
 }
- /* tokens: bg-independent-subpackage-marker <= src/sub-independent/pages/index.mpx */
+ /*! tokens: bg-independent-subpackage-marker <= src/sub-independent/pages/index.mpx */
 .bg-independent-subpackage-marker {
   background-color: #dc2626;
 }

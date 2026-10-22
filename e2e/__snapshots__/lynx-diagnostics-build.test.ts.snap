@@ -1,0 +1,185 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`正式 Rspeedy hook 的业务诊断 > strict=false：实际发出的 bundle、输入来源和拒绝分别验证 1`] = `
+{
+  "business": [
+    {
+      "origin": "encoder-log",
+      "property": undefined,
+      "selector": ".group-hover\\:bg-red-500:is(:where(.group):hover *)",
+      "status": "encoder-rejected",
+    },
+    {
+      "origin": "bundle-comparison",
+      "property": "gap",
+      "selector": ".gap-\\[7px\\]",
+      "status": "unknown",
+    },
+    {
+      "origin": "bundle-comparison",
+      "property": "mask-type",
+      "selector": ".\\[mask-type\\:luminance\\]",
+      "status": "encoder-rejected",
+    },
+    {
+      "origin": "bundle-comparison",
+      "property": "padding",
+      "selector": ".p-\\[13px\\]",
+      "status": "unknown",
+    },
+    {
+      "origin": "bundle-comparison",
+      "property": "padding-inline",
+      "selector": ".px-\\[7\\.5px\\]",
+      "status": "encoder-rejected",
+    },
+    {
+      "origin": "bundle-comparison",
+      "property": "background-color",
+      "selector": ".theme-probe",
+      "status": "unknown",
+    },
+    {
+      "origin": "bundle-comparison",
+      "property": "color",
+      "selector": ".app-probe",
+      "status": "unknown",
+    },
+    {
+      "origin": "bundle-comparison",
+      "property": "mask-type",
+      "selector": ".mixed",
+      "status": "encoder-rejected",
+    },
+    {
+      "origin": "bundle-comparison",
+      "property": "mask-type",
+      "selector": ".multi,.other",
+      "status": "encoder-rejected",
+    },
+  ],
+  "css": "hr { border-top-width: 1px; height: 0; }
+h1, h2, h3, h4, h5, h6 { }
+a { }
+b, strong { }
+code, kbd, samp, pre { font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace; font-feature-settings: {{--default-mono-font-feature-settings}}; font-size: 1em; font-variation-settings: {{--default-mono-font-variation-settings}}; }
+small { font-size: 80%; }
+sub, sup { font-size: 75%; line-height: 0; position: relative; vertical-align: baseline; }
+sub { bottom: -0.25em; }
+sup { top: -0.5em; }
+table { text-indent: 0; }
+progress { vertical-align: baseline; }
+summary { }
+ol, ul, menu { }
+img, svg, video, canvas, audio, iframe, embed, object { display: block; vertical-align: middle; }
+img, video { height: auto; max-width: 100%; }
+::placeholder { opacity: 1; }
+textarea { }
+.gap-\\[7px\\] { column-gap: 7px; row-gap: 7px; }
+.\\[mask-type\\:luminance\\] { }
+.p-\\[13px\\] { padding-bottom: 13px; padding-left: 13px; padding-right: 13px; padding-top: 13px; }
+.px-\\[7\\.5px\\] { }
+.pr-\\[7\\.5px\\] { padding-right: 7.5px; }
+.pl-\\[7\\.5px\\] { padding-left: 7.5px; }
+:root { --brand-color: rgb(230,80,0); --color-brand: #f00; }
+.theme-dark { --brand-color: #00f; --color-brand: #00f; }
+.theme-probe { background-color: {{--color-brand}}; }
+.app-probe { color: {{--brand-color}}; }
+.mixed { --tw-business: 1; width: 10px; }
+.multi, .other { }
+@supports (not (-webkit-appearance: -apple-pay-button)) or (contain-intrinsic-size: 1px) { ::placeholder { } }
+@media (hover: hover) { }",
+}
+`;
+
+exports[`正式 Rspeedy hook 的业务诊断 > strict=true：实际发出的 bundle、输入来源和拒绝分别验证 1`] = `
+{
+  "business": [
+    {
+      "origin": "encoder-log",
+      "property": undefined,
+      "selector": ".group-hover\\:bg-red-500:is(:where(.group):hover *)",
+      "status": "encoder-rejected",
+    },
+    {
+      "origin": "bundle-comparison",
+      "property": "gap",
+      "selector": ".gap-\\[7px\\]",
+      "status": "unknown",
+    },
+    {
+      "origin": "bundle-comparison",
+      "property": "mask-type",
+      "selector": ".\\[mask-type\\:luminance\\]",
+      "status": "encoder-rejected",
+    },
+    {
+      "origin": "bundle-comparison",
+      "property": "padding",
+      "selector": ".p-\\[13px\\]",
+      "status": "unknown",
+    },
+    {
+      "origin": "bundle-comparison",
+      "property": "padding-inline",
+      "selector": ".px-\\[7\\.5px\\]",
+      "status": "encoder-rejected",
+    },
+    {
+      "origin": "bundle-comparison",
+      "property": "background-color",
+      "selector": ".theme-probe",
+      "status": "unknown",
+    },
+    {
+      "origin": "bundle-comparison",
+      "property": "color",
+      "selector": ".app-probe",
+      "status": "unknown",
+    },
+    {
+      "origin": "bundle-comparison",
+      "property": "mask-type",
+      "selector": ".mixed",
+      "status": "encoder-rejected",
+    },
+    {
+      "origin": "bundle-comparison",
+      "property": "mask-type",
+      "selector": ".multi,.other",
+      "status": "encoder-rejected",
+    },
+  ],
+  "css": "hr { border-top-width: 1px; height: 0; }
+h1, h2, h3, h4, h5, h6 { }
+a { }
+b, strong { }
+code, kbd, samp, pre { font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace; font-feature-settings: {{--default-mono-font-feature-settings}}; font-size: 1em; font-variation-settings: {{--default-mono-font-variation-settings}}; }
+small { font-size: 80%; }
+sub, sup { font-size: 75%; line-height: 0; position: relative; vertical-align: baseline; }
+sub { bottom: -0.25em; }
+sup { top: -0.5em; }
+table { text-indent: 0; }
+progress { vertical-align: baseline; }
+summary { }
+ol, ul, menu { }
+img, svg, video, canvas, audio, iframe, embed, object { display: block; vertical-align: middle; }
+img, video { height: auto; max-width: 100%; }
+::placeholder { opacity: 1; }
+textarea { }
+.gap-\\[7px\\] { column-gap: 7px; row-gap: 7px; }
+.\\[mask-type\\:luminance\\] { }
+.p-\\[13px\\] { padding-bottom: 13px; padding-left: 13px; padding-right: 13px; padding-top: 13px; }
+.px-\\[7\\.5px\\] { }
+.pr-\\[7\\.5px\\] { padding-right: 7.5px; }
+.pl-\\[7\\.5px\\] { padding-left: 7.5px; }
+:root { --brand-color: rgb(230,80,0); --color-brand: #f00; }
+.theme-dark { --brand-color: #00f; --color-brand: #00f; }
+.theme-probe { background-color: {{--color-brand}}; }
+.app-probe { color: {{--brand-color}}; }
+.mixed { --tw-business: 1; width: 10px; }
+.multi, .other { }
+@supports (not (-webkit-appearance: -apple-pay-button)) or (contain-intrinsic-size: 1px) { ::placeholder { } }
+@media (hover: hover) { }",
+}
+`;

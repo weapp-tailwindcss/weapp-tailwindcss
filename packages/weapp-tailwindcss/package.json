@@ -275,6 +275,7 @@
   },
   "devDependencies": {
     "@iconify/tailwind4": "^1.2.3",
+    "@jridgewell/trace-mapping": "^0.3.31",
     "@mpxjs/webpack-plugin": "^2.11.1",
     "tsx": "catalog:tsx",
     "vite": "catalog:vite724",

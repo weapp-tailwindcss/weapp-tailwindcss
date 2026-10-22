@@ -2,6 +2,7 @@ import { authoringFixtures, cssAuthoringCapabilities } from './authoring'
 import { compatibilityCases } from './compatibility/catalog'
 import { officialFeatureManifest } from './compatibility/manifest'
 import { tailwindParityCandidateCategories, tailwindParityCandidates } from './parity-candidates'
+import { miniProgramRuntimeColorWeightLimit } from './platform-limits'
 import { sourceSyntaxCases } from './source-syntax'
 import { arbitrarySyntaxCases, functionalValueProfiles } from './value-profiles'
 
@@ -13,6 +14,7 @@ export { officialFeatureManifest } from './compatibility/manifest'
 export type { OfficialFeature } from './compatibility/manifest'
 export * from './compatibility/types'
 export { tailwindParityCandidateCategories, tailwindParityCandidates } from './parity-candidates'
+export { miniProgramRuntimeColorWeightLimit } from './platform-limits'
 export { sourceSyntaxCases } from './source-syntax'
 export type { SourceSyntaxCase } from './source-syntax'
 export { arbitrarySyntaxCases, functionalValueProfiles } from './value-profiles'
@@ -39,6 +41,7 @@ export const catalogIdentity = {
   functionalValueProfiles,
   tailwindParityCandidateCategories,
   tailwindParityCandidates,
+  miniProgramRuntimeColorWeightLimit,
 } as const
 
 export const catalogIdentityPayload = JSON.stringify(catalogIdentity)

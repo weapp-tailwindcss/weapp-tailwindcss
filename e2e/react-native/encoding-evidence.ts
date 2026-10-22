@@ -9,6 +9,7 @@ import { createNativeStyleRuntime } from '../../packages/react-native/src/runtim
 import { RN_FIXTURE_HASH } from './catalog'
 import { RN_ENTRY_SCOPE_VERSION } from './generation-input'
 import { validateImportantRuntimeManifest } from './important-runtime'
+import { validateInstalledManifest } from './installation-evidence'
 import { captureMetroEvidence } from './metro-evidence'
 import { nativeEncodingArtifactNames } from './phase-contract'
 import { validateStaticGenerationInput } from './static-input-evidence'
@@ -42,7 +43,9 @@ export async function validateNativeEncodingArtifacts(report: ReactNativeReport,
     || !snapshot.stablePublication || snapshot.readyBefore !== ready || snapshot.readyAfter !== ready
     || snapshot.files?.['manifest.json']?.sha256 !== hash(manifestSource)
     || snapshot.files?.['manifest.ready']?.sha256 !== hash(ready)
-    || publication.error || !publication.revision || !publication.virtualPath) {
+    || publication.error || typeof publication.revision !== 'string' || !publication.revision.trim()
+    || publication.manifestSha256 !== hash(manifestSource)
+    || typeof publication.virtualPath !== 'string' || !publication.virtualPath) {
     throw new Error('React Native encoding manifest 缺少本轮稳定发布身份或字节不匹配')
   }
   const staticInput = await readFile(path.join(output, 'static-evidence.json'), 'utf8')
@@ -68,5 +71,6 @@ export async function validateNativeEncodingArtifacts(report: ReactNativeReport,
       throw new Error(`${id} 的本轮 manifest 编码与独立原生 oracle 或报告不一致`)
     }
   }
+  validateInstalledManifest(report.runtimeInstallation, manifestSource, publication)
   return nativeEncodingArtifactNames.map(name => path.join(output, name))
 }

@@ -24,6 +24,7 @@ export const arbitrarySyntaxCases = [
   { id: 'custom-property', candidate: '[--probe:17px]' },
   { id: 'variable-short', candidate: 'w-(--probe)' },
   { id: 'typed-variable', candidate: 'text-(color:--brand)' },
+  { id: 'variable-color-weight', candidate: 'bg-sky-500/(--my-alpha-value)' },
   { id: 'important-before', candidate: '!p-4' },
   { id: 'important-after', candidate: 'p-4!' },
   { id: 'negative-important', candidate: '-mt-[7.5px]!' },

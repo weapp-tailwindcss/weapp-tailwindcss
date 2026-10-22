@@ -12,7 +12,7 @@ import { protectDynamicColorMixAlpha, protectDynamicVarFallbacks } from './compa
 import { normalizeCssLineComments } from './compat/line-comments'
 import { removeEmptyBlockAtRules } from './compat/mini-program-css/root-cleanups'
 import { splitUnresolvedAuthorVariableFallbacks } from './compat/uni-app-x-uvue/theme'
-import { probeFeatures, signalToCacheKey } from './content-probe'
+import { probeFeatures } from './content-probe'
 import { getDefaultOptions } from './defaults'
 import { fingerprintStyleOptions } from './fingerprint'
 import { processUserCss } from './framework-pipeline'
@@ -21,7 +21,7 @@ import { createOptionsResolver, normalizeCssOptions } from './options-resolver'
 import { isKnownPurePostcssPlugin } from './plugin-cache-policy'
 import { createInjectPreflight } from './preflight'
 import { StyleProcessorCache } from './processor-cache'
-import { captureRootCacheSnapshot, cloneRootWithCurrentSources, matchRootCacheSnapshot } from './root-cache'
+import { captureRootCacheSnapshot, cloneRootWithCurrentSources, hasOnlyCapturedInputs, matchRootCacheSnapshot } from './root-cache'
 import { contentHash } from './utils/content-hash'
 
 /** CSS 结果缓存最大条目数 */
@@ -47,9 +47,18 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
   /** CSS 处理结果 LRU 缓存 */
   const resultCache = new LRUCache<string, { source: string, options: string, root: RootCacheSnapshot | undefined, result: PostcssResult }>({
     max: CSS_RESULT_CACHE_MAX,
-    // AST 快照按节点数约束总量，避免少量大样式占满长会话内存。
+    // 输入快照与输出 AST 都会被保留，文本输入也必须按实际树规模计量。
     maxSize: 128_000,
-    sizeCalculation: entry => Math.max(1, entry.root?.nodes.length ?? 0),
+    sizeCalculation: (entry) => {
+      let nodes = entry.root?.nodes.length ?? 0
+      if (entry.result.root) {
+        nodes++
+        entry.result.root.walk(() => {
+          nodes++
+        })
+      }
+      return Math.max(1, nodes)
+    },
   })
 
   function cloneResult(result: PostcssResult, current?: ReadonlyMap<Input, Input>): PostcssResult {
@@ -79,6 +88,26 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
     const configured = Array.isArray(plugins) ? plugins : Object.values(plugins ?? {})
     const hasExternalPlugins = hasUserPlugins && !configured.every(isKnownPurePostcssPlugin)
     let cacheable = !hasExternalPlugins
+    // 确定性准备属于缓存未命中的处理；原始输入和配置已经完整标识其输出。
+    const optsFp = cacheable ? fingerprintStyleOptions(resolvedOptions) : ''
+    const cacheKey = `${optsFp}|${contentHash(rawSource)}|${root === undefined ? 'text' : 'root'}|${sourcePrepared ? 'prepared' : 'raw'}`
+
+    const cached = cacheable ? resultCache.get(cacheKey) : undefined
+    const sameInput = cached?.source === rawSource && cached.options === optsFp
+    let bindings: ReadonlyMap<Input, Input> | undefined
+    if (sameInput && root && cached.root) {
+      try {
+        bindings = matchRootCacheSnapshot(cached.root, root)
+      }
+      catch { cacheable = false }
+    }
+    if (sameInput && (root ? bindings !== undefined : cached.root === undefined)) {
+      if (emitDiagnostics) {
+        void resolvedOptions.onDiagnostic?.({ phase: 'postcss', durationMs: 0, cache: { hit: true, key: cacheKey } })
+      }
+      return Promise.resolve(cloneOutput ? cloneResult(cached.result, bindings) : cached.result)
+    }
+
     const normalizedRawSource = sourcePrepared ? rawSource : normalizeCssLineComments(rawSource)
     // uni-app x 的 WebView/小程序目标也会复用 preserve:false 的 preset，
     // 需要先保护作者变量，否则主题 fallback 会在生成阶段被静态化。
@@ -157,27 +186,6 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
       }
     }
 
-    // 构建缓存键：选项指纹 + 信号 + 内容哈希
-    const optsFp = fingerprintStyleOptions(resolvedOptions)
-    const signalKey = signal ? signalToCacheKey(signal) : ''
-    const cacheKey = `${optsFp}|${signalKey}|${contentHash(source)}|${root === undefined ? 'text' : 'root'}`
-
-    const cached = cacheable ? resultCache.get(cacheKey) : undefined
-    const sameInput = cached?.source === rawSource && cached.options === optsFp
-    let bindings: ReadonlyMap<Input, Input> | undefined
-    if (sameInput && root && cached.root) {
-      try {
-        bindings = matchRootCacheSnapshot(cached.root, root)
-      }
-      catch { cacheable = false }
-    }
-    if (sameInput && (root ? bindings !== undefined : cached.root === undefined)) {
-      if (emitDiagnostics) {
-        void resolvedOptions.onDiagnostic?.({ phase: 'postcss', durationMs: 0, cache: { hit: true, key: cacheKey } })
-      }
-      return Promise.resolve(cloneOutput ? cloneResult(cached.result, bindings) : cached.result)
-    }
-
     let rootSnapshot: RootCacheSnapshot | undefined
     if (cacheable && root) {
       try {
@@ -218,7 +226,8 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
         }
       }
       // 缓存最终结果
-      if (cacheable) {
+      // message 可能引用已删除的节点，无法只靠输出树重新绑定其来源。
+      if (cacheable && (!rootSnapshot || (!finalResult.messages.length && hasOnlyCapturedInputs(finalResult.root as Root, rootSnapshot)))) {
         // 短哈希仅用于索引，命中还须核对保护占位前的完整输入及配置。
         resultCache.set(cacheKey, { source: rawSource, options: optsFp, root: rootSnapshot, result: finalResult })
       }

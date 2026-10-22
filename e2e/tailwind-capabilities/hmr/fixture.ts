@@ -1,4 +1,9 @@
+import { fixtureIcon, fixtureIconLink } from '../browser/resources'
+
 export const hmrCss = '@import "tailwindcss" source(none);\n@source "./probe.js";\n@layer base { #probe { width:80px; height:40px; background:#123456; } }'
+
+export const hmrIcon = fixtureIcon
+export const hmrPage = `<!doctype html><html><head><meta name="tailwind-instance" content="__TAILWIND_INSTANCE__">${fixtureIconLink}</head><body><script type="module" src="/probe.js"></script></body></html>`
 
 export const hmrStates = [
   { id: 'initial', candidate: '', width: 80 },

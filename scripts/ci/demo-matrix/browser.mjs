@@ -3,6 +3,7 @@ import { writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { chromium } from 'playwright'
 import { coverage, isWeb } from './catalog.mjs'
+import { assertRenderedColors } from './color-contract.mjs'
 import { inspectStyles } from './output.mjs'
 import { probeClasses } from './probe.mjs'
 import { until } from './process.mjs'
@@ -128,7 +129,7 @@ export async function openBrowser(url, session, artifactDir, { vueHydration = fa
       events,
       async waitForUpdateIdle() { await until(assertUpdateIdle, session) },
       async inspect(item, round) {
-        const result = await page.evaluate(async ({ expected, round }) => {
+        const result = await page.evaluate(async ({ expected, round, renderedColors }) => {
           const styles = []
           const styleSources = []
           const deadline = Date.now() + 5000
@@ -173,9 +174,33 @@ export async function openBrowser(url, session, artifactDir, { vueHydration = fa
           if (round === 'restore' && document.getElementById('tw-matrix-added')) {
             throw new Error('Deleted probe remains rendered')
           }
-          return { styles, styleSources, computed, rootFontSize: Number.parseFloat(getComputedStyle(document.documentElement).fontSize) }
-        }, { expected: probeClasses(item, round), round })
+          const colors = {}
+          if (renderedColors) {
+            const canvas = document.createElement('canvas')
+            canvas.width = canvas.height = 1
+            const context = canvas.getContext('2d')
+            if (!context) {
+              throw new Error('Color evidence requires a 2D canvas')
+            }
+            const sample = (value) => {
+              context.clearRect(0, 0, 1, 1)
+              context.fillStyle = value
+              context.fillRect(0, 0, 1, 1)
+              return [...context.getImageData(0, 0, 1, 1).data]
+            }
+            for (const [key, reference] of Object.entries(renderedColors)) {
+              const value = computed[key]?.[reference.property]
+              if (!value || !CSS.supports('color', value) || !CSS.supports('color', reference.value)) {
+                throw new Error(`Missing or invalid rendered color: ${key}`)
+              }
+              // 两者经过同一像素管线，保留精确比较而不引入透明像素量化误判。
+              colors[key] = { actual: sample(value), expected: sample(reference.value), reference: reference.value }
+            }
+          }
+          return { styles, styleSources, computed, colors, rootFontSize: Number.parseFloat(getComputedStyle(document.documentElement).fontSize) }
+        }, { expected: probeClasses(item, round), round, renderedColors: item.renderedColors })
         lastInspection = { round, ...result }
+        assertRenderedColors(item, result.colors, round)
         const consumed = Object.fromEntries(Object.values(result.computed).map(actual => [actual.expected, actual.className.split(/\s+/)]))
         const output = inspectStyles(result.styles, item, round, consumed)
         if (coverage(item) === 'authored-styles') {
@@ -202,7 +227,7 @@ export async function openBrowser(url, session, artifactDir, { vueHydration = fa
             assert.ok(Math.abs(Number.parseFloat(result.computed.added.width) - (item.family === 'taro' ? 9 * unit : 137)) < 0.1)
           }
         }
-        return { ...output, computed: result.computed }
+        return { ...output, computed: result.computed, ...(item.renderedColors ? { colors: result.colors } : {}) }
       },
       async screenshot(round) { await page.screenshot({ path: path.join(artifactDir, `${round}.png`), fullPage: false }) },
       async reload() { await page.reload({ waitUntil: 'domcontentloaded' }) },

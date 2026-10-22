@@ -8,6 +8,8 @@
       'Noto Color Emoji';
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
     --color-green-200: oklch(92.5% 0.084 155.995);
+    --color-cyan-500: oklch(71.5% 0.143 215.221);
+    --color-blue-500: oklch(62.3% 0.214 259.815);
     --color-purple-300: oklch(82.7% 0.119 306.383);
     --color-slate-200: oklch(92.9% 0.013 255.508);
     --color-slate-700: oklch(37.2% 0.044 257.287);
@@ -311,52 +313,55 @@
   }
 }
 @layer utilities {
- /*tokens: mt-2 <= src/pages/index/index.tsx */
+ /*! tokens: mt-2 <= src/pages/index/index.tsx */
   .mt-2 {
     margin-top: calc(var(--spacing) * 2);
   }
- /*tokens: mt-4 <= src/pages/index/index.tsx */
+ /*! tokens: mt-4 <= src/pages/index/index.tsx */
   .mt-4 {
     margin-top: calc(var(--spacing) * 4);
   }
- /*tokens: flex <= src/pages/index/index.tsx */
+ /*! tokens: flex <= src/pages/index/index.tsx */
   .flex {
     display: -webkit-flex;
     display: -ms-flexbox;
     display: flex;
   }
- /*tokens: h-14 <= src/pages/index/index.tsx */
+ /*! tokens: h-14 <= src/pages/index/index.tsx */
   .h-14 {
     height: calc(var(--spacing) * 14);
   }
- /*tokens: h-16 <= src/pages/index/index.tsx */
+ /*! tokens: h-16 <= src/pages/index/index.tsx */
   .h-16 {
     height: calc(var(--spacing) * 16);
   }
+ /*! tokens: h-[45px] <= src/pages/index/index.tsx */
   .h-\[45px\] {
     height: 1.125rem;
   }
+ /*! tokens: h-[300px] <= src/pages/index/index.tsx */
   .h-\[300px\] {
     height: 7.5rem;
   }
- /*tokens: w-32 <= src/pages/index/index.tsx */
+ /*! tokens: w-32 <= src/pages/index/index.tsx */
   .w-32 {
     width: calc(var(--spacing) * 32);
   }
+ /*! tokens: w-[323px] <= src/pages/index/index.tsx */
   .w-\[323px\] {
     width: 8.075rem;
   }
- /*tokens: flex-col <= src/pages/index/index.tsx */
+ /*! tokens: flex-col <= src/pages/index/index.tsx */
   .flex-col {
     -webkit-flex-direction: column;
     -ms-flex-direction: column;
     flex-direction: column;
   }
- /*tokens: gap-3 <= src/pages/index/index.tsx */
+ /*! tokens: gap-3 <= src/pages/index/index.tsx */
   .gap-3 {
     gap: calc(var(--spacing) * 3);
   }
- /*tokens: space-y-2 <= src/pages/index/index.tsx */
+ /*! tokens: space-y-2 <= src/pages/index/index.tsx */
   :where(.space-y-2 > :not(:last-child)) {
     --tw-space-y-reverse: 0;
     -webkit-margin-before: calc(calc(var(--spacing) * 2) * var(--tw-space-y-reverse));
@@ -364,73 +369,81 @@
     -webkit-margin-after: calc(calc(var(--spacing) * 2) * (1 - var(--tw-space-y-reverse)));
     margin-block-end: calc(calc(var(--spacing) * 2) * (1 - var(--tw-space-y-reverse)));
   }
- /*tokens: rounded <= src/pages/index/index.tsx */
+ /*! tokens: rounded <= src/pages/index/index.tsx */
   .rounded {
     border-radius: 0.25rem;
   }
+ /*! tokens: rounded-[20rpx] <= src/pages/index/index.tsx */
   .rounded-\[20rpx\] {
     border-radius: 0.625rem;
   }
+ /*! tokens: rounded-[28rpx] <= src/pages/index/index.tsx */
   .rounded-\[28rpx\] {
     border-radius: 0.875rem;
   }
- /*tokens: rounded-full <= src/pages/index/index.tsx */
+ /*! tokens: rounded-full <= src/pages/index/index.tsx */
   .rounded-full {
     border-radius: calc(infinity * 0.025rem);
   }
+ /*! tokens: rounded-full! <= src/pages/index/index.tsx */
   .rounded-full\! {
     border-radius: calc(infinity * 0.025rem) !important;
   }
- /*tokens: border <= src/pages/index/index.tsx */
+ /*! tokens: border <= src/pages/index/index.tsx */
   .border {
     border-style: var(--tw-border-style);
     border-width: 0.025rem;
   }
- /*tokens: border-slate-200/80 <= src/pages/index/index.tsx */
+ /*! tokens: border-slate-200/80 <= src/pages/index/index.tsx */
   .border-slate-200\/80 {
     border-color: color-mix(in srgb, oklch(92.9% 0.013 255.508) 80%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
       border-color: color-mix(in oklab, var(--color-slate-200) 80%, transparent);
     }
   }
+ /*! tokens: !bg-[gray] <= src/pages/index/index.tsx */
   .\!bg-\[gray\] {
     background-color: gray !important;
   }
+ /*! tokens: bg-[#68c828] <= src/pages/index/index.tsx */
   .bg-\[\#68c828\] {
     background-color: #68c828;
   }
+ /*! tokens: bg-[#0977ee] <= src/pages/index/index.tsx */
   .bg-\[\#0977ee\] {
     background-color: #0977ee;
   }
+ /*! tokens: bg-[#123456] <= src/pages/index/index.tsx */
   .bg-\[\#123456\] {
     background-color: #123456;
   }
+ /*! tokens: bg-[red] <= src/pages/index/index.tsx */
   .bg-\[red\] {
     background-color: red;
   }
- /*tokens: bg-green-200/70 <= src/pages/index/index.tsx */
+ /*! tokens: bg-green-200/70 <= src/pages/index/index.tsx */
   .bg-green-200\/70 {
     background-color: color-mix(in srgb, oklch(92.5% 0.084 155.995) 70%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
       background-color: color-mix(in oklab, var(--color-green-200) 70%, transparent);
     }
   }
- /*tokens: bg-purple-300 <= src/pages/index/index.tsx */
+ /*! tokens: bg-purple-300 <= src/pages/index/index.tsx */
   .bg-purple-300 {
     background-color: var(--color-purple-300);
   }
- /*tokens: bg-white <= src/pages/index/index.tsx */
+ /*! tokens: bg-white <= src/pages/index/index.tsx */
   .bg-white {
     background-color: var(--color-white);
   }
- /*tokens: bg-white/70 <= src/pages/index/index.tsx */
+ /*! tokens: bg-white/70 <= src/pages/index/index.tsx */
   .bg-white\/70 {
     background-color: color-mix(in srgb, #fff 70%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
       background-color: color-mix(in oklab, var(--color-white) 70%, transparent);
     }
   }
- /*tokens: bg-linear-to-r <= src/pages/index/index.tsx */
+ /*! tokens: bg-linear-to-r <= src/pages/index/index.tsx */
   .bg-linear-to-r {
     --tw-gradient-position: to right;
     @supports (background-image: linear-gradient(in lab, red, red)) {
@@ -439,23 +452,24 @@
     background-image: -webkit-linear-gradient(var(--tw-gradient-stops));
     background-image: linear-gradient(var(--tw-gradient-stops));
   }
- /*tokens: bg-gradient-to-br <= src/pages/index/index.tsx */
+ /*! tokens: bg-gradient-to-br <= src/pages/index/index.tsx */
   .bg-gradient-to-br {
     --tw-gradient-position: to bottom right in oklab;
     background-image: -webkit-linear-gradient(var(--tw-gradient-stops));
     background-image: linear-gradient(var(--tw-gradient-stops));
   }
- /*tokens: bg-gradient-to-r <= src/pages/index/index.tsx */
+ /*! tokens: bg-gradient-to-r <= src/pages/index/index.tsx */
   .bg-gradient-to-r {
     --tw-gradient-position: to right in oklab;
     background-image: -webkit-linear-gradient(var(--tw-gradient-stops));
     background-image: linear-gradient(var(--tw-gradient-stops));
   }
+ /*! tokens: bg-[radial-gradient(circle_at_18%_20%,#e0f2fe,#fdf4ff_70%)] <= src/pages/index/index.tsx */
   .bg-\[radial-gradient\(circle_at_18\%_20\%\,\#e0f2fe\,\#fdf4ff_70\%\)\] {
     background-image: -webkit-radial-gradient(18% 20%, circle, #e0f2fe, #fdf4ff 70%);
     background-image: radial-gradient(circle at 18% 20%, #e0f2fe, #fdf4ff 70%);
   }
- /*tokens: from-cyan-500 <= src/pages/index/index.tsx */
+ /*! tokens: from-cyan-500 <= src/pages/index/index.tsx */
   .from-cyan-500 {
     --tw-gradient-from: var(--color-cyan-500);
     --tw-gradient-stops: var(
@@ -465,7 +479,7 @@
       var(--tw-gradient-to) var(--tw-gradient-to-position)
     );
   }
- /*tokens: from-slate-900/95 <= src/pages/index/index.tsx */
+ /*! tokens: from-slate-900/95 <= src/pages/index/index.tsx */
   .from-slate-900\/95 {
     --tw-gradient-from: color-mix(in srgb, oklch(20.8% 0.042 265.755) 95%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
@@ -478,7 +492,7 @@
       var(--tw-gradient-to) var(--tw-gradient-to-position)
     );
   }
- /*tokens: to-blue-500 <= src/pages/index/index.tsx */
+ /*! tokens: to-blue-500 <= src/pages/index/index.tsx */
   .to-blue-500 {
     --tw-gradient-to: var(--color-blue-500);
     --tw-gradient-stops: var(
@@ -488,7 +502,7 @@
       var(--tw-gradient-to) var(--tw-gradient-to-position)
     );
   }
- /*tokens: to-slate-700/95 <= src/pages/index/index.tsx */
+ /*! tokens: to-slate-700/95 <= src/pages/index/index.tsx */
   .to-slate-700\/95 {
     --tw-gradient-to: color-mix(in srgb, oklch(37.2% 0.044 257.287) 95%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
@@ -501,117 +515,130 @@
       var(--tw-gradient-to) var(--tw-gradient-to-position)
     );
   }
- /*tokens: p-4 <= src/pages/index/index.tsx, src/pages/issue-998/index.tsx */
+ /*! tokens: p-4 <= src/pages/index/index.tsx, src/pages/issue-998/index.tsx */
   .p-4 {
     padding: calc(var(--spacing) * 4);
   }
- /*tokens: px-3 <= src/pages/index/index.tsx */
+ /*! tokens: px-3 <= src/pages/index/index.tsx */
   .px-3 {
     padding-inline: calc(var(--spacing) * 3);
   }
- /*tokens: px-4 <= src/pages/index/index.tsx */
+ /*! tokens: px-4 <= src/pages/index/index.tsx */
   .px-4 {
     padding-inline: calc(var(--spacing) * 4);
   }
+ /*! tokens: px-[29rpx] <= src/pages/index/index.tsx */
   .px-\[29rpx\] {
     padding-inline: 0.90625rem;
   }
+ /*! tokens: px-[48px] <= src/pages/index/index.tsx */
   .px-\[48px\] {
     padding-inline: 1.2rem;
   }
- /*tokens: py-1 <= src/pages/index/index.tsx */
+ /*! tokens: py-1 <= src/pages/index/index.tsx */
   .py-1 {
     padding-block: var(--spacing);
   }
- /*tokens: py-2 <= src/pages/index/index.tsx */
+ /*! tokens: py-2 <= src/pages/index/index.tsx */
   .py-2 {
     padding-block: calc(var(--spacing) * 2);
   }
- /*tokens: py-3 <= src/pages/index/index.tsx */
+ /*! tokens: py-3 <= src/pages/index/index.tsx */
   .py-3 {
     padding-block: calc(var(--spacing) * 3);
   }
+ /*! tokens: py-[24rpx] <= src/pages/index/index.tsx */
   .py-\[24rpx\] {
     padding-block: 0.75rem;
   }
+ /*! tokens: text-[26rpx] <= src/pages/index/index.tsx */
+  .text-\[26rpx\] {
+    font-size: 0.8125rem;
+  }
+ /*! tokens: text-[31rpx] <= src/pages/index/index.tsx */
+  .text-\[31rpx\] {
+    font-size: 0.96875rem;
+  }
+ /*! tokens: text-[55rpx] <= src/pages/index/index.tsx */
+  .text-\[55rpx\] {
+    font-size: 1.71875rem;
+  }
+ /*! tokens: text-[100rpx] <= src/pages/index/index.tsx */
   .text-\[100rpx\] {
     font-size: 3.125rem;
   }
-.text-\[26rpx\] {
-    font-size: 0.8125rem;
-  }
-.text-\[31rpx\] {
-    font-size: 0.96875rem;
-  }
-.text-\[55rpx\] {
-    font-size: 1.71875rem;
-  }
-.text-\[\#123456\] {
+ /*! tokens: text-[#123456] <= src/pages/index/index.tsx */
+  .text-\[\#123456\] {
     color: #123456;
   }
-.text-\[\#c31d6b\] {
+ /*! tokens: text-[#c31d6b] <= src/pages/index/index.tsx */
+  .text-\[\#c31d6b\] {
     color: #c31d6b;
   }
-.text-\[\#fff\] {
+ /*! tokens: text-[#fff] <= src/pages/index/index.tsx */
+  .text-\[\#fff\] {
     color: #fff;
   }
- /*tokens: text-slate-700 <= src/pages/index/index.tsx */
+ /*! tokens: text-slate-700 <= src/pages/index/index.tsx */
   .text-slate-700 {
     color: var(--color-slate-700);
   }
- /*tokens: text-slate-900 <= src/pages/index/index.tsx */
+ /*! tokens: text-slate-900 <= src/pages/index/index.tsx */
   .text-slate-900 {
     color: var(--color-slate-900);
   }
- /*tokens: text-white <= src/pages/index/index.tsx */
+ /*! tokens: text-white <= src/pages/index/index.tsx */
   .text-white {
     color: var(--color-white);
   }
- /*tokens: shadow-xl <= src/pages/index/index.tsx */
+ /*! tokens: shadow-xl <= src/pages/index/index.tsx */
   .shadow-xl {
     --tw-shadow: 0 0.5rem 0.625rem -0.125rem var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 0.2rem 0.25rem -0.15rem var(--tw-shadow-color, rgb(0 0 0 / 0.1));
     -webkit-box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
+ /*! tokens: before:content-['现在，让我们开始神奇的_tailwindcss_开发之旅吧！'] <= <tailwind generated> */
   .before\:content-\[\'现在，让我们开始神奇的_tailwindcss_开发之旅吧！\'\]::before {
     --tw-content: '现在，让我们开始神奇的 tailwindcss 开发之旅吧！';
     content: var(--tw-content);
   }
+ /*! tokens: before:content-['现在，让我们继续神奇的_tailwindcss_HMR_回归之旅吧！'] <= <tailwind generated> */
   .before\:content-\[\'现在，让我们继续神奇的_tailwindcss_HMR_回归之旅吧！\'\]::before {
     --tw-content: '现在，让我们继续神奇的 tailwindcss HMR 回归之旅吧！';
     content: var(--tw-content);
   }
+ /*! tokens: after:!content-['good_work!'] <= src/pages/index/index.tsx */
   .after\:\!content-\[\'good_work\!\'\]::after {
     content: var(--tw-content);
     --tw-content: 'good work!' !important;
     content: var(--tw-content) !important;
   }
- /*tokens: dark:bg-zinc-900 <= src/pages/index/index.tsx | theme-dark <= src/pages/index/index.tsx */
+ /*! tokens: dark:bg-zinc-900 <= src/pages/index/index.tsx | theme-dark <= src/pages/index/index.tsx */
   .dark\:bg-zinc-900.theme-dark {
     background-color: var(--color-zinc-900);
   }
- /*tokens: theme-dark <= src/pages/index/index.tsx | dark:bg-zinc-900 <= src/pages/index/index.tsx */
+ /*! tokens: theme-dark <= src/pages/index/index.tsx | dark:bg-zinc-900 <= src/pages/index/index.tsx */
   .theme-dark .dark\:bg-zinc-900 {
     background-color: var(--color-zinc-900);
   }
- /*tokens: dark:bg-zinc-950 <= src/pages/index/index.tsx | theme-dark <= src/pages/index/index.tsx */
+ /*! tokens: dark:bg-zinc-950 <= src/pages/index/index.tsx | theme-dark <= src/pages/index/index.tsx */
   .dark\:bg-zinc-950.theme-dark {
     background-color: var(--color-zinc-950);
   }
- /*tokens: theme-dark <= src/pages/index/index.tsx | dark:bg-zinc-950 <= src/pages/index/index.tsx */
+ /*! tokens: theme-dark <= src/pages/index/index.tsx | dark:bg-zinc-950 <= src/pages/index/index.tsx */
   .theme-dark .dark\:bg-zinc-950 {
     background-color: var(--color-zinc-950);
   }
- /*tokens: dark:text-zinc-50 <= src/pages/index/index.tsx | theme-dark <= src/pages/index/index.tsx */
+ /*! tokens: dark:text-zinc-50 <= src/pages/index/index.tsx | theme-dark <= src/pages/index/index.tsx */
   .dark\:text-zinc-50.theme-dark {
     color: var(--color-zinc-50);
   }
- /*tokens: theme-dark <= src/pages/index/index.tsx | dark:text-zinc-50 <= src/pages/index/index.tsx */
+ /*! tokens: theme-dark <= src/pages/index/index.tsx | dark:text-zinc-50 <= src/pages/index/index.tsx */
   .theme-dark .dark\:text-zinc-50 {
     color: var(--color-zinc-50);
   }
 }
- /*tokens: issue-998-page <= src/pages/issue-998/index.tsx */
+ /*! tokens: issue-998-page <= src/pages/issue-998/index.tsx */
 .issue-998-page {
   padding: calc(var(--spacing) * 4);
 }
@@ -831,14 +858,6 @@
 /*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
 @layer properties;
 @layer theme, base, components, utilities;
-@layer theme {
-}
-@layer base {
-  @supports (not (-webkit-appearance: -apple-pay-button)) or (contain-intrinsic-size: 1px) {
-  }
-}
-@layer utilities {
-}
 @property --tw-space-y-reverse {
   syntax: '*';
   inherits: false;
@@ -960,8 +979,4 @@
   syntax: '*';
   initial-value: '';
   inherits: false;
-}
-@layer properties {
-  @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
-  }
 }

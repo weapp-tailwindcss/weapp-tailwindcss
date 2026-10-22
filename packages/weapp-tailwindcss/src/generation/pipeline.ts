@@ -119,7 +119,7 @@ export async function generateCssByGenerator(
     if (shouldProcessDisabledGeneratorCss(rawSource, cssHandlerOptions)) {
       const handled = await styleHandler(rawSource, cssHandlerOptions)
       return {
-        css: finalizeWebGeneratorCss(handled.css, generatorOptions.target, generatorOptions.webCompat),
+        css: finalizeWebGeneratorCss(handled.css, generatorOptions.target, generatorOptions.webCompat, options.deferWebCssPropertyFallback),
         classSet: resolveGeneratedCssClassSet(
           generatorOptions.target,
           new Set(),
@@ -186,6 +186,7 @@ export async function generateCssByGenerator(
       ),
       target,
       generatorOptions.webCompat,
+      options.deferWebCssPropertyFallback,
     )
   }
   const generatorRawSource = localImportParts?.source ?? effectiveRawSource

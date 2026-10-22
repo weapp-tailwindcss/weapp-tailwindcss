@@ -1,15 +1,12 @@
-import type { NativeCaseResult, NativeGeometryEvidence, NativePlatformReport, NativeRect } from '../examples/react-lynx/src/compatibility/types'
-import type { RunContext } from './tailwind-capabilities/context'
 import { Buffer } from 'node:buffer'
-import { mkdir, mkdtemp, readFile, rm, utimes, writeFile } from 'node:fs/promises'
-import os from 'node:os'
+import { mkdir, readFile, rm, utimes, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { afterEach, expect, it, vi } from 'vitest'
 import { skewImage } from './lynx/fixtures/skew-images'
 import { PNG } from './lynx/png'
 import { digest } from './tailwind-capabilities/identity'
 import { buildLynxCapabilityReport, lynxCaseContracts } from './tailwind-capabilities/lynx-adapter'
-import { geometryValidators } from './tailwind-capabilities/lynx/contracts'
+import { directories, fixture, rect } from './tailwind-capabilities/lynx/adapter-test-fixture'
 import { validateCapabilityReport, verifyReportArtifacts } from './tailwind-capabilities/report'
 
 vi.mock('./tailwind-capabilities/identity', async (original) => {
@@ -24,79 +21,9 @@ vi.mock('./tailwind-capabilities/identity', async (original) => {
   }) }
 })
 
-const directories: string[] = []
 afterEach(async () => {
   await Promise.all(directories.splice(0).map(directory => rm(directory, { recursive: true, force: true })))
 })
-
-function rect(left: number, top: number, width: number, height: number): NativeRect {
-  return { left, top, width, height, right: left + width, bottom: top + height }
-}
-
-function geometry(): NativeGeometryEvidence {
-  return {
-    probe: rect(6, 6, 44, 44),
-    control: rect(206, 6, 90, 60),
-    probeContainer: rect(0, 0, 160, 140),
-    controlContainer: rect(200, 0, 160, 140),
-    probeChild: rect(6, 6, 8, 8),
-    controlChild: rect(206, 6, 8, 8),
-  }
-}
-
-async function fixture(id = 'sizing-size', status: NativeCaseResult['status'] = 'supported', hostGeometry = true) {
-  const root = await mkdtemp(path.join(os.tmpdir(), 'lynx adapter 中文 '))
-  directories.push(root)
-  const context: RunContext = { root, directory: root, runId: '0b12a000-0000-4000-8000-000000000001', startedAt: new Date(Date.now() - 1000).toISOString(), caseFilter: new RegExp(`^${id}$`) }
-  const native = path.join(root, 'native')
-  await mkdir(native)
-  const bundle = Buffer.from('synthetic native bundle')
-  const identity = { version: 1 as const, runId: context.runId, bundleSha256: digest(bundle) }
-  const raw: NativePlatformReport = {
-    schemaVersion: 1,
-    platform: 'ios',
-    catalogHash: 'fixture',
-    verifiedAt: new Date().toISOString(),
-    versions: { tailwindcss: '4.3.3', lynxEngine: '4.0.1', engineVersion: '4.0.1', cssDefines: '0.0.18' },
-    environment: {
-      deviceName: 'synthetic test',
-      deviceModel: 'fixture',
-      osName: 'iOS',
-      osVersion: 'test',
-      osBuild: 'test',
-      runtimeIdentifier: 'synthetic',
-      abi: 'arm64',
-      viewport: { width: 400, height: 800, pixelRatio: 1 },
-    },
-    evidence: { ...identity, artifacts: [] },
-    results: [{ id, status, checkpoints: [{ name: 'forged-checkpoint', passed: true }], geometry: geometry(), ...(status === 'unsupported' ? { reason: 'synthetic unsupported', failureStage: 'runtime' as const } : {}) }],
-  }
-  await writeFile(path.join(native, 'main.lynx.bundle'), bundle)
-  await writeFile(path.join(native, 'run-context.json'), JSON.stringify(identity))
-  const saveGeometry = async () => {
-    const crops = path.join(native, 'crops', context.runId)
-    await mkdir(crops, { recursive: true })
-    const sidecar = { ...identity, source: 'lynx-native-host-geometry-v1', id, platform: raw.platform, geometry: raw.results[0]!.geometry }
-    const files: Array<[string, Uint8Array]> = [[`${id}-geometry.json`, Buffer.from(JSON.stringify(sidecar))]]
-    for (const frame of ['probe', 'control'] as const) {
-      const rect = sidecar.geometry![`${frame}Container`]
-      const image = new PNG({ width: rect.width, height: rect.height })
-      image.data.fill(255)
-      files.push([`${id}-geometry-${frame}.png`, PNG.sync.write(image)])
-    }
-    for (const [name, bytes] of files) {
-      await writeFile(path.join(crops, name), bytes)
-      raw.evidence!.artifacts = raw.evidence!.artifacts.filter(item => item.name !== name)
-      raw.evidence!.artifacts.push({ name, runId: context.runId, sha256: digest(bytes), byteLength: bytes.byteLength })
-    }
-  }
-  const save = () => writeFile(path.join(native, 'report.json'), JSON.stringify(raw))
-  if (hostGeometry && geometryValidators.has(id)) {
-    await saveGeometry()
-  }
-  await save()
-  return { context, raw, native, save, saveGeometry }
-}
 
 it('固定的支持与阶段不从本轮 checkpoint 或失败推导', () => {
   const ios = lynxCaseContracts('lynx-ios')
@@ -141,7 +68,7 @@ it('伪造的通过checkpoint不能遮住不符合44px的实际测量', async ()
   expect(report.results[0]).toMatchObject({ status: 'failed', support: 'supported', assertions: [{ actual: 'unsupported', expected: 'supported' }] })
 })
 
-it.each(['layout-display', 'sizing-fixed', 'directive-import'])('%s 没有完整语义判定器时保守阻断', async (id) => {
+it.each(['layout-display', 'directive-import'])('%s 没有完整语义判定器时保守阻断', async (id) => {
   const { context, raw } = await fixture(id)
   const { report } = await buildLynxCapabilityReport(context, 'lynx-ios', raw)
   expect(report.results[0]).toMatchObject({ status: 'blocked', assertions: [] })

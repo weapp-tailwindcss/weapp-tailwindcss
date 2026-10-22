@@ -1,18 +1,20 @@
 import type { Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'
 import { createCaptureBudget, readDocumentGeometry } from './capture'
+import { prepareFullPageImages } from './images'
 import { captureStableFullPage } from './stable'
 
 /** 仅 Firefox 的协议尺寸超限使用分片，其余整页截图保留原生断言。 */
 export async function expectFullPageScreenshot(page: Page) {
+  const budget = createCaptureBudget(test.info().timeout || 60_000)
+  await prepareFullPageImages(page, budget)
   if (page.context().browser()?.browserType().name() !== 'firefox') {
-    await expect(page).toHaveScreenshot({ fullPage: true })
+    await expect(page).toHaveScreenshot({ fullPage: true, timeout: budget.remaining() })
     return
   }
-  const budget = createCaptureBudget(test.info().timeout || 60_000)
   const geometry = await budget.run(() => readDocumentGeometry(page))
   if (geometry.width <= 32_767 && geometry.height <= 32_767) {
-    await expect(page).toHaveScreenshot({ fullPage: true })
+    await expect(page).toHaveScreenshot({ fullPage: true, timeout: budget.remaining() })
     return
   }
   const name = '__full-page-template-check__.png'

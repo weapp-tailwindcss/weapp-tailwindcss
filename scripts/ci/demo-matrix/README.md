@@ -14,6 +14,8 @@
 
 普通 utility 同时检查 `h-8`、`h-20`、`h-50`、`mt-2`、`flex`、`text-slate-500`、spacing 定义或内联值一致性，以及任意值和透明色对照。期望间距来自配置与实际产物，按倍数检查，不能拿某个模板的默认数值套用所有 demo。页面探针同时具有唯一 id、本轮标记、文本和真实 class 属性，孤立字符串不能充当消费证据。
 
+五个 Taro React/Vue 夹具的 H5 与 Harmony hybrid 生产产物还默认启动后台 Chromium，检查独立尺寸、间距、颜色和像素参考。Harmony 的普通浏览器证据只验证 WebView 产物，不代表原生桥接或设备运行通过；报告缺少生产证据或部分属性错误必须被拒绝。
+
 静态基线只记录探针实际引用的 spacing 变量；已内联的规则检查数值与倍数，主题中残留的未使用声明不参与等价比较。完整 CSS 仍随 artifact 保存；任何规则引用 `var(--spacing)` 却没有定义时必须失败。
 
 Taro 目标包括 weapp、swan、alipay、tt、h5、qq、jd、harmony-hybrid、rn；分包 demo 按现有脚本覆盖五个目标。uni 主 demo 覆盖九个小程序、H5/SSR、三种 quickapp-webview 和 app；其他 uni demo 按现有 CLI 登记。Mpx 覆盖 wx/ali/swan/tt/dd，Gulp 覆盖 weapp/tt，Web Vite/Webpack/Rsbuild 同时覆盖 web/weapp 模式，另含 Vite 7 和 Nuxt。
@@ -44,6 +46,8 @@ weapp-vite 的首轮产物写出早于监听初始化完成；首次修改前必
 锁文件中的 Rollup 4.63.0 使用 [watcher 补丁](../../../patches/rollup@4.63.0.patch)：同一构建任务共用文件 watcher，transform dependency 单独记录失效语义。原版在 Linux 对普通模块和 transform dependency 重复监听同一文件，原子替换后会停止响应后续修改。[CJS/ESM 回归](./rollup-watch.test.mjs) 同时检查直接导入、虚拟模块消费方、连续修改与删除后重建。补丁仅随本仓库冻结依赖应用，不随 weapp-tailwindcss npm 包安装；后续升级 Rollup 时必须复验并评估移除，不能只改版本号。
 
 Nitro 2.13.4 的 [externals 补丁](../../../patches/nitropack@2.13.4.patch) 在匹配内联规则前规范化解析后的 module ID。原版只规范化原始 ID，Windows 原生反斜杠路径会漏掉 `nuxt/dist` 内联规则，让 Nuxt 4.6 的 SSR renderer 在 Node 中未经开发环境变换直接加载，导致 manifest 缺失和 HTTP 500。[发行包 resolver 回归](./nitro-externals.test.mjs) 覆盖 POSIX、Windows 盘符、根目录、UNC、pnpm 嵌套路径、相对导入及更具体的 external 规则；真实 Nuxt demo 继续验证 SSR、静态基线与连续 Web 更新。补丁仅随本仓库冻结安装生效，不随产品 npm 包发布；[上游 resolver](https://github.com/nitrojs/nitro/blob/v2.13.4/src/build/plugins/externals.ts) 发布等价修复后，先复验再移除补丁与锁文件登记。
+
+Taro 4.2.1 的 Harmony hybrid 平台原来只登记 Webpack 适配，Vite 产物会缺平台 alias、组件初始化和框架 hooks。[平台补丁](../../../patches/@tarojs__plugin-platform-harmony-hybrid@4.2.1.patch) 从 compiler context 与平台 getter 接入 Vite，复用上游 API 转换并显式登记 Babel 依赖；[React](../../../patches/@tarojs__plugin-framework-react@4.2.1.patch) 与 [Vue3](../../../patches/@tarojs__plugin-framework-vue3@4.2.1.patch) 补丁在开发 optimizer、生产 load 两入口识别真实 hybrid API，保留普通 H5 的绑定方式。[runner 补丁](../../../patches/@tarojs__vite-runner@4.2.1.patch) 等待异步 `modifyViteConfig`，并让 SPA/MPA 按真实 buildAdapter 使用 Harmony 的 rem 策略。回归执行发行包的插件钩子、真实 Babel 转换及生成脚本，覆盖已有元数据、Windows 模块字面量和路径归属；生产矩阵继续验证实际输出。补丁仅随本仓库冻结安装生效，不随产品 npm 包发布；[上游 Taro 4.2.1](https://github.com/NervJS/taro/tree/v4.2.1/packages) 发布等价修复后，必须先运行本目录 `taro-*.test.mjs` 与五个项目的 H5/Harmony 生产矩阵，再移除四份补丁、packageExtensions 和锁文件登记。
 
 开发验收使用 demo 默认 watcher，不强加 Watchpack 或 Chokidar polling。短间隔磁盘轮询会将 Webpack 虚拟模块反复报告为缺失，使慢编译持续空转；真实虚拟模块回归要求空闲时稳定、实际更新后重建并再次稳定。Windows 专项连续执行三次完整 H5 流程，额外保存失效事件来源与 watcher 身份。
 

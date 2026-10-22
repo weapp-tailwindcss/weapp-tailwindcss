@@ -13,6 +13,7 @@ import {
   toMarkdown,
 } from './ci-report.mjs'
 import { runHmrMemoryConfirmation } from './memory-confirmation.mjs'
+import { assertBenchmarkMatrixRows, selectBenchmarkProjects } from './project-selection.mjs'
 import { benchmarkProjectDirs } from './projects.mjs'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -117,7 +118,7 @@ async function hasGitChanges(ref, paths) {
     stdio: ['ignore', 'ignore', 'pipe'],
   })
   let stderr = ''
-  child.stderr.on('data', chunk => {
+  child.stderr.on('data', (chunk) => {
     stderr += chunk.toString('utf8')
   })
   const code = await new Promise((resolve, reject) => {
@@ -438,6 +439,8 @@ function createProcessedCssInjectionBenchmarkRow(version, root, result) {
 }
 
 async function main() {
+  const only = process.argv.includes('--only') ? parseArg('--only') : undefined
+  const selectedProjects = selectBenchmarkProjects(only)
   const pkg = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'))
   const guardMode = process.argv.includes('--guard')
   const baselineRef = parseArg('--baseline-ref', process.env.WEAPP_TW_BENCH_BASE_REF ?? (guardMode ? 'origin/main' : ''))
@@ -457,7 +460,6 @@ async function main() {
   const hmrRuns = parseNumber('--hmr-runs', 5)
   const timeoutMs = parseNumber('--timeout', 180000)
   const pollIntervalMs = parseNumber('--poll-interval', 30)
-  const only = parseArg('--only', '')
   const baselineLabel = baselineRef
     ? `base:${baselineRef}`
     : `published:${normalizePackageSpec(baseline)}`
@@ -530,6 +532,7 @@ async function main() {
   await runMatrix({ versionsFile: versionsPath, outputFile: rawPath, matrixBuildRuns: buildRuns })
 
   const raw = JSON.parse(await fs.readFile(rawPath, 'utf8'))
+  assertBenchmarkMatrixRows(raw, selectedProjects, [baselineVersion, currentVersion], { buildRuns, hmrRuns })
   const performanceChanges = baselineRef
     ? await classifyPerformanceChanges(repoRoot, baselineRef)
     : { relevant: true, relevantFiles: performanceRelevantPaths, ignoredReleaseMetadataFiles: [], ignoredNonPerformanceFiles: [] }
@@ -588,6 +591,8 @@ async function main() {
         baselineVersion,
         performanceGuard,
         regressionPercent: parseNumber('--regression-percent', 5),
+        hmrRuns,
+        selectedProjects,
         runMatrix,
       })
     }
@@ -598,7 +603,7 @@ async function main() {
       ? `PR 仅修改不影响性能的构建守卫文件：${ignoredNonPerformanceFiles}`
       : ignoredFiles
         ? `PR 仅修改版本号或内部包发布范围等发版元数据：${ignoredFiles}`
-      : 'PR 未修改性能相关源码、依赖或 demo'
+        : 'PR 未修改性能相关源码、依赖或 demo'
     summary.performanceGuard = performanceRelevantChanges
       ? { ...performanceGuard, blocking: true, relevantChanges: performanceChanges.relevantFiles }
       : asInformationalPerformanceGuard(performanceGuard, informationalReason)

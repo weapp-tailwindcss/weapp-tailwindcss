@@ -6,6 +6,8 @@ import path from 'node:path'
 import process from 'node:process'
 import { execa } from 'execa'
 import { androidSdkRoot } from '../react-native/native-toolchain'
+import { runStageProducer } from '../tailwind-capabilities/stage-receipt'
+import { withAndroidHostSession } from './android-host-session'
 import { saveAndroidSdkBuild, saveInstalledAndroidSdk } from './android-sdk-runner'
 import { buildCompatibilityBundle } from './build'
 import { exampleDir, lynxIntermediateDir, repoRoot } from './catalog'
@@ -42,11 +44,6 @@ async function collectAndroidArtifacts(source: string, artifactDir: string, devi
     const result = await execa('adb', adbArgs(device, ['exec-out', 'run-as', applicationId, 'cat', devicePath]), { encoding: 'buffer' })
     return result.stdout
   })
-}
-
-async function collectAndroidLogcat(artifactDir: string, device: AndroidDevice) {
-  const result = await execa('adb', adbArgs(device, ['logcat', '-d', '-t', '2500']), { all: true, encoding: 'utf8', reject: false })
-  await fs.writeFile(path.join(artifactDir, 'logcat.txt'), result.all ?? result.stdout ?? result.stderr ?? '')
 }
 
 async function installedAndroidCompileSdk() {
@@ -89,9 +86,7 @@ async function runAndroid(hostDir: string, artifactDir: string, device: AndroidD
   await command('adb', adbArgs(device, ['install', '-r', apkPath]), hostDir, 120_000)
   await saveInstalledAndroidSdk(hostDir, artifactDir, device, context)
   await command('adb', adbArgs(device, ['shell', 'am', 'force-stop', applicationId]), hostDir, 30_000)
-  const hiddenErrorDialogs = (await command('adb', adbArgs(device, ['shell', 'settings', 'get', 'global', 'hide_error_dialogs']), hostDir, 30_000)).trim()
-  await command('adb', adbArgs(device, ['shell', 'settings', 'put', 'global', 'hide_error_dialogs', '1']), hostDir, 30_000)
-  try {
+  return withAndroidHostSession(hostDir, artifactDir, device, async () => {
     return await withNativeFailureEvidence(artifactDir, context, androidFailureReaders(device, context), async () => {
       await execa('adb', adbArgs(device, ['shell', 'input', 'keyevent', 'KEYCODE_WAKEUP']), { reject: false })
       await execa('adb', adbArgs(device, ['shell', 'wm', 'dismiss-keyguard']), { reject: false })
@@ -123,14 +118,7 @@ async function runAndroid(hostDir: string, artifactDir: string, device: AndroidD
       await collectAndroidArtifacts(report, artifactDir, device, context)
       return report
     })
-  }
-  finally {
-    await collectAndroidLogcat(artifactDir, device)
-    const restoreArguments = hiddenErrorDialogs === 'null'
-      ? ['shell', 'settings', 'delete', 'global', 'hide_error_dialogs']
-      : ['shell', 'settings', 'put', 'global', 'hide_error_dialogs', hiddenErrorDialogs]
-    await execa('adb', adbArgs(device, restoreArguments), { reject: false })
-  }
+  })
 }
 
 async function compareCommittedReport(actual: NativePlatformReport) {
@@ -216,7 +204,7 @@ async function main() {
   })
 }
 
-main().catch((error) => {
+runStageProducer('lynx-native', main).catch((error) => {
   process.stderr.write(`${formatNativeFailure(error)}\n`)
   process.exitCode = 1
 })

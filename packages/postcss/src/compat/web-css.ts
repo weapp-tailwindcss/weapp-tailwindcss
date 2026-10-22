@@ -3,12 +3,14 @@ import postcss from 'postcss'
 import postcssPresetEnv from 'postcss-preset-env'
 import selectorParser from 'postcss-selector-parser'
 import { internalCssSelectorReplacer } from '../shared'
+import { getCssCalcVariableReferences, isCssPropertyRegistration } from '../utils/css-custom-property'
 import { normalizeModernColorValue } from './color-mix'
 import { removeUnsupportedCascadeLayers } from './mini-program-css/at-rules'
-import { normalizeTailwindcssV4GradientPosition, normalizeTailwindcssV4InfinityCalcValue } from './tailwindcss-v4'
+import { normalizeTailwindcssV4InfinityCalcValue } from './tailwindcss-v4'
 import { collectCustomPropertyValues, resolveCustomPropertyVarValue, usesResolvableTailwindColorVariable } from './web-css-custom-properties'
-
-const customPropertyReferencePattern = /var\(\s*(--(?:\\.|[-\w])+)/gi
+import { normalizeWebGradientPositions } from './web-css-gradients'
+import { withPreservedRegistrationScopes } from './web-css-registration-scopes'
+import { collectRegisteredCustomPropertyFallbacks, insertRegisteredCustomPropertyFallbackRule } from './web-css-registrations'
 
 export interface NormalizedWebCssCompatOptions {
   preset: 'off' | 'legacy-web'
@@ -64,77 +66,11 @@ function isWebCssCompatEnabled(options: NormalizedWebCssCompatOptions) {
   return Object.values(options.features).some(Boolean)
 }
 
-interface RegisteredCustomProperty {
-  initialValue?: string | undefined
-}
-
-function collectRegisteredCustomPropertyFallbacks(root: postcss.Root) {
-  const registeredProperties = new Map<string, RegisteredCustomProperty>()
-  root.walkAtRules('property', (atRule) => {
-    const propertyName = atRule.params.trim().split(/\s+/, 1)[0]
-    if (propertyName?.startsWith('--')) {
-      const existing = registeredProperties.get(propertyName) ?? {}
-      atRule.walkDecls('initial-value', (decl) => {
-        existing.initialValue = decl.value.trim()
-      })
-      registeredProperties.set(propertyName, existing)
-    }
-    atRule.remove()
-  })
-  return registeredProperties
-}
-
-const tailwindUnregisteredInitialFallbackCustomProperties = new Set([
-  '--tw-gradient-position',
-  '--tw-gradient-stops',
-  '--tw-gradient-via-stops',
-  '--tw-leading',
-  '--tw-font-weight',
-  '--tw-tracking',
-])
-
-function insertRegisteredCustomPropertyFallbackRule(
-  root: postcss.Root,
-  registeredProperties: ReadonlyMap<string, RegisteredCustomProperty>,
-) {
-  const declarations: postcss.Declaration[] = []
-  for (const [prop, registration] of registeredProperties) {
-    if (!registration.initialValue || registration.initialValue === 'initial') {
-      continue
-    }
-    declarations.push(postcss.decl({
-      prop,
-      value: registration.initialValue,
-    }))
-  }
-
-  if (declarations.length === 0) {
-    return
-  }
-
-  root.prepend(postcss.rule({
-    selector: '*, ::before, ::after, ::backdrop',
-    nodes: declarations,
-  }))
-}
-
-function removeInitialFallbackDeclarations(
-  root: postcss.Root,
-  registeredProperties: ReadonlyMap<string, RegisteredCustomProperty>,
-) {
-  root.walkDecls((decl) => {
-    if (
-      ((registeredProperties.has(decl.prop) && !registeredProperties.get(decl.prop)?.initialValue)
-        || tailwindUnregisteredInitialFallbackCustomProperties.has(decl.prop))
-      && decl.value.trim() === 'initial'
-    ) {
-      decl.remove()
-    }
-  })
-}
-
 function unwrapThemeAtRules(root: postcss.Root) {
   root.walkAtRules('theme', (atRule) => {
+    if (isCssPropertyRegistration(atRule)) {
+      return
+    }
     if (atRule.nodes && atRule.nodes.length > 0) {
       const rootNodes: postcss.ChildNode[] = []
       const hoistedNodes: postcss.ChildNode[] = []
@@ -169,11 +105,8 @@ function normalizeModernColorDeclarations(root: postcss.Root, features: Required
   }
   const referencedProperties = new Set<string>()
   root.walkDecls((decl) => {
-    if (!decl.value.includes('var(')) {
-      return
-    }
-    for (const match of decl.value.matchAll(customPropertyReferencePattern)) {
-      referencedProperties.add(match[1])
+    for (const property of getCssCalcVariableReferences(decl.value).values()) {
+      referencedProperties.add(property)
     }
   })
   let customPropertyValues: Map<string, string> = new Map()
@@ -189,6 +122,9 @@ function normalizeModernColorDeclarations(root: postcss.Root, features: Required
     }
   }
   root.walkDecls((decl) => {
+    if (isCssPropertyRegistration(decl)) {
+      return
+    }
     const value = resolveCustomPropertyVarValue(decl.value, customPropertyValues)
     const normalized = normalizeModernColorValue(value, customPropertyValues)
     if (!normalized.changed) {
@@ -206,6 +142,13 @@ function normalizeModernColorDeclarations(root: postcss.Root, features: Required
 
 function removeModernColorSupports(root: postcss.Root) {
   root.walkAtRules('supports', (atRule) => {
+    let containsRegistration = isCssPropertyRegistration(atRule)
+    atRule.walkAtRules((child) => {
+      containsRegistration ||= isCssPropertyRegistration(child)
+    })
+    if (containsRegistration) {
+      return
+    }
     if (!/color-mix|oklch|oklab|lab|lch|display-p3/i.test(atRule.params)) {
       return
     }
@@ -218,41 +161,11 @@ function removeModernColorSupports(root: postcss.Root) {
   })
 }
 
-function normalizeTailwindcssV4GradientPositionDeclarations(root: postcss.Root) {
-  root.walkDecls('--tw-gradient-position', (decl) => {
-    const normalized = normalizeTailwindcssV4GradientPosition(decl.value)
-    if (normalized) {
-      decl.value = normalized
-      return
-    }
-
-    if (normalized === decl.value.trim()) {
-      return
-    }
-
-    const parent = decl.parent
-    if (parent?.type !== 'rule') {
-      decl.value = 'to bottom'
-      return
-    }
-
-    const backgroundImageDecl = parent.nodes.find((node): node is postcss.Declaration => {
-      return node.type === 'decl' && node.prop === 'background-image'
-    })
-    if (/^radial-gradient\(/i.test(backgroundImageDecl?.value ?? '')) {
-      decl.value = 'at center'
-      return
-    }
-    if (/^conic-gradient\(/i.test(backgroundImageDecl?.value ?? '')) {
-      decl.value = 'from 0deg'
-      return
-    }
-    decl.value = 'to bottom'
-  })
-}
-
 function normalizeTailwindcssV4InfinityCalcDeclarations(root: postcss.Root) {
   root.walkDecls((decl) => {
+    if (isCssPropertyRegistration(decl)) {
+      return
+    }
     const normalized = normalizeTailwindcssV4InfinityCalcValue(decl.value)
     if (normalized !== decl.value) {
       decl.value = normalized
@@ -262,7 +175,7 @@ function normalizeTailwindcssV4InfinityCalcDeclarations(root: postcss.Root) {
 
 function removeEmptyAtRules(root: postcss.Root) {
   root.walkAtRules((atRule) => {
-    if (atRule.nodes && atRule.nodes.length === 0) {
+    if (!isCssPropertyRegistration(atRule) && atRule.nodes && atRule.nodes.length === 0) {
       atRule.remove()
     }
   })
@@ -270,6 +183,9 @@ function removeEmptyAtRules(root: postcss.Root) {
 
 function insertWebkitBackgroundClipText(root: postcss.Root) {
   root.walkDecls('background-clip', (decl) => {
+    if (isCssPropertyRegistration(decl)) {
+      return
+    }
     if (decl.value.trim().toLowerCase() !== 'text') {
       return
     }
@@ -305,6 +221,7 @@ function transformCssNesting(root: postcss.Root) {
 export function transformWebCssCompat(
   css: string,
   options: WebCssCompatUserOptions | undefined,
+  processing: { deferPropertyFallback?: boolean | undefined } = {},
 ) {
   const normalized = normalizeWebCssCompatOptions(options)
   if (!isWebCssCompatEnabled(normalized) && normalized.preset !== 'legacy-web') {
@@ -313,28 +230,27 @@ export function transformWebCssCompat(
 
   try {
     const root = postcss.parse(css)
+    const registeredProperties = collectRegisteredCustomPropertyFallbacks(root)
     if (normalized.features.theme) {
-      unwrapThemeAtRules(root)
+      withPreservedRegistrationScopes(root, () => unwrapThemeAtRules(root))
     }
-    if (normalized.features.property) {
-      const registeredProperties = collectRegisteredCustomPropertyFallbacks(root)
-      insertRegisteredCustomPropertyFallbackRule(root, registeredProperties)
-      removeInitialFallbackDeclarations(root, registeredProperties)
+    if (normalized.features.property && !processing.deferPropertyFallback) {
+      insertRegisteredCustomPropertyFallbackRule(root, registeredProperties, !normalized.features.layer)
     }
     if (normalized.features.supports) {
       removeModernColorSupports(root)
     }
     if (normalized.features.nesting) {
-      transformCssNesting(root)
+      withPreservedRegistrationScopes(root, () => transformCssNesting(root))
     }
-    normalizeTailwindcssV4GradientPositionDeclarations(root)
+    normalizeWebGradientPositions(root, registeredProperties)
     normalizeTailwindcssV4InfinityCalcDeclarations(root)
     normalizeModernColorDeclarations(root, normalized.features)
     if (normalized.preset === 'legacy-web') {
       insertWebkitBackgroundClipText(root)
     }
     if (normalized.features.layer) {
-      removeUnsupportedCascadeLayers(root)
+      withPreservedRegistrationScopes(root, () => removeUnsupportedCascadeLayers(root))
     }
     removeEmptyAtRules(root)
     return root.toString()

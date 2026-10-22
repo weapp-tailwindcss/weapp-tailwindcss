@@ -1,5 +1,7 @@
 import type { ExpectedDeclaration } from '@weapp-tailwindcss/test-catalog'
+import type { NativeScreenMetrics } from './fixed-size-contract'
 import type { ResponsiveFrame, ResponsivePhase } from './responsive-contract'
+import type { ThemeOverrideEvidence } from './theme-overrides-contract'
 
 export { featureFamilies } from '@weapp-tailwindcss/test-catalog'
 export type { CompatibilityCase, EvidenceLevel, ExpectedDeclaration, FeatureFamily, ProbeType } from '@weapp-tailwindcss/test-catalog'
@@ -90,6 +92,7 @@ export interface NativeCaseResult extends PlatformResult {
   failureStage?: Extract<FailureStage, 'runtime' | 'version-limit'>
   checkpoints: RuntimeCheckpoint[]
   geometry?: NativeGeometryEvidence
+  screenMetrics?: NativeScreenMetrics
   colorScheme?: Record<'light' | 'dark' | 'restored', NativeColorSchemeReceipt>
   responsive?: Record<ResponsivePhase, ResponsiveFrame>
   /** 混合交互必须逐候选取证；旧报告缺失此字段时仅可历史展示。 */
@@ -180,6 +183,7 @@ export interface NativePlatformReport {
   environment: NativeRuntimeEnvironment
   results: NativeCaseResult[]
   mediaGate?: NativeMediaGateEvidence
+  themeOverrides?: ThemeOverrideEvidence
   // 历史结论仍可展示；实时验收及基线更新必须携带完整的新证据协议。
   evidence?: NativeEvidenceContext & { artifacts: NativeArtifactReceipt[] }
 }

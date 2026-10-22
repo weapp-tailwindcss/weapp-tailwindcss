@@ -1,5 +1,5 @@
 import type { normalizeWeappTailwindcssGeneratorOptions } from '@/generator/index'
-import { transformWebCssCompat } from '@weapp-tailwindcss/postcss/transform'
+import { normalizeWebCssCompatOptions, transformWebCssCompat } from '@weapp-tailwindcss/postcss/transform'
 import { collectGeneratedRawSourceCandidates } from './class-selectors'
 import { finalizeMiniProgramGeneratorCss } from './generation-helpers'
 import { createCssAppend } from './markers'
@@ -40,9 +40,10 @@ export function finalizeWebGeneratorCss(
   css: string,
   target: string,
   webCompat: ReturnType<typeof normalizeWeappTailwindcssGeneratorOptions>['webCompat'],
+  deferPropertyFallback = false,
 ) {
   return target === 'web'
-    ? transformWebCssCompat(css, webCompat)
+    ? transformWebCssCompat(css, webCompat, { deferPropertyFallback })
     : css
 }
 
@@ -54,6 +55,7 @@ export function finalizeIncrementalGeneratorCss(
   cssPreflight: Parameters<typeof finalizeMiniProgramGeneratorCss>[3],
   options: Parameters<typeof finalizeMiniProgramGeneratorCss>[4],
   webCompat: ReturnType<typeof normalizeWeappTailwindcssGeneratorOptions>['webCompat'],
+  deferPropertyFallback = false,
 ) {
   const finalizedIncrementalCss = finalizeMiniProgramGeneratorCss(
     incrementalCss,
@@ -63,7 +65,12 @@ export function finalizeIncrementalGeneratorCss(
     options,
   )
   if (target === 'web') {
-    return createCssAppend(previousCss, finalizeWebGeneratorCss(finalizedIncrementalCss, target, webCompat))
+    return finalizeWebGeneratorCss(createCssAppend(previousCss, finalizedIncrementalCss), target, webCompat, deferPropertyFallback)
   }
   return createCssAppend(previousCss, finalizedIncrementalCss)
+}
+
+/** 已收尾的 CSS 不含默认值来源身份；注册兼容开启时必须重新消费完整生成结果。 */
+export function canAppendGeneratorCss(target: string, webCompat: Parameters<typeof normalizeWebCssCompatOptions>[0]) {
+  return target !== 'web' || !normalizeWebCssCompatOptions(webCompat).features.property
 }

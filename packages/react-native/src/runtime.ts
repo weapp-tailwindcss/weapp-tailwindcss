@@ -1,8 +1,9 @@
 import type { RelativeLineHeight } from './runtime/line-height'
 import type { DeferredBoxShadow } from './runtime/shadow'
 import type { NativeClassValue, NativeStyleEnvironment, NativeStyleRuntime, NativeStyleValue } from './runtime/types'
-import type { NativePlatform, NativeStyleManifest } from './types'
+import type { NativeManifestPublication, NativePlatform, NativeStyleManifest } from './types'
 import { flattenInlineStyle, relativeLineHeightStyle } from './runtime/line-height'
+import { copyManifestSnapshot, copyPublication } from './runtime/manifest'
 import { resolveRules } from './runtime/resolve'
 import { inlineBoxShadowStyle } from './runtime/shadow'
 
@@ -11,7 +12,6 @@ interface StyleMeta { important?: NativeStyleValue, relativeLineHeight?: Relativ
 type StyleSheetFactory = (value: Record<string, StyleValue>) => Record<string, NativeStyleValue>
 type StyleSheetFlattener = (value: NativeStyleValue) => StyleValue | undefined
 
-let activeManifest: NativeStyleManifest | undefined
 let activeEnvironment: NativeStyleEnvironment = {}
 let styleSheetFactory: StyleSheetFactory | undefined
 let styleSheetFlattener: StyleSheetFlattener | undefined
@@ -22,10 +22,12 @@ function resolveRegisteredStyle(value: number) {
 }
 
 function createStyleSheet(manifest: NativeStyleManifest) {
+  const revision = styleSheetRevision
+  const factory = styleSheetFactory
   const source = manifest.styleSheet ?? Object.fromEntries(
     Object.entries(manifest.styleEntries ?? {}).map(([id, rule]) => [id, rule.style]),
   )
-  return styleSheetFactory?.(source)
+  return { revision, styles: factory?.(JSON.parse(JSON.stringify(source))) }
 }
 
 function flatten(value: NativeClassValue, result: string[]) {
@@ -71,17 +73,23 @@ function rememberStyle(styleMetadata: Map<unknown, StyleMeta>, style: NativeStyl
   return style
 }
 
-export function createNativeStyleRuntime(initialManifest?: NativeStyleManifest): NativeStyleRuntime {
-  let manifest = initialManifest
+export function createNativeStyleRuntime(initialManifest?: NativeStyleManifest, initialPublication?: NativeManifestPublication): NativeStyleRuntime {
+  if (!initialManifest && initialPublication) {
+    throw new Error('React Native 发布身份必须绑定 manifest')
+  }
+  let manifest = initialManifest ? copyManifestSnapshot(initialManifest) : undefined
+  let publication = copyPublication(initialPublication)
   let environment = activeEnvironment
   const cache = new Map<string, NativeStyleValue>()
   const styleMetadata = new Map<unknown, StyleMeta>()
-  let nativeStyleSheet = manifest ? createStyleSheet(manifest) : undefined
-  let revision = styleSheetRevision
+  const initial = manifest ? createStyleSheet(manifest) : undefined
+  let nativeStyleSheet = initial?.styles
+  let revision = initial?.revision ?? styleSheetRevision
   const ensureStyleSheet = () => {
     if (revision !== styleSheetRevision) {
-      nativeStyleSheet = manifest ? createStyleSheet(manifest) : undefined
-      revision = styleSheetRevision
+      const prepared = manifest ? createStyleSheet(manifest) : undefined
+      nativeStyleSheet = prepared?.styles
+      revision = prepared?.revision ?? styleSheetRevision
       cache.clear()
     }
   }
@@ -119,13 +127,16 @@ export function createNativeStyleRuntime(initialManifest?: NativeStyleManifest):
         ? [tailwindStyle, inlineStyle, important]
         : [tailwindStyle, inlineStyle]
     },
-    setManifest(nextManifest) {
-      manifest = nextManifest
+    setManifest(nextManifest, nextPublication) {
+      const preparedManifest = copyManifestSnapshot(nextManifest)
+      const preparedPublication = copyPublication(nextPublication)
+      const preparedStyleSheet = createStyleSheet(preparedManifest)
+      manifest = preparedManifest
+      publication = preparedPublication
+      nativeStyleSheet = preparedStyleSheet.styles
+      revision = preparedStyleSheet.revision
       cache.clear()
       styleMetadata.clear()
-      nativeStyleSheet = createStyleSheet(nextManifest)
-      revision = styleSheetRevision
-      activeManifest = nextManifest
     },
     setEnvironment(nextEnvironment) {
       environment = nextEnvironment
@@ -135,17 +146,17 @@ export function createNativeStyleRuntime(initialManifest?: NativeStyleManifest):
     getManifest() {
       return manifest
     },
-  }
-  if (initialManifest) {
-    activeManifest = initialManifest
+    getPublication() {
+      return publication
+    },
   }
   return runtime
 }
 
 const defaultRuntime = createNativeStyleRuntime()
 
-export function setManifest(manifest: NativeStyleManifest) {
-  defaultRuntime.setManifest(manifest)
+export function setManifest(manifest: NativeStyleManifest, publication?: NativeManifestPublication) {
+  defaultRuntime.setManifest(manifest, publication)
 }
 
 /** 由 Expo virtual module 注入，避免 runtime 引入 Node-only 的 require shim。 */
@@ -160,7 +171,11 @@ export function setEnvironment(environment: NativeStyleEnvironment) {
 }
 
 export function getManifest() {
-  return activeManifest ?? defaultRuntime.getManifest()
+  return defaultRuntime.getManifest()
+}
+
+export function getPublication() {
+  return defaultRuntime.getPublication()
 }
 
 export function tw(value: NativeClassValue, environment?: NativeStyleEnvironment): NativeStyleValue {
@@ -175,4 +190,4 @@ export function composeStyle<const InlineStyle>(tailwindStyle: NativeStyleValue,
   return defaultRuntime.composeStyle(tailwindStyle, inlineStyle)
 }
 
-export type { NativeClassValue, NativePlatform, NativeStyleEnvironment, NativeStyleManifest, NativeStyleValue }
+export type { NativeClassValue, NativeManifestPublication, NativePlatform, NativeStyleEnvironment, NativeStyleManifest, NativeStyleValue }

@@ -1,0 +1,366 @@
+{
+  "status": "partial",
+  "baseSha": "7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5",
+  "sourceSha": "4ba9fd1bd8d52c01db4b806d0968bdee24272f4d",
+  "sourceIdentity": "4ba9 + 四个产品文件 overlay；非已提交修复 SHA",
+  "ciFailure": {
+    "run": 39726991635,
+    "job": 119654407179,
+    "artifact": 12403903859,
+    "artifactSha256": "ef52c205bc54489d0984d332c0406aef7c525b2a27e064a2826701bc9f1e46db",
+    "url": "https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/39726991635/job/119654407179",
+    "peakRssMb": [
+      [
+        1423.883,
+        1612.793
+      ],
+      [
+        1277.094,
+        1454.313
+      ]
+    ],
+    "steadyRssMb": [
+      [
+        1399.621,
+        1529.207
+      ],
+      [
+        1268.82,
+        1408.043
+      ]
+    ],
+    "rerun": false
+  },
+  "comparison": {
+    "environment": {
+      "platform": "darwin",
+      "arch": "arm64",
+      "node": "22.23.3",
+      "pnpm": "12.14.0"
+    },
+    "startedAt": "2026-10-22T06:21:04.278Z",
+    "finishedAt": "2026-10-22T06:23:11.337Z",
+    "formalAcceptance": false,
+    "profiling": false,
+    "forcedGc": false,
+    "lockSha256": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+    "overlay": [
+      {
+        "file": "packages/postcss/src/handler.ts",
+        "before": "477abcf88a01b4085b021978acd50b93de66e4d384521fdf8153c23bd3f8c4e9",
+        "after": "84f4ad4297f2421287cc20e25d799fc5e9f784c1977d664c0d86404861da2c7a",
+        "unchanged": true,
+        "finalSha256": "c6a952e0ee2300c3ade4710e7ccb2f0ac398e5eeb19aeae5ebf1c896615a45a4"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/core/compiler/compiler.ts",
+        "before": "34a3b80a0867e742a03de92041e521b82c57a45ce30a35ae1c608227116867aa",
+        "after": "cd8fe247db64537fef9c13563de39759b55d4bb83f1a1c7de61a8ce2783c8fc2",
+        "unchanged": true,
+        "finalSha256": "cd8fe247db64537fef9c13563de39759b55d4bb83f1a1c7de61a8ce2783c8fc2"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/core/compiler/root-store.ts",
+        "before": "e3b188bea59709946dea29c7c3ecc5300d05eb7fc20d389d322e92bf0ac79820",
+        "after": "d7a4198d0182b727f492226462d1de6159ed55078fcbb9f7bff51927a7fe5586",
+        "unchanged": true,
+        "finalSha256": "d7a4198d0182b727f492226462d1de6159ed55078fcbb9f7bff51927a7fe5586"
+      },
+      {
+        "file": "packages/weapp-tailwindcss/src/core/compiler/source.ts",
+        "before": "542ad0004d36819659f390652dce809463b800ae6080181269cc1f5b4701b732",
+        "after": "ce594c33c6e24c465c4e096ff279af26bb110ab7b56c414b55f2e9c42e8e0ef6",
+        "unchanged": true,
+        "finalSha256": "ce594c33c6e24c465c4e096ff279af26bb110ab7b56c414b55f2e9c42e8e0ef6"
+      }
+    ],
+    "finalSourceDifference": "handler 回调仅换行满足 lint；其余三个产品文件与计时 overlay 完全一致",
+    "markers": [
+      {
+        "before": "4e2c716851e27ff260ef5c71955f60eb44a4940de6389a10e3ae17449127e9a0",
+        "after": "4e2c716851e27ff260ef5c71955f60eb44a4940de6389a10e3ae17449127e9a0",
+        "restored": true
+      },
+      {
+        "before": "4e2c716851e27ff260ef5c71955f60eb44a4940de6389a10e3ae17449127e9a0",
+        "after": "4e2c716851e27ff260ef5c71955f60eb44a4940de6389a10e3ae17449127e9a0",
+        "restored": true
+      }
+    ],
+    "command": "node .tmp/run-4ba9-candidate-perf.mjs"
+  },
+  "summary": {
+    "generatedAt": "2026-10-22T06:23:08.589Z",
+    "options": {
+      "buildRuns": 3,
+      "hmrRuns": 3,
+      "timeoutMs": 180000,
+      "pollIntervalMs": 30
+    },
+    "baseline": "base:7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5",
+    "current": "fixed:4ba9fd1bd8d52c01db4b806d0968bdee24272f4d+candidate-invalidation",
+    "compares": [
+      {
+        "key": "demo-weapp-vite-tailwindcss-v4__mp-weixin",
+        "project": "demo/weapp-vite-tailwindcss-v4",
+        "target": "mp-weixin",
+        "baselineBuild": 2971.557208,
+        "currentBuild": 3112.245999999999,
+        "buildDeltaPct": 4.734513998964512,
+        "baselineHmr": 7515.300374999999,
+        "currentHmr": 6692.179457999999,
+        "hmrDeltaPct": -10.95260170489194,
+        "baselineHmrMedian": 6506.767417000001,
+        "currentHmrMedian": 6607.682417000004,
+        "hmrMedianDeltaPct": 1.5509237311348436,
+        "hmrPluginStatistic": "p95",
+        "baselineBuildPeakRssMb": 517.78125,
+        "currentBuildPeakRssMb": 503.3125,
+        "buildPeakRssDeltaPct": -2.7943750377210455,
+        "baselineBuildSteadyRssMb": 438.421875,
+        "currentBuildSteadyRssMb": 413.015625,
+        "buildSteadyRssDeltaPct": -5.794932107345237,
+        "baselineHmrPeakRssMb": 1396.09375,
+        "currentHmrPeakRssMb": 1333.140625,
+        "hmrPeakRssDeltaPct": -4.50923335198657,
+        "baselineHmrSteadyRssMb": 1353.125,
+        "currentHmrSteadyRssMb": 1309.734375,
+        "hmrSteadyRssDeltaPct": -3.2066974595842956,
+        "baselineHmrSampleCount": 3,
+        "currentHmrSampleCount": 3,
+        "baselineHmrPluginSampleCount": 0,
+        "currentHmrPluginSampleCount": 0,
+        "baselineBuildSamples": [
+          4916.152541,
+          2864.602667,
+          2971.557208
+        ],
+        "currentBuildSamples": [
+          5210.476499999997,
+          3112.245999999999,
+          2975.683250000002
+        ],
+        "baselineBuildPluginSamples": [],
+        "currentBuildPluginSamples": [],
+        "baselineHmrSamples": [
+          6506.767417000001,
+          7515.300374999999,
+          6481.3113330000015
+        ],
+        "currentHmrSamples": [
+          6692.179457999999,
+          6607.682417000004,
+          6517.447167000006
+        ],
+        "baselineHmrPluginSamples": [],
+        "currentHmrPluginSamples": [],
+        "baselineHmrPluginSteadySamples": [],
+        "currentHmrPluginSteadySamples": [],
+        "baselineBuildPeakRssSamples": [
+          517.78125,
+          501.40625,
+          538.765625
+        ],
+        "currentBuildPeakRssSamples": [
+          497.28125,
+          503.3125,
+          527.359375
+        ],
+        "baselineBuildSteadyRssSamples": [
+          438.421875,
+          412.984375,
+          490.328125
+        ],
+        "currentBuildSteadyRssSamples": [
+          403.8359375,
+          413.015625,
+          465.671875
+        ],
+        "baselineBuildMode": "build",
+        "currentBuildMode": "build",
+        "baselineHmrMode": "watch",
+        "currentHmrMode": "watch",
+        "hmrEndToEndGuard": true
+      }
+    ],
+    "errors": [],
+    "baselineErrors": [],
+    "currentErrors": [],
+    "currentOnlyErrors": [],
+    "sharedErrors": [],
+    "baselineOnlyErrors": [],
+    "averages": {
+      "buildDeltaPct": 4.734513998964512,
+      "hmrDeltaPct": -10.95260170489194,
+      "buildCompareCount": 1,
+      "watchHmrCompareCount": 1,
+      "buildPluginCompareCount": 0,
+      "watchHmrPluginCompareCount": 0
+    },
+    "performanceGuard": {
+      "passed": true,
+      "thresholds": {
+        "minimumMemoryRegressionMb": 64,
+        "minimumTailRegressionSamples": 2,
+        "minimumTimingRegressionMs": 10,
+        "maximumMedianRegressionPValue": 0.05,
+        "regressionPercent": 5
+      },
+      "violations": []
+    }
+  },
+  "diagnostics": {
+    "purpose": "排除假设，不作为性能验收",
+    "realCache": {
+      "versions": [
+        "6050e9a787d3ae0a3450cc91af5695ac3c32b64e",
+        "4ba9fd1bd8d52c01db4b806d0968bdee24272f4d"
+      ],
+      "cacheCountEach": 2,
+      "outputNodesEach": [
+        1890,
+        2055
+      ],
+      "inputSnapshotNodesEach": 0,
+      "conclusion": "两端均远低于原节点预算，不能归因为该 LRU 容量缺陷"
+    },
+    "allocation": {
+      "samplingInterval": 32768,
+      "includesCollected": true,
+      "snapshotForcesGc": true,
+      "roles": [
+        {
+          "role": "base",
+          "node": "v22.23.3",
+          "beforeSnapshot": {
+            "rss": 1252884480,
+            "heapTotal": 561070080,
+            "heapUsed": 294510360,
+            "external": 34408193,
+            "arrayBuffers": 13510796
+          },
+          "afterSnapshot": {
+            "rss": 1982414848,
+            "heapTotal": 315064320,
+            "heapUsed": 301027656,
+            "external": 82100392,
+            "arrayBuffers": 61210009
+          },
+          "allocationSha256": "9cde3b8ccaab43e1e384a37b6350ab209b241412336e35406d396a433ece634b",
+          "snapshotSha256": "61b72398dde2be1a49cad80d5903b73535a083d99bf3cf51cd57a334e30cff48",
+          "sampledAllocatedBytes": 8359822112
+        },
+        {
+          "role": "current",
+          "node": "v22.23.3",
+          "beforeSnapshot": {
+            "rss": 1201995776,
+            "heapTotal": 689176576,
+            "heapUsed": 647813216,
+            "external": 35261825,
+            "arrayBuffers": 14364428
+          },
+          "afterSnapshot": {
+            "rss": 1899446272,
+            "heapTotal": 313540608,
+            "heapUsed": 300093584,
+            "external": 80446030,
+            "arrayBuffers": 59555647
+          },
+          "allocationSha256": "b8b4d997ee50189599600b048ee1437cf52d1c805ef2ebe32a7b078bd7c378e0",
+          "snapshotSha256": "d0a1d978848900e973559dbd1fc131b0b563049036e244ce64e8597e8e3ee54e",
+          "sampledAllocatedBytes": 8376003464
+        }
+      ]
+    }
+  },
+  "static": {
+    "updateCommand": "CI=1 E2E_SKIP_OPEN_AUTOMATOR=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/weapp-vite-tailwindcss-v4.test.ts -u",
+    "checkCommand": "CI=1 E2E_SKIP_OPEN_AUTOMATOR=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/weapp-vite-tailwindcss-v4.test.ts --update=none",
+    "testsPassed": 5,
+    "snapshots": [
+      {
+        "file": "e2e/__snapshots__/e2e/weapp-vite-tailwindcss-v4/app.wxss",
+        "sha256": "9d52fe8a8d99b36e0560cf2053f52049ccf694334362c83e49b1a5f402477917",
+        "unchanged": true
+      },
+      {
+        "file": "e2e/__snapshots__/e2e/weapp-vite-tailwindcss-v4/pages/index/index.wxml.json",
+        "sha256": "3f556652762c87ff6636f3e7a57c442fbe42edd8b1bd252e90ad65ab2df3925f",
+        "unchanged": true
+      },
+      {
+        "file": "e2e/__snapshots__/e2e/weapp-vite-tailwindcss-v4/sub-independent/pages/index.wxml.json",
+        "sha256": "4803ed255db0eaa1ef3a6f0927ac4d51bc749e0ab856961300b177aef452efda",
+        "unchanged": true
+      },
+      {
+        "file": "e2e/__snapshots__/e2e/weapp-vite-tailwindcss-v4/sub-independent/pages/index.wxss",
+        "sha256": "032ff5aaf9f879a7db74d5b8dac8d84c937d314f0fe7bdf40335da13e931bf84",
+        "unchanged": true
+      },
+      {
+        "file": "e2e/__snapshots__/e2e/weapp-vite-tailwindcss-v4/sub-normal/pages/index.wxml.json",
+        "sha256": "97f8bd4ab8f35ebcf87ea638024f2a3642248f869858642dcde805aad0408603",
+        "unchanged": true
+      },
+      {
+        "file": "e2e/__snapshots__/e2e/weapp-vite-tailwindcss-v4/sub-normal/pages/index.wxss",
+        "sha256": "49de5868421f9d61fc5bb8a9d961db64be13be56b59729613fdf2e23c75c7e3a",
+        "unchanged": true
+      },
+      {
+        "file": "e2e/__snapshots__/e2e/weapp-vite-tailwindcss-v4/tw-class-list.json",
+        "sha256": "6b9d32445376ed5dbe8ddb55eb704d8890a9e87546c83a1aeaa1bfdc41e697e3",
+        "unchanged": true
+      }
+    ]
+  },
+  "artifacts": [
+    {
+      "file": "candidate-fix-pair/identity.json",
+      "sha256": "303616b8c8d98905cd6528028edf15465646d10eeb1a9b9dab5e5ad289ec5903",
+      "bytes": 4735
+    },
+    {
+      "file": "candidate-fix-pair/matrix-raw.json",
+      "sha256": "56bdbee8d58607e1b5c9d047561660533bd6766b52a3bdc88c1c5d82c3885bd6",
+      "bytes": 437935
+    },
+    {
+      "file": "candidate-fix-pair/summary.json",
+      "sha256": "b47536b8af9b6895cf1ec1ba3820f775b830aced77a3e0569cd915dd4669be8b",
+      "bytes": 3539
+    },
+    {
+      "file": "candidate-fix-pair/report.md",
+      "sha256": "099fc0e0996b553aea46d4384e90bbcc2c3db6676038f2c1bbb594f4bf31a184",
+      "bytes": 2552
+    },
+    {
+      "file": "allocation-pair/identity.json",
+      "sha256": "b70aceb3a5f08a13243599bda15b0379212770b242068f3e4c91172dc6e5ae54",
+      "bytes": 7746
+    },
+    {
+      "file": "allocation-pair/allocation-analysis.json",
+      "sha256": "e896178f951183b14c609ebdf30f17acca2ae1d7375779ecc1b0bdd627a3e13a",
+      "bytes": 4084462
+    },
+    {
+      "file": "cache-observer-pair/identity.json",
+      "sha256": "da2d06ac118fb38896ccc23d3140890e8286a0832859bf95b614164b383f414d",
+      "bytes": 2358
+    },
+    {
+      "file": "cache-observer-pair/matrix-raw.json",
+      "sha256": "09e94d0bb8a8f163dea044d57d2877694a099b5027628a7075836f67c252cb49",
+      "bytes": 359600
+    }
+  ],
+  "limitations": [
+    "Ubuntu 当前修复 head 的正式门禁待执行",
+    "本地全面预检仍被保护租约与 Android UI 结构阻塞",
+    "RN served bundle 与原生 HMR 因果链等全面验收仍 partial"
+  ]
+}

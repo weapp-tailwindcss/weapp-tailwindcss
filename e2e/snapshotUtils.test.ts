@@ -198,12 +198,12 @@ describe('normalizeCssSnapshot', () => {
     ].join('\n'))
   })
 
-  it('normalizes token comments that are formatted after a closing brace', () => {
+  it.each(['/* tokens:', '/*tokens:', '/*! tokens:', '/*!tokens:'])('normalizes %s comments that are formatted after a closing brace', (prefix) => {
     expect(normalizeFormattedCssSnapshot([
       '@media (prefers-color-scheme: dark) {',
       '  .system-dark_cbg-slate-900 {',
       '    background-color: #0f172a;',
-      '  } /* tokens: system-dark:text-slate-100 <= src/pages/index/index.tsx */',
+      `  } ${prefix} system-dark:text-slate-100 <= src/pages/index/index.tsx */`,
       '  .system-dark_ctext-slate-100 {',
       '    color: #f1f5f9;',
       '  }',
@@ -213,7 +213,7 @@ describe('normalizeCssSnapshot', () => {
       '  .system-dark_cbg-slate-900 {',
       '    background-color: #0f172a;',
       '  }',
-      ' /* tokens: system-dark:text-slate-100 <= src/pages/index/index.tsx */',
+      ` ${prefix} system-dark:text-slate-100 <= src/pages/index/index.tsx */`,
       '  .system-dark_ctext-slate-100 {',
       '    color: #f1f5f9;',
       '  }',
@@ -231,7 +231,7 @@ describe('normalizeCssSnapshot', () => {
       '.border-be { border-bottom-width: 1px; }',
       '.text-_b45rpx_B { font-size: 45rpx; }',
     ].join('\n'))).toBe([
-      ':host { --spacing: 8rpx; }',
+      ':host { --color-red-500: red; --spacing: 8rpx; }',
       '.text-_b45rpx_B { font-size: 45rpx; }',
     ].join('\n'))
   })
@@ -289,7 +289,7 @@ describe('normalizeCssSnapshot', () => {
       '  border-left-width: calc(8rpx * (1 - var(--tw-divide-x-reverse)));',
       '}',
     ].join('\n'))).toBe([
-      ':host { --spacing: 8rpx; }',
+      ':host { --spacing: 8rpx; --color-red-500: red; }',
       '.border-_b10rpx_B { border-width: 10rpx; }',
       '.border-_b_h098765_B { border-color: #098765; }',
       '.border-_bred_B { border-color: red; }',
@@ -418,9 +418,9 @@ describe('normalizeCssSnapshot', () => {
     ].join('\n'))
   })
 
-  it('removes existing token comments with legacy spacing before re-annotating rules', () => {
+  it.each(['/* tokens:', '/*tokens:', '/*! tokens:', '/*!tokens:'])('removes existing %s comments before re-annotating rules', (prefix) => {
     expect(normalizeCssSnapshot([
-      '/*tokens: btn <= src/pages/index/daisyui.vue */',
+      `${prefix} btn <= stale.vue */`,
       '/* tokens: relative <= src/components/TestCase55.vue */',
       '.btn { display: inline-flex; }',
       '.relative { position: relative; }',
@@ -544,6 +544,17 @@ describe('normalizeCssSnapshot', () => {
     ].join('\n'))
   })
 
+  it('保留跨资产、变量别名和 fallback 可能消费的主题定义', () => {
+    const definitions = ':root { --spacing: .25rem; --color-cyan-500: #06b6d4; --color-blue-500: #3b82f6; --color-gray-100: #f3f4f6; }'
+    const consumers = '.from { --tw-gradient-from: var(--color-cyan-500); } .to { --alias: var(--color-blue-500); --tw-gradient-to: var(--alias); } .paint { background-image: linear-gradient(var(--tw-gradient-from), var(--tw-gradient-to)); color: var(--missing, var(--color-gray-100)); }'
+    for (const css of [definitions, definitions + consumers]) {
+      const snapshot = normalizeCssSnapshot(css)
+      for (const name of ['--color-cyan-500', '--color-blue-500', '--color-gray-100']) {
+        expect(snapshot).toContain(`${name}:`)
+      }
+    }
+  })
+
   it('normalizes Tailwind CSS v4 color output differences', () => {
     expect(normalizeCssSnapshot([
       ':host, page, .tw-root, wx-root-portal-content {',
@@ -571,6 +582,9 @@ describe('normalizeCssSnapshot', () => {
       ':host, page, .tw-root, wx-root-portal-content {',
       '  --font-mono: ui-monospace;',
       '  --color-red-500: rgb(251, 44, 54);',
+      '  --color-blue-500: rgb(50, 128, 255);',
+      '  --color-gray-100: rgb(243, 244, 246);',
+      '  --color-white: #fff;',
       '  --color-brand: #155dfc;',
       '  --spacing: 8rpx;',
       '}',
@@ -759,16 +773,16 @@ describe('normalizeCssSnapshot', () => {
     ].join('\n'))
   })
 
-  it('keeps subpackage marker token comments attached while sorting chunks', () => {
+  it.each(['/* tokens:', '/*tokens:', '/*! tokens:', '/*!tokens:'])('keeps subpackage marker %s comments attached while sorting chunks', (prefix) => {
     expect(normalizeCssSnapshot([
       ':host, page, .tw-root, wx-root-portal-content {',
       '  --spacing: 8rpx;',
       '}',
-      '/* tokens: bg-independent-subpackage-marker <= src/sub-independent/pages/index.mpx */',
+      `${prefix} bg-independent-subpackage-marker <= src/sub-independent/pages/index.mpx */`,
       '.bg-independent-subpackage-marker {',
       '  background-color: #dc2626;',
       '}',
-      '/* tokens: before:content-[\'independent_subpackage_demo\'] <= src/sub-independent/pages/index.mpx */',
+      `${prefix} before:content-['independent_subpackage_demo'] <= src/sub-independent/pages/index.mpx */`,
       '.before_ccontent-_b_aindependent_subpackage_demo_a_B::before {',
       '  --tw-content: "independent";',
       '}',
@@ -776,11 +790,11 @@ describe('normalizeCssSnapshot', () => {
       ':host, page, .tw-root, wx-root-portal-content {',
       '  --spacing: 8rpx;',
       '}',
-      '/* tokens: before:content-[\'independent_subpackage_demo\'] <= src/sub-independent/pages/index.mpx */',
+      `${prefix} before:content-['independent_subpackage_demo'] <= src/sub-independent/pages/index.mpx */`,
       '.before_ccontent-_b_aindependent_subpackage_demo_a_B::before {',
       '  --tw-content: "independent";',
       '}',
-      '/* tokens: bg-independent-subpackage-marker <= src/sub-independent/pages/index.mpx */',
+      `${prefix} bg-independent-subpackage-marker <= src/sub-independent/pages/index.mpx */`,
       '.bg-independent-subpackage-marker {',
       '  background-color: #dc2626;',
       '}',

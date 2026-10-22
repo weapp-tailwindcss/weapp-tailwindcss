@@ -4,7 +4,8 @@ import type { BrowserEngine } from './types'
 import { writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
-import { chromium, firefox, webkit } from 'playwright'
+import { firefox } from 'playwright'
+import { launchCapabilityBrowser } from './browser/launch'
 import { newReport, persistReport } from './context'
 import { withGeneratorFixture } from './fixture'
 import { collectInventory, loadInventory, validateInventory } from './inventory'
@@ -53,7 +54,7 @@ export async function runRegistryWeb(context: RunContext, engine: BrowserEngine,
     await withGeneratorFixture(output.root, reference.productInput, {}, async (generator) => {
       const generated = await generator.generate({ target: 'web', candidates: [...new Set(profiles.map(item => item.candidate))], scanSources: false })
       await save('generated.css', generated.css, 'css')
-      browser = borrowedBrowser ?? await { chromium, firefox, webkit }[engine].launch({ headless: true })
+      browser = borrowedBrowser ?? await launchCapabilityBrowser(engine)
       report.environment.browserVersion = browser.version()
       const browserContext = await browser.newContext({ viewport: { width: 960, height: 900 }, colorScheme: 'light', reducedMotion: 'reduce' })
       if (borrowedBrowser) {

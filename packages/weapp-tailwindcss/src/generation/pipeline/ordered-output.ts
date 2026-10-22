@@ -7,7 +7,7 @@ import { appendLegacyCompatCss, appendLegacyContainerCompatCss } from '../legacy
 import { inheritLegacyUnitConvertedDeclarations } from '../legacy-units'
 import { restoreLocalCssImports } from '../local-imports'
 import { splitGeneratorPlaceholderCssBySourceOrder, splitTailwindV4GeneratedCssBySourceOrder, stripTailwindBanner } from '../markers'
-import { finalizeIncrementalGeneratorCss, finalizeWebGeneratorCss, isCssAlreadyRepresentedByMarkers, resolveGeneratedCssClassSet } from '../result-helpers'
+import { canAppendGeneratorCss, finalizeIncrementalGeneratorCss, finalizeWebGeneratorCss, isCssAlreadyRepresentedByMarkers, resolveGeneratedCssClassSet } from '../result-helpers'
 import { hasUserCssLayerBlocks, isCommentOnlyCss, splitUserCssLayerBlocks, transformGeneratorUserCss } from '../user-css'
 import { reorderMarkedUserLayerComponentsCss, wrapUserLayerComponentsCss } from '../user-layer-order'
 
@@ -15,7 +15,8 @@ export async function finalizeOrderedGeneratorCss(
   context: GeneratorPipelineOutputContext,
 ): Promise<GenerateCssByGeneratorResult | undefined> {
   const { configuredContainerCompat, cssHandlerOptions, cssUserHandlerOptions, file, filterGeneratedApplyOnlyCss, finalizeGeneratorCss, generated, generatedUserCssRawSource, generatorOptions, generatorRawSource, generatorStyleOptions, hasDistinctUserRawSource, hasGeneratedCss, hasGeneratedMarkers, hasMatchedCssSourceFile, hasSourceDirectives, hasWebUserCssFallbackSource, isolateCurrentCssCandidates, legacyCompatUserCssRawSource, localImports, majorVersion, options, opts, preflightMode, prepareFinalGeneratorCss, runtime, runtimeWithCurrentCss, shouldFilterApplyOnlyCss, shouldPreserveLegacyCompatSelectorOverrides, styleHandler, userCssOrderSource, userCssRawSource, userRawSourceProcessed } = context
-  const canAppendIncrementalCss = generated.target !== 'weapp' || !hasUserCssLayerBlocks(generatorRawSource)
+  const canAppendIncrementalCss = canAppendGeneratorCss(generated.target, generatorOptions.webCompat)
+    && (generated.target !== 'weapp' || !hasUserCssLayerBlocks(generatorRawSource))
   if (canAppendIncrementalCss && typeof options.previousCss === 'string' && typeof generated.incrementalCss === 'string') {
     const incrementalCss = stripTailwindBanner(generated.incrementalCss)
     const css = incrementalCss.trim().length > 0
@@ -23,11 +24,11 @@ export async function finalizeOrderedGeneratorCss(
           injectPreflight: false,
           removeEmptyAtRuleAncestors: false,
           styleOptions: generatorStyleOptions,
-        }, generatorOptions.webCompat)
+        }, generatorOptions.webCompat, options.deferWebCssPropertyFallback)
       : options.previousCss
     const finalCss = generated.target === 'web'
       ? restoreLocalCssImports(css, localImports, { outputFile: file })
-      : finalizeWebGeneratorCss(restoreLocalCssImports(css, localImports, { outputFile: file }), generated.target, generatorOptions.webCompat)
+      : finalizeWebGeneratorCss(restoreLocalCssImports(css, localImports, { outputFile: file }), generated.target, generatorOptions.webCompat, options.deferWebCssPropertyFallback)
     return {
       css: finalCss,
       classSet: resolveGeneratedCssClassSet(generated.target, generated.classSet, runtimeWithCurrentCss, finalCss, opts.escapeMap, options.previousClassSet),

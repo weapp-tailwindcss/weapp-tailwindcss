@@ -120,6 +120,7 @@ export async function handleUniAppXPostCssTasks(options: HandleUniAppXPostCssOpt
     const outputFile = 'uni-app-x-harmony-apply.css'
     const cssHandlerOptions = getCssHandlerOptions(outputFile)
     const generated = await generateTailwindV4Css({
+      deferWebCssPropertyFallback: true,
       opts,
       runtimeState,
       runtime: new Set(),

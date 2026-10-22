@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 import fg from 'fast-glob'
 import { repositoryPackageManager } from '../version-contract.mjs'
 import { cases, coverage, matrix, requiredPhases } from './catalog.mjs'
+import { assertTaroProductionEvidence, hasTaroProductionContract } from './taro-production-contract.mjs'
 
 const platforms = { 'ubuntu-latest': 'linux', 'windows-latest': 'win32', 'macos-latest': 'darwin' }
 
@@ -25,6 +26,9 @@ export function verifyReports(reports, expectedMatrix, sha, packageManager = rep
       const item = cases.find(item => item.id === result.id)
       assert.ok(item, `Unregistered case ${result.id}`)
       assert.equal(result.coverage, coverage(item), `Incorrect coverage ${key}`)
+      if (hasTaroProductionContract(item)) {
+        assertTaroProductionEvidence(item, result.productionBrowser)
+      }
       for (const phase of requiredPhases(item)) {
         assert.ok(result.rounds[phase], `Missing ${phase}: ${key}`)
       }

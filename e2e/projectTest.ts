@@ -9,6 +9,7 @@ import { collectEmptyCssBlocks } from '../tools/weapp-tailwindcss-scripts/src/wa
 import { ensureProjectBuilt } from './projectBuild'
 import { isE2EProjectSupportedOnPlatform } from './projectEntries'
 import { clearTailwindPatchTaskCache, collectCssSnapshots, formatWxml, getProjectCssSnapshotFiles, logE2EError, projectFilter, removeWxmlId, resolveSnapshotFile, twExtract, twPatch, wait } from './shared'
+import { collectTracedRootRules } from './snapshot/css-source-trace'
 import { formatRawCssSnapshotText, normalizeCssTextSnapshot } from './snapshotUtils'
 import { collectTokenSourceReports, formatTokenSourceFileReport } from './tokenSourceReports'
 
@@ -173,15 +174,7 @@ function normalizeIssue909CssSnapshot(source: string) {
     sections.push(rootRule)
   }
 
-  const rulePattern = /(?:^|\n)((?:\/\* tokens:[^\n]* \*\/\n)?)(\.[^{]+ \{[\s\S]*?\n\})/g
-  for (const match of source.matchAll(rulePattern)) {
-    const comment = match[1] ?? ''
-    const rule = match[2]
-    const selector = rule?.slice(0, rule.indexOf(' {'))
-    if (selector && ISSUE_909_CSS_SELECTORS.has(selector)) {
-      sections.push(`${comment}${rule}`)
-    }
-  }
+  sections.push(...collectTracedRootRules(source, ISSUE_909_CSS_SELECTORS))
 
   return sections.join('\n')
 }

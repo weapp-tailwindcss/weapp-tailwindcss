@@ -4,6 +4,7 @@ import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { isDeepStrictEqual } from 'node:util'
 import { captureNativeEncoding, validateNativeEncodingArtifacts } from './encoding-evidence'
+import { validateNativeHmrObservations } from './hmr-observation/evidence'
 import { validateNativeArtifacts } from './pair-evidence'
 import { nativeEncodingArtifactNames, nativePhaseForRevision, nativeRuntimePhases } from './phase-contract'
 import { createNativePhaseIndex, nativePhaseDirectory, phaseArtifactDefinitions, phaseIndexName, snapshotNativePhase, validateNativePhaseIndex } from './phase-index'
@@ -32,6 +33,12 @@ export async function captureNativePhase(projectRoot: string, directory: string,
   await writeFile(path.join(destination, 'report.json'), `${JSON.stringify(report, null, 2)}\n`, { flag: 'wx' })
   await captureNativeEncoding(projectRoot, destination, report)
   await captureNativePhaseSources(projectRoot, destination)
+  if (report.platform === 'web') {
+    await writeFile(path.join(destination, 'hmr-observation.json'), JSON.stringify({ schemaVersion: 1, evidence: 'not-applicable', platform: 'web' }), { flag: 'wx' })
+  }
+  else {
+    await copyFile(path.join(directory, 'hmr-client', `${phase.id}.json`), path.join(destination, 'hmr-observation.json'))
+  }
   const entry = await snapshotNativePhase(directory, phase)
   await validateNativePhaseSources(destination, entry, phase)
   index.phases.push(entry)
@@ -63,6 +70,9 @@ export async function validateNativeRuntimePhases(finalReport: ReactNativeReport
     await validateNativeArtifacts(report, directory)
     const encodingFiles = await validateNativeEncodingArtifacts(report, root)
     await validateNativePhaseSources(root, entry, phase)
+    if (report.platform === 'web' && !isDeepStrictEqual(JSON.parse(await readFile(path.join(root, 'hmr-observation.json'), 'utf8')), { schemaVersion: 1, evidence: 'not-applicable', platform: 'web' })) {
+      throw new Error('Expo Web 不得冒称原生 HMR 观察')
+    }
     phases.push({ report, reportFile, encodingFiles, sourceFiles: phaseArtifactDefinitions.filter(item => item.name.startsWith('source:')).map(item => path.join(root, ...item.segments)) })
   }
   const final = phases[phases.length - 1]!
@@ -75,5 +85,6 @@ export async function validateNativeRuntimePhases(finalReport: ReactNativeReport
       throw new Error('React Native 最终 encoding 兼容入口与最后阶段归档不一致')
     }
   }
-  return { indexFile, phases, compatibilityFiles }
+  const observations = finalReport.platform === 'web' ? undefined : await validateNativeHmrObservations(directory, finalReport.platform)
+  return { indexFile, phases, compatibilityFiles, observationFiles: observations?.files ?? [] }
 }

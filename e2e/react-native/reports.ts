@@ -1,18 +1,29 @@
 import type { ReactNativeCaseResult, ReactNativePlatform, ReactNativeReport } from './catalog'
 import { nativeBuildCases, nativeBuildFixtures, nativeFixtures, rejectedNativeCases, styleContains } from '../../examples/react-native-expo/src/compatibility/protocol'
 import { compatibilityCases, reactNativeVersions, RN_CATALOG_HASH, RN_FIXTURE_HASH } from './catalog'
+import { validateNativeFrameSequence } from './frame-contract'
+import { assertRuntimeIdentity, validateRuntimeInstallation } from './installation-evidence'
 
 function fail(message: string): never {
   throw new Error(`React Native compatibility report: ${message}`)
 }
 
 export function validateReactNativeReport(report: ReactNativeReport, platform: ReactNativePlatform = report.platform, context: { stage?: 'static' | 'runtime', runId?: string, revision?: string, versions?: Record<string, string> } = {}) {
+  if (report.failureDiagnostic) {
+    fail('failure diagnostics cannot satisfy a successful native report')
+  }
   if (report.schemaVersion !== 2) {
     fail('historical schemaVersion is not fresh runtime evidence; regenerate static evidence and rerun')
   }
   const stage = context.stage ?? 'runtime'
   if (report.stage !== stage) {
     fail(`stage must be ${stage}`)
+  }
+  if (stage === 'runtime') {
+    validateRuntimeInstallation(report.runtimeInstallation)
+    for (const receipt of report.receipts) {
+      assertRuntimeIdentity(receipt.runtimeInstallation, report.runtimeInstallation)
+    }
   }
   if (report.platform !== platform) {
     fail(`platform must be ${platform}`)
@@ -38,6 +49,10 @@ export function validateReactNativeReport(report: ReactNativeReport, platform: R
   }
   if (report.results.length !== compatibilityCases.length) {
     fail('report must contain every catalog case exactly once')
+  }
+  const failure = report.results.find(result => result.status === 'failed')
+  if (failure) {
+    fail(`${failure.id} changed from expected support to failed: ${failure.reason ?? '缺少原始失败原因'}`)
   }
   const ids = new Set<string>()
   for (const result of report.results) {
@@ -94,6 +109,7 @@ export function validateReactNativeReport(report: ReactNativeReport, platform: R
         || ['geometry', 'pixel', 'control'].some(kind => !receipt.checkpoints.some(checkpoint => checkpoint.name === `runtime:${phase}:${kind}` && checkpoint.passed === true))) {
         fail(`${result.id} is missing fresh native artifact receipt for ${phase}`)
       }
+      validateNativeFrameSequence(receipt)
     }
   }
   if (stage === 'runtime') {

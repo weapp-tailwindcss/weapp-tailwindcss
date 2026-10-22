@@ -29,13 +29,15 @@
   LynxConfig *config = [[LynxConfig alloc] initWithProvider:nil];
   [config registerModule:CompatibilityReporter.class param:_binding];
   [[LynxEnv sharedInstance] prepareConfig:config];
+  CGSize screenSize = UIScreen.mainScreen.bounds.size;
+  CGFloat pixelRatio = UIScreen.mainScreen.scale;
   LynxView *lynxView = [[LynxView alloc] initWithBuilderBlock:^(LynxViewBuilder *builder) {
     builder.config = config;
-    builder.screenSize = UIScreen.mainScreen.bounds.size;
+    builder.screenSize = screenSize;
     [builder setThreadStrategyForRender:LynxThreadStrategyForRenderAllOnUI];
     builder.colorScheme = LynxColorSchemeLight;
   }];
-  [_binding attach:lynxView];
+  [_binding attach:lynxView screenSize:screenSize pixelRatio:pixelRatio];
   lynxView.frame = self.view.bounds;
   lynxView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
   lynxView.preferredLayoutWidth = self.view.bounds.size.width;

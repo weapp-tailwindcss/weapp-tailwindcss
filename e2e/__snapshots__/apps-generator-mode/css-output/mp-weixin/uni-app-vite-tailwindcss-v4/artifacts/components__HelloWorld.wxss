@@ -1,4 +1,4 @@
- /* tokens: hello-world-shell <= src/components/HelloWorld.vue */
+ /*! tokens: hello-world-shell <= src/components/HelloWorld.vue */
 .hello-world-shell {
   display: flex;
   align-items: center;

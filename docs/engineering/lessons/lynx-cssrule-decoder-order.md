@@ -21,7 +21,7 @@ regressions:
 - 官方包：`@lynx-js/tasm@0.0.53`。
 - 官方源码提交：[`3526f07a8cb25cfb2841736c76b54deadc7e6e46`](https://github.com/lynx-family/lynx/tree/3526f07a8cb25cfb2841736c76b54deadc7e6e46)。
 - 源码压缩包 SHA-256：`8c570a0a56a2cb5926e58b09cbe8774398fb956bd275f65cb6a107e17cdd9c23`。
-- 补丁：[先读取页面配置](../../../e2e/lynx/decoder/patches/0001-decode-page-config-before-css.patch)。
+- 补丁：[先读取页面配置](../../../packages/lynx/src/decoder-data/patches/0001-decode-page-config-before-css.patch)。
 - 补丁 SHA-256：`1282e4927efef30ce3a73a5dca4a499daafa5aef0fbef17026593ffb36376f62`。
 
 `codec::Decode` 固定调用 `FromBinaryGreedy`；公开 Node、WASM 和 CLI 接口没有 lazy 或先读取配置的参数。

@@ -3,6 +3,7 @@ import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, expect, it } from 'vitest'
+import { virtualModuleCode } from '../packages/react-native/src/metro/virtual-module'
 import { nativeRuntimePhases } from './react-native/phase-contract'
 import { validateNativeRuntimePhases } from './react-native/phase-evidence'
 import { writeNativePhaseFixture } from './react-native/phase-fixture'
@@ -112,4 +113,65 @@ it('阶段来源不能冒称已保存设备实际加载的完整 bundle', async 
   index.phases[0].sourceArchive.servedBundle = 'captured'
   await writeFile(path.join(directory, phaseIndexName), JSON.stringify(index))
   await expect(validateNativeRuntimePhases(report, directory)).rejects.toThrow('原始产物')
+})
+
+it.each(['missing', 'other-instance', 'other-publication', 'other-manifest'] as const)('设备实际安装的 %s 证据不能被宿主产物与重算摘要代替', async (kind) => {
+  const { directory, report } = await fixture()
+  const phase = nativeRuntimePhases[0]
+  const root = nativePhaseDirectory(directory, phase)
+  const raw = JSON.parse(await readFile(path.join(root, 'report.json'), 'utf8'))
+  const ready = JSON.parse(await readFile(path.join(root, 'encoding', 'manifest.ready'), 'utf8'))
+  raw.runtimeInstallation ??= { version: 1, runtimeInstanceId: 'synthetic-unit-runtime-instance', publication: { revision: ready.revision, manifestSha256: ready.manifestSha256 }, manifestJson: await readFile(path.join(root, 'encoding', 'manifest.json'), 'utf8') }
+  if (kind === 'missing') {
+    delete raw.runtimeInstallation
+  }
+  if (kind === 'other-instance') {
+    raw.runtimeInstallation.runtimeInstanceId = 'different-runtime-after-full-reload'
+  }
+  if (kind === 'other-publication') {
+    raw.runtimeInstallation.publication.revision = 'other-publication-same-manifest'
+  }
+  if (kind === 'other-manifest') {
+    raw.runtimeInstallation.manifestJson = '{"version":1,"rules":{}}'
+  }
+  await writeFile(path.join(root, 'report.json'), JSON.stringify(raw))
+  await expect((async () => {
+    await resnapshot(directory, phase)
+    await validateNativeRuntimePhases(report, directory)
+  })()).rejects.toThrow(/安装|运行实例/)
+})
+
+it('单阶段报告和全部截图身份一致重写且重算摘要，仍不能用新 realm 冒充 HMR', async () => {
+  const { directory, report } = await fixture()
+  const phase = nativeRuntimePhases[1]
+  const file = path.join(nativePhaseDirectory(directory, phase), 'report.json')
+  const raw = JSON.parse(await readFile(file, 'utf8'))
+  const replacement = 'different-runtime-after-full-reload'
+  raw.runtimeInstallation.runtimeInstanceId = replacement
+  for (const receipt of raw.receipts) {
+    receipt.runtimeInstallation.runtimeInstanceId = replacement
+    const metadataFile = path.join(directory, `${receipt.artifact.name}.json`)
+    const metadata = JSON.parse(await readFile(metadataFile, 'utf8'))
+    metadata.pair.runtimeInstallation.runtimeInstanceId = replacement
+    metadata.receipt.runtimeInstallation.runtimeInstanceId = replacement
+    await writeFile(metadataFile, JSON.stringify(metadata))
+  }
+  await writeFile(file, JSON.stringify(raw))
+  await resnapshot(directory, phase)
+  await expect(validateNativeRuntimePhases(report, directory)).rejects.toThrow('阶段实际安装或运行实例')
+})
+
+it.each(['missing', 'other-publication', 'other-digest'] as const)('虚拟模块 %s 身份时，完整 manifest 和重算归档摘要也不能通过', async (kind) => {
+  const { directory, report } = await fixture()
+  const phase = nativeRuntimePhases[0]
+  const root = nativePhaseDirectory(directory, phase)
+  const source = await readFile(path.join(root, 'encoding', 'manifest.json'), 'utf8')
+  const manifest = JSON.parse(source)
+  const publication = JSON.parse(await readFile(path.join(root, 'encoding', 'manifest.ready'), 'utf8'))
+  const identity = kind === 'missing'
+    ? undefined
+    : { revision: kind === 'other-publication' ? 'other-publication' : publication.revision, manifestSha256: kind === 'other-digest' ? 'a'.repeat(64) : publication.manifestSha256 }
+  await writeFile(path.join(root, 'sources', 'virtual.js'), virtualModuleCode(manifest, identity, source))
+  await resnapshot(directory, phase)
+  await expect(validateNativeRuntimePhases(report, directory)).rejects.toThrow('阶段原始源码')
 })

@@ -2,14 +2,14 @@ import type { IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
 import type { TailwindV4Engine, TailwindV4GenerateOptions, TailwindV4ResolvedSource } from '../types'
 import type { PreparedTailwindV4Source } from './prepared-source'
 import { createTailwindV4Engine as createEngineTailwindV4Engine } from '@weapp-tailwindcss/engine'
-import { createCssRuntimeAffectingSignature } from '@weapp-tailwindcss/postcss/transform'
+import { collectStaticCustomPropertyValues, createCssRuntimeAffectingSignature } from '@weapp-tailwindcss/postcss/transform'
 import { transformTailwindV4CssByTarget } from '../miniprogram'
 import { createIncrementalGenerateCacheKey, createIncrementalStyleOptions, hasRemovedCandidates, incrementalGenerateCache, normalizeTargetRpxLengthCandidates, resolveStyleOptions, resolveTargetCandidates, runIncrementalGenerateTask, seedIncrementalGenerateCache, shouldRebuildIncrementalEntry } from './incremental-cache'
 import { TailwindV4NativeSessionPool } from './native-session'
 import { prepareTailwindV4Source } from './prepared-source'
 import { generateRawArtifact, transformGeneratedArtifact } from './raw-generation'
 import { restoreRpxLengthCssSelectors } from './rpx-candidates'
-import { hasChangedCssCalcContext, resolveGenerationStyleContext, resolveIncrementalStyleContext } from './style-context'
+import { hasChangedCssCalcContext, hasChangedCustomPropertyCompatibilityContext, resolveGenerationStyleContext, resolveIncrementalStyleContext } from './style-context'
 
 export function createTailwindV4Engine(source: TailwindV4ResolvedSource): TailwindV4Engine {
   const generationSessions = new TailwindV4NativeSessionPool()
@@ -128,8 +128,11 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
         const fullRawCss = [cached.rawCss, rawCss].filter(Boolean).join('\n')
         // 完整产物同时确认主题、keyframes、@property 依赖及规则顺序，追加不能改变层叠结果。
         const artifact = await generateRawArtifact(generationSessions, cssMacroSource, options, preparedSource)
-        if (createCssRuntimeAffectingSignature(fullRawCss) !== createCssRuntimeAffectingSignature(artifact.rawCss)
-          || hasChangedCssCalcContext(cached.rawCss, artifact.rawCss, styleOptions)) {
+        const needsFullTransform = createCssRuntimeAffectingSignature(fullRawCss) !== createCssRuntimeAffectingSignature(artifact.rawCss)
+          || hasChangedCssCalcContext(cached.rawCss, artifact.rawCss, styleOptions)
+        const compatibilityValues = !needsFullTransform && target === 'weapp' ? collectStaticCustomPropertyValues(artifact.rawCss) : undefined
+        if (needsFullTransform
+          || (compatibilityValues && hasChangedCustomPropertyCompatibilityContext(cached.compatibilityValues, compatibilityValues))) {
           const generated = await transformGeneratedArtifact(artifact)
           const admitted = seedIncrementalGenerateCache({ compatibleSource, generated, requestedCandidates, styleOptions, target })
           if (!admitted) {
@@ -138,7 +141,7 @@ export function createTailwindV4Engine(source: TailwindV4ResolvedSource): Tailwi
           return generated
         }
         const styleContext = target === 'weapp'
-          ? resolveIncrementalStyleContext(compatibleSource.css, fullRawCss, styleOptions)
+          ? resolveIncrementalStyleContext(compatibleSource.css, fullRawCss, styleOptions, compatibilityValues)
           : resolveGenerationStyleContext(compatibleSource.css, fullRawCss, styleOptions)
         const incrementalCss = rawCss.length > 0
           ? await transformTailwindV4CssByTarget(rawCss, target, {

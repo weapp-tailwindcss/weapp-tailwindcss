@@ -2,6 +2,8 @@ import type { IStyleHandlerOptions } from '../../../types'
 import { postcss } from '../../../postcss-runtime'
 import { selectorContainsPseudoClass } from '../../../selectorParser/pseudo'
 import { removeUnsupportedCascadeLayers, removeUnsupportedMiniProgramAtRules } from '../../mini-program-css'
+import { removeUnsupportedMiniProgramAtRulesRoot } from '../../mini-program-css/at-rules'
+import { normalizeMiniProgramColorMix, normalizeMiniProgramColorMixRoot } from '../../mini-program-css/modern-colors'
 import { removeTailwindSourceMediaBlocks, terminateTailwindSourceAtRulesBeforeNextDirective } from './at-rules'
 import { removeTailwindV4GeneratorAtRulesFallback, TAILWIND_V4_GENERATOR_AT_RULES } from './generated-cleanup'
 
@@ -64,36 +66,44 @@ export function removeMiniProgramInteractiveSelectors(
   }
   try {
     const root = postcss.parse(source)
-    let changed = false
-    root.walkRules((rule) => {
-      const selectors = rule.selectors ?? [rule.selector]
-      const keptSelectors = selectors.filter((selector) => {
-        if (!unsupportedPseudoClasses.some(pseudoClass => selector.includes(pseudoClass))) {
-          return true
-        }
-        return !selectorContainsPseudoClass(selector, unsupportedPseudoClasses)
-      })
-      if (keptSelectors.length === selectors.length) {
-        return
-      }
-      changed = true
-      if (keptSelectors.length === 0) {
-        rule.remove()
-        return
-      }
-      rule.selectors = keptSelectors
-    })
-    root.walk((node) => {
-      if ('nodes' in node && node.nodes?.length === 0) {
-        node.remove()
-        changed = true
-      }
-    })
+    const changed = removeMiniProgramInteractiveSelectorsRoot(root, unsupportedPseudoClasses)
     return changed ? root.toString() : source
   }
   catch {
     return source
   }
+}
+
+function removeMiniProgramInteractiveSelectorsRoot(root: postcss.Root, unsupportedPseudoClasses: string[]) {
+  if (unsupportedPseudoClasses.length === 0) {
+    return false
+  }
+  let changed = false
+  root.walkRules((rule) => {
+    const selectors = rule.selectors ?? [rule.selector]
+    const keptSelectors = selectors.filter((selector) => {
+      if (!unsupportedPseudoClasses.some(pseudoClass => selector.includes(pseudoClass))) {
+        return true
+      }
+      return !selectorContainsPseudoClass(selector, unsupportedPseudoClasses)
+    })
+    if (keptSelectors.length === selectors.length) {
+      return
+    }
+    changed = true
+    if (keptSelectors.length === 0) {
+      rule.remove()
+      return
+    }
+    rule.selectors = keptSelectors
+  })
+  root.walk((node) => {
+    if ('nodes' in node && node.nodes?.length === 0) {
+      node.remove()
+      changed = true
+    }
+  })
+  return changed
 }
 
 export function removeMiniProgramHoverSelectors(source: string, enabled: boolean | undefined = true) {
@@ -104,14 +114,50 @@ export function removeProcessedMiniProgramUnsupportedCss(
   source: string,
   options: Partial<IStyleHandlerOptions>,
 ) {
-  return removeMiniProgramInteractiveSelectors(
-    removeUnsupportedMiniProgramAtRules(source),
-    {
-      active: options.cssRemoveActivePseudoClass ?? true,
-      hover: options.cssRemoveHoverPseudoClass ?? true,
-      focus: options.cssRemoveFocusPseudoClass ?? true,
-    },
+  return prepareProcessedMiniProgramCss(source, options, false)
+}
+
+/** 生成管线在同一棵树中完成颜色、平台清理及既有 legacy layer 消费。 */
+export function prepareProcessedMiniProgramUserCss(source: string, options: Partial<IStyleHandlerOptions>) {
+  return prepareProcessedMiniProgramCss(source, options, true)
+}
+
+function prepareProcessedMiniProgramCss(source: string, options: Partial<IStyleHandlerOptions>, prepareUserCss: boolean) {
+  const selectors = {
+    active: options.cssRemoveActivePseudoClass ?? true,
+    hover: options.cssRemoveHoverPseudoClass ?? true,
+    focus: options.cssRemoveFocusPseudoClass ?? true,
+  }
+  try {
+    const root = postcss.parse(source)
+    // 注册、局部覆盖和条件规则仍在同一棵树中，先证明颜色语义再裁剪。
+    if (prepareUserCss && /color-mix\(/i.test(source)) {
+      normalizeMiniProgramColorMixRoot(root)
+    }
+    removeUnsupportedMiniProgramAtRulesRoot(root)
+    const unsupportedPseudoClasses = [
+      ...(selectors.active ? [':active'] : []),
+      ...(selectors.hover ? [':hover'] : []),
+      ...(selectors.focus ? [':focus'] : []),
+    ]
+    const cleaned = root.toString()
+    // 沿用原字符串阶段的守卫，不能因已删除子树中的 hover 而清理其它空规则。
+    const changed = (cleaned.includes(':active') || cleaned.includes(':hover') || cleaned.includes(':focus'))
+      && removeMiniProgramInteractiveSelectorsRoot(root, unsupportedPseudoClasses)
+    if (prepareUserCss && source.includes('@layer')) {
+      removeUnsupportedCascadeLayers(root)
+      return root.toString()
+    }
+    return changed ? root.toString() : cleaned
+  }
+  catch {
+    // 编辑中的不完整 CSS 保留原字符串修复顺序，不消费半变换的 AST。
+  }
+  const fallback = removeMiniProgramInteractiveSelectors(
+    removeUnsupportedMiniProgramAtRules(prepareUserCss ? normalizeMiniProgramColorMix(source) : source),
+    selectors,
   )
+  return prepareUserCss ? unwrapMiniProgramCascadeLayers(fallback) : fallback
 }
 
 export function unwrapMiniProgramCascadeLayers(source: string) {

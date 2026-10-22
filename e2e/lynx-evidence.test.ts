@@ -12,9 +12,11 @@ import { archiveNativeBaseline, validateNativeBaselineArchive } from './lynx/bas
 import { collectNativeEvidence, createEvidenceContext, cropsDirectory, sha256, validateNativeEvidence } from './lynx/evidence'
 import { darkReceipts } from './lynx/fixtures/dark-images'
 import { effectFixtureImage } from './lynx/fixtures/effect-images'
+import { fixedSizeArtifactFixture } from './lynx/fixtures/fixed-size-artifacts'
 import { overflowArtifactFixture } from './lynx/fixtures/overflow-artifacts'
 import { protocolReport } from './lynx/fixtures/protocol-report'
 import { responsiveArtifactFixture } from './lynx/fixtures/responsive-artifacts'
+import { themeOverrideArtifacts } from './lynx/fixtures/theme-overrides'
 import { finalizeNativePixelEffects } from './lynx/pixel-evidence'
 import { PNG } from './lynx/png'
 import { readNativeReport } from './lynx/reports'
@@ -64,6 +66,9 @@ async function fixture(platform: Platform = 'android') {
     'flex-shorthand-shrink': [6, 6, 24, 24, 0, 0, 12, 24],
   }
   for (const result of report.results) {
+    if (result.id === 'sizing-fixed') {
+      continue
+    }
     const item = compatibilityCases.find(item => item.id === result.id)!
     if (!requiresPixelEffect(result.id) && (result.id === 'variant-supports' || ['native-geometry', 'pixel-geometry'].includes(lynxEvidenceStrategy(item)))) {
       const layout = layoutControls[item.id]
@@ -92,15 +97,19 @@ async function fixture(platform: Platform = 'android') {
   const bundle = Buffer.from('the actual staged bundle')
   const context = createEvidenceContext(bundle)
   report.evidence = { ...context, artifacts: [] }
-  const images = new Map<string, Buffer>()
+  report.environment.viewport.pixelRatio = 2
+  const images = new Map<string, Buffer>(themeOverrideArtifacts(report))
   for (const [name, bytes] of responsiveArtifactFixture(report)) {
     images.set(name, bytes)
   }
   for (const [name, bytes] of overflowArtifactFixture(report)) {
     images.set(name, bytes)
   }
+  for (const [name, bytes] of fixedSizeArtifactFixture(report)) {
+    images.set(name, bytes)
+  }
   for (const result of report.results) {
-    if (result.id === 'variant-responsive' || result.id === 'layout-overflow') {
+    if (result.id === 'variant-responsive' || result.id === 'layout-overflow' || result.id === 'sizing-fixed') {
       continue
     }
     const frames = evidenceSequence(compatibilityCases.find(item => item.id === result.id)!, staticEvidence.results.find(item => item.id === result.id))?.frames ?? []

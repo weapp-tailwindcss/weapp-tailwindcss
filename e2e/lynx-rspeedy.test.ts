@@ -17,6 +17,7 @@ import { verifySkewFixture } from './lynx/skew-fixture-browser'
 import { analyzeStaticEvidence, parseDecodedRules, parseGeneratedRules } from './lynx/static-evidence'
 import { verifyStructuralFixture } from './lynx/structural-fixture-browser'
 import { verifyTextFlowFixture } from './lynx/text-flow-fixture-browser'
+import { assertThemeOverrideRules } from './lynx/theme-overrides-static'
 
 const bundlePath = path.join(exampleDir, 'dist', 'main.lynx.bundle')
 let encoderLog = ''
@@ -52,6 +53,29 @@ describe('ReactLynx Rspeedy compatibility evidence', () => {
     expect(decodedCss).not.toBe('')
   })
 
+  it('本地导入合并后的完整渐变链在实际编码前降级且保留动态变量与作者重置', async () => {
+    const generated = await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8')
+    for (const css of [generated, decodedCss]) {
+      const positions: string[] = []
+      const dependencies: string[] = []
+      postcss.parse(css).walkRules((rule) => {
+        if (rule.selectors.includes('.bg-linear-to-r')) {
+          rule.walkDecls('--tw-gradient-position', (decl) => {
+            positions.push(decl.value)
+          })
+          rule.walkDecls('background-image', (decl) => {
+            dependencies.push(decl.value)
+          })
+        }
+      })
+      expect(positions.length).toBeGreaterThan(0)
+      expect(positions.every(value => value === 'to right')).toBe(true)
+      expect(dependencies).toEqual([expect.stringMatching(/^linear-gradient\(\s*var\(--tw-gradient-stops\)\s*\)$/)])
+      expect(css).toMatch(/--tw-gradient-position:\s*initial\s*;/)
+      expect(css).toContain('var(--tw-gradient-position)')
+    }
+  })
+
   it('响应式真实构建与实际解码保留唯一媒体 utility 和完整一致的标尺副本', async () => {
     const css = await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8')
     expect(() => assertResponsiveGuard(parseGeneratedRules(css), 'generation')).not.toThrow()
@@ -62,6 +86,12 @@ describe('ReactLynx Rspeedy compatibility evidence', () => {
     const css = await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8')
     expect(() => assertOverflowRules(parseGeneratedRules(css), 'generation')).not.toThrow()
     expect(() => assertOverflowRules(parseDecodedRules(decodedCss), 'encoding')).not.toThrow()
+  })
+
+  it('主题覆盖的真实生成与实际 bundle 同时保留三分支的根定义和切换引用', async () => {
+    const css = await fs.readFile(path.join(lynxIntermediateDir, 'main.css'), 'utf8')
+    expect(() => assertThemeOverrideRules(parseGeneratedRules(css), 'generation')).not.toThrow()
+    expect(() => assertThemeOverrideRules(parseDecodedRules(decodedCss), 'encoding')).not.toThrow()
   })
 
   it('固定 SDK 的编码配置启用运行时递归变量解析', async () => {

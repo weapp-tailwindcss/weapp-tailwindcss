@@ -27,7 +27,7 @@ describe('color-mix compatibility helpers', () => {
     ])
     expect(valueParser.stringify(trimNodes(valueParser('  red  ').nodes))).toBe('red')
     expect(parseAlphaValue('50%')).toBe(0.5)
-    expect(parseAlphaValue('0.25')).toBe(0.25)
+    expect(parseAlphaValue('0.25')).toBeUndefined()
     expect(parseAlphaValue('var(--alpha)')).toBeUndefined()
   })
 
@@ -42,7 +42,7 @@ describe('color-mix compatibility helpers', () => {
     expect(resolveColorData('transparent', customProperties)?.alpha).toBe(0)
     expect(resolveColorData('currentColor', customProperties)).toBeUndefined()
     expect(resolveColorData('inherit', customProperties)).toBeUndefined()
-    expect(resolveColorData('var(--missing, #0ea5e9)', customProperties)?.channels.length).toBe(3)
+    expect(resolveColorData('var(--missing, #0ea5e9)', customProperties)).toBeUndefined()
     expect(resolveColorData('var(--nested)', customProperties)?.channels.length).toBe(3)
     expect(resolveColorData('var(--loop-a)', customProperties)).toBeUndefined()
     expect(normalizeColorFunctionName('var(--brand)', 0.4, customProperties)).toContain('rgba(')
@@ -63,14 +63,14 @@ describe('color-mix compatibility helpers', () => {
       hasUnsupported: false,
     })
     expect(normalizeModernColorValue('color-mix(in oklab, currentColor 50%, transparent)')).toEqual({
-      value: 'currentColor',
-      changed: true,
-      hasUnsupported: false,
+      value: 'color-mix(in oklab, currentColor 50%, transparent)',
+      changed: false,
+      hasUnsupported: true,
     })
     expect(normalizeModernColorValue('linear-gradient(color-mix(in oklab, var(--missing) 50%, transparent), red)')).toEqual({
-      value: 'linear-gradient(var(--missing), red)',
-      changed: true,
-      hasUnsupported: false,
+      value: 'linear-gradient(color-mix(in oklab, var(--missing) 50%, transparent), red)',
+      changed: false,
+      hasUnsupported: true,
     })
   })
 
@@ -90,22 +90,10 @@ describe('color-mix compatibility helpers', () => {
       value: 'rgba(14, 165, 233, 0.25)',
       deferred: false,
     })
-    expect(resolve('color-mix(in oklab, var(--brand) var(--alpha), transparent)')).toEqual({
-      value: 'rgba(14, 165, 233, var(--alpha))',
-      deferred: true,
-    })
-    expect(resolve('color-mix(in oklab, var(--modern-brand) var(--alpha), transparent)')).toEqual({
-      value: 'rgba(0, 165, 234, var(--alpha))',
-      deferred: true,
-    })
-    expect(resolve('color-mix(in oklab, var(--missing) var(--alpha), transparent)')).toEqual({
-      value: 'var(--missing)',
-      deferred: true,
-    })
-    expect(resolve('color-mix(in oklab, currentColor 50%, transparent)')).toEqual({
-      value: 'currentColor',
-      deferred: false,
-    })
+    expect(resolve('color-mix(in oklab, var(--brand) var(--alpha), transparent)')).toBeUndefined()
+    expect(resolve('color-mix(in oklab, var(--modern-brand) var(--alpha), transparent)')).toBeUndefined()
+    expect(resolve('color-mix(in oklab, var(--missing) var(--alpha), transparent)')).toBeUndefined()
+    expect(resolve('color-mix(in oklab, currentColor 50%, transparent)')).toBeUndefined()
     expect(resolve('color-mix(in oklab, var(--brand) var(--tw-bg-alpha), transparent)')).toBeUndefined()
     expect(resolve('color-mix(in oklab, var(--brand) 50%, white)')).toBeUndefined()
     expect(resolve('color-mix(in oklab, var(--brand), transparent)')).toBeUndefined()
@@ -119,7 +107,7 @@ describe('color-mix compatibility helpers', () => {
     })
   })
 
-  it('protects dynamic color-mix alpha and unwraps protected supports blocks', () => {
+  it('preserves dynamic color-mix alpha and its supports condition', () => {
     const protectedCss = protectDynamicColorMixAlpha([
       ':root{--brand:#0ea5e9}',
       '@supports (color: color-mix(in oklab, red, red)){',
@@ -127,9 +115,9 @@ describe('color-mix compatibility helpers', () => {
       '}',
     ].join('\n'))
 
-    expect(protectedCss.css).toContain('__weapp_tw_color_mix_0__')
-    expect(protectedCss.css).not.toContain('@supports')
-    expect(protectedCss.restore(protectedCss.css)).toContain('rgba(14, 165, 233, var(--alpha))')
+    expect(protectedCss.css).toContain('color-mix(in oklab, var(--brand) var(--alpha), transparent)')
+    expect(protectedCss.css).toContain('@supports')
+    expect(protectedCss.restore(protectedCss.css)).toContain('color-mix(in oklab, var(--brand) var(--alpha), transparent)')
 
     const unchanged = protectDynamicColorMixAlpha('.card{color:red}')
     expect(unchanged.css).toBe('.card{color:red}')
@@ -144,10 +132,10 @@ describe('color-mix compatibility helpers', () => {
       '.nested{filter:blur(color-mix(in oklab, red 50%, transparent))}',
     ].join('\n'))
 
-    expect(protectedCss.css).toContain('__weapp_tw_color_mix_0__')
+    expect(protectedCss.css).toContain('color-mix(in oklab, var(--brand) var(--alpha), transparent)')
     expect(protectedCss.css).toContain('var(--missing)')
     expect(protectedCss.css).toContain('rgba(255, 0, 0, 0.5)')
-    expect(protectedCss.restore(protectedCss.css)).toContain('rgba(14, 165, 233, var(--alpha))')
+    expect(protectedCss.restore(protectedCss.css)).toContain('color-mix(in oklab, var(--brand) var(--alpha), transparent)')
   })
 
   it('preserves author variable fallbacks without shielding Tailwind theme variables', async () => {

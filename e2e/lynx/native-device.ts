@@ -2,6 +2,7 @@ import type { CommandDiagnostics } from './native-command-observer'
 import type { NativePlatform } from './native-options'
 import process from 'node:process'
 import { iosSimulatorDestination, parseAdbDevices, requestedIosTarget, requestedTarget, selectTarget } from '../../scripts/e2e-preflight/targets'
+import { EnvironmentBlockedError } from '../tailwind-capabilities/environment-block'
 import { command } from './native-command'
 
 export interface AndroidDevice {
@@ -79,10 +80,15 @@ export function selectIosBuildTarget(output: string, env: NodeJS.ProcessEnv): Io
 
 /** 构建前锁定唯一在线设备，后续运行和证据采集只消费该身份。 */
 export async function resolveNativeDevice(platform: NativePlatform, cwd: string, env: NodeJS.ProcessEnv = process.env, diagnostics?: CommandDiagnostics): Promise<NativeDevice> {
-  if (platform === 'android') {
-    return selectAndroidDevice(await command('adb', ['devices', '-l'], cwd, 30_000, diagnostics), env)
+  try {
+    if (platform === 'android') {
+      return selectAndroidDevice(await command('adb', ['devices', '-l'], cwd, 30_000, diagnostics), env)
+    }
+    const requested = requestedIosTarget(['LYNX_IOS_DEVICE_ID'], env)
+    // 显式目标只查询自身；simctl 的搜索为 contains，返回后仍按精确 ID 和可运行状态校验。
+    return selectIosDevice(await command('xcrun', ['simctl', 'list', 'devices', requested ?? 'available', '--json'], cwd, 30_000, diagnostics), env)
   }
-  const requested = requestedIosTarget(['LYNX_IOS_DEVICE_ID'], env)
-  // 显式目标只查询自身；simctl 的搜索为 contains，返回后仍按精确 ID 和可运行状态校验。
-  return selectIosDevice(await command('xcrun', ['simctl', 'list', 'devices', requested ?? 'available', '--json'], cwd, 30_000, diagnostics), env)
+  catch (error) {
+    throw new EnvironmentBlockedError(`Lynx ${platform} 设备发现失败：${String(error)}`, { cause: error })
+  }
 }

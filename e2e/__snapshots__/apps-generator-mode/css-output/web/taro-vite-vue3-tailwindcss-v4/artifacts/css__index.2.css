@@ -301,18 +301,21 @@
   }
 }
 @layer utilities {
- /*tokens: bg-normal-subpackage-marker <= src/sub-normal/pages/index.vue */
+ /*! tokens: bg-normal-subpackage-marker <= src/sub-normal/pages/index.vue */
   .bg-normal-subpackage-marker {
     background-color: #2563eb;
   }
+ /*! tokens: before:content-['normal_subpackage_taro-vite-vue3-tailwindcss-v4'] <= src/sub-normal/pages/index.vue */
   .before\:content-\[\'normal_subpackage_taro-vite-vue3-tailwindcss-v4\'\]::before {
     --tw-content: 'normal subpackage taro-vite-vue3-tailwindcss-v4';
     content: var(--tw-content);
   }
+ /*! tokens: before:content-['现在，让我们开始神奇的_tailwindcss_开发之旅吧！'] <= <tailwind generated> */
   .before\:content-\[\'现在，让我们开始神奇的_tailwindcss_开发之旅吧！\'\]::before {
     --tw-content: '现在，让我们开始神奇的 tailwindcss 开发之旅吧！';
     content: var(--tw-content);
   }
+ /*! tokens: before:content-['现在，让我们继续神奇的_tailwindcss_HMR_回归之旅吧！'] <= <tailwind generated> */
   .before\:content-\[\'现在，让我们继续神奇的_tailwindcss_HMR_回归之旅吧！\'\]::before {
     --tw-content: '现在，让我们继续神奇的 tailwindcss HMR 回归之旅吧！';
     content: var(--tw-content);
@@ -342,20 +345,8 @@
 /*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
 @layer properties;
 @layer theme, base, components, utilities;
-@layer theme {
-}
-@layer base {
-  @supports (not (-webkit-appearance: -apple-pay-button)) or (contain-intrinsic-size: 1px) {
-  }
-}
-@layer utilities {
-}
 @property --tw-content {
   syntax: '*';
   initial-value: '';
   inherits: false;
-}
-@layer properties {
-  @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
-  }
 }

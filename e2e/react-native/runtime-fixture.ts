@@ -5,7 +5,12 @@ import path from 'node:path'
 import { PNG } from 'pngjs'
 import { expectedFixtureStyle, nativeBuildFixtures, nativeFixtures, rejectedNativeCases } from '../../examples/react-native-expo/src/compatibility/protocol'
 import { compatibilityCases, reactNativeVersions, RN_CATALOG_HASH, RN_FIXTURE_HASH } from './catalog'
+import { syntheticFrameCapture } from './frame-fixture'
+import { syntheticImagePair } from './image-fixture'
+import { runtimeIdentity } from './installation-evidence'
+import { syntheticRuntimeInstallation } from './installation-fixture'
 import { assessNativePair } from './pair-evidence'
+import { syntheticScrollPair } from './scroll-fixture'
 
 /** 构造有真实 PNG 和独立样式 oracle 的纯运行时报告，不伪装设备验收。 */
 export async function writeRuntimeFixture(artifacts: string, platform: ReactNativeReport['platform'], runId: string, observedAt: string, revision = 'rn-hmr-updated-f59e0b') {
@@ -21,6 +26,7 @@ export async function writeRuntimeFixture(artifacts: string, platform: ReactNati
     }
   }
   const raw: ReactNativeReport = {
+    runtimeInstallation: syntheticRuntimeInstallation(),
     schemaVersion: 2,
     stage: 'runtime',
     revision,
@@ -53,7 +59,8 @@ export async function writeRuntimeFixture(artifacts: string, platform: ReactNati
       ],
     }
     for (const phase of nativeFixtures[item.id]?.phases ?? (nativeFixtures[item.id] ? ['default'] : [])) {
-      const pair: NativePairEvidence = {
+      let pair: NativePairEvidence = {
+        runtimeInstallation: runtimeIdentity(raw.runtimeInstallation!),
         runId: raw.runId,
         platform,
         revision: raw.revision,
@@ -86,13 +93,28 @@ export async function writeRuntimeFixture(artifacts: string, platform: ReactNati
           }
         }
       }
-      const png = PNG.sync.write(image)
-      const checkpoints = assessNativePair(image, pair)
+      let phaseImage = image
+      if (item.id === 'sizing-size' && phase === 'image') {
+        const synthetic = syntheticImagePair(pair)
+        pair = synthetic.pair
+        phaseImage = synthetic.image
+      }
+      if (item.id === 'sizing-size' && phase.startsWith('scroll-')) {
+        const synthetic = syntheticScrollPair(pair)
+        pair = synthetic.pair
+        phaseImage = synthetic.image
+      }
+      const png = PNG.sync.write(phaseImage)
+      const checkpoints = assessNativePair(phaseImage, pair)
       const name = `case-${raw.revision}-${item.id}-${phase}.png`
-      const receipt = { id: item.id, phase, runId: raw.runId, checkpoints, artifact: { name, sha256: createHash('sha256').update(png).digest('hex'), byteLength: png.length } }
+      const artifact = { name, sha256: createHash('sha256').update(png).digest('hex'), byteLength: png.length }
+      const receipt = { runtimeInstallation: pair.runtimeInstallation, id: item.id, phase, runId: raw.runId, checkpoints, artifact, capture: syntheticFrameCapture(artifact, checkpoints) }
       raw.receipts.push(receipt)
       result.checkpoints.push({ name: `runtime:${phase}:style`, passed: true, actual: JSON.stringify(expectedFixtureStyle(item.id, phase, platform)) }, ...checkpoints)
       await writeFile(path.join(artifacts, name), png)
+      for (const frame of receipt.capture.frames) {
+        await writeFile(path.join(artifacts, frame.artifact.name), png)
+      }
       await writeFile(path.join(artifacts, `${name}.json`), JSON.stringify({ pair, receipt }))
     }
     raw.results.push(result)

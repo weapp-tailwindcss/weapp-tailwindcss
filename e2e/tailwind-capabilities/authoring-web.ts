@@ -3,11 +3,11 @@ import type { RunContext } from './context'
 import type { BrowserEngine, CapabilityResult, SemanticAssertion } from './types'
 import { writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { chromium, firefox, webkit } from 'playwright'
 import { observeAuthoring } from './authoring-web/browser'
 import { authoringMeasurementAssertions, authoringStates, authoringWebContract, authoringWebOutcome } from './authoring-web/contract'
 import { authoringWebCoverage, authoringWebProfiles } from './authoring-web/profiles'
 import { buildAuthoringReference } from './authoring-web/reference'
+import { launchCapabilityBrowser } from './browser/launch'
 import { newReport, persistReport } from './context'
 import { cssDeclarations } from './css'
 import { withGeneratorFixture } from './fixture'
@@ -29,7 +29,7 @@ export async function runAuthoringWeb(context: RunContext, engine: BrowserEngine
   const errors: string[] = []
   try {
     if (profiles.some(profile => !profile.reason)) {
-      browser = borrowedBrowser ?? await { chromium, firefox, webkit }[engine].launch({ headless: true })
+      browser = borrowedBrowser ?? await launchCapabilityBrowser(engine)
       report.environment.browserVersion = browser.version()
       const browserContext = await browser.newContext({ viewport: { width: 960, height: 300 }, colorScheme: 'light', reducedMotion: 'reduce' })
       if (borrowedBrowser) {

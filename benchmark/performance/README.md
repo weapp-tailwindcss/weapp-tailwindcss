@@ -2,6 +2,8 @@
 
 `report` 的 postcss/core/runtime 是微基准。synthetic HMR 调用模板转换，bundler 场景调用普通 esbuild，均不能代替实际插件的 watch 证据。
 
+synthetic JSON 的 `samples` 按执行顺序保存正式测量的毫秒原始值、内存和输出 hash，保留精度并排除预热；汇总统计和预算保持原规则。历史报告缺少此字段时，不能从汇总恢复原始样本或据此推断尾延迟根因。
+
 runtime 场景分别创建 cn 与 tailwind-merge 的真实实例：cold 包含引擎和包装初始化，cache-miss 保持实例并改变最终被覆盖的输入，cache-hit 重复输入，custom-map 验证自定义映射，hot-churn 混合热点与大量冷输入。最终输出必须稳定且满足冲突消解语义。
 
 ## 真实 watcher

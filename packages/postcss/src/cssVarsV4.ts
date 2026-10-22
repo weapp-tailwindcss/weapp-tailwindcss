@@ -2,10 +2,12 @@
 // 参考：https://github.com/tailwindlabs/tailwindcss/blob/main/packages/tailwindcss/src/utilities.ts
 
 // property 函数用于快速构建变量描述对象，便于后续批量注入
-function property(ident: string, initialValue?: string, _syntax?: string) {
+function property(ident: string, initialValue?: string, syntax = '*', legacyValue?: string) {
   return {
     prop: ident,
-    value: initialValue || '',
+    syntax,
+    initialValue,
+    value: legacyValue ?? initialValue ?? '',
   }
 }
 
@@ -45,12 +47,12 @@ const nodes = [
   property('--tw-border-style', 'solid'),
   property('--tw-divide-x-reverse', '0'),
   property('--tw-divide-y-reverse', '0'),
-  property('--tw-gradient-position', 'initial'),
+  property('--tw-gradient-position', undefined, '*', 'initial'),
   property('--tw-gradient-from', '#0000', '<color>'),
   property('--tw-gradient-via', '#0000', '<color>'),
   property('--tw-gradient-to', '#0000', '<color>'),
-  property('--tw-gradient-stops', 'initial'),
-  property('--tw-gradient-via-stops', 'initial'),
+  property('--tw-gradient-stops', undefined, '*', 'initial'),
+  property('--tw-gradient-via-stops', undefined, '*', 'initial'),
   property('--tw-gradient-from-position', '0%', '<length-percentage>'),
   property('--tw-gradient-via-position', '50%', '<length-percentage>'),
   property('--tw-gradient-to-position', '100%', '<length-percentage>'),
@@ -101,8 +103,8 @@ const nodes = [
   property('--tw-backdrop-opacity'),
   property('--tw-backdrop-saturate'),
   property('--tw-backdrop-sepia'),
-  property('--tw-duration', 'initial'),
-  property('--tw-ease', 'initial'),
+  property('--tw-duration', undefined, '*', 'initial'),
+  property('--tw-ease', undefined, '*', 'initial'),
   property('--tw-content', '""'),
   property('--tw-contain-size'),
   property('--tw-contain-layout'),
@@ -116,13 +118,13 @@ const nodes = [
   property('--tw-numeric-spacing'),
   property('--tw-numeric-fraction'),
   property('--tw-outline-style', 'solid'),
-  property('--tw-text-shadow-color', 'initial'),
+  property('--tw-text-shadow-color', undefined, '*', 'initial'),
   property('--tw-text-shadow-alpha', '100%', '<percentage>'),
   property('--tw-shadow', nullShadow),
-  property('--tw-shadow-color', 'initial'),
+  property('--tw-shadow-color', undefined, '*', 'initial'),
   property('--tw-shadow-alpha', '100%', '<percentage>'),
   property('--tw-inset-shadow', nullShadow),
-  property('--tw-inset-shadow-color', 'initial'),
+  property('--tw-inset-shadow-color', undefined, '*', 'initial'),
   property('--tw-inset-shadow-alpha', '100%', '<percentage>'),
   property('--tw-ring-color'),
   property('--tw-ring-shadow', nullShadow),
@@ -146,4 +148,7 @@ for (const edge of ['top', 'right', 'bottom', 'left'] as const) {
   )
 }
 
-export default nodes
+/** 默认值兼容合同只描述签名，不能据此推断注册的作者或生成来源。 */
+export const tailwindPropertyRegistrations = nodes.map(({ prop, syntax, initialValue }) => ({ prop, syntax, initialValue }))
+
+export default nodes.map(({ prop, value }) => ({ prop, value }))

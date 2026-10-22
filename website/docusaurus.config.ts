@@ -9,6 +9,7 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import createBlogOptions from './config/blog'
 import { getBuildLocale } from './config/buildLocale'
+import { preserveWebsiteCssConditionalOrder } from './config/cssMinimizer'
 import { footer, footerCustomFields } from './config/footer'
 import headTags from './config/headTags'
 import { getDocsDirectory } from './config/localizedContent'
@@ -199,10 +200,18 @@ const config: Config = {
     function twPlugin() {
       return {
         name: 'docusaurus-weapp-tailwindcss',
-        configureWebpack() {
+        configureWebpack(webpackConfig, isServer) {
           const { WeappTailwindcss } = require('weapp-tailwindcss/webpack')
 
           return {
+            ...(!isServer && isProd
+              ? {
+                  mergeStrategy: { 'optimization.minimizer': 'replace' },
+                  optimization: {
+                    minimizer: preserveWebsiteCssConditionalOrder(webpackConfig.optimization?.minimizer ?? []),
+                  },
+                }
+              : {}),
             devServer: {
               client: {
                 overlay: false,

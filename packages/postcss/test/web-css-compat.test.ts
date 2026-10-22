@@ -40,7 +40,7 @@ describe('web css compatibility transform', () => {
 
     expect(result).not.toContain('@theme')
     expect(result).not.toContain('@layer')
-    expect(result).not.toContain('@property')
+    expect(result).toContain('@property')
     expect(result).not.toContain('@supports')
     expect(result).toContain(':root')
     expect(result).toContain('--color-blue-500: rgb(')
@@ -198,7 +198,7 @@ describe('web css compatibility transform', () => {
     expect(result).toContain('background-color: rgba(255, 255, 255, 0.7)')
   })
 
-  it('removes Tailwind initial fallback variables that break gradient var fallbacks without @property', () => {
+  it('保留注册及显式 initial，并降级可证明用途的渐变位置', () => {
     const css = [
       '@property --tw-gradient-position { syntax: "*"; inherits: false; }',
       '@property --tw-gradient-stops { syntax: "*"; inherits: false; }',
@@ -231,10 +231,10 @@ describe('web css compatibility transform', () => {
     ].join('\n')
     const result = transformWebCssCompat(css, true)
 
-    expect(result).not.toContain('@property')
-    expect(result).not.toContain('--tw-gradient-position: initial')
-    expect(result).not.toContain('--tw-gradient-stops: initial')
-    expect(result).not.toContain('--tw-gradient-via-stops: initial')
+    expect(result).toContain('@property')
+    expect(result).toContain('--tw-gradient-position: initial')
+    expect(result).toContain('--tw-gradient-stops: initial')
+    expect(result).toContain('--tw-gradient-via-stops: initial')
     expect(result).toContain('--tw-gradient-from: #0000')
     expect(result).toContain('--tw-gradient-to: #0000')
     expect(result).toContain('--tw-gradient-position: to bottom right')
@@ -243,27 +243,15 @@ describe('web css compatibility transform', () => {
     expect(result).toContain('var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from)')
   })
 
-  it('normalizes Tailwind CSS v4 gradient interpolation hints for legacy WebView', () => {
-    const css = [
-      '.bg-linear {',
-      '  --tw-gradient-position: in oklab;',
-      '  background-image: linear-gradient(var(--tw-gradient-stops));',
-      '}',
-      '.bg-radial {',
-      '  --tw-gradient-position: in oklab;',
-      '  background-image: radial-gradient(var(--tw-gradient-stops));',
-      '}',
-      '.bg-conic {',
-      '  --tw-gradient-position: in oklab;',
-      '  background-image: conic-gradient(var(--tw-gradient-stops));',
-      '}',
-    ].join('\n')
+  it.each([
+    ['linear', 'to bottom'],
+    ['radial', 'at center'],
+    ['conic', 'from 0deg'],
+  ])('单一 %s 的完整消费链降级插值提示', (kind, expected) => {
+    const css = `.probe { --tw-gradient-position: in oklab; --tw-gradient-stops: var(--tw-gradient-position), red, blue; background-image: ${kind}-gradient(var(--tw-gradient-stops)); }`
     const result = transformWebCssCompat(css, true)
-
     expect(result).not.toContain('in oklab')
-    expect(result).toContain('--tw-gradient-position: to bottom')
-    expect(result).toContain('--tw-gradient-position: at center')
-    expect(result).toContain('--tw-gradient-position: from 0deg')
+    expect(result).toContain(`--tw-gradient-position: ${expected}`)
   })
 
   it('normalizes Tailwind CSS v4 infinity radius for legacy WebView', () => {
@@ -394,16 +382,16 @@ describe('web css compatibility transform', () => {
     ].join('\n')
     const result = transformWebCssCompat(css, true)
 
-    expect(result).not.toContain('@property')
+    expect(result).toContain('@property')
     expect(result).toContain('*, ::before, ::after, ::backdrop')
     expect(result).toContain('--tw-border-style: solid')
     expect(result).toContain('--tw-shadow: 0 0 #0000')
-    expect(result).not.toContain('--tw-gradient-stops: initial')
+    expect(result).toContain('--tw-gradient-stops: initial')
     expect(result).toContain('border-style: var(--tw-border-style)')
     expect(result).toContain('box-shadow: var(--tw-shadow)')
   })
 
-  it('removes known Tailwind initial fallback variables when dev css chunks no longer contain @property rules', () => {
+  it('缺少注册及完整消费链的开发 chunk 保留显式 initial 和插值 token', () => {
     const css = [
       '@supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) {',
       '  *, ::before, ::after, ::backdrop {',
@@ -426,16 +414,16 @@ describe('web css compatibility transform', () => {
     ].join('\n')
     const result = transformWebCssCompat(css, true)
 
-    expect(result).not.toContain('--tw-gradient-position: initial')
-    expect(result).not.toContain('--tw-gradient-stops: initial')
-    expect(result).not.toContain('--tw-gradient-via-stops: initial')
-    expect(result).not.toContain('--tw-leading: initial')
-    expect(result).not.toContain('--tw-font-weight: initial')
-    expect(result).not.toContain('--tw-tracking: initial')
+    expect(result).toContain('--tw-gradient-position: initial')
+    expect(result).toContain('--tw-gradient-stops: initial')
+    expect(result).toContain('--tw-gradient-via-stops: initial')
+    expect(result).toContain('--tw-leading: initial')
+    expect(result).toContain('--tw-font-weight: initial')
+    expect(result).toContain('--tw-tracking: initial')
     expect(result).toContain('--tw-shadow-color: initial')
     expect(result).toContain('--tw-gradient-from: #0000')
     expect(result).toContain('--tw-gradient-position: to bottom right')
-    expect(result).not.toContain('to bottom right in oklab')
+    expect(result).toContain('to bottom right in oklab')
     expect(result).toContain('background-image: linear-gradient(var(--tw-gradient-stops))')
   })
 
@@ -495,7 +483,7 @@ describe('web css compatibility transform', () => {
     })
 
     expect(result).toContain('@theme')
-    expect(result).not.toContain('@property')
+    expect(result).toContain('@property')
   })
 
   it('supports individual feature switches', () => {

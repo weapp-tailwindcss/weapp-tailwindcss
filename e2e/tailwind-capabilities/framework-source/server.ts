@@ -9,7 +9,8 @@ import { pathToFileURL } from 'node:url'
 import { createLogger, createServer } from 'vite'
 import { WeappTailwindcssWeb } from 'weapp-tailwindcss/vite/web'
 import { digest } from '../identity'
-import { frameworkSource, frameworkSourceCss } from './fixtures'
+import { frameworkSource } from './fixtures'
+import { frameworkSourceResources } from './resources'
 
 export interface FrameworkSourceServer {
   url: string
@@ -42,8 +43,7 @@ export async function withFrameworkSourceServer<T>(root: string, runId: string, 
     await symlink(path.join(root, 'node_modules'), path.join(directory, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir')
     const sourceName = `Probe.${framework === 'react' ? 'tsx' : 'vue'}`
     const source = path.join(directory, sourceName)
-    const entry = framework === 'react' ? `import './entry.css'\nimport './Probe.tsx'` : `import './entry.css'\nimport { createApp } from 'vue'\nimport App from './Probe.vue'\ncreateApp(App).mount('#app')`
-    for (const [name, content] of Object.entries({ 'package.json': '{"type":"module"}', 'entry.css': frameworkSourceCss(framework), [sourceName]: frameworkSource(framework, 'initial', runId), 'entry.js': entry, 'index.html': `<!doctype html><html><head><meta name="framework-instance" content="${instance}"></head><body><div id="app"></div><script type="module" src="/entry.js"></script></body></html>` })) {
+    for (const [name, content] of Object.entries(frameworkSourceResources(framework, runId, instance))) {
       await writeFile(path.join(directory, name), content)
     }
     const logger = createLogger('silent')

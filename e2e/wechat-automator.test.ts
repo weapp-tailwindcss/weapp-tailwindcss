@@ -37,10 +37,87 @@ afterEach(() => {
 })
 
 describe('微信会话保护', () => {
+  it.each([
+    new Error('Timed out waiting App domain readiness after 1000ms'),
+    new Error('Connection closed, check if wechat web devTools is still running'),
+  ])('App 就绪终态没有 SDK code 也须阻断，不从错误文字推导恢复：%s', async (primary) => {
+    const { mini, connection } = miniProgram()
+    vi.mocked(mini.waitForAppReady).mockRejectedValue(primary)
+    connect.mockResolvedValue(mini)
+    await expect(new Launcher().launch({ projectPath: '/owned', port: 45678, timeout: 1000 })).rejects.toMatchObject({ name: 'WechatEnvironmentError', cause: primary })
+    expect(connect).toHaveBeenCalledOnce()
+    expect(connection.dispose).toHaveBeenCalledOnce()
+  })
+
+  it('App 就绪最终返回协议超时后立即阻断，保留原错并仅清理本轮项目', async () => {
+    const { mini, connection } = miniProgram()
+    const primary = Object.assign(new Error('DevTools did not respond'), { code: 'DEVTOOLS_PROTOCOL_TIMEOUT', method: 'App.captureScreenshot' })
+    vi.mocked(mini.waitForAppReady).mockRejectedValue(primary)
+    connect.mockResolvedValue(mini)
+    await expect(new Launcher().launch({ projectPath: '/owned', port: 45678, timeout: 1000 })).rejects.toMatchObject({ name: 'WechatEnvironmentError', cause: primary })
+    expect(mini.waitForAppReady).toHaveBeenCalledOnce()
+    expect(connect).toHaveBeenCalledOnce()
+    expect(connection.dispose).toHaveBeenCalledOnce()
+    expect(wechatRequest).toHaveBeenLastCalledWith('12345', { kind: 'close', project: '/owned' }, expect.any(Number))
+  })
+
+  it('SDK 内部恢复前的 send 保留原错误与返回值，不在协议拦截层提前转换', async () => {
+    const { mini, connection, send } = miniProgram()
+    const primary = Object.assign(new Error('recoverable page timeout'), { code: 'DEVTOOLS_PROTOCOL_TIMEOUT', method: 'Page.getData' })
+    send.mockRejectedValueOnce(primary).mockResolvedValueOnce({ data: 'recovered' })
+    connect.mockResolvedValue(mini)
+    await new Launcher().connect({ wsEndpoint: 'ws://127.0.0.1:45678' })
+    await expect(connection.send('Page.getData')).rejects.toBe(primary)
+    await expect(connection.send('App.callFunction')).resolves.toEqual({ data: 'recovered' })
+    expect(send).toHaveBeenCalledTimes(2)
+    mini.disconnect()
+  })
+
+  it('真实 SDK 就绪检查首轮超时后恢复时仍移交同一连接，不提前阻断或重连', async () => {
+    const { mini, send } = miniProgram()
+    vi.mocked(mini.waitForAppReady).mockRestore()
+    const primary = Object.assign(new Error('first readiness probe timed out'), { code: 'DEVTOOLS_PROTOCOL_TIMEOUT', method: 'App.captureScreenshot' })
+    send.mockRejectedValueOnce(primary).mockResolvedValueOnce({ data: 'ready' })
+    connect.mockResolvedValue(mini)
+    await expect(new Launcher().launch({ projectPath: '/owned', port: 45678, timeout: 2000 })).resolves.toBe(mini)
+    expect(connect).toHaveBeenCalledOnce()
+    expect(send.mock.calls.map(call => call[0])).toEqual(['App.captureScreenshot', 'App.captureScreenshot'])
+    expect(wechatRequest).toHaveBeenCalledOnce()
+    mini.disconnect()
+  })
+
+  it('App 就绪协议超时与断连同时失败，两个原异常均保留且不重连', async () => {
+    const { mini, connection } = miniProgram()
+    const primary = Object.assign(new Error('opaque App timeout'), { code: 'DEVTOOLS_PROTOCOL_TIMEOUT', method: 'App.captureScreenshot' })
+    const cleanup = new Error('disconnect failed')
+    vi.mocked(mini.waitForAppReady).mockRejectedValue(primary)
+    connection.dispose.mockImplementation(() => {
+      throw cleanup
+    })
+    connect.mockResolvedValue(mini)
+    const error = await new Launcher().launch({ projectPath: '/owned', port: 45678, timeout: 1000 }).catch(error => error)
+    expect(error).toBeInstanceOf(AggregateError)
+    expect(error.errors).toMatchObject([{ name: 'WechatEnvironmentError', cause: primary }, cleanup])
+    expect(error.cause).toBe(error.errors[0])
+    expect(connect).toHaveBeenCalledOnce()
+    expect(connection.dispose).toHaveBeenCalledOnce()
+  })
+
+  it('SDK 握手错误耗尽本轮截止时间时，保留 cause 并明确阻断', async () => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(0)
+    const primary = new Error('opaque SDK handshake error')
+    connect.mockImplementation(async () => {
+      clock.mockReturnValue(1001)
+      throw primary
+    })
+    await expect(new Launcher().launch({ projectPath: '/owned', port: 45678, timeout: 1000 })).rejects.toMatchObject({ name: 'WechatEnvironmentError', cause: primary })
+    expect(connect).toHaveBeenCalledOnce()
+    expect(wechatRequest).toHaveBeenCalledTimes(2)
+  })
   it('连接握手与断开同时失败时立即保留聚合错误，不重试新连接', async () => {
     const error = new AggregateError([new Error('version failed'), new Error('disconnect failed')], 'connect cleanup failed')
     connect.mockRejectedValueOnce(error).mockResolvedValue(miniProgram().mini)
-    await expect(new Launcher().launch({ projectPath: '/owned', port: 45678, timeout: 1000 })).rejects.toBe(error)
+    await expect(new Launcher().launch({ projectPath: '/owned', port: 45678, timeout: 1000 })).rejects.toMatchObject({ name: 'WechatEnvironmentError', cause: error })
     expect(connect).toHaveBeenCalledOnce()
     expect(wechatRequest).toHaveBeenLastCalledWith('12345', { kind: 'close', project: '/owned' }, expect.any(Number))
   })
@@ -74,7 +151,7 @@ describe('微信会话保护', () => {
           await closeMiniProgramAndCleanup(session?.miniProgram, dir)
         }
       }
-      await expect(execute()).rejects.toBe(primary)
+      await expect(execute()).rejects.toMatchObject({ name: 'WechatEnvironmentError', cause: primary })
       expect(run).not.toHaveBeenCalled()
       expect(connection.dispose).toHaveBeenCalledOnce()
       expect(wechatRequest).toHaveBeenCalledTimes(2)
@@ -150,9 +227,10 @@ describe('微信会话保护', () => {
 
   it('页面就绪失败只断开自己的连接', async () => {
     const { mini, connection } = miniProgram()
-    vi.mocked(mini.waitForAppReady).mockRejectedValue(new Error('page failed'))
+    const primary = new Error('page failed')
+    vi.mocked(mini.waitForAppReady).mockRejectedValue(primary)
     connect.mockResolvedValue(mini)
-    await expect(new Launcher().launch({ projectPath: '/owned', port: 45678 })).rejects.toThrow('page failed')
+    await expect(new Launcher().launch({ projectPath: '/owned', port: 45678 })).rejects.toMatchObject({ name: 'WechatEnvironmentError', cause: primary })
     expect(connection.dispose).toHaveBeenCalledOnce()
     expect(wechatRequest).toHaveBeenCalledTimes(2)
     expect(wechatRequest).toHaveBeenLastCalledWith('12345', { kind: 'close', project: '/owned' }, expect.any(Number))
@@ -169,8 +247,8 @@ describe('微信会话保护', () => {
     connect.mockResolvedValue(mini)
     const error = await new Launcher().launch({ projectPath: '/owned', port: 45678 }).catch(error => error)
     expect(error).toBeInstanceOf(AggregateError)
-    expect(error.cause).toBe(primary)
-    expect(error.errors).toEqual([primary, cleanup])
+    expect(error.cause).toMatchObject({ name: 'WechatEnvironmentError', cause: primary })
+    expect(error.errors).toEqual([error.cause, cleanup])
     expect(connection.dispose).toHaveBeenCalledOnce()
     expect(connect).toHaveBeenCalledOnce()
     expect(wechatRequest).toHaveBeenCalledTimes(2)

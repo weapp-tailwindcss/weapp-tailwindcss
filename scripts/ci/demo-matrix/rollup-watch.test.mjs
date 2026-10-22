@@ -4,6 +4,7 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { expect, it } from 'vitest'
 import { rollupTestRequire } from './rollup-test-runtime.mjs'
+import { watchRunScope, withWatchCleanup } from './rollup-watch-scope.mjs'
 import { replaceSourceFile } from './source-file.mjs'
 
 const scenarios = ['uni-app-vite-tailwindcss-v4', 'issue-uview-plus-cssentries', 'taro-vite-react-tailwindcss-v4'].flatMap(demo =>
@@ -21,10 +22,11 @@ it.each(scenarios)('keeps module and transform dependencies live after atomic re
   const data = path.join(dataDir, 'value.json')
   const output = path.join(dir, 'bundle.mjs')
   let watcher
+  let close
   let builds = 0
   let errors = 0
   let inspection = 0
-  try {
+  await withWatchCleanup(async () => {
     await mkdir(dataDir)
     await replaceSourceFile(entry, 'export { default as value } from "./data/value.json"; export { default as derived } from "virtual:derived"')
     await replaceSourceFile(data, '{"value":0}')
@@ -48,10 +50,10 @@ it.each(scenarios)('keeps module and transform dependencies live after atomic re
         },
       }],
     })
+    close = watchRunScope(watcher)
     watcher.on('event', (event) => {
       if (event.code === 'BUNDLE_END') {
         builds++
-        void event.result.close()
       }
       else if (event.code === 'ERROR') {
         errors++
@@ -78,9 +80,5 @@ it.each(scenarios)('keeps module and transform dependencies live after atomic re
     const previous = builds
     await replaceSourceFile(data, '{"value":4}')
     await inspect(4, previous)
-  }
-  finally {
-    await watcher?.close()
-    await rm(dir, { recursive: true, force: true })
-  }
+  }, () => close?.(), () => rm(dir, { recursive: true, force: true }))
 }, 30_000)

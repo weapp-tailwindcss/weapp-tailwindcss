@@ -1164,7 +1164,6 @@ describe('benchmark ci report', () => {
     expect(source).toContain('fetchProbeText')
     expect(source).toContain('await waitForPluginTimingSample(roundLogs.lines, 0, timeoutMs, pollIntervalMs)')
     expect(source).toContain('hmr rollback')
-    expect(source).toContain("onlyItems.includes(item.key) || onlyItems.includes(item.project)")
     expect(source).toContain("className=(['\"])(.*?)\\1")
     expect(source).toContain('data-tw-bench')
     expect(source).toContain('outputProbeTemplates')

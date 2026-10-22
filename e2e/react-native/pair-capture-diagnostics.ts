@@ -11,6 +11,7 @@ interface FrameDiagnostic {
   capturedAtMs?: number
   readAtMs?: number
   decodedAtMs?: number
+  assessmentReusedFromFrame?: number
   assessedAtMs?: number
   sha256?: string
   byteLength?: number

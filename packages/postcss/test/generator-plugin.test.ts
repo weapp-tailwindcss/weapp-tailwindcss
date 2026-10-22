@@ -192,7 +192,7 @@ describe('generator postcss plugin factory', () => {
     })
 
     expect(result.css).not.toContain('@layer')
-    expect(result.css).not.toContain('@property')
+    expect(result.css).toContain('@property')
     expect(result.css).not.toContain('@supports')
     expect(result.css).toContain('color: rgba(')
     expect(result.css).toContain('--color-blue-500: rgb(')
@@ -267,7 +267,7 @@ describe('generator postcss plugin factory', () => {
     })
 
     expect(result.css).not.toContain('@layer')
-    expect(result.css).not.toContain('@property')
+    expect(result.css).toContain('@property')
     expect(result.css).toContain('color: rgb(')
     expect(result.css).not.toContain('color: oklch(')
     expect(result.css).not.toContain('& > :not(:last-child)')

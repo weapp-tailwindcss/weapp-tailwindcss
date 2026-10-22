@@ -5,6 +5,7 @@ import { expectedFixtureStyle, fixtureClassValue, fixtureInlineStyle, nativeFixt
 import { compileNativeStylesheet } from '../packages/react-native/src/compiler'
 import { createNativeStyleRuntime } from '../packages/react-native/src/runtime'
 import { flattenInlineStyle } from '../packages/react-native/src/runtime/line-height'
+import { syntheticRuntimeInstallation } from './react-native/installation-fixture'
 import { assessNativePair } from './react-native/pair-evidence'
 
 const css = String.raw`
@@ -26,6 +27,7 @@ function fixture(phase = nativeFixtures['syntax-important']!.phases?.[0] ?? 'def
     image.data.set([226, 232, 240, 255], offset)
   }
   const pair: NativePairEvidence = {
+    runtimeInstallation: syntheticRuntimeInstallation(),
     runId: 'important-run',
     revision: 'revision',
     platform: 'web',

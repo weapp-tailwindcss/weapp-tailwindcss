@@ -3,6 +3,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { execa } from 'execa'
 import { exampleDir, lynxIntermediateDir, repoRoot } from './catalog'
+import { validateStyleFixtureArtifacts } from './style-fixture-artifacts'
 
 const artifactsDir = path.join(repoRoot, 'e2e', '.artifacts', 'lynx-static')
 
@@ -38,5 +39,7 @@ export async function buildCompatibilityBundle() {
     fs.copyFile(path.join(lynxIntermediateDir, 'tasm.json'), path.join(artifactsDir, 'tasm.json')),
     fs.copyFile(path.join(exampleDir, 'dist', 'main.lynx.bundle'), path.join(artifactsDir, 'main.lynx.bundle')),
   ])
+  // 实际样式和 bundle 先过门禁，再消耗设备编译与采集资源。
+  await validateStyleFixtureArtifacts(artifactsDir)
   return { encoderLog, artifactsDir }
 }

@@ -1,6 +1,7 @@
 import type { GenerateCssByGeneratorOptions, GenerateCssByGeneratorResult } from './index'
 import type { CompilationDependencyChange, CompilerShadowReport, CssStage, GenerationArtifact, SourceScope } from '@/compiler'
 import type { InternalUserDefinedOptions } from '@/types'
+import { finalizeWebCssPropertyFallbacks } from '@weapp-tailwindcss/postcss/transform'
 import { consumeCompilationScopeChanges, createCompilerShadowReport, createCssFragment, createGenerationArtifact, getCompilerShadowRunRevision, mergeCompilationDependencyChanges, recordCompilerShadowReport, resolveCompilerMode } from '@/compiler'
 import { getFrameworkCompilerSession } from '@/compiler/framework-compiler-session'
 import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
@@ -122,6 +123,7 @@ async function generateTailwindV4CssWithImplementation(
     shouldReplayFrameworkPostcss
       ? {
           ...generationInput,
+          deferWebCssPropertyFallback: normalizedGeneratorOptions.target === 'web' || options.deferWebCssPropertyFallback,
           frameworkProcessedUserCss: options.frameworkProcessedUserCss === undefined
             ? undefined
             : normalizeFrameworkProcessedUserCss(options.frameworkProcessedUserCss),
@@ -137,6 +139,7 @@ async function generateTailwindV4CssWithImplementation(
         }
       : {
           ...generationInput,
+          deferWebCssPropertyFallback: normalizedGeneratorOptions.target === 'web' || options.deferWebCssPropertyFallback,
           compilation: implementation.frameworkAdapter === 'graph'
             ? {
                 enabled: true,
@@ -170,9 +173,12 @@ async function generateTailwindV4CssWithImplementation(
   const composedCss = shouldReplayFrameworkPostcss && options.frameworkProcessedUserCss
     ? await restoreFrameworkProcessedUserCss(adaptedCss, generated, generated.frameworkProcessedUserCss ?? options.frameworkProcessedUserCss, options, normalizedGeneratorOptions)
     : adaptedCss
-  const css = isVueScopedStyleRequest(resolvePostcssRequestOption(options.cssHandlerOptions))
+  const scopedCss = isVueScopedStyleRequest(resolvePostcssRequestOption(options.cssHandlerOptions))
     ? preferScopedGeneratedCssRules(composedCss)
     : composedCss
+  const css = generated.target === 'web' && !options.deferWebCssPropertyFallback
+    ? finalizeWebCssPropertyFallbacks([scopedCss], normalizedGeneratorOptions.webCompat)[0]!
+    : scopedCss
   const classSet = options.frameworkProcessedUserCss
     ? resolveGeneratedCssClassSet(generated.target, generated.classSet, options.runtime, css, options.opts.escapeMap, options.previousClassSet)
     : new Set(generated.classSet)

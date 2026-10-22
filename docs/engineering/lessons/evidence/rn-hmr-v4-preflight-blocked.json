@@ -1,0 +1,171 @@
+{
+  "schemaVersion": 1,
+  "status": "blocked",
+  "fullAcceptanceStarted": false,
+  "currentSessionComputerUse": "not-run",
+  "verify": "not-run",
+  "loginReset": false,
+  "serviceLeaseRemoved": false,
+  "runs": [
+    {
+      "runId": "e229b485-5662-4154-8361-7f1fe8339f1f",
+      "sourceCommit": "92249ccffcf38410bcae9a2d9e8ad68425752ab7",
+      "status": "blocked",
+      "checks": [
+        {
+          "id": "base",
+          "status": "passed"
+        },
+        {
+          "id": "wechat",
+          "status": "blocked"
+        },
+        {
+          "id": "hbuilderx",
+          "status": "passed"
+        },
+        {
+          "id": "ios",
+          "status": "passed"
+        },
+        {
+          "id": "android",
+          "status": "blocked"
+        },
+        {
+          "id": "harmony",
+          "status": "passed"
+        },
+        {
+          "id": "web",
+          "status": "passed"
+        },
+        {
+          "id": "computer-use",
+          "status": "blocked"
+        },
+        {
+          "id": "runtime-android",
+          "status": "passed"
+        },
+        {
+          "id": "runtime-ios",
+          "status": "passed"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "report.json",
+          "byteLength": 28870,
+          "sha256": "b1a50acd06ff1d1ef7bcee7d12676585ecdd43f567ef3cc45cd3afb3d25ebb6b"
+        },
+        {
+          "path": "report.md",
+          "byteLength": 23717,
+          "sha256": "4df0a7af2c8f363cd3476d6da499f784313aa8e7e362743bde5611f03b2c35f4"
+        },
+        {
+          "path": "wechat-prepare-1792639080867.log",
+          "byteLength": 3891,
+          "sha256": "1316fe8f241381a71bfb494014ea222ed7df9da833fa14ebae83752a3d4be37a"
+        },
+        {
+          "path": "android-prepare-1792639113834.log",
+          "byteLength": 2242,
+          "sha256": "d78b2d5ac4e141ca306f858cf968c49f57e0fb6710882d86fb91cfc7228e4d06"
+        }
+      ]
+    },
+    {
+      "runId": "10356248-1d6e-4756-89e5-42856306c09b",
+      "sourceCommit": "c0d6ed8bf01276bdb779ab793d1411e517b1e1c8",
+      "status": "blocked",
+      "checks": [
+        {
+          "id": "base",
+          "status": "passed"
+        },
+        {
+          "id": "wechat",
+          "status": "blocked"
+        },
+        {
+          "id": "hbuilderx",
+          "status": "passed"
+        },
+        {
+          "id": "ios",
+          "status": "passed"
+        },
+        {
+          "id": "android",
+          "status": "blocked"
+        },
+        {
+          "id": "harmony",
+          "status": "passed"
+        },
+        {
+          "id": "web",
+          "status": "passed"
+        },
+        {
+          "id": "computer-use",
+          "status": "not-run"
+        },
+        {
+          "id": "runtime-android",
+          "status": "passed"
+        },
+        {
+          "id": "runtime-ios",
+          "status": "passed"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "report.json",
+          "byteLength": 29510,
+          "sha256": "413bdf9c2f1de0883170268532d5703da3d30f6a1c0bb139cdfdc3e3397f3e25"
+        },
+        {
+          "path": "report.md",
+          "byteLength": 24347,
+          "sha256": "ae212d255568d8f167dafc6814b5defdf969d38a54028a80e3517d4284739f41"
+        },
+        {
+          "path": "wechat-prepare-1792639322418.log",
+          "byteLength": 4811,
+          "sha256": "c88d71c1f50398a878b1a5e86b188afb4ac90a5235cea59356cf39f9eb66ff3a"
+        },
+        {
+          "path": "android-prepare-1792639325036.log",
+          "byteLength": 2159,
+          "sha256": "83af05ca7c33c15de8283ad07139101a8bbea2233e5c1f52bdd9e2e34effc3ed"
+        }
+      ]
+    }
+  ],
+  "blockers": [
+    {
+      "kind": "wechat-auto-timeout",
+      "runId": "e229b485-5662-4154-8361-7f1fe8339f1f",
+      "operation": "auto",
+      "httpPort": 19355,
+      "ownerPid": 18647,
+      "ownerExited": true,
+      "projectClosure": "unconfirmed",
+      "reason": "原服务auto超时后保留租约，未取得自动化连接，不发后续项目请求"
+    },
+    {
+      "kind": "wechat-service-lease",
+      "runId": "10356248-1d6e-4756-89e5-42856306c09b",
+      "reason": "后续报告拒绝复用e229保留的原服务租约，未删除锁或抢占项目"
+    },
+    {
+      "kind": "android-ui-empty",
+      "runId": "10356248-1d6e-4756-89e5-42856306c09b",
+      "reason": "uiautomator dump结果没有node；未降低结构门槛或重置设备"
+    }
+  ]
+}

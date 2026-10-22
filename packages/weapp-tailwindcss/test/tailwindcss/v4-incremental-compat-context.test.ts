@@ -10,6 +10,32 @@ afterEach(() => {
 })
 
 describe('增量主题兼容上下文', () => {
+  it.each(['--weight', '--alias'])('局部覆盖 %s 撤销已折叠颜色，删除与重加均等于独立完整生成', async (property) => {
+    const source = await resolveTailwindV4Source({
+      css: '@theme inline { --color-probe:rgba(255,0,0,.4); } :root{--weight:50%;--alias:var(--weight)} @tailwind utilities;',
+      base: process.cwd(),
+    })
+    const incrementalEngine = createTailwindV4Engine(source)
+    const referenceEngine = createTailwindV4Engine(source)
+    engines.push(incrementalEngine, referenceEngine)
+    const background = 'bg-probe/(--alias)'
+    const override = `[${property}:25%]`
+    const phases = [[background], [background, override], [background], [background, override]]
+    for (const candidates of phases) {
+      const options = { target: 'weapp' as const, scanSources: false, candidates, styleOptions: { cssCalc: false } }
+      const actual = await incrementalEngine.generate({ ...options, incrementalCache: true })
+      const reference = await referenceEngine.generate({ ...options, incrementalCache: false })
+      expect(actual.css, candidates.join(' ')).toBe(reference.css)
+      expect(actual.classSet).toEqual(reference.classSet)
+      if (candidates.includes(override)) {
+        expect(actual.css).not.toContain('rgba(255, 0, 0, 0.2)')
+      }
+      else {
+        expect(actual.css).toContain('rgba(255, 0, 0, 0.2)')
+      }
+    }
+  })
+
   it.each([false, ['--spacing']])('颜色转换不把局部变量推导值升级成 calc 常量，cssCalc=%s', async (cssCalc) => {
     const source = await resolveTailwindV4Source({
       css: `

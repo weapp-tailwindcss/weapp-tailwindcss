@@ -9,10 +9,12 @@ export interface CompilerRootSession {
   accepting: boolean
   active: boolean
   appliedInvalidation: number
+  appliedEngineInvalidation: number
   compilation: DefaultCompilationSession
   compilationCache?: CompilerCompilationCacheEntry | undefined
   compilationRevision: number
   dependencies: Set<string>
+  engineInvalidation: number
   generator?: WeappTailwindcssGenerator | undefined
   generationCache?: CompilerGenerationCacheEntry | undefined
   id: string
@@ -66,9 +68,11 @@ export class CompilerRootStore {
       accepting: true,
       active: true,
       appliedInvalidation: 0,
+      appliedEngineInvalidation: 0,
       compilation: new DefaultCompilationSession(),
       compilationRevision: 0,
       dependencies: new Set(),
+      engineInvalidation: 0,
       id,
       invalidation: 0,
       pending: Promise.resolve(),
@@ -101,13 +105,16 @@ export class CompilerRootStore {
 
   invalidate(ids: Iterable<string>) {
     const affected = new Set<string>()
+    const engines = new Set<string>()
     for (const id of ids) {
       const root = this.roots.get(id)
       if (root?.accepting) {
         affected.add(root.id)
+        engines.add(root.id)
       }
       for (const rootId of this.dependencyRoots.get(id) ?? []) {
         affected.add(rootId)
+        engines.add(rootId)
       }
       const sourcePath = stripSourceQuery(id)
       for (const sourceRoot of this.roots.values()) {
@@ -120,6 +127,10 @@ export class CompilerRootStore {
       const entry = this.roots.get(rootId)
       if (entry?.accepting) {
         entry.invalidation += 1
+        // 仅候选 glob 变化仍须重扫；精确编译依赖和显式 root 才重建引擎。
+        if (engines.has(rootId)) {
+          entry.engineInvalidation += 1
+        }
       }
     }
     return Object.freeze([...affected].sort())

@@ -32,8 +32,10 @@ wx-root-portal-content {
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
   --color-red-700: rgb(191, 0, 15);
   --color-amber-300: rgb(255, 210, 55);
+  --color-green-300: rgb(123, 241, 168);
   --color-emerald-600: rgb(0, 150, 105);
   --color-sky-600: rgb(0, 132, 199);
+  --color-blue-200: rgb(190, 219, 255);
   --color-blue-500: rgb(50, 128, 255);
   --color-violet-600: rgb(127, 34, 254);
   --color-pink-300: rgb(253, 165, 213);

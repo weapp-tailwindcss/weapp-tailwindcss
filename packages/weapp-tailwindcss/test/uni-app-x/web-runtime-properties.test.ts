@@ -70,13 +70,42 @@ async function transform(plugin: Plugin, source: string, id: string) {
 }
 
 describe('issue 1210: uni-app x Web runtime properties', () => {
+  it.each([true, false])('保留未知主题颜色的静态百分比和 rgba 顺序，webCompat=%s', async (webCompat) => {
+    const mix = 'color-mix(in oklab,var(--color-unregistered,red) 80%,transparent)'
+    const source = `${entryCss}\n.probe{background-color:rgba(255,0,0,.8)}\n@supports(color:color-mix(in lab,red,red)){.probe{background-color:${mix}}}`
+    const result = await transform(createWebPlugin(webCompat), source, path.resolve('alpha.css'))
+    const root = postcss.parse(result.code)
+    const values: string[] = []
+    root.walkRules('.probe', (rule) => {
+      rule.walkDecls('background-color', (decl) => {
+        values.push(decl.value.replace(/\s+/g, ''))
+      })
+    })
+    expect(values).toEqual(['rgba(255,0,0,.8)', mix.replace(/\s+/g, '')])
+    expect(result.code).not.toContain('@import')
+    const setters: string[] = []
+    root.walkDecls('--color-unregistered', (decl) => {
+      setters.push(decl.value)
+    })
+    expect(setters).toEqual([])
+    if (!webCompat) {
+      const conditions: string[] = []
+      root.walkAtRules('supports', (rule) => {
+        if (rule.toString().includes(mix)) {
+          conditions.push(rule.params.replace(/\s+/g, ''))
+        }
+      })
+      expect(conditions).toEqual(['(color:color-mix(inlab,red,red))'])
+    }
+  })
+
   it.each([true, false])('preserves generated Web CSS and source maps with webCompat=%s', async (webCompat) => {
     const source = `${entryCss}\n${applyCss}`
     const plugin = createWebPlugin(webCompat)
     const result = await transform(plugin, source, path.resolve('theme.css'))
     expect(result.code).not.toMatch(/view,\s*text/)
     expect(result.code).toContain('var(--tw-gradient-via-stops,')
-    expect(result.code.includes('@property')).toBe(!webCompat)
+    expect(result.code).toContain('@property')
     expect(JSON.parse(result.map).sourcesContent).toHaveLength(1)
     expect(await transform(plugin, result.code, path.resolve('theme.css'))).toBeUndefined()
   })

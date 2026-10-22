@@ -11,6 +11,7 @@ afterEach(() => vi.useRealTimers())
 
 function host() {
   const capture: NativeGeometryCapture = {
+    screenMetrics: { version: 1, source: 'lynx-native-screen-v1', width: 375, height: 812, pixelRatio: 3 },
     geometry: Object.fromEntries(geometryFields.map(field => [field, { left: 2, top: 3, right: 12, bottom: 23, width: 10, height: 20 }])) as unknown as NativeGeometryCapture['geometry'],
     artifacts: geometryArtifactNames(id).map(name => ({ runId: context.runId, name, sha256: 'b'.repeat(64), byteLength: 100 })),
   }
@@ -75,6 +76,22 @@ it('磁盘失败与重复采集都不能发布部分证据', async () => {
   await duplicate.geometry(id)
   await expect(duplicate.geometry(id)).rejects.toThrow(/回执无效/)
   await expect(duplicate.submit({} as NativePlatformReport)).rejects.toThrow(/已失败/)
+})
+
+it.each(['missing', 'wrong-source', 'bad-scale'] as const)('固定尺寸缺少 %s 宿主参数时拒绝发布', async (mode) => {
+  const { reporter, capture } = host()
+  if (mode === 'missing') {
+    delete capture.screenMetrics
+  }
+  if (mode === 'wrong-source') {
+    Object.assign(capture.screenMetrics!, { source: 'js-SystemInfo' })
+  }
+  if (mode === 'bad-scale') {
+    capture.screenMetrics!.pixelRatio = 0
+  }
+  const writer = await createNativeEvidence(reporter)
+  await expect(writer.geometryCapture(id)).rejects.toThrow(/screen/)
+  await expect(writer.submit({} as NativePlatformReport)).rejects.toThrow(/已失败/)
 })
 
 it('采集等待与超时后的迟到原生回执不能发布成功报告', async () => {

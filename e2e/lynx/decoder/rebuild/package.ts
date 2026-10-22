@@ -5,9 +5,10 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
 import { gzipSync } from 'node:zlib'
+import { decoderDataDirectory } from '../paths'
 import { sha256 } from './archives'
 
-const decoderRoot = fileURLToPath(new URL('..', import.meta.url))
+const decoderRoot = decoderDataDirectory
 const licenseSources = [
   ['source', 'LICENSE'],
   ['source', 'NOTICE'],

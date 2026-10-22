@@ -3,7 +3,7 @@ import type { RunContext } from './context'
 import type { BrowserEngine, CapabilityResult, SemanticAssertion } from './types'
 import { writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { chromium, firefox, webkit } from 'playwright'
+import { launchCapabilityBrowser } from './browser/launch'
 import { newReport, persistReport } from './context'
 import { withGeneratorFixture } from './fixture'
 import { loadInventory } from './inventory'
@@ -24,7 +24,7 @@ export async function runWeb(context: RunContext, engine: BrowserEngine, borrowe
     throw new Error('Web 运行时过滤条件没有匹配任何语义夹具')
   }
   const contracts = probes.map(webContract)
-  const coverage = webRuntimeCoverage(await loadInventory())
+  const coverage = webRuntimeCoverage(await loadInventory(), engine)
   const report = await newReport(context, `web-${engine}`, contracts, { probes, css: webFixtureCss, coverage }, { engine, browserVersion: 'not-started', mode: 'independent-computed-style-state-and-pixels', fixtureDefinedFeatures: coverage.filter(item => item.status === 'fixture-defined').length, featuresWithoutRuntimeFixture: coverage.filter(item => item.status === 'not-run').length })
   await writeFile(path.join(context.directory, 'runtime-coverage.json'), `${JSON.stringify(coverage, null, 2)}\n`)
   if (contracts.length) {
@@ -35,7 +35,7 @@ export async function runWeb(context: RunContext, engine: BrowserEngine, borrowe
   let page: Page | undefined
   const errors: string[] = []
   try {
-    browser = borrowedBrowser ?? await { chromium, firefox, webkit }[engine].launch({ headless: true })
+    browser = borrowedBrowser ?? await launchCapabilityBrowser(engine)
     report.environment.browserVersion = browser.version()
     const browserContext = await browser.newContext({ viewport: { width: 640, height: 480 }, colorScheme: 'light', reducedMotion: 'reduce' })
     if (borrowedBrowser) {

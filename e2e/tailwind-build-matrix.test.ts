@@ -7,6 +7,7 @@ import { createLocalTargetCase } from './multiplatform-build-output/helpers'
 import { buildMatrixContracts, executeBuildMatrixCase } from './tailwind-capabilities/build-matrix/cases'
 import { buildMatrixVersions } from './tailwind-capabilities/build-matrix/versions'
 import configuration from './tailwind-capabilities/build-matrix/vitest.config'
+import { EnvironmentBlockedError } from './tailwind-capabilities/environment-block'
 
 const directories: string[] = []
 afterEach(async () => {
@@ -98,6 +99,27 @@ describe('逐项目构建证据', () => {
     const observed = await executeBuildMatrixCase(ctx, executable, async () => {})
     expect(observed.result.status).toBe('failed')
     expect(observed.result.reason).toMatch(/样式/)
+  })
+
+  it('归档provider已验证的第二候选根，不猜测旧production目录', async () => {
+    const ctx = await context()
+    const stale = path.join(ctx.root, 'fixture', 'dist')
+    const actual = path.join(ctx.root, 'fixture', 'unpackage', 'dist', 'dev', 'mp-weixin')
+    await mkdir(stale, { recursive: true })
+    await mkdir(actual, { recursive: true })
+    await writeFile(path.join(stale, 'app.wxss'), '.stale{color:blue}')
+    await writeFile(path.join(actual, 'app.wxss'), '.probe{color:red}')
+    const observed = await executeBuildMatrixCase(ctx, executable, async () => ({ outputRoot: actual, provider: 'hbuilderx-mini' }))
+    const css = observed.artifacts.find(item => item.kind === 'css')!
+    expect(await readFile(path.resolve(ctx.directory, css.path), 'utf8')).toBe('.probe{color:red}')
+  })
+
+  it('环境异常经收尾Aggregate仍穿透，不降级为普通样式失败', async () => {
+    const primary = new EnvironmentBlockedError('HBuilderX host identity lost')
+    const error = new AggregateError([primary, new Error('close failed')], 'cleanup', { cause: primary })
+    await expect(executeBuildMatrixCase(await context(), executable, async () => {
+      throw error
+    })).rejects.toBe(error)
   })
 
   it('分包不同模式保持独立 ID，夹具 hash 包含正则源和配置', () => {

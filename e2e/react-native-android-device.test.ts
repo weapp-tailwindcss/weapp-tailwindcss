@@ -1,6 +1,7 @@
 import { execa } from 'execa'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { androidExpoDevice } from './react-native/android-device'
+import { EnvironmentBlockedError } from './tailwind-capabilities/environment-block'
 
 vi.mock('execa', () => ({ execa: vi.fn() }))
 
@@ -8,6 +9,14 @@ const run = vi.mocked(execa)
 beforeEach(() => vi.resetAllMocks())
 
 describe('Expo 与 adb 设备身份一致', () => {
+  it('设备消失时保留命令诊断并以结构化环境故障停止', async () => {
+    const result = { exitCode: 1, stdout: '', stderr: 'opaque adb diagnostic' }
+    run.mockResolvedValue(result as never)
+    await expect(androidExpoDevice('selected-serial')).rejects.toMatchObject({ name: 'EnvironmentBlockedError', cause: result })
+    const primary = new Error('opaque process failure')
+    run.mockRejectedValueOnce(primary)
+    await expect(androidExpoDevice('selected-serial')).rejects.toBeInstanceOf(EnvironmentBlockedError)
+  })
   it.each(['', 'Selected_AVD', 'selected-serial'])('从绑定设备解析 AVD，兼容相同配置 %s', async (configured) => {
     run.mockResolvedValue({ exitCode: 0, stdout: 'Selected_AVD\r\nOK\r\n' } as never)
     await expect(androidExpoDevice('selected-serial', configured)).resolves.toBe('Selected_AVD')

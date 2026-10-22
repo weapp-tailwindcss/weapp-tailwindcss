@@ -7,10 +7,12 @@ import { localBrowserCommand, verifyBrowserLocal } from './browser-local'
 import { verifyWorkerRoutes } from './local-worker/assertions'
 import { runLocalCommand } from './local-worker/command'
 import { withLocalWorker } from './local-worker/server'
+import { verifyInstalledBaselines } from './visual-baselines/install'
 
 vi.mock('./local-worker/assertions', () => ({ verifyWorkerRoutes: vi.fn() }))
 vi.mock('./local-worker/command', () => ({ runLocalCommand: vi.fn() }))
 vi.mock('./local-worker/server', () => ({ withLocalWorker: vi.fn() }))
+vi.mock('./visual-baselines/install', () => ({ verifyInstalledBaselines: vi.fn() }))
 
 const websiteRoot = fileURLToPath(new URL('..', import.meta.url))
 let controller: AbortController
@@ -94,5 +96,13 @@ it('取消已发生时不启动发现命令', async () => {
   const reason = new Error('启动前取消')
   controller.abort(reason)
   await expect(verifyBrowserLocal({ websiteRoot })).rejects.toBe(reason)
+  expect(runLocalCommand).not.toHaveBeenCalled()
+})
+
+it('黄金图缺少来源或审查时，在启动 Worker 之前失败', async () => {
+  const reason = new Error('黄金图没有来源')
+  vi.mocked(verifyInstalledBaselines).mockRejectedValueOnce(reason)
+  await expect(verifyBrowserLocal({ websiteRoot })).rejects.toBe(reason)
+  expect(withLocalWorker).not.toHaveBeenCalled()
   expect(runLocalCommand).not.toHaveBeenCalled()
 })

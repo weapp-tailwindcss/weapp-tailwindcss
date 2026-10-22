@@ -2,6 +2,8 @@ import type { NativePairEvidence } from '../examples/react-native-expo/src/compa
 import type { ReactNativeReport } from './react-native/catalog'
 import { PNG } from 'pngjs'
 import { describe, expect, it, vi } from 'vitest'
+import { syntheticFrameCapture } from './react-native/frame-fixture'
+import { syntheticRuntimeInstallation } from './react-native/installation-fixture'
 import { assessNativePair } from './react-native/pair-evidence'
 import { readHistoricalReactNativeReport, validateReactNativeReport } from './react-native/reports'
 
@@ -16,7 +18,8 @@ vi.mock('./react-native/catalog', () => ({
 }))
 
 function report(): ReactNativeReport {
-  return {
+  const value = {
+    runtimeInstallation: syntheticRuntimeInstallation(),
     schemaVersion: 2,
     stage: 'runtime',
     revision: 'baseline',
@@ -64,16 +67,26 @@ function report(): ReactNativeReport {
       },
     ],
     receipts: [{
+      runtimeInstallation: syntheticRuntimeInstallation(),
       runId: 'current-run',
       id: 'background-color',
       phase: 'default',
       checkpoints: [{ name: 'runtime:default:geometry', passed: true }, { name: 'runtime:default:pixel', passed: true }, { name: 'runtime:default:control', passed: true }],
       artifact: { name: 'case-baseline-background-color-default.png', sha256: 'a'.repeat(64), byteLength: 1_024 },
     }],
+  } as ReactNativeReport
+  for (const receipt of value.receipts) {
+    receipt.capture = syntheticFrameCapture(receipt.artifact, receipt.checkpoints)
   }
+  return value
 }
 
 describe('React Native fresh semantic evidence', () => {
+  it('旧单帧报告即使有全部语义布尔检查点也不能通过 fresh gate', () => {
+    const value = report()
+    Reflect.deleteProperty(value.receipts[0]!, 'capture')
+    expect(() => validateReactNativeReport(value)).toThrow(/frame|capture/)
+  })
   it('接受逐项语义与原生像素回执，同时保留明确的负向编码结论', () => {
     const value = report()
     expect(validateReactNativeReport(value, 'android', { runId: 'current-run', revision: 'baseline' })).toBe(value)
@@ -109,6 +122,13 @@ describe('React Native fresh semantic evidence', () => {
     const value = report()
     value.results[0]!.checkpoints = value.results[0]!.checkpoints.filter(checkpoint => !checkpoint.name.startsWith('runtime:'))
     expect(() => validateReactNativeReport(value)).toThrow(/runtime/)
+  })
+
+  it('后置显式运行错误优先呈现原始原因，前序未执行状态不能掩盖它', () => {
+    const value = report()
+    value.results[0]!.status = 'unverified'
+    Object.assign(value.results[1]!, { status: 'failed', reason: 'owned-runtime-failure' })
+    expect(() => validateReactNativeReport(value)).toThrow(/filter-blur.*owned-runtime-failure/)
   })
 
   it.each(['unsupported', 'unverified', 'failed'] as const)('预期支持退化为 %s 不会自动变绿', (status) => {
@@ -174,6 +194,7 @@ function pairFixture() {
     }
   }
   const pair: NativePairEvidence = {
+    runtimeInstallation: syntheticRuntimeInstallation(),
     runId: 'run',
     platform: 'web',
     revision: 'baseline',

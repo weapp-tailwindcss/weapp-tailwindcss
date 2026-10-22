@@ -24,13 +24,19 @@ keywords:
 
 See the [ReactLynx / Rspeedy configuration reference](../../config/react-lynx) for options, fixed fields, and encoder boundaries.
 
+This integration requires Node.js `^22.18.0 || >=24.11.0`, covering the adapter and its mandatory core dependency chain. Using the ReactLynx integration requires an installed and registered `@lynx-js/react-rsbuild-plugin` `>=0.12.4`; its optional peer installation flag only avoids installing another builder copy. Recursive CSS variables require Lynx runtime `>=3.6`, separately from the tested Engine version and bundle encoding target.
+
+Stable Tailwind theme tokens may become literals. Web color compatibility may also resolve application variables when lowering modern color expressions. Local, conditional, or priority overrides visible in the current CSS input prevent the affected variables from being treated as static. Overrides from separately compiled stylesheets or inline styles are outside this analysis and cannot change generated literals. Renaming a variable does not guarantee dynamic override behavior.
+
+All `@property` registrations, descriptors, and variable dependencies are preserved. The public theme prefix can also produce `--tw-*` names, so the prefix cannot establish ownership. Default compatibility matches explicitly recorded full signatures; conflicting or conditional registrations receive no global defaults. Global defaults do not emulate arbitrary registration semantics. The target must still support registered properties. Preserving the input and verifying it in browsers do not establish Lynx native support.
+
 ## Install
 
 ```bash npm2yarn
 npm install -D @weapp-tailwindcss/lynx tailwindcss
 ```
 
-The current `@weapp-tailwindcss/lynx` adapter is `0.4.4` and requires Node.js `>=22.12.0`. Its `weapp-tailwindcss` core dependency is `5.6.3`, whose dependency chain requires Node.js `^22.18.0 || >=24.11.0`. The adapter peers on Rspeedy `>=0.16.0` and Tailwind CSS `>=4.0.0`, and supports only ReactLynx projects built with Rspeedy.
+The current `@weapp-tailwindcss/lynx` adapter is `0.4.4` and requires Node.js `^22.18.0 || >=24.11.0`. Its `weapp-tailwindcss` core dependency is `5.6.3`, whose dependency chain requires Node.js `^22.18.0 || >=24.11.0`. The adapter peers on Rspeedy `>=0.16.0` and Tailwind CSS `>=4.0.0`, and supports only ReactLynx projects built with Rspeedy.
 
 The repository fixture and regression matrix pin Rspeedy `0.17.2`, ReactLynx plugin `0.20.2`, ReactLynx runtime `0.126.1`, Tailwind CSS `4.3.3`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.18`.
 
@@ -114,7 +120,7 @@ The complete repository example is available under [`examples/react-lynx`](https
 
 `examples/react-lynx` is pinned to Tailwind CSS `4.3.3`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.18`. Representative cases cover every official utility family, variant kind, directive, and arbitrary syntax branch.
 
-The static gate records Tailwind generation and Lynx encoder retention separately. CI defaults to Android API 30 on a Pixel 2 x86_64 runner and iOS 18.5 on an iPhone 16 Pro simulator. Each CI run and committed report carries its own run identity and original artifacts. The committed baseline has `verifiedAt` `2026-10-19T15:13:36.717Z` and `catalogHash` `2e3a1a60517c13de507d22ef8b4d209ffcdb86b2dfbf5bf7100df35c40dc3fec`; its reports come from Android `sdk_phone_x86_64` (Android 11/API 30, x86_64) and `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64). css-defines cannot replace runtime evidence.
+The static gate records Tailwind generation and Lynx encoder retention separately. CI defaults to Android API 30 on a Pixel 2 x86_64 runner and iOS 18.5 on an iPhone 16 Pro simulator. Each CI run and committed report carries its own run identity and original artifacts. The committed baseline has `verifiedAt` `2026-10-21T18:49:50.413Z` and `catalogHash` `ee4e7bd2d4b126dc4920a08e16878fe8cccf364c537ca4b025b821f188c85941`; its reports come from Android `sdk_gphone_arm64` (Android 11/API 30, arm64-v8a) and `iPhone 17 Pro iOS 26.5` (iPhone 17 Pro, iOS 26.5, arm64). css-defines cannot replace runtime evidence.
 
 `--capture-only` captures screenshots/video only after an explicit bundle and target device are supplied. It does not update a native support report or committed baseline.
 

@@ -25,11 +25,11 @@ regressions:
 
 补丁不修改 selector AST、匹配逻辑、encoder 或 bundle 格式。源码的 `ToString()` 也是 DevTools 文本展示入口；修正后的文本仍表达同一已解码 selector。
 
-补丁：[0002-serialize-css-identifiers.patch](../../../e2e/lynx/decoder/patches/0002-serialize-css-identifiers.patch)。SHA-256：`f14ab36c1aa7e26b1021ff4b31af3030a82cd4fe21952c7af5f6dba5834c0b76`。
+补丁：[0002-serialize-css-identifiers.patch](../../../packages/lynx/src/decoder-data/patches/0002-serialize-css-identifiers.patch)。SHA-256：`f14ab36c1aa7e26b1021ff4b31af3030a82cd4fe21952c7af5f6dba5834c0b76`。
 
 ## 验证
 
-[固定夹具](../../../e2e/lynx/decoder/fixtures/selector-identifiers.json) 保存 1,946 字节实际 bundle 的 Base64、SHA、原 CSS 和独立预期。bundle SHA-256 为 `0b751511fd435c1e54ef84ba932f3abe947d069dd91ea30b7bb165f4d80a6035`。两轮都读取这份 bundle，没有重新编码或从输入补齐解码输出。
+[固定夹具](../../../packages/lynx/src/decoder-data/fixtures/selector-identifiers.json) 保存 1,946 字节实际 bundle 的 Base64、SHA、原 CSS 和独立预期。bundle SHA-256 为 `0b751511fd435c1e54ef84ba932f3abe947d069dd91ea30b7bb165f4d80a6035`。两轮都读取这份 bundle，没有重新编码或从输入补齐解码输出。
 
 17 条规则覆盖 arbitrary value/type hint、important、伪元素、class/id 首位数字、`-` 后数字、逗号、反斜杠、控制字符、DEL、中文、emoji、单独 `-`、NUL 替换、嵌套 `:not` 和命名 group。NUL 的 CSS 转义在解析阶段就规范化为 U+FFFD；此项验证公开 encode/decode 路径的规范化结果。
 

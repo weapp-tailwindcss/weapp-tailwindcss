@@ -119,7 +119,7 @@ describe('vite css finalizer output plugin', () => {
     }
     const records = new Map<string, any>([
       ['/project/src/app.css', {
-        css: '.app{color:red}.icon-mdi--home{display:inline-block}',
+        css: ':root{--spacing:.25rem;--brand:red}.app{color:var(--brand);background-color:#ecfdf5cc}.icon-mdi--home{display:inline-block}',
         outputFile: 'assets/app.css',
       }],
       ['/project/src/admin.css', {
@@ -148,7 +148,8 @@ describe('vite css finalizer output plugin', () => {
       })),
     })
     const plugin = createViteCssFinalizerOutputPlugin(context as any)
-    const appCss = asset('assets/app.css', `${createBundlerGeneratedCssMarker('vite', '/project/src/app.css')}\n.app{color:red}.icon-mdi--home{display:inline-block}`)
+    const frameworkCss = ':root{--spacing:0.25rem}.app{color:#62748e;background-color:rgba(236,253,245,.8)}.icon-mdi--home{display:inline-block}.app{color:blue}'
+    const appCss = asset('assets/app.css', `${createBundlerGeneratedCssMarker('vite', '/project/src/app.css')}\n${frameworkCss}`)
     const adminCss = asset('assets/admin.css', `${createBundlerGeneratedCssMarker('vite', '/project/src/admin.css')}\n.admin{color:blue}.text-sm{font-size:.875rem}`)
     const jsChunk = {
       type: 'chunk',
@@ -166,6 +167,10 @@ describe('vite css finalizer output plugin', () => {
     await getHandler(plugin).call(plugin, {}, bundle)
 
     expect(String(appCss.source)).toContain('.icon-mdi--home')
+    // 注册表不能覆盖框架最终颜色、透明度、数值表示和作者的后置规则。
+    expect(String(appCss.source).trim()).toBe(`${frameworkCss}\n.finalized{display:block}`)
+    expect(String(appCss.source)).not.toContain('var(--brand)')
+    expect(String(appCss.source).match(/--spacing:/g)).toHaveLength(1)
     expect(String(adminCss.source)).toContain('.text-sm')
     expect(String(appCss.source)).not.toContain('weapp-tailwindcss:generated-css')
     expect(String(adminCss.source)).not.toContain('weapp-tailwindcss:generated-css')
@@ -617,7 +622,7 @@ describe('vite css finalizer output plugin', () => {
     }))
     expect(opts.styleHandler).not.toHaveBeenCalled()
     expect(String(output.source)).toContain('@media (hover: hover)')
-    expect(String(output.source)).toContain('@media (prefers-color-scheme: dark) {}')
+    expect(String(output.source)).not.toContain('@media (prefers-color-scheme: dark) {}')
     expect(context.markCssAssetProcessed).toHaveBeenCalledWith(output, 'style.css')
   })
 

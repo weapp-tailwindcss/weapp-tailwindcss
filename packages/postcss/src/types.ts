@@ -126,7 +126,8 @@ export interface WebCssCompatFeatures {
    */
   layer?: boolean | undefined
   /**
-   * 移除 `@property`，避免旧 WebView 解析失败。
+   * 按完整注册签名补齐 Tailwind 默认值兼容声明，前缀不作为注册来源依据。
+   * 全部注册及其描述符保持原文，避免丢失语法校验、初值与继承语义；目标端仍需自行支持注册属性。
    */
   property?: boolean | undefined
   /**

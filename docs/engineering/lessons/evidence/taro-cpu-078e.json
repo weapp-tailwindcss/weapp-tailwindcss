@@ -1,0 +1,1056 @@
+{
+  "schema": "taro-cpu-diagnostic-summary/v1",
+  "formalAcceptance": false,
+  "rawArtifactsIncluded": false,
+  "summaryIsReplayEvidence": false,
+  "operatingSystem": "macOS arm64",
+  "node": "22.23.3",
+  "pnpm": "12.14.0",
+  "prepared": {
+    "directory": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP",
+    "node": "/Users/icebreaker/Library/Caches/pnpm/dlx/5cdb218937a612a4f2768ef78bb261d2/mvif2yls-1mww/node_modules/.pnpm/node@22.23.3/node_modules/node/bin/node",
+    "pnpm": "/Users/icebreaker/.cache/node/corepack/v1/pnpm/12.14.0/pnpm-native",
+    "envPath": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP/bin:/Applications/ChatGPT.app/Contents/Resources/codex-cli/codex-path:/Users/icebreaker/.codex/tmp/arg0-macos/codex-arg0Qy6eN3:/Users/icebreaker/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/icebreaker/Library/pnpm/bin:/Users/icebreaker/.unity/bin:/Users/icebreaker/.grok/bin:/Users/icebreaker/.nvm/versions/node/v24.18.0/bin:/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home/bin:/Users/icebreaker/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/Library/Apple/usr/bin:/Users/icebreaker/.docker/bin:/Users/icebreaker/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback:/Applications/ChatGPT.app/Contents/Resources:/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS",
+    "startedAt": "2026-10-22T02:15:17.959Z",
+    "steps": [
+      {
+        "cwd": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP",
+        "command": "/Users/icebreaker/Library/Caches/pnpm/dlx/5cdb218937a612a4f2768ef78bb261d2/mvif2yls-1mww/node_modules/.pnpm/node@22.23.3/node_modules/node/bin/node",
+        "args": [
+          "--version"
+        ],
+        "startedAt": "2026-10-22T02:15:18.043Z",
+        "code": 0,
+        "finishedAt": "2026-10-22T02:15:18.087Z"
+      },
+      {
+        "cwd": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP",
+        "command": "/Users/icebreaker/.cache/node/corepack/v1/pnpm/12.14.0/pnpm-native",
+        "args": [
+          "--version"
+        ],
+        "startedAt": "2026-10-22T02:15:18.087Z",
+        "code": 0,
+        "finishedAt": "2026-10-22T02:15:18.104Z"
+      },
+      {
+        "cwd": "/Users/icebreaker/.codex/worktrees/tailwind-capability-e2e/weapp-tailwindcss",
+        "command": "git",
+        "args": [
+          "archive",
+          "--format=tar",
+          "--output=/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP/current.tar",
+          "078e6e020db23143cd01826450a5a2b969bda610"
+        ],
+        "startedAt": "2026-10-22T02:15:18.105Z",
+        "code": 0,
+        "finishedAt": "2026-10-22T02:15:18.557Z"
+      },
+      {
+        "cwd": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP",
+        "command": "tar",
+        "args": [
+          "-xf",
+          "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP/current.tar",
+          "-C",
+          "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP/current"
+        ],
+        "startedAt": "2026-10-22T02:15:18.557Z",
+        "code": 0,
+        "finishedAt": "2026-10-22T02:15:20.045Z"
+      },
+      {
+        "cwd": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP/current",
+        "command": "/Users/icebreaker/.cache/node/corepack/v1/pnpm/12.14.0/pnpm-native",
+        "args": [
+          "install",
+          "--frozen-lockfile"
+        ],
+        "startedAt": "2026-10-22T02:15:20.103Z",
+        "code": 0,
+        "finishedAt": "2026-10-22T02:15:43.318Z"
+      },
+      {
+        "cwd": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP/current",
+        "command": "/Users/icebreaker/.cache/node/corepack/v1/pnpm/12.14.0/pnpm-native",
+        "args": [
+          "build:pkgs"
+        ],
+        "startedAt": "2026-10-22T02:15:43.318Z",
+        "code": 0,
+        "finishedAt": "2026-10-22T02:16:02.825Z"
+      },
+      {
+        "cwd": "/Users/icebreaker/.codex/worktrees/tailwind-capability-e2e/weapp-tailwindcss",
+        "command": "git",
+        "args": [
+          "archive",
+          "--format=tar",
+          "--output=/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP/base.tar",
+          "7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5"
+        ],
+        "startedAt": "2026-10-22T02:16:02.827Z",
+        "code": 0,
+        "finishedAt": "2026-10-22T02:16:03.466Z"
+      },
+      {
+        "cwd": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP",
+        "command": "tar",
+        "args": [
+          "-xf",
+          "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP/base.tar",
+          "-C",
+          "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP/base"
+        ],
+        "startedAt": "2026-10-22T02:16:03.467Z",
+        "code": 0,
+        "finishedAt": "2026-10-22T02:16:05.759Z"
+      },
+      {
+        "cwd": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP/base",
+        "command": "/Users/icebreaker/.cache/node/corepack/v1/pnpm/12.14.0/pnpm-native",
+        "args": [
+          "install",
+          "--frozen-lockfile"
+        ],
+        "startedAt": "2026-10-22T02:16:05.803Z",
+        "code": 0,
+        "finishedAt": "2026-10-22T02:16:27.951Z"
+      },
+      {
+        "cwd": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP/base",
+        "command": "/Users/icebreaker/.cache/node/corepack/v1/pnpm/12.14.0/pnpm-native",
+        "args": [
+          "build:pkgs"
+        ],
+        "startedAt": "2026-10-22T02:16:27.952Z",
+        "code": 0,
+        "finishedAt": "2026-10-22T02:16:42.251Z"
+      }
+    ],
+    "sources": [
+      {
+        "role": "current",
+        "commit": "078e6e020db23143cd01826450a5a2b969bda610",
+        "root": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP/current",
+        "archiveSha256": "37469a4eefb5be330c887f87dac9410715d11c2a18835c06ebe798233986c7cb",
+        "lockfileSha256": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb"
+      },
+      {
+        "role": "base",
+        "commit": "7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5",
+        "root": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP/base",
+        "archiveSha256": "3f3ecf5693260f03254331392f74e7da9d1a51b25193296056b575c7a16c961e",
+        "lockfileSha256": "8728f3a756cd5246690d43d735866486149e070205c9a0d0dfaaf45f112468c5"
+      }
+    ],
+    "nodeSha256": "68f4d07ca49e0500cc135c7e0a445093e228e42e126ac22306d045f0a8c2636b",
+    "pnpmSha256": "d536ab6b857027a28ad182e843a611946b96aab9194b84de24620cb9d15ca110",
+    "status": "prepared",
+    "finishedAt": "2026-10-22T02:16:42.251Z"
+  },
+  "run": {
+    "formalAcceptance": false,
+    "profiling": true,
+    "identityFile": "/private/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP/identity.json",
+    "driverOriginalSha256": "2a101d338a88b8ce28463ca2b2f20138a49366c3a808b0884424e2160be7d748",
+    "driverModifiedSha256": "391175b0536c7f2093158fccbd02845b355f591ed25141a2762ede5afe5a0911",
+    "cpuDriverSha256": "ee5a4396889712706889d6a038c621df28265fb3c00b18735673b7eab1663771",
+    "cpuPreloadSha256": "6ec69822fe2eb657a1956e85166424a3e59c4c58d00a2176caff383730d3def9",
+    "args": [
+      "/private/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP/driver-cpu-v2/run-matrix.mjs",
+      "--versions-file",
+      "/private/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP/versions-cpu-v2.json",
+      "--only",
+      "demo-taro-vite-react-tailwindcss-v4__mp-weixin",
+      "--build-runs",
+      "3",
+      "--hmr-runs",
+      "3",
+      "--timeout",
+      "180000",
+      "--poll-interval",
+      "30",
+      "--out",
+      "/private/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP/raw-cpu.json"
+    ],
+    "sources": [
+      {
+        "file": "/private/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP/base/demo/taro-vite-react-tailwindcss-v4/src/pages/index/index.tsx",
+        "before": "bdc2c9543e6395fdd1b955d7e925efef061bbcfbd119974218073c5e3d569b0d",
+        "after": "bdc2c9543e6395fdd1b955d7e925efef061bbcfbd119974218073c5e3d569b0d",
+        "restored": true
+      },
+      {
+        "file": "/private/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP/current/demo/taro-vite-react-tailwindcss-v4/src/pages/index/index.tsx",
+        "before": "bdc2c9543e6395fdd1b955d7e925efef061bbcfbd119974218073c5e3d569b0d",
+        "after": "bdc2c9543e6395fdd1b955d7e925efef061bbcfbd119974218073c5e3d569b0d",
+        "restored": true
+      }
+    ],
+    "startedAt": "2026-10-22T02:18:48.369Z",
+    "profiles": [
+      {
+        "version": "7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5",
+        "pid": 61343,
+        "ppid": 61342,
+        "argv": [
+          "/Users/icebreaker/Library/Caches/pnpm/dlx/5cdb218937a612a4f2768ef78bb261d2/mvif2yls-1mww/node_modules/.pnpm/node@22.23.3/node_modules/node/bin/node",
+          "/private/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP/base/scripts/taro-build-runner.mjs",
+          "build",
+          "--type",
+          "weapp",
+          "--watch"
+        ],
+        "cwd": "/private/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP/base/demo/taro-vite-react-tailwindcss-v4",
+        "node": "v22.23.3",
+        "executable": "/Users/icebreaker/Library/Caches/pnpm/dlx/5cdb218937a612a4f2768ef78bb261d2/mvif2yls-1mww/node_modules/.pnpm/node@22.23.3/node_modules/node/bin/node",
+        "startBeforeMicros": 521698199450,
+        "startAfterMicros": 521698208599,
+        "signalListeners": {
+          "SIGINT": 0,
+          "SIGTERM": 0
+        },
+        "stopReceivedMicros": 521722583753,
+        "stopCompletedMicros": 521722904048,
+        "profileBytes": 20076910,
+        "profileSha256": "506484de1b174e54fa7dd0c234c303a6bd8938b58fea4908983717b13d4b27e4",
+        "profileStartTime": 521698199626,
+        "profileEndTime": 521722583876,
+        "samples": 21241,
+        "clockAlignment": {
+          "inspectorWithinStartBounds": true,
+          "childStopWithinControllerBounds": true
+        }
+      },
+      {
+        "version": "078e6e020db23143cd01826450a5a2b969bda610",
+        "pid": 73921,
+        "ppid": 73919,
+        "argv": [
+          "/Users/icebreaker/Library/Caches/pnpm/dlx/5cdb218937a612a4f2768ef78bb261d2/mvif2yls-1mww/node_modules/.pnpm/node@22.23.3/node_modules/node/bin/node",
+          "/private/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP/current/scripts/taro-build-runner.mjs",
+          "build",
+          "--type",
+          "weapp",
+          "--watch"
+        ],
+        "cwd": "/private/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP/current/demo/taro-vite-react-tailwindcss-v4",
+        "node": "v22.23.3",
+        "executable": "/Users/icebreaker/Library/Caches/pnpm/dlx/5cdb218937a612a4f2768ef78bb261d2/mvif2yls-1mww/node_modules/.pnpm/node@22.23.3/node_modules/node/bin/node",
+        "startBeforeMicros": 521769421721,
+        "startAfterMicros": 521769429447,
+        "signalListeners": {
+          "SIGINT": 0,
+          "SIGTERM": 0
+        },
+        "stopReceivedMicros": 521795924432,
+        "stopCompletedMicros": 521796246271,
+        "profileBytes": 20369294,
+        "profileSha256": "139dbeeb53ee51bba67d4940e5c98a9c9d09817d0faeaf961d804b6d993a8baf",
+        "profileStartTime": 521769421709,
+        "profileEndTime": 521795924584,
+        "samples": 22209,
+        "clockAlignment": {
+          "inspectorWithinStartBounds": false,
+          "childStopWithinControllerBounds": true
+        }
+      }
+    ],
+    "status": "completed",
+    "finishedAt": "2026-10-22T02:21:15.282Z"
+  },
+  "raw": {
+    "file": "raw-cpu.json",
+    "bytes": 1338470,
+    "sha256": "9f94f2255c43daf98da438605e555892e34b69c18ef3d65f24eec5a429a7105a"
+  },
+  "summary": {
+    "file": "summary-cpu.json",
+    "bytes": 4435,
+    "sha256": "6d064a88bb4d8fa711f70176ae9ba3a8efaaf2c2a1400f5cf55329b2f8b872df"
+  },
+  "analysis": {
+    "file": "analysis-cpu.json",
+    "bytes": 268849,
+    "sha256": "299ad666c8ba8715d7c52dad24329de2ec55789910fbe5a11aaedde84098019a"
+  },
+  "performanceGuard": {
+    "passed": true,
+    "thresholds": {
+      "minimumMemoryRegressionMb": 64,
+      "minimumTailRegressionSamples": 2,
+      "minimumTimingRegressionMs": 10,
+      "maximumMedianRegressionPValue": 0.05,
+      "regressionPercent": 5
+    },
+    "violations": []
+  },
+  "rows": [
+    {
+      "version": "7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5",
+      "buildMs": [
+        16771.515333,
+        13892.759999999998,
+        13782.259290999998
+      ],
+      "buildPluginMs": [
+        3378,
+        2878,
+        2918
+      ],
+      "hmrMs": [
+        2040.3080410000039,
+        2118.391291,
+        1915.470957999998
+      ],
+      "hmrPluginMs": [
+        1051,
+        1202,
+        1039
+      ],
+      "hmrPluginTimings": [
+        {
+          "bundler": "vite",
+          "phase": "total",
+          "durationMs": 1051,
+          "hooks": {
+            "sourceCandidates.watchChange": {
+              "count": 1,
+              "durationMs": 1,
+              "maxMs": 1
+            },
+            "sourceCandidates.buildStart": {
+              "count": 1,
+              "durationMs": 0,
+              "maxMs": 0
+            },
+            "sourceCandidates.transform": {
+              "count": 6,
+              "durationMs": 6,
+              "maxMs": 2
+            },
+            "generateBundle": {
+              "count": 1,
+              "durationMs": 1044,
+              "maxMs": 1044
+            }
+          },
+          "metric": "total",
+          "wallMs": 1925,
+          "details": {
+            "bundler": "vite",
+            "phase": "generateBundle",
+            "durationMs": 1044,
+            "snapshot": 3.9656660000000556,
+            "sourceCandidates.wait": 0.007083000000420725,
+            "runtime": 7.847874999999476,
+            "entries.plan": 90.71487499999967,
+            "rememberedCss.plan": 0.6056659999994736,
+            "tasks.html": 42.77104199999667,
+            "tasks.css": 849.4312089999985,
+            "tasks.js": 2.6781240000000253,
+            "tasks": 851.2090840000001,
+            "finalize.uniAppXPostCss": 7.5694579999999405,
+            "finalize.processedCss.collect": 0.2785830000011629,
+            "finalize.processedCss.inject.prepareResults": 0.31016599999929895,
+            "finalize.processedCss.inject": 0.48258399999940593,
+            "finalize.processedCss": 0.7695830000011483,
+            "finalize.rootCss": 60.27295800000138,
+            "finalize.cssAssets": 6.622124999999869,
+            "finalize.webCompat": 0.0011660000000119908,
+            "state.update": 0.709208000000217
+          }
+        },
+        {
+          "bundler": "vite",
+          "phase": "total",
+          "durationMs": 1202,
+          "hooks": {
+            "sourceCandidates.watchChange": {
+              "count": 1,
+              "durationMs": 0,
+              "maxMs": 0
+            },
+            "sourceCandidates.buildStart": {
+              "count": 1,
+              "durationMs": 0,
+              "maxMs": 0
+            },
+            "sourceCandidates.transform": {
+              "count": 1,
+              "durationMs": 1,
+              "maxMs": 1
+            },
+            "generateBundle": {
+              "count": 1,
+              "durationMs": 1201,
+              "maxMs": 1201
+            }
+          },
+          "metric": "total",
+          "wallMs": 2002,
+          "details": {
+            "bundler": "vite",
+            "phase": "generateBundle",
+            "durationMs": 1201,
+            "snapshot": 3.4668749999982538,
+            "sourceCandidates.wait": 0.006541999999171821,
+            "runtime": 4.274083000000246,
+            "entries.plan": 86.70041700000002,
+            "rememberedCss.plan": 1.3915829999968992,
+            "tasks.html": 43.46504200000345,
+            "tasks.css": 1008.500291999997,
+            "tasks.js": 0.9556249999986903,
+            "tasks": 1009.5204580000027,
+            "finalize.uniAppXPostCss": 10.723249999999098,
+            "finalize.processedCss.collect": 0.2694999999985157,
+            "finalize.processedCss.inject.prepareResults": 0.23554200000216952,
+            "finalize.processedCss.inject": 0.3287080000009155,
+            "finalize.processedCss": 0.6054579999981797,
+            "finalize.rootCss": 65.57333300000028,
+            "finalize.cssAssets": 2.519416999999521,
+            "finalize.webCompat": 0.0010000000002037268,
+            "state.update": 0.34670900000128313
+          }
+        },
+        {
+          "bundler": "vite",
+          "phase": "total",
+          "durationMs": 1039,
+          "hooks": {
+            "sourceCandidates.watchChange": {
+              "count": 1,
+              "durationMs": 0,
+              "maxMs": 0
+            },
+            "sourceCandidates.buildStart": {
+              "count": 1,
+              "durationMs": 0,
+              "maxMs": 0
+            },
+            "sourceCandidates.transform": {
+              "count": 1,
+              "durationMs": 0,
+              "maxMs": 0
+            },
+            "generateBundle": {
+              "count": 1,
+              "durationMs": 1039,
+              "maxMs": 1039
+            }
+          },
+          "metric": "total",
+          "wallMs": 1846,
+          "details": {
+            "bundler": "vite",
+            "phase": "generateBundle",
+            "durationMs": 1039,
+            "snapshot": 3.645042000000103,
+            "sourceCandidates.wait": 0.009540999999444466,
+            "runtime": 5.241000000001804,
+            "entries.plan": 88.39158300000054,
+            "rememberedCss.plan": 1.4496670000007725,
+            "tasks.html": 17.850374000005104,
+            "tasks.css": 841.3007089999955,
+            "tasks.js": 0.8988749999989523,
+            "tasks": 842.2610840000016,
+            "finalize.uniAppXPostCss": 9.15991700000086,
+            "finalize.processedCss.collect": 0.2506250000005821,
+            "finalize.processedCss.inject.prepareResults": 0.1464589999995951,
+            "finalize.processedCss.inject": 0.2347909999989497,
+            "finalize.processedCss": 0.49220900000000256,
+            "finalize.rootCss": 68.32770900000105,
+            "finalize.cssAssets": 2.5429169999988517,
+            "finalize.webCompat": 0.0014999999984866008,
+            "state.update": 0.19112500000119326
+          }
+        }
+      ]
+    },
+    {
+      "version": "078e6e020db23143cd01826450a5a2b969bda610",
+      "buildMs": [
+        17554.435459,
+        14588.388624999992,
+        13990.463833000002
+      ],
+      "buildPluginMs": [
+        3347,
+        2932,
+        2903
+      ],
+      "hmrMs": [
+        2003.8809159999946,
+        2449.6102089999767,
+        1908.3843749999942
+      ],
+      "hmrPluginMs": [
+        1069,
+        1473,
+        1013
+      ],
+      "hmrPluginTimings": [
+        {
+          "bundler": "vite",
+          "phase": "total",
+          "durationMs": 1069,
+          "hooks": {
+            "sourceCandidates.watchChange": {
+              "count": 1,
+              "durationMs": 1,
+              "maxMs": 1
+            },
+            "sourceCandidates.buildStart": {
+              "count": 1,
+              "durationMs": 0,
+              "maxMs": 0
+            },
+            "sourceCandidates.transform": {
+              "count": 6,
+              "durationMs": 5,
+              "maxMs": 2
+            },
+            "generateBundle": {
+              "count": 1,
+              "durationMs": 1062,
+              "maxMs": 1062
+            }
+          },
+          "metric": "total",
+          "wallMs": 1932,
+          "details": {
+            "bundler": "vite",
+            "phase": "generateBundle",
+            "durationMs": 1062,
+            "snapshot": 4.0347079999992275,
+            "sourceCandidates.wait": 0.004417000000103144,
+            "runtime": 12.063208000001396,
+            "entries.plan": 93.14316700000018,
+            "rememberedCss.plan": 0.6597910000000411,
+            "tasks.html": 42.334750000001804,
+            "tasks.css": 855.2169159999994,
+            "tasks.js": 3.2376249999997526,
+            "tasks": 857.0309159999997,
+            "finalize.uniAppXPostCss": 9.949624999999287,
+            "finalize.processedCss.collect": 0.3338339999991149,
+            "finalize.processedCss.inject.prepareResults": 0.24579200000152923,
+            "finalize.processedCss.inject": 0.4177909999998519,
+            "finalize.processedCss": 0.7605419999999867,
+            "finalize.rootCss": 61.30541600000106,
+            "finalize.cssAssets": 6.690790999999081,
+            "finalize.webCompat": 0.0007499999992433004,
+            "state.update": 0.612291000001278
+          }
+        },
+        {
+          "bundler": "vite",
+          "phase": "total",
+          "durationMs": 1473,
+          "hooks": {
+            "sourceCandidates.watchChange": {
+              "count": 1,
+              "durationMs": 0,
+              "maxMs": 0
+            },
+            "sourceCandidates.buildStart": {
+              "count": 1,
+              "durationMs": 0,
+              "maxMs": 0
+            },
+            "sourceCandidates.transform": {
+              "count": 1,
+              "durationMs": 0,
+              "maxMs": 0
+            },
+            "generateBundle": {
+              "count": 1,
+              "durationMs": 1472,
+              "maxMs": 1472
+            }
+          },
+          "metric": "total",
+          "wallMs": 2322,
+          "details": {
+            "bundler": "vite",
+            "phase": "generateBundle",
+            "durationMs": 1472,
+            "snapshot": 3.5802499999990687,
+            "sourceCandidates.wait": 0.007499999999708962,
+            "runtime": 4.604125000001659,
+            "entries.plan": 90.08520800000042,
+            "rememberedCss.plan": 1.3620829999999842,
+            "tasks.html": 17.94224800000302,
+            "tasks.css": 1255.7284160000054,
+            "tasks.js": 0.84808300000077,
+            "tasks": 1256.6375420000004,
+            "finalize.uniAppXPostCss": 5.354875000000902,
+            "finalize.processedCss.collect": 0.2738329999992857,
+            "finalize.processedCss.inject.prepareResults": 0.1483749999970314,
+            "finalize.processedCss.inject": 0.23320800000146846,
+            "finalize.processedCss": 0.5137920000015583,
+            "finalize.rootCss": 89.17354200000045,
+            "finalize.cssAssets": 2.5985409999993863,
+            "finalize.webCompat": 0.000959000000875676,
+            "state.update": 0.3260000000009313
+          }
+        },
+        {
+          "bundler": "vite",
+          "phase": "total",
+          "durationMs": 1013,
+          "hooks": {
+            "sourceCandidates.watchChange": {
+              "count": 1,
+              "durationMs": 0,
+              "maxMs": 0
+            },
+            "sourceCandidates.buildStart": {
+              "count": 1,
+              "durationMs": 0,
+              "maxMs": 0
+            },
+            "sourceCandidates.transform": {
+              "count": 1,
+              "durationMs": 0,
+              "maxMs": 0
+            },
+            "generateBundle": {
+              "count": 1,
+              "durationMs": 1013,
+              "maxMs": 1013
+            }
+          },
+          "metric": "total",
+          "wallMs": 1768,
+          "details": {
+            "bundler": "vite",
+            "phase": "generateBundle",
+            "durationMs": 1013,
+            "snapshot": 3.7316250000003492,
+            "sourceCandidates.wait": 0.008832999999867752,
+            "runtime": 5.062042000001384,
+            "entries.plan": 91.26525000000038,
+            "rememberedCss.plan": 1.4723750000011933,
+            "tasks.html": 35.22445700000026,
+            "tasks.css": 814.4385819999989,
+            "tasks.js": 0.7182920000013837,
+            "tasks": 815.2127909999981,
+            "finalize.uniAppXPostCss": 9.739582999998674,
+            "finalize.processedCss.collect": 0.2544159999997646,
+            "finalize.processedCss.inject.prepareResults": 0.17387500000040745,
+            "finalize.processedCss.inject": 0.26062499999898137,
+            "finalize.processedCss": 0.5221249999995052,
+            "finalize.rootCss": 66.90608300000167,
+            "finalize.cssAssets": 2.5307079999984126,
+            "finalize.webCompat": 0.001458000002457993,
+            "state.update": 0.18008299999928568
+          }
+        }
+      ]
+    }
+  ],
+  "sampling": [
+    {
+      "version": "7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5",
+      "clockOffsetIntervalMicros": [
+        -123,
+        8973
+      ],
+      "endpointSensitivityOnly": true,
+      "windows": [
+        {
+          "round": 1,
+          "offsetMicros": -123,
+          "elapsedMs": 2040.31,
+          "sampledMs": 2040.31,
+          "categoriesMs": {
+            "tokenize": 2.875,
+            "protectDynamicColorMixAlpha": 21.541,
+            "removeUnsupportedModernColorDeclarations": 30.418,
+            "normalizeModernColorValue": 22.209,
+            "pruneMiniProgramGeneratedCssRoot": 40.125,
+            "finalizeMiniProgramCssRoot": 79.126
+          },
+          "gcSelfMs": 429.753
+        },
+        {
+          "round": 2,
+          "offsetMicros": -123,
+          "elapsedMs": 2118.391,
+          "sampledMs": 2118.391,
+          "categoriesMs": {
+            "protectDynamicColorMixAlpha": 18.834,
+            "tokenize": 0.125,
+            "pruneMiniProgramGeneratedCssRoot": 36.209,
+            "removeUnsupportedModernColorDeclarations": 30.459,
+            "normalizeModernColorValue": 22.458,
+            "finalizeMiniProgramCssRoot": 77.209
+          },
+          "gcSelfMs": 682.077
+        },
+        {
+          "round": 3,
+          "offsetMicros": -123,
+          "elapsedMs": 1915.47,
+          "sampledMs": 1915.47,
+          "categoriesMs": {
+            "protectDynamicColorMixAlpha": 18.706,
+            "tokenize": 0.458,
+            "pruneMiniProgramGeneratedCssRoot": 35.334,
+            "finalizeMiniProgramCssRoot": 71.999,
+            "removeUnsupportedModernColorDeclarations": 26.499,
+            "normalizeModernColorValue": 20.834
+          },
+          "gcSelfMs": 582.834
+        },
+        {
+          "round": 1,
+          "offsetMicros": 8973,
+          "elapsedMs": 2040.31,
+          "sampledMs": 2040.31,
+          "categoriesMs": {
+            "tokenize": 2.875,
+            "protectDynamicColorMixAlpha": 21.541,
+            "removeUnsupportedModernColorDeclarations": 30.418,
+            "normalizeModernColorValue": 22.209,
+            "pruneMiniProgramGeneratedCssRoot": 40.125,
+            "finalizeMiniProgramCssRoot": 79.126
+          },
+          "gcSelfMs": 429.753
+        },
+        {
+          "round": 2,
+          "offsetMicros": 8973,
+          "elapsedMs": 2118.391,
+          "sampledMs": 2118.391,
+          "categoriesMs": {
+            "protectDynamicColorMixAlpha": 18.834,
+            "tokenize": 0.125,
+            "pruneMiniProgramGeneratedCssRoot": 36.209,
+            "removeUnsupportedModernColorDeclarations": 30.459,
+            "normalizeModernColorValue": 22.458,
+            "finalizeMiniProgramCssRoot": 77.209
+          },
+          "gcSelfMs": 678.535
+        },
+        {
+          "round": 3,
+          "offsetMicros": 8973,
+          "elapsedMs": 1915.47,
+          "sampledMs": 1915.47,
+          "categoriesMs": {
+            "protectDynamicColorMixAlpha": 18.706,
+            "tokenize": 0.458,
+            "pruneMiniProgramGeneratedCssRoot": 35.334,
+            "finalizeMiniProgramCssRoot": 71.999,
+            "removeUnsupportedModernColorDeclarations": 26.499,
+            "normalizeModernColorValue": 20.834
+          },
+          "gcSelfMs": 582.834
+        }
+      ]
+    },
+    {
+      "version": "078e6e020db23143cd01826450a5a2b969bda610",
+      "clockOffsetIntervalMicros": [
+        12,
+        7738
+      ],
+      "endpointSensitivityOnly": true,
+      "windows": [
+        {
+          "round": 1,
+          "offsetMicros": 12,
+          "elapsedMs": 2003.884,
+          "sampledMs": 2003.884,
+          "categoriesMs": {
+            "protectDynamicColorMixAlpha": 17.708,
+            "tokenize": 1.583,
+            "normalizeMiniProgramColorMix": 13.708,
+            "pruneMiniProgramGeneratedCssRoot": 37.583,
+            "removeUnsupportedModernColorDeclarations": 23.624,
+            "normalizeModernColorValue": 7,
+            "finalizeMiniProgramCssRoot": 75.082,
+            "collectCustomPropertyValues": 13.415
+          },
+          "gcSelfMs": 450.377
+        },
+        {
+          "round": 2,
+          "offsetMicros": 12,
+          "elapsedMs": 2449.613,
+          "sampledMs": 2449.613,
+          "categoriesMs": {
+            "collectCustomPropertyValues": 12.79,
+            "protectDynamicColorMixAlpha": 14.249,
+            "tokenize": 0.375,
+            "normalizeMiniProgramColorMix": 11.792,
+            "pruneMiniProgramGeneratedCssRoot": 31.667,
+            "removeUnsupportedModernColorDeclarations": 21.29,
+            "normalizeModernColorValue": 5.958,
+            "finalizeMiniProgramCssRoot": 71.124
+          },
+          "gcSelfMs": 1005.338
+        },
+        {
+          "round": 3,
+          "offsetMicros": 12,
+          "elapsedMs": 1908.386,
+          "sampledMs": 1908.386,
+          "categoriesMs": {
+            "protectDynamicColorMixAlpha": 13.708,
+            "tokenize": 0.5,
+            "collectCustomPropertyValues": 12.793,
+            "normalizeMiniProgramColorMix": 11.375,
+            "removeUnsupportedModernColorDeclarations": 19.042,
+            "pruneMiniProgramGeneratedCssRoot": 32.375,
+            "finalizeMiniProgramCssRoot": 67.416,
+            "normalizeModernColorValue": 6.249
+          },
+          "gcSelfMs": 561.778
+        },
+        {
+          "round": 1,
+          "offsetMicros": 7738,
+          "elapsedMs": 2003.884,
+          "sampledMs": 2003.884,
+          "categoriesMs": {
+            "protectDynamicColorMixAlpha": 17.708,
+            "tokenize": 1.583,
+            "normalizeMiniProgramColorMix": 13.708,
+            "pruneMiniProgramGeneratedCssRoot": 37.583,
+            "removeUnsupportedModernColorDeclarations": 23.624,
+            "normalizeModernColorValue": 7,
+            "finalizeMiniProgramCssRoot": 75.082,
+            "collectCustomPropertyValues": 13.415
+          },
+          "gcSelfMs": 450.377
+        },
+        {
+          "round": 2,
+          "offsetMicros": 7738,
+          "elapsedMs": 2449.613,
+          "sampledMs": 2449.613,
+          "categoriesMs": {
+            "collectCustomPropertyValues": 12.79,
+            "protectDynamicColorMixAlpha": 14.249,
+            "tokenize": 0.375,
+            "normalizeMiniProgramColorMix": 11.792,
+            "pruneMiniProgramGeneratedCssRoot": 31.667,
+            "removeUnsupportedModernColorDeclarations": 21.29,
+            "normalizeModernColorValue": 5.958,
+            "finalizeMiniProgramCssRoot": 71.124
+          },
+          "gcSelfMs": 1005.338
+        },
+        {
+          "round": 3,
+          "offsetMicros": 7738,
+          "elapsedMs": 1908.386,
+          "sampledMs": 1908.386,
+          "categoriesMs": {
+            "protectDynamicColorMixAlpha": 13.708,
+            "tokenize": 0.5,
+            "collectCustomPropertyValues": 12.793,
+            "normalizeMiniProgramColorMix": 11.375,
+            "removeUnsupportedModernColorDeclarations": 19.042,
+            "pruneMiniProgramGeneratedCssRoot": 32.375,
+            "finalizeMiniProgramCssRoot": 67.416,
+            "normalizeModernColorValue": 6.249
+          },
+          "gcSelfMs": 559.927
+        }
+      ]
+    }
+  ],
+  "initialSetupFailure": {
+    "record": {
+      "file": "run-cpu.json",
+      "bytes": 2322,
+      "sha256": "be0c15e1a865fc6a6827fc0a8a25eeb85e780f7fa1a3b728acff045bf6ece98e"
+    },
+    "status": "failed",
+    "error": "Error: ENOENT: no such file or directory, open '/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/tailwind-078e-perf-VnCccP/raw-cpu.json'\n    at async open (node:internal/fs/promises:640:25)\n    at async Object.readFile (node:internal/fs/promises:1290:14)\n    at async file:///Users/icebreaker/.codex/worktrees/tailwind-capability-e2e/weapp-tailwindcss/.tmp/run-078e-perf-cpu.mjs:51:26",
+    "reason": "第一份driver因macOS /var与/private/var入口路径不等而不执行main；未产生raw或profile，校正真实路径后才开始唯一有界采样"
+  },
+  "sourceAfterValidation": [
+    {
+      "role": "current",
+      "commit": "078e6e020db23143cd01826450a5a2b969bda610",
+      "trackedBlobs": 8796,
+      "mismatches": [
+        {
+          "path": "benchmark/performance/demo/windows-memory.ps1",
+          "reason": "blob-mismatch",
+          "expected": "d54c704802ad572e7832363e7ec4f2e82f962ff1",
+          "actual": "bd906f70e74f17ade682f4203eade0da3e214af2"
+        },
+        {
+          "path": "scripts/ci/hbuilderx-first-run.ps1",
+          "reason": "blob-mismatch",
+          "expected": "03dd9cc68ed98e61ca293050bf92b755401a2ad0",
+          "actual": "01d5a9d11ac6ee80e33a0290c3121d4062bff1fc"
+        },
+        {
+          "path": "scripts/ci/hbuilderx-vanilla-shell.ps1",
+          "reason": "blob-mismatch",
+          "expected": "528553dbf5ea268dad2eedc3db98b7d24204494e",
+          "actual": "8123cb714b45d465d91d919ae10b0032414e9492"
+        },
+        {
+          "path": "scripts/ci/issue-hbuilderx-diagnostics.ps1",
+          "reason": "blob-mismatch",
+          "expected": "442a8b25a0ffdba9636443975aa1785f8532a64a",
+          "actual": "5b869124e4209a29113c37f9946af13ffba5cbb2"
+        },
+        {
+          "path": "submodules/tailwindcss-v3",
+          "reason": "not-blob"
+        },
+        {
+          "path": "submodules/tailwindcss-v4",
+          "reason": "not-blob"
+        }
+      ]
+    },
+    {
+      "role": "base",
+      "commit": "7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5",
+      "trackedBlobs": 8480,
+      "mismatches": [
+        {
+          "path": "benchmark/performance/demo/windows-memory.ps1",
+          "reason": "blob-mismatch",
+          "expected": "d54c704802ad572e7832363e7ec4f2e82f962ff1",
+          "actual": "bd906f70e74f17ade682f4203eade0da3e214af2"
+        },
+        {
+          "path": "scripts/ci/hbuilderx-first-run.ps1",
+          "reason": "blob-mismatch",
+          "expected": "03dd9cc68ed98e61ca293050bf92b755401a2ad0",
+          "actual": "01d5a9d11ac6ee80e33a0290c3121d4062bff1fc"
+        },
+        {
+          "path": "scripts/ci/hbuilderx-vanilla-shell.ps1",
+          "reason": "blob-mismatch",
+          "expected": "528553dbf5ea268dad2eedc3db98b7d24204494e",
+          "actual": "8123cb714b45d465d91d919ae10b0032414e9492"
+        },
+        {
+          "path": "scripts/ci/issue-hbuilderx-diagnostics.ps1",
+          "reason": "blob-mismatch",
+          "expected": "442a8b25a0ffdba9636443975aa1785f8532a64a",
+          "actual": "5b869124e4209a29113c37f9946af13ffba5cbb2"
+        },
+        {
+          "path": "submodules/tailwindcss-v3",
+          "reason": "not-blob"
+        },
+        {
+          "path": "submodules/tailwindcss-v4",
+          "reason": "not-blob"
+        }
+      ]
+    }
+  ],
+  "scripts": [
+    {
+      "file": ".tmp/prepare-078e-perf.mjs",
+      "bytes": 3233,
+      "sha256": "4bc27522731778ce603978fe5d16d329312f8aad00772655f7fcdccd4a33dbfe"
+    },
+    {
+      "file": ".tmp/run-078e-perf-cpu.mjs",
+      "bytes": 6298,
+      "sha256": "d1d9dd632b9fd38704fa82ff3aba67a7dd8b75bb718b7de0210ea1046ee67805"
+    },
+    {
+      "file": ".tmp/analyze-078e-cpu.mjs",
+      "bytes": 4092,
+      "sha256": "67aa47fdf9d8d6437ada1cf102aeaeae4cb63646a9406194bdd13d7c853296ff"
+    },
+    {
+      "file": ".tmp/taro-cpu-driver-078e.mjs",
+      "bytes": 2478,
+      "sha256": "ee5a4396889712706889d6a038c621df28265fb3c00b18735673b7eab1663771"
+    },
+    {
+      "file": ".tmp/taro-cpu-preload-078e.mjs",
+      "bytes": 2940,
+      "sha256": "6ec69822fe2eb657a1956e85166424a3e59c4c58d00a2176caff383730d3def9"
+    }
+  ],
+  "sourceAfterValidationExplanation": {
+    "originalMismatchesPreserved": true,
+    "attribute": "*.ps1 text eol=crlf",
+    "archiveLineEndingChecks": [
+      {
+        "role": "current",
+        "path": "benchmark/performance/demo/windows-memory.ps1",
+        "matchesTarMember": true,
+        "matchesGitBlobAfterCrlfNormalization": true,
+        "crlfCount": 60
+      },
+      {
+        "role": "current",
+        "path": "scripts/ci/hbuilderx-first-run.ps1",
+        "matchesTarMember": true,
+        "matchesGitBlobAfterCrlfNormalization": true,
+        "crlfCount": 94
+      },
+      {
+        "role": "current",
+        "path": "scripts/ci/hbuilderx-vanilla-shell.ps1",
+        "matchesTarMember": true,
+        "matchesGitBlobAfterCrlfNormalization": true,
+        "crlfCount": 7
+      },
+      {
+        "role": "current",
+        "path": "scripts/ci/issue-hbuilderx-diagnostics.ps1",
+        "matchesTarMember": true,
+        "matchesGitBlobAfterCrlfNormalization": true,
+        "crlfCount": 72
+      },
+      {
+        "role": "base",
+        "path": "benchmark/performance/demo/windows-memory.ps1",
+        "matchesTarMember": true,
+        "matchesGitBlobAfterCrlfNormalization": true,
+        "crlfCount": 60
+      },
+      {
+        "role": "base",
+        "path": "scripts/ci/hbuilderx-first-run.ps1",
+        "matchesTarMember": true,
+        "matchesGitBlobAfterCrlfNormalization": true,
+        "crlfCount": 94
+      },
+      {
+        "role": "base",
+        "path": "scripts/ci/hbuilderx-vanilla-shell.ps1",
+        "matchesTarMember": true,
+        "matchesGitBlobAfterCrlfNormalization": true,
+        "crlfCount": 7
+      },
+      {
+        "role": "base",
+        "path": "scripts/ci/issue-hbuilderx-diagnostics.ps1",
+        "matchesTarMember": true,
+        "matchesGitBlobAfterCrlfNormalization": true,
+        "crlfCount": 72
+      }
+    ],
+    "gitlinks": {
+      "paths": [
+        "submodules/tailwindcss-v3",
+        "submodules/tailwindcss-v4"
+      ],
+      "expanded": false,
+      "consumedByThisTaroBuild": false
+    },
+    "remainingTrackedBlobsMatch": true,
+    "wholeTreeRawGitBytesIdentical": false
+  }
+}

@@ -39,7 +39,7 @@ async function fixture() {
   const performanceGuard = evaluatePerformanceGuard(buildSummary(rawResult(1400), baselineVersion.version, currentVersion.version))
   expect(performanceGuard.passed).toBe(false)
   expect(performanceGuard.violations.map(item => item.metric)).toEqual(['hmrPeakRssMb', 'hmrSteadyRssMb'])
-  return { resultDir, baselineVersion, currentVersion, performanceGuard, regressionPercent: 5 }
+  return { resultDir, baselineVersion, currentVersion, performanceGuard, regressionPercent: 5, hmrRuns: 3, selectedProjects: [{ key: 'framework' }] }
 }
 
 describe('benchmark HMR 内存反向确认', () => {
@@ -108,6 +108,61 @@ describe('benchmark HMR 内存反向确认', () => {
     await expect(runHmrMemoryConfirmation({ ...options, runMatrix })).rejects.toBe(failure)
     expect(runMatrix).toHaveBeenCalledTimes(1)
     await expect(fs.stat(path.join(options.resultDir, 'memory-confirmation-summary.json'))).rejects.toMatchObject({ code: 'ENOENT' })
+  })
+
+  it.each([
+    { hmrMode: 'unsupported', missingMemory: false },
+    { hmrMode: 'unsupported', missingMemory: true },
+    { hmrMode: 'fallback-build', missingMemory: false },
+    { hmrMode: 'fallback-build', missingMemory: true },
+  ])('复测行自报 $hmrMode 不得豁免登记 watch 的 RSS，缺内存证据：$missingMemory', async ({ hmrMode, missingMemory }) => {
+    const options = await fixture()
+    const raw = rawResult(1300, missingMemory)
+    raw.rows[1]!.hmrMode = hmrMode
+    const result = await runHmrMemoryConfirmation({
+      ...options,
+      selectedProjects: [{ key: 'framework', hmrMode: 'watch' }],
+      runMatrix: async ({ outputFile }) => fs.writeFile(outputFile, JSON.stringify(raw), 'utf8'),
+    })
+    expect(result.passed).toBe(false)
+    expect(result.memoryConfirmation.error).toContain('benchmark matrix')
+    expect(result.violations.map(item => [item.metric, item.baseline, item.current]))
+      .toEqual(options.performanceGuard.violations.map(item => [item.metric, item.baseline, item.current]))
+    await expect(fs.stat(path.join(options.resultDir, 'memory-confirmation-summary.json'))).rejects.toMatchObject({ code: 'ENOENT' })
+  })
+
+  it.each([
+    { name: '空矩阵', raw: { rows: [] } },
+    { name: '只有基线', raw: { rows: rawResult().rows.slice(0, 1) } },
+    { name: '只有当前版本', raw: { rows: rawResult().rows.slice(1) } },
+    { name: '重复当前版本', raw: { rows: [...rawResult().rows, rawResult().rows[1]] } },
+    { name: '只有微基准', raw: { rows: rawResult().rows.map(row => ({ ...row, key: 'core-metric' })) } },
+    { name: '身份完整但无测量', raw: { rows: rawResult().rows.map(({ version, key }) => ({ version, key })) } },
+    { name: '身份完整但 summary 为空', raw: { rows: rawResult().rows.map(row => ({ ...row, summary: {} })) } },
+  ])('$name 不得清除主轮 RSS 失败', async ({ raw }) => {
+    const options = await fixture()
+    const result = await runHmrMemoryConfirmation({
+      ...options,
+      runMatrix: async ({ outputFile }) => fs.writeFile(outputFile, JSON.stringify(raw), 'utf8'),
+    })
+    expect(result.passed).toBe(false)
+    expect(result.memoryConfirmation.error).toContain('benchmark matrix')
+    expect(result.violations.map(item => [item.metric, item.baseline, item.current]))
+      .toEqual(options.performanceGuard.violations.map(item => [item.metric, item.baseline, item.current]))
+    await expect(fs.stat(path.join(options.resultDir, 'memory-confirmation-summary.json'))).rejects.toMatchObject({ code: 'ENOENT' })
+  })
+
+  it('遗漏本轮另一个选中项目时不得用已有完整项目放行', async () => {
+    const options = await fixture()
+    const result = await runHmrMemoryConfirmation({
+      ...options,
+      selectedProjects: [...options.selectedProjects, { key: 'another-framework' }],
+      runMatrix: async ({ outputFile }) => fs.writeFile(outputFile, JSON.stringify(rawResult()), 'utf8'),
+    })
+    expect(result.passed).toBe(false)
+    expect(result.memoryConfirmation.error).toContain('another-framework')
+    expect(result.violations.map(item => [item.metric, item.baseline, item.current]))
+      .toEqual(options.performanceGuard.violations.map(item => [item.metric, item.baseline, item.current]))
   })
 
   it('确认原始产物损坏时拒绝，不把解析失败降级为通过', async () => {

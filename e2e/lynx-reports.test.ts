@@ -8,6 +8,7 @@ import staticEvidenceJson from '../examples/react-lynx/src/compatibility/static-
 import { compatibilityVersions, getCatalogHash } from './lynx/catalog'
 import { assertReviewedLynxOutcome, reviewedLynxSupport } from './lynx/expectations'
 import { responsiveFixture } from './lynx/fixtures/responsive-images'
+import { themeOverrideArtifacts } from './lynx/fixtures/theme-overrides'
 import { assertNativeConclusionsMatch } from './lynx/report-comparison'
 import { nativeReportConclusion, validateNativeReport } from './lynx/reports'
 
@@ -64,7 +65,7 @@ function validResult(item: typeof compatibilityCases[number]): NativeCaseResult 
 }
 
 function report(overrides: Partial<NativePlatformReport> = {}): NativePlatformReport {
-  return {
+  const value: NativePlatformReport = {
     schemaVersion: 1,
     platform: 'ios',
     catalogHash: getCatalogHash(),
@@ -85,6 +86,9 @@ function report(overrides: Partial<NativePlatformReport> = {}): NativePlatformRe
     results: compatibilityCases.map(validResult),
     ...overrides,
   }
+  value.environment.viewport.pixelRatio = 2
+  themeOverrideArtifacts(value)
+  return value
 }
 
 describe('Lynx native report gate', () => {
@@ -288,4 +292,18 @@ describe('Lynx native report gate', () => {
     second.results[0] = { ...second.results[0]!, status: 'unsupported', reason: 'regression' }
     expect(nativeReportConclusion(second)).not.toEqual(nativeReportConclusion(first))
   })
+})
+
+it.each(['missing', 'duplicate', 'old-contract'] as const)('当前报告结构门禁拒绝主题 %s', (mode) => {
+  const value = report()
+  if (mode === 'missing') {
+    delete value.themeOverrides
+  }
+  if (mode === 'duplicate') {
+    value.themeOverrides!.frames[1]!.id = value.themeOverrides!.frames[0]!.id
+  }
+  if (mode === 'old-contract') {
+    value.themeOverrides!.contract = 'old'
+  }
+  expect(() => validateNativeReport(value, 'ios')).toThrow(/主题覆盖/)
 })

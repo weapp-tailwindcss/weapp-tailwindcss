@@ -18,7 +18,7 @@
       "flex"
     ],
     "text-slate-500": [
-      "var(--color-slate-500)"
+      "rgb(98,116,142)"
     ],
     "h-[4rem]": [
       "4rem"
@@ -27,7 +27,7 @@
       "25rem"
     ],
     "bg-emerald-50/80": [
-      "color-mix(insrgb,oklch(97.9%0.021166.113)80%,transparent)"
+      "rgba(236,253,245,0.8)"
     ]
   },
   "spacing": [

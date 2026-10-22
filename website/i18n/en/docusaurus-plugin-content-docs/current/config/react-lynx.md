@@ -16,9 +16,15 @@ keywords:
 
 This page explains every Lynx-specific option in `pluginLynxTailwindcss()`. Start with the [ReactLynx / Rspeedy guide](../quick-start/frameworks/lynx) for initial setup.
 
+This integration requires Node.js `^22.18.0 || >=24.11.0`, covering the adapter and its mandatory core dependency chain. Using the ReactLynx integration requires an installed and registered `@lynx-js/react-rsbuild-plugin` `>=0.12.4`; its optional peer installation flag only avoids installing another builder copy. Recursive CSS variables require Lynx runtime `>=3.6`, separately from the tested Engine version and bundle encoding target.
+
+Stable Tailwind theme tokens may become literals. Web color compatibility may also resolve application variables when lowering modern color expressions. Local, conditional, or priority overrides visible in the current CSS input prevent the affected variables from being treated as static. Overrides from separately compiled stylesheets or inline styles are outside this analysis and cannot change generated literals. Renaming a variable does not guarantee dynamic override behavior.
+
+All `@property` registrations, descriptors, and variable dependencies are preserved. The public theme prefix can also produce `--tw-*` names, so the prefix cannot establish ownership. Default compatibility matches explicitly recorded full signatures; conflicting or conditional registrations receive no global defaults. Global defaults do not emulate arbitrary registration semantics. The target must still support registered properties. Preserving the input and verifying it in browsers do not establish Lynx native support.
+
 ## Support baseline
 
-- `@weapp-tailwindcss/lynx` `0.4.4`; adapter Node.js `>=22.12.0`
+- `@weapp-tailwindcss/lynx` `0.4.4`; adapter Node.js `^22.18.0 || >=24.11.0`
 - Core `weapp-tailwindcss` `5.6.3`; dependency-chain Node.js `^22.18.0 || >=24.11.0`
 - `@lynx-js/rspeedy` `>=0.16.0`
 - Tailwind CSS `4.x`
@@ -144,13 +150,13 @@ rspack: { removeLightningCssLoader: true }
 
 **When to use** The default is suitable for observing compatibility in local builds and CI. Set `strict` only when a confirmed business rule removed by the encoder should become a build gate. `preflight`, Tailwind default rules, and `unknown` diagnostics remain reports and never fail strict mode.
 
-**Usage** `ignore` can match a selector, property, or reason. `onReport` receives versions, counts, categories, rejection reasons, and replacement suggestions:
+**Usage** `ignore` selects a selector/property; `reason` is an audit note, not a log filter. `onReport` receives versions, counts, categories, rejection reasons, and replacement suggestions:
 
 ```ts
 pluginLynxTailwindcss({
   diagnostics: {
     strict: true,
-    ignore: [{ property: 'padding-inline' }],
+    ignore: [{ property: 'padding-inline', reason: 'The application accepts this platform limitation' }],
     onReport(report) {
       console.log(report)
     },
@@ -158,7 +164,27 @@ pluginLynxTailwindcss({
 })
 ```
 
-Diagnostics use CSS and encoder data registered through the Rspack/Rspeedy lifecycle. They do not scan `dist` or equate bundle inclusion with native support. Unknown log formats remain `unknown` and never fail strict mode.
+Reports distinguish raw `encoder-log` records from silent removals found by `bundle-comparison`, with `bundled`, `encoder-rejected`, or `unknown` status. Matching requires unique selector branches, conditions, and declarations. Evidence comes from the emitted build-graph asset in `afterEmit` and binds the bundle, pinned decoder, and input CSS hashes. An ignore must select a selector/property; `reason` is an audit note. Ignored records and removal counts remain in the report.
+
+Original files and positions are provided only when the current build graph source map proves them; synthetic cssId and generated coordinates remain separate. Duplicate branches across entries, repeated declarations, unknown value normalization, incomplete CSS-section decoding, and ambiguous scoped CSS origins remain unproven. Diagnostics do not scan `dist` or equate bundle inclusion with native support.
+
+For example, if the emitted bundle proves that `padding-inline` from `px-[7.5px]` is missing, a business diagnostic contains the following fields (reason and suggestion are translated here; runtime messages currently use Chinese):
+
+```js
+{
+  status: 'encoder-rejected',
+  category: 'business',
+  utility: 'px-[7.5px]',
+  property: 'padding-inline',
+  value: '7.5px',
+  reason: 'Comparison of unique input with the emitted bundle proves the missing rule or declaration; it does not infer the internal encoder cause.',
+  suggestion: 'Choose padding-left / padding-right according to application direction; validate RTL and dynamic direction separately.',
+}
+```
+
+The reason proves a missing declaration without guessing the encoder's internal cause. The suggestion proposes physical padding only after checking application direction; RTL and dynamic direction require separate validation.
+
+`versions.encoder` prefers the `@lynx-js/tasm` dependency associated with the exact template class exposed by the builder. `versionEvidence.encoder` states that this does not independently identify the executed encode hook or binary; custom encoders and Web paths need additional evidence. Missing identity yields `unknown`, or an explicitly labeled compilerOptions declaration. `versions.engine` remains `unknown` without host evidence; `targetSdk` is not a runtime version. Unknown diagnostics request evidence instead of inventing equivalent styles.
 
 ## CSS and candidates
 
@@ -188,7 +214,7 @@ Do not construct `w-[${width}px]`; Tailwind cannot know the final token at build
 
 ## Devices and evidence
 
-CI defaults to Android API 30 on a Pixel 2 x86_64 runner and iOS 18.5 on an iPhone 16 Pro simulator. The committed native reports come from Android `sdk_phone_x86_64` (Android 11/API 30, x86_64) and `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64), with baseline `verifiedAt` `2026-10-19T15:13:36.717Z` and `catalogHash` `2e3a1a60517c13de507d22ef8b4d209ffcdb86b2dfbf5bf7100df35c40dc3fec`. The current baseline comes from official run `39272094832`; later CI runs on the same device configuration still require independent evidence.
+CI defaults to Android API 30 on a Pixel 2 x86_64 runner and iOS 18.5 on an iPhone 16 Pro simulator. The committed native reports come from Android `sdk_gphone_arm64` (Android 11/API 30, arm64-v8a) and `iPhone 17 Pro iOS 26.5` (iPhone 17 Pro, iOS 26.5, arm64), with baseline `verifiedAt` `2026-10-21T18:49:50.413Z` and `catalogHash` `ee4e7bd2d4b126dc4920a08e16878fe8cccf364c537ca4b025b821f188c85941`. The current baseline comes from local dual-platform run `8c29cdaa-b86c-4fc1-a7e8-28b254463458` on source `8db895c54373e20737dcc8254861f73872579aa1`, after a fresh complete preflight and original-artifact replay; later CI runs on different device configurations still require independent evidence.
 
 `--capture-only` captures screenshots/video only after an explicit bundle and target device are supplied. It does not write a native support report or update the committed baseline.
 

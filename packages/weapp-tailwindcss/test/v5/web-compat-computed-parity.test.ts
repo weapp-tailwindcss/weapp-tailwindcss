@@ -11,6 +11,7 @@ import { PNG } from 'pngjs'
 import postcss from 'postcss'
 import { afterEach, describe, expect, it } from 'vitest'
 import weappTailwindcss from '@/postcss'
+import { classSelector, dynamicAlphaMix, expectColorDeclarations, runtimeColors } from './fixtures/web-color-declarations'
 
 const require = createRequire(import.meta.url)
 const tailwindcssV4Root = path.dirname(require.resolve('tailwindcss/package.json'))
@@ -427,10 +428,40 @@ describe('Tailwind CSS v4 web compat computed parity', () => {
 
     expect(standardCss).toContain('@layer')
     expect(compatCss).not.toContain('@layer')
-    expect(compatCss).not.toContain('@property')
+    expect(compatCss).toContain('@property')
     expect(compatCss).toContain('rgba(')
-    expect(compatCss).not.toContain('oklch(')
-    expect(compatCss).not.toContain('var(--color-')
+    const compatRoot = postcss.parse(compatCss)
+    for (const [property, color] of [
+      ['--color-accent', 'rgb(0, 187, 128)'],
+      ['--color-slate-200', 'rgb(226, 232, 240)'],
+      ['--color-slate-700', 'rgb(49, 65, 88)'],
+      ['--color-slate-900', 'rgb(15, 23, 43)'],
+      ['--color-red-500', 'rgb(251, 44, 54)'],
+      ['--color-teal-600', 'rgb(0, 148, 136)'],
+    ] as const) {
+      expectColorDeclarations(compatRoot, ':root', property, [color])
+    }
+    for (const [candidate, property, color] of [
+      ['border-slate-200/80', 'border-color', 'rgba(226, 232, 240, 0.8)'],
+      ['bg-accent/70', 'background-color', 'rgba(0, 187, 128, 0.7)'],
+      ['from-slate-900/95', '--tw-gradient-from', 'rgba(15, 23, 43, 0.95)'],
+      ['via-accent/75', '--tw-gradient-via', 'rgba(0, 187, 128, 0.75)'],
+      ['to-slate-700/95', '--tw-gradient-to', 'rgba(49, 65, 88, 0.95)'],
+      ['ring-brand/30', '--tw-ring-color', 'rgba(21, 93, 252, 0.3)'],
+    ] as const) {
+      expectColorDeclarations(compatRoot, classSelector(candidate), property, [color])
+    }
+    for (const [index, candidate] of ['shadow-red-500', 'shadow-teal-600/20'].entries()) {
+      const color = runtimeColors[index]!
+      expectColorDeclarations(compatRoot, classSelector(candidate), '--tw-shadow-color', [
+        color.fallback,
+        dynamicAlphaMix(color.dynamic, '--tw-shadow-alpha'),
+      ])
+    }
+    expectColorDeclarations(compatRoot, '::placeholder', 'color', ['currentcolor', 'color-mix(in oklab, currentcolor 50%, transparent)'])
+    expectColorDeclarations(compatRoot, `${classSelector('placeholder:text-brand/60')}::placeholder`, 'color', ['rgba(21, 93, 252, 0.6)'])
+    expectColorDeclarations(compatRoot, `${classSelector('after:bg-brand/25')}::after`, 'background-color', ['rgba(21, 93, 252, 0.25)'])
+    expectColorDeclarations(compatRoot, `${classSelector('hover:bg-brand/80')}:hover`, 'background-color', ['rgba(21, 93, 252, 0.8)'], /@media\(hover:\s*hover\)/)
     expect(compatCss).toContain('.bg-gradient-to-br')
     expect(compatCss).toContain('.i-\\[tst--home\\]')
     expect(compatCss).toContain('.icon-\\[tst--wide\\]')

@@ -1,9 +1,11 @@
+import type { NativeRuntimeIdentity } from '../../examples/react-native-expo/src/compatibility/protocol'
 import type { ReactNativeReport } from './catalog'
 import type { NativeRuntimePhase } from './phase-contract'
 import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { RN_FIXTURE_HASH } from './catalog'
+import { runtimeIdentity, validateRuntimeIdentity, validateRuntimeInstallation } from './installation-evidence'
 import { nativeEncodingArtifactNames, nativeRuntimePhases, RN_PHASE_EVIDENCE_VERSION } from './phase-contract'
 
 export const phaseIndexName = 'phase-index.json'
@@ -13,12 +15,14 @@ export const phaseArtifactDefinitions = [
   { name: 'source:css', segments: ['sources', 'global.css'] },
   { name: 'source:marker', segments: ['sources', 'hmr-marker.ts'] },
   { name: 'source:virtual', segments: ['sources', 'virtual.js'] },
+  { name: 'source:hmr-observation', segments: ['hmr-observation.json'] },
 ]
 
 export interface NativePhaseEntry {
   phase: NativeRuntimePhase['id']
   revision: NativeRuntimePhase['revision']
   artifacts: Array<{ name: string, sha256: string, byteLength: number }>
+  runtimeInstallation: NativeRuntimeIdentity & { evidence: 'runtime-installation', serializedManifestSha256: string }
   sourceArchive: {
     evidence: 'metro-input'
     servedBundle: 'not-captured'
@@ -34,6 +38,7 @@ export interface NativePhaseIndex {
   fixtureHash: string
   runId: string
   platform: ReactNativeReport['platform']
+  runtimeInstanceId: string
   phases: NativePhaseEntry[]
 }
 
@@ -42,11 +47,16 @@ export function nativePhaseDirectory(directory: string, phase: NativeRuntimePhas
 }
 
 export function createNativePhaseIndex(report: ReactNativeReport): NativePhaseIndex {
-  return { version: RN_PHASE_EVIDENCE_VERSION, fixtureHash: RN_FIXTURE_HASH, runId: report.runId, platform: report.platform, phases: [] }
+  validateRuntimeInstallation(report.runtimeInstallation)
+  return { version: RN_PHASE_EVIDENCE_VERSION, fixtureHash: RN_FIXTURE_HASH, runId: report.runId, platform: report.platform, runtimeInstanceId: report.runtimeInstallation.runtimeInstanceId, phases: [] }
 }
 
 /** 前缀只用于逐阶段写入；离线验收始终要求全部固定阶段且顺序唯一。 */
 export function validateNativePhaseIndex(index: NativePhaseIndex, report: ReactNativeReport, complete = true) {
+  validateRuntimeInstallation(report.runtimeInstallation)
+  if (index?.runtimeInstanceId !== report.runtimeInstallation.runtimeInstanceId) {
+    throw new Error('React Native 阶段运行实例改变，不能以整包刷新冒充 HMR')
+  }
   if (index?.version !== RN_PHASE_EVIDENCE_VERSION || index.fixtureHash !== RN_FIXTURE_HASH
     || index.runId !== report.runId || index.platform !== report.platform || !Array.isArray(index.phases)
     || (complete ? index.phases.length !== nativeRuntimePhases.length : index.phases.length > nativeRuntimePhases.length)) {
@@ -54,6 +64,10 @@ export function validateNativePhaseIndex(index: NativePhaseIndex, report: ReactN
   }
   for (const [position, entry] of index.phases.entries()) {
     const phase = nativeRuntimePhases[position]!
+    validateRuntimeIdentity(entry.runtimeInstallation)
+    if (entry.runtimeInstallation.evidence !== 'runtime-installation' || entry.runtimeInstallation.runtimeInstanceId !== index.runtimeInstanceId || !/^[a-f\d]{64}$/.test(entry.runtimeInstallation.serializedManifestSha256)) {
+      throw new Error(`React Native 阶段实际安装或运行实例证据缺失：${phase.id}`)
+    }
     if (entry?.phase !== phase.id || entry.revision !== phase.revision
       || !Array.isArray(entry.artifacts) || entry.artifacts.length !== phaseArtifactDefinitions.length
       || entry.artifacts.some((item, offset) => item?.name !== phaseArtifactDefinitions[offset]!.name || !/^[a-f\d]{64}$/.test(item.sha256) || !Number.isSafeInteger(item.byteLength) || item.byteLength <= 0)
@@ -73,5 +87,7 @@ export async function snapshotNativePhase(directory: string, phase: NativeRuntim
   }))
   const publication = JSON.parse(await readFile(path.join(root, 'encoding', 'manifest.ready'), 'utf8'))
   const input = JSON.parse(await readFile(path.join(root, 'encoding', 'static-evidence.json'), 'utf8'))
-  return { phase: phase.id, revision: phase.revision, artifacts, sourceArchive: { evidence: 'metro-input', servedBundle: 'not-captured', cssInput: input.generation.runtimeInput.options.input, markerInput: ['src', 'hmr-marker.ts'], virtualInput: publication.virtualPath, publicationRevision: publication.revision } }
+  const report = JSON.parse(await readFile(path.join(root, 'report.json'), 'utf8')) as ReactNativeReport
+  validateRuntimeInstallation(report.runtimeInstallation)
+  return { phase: phase.id, revision: phase.revision, artifacts, runtimeInstallation: { ...runtimeIdentity(report.runtimeInstallation), evidence: 'runtime-installation', serializedManifestSha256: createHash('sha256').update(report.runtimeInstallation.manifestJson).digest('hex') }, sourceArchive: { evidence: 'metro-input', servedBundle: 'not-captured', cssInput: input.generation.runtimeInput.options.input, markerInput: ['src', 'hmr-marker.ts'], virtualInput: publication.virtualPath, publicationRevision: publication.revision } }
 }

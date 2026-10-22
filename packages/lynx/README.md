@@ -4,6 +4,10 @@
 
 Tailwind CSS 4 integration for ReactLynx and Rspeedy. It invokes `weapp-tailwindcss` through Rspeedy's Rspack lifecycle to produce standard CSS for Lynx, preserves native ReactLynx `className`, and introduces no runtime stylesheet or JSX transform.
 
+This integration requires Node.js `^22.18.0 || >=24.11.0`, covering the adapter and its mandatory core dependency chain. Using the ReactLynx integration requires an installed and registered `@lynx-js/react-rsbuild-plugin` `>=0.12.4`; its optional peer installation flag only avoids installing another builder copy. Recursive CSS variables require Lynx runtime `>=3.6`, separately from the tested Engine version and bundle encoding target.
+
+Stable Tailwind theme tokens may become literals. Web color compatibility may also resolve application variables when lowering modern color expressions. Local, conditional, or priority overrides visible in the current CSS input prevent the affected variables from being treated as static. Overrides from separately compiled stylesheets or inline styles are outside this analysis and cannot change generated literals. Renaming a variable does not guarantee dynamic override behavior.
+
 ## Install
 
 ```bash
@@ -12,7 +16,7 @@ pnpm add @weapp-tailwindcss/lynx tailwindcss
 
 ## Versions and runtime requirements
 
-The current adapter version is `0.4.4`. The adapter requires Node.js `>=22.12.0`, with peer ranges of Rspeedy `>=0.16.0` and Tailwind CSS `>=4.0.0`. Its `weapp-tailwindcss` dependency is currently `5.6.3`, whose dependency chain requires Node.js `^22.18.0 || >=24.11.0`; consumers using the core package should follow the higher requirement.
+The current adapter version is `0.4.4`. The adapter requires Node.js `^22.18.0 || >=24.11.0`, with peer ranges of Rspeedy `>=0.16.0` and Tailwind CSS `>=4.0.0`. Its `weapp-tailwindcss` dependency is currently `5.6.3`, whose dependency chain requires Node.js `^22.18.0 || >=24.11.0`.
 
 The repository fixture pins `@lynx-js/rspeedy` `0.17.2`, `@lynx-js/react-rsbuild-plugin` `0.20.2`, `@lynx-js/react` `0.126.1`, Tailwind CSS `4.3.3`, Lynx Engine `4.0.1`, bundle `engineVersion: '3.9'`, and `@lynx-js/css-defines` `0.0.18`. These versions describe the checked-in regression matrix and do not replace compatibility validation in a consuming project.
 
@@ -41,6 +45,8 @@ Import Tailwind CSS 4 from the application CSS entry and point `@source` at the 
 
 `pluginLynxTailwindcss` fixes `platform` to `'lynx'`, sets `generator.target` to `'web'`, and enables Lynx-compatible output. Stable Tailwind theme tokens may be resolved at build time, while an application variable override visible in the same CSS keeps its `var()` dependency. Overrides from another stylesheet or an inline style are outside this static analysis guarantee.
 
+Author-defined `@property` registrations outside `--tw-*` retain their registration and `var()` dependency; global defaults cannot replace syntax, initial-value, or inheritance semantics. The target must still support registered properties. Preserving the input and verifying it in browsers do not establish Lynx native support.
+
 Recursive variables require Lynx runtime 3.6 or later and the exposed template API from ReactLynx plugin 0.12.4 or later. Older builders must be upgraded; native behavior is currently tested on the pinned 4.0.1 matrix.
 
 Before template encoding, the plugin defaults `enableCSSInlineVariables` to `true` through the ReactLynx builder’s exposed template hooks. This selects native recursive variable resolution for nested Tailwind utility variables while preserving explicit page configuration and dynamic CSS dependencies. Register `pluginReactLynx()` alongside this plugin; a missing template API is a build error. This does not change the target SDK or guarantee native support for each CSS property.
@@ -55,7 +61,7 @@ Enable structured Lynx encoder diagnostics when a build needs an auditable compa
 pluginLynxTailwindcss({
   diagnostics: {
     strict: true,
-    ignore: [{ property: 'padding-inline' }],
+    ignore: [{ property: 'padding-inline', reason: '业务明确接受该平台限制' }],
     onReport(report) {
       console.log(report)
     },
@@ -63,7 +69,9 @@ pluginLynxTailwindcss({
 })
 ```
 
-Reports include the category, selector, utility, property/value, source location, rejection reason, and replacement suggestion. Unmatched or unparseable log records remain `unknown`. Diagnostics consume CSS and encoder data from the build lifecycle; they do not scan `dist` or equate bundle inclusion with native support.
+Reports distinguish raw `encoder-log` records from silent removals found by `bundle-comparison`, with `bundled`, `encoder-rejected`, or `unknown` status. Matching requires unique selector branches, conditions, and declarations. Evidence comes from the emitted build-graph asset in `afterEmit` and binds the bundle, pinned decoder, and input CSS hashes. An ignore must select a selector/property; `reason` is an audit note. Ignored records and removal counts remain in the report.
+
+Original files and positions are provided only when the current build graph source map proves them; synthetic cssId and generated coordinates remain separate. Duplicate branches across entries, repeated declarations, unknown value normalization, incomplete CSS-section decoding, and ambiguous scoped CSS origins remain unproven. Diagnostics do not scan `dist` or equate bundle inclusion with native support.
 
 The current integration supports ReactLynx + Rspeedy and Tailwind CSS 4. It does not cover Rspeedy Web output, non-React Lynx frameworks, or React Native-style runtime style mapping.
 
@@ -105,6 +113,6 @@ pnpm e2e:lynx:update
 
 CI uses Android API 30 with a Pixel 2 x86_64 runner and iOS 18.5 with an iPhone 16 Pro simulator. Each CI run and committed report carries its own run identity and original artifacts.
 
-The committed native baseline records `verifiedAt: 2026-10-19T15:13:36.717Z` and `catalogHash: 2e3a1a60517c13de507d22ef8b4d209ffcdb86b2dfbf5bf7100df35c40dc3fec`. Its Android report is from `sdk_phone_x86_64` (Android 11/API 30, x86_64), and its iOS report is from `LynxCompatibility` (iPhone 16 Pro, iOS 18.5, arm64). A baseline update requires complete reports from both platforms for the same catalog and Engine version.
+The committed native baseline records `verifiedAt: 2026-10-21T18:49:50.413Z` and `catalogHash: ee4e7bd2d4b126dc4920a08e16878fe8cccf364c537ca4b025b821f188c85941`. Its Android report is from `sdk_gphone_arm64` (Android 11/API 30, arm64-v8a), and its iOS report is from `iPhone 17 Pro iOS 26.5` (iPhone 17 Pro, iOS 26.5, arm64). A baseline update requires complete reports from both platforms for the same catalog and Engine version.
 
 `--capture-only` is an explicitly targeted bundle capture mode that writes screenshots/video for inspection. It does not create or update native support reports and cannot replace CI or committed-baseline evidence.

@@ -1,4 +1,4 @@
-import { stripDeferredCssSourceMarkers } from './deferred-css-source'
+import { deferredCssSourceMarkerRanges, stripDeferredCssSourceMarkers } from './deferred-css-source'
 
 const BUNDLER_GENERATED_CSS_MARKER_RE = /\/\*!?\s*weapp-tailwindcss (?:gulp|vite|webpack)-generated-css(?:\s*:\s*[^\s*]+)?\s*\*\/\s*/i
 const BUNDLER_GENERATED_CSS_MARKER_GLOBAL_RE = /\/\*!?\s*weapp-tailwindcss (?:gulp|vite|webpack)-generated-css(?:\s*:\s*[^\s*]+)?\s*\*\/\s*/gi
@@ -29,6 +29,26 @@ export function stripBundlerGeneratedCssMarkers(source: string) {
     .replace(BUNDLER_GENERATED_CSS_MARKER_GLOBAL_RE, '')
     .replace(BUNDLER_GENERATED_CSS_END_MARKER_GLOBAL_RE, '')
     .replace(VITE_INTERNAL_CSS_MARKER_GLOBAL_RE, '')
+}
+
+/** 所有区间使用原始字符串坐标与右开边界，不能把清理后的偏移用于 source map。 */
+export function bundlerGeneratedCssMarkerRanges(source: string) {
+  const ranges = [
+    ...deferredCssSourceMarkerRanges(source),
+    ...[BUNDLER_GENERATED_CSS_MARKER_GLOBAL_RE, BUNDLER_GENERATED_CSS_END_MARKER_GLOBAL_RE, VITE_INTERNAL_CSS_MARKER_GLOBAL_RE]
+      .flatMap(pattern => [...source.matchAll(pattern)].map(match => ({ start: match.index!, end: match.index! + match[0].length }))),
+  ].sort((a, b) => a.start - b.start)
+  const result: typeof ranges = []
+  for (const range of ranges) {
+    const previous = result.at(-1)
+    if (previous && range.start <= previous.end) {
+      previous.end = Math.max(previous.end, range.end)
+    }
+    else {
+      result.push({ ...range })
+    }
+  }
+  return result
 }
 
 export function parseBundlerGeneratedCssMarkerBlocks(source: string): BundlerGeneratedCssMarkerBlock[] {

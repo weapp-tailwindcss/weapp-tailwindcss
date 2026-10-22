@@ -600,7 +600,7 @@ describe('plugin behaviours', () => {
     expect(unchanged.css).toContain('rgb(1, 2, 3)')
   })
 
-  it('downgrades dynamic color-mix alpha values instead of restoring color-mix', async () => {
+  it('preserves dynamic color-mix weights while lowering proven static mixes', async () => {
     const styleHandler = createStyleHandler({
       majorVersion: 4,
     })
@@ -614,15 +614,14 @@ describe('plugin behaviours', () => {
       }
     `
     const protectedSource = protectDynamicColorMixAlpha(source)
-    expect(protectedSource.css).toContain('background-color: __weapp_tw_color_mix_0__')
+    expect(protectedSource.css).toContain('background-color: color-mix(in oklab, var(--color-sky-500) var(--my-alpha-value), transparent)')
     expect(protectedSource.css).toContain('color: rgba(14, 165, 233, 0.5)')
     const result = await styleHandler(protectedSource.css)
     const css = protectedSource.restore(result.css)
 
-    expect(css).toContain('background-color: rgba(14, 165, 233, var(--my-alpha-value))')
+    expect(css).toContain('var(--my-alpha-value)')
+    expect(css).toContain('color-mix(')
     expect(css).toContain('color: rgba(14, 165, 233, 0.5)')
-    expect(css).not.toContain('color-mix')
-    expect(css).not.toContain('oklab')
   })
 
   it('downgrades static tailwind v4 color-mix alpha values to rgba', async () => {

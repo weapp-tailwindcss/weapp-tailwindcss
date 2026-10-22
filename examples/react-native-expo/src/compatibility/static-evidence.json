@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
-  "catalogHash": "ccd8a53672fd5b3fb2a8c3529b15e2715617be350cb62df98e8f3d2c0048aa9a",
-  "fixtureHash": "2559da5cb52b9cc408e59406d03b6c85bfa8d270a0dfb55699681b59b1a98f7d",
+  "catalogHash": "e02267ce217c78899898b6cefd7c46e962b99b442a5052fddcd74cc7500ed3e0",
+  "fixtureHash": "a4c36edbacc694de8299813c52499cd09b56c58fde96ce0feffb91a4ea34aaf3",
   "cases": [
     {
       "id": "layout-aspect",
@@ -2064,10 +2064,10 @@
     "stage": "static",
     "revision": "static",
     "platform": "web",
-    "catalogHash": "ccd8a53672fd5b3fb2a8c3529b15e2715617be350cb62df98e8f3d2c0048aa9a",
-    "fixtureHash": "2559da5cb52b9cc408e59406d03b6c85bfa8d270a0dfb55699681b59b1a98f7d",
+    "catalogHash": "e02267ce217c78899898b6cefd7c46e962b99b442a5052fddcd74cc7500ed3e0",
+    "fixtureHash": "a4c36edbacc694de8299813c52499cd09b56c58fde96ce0feffb91a4ea34aaf3",
     "runId": "static-generation",
-    "verifiedAt": "2026-10-19T11:54:43.708Z",
+    "verifiedAt": "2026-10-22T03:06:34.084Z",
     "versions": {
       "tailwindcss": "4.3.3",
       "expo": "54.0.37",

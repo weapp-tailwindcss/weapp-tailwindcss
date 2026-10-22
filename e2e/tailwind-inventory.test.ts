@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { arbitrarySyntaxCases, authoringFixtures, catalogIdentity, catalogIdentityPayload, compatibilityCandidateMap, compatibilityCases, cssAuthoringCapabilities, functionalValueProfiles, officialFeatureManifest, sourceSyntaxCases, tailwindParityCandidateCategories, tailwindParityCandidates } from '../tools/tailwindcss-test-catalog/src'
+import { arbitrarySyntaxCases, authoringFixtures, catalogIdentity, catalogIdentityPayload, compatibilityCandidateMap, compatibilityCases, cssAuthoringCapabilities, functionalValueProfiles, miniProgramRuntimeColorWeightLimit, officialFeatureManifest, sourceSyntaxCases, tailwindParityCandidateCategories, tailwindParityCandidates } from '../tools/tailwindcss-test-catalog/src'
 import { collectInventory, loadDefaultDesignSystem, loadInventory, serializeInventory, validateInventory } from './tailwind-capabilities/inventory'
 
 describe('Tailwind 上游完整能力清单', () => {
@@ -41,6 +41,18 @@ describe('Tailwind 上游完整能力清单', () => {
     }
     expect(new Set(Object.values(tailwindParityCandidateCategories).flat())).toEqual(new Set(tailwindParityCandidates))
     expect(JSON.parse(catalogIdentityPayload)).toEqual(catalogIdentity)
+  })
+
+  it('运行时颜色权重限制保持独立身份、原因和生成样本，不冒充宿主已验证', () => {
+    const limit = miniProgramRuntimeColorWeightLimit
+    expect(arbitrarySyntaxCases.find(item => item.id === 'variable-color-weight')?.candidate).toBe(limit.candidate)
+    expect(new Set(arbitrarySyntaxCases.map(item => item.id)).size).toBe(arbitrarySyntaxCases.length)
+    expect(compatibilityCases.some(item => item.id === limit.id)).toBe(false)
+    expect(limit).toMatchObject({ id: 'weapp-runtime-color-weight', target: 'weapp', support: 'unsupported', stage: 'encoding', runtimeEvidence: 'not-run' })
+    expect(limit.reason).not.toBe('')
+    expect(limit.regression).toBe('e2e/tailwind-mini-program-alpha-limit.test.ts')
+    expect(limit.reference).toBe('e2e/color-mix-alpha-browser.test.ts')
+    expect(JSON.parse(catalogIdentityPayload).miniProgramRuntimeColorWeightLimit).toEqual(limit)
   })
 
   it('important 修饰必须具有独立优先级预期，且完整共享身份保留该标志', async () => {

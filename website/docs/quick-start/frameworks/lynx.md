@@ -18,13 +18,19 @@ keywords:
 
 配置项、固定字段和 encoder 边界见 [ReactLynx / Rspeedy 配置参考](../../config/react-lynx)。
 
+本集成要求 Node.js `^22.18.0 || >=24.11.0`，覆盖适配器及其必装核心依赖链。启用 ReactLynx 集成时，必须安装并注册 `@lynx-js/react-rsbuild-plugin` `>=0.12.4`；该 peer 的 optional 安装标记只避免自动引入另一份构建器。递归 CSS 变量要求 Lynx runtime `>=3.6`，这与当前原生基线的 Engine 版本和 bundle 编码 target 是不同的要求。
+
+稳定的 Tailwind theme token 可以替换为字面值；Web 颜色兼容阶段也可能在降级现代颜色表达式时解析应用变量。当前 CSS 输入中可见的局部、条件或优先级覆盖会阻止相关变量静态化。跨文件 stylesheet 或 inline style 的覆盖不在分析范围内，不能改变已生成的字面值；变量改名也不能保证动态覆盖语义。
+
+全部 `@property` 注册、描述符与变量依赖保持原文；`--tw-*` 名称也可来自公开 theme 前缀，不能证明注册归属。默认值兼容仅匹配明确登记的完整签名，冲突或条件注册不合成全局默认；不以全局默认值模拟任意注册语义。目标端仍须支持注册属性；保留输入与浏览器对照不代表 Lynx 原生已支持该语义。
+
 ## 安装
 
 ```bash npm2yarn
 npm install -D @weapp-tailwindcss/lynx tailwindcss
 ```
 
-适配器 `@weapp-tailwindcss/lynx` 当前版本为 `0.4.4`，自身要求 Node.js `>=22.12.0`；核心 `weapp-tailwindcss` 当前为 `5.6.3`，依赖链要求 Node.js `^22.18.0 || >=24.11.0`。适配器 peer 依赖为 Rspeedy `>=0.16.0` 与 Tailwind CSS `>=4.0.0`，仅支持 ReactLynx + Rspeedy 构建目标。
+适配器 `@weapp-tailwindcss/lynx` 当前版本为 `0.4.4`，自身要求 Node.js `^22.18.0 || >=24.11.0`；核心 `weapp-tailwindcss` 当前为 `5.6.3`，依赖链要求 Node.js `^22.18.0 || >=24.11.0`。适配器 peer 依赖为 Rspeedy `>=0.16.0` 与 Tailwind CSS `>=4.0.0`，仅支持 ReactLynx + Rspeedy 构建目标。
 
 仓库示例与回归矩阵固定 Rspeedy `0.17.2`、ReactLynx 插件 `0.20.2`、ReactLynx runtime `0.126.1`、Tailwind CSS `4.3.3`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 与 `@lynx-js/css-defines` `0.0.18`。
 
@@ -108,7 +114,7 @@ pluginLynxTailwindcss({
 
 示例固定 Tailwind CSS `4.3.3`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 与 `@lynx-js/css-defines` `0.0.18`。catalog 使用代表值覆盖官方 utility 功能族、variant、指令和任意语法分支。
 
-静态 gate 分别记录 Tailwind 是否生成规则和 Lynx encoder 是否保留规则。CI 默认 runner 是 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro。每轮 CI 与已提交报告分别绑定自己的运行身份和原始工件。已提交基线 `verifiedAt` 为 `2026-10-19T15:13:36.717Z`、`catalogHash` 为 `2e3a1a60517c13de507d22ef8b4d209ffcdb86b2dfbf5bf7100df35c40dc3fec`，Android 为 `sdk_phone_x86_64`（Android 11/API 30，x86_64），iOS 为 `LynxCompatibility`（iPhone 16 Pro，iOS 18.5，arm64）。`css-defines` 不能替代运行时结论。
+静态 gate 分别记录 Tailwind 是否生成规则和 Lynx encoder 是否保留规则。CI 默认 runner 是 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro。每轮 CI 与已提交报告分别绑定自己的运行身份和原始工件。已提交基线 `verifiedAt` 为 `2026-10-21T18:49:50.413Z`、`catalogHash` 为 `ee4e7bd2d4b126dc4920a08e16878fe8cccf364c537ca4b025b821f188c85941`，Android 为 `sdk_gphone_arm64`（Android 11/API 30，arm64-v8a），iOS 为 `iPhone 17 Pro iOS 26.5`（iPhone 17 Pro，iOS 26.5，arm64）。`css-defines` 不能替代运行时结论。
 
 `--capture-only` 只在显式指定 bundle 和目标设备后采集截图/视频，不更新 native support report 或已提交基线。
 

@@ -38,7 +38,7 @@ export async function validateLynxCase(context: RunContext, raw: NativePlatformR
     measured = (await readResponsiveEvidence(raw, path.join(context.directory, 'native', 'crops', context.runId), { ...raw.evidence, runId: context.runId })).measured
   }
   else if (geometryValidators.has(contract.id) && contract.expectation.stage === 'runtime') {
-    measured = evaluateGeometry(compatibilityCases.find(item => item.id === contract.id)!, await readLynxGeometry(context, raw, contract.id))
+    measured = evaluateGeometry(compatibilityCases.find(item => item.id === contract.id)!, await readLynxGeometry(context, raw, contract.id), result.screenMetrics)
   }
   else if (pixelValidators.has(contract.id) && contract.expectation.stage === 'visual') {
     const images = await Promise.all(pixelValidators.get(contract.id)!.map(frame => readLynxFrame(context, raw, `${contract.id}-${frame}.png`)))

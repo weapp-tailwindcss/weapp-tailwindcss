@@ -2,6 +2,7 @@
 
 import { captureNativePhase } from './phase-evidence'
 import { EnvironmentBlockedError, environmentFailure } from '../tailwind-capabilities/environment-block'
+import { runStageProducer } from '../tailwind-capabilities/stage-receipt'
 import type { Server } from 'node:http'
 import type { NativeVisualProbe } from '../../examples/react-native-expo/src/visual-probes'
 import { createHash, randomUUID } from 'node:crypto'
@@ -24,15 +25,21 @@ import { createExpoNativeEnvironment } from './native-environment'
 import { reactNativeAndroidToolchain } from './native-toolchain'
 import { awaitNativeExitCompletion, canAcceptNativeReport, evaluateNativeWait } from './native-wait'
 import { stopOwnedProcess } from './process'
-import { createRuntimeArtifacts } from './runtime-artifacts'
+import { createRuntimeArtifacts, runtimeArtifactIdentity } from './runtime-artifacts'
 import { validateReactNativeReport } from './reports'
 import { reactNativeVersions, RN_CATALOG_HASH, RN_FIXTURE_HASH } from './catalog'
 import { captureNativePair, validateNativeArtifacts } from './pair-evidence'
+import { closeCaptureReporter, publishAfterCapture } from './capture-cleanup'
+import { createNativeDiagnosticWriter } from './failure-diagnostics'
 import { createSemanticReporter } from './semantic-reporter'
 import { executeIosCommand } from './ios-command'
 import { launchIosRuntime } from './ios-runtime'
+import { readRuntimePublication } from './installation-evidence'
+import { prepareMetroHttpObservation } from './http-observation'
+import type { HmrObservationSnapshot } from '../../examples/react-native-expo/src/compatibility/hmr-observation.cjs'
+import { archiveHmrSnapshot, prepareMetroHmrObservation, validateNativeHmrObservations } from './hmr-observation/evidence'
 
-interface ReportEnvelope { hmrMarker: string, cssHmrColor: string, report: ReactNativeReport, visualProbes: NativeVisualProbe[] }
+interface ReportEnvelope { hmrMarker: string, cssHmrColor: string, report: ReactNativeReport, visualProbes: NativeVisualProbe[], hmrObservation: HmrObservationSnapshot }
 type NativeProcess = ReturnType<typeof startExpo>
 
 interface ReportWaitOptions {
@@ -49,7 +56,8 @@ if (platform !== 'android' && platform !== 'ios') { throw new Error('Usage: tsx 
 
 const repoRoot = path.resolve(import.meta.dirname, '../..')
 const exampleRoot = path.resolve(repoRoot, 'examples/react-native-expo')
-const artifactSession = await createRuntimeArtifacts(path.resolve(repoRoot, `e2e/.artifacts/react-native-${platform}`))
+const runId = process.env['TAILWIND_E2E_RUN_ID'] ?? randomUUID()
+const artifactSession = await createRuntimeArtifacts(path.resolve(repoRoot, `e2e/.artifacts/react-native-${platform}`), runtimeArtifactIdentity('react-native', `react-native-${platform}`, runId))
 const artifacts = artifactSession.directory
 const reportsDir = path.resolve(repoRoot, 'e2e/react-native/reports/v2')
 const markerFile = path.resolve(exampleRoot, 'src/hmr-marker.ts')
@@ -57,7 +65,6 @@ const cssFile = path.resolve(exampleRoot, 'global.css')
 const metroLogPath = path.resolve(artifacts, 'metro.log')
 const reports: ReportEnvelope[] = []
 const updateBaseline = process.env['RN_UPDATE_BASELINE'] === '1'
-const runId = process.env['TAILWIND_E2E_RUN_ID'] ?? randomUUID()
 const clientToken = randomUUID()
 let semanticDevice = ''
 const semanticReporter = createSemanticReporter<ReportEnvelope>({ runId, catalogHash: RN_CATALOG_HASH, fixtureHash: RN_FIXTURE_HASH, versions: reactNativeVersions() }, async (pair, cancelSignal) => {
@@ -69,10 +76,15 @@ const semanticReporter = createSemanticReporter<ReportEnvelope>({ runId, catalog
   return captureNativePair(pair, { runId, artifacts, cancelSignal, capture: name => capture(name, semanticDevice, cancelSignal) })
 }, {
   clientToken,
+  diagnostic: createNativeDiagnosticWriter(artifacts),
   revision: 'rn-hmr-baseline-10b981',
   platform,
-  complete: async (envelope) => {
-    await fs.writeFile(path.join(artifacts, 'report.json'), `${JSON.stringify(envelope.report, null, 2)}\n`, 'utf8')
+  publication: signal => readRuntimePublication(exampleRoot, signal),
+  complete: async (envelope, signal) => {
+    await archiveHmrSnapshot(artifacts, envelope.report, envelope.hmrObservation)
+    signal.throwIfAborted()
+    await fs.writeFile(path.join(artifacts, 'report.json'), `${JSON.stringify(envelope.report, null, 2)}\n`, { encoding: 'utf8', signal })
+    signal.throwIfAborted()
     reports.push(envelope)
   },
 })
@@ -92,10 +104,7 @@ function startReporter(host: string) {
       resolve(typeof address === 'object' && address ? address.port : 0)
     })
   })
-  return { ready, close: () => new Promise<void>((resolve, reject) => {
-    if (!server.listening) { resolve(); return }
-    server.close(error => error ? reject(error) : resolve())
-  }) }
+  return { ready, close: () => closeCaptureReporter(server) }
 }
 
 function startExpo(args: string[], env: NodeJS.ProcessEnv, log: Awaited<ReturnType<typeof fs.open>>) {
@@ -209,7 +218,7 @@ async function capture(name: string, device: string, cancelSignal?: AbortSignal)
   if (platform === 'android') {
     const result = await execa('adb', ['-s', device, 'exec-out', 'screencap', '-p'], { encoding: 'buffer', cancelSignal, forceKillAfterDelay: 1_000 })
     cancelSignal?.throwIfAborted()
-    await fs.writeFile(output, result.stdout)
+    await fs.writeFile(output, result.stdout, { signal: cancelSignal })
   }
   else {
     await execa('xcrun', ['simctl', 'io', device, 'screenshot', output], { cancelSignal, forceKillAfterDelay: 1_000 })
@@ -366,10 +375,10 @@ function withNativeEnvironment(report: ReactNativeReport, environment: Partial<R
   return { ...report, environment: { ...report.environment, ...environment } }
 }
 
+let restoreAfterCapture = async () => {}
+
 async function main() {
   const toolchain = platform === 'android' ? await reactNativeAndroidToolchain() : undefined
-  await fs.rm(artifacts, { recursive: true, force: true })
-  await fs.mkdir(artifacts, { recursive: true })
   if (updateBaseline) { await fs.mkdir(reportsDir, { recursive: true }) }
   const originalMarker = await fs.readFile(markerFile, 'utf8')
   const originalCss = await fs.readFile(cssFile, 'utf8')
@@ -388,9 +397,19 @@ async function main() {
   let metroLogFile: Awaited<ReturnType<typeof fs.open>> | undefined
   let metro: NativeProcess | undefined
   let run: NativeProcess | undefined
+  let httpObservation: Awaited<ReturnType<typeof prepareMetroHttpObservation>> | undefined
   let completed = false
   let markerChanged = false
   let cssChanged = false
+  restoreAfterCapture = () => runWithCleanup(async () => {
+    await runWithCleanup(async () => {
+      if (markerChanged) { await fs.writeFile(markerFile, originalMarker, 'utf8') }
+    }, async () => {
+      if (cssChanged) { await fs.writeFile(cssFile, originalCss, 'utf8') }
+    })
+  }, async () => {
+    await androidEnvironment?.restore()
+  })
   await runWithCleanup(async () => {
     const port = await reporter.ready
     const reportUrl = `http://${runtimeHost}:${port}`
@@ -414,7 +433,10 @@ async function main() {
     if (javaHome) { env['PATH'] = `${path.join(javaHome, 'bin')}${path.delimiter}${process.env['PATH'] ?? ''}` }
     // iOS Simulator 与宿主机共享网络栈时使用 localhost，避免 CI 虚拟网卡地址导致 Metro 连接失败。
     const metroHost = platform === 'ios' && runtimeHost !== '127.0.0.1' ? '--lan' : '--localhost'
-    const activeMetro = metro = startExpo(['--filter', '@weapp-tailwindcss/example-react-native-expo', 'exec', 'expo', 'start', metroHost, '--port', '8081', '--clear'], env, metroLogFile)
+    httpObservation = await prepareMetroHttpObservation(repoRoot, artifacts, reactNativeVersions())
+    const session = JSON.parse(await fs.readFile(path.join(artifacts, 'runtime-session.json'), 'utf8'))
+    const hmrEnvironment = await prepareMetroHmrObservation(repoRoot, artifacts, { runId: session.runId, invocationId: session.invocationId })
+    const activeMetro = metro = startExpo(['--filter', '@weapp-tailwindcss/example-react-native-expo', 'exec', 'expo', 'start', metroHost, '--port', '8081', '--clear'], { ...env, ...httpObservation.environment, ...hmrEnvironment }, metroLogFile)
     await waitForMetro(activeMetro)
     const runArgs = platform === 'ios'
       ? ['exec', 'tsx', 'e2e/react-native/ios-build-cli.ts', device, `http://${runtimeHost}:8081`, artifacts]
@@ -465,6 +487,7 @@ async function main() {
     validateReactNativeReport(cssHmrReport, platform, { runId, revision: 'rn-hmr-updated-f59e0b' })
     await validateNativeArtifacts(cssHmrReport, artifacts)
     await captureNativePhase(exampleRoot, artifacts, cssHmrReport)
+    await validateNativeHmrObservations(artifacts, platform)
     if (platform === 'android') { await assertAndroidMarker(device, 'rn-hmr-updated') }
     const afterScreenshot = await captureVerified('runtime-after.png', device, cssHmr)
     const beforeHash = await fileHash(beforeScreenshot)
@@ -494,19 +517,21 @@ async function main() {
       catch (error) { errors.push(error) }
     }
     await attempt(() => stopAndroidDialogGuard?.())
-    if (!completed && metro) { await attempt(() => captureFailureDiagnostics(device, androidEnvironment?.receipt.logcat.since)) }
-    if (markerChanged) { await attempt(() => fs.writeFile(markerFile, originalMarker, 'utf8')) }
-    if (cssChanged) { await attempt(() => fs.writeFile(cssFile, originalCss, 'utf8')) }
+    semanticReporter.stop()
+    await attempt(() => semanticReporter.drain())
+    if (!semanticReporter.capturePending()) {
+      if (!completed && metro) { await attempt(() => captureFailureDiagnostics(device, androidEnvironment?.receipt.logcat.since)) }
+    }
     await attempt(() => stopOwnedProcess(run))
     await attempt(() => run?.catch(() => undefined))
+    if (metro && httpObservation) { await attempt(() => httpObservation.drain()) }
     await attempt(() => stopOwnedProcess(metro))
     await attempt(() => metro?.catch(() => undefined))
     await attempt(() => logFile?.close())
     await attempt(() => metroLogFile?.close())
     await attempt(() => reporter.close())
-    await attempt(() => androidEnvironment?.restore())
     if (errors.length) { throw new AggregateError(errors, 'React Native 运行收尾失败') }
   })
 }
 
-await runWithCleanup(main, () => artifactSession.publish())
+await runStageProducer('react-native', () => runWithCleanup(main, () => publishAfterCapture(artifactSession, semanticReporter, restoreAfterCapture)))

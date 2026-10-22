@@ -2,6 +2,12 @@ import type { NativeCompilerWarning, NativeStyleRule } from '@weapp-tailwindcss/
 
 export type { CompileNativeStylesheetOptions, NativeCompilerWarning, NativePlatform, NativeStyleRule } from '@weapp-tailwindcss/postcss/native'
 
+/** 同一轮 Metro 发布的便携身份，不包含构建机器的文件路径。 */
+export interface NativeManifestPublication {
+  revision: string
+  manifestSha256: string
+}
+
 export interface NativeStyleManifest {
   version: 1
   classSet: string[]

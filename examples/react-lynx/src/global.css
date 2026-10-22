@@ -1,12 +1,14 @@
 @layer theme, base, components, utilities;
 @import './styles/grid-fixtures.css' layer(components);
 @import './styles/flex-fixtures.css' layer(components);
+@import './styles/fixed-size-fixtures.css' layer(components);
 @import './styles/dark-fixtures.css' layer(components);
 @import './styles/responsive-fixtures.css' layer(components);
 @import './styles/overflow-fixtures.css' layer(components);
 @import './styles/structural-fixtures.css' layer(components);
 @import './styles/flow-fixtures.css' layer(components);
 @import './styles/media-fixtures.css' layer(components);
+@import './styles/theme-overrides-fixtures.css' layer(components);
 @import './styles/important-fixtures.css' layer(utilities);
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities) source(none);
@@ -19,6 +21,7 @@
 
 @theme {
   --color-lynx-brand: #0ea5e9;
+  --color-brand: #f00;
 }
 
 @utility content-auto {

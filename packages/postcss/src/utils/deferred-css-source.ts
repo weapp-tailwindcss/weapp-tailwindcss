@@ -21,3 +21,8 @@ export function readDeferredCssSourceMarkers(css: string) {
 export function stripDeferredCssSourceMarkers(css: string) {
   return css.replace(marker, '')
 }
+
+/** 返回原始文本坐标，供构建器保留 Source 映射地删除元数据。 */
+export function deferredCssSourceMarkerRanges(css: string) {
+  return [...css.matchAll(marker)].map(match => ({ start: match.index!, end: match.index! + match[0].length }))
+}

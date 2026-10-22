@@ -1,6 +1,6 @@
 import type { BuildOutputCase } from './types'
 
-export const rawTailwindDirectiveRE = /@(import\s+["']tailwindcss|tailwind|apply|theme|source)\b/
+export const rawTailwindDirectiveRE = /@(import\s+["']tailwindcss|tailwind|apply|theme|source|utility|variant|custom-variant|reference|config|plugin)\b/
 
 const MINI_PROGRAM_PLATFORM_NAMES = new Set([
   'ali',

@@ -47,22 +47,26 @@ async function readMaybeDirectory(
   target: string,
   options: {
     extensions?: RegExp | undefined
+    fileFilter?: (file: string) => boolean
   } = {},
 ): Promise<ReadOutputResult> {
   const absolute = path.resolve(root, target)
   const stat = await fs.stat(absolute)
   if (stat.isFile()) {
+    if (options.fileFilter && !options.fileFilter(absolute)) {
+      return { files: [], text: '' }
+    }
     return {
       files: [absolute],
       text: await fs.readFile(absolute, 'utf8'),
     }
   }
 
-  const files = await fg('**/*', {
+  const files = (await fg('**/*', {
     absolute: true,
     cwd: absolute,
     onlyFiles: true,
-  })
+  })).filter(file => !options.fileFilter || options.fileFilter(file))
   const texts: string[] = []
   const extensions = options.extensions ?? textExtensions
   for (const file of files.sort()) {
@@ -144,14 +148,23 @@ export async function verifyBuildOutputCase(item: BuildOutputCase) {
     await runBuildCase(item, projectRoot, repoRoot)
   }
 
+  await assertBuildOutputCase(item, projectRoot)
+  return { outputRoot, provider: 'command' as const }
+}
+
+/** 构建与只读断言共享同一合同；IDE入口传入重定位后的明确产物路径。 */
+export async function assertBuildOutputCase(item: BuildOutputCase, projectRoot: string) {
+  const outputRoot = path.resolve(projectRoot, item.outputDir)
   expect(await pathExists(outputRoot), `${item.name} should emit ${item.outputDir}`).toBe(true)
 
   for (const file of item.requiredFiles) {
     expect(await pathExists(path.resolve(projectRoot, file)), `${item.name} should emit ${file}`).toBe(true)
   }
 
+  const expectedStyleExtensions = new Set(item.styleFileExtensions?.map(extension => extension.toLowerCase()))
   const styleOutputs = await Promise.all(item.styleFiles.map(file => readMaybeDirectory(projectRoot, file, {
     extensions: styleExtensions,
+    fileFilter: file => styleExtensions.test(file) && (!expectedStyleExtensions.size || expectedStyleExtensions.has(path.extname(file).toLowerCase())),
   })))
   const styleFiles = styleOutputs.flatMap(output => output.files)
   const styles = styleOutputs.map(output => output.text).join('\n')

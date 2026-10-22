@@ -4,6 +4,7 @@ import { MiniProgram, Launcher as RawLauncher } from '@weapp-vite/miniprogram-au
 import { runWithCleanup } from '../e2e-preflight/cleanup'
 import { availablePort } from '../e2e-preflight/probes/port'
 import { closeWechatProject } from '../wechat-project-cleanup'
+import { WechatEnvironmentError } from './errors'
 import { assertWechatLogin, existingWechatService, wechatRequest } from './service'
 
 const guarded = new WeakSet<MiniProgram>()
@@ -59,7 +60,7 @@ export class Launcher {
     const remaining = () => {
       const ms = deadline - Date.now()
       if (ms <= 0) {
-        throw new Error('微信 IDE 本轮自动化连接超时；不启动或重启 IDE。')
+        throw new WechatEnvironmentError('微信 IDE 本轮自动化连接超时；不启动或重启 IDE。')
       }
       return ms
     }
@@ -70,7 +71,7 @@ export class Launcher {
     let mini: MiniProgram | undefined
     try {
       if (result.autoPort !== port) {
-        throw new Error('微信 IDE 自动化端口与本轮请求不一致，拒绝连接旧会话。')
+        throw new WechatEnvironmentError('微信 IDE 自动化端口与本轮请求不一致，拒绝连接旧会话。')
       }
       await assertWechatLogin(service.httpPort, remaining())
       while (!mini) {
@@ -81,12 +82,20 @@ export class Launcher {
         catch (error) {
           // 上游握手与断连同时失败会聚合异常，资源未确认释放时禁止再连。
           if (error instanceof AggregateError || Date.now() >= deadline) {
-            throw error
+            throw new WechatEnvironmentError('本轮微信自动化握手或连接资源未确认，停止后续项目请求', { cause: error })
           }
           await delay(Math.min(100, remaining()))
         }
       }
-      await mini.waitForAppReady(remaining())
+      try {
+        await mini.waitForAppReady(remaining())
+      }
+      catch (error) {
+        if (error instanceof WechatEnvironmentError) {
+          throw error
+        }
+        throw new WechatEnvironmentError('微信 App 域就绪未确认；停止本轮请求，保留登录态并重新预检。', { cause: error })
+      }
       remaining()
       return mini
     }

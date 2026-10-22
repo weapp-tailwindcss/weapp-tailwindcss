@@ -1,4 +1,11 @@
+vi.mock('@weapp-tailwindcss/lynx/decoder', () => ({
+  decodeLynxBundle: vi.fn(async () => ({ css: { text: '.control { padding-left: 7.5px; }' } })),
+  lynxDecoderIdentity: () => 'unit-test-decoder',
+}))
+
+import { createHash } from 'node:crypto'
 import { PLUGIN_NAME, pluginLynxTailwindcss } from '../src/index'
+import { decodeLynxBundle } from '@weapp-tailwindcss/lynx/decoder'
 
 function createApi() {
   let bundlerHandler: ((chain: any) => any) | undefined
@@ -74,13 +81,13 @@ describe('pluginLynxTailwindcss', () => {
     }
   })
 
-  it('在 beforeEmit 生成结构化诊断，并按 strict 选项报告业务 encoder 删除', () => {
+  it('在 beforeEmit 解码实际字节并按 strict 选项报告确证的业务删除', async () => {
     const { api, getBundlerHandler } = createApi()
     const beforeEmit = vi.fn()
     const templatePlugin = {
       getLynxTemplatePluginHooks: vi.fn(() => ({
         beforeEncode: { tap: vi.fn() },
-        beforeEmit: { tap: beforeEmit },
+        beforeEmit: { tapPromise: beforeEmit },
       })),
     }
     api.useExposed.mockReturnValue({ LynxTemplatePlugin: templatePlugin })
@@ -91,8 +98,16 @@ describe('pluginLynxTailwindcss', () => {
     const [Plugin, [host, options]] = use.mock.calls[1]!
     expect(options).toMatchObject({ strict: true })
     const compilation = { warnings: [], errors: [] }
-    new Plugin(host, options).apply({ hooks: { thisCompilation: { tap: (_name: string, callback: (value: unknown) => void) => callback(compilation) } } })
+    const afterEmit = vi.fn()
+    const emitted = new Uint8Array([4, 5, 6])
+    Object.assign(compilation, { getAsset: () => ({ source: { source: () => emitted } }) })
+    new Plugin(host, options).apply({ hooks: {
+      afterEmit: { tapPromise: afterEmit },
+      thisCompilation: { tap: (_name: string, callback: (value: unknown) => void) => callback(compilation) },
+    } })
     const args = {
+      template: new Uint8Array([1, 2, 3]),
+      outputName: 'main.lynx.bundle',
       finalEncodeOptions: {
         compilerOptions: { targetSdkVersion: '3.9', engineVersion: '4.0.1' },
         css: {
@@ -107,9 +122,12 @@ describe('pluginLynxTailwindcss', () => {
       },
       cssDiagnostics: JSON.stringify([{ type: 'property', name: 'padding-inline', line: 1, column: 20 }]),
     }
-    const result = beforeEmit.mock.calls[0]![1](args)
-
+    const result = await beforeEmit.mock.calls[0]![1](args)
     expect(result).toBe(args)
+    expect(report).not.toHaveBeenCalled()
+    await afterEmit.mock.calls[0]![1](compilation)
+    expect(decodeLynxBundle).toHaveBeenLastCalledWith(emitted)
+    expect(report.mock.calls[0]?.[0].evidence.bundleSha256).toBe(createHash('sha256').update(emitted).digest('hex'))
     expect(report).toHaveBeenCalledWith(expect.objectContaining({ counts: { generated: 1, encoderRejected: 1, unknown: 0 } }))
     expect(compilation.errors).toHaveLength(1)
     expect(compilation.warnings).toHaveLength(0)

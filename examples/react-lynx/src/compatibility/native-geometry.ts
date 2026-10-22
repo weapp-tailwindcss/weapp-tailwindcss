@@ -1,8 +1,10 @@
+import type { NativeScreenMetrics } from './fixed-size-contract'
 import type { NativeArtifactReceipt, NativeGeometryEvidence, NativeRect } from './types'
 
 export interface NativeGeometryCapture {
   geometry: NativeGeometryEvidence
   artifacts: NativeArtifactReceipt[]
+  screenMetrics?: NativeScreenMetrics
 }
 
 export const geometryFields = ['probe', 'control', 'probeContainer', 'controlContainer', 'probeChild', 'controlChild'] as const

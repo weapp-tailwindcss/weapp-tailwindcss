@@ -12,7 +12,7 @@ describe('processed CSS ownership', () => {
 
   it('reuses the parsed scoped stylesheet when removing trailing source comments', () => {
     const parse = vi.spyOn(postcss, 'parse')
-    const css = '/*! tailwindcss v4 */ /* tokens: generated */ *[data-v-a]{margin:0} /* tokens: stale */'
+    const css = '/*! tailwindcss v4 */ /* tokens: generated <= <tailwind generated> */ *[data-v-a]{margin:0} /* tokens: stale <= src/stale.vue */'
     expect(removeScopedTailwindPreflightCss(css)).toBe('')
     expect(parse).toHaveBeenCalledTimes(1)
     expect(removeCssCoveredByRootStyleSources(' /* only a comment */ ', ['.a{color:red}'])).toBe('')
@@ -49,6 +49,7 @@ describe('processed CSS ownership', () => {
     expect(isCssImportOnly('@import "./a.css";.a{}')).toBe(false)
     expect(isCssImportOnly('@import "./a.css";.a{')).toBe(false)
     expect(removeCommentOnlyAtRules('@media screen{/* marker */}.a{color:red}')).toBe('.a{color:red}')
+    expect(removeCommentOnlyAtRules('@media screen{@supports(display:block){}}.a{color:red}')).toBe('.a{color:red}')
     const source = '@theme{--spacing:1rpx}@layer components{.a{color:red}}'
     expect(removeTailwindEntryDirectivesFromCss(source, true)).toBe('@layer components{.a{color:red}}')
   })

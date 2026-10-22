@@ -859,11 +859,11 @@ exports[`tailwindcss v4 > v4-default.css 1`] = `
   }
   ::-webkit-input-placeholder {
     opacity: 1;
-    color: currentColor;
+    color: color-mix(in oklab, currentColor 50%, transparent);
   }
   ::placeholder {
     opacity: 1;
-    color: currentColor;
+    color: color-mix(in oklab, currentColor 50%, transparent);
   }
   textarea {
     resize: vertical;

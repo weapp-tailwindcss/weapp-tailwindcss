@@ -13,6 +13,7 @@ import { createScopedGeneratorRuntime } from '../../../vite/generate-bundle/scop
 import { isWebpackCssLoaderRuntimeSource } from '../../shared/css-loader-runtime'
 import { createRuntimeAwareCssHash } from '../shared'
 import { finalizeWebpackGeneratedCssResult } from './generated-css-result'
+import { preserveLoaderProcessedWebCssAsset } from './loader-css-source'
 
 import {
   collectWebpackBareSelectorUserCss,
@@ -74,6 +75,10 @@ export async function processWebpackGeneratedCssAsset(element: any, context: Web
     `${createRuntimeSetHash(getGeneratorRuntimeSet())}:${runtimeAffectingSourceHash}:${webpackSourceCandidates?.signatureHash ?? 'source-candidates:0'}:${webpackSourceCandidateValueSignature}:${cssSourceTraceSignature}:${cssSourceHash}:compiler-dependencies:${compilationDependencyRevision}`,
   )
   await enqueueTask(async () => {
+    await runtimeState.readyPromise
+    if (await preserveLoaderProcessedWebCssAsset(file, originalSource, context)) {
+      return
+    }
     await processCachedTask({
       cache: compilerOptions.cache,
       cacheKey,
@@ -405,6 +410,7 @@ export async function processWebpackGeneratedCssAsset(element: any, context: Web
               },
             }
         const generatorOptions = {
+          deferWebCssPropertyFallback: (compilerOptions.cssOptions?.platform ?? compilerOptions.platform) !== 'lynx',
           opts: scopedGeneratorCompilerOptions,
           runtimeState,
           runtime: scopedGeneratorRuntimeSet,

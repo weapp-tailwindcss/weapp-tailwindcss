@@ -7,7 +7,7 @@ Entry: uni-app-vite-tailwindcss-v4/dist/build/mp-weixin/app.wxss
 
 | Bytes | Selectors | @supports | :hover | Tailwind banner | System dark media | Manual dark selector | Raw arbitrary selector | Weapp escaped arbitrary selector |
 | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |
-| 53036 | 214 | false | false | false | true | true | false | true |
+| 53689 | 214 | false | false | false | true | true | false | true |
 
 ## Generator CSS Files
 
@@ -27,10 +27,10 @@ Entry: uni-app-vite-tailwindcss-v4/dist/build/mp-weixin/app.wxss
 | File | Artifact | Bytes | Selectors | @supports | :hover | Tailwind banner | System dark media | Manual dark selector | Raw arbitrary selector | Weapp escaped arbitrary selector |
 | --- | --- | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |
 | `app.wxss` | [artifacts/app.wxss](artifacts/app.wxss) | 23 | 0 | false | false | false | false | false | false | false |
-| `main.wxss` | [artifacts/main.wxss](artifacts/main.wxss) | 28691 | 187 | false | false | false | true | true | false | true |
-| `components/HelloWorld.wxss` | [artifacts/components__HelloWorld.wxss](artifacts/components__HelloWorld.wxss) | 480 | 1 | false | false | false | false | false | false | false |
-| `pages-order/pages/home/home.wxss` | [artifacts/pages-order__pages__home__home.wxss](artifacts/pages-order__pages__home__home.wxss) | 9371 | 51 | false | false | false | false | false | false | true |
-| `pages-order/pages/user/user.wxss` | [artifacts/pages-order__pages__user__user.wxss](artifacts/pages-order__pages__user__user.wxss) | 9371 | 51 | false | false | false | false | false | false | true |
-| `pages/index/index.wxss` | [artifacts/pages__index__index.wxss](artifacts/pages__index__index.wxss) | 1231 | 5 | false | false | false | false | false | false | true |
-| `sub-independent/pages/index.wxss` | [artifacts/sub-independent__pages__index.wxss](artifacts/sub-independent__pages__index.wxss) | 1910 | 8 | false | false | false | false | false | false | true |
-| `sub-normal/pages/index.wxss` | [artifacts/sub-normal__pages__index.wxss](artifacts/sub-normal__pages__index.wxss) | 1875 | 8 | false | false | false | false | false | false | true |
+| `main.wxss` | [artifacts/main.wxss](artifacts/main.wxss) | 29134 | 187 | false | false | false | true | true | false | true |
+| `components/HelloWorld.wxss` | [artifacts/components__HelloWorld.wxss](artifacts/components__HelloWorld.wxss) | 481 | 1 | false | false | false | false | false | false | false |
+| `pages-order/pages/home/home.wxss` | [artifacts/pages-order__pages__home__home.wxss](artifacts/pages-order__pages__home__home.wxss) | 9507 | 51 | false | false | false | false | false | false | true |
+| `pages-order/pages/user/user.wxss` | [artifacts/pages-order__pages__user__user.wxss](artifacts/pages-order__pages__user__user.wxss) | 9507 | 51 | false | false | false | false | false | false | true |
+| `pages/index/index.wxss` | [artifacts/pages__index__index.wxss](artifacts/pages__index__index.wxss) | 1236 | 5 | false | false | false | false | false | false | true |
+| `sub-independent/pages/index.wxss` | [artifacts/sub-independent__pages__index.wxss](artifacts/sub-independent__pages__index.wxss) | 1918 | 8 | false | false | false | false | false | false | true |
+| `sub-normal/pages/index.wxss` | [artifacts/sub-normal__pages__index.wxss](artifacts/sub-normal__pages__index.wxss) | 1883 | 8 | false | false | false | false | false | false | true |

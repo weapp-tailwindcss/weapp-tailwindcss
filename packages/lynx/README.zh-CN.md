@@ -4,6 +4,10 @@
 
 ReactLynx + Rspeedy 的 Tailwind CSS v4 集成。它通过 Rspeedy 的 Rspack 生命周期调用 `weapp-tailwindcss` 生成 Lynx 可消费的普通 CSS，保留 ReactLynx 原生 `className`，不引入运行时样式表或 JSX 转换。
 
+本集成要求 Node.js `^22.18.0 || >=24.11.0`，覆盖适配器及其必装核心依赖链。启用 ReactLynx 集成时，必须安装并注册 `@lynx-js/react-rsbuild-plugin` `>=0.12.4`；该 peer 的 optional 安装标记只避免自动引入另一份构建器。递归 CSS 变量要求 Lynx runtime `>=3.6`，这与当前原生基线的 Engine 版本和 bundle 编码 target 是不同的要求。
+
+稳定的 Tailwind theme token 可以替换为字面值；Web 颜色兼容阶段也可能在降级现代颜色表达式时解析应用变量。当前 CSS 输入中可见的局部、条件或优先级覆盖会阻止相关变量静态化。跨文件 stylesheet 或 inline style 的覆盖不在分析范围内，不能改变已生成的字面值；变量改名也不能保证动态覆盖语义。
+
 ## 安装
 
 ```bash
@@ -12,7 +16,7 @@ pnpm add @weapp-tailwindcss/lynx tailwindcss
 
 ## 版本与运行要求
 
-当前适配器版本为 `0.4.4`，适配器自身要求 Node.js `>=22.12.0`，peer 依赖为 Rspeedy `>=0.16.0` 与 Tailwind CSS `>=4.0.0`。适配器依赖的 `weapp-tailwindcss` 当前为 `5.6.3`，其依赖链要求 Node.js `^22.18.0 || >=24.11.0`；使用核心依赖时应按较高要求准备 Node.js。
+当前适配器版本为 `0.4.4`，适配器自身要求 Node.js `^22.18.0 || >=24.11.0`，peer 依赖为 Rspeedy `>=0.16.0` 与 Tailwind CSS `>=4.0.0`。适配器依赖的 `weapp-tailwindcss` 当前为 `5.6.3`，其依赖链要求 Node.js `^22.18.0 || >=24.11.0`。
 
 仓库示例固定 `@lynx-js/rspeedy` `0.17.2`、`@lynx-js/react-rsbuild-plugin` `0.20.2`、`@lynx-js/react` `0.126.1`、Tailwind CSS `4.3.3`、Lynx Engine `4.0.1`、bundle `engineVersion: '3.9'` 和 `@lynx-js/css-defines` `0.0.18`。这些是本仓库回归矩阵的版本，不会替代消费项目自己的兼容性验证。
 
@@ -42,6 +46,8 @@ export default defineConfig({
 
 `pluginLynxTailwindcss` 固定使用 `platform: 'lynx'`、`generator.target: 'web'` 与 Lynx 原生兼容输出。稳定的 Tailwind theme token 可能在构建期静态化，确保 `bg-sky-500`、`p-6`、`text-lg` 等标准 utility 能进入 Lynx 原生样式表；同一 CSS 中可见的应用变量覆盖会保留 `var()` 依赖。跨文件 stylesheet 或 inline style 的覆盖关系不在该静态分析保证范围内。
 
+作者自定义 `@property`（非 `--tw-*`）保留注册与 `var()`，不会用全局默认值替代语法、初值或继承语义。目标端仍须支持注册属性；保留输入与浏览器对照不代表 Lynx 原生已支持该语义。
+
 递归变量路径要求 Lynx runtime 3.6 以上，以及 ReactLynx 插件 0.12.4 以上公开的模板 API；更旧的构建器需要升级。源码支持边界不等于设备验收，当前原生测试仍使用固定 4.0.1 矩阵。
 
 插件在模板编码前，通过 ReactLynx 构建器公开的 hook 将未配置的 `enableCSSInlineVariables` 默认设为 `true`，使嵌套 utility 变量进入原生递归解析路径；保留显式页面配置与动态 CSS 依赖。需要同时注册 `pluginReactLynx()`，缺少模板 API 时明确构建失败。此设置不改变目标 SDK，也不代表所有 CSS 属性已通过原生验收。
@@ -56,7 +62,7 @@ export default defineConfig({
 pluginLynxTailwindcss({
   diagnostics: {
     strict: true,
-    ignore: [{ property: 'padding-inline' }],
+    ignore: [{ property: 'padding-inline', reason: '业务明确接受该平台限制' }],
     onReport(report) {
       console.log(report)
     },
@@ -64,7 +70,9 @@ pluginLynxTailwindcss({
 })
 ```
 
-报告包含分类、selector、utility、property/value、来源位置、拒绝原因与替代建议；无法可靠关联或无法解析的日志会保留为 `unknown`。诊断消费的是构建生命周期中的 CSS 和 encoder 数据，不扫描 `dist`，也不把进入 bundle 视为 Lynx 原生支持。
+报告把 `encoder-log` 原始日志与 `bundle-comparison` 发现的静默删除分开记录，状态为 `bundled`、`encoder-rejected` 或 `unknown`。输入通过唯一选择器分支、条件和声明关联；编码证据来自 `afterEmit` 的构建图 asset，并绑定 bundle、固定 decoder 与输入 CSS 的 hash。忽略项必须限定 selector/property，`reason` 仅作审计说明；记录和删除计数始终保留。
+
+来源文件/行列只在当前构建图 source map 可证明时提供；合成 cssId 和生成坐标单独保存。跨入口同名分支、重复声明、未知值规范化、无法完整解码的 CSS section，以及无法唯一关联的 scoped CSS 来源均不猜测。诊断不扫描 `dist`，也不把进入 bundle 视为 Lynx 原生支持。
 
 当前集成支持 ReactLynx + Rspeedy 与 Tailwind CSS v4；不覆盖 Rspeedy Web 输出、非 React Lynx 框架或 React Native 风格的运行时样式映射。
 
@@ -100,7 +108,7 @@ Lynx 集成保留 ReactLynx 原生 `className`，不会像小程序目标一样�
 | 颜色 | `bg-[#123456]`、`bg-[rgb(12,34,56)]`、`text-[color:#c31d6b]` | 已验证 |
 | 渐变 | `bg-[radial-gradient(circle_at_20%_20%,#fff,#000)]` | 已验证生成；复杂效果仍建议做真机视觉验收 |
 | 明确类型 | `text-[length:23px]`、`text-[color:#c31d6b]` | 已验证，二义性值推荐显式写 `length:` / `color:` |
-| CSS 变量 | `[--panel-height:240px]`、`max-h-[var(--panel-height)]`、`bg-(--brand-color)` | 已验证；应用自定义变量不会被静态化 |
+| CSS 变量 | `[--panel-height:240px]`、`max-h-[var(--panel-height)]`、`bg-(--brand-color)` | 当前基线用例已验证；静态求值与动态覆盖边界见上文 |
 | 重要值 | `!bg-[gray]` | Tailwind 可生成，需结合 Lynx 目标版本验收优先级行为 |
 | 布局值 | `aspect-[4/3]`、`grid-cols-[200px_minmax(0,1fr)_80px]` | 已验证生成并进入 bundle |
 | 逻辑属性 | `px-[7.5px]` | 不推荐；Tailwind 生成 `padding-inline`，当前 Lynx encoder 会删除该属性 |
@@ -121,7 +129,7 @@ Lynx 集成保留 ReactLynx 原生 `className`，不会像小程序目标一样�
 这些警告需要分两类处理：
 
 - preflight 的浏览器专用规则：改用上面的 theme + utilities 入口即可减少噪声。
-- 业务 utility 对应的 selector/property：表示该样式不会进入 Lynx 原生样式表，应调整 Tailwind 写法，不能只忽略警告。
+- 业务 utility 对应的 selector/property：需要根据 `bundled`、`encoder-rejected` 或 `unknown` 状态核对实际编码证据，不能仅凭 warning 判断样式是否进入 Lynx 原生样式表，应调整 Tailwind 写法，不能只忽略警告。
 
 ## 验证
 
@@ -136,7 +144,7 @@ pnpm e2e:lynx
 
 静态 gate 使用 PostCSS 解析真实 `main.css`，并结合 `tasm.json.css.cssMap` 与 encoder removal 日志分别记录 `generated` 和 `bundled`。CI 默认使用 Android API 30、Pixel 2、x86_64，以及 iOS 18.5、iPhone 16 Pro。每轮 CI 与已提交报告分别绑定自己的运行身份和原始工件。
 
-当前已提交的原生报告基线记录 `verifiedAt: 2026-10-19T15:13:36.717Z`、`catalogHash: 2e3a1a60517c13de507d22ef8b4d209ffcdb86b2dfbf5bf7100df35c40dc3fec`，Android 为 `sdk_phone_x86_64`（Android 11/API 30，x86_64），iOS 为 `LynxCompatibility`（iPhone 16 Pro，iOS 18.5，arm64）。只有与相同 catalog 和版本匹配的完整双端报告才能更新基线。
+当前已提交的原生报告基线记录 `verifiedAt: 2026-10-21T18:49:50.413Z`、`catalogHash: ee4e7bd2d4b126dc4920a08e16878fe8cccf364c537ca4b025b821f188c85941`，Android 为 `sdk_gphone_arm64`（Android 11/API 30，arm64-v8a），iOS 为 `iPhone 17 Pro iOS 26.5`（iPhone 17 Pro，iOS 26.5，arm64）。只有与相同 catalog 和版本匹配的完整双端报告才能更新基线。
 
 `--capture-only` 是显式指定 bundle 和目标设备后的采集模式，只保存截图/视频用于观察，不生成或更新原生支持报告，也不能替代 CI runner 或已提交基线设备的验收。
 

@@ -1,934 +1,1096 @@
 {
   "schemaVersion": 1,
   "evidence": {
-    "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+    "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
     "artifacts": [
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "media-hover-v1-base.png",
         "byteLength": 1419,
         "sha256": "26fc28855b9ea1a4193ec3aa1c0d6dce2b496ae4fbc65804f12361f850db8197"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "media-hover-v1-control.png",
         "byteLength": 1419,
         "sha256": "26fc28855b9ea1a4193ec3aa1c0d6dce2b496ae4fbc65804f12361f850db8197"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "media-hover-v1-unguarded.png",
         "byteLength": 1453,
         "sha256": "4acd28d1a22de00297c638b8ed411f1a41eff01e902943c547cea97ec42bcae6"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "media-hover-v1-min-width.png",
         "byteLength": 1453,
         "sha256": "4acd28d1a22de00297c638b8ed411f1a41eff01e902943c547cea97ec42bcae6"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "media-hover-v1-hover-hover.png",
         "byteLength": 1419,
         "sha256": "26fc28855b9ea1a4193ec3aa1c0d6dce2b496ae4fbc65804f12361f850db8197"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "media-hover-v1-hover-none.png",
         "byteLength": 1419,
         "sha256": "26fc28855b9ea1a4193ec3aa1c0d6dce2b496ae4fbc65804f12361f850db8197"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "media-hover-v1.native.json",
         "byteLength": 1465,
-        "sha256": "7052cf0aadbac3507a756b6018166ff4452244799e5307bfca8d57261d0d9d9a"
+        "sha256": "e4eeff64dff2094fd6f94558fb926edb96e021a7bdd1f6f2af575b2b7b63be29"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-tailwind-hex-before-geometry-probe.png",
+        "byteLength": 2514,
+        "sha256": "97b69aabd8093f9f0d28c8d089158b229019b239f1175019f16ffabfe5984c5d"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-tailwind-hex-before-geometry-control.png",
+        "byteLength": 2514,
+        "sha256": "97b69aabd8093f9f0d28c8d089158b229019b239f1175019f16ffabfe5984c5d"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-tailwind-hex-before-geometry.json",
+        "byteLength": 842,
+        "sha256": "5c3aae06187580c23547169e5d1673bd4add265a833a70652ee1be584dd1e24c"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-application-hex-before-geometry-probe.png",
+        "byteLength": 2514,
+        "sha256": "97b69aabd8093f9f0d28c8d089158b229019b239f1175019f16ffabfe5984c5d"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-application-hex-before-geometry-control.png",
+        "byteLength": 2514,
+        "sha256": "97b69aabd8093f9f0d28c8d089158b229019b239f1175019f16ffabfe5984c5d"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-application-hex-before-geometry.json",
+        "byteLength": 845,
+        "sha256": "c4a21d2b374f6a691a8701a91114c493a3edde4e08895f16a2c7cc55344d05d3"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-application-oklch-before-geometry-probe.png",
+        "byteLength": 2371,
+        "sha256": "0cd334be277aea89b6de352da47fcd166daaadd8ebd772f91e79e889948a0cd8"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-application-oklch-before-geometry-control.png",
+        "byteLength": 2371,
+        "sha256": "0cd334be277aea89b6de352da47fcd166daaadd8ebd772f91e79e889948a0cd8"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-application-oklch-before-geometry.json",
+        "byteLength": 847,
+        "sha256": "9de9e870a94a9c71b51037c763b61fa0977c7d15bdbcac1eb5b5819ab6523dd4"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-tailwind-hex-after-geometry-probe.png",
+        "byteLength": 2441,
+        "sha256": "b092a05ddfdf929f2b8e1c186831b260b3d4aded1a9e59bad0e804574db16412"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-tailwind-hex-after-geometry-control.png",
+        "byteLength": 2441,
+        "sha256": "b092a05ddfdf929f2b8e1c186831b260b3d4aded1a9e59bad0e804574db16412"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-tailwind-hex-after-geometry.json",
+        "byteLength": 841,
+        "sha256": "16d0bdac8da46c6f56c7d8c5dc6af04ac249cef97864e3c725968015f1ec67be"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-application-hex-after-geometry-probe.png",
+        "byteLength": 2441,
+        "sha256": "b092a05ddfdf929f2b8e1c186831b260b3d4aded1a9e59bad0e804574db16412"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-application-hex-after-geometry-control.png",
+        "byteLength": 2441,
+        "sha256": "b092a05ddfdf929f2b8e1c186831b260b3d4aded1a9e59bad0e804574db16412"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-application-hex-after-geometry.json",
+        "byteLength": 844,
+        "sha256": "5c389ab7035551e9de1f7b1f72319f5f1cfb44a13ccdab6691638079a927bc9b"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-application-oklch-after-geometry-probe.png",
+        "byteLength": 2441,
+        "sha256": "b092a05ddfdf929f2b8e1c186831b260b3d4aded1a9e59bad0e804574db16412"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-application-oklch-after-geometry-control.png",
+        "byteLength": 2441,
+        "sha256": "b092a05ddfdf929f2b8e1c186831b260b3d4aded1a9e59bad0e804574db16412"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-application-oklch-after-geometry.json",
+        "byteLength": 846,
+        "sha256": "61fcb96a59039d02179d250d49369b04d01ab0c090776dbc52adc5b8fef077fd"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-tailwind-hex-restored-geometry-probe.png",
+        "byteLength": 2469,
+        "sha256": "4ba44ca0496adb7f818674703b55300fe9cfabb9df08800fa3748c098b193551"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-tailwind-hex-restored-geometry-control.png",
+        "byteLength": 2469,
+        "sha256": "4ba44ca0496adb7f818674703b55300fe9cfabb9df08800fa3748c098b193551"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-tailwind-hex-restored-geometry.json",
+        "byteLength": 844,
+        "sha256": "6a4447ba505b4fa18d5dd8bd7cead3cbcbed836f85d6c13fd998d90f5141aaee"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-application-hex-restored-geometry-probe.png",
+        "byteLength": 2469,
+        "sha256": "4ba44ca0496adb7f818674703b55300fe9cfabb9df08800fa3748c098b193551"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-application-hex-restored-geometry-control.png",
+        "byteLength": 2469,
+        "sha256": "4ba44ca0496adb7f818674703b55300fe9cfabb9df08800fa3748c098b193551"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-application-hex-restored-geometry.json",
+        "byteLength": 847,
+        "sha256": "adb7767a77aff175381193dc1a7ada37716298be7ca7751949e7b961f2846a0e"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-application-oklch-restored-geometry-probe.png",
+        "byteLength": 2455,
+        "sha256": "7c9608bcc7679c69120dba5ec43ff4fc053e99694b8a90d66522f9787f0fab08"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-application-oklch-restored-geometry-control.png",
+        "byteLength": 2455,
+        "sha256": "7c9608bcc7679c69120dba5ec43ff4fc053e99694b8a90d66522f9787f0fab08"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
+        "name": "theme-application-oklch-restored-geometry.json",
+        "byteLength": 849,
+        "sha256": "59b0ec319105c6093a8a434645d30a8c6915945c8b3e963bb1bba3dce113d299"
+      },
+      {
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "layout-aspect-geometry-probe.png",
-        "byteLength": 5912,
-        "sha256": "c9649e0f31ab72b915ea236078b44527c4ce1a6a2c3adf7cb2c783966d889af8"
+        "byteLength": 5905,
+        "sha256": "ddd51a89d023818176040036156b569fbdd9928be01ea73f13ed2775ed96e3b6"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "layout-aspect-geometry-control.png",
-        "byteLength": 5147,
-        "sha256": "9948ae6471d97fbeae1ffcdf88164b30921d1178a4b4b9100bed71da06078cc0"
+        "byteLength": 5139,
+        "sha256": "cf3adaa473c6eaa08ed16c35f96bf5a58ec49890e7205c868a0602e7dfe36e0b"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "layout-aspect-geometry.json",
-        "byteLength": 1038,
-        "sha256": "da3fe243f3f14fb370cb4dbc54cb3cd12abe3146bf538c659a902da92eeabab1"
+        "byteLength": 1141,
+        "sha256": "51e9f04921d1cb40c6536bd4743f41a5b62d1731c27971ee6ac1e3a50f50c720"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "layout-box-sizing-geometry-probe.png",
-        "byteLength": 7054,
-        "sha256": "a4fcf35ec6ec96b8fcaff3e52a97a2135af6befb64f046db0f74ee6d6541b7eb"
+        "byteLength": 7047,
+        "sha256": "25110f73dd02dfd474351f7664d09d01b84767ccc6ed933c5e0c5c035d965a7a"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "layout-box-sizing-geometry-control.png",
-        "byteLength": 7325,
-        "sha256": "b0bbdf585325683659863ee88f3f336ec73acb4a56b4cefe6237505132a2bff8"
+        "byteLength": 7319,
+        "sha256": "1ff708df77ab540cdbcb8e72ed5615e4b756a49d5e0c76ee40b02386802adba5"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "layout-box-sizing-geometry.json",
-        "byteLength": 988,
-        "sha256": "860ba5783e355c219b20b44aaeb60a22e65c4f5f174af2dbbd3f8e55aefb4a60"
+        "byteLength": 1035,
+        "sha256": "f3b9c193c10e63da37adf20dc3f7d91cb4062a6c59229c6f7768804c45d8a4d4"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "layout-display-geometry-probe.png",
-        "byteLength": 5768,
-        "sha256": "bd47e60bd48b3ee6446a885d880a2528e7832b8f09b895cc85de3f53aab52365"
+        "byteLength": 5764,
+        "sha256": "8bbb8c6422f6c94cd8f06e3da6d701e183bdbb0b7aa41eb688c1d6bd2f7668e2"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "layout-display-geometry-control.png",
-        "byteLength": 6005,
-        "sha256": "0614e28d3eff8c3867861b2c90ef5fd7a5824f284d552606eb81b741782c6539"
+        "byteLength": 5841,
+        "sha256": "542ee01c69a681457df2204050cf0fb9192a0e07e208561d742a1560a837430c"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "layout-display-geometry.json",
-        "byteLength": 936,
-        "sha256": "78a2ed7299e1d929f2ad34862bfa46b7ab0b18fe340834b5f0ba147a4f2e68df"
+        "byteLength": 1097,
+        "sha256": "87177ff14167745a5d03d33d573693e2106817c381ffddae2b4a67702d28c681"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "layout-overflow-geometry-probe.png",
         "byteLength": 6881,
         "sha256": "54d71447eb57916d65d34040f594a717dc14ea521b86103db587741515323443"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "layout-overflow-geometry-control.png",
         "byteLength": 7633,
         "sha256": "19610a3e4a7170ba7e5514c2a2e738517a78f2efe674a8dc40561d4b930a1639"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "layout-overflow-geometry.json",
-        "byteLength": 932,
-        "sha256": "57f403f3879e49b4996cc33217e391e329b455087fe7c8b8048efea5c0b79eae"
+        "byteLength": 1012,
+        "sha256": "10035350263aca28a33a086abf7e9f7a38df46c59e71f2153194a435af6f7701"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "layout-position-geometry-probe.png",
-        "byteLength": 6503,
-        "sha256": "24f0d4d85237b3a064f3c20acb952e87aa7dec295729869182bd727f235b7767"
+        "byteLength": 6496,
+        "sha256": "2e70adba079f71f0264d180eec5414a2129392bcf26019647110806f22f588b2"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "layout-position-geometry-control.png",
-        "byteLength": 5845,
-        "sha256": "b193708aecfc4c160fdd8055715ad5fc103d7a5c9cb2eca98f0195cc4a760364"
+        "byteLength": 5841,
+        "sha256": "542ee01c69a681457df2204050cf0fb9192a0e07e208561d742a1560a837430c"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "layout-position-geometry.json",
-        "byteLength": 1065,
-        "sha256": "48dfbdcbd96f96a67c6cf401970b9a6564e456ecd181d32e6421c7a0dd890c4d"
+        "byteLength": 1088,
+        "sha256": "923cc76ace066fa934f4d42c2f11dd1a245894f2b2c51553ac19f72b414c58b3"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "layout-visibility-probe.png",
         "byteLength": 6045,
         "sha256": "7dcf1111fe5939e9a0542bb754a146a237a94a39c3ad87ab4c9fe4c84d14b721"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "layout-visibility-control.png",
-        "byteLength": 8064,
-        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "layout-z-index-probe.png",
         "byteLength": 6045,
         "sha256": "7dcf1111fe5939e9a0542bb754a146a237a94a39c3ad87ab4c9fe4c84d14b721"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "layout-z-index-control.png",
-        "byteLength": 8217,
-        "sha256": "104d0eb77322317a64cce303d647fbc7348dc8bc2c8dc3ab04b4904f9b8c3b7a"
+        "byteLength": 8215,
+        "sha256": "9dee1d118de723888f6e7700b5376b495e9b837e8f4c6d69f442a646c599ff51"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "flex-direction-geometry-probe.png",
-        "byteLength": 5768,
-        "sha256": "bd47e60bd48b3ee6446a885d880a2528e7832b8f09b895cc85de3f53aab52365"
+        "byteLength": 5764,
+        "sha256": "8bbb8c6422f6c94cd8f06e3da6d701e183bdbb0b7aa41eb688c1d6bd2f7668e2"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "flex-direction-geometry-control.png",
-        "byteLength": 5845,
-        "sha256": "b193708aecfc4c160fdd8055715ad5fc103d7a5c9cb2eca98f0195cc4a760364"
+        "byteLength": 5841,
+        "sha256": "542ee01c69a681457df2204050cf0fb9192a0e07e208561d742a1560a837430c"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "flex-direction-geometry.json",
-        "byteLength": 1108,
-        "sha256": "1ab963fcf4dd619bdbcec9f50f74c6641c30c2df883526b36b1b6364bd60b686"
+        "byteLength": 1095,
+        "sha256": "b51e884252800724936c43ef75b7f6b109dd7d8812112b773b254e3551a459aa"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "flex-alignment-geometry-probe.png",
-        "byteLength": 6483,
-        "sha256": "1ba424c9f60fce758da7eabe2b7efd112a3f38a7990517b87b6c34063ba463c3"
+        "byteLength": 6478,
+        "sha256": "743e6b7acc532b7a44fceeedee2cd2ef73b9b9efc69b1b8223874ebc7b792c88"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "flex-alignment-geometry-control.png",
-        "byteLength": 5845,
-        "sha256": "b193708aecfc4c160fdd8055715ad5fc103d7a5c9cb2eca98f0195cc4a760364"
+        "byteLength": 5841,
+        "sha256": "542ee01c69a681457df2204050cf0fb9192a0e07e208561d742a1560a837430c"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "flex-alignment-geometry.json",
-        "byteLength": 1078,
-        "sha256": "5a7715dcab199305411dc49d1da2fe8b6ffe9204885dfa832b24694f323aec4f"
+        "byteLength": 1227,
+        "sha256": "651bb4c82c0f653dff3f1ff5b5fde4b4e27219da9389a7bc9b2cdc5be7bf903d"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "flex-grow-geometry-probe.png",
         "byteLength": 5956,
         "sha256": "a6c5ec17f4313834b3dd119cc9ef8b4ee117e8c7771c840b5158b271e8a5b94e"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "flex-grow-geometry-control.png",
         "byteLength": 5789,
         "sha256": "75f31eee7870fae1701ac7e0fa2689e19f7a21f24165804bc2b4fda0c5c75e2c"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "flex-grow-geometry.json",
-        "byteLength": 740,
-        "sha256": "cda22afdaaf109f593ec5a63e51fbf3c2f83c0fe66f1dd3995fb45b5ea8b7190"
+        "byteLength": 1011,
+        "sha256": "68bbf50e2f3306e4e50086aafd2edcf1981f574df15c12f7c524e516f0f1e7bd"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "grid-template-geometry-probe.png",
-        "byteLength": 6166,
-        "sha256": "fe36299dd4978ba01c6c8113d5d0c61616cf5a47c8373ebe32523488814eca29"
+        "byteLength": 6161,
+        "sha256": "90722f1689ac1e230797f0ca0c53f405e0d77b6bfb4a797e0379e6fe358e35ec"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "grid-template-geometry-control.png",
-        "byteLength": 5845,
-        "sha256": "b193708aecfc4c160fdd8055715ad5fc103d7a5c9cb2eca98f0195cc4a760364"
+        "byteLength": 5841,
+        "sha256": "542ee01c69a681457df2204050cf0fb9192a0e07e208561d742a1560a837430c"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "grid-template-geometry.json",
-        "byteLength": 1077,
-        "sha256": "4fecf9d2489f4264ea712aa5f9523efffd73831acf6a7610d26aa84ac2ccc6b2"
+        "byteLength": 1064,
+        "sha256": "8b40e21c7c30d556c29bcf06c3491b7d1edfc3cb9e24b3e5ffef78be488f3ebb"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "spacing-margin-geometry-probe.png",
-        "byteLength": 5992,
-        "sha256": "3103351e4bc28b33758ee920a75ecd939d0937258e7265cc3b2d40cc8f8587e6"
+        "byteLength": 5986,
+        "sha256": "7caf6cbba1d508a5f0e84d63379af15410adaf4ef35a08b18e45e55d1f2a9ba5"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "spacing-margin-geometry-control.png",
-        "byteLength": 5845,
-        "sha256": "b193708aecfc4c160fdd8055715ad5fc103d7a5c9cb2eca98f0195cc4a760364"
+        "byteLength": 5841,
+        "sha256": "542ee01c69a681457df2204050cf0fb9192a0e07e208561d742a1560a837430c"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "spacing-margin-geometry.json",
-        "byteLength": 1046,
-        "sha256": "27d029274ddcdfe59b40cd7198e831ee8892808bd964c221396dd783c77262f1"
+        "byteLength": 1195,
+        "sha256": "892a8a50989b298dcba65e25b2504d1eb96b62e1c41e4d05341fac97eb1745a5"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "spacing-padding-geometry-probe.png",
-        "byteLength": 5911,
-        "sha256": "7f47d6b0506cd705c35324c61ed47f3d19763c6d04f17e756131ae61ea1d2b19"
+        "byteLength": 5907,
+        "sha256": "a8ecc2d3b10dc9cb2987cfedd3f5e5ac2ef253154296ceffd20c9e31554609ca"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "spacing-padding-geometry-control.png",
-        "byteLength": 5845,
-        "sha256": "b193708aecfc4c160fdd8055715ad5fc103d7a5c9cb2eca98f0195cc4a760364"
+        "byteLength": 5841,
+        "sha256": "542ee01c69a681457df2204050cf0fb9192a0e07e208561d742a1560a837430c"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "spacing-padding-geometry.json",
-        "byteLength": 1017,
-        "sha256": "faf2974a147dffb8b021b2c367b3fbf045214db62e6b642260c30769e3012e8d"
+        "byteLength": 1150,
+        "sha256": "02e3b4cf3c7430b1b75a5f5c2711f0b0ef40072543e26146f0c02ddc0881f131"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "sizing-fixed-geometry-probe.png",
-        "byteLength": 6041,
-        "sha256": "daf00e31290de357afa5811dc51cd166686877e9afa9504e194c916eaa99d9b7"
+        "byteLength": 3918,
+        "sha256": "30a59dd3a4373294588e875bcd930502c2a2bf54509493fabaecb94cff50386f"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "sizing-fixed-geometry-control.png",
-        "byteLength": 5845,
-        "sha256": "b193708aecfc4c160fdd8055715ad5fc103d7a5c9cb2eca98f0195cc4a760364"
+        "byteLength": 4522,
+        "sha256": "7f1f5c0feaeb47204d6545de8a89038f5f8bfc8aea795aff02bd1341c3dd64df"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "sizing-fixed-geometry.json",
-        "byteLength": 957,
-        "sha256": "95b8ea8bced2e92ae5fbc55ef15ad9783c4fd4ca9935c3f1a9fd260f5ad1ad18"
+        "byteLength": 1018,
+        "sha256": "913680a9512348a91b6128e7dd7ff8a30dde7e793d3157c002146f5718fc89fe"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "sizing-min-max-geometry-probe.png",
-        "byteLength": 17130,
-        "sha256": "d9269c66b9beb5b0a56024d0ac5b6ba94596812b49fdce180d6f8b180ae1270a"
+        "byteLength": 17125,
+        "sha256": "868e5d94f18fed553ac7bcf422e0938326acabb44a77eb9e282cf00b28d02591"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "sizing-min-max-geometry-control.png",
-        "byteLength": 17346,
-        "sha256": "c07a5df4f426ea5814f16df145fbad7d2e7e039c2a2261841e723d247bb03aa3"
+        "byteLength": 17340,
+        "sha256": "9ec352581585540185bba74f4f4e6e75516e95a94978dd7530f9e9139ca1d894"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "sizing-min-max-geometry.json",
-        "byteLength": 1043,
-        "sha256": "5267b2799c9596f0ce10d33c2d56559c4c42de462402dc56bf2b1de300e6e875"
+        "byteLength": 1034,
+        "sha256": "d4c670095a7ea50aac90ffe7783deebd8bad2f523c78690d8fd027fec8ef9749"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "type-size-geometry-probe.png",
-        "byteLength": 7070,
-        "sha256": "b4fa17c3a355c5e74602342423d3ea5c0a141d5595324289b04f05540f702654"
+        "byteLength": 7056,
+        "sha256": "0f331e517e158616f56565b729d84b063dbde5cd1571398db50087d0e246f44c"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "type-size-geometry-control.png",
-        "byteLength": 5754,
-        "sha256": "d09a798c25a6a56b38ac7d0298976ef93843517bbd5df917dd2ac25ac19b4be1"
+        "byteLength": 5898,
+        "sha256": "6324a448ce88e261270dcfe0d39579f127687430c470e22131437194a7fc3f10"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "type-size-geometry.json",
-        "byteLength": 1099,
-        "sha256": "e64629e1204d8cd5c357be187142d90e4a1b471c4ea32cc333a0883b10df9c3b"
+        "byteLength": 1046,
+        "sha256": "db6769098432315ea76c3973a76a9b59d55f5bc31570d8cae979c578753323e8"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "type-weight-style-probe.png",
-        "byteLength": 8384,
-        "sha256": "8fca8d8d7380f1c33286d0bbd0cf0faa8330754a352144a9a2b2f2e692ede94a"
+        "byteLength": 8392,
+        "sha256": "8f8d60df4a363bceed4faa86b1efbd678b316c45cf864f2f57a08d2a51c67327"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "type-weight-style-control.png",
-        "byteLength": 8064,
-        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "type-tracking-geometry-probe.png",
-        "byteLength": 5794,
-        "sha256": "28811dab58c0bc0d34cefd5d9392daf63d522ab22b07896c114bb44686948ef8"
+        "byteLength": 5791,
+        "sha256": "f2e3b991dfea32387cf4fd19b0b94b1089d2b474f00fadff1e7c3c6c4fc97782"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "type-tracking-geometry-control.png",
-        "byteLength": 5754,
-        "sha256": "d09a798c25a6a56b38ac7d0298976ef93843517bbd5df917dd2ac25ac19b4be1"
+        "byteLength": 5748,
+        "sha256": "a4229e2220b1071864964d7a3fbfce1e09f04735c2080cdeeb82043bdf8e197a"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "type-tracking-geometry.json",
-        "byteLength": 1119,
-        "sha256": "41ac53e039066ce53f8895b5024f0ba7829c082d33db86eed78bf1319c0aec03"
+        "byteLength": 1222,
+        "sha256": "9fb5de59218511c155f27745d8958cd32dfa399dc5a06b3f4088cf4164cd4220"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "type-align-overflow-probe.png",
-        "byteLength": 8393,
-        "sha256": "e765b9407765a629e6323b697b6eed5d9639f6fd7024455aea2aed9d6c02228a"
+        "byteLength": 8391,
+        "sha256": "65c930ffa9dfee221b39107c2fdbc8a00177876ae2b93a8ffb00e0e783a2cc39"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "type-align-overflow-control.png",
-        "byteLength": 8393,
-        "sha256": "e765b9407765a629e6323b697b6eed5d9639f6fd7024455aea2aed9d6c02228a"
+        "byteLength": 8391,
+        "sha256": "65c930ffa9dfee221b39107c2fdbc8a00177876ae2b93a8ffb00e0e783a2cc39"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "background-color-probe.png",
-        "byteLength": 8136,
-        "sha256": "54ff2af365a7a1b34782b281f23db4ad05884e5910867b2afdc35a9f1f660140"
+        "byteLength": 8125,
+        "sha256": "5d884efe40b335e0275f2b1230213be41d63116daf263e441f88cfce067ee389"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "background-color-control.png",
-        "byteLength": 8064,
-        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "background-gradient-probe.png",
-        "byteLength": 138814,
-        "sha256": "5827fc29f8768824ff536f9bf21d90e473639201e4620610ce088b601eb75eea"
+        "byteLength": 139843,
+        "sha256": "f6848b632f7d038d4193c0429120885e9fa05ffb05b7f1d00716259d509f4ace"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "background-gradient-control.png",
-        "byteLength": 6403,
-        "sha256": "c30a286d174887db46a2ffec37223131556cd71726dbe376784222ae937680b5"
+        "byteLength": 6393,
+        "sha256": "7a127c5ddf71efefa4928aeaa8369f713b31ab80ede344bbac5ad7c6633a3f6d"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "background-size-probe.png",
-        "byteLength": 137745,
-        "sha256": "3f702391383d44aea031878f7c4607cb0da9bb599126bbcba028604c09ec6a5a"
+        "byteLength": 137740,
+        "sha256": "67e926f8fce3f5649216dffab3b7a2824e754a5dd4b17a460aac6795b19fdf64"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "background-size-control.png",
-        "byteLength": 95870,
-        "sha256": "0e3cc91d88f090b61a1e6f887673d5f7208d3e7d4b9100a6ed1c97b5eeb791ac"
+        "byteLength": 95937,
+        "sha256": "c83f6234b0494a80200fbc083cea644bb64d3e5e81dec5f82e067498124b8c0a"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "border-width-color-probe.png",
-        "byteLength": 8104,
-        "sha256": "e40526ce5303fbc6fcb3bb16fb0a0f94a9ea95d0caec76444c31e812e78014d3"
+        "byteLength": 8101,
+        "sha256": "4065f6ef0e8508ce99f3c056ac6e140f21bc10b74743c70229cf44430121873f"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "border-width-color-control.png",
-        "byteLength": 8064,
-        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "border-radius-probe.png",
-        "byteLength": 10697,
-        "sha256": "8a090627c8cc59f1b9646d2cab406aca45d345c19351fea2564b5a52d3566315"
+        "byteLength": 10695,
+        "sha256": "e4879eee48d30cbd0b959fd664ec5cee159c7d296afe0e67900e3e980acfe377"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "border-radius-control.png",
-        "byteLength": 8064,
-        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "effect-opacity-probe.png",
-        "byteLength": 7923,
-        "sha256": "dc3d4ed702f69137429d52fb270a2f6ff08ae148c06b2ff0eaa43208db86adc6"
+        "byteLength": 7924,
+        "sha256": "812afc887d808b82aaf0f1f7493260e65b1a89c9e44e16750aba8b284a065275"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "effect-opacity-control.png",
-        "byteLength": 8064,
-        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "effect-shadow-probe.png",
-        "byteLength": 33745,
-        "sha256": "fac5d46094d1402092fd33b6438b2f874dd502c605938faff4b7bc91f783857b"
+        "byteLength": 33738,
+        "sha256": "f9abf1ba2893543f4739ce666f9738b4bd4b6fe52e61ab88d83d32c77deac050"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "effect-shadow-control.png",
-        "byteLength": 15395,
-        "sha256": "4f0ec23329a99f705f5fdf321d20e87753e3a3a81541a2dedea0553d0485addc"
+        "byteLength": 15393,
+        "sha256": "80b6d147ff8df5372a310d597a5bb0793576054e9bfe4a7915ba68137859db21"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "filter-blur-probe.png",
-        "byteLength": 31488,
-        "sha256": "c7a6160c5efb6151318e2a0fd2cf73628c176ae2ccbe284722d05ee5bc9d01d9"
+        "byteLength": 31498,
+        "sha256": "ab335592f3834fc263ffafd845dbcca518a9388459d2b9df3adb7ff6beae7918"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "filter-blur-control.png",
-        "byteLength": 8064,
-        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "accessibility-sr-geometry-probe.png",
         "byteLength": 3965,
         "sha256": "01ad6f1ca73856a6a3a88877148c7fa3625c3c81e4cf6e2ede9634f38af750dc"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "accessibility-sr-geometry-control.png",
-        "byteLength": 5845,
-        "sha256": "b193708aecfc4c160fdd8055715ad5fc103d7a5c9cb2eca98f0195cc4a760364"
+        "byteLength": 5843,
+        "sha256": "be53bb92cf35cdddce022945567dda1c704bd717cb3eb96e7403aac302c76a35"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "accessibility-sr-geometry.json",
-        "byteLength": 1030,
-        "sha256": "446b7836a652085f6854969d259f4a46507a71b1c0feac24f85469466bb025cf"
+        "byteLength": 1159,
+        "sha256": "181d63bcb68e27e50e7a9b5861afe70e9c9f9d21ee500f276080f92e633e08d8"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "transform-origin-geometry-probe.png",
-        "byteLength": 9099,
-        "sha256": "88a7909ac2689871b91307a919ddf0945593cb4482021985e29d586ac0cb33fb"
+        "byteLength": 9098,
+        "sha256": "6daac9039da123f181a6b8576534342af5d3ac034ee26df71021df60e6dd1c77"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "transform-origin-geometry-control.png",
-        "byteLength": 9205,
-        "sha256": "a96fb7e9976a2b31ead95ab5de9167a9bd158e35f375413ceaaa9ab5f763dcb0"
+        "byteLength": 9199,
+        "sha256": "33273c8c26d6ef9e9a2e1195dd69f368309daba80593c1ecbc0b1942579c262a"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "transform-origin-geometry.json",
-        "byteLength": 1226,
-        "sha256": "520aa9847f46a29134bb07a5760f7063c227143853cb381cf6c2b205a4d5140e"
+        "byteLength": 1329,
+        "sha256": "e47642779b3ede9bab12a8f25b720f645441a77c7c805e719c13f2d0372cf1af"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "transition-basic-before.png",
-        "byteLength": 8064,
-        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "transition-basic-during.png",
-        "byteLength": 8064,
-        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "transition-basic-after.png",
-        "byteLength": 8064,
-        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "animation-spin-before.png",
-        "byteLength": 12218,
-        "sha256": "9406118a8a400a3e444c1a70a560eec6e53bbf769fd1e3f830e7437b6f07bd5d"
+        "byteLength": 9747,
+        "sha256": "90d0f6320baece088b8f4f665bdb351a749d3ddafbd80dca90046be650b6b7d4"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "animation-spin-after.png",
-        "byteLength": 11429,
-        "sha256": "5d44e837c7a3244418e3646145f7fe085b155b7deec2cba968a6e749a16cbedc"
+        "byteLength": 9659,
+        "sha256": "213261289b6c0ed02d5e9d12acd6e3e802cb070207009f5519c4d6167fd47e5c"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-responsive-narrow-probe.png",
         "byteLength": 5012,
         "sha256": "8edd141d468ab9388eed902318a15d5105921313ad04dbb7245869a26a5d9350"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-responsive-narrow-control.png",
         "byteLength": 5210,
         "sha256": "aacbbccc9fa2032e7460acff9fc6ce1d0adcc63a3716db854827b8a5ad41b322"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-responsive-narrow.native.json",
-        "byteLength": 1003,
-        "sha256": "22530c96a8f20b0cd9a039200135b8b2be9c196b22d796234020d4a1127d4365"
+        "byteLength": 873,
+        "sha256": "13c598d3d50d62e0843a2ba496bdfa204f93940681ca30bafb8eb6e87ce1b57a"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-responsive-wide-probe.png",
         "byteLength": 5012,
         "sha256": "8edd141d468ab9388eed902318a15d5105921313ad04dbb7245869a26a5d9350"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-responsive-wide-control.png",
         "byteLength": 5210,
         "sha256": "aacbbccc9fa2032e7460acff9fc6ce1d0adcc63a3716db854827b8a5ad41b322"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-responsive-wide.native.json",
-        "byteLength": 1001,
-        "sha256": "0c1a1e55a78c496921bfec77440ada25f828509d1626bc808b13f12e4ecbe03f"
+        "byteLength": 871,
+        "sha256": "5d914d23c1bf75ada6218d0dd9d64db0cde73d205c0e4732733beab9de742452"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-responsive-narrowed-probe.png",
         "byteLength": 5012,
         "sha256": "8edd141d468ab9388eed902318a15d5105921313ad04dbb7245869a26a5d9350"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-responsive-narrowed-control.png",
         "byteLength": 5210,
         "sha256": "aacbbccc9fa2032e7460acff9fc6ce1d0adcc63a3716db854827b8a5ad41b322"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-responsive-narrowed.native.json",
-        "byteLength": 1005,
-        "sha256": "80dbfc3cc2afa92b26049947171570ad6c28a37bd30b78d6ad8381d2cdaf0fcd"
+        "byteLength": 875,
+        "sha256": "3117f76db472c28b82fffed842d410996fb22860416526e7fa9aed41ef42d46a"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-responsive-restored-probe.png",
         "byteLength": 5012,
         "sha256": "8edd141d468ab9388eed902318a15d5105921313ad04dbb7245869a26a5d9350"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-responsive-restored-control.png",
         "byteLength": 5210,
         "sha256": "aacbbccc9fa2032e7460acff9fc6ce1d0adcc63a3716db854827b8a5ad41b322"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-responsive-restored.native.json",
         "byteLength": 875,
-        "sha256": "c3821b1b6c8ff652eb972a16e6d3ca358a6497baf14454f2b0a766ddff937ce2"
+        "sha256": "ae1d969454c0e2a05f9e62d58c4b45af272f8e25e16c5d4b0d0fcc7f48e1ed07"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-dark-light-probe.png",
-        "byteLength": 11229,
-        "sha256": "2d5478805b2fb5a5104aeb15b43134c0842ace784c16df7479eb72f051042098"
+        "byteLength": 11114,
+        "sha256": "dcd71acd80ca185a94e48c44540e93fadc541d60e56dd65af880a004c372673f"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-dark-light-control.png",
-        "byteLength": 11229,
-        "sha256": "2d5478805b2fb5a5104aeb15b43134c0842ace784c16df7479eb72f051042098"
+        "byteLength": 11114,
+        "sha256": "dcd71acd80ca185a94e48c44540e93fadc541d60e56dd65af880a004c372673f"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-dark-dark-probe.png",
-        "byteLength": 11033,
-        "sha256": "54a45d526166693aa05b325a06e6cea035efd8a12f7926eece82706661ed864c"
+        "byteLength": 11017,
+        "sha256": "95d7c08d9f8743650e79a588bfcd0de9e3c3912cc4186c108ef9b3e124448565"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-dark-dark-control.png",
-        "byteLength": 11229,
-        "sha256": "2d5478805b2fb5a5104aeb15b43134c0842ace784c16df7479eb72f051042098"
+        "byteLength": 11114,
+        "sha256": "dcd71acd80ca185a94e48c44540e93fadc541d60e56dd65af880a004c372673f"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-dark-restored-probe.png",
-        "byteLength": 11229,
-        "sha256": "2d5478805b2fb5a5104aeb15b43134c0842ace784c16df7479eb72f051042098"
+        "byteLength": 11114,
+        "sha256": "dcd71acd80ca185a94e48c44540e93fadc541d60e56dd65af880a004c372673f"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-dark-restored-control.png",
-        "byteLength": 11229,
-        "sha256": "2d5478805b2fb5a5104aeb15b43134c0842ace784c16df7479eb72f051042098"
+        "byteLength": 11114,
+        "sha256": "dcd71acd80ca185a94e48c44540e93fadc541d60e56dd65af880a004c372673f"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-state-before.png",
-        "byteLength": 8064,
-        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-state-active.png",
-        "byteLength": 8090,
-        "sha256": "89b787d0e11004826522f51483f7be997ec27bd916fb5402b048f250c487df96"
+        "byteLength": 8070,
+        "sha256": "66fc1f159d311ad74fb1e9fafd5cddeb18b0405ea51eaae84136930a7ab24270"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-structural-probe.png",
-        "byteLength": 17798,
-        "sha256": "cb44fc9a2401814ec879866b3aa302e26a216a5d0edacc497203961187a1f046"
+        "byteLength": 17850,
+        "sha256": "cc1c2ace4b4467023beca71a649b044b56ae93bfdfdeea80a45b7ab11d1bf6f1"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-structural-control.png",
-        "byteLength": 17798,
-        "sha256": "cb44fc9a2401814ec879866b3aa302e26a216a5d0edacc497203961187a1f046"
+        "byteLength": 17850,
+        "sha256": "cc1c2ace4b4467023beca71a649b044b56ae93bfdfdeea80a45b7ab11d1bf6f1"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-structural-reference.png",
-        "byteLength": 17493,
-        "sha256": "eaaa98ce917ee8817b217bf185fcd79a68c5fbfe550028442935c398da1280e9"
+        "byteLength": 17512,
+        "sha256": "7840aba8602ae433a7e9d8a5274fc9ef528acc16a7a15b7ed7bcb9d9cbc9042d"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-supports-geometry-probe.png",
         "byteLength": 6312,
         "sha256": "ceb9593a6db884db0b582808c9e2543ac2b815ef463975896a16e938f7c7d8ec"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-supports-geometry-control.png",
         "byteLength": 5958,
         "sha256": "db6e8b18a81b5fc706d701de6dface372e10f6944f47c476a4c8cb51207f1ced"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-supports-geometry.json",
-        "byteLength": 922,
-        "sha256": "7a932b7e686720ba3ccdac42f5223f56f3d9ee5ffdab660169b44d5bf5692578"
+        "byteLength": 869,
+        "sha256": "08c213b1371ff94a69870a8dd8095327a35bf60c612500e8a54d3d7985818871"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-arbitrary-probe.png",
-        "byteLength": 7981,
-        "sha256": "e8a385f4449d243d7d746e4ae10ac27084276e258375390025cdecca9ccc6df0"
+        "byteLength": 7982,
+        "sha256": "5b69b352c53e9c5b397d9f7c9f8687146fb0fd2a4046a0f8b53dc0ee0d8a28f4"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "variant-arbitrary-control.png",
-        "byteLength": 8064,
-        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "syntax-important-probe.png",
         "byteLength": 6489,
         "sha256": "d1373ce110727a5ec22645853a62ce8fb1ded91aed1eabf063ae6182c859f1d6"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "syntax-important-control.png",
         "byteLength": 6492,
         "sha256": "8c5c4355de7ff7ad5456cd75b96af7dd924afadcabd4645ca5266cb85ba2a4ff"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "syntax-important-reference.png",
         "byteLength": 6489,
         "sha256": "d1373ce110727a5ec22645853a62ce8fb1ded91aed1eabf063ae6182c859f1d6"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "syntax-css-variable-geometry-probe.png",
-        "byteLength": 17130,
-        "sha256": "d9269c66b9beb5b0a56024d0ac5b6ba94596812b49fdce180d6f8b180ae1270a"
+        "byteLength": 17125,
+        "sha256": "868e5d94f18fed553ac7bcf422e0938326acabb44a77eb9e282cf00b28d02591"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "syntax-css-variable-geometry-control.png",
-        "byteLength": 17346,
-        "sha256": "c07a5df4f426ea5814f16df145fbad7d2e7e039c2a2261841e723d247bb03aa3"
+        "byteLength": 17340,
+        "sha256": "9ec352581585540185bba74f4f4e6e75516e95a94978dd7530f9e9139ca1d894"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "syntax-css-variable-geometry.json",
-        "byteLength": 996,
-        "sha256": "a95c8479abc7fdae44b65e5c66caf95beb5a8aba46b5e28d85f924e8eff130f2"
+        "byteLength": 1047,
+        "sha256": "4ebb467fe2e47102be5f6784b27bfbc15f671346477c85664f875d85133ae59c"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "syntax-type-hint-probe.png",
-        "byteLength": 8114,
-        "sha256": "bdd5e7c5e5c265769b1186fc735cbb0b6a7d7b1ce6466b913f72b24c5201aa71"
+        "byteLength": 8111,
+        "sha256": "6569497bb0b98af3275fe51f537e219a0e69c3e95f2427b3d49758fd3a892935"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "syntax-type-hint-control.png",
-        "byteLength": 8064,
-        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "flex-wrap-order-geometry-probe.png",
         "byteLength": 6375,
         "sha256": "052dd5f522770a8a2764a69fa8d9a90fa7f6eb635e08aa0805c863a4123b6257"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "flex-wrap-order-geometry-control.png",
         "byteLength": 6244,
         "sha256": "77235a0c8adf36eb7757df62606d04b0a87f00e0c742eec4cbb1c15d2f7234d1"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "flex-wrap-order-geometry.json",
-        "byteLength": 919,
-        "sha256": "574a85b5dc351f87bfe5d294c6b4314c32dc1ef80373563956fb35aec0cb4a1c"
+        "byteLength": 866,
+        "sha256": "d7b0f3abdf45f46689a27aa348207534fdce4002280760f92ffb89d76a452fbe"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "flex-shorthand-shrink-geometry-probe.png",
         "byteLength": 6010,
         "sha256": "1d5fe05793ef1cbe7cfa110493d92ef5df31cad47ff96858ca932907e3c52383"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "flex-shorthand-shrink-geometry-control.png",
         "byteLength": 6025,
         "sha256": "7cd8b02f4b98d37a9902a689c91db82543b13dc0be4461899cbcebb6d4f8fec4"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "flex-shorthand-shrink-geometry.json",
-        "byteLength": 926,
-        "sha256": "2a1b4660462b7bf6eb3b0e3ae1fdb6a9227577dd0ea01918c8cd39de3bfb8c89"
+        "byteLength": 873,
+        "sha256": "0f5a0d4465596013c9bdfd49ec385dd8ea4aede2428e18f6a1f0a603c4a69d07"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "grid-placement-geometry-probe.png",
         "byteLength": 6212,
         "sha256": "b1f98be8b65dacce9ec383bf50f5477e7aa7043d31a02c2e76b12286a4f6c539"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "grid-placement-geometry-control.png",
         "byteLength": 6226,
         "sha256": "71f2053ecb5dffc45ad9ac9c2fcf5d5e69301b936eb01c12d572c19aef2d33ef"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "grid-placement-geometry.json",
-        "byteLength": 758,
-        "sha256": "866060cca300d4598110ee081c8a4dba1fd9bc65fa7a1cbcd8fa9f4251de6718"
+        "byteLength": 1017,
+        "sha256": "92295f662cf64be05eb864846db1ebdd97ed6d6b5f62833940c90b5ad6fd56eb"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "grid-align-content-self-geometry-probe.png",
-        "byteLength": 7198,
-        "sha256": "43fd09237d6dd9143363dabd20e62a5e66f561ab538f63b4aedded17b044910b"
+        "byteLength": 7193,
+        "sha256": "9526ad6d289c969c43a123c087224f3763cdcd5a158cd7114833afb98207858e"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "grid-align-content-self-geometry-control.png",
-        "byteLength": 5845,
-        "sha256": "b193708aecfc4c160fdd8055715ad5fc103d7a5c9cb2eca98f0195cc4a760364"
+        "byteLength": 5841,
+        "sha256": "542ee01c69a681457df2204050cf0fb9192a0e07e208561d742a1560a837430c"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "grid-align-content-self-geometry.json",
-        "byteLength": 1093,
-        "sha256": "ce413a72f7d5e520d3f2aab9d4ac04bd5b04aa9a12f06716f7e06dad930d4298"
+        "byteLength": 1196,
+        "sha256": "2525d4c26aca824891eca43f331878a201f7eef6d3e10387d658d63865e1cfa3"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "sizing-size-geometry-probe.png",
-        "byteLength": 6090,
-        "sha256": "b1f29df1e86616e7905c8411c09a99fec955802bc5c1146458fd0f3f2ec664e1"
+        "byteLength": 6085,
+        "sha256": "57ea6ed36403aee05e7d3f1ce32108d4572b1b083d506204a7a2a2338d1d12f9"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "sizing-size-geometry-control.png",
-        "byteLength": 5845,
-        "sha256": "b193708aecfc4c160fdd8055715ad5fc103d7a5c9cb2eca98f0195cc4a760364"
+        "byteLength": 5841,
+        "sha256": "542ee01c69a681457df2204050cf0fb9192a0e07e208561d742a1560a837430c"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "sizing-size-geometry.json",
-        "byteLength": 962,
-        "sha256": "8fa357fcea2935de4a63c01196c60e53b74d1f57d20db1f5e85d60ff7491e450"
+        "byteLength": 1104,
+        "sha256": "e895acf56f286e716ed1100be01c4c317ae1d36e20795c5743ca7890c5eae095"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "type-content-probe.png",
-        "byteLength": 8064,
-        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "type-content-control.png",
-        "byteLength": 8064,
-        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "background-linear-gradient-probe.png",
-        "byteLength": 134124,
-        "sha256": "30ad1c818599904b7378a7b6317cb1ce551d73dcd93d340591a874bd2908cd96"
+        "byteLength": 134108,
+        "sha256": "6f43591ee5166d9c978d2baf7151c87df9461f67119b9b7a6f22dd90982ee559"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "background-linear-gradient-control.png",
-        "byteLength": 137745,
-        "sha256": "3f702391383d44aea031878f7c4607cb0da9bb599126bbcba028604c09ec6a5a"
+        "byteLength": 137740,
+        "sha256": "67e926f8fce3f5649216dffab3b7a2824e754a5dd4b17a460aac6795b19fdf64"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "effect-ring-probe.png",
-        "byteLength": 12327,
-        "sha256": "ea52e9b03672e76b08765092c89166fbf3bdb5e8504f4a29639df781bd05a206"
+        "byteLength": 12323,
+        "sha256": "d5eb9fe72bc5b95d7303018641f7f87cfb5c85049c51452ad3b70475206dfb42"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "effect-ring-control.png",
-        "byteLength": 8064,
-        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "effect-inset-text-shadow-probe.png",
-        "byteLength": 17787,
-        "sha256": "40a702b8fc11946a82bfdabc7f07f778fde5c615f79202a056c5ed99e2ec6d32"
+        "byteLength": 17783,
+        "sha256": "1528102084b4e1fb9cf30149f50099ed2d3263374b1a354002d387fc51d7da6e"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "effect-inset-text-shadow-control.png",
-        "byteLength": 8064,
-        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "filter-color-adjustments-probe.png",
-        "byteLength": 8064,
-        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "filter-color-adjustments-control.png",
-        "byteLength": 8064,
-        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "filter-color-rotation-probe.png",
-        "byteLength": 8064,
-        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "filter-color-rotation-control.png",
-        "byteLength": 8064,
-        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "filter-drop-shadow-probe.png",
-        "byteLength": 8064,
-        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "filter-drop-shadow-control.png",
-        "byteLength": 8064,
-        "sha256": "e8bb4624baecebf91e7a58c28d69a4e043b02c2de30350c4d85fd34712d14a0d"
+        "byteLength": 8065,
+        "sha256": "64c8086ddbce5216a42fdcf80dd44d529ba24577d4b3907067f82b975c6f92b0"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "transform-skew-probe.png",
         "byteLength": 7774,
         "sha256": "0835a235e9b1c2ce94faa89241c8118e97af335ba3640ceacc2cb92659c6566b"
       },
       {
-        "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+        "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
         "name": "transform-skew-control.png",
         "byteLength": 6540,
         "sha256": "03eebb8e8b6bc1ec78070e43723f7a2458fe256e1b270e59007e5833aa00c402"
       }
     ],
-    "bundleSha256": "b0106c10d81286219b72222a9e466ec5b9971e4f2918f28681a201b3d039331c",
+    "bundleSha256": "aefb7b436c46e33760f57bd7ba6f1895ffa33970aff34ca5934ebda089815608",
     "version": 1
   },
   "platform": "ios",
@@ -942,22 +1104,22 @@
     "tailwindcss": "4.3.3",
     "cssSerializer": "0.1.9"
   },
-  "catalogHash": "2e3a1a60517c13de507d22ef8b4d209ffcdb86b2dfbf5bf7100df35c40dc3fec",
+  "catalogHash": "ee4e7bd2d4b126dc4920a08e16878fe8cccf364c537ca4b025b821f188c85941",
   "environment": {
     "osName": "iOS",
-    "osBuild": "22F77",
-    "deviceName": "LynxCompatibility",
-    "osVersion": "18.5",
+    "osBuild": "23F77",
+    "deviceName": "iPhone 17 Pro iOS 26.5",
+    "osVersion": "26.5",
     "abi": "arm64",
-    "runtimeIdentifier": "com.apple.CoreSimulator.SimRuntime.iOS-18-5",
+    "runtimeIdentifier": "com.apple.CoreSimulator.SimRuntime.iOS-26-5",
     "viewport": {
       "width": 402,
       "height": 874,
       "pixelRatio": 3
     },
-    "deviceModel": "iPhone17,1"
+    "deviceModel": "iPhone18,1"
   },
-  "verifiedAt": "2026-10-19T15:13:36.717Z",
+  "verifiedAt": "2026-10-21T18:49:50.413Z",
   "results": [
     {
       "status": "supported",
@@ -974,50 +1136,50 @@
         "probe": {
           "left": 21,
           "right": 85,
-          "top": 1112.9999999999998,
+          "top": 1367.3333333333333,
           "height": 48,
           "width": 64,
-          "bottom": 1160.9999999999998
+          "bottom": 1415.3333333333333
         },
         "control": {
           "left": 207.66666666666663,
           "right": 271.66666666666663,
-          "top": 1112.9999999999998,
+          "top": 1367.3333333333333,
           "height": 16,
           "width": 64,
-          "bottom": 1128.9999999999998
+          "bottom": 1383.3333333333333
         },
         "controlChild": {
           "left": 207.66666666666663,
           "right": 219.66666666666663,
-          "top": 1116.9999999999998,
+          "top": 1371.3333333333333,
           "height": 12,
           "width": 12,
-          "bottom": 1128.9999999999998
+          "bottom": 1383.3333333333333
         },
         "probeChild": {
           "left": 21,
           "right": 33,
-          "top": 1116.9999999999998,
+          "top": 1371.3333333333333,
           "height": 12,
           "width": 12,
-          "bottom": 1128.9999999999998
+          "bottom": 1383.3333333333333
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 1106.9999999999998,
+          "top": 1361.3333333333333,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 1198.9999999999998
+          "bottom": 1453.3333333333333
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 1106.9999999999998,
+          "top": 1361.3333333333333,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 1198.9999999999998
+          "bottom": 1453.3333333333333
         }
       }
     },
@@ -1051,50 +1213,50 @@
         "probe": {
           "left": 21,
           "right": 117,
-          "top": 1772.6666666666665,
+          "top": 2027,
           "height": 64,
           "width": 96,
-          "bottom": 1836.6666666666665
+          "bottom": 2091
         },
         "control": {
           "left": 207.66666666666663,
           "right": 323.66666666666663,
-          "top": 1772.6666666666665,
+          "top": 2027,
           "height": 84,
           "width": 116,
-          "bottom": 1856.6666666666665
+          "bottom": 2111
         },
         "controlChild": {
           "left": 217.66666666666663,
           "right": 229.66666666666663,
-          "top": 1801,
+          "top": 2055.3333333333335,
           "height": 12,
           "width": 12,
-          "bottom": 1813
+          "bottom": 2067.3333333333335
         },
         "probeChild": {
           "left": 31,
           "right": 43,
-          "top": 1801,
+          "top": 2055.3333333333335,
           "height": 12,
           "width": 12,
-          "bottom": 1813
+          "bottom": 2067.3333333333335
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 1766.6666666666665,
+          "top": 2021,
           "height": 96,
           "width": 178.66666666666666,
-          "bottom": 1862.6666666666665
+          "bottom": 2117
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 1766.6666666666665,
+          "top": 2021,
           "height": 96,
           "width": 178.33333333333337,
-          "bottom": 1862.6666666666665
+          "bottom": 2117
         }
       }
     },
@@ -1105,7 +1267,7 @@
         {
           "actual": "6,6,166.66666666666666,40; child=31.66666666666667,12,12,12",
           "passed": true,
-          "expected": "control=6,6,166.33333333333337,62; child=8,26,12,12",
+          "expected": "control=6,6,166.33333333333337,62.333333333333485; child=8,26.333333333333485,12,12",
           "name": "geometry:probe-vs-control"
         }
       ],
@@ -1113,50 +1275,50 @@
         "probe": {
           "left": 21,
           "right": 187.66666666666666,
-          "top": 2076,
+          "top": 2330,
           "height": 40,
           "width": 166.66666666666666,
-          "bottom": 2116
+          "bottom": 2370
         },
         "control": {
           "left": 207.66666666666663,
           "right": 374,
-          "top": 2076,
-          "height": 62,
+          "top": 2330,
+          "height": 62.333333333333485,
           "width": 166.33333333333337,
-          "bottom": 2138
+          "bottom": 2392.3333333333335
         },
         "controlChild": {
           "left": 215.66666666666663,
           "right": 227.66666666666663,
-          "top": 2102,
+          "top": 2356.3333333333335,
           "height": 12,
           "width": 12,
-          "bottom": 2114
+          "bottom": 2368.3333333333335
         },
         "probeChild": {
           "left": 52.66666666666667,
           "right": 64.66666666666667,
-          "top": 2088,
+          "top": 2342,
           "height": 12,
           "width": 12,
-          "bottom": 2100
+          "bottom": 2354
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 2070,
+          "top": 2324,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 2162
+          "bottom": 2416
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 2070,
+          "top": 2324,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 2162
+          "bottom": 2416
         }
       }
     },
@@ -1218,49 +1380,49 @@
       ],
       "geometry": {
         "probe": {
-          "bottom": 3998.3333333333335,
+          "bottom": 4252.666666666667,
           "height": 64,
-          "top": 3934.3333333333335,
+          "top": 4188.666666666667,
           "width": 96,
           "left": 27,
           "right": 123
         },
         "control": {
-          "bottom": 4166.333333333333,
+          "bottom": 4420.666666666667,
           "height": 64,
-          "top": 4102.333333333333,
+          "top": 4356.666666666667,
           "width": 96,
           "left": 27,
           "right": 123
         },
         "controlChild": {
-          "bottom": 4182.333333333333,
+          "bottom": 4436.666666666667,
           "height": 40,
-          "top": 4142.333333333333,
+          "top": 4396.666666666667,
           "width": 48,
           "left": 99,
           "right": 147
         },
         "probeChild": {
-          "bottom": 4014.3333333333335,
+          "bottom": 4268.666666666667,
           "height": 40,
-          "top": 3974.3333333333335,
+          "top": 4228.666666666667,
           "width": 48,
           "left": 99,
           "right": 147
         },
         "probeContainer": {
-          "bottom": 4082.3333333333335,
+          "bottom": 4336.666666666667,
           "height": 160,
-          "top": 3922.3333333333335,
+          "top": 4176.666666666667,
           "width": 160,
           "left": 15,
           "right": 175
         },
         "controlContainer": {
-          "bottom": 4250.333333333334,
-          "height": 160.00000000000045,
-          "top": 4090.3333333333335,
+          "bottom": 4504.666666666667,
+          "height": 160,
+          "top": 4344.666666666667,
           "width": 160,
           "left": 15,
           "right": 175
@@ -1272,9 +1434,9 @@
       "id": "layout-position",
       "checkpoints": [
         {
-          "actual": "7,9,72,62.33333333333303; child=8,26.33333333333303,12,12",
+          "actual": "7,9,72,62.33333333333303; child=8,26.33333333333394,12,12",
           "passed": true,
-          "expected": "control=6,6,166.33333333333337,62.33333333333303; child=8,26.33333333333303,12,12",
+          "expected": "control=6,6,166.33333333333337,62.33333333333303; child=8,26.33333333333394,12,12",
           "name": "geometry:probe-vs-control"
         }
       ],
@@ -1282,50 +1444,50 @@
         "probe": {
           "left": 22,
           "right": 94,
-          "top": 4507.333333333334,
+          "top": 4721,
           "height": 62.33333333333303,
           "width": 72,
-          "bottom": 4569.666666666667
+          "bottom": 4783.333333333333
         },
         "control": {
           "left": 207.66666666666663,
           "right": 374,
-          "top": 4504.333333333334,
+          "top": 4718,
           "height": 62.33333333333303,
           "width": 166.33333333333337,
-          "bottom": 4566.666666666667
+          "bottom": 4780.333333333333
         },
         "controlChild": {
           "left": 215.66666666666663,
           "right": 227.66666666666663,
-          "top": 4530.666666666667,
+          "top": 4744.333333333334,
           "height": 12,
           "width": 12,
-          "bottom": 4542.666666666667
+          "bottom": 4756.333333333334
         },
         "probeChild": {
           "left": 30,
           "right": 42,
-          "top": 4533.666666666667,
+          "top": 4747.333333333334,
           "height": 12,
           "width": 12,
-          "bottom": 4545.666666666667
+          "bottom": 4759.333333333334
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 4498.333333333334,
+          "top": 4712,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 4590.333333333334
+          "bottom": 4804
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 4498.333333333334,
+          "top": 4712,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 4590.333333333334
+          "bottom": 4804
         }
       }
     },
@@ -1336,7 +1498,7 @@
         {
           "actual": "8060:306eaf41",
           "passed": true,
-          "expected": "different from 10752:f79ae09e",
+          "expected": "different from 10756:33306848",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -1348,7 +1510,7 @@
         {
           "actual": "8060:306eaf41",
           "passed": true,
-          "expected": "different from 10956:12465956",
+          "expected": "different from 10956:abfa2639",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -1368,50 +1530,50 @@
         "probe": {
           "left": 21,
           "right": 187.66666666666666,
-          "top": 5874.333333333333,
+          "top": 6088,
           "height": 40,
           "width": 166.66666666666666,
-          "bottom": 5914.333333333333
+          "bottom": 6128
         },
         "control": {
           "left": 207.66666666666663,
           "right": 374,
-          "top": 5874.333333333333,
+          "top": 6088,
           "height": 62.33333333333303,
           "width": 166.33333333333337,
-          "bottom": 5936.666666666666
+          "bottom": 6150.333333333333
         },
         "controlChild": {
           "left": 215.66666666666663,
           "right": 227.66666666666663,
-          "top": 5900.666666666667,
+          "top": 6114.333333333334,
           "height": 12,
           "width": 12,
-          "bottom": 5912.666666666667
+          "bottom": 6126.333333333334
         },
         "probeChild": {
           "left": 52.66666666666667,
           "right": 64.66666666666667,
-          "top": 5886.333333333333,
+          "top": 6100,
           "height": 12,
           "width": 12,
-          "bottom": 5898.333333333333
+          "bottom": 6112
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 5868.333333333333,
+          "top": 6082,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 5960.333333333333
+          "bottom": 6174
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 5868.333333333333,
+          "top": 6082,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 5960.333333333333
+          "bottom": 6174
         }
       }
     },
@@ -1430,50 +1592,50 @@
         "probe": {
           "left": 21,
           "right": 187.66666666666666,
-          "top": 6173.666666666666,
+          "top": 6387.333333333333,
           "height": 62.33333333333303,
           "width": 166.66666666666666,
-          "bottom": 6235.999999999999
+          "bottom": 6449.666666666666
         },
         "control": {
           "left": 207.66666666666663,
           "right": 374,
-          "top": 6173.666666666666,
+          "top": 6387.333333333333,
           "height": 62.33333333333303,
           "width": 166.33333333333337,
-          "bottom": 6235.999999999999
+          "bottom": 6449.666666666666
         },
         "controlChild": {
           "left": 215.66666666666663,
           "right": 227.66666666666663,
-          "top": 6200,
+          "top": 6413.666666666667,
           "height": 12,
           "width": 12,
-          "bottom": 6212
+          "bottom": 6425.666666666667
         },
         "probeChild": {
           "left": 98.33333333333333,
           "right": 110.33333333333333,
-          "top": 6200,
+          "top": 6413.666666666667,
           "height": 12,
           "width": 12,
-          "bottom": 6212
+          "bottom": 6425.666666666667
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 6167.666666666666,
+          "top": 6381.333333333333,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 6259.666666666666
+          "bottom": 6473.333333333333
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 6167.666666666666,
+          "top": 6381.333333333333,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 6259.666666666666
+          "bottom": 6473.333333333333
         }
       }
     },
@@ -1492,50 +1654,50 @@
         "probe": {
           "left": 21,
           "right": 112,
-          "top": 6473,
+          "top": 6686.666666666666,
           "height": 24,
           "width": 91,
-          "bottom": 6497
+          "bottom": 6710.666666666666
         },
         "control": {
           "left": 21,
           "right": 45,
-          "top": 6621,
+          "top": 6834.666666666666,
           "height": 24,
           "width": 24,
-          "bottom": 6645
+          "bottom": 6858.666666666666
         },
         "controlChild": {
           "left": 21,
           "right": 29,
-          "top": 6621,
+          "top": 6834.666666666666,
           "height": 8,
           "width": 8,
-          "bottom": 6629
+          "bottom": 6842.666666666666
         },
         "probeChild": {
           "left": 21,
           "right": 29,
-          "top": 6473,
+          "top": 6686.666666666666,
           "height": 8,
           "width": 8,
-          "bottom": 6481
+          "bottom": 6694.666666666666
         },
         "probeContainer": {
           "left": 15,
           "right": 175,
-          "top": 6467,
+          "top": 6680.666666666666,
           "height": 140,
           "width": 160,
-          "bottom": 6607
+          "bottom": 6820.666666666666
         },
         "controlContainer": {
           "left": 15,
           "right": 175,
-          "top": 6615,
+          "top": 6828.666666666666,
           "height": 140,
           "width": 160,
-          "bottom": 6755
+          "bottom": 6968.666666666666
         }
       }
     },
@@ -1554,50 +1716,50 @@
         "probe": {
           "left": 21,
           "right": 187.66666666666666,
-          "top": 6980.333333333333,
+          "top": 7194,
           "height": 55,
           "width": 166.66666666666666,
-          "bottom": 7035.333333333333
+          "bottom": 7249
         },
         "control": {
           "left": 207.66666666666663,
           "right": 374,
-          "top": 6980.333333333333,
+          "top": 7194,
           "height": 62.33333333333303,
           "width": 166.33333333333337,
-          "bottom": 7042.666666666666
+          "bottom": 7256.333333333333
         },
         "controlChild": {
           "left": 215.66666666666663,
           "right": 227.66666666666663,
-          "top": 7006.666666666667,
+          "top": 7220.333333333334,
           "height": 12,
           "width": 12,
-          "bottom": 7018.666666666667
+          "bottom": 7232.333333333334
         },
         "probeChild": {
           "left": 116,
           "right": 128,
-          "top": 6992.333333333333,
+          "top": 7206,
           "height": 12,
           "width": 12,
-          "bottom": 7004.333333333333
+          "bottom": 7218
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 6974.333333333333,
+          "top": 7188,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 7066.333333333333
+          "bottom": 7280
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 6974.333333333333,
+          "top": 7188,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 7066.333333333333
+          "bottom": 7280
         }
       }
     },
@@ -1616,50 +1778,50 @@
         "probe": {
           "left": 32,
           "right": 187.66666666666666,
-          "top": 7272.666666666666,
+          "top": 7486.333333333333,
           "height": 62.33333333333303,
           "width": 155.66666666666666,
-          "bottom": 7334.999999999999
+          "bottom": 7548.666666666666
         },
         "control": {
           "left": 207.66666666666663,
           "right": 374,
-          "top": 7279.666666666666,
+          "top": 7493.333333333333,
           "height": 62.33333333333303,
           "width": 166.33333333333337,
-          "bottom": 7341.999999999999
+          "bottom": 7555.666666666666
         },
         "controlChild": {
           "left": 215.66666666666663,
           "right": 227.66666666666663,
-          "top": 7306,
+          "top": 7519.666666666667,
           "height": 12,
           "width": 12,
-          "bottom": 7318
+          "bottom": 7531.666666666667
         },
         "probeChild": {
           "left": 40,
           "right": 52,
-          "top": 7299,
+          "top": 7512.666666666667,
           "height": 12,
           "width": 12,
-          "bottom": 7311
+          "bottom": 7524.666666666667
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 7273.666666666666,
+          "top": 7487.333333333333,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 7365.666666666666
+          "bottom": 7579.333333333333
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 7273.666666666666,
+          "top": 7487.333333333333,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 7365.666666666666
+          "bottom": 7579.333333333333
         }
       }
     },
@@ -1678,50 +1840,50 @@
         "probe": {
           "left": 21,
           "right": 187.66666666666666,
-          "top": 7591,
+          "top": 7804.666666666666,
           "height": 72.33333333333303,
           "width": 166.66666666666666,
-          "bottom": 7663.333333333333
+          "bottom": 7876.999999999999
         },
         "control": {
           "left": 207.66666666666663,
           "right": 374,
-          "top": 7591,
+          "top": 7804.666666666666,
           "height": 62.33333333333303,
           "width": 166.33333333333337,
-          "bottom": 7653.333333333333
+          "bottom": 7866.999999999999
         },
         "controlChild": {
           "left": 215.66666666666663,
           "right": 227.66666666666663,
-          "top": 7617.333333333334,
+          "top": 7831,
           "height": 12,
           "width": 12,
-          "bottom": 7629.333333333334
+          "bottom": 7843
         },
         "probeChild": {
           "left": 28,
           "right": 40,
-          "top": 7622.333333333334,
+          "top": 7836,
           "height": 12,
           "width": 12,
-          "bottom": 7634.333333333334
+          "bottom": 7848
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 7585,
+          "top": 7798.666666666666,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 7677
+          "bottom": 7890.666666666666
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 7585,
+          "top": 7798.666666666666,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 7677
+          "bottom": 7890.666666666666
         }
       }
     },
@@ -1745,60 +1907,67 @@
       "id": "sizing-fixed",
       "checkpoints": [
         {
-          "actual": "6,6,123,40; child=8,26.33333333333394,12,12",
+          "actual": "8,8,123,24; child=4,4,4,4",
           "passed": true,
-          "expected": "control=6,6,166.33333333333337,62.33333333333394; child=8,26.33333333333394,12,12",
+          "expected": "control=8,8,80,64; child=4,4,4,4",
           "name": "geometry:probe-vs-control"
         }
       ],
+      "screenMetrics": {
+        "pixelRatio": 3,
+        "source": "lynx-native-screen-v1",
+        "width": 402,
+        "height": 874,
+        "version": 1
+      },
       "geometry": {
         "probe": {
-          "left": 21,
-          "right": 144,
-          "top": 8271,
-          "height": 40,
+          "left": 23,
+          "right": 146,
+          "top": 8486.666666666668,
+          "height": 24,
           "width": 123,
-          "bottom": 8311
+          "bottom": 8510.666666666668
         },
         "control": {
-          "left": 207.66666666666663,
-          "right": 374,
-          "top": 8271,
-          "height": 62.33333333333394,
-          "width": 166.33333333333337,
-          "bottom": 8333.333333333334
+          "left": 187,
+          "right": 267,
+          "top": 8486.666666666668,
+          "height": 64,
+          "width": 80,
+          "bottom": 8550.666666666668
         },
         "controlChild": {
-          "left": 215.66666666666663,
-          "right": 227.66666666666663,
-          "top": 8297.333333333334,
-          "height": 12,
-          "width": 12,
-          "bottom": 8309.333333333334
+          "left": 191,
+          "right": 195,
+          "top": 8490.666666666668,
+          "height": 4,
+          "width": 4,
+          "bottom": 8494.666666666668
         },
         "probeChild": {
-          "left": 29,
-          "right": 41,
-          "top": 8297.333333333334,
-          "height": 12,
-          "width": 12,
-          "bottom": 8309.333333333334
+          "left": 27,
+          "right": 31,
+          "top": 8490.666666666668,
+          "height": 4,
+          "width": 4,
+          "bottom": 8494.666666666668
         },
         "probeContainer": {
           "left": 15,
-          "right": 193.66666666666666,
-          "top": 8265,
-          "height": 92,
-          "width": 178.66666666666666,
-          "bottom": 8357
+          "right": 175,
+          "top": 8478.666666666668,
+          "height": 96,
+          "width": 160,
+          "bottom": 8574.666666666668
         },
         "controlContainer": {
-          "left": 201.66666666666663,
-          "right": 380,
-          "top": 8265,
-          "height": 92,
-          "width": 178.33333333333337,
-          "bottom": 8357
+          "left": 179,
+          "right": 339,
+          "top": 8478.666666666668,
+          "height": 96,
+          "width": 160,
+          "bottom": 8574.666666666668
         }
       }
     },
@@ -1811,50 +1980,50 @@
         "probe": {
           "left": 21,
           "right": 61,
-          "top": 8570.333333333334,
+          "top": 8788,
           "height": 240,
           "width": 40,
-          "bottom": 8810.333333333334
+          "bottom": 9028
         },
         "control": {
           "left": 207.66666666666663,
           "right": 247.66666666666663,
-          "top": 8570.333333333334,
+          "top": 8788,
           "height": 300,
           "width": 40,
-          "bottom": 8870.333333333334
+          "bottom": 9088
         },
         "controlChild": {
           "left": 207.66666666666663,
           "right": 219.66666666666663,
-          "top": 8588.666666666666,
+          "top": 8806.333333333332,
           "height": 12,
           "width": 12,
-          "bottom": 8600.666666666666
+          "bottom": 8818.333333333332
         },
         "probeChild": {
           "left": 21,
           "right": 33,
-          "top": 8588.666666666666,
+          "top": 8806.333333333332,
           "height": 12,
           "width": 12,
-          "bottom": 8600.666666666666
+          "bottom": 8818.333333333332
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 8564.333333333334,
+          "top": 8782,
           "height": 320,
           "width": 178.66666666666666,
-          "bottom": 8884.333333333334
+          "bottom": 9102
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 8564.333333333334,
+          "top": 8782,
           "height": 320,
           "width": 178.33333333333337,
-          "bottom": 8884.333333333334
+          "bottom": 9102
         }
       },
       "checkpoints": [
@@ -1896,50 +2065,50 @@
         "probe": {
           "left": 21,
           "right": 187.66666666666666,
-          "top": 9740.666666666668,
+          "top": 10011,
           "height": 45,
           "width": 166.66666666666666,
-          "bottom": 9785.666666666668
+          "bottom": 10056
         },
         "control": {
           "left": 207.66666666666663,
           "right": 374,
-          "top": 9740.666666666668,
+          "top": 10011,
           "height": 40,
           "width": 166.33333333333337,
-          "bottom": 9780.666666666668
+          "bottom": 10051
         },
         "controlChild": {
           "left": 239.33333333333331,
           "right": 251.33333333333331,
-          "top": 9752.666666666668,
+          "top": 10023,
           "height": 12,
           "width": 12,
-          "bottom": 9764.666666666668
+          "bottom": 10035
         },
         "probeChild": {
           "left": 71.66666666666666,
           "right": 83.66666666666666,
-          "top": 9752.666666666668,
+          "top": 10023,
           "height": 12,
           "width": 12,
-          "bottom": 9764.666666666668
+          "bottom": 10035
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 9734.666666666668,
+          "top": 10005,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 9826.666666666668
+          "bottom": 10097
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 9734.666666666668,
+          "top": 10005,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 9826.666666666668
+          "bottom": 10097
         }
       }
     },
@@ -1948,9 +2117,9 @@
       "status": "supported",
       "checkpoints": [
         {
-          "actual": "11180:ba63e008",
+          "actual": "11192:aad0ad4f",
           "passed": true,
-          "expected": "different from 10752:f79ae09e",
+          "expected": "different from 10756:33306848",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -1970,50 +2139,50 @@
         "probe": {
           "left": 21,
           "right": 187.66666666666666,
-          "top": 10575.333333333334,
+          "top": 10845.333333333334,
           "height": 40,
           "width": 166.66666666666666,
-          "bottom": 10615.333333333334
+          "bottom": 10885.333333333334
         },
         "control": {
           "left": 207.66666666666663,
           "right": 374,
-          "top": 10575.333333333334,
+          "top": 10845.333333333334,
           "height": 40,
           "width": 166.33333333333337,
-          "bottom": 10615.333333333334
+          "bottom": 10885.333333333334
         },
         "controlChild": {
           "left": 239.33333333333331,
           "right": 251.33333333333331,
-          "top": 10587.333333333334,
+          "top": 10857.333333333334,
           "height": 12,
           "width": 12,
-          "bottom": 10599.333333333334
+          "bottom": 10869.333333333334
         },
         "probeChild": {
           "left": 56.666666666666664,
           "right": 68.66666666666666,
-          "top": 10587.333333333334,
+          "top": 10857.333333333334,
           "height": 12,
           "width": 11.999999999999993,
-          "bottom": 10599.333333333334
+          "bottom": 10869.333333333334
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 10569.333333333334,
+          "top": 10839.333333333334,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 10661.333333333334
+          "bottom": 10931.333333333334
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 10569.333333333334,
+          "top": 10839.333333333334,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 10661.333333333334
+          "bottom": 10931.333333333334
         }
       }
     },
@@ -2024,9 +2193,9 @@
       "reason": "probe/control 元素截图没有可观察的像素差异",
       "checkpoints": [
         {
-          "actual": "11192:1370e59c",
+          "actual": "11188:ffc2f305",
           "passed": false,
-          "expected": "different from 11192:1370e59c",
+          "expected": "different from 11188:ffc2f305",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -2051,9 +2220,9 @@
       "status": "supported",
       "checkpoints": [
         {
-          "actual": "10848:836d459d",
+          "actual": "10836:e7917076",
           "passed": true,
-          "expected": "different from 10752:f79ae09e",
+          "expected": "different from 10756:33306848",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -2063,9 +2232,9 @@
       "status": "supported",
       "checkpoints": [
         {
-          "actual": "185088:6e43b9ee",
+          "actual": "186460:bcdbbeee",
           "passed": true,
-          "expected": "different from 8540:aa77475e",
+          "expected": "different from 8524:e9c7a93",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -2075,9 +2244,9 @@
       "status": "supported",
       "checkpoints": [
         {
-          "actual": "183660:6f1f960f",
+          "actual": "183656:ffe798d6",
           "passed": true,
-          "expected": "different from 127828:48ec0196",
+          "expected": "different from 127916:8103cdcf",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -2087,9 +2256,9 @@
       "status": "supported",
       "checkpoints": [
         {
-          "actual": "10808:932fdfa9",
+          "actual": "10804:caeae8dd",
           "passed": true,
-          "expected": "different from 10752:f79ae09e",
+          "expected": "different from 10756:33306848",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -2099,9 +2268,9 @@
       "status": "supported",
       "checkpoints": [
         {
-          "actual": "14264:346ada85",
+          "actual": "14260:7663fef3",
           "passed": true,
-          "expected": "different from 10752:f79ae09e",
+          "expected": "different from 10756:33306848",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -2111,9 +2280,9 @@
       "status": "supported",
       "checkpoints": [
         {
-          "actual": "10564:43af078b",
+          "actual": "10568:1eecb4bd",
           "passed": true,
-          "expected": "different from 10752:f79ae09e",
+          "expected": "different from 10756:33306848",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -2154,9 +2323,9 @@
       "status": "supported",
       "checkpoints": [
         {
-          "actual": "41984:9f0e767",
+          "actual": "42000:5848ec61",
           "passed": true,
-          "expected": "different from 10752:f79ae09e",
+          "expected": "different from 10756:33306848",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -2198,7 +2367,7 @@
         {
           "actual": "-1,-1,1,1; child=0,47,12,12",
           "passed": true,
-          "expected": "control=6,6,166.33333333333337,62.33333333333212; child=8,26.33333333333576,12,12",
+          "expected": "control=6,6,166.33333333333337,62.66666666666788; child=8,26.66666666666788,12,12",
           "name": "geometry:probe-vs-control"
         }
       ],
@@ -2206,50 +2375,50 @@
         "probe": {
           "left": 14,
           "right": 15,
-          "top": 18389.666666666664,
+          "top": 18725.666666666664,
           "height": 1,
           "width": 1,
-          "bottom": 18390.666666666664
+          "bottom": 18726.666666666664
         },
         "control": {
           "left": 207.66666666666663,
           "right": 374,
-          "top": 18396.666666666664,
-          "height": 62.33333333333212,
+          "top": 18732.666666666664,
+          "height": 62.66666666666788,
           "width": 166.33333333333337,
-          "bottom": 18458.999999999996
+          "bottom": 18795.333333333332
         },
         "controlChild": {
           "left": 215.66666666666663,
           "right": 227.66666666666663,
-          "top": 18423,
+          "top": 18759.333333333332,
           "height": 12,
           "width": 12,
-          "bottom": 18435
+          "bottom": 18771.333333333332
         },
         "probeChild": {
           "left": 14,
           "right": 26,
-          "top": 18436.666666666664,
+          "top": 18772.666666666664,
           "height": 12,
           "width": 12,
-          "bottom": 18448.666666666664
+          "bottom": 18784.666666666664
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 18390.666666666664,
+          "top": 18726.666666666664,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 18482.666666666664
+          "bottom": 18818.666666666664
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 18390.666666666664,
+          "top": 18726.666666666664,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 18482.666666666664
+          "bottom": 18818.666666666664
         }
       }
     },
@@ -2305,7 +2474,7 @@
         {
           "actual": "-10.133053811390461,6,177.12069152623516,103.34588402243753; child=13.939063692773047,27.50659911976618,14.696938456699066,14.696938456698263",
           "passed": true,
-          "expected": "control=0.7673085412639296,-14.46313883703624,176.79871625080548,103.2596110074046; child=13.939063692773061,27.50659911976618,14.696938456699058,14.696938456698263",
+          "expected": "control=0.7673085412639296,-14.463138837032602,176.79871625080548,103.2596110074046; child=13.939063692773061,27.50659911976254,14.696938456699058,14.696938456698263",
           "name": "geometry:probe-vs-control"
         }
       ],
@@ -2313,50 +2482,50 @@
         "probe": {
           "left": 4.86694618860954,
           "right": 181.9876377148447,
-          "top": 19838.333333333336,
+          "top": 20200.333333333332,
           "height": 103.34588402243753,
           "width": 177.12069152623516,
-          "bottom": 19941.679217355773
+          "bottom": 20303.67921735577
         },
         "control": {
           "left": 202.43397520793056,
           "right": 379.23269145873604,
-          "top": 19817.8701944963,
+          "top": 20179.8701944963,
           "height": 103.2596110074046,
           "width": 176.79871625080548,
-          "bottom": 19921.129805503704
+          "bottom": 20283.129805503704
         },
         "controlChild": {
           "left": 216.37303890070362,
           "right": 231.06997735740268,
-          "top": 19845.376793616066,
+          "top": 20207.376793616062,
           "height": 14.696938456698263,
           "width": 14.696938456699058,
-          "bottom": 19860.073732072764
+          "bottom": 20222.07373207276
         },
         "probeChild": {
           "left": 18.806009881382586,
           "right": 33.50294833808165,
-          "top": 19865.839932453102,
+          "top": 20227.8399324531,
           "height": 14.696938456698263,
           "width": 14.696938456699066,
-          "bottom": 19880.5368709098
+          "bottom": 20242.536870909797
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 19832.333333333336,
+          "top": 20194.333333333332,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 19924.333333333336
+          "bottom": 20286.333333333332
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 19832.333333333336,
+          "top": 20194.333333333332,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 19924.333333333336
+          "bottom": 20286.333333333332
         }
       }
     },
@@ -2369,7 +2538,7 @@
         {
           "name": "interaction:transition-progress",
           "passed": false,
-          "actual": "10752:f79ae09e -> 10752:f79ae09e -> 10752:f79ae09e"
+          "actual": "10756:33306848 -> 10756:33306848 -> 10756:33306848"
         }
       ]
     },
@@ -2380,7 +2549,7 @@
         {
           "name": "interaction:animation-progress",
           "passed": true,
-          "actual": "16292:50debb26 -> 15240:bc8df7ef"
+          "actual": "12996:7ebc9e70 -> 12880:bc39852b"
         }
       ]
     },
@@ -2449,41 +2618,41 @@
             "probe": {
               "left": 31,
               "right": 231,
-              "top": 22610.333333333332,
+              "top": 22877,
               "height": 40,
               "width": 200,
-              "bottom": 22650.333333333332
+              "bottom": 22917
             },
             "control": {
               "left": 31,
               "right": 111,
-              "top": 22698.333333333332,
+              "top": 22965,
               "height": 40,
               "width": 80,
-              "bottom": 22738.333333333332
+              "bottom": 23005
             },
             "probeContainer": {
               "left": 15,
               "right": 255,
-              "top": 22594.333333333332,
+              "top": 22861,
               "height": 80,
               "width": 240,
-              "bottom": 22674.333333333332
+              "bottom": 22941
             },
             "controlContainer": {
               "left": 15,
               "right": 255,
-              "top": 22682.333333333332,
+              "top": 22949,
               "height": 80,
               "width": 240,
-              "bottom": 22762.333333333332
+              "bottom": 23029
             }
           },
           "original": {
             "width": 402,
             "height": 874
           },
-          "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+          "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
           "requestId": "responsive-2",
           "viewport": {
             "measuredWidth": 840,
@@ -2495,10 +2664,10 @@
           "threshold": {
             "left": 15,
             "right": 687,
-            "top": 22594.333333333332,
+            "top": 22861,
             "height": 1,
             "width": 672,
-            "bottom": 22595.333333333332
+            "bottom": 22862
           }
         },
         "narrow": {
@@ -2511,41 +2680,41 @@
             "probe": {
               "left": 31,
               "right": 231,
-              "top": 23393.666666666664,
+              "top": 24044,
               "height": 40,
               "width": 200,
-              "bottom": 23433.666666666664
+              "bottom": 24084
             },
             "control": {
               "left": 31,
               "right": 111,
-              "top": 23481.666666666664,
+              "top": 24132,
               "height": 40,
               "width": 80,
-              "bottom": 23521.666666666664
+              "bottom": 24172
             },
             "probeContainer": {
               "left": 15,
               "right": 255,
-              "top": 23377.666666666664,
+              "top": 24028,
               "height": 80,
               "width": 240,
-              "bottom": 23457.666666666664
+              "bottom": 24108
             },
             "controlContainer": {
               "left": 15,
               "right": 255,
-              "top": 23465.666666666664,
+              "top": 24116,
               "height": 80,
               "width": 240,
-              "bottom": 23545.666666666664
+              "bottom": 24196
             }
           },
           "original": {
             "width": 402,
             "height": 874
           },
-          "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+          "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
           "requestId": "responsive-1",
           "viewport": {
             "measuredWidth": 336,
@@ -2557,10 +2726,10 @@
           "threshold": {
             "left": 15,
             "right": 687,
-            "top": 23377.666666666664,
+            "top": 24028,
             "height": 1,
             "width": 672,
-            "bottom": 23378.666666666664
+            "bottom": 24029
           }
         },
         "restored": {
@@ -2573,41 +2742,41 @@
             "probe": {
               "left": 31,
               "right": 231,
-              "top": 23060,
+              "top": 23448,
               "height": 40,
               "width": 200,
-              "bottom": 23100
+              "bottom": 23488
             },
             "control": {
               "left": 31,
               "right": 111,
-              "top": 23148,
+              "top": 23536,
               "height": 40,
               "width": 80,
-              "bottom": 23188
+              "bottom": 23576
             },
             "probeContainer": {
               "left": 15,
               "right": 255,
-              "top": 23044,
+              "top": 23432,
               "height": 80,
               "width": 240,
-              "bottom": 23124
+              "bottom": 23512
             },
             "controlContainer": {
               "left": 15,
               "right": 255,
-              "top": 23132,
+              "top": 23520,
               "height": 80,
               "width": 240,
-              "bottom": 23212
+              "bottom": 23600
             }
           },
           "original": {
             "width": 402,
             "height": 874
           },
-          "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+          "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
           "requestId": "responsive-4",
           "viewport": {
             "measuredWidth": 402,
@@ -2619,10 +2788,10 @@
           "threshold": {
             "left": 15,
             "right": 687,
-            "top": 23044,
+            "top": 23432,
             "height": 1,
             "width": 672,
-            "bottom": 23045
+            "bottom": 23433
           }
         },
         "narrowed": {
@@ -2635,41 +2804,41 @@
             "probe": {
               "left": 31,
               "right": 231,
-              "top": 23393.666666666664,
+              "top": 24044,
               "height": 40,
               "width": 200,
-              "bottom": 23433.666666666664
+              "bottom": 24084
             },
             "control": {
               "left": 31,
               "right": 111,
-              "top": 23481.666666666664,
+              "top": 24132,
               "height": 40,
               "width": 80,
-              "bottom": 23521.666666666664
+              "bottom": 24172
             },
             "probeContainer": {
               "left": 15,
               "right": 255,
-              "top": 23377.666666666664,
+              "top": 24028,
               "height": 80,
               "width": 240,
-              "bottom": 23457.666666666664
+              "bottom": 24108
             },
             "controlContainer": {
               "left": 15,
               "right": 255,
-              "top": 23465.666666666664,
+              "top": 24116,
               "height": 80,
               "width": 240,
-              "bottom": 23545.666666666664
+              "bottom": 24196
             }
           },
           "original": {
             "width": 402,
             "height": 874
           },
-          "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+          "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
           "requestId": "responsive-3",
           "viewport": {
             "measuredWidth": 336,
@@ -2681,10 +2850,10 @@
           "threshold": {
             "left": 15,
             "right": 687,
-            "top": 23377.666666666664,
+            "top": 24028,
             "height": 1,
             "width": 672,
-            "bottom": 23378.666666666664
+            "bottom": 24029
           }
         }
       },
@@ -2697,23 +2866,23 @@
         {
           "name": "pixel:color-scheme-v2",
           "passed": true,
-          "actual": "{\"glyphPixels\":3741,\"corePixels\":3023,\"whiteMatch\":1,\"invalidGlyphColors\":0,\"backgroundMismatch\":0}",
+          "actual": "{\"glyphPixels\":3740,\"corePixels\":3023,\"whiteMatch\":1,\"invalidGlyphColors\":0,\"backgroundMismatch\":0}",
           "expected": "light 深色字形 → dark 同字形白色 → restored 同字形深色；control 与背景不变"
         }
       ],
       "colorScheme": {
         "light": {
-          "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+          "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
           "requestId": "color-scheme-1",
           "scheme": "light"
         },
         "dark": {
-          "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+          "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
           "requestId": "color-scheme-2",
           "scheme": "dark"
         },
         "restored": {
-          "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+          "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
           "requestId": "color-scheme-3",
           "scheme": "light"
         }
@@ -2730,7 +2899,7 @@
             {
               "name": "interaction:pseudo-active",
               "passed": true,
-              "actual": "10752:f79ae09e -> 10788:eda75301"
+              "actual": "10756:33306848 -> 10760:972d9a63"
             }
           ]
         },
@@ -2763,7 +2932,7 @@
         {
           "name": "interaction:pseudo-active",
           "passed": true,
-          "actual": "10752:f79ae09e -> 10788:eda75301"
+          "actual": "10756:33306848 -> 10760:972d9a63"
         },
         {
           "name": "media:necessary-guard-v1",
@@ -2785,7 +2954,7 @@
         {
           "name": "pixel:structural-v1",
           "passed": false,
-          "actual": "{\"outside\":true,\"rows\":[{\"massRatio\":1.2734712579594825,\"forward\":0.028851107676455434,\"reverse\":0.06834656541249569,\"valid\":true},{\"massRatio\":1,\"forward\":1,\"reverse\":1,\"valid\":true},{\"massRatio\":1.9967595650567445,\"forward\":0.05100463678516229,\"reverse\":0.06557801969932607,\"valid\":true}]}",
+          "actual": "{\"outside\":true,\"rows\":[{\"massRatio\":1.273459310277935,\"forward\":0.028851107676455434,\"reverse\":0.06867989646246764,\"valid\":true},{\"massRatio\":1,\"forward\":1,\"reverse\":1,\"valid\":true},{\"massRatio\":1.9967356750631737,\"forward\":0.05100463678516229,\"reverse\":0.06607929515418502,\"valid\":true}]}",
           "expected": "三个兄弟依次为粗体/0.5、普通/1、普通/0.5，与显式效果及普通文字对照一致"
         }
       ]
@@ -2880,50 +3049,50 @@
         "probe": {
           "left": 21,
           "right": 121,
-          "top": 26667.333333333332,
+          "top": 27188,
           "height": 44,
           "width": 100,
-          "bottom": 26711.333333333332
+          "bottom": 27232
         },
         "control": {
           "left": 21,
           "right": 121,
-          "top": 26815.333333333332,
+          "top": 27336,
           "height": 44,
           "width": 100,
-          "bottom": 26859.333333333332
+          "bottom": 27380
         },
         "controlChild": {
           "left": 21,
           "right": 41,
-          "top": 26831.333333333332,
+          "top": 27352,
           "height": 12,
           "width": 20,
-          "bottom": 26843.333333333332
+          "bottom": 27364
         },
         "probeChild": {
           "left": 65,
           "right": 85,
-          "top": 26667.333333333332,
+          "top": 27188,
           "height": 12,
           "width": 20,
-          "bottom": 26679.333333333332
+          "bottom": 27200
         },
         "probeContainer": {
           "left": 15,
           "right": 175,
-          "top": 26661.333333333332,
+          "top": 27182,
           "height": 140,
           "width": 160,
-          "bottom": 26801.333333333332
+          "bottom": 27322
         },
         "controlContainer": {
           "left": 15,
           "right": 175,
-          "top": 26809.333333333332,
+          "top": 27330,
           "height": 140,
           "width": 160,
-          "bottom": 26949.333333333332
+          "bottom": 27470
         }
       }
     },
@@ -2947,9 +3116,9 @@
       "status": "supported",
       "checkpoints": [
         {
-          "actual": "10644:31a74d3",
+          "actual": "10644:c2868462",
           "passed": true,
-          "expected": "different from 10752:f79ae09e",
+          "expected": "different from 10756:33306848",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -3026,50 +3195,50 @@
         "probe": {
           "left": 21,
           "right": 61,
-          "top": 30696.666666666664,
+          "top": 31162,
           "height": 240,
           "width": 40,
-          "bottom": 30936.666666666664
+          "bottom": 31402
         },
         "control": {
           "left": 207.66666666666663,
           "right": 247.66666666666663,
-          "top": 30696.666666666664,
+          "top": 31162,
           "height": 300,
           "width": 40,
-          "bottom": 30996.666666666664
+          "bottom": 31462
         },
         "controlChild": {
           "left": 207.66666666666663,
           "right": 219.66666666666663,
-          "top": 30715,
+          "top": 31180.333333333336,
           "height": 12,
           "width": 12,
-          "bottom": 30727
+          "bottom": 31192.333333333336
         },
         "probeChild": {
           "left": 21,
           "right": 33,
-          "top": 30715,
+          "top": 31180.333333333336,
           "height": 12,
           "width": 12,
-          "bottom": 30727
+          "bottom": 31192.333333333336
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 30690.666666666664,
+          "top": 31156,
           "height": 320,
           "width": 178.66666666666666,
-          "bottom": 31010.666666666664
+          "bottom": 31476
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 30690.666666666664,
+          "top": 31156,
           "height": 320,
           "width": 178.33333333333337,
-          "bottom": 31010.666666666664
+          "bottom": 31476
         }
       }
     },
@@ -3078,9 +3247,9 @@
       "status": "supported",
       "checkpoints": [
         {
-          "actual": "10820:86f8bc21",
+          "actual": "10816:8517fa30",
           "passed": true,
-          "expected": "different from 10752:f79ae09e",
+          "expected": "different from 10756:33306848",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -3250,50 +3419,50 @@
         "probe": {
           "left": 45,
           "right": 109,
-          "top": 36931.333333333336,
+          "top": 37153,
           "height": 52,
           "width": 64,
-          "bottom": 36983.333333333336
+          "bottom": 37205
         },
         "control": {
           "left": 21,
           "right": 85,
-          "top": 37079.333333333336,
+          "top": 37301,
           "height": 24,
           "width": 64,
-          "bottom": 37103.333333333336
+          "bottom": 37325
         },
         "controlChild": {
           "left": 65,
           "right": 105,
-          "top": 37079.333333333336,
+          "top": 37301,
           "height": 24,
           "width": 40,
-          "bottom": 37103.333333333336
+          "bottom": 37325
         },
         "probeChild": {
           "left": 45,
           "right": 85,
-          "top": 36959.333333333336,
+          "top": 37181,
           "height": 24,
           "width": 40,
-          "bottom": 36983.333333333336
+          "bottom": 37205
         },
         "probeContainer": {
           "left": 15,
           "right": 175,
-          "top": 36925.333333333336,
+          "top": 37147,
           "height": 140,
           "width": 160,
-          "bottom": 37065.333333333336
+          "bottom": 37287
         },
         "controlContainer": {
           "left": 15,
           "right": 175,
-          "top": 37073.333333333336,
+          "top": 37295,
           "height": 140,
           "width": 160,
-          "bottom": 37213.333333333336
+          "bottom": 37435
         }
       }
     },
@@ -3312,50 +3481,50 @@
         "probe": {
           "left": 21,
           "right": 129,
-          "top": 37426.66666666667,
+          "top": 37648,
           "height": 24,
           "width": 108,
-          "bottom": 37450.66666666667
+          "bottom": 37672
         },
         "control": {
           "left": 21,
           "right": 45,
-          "top": 37574.66666666667,
+          "top": 37796,
           "height": 24,
           "width": 24,
-          "bottom": 37598.66666666667
+          "bottom": 37820
         },
         "controlChild": {
           "left": 21,
           "right": 33,
-          "top": 37574.66666666667,
+          "top": 37796,
           "height": 24,
           "width": 12,
-          "bottom": 37598.66666666667
+          "bottom": 37820
         },
         "probeChild": {
           "left": 21,
           "right": 101,
-          "top": 37426.66666666667,
+          "top": 37648,
           "height": 24,
           "width": 80,
-          "bottom": 37450.66666666667
+          "bottom": 37672
         },
         "probeContainer": {
           "left": 15,
           "right": 175,
-          "top": 37420.66666666667,
+          "top": 37642,
           "height": 140,
           "width": 160,
-          "bottom": 37560.66666666667
+          "bottom": 37782
         },
         "controlContainer": {
           "left": 15,
           "right": 175,
-          "top": 37568.66666666667,
+          "top": 37790,
           "height": 140,
           "width": 160,
-          "bottom": 37708.66666666667
+          "bottom": 37930
         }
       }
     },
@@ -3374,50 +3543,50 @@
         "probe": {
           "left": 21,
           "right": 105,
-          "top": 37922,
+          "top": 38143.333333333336,
           "height": 52,
           "width": 84,
-          "bottom": 37974
+          "bottom": 38195.333333333336
         },
         "control": {
           "left": 65,
           "right": 105,
-          "top": 38098,
+          "top": 38319.333333333336,
           "height": 24,
           "width": 40,
-          "bottom": 38122
+          "bottom": 38343.333333333336
         },
         "controlChild": {
           "left": 65,
           "right": 73,
-          "top": 38098,
+          "top": 38319.333333333336,
           "height": 8,
           "width": 8,
-          "bottom": 38106
+          "bottom": 38327.333333333336
         },
         "probeChild": {
           "left": 21,
           "right": 29,
-          "top": 37922,
+          "top": 38143.333333333336,
           "height": 8,
           "width": 8,
-          "bottom": 37930
+          "bottom": 38151.333333333336
         },
         "probeContainer": {
           "left": 15,
           "right": 175,
-          "top": 37916,
+          "top": 38137.333333333336,
           "height": 140,
           "width": 160,
-          "bottom": 38056
+          "bottom": 38277.333333333336
         },
         "controlContainer": {
           "left": 15,
           "right": 175,
-          "top": 38064,
+          "top": 38285.333333333336,
           "height": 140,
           "width": 160,
-          "bottom": 38204
+          "bottom": 38425.333333333336
         }
       }
     },
@@ -3481,50 +3650,50 @@
         "probe": {
           "left": 115.66666666666669,
           "right": 187.66666666666669,
-          "top": 39940.66666666667,
+          "top": 40214.66666666667,
           "height": 62.33333333333576,
           "width": 72,
-          "bottom": 40003.00000000001
+          "bottom": 40277.00000000001
         },
         "control": {
           "left": 207.66666666666663,
           "right": 374,
-          "top": 39940.66666666667,
+          "top": 40214.66666666667,
           "height": 62.33333333333576,
           "width": 166.33333333333337,
-          "bottom": 40003.00000000001
+          "bottom": 40277.00000000001
         },
         "controlChild": {
           "left": 215.66666666666663,
           "right": 227.66666666666663,
-          "top": 39967,
+          "top": 40241,
           "height": 12,
           "width": 12,
-          "bottom": 39979
+          "bottom": 40253
         },
         "probeChild": {
           "left": 123.66666666666669,
           "right": 135.66666666666669,
-          "top": 39967,
+          "top": 40241,
           "height": 12,
           "width": 12,
-          "bottom": 39979
+          "bottom": 40253
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 39934.66666666667,
+          "top": 40208.66666666667,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 40026.66666666667
+          "bottom": 40300.66666666667
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 39934.66666666667,
+          "top": 40208.66666666667,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 40026.66666666667
+          "bottom": 40300.66666666667
         }
       }
     },
@@ -3558,50 +3727,50 @@
         "probe": {
           "left": 21,
           "right": 65,
-          "top": 40672,
+          "top": 41024.66666666667,
           "height": 44,
           "width": 44,
-          "bottom": 40716
+          "bottom": 41068.66666666667
         },
         "control": {
           "left": 207.66666666666663,
           "right": 374,
-          "top": 40672,
+          "top": 41024.66666666667,
           "height": 62.33333333333576,
           "width": 166.33333333333337,
-          "bottom": 40734.333333333336
+          "bottom": 41087.00000000001
         },
         "controlChild": {
           "left": 215.66666666666663,
           "right": 227.66666666666663,
-          "top": 40698.33333333333,
+          "top": 41051,
           "height": 12,
           "width": 12,
-          "bottom": 40710.33333333333
+          "bottom": 41063
         },
         "probeChild": {
           "left": 29,
           "right": 41,
-          "top": 40698.33333333333,
+          "top": 41051,
           "height": 12,
           "width": 12,
-          "bottom": 40710.33333333333
+          "bottom": 41063
         },
         "probeContainer": {
           "left": 15,
           "right": 193.66666666666666,
-          "top": 40666,
+          "top": 41018.66666666667,
           "height": 92,
           "width": 178.66666666666666,
-          "bottom": 40758
+          "bottom": 41110.66666666667
         },
         "controlContainer": {
           "left": 201.66666666666663,
           "right": 380,
-          "top": 40666,
+          "top": 41018.66666666667,
           "height": 92,
           "width": 178.33333333333337,
-          "bottom": 40758
+          "bottom": 41110.66666666667
         }
       }
     },
@@ -3732,9 +3901,9 @@
       "reason": "probe/control 元素截图没有可观察的像素差异",
       "checkpoints": [
         {
-          "actual": "10752:f79ae09e",
+          "actual": "10756:33306848",
           "passed": false,
-          "expected": "different from 10752:f79ae09e",
+          "expected": "different from 10756:33306848",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -3805,9 +3974,9 @@
       "status": "supported",
       "checkpoints": [
         {
-          "actual": "16436:575bb51d",
+          "actual": "16432:2f1bd250",
           "passed": true,
-          "expected": "different from 10752:f79ae09e",
+          "expected": "different from 10756:33306848",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -3817,9 +3986,9 @@
       "status": "supported",
       "checkpoints": [
         {
-          "actual": "23716:71010e9c",
+          "actual": "23712:f3651f62",
           "passed": true,
-          "expected": "different from 10752:f79ae09e",
+          "expected": "different from 10756:33306848",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -3876,9 +4045,9 @@
       "reason": "probe/control 元素截图没有可观察的像素差异",
       "checkpoints": [
         {
-          "actual": "10752:f79ae09e",
+          "actual": "10756:33306848",
           "passed": false,
-          "expected": "different from 10752:f79ae09e",
+          "expected": "different from 10756:33306848",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -3890,9 +4059,9 @@
       "reason": "probe/control 元素截图没有可观察的像素差异",
       "checkpoints": [
         {
-          "actual": "10752:f79ae09e",
+          "actual": "10756:33306848",
           "passed": false,
-          "expected": "different from 10752:f79ae09e",
+          "expected": "different from 10756:33306848",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -3904,9 +4073,9 @@
       "reason": "probe/control 元素截图没有可观察的像素差异",
       "checkpoints": [
         {
-          "actual": "10752:f79ae09e",
+          "actual": "10756:33306848",
           "passed": false,
-          "expected": "different from 10752:f79ae09e",
+          "expected": "different from 10756:33306848",
           "name": "pixel:probe-vs-control"
         }
       ]
@@ -4108,10 +4277,510 @@
       "reason": "forced-color-adjust-none: TASM 未保留该候选的完整 selector 或声明"
     }
   ],
+  "themeOverrides": {
+    "contract": "lynx-theme-overrides-v1",
+    "frames": [
+      {
+        "phase": "before",
+        "id": "theme-tailwind-hex-before",
+        "branch": "tailwind-hex",
+        "geometry": {
+          "probe": {
+            "left": 8,
+            "right": 72,
+            "top": 392,
+            "height": 64,
+            "width": 64,
+            "bottom": 456
+          },
+          "control": {
+            "left": 88,
+            "right": 152,
+            "top": 392,
+            "height": 64,
+            "width": 64,
+            "bottom": 456
+          },
+          "controlChild": {
+            "left": 88,
+            "right": 104,
+            "top": 392,
+            "height": 8,
+            "width": 16,
+            "bottom": 400
+          },
+          "probeChild": {
+            "left": 8,
+            "right": 24,
+            "top": 392,
+            "height": 8,
+            "width": 16,
+            "bottom": 400
+          },
+          "probeContainer": {
+            "left": 0,
+            "right": 80,
+            "top": 384,
+            "height": 80,
+            "width": 80,
+            "bottom": 464
+          },
+          "controlContainer": {
+            "left": 80,
+            "right": 160,
+            "top": 384,
+            "height": 80,
+            "width": 80,
+            "bottom": 464
+          }
+        }
+      },
+      {
+        "phase": "before",
+        "id": "theme-application-hex-before",
+        "branch": "application-hex",
+        "geometry": {
+          "probe": {
+            "left": 8,
+            "right": 72,
+            "top": 472,
+            "height": 64,
+            "width": 64,
+            "bottom": 536
+          },
+          "control": {
+            "left": 88,
+            "right": 152,
+            "top": 472,
+            "height": 64,
+            "width": 64,
+            "bottom": 536
+          },
+          "controlChild": {
+            "left": 88,
+            "right": 104,
+            "top": 472,
+            "height": 8,
+            "width": 16,
+            "bottom": 480
+          },
+          "probeChild": {
+            "left": 8,
+            "right": 24,
+            "top": 472,
+            "height": 8,
+            "width": 16,
+            "bottom": 480
+          },
+          "probeContainer": {
+            "left": 0,
+            "right": 80,
+            "top": 464,
+            "height": 80,
+            "width": 80,
+            "bottom": 544
+          },
+          "controlContainer": {
+            "left": 80,
+            "right": 160,
+            "top": 464,
+            "height": 80,
+            "width": 80,
+            "bottom": 544
+          }
+        }
+      },
+      {
+        "phase": "before",
+        "id": "theme-application-oklch-before",
+        "branch": "application-oklch",
+        "geometry": {
+          "probe": {
+            "left": 8,
+            "right": 72,
+            "top": 552,
+            "height": 64,
+            "width": 64,
+            "bottom": 616
+          },
+          "control": {
+            "left": 88,
+            "right": 152,
+            "top": 552,
+            "height": 64,
+            "width": 64,
+            "bottom": 616
+          },
+          "controlChild": {
+            "left": 88,
+            "right": 104,
+            "top": 552,
+            "height": 8,
+            "width": 16,
+            "bottom": 560
+          },
+          "probeChild": {
+            "left": 8,
+            "right": 24,
+            "top": 552,
+            "height": 8,
+            "width": 16,
+            "bottom": 560
+          },
+          "probeContainer": {
+            "left": 0,
+            "right": 80,
+            "top": 544,
+            "height": 80,
+            "width": 80,
+            "bottom": 624
+          },
+          "controlContainer": {
+            "left": 80,
+            "right": 160,
+            "top": 544,
+            "height": 80,
+            "width": 80,
+            "bottom": 624
+          }
+        }
+      },
+      {
+        "phase": "after",
+        "id": "theme-tailwind-hex-after",
+        "branch": "tailwind-hex",
+        "geometry": {
+          "probe": {
+            "left": 8,
+            "right": 72,
+            "top": 392,
+            "height": 64,
+            "width": 64,
+            "bottom": 456
+          },
+          "control": {
+            "left": 88,
+            "right": 152,
+            "top": 392,
+            "height": 64,
+            "width": 64,
+            "bottom": 456
+          },
+          "controlChild": {
+            "left": 88,
+            "right": 112,
+            "top": 392,
+            "height": 8,
+            "width": 24,
+            "bottom": 400
+          },
+          "probeChild": {
+            "left": 8,
+            "right": 32,
+            "top": 392,
+            "height": 8,
+            "width": 24,
+            "bottom": 400
+          },
+          "probeContainer": {
+            "left": 0,
+            "right": 80,
+            "top": 384,
+            "height": 80,
+            "width": 80,
+            "bottom": 464
+          },
+          "controlContainer": {
+            "left": 80,
+            "right": 160,
+            "top": 384,
+            "height": 80,
+            "width": 80,
+            "bottom": 464
+          }
+        }
+      },
+      {
+        "phase": "after",
+        "id": "theme-application-hex-after",
+        "branch": "application-hex",
+        "geometry": {
+          "probe": {
+            "left": 8,
+            "right": 72,
+            "top": 472,
+            "height": 64,
+            "width": 64,
+            "bottom": 536
+          },
+          "control": {
+            "left": 88,
+            "right": 152,
+            "top": 472,
+            "height": 64,
+            "width": 64,
+            "bottom": 536
+          },
+          "controlChild": {
+            "left": 88,
+            "right": 112,
+            "top": 472,
+            "height": 8,
+            "width": 24,
+            "bottom": 480
+          },
+          "probeChild": {
+            "left": 8,
+            "right": 32,
+            "top": 472,
+            "height": 8,
+            "width": 24,
+            "bottom": 480
+          },
+          "probeContainer": {
+            "left": 0,
+            "right": 80,
+            "top": 464,
+            "height": 80,
+            "width": 80,
+            "bottom": 544
+          },
+          "controlContainer": {
+            "left": 80,
+            "right": 160,
+            "top": 464,
+            "height": 80,
+            "width": 80,
+            "bottom": 544
+          }
+        }
+      },
+      {
+        "phase": "after",
+        "id": "theme-application-oklch-after",
+        "branch": "application-oklch",
+        "geometry": {
+          "probe": {
+            "left": 8,
+            "right": 72,
+            "top": 552,
+            "height": 64,
+            "width": 64,
+            "bottom": 616
+          },
+          "control": {
+            "left": 88,
+            "right": 152,
+            "top": 552,
+            "height": 64,
+            "width": 64,
+            "bottom": 616
+          },
+          "controlChild": {
+            "left": 88,
+            "right": 112,
+            "top": 552,
+            "height": 8,
+            "width": 24,
+            "bottom": 560
+          },
+          "probeChild": {
+            "left": 8,
+            "right": 32,
+            "top": 552,
+            "height": 8,
+            "width": 24,
+            "bottom": 560
+          },
+          "probeContainer": {
+            "left": 0,
+            "right": 80,
+            "top": 544,
+            "height": 80,
+            "width": 80,
+            "bottom": 624
+          },
+          "controlContainer": {
+            "left": 80,
+            "right": 160,
+            "top": 544,
+            "height": 80,
+            "width": 80,
+            "bottom": 624
+          }
+        }
+      },
+      {
+        "phase": "restored",
+        "id": "theme-tailwind-hex-restored",
+        "branch": "tailwind-hex",
+        "geometry": {
+          "probe": {
+            "left": 8,
+            "right": 72,
+            "top": 392,
+            "height": 64,
+            "width": 64,
+            "bottom": 456
+          },
+          "control": {
+            "left": 88,
+            "right": 152,
+            "top": 392,
+            "height": 64,
+            "width": 64,
+            "bottom": 456
+          },
+          "controlChild": {
+            "left": 88,
+            "right": 120,
+            "top": 392,
+            "height": 8,
+            "width": 32,
+            "bottom": 400
+          },
+          "probeChild": {
+            "left": 8,
+            "right": 40,
+            "top": 392,
+            "height": 8,
+            "width": 32,
+            "bottom": 400
+          },
+          "probeContainer": {
+            "left": 0,
+            "right": 80,
+            "top": 384,
+            "height": 80,
+            "width": 80,
+            "bottom": 464
+          },
+          "controlContainer": {
+            "left": 80,
+            "right": 160,
+            "top": 384,
+            "height": 80,
+            "width": 80,
+            "bottom": 464
+          }
+        }
+      },
+      {
+        "phase": "restored",
+        "id": "theme-application-hex-restored",
+        "branch": "application-hex",
+        "geometry": {
+          "probe": {
+            "left": 8,
+            "right": 72,
+            "top": 472,
+            "height": 64,
+            "width": 64,
+            "bottom": 536
+          },
+          "control": {
+            "left": 88,
+            "right": 152,
+            "top": 472,
+            "height": 64,
+            "width": 64,
+            "bottom": 536
+          },
+          "controlChild": {
+            "left": 88,
+            "right": 120,
+            "top": 472,
+            "height": 8,
+            "width": 32,
+            "bottom": 480
+          },
+          "probeChild": {
+            "left": 8,
+            "right": 40,
+            "top": 472,
+            "height": 8,
+            "width": 32,
+            "bottom": 480
+          },
+          "probeContainer": {
+            "left": 0,
+            "right": 80,
+            "top": 464,
+            "height": 80,
+            "width": 80,
+            "bottom": 544
+          },
+          "controlContainer": {
+            "left": 80,
+            "right": 160,
+            "top": 464,
+            "height": 80,
+            "width": 80,
+            "bottom": 544
+          }
+        }
+      },
+      {
+        "phase": "restored",
+        "id": "theme-application-oklch-restored",
+        "branch": "application-oklch",
+        "geometry": {
+          "probe": {
+            "left": 8,
+            "right": 72,
+            "top": 552,
+            "height": 64,
+            "width": 64,
+            "bottom": 616
+          },
+          "control": {
+            "left": 88,
+            "right": 152,
+            "top": 552,
+            "height": 64,
+            "width": 64,
+            "bottom": 616
+          },
+          "controlChild": {
+            "left": 88,
+            "right": 120,
+            "top": 552,
+            "height": 8,
+            "width": 32,
+            "bottom": 560
+          },
+          "probeChild": {
+            "left": 8,
+            "right": 40,
+            "top": 552,
+            "height": 8,
+            "width": 32,
+            "bottom": 560
+          },
+          "probeContainer": {
+            "left": 0,
+            "right": 80,
+            "top": 544,
+            "height": 80,
+            "width": 80,
+            "bottom": 624
+          },
+          "controlContainer": {
+            "left": 80,
+            "right": 160,
+            "top": 544,
+            "height": 80,
+            "width": 80,
+            "bottom": 624
+          }
+        }
+      }
+    ]
+  },
   "mediaGate": {
-    "runId": "268afe0a-2c5e-4408-ac45-04637baef7f5",
+    "runId": "8c29cdaa-b86c-4fc1-a7e8-28b254463458",
     "limitationId": "lynx4.0.1-media-hover-unknown-v1",
-    "bundleSha256": "b0106c10d81286219b72222a9e466ec5b9971e4f2918f28681a201b3d039331c",
+    "bundleSha256": "aefb7b436c46e33760f57bd7ba6f1895ffa33970aff34ca5934ebda089815608",
     "sdkVersion": "4.0.1",
     "probes": [
       {

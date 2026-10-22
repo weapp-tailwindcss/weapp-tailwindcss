@@ -7,7 +7,7 @@ Entry: taro-webpack-react-tailwindcss-v4/dist/app.wxss
 
 | Bytes | Selectors | @supports | :hover | Tailwind banner | System dark media | Manual dark selector | Raw arbitrary selector | Weapp escaped arbitrary selector |
 | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |
-| 318144 | 2226 | false | false | false | true | true | false | true |
+| 318765 | 2226 | false | false | false | true | true | false | true |
 
 ## Generator CSS Files
 
@@ -23,8 +23,8 @@ Entry: taro-webpack-react-tailwindcss-v4/dist/app.wxss
 
 | File | Artifact | Bytes | Selectors | @supports | :hover | Tailwind banner | System dark media | Manual dark selector | Raw arbitrary selector | Weapp escaped arbitrary selector |
 | --- | --- | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |
-| `app.wxss` | [artifacts/app.wxss](artifacts/app.wxss) | 293621 | 2203 | false | false | false | true | true | false | true |
+| `app.wxss` | [artifacts/app.wxss](artifacts/app.wxss) | 294036 | 2203 | false | false | false | true | true | false | true |
 | `pages/index/index.wxss` | [artifacts/pages__index__index.wxss](artifacts/pages__index__index.wxss) | 3938 | 38 | false | false | false | false | false | false | false |
-| `pages/issue-998/index.wxss` | [artifacts/pages__issue-998__index.wxss](artifacts/pages__issue-998__index.wxss) | 17200 | 88 | false | false | false | false | true | false | true |
-| `sub-independent/pages/index.wxss` | [artifacts/sub-independent__pages__index.wxss](artifacts/sub-independent__pages__index.wxss) | 2348 | 11 | false | false | false | false | false | false | true |
-| `sub-normal/pages/index.wxss` | [artifacts/sub-normal__pages__index.wxss](artifacts/sub-normal__pages__index.wxss) | 1037 | 6 | false | false | false | false | false | false | true |
+| `pages/issue-998/index.wxss` | [artifacts/pages__issue-998__index.wxss](artifacts/pages__issue-998__index.wxss) | 17397 | 88 | false | false | false | false | true | false | true |
+| `sub-independent/pages/index.wxss` | [artifacts/sub-independent__pages__index.wxss](artifacts/sub-independent__pages__index.wxss) | 2355 | 11 | false | false | false | false | false | false | true |
+| `sub-normal/pages/index.wxss` | [artifacts/sub-normal__pages__index.wxss](artifacts/sub-normal__pages__index.wxss) | 1039 | 6 | false | false | false | false | false | false | true |

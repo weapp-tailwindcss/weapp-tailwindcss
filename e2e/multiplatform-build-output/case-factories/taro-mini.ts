@@ -23,6 +23,27 @@ export const taroMiniOutputByPlatform = {
     pageTemplate: 'dist/pages/index/index.ttml',
     styleExtension: '.ttss',
   },
+  swan: {
+    appJson: 'dist/app.json',
+    appStyle: 'dist/app.css',
+    pageScript: 'dist/pages/index/index.js',
+    pageTemplate: 'dist/pages/index/index.swan',
+    styleExtension: '.css',
+  },
+  qq: {
+    appJson: 'dist/app.json',
+    appStyle: 'dist/app.qss',
+    pageScript: 'dist/pages/index/index.js',
+    pageTemplate: 'dist/pages/index/index.qml',
+    styleExtension: '.qss',
+  },
+  jd: {
+    appJson: 'dist/app.json',
+    appStyle: 'dist/app.jxss',
+    pageScript: 'dist/pages/index/index.js',
+    pageTemplate: 'dist/pages/index/index.jxml',
+    styleExtension: '.jxss',
+  },
 } as const
 
 export type TaroMiniPlatform = keyof typeof taroMiniOutputByPlatform
@@ -58,7 +79,10 @@ export function taroMiniCase(options: {
     styleContains: options.styleContains,
     forbidEmptyBlockAtRules: true,
     textContains: options.textContains,
-    fileAssertions: options.fileAssertions,
+    fileAssertions: [
+      { file: output.pageTemplate, contains: [/<(?:import|template|view)\b/] },
+      ...options.fileAssertions ?? [],
+    ],
     notContains: [rawTailwindDirectiveRE],
     status: options.status ?? 'local',
     reason: options.reason ?? 'Taro 小程序目标通过多平台构建专项断言；本地 runner 可能因系统依赖挂起，不放入默认 vitest/execa 构建集合。',

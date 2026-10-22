@@ -1,4 +1,4 @@
-import type { AtRule } from 'postcss'
+import type { AtRule, Node } from 'postcss'
 import { tokenize, TokenType } from '@csstools/css-tokenizer'
 import valueParser from 'postcss-value-parser'
 
@@ -25,6 +25,18 @@ export function getCssAtRulePrelude(rule: AtRule) {
     : { name: rule.name, params: rule.params }
 }
 
+/** 注册描述符不参与普通声明变换；沿祖先链保护无效或嵌套的注册子树。 */
+export function isCssPropertyRegistration(node: Node) {
+  let current: Node | undefined = node
+  while (current) {
+    if (current.type === 'atrule' && getCssAtRulePrelude(current as AtRule).name.toLowerCase() === 'property') {
+      return true
+    }
+    current = current.parent
+  }
+  return false
+}
+
 /** 按 CSS token 解码名称，保留自定义属性的大小写及转义终止空白语义。 */
 export function getCssCustomPropertyName(source: string) {
   if (/^--[\w-]+$/.test(source)) {
@@ -37,6 +49,16 @@ export function getCssCustomPropertyName(source: string) {
   return name?.startsWith('--') && name.length > 2 ? name : undefined
 }
 
+/** 以 CSS token 身份识别函数，包括十六进制转义的终止空白。 */
+export function hasCssFunction(value: string, name: string) {
+  // 没有转义且不存在目标拼写时无需 tokenize；潜在命中仍按 token 确认。
+  return value.includes('(')
+    && (value.includes('\\') || value.toLowerCase().includes(`${name.toLowerCase()}(`))
+    && tokenize({ css: value }).some(token =>
+      token[0] === TokenType.Function && token[4].value.toLowerCase() === name,
+    )
+}
+
 export function isCssVarFunction(name: string) {
   return (name.includes('\\') ? decodeCssIdentifier(name) : name)?.toLowerCase() === 'var'
 }
@@ -44,7 +66,7 @@ export function isCssVarFunction(name: string) {
 /** 同时保留引用处的原始拼写，供底层 calc 匹配；安全判断只使用解码后的身份。 */
 export function getCssCalcVariableReferences(value: string) {
   const references = new Map<string, string>()
-  if (!value.includes('(')) {
+  if (!value.includes('(') || (!value.includes('\\') && !/var\(/i.test(value))) {
     return references
   }
   if (value.includes('\\')) {

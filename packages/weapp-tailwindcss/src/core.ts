@@ -25,6 +25,7 @@ export type {
   CreateCompilerSnapshotRequest,
 } from './core/compiler'
 export { createCompiler } from './core/compiler'
+export { collectCssRuleEvidence, cssSelectorDiagnosticMatches } from '@weapp-tailwindcss/postcss/syntax'
 export {
   finalizeMiniProgramCss,
   finalizeMiniProgramCssRoot,

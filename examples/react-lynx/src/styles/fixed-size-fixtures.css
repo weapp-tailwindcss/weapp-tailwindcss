@@ -1,0 +1,36 @@
+.fixed-size-pair {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+}
+
+.fixed-size-slot {
+  position: relative;
+  width: 160px;
+  height: 96px;
+  flex-shrink: 0;
+  background-color: #fff;
+}
+
+.fixed-size-probe {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  width: 80px;
+  height: 64px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border-width: 0;
+  box-sizing: border-box;
+  background-color: #2563eb;
+}
+
+.fixed-size-marker {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 4px;
+  height: 4px;
+  background-color: #f97316;
+}

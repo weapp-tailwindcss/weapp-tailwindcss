@@ -1,4 +1,18 @@
 import postcss from 'postcss'
+import { collectCustomPropertyValues as collectStaticValues } from '../compat/web-css-custom-properties'
+
+/** 从完整生成产物推导稳定变量，保留局部、条件、注册及依赖链的动态边界。 */
+export function collectStaticCustomPropertyValues(css: string) {
+  if (!css.includes('--')) {
+    return new Map<string, string>()
+  }
+  try {
+    return collectStaticValues(postcss.parse(css)).values
+  }
+  catch {
+    return new Map<string, string>()
+  }
+}
 
 /** 按声明顺序收集构建期上下文，不推断级联或运行时作用域。 */
 export function collectCustomPropertyValues(css: string) {

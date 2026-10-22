@@ -2,6 +2,7 @@ import type { CaseContract, EvidenceStage } from '../types'
 import { compatibilityCases, officialFeatureManifest } from '@weapp-tailwindcss/test-catalog'
 import { colorSchemeContract } from '../../../examples/react-lynx/src/compatibility/color-scheme-contract'
 import { lynxEvidenceStrategy } from '../../../examples/react-lynx/src/compatibility/evidence'
+import { fixedSizeContract } from '../../../examples/react-lynx/src/compatibility/fixed-size-contract'
 import { overflowContract } from '../../../examples/react-lynx/src/compatibility/overflow-contract'
 import { responsiveContract } from '../../../examples/react-lynx/src/compatibility/responsive-contract'
 import { reviewedLynxContract } from '../../lynx/expectations'
@@ -21,6 +22,7 @@ export const geometryValidators = new Set([
   'layout-aspect',
   'layout-box-sizing',
   'sizing-size',
+  'sizing-fixed',
   'syntax-css-variable',
   'flex-grow',
   'flex-wrap-order',
@@ -92,5 +94,6 @@ export const lynxAdapterFixture = {
   pixelValidators: [...pixelValidators],
   responsive: responsiveContract,
   overflow: overflowContract,
+  fixedSize: fixedSizeContract,
   cases: compatibilityCases,
 }

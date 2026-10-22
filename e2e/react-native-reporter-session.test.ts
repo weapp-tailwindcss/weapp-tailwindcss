@@ -1,67 +1,168 @@
-import type { NativeCaseReceipt, NativePairEvidence, ReactNativeReport } from '../examples/react-native-expo/src/compatibility/protocol'
+import type { ReactNativeReport } from '../examples/react-native-expo/src/compatibility/protocol'
 import { createServer } from 'node:http'
 import { describe, expect, it, vi } from 'vitest'
 import { nativeFixtures } from '../examples/react-native-expo/src/compatibility/protocol'
+import { syntheticRuntimeInstallation } from './react-native/installation-fixture'
 import { evaluateNativeWait } from './react-native/native-wait'
-import { createSemanticReporter } from './react-native/semantic-reporter'
+import { headers, pair, receipt, revision, withReporter } from './react-native/reporter-fixture'
+import { syntheticScrollPair } from './react-native/scroll-fixture'
+
 import { allocateExpoWebPort } from './react-native/web-session'
 
-const revision = 'rn-hmr-baseline-10b981'
-const headers = { 'x-rn-e2e-client': 'owned-client', 'content-type': 'application/json' }
-
-function pair(overrides: Partial<NativePairEvidence> = {}): NativePairEvidence {
-  const rect = { x: 0, y: 0, width: 40, height: 40 }
-  return {
-    runId: 'run',
-    revision,
-    platform: 'web',
-    id: 'background-color',
-    phase: 'default',
-    probe: rect,
-    reference: rect,
-    target: rect,
-    referenceTarget: rect,
-    control: rect,
-    controlTarget: rect,
-    viewport: { width: 402, height: 874, pixelRatio: 1 },
-    ...overrides,
-  }
-}
-
-function receipt(input: NativePairEvidence): NativeCaseReceipt {
-  return { runId: input.runId, id: input.id, phase: input.phase, checkpoints: [], artifact: { name: 'owned.png', sha256: 'a'.repeat(64), byteLength: 1 } }
-}
-
-async function withReporter(action: (session: {
-  endpoint: string
-  reporter: ReturnType<typeof createSemanticReporter>
-  capture: ReturnType<typeof vi.fn<(input: NativePairEvidence) => Promise<NativeCaseReceipt>>>
-  complete: ReturnType<typeof vi.fn<() => Promise<void>>>
-  post: (route: string, value: unknown, client?: string) => Promise<Response>
-}) => Promise<void>) {
-  const capture = vi.fn(async (input: NativePairEvidence) => receipt(input))
-  const complete = vi.fn(async () => {})
-  const reporter = createSemanticReporter({ runId: 'run', fixtureHash: 'fixture', catalogHash: 'catalog', versions: {} }, capture, { clientToken: 'owned-client', revision, platform: 'web', complete })
-  const server = createServer((request, response) => {
-    if (!reporter.handle(request, response)) {
-      response.writeHead(404).end()
-    }
-  })
-  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
-  try {
-    const address = server.address()
-    if (!address || typeof address === 'string') {
-      throw new Error('Missing test reporter port')
-    }
-    const endpoint = `http://127.0.0.1:${address.port}`
-    await action({ endpoint, reporter, capture, complete, post: (route, value, client = 'owned-client') => fetch(`${endpoint}${route}`, { method: 'POST', headers: { ...headers, 'x-rn-e2e-client': client }, body: JSON.stringify(value) }) })
-  }
-  finally {
-    await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()))
-  }
-}
-
 describe('React Native 采集客户端与 revision 隔离', () => {
+  it.each(['resolve', 'reject'] as const)('最终 report 写入也归 owner 管理，迟到 %s 不能越过收尾与归档', async (outcome) => {
+    await withReporter(async ({ reporter, complete, post }) => {
+      await post('/case', pair())
+      let release!: () => void
+      let reject!: (error: Error) => void
+      let entered!: () => void
+      const writing = new Promise<void>((resolve) => {
+        entered = resolve
+      })
+      complete.mockImplementationOnce(() => new Promise<void>((resolve, fail) => {
+        release = resolve
+        reject = fail
+        entered()
+      }))
+      const posting = post('/report', { hmrMarker: 'rn-hmr-baseline', cssHmrColor: '#10b981', report: { runId: 'run', revision, platform: 'web', receipts: [receipt(pair())], runtimeInstallation: syntheticRuntimeInstallation() } })
+      const failure = new Error('late report write failed')
+      try {
+        await writing
+        reporter.stop()
+        expect(reporter.capturePending()).toBe(true)
+      }
+      finally {
+        if (outcome === 'resolve') {
+          release()
+        }
+        else { reject(failure) }
+        await posting
+      }
+      expect((await posting).status).toBe(outcome === 'resolve' ? 409 : 500)
+      if (outcome === 'resolve') {
+        await reporter.drain()
+      }
+      else { await expect(reporter.drain()).rejects.toThrow('late report write failed') }
+      expect(reporter.capturePending()).toBe(false)
+    })
+  })
+  it('收尾取消在途 publication 读取，不再授予 context 或接受新 case', async () => {
+    let entered!: () => void
+    const reading = new Promise<void>((resolve) => {
+      entered = resolve
+    })
+    await withReporter(async ({ endpoint, reporter, post }) => {
+      const context = fetch(`${endpoint}/context`, { headers })
+      await reading
+      reporter.stop()
+      expect((await context).status).toBe(409)
+      expect((await fetch(`${endpoint}/context`, { headers })).status).toBe(409)
+      expect((await post('/case', pair())).status).toBe(409)
+      expect(() => reporter.assertReady()).not.toThrow()
+    }, signal => new Promise((_resolve, reject) => {
+      signal.addEventListener('abort', () => reject(signal.reason), { once: true })
+      entered()
+    }))
+  })
+  it('ScrollView 缺真实事件不能由mock截图绕过；被拒原件先保存且不授予回执', async () => {
+    await withReporter(async ({ reporter, capture, post, diagnostic }) => {
+      const missing = pair({ id: 'sizing-size', phase: 'scroll-initial' })
+      expect((await post('/case', missing)).status).toBe(500)
+      expect(capture).not.toHaveBeenCalled()
+      expect(diagnostic).toHaveBeenCalledWith(expect.objectContaining({ kind: 'scroll-transition-rejected', observed: missing }), expect.any(AbortSignal))
+      expect(() => reporter.assertReady()).toThrow('semantic evidence failed')
+    })
+  })
+
+  it('失败采集不推进滚动序列；下一步骤仍因缺初始成功原件拒绝', async () => {
+    await withReporter(async ({ post, capture, diagnostic }) => {
+      capture.mockRejectedValueOnce(new Error('owned scroll capture failure'))
+      const initial = syntheticScrollPair(pair({ id: 'sizing-size', phase: 'scroll-initial' })).pair
+      expect((await post('/case', initial)).status).toBe(500)
+      expect((await post('/case', syntheticScrollPair(pair({ id: 'sizing-size', phase: 'scroll-offset' })).pair)).status).toBe(500)
+      expect(capture).toHaveBeenCalledOnce()
+      expect(diagnostic).toHaveBeenCalledOnce()
+    })
+  })
+
+  it('当前阶段的真实 publication 读取失败仍立即阻断', async () => {
+    await withReporter(async ({ endpoint, reporter }) => {
+      expect((await fetch(`${endpoint}/context`, { headers })).status).toBe(500)
+      expect(() => reporter.assertReady()).toThrow('semantic evidence failed')
+    }, async () => { throw new Error('current-publication-read-failed') })
+  })
+
+  it.each(['resolve', 'reject'] as const)('旧 context 延迟 %s 不得污染新阶段的 fence 或错误集合', async (outcome) => {
+    let release!: (value: NativePairEvidence['runtimeInstallation']['publication']) => void
+    let reject!: (error: Error) => void
+    let started!: () => void
+    const entered = new Promise<void>(resolve => started = resolve)
+    const delayed = new Promise<NativePairEvidence['runtimeInstallation']['publication']>((resolve, fail) => {
+      release = resolve
+      reject = fail
+    })
+    const publication = vi.fn().mockImplementationOnce(() => {
+      started()
+      return delayed
+    }).mockResolvedValue(syntheticRuntimeInstallation().publication)
+    await withReporter(async ({ endpoint, reporter, post }) => {
+      const stale = fetch(`${endpoint}/context`, { headers })
+      await entered
+      reporter.setRevision('next-phase')
+      if (outcome === 'resolve') {
+        release({ ...syntheticRuntimeInstallation().publication, revision: 'stale-publication' })
+      }
+      else {
+        reject(new Error('old-phase-read-failed'))
+      }
+      expect((await stale).status).toBe(409)
+      expect(() => reporter.assertReady()).not.toThrow()
+      expect((await fetch(`${endpoint}/context`, { headers })).status).toBe(200)
+      expect((await post('/case', pair({ revision: 'next-phase' }))).status).toBe(200)
+    }, publication)
+  })
+
+  it('新阶段旧 publication 返回未就绪，新的实际安装通过 fence 后才能采集', async () => {
+    let current = syntheticRuntimeInstallation().publication
+    await withReporter(async ({ endpoint, post, reporter, capture }) => {
+      const context = () => fetch(`${endpoint}/context`, { headers })
+      expect((await (await context()).json()).publication).toEqual(current)
+      expect((await post('/case', pair())).status).toBe(200)
+      reporter.setRevision('next-phase')
+      expect((await context()).status).toBe(425)
+      expect((await post('/case', pair({ revision: 'next-phase' }))).status).toBe(409)
+      current = { ...current, revision: 'next-publication-same-content' }
+      expect((await (await context()).json()).publication).toEqual(current)
+      expect((await post('/case', pair({ revision: 'next-phase' }))).status).toBe(409)
+      const installed = { ...syntheticRuntimeInstallation(), publication: current }
+      expect((await post('/case', pair({ revision: 'next-phase', runtimeInstallation: installed }))).status).toBe(200)
+      expect(capture).toHaveBeenCalledTimes(2)
+    }, async () => current)
+  })
+
+  it('同阶段 case 与报告不能替换实际安装；跨 HMR 保持同一运行实例', async () => {
+    await withReporter(async ({ post, reporter, capture }) => {
+      expect((await post('/case', pair())).status).toBe(200)
+      const other = syntheticRuntimeInstallation(undefined, 'another-publication')
+      expect((await post('/case', pair({ id: 'border-radius', runtimeInstallation: other }))).status).toBe(409)
+      expect((await post('/report', { hmrMarker: 'rn-hmr-baseline', cssHmrColor: '#10b981', report: { runId: 'run', revision, platform: 'web', receipts: [receipt(pair())], runtimeInstallation: other } })).status).toBe(409)
+      reporter.setRevision('rn-hmr-updated-10b981')
+      const next = pair({ revision: 'rn-hmr-updated-10b981', runtimeInstallation: { ...other, runtimeInstanceId: 'different-realm-after-full-reload' } })
+      expect((await post('/case', next)).status).toBe(409)
+      next.runtimeInstallation = other
+      expect((await post('/case', next)).status).toBe(200)
+      expect(capture).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  it('宿主采集回执的安装身份被替换时立即阻断', async () => {
+    await withReporter(async ({ post, reporter, capture }) => {
+      capture.mockImplementationOnce(async input => ({ ...receipt(input), runtimeInstallation: { ...input.runtimeInstallation, runtimeInstanceId: 'other-host-receipt-runtime-instance' } }))
+      expect((await post('/case', pair())).status).toBe(500)
+      expect(() => reporter.assertReady()).toThrow('semantic evidence failed')
+    })
+  })
+
   it('只有当前认证的唯一 case 获得实际采集预算；旧回执和下一轮不能重用抵扣', async () => {
     let now = 0
     const clock = vi.spyOn(performance, 'now').mockImplementation(() => now)
@@ -83,7 +184,8 @@ describe('React Native 采集客户端与 revision 隔离', () => {
         expect(reporter.captureElapsed()).toBe(4_000)
         const phases = Object.entries(nativeFixtures).flatMap(([id, fixture]) => (fixture.phases ?? ['default']).map(phase => ({ id, phase })))
         for (const candidate of phases.filter(candidate => candidate.id !== pair().id || candidate.phase !== pair().phase)) {
-          expect((await post('/case', pair(candidate))).status).toBe(200)
+          const input = candidate.phase.startsWith('scroll-') ? syntheticScrollPair(pair(candidate)).pair : pair(candidate)
+          expect((await post('/case', input)).status).toBe(200)
         }
         expect(reporter.captureElapsed()).toBe(phases.length * 4_000)
         expect(evaluateNativeWait({ now: reporter.captureElapsed() + 120_001, runCompletedAt: 1, startedAt: 0, reportTimeout: 120_000, startupTimeout: 1_800_000, recovered: true, recoveryDelay: 180_000, hostCaptureElapsed: reporter.captureElapsed() }).timedOut).toBe(true)
@@ -122,7 +224,7 @@ describe('React Native 采集客户端与 revision 隔离', () => {
       expect((await post('/case', pair())).status).toBe(200)
       expect((await post('/case', pair())).status).toBe(409)
       expect(capture).toHaveBeenCalledOnce()
-      reporter.assertReceipts({ runId: 'run', revision, platform: 'web', receipts: [receipt(pair())] } as ReactNativeReport)
+      reporter.assertReceipts({ runtimeInstallation: syntheticRuntimeInstallation(), runId: 'run', revision, platform: 'web', receipts: [receipt(pair())] } as ReactNativeReport)
       expect(() => reporter.assertReady()).not.toThrow()
     })
   })
@@ -159,7 +261,7 @@ describe('React Native 采集客户端与 revision 隔离', () => {
 
   it('最终报告只接收已核对回执；重复投递幂等，冲突与旧 revision 不能覆盖文件', async () => {
     await withReporter(async ({ post, reporter, complete }) => {
-      const report = { runId: 'run', revision, platform: 'web', receipts: [receipt(pair())] } as ReactNativeReport
+      const report = { runtimeInstallation: syntheticRuntimeInstallation(), runId: 'run', revision, platform: 'web', receipts: [receipt(pair())] } as ReactNativeReport
       const envelope = { hmrMarker: 'rn-hmr-baseline', cssHmrColor: '#10b981', report }
       expect((await post('/', envelope)).status).toBe(404)
       expect((await post('/report', envelope)).status).toBe(409)

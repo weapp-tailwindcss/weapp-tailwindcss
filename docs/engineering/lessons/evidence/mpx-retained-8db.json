@@ -1,0 +1,806 @@
+{
+  "schemaVersion": 1,
+  "diagnosticOnly": true,
+  "guardEligible": false,
+  "captureId": "capture-ad62de80-75d5-433f-8265-e711a7eaf3bf",
+  "comparisonSha256": "e11f1893f38327d9ddf4c072d2e97c012c6940d15af9eb70d796b85b1f40b3d0",
+  "protocolHash": "c0ca00198f76f03490301afb645a938f3387c1049a2918a7f29765d705dd1fbc",
+  "analyzerHash": "af02582b9bc15e7f4eaac722fcca61f4b3a847ca6e4248420e45c49e5ee604d9",
+  "nodeVersion": "22.23.3",
+  "nodeBinarySha256": "68f4d07ca49e0500cc135c7e0a445093e228e42e126ac22306d045f0a8c2636b",
+  "points": [
+    {
+      "role": "base",
+      "round": 0,
+      "ref": "7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5",
+      "sourceSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b",
+      "lockSha256": "8728f3a756cd5246690d43d735866486149e070205c9a0d0dfaaf45f112468c5",
+      "snapshotSha256": "19e0c63be0a948d4f4ef89d201c276c0f7c9758d2cd6f8a7c234d29f8d001778",
+      "snapshotBytes": 480710334,
+      "receiptSha256": "1d441a4400dfd6be73c3f80280f859074b055073b8db7481289a4723344466a2",
+      "captureBoundary": {
+        "epoch": 1,
+        "idle": true,
+        "sourceSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b",
+        "outputSha256": "b21c2f71a86caddd21b0453113741b7053a25f3d51f13d1a47bbb6bef871a5ff",
+        "observedAt": "2026-10-21T21:12:27.276Z"
+      },
+      "postValidationCompilerState": {
+        "epoch": 1,
+        "idle": true,
+        "sourceSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b"
+      },
+      "cacheEntryCountDistribution": [
+        0,
+        3,
+        8
+      ],
+      "cacheAst": {
+        "count": 1691,
+        "shallowBytes": 130144,
+        "classes": {
+          "Root": {
+            "count": 11,
+            "shallowBytes": 968
+          },
+          "Rule": {
+            "count": 467,
+            "shallowBytes": 41096
+          },
+          "Declaration": {
+            "count": 1178,
+            "shallowBytes": 84816
+          },
+          "AtRule": {
+            "count": 29,
+            "shallowBytes": 2784
+          },
+          "Comment": {
+            "count": 6,
+            "shallowBytes": 480
+          }
+        }
+      },
+      "cacheInputs": 11,
+      "cacheStringBacking": {
+        "count": 169,
+        "shallowBytes": 729360,
+        "classes": {
+          "concatenated string": {
+            "count": 99,
+            "shallowBytes": 3168
+          },
+          "string": {
+            "count": 70,
+            "shallowBytes": 726192
+          }
+        }
+      },
+      "inputSnapshotObjects": {
+        "count": 0,
+        "shallowBytes": 0,
+        "classes": {}
+      },
+      "wholeHeapNativeShallowBytes": 6446924671
+    },
+    {
+      "role": "current",
+      "round": 0,
+      "ref": "8db895c54373e20737dcc8254861f73872579aa1",
+      "sourceSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b",
+      "lockSha256": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+      "snapshotSha256": "9cd7e6d4b15366f42822898c94d25aafc840b9fd7f486c389a3a7a0ec9cadbc9",
+      "snapshotBytes": 482937212,
+      "receiptSha256": "410aaee93639c18f02fffa1703a164c0286de1950a62a66af04dcb5d23e31ec6",
+      "captureBoundary": {
+        "epoch": 1,
+        "idle": true,
+        "sourceSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b",
+        "outputSha256": "64cae573cf86f8eb754319a802c408850804e1ef92c538a721dd22c25edc09e6",
+        "observedAt": "2026-10-21T21:12:43.751Z"
+      },
+      "postValidationCompilerState": {
+        "epoch": 1,
+        "idle": true,
+        "sourceSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b"
+      },
+      "cacheEntryCountDistribution": [
+        0,
+        3,
+        8
+      ],
+      "cacheAst": {
+        "count": 1691,
+        "shallowBytes": 130144,
+        "classes": {
+          "Root": {
+            "count": 11,
+            "shallowBytes": 968
+          },
+          "Rule": {
+            "count": 467,
+            "shallowBytes": 41096
+          },
+          "Declaration": {
+            "count": 1178,
+            "shallowBytes": 84816
+          },
+          "AtRule": {
+            "count": 29,
+            "shallowBytes": 2784
+          },
+          "Comment": {
+            "count": 6,
+            "shallowBytes": 480
+          }
+        }
+      },
+      "cacheInputs": 11,
+      "cacheStringBacking": {
+        "count": 161,
+        "shallowBytes": 728432,
+        "classes": {
+          "concatenated string": {
+            "count": 100,
+            "shallowBytes": 3200
+          },
+          "string": {
+            "count": 61,
+            "shallowBytes": 725232
+          }
+        }
+      },
+      "inputSnapshotObjects": {
+        "count": 0,
+        "shallowBytes": 0,
+        "classes": {}
+      },
+      "wholeHeapNativeShallowBytes": 6446926205
+    },
+    {
+      "role": "base",
+      "round": 1,
+      "ref": "7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5",
+      "sourceSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b",
+      "lockSha256": "8728f3a756cd5246690d43d735866486149e070205c9a0d0dfaaf45f112468c5",
+      "snapshotSha256": "e402b1013bfda9113658eb5a036d07d25a8e389d72464ddc37baa9f8a714c668",
+      "snapshotBytes": 573225563,
+      "receiptSha256": "98b9851d9771efdac34662e12884cc6521d5c6c0b1dcda41066767bb6db3a415",
+      "captureBoundary": {
+        "epoch": 5,
+        "idle": true,
+        "sourceSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b",
+        "outputSha256": "b21c2f71a86caddd21b0453113741b7053a25f3d51f13d1a47bbb6bef871a5ff",
+        "observedAt": "2026-10-21T21:13:08.843Z"
+      },
+      "postValidationCompilerState": {
+        "epoch": 11,
+        "idle": true,
+        "sourceSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b"
+      },
+      "cacheEntryCountDistribution": [
+        0,
+        3,
+        8
+      ],
+      "cacheAst": {
+        "count": 1691,
+        "shallowBytes": 130144,
+        "classes": {
+          "Root": {
+            "count": 11,
+            "shallowBytes": 968
+          },
+          "Rule": {
+            "count": 467,
+            "shallowBytes": 41096
+          },
+          "Declaration": {
+            "count": 1178,
+            "shallowBytes": 84816
+          },
+          "AtRule": {
+            "count": 29,
+            "shallowBytes": 2784
+          },
+          "Comment": {
+            "count": 6,
+            "shallowBytes": 480
+          }
+        }
+      },
+      "cacheInputs": 11,
+      "cacheStringBacking": {
+        "count": 90,
+        "shallowBytes": 1119232,
+        "classes": {
+          "concatenated string": {
+            "count": 37,
+            "shallowBytes": 1184
+          },
+          "string": {
+            "count": 53,
+            "shallowBytes": 1118048
+          }
+        }
+      },
+      "inputSnapshotObjects": {
+        "count": 0,
+        "shallowBytes": 0,
+        "classes": {}
+      },
+      "wholeHeapNativeShallowBytes": 6454502894
+    },
+    {
+      "role": "current",
+      "round": 1,
+      "ref": "8db895c54373e20737dcc8254861f73872579aa1",
+      "sourceSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b",
+      "lockSha256": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+      "snapshotSha256": "0c9f39671c68c0dd398f656b05331d03e6fd7226bec0485a589d08e0624fffa7",
+      "snapshotBytes": 543177970,
+      "receiptSha256": "83f405e7cdf248fab3aa0f07f0d9ab291290123f0085252e41c0e1db10bbe339",
+      "captureBoundary": {
+        "epoch": 5,
+        "idle": true,
+        "sourceSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b",
+        "outputSha256": "64cae573cf86f8eb754319a802c408850804e1ef92c538a721dd22c25edc09e6",
+        "observedAt": "2026-10-21T21:14:49.770Z"
+      },
+      "postValidationCompilerState": {
+        "epoch": 5,
+        "idle": true,
+        "sourceSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b"
+      },
+      "cacheEntryCountDistribution": [
+        0,
+        3,
+        8
+      ],
+      "cacheAst": {
+        "count": 1691,
+        "shallowBytes": 130144,
+        "classes": {
+          "Root": {
+            "count": 11,
+            "shallowBytes": 968
+          },
+          "Rule": {
+            "count": 467,
+            "shallowBytes": 41096
+          },
+          "Declaration": {
+            "count": 1178,
+            "shallowBytes": 84816
+          },
+          "AtRule": {
+            "count": 29,
+            "shallowBytes": 2784
+          },
+          "Comment": {
+            "count": 6,
+            "shallowBytes": 480
+          }
+        }
+      },
+      "cacheInputs": 11,
+      "cacheStringBacking": {
+        "count": 89,
+        "shallowBytes": 1118688,
+        "classes": {
+          "concatenated string": {
+            "count": 37,
+            "shallowBytes": 1184
+          },
+          "string": {
+            "count": 52,
+            "shallowBytes": 1117504
+          }
+        }
+      },
+      "inputSnapshotObjects": {
+        "count": 0,
+        "shallowBytes": 0,
+        "classes": {}
+      },
+      "wholeHeapNativeShallowBytes": 6454504624
+    },
+    {
+      "role": "base",
+      "round": 2,
+      "ref": "7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5",
+      "sourceSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b",
+      "lockSha256": "8728f3a756cd5246690d43d735866486149e070205c9a0d0dfaaf45f112468c5",
+      "snapshotSha256": "e761fa8e247ac5c1dd04b93d562b4f339c9cc5a11c6a96bbb916724364c29782",
+      "snapshotBytes": 564414339,
+      "receiptSha256": "e1601a801f379bf9bdda3018e6daf18384d84f8718843dfaa002706bd105b769",
+      "captureBoundary": {
+        "epoch": 11,
+        "idle": true,
+        "sourceSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b",
+        "outputSha256": "b21c2f71a86caddd21b0453113741b7053a25f3d51f13d1a47bbb6bef871a5ff",
+        "observedAt": "2026-10-21T21:15:24.869Z"
+      },
+      "postValidationCompilerState": {
+        "epoch": 11,
+        "idle": true,
+        "sourceSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b"
+      },
+      "cacheEntryCountDistribution": [
+        0,
+        3,
+        8
+      ],
+      "cacheAst": {
+        "count": 1691,
+        "shallowBytes": 138080,
+        "classes": {
+          "Root": {
+            "count": 11,
+            "shallowBytes": 968
+          },
+          "Rule": {
+            "count": 467,
+            "shallowBytes": 48568
+          },
+          "Declaration": {
+            "count": 1178,
+            "shallowBytes": 84816
+          },
+          "AtRule": {
+            "count": 29,
+            "shallowBytes": 3248
+          },
+          "Comment": {
+            "count": 6,
+            "shallowBytes": 480
+          }
+        }
+      },
+      "cacheInputs": 11,
+      "cacheStringBacking": {
+        "count": 90,
+        "shallowBytes": 1119232,
+        "classes": {
+          "concatenated string": {
+            "count": 37,
+            "shallowBytes": 1184
+          },
+          "string": {
+            "count": 53,
+            "shallowBytes": 1118048
+          }
+        }
+      },
+      "inputSnapshotObjects": {
+        "count": 0,
+        "shallowBytes": 0,
+        "classes": {}
+      },
+      "wholeHeapNativeShallowBytes": 12060158
+    },
+    {
+      "role": "current",
+      "round": 2,
+      "ref": "8db895c54373e20737dcc8254861f73872579aa1",
+      "sourceSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b",
+      "lockSha256": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+      "snapshotSha256": "92a28c3820ca8a8ac61d9113be7b7e4a7372a9acc70ae1e4fa063a844d6d7fbc",
+      "snapshotBytes": 567222326,
+      "receiptSha256": "2d100f643f195dd65e4e5213d4bb81f0fb106b3bc31d74e905d206d2e3c4689d",
+      "captureBoundary": {
+        "epoch": 11,
+        "idle": true,
+        "sourceSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b",
+        "outputSha256": "64cae573cf86f8eb754319a802c408850804e1ef92c538a721dd22c25edc09e6",
+        "observedAt": "2026-10-21T21:16:00.490Z"
+      },
+      "postValidationCompilerState": {
+        "epoch": 11,
+        "idle": true,
+        "sourceSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b"
+      },
+      "cacheEntryCountDistribution": [
+        0,
+        3,
+        8
+      ],
+      "cacheAst": {
+        "count": 1691,
+        "shallowBytes": 130144,
+        "classes": {
+          "Root": {
+            "count": 11,
+            "shallowBytes": 968
+          },
+          "Rule": {
+            "count": 467,
+            "shallowBytes": 41096
+          },
+          "Declaration": {
+            "count": 1178,
+            "shallowBytes": 84816
+          },
+          "AtRule": {
+            "count": 29,
+            "shallowBytes": 2784
+          },
+          "Comment": {
+            "count": 6,
+            "shallowBytes": 480
+          }
+        }
+      },
+      "cacheInputs": 11,
+      "cacheStringBacking": {
+        "count": 89,
+        "shallowBytes": 1118688,
+        "classes": {
+          "concatenated string": {
+            "count": 37,
+            "shallowBytes": 1184
+          },
+          "string": {
+            "count": 52,
+            "shallowBytes": 1117504
+          }
+        }
+      },
+      "inputSnapshotObjects": {
+        "count": 0,
+        "shallowBytes": 0,
+        "classes": {}
+      },
+      "wholeHeapNativeShallowBytes": 12061888
+    },
+    {
+      "role": "base",
+      "round": 3,
+      "ref": "7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5",
+      "sourceSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b",
+      "lockSha256": "8728f3a756cd5246690d43d735866486149e070205c9a0d0dfaaf45f112468c5",
+      "snapshotSha256": "d68e5ef77bb1c5c4c432ddd6154ae9c2d83451b92e9b1c4d5e59b5b8ae034b8b",
+      "snapshotBytes": 546523914,
+      "receiptSha256": "6e60f5e3161e8d13649b429905045ac10000f584fd88ef5086f3ff3f4416b618",
+      "captureBoundary": {
+        "epoch": 11,
+        "idle": true,
+        "sourceSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b",
+        "outputSha256": "b21c2f71a86caddd21b0453113741b7053a25f3d51f13d1a47bbb6bef871a5ff",
+        "observedAt": "2026-10-21T21:16:36.322Z"
+      },
+      "postValidationCompilerState": {
+        "epoch": 11,
+        "idle": true,
+        "sourceSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b"
+      },
+      "cacheEntryCountDistribution": [
+        0,
+        3,
+        8
+      ],
+      "cacheAst": {
+        "count": 1691,
+        "shallowBytes": 130144,
+        "classes": {
+          "Root": {
+            "count": 11,
+            "shallowBytes": 968
+          },
+          "Rule": {
+            "count": 467,
+            "shallowBytes": 41096
+          },
+          "Declaration": {
+            "count": 1178,
+            "shallowBytes": 84816
+          },
+          "AtRule": {
+            "count": 29,
+            "shallowBytes": 2784
+          },
+          "Comment": {
+            "count": 6,
+            "shallowBytes": 480
+          }
+        }
+      },
+      "cacheInputs": 11,
+      "cacheStringBacking": {
+        "count": 90,
+        "shallowBytes": 1119232,
+        "classes": {
+          "concatenated string": {
+            "count": 37,
+            "shallowBytes": 1184
+          },
+          "string": {
+            "count": 53,
+            "shallowBytes": 1118048
+          }
+        }
+      },
+      "inputSnapshotObjects": {
+        "count": 0,
+        "shallowBytes": 0,
+        "classes": {}
+      },
+      "wholeHeapNativeShallowBytes": 12076720
+    },
+    {
+      "role": "current",
+      "round": 3,
+      "ref": "8db895c54373e20737dcc8254861f73872579aa1",
+      "sourceSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b",
+      "lockSha256": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+      "snapshotSha256": "9b0efb05f7a5767fd8019b8b8ba4b67cdd4e95944742c93b834a758e8adecc37",
+      "snapshotBytes": 552205328,
+      "receiptSha256": "9e8c17fe0a349f42df0ee0ad24068a1e136d848c241a313adbf9b75a96f5828d",
+      "captureBoundary": {
+        "epoch": 9,
+        "idle": true,
+        "sourceSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b",
+        "outputSha256": "64cae573cf86f8eb754319a802c408850804e1ef92c538a721dd22c25edc09e6",
+        "observedAt": "2026-10-21T21:17:09.052Z"
+      },
+      "postValidationCompilerState": {
+        "epoch": 9,
+        "idle": true,
+        "sourceSha256": "a367cd2429fb83f8e62278df50d12bed02eddfb2ef28ec876a0f5b3ca8a70e7b"
+      },
+      "cacheEntryCountDistribution": [
+        0,
+        3,
+        8
+      ],
+      "cacheAst": {
+        "count": 1691,
+        "shallowBytes": 138080,
+        "classes": {
+          "Root": {
+            "count": 11,
+            "shallowBytes": 968
+          },
+          "Rule": {
+            "count": 467,
+            "shallowBytes": 48568
+          },
+          "Declaration": {
+            "count": 1178,
+            "shallowBytes": 84816
+          },
+          "AtRule": {
+            "count": 29,
+            "shallowBytes": 3248
+          },
+          "Comment": {
+            "count": 6,
+            "shallowBytes": 480
+          }
+        }
+      },
+      "cacheInputs": 11,
+      "cacheStringBacking": {
+        "count": 89,
+        "shallowBytes": 1118688,
+        "classes": {
+          "concatenated string": {
+            "count": 37,
+            "shallowBytes": 1184
+          },
+          "string": {
+            "count": 52,
+            "shallowBytes": 1117504
+          }
+        }
+      },
+      "inputSnapshotObjects": {
+        "count": 0,
+        "shallowBytes": 0,
+        "classes": {}
+      },
+      "wholeHeapNativeShallowBytes": 12086386
+    }
+  ],
+  "comparisons": [
+    {
+      "round": 0,
+      "metrics": {
+        "cachedAstNodes": {
+          "base": 1691,
+          "current": 1691,
+          "difference": 0,
+          "netGrowthDifference": 0
+        },
+        "cachedAstShallowBytes": {
+          "base": 130144,
+          "current": 130144,
+          "difference": 0,
+          "netGrowthDifference": 0
+        },
+        "cachedInputs": {
+          "base": 11,
+          "current": 11,
+          "difference": 0,
+          "netGrowthDifference": 0
+        },
+        "cachedStringPhysicalNodes": {
+          "base": 169,
+          "current": 161,
+          "difference": -8,
+          "netGrowthDifference": 0
+        },
+        "cachedStringShallowBytes": {
+          "base": 729360,
+          "current": 728432,
+          "difference": -928,
+          "netGrowthDifference": 0
+        },
+        "inputSnapshotObjects": {
+          "base": 0,
+          "current": 0,
+          "difference": 0,
+          "netGrowthDifference": 0
+        },
+        "inputSnapshotShallowBytes": {
+          "base": 0,
+          "current": 0,
+          "difference": 0,
+          "netGrowthDifference": 0
+        }
+      }
+    },
+    {
+      "round": 1,
+      "metrics": {
+        "cachedAstNodes": {
+          "base": 1691,
+          "current": 1691,
+          "difference": 0,
+          "netGrowthDifference": 0
+        },
+        "cachedAstShallowBytes": {
+          "base": 130144,
+          "current": 130144,
+          "difference": 0,
+          "netGrowthDifference": 0
+        },
+        "cachedInputs": {
+          "base": 11,
+          "current": 11,
+          "difference": 0,
+          "netGrowthDifference": 0
+        },
+        "cachedStringPhysicalNodes": {
+          "base": 90,
+          "current": 89,
+          "difference": -1,
+          "netGrowthDifference": 7
+        },
+        "cachedStringShallowBytes": {
+          "base": 1119232,
+          "current": 1118688,
+          "difference": -544,
+          "netGrowthDifference": 384
+        },
+        "inputSnapshotObjects": {
+          "base": 0,
+          "current": 0,
+          "difference": 0,
+          "netGrowthDifference": 0
+        },
+        "inputSnapshotShallowBytes": {
+          "base": 0,
+          "current": 0,
+          "difference": 0,
+          "netGrowthDifference": 0
+        }
+      }
+    },
+    {
+      "round": 2,
+      "metrics": {
+        "cachedAstNodes": {
+          "base": 1691,
+          "current": 1691,
+          "difference": 0,
+          "netGrowthDifference": 0
+        },
+        "cachedAstShallowBytes": {
+          "base": 138080,
+          "current": 130144,
+          "difference": -7936,
+          "netGrowthDifference": -7936
+        },
+        "cachedInputs": {
+          "base": 11,
+          "current": 11,
+          "difference": 0,
+          "netGrowthDifference": 0
+        },
+        "cachedStringPhysicalNodes": {
+          "base": 90,
+          "current": 89,
+          "difference": -1,
+          "netGrowthDifference": 7
+        },
+        "cachedStringShallowBytes": {
+          "base": 1119232,
+          "current": 1118688,
+          "difference": -544,
+          "netGrowthDifference": 384
+        },
+        "inputSnapshotObjects": {
+          "base": 0,
+          "current": 0,
+          "difference": 0,
+          "netGrowthDifference": 0
+        },
+        "inputSnapshotShallowBytes": {
+          "base": 0,
+          "current": 0,
+          "difference": 0,
+          "netGrowthDifference": 0
+        }
+      }
+    },
+    {
+      "round": 3,
+      "metrics": {
+        "cachedAstNodes": {
+          "base": 1691,
+          "current": 1691,
+          "difference": 0,
+          "netGrowthDifference": 0
+        },
+        "cachedAstShallowBytes": {
+          "base": 130144,
+          "current": 138080,
+          "difference": 7936,
+          "netGrowthDifference": 7936
+        },
+        "cachedInputs": {
+          "base": 11,
+          "current": 11,
+          "difference": 0,
+          "netGrowthDifference": 0
+        },
+        "cachedStringPhysicalNodes": {
+          "base": 90,
+          "current": 89,
+          "difference": -1,
+          "netGrowthDifference": 7
+        },
+        "cachedStringShallowBytes": {
+          "base": 1119232,
+          "current": 1118688,
+          "difference": -544,
+          "netGrowthDifference": 384
+        },
+        "inputSnapshotObjects": {
+          "base": 0,
+          "current": 0,
+          "difference": 0,
+          "netGrowthDifference": 0
+        },
+        "inputSnapshotShallowBytes": {
+          "base": 0,
+          "current": 0,
+          "difference": 0,
+          "netGrowthDifference": 0
+        }
+      }
+    }
+  ],
+  "limitations": [
+    "每个角色和回滚数只有一个独立进程，G不是同进程增长轨迹，也不是逐编译增长；各端点实际watch epoch不同。",
+    "只比较缓存条目数分布，没有跨进程owner或节点ID匹配。",
+    "选定AST节点、Input和字符串backing的count及shallow size不是dominator retained size或RSS。",
+    "字符串入口本次没有输入Root语义快照，snapshotObjects=0不能评价Root入口。",
+    "11个Input中8个CSS显示不完整，展示hash不能证明完整CSS内容相同。",
+    "snapshot可能触发GC并改变执行；before/after内存不能与捕获边界混为同时点。",
+    "约6.4GB native self_size未归因，没有native owner分解，不能当成驻留内存或current新增内存。",
+    "诊断输入仅base7d80与失败head8db；不能证明后续head或CI性能失败根因已经消除。",
+    "采集和分析脚本仍为本机临时诊断工具，摘要不代表已交付通用heap分析工具或新增产品回归。"
+  ]
+}

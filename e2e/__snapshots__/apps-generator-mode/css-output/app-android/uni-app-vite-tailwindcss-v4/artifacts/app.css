@@ -1,3 +1,29 @@
+*,
+::before,
+::after,
+::backdrop {
+  --tw-space-y-reverse: 0;
+  --tw-space-x-reverse: 0;
+  --tw-divide-x-reverse: 0;
+  --tw-border-style: solid;
+  --tw-divide-y-reverse: 0;
+  --tw-gradient-from: #0000;
+  --tw-gradient-via: #0000;
+  --tw-gradient-to: #0000;
+  --tw-gradient-from-position: 0%;
+  --tw-gradient-via-position: 50%;
+  --tw-gradient-to-position: 100%;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-alpha: 100%;
+  --tw-inset-shadow: 0 0 #0000;
+  --tw-inset-shadow-alpha: 100%;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-inset-ring-shadow: 0 0 #0000;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-content: '';
+}
 * {
   margin: 0;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
@@ -1442,7 +1468,7 @@ uni-map.web .uni-map-control-icon {
   bottom: 80px;
   height: auto;
 }
- /*tokens: info <= src/pages/index/index.vue */
+ /*! tokens: info <= src/pages/index/index.vue */
 .uni-system-open-location .info {
   position: absolute;
   bottom: 0;
@@ -1454,18 +1480,18 @@ uni-map.web .uni-map-control-icon {
   box-sizing: border-box;
   line-height: 1.5;
 }
- /*tokens: info <= src/pages/index/index.vue | name <= src/pages/index/index.vue */
+ /*! tokens: info <= src/pages/index/index.vue | name <= src/pages/index/index.vue */
 .uni-system-open-location .info > .name {
   font-size: 17px;
   color: #111;
   padding-right: 50px;
 }
- /*tokens: info <= src/pages/index/index.vue */
+ /*! tokens: info <= src/pages/index/index.vue */
 .uni-system-open-location .info > .address {
   font-size: 14px;
   color: #666;
 }
- /*tokens: info <= src/pages/index/index.vue */
+ /*! tokens: info <= src/pages/index/index.vue */
 .uni-system-open-location .info > .nav {
   position: absolute;
   top: 50%;
@@ -1476,7 +1502,7 @@ uni-map.web .uni-map-control-icon {
   margin-top: -25px;
   background-color: #007aff;
 }
- /*tokens: info <= src/pages/index/index.vue */
+ /*! tokens: info <= src/pages/index/index.vue */
 .uni-system-open-location .info > .nav > svg {
   display: block;
   width: 100%;
@@ -2348,32 +2374,6 @@ uni-web-view {
   top: 0;
   bottom: 0;
 }
-*,
-::before,
-::after,
-::backdrop {
-  --tw-space-y-reverse: 0;
-  --tw-space-x-reverse: 0;
-  --tw-divide-x-reverse: 0;
-  --tw-border-style: solid;
-  --tw-divide-y-reverse: 0;
-  --tw-gradient-from: #0000;
-  --tw-gradient-via: #0000;
-  --tw-gradient-to: #0000;
-  --tw-gradient-from-position: 0%;
-  --tw-gradient-via-position: 50%;
-  --tw-gradient-to-position: 100%;
-  --tw-shadow: 0 0 #0000;
-  --tw-shadow-alpha: 100%;
-  --tw-inset-shadow: 0 0 #0000;
-  --tw-inset-shadow-alpha: 100%;
-  --tw-ring-shadow: 0 0 #0000;
-  --tw-inset-ring-shadow: 0 0 #0000;
-  --tw-ring-offset-width: 0px;
-  --tw-ring-offset-color: #fff;
-  --tw-ring-offset-shadow: 0 0 #0000;
-  --tw-content: '';
-}
 /*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
 @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
   *,
@@ -2385,18 +2385,28 @@ uni-web-view {
     --tw-divide-x-reverse: 0;
     --tw-border-style: solid;
     --tw-divide-y-reverse: 0;
+    --tw-gradient-position: initial;
     --tw-gradient-from: #0000;
     --tw-gradient-via: #0000;
     --tw-gradient-to: #0000;
+    --tw-gradient-stops: initial;
+    --tw-gradient-via-stops: initial;
     --tw-gradient-from-position: 0%;
     --tw-gradient-via-position: 50%;
     --tw-gradient-to-position: 100%;
+    --tw-leading: initial;
+    --tw-font-weight: initial;
     --tw-shadow: 0 0 #0000;
+    --tw-shadow-color: initial;
     --tw-shadow-alpha: 100%;
     --tw-inset-shadow: 0 0 #0000;
+    --tw-inset-shadow-color: initial;
     --tw-inset-shadow-alpha: 100%;
+    --tw-ring-color: initial;
     --tw-ring-shadow: 0 0 #0000;
+    --tw-inset-ring-color: initial;
     --tw-inset-ring-shadow: 0 0 #0000;
+    --tw-ring-inset: initial;
     --tw-ring-offset-width: 0px;
     --tw-ring-offset-color: #fff;
     --tw-ring-offset-shadow: 0 0 #0000;
@@ -2410,12 +2420,24 @@ uni-web-view {
     'Noto Color Emoji';
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
   --color-red-300: rgb(255, 163, 164);
+  --color-red-500: rgb(251, 44, 54);
   --color-green-200: rgb(185, 248, 207);
+  --color-emerald-50: rgb(236, 253, 245);
   --color-emerald-200: rgb(164, 244, 207);
+  --color-emerald-500: rgb(0, 185, 129);
+  --color-emerald-600: rgb(0, 150, 105);
   --color-emerald-700: rgb(0, 120, 87);
+  --color-blue-500: rgb(50, 128, 255);
   --color-slate-100: rgb(241, 245, 249);
+  --color-slate-200: rgb(226, 232, 240);
+  --color-slate-500: rgb(98, 116, 142);
   --color-slate-700: rgb(49, 65, 88);
+  --color-slate-800: rgb(29, 41, 61);
+  --color-slate-900: rgb(15, 23, 43);
+  --color-zinc-50: rgb(250, 250, 250);
+  --color-zinc-900: rgb(24, 24, 27);
   --color-zinc-950: rgb(9, 9, 11);
+  --color-white: #fff;
   --spacing: 0.25rem;
   --text-xs: 0.75rem;
   --text-xs--line-height: calc(1 / 0.75);
@@ -2589,9 +2611,11 @@ uni-textarea,
 @supports (not (-webkit-appearance: -apple-pay-button)) or (contain-intrinsic-size: 1px) {
   ::-moz-placeholder {
     color: currentcolor;
+    color: color-mix(in oklab, currentcolor 50%, transparent);
   }
   ::placeholder {
     color: currentcolor;
+    color: color-mix(in oklab, currentcolor 50%, transparent);
   }
 }
 uni-textarea {
@@ -2656,7 +2680,7 @@ wx-button {
   gap: 8px;
   color: #121063;
 }
- /*tokens: template-corpus-apply <= src/pages/index/index.vue */
+ /*! tokens: template-corpus-apply <= src/pages/index/index.vue */
 .template-corpus-apply {
   display: inline-flex;
   align-items: center;
@@ -2679,35 +2703,38 @@ wx-button {
   font-size: 0.8125rem;
   color: #fff;
 }
- /*tokens: m-3 <= src/pages/index/index.vue */
+ /*! tokens: m-3 <= src/pages/index/index.vue */
 .m-3 {
   margin: calc(var(--spacing) * 3);
 }
- /*tokens: mt-1 <= src/pages/index/index.vue */
+ /*! tokens: mt-1 <= src/pages/index/index.vue */
 .mt-1 {
   margin-top: var(--spacing);
 }
- /*tokens: mt-2 <= src/pages/index/index.vue */
+ /*! tokens: mt-2 <= src/pages/index/index.vue */
+ /*! tokens: mt-2 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .mt-2 {
   margin-top: calc(var(--spacing) * 2);
 }
- /*tokens: mt-3 <= src/pages/index/index.vue */
+ /*! tokens: mt-3 <= src/pages/index/index.vue */
 .mt-3 {
   margin-top: calc(var(--spacing) * 3);
 }
- /*tokens: mt-4 <= src/pages/index/index.vue */
+ /*! tokens: mt-4 <= src/pages/index/index.vue */
+ /*! tokens: mt-4 <= src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
 .mt-4 {
   margin-top: calc(var(--spacing) * 4);
 }
- /*tokens: mt-6 <= src/pages/index/index.vue */
+ /*! tokens: mt-6 <= src/pages/index/index.vue */
+ /*! tokens: mt-6 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .mt-6 {
   margin-top: calc(var(--spacing) * 6);
 }
- /*tokens: ml-2 <= src/pages/index/index.vue */
+ /*! tokens: ml-2 <= src/pages/index/index.vue */
 .ml-2 {
   margin-left: calc(var(--spacing) * 2);
 }
- /*tokens: i-[mdi--github-circle] <= <tailwind generated> */
+ /*! tokens: i-[mdi--github-circle] <= <tailwind generated> */
 .i-_bmdi--github-circle_B {
   display: inline-block;
   width: 1em;
@@ -2721,7 +2748,7 @@ wx-button {
   mask-size: 100% 100%;
   --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='black' d='M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5c.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34c-.46-1.16-1.11-1.47-1.11-1.47c-.91-.62.07-.6.07-.6c1 .07 1.53 1.03 1.53 1.03c.87 1.52 2.34 1.07 2.91.83c.09-.65.35-1.09.63-1.34c-2.22-.25-4.55-1.11-4.55-4.92c0-1.11.38-2 1.03-2.71c-.1-.25-.45-1.29.1-2.64c0 0 .84-.27 2.75 1.02c.79-.22 1.65-.33 2.5-.33s1.71.11 2.5.33c1.91-1.29 2.75-1.02 2.75-1.02c.55 1.35.2 2.39.1 2.64c.65.71 1.03 1.6 1.03 2.71c0 3.82-2.34 4.66-4.57 4.91c.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2'/%3E%3C/svg%3E");
 }
- /*tokens: i-[mdi--home] <= src/pages/index/index.vue */
+ /*! tokens: i-[mdi--home] <= src/pages/index/index.vue */
 .i-_bmdi--home_B {
   display: inline-block;
   width: 1em;
@@ -2735,7 +2762,7 @@ wx-button {
   mask-size: 100% 100%;
   --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='black' d='M10 20v-6h4v6h5v-8h3L12 3L2 12h3v8z'/%3E%3C/svg%3E");
 }
- /*tokens: i-[mdi--star] <= <tailwind generated> */
+ /*! tokens: i-[mdi--star] <= <tailwind generated> */
 .i-_bmdi--star_B {
   display: inline-block;
   width: 1em;
@@ -2749,7 +2776,7 @@ wx-button {
   mask-size: 100% 100%;
   --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='black' d='M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2L9.19 8.62L2 9.24l5.45 4.73L5.82 21z'/%3E%3C/svg%3E");
 }
- /*tokens: i-[svg-spinners--180-ring-with-bg] <= <tailwind generated> */
+ /*! tokens: i-[svg-spinners--180-ring-with-bg] <= <tailwind generated> */
 .i-_bsvg-spinners--180-ring-with-bg_B {
   display: inline-block;
   width: 1em;
@@ -2763,116 +2790,124 @@ wx-button {
   mask-size: 100% 100%;
   --svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='black' d='M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z' opacity='.25'/%3E%3Cpath fill='black' d='M12,4a8,8,0,0,1,7.89,6.7A1.53,1.53,0,0,0,21.38,12h0a1.5,1.5,0,0,0,1.48-1.75,11,11,0,0,0-21.72,0A1.5,1.5,0,0,0,2.62,12h0a1.53,1.53,0,0,0,1.49-1.3A8,8,0,0,1,12,4Z'%3E%3CanimateTransform attributeName='transform' dur='0.75s' repeatCount='indefinite' type='rotate' values='0 12 12;360 12 12'/%3E%3C/path%3E%3C/svg%3E");
 }
- /*tokens: block <= src/pages/index/index.vue */
+ /*! tokens: block <= src/pages/index/index.vue */
+ /*! tokens: block <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .block {
   display: block;
 }
- /*tokens: flex <= src/components/HelloWorld.vue, src/pages/index/index.vue */
+ /*! tokens: flex <= src/components/HelloWorld.vue, src/pages/index/index.vue */
+ /*! tokens: flex <= src/components/HelloWorld.vue, src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .flex {
   display: flex;
 }
- /*tokens: aspect-(--my-aspect-ratio) <= src/pages/index/index.vue */
+ /*! tokens: aspect-(--my-aspect-ratio) <= src/pages/index/index.vue */
 .aspect-_p--my-aspect-ratio_P {
   aspect-ratio: var(--my-aspect-ratio);
 }
- /*tokens: aspect-[calc(4*3+1)/3] <= src/pages/index/index.vue */
+ /*! tokens: aspect-[calc(4*3+1)/3] <= src/pages/index/index.vue */
 .aspect-_bcalc_p4_x3_u1_P_f3_B {
   aspect-ratio: calc(4 * 3 + 1) / 3;
 }
- /*tokens: h-12 <= src/pages/index/index.vue */
+ /*! tokens: h-12 <= src/pages/index/index.vue */
+ /*! tokens: h-12 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .h-12 {
   height: calc(var(--spacing) * 12);
 }
- /*tokens: h-16 <= src/pages/index/index.vue */
+ /*! tokens: h-16 <= src/pages/index/index.vue */
 .h-16 {
   height: calc(var(--spacing) * 16);
 }
- /*tokens: h-20 <= src/pages/index/index.vue */
+ /*! tokens: h-20 <= src/pages/index/index.vue */
 .h-20 {
   height: calc(var(--spacing) * 20);
 }
- /*tokens: h-[45px] <= src/pages/index/index.vue */
+ /*! tokens: h-[45px] <= src/pages/index/index.vue */
 .h-_b45px_B {
   height: 45px;
 }
- /*tokens: w-12 <= src/pages/index/index.vue */
+ /*! tokens: w-12 <= src/pages/index/index.vue */
+ /*! tokens: w-12 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .w-12 {
   width: calc(var(--spacing) * 12);
 }
- /*tokens: w-20 <= src/pages/index/index.vue */
+ /*! tokens: w-20 <= src/pages/index/index.vue */
 .w-20 {
   width: calc(var(--spacing) * 20);
 }
- /*tokens: w-32 <= src/pages/index/index.vue */
+ /*! tokens: w-32 <= src/pages/index/index.vue */
 .w-32 {
   width: calc(var(--spacing) * 32);
 }
- /*tokens: w-[323px] <= src/pages/index/index.vue */
+ /*! tokens: w-[323px] <= src/pages/index/index.vue */
 .w-_b323px_B {
   width: 323px;
 }
- /*tokens: flex-col <= src/pages/index/index.vue */
+ /*! tokens: flex-col <= src/pages/index/index.vue */
+ /*! tokens: flex-col <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .flex-col {
   flex-direction: column;
 }
- /*tokens: flex-col-reverse <= src/pages/index/index.vue */
+ /*! tokens: flex-col-reverse <= src/pages/index/index.vue */
 .flex-col-reverse {
   flex-direction: column-reverse;
 }
- /*tokens: flex-row-reverse <= src/pages/index/index.vue */
+ /*! tokens: flex-row-reverse <= src/pages/index/index.vue */
 .flex-row-reverse {
   flex-direction: row-reverse;
 }
- /*tokens: items-center <= src/components/HelloWorld.vue, src/pages/index/index.vue */
+ /*! tokens: items-center <= src/components/HelloWorld.vue, src/pages/index/index.vue */
+ /*! tokens: items-center <= src/components/HelloWorld.vue, src/main.css, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .items-center {
   align-items: center;
 }
- /*tokens: justify-between <= src/pages/index/index.vue */
+ /*! tokens: justify-between <= src/pages/index/index.vue */
 .justify-between {
   justify-content: space-between;
 }
- /*tokens: gap-2 <= src/components/HelloWorld.vue, src/pages/index/index.vue */
+ /*! tokens: gap-2 <= src/components/HelloWorld.vue, src/pages/index/index.vue */
+ /*! tokens: gap-2 <= src/components/HelloWorld.vue, src/main.css, src/pages/index/index.vue */
 .gap-2 {
   gap: calc(var(--spacing) * 2);
 }
- /*tokens: gap-3 <= src/pages/index/index.vue */
+ /*! tokens: gap-3 <= src/pages/index/index.vue */
+ /*! tokens: gap-3 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .gap-3 {
   gap: calc(var(--spacing) * 3);
 }
- /*tokens: space-y-2 <= src/pages/index/index.vue */
+ /*! tokens: space-y-2 <= src/pages/index/index.vue */
 :where(.space-y-2 > :not(:last-child)) {
   --tw-space-y-reverse: 0;
   margin-block-start: calc(calc(var(--spacing) * 2) * var(--tw-space-y-reverse));
   margin-block-end: calc(calc(var(--spacing) * 2) * (1 - var(--tw-space-y-reverse)));
 }
- /*tokens: space-y-4 <= src/pages/index/index.vue */
+ /*! tokens: space-y-4 <= src/pages/index/index.vue */
 :where(.space-y-4 > :not(:last-child)) {
   --tw-space-y-reverse: 0;
   margin-block-start: calc(calc(var(--spacing) * 4) * var(--tw-space-y-reverse));
   margin-block-end: calc(calc(var(--spacing) * 4) * (1 - var(--tw-space-y-reverse)));
 }
- /*tokens: space-y-reverse <= src/pages/index/index.vue */
+ /*! tokens: space-y-reverse <= src/pages/index/index.vue */
 :where(.space-y-reverse > :not(:last-child)) {
   --tw-space-y-reverse: 1;
 }
- /*tokens: space-x-4 <= src/pages/index/index.vue */
+ /*! tokens: space-x-4 <= src/pages/index/index.vue */
 :where(.space-x-4 > :not(:last-child)) {
   --tw-space-x-reverse: 0;
   margin-inline-start: calc(calc(var(--spacing) * 4) * var(--tw-space-x-reverse));
   margin-inline-end: calc(calc(var(--spacing) * 4) * (1 - var(--tw-space-x-reverse)));
 }
- /*tokens: space-x-reverse <= src/pages/index/index.vue */
+ /*! tokens: space-x-reverse <= src/pages/index/index.vue */
 :where(.space-x-reverse > :not(:last-child)) {
   --tw-space-x-reverse: 1;
 }
- /*tokens: divide-x-4 <= src/pages/index/index.vue */
+ /*! tokens: divide-x-4 <= src/pages/index/index.vue */
 :where(.divide-x-4 > :not(:last-child)) {
   --tw-divide-x-reverse: 0;
   border-inline-style: var(--tw-border-style);
   border-inline-start-width: calc(4px * var(--tw-divide-x-reverse));
   border-inline-end-width: calc(4px * (1 - var(--tw-divide-x-reverse)));
 }
- /*tokens: divide-y-4 <= src/pages/index/index.vue */
+ /*! tokens: divide-y-4 <= src/pages/index/index.vue */
 :where(.divide-y-4 > :not(:last-child)) {
   --tw-divide-y-reverse: 0;
   border-bottom-style: var(--tw-border-style);
@@ -2880,156 +2915,162 @@ wx-button {
   border-top-width: calc(4px * var(--tw-divide-y-reverse));
   border-bottom-width: calc(4px * (1 - var(--tw-divide-y-reverse)));
 }
- /*tokens: divide-y-reverse <= src/pages/index/index.vue */
+ /*! tokens: divide-y-reverse <= src/pages/index/index.vue */
 :where(.divide-y-reverse > :not(:last-child)) {
   --tw-divide-y-reverse: 1;
 }
- /*tokens: divide-dotted <= src/pages/index/index.vue */
+ /*! tokens: divide-dotted <= src/pages/index/index.vue */
 :where(.divide-dotted > :not(:last-child)) {
   --tw-border-style: dotted;
   border-style: dotted;
 }
- /*tokens: divide-double <= src/pages/index/index.vue */
+ /*! tokens: divide-double <= src/pages/index/index.vue */
 :where(.divide-double > :not(:last-child)) {
   --tw-border-style: double;
   border-style: double;
 }
- /*tokens: divide-[#41eb04] <= src/pages/index/index.vue */
+ /*! tokens: divide-[#41eb04] <= src/pages/index/index.vue */
 :where(.divide-_b_h41eb04_B > :not(:last-child)) {
   border-color: #41eb04;
 }
- /*tokens: divide-[#d80c0c] <= src/pages/index/index.vue */
+ /*! tokens: divide-[#d80c0c] <= src/pages/index/index.vue */
 :where(.divide-_b_hd80c0c_B > :not(:last-child)) {
   border-color: #d80c0c;
 }
- /*tokens: rounded <= src/pages/index/index.vue */
+ /*! tokens: rounded <= src/pages/index/index.vue */
 .rounded {
   border-radius: 0.25rem;
 }
- /*tokens: rounded-[20rpx] <= src/components/HelloWorld.vue, src/pages/index/index.vue */
+ /*! tokens: rounded-[20rpx] <= src/components/HelloWorld.vue, src/pages/index/index.vue */
+ /*! tokens: rounded-[20rpx] <= src/components/HelloWorld.vue, src/main.css, src/pages/index/index.vue */
 .rounded-_b20rpx_B {
   border-radius: 0.625rem;
 }
- /*tokens: rounded-[28rpx] <= src/pages/index/index.vue */
+ /*! tokens: rounded-[28rpx] <= src/pages/index/index.vue */
 .rounded-_b28rpx_B {
   border-radius: 0.875rem;
 }
- /*tokens: rounded-full <= src/pages/index/index.vue */
+ /*! tokens: rounded-full <= src/pages/index/index.vue */
 .rounded-full {
   border-radius: 9999px;
 }
- /*tokens: rounded-xl <= src/pages/index/index.vue */
+ /*! tokens: rounded-xl <= src/pages/index/index.vue */
+ /*! tokens: rounded-xl <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .rounded-xl {
   border-radius: 0.5rem;
 }
- /*tokens: border <= src/pages/index/index.vue */
+ /*! tokens: border <= src/pages/index/index.vue */
+ /*! tokens: border <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .border {
   border-style: var(--tw-border-style);
   border-width: 1px;
 }
- /*tokens: border-t <= src/pages/index/index.vue */
+ /*! tokens: border-t <= src/pages/index/index.vue */
 .border-t {
   border-top-style: var(--tw-border-style);
   border-top-width: 1px;
 }
- /*tokens: border-emerald-200 <= src/pages/index/index.vue */
+ /*! tokens: border-emerald-200 <= src/pages/index/index.vue */
 .border-emerald-200 {
   border-color: rgb(164, 244, 207);
 }
- /*tokens: border-slate-200 <= src/pages/index/index.vue */
+ /*! tokens: border-slate-200 <= src/pages/index/index.vue */
+ /*! tokens: border-slate-200 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .border-slate-200 {
   border-color: rgb(226, 232, 240);
 }
- /*tokens: border-slate-200/80 <= src/pages/index/index.vue */
+ /*! tokens: border-slate-200/80 <= src/pages/index/index.vue */
 .border-slate-200_f80 {
   border-color: rgba(226, 232, 240, 0.8);
 }
- /*tokens: border-slate-200/80 <= src/pages/index/index.vue */
+ /*! tokens: border-slate-200/80 <= src/pages/index/index.vue */
 .border-slate-200_f80 {
   border-color: rgba(226, 232, 240, 0.8);
 }
- /*tokens: !bg-[gray] <= src/pages/index/index.vue */
+ /*! tokens: !bg-[gray] <= src/pages/index/index.vue */
 ._ebg-_bgray_B {
   background-color: gray !important;
 }
- /*tokens: bg-[#0000ff] <= src/pages/index/index.vue */
+ /*! tokens: bg-[#0000ff] <= src/pages/index/index.vue */
 .bg-_b_h0000ff_B {
   background-color: #0000ff;
 }
- /*tokens: bg-[#68c828] <= src/pages/index/index.vue */
+ /*! tokens: bg-[#68c828] <= src/pages/index/index.vue */
 .bg-_b_h68c828_B {
   background-color: #68c828;
 }
- /*tokens: bg-[#0977ee] <= src/pages/index/index.vue */
+ /*! tokens: bg-[#0977ee] <= src/pages/index/index.vue */
 .bg-_b_h0977ee_B {
   background-color: #0977ee;
 }
- /*tokens: bg-[#123498] <= src/pages/index/index.vue */
+ /*! tokens: bg-[#123498] <= src/pages/index/index.vue */
 .bg-_b_h123498_B {
   background-color: #123498;
 }
- /*tokens: bg-[#f8fafc] <= src/components/HelloWorld.vue */
+ /*! tokens: bg-[#f8fafc] <= src/components/HelloWorld.vue */
 .bg-_b_hf8fafc_B {
   background-color: #f8fafc;
 }
- /*tokens: bg-emerald-50 <= src/pages/index/index.vue */
+ /*! tokens: bg-emerald-50 <= src/pages/index/index.vue */
 .bg-emerald-50 {
   background-color: rgb(236, 253, 245);
 }
- /*tokens: bg-emerald-500 <= src/pages/index/index.vue */
+ /*! tokens: bg-emerald-500 <= src/pages/index/index.vue */
+ /*! tokens: bg-emerald-500 <= src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
 .bg-emerald-500 {
   background-color: rgb(0, 185, 129);
 }
- /*tokens: bg-emerald-600 <= src/pages/index/index.vue */
+ /*! tokens: bg-emerald-600 <= src/pages/index/index.vue */
 .bg-emerald-600 {
   background-color: rgb(0, 150, 105);
 }
- /*tokens: bg-green-200/70 <= src/pages/index/index.vue */
+ /*! tokens: bg-green-200/70 <= src/pages/index/index.vue */
 .bg-green-200_f70 {
   background-color: rgba(185, 248, 207, 0.7);
 }
- /*tokens: bg-green-200/70 <= src/pages/index/index.vue */
+ /*! tokens: bg-green-200/70 <= src/pages/index/index.vue */
 .bg-green-200_f70 {
   background-color: rgba(185, 248, 207, 0.7);
 }
- /*tokens: bg-midnight <= src/pages/index/index.vue */
+ /*! tokens: bg-midnight <= src/pages/index/index.vue */
 .bg-midnight {
   background-color: #121063;
 }
- /*tokens: bg-neutral-1B <= src/pages/index/index.vue */
+ /*! tokens: bg-neutral-1B <= src/pages/index/index.vue */
 .bg-neutral-1B {
   background-color: #1b1b1b;
 }
- /*tokens: bg-red-300 <= src/pages/index/index.vue */
+ /*! tokens: bg-red-300 <= src/pages/index/index.vue */
 .bg-red-300 {
   background-color: rgb(255, 163, 164);
 }
- /*tokens: bg-slate-900 <= src/pages/index/index.vue */
+ /*! tokens: bg-slate-900 <= src/pages/index/index.vue */
 .bg-slate-900 {
   background-color: rgb(15, 23, 43);
 }
- /*tokens: bg-white <= src/pages/index/index.vue */
+ /*! tokens: bg-white <= src/pages/index/index.vue */
+ /*! tokens: bg-white <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .bg-white {
   background-color: #fff;
 }
- /*tokens: bg-white/70 <= src/pages/index/index.vue */
+ /*! tokens: bg-white/70 <= src/pages/index/index.vue */
 .bg-white_f70 {
   background-color: rgba(255, 255, 255, 0.7);
 }
- /*tokens: bg-white/70 <= src/pages/index/index.vue */
+ /*! tokens: bg-white/70 <= src/pages/index/index.vue */
 .bg-white_f70 {
   background-color: rgba(255, 255, 255, 0.7);
 }
- /*tokens: bg-gradient-to-br <= src/pages/index/index.vue */
+ /*! tokens: bg-gradient-to-br <= src/pages/index/index.vue */
 .bg-gradient-to-br {
   --tw-gradient-position: to bottom right;
   background-image: linear-gradient(var(--tw-gradient-stops));
 }
- /*tokens: bg-[radial-gradient(circle_at_18%_20%,#e0f2fe,#fdf4ff_70%)] <= src/pages/index/index.vue */
+ /*! tokens: bg-[radial-gradient(circle_at_18%_20%,#e0f2fe,#fdf4ff_70%)] <= src/pages/index/index.vue */
 .bg-_bradial-gradient_pcircle_at_18_v_20_v_m_he0f2fe_m_hfdf4ff_70_v_P_B {
   background-image: radial-gradient(circle at 18% 20%, #e0f2fe, #fdf4ff 70%);
 }
- /*tokens: from-slate-900/95 <= src/pages/index/index.vue */
+ /*! tokens: from-slate-900/95 <= src/pages/index/index.vue */
 .from-slate-900_f95 {
   --tw-gradient-from: rgba(15, 23, 43, 0.95);
   --tw-gradient-stops: var(
@@ -3039,11 +3080,11 @@ wx-button {
     var(--tw-gradient-to) var(--tw-gradient-to-position)
   );
 }
- /*tokens: from-slate-900/95 <= src/pages/index/index.vue */
+ /*! tokens: from-slate-900/95 <= src/pages/index/index.vue */
 .from-slate-900_f95 {
   --tw-gradient-from: rgba(15, 23, 43, 0.95);
 }
- /*tokens: to-slate-700/95 <= src/pages/index/index.vue */
+ /*! tokens: to-slate-700/95 <= src/pages/index/index.vue */
 .to-slate-700_f95 {
   --tw-gradient-to: rgba(49, 65, 88, 0.95);
   --tw-gradient-stops: var(
@@ -3053,254 +3094,269 @@ wx-button {
     var(--tw-gradient-to) var(--tw-gradient-to-position)
   );
 }
- /*tokens: to-slate-700/95 <= src/pages/index/index.vue */
+ /*! tokens: to-slate-700/95 <= src/pages/index/index.vue */
 .to-slate-700_f95 {
   --tw-gradient-to: rgba(49, 65, 88, 0.95);
 }
- /*tokens: fill-bermuda <= src/pages/index/index.vue */
+ /*! tokens: fill-bermuda <= src/pages/index/index.vue */
 .fill-bermuda {
   fill: #78dcca;
 }
- /*tokens: p-2 <= src/pages/index/index.vue */
+ /*! tokens: p-2 <= src/pages/index/index.vue */
 .p-2 {
   padding: calc(var(--spacing) * 2);
 }
- /*tokens: p-4 <= src/pages/index/index.vue */
+ /*! tokens: p-4 <= src/pages/index/index.vue */
 .p-4 {
   padding: calc(var(--spacing) * 4);
 }
- /*tokens: px-3 <= src/pages/index/index.vue */
+ /*! tokens: px-3 <= src/pages/index/index.vue */
 .px-3 {
   padding-inline: calc(var(--spacing) * 3);
 }
- /*tokens: px-4 <= src/components/HelloWorld.vue, src/pages/index/index.vue */
+ /*! tokens: px-4 <= src/components/HelloWorld.vue, src/pages/index/index.vue */
+ /*! tokens: px-4 <= src/components/HelloWorld.vue, src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .px-4 {
   padding-inline: calc(var(--spacing) * 4);
 }
- /*tokens: px-[29rpx] <= src/pages/index/index.vue */
+ /*! tokens: px-[29rpx] <= src/pages/index/index.vue */
 .px-_b29rpx_B {
   padding-inline: 0.90625rem;
 }
- /*tokens: px-[48px] <= src/pages/index/index.vue */
+ /*! tokens: px-[48px] <= src/pages/index/index.vue */
 .px-_b48px_B {
   padding-inline: 48px;
 }
- /*tokens: py-1 <= src/pages/index/index.vue */
+ /*! tokens: py-1 <= src/pages/index/index.vue */
 .py-1 {
   padding-block: var(--spacing);
 }
- /*tokens: py-2 <= src/pages/index/index.vue */
+ /*! tokens: py-2 <= src/pages/index/index.vue */
+ /*! tokens: py-2 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .py-2 {
   padding-block: calc(var(--spacing) * 2);
 }
- /*tokens: py-3 <= src/components/HelloWorld.vue, src/pages/index/index.vue */
+ /*! tokens: py-3 <= src/components/HelloWorld.vue, src/pages/index/index.vue */
 .py-3 {
   padding-block: calc(var(--spacing) * 3);
 }
- /*tokens: py-[24rpx] <= src/pages/index/index.vue */
+ /*! tokens: py-[24rpx] <= src/pages/index/index.vue */
 .py-_b24rpx_B {
   padding-block: 0.75rem;
 }
- /*tokens: pt-2 <= src/pages/index/index.vue */
+ /*! tokens: pt-2 <= src/pages/index/index.vue */
 .pt-2 {
   padding-top: calc(var(--spacing) * 2);
 }
- /*tokens: text-center <= src/pages/index/index.vue */
+ /*! tokens: text-center <= src/pages/index/index.vue */
+ /*! tokens: text-center <= src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
 .text-center {
   text-align: center;
 }
- /*tokens: text-base <= src/pages/index/index.vue */
+ /*! tokens: text-base <= src/pages/index/index.vue */
+ /*! tokens: text-base <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .text-base {
   font-size: var(--text-base);
   line-height: var(--tw-leading, var(--text-base--line-height));
 }
- /*tokens: text-sm <= src/pages/index/index.vue */
+ /*! tokens: text-sm <= src/pages/index/index.vue */
+ /*! tokens: text-sm <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .text-sm {
   font-size: var(--text-sm);
   line-height: var(--tw-leading, var(--text-sm--line-height));
 }
- /*tokens: text-xs <= src/pages/index/index.vue */
+ /*! tokens: text-xs <= src/pages/index/index.vue */
+ /*! tokens: text-xs <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .text-xs {
   font-size: var(--text-xs);
   line-height: var(--tw-leading, var(--text-xs--line-height));
 }
- /*tokens: text-[24rpx] <= src/pages/index/index.vue */
+ /*! tokens: text-[24rpx] <= src/pages/index/index.vue */
 .text-_b24rpx_B {
   font-size: 0.75rem;
 }
- /*tokens: text-[26rpx] <= src/pages/index/index.vue */
+ /*! tokens: text-[26rpx] <= src/pages/index/index.vue */
+ /*! tokens: text-[26rpx] <= src/main.css, src/pages/index/index.vue */
 .text-_b26rpx_B {
   font-size: 0.8125rem;
 }
- /*tokens: text-[31rpx] <= src/pages/index/index.vue */
+ /*! tokens: text-[31rpx] <= src/pages/index/index.vue */
 .text-_b31rpx_B {
   font-size: 0.96875rem;
 }
- /*tokens: text-[45rpx] <= src/pages/index/index.vue */
+ /*! tokens: text-[45rpx] <= src/pages/index/index.vue */
 .text-_b45rpx_B {
   font-size: 1.40625rem;
 }
- /*tokens: text-[100rpx] <= src/pages/index/index.vue */
+ /*! tokens: text-[100rpx] <= src/pages/index/index.vue */
 .text-_b100rpx_B {
   font-size: 3.125rem;
 }
- /*tokens: text-[102.43rpx] <= src/pages/index/index.vue */
+ /*! tokens: text-[102.43rpx] <= src/pages/index/index.vue */
 .text-_b102_d43rpx_B {
   font-size: 3.20094rem;
 }
- /*tokens: leading-5 <= src/pages/index/index.vue */
+ /*! tokens: leading-5 <= src/pages/index/index.vue */
 .leading-5 {
   --tw-leading: calc(var(--spacing) * 5);
   line-height: calc(var(--spacing) * 5);
 }
- /*tokens: font-bold <= src/pages/index/index.vue */
+ /*! tokens: font-bold <= src/pages/index/index.vue */
+ /*! tokens: font-bold <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .font-bold {
   --tw-font-weight: var(--font-weight-bold);
   font-weight: var(--font-weight-bold);
 }
- /*tokens: font-semibold <= src/pages/index/index.vue */
+ /*! tokens: font-semibold <= src/pages/index/index.vue */
+ /*! tokens: font-semibold <= src/main.css, src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .font-semibold {
   --tw-font-weight: var(--font-weight-semibold);
   font-weight: var(--font-weight-semibold);
 }
- /*tokens: break-all <= src/pages/index/index.vue */
+ /*! tokens: break-all <= src/pages/index/index.vue */
 .break-all {
   word-break: break-all;
 }
- /*tokens: text-[#00f285] <= src/pages/index/index.vue */
+ /*! tokens: text-[#00f285] <= src/pages/index/index.vue */
 .text-_b_h00f285_B {
   color: #00f285;
 }
- /*tokens: text-[#123456] <= src/pages/index/index.vue */
+ /*! tokens: text-[#123456] <= src/pages/index/index.vue */
 .text-_b_h123456_B {
   color: #123456;
 }
- /*tokens: text-emerald-700 <= src/pages/index/index.vue */
+ /*! tokens: text-emerald-700 <= src/pages/index/index.vue */
 .text-emerald-700 {
   color: rgb(0, 120, 87);
 }
- /*tokens: text-neutral-66 <= src/pages/index/index.vue */
+ /*! tokens: text-neutral-66 <= src/pages/index/index.vue */
 .text-neutral-66 {
   color: #666;
 }
- /*tokens: text-slate-500 <= src/pages/index/index.vue */
+ /*! tokens: text-slate-500 <= src/pages/index/index.vue */
+ /*! tokens: text-slate-500 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .text-slate-500 {
   color: rgb(98, 116, 142);
 }
- /*tokens: text-slate-700 <= src/components/HelloWorld.vue, src/pages/index/index.vue */
+ /*! tokens: text-slate-700 <= src/components/HelloWorld.vue, src/pages/index/index.vue */
 .text-slate-700 {
   color: rgb(49, 65, 88);
 }
- /*tokens: text-slate-800 <= src/pages/index/index.vue */
+ /*! tokens: text-slate-800 <= src/pages/index/index.vue */
+ /*! tokens: text-slate-800 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .text-slate-800 {
   color: rgb(29, 41, 61);
 }
- /*tokens: text-slate-900 <= src/pages/index/index.vue */
+ /*! tokens: text-slate-900 <= src/pages/index/index.vue */
+ /*! tokens: text-slate-900 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
 .text-slate-900 {
   color: rgb(15, 23, 43);
 }
- /*tokens: text-tahiti <= src/pages/index/index.vue */
+ /*! tokens: text-tahiti <= src/pages/index/index.vue */
 .text-tahiti {
   color: #3ab7bf;
 }
- /*tokens: text-white <= src/pages/index/index.vue */
+ /*! tokens: text-white <= src/pages/index/index.vue */
+ /*! tokens: text-white <= src/main.css, src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
 .text-white {
   color: #fff;
 }
- /*tokens: underline <= src/pages/index/index.vue */
+ /*! tokens: underline <= src/pages/index/index.vue */
 .underline {
   text-decoration-line: underline;
 }
- /*tokens: shadow-sm <= src/pages/index/index.vue */
+ /*! tokens: shadow-sm <= src/pages/index/index.vue */
+ /*! tokens: shadow-sm <= src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
 .shadow-sm {
   --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgba(0, 0, 0, 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgba(0, 0, 0, 0.1));
   box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
 }
- /*tokens: shadow-xl <= src/pages/index/index.vue */
+ /*! tokens: shadow-xl <= src/pages/index/index.vue */
 .shadow-xl {
   --tw-shadow: 0 20px 25px -5px var(--tw-shadow-color, rgba(0, 0, 0, 0.1)), 0 8px 10px -6px var(--tw-shadow-color, rgba(0, 0, 0, 0.1));
   box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
 }
- /*tokens: divide-x-reverse <= src/pages/index/index.vue */
+ /*! tokens: divide-x-reverse <= src/pages/index/index.vue */
 :where(.divide-x-reverse > :not(:last-child)) {
   --tw-divide-x-reverse: 1;
 }
- /*tokens: before:content-['现在，让我们开始神奇的_tailwindcss_开发之旅吧！'] <= <tailwind generated> */
+ /*! tokens: before:content-['现在，让我们开始神奇的_tailwindcss_开发之旅吧！'] <= <tailwind generated> */
 .before_ccontent-_b_au_x73b0_u_x5728_u_xff0c_u_x8ba9_u_x6211_u_x4eec_u_x5f00_u_x59cb_u_x795e_u_x5947_u_x7684__tailwindcss_u_x5f00_u_x53d1_u_x4e4b_u_x65c5_u_x5427_u_xff01__a_B::before {
   --tw-content: '现在，让我们开始神奇的 tailwindcss 开发之旅吧！';
   content: var(--tw-content);
 }
- /*tokens: before:content-['现在，让我们继续神奇的_tailwindcss_HMR_回归之旅吧！'] <= <tailwind generated> */
+ /*! tokens: before:content-['现在，让我们继续神奇的_tailwindcss_HMR_回归之旅吧！'] <= <tailwind generated> */
 .before_ccontent-_b_au_x73b0_u_x5728_u_xff0c_u_x8ba9_u_x6211_u_x4eec_u_x7ee7_u_x7eed_u_x795e_u_x5947_u_x7684__tailwindcss_HMR_u_x56de_u_x5f52_u_x4e4b_u_x65c5_u_x5427_u_xff01__a_B::before {
   --tw-content: '现在，让我们继续神奇的 tailwindcss HMR 回归之旅吧！';
   content: var(--tw-content);
 }
- /*tokens: after:!content-['good_work!'] <= src/pages/index/index.vue */
+ /*! tokens: after:!content-['good_work!'] <= src/pages/index/index.vue */
 .after_c_econtent-_b_agood_work_e_a_B::after {
   content: var(--tw-content);
   --tw-content: 'good work!' !important;
   content: var(--tw-content) !important;
 }
- /*tokens: active:bg-emerald-600 <= src/pages/index/index.vue */
+ /*! tokens: active:bg-emerald-600 <= src/pages/index/index.vue */
+ /*! tokens: active:bg-emerald-600 <= src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
 .active_cbg-emerald-600:active {
   background-color: rgb(0, 150, 105);
 }
- /*tokens: active:bg-emerald-700 <= src/pages/index/index.vue */
+ /*! tokens: active:bg-emerald-700 <= src/pages/index/index.vue */
 .active_cbg-emerald-700:active {
   background-color: rgb(0, 120, 87);
 }
- /*tokens: active:bg-slate-700 <= src/pages/index/index.vue */
+ /*! tokens: active:bg-slate-700 <= src/pages/index/index.vue */
 .active_cbg-slate-700:active {
   background-color: rgb(49, 65, 88);
 }
- /*tokens: dark:bg-red-300 <= src/pages/index/index.vue | theme-dark <= src/pages/index/index.vue */
+ /*! tokens: dark:bg-red-300 <= src/pages/index/index.vue | theme-dark <= src/pages/index/index.vue */
 .dark_cbg-red-300.theme-dark {
   background-color: rgb(255, 163, 164);
 }
- /*tokens: theme-dark <= src/pages/index/index.vue | dark:bg-red-300 <= src/pages/index/index.vue */
+ /*! tokens: theme-dark <= src/pages/index/index.vue | dark:bg-red-300 <= src/pages/index/index.vue */
 .theme-dark .dark_cbg-red-300 {
   background-color: rgb(255, 163, 164);
 }
- /*tokens: dark:bg-zinc-900 <= src/pages/index/index.vue | theme-dark <= src/pages/index/index.vue */
+ /*! tokens: dark:bg-zinc-900 <= src/pages/index/index.vue | theme-dark <= src/pages/index/index.vue */
 .dark_cbg-zinc-900.theme-dark {
   background-color: rgb(24, 24, 27);
 }
- /*tokens: theme-dark <= src/pages/index/index.vue | dark:bg-zinc-900 <= src/pages/index/index.vue */
+ /*! tokens: theme-dark <= src/pages/index/index.vue | dark:bg-zinc-900 <= src/pages/index/index.vue */
 .theme-dark .dark_cbg-zinc-900 {
   background-color: rgb(24, 24, 27);
 }
- /*tokens: dark:bg-zinc-950 <= src/pages/index/index.vue | theme-dark <= src/pages/index/index.vue */
+ /*! tokens: dark:bg-zinc-950 <= src/pages/index/index.vue | theme-dark <= src/pages/index/index.vue */
 .dark_cbg-zinc-950.theme-dark {
   background-color: rgb(9, 9, 11);
 }
- /*tokens: theme-dark <= src/pages/index/index.vue | dark:bg-zinc-950 <= src/pages/index/index.vue */
+ /*! tokens: theme-dark <= src/pages/index/index.vue | dark:bg-zinc-950 <= src/pages/index/index.vue */
 .theme-dark .dark_cbg-zinc-950 {
   background-color: rgb(9, 9, 11);
 }
- /*tokens: dark:text-zinc-50 <= src/pages/index/index.vue | theme-dark <= src/pages/index/index.vue */
+ /*! tokens: dark:text-zinc-50 <= src/pages/index/index.vue | theme-dark <= src/pages/index/index.vue */
 .dark_ctext-zinc-50.theme-dark {
   color: rgb(250, 250, 250);
 }
- /*tokens: theme-dark <= src/pages/index/index.vue | dark:text-zinc-50 <= src/pages/index/index.vue */
+ /*! tokens: theme-dark <= src/pages/index/index.vue | dark:text-zinc-50 <= src/pages/index/index.vue */
 .theme-dark .dark_ctext-zinc-50 {
   color: rgb(250, 250, 250);
 }
 @media (prefers-color-scheme: dark) {
- /*tokens: system-dark:bg-slate-900 <= src/pages/index/index.vue */
+ /*! tokens: system-dark:bg-slate-900 <= src/pages/index/index.vue */
   .system-dark_cbg-slate-900 {
     background-color: rgb(15, 23, 43);
   }
- /*tokens: system-dark:text-slate-100 <= src/pages/index/index.vue */
+ /*! tokens: system-dark:text-slate-100 <= src/pages/index/index.vue */
   .system-dark_ctext-slate-100 {
     color: rgb(241, 245, 249);
   }
 }
- /*tokens: not-wx:bg-red-500 <= src/pages/index/index.vue */
+ /*! tokens: not-wx:bg-red-500 <= src/pages/index/index.vue */
 .not-wx_cbg-red-500 {
   background-color: rgb(251, 44, 54);
 }
 @media (any-hover: hover) {
- /*tokens: any-hover:bg-slate-800 <= src/pages/index/index.vue */
+ /*! tokens: any-hover:bg-slate-800 <= src/pages/index/index.vue */
   .any-hover_cbg-slate-800:hover {
     background-color: rgb(29, 41, 61);
   }
@@ -3310,6 +3366,151 @@ wx-button {
 }
 abc {
   background: #222;
+}
+@property --tw-space-y-reverse {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-space-x-reverse {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-divide-x-reverse {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-border-style {
+  syntax: '*';
+  inherits: false;
+  initial-value: solid;
+}
+@property --tw-divide-y-reverse {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-gradient-position {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-gradient-from {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: #0000;
+}
+@property --tw-gradient-via {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: #0000;
+}
+@property --tw-gradient-to {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: #0000;
+}
+@property --tw-gradient-stops {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-gradient-via-stops {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-gradient-from-position {
+  syntax: '<length-percentage>';
+  inherits: false;
+  initial-value: 0%;
+}
+@property --tw-gradient-via-position {
+  syntax: '<length-percentage>';
+  inherits: false;
+  initial-value: 50%;
+}
+@property --tw-gradient-to-position {
+  syntax: '<length-percentage>';
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-leading {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-font-weight {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-shadow {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-shadow-color {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-shadow-alpha {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-inset-shadow {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-inset-shadow-color {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-inset-shadow-alpha {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-ring-color {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-ring-shadow {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-inset-ring-color {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-inset-ring-shadow {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-ring-inset {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-ring-offset-width {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --tw-ring-offset-color {
+  syntax: '*';
+  inherits: false;
+  initial-value: #fff;
+}
+@property --tw-ring-offset-shadow {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-content {
+  syntax: '*';
+  initial-value: '';
+  inherits: false;
 }
 .weapp-tw-user-ui-card {
   display: inline-flex;
@@ -3351,6 +3552,16 @@ body {
   --font-sans: 'inter', 'inter Fallback', system-ui;
   --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
   --font-mono: var(--font-plex-mono), monospace;
+  --color-red-500: #fb2c36;
+  --color-green-500: #00c758;
+  --color-emerald-500: #00bb7f;
+  --color-cyan-500: #00b7d7;
+  --color-blue-500: #3080ff;
+  --color-slate-900: #0f172b;
+  --color-fuchsia-500: #e12afb;
+  --color-rose-500: #ff2357;
+  --color-white: #fff;
+  --color-zinc-900: rgb(24, 24, 27);
   --color-red-50: #fef2f2;
   --color-red-950: #460809;
   --color-orange-500: #fe6e00;
@@ -3423,158 +3634,180 @@ wx-button::after {
   border: none;
   content: '';
 }
- /*tokens: template-corpus-apply <= src/pages/index/index.vue */
- /*tokens: m-3 <= src/pages/index/index.vue */
- /*tokens: mt-1 <= src/pages/index/index.vue */
- /*tokens: mt-2 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
- /*tokens: mt-3 <= src/pages/index/index.vue */
- /*tokens: mt-4 <= src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
- /*tokens: mt-6 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
- /*tokens: ml-2 <= src/pages/index/index.vue */
- /*tokens: i-[mdi--github-circle] <= <tailwind generated> */
- /*tokens: i-[mdi--home] <= src/pages/index/index.vue */
- /*tokens: i-[mdi--star] <= <tailwind generated> */
- /*tokens: i-[svg-spinners--180-ring-with-bg] <= <tailwind generated> */
- /*tokens: block <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
- /*tokens: flex <= src/components/HelloWorld.vue, src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
- /*tokens: aspect-(--my-aspect-ratio) <= src/pages/index/index.vue */
- /*tokens: aspect-[calc(4*3+1)/3] <= src/pages/index/index.vue */
- /*tokens: h-12 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
- /*tokens: h-16 <= src/pages/index/index.vue */
- /*tokens: h-20 <= src/pages/index/index.vue */
- /*tokens: h-[45px] <= src/pages/index/index.vue */
- /*tokens: w-12 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
- /*tokens: w-20 <= src/pages/index/index.vue */
- /*tokens: w-32 <= src/pages/index/index.vue */
- /*tokens: w-[323px] <= src/pages/index/index.vue */
- /*tokens: flex-col <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
- /*tokens: flex-col-reverse <= src/pages/index/index.vue */
- /*tokens: flex-row-reverse <= src/pages/index/index.vue */
- /*tokens: items-center <= src/components/HelloWorld.vue, src/main.css, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
- /*tokens: justify-between <= src/pages/index/index.vue */
- /*tokens: gap-2 <= src/components/HelloWorld.vue, src/main.css, src/pages/index/index.vue */
- /*tokens: gap-3 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
- /*tokens: space-y-2 <= src/pages/index/index.vue */
- /*tokens: space-y-4 <= src/pages/index/index.vue */
- /*tokens: space-y-reverse <= src/pages/index/index.vue */
- /*tokens: space-x-4 <= src/pages/index/index.vue */
- /*tokens: space-x-reverse <= src/pages/index/index.vue */
- /*tokens: divide-x-4 <= src/pages/index/index.vue */
- /*tokens: divide-y-4 <= src/pages/index/index.vue */
- /*tokens: divide-y-reverse <= src/pages/index/index.vue */
- /*tokens: divide-dotted <= src/pages/index/index.vue */
- /*tokens: divide-double <= src/pages/index/index.vue */
- /*tokens: divide-[#41eb04] <= src/pages/index/index.vue */
- /*tokens: divide-[#d80c0c] <= src/pages/index/index.vue */
- /*tokens: rounded <= src/pages/index/index.vue */
- /*tokens: rounded-[20rpx] <= src/components/HelloWorld.vue, src/main.css, src/pages/index/index.vue */
- /*tokens: rounded-[28rpx] <= src/pages/index/index.vue */
- /*tokens: rounded-full <= src/pages/index/index.vue */
- /*tokens: rounded-xl <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
- /*tokens: border <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
- /*tokens: border-t <= src/pages/index/index.vue */
- /*tokens: border-emerald-200 <= src/pages/index/index.vue */
- /*tokens: border-slate-200 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
- /*tokens: border-slate-200/80 <= src/pages/index/index.vue */
- /*tokens: border-slate-200/80 <= src/pages/index/index.vue */
- /*tokens: !bg-[gray] <= src/pages/index/index.vue */
- /*tokens: bg-[#0000ff] <= src/pages/index/index.vue */
- /*tokens: bg-[#68c828] <= src/pages/index/index.vue */
- /*tokens: bg-[#0977ee] <= src/pages/index/index.vue */
- /*tokens: bg-[#123498] <= src/pages/index/index.vue */
- /*tokens: bg-[#f8fafc] <= src/components/HelloWorld.vue */
- /*tokens: bg-emerald-50 <= src/pages/index/index.vue */
- /*tokens: bg-emerald-500 <= src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
- /*tokens: bg-emerald-600 <= src/pages/index/index.vue */
- /*tokens: bg-green-200/70 <= src/pages/index/index.vue */
- /*tokens: bg-green-200/70 <= src/pages/index/index.vue */
- /*tokens: bg-midnight <= src/pages/index/index.vue */
- /*tokens: bg-neutral-1B <= src/pages/index/index.vue */
- /*tokens: bg-red-300 <= src/pages/index/index.vue */
- /*tokens: bg-slate-900 <= src/pages/index/index.vue */
- /*tokens: bg-white <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
- /*tokens: bg-white/70 <= src/pages/index/index.vue */
- /*tokens: bg-white/70 <= src/pages/index/index.vue */
- /*tokens: bg-gradient-to-br <= src/pages/index/index.vue */
- /*tokens: bg-[radial-gradient(circle_at_18%_20%,#e0f2fe,#fdf4ff_70%)] <= src/pages/index/index.vue */
- /*tokens: from-slate-900/95 <= src/pages/index/index.vue */
- /*tokens: from-slate-900/95 <= src/pages/index/index.vue */
- /*tokens: to-slate-700/95 <= src/pages/index/index.vue */
- /*tokens: to-slate-700/95 <= src/pages/index/index.vue */
- /*tokens: fill-bermuda <= src/pages/index/index.vue */
- /*tokens: p-2 <= src/pages/index/index.vue */
- /*tokens: p-4 <= src/pages/index/index.vue */
- /*tokens: px-3 <= src/pages/index/index.vue */
- /*tokens: px-4 <= src/components/HelloWorld.vue, src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
- /*tokens: px-[29rpx] <= src/pages/index/index.vue */
- /*tokens: px-[48px] <= src/pages/index/index.vue */
- /*tokens: py-1 <= src/pages/index/index.vue */
- /*tokens: py-2 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
- /*tokens: py-3 <= src/components/HelloWorld.vue, src/pages/index/index.vue */
- /*tokens: py-[24rpx] <= src/pages/index/index.vue */
- /*tokens: pt-2 <= src/pages/index/index.vue */
- /*tokens: text-center <= src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
- /*tokens: text-base <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
- /*tokens: text-sm <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
- /*tokens: text-xs <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
- /*tokens: text-[24rpx] <= src/pages/index/index.vue */
- /*tokens: text-[26rpx] <= src/main.css, src/pages/index/index.vue */
- /*tokens: text-[31rpx] <= src/pages/index/index.vue */
- /*tokens: text-[45rpx] <= src/pages/index/index.vue */
- /*tokens: text-[100rpx] <= src/pages/index/index.vue */
- /*tokens: text-[102.43rpx] <= src/pages/index/index.vue */
- /*tokens: leading-5 <= src/pages/index/index.vue */
- /*tokens: font-bold <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
- /*tokens: font-semibold <= src/main.css, src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
- /*tokens: break-all <= src/pages/index/index.vue */
- /*tokens: text-[#00f285] <= src/pages/index/index.vue */
- /*tokens: text-[#123456] <= src/pages/index/index.vue */
- /*tokens: text-emerald-700 <= src/pages/index/index.vue */
- /*tokens: text-neutral-66 <= src/pages/index/index.vue */
- /*tokens: text-slate-500 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
- /*tokens: text-slate-700 <= src/components/HelloWorld.vue, src/pages/index/index.vue */
- /*tokens: text-slate-800 <= src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
- /*tokens: text-slate-900 <= src/pages-order/pages/home/home.vue, src/pages-order/pages/user/user.vue, src/pages/index/index.vue */
- /*tokens: text-tahiti <= src/pages/index/index.vue */
- /*tokens: text-white <= src/main.css, src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
- /*tokens: underline <= src/pages/index/index.vue */
- /*tokens: shadow-sm <= src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
- /*tokens: shadow-xl <= src/pages/index/index.vue */
- /*tokens: divide-x-reverse <= src/pages/index/index.vue */
- /*tokens: before:content-['现在，让我们开始神奇的_tailwindcss_开发之旅吧！'] <= <tailwind generated> */
- /*tokens: before:content-['现在，让我们继续神奇的_tailwindcss_HMR_回归之旅吧！'] <= <tailwind generated> */
- /*tokens: after:!content-['good_work!'] <= src/pages/index/index.vue */
- /*tokens: active:bg-emerald-600 <= src/pages-order/pages/home/home.vue, src/pages/index/index.vue */
- /*tokens: active:bg-emerald-700 <= src/pages/index/index.vue */
- /*tokens: active:bg-slate-700 <= src/pages/index/index.vue */
- /*tokens: dark:bg-red-300 <= src/pages/index/index.vue | theme-dark <= src/pages/index/index.vue */
- /*tokens: theme-dark <= src/pages/index/index.vue | dark:bg-red-300 <= src/pages/index/index.vue */
- /*tokens: dark:bg-zinc-900 <= src/pages/index/index.vue | theme-dark <= src/pages/index/index.vue */
- /*tokens: theme-dark <= src/pages/index/index.vue | dark:bg-zinc-900 <= src/pages/index/index.vue */
- /*tokens: dark:bg-zinc-950 <= src/pages/index/index.vue | theme-dark <= src/pages/index/index.vue */
- /*tokens: theme-dark <= src/pages/index/index.vue | dark:bg-zinc-950 <= src/pages/index/index.vue */
- /*tokens: dark:text-zinc-50 <= src/pages/index/index.vue | theme-dark <= src/pages/index/index.vue */
- /*tokens: theme-dark <= src/pages/index/index.vue | dark:text-zinc-50 <= src/pages/index/index.vue */
- /*tokens: not-wx:bg-red-500 <= src/pages/index/index.vue */
+@property --tw-space-y-reverse {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-space-x-reverse {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-divide-x-reverse {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-border-style {
+  syntax: '*';
+  inherits: false;
+  initial-value: solid;
+}
+@property --tw-divide-y-reverse {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-gradient-position {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-gradient-from {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: #0000;
+}
+@property --tw-gradient-via {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: #0000;
+}
+@property --tw-gradient-to {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: #0000;
+}
+@property --tw-gradient-stops {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-gradient-via-stops {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-gradient-from-position {
+  syntax: '<length-percentage>';
+  inherits: false;
+  initial-value: 0%;
+}
+@property --tw-gradient-via-position {
+  syntax: '<length-percentage>';
+  inherits: false;
+  initial-value: 50%;
+}
+@property --tw-gradient-to-position {
+  syntax: '<length-percentage>';
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-leading {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-font-weight {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-shadow {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-shadow-color {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-shadow-alpha {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-inset-shadow {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-inset-shadow-color {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-inset-shadow-alpha {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-ring-color {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-ring-shadow {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-inset-ring-color {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-inset-ring-shadow {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-ring-inset {
+  syntax: '*';
+  inherits: false;
+}
+@property --tw-ring-offset-width {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --tw-ring-offset-color {
+  syntax: '*';
+  inherits: false;
+  initial-value: #fff;
+}
+@property --tw-ring-offset-shadow {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-content {
+  syntax: '*';
+  initial-value: '';
+  inherits: false;
+}
 /* stylelint-disable custom-property-pattern */
 /* Core plugin extractor sources are intentionally not loaded here. */
 /*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
- /*tokens: before:content-['independent_subpackage_uni-app-vite-tailwindcss-v4'] <= src/sub-independent/pages/index.vue */
+ /*! tokens: before:content-['independent_subpackage_uni-app-vite-tailwindcss-v4'] <= src/sub-independent/pages/index.vue */
 .before_ccontent-_b_aindependent_subpackage_uni-app-vite-tailwindcss-v4_a_B::before {
   --tw-content: 'independent subpackage uni-app-vite-tailwindcss-v4';
   content: var(--tw-content);
 }
- /*tokens: before:content-['normal_subpackage_uni-app-vite-tailwindcss-v4'] <= src/sub-normal/pages/index.vue */
+ /*! tokens: before:content-['normal_subpackage_uni-app-vite-tailwindcss-v4'] <= src/sub-normal/pages/index.vue */
 .before_ccontent-_b_anormal_subpackage_uni-app-vite-tailwindcss-v4_a_B::before {
   --tw-content: 'normal subpackage uni-app-vite-tailwindcss-v4';
   content: var(--tw-content);
 }
+@property --tw-content {
+  syntax: '*';
+  initial-value: '';
+  inherits: false;
+}
 /*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
- /*tokens: bg-independent-subpackage-marker <= src/sub-independent/pages/index.vue */
+ /*! tokens: bg-independent-subpackage-marker <= src/sub-independent/pages/index.vue */
 .bg-independent-subpackage-marker {
   background-color: #dc2626;
 }
- /*tokens: bg-normal-subpackage-marker <= src/sub-normal/pages/index.vue */
+ /*! tokens: bg-normal-subpackage-marker <= src/sub-normal/pages/index.vue */
 .bg-normal-subpackage-marker {
   background-color: #2563eb;
+}
+@property --tw-content {
+  syntax: '*';
+  initial-value: '';
+  inherits: false;
 }

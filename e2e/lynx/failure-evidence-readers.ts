@@ -4,16 +4,16 @@ import type { AndroidDevice } from './native-device'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execa } from 'execa'
-import { mediaGateArtifactNames } from '../../examples/react-lynx/src/compatibility/media-gate-contract'
 import { validateEvidenceContext } from './evidence'
+import { nativeFailureArtifactNames } from './failure-evidence-artifacts'
 import { adbArgs } from './native-device'
 
 const applicationId = 'com.weapptailwindcss.lynxcompat'
-const artifactNames = new Set(mediaGateArtifactNames())
+const artifactNames = new Set(nativeFailureArtifactNames)
 
 function requireArtifactName(name: string) {
   if (!artifactNames.has(name)) {
-    throw new Error('原生失败诊断只接受固定媒体文件白名单')
+    throw new Error('原生失败诊断只接受固定原生文件白名单')
   }
 }
 

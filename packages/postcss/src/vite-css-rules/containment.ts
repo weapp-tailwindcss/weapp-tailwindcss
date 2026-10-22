@@ -1,4 +1,5 @@
 import { postcss } from '../postcss-runtime'
+import { removeCssRuleWithSourceTrace } from '../utils/css-source-trace'
 import { isCssRuleCoveredByDeclarations, removeEmptyAtRules } from './coverage'
 import { collectCssRuleContentKeys, collectCssRuleDeclarationKeyMap, collectNormalizedCssNodes, getCssRuleContentKey, normalizeCssForContainment } from './structure'
 
@@ -17,7 +18,7 @@ function filterCssRules(base: ReturnType<typeof prepareCssBase>, css: string) {
         (key && baseRuleKeys.has(key))
         || isCssRuleCoveredByDeclarations(rule, baseRuleDeclarationKeys)
       ) {
-        rule.remove()
+        removeCssRuleWithSourceTrace(rule)
         changed = true
       }
     })

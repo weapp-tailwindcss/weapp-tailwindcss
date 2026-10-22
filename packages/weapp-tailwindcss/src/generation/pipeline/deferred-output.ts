@@ -5,7 +5,7 @@ import { hasCssMacroStyleOptions, hasCssMacroTailwindV4InternalAtRules, transfor
 import { createCssSourceOrderAppend, splitRawSourceByGeneratedCssOrder } from '../generation-helpers'
 import { restoreLocalCssImports } from '../local-imports'
 import { createCssAppend, splitGeneratorPlaceholderCssBySourceOrder, splitTailwindV4GeneratedCssBySourceOrder, stripTailwindBanner } from '../markers'
-import { resolveGeneratedCssClassSet } from '../result-helpers'
+import { canAppendGeneratorCss, resolveGeneratedCssClassSet } from '../result-helpers'
 import { hasUserCssLayerBlocks, splitUserCssLayerBlocks, transformGeneratorUserCss } from '../user-css'
 import { reorderMarkedUserLayerComponentsCss, wrapUserLayerComponentsCss } from '../user-layer-order'
 
@@ -75,7 +75,8 @@ export async function finalizeDeferredGeneratorCss(
         createCssSourceOrderAppend(css, filterExistingCssRules(css, userCss)),
       )
     }
-    const canAppendIncrementalCss = generated.target !== 'weapp' || !hasUserCssLayerBlocks(generatorRawSource)
+    const canAppendIncrementalCss = canAppendGeneratorCss(generated.target, generatorOptions.webCompat)
+      && (generated.target !== 'weapp' || !hasUserCssLayerBlocks(generatorRawSource))
     const incrementalRawCss = generated.incrementalRawCss ?? generated.incrementalCss
     const previousCss = options.previousCss
     const shouldAppendIncrementalCss = canAppendIncrementalCss

@@ -6,6 +6,7 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { createGcDiagnostics } from './gc-diagnostics.mjs'
 import { createProcessMemorySampler } from './process-memory.mjs'
+import { selectBenchmarkProjects } from './project-selection.mjs'
 import { benchmarkProjects as projects } from './projects.mjs'
 import { resolvePluginTimingSample } from './timing.mjs'
 import { createWatchLogBuffer } from './watch-log-buffer.mjs'
@@ -792,23 +793,18 @@ export async function runCase(versionMeta, projectMeta, options) {
 }
 
 async function main() {
+  const only = process.argv.includes('--only') ? parseString('--only', '') : undefined
+  const selectedProjects = selectBenchmarkProjects(only)
   const buildRuns = parseNumber('--build-runs', 3)
   const hmrRuns = parseNumber('--hmr-runs', 5)
   const timeoutMs = parseNumber('--timeout', 180000)
   const pollIntervalMs = parseNumber('--poll-interval', 30)
   const output = parseString('--out', 'benchmark/version-compare/data/matrix-raw.json')
-  const only = parseString('--only', '')
   const gcDiagnosticDir = parseString('--gc-diagnostic-dir', '')
   const versions = await parseVersions()
 
   const options = { buildRuns, hmrRuns, timeoutMs, pollIntervalMs, ...(gcDiagnosticDir ? { gcDiagnosticDir: path.resolve(gcDiagnosticDir) } : {}) }
   const rows = []
-  const selectedProjects = only
-    ? projects.filter((item) => {
-        const onlyItems = only.split(',').map(v => v.trim()).filter(Boolean)
-        return onlyItems.includes(item.key) || onlyItems.includes(item.project)
-      })
-    : projects
 
   for (const projectMeta of selectedProjects) {
     for (const versionMeta of versions) {
@@ -833,6 +829,7 @@ async function main() {
     options,
     versions,
     projects,
+    selectedProjectKeys: selectedProjects.map(project => project.key),
     rows,
   }
 

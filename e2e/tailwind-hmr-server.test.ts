@@ -18,7 +18,15 @@ it('Vite 的源码身份与真实临时目录一致，软链根目录不阻断�
       fetch(new URL('entry.css', url)),
     ])
     expect(html.status).toBe(200)
-    expect(await html.text()).toContain(instance)
+    const document = await html.text()
+    expect(document).toContain(instance)
+    // 完整 Chromium 会额外请求图标；独立夹具必须显式提供资源，不能过滤 404。
+    const icon = document.match(/<link rel="icon" href="([^"]+)"/)
+    expect(icon, '独立 HMR 页面缺少显式图标资源').not.toBeNull()
+    const response = await fetch(new URL(icon![1]!, url))
+    expect(response.status).toBe(200)
+    expect(response.headers.get('content-type')).toContain('image/svg+xml')
+    expect(await response.text()).toContain('<svg')
     expect(module.status).toBe(200)
     expect(await module.text()).toContain('canonical-directory-test/initial')
     expect(css.status).toBe(200)

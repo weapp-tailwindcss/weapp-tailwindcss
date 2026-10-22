@@ -39,6 +39,8 @@ export interface GenerateCssByGeneratorOptions {
   incrementalCache?: boolean | undefined
   deferEmptyScopedCssSource?: boolean | undefined
   deferCssAdaptation?: boolean | undefined
+  /** 构建片段只保留注册证据，默认值由完整资产边界统一合成。 */
+  deferWebCssPropertyFallback?: boolean | undefined
   disableSourceScan?: boolean | undefined
   restoreLocalCssImports?: boolean | undefined
 }

@@ -14,6 +14,8 @@ import { insertProbe } from './probe.mjs'
 import { assertGulpWatchBuildComplete, assertMpxWatchBuildComplete, assertTaroWatchBuildComplete, assertUniWatchBuildComplete, assertWeappViteWatchReady, complete, developmentEnvironment, freePort, start, until } from './process.mjs'
 import { snapshotOutput } from './snapshot.mjs'
 import { replaceSourceFile } from './source-file.mjs'
+import { hasTaroProductionContract, hasTaroProductionFixture } from './taro-production-contract.mjs'
+import { inspectTaroProduction } from './taro-production.mjs'
 
 const args = process.argv.slice(2)
 checkCatalog()
@@ -33,6 +35,8 @@ assert.ok(selected.length)
 assert.equal(new Set(selected.map(item => item.id)).size, selected.length)
 const update = args.includes('--update')
 const buildOnly = args.includes('--build-only')
+const productionBrowser = args.includes('--production-browser')
+assert.ok(!productionBrowser || selected.every(hasTaroProductionFixture), 'Production browser diagnostics require registered Taro fixtures')
 assert.ok(!update || !process.env.GITHUB_ACTIONS, 'CI cannot update baselines')
 assert.ok(!buildOnly || !process.env.GITHUB_ACTIONS, 'CI must execute every phase')
 const artifactRoot = process.env.DEMO_MATRIX_ARTIFACT_DIR ? path.resolve(process.env.DEMO_MATRIX_ARTIFACT_DIR) : path.join(repo, 'e2e/.artifacts/demo-matrix')
@@ -90,11 +94,16 @@ async function runCase(item) {
     }
     finally { await writeFile(path.join(artifactDir, 'build.log'), session.log()) }
     assert.ok(!interrupted, 'Matrix interrupted')
-    await cp(outputDir, path.join(artifactDir, 'production'), { recursive: true })
+    const productionDir = path.join(artifactDir, 'production')
+    await rm(productionDir, { recursive: true, force: true })
+    await cp(outputDir, productionDir, { recursive: true })
     const production = result.coverage === 'native-build'
       ? await inspectNative(outputDir)
       : await inspectFiles(outputDir, item, 'initial')
     result.rounds.production = production
+    if (productionBrowser || hasTaroProductionContract(item)) {
+      result.productionBrowser = await inspectTaroProduction(item, path.join(artifactDir, 'production'), artifactDir)
+    }
     if (update) {
       await mkdir(baselineRoot, { recursive: true })
       await writeFile(baselineFile, `${JSON.stringify(production, null, 2)}\n`)

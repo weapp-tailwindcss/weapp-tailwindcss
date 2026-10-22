@@ -1,5 +1,5 @@
 import type { IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
-import { analyzeCssCalcContext, collectCustomPropertyValues, isCssCalcCustomPropertySelected, mergeCustomPropertyValues } from '@weapp-tailwindcss/postcss/transform'
+import { analyzeCssCalcContext, collectStaticCustomPropertyValues, isCssCalcCustomPropertySelected } from '@weapp-tailwindcss/postcss/transform'
 
 type GenerationStyleOptions = Partial<IStyleHandlerOptions>
 
@@ -30,13 +30,18 @@ export function resolveIncrementalStyleContext(
   sourceCss: string,
   generatedCss: string,
   options?: GenerationStyleOptions,
+  customPropertyCompatibilityValues = collectStaticCustomPropertyValues(generatedCss),
 ): GenerationStyleOptions {
-  const customPropertyCompatibilityValues = collectCustomPropertyValues(sourceCss)
-  mergeCustomPropertyValues(customPropertyCompatibilityValues, generatedCss)
+  // 只以完整生成产物证明稳定性，原始 @theme 的声明尚未具备实际运行时作用域。
   return {
     ...resolveGenerationStyleContext(sourceCss, generatedCss, options),
     customPropertyCompatibilityValues,
   }
+}
+
+/** 颜色等静态兼容结果同样依赖完整变量资格，与 cssCalc 是否启用无关。 */
+export function hasChangedCustomPropertyCompatibilityContext(previous: ReadonlyMap<string, string>, next: ReadonlyMap<string, string>) {
+  return previous.size !== next.size || [...previous].some(([name, value]) => next.get(name) !== value)
 }
 
 /** 新增候选改变静态变量资格时，需要重算已有规则，不能只追加新 CSS。 */

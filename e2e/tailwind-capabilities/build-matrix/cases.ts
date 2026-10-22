@@ -1,26 +1,28 @@
-import type { BuildOutputCase } from '../../multiplatform-build-output/types'
 import type { RunContext } from '../context'
 import type { ArtifactReceipt, CapabilityResult, CaseContract } from '../types'
+import type { BuildMatrixCase, VerifiedBuild } from './providers'
 import { copyFile, mkdir, readdir, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
+import { formatWorkflowError, runWithCleanup } from '../../../scripts/e2e-preflight/cleanup'
+import { assertOutputOwnership } from '../../hbuilderx-local/output-ownership'
+import { findEnvironmentBlock } from '../environment-block'
 import { digest } from '../identity'
 import { receipt } from '../report'
+import { buildMatrixDefinition } from './providers'
+
+export interface MatrixObservation { result: CapabilityResult, artifacts: ArtifactReceipt[], versions?: Record<string, string> }
 
 /** 登记条目没有构建器，不能把空命令和 package.json 当作样式产物。 */
-export function documentedOnly(item: BuildOutputCase) {
-  return item.command[0] === 'node' && item.command.includes('process.exit(0)')
+export function documentedOnly(item: BuildMatrixCase) {
+  return item.provider ? item.provider.kind === 'documented' : item.command[0] === 'node' && item.command.includes('process.exit(0)')
 }
 
-function definition(item: BuildOutputCase) {
-  return JSON.stringify(item, (_key, value: unknown) => value instanceof RegExp ? { source: value.source, flags: value.flags } : value)
-}
-
-export function buildMatrixContracts(cases: readonly BuildOutputCase[]): CaseContract[] {
+export function buildMatrixContracts(cases: readonly BuildMatrixCase[]): CaseContract[] {
   return cases.map(item => ({
-    id: `matrix/${item.framework}/${item.platform}/${digest(definition(item)).slice(0, 16)}`,
+    id: `matrix/${item.framework}/${item.platform}/${digest(buildMatrixDefinition(item)).slice(0, 16)}`,
     features: [`framework/${item.framework}`, `platform/${item.platform}`, 'pipeline/build-output'],
     candidate: item.styleContains.map(String).join(' '),
-    fixture: definition(item),
+    fixture: buildMatrixDefinition(item),
     expectation: { support: 'supported', stage: 'encoding' },
     requiredAssertions: ['build-output-contract'],
     expectedValues: { 'build-output-contract': true },
@@ -40,7 +42,7 @@ async function outputFiles(directory: string): Promise<string[]> {
 }
 
 /** 必须先完成既有的完整样式/模板断言，再保存本轮产物；后续同项目构建不能改写证据。 */
-export async function executeBuildMatrixCase(context: RunContext, item: BuildOutputCase, verify: (item: BuildOutputCase) => Promise<void>): Promise<{ result: CapabilityResult, artifacts: ArtifactReceipt[] }> {
+export async function executeBuildMatrixCase(context: RunContext, item: BuildMatrixCase, verify: (item: BuildMatrixCase) => Promise<VerifiedBuild | void>, recordBlocked?: (observed: MatrixObservation) => void): Promise<MatrixObservation> {
   const contract = buildMatrixContracts([item])[0]!
   const base = { id: contract.id, support: 'supported' as const, warnings: [], assertions: [], artifacts: [] }
   if (documentedOnly(item)) {
@@ -50,13 +52,15 @@ export async function executeBuildMatrixCase(context: RunContext, item: BuildOut
   await mkdir(caseDirectory, { recursive: true })
   const log = path.join(caseDirectory, 'execution.json')
   try {
-    await verify(item)
-    const project = path.resolve(context.root, item.projectDir)
-    const output = path.resolve(project, item.outputDir)
-    const within = path.relative(project, output)
-    if (!within || within === '..' || within.startsWith(`..${path.sep}`) || path.isAbsolute(within)) {
-      throw new Error('实际构建输出必须位于项目的独立目录')
+    const verified = await verify(item)
+    if (item.provider && !verified) {
+      throw new Error('构建provider没有交付已验证输出根')
     }
+    if (verified && !path.isAbsolute(verified.outputRoot)) {
+      throw new Error('构建provider必须交付绝对输出根')
+    }
+    const project = path.resolve(context.root, item.projectDir)
+    const output = await assertOutputOwnership(project, verified?.outputRoot ?? path.resolve(project, item.outputDir))
     const files = await outputFiles(output)
     const styles = files.filter(file => /\.(?:css|wxss|acss|jxss|qss|ttss)$/i.test(file))
     if (!styles.length || !(await Promise.all(styles.map(file => stat(file)))).some(value => value.size > 0)) {
@@ -72,12 +76,25 @@ export async function executeBuildMatrixCase(context: RunContext, item: BuildOut
         artifacts.push(await receipt(destination, context.directory, context.runId, [contract.id], styles.includes(file) ? 'css' : 'bundle'))
       }
     }
-    await writeFile(log, `${JSON.stringify({ runId: context.runId, id: contract.id, definition: item, assertions: '完整构建、样式、模板、分包和指令残留合同已通过', files: files.map(file => path.relative(output, file)) }, null, 2)}\n`)
+    await writeFile(log, `${JSON.stringify({ runId: context.runId, id: contract.id, definition: buildMatrixDefinition(item), verified, outputRoot: output, assertions: '完整构建、样式、模板、分包和指令残留合同已通过', files: files.map(file => path.relative(output, file)) }, null, 2)}\n`)
     artifacts.push(await receipt(log, context.directory, context.runId, [contract.id], 'log'))
-    return { result: { ...base, status: 'passed', assertions: [{ name: 'build-output-contract', stage: 'encoding', actual: true, expected: true }], artifacts: artifacts.map(artifact => artifact.path) }, artifacts }
+    return { result: { ...base, status: 'passed', assertions: [{ name: 'build-output-contract', stage: 'encoding', actual: true, expected: true }], artifacts: artifacts.map(artifact => artifact.path) }, artifacts, ...(verified?.versions ? { versions: verified.versions } : {}) }
   }
   catch (error) {
-    await writeFile(log, `${JSON.stringify({ runId: context.runId, id: contract.id, failure: String(error) }, null, 2)}\n`)
+    const blocker = findEnvironmentBlock(error)
+    await runWithCleanup(async () => {
+      throw error
+    }, async () => {
+      await writeFile(log, `${JSON.stringify({ runId: context.runId, id: contract.id, failure: formatWorkflowError(error) }, null, 2)}\n`)
+      if (blocker) {
+        const artifact = await receipt(log, context.directory, context.runId, [contract.id], 'log')
+        recordBlocked?.({ result: { ...base, status: 'blocked', reason: blocker.message, artifacts: [artifact.path] }, artifacts: [artifact] })
+      }
+    }).catch((failure: unknown) => {
+      if (failure !== error || blocker) {
+        throw failure
+      }
+    })
     const artifact = await receipt(log, context.directory, context.runId, [contract.id], 'log')
     return { result: { ...base, status: 'failed', reason: String(error), artifacts: [artifact.path] }, artifacts: [artifact] }
   }

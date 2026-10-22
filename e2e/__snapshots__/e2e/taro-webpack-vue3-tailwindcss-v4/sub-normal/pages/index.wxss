@@ -19,12 +19,12 @@ wx-root-portal-content {
   --default-font-family: var(--font-sans);
   --default-mono-font-family: var(--font-mono);
 }
-/* tokens: before:content-['normal_subpackage_taro-webpack-vue3-tailwindcss-v4'] <= src/sub-normal/pages/index.vue */
+/*! tokens: before:content-['normal_subpackage_taro-webpack-vue3-tailwindcss-v4'] <= src/sub-normal/pages/index.vue */
 .before_ccontent-_b_anormal_subpackage_taro-webpack-vue3-tailwindcss-v4_a_B::before {
   --tw-content: 'normal subpackage taro-webpack-vue3-tailwindcss-v4';
   content: var(--tw-content);
 }
-/* tokens: bg-normal-subpackage-marker <= src/sub-normal/pages/index.vue */
+/*! tokens: bg-normal-subpackage-marker <= src/sub-normal/pages/index.vue */
 .bg-normal-subpackage-marker {
   background-color: #2563eb;
 }

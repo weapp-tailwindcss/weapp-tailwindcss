@@ -158,6 +158,22 @@ export async function verifyReportArtifacts(report: CapabilityReport, root: stri
       fail(`产物摘要不匹配：${item.path}`)
     }
   }
+  if (report.results.some(result => result.id === 'runtime/native-media-contrast-less')) {
+    const { verifyNativeMediaReport } = await import('./web-native-media/replay')
+    await verifyNativeMediaReport(report, root)
+  }
+  if (report.results.some(result => result.id === 'runtime/autofill-native-outline')) {
+    const { verifyAutofillReport } = await import('./web-autofill/replay')
+    await verifyAutofillReport(report, root)
+  }
+  if (report.results.some(result => result.id === 'runtime/history-visited-border')) {
+    const { verifyHistoryReport } = await import('./web-history/replay')
+    await verifyHistoryReport(report, root)
+  }
+  if (report.target === 'weapp') {
+    const { verifyWeappReport } = await import('./weapp/replay')
+    await verifyWeappReport(report, root)
+  }
 }
 
 export async function writeCapabilityReport(file: string, report: CapabilityReport) {

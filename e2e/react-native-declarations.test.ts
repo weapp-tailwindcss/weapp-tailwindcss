@@ -21,10 +21,14 @@ it('独立 Node 编译入口的真实声明不依赖可选 React Native peer', a
     await fs.writeFile(file, `
       import { compileNativeStylesheet } from './package/compiler.js'
       import { generateNativeStylesheet } from './package/tailwind.js'
-      import { withWeappTailwindcss } from './package/metro.js'
+      import { getRegisteredSnapshot, withWeappTailwindcss } from './package/metro.js'
       const manifest = compileNativeStylesheet('.flex { display: flex }')
       const config = withWeappTailwindcss({}, { manifest })
       const generation = generateNativeStylesheet({ css: '.flex { display: flex }' })
+      getRegisteredSnapshot('node-entry').then(snapshot => {
+        const identity: { revision: string, manifestSha256: string } | undefined = snapshot?.publication
+        void identity
+      })
       void [config, generation]
     `)
     const program = ts.createProgram([file], {
@@ -43,4 +47,32 @@ it('独立 Node 编译入口的真实声明不依赖可选 React Native peer', a
   finally {
     await fs.rm(root, { recursive: true, force: true })
   }
+}, 60_000)
+
+it.each(['js', 'cjs'])('构建后的 %s 根入口与 runtime 共享默认发布实例，独立实例保持隔离', async (extension) => {
+  await execa('pnpm', ['--filter', '@weapp-tailwindcss/react-native', 'build'], { cwd: repoRoot })
+  const { stdout } = await execa(process.execPath, ['--input-type=module', '-e', `
+    import assert from 'node:assert/strict';
+    import { createRequire } from 'node:module';
+    import { pathToFileURL } from 'node:url';
+    const require = createRequire(import.meta.url);
+    const load = filename => ${JSON.stringify(extension)} === 'cjs' ? require(filename) : import(pathToFileURL(filename).href);
+    const base = ${JSON.stringify(path.join(repoRoot, 'packages/react-native/dist'))};
+    const { join } = await import('node:path');
+    const root = await load(join(base, 'index.${extension}'));
+    const runtime = await load(join(base, 'runtime.${extension}'));
+    const compiler = await load(join(base, 'compiler.${extension}'));
+    const red = compiler.compileNativeStylesheet('.probe { color: red }');
+    const identity = { revision: 'built-consumer', manifestSha256: 'a'.repeat(64) };
+    root.setManifest(red, identity);
+    assert.deepEqual(runtime.getPublication(), identity);
+    assert.deepEqual(runtime.tw('probe'), { color: 'red' });
+    const isolated = runtime.createNativeStyleRuntime(compiler.compileNativeStylesheet('.probe { color: blue }'));
+    assert.deepEqual(isolated.tw('probe'), { color: 'blue' });
+    assert.deepEqual(root.getManifest(), JSON.parse(JSON.stringify(red)));
+    runtime.setManifest(red);
+    assert.equal(root.getPublication(), undefined);
+    process.stdout.write('publication-consumer-ok');
+  `], { cwd: repoRoot })
+  expect(stdout).toBe('publication-consumer-ok')
 }, 60_000)

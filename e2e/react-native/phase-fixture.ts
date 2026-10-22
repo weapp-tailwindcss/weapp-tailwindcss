@@ -6,6 +6,10 @@ import { virtualModuleCode } from '../../packages/react-native/src/metro/virtual
 import { generateNativeStylesheetEvidence } from '../../packages/react-native/src/tailwind/generate'
 import { writeEncodingFixture } from './encoding-fixture'
 import { exampleRoot, readRuntimeStyleInput } from './generation-input'
+import { writeHmrPhaseFixture } from './hmr-observation/fixture'
+import { runtimeIdentity } from './installation-evidence'
+import { syntheticRuntimeInstallation } from './installation-fixture'
+import { nativeFrameName } from './pair-evidence'
 import { nativeEncodingArtifactNames, nativePhaseForRevision, nativeRuntimePhases } from './phase-contract'
 import { createNativePhaseIndex, nativePhaseDirectory, phaseIndexName, snapshotNativePhase } from './phase-index'
 
@@ -27,29 +31,51 @@ export async function writeNativePhaseFixture(directory: string, finalReport: Re
   for (const phase of nativeRuntimePhases) {
     const report = structuredClone(finalReport)
     report.revision = phase.revision
+    if (!generated.has(phase.id)) {
+      generated.set(phase.id, phaseSource(phase))
+    }
+    const { css, marker, manifest } = await generated.get(phase.id)!
+    const root = nativePhaseDirectory(directory, phase)
+    await mkdir(path.join(root, 'sources'), { recursive: true })
+    const { source, ready } = await writeEncodingFixture(root, report, { manifest, publication: { revision: `synthetic-publication-${phase.id}`, virtualPath: path.join(root, 'source-virtual-input.js') } })
+    const { revision, manifestSha256 } = JSON.parse(ready)
+    report.runtimeInstallation = syntheticRuntimeInstallation(source, revision)
     for (const saved of report.receipts) {
       const original = saved.artifact.name
       const name = `case-${phase.revision}-${saved.id}-${saved.phase}.png`
       const bytes = await readFile(path.join(directory, original))
       const metadata = JSON.parse(await readFile(path.join(directory, `${original}.json`), 'utf8'))
       saved.artifact.name = name
+      for (const frame of saved.capture.frames) {
+        const frameName = nativeFrameName(name, frame.index)
+        await copyFile(path.join(directory, frame.artifact.name), path.join(directory, frameName))
+        frame.artifact.name = frameName
+      }
+      saved.runtimeInstallation = runtimeIdentity(report.runtimeInstallation)
       metadata.pair.revision = phase.revision
+      for (const load of metadata.pair.image?.loads ?? []) {
+        load.revision = phase.revision
+      }
+      if (metadata.pair.scroll) {
+        metadata.pair.scroll.revision = phase.revision
+      }
+      metadata.pair.runtimeInstallation = runtimeIdentity(report.runtimeInstallation)
+      metadata.receipt.runtimeInstallation = runtimeIdentity(report.runtimeInstallation)
       metadata.receipt.artifact.name = name
+      metadata.receipt.capture = structuredClone(saved.capture)
       await writeFile(path.join(directory, name), bytes)
       await writeFile(path.join(directory, `${name}.json`), JSON.stringify(metadata))
     }
-    const root = nativePhaseDirectory(directory, phase)
-    await mkdir(path.join(root, 'sources'), { recursive: true })
-    if (!generated.has(phase.id)) {
-      generated.set(phase.id, phaseSource(phase))
-    }
-    const { css, marker, manifest } = await generated.get(phase.id)!
-    await writeEncodingFixture(root, report, { manifest, publication: { revision: `synthetic-publication-${phase.id}`, virtualPath: path.join(root, 'source-virtual-input.js') } })
     await writeFile(path.join(root, 'report.json'), JSON.stringify(report))
     await writeFile(path.join(root, 'sources', 'global.css'), css)
     await writeFile(path.join(root, 'sources', 'hmr-marker.ts'), marker)
-    await writeFile(path.join(root, 'sources', 'virtual.js'), virtualModuleCode(manifest))
+    await writeFile(path.join(root, 'sources', 'virtual.js'), virtualModuleCode(manifest, { revision, manifestSha256 }, source))
+    await writeHmrPhaseFixture(directory, report, root)
     index.phases.push(await snapshotNativePhase(directory, phase))
+    if (phase === nativeRuntimePhases.at(-1)) {
+      Object.assign(finalReport, report)
+      await writeFile(path.join(directory, 'report.json'), JSON.stringify(report))
+    }
   }
   await writeFile(path.join(directory, phaseIndexName), JSON.stringify(index))
   const final = nativePhaseDirectory(directory, nativeRuntimePhases[nativeRuntimePhases.length - 1]!)

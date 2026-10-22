@@ -17,7 +17,12 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./decoder": {
+      "types": "./dist/decoder.d.ts",
+      "import": "./dist/decoder.js",
+      "require": "./dist/decoder.cjs"
+    }
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -26,7 +31,7 @@
     "dist"
   ],
   "engines": {
-    "node": ">=22.12.0"
+    "node": "^22.18.0 || >=24.11.0"
   },
   "scripts": {
     "build": "tsdown",
@@ -39,10 +44,14 @@
     "access": "public"
   },
   "peerDependencies": {
+    "@lynx-js/react-rsbuild-plugin": ">=0.12.4",
     "@lynx-js/rspeedy": ">=0.16.0",
     "tailwindcss": ">=4.0.0"
   },
   "peerDependenciesMeta": {
+    "@lynx-js/react-rsbuild-plugin": {
+      "optional": true
+    },
     "@lynx-js/rspeedy": {
       "optional": true
     },
@@ -51,6 +60,7 @@
     }
   },
   "dependencies": {
+    "@jridgewell/trace-mapping": "^0.3.31",
     "weapp-tailwindcss": "workspace:*"
   },
   "devDependencies": {

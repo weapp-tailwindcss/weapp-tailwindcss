@@ -4,6 +4,7 @@ import { devices, expect, test } from '@playwright/test'
 import routes from '../routes.json'
 import { expectFullPageScreenshot } from './helpers/full-page/screenshot'
 import { navigateWebsite, reloadWebsite } from './helpers/navigation'
+import { followWebsiteLink } from './helpers/navigation-link'
 import { visualTest } from './helpers/visual-test'
 
 declare global {
@@ -454,8 +455,10 @@ test.describe('homepage hero layout', () => {
       const link = dropdown.locator(`a[lang^="${locale === 'en' ? 'en' : 'zh'}"]`)
       const pathname = `${locale === 'en' ? '' : '/zh-cn'}/docs/quick-start/frameworks/lynx`
       await expect(link).toHaveAttribute('href', pathname)
-      await link.click()
-      await expect(page).toHaveURL(new URL(pathname, baseURL).toString())
+      await followWebsiteLink(page, link, {
+        url: new URL(pathname, baseURL).toString(),
+        ready: page.getByRole('heading', { name: 'ReactLynx / Rspeedy', exact: true }),
+      })
     }
 
     await setStoredLocale(page, 'zh-cn')
@@ -465,21 +468,29 @@ test.describe('homepage hero layout', () => {
       }
       await navigateWebsite(page, baseURL)
 
-      await page.getByRole('link', { name: 'React Native' }).click()
-      await expect(page).toHaveURL(/\/zh-cn\/docs\/quick-start\/react-native-expo\/?$/)
+      await followWebsiteLink(page, page.getByRole('link', { name: 'React Native' }), {
+        url: /\/zh-cn\/docs\/quick-start\/react-native-expo\/?$/,
+        ready: page.getByRole('heading', { name: 'React Native / Expo', exact: true }),
+      })
 
       await navigateWebsite(page, baseURL)
-      await page.getByRole('link', { name: 'Lynx' }).click()
-      await expect(page).toHaveURL(/\/zh-cn\/docs\/quick-start\/frameworks\/lynx\/?$/)
+      await followWebsiteLink(page, page.getByRole('link', { name: 'Lynx' }), {
+        url: /\/zh-cn\/docs\/quick-start\/frameworks\/lynx\/?$/,
+        ready: page.getByRole('heading', { name: 'ReactLynx / Rspeedy', exact: true }),
+      })
 
       await switchDocumentationLocale('en')
       await navigateWebsite(page, baseURL)
-      await page.getByRole('link', { name: 'React Native' }).click()
-      await expect(page).toHaveURL(/\/docs\/quick-start\/react-native-expo\/?$/)
+      await followWebsiteLink(page, page.getByRole('link', { name: 'React Native' }), {
+        url: /\/docs\/quick-start\/react-native-expo\/?$/,
+        ready: page.getByRole('heading', { name: 'React Native / Expo', exact: true }),
+      })
 
       await navigateWebsite(page, baseURL)
-      await page.getByRole('link', { name: 'Lynx' }).click()
-      await expect(page).toHaveURL(/\/docs\/quick-start\/frameworks\/lynx\/?$/)
+      await followWebsiteLink(page, page.getByRole('link', { name: 'Lynx' }), {
+        url: /\/docs\/quick-start\/frameworks\/lynx\/?$/,
+        ready: page.getByRole('heading', { name: 'ReactLynx / Rspeedy', exact: true }),
+      })
     }
   })
 

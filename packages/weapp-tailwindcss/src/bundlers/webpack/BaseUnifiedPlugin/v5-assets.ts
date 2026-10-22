@@ -1,7 +1,6 @@
 import type { SetupWebpackV5ProcessAssetsHookOptions, WebpackSourceLike } from './v5-assets/helpers'
 import type { WebpackCssHandlerOptions } from './v5-assets/pipeline-helpers'
 import path from 'node:path'
-import process from 'node:process'
 import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { LRUCache } from 'lru-cache'
 import { beginCompilerShadowRun, createCompilationDependencyChanges, createRuntimeCompilationAffectingSignature, createRuntimeCompilationBuildState, finalizeCompilerShadowRun, getCompilationScopeDependencyRevision, recordCompilationDependencyChanges, resetRuntimeCompilationBuildState, updateRuntimeCompilationBuildState } from '@/compiler'
@@ -9,7 +8,6 @@ import { pluginName } from '@/constants'
 import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
 import { ensureRuntimeClassSet } from '@/tailwindcss/runtime'
 import { getRuntimeClassSetSignature } from '@/tailwindcss/runtime/cache'
-import { warnFinalRpxThemeRisk } from '@/tailwindcss/v4/rpx-theme-warning'
 import { getGroupedEntries } from '@/utils'
 import { resolveTaskConcurrency } from '../../../utils/run-tasks'
 import { annotateCssSourceTrace, createCssSourceTraceCacheSignature, isCssSourceTraceEnabled } from '../../shared/css-source-trace'
@@ -18,9 +16,10 @@ import { collectStrictEscapedRuntimeCandidates, createEscapeFragments } from '..
 import { createCandidateSignature } from '../../shared/runtime-signatures'
 import { createAssetHashByChunkMap, createWebpackCssAssetResourceMap, createWebpackDirectCssAssetResourceMap } from './shared'
 import { createWebpackCssSourceResolvers } from './v5-assets/css-source-resolvers'
+import { finalizeProcessedWebpackCssAssets, setupWebpackMiniCssAssetFinalizer } from './v5-assets/final-css-assets'
 import { finalizeWebpackProcessAssets } from './v5-assets/finalize-assets'
 import { processWebpackGeneratedCssAsset } from './v5-assets/generated-css-task'
-import { buildWebpackBundleSnapshot, createWebpackAssetUpdater, releaseWebpackBundleSnapshotSources } from './v5-assets/helpers'
+import { buildWebpackBundleSnapshot, createWebpackAssetUpdater, releaseWebpackBundleSnapshotSources, resolveWebpackOutputDirectory } from './v5-assets/helpers'
 import { enqueueWebpackHtmlAndJsTasks } from './v5-assets/html-js-tasks'
 import { applyWebpackLinkedJsResults, createWebpackJsAssetModuleGraph } from './v5-assets/js-module-graph'
 import {
@@ -30,13 +29,13 @@ import {
   collectWebpackJsRuntimeTokenSignature,
   createWebpackCssSourceTraceTokenSources,
   finalizeTracedWebpackCssAsset,
-  finalizeWebpackCssAssetOutputSource,
   finalizeWebpackCssAssetSource,
   getRuntimeClassSetSync,
   isRuntimeTransformCandidate,
   resolveWebpackCssAssetModuleResource,
   stringifyWebpackSourceLike,
 } from './v5-assets/pipeline-helpers'
+import { annotateProcessedWebpackCssSource, preserveProcessedWebpackCssSource } from './v5-assets/processed-css-source'
 import { processWebpackProcessedCssAsset } from './v5-assets/processed-css-task'
 import { createWebpackSourceCandidateScanCache } from './v5-assets/source-candidate-cache'
 import { refreshWebpackSourceCandidates } from './v5-assets/source-candidate-refresh'
@@ -66,6 +65,7 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
   } = options
   const { Compilation, sources } = compiler.webpack
   const { ConcatSource } = sources
+  const preserveFrameworkCssSource = (source: any) => preserveProcessedWebpackCssSource(source, sources)
   const generatorOptions = normalizeWeappTailwindcssGeneratorOptions(compilerOptions.generator, {
     appType: compilerOptions.appType,
     platform: compilerOptions.cssOptions?.platform ?? compilerOptions.platform,
@@ -85,7 +85,10 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
     compilation.hooks.processAssets.tapPromise(
       {
         name: pluginName,
-        stage: Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE,
+        // Web 保留构建图的样式身份，在压缩器合并规则、改写声明之前完成生成。
+        stage: isWebGeneratorTarget
+          ? Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE
+          : Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE,
       },
       async (assets) => {
         const entries = Object.entries(assets)
@@ -128,10 +131,7 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
           debug,
         })
 
-        const compilerOutputPath = compilation.compiler?.outputPath ?? compiler.outputPath
-        const outputDir = compilerOutputPath
-          ? path.resolve(compilerOutputPath)
-          : (compilation.outputOptions?.path ?? process.cwd())
+        const outputDir = resolveWebpackOutputDirectory(compilation, compiler)
         const { jsAssets, moduleGraphOptions } = createWebpackJsAssetModuleGraph({
           compilation,
           compilerOptions,
@@ -236,6 +236,7 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
           : 'source-candidates:0'
         recordTimingDetail('sourceCandidates', sourceCandidatesStartedAt)
         const cssSourceTraceTokenSources = createWebpackCssSourceTraceTokenSources(compilerOptions, webpackSourceCandidates)
+        const preserveProcessedWebCssAsset = (source: any) => annotateProcessedWebpackCssSource(preserveFrameworkCssSource(source), sources, cssSourceTraceTokenSources)
         const cssSourceTraceSignature = createCssSourceTraceCacheSignature(cssSourceTraceTokenSources, compilerOptions)
         const annotateCss = (css: string) => annotateCssSourceTrace(css, {
           opts: compilerOptions,
@@ -429,7 +430,7 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
           updateAssetIfChanged,
           watchMode,
         })
-        const cssTaskContext = { ConcatSource, affectedCompilationScopes, assetHashByChunk, compilation, compilationChanges, compilerOptions, configuredCssEntryFiles, configuredMainCssEntryFiles, createRuntimeSetHash, cssSourceTraceSignature, cssSources, cssTaskFactories, debug, enqueueTask, finalizeCssAssetSource, finalizeTracedCss, generatedCssSources, generatorRuntimeSet, getCompilationDependencyRevision, getCssHandlerOptions, getCssUserHandlerOptions, getGeneratorRuntimeSet, hasConfiguredTailwindV4SourceRoots, isKnownWebpackProcessedCssAsset, isSameWebpackSourceScope, isWebGeneratorTarget, isWebpackProcessedCssAsset, processedCssAssetSkipDecisionCache, rememberProcessCacheKey, resolveWebpackCssSourceFile, runtimeAffectingSourceHash, runtimeState, transformRuntimeSet, updateAssetIfChanged, watchMode, webpackSourceCandidateSet, webpackSourceCandidateValueSignature, webpackSourceCandidates }
+        const cssTaskContext = { ConcatSource, affectedCompilationScopes, assetHashByChunk, compilation, compilationChanges, compilerOptions, configuredCssEntryFiles, configuredMainCssEntryFiles, createRuntimeSetHash, cssSourceTraceSignature, cssSources, cssTaskFactories, debug, enqueueTask, finalizeCssAssetSource, finalizeTracedCss, generatedCssSources, generatorRuntimeSet, getCompilationDependencyRevision, getCssHandlerOptions, getCssUserHandlerOptions, getGeneratorRuntimeSet, hasConfiguredTailwindV4SourceRoots, isKnownWebpackProcessedCssAsset, isSameWebpackSourceScope, isWebGeneratorTarget, isWebpackProcessedCssAsset, preserveProcessedWebCssAsset, processedCssAssetSkipDecisionCache, rememberProcessCacheKey, resolveWebpackCssSourceFile, runtimeAffectingSourceHash, runtimeState, transformRuntimeSet, updateAssetIfChanged, watchMode, webpackSourceCandidateSet, webpackSourceCandidateValueSignature, webpackSourceCandidates }
         for (const element of groupedEntries.css) {
           if (await processWebpackProcessedCssAsset(element, cssTaskContext)) {
             continue
@@ -447,6 +448,15 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
           cssUserHandlerOptionsCache,
           debug,
           entries,
+          finalizeCssAssets: isWebGeneratorTarget
+            ? () => finalizeProcessedWebpackCssAssets({
+                compilation,
+                cssFiles: groupedEntries.css.map(([file]) => file),
+                sources,
+                webCompat: generatorOptions.webCompat,
+                updateAssetIfChanged,
+              })
+            : undefined,
           groupedEntries,
           hmrTimingStartedAt,
           htmlTaskFactories,
@@ -464,36 +474,7 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
       },
     )
     if (!isWebGeneratorTarget) {
-      compilation.hooks.processAssets.tapPromise(
-        {
-          name: `${pluginName}:finalize-css-assets`,
-          stage: Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE_HASH,
-        },
-        async (assets) => {
-          const entries = Object.entries(assets)
-          if (entries.length === 0) {
-            return
-          }
-          const groupedEntries = getGroupedEntries(entries, compilerOptions)
-          if (groupedEntries.css.length === 0) {
-            return
-          }
-          const { updateAssetIfChanged } = createWebpackAssetUpdater({
-            compilation,
-            ConcatSource,
-            onUpdate: compilerOptions.onUpdate,
-            debug,
-          })
-          for (const [file, asset] of groupedEntries.css) {
-            const currentAsset = compilation.getAsset(file)
-            const rawSource = currentAsset?.source.source() ?? asset.source()
-            const source = rawSource.toString()
-            const finalized = finalizeWebpackCssAssetOutputSource(source, compilerOptions, isWebGeneratorTarget)
-            updateAssetIfChanged(file, finalized)
-            warnFinalRpxThemeRisk(runtimeState, [finalized], compilerOptions)
-          }
-        },
-      )
+      setupWebpackMiniCssAssetFinalizer({ compilation, compiler, compilerOptions, debug, runtimeState })
     }
   })
 }

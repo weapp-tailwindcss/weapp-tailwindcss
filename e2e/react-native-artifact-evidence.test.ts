@@ -6,11 +6,13 @@ import path from 'node:path'
 import { PNG } from 'pngjs'
 import { describe, expect, it, vi } from 'vitest'
 import { androidPairCoordinates } from './react-native/android-window'
+import { syntheticRuntimeInstallation } from './react-native/installation-fixture'
 import { captureNativePair, validateNativeArtifacts } from './react-native/pair-evidence'
 import { createSemanticReporter } from './react-native/semantic-reporter'
 
 function input(): NativePairEvidence {
   return {
+    runtimeInstallation: syntheticRuntimeInstallation(),
     runId: 'run',
     platform: 'web',
     revision: 'baseline',
@@ -96,14 +98,16 @@ describe('原生宿主截图证据', () => {
       runId: pair.runId,
       artifacts: directory,
       cancelSignal: controller.signal,
-      capture: async () => {
+      capture: async (name) => {
         if (++frames === 2) {
           entered()
           await new Promise<void>((resolve) => {
             release = resolve
           })
         }
-        return file
+        const frameFile = path.join(directory, name)
+        await fs.copyFile(file, frameFile)
+        return frameFile
       },
     })
     const outcome = capturing.catch(error => error as Error)
@@ -143,9 +147,11 @@ describe('原生宿主截图证据', () => {
       }
       const file = path.join(directory, 'case-baseline-background-color-default.png')
       await fs.writeFile(file, PNG.sync.write(image))
-      await expect(captureNativePair(pair, { runId: pair.runId, artifacts: directory, capture: async () => {
+      await expect(captureNativePair(pair, { runId: pair.runId, artifacts: directory, capture: async (name) => {
         now.mockReturnValue(10_001)
-        return file
+        const frameFile = path.join(directory, name)
+        await fs.copyFile(file, frameFile)
+        return frameFile
       } })).rejects.toThrow(/two consecutive/)
       const diagnostic = JSON.parse(await fs.readFile(`${file}.capture.json`, 'utf8'))
       expect(diagnostic).toMatchObject({ status: 'failed', stage: 'assess-screenshot', consecutive: 0 })
@@ -171,7 +177,7 @@ describe('原生宿主截图证据', () => {
       } })
       controller.abort(new Error('采集完成后的取消不能生成失败诊断'))
       await expect(fs.stat(path.join(directory, `${receipt.artifact.name}.capture.json`))).rejects.toMatchObject({ code: 'ENOENT' })
-      const report = { runId: pair.runId, revision: pair.revision, receipts: [receipt] } as unknown as ReactNativeReport
+      const report = { runtimeInstallation: syntheticRuntimeInstallation(), runId: pair.runId, revision: pair.revision, receipts: [receipt] } as unknown as ReactNativeReport
       await expect(validateNativeArtifacts(report, directory)).resolves.toBeUndefined()
       const file = path.join(directory, receipt.artifact.name)
       const saved = await fs.readFile(`${file}.json`, 'utf8')
@@ -219,7 +225,7 @@ describe('原生宿主截图证据', () => {
 
   it('宿主只接受本轮已知用例并校验回执归属', async () => {
     const pair = input()
-    const receipt = { runId: pair.runId, id: pair.id, phase: pair.phase, checkpoints: [], artifact: { name: 'test.png', sha256: 'a'.repeat(64), byteLength: 100 } }
+    const receipt = { runtimeInstallation: pair.runtimeInstallation, runId: pair.runId, id: pair.id, phase: pair.phase, checkpoints: [], artifact: { name: 'test.png', sha256: 'a'.repeat(64), byteLength: 100 }, capture: { version: 1 as const, timeoutMs: 10_000, frames: [] } }
     const capture = vi.fn(async () => receipt)
     const reporter = createSemanticReporter({ runId: pair.runId, fixtureHash: 'fixture', catalogHash: 'catalog', versions: {} }, capture, { clientToken: 'client', revision: pair.revision, platform: 'web' })
     const headers = { 'x-rn-e2e-client': 'client' }
@@ -238,7 +244,7 @@ describe('原生宿主截图证据', () => {
       expect(await (await fetch(`${endpoint}/context`, { headers })).json()).toMatchObject({ runId: pair.runId })
       const accepted = await fetch(`${endpoint}/case`, { method: 'POST', headers, body: JSON.stringify(pair) })
       expect(accepted.ok).toBe(true)
-      const report = { runId: pair.runId, revision: pair.revision, platform: pair.platform, receipts: [receipt] } as unknown as ReactNativeReport
+      const report = { runtimeInstallation: syntheticRuntimeInstallation(), runId: pair.runId, revision: pair.revision, platform: pair.platform, receipts: [receipt] } as unknown as ReactNativeReport
       expect(() => reporter.assertReceipts(report)).not.toThrow()
       expect(() => reporter.assertReceipts({ ...report, receipts: [{ ...receipt, phase: 'old' }] })).toThrow(/Missing host/)
       const stale = await fetch(`${endpoint}/case`, { method: 'POST', headers, body: JSON.stringify({ ...pair, runId: 'old' }) })

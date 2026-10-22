@@ -1,12 +1,15 @@
 {
   "schemaVersion": 2,
-  "fixtureHash": "c9518dae0d4e03e58ed0e5ec67e8902bb7d686b0dfef045bd95000db9a904c6c",
+  "fixtureHash": "442f311307edf93a697ca783721e2aaf8ca0aabb98af42a2bef8401b5fe79838",
   "files": {
+    "autofill.css": "6276d99e3807b9ade3c240baa6aff549713845b638d8a4f14f0db8737b565aec",
     "web.css": "0975c9180d665818550de27dd5270090456f84d4adf477481762bbe174fca7ea",
-    "weapp.wxss": "61f6e7306cae8c8012dd0117461595e65dbbdc8b2313750d244c0cf1d654f586",
+    "weapp.wxss": "e96b95aad9e5b146cdbda5180b63613f0f2c35dc12f616e1e49d7669c7875469",
     "context.css": "1090ee0b2bac833f303a3489a89ad85f18ff0c0964044f6af2c673e5a7e252cb",
     "lifecycle.css": "0878f16c19f970349e1488849508e7ff0edeb567a1a79754594a452eaa4f549f",
     "registry.css": "4e09537d7cb62b05821bae7bcda8613197fae1c139ccf9ec2e92097665afbe0a",
+    "native-media.css": "0ea270df8b5f2880b6234580f70f5a7b5de86f73809a98c9ba4d8701971d6f2b",
+    "history.css": "c4e2c83dbea62f533fe9c4d0150fcfc0eef2627c384a938bd3751559708a3fd4",
     "hmr-initial.css": "3eb3a5350241d6243632bfff6f5e41ec7951f04a4bd37e6789bcbe3060b58b39",
     "hmr-added.css": "07527d3857d33bfecfb008017207e582179a3ec86d4aa668b7009c2a53eb77ba",
     "hmr-replaced.css": "f1823a2e678b809e0263c7d85b0ce00733dcd3eecde94635fa98ab61085fd7c7",

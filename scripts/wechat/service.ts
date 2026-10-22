@@ -5,12 +5,13 @@ import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { wechatVersion } from '../e2e-preflight/probes/wechat-version'
+import { WechatEnvironmentError } from './errors'
 
 export function wechatCliPath() {
   const cli = process.env.E2E_PREFLIGHT_WECHAT_CLI
     ?? (process.platform === 'darwin' ? path.join(path.parse(os.homedir()).root, 'Applications', 'wechatwebdevtools.app', 'Contents', 'MacOS', 'cli') : undefined)
   if (!cli) {
-    throw new Error('请设置 E2E_PREFLIGHT_WECHAT_CLI 指向官方安装；E2E 不会执行 CLI 或启动 IDE。')
+    throw new WechatEnvironmentError('请设置 E2E_PREFLIGHT_WECHAT_CLI 指向官方安装；E2E 不会执行 CLI 或启动 IDE。')
   }
   return cli
 }
@@ -27,7 +28,7 @@ export function serviceDirectory(metadata: string, name: string, home: string, p
   const api = platform === 'win32' ? path.win32 : path.posix
   if (!['darwin', 'win32'].includes(platform) || api.basename(api.dirname(metadata)) !== 'app.asar.unpacked'
     || !name || api.basename(name) !== name || name === '.' || name === '..') {
-    throw new Error('当前 IDE 布局不支持自动发现；请显式设置 E2E_PREFLIGHT_WECHAT_HTTP_PORT。')
+    throw new WechatEnvironmentError('当前 IDE 布局不支持自动发现；请显式设置 E2E_PREFLIGHT_WECHAT_HTTP_PORT。')
   }
   const installation = api.resolve(api.dirname(metadata), '..', 'app.asar')
   const hash = createHash('md5').update(installation).digest('hex')
@@ -49,7 +50,7 @@ export async function existingWechatService(cli = wechatCliPath()) {
       port = (await readFile(path.join(dir, '.ide'), 'utf8')).trim()
     }
     catch {
-      throw new Error('微信 IDE 未提供已开启的 HTTP 服务。请手动打开 IDE、确认登录并开启服务端口；E2E 不会自动启动、登录或重置 IDE。')
+      throw new WechatEnvironmentError('微信 IDE 未提供已开启的 HTTP 服务。请手动打开 IDE、确认登录并开启服务端口；E2E 不会自动启动、登录或重置 IDE。')
     }
   }
   return { command: cli, version, metadata, httpPort: String(servicePort(port)) }
@@ -96,7 +97,7 @@ async function acquireServiceLease(port: number, project: string, runId: string)
       throw error
     }
     const owner = await readFile(file, 'utf8').catch(() => '未知（锁文件不可读）')
-    throw new Error(`微信 IDE 服务 ${port} 已被另一个 E2E 会话占用；拒绝并发打开项目 ${project}，保留登录态。锁=${file}，所有者=${owner}`)
+    throw new WechatEnvironmentError(`微信 IDE 服务 ${port} 已被另一个 E2E 会话占用；拒绝并发打开项目 ${project}，保留登录态。锁=${file}，所有者=${owner}`)
   }
   try {
     await handle.writeFile(JSON.stringify({ pid: process.pid, project, runId, createdAt: new Date().toISOString() }))
@@ -107,7 +108,7 @@ async function acquireServiceLease(port: number, project: string, runId: string)
   return async () => {
     const owner = JSON.parse(await readFile(file, 'utf8')) as { pid?: number, runId?: string }
     if (owner.pid !== process.pid || owner.runId !== runId) {
-      throw new Error('微信 IDE 服务锁所有者改变，拒绝清理其他会话。')
+      throw new WechatEnvironmentError('微信 IDE 服务锁所有者改变，拒绝清理其他会话。')
     }
     await unlink(file)
   }
@@ -132,7 +133,7 @@ function enqueue<T>(port: number, task: () => Promise<T>) {
 export function ownedWechatPort(project: string) {
   const binding = projects.get(path.resolve(project))
   if (!binding) {
-    throw new Error('未登记本轮微信项目与 HTTP 服务的归属，保留 IDE，不重新发现或关闭其他会话。')
+    throw new WechatEnvironmentError('未登记本轮微信项目与 HTTP 服务的归属，保留 IDE，不重新发现或关闭其他会话。')
   }
   return String(binding.servicePort)
 }
@@ -141,7 +142,7 @@ export function ownedWechatPort(project: string) {
 export function ownedWechatEndpoint(project: string) {
   const binding = projects.get(path.resolve(project))
   if (!binding?.opened || binding.closing || serviceLeases.get(binding.servicePort) !== binding) {
-    throw new Error('微信项目没有本轮已打开的自动化连接，拒绝借用未知会话。')
+    throw new WechatEnvironmentError('微信项目没有本轮已打开的自动化连接，拒绝借用未知会话。')
   }
   if (blocked.has(binding.servicePort)) {
     blockWechatService(binding.servicePort)
@@ -151,7 +152,7 @@ export function ownedWechatEndpoint(project: string) {
 
 export function blockWechatService(port: string | number): never {
   blocked.add(servicePort(port))
-  throw new Error('微信 IDE 登录或服务异常；本进程停止后续项目请求，保留现场与登录态，请恢复后重新预检。')
+  throw new WechatEnvironmentError('微信 IDE 登录或服务异常；本进程停止后续项目请求，保留现场与登录态，请恢复后重新预检。')
 }
 
 /** 只允许已有 IDE 服务的三个项目操作；不暴露登录、票据、清缓存或全局退出入口。 */
@@ -177,18 +178,18 @@ export async function wechatRequest(port: string | number, operation: Operation,
     if (operation.kind === 'auto') {
       const previous = projects.get(project!)
       if (previous && previous.servicePort !== actualPort) {
-        throw new Error('微信项目的 HTTP 服务绑定已改变；必须清理原会话后重新预检。')
+        throw new WechatEnvironmentError('微信项目的 HTTP 服务绑定已改变；必须清理原会话后重新预检。')
       }
       const previousAutoPort = previous?.autoPort
       if (previousAutoPort && previousAutoPort !== autoPort) {
-        throw new Error('微信项目的自动化端口已改变；必须清理原会话后重新预检。')
+        throw new WechatEnvironmentError('微信项目的自动化端口已改变；必须清理原会话后重新预检。')
       }
       if (previous || pendingProjects.has(project!)) {
-        throw new Error('微信项目已有活跃会话；必须先清理原会话后重新打开。')
+        throw new WechatEnvironmentError('微信项目已有活跃会话；必须先清理原会话后重新打开。')
       }
       const occupied = serviceLeases.get(actualPort)
       if (occupied || pendingServices.has(actualPort)) {
-        throw new Error('稳定版微信 IDE 的运行时资源按 HTTP 服务共享；同一服务已有本轮项目，必须先清理后再打开其他项目。')
+        throw new WechatEnvironmentError('稳定版微信 IDE 的运行时资源按 HTTP 服务共享；同一服务已有本轮项目，必须先清理后再打开其他项目。')
       }
       const runId = `${process.pid}-${++nextRunId}`
       pendingProjects.add(project!)
@@ -215,17 +216,17 @@ export async function wechatRequest(port: string | number, operation: Operation,
     else {
       const binding = projects.get(project!)
       if (!binding) {
-        throw new Error('未登记本轮微信项目与 HTTP 服务的归属，保留 IDE，不关闭其他项目。')
+        throw new WechatEnvironmentError('未登记本轮微信项目与 HTTP 服务的归属，保留 IDE，不关闭其他项目。')
       }
       if (binding.servicePort !== actualPort) {
-        throw new Error('微信项目的 HTTP 服务绑定已改变；必须清理原会话后重新预检。')
+        throw new WechatEnvironmentError('微信项目的 HTTP 服务绑定已改变；必须清理原会话后重新预检。')
       }
       const leaseOwner = serviceLeases.get(actualPort)
       if (!leaseOwner || leaseOwner.runId !== binding.runId) {
-        throw new Error('微信项目租约不属于本轮请求，保留 IDE，不关闭其他项目。')
+        throw new WechatEnvironmentError('微信项目租约不属于本轮请求，保留 IDE，不关闭其他项目。')
       }
       if (binding.closing) {
-        throw new Error('微信项目正在关闭；拒绝对同一租约重复清理。')
+        throw new WechatEnvironmentError('微信项目正在关闭；拒绝对同一租约重复清理。')
       }
       // 入队前锁定关闭责任，避免旧 close 回执与同路径的新 auto 交错。
       binding.closing = true
@@ -237,7 +238,7 @@ export async function wechatRequest(port: string | number, operation: Operation,
       blockWechatService(actualPort)
     }
     if (lease && (projects.get(project!) !== lease || serviceLeases.get(actualPort) !== lease)) {
-      throw new Error('微信项目租约已改变；拒绝执行过期请求，保留当前会话。')
+      throw new WechatEnvironmentError('微信项目租约已改变；拒绝执行过期请求，保留当前会话。')
     }
     const signal = AbortSignal.timeout(timeoutMs)
     const token = process.env.WECHAT_DEVTOOLS_CLI_TOKEN
@@ -248,7 +249,7 @@ export async function wechatRequest(port: string | number, operation: Operation,
       }
       catch {
         blocked.add(actualPort)
-        throw new Error(`微信 IDE 已有服务不可用或超时（${operation.kind}）；保留登录态，不启动或重启 IDE。`)
+        throw new WechatEnvironmentError(`微信 IDE 已有服务不可用或超时（${operation.kind}）；保留登录态，不启动或重启 IDE。`)
       }
       if (response.status === 303) {
         try {
@@ -263,7 +264,7 @@ export async function wechatRequest(port: string | number, operation: Operation,
         catch {
           blocked.add(actualPort)
           await response.body?.cancel().catch(() => {})
-          throw new Error('微信 IDE 返回不受支持的任务重定向。')
+          throw new WechatEnvironmentError('微信 IDE 返回不受支持的任务重定向。')
         }
         continue
       }
@@ -273,7 +274,7 @@ export async function wechatRequest(port: string | number, operation: Operation,
       if (!response.ok || (!validObject && !stableWindowId) || (validObject && ((result as Record<string, unknown>).code || (result as Record<string, unknown>).error || (result as Record<string, unknown>).success === false))) {
         blocked.add(actualPort)
         // 不回显可能包含凭据的服务端正文，保留状态码供定位。
-        throw new Error(`微信 IDE ${operation.kind} 失败（HTTP ${response.status}）；请检查 IDE 认证/项目授权，E2E 不会登录、刷新票据或重试账号操作。`)
+        throw new WechatEnvironmentError(`微信 IDE ${operation.kind} 失败（HTTP ${response.status}）；请检查 IDE 认证/项目授权，E2E 不会登录、刷新票据或重试账号操作。`)
       }
       if (operation.kind === 'auto') {
         const objectResult = validObject ? result as Record<string, unknown> : undefined
@@ -284,11 +285,11 @@ export async function wechatRequest(port: string | number, operation: Operation,
           }
           catch {
             blocked.add(actualPort)
-            throw new Error('微信 IDE 自动化端口回执无效；拒绝连接旧会话。')
+            throw new WechatEnvironmentError('微信 IDE 自动化端口回执无效；拒绝连接旧会话。')
           }
           if (responseAutoPort !== autoPort) {
             blocked.add(actualPort)
-            throw new Error('微信 IDE 自动化端口回执与本轮请求不一致；拒绝连接旧会话。')
+            throw new WechatEnvironmentError('微信 IDE 自动化端口回执与本轮请求不一致；拒绝连接旧会话。')
           }
         }
         lease!.opened = true
@@ -307,13 +308,13 @@ export async function wechatRequest(port: string | number, operation: Operation,
       return result as Record<string, unknown>
     }
     blocked.add(actualPort)
-    throw new Error('微信 IDE 异步任务重定向过多，停止本轮操作。')
+    throw new WechatEnvironmentError('微信 IDE 异步任务重定向过多，停止本轮操作。')
   })
 }
 
 export async function assertWechatLogin(port: string | number, timeoutMs?: number) {
   if ((await wechatRequest(port, { kind: 'isLogin' }, timeoutMs)).login !== true) {
     blocked.add(servicePort(port))
-    throw new Error('微信 IDE 登录未确认；请在已有 IDE 中完成登录。E2E 不会自动登录、注销或刷新票据。')
+    throw new WechatEnvironmentError('微信 IDE 登录未确认；请在已有 IDE 中完成登录。E2E 不会自动登录、注销或刷新票据。')
   }
 }

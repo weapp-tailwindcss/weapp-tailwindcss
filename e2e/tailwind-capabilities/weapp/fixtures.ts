@@ -1,6 +1,10 @@
+import type { WeappProbe } from './types'
 import { borderProperties, paddingProperties, radiusProperties } from '../style-properties'
+import { alphaProbes } from './alpha-fixtures'
 
-export const weappProbes = [
+export type { WeappProbe } from './types'
+
+export const weappProbes: readonly WeappProbe[] = [
   { id: 'width-arbitrary', candidates: ['w-[123px]'], property: 'width', expected: '123px', reference: 'width:123px' },
   { id: 'height-arbitrary', candidates: ['h-[48px]'], property: 'height', expected: '48px', reference: 'height:48px' },
   { id: 'size-width', candidates: ['size-[44px]'], property: 'width', expected: '44px', reference: 'width:44px;height:44px', styles: { width: '44px', height: '44px' } },
@@ -18,7 +22,10 @@ export const weappProbes = [
   { id: 'typed-variable', candidates: ['w-(length:--probe-width)'], property: 'width', expected: '73px', reference: 'width:73px' },
   { id: 'math', candidates: ['w-[calc(100%-17px)]'], property: 'width', expected: '183px', reference: 'width:calc(100% - 17px)' },
   { id: 'important', candidates: ['w-[67px]!'], property: 'width', expected: '67px', reference: 'width:67px', inline: 'width:99px' },
-  { id: 'dynamic-width', candidates: ['w-[32px]', 'w-[64px]'], property: 'width', expected: '32px', reference: 'width:32px', dynamic: true },
-] as const
-
-export type WeappProbe = typeof weappProbes[number]
+  { id: 'dynamic-width', candidates: ['w-[32px]', 'w-[64px]'], property: 'width', expected: '32px', reference: 'width:32px', phases: [
+    { name: 'before', candidates: ['w-[32px]'], reference: 'width:32px', expected: { width: '32px' } },
+    { name: 'after', candidates: ['w-[64px]'], reference: 'width:64px', expected: { width: '64px' } },
+    { name: 'restored', candidates: ['w-[32px]'], reference: 'width:32px', expected: { width: '32px' } },
+  ] },
+  ...alphaProbes,
+]

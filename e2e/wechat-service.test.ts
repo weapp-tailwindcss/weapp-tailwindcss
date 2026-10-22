@@ -33,6 +33,17 @@ async function server(handler: RequestListener) {
 }
 
 describe('微信已有服务边界', () => {
+  it.each([false, 401, 'network'])('服务环境事实 %s 通过错误类型传播，不依赖中文正则', async (fact) => {
+    const port = await server((_req, res) => {
+      if (fact === 'network') {
+        res.destroy()
+        return
+      }
+      res.statusCode = fact === 401 ? 401 : 200
+      res.end(JSON.stringify({ login: false }))
+    })
+    await expect(assertWechatLogin(port)).rejects.toMatchObject({ name: 'WechatEnvironmentError' })
+  })
   it('临时 HMR 读取借用已绑定端口，不再次打开项目或释放外层租约', async () => {
     const requests: string[] = []
     const port = await server((req, res) => {
@@ -265,7 +276,7 @@ describe('微信已有服务边界', () => {
       calls++
       res.writeHead(303, { location }).end()
     })
-    await expect(assertWechatLogin(port)).rejects.toThrow('重定向')
+    await expect(assertWechatLogin(port)).rejects.toMatchObject({ name: 'WechatEnvironmentError', message: expect.stringContaining('重定向') })
     await expect(wechatRequest(port, { kind: 'close', project: `/owned-${port}` })).rejects.toThrow('停止后续')
     expect(calls).toBe(1)
   })

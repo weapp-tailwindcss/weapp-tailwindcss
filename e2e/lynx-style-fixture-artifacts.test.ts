@@ -3,8 +3,10 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, beforeAll, expect, it, vi } from 'vitest'
+import { transformLynxCssCompat, transformWebCssCompat } from '../packages/postcss/src/index'
 import { encodeLynxCss } from './lynx/batch-encode'
 import { createEvidenceContext, validateNativeEvidence } from './lynx/evidence'
+import { themeOverrideArtifacts } from './lynx/fixtures/theme-overrides'
 import iosReport from './lynx/reports/ios.json'
 
 // 只隔离截图/几何的报告维度；生成 CSS、生产 encoder、WASM decoder 和样式门禁均使用真实实现。
@@ -22,7 +24,8 @@ beforeAll(async () => {
   const fixture = await fs.readFile(path.join(import.meta.dirname, '..', 'examples', 'react-lynx', 'src', 'styles', 'important-fixtures.css'), 'utf8')
   const overflowFixture = await fs.readFile(path.join(import.meta.dirname, '..', 'examples', 'react-lynx', 'src', 'styles', 'overflow-fixtures.css'), 'utf8')
   // 实际 CSS 入口经 layer import 与 Tailwind 展开会留下完整相同的两份标尺。
-  source = `${String.raw`.\!bg-\[\#737373\]{background-color:#737373!important}.bg-\[\#737373\]{background-color:#737373}`}${fixture}.overflow-hidden{overflow:hidden}${overflowFixture}${responsiveRule}${responsiveMarker}${responsiveMarker}${supports}`
+  const themeFixture = transformLynxCssCompat(transformWebCssCompat(`:root,:host{--color-brand:#f00}${await fs.readFile(path.join(import.meta.dirname, '..', 'examples', 'react-lynx', 'src', 'styles', 'theme-overrides-fixtures.css'), 'utf8')}.bg-brand{background-color:var(--color-brand)}`, true))
+  source = `${String.raw`.\!bg-\[\#737373\]{background-color:#737373!important}.bg-\[\#737373\]{background-color:#737373}`}${fixture}.overflow-hidden{overflow:hidden}${overflowFixture}${responsiveRule}${responsiveMarker}${responsiveMarker}${supports}${themeFixture}`
   bundle = (await encodeLynxCss(source, { mode: 'wasm', applyCompatibility: false })).buffer
 })
 
@@ -42,6 +45,12 @@ async function fixture(css = source, bytes = bundle) {
   delete report.mediaGate
   report.results = []
   report.evidence = { ...context, artifacts: [] }
+  report.environment.viewport.pixelRatio = 2
+  const crops = path.join(directory, 'crops', context.runId)
+  await fs.mkdir(crops, { recursive: true })
+  for (const [name, bytes] of themeOverrideArtifacts(report)) {
+    await fs.writeFile(path.join(crops, name), bytes)
+  }
   return { directory, report, context }
 }
 
@@ -68,6 +77,10 @@ it('伪 bundle 不得回退到正确 CSS 或 serializer 输入', async () => {
 })
 
 const mutations = [
+  ['theme-reference-lost', (css: string) => css.replace(/\.theme-reference-blue\s*\{[^}]*\}/g, ''), /主题覆盖/],
+  ['theme-inlined', (css: string) => css.replace(/background-color:\s*var\(--color-brand\)/, 'background-color: #f00'), /主题覆盖/],
+  ['theme-local-fallback', (css: string) => `${css}.theme-evidence-base{--color-brand:#f00}`, /主题覆盖/],
+
   ['overflow-candidate', (css: string) => css.replace('.overflow-hidden{overflow:hidden}', ''), /overflow/],
   ['overflow-base-hidden', (css: string) => css.replaceAll('overflow: visible', 'overflow: hidden'), /overflow/],
   ['overflow-min-width', (css: string) => css.replace('min-width: 0', 'min-width: 120px'), /overflow/],

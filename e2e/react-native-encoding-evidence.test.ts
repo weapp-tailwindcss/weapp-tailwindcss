@@ -26,6 +26,13 @@ async function rewriteArtifact(output: string, name: 'manifest.json' | 'static-e
   const snapshot = JSON.parse(await readFile(path.join(output, 'snapshot.json'), 'utf8'))
   const context = JSON.parse(await readFile(path.join(output, 'run-context.json'), 'utf8'))
   snapshot.files[name].sha256 = sha256
+  if (name === 'manifest.json') {
+    const publication = JSON.parse(await readFile(path.join(output, 'manifest.ready'), 'utf8'))
+    const ready = JSON.stringify({ ...publication, manifestSha256: sha256 })
+    snapshot.readyBefore = snapshot.readyAfter = ready
+    snapshot.files['manifest.ready'].sha256 = createHash('sha256').update(ready).digest('hex')
+    await writeFile(path.join(output, 'manifest.ready'), ready)
+  }
   context[name === 'manifest.json' ? 'manifestSha256' : name === 'static-evidence.json' ? 'staticInputSha256' : 'runtimeInputSha256'] = sha256
   await writeFile(path.join(output, name), source)
   await writeFile(path.join(output, 'snapshot.json'), JSON.stringify(snapshot))
@@ -33,6 +40,27 @@ async function rewriteArtifact(output: string, name: 'manifest.json' | 'static-e
 }
 
 describe('构建指令编码需要独立 oracle 与本轮实际 manifest', () => {
+  it.each(['missing-hash', 'wrong-hash', 'invalid-revision'] as const)('即使归档摘要完整，也拒绝 %s 发布身份', async (kind) => {
+    const { directory, report, output } = await fixture()
+    const publication = JSON.parse(await readFile(path.join(output, 'manifest.ready'), 'utf8'))
+    if (kind === 'missing-hash') {
+      delete publication.manifestSha256
+    }
+    else if (kind === 'wrong-hash') {
+      publication.manifestSha256 = 'a'.repeat(64)
+    }
+    else {
+      publication.revision = 1
+    }
+    const ready = JSON.stringify(publication)
+    const snapshot = JSON.parse(await readFile(path.join(output, 'snapshot.json'), 'utf8'))
+    snapshot.readyBefore = snapshot.readyAfter = ready
+    snapshot.files['manifest.ready'].sha256 = createHash('sha256').update(ready).digest('hex')
+    await writeFile(path.join(output, 'manifest.ready'), ready)
+    await writeFile(path.join(output, 'snapshot.json'), JSON.stringify(snapshot))
+    await expect(validateNativeEncodingArtifacts(report, directory)).rejects.toThrow('发布身份')
+  })
+
   it('五例完整编码与稳定发布 manifest 一致才接受', async () => {
     const { directory, report } = await fixture()
     expect(await validateNativeEncodingArtifacts(report, directory)).toHaveLength(6)
@@ -47,14 +75,7 @@ describe('构建指令编码需要独立 oracle 与本轮实际 manifest', () =>
   it('即使摘要全部更新，声明缺失也不能伪装成合法编码', async () => {
     const { directory, report, manifest, output } = await fixture()
     manifest.rules['lynx-applied']![0]!.style = { display: 'flex' }
-    const source = JSON.stringify(manifest)
-    const sha256 = createHash('sha256').update(source).digest('hex')
-    const snapshot = JSON.parse(await readFile(path.join(output, 'snapshot.json'), 'utf8'))
-    snapshot.files['manifest.json'].sha256 = sha256
-    await writeFile(path.join(output, 'manifest.json'), source)
-    await writeFile(path.join(output, 'snapshot.json'), JSON.stringify(snapshot))
-    const context = JSON.parse(await readFile(path.join(output, 'run-context.json'), 'utf8'))
-    await writeFile(path.join(output, 'run-context.json'), JSON.stringify({ ...context, manifestSha256: sha256 }))
+    await rewriteArtifact(output, 'manifest.json', JSON.stringify(manifest))
     await expect(validateNativeEncodingArtifacts(report, directory)).rejects.toThrow('directive-apply')
   })
 

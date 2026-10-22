@@ -24,6 +24,27 @@ pnpm --filter @weapp-tailwindcss/website e2e
 PLAYWRIGHT_BASE_URL=http://192.168.10.4:4000 pnpm --filter @weapp-tailwindcss/website e2e
 ```
 
+### 本地黄金图的采集与审查
+
+`e2e:local` 先以 `e2e:visual:test` 验证真实三浏览器基线管线，在启动受管本地 Worker 前验证黄金图及来源登记，再以三浏览器、零重试、`--update-snapshots=none` 比较。三浏览器管线在 Website SEO Quality 的独立 job 中执行，普通 unit 不依赖 Firefox/WebKit。首次使用或渲染环境变化时，先生成并审查候选；不能把失败截图直接登记为预期。PNG 体积较大，不加入 Git；来源清单和审查记录登记在 `tests/visual-baselines/<platform>*.json`，完整候选目录及归档须另行保留。
+
+```bash
+# 仓库根目录执行；先提交本任务源码，采集入口自动生产构建，期间不同时修改或重建依赖
+pnpm --filter @weapp-tailwindcss/website e2e:visual capture --directory ../.tmp/website-visual-candidate
+
+# 查看实际 PNG，审查三引擎、移动布局和代表性长页，保存接触表或原图证据
+pnpm --filter @weapp-tailwindcss/website e2e:visual review --directory ../.tmp/website-visual-candidate --reviewer 维护者 --notes 已检查颜色、布局与完整页面 --evidence ../.tmp/website-visual-review.png
+pnpm --filter @weapp-tailwindcss/website e2e:visual install --directory ../.tmp/website-visual-candidate
+pnpm --filter @weapp-tailwindcss/website e2e:visual verify
+pnpm --filter @weapp-tailwindcss/website e2e:local
+```
+
+候选必须是全新目录。范围来自 `routes.json`：桌面 Chromium、Firefox、WebKit 与移动 Chromium 全部首次成功，移动 Firefox/WebKit 保留既有显式跳过。每张图的名字来自 Playwright 原生报告附件，校验完整集合、PNG 内容和尺寸。采集期间源码、锁文件和实际构建不能变化；失败只留下诊断，不生成可安装清单。审查绑定当前清单 hash 与真实 PNG 证据，安装采用同父目录暂存和原子重命名；来源不明或已有其他基线的目标目录会拒绝覆盖。需替换已有黄金图时，先确认归属并单独归档，重新采集和审查。
+
+视觉夹具对显式 `.gif` 网络图片地址采用固定首帧合同：实际成功响应须由 MIME 或字节签名确认为 GIF，再经显式版本的 sharp/libvips 解码第 0 帧，PNG 保留该帧颜色和尺寸；失败 HTTP 状态及静态图片字节保持可观察。报告附件登记原始 GIF 与 PNG 摘要，渲染环境登记解码器版本。其他图片保留真实请求与重定向，最终字节检查发现未冻结 GIF 时明确拒绝采集；GIF 地址的重定向也拒绝，避免改写跨源语义。此项只比较 GIF 首帧，动画时序需单独验证；data/blob 图片不属于网络响应规范化范围。响应拦截会禁用这些独立视觉 context 的浏览器 HTTP 缓存，缓存行为由功能回归覆盖。
+
+黄金图记录历史源码和构建，不要求未来 HEAD 相同；未来代码仍须比较像素。操作系统、架构、系统版本、Playwright/浏览器、图片解码器版本或截图合同变化会阻断，不能静默沿用其他环境的旧图。完整本地验收仍须先完成仓库本轮扩展预检、当前会话 computer use 与 verify，此处单独采集网站候选不能替代该门禁。
+
 ## 报错解决
 
 Module not found: Error: Can't resolve '@weapp-tailwindcss/merge' in '/Users/zzy/Projects/weapp-tailwindcss/website/src/theme/ReactLiveScope'

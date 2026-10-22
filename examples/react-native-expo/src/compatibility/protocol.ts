@@ -1,7 +1,9 @@
+import type { NativeImageEvidence } from './image-fixture'
+import type { NativeScrollEvidence } from './scroll-fixture'
 import { nativeBuildFixtures } from './fixtures'
 
 export type { NativeFixture } from './fixtures'
-export { expectedFixtureStyle, fixtureClassValue, fixtureInlineStyle, nativeBuildFixtures, nativeFixtures, styleContains } from './fixtures'
+export { expectedFixtureStyle, fixtureClassValue, fixtureForPhase, fixtureInlineStyle, nativeBuildFixtures, nativeFixtures, styleContains } from './fixtures'
 
 export type ReactNativePlatform = 'android' | 'ios' | 'web'
 export type NativeCaseStatus = 'supported' | 'unsupported' | 'unverified' | 'failed'
@@ -33,7 +35,29 @@ export interface ReactNativeCaseResult {
 
 export interface NativeRect { x: number, y: number, width: number, height: number }
 
+export interface NativeRuntimeIdentity {
+  version: 1
+  runtimeInstanceId: string
+  publication: { revision: string, manifestSha256: string }
+}
+
+export interface NativeRuntimeInstallation extends NativeRuntimeIdentity {
+  manifestJson: string
+}
+
+export interface NativeSemanticContext {
+  runId: string
+  revision: string
+  fixtureHash: string
+  catalogHash: string
+  versions: Record<string, string>
+  publication: NativeRuntimeIdentity['publication']
+}
+
 export interface NativePairEvidence {
+  image?: NativeImageEvidence
+  scroll?: NativeScrollEvidence
+  runtimeInstallation: NativeRuntimeIdentity
   runId: string
   platform: ReactNativePlatform
   revision: string
@@ -48,15 +72,47 @@ export interface NativePairEvidence {
   viewport: { width: number, height: number, pixelRatio: number }
 }
 
+export interface NativeScreenshotArtifact { name: string, sha256: string, byteLength: number }
+
+export interface NativeCaptureFrame {
+  index: number
+  startedAtMs: number
+  capturedAtMs: number
+  readAtMs: number
+  decodedAtMs?: number
+  assessedAtMs: number
+  assessmentReusedFromFrame?: number
+  artifact: NativeScreenshotArtifact
+  checkpoints: NativeCheckpoint[]
+}
+
 export interface NativeCaseReceipt {
+  runtimeInstallation: NativeRuntimeIdentity
   runId: string
   id: string
   phase: string
   checkpoints: NativeCheckpoint[]
-  artifact: { name: string, sha256: string, byteLength: number }
+  artifact: NativeScreenshotArtifact
+  capture: { version: 1, timeoutMs: number, frames: NativeCaptureFrame[] }
+}
+
+/** 失败原件只用于诊断；不得生成成功回执或补齐缺失阶段。 */
+export interface NativeSemanticDiagnostic {
+  version: 1
+  evidence: 'diagnostic-only'
+  kind: 'scroll-client-failure' | 'scroll-transition-rejected'
+  runId: string
+  revision: string
+  platform: ReactNativePlatform
+  runtimeInstallation: NativeRuntimeIdentity
+  id: string
+  phase: string
+  message: string
+  observed: unknown
 }
 
 export interface ReactNativeReport {
+  failureDiagnostic?: NativeSemanticDiagnostic
   schemaVersion: 2
   stage: 'static' | 'runtime'
   revision: string
@@ -77,6 +133,7 @@ export interface ReactNativeReport {
   }
   results: ReactNativeCaseResult[]
   receipts: NativeCaseReceipt[]
+  runtimeInstallation?: NativeRuntimeInstallation
 }
 
 /** 已确认的编码边界；新增能力必须显式调整预期并补真实夹具。 */

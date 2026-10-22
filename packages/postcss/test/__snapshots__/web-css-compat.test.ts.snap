@@ -15,14 +15,13 @@ exports[`web css compatibility transform > snapshots web and web compat css outp
 @supports (color: color-mix(in lab, red, red)) {
   .bg-blue\\/50 { background-color: color-mix(in oklab, var(--color-blue-500) 50%, transparent); }
 }",
-  "webCompat": "*, ::before, ::after, ::backdrop {
-  --tw-rotate-x: 0; }
-  :root {
+  "webCompat": ":root {
   --color-blue-500: rgb(50, 128, 255);
   --shadow-card: 0 8px 24px rgba(50, 128, 255, 0.18); }
   @keyframes enter { from { opacity: 0; } to { opacity: 1; } }
   .text-blue { color: rgb(50, 128, 255); }
   .shadow-card { box-shadow: 0 8px 24px rgba(50, 128, 255, 0.18); }
+@property --tw-rotate-x { syntax: "*"; inherits: false; initial-value: 0; }
 .bg-blue\\/50 { background-color: rgba(50, 128, 255, 0.5); }",
 }
 `;

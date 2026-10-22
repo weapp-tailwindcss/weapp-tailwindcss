@@ -1,5 +1,6 @@
 import type { ReactNativeReport } from './react-native/catalog'
 import type { NativeRuntimePhase } from './react-native/phase-contract'
+import { createHash } from 'node:crypto'
 import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
@@ -35,7 +36,7 @@ async function fixture() {
     const source = nativePhaseDirectory(original, phase)
     const raw = JSON.parse(await readFile(path.join(source, 'report.json'), 'utf8')) as ReactNativeReport
     for (const saved of raw.receipts) {
-      for (const name of [saved.artifact.name, `${saved.artifact.name}.json`]) {
+      for (const name of [saved.artifact.name, `${saved.artifact.name}.json`, ...saved.capture.frames.map(frame => frame.artifact.name)]) {
         await copyFile(path.join(original, name), path.join(destination, name))
       }
     }
@@ -49,7 +50,8 @@ async function fixture() {
     ] as const) {
       await copyFile(from, to)
     }
-    await writeFile(publication.manifestReadyPath, JSON.stringify({ revision: `synthetic-publication-${phase.id}`, virtualPath: path.join(projectRoot, 'virtual.js') }))
+    const manifestSource = await readFile(publication.manifestPath, 'utf8')
+    await writeFile(publication.manifestReadyPath, JSON.stringify({ revision: `synthetic-publication-${phase.id}`, manifestSha256: createHash('sha256').update(manifestSource).digest('hex'), virtualPath: path.join(projectRoot, 'virtual.js') }))
     return raw
   }
   return { original, destination, projectRoot, report, publish, publication }
@@ -79,13 +81,15 @@ it('不能从 TSX 或 CSS HMR 跳过 baseline 开始，也不能以任意 revisi
 it('ready 指向项目边界外的虚拟 JS 时停止捕获，不读取无关文件', async () => {
   const { destination, projectRoot, publish, publication } = await fixture()
   const report = await publish(nativeRuntimePhases[0])
-  await writeFile(publication.manifestReadyPath, JSON.stringify({ revision: 'synthetic-publication', virtualPath: path.resolve(projectRoot, '..', 'unrelated.js') }))
+  const identity = JSON.parse(await readFile(publication.manifestReadyPath, 'utf8'))
+  await writeFile(publication.manifestReadyPath, JSON.stringify({ ...identity, virtualPath: path.resolve(projectRoot, '..', 'unrelated.js') }))
   await expect(captureNativePhase(projectRoot, destination, report)).rejects.toThrow('项目边界')
 })
 
 it.each(['../outside.js', '..\\outside.js', 'C:\\outside\\virtual.js', 'C:relative\\virtual.js', '/outside.js'])('拒绝相对路径、根目录或其它盘符的虚拟模块来源 %s', async (virtualPath) => {
   const { destination, projectRoot, publish, publication } = await fixture()
   const report = await publish(nativeRuntimePhases[0])
-  await writeFile(publication.manifestReadyPath, JSON.stringify({ revision: 'synthetic-publication', virtualPath }))
+  const identity = JSON.parse(await readFile(publication.manifestReadyPath, 'utf8'))
+  await writeFile(publication.manifestReadyPath, JSON.stringify({ ...identity, virtualPath }))
   await expect(captureNativePhase(projectRoot, destination, report)).rejects.toThrow(/绝对路径|项目边界/)
 })

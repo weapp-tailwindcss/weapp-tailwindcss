@@ -12,6 +12,7 @@ import { assertIconifyConsumer } from '../../../tools/weapp-tailwindcss-scripts/
 import { createIconifyProbeSource } from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/iconify/probe'
 import * as shared from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/mutations/shared'
 import * as text from '../../../tools/weapp-tailwindcss-scripts/src/watch-hmr-regression/text'
+import { mockOutputEvidencePoll } from './helpers/watch-evidence-poll'
 
 const roots: string[] = []
 const before = 'before:content-[\'before\']'
@@ -48,6 +49,7 @@ afterEach(async () => {
 })
 
 async function fixture(onWrite?: (source: string, watchCase: WatchCase) => Promise<void>) {
+  const polling = mockOutputEvidencePoll()
   const root = await mkdtemp(path.join(os.tmpdir(), 'iconify-evidence-'))
   roots.push(root)
   const sourceFile = path.join(root, 'page.vue')
@@ -81,6 +83,7 @@ async function fixture(onWrite?: (source: string, watchCase: WatchCase) => Promi
     css,
     sourceOriginal,
     sourceFile,
+    polling,
     run: () => runIconifyHotUpdate(watchCase, { timeoutMs: 100, pollMs: 1 } as CliOptions, {
       ensureRunning() {},
       pluginProcessSamplesSince: () => [],
@@ -95,8 +98,9 @@ async function emit(source: string, watchCase: WatchCase) {
 
 describe('Iconify HMR 的本轮产物证据', () => {
   it('已有 CSS 包含前后文案和图标，但编译器没有消费本轮源码时必须失败', async () => {
-    const { run } = await fixture()
+    const { run, polling } = await fixture()
     await expect(run()).rejects.toThrow(/iconify HMR inject/)
+    expect(polling).toHaveBeenCalledOnce()
   })
 
   it('使用已有模板 mutate 生成两个阶段的真实 class 消费，再撤销探针', async () => {
@@ -161,13 +165,20 @@ describe('Iconify HMR 的本轮产物证据', () => {
       await emit(source, watchCase)
     })
     let settled = 0
+    // 本例验证稳定后的再次污染；绝对时限由 waiter 专项回归验证，不依赖宿主文件 I/O 的耗时。
+    const waits = vi.spyOn(shared, 'waitForOutputFilesUpdatedWithDiagnostics').mockImplementation(async (_case, files, _baseline, _options, _session, _startedAt, accepts) => {
+      expect(await accepts!()).toBe(true)
+      return { trigger: 'semantic', elapsedMs: 0, fileCount: files.length, resolvedFileCount: files.length, exactFileUpdated: true, globFileUpdated: false, semanticAccepted: true, missingExactFiles: [], updatedFiles: files }
+    })
     vi.mocked(shared.waitForCompileSettled).mockImplementation(async () => {
       if (++settled === 3) {
+        expect(waits).toHaveBeenCalledTimes(3)
         await emit(lastProbe, watchCase)
       }
       return 0
     })
     await expect(run()).rejects.toThrow(/rollback retained current probe/)
+    expect(settled).toBe(3)
   })
 
   it('同一 class 组必须同时含阶段身份、图标和当前 content', () => {

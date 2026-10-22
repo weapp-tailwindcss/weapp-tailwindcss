@@ -91,6 +91,7 @@ export async function executeViteCssTransformTask(
     const generated = await (options.generateCss ?? generateTailwindV4Css)({
       cssHandlerOptions: options.generatorCssHandlerOptions,
       cssStage: 'framework-processed',
+      deferWebCssPropertyFallback: true,
       cssUserHandlerOptions: options.cssUserHandlerOptions,
       debug: options.debug,
       file: options.generatorSourceFile,

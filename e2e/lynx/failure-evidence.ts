@@ -1,8 +1,8 @@
 import type { NativeEvidenceContext } from '../../examples/react-lynx/src/compatibility/types'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { mediaGateArtifactNames } from '../../examples/react-lynx/src/compatibility/media-gate-contract'
 import { validateEvidenceContext } from './evidence'
+import { nativeFailureArtifactNames } from './failure-evidence-artifacts'
 
 export interface NativeFailureReaders {
   failure: () => Promise<Uint8Array | undefined>
@@ -17,7 +17,7 @@ async function collectFailureEvidence(artifactDir: string, context: NativeEviden
   await fs.mkdir(path.join(directory, 'artifacts'))
   const requests = [
     { name: 'failure.json', read: read.failure, output: path.join(directory, 'failure.json') },
-    ...mediaGateArtifactNames().map(name => ({ name, read: () => read.artifact(name), output: path.join(directory, 'artifacts', name) })),
+    ...nativeFailureArtifactNames.map(name => ({ name, read: () => read.artifact(name), output: path.join(directory, 'artifacts', name) })),
   ]
   const errors: unknown[] = []
   const files = await Promise.all(requests.map(async (request) => {

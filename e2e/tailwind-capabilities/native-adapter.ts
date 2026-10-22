@@ -5,6 +5,7 @@ import type { ArtifactReceipt, CapabilityResult, CaseContract, SemanticAssertion
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { compatibilityCases } from '@weapp-tailwindcss/test-catalog'
+import { nativeImageFixture } from '../../examples/react-native-expo/src/compatibility/image-fixture'
 import { expectedFixtureStyle, nativeBuildCases, nativeBuildFixtures, nativeFixtures, rejectedNativeCases, styleContains } from '../../examples/react-native-expo/src/compatibility/protocol'
 import { validateNativeArtifacts } from '../react-native/pair-evidence'
 import { validateNativeRuntimePhases } from '../react-native/phase-evidence'
@@ -101,7 +102,7 @@ export async function buildNativeCapabilityReport(context: RunContext, target: N
   const all = nativeContracts(inventory)
   const contracts = all.contracts.filter(item => !context.caseFilter || context.caseFilter.test(item.id))
   const coverage = all.coverage
-  const report = await newReport(context, target, contracts, { nativeFixtures, build: nativeBuildFixtures, rejected: [...rejectedNativeCases], fixtureFeatures, coverage }, { provider: 'react-native', platform: raw?.platform ?? target, nativeRevision: raw?.revision ?? 'missing', scopeGaps: coverage.filter(item => item.status === 'not-run').length })
+  const report = await newReport(context, target, contracts, { nativeFixtures, image: nativeImageFixture, build: nativeBuildFixtures, rejected: [...rejectedNativeCases], fixtureFeatures, coverage }, { provider: 'react-native', platform: raw?.platform ?? target, nativeRevision: raw?.revision ?? 'missing', scopeGaps: coverage.filter(item => item.status === 'not-run').length })
   if (raw) {
     report.identity.versions = { ...report.identity.versions, ...raw.versions }
     report.environment.nativeEnvironment = JSON.stringify(raw.environment)
@@ -133,6 +134,9 @@ export async function buildNativeCapabilityReport(context: RunContext, target: N
     for (const file of archived.compatibilityFiles) {
       record(await receipt(file, context.directory, context.runId, [...nativeBuildCases].map(caseId), 'bundle'))
     }
+    for (const file of archived.observationFiles) {
+      record(await receipt(file, context.directory, context.runId, compatibilityCases.map(item => caseId(item.id)), 'bundle'))
+    }
     for (const phase of archived.phases) {
       record(await receipt(phase.reportFile, context.directory, context.runId, compatibilityCases.map(item => caseId(item.id)), 'bundle'))
       for (const file of [...phase.encodingFiles, ...phase.sourceFiles]) {
@@ -141,6 +145,9 @@ export async function buildNativeCapabilityReport(context: RunContext, target: N
       for (const saved of phase.report.receipts) {
         for (const [name, kind] of [[saved.artifact.name, 'screenshot'], [`${saved.artifact.name}.json`, 'measurements']] as const) {
           record(await receipt(path.join(directory, name), context.directory, context.runId, [caseId(saved.id)], kind))
+        }
+        for (const frame of saved.capture.frames) {
+          record(await receipt(path.join(directory, frame.artifact.name), context.directory, context.runId, [caseId(saved.id)], 'screenshot'))
         }
       }
     }
@@ -166,6 +173,9 @@ export async function buildNativeCapabilityReport(context: RunContext, target: N
       }
       for (const [name, kind] of [[saved.artifact.name, 'screenshot'], [`${saved.artifact.name}.json`, 'measurements']] as const) {
         record(await receipt(path.join(directory, name), context.directory, context.runId, [id], kind))
+      }
+      for (const frame of saved.capture.frames) {
+        record(await receipt(path.join(directory, frame.artifact.name), context.directory, context.runId, [id], 'screenshot'))
       }
     }
   }

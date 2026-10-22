@@ -42,6 +42,7 @@ Mark the token source file in the output CSS for tool rules.
 
 Off by default. When turned on, the `tokens: token <= source-file` comment will be inserted before the generated CSS rules.
 Used to check which source code file a certain tool class comes from. You can pass in `{ root }` to control the relative path base in the annotation.
+Important comments preserve source information in default minification pipelines. Explicit options that remove all comments still take effect.
 This capability is intended for debugging and demo acceptance, and production builds are usually kept turned off to reduce product volume.
 
 #### default value

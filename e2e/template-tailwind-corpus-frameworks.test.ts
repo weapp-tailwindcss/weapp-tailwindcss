@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest'
 import { replaceWxml } from '../packages/weapp-tailwindcss/src/wxml'
 import { getE2EProject } from './projectEntries'
 import { clearProjectBuildState, ensureProjectBuilt } from './projectTest'
+import { joinOutputsWithoutCssSourceTraces } from './snapshot/css-source-trace'
 
 const demoRoot = path.resolve(__dirname, '../demo')
 const corpusMarkers = [
@@ -65,7 +66,7 @@ function expectCssRuleContains(rule: string, pattern: RegExp, message: string) {
 
 function expectTemplateCorpusBuild(entry: ProjectEntry, outputs: Array<{ name: string, content: string }>) {
   const joined = outputs.map(output => output.content).join('\n')
-  const joinedWithoutTokenSourceComments = joined.replace(/\/\*\s*tokens:[\s\S]*?\*\//g, '')
+  const joinedWithoutTokenSourceComments = joinOutputsWithoutCssSourceTraces(outputs)
   const styles = joinOutputs(outputs, styleOutputRE)
   const scripts = joinOutputs(outputs, /\.js$/i)
   const markup = joinOutputs(outputs, /\.(?:wxml|axml|swan|ttml|qml|jxml)$/i)

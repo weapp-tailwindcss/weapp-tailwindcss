@@ -6,6 +6,7 @@ typedef NSData *(^GeometryCaptureBlock)(NSString *identifier);
 
 @interface GeometryEvidence : NSObject
 - (instancetype)initWithStore:(EvidenceStore *)store;
+- (instancetype)initWithStore:(EvidenceStore *)store screenMetrics:(NSDictionary *)screenMetrics;
 - (NSDictionary *)captureRunId:(NSString *)runId identifier:(NSString *)identifier
                       measure:(GeometryMeasureBlock)measure capture:(GeometryCaptureBlock)capture error:(NSError **)error;
 @end

@@ -100,10 +100,12 @@ describe('weapp-tailwindcss postcss generator', () => {
     expect(result.css).toContain('.from-slate-900\\/95')
     expect(result.css).toContain('.to-slate-700\\/95')
     expect(result.css).toContain('--tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from)')
-    expect(result.css).not.toContain('@property --tw-gradient')
-    expect(result.css).not.toContain('--tw-gradient-position: initial')
-    expect(result.css).not.toContain('--tw-gradient-stops: initial')
-    expect(result.css).not.toContain('--tw-gradient-via-stops: initial')
+    expect(result.css).toContain('@property --tw-gradient-position')
+    expect(result.css).toContain('@property --tw-gradient-stops')
+    expect(result.css).toContain('@property --tw-gradient-via-stops')
+    expect(result.css).toContain('--tw-gradient-position: initial')
+    expect(result.css).toContain('--tw-gradient-stops: initial')
+    expect(result.css).toContain('--tw-gradient-via-stops: initial')
   })
 
   it.each([
@@ -148,10 +150,12 @@ describe('weapp-tailwindcss postcss generator', () => {
     expect(result.css).toContain('.to-slate-700\\/95')
     expect(result.css).toContain('background-image: linear-gradient(var(--tw-gradient-stops))')
     expect(result.css).toContain('--tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from)')
-    expect(result.css).not.toContain('@property --tw-gradient')
-    expect(result.css).not.toContain('--tw-gradient-position: initial')
-    expect(result.css).not.toContain('--tw-gradient-stops: initial')
-    expect(result.css).not.toContain('--tw-gradient-via-stops: initial')
+    expect(result.css).toContain('@property --tw-gradient-position')
+    expect(result.css).toContain('@property --tw-gradient-stops')
+    expect(result.css).toContain('@property --tw-gradient-via-stops')
+    expect(result.css).toContain('--tw-gradient-position: initial')
+    expect(result.css).toContain('--tw-gradient-stops: initial')
+    expect(result.css).toContain('--tw-gradient-via-stops: initial')
   })
 
   it('emits expanded web spacing selectors without mini-program tag fallback', async () => {
