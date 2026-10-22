@@ -47,9 +47,18 @@ export function createStyleHandler(options?: Partial<IStyleHandlerOptions>): Sty
   /** CSS 处理结果 LRU 缓存 */
   const resultCache = new LRUCache<string, { source: string, options: string, root: RootCacheSnapshot | undefined, result: PostcssResult }>({
     max: CSS_RESULT_CACHE_MAX,
-    // AST 快照按节点数约束总量，避免少量大样式占满长会话内存。
+    // 输入快照与输出 AST 都会被保留，文本输入也必须按实际树规模计量。
     maxSize: 128_000,
-    sizeCalculation: entry => Math.max(1, entry.root?.nodes.length ?? 0),
+    sizeCalculation: (entry) => {
+      let nodes = entry.root?.nodes.length ?? 0
+      if (entry.result.root) {
+        nodes++
+        entry.result.root.walk(() => {
+          nodes++
+        })
+      }
+      return Math.max(1, nodes)
+    },
   })
 
   function cloneResult(result: PostcssResult, current?: ReadonlyMap<Input, Input>): PostcssResult {

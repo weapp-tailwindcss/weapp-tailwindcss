@@ -7,7 +7,7 @@ import { createCompilerValueFingerprint, createSourceFingerprint } from './sourc
 export async function resolveCompilerSource(
   entry: CompilerRootSession,
   request: CompilerGenerateRequest,
-  invalidation: number,
+  engineInvalidation: number,
 ) {
   if (request.source && request.sourceOptions) {
     throw new Error('generate() 的 source 与 sourceOptions 互斥。')
@@ -25,7 +25,7 @@ export async function resolveCompilerSource(
     entry.source !== undefined
     && entry.sourceFingerprint !== undefined
     && entry.sourceInputFingerprint === sourceInputFingerprint
-    && entry.appliedInvalidation === invalidation
+    && entry.appliedEngineInvalidation === engineInvalidation
   ) {
     return { source: entry.source, sourceFingerprint: entry.sourceFingerprint, sourceInputFingerprint }
   }
