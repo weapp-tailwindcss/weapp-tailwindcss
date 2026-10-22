@@ -1,0 +1,1233 @@
+{
+  "schema": "visited-navigation-diagnostic-summary/v1",
+  "runId": "fe9ed664-a9d1-4227-a044-d499814d05f3",
+  "sourceCommit": "44ce882520940eb45463386fe50f6876944581e7",
+  "formalAcceptance": false,
+  "environment": {
+    "system": "macOS arm64",
+    "node": "24.18.0",
+    "pnpm": "12.14.0",
+    "headless": true
+  },
+  "budget": {
+    "budgetMs": 2000,
+    "intervalMs": 100
+  },
+  "generation": {
+    "candidate": "visited:border-[#123456]",
+    "cssSha256": "c4e2c83dbea62f533fe9c4d0150fcfc0eef2627c384a938bd3751559708a3fd4"
+  },
+  "sourceRecord": {
+    "name": "record.json",
+    "byteLength": 1001992,
+    "sha256": "8b0ebc63dcfea9b8b0f2187ab657c3eda3dd63f27016cad22b4c54d37f54d8e0"
+  },
+  "diagnosticScript": {
+    "name": ".tmp/visited-navigation-diagnostic.mts",
+    "sha256": "34e5556b46ea46dd7da9dd084761d12778163f8775acd3a9df9c63eb60b56c44"
+  },
+  "lockfileSha256": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+  "requests": [
+    {
+      "sequence": 1,
+      "rawUrl": "/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/a",
+      "host": "127.0.0.1:50078",
+      "method": "GET",
+      "status": 200,
+      "nonce": "22644af5-0582-42b1-ba53-b29e89f87de4",
+      "bodySha256": "679fc21c8c996e9cbb67d982d34cca6e4fcee44dea91c40812d4379d61976426",
+      "doc": "a"
+    },
+    {
+      "sequence": 4,
+      "rawUrl": "/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/b",
+      "host": "127.0.0.1:50078",
+      "referer": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/a",
+      "method": "GET",
+      "status": 200,
+      "nonce": "f9bccceb-468f-42bc-b7be-6193791df0cd",
+      "bodySha256": "7b8dbe734a4b4508f92e481eee57fa5228e9f00d33e0839e847f59c1086ce382",
+      "doc": "b"
+    },
+    {
+      "sequence": 8,
+      "rawUrl": "/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/c",
+      "host": "127.0.0.1:50078",
+      "referer": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/b",
+      "method": "GET",
+      "status": 200,
+      "nonce": "c43faf70-08d9-457f-9cc9-2cbe40bd5a9e",
+      "bodySha256": "1970c2d1f5b00eed7be54ef2fad9919e0e1790f831d9186ab09800f7542545e6",
+      "doc": "c"
+    },
+    {
+      "sequence": 12,
+      "rawUrl": "/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/b",
+      "host": "127.0.0.1:50078",
+      "referer": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/a",
+      "method": "GET",
+      "status": 200,
+      "nonce": "fc8db7d5-369b-490f-82a5-fbc41987083c",
+      "bodySha256": "6f4b73eb4e4d8699577464789259a0d677379594c8b98f1a8789a8fdee7dfda4",
+      "doc": "b"
+    },
+    {
+      "sequence": 15,
+      "rawUrl": "/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/a",
+      "host": "127.0.0.1:50078",
+      "method": "GET",
+      "status": 200,
+      "nonce": "f69da91e-88b3-45bc-8d0f-d76bbf5fa0c2",
+      "bodySha256": "ac916c187da2afb1a297ecd1bb0f7aedb8f595f5d1860b6460e1f4b325dc8058",
+      "doc": "a"
+    },
+    {
+      "sequence": 19,
+      "rawUrl": "/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/goto/a",
+      "host": "127.0.0.1:50078",
+      "method": "GET",
+      "status": 200,
+      "nonce": "2fdf9696-90dd-4812-8595-36e823e2d867",
+      "bodySha256": "ebf3ed004e43988cb02d5da14a77bb3e4515787afd287da31ce4ec6ff9cf080d",
+      "doc": "a"
+    },
+    {
+      "sequence": 22,
+      "rawUrl": "/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/goto/b",
+      "host": "127.0.0.1:50078",
+      "method": "GET",
+      "status": 200,
+      "nonce": "d13c8a0f-b38f-42da-b3ec-4b980f059217",
+      "bodySha256": "7469b3f72fca3cbae3fe6d9dba5fc1f257c448fa996e6ed328dd07ce007f8b73",
+      "doc": "b"
+    },
+    {
+      "sequence": 26,
+      "rawUrl": "/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/goto/c",
+      "host": "127.0.0.1:50078",
+      "referer": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/goto/b",
+      "method": "GET",
+      "status": 200,
+      "nonce": "90cacd2c-b681-4704-b768-62deacb8e1f0",
+      "bodySha256": "cb5adc6c36592459baed05ff230dc3ae9b0d217e7bc3dcff52e8899e4e42ed43",
+      "doc": "c"
+    },
+    {
+      "sequence": 43,
+      "rawUrl": "/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/goto/b",
+      "host": "127.0.0.1:50078",
+      "method": "GET",
+      "status": 200,
+      "nonce": "b4e2943a-b9a8-42e6-ba8e-5f1eeb854b30",
+      "bodySha256": "a9191b98fe44f11dcdc78ea461b68bc739d42e4135cfe89ac19a2da63a7320b3",
+      "doc": "b"
+    },
+    {
+      "sequence": 46,
+      "rawUrl": "/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/goto/a",
+      "host": "127.0.0.1:50078",
+      "method": "GET",
+      "status": 200,
+      "nonce": "c6b02cec-7a43-4eb7-a29a-e2a05788a643",
+      "bodySha256": "8cb5323afa5a126669a2505fa4a070c0274f779b9a5aff819d0ef43314420d27",
+      "doc": "a"
+    },
+    {
+      "sequence": 62,
+      "rawUrl": "/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/a",
+      "host": "127.0.0.1:50078",
+      "method": "GET",
+      "status": 200,
+      "nonce": "2f1b524d-086d-42e4-80a6-f08df671f437",
+      "bodySha256": "5fa2ed637fc7b281338107abddc46018c95eccfe197866181fcaddd2ff5b7f90",
+      "doc": "a"
+    },
+    {
+      "sequence": 65,
+      "rawUrl": "/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/b",
+      "host": "127.0.0.1:50078",
+      "referer": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/a",
+      "method": "GET",
+      "status": 200,
+      "nonce": "935e4526-4a4b-4ecd-962d-d65a0b56e8f9",
+      "bodySha256": "8d6bb70ef24c2206d15815f8252a88ba9bb99f7e9e4d09a64fe8945eda4ad8c8",
+      "doc": "b"
+    },
+    {
+      "sequence": 69,
+      "rawUrl": "/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/c",
+      "host": "127.0.0.1:50078",
+      "referer": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/b",
+      "method": "GET",
+      "status": 200,
+      "nonce": "f18c748f-c46a-49bc-aec5-376187ae1506",
+      "bodySha256": "857e0d513858f2391dd442433e2fd5aea80f4f2d0b7c44847efdf8c3240dc914",
+      "doc": "c"
+    },
+    {
+      "sequence": 87,
+      "rawUrl": "/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/b",
+      "host": "127.0.0.1:50078",
+      "referer": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/a",
+      "method": "GET",
+      "status": 200,
+      "nonce": "76f7ed0a-d1bd-47de-b5c7-2e8121616cf0",
+      "bodySha256": "9812b47752cd6af340b5255e692acddfd9e085bc042647808aee8147d79b6aa6",
+      "doc": "b"
+    },
+    {
+      "sequence": 90,
+      "rawUrl": "/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/a",
+      "host": "127.0.0.1:50078",
+      "method": "GET",
+      "status": 200,
+      "nonce": "d31d2f6c-5316-4f04-b03f-a3d55812106a",
+      "bodySha256": "5970cc2cd515f9ad6ac68ac28483bada1fec697729b68672b9160800f21d6565",
+      "doc": "a"
+    },
+    {
+      "sequence": 108,
+      "rawUrl": "/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/goto/a",
+      "host": "127.0.0.1:50078",
+      "method": "GET",
+      "status": 200,
+      "nonce": "e903ba49-4ff0-4e1b-ad12-99e7cf51c85f",
+      "bodySha256": "727ba6a81b3ac0f614986578a53d68f77d88f0f010725e1d47c592b734f9aa88",
+      "doc": "a"
+    },
+    {
+      "sequence": 111,
+      "rawUrl": "/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/goto/b",
+      "host": "127.0.0.1:50078",
+      "method": "GET",
+      "status": 200,
+      "nonce": "daf1ad11-5509-48df-a3cc-9e9a052cae53",
+      "bodySha256": "a02bd74a6065b238f58553b404063281c25c4bd97aa5ea7c9b854fa31b32af70",
+      "doc": "b"
+    },
+    {
+      "sequence": 115,
+      "rawUrl": "/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/goto/c",
+      "host": "127.0.0.1:50078",
+      "referer": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/goto/b",
+      "method": "GET",
+      "status": 200,
+      "nonce": "370d48d8-5fb4-4c6e-a88e-f7e19c3bd4bb",
+      "bodySha256": "17248da4f51684dc38c53bbeed826e321a23f97a246681de6c085f65399b0391",
+      "doc": "c"
+    },
+    {
+      "sequence": 133,
+      "rawUrl": "/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/goto/b",
+      "host": "127.0.0.1:50078",
+      "method": "GET",
+      "status": 200,
+      "nonce": "679825e9-e5eb-4364-bd46-813e36f3eb72",
+      "bodySha256": "61dfa7685ebccd8aa7bef2e419eeb9031a7ecc7eb13150bd8b9e00fccad3b8d3",
+      "doc": "b"
+    },
+    {
+      "sequence": 136,
+      "rawUrl": "/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/goto/a",
+      "host": "127.0.0.1:50078",
+      "method": "GET",
+      "status": 200,
+      "nonce": "8f492dba-7cfe-4d7b-9959-2dc78295ebe1",
+      "bodySha256": "5a24dd0dddfdb2f4684dca0a0eddd9d0a7fc07fe05717c95f792f939a5fb2207",
+      "doc": "a"
+    }
+  ],
+  "combinations": [
+    {
+      "engine": "chromium",
+      "mode": "click",
+      "browserVersion": "156.0.8078.4",
+      "pageId": "f3f440f6-2033-42d5-944f-f2a929f9edd2",
+      "profiles": [
+        {
+          "name": "history",
+          "id": "41e8edc998b4094d251d16d04d9af8f5b79f819ee86e38e5801636bffa4872de",
+          "browserType": "chromium",
+          "persistent": true,
+          "headless": true,
+          "channel": "chromium",
+          "created": true,
+          "closed": true,
+          "removed": true
+        }
+      ],
+      "navigation": [
+        {
+          "sequence": 6,
+          "action": "click-b",
+          "from": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/a",
+          "to": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/b",
+          "source": {
+            "nonce": "22644af5-0582-42b1-ba53-b29e89f87de4",
+            "url": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/a",
+            "timeOrigin": 1792630321017.2
+          },
+          "status": 200,
+          "mainFrame": true,
+          "click": {
+            "trusted": true,
+            "mainFrame": true,
+            "href": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/b",
+            "rawHref": "/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/b",
+            "nonce": "22644af5-0582-42b1-ba53-b29e89f87de4",
+            "url": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/a",
+            "at": 174.20000004768372
+          }
+        },
+        {
+          "sequence": 10,
+          "action": "click-c",
+          "from": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/b",
+          "to": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/c",
+          "source": {
+            "nonce": "f9bccceb-468f-42bc-b7be-6193791df0cd",
+            "url": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/b",
+            "timeOrigin": 1792630321192.2
+          },
+          "status": 200,
+          "mainFrame": true,
+          "click": {
+            "trusted": true,
+            "mainFrame": true,
+            "href": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/c",
+            "rawHref": "/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/c",
+            "nonce": "f9bccceb-468f-42bc-b7be-6193791df0cd",
+            "url": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/b",
+            "at": 121.80000001192093
+          }
+        },
+        {
+          "sequence": 14,
+          "action": "back-to-b",
+          "from": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/c",
+          "to": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/b",
+          "source": {
+            "nonce": "c43faf70-08d9-457f-9cc9-2cbe40bd5a9e",
+            "url": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/c",
+            "timeOrigin": 1792630321314.1
+          },
+          "status": 200,
+          "mainFrame": true,
+          "click": null
+        },
+        {
+          "sequence": 17,
+          "action": "back-to-a",
+          "from": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/b",
+          "to": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/a",
+          "source": {
+            "nonce": "fc8db7d5-369b-490f-82a5-fbc41987083c",
+            "url": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/click/b",
+            "timeOrigin": 1792630321418.3
+          },
+          "status": 200,
+          "mainFrame": true,
+          "click": null
+        }
+      ],
+      "observations": [
+        {
+          "stage": "c-queries-b",
+          "budgetMs": 2000,
+          "intervalMs": 100,
+          "reached": true,
+          "errors": [],
+          "elapsedMs": 62.256374999999935,
+          "sampleCount": 1,
+          "lastSampleElapsedMs": 62.185415999999805
+        },
+        {
+          "stage": "a-queries-b",
+          "budgetMs": 2000,
+          "intervalMs": 100,
+          "reached": true,
+          "errors": [],
+          "elapsedMs": 60.237290999999914,
+          "sampleCount": 1,
+          "lastSampleElapsedMs": 60.21737499999972
+        }
+      ],
+      "warnings": [],
+      "popups": [],
+      "profileCleanup": {
+        "closedProfiles": [
+          "history"
+        ],
+        "removedProfiles": [
+          "history"
+        ],
+        "errors": []
+      }
+    },
+    {
+      "engine": "chromium",
+      "mode": "goto",
+      "browserVersion": "156.0.8078.4",
+      "pageId": "c9c374bf-23ab-4415-82af-c1bc49b16217",
+      "profiles": [
+        {
+          "name": "history",
+          "id": "0193845cc305fdcd76a68fe8ce355a551436392accd558c87ee02197c9ddcede",
+          "browserType": "chromium",
+          "persistent": true,
+          "headless": true,
+          "channel": "chromium",
+          "created": true,
+          "closed": true,
+          "removed": true
+        }
+      ],
+      "navigation": [
+        {
+          "sequence": 24,
+          "action": "goto-b",
+          "from": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/goto/a",
+          "to": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/goto/b",
+          "source": {
+            "nonce": "2fdf9696-90dd-4812-8595-36e823e2d867",
+            "url": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/goto/a",
+            "timeOrigin": 1792630322009.1
+          },
+          "status": 200,
+          "mainFrame": true,
+          "click": null
+        },
+        {
+          "sequence": 28,
+          "action": "click-c",
+          "from": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/goto/b",
+          "to": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/goto/c",
+          "source": {
+            "nonce": "d13c8a0f-b38f-42da-b3ec-4b980f059217",
+            "url": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/goto/b",
+            "timeOrigin": 1792630322144.1
+          },
+          "status": 200,
+          "mainFrame": true,
+          "click": {
+            "trusted": true,
+            "mainFrame": true,
+            "href": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/goto/c",
+            "rawHref": "/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/goto/c",
+            "nonce": "d13c8a0f-b38f-42da-b3ec-4b980f059217",
+            "url": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/goto/b",
+            "at": 91.19999998807907
+          }
+        },
+        {
+          "sequence": 45,
+          "action": "back-to-b",
+          "from": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/goto/c",
+          "to": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/goto/b",
+          "source": {
+            "nonce": "90cacd2c-b681-4704-b768-62deacb8e1f0",
+            "url": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/goto/c",
+            "timeOrigin": 1792630322235.5
+          },
+          "status": 200,
+          "mainFrame": true,
+          "click": null
+        },
+        {
+          "sequence": 48,
+          "action": "back-to-a",
+          "from": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/goto/b",
+          "to": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/goto/a",
+          "source": {
+            "nonce": "b4e2943a-b9a8-42e6-ba8e-5f1eeb854b30",
+            "url": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/chromium/goto/b",
+            "timeOrigin": 1792630324271.3
+          },
+          "status": 200,
+          "mainFrame": true,
+          "click": null
+        }
+      ],
+      "observations": [
+        {
+          "stage": "c-queries-b",
+          "budgetMs": 2000,
+          "intervalMs": 100,
+          "reached": false,
+          "errors": [],
+          "elapsedMs": 2002.9689579999995,
+          "sampleCount": 14,
+          "lastSampleElapsedMs": 2002.961792
+        },
+        {
+          "stage": "a-queries-b",
+          "budgetMs": 2000,
+          "intervalMs": 100,
+          "reached": false,
+          "errors": [
+            "Error: page.evaluate: Error: 诊断文档两帧超时\n    at eval (eval at evaluate (:370:30), <anonymous>:1:141)"
+          ],
+          "elapsedMs": 2002.782709,
+          "sampleCount": 13,
+          "lastSampleElapsedMs": 1892.1287499999999
+        }
+      ],
+      "warnings": [],
+      "popups": [],
+      "profileCleanup": {
+        "closedProfiles": [
+          "history"
+        ],
+        "removedProfiles": [
+          "history"
+        ],
+        "errors": []
+      }
+    },
+    {
+      "engine": "webkit",
+      "mode": "click",
+      "browserVersion": "27.2",
+      "pageId": "21d58eae-cc22-4339-8c03-77b065199fd5",
+      "profiles": [
+        {
+          "name": "history",
+          "id": "bd29ffacf6dd23cdd8476b25539fd115d563334660ff2cfd8cfcb3375e05be84",
+          "browserType": "webkit",
+          "persistent": true,
+          "headless": true,
+          "channel": "default",
+          "created": true,
+          "closed": true,
+          "removed": true
+        }
+      ],
+      "navigation": [
+        {
+          "sequence": 67,
+          "action": "click-b",
+          "from": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/a",
+          "to": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/b",
+          "source": {
+            "nonce": "2f1b524d-086d-42e4-80a6-f08df671f437",
+            "url": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/a",
+            "timeOrigin": 1792630327188
+          },
+          "status": 200,
+          "mainFrame": true,
+          "click": {
+            "trusted": true,
+            "mainFrame": true,
+            "href": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/b",
+            "rawHref": "/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/b",
+            "nonce": "2f1b524d-086d-42e4-80a6-f08df671f437",
+            "url": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/a",
+            "at": 210
+          }
+        },
+        {
+          "sequence": 71,
+          "action": "click-c",
+          "from": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/b",
+          "to": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/c",
+          "source": {
+            "nonce": "935e4526-4a4b-4ecd-962d-d65a0b56e8f9",
+            "url": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/b",
+            "timeOrigin": 1792630327400
+          },
+          "status": 200,
+          "mainFrame": true,
+          "click": {
+            "trusted": true,
+            "mainFrame": true,
+            "href": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/c",
+            "rawHref": "/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/c",
+            "nonce": "935e4526-4a4b-4ecd-962d-d65a0b56e8f9",
+            "url": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/b",
+            "at": 73
+          }
+        },
+        {
+          "sequence": 89,
+          "action": "back-to-b",
+          "from": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/c",
+          "to": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/b",
+          "source": {
+            "nonce": "f18c748f-c46a-49bc-aec5-376187ae1506",
+            "url": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/c",
+            "timeOrigin": 1792630327474
+          },
+          "status": 200,
+          "mainFrame": true,
+          "click": null
+        },
+        {
+          "sequence": 92,
+          "action": "back-to-a",
+          "from": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/b",
+          "to": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/a",
+          "source": {
+            "nonce": "76f7ed0a-d1bd-47de-b5c7-2e8121616cf0",
+            "url": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/click/b",
+            "timeOrigin": 1792630329417
+          },
+          "status": 200,
+          "mainFrame": true,
+          "click": null
+        }
+      ],
+      "observations": [
+        {
+          "stage": "c-queries-b",
+          "budgetMs": 2000,
+          "intervalMs": 100,
+          "reached": false,
+          "errors": [],
+          "elapsedMs": 1930.899125,
+          "sampleCount": 15,
+          "lastSampleElapsedMs": 1930.887499999999
+        },
+        {
+          "stage": "a-queries-b",
+          "budgetMs": 2000,
+          "intervalMs": 100,
+          "reached": false,
+          "errors": [],
+          "elapsedMs": 1929.529790999999,
+          "sampleCount": 15,
+          "lastSampleElapsedMs": 1929.520457999999
+        }
+      ],
+      "warnings": [],
+      "popups": [],
+      "profileCleanup": {
+        "closedProfiles": [
+          "history"
+        ],
+        "removedProfiles": [
+          "history"
+        ],
+        "errors": []
+      }
+    },
+    {
+      "engine": "webkit",
+      "mode": "goto",
+      "browserVersion": "27.2",
+      "pageId": "cd36d54e-697d-4ede-bf9f-8072d38c6788",
+      "profiles": [
+        {
+          "name": "history",
+          "id": "a624d86ec9f8ae9c7cfd41e604a6e75bbc16f3e776d8d6cc4e179285b3c9c58d",
+          "browserType": "webkit",
+          "persistent": true,
+          "headless": true,
+          "channel": "default",
+          "created": true,
+          "closed": true,
+          "removed": true
+        }
+      ],
+      "navigation": [
+        {
+          "sequence": 113,
+          "action": "goto-b",
+          "from": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/goto/a",
+          "to": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/goto/b",
+          "source": {
+            "nonce": "e903ba49-4ff0-4e1b-ad12-99e7cf51c85f",
+            "url": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/goto/a",
+            "timeOrigin": 1792630331816
+          },
+          "status": 200,
+          "mainFrame": true,
+          "click": null
+        },
+        {
+          "sequence": 117,
+          "action": "click-c",
+          "from": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/goto/b",
+          "to": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/goto/c",
+          "source": {
+            "nonce": "daf1ad11-5509-48df-a3cc-9e9a052cae53",
+            "url": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/goto/b",
+            "timeOrigin": 1792630331974
+          },
+          "status": 200,
+          "mainFrame": true,
+          "click": {
+            "trusted": true,
+            "mainFrame": true,
+            "href": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/goto/c",
+            "rawHref": "/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/goto/c",
+            "nonce": "daf1ad11-5509-48df-a3cc-9e9a052cae53",
+            "url": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/goto/b",
+            "at": 74
+          }
+        },
+        {
+          "sequence": 135,
+          "action": "back-to-b",
+          "from": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/goto/c",
+          "to": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/goto/b",
+          "source": {
+            "nonce": "370d48d8-5fb4-4c6e-a88e-f7e19c3bd4bb",
+            "url": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/goto/c",
+            "timeOrigin": 1792630332049
+          },
+          "status": 200,
+          "mainFrame": true,
+          "click": null
+        },
+        {
+          "sequence": 138,
+          "action": "back-to-a",
+          "from": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/goto/b",
+          "to": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/goto/a",
+          "source": {
+            "nonce": "679825e9-e5eb-4364-bd46-813e36f3eb72",
+            "url": "http://127.0.0.1:50078/fe9ed664-a9d1-4227-a044-d499814d05f3/webkit/goto/b",
+            "timeOrigin": 1792630334002
+          },
+          "status": 200,
+          "mainFrame": true,
+          "click": null
+        }
+      ],
+      "observations": [
+        {
+          "stage": "c-queries-b",
+          "budgetMs": 2000,
+          "intervalMs": 100,
+          "reached": false,
+          "errors": [],
+          "elapsedMs": 1941.1423340000001,
+          "sampleCount": 15,
+          "lastSampleElapsedMs": 1941.12975
+        },
+        {
+          "stage": "a-queries-b",
+          "budgetMs": 2000,
+          "intervalMs": 100,
+          "reached": false,
+          "errors": [],
+          "elapsedMs": 1952.2189589999998,
+          "sampleCount": 15,
+          "lastSampleElapsedMs": 1952.2077919999992
+        }
+      ],
+      "warnings": [],
+      "popups": [],
+      "profileCleanup": {
+        "closedProfiles": [
+          "history"
+        ],
+        "removedProfiles": [
+          "history"
+        ],
+        "errors": []
+      }
+    }
+  ],
+  "counts": {
+    "png": 97,
+    "rgbaSideSamples": 1860,
+    "trustedClicks": 6
+  },
+  "serverClosed": true,
+  "topLevelErrors": [],
+  "images": [
+    {
+      "name": "chromium-click-a-queries-b-1.png",
+      "byteLength": 10533,
+      "sha256": "0e176847fc4bfd6b9bff62d2e4b741d5c3a2e4717710e5e9d98c21cd0f7d291a"
+    },
+    {
+      "name": "chromium-click-c-queries-b-1.png",
+      "byteLength": 10561,
+      "sha256": "8dce765a4da0b21e2e828186ffb183ac2af152b79c1c2d444d85df9464a60c27"
+    },
+    {
+      "name": "chromium-click-document-b-1.png",
+      "byteLength": 3104,
+      "sha256": "904dfb620f87eb34173408edcc1957a709f4c5c94a25cfab77beca5ca38a9941"
+    },
+    {
+      "name": "chromium-click-initial-a-1.png",
+      "byteLength": 10485,
+      "sha256": "c9bf40bbe33ca93d5f1bab6f7a535e843a861e8b9441ec9d4b7d7ccf8db647ee"
+    },
+    {
+      "name": "chromium-goto-a-queries-b-1.png",
+      "byteLength": 10485,
+      "sha256": "c9bf40bbe33ca93d5f1bab6f7a535e843a861e8b9441ec9d4b7d7ccf8db647ee"
+    },
+    {
+      "name": "chromium-goto-a-queries-b-10.png",
+      "byteLength": 10485,
+      "sha256": "c9bf40bbe33ca93d5f1bab6f7a535e843a861e8b9441ec9d4b7d7ccf8db647ee"
+    },
+    {
+      "name": "chromium-goto-a-queries-b-11.png",
+      "byteLength": 10485,
+      "sha256": "c9bf40bbe33ca93d5f1bab6f7a535e843a861e8b9441ec9d4b7d7ccf8db647ee"
+    },
+    {
+      "name": "chromium-goto-a-queries-b-12.png",
+      "byteLength": 10485,
+      "sha256": "c9bf40bbe33ca93d5f1bab6f7a535e843a861e8b9441ec9d4b7d7ccf8db647ee"
+    },
+    {
+      "name": "chromium-goto-a-queries-b-13.png",
+      "byteLength": 10485,
+      "sha256": "c9bf40bbe33ca93d5f1bab6f7a535e843a861e8b9441ec9d4b7d7ccf8db647ee"
+    },
+    {
+      "name": "chromium-goto-a-queries-b-2.png",
+      "byteLength": 10485,
+      "sha256": "c9bf40bbe33ca93d5f1bab6f7a535e843a861e8b9441ec9d4b7d7ccf8db647ee"
+    },
+    {
+      "name": "chromium-goto-a-queries-b-3.png",
+      "byteLength": 10485,
+      "sha256": "c9bf40bbe33ca93d5f1bab6f7a535e843a861e8b9441ec9d4b7d7ccf8db647ee"
+    },
+    {
+      "name": "chromium-goto-a-queries-b-4.png",
+      "byteLength": 10485,
+      "sha256": "c9bf40bbe33ca93d5f1bab6f7a535e843a861e8b9441ec9d4b7d7ccf8db647ee"
+    },
+    {
+      "name": "chromium-goto-a-queries-b-5.png",
+      "byteLength": 10485,
+      "sha256": "c9bf40bbe33ca93d5f1bab6f7a535e843a861e8b9441ec9d4b7d7ccf8db647ee"
+    },
+    {
+      "name": "chromium-goto-a-queries-b-6.png",
+      "byteLength": 10485,
+      "sha256": "c9bf40bbe33ca93d5f1bab6f7a535e843a861e8b9441ec9d4b7d7ccf8db647ee"
+    },
+    {
+      "name": "chromium-goto-a-queries-b-7.png",
+      "byteLength": 10485,
+      "sha256": "c9bf40bbe33ca93d5f1bab6f7a535e843a861e8b9441ec9d4b7d7ccf8db647ee"
+    },
+    {
+      "name": "chromium-goto-a-queries-b-8.png",
+      "byteLength": 10485,
+      "sha256": "c9bf40bbe33ca93d5f1bab6f7a535e843a861e8b9441ec9d4b7d7ccf8db647ee"
+    },
+    {
+      "name": "chromium-goto-a-queries-b-9.png",
+      "byteLength": 10485,
+      "sha256": "c9bf40bbe33ca93d5f1bab6f7a535e843a861e8b9441ec9d4b7d7ccf8db647ee"
+    },
+    {
+      "name": "chromium-goto-c-queries-b-1.png",
+      "byteLength": 10485,
+      "sha256": "c9bf40bbe33ca93d5f1bab6f7a535e843a861e8b9441ec9d4b7d7ccf8db647ee"
+    },
+    {
+      "name": "chromium-goto-c-queries-b-10.png",
+      "byteLength": 10513,
+      "sha256": "ed48dc3efc9a050891e5725e9a902ab05430e3193cb2b1021f1c67a54855e4d4"
+    },
+    {
+      "name": "chromium-goto-c-queries-b-11.png",
+      "byteLength": 10513,
+      "sha256": "ed48dc3efc9a050891e5725e9a902ab05430e3193cb2b1021f1c67a54855e4d4"
+    },
+    {
+      "name": "chromium-goto-c-queries-b-12.png",
+      "byteLength": 10513,
+      "sha256": "ed48dc3efc9a050891e5725e9a902ab05430e3193cb2b1021f1c67a54855e4d4"
+    },
+    {
+      "name": "chromium-goto-c-queries-b-13.png",
+      "byteLength": 10513,
+      "sha256": "ed48dc3efc9a050891e5725e9a902ab05430e3193cb2b1021f1c67a54855e4d4"
+    },
+    {
+      "name": "chromium-goto-c-queries-b-14.png",
+      "byteLength": 10513,
+      "sha256": "ed48dc3efc9a050891e5725e9a902ab05430e3193cb2b1021f1c67a54855e4d4"
+    },
+    {
+      "name": "chromium-goto-c-queries-b-2.png",
+      "byteLength": 10513,
+      "sha256": "ed48dc3efc9a050891e5725e9a902ab05430e3193cb2b1021f1c67a54855e4d4"
+    },
+    {
+      "name": "chromium-goto-c-queries-b-3.png",
+      "byteLength": 10513,
+      "sha256": "ed48dc3efc9a050891e5725e9a902ab05430e3193cb2b1021f1c67a54855e4d4"
+    },
+    {
+      "name": "chromium-goto-c-queries-b-4.png",
+      "byteLength": 10513,
+      "sha256": "ed48dc3efc9a050891e5725e9a902ab05430e3193cb2b1021f1c67a54855e4d4"
+    },
+    {
+      "name": "chromium-goto-c-queries-b-5.png",
+      "byteLength": 10513,
+      "sha256": "ed48dc3efc9a050891e5725e9a902ab05430e3193cb2b1021f1c67a54855e4d4"
+    },
+    {
+      "name": "chromium-goto-c-queries-b-6.png",
+      "byteLength": 10513,
+      "sha256": "ed48dc3efc9a050891e5725e9a902ab05430e3193cb2b1021f1c67a54855e4d4"
+    },
+    {
+      "name": "chromium-goto-c-queries-b-7.png",
+      "byteLength": 10513,
+      "sha256": "ed48dc3efc9a050891e5725e9a902ab05430e3193cb2b1021f1c67a54855e4d4"
+    },
+    {
+      "name": "chromium-goto-c-queries-b-8.png",
+      "byteLength": 10513,
+      "sha256": "ed48dc3efc9a050891e5725e9a902ab05430e3193cb2b1021f1c67a54855e4d4"
+    },
+    {
+      "name": "chromium-goto-c-queries-b-9.png",
+      "byteLength": 10513,
+      "sha256": "ed48dc3efc9a050891e5725e9a902ab05430e3193cb2b1021f1c67a54855e4d4"
+    },
+    {
+      "name": "chromium-goto-document-b-1.png",
+      "byteLength": 3104,
+      "sha256": "904dfb620f87eb34173408edcc1957a709f4c5c94a25cfab77beca5ca38a9941"
+    },
+    {
+      "name": "chromium-goto-initial-a-1.png",
+      "byteLength": 10485,
+      "sha256": "c9bf40bbe33ca93d5f1bab6f7a535e843a861e8b9441ec9d4b7d7ccf8db647ee"
+    },
+    {
+      "name": "webkit-click-a-queries-b-1.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-a-queries-b-10.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-a-queries-b-11.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-a-queries-b-12.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-a-queries-b-13.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-a-queries-b-14.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-a-queries-b-15.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-a-queries-b-2.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-a-queries-b-3.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-a-queries-b-4.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-a-queries-b-5.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-a-queries-b-6.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-a-queries-b-7.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-a-queries-b-8.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-a-queries-b-9.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-c-queries-b-1.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-c-queries-b-10.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-c-queries-b-11.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-c-queries-b-12.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-c-queries-b-13.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-c-queries-b-14.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-c-queries-b-15.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-c-queries-b-2.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-c-queries-b-3.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-c-queries-b-4.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-c-queries-b-5.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-c-queries-b-6.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-c-queries-b-7.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-c-queries-b-8.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-c-queries-b-9.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-click-document-b-1.png",
+      "byteLength": 8659,
+      "sha256": "7980577347c76bc17314282091d15820e7cc5dc52ce3964b28265b206cd5eae4"
+    },
+    {
+      "name": "webkit-click-initial-a-1.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-a-queries-b-1.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-a-queries-b-10.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-a-queries-b-11.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-a-queries-b-12.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-a-queries-b-13.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-a-queries-b-14.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-a-queries-b-15.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-a-queries-b-2.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-a-queries-b-3.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-a-queries-b-4.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-a-queries-b-5.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-a-queries-b-6.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-a-queries-b-7.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-a-queries-b-8.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-a-queries-b-9.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-c-queries-b-1.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-c-queries-b-10.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-c-queries-b-11.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-c-queries-b-12.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-c-queries-b-13.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-c-queries-b-14.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-c-queries-b-15.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-c-queries-b-2.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-c-queries-b-3.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-c-queries-b-4.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-c-queries-b-5.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-c-queries-b-6.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-c-queries-b-7.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-c-queries-b-8.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-c-queries-b-9.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    },
+    {
+      "name": "webkit-goto-document-b-1.png",
+      "byteLength": 8659,
+      "sha256": "7980577347c76bc17314282091d15820e7cc5dc52ce3964b28265b206cd5eae4"
+    },
+    {
+      "name": "webkit-goto-initial-a-1.png",
+      "byteLength": 16652,
+      "sha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7"
+    }
+  ],
+  "limitations": [
+    "仅为定向诊断，不是全面验收报告；reached只核对probe/reference/control。",
+    "Chromium goto的末帧超预算和返回A的两帧超时保留，不计成功。",
+    "WebKit empty-self与absolute-self解析URL相同但绘制不同，空href不能代表一般历史登记成功。",
+    "完整record和PNG留在任务忽略目录；摘要不能替代原图离线重放。",
+    "尚未证明Tailwind生成缺陷或WebKit平台限制；正向失败和partial保持。"
+  ]
+}

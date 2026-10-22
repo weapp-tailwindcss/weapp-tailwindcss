@@ -7,6 +7,13 @@ regressions:
   - e2e/tailwind-web-history-replay.test.ts
   - e2e/tailwind-web-history-runner.test.ts
 verification:
+  - claim: 新文档查询与历史返回两条路径中，WebKit 候选及手写参考仍未绘制访问色
+    kind: integration
+    status: failed
+    sha: 44ce882520940eb45463386fe50f6876944581e7
+    environment: macOS arm64、Node 24.18.0、pnpm 12.14.0；Chromium 156.0.8078.4 与 WebKit 27.2，四份独占 persistent profile，headless true，仅定向诊断
+    command: pnpm exec tsx .tmp/visited-navigation-diagnostic.mts
+    reason: 不作为正式全面验收；97张PNG独立重读，Chromium可信点击对照通过，WebKit四条离散观察轨迹未达到；未定位历史登记或查询根因
   - claim: 当前全面验收的 WebKit visited 四边像素失败，手写参考同样未显示访问后颜色
     kind: integration
     status: failed
@@ -68,3 +75,28 @@ verification:
 独立手写 CSS 实验新增空链接 Self，分别以立即返回和目标真实 HTTP 文档 complete、两次 rAF 与截图后返回两条路径运行。两分支各自独立 profile，Chromium 156 和 WebKit 27.2 均后台运行，返回后观察预算仍是两秒。Chromium 的历史返回与同 profile 重开均首帧通过；WebKit 的 Self 始终显示访问色 `[18,52,86,255]`，但真实目标 probe/reference 始终为未访问色 `[1,2,3,255]`，control 正确保持未访问。
 
 证据保存在 `.tmp/visited-self-control/report.json` 及逐帧 PNG，脚本为 `.tmp/visited-self-control.mjs`。所有自有 profile、context 和 HTTP 服务已关闭清理。此实验可排除通用 visited CSS 绘制失败及全面截图掩蔽，不能确定真实目标在历史登记、查询或失效链的具体根因。正向失败继续保留，不以 Self 代替真实导航，不放宽支持预期或时间预算。
+
+## 新文档查询与空链接差异诊断
+
+run `fe9ed664-a9d1-4227-a044-d499814d05f3` 固定源码44ce及相同生成CSS摘要，串行执行 Chromium/WebKit × click/goto 四个组合。可信点击路径是 A→B→C，在新文档C查询B，再返回B、A查询B；goto仅替代首次A→B作为方法对照，不替代正式可信点击合同。每组合使用独占临时profile，保留原始/解析href、baseURI、主frame、文档nonce、HTTP请求/响应nonce、pageshow、单调时间与逐帧四边像素。
+
+| 引擎与首次进入B方式 | C查询B | 返回A查询B |
+| --- | --- | --- |
+| Chromium可信点击 | probe/reference/control首帧达到，约62ms | 三者首帧达到，约60ms |
+| Chromium goto | 14帧未达到；末帧约2002.97ms超预算 | 13帧未达到，另有两帧rAF预算超时 |
+| WebKit可信点击 | 15帧未达到 | 15帧未达到 |
+| WebKit goto | 15帧未达到 | 15帧未达到 |
+
+WebKit的probe与独立手写reference四边均保持未访问色。empty-self与absolute-self的解析URL逐字相同，却仅空href显示访问色；空链接控制走过特殊路径，不能证明一般历史登记正常。`reached`只检查probe/reference/control，不能推广为五条链接全部通过。WebKit轨迹是两秒上限内的离散采样，不声称穷尽连续两秒。
+
+独立复核重读97张PNG、1860个RGBA四边采样及6次可信点击，核对URL/端口、main frame、HTTP与文档nonce链及CSS hash；20个HTTP请求均为200，无popup/pageerror。四份profile均关闭删除并独立确认目录不存在，共享HTTP服务关闭。顶层`errors=[]`不覆盖观察阶段异常，Chromium goto的超预算和rAF错误全部保留。
+
+[持久摘要与97张原图摘要](evidence/visited-navigation-44ce.json)绑定完整record、诊断脚本和锁文件hash。完整record、HTML与PNG仍保存在本任务忽略目录，未随Git交付；摘要不能代替原始证据重放。本轮没有改变正式支持预期、两秒预算或CSS/HTML基线，也没有重跑全面调度。WebKit正向失败及partial继续保留，尚未证明Tailwind生成缺陷或WebKit平台限制。
+
+## Playwright macOS 宿主的源码定位
+
+本机实际 Playwright1.64.1、WebKit revision2370 对应 [Playwright提交cfe490d9的UPSTREAM_CONFIG](https://github.com/microsoft/playwright/blob/cfe490d941f992655948eee8fd4fd94e1c4234bf/browser_patches/webkit/UPSTREAM_CONFIG.sh#L3)，固定WebKit base `56453fdfe0b0ca6258c23e6453b34f70b885d13f`。该版本的[headless宿主建页](https://github.com/microsoft/playwright/blob/cfe490d941f992655948eee8fd4fd94e1c4234bf/browser_patches/webkit/embedder/Playwright/mac/AppDelegate.m#L326)没有开启历史登记。
+
+WebKit [WebViewImpl初始化](https://github.com/WebKit/WebKit/blob/56453fdfe0b0ca6258c23e6453b34f70b885d13f/Source/WebKit/UIProcess/mac/WebViewImpl.mm#L1408)从history client取addsVisitedLinks，[默认返回false](https://github.com/WebKit/WebKit/blob/56453fdfe0b0ca6258c23e6453b34f70b885d13f/Source/WebKit/UIProcess/API/APILegacyContextHistoryClient.h#L51)。[VisitedLinkStore](https://github.com/WebKit/WebKit/blob/56453fdfe0b0ca6258c23e6453b34f70b885d13f/Source/WebKit/UIProcess/VisitedLinkStore.cpp#L103)在该开关关闭时拒绝页面提交的历史hash；[空href则直接走InsideVisited路径](https://github.com/WebKit/WebKit/blob/56453fdfe0b0ca6258c23e6453b34f70b885d13f/Source/WebCore/dom/VisitedLinkState.cpp#L114)。这条源码链解释了普通目标不变色、空href却变色的诊断差异，指向测试宿主配置缺口，不能登记成WebKit或Tailwind不支持visited。
+
+修复边界在embedder：[现有WKWebView SPI](https://github.com/WebKit/WebKit/blob/56453fdfe0b0ca6258c23e6453b34f70b885d13f/Source/WebKit/UIProcess/API/Cocoa/WKWebView.mm#L5829)可开启正常历史登记，[WebKit自身测试宿主](https://github.com/WebKit/WebKit/blob/56453fdfe0b0ca6258c23e6453b34f70b885d13f/Tools/WebKitTestRunner/TestInvocation.cpp#L425)也显式控制该开关。没有以forcePseudoState或空href替代真实可信点击。本轮仅对照固定版本源码，尚未构建修改后的宿主或验证二进制运行路径；正式正向失败继续保留，下一步需要宿主修复后的原流程实测。

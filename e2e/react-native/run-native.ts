@@ -35,6 +35,7 @@ import { createSemanticReporter } from './semantic-reporter'
 import { executeIosCommand } from './ios-command'
 import { launchIosRuntime } from './ios-runtime'
 import { readRuntimePublication } from './installation-evidence'
+import { prepareMetroHttpObservation } from './http-observation'
 
 interface ReportEnvelope { hmrMarker: string, cssHmrColor: string, report: ReactNativeReport, visualProbes: NativeVisualProbe[] }
 type NativeProcess = ReturnType<typeof startExpo>
@@ -392,6 +393,7 @@ async function main() {
   let metroLogFile: Awaited<ReturnType<typeof fs.open>> | undefined
   let metro: NativeProcess | undefined
   let run: NativeProcess | undefined
+  let httpObservation: Awaited<ReturnType<typeof prepareMetroHttpObservation>> | undefined
   let completed = false
   let markerChanged = false
   let cssChanged = false
@@ -427,7 +429,8 @@ async function main() {
     if (javaHome) { env['PATH'] = `${path.join(javaHome, 'bin')}${path.delimiter}${process.env['PATH'] ?? ''}` }
     // iOS Simulator 与宿主机共享网络栈时使用 localhost，避免 CI 虚拟网卡地址导致 Metro 连接失败。
     const metroHost = platform === 'ios' && runtimeHost !== '127.0.0.1' ? '--lan' : '--localhost'
-    const activeMetro = metro = startExpo(['--filter', '@weapp-tailwindcss/example-react-native-expo', 'exec', 'expo', 'start', metroHost, '--port', '8081', '--clear'], env, metroLogFile)
+    httpObservation = await prepareMetroHttpObservation(repoRoot, artifacts, reactNativeVersions())
+    const activeMetro = metro = startExpo(['--filter', '@weapp-tailwindcss/example-react-native-expo', 'exec', 'expo', 'start', metroHost, '--port', '8081', '--clear'], { ...env, ...httpObservation.environment }, metroLogFile)
     await waitForMetro(activeMetro)
     const runArgs = platform === 'ios'
       ? ['exec', 'tsx', 'e2e/react-native/ios-build-cli.ts', device, `http://${runtimeHost}:8081`, artifacts]
@@ -514,6 +517,7 @@ async function main() {
     }
     await attempt(() => stopOwnedProcess(run))
     await attempt(() => run?.catch(() => undefined))
+    if (metro && httpObservation) { await attempt(() => httpObservation.drain()) }
     await attempt(() => stopOwnedProcess(metro))
     await attempt(() => metro?.catch(() => undefined))
     await attempt(() => logFile?.close())
