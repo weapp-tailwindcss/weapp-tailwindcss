@@ -24,6 +24,12 @@ verification:
     sha: e893060d2be447af35edf5c31b8e032f6cfea09e
     environment: fresh extended预检fa1cd8f6、本会话原生Chrome交互和verify通过；run1e0a3ec9的Expo三引擎三阶段原件独立重放通过，双原生在scroll-initial失败；全部保持partial
     command: pnpm e2e:tailwind --preflight-report e2e/.artifacts/preflight/fa1cd8f6-1ac0-4362-9411-731eed8f8074/report.json --target expo-chromium,expo-firefox,expo-webkit,react-native-android,react-native-ios
+  - claim: e57源码五目标ScrollView三阶段真实采集与独立生产重放通过
+    kind: native
+    status: passed
+    sha: e57a24f7bba2835328af8d5ba4b8183dbc429dd3
+    environment: fresh extended预检d429f4f1、本会话原生Chrome交互与verify通过；run55be121d的Expo三引擎及Android/iOS三阶段共660回执1320帧，含ScrollView45回执90帧；全部cleanup settled；各1260注册能力not-run，统一入口exit1，全面验收partial
+    command: pnpm e2e:tailwind --preflight-report e2e/.artifacts/preflight/d429f4f1-dc37-4467-a302-511a959ac10d/report.json --target expo-chromium,expo-firefox,expo-webkit,react-native-android,react-native-ios
 ---
 
 # ScrollView 尺寸、程序化滚动与失败原件
@@ -79,7 +85,23 @@ Web继续精确比较。原0.5dp几何、RGB ±2、双帧、内容位移、裁�
 
 修正后以 `CI=1 pnpm e2e:react-native-compatibility --update=none` 验证26文件386项通过，包含三平台Metro导出及正常static禁止更新比较。Expo示例13文件83项、`tsc --noEmit`、变更代码lint（示例测试显式 `--no-ignore`）通过。日志为 `.tmp/scroll-envelope-{compatibility,example-final,types,lint,example-lint}.log`。这些是本地定向回归，尚不代表修正后的原生运行成功。
 
-修正后的真实设备运行须重新完成extended预检、当前会话原生Chrome交互和verify；旧失败与e893的三引擎成功原件都保留，不转移为新源码成功。全面验收保持partial，served bundle/HMR接收应用链及全注册能力等缺口继续保留。
+### e57 修正后的五目标实际运行
+
+源码 `e57a24f7bba2835328af8d5ba4b8183dbc429dd3` 重新完成extended预检 `d429f4f1-dc37-4467-a302-511a959ac10d`、当前会话原生Chrome交互和verify。统一入口消费该报告，run为 `55be121d-939b-4ec9-bfb3-1985999ca36e`。报告已finished，服务退出；临时Chrome页已关闭，HMR源码恢复，工作树无遗留改动。
+
+| 目标 | 实际宿主 | 三阶段回执/帧 | ScrollView回执/帧 | 独立生产重放 |
+| --- | --- | --- | --- | --- |
+| Expo Chromium | 156.0.8078.4，headless | 132 / 264 | 9 / 18 | 通过 |
+| Expo Firefox | 157.0，headless | 132 / 264 | 9 / 18 | 通过 |
+| Expo WebKit | 27.2，headless | 132 / 264 | 9 / 18 | 通过 |
+| RN Android | sdk_gphone_arm64，Android 11/API30，2.75倍密度 | 132 / 264 | 9 / 18 | 通过 |
+| RN iOS | iPhone 17 Pro模拟器，iOS26.5，3倍密度 | 132 / 264 | 9 / 18 | 通过 |
+
+baseline、TSX HMR、CSS HMR每阶段均118例、44回执、88帧。31项报告supported中26项具有运行时语义证据，另外5项仅编码支持；87项为预声明拒绝。每阶段ScrollView三步顺序完整；五目标共660回执、1320帧，其中ScrollView45回执、90帧。全部 `capture-cleanup.json` 为 `settled/pending:false`。
+
+采集全部结束后，每目标使用独立进程调用原生产 `validateReactNativeReport` 和 `validateNativeRuntimePhases`，重新读取所有阶段PNG、sidecar、编码与源码；五个进程均exit0。原报告、phase-index及完整目标目录摘要、环境和计数保存在 [证据摘要](tailwind-rn-scroll-evidence.json)。原件位于 `e2e/.artifacts/tailwind/55be121d-939b-4ec9-bfb3-1985999ca36e/`；摘要不能替代未随Git保存的完整PNG/原件。运行日志为 `.tmp/scroll-envelope-runtime.log`，独立重放日志为 `.tmp/scroll-envelope-replay-<target>.log`。
+
+五目标各1260项注册能力仍缺独立运行时语义夹具；统一报告均保留 `not-run/attempted:true`，入口exit1，没有被本次有限夹具成功改为全面通过。`servedBundle`仍为`not-captured`，实际bundle及HMR接收/应用链继续独立登记。旧e893双原生失败保留；本次成功只绑定e57，不转移给后续head。下一轮全面调度仍须重新预检。
 
 ## 规则评估
 

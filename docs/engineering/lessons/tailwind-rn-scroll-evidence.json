@@ -1,0 +1,447 @@
+{
+  "status": "partial",
+  "sourceCommit": "e57a24f7bba2835328af8d5ba4b8183dbc429dd3",
+  "runId": "55be121d-939b-4ec9-bfb3-1985999ca36e",
+  "preflightRunId": "d429f4f1-dc37-4467-a302-511a959ac10d",
+  "preflightStatus": "finished",
+  "fixtureHash": "bc36a113e871843b9e21e1b63a7d9df9f7e401955bdeb6d729e9680a75c934dd",
+  "artifactRoot": "e2e/.artifacts/tailwind/55be121d-939b-4ec9-bfb3-1985999ca36e",
+  "replay": "每目标独立进程调用生产 validateReactNativeReport 和 validateNativeRuntimePhases，重读全部阶段 PNG、sidecar、编码和源码；五个进程均 exit 0。",
+  "treeDigestAlgorithm": "将目标 native 目录的全部普通文件按相对逻辑路径排序；每项为 [相对路径,UTF-8/二进制字节数,SHA256]，以紧凑 JSON 和 LF 连接，再计算 UTF-8 SHA256。包含最终日志，不改写原件。",
+  "targets": [
+    {
+      "target": "expo-chromium",
+      "runtimeSession": {
+        "version": 1,
+        "producer": "expo-web",
+        "target": "expo-chromium",
+        "runId": "55be121d-939b-4ec9-bfb3-1985999ca36e",
+        "invocationId": "deb7c5ef-cfaf-4723-9b9f-9dfc5a8799cc"
+      },
+      "versions": {
+        "tailwindcss": "4.3.3",
+        "expo": "54.0.37",
+        "reactNative": "0.81.5",
+        "compiler": "0.3.4"
+      },
+      "environment": {
+        "deviceName": "chromium 156.0.8078.4",
+        "osName": "MacIntel",
+        "osVersion": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+        "runtimeIdentifier": "expo-web-chromium",
+        "abi": "arm64",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "pixelRatio": 1
+        },
+        "browser": {
+          "name": "chromium",
+          "version": "156.0.8078.4"
+        }
+      },
+      "reportSha256": "59f794a439c1da9229eee7e90e43e9532a44793f03b516a96e538c28c340662e",
+      "phaseIndexSha256": "8936ee5845df38125f2f1c24fc6cc19de1f53017083994a3096d7f673d4134eb",
+      "artifactTree": {
+        "fileCount": 706,
+        "bytes": 13332336,
+        "sha256": "e9cbcd0c2aaa54f27106d43380ab3fe4447f46a352c7f446d7044d46bfcb97ae"
+      },
+      "phases": [
+        {
+          "revision": "rn-hmr-baseline-10b981",
+          "cases": 118,
+          "counts": {
+            "supported": 31,
+            "unsupported": 87,
+            "unverified": 0,
+            "failed": 0
+          },
+          "receipts": 44,
+          "frames": 88,
+          "scrollReceipts": 3
+        },
+        {
+          "revision": "rn-hmr-updated-10b981",
+          "cases": 118,
+          "counts": {
+            "supported": 31,
+            "unsupported": 87,
+            "unverified": 0,
+            "failed": 0
+          },
+          "receipts": 44,
+          "frames": 88,
+          "scrollReceipts": 3
+        },
+        {
+          "revision": "rn-hmr-updated-f59e0b",
+          "cases": 118,
+          "counts": {
+            "supported": 31,
+            "unsupported": 87,
+            "unverified": 0,
+            "failed": 0
+          },
+          "receipts": 44,
+          "frames": 88,
+          "scrollReceipts": 3
+        }
+      ],
+      "cleanup": {
+        "version": 1,
+        "pending": false,
+        "status": "settled"
+      },
+      "productionReplay": "passed"
+    },
+    {
+      "target": "expo-firefox",
+      "runtimeSession": {
+        "version": 1,
+        "producer": "expo-web",
+        "target": "expo-firefox",
+        "runId": "55be121d-939b-4ec9-bfb3-1985999ca36e",
+        "invocationId": "e419ebcd-afb0-492b-a113-006b1209d0c2"
+      },
+      "versions": {
+        "tailwindcss": "4.3.3",
+        "expo": "54.0.37",
+        "reactNative": "0.81.5",
+        "compiler": "0.3.4"
+      },
+      "environment": {
+        "deviceName": "firefox 157.0",
+        "osName": "MacIntel",
+        "osVersion": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:157.0) Gecko/20100101 Firefox/157.0",
+        "runtimeIdentifier": "expo-web-firefox",
+        "abi": "arm64",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "pixelRatio": 1
+        },
+        "browser": {
+          "name": "firefox",
+          "version": "157.0"
+        }
+      },
+      "reportSha256": "31a7fd8c87b8e40d1c547dbc3dab1e6fb61fe0c2d614b3be9abdea62a41836e5",
+      "phaseIndexSha256": "be9362fdedb183519ac6b5716b447b709c7f986779a1069c0f2f5b87280d6e55",
+      "artifactTree": {
+        "fileCount": 706,
+        "bytes": 14930911,
+        "sha256": "16790aef71fc9fd2447b761a02f977b25cda26f6b30aa282f54b4ee18f447534"
+      },
+      "phases": [
+        {
+          "revision": "rn-hmr-baseline-10b981",
+          "cases": 118,
+          "counts": {
+            "supported": 31,
+            "unsupported": 87,
+            "unverified": 0,
+            "failed": 0
+          },
+          "receipts": 44,
+          "frames": 88,
+          "scrollReceipts": 3
+        },
+        {
+          "revision": "rn-hmr-updated-10b981",
+          "cases": 118,
+          "counts": {
+            "supported": 31,
+            "unsupported": 87,
+            "unverified": 0,
+            "failed": 0
+          },
+          "receipts": 44,
+          "frames": 88,
+          "scrollReceipts": 3
+        },
+        {
+          "revision": "rn-hmr-updated-f59e0b",
+          "cases": 118,
+          "counts": {
+            "supported": 31,
+            "unsupported": 87,
+            "unverified": 0,
+            "failed": 0
+          },
+          "receipts": 44,
+          "frames": 88,
+          "scrollReceipts": 3
+        }
+      ],
+      "cleanup": {
+        "version": 1,
+        "pending": false,
+        "status": "settled"
+      },
+      "productionReplay": "passed"
+    },
+    {
+      "target": "expo-webkit",
+      "runtimeSession": {
+        "version": 1,
+        "producer": "expo-web",
+        "target": "expo-webkit",
+        "runId": "55be121d-939b-4ec9-bfb3-1985999ca36e",
+        "invocationId": "35f0856f-fcba-49b0-b8c4-4dcb912518b6"
+      },
+      "versions": {
+        "tailwindcss": "4.3.3",
+        "expo": "54.0.37",
+        "reactNative": "0.81.5",
+        "compiler": "0.3.4"
+      },
+      "environment": {
+        "deviceName": "webkit 27.2",
+        "osName": "MacIntel",
+        "osVersion": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.2 Safari/605.1.15",
+        "runtimeIdentifier": "expo-web-webkit",
+        "abi": "arm64",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "pixelRatio": 1
+        },
+        "browser": {
+          "name": "webkit",
+          "version": "27.2"
+        }
+      },
+      "reportSha256": "f46bd8467bce4544612bbc7e07baa5232c0285147705cc68a472fbe120e34536",
+      "phaseIndexSha256": "60eee480d521ae7429ca551f092232b1df99fd71ca992123338b099f70f8cac0",
+      "artifactTree": {
+        "fileCount": 706,
+        "bytes": 16956613,
+        "sha256": "8817057ea69b779efd536d6cedd1c19508e2ea3ec7f103a44687ec00ed0d41dd"
+      },
+      "phases": [
+        {
+          "revision": "rn-hmr-baseline-10b981",
+          "cases": 118,
+          "counts": {
+            "supported": 31,
+            "unsupported": 87,
+            "unverified": 0,
+            "failed": 0
+          },
+          "receipts": 44,
+          "frames": 88,
+          "scrollReceipts": 3
+        },
+        {
+          "revision": "rn-hmr-updated-10b981",
+          "cases": 118,
+          "counts": {
+            "supported": 31,
+            "unsupported": 87,
+            "unverified": 0,
+            "failed": 0
+          },
+          "receipts": 44,
+          "frames": 88,
+          "scrollReceipts": 3
+        },
+        {
+          "revision": "rn-hmr-updated-f59e0b",
+          "cases": 118,
+          "counts": {
+            "supported": 31,
+            "unsupported": 87,
+            "unverified": 0,
+            "failed": 0
+          },
+          "receipts": 44,
+          "frames": 88,
+          "scrollReceipts": 3
+        }
+      ],
+      "cleanup": {
+        "version": 1,
+        "pending": false,
+        "status": "settled"
+      },
+      "productionReplay": "passed"
+    },
+    {
+      "target": "react-native-android",
+      "runtimeSession": {
+        "version": 1,
+        "producer": "react-native",
+        "target": "react-native-android",
+        "runId": "55be121d-939b-4ec9-bfb3-1985999ca36e",
+        "invocationId": "661082ea-7197-4bce-ba12-42bf4f8f838a"
+      },
+      "versions": {
+        "tailwindcss": "4.3.3",
+        "expo": "54.0.37",
+        "reactNative": "0.81.5",
+        "compiler": "0.3.4"
+      },
+      "environment": {
+        "deviceName": "sdk_gphone_arm64",
+        "osName": "android",
+        "osVersion": "11 (API 30)",
+        "runtimeIdentifier": "expo-android",
+        "abi": "arm64-v8a",
+        "viewport": {
+          "width": 392.72727272727275,
+          "height": 753.4545454545455,
+          "pixelRatio": 2.75
+        }
+      },
+      "reportSha256": "295827eb1f230a7a98e457163762ed99fb332fc0af5f7d23111647cc271d3cce",
+      "phaseIndexSha256": "b2613bd3076986c10f79568d7ad05f2d732c09a73a1d5a9026e388b535c2d371",
+      "artifactTree": {
+        "fileCount": 715,
+        "bytes": 33030735,
+        "sha256": "c051e0c06b139304b5b021432a48e0c996efec8feb8384a1b4208af4fc0106d2"
+      },
+      "phases": [
+        {
+          "revision": "rn-hmr-baseline-10b981",
+          "cases": 118,
+          "counts": {
+            "supported": 31,
+            "unsupported": 87,
+            "unverified": 0,
+            "failed": 0
+          },
+          "receipts": 44,
+          "frames": 88,
+          "scrollReceipts": 3
+        },
+        {
+          "revision": "rn-hmr-updated-10b981",
+          "cases": 118,
+          "counts": {
+            "supported": 31,
+            "unsupported": 87,
+            "unverified": 0,
+            "failed": 0
+          },
+          "receipts": 44,
+          "frames": 88,
+          "scrollReceipts": 3
+        },
+        {
+          "revision": "rn-hmr-updated-f59e0b",
+          "cases": 118,
+          "counts": {
+            "supported": 31,
+            "unsupported": 87,
+            "unverified": 0,
+            "failed": 0
+          },
+          "receipts": 44,
+          "frames": 88,
+          "scrollReceipts": 3
+        }
+      ],
+      "cleanup": {
+        "version": 1,
+        "pending": false,
+        "status": "settled"
+      },
+      "productionReplay": "passed"
+    },
+    {
+      "target": "react-native-ios",
+      "runtimeSession": {
+        "version": 1,
+        "producer": "react-native",
+        "target": "react-native-ios",
+        "runId": "55be121d-939b-4ec9-bfb3-1985999ca36e",
+        "invocationId": "0deea286-8d7a-4e56-8a26-11596c158558"
+      },
+      "versions": {
+        "tailwindcss": "4.3.3",
+        "expo": "54.0.37",
+        "reactNative": "0.81.5",
+        "compiler": "0.3.4"
+      },
+      "environment": {
+        "deviceName": "iPhone 17 Pro iOS 26.5 (iPhone18,1)",
+        "osName": "ios",
+        "osVersion": "26.5",
+        "runtimeIdentifier": "expo-ios",
+        "abi": "x86_64",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "pixelRatio": 3
+        }
+      },
+      "reportSha256": "1e77746734bdaa51d570122a5fb941ff9c27d0a715439c31fa0181343610de27",
+      "phaseIndexSha256": "9b5a1c830652139857f468d39ffeb3f7d96a6ad11d759efcf2072b6c28e1ce40",
+      "artifactTree": {
+        "fileCount": 713,
+        "bytes": 60206966,
+        "sha256": "aa0054430e1ea31af64c42fdfc557f426ecb54a6a6d023dae22dad9dba1341f2"
+      },
+      "phases": [
+        {
+          "revision": "rn-hmr-baseline-10b981",
+          "cases": 118,
+          "counts": {
+            "supported": 31,
+            "unsupported": 87,
+            "unverified": 0,
+            "failed": 0
+          },
+          "receipts": 44,
+          "frames": 88,
+          "scrollReceipts": 3
+        },
+        {
+          "revision": "rn-hmr-updated-10b981",
+          "cases": 118,
+          "counts": {
+            "supported": 31,
+            "unsupported": 87,
+            "unverified": 0,
+            "failed": 0
+          },
+          "receipts": 44,
+          "frames": 88,
+          "scrollReceipts": 3
+        },
+        {
+          "revision": "rn-hmr-updated-f59e0b",
+          "cases": 118,
+          "counts": {
+            "supported": 31,
+            "unsupported": 87,
+            "unverified": 0,
+            "failed": 0
+          },
+          "receipts": 44,
+          "frames": 88,
+          "scrollReceipts": 3
+        }
+      ],
+      "cleanup": {
+        "version": 1,
+        "pending": false,
+        "status": "settled"
+      },
+      "productionReplay": "passed"
+    }
+  ],
+  "totals": {
+    "receipts": 660,
+    "frames": 1320,
+    "scrollReceipts": 45,
+    "scrollFrames": 90
+  },
+  "limitations": [
+    "每目标仍有1260项注册能力缺少独立运行时语义夹具，统一入口以not-run和exit1拒绝全面通过。",
+    "每阶段118例：31报告supported包含26运行时语义支持和5仅编码支持；87例为预声明拒绝。",
+    "servedBundle仍为not-captured，不能据marker/安装回执证明实际bundle和HMR接收/应用完整链。",
+    "设备结果只绑定e57a24f7，不转移给后续head；旧e893失败保留。"
+  ]
+}
