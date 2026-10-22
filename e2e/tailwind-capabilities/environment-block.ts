@@ -1,4 +1,4 @@
-import { WechatEnvironmentError } from '../../scripts/wechat/errors'
+import { WechatEnvironmentError, wechatProtocolEnvironmentError } from '../../scripts/wechat/errors'
 import { parseLynxHarnessFailure } from '../lynx/native-failure'
 
 /** 环境故障与产品断言失败分开传播，禁止捕获后继续调度。 */
@@ -24,6 +24,10 @@ export function findEnvironmentBlock(error: unknown): EnvironmentBlockedError | 
     }
     if (current instanceof WechatEnvironmentError) {
       return new EnvironmentBlockedError(current.message, { cause: current })
+    }
+    const protocolFailure = wechatProtocolEnvironmentError(current)
+    if (protocolFailure) {
+      return new EnvironmentBlockedError(protocolFailure.message, { cause: protocolFailure })
     }
     pending.push(current.cause, ...(current instanceof AggregateError ? current.errors : []))
   }

@@ -13,12 +13,12 @@ verification:
     sha: 44ce882520940eb45463386fe50f6876944581e7
     environment: macOS arm64、Node 24.18.0、pnpm 12.14.0、Vitest 5.0.4；包含本记录对应未提交实现，CI=1、快照更新none
     command: pnpm exec vitest run --config e2e/vitest.e2e.config.ts e2e/react-native-http-archive.test.ts e2e/react-native-http-archive-owner.test.ts --maxWorkers=1 --update=none
-  - claim: 新观察器仍需在准确提交和新鲜预检后取得原生双端真实流量
+  - claim: 新鲜预检后取得原生双端真实HTTP调用原件，生产validator独立重放通过
     kind: native
-    status: pending
-    sha: 44ce882520940eb45463386fe50f6876944581e7
-    environment: Android与iOS实际Expo/Metro会话，包含本记录对应待提交实现
-    reason: 定向HTTP回归不是设备证据；旧ScrollView运行未包含观察器，不能继承其运行时成功
+    status: passed
+    sha: 078e6e020db23143cd01826450a5a2b969bda610
+    environment: macOS arm64、Node24.18.0，干净源码run2019853d-3740-49ba-a1c6-a466241025c5；extended脚本、当前会话原生Chrome交互及verify先通过
+    command: pnpm exec tsx .tmp/replay-078e-runtime.mts react-native-ios
 ---
 
 # RN Metro HTTP 调用原件观察
@@ -46,6 +46,17 @@ Expo的compression位于增强器外层，归档边界固定为`metro-response-b
 示例13文件84项通过，包含观察器开启/关闭与共享扫描监听。定向TypeScript与ESLint检查通过。首次类型检查因从原生阶段导入版本/身份而拉入无关E2E依赖图，暴露既有别名和精确可选属性错误；观察器现在由runner传入版本，只依赖Node与execa，定向检查通过，不宣称全仓类型检查成功。
 
 已重新执行`pnpm e2e:react-native:static:update`，差异仅`verifiedAt`；fixtureHash、原始CSS、manifest及声明不变。原阶段与HTTP合同另行执行，不更新快照。
+
+2026-10-22的干净078e全面运行取得双端真实流量。独立重放分别核对本轮invocation、生产阶段回执、准确提交的锁文件、观察器和Metro配置hash，使用生产`validateMetroHttpArchive`重读原件。实际工具链为Expo54.0.37→CLI54.0.27→@expo/metro54.2.0→Metro0.83.3，Node24.18.0。各端仅一次真实GET `.bundle`，均为200、finished、multipart、bodySuppressed=false，`entityValidation:not-performed`。
+
+| 目标 | 调用正文字节 | SHA256 |
+| --- | ---: | --- |
+| Android | 5,668,905 | ce9f3eb183f7ed1732e693bf90e40fce75ecc6520e1192083df2768b611ba7f5 |
+| iOS | 5,665,445 | 1769e0f52bc7ec048001e926eef87623d2ef54989d25be21ae7b3c0ab8311b19 |
+
+同轮baseline、TSX HMR、CSS HMR各118例、44回执、88帧，生产安装/PNG/phase validator独立重放通过。31项预声明支持仍是26运行时及5编码，另87项为预声明拒绝。Image/ScrollView的`sizing-size`语义包含initial/offset/restored，不能推广其它utility。完整报告仍有1260注册能力not-run。[持久摘要](evidence/tailwind-acceptance-078e.json)绑定原件hash；完整流量和PNG保存在忽略目录，未随Git交付。
+
+运行后的微信就绪超时令全面验收失败并人工停止。上述端侧和HTTP结论只属于078e本轮已采集范围，不宣称全部平台通过，也不把一次初始GET关联成三个HMR阶段的完整交付链。
 
 ## 适用边界
 

@@ -7,6 +7,12 @@ regressions:
   - e2e/tailwind-web-history-replay.test.ts
   - e2e/tailwind-web-history-runner.test.ts
 verification:
+  - claim: 三宿主实测对照中，仅开启正常历史登记的macOS宿主在原两秒预算内绘制真实目标访问色
+    kind: integration
+    status: passed
+    sha: 078e6e020db23143cd01826450a5a2b969bda610
+    environment: macOS arm64、Node24.18.0、Playwright1.64.1、WebKit2370；含六个微信环境相关未提交文件，diff cd06248bc489956e4169b5fac7958f6f053b2ac6b397505b8f2dded00ae2b17d；三独占persistent profile，headless true，非正式验收
+    command: pnpm exec tsx .tmp/visited-host-comparison.mts
   - claim: 新文档查询与历史返回两条路径中，WebKit 候选及手写参考仍未绘制访问色
     kind: integration
     status: failed
@@ -99,4 +105,29 @@ WebKit的probe与独立手写reference四边均保持未访问色。empty-self�
 
 WebKit [WebViewImpl初始化](https://github.com/WebKit/WebKit/blob/56453fdfe0b0ca6258c23e6453b34f70b885d13f/Source/WebKit/UIProcess/mac/WebViewImpl.mm#L1408)从history client取addsVisitedLinks，[默认返回false](https://github.com/WebKit/WebKit/blob/56453fdfe0b0ca6258c23e6453b34f70b885d13f/Source/WebKit/UIProcess/API/APILegacyContextHistoryClient.h#L51)。[VisitedLinkStore](https://github.com/WebKit/WebKit/blob/56453fdfe0b0ca6258c23e6453b34f70b885d13f/Source/WebKit/UIProcess/VisitedLinkStore.cpp#L103)在该开关关闭时拒绝页面提交的历史hash；[空href则直接走InsideVisited路径](https://github.com/WebKit/WebKit/blob/56453fdfe0b0ca6258c23e6453b34f70b885d13f/Source/WebCore/dom/VisitedLinkState.cpp#L114)。这条源码链解释了普通目标不变色、空href却变色的诊断差异，指向测试宿主配置缺口，不能登记成WebKit或Tailwind不支持visited。
 
-修复边界在embedder：[现有WKWebView SPI](https://github.com/WebKit/WebKit/blob/56453fdfe0b0ca6258c23e6453b34f70b885d13f/Source/WebKit/UIProcess/API/Cocoa/WKWebView.mm#L5829)可开启正常历史登记，[WebKit自身测试宿主](https://github.com/WebKit/WebKit/blob/56453fdfe0b0ca6258c23e6453b34f70b885d13f/Tools/WebKitTestRunner/TestInvocation.cpp#L425)也显式控制该开关。没有以forcePseudoState或空href替代真实可信点击。本轮仅对照固定版本源码，尚未构建修改后的宿主或验证二进制运行路径；正式正向失败继续保留，下一步需要宿主修复后的原流程实测。
+修复边界在embedder：[现有WKWebView SPI](https://github.com/WebKit/WebKit/blob/56453fdfe0b0ca6258c23e6453b34f70b885d13f/Source/WebKit/UIProcess/API/Cocoa/WKWebView.mm#L5829)可开启正常历史登记，[WebKit自身测试宿主](https://github.com/WebKit/WebKit/blob/56453fdfe0b0ca6258c23e6453b34f70b885d13f/Tools/WebKitTestRunner/TestInvocation.cpp#L425)也显式控制该开关。没有以forcePseudoState或空href替代真实可信点击。该阶段只完成源码对照，以下后续构建实测单独记录，正式失败历史不改写。
+
+## 三宿主构建对照
+
+run `8fa5a010-dcc9-4aa0-89ab-9ffe66be63ce` 比较installed-stock、rebuilt-stock和rebuilt-visited。下载固定Playwright提交的49个embedder文件及WebKit对应ccache配置，逐项复核Git blob与SHA256；两次本机构建共用Xcode27.1/macOS27 SDK、arm64、deployment26.5及原revision2370配套框架。原样重建控制排除单纯本机重建差异。仅patched的headless建页和headful awakeFromNib各增加一行，均在首次导航之前：
+
+```objc
+webView._addsVisitedLinks = configuration.websiteDataStore.persistent;
+_webView._addsVisitedLinks = _configuration.websiteDataStore.persistent;
+```
+
+条件保持ephemeral隐私边界；没有修改WebKit引擎、样式、目标URL、点击方式、采样预算或阈值。构建使用`xcodebuild -project <Playwright.xcodeproj> -target Playwright -configuration Release -sdk macosx`；上游scheme的target ID不对应本项目，不能改用scheme。输出、对象、PCH和module cache均独立于用户工程；`FRAMEWORK_SEARCH_PATHS`绑定revision2370目录。原cache和系统应用未覆盖。
+
+| 宿主 | C查询B | 返回A查询B |
+| --- | --- | --- |
+| installed-stock | 15帧未访问色，末帧1928.496ms | 15帧未访问色，末帧1947.976ms |
+| rebuilt-stock | 15帧未访问色，末帧1920.839ms | 15帧未访问色，末帧1944.036ms |
+| rebuilt-visited | 首帧48.023ms通过 | 首帧46.212ms通过 |
+
+每组合独占新persistent profile、headless true，A→B→C使用真实可信点击；在C查询B，再返回B、A查询B。probe与独立手写reference在patched宿主均为`[18,52,86,255]`，control保持`[1,2,3,255]`。两版stock的probe/reference持续为未访问色。
+
+独立审计用Python标准库另写PNG解码，不消费仓库readPixels/pngjs，校验68张640×480 RGBA原图、CRC及1300个四边采样，结论吻合；核对六次可信点击、15个唯一HTTP nonce、68份文档及325个链接身份、110个事件序号。全部采样在原2000ms内，无重定向、popup或pageerror。三个profile目录已删除，无本任务匹配宿主/诊断端口遗留；服务已关闭。
+
+[持久构建与采样摘要](evidence/visited-host-comparison-078e.json)保存固定源码manifest、原件/构建回执/脚本hash、三个宿主和框架hash、逐帧PNG摘要与四边一致颜色。完整record、构建源、脚本和原图仍在忽略的`.tmp/webkit-visited-host/`；摘要不是完整重放输入。独立目录重建时按manifest的固定Git提交和`source`路径获取文件，以`gitBlob`和`sha256`双校验，布局保持`Tools/Playwright`及对应`Tools/ccache`。patched只加上述两行，再以同参构建两份宿主。自建版启动显式`executablePath`，`DYLD_FRAMEWORK_PATH`及`DYLD_LIBRARY_PATH`绑定原cache；不可覆盖默认浏览器或静默替换正式报告的宿主身份。
+
+这次源码身份为078e加当时六个微信环境相关dirty文件，准确diff hash见frontmatter和摘要；后续这六文件又修改过，不能称为纯078e或当前diff。框架绑定有构建参数、启动环境和二进制hash证据，未采集运行时loaded-image清单。未验证headful、ephemeral或其它系统。该对照支持把故障定位到宿主历史登记开关，尚未将修复宿主作为独立可复现工具接入正式runner；原WebKit正向失败、全面partial及新鲜预检要求继续保留。

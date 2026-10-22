@@ -87,7 +87,15 @@ export class Launcher {
           await delay(Math.min(100, remaining()))
         }
       }
-      await mini.waitForAppReady(remaining())
+      try {
+        await mini.waitForAppReady(remaining())
+      }
+      catch (error) {
+        if (error instanceof WechatEnvironmentError) {
+          throw error
+        }
+        throw new WechatEnvironmentError('微信 App 域就绪未确认；停止本轮请求，保留登录态并重新预检。', { cause: error })
+      }
       remaining()
       return mini
     }

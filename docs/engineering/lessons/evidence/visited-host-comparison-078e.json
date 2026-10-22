@@ -1,0 +1,2826 @@
+{
+  "schema": "visited-host-comparison-summary/v1",
+  "formalAcceptance": false,
+  "rawArtifactsIncluded": false,
+  "summaryIsReplayEvidence": false,
+  "runId": "8fa5a010-dcc9-4aa0-89ab-9ffe66be63ce",
+  "sourceCommit": "078e6e020db23143cd01826450a5a2b969bda610",
+  "sourceStatus": "M e2e/tailwind-capabilities/environment-block.ts\n M e2e/tailwind-scheduler.test.ts\n M e2e/tailwind-weapp-environment.test.ts\n M e2e/wechat-automator.test.ts\n M scripts/wechat/automator.ts\n M scripts/wechat/errors.ts",
+  "sourceDiffSha256": "cd06248bc489956e4169b5fac7958f6f053b2ac6b397505b8f2dded00ae2b17d",
+  "budget": {
+    "budgetMs": 2000,
+    "intervalMs": 100
+  },
+  "generation": {
+    "candidate": "visited:border-[#123456]",
+    "cssSha256": "c4e2c83dbea62f533fe9c4d0150fcfc0eef2627c384a938bd3751559708a3fd4"
+  },
+  "hostSourceManifestSha256": "eab2ae9e68c6690c285e14933be13f94f14e66fa044a4f0b70ff33bb1e6640e0",
+  "scriptSha256": "7ae72dce6ea2de488217a5b37561f49d9fa1fc4cd022dd8e0887cac6883988f7",
+  "serverClosed": true,
+  "errors": [],
+  "record": {
+    "path": ".tmp/webkit-visited-host/comparison-8fa5a010-dcc9-4aa0-89ab-9ffe66be63ce/record.json",
+    "bytes": 714534,
+    "sha256": "be1c544ceba3246a5af4687144e038f4767d91ec66a3bc33646cb0a8c42f96e6"
+  },
+  "script": {
+    "path": ".tmp/visited-host-comparison.mts",
+    "bytes": 14258,
+    "sha256": "7ae72dce6ea2de488217a5b37561f49d9fa1fc4cd022dd8e0887cac6883988f7"
+  },
+  "sourceManifest": {
+    "playwright": "cfe490d941f992655948eee8fd4fd94e1c4234bf",
+    "webkit": "56453fdfe0b0ca6258c23e6453b34f70b885d13f",
+    "files": [
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/Configurations/Base.xcconfig",
+        "relative": "Configurations/Base.xcconfig",
+        "gitBlob": "fc61d5227c8608488514cbd92a28dc7c1c2efaf4",
+        "sha256": "57899702b5b9c740dc0f268c2113b7605ad3e18f13512c8118a8b86f8cace52d",
+        "bytes": 3662
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/Configurations/DebugRelease.xcconfig",
+        "relative": "Configurations/DebugRelease.xcconfig",
+        "gitBlob": "44dc1139c298bd119368ef4f45bbf0888dc71cdb",
+        "sha256": "07f5a74fcf4d6021c9695505c748f6f810b3438b1b35c1a49605f3299d03d164",
+        "bytes": 1949
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/Configurations/Playwright.xcconfig",
+        "relative": "Configurations/Playwright.xcconfig",
+        "gitBlob": "d05c841a5b0f5fce481f16b8c98caf3a5846db77",
+        "sha256": "69f21690dfb8e38f195aa555fd5351a846a9de22d82eca8883cd051ebf1f33f8",
+        "bytes": 1649
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/Configurations/SDKVariant.xcconfig",
+        "relative": "Configurations/SDKVariant.xcconfig",
+        "gitBlob": "fcdf7e65a67c61fb19ef19c428652f336c180e8e",
+        "sha256": "de0a7651bc7a8a18ab7e06629f848c27a01d97a9deb576f5fa891f267bf95489",
+        "bytes": 2413
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/Images.xcassets/AppIcon.appiconset/Contents.json",
+        "relative": "Images.xcassets/AppIcon.appiconset/Contents.json",
+        "gitBlob": "fef0f943e090c43c823b3f4c4b377d9d97356f44",
+        "sha256": "270461916fbb64066bc6fe6f4b6ac05b3b707aa940480a8c8b0df761842c426b",
+        "bytes": 1251
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/Images.xcassets/AppIcon.appiconset/logo-1024.png",
+        "relative": "Images.xcassets/AppIcon.appiconset/logo-1024.png",
+        "gitBlob": "0e884921a30afb13aba7475d408a6090bbe9604d",
+        "sha256": "a561b72becff0e68b032c0a37d1fad076f4602b62d5b0ae9d359785bce855300",
+        "bytes": 147951
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/Images.xcassets/AppIcon.appiconset/logo-128.png",
+        "relative": "Images.xcassets/AppIcon.appiconset/logo-128.png",
+        "gitBlob": "eb8d8edb9aee3d2fde11f2c4ef55dcf7448ff44a",
+        "sha256": "269311ebf5c5a0b0dd821f4ac86ef168dc3841a800e412120bf23e89ef92e902",
+        "bytes": 10150
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/Images.xcassets/AppIcon.appiconset/logo-16.png",
+        "relative": "Images.xcassets/AppIcon.appiconset/logo-16.png",
+        "gitBlob": "ec35525155a5d58010cafd30bd536c21cb388b11",
+        "sha256": "83a5180855a1325e34f9358dcdcc2c608ec4fb40f15366e48cfd3f74b61d36d6",
+        "bytes": 1675
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/Images.xcassets/AppIcon.appiconset/logo-256.png",
+        "relative": "Images.xcassets/AppIcon.appiconset/logo-256.png",
+        "gitBlob": "292b1b69da278080bd3d871161ebfd974fa1986e",
+        "sha256": "75e112c1dd6256c7f3e83be26a28f3944689605f1dc3700b7ebafc8280273fc1",
+        "bytes": 22061
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/Images.xcassets/AppIcon.appiconset/logo-257.png",
+        "relative": "Images.xcassets/AppIcon.appiconset/logo-257.png",
+        "gitBlob": "292b1b69da278080bd3d871161ebfd974fa1986e",
+        "sha256": "75e112c1dd6256c7f3e83be26a28f3944689605f1dc3700b7ebafc8280273fc1",
+        "bytes": 22061
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/Images.xcassets/AppIcon.appiconset/logo-32.png",
+        "relative": "Images.xcassets/AppIcon.appiconset/logo-32.png",
+        "gitBlob": "0765afdab9f4c0ba9967ad5a3729a0a1334158ba",
+        "sha256": "3a6d352ae28434ed53222106f80a2e7da62e75ebd962f81a103bb198dc654bb5",
+        "bytes": 2599
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/Images.xcassets/AppIcon.appiconset/logo-33.png",
+        "relative": "Images.xcassets/AppIcon.appiconset/logo-33.png",
+        "gitBlob": "0765afdab9f4c0ba9967ad5a3729a0a1334158ba",
+        "sha256": "3a6d352ae28434ed53222106f80a2e7da62e75ebd962f81a103bb198dc654bb5",
+        "bytes": 2599
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/Images.xcassets/AppIcon.appiconset/logo-512.png",
+        "relative": "Images.xcassets/AppIcon.appiconset/logo-512.png",
+        "gitBlob": "81910918b6b4a4d9d75744d88ac7b1981c040dd3",
+        "sha256": "aeae6e52e1d06f43da1b41321ff25eb93dfbaed45efce3be136be57ad4aea946",
+        "bytes": 48423
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/Images.xcassets/AppIcon.appiconset/logo-513.png",
+        "relative": "Images.xcassets/AppIcon.appiconset/logo-513.png",
+        "gitBlob": "81910918b6b4a4d9d75744d88ac7b1981c040dd3",
+        "sha256": "aeae6e52e1d06f43da1b41321ff25eb93dfbaed45efce3be136be57ad4aea946",
+        "bytes": 48423
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/Images.xcassets/AppIcon.appiconset/logo-64.png",
+        "relative": "Images.xcassets/AppIcon.appiconset/logo-64.png",
+        "gitBlob": "d66de39a7465043eee85d2fa4551096d92e84d69",
+        "sha256": "84af64c88f4f33b4b999d268586c6391c5f691b66b758f5e231f507cdefc4142",
+        "bytes": 4894
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/Images.xcassets/Contents.json",
+        "relative": "Images.xcassets/Contents.json",
+        "gitBlob": "73c00596a7fca3f3d4bdd64053b69d86745f9e10",
+        "sha256": "0fd49ba3c3585c709678e0046a821c3c60685ec7063720d30d3a3448be3a208b",
+        "bytes": 63
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/MBToolbarItem.h",
+        "relative": "MBToolbarItem.h",
+        "gitBlob": "9971d4c1023a9f6e57c6058ae20729e51bb6d503",
+        "sha256": "82c6cf0cd1270268b23be9c01cd59e8f15899c4b118fdd9986668ccdd525226b",
+        "bytes": 1402
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/MBToolbarItem.m",
+        "relative": "MBToolbarItem.m",
+        "gitBlob": "56f777891519e820105ae50a86141a534ec4794b",
+        "sha256": "e56cbfae5e186d8a8efe250fea99772d1d7455da3e02601c569273907e764f00",
+        "bytes": 1511
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/Makefile",
+        "relative": "Makefile",
+        "gitBlob": "58e52428388d927ae7681d999e6dd28e0fb3ec6b",
+        "sha256": "d11f75c890500ecd03943569fc901bfe307e79cbec27e59ef0c66f7ec17fed16",
+        "bytes": 377
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/Playwright.xcodeproj/project.pbxproj",
+        "relative": "Playwright.xcodeproj/project.pbxproj",
+        "gitBlob": "e2dd63d3c4358d29449e50b9f8b673369327f4df",
+        "sha256": "760a9812adc3d462839424d78b6115ef26fa1a8025c791f0001184f7f7d2f778",
+        "bytes": 13585
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/Playwright.xcodeproj/xcshareddata/xcschemes/Playwright.xcscheme",
+        "relative": "Playwright.xcodeproj/xcshareddata/xcschemes/Playwright.xcscheme",
+        "gitBlob": "00fb6b0006c743091a8bbf8edb18b21192ea7d6c",
+        "sha256": "678b2d2098a1847b5d32888b630fdf970720efceef9082589e956c1b1a601f13",
+        "bytes": 2867
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/mac/AppDelegate.h",
+        "relative": "mac/AppDelegate.h",
+        "gitBlob": "f3ebb86b818ec892dec84d61f73c240ae3d025bd",
+        "sha256": "cb7d7d3d73930162ce18aa1cdbe76b47727d048287d4e6f5375e258853c36d3c",
+        "bytes": 2218
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/mac/AppDelegate.m",
+        "relative": "mac/AppDelegate.m",
+        "gitBlob": "c9c08a8f45c141e1cadd646161324617390a13e2",
+        "sha256": "1601822596db087a4b4c0b71879945cdf2f4157578909631c58dc10d18871695",
+        "bytes": 22737
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/mac/BrowserWindow.xib",
+        "relative": "mac/BrowserWindow.xib",
+        "gitBlob": "3789c399d4eb97764b4beb332b898fb3c7e08d92",
+        "sha256": "fec72ffa3ccaf37895416f73beec9de99e49e24d5df8dee020f172030f5a645e",
+        "bytes": 14693
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/mac/BrowserWindowController.h",
+        "relative": "mac/BrowserWindowController.h",
+        "gitBlob": "dd9ff40910e5bcc88cb806e868a87f414e4179f2",
+        "sha256": "a4dcd1c85d4dbd8bf3d60c180aef93161efad0dc58eeb5df499403e80d6ed869",
+        "bytes": 2141
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/mac/BrowserWindowController.m",
+        "relative": "mac/BrowserWindowController.m",
+        "gitBlob": "9c468dc95e5bf1c0999a7d3237f16daae98aed77",
+        "sha256": "a88e67f203a730f99acd1857c99feff92f7a18803c2b38ab77020478d675a6b0",
+        "bytes": 34981
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/mac/CMakeLists.txt",
+        "relative": "mac/CMakeLists.txt",
+        "gitBlob": "410d47425b79367114b17274355350894a70a5e6",
+        "sha256": "2faaff55f12fc9cfd8cbbc6382da7c6a1ded9a9d6b81ee565d0d7f63cff9f044",
+        "bytes": 1766
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/mac/Info.plist",
+        "relative": "mac/Info.plist",
+        "gitBlob": "77e666e5f260fefa16e66e20961d95fabce0afe6",
+        "sha256": "4bceb37f1e7b416f2f3b1935f022232b7a3db3ce6f9e09aaab2d46e9655ae913",
+        "bytes": 1451
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/mac/MainMenu.xib",
+        "relative": "mac/MainMenu.xib",
+        "gitBlob": "b16d639a1ad18354e058c613987d846acd70b361",
+        "sha256": "23614586b0f13bb82847ddd7ad4b7f0de69bcae492edb89b949a1c3dc0be7e30",
+        "bytes": 21016
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/mac/Playwright_Prefix.pch",
+        "relative": "mac/Playwright_Prefix.pch",
+        "gitBlob": "ab6e9bce9a41291bb35664c2c63751c3413601f2",
+        "sha256": "097d49c2f70129680aba72c60040180e4f1b10e4db3e5498b92d6123b3823d1b",
+        "bytes": 1533
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/mac/main.m",
+        "relative": "mac/main.m",
+        "gitBlob": "ba2ca12482c0ab809998131f693c876019c595f1",
+        "sha256": "4b75ee30418ea9a4a3094fc43af4939855194be69584bf4b00688ac8e843fa8d",
+        "bytes": 1577
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/win/CMakeLists.txt",
+        "relative": "win/CMakeLists.txt",
+        "gitBlob": "5be95046e4173a5902a4cef72b2ff040d3bc777a",
+        "sha256": "4dd4d66528f1713712161036ddbc2fa3257fa1f7813cbfcb297000fc04a524f0",
+        "bytes": 805
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/win/Common.cpp",
+        "relative": "win/Common.cpp",
+        "gitBlob": "01a10f7be9cedc548ed2d9ee1865f2249af7dfaa",
+        "sha256": "b1d300fe38e5c4bfcf231fedcebfc9d6d5cfdb3e2c0d141e0d50970f2609b625",
+        "bytes": 8415
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/win/Common.h",
+        "relative": "win/Common.h",
+        "gitBlob": "29edbe39dad34cfcc028b56d784ff1d8162cb526",
+        "sha256": "525531472a94e7ca035d7cfb09e9f450ce4045faa409f38027be986a2403a439",
+        "bytes": 2783
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/win/DialogHelper.h",
+        "relative": "win/DialogHelper.h",
+        "gitBlob": "6590fe00255841fa93a0fe7c6bffbc0dc13fd2d0",
+        "sha256": "bf013764bc5ee6c750de986150bf85c2936c026d13ecdfa71a9180f42d220dee",
+        "bytes": 4598
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/win/MainWindow.cpp",
+        "relative": "win/MainWindow.cpp",
+        "gitBlob": "ca65ccb0221fcf5623d5e331d28c443868664da5",
+        "sha256": "ff842dbed782740fea5ed269f92dc3dd003aea36eb3d01a448348daf2b7bef3b",
+        "bytes": 15079
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/win/MainWindow.h",
+        "relative": "win/MainWindow.h",
+        "gitBlob": "e0af565f4b98bb7b0d82fb7f42ae533274a20d21",
+        "sha256": "6307e4b08a76cde765f78b03bb590c0f881bc8e70f5a816bc4d05a3e40dc3bb3",
+        "bytes": 3036
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/win/Playwright.ico",
+        "relative": "win/Playwright.ico",
+        "gitBlob": "cea0bdebc38b20b92f39948ee5df0ea6c9254a2c",
+        "sha256": "d81c748cc8bd064ea31772063fa2a8373df0a6f621495428755be015f6c239cf",
+        "bytes": 113314
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/win/PlaywrightLib.rc",
+        "relative": "win/PlaywrightLib.rc",
+        "gitBlob": "07e4e0d072eefb7703224a4d0910f1c4f746bae7",
+        "sha256": "63432b5e1a533c428ee74c173622bd12743e7f85944271d9ffdb20fcff1e1d0c",
+        "bytes": 12579
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/win/PlaywrightLibResource.h",
+        "relative": "win/PlaywrightLibResource.h",
+        "gitBlob": "360c0a9cec39909f64479e6a67e80c57d874086f",
+        "sha256": "4321466054837235a7ac765bc1ced63ee00705891aeb8dfe5954b3d73d10c7c1",
+        "bytes": 4859
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/win/PlaywrightReplace.h",
+        "relative": "win/PlaywrightReplace.h",
+        "gitBlob": "dd134b879ea6aee23826e9ed2f6773d8c1466118",
+        "sha256": "c41951384ce6cc7232a00b577ef98845ac4bb7a9d719cb40b76775da1b876327",
+        "bytes": 1586
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/win/PlaywrightResource.h",
+        "relative": "win/PlaywrightResource.h",
+        "gitBlob": "c60d7b73f18d0e7f220e68c2a22e5d9911bf8960",
+        "sha256": "6a755f80bb1eec18a503ff7d21d0b586f1dc7d3d809875ac43942a384a060da3",
+        "bytes": 616
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/win/WebKitBrowserWindow.cpp",
+        "relative": "win/WebKitBrowserWindow.cpp",
+        "gitBlob": "c850d820763a59425ef17aad7ae0cf3d7f3a8cd8",
+        "sha256": "45995bba9988a5c5acf07c3d4a661fda122c39a1992b5acba643ee9ecbc080a2",
+        "bytes": 16486
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/win/WebKitBrowserWindow.h",
+        "relative": "win/WebKitBrowserWindow.h",
+        "gitBlob": "6b677e808fb900f5a40f390bb37c94f2daefd678",
+        "sha256": "f0fb2825dd2e03de5d67b6864718e619cf711afcbb97a1dddcb5c81c8fb43731",
+        "bytes": 4618
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/win/WinMain.cpp",
+        "relative": "win/WinMain.cpp",
+        "gitBlob": "585e1778b0a6da8e60722a1f033c0427eaed4940",
+        "sha256": "866253e1ef75924ab0fcc723f1b062090b5a2134d0a93247863c57f50f7aeacc",
+        "bytes": 7265
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/win/resource.h",
+        "relative": "win/resource.h",
+        "gitBlob": "5a19599daedb9885e0e251412d17b97a51ad1529",
+        "sha256": "fcf6878ee698201b3404bce9a941d3397a65bfac62b1b9393e1d3d0c20d778ef",
+        "bytes": 829
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/win/stdafx.cpp",
+        "relative": "win/stdafx.cpp",
+        "gitBlob": "3c4e5e52a16a300e36f4f9d8c5c490634ed02257",
+        "sha256": "e0adee7807af323ebb7234812a4e36316cb0c68073709438bfbc3517788a109f",
+        "bytes": 1622
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/win/stdafx.h",
+        "relative": "win/stdafx.h",
+        "gitBlob": "8436fba636da15aa7a9f2f9e6b6667908d7c7b85",
+        "sha256": "03cb9eb654fb98b8f11d93647de6a826d958af8997b76af7360eae147c549980",
+        "bytes": 2509
+      },
+      {
+        "source": "browser_patches/webkit/embedder/Playwright/win/toolbar.bmp",
+        "relative": "win/toolbar.bmp",
+        "gitBlob": "07eea0dbb576d3f26e9302308507888f7e2c3bbf",
+        "sha256": "8b36f3c15f98dee629a7f2e974ea752b87616127b3cb7ee4b11f58ec952d6134",
+        "bytes": 982
+      }
+    ],
+    "ccache": {
+      "source": "Tools/ccache/ccache.xcconfig",
+      "gitBlob": "40c4bf93ffc3d593326174c138bd31b54694ae66",
+      "sha256": "9e6437f3dff0f474da52250afbe8be2f114e42c0de416197fc4d95d16195fb25"
+    },
+    "status": "source-only-not-built"
+  },
+  "buildReceipt": {
+    "path": ".tmp/webkit-visited-host/build-results.json",
+    "bytes": 2821,
+    "sha256": "59f2be510dad2bf22501459a8d84f783ea22d7b546afe78da1c147d5909dab15"
+  },
+  "hostBinaries": [
+    {
+      "host": "installed-stock",
+      "sha256": "18775828b550e916840169243afdacec3b3411a5ccd5ebf2da7eb401b68f7900"
+    },
+    {
+      "host": "rebuilt-stock",
+      "sha256": "1daf0f2ca2b802504e4b317726e8da3aa84beab3ee3defd6a545dd680573b773"
+    },
+    {
+      "host": "rebuilt-visited",
+      "sha256": "dff66e946c42f2a23c7a6ab1468a6c83f2ebac5f38192172424e83d867ebd340"
+    }
+  ],
+  "frameworkBinary": {
+    "sha256": "2ca18faf698a23e2437dd4c6d3432f96eb757ad1f056396be2e5904b71fda250"
+  },
+  "loadedImages": "not-captured",
+  "combinations": [
+    {
+      "host": "installed-stock",
+      "mode": "click",
+      "browserVersion": "27.2",
+      "profile": [
+        {
+          "name": "history",
+          "id": "85a343e680ec76ce3fd28fa2bea5f64f391df1db861f60c9295cfe031920e9b5",
+          "browserType": "webkit",
+          "persistent": true,
+          "headless": true,
+          "channel": "default",
+          "created": true,
+          "closed": true,
+          "removed": true
+        }
+      ],
+      "navigationActions": [
+        "click-b",
+        "click-c",
+        "back-to-b",
+        "back-to-a"
+      ],
+      "trustedClicks": 2,
+      "responseCount": 5,
+      "observations": [
+        {
+          "stage": "c-queries-b",
+          "reached": false,
+          "samples": [
+            {
+              "attempt": 1,
+              "elapsedMs": 55.24075000000039,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 2,
+              "elapsedMs": 202.09245800000008,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 3,
+              "elapsedMs": 328.66158300000006,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 4,
+              "elapsedMs": 464.42966700000034,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 5,
+              "elapsedMs": 597.2557080000001,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 6,
+              "elapsedMs": 731.455042,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 7,
+              "elapsedMs": 861.0209170000003,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 8,
+              "elapsedMs": 995.6977500000003,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 9,
+              "elapsedMs": 1130.27,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 10,
+              "elapsedMs": 1263.9230420000004,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 11,
+              "elapsedMs": 1394.8830000000003,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 12,
+              "elapsedMs": 1529.3587080000002,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 13,
+              "elapsedMs": 1661.482958,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 14,
+              "elapsedMs": 1801.643458,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 15,
+              "elapsedMs": 1928.4961670000002,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "stage": "a-queries-b",
+          "reached": false,
+          "samples": [
+            {
+              "attempt": 1,
+              "elapsedMs": 56.24695799999972,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 2,
+              "elapsedMs": 196.61479199999985,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 3,
+              "elapsedMs": 330.0520419999998,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 4,
+              "elapsedMs": 462.7416669999998,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 5,
+              "elapsedMs": 610.1607499999996,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 6,
+              "elapsedMs": 745.711667,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 7,
+              "elapsedMs": 879.5092499999996,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 8,
+              "elapsedMs": 1013.5322919999994,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 9,
+              "elapsedMs": 1146.8736249999997,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 10,
+              "elapsedMs": 1281.8672080000001,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 11,
+              "elapsedMs": 1415.340208,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 12,
+              "elapsedMs": 1545.7782080000002,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 13,
+              "elapsedMs": 1683.0328749999994,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 14,
+              "elapsedMs": 1812.1447080000003,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 15,
+              "elapsedMs": 1947.9761249999997,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "host": "rebuilt-stock",
+      "mode": "click",
+      "browserVersion": "27.2",
+      "profile": [
+        {
+          "name": "history",
+          "id": "eb2a662aaee75419ad4a474ef2ffe7746820374d27d8a673816fc7cb2121ccae",
+          "browserType": "webkit",
+          "persistent": true,
+          "headless": true,
+          "channel": "default",
+          "created": true,
+          "closed": true,
+          "removed": true
+        }
+      ],
+      "navigationActions": [
+        "click-b",
+        "click-c",
+        "back-to-b",
+        "back-to-a"
+      ],
+      "trustedClicks": 2,
+      "responseCount": 5,
+      "observations": [
+        {
+          "stage": "c-queries-b",
+          "reached": false,
+          "samples": [
+            {
+              "attempt": 1,
+              "elapsedMs": 61.342499999999745,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 2,
+              "elapsedMs": 187.26120900000024,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 3,
+              "elapsedMs": 321.36425000000054,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 4,
+              "elapsedMs": 458.4227090000004,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 5,
+              "elapsedMs": 586.8938340000004,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 6,
+              "elapsedMs": 719.7621669999999,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 7,
+              "elapsedMs": 855.674,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 8,
+              "elapsedMs": 986.2210000000005,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 9,
+              "elapsedMs": 1121.3084170000002,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 10,
+              "elapsedMs": 1258.7721249999995,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 11,
+              "elapsedMs": 1390.564375,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 12,
+              "elapsedMs": 1528.9505000000008,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 13,
+              "elapsedMs": 1652.0949170000004,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 14,
+              "elapsedMs": 1788.3562920000004,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 15,
+              "elapsedMs": 1920.8387920000005,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "stage": "a-queries-b",
+          "reached": false,
+          "samples": [
+            {
+              "attempt": 1,
+              "elapsedMs": 53.65166700000009,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 2,
+              "elapsedMs": 195.34150000000045,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 3,
+              "elapsedMs": 328.8601669999989,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 4,
+              "elapsedMs": 462.44637499999953,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 5,
+              "elapsedMs": 593.9734580000004,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 6,
+              "elapsedMs": 730.9692500000001,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 7,
+              "elapsedMs": 863.5480420000004,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 8,
+              "elapsedMs": 994.4665420000001,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 9,
+              "elapsedMs": 1126.914666999999,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 10,
+              "elapsedMs": 1260.8282920000001,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 11,
+              "elapsedMs": 1394.512666999999,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 12,
+              "elapsedMs": 1529.3044169999994,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 13,
+              "elapsedMs": 1671.7062499999993,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 14,
+              "elapsedMs": 1811.9276250000003,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            },
+            {
+              "attempt": 15,
+              "elapsedMs": 1944.0356250000004,
+              "screenshotSha256": "0862e7d933da34e920023f23a7987fa784614d6faef798216f11dcc632b3f0d7",
+              "uniformFourSideRgba": {
+                "probe": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "reference": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  1,
+                  2,
+                  3,
+                  255
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "host": "rebuilt-visited",
+      "mode": "click",
+      "browserVersion": "27.2",
+      "profile": [
+        {
+          "name": "history",
+          "id": "16400cf37faf4a0607a8e1c47b5e7c4559aed7567b64cdbe52ae1106f37d434a",
+          "browserType": "webkit",
+          "persistent": true,
+          "headless": true,
+          "channel": "default",
+          "created": true,
+          "closed": true,
+          "removed": true
+        }
+      ],
+      "navigationActions": [
+        "click-b",
+        "click-c",
+        "back-to-b",
+        "back-to-a"
+      ],
+      "trustedClicks": 2,
+      "responseCount": 5,
+      "observations": [
+        {
+          "stage": "c-queries-b",
+          "reached": true,
+          "samples": [
+            {
+              "attempt": 1,
+              "elapsedMs": 48.02299999999923,
+              "screenshotSha256": "6b239fc65f273e46751a957abe8737c20b11154a3e2e7c9d24cf92ffda143415",
+              "uniformFourSideRgba": {
+                "probe": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "reference": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "stage": "a-queries-b",
+          "reached": true,
+          "samples": [
+            {
+              "attempt": 1,
+              "elapsedMs": 46.21216599999934,
+              "screenshotSha256": "6b239fc65f273e46751a957abe8737c20b11154a3e2e7c9d24cf92ffda143415",
+              "uniformFourSideRgba": {
+                "probe": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "reference": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "control": [
+                  1,
+                  2,
+                  3,
+                  255
+                ],
+                "empty-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ],
+                "absolute-self": [
+                  18,
+                  52,
+                  86,
+                  255
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

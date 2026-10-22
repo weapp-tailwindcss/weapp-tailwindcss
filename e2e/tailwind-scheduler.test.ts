@@ -1,6 +1,6 @@
 import type { ExecutionStage } from './tailwind-capabilities/execution-record'
 import type { ExecutionTarget } from './tailwind-capabilities/plan'
-import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises'
+import { mkdir, mkdtemp, readdir, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { expect, it, vi } from 'vitest'
@@ -15,9 +15,49 @@ function fixture() {
   return { stages, dependencies }
 }
 
-function producerCommand(producer: 'react-native' | 'lynx-native', body: string) {
+function producerCommand(producer: 'react-native' | 'lynx-native' | 'weapp', body: string) {
   return ['exec', 'tsx', '-e', `import { runStageProducer } from './e2e/tailwind-capabilities/stage-receipt'; import { LynxHarnessBlockedError, formatLynxHarnessFailure } from './e2e/lynx/native-failure'; runStageProducer(${JSON.stringify(producer)}, async () => { ${body} }).catch(error => { console.error(formatLynxHarnessFailure(error) ?? String(error)); process.exitCode = 1 })`]
 }
+
+it.each([false, true])('微信终态协议超时跨进程回执后阻断，聚合=%s，不能启动后续小程序矩阵', async (nested) => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'tailwind-wechat-timeout-'))
+  const { stages, dependencies } = fixture()
+  stages[0]!.target = 'weapp'
+  const primary = `Object.assign(new Error('opaque SDK timeout'), { code: 'DEVTOOLS_PROTOCOL_TIMEOUT', method: 'App.captureScreenshot' })`
+  const failure = nested ? `new AggregateError([new Error('SDK wrapper', { cause: ${primary} }), new Error('diagnostic cleanup failed')], 'owned producer failure')` : primary
+  dependencies.execute.mockImplementation(() => runPnpmStage({ root: path.resolve(import.meta.dirname, '..'), directory, runId: 'wechat-timeout', env: {} }, producerCommand('weapp', `throw ${failure}`), 'weapp'))
+  try {
+    await expect(scheduleTargets(stages, dependencies)).rejects.toThrow(EnvironmentBlockedError)
+    expect(dependencies.execute.mock.calls).toEqual([['weapp']])
+    expect(dependencies.check.mock.calls).toEqual([['weapp']])
+    expect(dependencies.classify).not.toHaveBeenCalled()
+    expect(stages.map(stage => stage.status)).toEqual(['blocked', 'blocked', 'blocked'])
+    const receipts = await readdir(path.join(directory, 'stage-receipts'))
+    expect(receipts).toHaveLength(1)
+    const receipt = JSON.parse(await readFile(path.join(directory, 'stage-receipts', receipts[0]!), 'utf8'))
+    expect(receipt.status).toBe('blocked')
+    expect(receipt.diagnostic).toContain('opaque SDK timeout')
+    if (nested) {
+      expect(receipt.diagnostic).toContain('diagnostic cleanup failed')
+    }
+  }
+  finally {
+    await rm(directory, { recursive: true, force: true })
+  }
+})
+
+it('协议错误文字、普通对象及不完整字段不能拥有环境调度控制权', () => {
+  for (const error of [
+    new Error('DEVTOOLS_PROTOCOL_TIMEOUT App.captureScreenshot'),
+    { code: 'DEVTOOLS_PROTOCOL_TIMEOUT', method: 'App.captureScreenshot' },
+    Object.assign(new Error('opaque SDK error'), { code: 'DEVTOOLS_PROTOCOL_TIMEOUT' }),
+    Object.assign(new Error('opaque SDK error'), { code: 'DEVTOOLS_PROTOCOL_TIMEOUT', method: '' }),
+    Object.assign(new Error('opaque SDK error'), { code: 'DEVTOOLS_PROTOCOL_TIMEOUT', method: 'css.compile' }),
+    Object.assign(new Error('opaque SDK error'), { code: 'OTHER', method: 'App.captureScreenshot' }),
+  ]) {
+    expect(findEnvironmentBlock(error)).toBeUndefined()
+  }
+})
 
 it('聚合单测中的模拟环境日志不能把真实快照失败升级为环境阻塞', async () => {
   const directory = await mkdtemp(path.join(tmpdir(), 'tailwind-nested-output-'))

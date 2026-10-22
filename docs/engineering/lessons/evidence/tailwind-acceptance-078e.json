@@ -1,0 +1,1617 @@
+{
+  "schema": "tailwind-acceptance-summary/v1",
+  "status": "partial",
+  "rawArtifactsIncluded": false,
+  "summaryIsReplayEvidence": false,
+  "runId": "2019853d-3740-49ba-a1c6-a466241025c5",
+  "sourceCommit": "078e6e020db23143cd01826450a5a2b969bda610",
+  "sourceDirty": false,
+  "index": {
+    "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/index.json",
+    "bytes": 30290,
+    "sha256": "77881e914d76e5ba0868f037e5285f7fe227ad00df51a1f0813a18ee883d74b2"
+  },
+  "preflight": {
+    "path": "e2e/.artifacts/preflight/c1657530-7382-482b-ba30-596a9081bbfc/report.json",
+    "bytes": 23777,
+    "sha256": "bc659f4b9c797d5299a096cb121f7989124cfa74441001b3d3ac505f9ef35658"
+  },
+  "targets": [
+    {
+      "target": "react-native-android",
+      "schedulerStatus": "not-run",
+      "attempted": true,
+      "counts": {
+        "passed": 118,
+        "not-run": 1260
+      },
+      "reports": [
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/react-native-android/report.json",
+          "bytes": 958745,
+          "sha256": "fd8c277462bc7055ca3c891acf983fdd7a6d1f29d53f1f25af549d7af69a4f1c",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "0634c407bcb5bf99beaca0b06ef1c13432aafc71235620c2cdc33db238c3e67d",
+            "fixtureHash": "1f5540bf4c87eec2e21a20df6ecbe3bf463f806cad48b1c59bde8f23e8ce84c4",
+            "expectationsHash": "9f45e043980991466825318f9ab60492d84b4df9025362f0dd11f9dff5215bcd",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18",
+              "expo": "54.0.37",
+              "reactNative": "0.81.5",
+              "compiler": "0.3.4"
+            }
+          },
+          "counts": {
+            "passed": 118,
+            "not-run": 1260
+          }
+        }
+      ]
+    },
+    {
+      "target": "react-native-ios",
+      "schedulerStatus": "not-run",
+      "attempted": true,
+      "counts": {
+        "passed": 118,
+        "not-run": 1260
+      },
+      "reports": [
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/react-native-ios/report.json",
+          "bytes": 959102,
+          "sha256": "4051fc8a3a343f1f04a3ccf4f3013705b107228b72ec24b64e0fc16f031298b7",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "0634c407bcb5bf99beaca0b06ef1c13432aafc71235620c2cdc33db238c3e67d",
+            "fixtureHash": "bf694bb8a249c1ada47749273ed973e8e593565079263d934dd71caab8d53927",
+            "expectationsHash": "9f45e043980991466825318f9ab60492d84b4df9025362f0dd11f9dff5215bcd",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18",
+              "expo": "54.0.37",
+              "reactNative": "0.81.5",
+              "compiler": "0.3.4"
+            }
+          },
+          "counts": {
+            "passed": 118,
+            "not-run": 1260
+          }
+        }
+      ]
+    },
+    {
+      "target": "lynx-android",
+      "schedulerStatus": "blocked",
+      "attempted": true,
+      "counts": {
+        "passed": 18,
+        "blocked": 100,
+        "not-run": 1496
+      },
+      "reports": [
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/lynx-android/report.json",
+          "bytes": 4144076,
+          "sha256": "f960d7723bf2b3e87a1d4c04b4e252c48562d54223050278f16fd59ab8fb475d",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "674758d2f80ad517ccb714828210e36274766cbf7d7362e98335ce5d26604a03",
+            "fixtureHash": "71544fef715da808bff664bae203b4cd528fba3f5f2216e1859bf56f0fd5978f",
+            "expectationsHash": "572e2ded024fea28b12ea3ed675ea4d1081c0535d26152e4d9056bdf8b9ad25f",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18",
+              "lynxEngine": "4.0.1",
+              "engineVersion": "3.9",
+              "cssDefines": "0.0.18",
+              "tasmEncoder": "0.0.49",
+              "cssSerializer": "0.1.9",
+              "tasmDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "bundleConfig": "83ff6486fd81b51443ebc52109b8314e07f33507e0fb3354553d704b27324f5b"
+            }
+          },
+          "counts": {
+            "passed": 18,
+            "blocked": 100,
+            "not-run": 1496
+          }
+        }
+      ]
+    },
+    {
+      "target": "lynx-ios",
+      "schedulerStatus": "blocked",
+      "attempted": true,
+      "counts": {
+        "passed": 18,
+        "blocked": 100,
+        "not-run": 1496
+      },
+      "reports": [
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/lynx-ios/report.json",
+          "bytes": 4016878,
+          "sha256": "482593a9cbb1d3f25889ff80a1fc95006af5a2ca2821f0d65f59d3271abf6fd6",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "674758d2f80ad517ccb714828210e36274766cbf7d7362e98335ce5d26604a03",
+            "fixtureHash": "340b6d8297bf4ef7ca98fcfcf4d17b05856c1aef54d4b71d268eecfdfcf8336a",
+            "expectationsHash": "b24d3befec444dbbc28f8c1f601b452c3251fcb8f0b165bd4c7bb12f8871698a",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18",
+              "tasmEncoder": "0.0.49",
+              "cssDefines": "0.0.18",
+              "tasmDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "engineVersion": "3.9",
+              "lynxEngine": "4.0.1",
+              "bundleConfig": "83ff6486fd81b51443ebc52109b8314e07f33507e0fb3354553d704b27324f5b",
+              "cssSerializer": "0.1.9"
+            }
+          },
+          "counts": {
+            "passed": 18,
+            "blocked": 100,
+            "not-run": 1496
+          }
+        }
+      ]
+    },
+    {
+      "target": "static",
+      "schedulerStatus": "not-run",
+      "attempted": true,
+      "counts": {
+        "passed": 47483,
+        "not-run": 118473
+      },
+      "reports": [
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/static/report.json",
+          "bytes": 158947974,
+          "sha256": "7a872efa881ab0dc5478c146ad35e3c105cfcf6ddef0602440bf71435d3560d5",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "7a9249c5415ee092f96ee62a9cac69cafb9ff9ebcf20e8261e08592ff8d8d2af",
+            "fixtureHash": "7921513a7fdcaab61e6a583c5b2321c84b70f56bafe0b4d5a5185b3d8ab2466b",
+            "expectationsHash": "ba8f147f0630890529765782a6777b68e2d629ce91178e09dd030a6ad2cd47c9",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 47483,
+            "not-run": 118473
+          }
+        }
+      ]
+    },
+    {
+      "target": "authoring",
+      "schedulerStatus": "passed",
+      "attempted": true,
+      "counts": {
+        "passed": 29
+      },
+      "reports": [
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/authoring/report.json",
+          "bytes": 23088,
+          "sha256": "a0f18f3254ed2177fc9e38b89d38fb441eba807f04012ffa694f6fda3a709e26",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "00faf09c835396558074ca500a814df5c927905faff34adc9a5178c3292c6916",
+            "fixtureHash": "d576bbeefc9f60d60dee49c1170e5c8bb27c80b575c88ff1894a51ee3fdca307",
+            "expectationsHash": "4fa63583e8dea6e2c5af43dd38c2b2450d44581b852ad386cc0b6012c0e00e24",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 29
+          }
+        }
+      ]
+    },
+    {
+      "target": "web-chromium",
+      "schedulerStatus": "passed",
+      "attempted": true,
+      "counts": {
+        "passed": 1392
+      },
+      "reports": [
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-chromium/authoring/report.json",
+          "bytes": 57967,
+          "sha256": "bdc7cbf98d4bd9abcf60d5393ecb9b57b93173fe75000e61c6fcd13237cef865",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "7b85d55b7f4cdc31fdff35e123059ec0d0954d62a9472f490f886934854c710e",
+            "fixtureHash": "c549fcd5882c064ae7fec65476ff96a754560dd00df032f8e959c8180f614988",
+            "expectationsHash": "96ca61558faf9f2275ee76ed78209f96a4dfb4f6033d71521c8b1db01bd544f4",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 29
+          }
+        },
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-chromium/autofill/report.json",
+          "bytes": 17638,
+          "sha256": "95069406894e2dfa9f617bd5d63d98f8a44b9568e2c68323732ff1324447d0a8",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "d144613d0db19a972534da626eed2b2db29e3de6834f1b1289245e3eceb78792",
+            "fixtureHash": "73e2f7cfa61ab01984be17a5f02d3fd8874366c7bcb00eae1cf84fc5a543274a",
+            "expectationsHash": "543417b01ef97b2d50cb4b7ee77ccfa9861f89394fee3a0d941bb63d6d1b7f31",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 1
+          }
+        },
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-chromium/context/report.json",
+          "bytes": 55826,
+          "sha256": "c56f99f804f00a9156d3afd68e822e1cf51669776e872e211e9922fc3a63a628",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "306b1d36726e9c76d0b6c12d4f07bfead46d0dc7a51f58cdcd9631a917d3c149",
+            "fixtureHash": "554dc2e0196595c52448a59f5f341f20eb087530bd6366cab0b03f3fd2cf3e24",
+            "expectationsHash": "6605b16ed02294354c2c87bbfec3cbb396ad0c63d55d284f24acf9ee0b8bf670",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 7
+          }
+        },
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-chromium/framework-source/report.json",
+          "bytes": 212636,
+          "sha256": "631652134e1aca27f8de3a91ad023399ebc5bc9e90832544d6e3b1cd491966fb",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "88acaffd38778a4b047b4e0233d575f56f5e0607fd1e8b43719c33a22887e095",
+            "fixtureHash": "0d829f1027300304faa7d31913b52e07f5d4f8c28606cf5451ce2710b0de3f59",
+            "expectationsHash": "413fc1b11f511183a323e4e0aede0d9eca2c1100bfa4f683712f7dee57913ab3",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 18
+          }
+        },
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-chromium/history/report.json",
+          "bytes": 23728,
+          "sha256": "9eede0ba935b3047251bb5fec0b27e04454cb19e987a73f4e4df6edad3c38c3b",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "c83abddd3d64fba9cf77d3d1c21433a2da03fe480c6d322d6bf4ed6f088e28f9",
+            "fixtureHash": "43c4bd0ccf689c0ef395a00153e81265a0b94bfc3f9f1b40c161976d1dc1d72b",
+            "expectationsHash": "a28d405eeed23fe3172b19b2b40ea10a2901bb142d5007ffb01f4cce6b507a2e",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 1
+          }
+        },
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-chromium/hmr/report.json",
+          "bytes": 7267,
+          "sha256": "9ca98ad54203a860990c6e35338074302e00f23d25ac5c9161fd276c4013c4cf",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "d177aeae7ca3bfe40103b10eba4694ed9e30c34c9dc9b0b3999aa1a2a0220a16",
+            "fixtureHash": "b02e46dda099b579e33c4d16ff1803d676fc118f3fe4ee2f0c7307226d74f97a",
+            "expectationsHash": "3a852163d79e0d52e4ae442e05acc3fd85234f91fe88da513f458861085c28ea",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 1
+          }
+        },
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-chromium/lifecycle/report.json",
+          "bytes": 22813,
+          "sha256": "2bb1a39b5e94695fcd5bc327611daf4bf919517adc6bb9711c290ac2d7649375",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "47d71c22686c2dd05bef9e61ea29ec655270f7002a4ebb6eb07d1871851c0f6c",
+            "fixtureHash": "e4cf297cc66d0ba6221ed7761ebc9057d7b61cdc48b02283ff11a8cb43753048",
+            "expectationsHash": "480e64580112ffb597215463107a8ab2d3af2fcf8a42e5840da908a76d6c01e0",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 2
+          }
+        },
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-chromium/native-media/report.json",
+          "bytes": 20323,
+          "sha256": "6c2906a882791004e753d45ce1359c5dcd14b61dfcb8f46e7f56d544010c1106",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "7cabd7339b33d3294fbd1565ae95c11036efc6ec2196af78ae3738511c0f12e1",
+            "fixtureHash": "3faea832b05be7f707a9097e0eb500f1972e35661b56047968df1f3be54ade6f",
+            "expectationsHash": "a320232811458d3d5da0ca7e5b8b5c18a6b2bf007dca80154b01d786d2db6c7c",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 1
+          }
+        },
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-chromium/registry/report.json",
+          "bytes": 999775,
+          "sha256": "84f44028aaddbbad289802233b75171fd15e27d959e5d97345f336a8638735b5",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "5ea9088318df206aec4077013ce123e968e64e78885de535e6586614d9e37a84",
+            "fixtureHash": "11141ea6fba179df66399a16ff7a3e946283150b1733ba4f24f6e908b30a468b",
+            "expectationsHash": "a4cfcf26b386803c336d8fe1b5a8fde544024c4324737ab3d34e97bb531ef1af",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 1205
+          }
+        },
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-chromium/report.json",
+          "bytes": 189019,
+          "sha256": "e9cefdc259d1670bcde4f9ecfcf5975c3436f6acdf91de0bf4f092561052fb6a",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "a0a13a9aeeb9f7dc69fa89eb357e7b02c083119116a280f7edf6b628f34b3cbb",
+            "fixtureHash": "632ee6ce081bc049c9df95dbf0b60693313b41d8441c65c40ff768df28c43a9b",
+            "expectationsHash": "27dee2541ef9a0dcbfad65f96541f081e1a88f73cf2d593373c41701b4f858ae",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 127
+          }
+        }
+      ]
+    },
+    {
+      "target": "web-firefox",
+      "schedulerStatus": "passed",
+      "attempted": true,
+      "counts": {
+        "passed": 1390
+      },
+      "reports": [
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-firefox/authoring/report.json",
+          "bytes": 57961,
+          "sha256": "c18c4ec22728e1b75e9ee405d94df7d89b00a456eeb5255ea968988154df8c76",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "7b85d55b7f4cdc31fdff35e123059ec0d0954d62a9472f490f886934854c710e",
+            "fixtureHash": "c41a922fe5cbb5504e53e879fa788a9d04177716e7822f62aba5e766179fe2b6",
+            "expectationsHash": "96ca61558faf9f2275ee76ed78209f96a4dfb4f6033d71521c8b1db01bd544f4",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 29
+          }
+        },
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-firefox/context/report.json",
+          "bytes": 55817,
+          "sha256": "706ad8f8193a1563bc8cdc0c0f1c0d6b77aca4cf3b28e0707b4ee7d5eccf75a6",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "306b1d36726e9c76d0b6c12d4f07bfead46d0dc7a51f58cdcd9631a917d3c149",
+            "fixtureHash": "037c3c7ee0242e05bbeb980351bec91211ca0370c6d32a42fcc2abd993f27a91",
+            "expectationsHash": "6605b16ed02294354c2c87bbfec3cbb396ad0c63d55d284f24acf9ee0b8bf670",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 7
+          }
+        },
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-firefox/framework-source/report.json",
+          "bytes": 212627,
+          "sha256": "51ae088e03c05fc953c68e0fd0a71017f57c840d3de8250593ee80bd064a5544",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "88acaffd38778a4b047b4e0233d575f56f5e0607fd1e8b43719c33a22887e095",
+            "fixtureHash": "f98089d0827373b0518731fe04f141dfa053ba0f55fd826c811d1eddb82b1c38",
+            "expectationsHash": "413fc1b11f511183a323e4e0aede0d9eca2c1100bfa4f683712f7dee57913ab3",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 18
+          }
+        },
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-firefox/history/report.json",
+          "bytes": 23719,
+          "sha256": "76bde7ece7a2ae4782714e183ed2dc489611bc01ed5d29d15525ed21b3a2378a",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "c83abddd3d64fba9cf77d3d1c21433a2da03fe480c6d322d6bf4ed6f088e28f9",
+            "fixtureHash": "3aec7869bed3c4902bbda36fed594b7274a45fc82d6a37306592a38a72d6a959",
+            "expectationsHash": "a28d405eeed23fe3172b19b2b40ea10a2901bb142d5007ffb01f4cce6b507a2e",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 1
+          }
+        },
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-firefox/hmr/report.json",
+          "bytes": 7258,
+          "sha256": "5377711a151bd449137579c05aaf712ae19deba84c4922825f7e69f3a0e69bbf",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "d177aeae7ca3bfe40103b10eba4694ed9e30c34c9dc9b0b3999aa1a2a0220a16",
+            "fixtureHash": "5beb5f5e8c66c1a43601b99a59ebaab9c3d641be47a4ebcfd87336df64dd38da",
+            "expectationsHash": "3a852163d79e0d52e4ae442e05acc3fd85234f91fe88da513f458861085c28ea",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 1
+          }
+        },
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-firefox/lifecycle/report.json",
+          "bytes": 22804,
+          "sha256": "fcfc9e947ee3abf071e8ffa0c0c15461c5b1f00d44b7360e482561a302d595ef",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "47d71c22686c2dd05bef9e61ea29ec655270f7002a4ebb6eb07d1871851c0f6c",
+            "fixtureHash": "64e87c617ca7857c6f2602aaa30cbc64923eeb291338a50de30b2b312e0d4937",
+            "expectationsHash": "480e64580112ffb597215463107a8ab2d3af2fcf8a42e5840da908a76d6c01e0",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 2
+          }
+        },
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-firefox/registry/report.json",
+          "bytes": 1001961,
+          "sha256": "a5e63c4f87a41baf43eb7fa77787f551aa4948dc0423f1704e326ef4e7b57fa0",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "5ea9088318df206aec4077013ce123e968e64e78885de535e6586614d9e37a84",
+            "fixtureHash": "e2ccf13876e94188e2a4ee1f7ecfd78e608922447e695b384a3273e3af98ad41",
+            "expectationsHash": "1a1be1ba543c7c7a6c8b64e520e372cf9e4d70c90cff8620b9886a09bf8776b4",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 1205
+          }
+        },
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-firefox/report.json",
+          "bytes": 189027,
+          "sha256": "6e4cd4a4e365bd76cfde9866e174b2876955cf5649e55ffb6da9b2cbbf7387ef",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "a0a13a9aeeb9f7dc69fa89eb357e7b02c083119116a280f7edf6b628f34b3cbb",
+            "fixtureHash": "351c10fe00af137e7c6617c43bcb680ac564fdc2e12cd7abbf962da8c83951d7",
+            "expectationsHash": "27dee2541ef9a0dcbfad65f96541f081e1a88f73cf2d593373c41701b4f858ae",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 127
+          }
+        }
+      ]
+    },
+    {
+      "target": "web-webkit",
+      "schedulerStatus": "failed",
+      "attempted": true,
+      "counts": {
+        "passed": 1389,
+        "failed": 1
+      },
+      "reports": [
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-webkit/authoring/report.json",
+          "bytes": 57980,
+          "sha256": "b98a00d9f376444f4c8c829e9b6387d2db5dd4f167abead4d517545c7b00fc18",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "7b85d55b7f4cdc31fdff35e123059ec0d0954d62a9472f490f886934854c710e",
+            "fixtureHash": "47d93743025d79854085b78f3cb916cc0a7ecc7de7f328a0b5274f963aa08512",
+            "expectationsHash": "96ca61558faf9f2275ee76ed78209f96a4dfb4f6033d71521c8b1db01bd544f4",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 29
+          }
+        },
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-webkit/context/report.json",
+          "bytes": 55833,
+          "sha256": "d0631083e9f0cd84429cd870454126891d2f3d42a314cbc98bcbc58b5f8e3717",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "306b1d36726e9c76d0b6c12d4f07bfead46d0dc7a51f58cdcd9631a917d3c149",
+            "fixtureHash": "bf96b0d9b0c76c4280677000fcddd1904a9315a5cc6cf43b3e2e570d60fdde0a",
+            "expectationsHash": "6605b16ed02294354c2c87bbfec3cbb396ad0c63d55d284f24acf9ee0b8bf670",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 7
+          }
+        },
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-webkit/framework-source/report.json",
+          "bytes": 212624,
+          "sha256": "2769ef047a073421151de9ac45a080fc7ca8ecf66633db3939f5eaa132773a42",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "88acaffd38778a4b047b4e0233d575f56f5e0607fd1e8b43719c33a22887e095",
+            "fixtureHash": "2664acdf5b3f5ae519e158516c539ea78ed807363bf13b8d633006e32cb5b435",
+            "expectationsHash": "413fc1b11f511183a323e4e0aede0d9eca2c1100bfa4f683712f7dee57913ab3",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 18
+          }
+        },
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-webkit/history/report.json",
+          "bytes": 28043,
+          "sha256": "90bb6c9f34ad70c733592ff8185a06fd4eb7579f8ff89a2d3ef4d962dfbdb2ab",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "c83abddd3d64fba9cf77d3d1c21433a2da03fe480c6d322d6bf4ed6f088e28f9",
+            "fixtureHash": "26bb8629d3f972b1d2b536ae56ba7f32fd304486c84163f41735f8a9dcacde1a",
+            "expectationsHash": "a28d405eeed23fe3172b19b2b40ea10a2901bb142d5007ffb01f4cce6b507a2e",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "failed": 1
+          }
+        },
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-webkit/hmr/report.json",
+          "bytes": 7255,
+          "sha256": "fae391c425506816c49f06b32ca0900b3d2a94f92961697cd0d25257058a0f6e",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "d177aeae7ca3bfe40103b10eba4694ed9e30c34c9dc9b0b3999aa1a2a0220a16",
+            "fixtureHash": "6b8dd597e2a9af2a9cb631f8056e7f858eaef295f68fcd67b7c518898181d83e",
+            "expectationsHash": "3a852163d79e0d52e4ae442e05acc3fd85234f91fe88da513f458861085c28ea",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 1
+          }
+        },
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-webkit/lifecycle/report.json",
+          "bytes": 22802,
+          "sha256": "55fad3b016a4f996bb3f10dac25755b7c51843ae79b18327a283b5ce27728643",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "47d71c22686c2dd05bef9e61ea29ec655270f7002a4ebb6eb07d1871851c0f6c",
+            "fixtureHash": "32a016f0c78eb8ebeeb0da78a221576ca686cc11f92b6ee9329d1a02e1a8bd44",
+            "expectationsHash": "480e64580112ffb597215463107a8ab2d3af2fcf8a42e5840da908a76d6c01e0",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 2
+          }
+        },
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-webkit/registry/report.json",
+          "bytes": 1001854,
+          "sha256": "3820274139cb8e59779d858be069e0810056c83682bc8df2133dbc844b41b0ae",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "5ea9088318df206aec4077013ce123e968e64e78885de535e6586614d9e37a84",
+            "fixtureHash": "7fc1421a3440caaf3ce448f6c1b752787b76c0e063bd9b4f520daf174ac34c24",
+            "expectationsHash": "f35b96d4379e2c9b8a34330315c6075f0815891cea323f973a3cf47c2beb07bf",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 1205
+          }
+        },
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/web-webkit/report.json",
+          "bytes": 189048,
+          "sha256": "af4921578109943bd7b497917b08aa02e51f1ad1287713a5807bc51589fa8c70",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "a0a13a9aeeb9f7dc69fa89eb357e7b02c083119116a280f7edf6b628f34b3cbb",
+            "fixtureHash": "ccedf4e8b9d5007e01c86767089b3af76b747000d0c181e707bf4ffe4ae80c80",
+            "expectationsHash": "27dee2541ef9a0dcbfad65f96541f081e1a88f73cf2d593373c41701b4f858ae",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "passed": 127
+          }
+        }
+      ]
+    },
+    {
+      "target": "expo-chromium",
+      "schedulerStatus": "not-run",
+      "attempted": true,
+      "counts": {
+        "passed": 118,
+        "not-run": 1260
+      },
+      "reports": [
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/expo-chromium/report.json",
+          "bytes": 958891,
+          "sha256": "2a49a8e552ef6bd01403b225251245844e8373bc9ec4a10654ba65ebb272df29",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "0634c407bcb5bf99beaca0b06ef1c13432aafc71235620c2cdc33db238c3e67d",
+            "fixtureHash": "8f90f022c7a2170657e9873a43c8212bc7f48320782e4e9fcd4a9d8e943c70e5",
+            "expectationsHash": "9f45e043980991466825318f9ab60492d84b4df9025362f0dd11f9dff5215bcd",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18",
+              "expo": "54.0.37",
+              "reactNative": "0.81.5",
+              "compiler": "0.3.4"
+            }
+          },
+          "counts": {
+            "passed": 118,
+            "not-run": 1260
+          }
+        }
+      ]
+    },
+    {
+      "target": "expo-firefox",
+      "schedulerStatus": "not-run",
+      "attempted": true,
+      "counts": {
+        "passed": 118,
+        "not-run": 1260
+      },
+      "reports": [
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/expo-firefox/report.json",
+          "bytes": 958829,
+          "sha256": "090c10216299dac9f51703e6512e12613c1c3596c3158668ad77cf5b9e6d6d38",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "0634c407bcb5bf99beaca0b06ef1c13432aafc71235620c2cdc33db238c3e67d",
+            "fixtureHash": "15efb00a453f88109bc612169c6fb596effcb7a32b7b682c1e6ed8bb832daa59",
+            "expectationsHash": "9f45e043980991466825318f9ab60492d84b4df9025362f0dd11f9dff5215bcd",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18",
+              "expo": "54.0.37",
+              "reactNative": "0.81.5",
+              "compiler": "0.3.4"
+            }
+          },
+          "counts": {
+            "passed": 118,
+            "not-run": 1260
+          }
+        }
+      ]
+    },
+    {
+      "target": "expo-webkit",
+      "schedulerStatus": "not-run",
+      "attempted": true,
+      "counts": {
+        "passed": 118,
+        "not-run": 1260
+      },
+      "reports": [
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/expo-webkit/report.json",
+          "bytes": 958856,
+          "sha256": "bfdaf35f26595c53896f8544fedebe7b89afc51c659d9d5fa6073d6161345045",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "0634c407bcb5bf99beaca0b06ef1c13432aafc71235620c2cdc33db238c3e67d",
+            "fixtureHash": "4cd4746c4259952f86a6fc2298a453c6296c53c48c5042570924d9d463a2c350",
+            "expectationsHash": "9f45e043980991466825318f9ab60492d84b4df9025362f0dd11f9dff5215bcd",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18",
+              "expo": "54.0.37",
+              "reactNative": "0.81.5",
+              "compiler": "0.3.4"
+            }
+          },
+          "counts": {
+            "passed": 118,
+            "not-run": 1260
+          }
+        }
+      ]
+    },
+    {
+      "target": "weapp",
+      "schedulerStatus": "failed",
+      "attempted": true,
+      "counts": {
+        "not-run": 1282,
+        "failed": 31
+      },
+      "reports": [
+        {
+          "path": "e2e/.artifacts/tailwind/2019853d-3740-49ba-a1c6-a466241025c5/weapp/report.json",
+          "bytes": 325353,
+          "sha256": "7b2b23dc0970b3a38f7d86f921d2b99f9fc7aa44939372aa3084ee4b1f39aedf",
+          "identity": {
+            "sourceHash": "188ba0ab38dc99123625cbe46a9efc239afdac37aa7f32b6c97139f65dcc4e50",
+            "lockfileHash": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+            "catalogHash": "614a8e9e712d050efedf204df12e7d7e4de547b0869126d31a6c1b1b208a0c4f",
+            "fixtureHash": "278b8444766c374e7ad0e40923b1386312815cef6c5e312c66d07ad222a42e04",
+            "expectationsHash": "c3d69ba73fefd3d9e634d2bef6a92a935393537b31c53035e2d6bc5e4a29e725",
+            "versions": {
+              "tailwindcss": "4.3.3",
+              "node": "v24.18.0",
+              "generator": "5.6.3",
+              "engine": "0.1.6",
+              "playwright": "1.64.1",
+              "vite": "7.3.6",
+              "compatibility": "3.4.3",
+              "nativeAdapter": "0.3.4",
+              "lynxAdapter": "0.4.4",
+              "lynxEncoder": "0.0.49",
+              "lynxSerializer": "0.1.9",
+              "lynxDecoder": "0.0.53+f0bf2a5a18eb5152dd66fe94e2e95e113175dc6cc1d11aff91ec60c1249ea49a",
+              "lynxCssDefines": "0.0.18"
+            }
+          },
+          "counts": {
+            "not-run": 1282,
+            "failed": 31
+          }
+        }
+      ]
+    },
+    {
+      "target": "mini-builds",
+      "schedulerStatus": "blocked",
+      "attempted": true,
+      "counts": {},
+      "reports": []
+    },
+    {
+      "target": "framework-regressions",
+      "schedulerStatus": "blocked",
+      "attempted": false,
+      "counts": {},
+      "reports": []
+    }
+  ],
+  "static": {
+    "batches": 135,
+    "uniqueCandidates": 34505,
+    "weapp": {
+      "target": "weapp",
+      "contract": "weapp-keyword-compatibility-v2",
+      "candidates": 34505,
+      "reviewed": 1440,
+      "unresolved": 33065
+    },
+    "reactNative": {
+      "target": "react-native",
+      "contract": "react-native-literal-mapping-v1",
+      "candidates": 34505,
+      "reviewed": 2557,
+      "supported": 1894,
+      "rejected": 663,
+      "unresolved": 31948
+    },
+    "lynx": {
+      "supportedOracles": 9,
+      "declaredOracles": 44,
+      "unverifiedCandidates": 34496
+    }
+  },
+  "stop": {
+    "raw": {
+      "path": ".tmp/weapp-201985-environment-stop.json",
+      "bytes": 2021,
+      "sha256": "3a7715611656ad01b47d20791b33a5656ab58f363741a4477b0f13fffea90d15"
+    },
+    "cause": {
+      "code": "DEVTOOLS_PROTOCOL_TIMEOUT",
+      "method": "App.captureScreenshot",
+      "timeoutMs": 2555
+    },
+    "casesEntered": 0,
+    "reportedFailedCases": 31,
+    "miniBuilds": "started-after-misclassification-then-owned-process-group-interrupted",
+    "historicalReportUnmodified": true
+  },
+  "nativeReplays": [
+    {
+      "runId": "2019853d-3740-49ba-a1c6-a466241025c5",
+      "target": "react-native-android",
+      "sourceCommit": "078e6e020db23143cd01826450a5a2b969bda610",
+      "stageStatus": "completed",
+      "fixtureHash": "bc36a113e871843b9e21e1b63a7d9df9f7e401955bdeb6d729e9680a75c934dd",
+      "runtimeEvidence": "production-validator-replayed",
+      "phases": [
+        {
+          "revision": "rn-hmr-baseline-10b981",
+          "cases": 118,
+          "counts": {
+            "supported": 31,
+            "unsupported": 87,
+            "unverified": 0,
+            "failed": 0
+          },
+          "runtimeSupportedCases": 26,
+          "encodingOnlyCases": 5,
+          "receipts": 44,
+          "frames": 88
+        },
+        {
+          "revision": "rn-hmr-updated-10b981",
+          "cases": 118,
+          "counts": {
+            "supported": 31,
+            "unsupported": 87,
+            "unverified": 0,
+            "failed": 0
+          },
+          "runtimeSupportedCases": 26,
+          "encodingOnlyCases": 5,
+          "receipts": 44,
+          "frames": 88
+        },
+        {
+          "revision": "rn-hmr-updated-f59e0b",
+          "cases": 118,
+          "counts": {
+            "supported": 31,
+            "unsupported": 87,
+            "unverified": 0,
+            "failed": 0
+          },
+          "runtimeSupportedCases": 26,
+          "encodingOnlyCases": 5,
+          "receipts": 44,
+          "frames": 88
+        }
+      ],
+      "http": {
+        "archiveIntegrity": "passed",
+        "boundary": "metro-response-before-content-encoding",
+        "claim": {
+          "http": "host-response-observation",
+          "device": "unattributed",
+          "websocket": "not-captured",
+          "received": "not-captured",
+          "evaluated": "not-captured",
+          "servedBundle": "not-captured",
+          "phaseAttribution": "not-captured"
+        },
+        "openedAt": "2026-10-22T01:25:16.750Z",
+        "stoppedAcceptingAt": "2026-10-22T01:31:25.703Z",
+        "closedAt": "2026-10-22T01:31:25.703Z",
+        "tools": {
+          "expo": {
+            "version": "54.0.37",
+            "sha256": "ba7bb712b504740da353e913fc09a13fcda261811b83ce4c14506f98d2cc7365"
+          },
+          "@expo/cli": {
+            "version": "54.0.27",
+            "sha256": "47ab4530a9371909cf3f990b5dcb53526591ee1241996d627bb2ccc4bb104785"
+          },
+          "@expo/metro": {
+            "version": "54.2.0",
+            "sha256": "03421a3a83387dfbab9bc0b5f9eac4506be8f7a3133c92233b7131aa29cb880e"
+          },
+          "metro": {
+            "version": "0.83.3",
+            "sha256": "c067bde7b3109729c3cc045591dab2b4d1f75fd22b4963b9a4c05c8023ab1192"
+          }
+        },
+        "node": "v24.18.0",
+        "requestCount": 1,
+        "records": [
+          {
+            "sequence": 1,
+            "socketId": 1,
+            "method": "GET",
+            "url": "/.expo/.virtual-metro-entry.bundle?platform=android&dev=true&lazy=true&minify=false&app=com.weapptailwindcss.rncompat&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server",
+            "status": 200,
+            "state": "finished",
+            "bodySuppressed": false,
+            "contentType": "multipart/mixed; boundary=\"3beqjf3apnqeu3h5jqorms4i\"",
+            "entityValidation": "not-performed",
+            "body": {
+              "file": "body-1.bin",
+              "meaning": "attempted-application-writes",
+              "byteLength": 5668905,
+              "sha256": "ce9f3eb183f7ed1732e693bf90e40fce75ecc6520e1192083df2768b611ba7f5"
+            }
+          }
+        ]
+      },
+      "servedBundle": "not-captured",
+      "originalReplay": {
+        "path": ".tmp/replay-078e-react-native-android-final.json",
+        "bytes": 3411,
+        "sha256": "d7ca4ab241b37384688dca9e38fc1ec663e8a6d0f74dd2eb5609b84a3a31c3e9"
+      }
+    },
+    {
+      "runId": "2019853d-3740-49ba-a1c6-a466241025c5",
+      "target": "react-native-ios",
+      "sourceCommit": "078e6e020db23143cd01826450a5a2b969bda610",
+      "stageStatus": "completed",
+      "fixtureHash": "bc36a113e871843b9e21e1b63a7d9df9f7e401955bdeb6d729e9680a75c934dd",
+      "runtimeEvidence": "production-validator-replayed",
+      "phases": [
+        {
+          "revision": "rn-hmr-baseline-10b981",
+          "cases": 118,
+          "counts": {
+            "supported": 31,
+            "unsupported": 87,
+            "unverified": 0,
+            "failed": 0
+          },
+          "runtimeSupportedCases": 26,
+          "encodingOnlyCases": 5,
+          "receipts": 44,
+          "frames": 88
+        },
+        {
+          "revision": "rn-hmr-updated-10b981",
+          "cases": 118,
+          "counts": {
+            "supported": 31,
+            "unsupported": 87,
+            "unverified": 0,
+            "failed": 0
+          },
+          "runtimeSupportedCases": 26,
+          "encodingOnlyCases": 5,
+          "receipts": 44,
+          "frames": 88
+        },
+        {
+          "revision": "rn-hmr-updated-f59e0b",
+          "cases": 118,
+          "counts": {
+            "supported": 31,
+            "unsupported": 87,
+            "unverified": 0,
+            "failed": 0
+          },
+          "runtimeSupportedCases": 26,
+          "encodingOnlyCases": 5,
+          "receipts": 44,
+          "frames": 88
+        }
+      ],
+      "http": {
+        "archiveIntegrity": "passed",
+        "boundary": "metro-response-before-content-encoding",
+        "claim": {
+          "http": "host-response-observation",
+          "device": "unattributed",
+          "websocket": "not-captured",
+          "received": "not-captured",
+          "evaluated": "not-captured",
+          "servedBundle": "not-captured",
+          "phaseAttribution": "not-captured"
+        },
+        "openedAt": "2026-10-22T01:31:47.379Z",
+        "stoppedAcceptingAt": "2026-10-22T01:36:06.797Z",
+        "closedAt": "2026-10-22T01:36:06.797Z",
+        "tools": {
+          "expo": {
+            "version": "54.0.37",
+            "sha256": "ba7bb712b504740da353e913fc09a13fcda261811b83ce4c14506f98d2cc7365"
+          },
+          "@expo/cli": {
+            "version": "54.0.27",
+            "sha256": "47ab4530a9371909cf3f990b5dcb53526591ee1241996d627bb2ccc4bb104785"
+          },
+          "@expo/metro": {
+            "version": "54.2.0",
+            "sha256": "03421a3a83387dfbab9bc0b5f9eac4506be8f7a3133c92233b7131aa29cb880e"
+          },
+          "metro": {
+            "version": "0.83.3",
+            "sha256": "c067bde7b3109729c3cc045591dab2b4d1f75fd22b4963b9a4c05c8023ab1192"
+          }
+        },
+        "node": "v24.18.0",
+        "requestCount": 1,
+        "records": [
+          {
+            "sequence": 1,
+            "socketId": 1,
+            "method": "GET",
+            "url": "/.expo/.virtual-metro-entry.bundle?platform=ios&dev=true&lazy=true&minify=false&inlineSourceMap=false&modulesOnly=false&runModule=true&excludeSource=true&sourcePaths=url-server&app=com.weapptailwindcss.rncompat",
+            "status": 200,
+            "state": "finished",
+            "bodySuppressed": false,
+            "contentType": "multipart/mixed; boundary=\"3beqjf3apnqeu3h5jqorms4i\"",
+            "entityValidation": "not-performed",
+            "body": {
+              "file": "body-1.bin",
+              "meaning": "attempted-application-writes",
+              "byteLength": 5665445,
+              "sha256": "1769e0f52bc7ec048001e926eef87623d2ef54989d25be21ae7b3c0ab8311b19"
+            }
+          }
+        ]
+      },
+      "servedBundle": "not-captured",
+      "originalReplay": {
+        "path": ".tmp/replay-078e-react-native-ios.json",
+        "bytes": 3421,
+        "sha256": "1104b99f732f80376ac595561ea819fff68c0f63047b87d2dda31bf859d4c4c5"
+      }
+    }
+  ],
+  "lynxReplay": {
+    "validator": "readNativeReport with bundle, geometry, theme and pixel validation",
+    "originalLog": {
+      "path": ".tmp/replay-078e-lynx.log",
+      "sha256": "caf837f9ef977e480ef209a99d0a2b669a076937972421c41fb9571e15c405f0"
+    },
+    "records": [
+      {
+        "platform": "android",
+        "reportSha256": "80d245ffdeb172cffb38e51b0bcb7767dc130f32bd2cba0d58e412a19e3a2fba",
+        "keys": [
+          "schemaVersion",
+          "platform",
+          "catalogHash",
+          "verifiedAt",
+          "versions",
+          "environment",
+          "results",
+          "mediaGate",
+          "themeOverrides",
+          "evidence"
+        ],
+        "counts": {
+          "supported": 54,
+          "unsupported": 64
+        },
+        "themeFrames": 9
+      },
+      {
+        "platform": "ios",
+        "reportSha256": "79b8c3ff378c696df021f86d71557e1e78eaff6e481677f931c98c7f927006e0",
+        "keys": [
+          "schemaVersion",
+          "evidence",
+          "platform",
+          "versions",
+          "catalogHash",
+          "environment",
+          "verifiedAt",
+          "results",
+          "themeOverrides",
+          "mediaGate"
+        ],
+        "counts": {
+          "supported": 53,
+          "unsupported": 65
+        },
+        "themeFrames": 9
+      }
+    ]
+  }
+}

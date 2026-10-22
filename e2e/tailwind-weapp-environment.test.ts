@@ -51,6 +51,16 @@ it('真实环境异常立即停止剩余微信案例，清理和报告落盘后�
   expect(persistReport).not.toHaveBeenCalled()
 })
 
+it('终态 SDK 协议超时阻断剩余案例，不根据相同错误文字把它记为样式失败', async () => {
+  const failure = Object.assign(new Error('opaque SDK timeout'), { code: 'DEVTOOLS_PROTOCOL_TIMEOUT', method: 'Page.setData' })
+  setData.mockRejectedValue(failure)
+  await expect(runWeapp(await context())).rejects.toBe(failure)
+  expect(setData).toHaveBeenCalledOnce()
+  expect(closeWechatProject).toHaveBeenCalledOnce()
+  expect(vi.mocked(writeCapabilityReport).mock.calls[0]![1].results.map(result => result.status)).toEqual(['blocked', 'blocked'])
+  expect(findEnvironmentBlock(failure)).toMatchObject({ cause: { cause: failure } })
+})
+
 it('认证失败和收尾失败保留原阻塞，不能被覆盖为样式断言', async () => {
   const failure = new EnvironmentBlockedError('本轮认证失败')
   const cleanup = new Error('项目清理失败')
