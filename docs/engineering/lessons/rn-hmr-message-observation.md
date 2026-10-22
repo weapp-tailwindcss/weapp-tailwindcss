@@ -1,12 +1,23 @@
 ---
 status: partial
+issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1314
+baseline: 2f42d5c49dedf322b80dfeb5c27d98b146d09d9b
+regressions:
+  - e2e/react-native-hmr-observer.test.ts
+  - e2e/react-native-hmr-resolver.test.ts
+  - e2e/react-native-hmr-observation.test.ts
+  - e2e/tailwind-native-adapter.test.ts
 ---
 
 # RN 原连接消息与完成时安装观察
 
 本轮补齐原 HMR 连接的消息观察边界，不能据此宣布实际交付、执行及模块因果链全部通过。此前的 HTTP 响应调用快照、宿主发布 manifest 和设备安装观察各自保留，不能互相代替。
 
-## 数据来源与边界
+## 症状
+
+此前 native 阶段只有宿主 HTTP 调用和设备安装快照，原客户端是否收到 HMR 消息尚无独立原件；缺少该目录也不会被旧阶段合同拒绝。
+
+## 根因与纠正
 
 仅原生验收显式设置 `RN_METRO_HMR_ARCHIVE` 时启用。Metro 最终 resolver 先委托既有解析链，只在 React Native Utilities 的精确请求上保存真实解析结果、客户端源码及所属包；wrapper 内部 alias 复用该结果，不创建第二个客户端。普通示例和 Expo Web 保持原入口。
 
@@ -18,7 +29,7 @@ App 在完成本阶段报告时，先核对实际安装，再采一次累计消�
 
 以下声明继续保持 `not-captured`：初始 bundle、evaluator、modulePhaseCausality、servedBundle。合成消息明确带 synthetic-unit 身份，只证明回归门禁。
 
-## 已执行验证
+## 验证
 
 - 首红：缺记录模块；补齐后继续固化伪造槽位、冻结记录和错误数组等反例。后者红日志为 `.tmp/rn-hmr-malformed-red.log`，两个伪造状态失败。该轮另有构造器替身被 ESLint 改成箭头函数的问题，已改回可构造替身并注明原因。
 - `CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts` 定向 HMR 三文件、phase-evidence、phase-capture、native-adapter、static-entry-scope，`--update=none`：7 文件 147 项通过。日志 `.tmp/rn-hmr-integrated-v4-green.log`。
@@ -38,8 +49,12 @@ App 在完成本阶段报告时，先核对实际安装，再采一次累计消�
 
 完整原件位于任务系统临时目录，指针 `.tmp/rn-hmr-dev-export-directory.txt`；持久摘要、源码/锁文件身份、resolver、包和所有文件摘要见 [构建证据](evidence/rn-hmr-observation-build.json)。进程已退出，没有创建设备或浏览器资源。
 
-## 后续验收
+## 适用边界
 
 微信终态协议故障尚未确认恢复，本轮不消费作废 lease，也不继续全面调度。必须重新完成 extended prepare、当前会话原生 Chrome computer use 和 verify 后，再采新 v4 原生证据。WebKit 正式宿主接入、原生完整注册夹具和转换独立 oracle 仍未完成；main 上的 #1307–#1309 不能借 PR 合同成功宣称根治。
+
+## 规则评估
+
+现有规则已要求原始证据、逐层验证、独立预期及预检，未发现需要扩大根规则的边界。以 v4 合同和明确 not-captured 字段承载本次变化，避免将单次构建或合成夹具升格为设备成功。文档检查最初缺少元数据和标准章节，已补齐；新预检 e229b485 在全面启动前因这次文档修正作废，不能用于放行。
 
 Refs #1307, #1308, #1309
