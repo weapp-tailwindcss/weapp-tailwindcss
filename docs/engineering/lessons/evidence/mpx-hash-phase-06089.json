@@ -1,0 +1,415 @@
+{
+  "status": "partial",
+  "formalPerformanceSample": false,
+  "sourceCommit": "06089e2a0f598aadec3ab5922cb864716b47249d",
+  "diagnostic": {
+    "scope": "仅 current 一次冷 build，无 watch/HMR 或 baseline，无 CI 重跑；macOS arm64 / Node24.18.0。",
+    "sourceInventorySha256": "e0e57ce7638936f52f4d9ad1f705dd4e6299cc910f6fec499828df1144f297f7",
+    "lockfileSha256": "765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb",
+    "preloadSha256": "f2f4e294f82c84c8bbd7c8150e99441e2849df7543262dc72d6615b919638536",
+    "prepareLogSha256": "6852b4217b1c408ae2173f2a4d6f964cba91e06dea3554136cc8c911511bb58d",
+    "entrySha256": "bbf55b0dad1ab3de52a74cb8b092c71586eca1f5a685390fe83ed33c303faa1b",
+    "modules": [
+      {
+        "role": "root",
+        "sha256": "b9ad1256297cb685b6b43f0573c2effd6be7bffb2d410382b47f6b432e5f8cfe",
+        "functions": [
+          "collectCustomPropertyValues",
+          "protectDynamicColorMixAlpha",
+          "removeUnsupportedModernColorDeclarations",
+          "finalizeMiniProgramCssRoot",
+          "finalizeMiniProgramCss"
+        ]
+      },
+      {
+        "role": "transform",
+        "sha256": "1b2d5c61421fb29440fc032db081f24a6cb581bfa55b8e12b2298d202a7e7a16",
+        "functions": [
+          "processSource",
+          "normalizeMiniProgramColorMix",
+          "transformTailwindV4CssToWeapp",
+          "normalizeTailwindV4GeneratedUrlValues",
+          "pruneMiniProgramGeneratedCss",
+          "pruneMiniProgramGeneratedCssRoot",
+          "collectStaticCustomPropertyValues"
+        ]
+      },
+      {
+        "role": "generator",
+        "sha256": "75b3baae05f72ca3821c5dbbf3effacdbe12e7619a0d0538d0ff1e2b530e6ca8",
+        "functions": [
+          "seedIncrementalGenerateCache",
+          "resolveIncrementalStyleContext",
+          "generateRawArtifact",
+          "transformGeneratedArtifact",
+          "generateWithIncrementalCache"
+        ]
+      }
+    ],
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "timedOut": false,
+    "cleanup": [],
+    "liveGroups": [],
+    "evidence": {
+      "complete": true,
+      "file": "phase-43328.ndjson",
+      "sha256": "cacb7e852a7189454f4b4290d5a39317d792b2c78a26bb38be48c9b082b41b94",
+      "bytes": 115625,
+      "records": 169,
+      "spans": 129,
+      "modules": 3
+    },
+    "rawFile": "/var/folders/nc/lnt357c50gdcwqlvymm9jn040000gn/T/weapp-tw-mpx-hash-phase-ejwVqO/phase-43328.ndjson",
+    "rawSha256": "cacb7e852a7189454f4b4290d5a39317d792b2c78a26bb38be48c9b082b41b94"
+  },
+  "functionCounts": {
+    "collectCustomPropertyValues": 26,
+    "protectDynamicColorMixAlpha": 14,
+    "removeUnsupportedModernColorDeclarations": 20,
+    "finalizeMiniProgramCssRoot": 8,
+    "finalizeMiniProgramCss": 8,
+    "processSource": 11,
+    "normalizeMiniProgramColorMix": 5,
+    "transformTailwindV4CssToWeapp": 3,
+    "normalizeTailwindV4GeneratedUrlValues": 3,
+    "pruneMiniProgramGeneratedCss": 6,
+    "pruneMiniProgramGeneratedCssRoot": 9,
+    "collectStaticCustomPropertyValues": 0,
+    "seedIncrementalGenerateCache": 0,
+    "resolveIncrementalStyleContext": 0,
+    "generateRawArtifact": 8,
+    "transformGeneratedArtifact": 8,
+    "generateWithIncrementalCache": 0
+  },
+  "rootCollector": {
+    "calls": 26,
+    "parents": {
+      "protectDynamicColorMixAlpha": 6,
+      "removeUnsupportedModernColorDeclarations": 20
+    },
+    "instrumentedInclusiveMs": 3.112837000003765,
+    "duplicates": [
+      {
+        "input": {
+          "kind": "root",
+          "bytes": 66,
+          "sha256": "7853236a43fed80bafcf41ed66248aea1f2cc23c7b2df3e82d45c62395731887",
+          "snapshotMs": 0.0038340000000971486
+        },
+        "context": {
+          "bytes": 198,
+          "sha256": "27c7aa5879809b6acc07ddde94bdc656bf1f51ef4548c54de57357b35f545057",
+          "comparable": true
+        },
+        "calls": 2,
+        "valuesSha256": [
+          "55279606329849b7458b517c195e785721934c903ff91220c728d16b53336cb4",
+          "55279606329849b7458b517c195e785721934c903ff91220c728d16b53336cb4"
+        ],
+        "dependenciesSha256": [
+          "b553917e52362a490f845e27df17d0cee79c90e5a5689d98f85f47a8be0aa8a8",
+          "b553917e52362a490f845e27df17d0cee79c90e5a5689d98f85f47a8be0aa8a8"
+        ],
+        "valueCounts": [
+          0,
+          0
+        ],
+        "outputChanged": [
+          false,
+          false
+        ]
+      }
+    ]
+  },
+  "assets": [
+    {
+      "seq": 81,
+      "pid": 43328,
+      "type": "asset",
+      "phase": "before-plugin",
+      "name": "styles/app3dc97d7c.wxss",
+      "content": {
+        "bytes": 17996,
+        "sha256": "345b807aba068db75a6dbf3d085043a61de23d89d95546fea9396655bb13bb3e"
+      }
+    },
+    {
+      "seq": 82,
+      "pid": 43328,
+      "type": "asset",
+      "phase": "before-plugin",
+      "name": "app.wxss",
+      "content": {
+        "bytes": 85,
+        "sha256": "946c041bf7b6ff5948f6688f7b4962a2ed36387e651de8bb74319d1ef5e7bf0a"
+      }
+    },
+    {
+      "seq": 83,
+      "pid": 43328,
+      "type": "asset",
+      "phase": "before-plugin",
+      "name": "styles/third-party-ui401cb2e0.wxss",
+      "content": {
+        "bytes": 426,
+        "sha256": "4fced96e49f925c10e4454886c51ee4ea60cce7e2708bf0974a2d313c02d9279"
+      }
+    },
+    {
+      "seq": 84,
+      "pid": 43328,
+      "type": "asset",
+      "phase": "before-plugin",
+      "name": "pages/component/index.wxss",
+      "content": {
+        "bytes": 27,
+        "sha256": "db5c55e7ba34a9243b70cda47d1bf05bc6eccca66a9a0ee302a685ee95d7cf29"
+      }
+    },
+    {
+      "seq": 85,
+      "pid": 43328,
+      "type": "asset",
+      "phase": "before-plugin",
+      "name": "sub-normal/styles/index7a9e98a6.wxss",
+      "content": {
+        "bytes": 915,
+        "sha256": "be97e4c799f81446bd9bead348f99ebe0bca0b2ebe33a4202c50ad9abfd7a9fe"
+      }
+    },
+    {
+      "seq": 86,
+      "pid": 43328,
+      "type": "asset",
+      "phase": "before-plugin",
+      "name": "sub-normal/pages/index.wxss",
+      "content": {
+        "bytes": 40,
+        "sha256": "b1885421ea1f962ef57d174301b116118368c5945ecdfdaf7449dc0a526c268f"
+      }
+    },
+    {
+      "seq": 87,
+      "pid": 43328,
+      "type": "asset",
+      "phase": "before-plugin",
+      "name": "sub-independent/styles/index1eb40e0b.wxss",
+      "content": {
+        "bytes": 935,
+        "sha256": "db851c49b655c6866df86279c6e6a0a641211ef13e95ec6ab333cd012d3adf8d"
+      }
+    },
+    {
+      "seq": 88,
+      "pid": 43328,
+      "type": "asset",
+      "phase": "before-plugin",
+      "name": "sub-independent/pages/index.wxss",
+      "content": {
+        "bytes": 40,
+        "sha256": "e247adf9506afd649833454db79b4fdbc8b436e7a562fefd397c61f56b3c66d0"
+      }
+    },
+    {
+      "seq": 153,
+      "pid": 43328,
+      "type": "asset",
+      "phase": "after-plugin",
+      "name": "styles/app3dc97d7c.wxss",
+      "content": {
+        "bytes": 26337,
+        "sha256": "8ff82db1bf9957d8752a4855830cb459aea7f19e600e09ba74398feec004ece8"
+      }
+    },
+    {
+      "seq": 154,
+      "pid": 43328,
+      "type": "asset",
+      "phase": "after-plugin",
+      "name": "app.wxss",
+      "content": {
+        "bytes": 85,
+        "sha256": "946c041bf7b6ff5948f6688f7b4962a2ed36387e651de8bb74319d1ef5e7bf0a"
+      }
+    },
+    {
+      "seq": 155,
+      "pid": 43328,
+      "type": "asset",
+      "phase": "after-plugin",
+      "name": "styles/third-party-ui401cb2e0.wxss",
+      "content": {
+        "bytes": 426,
+        "sha256": "4fced96e49f925c10e4454886c51ee4ea60cce7e2708bf0974a2d313c02d9279"
+      }
+    },
+    {
+      "seq": 156,
+      "pid": 43328,
+      "type": "asset",
+      "phase": "after-plugin",
+      "name": "pages/component/index.wxss",
+      "content": {
+        "bytes": 27,
+        "sha256": "db5c55e7ba34a9243b70cda47d1bf05bc6eccca66a9a0ee302a685ee95d7cf29"
+      }
+    },
+    {
+      "seq": 157,
+      "pid": 43328,
+      "type": "asset",
+      "phase": "after-plugin",
+      "name": "sub-normal/styles/index7a9e98a6.wxss",
+      "content": {
+        "bytes": 1359,
+        "sha256": "0e084f2b183a1798efa8e708b6068455225b89e809ebd166d884d1ba537d440f"
+      }
+    },
+    {
+      "seq": 158,
+      "pid": 43328,
+      "type": "asset",
+      "phase": "after-plugin",
+      "name": "sub-normal/pages/index.wxss",
+      "content": {
+        "bytes": 40,
+        "sha256": "b1885421ea1f962ef57d174301b116118368c5945ecdfdaf7449dc0a526c268f"
+      }
+    },
+    {
+      "seq": 159,
+      "pid": 43328,
+      "type": "asset",
+      "phase": "after-plugin",
+      "name": "sub-independent/styles/index1eb40e0b.wxss",
+      "content": {
+        "bytes": 1394,
+        "sha256": "c954e8e77fd7ad685320bdb3e0ac512c2c298dfce89b894c3d2129d31b41c7cd"
+      }
+    },
+    {
+      "seq": 160,
+      "pid": 43328,
+      "type": "asset",
+      "phase": "after-plugin",
+      "name": "sub-independent/pages/index.wxss",
+      "content": {
+        "bytes": 40,
+        "sha256": "e247adf9506afd649833454db79b4fdbc8b436e7a562fefd397c61f56b3c66d0"
+      }
+    },
+    {
+      "seq": 161,
+      "pid": 43328,
+      "type": "asset",
+      "phase": "final-assets",
+      "name": "styles/app3dc97d7c.wxss",
+      "content": {
+        "bytes": 26244,
+        "sha256": "2e9a8e25748b1f212976311a17e9652b9e39883720d0b525801e1ba53192f538"
+      }
+    },
+    {
+      "seq": 162,
+      "pid": 43328,
+      "type": "asset",
+      "phase": "final-assets",
+      "name": "app.wxss",
+      "content": {
+        "bytes": 85,
+        "sha256": "946c041bf7b6ff5948f6688f7b4962a2ed36387e651de8bb74319d1ef5e7bf0a"
+      }
+    },
+    {
+      "seq": 163,
+      "pid": 43328,
+      "type": "asset",
+      "phase": "final-assets",
+      "name": "styles/third-party-ui401cb2e0.wxss",
+      "content": {
+        "bytes": 426,
+        "sha256": "4fced96e49f925c10e4454886c51ee4ea60cce7e2708bf0974a2d313c02d9279"
+      }
+    },
+    {
+      "seq": 164,
+      "pid": 43328,
+      "type": "asset",
+      "phase": "final-assets",
+      "name": "pages/component/index.wxss",
+      "content": {
+        "bytes": 27,
+        "sha256": "db5c55e7ba34a9243b70cda47d1bf05bc6eccca66a9a0ee302a685ee95d7cf29"
+      }
+    },
+    {
+      "seq": 165,
+      "pid": 43328,
+      "type": "asset",
+      "phase": "final-assets",
+      "name": "sub-normal/styles/index7a9e98a6.wxss",
+      "content": {
+        "bytes": 1359,
+        "sha256": "0e084f2b183a1798efa8e708b6068455225b89e809ebd166d884d1ba537d440f"
+      }
+    },
+    {
+      "seq": 166,
+      "pid": 43328,
+      "type": "asset",
+      "phase": "final-assets",
+      "name": "sub-normal/pages/index.wxss",
+      "content": {
+        "bytes": 40,
+        "sha256": "b1885421ea1f962ef57d174301b116118368c5945ecdfdaf7449dc0a526c268f"
+      }
+    },
+    {
+      "seq": 167,
+      "pid": 43328,
+      "type": "asset",
+      "phase": "final-assets",
+      "name": "sub-independent/styles/index1eb40e0b.wxss",
+      "content": {
+        "bytes": 1394,
+        "sha256": "c954e8e77fd7ad685320bdb3e0ac512c2c298dfce89b894c3d2129d31b41c7cd"
+      }
+    },
+    {
+      "seq": 168,
+      "pid": 43328,
+      "type": "asset",
+      "phase": "final-assets",
+      "name": "sub-independent/pages/index.wxss",
+      "content": {
+        "bytes": 40,
+        "sha256": "e247adf9506afd649833454db79b4fdbc8b436e7a562fefd397c61f56b3c66d0"
+      }
+    }
+  ],
+  "limitations": [
+    "全部模块按准确 SHA 唯一插桩；cold seed、generateWithIncrementalCache、resolveIncrementalStyleContext 与字符串静态分析均零调用。",
+    "唯一完整可比较的 Root 分析重复是两份 66 字节空结果，未证实重型重复资格扫描。",
+    "handler 缺构造上下文，显式不可比较；raw-generation 缺 session/source 完整元数据，其可序列化 options 摘要不代表完整语义上下文。",
+    "所有耗时来自插桩单 current，不是 Linux 正式样本；父子 inclusive 不相加解释墙钟，不排除 Linux 根因。"
+  ],
+  "ciFailure": {
+    "head": "e57a24f7bba2835328af8d5ba4b8183dbc429dd3",
+    "checkout": "c184bfe8c88027f57ffe3c048f9291b0f94f7ace",
+    "baseline": "7d80eb1b707a4332b39bcad23e6d06cfa42bf9d5",
+    "run": 39698471962,
+    "job": 119563665481,
+    "metric": "buildMedian",
+    "baselineMs": 16618.732056,
+    "currentMs": 17524.386687,
+    "percent": 5.449601,
+    "thresholdPercent": 5,
+    "regressionSamples": 2,
+    "requiredRegressionSamples": 2,
+    "artifact": 12393006462,
+    "artifactSha256": "dfbc4904eec9bb990c55adfc6f6487217bece4cc2096f70aec7b831922769db4"
+  }
+}

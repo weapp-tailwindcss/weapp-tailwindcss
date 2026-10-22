@@ -79,3 +79,17 @@ Refs #1307, #1308, #1309
 锁文件hash `765ed2e2f10b3dd7a35570987f36be5edc687bc243f1b0bf613f5111cae279cb`，readerHash `4360413daf59947736c33eb52f65b085bfad7809206293608f04fa84eb42f59f`，主线程profile hash `17bb34f85cd50710a6918fd2876f6e5bcba230c91ee9202404d1aa8efa716464`。该证据不支持把full-selector reader猜作热点并优化。
 
 本机为macOS/Node24.18.0的单current插桩诊断；原失败是Linux/Node22.23.3、base10672.6229ms→current11266.745728ms（+594.1ms/+5.5668%），plugin602→655ms。缺同环境base profile，因此不能解释或撤销原5%门槛失败，也不能将其归为宿主噪声。没有重跑原作业或放宽阈值。
+
+## 2026-10-22 完整摘要的阶段诊断
+
+准确head `e57a24f7bba2835328af8d5ba4b8183dbc429dd3` 的 [run39698471962/job119563665481](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/39698471962/job/119563665481) 再次触发既有buildMedian门槛：16618.732056→17524.386687ms，增加905.654631ms/5.449601%，原门槛5%，违规2/要求2。插件build +3.75%、HMR +4.10%没有越线。实际checkout为merge `c184bfe8c88027f57ffe3c048f9291b0f94f7ace`，父提交为main `7d80eb1…`与e57；artifact12393006462的API及上传digest为 `dfbc4904eec9bb990c55adfc6f6487217bece4cc2096f70aec7b831922769db4`。没有重跑或降低门槛。
+
+随后在仅新增ScrollView验证文档的干净源码 `06089e2a0f598aadec3ab5922cb864716b47249d`，构建准备记录固定源码/锁文件与本地CJS完整SHA，执行一次current冷build。只诊断、不运行watch/HMR、不调用性能guard，也没有baseline对照。预声明180秒预算及有归属的进程组清理；实际退出0、无超时、无活进程组。原Promise身份、默认参数单次求值及嵌套函数插桩先用独立夹具验证。
+
+诊断以AST精确定位17个函数，3个模块全部按预声明SHA加载；记录169条连续NDJSON、129个完成span，唯一开始/尾记录、零pending/截断/写盘错误。Root输入用当前clone序列化而非旧Input；CSS、Map、Set、上下文和最终资产只保存完整SHA256与字节/数量，不保存CSS正文。诊断快照及hash开销单独记录，父子inclusive不相加解释墙钟。[持久摘要](evidence/mpx-hash-phase-06089.json)保存身份、调用数、重复项和24份资产阶段摘要；完整NDJSON仍在本任务临时目录，未随Git交付。
+
+- `seedIncrementalGenerateCache`、`generateWithIncrementalCache`、字符串静态变量分析均零调用；函数已插桩而未进入，不能将本次归因为cold seed的重复分析。
+- Root变量分析26次，20次来自现代颜色清理、6次来自protect。唯一相同完整输入和可比较分析上下文的重复为两份66字节样式，变量与依赖结果都为空，原Root未改；没有证实重型重复资格分析。
+- 本机插桩Root分析inclusive总计3.113ms，含诊断影响，不是生产耗时或Linux对照。未知handler构造上下文显式不可比较；raw-generation缺完整session/source元数据，不能仅凭相同CSS摘要实施缓存。
+
+本轮只排除了该次本机采集中“实际调用cold seed”的假设，不能排除Linux根因，也不能由局部耗时推定905ms差额来源。性能回退仍未解决，验收partial；没有基于未证实的缓存假设修改生产实现。
