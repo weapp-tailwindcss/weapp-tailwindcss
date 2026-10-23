@@ -7,12 +7,14 @@ regressions:
   - packages/weapp-tailwindcss/test/ci/framework-core-inputs.test.ts
   - packages/weapp-tailwindcss/test/ci/framework-public-entries.test.ts
   - packages/weapp-tailwindcss/test/context/compilation-profile.test.ts
+  - packages/weapp-tailwindcss/test/context/style-capability.test.ts
   - packages/weapp-tailwindcss/test/compiler/profile-session-regressions.test.ts
   - packages/weapp-tailwindcss/test/compiler/owner-lifecycle.test.ts
   - packages/weapp-tailwindcss/test/compiler/core-root-store-cleanup.test.ts
   - packages/weapp-tailwindcss/test/bundlers/webpack-operation-lifecycle.test.ts
   - packages/weapp-tailwindcss/test/bundlers/webpack-loader-session.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-framework-extension.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-css-cache-inputs.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-dispatcher.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/style-injector-watch-parity.test.ts
 ---
@@ -38,6 +40,8 @@ Vite 策略分为来源、生成阶段、样式组织和产物处理四组。框
 框架维护静态插件描述，在现有 `configResolved` 时机创建活动实例。配置前置行为不创建编译会话，禁用插件也不建立 runtime。dispatcher 与内置 injector 使用同一逐插件代理，保留 hook 元数据、上下文、返回值、sourcemap、异常和每轮 buildStart；实际 hook 与声明不一致时明确失败。injector 继续使用独立包的公开工厂。Webpack 保留自己的 compiler/loader 契约。
 
 框架身份、别名、支持组合和模块归属成为声明数据，各构建器维护类型化注册表。AST 图覆盖主包及独立 injector 的实现、子目录、类型、动态导入和重导出。未知或冲突归属失败；核心输入类型检查包含别名、命名空间和聚合导出。兼容例外只登记具体依赖边、原因和替代入口，不豁免整个文件。测试框架通过新增实现、注册及 fixture 完成生成与更新，共享流程无需增加分支。
+
+只读能力查询与编译请求快照也必须分开。Taro 真实构建观测到约 20722 次“样式是否嵌入脚本”查询，每次都创建完整 profile，造成约 923ms 累计耗时，其中配置指纹约 705ms；真正编译请求只额外创建 4 次 profile。查询改为只调用已有策略解析，保持参数、配置与实例环境的优先级，不遍历无关来源配置，不推进 revision，也不按可变配置对象身份盲目缓存。回归先证明旧实现的 10 次查询读取 cssEntries 20 次，修复后无读取且既有请求仍有效；正式解析新配置时才推进 revision。
 
 ## 验证
 
@@ -75,7 +79,7 @@ Vite 策略分为来源、生成阶段、样式组织和产物处理四组。框
 
 - 将旧 context、Webpack testkit 和 Vite 配置解析 fixture 迁移到已收紧的契约，保留原有行为断言；提取 Webpack 已配置 CSS 来源收集，满足源码行数门禁。
 - 保留 injector 的 hook 元数据，并明确资产生产者先于 post 阶段生成与收尾消费者；新增真实 Vite wxss/acss 回归，修复前两项均失败，修复后通过。微信、支付宝、抖音各 isolated/single 六组实际构建输出通过。
-- CSS 缓存键原先包含本轮 dirty 集合，使候选与内容不变的下一轮仍重新生成。改为当前 HTML/JS 对运行时有影响的稳定哈希；部分 bundle 保留既有来源关系，显式删除移除对应来源。保留缓存调用次数断言，并覆盖真实候选变化、配置依赖失效和删除。
+- CSS 缓存键原先包含本轮 dirty 集合，使候选与内容不变的下一轮仍重新生成。先尝试当前 HTML/JS 对运行时有影响的稳定哈希；后续真实 HMR 性能验证发现该输入仍过宽，最终修正见下文。部分 bundle 保留既有来源关系，显式删除移除对应来源。保留缓存调用次数断言，并覆盖真实候选变化、配置依赖失效和删除。
 
 最终整合后，Core/重写/Web parity 共 4 文件 48 项、Webpack/源码行数共 4 文件 174 项，以及 Vite 生成、真实 injector、CSS 决策、重复 build 和 watch 对照共 5 文件 44 项通过；主包重新构建通过。Web parity 首次本地运行因 website 依赖缺失失败，补齐锁定依赖后原 3 项全部通过，未修改 lockfile。各修复分支另有定向结果，数量不与上述整合结果相加。
 
@@ -96,6 +100,16 @@ Vite 策略分为来源、生成阶段、样式组织和产物处理四组。框
 第一轮根构建因独立工作树的示例未安装锁定的 `tailwindcss-patch` 依赖停止。执行 `pnpm install --frozen-lockfile --ignore-scripts` 补齐 97 个 workspace 项目的依赖，没有修改 lockfile；重新 prepare 后，第二轮根构建通过（71 个任务，8 个命中缓存）。随后全量单测为 1018 文件通过、1 文件失败、5 文件跳过；10955 项通过、1 项失败、1 项预期失败、44 项跳过。唯一失败是 JS-only bundle 中新增 CSS 依赖签名造成两次无用哈希；修复将签名计算限制在实际存在 CSS 且开启样式处理时，保留原有三次哈希断言，整个 bundle 回归与源码行数用例共 211 项通过。生成、injector、CSS 决策、重复 build 与 watch 对照另有 44 项通过。
 
 两轮全面流程均未进入设备验收，失败原始日志与内存报告保存在 `.tmp/framework-isolation/local-acceptance/<run-id>/`。Windows watcher 夹具的父目录初始化修复见 [虚拟 watcher 边界复盘](virtual-watch-fixture-boundary.md)。当前 head 的 Taro Vite 与 uni-app Vite 远端性能任务尚有失败，必须保留原预算完成归因和复验，不能以定向行为通过代替性能验收。
+
+### 性能回归的输入边界修复
+
+`6c5031219` 的质量三个分片、Ubuntu core smoke、四组 platform watch 和九组 repeated watch 全部通过，但 Taro Vite 构建中位耗时仍增加 10.56%（3/3 超阈值，p=0.05），uni-app 稳态 HMR 插件 P95 从 94ms 增至 207ms（2/2 超阈值）。固定基线 `fdc3d5856c8dd4b9dbb6417e1206cb9b3cf3d417` 的本地 3 次构建 / 3 次 HMR 也复现未修复 Taro +5.753% 和 uni-app P95 109ms → 173ms。远端为 Ubuntu Node 22.23.3，本地性能对照为 macOS Node 22.22.3；不混算两个环境的样本。
+
+Taro 的完整 profile 热点按前述策略查询边界修复；uni-app 的 CSS 任务只消费样式内容、配置、运行时候选与来源标注，任意 HTML/JS 文本不是其输入。移除全局 linked-source 签名及传递链，继续使用已有缓存键中的真实输入，不增加另一份关系图或可变状态。新增七项真实任务回归覆盖无关属性/业务字符串、候选同集重排、候选增删、部分 bundle 恢复、配置失效、来源删除和标注移动；修复前三项确定失败，修复后与原 bundle 全文件及关联回归合计 278 项通过。旧签名 helper 的镜像测试由这些行为回归替代，原 bundle 的 210 项断言保持不变。
+
+配置查询相关五文件 49 项通过。额外发现的旧 incremental issue #33 fixture 在未修改的 `6c5031219` 独立执行时 6/6 失败；显式使用其测试语义所需的 uni-app 组装入口后，保留原断言的六项全部通过。合并生产实现后的主包构建和新增 profile/CSS 15 项组合回归通过，主包类型与生产源码 ESLint 通过。
+
+修复后的本地 uni-app 3+3 采样遇到其他任务并发编译：同轮基线构建耗时升至 24–36 秒，而前轮约 4–6 秒；后半轮负载下降。保留进程与原始采样证据，并将报告 `acceptance.usable` 标为 false，不采信表面的通过结果、不终止其他任务，也不放宽预算。修复后 Taro 本地正式对照尚未执行；性能结论须以当前提交的独立 CI 原预算结果为准。本地功能全面验收仍须在新预检后执行。
 
 ## 适用边界
 

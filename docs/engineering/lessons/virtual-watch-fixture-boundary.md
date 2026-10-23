@@ -1,5 +1,5 @@
 ---
-status: partial
+status: verified
 issue: https://github.com/sonofmagic/weapp-tailwindcss/pull/1172
 baseline: d6269d23ffac4c95e7aaf7c63c4b310f9db9164a
 regressions:
@@ -28,9 +28,11 @@ PR #1316 的 [Windows Node 24 检查](https://github.com/weapp-tailwindcss/weapp
 
 旧夹具追加新图边界断言，本地确定失败：Virtual fixture has unexpected missing dependencies。修复后的图 missingDependencies 为空。`pnpm test:demo:matrix` 的 51 项全部通过。
 
-负对照 `WATCHPACK_POLLING=100 node scripts/ci/demo-matrix/fixtures/virtual-watch.cjs` 仍因初始编译 6 次失败，说明没有放松对轮询循环的检测。Windows 最新自动 CI 尚需复验，不能仅凭本地结果断言所有额外 invalidation 的来源均已确认。
+负对照 `WATCHPACK_POLLING=100 node scripts/ci/demo-matrix/fixtures/virtual-watch.cjs` 仍因初始编译 6 次失败，说明没有放松对轮询循环的检测。该记录属于前一次修复，不单独用于证明本轮 Windows 行为。
 
-上述 51 项记录属于前一次包边界修复。本轮在 macOS、Node 24.18.0 执行 `CI=1 pnpm exec vitest run -c scripts/ci/demo-matrix/vitest.config.mts scripts/ci/demo-matrix/watch.test.mjs --update=none`，8 项通过。默认 watcher 保留首次不超过两次编译、虚拟模块真实更新及更新后稳定断言；新增强制 polling 负对照，只接受首次空闲重复编译或更新后未稳定这两种原断言失败。Windows 的三次失效时序仍需新提交的 CI 复验，本地证据只直接证明首次构建修改了已登记的父目录。
+上述 51 项记录属于前一次包边界修复。本轮在 macOS、Node 24.18.0 执行 `CI=1 pnpm exec vitest run -c scripts/ci/demo-matrix/vitest.config.mts scripts/ci/demo-matrix/watch.test.mjs --update=none`，8 项通过。默认 watcher 保留首次不超过两次编译、虚拟模块真实更新及更新后稳定断言；新增强制 polling 负对照，只接受首次空闲重复编译或更新后未稳定这两种原断言失败。
+
+提交 `6c5031219a184e9c896645436be522392a15bf1f` 的 [Demo Watch Diagnostic](https://github.com/weapp-tailwindcss/weapp-tailwindcss/actions/runs/39950474641) 中，9 个真实 repeated-watch 任务全部通过，包含此前失败的 Windows Node 24 Taro Vite Vue JD，以及 Windows Mpx、Gulp 和其他平台组合。条件未执行的 output-copy 任务不计成功。该结果验证了修复在当前矩阵中的行为；对三次失效的归因仍以已捕获的父目录变更与图依赖为范围，不推断其他 watcher 故障。
 
 ## 适用边界
 
