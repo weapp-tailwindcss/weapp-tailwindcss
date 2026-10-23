@@ -1,5 +1,5 @@
 import type { InternalUserDefinedOptions, UserDefinedOptions } from '@/types'
-import { webpackStyleInjectorDelegates } from '@/style-injector/internal'
+import { createTaroWebpackStyleInjector } from '@/style-injector/webpack/taro'
 import { WebpackFrameworkPlugin } from '../../shared/create-framework-plugin'
 import { createDefaultLoaderAnchorFinders } from '../../shared/loader-anchors'
 
@@ -8,7 +8,7 @@ export class TaroWebpackPlugin extends WebpackFrameworkPlugin {
     super(options, {
       frameworkName: 'taro',
       loaderAnchorFinders: createDefaultLoaderAnchorFinders(),
-      styleInjectorDelegate: webpackStyleInjectorDelegates.taro,
+      styleInjectorDelegate: createTaroWebpackStyleInjector,
     })
   }
 }

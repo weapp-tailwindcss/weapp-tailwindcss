@@ -1,6 +1,7 @@
 import type { TailwindV4CssSource } from '@weapp-tailwindcss/engine'
 import type { Compiler } from 'webpack'
 import type { WebpackCssSourceRegistration, WebpackGeneratedCssRegistration } from '../loaders/runtime-registry'
+import type { WebpackCssImportRewriteExtension } from '../shared/css-import-rewrite'
 import type { LoaderAnchorFinders } from '../shared/loader-anchors'
 import type { TailwindRuntimeState } from '@/tailwindcss/runtime'
 import type { AppType, InternalUserDefinedOptions } from '@/types'
@@ -11,7 +12,6 @@ import { disposeCompilerOwner } from '@/compiler'
 import { pluginName } from '@/constants'
 import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
 import { resolveRuntimeBranch } from '@/runtime-branch'
-import { ensureMpxTailwindcssAliases, injectMpxCssRewritePreRules, patchMpxLoaderResolve } from '@/shared/mpx'
 import { captureResolvedFrameworkPostcssOptions, collectFrameworkPostcssOptionsFromLoaderEntries } from '../../../generation/framework-postcss'
 import { deleteWebpackLoaderRuntime, setWebpackLoaderRuntime } from '../loaders/runtime-registry'
 import { createDefaultLoaderAnchorFinders, findCssPreprocessorIndex } from '../shared/loader-anchors'
@@ -38,7 +38,7 @@ interface SetupWebpackV5LoadersOptions {
     contexts: ReadonlySet<string>
   }
   loaderAnchorFinders?: LoaderAnchorFinders | undefined
-  mpxCssImportRewrite?: boolean | undefined
+  cssImportRewrite?: WebpackCssImportRewriteExtension | undefined
   runtimeRegistryKey?: string | undefined
   debug: (format: string, ...args: unknown[]) => void
 }
@@ -62,7 +62,7 @@ export function setupWebpackV5Loaders(options: SetupWebpackV5LoadersOptions) {
     registerWebpackCssSourceFile,
     getRuntimeWatchDependencies,
     loaderAnchorFinders = createDefaultLoaderAnchorFinders(),
-    mpxCssImportRewrite = false,
+    cssImportRewrite,
     runtimeRegistryKey = `weapp-tailwindcss-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     debug,
   } = options
@@ -81,8 +81,8 @@ export function setupWebpackV5Loaders(options: SetupWebpackV5LoadersOptions) {
     uniAppX: compilerOptions.uniAppX,
   })
 
-  if (shouldRewriteCssImports && mpxCssImportRewrite) {
-    ensureMpxTailwindcssAliases(compiler, weappTailwindcssPackageDir)
+  if (shouldRewriteCssImports) {
+    cssImportRewrite?.configureCompiler?.(compiler, weappTailwindcssPackageDir)
   }
 
   const runtimeClassSetLoader = runtimeLoaderPath
@@ -150,9 +150,8 @@ export function setupWebpackV5Loaders(options: SetupWebpackV5LoadersOptions) {
       }
     : undefined
 
-  if (runtimeCssImportRewriteLoader && shouldRewriteCssImports && cssImportRewriteLoaderOptions && mpxCssImportRewrite) {
-    // Ensure CSS files enter postcss-import after rewriting.
-    injectMpxCssRewritePreRules(compiler, runtimeCssImportRewriteLoader, cssImportRewriteLoaderOptions)
+  if (runtimeCssImportRewriteLoader && shouldRewriteCssImports && cssImportRewriteLoaderOptions) {
+    cssImportRewrite?.configureRules?.(compiler, runtimeCssImportRewriteLoader, cssImportRewriteLoaderOptions)
   }
 
   const createRuntimeClassSetLoaderEntry = () => ({
@@ -196,7 +195,9 @@ export function setupWebpackV5Loaders(options: SetupWebpackV5LoadersOptions) {
       if (!hasRuntimeLoader) {
         return
       }
-      patchMpxLoaderResolve(_loaderContext, weappTailwindcssPackageDir, shouldRewriteCssImports && mpxCssImportRewrite)
+      if (shouldRewriteCssImports) {
+        cssImportRewrite?.configureLoader?.(_loaderContext, weappTailwindcssPackageDir)
+      }
       const loaderEntries = module.loaders || []
       // ReactLynx 为同一 CSS 模块创建 main-thread/background 两条规则。
       // main-thread 由 ignore-css-loader 丢弃，不能让它提前消费 Tailwind 源。

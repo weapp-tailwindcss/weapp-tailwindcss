@@ -11,20 +11,13 @@ export interface LoaderAnchorFinders {
   findClassSetAnchor: (entries: LoaderEntry[]) => number
 }
 
-const MPX_STRIP_CONDITIONAL_LOADER = '@mpxjs/webpack-plugin/lib/style-compiler/strip-conditional-loader'
-const MPX_STYLE_COMPILER_LOADER = '@mpxjs/webpack-plugin/lib/style-compiler/index'
-const MPX_REWRITE_PRECEDENCE_LOADERS = [
-  MPX_STYLE_COMPILER_LOADER,
-  MPX_STRIP_CONDITIONAL_LOADER,
-]
-
-function createFinder(targets: string[]) {
+export function createFinder(targets: string[]) {
   return (entries: LoaderEntry[]) => entries.findIndex(entry =>
     targets.some(target => entry?.loader?.includes?.(target)),
   )
 }
 
-function createPrioritizedFinder(targets: string[]) {
+export function createPrioritizedFinder(targets: string[]) {
   return (entries: LoaderEntry[]) => {
     for (const target of targets) {
       const idx = entries.findIndex(entry => entry?.loader?.includes?.(target))
@@ -33,15 +26,6 @@ function createPrioritizedFinder(targets: string[]) {
       }
     }
     return -1
-  }
-}
-
-export function createMpxLoaderAnchorFinders(): LoaderAnchorFinders {
-  // Rewrite should run before style-compiler (and strip-conditional as fallback);
-  // class-set should still run after style-compiler.
-  return {
-    findRewriteAnchor: createPrioritizedFinder(MPX_REWRITE_PRECEDENCE_LOADERS),
-    findClassSetAnchor: createFinder([MPX_STYLE_COMPILER_LOADER]),
   }
 }
 

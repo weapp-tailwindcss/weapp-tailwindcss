@@ -2,8 +2,9 @@ import type { TailwindV4CssSource } from '@weapp-tailwindcss/engine'
 import type { Compiler } from 'webpack'
 import type { WebpackFrameworkName } from '../../../framework-selector'
 import type { WebpackCssSourceRegistration, WebpackGeneratedCssRegistration } from '../../loaders/runtime-registry'
+import type { WebpackCssImportRewriteExtension } from '../css-import-rewrite'
 import type { LoaderAnchorFinders } from '../loader-anchors'
-import type { WebpackStyleInjectorDelegateFactory } from '@/style-injector/internal'
+import type { WebpackStyleInjectorDelegateFactory } from '@/style-injector/types'
 import type { AppType, IBaseWebpackPlugin, InternalUserDefinedOptions, UserDefinedOptions } from '@/types'
 import path from 'node:path'
 import process from 'node:process'
@@ -12,7 +13,7 @@ import { COMPILATION_EVENT_SCHEMA_VERSION } from '@/compiler/events'
 import { createCompilerRuntimeState } from '@/compiler/runtime-state'
 import { pluginName } from '@/constants'
 import { getCompilerContext } from '@/context'
-import { createBuiltinWebpackStyleInjectorPlugin } from '@/style-injector/internal'
+import { createBuiltinWebpackStyleInjectorPlugin } from '@/style-injector/webpack/runtime'
 import { createTailwindRuntimeReadyPromise, ensureRuntimeClassSet, refreshTailwindRuntimeState } from '@/tailwindcss/runtime'
 import { resolveTailwindcssOptions } from '@/tailwindcss/runtime-options'
 import { getRuntimeClassSetSignature } from '@/tailwindcss/runtime/cache'
@@ -41,7 +42,7 @@ function isInternalUserDefinedOptions(options: UserDefinedOptions | InternalUser
 export interface WebpackFrameworkBranchContext {
   frameworkName: WebpackFrameworkName
   loaderAnchorFinders: LoaderAnchorFinders
-  mpxCssImportRewrite?: boolean | undefined
+  cssImportRewrite?: WebpackCssImportRewriteExtension | undefined
   setupCssImportRewriteRedirect?: ((packageDir: string) => void) | undefined
   styleInjectorDelegate: WebpackStyleInjectorDelegateFactory
 }
@@ -436,7 +437,7 @@ export class WebpackFrameworkPlugin implements IBaseWebpackPlugin {
         }
       },
       loaderAnchorFinders: this.frameworkBranch.loaderAnchorFinders,
-      mpxCssImportRewrite: this.frameworkBranch.mpxCssImportRewrite,
+      cssImportRewrite: this.frameworkBranch.cssImportRewrite,
       debug,
     })
 
