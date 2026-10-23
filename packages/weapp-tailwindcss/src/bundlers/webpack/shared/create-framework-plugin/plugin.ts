@@ -24,6 +24,7 @@ import { hasTailwindGeneratedCss, hasTailwindGeneratedCssMarkers } from '../../.
 import { isWatchFileInRuntimeDependencies } from '../../BaseUnifiedPlugin/shared'
 import { setupWebpackV5ProcessAssetsHook } from '../../BaseUnifiedPlugin/v5-assets'
 import { setupWebpackV5Loaders } from '../../BaseUnifiedPlugin/v5-loaders'
+import { collectConfiguredCssSourceFiles } from './configured-css-sources'
 import { createWebpackLoaderRuntimePreparation } from './runtime-preparation'
 import { createWebpackSessionLifecycle } from './session-lifecycle'
 import { debug, setupWebpackWatchOutputIgnore, shouldKeepPreviousWebpackCssSource, weappTailwindcssPackageDir } from './watch-output'
@@ -320,19 +321,7 @@ export class WebpackFrameworkPlugin implements IBaseWebpackPlugin {
         })
       }
       const pruneWebpackCssSources = (activeSourceFiles: ReadonlySet<string>, _options: { watchMode?: boolean | undefined } = {}) => {
-        const tailwindOptions = resolveTailwindcssOptions(runtimeState.tailwindRuntime.options)
-        const configuredSourceFiles = new Set<string>()
-        for (const entry of opts.cssEntries ?? []) {
-          configuredSourceFiles.add(path.resolve(entry))
-        }
-        for (const entry of tailwindOptions?.v4?.cssEntries ?? []) {
-          configuredSourceFiles.add(path.resolve(entry))
-        }
-        for (const source of tailwindOptions?.v4?.cssSources ?? []) {
-          if (source.file) {
-            configuredSourceFiles.add(path.resolve(source.file))
-          }
-        }
+        const configuredSourceFiles = collectConfiguredCssSourceFiles(opts.cssEntries, runtimeState.tailwindRuntime)
         for (const file of webpackCssSources.keys()) {
           if (!activeSourceFiles.has(file) && !configuredSourceFiles.has(file)) {
             webpackCssSources.delete(file)
@@ -345,19 +334,7 @@ export class WebpackFrameworkPlugin implements IBaseWebpackPlugin {
         }
       }
       const prepareWebpackCssSources = (activeAssetResources: ReadonlySet<string> = new Set()) => {
-        const tailwindOptions = resolveTailwindcssOptions(runtimeState.tailwindRuntime.options)
-        const configuredSourceFiles = new Set<string>()
-        for (const entry of opts.cssEntries ?? []) {
-          configuredSourceFiles.add(path.resolve(entry))
-        }
-        for (const entry of tailwindOptions?.v4?.cssEntries ?? []) {
-          configuredSourceFiles.add(path.resolve(entry))
-        }
-        for (const source of tailwindOptions?.v4?.cssSources ?? []) {
-          if (source.file) {
-            configuredSourceFiles.add(path.resolve(source.file))
-          }
-        }
+        const configuredSourceFiles = collectConfiguredCssSourceFiles(opts.cssEntries, runtimeState.tailwindRuntime)
         const activeSourceFiles = new Set([
           ...configuredSourceFiles,
           ...currentWebpackCssSourceModules,

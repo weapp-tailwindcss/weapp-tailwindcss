@@ -25,7 +25,7 @@ import {
   FakeConcatSource,
   createAssetsFromStore,
   createContext as createWebpackContext,
-  getCompilerContextMock as getWebpackCompilerContextMock,
+  createCompilerContextMock as createWebpackCompilerContextMock,
   getWebpackLoaderRuntime,
   path as webpackPath,
   testState as webpackTestState,
@@ -532,7 +532,7 @@ async function generateWebpackPluginCss(root: string, cssEntry: string, css: str
       },
     },
   } as any)
-  getWebpackCompilerContextMock.mockClear()
+  createWebpackCompilerContextMock.mockClear()
 
   const processAssetsCallbacks: Array<(assets: Record<string, any>) => Promise<void>> = []
   let loaderHandler: ((loaderContext: any, module: { loaders: Array<{ loader: string, options?: Record<string, any> }>, resource?: string }) => void) | undefined
