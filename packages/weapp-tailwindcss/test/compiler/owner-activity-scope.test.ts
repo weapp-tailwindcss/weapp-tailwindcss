@@ -7,12 +7,12 @@ import { describe, expect, it, vi } from 'vitest'
 import { runCompilerOwnerActivity, runCompilerOwnerDisposal } from '@/compiler/compiler-owner-state'
 
 describe('compiler activity scope', () => {
-  it('releases completed owners while preserving pending activity ownership', async () => {
+  it('releases completed owners while preserving pending activity ownership', async ({ signal }) => {
     await promisify(execFile)(process.execPath, [
       '--expose-gc',
       fileURLToPath(new URL('./fixtures/owner-activity-retention.mjs', import.meta.url)),
-    ], { timeout: 15_000 })
-  })
+    ], { timeout: 15_000, signal })
+  }, 20_000)
 
   it('keeps sequential inherited activity scopes bounded', async () => {
     const run = AsyncLocalStorage.prototype.run
