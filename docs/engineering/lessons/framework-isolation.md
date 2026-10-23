@@ -14,6 +14,7 @@ regressions:
   - packages/weapp-tailwindcss/test/bundlers/webpack-operation-lifecycle.test.ts
   - packages/weapp-tailwindcss/test/bundlers/webpack-loader-session.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-framework-extension.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-framework-runtime-facts.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-css-cache-inputs.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/framework-css-asset-demand.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-dispatcher.unit.test.ts
@@ -127,6 +128,14 @@ Taro 的完整 profile 热点按前述策略查询边界修复；uni-app 的 CSS
 同一提交的新预检 `ecd69b1b-5b6c-4469-ab1b-bf340a722766` 完成全部环境探针、当前会话后台浏览器的真实输入、点击、截图与 verify，临时页面已关闭。`pnpm e2e:demo:workflow:local --quality --preflight-report <本轮报告>` 的根构建 71/71、0 缓存通过，但全量单测阶段再次发生 5000ms 的进程身份探针超时，现场 host load 为 100–118。新清理路径执行本次活句柄及身份复核后的 TERM/KILL，工作流退出 1；随后确认登记进程无残留，将内容与测试写入逻辑一致的中断 HMR fixture 定向归档，工作树干净。不能把中断的单测计为通过，后续 static、watch、IDE 与设备阶段未执行。
 
 该轮原始日志、进程身份、内存报告、清理回执与恢复探针归档在 `.tmp/framework-isolation/local-acceptance/ecd69b1b-5b6c-4469-ab1b-bf340a722766/`。本机并行重任务的错峰协调由用户明确授权；只能请各任务安全完成自己的阶段，不停止他人进程或 IDE。暂停和共同窗口都要有明确结束条件，完整流程开始前仍需重新 prepare、当前会话交互与 verify，不调整现有超时、预算或门禁。
+
+### 运行时框架判断的最小输入
+
+最终只读审查发现，`requiresCssHotReload` 和 `splitGenerateBundlePhases` 仍接收完整 Vite `ResolvedConfig`，而现有实现仅消费插件名称和 mode。构建器现在按实例维护冻结的 `mode`、`pluginNames` 快照；每次判断检查当前必要值，未变化复用快照，配置解析前返回 undefined，后续 mode、插件名称、增删及排序变化产生新快照。用户配置、数组和插件对象不冻结，旧快照保持有效，首次缺少 mode 的兼容输入也不会误命中空快照。
+
+真实产物阶段回归在旧实现先失败，修复后覆盖前置 undefined、mode 往返、配置变化与实例隔离。运行时契约的 AST 门禁同时拒绝完整 Vite 配置与插件输入，包括类型别名、命名空间、通配及经过聚合文件的二次命名转出；持久 TypeScript 负向断言由真实 tsc 执行，不能只依靠 Vitest 转译。独立复核发现的首次缺省 mode 和重导出绕过均保留失败用例。
+
+实现提交 `30e44e8b4496dfee4a186bf1a94f03c16474bb3f` 的五个定向文件共 108 项通过，主任务整合提交 `f16fa74d191fccc74c6c2fa6423cb76c08581cd1` 再次通过全部 108 项与主包构建。命令为 `pnpm --filter weapp-tailwindcss exec vitest run test/bundlers/vite-framework-runtime-facts.unit.test.ts test/bundlers/vite-framework-isolation.unit.test.ts test/bundlers/vite-source-candidates-hmr.unit.test.ts test/ci/framework-core-inputs.test.ts test/ci/framework-boundaries.test.ts --update=none --maxWorkers=1`；严格 `pnpm --filter weapp-tailwindcss exec tsc -p tsconfig.typecheck.json --pretty false`、源码及新增测试 ESLint、architecture:check（37 包、1511 源文件）、agents:check 与 diff 检查通过。此前 `39a424426` 的远端结果保留为历史证据，新提交需重新执行自身 CI 与本地完整验收。
 
 ## 适用边界
 
