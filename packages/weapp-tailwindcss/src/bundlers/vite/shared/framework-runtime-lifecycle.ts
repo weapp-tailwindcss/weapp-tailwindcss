@@ -41,16 +41,13 @@ export function createFrameworkRuntimeLifecycle(options: FrameworkRuntimeLifecyc
       order: 'post',
       sequential: true,
       handler() {
-        if (!isPersistent()) {
+        const config = options.getResolvedConfig()
+        if (config?.command !== 'build' || config.build?.watch == null) {
           return dispose()
         }
       },
     },
     closeWatcher: { order: 'post', sequential: true, handler: dispose },
-    configureServer(server) {
-      server.httpServer?.once('close', () => {
-        void dispose().catch(error => server.config.logger.error(String(error)))
-      })
-    },
+
   }
 }

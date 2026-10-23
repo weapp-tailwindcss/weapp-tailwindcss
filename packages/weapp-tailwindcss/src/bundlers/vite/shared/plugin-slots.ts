@@ -122,6 +122,15 @@ interface PluginSlotState {
   config: ResolvedConfig
   bindings: Map<string, Plugin>
   invocation: ReturnType<typeof createPluginInvocationSession>
+  initializationFailure?: Promise<never>
+}
+
+function failInitialization(state: PluginSlotState, coordinator: Plugin | undefined, context: unknown, error: unknown): Promise<never> {
+  const cleanup = handlerOf(coordinator?.closeWatcher)
+  return state.invocation.close(() => cleanup && Reflect.apply(cleanup, context, [])).then(
+    () => { throw error },
+    (cleanupError) => { throw new AggregateError([error, cleanupError], 'Vite 初始化与清理均失败。') },
+  )
 }
 
 /** 多个候选分支共享槽位时只合并兼容的钩子声明。 */
@@ -179,8 +188,16 @@ export function createDeferredVitePlugins(
     if (selectedConfig) {
       let state = states.get(selectedConfig)
       if (!state && config) {
-        state = { config, bindings: bindVitePluginSlots(slots, create(config, context)), invocation: createPluginInvocationSession() }
+        const delegates = create(config, context)
+        state = { config, bindings: new Map(), invocation: createPluginInvocationSession() }
         states.set(config, state)
+        try {
+          state.bindings = bindVitePluginSlots(slots, delegates)
+        }
+        catch (error) {
+          const coordinator = slots.find(candidate => candidate.ownsSession)
+          state.initializationFailure = failInitialization(state, delegates.find(plugin => plugin.name === (coordinator?.pluginName ?? coordinator?.name)), context, error)
+        }
       }
       if (state) {
         active = state
@@ -204,6 +221,9 @@ export function createDeferredVitePlugins(
       const hookName = key as HookName
       const handler = function (this: unknown, ...args: unknown[]) {
         const state = resolveState(this, hookName === 'configResolved' ? args[0] as ResolvedConfig : undefined)
+        if (state?.initializationFailure) {
+          return state.initializationFailure
+        }
         const delegate = state?.bindings.get(slot.name)
         if (!delegate || !state) {
           return
@@ -221,9 +241,10 @@ export function createDeferredVitePlugins(
           return
         }
         const invoke = () => Reflect.apply(run, this, args)
-        const persistent = state.config.command === 'serve' || state.config.build?.watch != null
+        const watchBuild = state.config.command === 'build' && state.config.build?.watch != null
         const closesSession = slot.ownsSession && (hookName === 'closeWatcher'
-          || (!persistent && (hookName === 'closeBundle' || (hookName === 'buildEnd' && args[0]))))
+          || (hookName === 'closeBundle' && !watchBuild)
+          || (hookName === 'buildEnd' && args[0] && state.config.command === 'build' && !watchBuild))
         if (closesSession) {
           return state.invocation.close(invoke)
         }
@@ -231,18 +252,21 @@ export function createDeferredVitePlugins(
         if (hookName === 'closeBundle' || hookName === 'closeWatcher' || hookName === 'buildEnd') {
           return invoke()
         }
-        const result = state.invocation.run(invoke)
-        if (hookName === 'configResolved' && result && typeof result === 'object' && 'then' in result && typeof result.then === 'function') {
-          return Promise.resolve(result).catch(async (error) => {
-            const coordinator = slots.find(candidate => candidate.ownsSession)
-            const cleanup = coordinator && handlerOf(state.bindings.get(coordinator.name)?.closeWatcher)
-            try {
-              await state.invocation.close(() => cleanup && Reflect.apply(cleanup, this, []))
-            }
-            catch (cleanupError) {
-              throw new AggregateError([error, cleanupError], 'Vite 初始化与清理均失败。')
-            }
+        let result: unknown
+        try {
+          result = state.invocation.run(invoke)
+        }
+        catch (error) {
+          if (hookName !== 'configResolved') {
             throw error
+          }
+          const coordinator = slots.find(candidate => candidate.ownsSession)
+          return failInitialization(state, coordinator && state.bindings.get(coordinator.name), this, error)
+        }
+        if (hookName === 'configResolved' && result && typeof result === 'object' && 'then' in result && typeof result.then === 'function') {
+          return Promise.resolve(result).catch((error) => {
+            const coordinator = slots.find(candidate => candidate.ownsSession)
+            return failInitialization(state, coordinator && state.bindings.get(coordinator.name), this, error)
           })
         }
         return result

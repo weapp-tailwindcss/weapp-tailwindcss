@@ -39,6 +39,35 @@ describe('静态插件契约与逐配置实例', () => {
     expect(factory).toHaveBeenCalledTimes(2)
   })
 
+  it('初始化失败排空任务并关闭核心，不会隐式重建', async () => {
+    const failure = new Error('initialization failed')
+    const dispose = vi.fn(async () => {})
+    const create = vi.fn((): Plugin[] => [
+      { name: 'initialize', configResolved: async () => { throw failure } },
+      { name: 'close', closeWatcher: dispose },
+    ])
+    const plugins = createDeferredVitePlugins([
+      { name: 'initialize', hooks: { configResolved: true } },
+      { name: 'close', ownsSession: true, hooks: { closeWatcher: true } },
+    ], create)
+    const resolved = config()
+    await expect(call(plugins[0]!, 'configResolved', {}, resolved)).rejects.toBe(failure)
+    expect(dispose).toHaveBeenCalledTimes(1)
+    await expect(call(plugins[0]!, 'configResolved', {}, resolved)).rejects.toThrow('不再接收')
+    expect(create).toHaveBeenCalledTimes(1)
+  })
+
+  it('工厂与静态声明不一致时仍释放刚创建的实例', async () => {
+    const dispose = vi.fn(async () => {})
+    const create = vi.fn((): Plugin[] => [{ name: 'unexpected' }, { name: 'close', closeWatcher: dispose }])
+    const [plugin] = createDeferredVitePlugins([{ name: 'close', ownsSession: true, hooks: { closeWatcher: true } }], create)
+    const resolved = config()
+    await expect(call(plugin!, 'configResolved', {}, resolved)).rejects.toThrow('未声明或重复')
+    await expect(call(plugin!, 'configResolved', {}, resolved)).rejects.toThrow('未声明或重复')
+    expect(dispose).toHaveBeenCalledTimes(1)
+    expect(create).toHaveBeenCalledTimes(1)
+  })
+
   it('未知插件、未声明钩子及 hook 元数据漂移明确失败', () => {
     const slots = [{ name: 'fixture', hooks: { transform: { order: 'pre' } } }] satisfies VitePluginSlot[]
     expect(() => bindVitePluginSlots(slots, [{ name: 'unknown' }])).toThrow('未声明或重复')
@@ -83,6 +112,18 @@ describe('关闭协调者', () => {
     const close = call(plugin, 'closeWatcher', {})
     expect(call(plugin, 'closeWatcher', {})).toBe(close)
     await close
+    expect(dispose).toHaveBeenCalledTimes(1)
+  })
+
+  it('serve 通过 Vite closeBundle 关闭，无需拥有 HTTP server', async () => {
+    const dispose = vi.fn(async () => {})
+    const resolved = { command: 'serve', build: {} } as ResolvedConfig
+    const plugin = createFrameworkRuntimeLifecycle({ getResolvedConfig: () => resolved, dispose })
+    await call(plugin, 'buildEnd', {}, new Error('recoverable HMR error'))
+    expect(dispose).not.toHaveBeenCalled()
+    const closed = call(plugin, 'closeBundle', {})
+    expect(call(plugin, 'closeBundle', {})).toBe(closed)
+    await closed
     expect(dispose).toHaveBeenCalledTimes(1)
   })
 

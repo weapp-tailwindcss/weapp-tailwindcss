@@ -34,7 +34,7 @@ export const runtimeLifecycleSlot = {
   name: 'weapp-tailwindcss:runtime-lifecycle',
   ownsSession: true,
   enforce: 'post',
-  hooks: { buildEnd: true, closeBundle: { order: 'post', sequential: true }, closeWatcher: { order: 'post', sequential: true }, configureServer: true },
+  hooks: { buildEnd: true, closeBundle: { order: 'post', sequential: true }, closeWatcher: { order: 'post', sequential: true } },
 } satisfies VitePluginSlot
 
 export const frameworkRuntimeSlots = [
