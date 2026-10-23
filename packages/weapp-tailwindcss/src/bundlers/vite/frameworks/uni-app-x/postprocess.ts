@@ -82,7 +82,7 @@ export async function handleUniAppXPostCssTasks(options: HandleUniAppXPostCssOpt
   const {
     assets,
     debug,
-    getCssHandlerOptions,
+    matchesMainCss,
     isHarmonyAppStyleTarget,
     isNativeAppStyleTarget,
     onUpdate,
@@ -105,7 +105,7 @@ export async function handleUniAppXPostCssTasks(options: HandleUniAppXPostCssOpt
     injectHarmonyCssIntoMainAsset(
       bundle,
       viteProcessedCssSources,
-      file => getCssHandlerOptions(file).isMainChunk === true,
+      matchesMainCss,
       assets,
       onUpdate,
       debug,

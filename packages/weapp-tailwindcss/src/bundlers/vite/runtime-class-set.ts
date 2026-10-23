@@ -1,6 +1,5 @@
 import type { BundleSnapshot } from './bundle-state'
 import type { InternalUserDefinedOptions } from '@/types'
-import process from 'node:process'
 import { COMPILATION_EVENT_SCHEMA_VERSION } from '@/compiler/events'
 import { createCompilerRuntimeState } from '@/compiler/runtime-state'
 import {
@@ -15,6 +14,8 @@ import { createRuntimeClassSetCache } from './runtime-class-set/cache'
 
 interface CreateViteRuntimeClassSetOptions {
   opts: InternalUserDefinedOptions
+  /** 由入口解析实例环境；省略时只响应当前请求的显式刷新。 */
+  forceRuntimeRefresh?: boolean
   initialTailwindRuntime: InternalUserDefinedOptions['tailwindRuntime']
   refreshTailwindcssRuntime: InternalUserDefinedOptions['refreshTailwindcssRuntime']
   runtimeClassSetFeatureEnabled: boolean
@@ -26,6 +27,7 @@ interface CreateViteRuntimeClassSetOptions {
 export function createViteRuntimeClassSet(options: CreateViteRuntimeClassSetOptions) {
   const {
     opts,
+    forceRuntimeRefresh: forceRefreshByEnvironment = false,
     initialTailwindRuntime,
     refreshTailwindcssRuntime,
     runtimeClassSetFeatureEnabled,
@@ -101,7 +103,7 @@ export function createViteRuntimeClassSet(options: CreateViteRuntimeClassSetOpti
   async function ensureRuntimeClassSet(force = false): Promise<Set<string>> {
     const startedAt = performance.now()
     const operationId = `vite-runtime-${Date.now()}-${runtimeState.revision}`
-    const forceRuntimeRefresh = force || process.env['WEAPP_TW_VITE_FORCE_RUNTIME_REFRESH'] === '1'
+    const forceRuntimeRefresh = force || forceRefreshByEnvironment
     const invalidation = resolveRuntimeRefreshOptions()
     if (forceRuntimeRefresh || invalidation.changed) {
       invalidateRuntimeClassSet()
@@ -124,7 +126,7 @@ export function createViteRuntimeClassSet(options: CreateViteRuntimeClassSetOpti
   ) {
     const startedAt = performance.now()
     const operationId = `vite-bundle-${Date.now()}-${runtimeState.revision}`
-    const forceRuntimeRefresh = forceRefresh || process.env['WEAPP_TW_VITE_FORCE_RUNTIME_REFRESH'] === '1'
+    const forceRuntimeRefresh = forceRefresh || forceRefreshByEnvironment
     const invalidation = resolveRuntimeRefreshOptions()
     const shouldRefreshRuntime = forceRuntimeRefresh || invalidation.changed
     const forceCollectBySource = snapshot.runtimeAffectingChangedByType.html.size > 0

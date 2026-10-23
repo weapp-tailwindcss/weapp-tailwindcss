@@ -112,7 +112,10 @@ export function createUniAppXVitePlugins(options: UserDefinedOptions | InternalU
       appType: 'uni-app-x',
       cssPreflight: context.cssPreflight,
       cssPreflightRange: context.cssPreflightRange,
-      customAttributesEntities: context.customAttributesEntities,
+      customAttributesEntities: context.customAttributesEntities.map(([name, attributes]) => [
+        name,
+        typeof attributes === 'string' || attributes instanceof RegExp ? attributes : [...attributes],
+      ]),
       disabledDefaultTemplateHandler: context.disabledDefaultTemplateHandler,
       ensureRuntimeClassSet: context.ensureRuntimeClassSet,
       generateCss: context.generateCss,

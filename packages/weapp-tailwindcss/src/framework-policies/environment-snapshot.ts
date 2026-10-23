@@ -13,6 +13,7 @@ export interface FrameworkEnvironment {
   readonly compilerMode: 'legacy' | 'graph' | 'shadow'
   readonly sourceConcurrency: number
   readonly shadowGate: string | undefined
+  readonly forceViteRuntimeRefresh: boolean
 }
 
 const frameworkEnvironment = Symbol('weapp-tailwindcss.framework-environment')
@@ -35,6 +36,7 @@ export function captureFrameworkEnvironment(): FrameworkEnvironment {
       ? process.env['WEAPP_TAILWINDCSS_COMPILER']
       : 'graph',
     shadowGate: process.env['WEAPP_TAILWINDCSS_COMPILER_SHADOW_GATE'],
+    forceViteRuntimeRefresh: process.env['WEAPP_TW_VITE_FORCE_RUNTIME_REFRESH'] === '1',
     sourceConcurrency: Math.max(1, Number.parseInt(process.env['WEAPP_TW_GENERATOR_SOURCE_CONCURRENCY'] ?? '', 10) || 1),
   })
 }

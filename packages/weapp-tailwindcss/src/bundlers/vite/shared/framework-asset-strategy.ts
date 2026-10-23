@@ -1,5 +1,5 @@
 import type { FrameworkAssetAccess, FrameworkAssets } from './framework-assets'
-import type { CreateJsHandlerOptions, InternalUserDefinedOptions, IStyleHandlerOptions, JsHandlerResult } from '@/types'
+import type { CreateJsHandlerOptions, InternalUserDefinedOptions, JsHandlerResult } from '@/types'
 
 /** 仅提供当前 JS 资产的转换服务；缓存提交与任务调度由构建器持有。 */
 export interface ViteFrameworkJsAssetContext {
@@ -19,7 +19,7 @@ export interface ViteFrameworkStyleAssetContext {
   assets: FrameworkAssetAccess
   debug: (format: string, ...args: unknown[]) => void
   generateCss: (source: string, outputFile: string) => Promise<string | undefined>
-  getCssHandlerOptions: (file: string) => IStyleHandlerOptions
+  matchesMainCss: (file: string) => boolean
   getProcessedCssSources: () => string[]
   isHarmonyAppStyleTarget: boolean
   isNativeAppStyleTarget: boolean

@@ -2,6 +2,7 @@ import type { IStyleHandlerOptions, StyleHandler } from '@weapp-tailwindcss/post
 import type { HmrContext } from 'vite'
 import type { ViteHmrCssModuleVersionTracker } from './framework-hmr-module-version'
 import type { ICustomAttributesEntities, JsHandler } from '@/types'
+import { snapshotConfiguration } from '@/compiler/configuration-snapshot'
 
 /** 扩展只读取已解析的构建事实，不取得构建器配置对象。 */
 export interface FrameworkBuildFacts {
@@ -17,12 +18,27 @@ export interface FrameworkGenerationRequest {
   transient?: boolean | undefined
 }
 
-/** 绑定到当前会话的操作不暴露处理器属性或资源释放权。 */
-export interface ViteFrameworkExtraPluginContext {
-  readonly cssPreflight: IStyleHandlerOptions['cssPreflight']
+interface FrameworkExtraConfigurationInput {
+  cssPreflight: IStyleHandlerOptions['cssPreflight']
+  cssPreflightRange: IStyleHandlerOptions['cssPreflightRange']
+  customAttributesEntities: ICustomAttributesEntities
+  disabledDefaultTemplateHandler: boolean | undefined
+}
+
+export interface FrameworkExtraConfiguration {
+  readonly cssPreflight: Readonly<IStyleHandlerOptions['cssPreflight']>
   readonly cssPreflightRange: IStyleHandlerOptions['cssPreflightRange']
-  readonly customAttributesEntities: ICustomAttributesEntities
+  readonly customAttributesEntities: readonly (readonly [string | RegExp, string | RegExp | readonly (string | RegExp)[]])[]
   readonly disabledDefaultTemplateHandler: boolean | undefined
+}
+
+/** 扩展配置独立复制；不能通过嵌套容器修改构建器或用户持有的配置。 */
+export function createFrameworkExtraConfiguration(input: FrameworkExtraConfigurationInput): FrameworkExtraConfiguration {
+  return snapshotConfiguration(input)
+}
+
+/** 绑定到当前会话的操作不暴露处理器属性或资源释放权。 */
+export interface ViteFrameworkExtraPluginContext extends FrameworkExtraConfiguration {
   ensureRuntimeClassSet: (force?: boolean) => Promise<ReadonlySet<string>>
   generateCss: (id: string, code: string, request?: FrameworkGenerationRequest) => Promise<string | undefined>
   getResolvedConfig: () => FrameworkBuildFacts | undefined

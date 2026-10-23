@@ -7,6 +7,7 @@ import process from 'node:process'
 import { disposeCompilerOwner } from '@/compiler'
 import { createCompilerContext } from '@/context'
 import { generateTailwindV4Css } from '@/context/generation'
+import { resolveContextViteRuntimeRefresh } from '@/context/vite-environment'
 import { createDebug } from '@/debug'
 import { normalizeTailwindConfigDirectives, normalizeTailwindSourceForGenerator } from '@/generation/directives'
 import { normalizeEmptyTailwindCustomVariants } from '@/generation/user-css'
@@ -81,6 +82,7 @@ export function createCssOnlyVitePlugins(
   const hmrTimingRecorder = createHmrTimingRecorder('vite')
   const runtimeClassSet = createViteRuntimeClassSet({
     opts,
+    forceRuntimeRefresh: resolveContextViteRuntimeRefresh(originalOpts),
     initialTailwindRuntime: opts.tailwindRuntime,
     refreshTailwindcssRuntime: opts.refreshTailwindcssRuntime,
     runtimeClassSetFeatureEnabled: false,

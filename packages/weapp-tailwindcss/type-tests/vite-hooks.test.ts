@@ -1,4 +1,6 @@
 import type { Plugin, ResolvedConfig } from 'vite'
+import type { ViteFrameworkStyleAssetContext } from '../src/bundlers/vite/shared/framework-asset-strategy'
+import type { ViteFrameworkExtraPluginContext } from '../src/bundlers/vite/shared/framework-services'
 import { getViteHookHandler } from '../src/bundlers/vite/plugin-hook'
 import { wrapViteCssPostOutput } from '../src/bundlers/vite/watch-css-output'
 import { createBuiltinViteStyleInjectorPlugins } from '../src/style-injector/internal'
@@ -33,3 +35,23 @@ for (const plugin of createBuiltinViteStyleInjectorPlugins(true, () => Object.as
   getViteHookHandler(plugin.buildStart)?.call(context, buildOptions)
   getViteHookHandler(plugin.generateBundle)?.call(context, ...output)
 }
+
+// 框架扩展不能写入共享配置，也不能索取构建器持有的样式配置缓存。
+declare const extension: ViteFrameworkExtraPluginContext
+declare const styleAssets: ViteFrameworkStyleAssetContext
+if (extension.cssPreflight) {
+  // @ts-expect-error 框架配置必须只读。
+  extension.cssPreflight['margin'] = '1'
+}
+// @ts-expect-error 属性登记数组必须只读。
+extension.customAttributesEntities.push(['view', 'class'])
+// @ts-expect-error 属性登记元组必须只读。
+extension.customAttributesEntities[0]![0] = 'text'
+const attributeNames = extension.customAttributesEntities[0]![1]
+if (typeof attributeNames !== 'string' && !(attributeNames instanceof RegExp)) {
+  // @ts-expect-error 嵌套属性数组必须只读。
+  attributeNames.push('style')
+}
+// @ts-expect-error 样式资产上下文只暴露匹配操作，不暴露缓存配置。
+styleAssets.getCssHandlerOptions('entry.css')
+expectType<boolean>(styleAssets.matchesMainCss('entry.css'))

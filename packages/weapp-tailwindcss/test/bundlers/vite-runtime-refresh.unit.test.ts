@@ -2,28 +2,39 @@ import type { Plugin, ResolvedConfig } from 'vite'
 import type { InternalUserDefinedOptions } from '@/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createViteRuntimeClassSet } from '@/bundlers/vite/runtime-class-set'
+import { resolveContextViteRuntimeRefresh } from '@/context/vite-environment'
+import { initializeFrameworkEnvironment } from '@/framework-policies/environment-snapshot'
 import { createUniAppXPlugins } from '@/uni-app-x/vite'
 
 function deferred<T>() {
   let resolve!: (value: T) => void
   let reject!: (reason: unknown) => void
-  const promise = new Promise<T>((yes, no) => { resolve = yes; reject = no })
+  const promise = new Promise<T>((yes, no) => {
+    resolve = yes
+    reject = no
+  })
   return { promise, resolve, reject }
 }
 
-function setup() {
+const runtimeOwners: Array<ReturnType<typeof createViteRuntimeClassSet>['runtimeState']> = []
+
+function setup(environmentOwner?: object, includeRefreshPolicy = true) {
   const extract = vi.fn(async () => ({ classSet: new Set(['flex']) }))
   const runtime = { majorVersion: 4, options: {}, extract }
   const refresh = vi.fn(async () => runtime)
+  const opts = { appType: 'uni-app-x' } as InternalUserDefinedOptions
+  initializeFrameworkEnvironment(opts, environmentOwner)
   const manager = createViteRuntimeClassSet({
-    opts: { appType: 'uni-app-x' } as InternalUserDefinedOptions,
+    opts,
+    ...(includeRefreshPolicy ? { forceRuntimeRefresh: resolveContextViteRuntimeRefresh(opts) } : {}),
     initialTailwindRuntime: runtime as any,
     refreshTailwindcssRuntime: refresh as any,
-    uniAppXEnabled: true,
+    runtimeClassSetFeatureEnabled: true,
     customAttributesEntities: [],
     disabledDefaultTemplateHandler: false,
     debug: () => {},
   })
+  runtimeOwners.push(manager.runtimeState)
   return { manager, extract, refresh, runtime }
 }
 
@@ -32,7 +43,12 @@ function hook(plugin: Plugin, name: 'transform' | 'buildStart') {
   return typeof value === 'function' ? value : value?.handler
 }
 
-afterEach(() => vi.unstubAllEnvs())
+afterEach(() => {
+  for (const runtime of runtimeOwners.splice(0)) {
+    runtime.dispose()
+  }
+  vi.unstubAllEnvs()
+})
 
 describe('uni-app x runtime refresh ownership (issue 1245)', () => {
   it.each(['sequential', 'concurrent'])('shares one baseline for 108 %s SFC transforms', async (mode) => {
@@ -143,12 +159,39 @@ describe('uni-app x runtime refresh ownership (issue 1245)', () => {
     await expect(manager.ensureRuntimeClassSet()).rejects.toThrow('disposed')
   })
 
-  it('retains the explicit forced refresh diagnostic override', async () => {
+  it('captures forced refresh independently for interleaved instances', async () => {
+    vi.stubEnv('WEAPP_TW_VITE_FORCE_RUNTIME_REFRESH', '1')
+    const environmentOwner = {}
+    initializeFrameworkEnvironment(environmentOwner)
+    vi.stubEnv('WEAPP_TW_VITE_FORCE_RUNTIME_REFRESH', '0')
+    const forced = setup(environmentOwner)
+    const cached = setup()
+    for (let index = 0; index < 3; index++) {
+      vi.stubEnv('WEAPP_TW_VITE_FORCE_RUNTIME_REFRESH', index % 2 ? '0' : '1')
+      await forced.manager.ensureRuntimeClassSet()
+      await cached.manager.ensureRuntimeClassSet()
+    }
+    expect(forced.extract).toHaveBeenCalledTimes(3)
+    expect(cached.extract).toHaveBeenCalledTimes(1)
+    forced.manager.runtimeState.dispose()
+    await cached.manager.ensureRuntimeClassSet()
+    expect(cached.extract).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not read global environment when the internal refresh option is omitted', async () => {
+    vi.stubEnv('WEAPP_TW_VITE_FORCE_RUNTIME_REFRESH', '1')
+    const { manager, extract } = setup(undefined, false)
+    await manager.ensureRuntimeClassSet()
+    await manager.ensureRuntimeClassSet()
+    expect(extract).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps explicit request refresh independent of the environment policy', async () => {
+    vi.stubEnv('WEAPP_TW_VITE_FORCE_RUNTIME_REFRESH', '0')
     const { manager, extract } = setup()
     await manager.ensureRuntimeClassSet()
-    vi.stubEnv('WEAPP_TW_VITE_FORCE_RUNTIME_REFRESH', '1')
+    await manager.ensureRuntimeClassSet(true)
     await manager.ensureRuntimeClassSet()
-    await manager.ensureRuntimeClassSet()
-    expect(extract).toHaveBeenCalledTimes(3)
+    expect(extract).toHaveBeenCalledTimes(2)
   })
 })

@@ -1,7 +1,7 @@
-import { createFrameworkAssetAccess } from '@/bundlers/vite/shared/framework-assets'
 import type { OutputAsset } from 'rollup'
 import { describe, expect, it, vi } from 'vitest'
 import { handleUniAppXPostCssTasks } from '@/bundlers/vite/frameworks/uni-app-x/postprocess'
+import { createFrameworkAssetAccess } from '@/bundlers/vite/shared/framework-assets'
 
 function asset(fileName: string, source: string): OutputAsset {
   return {
@@ -19,7 +19,7 @@ function createOptions(overrides: Partial<Parameters<typeof handleUniAppXPostCss
     debug: vi.fn(),
     enabled: false,
     generateCss: vi.fn(async () => undefined),
-    getCssHandlerOptions: vi.fn(() => ({ isMainChunk: false })),
+    matchesMainCss: vi.fn(() => false),
     getProcessedCssSources: vi.fn(() => []),
     isHarmonyAppStyleTarget: false,
     isNativeAppStyleTarget: false,
@@ -57,9 +57,7 @@ describe('bundlers/vite uni-app-x post css tasks', () => {
     await handleUniAppXPostCssTasks(createOptions({
       assets: createFrameworkAssetAccess(bundle),
       debug,
-      getCssHandlerOptions: vi.fn(file => ({
-        isMainChunk: file === 'styles/root.css',
-      })),
+      matchesMainCss: vi.fn(file => file === 'styles/root.css'),
       getProcessedCssSources: () => ['.generated{color:blue}'],
       isHarmonyAppStyleTarget: true,
       onUpdate,

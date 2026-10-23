@@ -1,3 +1,4 @@
+import type { IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
 import type { OutputBundle } from 'rollup'
 import type { GenerateBundleContext } from '../generate-bundle/types'
 import type { ViteFrameworkStyleAssetContext } from './framework-asset-strategy'
@@ -5,8 +6,9 @@ import { generateTailwindV4Css } from '@/context/generation'
 import { annotateCssSourceTrace, createCssTokenSourceMap } from '../../shared/css-source-trace'
 import { createFrameworkAssetAccess } from './framework-assets'
 
-interface FrameworkStyleAssetOptions extends Omit<ViteFrameworkStyleAssetContext, 'generateCss' | 'getProcessedCssSources' | 'assets'> {
+interface FrameworkStyleAssetOptions extends Omit<ViteFrameworkStyleAssetContext, 'generateCss' | 'getProcessedCssSources' | 'assets' | 'matchesMainCss'> {
   bundle: OutputBundle
+  getCssHandlerOptions: (file: string) => IStyleHandlerOptions
   opts: GenerateBundleContext['opts']
   runtimeState: GenerateBundleContext['runtimeState']
   getSourceCandidatesForEntries: GenerateBundleContext['getSourceCandidatesForEntries']
@@ -20,7 +22,7 @@ export function createFrameworkStyleAssetContext(options: FrameworkStyleAssetOpt
   return {
     assets: createFrameworkAssetAccess(options.bundle),
     debug: options.debug,
-    getCssHandlerOptions: options.getCssHandlerOptions,
+    matchesMainCss: file => options.getCssHandlerOptions(file).isMainChunk === true,
     getProcessedCssSources: () => [...(options.getViteProcessedCssAssetResults?.() ?? [])]
       .map(([, record]) => typeof record === 'string' ? record : record.css),
     isHarmonyAppStyleTarget: options.isHarmonyAppStyleTarget,

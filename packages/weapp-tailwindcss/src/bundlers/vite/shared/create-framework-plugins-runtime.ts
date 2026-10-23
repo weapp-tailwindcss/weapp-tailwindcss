@@ -14,6 +14,7 @@ import { disposeCompilerOwner } from '@/compiler'
 import { vitePluginName } from '@/constants'
 import { createCompilerContext } from '@/context'
 import { toCustomAttributesEntities } from '@/context/custom-attributes'
+import { resolveContextViteRuntimeRefresh } from '@/context/vite-environment'
 import { createDebug } from '@/debug'
 import { hasTailwindRootDirectives } from '@/generation/directives'
 import { hasUserCssLayerBlocks } from '@/generation/user-css'
@@ -55,6 +56,7 @@ import { createFrameworkPostPlugin } from './framework-post-plugin'
 import { createFrameworkCssEntrySync, resolveFrameworkStylePlatform } from './framework-runtime-configuration'
 import { createFrameworkRuntimeLifecycle, disposeViteResources } from './framework-runtime-lifecycle'
 import { collectConfiguredCssEntries, isInternalUserDefinedOptions, isNuxtPageHotModule, isWebOrNativeAppPlatform } from './framework-runtime-utils'
+import { createFrameworkExtraConfiguration } from './framework-services'
 import { createFrameworkSourceCandidatesPlugin } from './framework-source-candidates-plugin'
 import { createFrameworkSourceDiscovery } from './framework-source-discovery'
 import { createFrameworkSourceScanSession, syncFrameworkSourceCandidatesForHotUpdate } from './framework-source-scan-session'
@@ -121,7 +123,7 @@ export function createViteFrameworkPlugins(options: ViteFrameworkRuntimeOptions 
   const sourceCandidateCollector = createSourceCandidateCollector({ bareArbitraryValues: opts.arbitraryValues?.bareArbitraryValues, customAttributesEntities, disabledDefaultTemplateHandler })
   const cssAssets = createFrameworkCssAssets({ debug, getSourceCandidateSource: file => sourceCandidateCollector.source(file) })
   const { originalCssLayerSourceByFile, rememberOriginalCssLayerSource, cleanGeneratedCssByFile, generatedClassSetByFile, processedCssRegistry, cssMemory, markCssAssetProcessed, isCssAssetProcessed, recordCssAssetResult, recordViteProcessedCssAssetResult, getViteProcessedCssAssetResults, getViteProcessedCssAssetResult, pruneViteCssCaches, frameworkRootImportShellTargetByFile } = cssAssets
-  const { runtimeState, refreshRuntimeState, invalidateRuntimeClassSet, ensureRuntimeClassSet, ensureBundleRuntimeClassSet } = createViteRuntimeClassSet({ opts, initialTailwindRuntime, refreshTailwindcssRuntime: refreshTailwindRuntime, runtimeClassSetFeatureEnabled, customAttributesEntities, disabledDefaultTemplateHandler, debug })
+  const { runtimeState, refreshRuntimeState, invalidateRuntimeClassSet, ensureRuntimeClassSet, ensureBundleRuntimeClassSet } = createViteRuntimeClassSet({ opts, forceRuntimeRefresh: resolveContextViteRuntimeRefresh(originalOpts), initialTailwindRuntime, refreshTailwindcssRuntime: refreshTailwindRuntime, runtimeClassSetFeatureEnabled, customAttributesEntities, disabledDefaultTemplateHandler, debug })
   const hmrTimingRecorder = createHmrTimingRecorder('vite')
   const refreshRuntimeStateForAutoCssSources = refreshRuntimeState
   onLoad()
@@ -189,10 +191,12 @@ export function createViteFrameworkPlugins(options: ViteFrameworkRuntimeOptions 
   }
   const extraPlugins = capability.frameworkExtras
     ? frameworkBranch.createExtraPlugins?.({
-      cssPreflight: opts.cssPreflight,
-      cssPreflightRange: opts.cssPreflightRange,
-      customAttributesEntities,
-      disabledDefaultTemplateHandler,
+      ...createFrameworkExtraConfiguration({
+        cssPreflight: opts.cssPreflight,
+        cssPreflightRange: opts.cssPreflightRange,
+        customAttributesEntities,
+        disabledDefaultTemplateHandler,
+      }),
       ensureRuntimeClassSet: async force => new Set(await ensureRuntimeClassSet(force)),
       generateCss: generateTailwindCssForVitePipeline,
       getResolvedConfig: () => resolvedConfig && Object.freeze({
