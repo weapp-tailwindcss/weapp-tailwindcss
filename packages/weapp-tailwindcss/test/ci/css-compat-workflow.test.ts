@@ -40,15 +40,17 @@ describe('独立 CSS 兼容内核 CI 契约', () => {
   it('Ubuntu Node 24 固定真实消费、三浏览器、属性数据与基准证据', () => {
     const job = readWorkflow('css-compat.yml').jobs.semantics
     expect(job['runs-on']).toBe('ubuntu-latest')
+    expect(job['timeout-minutes']).toBe(25)
     expect(job.steps.find((step: { uses?: string }) => step.uses === './.github/actions/setup-pnpm').with['node-version']).toBe(24)
     const runs = commands(job)
     expect(runs).toEqual(expect.arrayContaining([
       'pnpm --filter @weapp-tailwindcss/postcss... run build',
       'pnpm --filter @weapp-tailwindcss/css-compat properties:check',
       'pnpm --filter @weapp-tailwindcss/css-compat test:consumers',
-      'pnpm exec playwright install --with-deps chromium chromium-headless-shell firefox webkit',
+      'node scripts/ci/verify-playwright-image.mjs chromium firefox webkit',
       'pnpm --filter @weapp-tailwindcss/css-compat test:browser',
     ]))
+    expect(runs.join('\n')).not.toMatch(/playwright install|apt-get|install-deps/)
     expect(job.steps.every((step: Record<string, unknown>) => !step['continue-on-error'])).toBe(true)
     const benchmark = job.steps.find((step: { run?: string }) => step.run?.includes(' tee '))
     expect(benchmark.shell).toBe('bash')
