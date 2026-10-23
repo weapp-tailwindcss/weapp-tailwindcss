@@ -7,6 +7,7 @@ import { afterEach, expect, it, vi } from 'vitest'
 import * as processTools from '../../../packages/hbuilderx-runner/src/process'
 import * as processCommand from '../../../scripts/demo-e2e-workflow/process-command'
 import * as processObserver from '../../../scripts/demo-e2e-workflow/process-observer'
+import * as processTable from '../../../scripts/demo-e2e-workflow/process-table'
 import { withLocalCommand } from './lifecycle'
 
 const platform = Object.getOwnPropertyDescriptor(process, 'platform')!
@@ -106,6 +107,23 @@ it('首次采集跨越根退出时永久保留身份不足，不能把空子树�
   expect(action).not.toHaveBeenCalled()
   expect(item.terminate).not.toHaveBeenCalled()
   expect(item.state.rows).toEqual([descendant])
+  expect(item.close).toHaveBeenCalledOnce()
+})
+
+it('已登记根身份后自然退出不撤销首次证据，继续保留原始命令结果', async () => {
+  const item = fixture()
+  const collect = processTable.collectOwnedProcesses
+  vi.spyOn(processTable, 'collectOwnedProcesses').mockImplementationOnce((...args) => {
+    const owned = collect(...args)
+    queueMicrotask(item.finishRoot)
+    return owned
+  })
+  const action = vi.fn(async () => {
+    expect(item.child.exitCode).toBe(0)
+    return 'observed exit'
+  })
+  await expect(withLocalCommand(invocation, new AbortController().signal, action)).resolves.toBe('observed exit')
+  expect(action).toHaveBeenCalledOnce()
   expect(item.close).toHaveBeenCalledOnce()
 })
 

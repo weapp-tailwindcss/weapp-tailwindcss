@@ -33,10 +33,7 @@ it('浏览器根命令退出 0，后代关闭所有输出仍存活时不能绕�
   const descendant = await item.descendant('browser')
   if (error instanceof Error) {
     expect(error).toBeInstanceOf(Error)
-    expect(messages(error)).toMatch(/启动身份未确认|子进程清理/)
-    if (messages(error).includes('启动身份未确认')) {
-      return
-    }
+    expect(messages(error)).toContain('子进程清理')
   }
   else {
     expect(error).toBeUndefined()
@@ -55,11 +52,8 @@ it.each(['surviving-descendant', 'surviving-detached'])('Worker 根退出 0 后�
     context.signal.throwIfAborted()
   }, item.options).catch(error => error)
   expect(error).toBeInstanceOf(Error)
-  expect(messages(error)).toMatch(/Worker 提前退出：exit=0|启动身份未确认/)
+  expect(messages(error)).toContain('Worker 提前退出：exit=0')
   const descendant = await item.descendant('worker')
-  if (messages(error).includes('启动身份未确认')) {
-    return
-  }
   expect(() => process.kill(descendant.pid, 0)).toThrow()
   if (mode === 'surviving-detached') {
     expect(messages(error)).toContain('子进程清理未正常完成')

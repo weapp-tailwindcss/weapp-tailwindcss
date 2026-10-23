@@ -1,6 +1,7 @@
 import type { HBuilderXCommandOptions, SpawnedHBuilderXCommand } from '../../../packages/hbuilderx-runner/src/types'
 import type { WorkflowProcessObserver } from '../../../scripts/demo-e2e-workflow/process-observer'
 import type { ProcessIdentity } from '../../../scripts/demo-e2e-workflow/process-table'
+import type { LocalCommandGate } from './launch-gate'
 import process from 'node:process'
 import { spawnCommand } from '../../../packages/hbuilderx-runner/src/process'
 import { includeWorkflowCancellation } from '../../../scripts/demo-e2e-workflow/cancellation'
@@ -8,8 +9,9 @@ import { prepareWorkflowProcessObserver } from '../../../scripts/demo-e2e-workfl
 import { readProcessTable } from '../../../scripts/demo-e2e-workflow/process-table'
 import { createWorkflowProcessTree } from '../../../scripts/demo-e2e-workflow/process-tree'
 import { runWithCleanup } from '../../../scripts/e2e-preflight/cleanup'
+import { prepareLocalCommandGate } from './launch-gate'
 
-async function runOwnedCommand<T>(command: SpawnedHBuilderXCommand, signal: AbortSignal, observer: WorkflowProcessObserver | undefined, action: (command: SpawnedHBuilderXCommand, signal: AbortSignal) => Promise<T>, onSpawn?: (command: SpawnedHBuilderXCommand, isStopping: () => boolean) => void) {
+async function runOwnedCommand<T>(command: SpawnedHBuilderXCommand, signal: AbortSignal, observer: WorkflowProcessObserver | undefined, gate: LocalCommandGate, action: (command: SpawnedHBuilderXCommand, signal: AbortSignal) => Promise<T>, onSpawn?: (command: SpawnedHBuilderXCommand, isStopping: () => boolean) => void) {
   const controller = new AbortController()
   const managedSignal = AbortSignal.any([signal, controller.signal])
   let stopping = false
@@ -99,9 +101,10 @@ async function runOwnedCommand<T>(command: SpawnedHBuilderXCommand, signal: Abor
       onSpawn?.(command, () => stopping)
       const owned = await capture()
       managedSignal.throwIfAborted()
-      if (!owned.has(command.child.pid!) || exited || command.child.exitCode !== null || command.child.signalCode !== null) {
+      if (!owned.has(command.child.pid!)) {
         throw new Error(`${process.platform === 'win32' ? 'Windows' : 'POSIX'} 本地命令 pid=${command.child.pid ?? 'unknown'} 的启动身份未确认：根进程已退出或首次采集缺失，不能确认后代归属。`)
       }
+      gate?.release()
       observe()
       managedSignal.throwIfAborted()
       const result = await action(command, managedSignal)
@@ -124,6 +127,7 @@ async function runOwnedCommand<T>(command: SpawnedHBuilderXCommand, signal: Abor
 export async function withLocalCommand<T>(options: HBuilderXCommandOptions, signal: AbortSignal, action: (command: SpawnedHBuilderXCommand, signal: AbortSignal) => Promise<T>, onSpawn?: (command: SpawnedHBuilderXCommand, isStopping: () => boolean) => void): Promise<T> {
   signal.throwIfAborted()
   let observer: WorkflowProcessObserver | undefined
+  let gate: LocalCommandGate
   try {
     const result = await runWithCleanup(async () => {
       if (process.platform === 'win32') {
@@ -132,10 +136,11 @@ export async function withLocalCommand<T>(options: HBuilderXCommandOptions, sign
           throw new Error('Windows 身份观察器未准备，禁止启动本地命令。')
         }
       }
+      gate = await prepareLocalCommandGate(options)
       signal.throwIfAborted()
-      const command = spawnCommand({ ...options, detached: process.platform !== 'win32' })
-      return await runOwnedCommand(command, signal, observer, action, onSpawn)
-    }, async () => observer?.close())
+      const command = spawnCommand({ ...(gate?.options ?? options), detached: process.platform !== 'win32' })
+      return await runOwnedCommand(command, signal, observer, gate, action, onSpawn)
+    }, async () => runWithCleanup(async () => observer?.close(), async () => gate?.close()))
     signal.throwIfAborted()
     return result
   }

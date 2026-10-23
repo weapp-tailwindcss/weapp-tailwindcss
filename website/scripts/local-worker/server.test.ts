@@ -162,9 +162,12 @@ it('服务 exit 早于 close 时立即取消浏览器，并等待浏览器与服
   const browserStop = vi.fn(async () => closeBrowser({ code: null, signal: 'SIGTERM' }))
   vi.spyOn(processTools, 'spawnCommand')
     .mockImplementationOnce(options => ({ ...options, child, logs: [`Ready on http://127.0.0.1:${options.args[1]}`], closed: workerClosed, stop: workerStop }) as unknown as SpawnedHBuilderXCommand)
-    .mockReturnValueOnce({ child: Object.assign(new EventEmitter(), { pid: 424243, exitCode: null, signalCode: null }), logs: [], closed: browserClosed, stop: browserStop } as unknown as SpawnedHBuilderXCommand)
+    .mockImplementationOnce(() => {
+      // 明确在浏览器已启动后触发 Worker 退出，不依赖异步启动准备的微任务数量。
+      queueMicrotask(() => child.emit('exit', 0, null))
+      return { child: Object.assign(new EventEmitter(), { pid: 424243, exitCode: null, signalCode: null }), logs: [], closed: browserClosed, stop: browserStop } as unknown as SpawnedHBuilderXCommand
+    })
   await expect(withLocalWorker(async (context) => {
-    queueMicrotask(() => child.emit('exit', 0, null))
     await runLocalCommand(item.browserCommand, context.signal)
   }, item.options)).rejects.toThrow('Worker 提前退出：exit=0')
   expect(browserStop).toHaveBeenCalledOnce()
