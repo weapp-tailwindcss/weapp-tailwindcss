@@ -19,6 +19,7 @@ const files = [
   'command.test.ts',
   'server.test.ts',
   'test-scope.test.ts',
+  'test-process-state.test.ts',
 ]
 
 describe('本地命令生命周期的真实跨平台 CI 门禁', () => {

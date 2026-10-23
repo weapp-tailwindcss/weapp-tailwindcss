@@ -237,6 +237,7 @@ jobs:
             scripts/local-worker/command.test.ts \
             scripts/local-worker/server.test.ts \
             scripts/local-worker/test-scope.test.ts \
+            scripts/local-worker/test-process-state.test.ts \
             --update=none --maxWorkers=1 \
             --reporter=default --reporter=json --outputFile.json=../.tmp/local-worker-ci/vitest.json \
             2>&1 | tee .tmp/local-worker-ci/run.log
