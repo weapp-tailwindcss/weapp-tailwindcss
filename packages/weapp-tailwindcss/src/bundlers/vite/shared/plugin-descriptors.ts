@@ -43,11 +43,15 @@ export const runtimeLifecycleSlot = {
   hooks: { buildEnd: true, closeBundle: { order: 'post', sequential: true }, closeWatcher: { order: 'post', sequential: true } },
 } satisfies VitePluginSlot
 
-export const frameworkRuntimeSlots = [
+export const frameworkTransformSlots = [
   { name: 'weapp-tailwindcss:configured-css-entry-observer', hooks: { transform: true } },
   ...generationPluginSlots,
   { name: `${vitePluginName}:js:serve`, apply: 'serve', enforce: 'post', hooks: { transform: true } },
   { name: `${vitePluginName}:watch-css-cache`, hooks: { configResolved: { order: 'post' } } },
+] satisfies VitePluginSlot[]
+
+/** injector 先提交来源资产，再由 post 与 finalizer 完成生成和平台收尾。 */
+export const frameworkOutputSlots = [
   postPluginSlot,
   cssFinalizerSlot,
   hmrVersionSlot,

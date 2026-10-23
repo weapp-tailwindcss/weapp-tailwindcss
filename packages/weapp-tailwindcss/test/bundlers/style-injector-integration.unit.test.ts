@@ -113,7 +113,7 @@ describe('bundlers/vite builtin styleInjector', () => {
     expect(() => asyncWebpackOptions.loadSubpackageTargetStyle('a.wxss', '/repo/a.wxss')).toThrow('must return synchronously')
   })
 
-  it('injects configured imports after the main vite plugin output hooks', async () => {
+  it('injects configured imports before generation and final CSS cleanup', async () => {
     resetVitePluginTestContext()
     setCurrentContext(createContext({
       appType: 'native',
@@ -143,7 +143,21 @@ describe('bundlers/vite builtin styleInjector', () => {
     } as any, {} as any, bundle as any, false)
 
     expect(bundle['app.wxss'].source).toBe('@import "shared.wxss";\n.app{}')
-    expect(plugins.findIndex(plugin => plugin.name === 'weapp-tailwindcss:style-injector')).toBeGreaterThan(plugins.findIndex(plugin => plugin.name === 'weapp-tailwindcss:adaptor:css-finalizer'))
+    expect(plugins.findIndex(plugin => plugin.name === 'weapp-tailwindcss:style-injector')).toBeLessThan(plugins.findIndex(plugin => plugin.name === 'weapp-tailwindcss:adaptor:post'))
+    expect(styleInjectorPlugin.generateBundle).toMatchObject({ order: 'post' })
+  })
+
+  it('submits injector assets before uni-app-x consumes style placeholders', async () => {
+    resetVitePluginTestContext()
+    setCurrentContext(createContext({ appType: 'uni-app-vite', uniAppX: true, styleInjector: true }))
+    const WeappTailwindcss = await loadViteWeappTailwindcssPlugin()
+    const plugins = WeappTailwindcss({ appType: 'uni-app-vite', uniAppX: true, styleInjector: true })!
+    const injector = plugins.findIndex(plugin => plugin.name === 'weapp-tailwindcss:style-injector')
+    const placeholder = plugins.findIndex(plugin => plugin.name === 'weapp-tailwindcss:uni-app-x:style-placeholder')
+    expect(injector).toBeGreaterThan(-1)
+    expect(placeholder).toBeGreaterThan(injector)
+    expect(plugins[injector]?.generateBundle).toMatchObject({ order: 'post' })
+    expect(plugins[placeholder]?.generateBundle).toMatchObject({ order: 'post' })
   })
 
   it('uses the selected uni-app Vite framework styleInjector preset', async () => {

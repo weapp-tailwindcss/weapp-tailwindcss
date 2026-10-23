@@ -258,14 +258,12 @@ export function createCssOnlyVitePlugins(
     ...rewritePlugins,
     sourceCandidatesPlugin,
     ...createViteCssGenerationPlugins({ generateCss, getCommand: () => resolvedConfig?.command, onTailwindRootCss: registerTailwindRootCss, shouldGenerate: () => shouldGenerate, shouldGenerateBuild: () => true }),
-    postPlugin,
-    finalizer,
-    createViteHmrCssModuleVersionFilterPlugin(hmrCssModuleVersions),
   ]
   const styleInjectorFactory = (options as any).__internalViteWebStyleInjectorFactory
   if (opts.styleInjector !== undefined && typeof styleInjectorFactory === 'function') {
     plugins.push(...styleInjectorFactory(opts.styleInjector))
   }
+  plugins.push(postPlugin, finalizer, createViteHmrCssModuleVersionFilterPlugin(hmrCssModuleVersions))
   plugins.push(createFrameworkRuntimeLifecycle({
     getResolvedConfig: () => resolvedConfig,
     dispose: () => disposeViteResources([

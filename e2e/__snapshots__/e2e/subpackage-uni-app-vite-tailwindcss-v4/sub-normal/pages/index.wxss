@@ -1,5 +1,5 @@
 @import '../index.wxss';
-/* tokens: normal-page-local <= src/sub-normal/pages/index.vue */
+/*! tokens: normal-page-local <= src/sub-normal/pages/index.vue */
 .normal-page-local {
   border-width: 3rpx;
 }

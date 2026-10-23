@@ -1,10 +1,11 @@
 import type { VitePluginSlot } from '../../shared/plugin-slots'
 import { createUniViteStyleInjector } from '@/style-injector/vite/uni'
-import { frameworkRuntimeSlots, injectorPluginSlots, runtimeLifecycleSlot, sourcePluginSlots } from '../../shared/plugin-descriptors'
+import { frameworkOutputSlots, frameworkTransformSlots, injectorPluginSlots, runtimeLifecycleSlot, sourcePluginSlots } from '../../shared/plugin-descriptors'
 
 export const pluginSlots = [
   ...sourcePluginSlots,
-  ...frameworkRuntimeSlots,
+  ...frameworkTransformSlots,
   ...injectorPluginSlots(createUniViteStyleInjector.slots),
+  ...frameworkOutputSlots,
   runtimeLifecycleSlot,
 ] satisfies VitePluginSlot[]

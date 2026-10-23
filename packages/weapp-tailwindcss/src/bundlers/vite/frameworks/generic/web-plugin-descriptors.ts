@@ -7,9 +7,9 @@ export const webPluginSlots = [
   sourcePluginSlots[0]!,
   { name: `${vitePluginName}:web-source-candidates`, enforce: 'pre', hooks: { transform: true, watchChange: true, handleHotUpdate: true } },
   ...generationPluginSlots,
+  ...injectorPluginSlots(webStyleInjectorSlots),
   postPluginSlot,
   { ...cssFinalizerSlot, name: `${vitePluginName}:web-css-finalizer` },
   hmrVersionSlot,
-  ...injectorPluginSlots(webStyleInjectorSlots),
   runtimeLifecycleSlot,
 ] satisfies VitePluginSlot[]

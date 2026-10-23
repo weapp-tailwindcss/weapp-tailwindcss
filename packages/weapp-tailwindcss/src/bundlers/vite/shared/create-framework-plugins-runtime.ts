@@ -51,7 +51,7 @@ import { createFrameworkCssGenerator } from './framework-css-generator'
 import { createViteHmrCandidateState } from './framework-hmr-candidate-state'
 import { createViteHmrCssModuleVersionFilterPlugin, createViteHmrCssModuleVersionTracker } from './framework-hmr-module-version'
 import { createFrameworkModuleCandidateRegistrar } from './framework-module-candidates'
-import { orderFrameworkSourceCandidatePlugins } from './framework-plugin-order'
+import { insertFrameworkAssetPlugins, orderFrameworkSourceCandidatePlugins } from './framework-plugin-order'
 import { createFrameworkPostPlugin } from './framework-post-plugin'
 import { createFrameworkCssEntrySync, resolveFrameworkStylePlatform } from './framework-runtime-configuration'
 import { createFrameworkRuntimeLifecycle, disposeViteResources } from './framework-runtime-lifecycle'
@@ -287,11 +287,11 @@ export function createViteFrameworkPlugins(options: ViteFrameworkRuntimeOptions 
   })
   const sourceAndRewritePlugins = orderFrameworkSourceCandidatePlugins(extraPlugins, rewritePlugins, sourceCandidatesPlugin, frameworkBranch.sourceCandidatesBeforeExtraPlugin)
   const serveJsPlugin = capability.serveJsTransform ? createViteServeJsTransformPlugin({ createHandlerOptions: file => serveJsHandlerOptions(file, frameworkCssPipelineStrategy?.sources?.getServeJsHandlerOptions?.({ ...createCssPipelineContext(), file })), getCommand: () => resolvedConfig?.command, jsHandler, shouldTransform: () => shouldOwnTailwindGeneration && (frameworkCssPipelineStrategy?.sources?.shouldTransformServeJs?.(createCssPipelineContext()) ?? !resolveCurrentGeneratorBranch().isWeb), transformRuntime: (id, code) => registerModuleGraphCandidates(id, code, 'js') }) : undefined
-  const plugins: Plugin[] = [...sourceAndRewritePlugins, webCssEntryObserverPlugin, ...createViteCssGenerationPlugins({ generateCss: generateTailwindCssForVitePipeline, getCommand: () => resolvedConfig?.command, onTailwindRootCss: registerTailwindRootCss, shouldDeferGeneration: shouldDeferFrameworkPreTransformGeneration, shouldGenerate: () => shouldOwnTailwindGeneration, shouldGenerateBuild: () => resolveCurrentGeneratorBranch().isWeb }), ...(serveJsPlugin ? [serveJsPlugin] : []), ...(capability.cssOnly ? [] : [{ name: `${vitePluginName}:watch-css-cache`, configResolved: { order: 'post' as const, handler: installFrameworkWatchCssCacheAdapter } }]), postPlugin]
+  const plugins: Plugin[] = [...sourceAndRewritePlugins, webCssEntryObserverPlugin, ...createViteCssGenerationPlugins({ generateCss: generateTailwindCssForVitePipeline, getCommand: () => resolvedConfig?.command, onTailwindRootCss: registerTailwindRootCss, shouldDeferGeneration: shouldDeferFrameworkPreTransformGeneration, shouldGenerate: () => shouldOwnTailwindGeneration, shouldGenerateBuild: () => resolveCurrentGeneratorBranch().isWeb }), ...(serveJsPlugin ? [serveJsPlugin] : []), ...(capability.cssOnly ? [] : [{ name: `${vitePluginName}:watch-css-cache`, configResolved: { order: 'post' as const, handler: installFrameworkWatchCssCacheAdapter } }])]
   installRuntimeClassSetLifecycle({ plugins, invalidateBeforeTransform: frameworkRuntimeStrategy?.invalidateBeforeTransform === true, invalidate: invalidateRuntimeClassSet, isEnabled: shouldEnableFrameworkExtraPlugins, isRelevant: id => sourceScanSession.isDependency(id) || isSourceCandidateRequest(id) })
-  plugins.push(cssFinalizerOutputPlugin)
+  if (capability.styleInjector) { insertFrameworkAssetPlugins(plugins, capability.cssOnly && typeof (options as any).__internalViteWebStyleInjectorFactory === 'function' ? (options as any).__internalViteWebStyleInjectorFactory(styleInjector) : createBuiltinViteStyleInjectorPlugins(styleInjector, () => frameworkBranch.styleInjectorDelegate)) }
+  plugins.push(postPlugin, cssFinalizerOutputPlugin)
   plugins.push(createViteHmrCssModuleVersionFilterPlugin(hmrCssModuleVersions))
-  if (capability.styleInjector) { plugins.push(...capability.cssOnly && typeof (options as any).__internalViteWebStyleInjectorFactory === 'function' ? (options as any).__internalViteWebStyleInjectorFactory(styleInjector) : createBuiltinViteStyleInjectorPlugins(styleInjector, () => frameworkBranch.styleInjectorDelegate)) }
   plugins.push(createFrameworkRuntimeLifecycle({
     getResolvedConfig,
     dispose: () => disposeViteResources([
