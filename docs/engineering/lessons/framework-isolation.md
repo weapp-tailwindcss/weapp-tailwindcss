@@ -273,6 +273,9 @@ Expo 的 run `40016346808` 首轮保留两个不同失败：iOS 在原 10 秒采
 
 持久回归使用真实 createStyleHandler，在子进程中保留 closed Core 和已完成 Promise 的强引用，跨事件循环显式 GC，验证 handler、services 和缓存 AST 可以释放；同时覆盖同配置双实例、活动缓存命中、在途任务排空、清理失败与重复关闭。修复前三个场景确定失败。整合至 `ba27c6e0ee4f55b43bdf5ce51fe93c92deb51409` 后，core-transform-retention、core-compiler-lifecycle、core-root-store-cleanup、profile-session-regressions 和 css-compat-workflow 五文件 29 项通过。该回归证明关闭引用释放，尚不证明它解释全部 RSS 增量；原性能预算仍须复验，不以诊断采样代替。
 
+
+Node 22.22.3 的无探针正式对照以 `534a1ae503e9637f41e21343707eba00ff6f387a` 和固定基线运行原 `pnpm perf:guard -- --baseline-ref fdc3d5856c8dd4b9dbb6417e1206cb9b3cf3d417 --build-runs 3 --hmr-runs 3 --timeout 180000 --poll-interval 30 --only demo-weapp-vite-tailwindcss-v4__mp-weixin`，两侧独立安装、构建及输出，默认 stateful，同一 watcher 连续三次修改和回滚。七个协作任务明确就绪后执行，原预算 `blocking=true`、0 违规，不触发反向确认；build 中位数 3463.94→3464.44ms（+0.014%），HMR peak RSS 1281.34→1324.91MB（+3.40%），steady 1237.13→1284.88MB（+3.86%）。HMR P95 增加 2.31%，中位数增加 1.62%，Core 消费路径没有独立插件计时样本，不将其描述为插件耗时通过。全部 54 个记录 PID 已退出，源码逐字节匹配各自提交，独占临时工作树已删除；命令、环境、原始矩阵、报告及清理摘要保留于 `.tmp/framework-isolation/weapp-vite-close-performance/`。本机 macOS 与远端 Ubuntu、Node 22.23.3 不同，此结果不取消远端首败，也不单独证明关闭修复解释全部改善，最终 head 仍须通过 CI。
+
 ### CSS 语义 CI 的系统依赖安装超时
 
 同一 `f6e8c1e8` 的 CSS compatibility semantics job `120658509643` 在 25 分钟截止后取消。Playwright 的在线系统依赖安装单步耗时 24 分 12 秒，APT 下载停在 libflite1；消费者、属性目录、三浏览器语义和 benchmark 均尚未开始，不能记为产品语义失败或通过。
