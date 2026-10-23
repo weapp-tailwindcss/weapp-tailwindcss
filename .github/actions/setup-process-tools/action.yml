@@ -1,0 +1,12 @@
+name: Setup process identity tools
+description: 为 Linux 预装浏览器容器补齐进程身份查询工具，不安装浏览器依赖。
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        if ! command -v ps > /dev/null; then
+          apt-get -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update
+          apt-get -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install -y --no-install-recommends procps
+        fi
+        ps -A -o pid=,ppid=,pgid=,lstart=,stat= > /dev/null
