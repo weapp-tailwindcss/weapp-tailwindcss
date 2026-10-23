@@ -1,12 +1,15 @@
-import type { AcceptedPlugin } from '@weapp-tailwindcss/postcss/transform'
-import type { LoadedPostcssOptions } from '@weapp-tailwindcss/postcss/types'
+import type { AcceptedPlugin, StyleHandler } from '@weapp-tailwindcss/postcss/transform'
+import type { CssPreflightOptions, LoadedPostcssOptions } from '@weapp-tailwindcss/postcss/types'
 import type { GenerateCssByGeneratorResult } from './index'
 import type { GenerationStyleHandlerOptions as IStyleHandlerOptions } from './style-options'
-import type { Compiler, CompilerSnapshot } from '@/core/compiler'
-import type { InternalUserDefinedOptions } from '@/types'
+import type { Compiler, CompilerSnapshot } from '@/core/compiler/types'
 import { processFrameworkCss, removeTailwindPostcssPlugins } from '@weapp-tailwindcss/postcss/transform'
 import { composeGenerationArtifact, createCssFragment, createGenerationArtifact, createStylePlatformAdapter } from '@/compiler'
 import { finalizeMiniProgramGeneratorCss } from './generation-helpers'
+
+export interface FrameworkPostcssOwner {
+  readonly cssPreflight: CssPreflightOptions
+}
 
 const FRAMEWORK_POSTCSS_REGISTRY = Symbol.for('weapp-tailwindcss.framework-postcss-options')
 const registryHost = globalThis as typeof globalThis & Record<symbol, unknown>
@@ -101,7 +104,7 @@ export function collectFrameworkPostcssOptionsFromLoaderEntries(
 }
 
 export function captureFrameworkPostcssOptions(
-  owner: InternalUserDefinedOptions,
+  owner: FrameworkPostcssOwner,
   options: unknown,
 ): LoadedPostcssOptions | undefined {
   const resolved = resolveFrameworkPostcssOptions(options)
@@ -114,7 +117,7 @@ export function captureFrameworkPostcssOptions(
 }
 
 export function captureResolvedFrameworkPostcssOptions(
-  owner: InternalUserDefinedOptions,
+  owner: FrameworkPostcssOwner,
   options: LoadedPostcssOptions | undefined,
 ): LoadedPostcssOptions | undefined {
   if (!options) {
@@ -125,12 +128,12 @@ export function captureResolvedFrameworkPostcssOptions(
   return options
 }
 
-export function hasFrameworkPostcssOptions(owner: InternalUserDefinedOptions): boolean {
+export function hasFrameworkPostcssOptions(owner: FrameworkPostcssOwner): boolean {
   return frameworkPostcssOptions.has(owner)
 }
 
 function createGeneratedCssHandlerOptions(
-  owner: InternalUserDefinedOptions,
+  owner: FrameworkPostcssOwner,
   options: IStyleHandlerOptions,
   from: string,
 ): IStyleHandlerOptions {
@@ -180,13 +183,13 @@ function createFrameworkReplayArtifact(
 }
 
 export async function adaptGeneratedCssWithFrameworkPipeline(
-  owner: InternalUserDefinedOptions,
+  owner: FrameworkPostcssOwner,
   generated: GenerateCssByGeneratorResult,
   options: {
     cssHandlerOptions: IStyleHandlerOptions
     file: string
     majorVersion: number
-    styleHandler: InternalUserDefinedOptions['styleHandler']
+    styleHandler: StyleHandler
   },
 ): Promise<string> {
   const handlerOptions = createGeneratedCssHandlerOptions(owner, options.cssHandlerOptions, options.file)
@@ -211,14 +214,14 @@ export async function adaptGeneratedCssWithFrameworkPipeline(
 }
 
 export async function adaptGeneratedCssWithFrameworkRootPipeline(
-  owner: InternalUserDefinedOptions,
+  owner: FrameworkPostcssOwner,
   generated: GenerateCssByGeneratorResult,
   options: {
     cssHandlerOptions: IStyleHandlerOptions
     file: string
     majorVersion: number
     rawCandidates: Iterable<string>
-    styleHandler: InternalUserDefinedOptions['styleHandler']
+    styleHandler: StyleHandler
     compiler?: Compiler | undefined
     snapshot?: CompilerSnapshot | undefined
   },

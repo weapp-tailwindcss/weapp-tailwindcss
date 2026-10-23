@@ -1,13 +1,13 @@
 import type { GenerateCssByGeneratorResult } from '../types'
 import type { GeneratorPipelineExecutionContext, GeneratorPipelineOutputContext } from './context'
-import type { CompilerSnapshot } from '@/core/compiler/index'
+import type { CompilerSnapshot } from '@/core/compiler/types'
 import { runCompilerOwnerActivity } from '@/compiler/compiler-owner-state'
 import { getFrameworkCompilerSession } from '@/compiler/framework-compiler-session'
 import { getCompilationSessionPool } from '@/compiler/index'
+import { collectRpxThemeRiskSources } from '@/compiler/rpx-theme-diagnostics'
 import { getTailwindGenerationSessionPool } from '@/compiler/tailwind-generation-session-pool'
 import { hasCssCalcVariables } from '@/tailwindcss/v4-engine/generator/style-context'
 import { includesTailwindV4PreflightDirective } from '@/tailwindcss/v4/preflight'
-import { collectRpxThemeRiskSources, shouldCheckRpxThemeRisk } from '@/tailwindcss/v4/rpx-theme-warning'
 import { runWithConcurrency } from '../../utils/run-tasks'
 import { resolveMiniProgramPreflightModeForGeneratorCss, shouldScanTailwindV4Sources } from '../generation-helpers'
 import { stripTailwindBanner } from '../markers'
@@ -38,10 +38,10 @@ async function executeGeneratorPipelineWithOwner(
   compilationPool: ReturnType<typeof getCompilationSessionPool>,
   generationSession: ReturnType<typeof getTailwindGenerationSessionPool>,
 ): Promise<GenerateCssByGeneratorResult | undefined> {
-  const { cssHandlerOptions, debug, file, generatorOptions, generatorRawSource, hasGeneratedCss, hasGeneratedMarkers, localImports, majorVersion, options, opts, runtimeState } = context
+  const { cssHandlerOptions, debug, file, generatorOptions, generatorRawSource, hasGeneratedCss, hasGeneratedMarkers, localImports, majorVersion, options, profile, runtimeState } = context
   await runtimeState.readyPromise
   const compilerSession = options.compilation?.enabled
-    ? getFrameworkCompilerSession(runtimeState, opts)
+    ? getFrameworkCompilerSession(runtimeState, options.compilerTransforms)
     : undefined
   const { isolateCurrentCssCandidates, runtimeWithCurrentCss, generatorSourceRecords, generatorStyleOptions, configuredContainerCompat, sourceConcurrency, preparedGenerationInputs } = await prepareGeneratorInputs(context)
   if (hasCssCalcVariables(generatorStyleOptions)) {
@@ -75,20 +75,12 @@ async function executeGeneratorPipelineWithOwner(
       }
       let generated
       if (compilerSession && input.generatorSource) {
-        try {
-          generated = await compilerSession.generate(
-            options.compilation?.scope.id ?? options.outputFile ?? file,
-            input.sourceId,
-            input.generatorSource,
-            generateOptions,
-          )
-        }
-        catch (error) {
-          if (!(error instanceof TypeError) || !String(error.message).includes('dependencies')) {
-            throw error
-          }
-          generated = await generationSession.generate(input.generatorSource, generateOptions)
-        }
+        generated = await compilerSession.generate(
+          options.compilation?.scope.id ?? options.outputFile ?? file,
+          input.sourceId,
+          input.generatorSource,
+          generateOptions,
+        )
       }
       else {
         generated = await generationSession.generate(input.generatorSource, generateOptions)
@@ -114,6 +106,7 @@ async function executeGeneratorPipelineWithOwner(
         dependencies: input.dependencies,
       })),
       preserveDeletedCss: options.compilation.preserveDeletedCss,
+      isCurrent: options.isConfigurationCurrent,
     }, async (compilation) => {
       if (compilerSession && options.compilation?.changes) {
         compilerSession.invalidate(options.compilation.changes.map(change => change.id))
@@ -217,7 +210,7 @@ async function executeGeneratorPipelineWithOwner(
       preserveRuntimeProperties: generated.target === 'web' && context.frameworkPolicy.preserveWebRuntimeProperties,
     })
   }
-  const preflightMode = resolveMiniProgramPreflightModeForGeneratorCss(opts, {
+  const preflightMode = resolveMiniProgramPreflightModeForGeneratorCss(profile, {
     cssHandlerOptions,
     frameworkPolicy: context.frameworkPolicy,
     isolateCurrentCssCandidates,
@@ -255,7 +248,7 @@ async function executeGeneratorPipelineWithOwner(
     shouldFilterApplyOnlyCss,
   }
   const withCompilationMetadata = (result: GenerateCssByGeneratorResult | undefined) => {
-    if (result && shouldCheckRpxThemeRisk(runtimeState, generated.target, opts, options.generatorPlatform)) {
+    if (result && profile.checkRpxThemeRisk) {
       result.rpxThemeVariables = [...new Set([
         ...preparedGenerationInputs.flatMap(input => input.generatorSource.rpxThemeVariables ?? []),
         ...collectRpxThemeRiskSources([

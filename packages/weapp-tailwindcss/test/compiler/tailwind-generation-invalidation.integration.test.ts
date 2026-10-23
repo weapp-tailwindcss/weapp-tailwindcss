@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { TailwindGenerationSessionPool } from '@/compiler/tailwind-generation-session-pool'
 
 // 配置热加载必须使用原生模块缓存，不能经过 Vitest 的模块执行器。
-vi.mock('@/generator', async () => {
+vi.mock('@/generator/runtime', async () => {
   const { createRequire } = await import('node:module')
   return createRequire(import.meta.url)('../../dist/generator.cjs')
 })

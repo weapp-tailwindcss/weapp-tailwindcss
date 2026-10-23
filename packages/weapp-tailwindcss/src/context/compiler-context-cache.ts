@@ -22,13 +22,18 @@ type NormalizedOptionsValue
     | NormalizedOptionsArray
     | NormalizedOptionsRecord
 
-interface GlobalCompilerContextCacheHolder {
-  __WEAPP_TW_COMPILER_CONTEXT_CACHE__?: Map<string, InternalUserDefinedOptions>
+const callbackIdentities = new WeakMap<object, number>()
+let nextCallbackIdentity = 0
+
+function callbackIdentity(callback: object) {
+  let identity = callbackIdentities.get(callback)
+  if (identity === undefined) {
+    identity = ++nextCallbackIdentity
+    callbackIdentities.set(callback, identity)
+  }
+  return identity
 }
 
-const globalCacheHolder = globalThis as GlobalCompilerContextCacheHolder
-const compilerContextCache: Map<string, InternalUserDefinedOptions> = globalCacheHolder.__WEAPP_TW_COMPILER_CONTEXT_CACHE__
-  ?? (globalCacheHolder.__WEAPP_TW_COMPILER_CONTEXT_CACHE__ = new Map())
 const compilerContextKeyCacheByOptions = new WeakMap<UserDefinedOptions, Map<string, string | undefined>>()
 const compilerContextKeyCacheWithoutOptions = new Map<string, string | undefined>()
 
@@ -254,7 +259,7 @@ function normalizeOptionsValue(
     return encodeTaggedValue('Symbol', symbolValue.description ?? String(symbolValue))
   }
   if (type === 'function') {
-    return encodeTaggedValue('Function', (rawValue as (...args: unknown[]) => unknown).toString())
+    return encodeTaggedValue('Function', callbackIdentity(rawValue as object))
   }
 
   if (Array.isArray(rawValue)) {
@@ -343,9 +348,14 @@ function normalizeOptionsValue(
   return encodeTaggedValue(typeof rawValue, String(rawValue))
 }
 
+/** 配置快照指纹不读取全局环境，回调通过对象身份区分。 */
+export function createCompilerConfigurationFingerprint(value: unknown): string {
+  return md5Hash(serializeNormalizedValue(normalizeOptionsValue(value)))
+}
+
 export function createCompilerContextCacheKey(opts?: UserDefinedOptions): string | undefined {
   try {
-    const runtimeCacheScopeKey = createRuntimeCacheScopeKey(opts)
+    const runtimeCacheScopeKey = `${createRuntimeCacheScopeKey(opts)}:${createCompilerConfigurationFingerprint(opts)}`
     const keyStore = getCompilerContextKeyCacheStore(opts)
     const cached = keyStore.get(runtimeCacheScopeKey)
     if (cached !== undefined) {
@@ -370,19 +380,7 @@ export function withCompilerContextCache(
   opts: UserDefinedOptions | undefined,
   factory: () => InternalUserDefinedOptions,
 ): InternalUserDefinedOptions {
-  const cacheKey = createCompilerContextCacheKey(opts)
-  if (cacheKey) {
-    const cached = compilerContextCache.get(cacheKey)
-    if (cached) {
-      touchMapValue(compilerContextCache, cacheKey, cached)
-      return cached
-    }
-  }
-
-  const ctx = factory()
-  if (cacheKey) {
-    touchMapValue(compilerContextCache, cacheKey, ctx)
-    pruneMapToMaxSize(compilerContextCache, resolveCompilerContextCacheMax(DEFAULT_COMPILER_CONTEXT_CACHE_MAX))
-  }
-  return ctx
+  // 兼容旧内部入口，但可变编译状态永远属于新实例。
+  void opts
+  return factory()
 }

@@ -1,6 +1,6 @@
 import type { PackageResolvingOptions } from './package-options'
 import type { TailwindSourceEntry } from './source-scan'
-import type { TailwindV4SourceOptions } from './v4-engine'
+import type { TailwindV4SourceOptions } from './v4-engine/types'
 
 type TailwindV4CssSource = NonNullable<TailwindV4SourceOptions['cssSources']>[number]
 

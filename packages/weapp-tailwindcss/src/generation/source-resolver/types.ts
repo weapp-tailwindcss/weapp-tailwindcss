@@ -1,10 +1,10 @@
 import type { SourceSideCssEntryOptions } from '../source-files'
-import type { resolveTailwindV4SourceOptionsFromRuntime } from '@/generator/index'
+import type { resolveTailwindV4SourceOptionsFromRuntime } from '@/generator/runtime'
 import type { TailwindSourceEntry } from '@/tailwindcss/source-scan'
-import type { InternalUserDefinedOptions } from '@/types/index'
+import type { TailwindcssRuntimeLike } from '@/types/compilation'
 
 export interface GeneratorSourceRuntimeState {
-  tailwindRuntime: InternalUserDefinedOptions['tailwindRuntime']
+  tailwindRuntime: TailwindcssRuntimeLike
 }
 
 export interface GeneratorSourceSelectionOptions {

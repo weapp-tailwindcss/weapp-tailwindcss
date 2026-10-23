@@ -1,5 +1,5 @@
 import type { IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
-import type { WeappTailwindcssGeneratorTarget } from '@/runtime-branch/types'
+import type { WeappTailwindcssGeneratorTarget } from '@/compiler/target'
 import type {
   TailwindV4CandidateSource,
   TailwindV4DesignSystem,
@@ -9,7 +9,7 @@ import type {
   TailwindV4GenerateTarget,
   TailwindV4ResolvedSource,
   TailwindV4SourceOptions,
-} from '@/tailwindcss/v4-engine'
+} from '@/tailwindcss/v4-engine/types'
 
 export type { WeappTailwindcssGeneratorTarget }
 export type TailwindGeneratorVersion = 4

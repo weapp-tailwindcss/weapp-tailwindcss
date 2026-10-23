@@ -4,11 +4,12 @@ import type {
   CompilerGenerateRequest,
   CompilerGenerateResult,
   CompilerSnapshot,
-  CreateCompilerOptions,
 } from './types'
-import type { UserDefinedOptions } from '@/types'
+import type { CacheTelemetryCollector } from '@/compiler/cache-telemetry'
+import type { CompilerTransformServices } from '@/compiler/transform-services'
 import { finalizeMiniProgramCss, finalizeMiniProgramCssRoot } from '@weapp-tailwindcss/postcss/transform'
-import { createWeappTailwindcssGenerator } from '@/generator'
+import { snapshotConfiguration } from '@/compiler/configuration-snapshot'
+import { createWeappTailwindcssGenerator } from '@/generator/runtime'
 import { createCompilerGenerationCacheKey, isSameCompilerGenerationCacheKey, reuseCompilerGenerationResult } from './generation-cache'
 import { commitCompilerGeneration, prepareCompilerGeneration } from './generation-state'
 import { CompilerRootStore } from './root-store'
@@ -23,8 +24,17 @@ import { createCompilerTransforms } from './transforms'
 
 const DEFAULT_MAX_ROOTS = 128
 
-export function createCompiler(options: CreateCompilerOptions = {}): Compiler {
-  const { compiler: compilerOptions, ...userOptions } = options
+export interface ResolvedCompilerOptions {
+  transforms: CompilerTransformServices
+  compiler?: {
+    maxRoots?: number | undefined
+    onRootEvicted?: ((id: string) => void) | undefined
+    cacheTelemetry?: CacheTelemetryCollector | undefined
+  } | undefined
+}
+
+export function createResolvedCompiler(options: ResolvedCompilerOptions): Compiler {
+  const compilerOptions = options.compiler
   const maxRoots = Math.max(1, Math.floor(compilerOptions?.maxRoots ?? DEFAULT_MAX_ROOTS))
   const cacheTelemetry = compilerOptions?.cacheTelemetry
   const rootStore = new CompilerRootStore(maxRoots, compilerOptions?.onRootEvicted)
@@ -53,7 +63,7 @@ export function createCompiler(options: CreateCompilerOptions = {}): Compiler {
   } = createCompilerTransforms({
     ensureActive,
     track,
-    userOptions: userOptions as UserDefinedOptions,
+    services: options.transforms,
   })
 
   async function runGenerate(entry: CompilerRootSession, request: CompilerGenerateRequest): Promise<CompilerGenerateResult> {
@@ -190,29 +200,10 @@ export function createCompiler(options: CreateCompilerOptions = {}): Compiler {
     return entry.latestSnapshot?.roots[0]?.revision
   }
 
-  function snapshotCompilerGenerateRequest(request: CompilerGenerateRequest): CompilerGenerateRequest {
-    const styleOptions = request.styleOptions
-    const cssOptions = styleOptions?.cssOptions
-    const preserveWebkitProperties = cssOptions?.preserveWebkitProperties
-    if (!Array.isArray(preserveWebkitProperties)) {
-      return request
-    }
-    return {
-      ...request,
-      styleOptions: {
-        ...styleOptions,
-        cssOptions: {
-          ...cssOptions,
-          preserveWebkitProperties: [...preserveWebkitProperties],
-        },
-      },
-    }
-  }
-
   function generate(request: CompilerGenerateRequest) {
     ensureActive()
     const entry = rootStore.get(request.id)
-    const stableRequest = snapshotCompilerGenerateRequest(request)
+    const stableRequest = snapshotConfiguration(request.candidates ? { ...request, candidates: [...request.candidates] } : request)
     entry.pendingCount += 1
     const execution = entry.pending.then(() => runGenerate(entry, stableRequest))
     const settled = execution.finally(() => {
@@ -266,8 +257,12 @@ export function createCompiler(options: CreateCompilerOptions = {}): Compiler {
     disposePromise = (async () => {
       await Promise.allSettled([...activeTasks])
       clearTransformCache()
-      await rootStore.dispose()
-      lifecycle = 'disposed'
+      try {
+        await rootStore.dispose()
+      }
+      finally {
+        lifecycle = 'disposed'
+      }
     })()
     return disposePromise
   }

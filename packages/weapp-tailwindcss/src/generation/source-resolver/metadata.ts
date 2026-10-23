@@ -1,5 +1,5 @@
 import type { SourceSideCssEntrySource } from '../source-files'
-import type { TailwindResolvedSource } from '@/generator/index'
+import type { TailwindResolvedSource } from '@/generator/runtime'
 import type { TailwindSourceEntry } from '@/tailwindcss/source-scan'
 
 export interface GeneratorSourceMetadata {

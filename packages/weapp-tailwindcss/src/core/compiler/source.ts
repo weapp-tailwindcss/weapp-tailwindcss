@@ -1,7 +1,7 @@
 import type { CompilerRootSession } from './root-store'
 import type { CompilerGenerateRequest } from './types'
 import process from 'node:process'
-import { resolveTailwindV4Source } from '@/generator'
+import { resolveTailwindV4Source } from '@/generator/runtime'
 import { createCompilerValueFingerprint, createSourceFingerprint } from './source-fingerprint'
 
 export async function resolveCompilerSource(

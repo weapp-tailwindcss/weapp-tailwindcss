@@ -23,7 +23,7 @@ describe('compiler context cache', () => {
     clearCompilerContextCache()
   })
 
-  it('reuses context for identical option values', () => {
+  it('isolates mutable state for identical option values', () => {
     const ctxA = getCompilerContext({
       cssEntries: ['src/app.weapp.css'],
       cssChildCombinatorReplaceValue: ['view', 'text'],
@@ -33,9 +33,9 @@ describe('compiler context cache', () => {
       cssEntries: ['src/app.weapp.css'],
     })
 
-    expect(ctxA).toBe(ctxB)
-    expect(ctxA.tailwindRuntime).toBe(ctxB.tailwindRuntime)
-    expect(ctxA.tailwindRuntime).toBe(ctxB.tailwindRuntime)
+    expect(ctxA).not.toBe(ctxB)
+    expect(ctxA.tailwindRuntime).not.toBe(ctxB.tailwindRuntime)
+    expect(ctxA.tailwindRuntime).not.toBe(ctxB.tailwindRuntime)
     expect(ctxA.tailwindRuntime).toBe(ctxA.tailwindRuntime)
   })
 
@@ -62,7 +62,7 @@ describe('compiler context cache', () => {
       ]),
     })
 
-    expect(ctxA).toBe(ctxB)
+    expect(ctxA).not.toBe(ctxB)
   })
 
   it('creates isolated context when runtime package scope differs with implicit basedir', () => {
@@ -85,7 +85,7 @@ describe('compiler context cache', () => {
     expect(ctxB.tailwindcssBasedir).toBe(secondProject)
   })
 
-  it('reuses context across runtime package scope changes when tailwindcssBasedir is explicit', () => {
+  it('isolates contexts while preserving explicit project configuration', () => {
     const firstProject = path.resolve(process.cwd(), 'demo/uni-app-vite-tailwindcss-v4')
     const secondProject = path.resolve(process.cwd(), 'demo/uni-app-vite-tailwindcss-v4')
     const options = {
@@ -100,7 +100,7 @@ describe('compiler context cache', () => {
     process.env['PNPM_PACKAGE_NAME'] = '@weapp-tailwindcss-demo/uni-app-vite-tailwindcss-v4'
     const ctxB = getCompilerContext(options)
 
-    expect(ctxA).toBe(ctxB)
+    expect(ctxA).not.toBe(ctxB)
     expect(ctxA.tailwindcssBasedir).toBe(firstProject)
     expect(ctxB.tailwindcssBasedir).toBe(firstProject)
   })
@@ -172,7 +172,7 @@ describe('compiler context cache', () => {
     expect(createCompilerContextCacheKey(circular)).toBeUndefined()
   })
 
-  it('caches factory results when a key can be created', () => {
+  it('does not cache mutable factory results when a key can be created', () => {
     const factory = () => ({ value: Symbol('ctx') } as never)
     const options = {
       tailwindcssBasedir: process.cwd(),
@@ -182,37 +182,23 @@ describe('compiler context cache', () => {
     const first = withCompilerContextCache(options, factory)
     const second = withCompilerContextCache(options, factory)
 
-    expect(first).toBe(second)
+    expect(first).not.toBe(second)
   })
 
-  it('limits cached compiler contexts with least-recently-used pruning', () => {
-    process.env['WEAPP_TW_COMPILER_CONTEXT_CACHE_MAX'] = '2'
-    const firstOptions = {
-      tailwindcssBasedir: process.cwd(),
-      cssEntries: ['src/first.css'],
-    }
-    const secondOptions = {
-      tailwindcssBasedir: process.cwd(),
-      cssEntries: ['src/second.css'],
-    }
-    const thirdOptions = {
-      tailwindcssBasedir: process.cwd(),
-      cssEntries: ['src/third.css'],
-    }
+  it('uses function identity for callbacks with identical source and different captures', () => {
+    const capture = (value: string) => () => value
+    const first = { tailwindcssBasedir: process.cwd(), onLoad: capture('first') }
+    const second = { tailwindcssBasedir: process.cwd(), onLoad: capture('second') }
+    expect(first.onLoad.toString()).toBe(second.onLoad.toString())
+    expect(createCompilerContextCacheKey(first)).not.toBe(createCompilerContextCacheKey(second))
+    expect(createCompilerContextCacheKey(first)).toBe(createCompilerContextCacheKey({ ...first }))
+  })
 
-    const first = withCompilerContextCache(firstOptions, () => ({ value: 'first' } as never))
-    const second = withCompilerContextCache(secondOptions, () => ({ value: 'second' } as never))
-
-    expect(withCompilerContextCache(firstOptions, () => ({ value: 'first-new' } as never))).toBe(first)
-
-    const third = withCompilerContextCache(thirdOptions, () => ({ value: 'third' } as never))
-    expect(third).toEqual({ value: 'third' })
-    expect(withCompilerContextCache(firstOptions, () => ({ value: 'first-newer' } as never))).toBe(first)
-
-    const secondAfterPrune = withCompilerContextCache(secondOptions, () => ({ value: 'second-new' } as never))
-
-    expect(secondAfterPrune).not.toBe(second)
-    expect(secondAfterPrune).toEqual({ value: 'second-new' })
+  it('invalidates preparation keys when the same options object changes', () => {
+    const options = { tailwindcssBasedir: process.cwd(), cssEntries: ['first.css'] }
+    const previous = createCompilerContextCacheKey(options)
+    options.cssEntries.push('second.css')
+    expect(createCompilerContextCacheKey(options)).not.toBe(previous)
   })
 
   it('does not cache factory results when options cannot be keyed', () => {

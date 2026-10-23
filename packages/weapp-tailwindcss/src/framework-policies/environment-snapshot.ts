@@ -10,6 +10,9 @@ export interface FrameworkEnvironment {
   readonly uniPlatform: string | undefined
   readonly uniUtsPlatform: Readonly<UniUtsPlatformInfo>
   readonly mpxPlatform: string | undefined
+  readonly compilerMode: 'legacy' | 'graph' | 'shadow'
+  readonly sourceConcurrency: number
+  readonly shadowGate: string | undefined
 }
 
 const frameworkEnvironment = Symbol('weapp-tailwindcss.framework-environment')
@@ -28,6 +31,11 @@ export function captureFrameworkEnvironment(): FrameworkEnvironment {
     uniPlatform: process.env['UNI_PLATFORM'],
     uniUtsPlatform: Object.freeze(resolveUniUtsPlatform()),
     mpxPlatform: resolveMpxPlatform().normalized,
+    compilerMode: process.env['WEAPP_TAILWINDCSS_COMPILER'] === 'legacy' || process.env['WEAPP_TAILWINDCSS_COMPILER'] === 'shadow'
+      ? process.env['WEAPP_TAILWINDCSS_COMPILER']
+      : 'graph',
+    shadowGate: process.env['WEAPP_TAILWINDCSS_COMPILER_SHADOW_GATE'],
+    sourceConcurrency: Math.max(1, Number.parseInt(process.env['WEAPP_TW_GENERATOR_SOURCE_CONCURRENCY'] ?? '', 10) || 1),
   })
 }
 
@@ -44,11 +52,25 @@ export function resolveFrameworkEnvironment(owner?: object): FrameworkEnvironmen
   return context?.[frameworkEnvironment] ?? context?.tailwindRuntime?.[frameworkEnvironment] ?? captureFrameworkEnvironment()
 }
 
+/** 内部实例必须显式继承环境，禁止丢失所有权后重新读取全局环境。 */
+export function getFrameworkEnvironmentSnapshot(owner: object): FrameworkEnvironment | undefined {
+  const context = owner as EnvironmentOwner
+  return context[frameworkEnvironment] ?? context.tailwindRuntime?.[frameworkEnvironment]
+}
+
+export function requireFrameworkEnvironment(owner: object): FrameworkEnvironment {
+  const environment = getFrameworkEnvironmentSnapshot(owner)
+  if (!environment) {
+    throw new Error('编译实例缺少环境快照。')
+  }
+  return environment
+}
+
 /** 将实例环境传给后续样式转换，同时保留独立 API 的即时环境语义。 */
 export function withFrameworkEnvironment<T extends object>(value: T, owner: object): T {
   return Object.assign(value, { [frameworkEnvironment]: resolveFrameworkEnvironment(owner) })
 }
 
-export function shouldUseContextWebRpxCompatibility(options?: { appType?: string | undefined }): boolean {
-  return shouldUseUniAppWebRpxCompatibility(options?.appType, resolveFrameworkEnvironment(options).webTarget)
+export function shouldUseContextWebRpxCompatibility(options?: { appType?: string | undefined, webRpxCompatibility?: boolean | undefined }): boolean {
+  return options?.webRpxCompatibility ?? shouldUseUniAppWebRpxCompatibility(options?.appType, resolveFrameworkEnvironment(options).webTarget)
 }

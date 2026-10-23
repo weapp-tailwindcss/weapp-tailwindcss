@@ -1,6 +1,6 @@
-import type { TailwindResolvedSource, WeappTailwindcssGenerateOptions, WeappTailwindcssGenerateResult, WeappTailwindcssGenerator } from '@/generator'
+import type { TailwindResolvedSource, WeappTailwindcssGenerateOptions, WeappTailwindcssGenerateResult, WeappTailwindcssGenerator } from '@/generator/runtime'
 import { md5Hash } from '@/cache/md5'
-import { createWeappTailwindcssGenerator } from '@/generator'
+import { createWeappTailwindcssGenerator } from '@/generator/runtime'
 import { ensureCompilerOwnerActive } from './compiler-owner-state'
 
 const SESSION_ENGINE_CACHE_MAX = 32
@@ -109,11 +109,24 @@ export class TailwindGenerationSessionPool {
   }
 
   dispose() {
-    for (const entry of this.generators.values()) {
-      disposeGenerator(entry.generator)
+    if (this.disposed) {
+      return
     }
-    this.generators.clear()
     this.disposed = true
+    const entries = [...this.generators.values()]
+    this.generators.clear()
+    const errors: unknown[] = []
+    for (const entry of entries) {
+      try {
+        disposeGenerator(entry.generator)
+      }
+      catch (error) {
+        errors.push(error)
+      }
+    }
+    if (errors.length) {
+      throw new AggregateError(errors, '生成器释放失败，已继续释放其余生成器。')
+    }
   }
 
   get size() {

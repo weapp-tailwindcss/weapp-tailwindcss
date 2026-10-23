@@ -1,9 +1,7 @@
 import type { IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
 import type { GeneratorSourceRecord } from '../source-resolver'
+import type { ResolvedCompilationProfile } from '@/compiler/compilation-profile'
 import type { TailwindSourceEntry } from '@/tailwindcss/source-scan'
-import type { InternalUserDefinedOptions } from '@/types/index'
-import { resolveStyleOptionsFromContext } from '@/context/style-options'
-import { withFrameworkEnvironment } from '@/framework-policies/environment-snapshot'
 import { hasTailwindApplyDirective, hasTailwindRootDirectives } from '../directives'
 import { resolvePostcssRequestOption } from '../source-resolver/postcss-source'
 import { isVueScopedStyleRequest } from '../style-requests'
@@ -120,22 +118,20 @@ export function isEmptyCssSourceOrderParts(parts: {
 }
 
 export function resolveGeneratorStyleOptions(
-  opts: InternalUserDefinedOptions,
+  profile: ResolvedCompilationProfile,
   cssHandlerOptions: IStyleHandlerOptions,
   generatorStyleOptions: Partial<IStyleHandlerOptions> | undefined,
 ): Partial<IStyleHandlerOptions> {
-  const resolvedStyleOptions = resolveStyleOptionsFromContext(opts)
+  const resolvedStyleOptions = profile.styleOptions
   const scopedVueStyleSource = isVueScopedStyleRequest(resolvePostcssRequestOption(cssHandlerOptions))
   const preflightStyleOptions: Partial<IStyleHandlerOptions> = {
     cssPreflight: scopedVueStyleSource ? false : resolvedStyleOptions.cssPreflight,
     cssPreflightRange: scopedVueStyleSource ? undefined : resolvedStyleOptions.cssPreflightRange,
   }
-  return withFrameworkEnvironment({
+  return {
     ...resolvedStyleOptions,
-    uniAppXCssTarget: opts.uniAppXCssTarget,
-    uniAppXUnsupported: opts.uniAppXUnsupported,
     ...cssHandlerOptions,
     ...preflightStyleOptions,
     ...generatorStyleOptions,
-  }, opts)
+  }
 }

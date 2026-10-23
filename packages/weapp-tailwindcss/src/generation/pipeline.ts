@@ -1,7 +1,7 @@
 import type { GenerateCssByGeneratorOptions, GenerateCssByGeneratorResult } from './types'
 import { postcss, removeUnsupportedMiniProgramAtRules } from '@weapp-tailwindcss/postcss/transform'
-import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
-import { resolveGeneratorRuntimeBranch, shouldUseMiniProgramCssBranch } from '@/runtime-branch'
+import { runCompilerOwnerActivity } from '@/compiler/compiler-owner-state'
+import { shouldUseMiniProgramCssBranch } from '@/compiler/target'
 import { hasTailwindApplyDirective, hasTailwindSourceDirectives, normalizeTailwindSourceDirectives } from './directives'
 import { deduplicateGeneratedCssRules, finalizeMiniProgramGeneratorCss, shouldUseGeneratorForCurrentCss } from './generation-helpers'
 import { cleanLocalCssImportWrapperTailwindDirectives, cleanLocalCssImportWrapperTailwindDirectivesRoot, isPureLocalCssImportWrapper, isPureLocalCssImportWrapperRoot, restoreLocalCssImports, splitLocalCssImports, splitLocalCssImportsRoot } from './local-imports'
@@ -58,11 +58,11 @@ function splitLocalCssImportsFromParsedRoot(rawSource: string, root: postcss.Roo
     : splitLocalCssImports(rawSource)
 }
 
-export async function generateCssByGenerator(
+async function generateCssByGeneratorWithOwner(
   options: GenerateCssByGeneratorOptions,
 ): Promise<GenerateCssByGeneratorResult | undefined> {
   const {
-    opts,
+    profile,
     runtimeState,
     runtime,
     rawSource,
@@ -71,30 +71,13 @@ export async function generateCssByGenerator(
     cssUserHandlerOptions,
     getSourceCandidatesForEntries,
     styleHandler,
-    generatorPlatform,
     userRawSource,
     userRawSourceProcessed,
     debug,
   } = options
-  const platform = generatorPlatform ?? opts.cssOptions?.platform ?? opts.platform
-  const { options: normalizedGeneratorOptions, frameworkPolicy } = resolveContextGeneratorConfiguration(opts, {
-    appType: opts.appType,
-    platform,
-    tailwindcssMajorVersion: runtimeState.tailwindRuntime.majorVersion,
-    uniAppX: opts.uniAppX,
-    nativeStyle: cssHandlerOptions.uniAppX === true,
-    styleTarget: cssHandlerOptions.uniAppXCssTarget,
-  })
-  const generatorOptions = {
-    ...normalizedGeneratorOptions,
-    bareArbitraryValues: opts.arbitraryValues?.bareArbitraryValues,
-  }
-  const generatorBranch = resolveGeneratorRuntimeBranch(generatorOptions, {
-    appType: opts.appType,
-    platform,
-    tailwindcssMajorVersion: runtimeState.tailwindRuntime.majorVersion,
-    uniAppX: opts.uniAppX,
-  })
+  const generatorOptions = profile.generator
+  const frameworkPolicy = profile.policy
+  const generatorBranch = generatorOptions.branch
   const majorVersion = runtimeState.tailwindRuntime.majorVersion
   if (majorVersion !== 4) {
     throw new Error('weapp-tailwindcss 生成管线仅支持 Tailwind CSS v4。')
@@ -128,7 +111,7 @@ export async function generateCssByGenerator(
           new Set(),
           runtime,
           handled.css,
-          opts.escapeMap,
+          profile.escapeMap,
           options.previousClassSet,
         ),
         target: generatorOptions.target,
@@ -183,7 +166,7 @@ export async function generateCssByGenerator(
   const finalizeGeneratorCss = (css: string, target: string, finalizeOptions: Parameters<typeof finalizeMiniProgramGeneratorCss>[4] = {}) => {
     return finalizeWebGeneratorCss(
       restoreLocalCssImports(
-        finalizeMiniProgramGeneratorCss(css, target, majorVersion, opts.cssPreflight, finalizeOptions),
+        finalizeMiniProgramGeneratorCss(css, target, majorVersion, profile.cssPreflight, finalizeOptions),
         localImports,
         { outputFile: file },
       ),
@@ -277,7 +260,7 @@ export async function generateCssByGenerator(
   }
 
   try {
-    return await executeGeneratorPipeline({
+    const result = await executeGeneratorPipeline({
       cssHandlerOptions,
       cssUserHandlerOptions,
       debug,
@@ -300,7 +283,7 @@ export async function generateCssByGenerator(
       normalizeGeneratorSource,
       normalizedCssSources,
       options,
-      opts,
+      profile,
       prepareFinalGeneratorCss,
       runtime,
       runtimeState,
@@ -311,6 +294,7 @@ export async function generateCssByGenerator(
       userRawSourceProcessed,
       useMiniProgramCssBranch,
     })
+    return options.isConfigurationCurrent() ? result : undefined
   }
   catch (error) {
     debug('tailwind direct css generation failed: %s %O', file, error)
@@ -318,4 +302,11 @@ export async function generateCssByGenerator(
   }
 
   return undefined
+}
+
+export function generateCssByGenerator(options: GenerateCssByGeneratorOptions) {
+  return runCompilerOwnerActivity(options.runtimeState, async () => {
+    const result = await generateCssByGeneratorWithOwner(options)
+    return options.isConfigurationCurrent() ? result : undefined
+  })
 }

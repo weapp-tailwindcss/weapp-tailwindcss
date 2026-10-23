@@ -1,5 +1,5 @@
 import type { TailwindV4ResolvedSource, TailwindV4SourceOptions, TailwindV4SourceOptionsWithSources } from './types'
-import type { TailwindcssRuntimeLike } from '@/types'
+import type { TailwindcssRuntimeLike } from '@/types/compilation'
 import { existsSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import path from 'node:path'

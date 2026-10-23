@@ -2,9 +2,10 @@ import type { IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
 import type { GeneratorResult } from '../generation-helpers/results'
 import type { TailwindV4CssSource } from '../source-resolver/types'
 import type { GenerateCssByGeneratorOptions } from '../types'
+import type { ResolvedCompilationProfile, ResolvedGeneratorOptions } from '@/compiler/compilation-profile'
 import type { FrameworkPolicy } from '@/compiler/framework-policy'
-import type { NormalizedWeappTailwindcssGeneratorOptions, TailwindResolvedSource } from '@/generator/index'
-import type { RuntimeBranch } from '@/runtime-branch'
+import type { RuntimeBranch } from '@/compiler/target'
+import type { TailwindResolvedSource } from '@/generator/runtime'
 
 export interface GeneratorPipelineExecutionContext {
   cssHandlerOptions: GenerateCssByGeneratorOptions['cssHandlerOptions']
@@ -23,7 +24,7 @@ export interface GeneratorPipelineExecutionContext {
   ) => string
   generatedUserCssRawSource: string
   generatorBranch: RuntimeBranch
-  generatorOptions: NormalizedWeappTailwindcssGeneratorOptions
+  generatorOptions: ResolvedGeneratorOptions
   frameworkPolicy: FrameworkPolicy
   generatorRawSource: string
   getSourceCandidatesForEntries: GenerateCssByGeneratorOptions['getSourceCandidatesForEntries']
@@ -38,7 +39,7 @@ export interface GeneratorPipelineExecutionContext {
   normalizeGeneratorSource: (source: TailwindResolvedSource) => TailwindResolvedSource
   normalizedCssSources: TailwindV4CssSource[] | undefined
   options: GenerateCssByGeneratorOptions
-  opts: GenerateCssByGeneratorOptions['opts']
+  profile: ResolvedCompilationProfile
   prepareFinalGeneratorCss: (css: string) => string
   runtime: Set<string>
   runtimeState: GenerateCssByGeneratorOptions['runtimeState']

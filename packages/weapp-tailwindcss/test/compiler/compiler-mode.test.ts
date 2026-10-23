@@ -62,7 +62,7 @@ describe('compiler mode', () => {
       return createGeneratedResult('.p-4 { padding: 1rem; }')
     })
     vi.doMock('@/generation/index', () => ({ generateCssByGenerator }))
-    const { generateTailwindV4Css } = await import('@/generation/service')
+    const { generateTailwindV4Css } = await import('@/context/generation')
 
     const result = await generateTailwindV4Css(createGenerationOptions())
 
@@ -77,7 +77,7 @@ describe('compiler mode', () => {
       return createGeneratedResult('.p-4 { padding: 1rem; }')
     })
     vi.doMock('@/generation/index', () => ({ generateCssByGenerator }))
-    const { generateTailwindV4Css } = await import('@/generation/service')
+    const { generateTailwindV4Css } = await import('@/context/generation')
 
     const result = await generateTailwindV4Css(createGenerationOptions())
 
@@ -107,7 +107,7 @@ describe('compiler mode', () => {
       }
     })
     vi.doMock('@/generation/index', () => ({ generateCssByGenerator }))
-    const { generateTailwindV4Css } = await import('@/generation/service')
+    const { generateTailwindV4Css } = await import('@/context/generation')
 
     const result = await generateTailwindV4Css({
       ...createGenerationOptions(),
@@ -125,7 +125,7 @@ describe('compiler mode', () => {
       return createGeneratedResult('.token { color: framework-token; }', target)
     })
     vi.doMock('@/generation/index', () => ({ generateCssByGenerator }))
-    const { generateTailwindV4Css } = await import('@/generation/service')
+    const { generateTailwindV4Css } = await import('@/context/generation')
     const transformRoot = vi.fn(async (root: any) => {
       root.walkDecls((decl: any) => {
         decl.value = decl.value.replace('framework-token', 'processed-token')
@@ -171,7 +171,7 @@ describe('compiler mode', () => {
       return createGeneratedResult('.token { color: raw-token; }')
     })
     vi.doMock('@/generation/index', () => ({ generateCssByGenerator }))
-    const { generateTailwindV4Css } = await import('@/generation/service')
+    const { generateTailwindV4Css } = await import('@/context/generation')
     const transformRoot = vi.fn()
     const styleHandler = Object.assign(
       vi.fn(async (css: string) => ({ css })),
@@ -202,7 +202,7 @@ describe('compiler mode', () => {
     process.env[COMPILER_MODE_ENV] = 'shadow'
     const generateCssByGenerator = vi.fn(async () => createGeneratedResult('.p-4 { padding: 1rem; }'))
     vi.doMock('@/generation/index', () => ({ generateCssByGenerator }))
-    const { generateTailwindV4Css } = await import('@/generation/service')
+    const { generateTailwindV4Css } = await import('@/context/generation')
     const { getCompilerShadowRunSnapshot } = await import('@/compiler')
     const debug = vi.fn()
     const onCompilerShadowReport = vi.fn()
@@ -237,7 +237,7 @@ describe('compiler mode', () => {
       .mockResolvedValueOnce(createGeneratedResult('.p-4 { padding: 1rem; }'))
       .mockResolvedValueOnce(createGeneratedResult('.p-4 { padding: 2rem; }'))
     vi.doMock('@/generation/index', () => ({ generateCssByGenerator }))
-    const { generateTailwindV4Css } = await import('@/generation/service')
+    const { generateTailwindV4Css } = await import('@/context/generation')
     const debug = vi.fn()
     const onCompilerShadowReport = vi.fn()
 

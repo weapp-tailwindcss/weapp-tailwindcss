@@ -1,8 +1,7 @@
-import type { IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
+import type { CssPreflightOptions, IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
+import type { ResolvedCompilationProfile } from '@/compiler/compilation-profile'
 import type { FrameworkPolicy } from '@/compiler/framework-policy'
-import type { InternalUserDefinedOptions } from '@/types/index'
 import { finalizeMiniProgramCss } from '@weapp-tailwindcss/postcss/transform'
-import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { resolvePostcssRequestOption } from '../source-resolver/postcss-source'
 import { isVueScopedStyleRequest } from '../style-requests'
 
@@ -18,7 +17,7 @@ export function finalizeMiniProgramGeneratorCss(
   css: string,
   target: string,
   _majorVersion: number | undefined,
-  cssPreflight: InternalUserDefinedOptions['cssPreflight'],
+  cssPreflight: CssPreflightOptions,
   options: {
     injectPreflight?: boolean | undefined
     preservePreflight?: boolean | undefined
@@ -64,7 +63,7 @@ export function finalizeMiniProgramGeneratorCss(
 }
 
 export function resolveMiniProgramPreflightModeForGeneratorCss(
-  opts: InternalUserDefinedOptions,
+  profile: Pick<ResolvedCompilationProfile, 'cssPreflight' | 'policy'>,
   options: {
     cssHandlerOptions: IStyleHandlerOptions
     frameworkPolicy?: FrameworkPolicy | undefined
@@ -80,12 +79,7 @@ export function resolveMiniProgramPreflightModeForGeneratorCss(
       preserve: false,
     }
   }
-  const policy = options.frameworkPolicy ?? resolveContextGeneratorConfiguration(opts, {
-    appType: opts.appType,
-    uniAppX: opts.uniAppX,
-    nativeStyle: options.cssHandlerOptions.uniAppX === true,
-    styleTarget: options.cssHandlerOptions.uniAppXCssTarget,
-  }).frameworkPolicy
+  const policy = options.frameworkPolicy ?? profile.policy
   if (policy.preflight.suppress) {
     return {
       inject: false,
@@ -93,7 +87,7 @@ export function resolveMiniProgramPreflightModeForGeneratorCss(
     }
   }
   const shouldInjectLocalImportPreflight = policy.preflight.localImports && Boolean(options.localImports?.trim())
-  if (opts.cssPreflight === false) {
+  if (profile.cssPreflight === false) {
     return {
       inject: false,
       preserve: false,

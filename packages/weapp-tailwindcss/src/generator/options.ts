@@ -1,8 +1,9 @@
 import type { IStyleHandlerOptions, WebCssCompatUserOptions } from '@weapp-tailwindcss/postcss/types'
 import type { WeappTailwindcssGeneratorTarget } from './types'
+import type { ResolvedGeneratorOptions } from '@/compiler/compilation-profile'
 import type { FrameworkPolicy } from '@/compiler/framework-policy'
 import type { FrameworkEnvironment } from '@/framework-policies/environment-snapshot'
-import type { RuntimeBranch, RuntimeBranchContext } from '@/runtime-branch'
+import type { RuntimeBranchContext } from '@/runtime-branch'
 import type { IArbitraryValues } from '@/types/shared'
 import { captureFrameworkEnvironment } from '@/framework-policies/environment-snapshot'
 import { resolveFrameworkPolicy } from '@/framework-policies/resolve'
@@ -71,19 +72,7 @@ export interface WeappTailwindcssGeneratorOptions {
 
 export type WeappTailwindcssGeneratorUserOptions = WeappTailwindcssGeneratorOptions | false
 
-export interface NormalizedWeappTailwindcssGeneratorOptions {
-  enabled: boolean
-  target: WeappTailwindcssGeneratorTarget
-  branch: RuntimeBranch
-  config?: string | undefined
-  styleOptions?: Partial<IStyleHandlerOptions> | undefined
-  webCompat: WebCssCompatUserOptions | undefined
-  hmr: {
-    preserveDeletedCss: boolean
-  }
-  importFallback: boolean
-  bareArbitraryValues?: IArbitraryValues['bareArbitraryValues'] | undefined
-}
+export interface NormalizedWeappTailwindcssGeneratorOptions extends ResolvedGeneratorOptions {}
 
 export function resolveGeneratorConfiguration(
   options: WeappTailwindcssGeneratorUserOptions | undefined,

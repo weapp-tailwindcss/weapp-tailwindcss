@@ -69,7 +69,7 @@ function expectMiniProgramPreflight(css: string | undefined) {
 
 describe('bundlers/shared generator css', () => {
   afterEach(() => {
-    vi.doUnmock('@/generator')
+    vi.doUnmock('@/generator/runtime')
     vi.doUnmock('@/generation/index')
     vi.doUnmock('node:fs')
     vi.resetModules()
@@ -77,11 +77,11 @@ describe('bundlers/shared generator css', () => {
 
   it('skips Tailwind generation when generator is disabled', async () => {
     const createWeappTailwindcssGenerator = vi.fn()
-    vi.doMock('@/generator', () => createDefaultGeneratorMock({
+    vi.doMock('@/generator/runtime', () => createDefaultGeneratorMock({
       createWeappTailwindcssGenerator,
     }))
 
-    const { generateTailwindV4Css } = await import('@/generation/service')
+    const { generateTailwindV4Css } = await import('@/context/generation')
     const result = await generateTailwindV4Css({
       opts: {
         cssPreflight: 'view',
@@ -126,11 +126,11 @@ describe('bundlers/shared generator css', () => {
 
   it('keeps classSet validation from generated CSS when generator is disabled', async () => {
     const createWeappTailwindcssGenerator = vi.fn()
-    vi.doMock('@/generator', () => createDefaultGeneratorMock({
+    vi.doMock('@/generator/runtime', () => createDefaultGeneratorMock({
       createWeappTailwindcssGenerator,
     }))
 
-    const { validateCandidatesByGenerator } = await import('@/generation/index')
+    const { validateCandidatesByGenerator } = await import('@/context/generation')
     const result = await validateCandidatesByGenerator({
       opts: {
         generator: false,
@@ -167,7 +167,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('returns standardized Tailwind v4 generation metadata and exact class set', async () => {
-    vi.doMock('@/generator', () => createDefaultGeneratorMock({
+    vi.doMock('@/generator/runtime', () => createDefaultGeneratorMock({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: vi.fn(async () => ({
           css: '.text-\\[24rpx\\]{font-size:24rpx}',
@@ -180,7 +180,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateTailwindV4Css } = await import('@/generation/service')
+    const { generateTailwindV4Css } = await import('@/context/generation')
     const result = await generateTailwindV4Css({
       opts: {
         cssPreflight: 'view',
@@ -243,7 +243,7 @@ describe('bundlers/shared generator css', () => {
     const dispose = vi.fn(() => {
       disposed = true
     })
-    vi.doMock('@/generator', () => createDefaultGeneratorMock({
+    vi.doMock('@/generator/runtime', () => createDefaultGeneratorMock({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         dispose,
         async generate() {
@@ -268,7 +268,7 @@ describe('bundlers/shared generator css', () => {
       tailwindRuntime: { majorVersion: 4 } as any,
       readyPromise: Promise.resolve(),
     }
-    const { generateTailwindV4Css } = await import('@/generation/service')
+    const { generateTailwindV4Css } = await import('@/context/generation')
     const { disposeCompilerOwner } = await import('@/compiler')
     const generation = generateTailwindV4Css({
       opts: {
@@ -312,7 +312,7 @@ describe('bundlers/shared generator css', () => {
       markResolutionStarted = resolve
     })
     const dispose = vi.fn()
-    vi.doMock('@/generator', () => createDefaultGeneratorMock({
+    vi.doMock('@/generator/runtime', () => createDefaultGeneratorMock({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         dispose,
         async generate() {
@@ -343,7 +343,7 @@ describe('bundlers/shared generator css', () => {
       tailwindRuntime: { majorVersion: 4 } as any,
       readyPromise: Promise.resolve(),
     }
-    const { generateTailwindV4Css } = await import('@/generation/service')
+    const { generateTailwindV4Css } = await import('@/context/generation')
     const { disposeCompilerOwner } = await import('@/compiler')
     const generation = generateTailwindV4Css({
       opts: {
@@ -409,7 +409,7 @@ describe('bundlers/shared generator css', () => {
     } as any
     const opts = { ...frameworkPostcssOwner }
     captureFrameworkPostcssOptions(frameworkPostcssOwner, { plugins: [frameworkPlugin] })
-    const { generateTailwindV4Css } = await import('@/generation/service')
+    const { generateTailwindV4Css } = await import('@/context/generation')
     const result = await generateTailwindV4Css({
       opts,
       runtimeState: {
@@ -441,7 +441,7 @@ describe('bundlers/shared generator css', () => {
         decl.value = decl.value.replaceAll('4px', 'processed-token')
       },
     }
-    vi.doMock('@/generator', () => createDefaultGeneratorMock({
+    vi.doMock('@/generator/runtime', () => createDefaultGeneratorMock({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: vi.fn(async () => ({
           css: ':root{--spacing:4px}',
@@ -466,7 +466,7 @@ describe('bundlers/shared generator css', () => {
       styleHandler,
     } as any
     captureFrameworkPostcssOptions(opts, { plugins: [frameworkPlugin] })
-    const { generateTailwindV4Css } = await import('@/generation/service')
+    const { generateTailwindV4Css } = await import('@/context/generation')
     const result = await generateTailwindV4Css({
       opts,
       runtimeState: {
@@ -494,7 +494,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('rejects non-v4 Tailwind generation', async () => {
-    const { generateTailwindV4Css } = await import('@/generation/service')
+    const { generateTailwindV4Css } = await import('@/context/generation')
     await expect(generateTailwindV4Css({
       opts: {} as any,
       runtimeState: {
@@ -520,7 +520,7 @@ describe('bundlers/shared generator css', () => {
         dependencies: [],
       })),
     }))
-    const { generateTailwindV4Css } = await import('@/generation/service')
+    const { generateTailwindV4Css } = await import('@/context/generation')
     const result = await generateTailwindV4Css({
       opts: {} as any,
       runtimeState: {
@@ -563,7 +563,7 @@ describe('bundlers/shared generator css', () => {
         root: null,
       })),
     }))
-    vi.doMock('@/generator', () => createDefaultGeneratorMock({
+    vi.doMock('@/generator/runtime', () => createDefaultGeneratorMock({
       createWeappTailwindcssGenerator,
       resolveTailwindV4Source: vi.fn(async () => ({
         projectRoot: process.cwd(),
@@ -574,7 +574,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const result = await generateCssByGenerator({
       opts: {
         cssPreflight: {
@@ -629,7 +629,7 @@ describe('bundlers/shared generator css', () => {
   it('preserves user native pseudo selectors in deferred mini-program css adaptation', async () => {
     const userCss = '@layer base { button::after, wx-button::after { display:none; border:none; content:""; } }'
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
-    vi.doMock('@/generator', () => createDefaultGeneratorMock({
+    vi.doMock('@/generator/runtime', () => createDefaultGeneratorMock({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: vi.fn(async () => ({
           css: '.bg-blue-500{background-color:blue}',
@@ -646,7 +646,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const result = await generateCssByGenerator({
       opts: {
         generator: {
@@ -689,7 +689,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('filters standalone utilities from deferred apply-only component css', async () => {
-    vi.doMock('@/generator', () => createDefaultGeneratorMock({
+    vi.doMock('@/generator/runtime', () => createDefaultGeneratorMock({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: vi.fn(async () => ({
           css: '',
@@ -708,7 +708,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateTailwindV4Css } = await import('@/generation/service')
+    const { generateTailwindV4Css } = await import('@/context/generation')
     const result = await generateTailwindV4Css({
       opts: {
         generator: {
@@ -751,7 +751,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('precomputes configured rpx theme calc in deferred mini-program css', async () => {
-    const { generateTailwindV4Css } = await import('@/generation/service')
+    const { generateTailwindV4Css } = await import('@/context/generation')
     const result = await generateTailwindV4Css({
       opts: {
         cssOptions: {
@@ -1091,7 +1091,7 @@ describe('bundlers/shared generator css', () => {
       '}',
     ].join('\n')
 
-    vi.doMock('@/generator', () => createDefaultGeneratorMock({
+    vi.doMock('@/generator/runtime', () => createDefaultGeneratorMock({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: vi.fn(async () => ({
           css: [
@@ -1113,7 +1113,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const result = await generateCssByGenerator({
       opts: {
         cssPreflight: 'view',
@@ -1178,7 +1178,7 @@ describe('bundlers/shared generator css', () => {
       '@keyframes u-rotate{to{transform:rotate(360deg)}}',
     ].join('\n')
 
-    vi.doMock('@/generator', () => createDefaultGeneratorMock({
+    vi.doMock('@/generator/runtime', () => createDefaultGeneratorMock({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: vi.fn(async () => ({
           css: '.bg-sky-500{background-color:var(--color-sky-500)}',
@@ -1200,7 +1200,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -1293,7 +1293,7 @@ describe('bundlers/shared generator css', () => {
         root: null,
       }))
 
-      vi.doMock('@/generator', () => createDefaultGeneratorMock({
+      vi.doMock('@/generator/runtime', () => createDefaultGeneratorMock({
         createWeappTailwindcssGenerator: vi.fn(() => ({
           generate: generateMock,
         })),
@@ -1319,7 +1319,7 @@ describe('bundlers/shared generator css', () => {
         })),
       }))
 
-      const { generateCssByGenerator } = await import('@/generation/index')
+      const { generateCssByGenerator } = await import('@/context/generation')
       const styleHandler = vi.fn(async (code: string) => ({ css: code }))
       const baseOptions = {
         opts: {
@@ -1427,7 +1427,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -1452,7 +1452,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -1516,14 +1516,14 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       ...createDefaultGeneratorMock(),
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -1598,14 +1598,14 @@ describe('bundlers/shared generator css', () => {
       }
     })
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       ...createDefaultGeneratorMock(),
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -1695,7 +1695,7 @@ describe('bundlers/shared generator css', () => {
       }
     })
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       ...createDefaultGeneratorMock({
         resolveTailwindV4Source: vi.fn(async (options: any) => ({
           projectRoot: root,
@@ -1716,7 +1716,7 @@ describe('bundlers/shared generator css', () => {
     }))
 
     try {
-      const { generateCssByGenerator } = await import('@/generation/index')
+      const { generateCssByGenerator } = await import('@/context/generation')
       const styleHandler = vi.fn(async (code: string) => ({ css: code }))
       const result = await generateCssByGenerator({
         opts: {
@@ -1791,7 +1791,7 @@ describe('bundlers/shared generator css', () => {
       await writeFile(page, 'export default <div className="flex grid items-center bg-[#0284c7]"></div>', 'utf8')
 
       const { createContext } = await import('./vite-plugin.testkit')
-      const { generateTailwindV4Css } = await import('@/generation/service')
+      const { generateTailwindV4Css } = await import('@/context/generation')
       const styleHandler = vi.fn(async (code: string) => ({ css: code }))
       const ctx = createContext({
         generator: {
@@ -1880,14 +1880,14 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       ...createDefaultGeneratorMock(),
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -1963,7 +1963,7 @@ describe('bundlers/shared generator css', () => {
       dependencies: [],
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       ...createDefaultGeneratorMock({
         resolveTailwindV4Source,
       }),
@@ -1972,7 +1972,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -2039,14 +2039,14 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       ...createDefaultGeneratorMock(),
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -2108,14 +2108,14 @@ describe('bundlers/shared generator css', () => {
       }
     })
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       ...createDefaultGeneratorMock(),
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const baseOptions = {
       opts: {
@@ -2182,7 +2182,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       ...createDefaultGeneratorMock({
         resolveTailwindV4Source,
       }),
@@ -2191,7 +2191,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -2268,7 +2268,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       ...createDefaultGeneratorMock({
         resolveTailwindV4Source,
         resolveTailwindV4SourceFromRuntime,
@@ -2278,7 +2278,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -2599,7 +2599,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       ...createDefaultGeneratorMock(),
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
@@ -2607,7 +2607,7 @@ describe('bundlers/shared generator css', () => {
       resolveTailwindV4Source,
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -2682,7 +2682,7 @@ describe('bundlers/shared generator css', () => {
       dependencies: [],
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       ...createDefaultGeneratorMock({
         resolveTailwindV4Source,
         resolveTailwindV4SourceOptionsFromRuntime: vi.fn(() => ({
@@ -2696,7 +2696,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -2768,7 +2768,7 @@ describe('bundlers/shared generator css', () => {
       dependencies: [],
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       ...createDefaultGeneratorMock({        resolveTailwindV4SourceFromRuntime,
         resolveTailwindV4Source,
       }),
@@ -2777,7 +2777,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -2832,7 +2832,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -2857,7 +2857,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({
       css: code.replace('/*! tailwindcss v4.2.4 | MIT License | https://tailwindcss.com */\n', ''),
     }))
@@ -2929,7 +2929,7 @@ describe('bundlers/shared generator css', () => {
         throw new Error(`unexpected readFileSync: ${file}`)
       }),
     }))
-    vi.doMock('@/generator', () => createDefaultGeneratorMock({
+    vi.doMock('@/generator/runtime', () => createDefaultGeneratorMock({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -2940,7 +2940,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code.replaceAll('rem', 'rpx') }))
     const result = await generateCssByGenerator({
       opts: {
@@ -2995,7 +2995,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => createDefaultGeneratorMock({
+    vi.doMock('@/generator/runtime', () => createDefaultGeneratorMock({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -3008,7 +3008,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -3063,7 +3063,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -3088,7 +3088,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -3182,7 +3182,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -3207,7 +3207,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -3264,7 +3264,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -3285,7 +3285,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `user:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -3348,7 +3348,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -3369,7 +3369,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -3440,7 +3440,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -3463,7 +3463,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -3523,7 +3523,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -3544,7 +3544,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `user:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -3602,7 +3602,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -3630,7 +3630,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `user:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -3687,7 +3687,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -3708,7 +3708,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `user:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -3780,7 +3780,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -3794,7 +3794,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -3859,7 +3859,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -3873,7 +3873,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `user:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -3932,7 +3932,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -3946,7 +3946,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `user:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -4006,7 +4006,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -4031,7 +4031,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `user:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -4099,14 +4099,14 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       ...createDefaultGeneratorMock(),
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -4149,7 +4149,7 @@ describe('bundlers/shared generator css', () => {
   })
 
   it('keeps local import wrapper assets out of forced generator replacement', async () => {
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -4202,14 +4202,14 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       ...createDefaultGeneratorMock(),
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -4270,7 +4270,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -4284,7 +4284,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -4344,14 +4344,14 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       ...createDefaultGeneratorMock(),
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -4419,7 +4419,7 @@ describe('bundlers/shared generator css', () => {
       }
     })
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       ...createDefaultGeneratorMock(),
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
@@ -4454,7 +4454,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async () => ({ css: 'legacy:.card{color:red}' }))
     const baseOptions = {
       opts: {
@@ -4558,14 +4558,14 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       ...createDefaultGeneratorMock(),
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -4631,7 +4631,7 @@ describe('bundlers/shared generator css', () => {
       '}',
     ].join('\n')
 
-    vi.doMock('@/generator', async () => {
+    vi.doMock('@/generator/runtime', async () => {
       const actual = await vi.importActual<typeof import('@/generator')>('@/generator')
       return {
         ...actual,
@@ -4639,7 +4639,7 @@ describe('bundlers/shared generator css', () => {
       }
     })
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const result = await generateCssByGenerator({
       opts: {
         generator: {
@@ -4709,7 +4709,7 @@ describe('bundlers/shared generator css', () => {
       '}',
     ].join('\n')
 
-    vi.doMock('@/generator', async () => {
+    vi.doMock('@/generator/runtime', async () => {
       const actual = await vi.importActual<typeof import('@/generator')>('@/generator')
       return {
         ...actual,
@@ -4717,7 +4717,7 @@ describe('bundlers/shared generator css', () => {
       }
     })
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const result = await generateCssByGenerator({
       opts: {
         generator: {
@@ -4790,7 +4790,7 @@ describe('bundlers/shared generator css', () => {
       '}',
     ].join('\n')
 
-    vi.doMock('@/generator', async () => {
+    vi.doMock('@/generator/runtime', async () => {
       const actual = await vi.importActual<typeof import('@/generator')>('@/generator')
       return {
         ...actual,
@@ -4798,7 +4798,7 @@ describe('bundlers/shared generator css', () => {
       }
     })
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const baseOptions = {
       opts: {
         generator: {
@@ -4871,13 +4871,13 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => createDefaultGeneratorMock({
+    vi.doMock('@/generator/runtime', () => createDefaultGeneratorMock({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const result = await generateCssByGenerator({
       opts: {
         generator: {
@@ -5075,7 +5075,7 @@ describe('bundlers/shared generator css', () => {
       css: options.css,
       dependencies: [],
     }))
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       ...createDefaultGeneratorMock({
         resolveTailwindV4Source,
         resolveTailwindV4SourceOptionsFromRuntime: vi.fn(() => ({
@@ -5123,7 +5123,7 @@ describe('bundlers/shared generator css', () => {
       css: options.css,
       dependencies: [],
     }))
-    vi.doMock('@/generator', () => createDefaultGeneratorMock({
+    vi.doMock('@/generator/runtime', () => createDefaultGeneratorMock({
       resolveTailwindV4Source,
       resolveTailwindV4SourceOptionsFromRuntime: vi.fn(() => ({
         projectRoot: root,
@@ -5178,7 +5178,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -5192,7 +5192,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -5246,13 +5246,13 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
       normalizeWeappTailwindcssGeneratorOptions: normalizeGeneratorOptions,    }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -5308,7 +5308,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -5322,7 +5322,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `user:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -5382,7 +5382,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -5405,7 +5405,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `user:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -5475,7 +5475,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -5489,7 +5489,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `user:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -5557,7 +5557,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -5571,7 +5571,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `user:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -5632,7 +5632,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -5646,7 +5646,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -5710,14 +5710,14 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       ...createDefaultGeneratorMock(),
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -5782,7 +5782,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -5796,7 +5796,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -5863,7 +5863,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -5877,7 +5877,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async () => ({ css: legacyCss }))
     const result = await generateCssByGenerator({
       opts: {
@@ -5952,7 +5952,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -5966,7 +5966,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async () => ({ css: legacyCss }))
     const result = await generateCssByGenerator({
       opts: {
@@ -6059,7 +6059,7 @@ describe('bundlers/shared generator css', () => {
       dependencies: options.cssEntries,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: createGeneratorMock,
       normalizeWeappTailwindcssGeneratorOptions: normalizeGeneratorOptions,
       resolveTailwindV4Source: resolveTailwindV4SourceMock,
@@ -6077,7 +6077,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -6184,7 +6184,7 @@ describe('bundlers/shared generator css', () => {
       }
     })
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: vi.fn(async () => ({
           css: '.main-only{display:block}.sub-normal-only{display:block}.sub-independent-only{display:block}',
@@ -6216,7 +6216,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const result = await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -6282,7 +6282,7 @@ describe('bundlers/shared generator css', () => {
       existsSync: vi.fn((file: string) => file === '/project/src/common.css'),
       readFileSync: vi.fn(() => commonCss),
     }))
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: vi.fn(async () => ({
           css: '.bg-slate-50{background-color:rgb(248,250,252)}',
@@ -6310,7 +6310,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -6365,7 +6365,7 @@ describe('bundlers/shared generator css', () => {
       dependencies: [firstResolvedCssSourceOption(options).file],
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: vi.fn(async () => ({
           css: '.bg-slate-50{background-color:rgb(248,250,252)}',
@@ -6405,7 +6405,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const result = await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -6464,7 +6464,7 @@ describe('bundlers/shared generator css', () => {
       existsSync: vi.fn((file: string) => file.endsWith('/index.css')),
       readFileSync: vi.fn(() => entryCss),
     }))
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: vi.fn(async () => ({
           css: '.bg-slate-50{background-color:rgb(248,250,252)}',
@@ -6496,7 +6496,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const result = await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -6566,7 +6566,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -6597,7 +6597,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -6671,7 +6671,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -6702,7 +6702,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const result = await generateCssByGenerator({
       opts: {
         cssPreflight: {
@@ -6797,7 +6797,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -6823,7 +6823,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const result = await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -6912,7 +6912,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -6943,7 +6943,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const result = await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -7029,7 +7029,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -7048,7 +7048,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const result = await generateCssByGenerator({
       opts: {
         cssPreflight: {
@@ -7118,7 +7118,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -7139,7 +7139,7 @@ describe('bundlers/shared generator css', () => {
     }))
 
     try {
-      const { generateCssByGenerator } = await import('@/generation/index')
+      const { generateCssByGenerator } = await import('@/context/generation')
       const result = await generateCssByGenerator({
         opts: {
           cssEntries: [mainCssFile, subCssFile],
@@ -7218,7 +7218,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -7239,7 +7239,7 @@ describe('bundlers/shared generator css', () => {
     }))
 
     try {
-      const { generateCssByGenerator } = await import('@/generation/index')
+      const { generateCssByGenerator } = await import('@/context/generation')
       const result = await generateCssByGenerator({
         opts: {
           cssEntries: [mainCssFile, scopedCssFile],
@@ -7321,7 +7321,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -7342,7 +7342,7 @@ describe('bundlers/shared generator css', () => {
     }))
 
     try {
-      const { generateCssByGenerator } = await import('@/generation/index')
+      const { generateCssByGenerator } = await import('@/context/generation')
       const result = await generateCssByGenerator({
         opts: {
           cssEntries: [mainCssFile, scopedCssFile],
@@ -7426,7 +7426,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -7457,7 +7457,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const result = await generateCssByGenerator({
       opts: {
         cssPreflight: {
@@ -7551,7 +7551,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -7576,7 +7576,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const result = await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -7639,7 +7639,7 @@ describe('bundlers/shared generator css', () => {
       }
     })
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -7676,7 +7676,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const result = await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -7730,7 +7730,7 @@ describe('bundlers/shared generator css', () => {
       }
     })
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -7766,7 +7766,7 @@ describe('bundlers/shared generator css', () => {
     const collector = createSourceCandidateCollector()
     await collector.merge(subWxmlFile, '<view class="bg-[#000000] text-[46px] h-[28px]"></view>')
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -7819,7 +7819,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -7851,7 +7851,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const result = await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -7914,7 +7914,7 @@ describe('bundlers/shared generator css', () => {
       }
     })
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -7945,7 +7945,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -8001,7 +8001,7 @@ describe('bundlers/shared generator css', () => {
       dependencies: [firstResolvedCssSourceOption(options).file],
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: vi.fn(async () => ({
           css: '',
@@ -8040,7 +8040,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -8084,7 +8084,7 @@ describe('bundlers/shared generator css', () => {
       dependencies: firstResolvedCssSourceOption(options).file ? [firstResolvedCssSourceOption(options).file] : [],
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: vi.fn(async () => ({
           css: '',
@@ -8123,7 +8123,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -8177,7 +8177,7 @@ describe('bundlers/shared generator css', () => {
       dependencies: [],
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: vi.fn(async () => ({
           css: '',
@@ -8219,7 +8219,7 @@ describe('bundlers/shared generator css', () => {
     }))
 
     try {
-      const { generateCssByGenerator } = await import('@/generation/index')
+      const { generateCssByGenerator } = await import('@/context/generation')
       await generateCssByGenerator({
         opts: {
           styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -8277,7 +8277,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -8314,7 +8314,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const result = await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -8372,7 +8372,7 @@ describe('bundlers/shared generator css', () => {
       existsSync: vi.fn((file: string) => file === subConfig),
       readFileSync: vi.fn(() => 'module.exports = { content: ["./**/*.{ts,tsx}"] }'),
     }))
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -8410,7 +8410,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -8467,13 +8467,13 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       ...createDefaultGeneratorMock(),
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),    }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     await generateCssByGenerator({
       opts: {
         generator: {
@@ -8536,7 +8536,7 @@ describe('bundlers/shared generator css', () => {
       }
     })
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -8562,7 +8562,7 @@ describe('bundlers/shared generator css', () => {
     }))
 
     try {
-      const { generateCssByGenerator } = await import('@/generation/index')
+      const { generateCssByGenerator } = await import('@/context/generation')
       await generateCssByGenerator({
         opts: {
           styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -8645,7 +8645,7 @@ describe('bundlers/shared generator css', () => {
       dependencies: [],
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -8677,7 +8677,7 @@ describe('bundlers/shared generator css', () => {
     }))
 
     try {
-      const { generateCssByGenerator } = await import('@/generation/index')
+      const { generateCssByGenerator } = await import('@/context/generation')
       await generateCssByGenerator({
         opts: {
           styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -8744,7 +8744,7 @@ describe('bundlers/shared generator css', () => {
       existsSync: vi.fn((file: string) => file === '/project/tailwind.config.order.js'),
       readFileSync: vi.fn(() => '@import "tailwindcss";'),
     }))
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: vi.fn(async () => ({
           css: '.bg-slate-50{background-color:rgb(248,250,252)}',
@@ -8772,7 +8772,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const result = await generateCssByGenerator({
       opts: {
         styleHandler: vi.fn(async (code: string) => ({ css: code })),
@@ -8828,7 +8828,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -8842,7 +8842,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -8897,7 +8897,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -8911,7 +8911,8 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator, hasTailwindSourceDirectives } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
+    const { hasTailwindSourceDirectives } = await import('@/generation/index')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -8970,7 +8971,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -8998,7 +8999,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `legacy:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -9075,14 +9076,14 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       ...createDefaultGeneratorMock(),
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -9161,7 +9162,7 @@ describe('bundlers/shared generator css', () => {
       dependencies: ['src/app.css'],
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: createGeneratorMock,
       normalizeWeappTailwindcssGeneratorOptions: normalizeGeneratorOptions,
       resolveTailwindV4Source,
@@ -9187,7 +9188,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code.includes('.container') ? '.container{width:100%}' : code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -9255,7 +9256,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -9289,7 +9290,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -9361,7 +9362,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -9389,7 +9390,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -9465,7 +9466,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -9493,7 +9494,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -9575,7 +9576,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -9603,7 +9604,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -9674,7 +9675,7 @@ describe('bundlers/shared generator css', () => {
       version: 4,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -9702,7 +9703,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -9765,7 +9766,7 @@ describe('bundlers/shared generator css', () => {
       version: 4,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -9793,7 +9794,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -9881,7 +9882,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -9909,7 +9910,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -9976,7 +9977,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -9990,7 +9991,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({
       css: code
         .replaceAll('.from-\\[\\#2f73f1\\]', '.from-_b_h2f73f1_B')
@@ -10084,7 +10085,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -10098,7 +10099,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -10332,7 +10333,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -10353,7 +10354,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -10419,7 +10420,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -10433,7 +10434,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -10492,7 +10493,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn((source: { css: string }) => {
         generatorSources.push(source)
         return {
@@ -10516,7 +10517,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -10581,7 +10582,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn((source: { css: string }) => {
         generatorSources.push(source)
         return {
@@ -10605,7 +10606,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: code }))
     const result = await generateCssByGenerator({
       opts: {
@@ -10660,7 +10661,7 @@ describe('bundlers/shared generator css', () => {
       root: null,
     }))
 
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         generate: generateMock,
       })),
@@ -10674,7 +10675,7 @@ describe('bundlers/shared generator css', () => {
       })),
     }))
 
-    const { generateCssByGenerator } = await import('@/generation/index')
+    const { generateCssByGenerator } = await import('@/context/generation')
     const styleHandler = vi.fn(async (code: string) => ({ css: `handled:${code}` }))
     const result = await generateCssByGenerator({
       opts: {
@@ -11366,7 +11367,7 @@ describe('bundlers/shared generator css', () => {
       dependencies: [],
       version: 4,
     }))
-    vi.doMock('@/generator', () => createDefaultGeneratorMock({
+    vi.doMock('@/generator/runtime', () => createDefaultGeneratorMock({
       resolveTailwindV4Source,
       resolveTailwindV4SourceOptionsFromRuntime: vi.fn(() => ({
         projectRoot: root,
@@ -11439,7 +11440,7 @@ describe('bundlers/shared generator css', () => {
       dependencies: [],
       version: 4,
     }))
-    vi.doMock('@/generator', () => createDefaultGeneratorMock({
+    vi.doMock('@/generator/runtime', () => createDefaultGeneratorMock({
       resolveTailwindV4Source,
       resolveTailwindV4SourceOptionsFromRuntime: vi.fn(() => ({
         projectRoot: root,
@@ -11502,7 +11503,7 @@ describe('bundlers/shared generator css', () => {
       dependencies: [],
       version: 4,
     }))
-    vi.doMock('@/generator', () => createDefaultGeneratorMock({
+    vi.doMock('@/generator/runtime', () => createDefaultGeneratorMock({
       resolveTailwindV4Source,
       resolveTailwindV4SourceOptionsFromRuntime: vi.fn(() => ({
         projectRoot: root,

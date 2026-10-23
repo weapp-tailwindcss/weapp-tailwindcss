@@ -50,7 +50,7 @@ describe('vite compiler shadow run boundary', () => {
     expect(getTailwindGenerationSessionPool(runtimeState)).toBe(generationPool)
 
     await plugin.closeWatcher?.()
-    expect(getTailwindGenerationSessionPool(runtimeState)).not.toBe(generationPool)
+    expect(() => getTailwindGenerationSessionPool(runtimeState)).toThrow('已释放')
   })
 
   it('completes the current shadow run after the post css finalizer', async () => {
@@ -101,6 +101,6 @@ describe('vite compiler shadow run boundary', () => {
     const shadowSession = getCompilerShadowReportSession(runtimeState)
     await plugin.closeBundle?.()
     expect(() => shadowSession.snapshot()).toThrow('已释放')
-    expect(getCompilerShadowReportSession(runtimeState)).not.toBe(shadowSession)
+    expect(() => getCompilerShadowReportSession(runtimeState)).toThrow('已释放')
   })
 })

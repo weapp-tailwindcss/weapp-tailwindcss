@@ -1,14 +1,20 @@
+import type { StyleHandler } from '@weapp-tailwindcss/postcss/transform'
 import type { TailwindV4CssSource } from './source-resolver/types'
 import type { GenerationStyleHandlerOptions } from './style-options'
+import type { ResolvedCompilationProfile } from '@/compiler/compilation-profile'
 import type { CompilationDependencyChange, SourceScope } from '@/compiler/index'
-import type { CompilerSnapshot } from '@/core/compiler/index'
+import type { CompilerTransformServices } from '@/compiler/transform-services'
+import type { CompilerSnapshot } from '@/core/compiler/types'
 import type { TailwindSourceEntry } from '@/tailwindcss/source-scan'
-import type { InternalUserDefinedOptions } from '@/types/index'
+import type { TailwindcssRuntimeLike } from '@/types/compilation'
 
 export interface GenerateCssByGeneratorOptions {
-  opts: InternalUserDefinedOptions
+  profile: ResolvedCompilationProfile
+  compilerTransforms: CompilerTransformServices
+  isConfigurationCurrent: () => boolean
+  sourceRuntimeState: { tailwindRuntime: TailwindcssRuntimeLike }
   runtimeState: {
-    tailwindRuntime: InternalUserDefinedOptions['tailwindRuntime']
+    tailwindRuntime: TailwindcssRuntimeLike
     readyPromise: Promise<void>
   }
   runtime: Set<string>
@@ -26,7 +32,7 @@ export interface GenerateCssByGeneratorOptions {
     scope: SourceScope
   } | undefined
   outputFile?: string | undefined
-  styleHandler: InternalUserDefinedOptions['styleHandler']
+  styleHandler: StyleHandler
   debug: (format: string, ...args: unknown[]) => void
   generatorPlatform?: string | undefined
   userRawSource?: string | undefined

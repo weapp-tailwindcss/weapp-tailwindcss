@@ -1,8 +1,7 @@
 import type { StyleHandler } from '@weapp-tailwindcss/postcss/transform'
 import type { Compiler, CompilerCssTransformOptions, CompilerSnapshot } from './types'
-import type { UserDefinedOptions } from '@/types'
+import type { CompilerTransformServices } from '@/compiler/transform-services'
 import { finalizeMiniProgramCssRoot, stripTailwindBannerComments } from '@weapp-tailwindcss/postcss/transform'
-import { getCompilerContext } from '@/context'
 import { getInternalCompilerSnapshot } from './snapshot'
 
 const DEFAULT_JS_OPTIONS = Object.freeze({ tailwindcssMajorVersion: 4 as const })
@@ -24,11 +23,11 @@ function resolveStyleOptions(options?: Parameters<StyleHandler>[1]): NonNullable
     : options
 }
 
-function resolveCssTransformOptions(options: CompilerCssTransformOptions | undefined, baseProperties: string[] | undefined, target: CompilerSnapshot['target']) {
+function resolveCssTransformOptions(options: CompilerCssTransformOptions | undefined, baseProperties: readonly string[] | undefined, target: CompilerSnapshot['target']) {
   const { finalize: _finalize, ...styleOptions } = options ?? {}
   const properties = target === 'web' ? [] : styleOptions.cssOptions?.preserveWebkitProperties ?? baseProperties
   // 样式处理和最终清理共享本次调用的名单快照，避免异步阶段读取不同配置。
-  const preserveWebkitProperties = Array.isArray(properties) ? [...properties] : properties
+  const preserveWebkitProperties = properties === undefined ? undefined : [...properties]
   const resolved = resolveStyleOptions(styleOptions)
   return {
     finalize: _finalize,
@@ -61,14 +60,10 @@ function finalizeResultRoot(result: Awaited<ReturnType<StyleHandler>>, snapshot:
 interface CreateCompilerTransformsOptions {
   ensureActive: () => void
   track: <T>(task: Promise<T>) => Promise<T>
-  userOptions: UserDefinedOptions
+  services: CompilerTransformServices
 }
 
-export function createCompilerTransforms({ ensureActive, track, userOptions }: CreateCompilerTransformsOptions) {
-  const context = getCompilerContext({
-    ...userOptions,
-    __internalDeferMissingCssEntriesWarning: true,
-  } as UserDefinedOptions)
+export function createCompilerTransforms({ ensureActive, track, services: context }: CreateCompilerTransformsOptions) {
   const styleHandler = context.styleHandler as StyleHandler
   let cachedTemplateClassSet: Set<string> | undefined
   let cachedTemplateOptions: Parameters<typeof context.templateHandler>[1]
@@ -105,7 +100,7 @@ export function createCompilerTransforms({ ensureActive, track, userOptions }: C
   function transformCss(css: string, snapshot: CompilerSnapshot, options?: Parameters<Compiler['transformCss']>[2]) {
     ensureActive()
     getInternalCompilerSnapshot(snapshot)
-    const resolved = resolveCssTransformOptions(options, context.cssOptions?.preserveWebkitProperties, snapshot.target)
+    const resolved = resolveCssTransformOptions(options, context.preserveWebkitProperties, snapshot.target)
     const shouldFinalize = resolved.finalize ?? snapshot.target === 'weapp'
     return track(styleHandler(css, resolved.styleOptions).then((result) => {
       const cloned = clonePostcssResult(result)
@@ -117,7 +112,7 @@ export function createCompilerTransforms({ ensureActive, track, userOptions }: C
   function transformCssRoot(root: Parameters<Compiler['transformCssRoot']>[0], snapshot: CompilerSnapshot, options?: Parameters<Compiler['transformCssRoot']>[2]) {
     ensureActive()
     getInternalCompilerSnapshot(snapshot)
-    const resolved = resolveCssTransformOptions(options, context.cssOptions?.preserveWebkitProperties, snapshot.target)
+    const resolved = resolveCssTransformOptions(options, context.preserveWebkitProperties, snapshot.target)
     const shouldFinalize = resolved.finalize ?? snapshot.target === 'weapp'
     return track(styleHandler.transformRoot(root, resolved.styleOptions).then((result) => {
       finalizeResultRoot(result, snapshot, shouldFinalize, resolved.preserveWebkitProperties)

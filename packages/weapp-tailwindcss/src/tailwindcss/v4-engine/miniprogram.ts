@@ -1,8 +1,7 @@
-import type { IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
 import type { TailwindV4GenerateTarget } from './types'
-import type { AppType } from '@/types'
+import type { ResolvedGenerationStyleOptions } from '@/compiler/style-capabilities'
 import { transformTailwindV4GeneratedCss } from '@weapp-tailwindcss/postcss/transform'
-import { shouldUseContextWebRpxCompatibility } from '@/framework-policies/environment-snapshot'
+import { useWebRpxCompatibility } from '@/compiler/style-capabilities'
 
 export {
   normalizeTailwindV4GeneratedUrlValues,
@@ -13,7 +12,7 @@ export {
 export function transformTailwindV4CssByTarget(
   css: string,
   target: TailwindV4GenerateTarget,
-  options?: Partial<IStyleHandlerOptions> & { appType?: AppType | undefined },
+  options?: ResolvedGenerationStyleOptions,
 ) {
-  return transformTailwindV4GeneratedCss(css, target, options, shouldUseContextWebRpxCompatibility(options))
+  return transformTailwindV4GeneratedCss(css, target, options, useWebRpxCompatibility(options))
 }

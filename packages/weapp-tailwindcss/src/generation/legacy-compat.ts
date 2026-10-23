@@ -1,6 +1,6 @@
+import type { StyleHandler } from '@weapp-tailwindcss/postcss/transform'
 import type { IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
-import type { TailwindResolvedSource } from '@/generator/index'
-import type { InternalUserDefinedOptions } from '@/types/index'
+import type { TailwindResolvedSource } from '@/generator/runtime'
 import { readFileSync } from 'node:fs'
 import { filterExistingCssRules, normalizeLegacyCompatCssSource, removeMiniProgramContainerCompatCss, removeTailwindApplyRules, removeUnsupportedMiniProgramAtRules } from '@weapp-tailwindcss/postcss/transform'
 import { stableSerialize } from '@/utils/stable-serialize'
@@ -136,7 +136,7 @@ export async function appendLegacyCompatCss(
   css: string,
   rawSource: string,
   generatorTarget: string,
-  styleHandler: InternalUserDefinedOptions['styleHandler'],
+  styleHandler: StyleHandler,
   cssHandlerOptions: IStyleHandlerOptions,
   generatorStyleOptions: Partial<IStyleHandlerOptions> | undefined,
   options: { preserveSelectorOverrides?: boolean | undefined, generatedSource?: string | undefined, compileAuthorCssFunctions?: ((css: string) => Promise<string>) | undefined } = {},
@@ -187,7 +187,7 @@ export async function appendLegacyContainerCompatCss(
   runtime: Set<string>,
   configuredContainerCompat: boolean,
   generatorTarget: string,
-  styleHandler: InternalUserDefinedOptions['styleHandler'],
+  styleHandler: StyleHandler,
   cssHandlerOptions: IStyleHandlerOptions,
   generatorStyleOptions: Partial<IStyleHandlerOptions> | undefined,
 ) {

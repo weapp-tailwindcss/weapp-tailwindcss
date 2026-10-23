@@ -1,5 +1,5 @@
 import type { GenerateCssByGeneratorOptions, GenerateCssByGeneratorResult } from './index'
-import type { NormalizedWeappTailwindcssGeneratorOptions } from '@/generator'
+import type { ResolvedGeneratorOptions as NormalizedWeappTailwindcssGeneratorOptions } from '@/compiler/compilation-profile'
 import { normalizeFrameworkProcessedUserCss } from '@weapp-tailwindcss/postcss/transform'
 import { composeFrameworkProcessedCss } from './framework-css-composition'
 import { createCssSourceOrderAppend, finalizeMiniProgramGeneratorCss, resolveGeneratorStyleOptions, splitRawSourceByGeneratedCssOrder } from './generation-helpers'
@@ -22,7 +22,7 @@ export async function restoreFrameworkProcessedUserCss(
     compileAuthorCssFunctions: generated.compileAuthorCssFunctions,
     generatorTarget: generated.target,
     generatedSource,
-    generatorStyleOptions: resolveGeneratorStyleOptions(options.opts, options.cssHandlerOptions, generatorOptions.styleOptions),
+    generatorStyleOptions: resolveGeneratorStyleOptions(options.profile, options.cssHandlerOptions, generatorOptions.styleOptions),
     cssUserHandlerOptions: options.cssUserHandlerOptions,
     styleHandler: options.styleHandler,
     importFallback: generatorOptions.importFallback,
@@ -35,7 +35,7 @@ export async function restoreFrameworkProcessedUserCss(
       createCssSourceOrderAppend(wrapUserLayerComponentsCss(layer), rest),
       generated.target,
       options.runtimeState.tailwindRuntime.majorVersion,
-      options.opts.cssPreflight,
+      options.profile.cssPreflight,
       { injectPreflight: false, preservePreflight: generated.metadata?.preflightMode?.preserve, styleOptions: options.cssHandlerOptions },
     ), generatedSource)
   }

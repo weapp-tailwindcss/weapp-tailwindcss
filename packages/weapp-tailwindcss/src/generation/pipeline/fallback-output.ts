@@ -12,7 +12,7 @@ import { reorderMarkedUserLayerComponentsCss, wrapUserLayerComponentsCss } from 
 export async function finalizeFallbackGeneratorCss(
   context: GeneratorPipelineOutputContext,
 ): Promise<GenerateCssByGeneratorResult> {
-  const { configuredContainerCompat, cssHandlerOptions, cssUserHandlerOptions, debug, file, finalizeGeneratorCss, generated, generatedCss, generatedUserCssRawSource, generatorOptions, generatorRawSource, generatorStyleOptions, hasDistinctUserRawSource, hasGeneratedCss, hasGeneratedMarkers, hasMatchedCssSourceFile, hasSourceDirectives, hasWebUserCssFallbackSource, isolateCurrentCssCandidates, legacyCompatUserCssRawSource, majorVersion, options, opts, preflightMode, prepareFinalGeneratorCss, runtime, runtimeWithCurrentCss, shouldFilterApplyOnlyCss, shouldPreserveLegacyCompatSelectorOverrides, styleHandler, userCssRawSource, userRawSourceProcessed } = context
+  const { configuredContainerCompat, cssHandlerOptions, cssUserHandlerOptions, debug, file, finalizeGeneratorCss, generated, generatedCss, generatedUserCssRawSource, generatorOptions, generatorRawSource, generatorStyleOptions, hasDistinctUserRawSource, hasGeneratedCss, hasGeneratedMarkers, hasMatchedCssSourceFile, hasSourceDirectives, hasWebUserCssFallbackSource, isolateCurrentCssCandidates, legacyCompatUserCssRawSource, majorVersion, options, profile, preflightMode, prepareFinalGeneratorCss, runtime, runtimeWithCurrentCss, shouldFilterApplyOnlyCss, shouldPreserveLegacyCompatSelectorOverrides, styleHandler, userCssRawSource, userRawSourceProcessed } = context
   debug(
     'tailwind direct css generation prefix mismatch, append transformed bundle css %s',
     file,
@@ -207,7 +207,7 @@ export async function finalizeFallbackGeneratorCss(
     })
     return {
       css: finalCss,
-      classSet: resolveGeneratedCssClassSet(generated.target, generated.classSet, runtimeWithCurrentCss, finalCss, opts.escapeMap, options.previousClassSet),
+      classSet: resolveGeneratedCssClassSet(generated.target, generated.classSet, runtimeWithCurrentCss, finalCss, profile.escapeMap, options.previousClassSet),
       target: generated.target,
       source: 'generator',
       dependencies: [...generated.dependencies],
@@ -277,7 +277,7 @@ export async function finalizeFallbackGeneratorCss(
   })
   return {
     css: finalCss,
-    classSet: resolveGeneratedCssClassSet(generated.target, generated.classSet, runtimeWithCurrentCss, finalCss, opts.escapeMap, options.previousClassSet),
+    classSet: resolveGeneratedCssClassSet(generated.target, generated.classSet, runtimeWithCurrentCss, finalCss, profile.escapeMap, options.previousClassSet),
     target: generated.target,
     source: 'generator',
     dependencies: [...generated.dependencies],

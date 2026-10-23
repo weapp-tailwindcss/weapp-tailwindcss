@@ -1,6 +1,7 @@
 import type { InternalUserDefinedOptions } from '@/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getCompilerContext } from '@/context'
+import { resolveCompilationProfile } from '@/context/compilation-profile'
 import { resolveStyleOptionsFromContext } from '@/context/style-options'
 import { generatorTargetEnvKeys, resolveFrameworkPolicy } from '@/framework-policies/resolve'
 import { resolveMiniProgramPreflightModeForGeneratorCss } from '@/generation/generation-helpers/preflight'
@@ -85,18 +86,18 @@ describe('生成 preflight 策略', () => {
   }
 
   it('保留旧直调 uniAppX 局部 import 行为', () => {
-    expect(resolveMiniProgramPreflightModeForGeneratorCss({ uniAppX: true } as InternalUserDefinedOptions, options)).toEqual({ inject: true, preserve: true })
-    expect(resolveMiniProgramPreflightModeForGeneratorCss({ uniAppX: false } as InternalUserDefinedOptions, options)).toEqual({ inject: false, preserve: false })
+    expect(resolveMiniProgramPreflightModeForGeneratorCss(resolveCompilationProfile({ uniAppX: true } as InternalUserDefinedOptions).profile, options)).toEqual({ inject: true, preserve: true })
+    expect(resolveMiniProgramPreflightModeForGeneratorCss(resolveCompilationProfile({ uniAppX: false } as InternalUserDefinedOptions).profile, options)).toEqual({ inject: false, preserve: false })
   })
 
   it('预解析策略驱动输出，不再读取原始框架身份', () => {
     const frameworkPolicy = resolveFrameworkPolicy({ uniAppX: true })
-    expect(resolveMiniProgramPreflightModeForGeneratorCss({ uniAppX: false } as InternalUserDefinedOptions, { ...options, frameworkPolicy })).toEqual({ inject: true, preserve: true })
+    expect(resolveMiniProgramPreflightModeForGeneratorCss(resolveCompilationProfile({ uniAppX: false } as InternalUserDefinedOptions).profile, { ...options, frameworkPolicy })).toEqual({ inject: true, preserve: true })
   })
 
   it('uvue 样式禁用 preflight，普通主样式仍可注入', () => {
     const nativeStyle = { ...options, cssHandlerOptions: { isMainChunk: true, uniAppX: true, uniAppXCssTarget: 'uvue' as const } }
-    expect(resolveMiniProgramPreflightModeForGeneratorCss({ uniAppX: true } as InternalUserDefinedOptions, nativeStyle)).toEqual({ inject: false, preserve: false })
-    expect(resolveMiniProgramPreflightModeForGeneratorCss({ uniAppX: true } as InternalUserDefinedOptions, { ...options, cssHandlerOptions: { isMainChunk: true } })).toEqual({ inject: true, preserve: true })
+    expect(resolveMiniProgramPreflightModeForGeneratorCss(resolveCompilationProfile({ uniAppX: true } as InternalUserDefinedOptions, {}, { nativeStyle: true, styleTarget: 'uvue' }).profile, nativeStyle)).toEqual({ inject: false, preserve: false })
+    expect(resolveMiniProgramPreflightModeForGeneratorCss(resolveCompilationProfile({ uniAppX: true } as InternalUserDefinedOptions).profile, { ...options, cssHandlerOptions: { isMainChunk: true } })).toEqual({ inject: true, preserve: true })
   })
 })

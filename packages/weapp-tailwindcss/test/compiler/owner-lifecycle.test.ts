@@ -10,11 +10,11 @@ const source = {
 
 describe('compiler owner lifecycle', () => {
   afterEach(() => {
-    vi.doUnmock('@/generator')
+    vi.doUnmock('@/generator/runtime')
     vi.resetModules()
   })
 
-  it('disposes owner-bound state and creates fresh sessions for later builds', async () => {
+  it('disposes owner-bound state permanently and requires a new owner for later builds', async () => {
     const dispose = vi.fn()
     const createGenerator = vi.fn(() => ({
       dispose,
@@ -31,7 +31,7 @@ describe('compiler owner lifecycle', () => {
       validateCandidates: vi.fn(),
       source,
     }))
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: createGenerator,
     }))
     const {
@@ -60,10 +60,12 @@ describe('compiler owner lifecycle', () => {
       sources: [],
     }, async () => undefined)).toThrow('已释放')
 
-    const nextCompilationPool = getCompilationSessionPool(owner)
-    const nextCoordinator = getCompilationChangeCoordinator(owner)
-    const nextGenerationPool = getTailwindGenerationSessionPool(owner)
-    const nextShadowSession = getCompilerShadowReportSession(owner)
+    expect(() => getCompilationSessionPool(owner)).toThrow('已释放')
+    const nextOwner = {}
+    const nextCompilationPool = getCompilationSessionPool(nextOwner)
+    const nextCoordinator = getCompilationChangeCoordinator(nextOwner)
+    const nextGenerationPool = getTailwindGenerationSessionPool(nextOwner)
+    const nextShadowSession = getCompilerShadowReportSession(nextOwner)
     expect(nextCompilationPool).not.toBe(compilationPool)
     expect(nextCoordinator).not.toBe(coordinator)
     expect(nextGenerationPool).not.toBe(generationPool)
@@ -114,10 +116,11 @@ describe('compiler owner lifecycle', () => {
     await expect(execution).resolves.toMatchObject({ committed: false })
     await Promise.all([firstDisposal, secondDisposal])
     expect(disposed).toBe(true)
-    expect(getCompilationSessionPool(owner)).not.toBe(pool)
+    expect(() => getCompilationSessionPool(owner)).toThrow('已释放')
+    expect(disposeCompilerOwner(owner)).toBe(firstDisposal)
   })
 
-  it('waits for owner activity before disposal and queues the next build behind it', async () => {
+  it('waits for accepted owner activity and rejects subsequent builds', async () => {
     const {
       runCompilerOwnerActivity,
       runCompilerOwnerDisposal,
@@ -144,17 +147,16 @@ describe('compiler owner lifecycle', () => {
       nextStarted = true
     })
 
-    await Promise.resolve()
+    await expect(next).rejects.toThrow('正在释放')
     expect(disposed).toBe(false)
     expect(nextStarted).toBe(false)
 
     releaseCurrent?.()
     await current
     await disposal
-    await next
 
     expect(disposed).toBe(true)
-    expect(nextStarted).toBe(true)
+    expect(nextStarted).toBe(false)
   })
 
   it('does not retain owner-bound state across 100 build lifecycles', async () => {
@@ -174,7 +176,7 @@ describe('compiler owner lifecycle', () => {
       validateCandidates: vi.fn(),
       source,
     }))
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: createGenerator,
     }))
     const {
@@ -184,13 +186,13 @@ describe('compiler owner lifecycle', () => {
       getCompilerShadowReportSession,
       getTailwindGenerationSessionPool,
     } = await import('@/compiler')
-    const owner = {}
     let previousCompilationPool: unknown
     let previousCoordinator: unknown
     let previousGenerationPool: unknown
     let previousShadowSession: unknown
 
     for (let index = 0; index < 100; index++) {
+      const owner = {}
       const compilationPool = getCompilationSessionPool(owner)
       const coordinator = getCompilationChangeCoordinator(owner)
       const generationPool = getTailwindGenerationSessionPool(owner)
@@ -222,4 +224,54 @@ describe('compiler owner lifecycle', () => {
     expect(createGenerator).toHaveBeenCalledTimes(100)
     expect(dispose).toHaveBeenCalledTimes(100)
   })
+  it('allows accepted work to finish nested operations while rejecting new external work', async () => {
+    const { runCompilerOwnerActivity, runCompilerOwnerDisposal } = await import('@/compiler/compiler-owner-state')
+    const { getCompilationSessionPool } = await import('@/compiler')
+    const owner = {}
+    let resume!: () => void
+    const gate = new Promise<void>(resolve => { resume = resolve })
+    const events: string[] = []
+    const accepted = runCompilerOwnerActivity(owner, async () => {
+      await gate
+      await runCompilerOwnerActivity(owner, () => {
+        getCompilationSessionPool(owner)
+        events.push('nested')
+      })
+    })
+    const closing = runCompilerOwnerDisposal(owner, async () => { events.push('closed') })
+    await expect(runCompilerOwnerActivity(owner, () => undefined)).rejects.toThrow('正在释放')
+    resume()
+    await Promise.all([accepted, closing])
+    expect(events).toEqual(['nested', 'closed'])
+    await expect(runCompilerOwnerActivity(owner, () => undefined)).rejects.toThrow('已释放')
+    expect(runCompilerOwnerDisposal(owner, async () => {})).toBe(closing)
+  })
+
+  it('releases every generator and remaining owner resources after cleanup failure', async () => {
+    const failure = new Error('cleanup failed')
+    const firstDispose = vi.fn(() => { throw failure })
+    const secondDispose = vi.fn()
+    let count = 0
+    vi.doMock('@/generator/runtime', () => ({
+      createWeappTailwindcssGenerator: () => ({
+        dispose: ++count === 1 ? firstDispose : secondDispose,
+        validateCandidates: async () => new Set(),
+      }),
+    }))
+    const { disposeCompilerOwner, getTailwindGenerationSessionPool, getCompilerShadowReportSession } = await import('@/compiler')
+    const owner = {}
+    const pool = getTailwindGenerationSessionPool(owner)
+    const shadow = getCompilerShadowReportSession(owner)
+    await pool.validateCandidates(source as any, [])
+    await pool.validateCandidates({ ...source, css: '.different {}' } as any, [])
+    const closing = disposeCompilerOwner(owner)
+    await expect(closing).rejects.toThrow('编译会话释放失败')
+    expect(firstDispose).toHaveBeenCalledTimes(1)
+    expect(secondDispose).toHaveBeenCalledTimes(1)
+    expect(pool.size).toBe(0)
+    expect(() => shadow.snapshot()).toThrow('已释放')
+    expect(() => getTailwindGenerationSessionPool(owner)).toThrow('已释放')
+    expect(disposeCompilerOwner(owner)).toBe(closing)
+  })
+
 })

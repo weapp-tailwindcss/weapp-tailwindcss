@@ -4,10 +4,11 @@ import type {
   CompilerGenerateResult,
   CompilerSnapshot,
 } from '../core/compiler/types'
-import type { TailwindV4ResolvedSource } from '../generator'
-import type { InternalUserDefinedOptions } from '../types'
+import type { TailwindV4ResolvedSource } from '../generator/runtime'
+import type { CompilerTransformServices } from './transform-services'
 import { Buffer } from 'node:buffer'
-import { createCompiler } from '../core/compiler/compiler'
+import { createResolvedCompiler } from '../core/compiler/compiler'
+import { ensureCompilerOwnerActive } from './compiler-owner-state'
 
 /**
  * 官方 bundler 共享的 compiler 生命周期边界。
@@ -21,9 +22,10 @@ export class FrameworkCompilerSession {
   private readonly activeRoots = new Set<string>()
   private transactionId = 0
   private disposed = false
+  private disposal: Promise<void> | undefined
 
-  constructor(options: InternalUserDefinedOptions) {
-    this.compiler = createCompiler(options)
+  constructor(transforms: CompilerTransformServices) {
+    this.compiler = createResolvedCompiler({ transforms })
   }
 
   rootId(scopeId: string, sourceId: string) {
@@ -105,12 +107,12 @@ export class FrameworkCompilerSession {
   }
 
   dispose() {
-    if (this.disposed) {
-      return Promise.resolve()
+    if (!this.disposal) {
+      this.disposed = true
+      this.scopeRoots.clear()
+      this.disposal = this.compiler.dispose()
     }
-    this.disposed = true
-    this.scopeRoots.clear()
-    return this.compiler.dispose()
+    return this.disposal
   }
 
   private encode(value: string) {
@@ -122,11 +124,12 @@ const frameworkCompilerSessions = new WeakMap<object, FrameworkCompilerSession>(
 
 export function getFrameworkCompilerSession(
   owner: object,
-  options: InternalUserDefinedOptions,
+  transforms: CompilerTransformServices,
 ) {
+  ensureCompilerOwnerActive(owner)
   let session = frameworkCompilerSessions.get(owner)
   if (!session) {
-    session = new FrameworkCompilerSession(options)
+    session = new FrameworkCompilerSession(transforms)
     frameworkCompilerSessions.set(owner, session)
   }
   return session

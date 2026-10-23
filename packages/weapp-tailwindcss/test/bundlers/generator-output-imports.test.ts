@@ -1,7 +1,7 @@
 import path from 'node:path'
 import process from 'node:process'
 import { describe, expect, it } from 'vitest'
-import { generateTailwindV4Css } from '@/generation/service'
+import { generateTailwindV4Css } from '@/context/generation'
 import { disposeCompilerOwner } from '@/compiler'
 import { getCompilerContext } from '@/context'
 

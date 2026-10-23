@@ -11,7 +11,6 @@ import { logTailwindcssTarget } from '@/tailwindcss/targets'
 import { applyV4CssCalcDefaults, warnMissingCssEntries } from '@/tailwindcss/v4'
 import { resolveUnocssBareArbitraryValues } from '@/unocss'
 import { defuOverrideArray } from '@/utils'
-import { withCompilerContextCache } from './compiler-context-cache'
 import { toCustomAttributesEntities } from './custom-attributes'
 import { createHandlersFromContext } from './handlers'
 import { applyLoggerLevel } from './logger'
@@ -162,7 +161,10 @@ export async function clearTailwindcssRuntimeCache(
   }
 }
 
-function createInternalCompilerContext(opts?: UserDefinedOptions): InternalUserDefinedOptions {
+const originalCacheConfigurations = new WeakMap<object, UserDefinedOptions['cache']>()
+
+/** 为一个编译实例创建独立的可变上下文；配置相同也不共享运行时。 */
+export function createCompilerContext(opts?: UserDefinedOptions): InternalUserDefinedOptions {
   const ctx = defuOverrideArray<InternalUserDefinedOptions, Partial<InternalUserDefinedOptions>[]>(
     opts as InternalUserDefinedOptions,
     getDefaultOptions() as InternalUserDefinedOptions,
@@ -212,7 +214,12 @@ function createInternalCompilerContext(opts?: UserDefinedOptions): InternalUserD
   ctx.jsHandler = jsHandler
   ctx.templateHandler = templateHandler
 
-  ctx.cache = initializeCache(ctx.cache)
+  const priorRuntime = (opts as Partial<InternalUserDefinedOptions> | undefined)?.tailwindRuntime
+  const cacheConfiguration = priorRuntime && originalCacheConfigurations.has(priorRuntime)
+    ? originalCacheConfigurations.get(priorRuntime)
+    : opts?.cache
+  ctx.cache = initializeCache(cacheConfiguration)
+  originalCacheConfigurations.set(tailwindRuntime, cacheConfiguration)
   ctx.tailwindRuntime = tailwindRuntime
   const refreshTailwindcssRuntime = async (
     options?: RefreshTailwindcssRuntimeOptions,
@@ -241,5 +248,5 @@ function createInternalCompilerContext(opts?: UserDefinedOptions): InternalUserD
  * @returns 返回一个包含内部用户定义选项的对象，包括样式、JS 和模板处理程序，以及 Tailwind CSS 运行时。
  */
 export function getCompilerContext(opts?: UserDefinedOptions): InternalUserDefinedOptions {
-  return withCompilerContextCache(opts, () => createInternalCompilerContext(opts))
+  return createCompilerContext(opts)
 }

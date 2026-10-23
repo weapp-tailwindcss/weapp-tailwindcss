@@ -1,11 +1,11 @@
+import type { FrameworkPostcssOwner } from './framework-postcss'
 import type { GenerateCssByGeneratorOptions, GenerateCssByGeneratorResult } from './index'
 import type { CompilationDependencyChange, CompilerShadowReport, CssStage, GenerationArtifact, SourceScope } from '@/compiler'
-import type { InternalUserDefinedOptions } from '@/types'
 import { finalizeWebCssPropertyFallbacks } from '@weapp-tailwindcss/postcss/transform'
-import { consumeCompilationScopeChanges, createCompilerShadowReport, createCssFragment, createGenerationArtifact, getCompilerShadowRunRevision, mergeCompilationDependencyChanges, recordCompilerShadowReport, resolveCompilerMode } from '@/compiler'
+import { consumeCompilationScopeChanges, createCompilerShadowReport, createCssFragment, createGenerationArtifact, getCompilerShadowRunRevision, mergeCompilationDependencyChanges, recordCompilerShadowReport } from '@/compiler'
+import { runCompilerOwnerActivity } from '@/compiler/compiler-owner-state'
 import { getFrameworkCompilerSession } from '@/compiler/framework-compiler-session'
-import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
-import { recordRpxThemeRisk, shouldCheckRpxThemeRisk } from '@/tailwindcss/v4/rpx-theme-warning'
+import { recordRpxThemeRisk } from '@/compiler/rpx-theme-diagnostics'
 import { adaptGeneratedCssWithFrameworkPipeline, adaptGeneratedCssWithFrameworkRootPipeline, hasFrameworkPostcssOptions } from './framework-postcss'
 import { normalizeFrameworkProcessedUserCss, restoreFrameworkProcessedUserCss } from './framework-user-css'
 import { generateCssByGenerator } from './index'
@@ -16,9 +16,9 @@ import { isVueScopedStyleRequest, stripRequestQuery } from './style-requests'
 
 export interface TailwindV4GenerationCoreInput extends GenerateCssByGeneratorOptions {
   /** CSS-only 构建不需要 compiler graph/shadow artifact，固定使用 legacy 输出。 */
-  compilerMode?: 'legacy' | undefined
+  compilerMode?: 'legacy' | 'graph' | 'shadow' | undefined
   compilationChanges?: CompilationDependencyChange[] | undefined
-  frameworkPostcssOwner?: InternalUserDefinedOptions | undefined
+  frameworkPostcssOwner?: FrameworkPostcssOwner | undefined
   cssStage?: CssStage | undefined
   outputFile?: string | undefined
   onCompilerShadowReport?: ((report: CompilerShadowReport) => void) | undefined
@@ -40,7 +40,7 @@ interface GenerationImplementationOptions {
 
 function resolveGenerationOptions(
   options: TailwindV4GenerationCoreInput,
-  mode: ReturnType<typeof resolveCompilerMode>,
+  mode: TailwindV4GenerationCoreInput['profile']['compilerMode'],
 ) {
   const physicalFile = stripRequestQuery(options.file)
   const normalizedOptions = physicalFile === options.file
@@ -102,13 +102,8 @@ async function generateTailwindV4CssWithImplementation(
   if (majorVersion !== 4) {
     throw new Error('weapp-tailwindcss 生成管线仅支持 Tailwind CSS v4。')
   }
-  const frameworkPostcssOwner = options.frameworkPostcssOwner ?? options.opts
-  const { options: normalizedGeneratorOptions } = resolveContextGeneratorConfiguration(options.opts, {
-    appType: options.opts.appType,
-    platform: options.generatorPlatform ?? options.opts.cssOptions?.platform ?? options.opts.platform,
-    tailwindcssMajorVersion: majorVersion,
-    uniAppX: options.opts.uniAppX,
-  })
+  const frameworkPostcssOwner = options.frameworkPostcssOwner ?? options.profile
+  const normalizedGeneratorOptions = options.profile.generator
   const shouldReplayFrameworkPostcss = options.cssStage === 'framework-processed'
     && hasFrameworkPostcssOptions(frameworkPostcssOwner)
 
@@ -150,7 +145,7 @@ async function generateTailwindV4CssWithImplementation(
             : undefined,
         },
   )
-  if (!generated) {
+  if (!generated || !options.isConfigurationCurrent()) {
     return undefined
   }
   const adaptedCss = shouldReplayFrameworkPostcss
@@ -164,7 +159,7 @@ async function generateTailwindV4CssWithImplementation(
         styleHandler: options.styleHandler,
         ...(implementation.frameworkAdapter === 'graph' && generated.snapshot
           ? {
-              compiler: getFrameworkCompilerSession(options.runtimeState, options.opts).compiler,
+              compiler: getFrameworkCompilerSession(options.runtimeState, options.compilerTransforms).compiler,
               snapshot: generated.snapshot,
             }
           : {}),
@@ -180,10 +175,13 @@ async function generateTailwindV4CssWithImplementation(
     ? finalizeWebCssPropertyFallbacks([scopedCss], normalizedGeneratorOptions.webCompat)[0]!
     : scopedCss
   const classSet = options.frameworkProcessedUserCss
-    ? resolveGeneratedCssClassSet(generated.target, generated.classSet, options.runtime, css, options.opts.escapeMap, options.previousClassSet)
+    ? resolveGeneratedCssClassSet(generated.target, generated.classSet, options.runtime, css, options.profile.escapeMap, options.previousClassSet)
     : new Set(generated.classSet)
-  if (shouldCheckRpxThemeRisk(options.runtimeState, generated.target, options.opts, options.generatorPlatform)) {
+  if (options.profile.checkRpxThemeRisk) {
     recordRpxThemeRisk(options.runtimeState, options.file, generated.rpxThemeVariables ?? [])
+  }
+  if (!options.isConfigurationCurrent()) {
+    return undefined
   }
   const artifact = implementation.emitArtifact
     ? createCoreArtifact({ ...generated, classSet }, css, options)
@@ -207,10 +205,10 @@ async function generateTailwindV4CssWithImplementation(
   }
 }
 
-export async function generateTailwindV4Css(
+async function generateTailwindV4CssWithOwner(
   options: TailwindV4GenerationCoreInput,
 ): Promise<TailwindV4GenerationCoreResult | undefined> {
-  const mode = options.compilerMode ?? resolveCompilerMode()
+  const mode = options.compilerMode ?? options.profile.compilerMode
   const generationOptions = resolveGenerationOptions(options, mode)
   if (mode === 'legacy') {
     return generateTailwindV4CssWithImplementation(generationOptions, {
@@ -249,4 +247,8 @@ export async function generateTailwindV4Css(
     generationOptions.debug('compiler shadow semantic report: %O', report)
   }
   return legacy
+}
+
+export function generateTailwindV4Css(options: TailwindV4GenerationCoreInput) {
+  return runCompilerOwnerActivity(options.runtimeState, () => generateTailwindV4CssWithOwner(options))
 }

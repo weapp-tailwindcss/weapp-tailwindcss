@@ -1,4 +1,4 @@
-import type { TailwindV4ResolvedSource } from '@/generator'
+import type { TailwindV4ResolvedSource } from '@/generator/runtime'
 import { md5Hash } from '@/cache/md5'
 import { stableSerialize } from '@/utils/stable-serialize'
 

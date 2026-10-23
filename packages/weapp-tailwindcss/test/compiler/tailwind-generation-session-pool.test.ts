@@ -10,7 +10,7 @@ const source = {
 
 describe('tailwind generation session pool', () => {
   afterEach(() => {
-    vi.doUnmock('@/generator')
+    vi.doUnmock('@/generator/runtime')
     vi.resetModules()
   })
 
@@ -18,7 +18,7 @@ describe('tailwind generation session pool', () => {
     const generate = vi.fn(async () => ({ css: '', rawCss: '', classSet: new Set(), rawCandidates: new Set(), dependencies: [], sources: [], root: null, target: 'web' }))
     const dispose = vi.fn()
     const createGenerator = vi.fn(() => ({ dispose, generate, validateCandidates: vi.fn(), source }))
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: createGenerator,
     }))
     const { TailwindGenerationSessionPool } = await import('@/compiler/tailwind-generation-session-pool')
@@ -41,7 +41,7 @@ describe('tailwind generation session pool', () => {
 
   it('rejects work and disposes generators after pool disposal', async () => {
     const dispose = vi.fn()
-    vi.doMock('@/generator', () => ({
+    vi.doMock('@/generator/runtime', () => ({
       createWeappTailwindcssGenerator: vi.fn(() => ({
         dispose,
         generate: vi.fn(),

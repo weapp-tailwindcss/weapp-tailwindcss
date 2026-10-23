@@ -13,7 +13,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { WeappTailwindcss as createGulpPlugins } from '@/gulp'
 import { createWeappTailwindcssGenerator, resolveTailwindV4Source } from '@/generator'
 import { WeappTailwindcss as createVitePlugins } from '@/vite'
-import { generateCssByGenerator } from '@/generation/index'
+import { generateCssByGenerator } from '@/context/generation'
 import {
   createContext,
   createRollupAsset,

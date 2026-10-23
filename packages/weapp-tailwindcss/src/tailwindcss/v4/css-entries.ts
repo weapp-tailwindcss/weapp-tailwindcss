@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { findNearestPackageRoot } from '@/context/workspace'
+import { findNearestPackageRoot } from '@/utils/package-root'
 
 const TAILWIND_V4_CSS_ENTRY_RE = /\.css(?:[?#].*)?$/i
 

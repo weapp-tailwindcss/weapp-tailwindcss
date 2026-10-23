@@ -1,7 +1,7 @@
 import type { CompilerGenerationCacheEntry } from './generation-cache'
 import type { CompilerCompilationCacheEntry } from './generation-state'
 import type { CompilerSnapshot, CompilerSourcePattern } from './types'
-import type { TailwindV4ResolvedSource, WeappTailwindcssGenerator } from '@/generator'
+import type { TailwindV4ResolvedSource, WeappTailwindcssGenerator } from '@/generator/runtime'
 import { DefaultCompilationSession } from '@/compiler/session'
 import { isFileMatchedByTailwindSourceEntries } from '@/tailwindcss/source-scan'
 
@@ -162,14 +162,18 @@ export class CompilerRootStore {
       entry.active = false
       entry.compilation.dispose()
       entry.compilationCache = undefined
-      disposeGenerator(entry.generator)
-      entry.generator = undefined
-      entry.generationCache = undefined
-      entry.latestSnapshot = undefined
-      entry.source = undefined
-      entry.sourceInputFingerprint = undefined
-      entry.sourceFingerprint = undefined
-      entry.sources = []
+      try {
+        disposeGenerator(entry.generator)
+      }
+      finally {
+        entry.generator = undefined
+        entry.generationCache = undefined
+        entry.latestSnapshot = undefined
+        entry.source = undefined
+        entry.sourceInputFingerprint = undefined
+        entry.sourceFingerprint = undefined
+        entry.sources = []
+      }
       if (notifyEvicted) {
         this.onRootEvicted?.(id)
       }
@@ -181,11 +185,16 @@ export class CompilerRootStore {
   }
 
   async dispose() {
-    await Promise.all([
+    const tasks = new Set([
       ...[...this.roots.keys()].map(id => this.remove(id)),
       ...this.releasing.values(),
     ])
+    const settled = await Promise.allSettled(tasks)
     this.dependencyRoots.clear()
+    const errors = settled.flatMap(result => result.status === 'rejected' ? [result.reason] : [])
+    if (errors.length) {
+      throw new AggregateError(errors, '编译来源释放失败，已继续释放其余来源。')
+    }
   }
 
   private detachDependencies(entry: CompilerRootSession) {
