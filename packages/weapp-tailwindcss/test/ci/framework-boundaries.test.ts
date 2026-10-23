@@ -4,13 +4,14 @@ import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { auditArchitecture } from '../../../../scripts/architecture/audit'
 import { frameworkOwner } from '../../../../scripts/architecture/framework-boundaries'
+import { createFrameworkBoundaryRegistration, defaultFrameworkBoundaryRegistration } from '../../../../scripts/architecture/framework-boundaries/ownership'
 
 const directories: string[] = []
 afterEach(async () => {
   await Promise.all(directories.splice(0).map(root => rm(root, { recursive: true, force: true })))
 })
 
-async function auditFixture(files: Record<string, string>, injectorFiles: Record<string, string> = {}) {
+async function auditFixture(files: Record<string, string>, injectorFiles: Record<string, string> = {}, frameworks = defaultFrameworkBoundaryRegistration) {
   const root = await mkdtemp(path.join(tmpdir(), 'framework-boundaries-'))
   directories.push(root)
   const packageRoot = path.join(root, 'packages', 'weapp-tailwindcss')
@@ -37,7 +38,7 @@ async function auditFixture(files: Record<string, string>, injectorFiles: Record
       await writeFile(target, content)
     }
   }
-  return auditArchitecture(root).errors
+  return auditArchitecture(root, { frameworks }).errors
 }
 
 describe('框架实现依赖边界', () => {
@@ -213,5 +214,73 @@ describe('框架实现依赖边界', () => {
     expect((await auditFixture({
       'framework-policies/taro.ts': "import type { Plugin } from 'vite'",
     })).join('\n')).toContain('核心反向依赖')
+  })
+
+  it.each([
+    'bundlers/vite/frameworks/new-framework/index.ts',
+    'bundlers/vite/frameworks/shared/unknown/protocol.ts',
+    'framework-policies/new-framework.ts',
+    'style-injector/vite/new-framework/index.ts',
+  ])('新框架模块必须有明确归属：%s', async (file) => {
+    expect((await auditFixture({ [file]: 'export const value = true' })).join('\n')).toContain('框架模块缺少归属')
+  })
+
+  it('injector 根实现和深层模块不能横向引用', async () => {
+    expect((await auditFixture({}, {
+      'mpx.ts': "export type { Options } from './taro/internal/types'",
+      'taro/internal/types.ts': 'export interface Options {}',
+    })).join('\n')).toContain('框架横向依赖')
+  })
+
+  it('injector 共享模块不能通过聚合导出访问根框架实现', async () => {
+    expect((await auditFixture({}, {
+      'core.ts': "import './index'",
+      'index.ts': "export * from './taro'",
+      'taro.ts': 'export const value = true',
+    })).join('\n')).toContain('共享实现引用框架')
+  })
+
+  it('未登记的 injector 目录不能默认为共享模块', async () => {
+    expect((await auditFixture({}, { 'new-framework/asset.ts': 'export const value = true' })).join('\n')).toContain('框架模块缺少归属')
+  })
+
+  it('同一文件的冲突归属不能通过较宽松规则放行', async () => {
+    const registration = createFrameworkBoundaryRegistration(undefined, undefined, [{
+      package: 'weapp-tailwindcss', path: ['bundlers', 'vite', 'frameworks', 'taro', 'index.ts'], owner: 'mpx',
+    }])
+    expect((await auditFixture({ 'bundlers/vite/frameworks/taro/index.ts': 'export const value = true' }, {}, registration)).join('\n')).toContain('框架模块归属冲突')
+  })
+
+  it('注册数据本身不能包含冲突别名或未登记框架', async () => {
+    const registration = createFrameworkBoundaryRegistration({
+      ...defaultFrameworkBoundaryRegistration.frameworks,
+      fixture: { aliases: ['uni-app-vite'] },
+    }, { ...defaultFrameworkBoundaryRegistration.bundlers, vite: ['unknown'] }, [{
+      package: 'weapp-style-injector', path: ['unknown', 'index.ts'], owner: 'unknown',
+    }])
+    const errors = (await auditFixture({}, {}, registration)).join('\n')
+    expect(errors).toContain('框架别名归属冲突')
+    expect(errors).toContain('构建器支持组合缺少框架登记')
+    expect(errors).toContain('模块所有者缺少框架登记')
+  })
+
+  it('新增框架只增加注册数据即可使用现有中立能力', async () => {
+    const registration = createFrameworkBoundaryRegistration({
+      ...defaultFrameworkBoundaryRegistration.frameworks,
+      fixture: { aliases: ['fixture-alias'] },
+    }, { ...defaultFrameworkBoundaryRegistration.bundlers, vite: [...defaultFrameworkBoundaryRegistration.bundlers.vite!, 'fixture'] })
+    expect(await auditFixture({
+      'bundlers/vite/index.ts': "export * from './frameworks/fixture'",
+      'bundlers/vite/frameworks/fixture/index.ts': "import type { Policy } from '@/compiler/framework-policy'; export const profile: Policy = { web: true }",
+      'framework-policies/fixture.ts': "import type { Policy } from '@/compiler/framework-policy'; export const profile: Policy = { web: true }",
+      'compiler/framework-policy.ts': 'export interface Policy { web: boolean }',
+    }, {}, registration)).toEqual([])
+  })
+
+  it('组装入口不允许直接依赖未登记的框架内部模块', async () => {
+    expect((await auditFixture({
+      'bundlers/vite/index.ts': "export * from './frameworks/taro/private'",
+      'bundlers/vite/frameworks/taro/private.ts': 'export const value = true',
+    })).join('\n')).toContain('共享实现引用框架')
   })
 })

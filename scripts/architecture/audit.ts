@@ -1,3 +1,4 @@
+import type { FrameworkBoundaryRegistration } from './framework-boundaries/ownership'
 import type { Graph } from './graph'
 import fs from 'node:fs'
 import { isBuiltin } from 'node:module'
@@ -5,12 +6,12 @@ import path from 'node:path'
 import ts from 'typescript'
 import { auditClientBoundaries } from './client-boundaries'
 import { auditCssCompat } from './css-compat'
-import { auditFrameworkBoundaries } from './framework-boundaries'
+import { auditFrameworkBoundariesDetailed } from './framework-boundaries'
 import { findCycles, findPath } from './graph'
 import { readImports } from './imports'
 import { inside, readWorkspace, resolveWorkspaceEntry } from './workspace'
 
-export function auditArchitecture(root: string) {
+export function auditArchitecture(root: string, options: { frameworks?: FrameworkBoundaryRegistration } = {}) {
   const packages = readWorkspace(root)
   const names = new Map(packages.map(pkg => [pkg.name, pkg]))
   const files = new Set(packages.flatMap(pkg => pkg.files))
@@ -112,6 +113,7 @@ export function auditArchitecture(root: string) {
       }
     }
   }
-  errors.push(...auditClientBoundaries(root, packages, values), ...auditCssCompat(root), ...auditFrameworkBoundaries(root, all))
-  return { errors, files: files.size, packages: packages.length }
+  const frameworkAudit = auditFrameworkBoundariesDetailed(root, all, options.frameworks)
+  errors.push(...auditClientBoundaries(root, packages, values), ...auditCssCompat(root), ...frameworkAudit.errors)
+  return { errors, files: files.size, packages: packages.length, frameworkExceptions: frameworkAudit.exceptions }
 }
