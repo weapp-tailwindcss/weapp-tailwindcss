@@ -1,4 +1,5 @@
 import type { Plugin, ResolvedConfig } from 'vite'
+import type { ViteFrameworkRuntimeStrategy } from './framework-runtime-strategy'
 import type { CssStage } from '@/compiler'
 import type { InternalUserDefinedOptions, UserDefinedOptions } from '@/types'
 import path from 'node:path'
@@ -49,6 +50,7 @@ function resolveWebGeneratorOptions(opts: InternalUserDefinedOptions) {
 /** 创建不含 JS/template、分包和小程序 bundle 处理的 Generic Web Vite 插件。 */
 export function createCssOnlyVitePlugins(
   options: UserDefinedOptions | InternalUserDefinedOptions = {},
+  runtimeStrategy: ViteFrameworkRuntimeStrategy = {},
 ): Plugin[] | undefined {
   const rawOptions = options as UserDefinedOptions
   let resolvedConfig: ResolvedConfig | undefined
@@ -217,7 +219,7 @@ export function createCssOnlyVitePlugins(
     generatorPlaceholderCssFile: path.join(resolvePackageDir('weapp-tailwindcss'), 'generator-placeholder.css'),
     hasExplicitTailwindcssBasedir: false,
     hasExplicitGeneratorTarget: true,
-    frameworkName: 'generic',
+    defaultToWebTarget: runtimeStrategy.defaultToWebTarget === true,
     hmrTimingRecorder,
     opts,
     resolveViteStylePlatform: () => 'web',
@@ -233,7 +235,7 @@ export function createCssOnlyVitePlugins(
     runtimeState,
     ensureRuntimeClassSet: collectCssSourceCandidates,
     debug,
-    frameworkName: 'generic',
+    allowWebProductionFastPath: runtimeStrategy.allowWebProductionFastPath === true,
     getResolvedConfig: () => resolvedConfig,
     markCssAssetProcessed: (asset) => { processedCssAssets.add(asset) },
     isCssAssetProcessed: asset => processedCssAssets.has(asset),

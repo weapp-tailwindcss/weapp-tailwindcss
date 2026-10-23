@@ -4,7 +4,7 @@ import { shouldSkipGenericWebProductionSourceCandidates, shouldUseGenericWebFina
 describe('generic Web production fast path', () => {
   const productionWeb = {
     command: 'build' as const,
-    frameworkName: 'generic',
+    allowWebProductionFastPath: true,
     hasProcessedCss: true,
     isWebGeneratorTarget: true,
     requiresSourceCandidateState: false,
@@ -24,10 +24,7 @@ describe('generic Web production fast path', () => {
     ['Vite watch build', { watch: {} }],
     ['CSS source tracing', { requiresSourceCandidateState: true }],
     ['mini-program target', { isWebGeneratorTarget: false }],
-    ['uni-app', { frameworkName: 'uni-app' }],
-    ['uni-app x', { frameworkName: 'uni-app-x' }],
-    ['Taro', { frameworkName: 'taro' }],
-    ['weapp-vite', { frameworkName: 'weapp-vite' }],
+    ['未启用生产 CSS 快速路径的框架', { allowWebProductionFastPath: false }],
   ])('keeps the full pipeline for %s', (_label, overrides) => {
     const options = {
       ...productionWeb,

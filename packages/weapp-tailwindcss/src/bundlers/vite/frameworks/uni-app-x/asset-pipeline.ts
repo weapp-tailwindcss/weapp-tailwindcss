@@ -1,45 +1,34 @@
 import type { ViteFrameworkAssetPipelineStrategy, ViteFrameworkJsAssetContext } from '../../shared/framework-asset-strategy'
-import type { UserDefinedOptions } from '@/types'
-import path from 'node:path'
+import type { CreateJsHandlerOptions, UserDefinedOptions } from '@/types'
 import { isUniAppXEnabled } from '@/uni-app-x/options'
-import { createUniAppXBundleAssetSourceGetter, injectUniAppXHarmonyBundleStyles, UNI_APP_X_STYLE_PLACEHOLDER_VERSION } from '@/uni-app-x/style-asset'
-import { createUniAppXAssetTask } from '@/uni-app-x/vite'
-import { shouldSkipViteJsTransform } from '../../js-precheck'
+import { createUniAppXBundleAssetSourceGetter, injectUniAppXHarmonyBundleStyles, injectUniAppXStylePlaceholder, UNI_APP_X_STYLE_PLACEHOLDER_VERSION } from '@/uni-app-x/style-asset'
 import { createHarmonyBundleStyleSources, handleUniAppXPostCssTasks } from './postprocess'
 
 function createJsAssetTask(context: ViteFrameworkJsAssetContext, options: Readonly<UserDefinedOptions>) {
   if (!options.uniAppX) {
     return
   }
-  const { file, asset, outDir } = context
-  const factory = createUniAppXAssetTask(file, asset, outDir, {
-    cache: context.cache,
-    hashKey: context.hashKey,
-    hashSalt: `${context.hashSalt}:${UNI_APP_X_STYLE_PLACEHOLDER_VERSION}`,
-    createHandlerOptions: context.createHandlerOptions,
-    debug: context.debug,
-    getAssetSource: createUniAppXBundleAssetSourceGetter(context.bundle),
-    injectStylePlaceholder: options.appType !== 'uni-app-x',
-    jsHandler: context.jsHandler,
-    onUpdate: context.onUpdate,
-    runtimeSet: context.runtimeSet,
-    applyLinkedResults: context.applyLinkedResults,
-    uniAppX: options.uniAppX,
-  })
+  const handlerOptions: CreateJsHandlerOptions = {
+    uniAppX: isUniAppXEnabled(options.uniAppX),
+    babelParserOptions: { plugins: ['typescript'], sourceType: 'unambiguous' },
+  }
+  const getAssetSource = createUniAppXBundleAssetSourceGetter(context.bundle)
   return async () => {
-    if (!context.shouldTransform) {
-      context.debug('js skip transform (clean, uni-app-x), replay cache: %s', file)
-      await factory()
+    if (context.shouldTransform && context.shouldSkipTransform(handlerOptions)) {
       return
     }
-    const handlerOptions = context.createHandlerOptions(path.resolve(outDir, file), {
-      uniAppX: isUniAppXEnabled(options.uniAppX),
-      babelParserOptions: { plugins: ['typescript'], sourceType: 'unambiguous' },
+    await context.runCachedTransform({
+      hashSalt: UNI_APP_X_STYLE_PLACEHOLDER_VERSION,
+      async transform(source) {
+        const result = await context.transformJs(source, handlerOptions)
+        return {
+          ...result,
+          code: options.appType !== 'uni-app-x'
+            ? injectUniAppXStylePlaceholder(context.file, result.code, getAssetSource)
+            : result.code,
+        }
+      },
     })
-    if (!context.disableJsPrecheck && shouldSkipViteJsTransform(context.source, handlerOptions)) {
-      return
-    }
-    await factory()
   }
 }
 

@@ -3,6 +3,7 @@ import path from 'node:path'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createBundlerGeneratedCssMarker } from '@/bundlers/shared/generated-css-marker'
 import { createViteCssFinalizerOutputPlugin } from '@/bundlers/vite/css-finalizer'
+import { createUniAppXAssetPipeline } from '@/bundlers/vite/frameworks/uni-app-x/asset-pipeline'
 import { UNI_APP_X_WEB_PREFLIGHT_RESET_MARKER, withUniAppXWebPreflightReset } from '@/uni-app-x/web-preflight-reset'
 
 const mocks = vi.hoisted(() => ({
@@ -128,7 +129,7 @@ describe('vite css finalizer output plugin', () => {
       }],
     ])
     const { context } = createContext({
-      frameworkName: 'generic',
+      allowWebProductionFastPath: true,
       opts: {
         appType: 'native',
         cssMatcher: (file: string) => file.endsWith('.css'),
@@ -197,7 +198,7 @@ describe('vite css finalizer output plugin', () => {
       }],
     ])
     const { context } = createContext({
-      frameworkName: 'generic',
+      allowWebProductionFastPath: true,
       opts: {
         appType: 'native',
         cssMatcher: (file: string) => file.endsWith('.css'),
@@ -227,7 +228,7 @@ describe('vite css finalizer output plugin', () => {
       }],
     ])
     const { context } = createContext({
-      frameworkName: 'generic',
+      allowWebProductionFastPath: true,
       opts: {
         appType: 'native',
         cssMatcher: (file: string) => file.endsWith('.css'),
@@ -265,7 +266,7 @@ describe('vite css finalizer output plugin', () => {
       ['/project/src/style.css', { css: '.generated{color:red}', outputFile: 'src/style.css' }],
     ])
     const { context } = createContext({
-      frameworkName: 'generic',
+      allowWebProductionFastPath: true,
       opts: {
         appType: 'native',
         cssMatcher: (file: string) => file.endsWith('.css'),
@@ -851,6 +852,7 @@ describe('vite css finalizer output plugin', () => {
       dependencies: [],
     })
     const { context } = createContext({
+      assetPipelineStrategy: createUniAppXAssetPipeline({ appType: 'uni-app-x' }),
       opts: {
         appType: 'uni-app-x',
         cssMatcher: (file: string) => file.endsWith('.css'),

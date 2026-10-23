@@ -8,6 +8,7 @@ import path from 'node:path'
 import { logger } from '@/logger'
 import { processCachedTask } from '../../shared/cache'
 import { shouldSkipViteJsTransform } from '../js-precheck'
+import { createFrameworkJsAssetContext } from './framework-js-asset-context'
 import { collectLinkedFileNames } from './js-linking'
 import { measureElapsed } from './metrics'
 import { createJsHashSalt, createLinkedImpactSignature, getSnapshotHash } from './signatures'
@@ -213,7 +214,7 @@ export function processJsBundleEntry(options: ProcessJsBundleEntryOptions) {
   else if (originalSource.type === 'asset' && assetPipelineStrategy?.createJsAssetTask) {
     const linkedSet = useIncrementalMode ? new Set<string>() : undefined
     const hashKey = `${file}:js`
-    const factory = assetPipelineStrategy.createJsAssetTask({
+    const factory = assetPipelineStrategy.createJsAssetTask(createFrameworkJsAssetContext({
       asset: originalSource,
       bundle,
       file,
@@ -235,7 +236,7 @@ export function processJsBundleEntry(options: ProcessJsBundleEntryOptions) {
         collectLinkedFileNames(linked, getJsEntry, linkedSet)
         applyLinkedUpdates(linked)
       },
-    })
+    }))
     if (!factory) {
       return
     }

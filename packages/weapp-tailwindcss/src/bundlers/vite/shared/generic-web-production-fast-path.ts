@@ -2,7 +2,7 @@ import type { ConfigEnv, ResolvedConfig, UserConfig } from 'vite'
 
 interface GenericWebProductionBuildOptions {
   command: ResolvedConfig['command'] | undefined
-  frameworkName: string
+  allowWebProductionFastPath: boolean
   isWebGeneratorTarget: boolean
   requiresSourceCandidateState?: boolean
   watch: ResolvedConfig['build']['watch'] | undefined
@@ -19,7 +19,7 @@ export interface GenericWebFinalizerFastPathOptions extends GenericWebProduction
 }
 
 interface GenericWebProductionBundleHooksOptions {
-  frameworkName: string
+  allowWebProductionFastPath: boolean
   getHasProcessedCss: () => boolean
   getIsWebGeneratorTarget: () => boolean
   getResolvedConfig: () => ResolvedConfig | undefined
@@ -28,7 +28,7 @@ interface GenericWebProductionBundleHooksOptions {
 }
 
 interface GenericWebProductionSourceCandidatesApplyOptions {
-  frameworkName: string
+  allowWebProductionFastPath: boolean
   getIsWebGeneratorTarget: () => boolean
   requiresSourceCandidateState: boolean
 }
@@ -39,7 +39,7 @@ interface GenericWebProductionSourceCandidatesApplyOptions {
 export function shouldSkipGenericWebProductionSourceCandidates(
   options: GenericWebProductionBuildOptions,
 ) {
-  return options.frameworkName === 'generic'
+  return options.allowWebProductionFastPath
     && options.command === 'build'
     && options.watch == null
     && options.isWebGeneratorTarget
@@ -54,7 +54,7 @@ export function createGenericWebProductionSourceCandidatesApply(
 ) {
   return (config: UserConfig, env: ConfigEnv) => !shouldSkipGenericWebProductionSourceCandidates({
     command: env.command,
-    frameworkName: options.frameworkName,
+    allowWebProductionFastPath: options.allowWebProductionFastPath,
     isWebGeneratorTarget: options.getIsWebGeneratorTarget(),
     requiresSourceCandidateState: options.requiresSourceCandidateState,
     watch: config.build?.watch,
@@ -98,7 +98,7 @@ export function createGenericWebProductionBundleHooks(
       const config = options.getResolvedConfig()
       return !shouldUseGenericWebProductionFastPath({
         command: config?.command,
-        frameworkName: options.frameworkName,
+        allowWebProductionFastPath: options.allowWebProductionFastPath,
         hasProcessedCss: options.getHasProcessedCss(),
         isWebGeneratorTarget: options.getIsWebGeneratorTarget(),
         watch: config?.build?.watch,

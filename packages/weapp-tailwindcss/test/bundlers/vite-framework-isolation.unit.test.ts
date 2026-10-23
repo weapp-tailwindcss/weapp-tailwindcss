@@ -74,6 +74,43 @@ describe('Vite 框架实例与产物阶段隔离', () => {
     }
   })
 
+  it('框架只通过当前资产绑定的操作转换 JS 与回放缓存', async () => {
+    const options = createContext({ appType: 'native' })
+    const transform = vi.fn()
+    const plugins = createViteFrameworkPlugins(options as any, {
+      frameworkName: 'generic',
+      createAssetPipeline: () => ({
+        createJsAssetTask(context) {
+          for (const key of ['asset', 'cache', 'hashKey', 'runtimeSet', 'jsHandler']) {
+            expect(context).not.toHaveProperty(key)
+          }
+          return () => context.runCachedTransform({
+            hashSalt: 'test-transform-v1',
+            async transform(source) {
+              transform(source)
+              return context.transformJs(source)
+            },
+          })
+        },
+      }),
+      styleInjectorDelegate: () => [],
+    }) as Plugin[]
+    try {
+      const build = await preparePostPlugin(plugins)
+      const source = 'const cls = "text-[#123456]"'
+      for (let iteration = 0; iteration < 2; iteration++) {
+        const bundle = { 'page.asset.js': asset(source) }
+        await build(bundle)
+        expect(bundle['page.asset.js'].source).toBe(`js:${source}`)
+      }
+      expect(transform).toHaveBeenCalledTimes(1)
+      expect(options.jsHandler).toHaveBeenCalledTimes(1)
+    }
+    finally {
+      await dispose(plugins)
+    }
+  })
+
   it('完成转换后才执行框架阶段，并将 CSS 同步后操作限定于当前构建轮次', async () => {
     const events: string[] = []
     const options = createContext({ appType: 'native' })

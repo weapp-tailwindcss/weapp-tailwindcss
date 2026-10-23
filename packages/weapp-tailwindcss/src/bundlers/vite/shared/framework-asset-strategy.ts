@@ -1,24 +1,17 @@
-import type { OutputAsset, OutputBundle } from 'rollup'
-import type { CreateJsHandlerOptions, InternalUserDefinedOptions, IStyleHandlerOptions, LinkedJsModuleResult } from '@/types'
+import type { OutputBundle } from 'rollup'
+import type { CreateJsHandlerOptions, InternalUserDefinedOptions, IStyleHandlerOptions, JsHandlerResult } from '@/types'
 
 /** 仅提供当前 JS 资产的转换服务；缓存提交与任务调度由构建器持有。 */
 export interface ViteFrameworkJsAssetContext {
-  asset: OutputAsset
-  bundle: OutputBundle
+  bundle: Readonly<OutputBundle>
   file: string
-  source: string
-  outDir: string
-  cache: InternalUserDefinedOptions['cache']
-  hashKey: string
-  hashSalt: string
-  createHandlerOptions: (file: string, extra?: CreateJsHandlerOptions) => CreateJsHandlerOptions
-  debug: (format: string, ...args: unknown[]) => void
-  disableJsPrecheck: boolean
-  jsHandler: InternalUserDefinedOptions['jsHandler']
-  onUpdate: InternalUserDefinedOptions['onUpdate']
-  runtimeSet: Set<string>
   shouldTransform: boolean
-  applyLinkedResults: (linked?: Record<string, LinkedJsModuleResult>) => void
+  shouldSkipTransform: (extra?: CreateJsHandlerOptions) => boolean
+  transformJs: (source: string, extra?: CreateJsHandlerOptions) => Promise<JsHandlerResult>
+  runCachedTransform: (options: {
+    hashSalt: string
+    transform: (source: string) => Promise<JsHandlerResult>
+  }) => Promise<void>
 }
 
 /** 框架只接收当前阶段产物和生成操作，不持有生成器或共享缓存状态。 */

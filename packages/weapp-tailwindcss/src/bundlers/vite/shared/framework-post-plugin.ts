@@ -86,7 +86,7 @@ export function createFrameworkPostPlugin(options: any): Plugin {
           }
         }
         if (
-          options.frameworkName === 'generic'
+          options.defaultToWebTarget === true
           && !options.hasExplicitGeneratorTarget
           && options.opts.generator !== false
           && options.opts.appType === undefined

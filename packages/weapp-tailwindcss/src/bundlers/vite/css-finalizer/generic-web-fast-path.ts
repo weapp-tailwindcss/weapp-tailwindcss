@@ -148,7 +148,7 @@ export function tryFinalizeGenericWebCss(
   const processedCssResults = [...(context.getViteProcessedCssAssetResults?.() ?? [])]
   if (!shouldUseGenericWebFinalizerFastPath({
     command: resolvedConfig?.command,
-    frameworkName: context.frameworkName ?? '',
+    allowWebProductionFastPath: context.allowWebProductionFastPath === true,
     hasFrameworkRootImportShells: (context.frameworkRootImportShellTargetByFile?.size ?? 0) > 0,
     hasProcessedCss: processedCssResults.length > 0,
     isHarmonyAppStyleTarget: options.isHarmonyAppStyleTarget,

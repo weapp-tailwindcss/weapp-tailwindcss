@@ -4,6 +4,7 @@ import { createBuiltinViteWebStyleInjectorPlugins } from '@/style-injector/vite-
 import { createGenericWebViteCapabilityProfile } from '../../capability-profile'
 import { createCssOnlyVitePlugins } from '../../shared/create-css-only-plugins-runtime'
 import { createViteSourceOutputRelationOwner, withViteSourceOutputRelationOwner } from '../../source-output-relations'
+import { genericViteRuntimeStrategy } from './runtime-strategy'
 
 /** Generic Web CSS-only profile，供 `vite/web` 入口直接使用。 */
 export function createGenericWebVitePlugins(options: UserDefinedOptions | InternalUserDefinedOptions = {}) {
@@ -14,7 +15,7 @@ export function createGenericWebVitePlugins(options: UserDefinedOptions | Intern
     __internalViteCapabilityProfile: capability,
     __internalViteWebStyleInjectorFactory: createBuiltinViteWebStyleInjectorPlugins,
   }
-  const plugins = withViteSourceOutputRelationOwner(owner, () => createCssOnlyVitePlugins(runtimeOptions))
+  const plugins = withViteSourceOutputRelationOwner(owner, () => createCssOnlyVitePlugins(runtimeOptions, genericViteRuntimeStrategy))
   if (!plugins) {
     owner.dispose()
     return undefined

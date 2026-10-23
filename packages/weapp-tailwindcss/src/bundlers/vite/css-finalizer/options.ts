@@ -22,7 +22,7 @@ interface RememberedMainCssSource {
 }
 
 export interface CssFinalizerContext {
-  frameworkName?: string | undefined
+  allowWebProductionFastPath?: boolean | undefined
   opts: InternalUserDefinedOptions
   getFinalCssCalcOptions?: (() => Partial<IStyleHandlerOptions> | undefined) | undefined
   runtimeState: {
