@@ -137,6 +137,20 @@ Taro 的完整 profile 热点按前述策略查询边界修复；uni-app 的 CSS
 
 实现提交 `30e44e8b4496dfee4a186bf1a94f03c16474bb3f` 的五个定向文件共 108 项通过，主任务整合提交 `f16fa74d191fccc74c6c2fa6423cb76c08581cd1` 再次通过全部 108 项与主包构建。命令为 `pnpm --filter weapp-tailwindcss exec vitest run test/bundlers/vite-framework-runtime-facts.unit.test.ts test/bundlers/vite-framework-isolation.unit.test.ts test/bundlers/vite-source-candidates-hmr.unit.test.ts test/ci/framework-core-inputs.test.ts test/ci/framework-boundaries.test.ts --update=none --maxWorkers=1`；严格 `pnpm --filter weapp-tailwindcss exec tsc -p tsconfig.typecheck.json --pretty false`、源码及新增测试 ESLint、architecture:check（37 包、1511 源文件）、agents:check 与 diff 检查通过。此前 `39a424426` 的远端结果保留为历史证据，新提交需重新执行自身 CI 与本地完整验收。
 
+
+
+提交 `a763888caff3c66d59fe6bcc391c1fbf45093af5` 的 Benchmark run `39972393388` 在原预算下完成五框架分片及汇总门禁，全部 artifact 的 SHA-256 已独立核验。Taro Vite 插件 HMR 中位耗时 -6.88%，HMR peak/steady RSS +0.38%/+0.23%。Mpx 首次 HMR peak/steady RSS 为 +6.15%/+7.50%，既有协议的反向顺序独立复测未复现，confirmedViolations=0；Taro Webpack 插件 HMR 汇总为 +9.27%，steady 原始样本 `[1208,1183] → [1320,1148]` 未满足持续样本门槛。门禁通过不能改写为全部单项百分比都低于 5%。weapp-vite 没有插件分段计时，整体构建、watch 和内存有实际样本；原始证据及精简对账保存在 `.tmp/framework-isolation/ci-evidence/a763888caff3c66d59fe6bcc391c1fbf45093af5/`。
+
+### 错峰完整验收中的快速退出竞态
+
+提交 `a763888caff3c66d59fe6bcc391c1fbf45093af5` 在共同错峰窗口重新执行预检 `7b7d6991-e8b6-4251-80f8-807c5569a11f`，全部七项探针、当前会话后台浏览器真实输入、点击、截图和 verify 通过，临时页面已关闭。完整入口 `pnpm e2e:demo:workflow:local --quality --preflight-report <本轮报告>` 的根构建 71/71、0 缓存通过；全量单测完成，1022 文件通过、1 文件失败、5 文件跳过，10991 项通过、1 项失败、1 项预期失败、44 项跳过。
+
+唯一失败是 `website/scripts/local-worker/command.test.ts` 的真实 CLI 首次失败用例。`lifecycle.ts` 首次采集时根 PID 已退出，抛出“启动身份未确认：根进程已退出或首次采集缺失，不能确认后代归属”，使测试收到清理归属错误而非预期命令退出结果；嵌套 Playwright 的断言失败本来就是该回归构造的输入，不能计为另一项意外失败。这次没有重复出现上一轮的进程探针超时。启动时 host load 为 8.91 / 16.87 / 31.23，失败后为 26.80 / 29.37 / 33.91；负载数据不用于替代代码竞态的分析。
+
+工作流退出 1，后续 lint、类型、架构、static、watch、IDE 与设备阶段未执行。已立即释放共同窗口，核对登记 PID 和任务目录命令均无残留，Git 状态干净。完整日志、内存报告、退出回执与进程快照保存在 `.tmp/framework-isolation/local-acceptance/7b7d6991-e8b6-4251-80f8-807c5569a11f/`。修复需保留后代归属与 PID 复用边界，并通过确定性快速退出回归；不能忽略身份错误或反复重跑以获得偶然通过。
+
+整合提交 `8d8403397b57f28c9ebbd819848a00849da22e72` 的网站 CLI 启动回归 6 文件、60 项全部通过，原真实 Playwright 首错退出和两种配置发现链路均恢复通过。网站 CLI 启动顺序的根因、握手修复与跨平台加载回归见[本地 CLI 启动身份复盘](local-worker-startup-identity.md)。该修复属于验收基础设施，不改变框架能力或扩大进程清理范围。
+
 ## 适用边界
 
 继续统一发布，包名、公开配置、导入路径和支持组合兼容。Rspack 复用 Webpack，Gulp 保留 native；目录隔离不增加支持组合。env 提供事实，engine 生成 Tailwind，postcss 转换 CSS，这些能力不复制到框架。只有独立依赖、维护负责人或发布周期出现实际需要时再考虑拆 npm 包。
