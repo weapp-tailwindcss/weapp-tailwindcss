@@ -21,6 +21,9 @@ regressions:
   - packages/weapp-tailwindcss/test/bundlers/framework-css-context-lifetime.test.ts
   - packages/weapp-tailwindcss/type-tests/framework-css-context.test.ts
   - e2e/uni-app-vite-vue3-hbuilderx-tailwindcss-v4.test.ts
+  - e2e/demo-visual-artifact-root.test.ts
+  - e2e/demo-visual-project-root.test.ts
+  - e2e/framework-ide-artifact-contract.test.ts
   - packages/weapp-tailwindcss/test/bundlers/framework-bundle-asset-demand.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-dispatcher.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/style-injector-watch-parity.test.ts
@@ -239,6 +242,24 @@ static 跑完 401 个文件后停止：385 文件通过、15 文件跳过、一�
 限定命令 `E2E_SKIP_OPEN_AUTOMATOR=1 pnpm --config.verifyDepsBeforeRun=false exec vitest run -c e2e/vitest.e2e.config.ts e2e/uni-app-vite-vue3-hbuilderx-tailwindcss-v4.test.ts -u` 重新生成该项目，再将 `-u` 换成 `--update=none` 复验通过；主工作树整合 `f5a469364` 后相同禁更新命令再次通过。环境为 macOS arm64、Node 24.18.0、HBuilderX stable 5.26.2026091802。只有一个基线文件变化，其余六个文件字节不变；机器全文比较与独立二审确认，归一注释后前后完全一致，SHA-256 为 `9814c28aa6b10de6d23d444100bf13b7fd1d6c055a1a1d02b862509ee98aa145`，选择器、声明、preflight 和顺序没有变化。已有真实 injector 产物、trace 幂等与保留注释回归继续保护生产行为，不新增镜像断言。
 
 原始日志、进程身份与退出记录保存在 `.tmp/framework-isolation/local-acceptance/<run-id>/`。完整流程和预检已退出，确认本轮 consumer 与服务端口无残留，工作树干净；后续多平台产物、watch、IDE 和设备阶段未执行。基线修正后必须新建预检并从完整入口重新执行，不消费旧报告，也不将本轮大部分 static 通过写成全面验收成功。
+
+### 视觉 HMR 调用方遗漏产物根目录
+
+新预检 `299a3b42-e899-4c97-82b1-d62e2d642252` 的全部环境探针、当前会话真实输入、按钮交互、截图和 verify 通过，由 `4483ca737f9f0297b11a457ca2c6139a2fe97899` 的完整 `--quality` 入口消费。根构建 71/71（59 缓存）、全量单测 1032 文件 / 11059 项及全部质量检查通过；单测另有五文件 / 44 项既有跳过和一项预期失败。static 386 文件 / 4208 项通过，另有 15 文件 / 38 项条件跳过；矩阵 34 项及真实多平台构建 55 项通过。通用框架 IDE/HMR 的 12 项也通过，但不同用例的 `live`、`compile` 和产物可见性不能统一描述为逐框架视觉验证，Mpx 的 IDE 样式 HMR 仍保留既有跳过。
+
+第 13/23 阶段的微信视觉 HMR 首败为 `TypeError [ERR_INVALID_ARG_TYPE]: The "paths[0]" argument must be of type string. Received undefined`。产物读取器新增必填的 `IdeWatchCase.miniprogramRoot` 后，视觉脚本四个调用仍传入普通 `WatchCase`；通用 IDE 调用方已迁移，而视觉调用方漏改。IDE 项目目录是项目配置所在位置，不必等于配置指定的小程序输出根目录，不能用前者或固定 `dist` 兜底。根 `pnpm typecheck` 不包含这两个脚本目录，其成功没有保护该调用边；独立 E2E 类型配置还存在无关历史错误，不能记为已通过。
+
+保留首败后向本任务工作流发送一次协作 SIGINT，当前阶段沿取消标记恢复源码并退出，后续 14–23 阶段没有执行。consumer 状态为 `finished`，工作树干净，确认没有本任务微信服务租约和活动全面测试进程。原始日志、首败、取消退出和清理摘要保存在 `.tmp/framework-isolation/local-acceptance/299a3b42-e899-4c97-82b1-d62e2d642252/`，不能将已通过的前段写成全面成功；修复后必须新建预检并从完整入口重新执行。
+
+`dc206b55e` 在 watch 输出与 warmup 就绪后，根据真实 `project.config.json` 解析 `{ projectPath, miniprogramRoot }`，四个产物调用共用这一份绑定；候选项目和祖先发现都校验实际运行时根覆盖当前输出，`srcMiniprogramRoot` 和项目目录不再作为兜底。启动路由同样从实际运行时根的 `app.json` 读取。新增回归通过真实 `runMiniProgramCase` 入口复现旧错误，IDE 与会话使用测试替身，但产物及样式依赖读取真实文件；覆盖连续两轮、缺失配置、越界产物、路径差异与失败清理。另用 TypeScript checker 检查三处真实消费者的全部产物调用参数，拒绝普通 `WatchCase`、`any` 和 `unknown`，不冒充整个 E2E 目录的类型检查。
+
+作者定向执行 `e2e/demo-visual-artifact-root.test.ts`、`e2e/demo-visual-project-root.test.ts`、`e2e/framework-ide-artifact-contract.test.ts`、`e2e/demo-visual-theme.test.ts`、`e2e/demo-visual-live-evidence.test.ts`、`e2e/frameworkIdeHotUpdateArtifacts.test.ts` 和 `e2e/hbuilderx-local-styles.test.ts`，七文件 / 53 项通过；修改文件 ESLint、解析模块严格类型检查、diff 与独立二审通过。没有修改 demo 或 static 基线，也没有修改设备预算；主工作树整合后以相同七文件入口再次通过 53 项，修改文件 ESLint、`pnpm agents:check` 和解析模块定向严格类型检查通过（TypeScript 6 命令显式使用 `--ignoreConfig --types node`）。后续仍需新预检完整验收。
+
+### 当前提交的远端性能与截图首败
+
+`4483ca737f9f0297b11a457ca2c6139a2fe97899` 的五框架性能门禁全部在原预算下通过，`blocking=true`、0 违规；四平台生命周期及 CSS 三浏览器语义也通过。旧提交的 apt 安装取消没有在这一 head 复现。Uni 的单次 HMR P95 仍有 +21.04% 样本，但既有确认规则的后续两轮为 98/106ms，相对基线 107/113ms 没有确认退化；weapp-vite 的首测 HMR RSS 超阈值，反向顺序复验未确认。该结论只表示现有门禁通过，不表示每项指标均下降，也不覆盖尚未完成的本地设备验收。
+
+Expo 的 run `40016346808` 首轮保留两个不同失败：iOS 在原 10 秒采集预算内未取得足够连续帧；Android 的第二帧只有 19 字节，原件精确为 `Segmentation fault `，logcat 同时记录 `/system/bin/screencap` 的 SIGSEGV，栈经过 graphics.mapper 与 ScreenshotClient，早于测试收尾和模拟器退出。Android 首帧几何、像素和 control 均通过，但连续帧数为一，不能据此算完整通过。现有截图校验正常阻断，没有证据支持修改产品、吞掉错误、扩大预算或降低连续帧要求；只允许在同 SHA、同参数下各进行一次定向复验，并保留首次产物。最终以最终 PR head 的全部适用检查及 reviewer 审批为准。
 
 ## 适用边界
 
