@@ -4,7 +4,7 @@ import fs from 'node:fs'
 import { collectCustomPropertyValues, collectStaticCustomPropertyValues, mergeCustomPropertyValues } from '@weapp-tailwindcss/postcss/transform'
 import { LRUCache } from 'lru-cache'
 import { hasCssMacroTailwindV4Source, withCssMacroStyleOptions } from '@/css-macro/auto'
-import { shouldUseUniAppWebRpxCompatibility } from '@/runtime-branch/generator-target-env'
+import { shouldUseContextWebRpxCompatibility } from '@/framework-policies/environment-snapshot'
 import { stableSerialize } from '@/utils/stable-serialize'
 import { filterUnsupportedMiniProgramTailwindV4Candidates } from '../candidates'
 import { loadTailwindV4DesignSystem } from '../design-system'
@@ -90,6 +90,7 @@ export function createIncrementalGenerateCacheKey(
     createTailwindV4SourceCacheKey(source),
     target,
     stableSerialize(styleOptions),
+    target === 'web' ? shouldUseContextWebRpxCompatibility(styleOptions) : false,
   ].join('\0')
 }
 
@@ -246,8 +247,7 @@ function shouldNormalizeRpxLengthCandidatesForTarget(
   if (target !== 'web') {
     return true
   }
-  const options = styleOptions as (Partial<IStyleHandlerOptions> & { appType?: string | undefined }) | undefined
-  return shouldUseUniAppWebRpxCompatibility(options?.appType)
+  return shouldUseContextWebRpxCompatibility(styleOptions)
 }
 
 export function normalizeTargetRpxLengthCandidates(

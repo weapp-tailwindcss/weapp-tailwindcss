@@ -12,7 +12,7 @@ import { createBundlerGeneratedCssMarker } from '@/bundlers/shared/generated-css
 import { normalizeStyleHandlerMajorVersion } from '@/context/style-options'
 import { hasTailwindApplyDirective, hasTailwindRootDirectives, hasTailwindRootImportDirectives, normalizeTailwindSourceForGenerator, removeTailwindSourceDirectives } from '@/generation/directives'
 import { generateTailwindV4Css } from '@/generation/service'
-import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
+import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { resolveTailwindV4EntriesFromCssCached } from '@/project-sources'
 import { createSourceCandidateStore, isSourceCandidateRequest } from '@/project-sources/candidates'
 import { forEachSourceCandidateFile } from '@/project-sources/candidates/file-io'
@@ -168,7 +168,7 @@ export async function generateCssForWebpackPipeline(
   }
   await runtimeState.readyPromise
   const runtime = await getRuntimeSet()
-  const generatorOptions = normalizeWeappTailwindcssGeneratorOptions(compilerOptions.generator, {
+  const { options: generatorOptions } = resolveContextGeneratorConfiguration(compilerOptions, {
     appType: compilerOptions.appType,
     platform: compilerOptions.cssOptions?.platform ?? compilerOptions.platform,
     tailwindcssMajorVersion: runtimeState.tailwindRuntime.majorVersion,

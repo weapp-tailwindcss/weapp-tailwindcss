@@ -1,7 +1,7 @@
 import type { GenerateCssByGeneratorOptions } from './types'
 import { runCompilerOwnerActivity } from '@/compiler/compiler-owner-state'
 import { getTailwindGenerationSessionPool } from '@/compiler/tailwind-generation-session-pool'
-import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator/index'
+import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { collectGeneratedRawSourceCandidates } from './class-selectors'
 import { resolveGeneratorSources } from './source-resolver'
 
@@ -43,7 +43,10 @@ async function validateCandidatesByGeneratorWithOwner(
   const classSet = new Set<string>()
   try {
     const generatorOptions = {
-      ...normalizeWeappTailwindcssGeneratorOptions(opts.generator),
+      ...resolveContextGeneratorConfiguration(opts, {
+        platform: options.generatorPlatform ?? opts.cssOptions?.platform ?? opts.platform,
+        tailwindcssMajorVersion: majorVersion,
+      }).options,
       bareArbitraryValues: opts.arbitraryValues?.bareArbitraryValues,
     }
     if (generatorOptions.enabled) {

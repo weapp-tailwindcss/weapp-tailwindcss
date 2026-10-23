@@ -1,4 +1,4 @@
-import type { UniUtsPlatformInfo } from '@weapp-tailwindcss/env'
+import type { UniPlatformInfo as UniUtsPlatformInfo } from '@weapp-tailwindcss/env'
 
 /** 仅在兼容入口读取旧配置；不向编译管线传播框架身份判断。 */
 export interface FrameworkPolicyInput {

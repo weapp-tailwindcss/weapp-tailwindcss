@@ -3,6 +3,7 @@ import { rm } from 'node:fs/promises'
 import { logger } from '@weapp-tailwindcss/logger'
 import { initializeCache } from '@/cache'
 import { getDefaultOptions, resolveDefaultCssPreflight } from '@/defaults'
+import { initializeFrameworkEnvironment, resolveFrameworkEnvironment } from '@/framework-policies/environment-snapshot'
 import { resolveFrameworkPolicy } from '@/framework-policies/resolve'
 import { invalidateRuntimeClassSet, refreshTailwindcssRuntimeSymbol } from '@/tailwindcss/runtime'
 import { logRuntimeTailwindcssVersion } from '@/tailwindcss/runtime-logs'
@@ -23,7 +24,7 @@ interface ClearTailwindcssRuntimeCacheOptions {
 function resolveContextCssPreflight(opts: UserDefinedOptions | undefined, ctx: InternalUserDefinedOptions, majorVersion: number | undefined): CssPreflightOptions {
   const userCssPreflight = opts?.cssOptions?.cssPreflight ?? opts?.cssPreflight
   const cssPreflight = resolveDefaultCssPreflight(userCssPreflight, majorVersion)
-  const defaults = resolveFrameworkPolicy(ctx).preflight.defaults
+  const defaults = resolveFrameworkPolicy(ctx, resolveFrameworkEnvironment(ctx)).preflight.defaults
   if (cssPreflight === false || !defaults) {
     return cssPreflight
   }
@@ -99,7 +100,7 @@ function applyFrameworkPlatformDefaults(ctx: InternalUserDefinedOptions) {
   const policy = resolveFrameworkPolicy({
     appType: ctx.appType,
     platform: ctx.cssOptions?.platform ?? ctx.platform,
-  })
+  }, resolveFrameworkEnvironment(ctx))
   Object.assign(ctx, policy.contextDefaults)
 }
 
@@ -169,6 +170,7 @@ function createInternalCompilerContext(opts?: UserDefinedOptions): InternalUserD
   )
 
   ctx.arbitraryValues = resolveUnocssBareArbitraryValues(ctx.arbitraryValues, ctx.unocss)
+  initializeFrameworkEnvironment(ctx)
   ctx.escapeMap = ctx.customReplaceDictionary
   syncCssOptionsToLegacyFields(ctx)
   applyFrameworkPlatformDefaults(ctx)
@@ -176,6 +178,7 @@ function createInternalCompilerContext(opts?: UserDefinedOptions): InternalUserD
   applyLoggerLevel(ctx.logLevel)
 
   const tailwindRuntime = createTailwindcssRuntimeFromContext(ctx) as TailwindcssRuntimeLike
+  initializeFrameworkEnvironment(tailwindRuntime, ctx)
   if ((opts as any)?.__internalViteDeferRuntimeLogs !== true) {
     logTailwindcssTarget(tailwindRuntime, ctx.tailwindcssBasedir)
     logRuntimeTailwindcssVersion(

@@ -3,6 +3,7 @@ import type { GeneratorSourceRecord } from '../source-resolver'
 import type { TailwindSourceEntry } from '@/tailwindcss/source-scan'
 import type { InternalUserDefinedOptions } from '@/types/index'
 import { resolveStyleOptionsFromContext } from '@/context/style-options'
+import { withFrameworkEnvironment } from '@/framework-policies/environment-snapshot'
 import { hasTailwindApplyDirective, hasTailwindRootDirectives } from '../directives'
 import { resolvePostcssRequestOption } from '../source-resolver/postcss-source'
 import { isVueScopedStyleRequest } from '../style-requests'
@@ -129,12 +130,12 @@ export function resolveGeneratorStyleOptions(
     cssPreflight: scopedVueStyleSource ? false : resolvedStyleOptions.cssPreflight,
     cssPreflightRange: scopedVueStyleSource ? undefined : resolvedStyleOptions.cssPreflightRange,
   }
-  return {
+  return withFrameworkEnvironment({
     ...resolvedStyleOptions,
     uniAppXCssTarget: opts.uniAppXCssTarget,
     uniAppXUnsupported: opts.uniAppXUnsupported,
     ...cssHandlerOptions,
     ...preflightStyleOptions,
     ...generatorStyleOptions,
-  }
+  }, opts)
 }

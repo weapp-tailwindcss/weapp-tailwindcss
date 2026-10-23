@@ -3,6 +3,7 @@ import type { TailwindV4GenerateOptions, TailwindV4ResolvedSource } from '../typ
 import type { NativeSessionSourcePreparation } from './native-session'
 import { canonicalizeBareArbitraryValueCandidates } from '@weapp-tailwindcss/engine'
 import { createLocalUtilityOrderPlan, UNI_APP_X_LOCAL_UTILITY_MARKER } from '@weapp-tailwindcss/postcss/transform'
+import { shouldUseContextWebRpxCompatibility, withFrameworkEnvironment } from '@/framework-policies/environment-snapshot'
 import { normalizeTargetRpxLengthCandidates } from './incremental-cache'
 
 /** 将局部规则排序接入生成会话，复用实际编译来源的 design system。 */
@@ -15,13 +16,13 @@ export function createLocalUtilitySourcePreparation(
   if (!source.css.includes(UNI_APP_X_LOCAL_UTILITY_MARKER)) {
     return undefined
   }
-  const normalizationOptions = { appType: styleOptions?.appType }
+  const normalizationOptions = withFrameworkEnvironment({ appType: styleOptions?.appType }, styleOptions ?? {})
   const bareOptions = typeof bareArbitraryValues === 'object'
     ? { ...bareArbitraryValues, ...(bareArbitraryValues.units ? { units: [...bareArbitraryValues.units] } : {}) }
     : bareArbitraryValues
   return {
     // 排序闭包的规范化配置属于会话身份，不能在相同来源下沿用旧配置。
-    key: JSON.stringify([target, normalizationOptions.appType, bareOptions]),
+    key: JSON.stringify([target, normalizationOptions.appType, shouldUseContextWebRpxCompatibility(normalizationOptions), bareOptions]),
     prepareSource(actualSource, designSystem) {
       const plan = createLocalUtilityOrderPlan(actualSource.css)
       if (!plan) {

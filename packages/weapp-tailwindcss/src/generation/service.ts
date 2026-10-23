@@ -4,7 +4,7 @@ import type { InternalUserDefinedOptions } from '@/types'
 import { finalizeWebCssPropertyFallbacks } from '@weapp-tailwindcss/postcss/transform'
 import { consumeCompilationScopeChanges, createCompilerShadowReport, createCssFragment, createGenerationArtifact, getCompilerShadowRunRevision, mergeCompilationDependencyChanges, recordCompilerShadowReport, resolveCompilerMode } from '@/compiler'
 import { getFrameworkCompilerSession } from '@/compiler/framework-compiler-session'
-import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
+import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { recordRpxThemeRisk, shouldCheckRpxThemeRisk } from '@/tailwindcss/v4/rpx-theme-warning'
 import { adaptGeneratedCssWithFrameworkPipeline, adaptGeneratedCssWithFrameworkRootPipeline, hasFrameworkPostcssOptions } from './framework-postcss'
 import { normalizeFrameworkProcessedUserCss, restoreFrameworkProcessedUserCss } from './framework-user-css'
@@ -103,7 +103,7 @@ async function generateTailwindV4CssWithImplementation(
     throw new Error('weapp-tailwindcss 生成管线仅支持 Tailwind CSS v4。')
   }
   const frameworkPostcssOwner = options.frameworkPostcssOwner ?? options.opts
-  const normalizedGeneratorOptions = normalizeWeappTailwindcssGeneratorOptions(options.opts.generator, {
+  const { options: normalizedGeneratorOptions } = resolveContextGeneratorConfiguration(options.opts, {
     appType: options.opts.appType,
     platform: options.generatorPlatform ?? options.opts.cssOptions?.platform ?? options.opts.platform,
     tailwindcssMajorVersion: majorVersion,

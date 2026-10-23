@@ -10,8 +10,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { disposeCompilerOwner } from '@/compiler'
 import { pluginName } from '@/constants'
-import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
-import { resolveRuntimeBranch } from '@/runtime-branch'
+import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { captureResolvedFrameworkPostcssOptions, collectFrameworkPostcssOptionsFromLoaderEntries } from '../../../generation/framework-postcss'
 import { deleteWebpackLoaderRuntime, setWebpackLoaderRuntime } from '../loaders/runtime-registry'
 import { createDefaultLoaderAnchorFinders, findCssPreprocessorIndex } from '../shared/loader-anchors'
@@ -66,20 +65,14 @@ export function setupWebpackV5Loaders(options: SetupWebpackV5LoadersOptions) {
     runtimeRegistryKey = `weapp-tailwindcss-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     debug,
   } = options
-  const generatorOptions = normalizeWeappTailwindcssGeneratorOptions(compilerOptions.generator, {
+  const { options: generatorOptions } = resolveContextGeneratorConfiguration(compilerOptions, {
     appType: compilerOptions.appType,
     platform: compilerOptions.cssOptions?.platform ?? compilerOptions.platform,
     tailwindcssMajorVersion: runtimeState.tailwindRuntime.majorVersion,
     uniAppX: compilerOptions.uniAppX,
   })
   const generatorTarget = generatorOptions.target
-  const generatorBranch = resolveRuntimeBranch({
-    appType: compilerOptions.appType,
-    generatorTarget,
-    platform: compilerOptions.cssOptions?.platform ?? compilerOptions.platform,
-    tailwindcssMajorVersion: runtimeState.tailwindRuntime.majorVersion,
-    uniAppX: compilerOptions.uniAppX,
-  })
+  const generatorBranch = generatorOptions.branch
 
   if (shouldRewriteCssImports) {
     cssImportRewrite?.configureCompiler?.(compiler, weappTailwindcssPackageDir)

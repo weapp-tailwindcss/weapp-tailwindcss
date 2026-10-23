@@ -2,7 +2,7 @@ import type { IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
 import type { FrameworkPolicy } from '@/compiler/framework-policy'
 import type { InternalUserDefinedOptions } from '@/types/index'
 import { finalizeMiniProgramCss } from '@weapp-tailwindcss/postcss/transform'
-import { resolveGeneratorConfiguration } from '@/generator/options'
+import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { resolvePostcssRequestOption } from '../source-resolver/postcss-source'
 import { isVueScopedStyleRequest } from '../style-requests'
 
@@ -80,7 +80,7 @@ export function resolveMiniProgramPreflightModeForGeneratorCss(
       preserve: false,
     }
   }
-  const policy = options.frameworkPolicy ?? resolveGeneratorConfiguration(opts.generator, {
+  const policy = options.frameworkPolicy ?? resolveContextGeneratorConfiguration(opts, {
     appType: opts.appType,
     uniAppX: opts.uniAppX,
     nativeStyle: options.cssHandlerOptions.uniAppX === true,

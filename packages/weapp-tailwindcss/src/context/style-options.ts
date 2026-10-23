@@ -1,7 +1,7 @@
 import type { IStyleHandlerOptions } from '@weapp-tailwindcss/postcss/types'
 import type { InternalUserDefinedOptions } from '@/types'
 import { isWechatAutoCssCalc } from '@weapp-tailwindcss/postcss/transform'
-import { resolveGeneratorConfiguration } from '@/generator/options'
+import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { resolveGeneratorRuntimeBranch } from '@/runtime-branch'
 
 export type ResolvedStyleOptions = Partial<IStyleHandlerOptions> & {
@@ -20,7 +20,7 @@ export function resolveStyleOptionsFromContext(
   // Vite 适配可能通过 getter 提供配置，同次解析只读取一次，避免重复解析及混用不同快照。
   const inputCssOptions = ctx.cssOptions
   const configuredPlatform = inputCssOptions?.platform ?? ctx.platform ?? platformFallback
-  const { options: generatorOptions, frameworkPolicy } = resolveGeneratorConfiguration(ctx.generator, {
+  const { options: generatorOptions, frameworkPolicy } = resolveContextGeneratorConfiguration(ctx, {
     appType: ctx.appType,
     platform: configuredPlatform,
     tailwindcssMajorVersion,

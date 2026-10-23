@@ -73,10 +73,10 @@ export function shouldUseWebGeneratorTargetFromEnv(): boolean {
     || getEnvValue('TARO_ENV') === 'h5'
 }
 
-export function shouldUseUniAppWebRpxCompatibility(appType: string | undefined): boolean {
+export function shouldUseUniAppWebRpxCompatibility(appType: string | undefined, webTarget = shouldUseWebGeneratorTargetFromEnv()): boolean {
   return appType === 'uni-app-vite'
     || appType === 'uni-app-x'
-    || shouldUseWebGeneratorTargetFromEnv()
+    || webTarget
 }
 
 export function shouldUseUniAppViteWebViewGeneratorTarget(appType: string | undefined, platform: string | undefined = getEnvValue('UNI_PLATFORM')): boolean {

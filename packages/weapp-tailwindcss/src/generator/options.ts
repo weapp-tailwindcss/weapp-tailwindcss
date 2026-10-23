@@ -1,8 +1,10 @@
 import type { IStyleHandlerOptions, WebCssCompatUserOptions } from '@weapp-tailwindcss/postcss/types'
 import type { WeappTailwindcssGeneratorTarget } from './types'
 import type { FrameworkPolicy } from '@/compiler/framework-policy'
+import type { FrameworkEnvironment } from '@/framework-policies/environment-snapshot'
 import type { RuntimeBranch, RuntimeBranchContext } from '@/runtime-branch'
 import type { IArbitraryValues } from '@/types/shared'
+import { captureFrameworkEnvironment } from '@/framework-policies/environment-snapshot'
 import { resolveFrameworkPolicy } from '@/framework-policies/resolve'
 import { resolveRuntimeBranch } from '@/runtime-branch'
 
@@ -86,13 +88,15 @@ export interface NormalizedWeappTailwindcssGeneratorOptions {
 export function resolveGeneratorConfiguration(
   options: WeappTailwindcssGeneratorUserOptions | undefined,
   context: Omit<RuntimeBranchContext, 'generatorTarget'> & { nativeStyle?: boolean | undefined, styleTarget?: string | undefined } = {},
+  environment: FrameworkEnvironment = captureFrameworkEnvironment(),
 ): { options: NormalizedWeappTailwindcssGeneratorOptions, frameworkPolicy: FrameworkPolicy } {
   const enabled = options !== false
   const objectOptions = enabled ? options : undefined
-  const frameworkPolicy = resolveFrameworkPolicy(context)
+  const frameworkPolicy = resolveFrameworkPolicy(context, environment)
   const target = objectOptions?.target ?? frameworkPolicy.defaultGeneratorTarget
   const branch = resolveRuntimeBranch({
     ...context,
+    uniUtsPlatform: context.uniUtsPlatform ?? environment.uniUtsPlatform,
     generatorTarget: target,
   }, frameworkPolicy)
   const hasExplicitTarget = objectOptions !== undefined && Object.hasOwn(objectOptions, 'target')

@@ -1,6 +1,6 @@
 import type { GenerateCssByGeneratorOptions, GenerateCssByGeneratorResult } from './types'
 import { postcss, removeUnsupportedMiniProgramAtRules } from '@weapp-tailwindcss/postcss/transform'
-import { resolveGeneratorConfiguration } from '@/generator/options'
+import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { resolveGeneratorRuntimeBranch, shouldUseMiniProgramCssBranch } from '@/runtime-branch'
 import { hasTailwindApplyDirective, hasTailwindSourceDirectives, normalizeTailwindSourceDirectives } from './directives'
 import { deduplicateGeneratedCssRules, finalizeMiniProgramGeneratorCss, shouldUseGeneratorForCurrentCss } from './generation-helpers'
@@ -77,7 +77,7 @@ export async function generateCssByGenerator(
     debug,
   } = options
   const platform = generatorPlatform ?? opts.cssOptions?.platform ?? opts.platform
-  const { options: normalizedGeneratorOptions, frameworkPolicy } = resolveGeneratorConfiguration(opts.generator, {
+  const { options: normalizedGeneratorOptions, frameworkPolicy } = resolveContextGeneratorConfiguration(opts, {
     appType: opts.appType,
     platform,
     tailwindcssMajorVersion: runtimeState.tailwindRuntime.majorVersion,

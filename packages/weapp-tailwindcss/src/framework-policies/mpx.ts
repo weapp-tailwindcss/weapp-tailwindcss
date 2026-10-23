@@ -1,15 +1,16 @@
+import type { FrameworkEnvironment } from './environment-snapshot'
 import type { FrameworkPolicyInput } from './types'
 import type { FrameworkPolicy } from '@/compiler/framework-policy'
-import { normalizeFrameworkStylePlatform, resolveMpxPlatform } from '@weapp-tailwindcss/env'
+import { normalizeFrameworkStylePlatform } from '@weapp-tailwindcss/env'
 
-export function applyMpxPolicy(policy: FrameworkPolicy, input: FrameworkPolicyInput): FrameworkPolicy {
+export function applyMpxPolicy(policy: FrameworkPolicy, input: FrameworkPolicyInput, environment: FrameworkEnvironment): FrameworkPolicy {
   if (input.appType !== 'mpx' || input.platform) {
     return policy
   }
   return {
     ...policy,
     contextDefaults: {
-      platform: normalizeFrameworkStylePlatform(resolveMpxPlatform().normalized, input.appType),
+      platform: normalizeFrameworkStylePlatform(environment.mpxPlatform, input.appType),
     },
   }
 }

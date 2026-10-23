@@ -5,7 +5,7 @@ import { MappingChars2String } from '@weapp-tailwindcss/escape'
 import { LRUCache } from 'lru-cache'
 import { beginCompilerShadowRun, createCompilationDependencyChanges, createRuntimeCompilationAffectingSignature, createRuntimeCompilationBuildState, finalizeCompilerShadowRun, getCompilationScopeDependencyRevision, recordCompilationDependencyChanges, resetRuntimeCompilationBuildState, updateRuntimeCompilationBuildState } from '@/compiler'
 import { pluginName } from '@/constants'
-import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
+import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { ensureRuntimeClassSet } from '@/tailwindcss/runtime'
 import { getRuntimeClassSetSignature } from '@/tailwindcss/runtime/cache'
 import { getGroupedEntries } from '@/utils'
@@ -66,7 +66,7 @@ export function setupWebpackV5ProcessAssetsHook(options: SetupWebpackV5ProcessAs
   const { Compilation, sources } = compiler.webpack
   const { ConcatSource } = sources
   const preserveFrameworkCssSource = (source: any) => preserveProcessedWebpackCssSource(source, sources)
-  const generatorOptions = normalizeWeappTailwindcssGeneratorOptions(compilerOptions.generator, {
+  const { options: generatorOptions } = resolveContextGeneratorConfiguration(compilerOptions, {
     appType: compilerOptions.appType,
     platform: compilerOptions.cssOptions?.platform ?? compilerOptions.platform,
     tailwindcssMajorVersion: runtimeState.tailwindRuntime.majorVersion,

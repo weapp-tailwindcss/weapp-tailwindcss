@@ -1,4 +1,4 @@
-import type { UniUtsPlatformInfo } from '@weapp-tailwindcss/env'
+import type { UniPlatformInfo as UniUtsPlatformInfo } from '@weapp-tailwindcss/env'
 import type { FrameworkPolicyInput } from './types'
 import type { FrameworkPolicy } from '@/compiler/framework-policy'
 
