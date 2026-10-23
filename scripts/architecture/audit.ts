@@ -5,6 +5,7 @@ import path from 'node:path'
 import ts from 'typescript'
 import { auditClientBoundaries } from './client-boundaries'
 import { auditCssCompat } from './css-compat'
+import { auditFrameworkBoundaries } from './framework-boundaries'
 import { findCycles, findPath } from './graph'
 import { readImports } from './imports'
 import { inside, readWorkspace, resolveWorkspaceEntry } from './workspace'
@@ -94,7 +95,7 @@ export function auditArchitecture(root: string) {
       }
     }
   }
-  const coreDirs = ['framework', 'core', 'compiler', 'context', 'generator', 'generation', 'tailwindcss', 'js', 'wxml', 'cache', 'project-sources']
+  const coreDirs = ['framework', 'framework-policies', 'core', 'compiler', 'context', 'generator', 'generation', 'tailwindcss', 'js', 'wxml', 'cache', 'project-sources']
   const corePackages = ['env', 'source-scan', 'engine'].map(name => path.join(root, 'packages', name, 'src'))
   const postcssSource = path.join(root, 'packages', 'postcss', 'src')
   const starts = [...files].filter(file => corePackages.some(directory => inside(directory, file))
@@ -111,6 +112,6 @@ export function auditArchitecture(root: string) {
       }
     }
   }
-  errors.push(...auditClientBoundaries(root, packages, values), ...auditCssCompat(root))
+  errors.push(...auditClientBoundaries(root, packages, values), ...auditCssCompat(root), ...auditFrameworkBoundaries(root, all))
   return { errors, files: files.size, packages: packages.length }
 }

@@ -4,6 +4,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { logger } from '@weapp-tailwindcss/logger'
 import { md5Hash } from '@/cache/md5'
+import { generatorTargetEnvKeys } from '@/runtime-branch/generator-target-env'
 
 const PAREN_CONTENT_RE = /\(([^)]+)\)/u
 const AT_LOCATION_RE = /at\s+(\S.*)$/u
@@ -131,6 +132,8 @@ function detectCallerLocation() {
 }
 
 function getRuntimeCacheScope(opts?: UserDefinedOptions) {
+  // 显式项目根目录只固定来源身份，框架平台与生成目标仍会随本轮环境变化。
+  const generatorEnvironment = Object.fromEntries(generatorTargetEnvKeys.map(key => [key, process.env[key]]))
   // 为什么把 runtime scope 纳入 cache key：
   // 在 e2e/watch 场景中，同一个 Node 进程会连续构建多个 demo 项目。
   // 有些调用方依赖隐式 basedir 推导（未显式传 tailwindcssBasedir），
@@ -139,11 +142,13 @@ function getRuntimeCacheScope(opts?: UserDefinedOptions) {
   if (hasExplicitOptionBasedir(opts)) {
     return {
       caller: undefined as string | undefined,
+      generatorEnvironment,
     }
   }
 
   const runtimeScope = {
     caller: undefined as string | undefined,
+    generatorEnvironment,
     cwd: process.cwd(),
     init_cwd: process.env['INIT_CWD'],
     npm_config_local_prefix: process.env['npm_config_local_prefix'],

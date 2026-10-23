@@ -1,3 +1,4 @@
+import type { UniPlatformInfo } from '@weapp-tailwindcss/env'
 import type { HmrContext, ResolvedConfig } from 'vite'
 import type { ViteHmrCssModuleVersionTracker } from '@/bundlers/vite/shared/framework-hmr-module-version'
 import type {
@@ -30,6 +31,7 @@ export interface CreateUniAppXPluginsOptions {
   getResolvedConfig: () => ResolvedConfig | undefined
   hmrCssModuleVersions?: ViteHmrCssModuleVersionTracker | undefined
   isIosPlatform?: boolean
+  uniUtsPlatform?: Readonly<UniPlatformInfo>
   isNativeAppStyleTarget?: (() => boolean) | undefined
   isWebGeneratorTarget?: (() => boolean) | undefined
   isEnabled?: (() => boolean) | undefined

@@ -1,11 +1,12 @@
 import type { InternalUserDefinedOptions } from '@/types'
 import process from 'node:process'
+import { resolveFrameworkEnvironment } from '@/framework-policies/environment-snapshot'
 import { normalizeFrameworkStylePlatform } from '@/framework/platform'
 import { normalizeCssEntries } from '@/tailwindcss/v4/css-entries'
 import { sameStringList } from './framework-runtime-options'
 import { inferPlatformFromOutDir } from './framework-runtime-utils'
 
-const ENV_PLATFORM_KEYS = ['UNI_PLATFORM', 'UNI_UTS_PLATFORM', 'TARO_ENV', 'MPX_CURRENT_TARGET_MODE', 'MPX_CLI_MODE']
+const ENV_PLATFORM_KEYS = ['UNI_PLATFORM', 'UNI_UTS_PLATFORM', 'TARO_ENV', 'MPX_CURRENT_TARGET_MODE', 'MPX_CLI_MODE'] as const
 
 /** 在配置基准确定后同步显式 CSS 入口，保留运行时与用户选项的一致性。 */
 export function createFrameworkCssEntrySync(opts: InternalUserDefinedOptions, rawCssEntries: string[] | undefined) {
@@ -35,8 +36,9 @@ export function resolveFrameworkStylePlatform(opts: InternalUserDefinedOptions, 
   if (explicit) {
     return explicit
   }
+  const environment = resolveFrameworkEnvironment(opts)
   for (const key of ENV_PLATFORM_KEYS) {
-    const platform = normalizeFrameworkStylePlatform(process.env[key], opts.appType)
+    const platform = normalizeFrameworkStylePlatform(environment.values[key], opts.appType)
     if (platform) {
       return platform
     }

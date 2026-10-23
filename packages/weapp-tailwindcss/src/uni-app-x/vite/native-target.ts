@@ -4,12 +4,13 @@ import { resolveUniUtsPlatform } from '@/utils'
 
 export function createUniAppXNativeBuildTargetResolver(
   getResolvedConfig: () => ResolvedConfig | undefined,
+  platform = resolveUniUtsPlatform(),
 ) {
   let observedNativeAppBuildTarget = false
 
   return (id?: string) => {
     const config = getResolvedConfig()
-    const detected = resolveUniUtsPlatform().isApp
+    const detected = platform.isApp
       || isUniAppXNativeAppOutDir(config?.build?.outDir)
       || isUniAppXNativeAppOutDir(config?.root)
       || isUniAppXNativeAppOutDir(id)

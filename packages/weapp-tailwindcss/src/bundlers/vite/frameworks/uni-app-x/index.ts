@@ -1,5 +1,6 @@
 import type { ViteFrameworkCssPipelineStrategy } from '../../shared/framework-strategy'
 import type { InternalUserDefinedOptions, UserDefinedOptions } from '@/types'
+import { resolveFrameworkEnvironment } from '@/framework-policies/environment-snapshot'
 import { hasTailwindApplyDirective, hasTailwindRootDirectives } from '@/generation/directives'
 import { createUniViteStyleInjector } from '@/style-injector/vite/uni'
 import { hoistUniAppXBorderPreflight } from '@/uni-app-x/border-preflight'
@@ -8,7 +9,6 @@ import { isUniAppXHarmonyBundle } from '@/uni-app-x/style-asset'
 import { createUniAppXPlugins } from '@/uni-app-x/vite'
 import { resolveUniAppXCssTarget } from '@/uni-app-x/vite/style-request'
 import { withUniAppXWebPreflightReset } from '@/uni-app-x/web-preflight-reset'
-import { resolveUniUtsPlatform } from '@/utils'
 import { createViteFrameworkPlugins } from '../../shared/create-framework-plugins'
 import { resolveUniAppXNativeCssHandlerOptions } from '../../uni-app-x-css-options'
 import { cleanUrl } from '../../utils'
@@ -17,7 +17,7 @@ import { createUniAppXAssetPipeline } from './asset-pipeline'
 
 function isUniAppXNativeAppStyleTarget(context?: Parameters<NonNullable<ViteFrameworkCssPipelineStrategy['isNativeAppStyleTarget']>>[0]) {
   const stylePlatform = context?.resolveStylePlatform?.()
-  return resolveUniUtsPlatform().isApp
+  return resolveFrameworkEnvironment(context?.opts).uniUtsPlatform.isApp
     || stylePlatform === 'app'
     || stylePlatform === 'app-plus'
     || stylePlatform?.startsWith('app-') === true
@@ -26,7 +26,7 @@ function isUniAppXNativeAppStyleTarget(context?: Parameters<NonNullable<ViteFram
 }
 
 function isUniAppXHarmonyAppStyleTarget(context: Parameters<NonNullable<ViteFrameworkCssPipelineStrategy['isHarmonyAppStyleTarget']>>[0]) {
-  const uniUtsPlatform = resolveUniUtsPlatform()
+  const uniUtsPlatform = resolveFrameworkEnvironment(context.opts).uniUtsPlatform
   const canInferHarmonyAppStyleTarget = !uniUtsPlatform.normalized || uniUtsPlatform.isApp
   return uniUtsPlatform.isAppHarmony || (
     canInferHarmonyAppStyleTarget
@@ -111,7 +111,8 @@ export function createUniAppXVitePlugins(options: UserDefinedOptions | InternalU
       getResolvedConfig: context.getResolvedConfig,
       hmrCssModuleVersions: context.hmrCssModuleVersions,
       isEnabled: context.isEnabled,
-      isIosPlatform: resolveUniUtsPlatform().isAppIos,
+      uniUtsPlatform: resolveFrameworkEnvironment(options).uniUtsPlatform,
+      isIosPlatform: resolveFrameworkEnvironment(options).uniUtsPlatform.isAppIos,
       isNativeAppStyleTarget: context.isNativeAppStyleTarget,
       isWebGeneratorTarget: context.isWebGeneratorTarget,
       jsHandler: context.jsHandler,

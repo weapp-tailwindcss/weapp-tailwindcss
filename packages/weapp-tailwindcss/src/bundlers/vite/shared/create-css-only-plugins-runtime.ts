@@ -8,8 +8,7 @@ import { getCompilerContext } from '@/context'
 import { createDebug } from '@/debug'
 import { normalizeTailwindConfigDirectives, normalizeTailwindSourceForGenerator } from '@/generation/directives'
 import { normalizeEmptyTailwindCustomVariants } from '@/generation/user-css'
-import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
-import { resolveGeneratorRuntimeBranch } from '@/runtime-branch'
+import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { resolvePackageDir } from '@/utils/resolve-package'
 import { generateTailwindV4Css } from '../../../generation/service'
 import { annotateCssSourceTrace, createCssTokenSourceMap, isCssSourceTraceEnabled } from '../../shared/css-source-trace'
@@ -39,12 +38,12 @@ import { createFrameworkTailwindRootCss } from './framework-tailwind-root-css'
 const debug = createDebug()
 
 function resolveWebGeneratorOptions(opts: InternalUserDefinedOptions) {
-  return normalizeWeappTailwindcssGeneratorOptions(opts.generator, {
+  return resolveContextGeneratorConfiguration(opts, {
     appType: undefined,
     platform: 'web',
     tailwindcssMajorVersion: opts.tailwindRuntime.majorVersion,
     uniAppX: false,
-  })
+  }).options
 }
 
 /** 创建不含 JS/template、分包和小程序 bundle 处理的 Generic Web Vite 插件。 */
@@ -205,7 +204,7 @@ export function createCssOnlyVitePlugins(
     refreshRuntimeStateForAutoCssSources: async () => { await refreshRuntimeState(true) },
     refreshTailwindRootCssSource,
     rememberTailwindRootCssModule,
-    resolveCurrentGeneratorBranch: () => resolveGeneratorRuntimeBranch(resolveWebGeneratorOptions(opts), { appType: undefined, platform: 'web', tailwindcssMajorVersion: runtimeState.tailwindRuntime.majorVersion, uniAppX: false }),
+    resolveCurrentGeneratorBranch: () => resolveWebGeneratorOptions(opts).branch,
     resolveCurrentGeneratorOptions: () => resolveWebGeneratorOptions(opts),
     runtimeState,
     sourceCandidateCollector,

@@ -7,7 +7,7 @@ import {
 import {
   hasTailwindGeneratedCssMarkers,
 } from '@/generation/markers'
-import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
+import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { normalizeOutputPathKey } from '../../shared/module-graph'
 
 export function createCssTransformShareScope(file: string, rawSource: string) {
@@ -25,7 +25,7 @@ export function createCssTransformShareScopeKey(
   if (opts.mainCssChunkMatcher(file, opts.appType)) {
     return `main:${normalizeOutputPathKey(file)}`
   }
-  const generatorOptions = normalizeWeappTailwindcssGeneratorOptions(opts.generator)
+  const generatorOptions = resolveContextGeneratorConfiguration(opts).options
   if (
     hasTailwindGeneratedCssMarkers(rawSource)
     || hasTailwindSourceDirectives(rawSource, { importFallback: generatorOptions.importFallback })

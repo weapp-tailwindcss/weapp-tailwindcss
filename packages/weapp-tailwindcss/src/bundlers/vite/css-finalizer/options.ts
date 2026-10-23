@@ -11,7 +11,7 @@ import path from 'node:path'
 import { logger } from '@weapp-tailwindcss/logger'
 import { transformWebCssCompat } from '@weapp-tailwindcss/postcss/transform'
 import { normalizeStyleHandlerMajorVersion } from '@/context/style-options'
-import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
+import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { hasLocalCssImport, hasTailwindApplyDirective, hasTailwindRootDirectives } from '../../../generation/directives'
 import { hasTailwindGeneratedCssMarkers } from '../../../generation/index'
 import { resolveViteWebCssCompatOptions, shouldApplyViteWebCssCompat } from '../web-css-compat'
@@ -133,12 +133,12 @@ export function shouldGenerateCssByGenerator(
   rawSource: string,
   processed: boolean,
 ) {
-  const generatorOptions = normalizeWeappTailwindcssGeneratorOptions(opts.generator, {
+  const generatorOptions = resolveContextGeneratorConfiguration(opts, {
     appType: opts.appType,
     platform: opts.cssOptions?.platform ?? opts.platform,
     tailwindcssMajorVersion: majorVersion,
     uniAppX: opts.uniAppX,
-  })
+  }).options
   if (!generatorOptions.enabled) {
     return false
   }

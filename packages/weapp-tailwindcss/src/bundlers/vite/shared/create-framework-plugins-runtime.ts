@@ -17,8 +17,7 @@ import { toCustomAttributesEntities } from '@/context/custom-attributes'
 import { createDebug } from '@/debug'
 import { hasTailwindRootDirectives } from '@/generation/directives'
 import { hasUserCssLayerBlocks } from '@/generation/user-css'
-import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
-import { resolveGeneratorRuntimeBranch } from '@/runtime-branch'
+import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { createBuiltinViteStyleInjectorPlugins } from '@/style-injector/vite/runtime'
 import { extractCandidatesFromSource } from '@/tailwindcss/candidates'
 import { hasConfiguredTailwindV4CssRoots } from '@/tailwindcss/v4/css-sources'
@@ -78,7 +77,7 @@ export function createViteFrameworkPlugins(options: ViteFrameworkRuntimeOptions 
   const opts = cssCalcStage.options
   const syncCssEntriesFromAnchor = createFrameworkCssEntrySync(opts, rawCssEntries)
   syncCssEntriesFromAnchor(opts.tailwindcssBasedir)
-  const { disabled, customAttributes, onLoad, mainCssChunkMatcher, styleHandler, jsHandler, tailwindRuntime, refreshTailwindcssRuntime, uniAppX, disabledDefaultTemplateHandler, styleInjector } = opts
+  const { disabled, customAttributes, onLoad, mainCssChunkMatcher, styleHandler, jsHandler, tailwindRuntime, refreshTailwindcssRuntime, disabledDefaultTemplateHandler, styleInjector } = opts
   const initialTailwindRuntime = tailwindRuntime
   const refreshTailwindRuntime = refreshTailwindcssRuntime
   const frameworkCssPipelineStrategy = frameworkBranch.cssPipelineStrategy
@@ -95,9 +94,9 @@ export function createViteFrameworkPlugins(options: ViteFrameworkRuntimeOptions 
   const { observer: webCssEntryDiagnostics, plugin: webCssEntryObserverPlugin } = createConfiguredCssEntryDiagnostics({ getEntries: () => opts.cssEntries, getRoot: () => resolvedConfig?.root, isWeb: () => resolveCurrentGeneratorBranch().isWeb }); const hmrCssModuleVersions = createViteHmrCssModuleVersionTracker()
   const resolveViteStylePlatform = () => resolveFrameworkStylePlatform(opts, resolvedConfig?.build?.outDir)
   const resolveGeneratorPlatform = () => opts.cssOptions?.platform ?? opts.platform ?? resolveViteStylePlatform()
-  const resolveCurrentGeneratorOptions = () => normalizeWeappTailwindcssGeneratorOptions(opts.generator, { appType: opts.appType, platform: resolveGeneratorPlatform(), tailwindcssMajorVersion, uniAppX })
+  const resolveCurrentGeneratorOptions = () => resolveContextGeneratorConfiguration(opts, { platform: resolveGeneratorPlatform(), tailwindcssMajorVersion }).options
   const shouldOwnTailwindGeneration = !disabledOptions.plugin && resolveCurrentGeneratorOptions().enabled
-  const resolveCurrentGeneratorBranch = () => resolveGeneratorRuntimeBranch(resolveCurrentGeneratorOptions(), { appType: opts.appType, platform: resolveGeneratorPlatform(), tailwindcssMajorVersion, uniAppX })
+  const resolveCurrentGeneratorBranch = () => resolveCurrentGeneratorOptions().branch
   const createCssPipelineContext = (overrides = {}) => ({ currentGeneratorBranch: resolveCurrentGeneratorBranch(), currentGeneratorOptions: resolveCurrentGeneratorOptions(), opts, resolvedConfig, resolveStylePlatform: resolveViteStylePlatform, ...overrides })
   const initialGeneratorBranch = resolveCurrentGeneratorBranch()
   const transformEarlyMiniProgramCss = (code: string) => {

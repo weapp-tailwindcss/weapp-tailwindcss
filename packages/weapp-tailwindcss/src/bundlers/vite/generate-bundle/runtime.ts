@@ -8,11 +8,10 @@ import { Buffer } from 'node:buffer'
 import path from 'node:path'
 import process from 'node:process'
 import { transformWebCssCompat } from '@weapp-tailwindcss/postcss/transform'
-import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
-import { resolveGeneratorRuntimeBranch, shouldUseMiniProgramCssBranch } from '@/runtime-branch'
+import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
+import { shouldUseMiniProgramCssBranch } from '@/runtime-branch'
 import { getRuntimeClassSetSignature } from '@/tailwindcss/runtime/cache'
 import { filterUnsupportedMiniProgramTailwindV4Candidates } from '@/tailwindcss/v4-engine/candidates'
-import { resolveUniUtsPlatform } from '@/utils'
 import { collectGeneratedRawSourceCandidatesFromCss } from '../../../generation/class-selectors'
 import { normalizeMiniProgramGeneratorCssSource } from '../../../generation/output-import-shell'
 import { annotateCssSourceTrace, createCssSourceTraceCacheSignature, createCssTokenSourceMap } from '../../shared/css-source-trace'
@@ -83,7 +82,7 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
   const frameworkRootImportShellTargetByFile = context.frameworkRootImportShellTargetByFile ?? new Map<string, string>()
   let currentOutDir: string | undefined
   let currentSubpackageRoots: Set<string> | undefined
-  const createInitialCssPipelineContext = (file: string) => { const resolvedConfig = context.getResolvedConfig(); const platform = context.opts.cssOptions?.platform ?? context.opts.platform ?? inferPlatformFromViteOutDir(resolvedConfig?.build?.outDir); const currentGeneratorOptions = normalizeWeappTailwindcssGeneratorOptions(context.opts.generator, { appType: context.opts.appType, platform, tailwindcssMajorVersion: context.runtimeState.tailwindRuntime.majorVersion, uniAppX: context.opts.uniAppX }); const currentGeneratorBranch = resolveGeneratorRuntimeBranch(currentGeneratorOptions, { appType: context.opts.appType, platform, tailwindcssMajorVersion: context.runtimeState.tailwindRuntime.majorVersion, uniAppX: context.opts.uniAppX }); return { currentGeneratorBranch, currentGeneratorOptions, file, opts: context.opts, resolvedConfig, resolveStylePlatform: () => platform } }
+  const createInitialCssPipelineContext = (file: string) => { const resolvedConfig = context.getResolvedConfig(); const platform = context.opts.cssOptions?.platform ?? context.opts.platform ?? inferPlatformFromViteOutDir(resolvedConfig?.build?.outDir); const currentGeneratorOptions = resolveContextGeneratorConfiguration(context.opts, { platform, tailwindcssMajorVersion: context.runtimeState.tailwindRuntime.majorVersion }).options; return { currentGeneratorBranch: currentGeneratorOptions.branch, currentGeneratorOptions, file, opts: context.opts, resolvedConfig, resolveStylePlatform: () => platform } }
   const cssHandlerOptions = createCssHandlerOptionsCache({ getAppType: () => context.opts.appType, mainCssChunkMatcher: context.opts.mainCssChunkMatcher, getMajorVersion: () => context.runtimeState.tailwindRuntime.majorVersion, getOutputRoot: () => currentOutDir, getExtraOptions: file => ({ ...resolveViteCssHandlerExtraOptions(file), ...context.cssPipelineStrategy?.getCssHandlerExtraOptions?.(createInitialCssPipelineContext(file)) ?? {}, ...currentSubpackageRoots && isSubpackageOutputFile(file, currentSubpackageRoots) ? { isMainChunk: false } : {} }) })
   return async function generateBundle(this: GenerateBundleThis, _opt: unknown, bundle: OutputBundle) {
     if (context.shouldProcessBundle?.() === false) {
@@ -97,12 +96,11 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
     const getBundlerSfcSource = (sourceFile: string) => { const code = this.getModuleInfo?.(sourceFile)?.code; return typeof code === 'string' && hasSfcStyleSources(code) ? code : void 0 }
     const getSfcSource = (sourceFile: string) => getBundlerSfcSource(sourceFile) ?? getKnownSfcSource?.(sourceFile)
     const getCssSource = (sourceFile: string) => getKnownCssSource?.(sourceFile) ?? getSourceCandidateSource?.(sourceFile)
-    const { cache, onEnd, onStart, onUpdate, styleHandler, templateHandler, jsHandler, uniAppX } = opts
+    const { cache, onEnd, onStart, onUpdate, styleHandler, templateHandler, jsHandler } = opts
     const resolvedConfig = getResolvedConfig()
-    const uniUtsPlatform = resolveUniUtsPlatform()
     const generatorPlatform = opts.cssOptions?.platform ?? opts.platform ?? inferPlatformFromViteOutDir(resolvedConfig?.build?.outDir)
-    const generatorOptions = normalizeWeappTailwindcssGeneratorOptions(opts.generator, { appType: opts.appType, platform: generatorPlatform, tailwindcssMajorVersion: runtimeState.tailwindRuntime.majorVersion, uniAppX, uniUtsPlatform })
-    const generatorBranch = resolveGeneratorRuntimeBranch(generatorOptions, { appType: opts.appType, platform: generatorPlatform, tailwindcssMajorVersion: runtimeState.tailwindRuntime.majorVersion, uniAppX, uniUtsPlatform })
+    const generatorOptions = resolveContextGeneratorConfiguration(opts, { platform: generatorPlatform, tailwindcssMajorVersion: runtimeState.tailwindRuntime.majorVersion }).options
+    const generatorBranch = generatorOptions.branch
     const cssPipelineContext = { bundle, currentGeneratorBranch: generatorBranch, currentGeneratorOptions: generatorOptions, opts, resolvedConfig, resolveStylePlatform: () => generatorPlatform }
     const isWebGeneratorTarget = generatorBranch.isWeb
     const shouldApplyWebCssCompat = shouldApplyViteWebCssCompat(cssPipelineContext, context.cssPipelineStrategy)

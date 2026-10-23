@@ -55,6 +55,7 @@
 - [packages/weapp-tailwindcss/AGENTS.md](../../packages/weapp-tailwindcss/AGENTS.md)
 - [packages/weapp-tailwindcss/native/AGENTS.md](../../packages/weapp-tailwindcss/native/AGENTS.md)
 - [packages/weapp-tailwindcss/src/compiler/AGENTS.md](../../packages/weapp-tailwindcss/src/compiler/AGENTS.md)
+- [packages/weapp-tailwindcss/src/framework-policies/AGENTS.md](../../packages/weapp-tailwindcss/src/framework-policies/AGENTS.md)
 - [packages/weapp-tailwindcss/src/generation/AGENTS.md](../../packages/weapp-tailwindcss/src/generation/AGENTS.md)
 - [packages/weapp-tw/AGENTS.md](../../packages/weapp-tw/AGENTS.md)
 - [packages/weapptw/AGENTS.md](../../packages/weapptw/AGENTS.md)

@@ -7,7 +7,7 @@ import type { GenerateBundleContext, PendingRememberedCssReplayUpdate } from '..
 import path from 'node:path'
 import { transformWebCssCompat, transformWebCssSafeSelectors } from '@weapp-tailwindcss/postcss/transform'
 import { AssetEmissionPlan } from '@/compiler'
-import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
+import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { isPureLocalCssImportWrapper } from '../../../../generation/local-imports'
 import { normalizeOutputPathKey } from '../../../shared/module-graph'
 import { applyViteAssetEmissionPlan } from '../asset-emission-plan'
@@ -86,7 +86,7 @@ export function finalizeWebviewCssCompat(
   bundle: Record<string, OutputAsset | OutputChunk>,
   options: Pick<FinalizeGenerateBundleOptions, 'debug' | 'onUpdate' | 'opts' | 'recordCssAssetResult'>,
 ) {
-  const generatorOptions = normalizeWeappTailwindcssGeneratorOptions(options.opts.generator)
+  const generatorOptions = resolveContextGeneratorConfiguration(options.opts).options
   if (generatorOptions.webCompat === false) {
     return 0
   }

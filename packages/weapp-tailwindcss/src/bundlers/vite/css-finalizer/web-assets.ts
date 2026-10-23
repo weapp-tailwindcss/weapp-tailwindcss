@@ -2,7 +2,7 @@ import type { OutputAsset, OutputBundle } from 'rollup'
 import type { CssFinalizerContext } from './options'
 import { finalizeWebCssPropertyFallbacks } from '@weapp-tailwindcss/postcss/transform'
 import { AssetEmissionPlan } from '@/compiler'
-import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
+import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
 import { applyViteAssetEmissionPlan } from '../generate-bundle/asset-emission-plan'
 import { finalizeWebCssCalc } from './css-calc'
 import { inferPlatformFromViteOutDir } from './options'
@@ -22,13 +22,13 @@ function sourceOf(asset: OutputAsset) {
 /** 收集、重放和注入全部完成后，统一分析注册并收尾 Web 资产。 */
 export async function finalizeWebCssAssets(bundle: OutputBundle, context: CssFinalizerContext) {
   const opts = context.opts
-  const generator = normalizeWeappTailwindcssGeneratorOptions(opts.generator, {
+  const generator = resolveContextGeneratorConfiguration(opts, {
     appType: opts.appType,
     platform: opts.cssOptions?.platform ?? opts.platform
       ?? inferPlatformFromViteOutDir(context.getResolvedConfig()?.build?.outDir),
     tailwindcssMajorVersion: context.runtimeState.tailwindRuntime.majorVersion,
     uniAppX: opts.uniAppX,
-  })
+  }).options
   const assets = Object.entries(bundle).flatMap(([key, asset]) => {
     const file = asset.fileName || key
     return asset.type === 'asset' && opts.cssMatcher(file) && !opts.htmlMatcher(file)

@@ -5,10 +5,9 @@ import type { CssFinalizerContext, CssFinalizerThis } from './options'
 import path from 'node:path'
 import process from 'node:process'
 import { AssetEmissionPlan, disposeCompilerOwner, finalizeCompilerShadowRun } from '@/compiler'
-import { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
-import { resolveGeneratorRuntimeBranch, shouldUseMiniProgramCssBranch } from '@/runtime-branch'
+import { resolveContextGeneratorConfiguration } from '@/generator/context-options'
+import { shouldUseMiniProgramCssBranch } from '@/runtime-branch'
 import { filterUnsupportedMiniProgramTailwindV4Candidates } from '@/tailwindcss/v4-engine/candidates'
-import { resolveUniUtsPlatform } from '@/utils'
 import { isPureLocalCssImportWrapper } from '../../../generation/local-imports'
 import { normalizeMiniProgramGeneratorCssSource } from '../../../generation/output-import-shell'
 import { generateTailwindV4Css } from '../../../generation/service'
@@ -67,24 +66,14 @@ export function createViteCssFinalizerOutputPlugin(context: CssFinalizerContext)
           frameworkRootImportShellTargetByFile,
         } = context
         const resolvedConfig = getResolvedConfig()
-        const uniUtsPlatform = resolveUniUtsPlatform()
         const generatorPlatform = opts.cssOptions?.platform
           ?? opts.platform
           ?? inferPlatformFromViteOutDir(resolvedConfig?.build?.outDir)
-        const generatorOptions = normalizeWeappTailwindcssGeneratorOptions(opts.generator, {
-          appType: opts.appType,
+        const generatorOptions = resolveContextGeneratorConfiguration(opts, {
           platform: generatorPlatform,
           tailwindcssMajorVersion: runtimeState.tailwindRuntime.majorVersion,
-          uniAppX: opts.uniAppX,
-          uniUtsPlatform,
-        })
-        const generatorBranch = resolveGeneratorRuntimeBranch(generatorOptions, {
-          appType: opts.appType,
-          platform: generatorPlatform,
-          tailwindcssMajorVersion: runtimeState.tailwindRuntime.majorVersion,
-          uniAppX: opts.uniAppX,
-          uniUtsPlatform,
-        })
+        }).options
+        const generatorBranch = generatorOptions.branch
         const isWebGeneratorTarget = generatorBranch.isWeb
         const createCssPipelineContext = (_file: string): ViteFrameworkCssPipelineContext => ({
           bundle,
