@@ -21,6 +21,8 @@ regressions:
   - packages/weapp-tailwindcss/test/bundlers/framework-bundle-asset-demand.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-dispatcher.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/style-injector-watch-parity.test.ts
+  - scripts/ci/demo-matrix/mpx-static-config.test.mjs
+  - benchmark/version-compare/test/watch-output.test.mjs
 ---
 
 # 框架目录不能替代配置、状态与生命周期边界
@@ -174,6 +176,36 @@ Taro 的完整 profile 热点按前述策略查询边界修复；uni-app 的 CSS
 主工作树在 macOS arm64 / Node 24.18.0 执行无 inspector、无计数 preload 的基线/当前 Uni 小程序对照，各 3 次构建、3 轮 HMR，既有 5% 与绝对差值/显著性预算通过、0 违规。构建插件中位数 1009→984ms，HMR 插件中位数 105→99ms，HMR peak/steady RSS 1407.22/1323.12→1394.22/1320.38MB。原始 matrix、同一 CI 评估器生成的 summary 和报告保存在 `.tmp/framework-isolation/uni-lazy-assets-comparison/`；这支持本机该工作负载通过，远端 Node 22 仍须验证当前 head，不能证明此前 CI 的全部退化都来自此处。
 
 Mpx 的一组轻量计数对照中，两侧均首构建加 3 次新增/回退，共 7 个完整 processAssets 轮次；每轮 service/pipeline 4 次、compiler 3 次、缓存任务 23 次相同。首轮 23 miss，后续每轮 13 hit/10 miss；配置 revision 的 3 次变化均在首轮，后续稳定为 3。该组未发现额外生成或配置反复失效，但 RSS 仍有差异。后续 Node 22 的异步上下文诊断出现中间重建轮次，空闲时 disable 的反向对照也未确认稳定收益，因此尚不将其作为生产性能修复，继续核对写入、失效与构建完成的因果关系。
+
+Node 22.22.3 在提交 `1c4ed4a2a72d9eec79715cb178a6b4f8668105b1` 上执行无 preload 的同范围对照，Uni 继续通过原预算；Mpx 的 peak/steady RSS 为 1671.91/1659.73→1823.33/1795.95MB，仍有 2 项违规，未作为通过记录。原始结果保存在 `.tmp/framework-isolation/node22-framework-performance/`。
+
+### Mpx 配置硬链接触发的 watch 反馈
+
+因果诊断串联源码写入、invalid/watchRun、processAssets、afterEmit 与 done。新增输入都晚于上一轮 afterDone，但部分构建仅由 `static` 目录失效触发，产物仍是上一份模板。实际依赖 `@mpxjs/vue-cli-plugin-mpx@2.2.30` 的 watch 回调每轮无条件删除输出配置，再将其硬链接到 `static` 源配置；即使两者已是同一 inode，重链仍改变源文件 ctime，触发下一轮监听。不能把这些额外构建归因于编译会话或租约释放。
+
+诊断仅跳过两个常规文件的 dev/非零 inode 都相同的重复重链。相同 3 轮增删中，原行为完成 10 次构建、4 次 static 失效；诊断 guard 完成 8 次构建、1 次 static 失效，保留第一次及真实修改事件。峰值/稳态 RSS 从 2167.56/2130.08 降到 1512.61/1497.84MB。带探针的这些数值只用于因果分析，不代替不带探针的正式预算验收。证据保存在 `.tmp/framework-isolation/mpx-link-causal/`。
+
+截至本次核对，npm 2.2.32 与上游 [固定 next 源码](https://github.com/mpx-ecology/mpx-cli/blob/915e1a862a1a5aeb1d3df0e78d57a25357e7c4d3/packages/vue-cli-plugin-mpx/utils/symlink.js#L36) 仍有相同行为；[配置同步讨论 #93](https://github.com/mpx-ecology/mpx-cli/issues/93) 没有提供重复建链修复。后续移除仓库依赖补丁时，须验证等价的文件身份判断、IDE 同步、原子替换及真实 watch 回归，不能仅凭升级版本移除。
+
+现有仓库依赖补丁加入 bigint 文件身份判断，锁文件只替换六处补丁摘要；不将该 CLI 补丁发布为主包运行时能力。隔离应用后的 Node 22/24 回归各 29 项通过，包括重复调用、IDE 原位写入同步、源码原子替换、独立同内容文件、跨设备/权限失败的复制后备，以及既有致命 watch 错误传播。主工作树执行 `CI=1 pnpm --config.verifyDepsBeforeRun=false install --frozen-lockfile --offline` 成功，锁文件无漂移；实际解析到补丁目录后，在 Node 22.22.3 与 Node 24.18.0 再次运行 `scripts/ci/demo-matrix/mpx-static-config.test.mjs` 和 `mpx-fatal-watch.test.mjs`，各 29 项通过。
+
+对应 static 验收以 `pnpm e2e:demo:matrix --update --build-only mpx-tailwindcss-v4:wx mpx-tailwindcss-v4:ali mpx-tailwindcss-v4:swan mpx-tailwindcss-v4:tt mpx-tailwindcss-v4:dd style-injector-mpx:wx` 重新生成六目标，再以相同六目标、不传 `--update` 复核，分别 6/6 通过，基线零差异。构建前重新从已提交源码生成主包，确认没有诊断实验残留；原始命令与补丁哈希记录在独立工作树 `.tmp/mpx-static-validation.json`。不带探针的性能预算另行验收。
+
+### 回滚测量判据的适用范围
+
+原测量器将读取失败当空串，因此缺失或空产物可能被当作“已移除 marker”。本轮保留读取状态，ENOENT/EBUSY 继续等待，其他读取错误报告；warmup 要求全部探针非空。成功三轮只提交六次源码变更，不在 watcher 活动期间额外重复写回，失败后仅在源码仍脏时停进程并恢复。
+
+最初尝试用首轮完整字节作为通用回滚基线，真实 Taro Vite React 验证推翻了这个假设：首轮的页面 config 没有 `usingComponents`，后续回滚合法加入 `comp: '../../comp'`，其他页面也有同样差异。源码与 marker 已恢复，逐字节判据却超时。对应失败和实际读取全文保存在 `.tmp/framework-isolation/watch-output-real/` 与 `.tmp/framework-isolation/taro-rollback-output-diagnostic/`。因此不删除框架字段或按长度放宽，而是回到可证明的契约：全部探针读取成功、非空、没有本轮 marker，允许合法元数据演进。
+
+这些检查不提供生产者事务完成、非空截断产物完整性或跨额外编译的精确计时归属保证。相关问题需要明确的构建生命周期协议，不能以文件内容轮询或完成日志字符串代替完整证明。
+
+修正后的测量及 GC 工作量回归共 9 项通过，报告回归 30 项通过。Node 22 的真实当前版本连续三轮增删验证已覆盖 Gulp、Taro Vite Vue、Taro Webpack React/Vue 与 weapp-vite 五个组合，全部成功、源码恢复；结果保存在 `.tmp/framework-isolation/watch-output-corrected/`。这些运行验证产物观察行为，期间存在其他定向构建，因此其耗时不用于性能预算。
+
+主工作树安装正式 Mpx 补丁后，在 `9f7b3a82e` 上执行无 preload 的 Node 22 对照，Mpx、Uni、Taro Vite React 的基线与当前版本各 3 次构建和 3 轮 watch，全部完成且源码恢复。结合前述五组合，本轮八个小程序 watch 组合的连续增删行为均已验证。原预算初测仍失败：Mpx HMR peak/steady RSS 增加 20.91%/24.26%，Uni 增加 7.46%/8.07%，须按既有反向顺序协议确认；Taro 构建内存本机未复现 CI 退化，但中位耗时从 15.45s 增至 46.21s。测试期间宿主 load 从约 17 升至 76.89，已再次协调错峰；该环境变化不把失败改写为通过，也不证明全部退化来自环境。原始 matrix、命令、summary 与报告保存在 `.tmp/framework-isolation/node22-patched-framework-performance/`，继续分别定位。
+
+Taro 随后的单轮阶段诊断中，基线/当前真实 context 为 2/1、engine 与原始生成均为 5 次，配置快照解析仅 4 次，没有观察到重复生成。当前十个释放步骤各执行一次，约 1ms 内 RSS 恒定、heapUsed 增加约 0.15MB；基线原先已有 owner 释放钩子，不能把关闭协调重构描述为首次释放。此次没有复现 CI 末尾内存脉冲。诊断会改变 GC 时机，且只测 macOS 主进程，不能据此否定 Linux 进程树预算失败。
+
+`1c4ed4a2a` 的四平台生命周期、三浏览器语义和 Expo iOS CI 均成功；quality shard 1 的唯一失败在 Linux 容器复现为已终止后代的 zombie 记录，出生身份和端口仍能确认清理结果。测试与 fixture 收尾修复保留运行进程、监听端口和探针错误的失败行为，新增随机退出凭据防止误停复用端口；未改变生产终止器或超时。独立工作树 Node 22/24 各 78 项及 Linux 三次真实场景通过，详见 [Linux zombie 夹具复盘](linux-zombie-fixture-lifecycle.md)。同一 head 的 Lynx iOS 在 `simctl getenv` 超过原 30s 截止时失败，保留证据且不扩大预算；新 head 仍需各自 CI 结果。
 
 ## 适用边界
 
