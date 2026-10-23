@@ -1,4 +1,3 @@
-import type { BundleBuildState, BundleSnapshot, EntryType } from '../bundle-state'
 import type { ViteCssAssetIdentityKind } from '../css-asset-identity'
 import { hasTailwindApplyDirective } from '../../../generation/directives'
 import { hasBundlerGeneratedCssMarker, stripBundlerGeneratedCssMarkers } from '../../shared/generated-css-marker'
@@ -123,7 +122,6 @@ export interface ResolveViteCssTransformCachePlanOptions {
   cssIsMainChunk: boolean
   cssRuntimeAffectingHash: string
   cssShareScope: string
-  linkedImpactSignature: string
   outputFile: string
   runtimeSignature: string
   scopedGeneratorCandidateSignature: string
@@ -168,42 +166,13 @@ export function resolveViteCssTransformCachePlan(
       options.sourceTraceSignature,
       ...(options.cssBundleSourceHash ? [options.cssBundleSourceHash] : []),
     ].join(':'),
+    // 来源文本仅通过候选与来源标注影响样式；全局 HTML/JS 内容不能使无关 CSS 失效。
     cssTaskHash: [
       options.cssRuntimeAffectingHash,
       options.scopedGeneratorCandidateSignature,
       options.sourceTraceSignature,
-      options.linkedImpactSignature,
       ...(options.cssBundleSourceHash ? [options.cssBundleSourceHash] : []),
     ].join(':'),
     rememberedCssRuntimeSignature,
   }
-}
-
-export interface ResolveViteCssLinkedImpactSignatureOptions {
-  snapshot: Pick<BundleSnapshot, 'entries' | 'runtimeAffectingHashByFile' | 'hasOmittedKnownFiles' | 'removedFiles'>
-  state: Pick<BundleBuildState, 'entryMetadataByFile' | 'runtimeAffectingHashByFile'>
-}
-
-export function resolveViteCssLinkedImpactSignature(
-  options: ResolveViteCssLinkedImpactSignatureOptions,
-) {
-  const { snapshot, state } = options
-  const entryTypes = new Map<string, EntryType>()
-  if (snapshot.hasOmittedKnownFiles) {
-    for (const [file, metadata] of state.entryMetadataByFile) {
-      entryTypes.set(file, metadata.type)
-    }
-  }
-  for (const entry of snapshot.entries) {
-    entryTypes.set(entry.file, entry.type)
-  }
-  for (const file of snapshot.removedFiles) {
-    entryTypes.delete(file)
-  }
-  // 缓存标识描述当前依赖内容；当轮变更集合在下一轮清空，不能作为内容身份。
-  // 增量产物省略的来源沿用构建图已有 hash，显式删除则必须从身份中移除。
-  return JSON.stringify([...entryTypes]
-    .filter(([, type]) => type === 'html' || type === 'js')
-    .sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0)
-    .map(([file]) => [file, snapshot.runtimeAffectingHashByFile.get(file) ?? state.runtimeAffectingHashByFile.get(file) ?? '']))
 }

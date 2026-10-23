@@ -36,7 +36,7 @@ import { processViteCssBundleEntry } from './css-entry-processing'
 import { applyCssResultToBundle, hasViteProcessedCssResultForSource, resolveCssAssetOutputPlan, shouldSkipRawSourceStyleAsset } from './css-output-helpers'
 import { createCssTransformShareScopeKey } from './css-share-scope'
 import { resolveViteCssSourcePlan } from './css-source-plan'
-import { resolveViteCssLinkedImpactSignature, resolveViteCssTransformCachePlan, resolveViteCssTransformDecisionPlan } from './css-transform-decision-plan'
+import { resolveViteCssTransformCachePlan, resolveViteCssTransformDecisionPlan } from './css-transform-decision-plan'
 import { applyViteCssTransformTaskResult } from './css-transform-result'
 import { executeViteCssTransformTask } from './css-transform-task'
 import { hasOmittedKnownBundleFiles } from './dirty-state'
@@ -224,7 +224,6 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
         : new Set(filteredGeneratorCandidates)
     const generatorRuntime = filteredGeneratorCandidates
     const cssEntries = snapshot.entries.filter((entry): entry is BundleStateEntry & { output: OutputAsset } => entry.type === 'css' && entry.output.type === 'asset')
-    const linkedImpactSignature = processStyles && cssEntries.length > 0 ? cache.computeHash(resolveViteCssLinkedImpactSignature({ snapshot, state })) : ''
     const hasMultipleConfiguredCssEntries = (opts.cssEntries?.length ?? 0) > 1
     await validateRuntimeCandidates({
       cssEntries,
@@ -386,7 +385,6 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
           isWebGeneratorTarget,
           lastCssResultByFile,
           lastCssSourceHashByFile,
-          linkedImpactSignature,
           markCssAssetProcessed,
           measureElapsed,
           metrics,

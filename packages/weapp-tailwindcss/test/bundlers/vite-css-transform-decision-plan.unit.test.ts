@@ -1,10 +1,5 @@
-import type { OutputAsset, OutputChunk } from 'rollup'
-import type { InternalUserDefinedOptions } from '@/types'
 import { describe, expect, it } from 'vitest'
-import { createCache } from '@/cache'
-import { buildBundleSnapshot, createBundleBuildState, updateBundleBuildState } from '../../src/bundlers/vite/bundle-state'
 import {
-  resolveViteCssLinkedImpactSignature,
   resolveViteCssTransformCachePlan,
   resolveViteCssTransformDecisionPlan,
 } from '../../src/bundlers/vite/generate-bundle/css-transform-decision-plan'
@@ -86,7 +81,6 @@ describe('vite css transform cache plan', () => {
       cssIsMainChunk: true,
       cssRuntimeAffectingHash: 'raw-hash',
       cssShareScope: 'scope',
-      linkedImpactSignature: 'linked',
       outputFile: 'app.acss',
       runtimeSignature: 'runtime',
       scopedGeneratorCandidateSignature: 'candidates',
@@ -97,7 +91,7 @@ describe('vite css transform cache plan', () => {
       cssHashKey: 'app.acss:css:runtime:candidates:4',
       cssRuntimeSignature: 'runtime:candidates',
       cssSharedCacheKey: 'scope:runtime:candidates:4:1:raw-hash:candidates:trace',
-      cssTaskHash: 'raw-hash:candidates:trace:linked',
+      cssTaskHash: 'raw-hash:candidates:trace',
       rememberedCssRuntimeSignature: 'runtime:candidates:raw-hash',
     })
   })
@@ -107,7 +101,6 @@ describe('vite css transform cache plan', () => {
       cssIsMainChunk: false,
       cssRuntimeAffectingHash: 'raw-hash',
       cssShareScope: 'scope',
-      linkedImpactSignature: '',
       outputFile: 'pages/index.wxss',
       runtimeSignature: 'runtime',
       scopedGeneratorCandidateSignature,
@@ -128,7 +121,6 @@ describe('vite css transform cache plan', () => {
       cssIsMainChunk: true,
       cssRuntimeAffectingHash: 'raw-hash',
       cssShareScope: 'scope',
-      linkedImpactSignature: 'linked',
       outputFile: 'app.acss',
       runtimeSignature,
       scopedGeneratorCandidateSignature: 'candidates',
@@ -141,77 +133,5 @@ describe('vite css transform cache plan', () => {
     expect(updated.cssCacheKey).not.toBe(initial.cssCacheKey)
     expect(updated.cssSharedCacheKey).not.toBe(initial.cssSharedCacheKey)
     expect(updated.rememberedCssRuntimeSignature).not.toBe(initial.rememberedCssRuntimeSignature)
-  })
-})
-
-function createLinkedSourceFixture() {
-  const state = createBundleBuildState()
-  const opts = {
-    cache: createCache(),
-    cssMatcher: (file: string) => file.endsWith('.css'),
-    htmlMatcher: (file: string) => file.endsWith('.wxml'),
-    jsMatcher: (file: string) => file.endsWith('.js'),
-    wxsMatcher: () => false,
-  } as InternalUserDefinedOptions
-  const snapshotFor = (sources: Record<string, string>, partial = false, removedFiles: string[] = []) => {
-    const bundle = Object.fromEntries(Object.entries(sources).map(([fileName, source]) => [
-      fileName,
-      fileName.endsWith('.js')
-        ? { type: 'chunk', fileName, code: source, isEntry: true } as OutputChunk
-        : { type: 'asset', fileName, source } as OutputAsset,
-    ]))
-    return buildBundleSnapshot(bundle, opts, process.cwd(), state, false, {
-      hasOmittedKnownFiles: partial,
-      removedFiles,
-    })
-  }
-  return { state, snapshotFor }
-}
-
-describe('vite css linked source identity', () => {
-  it('keeps identity through unchanged and non-runtime edits regardless of entry order', () => {
-    const { state, snapshotFor } = createLinkedSourceFixture()
-    const first = snapshotFor({
-      'page.js': 'const cls = "flex"; const stamp = 1',
-      'page.wxml': '<view class="underline" />',
-    })
-    const signature = resolveViteCssLinkedImpactSignature({ snapshot: first, state })
-    updateBundleBuildState(state, first, new Map())
-    const unchanged = snapshotFor({
-      'page.wxml': '<view class="underline" />',
-      'page.js': 'const cls = "flex"; const stamp = 1',
-    })
-    expect(unchanged.runtimeAffectingSignatureByFile.size).toBe(0)
-    expect(resolveViteCssLinkedImpactSignature({ snapshot: unchanged, state })).toBe(signature)
-    const edited = snapshotFor({
-      'page.js': 'const cls = "flex"; const stamp = 2',
-      'page.wxml': '<view class="underline" />',
-    })
-    expect(edited.changedByType.js.has('page.js')).toBe(true)
-    expect(edited.runtimeAffectingChangedByType.js.size).toBe(0)
-    expect(resolveViteCssLinkedImpactSignature({ snapshot: edited, state })).toBe(signature)
-  })
-
-  it('invalidates candidate changes and complete-bundle source deletion', () => {
-    const { state, snapshotFor } = createLinkedSourceFixture()
-    const first = snapshotFor({ 'page.js': 'const cls = "flex"', 'page.wxml': '<view class="underline" />' })
-    const signature = resolveViteCssLinkedImpactSignature({ snapshot: first, state })
-    updateBundleBuildState(state, first, new Map())
-    const edited = snapshotFor({ 'page.js': 'const cls = "grid"', 'page.wxml': '<view class="underline" />' })
-    expect(resolveViteCssLinkedImpactSignature({ snapshot: edited, state })).not.toBe(signature)
-    const deleted = snapshotFor({ 'page.js': 'const cls = "flex"' })
-    expect(resolveViteCssLinkedImpactSignature({ snapshot: deleted, state })).not.toBe(signature)
-  })
-
-  it('retains omitted sources in partial bundles and removes explicit deletions', () => {
-    const { state, snapshotFor } = createLinkedSourceFixture()
-    const first = snapshotFor({ 'page.js': 'const cls = "flex"', 'page.wxml': '<view class="underline" />' })
-    const signature = resolveViteCssLinkedImpactSignature({ snapshot: first, state })
-    updateBundleBuildState(state, first, new Map())
-    const partial = snapshotFor({ 'page.js': 'const cls = "flex"; const stamp = 2' }, true)
-    expect(resolveViteCssLinkedImpactSignature({ snapshot: partial, state })).toBe(signature)
-    updateBundleBuildState(state, partial, new Map(), { incremental: true })
-    const deleted = snapshotFor({}, true, ['page.wxml'])
-    expect(resolveViteCssLinkedImpactSignature({ snapshot: deleted, state })).not.toBe(signature)
   })
 })
