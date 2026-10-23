@@ -197,7 +197,7 @@ export function injectViteProcessedCssIntoMainCssAssets(
       continue
     }
     let originalSource = readAssetSource(output)
-    if (shouldPreserveMiniProgramImportShell(options, bundle, file, originalSource)) {
+    if (shouldPreserveMiniProgramImportShell(options, file, originalSource)) {
       const importedTargetFile = resolvePreservedImportShellInjectionTarget(options, bundle, file, originalSource)
       if (typeof importedTargetFile === 'string') {
         options.debug?.('preserve mini-program css import shell asset: %s -> %s', file, importedTargetFile)

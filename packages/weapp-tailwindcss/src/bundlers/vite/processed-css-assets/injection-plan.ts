@@ -7,7 +7,7 @@ import { shouldPreserveFrameworkRootMiniProgramImportShell } from '../generate-b
 import { isSubpackageOutputFile } from '../generate-bundle/subpackages'
 import { isSourceRootPrefixedOutputFile, restoreCssImportAtRules } from './cleanup'
 import { prepareImportedCssCoverage } from './coverage'
-import { clearAssetSource, collectImportedStyleFiles, createCssAssetPipelineContext, getAssetFile, hasNonCommentCss, isCssOutputFile, readAssetSource } from './markers-imports'
+import { clearAssetSource, collectImportedStyleFiles, getAssetFile, hasNonCommentCss, isCssOutputFile, readAssetSource } from './markers-imports'
 import { isMiniProgramStyleOutputFile, isRootStyleOutputFile } from './style-files'
 
 export { isMiniProgramStyleOutputFile, isRootStyleOutputFile } from './style-files'
@@ -77,11 +77,10 @@ export function shouldReplayViteProcessedCssIntoMainCss(
 
 export function shouldPreserveMiniProgramImportShell(
   options: Pick<InjectViteProcessedCssAssetOptions, 'cssPipelineStrategy' | 'createCssPipelineContext' | 'opts'>,
-  bundle: OutputBundle,
   file: string,
   css: string,
 ) {
-  const context = createCssAssetPipelineContext(options, file, bundle)
+  const context = options.createCssPipelineContext?.(file)
   return context !== undefined
     && shouldPreserveFrameworkRootMiniProgramImportShell({
       css,
@@ -98,7 +97,7 @@ export function resolvePreservedImportShellInjectionTarget(
   file: string,
   css: string,
 ) {
-  const context = createCssAssetPipelineContext(options, file, bundle)
+  const context = options.createCssPipelineContext?.(file)
   if (
     context === undefined
     || (options.cssPipelineStrategy?.styles?.rootImportShell === 'extract') !== true
@@ -134,7 +133,7 @@ export function shouldUseCssAssetAsMainInjectionTarget(
   options: Pick<InjectViteProcessedCssAssetOptions, 'cssPipelineStrategy' | 'createCssPipelineContext'>,
   bundle: OutputBundle,
 ) {
-  const context = createCssAssetPipelineContext(options, file, bundle)
+  const context = options.createCssPipelineContext?.(file)
   const fileKey = normalizeOutputPathKey(file)
   if (
     !isRootStyleOutputFile(file)

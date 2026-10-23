@@ -1,4 +1,5 @@
 import type { OutputAsset, OutputBundle } from 'rollup'
+import type { FrameworkAssets } from '../shared/framework-assets'
 import type { ViteFrameworkCssPipelineContext, ViteFrameworkCssPipelineStrategy } from '../shared/framework-strategy'
 import type { InternalUserDefinedOptions } from '@/types'
 import { collectImportedCssFiles, isStyleImportRequest, normalizeInjectableCssWithImports } from '@weapp-tailwindcss/postcss/transform'
@@ -65,9 +66,19 @@ export function createCssAssetPipelineContext(
   options: Pick<CollectViteProcessedCssAssetOptions & InjectViteProcessedCssAssetOptions, 'createCssPipelineContext'>,
   file: string,
   bundle: OutputBundle,
-) {
+): (ViteFrameworkCssPipelineContext & { readonly assets: FrameworkAssets }) | undefined {
   const context = options.createCssPipelineContext?.(file)
-  return context ? { ...context, assets: createFrameworkAssetAccess(bundle).read() } : undefined
+  if (!context) {
+    return
+  }
+  // 保留惰性属性，覆盖产物来源时不先读取并丢弃原上下文的完整快照。
+  return Object.freeze(Object.defineProperties({}, {
+    ...Object.getOwnPropertyDescriptors(context),
+    assets: {
+      enumerable: true,
+      get: () => createFrameworkAssetAccess(bundle).read(),
+    },
+  })) as ViteFrameworkCssPipelineContext & { readonly assets: FrameworkAssets }
 }
 
 export function getAssetFile(bundleFile: string, asset: OutputAsset) {
