@@ -64,6 +64,8 @@ jobs:
       - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
+      - name: Trust container workspace
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:

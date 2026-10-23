@@ -52,6 +52,8 @@ jobs:
       - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.full_verification && github.event.pull_request.head.sha || github.sha }}
+      - name: Trust container workspace
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: ./.github/actions/setup-pnpm
         with:
           node-version: 24

@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
-import { chmod, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
@@ -49,6 +49,41 @@ it('预装环境不省略网站三引擎管线或 Expo 的实际语义验收', (
 it('Firefox 使用与容器实际 root 用户归属一致的 HOME', () => {
   for (const job of [website, expo]) {
     expect(job.env.HOME).toBe('/root')
+  }
+})
+
+it.skipIf(process.platform === 'win32')('容器只信任当前挂载工作区，其他归属异常的仓库仍被拒绝', async () => {
+  for (const job of [website, expo]) {
+    const stepIndex = job.steps.findIndex((step: { name?: string }) => step.name === 'Trust container workspace')
+    expect(stepIndex).toBeGreaterThan(job.steps.findIndex((step: { uses?: string }) => step.uses?.startsWith('actions/checkout@')))
+    expect(stepIndex).toBeLessThan(job.steps.findIndex((step: { uses?: string }) => step.uses?.includes('pnpm')))
+    const directory = await mkdtemp(path.join(tmpdir(), 'container workspace '))
+    try {
+      const workspace = path.join(directory, 'owned workspace')
+      const unrelated = path.join(directory, 'unrelated')
+      await Promise.all([mkdir(workspace), mkdir(unrelated)])
+      const config = path.join(directory, 'gitconfig')
+      await writeFile(config, '')
+      const env = { ...process.env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: config, GIT_TEST_ASSUME_DIFFERENT_OWNER: '1', GITHUB_WORKSPACE: workspace }
+      const git = (cwd: string, args: string[], differentOwner = true) => spawnSync('git', args, { cwd, env: { ...env, GIT_TEST_ASSUME_DIFFERENT_OWNER: differentOwner ? '1' : '0' }, encoding: 'utf8', timeout: 5000 })
+      for (const repo of [workspace, unrelated]) {
+        expect(git(repo, ['init']).status).toBe(0)
+        expect(git(repo, ['-c', 'user.name=fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '--allow-empty', '-m', 'fixture'], false).status).toBe(0)
+        const rejected = git(repo, ['rev-parse', 'HEAD'])
+        expect(rejected.status).not.toBe(0)
+        expect(rejected.stderr).toContain('dubious ownership')
+      }
+      const configured = spawnSync('/bin/bash', ['-e', '-o', 'pipefail', '-c', job.steps[stepIndex].run], { env, encoding: 'utf8', timeout: 5000 })
+      expect(configured.status).toBe(0)
+      const accepted = git(workspace, ['rev-parse', 'HEAD'])
+      expect(accepted.status).toBe(0)
+      expect(accepted.stdout.trim()).toMatch(/^[a-f\d]{40,64}$/)
+      expect(git(unrelated, ['rev-parse', 'HEAD']).stderr).toContain('dubious ownership')
+      expect(git(workspace, ['config', '--global', '--get-all', 'safe.directory']).stdout.trim()).toBe(workspace)
+    }
+    finally {
+      await rm(directory, { recursive: true, force: true })
+    }
   }
 })
 
