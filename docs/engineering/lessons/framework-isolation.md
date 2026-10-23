@@ -19,6 +19,8 @@ regressions:
   - packages/weapp-tailwindcss/test/bundlers/vite-css-cache-inputs.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/framework-css-asset-demand.test.ts
   - packages/weapp-tailwindcss/test/bundlers/framework-css-context-lifetime.test.ts
+  - packages/weapp-tailwindcss/type-tests/framework-css-context.test.ts
+  - e2e/uni-app-vite-vue3-hbuilderx-tailwindcss-v4.test.ts
   - packages/weapp-tailwindcss/test/bundlers/framework-bundle-asset-demand.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-dispatcher.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/style-injector-watch-parity.test.ts
@@ -219,6 +221,24 @@ Uni 的单次带计数诊断中，当前 context/runtime 为 1/2，基线为 2/3
 `55d18e55f` 将两处 CSS 产物钩子的配置快照限制为本次调用内复用，文件请求只扩展自己的 file。等待任务前捕获配置，后续轮重新捕获；惰性资产仍读取该次 bundle，matcher 保留函数身份和闭包动态行为。持久 CSS handler 缓存未改，也未新增跨输出共享的 currentContext。六项回归在修复前全部失败，修复后作者五文件 48 项通过；主工作树执行 `pnpm --filter weapp-tailwindcss exec vitest run test/bundlers/framework-css-context-lifetime.test.ts test/bundlers/framework-css-asset-demand.test.ts test/bundlers/vite-css-finalizer.unit.test.ts --update=none --maxWorkers=1`，三文件 36 项通过。回归验证局部配置和资产隔离，不声称整个构建状态可并行复用；RSS 仍需独立预算验收。
 
 主工作树重新构建 ESM/CJS 和声明，通过 architecture:check、agents:check、修改文件 ESLint 与 diff check。七方再次明确就绪后，在 Node 22.22.3 对基线与 `55d18e55f` 各执行三次构建、三轮 HMR，不带计数或 inspector；原预算通过、零违规，不需要反向内存确认。构建中位数为 4362.54→4464.73ms（+2.34%），插件中位数为 1203→1221ms（+1.50%）；HMR peak RSS 为 1250.36→1104.86MB（-11.64%），steady 为 1143.66→1094.27MB（-4.32%）。HMR 插件中位数为 92→101ms，仍在原绝对差值/显著性规则内。命令、环境负载、原始矩阵和既有评估器报告保存在 `.tmp/framework-isolation/uni-round-snapshot-performance/`。此轮支持修改后的本地工作负载通过，不把前两次失败删除，也不将改善完全归因于某一种分配；新 head 的远端预算与完整设备验收仍需通过。
+
+### CSS 上下文扩展的单向类型推断
+
+预检 `108a7109-00a7-4b9f-8560-a693d6dc481a` 完成全部环境探针、当前会话真实输入、按钮交互和截图，并由完整 `--quality` 入口消费。根构建 71/71、0 缓存，全量单测 1032 文件 / 11059 项及 lint 通过；类型检查在五个 CSS 扩展调用失败，后续阶段未执行。TypeScript 6.0.3 将完整钩子返回期望通过 `Readonly<Extension>` 反向映射，错误地要求扩展对象重复提供基础上下文字段。
+
+`860f2f89b` 在返回侧使用 `Readonly<NoInfer<Extension>>`，使扩展仅从实参推断；失去外层上下文推断的五处回调显式标注参数类型。属性描述符、getter、冻结、字段覆盖和可选性实现不变，没有增加 `any` 或调用方断言。新增类型用例由原 `tsconfig.typecheck.json` 执行，包含真实钩子调用、字段覆盖、可选字段、只读性和未标注回调的负向约束；在同一真实项目的编译器 host 中仅内存回退旧签名时出现 2345 与未消费期望 2578 两个诊断，修复签名为零，避免仅靠参数注解使回归失效。
+
+主工作树执行根 `pnpm typecheck`（本轮另传 `--config.verifyDepsBeforeRun=false`）、三文件 36 项 CSS 整合回归，以及主包 ESM/CJS 和声明构建全部通过。作者另有五文件 48 项、修改文件 ESLint 与独立只读审查通过。`NoInfer` 只出现在独立内部 helper 声明，标准公开入口声明没有引用；本次没有运行时变化，不将此前性能结果改写为新测量。
+
+### 完整 static 验收的 trace 基线遗漏
+
+新预检 `bb511cbd-38d1-4a98-b3ec-8c10f6531231` 的七项探针、当前会话后台页面真实输入、按钮交互、截图与 verify 全通过，临时标签页已关闭。以 `860f2f89b` 从完整 `--quality` 入口重新执行，根构建 71/71、0 缓存、全量单测 1032 文件 / 11059 项、lint、类型、架构、文档、规则、release status、diff 和矩阵断言全部通过。单测另外保留五文件 / 44 项既有跳过及一项预期失败，不计作已验证。
+
+static 跑完 401 个文件后停止：385 文件通过、15 文件跳过、一个文件失败；4207 项通过、38 项跳过、一项失败。唯一差异是 HBuilderX uni-app demo 的 `main.wxss` 中 72 处 trace 注释由 `/*tokens:` 改为 `/*! tokens:`。该 demo 显式开启 `cssSourceTrace`，保留标记在原基线的 PostCSS 生成实现中已经存在；本 PR 将 injector 资产放在生成与收尾之前后，这个 demo 的诊断基线尚未同步，原因与 [injector 输出顺序复盘](vite-injector-output-order.md) 相同。
+
+限定命令 `E2E_SKIP_OPEN_AUTOMATOR=1 pnpm --config.verifyDepsBeforeRun=false exec vitest run -c e2e/vitest.e2e.config.ts e2e/uni-app-vite-vue3-hbuilderx-tailwindcss-v4.test.ts -u` 重新生成该项目，再将 `-u` 换成 `--update=none` 复验通过；主工作树整合 `f5a469364` 后相同禁更新命令再次通过。环境为 macOS arm64、Node 24.18.0、HBuilderX stable 5.26.2026091802。只有一个基线文件变化，其余六个文件字节不变；机器全文比较与独立二审确认，归一注释后前后完全一致，SHA-256 为 `9814c28aa6b10de6d23d444100bf13b7fd1d6c055a1a1d02b862509ee98aa145`，选择器、声明、preflight 和顺序没有变化。已有真实 injector 产物、trace 幂等与保留注释回归继续保护生产行为，不新增镜像断言。
+
+原始日志、进程身份与退出记录保存在 `.tmp/framework-isolation/local-acceptance/<run-id>/`。完整流程和预检已退出，确认本轮 consumer 与服务端口无残留，工作树干净；后续多平台产物、watch、IDE 和设备阶段未执行。基线修正后必须新建预检并从完整入口重新执行，不消费旧报告，也不将本轮大部分 static 通过写成全面验收成功。
 
 ## 适用边界
 
