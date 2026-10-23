@@ -124,6 +124,61 @@ describe('编译内部只消费已解析配置', () => {
     }
   })
 
+
+  it.each([
+    "import type * as Config from './types'; export type Options = Config.UserDefinedOptions",
+    "import type * as Config from './types'; export interface Options extends Config.UserDefinedOptions {}",
+    "export * as Config from './types'",
+    "export * as Outer from './nested'",
+  ])('命名空间别名和命名空间聚合不能遮蔽原始类型：%s', async (bridge) => {
+    const name = bridge.includes('export * as Outer') ? 'Outer.Config.UserDefinedOptions'
+      : bridge.includes('export * as Config') ? 'Config.UserDefinedOptions' : 'Options'
+    expect((await audit({
+      'types/index.ts': 'export interface UserDefinedOptions {}',
+      'nested.ts': "export * as Config from './types'",
+      'bridge.ts': bridge,
+      'generation/request.ts': `import type * as Public from '../bridge'; export type Request = { options: Public.${name} }`,
+    })).join('\n')).toContain('核心内部读取框架配置')
+  })
+
+  it.each([
+    "import type { Config } from '../bridge'; export interface Request { options: Config.UserDefinedOptions }",
+    "import type { Public } from '../alias'; export interface Request { options: Public.UserDefinedOptions }",
+    "export type Request = import('../bridge').Config.UserDefinedOptions",
+  ])('命名空间通过命名导入和再次别名仍保持原始归属：%s', async (request) => {
+    expect((await audit({
+      'types/index.ts': 'export interface UserDefinedOptions {}',
+      'bridge.ts': "export * as Config from './types'",
+      'alias.ts': "export { Config as Public } from './bridge'",
+      'generation/request.ts': request,
+    })).join('\n')).toContain('核心内部读取框架配置')
+  })
+
+  it.each([
+    "export type { UserDefinedOptions as Options } from '../types'",
+    "export type { Options } from '../bridge'",
+    "export type * from '../bridge'",
+    "export * as Configuration from '../bridge'",
+  ])('核心不能通过再导出携带原始配置：%s', async (request) => {
+    expect((await audit({
+      'types/index.ts': 'export interface UserDefinedOptions {}',
+      'bridge.ts': "export type { UserDefinedOptions as Options } from './types'",
+      'core/request.ts': request,
+    })).join('\n')).toContain('核心内部读取框架配置')
+  })
+
+  it('兼容出口仅允许精确登记的类型依赖边', async () => {
+    expect(await audit({
+      'types/index.ts': 'export interface UserDefinedOptions {}',
+      'context/compiler-options.ts': "import type { UserDefinedOptions } from '../types'; export interface CreateCompilerOptions extends UserDefinedOptions {}",
+      'core/compiler/index.ts': "export type { CreateCompilerOptions } from '../../context/compiler-options'",
+    })).toEqual([])
+    expect((await audit({
+      'types/index.ts': 'export interface UserDefinedOptions {}',
+      'core/compiler/index.ts': "export type { UserDefinedOptions } from '../../types'",
+    })).join('\n')).toContain('核心内部读取框架配置')
+  })
+
   it('中立 profile 和请求允许独立演进', async () => {
     expect(await audit({
       'compiler/compilation-profile.ts': "export interface ResolvedCompilationProfile { readonly revision: number; readonly target: 'weapp' | 'web' }",

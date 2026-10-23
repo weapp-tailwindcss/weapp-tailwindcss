@@ -240,6 +240,16 @@ describe('框架实现依赖边界', () => {
     })).join('\n')).toContain('共享实现引用框架')
   })
 
+
+  it.each(['style-injector/new-framework.ts', 'style-injector/unknown/new-framework.ts'])('主包 injector 的未知根模块与构建器目录必须登记：%s', async (file) => {
+    const errors = await auditFixture({ [file]: 'export const extension = {}' })
+    expect(errors.join('\n')).toContain('缺少归属')
+  })
+
+  it('主包 injector 的现有中立模块显式登记', async () => {
+    expect(await auditFixture(Object.fromEntries(['options', 'internal', 'vite-web', 'types'].map(name => [`style-injector/${name}.ts`, 'export const extension = {}'])))).toEqual([])
+  })
+
   it('未登记的 injector 目录不能默认为共享模块', async () => {
     expect((await auditFixture({}, { 'new-framework/asset.ts': 'export const value = true' })).join('\n')).toContain('框架模块缺少归属')
   })

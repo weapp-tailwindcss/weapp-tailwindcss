@@ -6,110 +6,9 @@ import { findPath } from '../graph'
 import { inside } from '../workspace'
 import { createFrameworkBoundaryEdges } from './edges'
 import { defaultFrameworkBoundaryRegistration } from './ownership'
+import { createRawTypeResolver } from './raw-types'
 
-const rawConfigurationTypes = new Set(['UserDefinedOptions', 'InternalUserDefinedOptions', 'AppType', 'FrameworkName', 'FrameworkPolicyInput', 'FrameworkEnvironment'])
 const frameworkProperties = new Set(['appType', 'uniAppX', 'uniUtsPlatform'])
-
-/** 跟踪本地类型别名和聚合导出，避免仅重命名输入类型就绕过契约。 */
-function createRawTypeResolver(source: string, graph: Graph, asts: Map<string, ts.SourceFile>) {
-  const localTarget = (file: string, specifier: string) => {
-    const base = specifier.startsWith('@/')
-      ? path.resolve(source, specifier.slice(2))
-      : specifier.startsWith('.') ? path.resolve(path.dirname(file), specifier) : undefined
-    if (!base) {
-      return undefined
-    }
-    const withoutExtension = base.replace(/\.[cm]?jsx?$/, '')
-    const extensions = ['.ts', '.mts', '.cts', '.tsx', '.js', '.mjs', '.cjs', '.jsx']
-    return [base, ...extensions.map(extension => `${withoutExtension}${extension}`), ...extensions.map(extension => path.join(base, `index${extension}`))].find(candidate => graph.has(candidate))
-  }
-  const cache = new Map<string, boolean>()
-  function resolve(file: string, name: string, visited = new Set<string>()): boolean {
-    if (rawConfigurationTypes.has(name)) {
-      return true
-    }
-    const key = `${file}:${name}`
-    if (visited.has(key)) {
-      return false
-    }
-    if (cache.has(key)) {
-      return cache.get(key)!
-    }
-    const next = new Set(visited).add(key)
-    const ast = asts.get(file)
-    if (!ast) {
-      return false
-    }
-    const referencesRaw = (node: ts.Node): boolean => {
-      if (ts.isTypeReferenceNode(node) && ts.isIdentifier(node.typeName) && resolve(file, node.typeName.text, next)) {
-        return true
-      }
-      if (ts.isExpressionWithTypeArguments(node) && ts.isIdentifier(node.expression) && resolve(file, node.expression.text, next)) {
-        return true
-      }
-      if (ts.isImportTypeNode(node) && resolveImportType(file, node, next)) {
-        return true
-      }
-      return ts.forEachChild(node, child => referencesRaw(child) || undefined) === true
-    }
-    const found = ast.statements.some((statement) => {
-      if (ts.isImportDeclaration(statement) && ts.isStringLiteral(statement.moduleSpecifier)) {
-        const bindings = statement.importClause?.namedBindings
-        const target = localTarget(file, statement.moduleSpecifier.text)
-        if (bindings && ts.isNamedImports(bindings)) {
-          return bindings.elements.some(element => element.name.text === name
-            && (rawConfigurationTypes.has((element.propertyName ?? element.name).text)
-              || (target !== undefined && resolve(target, (element.propertyName ?? element.name).text, next))))
-        }
-      }
-      if (ts.isExportDeclaration(statement)) {
-        const target = statement.moduleSpecifier && ts.isStringLiteral(statement.moduleSpecifier) ? localTarget(file, statement.moduleSpecifier.text) : file
-        if (!statement.exportClause) {
-          return target !== undefined && resolve(target, name, next)
-        }
-        if (ts.isNamedExports(statement.exportClause)) {
-          return statement.exportClause.elements.some(element => element.name.text === name && target !== undefined && resolve(target, (element.propertyName ?? element.name).text, next))
-        }
-      }
-      if ((ts.isTypeAliasDeclaration(statement) || ts.isInterfaceDeclaration(statement)) && statement.name.text === name) {
-        return referencesRaw(statement)
-      }
-      return false
-    })
-    if (found) {
-      cache.set(key, true)
-    }
-    return found
-  }
-  function resolveName(file: string, name: ts.EntityName): boolean {
-    if (ts.isIdentifier(name)) {
-      return resolve(file, name.text)
-    }
-    if (!ts.isIdentifier(name.left)) {
-      return false
-    }
-    const namespace = name.left.text
-    for (const statement of asts.get(file)?.statements ?? []) {
-      if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier)) {
-        continue
-      }
-      const bindings = statement.importClause?.namedBindings
-      if (bindings && ts.isNamespaceImport(bindings) && bindings.name.text === namespace) {
-        const target = localTarget(file, statement.moduleSpecifier.text)
-        return rawConfigurationTypes.has(name.right.text) || (target !== undefined && resolve(target, name.right.text))
-      }
-    }
-    return false
-  }
-  function resolveImportType(file: string, node: ts.ImportTypeNode, visited?: Set<string>): boolean {
-    if (!ts.isLiteralTypeNode(node.argument) || !ts.isStringLiteral(node.argument.literal) || !node.qualifier || !ts.isIdentifier(node.qualifier)) {
-      return false
-    }
-    const target = localTarget(file, node.argument.literal.text)
-    return rawConfigurationTypes.has(node.qualifier.text) || (target !== undefined && resolve(target, node.qualifier.text, visited))
-  }
-  return { resolve, resolveName, resolveImportType }
-}
 
 export function auditCoreFrameworkInputs(root: string, graph: Graph): string[] {
   const source = path.join(root, 'packages', 'weapp-tailwindcss', 'src')
@@ -141,6 +40,17 @@ export function auditCoreFrameworkInputs(root: string, graph: Graph): string[] {
       }
       if (ts.isImportSpecifier(node) && types.resolve(file, node.name.text)) {
         report(node, node.name.text)
+      }
+      if (ts.isExportDeclaration(node)) {
+        const target = node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)
+          ? types.localTarget(file, node.moduleSpecifier.text)
+          : undefined
+        const compatible = target !== undefined && publicExports.get(file)?.has(target)
+        if (!compatible && (node.exportClause && ts.isNamedExports(node.exportClause)
+          ? node.exportClause.elements.some(element => types.resolve(file, element.name.text))
+          : target !== undefined && types.exportsRaw(target))) {
+          report(node, node.getText(ast))
+        }
       }
       if (ts.isImportTypeNode(node) && types.resolveImportType(file, node)) {
         report(node, node.getText(ast))

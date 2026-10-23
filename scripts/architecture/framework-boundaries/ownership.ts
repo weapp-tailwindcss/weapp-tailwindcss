@@ -23,6 +23,7 @@ export interface FrameworkBoundaryRegistration {
 const sharedModules: ModuleOwnership[] = [
   ...['environment', 'environment-snapshot', 'resolve', 'types'].map(name => ({ package: 'weapp-tailwindcss' as const, path: ['framework-policies', `${name}.ts`], owner: undefined })),
   ...['index', 'shared'].map(name => ({ package: 'weapp-tailwindcss' as const, path: ['presets', `${name}.ts`], owner: undefined })),
+  ...['options', 'internal', 'vite-web', 'types'].map(name => ({ package: 'weapp-tailwindcss' as const, path: ['style-injector', `${name}.ts`], owner: undefined })),
   ...['vite', 'webpack'].flatMap(bundler => ['generic', 'runtime', 'options', 'plugins'].map(name => ({ package: 'weapp-tailwindcss' as const, path: ['style-injector', bundler, `${name}.ts`], owner: undefined }))),
   { package: 'weapp-tailwindcss', path: ['style-injector', 'vite', 'descriptor.ts'], owner: undefined },
   ...['index', 'core', 'preset-resolution', 'subpackage', 'subpackage-resolution', 'types', 'utils', 'vite', 'webpack'].map(name => ({ package: 'weapp-style-injector' as const, path: [`${name}.ts`], owner: undefined })),
@@ -124,6 +125,6 @@ export function resolveFrameworkOwnership(source: string, file: string, paths: t
   const inInjector = injectorRelative !== '..' && !injectorRelative.startsWith(`..${paths.sep}`) && !paths.isAbsolute(injectorRelative)
   const required = inInjector || ['framework-policies', 'presets'].includes(mainParts[0]!)
     || (mainParts[0] === 'bundlers' && mainParts[2] === 'frameworks')
-    || (mainParts[0] === 'style-injector' && ['vite', 'webpack'].includes(mainParts[1]!))
+    || mainParts[0] === 'style-injector'
   return { owner: owners.size === 1 ? [...owners][0] : undefined, missing: required && matches.length === 0, conflicting: owners.size > 1 }
 }
