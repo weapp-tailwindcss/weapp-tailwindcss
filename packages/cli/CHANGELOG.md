@@ -1,5 +1,13 @@
 # @weapp-tailwindcss/cli
 
+## 5.6.4
+
+### Patch Changes
+
+- Updated dependencies:
+  - @weapp-tailwindcss/engine@0.1.7
+  - weapp-tailwindcss@5.6.4
+
 ## 5.6.3
 
 ### Patch Changes

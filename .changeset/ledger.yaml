@@ -41,6 +41,10 @@
   dir: packages/css-compat
   intents:
     - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
+"@weapp-tailwindcss/css-compat@0.1.3":
+  dir: packages/css-compat
+  intents:
+    - lynx-evidence-and-theme-boundary
 "@weapp-tailwindcss/cva@0.1.12":
   dir: packages-runtime/cva
   intents:
@@ -104,6 +108,10 @@
   dir: packages/engine
   intents:
     - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
+"@weapp-tailwindcss/engine@0.1.7":
+  dir: packages/engine
+  intents:
+    - tall-trees-dream
 "@weapp-tailwindcss/env@0.1.0":
   dir: packages/env
   intents:
@@ -162,6 +170,10 @@
   intents:
     - hbuilderx-process-closure
     - organization-repository-metadata
+"@weapp-tailwindcss/hbuilderx-runner@0.1.8":
+  dir: packages/hbuilderx-runner
+  intents:
+    - weak-bats-knock
 "@weapp-tailwindcss/init@1.0.16":
   dir: packages/init
   intents:
@@ -223,6 +235,11 @@
   dir: packages/lynx
   intents:
     - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
+"@weapp-tailwindcss/lynx@0.5.0":
+  dir: packages/lynx
+  intents:
+    - curly-dragons-care
+    - lynx-evidence-and-theme-boundary
 "@weapp-tailwindcss/merge@2.2.3":
   dir: packages-runtime/merge
   intents:
@@ -250,6 +267,10 @@
   dir: packages/postcss-calc
   intents:
     - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
+"@weapp-tailwindcss/postcss-calc@1.0.12":
+  dir: packages/postcss-calc
+  intents:
+    - lynx-evidence-and-theme-boundary
 "@weapp-tailwindcss/postcss-calc@1.0.5":
   dir: packages/postcss-calc
   intents:
@@ -380,6 +401,15 @@
   dir: packages/postcss
   intents:
     - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
+"@weapp-tailwindcss/postcss@3.4.4":
+  dir: packages/postcss
+  intents:
+    - curly-kiwis-refuse
+    - lazy-knives-invent
+    - lynx-evidence-and-theme-boundary
+    - native-layout-contract
+    - place-alignment-groups
+    - webpack-web-production-cascade
 "@weapp-tailwindcss/react-native@0.2.19":
   dir: packages/react-native
   intents:
@@ -411,6 +441,13 @@
   dir: packages/react-native
   intents:
     - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
+"@weapp-tailwindcss/react-native@0.3.5":
+  dir: packages/react-native
+  intents:
+    - curly-kiwis-refuse
+    - native-layout-contract
+    - rn-manifest-publication
+    - wise-wolves-eat
 "@weapp-tailwindcss/reset@0.1.4":
   dir: packages/reset
   intents:
@@ -775,6 +812,11 @@ weapp-tailwindcss@5.6.3:
     - dependency-update-d1e3d8c5-8da1-46d9-8d5d-b3b9d067df90
     - lucky-monkeys-travel
     - smooth-bears-study
+weapp-tailwindcss@5.6.4:
+  dir: packages/weapp-tailwindcss
+  intents:
+    - lynx-evidence-and-theme-boundary
+    - webpack-web-production-cascade
 weapp-tw@0.0.3:
   dir: packages/weapp-tw
   intents:

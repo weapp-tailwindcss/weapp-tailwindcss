@@ -1,5 +1,12 @@
 # website
 
+## 1.0.71
+
+### Patch Changes
+
+- Updated dependencies:
+  - weapp-tailwindcss@5.6.4
+
 ## 1.0.70
 
 ### Patch Changes
