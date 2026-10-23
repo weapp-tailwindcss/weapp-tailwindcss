@@ -3,7 +3,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { createContext, resetVitePluginTestContext, setCurrentContext } from './vite-plugin.testkit'
+import { createContext, getCompilerContextMock, resetVitePluginTestContext, setCurrentContext } from './vite-plugin.testkit'
 
 function findPlugin(plugins: Plugin[] | undefined, suffix: string) {
   return plugins?.find(plugin => plugin.name?.endsWith(suffix))
@@ -16,8 +16,7 @@ describe('vite 单入口 dispatcher', () => {
     const { WeappTailwindcss } = await import('@/bundlers/vite')
     const plugins = WeappTailwindcss()
     const sourceCandidates = findPlugin(plugins, ':source-candidates')!
-    expect(sourceCandidates.apply).toBeTypeOf('function')
-    expect(typeof sourceCandidates.apply === 'function' && sourceCandidates.apply({ build: {} }, { command: 'build', mode: 'production' })).toBe(true)
+    expect(getCompilerContextMock).not.toHaveBeenCalled()
     const post = findPlugin(plugins, ':post')!
     await post.configResolved?.call(post, {
       command: 'build',
@@ -26,8 +25,9 @@ describe('vite 单入口 dispatcher', () => {
       build: { outDir: 'dist' },
     } as ResolvedConfig)
 
-    expect(context.generator).toMatchObject({ target: 'web' })
-    expect(typeof sourceCandidates.apply === 'function' && sourceCandidates.apply({ build: {} }, { command: 'build', mode: 'production' })).toBe(false)
+    expect(getCompilerContextMock).toHaveBeenLastCalledWith(expect.objectContaining({ generator: expect.objectContaining({ target: 'web' }) }))
+    const sourceTransform = sourceCandidates.transform as { handler: Function }
+    expect(await sourceTransform.handler.call(sourceCandidates, 'ignored', '/project/main.ts')).toBeUndefined()
     expect(plugins.some(plugin => plugin.name === 'weapp-tailwindcss:adaptor:web-css-finalizer')).toBe(true)
     const js = findPlugin(plugins, ':js:serve')
     const jsResult = await js?.transform?.call(js, 'const cls = "text-red-500"', '/project/main.ts')
@@ -55,7 +55,7 @@ describe('vite 单入口 dispatcher', () => {
       build: { outDir: 'dist' },
     } as ResolvedConfig)
 
-    expect(context.generator).toMatchObject({ target: 'web' })
+    expect(getCompilerContextMock).toHaveBeenLastCalledWith(expect.objectContaining({ generator: expect.objectContaining({ target: 'web' }) }))
     const js = findPlugin(plugins, ':js:serve')
     const jsResult = await js?.transform?.call(js, 'const cls = "text-red-500"', '/project/main.ts')
     expect(jsResult).toBeUndefined()
@@ -80,7 +80,7 @@ describe('vite 单入口 dispatcher', () => {
       build: { outDir: 'dist' },
     } as ResolvedConfig)
 
-    expect(context.generator).toMatchObject({ target: 'web' })
+    expect(getCompilerContextMock).toHaveBeenLastCalledWith(expect.objectContaining({ generator: expect.objectContaining({ target: 'web' }) }))
     expect(context.platform).toBe('web')
     expect(plugins.some(plugin => plugin.name === 'weapp-tailwindcss:taro-alipay-browserslist-asset')).toBe(false)
     expect(plugins.some(plugin => plugin.name === 'weapp-tailwindcss:adaptor:web-css-finalizer')).toBe(true)
@@ -103,9 +103,9 @@ describe('vite 单入口 dispatcher', () => {
     })
     setCurrentContext(context)
     const { WeappTailwindcssWeb } = await import('@/vite-web')
-    const plugins = WeappTailwindcssWeb()
+    const plugins = WeappTailwindcssWeb({ styleInjector: true })
 
-    expect(plugins.some(plugin => plugin.name === 'weapp-tailwindcss:web-style-injector-pre')).toBe(true)
+    expect(plugins.some(plugin => plugin.name === 'weapp-tailwindcss:web-style-injector-pre')).toBe(false)
     expect(plugins.some(plugin => plugin.name === 'weapp-tailwindcss:web-style-injector')).toBe(true)
     expect(plugins.some(plugin => plugin.name === 'weapp-tailwindcss:style-injector-pre')).toBe(false)
     resetVitePluginTestContext()

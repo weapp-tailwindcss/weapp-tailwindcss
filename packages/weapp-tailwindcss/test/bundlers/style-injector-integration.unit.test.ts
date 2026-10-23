@@ -59,7 +59,11 @@ describe('bundlers/vite builtin styleInjector', () => {
         generateBundle: { handler: generateBundleB },
       },
     ] as Plugin[])
-    const plugins = createBuiltinViteStyleInjectorPlugins(true, () => delegateFactory)
+    const factory = Object.assign(delegateFactory, { slots: [
+      { name: 'delegate-a', hooks: { configResolved: true as const, buildStart: true as const, load: true as const, transform: true as const, generateBundle: true as const } },
+      { name: 'delegate-b', hooks: { load: true as const, transform: true as const, generateBundle: true as const } },
+    ] })
+    const plugins = createBuiltinViteStyleInjectorPlugins(true, () => factory)
     const prePlugin = plugins[0]!
     const postPlugin = plugins[1]!
     const config = { root: process.cwd(), plugins, css: {} } as ResolvedConfig
@@ -68,17 +72,17 @@ describe('bundlers/vite builtin styleInjector', () => {
     await prePlugin.configResolved?.call(prePlugin, config)
     await prePlugin.buildStart?.call(hookContext, {} as any)
     await prePlugin.buildStart?.call(hookContext, {} as any)
-    await expect(prePlugin.load?.call(hookContext, 'virtual.css', {} as any)).resolves.toBe('loaded')
-    await expect(prePlugin.transform?.call(hookContext, 'code', 'virtual.css', {} as any)).resolves.toEqual({
-      code: 'code:a:b',
-      map: null,
-    })
+    expect(prePlugin.load?.call(hookContext, 'virtual.css', {} as any)).toBeUndefined()
+    expect(postPlugin.load?.call(hookContext, 'virtual.css', {} as any)).toBe('loaded')
+    expect(prePlugin.transform?.call(hookContext, 'code', 'virtual.css', {} as any)).toBe('code:a')
+    expect(postPlugin.transform?.call(hookContext, 'code:a', 'virtual.css', {} as any)).toEqual({ code: 'code:a:b' })
     await postPlugin.configResolved?.call(postPlugin, config)
+    await getGenerateBundleHandler(prePlugin)?.call(hookContext, {} as any, {}, false)
     await getGenerateBundleHandler(postPlugin)?.call(hookContext, {} as any, {}, false)
 
     expect(delegateFactory).toHaveBeenCalledTimes(1)
     expect(configResolved).toHaveBeenCalledTimes(1)
-    expect(buildStart).toHaveBeenCalledTimes(1)
+    expect(buildStart).toHaveBeenCalledTimes(2)
     expect(loadA).toHaveBeenCalled()
     expect(loadB).toHaveBeenCalled()
     expect(generateBundleA).toHaveBeenCalled()
@@ -118,7 +122,7 @@ describe('bundlers/vite builtin styleInjector', () => {
       },
     }))
     const WeappTailwindcss = await loadViteWeappTailwindcssPlugin()
-    const plugins = WeappTailwindcss()!
+    const plugins = WeappTailwindcss({ appType: 'native', styleInjector: { imports: ['shared.wxss'] } })!
     const styleInjectorPlugin = plugins.find(plugin => plugin.name === 'weapp-tailwindcss:style-injector')!
     const bundle = {
       'app.wxss': asset('app.wxss', '.app{}'),
@@ -139,7 +143,7 @@ describe('bundlers/vite builtin styleInjector', () => {
     } as any, {} as any, bundle as any, false)
 
     expect(bundle['app.wxss'].source).toBe('@import "shared.wxss";\n.app{}')
-    expect(plugins.filter(plugin => getGenerateBundleHandler(plugin)).at(-1)?.name).toBe('weapp-tailwindcss:style-injector')
+    expect(plugins.findIndex(plugin => plugin.name === 'weapp-tailwindcss:style-injector')).toBeGreaterThan(plugins.findIndex(plugin => plugin.name === 'weapp-tailwindcss:adaptor:css-finalizer'))
   })
 
   it('uses the selected uni-app Vite framework styleInjector preset', async () => {
@@ -167,7 +171,7 @@ describe('bundlers/vite builtin styleInjector', () => {
     })
     setCurrentContext(context)
     const WeappTailwindcss = await loadViteWeappTailwindcssPlugin()
-    const plugins = WeappTailwindcss()!
+    const plugins = WeappTailwindcss({ appType: 'uni-app-vite', styleInjector: context.styleInjector })!
     const styleInjectorPrePlugin = plugins.find(plugin => plugin.name === 'weapp-tailwindcss:style-injector-pre')!
     const styleInjectorPlugin = plugins.find(plugin => plugin.name === 'weapp-tailwindcss:style-injector')!
     const bundle = {

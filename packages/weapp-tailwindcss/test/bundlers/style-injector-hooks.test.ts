@@ -16,7 +16,7 @@ describe('style injector hook contracts', () => {
       buildStart: { handler: buildStart },
       load: { handler: load },
     }
-    const plugins = createBuiltinViteStyleInjectorPlugins(true, () => () => [delegate])
+    const plugins = createBuiltinViteStyleInjectorPlugins(true, () => Object.assign(() => [delegate], { slots: [{ name: 'object-hooks', hooks: { configResolved: true as const, buildStart: true as const, load: true as const } }] }))
     const pre = plugins[0]!
     const config = { root: process.cwd() } as ResolvedConfig
     const context = { addWatchFile: vi.fn() } as unknown as PluginContext
@@ -27,7 +27,7 @@ describe('style injector hook contracts', () => {
     expect(configResolved.mock.contexts[0]).toBe(context)
     expect(buildStart).toHaveBeenCalledExactlyOnceWith(buildOptions)
     expect(buildStart.mock.contexts[0]).toBe(context)
-    await expect(getViteHookHandler(pre.load)!.call(context, 'virtual:style', {})).resolves.toBe('virtual style')
+    expect(getViteHookHandler(pre.load)!.call(context, 'virtual:style', {})).toBe('virtual style')
     expect(load.mock.contexts[0]).toBe(context)
   })
 

@@ -9,7 +9,7 @@ describe('框架 style injector 实例隔离', () => {
       const configured = vi.fn()
       const started = vi.fn()
       const emitted = vi.fn()
-      const factory = vi.fn((): Plugin[] => [{ name, configResolved: configured, buildStart: started, generateBundle: emitted }])
+      const factory = Object.assign(vi.fn((): Plugin[] => [{ name, configResolved: configured, buildStart: started, generateBundle: emitted }]), { slots: [{ name, hooks: { configResolved: true as const, buildStart: true as const, generateBundle: true as const } }] })
       return { factory, configured, started, emitted, plugins: createBuiltinViteStyleInjectorPlugins(true, () => factory) }
     }
     const first = createInstance('first-framework')
@@ -21,10 +21,10 @@ describe('框架 style injector 实例隔离', () => {
     await getViteHookHandler(second.plugins[0]!.configResolved)!.call(context, secondConfig)
     await getViteHookHandler(second.plugins[0]!.buildStart)!.call(context, {} as any)
     await getViteHookHandler(first.plugins[0]!.buildStart)!.call(context, {} as any)
-    await getViteHookHandler(second.plugins[1]!.generateBundle)!.call(context, {} as any, {}, false)
+    await getViteHookHandler(second.plugins[0]!.generateBundle)!.call(context, {} as any, {}, false)
     expect(first.emitted).not.toHaveBeenCalled()
     expect(second.emitted).toHaveBeenCalledTimes(1)
-    await getViteHookHandler(first.plugins[1]!.generateBundle)!.call(context, {} as any, {}, false)
+    await getViteHookHandler(first.plugins[0]!.generateBundle)!.call(context, {} as any, {}, false)
     expect(first.configured).toHaveBeenCalledExactlyOnceWith(firstConfig)
     expect(second.configured).toHaveBeenCalledExactlyOnceWith(secondConfig)
     expect(first.factory).toHaveBeenCalledTimes(1)

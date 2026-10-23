@@ -8,7 +8,7 @@ import { isCSSRequest } from '../utils'
 
 export function createFrameworkSourceCandidatesPluginForCssOnly(options: any): Plugin {
   return {
-    name: `${vitePluginName}:source-candidates`,
+    name: `${vitePluginName}:web-source-candidates`,
     enforce: 'pre',
     async transform(code, id) {
       if (!options.sourceCandidateCollector || !isSourceCandidateRequest(id)) {

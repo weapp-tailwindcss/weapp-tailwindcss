@@ -4,6 +4,7 @@ import type { CssStage } from '@/compiler'
 import type { InternalUserDefinedOptions, UserDefinedOptions } from '@/types'
 import path from 'node:path'
 import process from 'node:process'
+import { disposeCompilerOwner } from '@/compiler'
 import { getCompilerContext } from '@/context'
 import { createDebug } from '@/debug'
 import { normalizeTailwindConfigDirectives, normalizeTailwindSourceForGenerator } from '@/generation/directives'
@@ -31,7 +32,7 @@ import { createViteHmrCandidateState } from './framework-hmr-candidate-state'
 import { createViteHmrCssModuleVersionFilterPlugin, createViteHmrCssModuleVersionTracker } from './framework-hmr-module-version'
 import { createFrameworkPostPlugin } from './framework-post-plugin'
 import { createFrameworkProcessedCssRegistry } from './framework-processed-css-registry'
-import { createFrameworkRuntimeLifecycle } from './framework-runtime-lifecycle'
+import { createFrameworkRuntimeLifecycle, disposeViteResources } from './framework-runtime-lifecycle'
 import { createFrameworkSourceScanSession } from './framework-source-scan-session'
 import { createFrameworkTailwindRootCss } from './framework-tailwind-root-css'
 
@@ -50,6 +51,7 @@ function resolveWebGeneratorOptions(opts: InternalUserDefinedOptions) {
 export function createCssOnlyVitePlugins(
   options: UserDefinedOptions | InternalUserDefinedOptions = {},
   runtimeStrategy: ViteFrameworkRuntimeStrategy = {},
+  disposeRelations: () => void = () => {},
 ): Plugin[] | undefined {
   const rawOptions = options as UserDefinedOptions
   let resolvedConfig: ResolvedConfig | undefined
@@ -264,20 +266,20 @@ export function createCssOnlyVitePlugins(
   }
   plugins.push(createFrameworkRuntimeLifecycle({
     getResolvedConfig: () => resolvedConfig,
-    async dispose() {
-      await generateCss.dispose()
-      try {
-        await sourceScanSession.dispose()
-      }
-      finally {
-        tailwindRootCss.dispose()
-        runtimeState.dispose()
-        cssMemory.dispose()
-        processedCssRegistry.dispose()
+    dispose: () => disposeViteResources([
+      () => generateCss.dispose(),
+      () => sourceScanSession.dispose(),
+      disposeRelations,
+      () => tailwindRootCss.dispose(),
+      () => cssMemory.dispose(),
+      () => processedCssRegistry.dispose(),
+      () => {
         generatedCssByFile.clear()
         recordedCandidates = undefined
-      }
-    },
+      },
+      () => disposeCompilerOwner(runtimeState),
+      () => runtimeState.dispose(),
+    ]),
   }))
   return plugins
 }

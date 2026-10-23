@@ -82,34 +82,6 @@ function wrapPluginHook(
   return hook
 }
 
-function wrapPluginCloseBundle(hook: unknown, dispose: () => void) {
-  if (typeof hook === 'function') {
-    return async function wrappedCloseBundle(this: unknown, ...args: any[]) {
-      try {
-        return await hook.apply(this, args)
-      }
-      finally {
-        dispose.call(this)
-      }
-    }
-  }
-  if (hook && typeof hook === 'object' && 'handler' in hook && typeof hook.handler === 'function') {
-    const handler = hook.handler
-    return {
-      ...hook,
-      async handler(this: unknown, ...args: any[]) {
-        try {
-          return await handler.apply(this, args)
-        }
-        finally {
-          dispose.call(this)
-        }
-      },
-    }
-  }
-  return dispose
-}
-
 export function createViteFrameworkPlugins(
   options: UserDefinedOptions | InternalUserDefinedOptions = {},
   frameworkBranch: ViteFrameworkBranchContext,
@@ -117,7 +89,7 @@ export function createViteFrameworkPlugins(
   const relationOwner = createViteSourceOutputRelationOwner()
   const plugins = withViteSourceOutputRelationOwner(
     relationOwner,
-    () => createRuntimeViteFrameworkPlugins(options, frameworkBranch),
+    () => createRuntimeViteFrameworkPlugins(options, frameworkBranch, relationOwner.dispose),
   )
   if (!plugins) {
     relationOwner.dispose()
@@ -139,14 +111,5 @@ export function createViteFrameworkPlugins(
       }
     }),
   }))
-  const cleanupPlugin = wrappedPlugins.at(-1)
-  if (cleanupPlugin) {
-    cleanupPlugin.closeBundle = wrapPluginCloseBundle(cleanupPlugin.closeBundle, function (this: { meta?: { watchMode?: boolean } }) {
-      if (!this.meta?.watchMode) {
-        relationOwner.dispose()
-      }
-    })
-    cleanupPlugin.closeWatcher = wrapPluginCloseBundle(cleanupPlugin.closeWatcher, relationOwner.dispose)
-  }
   return wrappedPlugins
 }

@@ -15,7 +15,7 @@ export function createGenericWebVitePlugins(options: UserDefinedOptions | Intern
     __internalViteCapabilityProfile: capability,
     __internalViteWebStyleInjectorFactory: createBuiltinViteWebStyleInjectorPlugins,
   }
-  const plugins = withViteSourceOutputRelationOwner(owner, () => createCssOnlyVitePlugins(runtimeOptions, genericViteRuntimeStrategy))
+  const plugins = withViteSourceOutputRelationOwner(owner, () => createCssOnlyVitePlugins(runtimeOptions, genericViteRuntimeStrategy, owner.dispose))
   if (!plugins) {
     owner.dispose()
     return undefined
@@ -24,7 +24,7 @@ export function createGenericWebVitePlugins(options: UserDefinedOptions | Intern
     const wrapped: Plugin = { ...plugin }
     if (plugin.watchChange) {
       const hook = plugin.watchChange
-      wrapped.watchChange = async function (id, change) {
+      const handler: Extract<Plugin['watchChange'], (...args: any[]) => any> = function (id, change) {
         if (change?.event === 'delete') {
           owner.removeSource(id)
         }
@@ -33,27 +33,18 @@ export function createGenericWebVitePlugins(options: UserDefinedOptions | Intern
         }
         return typeof hook === 'function' ? hook.call(this, id, change) : hook.handler.call(this, id, change)
       }
+      wrapped.watchChange = typeof hook === 'function' ? handler : { ...hook, handler }
     }
     if (plugin.handleHotUpdate) {
       const hook = plugin.handleHotUpdate
-      wrapped.handleHotUpdate = async function (context) {
+      const handler: Extract<Plugin['handleHotUpdate'], (...args: any[]) => any> = function (context) {
         const file = context.file
         if (typeof file === 'string') {
           owner.observeSource(file)
         }
         return typeof hook === 'function' ? hook.call(this, context) : hook.handler.call(this, context)
       }
-    }
-    if (plugin.closeBundle) {
-      const hook = plugin.closeBundle
-      wrapped.closeBundle = async function () {
-        try {
-          return typeof hook === 'function' ? await hook.call(this) : await hook.handler.call(this)
-        }
-        finally {
-          owner.dispose()
-        }
-      }
+      wrapped.handleHotUpdate = typeof hook === 'function' ? handler : { ...hook, handler }
     }
     return wrapped
   })
