@@ -52,7 +52,7 @@ Vite 策略分为来源、生成阶段、样式组织和产物处理四组。框
 - 架构：直接、类型、别名、命名空间、聚合导出、跨框架引用及未登记 injector 模块反例；测试框架扩展。
 - 发布：公开类型、ESM/CJS、loader 路径和受支持 Node 的 HBuilderX 同步加载链路，拦截官方 Tailwind ESM 生成插件防止意外引入。
 
-本轮定向结果（2026-10-23，生产源码提交 `95b3ef2ba`；文档尚未提交）：
+首批定向结果（2026-10-23，生产源码提交 `95b3ef2ba`）：
 
 | 范围 | 结果与复验入口 |
 | --- | --- |
@@ -67,7 +67,19 @@ Vite 策略分为来源、生成阶段、样式组织和产物处理四组。框
 
 包内单测统一使用 `pnpm --filter weapp-tailwindcss exec vitest run <上述对应测试路径> --update=none`，运行日志与 JSON 报告保存在忽略目录 `.tmp/framework-isolation/reports/`。上表按范围列出，不把重跑与交叠用例累加成全仓测试数量。
 
-本轮没有修改 demo 或已有 CSS/JS static 快照；新增的是内部契约和隔离 fixture，不以更新输出基线掩盖差异。
+首批实现没有修改 demo 或已有 CSS/JS static 快照；后续 CI 复验发现 injector 输出阶段顺序问题，修复并重新生成 uni-app 独立分包 static 基线。五个 CSS 文件的差异仅为 21 处 token trace 注释保留标记，选择器、声明、preflight 与顺序不变。命令与首次失败证据见 [injector 输出顺序复盘](vite-injector-output-order.md)。
+
+### CI 失败修复后的定向复验
+
+提交 `3098337`、`1ce19bef5`、`2f11d0de5` 修复 CI 暴露的问题：
+
+- 将旧 context、Webpack testkit 和 Vite 配置解析 fixture 迁移到已收紧的契约，保留原有行为断言；提取 Webpack 已配置 CSS 来源收集，满足源码行数门禁。
+- 保留 injector 的 hook 元数据，并明确资产生产者先于 post 阶段生成与收尾消费者；新增真实 Vite wxss/acss 回归，修复前两项均失败，修复后通过。微信、支付宝、抖音各 isolated/single 六组实际构建输出通过。
+- CSS 缓存键原先包含本轮 dirty 集合，使候选与内容不变的下一轮仍重新生成。改为当前 HTML/JS 对运行时有影响的稳定哈希；部分 bundle 保留既有来源关系，显式删除移除对应来源。保留缓存调用次数断言，并覆盖真实候选变化、配置依赖失效和删除。
+
+最终整合后，Core/重写/Web parity 共 4 文件 48 项、Webpack/源码行数共 4 文件 174 项，以及 Vite 生成、真实 injector、CSS 决策、重复 build 和 watch 对照共 5 文件 44 项通过；主包重新构建通过。Web parity 首次本地运行因 website 依赖缺失失败，补齐锁定依赖后原 3 项全部通过，未修改 lockfile。各修复分支另有定向结果，数量不与上述整合结果相加。
+
+远端 `c6812c05e` 的 Benchmark run `39942216772` 首次 Taro Webpack 构建中位耗时超预算 5.662%；保留同 SHA、同参数和原阈值进行一次复验后通过，第二次构建中位差为 -3.913%、HMR 为 -5.821%，无违规。两轮基线绝对耗时明显不同；证据仅说明未稳定复现回归，不证明环境噪声或性能提升。新提交仍需其自身 CI 结果。
 
 性能预算使用 `pnpm --filter benchmark-performance guard -- --suite core --runs 7 --warmups 2`：24 个场景、每个预热 2 次并采样 7 次，既有耗时、内存、输出稳定性与复杂度预算全部通过，0 违规、0 观察项。三个输入规模为 50、100、200；本机 Apple M4 Max，Node 24.18.0。结果保存在 `.tmp/framework-isolation/performance-core/synthetic.json` 和同目录 Markdown。第一次运行因独立工作树缺少 cn 构建产物未进入测量，构建 runtime/cn/merge 后串行执行成功，没有调整预算。微基准不代替实际 watcher 或设备性能。
 
@@ -75,7 +87,9 @@ Vite 策略分为来源、生成阶段、样式组织和产物处理四组。框
 
 第一阶段报告 `e2e/.artifacts/preflight/6511fe15-087f-45a5-bcfd-610b8fe1efc1/report.md` 曾记录微信服务被另一会话持有、Android 两个目标未明确选择；这份旧报告不用于本轮放行。
 
-代码调整后的新一轮 `pnpm e2e:preflight prepare` 报告为 `e2e/.artifacts/preflight/a7fedcee-29cf-4214-b381-22057f61d5fb/report.md`（同目录 JSON、日志和探针截图）。base、HBuilderX、iOS、Android、Harmony、Web 全部通过，Android 的旧目标歧义本轮已不再阻塞。微信仍报“微信 IDE 服务 19355 已被另一个 E2E 会话占用；拒绝并发打开项目”，锁登记属于 `tailwind-capability-e2e` 会话、PID 18647；只读核对时该 PID 已不存在，但其他任务的登记未释放，当前任务不能自动清除。预检已退出，未启动当前会话 computer use、verify 或全面 E2E；没有接管锁、重启 IDE 或修改登录态。原任务完成恢复清理后需重新 prepare，再完成真实设备验收。公开入口加载回归不代表真实 HBuilderX 构建或设备验收通过。
+第二轮 `pnpm e2e:preflight prepare` 报告为 `e2e/.artifacts/preflight/a7fedcee-29cf-4214-b381-22057f61d5fb/report.md`（同目录 JSON、日志和探针截图）。base、HBuilderX、iOS、Android、Harmony、Web 全部通过，Android 的旧目标歧义已解除。微信被服务 19355 的其他任务租约阻断，登记属于 `tailwind-capability-e2e`、PID 18647；只读核对时该 PID 已退出。本轮未执行 computer use、verify 或全面 E2E。
+
+用户授权通知原任务后，原任务已定向清理该孤儿协调锁，保留清理回执；未改动登录态或启动测试。原任务的预检项目仍在 IDE 打开，因原绑定丢失未自动关闭。当前代码已再次调整，仍须重新 prepare 并核对服务状态，不复用上述报告。公开入口加载回归不代表真实 HBuilderX 构建或设备验收通过。
 
 ## 适用边界
 
