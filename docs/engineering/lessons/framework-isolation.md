@@ -12,6 +12,9 @@ regressions:
   - packages/weapp-tailwindcss/test/compiler/owner-lifecycle.test.ts
   - packages/weapp-tailwindcss/test/compiler/owner-activity-scope.test.ts
   - packages/weapp-tailwindcss/test/compiler/core-root-store-cleanup.test.ts
+  - packages/weapp-tailwindcss/test/compiler/core-transform-retention.test.ts
+  - packages/weapp-tailwindcss/test/ci/css-compat-workflow.test.ts
+  - e2e/playwright-image-ci.test.ts
   - packages/weapp-tailwindcss/test/bundlers/webpack-operation-lifecycle.test.ts
   - packages/weapp-tailwindcss/test/bundlers/webpack-loader-session.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-framework-extension.test.ts
@@ -260,6 +263,29 @@ static 跑完 401 个文件后停止：385 文件通过、15 文件跳过、一�
 `4483ca737f9f0297b11a457ca2c6139a2fe97899` 的五框架性能门禁全部在原预算下通过，`blocking=true`、0 违规；四平台生命周期及 CSS 三浏览器语义也通过。旧提交的 apt 安装取消没有在这一 head 复现。Uni 的单次 HMR P95 仍有 +21.04% 样本，但既有确认规则的后续两轮为 98/106ms，相对基线 107/113ms 没有确认退化；weapp-vite 的首测 HMR RSS 超阈值，反向顺序复验未确认。该结论只表示现有门禁通过，不表示每项指标均下降，也不覆盖尚未完成的本地设备验收。
 
 Expo 的 run `40016346808` 首轮保留两个不同失败：iOS 在原 10 秒采集预算内未取得足够连续帧；Android 的第二帧只有 19 字节，原件精确为 `Segmentation fault `，logcat 同时记录 `/system/bin/screencap` 的 SIGSEGV，栈经过 graphics.mapper 与 ScreenshotClient，早于测试收尾和模拟器退出。Android 首帧几何、像素和 control 均通过，但连续帧数为一，不能据此算完整通过。现有截图校验正常阻断，没有证据支持修改产品、吞掉错误、扩大预算或降低连续帧要求；只允许在同 SHA、同参数下各进行一次定向复验，并保留首次产物。最终以最终 PR head 的全部适用检查及 reviewer 审批为准。
+
+
+### 关闭后的转换服务引用
+
+`f6e8c1e8ef8a569308e3d7b5a3002b426b74d0d2` 的 weapp-vite 性能在初测和反向确认中均违反原 HMR RSS 预算。peak/steady 首测分别增加 11.47%/9.93%（约 166/140MB），反向确认增加 18.55%/15.53%（约 251/209MB）。两轮没有产物错误，增量集中在工作 Node 的第二、三轮，不能以其他四框架通过或历史 head 通过覆盖本次失败。实际 weapp-vite 7.4.0 直接调用公开 Core，默认使用 stateful-experimental，不能用外部 Vite dispatcher 或 classic 诊断代表这条链路。
+
+审计另发现确定的生命周期缺口：已关闭的 Core 如果仍由宿主持有，转换闭包仍引用整个 services 和局部 handler，继而保留 PostCSS 管线与缓存 AST。`a3699a6048c89b0214332f1e24f98555e1a522f5` 将 handler 改为可清空的实例槽位，在拒绝新任务、排空已接受任务及 root store 清理后释放；root 清理失败同样进入 finally。来源删除仍只清模板选项，不清活动 watch 的转换缓存。没有恢复跨实例可变 handler 共享，也没有修改公开 API。
+
+持久回归使用真实 createStyleHandler，在子进程中保留 closed Core 和已完成 Promise 的强引用，跨事件循环显式 GC，验证 handler、services 和缓存 AST 可以释放；同时覆盖同配置双实例、活动缓存命中、在途任务排空、清理失败与重复关闭。修复前三个场景确定失败。整合至 `ba27c6e0ee4f55b43bdf5ce51fe93c92deb51409` 后，core-transform-retention、core-compiler-lifecycle、core-root-store-cleanup、profile-session-regressions 和 css-compat-workflow 五文件 29 项通过。该回归证明关闭引用释放，尚不证明它解释全部 RSS 增量；原性能预算仍须复验，不以诊断采样代替。
+
+### CSS 语义 CI 的系统依赖安装超时
+
+同一 `f6e8c1e8` 的 CSS compatibility semantics job `120658509643` 在 25 分钟截止后取消。Playwright 的在线系统依赖安装单步耗时 24 分 12 秒，APT 下载停在 libflite1；消费者、属性目录、三浏览器语义和 benchmark 均尚未开始，不能记为产品语义失败或通过。
+
+`ba27c6e0ee4f55b43bdf5ce51fe93c92deb51409` 复用仓库已有的官方 Playwright 1.64.1 Noble 镜像及固定 digest，通过现有验证脚本检查 driver、镜像 marker、HOME 和三个浏览器的真实 PNG 渲染。保留原 25 分钟预算、Node 24 显式选择、全部语义/性能步骤和产物上传，只信任当前挂载工作区，进程工具缺失或身份查询失败仍阻断。CSS workflow 契约已包含在前述 29 项中；镜像 CI 与验证脚本另两文件 13 项通过。本机没有运行该固定 digest 容器，最终镜像闭包仍待新 head 的 CI，不以其他 job 的成功替代。
+
+### 微信视觉修复的真实验收与旧轮收尾
+
+预检 `0c50ae63-df18-4890-b962-be63d508cfdf` 的全部探针、当前会话 computer use 和 verify 通过，以 `f6e8c1e8ef8a569308e3d7b5a3002b426b74d0d2` 从完整 `--quality` 入口执行。根构建 71/71（59 缓存）、全量单测 1032 文件 / 11059 项、全部质量检查、矩阵 34 项、static 389 文件 / 4221 项、多平台真实构建 55 项及框架 IDE/HMR 12 项通过；单测另有既有五文件 / 44 项跳过与一项预期失败，static 另有 15 文件 / 38 项条件跳过。通用 IDE 证据仍区分 live、compile 和产物，Mpx IDE 样式 HMR 保留既有跳过。
+
+第 13/23 阶段的真实微信视觉/HMR 报告为 11 组 passed，包括 uni-app-x 两种样式隔离和 HBuilderX 微信项目，已经实际越过旧 miniprogramRoot 首败。报告时间为 2026-10-23T21:58:20.363Z，156 个证据文件及 SHA-256 manifest 归档到 `.tmp/framework-isolation/local-acceptance/0c50ae63-df18-4890-b962-be63d508cfdf/visual-evidence/`。
+
+为整合关闭释放和 CI 修复并让出正式性能对照资源，本任务在核实 workflow PID、启动身份和 cwd 后发送一次 SIGINT，流程恢复 fixture 并正常收尾。第 14 阶段中断，15–23 未执行，不能声称本轮完整设备验收通过。已核对 prepare 退出、consumer finished、工作树干净、无本任务活动测试进程或微信租约；没有终止 IDE/模拟器或改变登录态。原始日志、退出记录、收尾原因和清理摘要在同一归档目录。最终源码必须重新 prepare、真实交互、verify 并从完整入口重跑，不能复用这一报告。
 
 ## 适用边界
 
