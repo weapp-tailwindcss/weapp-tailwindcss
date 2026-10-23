@@ -41,7 +41,6 @@ import {
   resolveGeneratedCssRuntimeCandidates,
   resolveWebpackCssAssetModuleResource,
   resolveWebpackGeneratorRawSource,
-  scopeWebpackGeneratorOptionsToCssSource,
   isSameWebpackCssSourceScope,
   shouldFallbackToWebpackUserCssOnGeneratorError,
   shouldAppendCurrentWebpackAssetUserCss,
@@ -266,66 +265,6 @@ describe('bundlers/webpack v5-assets helpers', () => {
       '.i-_bmdi--github-circle_B{color:red}',
       classSets,
     )).toBe(false)
-  })
-
-  it('scopes webpack generator cssEntries to the current css source file', () => {
-    const appCss = path.resolve('/workspace/src/app.css')
-    const subCss = path.resolve('/workspace/src/sub/pages/index.css')
-    const options = createContext({
-      cssEntries: [appCss, subCss],
-      tailwindcss: {
-        v4: {
-          cssEntries: [appCss, subCss],
-        },
-      },
-    } as any)
-
-    const scoped = scopeWebpackGeneratorOptionsToCssSource(options as any, subCss)
-    expect(scoped).not.toBe(options)
-    expect(scoped.cssEntries).toEqual([subCss])
-    expect(scoped.tailwindcss?.v4?.cssEntries).toEqual([subCss])
-    expect(options.cssEntries).toEqual([appCss, subCss])
-    expect(options.tailwindcss?.v4?.cssEntries).toEqual([appCss, subCss])
-  })
-
-  it('keeps webpack generator options unchanged without a matching css entry source', () => {
-    const options = createContext({
-      cssEntries: ['/workspace/src/app.css'],
-      tailwindcss: {
-        v4: {
-          cssEntries: ['/workspace/src/app.css'],
-        },
-      },
-    } as any)
-
-    expect(scopeWebpackGeneratorOptionsToCssSource(options as any, undefined)).toBe(options)
-    expect(scopeWebpackGeneratorOptionsToCssSource(options as any, '/workspace/src/unknown.css')).toBe(options)
-  })
-
-  it('clears webpack generator cssEntries for unmatched main css assets', () => {
-    const options = createContext({
-      cssEntries: ['/workspace/src/app.css'],
-      tailwindcss: {
-        v4: {
-          cssEntries: ['/workspace/src/app.css'],
-        },
-      },
-    } as any)
-
-    const scoped = scopeWebpackGeneratorOptionsToCssSource(options as any, undefined, {
-      disableUnmatchedCssEntries: true,
-    })
-    expect(scoped).not.toBe(options)
-    expect(scoped.cssEntries).toEqual([])
-    expect(scoped.tailwindcss?.v4?.cssEntries).toEqual([])
-    expect(options.cssEntries).toEqual(['/workspace/src/app.css'])
-
-    const scopedWithUnmatchedSource = scopeWebpackGeneratorOptionsToCssSource(options as any, '/workspace/src/pages/index.css', {
-      disableUnmatchedCssEntries: true,
-    })
-    expect(scopedWithUnmatchedSource).not.toBe(options)
-    expect(scopedWithUnmatchedSource.cssEntries).toEqual([])
-    expect(scopedWithUnmatchedSource.tailwindcss?.v4?.cssEntries).toEqual([])
   })
 
   it('normalizes generator css source arrays', () => {

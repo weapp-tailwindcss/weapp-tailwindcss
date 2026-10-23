@@ -13,6 +13,7 @@ import { createScopedGeneratorRuntime } from '../../../vite/generate-bundle/scop
 import { isWebpackCssLoaderRuntimeSource } from '../../shared/css-loader-runtime'
 import { createRuntimeAwareCssHash } from '../shared'
 import { finalizeWebpackGeneratedCssResult } from './generated-css-result'
+import { createWebpackGeneratorRequestOptions } from './generator-request'
 import { preserveLoaderProcessedWebCssAsset } from './loader-css-source'
 
 import {
@@ -22,12 +23,9 @@ import {
   createWebpackUserCssSourceAppend,
   hasAdditionalWebpackAssetUserCssMarkers,
   hasProcessedCssAssetUrl,
-  hasUsableWebpackGeneratorCssSources,
-  normalizeWebpackGeneratorCssSources,
   removeWebpackGeneratorNonTailwindImports,
   removeWebpackTailwindGeneratedAssetCss,
   resolveWebpackGeneratorRawSource,
-  scopeWebpackGeneratorOptionsToCssSource,
   shouldAppendCurrentWebpackAssetUserCss,
   shouldConsumeWebpackLoaderGeneratedCss,
   shouldFallbackToWebpackUserCssOnGeneratorError,
@@ -396,33 +394,18 @@ export async function processWebpackGeneratedCssAsset(element: any, context: Web
               ...resolvedScopedGeneratorRuntimeSet,
             ])
           : resolvedScopedGeneratorRuntimeSet
-        const generatorCssSources = normalizeWebpackGeneratorCssSources(cssHandlerOptions.sourceOptions?.cssSources)
-        const scopedGeneratorCompilerOptions = scopeWebpackGeneratorOptionsToCssSource(compilerOptions, sourceFile, {
-          disableUnmatchedCssEntries: !isWebGeneratorTarget && cssHandlerOptions.isMainChunk,
-        })
-        const generatorCssHandlerOptions = generatorCssSources === undefined
-          ? cssHandlerOptions
-          : {
-              ...cssHandlerOptions,
-              sourceOptions: {
-                ...cssHandlerOptions.sourceOptions,
-                cssSources: generatorCssSources,
-              },
-            }
         const generatorOptions = {
+          ...createWebpackGeneratorRequestOptions(compilerOptions, cssHandlerOptions, sourceFile, {
+            disableUnmatchedCssEntries: !isWebGeneratorTarget && cssHandlerOptions.isMainChunk,
+          }),
           deferWebCssPropertyFallback: (compilerOptions.cssOptions?.platform ?? compilerOptions.platform) !== 'lynx',
-          opts: scopedGeneratorCompilerOptions,
           runtimeState,
           runtime: scopedGeneratorRuntimeSet,
           rawSource: generatorRawSource,
           forceGenerator: shouldForceTailwindV4Generation,
-          ...(hasUsableWebpackGeneratorCssSources(generatorCssSources)
-            ? { cssSources: generatorCssSources }
-            : {}),
           ...(userRawSource === undefined ? {} : { userRawSource: userRawSource.css }),
           ...(userRawSource?.processed === true ? { userRawSourceProcessed: true } : {}),
           file,
-          cssHandlerOptions: generatorCssHandlerOptions,
           cssUserHandlerOptions: getCssUserHandlerOptions(file),
           compilationChanges: scopeCompilationChanges,
           frameworkPostcssOwner: compilerOptions,
