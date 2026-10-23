@@ -2,8 +2,16 @@ import { formatWorkflowError } from '../../scripts/e2e-preflight/cleanup'
 
 export const IDE_CLEANUP_FAILURE_MARKER = '[e2e:ide:cleanup]'
 
+/** 清理终态无法确认时保留类型，供子进程退出边界阻断后续调度。 */
+export class FrameworkIdeCleanupError extends Error {
+  constructor(label: string, cause: unknown) {
+    super(`${IDE_CLEANUP_FAILURE_MARKER} ${label}: ${formatWorkflowError(cause)}`, { cause })
+    this.name = 'FrameworkIdeCleanupError'
+  }
+}
+
 export function cleanupFailure(label: string, cause: unknown) {
-  return new Error(`${IDE_CLEANUP_FAILURE_MARKER} ${label}: ${formatWorkflowError(cause)}`, { cause })
+  return new FrameworkIdeCleanupError(label, cause)
 }
 
 /** 保留首错，逐项尝试本轮持有的资源释放，所有清理失败都参与验收。 */
