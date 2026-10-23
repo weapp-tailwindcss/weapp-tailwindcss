@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
-import { readFile } from 'node:fs/promises'
+import { readFile, stat } from 'node:fs/promises'
 import { createRequire } from 'node:module'
+import { userInfo } from 'node:os'
 import process from 'node:process'
 import { pathToFileURL } from 'node:url'
 
@@ -10,6 +11,11 @@ export function verifyImageVersion(info, versions) {
   assert.ok(versions.every(value => value === version), `Playwright 依赖版本不一致：${versions.join(', ')}`)
   assert.equal(info?.driverVersion, version, '预装镜像与实际 Playwright 版本不一致')
   assert.equal(info?.dockerImageName, `mcr.microsoft.com/playwright:v${version}-noble`, '必须使用匹配的官方 Noble 镜像')
+}
+
+export function verifyBrowserHome(homeDirectory, account, ownerUid) {
+  assert.equal(homeDirectory, account.homedir, '浏览器 HOME 必须与容器实际用户一致')
+  assert.equal(ownerUid, account.uid, '浏览器 HOME 必须属于当前容器用户')
 }
 
 export async function verifyBrowserRendering(playwright, engines) {
@@ -39,6 +45,8 @@ async function main() {
   // 此入口只用于官方 Linux CI 容器，拒绝用户缓存或下载兜底。
   assert.equal(process.platform, 'linux')
   assert.equal(process.env.PLAYWRIGHT_BROWSERS_PATH, '/ms-playwright')
+  const account = userInfo()
+  verifyBrowserHome(process.env.HOME, account, (await stat(account.homedir)).uid)
   const rootRequire = createRequire(new URL('../../package.json', import.meta.url))
   const websiteRequire = createRequire(new URL('../../website/package.json', import.meta.url))
   const websiteDriver = createRequire(websiteRequire.resolve('@playwright/test/package.json'))

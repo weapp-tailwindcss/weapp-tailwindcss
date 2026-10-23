@@ -39,6 +39,12 @@ verification:
     sha: 5af81c17630d66c3bfc39c2328ce28a17f78787c
     environment: 待提交修复的 GitHub Ubuntu x64、Node 24、Playwright 1.64.1 Noble 容器
     reason: 此 SHA 是修复前基线；新提交后需核对准确 head 和全部检查，旧 head 的成功不能替代
+  - claim: 容器实际账户 HOME 与目录 UID 同时匹配，拒绝 GitHub 异主挂载
+    kind: unit
+    status: passed
+    sha: 8911ce1d0f2696f96f648d8ab58d2411d90eed6c
+    environment: macOS、Node 24.18.0、pnpm 12.14.0，包含 HOME 适配的未提交改动
+    command: CI=1 pnpm exec vitest run -c e2e/vitest.e2e.config.ts e2e/playwright-image-ci.test.ts e2e/playwright-image.test.ts e2e/react-native-ci.test.ts e2e/hosted-workflow-contract.test.ts --update=none
 ---
 
 # 合并后 CI 的执行入口与证据边界
@@ -68,7 +74,8 @@ head `5af81c17630d66c3bfc39c2328ce28a17f78787c` 的网站视觉与 Expo WebKit �
 - repoctl 的历史发布完整性检查使用全仓 Release 分页列表判断已知 tag 是否存在。只读对账确认 40 个 npm 版本、tag、正式 Release 及完整 checkpoint 均已存在。使用原 guard 重现时，CLI transport 通过，而公共 HTTP 轮的 Release 列表为空，唯一失败谓词为 `release:false`。随后记录的真实响应显示 page 8 返回 100 项且 Link 指向 next=9/last=12，page 9 却返回 HTTP 200 和 `[]`，客户端因此提前终止。分页集合不能可靠证明某个准确 tag 不存在，改为 `GET /releases/tags/<tag>`；仅明确 404 表示缺失，空体、数组、错 tag、权限和网络异常保持未知并阻断。npm、checkpoint、draft、prerelease、tag 与 gitHead 门禁不变。
 - Chromium 工件的初始 rAF 样本为 `[46.832, 46.832]`，两次回调不足以证明绘制时间严格前进。原生填充、字段、标准伪类、outline/identity PNG、可信编辑恢复均符合原合同。将相同逻辑的 Autofill、原生媒体与历史采集统一为可独立序列化的浏览器屏障，只接受两次严格递增的真实 rAF 时间，超时取消挂起回调并禁止迟到回调重新调度。写入 identity、等待帧、读取样式三个阶段校验 `performance.timeOrigin`，拒绝同 URL reload 拼接；Autofill/媒体同一会话还锁定文档，history 不跨导航比较帧时间。外层 5000ms 及 visited 2000ms 总预算不变，传给屏障的是剩余预算；合同的严格 `>`、像素与全部独立预期不变。
 - 两项浏览器作业每轮执行 `install --with-deps`，将稳定的浏览器运行环境依赖交给宿主 APT 网络；持续慢传不会触发无进展超时，外层重试也无法在已耗尽预算后恢复。改用[官方 Noble 容器](https://github.com/microsoft/playwright/blob/v1.64.1/utils/docker/Dockerfile.noble)，固定版本 `1.64.1` 与 OCI 摘要 `sha256:47b510dd9230bf0b9bfc9b20102241e577ea7a99334ab4c3ca19f19770e9b8ea`，三引擎、headless-shell、系统库和字体在镜像构建时准备。作业内不再安装浏览器或其依赖，也不下载兜底；探针严格比较镜像 marker、根 Playwright、网站 test wrapper 及其实际 driver 的精确版本，再真实启动所选引擎、检查 DOM/CSS 并截取 PNG。保留原 10/25 分钟、原三浏览器及全部视觉/语义/工件门禁，不改黄金截图。版本升级必须同步固定镜像，否则直接失败。
-- 网站命令生命周期依赖真实 `ps` 身份表，官方镜像构建文件未显式声明 `procps`。增加限定两分钟的独立工具准备：已有 `ps` 不访问 APT，缺失时只安装 `procps`，随后必须以现有身份采集的完整参数执行查询。安装和查询任一失败均阻断，没有跳过或身份降级。该步骤仍在原作业总预算内；它并未消除镜像拉取或最小工具准备的网络风险。
+- 网站命令生命周期依赖真实 `ps` 身份表，官方镜像构建文件未显式声明 `procps`。初版为未确认的镜像准备了按需安装分支；实际 x64 容器在 81ms 内已完成完整进程查询，没有访问 APT。据此删除安装分支，仅保留限定两分钟的真实身份探针：工具缺失或查询失败直接阻断，不安装、不跳过、不降级。该步骤仍在原作业总预算内。
+- 首次容器 head `8911ce1d0f2696f96f648d8ab58d2411d90eed6c` 的网站作业 `120227284104` 在约 95 秒完成镜像/工作区/进程工具准备，Chromium 真实渲染通过；Firefox 严格探针拒绝 `HOME=/github/home`，因为挂载目录归属 `pwuser`，实际进程为 root。原始日志 SHA256 为 `c67bd75cd2b37d8df76603c25a2b3fefc99a6e8794431d5ec8d21a1759cbe2ca`。这是新增容器适配遗漏，不能登记容器通过。两个浏览器作业明确使用容器 root 的真实 HOME `/root`，探针另以系统用户记录和目录 UID 校验归属；不更改宿主用户会话，不关闭 Firefox 保护，也不跳过 Firefox。新增 HOME 合同在旧配置先失败，本地修复后 4 文件 29 项通过。
 
 Release 临时修复固定在 `@icebreakers/monorepo@5.10.3`，由 `repoctl@5.10.3` 消费，补丁为 [`patches/@icebreakers__monorepo@5.10.3.patch`](../../../patches/@icebreakers__monorepo@5.10.3.patch)。[上游源码](https://github.com/icelib/repoctl/blob/main/packages/monorepo/src/commands/release/preparation/guard.ts)尚未提交本轮修复；待上游发布包含准确 tag 查询和等价负向门禁的版本后，先以本仓库回归确认，再升级并删除 patch、workspace 和 lock 登记。锁文件仅保留补丁 hash、对应 snapshot 和 repoctl 引用变化，剔除安装附带的无关依赖图重算。
 

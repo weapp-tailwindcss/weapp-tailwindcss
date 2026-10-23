@@ -58,6 +58,7 @@ jobs:
       matrix:
         browser: [chromium, firefox, webkit]
     env:
+      HOME: /root
       RN_WEB_BROWSER: ${{ matrix.browser }}
     steps:
       - uses: actions/checkout@v6

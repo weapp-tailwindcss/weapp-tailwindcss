@@ -1,7 +1,14 @@
 import { expect, it, vi } from 'vitest'
-import { verifyBrowserRendering, verifyImageVersion } from '../scripts/ci/verify-playwright-image.mjs'
+import { verifyBrowserHome, verifyBrowserRendering, verifyImageVersion } from '../scripts/ci/verify-playwright-image.mjs'
 
 const info = { driverVersion: '1.64.1', dockerImageName: 'mcr.microsoft.com/playwright:v1.64.1-noble' }
+
+it('浏览器 HOME 同时匹配实际账户目录与 UID，拒绝 GitHub 异主挂载', () => {
+  const account = { homedir: '/root', uid: 0 }
+  expect(() => verifyBrowserHome('/root', account, 0)).not.toThrow()
+  expect(() => verifyBrowserHome('/github/home', account, 0)).toThrow('浏览器 HOME 必须与容器实际用户一致')
+  expect(() => verifyBrowserHome('/root', account, 1001)).toThrow('浏览器 HOME 必须属于当前容器用户')
+})
 
 it('镜像和三个实际解析版本必须精确一致，缺项或漂移不能降级', () => {
   expect(() => verifyImageVersion(info, ['1.64.1', '1.64.1', '1.64.1'])).not.toThrow()
