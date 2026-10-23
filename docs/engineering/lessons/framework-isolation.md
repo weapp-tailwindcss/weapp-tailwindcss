@@ -48,7 +48,9 @@ regressions:
 
 发布回归最初尝试完全关闭 Node 的同步 ESM 支持，被现有 `postcss-preset-env` 纯 ESM 依赖阻断。此设置超出包声明的 Node 运行语义，不能据此归因为框架隔离回归。正式测试使用受支持的 Node，同步加载公开入口和 loader，并单独拦截 `@tailwindcss/vite`、`@tailwindcss/postcss`；实际 HBuilderX 与设备验收仍由多端预检和对应流程证明。
 
-多端环境预检结果在本轮收尾时补充；单测通过不代表 IDE 或设备验收通过。
+`pnpm e2e:preflight prepare` 首次因独立工作树缺少 runner 的 `cross-spawn` 依赖而在启动阶段失败；执行 `pnpm --filter '@weapp-tailwindcss/hbuilderx-runner...' install --offline --frozen-lockfile --ignore-scripts` 后重新 prepare。第二轮报告为 `e2e/.artifacts/preflight/6511fe15-087f-45a5-bcfd-610b8fe1efc1/report.json`（同目录有 Markdown、探针日志与截图）：基础环境、HBuilderX、iOS、Harmony、Web 通过；微信 IDE 共享服务被另一 E2E 会话持有，Android 有两个在线目标且未明确选择，均为 blocked。未执行当前会话 computer use、verify 或全面 E2E，没有清除其他任务的锁或重置登录。
+
+因此本记录保持 `partial`。恢复时由原会话释放微信服务，并显式设置 `E2E_HBUILDERX_ANDROID_DEVICE_ID`，重新 prepare 后完成 computer use、verify 与全面验收。单测、真实构建和 watch 通过不代表 IDE 或设备验收通过。
 
 ## 适用边界
 
