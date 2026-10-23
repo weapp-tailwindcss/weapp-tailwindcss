@@ -36,6 +36,18 @@ function resolveInput<T extends LegacyInput<ResolvedGenerationInput> | LegacyInp
   })
   return {
     ...request,
+    ...('runtime' in input
+      ? { runtime: new Set(input.runtime) }
+      : {
+          candidates: new Set(input.candidates),
+          generatedCssSources: input.generatedCssSources ? [...input.generatedCssSources] : undefined,
+        }),
+    cssSources: snapshotConfiguration(input.cssSources),
+    sourceCandidates: input.sourceCandidates ? new Set(input.sourceCandidates) : undefined,
+    previousClassSet: input.previousClassSet ? new Set(input.previousClassSet) : undefined,
+    compilation: snapshotConfiguration(input.compilation),
+    ...('scope' in input ? { scope: snapshotConfiguration(input.scope) } : {}),
+    ...('compilationChanges' in input ? { compilationChanges: snapshotConfiguration(input.compilationChanges) } : {}),
     cssHandlerOptions: snapshotConfiguration(input.cssHandlerOptions),
     cssUserHandlerOptions: snapshotConfiguration(input.cssUserHandlerOptions),
     profile,

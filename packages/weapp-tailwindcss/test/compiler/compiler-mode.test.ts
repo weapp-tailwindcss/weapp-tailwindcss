@@ -85,6 +85,20 @@ describe('compiler mode', () => {
     expect(result?.artifact).toBeUndefined()
   })
 
+  it('propagates dependency TypeErrors without retrying a different backend', async () => {
+    process.env[COMPILER_MODE_ENV] = 'graph'
+    const error = new TypeError('Cannot read properties of undefined (reading dependencies)')
+    const generateCssByGenerator = vi.fn().mockRejectedValue(error)
+    vi.doMock('@/generation/index', () => ({ generateCssByGenerator }))
+    const { generateTailwindV4Css } = await import('@/context/generation')
+
+    await expect(generateTailwindV4Css(createGenerationOptions())).rejects.toBe(error)
+    expect(generateCssByGenerator).toHaveBeenCalledTimes(1)
+    expect(generateCssByGenerator).toHaveBeenCalledWith(expect.objectContaining({
+      compilation: expect.objectContaining({ enabled: true }),
+    }))
+  })
+
   it.each([
     [
       '/workspace/src/app.wxss?weapp-vite-sidecar-owner=app&weapp-vite-sidecar=style&lang.css',

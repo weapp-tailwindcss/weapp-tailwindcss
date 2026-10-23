@@ -99,4 +99,29 @@ describe('resolved compilation profiles', () => {
     await expect(pending).resolves.toBeUndefined()
     await disposeCompilerOwner(runtimeState)
   })
+
+  it('captures candidate input before an asynchronous transform yields to the next update', async () => {
+    let finish!: () => void
+    const gate = new Promise<void>(resolve => { finish = resolve })
+    const opts = { generator: false, cssPreflight: false } as InternalUserDefinedOptions
+    const runtimeState = { tailwindRuntime: { majorVersion: 4 } as any, readyPromise: Promise.resolve() }
+    const runtime = new Set(['first'])
+    const pending = generateCssByGenerator({
+      opts,
+      runtimeState,
+      runtime,
+      rawSource: '@import "tailwindcss";',
+      file: 'virtual:entry.css',
+      cssHandlerOptions: { postcssOptions: { plugins: [{ postcssPlugin: 'test' }] } },
+      cssUserHandlerOptions: {},
+      styleHandler: (async () => { await gate; return { css: '.first {} .next {}' } }) as any,
+      debug: vi.fn(),
+    })
+    runtime.clear()
+    runtime.add('next')
+    finish()
+    expect((await pending)?.classSet).toEqual(new Set(['first']))
+    expect(runtime).toEqual(new Set(['next']))
+    await disposeCompilerOwner(runtimeState)
+  })
 })
