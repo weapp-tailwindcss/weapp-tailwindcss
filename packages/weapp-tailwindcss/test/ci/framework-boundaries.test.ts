@@ -56,7 +56,7 @@ describe('框架实现依赖边界', () => {
       'bundlers/vite/index.ts': "export const select = (appType: string) => appType === 'taro'",
       'framework-policies/environment.ts': "export const select = (appType: string) => appType === 'uni-app-vite'",
       'bundlers/vite/frameworks/taro/index.ts': "export const select = (appType: string) => appType === 'taro'",
-      'compiler/types.ts': "export type Framework = 'generic' | 'taro'; export const defaults = { appType: 'taro' }",
+      'types/options.ts': "export type Framework = 'generic' | 'taro'; export const defaults = { appType: 'taro' }",
       'compiler/backend.ts': "export const native = (backend: string) => backend === 'native'",
     })).toEqual([])
   })
@@ -145,7 +145,7 @@ describe('框架实现依赖边界', () => {
       'framework-policies/resolve.ts': "import './taro'",
       'framework-policies/taro.ts': "import type { Policy } from '@/compiler/framework-policy'",
       'compiler/framework-policy.ts': 'export interface Policy {}',
-      'generation/service.ts': "import '@/context'; import type { Policy } from '@/compiler/framework-policy'",
+      'generation/service.ts': "import type { Policy } from '@/compiler/framework-policy'",
     })).toEqual([])
   })
 
@@ -282,5 +282,12 @@ describe('框架实现依赖边界', () => {
       'bundlers/vite/index.ts': "export * from './frameworks/taro/private'",
       'bundlers/vite/frameworks/taro/private.ts': 'export const value = true',
     })).join('\n')).toContain('共享实现引用框架')
+  })
+
+  it('兼容依赖边不会为所在共享文件新增框架分派权限', async () => {
+    expect((await auditFixture({}, {
+      'vite.ts': "import './uni-app'; export const dispatch = (framework: string) => framework === 'mpx'",
+      'uni-app.ts': 'export const value = true',
+    })).join('\n')).toContain('共享实现选择框架')
   })
 })

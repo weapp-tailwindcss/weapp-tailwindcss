@@ -48,14 +48,32 @@ describe('编译内部只消费已解析配置', () => {
     })).join('\n')).toContain('核心内部读取框架配置')
   })
 
+  it('内联 import 类型与本地别名不能绕过原始配置约束', async () => {
+    expect((await audit({
+      'types/index.ts': 'export interface InternalUserDefinedOptions {}',
+      'bridge.ts': "export type { InternalUserDefinedOptions as Configuration } from './types'",
+      'compiler/request.ts': "type Options = import('../bridge').Configuration; export interface Request { options: Options }",
+    })).join('\n')).toContain('核心内部读取框架配置')
+  })
+
   it.each([
     'export interface Request { appType: string }',
+    "export const defaults = { appType: 'taro' }",
+    'export const read = (options: Record<string, unknown>) => { const { uniAppX: extension } = options; return extension }',
     'export const read = (options: Record<string, unknown>) => options.uniAppX',
     "export const read = (options: Record<string, unknown>) => options['uniUtsPlatform']",
     "export const read = () => process.env['UNI_PLATFORM']",
     "export const read = () => process['env']['UNI_PLATFORM']",
   ])('禁止重新读取框架身份或进程环境：%s', async (code) => {
     expect((await audit({ 'generation/request.ts': code })).join('\n')).toContain('核心内部读取框架配置')
+  })
+
+  it('子模块扩展名不会隐藏重命名的原始类型', async () => {
+    expect((await audit({
+      'types/index.ts': 'export interface InternalUserDefinedOptions {}',
+      'nested/index.cts': "export type { InternalUserDefinedOptions as Options } from '../types'",
+      'compiler/request.ts': "import type { Options } from '../nested'; export interface Request { options: Options }",
+    })).join('\n')).toContain('核心内部读取框架配置')
   })
 
   it('核心不得通过桥接模块重新调用兼容解析', async () => {

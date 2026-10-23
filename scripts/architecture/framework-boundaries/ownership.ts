@@ -24,6 +24,7 @@ const sharedModules: ModuleOwnership[] = [
   ...['environment', 'environment-snapshot', 'resolve', 'types'].map(name => ({ package: 'weapp-tailwindcss' as const, path: ['framework-policies', `${name}.ts`], owner: undefined })),
   ...['index', 'shared'].map(name => ({ package: 'weapp-tailwindcss' as const, path: ['presets', `${name}.ts`], owner: undefined })),
   ...['vite', 'webpack'].flatMap(bundler => ['generic', 'runtime', 'options', 'plugins'].map(name => ({ package: 'weapp-tailwindcss' as const, path: ['style-injector', bundler, `${name}.ts`], owner: undefined }))),
+  { package: 'weapp-tailwindcss', path: ['style-injector', 'vite', 'descriptor.ts'], owner: undefined },
   ...['index', 'core', 'preset-resolution', 'subpackage', 'subpackage-resolution', 'types', 'utils', 'vite', 'webpack'].map(name => ({ package: 'weapp-style-injector' as const, path: [`${name}.ts`], owner: undefined })),
 ]
 

@@ -58,7 +58,7 @@ export function auditFrameworkBoundariesDetailed(root: string, graph: Graph, reg
   }
   const selectionEntries = new Set([
     ...assemblyEdges.keys(),
-    ...compatibilityEdges.keys(),
+    ...edges.filter(edge => edge.selectsFramework).map(edge => edge.from),
     path.join(source, 'framework-policies', 'environment.ts'),
     path.join(source, 'framework', 'catalog.ts'),
   ])

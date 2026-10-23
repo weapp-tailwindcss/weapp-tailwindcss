@@ -6,6 +6,7 @@ export interface FrameworkBoundaryEdge {
   readonly to: string
   readonly kind: 'assembly' | 'compatibility'
   readonly entryOnly?: boolean
+  readonly selectsFramework?: boolean
   readonly reason: string
   readonly replacement: string
 }
@@ -16,7 +17,7 @@ export function createFrameworkBoundaryEdges(root: string, registration: Framewo
   const injector = (...parts: string[]) => path.join(root, 'packages', 'weapp-style-injector', 'src', ...parts)
   const edges: FrameworkBoundaryEdge[] = []
   const assemble = (from: string, to: string, reason = '公开入口或框架注册表选择已登记的实现') => edges.push({ from, to, kind: 'assembly', reason, replacement: '内部消费者使用中立契约或所选框架的局部入口' })
-  const compatible = (from: string, to: string, reason: string, replacement: string) => edges.push({ from, to, kind: 'compatibility', reason, replacement })
+  const compatible = (from: string, to: string, reason: string, replacement: string, selectsFramework = false) => edges.push({ from, to, kind: 'compatibility', reason, replacement, selectsFramework })
 
   for (const [from, to] of [
     [['core', 'compiler', 'index.ts'], ['context', 'compiler.ts']],
@@ -33,9 +34,9 @@ export function createFrameworkBoundaryEdges(root: string, registration: Framewo
     ['runtime-branch', 'generator-target-env.ts'],
     ['runtime-branch', 'platform.ts'],
   ]) {
-    compatible(main(...parts), main('framework-policies', 'resolve.ts'), '旧公开归一化调用保持参数与返回形状', '内部编译只消费 ResolvedCompilationProfile')
+    compatible(main(...parts), main('framework-policies', 'resolve.ts'), '旧公开归一化调用保持参数与返回形状', '内部编译只消费 ResolvedCompilationProfile', true)
   }
-  compatible(main('bundlers', 'framework-selector.ts'), main('uni-app-x', 'options.ts'), '公开 uniAppX 配置参与既有框架选择优先级', '构建器内部消费所选框架能力')
+  compatible(main('bundlers', 'framework-selector.ts'), main('uni-app-x', 'options.ts'), '公开 uniAppX 配置参与既有框架选择优先级', '构建器内部消费所选框架能力', true)
 
   for (const name of Object.keys(registration.frameworks)) {
     assemble(main('framework-policies', 'resolve.ts'), main('framework-policies', `${name}.ts`))
@@ -44,10 +45,15 @@ export function createFrameworkBoundaryEdges(root: string, registration: Framewo
     const entry = bundler === 'webpack' ? main('bundlers', bundler, 'frameworks', 'index.ts') : main('bundlers', bundler, 'index.ts')
     for (const name of names) {
       assemble(entry, main('bundlers', bundler, 'frameworks', name, 'index.ts'))
+      if (bundler === 'vite') {
+        assemble(entry, main('bundlers', bundler, 'frameworks', name, 'plugin-descriptors.ts'), '构建器组装入口读取框架自有静态插件描述')
+      }
     }
   }
   assemble(main('bundlers', 'vite', 'index.ts'), main('bundlers', 'vite', 'frameworks', 'generic', 'web.ts'))
+  assemble(main('bundlers', 'vite', 'index.ts'), main('bundlers', 'vite', 'frameworks', 'generic', 'web-plugin-descriptors.ts'))
   assemble(main('vite-web.ts'), main('bundlers', 'vite', 'frameworks', 'generic', 'web.ts'))
+  assemble(main('vite-web.ts'), main('bundlers', 'vite', 'index.ts'))
   assemble(main('bundlers', 'webpack', 'BaseUnifiedPlugin', 'v5.ts'), main('bundlers', 'webpack', 'frameworks', 'index.ts'))
   assemble(main('bundlers', 'webpack', 'index.ts'), main('bundlers', 'webpack', 'BaseUnifiedPlugin', 'v5.ts'))
   assemble(main('bundlers', 'rspack', 'index.ts'), main('bundlers', 'webpack', 'index.ts'))

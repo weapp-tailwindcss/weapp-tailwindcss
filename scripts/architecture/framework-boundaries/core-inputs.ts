@@ -19,8 +19,9 @@ function createRawTypeResolver(source: string, graph: Graph, asts: Map<string, t
     if (!base) {
       return undefined
     }
-    const withoutExtension = base.replace(/\.[cm]?js$/, '')
-    return [base, `${withoutExtension}.ts`, `${withoutExtension}.mts`, path.join(base, 'index.ts')].find(candidate => graph.has(candidate))
+    const withoutExtension = base.replace(/\.[cm]?jsx?$/, '')
+    const extensions = ['.ts', '.mts', '.cts', '.tsx', '.js', '.mjs', '.cjs', '.jsx']
+    return [base, ...extensions.map(extension => `${withoutExtension}${extension}`), ...extensions.map(extension => path.join(base, `index${extension}`))].find(candidate => graph.has(candidate))
   }
   const cache = new Map<string, boolean>()
   function resolve(file: string, name: string, visited = new Set<string>()): boolean {
@@ -44,6 +45,9 @@ function createRawTypeResolver(source: string, graph: Graph, asts: Map<string, t
         return true
       }
       if (ts.isExpressionWithTypeArguments(node) && ts.isIdentifier(node.expression) && resolve(file, node.expression.text, next)) {
+        return true
+      }
+      if (ts.isImportTypeNode(node) && resolveImportType(file, node, next)) {
         return true
       }
       return ts.forEachChild(node, child => referencesRaw(child) || undefined) === true
@@ -97,7 +101,14 @@ function createRawTypeResolver(source: string, graph: Graph, asts: Map<string, t
     }
     return false
   }
-  return { resolve, resolveName }
+  function resolveImportType(file: string, node: ts.ImportTypeNode, visited?: Set<string>): boolean {
+    if (!ts.isLiteralTypeNode(node.argument) || !ts.isStringLiteral(node.argument.literal) || !node.qualifier || !ts.isIdentifier(node.qualifier)) {
+      return false
+    }
+    const target = localTarget(file, node.argument.literal.text)
+    return rawConfigurationTypes.has(node.qualifier.text) || (target !== undefined && resolve(target, node.qualifier.text, visited))
+  }
+  return { resolve, resolveName, resolveImportType }
 }
 
 export function auditCoreFrameworkInputs(root: string, graph: Graph): string[] {
@@ -106,6 +117,7 @@ export function auditCoreFrameworkInputs(root: string, graph: Graph): string[] {
   const asts = new Map([...graph.keys()].filter(file => inside(source, file)).map(file => [file, ts.createSourceFile(file, fs.readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true)]))
   const types = createRawTypeResolver(source, graph, asts)
   const errors = new Set<string>()
+  const reportedEdges = new Set<string>()
   const publicExports = new Map<string, Set<string>>()
   for (const edge of createFrameworkBoundaryEdges(root, defaultFrameworkBoundaryRegistration).filter(edge => edge.entryOnly)) {
     const targets = publicExports.get(edge.from) ?? new Set<string>()
@@ -130,6 +142,9 @@ export function auditCoreFrameworkInputs(root: string, graph: Graph): string[] {
       if (ts.isImportSpecifier(node) && types.resolve(file, node.name.text)) {
         report(node, node.name.text)
       }
+      if (ts.isImportTypeNode(node) && types.resolveImportType(file, node)) {
+        report(node, node.getText(ast))
+      }
       if (ts.isPropertyAccessExpression(node) && frameworkProperties.has(node.name.text)) {
         report(node, node.name.text)
       }
@@ -143,8 +158,14 @@ export function auditCoreFrameworkInputs(root: string, graph: Graph): string[] {
       if (ts.isElementAccessExpression(node) && node.argumentExpression && ts.isStringLiteralLike(node.argumentExpression) && frameworkProperties.has(node.argumentExpression.text)) {
         report(node, node.argumentExpression.text)
       }
-      if (ts.isPropertySignature(node) && (ts.isIdentifier(node.name) || ts.isStringLiteralLike(node.name)) && frameworkProperties.has(node.name.text)) {
+      if ((ts.isPropertySignature(node) || ts.isPropertyAssignment(node)) && (ts.isIdentifier(node.name) || ts.isStringLiteralLike(node.name)) && frameworkProperties.has(node.name.text)) {
         report(node, node.name.text)
+      }
+      if (ts.isBindingElement(node)) {
+        const name = node.propertyName ?? node.name
+        if ((ts.isIdentifier(name) || ts.isStringLiteralLike(name)) && frameworkProperties.has(name.text)) {
+          report(node, name.text)
+        }
       }
       ts.forEachChild(node, visit)
     }
@@ -153,7 +174,11 @@ export function auditCoreFrameworkInputs(root: string, graph: Graph): string[] {
     const effectiveGraph = allowed ? new Map(graph).set(file, new Set([...graph.get(file) ?? []].filter(target => !allowed.has(target)))) : graph
     const chain = findPath(effectiveGraph, file, forbidden)
     if (chain) {
-      errors.add(`核心内部引用兼容解析：${chain.map(item => path.relative(root, item)).join(' -> ')}`)
+      const lastEdge = chain.slice(-2).join(' -> ')
+      if (!reportedEdges.has(lastEdge)) {
+        reportedEdges.add(lastEdge)
+        errors.add(`核心内部引用兼容解析：${chain.map(item => path.relative(root, item)).join(' -> ')}`)
+      }
     }
   }
   return [...errors]

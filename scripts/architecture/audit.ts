@@ -7,6 +7,7 @@ import ts from 'typescript'
 import { auditClientBoundaries } from './client-boundaries'
 import { auditCssCompat } from './css-compat'
 import { auditFrameworkBoundariesDetailed } from './framework-boundaries'
+import { auditCoreFrameworkInputs } from './framework-boundaries/core-inputs'
 import { findCycles, findPath } from './graph'
 import { readImports } from './imports'
 import { inside, readWorkspace, resolveWorkspaceEntry } from './workspace'
@@ -114,6 +115,6 @@ export function auditArchitecture(root: string, options: { frameworks?: Framewor
     }
   }
   const frameworkAudit = auditFrameworkBoundariesDetailed(root, all, options.frameworks)
-  errors.push(...auditClientBoundaries(root, packages, values), ...auditCssCompat(root), ...frameworkAudit.errors)
+  errors.push(...auditClientBoundaries(root, packages, values), ...auditCssCompat(root), ...frameworkAudit.errors, ...auditCoreFrameworkInputs(root, all))
   return { errors, files: files.size, packages: packages.length, frameworkExceptions: frameworkAudit.exceptions }
 }
