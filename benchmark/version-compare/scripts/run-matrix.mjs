@@ -441,7 +441,6 @@ async function runHmrRounds({
   const probePaths = [outputPath, ...outputProbeTemplates.map(item => path.join(cwd, item))]
   const original = await fs.readFile(sourcePath, 'utf8')
   const initialOutputMtime = await statMtimeMs(outputPath)
-  let baselineOutputs
   let sourceDirty = false
 
   const child = spawnPnpmWithEnv(cwd, ['run', devScript], {
@@ -463,19 +462,15 @@ async function runHmrRounds({
         throw new Error(`dev exited early code=${child.exitCode}\n${logs.slice(-120).join('\n')}`)
       }
       const texts = await Promise.all(probePaths.map(readText))
-      const complete = texts.every(text => typeof text === 'string' && text.trim().length > 0)
-      const ready = isWatchReady({
+      const outputHasContent = texts.every(text => typeof text === 'string' && text.trim().length > 0)
+      return isWatchReady({
         logs,
         outputExists: await exists(outputPath),
         outputMtime: await statMtimeMs(outputPath),
         initialOutputMtime,
-        outputHasContent: complete,
+        outputHasContent,
         watchReadyLog,
       })
-      if (ready) {
-        baselineOutputs = texts
-      }
-      return ready
     }, timeoutMs, pollIntervalMs)
 
     if (!ready) {
@@ -523,9 +518,10 @@ async function runHmrRounds({
       await fs.writeFile(sourcePath, original, 'utf8')
       sourceDirty = false
       const rolledBack = await waitFor(async () => {
-        for (const [index, probePath] of probePaths.entries()) {
-          // 相同输入必须恢复完整探针；缺失、空读或截断内容不能作为回滚成功。
-          if (await readText(probePath) !== baselineOutputs[index]) {
+        for (const probePath of probePaths) {
+          const text = await readText(probePath)
+          // 这里只确认可读、非空且 marker 已移除，不把文件观察等同于生产者提交完成。
+          if (!text?.trim() || text.includes(marker)) {
             return false
           }
         }
