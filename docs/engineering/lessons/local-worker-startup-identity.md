@@ -3,6 +3,7 @@ status: partial
 issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1316
 baseline: a763888caff3c66d59fe6bcc391c1fbf45093af5
 regressions:
+  - packages/weapp-tailwindcss/test/ci/local-worker-workflow.test.ts
   - website/scripts/local-worker/launch-gate.test.ts
   - website/scripts/local-worker/launch-gate-options.test.ts
   - website/scripts/local-worker/command.test.ts
@@ -43,6 +44,11 @@ pnpm --filter @weapp-tailwindcss/website exec vitest run scripts/local-worker/la
 ```
 
 真实 Playwright local/default `--list` 和首错退出回归均通过；测试内部故意产生的 `expect(false).toBe(true)` 是验证首错调度的输入，不是 Vitest 失败。`pnpm agents:check` 检查 68 条规则、387 份文档、1066 个命令，0 错误。真实 Windows 执行仍由本次新提交的 CI 验证；本机模拟平台与参数用例不能替代 Windows runner。
+
+
+最后的覆盖核对发现，既有 PR Gate 全量单测只运行在 Ubuntu，原 Windows job 不包含网站脚本，所以此前 CI 全绿不能证明新握手在 Windows 上通过。整合提交 `51a7e5c8b343aa90d27667ea2e6c3b52cc7b657c` 复用平台工具矩阵，在 Windows Node 22/24、Ubuntu/macOS Node 24 执行完整六文件；显式 Bash `pipefail` 保留真实退出码，始终上传各系统与 Node 版本的日志、JSON。原 required 汇总继续要求该 job 成功，网站代码单独变更也会触发。
+
+新增工作流契约及既有 scope、取消、release trigger 回归共 5 文件、72 项，在实现工作树和主工作树均通过；命令为 `pnpm --filter weapp-tailwindcss exec vitest run test/ci/local-worker-workflow.test.ts test/ci/workflows.test.ts test/ci/workflow-gate-cancellation.test.ts test/ci/release-trigger-workflow.test.ts test/ci/pr-scope.test.ts --update=none --maxWorkers=1`。YAML 与测试 ESLint、diff 和独立审查通过。这些结构回归保证入口与失败传播存在，真实跨平台执行结果仍须等待新 head 的 CI，不能以静态检查替代。
 
 ## 适用边界
 
