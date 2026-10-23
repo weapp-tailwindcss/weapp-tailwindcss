@@ -1,17 +1,8 @@
 import type { OutputBundle } from 'rollup'
 import type { ResolvedConfig } from 'vite'
-import type { getCompilerContext } from '@/context'
 import type { normalizeWeappTailwindcssGeneratorOptions } from '@/generator'
 import type { resolveGeneratorRuntimeBranch } from '@/runtime-branch'
 import type { CreateJsHandlerOptions, InternalUserDefinedOptions } from '@/types'
-
-export interface ViteFrameworkExtraPluginPlatform {
-  isIosPlatform?: boolean | undefined
-}
-
-export interface ViteFrameworkRuntimeFeatureContext {
-  uniAppX: ReturnType<typeof getCompilerContext>['uniAppX']
-}
 
 export interface ViteFrameworkCssPipelineContext {
   bundle?: OutputBundle | undefined

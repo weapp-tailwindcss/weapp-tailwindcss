@@ -1,5 +1,6 @@
 import type { OutputAsset, OutputChunk } from 'rollup'
 import type { BundleBuildState, BundleSnapshot } from '../../bundle-state'
+import type { ViteFrameworkAssetPipelineStrategy } from '../../shared/framework-asset-strategy'
 import type { ViteFrameworkCssPipelineContext, ViteFrameworkCssPipelineStrategy } from '../../shared/framework-strategy'
 import type { BundleMetrics } from '../metrics'
 import type { GenerateBundleContext, PendingRememberedCssReplayUpdate } from '../types'
@@ -21,6 +22,7 @@ export interface FinalizeGenerateBundleOptions {
   cache: GenerateBundleContext['opts']['cache']
   cssTaskFactories: Array<() => Promise<void>>
   cssPipelineStrategy?: ViteFrameworkCssPipelineStrategy | undefined
+  assetPipelineStrategy?: ViteFrameworkAssetPipelineStrategy | undefined
   createCssPipelineContext?: ((file: string) => ViteFrameworkCssPipelineContext) | undefined
   debug: GenerateBundleContext['debug']
   defaultStyleOutputExtension: string

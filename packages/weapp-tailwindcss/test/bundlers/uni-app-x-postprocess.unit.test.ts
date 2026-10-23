@@ -1,6 +1,6 @@
 import type { OutputAsset } from 'rollup'
 import { describe, expect, it, vi } from 'vitest'
-import { handleUniAppXPostCssTasks } from '@/bundlers/vite/generate-bundle/uni-app-x-postprocess'
+import { handleUniAppXPostCssTasks } from '@/bundlers/vite/frameworks/uni-app-x/postprocess'
 
 function asset(fileName: string, source: string): OutputAsset {
   return {
@@ -16,23 +16,13 @@ function createOptions(overrides: Partial<Parameters<typeof handleUniAppXPostCss
   return {
     bundle: {},
     debug: vi.fn(),
-    generatorRuntime: new Set<string>(),
+    enabled: false,
+    generateCss: vi.fn(async () => undefined),
     getCssHandlerOptions: vi.fn(() => ({ isMainChunk: false })),
-    getSourceCandidateSourcesForEntries: vi.fn(() => new Map()),
-    getSourceCandidatesForEntries: vi.fn(() => new Set()),
-    getViteProcessedCssAssetResults: vi.fn(() => []),
+    getProcessedCssSources: vi.fn(() => []),
     isHarmonyAppStyleTarget: false,
     isNativeAppStyleTarget: false,
     onUpdate: vi.fn(),
-    opts: {
-      appType: 'native',
-      styleHandler: vi.fn(async (source: string) => ({ css: source })),
-    },
-    runtimeState: {
-      tailwindRuntime: { majorVersion: 4 },
-      readyPromise: Promise.resolve(),
-    },
-    styleHandler: vi.fn(async (source: string) => ({ css: source })),
     ...overrides,
   } as Parameters<typeof handleUniAppXPostCssTasks>[0]
 }
@@ -45,9 +35,7 @@ describe('bundlers/vite uni-app-x post css tasks', () => {
 
     const sources = await handleUniAppXPostCssTasks(createOptions({
       bundle,
-      opts: {
-        appType: 'native',
-      } as any,
+      enabled: false,
     }))
 
     expect(sources.join('\n')).toContain('@apply flex')
@@ -71,14 +59,10 @@ describe('bundlers/vite uni-app-x post css tasks', () => {
       getCssHandlerOptions: vi.fn(file => ({
         isMainChunk: file === 'styles/root.css',
       })),
-      getViteProcessedCssAssetResults: () => new Map([
-        ['app.css', '.generated{color:blue}'],
-      ]),
+      getProcessedCssSources: () => ['.generated{color:blue}'],
       isHarmonyAppStyleTarget: true,
       onUpdate,
-      opts: {
-        appType: 'uni-app-x',
-      } as any,
+      enabled: true,
     }))
 
     expect(bundle['assets/root-hash.css']).toBe(mainCssAsset)

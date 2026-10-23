@@ -2,8 +2,9 @@ import type { ViteFrameworkCssPipelineStrategy } from '../../shared/framework-st
 import type { InternalUserDefinedOptions, UserDefinedOptions } from '@/types'
 import path from 'node:path'
 import { transformWebCssSafeSelectors } from '@weapp-tailwindcss/postcss/transform'
-import { viteStyleInjectorDelegates } from '@/style-injector/internal'
+import { createUniAppViteStyleInjector } from '@/style-injector/vite/uni-app'
 import { createViteFrameworkPlugins } from '../../shared/create-framework-plugins'
+import { uniViteRuntimeStrategy } from '../shared/uni/runtime-strategy'
 
 function isUniAppWebviewStylePlatform(platform: string | undefined) {
   return platform === 'app' || platform === 'app-plus'
@@ -99,8 +100,9 @@ export const uniAppCssPipelineStrategy: ViteFrameworkCssPipelineStrategy = {
 export function createUniAppVitePlugins(options: UserDefinedOptions | InternalUserDefinedOptions = {}) {
   return createViteFrameworkPlugins(options, {
     frameworkName: 'uni-app',
+    runtimeStrategy: uniViteRuntimeStrategy,
     adaptWatchCssBeforeFrameworkCache: true,
     cssPipelineStrategy: uniAppCssPipelineStrategy,
-    styleInjectorDelegate: viteStyleInjectorDelegates.uniApp,
+    styleInjectorDelegate: createUniAppViteStyleInjector,
   })
 }

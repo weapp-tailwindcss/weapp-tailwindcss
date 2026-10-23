@@ -3,6 +3,7 @@ import type { ResolvedConfig } from 'vite'
 import type { HmrTimingRecorder } from '../../shared/hmr-timing'
 import type { BundleSnapshot } from '../bundle-state'
 import type { ViteCssAssetIdentity } from '../css-asset-identity'
+import type { ViteFrameworkAssetPipelineStrategy } from '../shared/framework-asset-strategy'
 import type { ViteFrameworkCssPipelineStrategy } from '../shared/framework-strategy'
 import type { SourceCandidateFilterOptions } from '../source-candidates'
 import type { TailwindSourceEntry } from '@/tailwindcss/source-scan'
@@ -62,6 +63,7 @@ export interface GenerateBundleContext {
   getViteCssCacheStats?: () => Record<string, unknown>
   hmrTimingRecorder?: HmrTimingRecorder
   cssPipelineStrategy?: ViteFrameworkCssPipelineStrategy | undefined
+  assetPipelineStrategy?: ViteFrameworkAssetPipelineStrategy | undefined
   frameworkRootImportShellTargetByFile?: Map<string, string> | undefined
 }
 

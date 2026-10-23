@@ -2,7 +2,7 @@ import type { Plugin } from 'vite'
 import type { ViteFrameworkCssPipelineStrategy } from '../../shared/framework-strategy'
 import type { InternalUserDefinedOptions, UserDefinedOptions } from '@/types'
 import process from 'node:process'
-import { viteStyleInjectorDelegates } from '@/style-injector/internal'
+import { createTaroViteStyleInjector } from '@/style-injector/vite/taro'
 import { createReplayCssAsset } from '../../generate-bundle/rollup-assets'
 import { createViteFrameworkPlugins } from '../../shared/create-framework-plugins'
 
@@ -36,7 +36,7 @@ export function createTaroVitePlugins(options: UserDefinedOptions | InternalUser
   const plugins = createViteFrameworkPlugins(options, {
     frameworkName: 'taro',
     cssPipelineStrategy: taroCssPipelineStrategy,
-    styleInjectorDelegate: viteStyleInjectorDelegates.taro,
+    styleInjectorDelegate: createTaroViteStyleInjector,
   })
   if (!plugins) {
     return undefined

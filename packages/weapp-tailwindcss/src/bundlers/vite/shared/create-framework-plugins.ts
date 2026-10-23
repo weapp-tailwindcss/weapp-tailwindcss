@@ -1,11 +1,12 @@
 import type { HmrContext, Plugin, ResolvedConfig } from 'vite'
 import type { ViteFrameworkName } from '../../framework-selector'
-import type { createViteRuntimeClassSet } from '../runtime-class-set'
+import type { ViteFrameworkAssetPipelineStrategy } from './framework-asset-strategy'
 import type { ViteHmrCssModuleVersionTracker } from './framework-hmr-module-version'
-import type { ViteFrameworkCssPipelineStrategy, ViteFrameworkExtraPluginPlatform, ViteFrameworkRuntimeFeatureContext } from './framework-strategy'
+import type { ViteFrameworkRuntimeStrategy } from './framework-runtime-strategy'
+import type { ViteFrameworkCssPipelineStrategy } from './framework-strategy'
 import type { getCompilerContext } from '@/context'
 import type { toCustomAttributesEntities } from '@/context/custom-attributes'
-import type { ViteStyleInjectorDelegateFactory } from '@/style-injector/internal'
+import type { ViteStyleInjectorDelegateFactory } from '@/style-injector/types'
 import type { InternalUserDefinedOptions, UserDefinedOptions } from '@/types'
 import {
   createViteSourceOutputRelationOwner,
@@ -20,12 +21,13 @@ export interface WeappTailwindcssVitePlugin {
 
 export interface ViteFrameworkBranchContext {
   frameworkName: ViteFrameworkName
+  createAssetPipeline?: (options: Readonly<UserDefinedOptions>) => ViteFrameworkAssetPipelineStrategy
+  runtimeStrategy?: ViteFrameworkRuntimeStrategy
   adaptWatchCssBeforeFrameworkCache?: boolean
   createExtraPlugins?: (context: ViteFrameworkExtraPluginContext) => Plugin[]
   cssPipelineStrategy?: ViteFrameworkCssPipelineStrategy
-  getExtraPluginPlatform?: () => ViteFrameworkExtraPluginPlatform
   styleInjectorDelegate: ViteStyleInjectorDelegateFactory
-  isRuntimeClassSetFeatureEnabled?: (context: ViteFrameworkRuntimeFeatureContext) => boolean
+  isRuntimeClassSetFeatureEnabled?: () => boolean
   sourceCandidatesBeforeExtraPlugin?: (plugin: Plugin) => boolean
 }
 
@@ -39,17 +41,15 @@ export interface ViteFrameworkExtraPluginContext {
   getResolvedConfig: () => ResolvedConfig | undefined
   hmrCssModuleVersions: ViteHmrCssModuleVersionTracker
   isEnabled: () => boolean
-  isIosPlatform: boolean
   isNativeAppStyleTarget: () => boolean
   isWebGeneratorTarget: () => boolean
   jsHandler: ReturnType<typeof getCompilerContext>['jsHandler']
   mainCssChunkMatcher: ReturnType<typeof getCompilerContext>['mainCssChunkMatcher']
   registerModuleGraphCandidates: (id: string, source: string) => Promise<Set<string>>
-  runtimeState: ReturnType<typeof createViteRuntimeClassSet>['runtimeState']
+  waitForRuntimeReady: () => Promise<unknown>
   styleHandler: ReturnType<typeof getCompilerContext>['styleHandler']
   syncSourceCandidatesForHotUpdate: (ctx: HmrContext) => Promise<void>
-  tailwindRootCssModuleIds: Set<string>
-  uniAppX: ReturnType<typeof getCompilerContext>['uniAppX']
+  tailwindRootCssModuleIds: ReadonlySet<string>
   viteProcessedCssSourceFiles: Iterable<string>
   webCssEntryDiagnostics: {
     dispose: () => void

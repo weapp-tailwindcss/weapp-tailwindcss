@@ -23,7 +23,7 @@ export function createFrameworkSourceCandidatesPlugin(options: any, apply?: Plug
   const hasTemplateHotSourceModule = (modules: Array<{ id?: string | null, url?: string | null }>) => modules.some((mod) => {
     const request = mod.url ?? mod.id
     return typeof request === 'string'
-      && /\.(?:uvue|nvue)(?:\?import)?$/i.test(request)
+      && options.isTemplateHotSourceModule?.(request) === true
   })
   const sendSupplementalSourceHotUpdates = (ctx: any, modules: ModuleNode[]) => {
     const root = ctx.server.config?.root ?? process.cwd()
@@ -237,7 +237,7 @@ export function createFrameworkSourceCandidatesPlugin(options: any, apply?: Plug
             ? await resolveHotSourceModules(ctx)
             : ctx.modules
           if (isWebLikeHotUpdate && isSourceCandidateHotUpdate && !isSourceStyleRequest(ctx.file)) {
-            if (!/\.(?:uvue|nvue)$/i.test(cleanUrl(ctx.file))) {
+            if (options.isTemplateHotSource?.(ctx.file) !== true) {
               sendSupplementalSourceHotUpdates(ctx, sourceModules)
             }
             if (sourceModules.some((mod) => {
@@ -259,7 +259,7 @@ export function createFrameworkSourceCandidatesPlugin(options: any, apply?: Plug
             && !isWebLikeHotUpdate
             && (
               (!hasSelfAcceptingNonStyleHotModule(sourceModules) && cssModules.length === 0)
-              || (cssModules.length > 0 && options.isUniViteProject())
+              || (cssModules.length > 0 && options.requiresCssHotReload?.() === true)
             )
           ) {
             sendFullReloadForUnresolvedHotUpdate(ctx)
@@ -278,7 +278,7 @@ export function createFrameworkSourceCandidatesPlugin(options: any, apply?: Plug
             isWebLikeHotUpdate
             && isSourceCandidateHotUpdate
             && !isSourceStyleRequest(ctx.file)
-            && /\.(?:uvue|nvue)$/i.test(cleanUrl(ctx.file))
+            && options.isTemplateHotSource?.(ctx.file) === true
             && !hasTemplateHotSourceModule(sourceModules)
           ) {
             sendFullReloadForUnresolvedHotUpdate(ctx)

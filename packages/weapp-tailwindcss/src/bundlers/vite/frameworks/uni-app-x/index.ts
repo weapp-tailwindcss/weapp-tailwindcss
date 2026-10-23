@@ -1,7 +1,7 @@
 import type { ViteFrameworkCssPipelineStrategy } from '../../shared/framework-strategy'
 import type { InternalUserDefinedOptions, UserDefinedOptions } from '@/types'
 import { hasTailwindApplyDirective, hasTailwindRootDirectives } from '@/generation/directives'
-import { viteStyleInjectorDelegates } from '@/style-injector/internal'
+import { createUniViteStyleInjector } from '@/style-injector/vite/uni'
 import { hoistUniAppXBorderPreflight } from '@/uni-app-x/border-preflight'
 import { isUniAppXHarmonyOutDir, isUniAppXNativeAppOutDir } from '@/uni-app-x/harmony'
 import { isUniAppXHarmonyBundle } from '@/uni-app-x/style-asset'
@@ -11,6 +11,9 @@ import { withUniAppXWebPreflightReset } from '@/uni-app-x/web-preflight-reset'
 import { resolveUniUtsPlatform } from '@/utils'
 import { createViteFrameworkPlugins } from '../../shared/create-framework-plugins'
 import { resolveUniAppXNativeCssHandlerOptions } from '../../uni-app-x-css-options'
+import { cleanUrl } from '../../utils'
+import { uniViteRuntimeStrategy } from '../shared/uni/runtime-strategy'
+import { createUniAppXAssetPipeline } from './asset-pipeline'
 
 function isUniAppXNativeAppStyleTarget(context?: Parameters<NonNullable<ViteFrameworkCssPipelineStrategy['isNativeAppStyleTarget']>>[0]) {
   const stylePlatform = context?.resolveStylePlatform?.()
@@ -86,12 +89,15 @@ export const uniAppXCssPipelineStrategy: ViteFrameworkCssPipelineStrategy = {
 export function createUniAppXVitePlugins(options: UserDefinedOptions | InternalUserDefinedOptions = {}) {
   return createViteFrameworkPlugins(options, {
     frameworkName: 'uni-app-x',
+    createAssetPipeline: createUniAppXAssetPipeline,
+    runtimeStrategy: {
+      ...uniViteRuntimeStrategy,
+      invalidateBeforeTransform: true,
+      isRuntimeAffectingSource: (file, isWeb) => !isWeb && /\.(?:uvue|nvue)$/i.test(cleanUrl(file)),
+    },
     adaptWatchCssBeforeFrameworkCache: true,
     cssPipelineStrategy: uniAppXCssPipelineStrategy,
-    getExtraPluginPlatform: () => ({
-      isIosPlatform: resolveUniUtsPlatform().isAppIos,
-    }),
-    styleInjectorDelegate: viteStyleInjectorDelegates.uniApp,
+    styleInjectorDelegate: createUniViteStyleInjector,
     isRuntimeClassSetFeatureEnabled: () => true,
     sourceCandidatesBeforeExtraPlugin: plugin => plugin.name === 'weapp-tailwindcss:uni-app-x:nvue',
     createExtraPlugins: context => createUniAppXPlugins({
@@ -105,17 +111,17 @@ export function createUniAppXVitePlugins(options: UserDefinedOptions | InternalU
       getResolvedConfig: context.getResolvedConfig,
       hmrCssModuleVersions: context.hmrCssModuleVersions,
       isEnabled: context.isEnabled,
-      isIosPlatform: context.isIosPlatform,
+      isIosPlatform: resolveUniUtsPlatform().isAppIos,
       isNativeAppStyleTarget: context.isNativeAppStyleTarget,
       isWebGeneratorTarget: context.isWebGeneratorTarget,
       jsHandler: context.jsHandler,
       mainCssChunkMatcher: context.mainCssChunkMatcher,
       registerModuleGraphCandidates: context.registerModuleGraphCandidates,
-      runtimeState: context.runtimeState,
+      runtimeState: { get readyPromise() { return context.waitForRuntimeReady() } },
       styleHandler: context.styleHandler,
       syncSourceCandidatesForHotUpdate: context.syncSourceCandidatesForHotUpdate,
       tailwindRootCssModuleIds: context.tailwindRootCssModuleIds,
-      uniAppX: context.uniAppX,
+      ...(options.uniAppX === undefined ? {} : { uniAppX: options.uniAppX }),
       viteProcessedCssSourceFiles: context.viteProcessedCssSourceFiles,
       webCssEntryDiagnostics: context.webCssEntryDiagnostics,
     }),

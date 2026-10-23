@@ -3,7 +3,7 @@ import { createRuntimeClassSetInvalidationPlugin } from './invalidation-plugin'
 
 interface RuntimeClassSetLifecycleOptions {
   plugins: Plugin[]
-  uniAppX: boolean
+  invalidateBeforeTransform: boolean
   invalidate: () => void
   isEnabled: () => boolean
   isRelevant: (id: string) => boolean
@@ -13,7 +13,7 @@ interface RuntimeClassSetLifecycleOptions {
 
 /** 将失效通知放在框架前置钩子之前，释放钩子放在框架插件之后。 */
 export function installRuntimeClassSetLifecycle(options: RuntimeClassSetLifecycleOptions) {
-  if (options.uniAppX) {
+  if (options.invalidateBeforeTransform) {
     options.plugins.unshift(createRuntimeClassSetInvalidationPlugin(options))
   }
   options.plugins.push({

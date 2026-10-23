@@ -1,5 +1,6 @@
 import type { HmrContext, ModuleNode } from 'vite'
 import { describe, expect, it, vi } from 'vitest'
+import { uniViteRuntimeStrategy } from '../../src/bundlers/vite/frameworks/shared/uni/runtime-strategy'
 import { createFrameworkSourceCandidatesPlugin } from '../../src/bundlers/vite/shared/framework-source-candidates-plugin'
 
 function getHandleHotUpdateHandler(plugin: ReturnType<typeof createFrameworkSourceCandidatesPlugin>) {
@@ -72,7 +73,9 @@ describe('Vite source candidate HMR transactions', () => {
       invalidateRecordedGeneratorCandidates: vi.fn(),
       isCurrentWebLikeStylePlatform: () => true,
       isNuxtPageHotModule: () => false,
-      isUniViteProject: () => true,
+      isTemplateHotSource: uniViteRuntimeStrategy.isTemplateHotSource,
+      isTemplateHotSourceModule: uniViteRuntimeStrategy.isTemplateHotSourceModule,
+      requiresCssHotReload: () => true,
       rememberOriginalCssLayerSource: vi.fn(),
       rememberTailwindRootCssModule: vi.fn(),
       refreshTailwindRootCssSource: vi.fn(),
@@ -131,7 +134,9 @@ describe('Vite source candidate HMR transactions', () => {
       invalidateRecordedGeneratorCandidates: vi.fn(),
       isCurrentWebLikeStylePlatform: () => true,
       isNuxtPageHotModule: () => false,
-      isUniViteProject: () => true,
+      isTemplateHotSource: uniViteRuntimeStrategy.isTemplateHotSource,
+      isTemplateHotSourceModule: uniViteRuntimeStrategy.isTemplateHotSourceModule,
+      requiresCssHotReload: () => true,
       rememberOriginalCssLayerSource: vi.fn(),
       rememberTailwindRootCssModule: vi.fn(),
       resolveCurrentGeneratorOptions: () => ({ hmr: { preserveDeletedCss: true } }),
@@ -200,7 +205,9 @@ describe('Vite source candidate HMR transactions', () => {
       invalidateRecordedGeneratorCandidates: vi.fn(),
       isCurrentWebLikeStylePlatform: () => true,
       isNuxtPageHotModule: () => false,
-      isUniViteProject: () => true,
+      isTemplateHotSource: uniViteRuntimeStrategy.isTemplateHotSource,
+      isTemplateHotSourceModule: uniViteRuntimeStrategy.isTemplateHotSourceModule,
+      requiresCssHotReload: () => true,
       rememberOriginalCssLayerSource: vi.fn(),
       rememberTailwindRootCssModule: vi.fn(),
       resolveCurrentGeneratorOptions: () => ({ hmr: { preserveDeletedCss: true } }),
@@ -269,7 +276,7 @@ describe('Vite source candidate HMR transactions', () => {
       invalidateRecordedGeneratorCandidates: vi.fn(),
       isCurrentWebLikeStylePlatform: () => true,
       isNuxtPageHotModule: (id: string) => id.includes('virtual:nuxt:'),
-      isUniViteProject: () => false,
+      requiresCssHotReload: () => false,
       rememberOriginalCssLayerSource: vi.fn(),
       rememberTailwindRootCssModule: vi.fn(),
       resolveCurrentGeneratorOptions: () => ({ hmr: { preserveDeletedCss: true } }),
@@ -341,7 +348,9 @@ describe('Vite source candidate HMR transactions', () => {
       invalidateRecordedGeneratorCandidates: vi.fn(),
       isCurrentWebLikeStylePlatform: () => true,
       isNuxtPageHotModule: () => false,
-      isUniViteProject: () => true,
+      isTemplateHotSource: uniViteRuntimeStrategy.isTemplateHotSource,
+      isTemplateHotSourceModule: uniViteRuntimeStrategy.isTemplateHotSourceModule,
+      requiresCssHotReload: () => true,
       rememberOriginalCssLayerSource: vi.fn(),
       rememberTailwindRootCssModule: vi.fn(),
       resolveCurrentGeneratorOptions: () => ({ hmr: { preserveDeletedCss: true } }),

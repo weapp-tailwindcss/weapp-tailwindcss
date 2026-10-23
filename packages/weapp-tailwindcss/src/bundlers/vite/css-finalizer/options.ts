@@ -3,6 +3,7 @@ import type { OutputAsset, PluginContext } from 'rollup'
 import type { ResolvedConfig } from 'vite'
 import type { HmrTimingRecorder } from '../../shared/hmr-timing'
 import type { ViteCssAssetIdentity } from '../css-asset-identity'
+import type { ViteFrameworkAssetPipelineStrategy } from '../shared/framework-asset-strategy'
 import type { ViteFrameworkCssPipelineContext, ViteFrameworkCssPipelineStrategy } from '../shared/framework-strategy'
 import type { TailwindSourceEntry } from '@/tailwindcss/source-scan'
 import type { InternalUserDefinedOptions } from '@/types'
@@ -30,6 +31,7 @@ export interface CssFinalizerContext {
   }
   ensureRuntimeClassSet: (force?: boolean) => Promise<Set<string>>
   cssPipelineStrategy?: ViteFrameworkCssPipelineStrategy | undefined
+  assetPipelineStrategy?: ViteFrameworkAssetPipelineStrategy | undefined
   isCssAssetProcessed: (asset: OutputAsset, file?: string) => boolean
   markCssAssetProcessed: (asset: OutputAsset, file?: string) => void
   debug: (format: string, ...args: unknown[]) => void
