@@ -91,6 +91,12 @@ Vite 策略分为来源、生成阶段、样式组织和产物处理四组。框
 
 用户授权通知原任务后，原任务已定向清理该孤儿协调锁，保留清理回执；未改动登录态或启动测试。原任务的预检项目仍在 IDE 打开，因原绑定丢失未自动关闭。当前代码已再次调整，仍须重新 prepare 并核对服务状态，不复用上述报告。公开入口加载回归不代表真实 HBuilderX 构建或设备验收通过。
 
+提交 `d6269d23f` 上的两轮新预检（`91c26f36-c8d2-482e-b476-813b8c17d0e6`、`b7de1a44-c177-40ba-bb7a-dfead581c8a7`）均完成七项探针、当前会话 Chrome 原生输入/点击/截图和 verify，微信租约阻塞解除。两轮均由 `pnpm e2e:demo:workflow:local --quality --preflight-report <本轮报告>` 正式领取，失败后释放会话；本任务创建的两个临时 Chrome 标签页均已关闭。
+
+第一轮根构建因独立工作树的示例未安装锁定的 `tailwindcss-patch` 依赖停止。执行 `pnpm install --frozen-lockfile --ignore-scripts` 补齐 97 个 workspace 项目的依赖，没有修改 lockfile；重新 prepare 后，第二轮根构建通过（71 个任务，8 个命中缓存）。随后全量单测为 1018 文件通过、1 文件失败、5 文件跳过；10955 项通过、1 项失败、1 项预期失败、44 项跳过。唯一失败是 JS-only bundle 中新增 CSS 依赖签名造成两次无用哈希；修复将签名计算限制在实际存在 CSS 且开启样式处理时，保留原有三次哈希断言，整个 bundle 回归与源码行数用例共 211 项通过。生成、injector、CSS 决策、重复 build 与 watch 对照另有 44 项通过。
+
+两轮全面流程均未进入设备验收，失败原始日志与内存报告保存在 `.tmp/framework-isolation/local-acceptance/<run-id>/`。Windows watcher 夹具的父目录初始化修复见 [虚拟 watcher 边界复盘](virtual-watch-fixture-boundary.md)。当前 head 的 Taro Vite 与 uni-app Vite 远端性能任务尚有失败，必须保留原预算完成归因和复验，不能以定向行为通过代替性能验收。
+
 ## 适用边界
 
 继续统一发布，包名、公开配置、导入路径和支持组合兼容。Rspack 复用 Webpack，Gulp 保留 native；目录隔离不增加支持组合。env 提供事实，engine 生成 Tailwind，postcss 转换 CSS，这些能力不复制到框架。只有独立依赖、维护负责人或发布周期出现实际需要时再考虑拆 npm 包。

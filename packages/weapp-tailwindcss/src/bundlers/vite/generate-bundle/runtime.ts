@@ -159,7 +159,6 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
     currentOutDir = outDir
     const snapshotStart = performance.now()
     const snapshot = buildBundleSnapshot(bundle, opts, outDir, state, envFlags.disableDirtyOptimization || !useIncrementalMode, { hasOmittedKnownFiles })
-    const linkedImpactSignature = cache.computeHash(resolveViteCssLinkedImpactSignature({ snapshot, state }))
     const configuredTailwindV4CssSourceEntriesForScope = getConfiguredTailwindV4CssSourceEntries()
     const configuredCssRootResolvers = createConfiguredCssRootResolvers({
       bundle,
@@ -225,6 +224,7 @@ function createGenerateBundleHook(context: GenerateBundleContext) {
         : new Set(filteredGeneratorCandidates)
     const generatorRuntime = filteredGeneratorCandidates
     const cssEntries = snapshot.entries.filter((entry): entry is BundleStateEntry & { output: OutputAsset } => entry.type === 'css' && entry.output.type === 'asset')
+    const linkedImpactSignature = processStyles && cssEntries.length > 0 ? cache.computeHash(resolveViteCssLinkedImpactSignature({ snapshot, state })) : ''
     const hasMultipleConfiguredCssEntries = (opts.cssEntries?.length ?? 0) > 1
     await validateRuntimeCandidates({
       cssEntries,
