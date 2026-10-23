@@ -200,7 +200,7 @@ jobs:
   windows-utilities:
     needs: scope
     if: needs.scope.outputs.core == 'true'
-    name: Default utilities (${{ matrix.os }}, Node ${{ matrix.node }})
+    name: Platform utilities and command lifecycle (${{ matrix.os }}, Node ${{ matrix.node }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     strategy:
@@ -224,6 +224,31 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: Build package on this OS
         run: pnpm --filter weapp-tailwindcss... --filter @weapp-tailwindcss/postcss-calc run build
+      - name: Verify local command lifecycle on this OS
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p .tmp/local-worker-ci
+          pnpm --filter @weapp-tailwindcss/website exec vitest run \
+            scripts/local-worker/launch-gate.test.ts \
+            scripts/local-worker/launch-gate-options.test.ts \
+            scripts/local-worker/process-lifecycle.test.ts \
+            scripts/local-worker/windows-lifecycle.test.ts \
+            scripts/local-worker/command.test.ts \
+            scripts/local-worker/server.test.ts \
+            --update=none --maxWorkers=1 \
+            --reporter=default --reporter=json --outputFile.json=../.tmp/local-worker-ci/vitest.json \
+            2>&1 | tee .tmp/local-worker-ci/run.log
+      - name: Upload local command lifecycle diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: local-command-lifecycle-${{ matrix.os }}-node${{ matrix.node }}
+          path: .tmp/local-worker-ci/**
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
+          overwrite: true
       - name: Check CSS import paths and source generation
         run: pnpm --filter weapp-tailwindcss exec vitest run test/tailwindcss/v4-import-paths.test.ts test/tailwindcss/v4-engine.test.ts
       - name: Reproduce published version and verify packed fix
