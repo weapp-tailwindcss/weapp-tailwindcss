@@ -85,6 +85,12 @@ export function resolveContextStylePlatform(context: InternalUserDefinedOptions,
   return normalizeFrameworkStylePlatform(platform, context.appType)
 }
 
+/** 能力查询只解析策略，不创建编译快照或推进配置 revision。 */
 export function resolveContextStylesEmbeddedInScript(context: InternalUserDefinedOptions, platformOverride?: string) {
-  return resolveCompilationProfile(context, context, { platform: platformOverride }).profile.stylesEmbeddedInScript
+  return resolveGeneratorConfiguration(context.generator, {
+    appType: context.appType,
+    platform: platformOverride ?? context.cssOptions?.platform ?? context.platform,
+    tailwindcssMajorVersion: context.tailwindRuntime?.majorVersion,
+    uniAppX: context.uniAppX,
+  }, resolveFrameworkEnvironment(context)).frameworkPolicy.stylesEmbeddedInScript
 }
