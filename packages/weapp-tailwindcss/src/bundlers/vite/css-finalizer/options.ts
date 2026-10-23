@@ -184,7 +184,7 @@ export function finalizeWebCss(
   )
   return cssPipelineStrategy?.generation?.transformGeneratedCss?.(css, extendFrameworkCssContext(context, {
     defaultWebCssCompat,
-    removeScopedPreflight: value => value,
+    removeScopedPreflight: (value: string) => value,
     shouldApplyWebCssCompat,
   })) ?? (shouldApplyWebCssCompat ? defaultWebCssCompat(css) : css)
 }

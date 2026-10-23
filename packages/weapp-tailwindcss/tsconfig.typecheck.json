@@ -8,6 +8,6 @@
   "include": [
     "src/**/*",
     "types/**/*",
-    "type-tests/vite-hooks.test.ts"
+    "type-tests/**/*.test.ts"
   ]
 }

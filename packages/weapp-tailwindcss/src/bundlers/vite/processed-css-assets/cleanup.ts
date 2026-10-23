@@ -93,7 +93,7 @@ export function resolveConfiguredCssEntryRootInjectionTarget(
     return
   }
   const resolvedByStrategy = options.cssPipelineStrategy?.styles?.resolveConfiguredCssEntryRootInjectionTarget?.(extendFrameworkCssContext(context, {
-    isConfiguredCssEntryFile: file => isConfiguredTailwindV4CssEntryFile(opts, file),
+    isConfiguredCssEntryFile: (file: string | undefined) => isConfiguredTailwindV4CssEntryFile(opts, file),
     isMiniProgramStyleOutputFile,
     isRootStyleOutputFile,
     outputFile,

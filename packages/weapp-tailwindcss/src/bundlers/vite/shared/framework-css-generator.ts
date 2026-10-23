@@ -171,7 +171,7 @@ ${previousTracedCss}`
     }
     const finalizedCss = finalizeViteMiniProgramCss(generated.css)
     const shouldApplyWebCssCompat = shouldApplyViteWebCssCompat(cssPipelineContext, frameworkCssPipelineStrategy)
-    const outputCss = frameworkCssPipelineStrategy?.generation?.transformGeneratedCss?.(finalizedCss, extendFrameworkCssContext(cssPipelineContext, { defaultWebCssCompat: css => transformWebCssCompat(css, resolveViteWebCssCompatOptions(cssPipelineContext), { deferPropertyFallback: resolvedConfig?.command === 'build' }), removeScopedPreflight: removeScopedTailwindPreflightCss, shouldApplyWebCssCompat })) ?? removeScopedTailwindPreflightCss(shouldApplyWebCssCompat ? transformWebCssCompat(finalizedCss, resolveViteWebCssCompatOptions(cssPipelineContext), { deferPropertyFallback: resolvedConfig?.command === 'build' }) : finalizedCss)
+    const outputCss = frameworkCssPipelineStrategy?.generation?.transformGeneratedCss?.(finalizedCss, extendFrameworkCssContext(cssPipelineContext, { defaultWebCssCompat: (css: string) => transformWebCssCompat(css, resolveViteWebCssCompatOptions(cssPipelineContext), { deferPropertyFallback: resolvedConfig?.command === 'build' }), removeScopedPreflight: removeScopedTailwindPreflightCss, shouldApplyWebCssCompat })) ?? removeScopedTailwindPreflightCss(shouldApplyWebCssCompat ? transformWebCssCompat(finalizedCss, resolveViteWebCssCompatOptions(cssPipelineContext), { deferPropertyFallback: resolvedConfig?.command === 'build' }) : finalizedCss)
     if (transient) {
       for (const dependency of generated.dependencies) {
         hookContext?.addWatchFile?.(dependency)

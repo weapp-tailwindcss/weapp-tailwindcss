@@ -269,7 +269,7 @@ export function createConfiguredCssRootResolvers(
       }
       return options.cssPipelineStrategy?.styles?.resolveConfiguredCssEntryRootInjectionTarget?.(extendFrameworkCssContext(options.cssPipelineContext, {
         get assets() { return createFrameworkAssetAccess(options.bundle).read() },
-        isConfiguredCssEntryFile: file => typeof file === 'string'
+        isConfiguredCssEntryFile: (file: string | undefined) => typeof file === 'string'
           && explicitFileKeys.has(normalizeEntryFile(file)),
         isMiniProgramStyleOutputFile,
         isRootStyleOutputFile,

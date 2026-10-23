@@ -14,11 +14,11 @@ interface CssContextInput {
   resolveStylePlatform: () => string | undefined
 }
 
-/** 扩展请求上下文时保留惰性资产访问，避免每个来源触发完整 bundle 快照。 */
+/** 保留惰性资产访问；扩展类型仅从实参推断，避免目标类型反向要求重复提供基础字段。 */
 export function extendFrameworkCssContext<Context extends ViteFrameworkCssPipelineContext, Extension extends object>(
   context: Context,
   extension: Extension,
-): Omit<Context, keyof Extension> & Readonly<Extension> {
+): Omit<Context, keyof Extension> & Readonly<NoInfer<Extension>> {
   return Object.freeze(Object.defineProperties({}, {
     ...Object.getOwnPropertyDescriptors(context),
     ...Object.getOwnPropertyDescriptors(extension),
