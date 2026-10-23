@@ -1,61 +1,88 @@
 ---
 status: partial
-issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/tree/fdc3d5856c8dd4b9dbb6417e1206cb9b3cf3d417
+issue: https://github.com/weapp-tailwindcss/weapp-tailwindcss/pull/1316
 baseline: fdc3d5856c8dd4b9dbb6417e1206cb9b3cf3d417
 regressions:
   - packages/weapp-tailwindcss/test/ci/framework-boundaries.test.ts
+  - packages/weapp-tailwindcss/test/ci/framework-core-inputs.test.ts
   - packages/weapp-tailwindcss/test/ci/framework-public-entries.test.ts
-  - packages/weapp-tailwindcss/test/context-framework-isolation.test.ts
-  - packages/weapp-tailwindcss/test/context/framework-environment.integration.test.ts
-  - packages/weapp-tailwindcss/test/framework-policies.test.ts
-  - packages/weapp-tailwindcss/test/bundlers/webpack-framework-isolation.test.ts
-  - packages/weapp-tailwindcss/test/bundlers/style-injector-isolation.test.ts
-  - packages/weapp-tailwindcss/test/bundlers/vite-framework-isolation.unit.test.ts
+  - packages/weapp-tailwindcss/test/context/compilation-profile.test.ts
+  - packages/weapp-tailwindcss/test/compiler/profile-session-regressions.test.ts
+  - packages/weapp-tailwindcss/test/compiler/owner-lifecycle.test.ts
+  - packages/weapp-tailwindcss/test/compiler/core-root-store-cleanup.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/webpack-operation-lifecycle.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/webpack-loader-session.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-framework-extension.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/vite-dispatcher.unit.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/style-injector-watch-parity.test.ts
 ---
 
-# 框架目录不能替代依赖与状态边界
+# 框架目录不能替代配置、状态与生命周期边界
 
 ## 症状
 
-主包已按框架组织适配目录，但共享 Vite 资源处理、样式收尾与 HMR 仍直接操作 uni-app-x 实现，Webpack loader 流程仍包含 Mpx 处理。旧边界用例只检查外层文件的字符串，无法发现子模块、类型引用和聚合导出形成的依赖。
+主包已有框架目录，但共享 Vite 资源处理、样式收尾与 HMR 仍直接操作 uni-app-x 实现，Webpack loader 流程仍包含 Mpx 处理。旧边界用例只检查外层文件的字符串，无法发现子模块、类型引用和聚合导出形成的依赖。
 
-交叉复核还发现：显式指定同一 `tailwindcssBasedir`，先以 `MPX_CLI_MODE=web` 创建 context，再切换为 `wx`，会得到同一 context，平台仍为 `web`。重新解析策略已能得到 `mp-weixin`，但缓存命中跳过了策略解析。
+最初交叉复核发现：显式指定同一 `tailwindcssBasedir`，先以 `MPX_CLI_MODE=web` 创建 context，再切换为 `wx`，会得到同一 context，平台仍为 `web`。第一阶段把环境加入缓存键，修复了这个现象，但仍把“相同配置”当成“同一个编译实例”。相同项目、相同框架和相同选项的两个构建仍可能共享可变 runtime、候选和 revision，不能作为长期设计。
 
 ## 根因与纠正
 
-框架专属行为没有形成完整所有权，目录包装隐藏了实际依赖。改为由框架分支注册来源、资源任务和阶段回调，构建器拥有调度及产物提交；编译核心接收中立策略。style injector 工厂与通用生命周期包装分开。真正共用的 uni 协议明确归属同一家族，其他框架不能引用。
+公开兼容入口解析用户配置、框架身份和环境事实；核心接收独立的 `ResolvedCompilationProfile` 与窄操作。框架策略只返回配置，不持有会话。配置深复制并冻结内部数据，保留用户对象可变；函数按身份参与缓存键，不能以相同函数源码代表相同闭包。配置更新产生新 revision，异步请求使用开始时的快照，旧结果不覆盖新配置。
 
-架构门禁复用完整 AST 图，检查类型、动态导入、重导出以及跨 workspace 的框架 injector 入口。公开分派与兼容解析仅按具体入口登记，普通 facade 和 preset 共享 helper 不豁免。
+每个 Core 和构建器实例拥有自己的可变会话，相同配置也创建独立实例。同一 watch 会话跨轮复用，后续独立 build 重新建立会话。原 context 缓存入口仅保留兼容调用，停止缓存可变 context；共享准备缓存继续按内容和依赖失效。实例显式保存环境事实，内部不能在参数缺失时回读全局环境。隐藏 Symbol 与旧运行时回溯限定在兼容桥。
 
-显式 basedir 被误当成完整的上下文身份。缓存键现在始终包含生成目标环境，来源目录稳定时仍能区分框架平台；相同环境继续复用缓存。
+会话状态为 `active → closing → closed`，关闭后拒绝新任务，重复关闭复用同一 Promise。构建器协调者先排空完整任务，再释放框架扩展、构建图关系和核心资源。Webpack loader 的租约覆盖读取、生成、变换和回调，processAssets 包含并行子任务与产物提交；registry 按实际 compiler 身份绑定，不使用“最近注册实例”兜底。watch 可恢复失败结束当前轮次，致命初始化失败和永久关闭完整清理。部分清理失败仍释放剩余资源并聚合报告，后台 LRU 淘汰异常也必须收集到最终关闭。生成后端在入口明确选择，删除根据 TypeError 文案切换后端的行为。
 
-只隔离 context 缓存还不够：原有生成与 Web 单位转换会重新读取全局环境。实例现在保存环境事实，内部生成、Vite 样式平台、uni-app-x 原生目标和 Taro 资产处理消费此快照；显式配置仍可在后续调用中更新。Web 单位兼容决策进入增量缓存与 utility 排序缓存身份。框架 JS 资产接口提供绑定到当前资产的转换与缓存操作，不再暴露核心 cache 或候选集合。
+Vite 策略分为来源、生成阶段、样式组织和产物处理四组。框架得到只读配置、候选副本以及生成、转换和诊断操作，不取得完整 opts、原始 handler、可写候选集合或外部资源的 dispose。只读资产视图与替换、生成、删除操作由构建器落实，Taro 专属资产同样遵守这一接口。单位转换阶段、样式是否嵌入脚本等解析为能力，UNI/TARO/MPX 识别留在兼容入口。
+
+框架维护静态插件描述，在现有 `configResolved` 时机创建活动实例。配置前置行为不创建编译会话，禁用插件也不建立 runtime。dispatcher 与内置 injector 使用同一逐插件代理，保留 hook 元数据、上下文、返回值、sourcemap、异常和每轮 buildStart；实际 hook 与声明不一致时明确失败。injector 继续使用独立包的公开工厂。Webpack 保留自己的 compiler/loader 契约。
+
+框架身份、别名、支持组合和模块归属成为声明数据，各构建器维护类型化注册表。AST 图覆盖主包及独立 injector 的实现、子目录、类型、动态导入和重导出。未知或冲突归属失败；核心输入类型检查包含别名、命名空间和聚合导出。兼容例外只登记具体依赖边、原因和替代入口，不豁免整个文件。测试框架通过新增实现、注册及 fixture 完成生成与更新，共享流程无需增加分支。
 
 ## 验证
 
-- 新缓存回归在修复前 7 项全部失败，其中 Mpx 平台实际返回 `web`；修复后与既有缓存、选项、框架策略回归一起验证。
-- 架构检查器用合成 workspace 验证直接/间接引用、跨框架与跨包类型引用、合法组装和路径归属，覆盖 POSIX、Windows 盘符与 UNC。
-- Webpack 和 injector 验证交错实例的 loader、registry 与生命周期归属；核心配置归一化保持原公开返回形状。
-- 本轮在 macOS、Node 24.18.0、pnpm 12.14.0 的独立工作树验证整合改动，使用 `CI=1` 和 Vitest `--update=none`。没有修改 demo 或已有 CSS/JS 快照基线。
-- `pnpm architecture:check`：37 个包、1475 个源码文件通过。`pnpm agents:check`、生产源码 ESLint、`git diff --check` 通过。
-- `pnpm --filter weapp-tailwindcss build`、`pnpm --filter weapp-tailwindcss exec tsc -p tsconfig.build.json --noEmit --noCheck false --pretty false`、`pnpm --filter weapp-tailwindcss exec tsc -p tsconfig.typecheck.json --pretty false`、`pnpm --filter weapp-tailwindcss tsd` 通过。
-- 策略、实例环境和依赖图：`pnpm --filter weapp-tailwindcss exec vitest run test/context-framework-isolation.test.ts test/context/framework-environment.integration.test.ts test/context-cache.test.ts test/framework-policies.test.ts test/ci/framework-boundaries.test.ts test/ci/architecture-graph.test.ts --update=none`，86 项通过。
-- Vite：`pnpm --filter weapp-tailwindcss exec vitest run test/bundlers/framework-plugins.test.ts test/bundlers/vite-framework-isolation.unit.test.ts test/bundlers/vite-plugin.uni-app-x.unit.test.ts test/bundlers/vite-js-processing.unit.test.ts test/bundlers/uni-app-x-postprocess.unit.test.ts test/bundlers/vite-generate-finalize.test.ts test/bundlers/vite-source-candidates-hmr.unit.test.ts test/bundlers/vite-dispatcher.unit.test.ts test/bundlers/vite-plugin.bundle.unit.test.ts test/bundlers/vite-build-reuse.integration.test.ts test/bundlers/vite-framework-universal.integration.test.ts test/uni-app-x/vite.test.ts --update=none`，335 项通过。
-- Webpack/Rspack/Gulp 真实编译与 injector：`pnpm --filter weapp-tailwindcss exec vitest run test/bundlers/source-generation-contract.test.ts test/bundlers/webpack-framework-isolation.test.ts test/bundlers/style-injector-isolation.test.ts test/bundlers/webpack.v5-loader-preparation.test.ts test/bundlers/style-injector-hooks.test.ts test/bundlers/webpack-style-injector-integration.unit.test.ts test/ci/package-module-exports.test.ts test/exports-alias.test.ts test/vitest/dts.test.ts --update=none` 对应的 41 项通过。
-- Mpx、发布入口与核心生命周期：`pnpm --filter weapp-tailwindcss exec vitest run test/shared/mpx.test.ts test/ci/framework-public-entries.test.ts test/compiler/framework-compiler-session.test.ts test/compiler/core-compiler-lifecycle.test.ts test/compiler/core-compiler-source-invalidation.test.ts test/compiler/core-compiler-invalidation-race.test.ts test/compiler/tailwind-generation-invalidation.integration.test.ts --update=none`，55 项通过。
-- 默认选项、runtime branch 与原架构契约：`pnpm --filter weapp-tailwindcss exec vitest run test/options.test.ts test/runtime-branch.test.ts test/ci/architecture-contract.test.ts --update=none`，66 项通过。
-- Vite watch：`pnpm --filter weapp-tailwindcss exec vitest run test/bundlers/vite-plugin.template-delete-watch.test.ts test/bundlers/vite-plugin.hmr-version-matrix.test.ts test/bundlers/vite-uni-app-x-css-watch.integration.test.ts test/bundlers/vite-uni-app-x-css-hash.integration.test.ts --update=none`，33 项通过，覆盖 Vite 4–8、模板删除和 uni-app-x 样式更新。整合验证共覆盖 41 个文件、616 项测试。
+本轮在独立工作树、macOS、Node 24、pnpm 12 上验证，设置 `CI=1` 和 Vitest `--update=none`。第一阶段曾通过 41 个文件、616 项定向测试；这是历史证据，不能代替本轮配置、会话和调度调整后的复验。
 
-发布回归最初尝试完全关闭 Node 的同步 ESM 支持，被现有 `postcss-preset-env` 纯 ESM 依赖阻断。此设置超出包声明的 Node 运行语义，不能据此归因为框架隔离回归。正式测试使用受支持的 Node，同步加载公开入口和 loader，并单独拦截 `@tailwindcss/vite`、`@tailwindcss/postcss`；实际 HBuilderX 与设备验收仍由多端预检和对应流程证明。
+本轮定向覆盖以下行为：
 
-`pnpm e2e:preflight prepare` 首次因独立工作树缺少 runner 的 `cross-spawn` 依赖而在启动阶段失败；执行 `pnpm --filter '@weapp-tailwindcss/hbuilderx-runner...' install --offline --frozen-lockfile --ignore-scripts` 后重新 prepare。第二轮报告为 `e2e/.artifacts/preflight/6511fe15-087f-45a5-bcfd-610b8fe1efc1/report.json`（同目录有 Markdown、探针日志与截图）：基础环境、HBuilderX、iOS、Harmony、Web 通过；微信 IDE 共享服务被另一 E2E 会话持有，Android 有两个在线目标且未明确选择，均为 blocked。未执行当前会话 computer use、verify 或全面 E2E，没有清除其他任务的锁或重置登录。
+- profile 与环境快照：不同框架、不同项目、同项目同配置的独立实例；交错候选、配置、环境更新和独立关闭；同源码不同捕获值的回调。
+- 生命周期：任务排空、重复关闭、清理失败、watch 错误恢复、来源删除、配置失效及旧任务结果隔离。
+- Vite 与 injector：真实重复 build、Vite 4–8 watch/HMR、模板删除、uni-app-x 局部样式与样式哈希、内置与独立 injector 连续更新和删除对照。
+- Webpack/Rspack/Gulp：真实来源生成契约、Mpx loader、compiler registry、重复 apply、完整任务关闭与流处理。
+- 架构：直接、类型、别名、命名空间、聚合导出、跨框架引用及未登记 injector 模块反例；测试框架扩展。
+- 发布：公开类型、ESM/CJS、loader 路径和受支持 Node 的 HBuilderX 同步加载链路，拦截官方 Tailwind ESM 生成插件防止意外引入。
 
-因此本记录保持 `partial`。恢复时由原会话释放微信服务，并显式设置 `E2E_HBUILDERX_ANDROID_DEVICE_ID`，重新 prepare 后完成 computer use、verify 与全面验收。单测、真实构建和 watch 通过不代表 IDE 或设备验收通过。
+本轮定向结果（2026-10-23，生产源码提交 `95b3ef2ba`；文档尚未提交）：
+
+| 范围 | 结果与复验入口 |
+| --- | --- |
+| Vite 最终整合 | 21 文件、445 项通过，包含 framework-services、framework-assets、uni-app-x-postprocess、vite-runtime-refresh、vite-css-finalizer、vite-auto-rpx-calc、vite-plugin-hooks、vite-plugin.bundle、vite-plugin.uni-app-x、vite-framework-isolation、framework-plugins、vite-framework-extension、vite-framework-universal、vite-build-reuse、style-injector-watch-parity、source-generation-contract、uni-app-x/vite、vite-plugin.hmr-version-matrix、vite-plugin.template-delete-watch、vite-uni-app-x-css-watch、vite-uni-app-x-css-hash 对应测试 |
+| Webpack/Gulp | 9 文件、224 项通过，包含 webpack.v5.unit、webpack-framework-isolation、webpack-operation-lifecycle、webpack-session-lifecycle、webpack-loader-session、webpack.v5-loader-preparation、webpack-style-injector-integration、webpack.v5-runtime-metadata、gulp 对应测试 |
+| 独立 injector | `pnpm --filter weapp-style-injector exec vitest run test/index.test.ts test/shared-resolution.test.ts --update=none`，94 项通过 |
+| 核心/profile | 21 文件 122 项通过；最后新增后台淘汰清理回归与 owner-lifecycle 合计 10 项通过。两处旧 mock/文案断言失败修正后单独复验，不计为跳过 |
+| 架构门禁 | framework-boundaries、framework-core-inputs、architecture-contract、architecture-graph、generation-ownership 合计 111 项通过。原 diagnostics 路径断言随实现归属迁移后复验 |
+| 公开入口 | framework-public-entries、package-module-exports、exports-alias、vitest/dts、build/dts-module-specifiers 合计 22 项通过 |
+| 构建与类型 | `pnpm --filter weapp-tailwindcss build`、`pnpm --filter weapp-style-injector build`、主包严格源码 tsc、tsconfig.typecheck 和 `pnpm --filter weapp-tailwindcss tsd` 通过；tsd 发现并推动恢复 Gulp watchChange 可选参数 |
+| 工程门禁 | `pnpm architecture:check`（37 包、1509 源文件、53 组装边、13 兼容边）、`pnpm agents:check`、生产源码 ESLint、`git diff --check`、`pnpm release status` 通过 |
+
+包内单测统一使用 `pnpm --filter weapp-tailwindcss exec vitest run <上述对应测试路径> --update=none`，运行日志与 JSON 报告保存在忽略目录 `.tmp/framework-isolation/reports/`。上表按范围列出，不把重跑与交叠用例累加成全仓测试数量。
+
+本轮没有修改 demo 或已有 CSS/JS static 快照；新增的是内部契约和隔离 fixture，不以更新输出基线掩盖差异。
+
+性能预算使用 `pnpm --filter benchmark-performance guard -- --suite core --runs 7 --warmups 2`：24 个场景、每个预热 2 次并采样 7 次，既有耗时、内存、输出稳定性与复杂度预算全部通过，0 违规、0 观察项。三个输入规模为 50、100、200；本机 Apple M4 Max，Node 24.18.0。结果保存在 `.tmp/framework-isolation/performance-core/synthetic.json` 和同目录 Markdown。第一次运行因独立工作树缺少 cn 构建产物未进入测量，构建 runtime/cn/merge 后串行执行成功，没有调整预算。微基准不代替实际 watcher 或设备性能。
+
+真实 watcher 使用 `pnpm --filter benchmark-performance watch:report -- --bundlers vite,webpack --sizes 10,50,100 --runs 7 --warmups 2`，6 个组合全部通过。每个组合保留同一 watcher，测量连续候选新增、作者样式删除、配置修改及逐项恢复的完整 6 次更新循环；恢复后的 CSS 哈希始终一致。100 来源规模的中位耗时为 Vite 1296.79ms、Webpack 1419.27ms，p95 分别为 1925.09ms、1867.14ms，GC 后峰值 heap 分别为 70.46MB、107.70MB。首次启动和 RSS 也保存在 `.tmp/framework-isolation/watch-lifecycle.json`。该结果是当前版本实测；只有 core 场景使用既有预算，不宣称 watcher 相较旧版本提速或有独立预算门禁。
+
+第一阶段报告 `e2e/.artifacts/preflight/6511fe15-087f-45a5-bcfd-610b8fe1efc1/report.md` 曾记录微信服务被另一会话持有、Android 两个目标未明确选择；这份旧报告不用于本轮放行。
+
+代码调整后的新一轮 `pnpm e2e:preflight prepare` 报告为 `e2e/.artifacts/preflight/a7fedcee-29cf-4214-b381-22057f61d5fb/report.md`（同目录 JSON、日志和探针截图）。base、HBuilderX、iOS、Android、Harmony、Web 全部通过，Android 的旧目标歧义本轮已不再阻塞。微信仍报“微信 IDE 服务 19355 已被另一个 E2E 会话占用；拒绝并发打开项目”，锁登记属于 `tailwind-capability-e2e` 会话、PID 18647；只读核对时该 PID 已不存在，但其他任务的登记未释放，当前任务不能自动清除。预检已退出，未启动当前会话 computer use、verify 或全面 E2E；没有接管锁、重启 IDE 或修改登录态。原任务完成恢复清理后需重新 prepare，再完成真实设备验收。公开入口加载回归不代表真实 HBuilderX 构建或设备验收通过。
 
 ## 适用边界
 
-这是同包内部隔离，包名、入口和框架/构建器支持组合保持兼容。Rspack 复用 Webpack，Gulp 保留 native。通用生成、CSS 转换与扫描能力继续由原所有者维护；不复制到各框架。
+继续统一发布，包名、公开配置、导入路径和支持组合兼容。Rspack 复用 Webpack，Gulp 保留 native；目录隔离不增加支持组合。env 提供事实，engine 生成 Tailwind，postcss 转换 CSS，这些能力不复制到框架。只有独立依赖、维护负责人或发布周期出现实际需要时再考虑拆 npm 包。
+
+本记录保持 `partial`，直到本轮多端预检与真实设备验收完成。定向单测、真实构建和 watch 通过不能替代完整验收。
 
 ## 规则评估
 
-更新主包规则，要求新增框架与兼容入口补依赖图和行为回归；策略目录增加就近规则。可执行门禁取代对外层文件字符串的检查，不增加全目录豁免。
+更新已有 compiler、generation 和 framework-policies 目录规则，明确中立输入、快照所有权和终止生命周期；Architecture 工作流显式执行新增门禁回归。优先使用持久反例和唯一归属登记封闭绕过，不新增宽泛目录豁免。

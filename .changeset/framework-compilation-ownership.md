@@ -1,0 +1,8 @@
+---
+"weapp-tailwindcss": patch
+"weapp-style-injector": patch
+---
+
+统一收口框架配置解析、只读能力契约与编译状态所有权。同配置的独立实例拥有各自的候选、缓存、revision 和运行时；watch 保留会话，后续独立构建创建新会话。配置与环境按实例快照，异步旧结果不能覆盖新配置。
+
+Vite 框架按来源、生成、样式和产物职责协作，dispatcher 与内置 injector 共用保留 hook 语义的逐插件代理。Webpack/Rspack、Vite 和 Gulp 在永久关闭时等待已接收任务，释放资源并拒绝后续任务。保持现有公开入口、类型、配置和支持组合。
