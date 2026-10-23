@@ -15,6 +15,7 @@ regressions:
   - packages/weapp-tailwindcss/test/bundlers/webpack-loader-session.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-framework-extension.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-css-cache-inputs.unit.test.ts
+  - packages/weapp-tailwindcss/test/bundlers/framework-css-asset-demand.test.ts
   - packages/weapp-tailwindcss/test/bundlers/vite-dispatcher.unit.test.ts
   - packages/weapp-tailwindcss/test/bundlers/style-injector-watch-parity.test.ts
 ---
@@ -110,6 +111,14 @@ Taro 的完整 profile 热点按前述策略查询边界修复；uni-app 的 CSS
 配置查询相关五文件 49 项通过。额外发现的旧 incremental issue #33 fixture 在未修改的 `6c5031219` 独立执行时 6/6 失败；显式使用其测试语义所需的 uni-app 组装入口后，保留原断言的六项全部通过。合并生产实现后的主包构建和新增 profile/CSS 15 项组合回归通过，主包类型与生产源码 ESLint 通过。
 
 修复后的本地 uni-app 3+3 采样遇到其他任务并发编译：同轮基线构建耗时升至 24–36 秒，而前轮约 4–6 秒；后半轮负载下降。保留进程与原始采样证据，并将报告 `acceptance.usable` 标为 false，不采信表面的通过结果、不终止其他任务，也不放宽预算。修复后 Taro 本地正式对照尚未执行；性能结论须以当前提交的独立 CI 原预算结果为准。本地功能全面验收仍须在新预检后执行。
+
+提交 `5b889d9436294001ca0552c68e157016f6f48e2b` 的 CI 已验证 uni-app Vite 修复：构建中位耗时 7398.65ms → 7266.61ms，稳态 HMR 插件 P95 150ms → 166ms，原门限无违规。Mpx、Taro Webpack、weapp-vite 和 synthetic 分片同样通过。Taro Vite 构建中位耗时 32822.43ms → 32660.67ms，但 HMR 插件中位耗时 1867ms → 2034ms，构建/HMR 内存仍超原预算。CSS 任务中位耗时增加约 140ms，根样式收尾增加约 29ms；这些是分段观测，不能仅凭相关性认定根因或内存泄漏。完整报告来自 Benchmark run `39954807193`，失败样本继续保留。
+
+同一提交的新预检 `3eaac4fb-8271-4813-8fff-e885916e51bc` 因原生 Chrome computer use 超时而明确阻断。实际有界重试仍失败后，改用当前会话后台应用内浏览器并重新 prepare；`ed279c07-c0b1-4ed0-9468-d06c586478b1` 的全部探针、真实输入/点击/截图与 verify 通过，临时页面已关闭。完整入口通过根构建 71/71（0 缓存）、单测 1021 文件（10968 通过、1 预期失败、44 跳过），以及 lint、类型、架构、文档构建、规则、release status 和 34 项矩阵断言。
+
+该轮 static 阶段在 30/400 文件时，进程身份探针 `ps` 超过 5000ms；清理探针又耗尽 2000ms 预算，自动清理未确认。残留子进程继续运行不能作为有效后续验收。核对本轮 static 根 PID、启动时间、父进程与命令后定向发送 SIGINT，工作流退出 1；随后确认登记进程与根工作树命令无残留、Git 状态干净。原始日志、内存报告和定向清理记录归档在 `.tmp/framework-isolation/local-acceptance/ed279c07-c0b1-4ed0-9468-d06c586478b1/`。static、watch、IDE 和设备完整验收仍未完成，已消费的报告不能复用。
+
+进一步审计发现，静态 CSS 策略判断通过展开带 `assets` getter 的上下文，复制一份完整 bundle 视图后又覆盖它；动态配置入口解析还再次覆盖同一视图。静态决策改为只读取所需能力，动态 hook 存在时才创建当前只读资产视图，保留惰性属性而不触发被覆盖的 getter。真实 wxss/acss 注入回归在旧实现全部失败：两轮静态更新读取脚本 `sourcesContent` 16 次，动态解析每次创建 3 份视图。修复后分别为 0 次和 1 份，连续更新输出、冻结隔离与新鲜性全部通过。九文件 294 项相关回归、类型、主包构建、源码 ESLint 与架构检查通过；没有调整性能门限。此证据证明消除了无用分配，实际耗时和 RSS 收益仍待最终提交的性能门禁确认。
 
 ## 适用边界
 
