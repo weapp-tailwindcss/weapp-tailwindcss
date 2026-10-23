@@ -1,5 +1,7 @@
 # @weapp-tailwindcss/native-darwin-x64
 
+## 5.6.4
+
 ## 5.6.3
 
 ## 5.6.2

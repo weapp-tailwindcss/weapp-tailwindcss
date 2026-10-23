@@ -1,5 +1,11 @@
 # @weapp-tailwindcss/engine
 
+## 0.1.7
+
+### Patch Changes
+
+- 修复多个 CSS 入口的配置与插件相对路径丢失来源目录，按各自入口固定模块身份，避免错误解析到首个入口。
+
 ## 0.1.6
 
 ### Patch Changes
