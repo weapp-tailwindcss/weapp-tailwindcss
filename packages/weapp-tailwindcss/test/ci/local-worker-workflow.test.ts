@@ -18,6 +18,7 @@ const files = [
   'windows-lifecycle.test.ts',
   'command.test.ts',
   'server.test.ts',
+  'test-scope.test.ts',
 ]
 
 describe('本地命令生命周期的真实跨平台 CI 门禁', () => {

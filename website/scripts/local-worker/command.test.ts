@@ -6,22 +6,32 @@ import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { promisify } from 'node:util'
-import { afterEach, expect, it, vi } from 'vitest'
+import { promisify, stripVTControlCharacters } from 'node:util'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import * as processTools from '../../../packages/hbuilderx-runner/src/process'
 import * as processTree from '../../../scripts/demo-e2e-workflow/process-tree'
-import { formatWorkflowError } from '../../../scripts/e2e-preflight/cleanup'
+import { formatWorkflowError, runWithCleanup } from '../../../scripts/e2e-preflight/cleanup'
 import { localBrowserCommand } from '../browser-local'
-import { resolveWranglerCommand, runLocalCommand } from './command'
+import { resolveWranglerCommand, runLocalCommand as runCommand } from './command'
 import localConfig from './playwright.config.mts'
+import { createLocalTestScope, localIntegrationTimeout, localTestCleanupMs } from './test-scope'
 
 const websiteRoot = fileURLToPath(new URL('../..', import.meta.url))
 const platform = Object.getOwnPropertyDescriptor(process, 'platform')!
-afterEach(() => {
-  vi.restoreAllMocks()
-  vi.unstubAllEnvs()
-  Object.defineProperty(process, 'platform', platform)
+let scope: ReturnType<typeof createLocalTestScope>
+beforeEach(({ signal }) => {
+  scope = createLocalTestScope(signal)
 })
+function runLocalCommand(options: Parameters<typeof runCommand>[0], signal: AbortSignal, timeoutMs?: number) {
+  return scope.run(signal => runCommand(options, signal, timeoutMs), signal)
+}
+afterEach(async () => {
+  await runWithCleanup(() => scope.close(), () => {
+    vi.restoreAllMocks()
+    vi.unstubAllEnvs()
+    Object.defineProperty(process, 'platform', platform)
+  })
+}, localTestCleanupMs)
 
 it('从导出的包 manifest 解析 Wrangler bin，并固定本地地址与默认环境', async () => {
   const command = await resolveWranglerCommand(websiteRoot, 45678)
@@ -99,11 +109,12 @@ it('真实本地 CLI 在首个失败后不重试或调度后续用例', async ()
     const command = localBrowserCommand({ websiteRoot, baseUrl: new URL('http://127.0.0.1:45678/'), signal: new AbortController().signal, request: vi.fn() })
     const failure = await runLocalCommand({
       ...command,
+      env: { ...command.env, FORCE_COLOR: '1' },
       args: [command.args[0], 'test', '--config', configPath],
     }, new AbortController().signal, 20_000).then(() => undefined, error => error)
     expect(failure?.message, formatWorkflowError(failure)).toContain('exit=1 signal=null')
     const report = JSON.parse(await readFile(reportPath, 'utf8'))
-    expect(report.errors).toEqual([{ message: 'Testing stopped early after 1 maximum allowed failures.' }])
+    expect(report.errors.map((error: { message: string }) => ({ ...error, message: stripVTControlCharacters(error.message) }))).toEqual([{ message: 'Testing stopped early after 1 maximum allowed failures.' }])
     const executed = (await readFile(sentinel, 'utf8')).trim().split('\n').map(line => JSON.parse(line))
     expect(executed).toEqual([{ test: 'first', retry: 0 }])
     expect(report.config.maxFailures).toBe(1)
@@ -114,7 +125,7 @@ it('真实本地 CLI 在首个失败后不重试或调度后续用例', async ()
   finally {
     await rm(directory, { recursive: true, force: true })
   }
-}, 25_000)
+}, localIntegrationTimeout(1, 20_000))
 
 it('取消已发生时不启动任何命令', async () => {
   const controller = new AbortController()
@@ -131,7 +142,7 @@ it('命令超时后等待真实合成进程关闭，不留下后台命令', asyn
   const child = spawn.mock.results[0].value.child
   expect(child.exitCode !== null || child.signalCode !== null).toBe(true)
   expect(() => process.kill(child.pid, 0)).toThrow()
-})
+}, localIntegrationTimeout(1, 80))
 
 it('命令失败与命令收尾失败同时保留，服务作用域仍可继续收尾', async () => {
   Object.defineProperty(process, 'platform', { ...platform, value: 'linux' })

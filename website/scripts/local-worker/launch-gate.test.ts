@@ -110,7 +110,8 @@ it.each([0, 7])('首次探针延迟时阻止 Node 业务启动，放行后保留
     expect(error.message).toContain('stderr from original CLI')
     expect(existsSync(preloadMarker)).toBe(true)
   }
-  expect(JSON.parse(await readFile(item.marker, 'utf8'))).toEqual({ pid, cwd: await realpath(item.root), nodeOptions, args: ['参数 with spaces'], child: { nodeOptions }, childStatus: 0 })
+  const observed = JSON.parse(await readFile(item.marker, 'utf8'))
+  expect({ ...observed, cwd: await realpath(observed.cwd) }).toEqual({ pid, cwd: await realpath(item.root), nodeOptions, args: ['参数 with spaces'], child: { nodeOptions }, childStatus: 0 })
   expect(launch.spawn.mock.calls[0][0]).toMatchObject({ command: item.options.command, args: item.options.args, cwd: item.root })
   expect(existsSync(directory)).toBe(false)
 })

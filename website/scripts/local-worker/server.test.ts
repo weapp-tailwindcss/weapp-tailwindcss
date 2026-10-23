@@ -1,17 +1,30 @@
 import type { SpawnedHBuilderXCommand } from '../../../packages/hbuilderx-runner/src/types'
+import type { LocalWorkerContext, LocalWorkerOptions } from './server'
 import { EventEmitter } from 'node:events'
 import { rm } from 'node:fs/promises'
 import process from 'node:process'
-import { afterEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import * as processTools from '../../../packages/hbuilderx-runner/src/process'
 import * as processTree from '../../../scripts/demo-e2e-workflow/process-tree'
+import { runWithCleanup } from '../../../scripts/e2e-preflight/cleanup'
 import { verifyWorkerRoutes } from './assertions'
-import { runLocalCommand } from './command'
-import { withLocalWorker } from './server'
+import { runLocalCommand as runCommand } from './command'
+import { withLocalWorker as withWorker } from './server'
+import { createLocalTestScope, localIntegrationTimeout, localTestCleanupMs, waitForLocalFixture } from './test-scope'
 import { fixtureHtml, workerFixture } from './test-support'
 
 const roots: string[] = []
 const platform = Object.getOwnPropertyDescriptor(process, 'platform')!
+let scope: ReturnType<typeof createLocalTestScope>
+beforeEach(({ signal }) => {
+  scope = createLocalTestScope(signal)
+})
+function withLocalWorker<T>(action: (context: LocalWorkerContext) => Promise<T>, options: LocalWorkerOptions) {
+  return scope.run(signal => withWorker(action, { ...options, signal }), options.signal)
+}
+function runLocalCommand(options: Parameters<typeof runCommand>[0], signal: AbortSignal) {
+  return scope.run(signal => runCommand(options, signal), signal)
+}
 function mockPosixProcess() {
   Object.defineProperty(process, 'platform', { ...platform, value: 'linux' })
   vi.spyOn(processTree, 'createWorkflowProcessTree').mockImplementation(child => ({
@@ -20,16 +33,24 @@ function mockPosixProcess() {
   }))
 }
 async function fixture(mode?: string) {
-  const result = await workerFixture(mode)
-  roots.push(result.root)
-  return result
+  return await scope.run(async () => {
+    const result = await workerFixture(mode)
+    roots.push(result.root)
+    return result
+  })
 }
 afterEach(async () => {
-  vi.restoreAllMocks()
-  vi.unstubAllGlobals()
-  Object.defineProperty(process, 'platform', platform)
-  await Promise.all(roots.splice(0).map(root => rm(root, { recursive: true, force: true })))
-})
+  await runWithCleanup(() => scope.close(), async () => {
+    vi.restoreAllMocks()
+    vi.unstubAllGlobals()
+    Object.defineProperty(process, 'platform', platform)
+    const removed = await Promise.allSettled(roots.splice(0).map(root => rm(root, { recursive: true, force: true })))
+    const errors = removed.flatMap(result => result.status === 'rejected' ? [result.reason] : [])
+    if (errors.length) {
+      throw new AggregateError(errors, '本地命令测试目录清理失败。')
+    }
+  })
+}, localTestCleanupMs)
 
 it('本轮 HTML 与路由通过后等待合成服务器退出，释放自己的端口', async () => {
   const item = await fixture()
@@ -41,7 +62,7 @@ it('本轮 HTML 与路由通过后等待合成服务器退出，释放自己的�
   const pid = await item.workerPid()
   expect(() => process.kill(pid, 0)).toThrow()
   await expect(fetch(url!, { signal: AbortSignal.timeout(500) })).rejects.toThrow()
-})
+}, localIntegrationTimeout(1, 2000 + 7 * 80 + 500))
 
 it.each(['stale', 'wrong-url', 'silent'])('拒绝 %s 实例且不启动后续动作', async (mode) => {
   const item = await fixture(mode)
@@ -50,7 +71,7 @@ it.each(['stale', 'wrong-url', 'silent'])('拒绝 %s 实例且不启动后续动
   expect(action).not.toHaveBeenCalled()
   const pid = await item.workerPid()
   expect(() => process.kill(pid, 0)).toThrow()
-})
+}, localIntegrationTimeout(1, 500))
 
 it('服务启动前以零状态退出也失败，不能当作就绪', async () => {
   const item = await fixture('exit-zero')
@@ -59,33 +80,33 @@ it('服务启动前以零状态退出也失败，不能当作就绪', async () =
   expect(action).not.toHaveBeenCalled()
   const pid = await item.workerPid()
   expect(() => process.kill(pid, 0)).toThrow()
-})
+}, localIntegrationTimeout(1, 2000))
 
 it.each(['/hang-head', '/hang-body'])('请求 %s 的响应头或响应体挂起仍受同一预算限制', async (route) => {
   const item = await fixture()
   await expect(withLocalWorker(context => context.request(route), item.options)).rejects.toThrow('预算=80ms')
   const pid = await item.workerPid()
   expect(() => process.kill(pid, 0)).toThrow()
-})
+}, localIntegrationTimeout(1, 2000 + 80))
 
 it('服务运行中零退出会取消并等待合成浏览器命令关闭', async () => {
   const item = await fixture()
   await expect(withLocalWorker(async (context) => {
     const browser = runLocalCommand(item.browserCommand, context.signal)
-    await vi.waitFor(() => item.browserPid())
+    await waitForLocalFixture(item.browserPid, browser, context.signal)
     await context.request('/exit')
     await browser
   }, item.options)).rejects.toThrow('Worker 提前退出：exit=0')
   const browserPid = await item.browserPid()
   expect(() => process.kill(browserPid, 0)).toThrow()
-})
+}, localIntegrationTimeout(2, 2000 + 80))
 
 it.each(['SIGINT', 'SIGTERM'] as const)('%s 中断后等待两个进程退出并移除本轮监听器', async (signal) => {
   const item = await fixture()
   const listeners = process.listeners(signal)
   await expect(withLocalWorker(async (context) => {
     const browser = runLocalCommand(item.browserCommand, context.signal)
-    await vi.waitFor(() => item.browserPid())
+    await waitForLocalFixture(item.browserPid, browser, context.signal)
     const handler = process.listeners(signal).find(listener => !listeners.includes(listener))!
     handler(signal)
     await browser
@@ -95,7 +116,7 @@ it.each(['SIGINT', 'SIGTERM'] as const)('%s 中断后等待两个进程退出并
   const workerPid = await item.workerPid()
   expect(() => process.kill(browserPid, 0)).toThrow()
   expect(() => process.kill(workerPid, 0)).toThrow()
-})
+}, localIntegrationTimeout(2, 2000))
 
 it('业务失败与服务收尾失败同时保留，不把服务失败改成通过', async () => {
   mockPosixProcess()
